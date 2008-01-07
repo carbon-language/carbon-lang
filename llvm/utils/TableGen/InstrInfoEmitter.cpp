@@ -298,8 +298,8 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   
   OS << "  { ";
   OS << Num << ",\t" << MinOperands << ",\t"
-     << Inst.NumDefs << ",\t\"" << Inst.TheDef->getName();
-  OS << "\",\t" << getItinClassNumber(Inst.TheDef) << ", 0";
+     << Inst.NumDefs << ",\t" << getItinClassNumber(Inst.TheDef)
+     << ",\t\"" << Inst.TheDef->getName() << "\", 0";
 
   // Emit all of the target indepedent flags...
   if (Inst.isReturn)     OS << "|M_RET_FLAG";

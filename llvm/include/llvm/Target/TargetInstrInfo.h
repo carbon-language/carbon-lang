@@ -33,28 +33,74 @@ class SelectionDAG;
 template<class T> class SmallVectorImpl;
 
 //===----------------------------------------------------------------------===//
-// struct TargetInstrDescriptor:
-//  Predefined information about each machine instruction.
-//  Designed to initialized statically.
-//
+// Machine Operand Flags and Description
+//===----------------------------------------------------------------------===//
+  
+namespace TOI {
+  // Operand constraints: only "tied_to" for now.
+  enum OperandConstraint {
+    TIED_TO = 0  // Must be allocated the same register as.
+  };
+  
+  /// OperandFlags - These are flags set on operands, but should be considered
+  /// private, all access should go through the TargetOperandInfo accessors.
+  /// See the accessors for a description of what these are.
+  enum OperandFlags {
+    LookupPtrRegClass = 1 << 0,
+    Predicate         = 1 << 1,
+    OptionalDef       = 1 << 2
+  };
+}
+
+/// TargetOperandInfo - This holds information about one operand of a machine
+/// instruction, indicating the register class for register operands, etc.
+///
+class TargetOperandInfo {
+public:
+  /// RegClass - This specifies the register class enumeration of the operand 
+  /// if the operand is a register.  If not, this contains 0.
+  unsigned short RegClass;
+  unsigned short Flags;
+  /// Lower 16 bits are used to specify which constraints are set. The higher 16
+  /// bits are used to specify the value of constraints (4 bits each).
+  unsigned int Constraints;
+  /// Currently no other information.
+  
+  /// isLookupPtrRegClass - Set if this operand is a pointer value and it
+  /// requires a callback to look up its register class.
+  bool isLookupPtrRegClass() const { return Flags & TOI::LookupPtrRegClass; }
+  
+  /// isPredicate - Set if this is one of the operands that made up of
+  /// the predicate operand that controls an M_PREDICATED instruction.
+  bool isPredicate() const { return Flags & TOI::Predicate; }
+  
+  /// isOptionalDef - Set if this operand is a optional def.
+  ///
+  bool isOptionalDef() const { return Flags & TOI::OptionalDef; }
+};
+
+  
+//===----------------------------------------------------------------------===//
+// Machine Instruction Flags and Description
+//===----------------------------------------------------------------------===//
 
 const unsigned M_BRANCH_FLAG           = 1 << 0;
 const unsigned M_CALL_FLAG             = 1 << 1;
 const unsigned M_RET_FLAG              = 1 << 2;
 const unsigned M_BARRIER_FLAG          = 1 << 3;
 const unsigned M_DELAY_SLOT_FLAG       = 1 << 4;
-  
+
 /// M_SIMPLE_LOAD_FLAG - This flag is set for instructions that are simple loads
 /// from memory.  This should only be set on instructions that load a value from
 /// memory and return it in their only virtual register definition.
 const unsigned M_SIMPLE_LOAD_FLAG      = 1 << 5;
-  
+
 /// M_MAY_STORE_FLAG - This flag is set to any instruction that could possibly
 /// modify memory.  Instructions with this flag set are not necessarily simple
 /// store instructions, they may store a modified value based on their operands,
 /// or may not actually modify anything, for example.
 const unsigned M_MAY_STORE_FLAG        = 1 << 6;
-  
+
 const unsigned M_INDIRECT_FLAG         = 1 << 7;
 const unsigned M_IMPLICIT_DEF_FLAG     = 1 << 8;
 
@@ -117,62 +163,15 @@ const unsigned M_NEVER_HAS_SIDE_EFFECTS = 1 << 18;
 // both! If neither flag is set, then the instruction *always* has side effects.
 const unsigned M_MAY_HAVE_SIDE_EFFECTS = 1 << 19;
 
-  
-//===----------------------------------------------------------------------===//
-// Machine operand flags
-//===----------------------------------------------------------------------===//
-  
-namespace TOI {
-  // Operand constraints: only "tied_to" for now.
-  enum OperandConstraint {
-    TIED_TO = 0  // Must be allocated the same register as.
-  };
-  
-  /// OperandFlags - These are flags set on operands, but should be considered
-  /// private, all access should go through the TargetOperandInfo accessors.
-  /// See the accessors for a description of what these are.
-  enum OperandFlags {
-    LookupPtrRegClass = 1 << 0,
-    Predicate         = 1 << 1,
-    OptionalDef       = 1 << 2
-  };
-}
-
-/// TargetOperandInfo - This holds information about one operand of a machine
-/// instruction, indicating the register class for register operands, etc.
-///
-class TargetOperandInfo {
-public:
-  /// RegClass - This specifies the register class enumeration of the operand 
-  /// if the operand is a register.  If not, this contains 0.
-  unsigned short RegClass;
-  unsigned short Flags;
-  /// Lower 16 bits are used to specify which constraints are set. The higher 16
-  /// bits are used to specify the value of constraints (4 bits each).
-  unsigned int Constraints;
-  /// Currently no other information.
-  
-  /// isLookupPtrRegClass - Set if this operand is a pointer value and it
-  /// requires a callback to look up its register class.
-  bool isLookupPtrRegClass() const { return Flags & TOI::LookupPtrRegClass; }
-  
-  /// isPredicate - Set if this is one of the operands that made up of
-  /// the predicate operand that controls an M_PREDICATED instruction.
-  bool isPredicate() const { return Flags & TOI::Predicate; }
-  
-  /// isOptionalDef - Set if this operand is a optional def.
-  ///
-  bool isOptionalDef() const { return Flags & TOI::OptionalDef; }
-};
 
 
 class TargetInstrDescriptor {
 public:
-  unsigned short  Opcode;        // The opcode.
-  unsigned short  NumOperands;   // Num of args (may be more if variable_ops).
+  unsigned short  Opcode;        // The opcode number.
+  unsigned short  NumOperands;   // Num of args (may be more if variable_ops)
   unsigned short  NumDefs;       // Num of args that are definitions.
-  const char *    Name;          // Assembly language mnemonic for the opcode.
-  unsigned        SchedClass;    // enum  identifying instr sched class
+  unsigned short  SchedClass;    // enum identifying instr sched class
+  const char *    Name;          // Name of the instruction record in td file.
   unsigned        Flags;         // flags identifying machine instr class
   unsigned        TSFlags;       // Target Specific Flag values
   const unsigned *ImplicitUses;  // Registers implicitly read by this instr
@@ -197,6 +196,8 @@ public:
   /// dest operand. Returns -1 if there isn't one.
   int findTiedToSrcOperand(unsigned OpNum) const;
   
+  /// getName - Return the name of the record in the .td file for this
+  /// instruction, for example "ADD8ri".
   const char *getName() const {
     return Name;
   }
