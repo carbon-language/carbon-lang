@@ -27,29 +27,14 @@ clang::reng::DFS::~DFS() {}
 
 ReachabilityEngineImpl::ReachabilityEngineImpl(CFG& c,
                                                clang::reng::WorkList* wlist)
-  : cfg(c), WList(wlist) {
-    
-  // Get the entry block.  Make sure that it has 1 (and only 1) successor.
-  CFGBlock* Entry = &c.getEntry();  
-  assert (Entry->empty() && "Entry block must be empty.");
-  assert (Entry->succ_size() == 1 && "Entry block must have 1 successor.");
-  
-  // Get the first (and only) successor of Entry.
-  CFGBlock* Succ = *(Entry->succ_begin());
-  
-  // Construct an edge representing the starting location in the function.
-  BlkBlkEdge StartLoc(Entry,Succ);
-  
-  // Create the root node.
-  assert (false && "FIXME soon.");
-//  WList->Enqueue(G->addRoot(getNode(StartLoc));
-}
+  : cfg(c), WList(wlist) {}
 
-void ReachabilityEngineImpl::getNode(const ProgramEdge& Loc, void* State, 
-                                     ExplodedNodeImpl* Pred) {
+ExplodedNodeImpl* ReachabilityEngineImpl::getNode(const ProgramEdge& Loc,
+                                                  void* State, 
+                                                  ExplodedNodeImpl* Pred) {
   
   bool IsNew;
-  ExplodedNodeImpl* V = G->getNodeImpl(Loc,State,IsNew);
+  ExplodedNodeImpl* V = G->getNodeImpl(Loc,State,&IsNew);
 
   // Link the node with its predecessor.
   V->addUntypedPredecessor(Pred);
@@ -72,6 +57,8 @@ void ReachabilityEngineImpl::getNode(const ProgramEdge& Loc, void* State,
       }
     }
   }
+  
+  return V;
 }
 
 void ReachabilityEngineImpl::PopulateParentMap(Stmt* Parent) {
@@ -85,6 +72,23 @@ void ReachabilityEngineImpl::PopulateParentMap(Stmt* Parent) {
 }
   
 bool ReachabilityEngineImpl::ExecuteWorkList(unsigned Steps) {
+
+  // Initialize the analysis by constructing the root if none exists.
+  if (G->num_roots() == 0) {
+    // Get the entry block.  Make sure that it has 1 (and only 1) successor.
+    CFGBlock* Entry = &cfg.getEntry();  
+    assert (Entry->empty() && "Entry block must be empty.");
+    assert (Entry->succ_size() == 1 && "Entry block must have 1 successor.");
+    
+    // Get the first (and only) successor of Entry.
+    CFGBlock* Succ = *(Entry->succ_begin());
+    
+    // Construct an edge representing the starting location in the function.
+    BlkBlkEdge StartLoc(Entry,Succ);
+    
+    // Create the root node.
+    WList->Enqueue(G->addRoot(G->getNodeImpl(StartLoc,getInitialState(),NULL)));
+  }
   
   while (Steps && WList->hasWork()) {
     --Steps;

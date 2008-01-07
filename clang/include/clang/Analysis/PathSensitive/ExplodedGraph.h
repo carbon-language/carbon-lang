@@ -20,6 +20,7 @@
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/Allocator.h"
+#include "llvm/ADT/OwningPtr.h"
 
 namespace clang {
   
@@ -60,13 +61,19 @@ protected:
   ///  pair, where 'State' is represented as an opaque void*.  This method
   ///  is intended to be used only by ReachabilityEngineImpl.
   virtual ExplodedNodeImpl* getNodeImpl(const ProgramEdge& L, void* State,
-                                       bool& IsNew) = 0;
+                                       bool* IsNew) = 0;
                                                             
   /// addRoot - Add an untyped node to the set of roots.
-  void addRoot(ExplodedNodeImpl* V) { Roots.push_back(V); }
+  ExplodedNodeImpl* addRoot(ExplodedNodeImpl* V) {
+    Roots.push_back(V);
+    return V;
+  }
 
   /// addEndOfPath - Add an untyped node to the set of EOP nodes.
-  void addEndOfPath(ExplodedNodeImpl* V) { EndNodes.push_back(V); }
+  ExplodedNodeImpl* addEndOfPath(ExplodedNodeImpl* V) {
+    EndNodes.push_back(V);
+    return V;
+  }
 
 public:
   virtual ~ExplodedGraphImpl() {};
@@ -76,16 +83,20 @@ public:
   unsigned getCounter() const { return NodeCounter; }
 };
   
-template <typename STATE>
+template <typename CHECKER>
 class ExplodedGraph : public ExplodedGraphImpl {
 public:
-  typedef STATE                  StateTy;
-  typedef ExplodedNode<StateTy>  NodeTy;
+  typedef CHECKER                     CheckerTy;
+  typedef typename CHECKER::StateTy   StateTy;
+  typedef ExplodedNode<StateTy>       NodeTy;
+  
+protected:
+  llvm::OwningPtr<CheckerTy> CheckerState;
   
 protected:
   virtual ExplodedNodeImpl*
-  getNodeImpl(const ProgramEdge& L, void* State, bool& IsNew) {
-    return getNode(L,ReachabilityTrait<StateTy>::toState(State),&IsNew);
+  getNodeImpl(const ProgramEdge& L, void* State, bool* IsNew) {
+    return getNode(L,ReachabilityTrait<StateTy>::toState(State),IsNew);
   }
     
 public:
@@ -96,6 +107,11 @@ public:
     for (EdgeNodeSetMap::iterator I=Nodes.begin(), E=Nodes.end(); I!=E; ++I)
       delete reinterpret_cast<llvm::FoldingSet<NodeTy>*>(I->second);
   }
+  
+  /// getCheckerState - Returns the internal checker state associated
+  ///  with the exploded graph.  Ownership remains with the ExplodedGraph
+  ///  objecct.
+  CheckerTy* getCheckerState() const { return CheckerState.get(); }
   
   /// getNode - Retrieve the node associated with a (Location,State) pair,
   ///  where the 'Location' is a ProgramEdge in the CFG.  If no node for

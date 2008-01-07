@@ -78,13 +78,21 @@ protected:
   // Internal methods. 
   
   /// getNode - Implemented by ReachabilityEngine<> subclass. 
-  ///   Creates/fetches a node and inserts it into the graph.
-  virtual void getNode(const ProgramEdge& Loc, void* State,
-                         ExplodedNodeImpl* Pred);
+  ///   Creates/fetches a node and inserts it into the 
+  ExplodedNodeImpl* getNode(const ProgramEdge& Loc, void* State,
+                            ExplodedNodeImpl* Pred);
   
-  inline void getNode(const ProgramEdge& Loc, ExplodedNodeImpl* Pred) {
-    getNode(Loc,Pred->State,Pred);
+  inline ExplodedNodeImpl* getNode(const ProgramEdge& Loc,
+                                   ExplodedNodeImpl* Pred) {
+    
+    return getNode(Loc,Pred->State,Pred);
   }
+  
+  /// getInitialState - Gets the void* representing the initial 'state'
+  ///  of the analysis.  This is simply a wrapper (implemented
+  ///  in ReachabilityEngine) that performs type erasure on the initial
+  ///  state returned by the checker object.
+  virtual void* getInitialState() = 0;
   
   /// PopulateParentMap - Populates ParentMap starting from the specified
   ///   expression.
@@ -117,13 +125,17 @@ public:
 template<typename CHECKER>
 class ReachabilityEngine : public ReachabilityEngineImpl {
 public:
-  typedef CHECKER                                CheckerTy;   
+  typedef CHECKER                                CheckerTy; 
   typedef typename CheckerTy::StateTy            StateTy;
-  typedef typename CheckerTy::StateManagerTy     StateManagerTy;
-  typedef ExplodedGraph<StateTy>                 GraphTy;
+  typedef ExplodedGraph<CheckerTy>               GraphTy;
   typedef typename GraphTy::NodeTy               NodeTy;
 
 protected:
+
+  virtual void* getInitialState() {
+    return (void*) getCheckerState()->getInitialState();        
+  }
+  
   virtual void ProcessEOP(CFGBlock* Blk, ExplodedNodeImpl* Pred) {
     assert (false && "Not implemented yet.");
     // FIXME: Perform dispatch to adjust state.
@@ -162,9 +174,15 @@ public:
   ///  with the ReachabilityEngine object.
   GraphTy* getGraph() const { return static_cast<GraphTy*>(G.get()); }
   
-  /// takeGraph - Returns the exploded graph.  Ownership of the graph is
+  /// getCheckerState - Returns the internal checker state.  Ownership is not
   ///  transferred to the caller.
-  GraphTy* takeGraph() { return static_cast<GraphTy*>(G.take()); }  
+  CheckerTy* getCheckerState() const {
+    return static_cast<GraphTy*>(G.get())->getCheckerState();
+  }  
+  
+  /// takeGraph - Returns the exploded graph.  Ownership of the graph is
+  ///  transfered to the caller.
+  GraphTy* takeGraph() { return static_cast<GraphTy*>(G.take()); }
 };
 
 } // end clang namespace
