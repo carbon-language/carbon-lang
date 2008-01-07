@@ -2,6 +2,13 @@ Target Independent Opportunities:
 
 //===---------------------------------------------------------------------===//
 
+We should make the various target's "IMPLICIT_DEF" instructions be a single
+target-independent opcode like TargetInstrInfo::INLINEASM.  This would allow
+us to eliminate the TargetInstrDesc::isImplicitDef() method, and would allow
+us to avoid having to define this for every target for every register class.
+
+//===---------------------------------------------------------------------===//
+
 With the recent changes to make the implicit def/use set explicit in
 machineinstrs, we should change the target descriptions for 'call' instructions
 so that the .td files don't list all the call-clobbered registers as implicit
