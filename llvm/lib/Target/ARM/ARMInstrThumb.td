@@ -188,7 +188,7 @@ let isReturn = 1, isTerminator = 1 in {
 }
 
 // FIXME: remove when we have a way to marking a MI with these properties.
-let isSimpleLoad = 1, isReturn = 1, isTerminator = 1 in
+let isReturn = 1, isTerminator = 1 in
 def tPOP_RET : TI<(outs reglist:$dst1, variable_ops), (ins),
                    "pop $dst1", []>;
 
@@ -237,7 +237,7 @@ let isBranch = 1, isTerminator = 1 in
 //  Load Store Instructions.
 //
 
-let isSimpleLoad = 1 in {
+let isSimpleLoad = 1 in
 def tLDR : TI4<(outs GPR:$dst), (ins t_addrmode_s4:$addr),
                "ldr $dst, $addr",
                [(set GPR:$dst, (load t_addrmode_s4:$addr))]>;
@@ -258,25 +258,27 @@ def tLDRSH : TI2<(outs GPR:$dst), (ins t_addrmode_rr:$addr),
                  "ldrsh $dst, $addr",
                  [(set GPR:$dst, (sextloadi16 t_addrmode_rr:$addr))]>;
 
+let isSimpleLoad = 1 in
 def tLDRspi : TIs<(outs GPR:$dst), (ins t_addrmode_sp:$addr),
                   "ldr $dst, $addr",
                   [(set GPR:$dst, (load t_addrmode_sp:$addr))]>;
 
 // Special instruction for restore. It cannot clobber condition register
 // when it's expanded by eliminateCallFramePseudoInstr().
+let isSimpleLoad = 1 in
 def tRestore : TIs<(outs GPR:$dst), (ins t_addrmode_sp:$addr),
                     "ldr $dst, $addr", []>;
 
 // Load tconstpool
+let isSimpleLoad = 1 in
 def tLDRpci : TIs<(outs GPR:$dst), (ins i32imm:$addr),
                   "ldr $dst, $addr",
                   [(set GPR:$dst, (load (ARMWrapper tconstpool:$addr)))]>;
 
 // Special LDR for loads from non-pc-relative constpools.
-let isReMaterializable = 1 in
+let isSimpleLoad = 1, isReMaterializable = 1 in
 def tLDRcp  : TIs<(outs GPR:$dst), (ins i32imm:$addr),
                   "ldr $dst, $addr", []>;
-} // isSimpleLoad
 
 def tSTR : TI4<(outs), (ins GPR:$src, t_addrmode_s4:$addr),
                "str $src, $addr",
@@ -307,7 +309,6 @@ def tSpill : TIs<(outs), (ins GPR:$src, t_addrmode_sp:$addr),
 
 // TODO: A7-44: LDMIA - load multiple
 
-let isSimpleLoad = 1 in
 def tPOP : TI<(outs reglist:$dst1, variable_ops), (ins),
                "pop $dst1", []>;
 

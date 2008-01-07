@@ -110,7 +110,6 @@ def FSTS  : ASI5<(outs), (ins SPR:$src, addrmode5:$addr),
 //  Load / store multiple Instructions.
 //
 
-let isSimpleLoad = 1 in {
 def FLDMD : AXDI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$dst1,
                            variable_ops),
                   "fldm${addr:submode}d${p} ${addr:base}, $dst1",
@@ -120,7 +119,6 @@ def FLDMS : AXSI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$dst1,
                            variable_ops),
                   "fldm${addr:submode}s${p} ${addr:base}, $dst1",
                   []>;
-} // isSimpleLoad
 
 let mayStore = 1 in {
 def FSTMD : AXDI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$src1,

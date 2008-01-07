@@ -684,7 +684,8 @@ def PICADD : AXI1<0x0, (outs GPR:$dst), (ins GPR:$a, pclabel:$cp, pred:$p),
                   Pseudo, "$cp:\n\tadd$p $dst, pc, $a",
                    [(set GPR:$dst, (ARMpic_add GPR:$a, imm:$cp))]>;
 
-let isSimpleLoad = 1, AddedComplexity = 10 in {
+let AddedComplexity = 10 in {
+let isSimpleLoad = 1 in
 def PICLD   : AXI2<0x0, (outs GPR:$dst), (ins addrmodepc:$addr, pred:$p),
                   Pseudo, "${addr:label}:\n\tldr$p $dst, $addr",
                   [(set GPR:$dst, (load addrmodepc:$addr))]>;
@@ -738,7 +739,7 @@ let isReturn = 1, isTerminator = 1 in
 // FIXME: remove when we have a way to marking a MI with these properties.
 // FIXME: $dst1 should be a def. But the extra ops must be in the end of the
 // operand list.
-let isSimpleLoad = 1, isReturn = 1, isTerminator = 1 in
+let isReturn = 1, isTerminator = 1 in
   def LDM_RET : AXI4<0x0, (outs),
                     (ins addrmode4:$addr, pred:$p, reglist:$dst1, variable_ops),
                     LdFrm, "ldm${p}${addr:submode} $addr, $dst1",
@@ -802,13 +803,13 @@ let isBranch = 1, isTerminator = 1 in {
 //
 
 // Load
-let isSimpleLoad = 1 in {
+let isSimpleLoad = 1 in 
 def LDR  : AI2<0x0, (outs GPR:$dst), (ins addrmode2:$addr), LdFrm,
                "ldr", " $dst, $addr",
                [(set GPR:$dst, (load addrmode2:$addr))]>;
 
 // Special LDR for loads from non-pc-relative constpools.
-let isReMaterializable = 1 in
+let isSimpleLoad = 1, isReMaterializable = 1 in
 def LDRcp : AI2<0x0, (outs GPR:$dst), (ins addrmode2:$addr), LdFrm,
                  "ldr", " $dst, $addr", []>;
 
@@ -875,7 +876,6 @@ def LDRSB_PRE : AI3pr<0xD, (outs GPR:$dst, GPR:$base_wb),
 def LDRSB_POST: AI3po<0xD, (outs GPR:$dst, GPR:$base_wb),
                       (ins GPR:$base,am3offset:$offset), LdFrm,
                       "ldr", "sb $dst, [$base], $offset", "$base = $base_wb", []>;
-} // isSimpleLoad
 
 // Store
 def STR  : AI2<0x0, (outs), (ins GPR:$src, addrmode2:$addr), StFrm,
@@ -939,7 +939,6 @@ def STRB_POST: AI2po<0x1, (outs GPR:$base_wb),
 //
 
 // FIXME: $dst1 should be a def.
-let isSimpleLoad = 1 in
 def LDM : AXI4<0x0, (outs),
                (ins addrmode4:$addr, pred:$p, reglist:$dst1, variable_ops),
                LdFrm, "ldm${p}${addr:submode} $addr, $dst1",
