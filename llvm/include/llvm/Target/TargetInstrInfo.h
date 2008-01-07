@@ -490,13 +490,6 @@ protected:
     return false;
   }
 public:
-  /// getOperandConstraint - Returns the value of the specific constraint if
-  /// it is set. Returns -1 if it is not set.
-  int getOperandConstraint(unsigned Opcode, unsigned OpNum,
-                           TOI::OperandConstraint Constraint) const {
-    return get(Opcode).getOperandConstraint(OpNum, Constraint);
-  }
-
   /// Return true if the instruction is a register to register move
   /// and leave the source and dest operands in the passed parameters.
   virtual bool isMoveInstr(const MachineInstr& MI,
