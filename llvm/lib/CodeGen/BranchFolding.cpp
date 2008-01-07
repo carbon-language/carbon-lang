@@ -346,14 +346,13 @@ MachineBasicBlock *BranchFolder::SplitMBBAt(MachineBasicBlock &CurMBB,
 /// EstimateRuntime - Make a rough estimate for how long it will take to run
 /// the specified code.
 static unsigned EstimateRuntime(MachineBasicBlock::iterator I,
-                                MachineBasicBlock::iterator E,
-                                const TargetInstrInfo *TII) {
+                                MachineBasicBlock::iterator E) {
   unsigned Time = 0;
   for (; I != E; ++I) {
-    const TargetInstrDescriptor &TID = TII->get(I->getOpcode());
-    if (TID.Flags & M_CALL_FLAG)
+    const TargetInstrDescriptor *TID = I->getDesc();
+    if (TID->isCall())
       Time += 10;
-    else if (TID.isSimpleLoad() || (TID.Flags & M_MAY_STORE_FLAG))
+    else if (TID->isSimpleLoad() || TID->mayStore())
       Time += 2;
     else
       ++Time;
@@ -368,7 +367,6 @@ static bool ShouldSplitFirstBlock(MachineBasicBlock *MBB1,
                                   MachineBasicBlock::iterator MBB1I,
                                   MachineBasicBlock *MBB2,
                                   MachineBasicBlock::iterator MBB2I,
-                                  const TargetInstrInfo *TII,
                                   MachineBasicBlock *PredBB) {
   // If one block is the entry block, split the other one; we can't generate
   // a branch to the entry block, as its label is not emitted.
@@ -389,8 +387,8 @@ static bool ShouldSplitFirstBlock(MachineBasicBlock *MBB1,
   // TODO: if we had some notion of which block was hotter, we could split
   // the hot block, so it is the fall-through.  Since we don't have profile info
   // make a decision based on which will hurt most to split.
-  unsigned MBB1Time = EstimateRuntime(MBB1->begin(), MBB1I, TII);
-  unsigned MBB2Time = EstimateRuntime(MBB2->begin(), MBB2I, TII);
+  unsigned MBB1Time = EstimateRuntime(MBB1->begin(), MBB1I);
+  unsigned MBB2Time = EstimateRuntime(MBB2->begin(), MBB2I);
   
   // If the MBB1 prefix takes "less time" to run than the MBB2 prefix, split the
   // MBB1 block so it falls through.  This will penalize the MBB2 path, but will
@@ -544,7 +542,7 @@ bool BranchFolder::TryMergeBlocks(MachineBasicBlock *SuccBB,
       }
       
       // Decide whether we want to split CurMBB or MBB2.
-      if (ShouldSplitFirstBlock(CurMBB, BBI1, MBB2, BBI2, TII, PredBB)) {
+      if (ShouldSplitFirstBlock(CurMBB, BBI1, MBB2, BBI2, PredBB)) {
         CurMBB = SplitMBBAt(*CurMBB, BBI1);
         BBI1 = CurMBB->begin();
         MergePotentials.back().second = CurMBB;
@@ -766,8 +764,7 @@ bool BranchFolder::CanFallThrough(MachineBasicBlock *CurBB) {
 /// a strict ordering, returning true for both (MBB1,MBB2) and (MBB2,MBB1) will
 /// result in infinite loops.
 static bool IsBetterFallthrough(MachineBasicBlock *MBB1, 
-                                MachineBasicBlock *MBB2,
-                                const TargetInstrInfo &TII) {
+                                MachineBasicBlock *MBB2) {
   // Right now, we use a simple heuristic.  If MBB2 ends with a call, and
   // MBB1 doesn't, we prefer to fall through into MBB1.  This allows us to
   // optimize branches that branch to either a return block or an assert block
@@ -781,7 +778,7 @@ static bool IsBetterFallthrough(MachineBasicBlock *MBB1,
 
   MachineInstr *MBB1I = --MBB1->end();
   MachineInstr *MBB2I = --MBB2->end();
-  return TII.isCall(MBB2I->getOpcode()) && !TII.isCall(MBB1I->getOpcode());
+  return MBB2I->getDesc()->isCall() && !MBB1I->getDesc()->isCall();
 }
 
 /// OptimizeBlock - Analyze and optimize control flow related to the specified
@@ -894,7 +891,7 @@ void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
       // last.  Only do the swap if one is clearly better to fall through than
       // the other.
       if (FallThrough == --MBB->getParent()->end() &&
-          !IsBetterFallthrough(PriorTBB, MBB, *TII))
+          !IsBetterFallthrough(PriorTBB, MBB))
         DoTransform = false;
 
       // We don't want to do this transformation if we have control flow like:
@@ -961,7 +958,7 @@ void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
     // If this branch is the only thing in its block, see if we can forward
     // other blocks across it.
     if (CurTBB && CurCond.empty() && CurFBB == 0 && 
-        TII->isBranch(MBB->begin()->getOpcode()) && CurTBB != MBB) {
+        MBB->begin()->getDesc()->isBranch() && CurTBB != MBB) {
       // This block may contain just an unconditional branch.  Because there can
       // be 'non-branch terminators' in the block, try removing the branch and
       // then seeing if the block is empty.

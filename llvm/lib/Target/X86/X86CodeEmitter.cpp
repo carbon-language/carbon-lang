@@ -115,7 +115,7 @@ bool Emitter::runOnMachineFunction(MachineFunction &MF) {
       MCE.StartMachineBasicBlock(MBB);
       for (MachineBasicBlock::const_iterator I = MBB->begin(), E = MBB->end();
            I != E; ++I) {
-        const TargetInstrDescriptor *Desc = I->getInstrDescriptor();
+        const TargetInstrDescriptor *Desc = I->getDesc();
         emitInstruction(*I, Desc);
         // MOVPC32r is basically a call plus a pop instruction.
         if (Desc->Opcode == X86::MOVPC32r)
@@ -436,7 +436,7 @@ inline static bool isX86_64NonExtLowByteReg(unsigned reg) {
 /// size, and 3) use of X86-64 extended registers.
 unsigned Emitter::determineREX(const MachineInstr &MI) {
   unsigned REX = 0;
-  const TargetInstrDescriptor *Desc = MI.getInstrDescriptor();
+  const TargetInstrDescriptor *Desc = MI.getDesc();
 
   // Pseudo instructions do not need REX prefix byte.
   if ((Desc->TSFlags & X86II::FormMask) == X86II::Pseudo)

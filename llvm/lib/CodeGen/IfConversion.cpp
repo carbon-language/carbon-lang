@@ -462,8 +462,7 @@ MachineBasicBlock::iterator firstNonBranchInst(MachineBasicBlock *BB,
   MachineBasicBlock::iterator I = BB->end();
   while (I != BB->begin()) {
     --I;
-    const TargetInstrDescriptor *TID = I->getInstrDescriptor();
-    if ((TID->Flags & M_BRANCH_FLAG) == 0)
+    if (!I->getDesc()->isBranch())
       break;
   }
   return I;
@@ -522,7 +521,7 @@ bool IfConverter::ValidDiamond(BBInfo &TrueBBI, BBInfo &FalseBBI,
 
 /// ScanInstructions - Scan all the instructions in the block to determine if
 /// the block is predicable. In most cases, that means all the instructions
-/// in the block has M_PREDICABLE flag. Also checks if the block contains any
+/// in the block are isPredicable(). Also checks if the block contains any
 /// instruction which can clobber a predicate (e.g. condition code register).
 /// If so, the block is not predicable unless it's the last instruction.
 void IfConverter::ScanInstructions(BBInfo &BBI) {
@@ -551,13 +550,12 @@ void IfConverter::ScanInstructions(BBInfo &BBI) {
   bool SeenCondBr = false;
   for (MachineBasicBlock::iterator I = BBI.BB->begin(), E = BBI.BB->end();
        I != E; ++I) {
-    const TargetInstrDescriptor *TID = I->getInstrDescriptor();
-    if ((TID->Flags & M_NOT_DUPLICABLE) != 0)
+    const TargetInstrDescriptor *TID = I->getDesc();
+    if (TID->isNotDuplicable())
       BBI.CannotBeCopied = true;
 
     bool isPredicated = TII->isPredicated(I);
-    bool isCondBr = BBI.IsBrAnalyzable &&
-      (TID->Flags & M_BRANCH_FLAG) != 0 && (TID->Flags & M_BARRIER_FLAG) == 0;
+    bool isCondBr = BBI.IsBrAnalyzable && TID->isBranch() && !TID->isBarrier();
 
     if (!isCondBr) {
       if (!isPredicated)
@@ -594,7 +592,7 @@ void IfConverter::ScanInstructions(BBInfo &BBI) {
     if (TII->DefinesPredicate(I, PredDefs))
       BBI.ClobbersPred = true;
 
-    if ((TID->Flags & M_PREDICABLE) == 0) {
+    if (!TID->isPredicable()) {
       BBI.IsUnpredicable = true;
       return;
     }
@@ -1136,10 +1134,10 @@ void IfConverter::CopyAndPredicateBlock(BBInfo &ToBBI, BBInfo &FromBBI,
                                         bool IgnoreBr) {
   for (MachineBasicBlock::iterator I = FromBBI.BB->begin(),
          E = FromBBI.BB->end(); I != E; ++I) {
-    const TargetInstrDescriptor *TID = I->getInstrDescriptor();
+    const TargetInstrDescriptor *TID = I->getDesc();
     bool isPredicated = TII->isPredicated(I);
     // Do not copy the end of the block branches.
-    if (IgnoreBr && !isPredicated && (TID->Flags & M_BRANCH_FLAG) != 0)
+    if (IgnoreBr && !isPredicated && TID->isBranch())
       break;
 
     MachineInstr *MI = I->clone();

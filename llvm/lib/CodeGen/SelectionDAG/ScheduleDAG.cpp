@@ -433,7 +433,7 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
     
     // Get/emit the operand.
     unsigned VReg = getVR(Op, VRBaseMap);
-    const TargetInstrDescriptor *TID = MI->getInstrDescriptor();
+    const TargetInstrDescriptor *TID = MI->getDesc();
     bool isOptDef = (IIOpNum < TID->numOperands)
       ? (TID->OpInfo[IIOpNum].Flags & M_OPTIONAL_DEF_OPERAND) : false;
     MI->addOperand(MachineOperand::CreateReg(VReg, isOptDef));

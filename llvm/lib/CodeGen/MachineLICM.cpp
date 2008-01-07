@@ -225,23 +225,21 @@ void MachineLICM::HoistRegion(MachineDomTreeNode *N) {
 bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
   DEBUG({
       DOUT << "--- Checking if we can hoist " << I;
-      if (I.getInstrDescriptor()->ImplicitUses) {
+      if (I.getDesc()->ImplicitUses) {
         DOUT << "  * Instruction has implicit uses:\n";
 
         const MRegisterInfo *MRI = TM->getRegisterInfo();
-        const unsigned *ImpUses = I.getInstrDescriptor()->ImplicitUses;
-
-        for (; *ImpUses; ++ImpUses)
+        for (const unsigned *ImpUses = I.getDesc()->ImplicitUses;
+             *ImpUses; ++ImpUses)
           DOUT << "      -> " << MRI->getName(*ImpUses) << "\n";
       }
 
-      if (I.getInstrDescriptor()->ImplicitDefs) {
+      if (I.getDesc()->ImplicitDefs) {
         DOUT << "  * Instruction has implicit defines:\n";
 
         const MRegisterInfo *MRI = TM->getRegisterInfo();
-        const unsigned *ImpDefs = I.getInstrDescriptor()->ImplicitDefs;
-
-        for (; *ImpDefs; ++ImpDefs)
+        for (const unsigned *ImpDefs = I.getDesc()->ImplicitDefs;
+             *ImpDefs; ++ImpDefs)
           DOUT << "      -> " << MRI->getName(*ImpDefs) << "\n";
       }
 

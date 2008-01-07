@@ -3147,15 +3147,13 @@ private:
     // Whether the last callsite entry was for an invoke.
     bool PreviousIsInvoke = false;
 
-    const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
-
     // Visit all instructions in order of address.
     for (MachineFunction::const_iterator I = MF->begin(), E = MF->end();
          I != E; ++I) {
       for (MachineBasicBlock::const_iterator MI = I->begin(), E = I->end();
            MI != E; ++MI) {
         if (MI->getOpcode() != TargetInstrInfo::LABEL) {
-          SawPotentiallyThrowing |= TII->isCall(MI->getOpcode());
+          SawPotentiallyThrowing |= MI->getDesc()->isCall();
           continue;
         }
 

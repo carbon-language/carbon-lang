@@ -173,8 +173,7 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
 
     // This is a preliminary pass that will invalidate any registers that are
     // used by the instruction (including implicit uses).
-    unsigned Opcode = MI->getOpcode();
-    const TargetInstrDescriptor &Desc = TM->getInstrInfo()->get(Opcode);
+    const TargetInstrDescriptor &Desc = *MI->getDesc();
     const unsigned *Regs;
     if (Desc.ImplicitUses) {
       for (Regs = Desc.ImplicitUses; *Regs; ++Regs)
@@ -204,7 +203,7 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
         unsigned physReg = Virt2PhysRegMap[virtualReg];
         if (physReg == 0) {
           if (op.isDef()) {
-            int TiedOp = MI->getInstrDescriptor()->findTiedToSrcOperand(i);
+            int TiedOp = MI->getDesc()->findTiedToSrcOperand(i);
             if (TiedOp == -1) {
               physReg = getFreeReg(virtualReg);
             } else {

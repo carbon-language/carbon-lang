@@ -201,8 +201,8 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
 }
 
 unsigned Emitter::getBinaryCodeForInstr(const MachineInstr &MI) {
-  const TargetInstrDescriptor *Desc = MI.getInstrDescriptor();
-  const unsigned opcode = MI.getOpcode();
+  const TargetInstrDescriptor *Desc = MI.getDesc();
+  unsigned opcode = Desc->Opcode;
   // initial instruction mask
   unsigned Value = 0xE0000000;
   unsigned op;

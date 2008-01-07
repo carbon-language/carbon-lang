@@ -359,7 +359,7 @@ void MachineCodeAnalysis::FindSafePoints(MachineFunction &MF) {
                                  BBE = MF.end(); BBI != BBE; ++BBI)
     for (MachineBasicBlock::iterator MI = BBI->begin(),
                                      ME = BBI->end(); MI != ME; ++MI)
-      if (TII->isCall(MI->getOpcode()))
+      if (MI->getDesc()->isCall())
         VisitCallPoint(*MI);
 }
 

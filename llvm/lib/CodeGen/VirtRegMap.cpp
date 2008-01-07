@@ -537,7 +537,7 @@ static bool InvalidateRegDef(MachineBasicBlock::iterator I,
 /// over.
 static void UpdateKills(MachineInstr &MI, BitVector &RegKills,
                         std::vector<MachineOperand*> &KillOps) {
-  const TargetInstrDescriptor *TID = MI.getInstrDescriptor();
+  const TargetInstrDescriptor *TID = MI.getDesc();
   for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI.getOperand(i);
     if (!MO.isRegister() || !MO.isUse())
@@ -966,7 +966,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
       NextMII = next(MII);
 
     MachineInstr &MI = *MII;
-    const TargetInstrDescriptor *TID = MI.getInstrDescriptor();
+    const TargetInstrDescriptor *TID = MI.getDesc();
 
     // Insert restores here if asked to.
     if (VRM.isRestorePt(&MI)) {
@@ -1436,7 +1436,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
       // If this def is part of a two-address operand, make sure to execute
       // the store from the correct physical register.
       unsigned PhysReg;
-      int TiedOp = MI.getInstrDescriptor()->findTiedToSrcOperand(i);
+      int TiedOp = MI.getDesc()->findTiedToSrcOperand(i);
       if (TiedOp != -1) {
         PhysReg = MI.getOperand(TiedOp).getReg();
         if (SubIdx) {

@@ -95,7 +95,7 @@ void RegScavenger::forward() {
 
   // Reaching a terminator instruction. Restore a scavenged register (which
   // must be life out.
-  if (TII->isTerminatorInstr(MI->getOpcode()))
+  if (MI->getDesc()->isTerminator())
     restoreScavengedReg();
 
   // Process uses first.
@@ -122,7 +122,7 @@ void RegScavenger::forward() {
   setUnused(ChangedRegs);
 
   // Process defs.
-  const TargetInstrDescriptor *TID = MI->getInstrDescriptor();
+  const TargetInstrDescriptor *TID = MI->getDesc();
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
     if (!MO.isRegister() || !MO.isDef())
@@ -152,7 +152,7 @@ void RegScavenger::backward() {
 
   MachineInstr *MI = MBBI;
   // Process defs first.
-  const TargetInstrDescriptor *TID = MI->getInstrDescriptor();
+  const TargetInstrDescriptor *TID = MI->getDesc();
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
     if (!MO.isRegister() || !MO.isDef())

@@ -256,7 +256,8 @@ void PPCDAGToDAGISel::InsertVRSaveCode(Function &F) {
   // MTVRSAVE UpdatedVRSAVE
   MachineBasicBlock::iterator IP = EntryBB.begin();  // Insert Point
   BuildMI(EntryBB, IP, TII.get(PPC::MFVRSAVE), InVRSAVE);
-  BuildMI(EntryBB, IP, TII.get(PPC::UPDATE_VRSAVE), UpdatedVRSAVE).addReg(InVRSAVE);
+  BuildMI(EntryBB, IP, TII.get(PPC::UPDATE_VRSAVE),
+          UpdatedVRSAVE).addReg(InVRSAVE);
   BuildMI(EntryBB, IP, TII.get(PPC::MTVRSAVE)).addReg(UpdatedVRSAVE);
   
   // Find all return blocks, outputting a restore in each epilog.
@@ -267,7 +268,7 @@ void PPCDAGToDAGISel::InsertVRSaveCode(Function &F) {
       // Skip over all terminator instructions, which are part of the return
       // sequence.
       MachineBasicBlock::iterator I2 = IP;
-      while (I2 != BB->begin() && TII.isTerminatorInstr((--I2)->getOpcode()))
+      while (I2 != BB->begin() && (--I2)->getDesc()->isTerminator())
         IP = I2;
       
       // Emit: MTVRSAVE InVRSave

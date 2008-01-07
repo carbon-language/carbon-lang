@@ -191,6 +191,31 @@ public:
   /// dest operand. Returns -1 if there isn't one.
   int findTiedToSrcOperand(unsigned OpNum) const;
   
+  bool isCall() const {
+    return Flags & M_CALL_FLAG;
+  }
+  
+  bool isBranch() const {
+    return Flags & M_BRANCH_FLAG;
+  }
+  
+  bool isTerminator() const {
+    return Flags & M_TERMINATOR_FLAG;
+  }
+  
+  bool isIndirectBranch() const {
+    return Flags & M_INDIRECT_FLAG;
+  }
+  
+  bool isPredicable() const {
+    return Flags & M_PREDICABLE;
+  }
+  
+  bool isNotDuplicable() const {
+    return Flags & M_NOT_DUPLICABLE;
+  }
+  
+  
   
   /// isSimpleLoad - Return true for instructions that are simple loads from
   /// memory.  This should only be set on instructions that load a value from
@@ -201,6 +226,26 @@ public:
     return Flags & M_SIMPLE_LOAD_FLAG;
   }
   
+  /// mayStore - Return true if this instruction could possibly modify memory.
+  /// Instructions with this flag set are not necessarily simple store
+  /// instructions, they may store a modified value based on their operands, or
+  /// may not actually modify anything, for example.
+  bool mayStore() const {
+    return Flags & M_MAY_STORE_FLAG;
+  }
+  
+  /// isBarrier - Returns true if the specified instruction stops control flow
+  /// from executing the instruction immediately following it.  Examples include
+  /// unconditional branches and return instructions.
+  bool isBarrier() const {
+    return Flags & M_BARRIER_FLAG;
+  }
+  
+  /// hasDelaySlot - Returns true if the specified instruction has a delay slot
+  /// which must be filled by the code generator.
+  bool hasDelaySlot() const {
+    return Flags & M_DELAY_SLOT_FLAG;
+  }
 };
 
 
@@ -274,42 +319,6 @@ public:
   bool isCommutableInstr(MachineOpCode Opcode) const {
     return get(Opcode).Flags & M_COMMUTABLE;
   }
-  bool isTerminatorInstr(MachineOpCode Opcode) const {
-    return get(Opcode).Flags & M_TERMINATOR_FLAG;
-  }
-  
-  bool isBranch(MachineOpCode Opcode) const {
-    return get(Opcode).Flags & M_BRANCH_FLAG;
-  }
-  
-  bool isIndirectBranch(MachineOpCode Opcode) const {
-    return get(Opcode).Flags & M_INDIRECT_FLAG;
-  }
-  
-  /// isBarrier - Returns true if the specified instruction stops control flow
-  /// from executing the instruction immediately following it.  Examples include
-  /// unconditional branches and return instructions.
-  bool isBarrier(MachineOpCode Opcode) const {
-    return get(Opcode).Flags & M_BARRIER_FLAG;
-  }
-  
-  bool isCall(MachineOpCode Opcode) const {
-    return get(Opcode).Flags & M_CALL_FLAG;
-  }
-
-  /// mayStore - Return true if this instruction could possibly modify memory.
-  /// Instructions with this flag set are not necessarily simple store
-  /// instructions, they may store a modified value based on their operands, or
-  /// may not actually modify anything, for example.
-  bool mayStore(MachineOpCode Opcode) const {
-    return get(Opcode).Flags & M_MAY_STORE_FLAG;
-  }
-  
-  /// hasDelaySlot - Returns true if the specified instruction has a delay slot
-  /// which must be filled by the code generator.
-  bool hasDelaySlot(MachineOpCode Opcode) const {
-    return get(Opcode).Flags & M_DELAY_SLOT_FLAG;
-  }
   
   /// usesCustomDAGSchedInsertionHook - Return true if this instruction requires
   /// custom insertion support when the DAG scheduler is inserting it into a
@@ -322,14 +331,6 @@ public:
     return get(Opcode).Flags & M_VARIABLE_OPS;
   }
 
-  bool isPredicable(MachineOpCode Opcode) const {
-    return get(Opcode).Flags & M_PREDICABLE;
-  }
-
-  bool isNotDuplicable(MachineOpCode Opcode) const {
-    return get(Opcode).Flags & M_NOT_DUPLICABLE;
-  }
-
   bool hasOptionalDef(MachineOpCode Opcode) const {
     return get(Opcode).Flags & M_HAS_OPTIONAL_DEF;
   }
@@ -338,7 +339,7 @@ public:
   /// rematerializable, meaning it has no side effects and requires no operands
   /// that aren't always available.
   bool isTriviallyReMaterializable(MachineInstr *MI) const {
-    return (MI->getInstrDescriptor()->Flags & M_REMATERIALIZIBLE) &&
+    return (MI->getDesc()->Flags & M_REMATERIALIZIBLE) &&
            isReallyTriviallyReMaterializable(MI);
   }
 
@@ -346,7 +347,7 @@ public:
   /// effects that are not captured by any operands of the instruction or other
   /// flags.
   bool hasUnmodelledSideEffects(MachineInstr *MI) const {
-    const TargetInstrDescriptor *TID = MI->getInstrDescriptor();
+    const TargetInstrDescriptor *TID = MI->getDesc();
     if (TID->Flags & M_NEVER_HAS_SIDE_EFFECTS) return false;
     if (!(TID->Flags & M_MAY_HAVE_SIDE_EFFECTS)) return true;
     return !isReallySideEffectFree(MI); // May have side effects

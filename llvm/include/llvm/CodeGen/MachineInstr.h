@@ -68,9 +68,9 @@ public:
   const MachineBasicBlock* getParent() const { return Parent; }
   MachineBasicBlock* getParent() { return Parent; }
   
-  /// getInstrDescriptor - Returns the target instruction descriptor of this
+  /// getDesc - Returns the target instruction descriptor of this
   /// MachineInstr.
-  const TargetInstrDescriptor *getInstrDescriptor() const { return TID; }
+  const TargetInstrDescriptor *getDesc() const { return TID; }
 
   /// getOpcode - Returns the opcode of this MachineInstr.
   ///

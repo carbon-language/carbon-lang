@@ -131,11 +131,10 @@ void ilist_traits<MachineInstr>::transferNodesFromList(
 }
 
 MachineBasicBlock::iterator MachineBasicBlock::getFirstTerminator() {
-  const TargetInstrInfo& TII = *getParent()->getTarget().getInstrInfo();
   iterator I = end();
-  while (I != begin() && TII.isTerminatorInstr((--I)->getOpcode()))
+  while (I != begin() && (--I)->getDesc()->isTerminator())
     ; /*noop */
-  if (I != end() && !TII.isTerminatorInstr(I->getOpcode())) ++I;
+  if (I != end() && !I->getDesc()->isTerminator()) ++I;
   return I;
 }
 
@@ -262,7 +261,7 @@ void MachineBasicBlock::ReplaceUsesOfBlockWith(MachineBasicBlock *Old,
   MachineBasicBlock::iterator I = end();
   while (I != begin()) {
     --I;
-    if (!(I->getInstrDescriptor()->Flags & M_TERMINATOR_FLAG)) break;
+    if (!I->getDesc()->isTerminator()) break;
 
     // Scan the operands of this machine instruction, replacing any uses of Old
     // with New.

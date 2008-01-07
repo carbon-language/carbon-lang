@@ -288,7 +288,7 @@ MachineInstr::MachineInstr(MachineBasicBlock *MBB,
 /// MachineInstr ctor - Copies MachineInstr arg exactly
 ///
 MachineInstr::MachineInstr(const MachineInstr &MI) {
-  TID = MI.getInstrDescriptor();
+  TID = MI.getDesc();
   NumImplicitOps = MI.NumImplicitOps;
   Operands.reserve(MI.getNumOperands());
 
@@ -538,8 +538,8 @@ MachineOperand *MachineInstr::findRegisterDefOperand(unsigned Reg) {
 /// operand list that is used to represent the predicate. It returns -1 if
 /// none is found.
 int MachineInstr::findFirstPredOperandIdx() const {
-  const TargetInstrDescriptor *TID = getInstrDescriptor();
-  if (TID->Flags & M_PREDICABLE) {
+  const TargetInstrDescriptor *TID = getDesc();
+  if (TID->isPredicable()) {
     for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
       if ((TID->OpInfo[i].Flags & M_PREDICATE_OPERAND))
         return i;
@@ -551,7 +551,7 @@ int MachineInstr::findFirstPredOperandIdx() const {
 /// isRegReDefinedByTwoAddr - Returns true if the Reg re-definition is due
 /// to two addr elimination.
 bool MachineInstr::isRegReDefinedByTwoAddr(unsigned Reg) const {
-  const TargetInstrDescriptor *TID = getInstrDescriptor();
+  const TargetInstrDescriptor *TID = getDesc();
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
     const MachineOperand &MO1 = getOperand(i);
     if (MO1.isRegister() && MO1.isDef() && MO1.getReg() == Reg) {
@@ -588,8 +588,8 @@ void MachineInstr::copyKillDeadInfo(const MachineInstr *MI) {
 
 /// copyPredicates - Copies predicate operand(s) from MI.
 void MachineInstr::copyPredicates(const MachineInstr *MI) {
-  const TargetInstrDescriptor *TID = MI->getInstrDescriptor();
-  if (TID->Flags & M_PREDICABLE) {
+  const TargetInstrDescriptor *TID = MI->getDesc();
+  if (TID->isPredicable()) {
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       if ((TID->OpInfo[i].Flags & M_PREDICATE_OPERAND)) {
         // Predicated operands must be last operands.
@@ -612,7 +612,7 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine *TM) const {
     ++StartOp;   // Don't print this operand again!
   }
 
-  OS << getInstrDescriptor()->Name;
+  OS << getDesc()->Name;
 
   for (unsigned i = StartOp, e = getNumOperands(); i != e; ++i) {
     if (i != StartOp)

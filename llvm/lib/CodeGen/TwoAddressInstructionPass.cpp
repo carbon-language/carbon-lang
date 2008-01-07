@@ -93,7 +93,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
        mbbi != mbbe; ++mbbi) {
     for (MachineBasicBlock::iterator mi = mbbi->begin(), me = mbbi->end();
          mi != me; ++mi) {
-      const TargetInstrDescriptor *TID = mi->getInstrDescriptor();
+      const TargetInstrDescriptor *TID = mi->getDesc();
 
       bool FirstTied = true;
       for (unsigned si = 1, e = TID->numOperands; si < e; ++si) {

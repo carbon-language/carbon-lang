@@ -139,68 +139,6 @@ unsigned X86RegisterInfo::getX86RegNum(unsigned RegNo) {
   }
 }
 
-static const MachineInstrBuilder &X86InstrAddOperand(MachineInstrBuilder &MIB,
-                                                     MachineOperand &MO) {
-  if (MO.isRegister())
-    MIB = MIB.addReg(MO.getReg(), MO.isDef(), MO.isImplicit(),
-                     false, false, MO.getSubReg());
-  else if (MO.isImmediate())
-    MIB = MIB.addImm(MO.getImm());
-  else if (MO.isFrameIndex())
-    MIB = MIB.addFrameIndex(MO.getIndex());
-  else if (MO.isGlobalAddress())
-    MIB = MIB.addGlobalAddress(MO.getGlobal(), MO.getOffset());
-  else if (MO.isConstantPoolIndex())
-    MIB = MIB.addConstantPoolIndex(MO.getIndex(), MO.getOffset());
-  else if (MO.isJumpTableIndex())
-    MIB = MIB.addJumpTableIndex(MO.getIndex());
-  else if (MO.isExternalSymbol())
-    MIB = MIB.addExternalSymbol(MO.getSymbolName());
-  else
-    assert(0 && "Unknown operand for X86InstrAddOperand!");
-
-  return MIB;
-}
-
-static unsigned getStoreRegOpcode(const TargetRegisterClass *RC,
-                                  unsigned StackAlign) {
-  unsigned Opc = 0;
-  if (RC == &X86::GR64RegClass) {
-    Opc = X86::MOV64mr;
-  } else if (RC == &X86::GR32RegClass) {
-    Opc = X86::MOV32mr;
-  } else if (RC == &X86::GR16RegClass) {
-    Opc = X86::MOV16mr;
-  } else if (RC == &X86::GR8RegClass) {
-    Opc = X86::MOV8mr;
-  } else if (RC == &X86::GR32_RegClass) {
-    Opc = X86::MOV32_mr;
-  } else if (RC == &X86::GR16_RegClass) {
-    Opc = X86::MOV16_mr;
-  } else if (RC == &X86::RFP80RegClass) {
-    Opc = X86::ST_FpP80m;   // pops
-  } else if (RC == &X86::RFP64RegClass) {
-    Opc = X86::ST_Fp64m;
-  } else if (RC == &X86::RFP32RegClass) {
-    Opc = X86::ST_Fp32m;
-  } else if (RC == &X86::FR32RegClass) {
-    Opc = X86::MOVSSmr;
-  } else if (RC == &X86::FR64RegClass) {
-    Opc = X86::MOVSDmr;
-  } else if (RC == &X86::VR128RegClass) {
-    // FIXME: Use movaps once we are capable of selectively
-    // aligning functions that spill SSE registers on 16-byte boundaries.
-    Opc = StackAlign >= 16 ? X86::MOVAPSmr : X86::MOVUPSmr;
-  } else if (RC == &X86::VR64RegClass) {
-    Opc = X86::MMX_MOVQ64mr;
-  } else {
-    assert(0 && "Unknown regclass");
-    abort();
-  }
-
-  return Opc;
-}
-
 const TargetRegisterClass *
 X86RegisterInfo::getCrossCopyRegClass(const TargetRegisterClass *RC) const {
   if (RC == &X86::CCRRegClass)
@@ -790,7 +728,8 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
   while (MBBI != MBB.begin()) {
     MachineBasicBlock::iterator PI = prior(MBBI);
     unsigned Opc = PI->getOpcode();
-    if (Opc != X86::POP32r && Opc != X86::POP64r && !TII.isTerminatorInstr(Opc))
+    if (Opc != X86::POP32r && Opc != X86::POP64r &&
+        !PI->getDesc()->isTerminator())
       break;
     --MBBI;
   }

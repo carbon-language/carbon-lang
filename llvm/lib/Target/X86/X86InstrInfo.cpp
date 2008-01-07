@@ -1243,16 +1243,15 @@ X86::CondCode X86::GetOppositeBranchCondition(X86::CondCode CC) {
 }
 
 bool X86InstrInfo::isUnpredicatedTerminator(const MachineInstr *MI) const {
-  const TargetInstrDescriptor *TID = MI->getInstrDescriptor();
-  if (TID->Flags & M_TERMINATOR_FLAG) {
-    // Conditional branch is a special case.
-    if ((TID->Flags & M_BRANCH_FLAG) != 0 && (TID->Flags & M_BARRIER_FLAG) == 0)
-      return true;
-    if ((TID->Flags & M_PREDICABLE) == 0)
-      return true;
-    return !isPredicated(MI);
-  }
-  return false;
+  const TargetInstrDescriptor *TID = MI->getDesc();
+  if (!TID->isTerminator()) return false;
+  
+  // Conditional branch is a special case.
+  if (TID->isBranch() && !TID->isBarrier())
+    return true;
+  if (!TID->isPredicable())
+    return true;
+  return !isPredicated(MI);
 }
 
 // For purposes of branch analysis do not count FP_REG_KILL as a terminator.
@@ -1277,7 +1276,7 @@ bool X86InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
   
   // If there is only one terminator instruction, process it.
   if (I == MBB.begin() || !isBrAnalysisUnpredicatedTerminator(--I, *this)) {
-    if (!isBranch(LastInst->getOpcode()))
+    if (!LastInst->getDesc()->isBranch())
       return true;
     
     // If the block ends with a branch there are 3 possibilities:
@@ -1695,7 +1694,7 @@ X86InstrInfo::foldMemoryOperand(MachineInstr *MI, unsigned i,
   bool isTwoAddrFold = false;
   unsigned NumOps = getNumOperands(MI->getOpcode());
   bool isTwoAddr = NumOps > 1 &&
-    MI->getInstrDescriptor()->getOperandConstraint(1, TOI::TIED_TO) != -1;
+    MI->getDesc()->getOperandConstraint(1, TOI::TIED_TO) != -1;
 
   MachineInstr *NewMI = NULL;
   // Folding a memory location into the two-address part of a two-address

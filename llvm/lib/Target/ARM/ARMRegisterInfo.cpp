@@ -581,7 +581,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   }
 
   unsigned Opcode = MI.getOpcode();
-  const TargetInstrDescriptor &Desc = *MI.getInstrDescriptor();
+  const TargetInstrDescriptor &Desc = *MI.getDesc();
   unsigned AddrMode = (Desc.TSFlags & ARMII::AddrModeMask);
   bool isSub = false;
 
@@ -797,7 +797,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
         MI.addOperand(MachineOperand::CreateReg(FrameReg, false));
       else  // tLDR has an extra register operand.
         MI.addOperand(MachineOperand::CreateReg(0, false));
-    } else if (TII.mayStore(Opcode)) {
+    } else if (Desc.mayStore()) {
       // FIXME! This is horrific!!! We need register scavenging.
       // Our temporary workaround has marked r3 unavailable. Of course, r3 is
       // also a ABI register so it's possible that is is the register that is

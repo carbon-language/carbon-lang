@@ -175,7 +175,7 @@ bool MipsInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
   // If there is only one terminator instruction, process it.
   unsigned LastOpc = LastInst->getOpcode();
   if (I == MBB.begin() || !isUnpredicatedTerminator(--I)) {
-    if (!isBranch(LastInst->getOpcode()))
+    if (!LastInst->getDesc()->isBranch())
       return true;
 
     // Unconditional branch

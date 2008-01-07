@@ -371,7 +371,7 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &Fn,
       MBBSize += ARM::GetInstSize(I);
 
       int Opc = I->getOpcode();
-      if (TII->isBranch(Opc)) {
+      if (I->getDesc()->isBranch()) {
         bool isCond = false;
         unsigned Bits = 0;
         unsigned Scale = 1;
@@ -423,7 +423,7 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &Fn,
           // Basic size info comes from the TSFlags field.
           unsigned Bits = 0;
           unsigned Scale = 1;
-          unsigned TSFlags = I->getInstrDescriptor()->TSFlags;
+          unsigned TSFlags = I->getDesc()->TSFlags;
           switch (TSFlags & ARMII::AddrModeMask) {
           default: 
             // Constant pool entries can reach anything.

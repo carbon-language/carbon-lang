@@ -65,7 +65,7 @@ FunctionPass *llvm::createSparcDelaySlotFillerPass(TargetMachine &tm) {
 bool Filler::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
   bool Changed = false;
   for (MachineBasicBlock::iterator I = MBB.begin(); I != MBB.end(); ++I)
-    if (TII->hasDelaySlot(I->getOpcode())) {
+    if (I->getDesc()->hasDelaySlot()) {
       MachineBasicBlock::iterator J = I;
       ++J;
       BuildMI(MBB, J, TII->get(SP::NOP));
