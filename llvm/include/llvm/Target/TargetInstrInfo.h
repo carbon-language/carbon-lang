@@ -22,8 +22,6 @@
 
 namespace llvm {
 
-class MachineInstr;
-class TargetMachine;
 class TargetRegisterClass;
 class LiveVariables;
 class CalleeSavedInfo;
@@ -46,9 +44,9 @@ namespace TOI {
   /// private, all access should go through the TargetOperandInfo accessors.
   /// See the accessors for a description of what these are.
   enum OperandFlags {
-    LookupPtrRegClass = 1 << 0,
-    Predicate         = 1 << 1,
-    OptionalDef       = 1 << 2
+    LookupPtrRegClass = 0,
+    Predicate,
+    OptionalDef
   };
 }
 
@@ -68,15 +66,15 @@ public:
   
   /// isLookupPtrRegClass - Set if this operand is a pointer value and it
   /// requires a callback to look up its register class.
-  bool isLookupPtrRegClass() const { return Flags & TOI::LookupPtrRegClass; }
+  bool isLookupPtrRegClass() const { return Flags&(1 <<TOI::LookupPtrRegClass);}
   
   /// isPredicate - Set if this is one of the operands that made up of
   /// the predicate operand that controls an isPredicable() instruction.
-  bool isPredicate() const { return Flags & TOI::Predicate; }
+  bool isPredicate() const { return Flags & (1 << TOI::Predicate); }
   
   /// isOptionalDef - Set if this operand is a optional def.
   ///
-  bool isOptionalDef() const { return Flags & TOI::OptionalDef; }
+  bool isOptionalDef() const { return Flags & (1 << TOI::OptionalDef); }
 };
 
   
@@ -84,29 +82,40 @@ public:
 // Machine Instruction Flags and Description
 //===----------------------------------------------------------------------===//
 
-const unsigned M_BRANCH_FLAG           = 1 << 0;
-const unsigned M_CALL_FLAG             = 1 << 1;
-const unsigned M_RET_FLAG              = 1 << 2;
-const unsigned M_BARRIER_FLAG          = 1 << 3;
-const unsigned M_DELAY_SLOT_FLAG       = 1 << 4;
-const unsigned M_SIMPLE_LOAD_FLAG      = 1 << 5;
-const unsigned M_MAY_STORE_FLAG        = 1 << 6;
-const unsigned M_INDIRECT_FLAG         = 1 << 7;
-const unsigned M_IMPLICIT_DEF_FLAG     = 1 << 8;
-const unsigned M_CONVERTIBLE_TO_3_ADDR = 1 << 9;
-const unsigned M_COMMUTABLE            = 1 << 10;
-const unsigned M_TERMINATOR_FLAG       = 1 << 11;
-const unsigned M_USES_CUSTOM_DAG_SCHED_INSERTION = 1 << 12;
-const unsigned M_VARIADIC              = 1 << 13;
-const unsigned M_PREDICABLE            = 1 << 14;
-const unsigned M_REMATERIALIZIBLE      = 1 << 15;
-const unsigned M_NOT_DUPLICABLE        = 1 << 16;
-const unsigned M_HAS_OPTIONAL_DEF      = 1 << 17;
-const unsigned M_NEVER_HAS_SIDE_EFFECTS = 1 << 18;
-const unsigned M_MAY_HAVE_SIDE_EFFECTS = 1 << 19;
+/// TargetInstrDescriptor flags - These should be considered private to the
+/// implementation of the TargetInstrDescriptor class.  Clients should use the
+/// predicate methods on TargetInstrDescriptor, not use these directly.  These
+/// all correspond to bitfields in the TargetInstrDescriptor::Flags field.
+namespace TID {
+  enum {
+    Variadic = 0,
+    HasOptionalDef,
+    Return,
+    Call,
+    ImplicitDef,
+    Barrier,
+    Terminator,
+    Branch,
+    IndirectBranch,
+    Predicable,
+    NotDuplicable,
+    DelaySlot,
+    SimpleLoad,
+    MayStore,
+    NeverHasSideEffects,
+    MayHaveSideEffects,
+    Commutable,
+    ConvertibleTo3Addr,
+    UsesCustomDAGSchedInserter,
+    Rematerializable
+  };
+}
 
-
-
+/// TargetInstrDescriptor - Describe properties that are true of each
+/// instruction in the target description file.  This captures information about
+/// side effects, register use and many other things.  There is one instance of
+/// this struct for each target instruction class, and the MachineInstr class
+/// points to this struct directly to describe itself.
 class TargetInstrDescriptor {
 public:
   unsigned short  Opcode;        // The opcode number.
@@ -118,7 +127,7 @@ public:
   unsigned        TSFlags;       // Target Specific Flag values
   const unsigned *ImplicitUses;  // Registers implicitly read by this instr
   const unsigned *ImplicitDefs;  // Registers implicitly defined by this instr
-  const TargetOperandInfo *OpInfo; // 'numOperands' entries about operands.
+  const TargetOperandInfo *OpInfo; // 'NumOperands' entries about operands.
 
   /// getOperandConstraint - Returns the value of the specific constraint if
   /// it is set. Returns -1 if it is not set.
@@ -165,13 +174,13 @@ public:
   /// operands but before the implicit definitions and uses (if any are
   /// present).
   bool isVariadic() const {
-    return Flags & M_VARIADIC;
+    return Flags & (1 << TID::Variadic);
   }
   
   /// hasOptionalDef - Set if this instruction has an optional definition, e.g.
   /// ARM instructions which can set condition code if 's' bit is set.
   bool hasOptionalDef() const {
-    return Flags & M_HAS_OPTIONAL_DEF;
+    return Flags & (1 << TID::HasOptionalDef);
   }
   
   /// getImplicitUses - Return a list of machine operands that are potentially
@@ -211,25 +220,25 @@ public:
   }
   
   bool isReturn() const {
-    return Flags & M_RET_FLAG;
+    return Flags & (1 << TID::Return);
   }
   
   bool isCall() const {
-    return Flags & M_CALL_FLAG;
+    return Flags & (1 << TID::Call);
   }
   
   /// isImplicitDef - Return true if this is an "IMPLICIT_DEF" instruction,
   /// which defines a register to an unspecified value.  These basically
   /// correspond to x = undef.
   bool isImplicitDef() const {
-    return Flags & M_IMPLICIT_DEF_FLAG;
+    return Flags & (1 << TID::ImplicitDef);
   }
   
   /// isBarrier - Returns true if the specified instruction stops control flow
   /// from executing the instruction immediately following it.  Examples include
   /// unconditional branches and return instructions.
   bool isBarrier() const {
-    return Flags & M_BARRIER_FLAG;
+    return Flags & (1 << TID::Barrier);
   }
   
   /// isTerminator - Returns true if this instruction part of the terminator for
@@ -239,7 +248,7 @@ public:
   /// Various passes use this to insert code into the bottom of a basic block,
   /// but before control flow occurs.
   bool isTerminator() const {
-    return Flags & M_TERMINATOR_FLAG;
+    return Flags & (1 << TID::Terminator);
   }
   
   /// isBranch - Returns true if this is a conditional, unconditional, or
@@ -247,13 +256,13 @@ public:
   /// these cases, and the TargetInstrInfo::AnalyzeBranch method can be used to
   /// get more information.
   bool isBranch() const {
-    return Flags & M_BRANCH_FLAG;
+    return Flags & (1 << TID::Branch);
   }
 
   /// isIndirectBranch - Return true if this is an indirect branch, such as a
   /// branch through a register.
   bool isIndirectBranch() const {
-    return Flags & M_INDIRECT_FLAG;
+    return Flags & (1 << TID::IndirectBranch);
   }
   
   /// isConditionalBranch - Return true if this is a branch which may fall
@@ -277,20 +286,20 @@ public:
   /// values.   There are various methods in TargetInstrInfo that can be used to
   /// control and modify the predicate in this instruction.
   bool isPredicable() const {
-    return Flags & M_PREDICABLE;
+    return Flags & (1 << TID::Predicable);
   }
   
   /// isNotDuplicable - Return true if this instruction cannot be safely
   /// duplicated.  For example, if the instruction has a unique labels attached
   /// to it, duplicating it would cause multiple definition errors.
   bool isNotDuplicable() const {
-    return Flags & M_NOT_DUPLICABLE;
+    return Flags & (1 << TID::NotDuplicable);
   }
   
   /// hasDelaySlot - Returns true if the specified instruction has a delay slot
   /// which must be filled by the code generator.
   bool hasDelaySlot() const {
-    return Flags & M_DELAY_SLOT_FLAG;
+    return Flags & (1 << TID::DelaySlot);
   }
   
   /// isSimpleLoad - Return true for instructions that are simple loads from
@@ -299,7 +308,7 @@ public:
   /// Instructions that return a value loaded from memory and then modified in
   /// some way should not return true for this.
   bool isSimpleLoad() const {
-    return Flags & M_SIMPLE_LOAD_FLAG;
+    return Flags & (1 << TID::SimpleLoad);
   }
   
   //===--------------------------------------------------------------------===//
@@ -311,7 +320,7 @@ public:
   /// instructions, they may store a modified value based on their operands, or
   /// may not actually modify anything, for example.
   bool mayStore() const {
-    return Flags & M_MAY_STORE_FLAG;
+    return Flags & (1 << TID::MayStore);
   }
   
   // TODO: mayLoad.
@@ -333,7 +342,7 @@ public:
   /// TargetInstrInfo::hasUnmodelledSideEffects method, which handles analysis
   /// of the machine instruction.
   bool hasNoSideEffects() const {
-    return Flags & M_NEVER_HAS_SIDE_EFFECTS;
+    return Flags & (1 << TID::NeverHasSideEffects);
   }
   
   /// hasConditionalSideEffects - Return true if some instances of this
@@ -346,14 +355,14 @@ public:
   /// TargetInstrInfo::hasUnmodelledSideEffects method, which handles analysis
   /// of the machine instruction.
   bool hasConditionalSideEffects() const {
-    return Flags & M_MAY_HAVE_SIDE_EFFECTS;
+    return Flags & (1 << TID::MayHaveSideEffects);
   }
   
   //===--------------------------------------------------------------------===//
   // Flags that indicate whether an instruction can be modified by a method.
   //===--------------------------------------------------------------------===//
   
-  /// isCommutableInstr - Return true if this may be a 2- or 3-address
+  /// isCommutable - Return true if this may be a 2- or 3-address
   /// instruction (of the form "X = op Y, Z, ..."), which produces the same
   /// result if Y and Z are exchanged.  If this flag is set, then the 
   /// TargetInstrInfo::commuteInstruction method may be used to hack on the
@@ -363,8 +372,8 @@ public:
   /// sometimes.  In these cases, the call to commuteInstruction will fail.
   /// Also note that some instructions require non-trivial modification to
   /// commute them.
-  bool isCommutableInstr() const {
-    return Flags & M_COMMUTABLE;
+  bool isCommutable() const {
+    return Flags & (1 << TID::Commutable);
   }
   
   /// isConvertibleTo3Addr - Return true if this is a 2-address instruction
@@ -382,7 +391,7 @@ public:
   /// instruction (e.g. shl reg, 4 on x86).
   ///
   bool isConvertibleTo3Addr() const {
-    return Flags & M_CONVERTIBLE_TO_3_ADDR;
+    return Flags & (1 << TID::ConvertibleTo3Addr);
   }
   
   /// usesCustomDAGSchedInsertionHook - Return true if this instruction requires
@@ -394,7 +403,7 @@ public:
   /// If this is true, the TargetLoweringInfo::InsertAtEndOfBasicBlock method
   /// is used to insert this into the MachineBasicBlock.
   bool usesCustomDAGSchedInsertionHook() const {
-    return Flags & M_USES_CUSTOM_DAG_SCHED_INSERTION;
+    return Flags & (1 << TID::UsesCustomDAGSchedInserter);
   }
   
   /// isRematerializable - Returns true if this instruction is a candidate for
@@ -402,7 +411,7 @@ public:
   /// flag is set, the isReallyTriviallyReMaterializable() method is called to
   /// verify the instruction is really rematable.
   bool isRematerializable() const {
-    return Flags & M_REMATERIALIZIBLE;
+    return Flags & (1 << TID::Rematerializable);
   }
 };
 

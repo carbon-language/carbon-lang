@@ -437,7 +437,7 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
         break;
       }
     }
-    if (TID->Flags & M_COMMUTABLE)
+    if (TID->isCommutable())
       NewSU->isCommutable = true;
     // FIXME: Calculate height / depth and propagate the changes?
     NewSU->Depth = SU->Depth;

@@ -94,17 +94,17 @@ InstrInfoEmitter::GetOperandInfo(const CodeGenInstruction &Inst) {
         
       // Ptr value whose register class is resolved via callback.
       if (OpR->getName() == "ptr_rc")
-        Res += "|TOI::LookupPtrRegClass";
+        Res += "|(1<<TOI::LookupPtrRegClass)";
 
       // Predicate operands.  Check to see if the original unexpanded operand
       // was of type PredicateOperand.
       if (Inst.OperandList[i].Rec->isSubClassOf("PredicateOperand"))
-        Res += "|TOI::Predicate";
+        Res += "|(1<<TOI::Predicate)";
         
       // Optional def operands.  Check to see if the original unexpanded operand
       // was of type OptionalDefOperand.
       if (Inst.OperandList[i].Rec->isSubClassOf("OptionalDefOperand"))
-        Res += "|TOI::OptionalDef";
+        Res += "|(1<<TOI::OptionalDef)";
 
       // Fill in constraint info.
       Res += ", " + Inst.OperandList[i].Constraints[j];
@@ -281,8 +281,8 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
                                   const OperandInfoMapTy &OpInfo,
                                   std::ostream &OS) {
   // Determine properties of the instruction from its pattern.
-  bool mayStore, isLoad, NeverHasSideEffects;
-  InferFromPattern(Inst, mayStore, isLoad, NeverHasSideEffects);
+  bool mayStore, isSimpleLoad, NeverHasSideEffects;
+  InferFromPattern(Inst, mayStore, isSimpleLoad, NeverHasSideEffects);
   
   if (NeverHasSideEffects && Inst.mayHaveSideEffects) {
     std::cerr << "error: Instruction '" << Inst.TheDef->getName()
@@ -302,27 +302,27 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
      << ",\t\"" << Inst.TheDef->getName() << "\", 0";
 
   // Emit all of the target indepedent flags...
-  if (Inst.isReturn)     OS << "|M_RET_FLAG";
-  if (Inst.isBranch)     OS << "|M_BRANCH_FLAG";
-  if (Inst.isIndirectBranch) OS << "|M_INDIRECT_FLAG";
-  if (Inst.isBarrier)    OS << "|M_BARRIER_FLAG";
-  if (Inst.hasDelaySlot) OS << "|M_DELAY_SLOT_FLAG";
-  if (Inst.isCall)       OS << "|M_CALL_FLAG";
-  if (isLoad)            OS << "|M_SIMPLE_LOAD_FLAG";
-  if (mayStore)          OS << "|M_MAY_STORE_FLAG";
-  if (Inst.isImplicitDef)OS << "|M_IMPLICIT_DEF_FLAG";
-  if (Inst.isPredicable) OS << "|M_PREDICABLE";
-  if (Inst.isConvertibleToThreeAddress) OS << "|M_CONVERTIBLE_TO_3_ADDR";
-  if (Inst.isCommutable) OS << "|M_COMMUTABLE";
-  if (Inst.isTerminator) OS << "|M_TERMINATOR_FLAG";
-  if (Inst.isReMaterializable) OS << "|M_REMATERIALIZIBLE";
-  if (Inst.isNotDuplicable)    OS << "|M_NOT_DUPLICABLE";
-  if (Inst.hasOptionalDef)     OS << "|M_HAS_OPTIONAL_DEF";
+  if (Inst.isReturn)     OS << "|(1<<TID::Return)";
+  if (Inst.isBranch)     OS << "|(1<<TID::Branch)";
+  if (Inst.isIndirectBranch) OS << "|(1<<TID::IndirectBranch)";
+  if (Inst.isBarrier)    OS << "|(1<<TID::Barrier)";
+  if (Inst.hasDelaySlot) OS << "|(1<<TID::DelaySlot)";
+  if (Inst.isCall)       OS << "|(1<<TID::Call)";
+  if (isSimpleLoad)      OS << "|(1<<TID::SimpleLoad)";
+  if (mayStore)          OS << "|(1<<TID::MayStore)";
+  if (Inst.isImplicitDef)OS << "|(1<<TID::ImplicitDef)";
+  if (Inst.isPredicable) OS << "|(1<<TID::Predicable)";
+  if (Inst.isConvertibleToThreeAddress) OS << "|(1<<TID::ConvertibleTo3Addr)";
+  if (Inst.isCommutable) OS << "|(1<<TID::Commutable)";
+  if (Inst.isTerminator) OS << "|(1<<TID::Terminator)";
+  if (Inst.isReMaterializable) OS << "|(1<<TID::Rematerializable)";
+  if (Inst.isNotDuplicable)    OS << "|(1<<TID::NotDuplicable)";
+  if (Inst.hasOptionalDef)     OS << "|(1<<TID::HasOptionalDef)";
   if (Inst.usesCustomDAGSchedInserter)
-    OS << "|M_USES_CUSTOM_DAG_SCHED_INSERTION";
-  if (Inst.isVariadic)         OS << "|M_VARIADIC";
-  if (Inst.mayHaveSideEffects) OS << "|M_MAY_HAVE_SIDE_EFFECTS";
-  if (NeverHasSideEffects)     OS << "|M_NEVER_HAS_SIDE_EFFECTS";
+    OS << "|(1<<TID::UsesCustomDAGSchedInserter)";
+  if (Inst.isVariadic)         OS << "|(1<<TID::Variadic)";
+  if (Inst.mayHaveSideEffects) OS << "|(1<<TID::MayHaveSideEffects)";
+  if (NeverHasSideEffects)     OS << "|(1<<TID::NeverHasSideEffects)";
   OS << ", 0";
 
   // Emit all of the target-specific flags...

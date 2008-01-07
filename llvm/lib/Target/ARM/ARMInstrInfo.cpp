@@ -838,7 +838,7 @@ ARMInstrInfo::SubsumesPredicate(const std::vector<MachineOperand> &Pred1,
 bool ARMInstrInfo::DefinesPredicate(MachineInstr *MI,
                                     std::vector<MachineOperand> &Pred) const {
   const TargetInstrDescriptor *TID = MI->getDesc();
-  if (!TID->ImplicitDefs && (TID->Flags & M_HAS_OPTIONAL_DEF) == 0)
+  if (!TID->getImplicitDefs() && !TID->hasOptionalDef())
     return false;
 
   bool Found = false;

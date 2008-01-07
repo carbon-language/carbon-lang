@@ -155,7 +155,7 @@ void ScheduleDAG::BuildSchedUnits() {
           break;
         }
       }
-      if (TID.Flags & M_COMMUTABLE)
+      if (TID.isCommutable())
         SU->isCommutable = true;
     }
     
