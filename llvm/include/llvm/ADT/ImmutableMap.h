@@ -76,7 +76,8 @@ public:
     ImmutableMap GetEmptyMap() { return ImmutableMap(F.GetEmptyTree()); }
     
     ImmutableMap Add(ImmutableMap Old, key_type_ref K, data_type_ref D) {
-      return ImmutableMap(F.Add(Old.Root,std::make_pair<key_type,data_type>(K,D)));
+      return ImmutableMap(F.Add(Old.Root,
+                                std::make_pair<key_type,data_type>(K,D)));
     }
     
     ImmutableMap Remove(ImmutableMap Old, key_type_ref K) {
