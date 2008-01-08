@@ -788,7 +788,17 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
   // C99 6.5.15p5: "If both operands have void type, the result has void type."
   if (lexT->isVoidType() && rexT->isVoidType())
     return lexT.getUnqualifiedType();
-  
+
+  // C99 6.5.15p6 - "if one operand is a null pointer constant, the result has
+  // the type of the other operand."
+  if (lexT->isPointerType() && rex->isNullPointerConstant(Context)) {
+    promoteExprToType(rex, lexT); // promote the null to a pointer.
+    return lexT;
+  }
+  if (rexT->isPointerType() && lex->isNullPointerConstant(Context)) {
+    promoteExprToType(lex, rexT); // promote the null to a pointer.
+    return rexT;
+  }
   // Handle the case where both operands are pointers before we handle null
   // pointer constants in case both operands are null pointer constants.
   if (const PointerType *LHSPT = lexT->getAsPointerType()) { // C99 6.5.15p3,6
@@ -820,18 +830,6 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
       // FIXME: Need to return the composite type.
       return lexT;
     }
-  }
-  
-  // C99 6.5.15p6 - "if one operand is a null pointer constant, the result has
-  // the type of the other operand."
-  if (lexT->isPointerType() && rex->isNullPointerConstant(Context)) {
-    promoteExprToType(rex, lexT); // promote the null to a pointer.
-    return lexT;
-  }
-  
-  if (rexT->isPointerType() && lex->isNullPointerConstant(Context)) {
-    promoteExprToType(lex, rexT); // promote the null to a pointer.
-    return rexT;
   }
   
   // Otherwise, the operands are not compatible.
