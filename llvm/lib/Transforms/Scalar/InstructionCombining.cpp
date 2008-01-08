@@ -210,7 +210,7 @@ namespace {
     Instruction *visitUIToFP(CastInst &CI);
     Instruction *visitSIToFP(CastInst &CI);
     Instruction *visitPtrToInt(CastInst &CI);
-    Instruction *visitIntToPtr(CastInst &CI);
+    Instruction *visitIntToPtr(IntToPtrInst &CI);
     Instruction *visitBitCast(BitCastInst &CI);
     Instruction *FoldSelectOpOp(SelectInst &SI, Instruction *TI,
                                 Instruction *FI);
@@ -7148,8 +7148,58 @@ Instruction *InstCombiner::visitPtrToInt(CastInst &CI) {
   return commonPointerCastTransforms(CI);
 }
 
-Instruction *InstCombiner::visitIntToPtr(CastInst &CI) {
-  return commonCastTransforms(CI);
+Instruction *InstCombiner::visitIntToPtr(IntToPtrInst &CI) {
+  if (Instruction *I = commonCastTransforms(CI))
+    return I;
+  
+  const Type *DestPointee = cast<PointerType>(CI.getType())->getElementType();
+  if (!DestPointee->isSized()) return 0;
+
+  // If this is inttoptr(add (ptrtoint x), cst), try to turn this into a GEP.
+  ConstantInt *Cst;
+  Value *X;
+  if (match(CI.getOperand(0), m_Add(m_Cast<PtrToIntInst>(m_Value(X)),
+                                    m_ConstantInt(Cst)))) {
+    // If the source and destination operands have the same type, see if this
+    // is a single-index GEP.
+    if (X->getType() == CI.getType()) {
+      // Get the size of the pointee type.
+      uint64_t Size = TD->getABITypeSizeInBits(DestPointee);
+
+      // Convert the constant to intptr type.
+      APInt Offset = Cst->getValue();
+      Offset.sextOrTrunc(TD->getPointerSizeInBits());
+
+      // If Offset is evenly divisible by Size, we can do this xform.
+      if (Size && !APIntOps::srem(Offset, APInt(Offset.getBitWidth(), Size))){
+        Offset = APIntOps::sdiv(Offset, APInt(Offset.getBitWidth(), Size));
+        return new GetElementPtrInst(X, ConstantInt::get(Offset));
+      }
+    }
+    // TODO: Could handle other cases, e.g. where add is indexing into field of
+    // struct etc.
+  } else if (CI.getOperand(0)->hasOneUse() &&
+             match(CI.getOperand(0), m_Add(m_Value(X), m_ConstantInt(Cst)))) {
+    // Otherwise, if this is inttoptr(add x, cst), try to turn this into an
+    // "inttoptr+GEP" instead of "add+intptr".
+    
+    // Get the size of the pointee type.
+    uint64_t Size = TD->getABITypeSize(DestPointee);
+    
+    // Convert the constant to intptr type.
+    APInt Offset = Cst->getValue();
+    Offset.sextOrTrunc(TD->getPointerSizeInBits());
+    
+    // If Offset is evenly divisible by Size, we can do this xform.
+    if (Size && !APIntOps::srem(Offset, APInt(Offset.getBitWidth(), Size))){
+      Offset = APIntOps::sdiv(Offset, APInt(Offset.getBitWidth(), Size));
+      
+      Instruction *P = InsertNewInstBefore(new IntToPtrInst(X, CI.getType(),
+                                                            "tmp"), CI);
+      return new GetElementPtrInst(P, ConstantInt::get(Offset), "tmp");
+    }
+  }
+  return 0;
 }
 
 Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
