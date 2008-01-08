@@ -387,7 +387,7 @@ void *X86JITInfo::emitGlobalValueLazyPtr(void *GV, MachineCodeEmitter &MCE) {
   MCE.emitWordLE(((unsigned *)&GV)[1]);
 #else
   MCE.startFunctionStub(4, 4);
-  MCE.emitWordLE((unsigned)GV);
+  MCE.emitWordLE((intptr_t)GV);
 #endif
   return MCE.finishFunctionStub(0);
 }
