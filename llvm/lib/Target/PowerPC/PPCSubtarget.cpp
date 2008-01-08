@@ -103,7 +103,7 @@ PPCSubtarget::PPCSubtarget(const TargetMachine &tm, const Module &M,
   const std::string &TT = M.getTargetTriple();
   if (TT.length() > 7) {
     // Determine which version of darwin this is.
-    unsigned DarwinPos = TT.find("-darwin");
+    size_t DarwinPos = TT.find("-darwin");
     if (DarwinPos != std::string::npos) {
       if (isdigit(TT[DarwinPos+7]))
         DarwinVers = atoi(&TT[DarwinPos+7]);

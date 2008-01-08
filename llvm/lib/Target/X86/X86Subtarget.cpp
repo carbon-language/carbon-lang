@@ -257,7 +257,7 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS, bool is64Bit)
   // if one cannot be determined, to true.
   const std::string& TT = M.getTargetTriple();
   if (TT.length() > 5) {
-    unsigned Pos;
+    size_t Pos;
     if ((Pos = TT.find("-darwin")) != std::string::npos) {
       TargetType = isDarwin;
       
