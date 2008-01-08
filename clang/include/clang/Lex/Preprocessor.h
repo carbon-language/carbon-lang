@@ -153,7 +153,7 @@ public:
   SelectorTable &getSelectorTable() { return Selectors; }
   
   inline FullSourceLoc getFullLoc(SourceLocation Loc) const {
-    return FullSourceLoc(Loc,getSourceManager());
+    return FullSourceLoc(Loc, getSourceManager());
   }
   
   /// SetCommentRetentionState - Control whether or not the preprocessor retains
