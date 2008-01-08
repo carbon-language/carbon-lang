@@ -20,6 +20,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/GraphWriter.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/Support/Compiler.h"
 #include <iomanip>
 #include <algorithm>
 #include <sstream>
@@ -31,7 +32,7 @@ namespace {
 // SaveAndRestore - A utility class that uses RIIA to save and restore
 //  the value of a variable.
 template<typename T>
-struct SaveAndRestore {
+struct VISIBILITY_HIDDEN SaveAndRestore {
   SaveAndRestore(T& x) : X(x), old_value(x) {}
   ~SaveAndRestore() { X = old_value; }
   T get() { return old_value; }
@@ -55,7 +56,7 @@ struct SaveAndRestore {
 ///  allows us to nicely capture implicit fall-throughs without extra
 ///  basic blocks.
 ///
-class CFGBuilder : public StmtVisitor<CFGBuilder,CFGBlock*> {    
+class VISIBILITY_HIDDEN CFGBuilder : public StmtVisitor<CFGBuilder,CFGBlock*> {    
   CFG* cfg;
   CFGBlock* Block;
   CFGBlock* Succ;
@@ -1039,7 +1040,7 @@ CFG::~CFG() {
 
 namespace {
 
-class StmtPrinterHelper : public PrinterHelper  {
+class VISIBILITY_HIDDEN StmtPrinterHelper : public PrinterHelper  {
                           
   typedef llvm::DenseMap<Stmt*,std::pair<unsigned,unsigned> > StmtMapTy;
   StmtMapTy StmtMap;
@@ -1078,9 +1079,9 @@ public:
   }
 };
 
-class CFGBlockTerminatorPrint : public StmtVisitor<CFGBlockTerminatorPrint,
-                                                    void > 
-{
+class VISIBILITY_HIDDEN CFGBlockTerminatorPrint
+  : public StmtVisitor<CFGBlockTerminatorPrint,void> {
+  
   std::ostream& OS;
   StmtPrinterHelper* Helper;
 public:
