@@ -1091,7 +1091,10 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
       // Turn ADD X, c to MOV32ri X+c. This cannot be done with tblgen'd
       // code and is matched first so to prevent it from being turned into
       // LEA32r X+c.
-      // In 64-bit mode, use LEA to take advantage of RIP-relative addressing.
+      // In 64-bit small code size mode, use LEA to take advantage of
+      // RIP-relative addressing.
+      if (TM.getCodeModel() != CodeModel::Small)
+        break;
       MVT::ValueType PtrVT = TLI.getPointerTy();
       SDOperand N0 = N.getOperand(0);
       SDOperand N1 = N.getOperand(1);
