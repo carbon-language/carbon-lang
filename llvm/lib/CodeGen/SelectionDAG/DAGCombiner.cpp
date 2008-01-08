@@ -4122,6 +4122,34 @@ SDOperand DAGCombiner::visitLOAD(SDNode *N) {
   return SDOperand();
 }
 
+/// ReachesChainWithoutSideEffects - Do a little local search to see if Src can
+/// reach Dest without any side effects like a store, or call.  Non-volatile
+/// loads are ok though.
+static bool ReachesChainWithoutSideEffects(SDOperand Src, SDOperand Dest,
+                                           unsigned Depth = 0) {
+  if (Src == Dest) return true;
+  
+  // Don't search too deeply, we just want to be able to see through
+  // TokenFactor's etc.
+  if (Depth == 2) return false;
+  
+  // If this is a token factor, all inputs to the TF happen in parallel.  If any
+  // of the operands of the TF reach dest, then we can do the xform.
+  if (Src.getOpcode() == ISD::TokenFactor) {
+    for (unsigned i = 0, e = Src.getNumOperands(); i != e; ++i)
+      if (ReachesChainWithoutSideEffects(Src.getOperand(i), Dest, Depth+1))
+        return true;
+    return false;
+  }
+  
+  // Loads don't have side effects, look through them.
+  if (LoadSDNode *Ld = dyn_cast<LoadSDNode>(Src)) {
+    if (!Ld->isVolatile())
+      return ReachesChainWithoutSideEffects(Ld->getChain(), Dest, Depth+1);
+  }
+  return false;
+}
+
 SDOperand DAGCombiner::visitSTORE(SDNode *N) {
   StoreSDNode *ST  = cast<StoreSDNode>(N);
   SDOperand Chain = ST->getChain();
@@ -4250,10 +4278,12 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
   // If this is a load followed by a store to the same location, then the store
   // is dead/noop.
   if (LoadSDNode *Ld = dyn_cast<LoadSDNode>(Value)) {
-    if (Chain.Val == Ld && Ld->getBasePtr() == Ptr &&
+    if (Ld->getBasePtr() == Ptr && ST->getStoredVT() == Ld->getLoadedVT() &&
         ST->getAddressingMode() == ISD::UNINDEXED &&
-        ST->getStoredVT() == Ld->getLoadedVT() &&
-        !ST->isVolatile()) {
+        !ST->isVolatile() &&
+        // There can't be any side effects between the load and store, such as
+        // a call or store.
+        ReachesChainWithoutSideEffects(Chain, SDOperand(Ld, 1))) {
       // The store is dead, remove it.
       return Chain;
     }
