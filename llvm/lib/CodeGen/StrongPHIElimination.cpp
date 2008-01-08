@@ -44,6 +44,7 @@ namespace {
     
     std::map<unsigned, std::vector<unsigned> > Stacks;
     std::set<unsigned> UsedByAnother;
+    std::map<unsigned, std::set<unsigned> > RenameSets;
 
     bool runOnMachineFunction(MachineFunction &Fn);
     
@@ -442,7 +443,8 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
       }
     }
     
-    // FIXME: Cache renaming information
+    // Cache renaming information
+    RenameSets.insert(std::make_pair(P->getOperand(0).getReg(), PHIUnion));
     
     ProcessedNames.insert(PHIUnion.begin(), PHIUnion.end());
     ++P;
@@ -649,8 +651,22 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
   // FIXME: This process should probably preserve LiveVariables
   InsertCopies(Fn.begin());
   
-  // FIXME: Perform renaming
-  // FIXME: Remove Phi instrs
+  // Perform renaming
+  typedef std::map<unsigned, std::set<unsigned> > RenameSetType;
+  for (RenameSetType::iterator I = RenameSets.begin(), E = RenameSets.end();
+       I != E; ++I)
+    for (std::set<unsigned>::iterator SI = I->second.begin(),
+         SE = I->second.end(); SI != SE; ++SI)
+      Fn.getRegInfo().replaceRegWith(*SI, I->first);
+  
+  // FIXME: Insert last-minute copies
+  
+  // Remove PHIs
+  for (MachineFunction::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
+    for (MachineBasicBlock::iterator BI = I->begin(), BE = I->end();
+         BI != BE; ++BI)
+      if (BI->getOpcode() == TargetInstrInfo::PHI)
+        BI->eraseFromParent();
   
   return false;
 }
