@@ -90,6 +90,7 @@ namespace TID {
     NotDuplicable,
     DelaySlot,
     SimpleLoad,
+    MayLoad,
     MayStore,
     NeverHasSideEffects,
     MayHaveSideEffects,
@@ -308,6 +309,14 @@ public:
   //===--------------------------------------------------------------------===//
   // Side Effect Analysis
   //===--------------------------------------------------------------------===//
+
+  /// mayLoad - Return true if this instruction could possibly read memory.
+  /// Instructions with this flag set are not necessarily simple load
+  /// instructions, they may load a value and modify it, for example.
+  bool mayLoad() const {
+    return Flags & (1 << TID::MayLoad);
+  }
+  
   
   /// mayStore - Return true if this instruction could possibly modify memory.
   /// Instructions with this flag set are not necessarily simple store
@@ -316,8 +325,6 @@ public:
   bool mayStore() const {
     return Flags & (1 << TID::MayStore);
   }
-  
-  // TODO: mayLoad.
   
   /// hasNoSideEffects - Return true if all instances of this instruction are
   /// guaranteed to have no side effects other than:

@@ -144,12 +144,12 @@ void InstrInfoEmitter::EmitOperandInfo(std::ostream &OS,
 class InstAnalyzer {
   const CodeGenDAGPatterns &CDP;
   bool &mayStore;
-  bool &isLoad;
+  bool &mayLoad;
   bool &NeverHasSideEffects;
 public:
   InstAnalyzer(const CodeGenDAGPatterns &cdp,
-               bool &maystore, bool &isload, bool &nhse)
-    : CDP(cdp), mayStore(maystore), isLoad(isload), NeverHasSideEffects(nhse) {
+               bool &maystore, bool &mayload, bool &nhse)
+    : CDP(cdp), mayStore(maystore), mayLoad(mayload), NeverHasSideEffects(nhse){
   }
   
   void Analyze(Record *InstRecord) {
@@ -166,9 +166,8 @@ public:
   
 private:
   void AnalyzeNode(const TreePatternNode *N) {
-    if (N->isLeaf()) {
+    if (N->isLeaf())
       return;
-    }
 
     if (N->getOperator()->getName() != "set") {
       // Get information about the SDNode for the operator.
@@ -191,11 +190,11 @@ private:
 };
 
 void InstrInfoEmitter::InferFromPattern(const CodeGenInstruction &Inst, 
-                                        bool &mayStore, bool &isLoad, 
+                                        bool &mayStore, bool &mayLoad, 
                                         bool &NeverHasSideEffects) {
-  mayStore = isLoad = NeverHasSideEffects = false;
+  mayStore = mayLoad = NeverHasSideEffects = false;
   
-  InstAnalyzer(CDP, mayStore, isLoad, NeverHasSideEffects).Analyze(Inst.TheDef);
+  InstAnalyzer(CDP, mayStore, mayLoad,NeverHasSideEffects).Analyze(Inst.TheDef);
 
   // InstAnalyzer only correctly analyzes mayStore so far.
   if (Inst.mayStore) {  // If the .td file explicitly sets mayStore, use it.
@@ -210,7 +209,7 @@ void InstrInfoEmitter::InferFromPattern(const CodeGenInstruction &Inst,
   }
 
   // These two override everything.
-  isLoad              = Inst.isSimpleLoad;
+  mayLoad             = Inst.mayLoad;
   NeverHasSideEffects = Inst.neverHasSideEffects;
 
 #if 0
@@ -281,8 +280,8 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
                                   const OperandInfoMapTy &OpInfo,
                                   std::ostream &OS) {
   // Determine properties of the instruction from its pattern.
-  bool mayStore, isSimpleLoad, NeverHasSideEffects;
-  InferFromPattern(Inst, mayStore, isSimpleLoad, NeverHasSideEffects);
+  bool mayStore, mayLoad, NeverHasSideEffects;
+  InferFromPattern(Inst, mayStore, mayLoad, NeverHasSideEffects);
   
   if (NeverHasSideEffects && Inst.mayHaveSideEffects) {
     std::cerr << "error: Instruction '" << Inst.TheDef->getName()
@@ -308,7 +307,8 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   if (Inst.isBarrier)    OS << "|(1<<TID::Barrier)";
   if (Inst.hasDelaySlot) OS << "|(1<<TID::DelaySlot)";
   if (Inst.isCall)       OS << "|(1<<TID::Call)";
-  if (isSimpleLoad)      OS << "|(1<<TID::SimpleLoad)";
+  if (Inst.isSimpleLoad) OS << "|(1<<TID::SimpleLoad)";
+  if (mayLoad)           OS << "|(1<<TID::MayLoad)";
   if (mayStore)          OS << "|(1<<TID::MayStore)";
   if (Inst.isImplicitDef)OS << "|(1<<TID::ImplicitDef)";
   if (Inst.isPredicable) OS << "|(1<<TID::Predicable)";

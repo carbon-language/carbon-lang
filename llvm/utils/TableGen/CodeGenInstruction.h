@@ -90,7 +90,7 @@ namespace llvm {
     bool isBarrier;
     bool isCall;
     bool isSimpleLoad;
-    bool mayStore;
+    bool mayLoad, mayStore;
     bool isImplicitDef;
     bool isPredicable;
     bool isConvertibleToThreeAddress;
