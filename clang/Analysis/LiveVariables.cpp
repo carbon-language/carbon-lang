@@ -19,6 +19,7 @@
 #include "clang/Analysis/Visitors/CFGRecStmtDeclVisitor.h"
 #include "clang/Analysis/FlowSensitive/DataflowSolver.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/Support/Compiler.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -30,7 +31,9 @@ using namespace clang;
 //===----------------------------------------------------------------------===//      
 
 namespace {
-class RegisterDecls : public CFGRecStmtDeclVisitor<RegisterDecls> {  
+class VISIBILITY_HIDDEN RegisterDecls 
+  : public CFGRecStmtDeclVisitor<RegisterDecls> {
+    
   LiveVariables::AnalysisDataTy& AD;
 public:
   RegisterDecls(LiveVariables::AnalysisDataTy& ad) : AD(ad) {}  
@@ -53,7 +56,7 @@ namespace {
 static const bool Alive = true;
 static const bool Dead = false;  
 
-class TransferFuncs : public CFGRecStmtVisitor<TransferFuncs> {
+class VISIBILITY_HIDDEN TransferFuncs : public CFGRecStmtVisitor<TransferFuncs>{
   LiveVariables::AnalysisDataTy& AD;
   LiveVariables::ValTy LiveState;
 public:

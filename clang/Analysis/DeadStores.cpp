@@ -17,12 +17,13 @@
 #include "clang/Analysis/Visitors/CFGRecStmtVisitor.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/AST/ASTContext.h"
+#include "llvm/Support/Compiler.h"
 
 using namespace clang;
 
 namespace {
   
-class DeadStoreObs : public LiveVariables::ObserverTy {
+class VISIBILITY_HIDDEN DeadStoreObs : public LiveVariables::ObserverTy {
   ASTContext &Ctx;
   Diagnostic &Diags;
 public:

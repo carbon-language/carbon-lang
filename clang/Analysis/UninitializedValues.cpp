@@ -17,6 +17,7 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/Analysis/FlowSensitive/DataflowSolver.h"
+#include "llvm/Support/Compiler.h"
 
 #include "llvm/ADT/SmallPtrSet.h"
 
@@ -28,7 +29,9 @@ using namespace clang;
 
 namespace {
 
-class RegisterDecls : public CFGRecStmtDeclVisitor<RegisterDecls> {  
+class VISIBILITY_HIDDEN RegisterDecls
+  : public CFGRecStmtDeclVisitor<RegisterDecls> {  
+
   UninitializedValues::AnalysisDataTy& AD;
 public:
   RegisterDecls(UninitializedValues::AnalysisDataTy& ad) :  AD(ad) {}
@@ -49,8 +52,9 @@ void UninitializedValues::InitializeValues(const CFG& cfg) {
 //===----------------------------------------------------------------------===//      
 
 namespace {
-
-class TransferFuncs : public CFGStmtVisitor<TransferFuncs,bool> {
+class VISIBILITY_HIDDEN TransferFuncs
+  : public CFGStmtVisitor<TransferFuncs,bool> {
+    
   UninitializedValues::ValTy V;
   UninitializedValues::AnalysisDataTy& AD;
 public:
@@ -230,7 +234,9 @@ namespace {
 UninitializedValues_ValueTypes::ObserverTy::~ObserverTy() {}
 
 namespace {
-class UninitializedValuesChecker : public UninitializedValues::ObserverTy {
+class VISIBILITY_HIDDEN UninitializedValuesChecker
+  : public UninitializedValues::ObserverTy {
+    
   ASTContext &Ctx;
   Diagnostic &Diags;
   llvm::SmallPtrSet<BlockVarDecl*,10> AlreadyWarned;
