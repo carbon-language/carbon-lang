@@ -20,6 +20,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/GraphTraits.h"
+#include "llvm/ADT/DepthFirstIterator.h"
 
 namespace clang {
   
@@ -159,8 +160,9 @@ public:
 namespace llvm {
 template<typename StateTy>
 struct GraphTraits<clang::ExplodedNode<StateTy>*> {
-  typedef clang::ExplodedNode<StateTy> NodeType;
-  typedef typename NodeType::succ_iterator ChildIteratorType;
+  typedef clang::ExplodedNode<StateTy>      NodeType;
+  typedef typename NodeType::succ_iterator  ChildIteratorType;
+  typedef llvm::df_iterator<NodeType*>      nodes_iterator;
   
   static inline NodeType* getEntryNode(NodeType* N) {
     return N;
@@ -172,13 +174,22 @@ struct GraphTraits<clang::ExplodedNode<StateTy>*> {
   
   static inline ChildIteratorType child_end(NodeType* N) {
     return N->succ_end();
+  }
+  
+  static inline nodes_iterator nodes_begin(NodeType* N) {
+    return df_begin(N);
+  }
+  
+  static inline nodes_iterator nodes_end(NodeType* N) {
+    return df_end(N);
   }
 };
 
 template<typename StateTy>
 struct GraphTraits<const clang::ExplodedNode<StateTy>*> {
   typedef const clang::ExplodedNode<StateTy> NodeType;
-  typedef typename NodeType::succ_iterator ChildIteratorType;
+  typedef typename NodeType::succ_iterator   ChildIteratorType;
+  typedef llvm::df_iterator<NodeType*>       nodes_iterator;
   
   static inline NodeType* getEntryNode(NodeType* N) {
     return N;
@@ -190,6 +201,14 @@ struct GraphTraits<const clang::ExplodedNode<StateTy>*> {
   
   static inline ChildIteratorType child_end(NodeType* N) {
     return N->succ_end();
+  }
+  
+  static inline nodes_iterator nodes_begin(NodeType* N) {
+    return df_begin(N);
+  }
+  
+  static inline nodes_iterator nodes_end(NodeType* N) {
+    return df_end(N);
   }
 };
 }
