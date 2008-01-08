@@ -121,8 +121,13 @@ namespace {
                       "extern int objc_exception_match"
                       "(struct objc_class *, struct objc_object *, ...);\n"
                       "extern Protocol *objc_getProtocol(const char *);\n"
-                      "#include <objc/objc.h>\n";
-
+                      "#include <objc/objc.h>\n"
+                      "struct __objcFastEnumerationState {\n\t"
+                      "unsigned long state;\n\t"
+                      "id *itemsPtr;\n\t"
+                      "unsigned long *mutationsPtr;\n\t"
+                      "unsigned long extra[5];\n};\n";
+                      
       Rewrite.InsertText(SourceLocation::getFileLoc(MainFileID, 0), 
                          s, strlen(s));
     }
@@ -167,6 +172,9 @@ namespace {
     Stmt *RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S);
     CallExpr *SynthesizeCallToFunctionDecl(FunctionDecl *FD, 
                                            Expr **args, unsigned nargs);
+    Stmt *SynthMessageExpr(ObjCMessageExpr *Exp);
+    void SynthCountByEnumWithState(std::string &buf);
+    
     void SynthMsgSendFunctionDecl();
     void SynthMsgSendSuperFunctionDecl();
     void SynthMsgSendStretFunctionDecl();
@@ -761,6 +769,25 @@ Stmt *RewriteTest::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
   return S;
 }
 
+/// SynthCountByEnumWithState - To print:
+/// ((unsigned int (*)
+///  (id, SEL, struct __objcFastEnumerationState *, id *, unsigned int))
+///  (void *)objc_msgSend)((id)l_collection, 
+///                        sel_registerName(
+///                          "countByEnumeratingWithState:objects:count:"), 
+///                        &enumState, 
+///                        (id *)items, (unsigned int)16)
+///
+void RewriteTest::SynthCountByEnumWithState(std::string &buf) {
+  buf += "((unsigned int (*) (id, SEL, struct __objcFastEnumerationState *, "
+  "id *, unsigned int))(void *)objc_msgSend)";
+  buf += "\n\t\t";
+  buf += "((id)l_collection,\n\t\t";
+  buf += "sel_registerName(\"countByEnumeratingWithState:objects:count:\"),";
+  buf += "\n\t\t";
+  buf += "&enumState, "
+         "(id *)items, (unsigned int)16)";
+}
 
 /// RewriteObjCTryStmt - Rewriter for ObjC2's feareach statement.
 ///  It rewrites:
@@ -768,30 +795,133 @@ Stmt *RewriteTest::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
  
 /// Into:
 /// {
-///   type elem;
-///   __objcFastEnumerationState enumState = { 0 };
+///   type elem; 
+///   struct __objcFastEnumerationState enumState = { 0 };
 ///   id items[16];
-///   unsigned long limit = [collection countByEnumeratingWithState:&enumState 
-///                                     objects:items count:16];
+///   id l_collection = (id)collection;
+///   unsigned long limit = [l_collection countByEnumeratingWithState:&enumState 
+///                                       objects:items count:16];
 /// if (limit) {
 ///   unsigned long startMutations = *enumState.mutationsPtr;
 ///   do {
 ///        unsigned long counter = 0;
 ///        do {
 ///             if (startMutations != *enumState.mutationsPtr) 
-///               objc_enumerationMutation(collection);
+///               objc_enumerationMutation(l_collection);
 ///             elem = enumState.itemsPtr[counter++];
 ///             stmts;
 ///        } while (counter < limit);
-///   } while (limit = [collection countByEnumeratingWithState:&enumState 
-///                                objects:items count:16]);
+///   } while (limit = [l_collection countByEnumeratingWithState:&enumState 
+///                                  objects:items count:16]);
+///   elem = nil;
+///   loopend: ;
 ///  }
 ///  else
 ///       elem = nil;
 ///  }
 ///
 Stmt *RewriteTest::RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S) {
-  return S;
+  SourceLocation startLoc = S->getLocStart();
+  SourceLocation collectionLoc = S->getCollection()->getLocStart();
+  const char *startBuf = SM->getCharacterData(startLoc);
+  const char *startCollectionBuf = SM->getCharacterData(collectionLoc);
+  const char *elementName;
+  std::string buf;
+  buf = "\n{\n\t";
+  if (DeclStmt *DS = dyn_cast<DeclStmt>(S->getElement())) {
+    // type elem;
+    QualType ElementType = cast<ValueDecl>(DS->getDecl())->getType();
+    buf += ElementType.getAsString();
+    buf += " ";
+    elementName = DS->getDecl()->getName();
+    buf += elementName;
+    buf += ";\n\t";
+  }
+  else if (DeclRefExpr *DR = dyn_cast<DeclRefExpr>(S->getElement()))
+    elementName = DR->getDecl()->getName();
+  else
+    assert(false && "RewriteObjCForCollectionStmt - bad element kind");
+  
+  // struct __objcFastEnumerationState enumState = { 0 };
+  buf += "struct __objcFastEnumerationState enumState = { 0 };\n\t";
+  // id items[16];
+  buf += "id items[16];\n\t";
+  // id l_collection = (id)
+  buf += "id l_collection = (id)";
+  // Replace: "for (type element in" with string constructed thus far. 
+  Rewrite.ReplaceText(startLoc, startCollectionBuf - startBuf,
+                      buf.c_str(), buf.size());
+  // Replace ')' in for '(' type elem in collection ')' with ';'
+  SourceLocation endCollectionLoc = S->getCollection()->getLocEnd();
+  const char *endCollectionBuf = SM->getCharacterData(endCollectionLoc);
+  const char *lparenBuf = strchr(endCollectionBuf, ')');
+  SourceLocation lparenLoc = startLoc.getFileLocWithOffset(lparenBuf-startBuf);
+  buf = ";\n\t";
+  
+  // unsigned long limit = [l_collection countByEnumeratingWithState:&enumState
+  //                                   objects:items count:16];
+  // which is synthesized into:
+  // unsigned int limit = 
+  // ((unsigned int (*)
+  //  (id, SEL, struct __objcFastEnumerationState *, id *, unsigned int))
+  //  (void *)objc_msgSend)((id)l_collection, 
+  //                        sel_registerName(
+  //                          "countByEnumeratingWithState:objects:count:"), 
+  //                        (struct __objcFastEnumerationState *)&state, 
+  //                        (id *)items, (unsigned int)16);
+  buf += "unsigned long limit =\n\t\t";
+  SynthCountByEnumWithState(buf);
+  buf += ";\n\t";
+  /// if (limit) {
+  ///   unsigned long startMutations = *enumState.mutationsPtr;
+  ///   do {
+  ///        unsigned long counter = 0;
+  ///        do {
+  ///             if (startMutations != *enumState.mutationsPtr) 
+  ///               objc_enumerationMutation(l_collection);
+  ///             elem = enumState.itemsPtr[counter++];
+  buf += "if (limit) {\n\t";
+  buf += "unsigned long startMutations = *enumState.mutationsPtr;\n\t";
+  buf += "do {\n\t\t";
+  buf += "unsigned long counter = 0;\n\t\t";
+  buf += "do {\n\t\t\t";
+  buf += "if (startMutations != *enumState.mutationsPtr)\n\t\t\t\t";
+  buf += "objc_enumerationMutation(l_collection);\n\t\t\t";
+  buf += elementName;
+  buf += " = enumState.itemsPtr[counter++];";
+  // Replace ')' in for '(' type elem in collection ')' with all of these.
+  Rewrite.ReplaceText(lparenLoc, 1, buf.c_str(), buf.size());
+  
+  ///        } while (counter < limit);
+  ///   } while (limit = [l_collection countByEnumeratingWithState:&enumState 
+  ///                                  objects:items count:16]);
+  ///   elem = nil;
+  ///   loopend: ;
+  ///  }
+  ///  else
+  ///       elem = nil;
+  ///  }
+  buf = ";\n\t\t";
+  buf += "} while (counter < limit);\n\t";
+  buf += "} while (limit = ";
+  SynthCountByEnumWithState(buf);
+  buf += ");\n\t";
+  buf += elementName;
+  buf += " = nil;\n\t";
+  // TODO: Generate a unique label to exit the for loop on break statement.
+  // buf += "loopend: ;\n\t";
+  buf += "}\n\t";
+  buf += "else\n\t\t";
+  buf += elementName;
+  buf += " = nil;\n";
+  buf += "}\n";
+  // Insert all these *after* the statement body.
+  SourceLocation endBodyLoc = S->getBody()->getLocEnd();
+  const char *endBodyBuf = SM->getCharacterData(endBodyLoc)+1;
+  endBodyLoc = startLoc.getFileLocWithOffset(endBodyBuf-startBuf);
+  Rewrite.InsertText(endBodyLoc, buf.c_str(), buf.size());
+ 
+  return 0;
 }
 
 Stmt *RewriteTest::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
@@ -1422,7 +1552,7 @@ QualType RewriteTest::getSuperStructType() {
   return Context->getTagDeclType(SuperStructDecl);
 }
 
-Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
+Stmt *RewriteTest::SynthMessageExpr(ObjCMessageExpr *Exp) {
   if (!SelGetUidFunctionDecl)
     SynthSelGetUidFunctionDecl();
   if (!MsgSendFunctionDecl)
@@ -1648,6 +1778,7 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
   const FunctionType *FT = msgSendType->getAsFunctionType();
   CallExpr *CE = new CallExpr(PE, &MsgExprs[0], MsgExprs.size(), 
                               FT->getResultType(), SourceLocation());
+  Stmt *ReplacingStmt = CE;
   if (MsgSendStretFlavor) {
     // We have the method which returns a struct/union. Must also generate
     // call to objc_msgSend_stret and hang both varieties on a conditional
@@ -1695,20 +1826,15 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
     // (sizeof(returnType) <= 8 ? objc_msgSend(...) : objc_msgSend_stret(...))
     ConditionalOperator *CondExpr = 
       new ConditionalOperator(lessThanExpr, CE, STCE, returnType);
-    ParenExpr *PE = new ParenExpr(SourceLocation(), SourceLocation(), CondExpr);
-    // Now do the actual rewrite.
-    if (Rewrite.ReplaceStmt(Exp, PE)) {
-      // replacement failed.
-      unsigned DiagID = Diags.getCustomDiagID(Diagnostic::Warning, 
-                       "rewriting sub-expression within a macro (may not be correct)");
-      SourceRange Range = Exp->getSourceRange();
-      Diags.Report(Context->getFullLoc(Exp->getLocStart()), DiagID, 0, 0, &Range, 1);
-    }
-    delete Exp;
-    return PE;
+    ReplacingStmt = new ParenExpr(SourceLocation(), SourceLocation(), CondExpr);
   }
+  return ReplacingStmt;
+}
+
+Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
+  Stmt *ReplacingStmt = SynthMessageExpr(Exp);
   // Now do the actual rewrite.
-  if (Rewrite.ReplaceStmt(Exp, CE)) {
+  if (Rewrite.ReplaceStmt(Exp, ReplacingStmt)) {
     // replacement failed.
     unsigned DiagID = Diags.getCustomDiagID(Diagnostic::Warning, 
                      "rewriting sub-expression within a macro (may not be correct)");
@@ -1717,7 +1843,7 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
   }
   
   delete Exp;
-  return CE;
+  return ReplacingStmt;
 }
 
 /// RewriteObjCProtocolExpr - Rewrite a protocol expression into
