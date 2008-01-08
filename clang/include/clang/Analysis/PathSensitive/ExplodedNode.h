@@ -19,6 +19,7 @@
 #include "clang/Analysis/ProgramEdge.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/ADT/GraphTraits.h"
 
 namespace clang {
   
@@ -153,4 +154,43 @@ public:
   
 } // end namespace clang
 
+// GraphTraits for ExplodedNodes.
+
+namespace llvm {
+template<typename StateTy>
+struct GraphTraits<clang::ExplodedNode<StateTy>*> {
+  typedef clang::ExplodedNode<StateTy> NodeType;
+  typedef typename NodeType::succ_iterator ChildIteratorType;
+  
+  static inline NodeType* getEntryNode(NodeType* N) {
+    return N;
+  }
+  
+  static inline ChildIteratorType child_begin(NodeType* N) {
+    return N->succ_begin();
+  }
+  
+  static inline ChildIteratorType child_end(NodeType* N) {
+    return N->succ_end();
+  }
+};
+
+template<typename StateTy>
+struct GraphTraits<const clang::ExplodedNode<StateTy>*> {
+  typedef const clang::ExplodedNode<StateTy> NodeType;
+  typedef typename NodeType::succ_iterator ChildIteratorType;
+  
+  static inline NodeType* getEntryNode(NodeType* N) {
+    return N;
+  }
+  
+  static inline ChildIteratorType child_begin(NodeType* N) {
+    return N->succ_begin();
+  }
+  
+  static inline ChildIteratorType child_end(NodeType* N) {
+    return N->succ_end();
+  }
+};
+}
 #endif
