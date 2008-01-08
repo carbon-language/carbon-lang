@@ -322,6 +322,30 @@ m_FCmp(FCmpInst::Predicate &Pred, const LHS &L, const RHS &R) {
 }
 
 //===----------------------------------------------------------------------===//
+// Matchers for CastInst classes
+//
+
+template<typename Op_t, typename Class>
+struct CastClass_match {
+  Op_t Op;
+  
+  CastClass_match(const Op_t &OpMatch) : Op(OpMatch) {}
+  
+  template<typename OpTy>
+  bool match(OpTy *V) {
+    if (Class *I = dyn_cast<Class>(V))
+      return Op.match(I->getOperand(0));
+    return false;
+  }
+};
+
+template<typename Class, typename OpTy>
+inline CastClass_match<OpTy, Class> m_Cast(const OpTy &Op) {
+  return CastClass_match<OpTy, Class>(Op);
+}
+
+  
+//===----------------------------------------------------------------------===//
 // Matchers for unary operators
 //
 
