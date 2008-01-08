@@ -25,6 +25,7 @@
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/DepthFirstIterator.h"
@@ -47,11 +48,8 @@ namespace {
     bool runOnMachineFunction(MachineFunction &Fn);
     
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addPreserved<LiveVariables>();
-      AU.addPreservedID(PHIEliminationID);
       AU.addRequired<MachineDominatorTree>();
       AU.addRequired<LiveVariables>();
-      AU.setPreservesAll();
       MachineFunctionPass::getAnalysisUsage(AU);
     }
     
@@ -516,6 +514,7 @@ void StrongPHIElimination::processPHIUnion(MachineInstr* Inst,
 /// of Static Single Assignment Form" by Briggs, et al.
 void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
                                           std::set<unsigned>& pushed) {
+  // FIXME: This function needs to update LiveVariables
   std::map<unsigned, unsigned>& copy_set= Waiting[MBB];
   
   std::map<unsigned, unsigned> worklist;
@@ -540,6 +539,8 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
   }
   
   LiveVariables& LV = getAnalysis<LiveVariables>();
+  MachineFunction* MF = MBB->getParent();
+  const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
   
   // Iterate over the worklist, inserting copies
   while (!worklist.empty() || !copy_set.empty()) {
@@ -547,13 +548,29 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
       std::pair<unsigned, unsigned> curr = *worklist.begin();
       worklist.erase(curr.first);
       
+      const TargetRegisterClass *RC = MF->getRegInfo().getRegClass(curr.first);
+      
       if (isLiveOut(LV.getVarInfo(curr.second), MBB)) {
-        // Insert copy from curr.second to a temporary
+        // Create a temporary
+        unsigned t = MF->getRegInfo().createVirtualRegister(RC);
+        
+        // Insert copy from curr.second to a temporary at
+        // the Phi defining curr.second
+        LiveVariables::VarInfo VI = LV.getVarInfo(curr.second);
+        MachineBasicBlock::iterator PI = VI.DefInst;
+        TII->copyRegToReg(*VI.DefInst->getParent(), PI, t,
+                          curr.second, RC, RC);
+        
         // Push temporary on Stacks
-        // Insert temporary in pushed
+        Stacks[curr.second].push_back(t);
+        
+        // Insert curr.second in pushed
+        pushed.insert(curr.second);
       }
       
       // Insert copy from map[curr.first] to curr.second
+      TII->copyRegToReg(*MBB, MBB->end(), curr.second,
+                        map[curr.first], RC, RC);
       map[curr.first] = curr.second;
       
       // If curr.first is a destination in copy_set...
@@ -577,8 +594,13 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
       std::pair<unsigned, unsigned> curr = *copy_set.begin();
       copy_set.erase(curr.first);
       
+      const TargetRegisterClass *RC = MF->getRegInfo().getRegClass(curr.first);
+      
       // Insert a copy from dest to a new temporary t at the end of b
-      // map[curr.second] = t;
+      unsigned t = MF->getRegInfo().createVirtualRegister(RC);
+      TII->copyRegToReg(*MBB, MBB->end(), t,
+                        curr.second, RC, RC);
+      map[curr.second] = t;
       
       worklist.insert(curr);
     }
@@ -628,6 +650,7 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
   InsertCopies(Fn.begin());
   
   // FIXME: Perform renaming
+  // FIXME: Remove Phi instrs
   
   return false;
 }
