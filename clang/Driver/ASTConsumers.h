@@ -38,6 +38,8 @@ ASTConsumer *CreateLiveVarAnalyzer();
 ASTConsumer *CreateDeadStoreChecker(Diagnostic &Diags);
 
 ASTConsumer *CreateUnitValsChecker(Diagnostic &Diags);
+  
+ASTConsumer *CreateGRConstProp();
 
 ASTConsumer *CreateLLVMEmitter(Diagnostic &Diags, const LangOptions &Features);
 

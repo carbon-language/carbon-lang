@@ -552,6 +552,25 @@ ASTConsumer *clang::CreateUnitValsChecker(Diagnostic &Diags) {
 }
 
 //===----------------------------------------------------------------------===//
+// GRConstProp - Perform intra-procedural, path-sensitive constant propagation.
+
+namespace {
+  class GRConstPropVisitor : public CFGVisitor {
+  public:
+    virtual void Initialize(ASTContext &Context) {}
+    
+    virtual void VisitCFG(CFG& C) {
+      // FIXME: Implement.
+      assert (false && "Not yet implemented.");
+    }
+  };
+} // end anonymous namespace
+
+ASTConsumer *clang::CreateGRConstProp() {
+  return new GRConstPropVisitor();
+}
+
+//===----------------------------------------------------------------------===//
 // LLVM Emitter
 
 #include "clang/Basic/Diagnostic.h"
