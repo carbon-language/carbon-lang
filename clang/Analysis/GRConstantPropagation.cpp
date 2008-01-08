@@ -1,6 +1,4 @@
 //===-- GRConstantPropagation.cpp --------------------------------*- C++ -*-==//
-//             
-//              [ Constant Propagation via Graph Reachability ]
 //   
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,6 +6,8 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//
+//               Constant Propagation via Graph Reachability
 //
 //  This files defines a simple analysis that performs path-sensitive
 //  constant propagation within a function.  An example use of this analysis
