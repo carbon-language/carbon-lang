@@ -335,6 +335,9 @@ Module *BugDriver::ExtractMappedBlocksFromModule(const
   for (std::vector<BasicBlock*>::const_iterator I = BBs.begin(), E = BBs.end();
        I != E; ++I) {
     BasicBlock *BB = *I;
+    // If the BB doesn't have a name, give it one so we have something to key
+    // off of.
+    if (!BB->hasName()) BB->setName("tmpbb");
     BlocksToNotExtractFile << BB->getParent()->getName() << " "
                            << BB->getName() << "\n";
   }
