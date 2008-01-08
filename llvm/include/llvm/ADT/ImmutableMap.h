@@ -52,20 +52,24 @@ struct ImutKeyValueInfo {
 template <typename KeyT, typename ValT, 
           typename ValInfo = ImutKeyValueInfo<KeyT,ValT> >
 class ImmutableMap {
+public:
   typedef typename ValInfo::value_type      value_type;
   typedef typename ValInfo::value_type_ref  value_type_ref;
   typedef typename ValInfo::key_type        key_type;
   typedef typename ValInfo::key_type_ref    key_type_ref;
   typedef typename ValInfo::data_type       data_type;
   typedef typename ValInfo::data_type_ref   data_type_ref;
+  typedef ImutAVLTree<ValInfo>              TreeTy;
   
-private:  
-  typedef ImutAVLTree<ValInfo> TreeTy;
+private:
   TreeTy* Root;
-  
-  ImmutableMap(TreeTy* R) : Root(R) {}
-  
+    
 public:
+  /// Constructs a map from a pointer to a tree root.  In general one
+  /// should use a Factory object to create maps instead of directly
+  /// invoking the constructor, but there are cases where make this
+  /// constructor public is useful.
+  explicit ImmutableMap(TreeTy* R) : Root(R) {}
   
   class Factory {
     typename TreeTy::Factory F;
@@ -111,6 +115,8 @@ public:
   bool operator!=(ImmutableMap RHS) const {
     return Root && RHS.Root ? Root->isNotEqual(*RHS.Root) : Root != RHS.Root;
   }
+  
+  TreeTy* getRoot() const { return Root; }
   
   bool isEmpty() const { return !Root; }
 
