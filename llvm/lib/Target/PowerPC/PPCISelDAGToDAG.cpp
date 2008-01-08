@@ -624,29 +624,34 @@ static PPC::Predicate getPredicateForSetCC(ISD::CondCode CC) {
 /// getCRIdxForSetCC - Return the index of the condition register field
 /// associated with the SetCC condition, and whether or not the field is
 /// treated as inverted.  That is, lt = 0; ge = 0 inverted.
-static unsigned getCRIdxForSetCC(ISD::CondCode CC, bool& Inv) {
+///
+/// If this returns with Other != -1, then the returned comparison is an or of
+/// two simpler comparisons.  In this case, Invert is guaranteed to be false.
+static unsigned getCRIdxForSetCC(ISD::CondCode CC, bool &Invert, int &Other) {
+  Invert = false;
+  Other = -1;
   switch (CC) {
   default: assert(0 && "Unknown condition!"); abort();
-  case ISD::SETOLT:  // FIXME: This is incorrect see PR642.
-  case ISD::SETULT:
-  case ISD::SETLT:  Inv = false;  return 0;
-  case ISD::SETOGE:  // FIXME: This is incorrect see PR642.
+  case ISD::SETOLT:
+  case ISD::SETLT:  return 0;                  // Bit #0 = SETOLT
+  case ISD::SETOGT:
+  case ISD::SETGT:  return 1;                  // Bit #1 = SETOGT
+  case ISD::SETOEQ:
+  case ISD::SETEQ:  return 2;                  // Bit #2 = SETOEQ
+  case ISD::SETUO:  return 3;                  // Bit #3 = SETUO
   case ISD::SETUGE:
-  case ISD::SETGE:  Inv = true;   return 0;
-  case ISD::SETOGT:  // FIXME: This is incorrect see PR642.
-  case ISD::SETUGT:
-  case ISD::SETGT:  Inv = false;  return 1;
-  case ISD::SETOLE:  // FIXME: This is incorrect see PR642.
+  case ISD::SETGE:  Invert = true; return 0;   // !Bit #0 = SETUGE
   case ISD::SETULE:
-  case ISD::SETLE:  Inv = true;   return 1;
-  case ISD::SETOEQ:  // FIXME: This is incorrect see PR642.
-  case ISD::SETUEQ:
-  case ISD::SETEQ:  Inv = false;  return 2;
-  case ISD::SETONE:  // FIXME: This is incorrect see PR642.
+  case ISD::SETLE:  Invert = true; return 1;   // !Bit #1 = SETULE
   case ISD::SETUNE:
-  case ISD::SETNE:  Inv = true;   return 2;
-  case ISD::SETO:   Inv = true;   return 3;
-  case ISD::SETUO:  Inv = false;  return 3;
+  case ISD::SETNE:  Invert = true; return 2;   // !Bit #2 = SETUNE
+  case ISD::SETO:   Invert = true; return 3;   // !Bit #3 = SETO
+  case ISD::SETULT: Other = 0; return 3;       // SETOLT | SETUO
+  case ISD::SETUGT: Other = 1; return 3;       // SETOGT | SETUO
+  case ISD::SETUEQ: Other = 2; return 3;       // SETOEQ | SETUO
+  case ISD::SETOGE: Other = 1; return 2;       // SETOGT | SETOEQ
+  case ISD::SETOLE: Other = 0; return 2;       // SETOLT | SETOEQ
+  case ISD::SETONE: Other = 0; return 1;       // SETOLT | SETOGT
   }
   return 0;
 }
@@ -726,7 +731,8 @@ SDNode *PPCDAGToDAGISel::SelectSETCC(SDOperand Op) {
   }
   
   bool Inv;
-  unsigned Idx = getCRIdxForSetCC(CC, Inv);
+  int OtherCondIdx;
+  unsigned Idx = getCRIdxForSetCC(CC, Inv, OtherCondIdx);
   SDOperand CCReg = SelectCC(N->getOperand(0), N->getOperand(1), CC);
   SDOperand IntCR;
   
@@ -737,7 +743,7 @@ SDNode *PPCDAGToDAGISel::SelectSETCC(SDOperand Op) {
   CCReg = CurDAG->getCopyToReg(CurDAG->getEntryNode(), CR7Reg, CCReg, 
                                InFlag).getValue(1);
   
-  if (PPCSubTarget.isGigaProcessor())
+  if (PPCSubTarget.isGigaProcessor() && OtherCondIdx == -1)
     IntCR = SDOperand(CurDAG->getTargetNode(PPC::MFOCRF, MVT::i32, CR7Reg,
                                             CCReg), 0);
   else
@@ -745,13 +751,26 @@ SDNode *PPCDAGToDAGISel::SelectSETCC(SDOperand Op) {
   
   SDOperand Ops[] = { IntCR, getI32Imm((32-(3-Idx)) & 31),
                       getI32Imm(31), getI32Imm(31) };
-  if (!Inv) {
+  if (OtherCondIdx == -1 && !Inv)
     return CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, Ops, 4);
-  } else {
-    SDOperand Tmp =
-      SDOperand(CurDAG->getTargetNode(PPC::RLWINM, MVT::i32, Ops, 4), 0);
+
+  // Get the specified bit.
+  SDOperand Tmp =
+    SDOperand(CurDAG->getTargetNode(PPC::RLWINM, MVT::i32, Ops, 4), 0);
+  if (Inv) {
+    assert(OtherCondIdx == -1 && "Can't have split plus negation");
     return CurDAG->SelectNodeTo(N, PPC::XORI, MVT::i32, Tmp, getI32Imm(1));
   }
+
+  // Otherwise, we have to turn an operation like SETONE -> SETOLT | SETOGT.
+  // We already got the bit for the first part of the comparison (e.g. SETULE).
+
+  // Get the other bit of the comparison.
+  Ops[1] = getI32Imm((32-(3-OtherCondIdx)) & 31);
+  SDOperand OtherCond = 
+    SDOperand(CurDAG->getTargetNode(PPC::RLWINM, MVT::i32, Ops, 4), 0);
+
+  return CurDAG->SelectNodeTo(N, PPC::OR, MVT::i32, Tmp, OtherCond);
 }
 
 

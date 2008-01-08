@@ -706,3 +706,32 @@ __Z11no_overflowjj:
 
 //===---------------------------------------------------------------------===//
 
+We compile some FP comparisons into an mfcr with two rlwinms and an or.  For
+example:
+#include <math.h>
+int test(double x, double y) { return islessequal(x, y);}
+int test2(double x, double y) {  return islessgreater(x, y);}
+int test3(double x, double y) {  return !islessequal(x, y);}
+
+Compiles into (all three are similar, but the bits differ):
+
+_test:
+	fcmpu cr7, f1, f2
+	mfcr r2
+	rlwinm r3, r2, 29, 31, 31
+	rlwinm r2, r2, 31, 31, 31
+	or r3, r2, r3
+	blr 
+
+GCC compiles this into:
+
+ _test:
+	fcmpu cr7,f1,f2
+	cror 30,28,30
+	mfcr r3
+	rlwinm r3,r3,31,1
+	blr
+        
+which is more efficient and can use mfocr.  See PR642 for some more context.
+
+//===---------------------------------------------------------------------===//
