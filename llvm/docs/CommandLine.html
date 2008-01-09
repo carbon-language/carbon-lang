@@ -138,7 +138,7 @@ code.</li>
 
 <li>Globally accessible: Libraries can specify command line arguments that are
 automatically enabled in any tool that links to the library.  This is possible
-because the application doesn't have to keep a "list" of arguments to pass to
+because the application doesn't have to keep a list of arguments to pass to
 the parser.  This also makes supporting <a href="#dynamicopts">dynamically
 loaded options</a> trivial.</li>
 
@@ -216,12 +216,12 @@ int main(int argc, char **argv) {
 declarations.</p>
 
 <p>Now that you are ready to support command line arguments, we need to tell the
-system which ones we want, and what type of argument they are.  The CommandLine
+system which ones we want, and what type of arguments they are.  The CommandLine
 library uses a declarative syntax to model command line arguments with the
 global variable declarations that capture the parsed values.  This means that
 for every command line option that you would like to support, there should be a
 global variable declaration to capture the result.  For example, in a compiler,
-we would like to support the unix standard '<tt>-o &lt;filename&gt;</tt>' option
+we would like to support the Unix-standard '<tt>-o &lt;filename&gt;</tt>' option
 to specify where to put the output.  With the CommandLine library, this is
 represented like this:</p>
 
@@ -383,7 +383,7 @@ OPTIONS:
   -help  - display available options (--help-hidden for more)
 </pre></div>
 
-<p>and "<tt>opt --help-hidden</tt>" prints this:</p>
+<p>and "<tt>compiler --help-hidden</tt>" prints this:</p>
 
 <div class="doc_code"><pre>
 USAGE: compiler [options] &lt;input file&gt;
@@ -432,7 +432,7 @@ a value itself:</p>
 </pre></div>
 
 <p>The third line (which is the only one we modified from above) defines a
-"<tt>-q</tt> alias that updates the "<tt>Quiet</tt>" variable (as specified by
+"<tt>-q</tt>" alias that updates the "<tt>Quiet</tt>" variable (as specified by
 the <tt><a href="#cl::aliasopt">cl::aliasopt</a></tt> modifier) whenever it is
 specified.  Because aliases do not hold state, the only thing the program has to
 query is the <tt>Quiet</tt> variable now.  Another nice feature of aliases is
@@ -462,24 +462,24 @@ uses.</p>
 
 <div class="doc_text">
 
-<p>So far, we have seen how the CommandLine library handles builtin types like
+<p>So far we have seen how the CommandLine library handles builtin types like
 <tt>std::string</tt>, <tt>bool</tt> and <tt>int</tt>, but how does it handle
 things it doesn't know about, like enums or '<tt>int*</tt>'s?</p>
 
-<p>The answer is that it uses a table driven generic parser (unless you specify
+<p>The answer is that it uses a table-driven generic parser (unless you specify
 your own parser, as described in the <a href="#extensionguide">Extension
 Guide</a>).  This parser maps literal strings to whatever type is required, and
 requires you to tell it what this mapping should be.</p>
 
-<p>Lets say that we would like to add four optimization levels to our
+<p>Let's say that we would like to add four optimization levels to our
 optimizer, using the standard flags "<tt>-g</tt>", "<tt>-O0</tt>",
 "<tt>-O1</tt>", and "<tt>-O2</tt>".  We could easily implement this with boolean
 options like above, but there are several problems with this strategy:</p>
 
 <ol>
 <li>A user could specify more than one of the options at a time, for example,
-"<tt>opt -O3 -O2</tt>".  The CommandLine library would not be able to catch this
-erroneous input for us.</li>
+"<tt>compiler -O3 -O2</tt>".  The CommandLine library would not be able to
+catch this erroneous input for us.</li>
 
 <li>We would have to test 4 different variables to see which ones are set.</li>
 
@@ -634,7 +634,7 @@ that you can choose the form most appropriate for your application.</p>
 
 <div class="doc_text">
 
-<p>Now that we have the standard run of the mill argument types out of the way,
+<p>Now that we have the standard run-of-the-mill argument types out of the way,
 lets get a little wild and crazy.  Lets say that we want our optimizer to accept
 a <b>list</b> of optimizations to perform, allowing duplicates.  For example, we
 might want to run: "<tt>compiler -dce -constprop -inline -dce -strip</tt>".  In
@@ -750,7 +750,7 @@ the first are discarded.</p>
 
 <p>Finally, if external storage is used, then the location specified must be of
 <b>type</b> <tt>unsigned</tt>. In all other ways a <a
-href="#bits"><tt>cl::bits</tt></a> option is morally equivalent to a <a
+href="#bits"><tt>cl::bits</tt></a> option is equivalent to a <a
 href="#list"> <tt>cl::list</tt></a> option.</p>
 
 </div>
@@ -916,7 +916,7 @@ can use it like this:</p>
   
   <div class="doc_code"><pre>
   static cl::list&lt;std::string&gt; Files(cl::Positional, cl::OneOrMore);
-  static cl::listlt;std::string&gt; Libraries("l", cl::ZeroOrMore);
+  static cl::list&lt;std::string&gt; Libraries("l", cl::ZeroOrMore);
 
   int main(int argc, char**argv) {
     // ...
@@ -969,7 +969,7 @@ interpreted by the command line argument.</p>
 standard Unix Bourne shell (<tt>/bin/sh</tt>).  To run <tt>/bin/sh</tt>, first
 you specify options to the shell itself (like <tt>-x</tt> which turns on trace
 output), then you specify the name of the script to run, then you specify
-arguments to the script.  These arguments to the script are parsed by the bourne
+arguments to the script.  These arguments to the script are parsed by the Bourne
 shell command line option processor, but are not interpreted as options to the
 shell itself.  Using the CommandLine library, we would specify this as:</p>
 
@@ -1042,10 +1042,7 @@ extern bool DebugFlag;
 <i>// DEBUG macro - This macro should be used by code to emit debug information.
 // In the '-debug' option is specified on the command line, and if this is a
 // debug build, then the code specified as the option to the macro will be
-// executed.  Otherwise it will not be.  Example:
-//
-// DOUT &lt;&lt; "Bitset contains: " &lt;&lt; Bitset &lt;&lt; "\n";
-//</i>
+// executed.  Otherwise it will not be.</i>
 <span class="doc_hilite">#ifdef NDEBUG
 #define DEBUG(X)
 #else
@@ -1057,7 +1054,7 @@ extern bool DebugFlag;
 <p>This allows clients to blissfully use the <tt>DEBUG()</tt> macro, or the
 <tt>DebugFlag</tt> explicitly if they want to.  Now we just need to be able to
 set the <tt>DebugFlag</tt> boolean when the option is set.  To do this, we pass
-an additial argument to our command line argument processor, and we specify
+an additional argument to our command line argument processor, and we specify
 where to fill in with the <a href="#cl::location">cl::location</a>
 attribute:</p>
 
@@ -1206,15 +1203,15 @@ compiled program:</p>
 
 <li><a name="cl::NotHidden">The <b><tt>cl::NotHidden</tt></b></a> modifier
 (which is the default for <tt><a href="#cl::opt">cl::opt</a></tt> and <tt><a
-href="#cl::list">cl::list</a></tt> options), indicates the option is to appear
+href="#cl::list">cl::list</a></tt> options) indicates the option is to appear
 in both help listings.</li>
 
 <li><a name="cl::Hidden">The <b><tt>cl::Hidden</tt></b></a> modifier (which is the
-default for <tt><a href="#cl::alias">cl::alias</a></tt> options), indicates that
+default for <tt><a href="#cl::alias">cl::alias</a></tt> options) indicates that
 the option should not appear in the <tt>--help</tt> output, but should appear in
 the <tt>--help-hidden</tt> output.</li>
 
-<li><a name="cl::ReallyHidden">The <b><tt>cl::ReallyHidden</tt></b></a> modifier,
+<li><a name="cl::ReallyHidden">The <b><tt>cl::ReallyHidden</tt></b></a> modifier
 indicates that the option should not appear in any help output.</li>
 
 </ul>
@@ -1255,7 +1252,7 @@ indicates that the specified option must be specified exactly one time.</li>
 indicates that the option must be specified at least one time.</li>
 
 <li>The <b><tt>cl::ConsumeAfter</tt></b> modifier is described in the <a
-href="#positional">Positional arguments section</a></li>
+href="#positional">Positional arguments section</a>.</li>
 
 </ul>
 
@@ -1328,7 +1325,7 @@ when <a href="#extensionguide">extending the library</a>.</p>
 
 <p>The formatting option group is used to specify that the command line option
 has special abilities and is otherwise different from other command line
-arguments.  As usual, you can only specify at most one of these arguments.</p>
+arguments.  As usual, you can only specify one of these arguments at most.</p>
 
 <ul>
 
@@ -1337,7 +1334,7 @@ modifier (which is the default all options) specifies that this option is
 "normal".</li>
 
 <li><a name="cl::Positional">The <b><tt>cl::Positional</tt></b></a> modifier
-specifies that this is a positional argument, that does not have a command line
+specifies that this is a positional argument that does not have a command line
 option associated with it.  See the <a href="#positional">Positional
 Arguments</a> section for more information.</li>
 
@@ -1358,7 +1355,7 @@ modifier added to allow the CommandLine library to recognize them.  Note that
 specified.</li>
 
 <li><a name="cl::Grouping">The <b><tt>cl::Grouping</tt></b></a> modifier is used
-to implement unix style tools (like <tt>ls</tt>) that have lots of single letter
+to implement Unix-style tools (like <tt>ls</tt>) that have lots of single letter
 arguments, but only require a single dash.  For example, the '<tt>ls -labF</tt>'
 command actually enables four different options, all of which are single
 letters.  Note that <b><tt><a href="#cl::Grouping">cl::Grouping</a></tt></b>
@@ -1426,7 +1423,7 @@ more values (i.e. it is a <a href="#cl::list">cl::list</a> option).</li>
 positional arguments, and only makes sense for lists) indicates that positional
 argument should consume any strings after it (including strings that start with
 a "-") up until another recognized positional argument.  For example, if you
-have two "eating" positional arguments "<tt>pos1</tt>" and "<tt>pos2</tt>" the
+have two "eating" positional arguments, "<tt>pos1</tt>" and "<tt>pos2</tt>", the
 string "<tt>-pos1 -foo -bar baz -pos2 -bork</tt>" would cause the "<tt>-foo -bar
 -baz</tt>" strings to be applied to the "<tt>-pos1</tt>" option and the
 "<tt>-bork</tt>" string to be applied to the "<tt>-pos2</tt>" option.</li>
@@ -1487,14 +1484,14 @@ as <a
 href="#cl::ParseCommandLineOptions"><tt>cl::ParseCommandLineOptions</tt></a>,
 except that it is designed to take values for options from an environment
 variable, for those cases in which reading the command line is not convenient or
-not desired. It fills in the values of all the command line option variables
-just like <a
+desired. It fills in the values of all the command line option variables just
+like <a
 href="#cl::ParseCommandLineOptions"><tt>cl::ParseCommandLineOptions</tt></a>
 does.</p>
 
-<p>It takes three parameters: first, the name of the program (since
-<tt>argv</tt> may not be available, it can't just look in <tt>argv[0]</tt>),
-second, the name of the environment variable to examine, and third, the optional
+<p>It takes three parameters: the name of the program (since <tt>argv</tt> may
+not be available, it can't just look in <tt>argv[0]</tt>), the name of the
+environment variable to examine, and the optional
 <a href="#description">additional extra text</a> to emit when the
 <tt>--help</tt> option is invoked.</p>
 
@@ -1518,7 +1515,7 @@ input.</p>
 <div class="doc_text">
 
 <p>The <tt>cl::SetVersionPrinter</tt> function is designed to be called
-directly from <tt>main</tt>, and <i>before</i>
+directly from <tt>main</tt> and <i>before</i>
 <tt>cl::ParseCommandLineOptions</tt>. Its use is optional. It simply arranges
 for a function to be called in response to the <tt>--version</tt> option instead
 of having the <tt>CommandLine</tt> library print out the usual version string
@@ -1783,7 +1780,7 @@ it.</p>
 <p>This approach works well in situations where you would line to parse an
 option using special syntax for a not-very-special data-type.  The drawback of
 this approach is that users of your parser have to be aware that they are using
-your parser, instead of the builtin ones.</p>
+your parser instead of the builtin ones.</p>
 
 </li>
 
@@ -1807,16 +1804,16 @@ this the default for all <tt>unsigned</tt> options.</p>
 </pre></div>
 
 <p>Our new class inherits from the <tt>cl::basic_parser</tt> template class to
-fill in the default, boiler plate, code for us.  We give it the data type that
-we parse into (the last argument to the <tt>parse</tt> method so that clients of
-our custom parser know what object type to pass in to the parse method (here we
-declare that we parse into '<tt>unsigned</tt>' variables.</p>
+fill in the default, boiler plate code for us.  We give it the data type that
+we parse into, the last argument to the <tt>parse</tt> method, so that clients of
+our custom parser know what object type to pass in to the parse method.  (Here we
+declare that we parse into '<tt>unsigned</tt>' variables.)</p>
 
 <p>For most purposes, the only method that must be implemented in a custom
 parser is the <tt>parse</tt> method.  The <tt>parse</tt> method is called
 whenever the option is invoked, passing in the option itself, the option name,
 the string to parse, and a reference to a return value.  If the string to parse
-is not well formed, the parser should output an error message and return true.
+is not well-formed, the parser should output an error message and return true.
 Otherwise it should return false and set '<tt>Val</tt>' to the parsed value.  In
 our example, we implement <tt>parse</tt> as:</p>
 
