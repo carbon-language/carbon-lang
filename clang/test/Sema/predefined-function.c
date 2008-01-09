@@ -1,5 +1,9 @@
 // RUN: clang -fsyntax-only -verify -pedantic %s
- 
+
+char *funk(int format);
+enum Test {A=-1};
+char *funk(enum Test x);
+
 int foo();
 int foo()
 {

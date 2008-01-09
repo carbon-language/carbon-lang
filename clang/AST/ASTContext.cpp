@@ -1618,15 +1618,23 @@ bool ASTContext::typesAreCompatible(QualType lhs, QualType rhs) {
   if (rcanon->getTypeClass() == Type::Reference)
     rcanon = cast<ReferenceType>(rcanon)->getReferenceeType();
   
-  // If the canonical type classes don't match, they can't be compatible
+  // If the canonical type classes don't match...
   if (lcanon->getTypeClass() != rcanon->getTypeClass()) {
     // For Objective-C, it is possible for two types to be compatible
     // when their classes don't match (when dealing with "id"). If either type
     // is an interface, we defer to objcTypesAreCompatible(). 
     if (lcanon->isObjCInterfaceType() || rcanon->isObjCInterfaceType())
       return objcTypesAreCompatible(lcanon, rcanon);
+	  
+	// C99 6.7.2.2p4: Each enumerated type shall be compatible with char,
+	// a signed integer type, or an unsigned integer type.
+	if ((lcanon->isEnumeralType() && rcanon->isIntegralType()) ||
+	    (rcanon->isEnumeralType() && lcanon->isIntegralType()))
+	  return true;
+	  
     return false;
   }
+  // The canonical type classes match.
   switch (lcanon->getTypeClass()) {
     case Type::Pointer:
       return pointerTypesAreCompatible(lcanon, rcanon);

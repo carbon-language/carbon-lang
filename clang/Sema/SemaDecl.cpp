@@ -245,7 +245,9 @@ FunctionDecl *Sema::MergeFunctionDecl(FunctionDecl *New, ScopedDecl *OldD) {
     if (OldQType.getTypePtr()->getTypeClass() == Type::FunctionNoProto && 
         Old->getResultType() == New->getResultType())
       return New;
-    if (OldQType == NewQType)
+    // Function types need to be compatible, not identical. This handles
+    // duplicate function decls like "void f(int); void f(enum X);" properly.
+    if (Context.functionTypesAreCompatible(OldQType, NewQType))
       return New;
   }
 
