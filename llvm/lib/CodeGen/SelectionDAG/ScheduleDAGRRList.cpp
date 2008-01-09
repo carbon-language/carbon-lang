@@ -1208,13 +1208,13 @@ static unsigned calcMaxScratches(const SUnit *SU) {
   for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I) {
     if (I->isCtrl) continue;  // ignore chain preds
-    if (I->Dep->Node->getOpcode() != ISD::CopyFromReg)
+    if (!I->Dep->Node || I->Dep->Node->getOpcode() != ISD::CopyFromReg)
       Scratches++;
   }
   for (SUnit::const_succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I) {
     if (I->isCtrl) continue;  // ignore chain succs
-    if (I->Dep->Node->getOpcode() != ISD::CopyToReg)
+    if (!I->Dep->Node || I->Dep->Node->getOpcode() != ISD::CopyToReg)
       Scratches += 10;
   }
   return Scratches;
