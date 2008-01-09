@@ -233,6 +233,12 @@ public:
   
   ///===---- Some helper methods ------------------------------------------===//
 
+  unsigned getBoolWidth(FullSourceLoc Loc) {
+    uint64_t Size; unsigned Align;
+    getBoolInfo(Size, Align, Loc);
+    return static_cast<unsigned>(Size);
+  }
+  
   unsigned getCharWidth(FullSourceLoc Loc) {
     uint64_t Size; unsigned Align;
     getCharInfo(Size, Align, Loc);

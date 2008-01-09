@@ -26,3 +26,9 @@ char *test(int c) {
  return c ? buf : bufptr;
 }
 
+
+_Bool booltest = 0;
+void booltest2() {
+  static _Bool booltest3 = 4;
+}
+

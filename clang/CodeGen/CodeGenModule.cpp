@@ -121,7 +121,7 @@ llvm::Constant *CodeGenModule::GetAddrOfGlobalVar(const VarDecl *D,
   llvm::Constant *&Entry = GlobalDeclMap[D];
   if (Entry) return Entry;
   
-  const llvm::Type *Ty = getTypes().ConvertType(D->getType());
+  const llvm::Type *Ty = getTypes().ConvertTypeForMem(D->getType());
 
   // Check to see if the global already exists.
   llvm::GlobalVariable *GV = getModule().getGlobalVariable(D->getName());

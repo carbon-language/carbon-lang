@@ -118,16 +118,26 @@ public:
   ASTContext &getContext() const { return Context; }
 
   /// ConvertType - Convert type T into a llvm::Type. Maintain and use
-  /// type cache through TypeHOlderMap.
+  /// type cache through TypeHolderMap.
   const llvm::Type *ConvertType(QualType T);
-  void DecodeArgumentTypes(const FunctionTypeProto &FTP, 
-                           std::vector<const llvm::Type*> &ArgTys);
-
+  
+  /// ConvertTypeForMem - Convert type T into a llvm::Type. Maintain and use
+  /// type cache through TypeHolderMap.  This differs from ConvertType in that
+  /// it is used to convert to the memory representation for a type.  For
+  /// example, the scalar representation for _Bool is i1, but the memory
+  /// representation is usually i8 or i32, depending on the target.
+  const llvm::Type *ConvertTypeForMem(QualType T);
+  
+  
   const CGRecordLayout *getCGRecordLayout(const llvm::Type*) const;
   
   /// getLLVMFieldNo - Return llvm::StructType element number
   /// that corresponds to the field FD.
   unsigned getLLVMFieldNo(const FieldDecl *FD);
+    
+public:  // These are internal details of CGT that shouldn't be used externally.
+  void DecodeArgumentTypes(const FunctionTypeProto &FTP, 
+                           std::vector<const llvm::Type*> &ArgTys);
 
   /// addFieldInfo - Assign field number to field FD.
   void addFieldInfo(const FieldDecl *FD, unsigned No, unsigned Begin, 

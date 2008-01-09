@@ -149,6 +149,25 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
   return ResultType;
 }
 
+/// ConvertTypeForMem - Convert type T into a llvm::Type. Maintain and use
+/// type cache through TypeHolderMap.  This differs from ConvertType in that
+/// it is used to convert to the memory representation for a type.  For
+/// example, the scalar representation for _Bool is i1, but the memory
+/// representation is usually i8 or i32, depending on the target.
+const llvm::Type *CodeGenTypes::ConvertTypeForMem(QualType T) {
+  const llvm::Type *R = ConvertType(T);
+  
+  // If this is a non-bool type, don't map it.
+  if (R != llvm::Type::Int1Ty)
+    return R;
+    
+  // Otherwise, return an integer of the target-specified size.
+  unsigned BoolWidth = (unsigned)Context.getTypeSize(T, SourceLocation());
+  return llvm::IntegerType::get(BoolWidth);
+  
+}
+
+
 const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
   const clang::Type &Ty = *T.getCanonicalType();
   
@@ -165,8 +184,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
       return llvm::IntegerType::get(8);
 
     case BuiltinType::Bool:
-      // FIXME: This is very strange.  We want scalars to be i1, but in memory
-      // they can be i1 or i32.  Should the codegen handle this issue?
+      // Note that we always return bool as i1 for use as a scalar type.
       return llvm::Type::Int1Ty;
       
     case BuiltinType::Char_S:

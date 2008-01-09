@@ -71,7 +71,7 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const BlockVarDecl &D) {
   llvm::Value *&DMEntry = LocalDeclMap[&D];
   assert(DMEntry == 0 && "Decl already exists in localdeclmap!");
   
-  const llvm::Type *LTy = ConvertType(Ty);
+  const llvm::Type *LTy = CGM.getTypes().ConvertTypeForMem(Ty);
   llvm::Constant *Init = 0;
   if (D.getInit() == 0) {
     Init = llvm::Constant::getNullValue(LTy);
