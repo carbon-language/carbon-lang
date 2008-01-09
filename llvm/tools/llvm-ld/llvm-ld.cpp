@@ -338,10 +338,8 @@ static int GenerateNative(const std::string &OutputFilename,
   }
 
   // Add the requested options
-  for (unsigned index = 0; index < XLinker.size(); index++) {
+  for (unsigned index = 0; index < XLinker.size(); index++)
     args.push_back(XLinker[index]);
-    args.push_back(Libraries[index]);
-  }
 
   // Add in the libraries to link.
   for (unsigned index = 0; index < LinkItems.size(); index++)
