@@ -854,7 +854,7 @@ Stmt *RewriteTest::RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S) {
   // Replace ')' in for '(' type elem in collection ')' with ';'
   SourceLocation endCollectionLoc = S->getCollection()->getLocEnd();
   const char *endCollectionBuf = SM->getCharacterData(endCollectionLoc);
-  const char *lparenBuf = strchr(endCollectionBuf, ')');
+  const char *lparenBuf = strchr(endCollectionBuf+1, ')');
   SourceLocation lparenLoc = startLoc.getFileLocWithOffset(lparenBuf-startBuf);
   buf = ";\n\t";
   

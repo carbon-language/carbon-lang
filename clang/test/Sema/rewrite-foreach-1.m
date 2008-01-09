@@ -24,6 +24,14 @@ int LOOP();
 	  { LOOP(); }
         for (id el1 in self) 
 	  LOOP();
+
+	for (el in (self)) 
+          if (el)
+            LOOP(); 
+
+	for (el in ((self))) 
+          if (el)
+            LOOP(); 
 }
 @end
 
