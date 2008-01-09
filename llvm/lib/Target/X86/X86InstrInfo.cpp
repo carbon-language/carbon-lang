@@ -1740,8 +1740,7 @@ X86InstrInfo::foldMemoryOperand(MachineInstr *MI, unsigned i,
   
   // No fusion 
   if (PrintFailedFusing)
-    cerr << "We failed to fuse ("
-         << ((i == 1) ? "r" : "s") << "): " << *MI;
+    cerr << "We failed to fuse operand " << i << *MI;
   return NULL;
 }
 
@@ -1773,8 +1772,8 @@ MachineInstr* X86InstrInfo::foldMemoryOperand(MachineInstr *MI,
 }
 
 MachineInstr* X86InstrInfo::foldMemoryOperand(MachineInstr *MI,
-                                                 SmallVectorImpl<unsigned> &Ops,
-                                                 MachineInstr *LoadMI) const {
+                                              SmallVectorImpl<unsigned> &Ops,
+                                              MachineInstr *LoadMI) const {
   // Check switch flag 
   if (NoFusing) return NULL;
 
@@ -1802,7 +1801,7 @@ MachineInstr* X86InstrInfo::foldMemoryOperand(MachineInstr *MI,
 
 
 bool X86InstrInfo::canFoldMemoryOperand(MachineInstr *MI,
-                                         SmallVectorImpl<unsigned> &Ops) const {
+                                        SmallVectorImpl<unsigned> &Ops) const {
   // Check switch flag 
   if (NoFusing) return 0;
 

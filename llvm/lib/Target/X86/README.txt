@@ -1601,13 +1601,13 @@ This would result in smaller code and more efficient microops.
 In SSE mode, we turn abs and neg into a load from the constant pool plus a xor
 or and instruction, for example:
 
-	xorpd	LCPI2_0-"L2$pb"(%esi), %xmm2
+	xorpd	LCPI1_0, %xmm2
 
 However, if xmm2 gets spilled, we end up with really ugly code like this:
 
-	%xmm2 = reload [mem]
-	xorpd	LCPI2_0-"L2$pb"(%esi), %xmm2
-	store %xmm2 -> [mem]
+	movsd	(%esp), %xmm0
+	xorpd	LCPI1_0, %xmm0
+	movsd	%xmm0, (%esp)
 
 Since we 'know' that this is a 'neg', we can actually "fold" the spill into
 the neg/abs instruction, turning it into an *integer* operation, like this:
@@ -1615,6 +1615,17 @@ the neg/abs instruction, turning it into an *integer* operation, like this:
 	xorl 2147483648, [mem+4]     ## 2147483648 = (1 << 31)
 
 you could also use xorb, but xorl is less likely to lead to a partial register
-stall.
+stall.  Here is a contrived testcase:
+
+double a, b, c;
+void test(double *P) {
+  double X = *P;
+  a = X;
+  bar();
+  X = -X;
+  b = X;
+  bar();
+  c = X;
+}
 
 //===---------------------------------------------------------------------===//
