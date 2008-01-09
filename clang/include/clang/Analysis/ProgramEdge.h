@@ -27,12 +27,16 @@ namespace clang {
 class ProgramEdge {
   uintptr_t Src, Dst;
 public:
-  enum EdgeKind { StmtBlk=0, BlkStmt=1, StmtStmt=2, BlkBlk=3 };
+  enum EdgeKind { BExprBlk=0,   BlkBExpr=1,   BExprBExpr=2, BlkBlk=3,
+                  BExprSExpr=4, SExprSExpr=5, SExprBExpr=6 };
+  
   static bool classof(const ProgramEdge*) { return true; }
   
-  unsigned getKind() const { return (unsigned) Src & 0x3; }
+  unsigned getKind() const { return (((unsigned) Src & 0x3) << 2) |
+                                     ((unsigned) Dst & 0x3); }  
+  
   void* RawSrc() const { return reinterpret_cast<void*>(Src & ~0x3); }
-  void* RawDst() const { return reinterpret_cast<void*>(Dst); }
+  void* RawDst() const { return reinterpret_cast<void*>(Dst & ~0x3); }
 
   bool operator==(const ProgramEdge & RHS) const {
     // comparing pointer values canoncalizes "NULL" edges where both pointers 
@@ -55,45 +59,89 @@ public:
 protected:
   
   ProgramEdge(const void* src, const void* dst, EdgeKind k) {
-    assert (k >= StmtBlk && k <= BlkBlk);
-    Src = reinterpret_cast<uintptr_t>(const_cast<void*>(src)) | k;
-    Dst = reinterpret_cast<uintptr_t>(const_cast<void*>(dst));
+    assert (k >= BExprBlk && k <= BlkBlk);
+    Src = reinterpret_cast<uintptr_t>(const_cast<void*>(src)) | (k >> 2);
+    Dst = reinterpret_cast<uintptr_t>(const_cast<void*>(dst)) | (k & 0x3);
   }
 };
 
-class StmtBlkEdge : public ProgramEdge {
+class BExprBlkEdge : public ProgramEdge {
 public:
-  StmtBlkEdge(const Stmt* S,const CFGBlock* B)
-  : ProgramEdge(S,B,StmtBlk) {}
+  BExprBlkEdge(const Stmt* S,const CFGBlock* B)
+  : ProgramEdge(S,B,BExprBlk) {}
   
   Stmt*     Src() const { return reinterpret_cast<Stmt*>(RawSrc()); }
   CFGBlock* Dst() const { return reinterpret_cast<CFGBlock*>(RawDst()); }  
   
-  static bool classof(const ProgramEdge* E) { return E->getKind() == StmtBlk; }
+  static bool classof(const ProgramEdge* E) {
+    return E->getKind() == BExprBlk;
+  }
 };
 
-class BlkStmtEdge : public ProgramEdge {
+class BlkBExprEdge : public ProgramEdge {
 public:
-  BlkStmtEdge(const CFGBlock* B, const Stmt* S)
-  : ProgramEdge(B,S,BlkStmt) {}
+  BlkBExprEdge(const CFGBlock* B, const Stmt* S)
+  : ProgramEdge(B,S,BlkBExpr) {}
   
   CFGBlock* Src() const { return reinterpret_cast<CFGBlock*>(RawSrc()); }  
   Stmt*     Dst() const { return reinterpret_cast<Stmt*>(RawDst()); }
 
-  static bool classof(const ProgramEdge* E) { return E->getKind() == StmtBlk; }
+  static bool classof(const ProgramEdge* E) {
+    return E->getKind() == BlkBExpr;
+  }
 };
   
-class StmtStmtEdge : public ProgramEdge {
+class BExprBExprEdge : public ProgramEdge {
 public:
-  StmtStmtEdge(const Stmt* S1, const Stmt* S2)
-  : ProgramEdge(S1,S2,StmtStmt) {}
+  BExprBExprEdge(const Stmt* S1, const Stmt* S2)
+  : ProgramEdge(S1,S2,BExprBExpr) {}
   
-  Stmt*     Src() const { return reinterpret_cast<Stmt*>(RawSrc()); }  
-  Stmt*     Dst() const { return reinterpret_cast<Stmt*>(RawDst()); }
+  Stmt* Src() const { return reinterpret_cast<Stmt*>(RawSrc()); }  
+  Stmt* Dst() const { return reinterpret_cast<Stmt*>(RawDst()); }
   
-  static bool classof(const ProgramEdge* E) { return E->getKind() == StmtStmt; }
+  static bool classof(const ProgramEdge* E) {
+    return E->getKind() == BExprBExpr;
+  }
+};
+  
+class BExprSExprEdge : public ProgramEdge {
+public:
+  BExprSExprEdge(const Stmt* S1, const Expr* S2)
+  : ProgramEdge(S1,S2,BExprSExpr) {}
+  
+  Stmt* Src() const { return reinterpret_cast<Stmt*>(RawSrc()); }  
+  Expr* Dst() const { return reinterpret_cast<Expr*>(RawDst()); }
+  
+  static bool classof(const ProgramEdge* E) {
+    return E->getKind() == BExprSExpr;
+  }
+};
+  
+class SExprSExprEdge : public ProgramEdge {
+public:
+  SExprSExprEdge(const Expr* S1, const Expr* S2)
+  : ProgramEdge(S1,S2,SExprSExpr) {}
+  
+  Expr* Src() const { return reinterpret_cast<Expr*>(RawSrc()); }  
+  Expr* Dst() const { return reinterpret_cast<Expr*>(RawDst()); }
+  
+  static bool classof(const ProgramEdge* E) {
+    return E->getKind() == SExprSExpr;
+  }
 };
 
+class SExprBExprEdge : public ProgramEdge {
+public:
+  SExprBExprEdge(const Expr* S1, const Stmt* S2)
+  : ProgramEdge(S1,S2,SExprBExpr) {}
+  
+  Expr* Src() const { return reinterpret_cast<Expr*>(RawSrc()); }  
+  Stmt* Dst() const { return reinterpret_cast<Stmt*>(RawDst()); }
+  
+  static bool classof(const ProgramEdge* E) {
+    return E->getKind() == SExprBExpr;
+  }
+};
 
 class BlkBlkEdge : public ProgramEdge {
 public:
@@ -103,7 +151,9 @@ public:
   CFGBlock* Src() const { return reinterpret_cast<CFGBlock*>(RawSrc()); }  
   CFGBlock* Dst() const { return reinterpret_cast<CFGBlock*>(RawDst()); }
   
-  static bool classof(const ProgramEdge* E) { return E->getKind() == BlkBlk; }
+  static bool classof(const ProgramEdge* E) {
+    return E->getKind() == BlkBlk;
+  }
 };
 
 } // end namespace clang
