@@ -808,7 +808,7 @@ void RewriteTest::SynthCountByEnumWithState(std::string &buf) {
 ///        do {
 ///             if (startMutations != *enumState.mutationsPtr) 
 ///               objc_enumerationMutation(l_collection);
-///             elem = enumState.itemsPtr[counter++];
+///             elem = (type)enumState.itemsPtr[counter++];
 ///             stmts;
 ///        } while (counter < limit);
 ///   } while (limit = [l_collection countByEnumeratingWithState:&enumState 
@@ -826,19 +826,23 @@ Stmt *RewriteTest::RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S) {
   const char *startBuf = SM->getCharacterData(startLoc);
   const char *startCollectionBuf = SM->getCharacterData(collectionLoc);
   const char *elementName;
+  std::string elementTypeAsString;
   std::string buf;
   buf = "\n{\n\t";
   if (DeclStmt *DS = dyn_cast<DeclStmt>(S->getElement())) {
     // type elem;
     QualType ElementType = cast<ValueDecl>(DS->getDecl())->getType();
-    buf += ElementType.getAsString();
+    elementTypeAsString = ElementType.getAsString();
+    buf += elementTypeAsString;
     buf += " ";
     elementName = DS->getDecl()->getName();
     buf += elementName;
     buf += ";\n\t";
   }
-  else if (DeclRefExpr *DR = dyn_cast<DeclRefExpr>(S->getElement()))
+  else if (DeclRefExpr *DR = dyn_cast<DeclRefExpr>(S->getElement())) {
     elementName = DR->getDecl()->getName();
+    elementTypeAsString = DR->getDecl()->getType().getAsString();
+  }
   else
     assert(false && "RewriteObjCForCollectionStmt - bad element kind");
   
@@ -879,7 +883,7 @@ Stmt *RewriteTest::RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S) {
   ///        do {
   ///             if (startMutations != *enumState.mutationsPtr) 
   ///               objc_enumerationMutation(l_collection);
-  ///             elem = enumState.itemsPtr[counter++];
+  ///             elem = (type)enumState.itemsPtr[counter++];
   buf += "if (limit) {\n\t";
   buf += "unsigned long startMutations = *enumState.mutationsPtr;\n\t";
   buf += "do {\n\t\t";
@@ -888,7 +892,9 @@ Stmt *RewriteTest::RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S) {
   buf += "if (startMutations != *enumState.mutationsPtr)\n\t\t\t\t";
   buf += "objc_enumerationMutation(l_collection);\n\t\t\t";
   buf += elementName;
-  buf += " = enumState.itemsPtr[counter++];";
+  buf += " = (";
+  buf += elementTypeAsString;
+  buf += ")enumState.itemsPtr[counter++];";
   // Replace ')' in for '(' type elem in collection ')' with all of these.
   Rewrite.ReplaceText(lparenLoc, 1, buf.c_str(), buf.size());
   
