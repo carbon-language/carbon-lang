@@ -24,11 +24,11 @@
 
 namespace clang {
   
-class ReachabilityEngineImpl;
+class GREngineImpl;
   
 class ExplodedGraphImpl {
 protected:
-  friend class ReachabilityEngineImpl;
+  friend class GREngineImpl;
   
   // Type definitions.
   typedef llvm::DenseMap<ProgramEdge,void*>         EdgeNodeSetMap;  
@@ -59,9 +59,9 @@ protected:
 
   /// getNodeImpl - Retrieve the node associated with a (Location,State)
   ///  pair, where 'State' is represented as an opaque void*.  This method
-  ///  is intended to be used only by ReachabilityEngineImpl.
+  ///  is intended to be used only by GREngineImpl.
   virtual ExplodedNodeImpl* getNodeImpl(const ProgramEdge& L, void* State,
-                                       bool* IsNew) = 0;
+                                        bool* IsNew) = 0;
                                                             
   /// addRoot - Add an untyped node to the set of roots.
   ExplodedNodeImpl* addRoot(ExplodedNodeImpl* V) {
@@ -96,7 +96,7 @@ protected:
 protected:
   virtual ExplodedNodeImpl*
   getNodeImpl(const ProgramEdge& L, void* State, bool* IsNew) {
-    return getNode(L,ReachabilityTrait<StateTy>::toState(State),IsNew);
+    return getNode(L,GRTrait<StateTy>::toState(State),IsNew);
   }
     
 public:
@@ -131,15 +131,15 @@ public:
     void* InsertPos = 0;
     
     StateTy::Profile(profile, State);
-    NodeTy* V = VSet.FindNodeOrInsertPos(profile,InsertPos);
+    NodeTy* V = VSet.FindNodeOrInsertPos(profile, InsertPos);
 
     if (!V) {
       // Allocate a new node.
       V = (NodeTy*) Allocator.Allocate<NodeTy>();
-      new (V) NodeTy(NodeCounter++,L,State);
+      new (V) NodeTy(NodeCounter++, L, State);
       
       // Insert the node into the node set and return it.
-      VSet.InsertNode(V,InsertPos);
+      VSet.InsertNode(V, InsertPos);
       
       if (IsNew) *IsNew = true;
     }
