@@ -39,12 +39,27 @@ namespace {
     static char ID; // Pass identification, replacement for typeid
     StrongPHIElimination() : MachineFunctionPass((intptr_t)&ID) {}
 
+    // Waiting stores, for each MBB, the set of copies that need to
+    // be inserted into that MBB
     DenseMap<MachineBasicBlock*,
              std::map<unsigned, unsigned> > Waiting;
     
+    // Stacks holds the renaming stack for each register
     std::map<unsigned, std::vector<unsigned> > Stacks;
+    
+    // Registers in UsedByAnother are PHI nodes that are themselves
+    // used as operands to another another PHI node
     std::set<unsigned> UsedByAnother;
+    
+    // RenameSets are the sets of operands to a PHI (the defining instruction
+    // of the key) that can be renamed without copies
     std::map<unsigned, std::set<unsigned> > RenameSets;
+
+    // Store the DFS-in number of each block
+    DenseMap<MachineBasicBlock*, unsigned> preorder;
+    
+    // Store the DFS-out number of each block
+    DenseMap<MachineBasicBlock*, unsigned> maxpreorder;
 
     bool runOnMachineFunction(MachineFunction &Fn);
     
@@ -59,19 +74,32 @@ namespace {
       maxpreorder.clear();
       
       Waiting.clear();
+      Stacks.clear();
+      UsedByAnother.clear();
+      RenameSets.clear();
     }
 
   private:
+    
+    /// DomForestNode - Represents a node in the "dominator forest".  This is
+    /// a forest in which the nodes represent registers and the edges
+    /// represent a dominance relation in the block defining those registers.
     struct DomForestNode {
     private:
+      // Store references to our children
       std::vector<DomForestNode*> children;
+      // The register we represent
       unsigned reg;
       
+      // Add another node as our child
       void addChild(DomForestNode* DFN) { children.push_back(DFN); }
       
     public:
       typedef std::vector<DomForestNode*>::iterator iterator;
       
+      // Create a DomForestNode by providing the register it represents, and
+      // the node to be its parent.  The virtual root node has register 0
+      // and a null parent.
       DomForestNode(unsigned r, DomForestNode* parent) : reg(r) {
         if (parent)
           parent->addChild(this);
@@ -82,15 +110,13 @@ namespace {
           delete *I;
       }
       
+      /// getReg - Return the regiser that this node represents
       inline unsigned getReg() { return reg; }
       
+      // Provide iterator access to our children
       inline DomForestNode::iterator begin() { return children.begin(); }
       inline DomForestNode::iterator end() { return children.end(); }
     };
-    
-    DenseMap<MachineBasicBlock*, unsigned> preorder;
-    DenseMap<MachineBasicBlock*, unsigned> maxpreorder;
-    
     
     void computeDFS(MachineFunction& MF);
     void processBlock(MachineBasicBlock* MBB);
@@ -188,22 +214,28 @@ std::vector<StrongPHIElimination::DomForestNode*>
 StrongPHIElimination::computeDomForest(std::set<unsigned>& regs) {
   LiveVariables& LV = getAnalysis<LiveVariables>();
   
+  // Begin by creating a virtual root node, since the actual results
+  // may well be a forest.  Assume this node has maximum DFS-out number.
   DomForestNode* VirtualRoot = new DomForestNode(0, 0);
   maxpreorder.insert(std::make_pair((MachineBasicBlock*)0, ~0UL));
   
+  // Populate a worklist with the registers
   std::vector<unsigned> worklist;
   worklist.reserve(regs.size());
   for (std::set<unsigned>::iterator I = regs.begin(), E = regs.end();
        I != E; ++I)
     worklist.push_back(*I);
   
+  // Sort the registers by the DFS-in number of their defining block
   PreorderSorter PS(preorder, LV);
   std::sort(worklist.begin(), worklist.end(), PS);
   
+  // Create a "current parent" stack, and put the virtual root on top of it
   DomForestNode* CurrentParent = VirtualRoot;
   std::vector<DomForestNode*> stack;
   stack.push_back(VirtualRoot);
   
+  // Iterate over all the registers in the previously computed order
   for (std::vector<unsigned>::iterator I = worklist.begin(), E = worklist.end();
        I != E; ++I) {
     unsigned pre = preorder[LV.getVarInfo(*I).DefInst->getParent()];
@@ -211,6 +243,8 @@ StrongPHIElimination::computeDomForest(std::set<unsigned>& regs) {
                  LV.getVarInfo(CurrentParent->getReg()).DefInst->getParent() :
                  0;
     
+    // If the DFS-in number of the register is greater than the DFS-out number
+    // of the current parent, repeatedly pop the parent stack until it isn't.
     while (pre > maxpreorder[parentBlock]) {
       stack.pop_back();
       CurrentParent = stack.back();
@@ -220,11 +254,16 @@ StrongPHIElimination::computeDomForest(std::set<unsigned>& regs) {
                    0;
     }
     
+    // Now that we've found the appropriate parent, create a DomForestNode for
+    // this register and attach it to the forest
     DomForestNode* child = new DomForestNode(*I, CurrentParent);
+    
+    // Push this new node on the "current parent" stack
     stack.push_back(child);
     CurrentParent = child;
   }
   
+  // Return a vector containing the children of the virtual root node
   std::vector<DomForestNode*> ret;
   ret.insert(ret.end(), VirtualRoot->begin(), VirtualRoot->end());
   return ret;
@@ -269,8 +308,9 @@ static bool isKillInst(LiveVariables::VarInfo& V, MachineInstr* MI) {
 /// trick parameter is 'mode' which tells it the relationship of the two
 /// registers. 0 - defined in the same block, 1 - first properly dominates
 /// second, 2 - second properly dominates first 
-static bool interferes(LiveVariables::VarInfo& First, LiveVariables::VarInfo& Second,
-                MachineBasicBlock* scan, unsigned mode) {
+static bool interferes(LiveVariables::VarInfo& First,
+                       LiveVariables::VarInfo& Second,
+                       MachineBasicBlock* scan, unsigned mode) {
   MachineInstr* def = 0;
   MachineInstr* kill = 0;
   
