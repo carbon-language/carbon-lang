@@ -1627,7 +1627,8 @@ bool ASTContext::typesAreCompatible(QualType lhs, QualType rhs) {
       return objcTypesAreCompatible(lcanon, rcanon);
 	  
 	// C99 6.7.2.2p4: Each enumerated type shall be compatible with char,
-	// a signed integer type, or an unsigned integer type.
+	// a signed integer type, or an unsigned integer type. 
+	// FIXME: need to check the size and ensure it's the same.
 	if ((lcanon->isEnumeralType() && rcanon->isIntegralType()) ||
 	    (rcanon->isEnumeralType() && lcanon->isIntegralType()))
 	  return true;
