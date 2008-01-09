@@ -846,7 +846,11 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
       
       // Figure out if this is a truncate, extend or noop cast.
       // If the input is signed, do a sign extend, noop, or truncate.
-      if (SubExpr->getType()->isSignedIntegerType())
+      if (getType()->isBooleanType()) {
+        // Conversion to bool compares against zero.
+        Result = Result != 0;
+        Result.zextOrTrunc(DestWidth);
+      } else if (SubExpr->getType()->isSignedIntegerType())
         Result.sextOrTrunc(DestWidth);
       else  // If the input is unsigned, do a zero extend, noop, or truncate.
         Result.zextOrTrunc(DestWidth);
@@ -865,6 +869,13 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
       if (Loc) *Loc = Operand->getLocStart();
       return false;
     }
+
+    // If the destination is boolean, compare against zero.
+    if (getType()->isBooleanType()) {
+      Result = !FL->getValue().isZero();
+      Result.zextOrTrunc(DestWidth);
+      break;
+    }     
     
     // Determine whether we are converting to unsigned or signed.
     bool DestSigned = getType()->isSignedIntegerType();
