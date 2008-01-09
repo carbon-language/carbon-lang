@@ -215,7 +215,9 @@ StrongPHIElimination::computeDomForest(std::set<unsigned>& regs) {
       stack.pop_back();
       CurrentParent = stack.back();
       
-      parentBlock = LV.getVarInfo(CurrentParent->getReg()).DefInst->getParent();
+      parentBlock = CurrentParent->getReg() ?
+                   LV.getVarInfo(CurrentParent->getReg()).DefInst->getParent() :
+                   0;
     }
     
     DomForestNode* child = new DomForestNode(*I, CurrentParent);
@@ -361,7 +363,7 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
   std::set<unsigned> ProcessedNames;
   
   MachineBasicBlock::iterator P = MBB->begin();
-  while (P->getOpcode() == TargetInstrInfo::PHI) {
+  while (P != MBB->end() && P->getOpcode() == TargetInstrInfo::PHI) {
     LiveVariables::VarInfo& PHIInfo = LV.getVarInfo(P->getOperand(0).getReg());
 
     unsigned DestReg = P->getOperand(0).getReg();
