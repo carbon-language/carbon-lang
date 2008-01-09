@@ -1,7 +1,5 @@
 // RUN: clang -rewrite-test %s | clang
 
-#include <objc/objc.h>
-
 @interface SUPER
 - (int) MainMethod;
 @end

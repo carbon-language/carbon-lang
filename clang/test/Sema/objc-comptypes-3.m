@@ -1,6 +1,8 @@
 // RUN: clang -fsyntax-only -verify %s
+
+#define nil (void *)0;
+
 extern void foo();
-#include <objc/objc.h>
 
 @protocol MyProtocolA
 - (void) methodA;

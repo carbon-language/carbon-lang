@@ -1,6 +1,7 @@
 // RUN: clang -fsyntax-only -verify -pedantic %s
 
-#include <objc/objc.h>
+#define nil (void *)0;
+#define Nil (void *)0;
 
 extern void foo();
 

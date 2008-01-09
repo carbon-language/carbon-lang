@@ -1,9 +1,9 @@
 // RUN: clang -fsyntax-only -verify -pedantic %s
 
-#include <objc/Object.h>
-
-@interface Derived: Object
+@interface Derived
 @end
+
+@interface Object @end
 
 extern Object* foo(void);
 

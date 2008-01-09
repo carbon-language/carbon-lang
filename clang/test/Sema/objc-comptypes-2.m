@@ -1,6 +1,7 @@
 // RUN: clang -fsyntax-only -verify %s
 
-#include <objc/objc.h>
+#define nil (void *)0;
+#define Nil (void *)0;
 
 @protocol MyProtocol
 - (void) foo;
