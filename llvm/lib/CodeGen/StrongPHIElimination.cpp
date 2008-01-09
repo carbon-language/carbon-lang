@@ -101,7 +101,7 @@ namespace {
                          std::vector<StrongPHIElimination::DomForestNode*>& DF,
                          std::vector<std::pair<unsigned, unsigned> >& locals);
     void ScheduleCopies(MachineBasicBlock* MBB, std::set<unsigned>& pushed);
-    void InsertCopies(MachineBasicBlock* MBB);
+    void InsertCopies(MachineBasicBlock* MBB, std::set<MachineBasicBlock*>& v);
   };
 
   char StrongPHIElimination::ID = 0;
@@ -610,7 +610,10 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
 }
 
 /// InsertCopies - insert copies into MBB and all of its successors
-void StrongPHIElimination::InsertCopies(MachineBasicBlock* MBB) {
+void StrongPHIElimination::InsertCopies(MachineBasicBlock* MBB,
+                                        std::set<MachineBasicBlock*>& visited) {
+  visited.insert(MBB);
+  
   std::set<unsigned> pushed;
   
   // Rewrite register uses from Stacks
@@ -629,7 +632,8 @@ void StrongPHIElimination::InsertCopies(MachineBasicBlock* MBB) {
   for (GraphTraits<MachineBasicBlock*>::ChildIteratorType I = 
        GraphTraits<MachineBasicBlock*>::child_begin(MBB), E =
        GraphTraits<MachineBasicBlock*>::child_end(MBB); I != E; ++I)
-    InsertCopies(*I);
+    if (!visited.count(*I))
+      InsertCopies(*I, visited);
   
   // As we exit this block, pop the names we pushed while processing it
   for (std::set<unsigned>::iterator I = pushed.begin(), 
@@ -649,7 +653,8 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
   
   // Insert copies
   // FIXME: This process should probably preserve LiveVariables
-  InsertCopies(Fn.begin());
+  std::set<MachineBasicBlock*> visited;
+  InsertCopies(Fn.begin(), visited);
   
   // Perform renaming
   typedef std::map<unsigned, std::set<unsigned> > RenameSetType;
