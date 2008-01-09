@@ -14,6 +14,7 @@
 #include "llvm/System/Path.h"
 #include "llvm/Config/config.h"
 #include <cassert>
+#include <cstring>
 #include <ostream>
 using namespace llvm;
 using namespace sys;

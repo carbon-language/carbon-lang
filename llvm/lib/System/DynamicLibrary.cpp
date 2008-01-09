@@ -13,6 +13,7 @@
 
 #include "llvm/System/DynamicLibrary.h"
 #include "llvm/Config/config.h"
+#include <cstring>
 #include <map>
 
 // Collection of symbol name/value pairs to be searched prior to any libraries.
