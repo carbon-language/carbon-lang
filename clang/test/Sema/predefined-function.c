@@ -4,9 +4,14 @@ char *funk(int format);
 enum Test {A=-1};
 char *funk(enum Test x);
 
+int eli(float b); // expected-error {{previous definition is here}}
+int b(int c) {return 1;}
+
 int foo();
 int foo()
 {
+    int eli(int (int)); // expected-error {{redefinition of 'eli'}}
+    eli(b);
 	return 0;	
 }
 

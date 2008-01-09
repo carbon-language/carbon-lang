@@ -637,9 +637,6 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
   // See if this is a redefinition of a variable in the same scope.
   ScopedDecl *PrevDecl = LookupScopedDecl(II, Decl::IDNS_Ordinary,
                                           D.getIdentifierLoc(), S);
-  if (PrevDecl && !S->isDeclScope(PrevDecl))
-    PrevDecl = 0;   // If in outer scope, it isn't the same thing.
-
   ScopedDecl *New;
   bool InvalidDecl = false;
   
@@ -653,8 +650,9 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     // Handle attributes prior to checking for duplicates in MergeVarDecl
     HandleDeclAttributes(NewTD, D.getDeclSpec().getAttributes(),
                          D.getAttributes());
-    // Merge the decl with the existing one if appropriate.
-    if (PrevDecl) {
+    // Merge the decl with the existing one if appropriate. If the decl is
+    // in an outer scope, it isn't the same thing.
+    if (PrevDecl && S->isDeclScope(PrevDecl)) {
       NewTD = MergeTypeDefDecl(NewTD, PrevDecl);
       if (NewTD == 0) return 0;
     }
@@ -692,7 +690,8 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     // Transfer ownership of DeclSpec attributes to FunctionDecl
     D.getDeclSpec().clearAttributes();
     
-    // Merge the decl with the existing one if appropriate.
+    // Merge the decl with the existing one if appropriate. Since C functions
+    // are in a flat namespace, make sure we consider decls in outer scopes.
     if (PrevDecl) {
       NewFD = MergeFunctionDecl(NewFD, PrevDecl);
       if (NewFD == 0) return 0;
@@ -731,8 +730,9 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     HandleDeclAttributes(NewVD, D.getDeclSpec().getAttributes(),
                          D.getAttributes());
      
-    // Merge the decl with the existing one if appropriate.
-    if (PrevDecl) {
+    // Merge the decl with the existing one if appropriate. If the decl is
+    // in an outer scope, it isn't the same thing.
+    if (PrevDecl && S->isDeclScope(PrevDecl)) {
       NewVD = MergeVarDecl(NewVD, PrevDecl);
       if (NewVD == 0) return 0;
     }
