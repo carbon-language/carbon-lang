@@ -664,8 +664,9 @@ ActOnCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
   Expr *literalExpr = static_cast<Expr*>(InitExpr);
 
   // FIXME: add more semantic analysis (C99 6.5.2.5).
-  if (CheckInitializer(literalExpr, literalType, false))
-    return 0;
+  bool requireConstantExprs = !CurFunctionDecl && !CurMethodDecl;
+  if (CheckInitializer(literalExpr, literalType, requireConstantExprs))
+    return true;
 
   return new CompoundLiteralExpr(LParenLoc, literalType, literalExpr);
 }
