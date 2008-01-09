@@ -789,7 +789,7 @@ void RewriteTest::SynthCountByEnumWithState(std::string &buf) {
          "(id *)items, (unsigned int)16)";
 }
 
-/// RewriteObjCTryStmt - Rewriter for ObjC2's feareach statement.
+/// RewriteObjCTryStmt - Rewriter for ObjC2's foreach statement.
 ///  It rewrites:
 /// for ( type elem in collection) { stmts; }
  
