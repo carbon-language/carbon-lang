@@ -178,7 +178,6 @@ public:
     else if (preorder[ABlock] > preorder[BBlock])
       return false;
     
-    assert(0 && "Error sorting by dominance!");
     return false;
   }
 };
@@ -208,8 +207,9 @@ StrongPHIElimination::computeDomForest(std::set<unsigned>& regs) {
   for (std::vector<unsigned>::iterator I = worklist.begin(), E = worklist.end();
        I != E; ++I) {
     unsigned pre = preorder[LV.getVarInfo(*I).DefInst->getParent()];
-    MachineBasicBlock* parentBlock =
-      LV.getVarInfo(CurrentParent->getReg()).DefInst->getParent();
+    MachineBasicBlock* parentBlock = CurrentParent->getReg() ?
+                 LV.getVarInfo(CurrentParent->getReg()).DefInst->getParent() :
+                 0;
     
     while (pre > maxpreorder[parentBlock]) {
       stack.pop_back();
