@@ -524,3 +524,24 @@ Investigate lowering of sparse switch statements into perfect hash tables:
 http://burtleburtle.net/bob/hash/perfect.html
 
 //===---------------------------------------------------------------------===//
+
+We should turn things like "load+fabs+store" and "load+fneg+store" into the
+corresponding integer operations.  On a yonah, this loop:
+
+double a[256];
+ for (b = 0; b < 10000000; b++)
+ for (i = 0; i < 256; i++)
+   a[i] = -a[i];
+
+is twice as slow as this loop:
+
+long long a[256];
+ for (b = 0; b < 10000000; b++)
+ for (i = 0; i < 256; i++)
+   a[i] ^= (1ULL << 63);
+
+and I suspect other processors are similar.  On X86 in particular this is a
+big win because doing this with integers allows the use of read/modify/write
+instructions.
+
+//===---------------------------------------------------------------------===//
