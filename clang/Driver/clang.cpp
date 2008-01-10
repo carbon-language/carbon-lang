@@ -506,6 +506,11 @@ static llvm::cl::list<std::string>
 U_macros("U", llvm::cl::value_desc("macro"), llvm::cl::Prefix,
          llvm::cl::desc("Undefine the specified macro"));
 
+static llvm::cl::list<std::string>
+ImplicitIncludes("include", llvm::cl::value_desc("file"),
+                 llvm::cl::desc("Include file before parsing"));
+
+
 // Append a #define line to Buf for Macro.  Macro should be of the form XXX,
 // in which case we emit "#define XXX 1" or "XXX=Y z W" in which case we emit
 // "#define XXX Y z W".  To get a #define with no value, use "XXX=".
@@ -523,6 +528,16 @@ static void DefineBuiltinMacro(std::vector<char> &Buf, const char *Macro,
     Buf.push_back(' ');
     Buf.push_back('1');
   }
+  Buf.push_back('\n');
+}
+
+/// AddImplicitInclude - Add an implicit #include of the specified file to the
+/// predefines buffer.
+static void AddImplicitInclude(std::vector<char> &Buf, const std::string &File){
+  const char *Inc = "#include \"";
+  Buf.insert(Buf.end(), Inc, Inc+strlen(Inc));
+  Buf.insert(Buf.end(), File.begin(), File.end());
+  Buf.push_back('"');
   Buf.push_back('\n');
 }
 
@@ -562,7 +577,11 @@ static unsigned InitializePreprocessor(Preprocessor &PP,
   for (unsigned i = 0, e = U_macros.size(); i != e; ++i)
     DefineBuiltinMacro(PredefineBuffer, U_macros[i].c_str(), "#undef ");
   
-  // FIXME: Read any files specified by -imacros or -include.
+  // FIXME: Read any files specified by -imacros.
+  
+  // Add implicit #includes from -include.
+  for (unsigned i = 0, e = ImplicitIncludes.size(); i != e; ++i)
+    AddImplicitInclude(PredefineBuffer, ImplicitIncludes[i]);
   
   // Null terminate PredefinedBuffer and add it.
   PredefineBuffer.push_back(0);
@@ -583,7 +602,7 @@ static unsigned InitializePreprocessor(Preprocessor &PP,
 // FIXME: -nostdinc,-nostdinc++
 // FIXME: -imultilib
 //
-// FIXME: -include,-imacros
+// FIXME: -imacros
 
 static llvm::cl::opt<bool>
 nostdinc("nostdinc", llvm::cl::desc("Disable standard #include directories"));
