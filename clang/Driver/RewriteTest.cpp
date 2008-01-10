@@ -122,11 +122,14 @@ namespace {
                       "(struct objc_class *, struct objc_object *, ...);\n"
                       "extern Protocol *objc_getProtocol(const char *);\n"
                       "#include <objc/objc.h>\n"
+                      "#ifndef __FASTENUMERATIONSTATE\n"
                       "struct __objcFastEnumerationState {\n\t"
                       "unsigned long state;\n\t"
                       "id *itemsPtr;\n\t"
                       "unsigned long *mutationsPtr;\n\t"
-                      "unsigned long extra[5];\n};\n";
+                      "unsigned long extra[5];\n};\n"
+                      "#define __FASTENUMERATIONSTATE\n"
+                      "#endif\n";
                       
       Rewrite.InsertText(SourceLocation::getFileLoc(MainFileID, 0), 
                          s, strlen(s));
