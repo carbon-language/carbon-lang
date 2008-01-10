@@ -603,8 +603,6 @@ void Emitter::emitInstruction(const MachineInstr &MI,
       assert(0 && "JIT does not support inline asm!\n");
     case TargetInstrInfo::LABEL:
       assert(0 && "JIT does not support meta labels!\n");
-    case X86::IMPLICIT_USE:
-    case X86::IMPLICIT_DEF:
     case X86::IMPLICIT_DEF_GR8:
     case X86::IMPLICIT_DEF_GR16:
     case X86::IMPLICIT_DEF_GR32:

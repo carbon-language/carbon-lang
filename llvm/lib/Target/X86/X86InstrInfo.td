@@ -263,12 +263,7 @@ def ADJCALLSTACKUP   : I<0, Pseudo, (outs), (ins i32imm:$amt1, i32imm:$amt2),
                          "#ADJCALLSTACKUP",
                          [(X86callseq_end imm:$amt1, imm:$amt2)]>;
 }
-def IMPLICIT_USE     : I<0, Pseudo, (outs), (ins variable_ops),
-                         "#IMPLICIT_USE", []>;
 let isImplicitDef = 1 in {
-let neverHasSideEffects = 1 in
-def IMPLICIT_DEF     : I<0, Pseudo, (outs variable_ops), (ins),
-                          "#IMPLICIT_DEF", []>;
 def IMPLICIT_DEF_GR8  : I<0, Pseudo, (outs GR8:$dst), (ins),
                          "#IMPLICIT_DEF $dst",
                          [(set GR8:$dst, (undef))]>;
