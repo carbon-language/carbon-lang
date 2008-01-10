@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mcpu=i486 | grep fstpl | count 4
+; RUN: llvm-as < %s | llc -mcpu=i486 | grep fstpl | count 3
 ; RUN: llvm-as < %s | llc -mcpu=i486 | grep fstps | count 3
 
 ; ModuleID = '<stdin>'
