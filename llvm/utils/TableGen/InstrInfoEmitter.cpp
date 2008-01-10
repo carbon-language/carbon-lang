@@ -154,7 +154,10 @@ public:
   
   void Analyze(Record *InstRecord) {
     const TreePattern *Pattern = CDP.getInstruction(InstRecord).getPattern();
-    if (Pattern == 0) return;  // No pattern.
+    if (Pattern == 0) {
+      HasSideEffects = 1;
+      return;  // No pattern.
+    }
     
     // FIXME: Assume only the first tree is the pattern. The others are clobber
     // nodes.
