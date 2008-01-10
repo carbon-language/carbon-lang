@@ -64,11 +64,31 @@ public:
   /// reg_begin/reg_end - Provide iteration support to walk over all definitions
   /// and uses of a register within the MachineFunction that corresponds to this
   /// MachineRegisterInfo object.
-  class reg_iterator;
+  template<bool Uses, bool Defs>
+  class defusechain_iterator;
+
+  /// reg_iterator/reg_begin/reg_end - Walk all defs and uses of the specified
+  /// register.
+  typedef defusechain_iterator<true,true> reg_iterator;
   reg_iterator reg_begin(unsigned RegNo) const {
     return reg_iterator(getRegUseDefListHead(RegNo));
   }
   static reg_iterator reg_end() { return reg_iterator(0); }
+
+  /// def_iterator/def_begin/def_end - Walk all defs of the specified register.
+  typedef defusechain_iterator<false,true> def_iterator;
+  def_iterator def_begin(unsigned RegNo) const {
+    return def_iterator(getRegUseDefListHead(RegNo));
+  }
+  static def_iterator def_end() { return def_iterator(0); }
+
+  /// use_iterator/use_begin/use_end - Walk all uses of the specified register.
+  typedef defusechain_iterator<true,false> use_iterator;
+  use_iterator use_begin(unsigned RegNo) const {
+    return use_iterator(getRegUseDefListHead(RegNo));
+  }
+  static use_iterator use_end() { return use_iterator(0); }
+  
   
   /// replaceRegWith - Replace all instances of FromReg with ToReg in the
   /// machine function.  This is like llvm-level X->replaceAllUsesWith(Y),
@@ -174,23 +194,36 @@ private:
   void HandleVRegListReallocation();
   
 public:
-  /// reg_iterator - This class provides iterator support for machine
-  /// operands in the function that use or define a specific register.
-  class reg_iterator : public forward_iterator<MachineInstr, ptrdiff_t> {
+  /// defusechain_iterator - This class provides iterator support for machine
+  /// operands in the function that use or define a specific register.  If
+  /// ReturnUses is true it returns uses of registers, if ReturnDefs is true it
+  /// returns defs.  If neither are true then you are silly and it always
+  /// returns end().
+  template<bool ReturnUses, bool ReturnDefs>
+  class defusechain_iterator
+    : public forward_iterator<MachineInstr, ptrdiff_t> {
     MachineOperand *Op;
-    reg_iterator(MachineOperand *op) : Op(op) {}
+    defusechain_iterator(MachineOperand *op) : Op(op) {
+      // If the first node isn't one we're interested in, advance to one that
+      // we are interested in.
+      if (op) {
+        if (!ReturnUses && op->isUse() || 
+            !ReturnDefs && op->isDef())
+          ++*this;
+      }
+    }
     friend class MachineRegisterInfo;
   public:
     typedef forward_iterator<MachineInstr, ptrdiff_t>::reference reference;
     typedef forward_iterator<MachineInstr, ptrdiff_t>::pointer pointer;
     
-    reg_iterator(const reg_iterator &I) : Op(I.Op) {}
-    reg_iterator() : Op(0) {}
+    defusechain_iterator(const defusechain_iterator &I) : Op(I.Op) {}
+    defusechain_iterator() : Op(0) {}
     
-    bool operator==(const reg_iterator &x) const {
+    bool operator==(const defusechain_iterator &x) const {
       return Op == x.Op;
     }
-    bool operator!=(const reg_iterator &x) const {
+    bool operator!=(const defusechain_iterator &x) const {
       return !operator==(x);
     }
     
@@ -198,13 +231,19 @@ public:
     bool atEnd() const { return Op == 0; }
     
     // Iterator traversal: forward iteration only
-    reg_iterator &operator++() {          // Preincrement
+    defusechain_iterator &operator++() {          // Preincrement
       assert(Op && "Cannot increment end iterator!");
       Op = Op->getNextOperandForReg();
+      
+      // If this is an operand we don't care about, skip it.
+      while (Op && (!ReturnUses && Op->isUse() || 
+                    !ReturnDefs && Op->isDef()))
+        Op = Op->getNextOperandForReg();
+      
       return *this;
     }
-    reg_iterator operator++(int) {        // Postincrement
-      reg_iterator tmp = *this; ++*this; return tmp;
+    defusechain_iterator operator++(int) {        // Postincrement
+      defusechain_iterator tmp = *this; ++*this; return tmp;
     }
     
     MachineOperand &getOperand() const {
