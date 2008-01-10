@@ -1209,6 +1209,34 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG) {
                      &ArgValues[0], ArgValues.size()).getValue(Op.ResNo);
 }
 
+SDOperand
+X86TargetLowering::LowerMemOpCallTo(SDOperand Op, SelectionDAG &DAG,
+                                    const SDOperand &StackPtr,
+                                    const CCValAssign &VA,
+                                    SDOperand Chain,
+                                    SDOperand Arg) {
+  SDOperand PtrOff = DAG.getConstant(VA.getLocMemOffset(), getPointerTy());
+  PtrOff = DAG.getNode(ISD::ADD, getPointerTy(), StackPtr, PtrOff);
+  SDOperand FlagsOp = Op.getOperand(6+2*VA.getValNo());
+  unsigned Flags    = cast<ConstantSDNode>(FlagsOp)->getValue();
+  if (Flags & ISD::ParamFlags::ByVal) {
+    unsigned Align = 1 << ((Flags & ISD::ParamFlags::ByValAlign) >>
+                           ISD::ParamFlags::ByValAlignOffs);
+
+    unsigned  Size = (Flags & ISD::ParamFlags::ByValSize) >>
+        ISD::ParamFlags::ByValSizeOffs;
+
+    SDOperand AlignNode = DAG.getConstant(Align, MVT::i32);
+    SDOperand  SizeNode = DAG.getConstant(Size, MVT::i32);
+    SDOperand AlwaysInline = DAG.getConstant(1, MVT::i32);
+
+    return DAG.getMemcpy(Chain, PtrOff, Arg, SizeNode, AlignNode,
+                         AlwaysInline);
+  } else {
+    return DAG.getStore(Chain, Arg, PtrOff, NULL, 0);
+  }
+}
+
 SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   MachineFunction &MF = DAG.getMachineFunction();
   SDOperand Chain     = Op.getOperand(0);
@@ -1522,47 +1550,6 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   return SDOperand(LowerCallResult(Chain, InFlag, Op.Val, CC, DAG), Op.ResNo);
 }
 
-
-//===----------------------------------------------------------------------===//
-//                   FastCall Calling Convention implementation
-//===----------------------------------------------------------------------===//
-//
-// The X86 'fastcall' calling convention passes up to two integer arguments in
-// registers (an appropriate portion of ECX/EDX), passes arguments in C order,
-// and requires that the callee pop its arguments off the stack (allowing proper
-// tail calls), and has the same return value conventions as C calling convs.
-//
-// This calling convention always arranges for the callee pop value to be 8n+4
-// bytes, which is needed for tail recursion elimination and stack alignment
-// reasons.
-
-SDOperand
-X86TargetLowering::LowerMemOpCallTo(SDOperand Op, SelectionDAG &DAG,
-                                    const SDOperand &StackPtr,
-                                    const CCValAssign &VA,
-                                    SDOperand Chain,
-                                    SDOperand Arg) {
-  SDOperand PtrOff = DAG.getConstant(VA.getLocMemOffset(), getPointerTy());
-  PtrOff = DAG.getNode(ISD::ADD, getPointerTy(), StackPtr, PtrOff);
-  SDOperand FlagsOp = Op.getOperand(6+2*VA.getValNo());
-  unsigned Flags    = cast<ConstantSDNode>(FlagsOp)->getValue();
-  if (Flags & ISD::ParamFlags::ByVal) {
-    unsigned Align = 1 << ((Flags & ISD::ParamFlags::ByValAlign) >>
-                           ISD::ParamFlags::ByValAlignOffs);
-
-    unsigned  Size = (Flags & ISD::ParamFlags::ByValSize) >>
-        ISD::ParamFlags::ByValSizeOffs;
-
-    SDOperand AlignNode = DAG.getConstant(Align, MVT::i32);
-    SDOperand  SizeNode = DAG.getConstant(Size, MVT::i32);
-    SDOperand AlwaysInline = DAG.getConstant(1, MVT::i32);
-
-    return DAG.getMemcpy(Chain, PtrOff, Arg, SizeNode, AlignNode,
-                         AlwaysInline);
-  } else {
-    return DAG.getStore(Chain, Arg, PtrOff, NULL, 0);
-  }
-}
 
 //===----------------------------------------------------------------------===//
 //                Fast Calling Convention (tail call) implementation
