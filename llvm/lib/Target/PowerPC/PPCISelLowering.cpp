@@ -341,9 +341,11 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   
   // Darwin long double math library functions have $LDBL128 appended.
   if (TM.getSubtarget<PPCSubtarget>().isDarwin()) {
-    setLibcallName(RTLIB::SQRT_PPCF128, "sqrtl$LDBL128");
+    setLibcallName(RTLIB::COS_PPCF128, "cosl$LDBL128");
     setLibcallName(RTLIB::POW_PPCF128, "powl$LDBL128");
     setLibcallName(RTLIB::REM_PPCF128, "fmodl$LDBL128");
+    setLibcallName(RTLIB::SIN_PPCF128, "sinl$LDBL128");
+    setLibcallName(RTLIB::SQRT_PPCF128, "sqrtl$LDBL128");
   }
 
   computeRegisterProperties();

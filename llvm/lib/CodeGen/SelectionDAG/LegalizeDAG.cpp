@@ -737,6 +737,20 @@ SDOperand SelectionDAGLegalize::UnrollVectorOp(SDOperand Op) {
   return DAG.getNode(ISD::BUILD_VECTOR, VT, &Scalars[0], Scalars.size());
 }
 
+/// GetFPLibCall - Return the right libcall for the given floating point type.
+static RTLIB::Libcall GetFPLibCall(MVT::ValueType VT,
+                                   RTLIB::Libcall Call_F32,
+                                   RTLIB::Libcall Call_F64,
+                                   RTLIB::Libcall Call_F80,
+                                   RTLIB::Libcall Call_PPCF128) {
+  return
+    VT == MVT::f32 ? Call_F32 :
+    VT == MVT::f64 ? Call_F64 :
+    VT == MVT::f80 ? Call_F80 :
+    VT == MVT::ppcf128 ? Call_PPCF128 :
+    RTLIB::UNKNOWN_LIBCALL;
+}
+
 /// LegalizeOp - We know that the specified value has a legal type, and
 /// that its operands are legal.  Now ensure that the operation itself
 /// is legal, recursively ensuring that the operands' operations remain
@@ -2774,11 +2788,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         }
         break;
       case ISD::FPOW:
-        LC = VT == MVT::f32 ? RTLIB::POW_F32 :
-             VT == MVT::f64 ? RTLIB::POW_F64 :
-             VT == MVT::f80 ? RTLIB::POW_F80 :
-             VT == MVT::ppcf128 ? RTLIB::POW_PPCF128 :
-             RTLIB::UNKNOWN_LIBCALL;
+        LC = GetFPLibCall(VT, RTLIB::POW_F32, RTLIB::POW_F64, RTLIB::POW_F80,
+                          RTLIB::POW_PPCF128);
         break;
       default: break;
       }
@@ -2996,8 +3007,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           Result = LegalizeOp(UnrollVectorOp(Op));
         } else {
           // Floating point mod -> fmod libcall.
-          RTLIB::Libcall LC = VT == MVT::f32
-            ? RTLIB::REM_F32 : RTLIB::REM_F64;
+          RTLIB::Libcall LC = GetFPLibCall(VT, RTLIB::REM_F32, RTLIB::REM_F64,
+                                           RTLIB::REM_F80, RTLIB::REM_PPCF128);
           SDOperand Dummy;
           Result = ExpandLibCall(TLI.getLibcallName(LC), Node,
                                  false/*sign irrelevant*/, Dummy);
@@ -3274,17 +3285,16 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
         switch(Node->getOpcode()) {
         case ISD::FSQRT:
-          LC = VT == MVT::f32 ? RTLIB::SQRT_F32 : 
-               VT == MVT::f64 ? RTLIB::SQRT_F64 : 
-               VT == MVT::f80 ? RTLIB::SQRT_F80 :
-               VT == MVT::ppcf128 ? RTLIB::SQRT_PPCF128 :
-               RTLIB::UNKNOWN_LIBCALL;
+          LC = GetFPLibCall(VT, RTLIB::SQRT_F32, RTLIB::SQRT_F64,
+                            RTLIB::SQRT_F80, RTLIB::SQRT_PPCF128);
           break;
         case ISD::FSIN:
-          LC = VT == MVT::f32 ? RTLIB::SIN_F32 : RTLIB::SIN_F64;
+          LC = GetFPLibCall(VT, RTLIB::SIN_F32, RTLIB::SIN_F64,
+                            RTLIB::SIN_F80, RTLIB::SIN_PPCF128);
           break;
         case ISD::FCOS:
-          LC = VT == MVT::f32 ? RTLIB::COS_F32 : RTLIB::COS_F64;
+          LC = GetFPLibCall(VT, RTLIB::COS_F32, RTLIB::COS_F64,
+                            RTLIB::COS_F80, RTLIB::COS_PPCF128);
           break;
         default: assert(0 && "Unreachable!");
         }
@@ -3307,12 +3317,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
 
     // We always lower FPOWI into a libcall.  No target support for it yet.
-    RTLIB::Libcall LC = 
-      VT == MVT::f32 ? RTLIB::POWI_F32 : 
-      VT == MVT::f64 ? RTLIB::POWI_F64 : 
-      VT == MVT::f80 ? RTLIB::POWI_F80 : 
-      VT == MVT::ppcf128 ? RTLIB::POWI_PPCF128 : 
-      RTLIB::UNKNOWN_LIBCALL;
+    RTLIB::Libcall LC = GetFPLibCall(VT, RTLIB::POWI_F32, RTLIB::POWI_F64,
+                                     RTLIB::POWI_F80, RTLIB::POWI_PPCF128);
     SDOperand Dummy;
     Result = ExpandLibCall(TLI.getLibcallName(LC), Node,
                            false/*sign irrelevant*/, Dummy);
@@ -6067,35 +6073,31 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     break;
 
   case ISD::FADD:
-    Lo = ExpandLibCall(TLI.getLibcallName(VT == MVT::f32 ? RTLIB::ADD_F32 : 
-                                          VT == MVT::f64 ? RTLIB::ADD_F64 :
-                                          VT == MVT::ppcf128 ? 
-                                                      RTLIB::ADD_PPCF128 :
-                                          RTLIB::UNKNOWN_LIBCALL),
+    Lo = ExpandLibCall(TLI.getLibcallName(GetFPLibCall(VT, RTLIB::ADD_F32,
+                                                       RTLIB::ADD_F64,
+                                                       RTLIB::ADD_F80,
+                                                       RTLIB::ADD_PPCF128)),
                        Node, false, Hi);
     break;
   case ISD::FSUB:
-    Lo = ExpandLibCall(TLI.getLibcallName(VT == MVT::f32 ? RTLIB::SUB_F32 :
-                                          VT == MVT::f64 ? RTLIB::SUB_F64 :
-                                          VT == MVT::ppcf128 ? 
-                                                      RTLIB::SUB_PPCF128 :
-                                          RTLIB::UNKNOWN_LIBCALL),
+    Lo = ExpandLibCall(TLI.getLibcallName(GetFPLibCall(VT, RTLIB::SUB_F32,
+                                                       RTLIB::SUB_F64,
+                                                       RTLIB::SUB_F80,
+                                                       RTLIB::SUB_PPCF128)),
                        Node, false, Hi);
     break;
   case ISD::FMUL:
-    Lo = ExpandLibCall(TLI.getLibcallName(VT == MVT::f32 ? RTLIB::MUL_F32 :
-                                          VT == MVT::f64 ? RTLIB::MUL_F64 :
-                                          VT == MVT::ppcf128 ? 
-                                                      RTLIB::MUL_PPCF128 :
-                                          RTLIB::UNKNOWN_LIBCALL),
+    Lo = ExpandLibCall(TLI.getLibcallName(GetFPLibCall(VT, RTLIB::MUL_F32,
+                                                       RTLIB::MUL_F64,
+                                                       RTLIB::MUL_F80,
+                                                       RTLIB::MUL_PPCF128)),
                        Node, false, Hi);
     break;
   case ISD::FDIV:
-    Lo = ExpandLibCall(TLI.getLibcallName(VT == MVT::f32 ? RTLIB::DIV_F32 :
-                                          VT == MVT::f64 ? RTLIB::DIV_F64 :
-                                          VT == MVT::ppcf128 ? 
-                                                      RTLIB::DIV_PPCF128 :
-                                          RTLIB::UNKNOWN_LIBCALL),
+    Lo = ExpandLibCall(TLI.getLibcallName(GetFPLibCall(VT, RTLIB::DIV_F32,
+                                                       RTLIB::DIV_F64,
+                                                       RTLIB::DIV_F80,
+                                                       RTLIB::DIV_PPCF128)),
                        Node, false, Hi);
     break;
   case ISD::FP_EXTEND:
@@ -6116,12 +6118,10 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     Lo = ExpandLibCall(TLI.getLibcallName(RTLIB::FPROUND_F64_F32),Node,true,Hi);
     break;
   case ISD::FPOWI:
-    Lo = ExpandLibCall(TLI.getLibcallName((VT == MVT::f32) ? RTLIB::POWI_F32 : 
-                                          (VT == MVT::f64) ? RTLIB::POWI_F64 :
-                                          (VT == MVT::f80) ? RTLIB::POWI_F80 :
-                                          (VT == MVT::ppcf128) ? 
-                                                         RTLIB::POWI_PPCF128 :
-                                          RTLIB::UNKNOWN_LIBCALL),
+    Lo = ExpandLibCall(TLI.getLibcallName(GetFPLibCall(VT, RTLIB::POWI_F32,
+                                                       RTLIB::POWI_F64,
+                                                       RTLIB::POWI_F80,
+                                                       RTLIB::POWI_PPCF128)),
                        Node, false, Hi);
     break;
   case ISD::FSQRT:
@@ -6130,17 +6130,16 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
     switch(Node->getOpcode()) {
     case ISD::FSQRT:
-      LC = (VT == MVT::f32) ? RTLIB::SQRT_F32 : 
-           (VT == MVT::f64) ? RTLIB::SQRT_F64 : 
-           (VT == MVT::f80) ? RTLIB::SQRT_F80 : 
-           (VT == MVT::ppcf128) ? RTLIB::SQRT_PPCF128 : 
-           RTLIB::UNKNOWN_LIBCALL;
+      LC = GetFPLibCall(VT, RTLIB::SQRT_F32, RTLIB::SQRT_F64,
+                        RTLIB::SQRT_F80, RTLIB::SQRT_PPCF128);
       break;
     case ISD::FSIN:
-      LC = (VT == MVT::f32) ? RTLIB::SIN_F32 : RTLIB::SIN_F64;
+      LC = GetFPLibCall(VT, RTLIB::SIN_F32, RTLIB::SIN_F64,
+                        RTLIB::SIN_F80, RTLIB::SIN_PPCF128);
       break;
     case ISD::FCOS:
-      LC = (VT == MVT::f32) ? RTLIB::COS_F32 : RTLIB::COS_F64;
+      LC = GetFPLibCall(VT, RTLIB::COS_F32, RTLIB::COS_F64,
+                        RTLIB::COS_F80, RTLIB::COS_PPCF128);
       break;
     default: assert(0 && "Unreachable!");
     }
