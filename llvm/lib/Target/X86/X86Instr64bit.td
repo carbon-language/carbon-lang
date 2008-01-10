@@ -1,4 +1,4 @@
-//====- X86InstrX86-64.td - Describe the X86 Instr. Set ----*- tablegen -*-===//
+//====- X86Instr64bit.td - Describe X86-64 Instructions ----*- tablegen -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,7 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
-// Operand Definitions...
+// Operand Definitions.
 //
 
 // 64-bits but only 32 bits are significant.
@@ -33,14 +33,14 @@ def lea64_32mem : Operand<i32> {
 }
 
 //===----------------------------------------------------------------------===//
-// Complex Pattern Definitions...
+// Complex Pattern Definitions.
 //
 def lea64addr : ComplexPattern<i64, 4, "SelectLEAAddr",
                                [add, mul, shl, or, frameindex, X86Wrapper],
                                []>;
 
 //===----------------------------------------------------------------------===//
-// Pattern fragments...
+// Pattern fragments.
 //
 
 def i64immSExt32  : PatLeaf<(i64 imm), [{

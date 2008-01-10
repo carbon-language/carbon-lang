@@ -2711,7 +2711,7 @@ include "X86InstrFPStack.td"
 // X86-64 Support
 //===----------------------------------------------------------------------===//
 
-include "X86InstrX86-64.td"
+include "X86Instr64bit.td"
 
 //===----------------------------------------------------------------------===//
 // MMX and XMM Packed Integer support (requires MMX, SSE, and SSE2)
