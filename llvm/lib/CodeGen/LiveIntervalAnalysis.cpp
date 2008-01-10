@@ -624,7 +624,7 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li,
 
   int FrameIdx = 0;
   if (!tii_->isLoadFromStackSlot(MI, FrameIdx) ||
-      !mf_->getFrameInfo()->isFixedObjectIndex(FrameIdx))
+      !mf_->getFrameInfo()->isImmutableObjectIndex(FrameIdx))
     return false;
 
   // This is a load from fixed stack slot. It can be rematerialized unless it's
@@ -719,7 +719,7 @@ bool LiveIntervals::tryFoldMemoryOperand(MachineInstr* &MI,
     else
       LiveVariables::transferKillDeadInfo(MI, fmi, mri_);
     MachineBasicBlock &MBB = *MI->getParent();
-    if (isSS && !mf_->getFrameInfo()->isFixedObjectIndex(Slot))
+    if (isSS && !mf_->getFrameInfo()->isImmutableObjectIndex(Slot))
       vrm.virtFolded(Reg, MI, fmi, (VirtRegMap::ModRef)MRInfo);
     vrm.transferSpillPts(MI, fmi);
     vrm.transferRestorePts(MI, fmi);
