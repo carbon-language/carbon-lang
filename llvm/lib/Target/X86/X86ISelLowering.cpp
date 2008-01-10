@@ -1012,16 +1012,17 @@ SDOperand X86TargetLowering::LowerMemArgument(SDOperand Op, SelectionDAG &DAG,
                                               MachineFrameInfo *MFI,
                                               SDOperand Root, unsigned i) {
   // Create the nodes corresponding to a load from this parameter slot.
+  unsigned Flags = cast<ConstantSDNode>(Op.getOperand(3 + i))->getValue();
+  bool isByVal = Flags & ISD::ParamFlags::ByVal;
+
+  // FIXME: For now, all byval parameter objects are marked mutable. This
+  // can be changed with more analysis.
   int FI = MFI->CreateFixedObject(MVT::getSizeInBits(VA.getValVT())/8,
-                                  VA.getLocMemOffset());
+                                  VA.getLocMemOffset(), !isByVal);
   SDOperand FIN = DAG.getFrameIndex(FI, getPointerTy());
-
-  unsigned Flags =  cast<ConstantSDNode>(Op.getOperand(3 + i))->getValue();
-
-  if (Flags & ISD::ParamFlags::ByVal)
+  if (isByVal)
     return FIN;
-  else
-    return DAG.getLoad(VA.getValVT(), Root, FIN, NULL, 0);
+  return DAG.getLoad(VA.getValVT(), Root, FIN, NULL, 0);
 }
 
 SDOperand
