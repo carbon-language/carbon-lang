@@ -33,7 +33,7 @@ namespace {
   public:
     std::ostream& Out;
 
-    DeclPrinter(std::ostream* out) : Out(out ? *out : *llvm::cerr.stream()) {}    
+    DeclPrinter(std::ostream* out) : Out(out ? *out : *llvm::cerr.stream()) {}
     DeclPrinter() : Out(*llvm::cerr.stream()) {}
     
     void PrintDecl(Decl *D);
@@ -245,51 +245,46 @@ void DeclPrinter::PrintObjCInterfaceDecl(ObjCInterfaceDecl *OID) {
       if (PDecl->getPropertyAttributes() != ObjCPropertyDecl::OBJC_PR_noattr) {
         bool first = true;
         Out << " (";
-        if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_readonly)
-        {
+        if (PDecl->getPropertyAttributes() & 
+            ObjCPropertyDecl::OBJC_PR_readonly) {
           Out << (first ? ' ' : ',') << "readonly";
           first = false;
         }
         
-        if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_getter)
-        {
+        if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_getter) {
           Out << (first ? ' ' : ',') << "getter = "
               << PDecl->getGetterName()->getName();
           first = false;
         }
-        if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_setter)
-        {
+        if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_setter) {
           Out << (first ? ' ' : ',') << "setter = "
               << PDecl->getSetterName()->getName();
           first = false;
         }
         
-        if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_assign)
-        {
+        if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_assign) {
           Out << (first ? ' ' : ',') << "assign";
           first = false;
         }
         
-        if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_readwrite)
-        {
+        if (PDecl->getPropertyAttributes() &
+            ObjCPropertyDecl::OBJC_PR_readwrite) {
           Out << (first ? ' ' : ',') << "readwrite";
           first = false;
         }
         
-        if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_retain)
-        {
+        if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_retain) {
           Out << (first ? ' ' : ',') << "retain";
           first = false;
         }
         
-        if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_copy)
-        {
+        if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_copy) {
           Out << (first ? ' ' : ',') << "copy";
           first = false;
         }
         
-        if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_nonatomic)
-        {
+        if (PDecl->getPropertyAttributes() & 
+            ObjCPropertyDecl::OBJC_PR_nonatomic) {
           Out << (first ? ' ' : ',') << "nonatomic";
           first = false;
         }
