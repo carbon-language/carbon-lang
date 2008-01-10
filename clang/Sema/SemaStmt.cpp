@@ -538,23 +538,25 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
   Stmt *First  = static_cast<Stmt*>(first);
   Expr *Second = static_cast<Expr*>(second);
   Stmt *Body  = static_cast<Stmt*>(body);
-  QualType FirstType;
-  if (DeclStmt *DS = dyn_cast_or_null<DeclStmt>(First)) {
-    FirstType = cast<ValueDecl>(DS->getDecl())->getType();
-    // C99 6.8.5p3: The declaration part of a 'for' statement shall only declare
-    // identifiers for objects having storage class 'auto' or 'register'.
-    ScopedDecl *D = DS->getDecl();
-    BlockVarDecl *BVD = cast<BlockVarDecl>(D);
-    if (!BVD->hasLocalStorage())
-      return Diag(BVD->getLocation(), diag::err_non_variable_decl_in_for);
-    if (D->getNextDeclarator())
-      return Diag(D->getLocation(), diag::err_toomany_element_decls);
+  if (First) {
+    QualType FirstType;
+    if (DeclStmt *DS = dyn_cast<DeclStmt>(First)) {
+      FirstType = cast<ValueDecl>(DS->getDecl())->getType();
+      // C99 6.8.5p3: The declaration part of a 'for' statement shall only declare
+      // identifiers for objects having storage class 'auto' or 'register'.
+      ScopedDecl *D = DS->getDecl();
+      BlockVarDecl *BVD = cast<BlockVarDecl>(D);
+      if (!BVD->hasLocalStorage())
+        return Diag(BVD->getLocation(), diag::err_non_variable_decl_in_for);
+      if (D->getNextDeclarator())
+        return Diag(D->getLocation(), diag::err_toomany_element_decls);
+    }
+    else
+      FirstType = static_cast<Expr*>(first)->getType();
+    if (!isObjCObjectPointerType(FirstType))
+        Diag(ForLoc, diag::err_selector_element_type,
+             FirstType.getAsString(), First->getSourceRange());
   }
-  else
-    FirstType = static_cast<Expr*>(first)->getType();
-  if (!isObjCObjectPointerType(FirstType))
-      Diag(ForLoc, diag::err_selector_element_type,
-           FirstType.getAsString(), First->getSourceRange());
   if (Second) {
     DefaultFunctionArrayConversion(Second);
     QualType SecondType = Second->getType();
