@@ -92,8 +92,7 @@ namespace TID {
     SimpleLoad,
     MayLoad,
     MayStore,
-    NeverHasSideEffects,
-    MayHaveSideEffects,
+    UnmodeledSideEffects,
     Commutable,
     ConvertibleTo3Addr,
     UsesCustomDAGSchedInserter,
@@ -326,37 +325,21 @@ public:
     return Flags & (1 << TID::MayStore);
   }
   
-  /// hasNoSideEffects - Return true if all instances of this instruction are
-  /// guaranteed to have no side effects other than:
-  ///   1. The register operands that are def/used by the MachineInstr.
-  ///   2. Registers that are implicitly def/used by the MachineInstr.
-  ///   3. Memory Accesses captured by mayLoad() or mayStore().
+  /// hasUnmodeledSideEffects - Return true if this instruction has side
+  /// effects that are not modeled by other flags.  This does not return true
+  /// for instructions whose effects are captured by:
   ///
-  /// Examples of other side effects would be calling a function, modifying
-  /// 'invisible' machine state like a control register, etc.
+  ///  1. Their operand list and implicit definition/use list.  Register use/def
+  ///     info is explicit for instructions.
+  ///  2. Memory accesses.  Use mayLoad/mayStore.
+  ///  3. Calling, branching, returning: use isCall/isReturn/isBranch.
   ///
-  /// If some instances of this instruction are side-effect free but others are
-  /// not, the hasConditionalSideEffects() property should return true, not this
-  /// one.
+  /// Examples of side effects would be modifying 'invisible' machine state like
+  /// a control register, flushing a cache, modifying a register invisible to
+  /// LLVM, etc.
   ///
-  /// Note that you should not call this method directly, instead, call the
-  /// TargetInstrInfo::hasUnmodelledSideEffects method, which handles analysis
-  /// of the machine instruction.
-  bool hasNoSideEffects() const {
-    return Flags & (1 << TID::NeverHasSideEffects);
-  }
-  
-  /// hasConditionalSideEffects - Return true if some instances of this
-  /// instruction are guaranteed to have no side effects other than those listed
-  /// for hasNoSideEffects().  To determine whether a specific machineinstr has
-  /// side effects, the TargetInstrInfo::isReallySideEffectFree virtual method
-  /// is invoked to decide.
-  ///
-  /// Note that you should not call this method directly, instead, call the
-  /// TargetInstrInfo::hasUnmodelledSideEffects method, which handles analysis
-  /// of the machine instruction.
-  bool hasConditionalSideEffects() const {
-    return Flags & (1 << TID::MayHaveSideEffects);
+  bool hasUnmodeledSideEffects() const {
+    return Flags & (1 << TID::UnmodeledSideEffects);
   }
   
   //===--------------------------------------------------------------------===//

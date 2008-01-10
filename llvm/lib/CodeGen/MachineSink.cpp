@@ -133,19 +133,21 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI) {
   const TargetInstrDesc &TID = MI->getDesc();
   
   // Ignore stuff that we obviously can't sink.
-  if (TID.mayStore() || TID.isCall() || TID.isReturn() || TID.isBranch())
+  if (TID.mayStore() || TID.isCall() || TID.isReturn() || TID.isBranch() ||
+      TID.hasUnmodeledSideEffects())
     return false;
 
-  if (TID.mayLoad())
-    return false;
-  
-  // Don't sink things with side-effects we don't understand.
-  if (TII->hasUnmodelledSideEffects(MI))
-    return false;
-  
-  // FIXME: we should be able to sink loads with no other side effects if there
-  // is nothing that can change memory from here until the end of block.  This
-  // is a trivial form of alias analysis.
+  if (TID.mayLoad()) {
+    // Okay, this instruction does a load.  As a refinement, allow the target
+    // to decide whether the loaded value is actually a constant.  If so, we
+    // can actually use it as a load.
+    if (!TII->isInvariantLoad(MI)) {
+      // FIXME: we should be able to sink loads with no other side effects if
+      // there is nothing that can change memory from here until the end of
+      // block.  This is a trivial form of alias analysis.
+      return false;
+    }
+  }
   
   // FIXME: This should include support for sinking instructions within the
   // block they are currently in to shorten the live ranges.  We often get

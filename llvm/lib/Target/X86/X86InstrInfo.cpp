@@ -763,16 +763,19 @@ bool X86InstrInfo::isReallyTriviallyReMaterializable(MachineInstr *MI) const {
   return true;
 }
 
-/// isReallySideEffectFree - If the M_MAY_HAVE_SIDE_EFFECTS flag is set, this
-/// method is called to determine if the specific instance of this instruction
-/// has side effects. This is useful in cases of instructions, like loads, which
-/// generally always have side effects. A load from a constant pool doesn't have
-/// side effects, though. So we need to differentiate it from the general case.
-bool X86InstrInfo::isReallySideEffectFree(MachineInstr *MI) const {
+/// isInvariantLoad - Return true if the specified instruction (which is marked
+/// mayLoad) is loading from a location whose value is invariant across the
+/// function.  For example, loading a value from the constant pool or from
+/// from the argument area of a function if it does not change.  This should
+/// only return true of *all* loads the instruction does are invariant (if it
+/// does multiple loads).
+bool X86InstrInfo::isInvariantLoad(MachineInstr *MI) const {
+  // FIXME: This should work with any X86 instruction that does a load, for
+  // example, all load+op instructions.
   switch (MI->getOpcode()) {
   default: break;
   case X86::MOV32rm:
-    // Loads from stubs of global addresses are side effect free.
+    // Loads from stubs of global addresses are invariant.
     if (MI->getOperand(1).isReg() &&
         MI->getOperand(2).isImm() && MI->getOperand(3).isReg() &&
         MI->getOperand(4).isGlobal() &&
@@ -794,7 +797,7 @@ bool X86InstrInfo::isReallySideEffectFree(MachineInstr *MI) const {
   case X86::MOVAPDrm:
   case X86::MMX_MOVD64rm:
   case X86::MMX_MOVQ64rm:
-    // Loads from constant pools are trivially rematerializable.
+    // Loads from constant pools are trivially invariant.
     if (MI->getOperand(1).isReg() && MI->getOperand(2).isImm() &&
         MI->getOperand(3).isReg() && MI->getOperand(4).isCPI() &&
         MI->getOperand(1).getReg() == 0 &&
@@ -815,8 +818,8 @@ bool X86InstrInfo::isReallySideEffectFree(MachineInstr *MI) const {
     return false;
   }
 
-  // All other instances of these instructions are presumed to have side
-  // effects.
+  // All other instances of these instructions are presumed to have other
+  // issues.
   return false;
 }
 

@@ -357,8 +357,7 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   if (Inst.usesCustomDAGSchedInserter)
     OS << "|(1<<TID::UsesCustomDAGSchedInserter)";
   if (Inst.isVariadic)         OS << "|(1<<TID::Variadic)";
-  if (Inst.mayHaveSideEffects) OS << "|(1<<TID::MayHaveSideEffects)";
-  if (!HasSideEffects)         OS << "|(1<<TID::NeverHasSideEffects)";
+  if (HasSideEffects)          OS << "|(1<<TID::UnmodeledSideEffects)";
   OS << ", 0";
 
   // Emit all of the target-specific flags...

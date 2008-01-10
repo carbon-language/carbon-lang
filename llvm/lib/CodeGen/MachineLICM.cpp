@@ -223,6 +223,26 @@ void MachineLICM::HoistRegion(MachineDomTreeNode *N) {
 /// effects that aren't captured by the operands or other flags.
 /// 
 bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
+  const TargetInstrDesc &TID = I.getDesc();
+  
+  // Ignore stuff that we obviously can't hoist.
+  if (TID.mayStore() || TID.isCall() || TID.isReturn() || TID.isBranch() ||
+      TID.hasUnmodeledSideEffects())
+    return false;
+  
+  if (TID.mayLoad()) {
+    // Okay, this instruction does a load.  As a refinement, allow the target
+    // to decide whether the loaded value is actually a constant.  If so, we
+    // can actually use it as a load.
+    if (!TII->isInvariantLoad(&I)) {
+      // FIXME: we should be able to sink loads with no other side effects if
+      // there is nothing that can change memory from here until the end of
+      // block.  This is a trivial form of alias analysis.
+      return false;
+    }
+  }
+  
+  
   DEBUG({
       DOUT << "--- Checking if we can hoist " << I;
       if (I.getDesc().getImplicitUses()) {
@@ -243,8 +263,8 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
           DOUT << "      -> " << MRI->getName(*ImpDefs) << "\n";
       }
 
-      if (TII->hasUnmodelledSideEffects(&I))
-        DOUT << "  * Instruction has side effects.\n";
+        //if (TII->hasUnmodelledSideEffects(&I))
+        //DOUT << "  * Instruction has side effects.\n";
     });
 
   // The instruction is loop invariant if all of its operands are loop-invariant
@@ -267,9 +287,6 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
     if (CurLoop->contains(RegInfo->getVRegDef(Reg)->getParent()))
       return false;
   }
-
-  // Don't hoist something that has unmodelled side effects.
-  if (TII->hasUnmodelledSideEffects(&I)) return false;
 
   // If we got this far, the instruction is loop invariant!
   return true;

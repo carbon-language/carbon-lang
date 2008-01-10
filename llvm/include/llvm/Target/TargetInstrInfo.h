@@ -69,15 +69,6 @@ public:
            isReallyTriviallyReMaterializable(MI);
   }
 
-  /// hasUnmodelledSideEffects - Returns true if the instruction has side
-  /// effects that are not captured by any operands of the instruction or other
-  /// flags.
-  bool hasUnmodelledSideEffects(MachineInstr *MI) const {
-    const TargetInstrDesc &TID = MI->getDesc();
-    if (TID.hasNoSideEffects()) return false;
-    if (!TID.hasConditionalSideEffects()) return true;
-    return !isReallySideEffectFree(MI); // May have side effects
-  }
 protected:
   /// isReallyTriviallyReMaterializable - For instructions with opcodes for
   /// which the M_REMATERIALIZABLE flag is set, this function tests whether the
@@ -91,15 +82,6 @@ protected:
     return true;
   }
 
-  /// isReallySideEffectFree - If the M_MAY_HAVE_SIDE_EFFECTS flag is set, this
-  /// method is called to determine if the specific instance of this
-  /// instruction has side effects. This is useful in cases of instructions,
-  /// like loads, which generally always have side effects. A load from a
-  /// constant pool doesn't have side effects, though. So we need to
-  /// differentiate it from the general case.
-  virtual bool isReallySideEffectFree(MachineInstr *MI) const {
-    return false;
-  }
 public:
   /// Return true if the instruction is a register to register move
   /// and leave the source and dest operands in the passed parameters.
@@ -127,6 +109,17 @@ public:
     return 0;
   }
 
+  /// isInvariantLoad - Return true if the specified instruction (which is
+  /// marked mayLoad) is loading from a location whose value is invariant across
+  /// the function.  For example, loading a value from the constant pool or from
+  /// from the argument area of a function if it does not change.  This should
+  /// only return true of *all* loads the instruction does are invariant (if it
+  /// does multiple loads).
+  virtual bool isInvariantLoad(MachineInstr *MI) const {
+    return false;
+  }
+  
+  
   /// convertToThreeAddress - This method must be implemented by targets that
   /// set the M_CONVERTIBLE_TO_3_ADDR flag.  When this flag is set, the target
   /// may be able to convert a two-address instruction into one or more true
