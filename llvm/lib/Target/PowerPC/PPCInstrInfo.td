@@ -695,7 +695,7 @@ def SUBFIC : DForm_2< 8, (outs GPRC:$rD), (ins GPRC:$rA, s16imm:$imm),
                      "subfic $rD, $rA, $imm", IntGeneral,
                      [(set GPRC:$rD, (subc immSExt16:$imm, GPRC:$rA))]>;
 
-let isReMaterializable = 1, neverHasSideEffects = 1 in {
+let isReMaterializable = 1 in {
   def LI  : DForm_2_r0<14, (outs GPRC:$rD), (ins symbolLo:$imm),
                        "li $rD, $imm", IntGeneral,
                        [(set GPRC:$rD, immSExt16:$imm)]>;
