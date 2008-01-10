@@ -86,9 +86,9 @@ class MachineFrameInfo {
     // the function.  This field has no meaning for a variable sized element.
     int64_t SPOffset;
 
-    // isImmutable - If true, the value of the stack object does not change
-    // in this function. By default, fixed objects are immutable unless marked
-    // otherwise.
+    // isImmutable - If true, the value of the stack object is set before
+    // entering the function and is not modified inside the function. By
+    // default, fixed objects are immutable unless marked otherwise.
     bool isImmutable;
 
     StackObject(uint64_t Sz, unsigned Al, int64_t SP, bool IM = false)
