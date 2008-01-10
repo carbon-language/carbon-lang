@@ -28,7 +28,7 @@ class ProgramEdge {
   uintptr_t Src, Dst;
 public:
   enum EdgeKind { BExprBlk=0,   BlkBExpr=1,   BExprBExpr=2, BlkBlk=3,
-                  BExprSExpr=4, SExprSExpr=5, SExprBExpr=6 };
+                  BExprSExpr=4, SExprSExpr=5, SExprBExpr=6, Infeasible=7 };
   
   static bool classof(const ProgramEdge*) { return true; }
   
@@ -155,7 +155,18 @@ public:
     return E->getKind() == BlkBlk;
   }
 };
-
+  
+class InfeasibleEdge : public ProgramEdge {
+public:
+  InfeasibleEdge(Stmt* S) : ProgramEdge(S,NULL,Infeasible) {}
+  
+  Stmt* getStmt() const { return reinterpret_cast<Stmt*>(RawSrc()); }
+  
+  static bool classof(const ProgramEdge* E) {
+    return E->getKind() == Infeasible;
+  }
+};
+  
 } // end namespace clang
 
 
