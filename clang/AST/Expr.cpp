@@ -487,7 +487,8 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
 
     // Get the operand value.  If this is sizeof/alignof, do not evalute the
     // operand.  This affects C99 6.6p3.
-    if (!Exp->isSizeOfAlignOfOp() &&
+    if (!Exp->isSizeOfAlignOfOp() && 
+        Exp->getOpcode() != UnaryOperator::OffsetOf &&
         !Exp->getSubExpr()->isConstantExpr(Ctx, Loc))
       return false;
   
@@ -501,6 +502,7 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
       return true;  // FIXME: this is wrong.
     case UnaryOperator::SizeOf:
     case UnaryOperator::AlignOf:
+    case UnaryOperator::OffsetOf:
       // sizeof(vla) is not a constantexpr: C99 6.5.3.4p2.
       if (!Exp->getSubExpr()->getType()->isConstantSizeType(Ctx)) {
         if (Loc) *Loc = Exp->getOperatorLoc();
@@ -560,9 +562,18 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
       return false;
     return true;
   }
+  case InitListExprClass: {
+    const InitListExpr *Exp = cast<InitListExpr>(this);
+    unsigned numInits = Exp->getNumInits();
+    for (unsigned i = 0; i < numInits; i++) {
+      if (!Exp->getInit(i)->isConstantExpr(Ctx, Loc)) {
+        if (Loc) *Loc = Exp->getInit(i)->getLocStart();
+        return false;
+      }
+    }
+    return true;
   }
-
-  return true;
+  }
 }
 
 /// isIntegerConstantExpr - this recursive routine will test if an expression is

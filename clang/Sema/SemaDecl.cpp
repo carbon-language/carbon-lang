@@ -354,18 +354,7 @@ Sema::DeclTy *Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
   return dyn_cast_or_null<TagDecl>(static_cast<Decl *>(DS.getTypeRep()));
 }
 
-bool Sema::CheckSingleInitializer(Expr *&Init, bool isStatic, 
-                                  QualType DeclType) {
-  // FIXME: Remove the isReferenceType check and handle assignment
-  // to a reference.
-  SourceLocation loc;
-  if (isStatic && !DeclType->isReferenceType() &&
-      !Init->isConstantExpr(Context, &loc)) { // C99 6.7.8p4.
-    assert(loc.isValid() && "isConstantExpr didn't return a loc!");
-    Diag(loc, diag::err_init_element_not_constant, Init->getSourceRange());
-    return true;
-  }
-  
+bool Sema::CheckSingleInitializer(Expr *&Init, QualType DeclType) {  
   // Get the type before calling CheckSingleAssignmentConstraints(), since
   // it can promote the expression.
   QualType InitType = Init->getType(); 
@@ -376,16 +365,9 @@ bool Sema::CheckSingleInitializer(Expr *&Init, bool isStatic,
 }
 
 bool Sema::CheckInitExpr(Expr *expr, InitListExpr *IList, unsigned slot,
-                         bool isStatic, QualType ElementType) {
-  SourceLocation loc;
-  if (isStatic && !expr->isConstantExpr(Context, &loc)) { // C99 6.7.8p4.
-    assert(loc.isValid() && "isConstantExpr didn't return a loc!");
-    Diag(loc, diag::err_init_element_not_constant, expr->getSourceRange());
-    return true;
-  }
-    
+                         QualType ElementType) {
   Expr *savExpr = expr; // Might be promoted by CheckSingleInitializer.
-  if (CheckSingleInitializer(expr, isStatic, ElementType))
+  if (CheckSingleInitializer(expr, ElementType))
     return true; // types weren't compatible.
   
   if (savExpr != expr) // The type was promoted, update initializer list.
@@ -394,7 +376,7 @@ bool Sema::CheckInitExpr(Expr *expr, InitListExpr *IList, unsigned slot,
 }
 
 void Sema::CheckVariableInitList(QualType DeclType, InitListExpr *IList, 
-                                 QualType ElementType, bool isStatic, 
+                                 QualType ElementType,
                                  int &nInitializers, bool &hadError) {
   unsigned numInits = IList->getNumInits();
 
@@ -409,11 +391,11 @@ void Sema::CheckVariableInitList(QualType DeclType, InitListExpr *IList,
       if (InitListExpr *InitList = dyn_cast<InitListExpr>(expr)) {
         if (const ConstantArrayType *CAT = DeclType->getAsConstantArrayType()) {
           int maxElements = CAT->getMaximumElements();
-          CheckConstantInitList(DeclType, InitList, ElementType, isStatic, 
+          CheckConstantInitList(DeclType, InitList, ElementType,
                                 maxElements, hadError);
         }
       } else {
-        hadError = CheckInitExpr(expr, IList, i, isStatic, ElementType);
+        hadError = CheckInitExpr(expr, IList, i, ElementType);
       }
       nInitializers++;
     }
@@ -469,7 +451,7 @@ bool Sema::CheckForCharArrayInitializer(InitListExpr *IList,
 
 // FIXME: Doesn't deal with arrays of structures yet.
 void Sema::CheckConstantInitList(QualType DeclType, InitListExpr *IList, 
-                                 QualType ElementType, bool isStatic,
+                                 QualType ElementType,
                                  int &totalInits, bool &hadError) {
   int maxElementsAtThisLevel = 0;
   int nInitsAtLevel = 0;
@@ -503,10 +485,10 @@ void Sema::CheckConstantInitList(QualType DeclType, InitListExpr *IList,
       Expr *expr = IList->getInit(i);
       
       if (InitListExpr *InitList = dyn_cast<InitListExpr>(expr)) {
-        CheckConstantInitList(DeclType, InitList, ElementType, isStatic, 
+        CheckConstantInitList(DeclType, InitList, ElementType, 
                               totalInits, hadError);
       } else {
-        hadError = CheckInitExpr(expr, IList, i, isStatic, ElementType);
+        hadError = CheckInitExpr(expr, IList, i, ElementType);
         nInitsAtLevel++; // increment the number of initializers at this level.
         totalInits--;    // decrement the total number of initializers.
         
@@ -527,7 +509,7 @@ void Sema::CheckConstantInitList(QualType DeclType, InitListExpr *IList,
   }
 }
 
-bool Sema::CheckInitializer(Expr *&Init, QualType &DeclType, bool isStatic) {
+bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType) {
   bool hadError = false;
   
   InitListExpr *InitList = dyn_cast<InitListExpr>(Init);
@@ -560,7 +542,7 @@ bool Sema::CheckInitializer(Expr *&Init, QualType &DeclType, bool isStatic) {
         return hadError;
       }
     }
-    return CheckSingleInitializer(Init, isStatic, DeclType);
+    return CheckSingleInitializer(Init, DeclType);
   }
   // We have an InitListExpr, make sure we set the type.
   Init->setType(DeclType);
@@ -576,7 +558,7 @@ bool Sema::CheckInitializer(Expr *&Init, QualType &DeclType, bool isStatic) {
     // array can have unknown size. For example, "int [][]" is illegal.
     int numInits = 0;
     CheckVariableInitList(VAT->getElementType(), InitList, VAT->getBaseType(), 
-                          isStatic, numInits, hadError);
+                          numInits, hadError);
     llvm::APSInt ConstVal(32);
     
     if (!hadError)
@@ -595,19 +577,18 @@ bool Sema::CheckInitializer(Expr *&Init, QualType &DeclType, bool isStatic) {
   if (const ConstantArrayType *CAT = DeclType->getAsConstantArrayType()) {
     int maxElements = CAT->getMaximumElements();
     CheckConstantInitList(DeclType, InitList, CAT->getBaseType(), 
-                          isStatic, maxElements, hadError);
+                          maxElements, hadError);
     return hadError;
   }
   if (const VectorType *VT = DeclType->getAsVectorType()) {
     int maxElements = VT->getNumElements();
     CheckConstantInitList(DeclType, InitList, VT->getElementType(),
-                          isStatic, maxElements, hadError);
+                          maxElements, hadError);
     return hadError;
   }
   if (DeclType->isScalarType()) { // C99 6.7.8p11: Allow "int x = { 1, 2 };"
     int maxElements = 1;
-    CheckConstantInitList(DeclType, InitList, DeclType, isStatic, maxElements, 
-                          hadError);
+    CheckConstantInitList(DeclType, InitList, DeclType, maxElements, hadError);
     return hadError;
   }
   // FIXME: Handle struct/union types, including those appearing in a 
@@ -752,6 +733,17 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
   return New;
 }
 
+bool Sema::CheckForConstantInitializer(Expr *Init, QualType DclT) {
+  SourceLocation loc;
+  // FIXME: Remove the isReference check and handle assignment to a reference.
+  if (!DclT->isReferenceType() && !Init->isConstantExpr(Context, &loc)) { 
+    assert(loc.isValid() && "isConstantExpr didn't return a loc!");
+    Diag(loc, diag::err_init_element_not_constant, Init->getSourceRange());
+    return true;
+  }
+  return false;
+}
+
 void Sema::AddInitializerToDecl(DeclTy *dcl, ExprTy *init) {
   Decl *RealDecl = static_cast<Decl *>(dcl);
   Expr *Init = static_cast<Expr *>(init);
@@ -772,7 +764,7 @@ void Sema::AddInitializerToDecl(DeclTy *dcl, ExprTy *init) {
     return;
   }  
   // Get the decls type and save a reference for later, since
-  // CheckInitializer may change it.
+  // CheckInitializerTypes may change it.
   QualType DclT = VDecl->getType(), SavT = DclT;
   if (BlockVarDecl *BVD = dyn_cast<BlockVarDecl>(VDecl)) {
     VarDecl::StorageClass SC = BVD->getStorageClass();
@@ -780,13 +772,18 @@ void Sema::AddInitializerToDecl(DeclTy *dcl, ExprTy *init) {
       Diag(VDecl->getLocation(), diag::err_block_extern_cant_init);
       BVD->setInvalidDecl();
     } else if (!BVD->isInvalidDecl()) {
-      CheckInitializer(Init, DclT, SC == VarDecl::Static);
+      CheckInitializerTypes(Init, DclT);
+      if (SC == VarDecl::Static) // C99 6.7.8p4.
+        CheckForConstantInitializer(Init, DclT);
     }
   } else if (FileVarDecl *FVD = dyn_cast<FileVarDecl>(VDecl)) {
     if (FVD->getStorageClass() == VarDecl::Extern)
       Diag(VDecl->getLocation(), diag::warn_extern_init);
     if (!FVD->isInvalidDecl())
-      CheckInitializer(Init, DclT, true);
+      CheckInitializerTypes(Init, DclT);
+    
+    // C99 6.7.8p4. All file scoped initializers need to be constant.
+    CheckForConstantInitializer(Init, DclT);
   }
   // If the type changed, it means we had an incomplete type that was
   // completed by the initializer. For example: 

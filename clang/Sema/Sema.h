@@ -722,21 +722,21 @@ private:
                                    IdentifierInfo &Comp, SourceLocation CmpLoc);
   
   /// type checking declaration initializers (C99 6.7.8)
-  bool CheckInitializer(Expr *&simpleInit_or_initList, QualType &declType,
-                        bool isStatic);
-  bool CheckSingleInitializer(Expr *&simpleInit, bool isStatic, 
-                              QualType declType);
+  bool CheckInitializerTypes(Expr *&simpleInit_or_initList, QualType &declType);
+  bool CheckSingleInitializer(Expr *&simpleInit, QualType declType);
   bool CheckInitExpr(Expr *expr, InitListExpr *IList, unsigned slot,
-                     bool isStatic, QualType ElementType);
+                     QualType ElementType);
+                     
   void CheckVariableInitList(QualType DeclType, InitListExpr *IList, 
-                             QualType ElementType, bool isStatic, 
+                             QualType ElementType,
                              int &nInitializers, bool &hadError);
   void CheckConstantInitList(QualType DeclType, InitListExpr *IList, 
-                             QualType ElementType, bool isStatic, 
+                             QualType ElementType,
                              int &nInitializers, bool &hadError);
   bool CheckForCharArrayInitializer(InitListExpr *IList, QualType ElementType,
                                     int &nInitializers, bool isConstant,
                                     bool &hadError);
+  bool CheckForConstantInitializer(Expr *e, QualType t);
   
   // CheckVectorCast - check type constraints for vectors. 
   // Since vectors are an extension, there are no C standard reference for this.
