@@ -38,7 +38,8 @@ enum SDNP {
   SDNPInFlag,
   SDNPOptInFlag,
   SDNPMayLoad,
-  SDNPMayStore
+  SDNPMayStore,
+  SDNPSideEffect
 };
 
 /// getValueType - Return the MVT::ValueType that the specified TableGen record

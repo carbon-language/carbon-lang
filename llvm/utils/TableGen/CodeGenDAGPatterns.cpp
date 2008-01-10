@@ -321,6 +321,8 @@ SDNodeInfo::SDNodeInfo(Record *R) : Def(R) {
       Properties |= 1 << SDNPMayStore;
     } else if (PropList[i]->getName() == "SDNPMayLoad") {
       Properties |= 1 << SDNPMayLoad;
+    } else if (PropList[i]->getName() == "SDNPSideEffect") {
+      Properties |= 1 << SDNPSideEffect;
     } else {
       cerr << "Unknown SD Node property '" << PropList[i]->getName()
            << "' on node '" << R->getName() << "'!\n";

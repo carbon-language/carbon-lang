@@ -43,7 +43,7 @@ private:
   
   // Instruction analysis.
   void InferFromPattern(const CodeGenInstruction &Inst, 
-                        bool &isStore, bool &isLoad, bool &NeverHasSideEffects);
+                        bool &MayStore, bool &MayLoad, bool &HasSideEffects);
   
   void emitRecord(const CodeGenInstruction &Inst, unsigned Num,
                   Record *InstrInfo, 
