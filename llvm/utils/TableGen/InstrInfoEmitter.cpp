@@ -205,7 +205,7 @@ void InstrInfoEmitter::InferFromPattern(const CodeGenInstruction &Inst,
   
   InstAnalyzer(CDP, mayStore, mayLoad,NeverHasSideEffects).Analyze(Inst.TheDef);
 
-  // InstAnalyzer only correctly analyzes mayStore so far.
+  // InstAnalyzer only correctly analyzes mayStore/mayLoad so far.
   if (Inst.mayStore) {  // If the .td file explicitly sets mayStore, use it.
     // If we decided that this is a store from the pattern, then the .td file
     // entry is redundant.
@@ -217,8 +217,18 @@ void InstrInfoEmitter::InferFromPattern(const CodeGenInstruction &Inst,
     mayStore = true;
   }
 
-  // These two override everything.
-  mayLoad             = Inst.mayLoad;
+  if (Inst.mayLoad) {  // If the .td file explicitly sets mayLoad, use it.
+    // If we decided that this is a load from the pattern, then the .td file
+    // entry is redundant.
+    if (mayLoad)
+      fprintf(stderr, 
+              "Warning: mayLoad flag explicitly set on instruction '%s'"
+              " but flag already inferred from pattern.\n", 
+              Inst.TheDef->getName().c_str());
+    mayLoad = true;
+  }
+  
+  
   NeverHasSideEffects = Inst.neverHasSideEffects;
 
 #if 0
