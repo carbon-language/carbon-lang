@@ -531,7 +531,7 @@ Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
 }
 
 Action::StmtResult 
-Sema::ActOnObjCForCollectionStmt(SourceLocation ForColLoc, 
+Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc, 
                                  SourceLocation LParenLoc, 
                                  StmtTy *first, ExprTy *second,
                                  SourceLocation RParenLoc, StmtTy *body) {
@@ -553,16 +553,16 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForColLoc,
   else
     FirstType = static_cast<Expr*>(first)->getType();
   if (!isObjCObjectPointerType(FirstType))
-      Diag(ForColLoc, diag::err_selector_element_type,
+      Diag(ForLoc, diag::err_selector_element_type,
            FirstType.getAsString(), First->getSourceRange());
   if (Second) {
     DefaultFunctionArrayConversion(Second);
     QualType SecondType = Second->getType();
     if (!isObjCObjectPointerType(SecondType))
-      Diag(ForColLoc, diag::err_collection_expr_type,
+      Diag(ForLoc, diag::err_collection_expr_type,
            SecondType.getAsString(), Second->getSourceRange());
   }
-  return new ObjCForCollectionStmt(First, Second, Body, ForColLoc);
+  return new ObjCForCollectionStmt(First, Second, Body, ForLoc, RParenLoc);
 }
 
 Action::StmtResult 

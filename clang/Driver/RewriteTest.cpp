@@ -822,9 +822,7 @@ void RewriteTest::SynthCountByEnumWithState(std::string &buf) {
 ///
 Stmt *RewriteTest::RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S) {
   SourceLocation startLoc = S->getLocStart();
-  SourceLocation collectionLoc = S->getCollection()->getLocStart();
   const char *startBuf = SM->getCharacterData(startLoc);
-  const char *startCollectionBuf = SM->getCharacterData(collectionLoc);
   const char *elementName;
   std::string elementTypeAsString;
   std::string buf;
@@ -852,14 +850,26 @@ Stmt *RewriteTest::RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S) {
   buf += "id items[16];\n\t";
   // id l_collection = (id)
   buf += "id l_collection = (id)";
+  // Find start location of 'collection' the hard way!
+  const char *startCollectionBuf = startBuf;
+  startCollectionBuf += 3;  // skip 'for'
+  startCollectionBuf = strchr(startCollectionBuf, '(');
+  startCollectionBuf++; // skip '('
+  // find 'in' and skip it.
+  while (*startCollectionBuf != ' ' ||
+         *(startCollectionBuf+1) != 'i' || *(startCollectionBuf+2) != 'n' ||
+         (*(startCollectionBuf+3) != ' ' &&
+          *(startCollectionBuf+3) != '[' && *(startCollectionBuf+3) != '('))
+    startCollectionBuf++;
+  startCollectionBuf += 3;
+  
   // Replace: "for (type element in" with string constructed thus far. 
   Rewrite.ReplaceText(startLoc, startCollectionBuf - startBuf,
                       buf.c_str(), buf.size());
   // Replace ')' in for '(' type elem in collection ')' with ';'
-  SourceLocation endCollectionLoc = S->getCollection()->getLocEnd();
-  const char *endCollectionBuf = SM->getCharacterData(endCollectionLoc);
-  const char *lparenBuf = strchr(endCollectionBuf+1, ')');
-  SourceLocation lparenLoc = startLoc.getFileLocWithOffset(lparenBuf-startBuf);
+  SourceLocation rightParenLoc = S->getRParenLoc();
+  const char *rparenBuf = SM->getCharacterData(rightParenLoc);
+  SourceLocation lparenLoc = startLoc.getFileLocWithOffset(rparenBuf-startBuf);
   buf = ";\n\t";
   
   // unsigned long limit = [l_collection countByEnumeratingWithState:&enumState

@@ -580,14 +580,16 @@ class ObjCForCollectionStmt : public Stmt {
   enum { ELEM, COLLECTION, BODY, END_EXPR };
   Stmt* SubExprs[END_EXPR]; // SubExprs[ELEM] is an expression or declstmt.
   SourceLocation ForLoc;
+  SourceLocation RParenLoc;
 public:
   ObjCForCollectionStmt(Stmt *Elem, Expr *Collect, Stmt *Body, 
-                        SourceLocation FCL) 
+                        SourceLocation FCL, SourceLocation RPL) 
   : Stmt(ObjCForCollectionStmtClass) {
     SubExprs[ELEM] = Elem;
     SubExprs[COLLECTION] = reinterpret_cast<Stmt*>(Collect);
     SubExprs[BODY] = Body;
     ForLoc = FCL;
+    RParenLoc = RPL;
   }
     
   Stmt *getElement() { return SubExprs[ELEM]; }
@@ -601,7 +603,9 @@ public:
     return reinterpret_cast<Expr*>(SubExprs[COLLECTION]);
   }
   const Stmt *getBody() const { return SubExprs[BODY]; }
-    
+  
+  SourceLocation getRParenLoc() const { return RParenLoc; }
+  
   virtual SourceRange getSourceRange() const { 
     return SourceRange(ForLoc, SubExprs[BODY]->getLocEnd()); 
   }
