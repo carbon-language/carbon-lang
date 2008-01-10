@@ -1332,7 +1332,7 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     } else {
       assert(VA.isMemLoc());
       if (StackPtr.Val == 0)
-        StackPtr = DAG.getRegister(getStackPtrReg(), getPointerTy());
+        StackPtr = DAG.getCopyFromReg(Chain, X86StackPtr, getPointerTy());
 
       MemOpChains.push_back(LowerMemOpCallTo(Op, DAG, StackPtr, VA, Chain,
                                              Arg));
