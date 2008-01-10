@@ -545,3 +545,53 @@ big win because doing this with integers allows the use of read/modify/write
 instructions.
 
 //===---------------------------------------------------------------------===//
+
+DAG Combiner should try to combine small loads into larger loads when 
+profitable.  For example, we compile this C++ example:
+
+struct THotKey { short Key; bool Control; bool Shift; bool Alt; };
+extern THotKey m_HotKey;
+THotKey GetHotKey () { return m_HotKey; }
+
+into (-O3 -fno-exceptions -static -fomit-frame-pointer):
+
+__Z9GetHotKeyv:
+	pushl	%esi
+	movl	8(%esp), %eax
+	movb	_m_HotKey+3, %cl
+	movb	_m_HotKey+4, %dl
+	movb	_m_HotKey+2, %ch
+	movw	_m_HotKey, %si
+	movw	%si, (%eax)
+	movb	%ch, 2(%eax)
+	movb	%cl, 3(%eax)
+	movb	%dl, 4(%eax)
+	popl	%esi
+	ret	$4
+
+GCC produces:
+
+__Z9GetHotKeyv:
+	movl	_m_HotKey, %edx
+	movl	4(%esp), %eax
+	movl	%edx, (%eax)
+	movzwl	_m_HotKey+4, %edx
+	movw	%dx, 4(%eax)
+	ret	$4
+
+The LLVM IR contains the needed alignment info, so we should be able to 
+merge the loads and stores into 4-byte loads:
+
+	%struct.THotKey = type { i16, i8, i8, i8 }
+define void @_Z9GetHotKeyv(%struct.THotKey* sret  %agg.result) nounwind  {
+...
+	%tmp2 = load i16* getelementptr (@m_HotKey, i32 0, i32 0), align 8
+	%tmp5 = load i8* getelementptr (@m_HotKey, i32 0, i32 1), align 2
+	%tmp8 = load i8* getelementptr (@m_HotKey, i32 0, i32 2), align 1
+	%tmp11 = load i8* getelementptr (@m_HotKey, i32 0, i32 3), align 2
+
+Alternatively, we should use a small amount of base-offset alias analysis
+to make it so the scheduler doesn't need to hold all the loads in regs at
+once.
+
+//===---------------------------------------------------------------------===//
