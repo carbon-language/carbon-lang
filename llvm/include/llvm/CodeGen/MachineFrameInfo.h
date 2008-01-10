@@ -86,8 +86,13 @@ class MachineFrameInfo {
     // the function.  This field has no meaning for a variable sized element.
     int64_t SPOffset;
 
-    StackObject(uint64_t Sz, unsigned Al, int64_t SP)
-      : Size(Sz), Alignment(Al), SPOffset(SP) {}
+    // isImmutable - If true, the value of the stack object does not change
+    // in this function. By default, fixed objects are immutable unless marked
+    // otherwise.
+    bool isImmutable;
+
+    StackObject(uint64_t Sz, unsigned Al, int64_t SP, bool IM = false)
+      : Size(Sz), Alignment(Al), SPOffset(SP), isImmutable(IM) {}
   };
 
   /// Objects - The list of stack objects allocated...
@@ -255,11 +260,13 @@ public:
 
   /// CreateFixedObject - Create a new object at a fixed location on the stack.
   /// All fixed objects should be created before other objects are created for
-  /// efficiency.  This returns an index with a negative value.
+  /// efficiency. By default, fixed objects are immutable. This returns an
+  /// index with a negative value.
   ///
-  int CreateFixedObject(uint64_t Size, int64_t SPOffset) {
+  int CreateFixedObject(uint64_t Size, int64_t SPOffset,
+                        bool Immutable = true) {
     assert(Size != 0 && "Cannot allocate zero size fixed stack objects!");
-    Objects.insert(Objects.begin(), StackObject(Size, 1, SPOffset));
+    Objects.insert(Objects.begin(), StackObject(Size, 1, SPOffset, Immutable));
     return -++NumFixedObjects;
   }
 
@@ -267,6 +274,12 @@ public:
   /// fixed stack object.
   bool isFixedObjectIndex(int ObjectIdx) const {
     return ObjectIdx < 0 && (ObjectIdx >= -(int)NumFixedObjects);
+  }
+
+  /// isImmutableObjectIndex - Returns true if the specified index corresponds
+  /// to an immutable object.
+  bool isImmutableObjectIndex(int ObjectIdx) const {
+    return Objects[ObjectIdx+NumFixedObjects].isImmutable;
   }
 
   /// CreateStackObject - Create a new statically sized stack object, returning
