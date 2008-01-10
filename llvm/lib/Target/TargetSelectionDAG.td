@@ -191,6 +191,7 @@ def SDNPInFlag      : SDNodeProperty;   // Read a flag operand
 def SDNPOptInFlag   : SDNodeProperty;   // Optionally read a flag operand
 def SDNPMayStore    : SDNodeProperty;   // May write to memory, sets 'mayStore'.
 def SDNPMayLoad     : SDNodeProperty;   // May read memory, sets 'mayLoad'.
+def SDNPSideEffect  : SDNodeProperty;   // Sets 'HasUnmodelledSideEffects'.
 
 //===----------------------------------------------------------------------===//
 // Selection DAG Node definitions.
