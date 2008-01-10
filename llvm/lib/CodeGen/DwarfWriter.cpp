@@ -2877,17 +2877,24 @@ private:
         O << GlobalEHDirective << EHFrameInfo.FnName << "\n";
     }
 
-    // If there are no calls then you can't unwind.
-    if (!EHFrameInfo.hasCalls) { 
+    // If corresponding function is weak definition, this should be too.
+    if ((EHFrameInfo.linkage == Function::WeakLinkage || 
+         EHFrameInfo.linkage == Function::LinkOnceLinkage) &&
+        TAI->getWeakDefDirective())
+      O << TAI->getWeakDefDirective() << EHFrameInfo.FnName << "\n";
+
+    // If there are no calls then you can't unwind.  This may mean we can
+    // omit the EH Frame, but some environments do not handle weak absolute
+    // symbols.
+    if (!EHFrameInfo.hasCalls &&
+        ((EHFrameInfo.linkage != Function::WeakLinkage && 
+          EHFrameInfo.linkage != Function::LinkOnceLinkage) ||
+         !TAI->getWeakDefDirective() ||
+         TAI->getSupportsWeakOmittedEHFrame()))
+    { 
       O << EHFrameInfo.FnName << " = 0\n";
     } else {
       O << EHFrameInfo.FnName << ":\n";
-
-      // If corresponding function is weak definition, this should be too.
-      if ((EHFrameInfo.linkage == Function::WeakLinkage || 
-           EHFrameInfo.linkage == Function::LinkOnceLinkage) &&
-          TAI->getWeakDefDirective())
-        O << TAI->getWeakDefDirective() << EHFrameInfo.FnName << "\n";
 
       // EH frame header.
       EmitDifference("eh_frame_end", EHFrameInfo.Number,

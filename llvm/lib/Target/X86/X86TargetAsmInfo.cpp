@@ -76,8 +76,8 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     SetDirective = "\t.set";
     PCSymbol = ".";
     UsedDirective = "\t.no_dead_strip\t";
-    WeakDefDirective = "\t.weak_definition\t";
-    WeakRefDirective = "\t.weak_reference\t";
+    WeakDefDirective = "\t.weak_definition ";
+    WeakRefDirective = "\t.weak_reference ";
     HiddenDirective = "\t.private_extern\t";
     
     // In non-PIC modes, emit a special label before jump tables so that the
@@ -93,7 +93,6 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     DwarfInfoSection = ".section __DWARF,__debug_info,regular,debug";
     DwarfLineSection = ".section __DWARF,__debug_line,regular,debug";
     DwarfFrameSection = ".section __DWARF,__debug_frame,regular,debug";
-    GlobalEHDirective = "\t.globl\t";
     DwarfPubNamesSection = ".section __DWARF,__debug_pubnames,regular,debug";
     DwarfPubTypesSection = ".section __DWARF,__debug_pubtypes,regular,debug";
     DwarfStrSection = ".section __DWARF,__debug_str,regular,debug";
@@ -105,6 +104,8 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     // Exceptions handling
     if (!Subtarget->is64Bit())
       SupportsExceptionHandling = true;
+    GlobalEHDirective = "\t.globl\t";
+    SupportsWeakOmittedEHFrame = false;
     AbsoluteEHSectionOffsets = false;
     DwarfEHFrameSection =
     ".section __TEXT,__eh_frame,coalesced,no_toc+strip_static_syms+live_support";

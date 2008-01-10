@@ -309,6 +309,10 @@ namespace llvm {
     ///
     const char *GlobalEHDirective;          // Defaults to NULL.
 
+    /// SupportsWeakEmptyEHFrame - True if target assembler and linker will
+    /// handle a weak_definition of constant 0 for an omitted EH frame.
+    bool SupportsWeakOmittedEHFrame;  // Defaults to true.
+
     /// DwarfSectionOffsetDirective - Special section offset directive.
     const char* DwarfSectionOffsetDirective; // Defaults to NULL
     
@@ -584,6 +588,9 @@ namespace llvm {
     }
     const char *getGlobalEHDirective() const {
       return GlobalEHDirective;
+    }
+    bool getSupportsWeakOmittedEHFrame() const {
+      return SupportsWeakOmittedEHFrame;
     }
     const char *getDwarfSectionOffsetDirective() const {
       return DwarfSectionOffsetDirective;
