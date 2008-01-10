@@ -613,7 +613,7 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
       }
       
       // Insert copy from map[curr.first] to curr.second
-      TII->copyRegToReg(*MBB, MBB->end(), curr.second,
+      TII->copyRegToReg(*MBB, MBB->getFirstTerminator(), curr.second,
                         map[curr.first], RC, RC);
       map[curr.first] = curr.second;
       
@@ -642,7 +642,7 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
       
       // Insert a copy from dest to a new temporary t at the end of b
       unsigned t = MF->getRegInfo().createVirtualRegister(RC);
-      TII->copyRegToReg(*MBB, MBB->end(), t,
+      TII->copyRegToReg(*MBB, MBB->getFirstTerminator(), t,
                         curr.second, RC, RC);
       map[curr.second] = t;
       
