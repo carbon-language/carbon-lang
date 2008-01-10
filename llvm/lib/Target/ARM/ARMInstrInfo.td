@@ -809,7 +809,7 @@ def LDR  : AI2<0x0, (outs GPR:$dst), (ins addrmode2:$addr), LdFrm,
                [(set GPR:$dst, (load addrmode2:$addr))]>;
 
 // Special LDR for loads from non-pc-relative constpools.
-let isSimpleLoad = 1, isReMaterializable = 1 in
+let isSimpleLoad = 1, mayLoad = 1, isReMaterializable = 1 in
 def LDRcp : AI2<0x0, (outs GPR:$dst), (ins addrmode2:$addr), LdFrm,
                  "ldr", " $dst, $addr", []>;
 
@@ -831,6 +831,7 @@ def LDRSB : AI3<0xD, (outs GPR:$dst), (ins addrmode3:$addr), LdFrm,
                  "ldr", "sb $dst, $addr",
                 [(set GPR:$dst, (sextloadi8 addrmode3:$addr))]>;
 
+let mayLoad = 1 in {
 // Load doubleword
 def LDRD  : AI3<0xD, (outs GPR:$dst), (ins addrmode3:$addr), LdFrm,
                  "ldr", "d $dst, $addr",
@@ -876,6 +877,7 @@ def LDRSB_PRE : AI3pr<0xD, (outs GPR:$dst, GPR:$base_wb),
 def LDRSB_POST: AI3po<0xD, (outs GPR:$dst, GPR:$base_wb),
                       (ins GPR:$base,am3offset:$offset), LdFrm,
                       "ldr", "sb $dst, [$base], $offset", "$base = $base_wb", []>;
+}
 
 // Store
 def STR  : AI2<0x0, (outs), (ins GPR:$src, addrmode2:$addr), StFrm,
@@ -939,6 +941,7 @@ def STRB_POST: AI2po<0x1, (outs GPR:$base_wb),
 //
 
 // FIXME: $dst1 should be a def.
+let mayLoad = 1 in
 def LDM : AXI4<0x0, (outs),
                (ins addrmode4:$addr, pred:$p, reglist:$dst1, variable_ops),
                LdFrm, "ldm${p}${addr:submode} $addr, $dst1",

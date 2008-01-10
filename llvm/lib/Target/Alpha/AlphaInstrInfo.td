@@ -24,7 +24,7 @@ def Alpha_cvtqs   : SDNode<"AlphaISD::CVTQS_",    SDTFPUnaryOpUnC, []>;
 def Alpha_cvttq   : SDNode<"AlphaISD::CVTTQ_"  ,  SDTFPUnaryOp, []>;
 def Alpha_gprello : SDNode<"AlphaISD::GPRelLo",   SDTIntBinOp, []>;
 def Alpha_gprelhi : SDNode<"AlphaISD::GPRelHi",   SDTIntBinOp, []>;
-def Alpha_rellit  : SDNode<"AlphaISD::RelLit",    SDTIntBinOp, []>;
+def Alpha_rellit  : SDNode<"AlphaISD::RelLit",    SDTIntBinOp, [SDNPMayLoad]>;
 
 def retflag       : SDNode<"AlphaISD::RET_FLAG", SDTRet,
 	                   [SDNPHasChain, SDNPOptInFlag]>;

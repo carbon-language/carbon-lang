@@ -120,7 +120,8 @@ def PPCvcmp_o     : SDNode<"PPCISD::VCMPo", SDT_PPCvcmp, [SDNPOutFlag]>;
 def PPCcondbranch : SDNode<"PPCISD::COND_BRANCH", SDT_PPCcondbr,
                            [SDNPHasChain, SDNPOptInFlag]>;
 
-def PPClbrx       : SDNode<"PPCISD::LBRX", SDT_PPClbrx, [SDNPHasChain]>;
+def PPClbrx       : SDNode<"PPCISD::LBRX", SDT_PPClbrx,
+                           [SDNPHasChain, SDNPMayLoad]>;
 def PPCstbrx      : SDNode<"PPCISD::STBRX", SDT_PPCstbrx,
                            [SDNPHasChain, SDNPMayStore]>;
 

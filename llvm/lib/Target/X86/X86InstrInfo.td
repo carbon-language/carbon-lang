@@ -86,9 +86,10 @@ def X86tailcall: SDNode<"X86ISD::TAILCALL",     SDT_X86Call,
                         [SDNPHasChain, SDNPOutFlag, SDNPOptInFlag]>;
 
 def X86rep_stos: SDNode<"X86ISD::REP_STOS", SDTX86RepStr,
-                        [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
+                        [SDNPHasChain, SDNPInFlag, SDNPOutFlag, SDNPMayStore]>;
 def X86rep_movs: SDNode<"X86ISD::REP_MOVS", SDTX86RepStr,
-                        [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
+                        [SDNPHasChain, SDNPInFlag, SDNPOutFlag, SDNPMayStore,
+                         SDNPMayLoad]>;
 
 def X86rdtsc   : SDNode<"X86ISD::RDTSC_DAG",SDTX86RdTsc,
                         [SDNPHasChain, SDNPOutFlag]>;

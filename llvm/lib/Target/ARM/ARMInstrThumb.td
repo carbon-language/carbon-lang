@@ -265,7 +265,7 @@ def tLDRspi : TIs<(outs GPR:$dst), (ins t_addrmode_sp:$addr),
 
 // Special instruction for restore. It cannot clobber condition register
 // when it's expanded by eliminateCallFramePseudoInstr().
-let isSimpleLoad = 1 in
+let isSimpleLoad = 1, mayLoad = 1 in
 def tRestore : TIs<(outs GPR:$dst), (ins t_addrmode_sp:$addr),
                     "ldr $dst, $addr", []>;
 
@@ -276,7 +276,7 @@ def tLDRpci : TIs<(outs GPR:$dst), (ins i32imm:$addr),
                   [(set GPR:$dst, (load (ARMWrapper tconstpool:$addr)))]>;
 
 // Special LDR for loads from non-pc-relative constpools.
-let isSimpleLoad = 1, isReMaterializable = 1 in
+let isSimpleLoad = 1, mayLoad = 1, isReMaterializable = 1 in
 def tLDRcp  : TIs<(outs GPR:$dst), (ins i32imm:$addr),
                   "ldr $dst, $addr", []>;
 
@@ -309,6 +309,7 @@ def tSpill : TIs<(outs), (ins GPR:$src, t_addrmode_sp:$addr),
 
 // TODO: A7-44: LDMIA - load multiple
 
+let mayLoad = 1 in
 def tPOP : TI<(outs reglist:$dst1, variable_ops), (ins),
                "pop $dst1", []>;
 
