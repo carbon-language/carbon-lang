@@ -309,14 +309,8 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       // are actually two values in the live interval.  Because of this we
       // need to take the LiveRegion that defines this register and split it
       // into two values.
-      MachineRegisterInfo& MRI = mbb->getParent()->getRegInfo();
-      unsigned lowIndex = ~0U;
-      for (MachineRegisterInfo::def_iterator DI = MRI.def_begin(interval.reg),
-          DE = MRI.def_end(); DI != DE; ++DI)
-        if (getInstructionIndex(&*DI) < lowIndex)
-          lowIndex = getInstructionIndex(&*DI);
-      
-      unsigned DefIndex = getDefIndex(lowIndex);
+      assert(interval.containsOneValue());
+      unsigned DefIndex = getDefIndex(interval.getValNumInfo(0)->def);
       unsigned RedefIndex = getDefIndex(MIIdx);
 
       const LiveRange *OldLR = interval.getLiveRangeContaining(RedefIndex-1);
