@@ -749,10 +749,11 @@ bool X86InstrInfo::isReallyTriviallyReMaterializable(MachineInstr *MI) const {
     // values.
 #if 0
     // FIXME: This is disabled due to a remat bug. rdar://5671644
-    MachineFunction *MF = MI->getParent()->getParent();
-    if (MI->getOperand(1).isFI() && 
-        MF->getFrameInfo()->isFixedObjectIndex(MI->getOperand(1).getIndex()))
-      return true;
+    if (MI->getOperand(1).isFI()) {
+      const MachineFrameInfo &MFI=*MI->getParent()->getParent()->getFrameInfo();
+      int Idx = MI->getOperand(1).getIndex();
+      return MFI.isFixedObjectIndex(Idx) && MFI.isImmutableObjectIndex(Idx);
+    }
 #endif
       
     return false;
@@ -805,9 +806,11 @@ bool X86InstrInfo::isReallySideEffectFree(MachineInstr *MI) const {
     // invariant across the whole function, because we don't redefine argument
     // values.
     MachineFunction *MF = MI->getParent()->getParent();
-    if (MI->getOperand(1).isFI() && 
-        MF->getFrameInfo()->isFixedObjectIndex(MI->getOperand(1).getIndex()))
-      return true;
+    if (MI->getOperand(1).isFI()) {
+      const MachineFrameInfo &MFI = *MF->getFrameInfo();
+      int Idx = MI->getOperand(1).getIndex();
+      return MFI.isFixedObjectIndex(Idx) && MFI.isImmutableObjectIndex(Idx);
+    }
       
     return false;
   }
