@@ -190,6 +190,7 @@ def SDNPOutFlag     : SDNodeProperty;   // Write a flag result
 def SDNPInFlag      : SDNodeProperty;   // Read a flag operand
 def SDNPOptInFlag   : SDNodeProperty;   // Optionally read a flag operand
 def SDNPMayStore    : SDNodeProperty;   // May write to memory, sets 'mayStore'.
+def SDNPMayLoad     : SDNodeProperty;   // May read memory, sets 'mayLoad'.
 
 //===----------------------------------------------------------------------===//
 // Selection DAG Node definitions.
@@ -313,7 +314,8 @@ def ret        : SDNode<"ISD::RET"        , SDTRet,    [SDNPHasChain]>;
 
 // Do not use ld, st directly. Use load, extload, sextload, zextload, store,
 // and truncst (see below).
-def ld         : SDNode<"ISD::LOAD"       , SDTLoad,  [SDNPHasChain]>;
+def ld         : SDNode<"ISD::LOAD"       , SDTLoad,
+                        [SDNPHasChain, SDNPMayLoad]>;
 def st         : SDNode<"ISD::STORE"      , SDTStore,
                         [SDNPHasChain, SDNPMayStore]>;
 def ist        : SDNode<"ISD::STORE"      , SDTIStore,
