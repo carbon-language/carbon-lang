@@ -121,7 +121,8 @@ namespace {
     void computeDFS(MachineFunction& MF);
     void processBlock(MachineBasicBlock* MBB);
     
-    std::vector<DomForestNode*> computeDomForest(std::set<unsigned>& instrs);
+    std::vector<DomForestNode*> computeDomForest(std::set<unsigned>& instrs,
+                                                 MachineRegisterInfo& MRI);
     void processPHIUnion(MachineInstr* Inst,
                          std::set<unsigned>& PHIUnion,
                          std::vector<StrongPHIElimination::DomForestNode*>& DF,
@@ -186,18 +187,18 @@ void StrongPHIElimination::computeDFS(MachineFunction& MF) {
 class PreorderSorter {
 private:
   DenseMap<MachineBasicBlock*, unsigned>& preorder;
-  LiveVariables& LV;
+  MachineRegisterInfo& MRI;
   
 public:
   PreorderSorter(DenseMap<MachineBasicBlock*, unsigned>& p,
-                LiveVariables& L) : preorder(p), LV(L) { }
+                MachineRegisterInfo& M) : preorder(p), MRI(M) { }
   
   bool operator()(unsigned A, unsigned B) {
     if (A == B)
       return false;
     
-    MachineBasicBlock* ABlock = LV.getVarInfo(A).DefInst->getParent();
-    MachineBasicBlock* BBlock = LV.getVarInfo(A).DefInst->getParent();
+    MachineBasicBlock* ABlock = MRI.getVRegDef(A)->getParent();
+    MachineBasicBlock* BBlock = MRI.getVRegDef(B)->getParent();
     
     if (preorder[ABlock] < preorder[BBlock])
       return true;
@@ -211,9 +212,8 @@ public:
 /// computeDomForest - compute the subforest of the DomTree corresponding
 /// to the defining blocks of the registers in question
 std::vector<StrongPHIElimination::DomForestNode*>
-StrongPHIElimination::computeDomForest(std::set<unsigned>& regs) {
-  LiveVariables& LV = getAnalysis<LiveVariables>();
-  
+StrongPHIElimination::computeDomForest(std::set<unsigned>& regs, 
+                                       MachineRegisterInfo& MRI) {
   // Begin by creating a virtual root node, since the actual results
   // may well be a forest.  Assume this node has maximum DFS-out number.
   DomForestNode* VirtualRoot = new DomForestNode(0, 0);
@@ -227,7 +227,7 @@ StrongPHIElimination::computeDomForest(std::set<unsigned>& regs) {
     worklist.push_back(*I);
   
   // Sort the registers by the DFS-in number of their defining block
-  PreorderSorter PS(preorder, LV);
+  PreorderSorter PS(preorder, MRI);
   std::sort(worklist.begin(), worklist.end(), PS);
   
   // Create a "current parent" stack, and put the virtual root on top of it
@@ -238,9 +238,9 @@ StrongPHIElimination::computeDomForest(std::set<unsigned>& regs) {
   // Iterate over all the registers in the previously computed order
   for (std::vector<unsigned>::iterator I = worklist.begin(), E = worklist.end();
        I != E; ++I) {
-    unsigned pre = preorder[LV.getVarInfo(*I).DefInst->getParent()];
+    unsigned pre = preorder[MRI.getVRegDef(*I)->getParent()];
     MachineBasicBlock* parentBlock = CurrentParent->getReg() ?
-                 LV.getVarInfo(CurrentParent->getReg()).DefInst->getParent() :
+                 MRI.getVRegDef(CurrentParent->getReg())->getParent() :
                  0;
     
     // If the DFS-in number of the register is greater than the DFS-out number
@@ -250,7 +250,7 @@ StrongPHIElimination::computeDomForest(std::set<unsigned>& regs) {
       CurrentParent = stack.back();
       
       parentBlock = CurrentParent->getReg() ?
-                   LV.getVarInfo(CurrentParent->getReg()).DefInst->getParent() :
+                   MRI.getVRegDef(CurrentParent->getReg())->getParent() :
                    0;
     }
     
@@ -271,11 +271,13 @@ StrongPHIElimination::computeDomForest(std::set<unsigned>& regs) {
 
 /// isLiveIn - helper method that determines, from a VarInfo, if a register
 /// is live into a block
-static bool isLiveIn(LiveVariables::VarInfo& V, MachineBasicBlock* MBB) {
+static bool isLiveIn(unsigned r, MachineBasicBlock* MBB,
+                     MachineRegisterInfo& MRI, LiveVariables& LV) {
+  LiveVariables::VarInfo V = LV.getVarInfo(r);
   if (V.AliveBlocks.test(MBB->getNumber()))
     return true;
   
-  if (V.DefInst->getParent() != MBB &&
+  if (MRI.getVRegDef(r)->getParent() != MBB &&
       V.UsedBlocks.test(MBB->getNumber()))
     return true;
   
@@ -284,8 +286,10 @@ static bool isLiveIn(LiveVariables::VarInfo& V, MachineBasicBlock* MBB) {
 
 /// isLiveOut - help method that determines, from a VarInfo, if a register is
 /// live out of a block.
-static bool isLiveOut(LiveVariables::VarInfo& V, MachineBasicBlock* MBB) {
-  if (MBB == V.DefInst->getParent() ||
+static bool isLiveOut(unsigned r, MachineBasicBlock* MBB,
+                      MachineRegisterInfo& MRI, LiveVariables& LV) {
+  LiveVariables::VarInfo& V = LV.getVarInfo(r);
+  if (MBB == MRI.getVRegDef(r)->getParent() ||
       V.UsedBlocks.test(MBB->getNumber())) {
     for (std::vector<MachineInstr*>::iterator I = V.Kills.begin(), 
          E = V.Kills.end(); I != E; ++I)
@@ -307,8 +311,9 @@ static bool interferes(unsigned a, unsigned b, MachineBasicBlock* scan,
   MachineInstr* def = 0;
   MachineInstr* kill = 0;
   
-  LiveVariables::VarInfo& First = LV.getVarInfo(a);
-  LiveVariables::VarInfo& Second = LV.getVarInfo(b);
+  // The code is still in SSA form at this point, so there is only one
+  // definition per VReg.  Thus we can safely use MRI->getVRegDef().
+  const MachineRegisterInfo* MRI = &scan->getParent()->getRegInfo();
   
   bool interference = false;
   
@@ -319,23 +324,23 @@ static bool interferes(unsigned a, unsigned b, MachineBasicBlock* scan,
     
     // Same defining block...
     if (mode == 0) {
-      if (curr == First.DefInst) {
-        // If we find our first DefInst, save it
+      if (curr == MRI->getVRegDef(a)) {
+        // If we find our first definition, save it
         if (!def) {
           def = curr;
-        // If there's already an unkilled DefInst, then 
+        // If there's already an unkilled definition, then 
         // this is an interference
         } else if (!kill) {
           interference = true;
           break;
-        // If there's a DefInst followed by a KillInst, then
+        // If there's a definition followed by a KillInst, then
         // they can't interfere
         } else {
           interference = false;
           break;
         }
       // Symmetric with the above
-      } else if (curr == Second.DefInst ) {
+      } else if (curr == MRI->getVRegDef(b)) {
         if (!def) {
           def = curr;
         } else if (!kill) {
@@ -345,24 +350,24 @@ static bool interferes(unsigned a, unsigned b, MachineBasicBlock* scan,
           interference = false;
           break;
         }
-      // Store KillInsts if they match up with the DefInst
+      // Store KillInsts if they match up with the definition
       } else if (LV.KillsRegister(curr, a)) {
-        if (def == First.DefInst) {
+        if (def == MRI->getVRegDef(a)) {
           kill = curr;
         } else if (LV.KillsRegister(curr, b)) {
-          if (def == Second.DefInst) {
+          if (def == MRI->getVRegDef(b)) {
             kill = curr;
           }
         }
       }
     // First properly dominates second...
     } else if (mode == 1) {
-      if (curr == Second.DefInst) {
-        // DefInst of second without kill of first is an interference
+      if (curr == MRI->getVRegDef(b)) {
+        // Definition of second without kill of first is an interference
         if (!kill) {
           interference = true;
           break;
-        // DefInst after a kill is a non-interference
+        // Definition after a kill is a non-interference
         } else {
           interference = false;
           break;
@@ -373,7 +378,7 @@ static bool interferes(unsigned a, unsigned b, MachineBasicBlock* scan,
       }
     // Symmetric with the above
     } else if (mode == 2) {
-      if (curr == First.DefInst) {
+      if (curr == MRI->getVRegDef(a)) {
         if (!kill) {
           interference = true;
           break;
@@ -396,6 +401,7 @@ static bool interferes(unsigned a, unsigned b, MachineBasicBlock* scan,
 /// which treatment.
 void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
   LiveVariables& LV = getAnalysis<LiveVariables>();
+  MachineRegisterInfo& MRI = MBB->getParent()->getRegInfo();
   
   // Holds names that have been added to a set in any PHI within this block
   // before the current one.
@@ -404,8 +410,6 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
   // Iterate over all the PHI nodes in this block
   MachineBasicBlock::iterator P = MBB->begin();
   while (P != MBB->end() && P->getOpcode() == TargetInstrInfo::PHI) {
-    LiveVariables::VarInfo& PHIInfo = LV.getVarInfo(P->getOperand(0).getReg());
-
     unsigned DestReg = P->getOperand(0).getReg();
 
     // PHIUnion is the set of incoming registers to the PHI node that
@@ -418,7 +422,6 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
     // Iterate over the operands of the PHI node
     for (int i = P->getNumOperands() - 1; i >= 2; i-=2) {
       unsigned SrcReg = P->getOperand(i-1).getReg();
-      LiveVariables::VarInfo& SrcInfo = LV.getVarInfo(SrcReg);
     
       // Check for trivial interferences via liveness information, allowing us
       // to avoid extra work later.  Any registers that interfere cannot both
@@ -432,12 +435,14 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
       //      in this block OR
       //   5) if any two operands are defined in the same block, insert copies
       //      for one of them
-      if (isLiveIn(SrcInfo, P->getParent()) ||
-          isLiveOut(PHIInfo, SrcInfo.DefInst->getParent()) ||
-          ( PHIInfo.DefInst->getOpcode() == TargetInstrInfo::PHI &&
-            isLiveIn(PHIInfo, SrcInfo.DefInst->getParent()) ) ||
+      if (isLiveIn(SrcReg, P->getParent(), MRI, LV) ||
+          isLiveOut(P->getOperand(0).getReg(),
+                    MRI.getVRegDef(SrcReg)->getParent(), MRI, LV) ||
+          ( MRI.getVRegDef(SrcReg)->getOpcode() == TargetInstrInfo::PHI &&
+            isLiveIn(P->getOperand(0).getReg(),
+                     MRI.getVRegDef(SrcReg)->getParent(), MRI, LV) ) ||
           ProcessedNames.count(SrcReg) ||
-          UnionedBlocks.count(SrcInfo.DefInst->getParent())) {
+          UnionedBlocks.count(MRI.getVRegDef(SrcReg)->getParent())) {
         
         // Add a copy for the selected register
         MachineBasicBlock* From = P->getOperand(i).getMBB();
@@ -446,7 +451,7 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
       } else {
         // Otherwise, add it to the renaming set
         PHIUnion.insert(SrcReg);
-        UnionedBlocks.insert(SrcInfo.DefInst->getParent());
+        UnionedBlocks.insert(MRI.getVRegDef(SrcReg)->getParent());
       }
     }
     
@@ -454,7 +459,7 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
     // where the nodes are the registers and the edges represent dominance 
     // relations between the defining blocks of the registers
     std::vector<StrongPHIElimination::DomForestNode*> DF = 
-                                                     computeDomForest(PHIUnion);
+                                                computeDomForest(PHIUnion, MRI);
     
     // Walk DomForest to resolve interferences at an inter-block level.  This
     // will remove registers from the renaming set (and insert copies for them)
@@ -469,24 +474,22 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
         localInterferences.begin(), E = localInterferences.end(); I != E; ++I) {
       std::pair<unsigned, unsigned> p = *I;
       
-      LiveVariables::VarInfo& FirstInfo = LV.getVarInfo(p.first);
-      LiveVariables::VarInfo& SecondInfo = LV.getVarInfo(p.second);
-      
       MachineDominatorTree& MDT = getAnalysis<MachineDominatorTree>();
       
       // Determine the block we need to scan and the relationship between
       // the two registers
       MachineBasicBlock* scan = 0;
       unsigned mode = 0;
-      if (FirstInfo.DefInst->getParent() == SecondInfo.DefInst->getParent()) {
-        scan = FirstInfo.DefInst->getParent();
+      if (MRI.getVRegDef(p.first)->getParent() ==
+          MRI.getVRegDef(p.second)->getParent()) {
+        scan = MRI.getVRegDef(p.first)->getParent();
         mode = 0; // Same block
-      } else if (MDT.dominates(FirstInfo.DefInst->getParent(),
-                             SecondInfo.DefInst->getParent())) {
-        scan = SecondInfo.DefInst->getParent();
+      } else if (MDT.dominates(MRI.getVRegDef(p.first)->getParent(),
+                               MRI.getVRegDef(p.second)->getParent())) {
+        scan = MRI.getVRegDef(p.second)->getParent();
         mode = 1; // First dominates second
       } else {
-        scan = FirstInfo.DefInst->getParent();
+        scan = MRI.getVRegDef(p.first)->getParent();
         mode = 2; // Second dominates first
       }
       
@@ -531,6 +534,9 @@ void StrongPHIElimination::processPHIUnion(MachineInstr* Inst,
   std::vector<DomForestNode*> worklist(DF.begin(), DF.end());
   SmallPtrSet<DomForestNode*, 4> visited;
   
+  // Code is still in SSA form, so we can use MRI::getVRegDef()
+  MachineRegisterInfo& MRI = Inst->getParent()->getParent()->getRegInfo();
+  
   LiveVariables& LV = getAnalysis<LiveVariables>();
   unsigned DestReg = Inst->getOperand(0).getReg();
   
@@ -538,16 +544,15 @@ void StrongPHIElimination::processPHIUnion(MachineInstr* Inst,
   while (!worklist.empty()) {
     DomForestNode* DFNode = worklist.back();
     
-    LiveVariables::VarInfo& Info = LV.getVarInfo(DFNode->getReg());
     visited.insert(DFNode);
     
     bool inserted = false;
     for (DomForestNode::iterator CI = DFNode->begin(), CE = DFNode->end();
          CI != CE; ++CI) {
       DomForestNode* child = *CI;   
-      LiveVariables::VarInfo& CInfo = LV.getVarInfo(child->getReg());
         
-      if (isLiveOut(Info, CInfo.DefInst->getParent())) {
+      if (isLiveOut(DFNode->getReg(),
+          MRI.getVRegDef(child->getReg())->getParent(), MRI, LV)) {
         // Insert copies for parent
         for (int i = Inst->getNumOperands() - 1; i >= 2; i-=2) {
           if (Inst->getOperand(i-1).getReg() == DFNode->getReg()) {
@@ -560,8 +565,11 @@ void StrongPHIElimination::processPHIUnion(MachineInstr* Inst,
             PHIUnion.erase(SrcReg);
           }
         }
-      } else if (isLiveIn(Info, CInfo.DefInst->getParent()) ||
-                 Info.DefInst->getParent() == CInfo.DefInst->getParent()) {
+      } else if (isLiveIn(DFNode->getReg(),
+                          MRI.getVRegDef(child->getReg())->getParent(),
+                          MRI, LV) ||
+                 MRI.getVRegDef(DFNode->getReg())->getParent() ==
+                                 MRI.getVRegDef(child->getReg())->getParent()) {
         // Add (p, c) to possible local interferences
         locals.push_back(std::make_pair(DFNode->getReg(), child->getReg()));
       }
@@ -610,6 +618,7 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
   
   LiveVariables& LV = getAnalysis<LiveVariables>();
   MachineFunction* MF = MBB->getParent();
+  MachineRegisterInfo& MRI = MF->getRegInfo();
   const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
   
   // Iterate over the worklist, inserting copies
@@ -620,15 +629,14 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
       
       const TargetRegisterClass *RC = MF->getRegInfo().getRegClass(curr.first);
       
-      if (isLiveOut(LV.getVarInfo(curr.second), MBB)) {
+      if (isLiveOut(curr.second, MBB, MRI, LV)) {
         // Create a temporary
         unsigned t = MF->getRegInfo().createVirtualRegister(RC);
         
         // Insert copy from curr.second to a temporary at
         // the Phi defining curr.second
-        LiveVariables::VarInfo VI = LV.getVarInfo(curr.second);
-        MachineBasicBlock::iterator PI = VI.DefInst;
-        TII->copyRegToReg(*VI.DefInst->getParent(), PI, t,
+        MachineBasicBlock::iterator PI = MRI.getVRegDef(curr.second);
+        TII->copyRegToReg(*PI->getParent(), PI, t,
                           curr.second, RC, RC);
         
         // Push temporary on Stacks
