@@ -298,21 +298,17 @@ static bool isLiveOut(LiveVariables::VarInfo& V, MachineBasicBlock* MBB) {
   return false;
 }
 
-/// isKillInst - helper method that determines, from a VarInfo, if an 
-/// instruction kills a given register
-static bool isKillInst(LiveVariables::VarInfo& V, MachineInstr* MI) {
-  return std::find(V.Kills.begin(), V.Kills.end(), MI) != V.Kills.end();
-}
-
 /// interferes - checks for local interferences by scanning a block.  The only
 /// trick parameter is 'mode' which tells it the relationship of the two
 /// registers. 0 - defined in the same block, 1 - first properly dominates
 /// second, 2 - second properly dominates first 
-static bool interferes(LiveVariables::VarInfo& First,
-                       LiveVariables::VarInfo& Second,
-                       MachineBasicBlock* scan, unsigned mode) {
+static bool interferes(unsigned a, unsigned b, MachineBasicBlock* scan,
+                       LiveVariables& LV, unsigned mode) {
   MachineInstr* def = 0;
   MachineInstr* kill = 0;
+  
+  LiveVariables::VarInfo& First = LV.getVarInfo(a);
+  LiveVariables::VarInfo& Second = LV.getVarInfo(b);
   
   bool interference = false;
   
@@ -350,10 +346,10 @@ static bool interferes(LiveVariables::VarInfo& First,
           break;
         }
       // Store KillInsts if they match up with the DefInst
-      } else if (isKillInst(First, curr)) {
+      } else if (LV.KillsRegister(curr, a)) {
         if (def == First.DefInst) {
           kill = curr;
-        } else if (isKillInst(Second, curr)) {
+        } else if (LV.KillsRegister(curr, b)) {
           if (def == Second.DefInst) {
             kill = curr;
           }
@@ -372,7 +368,7 @@ static bool interferes(LiveVariables::VarInfo& First,
           break;
         }
       // Save KillInsts of First
-      } else if (isKillInst(First, curr)) {
+      } else if (LV.KillsRegister(curr, a)) {
         kill = curr;
       }
     // Symmetric with the above
@@ -385,7 +381,7 @@ static bool interferes(LiveVariables::VarInfo& First,
           interference = false;
           break;
         }
-      } else if (isKillInst(Second, curr)) {
+      } else if (LV.KillsRegister(curr, b)) {
         kill = curr;
       }
     }
@@ -468,7 +464,7 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
       }
       
       // If there's an interference, we need to insert  copies
-      if (interferes(FirstInfo, SecondInfo, scan, mode)) {
+      if (interferes(p.first, p.second, scan, LV, mode)) {
         // Insert copies for First
         for (int i = P->getNumOperands() - 1; i >= 2; i-=2) {
           if (P->getOperand(i-1).getReg() == p.first) {
