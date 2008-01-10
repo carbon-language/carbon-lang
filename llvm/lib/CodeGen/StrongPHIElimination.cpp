@@ -390,7 +390,10 @@ static bool interferes(unsigned a, unsigned b, MachineBasicBlock* scan,
   return interference;
 }
 
-/// processBlock - Eliminate PHIs in the given block
+/// processBlock - Determine how to break up PHIs in the current block.  Each
+/// PHI is broken up by some combination of renaming its operands and inserting
+/// copies.  This method is responsible for determining which operands receive
+/// which treatment.
 void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
   LiveVariables& LV = getAnalysis<LiveVariables>();
   
@@ -398,21 +401,37 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
   // before the current one.
   std::set<unsigned> ProcessedNames;
   
+  // Iterate over all the PHI nodes in this block
   MachineBasicBlock::iterator P = MBB->begin();
   while (P != MBB->end() && P->getOpcode() == TargetInstrInfo::PHI) {
     LiveVariables::VarInfo& PHIInfo = LV.getVarInfo(P->getOperand(0).getReg());
 
     unsigned DestReg = P->getOperand(0).getReg();
 
-    // Hold the names that are currently in the candidate set.
+    // PHIUnion is the set of incoming registers to the PHI node that
+    // are going to be renames rather than having copies inserted.  This set
+    // is refinded over the course of this function.  UnionedBlocks is the set
+    // of corresponding MBBs.
     std::set<unsigned> PHIUnion;
     std::set<MachineBasicBlock*> UnionedBlocks;
   
+    // Iterate over the operands of the PHI node
     for (int i = P->getNumOperands() - 1; i >= 2; i-=2) {
       unsigned SrcReg = P->getOperand(i-1).getReg();
       LiveVariables::VarInfo& SrcInfo = LV.getVarInfo(SrcReg);
     
-      // Check for trivial interferences
+      // Check for trivial interferences via liveness information, allowing us
+      // to avoid extra work later.  Any registers that interfere cannot both
+      // be in the renaming set, so choose one and add copies for it instead.
+      // The conditions are:
+      //   1) if the operand is live into the PHI node's block OR
+      //   2) if the PHI node is live out of the operand's defining block OR
+      //   3) if the operand is itself a PHI node and the original PHI is
+      //      live into the operand's defining block OR
+      //   4) if the operand is already being renamed for another PHI node
+      //      in this block OR
+      //   5) if any two operands are defined in the same block, insert copies
+      //      for one of them
       if (isLiveIn(SrcInfo, P->getParent()) ||
           isLiveOut(PHIInfo, SrcInfo.DefInst->getParent()) ||
           ( PHIInfo.DefInst->getOpcode() == TargetInstrInfo::PHI &&
@@ -420,24 +439,32 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
           ProcessedNames.count(SrcReg) ||
           UnionedBlocks.count(SrcInfo.DefInst->getParent())) {
         
-        // add a copy from a_i to p in Waiting[From[a_i]]
+        // Add a copy for the selected register
         MachineBasicBlock* From = P->getOperand(i).getMBB();
         Waiting[From].insert(std::make_pair(SrcReg, DestReg));
         UsedByAnother.insert(SrcReg);
       } else {
+        // Otherwise, add it to the renaming set
         PHIUnion.insert(SrcReg);
         UnionedBlocks.insert(SrcInfo.DefInst->getParent());
       }
     }
     
+    // Compute the dominator forest for the renaming set.  This is a forest
+    // where the nodes are the registers and the edges represent dominance 
+    // relations between the defining blocks of the registers
     std::vector<StrongPHIElimination::DomForestNode*> DF = 
                                                      computeDomForest(PHIUnion);
     
-    // Walk DomForest to resolve interferences
+    // Walk DomForest to resolve interferences at an inter-block level.  This
+    // will remove registers from the renaming set (and insert copies for them)
+    // if interferences are found.
     std::vector<std::pair<unsigned, unsigned> > localInterferences;
     processPHIUnion(P, PHIUnion, DF, localInterferences);
     
-    // Check for local interferences
+    // The dominator forest walk may have returned some register pairs whose
+    // interference cannot be determines from dominator analysis.  We now 
+    // examine these pairs for local interferences.
     for (std::vector<std::pair<unsigned, unsigned> >::iterator I =
         localInterferences.begin(), E = localInterferences.end(); I != E; ++I) {
       std::pair<unsigned, unsigned> p = *I;
@@ -481,10 +508,13 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
       }
     }
     
-    // Cache renaming information
+    // Add the renaming set for this PHI node to our overal renaming information
     RenameSets.insert(std::make_pair(P->getOperand(0).getReg(), PHIUnion));
     
+    // Remember which registers are already renamed, so that we don't try to 
+    // rename them for another PHI node in this block
     ProcessedNames.insert(PHIUnion.begin(), PHIUnion.end());
+    
     ++P;
   }
 }
