@@ -204,19 +204,20 @@ class Instruction {
   bit hasCtrlDep   = 0;     // Does this instruction r/w ctrl-flow chains?
   bit isNotDuplicable = 0;  // Is it unsafe to duplicate this instruction?
 
-  // Side effect flags - If neither of these flags is set, then the instruction
-  // *always* has side effects. When set, the flags have these meanings:
+  // Side effect flags - When set, the flags have these meanings:
   //
-  //  neverHasSideEffects - The instruction has no side effects that are not
-  //    captured by any operands of the instruction or other flags, and when
-  //    *all* instances of the instruction of that opcode have no side effects.
+  //  hasSideEffects - The instruction has side effects that are not
+  //    captured by any operands of the instruction or other flags.
   //  mayHaveSideEffects  - Some instances of the instruction can have side
   //    effects. The virtual method "isReallySideEffectFree" is called to
   //    determine this. Load instructions are an example of where this is
   //    useful. In general, loads always have side effects. However, loads from
   //    constant pools don't. Individual back ends make this determination.
-  bit neverHasSideEffects = 0;
+  //  neverHasSideEffects - Set on an instruction with no pattern if it has no
+  //    side effects.
+  bit hasSideEffects = 0;
   bit mayHaveSideEffects = 0;
+  bit neverHasSideEffects = 0;
   
   InstrItinClass Itinerary = NoItinerary;// Execution steps used for scheduling.
 
@@ -343,12 +344,14 @@ def EXTRACT_SUBREG : Instruction {
   let InOperandList = (ops variable_ops);
   let AsmString = "";
   let Namespace = "TargetInstrInfo";
+  let neverHasSideEffects = 1;
 }
 def INSERT_SUBREG : Instruction {
         let OutOperandList = (ops variable_ops);
   let InOperandList = (ops variable_ops);
   let AsmString = "";
   let Namespace = "TargetInstrInfo";
+  let neverHasSideEffects = 1;
 }
 
 //===----------------------------------------------------------------------===//

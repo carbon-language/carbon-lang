@@ -42,7 +42,7 @@ def X86pinsrw  : SDNode<"X86ISD::PINSRW", SDTypeProfile<1, 3, []>, []>;
 // SSE 'Special' Instructions
 //===----------------------------------------------------------------------===//
 
-let isImplicitDef = 1 in
+let isImplicitDef = 1 in {
 def IMPLICIT_DEF_VR128 : I<0, Pseudo, (outs VR128:$dst), (ins),
                            "#IMPLICIT_DEF $dst",
                            [(set VR128:$dst, (v4f32 (undef)))]>,
@@ -53,6 +53,7 @@ def IMPLICIT_DEF_FR32  : I<0, Pseudo, (outs FR32:$dst), (ins),
 def IMPLICIT_DEF_FR64  : I<0, Pseudo, (outs FR64:$dst), (ins),
                            "#IMPLICIT_DEF $dst",
                            [(set FR64:$dst, (undef))]>, Requires<[HasSSE2]>;
+}
 
 //===----------------------------------------------------------------------===//
 // SSE Complex Patterns
@@ -62,9 +63,9 @@ def IMPLICIT_DEF_FR64  : I<0, Pseudo, (outs FR64:$dst), (ins),
 // the top elements.  These are used for the SSE 'ss' and 'sd' instruction
 // forms.
 def sse_load_f32 : ComplexPattern<v4f32, 4, "SelectScalarSSELoad", [],
-                                  [SDNPHasChain]>;
+                                  [SDNPHasChain, SDNPMayLoad]>;
 def sse_load_f64 : ComplexPattern<v2f64, 4, "SelectScalarSSELoad", [],
-                                  [SDNPHasChain]>;
+                                  [SDNPHasChain, SDNPMayLoad]>;
 
 def ssmem : Operand<v4f32> {
   let PrintMethod = "printf32mem";
@@ -452,6 +453,7 @@ def FsFLD0SS : I<0xEF, MRMInitReg, (outs FR32:$dst), (ins),
 
 // Alias instruction to do FR32 reg-to-reg copy using movaps. Upper bits are
 // disregarded.
+let neverHasSideEffects = 1 in 
 def FsMOVAPSrr : PSI<0x28, MRMSrcReg, (outs FR32:$dst), (ins FR32:$src),
                      "movaps\t{$src, $dst|$dst, $src}", []>;
 
@@ -488,13 +490,16 @@ def FsXORPSrm : PSI<0x57, MRMSrcMem, (outs FR32:$dst), (ins FR32:$src1, f128mem:
                     "xorps\t{$src2, $dst|$dst, $src2}",
                     [(set FR32:$dst, (X86fxor FR32:$src1,
                                       (memopfsf32 addr:$src2)))]>;
-
+let neverHasSideEffects = 1 in {
 def FsANDNPSrr : PSI<0x55, MRMSrcReg,
                      (outs FR32:$dst), (ins FR32:$src1, FR32:$src2),
                      "andnps\t{$src2, $dst|$dst, $src2}", []>;
+                     
+let mayLoad = 1 in
 def FsANDNPSrm : PSI<0x55, MRMSrcMem,
                      (outs FR32:$dst), (ins FR32:$src1, f128mem:$src2),
                      "andnps\t{$src2, $dst|$dst, $src2}", []>;
+}
 }
 
 /// basic_sse1_fp_binop_rm - SSE1 binops come in both scalar and vector forms.
@@ -632,6 +637,7 @@ defm MIN : sse1_fp_binop_rm<0x5D, "min", X86fmin,
 // SSE packed FP Instructions
 
 // Move Instructions
+let neverHasSideEffects = 1 in 
 def MOVAPSrr : PSI<0x28, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                    "movaps\t{$src, $dst|$dst, $src}", []>;
 let isSimpleLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
@@ -1148,6 +1154,7 @@ def FsFLD0SD : I<0xEF, MRMInitReg, (outs FR64:$dst), (ins),
 
 // Alias instruction to do FR64 reg-to-reg copy using movapd. Upper bits are
 // disregarded.
+let neverHasSideEffects = 1 in
 def FsMOVAPDrr : PDI<0x28, MRMSrcReg, (outs FR64:$dst), (ins FR64:$src),
                      "movapd\t{$src, $dst|$dst, $src}", []>;
 
@@ -1185,12 +1192,15 @@ def FsXORPDrm : PDI<0x57, MRMSrcMem, (outs FR64:$dst), (ins FR64:$src1, f128mem:
                     [(set FR64:$dst, (X86fxor FR64:$src1,
                                       (memopfsf64 addr:$src2)))]>;
 
+let neverHasSideEffects = 1 in {
 def FsANDNPDrr : PDI<0x55, MRMSrcReg,
                      (outs FR64:$dst), (ins FR64:$src1, FR64:$src2),
                      "andnpd\t{$src2, $dst|$dst, $src2}", []>;
+let mayLoad = 1 in
 def FsANDNPDrm : PDI<0x55, MRMSrcMem,
                      (outs FR64:$dst), (ins FR64:$src1, f128mem:$src2),
                      "andnpd\t{$src2, $dst|$dst, $src2}", []>;
+}
 }
 
 /// basic_sse2_fp_binop_rm - SSE2 binops come in both scalar and vector forms.
@@ -1328,6 +1338,7 @@ defm MIN : sse2_fp_binop_rm<0x5D, "min", X86fmin,
 // SSE packed FP Instructions
 
 // Move Instructions
+let neverHasSideEffects = 1 in
 def MOVAPDrr : PDI<0x28, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                    "movapd\t{$src, $dst|$dst, $src}", []>;
 let isSimpleLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
@@ -2116,7 +2127,6 @@ def LFENCE : I<0xAE, MRM5m, (outs), (ins),
                "lfence", [(int_x86_sse2_lfence)]>, TB, Requires<[HasSSE2]>;
 def MFENCE : I<0xAE, MRM6m, (outs), (ins),
                "mfence", [(int_x86_sse2_mfence)]>, TB, Requires<[HasSSE2]>;
-
 
 // Alias instructions that map zero vector to pxor / xorp* for sse.
 let isReMaterializable = 1 in

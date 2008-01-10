@@ -131,19 +131,21 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
 //===----------------------------------------------------------------------===//
 //  Miscellaneous Instructions...
 //
-let Defs = [RBP,RSP], Uses = [RBP,RSP] in
+let Defs = [RBP,RSP], Uses = [RBP,RSP], mayLoad = 1, neverHasSideEffects = 1 in
 def LEAVE64  : I<0xC9, RawFrm,
                  (outs), (ins), "leave", []>;
-let Defs = [RSP], Uses = [RSP] in {
+let Defs = [RSP], Uses = [RSP], neverHasSideEffects=1 in {
+let mayLoad = 1 in
 def POP64r   : I<0x58, AddRegFrm,
                  (outs GR64:$reg), (ins), "pop{q}\t$reg", []>;
+let mayStore = 1 in
 def PUSH64r  : I<0x50, AddRegFrm,
                  (outs), (ins GR64:$reg), "push{q}\t$reg", []>;
 }
 
-let Defs = [RSP, EFLAGS], Uses = [RSP] in
+let Defs = [RSP, EFLAGS], Uses = [RSP], mayLoad = 1 in
 def POPFQ    : I<0x9D, RawFrm, (outs), (ins), "popf", []>, REX_W;
-let Defs = [RSP], Uses = [RSP, EFLAGS] in
+let Defs = [RSP], Uses = [RSP, EFLAGS], mayStore = 1 in
 def PUSHFQ   : I<0x9C, RawFrm, (outs), (ins), "pushf", []>;
 
 def LEA64_32r : I<0x8D, MRMSrcMem,
@@ -160,12 +162,16 @@ def BSWAP64r : RI<0xC8, AddRegFrm, (outs GR64:$dst), (ins GR64:$src),
                   "bswap{q}\t$dst", 
                   [(set GR64:$dst, (bswap GR64:$src))]>, TB;
 // Exchange
+let neverHasSideEffects = 1 in {
 def XCHG64rr : RI<0x87, MRMDestReg, (outs), (ins GR64:$src1, GR64:$src2),
                   "xchg{q}\t{$src2|$src1}, {$src1|$src2}", []>;
+let mayLoad = 1, mayStore = 1 in {
 def XCHG64mr : RI<0x87, MRMDestMem, (outs), (ins i64mem:$src1, GR64:$src2),
                   "xchg{q}\t{$src2|$src1}, {$src1|$src2}", []>;
 def XCHG64rm : RI<0x87, MRMSrcMem, (outs), (ins GR64:$src1, i64mem:$src2),
                   "xchg{q}\t{$src2|$src1}, {$src1|$src2}", []>;
+}
+}
 
 // Bit scan instructions.
 let Defs = [EFLAGS] in {
@@ -198,6 +204,7 @@ def REP_STOSQ : RI<0xAB, RawFrm, (outs), (ins), "{rep;stosq|rep stosq}",
 //  Move Instructions...
 //
 
+let neverHasSideEffects = 1 in
 def MOV64rr : RI<0x89, MRMDestReg, (outs GR64:$dst), (ins GR64:$src),
                  "mov{q}\t{$src, $dst|$dst, $src}", []>;
 
@@ -256,13 +263,15 @@ def MOVZX64rm16: RI<0xB7, MRMSrcMem, (outs GR64:$dst), (ins i16mem:$src),
                     "movz{wq|x}\t{$src, $dst|$dst, $src}",
                     [(set GR64:$dst, (zextloadi64i16 addr:$src))]>, TB;
 
-let Defs = [RAX], Uses = [EAX] in
-def CDQE : RI<0x98, RawFrm, (outs), (ins),
-             "{cltq|cdqe}", []>;     // RAX = signext(EAX)
+let neverHasSideEffects = 1 in {
+  let Defs = [RAX], Uses = [EAX] in
+  def CDQE : RI<0x98, RawFrm, (outs), (ins),
+               "{cltq|cdqe}", []>;     // RAX = signext(EAX)
 
-let Defs = [RAX,RDX], Uses = [RAX] in
-def CQO  : RI<0x99, RawFrm, (outs), (ins),
-              "{cqto|cqo}", []>; // RDX:RAX = signext(RAX)
+  let Defs = [RAX,RDX], Uses = [RAX] in
+  def CQO  : RI<0x99, RawFrm, (outs), (ins),
+                "{cqto|cqo}", []>; // RDX:RAX = signext(RAX)
+}
 
 //===----------------------------------------------------------------------===//
 //  Arithmetic Instructions...
@@ -387,15 +396,17 @@ def SBB64mi8 : RIi8<0x83, MRM3m, (outs), (ins i64mem:$dst, i64i8imm :$src2),
 } // Defs = [EFLAGS]
 
 // Unsigned multiplication
-let Defs = [RAX,RDX,EFLAGS], Uses = [RAX] in {
+let Defs = [RAX,RDX,EFLAGS], Uses = [RAX], neverHasSideEffects = 1 in {
 def MUL64r : RI<0xF7, MRM4r, (outs), (ins GR64:$src),
                 "mul{q}\t$src", []>;         // RAX,RDX = RAX*GR64
+let mayLoad = 1 in
 def MUL64m : RI<0xF7, MRM4m, (outs), (ins i64mem:$src),
                 "mul{q}\t$src", []>;         // RAX,RDX = RAX*[mem64]
 
 // Signed multiplication
 def IMUL64r : RI<0xF7, MRM5r, (outs), (ins GR64:$src),
                  "imul{q}\t$src", []>;         // RAX,RDX = RAX*GR64
+let mayLoad = 1 in
 def IMUL64m : RI<0xF7, MRM5m, (outs), (ins i64mem:$src),
                  "imul{q}\t$src", []>;         // RAX,RDX = RAX*[mem64]
 }
@@ -432,17 +443,20 @@ def IMUL64rmi8 : RIi8<0x6B, MRMSrcMem,                      // GR64 = [mem64]*I8
 } // Defs = [EFLAGS]
 
 // Unsigned division / remainder
+let neverHasSideEffects = 1 in {
 let Defs = [RAX,RDX,EFLAGS], Uses = [RAX,RDX] in {
 def DIV64r : RI<0xF7, MRM6r, (outs), (ins GR64:$src),        // RDX:RAX/r64 = RAX,RDX
                 "div{q}\t$src", []>;
-def DIV64m : RI<0xF7, MRM6m, (outs), (ins i64mem:$src),      // RDX:RAX/[mem64] = RAX,RDX
-                "div{q}\t$src", []>;
-
 // Signed division / remainder
 def IDIV64r: RI<0xF7, MRM7r, (outs), (ins GR64:$src),        // RDX:RAX/r64 = RAX,RDX
                 "idiv{q}\t$src", []>;
+let mayLoad = 1 in {
+def DIV64m : RI<0xF7, MRM6m, (outs), (ins i64mem:$src),      // RDX:RAX/[mem64] = RAX,RDX
+                "div{q}\t$src", []>;
 def IDIV64m: RI<0xF7, MRM7m, (outs), (ins i64mem:$src),      // RDX:RAX/[mem64] = RAX,RDX
                 "idiv{q}\t$src", []>;
+}
+}
 }
 
 // Unary instructions
@@ -1035,11 +1049,12 @@ def CVTSI2SS64rr: RSSI<0x2A, MRMSrcReg, (outs FR32:$dst), (ins GR64:$src),
 def CVTSI2SS64rm: RSSI<0x2A, MRMSrcMem, (outs FR32:$dst), (ins i64mem:$src),
                        "cvtsi2ss{q}\t{$src, $dst|$dst, $src}",
                        [(set FR32:$dst, (sint_to_fp (loadi64 addr:$src)))]>;
-let isTwoAddress = 1 in {
+let isTwoAddress = 1, neverHasSideEffects = 1 in {
 def Int_CVTSI2SS64rr: RSSI<0x2A, MRMSrcReg,
                            (outs VR128:$dst), (ins VR128:$src1, GR64:$src2),
                            "cvtsi2ss{q}\t{$src2, $dst|$dst, $src2}",
                            []>; // TODO: add intrinsic
+let mayLoad = 1 in 
 def Int_CVTSI2SS64rm: RSSI<0x2A, MRMSrcMem,
                            (outs VR128:$dst), (ins VR128:$src1, i64mem:$src2),
                            "cvtsi2ss{q}\t{$src2, $dst|$dst, $src2}",

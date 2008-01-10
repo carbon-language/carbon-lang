@@ -340,6 +340,12 @@ ComplexPattern::ComplexPattern(Record *R) {
       Properties |= 1 << SDNPHasChain;
     } else if (PropList[i]->getName() == "SDNPOptInFlag") {
       Properties |= 1 << SDNPOptInFlag;
+    } else if (PropList[i]->getName() == "SDNPMayStore") {
+      Properties |= 1 << SDNPMayStore;
+    } else if (PropList[i]->getName() == "SDNPMayLoad") {
+      Properties |= 1 << SDNPMayLoad;
+    } else if (PropList[i]->getName() == "SDNPSideEffect") {
+      Properties |= 1 << SDNPSideEffect;
     } else {
       cerr << "Unsupported SD Node property '" << PropList[i]->getName()
            << "' on ComplexPattern '" << R->getName() << "'!\n";

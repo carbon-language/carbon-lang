@@ -152,22 +152,36 @@ public:
     : CDP(cdp), mayStore(maystore), mayLoad(mayload), HasSideEffects(hse){
   }
   
-  void Analyze(Record *InstRecord) {
+  /// Analyze - Analyze the specified instruction, returning true if the
+  /// instruction had a pattern.
+  bool Analyze(Record *InstRecord) {
     const TreePattern *Pattern = CDP.getInstruction(InstRecord).getPattern();
     if (Pattern == 0) {
       HasSideEffects = 1;
-      return;  // No pattern.
+      return false;  // No pattern.
     }
     
     // FIXME: Assume only the first tree is the pattern. The others are clobber
     // nodes.
     AnalyzeNode(Pattern->getTree(0));
+    return true;
   }
   
 private:
   void AnalyzeNode(const TreePatternNode *N) {
-    if (N->isLeaf())
+    if (N->isLeaf()) {
+      if (DefInit *DI = dynamic_cast<DefInit*>(N->getLeafValue())) {
+        Record *LeafRec = DI->getDef();
+        // Handle ComplexPattern leaves.
+        if (LeafRec->isSubClassOf("ComplexPattern")) {
+          const ComplexPattern &CP = CDP.getComplexPattern(LeafRec);
+          if (CP.hasProperty(SDNPMayStore)) mayStore = true;
+          if (CP.hasProperty(SDNPMayLoad)) mayLoad = true;
+          if (CP.hasProperty(SDNPSideEffect)) HasSideEffects = true;
+        }
+      }
       return;
+    }
 
     // Analyze children.
     for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i)
@@ -180,17 +194,10 @@ private:
     // Get information about the SDNode for the operator.
     const SDNodeInfo &OpInfo = CDP.getSDNodeInfo(N->getOperator());
     
-    // If node writes to memory, it obviously stores to memory.
-    if (OpInfo.hasProperty(SDNPMayStore))
-      mayStore = true;
-    
-    // If it reads memory, remember this.
-    if (OpInfo.hasProperty(SDNPMayLoad))
-      mayLoad = true;
-
-    // If it reads memory, remember this.
-    if (OpInfo.hasProperty(SDNPSideEffect))
-      HasSideEffects = true;
+    // Notice properties of the node.
+    if (OpInfo.hasProperty(SDNPMayStore)) mayStore = true;
+    if (OpInfo.hasProperty(SDNPMayLoad)) mayLoad = true;
+    if (OpInfo.hasProperty(SDNPSideEffect)) HasSideEffects = true;
     
     if (const CodeGenIntrinsic *IntInfo = N->getIntrinsicInfo(CDP)) {
       // If this is an intrinsic, analyze it.
@@ -213,7 +220,8 @@ void InstrInfoEmitter::InferFromPattern(const CodeGenInstruction &Inst,
                                         bool &HasSideEffects) {
   MayStore = MayLoad = HasSideEffects = false;
   
-  InstAnalyzer(CDP, MayStore, MayLoad, HasSideEffects).Analyze(Inst.TheDef);
+  bool HadPattern =
+    InstAnalyzer(CDP, MayStore, MayLoad, HasSideEffects).Analyze(Inst.TheDef);
 
   // InstAnalyzer only correctly analyzes mayStore/mayLoad so far.
   if (Inst.mayStore) {  // If the .td file explicitly sets mayStore, use it.
@@ -239,14 +247,17 @@ void InstrInfoEmitter::InferFromPattern(const CodeGenInstruction &Inst,
   }
   
   if (Inst.neverHasSideEffects) {
-    // If we already decided that this instruction has no side effects, then the
-    // .td file entry is redundant.
-    if (!HasSideEffects)
-      fprintf(stderr, 
-              "Warning: neverHasSideEffects flag explicitly set on instruction"
-              " '%s' but flag already inferred from pattern.\n", 
-              Inst.TheDef->getName().c_str());
+    if (HadPattern)
+      fprintf(stderr, "Warning: neverHasSideEffects set on instruction '%s' "
+              "which already has a pattern\n", Inst.TheDef->getName().c_str());
     HasSideEffects = false;
+  }
+  
+  if (Inst.hasSideEffects) {
+    if (HasSideEffects)
+      fprintf(stderr, "Warning: hasSideEffects set on instruction '%s' "
+              "which already inferred this.\n", Inst.TheDef->getName().c_str());
+    HasSideEffects = true;
   }
 }
 

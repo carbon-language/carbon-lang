@@ -32,25 +32,25 @@ def SDTX86FpToIMem  : SDTypeProfile<0, 2, [SDTCisFP<0>, SDTCisPtrTy<1>]>;
 def SDTX86CwdStore  : SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>;
 
 def X86fpget        : SDNode<"X86ISD::FP_GET_RESULT", SDTX86FpGet,
-                        [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
+                             [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
 def X86fpset        : SDNode<"X86ISD::FP_SET_RESULT", SDTX86FpSet,
-                        [SDNPHasChain, SDNPOutFlag]>;
-def X86fld          : SDNode<"X86ISD::FLD",      SDTX86Fld,
-                        [SDNPHasChain, SDNPMayLoad]>;
-def X86fst          : SDNode<"X86ISD::FST",      SDTX86Fst,
-                        [SDNPHasChain, SDNPInFlag, SDNPMayStore]>;
-def X86fild         : SDNode<"X86ISD::FILD",     SDTX86Fild,
-                        [SDNPHasChain, SDNPMayLoad]>;
-def X86fildflag     : SDNode<"X86ISD::FILD_FLAG",SDTX86Fild,
-                        [SDNPHasChain, SDNPOutFlag, SDNPMayLoad]>;
+                             [SDNPHasChain, SDNPOutFlag]>;
+def X86fld          : SDNode<"X86ISD::FLD", SDTX86Fld,
+                             [SDNPHasChain, SDNPMayLoad]>;
+def X86fst          : SDNode<"X86ISD::FST", SDTX86Fst,
+                             [SDNPHasChain, SDNPInFlag, SDNPMayStore]>;
+def X86fild         : SDNode<"X86ISD::FILD", SDTX86Fild,
+                             [SDNPHasChain, SDNPMayLoad]>;
+def X86fildflag     : SDNode<"X86ISD::FILD_FLAG", SDTX86Fild,
+                             [SDNPHasChain, SDNPOutFlag, SDNPMayLoad]>;
 def X86fp_to_i16mem : SDNode<"X86ISD::FP_TO_INT16_IN_MEM", SDTX86FpToIMem,
-                        [SDNPHasChain]>;
+                             [SDNPHasChain, SDNPMayStore]>;
 def X86fp_to_i32mem : SDNode<"X86ISD::FP_TO_INT32_IN_MEM", SDTX86FpToIMem,
-                        [SDNPHasChain]>;
+                             [SDNPHasChain, SDNPMayStore]>;
 def X86fp_to_i64mem : SDNode<"X86ISD::FP_TO_INT64_IN_MEM", SDTX86FpToIMem,
-                        [SDNPHasChain]>;
+                             [SDNPHasChain, SDNPMayStore]>;
 def X86fp_cwd_get16 : SDNode<"X86ISD::FNSTCW16m",          SDTX86CwdStore,
-                        [SDNPHasChain]>;
+                             [SDNPHasChain, SDNPMayStore, SDNPSideEffect]>;
 
 //===----------------------------------------------------------------------===//
 // FPStack pattern fragments
@@ -208,9 +208,9 @@ def _Fp80m64: FpI_<(outs RFP80:$dst), (ins RFP80:$src1, f64mem:$src2), OneArgFPR
                   [(set RFP80:$dst, 
                     (OpNode RFP80:$src1, (f80 (extloadf64 addr:$src2))))]>;
 def _F32m  : FPI<0xD8, fp, (outs), (ins f32mem:$src), 
-                 !strconcat("f", !strconcat(asmstring, "{s}\t$src"))>;
+                 !strconcat("f", !strconcat(asmstring, "{s}\t$src"))> { let mayLoad = 1; }
 def _F64m  : FPI<0xDC, fp, (outs), (ins f64mem:$src), 
-                 !strconcat("f", !strconcat(asmstring, "{l}\t$src"))>;
+                 !strconcat("f", !strconcat(asmstring, "{l}\t$src"))> { let mayLoad = 1; }
 // ST(0) = ST(0) + [memint]
 def _FpI16m32 : FpIf32<(outs RFP32:$dst), (ins RFP32:$src1, i16mem:$src2), OneArgFPRW,
                     [(set RFP32:$dst, (OpNode RFP32:$src1,
@@ -231,9 +231,9 @@ def _FpI32m80 : FpI_<(outs RFP80:$dst), (ins RFP80:$src1, i32mem:$src2), OneArgF
                     [(set RFP80:$dst, (OpNode RFP80:$src1,
                                        (X86fild addr:$src2, i32)))]>;
 def _FI16m  : FPI<0xDE, fp, (outs), (ins i16mem:$src), 
-                  !strconcat("fi", !strconcat(asmstring, "{s}\t$src"))>;
+                  !strconcat("fi", !strconcat(asmstring, "{s}\t$src"))> { let mayLoad = 1; }
 def _FI32m  : FPI<0xDA, fp, (outs), (ins i32mem:$src), 
-                  !strconcat("fi", !strconcat(asmstring, "{l}\t$src"))>;
+                  !strconcat("fi", !strconcat(asmstring, "{l}\t$src"))> { let mayLoad = 1; }
 }
 
 defm ADD : FPBinary_rr<fadd>;
@@ -392,13 +392,16 @@ def ST_Fp80m64 : FpI_<(outs), (ins f64mem:$op, RFP80:$src), OneArgFP,
                   [(truncstoref64 RFP80:$src, addr:$op)]>;
 // FST does not support 80-bit memory target; FSTP must be used.
 
+let mayStore = 1 in {
 def ST_FpP32m    : FpIf32<(outs), (ins f32mem:$op, RFP32:$src), OneArgFP, []>;
 def ST_FpP64m32  : FpIf64<(outs), (ins f32mem:$op, RFP64:$src), OneArgFP, []>;
 def ST_FpP64m    : FpIf64<(outs), (ins f64mem:$op, RFP64:$src), OneArgFP, []>;
 def ST_FpP80m32  : FpI_<(outs), (ins f32mem:$op, RFP80:$src), OneArgFP, []>;
 def ST_FpP80m64  : FpI_<(outs), (ins f64mem:$op, RFP80:$src), OneArgFP, []>;
+}
 def ST_FpP80m    : FpI_<(outs), (ins f80mem:$op, RFP80:$src), OneArgFP,
                     [(store RFP80:$src, addr:$op)]>;
+let mayStore = 1 in {
 def IST_Fp16m32  : FpIf32<(outs), (ins i16mem:$op, RFP32:$src), OneArgFP, []>;
 def IST_Fp32m32  : FpIf32<(outs), (ins i32mem:$op, RFP32:$src), OneArgFP, []>;
 def IST_Fp64m32  : FpIf32<(outs), (ins i64mem:$op, RFP32:$src), OneArgFP, []>;
@@ -408,13 +411,17 @@ def IST_Fp64m64  : FpIf64<(outs), (ins i64mem:$op, RFP64:$src), OneArgFP, []>;
 def IST_Fp16m80  : FpI_<(outs), (ins i16mem:$op, RFP80:$src), OneArgFP, []>;
 def IST_Fp32m80  : FpI_<(outs), (ins i32mem:$op, RFP80:$src), OneArgFP, []>;
 def IST_Fp64m80  : FpI_<(outs), (ins i64mem:$op, RFP80:$src), OneArgFP, []>;
+}
 
+let mayLoad = 1 in {
 def LD_F32m   : FPI<0xD9, MRM0m, (outs), (ins f32mem:$src), "fld{s}\t$src">;
 def LD_F64m   : FPI<0xDD, MRM0m, (outs), (ins f64mem:$src), "fld{l}\t$src">;
 def LD_F80m   : FPI<0xDB, MRM5m, (outs), (ins f80mem:$src), "fld{t}\t$src">;
 def ILD_F16m  : FPI<0xDF, MRM0m, (outs), (ins i16mem:$src), "fild{s}\t$src">;
 def ILD_F32m  : FPI<0xDB, MRM0m, (outs), (ins i32mem:$src), "fild{l}\t$src">;
 def ILD_F64m  : FPI<0xDF, MRM5m, (outs), (ins i64mem:$src), "fild{ll}\t$src">;
+}
+let mayStore = 1 in {
 def ST_F32m   : FPI<0xD9, MRM2m, (outs), (ins f32mem:$dst), "fst{s}\t$dst">;
 def ST_F64m   : FPI<0xDD, MRM2m, (outs), (ins f64mem:$dst), "fst{l}\t$dst">;
 def ST_FP32m  : FPI<0xD9, MRM3m, (outs), (ins f32mem:$dst), "fstp{s}\t$dst">;
@@ -425,6 +432,7 @@ def IST_F32m  : FPI<0xDB, MRM2m, (outs), (ins i32mem:$dst), "fist{l}\t$dst">;
 def IST_FP16m : FPI<0xDF, MRM3m, (outs), (ins i16mem:$dst), "fistp{s}\t$dst">;
 def IST_FP32m : FPI<0xDB, MRM3m, (outs), (ins i32mem:$dst), "fistp{l}\t$dst">;
 def IST_FP64m : FPI<0xDF, MRM7m, (outs), (ins i64mem:$dst), "fistp{ll}\t$dst">;
+}
 
 // FISTTP requires SSE3 even though it's a FPStack op.
 def ISTT_Fp16m32 : FpI_<(outs), (ins i16mem:$op, RFP32:$src), OneArgFP,
@@ -455,9 +463,11 @@ def ISTT_Fp64m80 : FpI_<(outs), (ins i64mem:$op, RFP80:$src), OneArgFP,
                     [(X86fp_to_i64mem RFP80:$src, addr:$op)]>,
                     Requires<[HasSSE3]>;
 
+let mayStore = 1 in {
 def ISTT_FP16m : FPI<0xDF, MRM1m, (outs), (ins i16mem:$dst), "fisttp{s}\t$dst">;
 def ISTT_FP32m : FPI<0xDB, MRM1m, (outs), (ins i32mem:$dst), "fisttp{l}\t$dst">;
 def ISTT_FP64m : FPI<0xDD, MRM1m, (outs), (ins i64mem:$dst), "fisttp{ll}\t$dst">;
+}
 
 // FP Stack manipulation instructions.
 def LD_Frr   : FPI<0xC0, AddRegFrm, (outs), (ins RST:$op), "fld\t$op">, D9;
@@ -531,6 +541,8 @@ def FNSTSW8r  : I<0xE0, RawFrm,                  // AX = fp flags
 def FNSTCW16m : I<0xD9, MRM7m,                   // [mem16] = X87 control world
                   (outs), (ins i16mem:$dst), "fnstcw\t$dst",
                   [(X86fp_cwd_get16 addr:$dst)]>;
+                  
+let mayLoad = 1 in
 def FLDCW16m  : I<0xD9, MRM5m,                   // X87 control world = [mem16]
                   (outs), (ins i16mem:$dst), "fldcw\t$dst", []>;
 

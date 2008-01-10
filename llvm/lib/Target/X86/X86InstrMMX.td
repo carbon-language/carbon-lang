@@ -156,17 +156,21 @@ def MMX_FEMMS : MMXI<0x0E, RawFrm, (outs), (ins), "femms", [(int_x86_mmx_femms)]
 //===----------------------------------------------------------------------===//
 
 // Data Transfer Instructions
+let neverHasSideEffects = 1 in
 def MMX_MOVD64rr : MMXI<0x6E, MRMSrcReg, (outs VR64:$dst), (ins GR32:$src),
                         "movd\t{$src, $dst|$dst, $src}", []>;
-let isSimpleLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
+let isSimpleLoad = 1, mayLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
 def MMX_MOVD64rm : MMXI<0x6E, MRMSrcMem, (outs VR64:$dst), (ins i32mem:$src),
                         "movd\t{$src, $dst|$dst, $src}", []>;
+let mayStore = 1 in 
 def MMX_MOVD64mr : MMXI<0x7E, MRMDestMem, (outs), (ins i32mem:$dst, VR64:$src),
                         "movd\t{$src, $dst|$dst, $src}", []>;
 
+let neverHasSideEffects = 1 in
 def MMX_MOVD64to64rr : MMXRI<0x6E, MRMSrcReg, (outs VR64:$dst), (ins GR64:$src),
                              "movd\t{$src, $dst|$dst, $src}", []>;
 
+let neverHasSideEffects = 1 in
 def MMX_MOVQ64rr : MMXI<0x6F, MRMSrcReg, (outs VR64:$dst), (ins VR64:$src),
                         "movq\t{$src, $dst|$dst, $src}", []>;
 let isSimpleLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
@@ -417,35 +421,44 @@ def MMX_PSHUFWmi : MMXIi8<0x70, MRMSrcMem,
                                     MMX_PSHUFW_shuffle_mask:$src2)))]>;
 
 // -- Conversion Instructions
+let neverHasSideEffects = 1 in {
 def MMX_CVTPD2PIrr  : MMX2I<0x2D, MRMSrcReg, (outs VR64:$dst), (ins VR128:$src),
                             "cvtpd2pi\t{$src, $dst|$dst, $src}", []>;
+let mayLoad = 1 in
 def MMX_CVTPD2PIrm  : MMX2I<0x2D, MRMSrcMem, (outs VR64:$dst), (ins f128mem:$src),
                             "cvtpd2pi\t{$src, $dst|$dst, $src}", []>;
 
 def MMX_CVTPI2PDrr  : MMX2I<0x2A, MRMSrcReg, (outs VR128:$dst), (ins VR64:$src),
                             "cvtpi2pd\t{$src, $dst|$dst, $src}", []>;
+let mayLoad = 1 in
 def MMX_CVTPI2PDrm  : MMX2I<0x2A, MRMSrcMem, (outs VR128:$dst), (ins i64mem:$src),
                             "cvtpi2pd\t{$src, $dst|$dst, $src}", []>;
 
 def MMX_CVTPI2PSrr  : MMXI<0x2A, MRMSrcReg, (outs VR128:$dst), (ins VR64:$src),
                            "cvtpi2ps\t{$src, $dst|$dst, $src}", []>;
+let mayLoad = 1 in
 def MMX_CVTPI2PSrm  : MMXI<0x2A, MRMSrcMem, (outs VR128:$dst), (ins i64mem:$src),
                            "cvtpi2ps\t{$src, $dst|$dst, $src}", []>;
 
 def MMX_CVTPS2PIrr  : MMXI<0x2D, MRMSrcReg, (outs VR64:$dst), (ins VR128:$src),
                            "cvtps2pi\t{$src, $dst|$dst, $src}", []>;
+let mayLoad = 1 in
 def MMX_CVTPS2PIrm  : MMXI<0x2D, MRMSrcMem, (outs VR64:$dst), (ins f64mem:$src),
                            "cvtps2pi\t{$src, $dst|$dst, $src}", []>;
 
 def MMX_CVTTPD2PIrr : MMX2I<0x2C, MRMSrcReg, (outs VR64:$dst), (ins VR128:$src),
                             "cvttpd2pi\t{$src, $dst|$dst, $src}", []>;
+let mayLoad = 1 in
 def MMX_CVTTPD2PIrm : MMX2I<0x2C, MRMSrcMem, (outs VR64:$dst), (ins f128mem:$src),
                             "cvttpd2pi\t{$src, $dst|$dst, $src}", []>;
 
 def MMX_CVTTPS2PIrr : MMXI<0x2C, MRMSrcReg, (outs VR64:$dst), (ins VR128:$src),
                            "cvttps2pi\t{$src, $dst|$dst, $src}", []>;
+let mayLoad = 1 in
 def MMX_CVTTPS2PIrm : MMXI<0x2C, MRMSrcMem, (outs VR64:$dst), (ins f64mem:$src),
                            "cvttps2pi\t{$src, $dst|$dst, $src}", []>;
+} // end neverHasSideEffects
+
 
 // Extract / Insert
 def MMX_X86pextrw : SDNode<"X86ISD::PEXTRW", SDTypeProfile<1, 2, []>, []>;

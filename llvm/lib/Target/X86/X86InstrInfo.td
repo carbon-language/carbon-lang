@@ -92,7 +92,7 @@ def X86rep_movs: SDNode<"X86ISD::REP_MOVS", SDTX86RepStr,
                          SDNPMayLoad]>;
 
 def X86rdtsc   : SDNode<"X86ISD::RDTSC_DAG",SDTX86RdTsc,
-                        [SDNPHasChain, SDNPOutFlag]>;
+                        [SDNPHasChain, SDNPOutFlag, SDNPSideEffect]>;
 
 def X86Wrapper    : SDNode<"X86ISD::Wrapper",     SDTX86Wrapper>;
 def X86WrapperRIP : SDNode<"X86ISD::WrapperRIP",  SDTX86Wrapper>;
@@ -266,6 +266,7 @@ def ADJCALLSTACKUP   : I<0, Pseudo, (outs), (ins i32imm:$amt1, i32imm:$amt2),
 def IMPLICIT_USE     : I<0, Pseudo, (outs), (ins variable_ops),
                          "#IMPLICIT_USE", []>;
 let isImplicitDef = 1 in {
+let neverHasSideEffects = 1 in
 def IMPLICIT_DEF     : I<0, Pseudo, (outs variable_ops), (ins),
                           "#IMPLICIT_DEF", []>;
 def IMPLICIT_DEF_GR8  : I<0, Pseudo, (outs GR8:$dst), (ins),
@@ -280,13 +281,13 @@ def IMPLICIT_DEF_GR32  : I<0, Pseudo, (outs GR32:$dst), (ins),
 }
 
 // Nop
-def NOOP : I<0x90, RawFrm, (outs), (ins), "nop", []>;
+let neverHasSideEffects = 1 in
+  def NOOP : I<0x90, RawFrm, (outs), (ins), "nop", []>;
 
 // PIC base
-let neverHasSideEffects = 1, isNotDuplicable = 1 in {
-def MOVPC32r : Ii32<0xE8, Pseudo, (outs GR32:$reg), (ins piclabel:$label),
-                    "call\t$label\n\tpop{l}\t$reg", []>;
-}
+let neverHasSideEffects = 1, isNotDuplicable = 1 in
+  def MOVPC32r : Ii32<0xE8, Pseudo, (outs GR32:$reg), (ins piclabel:$label),
+                      "call\t$label\n\tpop{l}\t$reg", []>;
 
 //===----------------------------------------------------------------------===//
 //  Control Flow Instructions...
@@ -399,19 +400,21 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
 //===----------------------------------------------------------------------===//
 //  Miscellaneous Instructions...
 //
-let Defs = [EBP, ESP], Uses = [EBP, ESP] in
+let Defs = [EBP, ESP], Uses = [EBP, ESP], mayLoad = 1, neverHasSideEffects=1 in
 def LEAVE    : I<0xC9, RawFrm,
                  (outs), (ins), "leave", []>;
 
-let Defs = [ESP], Uses = [ESP] in {
+let Defs = [ESP], Uses = [ESP], neverHasSideEffects=1 in {
+let mayLoad = 1 in
 def POP32r   : I<0x58, AddRegFrm, (outs GR32:$reg), (ins), "pop{l}\t$reg", []>;
 
+let mayStore = 1 in
 def PUSH32r  : I<0x50, AddRegFrm, (outs), (ins GR32:$reg), "push{l}\t$reg",[]>;
 }
 
-let Defs = [ESP, EFLAGS], Uses = [ESP] in
+let Defs = [ESP, EFLAGS], Uses = [ESP], mayLoad = 1, neverHasSideEffects=1 in
 def POPFD    : I<0x9D, RawFrm, (outs), (ins), "popf", []>;
-let Defs = [ESP], Uses = [ESP, EFLAGS] in
+let Defs = [ESP], Uses = [ESP, EFLAGS], mayStore = 1, neverHasSideEffects=1 in
 def PUSHFD   : I<0x9C, RawFrm, (outs), (ins), "pushf", []>;
 
 let isTwoAddress = 1 in                               // GR32 = bswap GR32
@@ -483,6 +486,7 @@ def BSR32rm  : I<0xBD, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
                   (implicit EFLAGS)]>, TB;
 } // Defs = [EFLAGS]
 
+let neverHasSideEffects = 1 in
 def LEA16r   : I<0x8D, MRMSrcMem,
                  (outs GR16:$dst), (ins i32mem:$src),
                  "lea{w}\t{$src|$dst}, {$dst|$src}", []>, OpSize;
@@ -560,12 +564,14 @@ def OUT32ir : Ii8<0xE7, RawFrm, (outs), (ins i16i8imm:$port),
 //===----------------------------------------------------------------------===//
 //  Move Instructions...
 //
+let neverHasSideEffects = 1 in {
 def MOV8rr  : I<0x88, MRMDestReg, (outs GR8 :$dst), (ins GR8 :$src),
                 "mov{b}\t{$src, $dst|$dst, $src}", []>;
 def MOV16rr : I<0x89, MRMDestReg, (outs GR16:$dst), (ins GR16:$src),
                 "mov{w}\t{$src, $dst|$dst, $src}", []>, OpSize;
 def MOV32rr : I<0x89, MRMDestReg, (outs GR32:$dst), (ins GR32:$src),
                 "mov{l}\t{$src, $dst|$dst, $src}", []>;
+}
 let isReMaterializable = 1 in {
 def MOV8ri  : Ii8 <0xB0, AddRegFrm, (outs GR8 :$dst), (ins i8imm :$src),
                    "mov{b}\t{$src, $dst|$dst, $src}",
@@ -633,13 +639,16 @@ def MUL8m  : I<0xF6, MRM4m, (outs), (ins i8mem :$src),
                // This probably ought to be moved to a def : Pat<> if the
                // syntax can be accepted.
                [(set AL, (mul AL, (loadi8 addr:$src)))]>;   // AL,AH = AL*[mem8]
+let mayLoad = 1, neverHasSideEffects = 1 in {
 let Defs = [AX,DX,EFLAGS], Uses = [AX] in
 def MUL16m : I<0xF7, MRM4m, (outs), (ins i16mem:$src),
                "mul{w}\t$src", []>, OpSize; // AX,DX = AX*[mem16]
 let Defs = [EAX,EDX,EFLAGS], Uses = [EAX] in
 def MUL32m : I<0xF7, MRM4m, (outs), (ins i32mem:$src),
               "mul{l}\t$src", []>;          // EAX,EDX = EAX*[mem32]
+}
 
+let neverHasSideEffects = 1 in {
 let Defs = [AL,AH,EFLAGS], Uses = [AL] in
 def IMUL8r  : I<0xF6, MRM5r, (outs),  (ins GR8:$src), "imul{b}\t$src", []>;
               // AL,AH = AL*GR8
@@ -649,6 +658,7 @@ def IMUL16r : I<0xF7, MRM5r, (outs),  (ins GR16:$src), "imul{w}\t$src", []>,
 let Defs = [EAX,EDX,EFLAGS], Uses = [EAX] in
 def IMUL32r : I<0xF7, MRM5r, (outs),  (ins GR32:$src), "imul{l}\t$src", []>;
               // EAX,EDX = EAX*GR32
+let mayLoad = 1 in {
 let Defs = [AL,AH,EFLAGS], Uses = [AL] in
 def IMUL8m  : I<0xF6, MRM5m, (outs), (ins i8mem :$src),
                 "imul{b}\t$src", []>;    // AL,AH = AL*[mem8]
@@ -658,6 +668,7 @@ def IMUL16m : I<0xF7, MRM5m, (outs), (ins i16mem:$src),
 let Defs = [EAX,EDX], Uses = [EAX] in
 def IMUL32m : I<0xF7, MRM5m, (outs), (ins i32mem:$src),
                 "imul{l}\t$src", []>;  // EAX,EDX = EAX*[mem32]
+}
 
 // unsigned division/remainder
 let Defs = [AX,EFLAGS], Uses = [AL,AH] in
@@ -669,6 +680,7 @@ def DIV16r : I<0xF7, MRM6r, (outs),  (ins GR16:$src),         // DX:AX/r16 = AX,
 let Defs = [EAX,EDX,EFLAGS], Uses = [EAX,EDX] in
 def DIV32r : I<0xF7, MRM6r, (outs),  (ins GR32:$src),         // EDX:EAX/r32 = EAX,EDX
                "div{l}\t$src", []>;
+let mayLoad = 1 in {
 let Defs = [AX,EFLAGS], Uses = [AL,AH] in
 def DIV8m  : I<0xF6, MRM6m, (outs), (ins i8mem:$src),       // AX/[mem8] = AL,AH
                "div{b}\t$src", []>;
@@ -678,6 +690,7 @@ def DIV16m : I<0xF7, MRM6m, (outs), (ins i16mem:$src),      // DX:AX/[mem16] = A
 let Defs = [EAX,EDX,EFLAGS], Uses = [EAX,EDX] in
 def DIV32m : I<0xF7, MRM6m, (outs), (ins i32mem:$src),      // EDX:EAX/[mem32] = EAX,EDX
                "div{l}\t$src", []>;
+}
 
 // Signed division/remainder.
 let Defs = [AX,EFLAGS], Uses = [AL,AH] in
@@ -689,6 +702,7 @@ def IDIV16r: I<0xF7, MRM7r, (outs),  (ins GR16:$src),         // DX:AX/r16 = AX,
 let Defs = [EAX,EDX,EFLAGS], Uses = [EAX,EDX] in
 def IDIV32r: I<0xF7, MRM7r, (outs),  (ins GR32:$src),         // EDX:EAX/r32 = EAX,EDX
                "idiv{l}\t$src", []>;
+let mayLoad = 1, mayLoad = 1 in {
 let Defs = [AX,EFLAGS], Uses = [AL,AH] in
 def IDIV8m : I<0xF6, MRM7m, (outs), (ins i8mem:$src),      // AX/[mem8] = AL,AH
                "idiv{b}\t$src", []>;
@@ -698,10 +712,11 @@ def IDIV16m: I<0xF7, MRM7m, (outs), (ins i16mem:$src),     // DX:AX/[mem16] = AX
 let Defs = [EAX,EDX,EFLAGS], Uses = [EAX,EDX] in
 def IDIV32m: I<0xF7, MRM7m, (outs), (ins i32mem:$src),     // EDX:EAX/[mem32] = EAX,EDX
                "idiv{l}\t$src", []>;
-
+}
+} // neverHasSideEffects
 
 //===----------------------------------------------------------------------===//
-//  Two address Instructions...
+//  Two address Instructions.
 //
 let isTwoAddress = 1 in {
 
@@ -2161,9 +2176,9 @@ def TEST32mi : Ii32<0xF7, MRM0m,                   // flags = [mem32] & imm32
 
 
 // Condition code ops, incl. set if equal/not equal/...
-let Defs = [EFLAGS], Uses = [AH] in
+let Defs = [EFLAGS], Uses = [AH], neverHasSideEffects = 1 in
 def SAHF     : I<0x9E, RawFrm, (outs),  (ins), "sahf", []>;  // flags = AH
-let Defs = [AH], Uses = [EFLAGS] in
+let Defs = [AH], Uses = [EFLAGS], neverHasSideEffects = 1 in
 def LAHF     : I<0x9F, RawFrm, (outs),  (ins), "lahf", []>;  // AH = flags
 
 let Uses = [EFLAGS] in {
@@ -2445,20 +2460,21 @@ def MOVZX32rm16: I<0xB7, MRMSrcMem, (outs GR32:$dst), (ins i16mem:$src),
                    "movz{wl|x}\t{$src, $dst|$dst, $src}",
                    [(set GR32:$dst, (zextloadi32i16 addr:$src))]>, TB;
 
-let Defs = [AX], Uses = [AL] in
-def CBW : I<0x98, RawFrm, (outs), (ins),
-            "{cbtw|cbw}", []>, OpSize;   // AX = signext(AL)
-let Defs = [EAX], Uses = [AX] in
-def CWDE : I<0x98, RawFrm, (outs), (ins),
-            "{cwtl|cwde}", []>;   // EAX = signext(AX)
+let neverHasSideEffects = 1 in {
+  let Defs = [AX], Uses = [AL] in
+  def CBW : I<0x98, RawFrm, (outs), (ins),
+              "{cbtw|cbw}", []>, OpSize;   // AX = signext(AL)
+  let Defs = [EAX], Uses = [AX] in
+  def CWDE : I<0x98, RawFrm, (outs), (ins),
+              "{cwtl|cwde}", []>;   // EAX = signext(AX)
 
-let Defs = [AX,DX], Uses = [AX] in
-def CWD : I<0x99, RawFrm, (outs), (ins),
-            "{cwtd|cwd}", []>, OpSize; // DX:AX = signext(AX)
-let Defs = [EAX,EDX], Uses = [EAX] in
-def CDQ : I<0x99, RawFrm, (outs), (ins),
-            "{cltd|cdq}", []>; // EDX:EAX = signext(EAX)
-          
+  let Defs = [AX,DX], Uses = [AX] in
+  def CWD : I<0x99, RawFrm, (outs), (ins),
+              "{cwtd|cwd}", []>, OpSize; // DX:AX = signext(AX)
+  let Defs = [EAX,EDX], Uses = [EAX] in
+  def CDQ : I<0x99, RawFrm, (outs), (ins),
+              "{cltd|cdq}", []>; // EDX:EAX = signext(EAX)
+}
 
 //===----------------------------------------------------------------------===//
 // Alias Instructions
@@ -2480,25 +2496,30 @@ def MOV32r0  : I<0x31, MRMInitReg,  (outs GR32:$dst), (ins),
 
 // Basic operations on GR16 / GR32 subclasses GR16_ and GR32_ which contains only
 // those registers that have GR8 sub-registers (i.e. AX - DX, EAX - EDX).
+let neverHasSideEffects = 1 in {
 def MOV16to16_ : I<0x89, MRMDestReg, (outs GR16_:$dst), (ins GR16:$src),
                 "mov{w}\t{$src, $dst|$dst, $src}", []>, OpSize;
 def MOV32to32_ : I<0x89, MRMDestReg, (outs GR32_:$dst), (ins GR32:$src),
                 "mov{l}\t{$src, $dst|$dst, $src}", []>;
-
+                
 def MOV16_rr : I<0x89, MRMDestReg, (outs GR16_:$dst), (ins GR16_:$src),
                 "mov{w}\t{$src, $dst|$dst, $src}", []>, OpSize;
 def MOV32_rr : I<0x89, MRMDestReg, (outs GR32_:$dst), (ins GR32_:$src),
                 "mov{l}\t{$src, $dst|$dst, $src}", []>;
-let isSimpleLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in {
+} // neverHasSideEffects
+
+let isSimpleLoad = 1, mayLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in {
 def MOV16_rm : I<0x8B, MRMSrcMem, (outs GR16_:$dst), (ins i16mem:$src),
                 "mov{w}\t{$src, $dst|$dst, $src}", []>, OpSize;
 def MOV32_rm : I<0x8B, MRMSrcMem, (outs GR32_:$dst), (ins i32mem:$src),
                 "mov{l}\t{$src, $dst|$dst, $src}", []>;
 }
+let mayStore = 1, neverHasSideEffects = 1 in {
 def MOV16_mr : I<0x89, MRMDestMem, (outs), (ins i16mem:$dst, GR16_:$src),
                 "mov{w}\t{$src, $dst|$dst, $src}", []>, OpSize;
 def MOV32_mr : I<0x89, MRMDestMem, (outs), (ins i32mem:$dst, GR32_:$src),
                 "mov{l}\t{$src, $dst|$dst, $src}", []>;
+}
 
 //===----------------------------------------------------------------------===//
 // Thread Local Storage Instructions

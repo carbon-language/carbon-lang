@@ -97,14 +97,14 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
   usesCustomDAGSchedInserter = R->getValueAsBit("usesCustomDAGSchedInserter");
   hasCtrlDep   = R->getValueAsBit("hasCtrlDep");
   isNotDuplicable = R->getValueAsBit("isNotDuplicable");
+  hasSideEffects = R->getValueAsBit("hasSideEffects");
   mayHaveSideEffects = R->getValueAsBit("mayHaveSideEffects");
   neverHasSideEffects = R->getValueAsBit("neverHasSideEffects");
   hasOptionalDef = false;
   isVariadic = false;
 
-  if (mayHaveSideEffects && neverHasSideEffects)
-    throw R->getName() +
-      ": cannot have both 'mayHaveSideEffects' and 'neverHasSideEffects' set!";
+  if (mayHaveSideEffects + neverHasSideEffects + hasSideEffects > 1)
+    throw R->getName() + ": multiple conflicting side-effect flags set!";
 
   DagInit *DI;
   try {
