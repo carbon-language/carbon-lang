@@ -991,13 +991,10 @@ Parser::DeclTy *Parser::ParseObjCAtEndDeclaration(SourceLocation atLoc) {
   assert(Tok.isObjCAtKeyword(tok::objc_end) &&
          "ParseObjCAtEndDeclaration(): Expected @end");
   ConsumeToken(); // the "end" identifier
-  if (ObjCImpDecl) {
-    // Checking is not necessary except that a parse error might have caused
-    // @implementation not to have been parsed to completion and ObjCImpDecl 
-    // could be 0.
+  if (ObjCImpDecl)
     Actions.ActOnAtEnd(atLoc, ObjCImpDecl);
-  }
-
+  else
+    Diag(atLoc, diag::warn_expected_implementation); // missing @implementation
   return ObjCImpDecl;
 }
 

@@ -478,6 +478,8 @@ DIAG(err_selector_element_type, ERROR,
      "selector element is not of valid object type (its type is '%0')")
 DIAG(err_toomany_element_decls, ERROR,
      "Only one element declaration is allowed")
+DIAG(warn_expected_implementation, WARNING,
+     "‘@end’ must appear in an @implementation context")
 
 //===----------------------------------------------------------------------===//
 // Semantic Analysis
