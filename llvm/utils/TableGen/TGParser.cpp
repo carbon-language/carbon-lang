@@ -290,7 +290,10 @@ ParseSubClassReference(Record *CurRec, bool isDefm) {
 ///   RangePiece ::= INTVAL '-' INTVAL
 ///   RangePiece ::= INTVAL INTVAL
 bool TGParser::ParseRangePiece(std::vector<unsigned> &Ranges) {
-  assert(Lex.getCode() == tgtok::IntVal && "Invalid range");
+  if (Lex.getCode() != tgtok::IntVal) {
+    TokError("expected integer or bitrange");
+    return true;
+  }
   int Start = Lex.getCurIntVal();
   int End;
   
