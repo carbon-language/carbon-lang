@@ -130,6 +130,15 @@ bool MachineSinking::ProcessBlock(MachineBasicBlock &MBB) {
 /// SinkInstruction - Determine whether it is safe to sink the specified machine
 /// instruction out of its current block into a successor.
 bool MachineSinking::SinkInstruction(MachineInstr *MI) {
+  const TargetInstrDesc &TID = MI->getDesc();
+  
+  // Ignore stuff that we obviously can't sink.
+  if (TID.mayStore() || TID.isCall() || TID.isReturn() || TID.isBranch())
+    return false;
+
+  if (TID.mayLoad())
+    return false;
+  
   // Don't sink things with side-effects we don't understand.
   if (TII->hasUnmodelledSideEffects(MI))
     return false;
