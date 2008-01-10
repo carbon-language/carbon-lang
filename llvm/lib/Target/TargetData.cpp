@@ -154,7 +154,8 @@ const TargetAlignElem TargetData::InvalidAlignmentElem =
  <i>p:@verbatim<size>:<abi_align>:<pref_align>@endverbatim</i>: Pointer size, 
  ABI and preferred alignment.
  <br><br>
- <i>@verbatim<type><size>:<abi_align>:<pref_align>@endverbatim</i>: Numeric type alignment. Type is
+ <i>@verbatim<type><size>:<abi_align>:<pref_align>@endverbatim</i>: Numeric type
+ alignment. Type is
  one of <i>i|f|v|a</i>, corresponding to integer, floating point, vector (aka
  packed) or aggregate.  Size indicates the size, e.g., 32 or 64 bits.
  \p
@@ -258,7 +259,8 @@ TargetData::setAlignment(AlignTypeEnum align_type, unsigned char abi_align,
 /// getAlignmentInfo - Return the alignment (either ABI if ABIInfo = true or 
 /// preferred if ABIInfo = false) the target wants for the specified datatype.
 unsigned TargetData::getAlignmentInfo(AlignTypeEnum AlignType, 
-                                      uint32_t BitWidth, bool ABIInfo) const {
+                                      uint32_t BitWidth, bool ABIInfo,
+                                      const Type *Ty) const {
   // Check to see if we have an exact match and remember the best match we see.
   int BestMatchIdx = -1;
   int LargestInt = -1;
@@ -293,14 +295,22 @@ unsigned TargetData::getAlignmentInfo(AlignTypeEnum AlignType,
     }
   }
 
-  // For integers, if we didn't find a best match, use the largest one found.
-  if (BestMatchIdx == -1)
-    BestMatchIdx = LargestInt;
-
   // Okay, we didn't find an exact solution.  Fall back here depending on what
   // is being looked for.
-  assert(BestMatchIdx != -1 && "Didn't find alignment info for this datatype!");
-
+  if (BestMatchIdx == -1) {
+    // If we didn't find an integer alignment, fall back on most conservative.
+    if (AlignType == INTEGER_ALIGN) {
+      BestMatchIdx = LargestInt;
+    } else {
+      assert(AlignType == VECTOR_ALIGN && "Unknown alignment type!");
+      
+      // If we didn't find a vector size that is smaller or equal to this type,
+      // then we will end up scalarizing this to its element type.  Just return
+      // the alignment of the element.
+      return getAlignment(cast<VectorType>(Ty)->getElementType(), ABIInfo);
+    }    
+  }
+    
   // Since we got a "best match" index, just return it.
   return ABIInfo ? Alignments[BestMatchIdx].ABIAlign
                  : Alignments[BestMatchIdx].PrefAlign;
@@ -474,7 +484,7 @@ unsigned char TargetData::getAlignment(const Type *Ty, bool abi_or_pref) const {
     
     // Get the layout annotation... which is lazily created on demand.
     const StructLayout *Layout = getStructLayout(cast<StructType>(Ty));
-    unsigned Align = getAlignmentInfo(AGGREGATE_ALIGN, 0, abi_or_pref);
+    unsigned Align = getAlignmentInfo(AGGREGATE_ALIGN, 0, abi_or_pref, Ty);
     return std::max(Align, (unsigned)Layout->getAlignment());
   }
   case Type::IntegerTyID:
@@ -490,22 +500,16 @@ unsigned char TargetData::getAlignment(const Type *Ty, bool abi_or_pref) const {
   case Type::X86_FP80TyID:
     AlignType = FLOAT_ALIGN;
     break;
-  case Type::VectorTyID: {
-    const VectorType *VTy = cast<VectorType>(Ty);
-    // Degenerate vectors are assumed to be scalar-ized
-    if (VTy->getNumElements() == 1)
-      return getAlignment(VTy->getElementType(), abi_or_pref);
-    else
-      AlignType = VECTOR_ALIGN;
+  case Type::VectorTyID:
+    AlignType = VECTOR_ALIGN;
     break;
-  }
   default:
     assert(0 && "Bad type for getAlignment!!!");
     break;
   }
 
   return getAlignmentInfo((AlignTypeEnum)AlignType, getTypeSizeInBits(Ty),
-                          abi_or_pref);
+                          abi_or_pref, Ty);
 }
 
 unsigned char TargetData::getABITypeAlignment(const Type *Ty) const {

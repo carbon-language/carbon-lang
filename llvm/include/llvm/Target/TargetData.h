@@ -92,7 +92,7 @@ private:
   void setAlignment(AlignTypeEnum align_type, unsigned char abi_align,
                     unsigned char pref_align, uint32_t bit_width);
   unsigned getAlignmentInfo(AlignTypeEnum align_type, uint32_t bit_width,
-                            bool ABIAlign) const;
+                            bool ABIAlign, const Type *Ty) const;
   //! Internal helper method that returns requested alignment for type.
   unsigned char getAlignment(const Type *Ty, bool abi_or_pref) const;
 
