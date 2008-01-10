@@ -37,6 +37,7 @@ enum SDNP {
   SDNPOutFlag,
   SDNPInFlag,
   SDNPOptInFlag,
+  SDNPMayLoad,
   SDNPMayStore
 };
 

@@ -174,12 +174,21 @@ private:
       const SDNodeInfo &OpInfo = CDP.getSDNodeInfo(N->getOperator());
       
       // If node writes to memory, it obviously stores to memory.
-      if (OpInfo.hasProperty(SDNPMayStore)) {
+      if (OpInfo.hasProperty(SDNPMayStore))
         mayStore = true;
-      } else if (const CodeGenIntrinsic *IntInfo = N->getIntrinsicInfo(CDP)) {
+      
+      // If it reads memory, remember this.
+      if (OpInfo.hasProperty(SDNPMayLoad))
+        mayLoad = true;
+      
+      if (const CodeGenIntrinsic *IntInfo = N->getIntrinsicInfo(CDP)) {
         // If this is an intrinsic, analyze it.
-        if (IntInfo->ModRef >= CodeGenIntrinsic::WriteArgMem)
+        if (IntInfo->ModRef >= CodeGenIntrinsic::WriteArgMem) {
           mayStore = true;// Intrinsics that can write to memory are 'mayStore'.
+        }
+        
+        if (IntInfo->ModRef >= CodeGenIntrinsic::ReadArgMem)
+          mayLoad  = true;// These may also load memory.
       }
     }
 
