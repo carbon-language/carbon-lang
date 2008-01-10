@@ -503,7 +503,7 @@ void RewriteTest::RewriteObjCMethodDecl(ObjCMethodDecl *OMD,
     ResultStr += "id";
   else
     ResultStr += OMD->getResultType().getAsString();
-  ResultStr += "\n";
+  ResultStr += " ";
   
   // Unique method name
   std::string NameStr;
@@ -567,7 +567,7 @@ void RewriteTest::RewriteObjCMethodDecl(ObjCMethodDecl *OMD,
     ResultStr += " ";
     ResultStr += PDecl->getName();
   }
-  ResultStr += ")";
+  ResultStr += ") ";
   
 }
 void RewriteTest::RewriteImplementationDecl(NamedDecl *OID) {
