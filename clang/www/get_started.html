@@ -187,6 +187,30 @@ _foo:
          ret
 </pre>
 
+<h3>GCC "Emulation" Driver</h3>
+
+While the <tt>clang</tt> executable is a compiler driver that can perform code
+generation, program analysis, and other actions, it is not designed to be a
+drop-in replacement for GCC's <tt>cc</tt>. There is interest in developing such
+a driver for clang, but in the interim the clang source tree includes a Python
+script <tt>ccc</tt> in the <tt>utils</tt> subdirectory that provides some of
+this functionality (the script is intended to be used where GCC's <tt>cc</tt>
+could be used). It is currently a work in progress, and eventually will likely
+be replaced by a more complete driver.
+
+<p>Example use:</p>
+
+<pre class="code">
+$ <b>ccc t.c</b>
+clang -emit-llvm-bc -o t.o -U__GNUC__ t.c
+llvm-ld -native -o a.out t.o
+$ <b>ls</b>
+a.out a.out.bc t.c t.o
+</pre>
+  
+
+
+
 </div>
 </body>
 </html>
