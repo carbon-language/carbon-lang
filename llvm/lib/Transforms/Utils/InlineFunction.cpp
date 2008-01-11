@@ -18,7 +18,9 @@
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/ParameterAttributes.h"
 #include "llvm/Analysis/CallGraph.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/CallSite.h"
 using namespace llvm;
@@ -201,7 +203,6 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
   BasicBlock *OrigBB = TheCall->getParent();
   Function *Caller = OrigBB->getParent();
 
-  
   // GC poses two hazards to inlining, which only occur when the callee has GC:
   //  1. If the caller has no GC, then the callee's GC must be propagated to the
   //     caller.
@@ -212,7 +213,6 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
     else if (CalledFunc->getCollector() != Caller->getCollector())
       return false;
   }
-  
   
   // Get an iterator to the last basic block in the function, which will have
   // the new function inlined after it.
@@ -228,15 +228,66 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
   { // Scope to destroy ValueMap after cloning.
     DenseMap<const Value*, Value*> ValueMap;
 
-    // Calculate the vector of arguments to pass into the function cloner, which
-    // matches up the formal to the actual argument values.
     assert(std::distance(CalledFunc->arg_begin(), CalledFunc->arg_end()) ==
            std::distance(CS.arg_begin(), CS.arg_end()) &&
            "No varargs calls can be inlined!");
+    
+    // Calculate the vector of arguments to pass into the function cloner, which
+    // matches up the formal to the actual argument values.
     CallSite::arg_iterator AI = CS.arg_begin();
+    unsigned ArgNo = 0;
     for (Function::const_arg_iterator I = CalledFunc->arg_begin(),
-           E = CalledFunc->arg_end(); I != E; ++I, ++AI)
-      ValueMap[I] = *AI;
+         E = CalledFunc->arg_end(); I != E; ++I, ++AI, ++ArgNo) {
+      Value *ActualArg = *AI;
+      
+      // When byval arguments actually inlined, we need to make the copy implied
+      // by them actually explicit.
+      // TODO: If we know that the callee never modifies the struct, we can
+      // remove this copy.
+      if (CalledFunc->paramHasAttr(ArgNo+1, ParamAttr::ByVal)) {
+        const Type *AggTy = cast<PointerType>(I->getType())->getElementType();
+        const Type *VoidPtrTy = PointerType::getUnqual(Type::Int8Ty);
+        
+        // Create the alloca.  If we have TargetData, use nice alignment.
+        unsigned Align = 1;
+        if (TD) Align = TD->getPrefTypeAlignment(AggTy);
+        Value *NewAlloca = new AllocaInst(AggTy, 0, Align, I->getName(), 
+                                          Caller->begin()->begin());
+        // Emit a memcpy.
+        Function *MemCpyFn = Intrinsic::getDeclaration(Caller->getParent(),
+                                                       Intrinsic::memcpy_i64);
+        Value *DestCast = new BitCastInst(NewAlloca, VoidPtrTy, "tmp", TheCall);
+        Value *SrcCast = new BitCastInst(*AI, VoidPtrTy, "tmp", TheCall);
+        
+        Value *Size;
+        if (TD == 0)
+          Size = ConstantExpr::getSizeOf(AggTy);
+        else
+          Size = ConstantInt::get(Type::Int64Ty, TD->getTypeStoreSize(AggTy));
+        
+        // Always generate a memcpy of alignment 1 here because we don't know
+        // the alignment of the src pointer.  Other optimizations can infer
+        // better alignment.
+        Value *CallArgs[] = {
+          DestCast, SrcCast, Size, ConstantInt::get(Type::Int32Ty, 1)
+        };
+        CallInst *TheMemCpy =
+          new CallInst(MemCpyFn, CallArgs, CallArgs+4, "", TheCall);
+        
+        // If we have a call graph, update it.
+        if (CG) {
+          CallGraphNode *MemCpyCGN = CG->getOrInsertFunction(MemCpyFn);
+          CallGraphNode *CallerNode = (*CG)[Caller];
+          CallerNode->addCalledFunction(TheMemCpy, MemCpyCGN);
+        }
+        
+        // Uses of the argument in the function should use our new alloca
+        // instead.
+        ActualArg = NewAlloca;
+      }
+      
+      ValueMap[I] = ActualArg;
+    }
 
     // We want the inliner to prune the code as it copies.  We would LOVE to
     // have no dead or constant instructions leftover after inlining occurs
