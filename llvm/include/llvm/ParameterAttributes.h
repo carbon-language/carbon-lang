@@ -52,6 +52,9 @@ const uint16_t ParameterOnly = ByVal | InReg | Nest | StructRet;
 /// @brief Attributes that only apply to function return values.
 const uint16_t ReturnOnly = NoReturn | NoUnwind | ReadNone | ReadOnly;
 
+/// @brief Attributes that can apply to vararg call arguments.
+const uint16_t VarArgsCompatible = ByVal;
+
 /// @brief Attributes that are mutually incompatible.
 const uint16_t MutuallyIncompatible[3] = {
   ByVal | InReg | Nest  | StructRet,

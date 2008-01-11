@@ -390,11 +390,6 @@ void Verifier::VerifyParamAttrs(const FunctionType *FT,
   if (!Attrs)
     return;
 
-  Assert1(FT->isVarArg() ||
-          (Attrs->size() &&
-           Attrs->getParamIndex(Attrs->size()-1) <= FT->getNumParams()),
-          "Attributes after end of type!", V);
-
   bool SawNest = false;
 
   for (unsigned Idx = 0; Idx <= FT->getNumParams(); ++Idx) {
@@ -450,8 +445,15 @@ void Verifier::visitFunction(Function &F) {
   Assert1(!F.isStructReturn() || FT->getReturnType() == Type::VoidTy,
           "Invalid struct-return function!", &F);
 
+  const ParamAttrsList *Attrs = F.getParamAttrs();
+
+  Assert1(!Attrs ||
+          (Attrs->size() &&
+           Attrs->getParamIndex(Attrs->size()-1) <= FT->getNumParams()),
+          "Attributes after last parameter!", &F);
+
   // Check function attributes.
-  VerifyParamAttrs(FT, F.getParamAttrs(), &F);
+  VerifyParamAttrs(FT, Attrs, &F);
 
   // Check that this function meets the restrictions on this calling convention.
   switch (F.getCallingConv()) {
@@ -847,8 +849,24 @@ void Verifier::VerifyCallSite(CallSite CS) {
             "Call parameter type does not match function signature!",
             CS.getArgument(i), FTy->getParamType(i), I);
 
+  const ParamAttrsList *Attrs = CS.getParamAttrs();
+
+  Assert1(!Attrs ||
+          (Attrs->size() &&
+           Attrs->getParamIndex(Attrs->size()-1) <= CS.arg_size()),
+          "Attributes after last argument!", I);
+
   // Verify call attributes.
-  VerifyParamAttrs(FTy, CS.getParamAttrs(), I);
+  VerifyParamAttrs(FTy, Attrs, I);
+
+  if (Attrs && FTy->isVarArg())
+    // Check attributes on the varargs part.
+    for (unsigned Idx = 1 + FTy->getNumParams(); Idx <= CS.arg_size(); ++Idx) {
+      uint16_t Attr = Attrs->getParamAttrs(Idx);
+      uint16_t VArgI = Attr & ~ParamAttr::VarArgsCompatible;
+      Assert1(!VArgI, "Attribute " + Attrs->getParamAttrsText(VArgI) +
+              "cannot be used for vararg call arguments!", I);
+    }
 
   visitInstruction(*I);
 }
