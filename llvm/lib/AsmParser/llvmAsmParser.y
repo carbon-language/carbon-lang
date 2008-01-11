@@ -2675,8 +2675,15 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
 
       if (Ty->isVarArg()) {
         if (I == E)
-          for (; ArgI != ArgE; ++ArgI)
+          for (; ArgI != ArgE; ++ArgI, ++index) {
             Args.push_back(ArgI->Val); // push the remaining varargs
+            if (ArgI->Attrs != ParamAttr::None) {
+              ParamAttrsWithIndex PAWI;
+              PAWI.index = index;
+              PAWI.attrs = ArgI->Attrs;
+              Attrs.push_back(PAWI);
+            }
+          }
       } else if (I != E || ArgI != ArgE)
         GEN_ERROR("Invalid number of parameters detected");
     }
@@ -3006,8 +3013,15 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
       }
       if (Ty->isVarArg()) {
         if (I == E)
-          for (; ArgI != ArgE; ++ArgI)
+          for (; ArgI != ArgE; ++ArgI, ++index) {
             Args.push_back(ArgI->Val); // push the remaining varargs
+            if (ArgI->Attrs != ParamAttr::None) {
+              ParamAttrsWithIndex PAWI;
+              PAWI.index = index;
+              PAWI.attrs = ArgI->Attrs;
+              Attrs.push_back(PAWI);
+            }
+          }
       } else if (I != E || ArgI != ArgE)
         GEN_ERROR("Invalid number of parameters detected");
     }
