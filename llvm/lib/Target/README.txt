@@ -595,3 +595,21 @@ to make it so the scheduler doesn't need to hold all the loads in regs at
 once.
 
 //===---------------------------------------------------------------------===//
+
+We should extend parameter attributes to capture more information about
+pointer parameters for alias analysis.  Some ideas:
+
+1. Add a "nocapture" attribute, which indicates that the callee does not store
+   the address of the parameter into a global or any other memory location
+   visible to the callee.  This can be used to make basicaa and other analyses
+   more powerful.  It is true for things like memcpy, strcat, and many other
+   things, including structs passed by value, most C++ references, etc.
+2. Generalize readonly to be set on parameters.  This is important mod/ref 
+   info for the function, which is important for basicaa and others.  It can
+   also be used by the inliner to avoid inserting a memcpy for byval 
+   arguments when the function is inlined.
+
+These functions can be inferred by various analysis passes such as the 
+globalsmodrefaa pass.
+
+//===---------------------------------------------------------------------===//
