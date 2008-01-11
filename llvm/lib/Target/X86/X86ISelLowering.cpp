@@ -1008,16 +1008,16 @@ X86TargetLowering::NameDecorationForFORMAL_ARGUMENTS(SDOperand Op) {
 }
 
 
-// IsPossiblyOverriddenArgumentOfTailCall - Check if the operand could possibly
-// be overridden when lowering the outgoing arguments in a tail call. Currently
+// IsPossiblyOverwrittenArgumentOfTailCall - Check if the operand could possibly
+// be overwritten when lowering the outgoing arguments in a tail call. Currently
 // the implementation of this call is very conservative and assumes all
 // arguments sourcing from FORMAL_ARGUMENTS or a CopyFromReg with virtual
-// registers would be overridden by direct lowering. 
+// registers would be overwritten by direct lowering.  
 // Possible improvement:
 // Check FORMAL_ARGUMENTS corresponding MERGE_VALUES for CopyFromReg nodes
 // indicating inreg passed arguments which also need not be lowered to a safe
 // stack slot.
-static bool IsPossiblyOverriddenArgumentOfTailCall(SDOperand Op) {
+static bool IsPossiblyOverwrittenArgumentOfTailCall(SDOperand Op) {
   RegisterSDNode * OpReg = NULL;
   if (Op.getOpcode() == ISD::FORMAL_ARGUMENTS ||
       (Op.getOpcode()== ISD::CopyFromReg &&
@@ -1359,7 +1359,7 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     if (VA.isRegLoc()) {
       RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
     } else {
-      if (!IsTailCall || IsPossiblyOverriddenArgumentOfTailCall(Arg)) {
+      if (!IsTailCall || IsPossiblyOverwrittenArgumentOfTailCall(Arg)) {
         assert(VA.isMemLoc());
         if (StackPtr.Val == 0)
           StackPtr = DAG.getCopyFromReg(Chain, X86StackPtr, getPointerTy());
@@ -1438,7 +1438,7 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
         FI = MF.getFrameInfo()->CreateFixedObject(OpSize, Offset);
         FIN = DAG.getFrameIndex(FI, MVT::i32);
         SDOperand Source = Arg;
-        if (IsPossiblyOverriddenArgumentOfTailCall(Arg)){
+        if (IsPossiblyOverwrittenArgumentOfTailCall(Arg)){
           // Copy from stack slots to stack slot of a tail called function. This
           // needs to be done because if we would lower the arguments directly
           // to their real stack slot we might end up overwriting each other.
