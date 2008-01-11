@@ -366,10 +366,11 @@ void CWriter::printStructReturnPointerFunctionType(std::ostream &Out,
   FunctionType::param_iterator I = FTy->param_begin(), E = FTy->param_end();
   const Type *RetTy = cast<PointerType>(I->get())->getElementType();
   unsigned Idx = 1;
-  for (++I; I != E; ++I) {
+  for (++I, ++Idx; I != E; ++I, ++Idx) {
     if (PrintedType)
       FunctionInnards << ", ";
-    printType(FunctionInnards, *I, 
+    const Type *ArgTy = *I;
+    printType(FunctionInnards, ArgTy,
         /*isSigned=*/PAL && PAL->paramHasAttr(Idx, ParamAttr::SExt), "");
     PrintedType = true;
   }
@@ -1866,23 +1867,25 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
   if (!F->isDeclaration()) {
     if (!F->arg_empty()) {
       Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end();
+      unsigned Idx = 1;
       
       // If this is a struct-return function, don't print the hidden
       // struct-return argument.
       if (isStructReturn) {
         assert(I != E && "Invalid struct return function!");
         ++I;
+        ++Idx;
       }
       
       std::string ArgName;
-      unsigned Idx = 1;
       for (; I != E; ++I) {
         if (PrintedArg) FunctionInnards << ", ";
         if (I->hasName() || !Prototype)
           ArgName = GetValueName(I);
         else
           ArgName = "";
-        printType(FunctionInnards, I->getType(), 
+        const Type *ArgTy = I->getType();
+        printType(FunctionInnards, ArgTy,
             /*isSigned=*/PAL && PAL->paramHasAttr(Idx, ParamAttr::SExt),
             ArgName);
         PrintedArg = true;
