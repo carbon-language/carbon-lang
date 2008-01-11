@@ -998,24 +998,6 @@ _test:
 
 //===---------------------------------------------------------------------===//
 
-For code like:
-phi (undef, x)
-
-We get an implicit def on the undef side. If the phi is spilled, we then get:
-implicitdef xmm1
-store xmm1 -> stack
-
-It should be possible to teach the x86 backend to "fold" the store into the
-implicitdef, which just deletes the implicit def.
-
-These instructions should go away:
-#IMPLICIT_DEF %xmm1 
-movaps %xmm1, 192(%esp) 
-movaps %xmm1, 224(%esp) 
-movaps %xmm1, 176(%esp)
-
-//===---------------------------------------------------------------------===//
-
 This is a "commutable two-address" register coallescing deficiency:
 
 define <4 x float> @test1(<4 x float> %V) {
@@ -1509,6 +1491,9 @@ we should get:
 movl    $0, 124(%esp)
 
 if the flags of the xor are dead.
+
+Likewise, we isel "x<<1" into "add reg,reg".  If reg is spilled, this should
+be folded into: shl [mem], 1
 
 //===---------------------------------------------------------------------===//
 
