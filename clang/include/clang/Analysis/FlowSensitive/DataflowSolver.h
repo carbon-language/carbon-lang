@@ -15,7 +15,7 @@
 #define LLVM_CLANG_ANALYSES_DATAFLOW_SOLVER
 
 #include "clang/AST/CFG.h"
-#include "clang/Analysis/ProgramEdge.h"
+#include "clang/Analysis/ProgramPoint.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "functional" // STL
 

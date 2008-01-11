@@ -17,7 +17,7 @@
 #define LLVM_CLANG_ANALYSES_DATAFLOW_VALUES
 
 #include "clang/AST/CFG.h"
-#include "clang/Analysis/ProgramEdge.h"
+#include "clang/Analysis/ProgramPoint.h"
 #include "llvm/ADT/DenseMap.h"
 
 //===----------------------------------------------------------------------===//
