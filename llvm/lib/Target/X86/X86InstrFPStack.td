@@ -166,6 +166,7 @@ class FpIf64<dag outs, dag ins, FPFormat fp, list<dag> pattern> :
   FpI_<outs, ins, fp, pattern>, Requires<[FPStackf64]>;
 
 // Register copies.  Just copies, the shortening ones do not truncate.
+let neverHasSideEffects = 1 in {
 def MOV_Fp3232       : FpIf32<(outs RFP32:$dst), (ins RFP32:$src), SpecialFP, []>; 
 def MOV_Fp3264       : FpIf32<(outs RFP64:$dst), (ins RFP32:$src), SpecialFP, []>; 
 def MOV_Fp6432       : FpIf32<(outs RFP32:$dst), (ins RFP64:$src), SpecialFP, []>; 
@@ -175,6 +176,7 @@ def MOV_Fp3280       : FpIf32<(outs RFP80:$dst), (ins RFP32:$src), SpecialFP, []
 def MOV_Fp8064       : FpIf64<(outs RFP64:$dst), (ins RFP80:$src), SpecialFP, []>; 
 def MOV_Fp6480       : FpIf64<(outs RFP80:$dst), (ins RFP64:$src), SpecialFP, []>; 
 def MOV_Fp8080       : FpI_<(outs RFP80:$dst), (ins RFP80:$src), SpecialFP, []>; 
+}
 
 // Factoring for arithmetic.
 multiclass FPBinary_rr<SDNode OpNode> {
@@ -293,12 +295,11 @@ defm SQRT: FPUnary<fsqrt,0xFA, "fsqrt">;
 defm SIN : FPUnary<fsin, 0xFE, "fsin">;
 defm COS : FPUnary<fcos, 0xFF, "fcos">;
 
-def TST_Fp32  : FpIf32<(outs), (ins RFP32:$src), OneArgFP,
-                 []>;
-def TST_Fp64  : FpIf64<(outs), (ins RFP64:$src), OneArgFP,
-                 []>;
-def TST_Fp80  : FpI_<(outs), (ins RFP80:$src), OneArgFP,
-                 []>;
+let neverHasSideEffects = 1 in {
+def TST_Fp32  : FpIf32<(outs), (ins RFP32:$src), OneArgFP, []>;
+def TST_Fp64  : FpIf64<(outs), (ins RFP64:$src), OneArgFP, []>;
+def TST_Fp80  : FpI_<(outs), (ins RFP80:$src), OneArgFP, []>;
+}
 def TST_F  : FPI<0xE4, RawFrm, (outs), (ins), "ftst">, D9;
 
 // Floating point cmovs.
@@ -392,7 +393,7 @@ def ST_Fp80m64 : FpI_<(outs), (ins f64mem:$op, RFP80:$src), OneArgFP,
                   [(truncstoref64 RFP80:$src, addr:$op)]>;
 // FST does not support 80-bit memory target; FSTP must be used.
 
-let mayStore = 1 in {
+let mayStore = 1, neverHasSideEffects = 1 in {
 def ST_FpP32m    : FpIf32<(outs), (ins f32mem:$op, RFP32:$src), OneArgFP, []>;
 def ST_FpP64m32  : FpIf64<(outs), (ins f32mem:$op, RFP64:$src), OneArgFP, []>;
 def ST_FpP64m    : FpIf64<(outs), (ins f64mem:$op, RFP64:$src), OneArgFP, []>;
@@ -401,7 +402,7 @@ def ST_FpP80m64  : FpI_<(outs), (ins f64mem:$op, RFP80:$src), OneArgFP, []>;
 }
 def ST_FpP80m    : FpI_<(outs), (ins f80mem:$op, RFP80:$src), OneArgFP,
                     [(store RFP80:$src, addr:$op)]>;
-let mayStore = 1 in {
+let mayStore = 1, neverHasSideEffects = 1 in {
 def IST_Fp16m32  : FpIf32<(outs), (ins i16mem:$op, RFP32:$src), OneArgFP, []>;
 def IST_Fp32m32  : FpIf32<(outs), (ins i32mem:$op, RFP32:$src), OneArgFP, []>;
 def IST_Fp64m32  : FpIf32<(outs), (ins i64mem:$op, RFP32:$src), OneArgFP, []>;
@@ -498,17 +499,18 @@ def LD_F1 : FPI<0xE8, RawFrm, (outs), (ins), "fld1">, D9;
 // Floating point compares.
 let Defs = [EFLAGS] in {
 def UCOM_Fpr32 : FpIf32<(outs), (ins RFP32:$lhs, RFP32:$rhs), CompareFP,
-                  []>;  // FPSW = cmp ST(0) with ST(i)
+                        []>;  // FPSW = cmp ST(0) with ST(i)
+def UCOM_Fpr64 : FpIf64<(outs), (ins RFP64:$lhs, RFP64:$rhs), CompareFP,
+                        []>;  // FPSW = cmp ST(0) with ST(i)
+def UCOM_Fpr80 : FpI_  <(outs), (ins RFP80:$lhs, RFP80:$rhs), CompareFP,
+                        []>;  // FPSW = cmp ST(0) with ST(i)
+                        
 def UCOM_FpIr32: FpIf32<(outs), (ins RFP32:$lhs, RFP32:$rhs), CompareFP,
                   [(X86cmp RFP32:$lhs, RFP32:$rhs),
                    (implicit EFLAGS)]>; // CC = ST(0) cmp ST(i)
-def UCOM_Fpr64 : FpIf64<(outs), (ins RFP64:$lhs, RFP64:$rhs), CompareFP,
-                  []>;  // FPSW = cmp ST(0) with ST(i)
 def UCOM_FpIr64: FpIf64<(outs), (ins RFP64:$lhs, RFP64:$rhs), CompareFP,
                   [(X86cmp RFP64:$lhs, RFP64:$rhs),
                    (implicit EFLAGS)]>; // CC = ST(0) cmp ST(i)
-def UCOM_Fpr80 : FpI_<(outs), (ins RFP80:$lhs, RFP80:$rhs), CompareFP,
-                  []>;  // FPSW = cmp ST(0) with ST(i)
 def UCOM_FpIr80: FpI_<(outs), (ins RFP80:$lhs, RFP80:$rhs), CompareFP,
                   [(X86cmp RFP80:$lhs, RFP80:$rhs),
                    (implicit EFLAGS)]>; // CC = ST(0) cmp ST(i)

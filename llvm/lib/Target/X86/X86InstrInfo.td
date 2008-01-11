@@ -419,6 +419,7 @@ let isTwoAddress = 1 in                               // GR32 = bswap GR32
                    [(set GR32:$dst, (bswap GR32:$src))]>, TB;
 
 // FIXME: Model xchg* as two address instructions?
+let neverHasSideEffects = 1 in {
 def XCHG8rr  : I<0x86, MRMDestReg,                    // xchg GR8, GR8
                  (outs), (ins GR8:$src1, GR8:$src2),
                  "xchg{b}\t{$src2|$src1}, {$src1|$src2}", []>;
@@ -428,7 +429,9 @@ def XCHG16rr : I<0x87, MRMDestReg,                    // xchg GR16, GR16
 def XCHG32rr : I<0x87, MRMDestReg,                    // xchg GR32, GR32
                  (outs), (ins GR32:$src1, GR32:$src2),
                  "xchg{l}\t{$src2|$src1}, {$src1|$src2}", []>;
+}
 
+let mayLoad = 1, mayStore = 1 in {
 def XCHG8mr  : I<0x86, MRMDestMem,
                  (outs), (ins i8mem:$src1, GR8:$src2),
                  "xchg{b}\t{$src2|$src1}, {$src1|$src2}", []>;
@@ -447,6 +450,7 @@ def XCHG16rm : I<0x87, MRMSrcMem,
 def XCHG32rm : I<0x87, MRMSrcMem,
                  (outs), (ins GR32:$src1, i32mem:$src2),
                  "xchg{l}\t{$src2|$src1}, {$src1|$src2}", []>;
+}
 
 // Bit scan instructions.
 let Defs = [EFLAGS] in {
@@ -621,10 +625,10 @@ def MUL8r  : I<0xF6, MRM4r, (outs),  (ins GR8:$src), "mul{b}\t$src",
                // This probably ought to be moved to a def : Pat<> if the
                // syntax can be accepted.
                [(set AL, (mul AL, GR8:$src))]>;               // AL,AH = AL*GR8
-let Defs = [AX,DX,EFLAGS], Uses = [AX] in
+let Defs = [AX,DX,EFLAGS], Uses = [AX], neverHasSideEffects = 1 in
 def MUL16r : I<0xF7, MRM4r, (outs),  (ins GR16:$src), "mul{w}\t$src", []>,
              OpSize;    // AX,DX = AX*GR16
-let Defs = [EAX,EDX,EFLAGS], Uses = [EAX] in
+let Defs = [EAX,EDX,EFLAGS], Uses = [EAX], neverHasSideEffects = 1 in
 def MUL32r : I<0xF7, MRM4r, (outs),  (ins GR32:$src), "mul{l}\t$src", []>;
                        // EAX,EDX = EAX*GR32
 let Defs = [AL,AH,EFLAGS], Uses = [AL] in
@@ -1416,12 +1420,14 @@ def SHL32ri  : Ii8<0xC1, MRM4r, (outs GR32:$dst), (ins GR32:$src1, i8imm:$src2),
 }
 
 // Shift left by one. Not used because (add x, x) is slightly cheaper.
+let neverHasSideEffects = 1 in {
 def SHL8r1   : I<0xD0, MRM4r, (outs GR8 :$dst), (ins GR8 :$src1),
                  "shl{b}\t$dst", []>;
 def SHL16r1  : I<0xD1, MRM4r, (outs GR16:$dst), (ins GR16:$src1),
                  "shl{w}\t$dst", []>, OpSize;
 def SHL32r1  : I<0xD1, MRM4r, (outs GR32:$dst), (ins GR32:$src1),
                  "shl{l}\t$dst", []>;
+}
 
 let isTwoAddress = 0 in {
   let Uses = [CL] in {
