@@ -799,27 +799,41 @@ declare i32 @atoi(i8*) nounwind readonly
     <dt><tt>zeroext</tt></dt>
     <dd>This indicates that the parameter should be zero extended just before
     a call to this function.</dd>
+
     <dt><tt>signext</tt></dt>
     <dd>This indicates that the parameter should be sign extended just before
     a call to this function.</dd>
+
     <dt><tt>inreg</tt></dt>
     <dd>This indicates that the parameter should be placed in register (if
     possible) during assembling function call. Support for this attribute is
     target-specific</dd>
+
+    <dt><tt>byval</tt></dt>
+    <dd>This indicates that the pointer parameter is really an aggregate that
+    was passed by value to the function.  The attribute implies that a hidden
+    copy of the struct is made between the caller and the callee, so the
+    callee is unable to modify the struct in the callee.  This attribute is only
+    valid on llvm pointer arguments.</dd>
+
     <dt><tt>sret</tt></dt>
     <dd>This indicates that the parameter specifies the address of a structure
     that is the return value of the function in the source program.</dd>
+
     <dt><tt>noalias</tt></dt>
     <dd>This indicates that the parameter not alias any other object or any 
     other "noalias" objects during the function call.
+
     <dt><tt>noreturn</tt></dt>
     <dd>This function attribute indicates that the function never returns. This
     indicates to LLVM that every call to this function should be treated as if
     an <tt>unreachable</tt> instruction immediately followed the call.</dd> 
+
     <dt><tt>nounwind</tt></dt>
     <dd>This function attribute indicates that the function type does not use
     the unwind instruction and does not allow stack unwinding to propagate
     through it.</dd>
+    
     <dt><tt>nest</tt></dt>
     <dd>This indicates that the parameter can be excised using the
     <a href="#int_trampoline">trampoline intrinsics</a>.</dd>
