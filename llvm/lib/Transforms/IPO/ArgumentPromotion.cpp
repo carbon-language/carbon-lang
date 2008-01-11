@@ -282,7 +282,7 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg, bool isByVal) const {
 
   // Because there could be several/many load instructions, remember which
   // blocks we know to be transparent to the load.
-  std::set<BasicBlock*> TranspBlocks;
+  SmallPtrSet<BasicBlock*, 16> TranspBlocks;
 
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
   TargetData &TD = getAnalysis<TargetData>();
@@ -304,7 +304,8 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg, bool isByVal) const {
     // To do this, we perform a depth first search on the inverse CFG from the
     // loading block.
     for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
-      for (idf_ext_iterator<BasicBlock*> I = idf_ext_begin(*PI, TranspBlocks),
+      for (idf_ext_iterator<BasicBlock*, SmallPtrSet<BasicBlock*, 16> >
+             I = idf_ext_begin(*PI, TranspBlocks),
              E = idf_ext_end(*PI, TranspBlocks); I != E; ++I)
         if (AA.canBasicBlockModify(**I, Arg, LoadSize))
           return false;
