@@ -390,10 +390,9 @@ void Verifier::VerifyParamAttrs(const FunctionType *FT,
   if (!Attrs)
     return;
 
-  // Note that when calling a varargs function, the following test disallows
-  // parameter attributes for the arguments corresponding to the varargs part.
-  Assert1(Attrs->size() &&
-          Attrs->getParamIndex(Attrs->size()-1) <= FT->getNumParams(),
+  Assert1(FT->isVarArg() ||
+          (Attrs->size() &&
+           Attrs->getParamIndex(Attrs->size()-1) <= FT->getNumParams()),
           "Attributes after end of type!", V);
 
   bool SawNest = false;
