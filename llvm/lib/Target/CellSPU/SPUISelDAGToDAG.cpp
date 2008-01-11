@@ -456,8 +456,9 @@ SPUDAGToDAGISel::SelectDFormAddr(SDOperand Op, SDOperand N, SDOperand &Base,
     const SDOperand Op0 = N.getOperand(0); // Frame index/base
     const SDOperand Op1 = N.getOperand(1); // Offset within base
 
-    if (Op1.getOpcode() == ISD::Constant
-        || Op1.getOpcode() == ISD::TargetConstant) {
+    if ((Op1.getOpcode() == ISD::Constant
+	 || Op1.getOpcode() == ISD::TargetConstant)
+	&& Op0.getOpcode() != SPUISD::XFormAddr) {
       ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Op1);
       assert(CN != 0 && "SelectDFormAddr: Expected a constant");
 
@@ -499,12 +500,19 @@ SPUDAGToDAGISel::SelectDFormAddr(SDOperand Op, SDOperand N, SDOperand &Base,
     } else
       return false;
   } else if (Opc == SPUISD::DFormAddr) {
-    // D-Form address: This is pretty straightforward, naturally...
-    ConstantSDNode *CN = cast<ConstantSDNode>(N.getOperand(1));
-    assert(CN != 0 && "SelectDFormAddr/SPUISD::DFormAddr expecting constant"); 
-    Base = CurDAG->getTargetConstant(CN->getValue(), PtrTy);
-    Index = N.getOperand(0);
-    return true;
+    // D-Form address: This is pretty straightforward,
+    // naturally... but make sure that this isn't a D-form address
+    // with a X-form address embedded within:
+    const SDOperand Op0 = N.getOperand(0); // Frame index/base
+    const SDOperand Op1 = N.getOperand(1); // Offset within base
+
+    if (Op0.getOpcode() != SPUISD::XFormAddr) {
+      ConstantSDNode *CN = cast<ConstantSDNode>(Op1);
+      assert(CN != 0 && "SelectDFormAddr/SPUISD::DFormAddr expecting constant"); 
+      Base = CurDAG->getTargetConstant(CN->getValue(), PtrTy);
+      Index = Op0;
+      return true;
+    }
   } else if (Opc == ISD::FrameIndex) {
     // Stack frame index must be less than 512 (divided by 16):
     FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(N);
@@ -564,6 +572,12 @@ SPUDAGToDAGISel::SelectXFormAddr(SDOperand Op, SDOperand N, SDOperand &Base,
     Base = N;
     Index = N.getOperand(1);
     return true;
+  } else if (Opc == SPUISD::DFormAddr) {
+    // Must be a D-form address with an X-form address embedded
+    // within:
+    Base = N.getOperand(0);
+    Index = N.getOperand(1);
+    return true;
   } else if (N.getNumOperands() == 2) {
     SDOperand N1 = N.getOperand(0);
     SDOperand N2 = N.getOperand(1);
@@ -578,14 +592,14 @@ SPUDAGToDAGISel::SelectXFormAddr(SDOperand Op, SDOperand N, SDOperand &Base,
       /*UNREACHED*/
     } else {
       cerr << "SelectXFormAddr: 2-operand unhandled operand:\n";
-      N.Val->dump();
+      N.Val->dump(CurDAG);
       cerr << "\n";
       abort();
     /*UNREACHED*/
     }
   } else {
     cerr << "SelectXFormAddr: Unhandled operand type:\n";
-    N.Val->dump();
+    N.Val->dump(CurDAG);
     cerr << "\n";
     abort();
     /*UNREACHED*/

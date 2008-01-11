@@ -1,26 +1,14 @@
 ; RUN: llvm-as -o - %s | llc -march=cellspu > %t1.s
-; RUN: llvm-as -o - %s | llc -march=cellspu -mattr=large_mem > %t2.s
-; RUN: grep lqa     %t1.s | count 10 &&
-; RUN: grep lqd     %t1.s | count 4 &&
-; RUN: grep rotqbyi %t1.s | count 5 &&
+; RUN: grep lqx     %t1.s | count 14 &&
+; RUN: grep rotqby  %t1.s | count 7 &&
 ; RUN: grep xshw    %t1.s | count 1 &&
 ; RUN: grep andi    %t1.s | count 4 &&
-; RUN: grep cbd     %t1.s | count 3 &&
+; RUN: grep cbx     %t1.s | count 1 &&
+; RUN: grep cbd     %t1.s | count 2 &&
 ; RUN: grep chd     %t1.s | count 1 &&
 ; RUN: grep cwd     %t1.s | count 3 &&
 ; RUN: grep shufb   %t1.s | count 7 &&
-; RUN: grep stqa    %t1.s | count 5
-; RUN: grep iohl    %t2.s | count 14 &&
-; RUN: grep ilhu    %t2.s | count 14 &&
-; RUN: grep lqx     %t2.s | count 14 &&
-; RUN: grep rotqbyi %t2.s | count 5 &&
-; RUN: grep xshw    %t2.s | count 1 &&
-; RUN: grep andi    %t2.s | count 4 &&
-; RUN: grep cbd     %t2.s | count 3 &&
-; RUN: grep chd     %t2.s | count 1 &&
-; RUN: grep cwd     %t2.s | count 3 &&
-; RUN: grep shufb   %t2.s | count 7 &&
-; RUN: grep stqx    %t2.s | count 7
+; RUN: grep stqx    %t1.s | count 7
 
 ; ModuleID = 'struct_1.bc'
 target datalayout = "E-p:32:32:128-f64:64:128-f32:32:128-i64:32:128-i32:32:128-i16:16:128-i8:8:128-i1:8:128-a0:0:128-v128:128:128-s0:128:128"
@@ -45,90 +33,90 @@ target triple = "spu"
 %struct.hackstate = type { i8, i8, i8, i32, i16, i32, i8, i8, i8, i8, i32, i32, i32, i32 }
 
 ; struct hackstate state = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
-@state = global %struct.hackstate zeroinitializer, align 16
+@state = global %struct.hackstate zeroinitializer, align 4
 
 define i8 @get_hackstate_c1() zeroext  {
 entry:
-        %tmp2 = load i8* getelementptr (%struct.hackstate* @state, i32 0, i32 0), align 16
+        %tmp2 = load i8* getelementptr (%struct.hackstate* @state, i32 0, i32 0), align 4
         ret i8 %tmp2
 }
 
 define i8 @get_hackstate_c2() zeroext  {
 entry:
-        %tmp2 = load i8* getelementptr (%struct.hackstate* @state, i32 0, i32 1), align 16
+        %tmp2 = load i8* getelementptr (%struct.hackstate* @state, i32 0, i32 1), align 4
         ret i8 %tmp2
 }
 
 define i8 @get_hackstate_c3() zeroext  {
 entry:
-        %tmp2 = load i8* getelementptr (%struct.hackstate* @state, i32 0, i32 2), align 16
+        %tmp2 = load i8* getelementptr (%struct.hackstate* @state, i32 0, i32 2), align 4
         ret i8 %tmp2
 }
 
 define i32 @get_hackstate_i1() {
 entry:
-        %tmp2 = load i32* getelementptr (%struct.hackstate* @state, i32 0, i32 3), align 16
+        %tmp2 = load i32* getelementptr (%struct.hackstate* @state, i32 0, i32 3), align 4
         ret i32 %tmp2
 }
 
 define i16 @get_hackstate_s1() signext  {
 entry:
-        %tmp2 = load i16* getelementptr (%struct.hackstate* @state, i32 0, i32 4), align 16
+        %tmp2 = load i16* getelementptr (%struct.hackstate* @state, i32 0, i32 4), align 4
         ret i16 %tmp2
 }
 
 define i8 @get_hackstate_c7() zeroext  {
 entry:
-        %tmp2 = load i8* getelementptr (%struct.hackstate* @state, i32 0, i32 9), align 16
+        %tmp2 = load i8* getelementptr (%struct.hackstate* @state, i32 0, i32 9), align 4
         ret i8 %tmp2
 }
 
 define i32 @get_hackstate_i6() zeroext  {
 entry:
-        %tmp2 = load i32* getelementptr (%struct.hackstate* @state, i32 0, i32 13), align 16
+        %tmp2 = load i32* getelementptr (%struct.hackstate* @state, i32 0, i32 13), align 4
         ret i32 %tmp2
 }
 
 define void @set_hackstate_c1(i8 zeroext  %c) {
 entry:
-        store i8 %c, i8* getelementptr (%struct.hackstate* @state, i32 0, i32 0), align 16
+        store i8 %c, i8* getelementptr (%struct.hackstate* @state, i32 0, i32 0), align 4
         ret void
 }
 
 define void @set_hackstate_c2(i8 zeroext  %c) {
 entry:
-        store i8 %c, i8* getelementptr (%struct.hackstate* @state, i32 0, i32 1), align 16
+        store i8 %c, i8* getelementptr (%struct.hackstate* @state, i32 0, i32 1), align 4
         ret void
 }
 
 define void @set_hackstate_c3(i8 zeroext  %c) {
 entry:
-        store i8 %c, i8* getelementptr (%struct.hackstate* @state, i32 0, i32 2), align 16
+        store i8 %c, i8* getelementptr (%struct.hackstate* @state, i32 0, i32 2), align 4
         ret void
 }
 
 define void @set_hackstate_i1(i32 %i) {
 entry:
-        store i32 %i, i32* getelementptr (%struct.hackstate* @state, i32 0, i32 3), align 16
+        store i32 %i, i32* getelementptr (%struct.hackstate* @state, i32 0, i32 3), align 4
         ret void
 }
 
 define void @set_hackstate_s1(i16 signext  %s) {
 entry:
-        store i16 %s, i16* getelementptr (%struct.hackstate* @state, i32 0, i32 4), align 16
+        store i16 %s, i16* getelementptr (%struct.hackstate* @state, i32 0, i32 4), align 4
         ret void
 }
 
 define void @set_hackstate_i3(i32 %i) {
 entry:
-        store i32 %i, i32* getelementptr (%struct.hackstate* @state, i32 0, i32 11), align 16
+        store i32 %i, i32* getelementptr (%struct.hackstate* @state, i32 0, i32 11), align 4
         ret void
 }
 
 
 define void @set_hackstate_i6(i32 %i) {
 entry:
-        store i32 %i, i32* getelementptr (%struct.hackstate* @state, i32 0, i32 13), align 16
+        store i32 %i, i32* getelementptr (%struct.hackstate* @state, i32 0, i32 13), align 4
         ret void
 }
 

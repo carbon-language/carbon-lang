@@ -90,13 +90,11 @@ namespace {
     const unsigned Opc = Op.getOpcode();
     return (Opc == ISD::GlobalAddress
             || Opc == ISD::GlobalTLSAddress
-            /* || Opc ==  ISD::FrameIndex */
             || Opc == ISD::JumpTable
             || Opc == ISD::ConstantPool
             || Opc == ISD::ExternalSymbol
             || Opc == ISD::TargetGlobalAddress
             || Opc == ISD::TargetGlobalTLSAddress
-            /* || Opc == ISD::TargetFrameIndex */
             || Opc == ISD::TargetJumpTable
             || Opc == ISD::TargetConstantPool
             || Opc == ISD::TargetExternalSymbol
@@ -566,7 +564,7 @@ LowerLOAD(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
     // Rotate the chunk if necessary
     if (rotamt < 0)
       rotamt += 16;
-    if (rotamt != 0) {
+    if (rotamt != 0 || !was16aligned) {
       SDVTList vecvts = DAG.getVTList(MVT::v16i8, MVT::Other);
 
       if (was16aligned) {
@@ -574,10 +572,12 @@ LowerLOAD(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
         Ops[1] = result;
         Ops[2] = DAG.getConstant(rotamt, MVT::i16);
       } else {
+	MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
         LoadSDNode *LN1 = cast<LoadSDNode>(result);
         Ops[0] = the_chain;
         Ops[1] = result;
-        Ops[2] = LN1->getBasePtr();
+        Ops[2] = DAG.getNode(ISD::ADD, PtrVT, LN1->getBasePtr(),
+			     DAG.getConstant(rotamt, PtrVT));
       }
 
       result = DAG.getNode(SPUISD::ROTBYTES_LEFT_CHAINED, vecvts, Ops, 3);
@@ -690,7 +690,6 @@ LowerSTORE(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
     }
 
     chunk_offset &= 0xf;
-    chunk_offset /= (MVT::getSizeInBits(StVT == MVT::i1 ? (unsigned) MVT::i8 : StVT) / 8);
 
     SDOperand insertEltOffs = DAG.getConstant(chunk_offset, PtrVT);
     SDOperand insertEltPtr;
@@ -700,10 +699,18 @@ LowerSTORE(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
     // a new D-form address with a slot offset and the orignal base pointer.
     // Otherwise generate a D-form address with the slot offset relative
     // to the stack pointer, which is always aligned.
+    DEBUG(cerr << "CellSPU LowerSTORE: basePtr = ");
+    DEBUG(basePtr.Val->dump(&DAG));
+    DEBUG(cerr << "\n");
+
     if (basePtr.getOpcode() == SPUISD::DFormAddr) {
       insertEltPtr = DAG.getNode(SPUISD::DFormAddr, PtrVT,
 				 basePtr.getOperand(0),
 				 insertEltOffs);
+    } else if (basePtr.getOpcode() == SPUISD::XFormAddr ||
+	       (basePtr.getOpcode() == ISD::ADD
+		&& basePtr.getOperand(0).getOpcode() == SPUISD::XFormAddr)) {
+      insertEltPtr = basePtr;
     } else {
       insertEltPtr = DAG.getNode(SPUISD::DFormAddr, PtrVT,
 				 DAG.getRegister(SPU::R1, PtrVT),
