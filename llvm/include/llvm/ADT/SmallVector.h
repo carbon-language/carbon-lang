@@ -294,6 +294,16 @@ public:
   
   const SmallVectorImpl &operator=(const SmallVectorImpl &RHS);
   
+  bool operator==(const SmallVectorImpl &RHS) const {
+    if (size() != RHS.size()) return false;
+    for (T *This = Begin, *That = RHS.Begin, *End = Begin+size(); 
+         This != End; ++This, ++That)
+      if (*This != *That)
+        return false;
+    return true;
+  }
+  bool operator!=(const SmallVectorImpl &RHS) const { return !(*this == RHS); }
+  
 private:
   /// isSmall - Return true if this is a smallvector which has not had dynamic
   /// memory allocated for it.
