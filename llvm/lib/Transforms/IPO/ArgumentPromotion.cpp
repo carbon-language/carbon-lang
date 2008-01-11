@@ -328,7 +328,7 @@ namespace {
 /// safe to do so.
 Function *ArgPromotion::DoPromotion(Function *F,
                                     SmallVectorImpl<Argument*> &Args2Prom) {
-  std::set<Argument*> ArgsToPromote(Args2Prom.begin(), Args2Prom.end());
+  SmallPtrSet<Argument*, 8> ArgsToPromote(Args2Prom.begin(), Args2Prom.end());
 
   // Start by computing a new prototype for the function, which is the same as
   // the old function, but has modified arguments.
