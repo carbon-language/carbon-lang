@@ -70,7 +70,8 @@ namespace {
   private:
     bool PromoteArguments(CallGraphNode *CGN);
     bool isSafeToPromoteArgument(Argument *Arg) const;
-    Function *DoPromotion(Function *F, std::vector<Argument*> &ArgsToPromote);
+    Function *DoPromotion(Function *F, 
+                          SmallVectorImpl<Argument*> &ArgsToPromote);
   };
 
   char ArgPromotion::ID = 0;
@@ -108,7 +109,7 @@ bool ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
   if (!F || !F->hasInternalLinkage()) return false;
 
   // First check: see if there are any pointer arguments!  If not, quick exit.
-  std::vector<Argument*> PointerArgs;
+  SmallVector<Argument*, 16> PointerArgs;
   for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
     if (isa<PointerType>(I->getType()))
       PointerArgs.push_back(I);
@@ -193,8 +194,8 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg) const {
   // instructions (with constant indices) that are subsequently loaded.
   bool HasLoadInEntryBlock = false;
   BasicBlock *EntryBlock = Arg->getParent()->begin();
-  std::vector<LoadInst*> Loads;
-  std::vector<std::vector<ConstantInt*> > GEPIndices;
+  SmallVector<LoadInst*, 16> Loads;
+  std::vector<SmallVector<ConstantInt*, 8> > GEPIndices;
   for (Value::use_iterator UI = Arg->use_begin(), E = Arg->use_end();
        UI != E; ++UI)
     if (LoadInst *LI = dyn_cast<LoadInst>(*UI)) {
@@ -210,7 +211,7 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg) const {
         return isSafeToPromoteArgument(Arg);
       }
       // Ensure that all of the indices are constants.
-      std::vector<ConstantInt*> Operands;
+      SmallVector<ConstantInt*, 8> Operands;
       for (unsigned i = 1, e = GEP->getNumOperands(); i != e; ++i)
         if (ConstantInt *C = dyn_cast<ConstantInt>(GEP->getOperand(i)))
           Operands.push_back(C);
@@ -326,7 +327,7 @@ namespace {
 /// arguments, and returns the new function.  At this point, we know that it's
 /// safe to do so.
 Function *ArgPromotion::DoPromotion(Function *F,
-                                    std::vector<Argument*> &Args2Prom) {
+                                    SmallVectorImpl<Argument*> &Args2Prom) {
   std::set<Argument*> ArgsToPromote(Args2Prom.begin(), Args2Prom.end());
 
   // Start by computing a new prototype for the function, which is the same as
