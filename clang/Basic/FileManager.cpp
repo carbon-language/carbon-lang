@@ -21,7 +21,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Bitcode/Serialize.h"
 #include "llvm/Bitcode/Deserialize.h"
-#include <iostream>
+#include "llvm/Support/Streams.h"
 using namespace clang;
 
 // FIXME: Enhance libsystem to support inode and other fields.
@@ -31,9 +31,9 @@ using namespace clang;
 #define S_ISDIR(s) (_S_IFDIR & s)
 #endif
 
-/// NON_EXISTANT_DIR - A special value distinct from null that is used to
+/// NON_EXISTENT_DIR - A special value distinct from null that is used to
 /// represent a dir name that doesn't exist on the disk.
-#define NON_EXISTANT_DIR reinterpret_cast<DirectoryEntry*>((intptr_t)-1)
+#define NON_EXISTENT_DIR reinterpret_cast<DirectoryEntry*>((intptr_t)-1)
 
 /// getDirectory - Lookup, cache, and verify the specified directory.  This
 /// returns null if the directory doesn't exist.
@@ -46,13 +46,13 @@ const DirectoryEntry *FileManager::getDirectory(const char *NameStart,
   
   // See if there is already an entry in the map.
   if (NamedDirEnt.getValue())
-    return NamedDirEnt.getValue() == NON_EXISTANT_DIR
+    return NamedDirEnt.getValue() == NON_EXISTENT_DIR
               ? 0 : NamedDirEnt.getValue();
   
   ++NumDirCacheMisses;
   
   // By default, initialize it to invalid.
-  NamedDirEnt.setValue(NON_EXISTANT_DIR);
+  NamedDirEnt.setValue(NON_EXISTENT_DIR);
   
   // Get the null-terminated directory name as stored as the key of the
   // DirEntries map.
@@ -79,9 +79,9 @@ const DirectoryEntry *FileManager::getDirectory(const char *NameStart,
   return &UDE;
 }
 
-/// NON_EXISTANT_FILE - A special value distinct from null that is used to
+/// NON_EXISTENT_FILE - A special value distinct from null that is used to
 /// represent a filename that doesn't exist on the disk.
-#define NON_EXISTANT_FILE reinterpret_cast<FileEntry*>((intptr_t)-1)
+#define NON_EXISTENT_FILE reinterpret_cast<FileEntry*>((intptr_t)-1)
 
 /// getFile - Lookup, cache, and verify the specified file.  This returns null
 /// if the file doesn't exist.
@@ -96,13 +96,13 @@ const FileEntry *FileManager::getFile(const char *NameStart,
 
   // See if there is already an entry in the map.
   if (NamedFileEnt.getValue())
-    return NamedFileEnt.getValue() == NON_EXISTANT_FILE
+    return NamedFileEnt.getValue() == NON_EXISTENT_FILE
                  ? 0 : NamedFileEnt.getValue();
   
   ++NumFileCacheMisses;
 
   // By default, initialize it to invalid.
-  NamedFileEnt.setValue(NON_EXISTANT_FILE);
+  NamedFileEnt.setValue(NON_EXISTENT_FILE);
 
   // Figure out what directory it is in.   If the string contains a / in it,
   // strip off everything after it.
@@ -133,14 +133,14 @@ const FileEntry *FileManager::getFile(const char *NameStart,
   
   // Nope, there isn't.  Check to see if the file exists.
   struct stat StatBuf;
-  //std::cerr << "STATING: " << Filename;
+  //llvm::cerr << "STATING: " << Filename;
   if (stat(InterndFileName, &StatBuf) ||   // Error stat'ing.
       S_ISDIR(StatBuf.st_mode)) {           // A directory?
     // If this file doesn't exist, we leave a null in FileEntries for this path.
-    //std::cerr << ": Not existing\n";
+    //llvm::cerr << ": Not existing\n";
     return 0;
   }
-  //std::cerr << ": exists\n";
+  //llvm::cerr << ": exists\n";
   
   // It exists.  See if we have already opened a file with the same inode.
   // This occurs when one dir is symlinked to another, for example.
@@ -165,13 +165,13 @@ const FileEntry *FileManager::getFile(const char *NameStart,
 }
 
 void FileManager::PrintStats() const {
-  std::cerr << "\n*** File Manager Stats:\n";
-  std::cerr << UniqueFiles.size() << " files found, "
-            << UniqueDirs.size() << " dirs found.\n";
-  std::cerr << NumDirLookups << " dir lookups, "
-            << NumDirCacheMisses << " dir cache misses.\n";
-  std::cerr << NumFileLookups << " file lookups, "
-            << NumFileCacheMisses << " file cache misses.\n";
+  llvm::cerr << "\n*** File Manager Stats:\n";
+  llvm::cerr << UniqueFiles.size() << " files found, "
+             << UniqueDirs.size() << " dirs found.\n";
+  llvm::cerr << NumDirLookups << " dir lookups, "
+             << NumDirCacheMisses << " dir cache misses.\n";
+  llvm::cerr << NumFileLookups << " file lookups, "
+             << NumFileCacheMisses << " file cache misses.\n";
   
-  //std::cerr << PagesMapped << BytesOfPagesMapped << FSLookups;
+  //llvm::cerr << PagesMapped << BytesOfPagesMapped << FSLookups;
 }
