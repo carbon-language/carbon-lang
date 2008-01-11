@@ -101,11 +101,11 @@ bool FPMover::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
 
       const TargetInstrInfo *TII = TM.getInstrInfo();
       if (MI->getOpcode() == SP::FpMOVD)
-        MI->setInstrDescriptor(TII->get(SP::FMOVS));
+        MI->setDesc(TII->get(SP::FMOVS));
       else if (MI->getOpcode() == SP::FpNEGD)
-        MI->setInstrDescriptor(TII->get(SP::FNEGS));
+        MI->setDesc(TII->get(SP::FNEGS));
       else if (MI->getOpcode() == SP::FpABSD)
-        MI->setInstrDescriptor(TII->get(SP::FABSS));
+        MI->setDesc(TII->get(SP::FABSS));
       else
         assert(0 && "Unknown opcode!");
         

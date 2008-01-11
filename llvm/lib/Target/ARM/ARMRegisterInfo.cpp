@@ -589,14 +589,14 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     Offset += MI.getOperand(i+1).getImm();
     if (Offset == 0) {
       // Turn it into a move.
-      MI.setInstrDescriptor(TII.get(ARM::MOVr));
+      MI.setDesc(TII.get(ARM::MOVr));
       MI.getOperand(i).ChangeToRegister(FrameReg, false);
       MI.RemoveOperand(i+1);
       return;
     } else if (Offset < 0) {
       Offset = -Offset;
       isSub = true;
-      MI.setInstrDescriptor(TII.get(ARM::SUBri));
+      MI.setDesc(TII.get(ARM::SUBri));
     }
 
     // Common case: small offset, fits into instruction.
@@ -629,7 +629,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     unsigned Scale = 1;
     if (FrameReg != ARM::SP) {
       Opcode = ARM::tADDi3;
-      MI.setInstrDescriptor(TII.get(ARM::tADDi3));
+      MI.setDesc(TII.get(ARM::tADDi3));
       NumBits = 3;
     } else {
       NumBits = 8;
@@ -640,7 +640,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
     if (Offset == 0) {
       // Turn it into a move.
-      MI.setInstrDescriptor(TII.get(ARM::tMOVr));
+      MI.setDesc(TII.get(ARM::tMOVr));
       MI.getOperand(i).ChangeToRegister(FrameReg, false);
       MI.RemoveOperand(i+1);
       return;
@@ -680,7 +680,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       // r0 = -imm (this is then translated into a series of instructons)
       // r0 = add r0, sp
       emitThumbConstant(MBB, II, DestReg, Offset, TII, *this);
-      MI.setInstrDescriptor(TII.get(ARM::tADDhirr));
+      MI.setDesc(TII.get(ARM::tADDhirr));
       MI.getOperand(i).ChangeToRegister(DestReg, false, false, true);
       MI.getOperand(i+1).ChangeToRegister(FrameReg, false);
     }
@@ -790,7 +790,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
         }
       } else
         emitThumbRegPlusImmediate(MBB, II, TmpReg, FrameReg, Offset, TII, *this);
-      MI.setInstrDescriptor(TII.get(ARM::tLDR));
+      MI.setDesc(TII.get(ARM::tLDR));
       MI.getOperand(i).ChangeToRegister(TmpReg, false, false, true);
       if (UseRR)
         // Use [reg, reg] addrmode.
@@ -827,7 +827,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
         }
       } else
         emitThumbRegPlusImmediate(MBB, II, TmpReg, FrameReg, Offset, TII, *this);
-      MI.setInstrDescriptor(TII.get(ARM::tSTR));
+      MI.setDesc(TII.get(ARM::tSTR));
       MI.getOperand(i).ChangeToRegister(TmpReg, false, false, true);
       if (UseRR)  // Use [reg, reg] addrmode.
         MI.addOperand(MachineOperand::CreateReg(FrameReg, false));

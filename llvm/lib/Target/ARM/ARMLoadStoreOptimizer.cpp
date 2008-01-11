@@ -741,7 +741,7 @@ bool ARMLoadStoreOpt::MergeReturnIntoLDM(MachineBasicBlock &MBB) {
     if (PrevMI->getOpcode() == ARM::LDM) {
       MachineOperand &MO = PrevMI->getOperand(PrevMI->getNumOperands()-1);
       if (MO.getReg() == ARM::LR) {
-        PrevMI->setInstrDescriptor(TII->get(ARM::LDM_RET));
+        PrevMI->setDesc(TII->get(ARM::LDM_RET));
         MO.setReg(ARM::PC);
         MBB.erase(MBBI);
         return true;

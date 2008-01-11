@@ -163,10 +163,10 @@ public:
   /// (before the first implicit operand). 
   void addOperand(const MachineOperand &Op);
   
-  /// setInstrDescriptor - Replace the instruction descriptor (thus opcode) of
+  /// setDesc - Replace the instruction descriptor (thus opcode) of
   /// the current instruction with a new one.
   ///
-  void setInstrDescriptor(const TargetInstrDesc &tid) { TID = &tid; }
+  void setDesc(const TargetInstrDesc &tid) { TID = &tid; }
 
   /// RemoveOperand - Erase an operand  from an instruction, leaving it with one
   /// fewer operand than it started with.

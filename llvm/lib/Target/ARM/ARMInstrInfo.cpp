@@ -635,7 +635,7 @@ bool ARMInstrInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
       if (isVarArg)
         continue;
       Reg = ARM::PC;
-      PopMI->setInstrDescriptor(get(ARM::tPOP_RET));
+      PopMI->setDesc(get(ARM::tPOP_RET));
       MBB.erase(MI);
     }
     PopMI->addOperand(MachineOperand::CreateReg(Reg, true));
@@ -792,7 +792,7 @@ bool ARMInstrInfo::PredicateInstruction(MachineInstr *MI,
                                 const std::vector<MachineOperand> &Pred) const {
   unsigned Opc = MI->getOpcode();
   if (Opc == ARM::B || Opc == ARM::tB) {
-    MI->setInstrDescriptor(get(Opc == ARM::B ? ARM::Bcc : ARM::tBcc));
+    MI->setDesc(get(Opc == ARM::B ? ARM::Bcc : ARM::tBcc));
     MI->addOperand(MachineOperand::CreateImm(Pred[0].getImm()));
     MI->addOperand(MachineOperand::CreateReg(Pred[1].getReg(), false));
     return true;

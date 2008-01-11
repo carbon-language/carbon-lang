@@ -535,7 +535,7 @@ void FPS::popStackAfter(MachineBasicBlock::iterator &I) {
   // Check to see if there is a popping version of this instruction...
   int Opcode = Lookup(PopTable, array_lengthof(PopTable), I->getOpcode());
   if (Opcode != -1) {
-    I->setInstrDescriptor(TII->get(Opcode));
+    I->setDesc(TII->get(Opcode));
     if (Opcode == X86::UCOM_FPPr)
       I->RemoveOperand(0);
   } else {    // Insert an explicit pop
@@ -587,7 +587,7 @@ void FPS::handleZeroArgFP(MachineBasicBlock::iterator &I) {
 
   // Change from the pseudo instruction to the concrete instruction.
   MI->RemoveOperand(0);   // Remove the explicit ST(0) operand
-  MI->setInstrDescriptor(TII->get(getConcreteOpcode(MI->getOpcode())));
+  MI->setDesc(TII->get(getConcreteOpcode(MI->getOpcode())));
   
   // Result gets pushed on the stack.
   pushReg(DestReg);
@@ -632,7 +632,7 @@ void FPS::handleOneArgFP(MachineBasicBlock::iterator &I) {
   
   // Convert from the pseudo instruction to the concrete instruction.
   MI->RemoveOperand(NumOps-1);    // Remove explicit ST(0) operand
-  MI->setInstrDescriptor(TII->get(getConcreteOpcode(MI->getOpcode())));
+  MI->setDesc(TII->get(getConcreteOpcode(MI->getOpcode())));
 
   if (MI->getOpcode() == X86::IST_FP64m ||
       MI->getOpcode() == X86::ISTT_FP16m ||
@@ -680,7 +680,7 @@ void FPS::handleOneArgFPRW(MachineBasicBlock::iterator &I) {
   // Change from the pseudo instruction to the concrete instruction.
   MI->RemoveOperand(1);   // Drop the source operand.
   MI->RemoveOperand(0);   // Drop the destination operand.
-  MI->setInstrDescriptor(TII->get(getConcreteOpcode(MI->getOpcode())));
+  MI->setDesc(TII->get(getConcreteOpcode(MI->getOpcode())));
 }
 
 
@@ -878,7 +878,7 @@ void FPS::handleCompareFP(MachineBasicBlock::iterator &I) {
   // Change from the pseudo instruction to the concrete instruction.
   MI->getOperand(0).setReg(getSTReg(Op1));
   MI->RemoveOperand(1);
-  MI->setInstrDescriptor(TII->get(getConcreteOpcode(MI->getOpcode())));
+  MI->setDesc(TII->get(getConcreteOpcode(MI->getOpcode())));
 
   // If any of the operands are killed by this instruction, free them.
   if (KillsOp0) freeStackSlotAfter(I, Op0);
@@ -904,7 +904,7 @@ void FPS::handleCondMovFP(MachineBasicBlock::iterator &I) {
   MI->RemoveOperand(0);
   MI->RemoveOperand(1);
   MI->getOperand(0).setReg(getSTReg(Op1));
-  MI->setInstrDescriptor(TII->get(getConcreteOpcode(MI->getOpcode())));
+  MI->setDesc(TII->get(getConcreteOpcode(MI->getOpcode())));
   
   // If we kill the second operand, make sure to pop it from the stack.
   if (Op0 != Op1 && KillsOp1) {

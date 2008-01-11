@@ -501,7 +501,7 @@ void PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     assert(ImmToIdxMap.count(OpC) &&
            "No indexed form of load or store available!");
     unsigned NewOpcode = ImmToIdxMap.find(OpC)->second;
-    MI.setInstrDescriptor(TII.get(NewOpcode));
+    MI.setDesc(TII.get(NewOpcode));
     OperandBase = 1;
   } else {
     OperandBase = OffsetOperandNo;

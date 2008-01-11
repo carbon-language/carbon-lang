@@ -1162,7 +1162,7 @@ ARMConstantIslands::FixUpUnconditionalBr(MachineFunction &Fn, ImmBranch &Br) {
 
   // Use BL to implement far jump.
   Br.MaxDisp = (1 << 21) * 2;
-  MI->setInstrDescriptor(TII->get(ARM::tBfar));
+  MI->setDesc(TII->get(ARM::tBfar));
   BBSizes[MBB->getNumber()] += 2;
   AdjustBBOffsetsAfter(MBB, 2);
   HasFarJump = true;

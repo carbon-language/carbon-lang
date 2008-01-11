@@ -1156,7 +1156,7 @@ MachineInstr *X86InstrInfo::commuteInstruction(MachineInstr *MI) const {
     case X86::CMOVNP64rr: Opc = X86::CMOVP64rr; break;
     }
 
-    MI->setInstrDescriptor(get(Opc));
+    MI->setDesc(get(Opc));
     // Fallthrough intended.
   }
   default:
@@ -1755,7 +1755,7 @@ MachineInstr* X86InstrInfo::foldMemoryOperand(MachineInstr *MI,
     case X86::TEST64rr: NewOpc = X86::CMP64ri32; break;
     }
     // Change to CMPXXri r, 0 first.
-    MI->setInstrDescriptor(get(NewOpc));
+    MI->setDesc(get(NewOpc));
     MI->getOperand(1).ChangeToImmediate(0);
   } else if (Ops.size() != 1)
     return NULL;
@@ -1781,7 +1781,7 @@ MachineInstr* X86InstrInfo::foldMemoryOperand(MachineInstr *MI,
     case X86::TEST64rr: NewOpc = X86::CMP64ri32; break;
     }
     // Change to CMPXXri r, 0 first.
-    MI->setInstrDescriptor(get(NewOpc));
+    MI->setDesc(get(NewOpc));
     MI->getOperand(1).ChangeToImmediate(0);
   } else if (Ops.size() != 1)
     return NULL;
@@ -1936,7 +1936,7 @@ bool X86InstrInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
       case X86::CMP16ri:   NewOpc = X86::TEST16rr; break;
       case X86::CMP8ri:    NewOpc = X86::TEST8rr; break;
       }
-      DataMI->setInstrDescriptor(get(NewOpc));
+      DataMI->setDesc(get(NewOpc));
       MO1.ChangeToRegister(MO0.getReg(), false);
     }
   }
