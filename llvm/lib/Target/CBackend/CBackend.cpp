@@ -1908,18 +1908,24 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
   } else {
     // Loop over the arguments, printing them.
     FunctionType::param_iterator I = FT->param_begin(), E = FT->param_end();
+    unsigned Idx = 1;
     
     // If this is a struct-return function, don't print the hidden
     // struct-return argument.
     if (isStructReturn) {
       assert(I != E && "Invalid struct return function!");
       ++I;
+      ++Idx;
     }
     
-    unsigned Idx = 1;
     for (; I != E; ++I) {
       if (PrintedArg) FunctionInnards << ", ";
-      printType(FunctionInnards, *I,
+      const Type *ArgTy = *I;
+      if (PAL && PAL->paramHasAttr(Idx, ParamAttr::ByVal)) {
+        assert(isa<PointerType>(ArgTy));
+        ArgTy = cast<PointerType>(ArgTy)->getElementType();
+      }
+      printType(FunctionInnards, ArgTy,
              /*isSigned=*/PAL && PAL->paramHasAttr(Idx, ParamAttr::SExt));
       PrintedArg = true;
       ++Idx;
@@ -2628,9 +2634,11 @@ void CWriter::visitCallInst(CallInst &I) {
   const ParamAttrsList *PAL = I.getParamAttrs();
   bool isStructRet = I.isStructReturn();
   if (isStructRet) {
-    Out << "*(";
+    bool isByVal = ByValParams.count(I.getOperand(1));
+    if (!isByVal) Out << "*(";
     writeOperand(I.getOperand(1));
-    Out << ") = ";
+    if (!isByVal) Out << ")";
+    Out << " = ";
   }
   
   if (I.isTailCall()) Out << " /*tail*/ ";
@@ -2685,22 +2693,26 @@ void CWriter::visitCallInst(CallInst &I) {
   }
       
   bool PrintedArg = false;
-  unsigned Idx = 1;
-  for (; AI != AE; ++AI, ++ArgNo, ++Idx) {
+  for (; AI != AE; ++AI, ++ArgNo) {
     if (PrintedArg) Out << ", ";
     if (ArgNo < NumDeclaredParams &&
         (*AI)->getType() != FTy->getParamType(ArgNo)) {
       Out << '(';
       printType(Out, FTy->getParamType(ArgNo), 
-            /*isSigned=*/PAL && PAL->paramHasAttr(Idx, ParamAttr::SExt));
+            /*isSigned=*/PAL && PAL->paramHasAttr(ArgNo+1, ParamAttr::SExt));
       Out << ')';
     }
-    // If call is expecting argument to be passed by value, then do not
-    // take its address.
-    if (PAL && PAL->paramHasAttr(Idx, ParamAttr::ByVal))
-      writeOperandInternal(*AI);
-    else
-      writeOperand(*AI);
+    // Check if the argument is expected to be passed by value.
+    bool isOutByVal = PAL && PAL->paramHasAttr(ArgNo+1, ParamAttr::ByVal);
+    // Check if this argument itself is passed in by reference. 
+    bool isInByVal = ByValParams.count(*AI);
+    if (isOutByVal && !isInByVal)
+      Out << "*(";
+    else if (!isOutByVal && isInByVal)
+      Out << "&(";
+    writeOperand(*AI);
+    if (isOutByVal ^ isInByVal)
+      Out << ")";
     PrintedArg = true;
   }
   Out << ')';
