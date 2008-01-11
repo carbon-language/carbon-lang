@@ -1028,6 +1028,7 @@ def CVTSI2SD64rr: RSDI<0x2A, MRMSrcReg, (outs FR64:$dst), (ins GR64:$src),
 def CVTSI2SD64rm: RSDI<0x2A, MRMSrcMem, (outs FR64:$dst), (ins i64mem:$src),
                        "cvtsi2sd{q}\t{$src, $dst|$dst, $src}",
                        [(set FR64:$dst, (sint_to_fp (loadi64 addr:$src)))]>;
+
 let isTwoAddress = 1 in {
 def Int_CVTSI2SD64rr: RSDI<0x2A, MRMSrcReg,
                            (outs VR128:$dst), (ins VR128:$src1, GR64:$src2),
@@ -1050,17 +1051,21 @@ def CVTSI2SS64rr: RSSI<0x2A, MRMSrcReg, (outs FR32:$dst), (ins GR64:$src),
 def CVTSI2SS64rm: RSSI<0x2A, MRMSrcMem, (outs FR32:$dst), (ins i64mem:$src),
                        "cvtsi2ss{q}\t{$src, $dst|$dst, $src}",
                        [(set FR32:$dst, (sint_to_fp (loadi64 addr:$src)))]>;
-let isTwoAddress = 1, neverHasSideEffects = 1 in {
-def Int_CVTSI2SS64rr: RSSI<0x2A, MRMSrcReg,
-                           (outs VR128:$dst), (ins VR128:$src1, GR64:$src2),
-                           "cvtsi2ss{q}\t{$src2, $dst|$dst, $src2}",
-                           []>; // TODO: add intrinsic
-let mayLoad = 1 in 
-def Int_CVTSI2SS64rm: RSSI<0x2A, MRMSrcMem,
-                           (outs VR128:$dst), (ins VR128:$src1, i64mem:$src2),
-                           "cvtsi2ss{q}\t{$src2, $dst|$dst, $src2}",
-                           []>; // TODO: add intrinsic
-} // isTwoAddress
+
+let isTwoAddress = 1 in {
+  def Int_CVTSI2SS64rr : RSSI<0x2A, MRMSrcReg,
+                              (outs VR128:$dst), (ins VR128:$src1, GR64:$src2),
+                              "cvtsi2ss{q}\t{$src2, $dst|$dst, $src2}",
+                              [(set VR128:$dst,
+                                (int_x86_sse_cvtsi642ss VR128:$src1,
+                                 GR64:$src2))]>;
+  def Int_CVTSI2SS64rm : RSSI<0x2A, MRMSrcMem,
+                              (outs VR128:$dst), (ins VR128:$src1, i64mem:$src2),
+                              "cvtsi2ss{q}\t{$src2, $dst|$dst, $src2}",
+                              [(set VR128:$dst,
+                                (int_x86_sse_cvtsi642ss VR128:$src1,
+                                 (loadi64 addr:$src2)))]>;
+}
 
 // f32 -> signed i64
 def Int_CVTSS2SI64rr: RSSI<0x2D, MRMSrcReg, (outs GR64:$dst), (ins VR128:$src),
@@ -1085,21 +1090,6 @@ def Int_CVTTSS2SI64rm: RSSI<0x2C, MRMSrcMem, (outs GR64:$dst), (ins f32mem:$src)
                             "cvttss2si{q}\t{$src, $dst|$dst, $src}",
                             [(set GR64:$dst,
                               (int_x86_sse_cvttss2si64 (load addr:$src)))]>;
-
-let isTwoAddress = 1 in {
-  def Int_CVTSI642SSrr : RSSI<0x2A, MRMSrcReg,
-                              (outs VR128:$dst), (ins VR128:$src1, GR64:$src2),
-                              "cvtsi2ss{q}\t{$src2, $dst|$dst, $src2}",
-                              [(set VR128:$dst,
-                                (int_x86_sse_cvtsi642ss VR128:$src1,
-                                 GR64:$src2))]>;
-  def Int_CVTSI642SSrm : RSSI<0x2A, MRMSrcMem,
-                              (outs VR128:$dst), (ins VR128:$src1, i64mem:$src2),
-                              "cvtsi2ss{q}\t{$src2, $dst|$dst, $src2}",
-                              [(set VR128:$dst,
-                                (int_x86_sse_cvtsi642ss VR128:$src1,
-                                 (loadi64 addr:$src2)))]>;
-}
 
 //===----------------------------------------------------------------------===//
 // Alias Instructions
