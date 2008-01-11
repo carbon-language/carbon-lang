@@ -69,9 +69,9 @@ namespace {
 
   private:
     bool PromoteArguments(CallGraphNode *CGN);
-    bool isSafeToPromoteArgument(Argument *Arg) const;
+    bool isSafeToPromoteArgument(Argument *Arg, bool isByVal) const;
     Function *DoPromotion(Function *F, 
-                          SmallVectorImpl<Argument*> &ArgsToPromote);
+                          SmallPtrSet<Argument*, 8> &ArgsToPromote);
   };
 
   char ArgPromotion::ID = 0;
@@ -109,10 +109,12 @@ bool ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
   if (!F || !F->hasInternalLinkage()) return false;
 
   // First check: see if there are any pointer arguments!  If not, quick exit.
-  SmallVector<Argument*, 16> PointerArgs;
-  for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
+  SmallVector<std::pair<Argument*, unsigned>, 16> PointerArgs;
+  unsigned ArgNo = 0;
+  for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end();
+       I != E; ++I, ++ArgNo)
     if (isa<PointerType>(I->getType()))
-      PointerArgs.push_back(I);
+      PointerArgs.push_back(std::pair<Argument*, unsigned>(I, ArgNo));
   if (PointerArgs.empty()) return false;
 
   // Second check: make sure that all callers are direct callers.  We can't
@@ -129,19 +131,19 @@ bool ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
       return false;
   }
 
-  // Check to see which arguments are promotable.  If an argument is not
-  // promotable, remove it from the PointerArgs vector.
-  for (unsigned i = 0; i != PointerArgs.size(); ++i)
-    if (!isSafeToPromoteArgument(PointerArgs[i])) {
-      std::swap(PointerArgs[i--], PointerArgs.back());
-      PointerArgs.pop_back();
-    }
-
+  // Check to see which arguments are promotable.  If an argument is promotable,
+  // add it to ArgsToPromote.
+  SmallPtrSet<Argument*, 8> ArgsToPromote;
+  for (unsigned i = 0; i != PointerArgs.size(); ++i) {
+    bool isByVal = F->paramHasAttr(PointerArgs[i].second, ParamAttr::ByVal);
+    if (isSafeToPromoteArgument(PointerArgs[i].first, isByVal))
+      ArgsToPromote.insert(PointerArgs[i].first);
+  }
+  
   // No promotable pointer arguments.
-  if (PointerArgs.empty()) return false;
+  if (ArgsToPromote.empty()) return false;
 
-  // Okay, promote all of the arguments and rewrite the callees!
-  Function *NewF = DoPromotion(F, PointerArgs);
+  Function *NewF = DoPromotion(F, ArgsToPromote);
 
   // Update the call graph to know that the function has been transformed.
   getAnalysis<CallGraph>().changeFunction(F, NewF);
@@ -188,7 +190,7 @@ static bool AllCalleesPassInValidPointerForArgument(Argument *Arg) {
 /// This method limits promotion of aggregates to only promote up to three
 /// elements of the aggregate in order to avoid exploding the number of
 /// arguments passed in.
-bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg) const {
+bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg, bool isByVal) const {
   // We can only promote this argument if all of the uses are loads, or are GEP
   // instructions (with constant indices) that are subsequently loaded.
   bool HasLoadInEntryBlock = false;
@@ -206,8 +208,8 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg) const {
         // Dead GEP's cause trouble later.  Just remove them if we run into
         // them.
         getAnalysis<AliasAnalysis>().deleteValue(GEP);
-        GEP->getParent()->getInstList().erase(GEP);
-        return isSafeToPromoteArgument(Arg);
+        GEP->eraseFromParent();
+        return isSafeToPromoteArgument(Arg, isByVal);
       }
       // Ensure that all of the indices are constants.
       SmallVector<ConstantInt*, 8> Operands;
@@ -326,8 +328,7 @@ namespace {
 /// arguments, and returns the new function.  At this point, we know that it's
 /// safe to do so.
 Function *ArgPromotion::DoPromotion(Function *F,
-                                    SmallVectorImpl<Argument*> &Args2Prom) {
-  SmallPtrSet<Argument*, 8> ArgsToPromote(Args2Prom.begin(), Args2Prom.end());
+                                    SmallPtrSet<Argument*, 8> &ArgsToPromote) {
 
   // Start by computing a new prototype for the function, which is the same as
   // the old function, but has modified arguments.
@@ -497,7 +498,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
 
     // Finally, remove the old call from the program, reducing the use-count of
     // F.
-    Call->getParent()->getInstList().erase(Call);
+    Call->eraseFromParent();
   }
 
   // Since we have now created the new function, splice the body of the old
@@ -532,7 +533,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
           I2->setName(I->getName()+".val");
           LI->replaceAllUsesWith(I2);
           AA.replaceWithNewValue(LI, I2);
-          LI->getParent()->getInstList().erase(LI);
+          LI->eraseFromParent();
           DOUT << "*** Promoted load of argument '" << I->getName()
                << "' in function '" << F->getName() << "'\n";
         } else {
@@ -562,10 +563,10 @@ Function *ArgPromotion::DoPromotion(Function *F,
             LoadInst *L = cast<LoadInst>(GEP->use_back());
             L->replaceAllUsesWith(TheArg);
             AA.replaceWithNewValue(L, TheArg);
-            L->getParent()->getInstList().erase(L);
+            L->eraseFromParent();
           }
           AA.deleteValue(GEP);
-          GEP->getParent()->getInstList().erase(GEP);
+          GEP->eraseFromParent();
         }
       }
 
@@ -583,6 +584,6 @@ Function *ArgPromotion::DoPromotion(Function *F,
   AA.replaceWithNewValue(F, NF);
 
   // Now that the old function is dead, delete it.
-  F->getParent()->getFunctionList().erase(F);
+  F->eraseFromParent();
   return NF;
 }
