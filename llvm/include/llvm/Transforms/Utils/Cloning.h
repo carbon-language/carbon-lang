@@ -20,7 +20,6 @@
 
 #include <vector>
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/Analysis/LoopInfo.h"
 
 namespace llvm {
 
@@ -37,6 +36,9 @@ class CallSite;
 class Trace;
 class CallGraph;
 class TargetData;
+class LoopInfo;
+template<class N> class LoopBase;
+typedef LoopBase<BasicBlock> Loop;
 
 /// CloneModule - Return an exact copy of the specified module
 ///
