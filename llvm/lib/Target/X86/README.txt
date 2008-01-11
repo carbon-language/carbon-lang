@@ -1330,10 +1330,11 @@ L5:
 
 Tail call optimization improvements: Tail call optimization currently
 pushes all arguments on the top of the stack (their normal place for
-non-tail call optimized calls) before moving them to actual stack
-slot. This is done to prevent overwriting of parameters (see example
-below) that might be used, since the arguments of the callee
-overwrites caller's arguments.
+non-tail call optimized calls) that source from the callers arguments
+or  that source from a virtual register (also possibly sourcing from
+callers arguments).
+This is done to prevent overwriting of parameters (see example
+below) that might be used later.
 
 example:  
 
@@ -1352,13 +1353,6 @@ arg2 of the caller.
 
 Possible optimizations:
 
- - Only push those arguments to the top of the stack that are actual
-   parameters of the caller function and have no local value in the
-   caller.
-
-   In the above example local does not need to be pushed onto the top
-   of the stack as it is definitely not a caller's function
-   parameter.
 
  - Analyse the actual parameters of the callee to see which would
    overwrite a caller parameter which is used by the callee and only
@@ -1380,35 +1374,6 @@ Possible optimizations:
    Here we need to push the arguments because they overwrite each
    other.
 
-
-   Code for lowering directly onto callers arguments:
-+  SmallVector<std::pair<unsigned, SDOperand>, 8> RegsToPass;
-+  SmallVector<SDOperand, 8> MemOpChains;
-+
-+  SDOperand FramePtr;
-+  SDOperand PtrOff;
-+  SDOperand FIN;
-+  int FI = 0;
-+  // Walk the register/memloc assignments, inserting copies/loads.
-+  for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
-+    CCValAssign &VA = ArgLocs[i];
-+    SDOperand Arg = Op.getOperand(5+2*VA.getValNo());
-+    
-+    ....
-+    
-+    if (VA.isRegLoc()) {
-+      RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
-+    } else {
-+      assert(VA.isMemLoc());
-+      // create frame index
-+      int32_t Offset = VA.getLocMemOffset()+FPDiff;
-+      uint32_t OpSize = (MVT::getSizeInBits(VA.getLocVT())+7)/8;
-+      FI = MF.getFrameInfo()->CreateFixedObject(OpSize, Offset);
-+      FIN = DAG.getFrameIndex(FI, MVT::i32);
-+      // store relative to framepointer
-+      MemOpChains.push_back(DAG.getStore(Chain, Arg, FIN, NULL, 0));
-+    }
-+  }
 //===---------------------------------------------------------------------===//
 
 main ()

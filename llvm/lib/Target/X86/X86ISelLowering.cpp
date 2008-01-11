@@ -1007,6 +1007,45 @@ X86TargetLowering::NameDecorationForFORMAL_ARGUMENTS(SDOperand Op) {
   return None;
 }
 
+
+// IsPossiblyOverriddenArgumentOfTailCall - Check if the operand could possibly
+// be overridden when lowering the outgoing arguments in a tail call. Currently
+// the implementation of this call is very conservative and assumes all
+// arguments sourcing from FORMAL_ARGUMENTS or a CopyFromReg with virtual
+// registers would be overridden by direct lowering. 
+// Possible improvement:
+// Check FORMAL_ARGUMENTS corresponding MERGE_VALUES for CopyFromReg nodes
+// indicating inreg passed arguments which also need not be lowered to a safe
+// stack slot.
+static bool IsPossiblyOverriddenArgumentOfTailCall(SDOperand Op) {
+  RegisterSDNode * OpReg = NULL;
+  if (Op.getOpcode() == ISD::FORMAL_ARGUMENTS ||
+      (Op.getOpcode()== ISD::CopyFromReg &&
+       (OpReg = cast<RegisterSDNode>(Op.getOperand(1))) &&
+       OpReg->getReg() >= MRegisterInfo::FirstVirtualRegister))
+    return true;
+  return false;
+}
+
+// GetMemCpyWithFlags - Create a MemCpy using function's parameter flag.
+static SDOperand 
+GetMemCpyWithFlags(SelectionDAG &DAG, unsigned Flags, SDOperand From,
+                   SDOperand To, SDOperand Chain) {
+
+  unsigned Align = 1 << ((Flags & ISD::ParamFlags::ByValAlign) >>
+                         ISD::ParamFlags::ByValAlignOffs);
+
+  unsigned  Size = (Flags & ISD::ParamFlags::ByValSize) >>
+    ISD::ParamFlags::ByValSizeOffs;
+
+  SDOperand AlignNode = DAG.getConstant(Align, MVT::i32);
+  SDOperand  SizeNode = DAG.getConstant(Size, MVT::i32);
+  SDOperand AlwaysInline = DAG.getConstant(1, MVT::i32);
+
+  return DAG.getMemcpy(Chain, To, From, SizeNode, AlignNode,
+                       AlwaysInline);
+}
+
 SDOperand X86TargetLowering::LowerMemArgument(SDOperand Op, SelectionDAG &DAG,
                                               const CCValAssign &VA,
                                               MachineFrameInfo *MFI,
@@ -1221,18 +1260,7 @@ X86TargetLowering::LowerMemOpCallTo(SDOperand Op, SelectionDAG &DAG,
   SDOperand FlagsOp = Op.getOperand(6+2*VA.getValNo());
   unsigned Flags    = cast<ConstantSDNode>(FlagsOp)->getValue();
   if (Flags & ISD::ParamFlags::ByVal) {
-    unsigned Align = 1 << ((Flags & ISD::ParamFlags::ByValAlign) >>
-                           ISD::ParamFlags::ByValAlignOffs);
-
-    unsigned  Size = (Flags & ISD::ParamFlags::ByValSize) >>
-        ISD::ParamFlags::ByValSizeOffs;
-
-    SDOperand AlignNode = DAG.getConstant(Align, MVT::i32);
-    SDOperand  SizeNode = DAG.getConstant(Size, MVT::i32);
-    SDOperand AlwaysInline = DAG.getConstant(1, MVT::i32);
-
-    return DAG.getMemcpy(Chain, PtrOff, Arg, SizeNode, AlignNode,
-                         AlwaysInline);
+    return GetMemCpyWithFlags(DAG, Flags, Arg, PtrOff, Chain);
   } else {
     return DAG.getStore(Chain, Arg, PtrOff, NULL, 0);
   }
@@ -1306,9 +1334,9 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
 
   SDOperand StackPtr;
 
-  // Walk the register/memloc assignments, inserting copies/loads.
-  // For tail calls, lower arguments first to the stack slot where they would 
-  // normally - in case of a normal function call - be.
+  // Walk the register/memloc assignments, inserting copies/loads.  For tail
+  // calls, lower arguments which could otherwise be possibly overwritten to the
+  // stack slot where they would go on normal function calls.
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     CCValAssign &VA = ArgLocs[i];
     SDOperand Arg = Op.getOperand(5+2*VA.getValNo());
@@ -1331,12 +1359,14 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     if (VA.isRegLoc()) {
       RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
     } else {
-      assert(VA.isMemLoc());
-      if (StackPtr.Val == 0)
-        StackPtr = DAG.getCopyFromReg(Chain, X86StackPtr, getPointerTy());
-
-      MemOpChains.push_back(LowerMemOpCallTo(Op, DAG, StackPtr, VA, Chain,
-                                             Arg));
+      if (!IsTailCall || IsPossiblyOverriddenArgumentOfTailCall(Arg)) {
+        assert(VA.isMemLoc());
+        if (StackPtr.Val == 0)
+          StackPtr = DAG.getCopyFromReg(Chain, X86StackPtr, getPointerTy());
+        
+        MemOpChains.push_back(LowerMemOpCallTo(Op, DAG, StackPtr, VA, Chain,
+                                               Arg));
+      }
     }
   }
   
@@ -1390,52 +1420,45 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     InFlag = Chain.getValue(1);
   }
 
-  // Copy from stack slots to stack slot of a tail called function. This needs
-  // to be done because if we would lower the arguments directly to their real
-  // stack slot we might end up overwriting each other.
-  // TODO: To make this more efficient (sometimes saving a store/load) we could
-  // analyse the arguments and emit this store/load/store sequence only for
-  // arguments which would be overwritten otherwise.
+  // For tail calls lower the arguments to the 'real' stack slot.
   if (IsTailCall) {
     SmallVector<SDOperand, 8> MemOpChains2;
-    SDOperand PtrOff;
     SDOperand FIN;
     int FI = 0;
     for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
       CCValAssign &VA = ArgLocs[i];
       if (!VA.isRegLoc()) {
+        assert(VA.isMemLoc());
+        SDOperand Arg = Op.getOperand(5+2*VA.getValNo());
         SDOperand FlagsOp = Op.getOperand(6+2*VA.getValNo());
         unsigned Flags    = cast<ConstantSDNode>(FlagsOp)->getValue();
-        
-        // Get source stack slot. 
-        SDOperand PtrOff = DAG.getConstant(VA.getLocMemOffset(),
-                                           getPointerTy());
-        PtrOff = DAG.getNode(ISD::ADD, getPointerTy(), StackPtr, PtrOff);
         // Create frame index.
         int32_t Offset = VA.getLocMemOffset()+FPDiff;
         uint32_t OpSize = (MVT::getSizeInBits(VA.getLocVT())+7)/8;
         FI = MF.getFrameInfo()->CreateFixedObject(OpSize, Offset);
         FIN = DAG.getFrameIndex(FI, MVT::i32);
+        SDOperand Source = Arg;
+        if (IsPossiblyOverriddenArgumentOfTailCall(Arg)){
+          // Copy from stack slots to stack slot of a tail called function. This
+          // needs to be done because if we would lower the arguments directly
+          // to their real stack slot we might end up overwriting each other.
+          // Get source stack slot.
+          Source = DAG.getConstant(VA.getLocMemOffset(), getPointerTy());
+          if (StackPtr.Val == 0)
+            StackPtr = DAG.getCopyFromReg(Chain, X86StackPtr, getPointerTy());
+          Source = DAG.getNode(ISD::ADD, getPointerTy(), StackPtr, Source);
+          if ((Flags & ISD::ParamFlags::ByVal)==0) 
+            Source = DAG.getLoad(VA.getValVT(), Chain, Source,NULL, 0);
+        } 
+
         if (Flags & ISD::ParamFlags::ByVal) {
-          // Copy relative to framepointer.
-          unsigned Align = 1 << ((Flags & ISD::ParamFlags::ByValAlign) >>
-                                 ISD::ParamFlags::ByValAlignOffs);
-
-          unsigned  Size = (Flags & ISD::ParamFlags::ByValSize) >>
-            ISD::ParamFlags::ByValSizeOffs;
- 
-          SDOperand AlignNode = DAG.getConstant(Align, MVT::i32);
-          SDOperand  SizeNode = DAG.getConstant(Size, MVT::i32);
-          SDOperand AlwaysInline = DAG.getConstant(1, MVT::i1);
-
-          MemOpChains2.push_back(DAG.getMemcpy(Chain, FIN, PtrOff, SizeNode, 
-                                               AlignNode,AlwaysInline));
+            // Copy relative to framepointer.
+            MemOpChains2.
+              push_back(GetMemCpyWithFlags(DAG, Flags, Source, FIN, Chain));
         } else {
-          SDOperand LoadedArg = DAG.getLoad(VA.getValVT(), Chain, PtrOff,
-                                            NULL, 0);
-          // Store relative to framepointer.
-          MemOpChains2.push_back(DAG.getStore(Chain, LoadedArg, FIN, NULL, 0));
-        }
+            // Store relative to framepointer.
+            MemOpChains2.push_back(DAG.getStore(Chain, Source, FIN, NULL, 0));
+        }            
       }
     }
 
