@@ -59,17 +59,20 @@ class Instruction;
 template<class N> class LoopInfoBase;
 
 //===----------------------------------------------------------------------===//
-/// LoopBase class - Instances of this class are used to represent loops that are
-/// detected in the flow graph
+/// LoopBase class - Instances of this class are used to represent loops that
+/// are detected in the flow graph
 ///
 template<class BlockT>
 class LoopBase {
   LoopBase<BlockT> *ParentLoop;
-  std::vector<LoopBase<BlockT>*> SubLoops; // Loops contained entirely within this one
-  std::vector<BlockT*> Blocks;   // First entry is the header node
+  // SubLoops - Loops contained entirely within this one.
+  std::vector<LoopBase<BlockT>*> SubLoops;
+
+  // Blocks - The list of blocks in this loop.  First entry is the header node.
+  std::vector<BlockT*> Blocks;
 
   LoopBase(const LoopBase<BlockT> &);                  // DO NOT IMPLEMENT
-  const LoopBase<BlockT> &operator=(const LoopBase<BlockT> &); // DO NOT IMPLEMENT
+  const LoopBase<BlockT>&operator=(const LoopBase<BlockT> &);// DO NOT IMPLEMENT
 public:
   /// Loop ctor - This creates an empty loop.
   LoopBase() : ParentLoop(0) {}
@@ -288,8 +291,8 @@ public:
     if (SI != BlockTraits::child_end(Out))
       return 0;  // Multiple exits from the block, must not be a preheader.
 
-    // If there is exactly one preheader, return it.  If there was zero, then Out
-    // is still null.
+    // If there is exactly one preheader, return it.  If there was zero, then
+    // Out is still null.
     return Out;
   }
 
@@ -412,7 +415,7 @@ public:
 
     for (block_iterator BI = block_begin(), E = block_end(); BI != E; ++BI) {
       BlockT *BB = *BI;
-      for (typename BlockT::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
+      for (typename BlockT::iterator I = BB->begin(), E = BB->end(); I != E;++I)
         for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E;
              ++UI) {
           BlockT *UserBB = cast<Instruction>(*UI)->getParent();
@@ -421,8 +424,8 @@ public:
             UserBB = P->getIncomingBlock(OperandNo/2);
           }
 
-          // Check the current block, as a fast-path.  Most values are used in the
-          // same block they are defined in.
+          // Check the current block, as a fast-path.  Most values are used in
+          // the same block they are defined in.
           if (UserBB != BB && !LoopBBs.count(UserBB))
             return false;
         }
@@ -573,7 +576,7 @@ public:
          TopLevelLoops.begin(), E = TopLevelLoops.end(); I != E; ++I)
       delete *I;   // Delete all of the loops...
 
-    BBMap.clear();                             // Reset internal state of analysis
+    BBMap.clear();                           // Reset internal state of analysis
     TopLevelLoops.clear();
   }
   
@@ -711,19 +714,20 @@ public:
       if (!L->contains(X) &&         // As of yet unprocessed??
           DT.dominates(EntryBlock, X)) {   // X is reachable from entry block?
         // Check to see if this block already belongs to a loop.  If this occurs
-        // then we have a case where a loop that is supposed to be a child of the
-        // current loop was processed before the current loop.  When this occurs,
-        // this child loop gets added to a part of the current loop, making it a
-        // sibling to the current loop.  We have to reparent this loop.
+        // then we have a case where a loop that is supposed to be a child of
+        // the current loop was processed before the current loop.  When this
+        // occurs, this child loop gets added to a part of the current loop,
+        // making it a sibling to the current loop.  We have to reparent this
+        // loop.
         if (LoopBase<BlockT> *SubLoop =
             const_cast<LoopBase<BlockT>*>(getLoopFor(X)))
-          if (SubLoop->getHeader() == X && isNotAlreadyContainedIn(SubLoop, L)) {
+          if (SubLoop->getHeader() == X && isNotAlreadyContainedIn(SubLoop, L)){
             // Remove the subloop from it's current parent...
             assert(SubLoop->ParentLoop && SubLoop->ParentLoop != L);
             LoopBase<BlockT> *SLP = SubLoop->ParentLoop;  // SubLoopParent
             typename std::vector<LoopBase<BlockT>*>::iterator I =
               std::find(SLP->SubLoops.begin(), SLP->SubLoops.end(), SubLoop);
-            assert(I != SLP->SubLoops.end() && "SubLoop not a child of parent?");
+            assert(I != SLP->SubLoops.end() &&"SubLoop not a child of parent?");
             SLP->SubLoops.erase(I);   // Remove from parent...
 
             // Add the subloop to THIS loop...
@@ -762,8 +766,8 @@ public:
     }
 
     // Now that we have a list of all of the child loops of this loop, check to
-    // see if any of them should actually be nested inside of each other.  We can
-    // accidentally pull loops our of their parents, so we must make sure to
+    // see if any of them should actually be nested inside of each other.  We
+    // can accidentally pull loops our of their parents, so we must make sure to
     // organize the loop nests correctly now.
     {
       std::map<BlockT*, LoopBase<BlockT>*> ContainingLoops;
@@ -778,9 +782,9 @@ public:
           MoveSiblingLoopInto(Child, ContainingLoop);
           --i;  // The loop got removed from the SubLoops list.
         } else {
-          // This is currently considered to be a top-level loop.  Check to see if
-          // any of the contained blocks are loop headers for subloops we have
-          // already processed.
+          // This is currently considered to be a top-level loop.  Check to see
+          // if any of the contained blocks are loop headers for subloops we
+          // have already processed.
           for (unsigned b = 0, e = Child->Blocks.size(); b != e; ++b) {
             LoopBase<BlockT> *&BlockLoop = ContainingLoops[Child->Blocks[b]];
             if (BlockLoop == 0) {   // Child block not processed yet...
@@ -805,8 +809,8 @@ public:
     return L;
   }
   
-  /// MoveSiblingLoopInto - This method moves the NewChild loop to live inside of
-  /// the NewParent Loop, instead of being a sibling of it.
+  /// MoveSiblingLoopInto - This method moves the NewChild loop to live inside
+  /// of the NewParent Loop, instead of being a sibling of it.
   void MoveSiblingLoopInto(LoopBase<BlockT> *NewChild,
                            LoopBase<BlockT> *NewParent) {
     LoopBase<BlockT> *OldParent = NewChild->getParentLoop();
@@ -815,7 +819,8 @@ public:
 
     // Remove NewChild from being a child of OldParent
     typename std::vector<LoopBase<BlockT>*>::iterator I =
-      std::find(OldParent->SubLoops.begin(), OldParent->SubLoops.end(), NewChild);
+      std::find(OldParent->SubLoops.begin(), OldParent->SubLoops.end(),
+                NewChild);
     assert(I != OldParent->SubLoops.end() && "Parent fields incorrect??");
     OldParent->SubLoops.erase(I);   // Remove from parent's subloops list
     NewChild->ParentLoop = 0;
@@ -823,12 +828,13 @@ public:
     InsertLoopInto(NewChild, NewParent);
   }
   
-  /// InsertLoopInto - This inserts loop L into the specified parent loop.  If the
-  /// parent loop contains a loop which should contain L, the loop gets inserted
-  /// into L instead.
+  /// InsertLoopInto - This inserts loop L into the specified parent loop.  If
+  /// the parent loop contains a loop which should contain L, the loop gets
+  /// inserted into L instead.
   void InsertLoopInto(LoopBase<BlockT> *L, LoopBase<BlockT> *Parent) {
     BlockT *LHeader = L->getHeader();
-    assert(Parent->contains(LHeader) && "This loop should not be inserted here!");
+    assert(Parent->contains(LHeader) &&
+           "This loop should not be inserted here!");
 
     // Check to see if it belongs in a child loop...
     for (unsigned i = 0, e = Parent->SubLoops.size(); i != e; ++i)
