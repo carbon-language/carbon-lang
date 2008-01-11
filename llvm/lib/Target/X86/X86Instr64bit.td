@@ -161,17 +161,6 @@ let isTwoAddress = 1 in
 def BSWAP64r : RI<0xC8, AddRegFrm, (outs GR64:$dst), (ins GR64:$src),
                   "bswap{q}\t$dst", 
                   [(set GR64:$dst, (bswap GR64:$src))]>, TB;
-// Exchange
-let neverHasSideEffects = 1 in {
-def XCHG64rr : RI<0x87, MRMDestReg, (outs), (ins GR64:$src1, GR64:$src2),
-                  "xchg{q}\t{$src2|$src1}, {$src1|$src2}", []>;
-let mayLoad = 1, mayStore = 1 in {
-def XCHG64mr : RI<0x87, MRMDestMem, (outs), (ins i64mem:$src1, GR64:$src2),
-                  "xchg{q}\t{$src2|$src1}, {$src1|$src2}", []>;
-def XCHG64rm : RI<0x87, MRMSrcMem, (outs), (ins GR64:$src1, i64mem:$src2),
-                  "xchg{q}\t{$src2|$src1}, {$src1|$src2}", []>;
-}
-}
 
 // Bit scan instructions.
 let Defs = [EFLAGS] in {
@@ -526,9 +515,8 @@ let isConvertibleToThreeAddress = 1 in   // Can transform into LEA.
 def SHL64ri  : RIi8<0xC1, MRM4r, (outs GR64:$dst), (ins GR64:$src1, i8imm:$src2),
                     "shl{q}\t{$src2, $dst|$dst, $src2}",
                     [(set GR64:$dst, (shl GR64:$src1, (i8 imm:$src2)))]>;
-let neverHasSideEffects = 1 in
-def SHL64r1  : RI<0xD1, MRM4r, (outs GR64:$dst), (ins GR64:$src1),
-                 "shl{q}\t$dst", []>;
+// NOTE: We don't use shifts of a register by one, because 'add reg,reg' is
+// cheaper.
 } // isTwoAddress
 
 let Uses = [CL] in

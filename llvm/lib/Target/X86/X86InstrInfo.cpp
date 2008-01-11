@@ -145,16 +145,12 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::SBB64ri32,   X86::SBB64mi32 },
     { X86::SBB64ri8,    X86::SBB64mi8 },
     { X86::SBB64rr,     X86::SBB64mr },
-    { X86::SHL16r1,     X86::SHL16m1 },
     { X86::SHL16rCL,    X86::SHL16mCL },
     { X86::SHL16ri,     X86::SHL16mi },
-    { X86::SHL32r1,     X86::SHL32m1 },
     { X86::SHL32rCL,    X86::SHL32mCL },
     { X86::SHL32ri,     X86::SHL32mi },
-    { X86::SHL64r1,     X86::SHL64m1 },
     { X86::SHL64rCL,    X86::SHL64mCL },
     { X86::SHL64ri,     X86::SHL64mi },
-    { X86::SHL8r1,      X86::SHL8m1 },
     { X86::SHL8rCL,     X86::SHL8mCL },
     { X86::SHL8ri,      X86::SHL8mi },
     { X86::SHLD16rrCL,  X86::SHLD16mrCL },
@@ -286,11 +282,7 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::TEST16ri,    X86::TEST16mi, 1 },
     { X86::TEST32ri,    X86::TEST32mi, 1 },
     { X86::TEST64ri32,  X86::TEST64mi32, 1 },
-    { X86::TEST8ri,     X86::TEST8mi, 1 },
-    { X86::XCHG16rr,    X86::XCHG16mr, 0 },
-    { X86::XCHG32rr,    X86::XCHG32mr, 0 },
-    { X86::XCHG64rr,    X86::XCHG64mr, 0 },
-    { X86::XCHG8rr,     X86::XCHG8mr, 0 }
+    { X86::TEST8ri,     X86::TEST8mi, 1 }
   };
 
   for (unsigned i = 0, e = array_lengthof(OpTbl0); i != e; ++i) {
@@ -417,11 +409,7 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::TEST8rr,         X86::TEST8rm },
     // FIXME: TEST*rr EAX,EAX ---> CMP [mem], 0
     { X86::UCOMISDrr,       X86::UCOMISDrm },
-    { X86::UCOMISSrr,       X86::UCOMISSrm },
-    { X86::XCHG16rr,        X86::XCHG16rm },
-    { X86::XCHG32rr,        X86::XCHG32rm },
-    { X86::XCHG64rr,        X86::XCHG64rm },
-    { X86::XCHG8rr,         X86::XCHG8rm }
+    { X86::UCOMISSrr,       X86::UCOMISSrm }
   };
 
   for (unsigned i = 0, e = array_lengthof(OpTbl1); i != e; ++i) {
