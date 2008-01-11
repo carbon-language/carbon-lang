@@ -1441,7 +1441,7 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
 
     if (!MemOpChains2.empty())
       Chain = DAG.getNode(ISD::TokenFactor, MVT::Other,
-                          &MemOpChains2[0], MemOpChains.size());
+                          &MemOpChains2[0], MemOpChains2.size());
 
     // Store the return address to the appropriate stack slot.
     if (FPDiff)
