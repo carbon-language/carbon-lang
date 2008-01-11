@@ -87,6 +87,7 @@ namespace {
     std::map<const Type *, std::string> TypeNames;
     std::map<const ConstantFP *, unsigned> FPConstantMap;
     std::set<Function*> intrinsicPrototypesAlreadyGenerated;
+    std::set<const Value*> ByValParams;
 
   public:
     static char ID;
@@ -113,14 +114,16 @@ namespace {
       printFloatingPointConstants(F);
 
       printFunction(F);
-      FPConstantMap.clear();
       return false;
     }
 
     virtual bool doFinalization(Module &M) {
       // Free memory...
       delete Mang;
+      FPConstantMap.clear();
       TypeNames.clear();
+      intrinsicPrototypesAlreadyGenerated.clear();
+      ByValParams.clear();
       return false;
     }
 
@@ -370,6 +373,10 @@ void CWriter::printStructReturnPointerFunctionType(std::ostream &Out,
     if (PrintedType)
       FunctionInnards << ", ";
     const Type *ArgTy = *I;
+    if (PAL && PAL->paramHasAttr(Idx, ParamAttr::ByVal)) {
+      assert(isa<PointerType>(ArgTy));
+      ArgTy = cast<PointerType>(ArgTy)->getElementType();
+    }
     printType(FunctionInnards, ArgTy,
         /*isSigned=*/PAL && PAL->paramHasAttr(Idx, ParamAttr::SExt), "");
     PrintedType = true;
@@ -1885,6 +1892,12 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
         else
           ArgName = "";
         const Type *ArgTy = I->getType();
+        if (PAL && PAL->paramHasAttr(Idx, ParamAttr::ByVal)) {
+          assert(isa<PointerType>(ArgTy));
+          ArgTy = cast<PointerType>(ArgTy)->getElementType();
+          const Value *Arg = &(*I);
+          ByValParams.insert(Arg);
+        }
         printType(FunctionInnards, ArgTy,
             /*isSigned=*/PAL && PAL->paramHasAttr(Idx, ParamAttr::SExt),
             ArgName);
@@ -2384,6 +2397,13 @@ void CWriter::visitCastInst(CastInst &I) {
       // Make sure we really get a sext from bool by subtracing the bool from 0
       Out << "0-";
     }
+    // If it's a byval parameter being casted, then takes its address.
+    bool isByVal = ByValParams.count(I.getOperand(0));
+    if (isByVal) {
+      assert(I.getOpcode() == Instruction::BitCast &&
+             "ByVal aggregate parameter must ptr type");
+      Out << '&';
+    }
     writeOperand(I.getOperand(0));
     if (DstTy == Type::Int1Ty && 
         (I.getOpcode() == Instruction::Trunc ||
@@ -2675,7 +2695,12 @@ void CWriter::visitCallInst(CallInst &I) {
             /*isSigned=*/PAL && PAL->paramHasAttr(Idx, ParamAttr::SExt));
       Out << ')';
     }
-    writeOperand(*AI);
+    // If call is expecting argument to be passed by value, then do not
+    // take its address.
+    if (PAL && PAL->paramHasAttr(Idx, ParamAttr::ByVal))
+      writeOperandInternal(*AI);
+    else
+      writeOperand(*AI);
     PrintedArg = true;
   }
   Out << ')';
@@ -2869,7 +2894,9 @@ void CWriter::printIndexingExpression(Value *Ptr, gep_type_iterator I,
 
     // Print out the -> operator if possible...
     if (TmpI != E && isa<StructType>(*TmpI)) {
-      Out << (HasImplicitAddress ? "." : "->");
+      // Check if it's actually an aggregate parameter passed by value.
+      bool isByVal = ByValParams.count(Ptr);
+      Out << ((HasImplicitAddress || isByVal) ? "." : "->");
       Out << "field" << cast<ConstantInt>(TmpI.getOperand())->getZExtValue();
       I = ++TmpI;
     }
