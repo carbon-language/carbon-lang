@@ -125,9 +125,8 @@ bool ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
 
     // Ensure that this call site is CALLING the function, not passing it as
     // an argument.
-    for (CallSite::arg_iterator AI = CS.arg_begin(), E = CS.arg_end();
-         AI != E; ++AI)
-      if (*AI == F) return false;   // Passing the function address in!
+    if (UI.getOperandNo() != 0) 
+      return false;
   }
 
   // Check to see which arguments are promotable.  If an argument is not
