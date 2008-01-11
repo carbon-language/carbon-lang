@@ -57,6 +57,9 @@ class LoopInfo;
 class PHINode;
 class Instruction;
 template<class N> class LoopInfoBase;
+template<class N> class LoopBase;
+
+typedef LoopBase<BasicBlock> Loop;
 
 //===----------------------------------------------------------------------===//
 /// LoopBase class - Instances of this class are used to represent loops that
@@ -551,8 +554,6 @@ private:
     Blocks.push_back(BB);
   }
 };
-
-typedef LoopBase<BasicBlock> Loop;
 
 
 //===----------------------------------------------------------------------===//
