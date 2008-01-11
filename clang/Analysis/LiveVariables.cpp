@@ -172,7 +172,7 @@ typedef DataflowSolver<LiveVariables,TransferFuncs,Merge> Solver;
 // External interface to run Liveness analysis.
 //===----------------------------------------------------------------------===//      
 
-void LiveVariables::runOnCFG(const CFG& cfg) {
+void LiveVariables::runOnCFG(CFG& cfg) {
   Solver S(*this);
   S.runOnCFG(cfg);
 }

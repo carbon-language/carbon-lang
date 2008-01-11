@@ -92,7 +92,7 @@ public:
   ///  a given CFG.  This is intended to be called by the dataflow solver.
   void InitializeValues(const CFG& cfg);
   
-  void runOnCFG(const CFG& cfg);
+  void runOnCFG(CFG& cfg);
   void runOnAllBlocks(const CFG& cfg, ObserverTy& Obs);
 };
 

@@ -48,7 +48,7 @@ public:
   typedef typename ValueTypes::ValTy               ValTy;
   typedef typename ValueTypes::AnalysisDataTy      AnalysisDataTy;  
   typedef _AnalysisDirTag                          AnalysisDirTag;
-  typedef llvm::DenseMap<ProgramEdge, ValTy>       EdgeDataMapTy;
+  typedef llvm::DenseMap<ProgramPoint, ValTy>      EdgeDataMapTy;
   typedef llvm::DenseMap<const CFGBlock*, ValTy>   BlockDataMapTy;
 
   //===--------------------------------------------------------------------===//
@@ -80,13 +80,13 @@ public:
 
   /// getEdgeData - Retrieves the dataflow values associated with a
   ///  CFG edge.
-  ValTy& getEdgeData(const BlkBlkEdge& E) {
+  ValTy& getEdgeData(const BlockEdge& E) {
     typename EdgeDataMapTy::iterator I = EdgeDataMap.find(E);
     assert (I != EdgeDataMap.end() && "No data associated with Edge.");
     return I->second;
   }
   
-  const ValTy& getEdgeData(const BlkBlkEdge& E) const {
+  const ValTy& getEdgeData(const BlockEdge& E) const {
     return reinterpret_cast<DataflowValues*>(this)->getEdgeData(E);
   }  
 

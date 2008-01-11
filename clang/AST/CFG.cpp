@@ -21,9 +21,11 @@
 #include "llvm/Support/GraphWriter.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/Compiler.h"
+#include <set>
 #include <iomanip>
 #include <algorithm>
 #include <sstream>
+
 
 using namespace clang;
 
@@ -1030,8 +1032,21 @@ unsigned CFG::getNumBlkExprs() {
   }
 }
 
+typedef std::set<std::pair<CFGBlock*,CFGBlock*> > BlkEdgeSetTy;
+
+const std::pair<CFGBlock*,CFGBlock*>*
+CFG::getBlockEdgeImpl(const CFGBlock* B1, const CFGBlock* B2) {
+  
+  BlkEdgeSetTy*& p = reinterpret_cast<BlkEdgeSetTy*&>(BlkEdgeSet);
+  if (!p) p = new BlkEdgeSetTy();
+  
+  return &*(p->insert(std::make_pair(const_cast<CFGBlock*>(B1),
+                                     const_cast<CFGBlock*>(B2))).first);
+}
+
 CFG::~CFG() {
   delete reinterpret_cast<const BlkExprMapTy*>(BlkExprMap);
+  delete reinterpret_cast<BlkEdgeSetTy*>(BlkEdgeSet);
 }
   
 //===----------------------------------------------------------------------===//

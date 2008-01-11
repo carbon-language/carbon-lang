@@ -22,11 +22,11 @@
 #include <cassert>
 
 namespace clang {
-
   class Stmt;
   class Expr;
   class CFG;
   class PrinterHelper;
+  class BlockEdge;
   
 /// CFGBlock - Represents a single basic block in a source-level CFG.
 ///  It consists of:
@@ -273,7 +273,7 @@ public:
   //===--------------------------------------------------------------------===//
 
   CFG() : Entry(NULL), Exit(NULL), IndirectGotoBlock(NULL), NumBlockIDs(0), 
-          BlkExprMap(NULL) {};
+          BlkExprMap(NULL), BlkEdgeSet(NULL) {};
   
   ~CFG();
     
@@ -287,6 +287,22 @@ private:
   // opaque pointer to prevent inclusion of DenseMap.h.  Map from expressions
   // to integers to record block-level expressions.
   void*     BlkExprMap;
+  
+  // opaque pointer to prevent inclusion of <set>.  This records a set of
+  // CFGBlock edges for using with ProgramPoint.  These edges represent
+  // the edges that cannot be succinctly represented, and in practice this
+  // set should be small.
+  void*     BlkEdgeSet;
+  
+  friend class BlockEdge;
+  
+  /// getBlockEdgeImpl - Utility method used by the class BlockEdge.  The CFG
+  ///  stores a set of interned std::pair<CFGBlock*,CFGBlock*> that can
+  ///  be used by BlockEdge to refer to edges that cannot be represented
+  ///  by a single pointer.
+  const std::pair<CFGBlock*,CFGBlock*>* getBlockEdgeImpl(const CFGBlock* B1,
+                                                         const CFGBlock* B2);
+  
 };
 } // end namespace clang
 

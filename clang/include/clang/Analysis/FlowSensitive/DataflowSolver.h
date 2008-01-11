@@ -69,12 +69,12 @@ template <> struct ItrTraits<forward_analysis_tag> {
   static StmtItr StmtBegin(const CFGBlock* B) { return B->begin(); }
   static StmtItr StmtEnd(const CFGBlock* B) { return B->end(); }
   
-  static BlkBlkEdge PrevEdge(const CFGBlock* B, const CFGBlock* PrevBlk) {
-    return BlkBlkEdge(PrevBlk,B);
+  static BlockEdge PrevEdge(CFG& cfg, const CFGBlock* B, const CFGBlock* Prev) {
+    return BlockEdge(cfg,Prev,B);
   }
   
-  static BlkBlkEdge NextEdge(const CFGBlock* B, const CFGBlock* NextBlk) {
-    return BlkBlkEdge(B,NextBlk);
+  static BlockEdge NextEdge(CFG& cfg, const CFGBlock* B, const CFGBlock* Next) {
+    return BlockEdge(cfg,B,Next);
   }
 };
 
@@ -92,12 +92,12 @@ template <> struct ItrTraits<backward_analysis_tag> {
   static StmtItr StmtBegin(const CFGBlock* B) { return B->rbegin(); }
   static StmtItr StmtEnd(const CFGBlock* B) { return B->rend(); }    
   
-  static BlkBlkEdge PrevEdge(const CFGBlock* B, const CFGBlock* PrevBlk) {
-    return BlkBlkEdge(B,PrevBlk);
+  static BlockEdge PrevEdge(CFG& cfg, const CFGBlock* B, const CFGBlock* Prev) {
+    return BlockEdge(cfg,B,Prev);
   }
   
-  static BlkBlkEdge NextEdge(const CFGBlock* B, const CFGBlock* NextBlk) {
-    return BlkBlkEdge(NextBlk,B);
+  static BlockEdge NextEdge(CFG& cfg, const CFGBlock* B, const CFGBlock* Next) {
+    return BlockEdge(cfg,Next,B);
   }
 };
 } // end namespace dataflow
@@ -140,7 +140,7 @@ public:
   ~DataflowSolver() {}  
   
   /// runOnCFG - Computes dataflow values for all blocks in a CFG.
-  void runOnCFG(const CFG& cfg) {
+  void runOnCFG(CFG& cfg) {
     // Set initial dataflow values and boundary conditions.
     D.InitializeValues(cfg);     
     // Solve the dataflow equations.  This will populate D.EdgeDataMap
@@ -180,14 +180,14 @@ private:
  
   /// SolveDataflowEquations - Perform the actual worklist algorithm
   ///  to compute dataflow values.
-  void SolveDataflowEquations(const CFG& cfg) {
+  void SolveDataflowEquations(CFG& cfg) {
     EnqueueFirstBlock(cfg,AnalysisDirTag());
     
     while (!WorkList.isEmpty()) {
       const CFGBlock* B = WorkList.dequeue();
-      ProcessMerge(B);
+      ProcessMerge(cfg,B);
       ProcessBlock(B);
-      UpdateEdges(B,TF.getVal());
+      UpdateEdges(cfg,B,TF.getVal());
     }
   }
   
@@ -199,7 +199,7 @@ private:
     WorkList.enqueue(&cfg.getExit());
   }  
 
-  void ProcessMerge(const CFGBlock* B) {
+  void ProcessMerge(CFG& cfg, const CFGBlock* B) {
     // Merge dataflow values from all predecessors of this block.
     ValTy& V = TF.getVal();
     V.resetValues(D.getAnalysisData());
@@ -210,7 +210,8 @@ private:
     
     for (PrevBItr I=ItrTraits::PrevBegin(B),E=ItrTraits::PrevEnd(B); I!=E; ++I){
 
-      typename EdgeDataMapTy::iterator EI = M.find(ItrTraits::PrevEdge(B,*I));
+      typename EdgeDataMapTy::iterator EI =
+        M.find(ItrTraits::PrevEdge(cfg,B,*I));
 
       if (EI != M.end()) {
         if (firstMerge) {
@@ -236,13 +237,13 @@ private:
   ///   block, update the dataflow value associated with the block's
   ///   outgoing/incoming edges (depending on whether we do a
   //    forward/backward analysis respectively)
-  void UpdateEdges(const CFGBlock* B, ValTy& V) {
+  void UpdateEdges(CFG& cfg, const CFGBlock* B, ValTy& V) {
     for (NextBItr I=ItrTraits::NextBegin(B), E=ItrTraits::NextEnd(B); I!=E; ++I)
-      UpdateEdgeValue(ItrTraits::NextEdge(B,*I),V,*I);
+      UpdateEdgeValue(ItrTraits::NextEdge(cfg,B,*I),V,*I);
   }
     
   /// UpdateEdgeValue - Update the value associated with a given edge.
-  void UpdateEdgeValue(BlkBlkEdge E, ValTy& V, const CFGBlock* TargetBlock) {
+  void UpdateEdgeValue(BlockEdge E, ValTy& V, const CFGBlock* TargetBlock) {
   
     EdgeDataMapTy& M = D.getEdgeDataMap();
     typename EdgeDataMapTy::iterator I = M.find(E);
@@ -261,8 +262,7 @@ private:
   DFValuesTy& D;
   DataflowWorkListTy WorkList;
   TransferFuncsTy TF;
-};  
-  
+};
 
 } // end namespace clang
 #endif
