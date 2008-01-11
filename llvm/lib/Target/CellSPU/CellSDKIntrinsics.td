@@ -108,18 +108,18 @@ def CellSDKmpyhhau:
 
 def CellSDKand:
         RRForm<0b1000011000, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-          "add\t $rT, $rA, $rB", IntegerOp,
+          "and\t $rT, $rA, $rB", IntegerOp,
           [(set (v4i32 VECREG:$rT),
                 (int_spu_si_and (v4i32 VECREG:$rA), (v4i32 VECREG:$rB)))]>;
 
 def CellSDKandc:
         RRForm<0b10000011010, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-          "addc\t $rT, $rA, $rB", IntegerOp,
+          "andc\t $rT, $rA, $rB", IntegerOp,
           [(set (v4i32 VECREG:$rT),
                 (int_spu_si_andc (v4i32 VECREG:$rA), (v4i32 VECREG:$rB)))]>;
 
 def CellSDKandbi:
-     RI10Form<0b01101000, (outs VECREG:$rT), (ins VECREG:$rA, u10imm:$val),
+     RI10Form<0b01101000, (outs VECREG:$rT), (ins VECREG:$rA, u10imm_i8:$val),
        "andbi\t $rT, $rA, $val", BranchResolv,
        [(set (v16i8 VECREG:$rT),
              (int_spu_si_andbi (v16i8 VECREG:$rA), immU8:$val))]>;
@@ -149,7 +149,7 @@ def CellSDKorc:
                 (int_spu_si_orc (v4i32 VECREG:$rA), (v4i32 VECREG:$rB)))]>;
 
 def CellSDKorbi:
-     RI10Form<0b01100000, (outs VECREG:$rT), (ins VECREG:$rA, u10imm:$val),
+     RI10Form<0b01100000, (outs VECREG:$rT), (ins VECREG:$rA, u10imm_i8:$val),
        "orbi\t $rT, $rA, $val", BranchResolv,
        [(set (v16i8 VECREG:$rT),
              (int_spu_si_orbi (v16i8 VECREG:$rA), immU8:$val))]>;
@@ -173,7 +173,7 @@ def CellSDKxor:
                 (int_spu_si_xor (v4i32 VECREG:$rA), (v4i32 VECREG:$rB)))]>;
 
 def CellSDKxorbi:
-     RI10Form<0b01100000, (outs VECREG:$rT), (ins VECREG:$rA, u10imm:$val),
+     RI10Form<0b01100000, (outs VECREG:$rT), (ins VECREG:$rA, u10imm_i8:$val),
        "xorbi\t $rT, $rA, $val", BranchResolv,
        [(set (v16i8 VECREG:$rT), (int_spu_si_xorbi (v16i8 VECREG:$rA), immU8:$val))]>;
 
@@ -248,7 +248,7 @@ def CellSDKceqb:
               (int_spu_si_ceqb (v16i8 VECREG:$rA), (v16i8 VECREG:$rB)))]>;
 
 def CellSDKceqbi:
-  RI10Form<0b01111110, (outs VECREG:$rT), (ins VECREG:$rA, u10imm:$val),
+  RI10Form<0b01111110, (outs VECREG:$rT), (ins VECREG:$rA, u10imm_i8:$val),
         "ceqbi\t $rT, $rA, $val", BranchResolv,
     [(set (v16i8 VECREG:$rT), (int_spu_si_ceqbi (v16i8 VECREG:$rA), immU8:$val))]>;
 
@@ -294,7 +294,7 @@ def CellSDKcgtb:
               (int_spu_si_cgtb (v16i8 VECREG:$rA), (v16i8 VECREG:$rB)))]>;
 
 def CellSDKcgtbi:
-  RI10Form<0b01110010, (outs VECREG:$rT), (ins VECREG:$rA, u10imm:$val),
+  RI10Form<0b01110010, (outs VECREG:$rT), (ins VECREG:$rA, u10imm_i8:$val),
     "cgtbi\t $rT, $rA, $val", BranchResolv,
         [(set (v16i8 VECREG:$rT), (int_spu_si_cgtbi (v16i8 VECREG:$rA), immU8:$val))]>;
 
@@ -329,7 +329,7 @@ def CellSDKclgtb:
           (int_spu_si_clgtb (v16i8 VECREG:$rA), (v16i8 VECREG:$rB)))]>;
 
 def CellSDKclgtbi:
-  RI10Form<0b01111010, (outs VECREG:$rT), (ins VECREG:$rA, u10imm:$val),
+  RI10Form<0b01111010, (outs VECREG:$rT), (ins VECREG:$rA, u10imm_i8:$val),
     "clgtbi\t $rT, $rA, $val", BranchResolv,
     [(set (v16i8 VECREG:$rT),
           (int_spu_si_clgtbi (v16i8 VECREG:$rA), immU8:$val))]>;

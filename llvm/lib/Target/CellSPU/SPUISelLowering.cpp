@@ -82,7 +82,7 @@ namespace {
   /*!
     \arg Op Operand to test
     \return true if the operand is a memory target (i.e., global
-    address, external symbol, constant pool) or an existing D-Form
+    address, external symbol, constant pool) or an A-form
     address.
    */
   bool isMemoryOperand(const SDOperand &Op)
@@ -90,17 +90,17 @@ namespace {
     const unsigned Opc = Op.getOpcode();
     return (Opc == ISD::GlobalAddress
             || Opc == ISD::GlobalTLSAddress
-            || Opc ==  ISD::FrameIndex
+            /* || Opc ==  ISD::FrameIndex */
             || Opc == ISD::JumpTable
             || Opc == ISD::ConstantPool
             || Opc == ISD::ExternalSymbol
             || Opc == ISD::TargetGlobalAddress
             || Opc == ISD::TargetGlobalTLSAddress
-            || Opc == ISD::TargetFrameIndex
+            /* || Opc == ISD::TargetFrameIndex */
             || Opc == ISD::TargetJumpTable
             || Opc == ISD::TargetConstantPool
             || Opc == ISD::TargetExternalSymbol
-	    || Opc == SPUISD::DFormAddr);
+            || Opc == SPUISD::AFormAddr);
   }
 }
 
@@ -356,7 +356,7 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   setOperationAction(ISD::OR,  MVT::v16i8, Custom);
   setOperationAction(ISD::XOR, MVT::v16i8, Custom);
   setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v4f32, Custom);
-  
+
   setSetCCResultType(MVT::i32);
   setShiftAmountType(MVT::i32);
   setSetCCResultContents(ZeroOrOneSetCCResult);
@@ -377,6 +377,7 @@ SPUTargetLowering::getTargetNodeName(unsigned Opcode) const
     node_names[(unsigned) SPUISD::Hi] = "SPUISD::Hi";
     node_names[(unsigned) SPUISD::Lo] = "SPUISD::Lo";
     node_names[(unsigned) SPUISD::PCRelAddr] = "SPUISD::PCRelAddr";
+    node_names[(unsigned) SPUISD::AFormAddr] = "SPUISD::AFormAddr";
     node_names[(unsigned) SPUISD::DFormAddr] = "SPUISD::DFormAddr";
     node_names[(unsigned) SPUISD::XFormAddr] = "SPUISD::XFormAddr";
     node_names[(unsigned) SPUISD::LDRESULT] = "SPUISD::LDRESULT";
@@ -430,6 +431,105 @@ SPUTargetLowering::getTargetNodeName(unsigned Opcode) const
 //  LowerOperation implementation
 //===----------------------------------------------------------------------===//
 
+/// Aligned load common code for CellSPU
+/*!
+  \param[in] Op The SelectionDAG load or store operand
+  \param[in] DAG The selection DAG
+  \param[in] ST CellSPU subtarget information structure
+  \param[in,out] alignment Caller initializes this to the load or store node's
+  value from getAlignment(), may be updated while generating the aligned load
+  \param[in,out] alignOffs Aligned offset; set by AlignedLoad to the aligned
+  offset (divisible by 16, modulo 16 == 0)
+  \param[in,out] prefSlotOffs Preferred slot offset; set by AlignedLoad to the
+  offset of the preferred slot (modulo 16 != 0)
+  \param[in,out] VT Caller initializes this value type to the the load or store
+  node's loaded or stored value type; may be updated if an i1-extended load or
+  store.
+  \param[out] was16aligned true if the base pointer had 16-byte alignment,
+  otherwise false. Can help to determine if the chunk needs to be rotated.
+
+ Both load and store lowering load a block of data aligned on a 16-byte
+ boundary. This is the common aligned load code shared between both.
+ */
+static SDOperand
+AlignedLoad(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST,
+            LSBaseSDNode *LSN,
+            unsigned &alignment, int &alignOffs, int &prefSlotOffs,
+            unsigned &VT, bool &was16aligned)
+{
+  MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
+  const valtype_map_s *vtm = getValueTypeMapEntry(VT);
+  SDOperand basePtr = LSN->getBasePtr();
+  SDOperand chain = LSN->getChain();
+
+  if (basePtr.getOpcode() == ISD::ADD) {
+    SDOperand Op1 = basePtr.Val->getOperand(1);
+
+    if (Op1.getOpcode() == ISD::Constant || Op1.getOpcode() == ISD::TargetConstant) {
+      const ConstantSDNode *CN = cast<ConstantSDNode>(basePtr.Val->getOperand(1));
+
+      alignOffs = (int) CN->getValue();
+      prefSlotOffs = (int) (alignOffs & 0xf);
+
+      // Adjust the rotation amount to ensure that the final result ends up in
+      // the preferred slot:
+      prefSlotOffs -= vtm->prefslot_byte;
+      basePtr = basePtr.getOperand(0);
+
+      // Modify alignment, since the ADD is likely from getElementPtr:
+      switch (basePtr.getOpcode()) {
+      case ISD::GlobalAddress:
+      case ISD::TargetGlobalAddress: {
+        GlobalAddressSDNode *GN = cast<GlobalAddressSDNode>(basePtr.Val);
+        const GlobalValue *GV = GN->getGlobal();
+        alignment = GV->getAlignment();
+        break;
+      }
+      }
+    } else {
+      alignOffs = 0;
+      prefSlotOffs = -vtm->prefslot_byte;
+    }
+  } else {
+    alignOffs = 0;
+    prefSlotOffs = -vtm->prefslot_byte;
+  }
+
+  if (alignment == 16) {
+    // Realign the base pointer as a D-Form address:
+    if (!isMemoryOperand(basePtr) || (alignOffs & ~0xf) != 0) {
+      if (isMemoryOperand(basePtr)) {
+        SDOperand Zero = DAG.getConstant(0, PtrVT);
+        unsigned Opc = (!ST->usingLargeMem()
+                        ? SPUISD::AFormAddr
+                        : SPUISD::XFormAddr);
+        basePtr = DAG.getNode(Opc, PtrVT, basePtr, Zero);
+      }
+      basePtr = DAG.getNode(SPUISD::DFormAddr, PtrVT,
+                          basePtr, DAG.getConstant((alignOffs & ~0xf), PtrVT));
+    }
+
+    // Emit the vector load:
+    was16aligned = true;
+    return DAG.getLoad(MVT::v16i8, chain, basePtr,
+                       LSN->getSrcValue(), LSN->getSrcValueOffset(),
+                       LSN->isVolatile(), 16);
+  }
+
+  // Unaligned load or we're using the "large memory" model, which means that
+  // we have to be very pessimistic:
+  if (isMemoryOperand(basePtr)) {
+    basePtr = DAG.getNode(SPUISD::XFormAddr, PtrVT, basePtr, DAG.getConstant(0, PtrVT));
+  }
+
+  // Add the offset
+  basePtr = DAG.getNode(ISD::ADD, PtrVT, basePtr, DAG.getConstant(alignOffs, PtrVT));
+  was16aligned = false;
+  return DAG.getLoad(MVT::v16i8, chain, basePtr,
+                     LSN->getSrcValue(), LSN->getSrcValueOffset(),
+                     LSN->isVolatile(), 16);
+}
+
 /// Custom lower loads for CellSPU
 /*!
  All CellSPU loads and stores are aligned to 16-byte boundaries, so for elements
@@ -438,21 +538,12 @@ SPUTargetLowering::getTargetNodeName(unsigned Opcode) const
 static SDOperand
 LowerLOAD(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   LoadSDNode *LN = cast<LoadSDNode>(Op);
-  SDOperand basep = LN->getBasePtr();
   SDOperand the_chain = LN->getChain();
-  MVT::ValueType BasepOpc = basep.Val->getOpcode();
   MVT::ValueType VT = LN->getLoadedVT();
   MVT::ValueType OpVT = Op.Val->getValueType(0);
-  MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   ISD::LoadExtType ExtType = LN->getExtensionType();
   unsigned alignment = LN->getAlignment();
-  const valtype_map_s *vtm = getValueTypeMapEntry(VT);
   SDOperand Ops[8];
-
-  if (BasepOpc == ISD::FrameIndex) {
-    // Loading from a frame index is always properly aligned. Always.
-    return SDOperand();
-  }
 
   // For an extending load of an i1 variable, just call it i8 (or whatever we
   // were passed) and make it zero-extended:
@@ -463,178 +554,76 @@ LowerLOAD(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
 
   switch (LN->getAddressingMode()) {
   case ISD::UNINDEXED: {
-    SDOperand result;
-    SDOperand rot_op, rotamt;
-    SDOperand ptrp;
-    int c_offset;
-    int c_rotamt;
+    int offset, rotamt;
+    bool was16aligned;
+    SDOperand result =
+      AlignedLoad(Op, DAG, ST, LN,alignment, offset, rotamt, VT, was16aligned);
 
-    // The vector type we really want to be when we load the 16-byte chunk
-    MVT::ValueType vecVT, opVecVT;
-    
-    vecVT = MVT::v16i8;
-    if (VT != MVT::i1)
-      vecVT = MVT::getVectorType(VT, (128 / MVT::getSizeInBits(VT)));
-    opVecVT = MVT::getVectorType(OpVT, (128 / MVT::getSizeInBits(OpVT)));
-
-    if (basep.getOpcode() == ISD::ADD) {
-      const ConstantSDNode *CN = cast<ConstantSDNode>(basep.Val->getOperand(1));
-
-      assert(CN != NULL
-             && "LowerLOAD: ISD::ADD operand 1 is not constant");
-
-      c_offset = (int) CN->getValue();
-      c_rotamt = (int) (c_offset & 0xf);
-
-      // Adjust the rotation amount to ensure that the final result ends up in
-      // the preferred slot:
-      c_rotamt -= vtm->prefslot_byte;
-      ptrp = basep.getOperand(0);
-    } else {
-      c_offset = 0;
-      c_rotamt = -vtm->prefslot_byte;
-      ptrp = basep;
-    }
-
-    if (alignment == 16) {
-      // 16-byte aligned load into preferred slot, no rotation
-      if (c_rotamt == 0) {
-	if (isMemoryOperand(ptrp))
-	  // Return unchanged
-	  return SDOperand();
-	else {
-	  // Return modified D-Form address for pointer:
-	  ptrp = DAG.getNode(SPUISD::DFormAddr, PtrVT,
-			     ptrp, DAG.getConstant((c_offset & ~0xf), PtrVT));
-	  if (VT == OpVT)
-	    return DAG.getLoad(VT, LN->getChain(), ptrp,
-			       LN->getSrcValue(), LN->getSrcValueOffset(),
-			       LN->isVolatile(), 16);
-	  else
-	    return DAG.getExtLoad(ExtType, VT, LN->getChain(), ptrp, LN->getSrcValue(),
-				  LN->getSrcValueOffset(), OpVT,
-				  LN->isVolatile(), 16);
-	}
-      } else {
-	// Need to rotate...
-	if (c_rotamt < 0)
-	  c_rotamt += 16;
-	// Realign the base pointer, with a D-Form address
-	if ((c_offset & ~0xf) != 0 || !isMemoryOperand(ptrp))
-	  basep = DAG.getNode(SPUISD::DFormAddr, PtrVT,
-			      ptrp, DAG.getConstant((c_offset & ~0xf), MVT::i32));
-	else
-	  basep = ptrp;
-
-	// Rotate the load:
-	rot_op = DAG.getLoad(MVT::v16i8, the_chain, basep,
-			     LN->getSrcValue(), LN->getSrcValueOffset(),
-			     LN->isVolatile(), 16);
-	the_chain = rot_op.getValue(1);
-	rotamt = DAG.getConstant(c_rotamt, MVT::i16);
-
-	SDVTList vecvts = DAG.getVTList(MVT::v16i8, MVT::Other);
-	Ops[0] = the_chain;
-	Ops[1] = rot_op;
-	Ops[2] = rotamt;
-
-	result = DAG.getNode(SPUISD::ROTBYTES_LEFT_CHAINED, vecvts, Ops, 3);
-	the_chain = result.getValue(1);
-
-	if (VT == OpVT || ExtType == ISD::EXTLOAD) {
-	  SDVTList scalarvts;
-	  Ops[0] = the_chain;
-	  Ops[1] = result;
-	  if (OpVT == VT) {
-	    scalarvts = DAG.getVTList(VT, MVT::Other);
-	  } else {
-	    scalarvts = DAG.getVTList(OpVT, MVT::Other);
-	  }
-
-	  result = DAG.getNode(ISD::BIT_CONVERT, (OpVT == VT ? vecVT : opVecVT),
-	                       result);
-	  Ops[0] = the_chain;
-	  Ops[1] = result;
-	  result = DAG.getNode(SPUISD::EXTRACT_ELT0_CHAINED, scalarvts, Ops, 2);
-	  the_chain = result.getValue(1);
-	} else {
-	  // Handle the sign and zero-extending loads for i1 and i8:
-	  unsigned NewOpC;
-
-	  if (ExtType == ISD::SEXTLOAD) {
-	    NewOpC = (OpVT == MVT::i1
-		      ? SPUISD::EXTRACT_I1_SEXT
-		      : SPUISD::EXTRACT_I8_SEXT);
-	  } else {
-      assert(ExtType == ISD::ZEXTLOAD);
-	    NewOpC = (OpVT == MVT::i1
-		      ? SPUISD::EXTRACT_I1_ZEXT
-		      : SPUISD::EXTRACT_I8_ZEXT);
-	  }
-
-	  result = DAG.getNode(NewOpC, OpVT, result);
-	}
-
-	SDVTList retvts = DAG.getVTList(OpVT, MVT::Other);
-	SDOperand retops[2] = { result, the_chain };
-
-	result = DAG.getNode(SPUISD::LDRESULT, retvts, retops, 2);
-	return result;
-	/*UNREACHED*/
-      }
-    } else {
-      // Misaligned 16-byte load:
-      if (basep.getOpcode() == ISD::LOAD) {
-	LN = cast<LoadSDNode>(basep);
-	if (LN->getAlignment() == 16) {
-	  // We can verify that we're really loading from a 16-byte aligned
-	  // chunk. Encapsulate basep as a D-Form address and return a new
-	  // load:
-	  basep = DAG.getNode(SPUISD::DFormAddr, PtrVT, basep,
-			      DAG.getConstant(0, PtrVT));
-	  if (OpVT == VT)
-	    return DAG.getLoad(VT, LN->getChain(), basep,
-			       LN->getSrcValue(), LN->getSrcValueOffset(),
-			       LN->isVolatile(), 16);
-	  else
-	    return DAG.getExtLoad(ExtType, VT, LN->getChain(), basep,
-				  LN->getSrcValue(), LN->getSrcValueOffset(),
-				  OpVT, LN->isVolatile(), 16);
-	}
-      }
-
-      // Catch all other cases where we can't guarantee that we have a
-      // 16-byte aligned entity, which means resorting to an X-form
-      // address scheme:
-
-      SDOperand ZeroOffs = DAG.getConstant(0, PtrVT);
-      SDOperand loOp = DAG.getNode(SPUISD::Lo, PtrVT, basep, ZeroOffs);
-      SDOperand hiOp = DAG.getNode(SPUISD::Hi, PtrVT, basep, ZeroOffs);
-
-      ptrp = DAG.getNode(ISD::ADD, PtrVT, loOp, hiOp);
-
-      SDOperand alignLoad =
-	DAG.getLoad(opVecVT, LN->getChain(), ptrp,
-		    LN->getSrcValue(), LN->getSrcValueOffset(),
-		    LN->isVolatile(), 16);
-
-      SDOperand insertEltOp =
-	DAG.getNode(SPUISD::INSERT_MASK, vecVT, ptrp);
-
-      result = DAG.getNode(SPUISD::SHUFB, opVecVT,
-			   alignLoad,
-			   alignLoad,
-			   DAG.getNode(ISD::BIT_CONVERT, opVecVT, insertEltOp));
-
-      result = DAG.getNode(SPUISD::EXTRACT_ELT0, OpVT, result);
-
-      SDVTList retvts = DAG.getVTList(OpVT, MVT::Other);
-      SDOperand retops[2] = { result, the_chain };
-
-      result = DAG.getNode(SPUISD::LDRESULT, retvts, retops, 2);
+    if (result.Val == 0)
       return result;
+
+    the_chain = result.getValue(1);
+    // Rotate the chunk if necessary
+    if (rotamt < 0)
+      rotamt += 16;
+    if (rotamt != 0) {
+      SDVTList vecvts = DAG.getVTList(MVT::v16i8, MVT::Other);
+
+      if (was16aligned) {
+        Ops[0] = the_chain;
+        Ops[1] = result;
+        Ops[2] = DAG.getConstant(rotamt, MVT::i16);
+      } else {
+        LoadSDNode *LN1 = cast<LoadSDNode>(result);
+        Ops[0] = the_chain;
+        Ops[1] = result;
+        Ops[2] = LN1->getBasePtr();
+      }
+
+      result = DAG.getNode(SPUISD::ROTBYTES_LEFT_CHAINED, vecvts, Ops, 3);
+      the_chain = result.getValue(1);
     }
-    break;
+
+    if (VT == OpVT || ExtType == ISD::EXTLOAD) {
+      SDVTList scalarvts;
+      MVT::ValueType vecVT = MVT::v16i8;
+    
+      // Convert the loaded v16i8 vector to the appropriate vector type
+      // specified by the operand:
+      if (OpVT == VT) {
+        if (VT != MVT::i1)
+          vecVT = MVT::getVectorType(VT, (128 / MVT::getSizeInBits(VT)));
+      } else
+        vecVT = MVT::getVectorType(OpVT, (128 / MVT::getSizeInBits(OpVT)));
+
+      Ops[0] = the_chain;
+      Ops[1] = DAG.getNode(ISD::BIT_CONVERT, vecVT, result);
+      scalarvts = DAG.getVTList((OpVT == VT ? VT : OpVT), MVT::Other);
+      result = DAG.getNode(SPUISD::EXTRACT_ELT0_CHAINED, scalarvts, Ops, 2);
+      the_chain = result.getValue(1);
+    } else {
+      // Handle the sign and zero-extending loads for i1 and i8:
+      unsigned NewOpC;
+
+      if (ExtType == ISD::SEXTLOAD) {
+        NewOpC = (OpVT == MVT::i1
+                  ? SPUISD::EXTRACT_I1_SEXT
+                  : SPUISD::EXTRACT_I8_SEXT);
+      } else {
+        assert(ExtType == ISD::ZEXTLOAD);
+        NewOpC = (OpVT == MVT::i1
+                  ? SPUISD::EXTRACT_I1_ZEXT
+                  : SPUISD::EXTRACT_I8_ZEXT);
+      }
+
+      result = DAG.getNode(NewOpC, OpVT, result);
+    }
+
+    SDVTList retvts = DAG.getVTList(OpVT, MVT::Other);
+    SDOperand retops[2] = { result, the_chain };
+
+    result = DAG.getNode(SPUISD::LDRESULT, retvts, retops, 2);
+    return result;
   }
   case ISD::PRE_INC:
   case ISD::PRE_DEC:
@@ -664,58 +653,31 @@ LowerSTORE(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   MVT::ValueType VT = Value.getValueType();
   MVT::ValueType StVT = (!SN->isTruncatingStore() ? VT : SN->getStoredVT());
   MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
-  SDOperand the_chain = SN->getChain();
-  //unsigned alignment = SN->getAlignment();
-  //const valtype_map_s *vtm = getValueTypeMapEntry(VT);
+  unsigned alignment = SN->getAlignment();
 
   switch (SN->getAddressingMode()) {
   case ISD::UNINDEXED: {
-    SDOperand basep = SN->getBasePtr();
-    SDOperand ptrOp;
-    int offset;
-
-    if (basep.getOpcode() == ISD::FrameIndex) {
-      // FrameIndex nodes are always properly aligned. Really.
-      return SDOperand();
-    }
-
-    if (basep.getOpcode() == ISD::ADD) {
-      const ConstantSDNode *CN = cast<ConstantSDNode>(basep.Val->getOperand(1));
-      assert(CN != NULL
-             && "LowerSTORE: ISD::ADD operand 1 is not constant");
-      offset = unsigned(CN->getValue());
-      ptrOp = basep.getOperand(0);
-      DEBUG(cerr << "LowerSTORE: StoreSDNode ISD:ADD offset = "
-	         << offset
-		 << "\n");
-    } else {
-      ptrOp = basep;
-      offset = 0;
-    }
+    int chunk_offset, slot_offset;
+    bool was16aligned;
 
     // The vector type we really want to load from the 16-byte chunk, except
     // in the case of MVT::i1, which has to be v16i8.
-    unsigned vecVT, stVecVT;
-
+    unsigned vecVT, stVecVT = MVT::v16i8;
+ 
     if (StVT != MVT::i1)
       stVecVT = MVT::getVectorType(StVT, (128 / MVT::getSizeInBits(StVT)));
-    else
-      stVecVT = MVT::v16i8;
     vecVT = MVT::getVectorType(VT, (128 / MVT::getSizeInBits(VT)));
 
-    // Realign the pointer as a D-Form address (ptrOp is the pointer, basep is
-    // the actual dform addr offs($reg).
-    basep = DAG.getNode(SPUISD::DFormAddr, PtrVT, ptrOp,
-                        DAG.getConstant((offset & ~0xf), PtrVT));
+    SDOperand alignLoadVec =
+      AlignedLoad(Op, DAG, ST, SN, alignment,
+                  chunk_offset, slot_offset, VT, was16aligned);
 
-    // Create the 16-byte aligned vector load
-    SDOperand alignLoad =
-      DAG.getLoad(vecVT, the_chain, basep,
-                  SN->getSrcValue(), SN->getSrcValueOffset(),
-                  SN->isVolatile(), 16);
-    the_chain = alignLoad.getValue(1);
+    if (alignLoadVec.Val == 0)
+      return alignLoadVec;
 
-    LoadSDNode *LN = cast<LoadSDNode>(alignLoad);
+    LoadSDNode *LN = cast<LoadSDNode>(alignLoadVec);
+    SDOperand basePtr = LN->getBasePtr();
+    SDOperand the_chain = alignLoadVec.getValue(1);
     SDOperand theValue = SN->getValue();
     SDOperand result;
 
@@ -727,18 +689,34 @@ LowerSTORE(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
       theValue = theValue.getOperand(0); 
     }
 
-    SDOperand insertEltOp =
-      DAG.getNode(SPUISD::INSERT_MASK, stVecVT,
-		  DAG.getNode(SPUISD::DFormAddr, PtrVT,
-			      ptrOp,
-			      DAG.getConstant((offset & 0xf), PtrVT)));
+    chunk_offset &= 0xf;
+    chunk_offset /= (MVT::getSizeInBits(StVT == MVT::i1 ? (unsigned) MVT::i8 : StVT) / 8);
 
+    SDOperand insertEltOffs = DAG.getConstant(chunk_offset, PtrVT);
+    SDOperand insertEltPtr;
+    SDOperand insertEltOp;
+
+    // If the base pointer is already a D-form address, then just create
+    // a new D-form address with a slot offset and the orignal base pointer.
+    // Otherwise generate a D-form address with the slot offset relative
+    // to the stack pointer, which is always aligned.
+    if (basePtr.getOpcode() == SPUISD::DFormAddr) {
+      insertEltPtr = DAG.getNode(SPUISD::DFormAddr, PtrVT,
+				 basePtr.getOperand(0),
+				 insertEltOffs);
+    } else {
+      insertEltPtr = DAG.getNode(SPUISD::DFormAddr, PtrVT,
+				 DAG.getRegister(SPU::R1, PtrVT),
+				 insertEltOffs);
+    }
+
+    insertEltOp = DAG.getNode(SPUISD::INSERT_MASK, stVecVT, insertEltPtr);
     result = DAG.getNode(SPUISD::SHUFB, vecVT,
 			 DAG.getNode(ISD::SCALAR_TO_VECTOR, vecVT, theValue),
-			 alignLoad,
+			 alignLoadVec,
 			 DAG.getNode(ISD::BIT_CONVERT, vecVT, insertEltOp));
 
-    result = DAG.getStore(the_chain, result, basep,
+    result = DAG.getStore(the_chain, result, basePtr,
                           LN->getSrcValue(), LN->getSrcValueOffset(),
                           LN->isVolatile(), LN->getAlignment());
 
@@ -767,19 +745,23 @@ LowerConstantPool(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(Op);
   Constant *C = CP->getConstVal();
   SDOperand CPI = DAG.getTargetConstantPool(C, PtrVT, CP->getAlignment());
-  const TargetMachine &TM = DAG.getTarget();
   SDOperand Zero = DAG.getConstant(0, PtrVT);
+  const TargetMachine &TM = DAG.getTarget();
 
   if (TM.getRelocationModel() == Reloc::Static) {
     if (!ST->usingLargeMem()) {
       // Just return the SDOperand with the constant pool address in it.
       return CPI;
     } else {
+#if 1
       // Generate hi/lo address pair
       SDOperand Hi = DAG.getNode(SPUISD::Hi, PtrVT, CPI, Zero);
       SDOperand Lo = DAG.getNode(SPUISD::Lo, PtrVT, CPI, Zero);
 
       return DAG.getNode(ISD::ADD, PtrVT, Lo, Hi);
+#else
+      return DAG.getNode(SPUISD::XFormAddr, PtrVT, CPI, Zero);
+#endif
     }
   }
 
@@ -797,16 +779,9 @@ LowerJumpTable(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   const TargetMachine &TM = DAG.getTarget();
 
   if (TM.getRelocationModel() == Reloc::Static) {
-    if (!ST->usingLargeMem()) {
-      // Just return the SDOperand with the jump table address in it.
-      return JTI;
-    } else {
-      // Generate hi/lo address pair
-      SDOperand Hi = DAG.getNode(SPUISD::Hi, PtrVT, JTI, Zero);
-      SDOperand Lo = DAG.getNode(SPUISD::Lo, PtrVT, JTI, Zero);
-
-      return DAG.getNode(ISD::ADD, PtrVT, Lo, Hi);
-    }
+    return (!ST->usingLargeMem()
+            ? JTI
+            : DAG.getNode(SPUISD::XFormAddr, PtrVT, JTI, Zero));
   }
 
   assert(0 &&
@@ -820,20 +795,13 @@ LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   GlobalAddressSDNode *GSDN = cast<GlobalAddressSDNode>(Op);
   GlobalValue *GV = GSDN->getGlobal();
   SDOperand GA = DAG.getTargetGlobalAddress(GV, PtrVT, GSDN->getOffset());
-  SDOperand Zero = DAG.getConstant(0, PtrVT);
   const TargetMachine &TM = DAG.getTarget();
+  SDOperand Zero = DAG.getConstant(0, PtrVT);
   
   if (TM.getRelocationModel() == Reloc::Static) {
-    if (!ST->usingLargeMem()) {
-      // Generate a local store address
-      return GA;
-    } else {
-      // Generate hi/lo address pair
-      SDOperand Hi = DAG.getNode(SPUISD::Hi, PtrVT, GA, Zero);
-      SDOperand Lo = DAG.getNode(SPUISD::Lo, PtrVT, GA, Zero);
-
-      return DAG.getNode(ISD::ADD, PtrVT, Lo, Hi);
-    }
+    return (!ST->usingLargeMem()
+            ? GA
+            : DAG.getNode(SPUISD::XFormAddr, PtrVT, GA, Zero));
   } else {
     cerr << "LowerGlobalAddress: Relocation model other than static not "
 	 << "supported.\n";
@@ -1074,7 +1042,7 @@ static SDNode *isLSAAddress(SDOperand Op, SelectionDAG &DAG) {
 
 static
 SDOperand
-LowerCALL(SDOperand Op, SelectionDAG &DAG) {
+LowerCALL(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   SDOperand Chain = Op.getOperand(0);
 #if 0
   bool isVarArg       = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
@@ -1184,25 +1152,35 @@ LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
     GlobalValue *GV = G->getGlobal();
     unsigned CalleeVT = Callee.getValueType();
+    SDOperand Zero = DAG.getConstant(0, PtrVT);
+    SDOperand GA = DAG.getTargetGlobalAddress(GV, CalleeVT);
 
-    // Turn calls to targets that are defined (i.e., have bodies) into BRSL
-    // style calls, otherwise, external symbols are BRASL calls.
-    // NOTE:
-    // This may be an unsafe assumption for JIT and really large compilation
-    // units.
-    if (GV->isDeclaration()) {
-      Callee = DAG.getGlobalAddress(GV, CalleeVT);
+    if (!ST->usingLargeMem()) {
+      // Turn calls to targets that are defined (i.e., have bodies) into BRSL
+      // style calls, otherwise, external symbols are BRASL calls. This assumes
+      // that declared/defined symbols are in the same compilation unit and can
+      // be reached through PC-relative jumps.
+      //
+      // NOTE:
+      // This may be an unsafe assumption for JIT and really large compilation
+      // units.
+      if (GV->isDeclaration()) {
+        Callee = DAG.getNode(SPUISD::AFormAddr, CalleeVT, GA, Zero);
+      } else {
+        Callee = DAG.getNode(SPUISD::PCRelAddr, CalleeVT, GA, Zero);
+      }
     } else {
-      Callee = DAG.getNode(SPUISD::PCRelAddr, CalleeVT,
-                           DAG.getTargetGlobalAddress(GV, CalleeVT),
-                           DAG.getConstant(0, PtrVT));
+      // "Large memory" mode: Turn all calls into indirect calls with a X-form
+      // address pairs:
+      Callee = DAG.getNode(SPUISD::XFormAddr, PtrVT, GA, Zero);
     }
   } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
     Callee = DAG.getExternalSymbol(S->getSymbol(), Callee.getValueType());
-  else if (SDNode *Dest = isLSAAddress(Callee, DAG))
+  else if (SDNode *Dest = isLSAAddress(Callee, DAG)) {
     // If this is an absolute destination address that appears to be a legal
     // local store address, use the munged value.
     Callee = SDOperand(Dest, 0);
+  }
 
   Ops.push_back(Chain);
   Ops.push_back(Callee);
@@ -2468,7 +2446,7 @@ SPUTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG)
   case ISD::FORMAL_ARGUMENTS:
       return LowerFORMAL_ARGUMENTS(Op, DAG, VarArgsFrameIndex);
   case ISD::CALL:
-    return LowerCALL(Op, DAG);
+    return LowerCALL(Op, DAG, SPUTM.getSubtargetImpl());
   case ISD::RET:
     return LowerRET(Op, DAG, getTargetMachine());
 

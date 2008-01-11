@@ -17,8 +17,8 @@
 //===----------------------------------------------------------------------===//
 
 // 7-bit integer type, used as an immediate:
-def cell_i7_ty: LLVMType<i16>;   // Note: This was i8
-def cell_i8_ty: LLVMType<i16>;   // Note: This was i8
+def cell_i7_ty: LLVMType<i8>;
+def cell_i8_ty: LLVMType<i8>;
 
 class v16i8_u7imm<string builtin_suffix> :
   GCCBuiltin<!strconcat("__builtin_si_", builtin_suffix)>,
@@ -27,7 +27,7 @@ class v16i8_u7imm<string builtin_suffix> :
 
 class v16i8_u8imm<string builtin_suffix> :
   GCCBuiltin<!strconcat("__builtin_si_", builtin_suffix)>,
-  Intrinsic<[llvm_v16i8_ty, llvm_v16i8_ty, llvm_i16_ty],
+  Intrinsic<[llvm_v16i8_ty, llvm_v16i8_ty, llvm_i8_ty],
             [IntrNoMem]>;
 
 class v16i8_s10imm<string builtin_suffix> :

@@ -31,8 +31,9 @@ namespace llvm {
       Hi,                       ///< High address component (upper 16)
       Lo,                       ///< Low address component (lower 16)
       PCRelAddr,                ///< Program counter relative address
+      AFormAddr,                ///< A-form address (local store)
       DFormAddr,                ///< D-Form address "imm($r)"
-      XFormAddr,		///< X-Form address "$r1($r2)"
+      XFormAddr,                ///< X-Form address "$r($r)"
 
       LDRESULT,                 ///< Load result (value, chain)
       CALL,                     ///< CALL instruction

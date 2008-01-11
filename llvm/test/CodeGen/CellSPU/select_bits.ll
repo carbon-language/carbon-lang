@@ -3,6 +3,8 @@
 ; RUN: grep and    %t1.s | count 2
 ; RUN: grep xsbh   %t1.s | count 1
 ; RUN: grep xshw   %t1.s | count 2
+target datalayout = "E-p:32:32:128-f64:64:128-f32:32:128-i64:32:128-i32:32:128-i16:16:128-i8:8:128-i1:8:128-a0:0:128-v128:128:128-s0:128:128"
+target triple = "spu"
 
 define <16 x i8> @selb_v16i8_1(<16 x i8> %arg1, <16 x i8> %arg2, <16 x i8> %arg3) {
 	%A = xor <16 x i8> %arg3, < i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1,

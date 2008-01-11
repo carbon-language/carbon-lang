@@ -1454,11 +1454,63 @@ public:
   }
 };
 
+/// LSBaseSDNode - Base class for LoadSDNode and StoreSDNode
+///
+class LSBaseSDNode : public SDNode {
+private:
+  //! SrcValue - Memory location for alias analysis.
+  const Value *SrcValue;
+
+  //! SVOffset - Memory location offset.
+  int SVOffset;
+
+  //! Alignment - Alignment of memory location in bytes.
+  unsigned Alignment;
+
+  //! IsVolatile - True if the store is volatile.
+  bool IsVolatile;
+protected:
+  //! Operand array for load and store
+  /*!
+    \note Moving this array to the base class captures more
+    common functionality shared between LoadSDNode and
+    StoreSDNode
+   */
+  SDOperand Ops[4];
+public:
+  LSBaseSDNode(ISD::NodeType NodeTy, SDVTList VTs, const Value *SV, int SVO,
+               unsigned Align, bool Vol)
+    : SDNode(NodeTy, VTs),
+      SrcValue(SV), SVOffset(SVO), Alignment(Align), IsVolatile(Vol)
+  { }
+
+  const SDOperand getChain() const {
+    return getOperand(0);
+  }
+  const SDOperand getBasePtr() const {
+    return getOperand(getOpcode() == ISD::LOAD ? 1 : 2);
+  }
+  const SDOperand getOffset() const {
+    return getOperand(getOpcode() == ISD::LOAD ? 2 : 3);
+  }
+  const SDOperand getValue() const {
+    assert(getOpcode() == ISD::STORE);
+    return getOperand(1);
+  }
+
+  const Value *getSrcValue() const { return SrcValue; }
+  int getSrcValueOffset() const { return SVOffset; }
+  unsigned getAlignment() const { return Alignment; }
+  bool isVolatile() const { return IsVolatile; }
+
+  static bool classof(const LSBaseSDNode *N) { return true; }
+  static bool classof(const SDNode *N) { return true; }
+};
+
 /// LoadSDNode - This class is used to represent ISD::LOAD nodes.
 ///
-class LoadSDNode : public SDNode {
+class LoadSDNode : public LSBaseSDNode {
   virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
-  SDOperand Ops[3];
   
   // AddrMode - unindexed, pre-indexed, post-indexed.
   ISD::MemIndexedMode AddrMode;
@@ -1468,26 +1520,13 @@ class LoadSDNode : public SDNode {
 
   // LoadedVT - VT of loaded value before extension.
   MVT::ValueType LoadedVT;
-
-  // SrcValue - Memory location for alias analysis.
-  const Value *SrcValue;
-
-  // SVOffset - Memory location offset.
-  int SVOffset;
-
-  // Alignment - Alignment of memory location in bytes.
-  unsigned Alignment;
-
-  // IsVolatile - True if the load is volatile.
-  bool IsVolatile;
 protected:
   friend class SelectionDAG;
   LoadSDNode(SDOperand *ChainPtrOff, SDVTList VTs,
              ISD::MemIndexedMode AM, ISD::LoadExtType ETy, MVT::ValueType LVT,
              const Value *SV, int O=0, unsigned Align=0, bool Vol=false)
-    : SDNode(ISD::LOAD, VTs),
-      AddrMode(AM), ExtType(ETy), LoadedVT(LVT), SrcValue(SV), SVOffset(O),
-      Alignment(Align), IsVolatile(Vol) {
+    : LSBaseSDNode(ISD::LOAD, VTs, SV, O, Align, Vol),
+      AddrMode(AM), ExtType(ETy), LoadedVT(LVT) {
     Ops[0] = ChainPtrOff[0]; // Chain
     Ops[1] = ChainPtrOff[1]; // Ptr
     Ops[2] = ChainPtrOff[2]; // Off
@@ -1499,18 +1538,12 @@ protected:
   }
 public:
 
-  const SDOperand getChain() const { return getOperand(0); }
-  const SDOperand getBasePtr() const { return getOperand(1); }
-  const SDOperand getOffset() const { return getOperand(2); }
   ISD::MemIndexedMode getAddressingMode() const { return AddrMode; }
   ISD::LoadExtType getExtensionType() const { return ExtType; }
   MVT::ValueType getLoadedVT() const { return LoadedVT; }
-  const Value *getSrcValue() const { return SrcValue; }
-  int getSrcValueOffset() const { return SVOffset; }
-  unsigned getAlignment() const { return Alignment; }
-  bool isVolatile() const { return IsVolatile; }
 
   static bool classof(const LoadSDNode *) { return true; }
+  static bool classof(const LSBaseSDNode *N) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::LOAD;
   }
@@ -1518,9 +1551,8 @@ public:
 
 /// StoreSDNode - This class is used to represent ISD::STORE nodes.
 ///
-class StoreSDNode : public SDNode {
+class StoreSDNode : public LSBaseSDNode {
   virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
-  SDOperand Ops[4];
     
   // AddrMode - unindexed, pre-indexed, post-indexed.
   ISD::MemIndexedMode AddrMode;
@@ -1530,26 +1562,13 @@ class StoreSDNode : public SDNode {
 
   // StoredVT - VT of the value after truncation.
   MVT::ValueType StoredVT;
-
-  // SrcValue - Memory location for alias analysis.
-  const Value *SrcValue;
-
-  // SVOffset - Memory location offset.
-  int SVOffset;
-
-  // Alignment - Alignment of memory location in bytes.
-  unsigned Alignment;
-
-  // IsVolatile - True if the store is volatile.
-  bool IsVolatile;
 protected:
   friend class SelectionDAG;
   StoreSDNode(SDOperand *ChainValuePtrOff, SDVTList VTs,
               ISD::MemIndexedMode AM, bool isTrunc, MVT::ValueType SVT,
               const Value *SV, int O=0, unsigned Align=0, bool Vol=false)
-    : SDNode(ISD::STORE, VTs),
-      AddrMode(AM), IsTruncStore(isTrunc), StoredVT(SVT), SrcValue(SV),
-      SVOffset(O), Alignment(Align), IsVolatile(Vol) {
+    : LSBaseSDNode(ISD::STORE, VTs, SV, O, Align, Vol),
+      AddrMode(AM), IsTruncStore(isTrunc), StoredVT(SVT) {
     Ops[0] = ChainValuePtrOff[0]; // Chain
     Ops[1] = ChainValuePtrOff[1]; // Value
     Ops[2] = ChainValuePtrOff[2]; // Ptr
@@ -1562,19 +1581,12 @@ protected:
   }
 public:
 
-  const SDOperand getChain() const { return getOperand(0); }
-  const SDOperand getValue() const { return getOperand(1); }
-  const SDOperand getBasePtr() const { return getOperand(2); }
-  const SDOperand getOffset() const { return getOperand(3); }
   ISD::MemIndexedMode getAddressingMode() const { return AddrMode; }
   bool isTruncatingStore() const { return IsTruncStore; }
   MVT::ValueType getStoredVT() const { return StoredVT; }
-  const Value *getSrcValue() const { return SrcValue; }
-  int getSrcValueOffset() const { return SVOffset; }
-  unsigned getAlignment() const { return Alignment; }
-  bool isVolatile() const { return IsVolatile; }
 
   static bool classof(const StoreSDNode *) { return true; }
+  static bool classof(const LSBaseSDNode *N) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::STORE;
   }

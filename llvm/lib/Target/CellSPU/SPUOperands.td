@@ -140,6 +140,17 @@ def imm18  : PatLeaf<(imm), [{
   return ((Value & ((1 << 19) - 1)) == Value);
 }]>;
 
+def lo16 : PatLeaf<(imm), [{
+  // hi16 predicate - returns true if the immediate has all zeros in the
+  // low order bits and is a 32-bit constant:
+  if (N->getValueType(0) == MVT::i32) {
+    uint32_t val = N->getValue();
+    return ((val & 0x0000ffff) == val);
+  }
+
+  return false;
+}], LO16>;
+
 def hi16 : PatLeaf<(imm), [{
   // hi16 predicate - returns true if the immediate has all zeros in the
   // low order bits and is a 32-bit constant:
@@ -411,7 +422,11 @@ def v2i64Imm: PatLeaf<(build_vector), [{
 //===----------------------------------------------------------------------===//
 // Operand Definitions.
 
-def s7imm: Operand<i16> {
+def s7imm: Operand<i8> {
+  let PrintMethod = "printS7ImmOperand";
+}
+
+def s7imm_i8: Operand<i8> {
   let PrintMethod = "printS7ImmOperand";
 }
 

@@ -158,7 +158,7 @@ let isSimpleLoad = 1 in {
   def LQAr32:
       RI16Form<0b100001100, (outs R32C:$rT), (ins addr256k:$src),
         "lqa\t$rT, $src", LoadStore,
-        [(set R32C:$rT, (load aform_addr:$src))]>;
+        [(set R32C:$rT, (load  aform_addr:$src))]>;
 
   def LQAf32:
       RI16Form<0b100001100, (outs R32FP:$rT), (ins addr256k:$src),
@@ -607,6 +607,13 @@ def IOHLf32:
     RI16Form<0b100000110, (outs R32FP:$rT), (ins R32FP:$rS, f32imm:$val),
       "iohl\t$rT, $val", ImmLoad,
       [/* insert intrinsic here */]>,
+      RegConstraint<"$rS = $rT">,
+      NoEncode<"$rS">;
+
+def IOHLlo:
+    RI16Form<0b100000110, (outs R32C:$rT), (ins R32C:$rS, symbolLo:$val),
+      "iohl\t$rT, $val", ImmLoad,
+      [/* no pattern */]>,
       RegConstraint<"$rS = $rT">,
       NoEncode<"$rS">;
 
@@ -2367,12 +2374,12 @@ def ROTIr32_i8:
 // are used here for type checking (instances where ROTQBI is used actually
 // use vector registers)
 def ROTQBYvec:
-    RRForm<0b00111011100, (outs VECREG:$rT), (ins VECREG:$rA, R16C:$rB),
+    RRForm<0b00111011100, (outs VECREG:$rT), (ins VECREG:$rA, R32C:$rB),
       "rotqby\t$rT, $rA, $rB", RotateShift,
-      [(set (v16i8 VECREG:$rT), (SPUrotbytes_left (v16i8 VECREG:$rA), R16C:$rB))]>;
+      [(set (v16i8 VECREG:$rT), (SPUrotbytes_left (v16i8 VECREG:$rA), R32C:$rB))]>;
 
-def : Pat<(SPUrotbytes_left_chained (v16i8 VECREG:$rA), R16C:$rB),
-          (ROTQBYvec VECREG:$rA, R16C:$rB)>;
+def : Pat<(SPUrotbytes_left_chained (v16i8 VECREG:$rA), R32C:$rB),
+          (ROTQBYvec VECREG:$rA, R32C:$rB)>;
 
 // See ROTQBY note above.
 def ROTQBYIvec:
@@ -2720,12 +2727,12 @@ def CEQBv16i8:
     [/* no pattern to match: intrinsic */]>;
 
 def CEQBIr8:
-  RI10Form<0b01111110, (outs R8C:$rT), (ins R8C:$rA, s7imm:$val),
+  RI10Form<0b01111110, (outs R8C:$rT), (ins R8C:$rA, s7imm_i8:$val),
     "ceqbi\t$rT, $rA, $val", ByteOp,
     [/* no pattern to match: intrinsic */]>;
 
 def CEQBIv16i8:
-  RI10Form<0b01111110, (outs VECREG:$rT), (ins VECREG:$rA, s7imm:$val),
+  RI10Form<0b01111110, (outs VECREG:$rT), (ins VECREG:$rA, s7imm_i8:$val),
     "ceqbi\t$rT, $rA, $val", ByteOp,
     [/* no pattern to match: intrinsic */]>;
 
@@ -2793,7 +2800,7 @@ let isCall = 1,
   def BRASL:
     BranchSetLink<0b011001100, (outs), (ins calltarget:$func, variable_ops),
       "brasl\t$$lr, $func",
-      [(SPUcall tglobaladdr:$func)]>;
+      [(SPUcall (SPUaform tglobaladdr:$func, 0))]>;
 
   // Branch indirect and set link if external data. These instructions are not
   // actually generated, matched by an intrinsic:
@@ -3468,20 +3475,21 @@ def : Pat<(i32 (anyext R16C:$rSrc)),
 // low parts in order to load them into a register.
 //===----------------------------------------------------------------------===//
 
-def : Pat<(SPUhi    tglobaladdr:$in, 0), (ILHUhi tglobaladdr:$in)>;
-def : Pat<(SPUlo    tglobaladdr:$in, 0), (ILAlo  tglobaladdr:$in)>;
-def : Pat<(SPUdform tglobaladdr:$in, imm:$imm), (ILAlsa tglobaladdr:$in)>;
-def : Pat<(SPUhi    tconstpool:$in , 0), (ILHUhi tconstpool:$in)>;
-def : Pat<(SPUlo    tconstpool:$in , 0), (ILAlo  tconstpool:$in)>;
-def : Pat<(SPUdform tconstpool:$in, imm:$imm), (ILAlsa tconstpool:$in)>;
-def : Pat<(SPUhi    tjumptable:$in, 0),  (ILHUhi tjumptable:$in)>;
-def : Pat<(SPUlo    tjumptable:$in, 0),  (ILAlo tjumptable:$in)>;
-def : Pat<(SPUdform tjumptable:$in, imm:$imm),  (ILAlsa tjumptable:$in)>;
+def : Pat<(SPUhi    tglobaladdr:$in, 0),        (ILHUhi tglobaladdr:$in)>;
+def : Pat<(SPUlo    tglobaladdr:$in, 0),        (ILAlo  tglobaladdr:$in)>;
+def : Pat<(SPUaform tglobaladdr:$in, 0),        (ILAlsa tglobaladdr:$in)>;
+def : Pat<(SPUxform tglobaladdr:$in, 0),
+          (IOHLlo (ILHUhi tglobaladdr:$in), tglobaladdr:$in)>;
+def : Pat<(SPUhi    tjumptable:$in, 0),         (ILHUhi tjumptable:$in)>;
+def : Pat<(SPUlo    tjumptable:$in, 0),         (ILAlo  tjumptable:$in)>;
+def : Pat<(SPUaform tjumptable:$in, 0),         (ILAlsa tjumptable:$in)>;
+def : Pat<(SPUxform tjumptable:$in, 0),
+          (IOHLlo (ILHUhi tjumptable:$in), tjumptable:$in)>;
+def : Pat<(SPUhi    tconstpool:$in , 0),        (ILHUhi tconstpool:$in)>;
+def : Pat<(SPUlo    tconstpool:$in , 0),        (ILAlo  tconstpool:$in)>;
+def : Pat<(SPUaform tconstpool:$in, 0),         (ILAlsa tconstpool:$in)>;
+/* def : Pat<(SPUxform tconstpool:$in, 0),
+          (IOHLlo (ILHUhi tconstpool:$in), tconstpool:$in)>; */
 
-// Force load of global address to a register. These forms show up in
-// SPUISD::DFormAddr pseudo instructions:
-def : Pat<(add tglobaladdr:$in, 0), (ILAlsa tglobaladdr:$in)>;
-def : Pat<(add tconstpool:$in, 0),  (ILAlsa tglobaladdr:$in)>;
-def : Pat<(add tjumptable:$in, 0),  (ILAlsa tglobaladdr:$in)>;
 // Instrinsics:
 include "CellSDKIntrinsics.td"

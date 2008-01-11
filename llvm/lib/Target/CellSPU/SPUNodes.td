@@ -186,8 +186,14 @@ def SPUlo : SDNode<"SPUISD::Lo", SDTIntBinOp, []>;
 // PC-relative address
 def SPUpcrel : SDNode<"SPUISD::PCRelAddr", SDTIntBinOp, []>;
 
+// A-Form local store addresses
+def SPUaform : SDNode<"SPUISD::AFormAddr", SDTIntBinOp, []>;
+
 // D-Form "imm($reg)" addresses
 def SPUdform : SDNode<"SPUISD::DFormAddr", SDTIntBinOp, []>;
+
+// X-Form "$reg($reg)" addresses
+def SPUxform : SDNode<"SPUISD::XFormAddr", SDTIntBinOp, []>;
 
 // SPU 32-bit sign-extension to 64-bits
 def SPUsext32_to_64: SDNode<"SPUISD::SEXT32TO64", SDTIntExtendOp, []>;

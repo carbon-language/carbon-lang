@@ -10,6 +10,8 @@
 ; Alternatively, a ^ ~b, which the compiler will also match.
 
 ; ModuleID = 'eqv.bc'
+target datalayout = "E-p:32:32:128-f64:64:128-f32:32:128-i64:32:128-i32:32:128-i16:16:128-i8:8:128-i1:8:128-a0:0:128-v128:128:128-s0:128:128"
+target triple = "spu"
 
 define <4 x i32> @equiv_v4i32_1(<4 x i32> %arg1, <4 x i32> %arg2) {
 	%A = and <4 x i32> %arg1, %arg2		; <<4 x i32>> [#uses=1]
