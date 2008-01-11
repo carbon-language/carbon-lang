@@ -78,7 +78,7 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     UsedDirective = "\t.no_dead_strip\t";
     WeakDefDirective = "\t.weak_definition ";
     WeakRefDirective = "\t.weak_reference ";
-    HiddenDirective = "\t.private_extern\t";
+    HiddenDirective = "\t.private_extern ";
     
     // In non-PIC modes, emit a special label before jump tables so that the
     // linker can perform more accurate dead code stripping.

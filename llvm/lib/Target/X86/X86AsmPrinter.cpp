@@ -173,7 +173,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     if (C->isNullValue() && !I->hasSection()) {
       if (I->hasExternalLinkage()) {
         if (const char *Directive = TAI->getZeroFillDirective()) {
-          O << "\t.globl\t" << name << "\n";
+          O << "\t.globl " << name << "\n";
           O << Directive << "__DATA__, __common, " << name << ", "
             << Size << ", " << Align << "\n";
           continue;
@@ -181,8 +181,9 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
       }
       
       if (!I->isThreadLocal() &&
-          (I->hasInternalLinkage() || I->hasWeakLinkage() ||
-           I->hasLinkOnceLinkage())) {
+          (I->hasInternalLinkage() || 
+           (!Subtarget->isTargetDarwin() && 
+            (I->hasWeakLinkage() || I->hasLinkOnceLinkage())))) {
         if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
         if (!NoZerosInBSS && TAI->getBSSSection())
           SwitchToDataSection(TAI->getBSSSection(), I);
@@ -218,9 +219,9 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     case GlobalValue::LinkOnceLinkage:
     case GlobalValue::WeakLinkage:
       if (Subtarget->isTargetDarwin()) {
-        O << "\t.globl\t" << name << "\n"
+        O << "\t.globl " << name << "\n"
           << TAI->getWeakDefDirective() << name << "\n";
-        SwitchToDataSection(".section __DATA,__const_coal,coalesced", I);
+        SwitchToDataSection("\t.section __DATA,__datacoal_nt,coalesced", I);
       } else if (Subtarget->isTargetCygMing()) {
         std::string SectionName(".section\t.data$linkonce." +
                                 name +
@@ -244,7 +245,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
       // their name or something.  For now, just emit them as external.
     case GlobalValue::ExternalLinkage:
       // If external or appending, declare as a global symbol
-      O << "\t.globl\t" << name << "\n";
+      O << "\t.globl " << name << "\n";
       // FALL THROUGH
     case GlobalValue::InternalLinkage: {
       if (I->isConstant()) {
@@ -348,7 +349,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     unsigned j = 1;
     for (std::set<std::string>::iterator i = FnStubs.begin(), e = FnStubs.end();
          i != e; ++i, ++j) {
-      SwitchToDataSection(".section __IMPORT,__jump_table,symbol_stubs,"
+      SwitchToDataSection("\t.section __IMPORT,__jump_table,symbol_stubs,"
                           "self_modifying_code+pure_instructions,5", 0);
       O << "L" << *i << "$stub:\n";
       O << "\t.indirect_symbol " << *i << "\n";
@@ -369,7 +370,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     // Output stubs for external and common global variables.
     if (!GVStubs.empty())
       SwitchToDataSection(
-                    ".section __IMPORT,__pointers,non_lazy_symbol_pointers");
+                    "\t.section __IMPORT,__pointers,non_lazy_symbol_pointers");
     for (std::set<std::string>::iterator i = GVStubs.begin(), e = GVStubs.end();
          i != e; ++i) {
       O << "L" << *i << "$non_lazy_ptr:\n";

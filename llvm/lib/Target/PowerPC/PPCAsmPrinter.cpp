@@ -767,7 +767,7 @@ std::string DarwinAsmPrinter::getSectionForFunction(const Function &F) const {
   case Function::InternalLinkage: return TAI->getTextSection();
   case Function::WeakLinkage:
   case Function::LinkOnceLinkage:
-    return ".section __TEXT,__textcoal_nt,coalesced,pure_instructions";
+    return "\t.section __TEXT,__textcoal_nt,coalesced,pure_instructions";
   }
 }
 
@@ -869,13 +869,13 @@ bool DarwinAsmPrinter::doInitialization(Module &M) {
   
   // Prime text sections so they are adjacent.  This reduces the likelihood a
   // large data or debug section causes a branch to exceed 16M limit.
-  SwitchToTextSection(".section __TEXT,__textcoal_nt,coalesced,"
+  SwitchToTextSection("\t.section __TEXT,__textcoal_nt,coalesced,"
                       "pure_instructions");
   if (TM.getRelocationModel() == Reloc::PIC_) {
-    SwitchToTextSection(".section __TEXT,__picsymbolstub1,symbol_stubs,"
+    SwitchToTextSection("\t.section __TEXT,__picsymbolstub1,symbol_stubs,"
                           "pure_instructions,32");
   } else if (TM.getRelocationModel() == Reloc::DynamicNoPIC) {
-    SwitchToTextSection(".section __TEXT,__symbol_stub1,symbol_stubs,"
+    SwitchToTextSection("\t.section __TEXT,__symbol_stub1,symbol_stubs,"
                         "pure_instructions,16");
   }
   SwitchToTextSection(TAI->getTextSection());
@@ -917,8 +917,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
 
     if (C->isNullValue() && /* FIXME: Verify correct */
         !I->hasSection() &&
-        (I->hasInternalLinkage() || I->hasWeakLinkage() ||
-         I->hasLinkOnceLinkage() || I->hasExternalLinkage())) {
+        (I->hasInternalLinkage() || I->hasExternalLinkage())) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
       if (I->hasExternalLinkage()) {
         O << "\t.globl " << name << '\n';
@@ -941,7 +940,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
       case GlobalValue::WeakLinkage:
         O << "\t.globl " << name << '\n'
           << "\t.weak_definition " << name << '\n';
-        SwitchToDataSection(".section __DATA,__datacoal_nt,coalesced", I);
+        SwitchToDataSection("\t.section __DATA,__datacoal_nt,coalesced", I);
         break;
       case GlobalValue::AppendingLinkage:
         // FIXME: appending linkage variables should go into a section of
@@ -1008,7 +1007,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
   if (TM.getRelocationModel() == Reloc::PIC_) {
     for (std::set<std::string>::iterator i = FnStubs.begin(), e = FnStubs.end();
          i != e; ++i) {
-      SwitchToTextSection(".section __TEXT,__picsymbolstub1,symbol_stubs,"
+      SwitchToTextSection("\t.section __TEXT,__picsymbolstub1,symbol_stubs,"
                           "pure_instructions,32");
       EmitAlignment(4);
       O << "L" << *i << "$stub:\n";
@@ -1036,7 +1035,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
   } else {
     for (std::set<std::string>::iterator i = FnStubs.begin(), e = FnStubs.end();
          i != e; ++i) {
-      SwitchToTextSection(".section __TEXT,__symbol_stub1,symbol_stubs,"
+      SwitchToTextSection("\t.section __TEXT,__symbol_stub1,symbol_stubs,"
                           "pure_instructions,16");
       EmitAlignment(4);
       O << "L" << *i << "$stub:\n";
