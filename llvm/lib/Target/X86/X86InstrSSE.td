@@ -300,6 +300,7 @@ let Uses = [EFLAGS], usesCustomDAGSchedInserter = 1 in {
 //===----------------------------------------------------------------------===//
 
 // Move Instructions
+let neverHasSideEffects = 1 in
 def MOVSSrr : SSI<0x10, MRMSrcReg, (outs FR32:$dst), (ins FR32:$src),
                   "movss\t{$src, $dst|$dst, $src}", []>;
 let isSimpleLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
@@ -386,9 +387,11 @@ let isTwoAddress = 1 in {
 
 // Comparison instructions
 let isTwoAddress = 1 in {
+let neverHasSideEffects = 1 in
   def CMPSSrr : SSIi8<0xC2, MRMSrcReg, 
                     (outs FR32:$dst), (ins FR32:$src1, FR32:$src, SSECC:$cc),
                     "cmp${cc}ss\t{$src, $dst|$dst, $src}", []>;
+let neverHasSideEffects = 1, mayLoad = 1 in
   def CMPSSrm : SSIi8<0xC2, MRMSrcMem, 
                     (outs FR32:$dst), (ins FR32:$src1, f32mem:$src, SSECC:$cc),
                     "cmp${cc}ss\t{$src, $dst|$dst, $src}", []>;
@@ -649,6 +652,7 @@ def MOVAPSmr : PSI<0x29, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
                    "movaps\t{$src, $dst|$dst, $src}",
                    [(alignedstore (v4f32 VR128:$src), addr:$dst)]>;
 
+let neverHasSideEffects = 1 in
 def MOVUPSrr : PSI<0x10, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                    "movups\t{$src, $dst|$dst, $src}", []>;
 let isSimpleLoad = 1 in
@@ -979,6 +983,7 @@ def MOVPS2SSmr : SSI<0x11, MRMDestMem, (outs), (ins f32mem:$dst, VR128:$src),
 // Move to lower bits of a VR128, leaving upper bits alone.
 // Three operand (but two address) aliases.
 let isTwoAddress = 1 in {
+let neverHasSideEffects = 1 in
   def MOVLSS2PSrr : SSI<0x10, MRMSrcReg,
                         (outs VR128:$dst), (ins VR128:$src1, FR32:$src2),
                         "movss\t{$src2, $dst|$dst, $src2}", []>;
@@ -1007,6 +1012,7 @@ def MOVZSS2PSrm : SSI<0x10, MRMSrcMem, (outs VR128:$dst), (ins f32mem:$src),
 //===----------------------------------------------------------------------===//
 
 // Move Instructions
+let neverHasSideEffects = 1 in
 def MOVSDrr : SDI<0x10, MRMSrcReg, (outs FR64:$dst), (ins FR64:$src),
                   "movsd\t{$src, $dst|$dst, $src}", []>;
 let isSimpleLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
@@ -1090,10 +1096,11 @@ def Int_CVTTSD2SIrm : SDI<0x2C, MRMSrcMem, (outs GR32:$dst), (ins f128mem:$src),
                                             (load addr:$src)))]>;
 
 // Comparison instructions
-let isTwoAddress = 1 in {
+let isTwoAddress = 1, neverHasSideEffects = 1 in {
   def CMPSDrr : SDIi8<0xC2, MRMSrcReg, 
                     (outs FR64:$dst), (ins FR64:$src1, FR64:$src, SSECC:$cc),
                     "cmp${cc}sd\t{$src, $dst|$dst, $src}", []>;
+let mayLoad = 1 in
   def CMPSDrm : SDIi8<0xC2, MRMSrcMem, 
                     (outs FR64:$dst), (ins FR64:$src1, f64mem:$src, SSECC:$cc),
                     "cmp${cc}sd\t{$src, $dst|$dst, $src}", []>;
@@ -1350,6 +1357,7 @@ def MOVAPDmr : PDI<0x29, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
                    "movapd\t{$src, $dst|$dst, $src}",
                    [(alignedstore (v2f64 VR128:$src), addr:$dst)]>;
 
+let neverHasSideEffects = 1 in
 def MOVUPDrr : PDI<0x10, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                    "movupd\t{$src, $dst|$dst, $src}", []>;
 let isSimpleLoad = 1 in
@@ -1713,20 +1721,23 @@ let isTwoAddress = 1 in {
 // SSE integer instructions
 
 // Move Instructions
+let neverHasSideEffects = 1 in
 def MOVDQArr : PDI<0x6F, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                    "movdqa\t{$src, $dst|$dst, $src}", []>;
-let isSimpleLoad = 1 in
+let isSimpleLoad = 1, mayLoad = 1 in
 def MOVDQArm : PDI<0x6F, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
                    "movdqa\t{$src, $dst|$dst, $src}",
                    [/*(set VR128:$dst, (alignedloadv2i64 addr:$src))*/]>;
+let mayStore = 1 in
 def MOVDQAmr : PDI<0x7F, MRMDestMem, (outs), (ins i128mem:$dst, VR128:$src),
                    "movdqa\t{$src, $dst|$dst, $src}",
                    [/*(alignedstore (v2i64 VR128:$src), addr:$dst)*/]>;
-let isSimpleLoad = 1 in
+let isSimpleLoad = 1, mayLoad = 1 in
 def MOVDQUrm :   I<0x6F, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
                    "movdqu\t{$src, $dst|$dst, $src}",
                    [/*(set VR128:$dst, (loadv2i64 addr:$src))*/]>,
                  XS, Requires<[HasSSE2]>;
+let mayStore = 1 in
 def MOVDQUmr :   I<0x7F, MRMDestMem, (outs), (ins i128mem:$dst, VR128:$src),
                    "movdqu\t{$src, $dst|$dst, $src}",
                    [/*(store (v2i64 VR128:$src), addr:$dst)*/]>,
@@ -1861,7 +1872,7 @@ defm PSRAD : PDI_binop_rmi_int<0xE2, 0x72, MRM4r, "psrad", int_x86_sse2_psra_d>;
 // PSRAQ doesn't exist in SSE[1-3].
 
 // 128-bit logical shifts.
-let isTwoAddress = 1 in {
+let isTwoAddress = 1, neverHasSideEffects = 1 in {
   def PSLLDQri : PDIi8<0x73, MRM7r,
                        (outs VR128:$dst), (ins VR128:$src1, i32i8imm:$src2),
                        "pslldq\t{$src2, $dst|$dst, $src2}", []>;
@@ -2205,6 +2216,7 @@ def MOVSS2DImr  : PDI<0x7E, MRMDestMem, (outs), (ins i32mem:$dst, FR32:$src),
 // Move to lower bits of a VR128, leaving upper bits alone.
 // Three operand (but two address) aliases.
 let isTwoAddress = 1 in {
+  let neverHasSideEffects = 1 in
   def MOVLSD2PDrr : SDI<0x10, MRMSrcReg,
                         (outs VR128:$dst), (ins VR128:$src1, FR64:$src2),
                         "movsd\t{$src2, $dst|$dst, $src2}", []>;
