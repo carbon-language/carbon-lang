@@ -51,6 +51,7 @@ using namespace llvm;
 
 STATISTIC(NumArgumentsPromoted , "Number of pointer arguments promoted");
 STATISTIC(NumAggregatesPromoted, "Number of aggregate arguments promoted");
+STATISTIC(NumByValArgsPromoted , "Number of byval arguments promoted");
 STATISTIC(NumArgumentsDead     , "Number of dead pointer args eliminated");
 
 namespace {
@@ -71,7 +72,8 @@ namespace {
     bool PromoteArguments(CallGraphNode *CGN);
     bool isSafeToPromoteArgument(Argument *Arg, bool isByVal) const;
     Function *DoPromotion(Function *F, 
-                          SmallPtrSet<Argument*, 8> &ArgsToPromote);
+                          SmallPtrSet<Argument*, 8> &ArgsToPromote,
+                          SmallPtrSet<Argument*, 8> &ByValArgsToTransform);
   };
 
   char ArgPromotion::ID = 0;
@@ -134,16 +136,44 @@ bool ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
   // Check to see which arguments are promotable.  If an argument is promotable,
   // add it to ArgsToPromote.
   SmallPtrSet<Argument*, 8> ArgsToPromote;
+  SmallPtrSet<Argument*, 8> ByValArgsToTransform;
   for (unsigned i = 0; i != PointerArgs.size(); ++i) {
-    bool isByVal = F->paramHasAttr(PointerArgs[i].second, ParamAttr::ByVal);
-    if (isSafeToPromoteArgument(PointerArgs[i].first, isByVal))
-      ArgsToPromote.insert(PointerArgs[i].first);
+    bool isByVal = F->paramHasAttr(PointerArgs[i].second+1, ParamAttr::ByVal);
+    
+    // If this is a byval argument, and if the aggregate type is small, just
+    // pass the elements, which is always safe.
+    Argument *PtrArg = PointerArgs[i].first;
+    if (isByVal) {
+      const Type *AgTy = cast<PointerType>(PtrArg->getType())->getElementType();
+      if (const StructType *STy = dyn_cast<StructType>(AgTy))
+        if (STy->getNumElements() <= 3) {
+          // If all the elements are first class types, we can promote it.
+          bool AllSimple = true;
+          for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i)
+            if (!STy->getElementType(i)->isFirstClassType()) {
+              AllSimple = false;
+              break;
+            }
+          
+          // Safe to transform, don't even bother trying to "promote" it.
+          // Passing the elements as a scalar will allow scalarrepl to hack on
+          // the new alloca we introduce.
+          if (AllSimple) {
+            ByValArgsToTransform.insert(PtrArg);
+            continue;
+          }
+        }
+    }
+    
+    // Otherwise, see if we can promote the pointer to its value.
+    if (isSafeToPromoteArgument(PtrArg, isByVal))
+      ArgsToPromote.insert(PtrArg);
   }
   
   // No promotable pointer arguments.
-  if (ArgsToPromote.empty()) return false;
+  if (ArgsToPromote.empty() && ByValArgsToTransform.empty()) return false;
 
-  Function *NewF = DoPromotion(F, ArgsToPromote);
+  Function *NewF = DoPromotion(F, ArgsToPromote, ByValArgsToTransform);
 
   // Update the call graph to know that the function has been transformed.
   getAnalysis<CallGraph>().changeFunction(F, NewF);
@@ -344,7 +374,8 @@ namespace {
 /// arguments, and returns the new function.  At this point, we know that it's
 /// safe to do so.
 Function *ArgPromotion::DoPromotion(Function *F,
-                                    SmallPtrSet<Argument*, 8> &ArgsToPromote) {
+                                    SmallPtrSet<Argument*, 8> &ArgsToPromote,
+                              SmallPtrSet<Argument*, 8> &ByValArgsToTransform) {
 
   // Start by computing a new prototype for the function, which is the same as
   // the old function, but has modified arguments.
@@ -375,15 +406,18 @@ Function *ArgPromotion::DoPromotion(Function *F,
 
   unsigned index = 1;
   for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E;
-       ++I, ++index)
-    if (!ArgsToPromote.count(I)) {
+       ++I, ++index) {
+    if (ByValArgsToTransform.count(I)) {
+      // Just add all the struct element types.
+      const Type *AgTy = cast<PointerType>(I->getType())->getElementType();
+      const StructType *STy = cast<StructType>(AgTy);
+      for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i)
+        Params.push_back(STy->getElementType(i));
+      ++NumByValArgsPromoted;
+    } else if (!ArgsToPromote.count(I)) {
       Params.push_back(I->getType());
-      if (PAL) {
-        unsigned attrs = PAL->getParamAttrs(index);
-        if (attrs)
-          ParamAttrsVec.push_back(ParamAttrsWithIndex::get(Params.size(),
-                                  attrs));
-      }
+      if (unsigned attrs = PAL ? PAL->getParamAttrs(index) : 0)
+        ParamAttrsVec.push_back(ParamAttrsWithIndex::get(Params.size(), attrs));
     } else if (I->use_empty()) {
       ++NumArgumentsDead;
     } else {
@@ -416,6 +450,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
       else
         ++NumAggregatesPromoted;
     }
+  }
 
   const Type *RetTy = FTy->getReturnType();
 
@@ -462,9 +497,22 @@ Function *ArgPromotion::DoPromotion(Function *F,
     CallSite::arg_iterator AI = CS.arg_begin();
     for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end();
          I != E; ++I, ++AI)
-      if (!ArgsToPromote.count(I))
+      if (!ArgsToPromote.count(I) && !ByValArgsToTransform.count(I)) {
         Args.push_back(*AI);          // Unmodified argument
-      else if (!I->use_empty()) {
+      } else if (ByValArgsToTransform.count(I)) {
+        // Emit a GEP and load for each element of the struct.
+        const Type *AgTy = cast<PointerType>(I->getType())->getElementType();
+        const StructType *STy = cast<StructType>(AgTy);
+        Value *Idxs[2] = { ConstantInt::get(Type::Int32Ty, 0), 0 };
+        for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
+          Idxs[1] = ConstantInt::get(Type::Int32Ty, i);
+          Value *Idx = new GetElementPtrInst(*AI, Idxs, Idxs+2,
+                                             (*AI)->getName()+"."+utostr(i),
+                                             Call);
+          // TODO: Tell AA about the new values?
+          Args.push_back(new LoadInst(Idx, Idx->getName()+".val", Call));
+        }        
+      } else if (!I->use_empty()) {
         // Non-dead argument: insert GEPs and loads as appropriate.
         ScalarizeTable &ArgIndices = ScalarizedElements[I];
         for (ScalarizeTable::iterator SI = ArgIndices.begin(),
@@ -526,70 +574,102 @@ Function *ArgPromotion::DoPromotion(Function *F,
   // the new arguments, also transfering over the names as well.
   //
   for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(),
-       I2 = NF->arg_begin(); I != E; ++I)
-    if (!ArgsToPromote.count(I)) {
+       I2 = NF->arg_begin(); I != E; ++I) {
+    if (!ArgsToPromote.count(I) && !ByValArgsToTransform.count(I)) {
       // If this is an unmodified argument, move the name and users over to the
       // new version.
       I->replaceAllUsesWith(I2);
       I2->takeName(I);
       AA.replaceWithNewValue(I, I2);
       ++I2;
-    } else if (I->use_empty()) {
-      AA.deleteValue(I);
-    } else {
-      // Otherwise, if we promoted this argument, then all users are load
-      // instructions, and all loads should be using the new argument that we
-      // added.
-      ScalarizeTable &ArgIndices = ScalarizedElements[I];
-
-      while (!I->use_empty()) {
-        if (LoadInst *LI = dyn_cast<LoadInst>(I->use_back())) {
-          assert(ArgIndices.begin()->empty() &&
-                 "Load element should sort to front!");
-          I2->setName(I->getName()+".val");
-          LI->replaceAllUsesWith(I2);
-          AA.replaceWithNewValue(LI, I2);
-          LI->eraseFromParent();
-          DOUT << "*** Promoted load of argument '" << I->getName()
-               << "' in function '" << F->getName() << "'\n";
-        } else {
-          GetElementPtrInst *GEP = cast<GetElementPtrInst>(I->use_back());
-          std::vector<Value*> Operands(GEP->op_begin()+1, GEP->op_end());
-
-          Function::arg_iterator TheArg = I2;
-          for (ScalarizeTable::iterator It = ArgIndices.begin();
-               *It != Operands; ++It, ++TheArg) {
-            assert(It != ArgIndices.end() && "GEP not handled??");
-          }
-
-          std::string NewName = I->getName();
-          for (unsigned i = 0, e = Operands.size(); i != e; ++i)
-            if (ConstantInt *CI = dyn_cast<ConstantInt>(Operands[i]))
-              NewName += "." + CI->getValue().toStringUnsigned(10);
-            else
-              NewName += ".x";
-          TheArg->setName(NewName+".val");
-
-          DOUT << "*** Promoted agg argument '" << TheArg->getName()
-               << "' of function '" << F->getName() << "'\n";
-
-          // All of the uses must be load instructions.  Replace them all with
-          // the argument specified by ArgNo.
-          while (!GEP->use_empty()) {
-            LoadInst *L = cast<LoadInst>(GEP->use_back());
-            L->replaceAllUsesWith(TheArg);
-            AA.replaceWithNewValue(L, TheArg);
-            L->eraseFromParent();
-          }
-          AA.deleteValue(GEP);
-          GEP->eraseFromParent();
-        }
-      }
-
-      // Increment I2 past all of the arguments added for this promoted pointer.
-      for (unsigned i = 0, e = ArgIndices.size(); i != e; ++i)
-        ++I2;
+      continue;
     }
+    
+    if (ByValArgsToTransform.count(I)) {
+      // In the callee, we create an alloca, and store each of the new incoming
+      // arguments into the alloca.
+      Instruction *InsertPt = NF->begin()->begin();
+      
+      // Just add all the struct element types.
+      const Type *AgTy = cast<PointerType>(I->getType())->getElementType();
+      Value *TheAlloca = new AllocaInst(AgTy, 0, "", InsertPt);
+      const StructType *STy = cast<StructType>(AgTy);
+      Value *Idxs[2] = { ConstantInt::get(Type::Int32Ty, 0), 0 };
+      
+      for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
+        Idxs[1] = ConstantInt::get(Type::Int32Ty, i);
+        Value *Idx = new GetElementPtrInst(TheAlloca, Idxs, Idxs+2,
+                                           TheAlloca->getName()+"."+utostr(i),
+                                           InsertPt);
+        I2->setName(I->getName()+"."+utostr(i));
+        new StoreInst(I2++, Idx, InsertPt);
+      }
+      
+      // Anything that used the arg should now use the alloca.
+      I->replaceAllUsesWith(TheAlloca);
+      TheAlloca->takeName(I);
+      AA.replaceWithNewValue(I, TheAlloca);
+      continue;
+    } 
+    
+    if (I->use_empty()) {
+      AA.deleteValue(I);
+      continue;
+    }
+    
+    // Otherwise, if we promoted this argument, then all users are load
+    // instructions, and all loads should be using the new argument that we
+    // added.
+    ScalarizeTable &ArgIndices = ScalarizedElements[I];
+
+    while (!I->use_empty()) {
+      if (LoadInst *LI = dyn_cast<LoadInst>(I->use_back())) {
+        assert(ArgIndices.begin()->empty() &&
+               "Load element should sort to front!");
+        I2->setName(I->getName()+".val");
+        LI->replaceAllUsesWith(I2);
+        AA.replaceWithNewValue(LI, I2);
+        LI->eraseFromParent();
+        DOUT << "*** Promoted load of argument '" << I->getName()
+             << "' in function '" << F->getName() << "'\n";
+      } else {
+        GetElementPtrInst *GEP = cast<GetElementPtrInst>(I->use_back());
+        std::vector<Value*> Operands(GEP->op_begin()+1, GEP->op_end());
+
+        Function::arg_iterator TheArg = I2;
+        for (ScalarizeTable::iterator It = ArgIndices.begin();
+             *It != Operands; ++It, ++TheArg) {
+          assert(It != ArgIndices.end() && "GEP not handled??");
+        }
+
+        std::string NewName = I->getName();
+        for (unsigned i = 0, e = Operands.size(); i != e; ++i)
+          if (ConstantInt *CI = dyn_cast<ConstantInt>(Operands[i]))
+            NewName += "." + CI->getValue().toStringUnsigned(10);
+          else
+            NewName += ".x";
+        TheArg->setName(NewName+".val");
+
+        DOUT << "*** Promoted agg argument '" << TheArg->getName()
+             << "' of function '" << F->getName() << "'\n";
+
+        // All of the uses must be load instructions.  Replace them all with
+        // the argument specified by ArgNo.
+        while (!GEP->use_empty()) {
+          LoadInst *L = cast<LoadInst>(GEP->use_back());
+          L->replaceAllUsesWith(TheArg);
+          AA.replaceWithNewValue(L, TheArg);
+          L->eraseFromParent();
+        }
+        AA.deleteValue(GEP);
+        GEP->eraseFromParent();
+      }
+    }
+
+    // Increment I2 past all of the arguments added for this promoted pointer.
+    for (unsigned i = 0, e = ArgIndices.size(); i != e; ++i)
+      ++I2;
+  }
 
   // Notify the alias analysis implementation that we inserted a new argument.
   if (ExtraArgHack)
