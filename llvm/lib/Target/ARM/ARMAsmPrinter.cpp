@@ -845,8 +845,9 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
         }
       }
 
-      if (I->hasInternalLinkage() || I->hasWeakLinkage() ||
-          I->hasLinkOnceLinkage()) {
+      if (I->hasInternalLinkage() || 
+           (!Subtarget->isTargetDarwin() && 
+            (I->hasWeakLinkage() || I->hasLinkOnceLinkage()))) {
         if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
         if (!NoZerosInBSS && TAI->getBSSSection())
           SwitchToDataSection(TAI->getBSSSection(), I);
@@ -877,7 +878,7 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
       if (Subtarget->isTargetDarwin()) {
         O << "\t.globl " << name << "\n"
           << "\t.weak_definition " << name << "\n";
-        SwitchToDataSection("\t.section __DATA,__const_coal,coalesced", I);
+        SwitchToDataSection("\t.section __DATA,__datacoal_nt,coalesced", I);
       } else {
         std::string SectionName("\t.section\t.llvm.linkonce.d." +
                                 name +
