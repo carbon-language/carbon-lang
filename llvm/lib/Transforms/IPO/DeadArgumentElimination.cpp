@@ -175,16 +175,29 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
     // Pass all the same arguments.
     Args.assign(CS.arg_begin(), CS.arg_begin()+NumArgs);
 
+    // Drop any attributes that were on the vararg arguments.
+    const ParamAttrsList *PAL = CS.getParamAttrs();
+    if (PAL && PAL->getParamIndex(PAL->size() - 1) > NumArgs) {
+      ParamAttrsVector ParamAttrsVec;
+      for (unsigned i = 0; PAL->getParamIndex(i) <= NumArgs; ++i) {
+        ParamAttrsWithIndex PAWI;
+        PAWI = ParamAttrsWithIndex::get(PAL->getParamIndex(i),
+                                        PAL->getParamAttrsAtIndex(i));
+        ParamAttrsVec.push_back(PAWI);
+      }
+      PAL = ParamAttrsList::get(ParamAttrsVec);
+    }
+
     Instruction *New;
     if (InvokeInst *II = dyn_cast<InvokeInst>(Call)) {
       New = new InvokeInst(NF, II->getNormalDest(), II->getUnwindDest(),
                            Args.begin(), Args.end(), "", Call);
       cast<InvokeInst>(New)->setCallingConv(CS.getCallingConv());
-      cast<InvokeInst>(New)->setParamAttrs(CS.getParamAttrs());
+      cast<InvokeInst>(New)->setParamAttrs(PAL);
     } else {
       New = new CallInst(NF, Args.begin(), Args.end(), "", Call);
       cast<CallInst>(New)->setCallingConv(CS.getCallingConv());
-      cast<CallInst>(New)->setParamAttrs(CS.getParamAttrs());
+      cast<CallInst>(New)->setParamAttrs(PAL);
       if (cast<CallInst>(Call)->isTailCall())
         cast<CallInst>(New)->setTailCall();
     }
