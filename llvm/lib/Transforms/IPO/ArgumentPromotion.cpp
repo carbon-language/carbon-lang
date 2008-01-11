@@ -193,7 +193,15 @@ static bool AllCalleesPassInValidPointerForArgument(Argument *Arg) {
 bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg, bool isByVal) const {
   // We can only promote this argument if all of the uses are loads, or are GEP
   // instructions (with constant indices) that are subsequently loaded.
-  bool HasLoadInEntryBlock = false;
+
+  // We can also only promote the load if we can guarantee that it will happen.
+  // Promoting a load causes the load to be unconditionally executed in the
+  // caller, so we can't turn a conditional load into an unconditional load in
+  // general.
+  bool SafeToUnconditionallyLoad = false;
+  if (isByVal)   // ByVal arguments are always safe to load from.
+    SafeToUnconditionallyLoad = true;
+  
   BasicBlock *EntryBlock = Arg->getParent()->begin();
   SmallVector<LoadInst*, 16> Loads;
   std::vector<SmallVector<ConstantInt*, 8> > GEPIndices;
@@ -202,7 +210,10 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg, bool isByVal) const {
     if (LoadInst *LI = dyn_cast<LoadInst>(*UI)) {
       if (LI->isVolatile()) return false;  // Don't hack volatile loads
       Loads.push_back(LI);
-      HasLoadInEntryBlock |= LI->getParent() == EntryBlock;
+      
+      // If this load occurs in the entry block, then the pointer is 
+      // unconditionally loaded.
+      SafeToUnconditionallyLoad |= LI->getParent() == EntryBlock;
     } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(*UI)) {
       if (GEP->use_empty()) {
         // Dead GEP's cause trouble later.  Just remove them if we run into
@@ -225,7 +236,10 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg, bool isByVal) const {
         if (LoadInst *LI = dyn_cast<LoadInst>(*UI)) {
           if (LI->isVolatile()) return false;  // Don't hack volatile loads
           Loads.push_back(LI);
-          HasLoadInEntryBlock |= LI->getParent() == EntryBlock;
+          
+          // If this load occurs in the entry block, then the pointer is 
+          // unconditionally loaded.
+          SafeToUnconditionallyLoad |= LI->getParent() == EntryBlock;
         } else {
           return false;
         }
@@ -257,7 +271,8 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg, bool isByVal) const {
   // of the pointer in the entry block of the function) or if we can prove that
   // all pointers passed in are always to legal locations (for example, no null
   // pointers are passed in, no pointers to free'd memory, etc).
-  if (!HasLoadInEntryBlock && !AllCalleesPassInValidPointerForArgument(Arg))
+  if (!SafeToUnconditionallyLoad &&
+      !AllCalleesPassInValidPointerForArgument(Arg))
     return false;   // Cannot prove that this is safe!!
 
   // Okay, now we know that the argument is only used by load instructions and
