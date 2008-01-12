@@ -44,6 +44,16 @@ void CodeGenModule::WarnUnsupported(const Stmt *S, const char *Type) {
                     &Msg, 1, &Range, 1);
 }
 
+/// WarnUnsupported - Print out a warning that codegen doesn't support the
+/// specified decl yet.
+void CodeGenModule::WarnUnsupported(const Decl *D, const char *Type) {
+  unsigned DiagID = getDiags().getCustomDiagID(Diagnostic::Warning, 
+                                               "cannot codegen this %0 yet");
+  std::string Msg = Type;
+  getDiags().Report(Context.getFullLoc(D->getLocation()), DiagID,
+                    &Msg, 1);
+}
+
 /// ReplaceMapValuesWith - This is a really slow and bad function that
 /// searches for any entries in GlobalDeclMap that point to OldVal, changing
 /// them to point to NewVal.  This is badbadbad, FIXME!

@@ -37,6 +37,7 @@ static unsigned nObjCImplementationDecls = 0;
 static unsigned nObjCCategoryImpl = 0;
 static unsigned nObjCCompatibleAlias = 0;
 static unsigned nObjCPropertyDecl = 0;
+static unsigned nLinkageSpecDecl = 0;
 
 static bool StatSwitch = false;
 
@@ -156,7 +157,9 @@ void Decl::PrintStats() {
 	      nFileVars*sizeof(FileVarDecl)+nParmVars*sizeof(ParmVarDecl)+
 	      nFieldDecls*sizeof(FieldDecl)+nSUC*sizeof(RecordDecl)+
 	      nEnumDecls*sizeof(EnumDecl)+nEnumConst*sizeof(EnumConstantDecl)+
-	      nTypedef*sizeof(TypedefDecl)) /* FIXME: add ObjC decls */);
+	      nTypedef*sizeof(TypedefDecl)+
+	      nLinkageSpecDecl*sizeof(LinkageSpecDecl))
+	  /* FIXME: add ObjC decls */);
 }
 
 void Decl::addDeclKind(const Kind k) {
@@ -222,6 +225,9 @@ void Decl::addDeclKind(const Kind k) {
       break;
     case PropertyDecl:
       nObjCPropertyDecl++;
+      break;
+    case LinkageSpec:
+      nLinkageSpecDecl++;
       break;
   }
 }

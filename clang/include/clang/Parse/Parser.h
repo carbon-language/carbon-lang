@@ -437,6 +437,7 @@ private:
   // C++ 7: Declarations [dcl.dcl]
   
   DeclTy *ParseNamespace(unsigned Context);
+  DeclTy *ParseLinkage(unsigned Context);
 
 };
 

@@ -22,6 +22,7 @@ namespace llvm {
 namespace clang {
   class ASTContext;
   class FunctionDecl;
+  class LinkageSpecDecl;
   class FileVarDecl;
   struct LangOptions;
   class Diagnostic;
@@ -37,6 +38,8 @@ namespace CodeGen {
   /// CodeGenFunction - Convert the AST node for a FunctionDecl into LLVM.
   ///
   void CodeGenFunction(CodeGenModule *Builder, FunctionDecl *D);
+
+  void CodeGenLinkageSpec(CodeGenModule *Builder, LinkageSpecDecl *LS);
   
   /// CodeGenGlobalVar - Emit the specified global variable to LLVM.
   void CodeGenGlobalVar(CodeGenModule *Builder, FileVarDecl *D);

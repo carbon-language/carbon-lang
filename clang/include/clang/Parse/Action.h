@@ -154,6 +154,12 @@ public:
   virtual DeclTy *ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
     return 0;
   }
+
+  virtual DeclTy *ActOnLinkageSpec(SourceLocation Loc, SourceLocation LBrace,
+				   SourceLocation RBrace, const char *Lang,
+				   unsigned StrSize, DeclTy *D) {
+    return 0;
+  }
   
   //===--------------------------------------------------------------------===//
   // Type Parsing Callbacks.

@@ -95,6 +95,10 @@ public:
   /// specified stmt yet.
   void WarnUnsupported(const Stmt *S, const char *Type);
   
+  /// WarnUnsupported - Print out a warning that codegen doesn't support the
+  /// specified decl yet.
+  void WarnUnsupported(const Decl *D, const char *Type);
+  
 private:
   /// ReplaceMapValuesWith - This is a really slow and bad function that
   /// searches for any entries in GlobalDeclMap that point to OldVal, changing

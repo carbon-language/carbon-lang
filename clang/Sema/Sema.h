@@ -192,6 +192,9 @@ private:
   virtual void ObjCActOnStartOfMethodDef(Scope *S, DeclTy *D);
   
   virtual DeclTy *ActOnFinishFunctionBody(DeclTy *Decl, StmtTy *Body);
+  virtual DeclTy *ActOnLinkageSpec(SourceLocation Loc, SourceLocation LBrace,
+				   SourceLocation RBrace, const char *Lang,
+				   unsigned StrSize, DeclTy *D);
   
   /// Scope actions.
   virtual void ActOnPopScope(SourceLocation Loc, Scope *S);

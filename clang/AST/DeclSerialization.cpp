@@ -422,3 +422,19 @@ TypedefDecl* TypedefDecl::CreateImpl(Deserializer& D) {
 
   return decl;
 }
+
+//===----------------------------------------------------------------------===//
+//      LinkageSpec Serialization.
+//===----------------------------------------------------------------------===//
+
+void LinkageSpecDecl::EmitInRec(Serializer& S) const {
+  Decl::EmitInRec(S);
+  S.EmitInt(getLanguage());
+  S.EmitPtr(D);
+}
+
+void LinkageSpecDecl::ReadInRec(Deserializer& D) {
+  Decl::ReadInRec(D);
+  Language = static_cast<LanguageIDs>(D.ReadInt());
+  D.ReadPtr(this->D);
+}

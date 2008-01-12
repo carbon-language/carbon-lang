@@ -13,6 +13,7 @@
 
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "CodeGenModule.h"
+#include "clang/AST/Decl.h"
 using namespace clang;
 
 
@@ -32,6 +33,16 @@ void clang::CodeGen::Terminate(CodeGenModule *B) {
 ///
 void clang::CodeGen::CodeGenFunction(CodeGenModule *B, FunctionDecl *D) {
   B->EmitFunction(D);
+}
+
+/// CodeGenLinkageSpec - Emit the specified linkage space to LLVM.
+void clang::CodeGen::CodeGenLinkageSpec(CodeGenModule *Builder,
+					LinkageSpecDecl *LS) {
+  if (LS->getLanguage() == LinkageSpecDecl::lang_cxx)
+    Builder->WarnUnsupported(LS, "linkage spec");
+
+  // FIXME: implement C++ linkage, C linkage works mostly by C
+  // language reuse already.
 }
 
 /// CodeGenGlobalVar - Emit the specified global variable to LLVM.

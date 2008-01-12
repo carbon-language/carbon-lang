@@ -80,3 +80,40 @@ Parser::DeclTy *Parser::ParseNamespace(unsigned Context) {
   
   return 0;
 }
+
+/// ParseLinkage - We know that the current token is a string_literal
+/// and just before that, that extern was seen.
+///
+///       linkage-specification: [C++ 7.5p2: dcl.link]
+///         'extern' string-literal '{' declaration-seq[opt] '}'
+///         'extern' string-literal declaration
+///
+Parser::DeclTy *Parser::ParseLinkage(unsigned Context) {
+  assert(Tok.is(tok::string_literal) && "Not a stringliteral!");
+  llvm::SmallVector<char, 8> LangBuffer;
+  // LangBuffer is guaranteed to be big enough.
+  LangBuffer.resize(Tok.getLength());
+  const char *LangBufPtr = &LangBuffer[0];
+  unsigned StrSize = PP.getSpelling(Tok, LangBufPtr);
+
+  SourceLocation Loc = ConsumeStringToken();
+  DeclTy *D = 0;
+  SourceLocation LBrace, RBrace;
+  
+  if (Tok.isNot(tok::l_brace)) {
+    D = ParseDeclaration(Context);
+  } else {
+    LBrace = ConsumeBrace();
+    while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {
+      // FIXME capture the decls.
+      D = ParseExternalDeclaration();
+    }
+
+    RBrace = MatchRHSPunctuation(tok::r_brace, LBrace);
+  }
+
+  if (!D)
+    return 0;
+
+  return Actions.ActOnLinkageSpec(Loc, LBrace, RBrace, LangBufPtr, StrSize, D);
+}

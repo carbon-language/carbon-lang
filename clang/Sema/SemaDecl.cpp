@@ -1615,6 +1615,27 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
   Enum->defineElements(EltList, BestType);
 }
 
+Sema::DeclTy* Sema::ActOnLinkageSpec(SourceLocation Loc,
+				     SourceLocation LBrace,
+				     SourceLocation RBrace,
+				     const char *Lang,
+				     unsigned StrSize,
+				     DeclTy *D) {
+  LinkageSpecDecl::LanguageIDs Language;
+  Decl *dcl = static_cast<Decl *>(D);
+  if (strncmp(Lang, "\"C\"", StrSize) == 0)
+    Language = LinkageSpecDecl::lang_c;
+  else if (strncmp(Lang, "\"C++\"", StrSize) == 0)
+    Language = LinkageSpecDecl::lang_cxx;
+  else {
+    Diag(Loc, diag::err_bad_language);
+    return 0;
+  }
+
+  // FIXME: Add all the various semantics of linkage specifications
+  return new LinkageSpecDecl(Loc, Language, dcl);
+}
+
 void Sema::HandleDeclAttribute(Decl *New, AttributeList *rawAttr) {
   const char *attrName = rawAttr->getAttributeName()->getName();
   unsigned attrLen = rawAttr->getAttributeName()->getLength();

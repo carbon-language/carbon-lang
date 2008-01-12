@@ -537,6 +537,8 @@ DIAG(err_invalid_reference_qualifier_application, ERROR,
      "'%0' qualifier may not be applied to a reference")
 DIAG(err_declarator_need_ident, ERROR,
      "declarator requires an identifier")
+DIAG(err_bad_language, ERROR,
+     "unknown linkage language")
 
 // Attributes
 DIAG(err_attribute_wrong_number_arguments, ERROR,

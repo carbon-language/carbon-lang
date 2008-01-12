@@ -39,6 +39,7 @@ namespace {
     void PrintDecl(Decl *D);
     void PrintFunctionDeclStart(FunctionDecl *FD);    
     void PrintTypeDefDecl(TypedefDecl *TD);    
+    void PrintLinkageSpec(LinkageSpecDecl *LS);
     void PrintObjCMethodDecl(ObjCMethodDecl *OMD);    
     void PrintObjCImplementationDecl(ObjCImplementationDecl *OID);
     void PrintObjCInterfaceDecl(ObjCInterfaceDecl *OID);
@@ -94,6 +95,8 @@ void DeclPrinter:: PrintDecl(Decl *D) {
     Out << "Read top-level tag decl: '" << TD->getName() << "'\n";
   } else if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D)) {
     Out << "Read top-level variable decl: '" << SD->getName() << "'\n";
+  } else if (LinkageSpecDecl *LSD = dyn_cast<LinkageSpecDecl>(D)) {
+    PrintLinkageSpec(LSD);
   } else {
     assert(0 && "Unknown decl type!");
   }
@@ -150,6 +153,18 @@ void DeclPrinter::PrintTypeDefDecl(TypedefDecl *TD) {
   std::string S = TD->getName();
   TD->getUnderlyingType().getAsStringInternal(S);
   Out << "typedef " << S << ";\n";
+}
+
+void DeclPrinter::PrintLinkageSpec(LinkageSpecDecl *LS) {
+  const char *l;
+  if (LS->getLanguage() == LinkageSpecDecl::lang_c)
+    l = "C";
+  else if (LS->getLanguage() == LinkageSpecDecl::lang_cxx)
+    l = "C++";
+  else assert(0 && "unknown language in linkage specification");
+  Out << "extern \"" << l << "\" { ";
+  PrintDecl(LS->getDecl());
+  Out << "}\n";
 }
 
 void DeclPrinter::PrintObjCMethodDecl(ObjCMethodDecl *OMD) {
@@ -608,6 +623,8 @@ namespace {
         CodeGen::CodeGenFunction(Builder, FD);
       } else if (FileVarDecl *FVD = dyn_cast<FileVarDecl>(D)) {
         CodeGen::CodeGenGlobalVar(Builder, FVD);
+      } else if (LinkageSpecDecl *LSD = dyn_cast<LinkageSpecDecl>(D)) {
+        CodeGen::CodeGenLinkageSpec(Builder, LSD);
       } else {
         assert(isa<TypeDecl>(D) && "Only expected type decls here");
         // don't codegen for now, eventually pass down for debug info.
