@@ -758,54 +758,35 @@ bool X86InstrInfo::isReallyTriviallyReMaterializable(MachineInstr *MI) const {
 /// only return true of *all* loads the instruction does are invariant (if it
 /// does multiple loads).
 bool X86InstrInfo::isInvariantLoad(MachineInstr *MI) const {
-  // FIXME: This should work with any X86 instruction that does a load, for
-  // example, all load+op instructions.
-  switch (MI->getOpcode()) {
-  default: break;
-  case X86::MOV32rm:
-    // Loads from stubs of global addresses are invariant.
-    if (MI->getOperand(1).isReg() &&
-        MI->getOperand(2).isImm() && MI->getOperand(3).isReg() &&
-        MI->getOperand(4).isGlobal() &&
-        TM.getSubtarget<X86Subtarget>().GVRequiresExtraLoad
-          (MI->getOperand(4).getGlobal(), TM, false) &&
-        MI->getOperand(2).getImm() == 1 &&
-        MI->getOperand(3).getReg() == 0)
-      return true;
-    // FALLTHROUGH
-  case X86::MOV8rm:
-  case X86::MOV16rm:
-  case X86::MOV16_rm:
-  case X86::MOV32_rm:
-  case X86::MOV64rm:
-  case X86::LD_Fp64m:
-  case X86::MOVSSrm:
-  case X86::MOVSDrm:
-  case X86::MOVAPSrm:
-  case X86::MOVAPDrm:
-  case X86::MMX_MOVD64rm:
-  case X86::MMX_MOVQ64rm:
+  // This code cares about loads from three cases: constant pool entries,
+  // invariant argument slots, and global stubs.  In order to handle these cases
+  // for all of the myriad of X86 instructions, we just scan for a CP/FI/GV
+  // operand and base are analysis on it.  This is safe because the address of
+  // none of these three cases is ever used as anything other than a load base
+  // and X86 doesn't have any instructions that load from multiple places.
+  
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    const MachineOperand &MO = MI->getOperand(i);
     // Loads from constant pools are trivially invariant.
-    if (MI->getOperand(1).isReg() && MI->getOperand(2).isImm() &&
-        MI->getOperand(3).isReg() && MI->getOperand(4).isCPI() &&
-        MI->getOperand(1).getReg() == 0 &&
-        MI->getOperand(2).getImm() == 1 &&
-        MI->getOperand(3).getReg() == 0)
+    if (MO.isCPI())
       return true;
-      
-    // If this is a load from a fixed argument slot, we know the value is
-    // invariant across the whole function, because we don't redefine argument
-    // values.
-    MachineFunction *MF = MI->getParent()->getParent();
-    if (MI->getOperand(1).isFI()) {
-      const MachineFrameInfo &MFI = *MF->getFrameInfo();
-      int Idx = MI->getOperand(1).getIndex();
+    
+    if (MO.isGlobal()) {
+      if (TM.getSubtarget<X86Subtarget>().GVRequiresExtraLoad(MO.getGlobal(),
+                                                              TM, false))
+        return true;
+      return false;
+    }
+
+    // If this is a load from an invariant stack slot, the load is a constant.
+    if (MO.isFI()) {
+      const MachineFrameInfo &MFI =
+        *MI->getParent()->getParent()->getFrameInfo();
+      int Idx = MO.getIndex();
       return MFI.isFixedObjectIndex(Idx) && MFI.isImmutableObjectIndex(Idx);
     }
-      
-    return false;
   }
-
+  
   // All other instances of these instructions are presumed to have other
   // issues.
   return false;
