@@ -453,7 +453,7 @@ static SDOperand
 AlignedLoad(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST,
             LSBaseSDNode *LSN,
             unsigned &alignment, int &alignOffs, int &prefSlotOffs,
-            unsigned &VT, bool &was16aligned)
+            MVT::ValueType &VT, bool &was16aligned)
 {
   MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   const valtype_map_s *vtm = getValueTypeMapEntry(VT);
