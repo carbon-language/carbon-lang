@@ -128,8 +128,13 @@ Sema::ExprResult Sema::ActOnPreDefinedExpr(SourceLocation Loc,
     break;
   }
   
-  // Pre-defined identifiers are always of type char *.
-  return new PreDefinedExpr(Loc, Context.getPointerType(Context.CharTy), IT);
+  // Pre-defined identifiers are of type char[x], where x is the length of the
+  // string.
+  llvm::APSInt Length(32);
+  Length = CurFunctionDecl->getIdentifier()->getLength() + 1;
+  QualType ResTy = Context.getConstantArrayType(Context.CharTy, Length,
+                                                ArrayType::Normal, 0);
+  return new PreDefinedExpr(Loc, ResTy, IT);
 }
 
 Sema::ExprResult Sema::ActOnCharacterConstant(const Token &Tok) {

@@ -340,9 +340,6 @@ LValue CodeGenFunction::EmitPreDefinedLValue(const PreDefinedExpr *E) {
   C = new llvm::GlobalVariable(C->getType(), true, 
                                llvm::GlobalValue::InternalLinkage,
                                C, GlobalVarName, CurFn->getParent());
-  llvm::Constant *Zero = llvm::Constant::getNullValue(llvm::Type::Int32Ty);
-  llvm::Constant *Zeros[] = { Zero, Zero };
-  C = llvm::ConstantExpr::getGetElementPtr(C, Zeros, 2);
   return LValue::MakeAddr(C);
 }
 

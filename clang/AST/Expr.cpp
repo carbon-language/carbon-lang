@@ -372,6 +372,8 @@ Expr::isLvalueResult Expr::isLvalue() const {
     return LV_Valid;
   case ObjCIvarRefExprClass: // ObjC instance variables are lvalues.
     return LV_Valid;
+  case PreDefinedExprClass:
+    return LV_Valid;
   default:
     break;
   }
@@ -430,6 +432,8 @@ bool Expr::hasStaticStorage() const {
   }
   case ArraySubscriptExprClass:
     return cast<ArraySubscriptExpr>(this)->getBase()->hasStaticStorage();
+  case PreDefinedExprClass:
+    return true;
   }
 }
 
