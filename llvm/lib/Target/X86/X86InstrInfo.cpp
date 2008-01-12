@@ -761,7 +761,7 @@ bool X86InstrInfo::isInvariantLoad(MachineInstr *MI) const {
   // This code cares about loads from three cases: constant pool entries,
   // invariant argument slots, and global stubs.  In order to handle these cases
   // for all of the myriad of X86 instructions, we just scan for a CP/FI/GV
-  // operand and base are analysis on it.  This is safe because the address of
+  // operand and base our analysis on it.  This is safe because the address of
   // none of these three cases is ever used as anything other than a load base
   // and X86 doesn't have any instructions that load from multiple places.
   
