@@ -453,9 +453,14 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
     unsigned Idx = 1;
     for (FunctionType::param_iterator I = FTy->param_begin(),
            E = FTy->param_end(); I != E; ++I) {
+      const Type *ArgTy = *I;
+      if (PAL && PAL->paramHasAttr(Idx, ParamAttr::ByVal)) {
+        assert(isa<PointerType>(ArgTy));
+        ArgTy = cast<PointerType>(ArgTy)->getElementType();
+      }
       if (I != FTy->param_begin())
         FunctionInnards << ", ";
-      printType(FunctionInnards, *I,
+      printType(FunctionInnards, ArgTy,
         /*isSigned=*/PAL && PAL->paramHasAttr(Idx, ParamAttr::SExt), "");
       ++Idx;
     }
@@ -495,6 +500,9 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
         isa<VectorType>(PTy->getElementType()))
       ptrName = "(" + ptrName + ")";
 
+    if (PAL)
+      // Must be a function ptr cast!
+      return printType(Out, PTy->getElementType(), false, ptrName, true, PAL);
     return printType(Out, PTy->getElementType(), false, ptrName);
   }
 
@@ -2632,6 +2640,7 @@ void CWriter::visitCallInst(CallInst &I) {
   // If this is a call to a struct-return function, assign to the first
   // parameter instead of passing it to the call.
   const ParamAttrsList *PAL = I.getParamAttrs();
+  bool hasByVal = I.hasByValArgument();
   bool isStructRet = I.isStructReturn();
   if (isStructRet) {
     bool isByVal = ByValParams.count(I.getOperand(1));
@@ -2645,8 +2654,8 @@ void CWriter::visitCallInst(CallInst &I) {
   
   if (!WroteCallee) {
     // If this is an indirect call to a struct return function, we need to cast
-    // the pointer.
-    bool NeedsCast = isStructRet && !isa<Function>(Callee);
+    // the pointer. Ditto for indirect calls with byval arguments.
+    bool NeedsCast = (hasByVal || isStructRet) && !isa<Function>(Callee);
 
     // GCC is a real PITA.  It does not permit codegening casts of functions to
     // function pointers if they are in a call (it generates a trap instruction
@@ -2670,11 +2679,13 @@ void CWriter::visitCallInst(CallInst &I) {
     if (NeedsCast) {
       // Ok, just cast the pointer type.
       Out << "((";
-      if (!isStructRet)
-        printType(Out, I.getCalledValue()->getType());
-      else
+      if (isStructRet)
         printStructReturnPointerFunctionType(Out, PAL,
                              cast<PointerType>(I.getCalledValue()->getType()));
+      else if (hasByVal)
+        printType(Out, I.getCalledValue()->getType(), false, "", true, PAL);
+      else
+        printType(Out, I.getCalledValue()->getType());
       Out << ")(void*)";
     }
     writeOperand(Callee);
