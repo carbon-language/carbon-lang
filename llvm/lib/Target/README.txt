@@ -610,6 +610,14 @@ pointer parameters for alias analysis.  Some ideas:
    arguments when the function is inlined.
 
 These functions can be inferred by various analysis passes such as the 
-globalsmodrefaa pass.
+globalsmodrefaa pass.  Note that getting #2 right is actually really tricky.
+Consider this code:
+
+struct S;  S G;
+void caller(S byvalarg) { G.field = 1; ... }
+void callee() { caller(G); }
+
+The fact that the caller does not modify byval arg is not enough, we need
+to know that it doesn't modify G either.  This is very tricky.
 
 //===---------------------------------------------------------------------===//
