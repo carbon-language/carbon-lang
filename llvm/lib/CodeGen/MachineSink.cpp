@@ -47,7 +47,7 @@ namespace {
     }
   private:
     bool ProcessBlock(MachineBasicBlock &MBB);
-    bool SinkInstruction(MachineInstr *MI);
+    bool SinkInstruction(MachineInstr *MI, bool &SawStore);
     bool AllUsesDominatedByBlock(unsigned Reg, MachineBasicBlock *MBB) const;
   };
   
@@ -115,10 +115,11 @@ bool MachineSinking::ProcessBlock(MachineBasicBlock &MBB) {
   // Can't sink anything out of a block that has less than two successors.
   if (MBB.succ_size() <= 1) return false;
   
-  // Walk the basic block bottom-up
+  // Walk the basic block bottom-up.  Remember if we saw a store.
+  bool SawStore = false;
   for (MachineBasicBlock::iterator I = MBB.end(); I != MBB.begin(); ){
     MachineBasicBlock::iterator LastIt = I;
-    if (SinkInstruction(--I)) {
+    if (SinkInstruction(--I, SawStore)) {
       I = LastIt;
       ++NumSunk;
     }
@@ -129,24 +130,30 @@ bool MachineSinking::ProcessBlock(MachineBasicBlock &MBB) {
 
 /// SinkInstruction - Determine whether it is safe to sink the specified machine
 /// instruction out of its current block into a successor.
-bool MachineSinking::SinkInstruction(MachineInstr *MI) {
+bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
   const TargetInstrDesc &TID = MI->getDesc();
   
   // Ignore stuff that we obviously can't sink.
-  if (TID.mayStore() || TID.isCall() || TID.isReturn() || TID.isBranch() ||
-      TID.hasUnmodeledSideEffects())
+  if (TID.mayStore() || TID.isCall()) {
+    SawStore = true;
+    return false;
+  }
+  if (TID.isReturn() || TID.isBranch() || TID.hasUnmodeledSideEffects())
     return false;
 
-  if (TID.mayLoad()) {
-    // Okay, this instruction does a load.  As a refinement, allow the target
-    // to decide whether the loaded value is actually a constant.  If so, we
-    // can actually use it as a load.
-    if (!TII->isInvariantLoad(MI)) {
-      // FIXME: we should be able to sink loads with no other side effects if
-      // there is nothing that can change memory from here until the end of
-      // block.  This is a trivial form of alias analysis.
-      return false;
-    }
+  // See if this instruction does a load.  If so, we have to guarantee that the
+  // loaded value doesn't change between the load and the end of block.  The
+  // check for isInvariantLoad gives the targe the chance to classify the load
+  // as always returning a constant, e.g. a constant pool load.
+  if (TID.mayLoad() && !TII->isInvariantLoad(MI)) {
+    // Otherwise, this is a real load.  If there is a store between the load and
+    // end of block, we can't sink the load.
+    //
+    // FIXME: we can't do this transformation until we know that the load is
+    // not volatile, and machineinstrs don't keep this info. :(
+    //
+    //if (SawStore) 
+    return false;
   }
   
   // FIXME: This should include support for sinking instructions within the
