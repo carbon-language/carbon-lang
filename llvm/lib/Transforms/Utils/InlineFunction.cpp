@@ -241,10 +241,12 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
       Value *ActualArg = *AI;
       
       // When byval arguments actually inlined, we need to make the copy implied
-      // by them actually explicit.
-      // TODO: If we know that the callee never modifies the struct, we can
-      // remove this copy.
-      if (CalledFunc->paramHasAttr(ArgNo+1, ParamAttr::ByVal)) {
+      // by them explicit.  However, we don't do this if the callee is readonly
+      // or readnone, because the copy would be unneeded: the callee doesn't
+      // modify the struct.
+      if (CalledFunc->paramHasAttr(ArgNo+1, ParamAttr::ByVal) &&
+          !CalledFunc->paramHasAttr(0, ParamAttr::ReadOnly) &&
+          !CalledFunc->paramHasAttr(0, ParamAttr::ReadNone)) {
         const Type *AggTy = cast<PointerType>(I->getType())->getElementType();
         const Type *VoidPtrTy = PointerType::getUnqual(Type::Int8Ty);
         
