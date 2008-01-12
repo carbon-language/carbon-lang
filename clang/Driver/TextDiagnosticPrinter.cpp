@@ -47,19 +47,23 @@ PrintIncludeStack(FullSourceLoc Pos) {
 /// HighlightRange - Given a SourceRange and a line number, highlight (with ~'s)
 /// any characters in LineNo that intersect the SourceRange.
 void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
-                                          SourceManager& SourceMgr,
-                                           unsigned LineNo,
+                                           SourceManager& SourceMgr,
+                                           unsigned LineNo, unsigned FileID,
                                            std::string &CaratLine,
                                            const std::string &SourceLine) {  
   assert(CaratLine.size() == SourceLine.size() &&
          "Expect a correspondence between source and carat line!");
   if (!R.isValid()) return;
 
-  unsigned StartLineNo = SourceMgr.getLogicalLineNumber(R.getBegin());
-  if (StartLineNo > LineNo) return;  // No intersection.
+  SourceLocation LogicalStart = SourceMgr.getLogicalLoc(R.getBegin());
+  unsigned StartLineNo = SourceMgr.getLineNumber(LogicalStart);
+  if (StartLineNo > LineNo || LogicalStart.getFileID() != FileID)
+    return;  // No intersection.
   
-  unsigned EndLineNo = SourceMgr.getLogicalLineNumber(R.getEnd());
-  if (EndLineNo < LineNo) return;  // No intersection.
+  SourceLocation LogicalEnd = SourceMgr.getLogicalLoc(R.getEnd());
+  unsigned EndLineNo = SourceMgr.getLineNumber(LogicalEnd);
+  if (EndLineNo < LineNo || LogicalStart.getFileID() != FileID)
+    return;  // No intersection.
   
   // Compute the column number of the start.
   unsigned StartColNo = 0;
@@ -107,11 +111,13 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic &Diags,
                                              const SourceRange *Ranges,
                                              unsigned NumRanges) {
   unsigned LineNo = 0, ColNo = 0;
+  unsigned FileID = 0;
   const char *LineStart = 0, *LineEnd = 0;
   
   if (Pos.isValid()) {
     FullSourceLoc LPos = Pos.getLogicalLoc();
     LineNo = LPos.getLineNumber();
+    FileID = LPos.getLocation().getFileID();
     
     // First, if this diagnostic is not in the main file, print out the
     // "included from" lines.
@@ -163,7 +169,8 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic &Diags,
     
     // Highlight all of the characters covered by Ranges with ~ characters.
     for (unsigned i = 0; i != NumRanges; ++i)
-      HighlightRange(Ranges[i], Pos.getManager(),LineNo, CaratLine, SourceLine);
+      HighlightRange(Ranges[i], Pos.getManager(), LineNo, FileID,
+                     CaratLine, SourceLine);
     
     // Next, insert the carat itself.
     if (ColNo-1 < CaratLine.size())
