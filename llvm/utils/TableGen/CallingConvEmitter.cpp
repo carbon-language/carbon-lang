@@ -115,19 +115,32 @@ void CallingConvEmitter::EmitAction(Record *Action,
       int Size = Action->getValueAsInt("Size");
       int Align = Action->getValueAsInt("Align");
 
-      O << IndentStr << "unsigned Offset" << ++Counter
-        << " = State.AllocateStack(";
+      O << IndentStr << "unsigned Size = ";
       if (Size)
-        O << Size << ", ";
+        O << Size;
       else
-        O << "\n" << IndentStr << "  State.getTarget().getTargetData()"
-          "->getABITypeSize(MVT::getTypeForValueType(LocVT)), ";
+        O << "State.getTarget().getTargetData()"
+          "->getABITypeSize(MVT::getTypeForValueType(LocVT))";
+      O << ";\n"
+        << IndentStr << "unsigned Align = ";
       if (Align)
         O << Align;
       else
-        O << "\n" << IndentStr << "  State.getTarget().getTargetData()"
+        O << "State.getTarget().getTargetData()"
           "->getABITypeAlignment(MVT::getTypeForValueType(LocVT))";
-      O << ");\n" << IndentStr
+      O << ";\n";
+      O << IndentStr << "if (ArgFlags & ISD::ParamFlags::ByVal) {\n";
+      O << IndentStr << "  " <<
+        "Size = (ArgFlags & ISD::ParamFlags::ByValSize) >> "
+        "ISD::ParamFlags::ByValSizeOffs;\n";
+      O << IndentStr << "  " <<
+        "unsigned ParamAlign = 1 << ((ArgFlags & ISD::ParamFlags::ByValAlign) "
+        ">> ISD::ParamFlags::ByValAlignOffs);\n";
+      O << IndentStr << "  Align = std::max(Align, ParamAlign);\n"
+        << IndentStr << "}\n";
+      O << IndentStr << "unsigned Offset" << ++Counter
+        << " = State.AllocateStack(Size, Align);\n";
+      O << IndentStr
         << "State.addLoc(CCValAssign::getMem(ValNo, ValVT, Offset"
         << Counter << ", LocVT, LocInfo));\n";
       O << IndentStr << "return false;\n";
