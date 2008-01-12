@@ -389,8 +389,7 @@ Parser::DeclTy *Parser::ParseDeclarationOrFunctionDefinition() {
   // If the declspec consisted only of 'extern' and we have a string
   // literal following it, this must be a C++ linkage specifier like
   // 'extern "C"'.
-  // FIXME: This should be limited to just C++/ObjectiveC++
-  if (Tok.is(tok::string_literal) &&
+  if (Tok.is(tok::string_literal) && getLang().CPlusPlus &&
       DS.getStorageClassSpec() == DeclSpec::SCS_extern &&
       DS.getParsedSpecifiers() == DeclSpec::PQ_StorageClassSpecifier)
     return ParseLinkage(Declarator::FileContext);
