@@ -944,6 +944,9 @@ public:
   /// @brief Determine if the call returns a structure.
   bool isStructReturn() const;
 
+  /// @brief Determine if any call argument is an aggregate passed by value.
+  bool hasByValArgument() const;
+
   /// getCalledFunction - Return the function being called by this instruction
   /// if it is a direct call.  If it is a call through a function pointer,
   /// return null.
