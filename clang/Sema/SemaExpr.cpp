@@ -122,16 +122,20 @@ Sema::ExprResult Sema::ActOnPreDefinedExpr(SourceLocation Loc,
   }
 
   // Verify that this is in a function context.
-  if (CurFunctionDecl == 0)
+  if (CurFunctionDecl == 0 && CurMethodDecl == 0)
     return Diag(Loc, diag::err_predef_outside_function);
   
   // Pre-defined identifiers are of type char[x], where x is the length of the
   // string.
-  llvm::APSInt Length(32);
-  Length = CurFunctionDecl->getIdentifier()->getLength() + 1;
+  unsigned Length;
+  if (CurFunctionDecl)
+    Length = CurFunctionDecl->getIdentifier()->getLength();
+  else
+    Length = CurMethodDecl->getSelector().getName().size();
   
+  llvm::APInt LengthI(32, Length + 1);
   QualType ResTy = Context.CharTy.getQualifiedType(QualType::Const);
-  ResTy = Context.getConstantArrayType(ResTy, Length, ArrayType::Normal, 0);
+  ResTy = Context.getConstantArrayType(ResTy, LengthI, ArrayType::Normal, 0);
   return new PreDefinedExpr(Loc, ResTy, IT);
 }
 
