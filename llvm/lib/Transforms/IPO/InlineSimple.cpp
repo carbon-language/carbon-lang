@@ -35,6 +35,7 @@ namespace {
     InlineCostAnalyzer CA;
   public:
     SimpleInliner() : Inliner(&ID) {}
+    SimpleInliner(int Threshold) : Inliner(&ID, Threshold) {}
     static char ID; // Pass identification, replacement for typeid
     int getInlineCost(CallSite CS) {
       return CA.getInlineCost(CS, NeverInline);
@@ -46,6 +47,10 @@ namespace {
 }
 
 Pass *llvm::createFunctionInliningPass() { return new SimpleInliner(); }
+
+Pass *llvm::createFunctionInliningPass(int Threshold) { 
+  return new SimpleInliner(Threshold);
+}
 
 // doInitialization - Initializes the vector of functions that have been
 // annotated with the noinline attribute.

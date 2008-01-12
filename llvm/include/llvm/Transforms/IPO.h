@@ -91,6 +91,7 @@ ModulePass *createFunctionExtractionPass(Function *F, bool deleteFn = false,
 /// to inline direct function calls to small functions.
 ///
 Pass *createFunctionInliningPass();
+Pass *createFunctionInliningPass(int Threshold);
 
 //===----------------------------------------------------------------------===//
 /// createPruneEHPass - Return a new pass object which transforms invoke

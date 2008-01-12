@@ -39,6 +39,9 @@ namespace {
 Inliner::Inliner(const void *ID) 
   : CallGraphSCCPass((intptr_t)ID), InlineThreshold(InlineLimit) {}
 
+Inliner::Inliner(const void *ID, int Threshold) 
+  : CallGraphSCCPass((intptr_t)ID), InlineThreshold(Threshold) {}
+
 /// getAnalysisUsage - For this class, we declare that we require and preserve
 /// the call graph.  If the derived class implements this method, it should
 /// always explicitly call the implementation here.
