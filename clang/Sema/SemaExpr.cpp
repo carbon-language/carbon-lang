@@ -115,25 +115,23 @@ Sema::ExprResult Sema::ActOnPreDefinedExpr(SourceLocation Loc,
   PreDefinedExpr::IdentType IT;
   
   switch (Kind) {
-  default:
-    assert(0 && "Unknown simple primary expr!");
-  case tok::kw___func__:       // primary-expression: __func__ [C99 6.4.2.2]
-    IT = PreDefinedExpr::Func;
-    break;
-  case tok::kw___FUNCTION__:   // primary-expression: __FUNCTION__ [GNU]
-    IT = PreDefinedExpr::Function;
-    break;
-  case tok::kw___PRETTY_FUNCTION__:  // primary-expression: __P..Y_F..N__ [GNU]
-    IT = PreDefinedExpr::PrettyFunction;
-    break;
+  default: assert(0 && "Unknown simple primary expr!");
+  case tok::kw___func__: IT = PreDefinedExpr::Func; break; // [C99 6.4.2.2]
+  case tok::kw___FUNCTION__: IT = PreDefinedExpr::Function; break;
+  case tok::kw___PRETTY_FUNCTION__: IT = PreDefinedExpr::PrettyFunction; break;
   }
+
+  // Verify that this is in a function context.
+  if (CurFunctionDecl == 0)
+    return Diag(Loc, diag::err_predef_outside_function);
   
   // Pre-defined identifiers are of type char[x], where x is the length of the
   // string.
   llvm::APSInt Length(32);
   Length = CurFunctionDecl->getIdentifier()->getLength() + 1;
-  QualType ResTy = Context.getConstantArrayType(Context.CharTy, Length,
-                                                ArrayType::Normal, 0);
+  
+  QualType ResTy = Context.CharTy.getQualifiedType(QualType::Const);
+  ResTy = Context.getConstantArrayType(ResTy, Length, ArrayType::Normal, 0);
   return new PreDefinedExpr(Loc, ResTy, IT);
 }
 
