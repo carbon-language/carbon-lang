@@ -1445,7 +1445,7 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
             StackPtr = DAG.getCopyFromReg(Chain, X86StackPtr, getPointerTy());
           Source = DAG.getNode(ISD::ADD, getPointerTy(), StackPtr, Source);
           if ((Flags & ISD::ParamFlags::ByVal)==0) 
-            Source = DAG.getLoad(VA.getValVT(), Chain, Source,NULL, 0);
+            Source = DAG.getLoad(VA.getValVT(), Chain, Source, NULL, 0);
         } 
 
         if (Flags & ISD::ParamFlags::ByVal) {
