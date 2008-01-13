@@ -86,6 +86,16 @@ protected:
   }
   
 public:
+  // This method is only defined so that we can cast a
+  // void* to FoldingSet<ExplodedNodeImpl> so that we can iterate
+  // over the vertices of EdgeNodeSetMap in ExplodeGraphImpl.
+  // The actual profiling of vertices will be done in the derived
+  // class, ExplodedNode<>.  Nodes will NEVER be INSERTED into the
+  // FoldingSet using this Profile method (since it doesn't do anything).
+  inline void Profile(llvm::FoldingSetNodeID& ID) const {
+    assert (false && "Needs to be implemented in derived class.");
+  }
+  
   /// getLocation - Returns the edge associated with the given node.
   const ProgramPoint& getLocation() const { return Location; }
   
@@ -227,22 +237,6 @@ protected:
   }
     
 public:
-  virtual ~ExplodedGraph() {
-    // Delete the FoldingSet's in Nodes.  Note that the contents
-    // of the FoldingSets are nodes allocated from the BumpPtrAllocator,
-    // so all of those will get nuked when that object is destroyed.
-    for (EdgeNodeSetMap::iterator I=Nodes.begin(), E=Nodes.end(); I!=E; ++I) {
-      llvm::FoldingSet<NodeTy>* ENodes = 
-        reinterpret_cast<llvm::FoldingSet<NodeTy>*>(I->second);
-      
-      for (typename llvm::FoldingSet<NodeTy>::iterator
-             I=ENodes->begin(), E=ENodes->end(); I!=E; ++I)
-        delete *I;
-      
-      delete ENodes;
-    }
-  }
-  
   /// getCheckerState - Returns the internal checker state associated
   ///  with the exploded graph.  Ownership remains with the ExplodedGraph
   ///  objecct.

@@ -68,3 +68,20 @@ ExplodedNodeImpl** ExplodedNodeImpl::NodeGroup::end() const {
 ExplodedNodeImpl::NodeGroup::~NodeGroup() {
   if (getKind() == SizeOther) delete &getVector(getPtr());
 }
+
+
+ExplodedGraphImpl::~ExplodedGraphImpl() {
+  // Delete the FoldingSet's in Nodes.  Note that the contents
+  // of the FoldingSets are nodes allocated from the BumpPtrAllocator,
+  // so all of those will get nuked when that object is destroyed.
+  for (EdgeNodeSetMap::iterator I=Nodes.begin(), E=Nodes.end(); I!=E; ++I) {
+    llvm::FoldingSet<ExplodedNodeImpl>* ENodes = 
+      reinterpret_cast<llvm::FoldingSet<ExplodedNodeImpl>*>(I->second);
+    
+    for (llvm::FoldingSet<ExplodedNodeImpl>::iterator
+         I=ENodes->begin(), E=ENodes->end(); I!=E; ++I)
+      delete &*I;
+    
+    delete ENodes;
+  }
+}
