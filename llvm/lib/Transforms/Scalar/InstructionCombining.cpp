@@ -7854,34 +7854,35 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     // If we can determine a pointer alignment that is bigger than currently
     // set, update the alignment.
     if (isa<MemCpyInst>(MI) || isa<MemMoveInst>(MI)) {
-      unsigned Alignment1 = GetOrEnforceKnownAlignment(MI->getOperand(1), TD);
-      unsigned Alignment2 = GetOrEnforceKnownAlignment(MI->getOperand(2), TD);
-      unsigned Align = std::min(Alignment1, Alignment2);
-      if (MI->getAlignment()->getZExtValue() < Align) {
-        MI->setAlignment(ConstantInt::get(Type::Int32Ty, Align));
+      unsigned DstAlign = GetOrEnforceKnownAlignment(MI->getOperand(1), TD);
+      unsigned SrcAlign = GetOrEnforceKnownAlignment(MI->getOperand(2), TD);
+      unsigned MinAlign = std::min(DstAlign, SrcAlign);
+      unsigned CopyAlign = MI->getAlignment()->getZExtValue();
+      if (CopyAlign < MinAlign) {
+        MI->setAlignment(ConstantInt::get(Type::Int32Ty, MinAlign));
         Changed = true;
       }
-
+      
       // If MemCpyInst length is 1/2/4/8 bytes then replace memcpy with
       // load/store.
-      ConstantInt *MemOpLength = dyn_cast<ConstantInt>(CI.getOperand(3));
-      if (MemOpLength) {
+      if (ConstantInt *MemOpLength = dyn_cast<ConstantInt>(CI.getOperand(3))) {
+        // Source and destination pointer types are always "i8*" for intrinsic.
+        //   If Size is 8 then use Int64Ty
+        //   If Size is 4 then use Int32Ty
+        //   If Size is 2 then use Int16Ty
+        //   If Size is 1 then use Int8Ty
         unsigned Size = MemOpLength->getZExtValue();
-        unsigned Align = cast<ConstantInt>(CI.getOperand(4))->getZExtValue();
-        PointerType *NewPtrTy = NULL;
-        // Destination pointer type is always i8 *
-        // If Size is 8 then use Int64Ty
-        // If Size is 4 then use Int32Ty
-        // If Size is 2 then use Int16Ty
-        // If Size is 1 then use Int8Ty
-        if (Size && Size <=8 && !(Size&(Size-1)))
-          NewPtrTy = PointerType::getUnqual(IntegerType::get(Size<<3));
-
-        if (NewPtrTy) {
+        if (Size && Size <= 8 && !(Size&(Size-1))) {
+          Type *NewPtrTy = PointerType::getUnqual(IntegerType::get(Size<<3));
+          // If the memcpy/memmove provides better alignment info than we can
+          // infer, use it.
+          SrcAlign = std::max(SrcAlign, CopyAlign);
+          DstAlign = std::max(DstAlign, CopyAlign);
+          
           Value *Src = InsertBitCastBefore(CI.getOperand(2), NewPtrTy, CI);
           Value *Dest = InsertBitCastBefore(CI.getOperand(1), NewPtrTy, CI);
-          Value *L = new LoadInst(Src, "tmp", false, Align, &CI);
-          Value *NS = new StoreInst(L, Dest, false, Align, &CI);
+          Value *L = new LoadInst(Src, "tmp", false, SrcAlign, &CI);
+          Value *NS = new StoreInst(L, Dest, false, DstAlign, &CI);
           CI.replaceAllUsesWith(NS);
           Changed = true;
           return EraseInstFromFunction(CI);
