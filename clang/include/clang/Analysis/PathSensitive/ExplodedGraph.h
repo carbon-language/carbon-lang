@@ -23,7 +23,6 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/DepthFirstIterator.h"
-#include <vector>
 
 namespace clang {
 
@@ -159,7 +158,7 @@ protected:
   friend class GREngineImpl;
   
   // Type definitions.
-  typedef llvm::DenseMap<ProgramPoint,void*>         EdgeNodeSetMap;
+  typedef llvm::DenseMap<ProgramPoint,void*>        EdgeNodeSetMap;
   typedef llvm::SmallVector<ExplodedNodeImpl*,2>    RootsTy;
   typedef llvm::SmallVector<ExplodedNodeImpl*,10>   EndNodesTy;
   
@@ -204,7 +203,7 @@ protected:
   }
 
 public:
-  virtual ~ExplodedGraphImpl() {};
+  virtual ~ExplodedGraphImpl();
 
   unsigned num_roots() const { return Roots.size(); }
   unsigned num_eops() const { return EndNodes.size(); }
@@ -232,8 +231,16 @@ public:
     // Delete the FoldingSet's in Nodes.  Note that the contents
     // of the FoldingSets are nodes allocated from the BumpPtrAllocator,
     // so all of those will get nuked when that object is destroyed.
-    for (EdgeNodeSetMap::iterator I=Nodes.begin(), E=Nodes.end(); I!=E; ++I)
-      delete reinterpret_cast<llvm::FoldingSet<NodeTy>*>(I->second);
+    for (EdgeNodeSetMap::iterator I=Nodes.begin(), E=Nodes.end(); I!=E; ++I) {
+      llvm::FoldingSet<NodeTy>* ENodes = 
+        reinterpret_cast<llvm::FoldingSet<NodeTy>*>(I->second);
+      
+      for (typename llvm::FoldingSet<NodeTy>::iterator
+             I=ENodes->begin(), E=ENodes->end(); I!=E; ++I)
+        delete *I;
+      
+      delete ENodes;
+    }
   }
   
   /// getCheckerState - Returns the internal checker state associated
