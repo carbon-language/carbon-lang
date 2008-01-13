@@ -8142,9 +8142,9 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
       return false;   // Cannot transform this return value.
 
     if (!Caller->use_empty() &&
-        !CastInst::isCastable(FT->getReturnType(), OldRetTy) &&
         // void -> non-void is handled specially
-        FT->getReturnType() != Type::VoidTy)
+        FT->getReturnType() != Type::VoidTy &&
+        !CastInst::isCastable(FT->getReturnType(), OldRetTy))
       return false;   // Cannot transform this return value.
 
     if (CallerPAL && !Caller->use_empty()) {
@@ -8200,14 +8200,17 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
       Callee->isDeclaration())
     return false;   // Do not delete arguments unless we have a function body...
 
-  if (FT->getNumParams() < NumActualArgs && FT->isVarArg())
+  if (FT->getNumParams() < NumActualArgs && FT->isVarArg() && CallerPAL)
     // In this case we have more arguments than the new function type, but we
-    // won't be dropping them.  Some of them may have attributes.  If so, we
-    // cannot perform the transform because attributes are not allowed after
-    // the end of the function type.
-    if (CallerPAL && CallerPAL->size() &&
-        CallerPAL->getParamIndex(CallerPAL->size()-1) > FT->getNumParams())
-      return false;
+    // won't be dropping them.  Check that these extra arguments have attributes
+    // that are compatible with being a vararg call argument.
+    for (unsigned i = CallerPAL->size(); i; --i) {
+      if (CallerPAL->getParamIndex(i - 1) <= FT->getNumParams())
+        break;
+      uint16_t PAttrs = CallerPAL->getParamAttrsAtIndex(i - 1);
+      if (PAttrs & ParamAttr::VarArgsIncompatible)
+        return false;
+    }
 
   // Okay, we decided that this is a safe thing to do: go ahead and start
   // inserting cast instructions as necessary...
@@ -8269,10 +8272,12 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
         } else {
           Args.push_back(*AI);
         }
-      }
 
-      // No need to add parameter attributes - we already checked that there
-      // aren't any.
+        // Add any parameter attributes.
+        uint16_t PAttrs = CallerPAL ? CallerPAL->getParamAttrs(i + 1) : 0;
+        if (PAttrs)
+          attrVec.push_back(ParamAttrsWithIndex::get(i + 1, PAttrs));
+      }
     }
 
   if (FT->getReturnType() == Type::VoidTy)
