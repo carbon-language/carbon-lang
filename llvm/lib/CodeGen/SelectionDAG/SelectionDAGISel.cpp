@@ -3916,12 +3916,12 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
     if (F.paramHasAttr(j, ParamAttr::ByVal)) {
       Flags |= ISD::ParamFlags::ByVal;
       const PointerType *Ty = cast<PointerType>(I->getType());
-      const StructType *STy = cast<StructType>(Ty->getElementType());
-      unsigned StructAlign =
-          Log2_32(getTargetData()->getCallFrameTypeAlignment(STy));
-      unsigned StructSize  = getTargetData()->getABITypeSize(STy);
-      Flags |= (StructAlign << ISD::ParamFlags::ByValAlignOffs);
-      Flags |= (StructSize  << ISD::ParamFlags::ByValSizeOffs);
+      const Type *ElementTy = Ty->getElementType();
+      unsigned FrameAlign =
+          Log2_32(getTargetData()->getCallFrameTypeAlignment(ElementTy));
+      unsigned FrameSize  = getTargetData()->getABITypeSize(ElementTy);
+      Flags |= (FrameAlign << ISD::ParamFlags::ByValAlignOffs);
+      Flags |= (FrameSize  << ISD::ParamFlags::ByValSizeOffs);
     }
     if (F.paramHasAttr(j, ParamAttr::Nest))
       Flags |= ISD::ParamFlags::Nest;
@@ -4046,12 +4046,12 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
     if (Args[i].isByVal) {
       Flags |= ISD::ParamFlags::ByVal;
       const PointerType *Ty = cast<PointerType>(Args[i].Ty);
-      const StructType *STy = cast<StructType>(Ty->getElementType());
-      unsigned StructAlign =
-          Log2_32(getTargetData()->getCallFrameTypeAlignment(STy));
-      unsigned StructSize  = getTargetData()->getABITypeSize(STy);
-      Flags |= (StructAlign << ISD::ParamFlags::ByValAlignOffs);
-      Flags |= (StructSize  << ISD::ParamFlags::ByValSizeOffs);
+      const Type *ElementTy = Ty->getElementType();
+      unsigned FrameAlign =
+          Log2_32(getTargetData()->getCallFrameTypeAlignment(ElementTy));
+      unsigned FrameSize  = getTargetData()->getABITypeSize(ElementTy);
+      Flags |= (FrameAlign << ISD::ParamFlags::ByValAlignOffs);
+      Flags |= (FrameSize  << ISD::ParamFlags::ByValSizeOffs);
     }
     if (Args[i].isNest)
       Flags |= ISD::ParamFlags::Nest;
