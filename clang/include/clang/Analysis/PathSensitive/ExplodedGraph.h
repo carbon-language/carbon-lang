@@ -39,68 +39,23 @@ protected:
     uintptr_t P;
     
     unsigned getKind() const { return P & Flags; }
-    
-    std::vector<ExplodedNodeImpl*>& getVector() {
-      assert (getKind() == SizeOther);
-      return *reinterpret_cast<std::vector<ExplodedNodeImpl*>*>(P & ~Flags);
-    }  
-    const std::vector<ExplodedNodeImpl*>& getVector() const {
-      assert (getKind() == SizeOther);
-      return *reinterpret_cast<std::vector<ExplodedNodeImpl*>*>(P & ~Flags);
-    }
-    
-    ExplodedNodeImpl* getNode() const {
-      assert (getKind() == Size1);
-      return reinterpret_cast<ExplodedNodeImpl*>(P);
-    }
+    void* getPtr() const { return reinterpret_cast<void*>(P & ~Flags); }
+    ExplodedNodeImpl* getNode() const;
     
   public:
     NodeGroup() : P(0) {}
     
-    ~NodeGroup() { if (getKind() == SizeOther) delete &getVector(); }
+    ~NodeGroup();
     
-    inline ExplodedNodeImpl** begin() const {
-      if (getKind() == Size1)
-        return (ExplodedNodeImpl**) &P;
-      else
-        return const_cast<ExplodedNodeImpl**>(&*(getVector().begin()));
-    }
+    inline ExplodedNodeImpl** begin() const;
     
-    inline ExplodedNodeImpl** end() const {
-      if (getKind() == Size1)
-        return ((ExplodedNodeImpl**) &P)+1;
-      else
-        return const_cast<ExplodedNodeImpl**>(&*(getVector().rbegin())+1);
-    }
+    inline ExplodedNodeImpl** end() const;
     
-    inline unsigned size() const {
-      if (getKind() == Size1)
-        return getNode() ? 1 : 0;
-      else
-        return getVector().size();
-    }
+    inline unsigned size() const;
     
-    inline bool empty() const {
-      if (getKind() == Size1)
-        return getNode() ? false : true;
-      else
-        return getVector().empty();
-    }
+    inline bool empty() const;
     
-    inline void addNode(ExplodedNodeImpl* N) {
-      if (getKind() == Size1) {
-        if (ExplodedNodeImpl* NOld = getNode()) {
-          std::vector<ExplodedNodeImpl*>* V = new std::vector<ExplodedNodeImpl*>();
-          V->push_back(NOld);
-          V->push_back(N);
-          P = reinterpret_cast<uintptr_t>(V) & SizeOther;
-        }
-        else
-          P = reinterpret_cast<uintptr_t>(N);
-      }
-      else
-        getVector().push_back(N);
-    }
+    void addNode(ExplodedNodeImpl* N);
   };
   
   
