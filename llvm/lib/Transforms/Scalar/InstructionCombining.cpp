@@ -3495,8 +3495,14 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
              ICmpInst::isSignedPredicate(LHSCC) == 
                  ICmpInst::isSignedPredicate(RHSCC))) {
           // Ensure that the larger constant is on the RHS.
-          ICmpInst::Predicate GT = ICmpInst::isSignedPredicate(LHSCC) ? 
-            ICmpInst::ICMP_SGT : ICmpInst::ICMP_UGT;
+          ICmpInst::Predicate GT;
+          if (ICmpInst::isSignedPredicate(LHSCC) ||
+              (ICmpInst::isEquality(LHSCC) && 
+               ICmpInst::isSignedPredicate(RHSCC)))
+            GT = ICmpInst::ICMP_SGT;
+          else
+            GT = ICmpInst::ICMP_UGT;
+          
           Constant *Cmp = ConstantExpr::getICmp(GT, LHSCst, RHSCst);
           ICmpInst *LHS = cast<ICmpInst>(Op0);
           if (cast<ConstantInt>(Cmp)->getZExtValue()) {
