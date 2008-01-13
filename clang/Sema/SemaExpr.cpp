@@ -1618,6 +1618,17 @@ static Decl *getPrimaryDeclaration(Expr *e) {
 /// Note: The usual conversions are *not* applied to the operand of the & 
 /// operator (C99 6.3.2.1p[2-4]), and its result is never an lvalue.
 QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
+  if (getLangOptions().C99) {
+    // Implement C99-only parts of addressof rules.
+    if (UnaryOperator* uOp = dyn_cast<UnaryOperator>(op)) {
+      if (uOp->getOpcode() == UnaryOperator::Deref)
+        // Per C99 6.5.3.2, the address of a deref always returns a valid result
+        // (assuming the deref expression is valid).
+        return uOp->getSubExpr()->getType();
+    }
+    // Technically, there should be a check for array subscript
+    // expressions here, but the result of one is always an lvalue anyway.
+  }
   Decl *dcl = getPrimaryDeclaration(op);
   Expr::isLvalueResult lval = op->isLvalue();
   
@@ -1651,19 +1662,12 @@ QualType Sema::CheckIndirectionOperand(Expr *op, SourceLocation OpLoc) {
   QualType qType = op->getType();
   
   if (const PointerType *PT = qType->getAsPointerType()) {
-    QualType ptype = PT->getPointeeType();
-    // C99 6.5.3.2p4. "if it points to an object,...".
-    if (ptype->isIncompleteType()) { // An incomplete type is not an object
-      // GCC compat: special case 'void *' (treat as extension, not error).
-      if (ptype->isVoidType()) {
-        Diag(OpLoc, diag::ext_typecheck_deref_ptr_to_void,op->getSourceRange());
-      } else {
-        Diag(OpLoc, diag::err_typecheck_deref_incomplete_type, 
-             ptype.getAsString(), op->getSourceRange());
-        return QualType();
-      }
-    }
-    return ptype;
+    // Note that per both C89 and C99, this is always legal, even
+    // if ptype is an incomplete type or void.
+    // It would be possible to warn about dereferencing a
+    // void pointer, but it's completely well-defined,
+    // and such a warning is unlikely to catch any mistakes.
+    return PT->getPointeeType();
   }
   Diag(OpLoc, diag::err_typecheck_indirection_requires_pointer, 
        qType.getAsString(), op->getSourceRange());
