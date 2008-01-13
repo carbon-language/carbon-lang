@@ -194,8 +194,8 @@ uint16_t ParamAttr::typeIncompatible (const Type *Ty) {
     Incompatible |= SExt | ZExt;
 
   if (const PointerType *PTy = dyn_cast<PointerType>(Ty)) {
-    if (!isa<StructType>(PTy->getElementType()))
-      // Attributes that only apply to pointers to structs.
+    if (!PTy->getElementType()->isSized())
+      // The byval attribute only applies to pointers to types with a size.
       Incompatible |= ParamAttr::ByVal;
   } else {
     // Attributes that only apply to pointers.
