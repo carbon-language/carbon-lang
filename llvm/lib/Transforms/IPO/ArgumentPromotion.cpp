@@ -456,10 +456,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
 
   // Recompute the parameter attributes list based on the new arguments for
   // the function.
-  if (ParamAttrsVec.empty())
-    PAL = 0;
-  else
-    PAL = ParamAttrsList::get(ParamAttrsVec);
+  PAL = ParamAttrsList::get(ParamAttrsVec);
 
   // Work around LLVM bug PR56: the CWriter cannot emit varargs functions which
   // have zero fixed arguments.
