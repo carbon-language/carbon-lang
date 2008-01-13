@@ -28,8 +28,9 @@
 namespace clang {
 
 class GREngineImpl;
-
-/// ExplodeNodeGroup - A utility class used to represent the set of successor
+class ExplodedNodeImpl;
+  
+/// ExplodedNodeGroup - A utility class used to represent the set of successor
 ///  and predecessor nodes of a node.  Most nodes will have only 1 successor
 ///  and 1 predecessor, so class allows us to store such unit sets of nodes
 ///  using a single pointer without allocating an entire vector.  For
@@ -42,14 +43,18 @@ class ExplodedNodeGroup {
   
   unsigned getKind() const { return P & Flags; }
   
-  std::vector<ExplodeNodeImpl*>& getVector() {
+  std::vector<ExplodedNodeImpl*>& getVector() {
     assert (getKind() == SizeOther);
-    return *reinterpret_cast<std::vector<ExplodeNodeImpl*>*>(P & ~Flags);
+    return *reinterpret_cast<std::vector<ExplodedNodeImpl*>*>(P & ~Flags);
+  }  
+  const std::vector<ExplodedNodeImpl*>& getVector() const {
+    assert (getKind() == SizeOther);
+    return *reinterpret_cast<std::vector<ExplodedNodeImpl*>*>(P & ~Flags);
   }
   
-  ExplodeNodeImpl* getNode() {
+  ExplodedNodeImpl* getNode() const {
     assert (getKind() == Size1);
-    return reinterpret_cast<ExplodeNodeImpl*>(P);
+    return reinterpret_cast<ExplodedNodeImpl*>(P);
   }
   
 public:
@@ -61,14 +66,14 @@ public:
     if (getKind() == Size1)
       return (ExplodedNodeImpl**) &P;
     else
-      return getVector().begin();
+      return const_cast<ExplodedNodeImpl**>(&*(getVector().begin()));
   }
   
   inline ExplodedNodeImpl** end() const {
     if (getKind() == Size1)
       return ((ExplodedNodeImpl**) &P)+1;
     else
-      return getVector().end();
+      return const_cast<ExplodedNodeImpl**>(&*(getVector().rbegin())+1);
   }
   
   inline unsigned size() const {
@@ -88,7 +93,7 @@ public:
   inline void addNode(ExplodedNodeImpl* N) {
     if (getKind() == Size1) {
       if (ExplodedNodeImpl* NOld = getNode()) {
-        std::vector<ExplodeNodeImpl*>* V = new std::vector<ExplodeNodeImpl*>();
+        std::vector<ExplodedNodeImpl*>* V = new std::vector<ExplodedNodeImpl*>();
         V->push_back(NOld);
         V->push_back(N);
         P = reinterpret_cast<uintptr_t>(V) & SizeOther;
@@ -101,7 +106,7 @@ public:
   }
 };
 
-/// ExplodeNodeImpl - 
+/// ExplodedNodeImpl - 
 class ExplodedNodeImpl : public llvm::FoldingSetNode {
 protected:
   friend class ExplodedGraphImpl;
@@ -122,7 +127,7 @@ protected:
   ExplodedNodeGroup Succs;
   
   /// Construct a ExplodedNodeImpl with the provided location and state.
-  explicit ExplodedNodeImpl(const ProgramLocation& loc, void* state)
+  explicit ExplodedNodeImpl(const ProgramPoint& loc, void* state)
   : Location(loc), State(state) {}
   
   /// addPredeccessor - Adds a predecessor to the current node, and 
@@ -160,7 +165,7 @@ class ExplodedNode : public ExplodedNodeImpl {
 public:
   /// Construct a ExplodedNodeImpl with the given node ID, program edge,
   ///  and state.
-  explicit ExplodedNode(unsigned ID, const ProgramEdge& loc, StateTy state)
+  explicit ExplodedNode(unsigned ID, const ProgramPoint& loc, StateTy state)
   : ExplodedNodeImpl(ID, loc, GRTrait<StateTy>::toPtr(state)) {}
   
   /// getState - Returns the state associated with the node.  
@@ -177,10 +182,10 @@ public:
   typedef ExplodedNode**       succ_iterator;
   typedef const ExplodedNode** const_succ_iterator;
   typedef ExplodedNode**       pred_iterator;
-  typedef const ExplodedNode** const_pred_pred_iterator;
+  typedef const ExplodedNode** const_pred_iterator;
 
-  pred_iterator pred_begin() { return (ExplodedNode**) Pred.begin(); }
-  pred_iterator pred_end() { return (ExplodedNode**) Pred.end(); }
+  pred_iterator pred_begin() { return (ExplodedNode**) Preds.begin(); }
+  pred_iterator pred_end() { return (ExplodedNode**) Preds.end(); }
 
   const_pred_iterator pred_begin() const {
     return const_cast<ExplodedNode*>(this)->pred_begin();
@@ -189,8 +194,8 @@ public:
     return const_cast<ExplodedNode*>(this)->pred_end();
   }
 
-  succ_iterator succ_begin() { return (ExplodedNode**) Succ.begin(); }
-  succ_iterator succ_end() { return (ExplodedNode**) Succ.end(); }
+  succ_iterator succ_begin() { return (ExplodedNode**) Succs.begin(); }
+  succ_iterator succ_end() { return (ExplodedNode**) Succs.end(); }
 
   const_succ_iterator succ_begin() const {
     return const_cast<ExplodedNode*>(this)->succ_begin();
@@ -206,7 +211,7 @@ protected:
   friend class GREngineImpl;
   
   // Type definitions.
-  typedef llvm::DenseMap<ProgramEdge,void*>         EdgeNodeSetMap;
+  typedef llvm::DenseMap<ProgramPoint,void*>         EdgeNodeSetMap;
   typedef llvm::SmallVector<ExplodedNodeImpl*,2>    RootsTy;
   typedef llvm::SmallVector<ExplodedNodeImpl*,10>   EndNodesTy;
   
@@ -235,7 +240,7 @@ protected:
   /// getNodeImpl - Retrieve the node associated with a (Location,State)
   ///  pair, where 'State' is represented as an opaque void*.  This method
   ///  is intended to be used only by GREngineImpl.
-  virtual ExplodedNodeImpl* getNodeImpl(const ProgramEdge& L, void* State,
+  virtual ExplodedNodeImpl* getNodeImpl(const ProgramPoint& L, void* State,
                                         bool* IsNew) = 0;
 
   /// addRoot - Add an untyped node to the set of roots.
@@ -270,7 +275,7 @@ protected:
 
 protected:
   virtual ExplodedNodeImpl*
-  getNodeImpl(const ProgramEdge& L, void* State, bool* IsNew) {
+  getNodeImpl(const ProgramPoint& L, void* State, bool* IsNew) {
     return getNode(L,GRTrait<StateTy>::toState(State),IsNew);
   }
     
@@ -289,10 +294,10 @@ public:
   CheckerTy* getCheckerState() const { return CheckerState.get(); }
   
   /// getNode - Retrieve the node associated with a (Location,State) pair,
-  ///  where the 'Location' is a ProgramEdge in the CFG.  If no node for
+  ///  where the 'Location' is a ProgramPoint in the CFG.  If no node for
   ///  this pair exists, it is created.  IsNew is set to true if
   ///  the node was freshly created.
-  NodeTy* getNode(const ProgramEdge& L, StateTy State, bool* IsNew = NULL) {
+  NodeTy* getNode(const ProgramPoint& L, StateTy State, bool* IsNew = NULL) {
     
     // Retrieve the node set associated with Loc.
     llvm::FoldingSet<NodeTy>*& VSet =
