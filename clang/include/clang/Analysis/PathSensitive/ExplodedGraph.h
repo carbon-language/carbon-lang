@@ -1,4 +1,4 @@
-//===-- ExplodedGraph.h - Local, Path-Sensitive Supergraph -*- C++ -*------===//
+//=-- ExplodedGraph.h - Local, Path-Sens. "Exploded Graph" -*- C++ -*-------==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines the template class ExplodedGraph, which represents a
-//  path-sensitive, intra-procedural dataflow "exploded graph."
+//  This file defines the template classes ExplodedNode and ExplodedGraph,
+//  which represent a path-sensitive, intra-procedural "exploded graph."
 //
 //===----------------------------------------------------------------------===//
 
