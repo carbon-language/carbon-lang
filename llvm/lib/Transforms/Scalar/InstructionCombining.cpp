@@ -366,6 +366,8 @@ namespace {
     Instruction *PromoteCastOfAllocation(BitCastInst &CI, AllocationInst &AI);
     Instruction *MatchBSwap(BinaryOperator &I);
     bool SimplifyStoreAtEndOfBlock(StoreInst &SI);
+    Instruction *SimplifyMemTransfer(MemIntrinsic *MI);
+
 
     Value *EvaluateInDifferentType(Value *V, const Type *Ty, bool isSigned);
   };
@@ -7808,6 +7810,43 @@ static unsigned GetOrEnforceKnownAlignment(Value *V, TargetData *TD,
   return 0;
 }
 
+Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
+  unsigned DstAlign = GetOrEnforceKnownAlignment(MI->getOperand(1), TD);
+  unsigned SrcAlign = GetOrEnforceKnownAlignment(MI->getOperand(2), TD);
+  unsigned MinAlign = std::min(DstAlign, SrcAlign);
+  unsigned CopyAlign = MI->getAlignment()->getZExtValue();
+
+  if (CopyAlign < MinAlign) {
+    MI->setAlignment(ConstantInt::get(Type::Int32Ty, MinAlign));
+    return MI;
+  }
+  
+  // If MemCpyInst length is 1/2/4/8 bytes then replace memcpy with
+  // load/store.
+  ConstantInt *MemOpLength = dyn_cast<ConstantInt>(MI->getOperand(3));
+  if (MemOpLength == 0) return 0;
+  
+  // Source and destination pointer types are always "i8*" for intrinsic.
+  //   If Size is 8 then use Int64Ty
+  //   If Size is 4 then use Int32Ty
+  //   If Size is 2 then use Int16Ty
+  //   If Size is 1 then use Int8Ty
+  unsigned Size = MemOpLength->getZExtValue();
+  if (Size == 0 || Size > 8 || (Size&(Size-1)))
+    return 0;  // If not 1/2/4/8, exit.
+  
+  Type *NewPtrTy = PointerType::getUnqual(IntegerType::get(Size<<3));
+  // If the memcpy/memmove provides better alignment info than we can
+  // infer, use it.
+  SrcAlign = std::max(SrcAlign, CopyAlign);
+  DstAlign = std::max(DstAlign, CopyAlign);
+  
+  Value *Src = InsertBitCastBefore(MI->getOperand(2), NewPtrTy, *MI);
+  Value *Dest = InsertBitCastBefore(MI->getOperand(1), NewPtrTy, *MI);
+  Value *L = new LoadInst(Src, "tmp", false, SrcAlign, MI);
+  new StoreInst(L, Dest, false, DstAlign, MI);
+  return EraseInstFromFunction(*MI);
+}
 
 /// visitCallInst - CallInst simplification.  This mostly only handles folding 
 /// of intrinsic instructions.  For normal calls, it allows visitCallSite to do
@@ -7837,7 +7876,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     // If we have a memmove and the source operation is a constant global,
     // then the source and dest pointers can't alias, so we can change this
     // into a call to memcpy.
-    if (MemMoveInst *MMI = dyn_cast<MemMoveInst>(II)) {
+    if (MemMoveInst *MMI = dyn_cast<MemMoveInst>(MI)) {
       if (GlobalVariable *GVSrc = dyn_cast<GlobalVariable>(MMI->getSource()))
         if (GVSrc->isConstant()) {
           Module *M = CI.getParent()->getParent()->getParent();
@@ -7854,40 +7893,8 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     // If we can determine a pointer alignment that is bigger than currently
     // set, update the alignment.
     if (isa<MemCpyInst>(MI) || isa<MemMoveInst>(MI)) {
-      unsigned DstAlign = GetOrEnforceKnownAlignment(MI->getOperand(1), TD);
-      unsigned SrcAlign = GetOrEnforceKnownAlignment(MI->getOperand(2), TD);
-      unsigned MinAlign = std::min(DstAlign, SrcAlign);
-      unsigned CopyAlign = MI->getAlignment()->getZExtValue();
-      if (CopyAlign < MinAlign) {
-        MI->setAlignment(ConstantInt::get(Type::Int32Ty, MinAlign));
-        Changed = true;
-      }
-      
-      // If MemCpyInst length is 1/2/4/8 bytes then replace memcpy with
-      // load/store.
-      if (ConstantInt *MemOpLength = dyn_cast<ConstantInt>(CI.getOperand(3))) {
-        // Source and destination pointer types are always "i8*" for intrinsic.
-        //   If Size is 8 then use Int64Ty
-        //   If Size is 4 then use Int32Ty
-        //   If Size is 2 then use Int16Ty
-        //   If Size is 1 then use Int8Ty
-        unsigned Size = MemOpLength->getZExtValue();
-        if (Size && Size <= 8 && !(Size&(Size-1))) {
-          Type *NewPtrTy = PointerType::getUnqual(IntegerType::get(Size<<3));
-          // If the memcpy/memmove provides better alignment info than we can
-          // infer, use it.
-          SrcAlign = std::max(SrcAlign, CopyAlign);
-          DstAlign = std::max(DstAlign, CopyAlign);
-          
-          Value *Src = InsertBitCastBefore(CI.getOperand(2), NewPtrTy, CI);
-          Value *Dest = InsertBitCastBefore(CI.getOperand(1), NewPtrTy, CI);
-          Value *L = new LoadInst(Src, "tmp", false, SrcAlign, &CI);
-          Value *NS = new StoreInst(L, Dest, false, DstAlign, &CI);
-          CI.replaceAllUsesWith(NS);
-          Changed = true;
-          return EraseInstFromFunction(CI);
-        }
-      }
+      if (Instruction *I = SimplifyMemTransfer(MI))
+        return I;
     } else if (isa<MemSetInst>(MI)) {
       unsigned Alignment = GetOrEnforceKnownAlignment(MI->getDest(), TD);
       if (MI->getAlignment()->getZExtValue() < Alignment) {
