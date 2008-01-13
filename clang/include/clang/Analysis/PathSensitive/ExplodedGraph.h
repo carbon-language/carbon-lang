@@ -29,87 +29,80 @@ namespace clang {
 
 class GREngineImpl;
 class ExplodedNodeImpl;
-  
-/// ExplodedNodeGroup - A utility class used to represent the set of successor
-///  and predecessor nodes of a node.  Most nodes will have only 1 successor
-///  and 1 predecessor, so class allows us to store such unit sets of nodes
-///  using a single pointer without allocating an entire vector.  For
-///  larger sets of nodes, we dynamically allocate a vector.  This class
-///  will likely be revised in the future to further improve performance and
-///  to reduce memory footprint.
-class ExplodedNodeGroup {
-  enum { Size1 = 0x0, SizeOther = 0x1, Flags = 0x1 };
-  uintptr_t P;
-  
-  unsigned getKind() const { return P & Flags; }
-  
-  std::vector<ExplodedNodeImpl*>& getVector() {
-    assert (getKind() == SizeOther);
-    return *reinterpret_cast<std::vector<ExplodedNodeImpl*>*>(P & ~Flags);
-  }  
-  const std::vector<ExplodedNodeImpl*>& getVector() const {
-    assert (getKind() == SizeOther);
-    return *reinterpret_cast<std::vector<ExplodedNodeImpl*>*>(P & ~Flags);
-  }
-  
-  ExplodedNodeImpl* getNode() const {
-    assert (getKind() == Size1);
-    return reinterpret_cast<ExplodedNodeImpl*>(P);
-  }
-  
-public:
-  ExplodedNodeGroup() : P(0) {}
-  
-  ~ExplodedNodeGroup() { if (getKind() == SizeOther) delete &getVector(); }
-  
-  inline ExplodedNodeImpl** begin() const {
-    if (getKind() == Size1)
-      return (ExplodedNodeImpl**) &P;
-    else
-      return const_cast<ExplodedNodeImpl**>(&*(getVector().begin()));
-  }
-  
-  inline ExplodedNodeImpl** end() const {
-    if (getKind() == Size1)
-      return ((ExplodedNodeImpl**) &P)+1;
-    else
-      return const_cast<ExplodedNodeImpl**>(&*(getVector().rbegin())+1);
-  }
-  
-  inline unsigned size() const {
-    if (getKind() == Size1)
-      return getNode() ? 1 : 0;
-    else
-      return getVector().size();
-  }
-  
-  inline bool empty() const {
-    if (getKind() == Size1)
-      return getNode() ? false : true;
-    else
-      return getVector().empty();
-  }
-  
-  inline void addNode(ExplodedNodeImpl* N) {
-    if (getKind() == Size1) {
-      if (ExplodedNodeImpl* NOld = getNode()) {
-        std::vector<ExplodedNodeImpl*>* V = new std::vector<ExplodedNodeImpl*>();
-        V->push_back(NOld);
-        V->push_back(N);
-        P = reinterpret_cast<uintptr_t>(V) & SizeOther;
-      }
-      else
-        P = reinterpret_cast<uintptr_t>(N);
-    }
-    else
-      getVector().push_back(N);
-  }
-};
 
-/// ExplodedNodeImpl - 
 class ExplodedNodeImpl : public llvm::FoldingSetNode {
 protected:
   friend class ExplodedGraphImpl;
+  
+  class NodeGroup {
+    enum { Size1 = 0x0, SizeOther = 0x1, Flags = 0x1 };
+    uintptr_t P;
+    
+    unsigned getKind() const { return P & Flags; }
+    
+    std::vector<ExplodedNodeImpl*>& getVector() {
+      assert (getKind() == SizeOther);
+      return *reinterpret_cast<std::vector<ExplodedNodeImpl*>*>(P & ~Flags);
+    }  
+    const std::vector<ExplodedNodeImpl*>& getVector() const {
+      assert (getKind() == SizeOther);
+      return *reinterpret_cast<std::vector<ExplodedNodeImpl*>*>(P & ~Flags);
+    }
+    
+    ExplodedNodeImpl* getNode() const {
+      assert (getKind() == Size1);
+      return reinterpret_cast<ExplodedNodeImpl*>(P);
+    }
+    
+  public:
+    NodeGroup() : P(0) {}
+    
+    ~NodeGroup() { if (getKind() == SizeOther) delete &getVector(); }
+    
+    inline ExplodedNodeImpl** begin() const {
+      if (getKind() == Size1)
+        return (ExplodedNodeImpl**) &P;
+      else
+        return const_cast<ExplodedNodeImpl**>(&*(getVector().begin()));
+    }
+    
+    inline ExplodedNodeImpl** end() const {
+      if (getKind() == Size1)
+        return ((ExplodedNodeImpl**) &P)+1;
+      else
+        return const_cast<ExplodedNodeImpl**>(&*(getVector().rbegin())+1);
+    }
+    
+    inline unsigned size() const {
+      if (getKind() == Size1)
+        return getNode() ? 1 : 0;
+      else
+        return getVector().size();
+    }
+    
+    inline bool empty() const {
+      if (getKind() == Size1)
+        return getNode() ? false : true;
+      else
+        return getVector().empty();
+    }
+    
+    inline void addNode(ExplodedNodeImpl* N) {
+      if (getKind() == Size1) {
+        if (ExplodedNodeImpl* NOld = getNode()) {
+          std::vector<ExplodedNodeImpl*>* V = new std::vector<ExplodedNodeImpl*>();
+          V->push_back(NOld);
+          V->push_back(N);
+          P = reinterpret_cast<uintptr_t>(V) & SizeOther;
+        }
+        else
+          P = reinterpret_cast<uintptr_t>(N);
+      }
+      else
+        getVector().push_back(N);
+    }
+  };
+  
   
   /// Location - The program location (within a function body) associated
   ///  with this node.
@@ -121,10 +114,10 @@ protected:
   void* State;
   
   /// Preds - The predecessors of this node.
-  ExplodedNodeGroup Preds;
+  NodeGroup Preds;
   
   /// Succs - The successors of this node.
-  ExplodedNodeGroup Succs;
+  NodeGroup Succs;
   
   /// Construct a ExplodedNodeImpl with the provided location and state.
   explicit ExplodedNodeImpl(const ProgramPoint& loc, void* state)
