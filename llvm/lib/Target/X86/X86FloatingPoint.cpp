@@ -34,7 +34,6 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -60,13 +59,8 @@ namespace {
 
     virtual const char *getPassName() const { return "X86 FP Stackifier"; }
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired<LiveVariables>();
-      MachineFunctionPass::getAnalysisUsage(AU);
-    }
   private:
     const TargetInstrInfo *TII; // Machine instruction info.
-    LiveVariables     *LV;      // Live variable info for current function...
     MachineBasicBlock *MBB;     // Current basic block
     unsigned Stack[8];          // FP<n> Registers in each stack slot...
     unsigned RegMap[8];         // Track which stack slot contains each register
@@ -160,6 +154,28 @@ namespace {
 
 FunctionPass *llvm::createX86FloatingPointStackifierPass() { return new FPS(); }
 
+/// KillsRegister - Return true if the specified instruction kills (is the last
+/// use of) the specified register.  Note that this routine does not check for
+/// kills of subregisters.
+static bool KillsRegister(MachineInstr *MI, unsigned Reg) {
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = MI->getOperand(i);
+    if (MO.isRegister() && MO.isKill() && MO.getReg() == Reg)
+      return true;
+  }
+  return false;
+}
+
+/// getFPReg - Return the X86::FPx register number for the specified operand.
+/// For example, this returns 3 for X86::FP3.
+static unsigned getFPReg(const MachineOperand &MO) {
+  assert(MO.isRegister() && "Expected an FP register!");
+  unsigned Reg = MO.getReg();
+  assert(Reg >= X86::FP0 && Reg <= X86::FP6 && "Expected FP register!");
+  return Reg - X86::FP0;
+}
+
+
 /// runOnMachineFunction - Loop over all of the basic blocks, transforming FP
 /// register references into FP stack references.
 ///
@@ -179,7 +195,6 @@ bool FPS::runOnMachineFunction(MachineFunction &MF) {
   if (!FPIsUsed) return false;
 
   TII = MF.getTarget().getInstrInfo();
-  LV = &getAnalysis<LiveVariables>();
   StackTop = 0;
 
   // Process the function in depth first order so that we process at least one
@@ -567,14 +582,6 @@ void FPS::freeStackSlotAfter(MachineBasicBlock::iterator &I, unsigned FPRegNo) {
 }
 
 
-static unsigned getFPReg(const MachineOperand &MO) {
-  assert(MO.isRegister() && "Expected an FP register!");
-  unsigned Reg = MO.getReg();
-  assert(Reg >= X86::FP0 && Reg <= X86::FP6 && "Expected FP register!");
-  return Reg - X86::FP0;
-}
-
-
 //===----------------------------------------------------------------------===//
 // Instruction transformation implementation
 //===----------------------------------------------------------------------===//
@@ -603,7 +610,7 @@ void FPS::handleOneArgFP(MachineBasicBlock::iterator &I) {
 
   // Is this the last use of the source register?
   unsigned Reg = getFPReg(MI->getOperand(NumOps-1));
-  bool KillsSrc = LV->KillsRegister(MI, X86::FP0+Reg);
+  bool KillsSrc = KillsRegister(MI, X86::FP0+Reg);
 
   // FISTP64m is strange because there isn't a non-popping versions.
   // If we have one _and_ we don't want to pop the operand, duplicate the value
@@ -662,7 +669,7 @@ void FPS::handleOneArgFPRW(MachineBasicBlock::iterator &I) {
 
   // Is this the last use of the source register?
   unsigned Reg = getFPReg(MI->getOperand(1));
-  bool KillsSrc = LV->KillsRegister(MI, X86::FP0+Reg);
+  bool KillsSrc = KillsRegister(MI, X86::FP0+Reg);
 
   if (KillsSrc) {
     // If this is the last use of the source register, just make sure it's on
@@ -771,8 +778,8 @@ void FPS::handleTwoArgFP(MachineBasicBlock::iterator &I) {
   unsigned Dest = getFPReg(MI->getOperand(0));
   unsigned Op0 = getFPReg(MI->getOperand(NumOperands-2));
   unsigned Op1 = getFPReg(MI->getOperand(NumOperands-1));
-  bool KillsOp0 = LV->KillsRegister(MI, X86::FP0+Op0);
-  bool KillsOp1 = LV->KillsRegister(MI, X86::FP0+Op1);
+  bool KillsOp0 = KillsRegister(MI, X86::FP0+Op0);
+  bool KillsOp1 = KillsRegister(MI, X86::FP0+Op1);
 
   unsigned TOS = getStackEntry(0);
 
@@ -868,8 +875,8 @@ void FPS::handleCompareFP(MachineBasicBlock::iterator &I) {
   assert(NumOperands == 2 && "Illegal FUCOM* instruction!");
   unsigned Op0 = getFPReg(MI->getOperand(NumOperands-2));
   unsigned Op1 = getFPReg(MI->getOperand(NumOperands-1));
-  bool KillsOp0 = LV->KillsRegister(MI, X86::FP0+Op0);
-  bool KillsOp1 = LV->KillsRegister(MI, X86::FP0+Op1);
+  bool KillsOp0 = KillsRegister(MI, X86::FP0+Op0);
+  bool KillsOp1 = KillsRegister(MI, X86::FP0+Op1);
 
   // Make sure the first operand is on the top of stack, the other one can be
   // anywhere.
@@ -894,7 +901,7 @@ void FPS::handleCondMovFP(MachineBasicBlock::iterator &I) {
 
   unsigned Op0 = getFPReg(MI->getOperand(0));
   unsigned Op1 = getFPReg(MI->getOperand(2));
-  bool KillsOp1 = LV->KillsRegister(MI, X86::FP0+Op1);
+  bool KillsOp1 = KillsRegister(MI, X86::FP0+Op1);
 
   // The first operand *must* be on the top of the stack.
   moveToTop(Op0, I);
@@ -946,7 +953,7 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
     unsigned SrcReg = getFPReg(MI->getOperand(1));
     unsigned DestReg = getFPReg(MI->getOperand(0));
 
-    if (LV->KillsRegister(MI, X86::FP0+SrcReg)) {
+    if (KillsRegister(MI, X86::FP0+SrcReg)) {
       // If the input operand is killed, we can just change the owner of the
       // incoming stack slot into the result.
       unsigned Slot = getSlot(SrcReg);
