@@ -7826,16 +7826,49 @@ Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
   ConstantInt *MemOpLength = dyn_cast<ConstantInt>(MI->getOperand(3));
   if (MemOpLength == 0) return 0;
   
-  // Source and destination pointer types are always "i8*" for intrinsic.
-  //   If Size is 8 then use Int64Ty
-  //   If Size is 4 then use Int32Ty
-  //   If Size is 2 then use Int16Ty
-  //   If Size is 1 then use Int8Ty
+  // Source and destination pointer types are always "i8*" for intrinsic.  See
+  // if the size is something we can handle with a single primitive load/store.
+  // A single load+store correctly handles overlapping memory in the memmove
+  // case.
   unsigned Size = MemOpLength->getZExtValue();
   if (Size == 0 || Size > 8 || (Size&(Size-1)))
-    return 0;  // If not 1/2/4/8, exit.
+    return 0;  // If not 1/2/4/8 bytes, exit.
   
+  // Use an integer load+store unless we can find something better.
   Type *NewPtrTy = PointerType::getUnqual(IntegerType::get(Size<<3));
+  
+  // Memcpy forces the use of i8* for the source and destination.  That means
+  // that if you're using memcpy to move one double around, you'll get a cast
+  // from double* to i8*.  We'd much rather use a double load+store rather than
+  // an i64 load+store, here because this improves the odds that the source or
+  // dest address will be promotable.  See if we can find a better type than the
+  // integer datatype.
+  if (Value *Op = getBitCastOperand(MI->getOperand(1))) {
+    const Type *SrcETy = cast<PointerType>(Op->getType())->getElementType();
+    if (SrcETy->isSized() && TD->getTypeStoreSize(SrcETy) == Size) {
+      // The SrcETy might be something like {{{double}}} or [1 x double].  Rip
+      // down through these levels if so.
+      while (!SrcETy->isFirstClassType()) {
+        if (const StructType *STy = dyn_cast<StructType>(SrcETy)) {
+          if (STy->getNumElements() == 1)
+            SrcETy = STy->getElementType(0);
+          else
+            break;
+        } else if (const ArrayType *ATy = dyn_cast<ArrayType>(SrcETy)) {
+          if (ATy->getNumElements() == 1)
+            SrcETy = ATy->getElementType();
+          else
+            break;
+        } else
+          break;
+      }
+      
+      if (SrcETy->isFirstClassType())
+        NewPtrTy = PointerType::getUnqual(SrcETy);
+    }
+  }
+  
+  
   // If the memcpy/memmove provides better alignment info than we can
   // infer, use it.
   SrcAlign = std::max(SrcAlign, CopyAlign);
@@ -7843,9 +7876,13 @@ Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
   
   Value *Src = InsertBitCastBefore(MI->getOperand(2), NewPtrTy, *MI);
   Value *Dest = InsertBitCastBefore(MI->getOperand(1), NewPtrTy, *MI);
-  Value *L = new LoadInst(Src, "tmp", false, SrcAlign, MI);
-  new StoreInst(L, Dest, false, DstAlign, MI);
-  return EraseInstFromFunction(*MI);
+  Instruction *L = new LoadInst(Src, "tmp", false, SrcAlign);
+  InsertNewInstBefore(L, *MI);
+  InsertNewInstBefore(new StoreInst(L, Dest, false, DstAlign), *MI);
+
+  // Set the size of the copy to 0, it will be deleted on the next iteration.
+  MI->setOperand(3, Constant::getNullValue(MemOpLength->getType()));
+  return MI;
 }
 
 /// visitCallInst - CallInst simplification.  This mostly only handles folding 
