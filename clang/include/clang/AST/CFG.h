@@ -284,8 +284,10 @@ private:
   // for indirect gotos
   CFGBlockListTy Blocks;
   unsigned  NumBlockIDs;
-  // opaque pointer to prevent inclusion of DenseMap.h.  Map from expressions
-  // to integers to record block-level expressions.
+  
+  // BlkExprMap - An opaque pointer to prevent inclusion of DenseMap.h.
+  //  It represents a map from Expr* to integers to record the set of 
+  //  block-level expressions and their "statement number" in the CFG.
   void*     BlkExprMap;
   
   /// BlkEdgeSet - An opaque pointer to prevent inclusion of <set>.
