@@ -28,13 +28,16 @@ namespace clang {
 
 class GREngineImpl;
 class ExplodedNodeImpl;
+class GRNodeBuilderImpl;
 
 class ExplodedNodeImpl : public llvm::FoldingSetNode {
 protected:
   friend class ExplodedGraphImpl;
+  friend class GREngineImpl;
+  friend class GRNodeBuilderImpl;
   
   class NodeGroup {
-    enum { Size1 = 0x0, SizeOther = 0x1, Flags = 0x1 };
+    enum { Size1 = 0x0, SizeOther = 0x1, Infeasible = 0x2, Flags = 0x3 };
     uintptr_t P;
     
     unsigned getKind() const { return P & Flags; }
@@ -55,6 +58,14 @@ protected:
     bool empty() const;
     
     void addNode(ExplodedNodeImpl* N);
+    
+    void setInfeasibleFlag() {
+      P |= Infeasible;
+    }
+    
+    bool getInfeasibleFlag() const {
+      return P & Infeasible ? true : false;
+    }
   };
   
   
@@ -78,9 +89,9 @@ protected:
   : Location(loc), State(state) {}
   
   /// addPredeccessor - Adds a predecessor to the current node, and 
-  ///  in tandem add this node as a successor of the other node.  This
-  ///  method is intended to be used only by ExplodedGraphImpl.
+  ///  in tandem add this node as a successor of the other node.
   void addPredecessor(ExplodedNodeImpl* V) {
+    assert (!V->isInfeasible());
     Preds.addNode(V);
     V->Succs.addNode(this);
   }
@@ -103,6 +114,9 @@ public:
   unsigned pred_size() const { return Preds.size(); }
   bool succ_empty() const { return Succs.empty(); }
   bool pred_empty() const { return Preds.size(); }
+  
+  bool isInfeasible() const { return Preds.getInfeasibleFlag(); }
+  void setInfeasible() { Preds.setInfeasibleFlag(); }  
 };
 
 
@@ -166,6 +180,7 @@ public:
 class ExplodedGraphImpl {
 protected:
   friend class GREngineImpl;
+  friend class GRNodeBuilderImpl;
   
   // Type definitions.
   typedef llvm::DenseMap<ProgramPoint,void*>        EdgeNodeSetMap;
