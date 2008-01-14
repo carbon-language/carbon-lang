@@ -119,15 +119,9 @@ struct VISIBILITY_HIDDEN GlobalStatus {
   /// HasPHIUser - Set to true if this global has a user that is a PHI node.
   bool HasPHIUser;
   
-  /// isNotSuitableForSRA - Keep track of whether any SRA preventing users of
-  /// the global exist.  Such users include GEP instruction with variable
-  /// indexes, and non-gep/load/store users like constant expr casts.
-  bool isNotSuitableForSRA;
-
   GlobalStatus() : isLoaded(false), StoredType(NotStored), StoredOnceValue(0),
                    AccessingFunction(0), HasMultipleAccessingFunctions(false),
-                   HasNonInstructionUser(false), HasPHIUser(false),
-                   isNotSuitableForSRA(false) {}
+                   HasNonInstructionUser(false), HasPHIUser(false) {}
 };
 
 
@@ -159,22 +153,6 @@ static bool AnalyzeGlobal(Value *V, GlobalStatus &GS,
       GS.HasNonInstructionUser = true;
 
       if (AnalyzeGlobal(CE, GS, PHIUsers)) return true;
-      if (CE->getOpcode() != Instruction::GetElementPtr)
-        GS.isNotSuitableForSRA = true;
-      else if (!GS.isNotSuitableForSRA) {
-        // Check to see if this ConstantExpr GEP is SRA'able.  In particular, we
-        // don't like < 3 operand CE's, and we don't like non-constant integer
-        // indices.
-        if (CE->getNumOperands() < 3 || !CE->getOperand(1)->isNullValue())
-          GS.isNotSuitableForSRA = true;
-        else {
-          for (unsigned i = 1, e = CE->getNumOperands(); i != e; ++i)
-            if (!isa<ConstantInt>(CE->getOperand(i))) {
-              GS.isNotSuitableForSRA = true;
-              break;
-            }
-        }
-      }
 
     } else if (Instruction *I = dyn_cast<Instruction>(*UI)) {
       if (!GS.HasMultipleAccessingFunctions) {
@@ -218,44 +196,23 @@ static bool AnalyzeGlobal(Value *V, GlobalStatus &GS,
           }
       } else if (isa<GetElementPtrInst>(I)) {
         if (AnalyzeGlobal(I, GS, PHIUsers)) return true;
-
-        // If the first two indices are constants, this can be SRA'd.
-        if (isa<GlobalVariable>(I->getOperand(0))) {
-          if (I->getNumOperands() < 3 || !isa<Constant>(I->getOperand(1)) ||
-              !cast<Constant>(I->getOperand(1))->isNullValue() ||
-              !isa<ConstantInt>(I->getOperand(2)))
-            GS.isNotSuitableForSRA = true;
-        } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(I->getOperand(0))){
-          if (CE->getOpcode() != Instruction::GetElementPtr ||
-              CE->getNumOperands() < 3 || I->getNumOperands() < 2 ||
-              !isa<Constant>(I->getOperand(0)) ||
-              !cast<Constant>(I->getOperand(0))->isNullValue())
-            GS.isNotSuitableForSRA = true;
-        } else {
-          GS.isNotSuitableForSRA = true;
-        }
       } else if (isa<SelectInst>(I)) {
         if (AnalyzeGlobal(I, GS, PHIUsers)) return true;
-        GS.isNotSuitableForSRA = true;
       } else if (PHINode *PN = dyn_cast<PHINode>(I)) {
         // PHI nodes we can check just like select or GEP instructions, but we
         // have to be careful about infinite recursion.
         if (PHIUsers.insert(PN).second)  // Not already visited.
           if (AnalyzeGlobal(I, GS, PHIUsers)) return true;
-        GS.isNotSuitableForSRA = true;
         GS.HasPHIUser = true;
       } else if (isa<CmpInst>(I)) {
-        GS.isNotSuitableForSRA = true;
       } else if (isa<MemCpyInst>(I) || isa<MemMoveInst>(I)) {
         if (I->getOperand(1) == V)
           GS.StoredType = GlobalStatus::isStored;
         if (I->getOperand(2) == V)
           GS.isLoaded = true;
-        GS.isNotSuitableForSRA = true;
       } else if (isa<MemSetInst>(I)) {
         assert(I->getOperand(1) == V && "Memset only takes one pointer!");
         GS.StoredType = GlobalStatus::isStored;
-        GS.isNotSuitableForSRA = true;
       } else {
         return true;  // Any other non-load instruction might take address!
       }
@@ -1454,7 +1411,6 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
     cerr << "  HasMultipleAccessingFunctions =  "
               << GS.HasMultipleAccessingFunctions << "\n";
     cerr << "  HasNonInstructionUser = " << GS.HasNonInstructionUser<<"\n";
-    cerr << "  isNotSuitableForSRA = " << GS.isNotSuitableForSRA << "\n";
     cerr << "\n";
 #endif
     
