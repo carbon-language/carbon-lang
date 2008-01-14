@@ -112,3 +112,18 @@ struct _w
 
   _Bool j,k;
 } ws;
+
+/* Implicit casts (due to typedefs) */
+typedef struct _a
+{
+  int a;
+} a;
+
+void f11()
+{
+    struct _a a1;
+    a a2;
+    
+    a1 = a2;
+    a2 = a1;
+}

@@ -70,8 +70,8 @@ public:
 
   // Operators.
   //  case Expr::UnaryOperatorClass:
-  //  case Expr::ImplicitCastExprClass:
   //  case Expr::CastExprClass: 
+  void VisitImplicitCastExpr(ImplicitCastExpr *E);
   void VisitCallExpr(const CallExpr *E);
   void VisitStmtExpr(const StmtExpr *E);
   void VisitBinaryOperator(const BinaryOperator *BO);
@@ -136,6 +136,16 @@ void AggExprEmitter::EmitAggLoadOfLValue(const Expr *E) {
 //===----------------------------------------------------------------------===//
 //                            Visitor Methods
 //===----------------------------------------------------------------------===//
+
+void AggExprEmitter::VisitImplicitCastExpr(ImplicitCastExpr *E)
+{
+  QualType STy = E->getSubExpr()->getType().getCanonicalType();
+  QualType Ty = E->getType().getCanonicalType();
+  
+  assert(STy == Ty && "Implicit cast types must be equal");
+  
+  Visit(E->getSubExpr());
+}
 
 void AggExprEmitter::VisitCallExpr(const CallExpr *E)
 {
