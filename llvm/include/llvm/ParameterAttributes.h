@@ -53,7 +53,7 @@ const uint16_t ParameterOnly = ByVal | InReg | Nest | StructRet;
 const uint16_t ReturnOnly = NoReturn | NoUnwind | ReadNone | ReadOnly;
 
 /// @brief Parameter attributes that do not apply to vararg call arguments.
-const uint16_t VarArgsIncompatible = Nest | StructRet;
+const uint16_t VarArgsIncompatible = StructRet;
 
 /// @brief Attributes that are mutually incompatible.
 const uint16_t MutuallyIncompatible[3] = {
@@ -170,6 +170,12 @@ class ParamAttrsList : public FoldingSetNode {
     bool paramHasAttr(uint16_t i, ParameterAttributes attr) const {
       return getParamAttrs(i) & attr;
     }
+
+    /// This returns whether the given attribute is set for at least one
+    /// parameter or for the return value.
+    /// @returns true if the parameter attribute is set somewhere
+    /// @brief Determine if a ParameterAttributes is set somewhere
+    bool hasAttrSomewhere(ParameterAttributes attr) const;
 
     /// The set of ParameterAttributes set in Attributes is converted to a
     /// string of equivalent mnemonics. This is, presumably, for writing out

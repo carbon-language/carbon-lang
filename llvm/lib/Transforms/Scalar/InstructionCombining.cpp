@@ -8385,6 +8385,12 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
   Value *Callee = CS.getCalledValue();
   const PointerType *PTy = cast<PointerType>(Callee->getType());
   const FunctionType *FTy = cast<FunctionType>(PTy->getElementType());
+  const ParamAttrsList *Attrs = CS.getParamAttrs();
+
+  // If the call already has the 'nest' attribute somewhere then give up -
+  // otherwise 'nest' would occur twice after splicing in the chain.
+  if (Attrs && Attrs->hasAttrSomewhere(ParamAttr::Nest))
+    return 0;
 
   IntrinsicInst *Tramp =
     cast<IntrinsicInst>(cast<BitCastInst>(Callee)->getOperand(0));
@@ -8414,25 +8420,39 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
       std::vector<Value*> NewArgs;
       NewArgs.reserve(unsigned(CS.arg_end()-CS.arg_begin())+1);
 
+      ParamAttrsVector NewAttrs;
+      NewAttrs.reserve(Attrs ? Attrs->size() + 1 : 1);
+
       // Insert the nest argument into the call argument list, which may
-      // mean appending it.
+      // mean appending it.  Likewise for attributes.
+
+      // Add any function result attributes.
+      uint16_t Attr = Attrs ? Attrs->getParamAttrs(0) : 0;
+      if (Attr)
+        NewAttrs.push_back (ParamAttrsWithIndex::get(0, Attr));
+
       {
         unsigned Idx = 1;
         CallSite::arg_iterator I = CS.arg_begin(), E = CS.arg_end();
         do {
           if (Idx == NestIdx) {
-            // Add the chain argument.
+            // Add the chain argument and attributes.
             Value *NestVal = Tramp->getOperand(3);
             if (NestVal->getType() != NestTy)
               NestVal = new BitCastInst(NestVal, NestTy, "nest", Caller);
             NewArgs.push_back(NestVal);
+            NewAttrs.push_back(ParamAttrsWithIndex::get(NestIdx, NestAttr));
           }
 
           if (I == E)
             break;
 
-          // Add the original argument.
+          // Add the original argument and attributes.
           NewArgs.push_back(*I);
+          Attr = Attrs ? Attrs->getParamAttrs(Idx) : 0;
+          if (Attr)
+            NewAttrs.push_back
+              (ParamAttrsWithIndex::get(Idx + (Idx >= NestIdx), Attr));
 
           ++Idx, ++I;
         } while (1);
@@ -8440,41 +8460,28 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
 
       // The trampoline may have been bitcast to a bogus type (FTy).
       // Handle this by synthesizing a new function type, equal to FTy
-      // with the chain parameter inserted.  Likewise for attributes.
+      // with the chain parameter inserted.
 
-      const ParamAttrsList *Attrs = CS.getParamAttrs();
       std::vector<const Type*> NewTypes;
-      ParamAttrsVector NewAttrs;
       NewTypes.reserve(FTy->getNumParams()+1);
 
-      // Add any function result attributes.
-      uint16_t Attr = Attrs ? Attrs->getParamAttrs(0) : 0;
-      if (Attr)
-        NewAttrs.push_back (ParamAttrsWithIndex::get(0, Attr));
-
       // Insert the chain's type into the list of parameter types, which may
-      // mean appending it.  Likewise for the chain's attributes.
+      // mean appending it.
       {
         unsigned Idx = 1;
         FunctionType::param_iterator I = FTy->param_begin(),
           E = FTy->param_end();
 
         do {
-          if (Idx == NestIdx) {
-            // Add the chain's type and attributes.
+          if (Idx == NestIdx)
+            // Add the chain's type.
             NewTypes.push_back(NestTy);
-            NewAttrs.push_back(ParamAttrsWithIndex::get(NestIdx, NestAttr));
-          }
 
           if (I == E)
             break;
 
-          // Add the original type and attributes.
+          // Add the original type.
           NewTypes.push_back(*I);
-          Attr = Attrs ? Attrs->getParamAttrs(Idx) : 0;
-          if (Attr)
-            NewAttrs.push_back
-              (ParamAttrsWithIndex::get(Idx + (Idx >= NestIdx), Attr));
 
           ++Idx, ++I;
         } while (1);

@@ -36,6 +36,13 @@ ParamAttrsList::getParamAttrs(uint16_t Index) const {
   return ParamAttr::None;
 }
 
+bool ParamAttrsList::hasAttrSomewhere(ParameterAttributes attr) const {
+  for (unsigned i = 0, e = attrs.size(); i < e; ++i)
+    if (attrs[i].attrs & attr)
+      return true;
+  return false;
+}
+
 std::string 
 ParamAttrsList::getParamAttrsText(uint16_t Attrs) {
   std::string Result;
