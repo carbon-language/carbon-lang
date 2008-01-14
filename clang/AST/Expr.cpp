@@ -929,37 +929,47 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
   return true;
 }
 
+/// Helper function for isNullPointerConstant. This routine skips all
+/// explicit casts, implicit casts and paren expressions.
+const Expr * getNullPointerConstantExpr(const Expr *exp) {
+  if (const CastExpr *CE = dyn_cast<CastExpr>(exp)) {
+    return getNullPointerConstantExpr(CE->getSubExpr());
+  } else if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(exp)) {
+    return getNullPointerConstantExpr(ICE->getSubExpr());
+  } else if (const ParenExpr *PE = dyn_cast<ParenExpr>(exp)) {
+    // Accept ((void*)0) as a null pointer constant, as many other
+    // implementations do.
+    return getNullPointerConstantExpr(PE->getSubExpr());
+  }
+  return exp;
+}
 
 /// isNullPointerConstant - C99 6.3.2.3p3 -  Return true if this is either an
 /// integer constant expression with the value zero, or if this is one that is
 /// cast to void*.
 bool Expr::isNullPointerConstant(ASTContext &Ctx) const {
-  // Strip off a cast to void*, if it exists.
-  if (const CastExpr *CE = dyn_cast<CastExpr>(this)) {
-    // Check that it is a cast to void*.
+  const CastExpr *CE = dyn_cast<CastExpr>(this);
+  const Expr *e = getNullPointerConstantExpr(this);
+  
+  if (CE) {
+    bool castToVoidStar = false;
+    // Check if the highest precedence cast is "void *".
     if (const PointerType *PT = dyn_cast<PointerType>(CE->getType())) {
       QualType Pointee = PT->getPointeeType();
-      if (Pointee.getQualifiers() == 0 && Pointee->isVoidType() && // to void*
-          CE->getSubExpr()->getType()->isIntegerType())            // from int.
-        return CE->getSubExpr()->isNullPointerConstant(Ctx);
+      if (Pointee.getQualifiers() == 0 && Pointee->isVoidType())
+        castToVoidStar = true;
     }
-  } else if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(this)) {
-    // Ignore the ImplicitCastExpr type entirely.
-    return ICE->getSubExpr()->isNullPointerConstant(Ctx);
-  } else if (const ParenExpr *PE = dyn_cast<ParenExpr>(this)) {
-    // Accept ((void*)0) as a null pointer constant, as many other
-    // implementations do.
-    return PE->getSubExpr()->isNullPointerConstant(Ctx);
-  }
-  
-  // This expression must be an integer type.
-  if (!getType()->isIntegerType())
+    // This cast must be an integer type or void *.
+    if (!CE->getType()->isIntegerType() && !castToVoidStar)
+      return false;
+  } else if (!e->getType()->isIntegerType()) {
+    // This expression must be an integer type.
     return false;
-  
+  }
   // If we have an integer constant expression, we need to *evaluate* it and
   // test for the value 0.
   llvm::APSInt Val(32);
-  return isIntegerConstantExpr(Val, Ctx, 0, true) && Val == 0;
+  return e->isIntegerConstantExpr(Val, Ctx, 0, true) && Val == 0;
 }
 
 unsigned OCUVectorElementExpr::getNumElements() const {
