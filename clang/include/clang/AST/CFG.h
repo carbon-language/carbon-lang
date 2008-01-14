@@ -288,10 +288,11 @@ private:
   // to integers to record block-level expressions.
   void*     BlkExprMap;
   
-  // opaque pointer to prevent inclusion of <set>.  This records a set of
-  // CFGBlock edges for using with ProgramPoint.  These edges represent
-  // the edges that cannot be succinctly represented, and in practice this
-  // set should be small.
+  /// BlkEdgeSet - An opaque pointer to prevent inclusion of <set>.
+  ///  The set contains std::pair<CFGBlock*,CFGBlock*> objects that have
+  ///  stable references for use by the 'BlockEdge' class.  This set is intended
+  ///  to be sparse, as it only contains edges whether both the source
+  ///  and destination block have multiple successors/predecessors.
   void*     BlkEdgeSet;
   
   friend class BlockEdge;
