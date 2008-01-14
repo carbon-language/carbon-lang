@@ -378,12 +378,86 @@ static bool CleanupConstantGlobalUsers(Value *V, Constant *Init) {
   return Changed;
 }
 
+
+/// UsersSafeToSRA - Look at all uses of the global and decide whether it is
+/// safe for us to perform this transformation.
+///
+static bool UsersSafeToSRA(Value *V) {
+  for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;++UI){
+    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(*UI)) {
+      if (CE->getOpcode() != Instruction::GetElementPtr)
+        return false;
+
+      // Check to see if this ConstantExpr GEP is SRA'able.  In particular, we
+      // don't like < 3 operand CE's, and we don't like non-constant integer
+      // indices.
+      if (CE->getNumOperands() < 3 || !CE->getOperand(1)->isNullValue())
+        return false;
+      
+      for (unsigned i = 1, e = CE->getNumOperands(); i != e; ++i)
+        if (!isa<ConstantInt>(CE->getOperand(i)))
+          return false;
+      
+      if (!UsersSafeToSRA(CE)) return false;
+      continue;
+    }
+    
+    if (Instruction *I = dyn_cast<Instruction>(*UI)) {
+      if (isa<LoadInst>(I)) continue;
+      
+      if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
+        // Don't allow a store OF the address, only stores TO the address.
+        if (SI->getOperand(0) == V) return false;
+        continue;
+      }
+      
+      if (isa<GetElementPtrInst>(I)) {
+        if (!UsersSafeToSRA(I)) return false;
+        
+        // If the first two indices are constants, this can be SRA'd.
+        if (isa<GlobalVariable>(I->getOperand(0))) {
+          if (I->getNumOperands() < 3 || !isa<Constant>(I->getOperand(1)) ||
+              !cast<Constant>(I->getOperand(1))->isNullValue() ||
+              !isa<ConstantInt>(I->getOperand(2)))
+            return false;
+          continue;
+        }
+        
+        if (ConstantExpr *CE = dyn_cast<ConstantExpr>(I->getOperand(0))){
+          if (CE->getOpcode() != Instruction::GetElementPtr ||
+              CE->getNumOperands() < 3 || I->getNumOperands() < 2 ||
+              !isa<Constant>(I->getOperand(0)) ||
+              !cast<Constant>(I->getOperand(0))->isNullValue())
+            return false;
+          continue;
+        }
+        return false;
+      }
+      return false;  // Any other instruction is not safe.
+    }
+    if (Constant *C = dyn_cast<Constant>(*UI)) {
+      // We might have a dead and dangling constant hanging off of here.
+      if (!ConstantIsDead(C))
+        return false;
+      continue;
+    }
+    // Otherwise must be some other user.
+    return false;
+  }
+  
+  return true;
+}
+
 /// SRAGlobal - Perform scalar replacement of aggregates on the specified global
 /// variable.  This opens the door for other optimizations by exposing the
 /// behavior of the program in a more fine-grained way.  We have determined that
 /// this transformation is safe already.  We return the first global variable we
 /// insert so that the caller can reprocess it.
 static GlobalVariable *SRAGlobal(GlobalVariable *GV) {
+  // Make sure this global only has simple uses that we can SRA.
+  if (!UsersSafeToSRA(GV))
+    return 0;
+  
   assert(GV->hasInternalLinkage() && !GV->isConstant());
   Constant *Init = GV->getInitializer();
   const Type *Ty = Init->getType();
@@ -1444,8 +1518,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
 
       ++NumMarked;
       return true;
-    } else if (!GS.isNotSuitableForSRA &&
-               !GV->getInitializer()->getType()->isFirstClassType()) {
+    } else if (!GV->getInitializer()->getType()->isFirstClassType()) {
       if (GlobalVariable *FirstNewGV = SRAGlobal(GV)) {
         GVI = FirstNewGV;  // Don't skip the newly produced globals!
         return true;
