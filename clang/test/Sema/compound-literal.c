@@ -11,6 +11,9 @@ static int x = (int){1}; // -expected-error {{initializer element is not constan
 static int *p2 = (int []){2,x}; // -expected-error {{initializer element is not constant}}
 static int *p3 = (int []){2,"x"}; // -expected-warning {{incompatible pointer to integer conversion initializing 'char *', expected 'int'}}
 
+typedef struct Test {int a;int b;} Test;
+static Test* ll = &(Test) {0,0};
+
 extern void fooFunc(struct foo *pfoo);
 
 int main(int argc, char **argv) {

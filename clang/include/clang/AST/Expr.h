@@ -728,12 +728,15 @@ class CompoundLiteralExpr : public Expr {
   /// synthesized compound expression.
   SourceLocation LParenLoc;
   Expr *Init;
+  bool FileScope;
 public:
-  CompoundLiteralExpr(SourceLocation lparenloc, QualType ty, Expr *init) : 
-    Expr(CompoundLiteralExprClass, ty), LParenLoc(lparenloc), Init(init) {}
+  CompoundLiteralExpr(SourceLocation lparenloc, QualType ty, Expr *init, bool fileScope) : 
+    Expr(CompoundLiteralExprClass, ty), LParenLoc(lparenloc), Init(init), FileScope(fileScope) {}
   
   const Expr *getInitializer() const { return Init; }
   Expr *getInitializer() { return Init; }
+
+  bool isFileScope() const { return FileScope; }
   
   SourceLocation getLParenLoc() const { return LParenLoc; }
   

@@ -392,13 +392,15 @@ void CompoundLiteralExpr::EmitImpl(Serializer& S) const {
   S.Emit(getType());
   S.Emit(getLParenLoc());
   S.EmitOwnedPtr(Init);
+  S.EmitBool(isFileScope());
 }
 
 CompoundLiteralExpr* CompoundLiteralExpr::CreateImpl(Deserializer& D) {
   QualType Q = QualType::ReadVal(D);
   SourceLocation L = SourceLocation::ReadVal(D);
   Expr* Init = D.ReadOwnedPtr<Expr>();
-  return new CompoundLiteralExpr(L, Q, Init);
+  bool fileScope = D.ReadBool();
+  return new CompoundLiteralExpr(L, Q, Init, fileScope);
 }
 
 void CompoundStmt::EmitImpl(Serializer& S) const {

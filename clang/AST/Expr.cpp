@@ -420,6 +420,8 @@ bool Expr::hasStaticStorage() const {
     return cast<ParenExpr>(this)->getSubExpr()->hasStaticStorage();
   case ImplicitCastExprClass:
     return cast<ImplicitCastExpr>(this)->getSubExpr()->hasStaticStorage();
+  case CompoundLiteralExprClass:
+    return cast<CompoundLiteralExpr>(this)->isFileScope();
   case DeclRefExprClass: {
     const Decl *D = cast<DeclRefExpr>(this)->getDecl();
     if (const VarDecl *VD = dyn_cast<VarDecl>(D))

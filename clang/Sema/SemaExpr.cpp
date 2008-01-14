@@ -673,12 +673,13 @@ ActOnCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
   // FIXME: add more semantic analysis (C99 6.5.2.5).
   if (CheckInitializerTypes(literalExpr, literalType))
     return true;
-    
-  if (!CurFunctionDecl && !CurMethodDecl) { // 6.5.2.5p3
+
+  bool isFileScope = !CurFunctionDecl && !CurMethodDecl;
+  if (isFileScope) { // 6.5.2.5p3
     if (CheckForConstantInitializer(literalExpr, literalType))
       return true;
   }
-  return new CompoundLiteralExpr(LParenLoc, literalType, literalExpr);
+  return new CompoundLiteralExpr(LParenLoc, literalType, literalExpr, isFileScope);
 }
 
 Action::ExprResult Sema::
@@ -1963,7 +1964,7 @@ Sema::ExprResult Sema::ActOnBuiltinOffsetOf(SourceLocation BuiltinLoc,
   
   // Otherwise, create a compound literal expression as the base, and
   // iteratively process the offsetof designators.
-  Expr *Res = new CompoundLiteralExpr(SourceLocation(), ArgTy, 0);
+  Expr *Res = new CompoundLiteralExpr(SourceLocation(), ArgTy, 0, false);
   
   // offsetof with non-identifier designators (e.g. "offsetof(x, a.b[c])") are a
   // GCC extension, diagnose them.

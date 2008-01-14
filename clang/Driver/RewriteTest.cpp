@@ -1510,7 +1510,7 @@ Stmt *RewriteTest::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
   InitListExpr *ILE = new InitListExpr(SourceLocation(), 
                                        &InitExprs[0], InitExprs.size(), 
                                        SourceLocation());
-  CompoundLiteralExpr *StrRep = new CompoundLiteralExpr(CFConstantStrType, ILE);
+  CompoundLiteralExpr *StrRep = new CompoundLiteralExpr(CFConstantStrType, ILE, false);
   // struct NSConstantString *
   expType = Context->getPointerType(StrRep->getType());
   Unop = new UnaryOperator(StrRep, UnaryOperator::AddrOf, expType, 
@@ -1643,7 +1643,7 @@ Stmt *RewriteTest::SynthMessageExpr(ObjCMessageExpr *Exp) {
                                            &InitExprs[0], InitExprs.size(), 
                                            SourceLocation());
       CompoundLiteralExpr *SuperRep = new CompoundLiteralExpr(SourceLocation(),
-                                                              superType, ILE);
+                                                              superType, ILE, false);
       // struct objc_super *
       Expr *Unop = new UnaryOperator(SuperRep, UnaryOperator::AddrOf,
                                Context->getPointerType(SuperRep->getType()), 
@@ -1696,7 +1696,7 @@ Stmt *RewriteTest::SynthMessageExpr(ObjCMessageExpr *Exp) {
                                            &InitExprs[0], InitExprs.size(), 
                                            SourceLocation());
       CompoundLiteralExpr *SuperRep = new CompoundLiteralExpr(SourceLocation(),
-                                                              superType, ILE);
+                                                              superType, ILE, false);
       // struct objc_super *
       Expr *Unop = new UnaryOperator(SuperRep, UnaryOperator::AddrOf,
                                Context->getPointerType(SuperRep->getType()), 
