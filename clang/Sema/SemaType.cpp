@@ -164,7 +164,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
       if (T->isReferenceType()) {
         // C++ 8.3.2p4: There shall be no ... pointers to references ...
         Diag(D.getIdentifierLoc(), diag::err_illegal_decl_pointer_to_reference,
-             D.getIdentifier()->getName());
+             D.getIdentifier() ? D.getIdentifier()->getName() : "type name");
         D.setInvalidType(true);
         T = Context.IntTy;
       }
@@ -177,7 +177,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
         // C++ 8.3.2p4: There shall be no references to references ...
         Diag(D.getIdentifierLoc(),
              diag::err_illegal_decl_reference_to_reference,
-             D.getIdentifier()->getName());
+             D.getIdentifier() ? D.getIdentifier()->getName() : "type name");
         D.setInvalidType(true);
         T = RT->getReferenceeType();
       }
@@ -204,13 +204,13 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
         D.setInvalidType(true);
       } else if (T->isFunctionType()) {
         Diag(D.getIdentifierLoc(), diag::err_illegal_decl_array_of_functions,
-             D.getIdentifier()->getName());
+             D.getIdentifier() ? D.getIdentifier()->getName() : "type name");
         T = Context.getPointerType(T);
         D.setInvalidType(true);
       } else if (const ReferenceType *RT = T->getAsReferenceType()) {
         // C++ 8.3.2p4: There shall be no ... arrays of references ...
         Diag(D.getIdentifierLoc(), diag::err_illegal_decl_array_of_references,
-             D.getIdentifier()->getName());
+             D.getIdentifier() ? D.getIdentifier()->getName() : "type name");
         T = RT->getReferenceeType();
         D.setInvalidType(true);
       } else if (const RecordType *EltTy = T->getAsRecordType()) {
