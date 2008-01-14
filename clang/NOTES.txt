@@ -28,6 +28,32 @@ Extensions:
 
 //===---------------------------------------------------------------------===//
 
+When we go to reimplement <tgmath.h>, we should do it more intelligently than
+the GCC-supplied header.  EDG has an interesting __generic builtin that provides
+overloading for C:
+http://www.edg.com/docs/edg_cpp.pdf
+
+For example, they have:
+ #define sin(x) __generic(x,,, sin, sinf, sinl, csin, csinf,csinl)(x) 
+
+It's unclear to me why you couldn't just have a builtin like: 
+  __builtin_overload(1, arg1,              impl1, impl2, impl3)
+  __builtin_overload(2, arg1, arg2,        impl1, impl2, impl3)
+  __builtin_overload(3, arg1, arg2, arg3,  impl1, impl2, impl3)
+  
+Where the compiler would just pick the right "impl" based on the arguments
+provided.  One nasty detail is that some arithmetic promotions most be done for
+use by the tgmath.h stuff, but it would be nice to be able to handle vectors
+etc as well without huge globs of macros.  With the above scheme, you could
+use:
+
+ #define sin(x) __builtin_overload(1, x, sin, sinf, sinl, csin, csinf,csinl)(x) 
+
+and not need to keep track of which argument to "__generic" corresponds to which
+type, etc.
+
+//===---------------------------------------------------------------------===//
+
 To time GCC preprocessing speed without output, use:
    "time gcc -MM file"
 This is similar to -Eonly.
