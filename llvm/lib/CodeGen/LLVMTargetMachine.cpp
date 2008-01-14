@@ -41,6 +41,12 @@ PerformLICM("machine-licm",
             cl::init(false), cl::Hidden,
             cl::desc("Perform loop-invariant code motion on machine code"));
 
+// When this works it will be on by default.
+static cl::opt<bool>
+DisablePostRAScheduler("disable-post-RA-scheduler",
+                       cl::desc("Disable scheduling after register allocation"),
+                       cl::init(true));
+
 FileModel::Model
 LLVMTargetMachine::addPassesToEmitFile(FunctionPassManager &PM,
                                        std::ostream &Out,
@@ -103,7 +109,7 @@ LLVMTargetMachine::addPassesToEmitFile(FunctionPassManager &PM,
   PM.add(createPrologEpilogCodeInserter());
   
   // Second pass scheduler.
-  if (!Fast)
+  if (!Fast && !DisablePostRAScheduler)
     PM.add(createPostRAScheduler());
 
   // Branch folding must be run after regalloc and prolog/epilog insertion.

@@ -21,23 +21,11 @@
 #define DEBUG_TYPE "post-RA-sched"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
-//#include "llvm/ADT/Statistic.h"
-//#include <climits>
-//#include <queue>
-#include "llvm/Support/CommandLine.h"
 using namespace llvm;
 
 namespace {
-  bool NoPostRAScheduling;
-
-  // When this works it will be on by default.
-  cl::opt<bool, true>
-  DisablePostRAScheduler("disable-post-RA-scheduler",
-               cl::desc("Disable scheduling after register allocation"),
-               cl::location(NoPostRAScheduling),
-               cl::init(true));
-
   class VISIBILITY_HIDDEN SchedulePostRATDList : public MachineFunctionPass {
   public:
     static char ID;
@@ -56,9 +44,6 @@ namespace {
 }
 
 bool SchedulePostRATDList::runOnMachineFunction(MachineFunction &Fn) {
-  if (NoPostRAScheduling)
-    return true;
-
   DOUT << "SchedulePostRATDList\n";
   MF = &Fn;
   TM = &MF->getTarget();
