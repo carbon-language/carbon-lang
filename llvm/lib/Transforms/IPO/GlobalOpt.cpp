@@ -26,6 +26,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
@@ -335,75 +336,112 @@ static bool CleanupConstantGlobalUsers(Value *V, Constant *Init) {
   return Changed;
 }
 
-
-/// UsersSafeToSRA - Look at all uses of the global and decide whether it is
-/// safe for us to perform this transformation.
-///
-static bool UsersSafeToSRA(Value *V) {
-  for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;++UI){
-    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(*UI)) {
-      if (CE->getOpcode() != Instruction::GetElementPtr)
-        return false;
-
-      // Check to see if this ConstantExpr GEP is SRA'able.  In particular, we
-      // don't like < 3 operand CE's, and we don't like non-constant integer
-      // indices.
-      if (CE->getNumOperands() < 3 || !CE->getOperand(1)->isNullValue())
-        return false;
-      
-      for (unsigned i = 1, e = CE->getNumOperands(); i != e; ++i)
-        if (!isa<ConstantInt>(CE->getOperand(i)))
-          return false;
-      
-      if (!UsersSafeToSRA(CE)) return false;
-      continue;
-    }
-    
-    if (Instruction *I = dyn_cast<Instruction>(*UI)) {
-      if (isa<LoadInst>(I)) continue;
-      
-      if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
-        // Don't allow a store OF the address, only stores TO the address.
-        if (SI->getOperand(0) == V) return false;
-        continue;
-      }
-      
-      if (isa<GetElementPtrInst>(I)) {
-        if (!UsersSafeToSRA(I)) return false;
-        
-        // If the first two indices are constants, this can be SRA'd.
-        if (isa<GlobalVariable>(I->getOperand(0))) {
-          if (I->getNumOperands() < 3 || !isa<Constant>(I->getOperand(1)) ||
-              !cast<Constant>(I->getOperand(1))->isNullValue() ||
-              !isa<ConstantInt>(I->getOperand(2)))
-            return false;
-          continue;
-        }
-        
-        if (ConstantExpr *CE = dyn_cast<ConstantExpr>(I->getOperand(0))){
-          if (CE->getOpcode() != Instruction::GetElementPtr ||
-              CE->getNumOperands() < 3 || I->getNumOperands() < 2 ||
-              !isa<Constant>(I->getOperand(0)) ||
-              !cast<Constant>(I->getOperand(0))->isNullValue())
-            return false;
-          continue;
-        }
-        return false;
-      }
-      return false;  // Any other instruction is not safe.
-    }
-    if (Constant *C = dyn_cast<Constant>(*UI)) {
-      // We might have a dead and dangling constant hanging off of here.
-      if (!ConstantIsDead(C))
-        return false;
-      continue;
-    }
-    // Otherwise must be some other user.
-    return false;
-  }
+/// isSafeSROAElementUse - Return true if the specified instruction is a safe
+/// user of a derived expression from a global that we want to SROA.
+static bool isSafeSROAElementUse(Value *V) {
+  // We might have a dead and dangling constant hanging off of here.
+  if (Constant *C = dyn_cast<Constant>(V))
+    return ConstantIsDead(C);
   
+  Instruction *I = dyn_cast<Instruction>(V);
+  if (!I) return false;
+
+  // Loads are ok.
+  if (isa<LoadInst>(I)) return true;
+
+  // Stores *to* the pointer are ok.
+  if (StoreInst *SI = dyn_cast<StoreInst>(I))
+    return SI->getOperand(0) != V;
+    
+  // Otherwise, it must be a GEP.
+  GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(I);
+  if (GEPI == 0) return false;
+  
+  if (GEPI->getNumOperands() < 3 || !isa<Constant>(GEPI->getOperand(1)) ||
+      !cast<Constant>(GEPI->getOperand(1))->isNullValue())
+    return false;
+  
+  for (Value::use_iterator I = GEPI->use_begin(), E = GEPI->use_end();
+       I != E; ++I)
+    if (!isSafeSROAElementUse(*I))
+      return false;
   return true;
 }
+
+
+/// IsUserOfGlobalSafeForSRA - U is a direct user of the specified global value.
+/// Look at it and its uses and decide whether it is safe to SROA this global.
+///
+static bool IsUserOfGlobalSafeForSRA(User *U, GlobalValue *GV) {
+  // The user of the global must be a GEP Inst or a ConstantExpr GEP.
+  if (!isa<GetElementPtrInst>(U) && 
+      (!isa<ConstantExpr>(U) || 
+       cast<ConstantExpr>(U)->getOpcode() != Instruction::GetElementPtr))
+    return false;
+  
+  // Check to see if this ConstantExpr GEP is SRA'able.  In particular, we
+  // don't like < 3 operand CE's, and we don't like non-constant integer
+  // indices.  This enforces that all uses are 'gep GV, 0, C, ...' for some
+  // value of C.
+  if (U->getNumOperands() < 3 || !isa<Constant>(U->getOperand(1)) ||
+      !cast<Constant>(U->getOperand(1))->isNullValue() ||
+      !isa<ConstantInt>(U->getOperand(2)))
+    return false;
+
+  gep_type_iterator GEPI = gep_type_begin(U), E = gep_type_end(U);
+  ++GEPI;  // Skip over the pointer index.
+  
+  // If this is a use of an array allocation, do a bit more checking for sanity.
+  if (const ArrayType *AT = dyn_cast<ArrayType>(*GEPI)) {
+    uint64_t NumElements = AT->getNumElements();
+    ConstantInt *Idx = cast<ConstantInt>(U->getOperand(2));
+    
+    // Check to make sure that index falls within the array.  If not,
+    // something funny is going on, so we won't do the optimization.
+    //
+    if (Idx->getZExtValue() >= NumElements)
+      return false;
+      
+    // We cannot scalar repl this level of the array unless any array
+    // sub-indices are in-range constants.  In particular, consider:
+    // A[0][i].  We cannot know that the user isn't doing invalid things like
+    // allowing i to index an out-of-range subscript that accesses A[1].
+    //
+    // Scalar replacing *just* the outer index of the array is probably not
+    // going to be a win anyway, so just give up.
+    for (++GEPI; // Skip array index.
+         GEPI != E && (isa<ArrayType>(*GEPI) || isa<VectorType>(*GEPI));
+         ++GEPI) {
+      uint64_t NumElements;
+      if (const ArrayType *SubArrayTy = dyn_cast<ArrayType>(*GEPI))
+        NumElements = SubArrayTy->getNumElements();
+      else
+        NumElements = cast<VectorType>(*GEPI)->getNumElements();
+      
+      ConstantInt *IdxVal = dyn_cast<ConstantInt>(GEPI.getOperand());
+      if (!IdxVal || IdxVal->getZExtValue() >= NumElements)
+        return false;
+    }
+  }
+
+  for (Value::use_iterator I = U->use_begin(), E = U->use_end(); I != E; ++I)
+    if (!isSafeSROAElementUse(*I))
+      return false;
+  return true;
+}
+
+/// GlobalUsersSafeToSRA - Look at all uses of the global and decide whether it
+/// is safe for us to perform this transformation.
+///
+static bool GlobalUsersSafeToSRA(GlobalValue *GV) {
+  for (Value::use_iterator UI = GV->use_begin(), E = GV->use_end();
+       UI != E; ++UI) {
+    if (!IsUserOfGlobalSafeForSRA(*UI, GV))
+      return false;
+  }
+  return true;
+}
+ 
 
 /// SRAGlobal - Perform scalar replacement of aggregates on the specified global
 /// variable.  This opens the door for other optimizations by exposing the
@@ -412,7 +450,7 @@ static bool UsersSafeToSRA(Value *V) {
 /// insert so that the caller can reprocess it.
 static GlobalVariable *SRAGlobal(GlobalVariable *GV) {
   // Make sure this global only has simple uses that we can SRA.
-  if (!UsersSafeToSRA(GV))
+  if (!GlobalUsersSafeToSRA(GV))
     return 0;
   
   assert(GV->hasInternalLinkage() && !GV->isConstant());
