@@ -406,10 +406,7 @@ bool CallInst::isStructReturn() const {
 
 /// @brief Determine if any call argument is an aggregate passed by value.
 bool CallInst::hasByValArgument() const {
-  for (unsigned i = 1, e = getNumOperands(); i != e; ++i)
-    if (paramHasAttr(i, ParamAttr::ByVal))
-      return true;
-  return false;
+  return ParamAttrs && ParamAttrs->hasAttrSomewhere(ParamAttr::ByVal);
 }
 
 void CallInst::setDoesNotThrow(bool doesNotThrow) {
