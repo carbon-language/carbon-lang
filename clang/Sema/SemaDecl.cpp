@@ -1509,9 +1509,11 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
     
     // Keep track of the size of positive and negative values.
     if (InitVal.isUnsigned() || !InitVal.isNegative())
-      NumPositiveBits = std::max(NumPositiveBits, InitVal.getActiveBits());
+      NumPositiveBits = std::max(NumPositiveBits,
+                                 (unsigned)InitVal.getActiveBits());
     else
-      NumNegativeBits = std::max(NumNegativeBits, InitVal.getMinSignedBits());
+      NumNegativeBits = std::max(NumNegativeBits,
+                                 (unsigned)InitVal.getMinSignedBits());
 
     // Keep track of whether every enum element has type int (very commmon).
     if (AllElementsInt)
