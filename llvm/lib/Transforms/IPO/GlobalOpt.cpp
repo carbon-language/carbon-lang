@@ -1257,9 +1257,28 @@ static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
   return false;
 }
 
-/// ShrinkGlobalToBoolean - At this point, we have learned that the only two
-/// values ever stored into GV are its initializer and OtherVal.
-static void ShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
+/// TryToShrinkGlobalToBoolean - At this point, we have learned that the only
+/// two values ever stored into GV are its initializer and OtherVal.  See if we
+/// can shrink the global into a boolean and select between the two values
+/// whenever it is used.  This exposes the values to other scalar optimizations.
+static bool TryToShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
+  const Type *GVElType = GV->getType()->getElementType();
+  
+  // If GVElType is already i1, it is already shrunk.  If the type of the GV is
+  // an FP value or vector, don't do this optimization because a select between
+  // them is very expensive and unlikely to lead to later simplification.
+  if (GVElType == Type::Int1Ty || GVElType->isFloatingPoint() ||
+      isa<VectorType>(GVElType))
+    return false;
+  
+  // Walk the use list of the global seeing if all the uses are load or store.
+  // If there is anything else, bail out.
+  for (Value::use_iterator I = GV->use_begin(), E = GV->use_end(); I != E; ++I)
+    if (!isa<LoadInst>(I) && !isa<StoreInst>(I))
+      return false;
+  
+  DOUT << "   *** SHRINKING TO BOOL: " << *GV;
+  
   // Create the new global, initializing it to false.
   GlobalVariable *NewGV = new GlobalVariable(Type::Int1Ty, false,
          GlobalValue::InternalLinkage, ConstantInt::getFalse(),
@@ -1307,7 +1326,7 @@ static void ShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
         }
       }
       new StoreInst(StoreVal, NewGV, SI);
-    } else if (!UI->use_empty()) {
+    } else {
       // Change the load into a load of bool then a select.
       LoadInst *LI = cast<LoadInst>(UI);
       LoadInst *NLI = new LoadInst(NewGV, LI->getName()+".b", LI);
@@ -1323,6 +1342,7 @@ static void ShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
   }
 
   GV->eraseFromParent();
+  return true;
 }
 
 
@@ -1464,12 +1484,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
       // Otherwise, if the global was not a boolean, we can shrink it to be a
       // boolean.
       if (Constant *SOVConstant = dyn_cast<Constant>(GS.StoredOnceValue))
-        if (GV->getType()->getElementType() != Type::Int1Ty &&
-            !GV->getType()->getElementType()->isFloatingPoint() &&
-            !isa<VectorType>(GV->getType()->getElementType()) &&
-            !GS.HasPHIUser && !GS.isNotSuitableForSRA) {
-          DOUT << "   *** SHRINKING TO BOOL: " << *GV;
-          ShrinkGlobalToBoolean(GV, SOVConstant);
+        if (TryToShrinkGlobalToBoolean(GV, SOVConstant)) {
           ++NumShrunkToBool;
           return true;
         }
