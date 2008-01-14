@@ -310,6 +310,9 @@ bool Type::isIntegerType() const {
   if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
     if (TT->getDecl()->getKind() == Decl::Enum)
       return true;
+  // Check for GCC complex integer extension.
+  if (const ComplexType *CT = dyn_cast<ComplexType>(CanonicalType))
+    return CT->getElementType()->isIntegerType();
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
     return VT->getElementType()->isIntegerType();
   return false;
