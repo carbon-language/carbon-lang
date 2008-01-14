@@ -1613,51 +1613,59 @@ bool ASTContext::typesAreCompatible(QualType lhs, QualType rhs) {
   // type is adjusted to "T" prior to any further analysis, the expression
   // designates the object or function denoted by the reference, and the
   // expression is an lvalue.
-  if (lcanon->getTypeClass() == Type::Reference)
-    lcanon = cast<ReferenceType>(lcanon)->getReferenceeType();
-  if (rcanon->getTypeClass() == Type::Reference)
-    rcanon = cast<ReferenceType>(rcanon)->getReferenceeType();
+  if (ReferenceType *RT = dyn_cast<ReferenceType>(lcanon))
+    lcanon = RT->getReferenceeType();
+  if (ReferenceType *RT = dyn_cast<ReferenceType>(rcanon))
+    rcanon = RT->getReferenceeType();
+  
+  Type::TypeClass LHSClass = lcanon->getTypeClass();
+  Type::TypeClass RHSClass = rcanon->getTypeClass();
+  
+  // We want to consider the two function types to be the same for these
+  // comparisons, just force one to the other.
+  if (LHSClass == Type::FunctionProto) LHSClass = Type::FunctionNoProto;
+  if (RHSClass == Type::FunctionProto) RHSClass = Type::FunctionNoProto;
   
   // If the canonical type classes don't match...
-  if (lcanon->getTypeClass() != rcanon->getTypeClass()) {
+  if (LHSClass != RHSClass) {
     // For Objective-C, it is possible for two types to be compatible
     // when their classes don't match (when dealing with "id"). If either type
     // is an interface, we defer to objcTypesAreCompatible(). 
     if (lcanon->isObjCInterfaceType() || rcanon->isObjCInterfaceType())
       return objcTypesAreCompatible(lcanon, rcanon);
 	  
-	// C99 6.7.2.2p4: Each enumerated type shall be compatible with char,
-	// a signed integer type, or an unsigned integer type. 
-	// FIXME: need to check the size and ensure it's the same.
-	if ((lcanon->isEnumeralType() && rcanon->isIntegralType()) ||
-	    (rcanon->isEnumeralType() && lcanon->isIntegralType()))
-	  return true;
-	  
+    // C99 6.7.2.2p4: Each enumerated type shall be compatible with char,
+    // a signed integer type, or an unsigned integer type. 
+    // FIXME: need to check the size and ensure it's the same.
+    if ((lcanon->isEnumeralType() && rcanon->isIntegralType()) ||
+        (rcanon->isEnumeralType() && lcanon->isIntegralType()))
+      return true;
+
     return false;
   }
   // The canonical type classes match.
-  switch (lcanon->getTypeClass()) {
-    case Type::Pointer:
-      return pointerTypesAreCompatible(lcanon, rcanon);
-    case Type::ConstantArray:
-    case Type::VariableArray:
-      return arrayTypesAreCompatible(lcanon, rcanon);
-    case Type::FunctionNoProto:
-    case Type::FunctionProto:
-      return functionTypesAreCompatible(lcanon, rcanon);
-    case Type::Tagged: // handle structures, unions
-      return tagTypesAreCompatible(lcanon, rcanon);
-    case Type::Builtin:
-      return builtinTypesAreCompatible(lcanon, rcanon); 
-    case Type::ObjCInterface:
-      return interfaceTypesAreCompatible(lcanon, rcanon); 
-    case Type::Vector:
-    case Type::OCUVector:
-      return vectorTypesAreCompatible(lcanon, rcanon);
-    case Type::ObjCQualifiedInterface:
-      return QualifiedInterfaceTypesAreCompatible(lcanon, rcanon);
-    default:
-      assert(0 && "unexpected type");
+  switch (LHSClass) {
+  case Type::FunctionProto: assert(0 && "Canonicalized away above");
+  case Type::Pointer:
+    return pointerTypesAreCompatible(lcanon, rcanon);
+  case Type::ConstantArray:
+  case Type::VariableArray:
+    return arrayTypesAreCompatible(lcanon, rcanon);
+  case Type::FunctionNoProto:
+    return functionTypesAreCompatible(lcanon, rcanon);
+  case Type::Tagged: // handle structures, unions
+    return tagTypesAreCompatible(lcanon, rcanon);
+  case Type::Builtin:
+    return builtinTypesAreCompatible(lcanon, rcanon); 
+  case Type::ObjCInterface:
+    return interfaceTypesAreCompatible(lcanon, rcanon); 
+  case Type::Vector:
+  case Type::OCUVector:
+    return vectorTypesAreCompatible(lcanon, rcanon);
+  case Type::ObjCQualifiedInterface:
+    return QualifiedInterfaceTypesAreCompatible(lcanon, rcanon);
+  default:
+    assert(0 && "unexpected type");
   }
   return true; // should never get here...
 }
