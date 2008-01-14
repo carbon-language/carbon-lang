@@ -46,13 +46,13 @@ protected:
     
     ~NodeGroup();
     
-    inline ExplodedNodeImpl** begin() const;
+    ExplodedNodeImpl** begin() const;
     
-    inline ExplodedNodeImpl** end() const;
+    ExplodedNodeImpl** end() const;
     
-    inline unsigned size() const;
+    unsigned size() const;
     
-    inline bool empty() const;
+    bool empty() const;
     
     void addNode(ExplodedNodeImpl* N);
   };
