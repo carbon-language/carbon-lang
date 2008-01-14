@@ -37,7 +37,7 @@
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include <iostream>
+#include "llvm/Support/Streams.h"
 #include <ctime>
 using namespace clang;
 
@@ -129,72 +129,72 @@ void Preprocessor::Diag(SourceLocation Loc, unsigned DiagID,
 }
 
 void Preprocessor::DumpToken(const Token &Tok, bool DumpFlags) const {
-  std::cerr << tok::getTokenName(Tok.getKind()) << " '"
-            << getSpelling(Tok) << "'";
+  llvm::cerr << tok::getTokenName(Tok.getKind()) << " '"
+             << getSpelling(Tok) << "'";
   
   if (!DumpFlags) return;
   
-  std::cerr << "\t";
+  llvm::cerr << "\t";
   if (Tok.isAtStartOfLine())
-    std::cerr << " [StartOfLine]";
+    llvm::cerr << " [StartOfLine]";
   if (Tok.hasLeadingSpace())
-    std::cerr << " [LeadingSpace]";
+    llvm::cerr << " [LeadingSpace]";
   if (Tok.isExpandDisabled())
-    std::cerr << " [ExpandDisabled]";
+    llvm::cerr << " [ExpandDisabled]";
   if (Tok.needsCleaning()) {
     const char *Start = SourceMgr.getCharacterData(Tok.getLocation());
-    std::cerr << " [UnClean='" << std::string(Start, Start+Tok.getLength())
-              << "']";
+    llvm::cerr << " [UnClean='" << std::string(Start, Start+Tok.getLength())
+               << "']";
   }
   
-  std::cerr << "\tLoc=<";
+  llvm::cerr << "\tLoc=<";
   DumpLocation(Tok.getLocation());
-  std::cerr << ">";
+  llvm::cerr << ">";
 }
 
 void Preprocessor::DumpLocation(SourceLocation Loc) const {
   SourceLocation LogLoc = SourceMgr.getLogicalLoc(Loc);
-  std::cerr << SourceMgr.getSourceName(LogLoc) << ':'
-            << SourceMgr.getLineNumber(LogLoc) << ':'
-            << SourceMgr.getLineNumber(LogLoc);
+  llvm::cerr << SourceMgr.getSourceName(LogLoc) << ':'
+             << SourceMgr.getLineNumber(LogLoc) << ':'
+             << SourceMgr.getLineNumber(LogLoc);
   
   SourceLocation PhysLoc = SourceMgr.getPhysicalLoc(Loc);
   if (PhysLoc != LogLoc) {
-    std::cerr << " <PhysLoc=";
+    llvm::cerr << " <PhysLoc=";
     DumpLocation(PhysLoc);
-    std::cerr << ">";
+    llvm::cerr << ">";
   }
 }
 
 void Preprocessor::DumpMacro(const MacroInfo &MI) const {
-  std::cerr << "MACRO: ";
+  llvm::cerr << "MACRO: ";
   for (unsigned i = 0, e = MI.getNumTokens(); i != e; ++i) {
     DumpToken(MI.getReplacementToken(i));
-    std::cerr << "  ";
+    llvm::cerr << "  ";
   }
-  std::cerr << "\n";
+  llvm::cerr << "\n";
 }
 
 void Preprocessor::PrintStats() {
-  std::cerr << "\n*** Preprocessor Stats:\n";
-  std::cerr << NumDirectives << " directives found:\n";
-  std::cerr << "  " << NumDefined << " #define.\n";
-  std::cerr << "  " << NumUndefined << " #undef.\n";
-  std::cerr << "  #include/#include_next/#import:\n";
-  std::cerr << "    " << NumEnteredSourceFiles << " source files entered.\n";
-  std::cerr << "    " << MaxIncludeStackDepth << " max include stack depth\n";
-  std::cerr << "  " << NumIf << " #if/#ifndef/#ifdef.\n";
-  std::cerr << "  " << NumElse << " #else/#elif.\n";
-  std::cerr << "  " << NumEndif << " #endif.\n";
-  std::cerr << "  " << NumPragma << " #pragma.\n";
-  std::cerr << NumSkipped << " #if/#ifndef#ifdef regions skipped\n";
+  llvm::cerr << "\n*** Preprocessor Stats:\n";
+  llvm::cerr << NumDirectives << " directives found:\n";
+  llvm::cerr << "  " << NumDefined << " #define.\n";
+  llvm::cerr << "  " << NumUndefined << " #undef.\n";
+  llvm::cerr << "  #include/#include_next/#import:\n";
+  llvm::cerr << "    " << NumEnteredSourceFiles << " source files entered.\n";
+  llvm::cerr << "    " << MaxIncludeStackDepth << " max include stack depth\n";
+  llvm::cerr << "  " << NumIf << " #if/#ifndef/#ifdef.\n";
+  llvm::cerr << "  " << NumElse << " #else/#elif.\n";
+  llvm::cerr << "  " << NumEndif << " #endif.\n";
+  llvm::cerr << "  " << NumPragma << " #pragma.\n";
+  llvm::cerr << NumSkipped << " #if/#ifndef#ifdef regions skipped\n";
 
-  std::cerr << NumMacroExpanded << "/" << NumFnMacroExpanded << "/"
-            << NumBuiltinMacroExpanded << " obj/fn/builtin macros expanded, "
-            << NumFastMacroExpanded << " on the fast path.\n";
-  std::cerr << (NumFastTokenPaste+NumTokenPaste)
-            << " token paste (##) operations performed, "
-            << NumFastTokenPaste << " on the fast path.\n";
+  llvm::cerr << NumMacroExpanded << "/" << NumFnMacroExpanded << "/"
+             << NumBuiltinMacroExpanded << " obj/fn/builtin macros expanded, "
+             << NumFastMacroExpanded << " on the fast path.\n";
+  llvm::cerr << (NumFastTokenPaste+NumTokenPaste)
+             << " token paste (##) operations performed, "
+             << NumFastTokenPaste << " on the fast path.\n";
 }
 
 //===----------------------------------------------------------------------===//

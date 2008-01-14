@@ -15,7 +15,7 @@
 #include "clang.h"
 #include "clang/Parse/Action.h"
 #include "clang/Parse/DeclSpec.h"
-#include <iostream>
+#include "llvm/Support/Streams.h"
 using namespace clang;
 
 namespace {
@@ -29,13 +29,13 @@ namespace {
     /// "int X = 4" or "typedef int foo".
     virtual DeclTy *ActOnDeclarator(Scope *S, Declarator &D,
                                     DeclTy *LastInGroup) {
-      std::cout << "ActOnDeclarator ";
+      llvm::cout << "ActOnDeclarator ";
       if (IdentifierInfo *II = D.getIdentifier()) {
-        std::cout << "'" << II->getName() << "'";
+        llvm::cout << "'" << II->getName() << "'";
       } else {
-        std::cout << "<anon>";
+        llvm::cout << "<anon>";
       }
-      std::cout << "\n";
+      llvm::cout << "\n";
       
       // Pass up to EmptyActions so that the symbol table is maintained right.
       return MinimalAction::ActOnDeclarator(S, D, LastInGroup);
@@ -44,7 +44,7 @@ namespace {
     /// ActOnPopScope - This callback is called immediately before the specified
     /// scope is popped and deleted.
     virtual void ActOnPopScope(SourceLocation Loc, Scope *S) {
-      std::cout << "ActOnPopScope\n";
+      llvm::cout << "ActOnPopScope\n";
       
       // Pass up to EmptyActions so that the symbol table is maintained right.
       MinimalAction::ActOnPopScope(Loc, S);

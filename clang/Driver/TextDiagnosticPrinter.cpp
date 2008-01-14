@@ -18,7 +18,7 @@
 #include "clang/Lex/Lexer.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include <iostream>
+#include "llvm/Support/Streams.h"
 #include <string>
 using namespace clang;
 
@@ -40,8 +40,8 @@ PrintIncludeStack(FullSourceLoc Pos) {
   PrintIncludeStack(Pos.getIncludeLoc());
   unsigned LineNo = Pos.getLineNumber();
   
-  std::cerr << "In file included from " << Pos.getSourceName()
-            << ":" << LineNo << ":\n";
+  llvm::cerr << "In file included from " << Pos.getSourceName()
+             << ":" << LineNo << ":\n";
 }
 
 /// HighlightRange - Given a SourceRange and a line number, highlight (with ~'s)
@@ -141,23 +141,23 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic &Diags,
            *LineEnd != '\n' && *LineEnd != '\r')
       ++LineEnd;
   
-    std::cerr << Buffer->getBufferIdentifier() 
-              << ":" << LineNo << ":";
+    llvm::cerr << Buffer->getBufferIdentifier() 
+               << ":" << LineNo << ":";
     if (ColNo && !NoShowColumn) 
-      std::cerr << ColNo << ":";
-    std::cerr << " ";
+      llvm::cerr << ColNo << ":";
+    llvm::cerr << " ";
   }
   
   switch (Level) {
   default: assert(0 && "Unknown diagnostic type!");
-  case Diagnostic::Note:    std::cerr << "note: "; break;
-  case Diagnostic::Warning: std::cerr << "warning: "; break;
-  case Diagnostic::Error:   std::cerr << "error: "; break;
-  case Diagnostic::Fatal:   std::cerr << "fatal error: "; break;
+  case Diagnostic::Note:    llvm::cerr << "note: "; break;
+  case Diagnostic::Warning: llvm::cerr << "warning: "; break;
+  case Diagnostic::Error:   llvm::cerr << "error: "; break;
+  case Diagnostic::Fatal:   llvm::cerr << "fatal error: "; break;
     break;
   }
   
-  std::cerr << FormatDiagnostic(Diags, Level, ID, Strs, NumStrs) << "\n";
+  llvm::cerr << FormatDiagnostic(Diags, Level, ID, Strs, NumStrs) << "\n";
   
   if (!NoCaretDiagnostics && Pos.isValid()) {
     // Get the line of the source file.
@@ -202,7 +202,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic &Diags,
       CaratLine.erase(CaratLine.end()-1);
     
     // Emit what we have computed.
-    std::cerr << SourceLine << "\n";
-    std::cerr << CaratLine << "\n";
+    llvm::cerr << SourceLine << "\n";
+    llvm::cerr << CaratLine << "\n";
   }
 }

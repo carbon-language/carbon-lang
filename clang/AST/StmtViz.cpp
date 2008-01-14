@@ -14,7 +14,6 @@
 
 #include "clang/AST/StmtGraphTraits.h"
 #include "llvm/Support/GraphWriter.h"
-#include <iostream>
 #include <sstream>
 
 using namespace clang;
@@ -23,7 +22,7 @@ void Stmt::viewAST() const {
 #ifndef NDEBUG
   llvm::ViewGraph(this,"AST");
 #else
-  std::cerr << "Stmt::viewAST is only available in debug builds on "
+  llvm::cerr << "Stmt::viewAST is only available in debug builds on "
   << "systems with Graphviz or gv!\n";
 #endif
 }
