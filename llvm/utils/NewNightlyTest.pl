@@ -154,7 +154,7 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
                              $CONFIGUREARGS .= " --disable-jit"; next; }
   if (/^-disable-cbe$/)    { $PROGTESTOPTS .= " DISABLE_CBE=1"; next; }
   if (/^-disable-lto$/)    { $PROGTESTOPTS .= " DISABLE_LTO=1"; next; }
-  if (/^-test-opts$/)      { $PROGTESTOPTS .= "$ARGV[0]"; shift; next; }
+  if (/^-test-opts$/)      { $PROGTESTOPTS .= " $ARGV[0]"; shift; next; }
   if (/^-verbose$/)        { $VERBOSE = 1; next; }
   if (/^-debug$/)          { $DEBUG = 1; next; }
   if (/^-nice$/)           { $NICE = "nice "; next; }
