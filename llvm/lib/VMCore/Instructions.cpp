@@ -406,10 +406,7 @@ bool CallInst::isStructReturn() const {
 
 /// @brief Determine if any call argument is an aggregate passed by value.
 bool CallInst::hasByValArgument() const {
-  const Value *Callee = getCalledValue();
-  const PointerType *CalleeTy = cast<PointerType>(Callee->getType());
-  const FunctionType *FTy = cast<FunctionType>(CalleeTy->getElementType());
-  for (unsigned i = 1, e = FTy->getNumParams()+1; i != e; ++i)
+  for (unsigned i = 1, e = getNumOperands(); i != e; ++i)
     if (paramHasAttr(i, ParamAttr::ByVal))
       return true;
   return false;
