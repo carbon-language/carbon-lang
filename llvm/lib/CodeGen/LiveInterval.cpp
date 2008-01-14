@@ -24,7 +24,6 @@
 #include "llvm/Support/Streams.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include <algorithm>
-#include <map>
 #include <ostream>
 using namespace llvm;
 
