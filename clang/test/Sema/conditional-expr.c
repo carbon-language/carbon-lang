@@ -1,8 +1,8 @@
 // RUN: clang -fsyntax-only -verify -pedantic %s
 void foo() {
   *(0 ? (double *)0 : (void *)0) = 0;
-  *(0 ? (double *)0 : (void *)(int *)0) = 0;
-  *(0 ? (double *)0 : (void *)(double *)0) = 0;
+  *(0 ? (double *)0 : (void *)(int *)0) = 0; // expected-error {{incomplete type 'void' is not assignable}}
+  *(0 ? (double *)0 : (void *)(double *)0) = 0; // expected-error {{incomplete type 'void' is not assignable}}
   *(0 ? (double *)0 : (int *)(void *)0) = 0; // expected-warning {{pointer type mismatch ('double *' and 'int *')}}
   *(0 ? (double *)0 : (double *)(void *)0) = 0;
   *((void *) 0) = 0; // expected-error {{incomplete type 'void' is not assignable}}
