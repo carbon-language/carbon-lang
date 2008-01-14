@@ -245,16 +245,12 @@ FunctionDecl *Sema::MergeFunctionDecl(FunctionDecl *New, ScopedDecl *OldD) {
     if (OldQType.getTypePtr()->getTypeClass() == Type::FunctionNoProto && 
         Old->getResultType() == New->getResultType())
       return New;
-    // Function types need to be compatible, not identical. This handles
-    // duplicate function decls like "void f(int); void f(enum X);" properly.
-    if (Context.functionTypesAreCompatible(OldQType, NewQType))
-      return New;
   }
+  // Function types need to be compatible, not identical. This handles
+  // duplicate function decls like "void f(int); void f(enum X);" properly.
+  if (Context.functionTypesAreCompatible(OldQType, NewQType))
+    return New;
 
-  if (New->getBody() == 0 && OldQType == NewQType) {
-    return 0;
-  }
-  
   // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
   // TODO: This is totally simplistic.  It should handle merging functions
   // together etc, merging extern int X; int X; ...
@@ -950,9 +946,20 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
   }
   
   Scope *GlobalScope = FnBodyScope->getParent();
-  
+
+  // See if this is a redefinition.
+  ScopedDecl *PrevDcl = LookupScopedDecl(D.getIdentifier(), Decl::IDNS_Ordinary,
+                                         D.getIdentifierLoc(), GlobalScope);
+  if (FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(PrevDcl)) {
+    if (FD->getBody()) {
+      Diag(D.getIdentifierLoc(), diag::err_redefinition, 
+           D.getIdentifier()->getName());
+      Diag(FD->getLocation(), diag::err_previous_definition);
+    }
+  }
   FunctionDecl *FD =
     static_cast<FunctionDecl*>(ActOnDeclarator(GlobalScope, D, 0));
+  assert(FD != 0 && "ActOnDeclarator() didn't return a FunctionDecl");
   CurFunctionDecl = FD;
   
   // Create Decl objects for each parameter, adding them to the FunctionDecl.
