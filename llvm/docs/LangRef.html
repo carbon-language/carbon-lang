@@ -208,10 +208,10 @@
         <ol>
           <li><a href="#int_var_annotation">
             <tt>llvm.var.annotation</tt>' Intrinsic</a></li>
-        </ol>
-        <ol>
           <li><a href="#int_annotation">
             <tt>llvm.annotation.*</tt>' Intrinsic</a></li>
+          <li><a href="#int_trap">
+            <tt>llvm.trap</tt>' Intrinsic</a></li>
         </ol>
       </li>
     </ol>
@@ -5238,10 +5238,11 @@ file name, and the last argument is the line number.
 <h5>Semantics:</h5>
 
 <p>
-This intrinsic allows annotation of local variables with arbitrary strings.  
+This intrinsic allows annotation of local variables with arbitrary strings.
 This can be useful for special purpose optimizations that want to look for these
- annotations.  These have no other defined use, they are ignored by code 
- generation and optimization.
+annotations.  These have no other defined use, they are ignored by code
+generation and optimization.
+</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
@@ -5285,6 +5286,39 @@ This intrinsic allows annotations to be put on arbitrary expressions
 with arbitrary strings.  This can be useful for special purpose optimizations 
 that want to look for these annotations.  These have no other defined use, they 
 are ignored by code generation and optimization.
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="int_trap">'<tt>llvm.trap</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<pre>
+  declare void @llvm.trap()
+</pre>
+
+<h5>Overview:</h5>
+
+<p>
+The '<tt>llvm.trap</tt>' intrinsic
+</p>
+
+<h5>Arguments:</h5>
+
+<p>
+None
+</p>
+
+<h5>Semantics:</h5>
+
+<p>
+This intrinsics is lowered to the target dependent trap instruction. If the
+target does not have a trap instruction, this intrinsic will be lowered to the
+call of the abort() function.
+</p>
 </div>
 
 <!-- *********************************************************************** -->
