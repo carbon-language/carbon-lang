@@ -104,7 +104,6 @@ public:
   unsigned                     size()        const { return Stmts.size();    }
   bool                         empty()       const { return Stmts.empty();   }
 
-  Stmt*& operator[](size_t i)        { assert (i < size()); return Stmts[i]; }
   Stmt*  operator[](size_t i) const  { assert (i < size()); return Stmts[i]; }
   
   // CFG iterators
