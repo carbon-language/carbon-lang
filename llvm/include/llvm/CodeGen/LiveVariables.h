@@ -303,10 +303,10 @@ public:
   /// register.
   VarInfo &getVarInfo(unsigned RegIdx);
 
-  void MarkVirtRegAliveInBlock(VarInfo &VRInfo, MachineBasicBlock *BB);
-  void MarkVirtRegAliveInBlock(VarInfo &VRInfo, MachineBasicBlock *BB,
+  void MarkVirtRegAliveInBlock(unsigned reg, MachineBasicBlock *BB);
+  void MarkVirtRegAliveInBlock(unsigned reg, MachineBasicBlock *BB,
                                std::vector<MachineBasicBlock*> &WorkList);
-  void HandleVirtRegUse(VarInfo &VRInfo, MachineBasicBlock *MBB,
+  void HandleVirtRegUse(unsigned reg, MachineBasicBlock *MBB,
                         MachineInstr *MI);
 };
 
