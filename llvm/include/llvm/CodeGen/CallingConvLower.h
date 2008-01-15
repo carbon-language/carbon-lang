@@ -191,9 +191,13 @@ public:
     return Result;
   }
 
-  void HandleStruct(unsigned ValNo, MVT::ValueType ValVT,
-                    MVT::ValueType LocVT, CCValAssign::LocInfo LocInfo,
-                    unsigned ArgFlags);
+  // HandleByVal - Allocate a stack slot large enough to pass an argument by
+  // value. The size and alignment information of the argument is encoded in its
+  // parameter attribute.
+  void HandleByVal(unsigned ValNo, MVT::ValueType ValVT,
+                   MVT::ValueType LocVT, CCValAssign::LocInfo LocInfo,
+                   int MinSize, int MinAlign, unsigned ArgFlags);
+
 private:
   /// MarkAllocated - Mark a register and all of its aliases as allocated.
   void MarkAllocated(unsigned Reg);
