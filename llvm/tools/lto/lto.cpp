@@ -45,8 +45,15 @@
 using namespace llvm;
 
 extern "C"
-llvm::LinkTimeOptimizer *createLLVMOptimizer()
+llvm::LinkTimeOptimizer *createLLVMOptimizer(unsigned VERSION)
 {
+  // Linker records LLVM_LTO_VERSION based on llvm optimizer available
+  // during linker build. Match linker's recorded LTO VERSION number 
+  // with installed llvm optimizer version. If these numbers do not match
+  // then linker may not be able to use llvm optimizer dynamically.
+  if (VERSION != LLVM_LTO_VERSION)
+    return NULL;
+
   llvm::LTO *l = new llvm::LTO();
   return l;
 }
@@ -74,6 +81,20 @@ getLTOLinkageType(GlobalValue *v)
   return lt;
 }
 
+// MAP LLVM VisibilityType to LTO VisibilityType
+static LTOVisibilityTypes
+getLTOVisibilityType(GlobalValue *v)
+{
+  LTOVisibilityTypes vis;
+  if (v->hasHiddenVisibility()) 
+    vis = LTOHiddenVisibility;
+  else if (v->hasProtectedVisibility())
+    vis = LTOProtectedVisibility;
+  else
+    vis = LTODefaultVisibility;
+  return vis;
+}
+    
 // Find exeternal symbols referenced by VALUE. This is a recursive function.
 static void
 findExternalRefs(Value *value, std::set<std::string> &references, 
@@ -164,13 +185,12 @@ LTO::readLLVMObjectFile(const std::string &InputFilename,
   modules.push_back(m);
   
   for (Module::iterator f = m->begin(), e = m->end(); f != e; ++f) {
-
     LTOLinkageTypes lt = getLTOLinkageType(f);
-
+    LTOVisibilityTypes vis = getLTOVisibilityType(f);
     if (!f->isDeclaration() && lt != LTOInternalLinkage
         && strncmp (f->getName().c_str(), "llvm.", 5)) {
       int alignment = ( 16 > f->getAlignment() ? 16 : f->getAlignment());
-      LLVMSymbol *newSymbol = new LLVMSymbol(lt, f, f->getName(), 
+      LLVMSymbol *newSymbol = new LLVMSymbol(lt, vis, f, f->getName(), 
                                              mangler.getValueName(f),
                                              Log2_32(alignment));
       symbols[newSymbol->getMangledName()] = newSymbol;
@@ -180,19 +200,21 @@ LTO::readLLVMObjectFile(const std::string &InputFilename,
     // Collect external symbols referenced by this function.
     for (Function::iterator b = f->begin(), fe = f->end(); b != fe; ++b) 
       for (BasicBlock::iterator i = b->begin(), be = b->end(); 
-           i != be; ++i)
+           i != be; ++i) {
         for (unsigned count = 0, total = i->getNumOperands(); 
              count != total; ++count)
           findExternalRefs(i->getOperand(count), references, mangler);
+      }
   }
     
   for (Module::global_iterator v = m->global_begin(), e = m->global_end();
        v !=  e; ++v) {
     LTOLinkageTypes lt = getLTOLinkageType(v);
+    LTOVisibilityTypes vis = getLTOVisibilityType(v);
     if (!v->isDeclaration() && lt != LTOInternalLinkage
         && strncmp (v->getName().c_str(), "llvm.", 5)) {
       const TargetData *TD = Target->getTargetData();
-      LLVMSymbol *newSymbol = new LLVMSymbol(lt, v, v->getName(), 
+      LLVMSymbol *newSymbol = new LLVMSymbol(lt, vis, v, v->getName(), 
                                              mangler.getValueName(v),
                                              TD->getPreferredAlignmentLog(v));
       symbols[newSymbol->getMangledName()] = newSymbol;
@@ -354,8 +376,7 @@ enum LTOStatus
 LTO::optimizeModules(const std::string &OutputFilename,
                      std::vector<const char *> &exportList,
                      std::string &targetTriple,
-                     bool saveTemps,
-                     const char *FinalOutputFilename)
+                     bool saveTemps, const char *FinalOutputFilename)
 {
   if (modules.empty())
     return LTO_NO_WORK;
@@ -373,6 +394,18 @@ LTO::optimizeModules(const std::string &OutputFilename,
 
   sys::Path FinalOutputPath(FinalOutputFilename);
   FinalOutputPath.eraseSuffix();
+
+  switch(CGModel) {
+  case LTO_CGM_Dynamic:
+    Target->setRelocationModel(Reloc::PIC_);
+    break;
+  case LTO_CGM_DynamicNoPIC:
+    Target->setRelocationModel(Reloc::DynamicNoPIC);
+    break;
+  case LTO_CGM_Static:
+    Target->setRelocationModel(Reloc::Static);
+    break;
+  }
 
   if (saveTemps) {
     std::string tempFileName(FinalOutputPath.c_str());

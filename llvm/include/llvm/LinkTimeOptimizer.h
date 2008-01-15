@@ -20,6 +20,8 @@
 #include <set>
 #include <llvm/ADT/hash_map>
 
+#define LLVM_LTO_VERSION 2
+
 namespace llvm {
 
   class Module;
@@ -45,6 +47,19 @@ namespace llvm {
     LTOInternalLinkage  // Rename collisions when linking (static functions)
   };
 
+  enum LTOVisibilityTypes {
+    LTODefaultVisibility = 0,  ///< The GV is visible
+    LTOHiddenVisibility,       ///< The GV is hidden
+    LTOProtectedVisibility     ///< The GV is protected
+  };
+
+
+  enum LTOCodeGenModel {
+    LTO_CGM_Static,
+    LTO_CGM_Dynamic,
+    LTO_CGM_DynamicNoPIC
+  };
+
   /// This class represents LLVM symbol information without exposing details
   /// of LLVM global values. It encapsulates symbol linkage information. This
   /// is typically used in hash_map where associated name identifies the 
@@ -54,10 +69,13 @@ namespace llvm {
   public:
 
     LTOLinkageTypes getLinkage() const { return linkage; }
+    LTOVisibilityTypes getVisibility() const { return visibility; }
     void mayBeNotUsed();
 
-    LLVMSymbol (enum LTOLinkageTypes lt, GlobalValue *g, const std::string &n, 
-                const std::string &m, int a) : linkage(lt), gv(g), name(n), 
+    LLVMSymbol (enum LTOLinkageTypes lt, enum LTOVisibilityTypes vis, 
+                GlobalValue *g, const std::string &n, 
+                const std::string &m, int a) : linkage(lt), visibility(vis),
+                                               gv(g), name(n), 
                                                mangledName(m), alignment(a) {}
 
     const char *getName() { return name.c_str(); }
@@ -66,6 +84,7 @@ namespace llvm {
 
   private:
     enum LTOLinkageTypes linkage;
+    enum LTOVisibilityTypes visibility;
     GlobalValue *gv;
     std::string name;
     std::string mangledName;
@@ -91,11 +110,12 @@ namespace llvm {
                                               NameToSymbolMap &,
                                               std::set<std::string> &) = 0;
     virtual enum LTOStatus optimizeModules(const std::string &,
-                                           std::vector<const char*> &,
-                                           std::string &, bool, 
-                                           const char *) = 0;
+                                           std::vector<const char*> &exportList,
+                                           std::string &targetTriple,
+                                           bool saveTemps, const char *) = 0;
     virtual void getTargetTriple(const std::string &, std::string &) = 0;
     virtual void removeModule (const std::string &InputFilename) = 0;
+    virtual void setCodeGenModel(LTOCodeGenModel CGM) = 0;
     virtual void printVersion () = 0;
     virtual ~LinkTimeOptimizer() = 0;
   };
@@ -115,17 +135,20 @@ namespace llvm {
                                       std::set<std::string> &references);
     enum LTOStatus optimizeModules(const std::string &OutputFilename,
                                    std::vector<const char*> &exportList,
-                                   std::string &targetTriple, bool saveTemps,
-                                   const char *);
+                                   std::string &targetTriple, 
+                                   bool saveTemps,  const char *);
     void getTargetTriple(const std::string &InputFilename, 
                          std::string &targetTriple);
     void removeModule (const std::string &InputFilename);
     void printVersion();
 
+    void setCodeGenModel(LTOCodeGenModel CGM) {
+      CGModel = CGM;
+    }
+
     // Constructors and destructors
-    LTO() { 
+    LTO() : Target(NULL), CGModel(LTO_CGM_Dynamic) {
       /// TODO: Use Target info, it is available at this time.
-      Target = NULL; 
     }
     ~LTO();
 
@@ -140,6 +163,7 @@ namespace llvm {
     NameToSymbolMap allSymbols;
     NameToModuleMap allModules;
     TargetMachine *Target;
+    LTOCodeGenModel CGModel;
   };
 
 } // End llvm namespace
@@ -148,6 +172,6 @@ namespace llvm {
 /// linker to use dlopen() interface to dynamically load LinkTimeOptimizer.
 /// extern "C" helps, because dlopen() interface uses name to find the symbol.
 extern "C"
-llvm::LinkTimeOptimizer *createLLVMOptimizer();
+llvm::LinkTimeOptimizer *createLLVMOptimizer(unsigned VERSION = LLVM_LTO_VERSION);
 
 #endif
