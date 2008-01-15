@@ -40,6 +40,8 @@ namespace {
     llvm::SmallPtrSet<ObjCInterfaceDecl*, 8> ObjCSynthesizedStructs;
     llvm::SmallPtrSet<ObjCInterfaceDecl*, 8> ObjCForwardDecls;
     llvm::DenseMap<ObjCMethodDecl*, std::string> MethodInternalNames;
+    llvm::SmallVector<Stmt *, 32> Stmts;
+    llvm::SmallVector<int, 8> ObjCBcLabelNo;
     
     FunctionDecl *MsgSendFunctionDecl;
     FunctionDecl *MsgSendSuperFunctionDecl;
@@ -55,6 +57,9 @@ namespace {
     // ObjC string constant support.
     FileVarDecl *ConstantStringClassReference;
     RecordDecl *NSStringRecord;
+    
+    // ObjC foreach break/continue generation supper.
+    int BcLabelCount;
     
     // Needed for super.
     ObjCMethodDecl *CurMethodDecl;
@@ -79,6 +84,7 @@ namespace {
       NSStringRecord = 0;
       CurMethodDecl = 0;
       SuperStructDecl = 0;
+      BcLabelCount = 0;
       
       // Get the ID and start/end of the main file.
       MainFileID = SM->getMainFileID();
@@ -176,6 +182,8 @@ namespace {
     CallExpr *SynthesizeCallToFunctionDecl(FunctionDecl *FD, 
                                            Expr **args, unsigned nargs);
     Stmt *SynthMessageExpr(ObjCMessageExpr *Exp);
+    Stmt *RewriteBreakStmt(BreakStmt *S);
+    Stmt *RewriteContinueStmt(ContinueStmt *S);
     void SynthCountByEnumWithState(std::string &buf);
     
     void SynthMsgSendFunctionDecl();
@@ -699,6 +707,14 @@ Stmt *RewriteTest::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
 //===----------------------------------------------------------------------===//
 
 Stmt *RewriteTest::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
+  if (isa<SwitchStmt>(S) || isa<WhileStmt>(S) || 
+      isa<DoStmt>(S) || isa<ForStmt>(S))
+    Stmts.push_back(S);
+  else if (isa<ObjCForCollectionStmt>(S)) {
+    Stmts.push_back(S);
+    ObjCBcLabelNo.push_back(++BcLabelCount);
+  }
+  
   // Otherwise, just rewrite all children.
   for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end();
        CI != E; ++CI)
@@ -753,7 +769,21 @@ Stmt *RewriteTest::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
   if (ObjCForCollectionStmt *StmtForCollection = 
         dyn_cast<ObjCForCollectionStmt>(S))
     return RewriteObjCForCollectionStmt(StmtForCollection);
+  if (BreakStmt *StmtBreakStmt =
+      dyn_cast<BreakStmt>(S))
+    return RewriteBreakStmt(StmtBreakStmt);
+  if (ContinueStmt *StmtContinueStmt =
+      dyn_cast<ContinueStmt>(S))
+    return RewriteContinueStmt(StmtContinueStmt);
   
+  if (isa<SwitchStmt>(S) || isa<WhileStmt>(S) || 
+      isa<DoStmt>(S) || isa<ForStmt>(S)) {
+    assert(!Stmts.empty() && "Statement stack is empty");
+    assert ((isa<SwitchStmt>(Stmts.back()) || isa<WhileStmt>(Stmts.back()) || 
+             isa<DoStmt>(Stmts.back()) || isa<ForStmt>(Stmts.back())) 
+            && "Statement stack mismatch");
+    Stmts.pop_back();
+  }
 #if 0
   if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(S)) {
     CastExpr *Replacement = new CastExpr(ICE->getType(), ICE->getSubExpr(), SourceLocation());
@@ -792,6 +822,40 @@ void RewriteTest::SynthCountByEnumWithState(std::string &buf) {
          "(id *)items, (unsigned int)16)";
 }
 
+/// RewriteBreakStmt - Rewrite for a break-stmt inside an ObjC2's foreach
+/// statement to exit to its outer synthesized loop.
+///
+Stmt *RewriteTest::RewriteBreakStmt(BreakStmt *S) {
+  if (Stmts.empty() || !isa<ObjCForCollectionStmt>(Stmts.back()))
+    return S;
+  // replace break with goto __break_label
+  std::string buf;
+  
+  SourceLocation startLoc = S->getLocStart();
+  buf = "goto __break_label_";
+  buf += utostr(ObjCBcLabelNo.back());
+  Rewrite.ReplaceText(startLoc, strlen("break"), buf.c_str(), buf.size());
+
+  return 0;
+}
+
+/// RewriteContinueStmt - Rewrite for a continue-stmt inside an ObjC2's foreach
+/// statement to continue with its inner synthesized loop.
+///
+Stmt *RewriteTest::RewriteContinueStmt(ContinueStmt *S) {
+  if (Stmts.empty() || !isa<ObjCForCollectionStmt>(Stmts.back()))
+    return S;
+  // replace continue with goto __continue_label
+  std::string buf;
+  
+  SourceLocation startLoc = S->getLocStart();
+  buf = "goto __continue_label_";
+  buf += utostr(ObjCBcLabelNo.back());
+  Rewrite.ReplaceText(startLoc, strlen("continue"), buf.c_str(), buf.size());
+  
+  return 0;
+}
+
 /// RewriteObjCTryStmt - Rewriter for ObjC2's foreach statement.
 ///  It rewrites:
 /// for ( type elem in collection) { stmts; }
@@ -813,17 +877,24 @@ void RewriteTest::SynthCountByEnumWithState(std::string &buf) {
 ///               objc_enumerationMutation(l_collection);
 ///             elem = (type)enumState.itemsPtr[counter++];
 ///             stmts;
+///             __continue_label: ;
 ///        } while (counter < limit);
 ///   } while (limit = [l_collection countByEnumeratingWithState:&enumState 
 ///                                  objects:items count:16]);
 ///   elem = nil;
-///   loopend: ;
+///   __break_label: ;
 ///  }
 ///  else
 ///       elem = nil;
 ///  }
 ///
 Stmt *RewriteTest::RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S) {
+  assert(!Stmts.empty() && "ObjCForCollectionStmt - Statement stack empty");
+  assert(isa<ObjCForCollectionStmt>(Stmts.back()) && 
+         "ObjCForCollectionStmt Statement stack mismatch");
+  assert(!ObjCBcLabelNo.empty() && 
+         "ObjCForCollectionStmt - Label No stack empty");
+  
   SourceLocation startLoc = S->getLocStart();
   const char *startBuf = SM->getCharacterData(startLoc);
   const char *elementName;
@@ -911,24 +982,31 @@ Stmt *RewriteTest::RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S) {
   // Replace ')' in for '(' type elem in collection ')' with all of these.
   Rewrite.ReplaceText(lparenLoc, 1, buf.c_str(), buf.size());
   
+  ///            __continue_label: ;
   ///        } while (counter < limit);
   ///   } while (limit = [l_collection countByEnumeratingWithState:&enumState 
   ///                                  objects:items count:16]);
   ///   elem = nil;
-  ///   loopend: ;
+  ///   __break_label: ;
   ///  }
   ///  else
   ///       elem = nil;
   ///  }
-  buf = ";\n\t\t";
+  /// 
+  buf = ";\n\t";
+  buf += "__continue_label_";
+  buf += utostr(ObjCBcLabelNo.back());
+  buf += ": ;";
+  buf += "\n\t\t";
   buf += "} while (counter < limit);\n\t";
   buf += "} while (limit = ";
   SynthCountByEnumWithState(buf);
   buf += ");\n\t";
   buf += elementName;
   buf += " = nil;\n\t";
-  // TODO: Generate a unique label to exit the for loop on break statement.
-  // buf += "loopend: ;\n\t";
+  buf += "__break_label_";
+  buf += utostr(ObjCBcLabelNo.back());
+  buf += ": ;\n\t";
   buf += "}\n\t";
   buf += "else\n\t\t";
   buf += elementName;
@@ -939,6 +1017,8 @@ Stmt *RewriteTest::RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S) {
   const char *endBodyBuf = SM->getCharacterData(endBodyLoc)+1;
   endBodyLoc = startLoc.getFileLocWithOffset(endBodyBuf-startBuf);
   Rewrite.InsertText(endBodyLoc, buf.c_str(), buf.size());
+  Stmts.pop_back();
+  ObjCBcLabelNo.pop_back();
  
   return 0;
 }
