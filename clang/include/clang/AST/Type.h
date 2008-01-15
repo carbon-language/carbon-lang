@@ -291,7 +291,8 @@ public:
   bool isArrayType() const;
   bool isRecordType() const;
   bool isStructureType() const;   
-  bool isUnionType() const;  
+  bool isUnionType() const;
+  bool isComplexIntegerType() const; // GCC complex int type.
   bool isVectorType() const; // GCC vector type.
   bool isOCUVectorType() const; // OCU vector type.
   bool isObjCInterfaceType() const; // includes conforming protocol type
@@ -313,6 +314,7 @@ public:
   const RecordType *getAsUnionType() const;
   const VectorType *getAsVectorType() const; // GCC vector type.
   const ComplexType *getAsComplexType() const;
+  const ComplexType *getAsComplexIntegerType() const; // GCC complex int type.
   const OCUVectorType *getAsOCUVectorType() const; // OCU vector type.
   
   /// getDesugaredType - Return the specified type with any "sugar" removed from

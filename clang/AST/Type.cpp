@@ -77,6 +77,29 @@ bool Type::isComplexType() const {
   return isa<ComplexType>(CanonicalType);
 }
 
+bool Type::isComplexIntegerType() const {
+  // Check for GCC complex integer extension.
+  if (const ComplexType *CT = dyn_cast<ComplexType>(CanonicalType))
+    return CT->getElementType()->isIntegerType();
+  return false;
+}
+
+const ComplexType *Type::getAsComplexIntegerType() const {
+  // Are we directly a complex type?
+  if (const ComplexType *CTy = dyn_cast<ComplexType>(this)) {
+    if (CTy->getElementType()->isIntegerType())
+      return CTy;
+  }
+  // If the canonical form of this type isn't the right kind, reject it.
+  const ComplexType *CTy = dyn_cast<ComplexType>(CanonicalType);
+  if (!CTy || !CTy->getElementType()->isIntegerType())
+    return 0;
+
+  // If this is a typedef for a complex type, strip the typedef off without
+  // losing all typedef information.
+  return getDesugaredType()->getAsComplexIntegerType();
+}
+
 /// getDesugaredType - Return the specified type with any "sugar" removed from
 /// type type.  This takes off typedefs, typeof's etc.  If the outer level of
 /// the type is already concrete, it returns it unmodified.  This is similar
@@ -310,9 +333,6 @@ bool Type::isIntegerType() const {
   if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
     if (TT->getDecl()->getKind() == Decl::Enum)
       return true;
-  // Check for GCC complex integer extension.
-  if (const ComplexType *CT = dyn_cast<ComplexType>(CanonicalType))
-    return CT->getElementType()->isIntegerType();
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
     return VT->getElementType()->isIntegerType();
   return false;
