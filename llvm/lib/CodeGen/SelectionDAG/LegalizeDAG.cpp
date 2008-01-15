@@ -3752,7 +3752,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       TargetLowering::ArgListTy Args;
       std::pair<SDOperand,SDOperand> CallResult =
         TLI.LowerCallTo(Tmp1, Type::VoidTy, false, false, CallingConv::C, false,
-                        DAG.getExternalSymbol("abort", MVT::Other), Args, DAG);
+                        DAG.getExternalSymbol("abort", TLI.getPointerTy()),
+                        Args, DAG);
       Result = CallResult.second;
       break;
     }
