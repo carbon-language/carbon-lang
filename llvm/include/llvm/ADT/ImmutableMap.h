@@ -98,15 +98,7 @@ public:
   bool contains(key_type_ref K) const {
     return Root ? Root->contains(K) : false;
   }
-  
-  data_type* find(key_type_ref K) const {
-    if (Root) {
-      TreeTy* T = Root->find(K);
-      if (T) return &T->getValue().second;
-    }
-    
-    return NULL;
-  }
+
   
   bool operator==(ImmutableMap RHS) const {
     return Root && RHS.Root ? Root->isEqual(*RHS.Root) : Root == RHS.Root;
@@ -171,7 +163,7 @@ public:
     
     iterator() {}
     iterator(TreeTy* t) : itr(t) {}
-    friend class ImmutableSet<ValT,ValInfo>;
+    friend class ImmutableMap;
 
   public:
     inline value_type_ref operator*() const { return itr->getValue(); }
@@ -188,6 +180,15 @@ public:
   
   iterator begin() const { return iterator(Root); }
   iterator end() const { return iterator(); }  
+  
+  iterator find(key_type_ref K) const {
+    if (Root) {
+      TreeTy* T = Root->find(K);
+      if (T) return iterator(T);
+    }
+    
+    return iterator();
+  }
   
   //===--------------------------------------------------===//    
   // Utility methods.
