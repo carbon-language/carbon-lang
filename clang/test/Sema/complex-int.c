@@ -7,6 +7,7 @@ __complex__ unsigned xx;
 __complex__ signed yy;
 __complex__ int result;
 int ii;
+int aa = 1 + 1.0iF;
 
 result = arr*ii;
 result = ii*brr;

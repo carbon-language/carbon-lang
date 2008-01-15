@@ -74,7 +74,9 @@ bool Type::isUnionType() const {
 }
 
 bool Type::isComplexType() const {
-  return isa<ComplexType>(CanonicalType);
+  if (const ComplexType *CT = dyn_cast<ComplexType>(CanonicalType))
+    return CT->getElementType()->isFloatingType();
+  return false;
 }
 
 bool Type::isComplexIntegerType() const {

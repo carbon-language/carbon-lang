@@ -276,6 +276,8 @@ public:
   
   /// Floating point categories.
   bool isRealFloatingType() const; // C99 6.2.5p10 (float, double, long double)
+  /// isComplexType() does *not* include complex integers (a GCC extension).
+  /// isComplexIntegerType() can be used to test for complex integers.
   bool isComplexType() const;      // C99 6.2.5p11 (complex)
   bool isFloatingType() const;     // C99 6.2.5p11 (real floating + complex)
   bool isRealType() const;         // C99 6.2.5p17 (real floating + integer)

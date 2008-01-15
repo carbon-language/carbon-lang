@@ -951,25 +951,12 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
   
   // Handle complex types first (C99 6.3.1.8p1).
   if (lhs->isComplexType() || rhs->isComplexType()) {
-    // Handle GCC complex int extension first.
-    // FIXME: need to verify these conversion rules are consistent with GCC.
-    const ComplexType *lhsComplexInt = lhs->getAsComplexIntegerType();
-    const ComplexType *rhsComplexInt = rhs->getAsComplexIntegerType();
-    
-    if (lhsComplexInt && rhsComplexInt) {
-      if (Context.maxIntegerType(lhsComplexInt->getElementType(), 
-                                 rhsComplexInt->getElementType()) == lhs) { 
-        if (!isCompAssign) promoteExprToType(rhsExpr, lhs); // convert the rhs
-        return lhs;
-      }
-      if (!isCompAssign) promoteExprToType(lhsExpr, rhs); // convert the lhs
-      return rhs;
-    } else if (lhsComplexInt && rhs->isIntegerType()) {
-      // convert the rhs to the lhs complex type.
+    // if we have an integer operand, the result is the complex type.
+    if (rhs->isIntegerType()) { // convert the rhs to the lhs complex type.
       if (!isCompAssign) promoteExprToType(rhsExpr, lhs);
       return lhs;
-    } else if (rhsComplexInt && lhs->isIntegerType()) {
-      // convert the lhs to the rhs complex type.
+    }
+    if (lhs->isIntegerType()) { // convert the lhs to the rhs complex type.
       if (!isCompAssign) promoteExprToType(lhsExpr, rhs);
       return rhs;
     }
@@ -1034,6 +1021,30 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
       return rhs;
     }
     assert(0 && "Sema::UsualArithmeticConversions(): illegal float comparison");
+  }
+  if (lhs->isComplexIntegerType() || rhs->isComplexIntegerType()) {
+    // Handle GCC complex int extension.
+    // FIXME: need to verify these conversion rules are consistent with GCC.
+    const ComplexType *lhsComplexInt = lhs->getAsComplexIntegerType();
+	const ComplexType *rhsComplexInt = rhs->getAsComplexIntegerType();
+
+	if (lhsComplexInt && rhsComplexInt) {
+	  if (Context.maxIntegerType(lhsComplexInt->getElementType(), 
+								 rhsComplexInt->getElementType()) == lhs) { 
+		if (!isCompAssign) promoteExprToType(rhsExpr, lhs); // convert the rhs
+		return lhs;
+	  }
+	  if (!isCompAssign) promoteExprToType(lhsExpr, rhs); // convert the lhs
+	  return rhs;
+	} else if (lhsComplexInt && rhs->isIntegerType()) {
+	  // convert the rhs to the lhs complex type.
+	  if (!isCompAssign) promoteExprToType(rhsExpr, lhs);
+	  return lhs;
+	} else if (rhsComplexInt && lhs->isIntegerType()) {
+	  // convert the lhs to the rhs complex type.
+	  if (!isCompAssign) promoteExprToType(lhsExpr, rhs);
+	  return rhs;
+	}
   }
   // Finally, we have two differing integer types.
   if (Context.maxIntegerType(lhs, rhs) == lhs) { // convert the rhs
