@@ -107,10 +107,6 @@ def X86ehret : SDNode<"X86ISD::EH_RETURN", SDT_X86EHRET,
 def X86tcret : SDNode<"X86ISD::TC_RETURN", SDT_X86TCRET, 
                         [SDNPHasChain,  SDNPOptInFlag]>;
 
-def SDT_TRAP  : SDTypeProfile<0, 0, []>;
-def trap  : SDNode<"ISD::TRAP", SDT_TRAP,
-                   [SDNPHasChain, SDNPOutFlag, SDNPSideEffect]>;
-
 //===----------------------------------------------------------------------===//
 // X86 Operand Definitions.
 //

@@ -105,13 +105,13 @@ def PPCcall_ELF   : SDNode<"PPCISD::CALL_ELF", SDT_PPCCall,
                            [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 def PPCmtctr      : SDNode<"PPCISD::MTCTR", SDT_PPCCall,
                            [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
-def PPCbctrl_Macho  : SDNode<"PPCISD::BCTRL_Macho", SDTRet,
+def PPCbctrl_Macho  : SDNode<"PPCISD::BCTRL_Macho", SDTNone,
 	                   [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 
-def PPCbctrl_ELF  : SDNode<"PPCISD::BCTRL_ELF", SDTRet,
+def PPCbctrl_ELF  : SDNode<"PPCISD::BCTRL_ELF", SDTNone,
 	                   [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 
-def retflag       : SDNode<"PPCISD::RET_FLAG", SDTRet,
+def retflag       : SDNode<"PPCISD::RET_FLAG", SDTNone,
 	                   [SDNPHasChain, SDNPOptInFlag]>;
 
 def PPCvcmp       : SDNode<"PPCISD::VCMP" , SDT_PPCvcmp, []>;

@@ -154,7 +154,7 @@ def SDTBrind : SDTypeProfile<0, 1, [ // brind
   SDTCisPtrTy<0>
 ]>;
 
-def SDTRet : SDTypeProfile<0, 0, []>; // ret
+def SDTNone : SDTypeProfile<0, 0, []>; // ret, trap
 
 def SDTLoad : SDTypeProfile<1, 1, [ // load
   SDTCisPtrTy<1>  
@@ -311,7 +311,9 @@ def selectcc   : SDNode<"ISD::SELECT_CC"  , SDTSelectCC>;
 def brcond     : SDNode<"ISD::BRCOND"     , SDTBrcond, [SDNPHasChain]>;
 def brind      : SDNode<"ISD::BRIND"      , SDTBrind,  [SDNPHasChain]>;
 def br         : SDNode<"ISD::BR"         , SDTBr,     [SDNPHasChain]>;
-def ret        : SDNode<"ISD::RET"        , SDTRet,    [SDNPHasChain]>;
+def ret        : SDNode<"ISD::RET"        , SDTNone,   [SDNPHasChain]>;
+def trap       : SDNode<"ISD::TRAP"       , SDTNone,
+                        [SDNPHasChain, SDNPSideEffect]>;
 
 // Do not use ld, st directly. Use load, extload, sextload, zextload, store,
 // and truncst (see below).

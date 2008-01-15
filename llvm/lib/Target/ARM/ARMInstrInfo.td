@@ -57,7 +57,7 @@ def ARMcall_pred    : SDNode<"ARMISD::CALL_PRED", SDT_ARMcall,
 def ARMcall_nolink   : SDNode<"ARMISD::CALL_NOLINK", SDT_ARMcall,
                               [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 
-def ARMretflag       : SDNode<"ARMISD::RET_FLAG", SDTRet,
+def ARMretflag       : SDNode<"ARMISD::RET_FLAG", SDTNone,
                               [SDNPHasChain, SDNPOptInFlag]>;
 
 def ARMcmov          : SDNode<"ARMISD::CMOV", SDT_ARMCMov,

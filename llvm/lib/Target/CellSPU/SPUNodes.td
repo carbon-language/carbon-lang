@@ -222,5 +222,5 @@ class NoEncode<string E> {
 // instruction scheduling doesn't disassociate them.)
 //===----------------------------------------------------------------------===//
 
-def retflag     : SDNode<"SPUISD::RET_FLAG", SDTRet,
+def retflag     : SDNode<"SPUISD::RET_FLAG", SDTNone,
                          [SDNPHasChain, SDNPOptInFlag]>;

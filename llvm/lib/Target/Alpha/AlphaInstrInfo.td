@@ -26,7 +26,7 @@ def Alpha_gprello : SDNode<"AlphaISD::GPRelLo",   SDTIntBinOp, []>;
 def Alpha_gprelhi : SDNode<"AlphaISD::GPRelHi",   SDTIntBinOp, []>;
 def Alpha_rellit  : SDNode<"AlphaISD::RelLit",    SDTIntBinOp, [SDNPMayLoad]>;
 
-def retflag       : SDNode<"AlphaISD::RET_FLAG", SDTRet,
+def retflag       : SDNode<"AlphaISD::RET_FLAG", SDTNone,
 	                   [SDNPHasChain, SDNPOptInFlag]>;
 
 // These are target-independent nodes, but have target-specific formats.
