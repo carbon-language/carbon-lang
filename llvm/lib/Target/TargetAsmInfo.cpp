@@ -87,6 +87,7 @@ TargetAsmInfo::TargetAsmInfo() :
   DwarfRequiresFrameSection(true),
   GlobalEHDirective(0),
   SupportsWeakOmittedEHFrame(true),
+  ShortenEHDataOn64Bit(false),
   DwarfSectionOffsetDirective(0),
   DwarfAbbrevSection(".debug_abbrev"),
   DwarfInfoSection(".debug_info"),
