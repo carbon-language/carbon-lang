@@ -921,12 +921,13 @@ void AssemblyWriter::printModule(const Module *M) {
 void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
   if (GV->hasName()) Out << getLLVMName(GV->getName(), GlobalPrefix) << " = ";
 
-  if (!GV->hasInitializer())
+  if (!GV->hasInitializer()) {
     switch (GV->getLinkage()) {
      case GlobalValue::DLLImportLinkage:   Out << "dllimport "; break;
      case GlobalValue::ExternalWeakLinkage: Out << "extern_weak "; break;
      default: Out << "external "; break;
-    } else {
+    }
+  } else {
     switch (GV->getLinkage()) {
     case GlobalValue::InternalLinkage:     Out << "internal "; break;
     case GlobalValue::LinkOnceLinkage:     Out << "linkonce "; break;
