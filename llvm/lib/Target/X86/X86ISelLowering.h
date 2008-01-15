@@ -197,7 +197,10 @@ namespace llvm {
       TC_RETURN,
 
       // Store FP control world into i16 memory
-      FNSTCW16m
+      FNSTCW16m,
+
+      // Trapping instruction
+      TRAP
     };
   }
 
@@ -484,6 +487,7 @@ namespace llvm {
     SDOperand LowerEH_RETURN(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerTRAMPOLINE(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerFLT_ROUNDS(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerTRAP(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerCTLZ(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerCTTZ(SDOperand Op, SelectionDAG &DAG);
     SDNode *ExpandFP_TO_SINT(SDNode *N, SelectionDAG &DAG);

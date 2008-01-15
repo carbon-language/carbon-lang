@@ -563,6 +563,9 @@ namespace ISD {
     // chain as output.
     TRAMPOLINE,
 
+    // TRAP - Trapping instruction
+    TRAP,
+
     // BUILTIN_OP_END - This must be the last enum value in this list.
     BUILTIN_OP_END
   };

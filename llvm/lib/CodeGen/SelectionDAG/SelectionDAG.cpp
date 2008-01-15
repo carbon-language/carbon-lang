@@ -3770,7 +3770,8 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::BUILD_PAIR:         return "build_pair";
   case ISD::STACKSAVE:          return "stacksave";
   case ISD::STACKRESTORE:       return "stackrestore";
-    
+  case ISD::TRAP:               return "trap";
+
   // Block memory operations.
   case ISD::MEMSET:  return "memset";
   case ISD::MEMCPY:  return "memcpy";

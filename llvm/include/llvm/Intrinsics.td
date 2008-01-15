@@ -266,6 +266,8 @@ def int_init_trampoline : Intrinsic<[llvm_ptr_ty, llvm_ptr_ty, llvm_ptr_ty,
 //
 def int_flt_rounds : Intrinsic<[llvm_i32_ty]>,
                      GCCBuiltin<"__builtin_flt_rounds">;
+def int_trap : Intrinsic<[llvm_void_ty]>,
+               GCCBuiltin<"__builtin_trap">;
 
 //===----------------------------------------------------------------------===//
 // Target-specific intrinsics
