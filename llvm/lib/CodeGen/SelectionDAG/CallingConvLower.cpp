@@ -15,6 +15,7 @@
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/Target/MRegisterInfo.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 
@@ -31,11 +32,12 @@ CCState::CCState(unsigned CC, bool isVarArg, const TargetMachine &tm,
 void CCState::HandleStruct(unsigned ValNo, MVT::ValueType ValVT,
                            MVT::ValueType LocVT, CCValAssign::LocInfo LocInfo,
                            unsigned ArgFlags) {
+  unsigned MinAlign = TM.getTargetData()->getPointerABIAlignment();
   unsigned Align  = 1 << ((ArgFlags & ISD::ParamFlags::ByValAlign) >>
                           ISD::ParamFlags::ByValAlignOffs);
   unsigned Size   = (ArgFlags & ISD::ParamFlags::ByValSize) >>
       ISD::ParamFlags::ByValSizeOffs;
-  unsigned Offset = AllocateStack(Size, Align);
+  unsigned Offset = AllocateStack(Size, std::max(MinAlign, Align));
 
   addLoc(CCValAssign::getMem(ValNo, ValVT, Offset, LocVT, LocInfo));
 }
