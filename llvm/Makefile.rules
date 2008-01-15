@@ -483,8 +483,14 @@ LTInstall     = $(LIBTOOL) $(LibTool.Flags) --mode=install $(INSTALL) \
 ProgInstall   = $(INSTALL) $(Install.StripFlag) -m 0755 
 ScriptInstall = $(INSTALL) -m 0755 
 DataInstall   = $(INSTALL) -m 0644
-TableGen      = $(TBLGEN) -I $(PROJ_SRC_DIR) -I$(PROJ_SRC_ROOT)/include \
-                -I $(PROJ_SRC_ROOT)/lib/Target      
+
+# When compiling under Mingw/Cygwin, the tblgen tool expects Windows
+# paths. In this case, the SYSPATH function (defined in
+# Makefile.config) transforms Unix paths into Windows paths.
+TableGen      = $(TBLGEN) -I $(call SYSPATH, $(PROJ_SRC_DIR)) \
+                -I $(call SYSPATH, $(PROJ_SRC_ROOT)/include) \
+                -I $(call SYSPATH, $(PROJ_SRC_ROOT)/lib/Target)
+
 Archive       = $(AR) $(AR.Flags)
 LArchive      = $(LLVMToolDir)/llvm-ar rcsf
 ifdef RANLIB
@@ -1248,57 +1254,57 @@ $(INCFiles) : %.inc : $(ObjDir)/%.inc.tmp
 $(TARGET:%=$(ObjDir)/%GenRegisterNames.inc.tmp): \
 $(ObjDir)/%GenRegisterNames.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) register names with tblgen"
-	$(Verb) $(TableGen) -gen-register-enums -o $@ $<
+	$(Verb) $(TableGen) -gen-register-enums -o $(call SYSPATH, $@) $<
 
 $(TARGET:%=$(ObjDir)/%GenRegisterInfo.h.inc.tmp): \
 $(ObjDir)/%GenRegisterInfo.h.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) register information header with tblgen"
-	$(Verb) $(TableGen) -gen-register-desc-header -o $@ $<
+	$(Verb) $(TableGen) -gen-register-desc-header -o $(call SYSPATH, $@) $<
 
 $(TARGET:%=$(ObjDir)/%GenRegisterInfo.inc.tmp): \
 $(ObjDir)/%GenRegisterInfo.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) register info implementation with tblgen"
-	$(Verb) $(TableGen) -gen-register-desc -o $@ $<
+	$(Verb) $(TableGen) -gen-register-desc -o $(call SYSPATH, $@) $<
 
 $(TARGET:%=$(ObjDir)/%GenInstrNames.inc.tmp): \
 $(ObjDir)/%GenInstrNames.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) instruction names with tblgen"
-	$(Verb) $(TableGen) -gen-instr-enums -o $@ $<
+	$(Verb) $(TableGen) -gen-instr-enums -o $(call SYSPATH, $@) $<
 
 $(TARGET:%=$(ObjDir)/%GenInstrInfo.inc.tmp): \
 $(ObjDir)/%GenInstrInfo.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) instruction information with tblgen"
-	$(Verb) $(TableGen) -gen-instr-desc -o $@ $<
+	$(Verb) $(TableGen) -gen-instr-desc -o $(call SYSPATH, $@) $<
 
 $(TARGET:%=$(ObjDir)/%GenAsmWriter.inc.tmp): \
 $(ObjDir)/%GenAsmWriter.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) assembly writer with tblgen"
-	$(Verb) $(TableGen) -gen-asm-writer -o $@ $<
+	$(Verb) $(TableGen) -gen-asm-writer -o $(call SYSPATH, $@) $<
 
 $(TARGET:%=$(ObjDir)/%GenAsmWriter1.inc.tmp): \
 $(ObjDir)/%GenAsmWriter1.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) assembly writer #1 with tblgen"
-	$(Verb) $(TableGen) -gen-asm-writer -asmwriternum=1 -o $@ $< 
+	$(Verb) $(TableGen) -gen-asm-writer -asmwriternum=1 -o $(call SYSPATH, $@) $< 
 
 $(TARGET:%=$(ObjDir)/%GenCodeEmitter.inc.tmp): \
 $(ObjDir)/%GenCodeEmitter.inc.tmp: %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) code emitter with tblgen"
-	$(Verb) $(TableGen) -gen-emitter -o $@ $<
+	$(Verb) $(TableGen) -gen-emitter -o $(call SYSPATH, $@) $<
 
 $(TARGET:%=$(ObjDir)/%GenDAGISel.inc.tmp): \
 $(ObjDir)/%GenDAGISel.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) instruction selector implementation with tblgen"
-	$(Verb) $(TableGen) -gen-dag-isel -o $@ $<
+	$(Verb) $(TableGen) -gen-dag-isel -o $(call SYSPATH, $@) $<
 
 $(TARGET:%=$(ObjDir)/%GenSubtarget.inc.tmp): \
 $(ObjDir)/%GenSubtarget.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) subtarget information with tblgen"
-	$(Verb) $(TableGen) -gen-subtarget -o $@ $<
+	$(Verb) $(TableGen) -gen-subtarget -o $(call SYSPATH, $@) $<
 
 $(TARGET:%=$(ObjDir)/%GenCallingConv.inc.tmp): \
 $(ObjDir)/%GenCallingConv.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) calling convention information with tblgen"
-	$(Verb) $(TableGen) -gen-callingconv -o $@ $<
+	$(Verb) $(TableGen) -gen-callingconv -o $(call SYSPATH, $@) $<
 
 clean-local::
 	-$(Verb) $(RM) -f $(INCFiles)
