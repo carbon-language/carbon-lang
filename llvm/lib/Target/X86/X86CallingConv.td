@@ -96,11 +96,12 @@ def RetCC_X86 : CallingConv<[
 //===----------------------------------------------------------------------===//
 
 def CC_X86_64_C : CallingConv<[
+  // Handles byval parameters.
+  CCIfStruct<CCStructAssign<[]>>,
+
   // Promote i8/i16 arguments to i32.
   CCIfType<[i8, i16], CCPromoteToType<i32>>,
   
-  CCIfStruct<CCStructAssign<[RDI, RSI, RDX, RCX, R8, R9 ]>>,
-
   // The first 6 integer arguments are passed in integer registers.
   CCIfType<[i32], CCAssignToReg<[EDI, ESI, EDX, ECX, R8D, R9D]>>,
   CCIfType<[i64], CCAssignToReg<[RDI, RSI, RDX, RCX, R8 , R9 ]>>,
@@ -134,11 +135,12 @@ def CC_X86_64_C : CallingConv<[
 // Tail call convention (fast): One register is reserved for target address,
 // namely R9
 def CC_X86_64_TailCall : CallingConv<[
+  // Handles byval parameters.
+  CCIfStruct<CCStructAssign<[]>>,
+
   // Promote i8/i16 arguments to i32.
   CCIfType<[i8, i16], CCPromoteToType<i32>>,
   
-  CCIfStruct<CCStructAssign<[RDI, RSI, RDX, RCX, R8]>>,
-
   // The first 6 integer arguments are passed in integer registers.
   CCIfType<[i32], CCAssignToReg<[EDI, ESI, EDX, ECX, R8D]>>,
   CCIfType<[i64], CCAssignToReg<[RDI, RSI, RDX, RCX, R8]>>,
@@ -174,6 +176,9 @@ def CC_X86_64_TailCall : CallingConv<[
 /// values are spilled on the stack, and the first 4 vector values go in XMM
 /// regs.
 def CC_X86_32_Common : CallingConv<[
+  // Handles byval parameters.
+  CCIfStruct<CCStructAssign<[]>>,
+
   // Integer/Float values get stored in stack slots that are 4 bytes in
   // size and 4-byte aligned.
   CCIfType<[i32, f32], CCAssignToStack<4, 4>>,
