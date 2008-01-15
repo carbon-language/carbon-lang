@@ -420,8 +420,8 @@ static void InitAvoidConcatTokenInfo() {
   TokenInfo[tok::equal       ] |= aci_avoid_equal;           // ==
 }
 
+/// StartsWithL - Return true if the spelling of this token starts with 'L'.
 static bool StartsWithL(const Token &Tok, Preprocessor &PP) {
-  char Buffer[256];
   if (!Tok.needsCleaning()) {
     SourceManager &SrcMgr = PP.getSourceManager();
     return *SrcMgr.getCharacterData(SrcMgr.getPhysicalLoc(Tok.getLocation()))
@@ -429,6 +429,7 @@ static bool StartsWithL(const Token &Tok, Preprocessor &PP) {
   }
   
   if (Tok.getLength() < 256) {
+    char Buffer[256];
     const char *TokPtr = Buffer;
     PP.getSpelling(Tok, TokPtr);
     return TokPtr[0] == 'L';
@@ -436,6 +437,28 @@ static bool StartsWithL(const Token &Tok, Preprocessor &PP) {
 
   return PP.getSpelling(Tok)[0] == 'L';
 }
+
+/// IsIdentifierL - Return true if the spelling of this token is literally 'L'.
+static bool IsIdentifierL(const Token &Tok, Preprocessor &PP) {
+  if (!Tok.needsCleaning()) {
+    if (Tok.getLength() != 1)
+      return false;
+    SourceManager &SrcMgr = PP.getSourceManager();
+    return *SrcMgr.getCharacterData(SrcMgr.getPhysicalLoc(Tok.getLocation()))
+               == 'L';
+  }
+  
+  if (Tok.getLength() < 256) {
+    char Buffer[256];
+    const char *TokPtr = Buffer;
+    if (PP.getSpelling(Tok, TokPtr) != 1) 
+      return false;
+    return TokPtr[0] == 'L';
+  }
+  
+  return PP.getSpelling(Tok) == "L";
+}
+
 
 /// AvoidConcat - If printing PrevTok immediately followed by Tok would cause
 /// the two individual tokens to be lexed as a single token, return true (which
@@ -513,7 +536,9 @@ bool PrintPPOutputPPCallbacks::AvoidConcat(const Token &PrevTok,
     if (StartsWithL(Tok, PP))
       return true;
 
-    return false;
+    // Otherwise, this is a narrow character or string.  If the *identifier* is
+    // a literal 'L', avoid pasting L "foo" -> L"foo".
+    return IsIdentifierL(PrevTok, PP);
   case tok::numeric_constant:
     return isalnum(FirstChar) || Tok.is(tok::numeric_constant) ||
            FirstChar == '+' || FirstChar == '-' || FirstChar == '.';
