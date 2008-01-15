@@ -265,6 +265,9 @@ public:
   
   /// Helper methods to distinguish type categories. All type predicates
   /// operate on the canonical type, ignoring typedefs.
+  
+  /// isIntegerType() does *not* include complex integers (a GCC extension).
+  /// isComplexIntegerType() can be used to test for complex integers.
   bool isIntegerType() const;     // C99 6.2.5p17 (int, char, bool, enum)
   bool isEnumeralType() const;
   bool isBooleanType() const;
