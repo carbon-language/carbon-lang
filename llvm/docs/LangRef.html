@@ -810,11 +810,12 @@ declare i32 @atoi(i8*) nounwind readonly
     target-specific</dd>
 
     <dt><tt>byval</tt></dt>
-    <dd>This indicates that the pointer parameter is really an aggregate that
-    was passed by value to the function.  The attribute implies that a hidden
-    copy of the struct is made between the caller and the callee, so the
-    callee is unable to modify the struct in the callee.  This attribute is only
-    valid on llvm pointer arguments.</dd>
+    <dd>This indicates that the pointer parameter should really be passed by
+    value to the function.  The attribute implies that a hidden copy of the
+    pointee is made between the caller and the callee, so the callee is unable
+    to modify the value in the callee.  This attribute is only valid on llvm
+    pointer arguments.  It is generally used to pass structs and arrays by
+    value, but is also valid on scalars (even though this is silly).</dd>
 
     <dt><tt>sret</tt></dt>
     <dd>This indicates that the parameter specifies the address of a structure
