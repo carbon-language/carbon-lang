@@ -112,12 +112,11 @@ bool LiveVariables::ModifiesRegister(MachineInstr *MI, unsigned Reg) const {
   return false;
 }
 
-void LiveVariables::MarkVirtRegAliveInBlock(unsigned reg,
+void LiveVariables::MarkVirtRegAliveInBlock(VarInfo& VRInfo,
+                                            MachineBasicBlock *DefBlock,
                                             MachineBasicBlock *MBB,
                                     std::vector<MachineBasicBlock*> &WorkList) {
   unsigned BBNum = MBB->getNumber();
-
-  VarInfo& VRInfo = getVarInfo(reg);
   
   // Check to see if this basic block is one of the killing blocks.  If so,
   // remove it...
@@ -127,8 +126,7 @@ void LiveVariables::MarkVirtRegAliveInBlock(unsigned reg,
       break;
     }
   
-  MachineRegisterInfo& MRI = MBB->getParent()->getRegInfo();
-  if (MBB == MRI.getVRegDef(reg)->getParent()) return;  // Terminate recursion
+  if (MBB == DefBlock) return;  // Terminate recursion
 
   if (VRInfo.AliveBlocks[BBNum])
     return;  // We already know the block is live
@@ -141,14 +139,15 @@ void LiveVariables::MarkVirtRegAliveInBlock(unsigned reg,
     WorkList.push_back(*PI);
 }
 
-void LiveVariables::MarkVirtRegAliveInBlock(unsigned reg,
+void LiveVariables::MarkVirtRegAliveInBlock(VarInfo& VRInfo,
+                                            MachineBasicBlock *DefBlock,
                                             MachineBasicBlock *MBB) {
   std::vector<MachineBasicBlock*> WorkList;
-  MarkVirtRegAliveInBlock(reg, MBB, WorkList);
+  MarkVirtRegAliveInBlock(VRInfo, DefBlock, MBB, WorkList);
   while (!WorkList.empty()) {
     MachineBasicBlock *Pred = WorkList.back();
     WorkList.pop_back();
-    MarkVirtRegAliveInBlock(reg, Pred, WorkList);
+    MarkVirtRegAliveInBlock(VRInfo, DefBlock, Pred, WorkList);
   }
 }
 
@@ -190,7 +189,7 @@ void LiveVariables::HandleVirtRegUse(unsigned reg, MachineBasicBlock *MBB,
   // Update all dominating blocks to mark them known live.
   for (MachineBasicBlock::const_pred_iterator PI = MBB->pred_begin(),
          E = MBB->pred_end(); PI != E; ++PI)
-    MarkVirtRegAliveInBlock(reg, *PI);
+    MarkVirtRegAliveInBlock(VRInfo, MRI.getVRegDef(reg)->getParent(), *PI);
 }
 
 bool LiveVariables::addRegisterKilled(unsigned IncomingReg, MachineInstr *MI,
@@ -432,6 +431,7 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI) {
 bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
   MF = &mf;
   RegInfo = MF->getTarget().getRegisterInfo();
+  MachineRegisterInfo& MRI = mf.getRegInfo();
   assert(RegInfo && "Target doesn't have register information?");
 
   ReservedRegisters = RegInfo->getReservedRegs(mf);
@@ -523,7 +523,8 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
       for (SmallVector<unsigned, 4>::iterator I = VarInfoVec.begin(),
              E = VarInfoVec.end(); I != E; ++I) {
         // Only mark it alive only in the block we are representing.
-        MarkVirtRegAliveInBlock(*I, MBB);
+        MarkVirtRegAliveInBlock(getVarInfo(*I), MRI.getVRegDef(*I)->getParent(),
+                                MBB);
       }
     }
 
@@ -560,7 +561,6 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
   // Convert and transfer the dead / killed information we have gathered into
   // VirtRegInfo onto MI's.
   //
-  MachineRegisterInfo& MRI = mf.getRegInfo();
   for (unsigned i = 0, e1 = VirtRegInfo.size(); i != e1; ++i)
     for (unsigned j = 0, e2 = VirtRegInfo[i].Kills.size(); j != e2; ++j) {
       if (VirtRegInfo[i].Kills[j] == MRI.getVRegDef(i + 
