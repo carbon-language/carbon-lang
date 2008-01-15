@@ -60,7 +60,7 @@ protected:
   
   void HandleBlockEdge(const BlockEdge& E, ExplodedNodeImpl* Pred);
   void HandleBlockEntrance(const BlockEntrance& E, ExplodedNodeImpl* Pred);
-  void HandleBlockExit(const BlockExit& E, ExplodedNodeImpl* Pred);
+  void HandleBlockExit(CFGBlock* B, ExplodedNodeImpl* Pred);
   void HandlePostStmt(const PostStmt& S, CFGBlock* B,
                       unsigned StmtIdx, ExplodedNodeImpl *Pred);
 
@@ -195,7 +195,9 @@ public:
   ///  a DFS exploration of the exploded graph.
   GREngine(CFG& Cfg)
   : GREngineImpl(cfg, new GraphTy(), GRWorkList::MakeDFS()),
-      Checker(static_cast<GraphTy*>(G.get())->getCheckerState()) {}
+      Checker(static_cast<GraphTy*>(G.get())->getCheckerState()) {
+    Checker->Initialize(cfg);
+  }
   
   /// Construct a GREngine object to analyze the provided CFG and to
   ///  use the provided worklist object to execute the worklist algorithm.

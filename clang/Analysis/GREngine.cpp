@@ -88,7 +88,7 @@ bool GREngineImpl::ExecuteWorkList(unsigned Steps) {
         break;
         
       case ProgramPoint::BlockExitKind:
-        HandleBlockExit(cast<BlockExit>(Node->getLocation()), Node);
+        assert (false && "BlockExit location never occur in forward analysis.");
         break;
         
       case ProgramPoint::PostStmtKind:
@@ -127,10 +127,7 @@ void GREngineImpl::HandleBlockEdge(const BlockEdge& L, ExplodedNodeImpl* Pred) {
   // FIXME: we will dispatch to a function that
   //  manipulates the state at the entrance to a block.
   
-  if (!Blk->empty())                            
-    GenerateNode(BlockEntrance(Blk), Pred->State, Pred);
-  else
-    GenerateNode(BlockExit(Blk), Pred->State, Pred);
+  GenerateNode(BlockEntrance(Blk), Pred->State, Pred);
 }
 
 void GREngineImpl::HandleBlockEntrance(const BlockEntrance& L,
@@ -140,14 +137,12 @@ void GREngineImpl::HandleBlockEntrance(const BlockEntrance& L,
     GRNodeBuilderImpl Builder(L.getBlock(), 0, Pred, this);
     ProcessStmt(S, Builder);
   }
-  else
-    GenerateNode(BlockExit(L.getBlock()), Pred->State, Pred);
+  else 
+    HandleBlockExit(L.getBlock(), Pred);
 }
 
 
-void GREngineImpl::HandleBlockExit(const BlockExit& L, ExplodedNodeImpl* Pred) {
-  
-  CFGBlock* B = L.getBlock();
+void GREngineImpl::HandleBlockExit(CFGBlock * B, ExplodedNodeImpl* Pred) {
   
   if (Stmt* Terminator = B->getTerminator())
     ProcessTerminator(Terminator, B, Pred);
@@ -164,12 +159,8 @@ void GREngineImpl::HandlePostStmt(const PostStmt& L, CFGBlock* B,
   
   assert (!B->empty());
 
-  if (StmtIdx == B->size()) {
-    // FIXME: This is essentially an epsilon-transition.  Do we need it?
-    //  It does simplify the logic, and it is also another point
-    //  were we could introduce a dispatch to the client.
-    GenerateNode(BlockExit(B), Pred->State, Pred);
-  }
+  if (StmtIdx == B->size())
+    HandleBlockExit(B, Pred);
   else {
     GRNodeBuilderImpl Builder(B, StmtIdx, Pred, this);
     ProcessStmt(L.getStmt(), Builder);
