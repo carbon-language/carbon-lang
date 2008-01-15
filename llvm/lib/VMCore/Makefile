@@ -21,7 +21,7 @@ INTRINSICTDS := $(wildcard $(PROJ_SRC_ROOT)/include/llvm/Intrinsics*.td)
 
 $(ObjDir)/Intrinsics.gen.tmp: $(ObjDir)/.dir $(INTRINSICTDS) $(TBLGEN)
 	$(Echo) Building Intrinsics.gen.tmp from Intrinsics.td
-	$(Verb) $(TableGen) $(INTRINSICTD) -o $@ -gen-intrinsic
+	$(Verb) $(TableGen) $(call SYSPATH, $(INTRINSICTD)) -o $(call SYSPATH, $@) -gen-intrinsic
 
 $(GENFILE): $(ObjDir)/Intrinsics.gen.tmp
 	$(Verb) $(CMP) -s $@ $< || ( $(CP) $< $@ && \

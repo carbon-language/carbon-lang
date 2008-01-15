@@ -265,3 +265,11 @@ BINDINGS_TO_BUILD := @BINDINGS_TO_BUILD@
 ALL_BINDINGS      := @ALL_BINDINGS@
 OCAML_LIBDIR      := @OCAML_LIBDIR@
 
+# When compiling under Mingw/Cygwin, executables such as tblgen
+# expect Windows paths, whereas the build system uses Unix paths.
+# The function SYSPATH transforms Unix paths into Windows paths.
+ifneq (,$(findstring -mno-cygwin, $(CXX)))
+  SYSPATH = $(shell echo $(1) | cygpath -m -f -)
+else
+  SYSPATH = $(1)
+endif
