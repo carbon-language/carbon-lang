@@ -380,11 +380,23 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\utils\TableGen\CodeGenDAGPatterns.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\utils\TableGen\CodeGenInstruction.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\utils\TableGen\CodeGenTarget.cpp"
 				>
 			</File>
 			<File
 				RelativePath="..\..\utils\TableGen\DAGISelEmitter.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\utils\TableGen\InstrEnumEmitter.cpp"
 				>
 			</File>
 			<File
@@ -442,6 +454,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\utils\TableGen\CodeGenDAGPatterns.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\utils\TableGen\CodeGenInstruction.h"
 				>
 			</File>
@@ -459,6 +475,10 @@
 			</File>
 			<File
 				RelativePath="..\..\utils\TableGen\DAGISelEmitter.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\utils\TableGen\InstrEnumEmitter.h"
 				>
 			</File>
 			<File

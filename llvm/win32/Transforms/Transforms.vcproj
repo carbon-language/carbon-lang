@@ -496,10 +496,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\LowerGC.cpp"
-					>
-				</File>
-				<File
 					RelativePath="..\..\lib\Transforms\Scalar\LowerPacked.cpp"
 					>
 				</File>

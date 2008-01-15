@@ -313,6 +313,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\CodeGen\Collector.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\CodeGen\CollectorMetadata.cpp"
 				>
 			</File>
@@ -397,11 +401,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\CodeGen\MachineSink.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\CodeGen\MachOWriter.cpp"
 				>
 			</File>
 			<File
 				RelativePath="..\..\lib\CodeGen\MachOWriter.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\CodeGen\OcamlCollector.cpp"
 				>
 			</File>
 			<File
@@ -442,6 +454,10 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\CodeGen\RegisterScavenging.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\CodeGen\ShadowStackCollector.cpp"
 				>
 			</File>
 			<File

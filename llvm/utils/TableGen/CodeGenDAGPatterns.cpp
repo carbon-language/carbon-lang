@@ -18,6 +18,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Streams.h"
 #include <set>
+#include <algorithm>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//

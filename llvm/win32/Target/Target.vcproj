@@ -375,6 +375,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\include\llvm\Target\TargetInstrDesc.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\include\llvm\Target\TargetInstrInfo.h"
 				>
 			</File>
