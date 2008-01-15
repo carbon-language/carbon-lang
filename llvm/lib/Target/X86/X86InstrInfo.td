@@ -490,8 +490,7 @@ def RDTSC : I<0x31, RawFrm, (outs), (ins), "rdtsc", [(X86rdtsc)]>,
             TB;
 
 let isBarrier = 1, hasCtrlDep = 1 in {
-// FIXME: Should use 0x0F0B opcode
-def TRAP    : I<0, RawFrm, (outs), (ins), "ud2", [(X86trap)]>;
+def TRAP    : I<0x0B, RawFrm, (outs), (ins), "ud2", [(X86trap)]>, TB;
 }
 
 //===----------------------------------------------------------------------===//
