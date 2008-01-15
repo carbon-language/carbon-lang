@@ -294,7 +294,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   
   setOperationAction(ISD::TRAMPOLINE, MVT::Other, Custom);
 
-  setOperationAction(ISD::TRAP, MVT::Other, Custom);
+  setOperationAction(ISD::TRAP, MVT::Other, Legal);
 
   // VASTART needs to be custom lowered to use the VarArgsFrameIndex
   setOperationAction(ISD::VASTART           , MVT::Other, Custom);
@@ -4950,10 +4950,6 @@ SDOperand X86TargetLowering::LowerFLT_ROUNDS(SDOperand Op, SelectionDAG &DAG) {
                       ISD::TRUNCATE : ISD::ZERO_EXTEND), VT, RetVal);
 }
 
-SDOperand X86TargetLowering::LowerTRAP(SDOperand Op, SelectionDAG &DAG) {
-  return DAG.getNode(X86ISD::TRAP, MVT::Other, Op.getOperand(0));
-}
-
 SDOperand X86TargetLowering::LowerCTLZ(SDOperand Op, SelectionDAG &DAG) {
   MVT::ValueType VT = Op.getValueType();
   MVT::ValueType OpVT = VT;
@@ -5058,7 +5054,6 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::FLT_ROUNDS:         return LowerFLT_ROUNDS(Op, DAG);
   case ISD::CTLZ:               return LowerCTLZ(Op, DAG);
   case ISD::CTTZ:               return LowerCTTZ(Op, DAG);
-  case ISD::TRAP:               return LowerTRAP(Op, DAG);
       
   // FIXME: REMOVE THIS WHEN LegalizeDAGTypes lands.
   case ISD::READCYCLECOUNTER:
@@ -5098,7 +5093,6 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::CALL:               return "X86ISD::CALL";
   case X86ISD::TAILCALL:           return "X86ISD::TAILCALL";
   case X86ISD::RDTSC_DAG:          return "X86ISD::RDTSC_DAG";
-  case X86ISD::TRAP:               return "X86ISD::TRAP";
   case X86ISD::CMP:                return "X86ISD::CMP";
   case X86ISD::COMI:               return "X86ISD::COMI";
   case X86ISD::UCOMI:              return "X86ISD::UCOMI";

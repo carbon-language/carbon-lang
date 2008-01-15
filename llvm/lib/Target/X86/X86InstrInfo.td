@@ -57,8 +57,6 @@ def SDT_X86EHRET : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
 
 def SDT_X86TCRET : SDTypeProfile<0, 2, [SDTCisPtrTy<0>, SDTCisVT<1, i32>]>;
 
-def SDT_X86TRAP  : SDTypeProfile<0, 0, []>;
-
 def X86bsf     : SDNode<"X86ISD::BSF",      SDTIntUnaryOp>;
 def X86bsr     : SDNode<"X86ISD::BSR",      SDTIntUnaryOp>;
 def X86shld    : SDNode<"X86ISD::SHLD",     SDTIntShiftDOp>;
@@ -109,8 +107,9 @@ def X86ehret : SDNode<"X86ISD::EH_RETURN", SDT_X86EHRET,
 def X86tcret : SDNode<"X86ISD::TC_RETURN", SDT_X86TCRET, 
                         [SDNPHasChain,  SDNPOptInFlag]>;
 
-def X86trap  : SDNode<"X86ISD::TRAP", SDT_X86TRAP,
-                        [SDNPHasChain, SDNPOutFlag, SDNPSideEffect]>;
+def SDT_TRAP  : SDTypeProfile<0, 0, []>;
+def trap  : SDNode<"ISD::TRAP", SDT_TRAP,
+                   [SDNPHasChain, SDNPOutFlag, SDNPSideEffect]>;
 
 //===----------------------------------------------------------------------===//
 // X86 Operand Definitions.
@@ -490,7 +489,7 @@ def RDTSC : I<0x31, RawFrm, (outs), (ins), "rdtsc", [(X86rdtsc)]>,
             TB;
 
 let isBarrier = 1, hasCtrlDep = 1 in {
-def TRAP    : I<0x0B, RawFrm, (outs), (ins), "ud2", [(X86trap)]>, TB;
+def TRAP    : I<0x0B, RawFrm, (outs), (ins), "ud2", [(trap)]>, TB;
 }
 
 //===----------------------------------------------------------------------===//
