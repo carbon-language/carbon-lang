@@ -50,6 +50,7 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const PPCTargetMachine &TM)
     StaticCtorsSection = ".mod_init_func";
     StaticDtorsSection = ".mod_term_func";
   }
+  SwitchToSectionDirective = "\t.section ";
   UsedDirective = "\t.no_dead_strip\t";
   WeakDefDirective = "\t.weak_definition ";
   WeakRefDirective = "\t.weak_reference ";

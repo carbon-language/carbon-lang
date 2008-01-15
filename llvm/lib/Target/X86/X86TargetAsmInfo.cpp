@@ -59,6 +59,7 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
       SixteenByteConstantSection = "\t.literal16\n";
     ReadOnlySection = "\t.const\n";
     LCOMMDirective = "\t.lcomm\t";
+    SwitchToSectionDirective = "\t.section ";
     COMMDirectiveTakesAlignment = false;
     HasDotTypeDotSizeDirective = false;
     if (TM.getRelocationModel() == Reloc::Static) {
@@ -68,8 +69,13 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
       StaticCtorsSection = ".mod_init_func";
       StaticDtorsSection = ".mod_term_func";
     }
-    PersonalityPrefix = "L";
-    PersonalitySuffix = "$non_lazy_ptr";
+    if (Subtarget->is64Bit()) {
+      PersonalityPrefix = "";
+      PersonalitySuffix = "+4@GOTPCREL";
+    } else {
+      PersonalityPrefix = "L";
+      PersonalitySuffix = "$non_lazy_ptr";
+    }
     NeedsIndirectEncoding = true;
     InlineAsmStart = "# InlineAsm Start";
     InlineAsmEnd = "# InlineAsm End";
@@ -102,11 +108,12 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     DwarfMacInfoSection = ".section __DWARF,__debug_macinfo,regular,debug";
 
     // Exceptions handling
-    if (!Subtarget->is64Bit())
-      SupportsExceptionHandling = true;
+    SupportsExceptionHandling = true;
     GlobalEHDirective = "\t.globl\t";
     SupportsWeakOmittedEHFrame = false;
     AbsoluteEHSectionOffsets = false;
+    if (Subtarget->is64Bit())
+      ShortenEHDataOn64Bit = true;
     DwarfEHFrameSection =
     ".section __TEXT,__eh_frame,coalesced,no_toc+strip_static_syms+live_support";
     DwarfExceptionSection = ".section __DATA,__gcc_except_tab";

@@ -2835,11 +2835,13 @@ private:
 
       Asm->EOL("Personality (pcrel sdata4 indirect)");
       
-      PrintRelDirective();
+      PrintRelDirective(TAI->getShortenEHDataOn64Bit());
       O << TAI->getPersonalityPrefix();
       Asm->EmitExternalGlobal((const GlobalVariable *)(Personality));
       O << TAI->getPersonalitySuffix();
-      O << "-" << TAI->getPCSymbol();
+      if (!TAI->getShortenEHDataOn64Bit()) {
+        O << "-" << TAI->getPCSymbol();
+      }
       Asm->EOL("Personality");
 
       Asm->EmitULEB128Bytes(DW_EH_PE_pcrel);
@@ -2917,7 +2919,7 @@ private:
       // If there is a personality and landing pads then point to the language
       // specific data area in the exception table.
       if (EHFrameInfo.PersonalityIndex) {
-        Asm->EmitULEB128Bytes(4);
+        Asm->EmitULEB128Bytes(TAI->getShortenEHDataOn64Bit() ? 8 : 4);
         Asm->EOL("Augmentation size");
         
         if (EHFrameInfo.hasLandingPads) {
@@ -3284,24 +3286,26 @@ private:
       }
 
       EmitSectionOffset(BeginTag, "eh_func_begin", BeginNumber, SubprogramCount,
-                        false, true);
+                        TAI->getShortenEHDataOn64Bit(), true);
       Asm->EOL("Region start");
 
       if (!S.EndLabel) {
-        EmitDifference("eh_func_end", SubprogramCount, BeginTag, BeginNumber);
+        EmitDifference("eh_func_end", SubprogramCount, BeginTag, BeginNumber,
+                       TAI->getShortenEHDataOn64Bit());
       } else {
-        EmitDifference("label", S.EndLabel, BeginTag, BeginNumber);
+        EmitDifference("label", S.EndLabel, BeginTag, BeginNumber, 
+                       TAI->getShortenEHDataOn64Bit());
       }
       Asm->EOL("Region length");
 
       if (!S.PadLabel) {
-        if (TD->getPointerSize() == sizeof(int32_t))
+        if (TD->getPointerSize() == sizeof(int32_t) || TAI->getShortenEHDataOn64Bit())
           Asm->EmitInt32(0);
         else
           Asm->EmitInt64(0);
       } else {
         EmitSectionOffset("label", "eh_func_begin", S.PadLabel, SubprogramCount,
-                          false, true);
+                          TAI->getShortenEHDataOn64Bit(), true);
       }
       Asm->EOL("Landing pad");
 
