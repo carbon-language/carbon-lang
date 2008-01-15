@@ -43,11 +43,6 @@ char LiveVariables::ID = 0;
 static RegisterPass<LiveVariables> X("livevars", "Live Variable Analysis");
 
 void LiveVariables::VarInfo::dump() const {
-  cerr << "Register Defined by: ";
-  if (DefInst) 
-    cerr << *DefInst;
-  else
-    cerr << "<null>\n";
   cerr << "  Alive in blocks: ";
   for (unsigned i = 0, e = AliveBlocks.size(); i != e; ++i)
     if (AliveBlocks[i]) cerr << i << ", ";
@@ -117,11 +112,13 @@ bool LiveVariables::ModifiesRegister(MachineInstr *MI, unsigned Reg) const {
   return false;
 }
 
-void LiveVariables::MarkVirtRegAliveInBlock(VarInfo &VRInfo,
+void LiveVariables::MarkVirtRegAliveInBlock(unsigned reg,
                                             MachineBasicBlock *MBB,
                                     std::vector<MachineBasicBlock*> &WorkList) {
   unsigned BBNum = MBB->getNumber();
 
+  VarInfo& VRInfo = getVarInfo(reg);
+  
   // Check to see if this basic block is one of the killing blocks.  If so,
   // remove it...
   for (unsigned i = 0, e = VRInfo.Kills.size(); i != e; ++i)
@@ -129,8 +126,9 @@ void LiveVariables::MarkVirtRegAliveInBlock(VarInfo &VRInfo,
       VRInfo.Kills.erase(VRInfo.Kills.begin()+i);  // Erase entry
       break;
     }
-
-  if (MBB == VRInfo.DefInst->getParent()) return;  // Terminate recursion
+  
+  MachineRegisterInfo& MRI = MBB->getParent()->getRegInfo();
+  if (MBB == MRI.getVRegDef(reg)->getParent()) return;  // Terminate recursion
 
   if (VRInfo.AliveBlocks[BBNum])
     return;  // We already know the block is live
@@ -143,24 +141,26 @@ void LiveVariables::MarkVirtRegAliveInBlock(VarInfo &VRInfo,
     WorkList.push_back(*PI);
 }
 
-void LiveVariables::MarkVirtRegAliveInBlock(VarInfo &VRInfo,
+void LiveVariables::MarkVirtRegAliveInBlock(unsigned reg,
                                             MachineBasicBlock *MBB) {
   std::vector<MachineBasicBlock*> WorkList;
-  MarkVirtRegAliveInBlock(VRInfo, MBB, WorkList);
+  MarkVirtRegAliveInBlock(reg, MBB, WorkList);
   while (!WorkList.empty()) {
     MachineBasicBlock *Pred = WorkList.back();
     WorkList.pop_back();
-    MarkVirtRegAliveInBlock(VRInfo, Pred, WorkList);
+    MarkVirtRegAliveInBlock(reg, Pred, WorkList);
   }
 }
 
 
-void LiveVariables::HandleVirtRegUse(VarInfo &VRInfo, MachineBasicBlock *MBB,
+void LiveVariables::HandleVirtRegUse(unsigned reg, MachineBasicBlock *MBB,
                                      MachineInstr *MI) {
-  assert(VRInfo.DefInst && "Register use before def!");
+  MachineRegisterInfo& MRI = MBB->getParent()->getRegInfo();
+  assert(MRI.getVRegDef(reg) && "Register use before def!");
 
   unsigned BBNum = MBB->getNumber();
 
+  VarInfo& VRInfo = getVarInfo(reg);
   VRInfo.UsedBlocks[BBNum] = true;
   VRInfo.NumUses++;
 
@@ -177,7 +177,7 @@ void LiveVariables::HandleVirtRegUse(VarInfo &VRInfo, MachineBasicBlock *MBB,
     assert(VRInfo.Kills[i]->getParent() != MBB && "entry should be at end!");
 #endif
 
-  assert(MBB != VRInfo.DefInst->getParent() &&
+  assert(MBB != MRI.getVRegDef(reg)->getParent() &&
          "Should have kill for defblock!");
 
   // Add a new kill entry for this basic block.
@@ -190,7 +190,7 @@ void LiveVariables::HandleVirtRegUse(VarInfo &VRInfo, MachineBasicBlock *MBB,
   // Update all dominating blocks to mark them known live.
   for (MachineBasicBlock::const_pred_iterator PI = MBB->pred_begin(),
          E = MBB->pred_end(); PI != E; ++PI)
-    MarkVirtRegAliveInBlock(VRInfo, *PI);
+    MarkVirtRegAliveInBlock(reg, *PI);
 }
 
 bool LiveVariables::addRegisterKilled(unsigned IncomingReg, MachineInstr *MI,
@@ -489,7 +489,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
         MachineOperand &MO = MI->getOperand(i);
         if (MO.isRegister() && MO.isUse() && MO.getReg()) {
           if (MRegisterInfo::isVirtualRegister(MO.getReg())){
-            HandleVirtRegUse(getVarInfo(MO.getReg()), MBB, MI);
+            HandleVirtRegUse(MO.getReg(), MBB, MI);
           } else if (MRegisterInfo::isPhysicalRegister(MO.getReg()) &&
                      !ReservedRegisters[MO.getReg()]) {
             HandlePhysRegUse(MO.getReg(), MI);
@@ -503,9 +503,6 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
         if (MO.isRegister() && MO.isDef() && MO.getReg()) {
           if (MRegisterInfo::isVirtualRegister(MO.getReg())) {
             VarInfo &VRInfo = getVarInfo(MO.getReg());
-
-            assert(VRInfo.DefInst == 0 && "Variable multiply defined!");
-            VRInfo.DefInst = MI;
             // Defaults to dead
             VRInfo.Kills.push_back(MI);
           } else if (MRegisterInfo::isPhysicalRegister(MO.getReg()) &&
@@ -525,11 +522,8 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
 
       for (SmallVector<unsigned, 4>::iterator I = VarInfoVec.begin(),
              E = VarInfoVec.end(); I != E; ++I) {
-        VarInfo& VRInfo = getVarInfo(*I);
-        assert(VRInfo.DefInst && "Register use before def (or no def)!");
-
         // Only mark it alive only in the block we are representing.
-        MarkVirtRegAliveInBlock(VRInfo, MBB);
+        MarkVirtRegAliveInBlock(*I, MBB);
       }
     }
 
@@ -566,9 +560,11 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
   // Convert and transfer the dead / killed information we have gathered into
   // VirtRegInfo onto MI's.
   //
+  MachineRegisterInfo& MRI = mf.getRegInfo();
   for (unsigned i = 0, e1 = VirtRegInfo.size(); i != e1; ++i)
     for (unsigned j = 0, e2 = VirtRegInfo[i].Kills.size(); j != e2; ++j) {
-      if (VirtRegInfo[i].Kills[j] == VirtRegInfo[i].DefInst)
+      if (VirtRegInfo[i].Kills[j] == MRI.getVRegDef(i + 
+                                           MRegisterInfo::FirstVirtualRegister))
         addRegisterDead(i + MRegisterInfo::FirstVirtualRegister,
                         VirtRegInfo[i].Kills[j], RegInfo);
       else
@@ -612,9 +608,6 @@ void LiveVariables::instructionChanged(MachineInstr *OldMI,
           MO.setIsDead(false);
           addVirtualRegisterDead(Reg, NewMI);
         }
-        // Update the defining instruction.
-        if (VI.DefInst == OldMI)
-          VI.DefInst = NewMI;
       }
       if (MO.isKill()) {
         MO.setIsKill(false);

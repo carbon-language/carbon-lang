@@ -165,10 +165,6 @@ void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
       LV->addVirtualRegisterDead(DestReg, PHICopy);
       LV->removeVirtualRegistersDead(MPhi);
     }
-    
-    // Realize that the destination register is defined by the PHI copy now, not
-    // the PHI itself.
-    LV->getVarInfo(DestReg).DefInst = PHICopy;
 
     LV->getVarInfo(IncomingReg).UsedBlocks[MBB.getNumber()] = true;
   }

@@ -289,9 +289,6 @@ ARMInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
         MachineInstr *NewMI = (Reg == WBReg) ? UpdateMI : MemMI;
         if (MO.isDead())
           LV.addVirtualRegisterDead(Reg, NewMI);
-        // Update the defining instruction.
-        if (VI.DefInst == MI)
-          VI.DefInst = NewMI;
       }
       if (MO.isUse() && MO.isKill()) {
         for (unsigned j = 0; j < 2; ++j) {

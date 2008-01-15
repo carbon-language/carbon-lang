@@ -199,10 +199,6 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
           MachineBasicBlock::iterator prevMi = prior(mi);
           DOUT << "\t\tprepend:\t"; DEBUG(prevMi->print(*cerr.stream(), &TM));
 
-          // Update live variables for regA
-          LiveVariables::VarInfo& varInfo = LV.getVarInfo(regA);
-          varInfo.DefInst = prevMi;
-
           // update live variables for regB
           LiveVariables::VarInfo& varInfoB = LV.getVarInfo(regB);
           // regB is used in this BB.
