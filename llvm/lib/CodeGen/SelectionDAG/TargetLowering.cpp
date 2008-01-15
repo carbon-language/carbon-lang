@@ -175,6 +175,9 @@ TargetLowering::TargetLowering(TargetMachine &tm)
     setOperationAction(ISD::FGETSIGN, (MVT::ValueType)VT, Expand);
   }
 
+  // Default ISD::TRAP to expand (which turns it into abort).
+  setOperationAction(ISD::TRAP, MVT::Other, Expand);
+    
   IsLittleEndian = TD->isLittleEndian();
   UsesGlobalOffsetTable = false;
   ShiftAmountTy = SetCCResultTy = PointerTy = getValueType(TD->getIntPtrType());

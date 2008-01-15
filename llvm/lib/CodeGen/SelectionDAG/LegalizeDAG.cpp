@@ -3734,24 +3734,29 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       break;
     }
   }
-   case ISD::TRAP: {
+  case ISD::TRAP: {
     MVT::ValueType VT = Node->getValueType(0);
     switch (TLI.getOperationAction(Node->getOpcode(), VT)) {
     default: assert(0 && "This action not supported for this op yet!");
+    case TargetLowering::Legal:
+      Tmp1 = LegalizeOp(Node->getOperand(0));
+      Result = DAG.UpdateNodeOperands(Result, Tmp1);
+      break;
     case TargetLowering::Custom:
       Result = TLI.LowerOperation(Op, DAG);
       if (Result.Val) break;
       // Fall Thru
-    case TargetLowering::Legal:
+    case TargetLowering::Expand:
       // If this operation is not supported, lower it to 'abort()' call
-      SDOperand Chain = LegalizeOp(Node->getOperand(0));
+      Tmp1 = LegalizeOp(Node->getOperand(0));
       TargetLowering::ArgListTy Args;
       std::pair<SDOperand,SDOperand> CallResult =
-        TLI.LowerCallTo(Chain, Type::VoidTy, false, false, CallingConv::C, false,
+        TLI.LowerCallTo(Tmp1, Type::VoidTy, false, false, CallingConv::C, false,
                         DAG.getExternalSymbol("abort", MVT::Other), Args, DAG);
       Result = CallResult.second;
       break;
     }
+    break;
   }
   }
   
