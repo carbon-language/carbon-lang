@@ -110,7 +110,7 @@ namespace llvm {
         return;
       if (--S->getValue().Refcount == 0) {
         S->getValue().Pool->InternTable.remove(S);
-        delete S;
+        S->Destroy();
       }
       S = 0;
     }
