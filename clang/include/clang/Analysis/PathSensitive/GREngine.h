@@ -136,6 +136,8 @@ class GRNodeBuilder  {
   GRNodeBuilderImpl& NB;
   
 public:
+  GRNodeBuilder(GRNodeBuilderImpl& nb) : NB(nb) {}
+  
   const GraphTy& getGraph() const {
     return static_cast<const GraphTy&>(NB.getGraph());
   }
