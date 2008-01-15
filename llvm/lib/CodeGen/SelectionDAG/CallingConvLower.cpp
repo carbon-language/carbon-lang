@@ -29,15 +29,22 @@ CCState::CCState(unsigned CC, bool isVarArg, const TargetMachine &tm,
   UsedRegs.resize(MRI.getNumRegs());
 }
 
-void CCState::HandleStruct(unsigned ValNo, MVT::ValueType ValVT,
-                           MVT::ValueType LocVT, CCValAssign::LocInfo LocInfo,
-                           unsigned ArgFlags) {
-  unsigned MinAlign = TM.getTargetData()->getPointerABIAlignment();
+// HandleByVal - Allocate a stack slot large enough to pass an argument by
+// value. The size and alignment information of the argument is encoded in its
+// parameter attribute.
+void CCState::HandleByVal(unsigned ValNo, MVT::ValueType ValVT,
+                          MVT::ValueType LocVT, CCValAssign::LocInfo LocInfo,
+                          int MinSize, int MinAlign,
+                          unsigned ArgFlags) {
   unsigned Align  = 1 << ((ArgFlags & ISD::ParamFlags::ByValAlign) >>
                           ISD::ParamFlags::ByValAlignOffs);
   unsigned Size   = (ArgFlags & ISD::ParamFlags::ByValSize) >>
       ISD::ParamFlags::ByValSizeOffs;
-  unsigned Offset = AllocateStack(Size, std::max(MinAlign, Align));
+  if (MinSize > (int)Size)
+    Size = MinSize;
+  if (MinAlign > (int)Align)
+    Align = MinAlign;
+  unsigned Offset = AllocateStack(Size, Align);
 
   addLoc(CCValAssign::getMem(ValNo, ValVT, Offset, LocVT, LocInfo));
 }
