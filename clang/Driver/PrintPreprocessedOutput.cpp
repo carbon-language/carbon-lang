@@ -420,6 +420,23 @@ static void InitAvoidConcatTokenInfo() {
   TokenInfo[tok::equal       ] |= aci_avoid_equal;           // ==
 }
 
+static bool StartsWithL(const Token &Tok, Preprocessor &PP) {
+  char Buffer[256];
+  if (!Tok.needsCleaning()) {
+    SourceManager &SrcMgr = PP.getSourceManager();
+    return *SrcMgr.getCharacterData(SrcMgr.getPhysicalLoc(Tok.getLocation()))
+               == 'L';
+  }
+  
+  if (Tok.getLength() < 256) {
+    const char *TokPtr = Buffer;
+    PP.getSpelling(Tok, TokPtr);
+    return TokPtr[0] == 'L';
+  }
+
+  return PP.getSpelling(Tok)[0] == 'L';
+}
+
 /// AvoidConcat - If printing PrevTok immediately followed by Tok would cause
 /// the two individual tokens to be lexed as a single token, return true (which
 /// causes a space to be printed between them).  This allows the output of -E
@@ -484,21 +501,19 @@ bool PrintPPOutputPPCallbacks::AvoidConcat(const Token &PrevTok,
         Tok.is(tok::wide_string_literal) /* ||
         Tok.is(tok::wide_char_literal)*/)
       return true;
-    if (Tok.isNot(tok::char_constant))
+
+    // If this isn't identifier + string, we're done.
+    if (Tok.isNot(tok::char_constant) && Tok.isNot(tok::string_literal))
       return false;
       
     // FIXME: need a wide_char_constant!
-    if (!Tok.needsCleaning()) {
-      SourceManager &SrcMgr = PP.getSourceManager();
-      return *SrcMgr.getCharacterData(SrcMgr.getPhysicalLoc(Tok.getLocation()))
-             == 'L';
-    } else if (Tok.getLength() < 256) {
-      const char *TokPtr = Buffer;
-      PP.getSpelling(Tok, TokPtr);
-      return TokPtr[0] == 'L';
-    } else {
-      return PP.getSpelling(Tok)[0] == 'L';
-    }
+
+    // If the string was a wide string L"foo" or wide char L'f', it would concat
+    // with the previous identifier into fooL"bar".  Avoid this.
+    if (StartsWithL(Tok, PP))
+      return true;
+
+    return false;
   case tok::numeric_constant:
     return isalnum(FirstChar) || Tok.is(tok::numeric_constant) ||
            FirstChar == '+' || FirstChar == '-' || FirstChar == '.';
