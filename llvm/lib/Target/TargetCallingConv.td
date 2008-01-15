@@ -32,9 +32,9 @@ class CCIf<string predicate, CCAction A> : CCPredicateAction<A> {
   string Predicate = predicate;
 }
 
-/// CCIfStruct - If the current argument is a struct, apply
+/// CCIfByVal - If the current argument has ByVal parameter attribute, apply
 /// Action A.
-class CCIfStruct<CCAction A> : CCIf<"ArgFlags & ISD::ParamFlags::ByVal", A> {
+class CCIfByVal<CCAction A> : CCIf<"ArgFlags & ISD::ParamFlags::ByVal", A> {
 }
 
 /// CCIfCC - Match of the current calling convention is 'CC'.
@@ -68,11 +68,12 @@ class CCAssignToStack<int size, int align> : CCAction {
   int Align = align;
 }
 
-/// CCStructAssign - This action always matches: it will use the C ABI and
-/// the register availability to decided whether to assign to a set of
-/// registers or to a stack slot.
-class CCStructAssign<list<Register> regList> : CCAction {
-  list<Register> RegList = regList;
+/// CCPassByVal - This action always matches: it assigns the value to a stack
+/// slot to implement ByVal aggregate parameter passing. Size and alignment
+/// specify the minimum size and alignment for the stack slot.
+class CCPassByVal<int size, int align> : CCAction {
+  int Size = size;
+  int Align = align;
 }
 
 /// CCPromoteToType - If applied, this promotes the specified current value to

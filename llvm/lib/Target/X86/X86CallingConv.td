@@ -97,7 +97,7 @@ def RetCC_X86 : CallingConv<[
 
 def CC_X86_64_C : CallingConv<[
   // Handles byval parameters.
-  CCIfStruct<CCStructAssign<[]>>,
+  CCIfByVal<CCPassByVal<8, 8>>,
 
   // Promote i8/i16 arguments to i32.
   CCIfType<[i8, i16], CCPromoteToType<i32>>,
@@ -136,7 +136,7 @@ def CC_X86_64_C : CallingConv<[
 // namely R9
 def CC_X86_64_TailCall : CallingConv<[
   // Handles byval parameters.
-  CCIfStruct<CCStructAssign<[]>>,
+  CCIfByVal<CCPassByVal<8, 8>>,
 
   // Promote i8/i16 arguments to i32.
   CCIfType<[i8, i16], CCPromoteToType<i32>>,
@@ -177,7 +177,7 @@ def CC_X86_64_TailCall : CallingConv<[
 /// regs.
 def CC_X86_32_Common : CallingConv<[
   // Handles byval parameters.
-  CCIfStruct<CCStructAssign<[]>>,
+  CCIfByVal<CCPassByVal<4, 4>>,
 
   // Integer/Float values get stored in stack slots that are 4 bytes in
   // size and 4-byte aligned.
