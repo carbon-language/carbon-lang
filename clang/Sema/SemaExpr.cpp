@@ -927,6 +927,7 @@ Expr *Sema::UsualUnaryConversions(Expr *&Expr) {
 /// binary operators (C99 6.3.1.8). If both operands aren't arithmetic, this
 /// routine returns the first non-arithmetic type found. The client is 
 /// responsible for emitting appropriate error diagnostics.
+/// FIXME: verify the conversion rules for "complex int" are consistent with GCC.
 QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
                                           bool isCompAssign) {
   if (!isCompAssign) {
@@ -952,11 +953,13 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
   // Handle complex types first (C99 6.3.1.8p1).
   if (lhs->isComplexType() || rhs->isComplexType()) {
     // if we have an integer operand, the result is the complex type.
-    if (rhs->isIntegerType()) { // convert the rhs to the lhs complex type.
+    if (rhs->isIntegerType() || rhs->isComplexIntegerType()) { 
+	  // convert the rhs to the lhs complex type.
       if (!isCompAssign) promoteExprToType(rhsExpr, lhs);
       return lhs;
     }
-    if (lhs->isIntegerType()) { // convert the lhs to the rhs complex type.
+    if (lhs->isIntegerType() || lhs->isComplexIntegerType()) { 
+	  // convert the lhs to the rhs complex type.
       if (!isCompAssign) promoteExprToType(lhsExpr, rhs);
       return rhs;
     }
@@ -1000,11 +1003,13 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
   // Now handle "real" floating types (i.e. float, double, long double).
   if (lhs->isRealFloatingType() || rhs->isRealFloatingType()) {
     // if we have an integer operand, the result is the real floating type.
-    if (rhs->isIntegerType()) { // convert rhs to the lhs floating point type.
+    if (rhs->isIntegerType() || rhs->isComplexIntegerType()) { 
+	  // convert rhs to the lhs floating point type.
       if (!isCompAssign) promoteExprToType(rhsExpr, lhs);
       return lhs;
     }
-    if (lhs->isIntegerType()) { // convert lhs to the rhs floating point type.
+    if (lhs->isIntegerType() || lhs->isComplexIntegerType()) { 
+	  // convert lhs to the rhs floating point type.
       if (!isCompAssign) promoteExprToType(lhsExpr, rhs);
       return rhs;
     }
@@ -1024,7 +1029,6 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
   }
   if (lhs->isComplexIntegerType() || rhs->isComplexIntegerType()) {
     // Handle GCC complex int extension.
-    // FIXME: need to verify these conversion rules are consistent with GCC.
     const ComplexType *lhsComplexInt = lhs->getAsComplexIntegerType();
 	const ComplexType *rhsComplexInt = rhs->getAsComplexIntegerType();
 
