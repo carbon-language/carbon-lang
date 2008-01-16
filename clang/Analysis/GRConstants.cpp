@@ -192,6 +192,8 @@ public:
   StateTy RemoveGrandchildrenMappings(Stmt* S, StateTy M);
 
   void AddBinding(Expr* E, ExprVariantTy V, bool isBlkLvl = false);
+  void AddBinding(Decl* D, ExprVariantTy V);
+  
   ExprVariantTy GetBinding(Expr* E);
   
   void BlockStmt_VisitStmt(Stmt* S) { DoStmt(S); }
@@ -200,6 +202,7 @@ public:
   void VisitIntegerLiteral(IntegerLiteral* L);
   void VisitBinAdd(BinaryOperator* O);
   void VisitBinSub(BinaryOperator* O);
+  void VisitBinAssign(BinaryOperator* D);
 };
 } // end anonymous namespace
 
@@ -227,6 +230,13 @@ ExprVariantTy GRConstants::GetBinding(Expr* E) {
 void GRConstants::AddBinding(Expr* E, ExprVariantTy V, bool isBlkLvl) {
   if (V) 
     CurrentState = StateMgr.Add(CurrentState, DSPtr(E,isBlkLvl), V.getVal());
+}
+
+void GRConstants::AddBinding(Decl* D, ExprVariantTy V) {
+  if (V)
+    CurrentState = StateMgr.Add(CurrentState, DSPtr(D), V.getVal());
+  else
+    CurrentState = StateMgr.Remove(CurrentState, DSPtr(D));
 }
 
 void GRConstants::SwitchNodeSets() {
@@ -288,6 +298,20 @@ void GRConstants::VisitBinAdd(BinaryOperator* B) {
 
 void GRConstants::VisitBinSub(BinaryOperator* B) {
   AddBinding(B, GetBinding(B->getLHS()) - GetBinding(B->getRHS()));
+}
+
+
+static inline Expr* IgnoreParen(Expr* E) {
+  while (ParenExpr* P = dyn_cast<ParenExpr>(E))
+    E = P->getSubExpr();
+  
+  return E;
+}
+
+
+void GRConstants::VisitBinAssign(BinaryOperator* B) {
+  if (DeclRefExpr* D = dyn_cast<DeclRefExpr>(IgnoreParen(B->getLHS())))
+    AddBinding(D->getDecl(), GetBinding(B->getRHS()));
 }
 
 //===----------------------------------------------------------------------===//
