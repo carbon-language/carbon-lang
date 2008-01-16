@@ -760,7 +760,7 @@ SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
     
     // If this is an FP return with ScalarSSE, we need to move the value from
     // an XMM register onto the fp-stack.
-    if (isTypeInSSEReg(RVLocs[0].getValVT())) {
+    if (isScalarFPTypeInSSEReg(RVLocs[0].getValVT())) {
       SDOperand MemLoc;
         
       // If this is a load into a scalarsse value, don't store the loaded value
@@ -835,7 +835,7 @@ LowerCallResult(SDOperand Chain, SDOperand InFlag, SDNode *TheCall,
     
     // If we are using ScalarSSE, store ST(0) to the stack and reload it into
     // an XMM register.
-    if (isTypeInSSEReg(RVLocs[0].getValVT())) {
+    if (isScalarFPTypeInSSEReg(RVLocs[0].getValVT())) {
       SDOperand StoreLoc;
       const Value *SrcVal = 0;
       int SrcValOffset = 0;
@@ -3860,7 +3860,7 @@ SDOperand X86TargetLowering::LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
                                  StackSlot, NULL, 0);
 
   // These are really Legal; caller falls through into that case.
-  if (SrcVT == MVT::i32 && isTypeInSSEReg(Op.getValueType()))
+  if (SrcVT == MVT::i32 && isScalarFPTypeInSSEReg(Op.getValueType()))
     return Result;
   if (SrcVT == MVT::i64 && Op.getValueType() != MVT::f80 && 
       Subtarget->is64Bit())
@@ -3868,7 +3868,7 @@ SDOperand X86TargetLowering::LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
 
   // Build the FILD
   SDVTList Tys;
-  bool useSSE = isTypeInSSEReg(Op.getValueType());
+  bool useSSE = isScalarFPTypeInSSEReg(Op.getValueType());
   if (useSSE)
     Tys = DAG.getVTList(MVT::f64, MVT::Other, MVT::Flag);
   else
@@ -3911,7 +3911,7 @@ FP_TO_SINTHelper(SDOperand Op, SelectionDAG &DAG) {
 
   // These are really Legal.
   if (Op.getValueType() == MVT::i32 && 
-      isTypeInSSEReg(Op.getOperand(0).getValueType()))
+      isScalarFPTypeInSSEReg(Op.getOperand(0).getValueType()))
     return std::make_pair(SDOperand(), SDOperand());
   if (Subtarget->is64Bit() &&
       Op.getValueType() == MVT::i64 &&
@@ -3934,7 +3934,7 @@ FP_TO_SINTHelper(SDOperand Op, SelectionDAG &DAG) {
 
   SDOperand Chain = DAG.getEntryNode();
   SDOperand Value = Op.getOperand(0);
-  if (isTypeInSSEReg(Op.getOperand(0).getValueType())) {
+  if (isScalarFPTypeInSSEReg(Op.getOperand(0).getValueType())) {
     assert(Op.getValueType() == MVT::i64 && "Invalid FP_TO_SINT to lower!");
     Chain = DAG.getStore(Chain, Value, StackSlot, NULL, 0);
     SDVTList Tys = DAG.getVTList(Op.getOperand(0).getValueType(), MVT::Other);
@@ -4166,7 +4166,7 @@ SDOperand X86TargetLowering::LowerSELECT(SDOperand Op, SelectionDAG &DAG) {
     
     bool IllegalFPCMov = false;
     if (MVT::isFloatingPoint(VT) && !MVT::isVector(VT) &&
-        !isTypeInSSEReg(VT))  // FPStack?
+        !isScalarFPTypeInSSEReg(VT))  // FPStack?
       IllegalFPCMov = !hasFPCMov(cast<ConstantSDNode>(CC)->getSignExtended());
     
     if ((Opc == X86ISD::CMP ||

@@ -426,9 +426,9 @@ namespace llvm {
     bool X86ScalarSSEf32;
     bool X86ScalarSSEf64;
     
-    /// isTypeInSSEReg - Return true if the specified scalar FP type is computed
-    /// in an SSE register, not on the X87 floating point stack.
-    bool isTypeInSSEReg(MVT::ValueType VT) const {
+    /// isScalarFPTypeInSSEReg - Return true if the specified scalar FP type is
+    /// computed in an SSE register, not on the X87 floating point stack.
+    bool isScalarFPTypeInSSEReg(MVT::ValueType VT) const {
       return (VT == MVT::f64 && X86ScalarSSEf64) || // f64 is when SSE2
              (VT == MVT::f32 && X86ScalarSSEf32);   // f32 is when SSE1
     }
