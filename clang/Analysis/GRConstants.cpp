@@ -47,7 +47,7 @@ namespace {
 class VISIBILITY_HIDDEN DSPtr {
   uintptr_t Raw;
 public:
-  enum  VariantKind { IsValueDecl=0x0, IsSubExp=0x1, IsBlkLvl=0x2, Flags=0x3 };
+  enum  VariantKind { IsSubExp=0x0, IsValueDecl=0x1, IsBlkLvl=0x2, Flags=0x3 };
   inline void* getPtr() const { return reinterpret_cast<void*>(Raw & ~Flags); }
   inline VariantKind getKind() const { return (VariantKind) (Raw & Flags); }
   
