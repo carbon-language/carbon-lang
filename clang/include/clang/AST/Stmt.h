@@ -287,6 +287,11 @@ public:
   }
   const Stmt *getSubStmt() const { return SubExprs[SUBSTMT]; }
 
+  void setSubStmt(Stmt *S) { SubExprs[SUBSTMT] = S; }
+  void setLHS(Expr *Val) { SubExprs[LHS] = reinterpret_cast<Stmt*>(Val); }
+  void setRHS(Expr *Val) { SubExprs[RHS] = reinterpret_cast<Stmt*>(Val); }
+  
+  
   virtual SourceRange getSourceRange() const { 
     return SourceRange(CaseLoc, SubExprs[SUBSTMT]->getLocEnd()); 
   }
