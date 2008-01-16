@@ -199,7 +199,8 @@ private:
   SDOperand ExpandIntToFP(bool isSigned, MVT::ValueType DestTy,
                           SDOperand Source);
 
-  SDOperand ExpandBIT_CONVERT(MVT::ValueType DestVT, SDOperand SrcOp);
+  SDOperand EmitStackConvert(SDOperand SrcOp, MVT::ValueType SlotVT, 
+                             MVT::ValueType DestVT);
   SDOperand ExpandBUILD_VECTOR(SDNode *Node);
   SDOperand ExpandSCALAR_TO_VECTOR(SDNode *Node);
   SDOperand ExpandLegalINT_TO_FP(bool isSigned,
@@ -3326,7 +3327,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   }
   case ISD::BIT_CONVERT:
     if (!isTypeLegal(Node->getOperand(0).getValueType())) {
-      Result = ExpandBIT_CONVERT(Node->getValueType(0), Node->getOperand(0));
+      Result = EmitStackConvert(Node->getOperand(0), Node->getValueType(0),
+                                Node->getValueType(0));
     } else if (MVT::isVector(Op.getOperand(0).getValueType())) {
       // The input has to be a vector type, we have to either scalarize it, pack
       // it, or convert it based on whether the input vector type is legal.
@@ -3357,7 +3359,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                                      Node->getOperand(0).getValueType())) {
       default: assert(0 && "Unknown operation action!");
       case TargetLowering::Expand:
-        Result = ExpandBIT_CONVERT(Node->getValueType(0), Node->getOperand(0));
+        Result = EmitStackConvert(Node->getOperand(0), Node->getValueType(0),
+                                  Node->getValueType(0));
         break;
       case TargetLowering::Legal:
         Tmp1 = LegalizeOp(Node->getOperand(0));
@@ -3583,7 +3586,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Result = DAG.getStore(DAG.getEntryNode(), Node->getOperand(0),
                                    StackSlot, NULL, 0);
         Result = DAG.getExtLoad(ISD::EXTLOAD, newVT,
-                                   Result, StackSlot, NULL, 0, oldVT);
+                                Result, StackSlot, NULL, 0, oldVT);
         break;
       }
     }
@@ -3872,7 +3875,8 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     }
     break;
   case ISD::BIT_CONVERT:
-    Result = ExpandBIT_CONVERT(Node->getValueType(0), Node->getOperand(0));
+    Result = EmitStackConvert(Node->getOperand(0), Node->getValueType(0),
+                              Node->getValueType(0));
     Result = PromoteOp(Result);
     break;
     
@@ -4559,18 +4563,36 @@ void SelectionDAGLegalize::LegalizeSetCCOperands(SDOperand &LHS,
   RHS = Tmp2;
 }
 
-/// ExpandBIT_CONVERT - Expand a BIT_CONVERT node into a store/load combination.
-/// The resultant code need not be legal.  Note that SrcOp is the input operand
-/// to the BIT_CONVERT, not the BIT_CONVERT node itself.
-SDOperand SelectionDAGLegalize::ExpandBIT_CONVERT(MVT::ValueType DestVT, 
-                                                  SDOperand SrcOp) {
+/// EmitStackConvert - Emit a store/load combination to the stack.  This stores
+/// SrcOp to a stack slot of type SlotVT, truncating it if needed.  It then does
+/// a load from the stack slot to DestVT, extending it if needed.
+/// The resultant code need not be legal.
+SDOperand SelectionDAGLegalize::EmitStackConvert(SDOperand SrcOp,
+                                                 MVT::ValueType SlotVT, 
+                                                 MVT::ValueType DestVT) {
   // Create the stack frame object.
-  SDOperand FIPtr = DAG.CreateStackTemporary(DestVT);
+  SDOperand FIPtr = DAG.CreateStackTemporary(SlotVT);
+
+  unsigned SrcSize = MVT::getSizeInBits(SrcOp.getValueType());
+  unsigned SlotSize = MVT::getSizeInBits(SlotVT);
+  unsigned DestSize = MVT::getSizeInBits(DestVT);
   
-  // Emit a store to the stack slot.
-  SDOperand Store = DAG.getStore(DAG.getEntryNode(), SrcOp, FIPtr, NULL, 0);
+  // Emit a store to the stack slot.  Use a truncstore if the input value is
+  // later than DestVT.
+  SDOperand Store;
+  if (SrcSize > SlotSize)
+    Store = DAG.getTruncStore(DAG.getEntryNode(), SrcOp, FIPtr, NULL, 0,SlotVT);
+  else {
+    assert(SrcSize == SlotSize && "Invalid store");
+    Store = DAG.getStore(DAG.getEntryNode(), SrcOp, FIPtr, NULL, 0);
+  }
+  
   // Result is a load from the stack slot.
-  return DAG.getLoad(DestVT, Store, FIPtr, NULL, 0);
+  if (SlotSize == DestSize)
+    return DAG.getLoad(DestVT, Store, FIPtr, NULL, 0);
+  
+  assert(SlotSize < DestSize && "Unknown extension!");
+  return DAG.getExtLoad(ISD::EXTLOAD, DestVT, Store, FIPtr, NULL, 0, SlotVT);
 }
 
 SDOperand SelectionDAGLegalize::ExpandSCALAR_TO_VECTOR(SDNode *Node) {
@@ -5726,7 +5748,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
 
     // Turn this into a load/store pair by default.
     if (Tmp.Val == 0)
-      Tmp = ExpandBIT_CONVERT(VT, Node->getOperand(0));
+      Tmp = EmitStackConvert(Node->getOperand(0), VT, VT);
     
     ExpandOp(Tmp, Lo, Hi);
     break;
