@@ -780,6 +780,14 @@ public:
   inline bool isTargetOpcode() const;
   inline unsigned getTargetOpcode() const;
 
+  
+  /// reachesChainWithoutSideEffects - Return true if this operand (which must
+  /// be a chain) reaches the specified operand without crossing any 
+  /// side-effecting instructions.  In practice, this looks through token
+  /// factors and non-volatile loads.  In order to remain efficient, this only
+  /// looks a couple of nodes in, it does not do an exhaustive search.
+  bool reachesChainWithoutSideEffects(SDOperand Dest, unsigned Depth = 2) const;
+  
   /// hasOneUse - Return true if there is exactly one operation using this
   /// result value of the defining operator.
   inline bool hasOneUse() const;

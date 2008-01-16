@@ -3562,6 +3562,37 @@ bool SDNode::isOperand(SDNode *N) const {
   return false;
 }
 
+/// reachesChainWithoutSideEffects - Return true if this operand (which must
+/// be a chain) reaches the specified operand without crossing any 
+/// side-effecting instructions.  In practice, this looks through token
+/// factors and non-volatile loads.  In order to remain efficient, this only
+/// looks a couple of nodes in, it does not do an exhaustive search.
+bool SDOperand::reachesChainWithoutSideEffects(SDOperand Dest, 
+                                               unsigned Depth) const {
+  if (*this == Dest) return true;
+  
+  // Don't search too deeply, we just want to be able to see through
+  // TokenFactor's etc.
+  if (Depth == 0) return false;
+  
+  // If this is a token factor, all inputs to the TF happen in parallel.  If any
+  // of the operands of the TF reach dest, then we can do the xform.
+  if (getOpcode() == ISD::TokenFactor) {
+    for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
+      if (getOperand(i).reachesChainWithoutSideEffects(Dest, Depth-1))
+        return true;
+    return false;
+  }
+  
+  // Loads don't have side effects, look through them.
+  if (LoadSDNode *Ld = dyn_cast<LoadSDNode>(*this)) {
+    if (!Ld->isVolatile())
+      return Ld->getChain().reachesChainWithoutSideEffects(Dest, Depth-1);
+  }
+  return false;
+}
+
+
 static void findPredecessor(SDNode *N, const SDNode *P, bool &found,
                             SmallPtrSet<SDNode *, 32> &Visited) {
   if (found || !Visited.insert(N))
