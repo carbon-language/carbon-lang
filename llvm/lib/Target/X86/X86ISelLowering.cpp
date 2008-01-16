@@ -767,7 +767,7 @@ SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
       // If this is a load into a scalarsse value, don't store the loaded value
       // back to the stack, only to reload it: just replace the scalar-sse load.
       if (ISD::isNON_EXTLoad(Value.Val) &&
-          (Chain == Value.getValue(1) || Chain == Value.getOperand(0))) {
+          Chain.reachesChainWithoutSideEffects(Value.getOperand(0))) {
         Chain  = Value.getOperand(0);
         MemLoc = Value.getOperand(1);
       } else {
