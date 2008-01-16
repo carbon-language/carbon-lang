@@ -34,19 +34,19 @@ using llvm::dyn_cast;
 using llvm::cast;
 
 //===----------------------------------------------------------------------===//
-/// DeclStmtPtr - A variant smart pointer that wraps either a Decl* or a
+/// DSPtr - A variant smart pointer that wraps either a Decl* or a
 ///  Stmt*.  Use cast<> or dyn_cast<> to get actual pointer type
 //===----------------------------------------------------------------------===//
 namespace {
-class VISIBILITY_HIDDEN DeclStmtPtr {
+class VISIBILITY_HIDDEN DSPtr {
   const uintptr_t Raw;
 public:
   enum  VariantKind { IsDecl=0x1, IsBlkLvl=0x2, IsSubExp=0x3, Flags=0x3 };
   inline void* getPtr() const { return reinterpret_cast<void*>(Raw & ~Flags); }
   inline VariantKind getKind() const { return (VariantKind) (Raw & Flags); }
   
-  DeclStmtPtr(Decl* D) : Raw(reinterpret_cast<uintptr_t>(D) | IsDecl) {}
-  DeclStmtPtr(Stmt* S, bool isBlkLvl) 
+  DSPtr(Decl* D) : Raw(reinterpret_cast<uintptr_t>(D) | IsDecl) {}
+  DSPtr(Stmt* S, bool isBlkLvl) 
     : Raw(reinterpret_cast<uintptr_t>(S) | (isBlkLvl ? IsBlkLvl : IsSubExp)) {}
   
   bool isSubExpr() const { return getKind() == IsSubExp; }
@@ -54,29 +54,29 @@ public:
   inline void Profile(llvm::FoldingSetNodeID& ID) const {
     ID.AddPointer(getPtr());
   }      
-  inline bool operator==(const DeclStmtPtr& X) const { return Raw == X.Raw; }  
-  inline bool operator!=(const DeclStmtPtr& X) const { return Raw != X.Raw; }
-  inline bool operator<(const DeclStmtPtr& X) const { return Raw < X.Raw; }  
+  inline bool operator==(const DSPtr& X) const { return Raw == X.Raw; }  
+  inline bool operator!=(const DSPtr& X) const { return Raw != X.Raw; }
+  inline bool operator<(const DSPtr& X) const { return Raw < X.Raw; }  
 };
 } // end anonymous namespace
 
-// Machinery to get cast<> and dyn_cast<> working with DeclStmtPtr.
+// Machinery to get cast<> and dyn_cast<> working with DSPtr.
 namespace llvm {
-  template<> inline bool isa<Decl,DeclStmtPtr>(const DeclStmtPtr& V) {
-    return V.getKind() == DeclStmtPtr::IsDecl;
+  template<> inline bool isa<Decl,DSPtr>(const DSPtr& V) {
+    return V.getKind() == DSPtr::IsDecl;
   }
-  template<> inline bool isa<Stmt,DeclStmtPtr>(const DeclStmtPtr& V) {
-    return ((unsigned) V.getKind()) > DeclStmtPtr::IsDecl;
+  template<> inline bool isa<Stmt,DSPtr>(const DSPtr& V) {
+    return ((unsigned) V.getKind()) > DSPtr::IsDecl;
   }
-  template<> struct VISIBILITY_HIDDEN cast_retty_impl<Decl,DeclStmtPtr> {
+  template<> struct VISIBILITY_HIDDEN cast_retty_impl<Decl,DSPtr> {
     typedef const Decl* ret_type;
   };
-  template<> struct VISIBILITY_HIDDEN cast_retty_impl<Stmt,DeclStmtPtr> {
+  template<> struct VISIBILITY_HIDDEN cast_retty_impl<Stmt,DSPtr> {
     typedef const Stmt* ret_type;
   };
-  template<> struct VISIBILITY_HIDDEN simplify_type<DeclStmtPtr> {
+  template<> struct VISIBILITY_HIDDEN simplify_type<DSPtr> {
     typedef void* SimpleType;
-    static inline SimpleType getSimplifiedValue(const DeclStmtPtr &V) {
+    static inline SimpleType getSimplifiedValue(const DSPtr &V) {
       return V.getPtr();
     }
   };
@@ -91,7 +91,7 @@ namespace llvm {
 //
 //===----------------------------------------------------------------------===//
 
-typedef llvm::ImmutableMap<DeclStmtPtr,uint64_t> DeclStmtMapTy;
+typedef llvm::ImmutableMap<DSPtr,uint64_t> DeclStmtMapTy;
 
 namespace clang {
 template<>
@@ -153,7 +153,7 @@ protected:
   //  for a given statement.
   NodeBuilder* Builder;
 
-  DeclStmtMapTy::Factory StateFactory;
+  DeclStmtMapTy::Factory StateMgr;
   
   // cfg - the current CFG.
   CFG* cfg;
@@ -163,13 +163,14 @@ protected:
   NodeSetTy NodeSetB;
   NodeSetTy* Nodes;
   NodeSetTy* OldNodes;
-  NodeTy* Pred;
+  StateTy CurrentState;
   
   bool DoNotSwitch;
       
 public:
   GRConstants() : Liveness(NULL), Builder(NULL), cfg(NULL), 
-    Nodes(&NodeSetA), OldNodes(&NodeSetB), Pred(NULL), DoNotSwitch(false) {}    
+    Nodes(&NodeSetA), OldNodes(&NodeSetB),
+    CurrentState(StateMgr.GetEmptyMap()), DoNotSwitch(false) {} 
     
   ~GRConstants() { delete Liveness; }
   
@@ -182,12 +183,13 @@ public:
   }
   
   StateTy getInitialState() {
-    return StateFactory.GetEmptyMap();
+    return StateMgr.GetEmptyMap();
   }
     
   void ProcessStmt(Stmt* S, NodeBuilder& builder);    
-  void SwitchNodeSets();  
+  void SwitchNodeSets();
   void DoStmt(Stmt* S);
+  StateTy RemoveGrandchildrenMappings(Stmt* S, StateTy M);
 
   void AddBinding(Expr* E, ExprVariantTy V, bool isBlkLvl = false);
   ExprVariantTy GetBinding(Expr* E);
@@ -215,26 +217,17 @@ void GRConstants::ProcessStmt(Stmt* S, NodeBuilder& builder) {
 }
 
 ExprVariantTy GRConstants::GetBinding(Expr* E) {
-  DeclStmtPtr P(E, getCFG().isBlkExpr(E));
-  StateTy M = Pred->getState();
-  StateTy::iterator I = M.find(P);
+  DSPtr P(E, getCFG().isBlkExpr(E));
+  StateTy::iterator I = CurrentState.find(P);
 
-  if (I == M.end())
+  if (I == CurrentState.end())
     return ExprVariantTy();
   
   return (*I).second;
 }
 
 void GRConstants::AddBinding(Expr* E, ExprVariantTy V, bool isBlkLvl) {
-  if (!V) {
-    Nodes->insert(Pred);
-    return;
-  }
-  
-  StateTy M = Pred->getState();
-  StateTy MNew = StateFactory.Add(M, DeclStmtPtr(E,isBlkLvl), V.getVal());
-  NodeTy* N = Builder->generateNode(E, MNew, Pred);
-  if (N) Nodes->insert(N);
+  CurrentState = StateMgr.Add(CurrentState, DSPtr(E,isBlkLvl), V.getVal());
 }
 
 void GRConstants::SwitchNodeSets() {
@@ -244,18 +237,49 @@ void GRConstants::SwitchNodeSets() {
   Nodes->clear(); 
 }
 
+GRConstants::StateTy
+GRConstants::RemoveGrandchildrenMappings(Stmt* S, GRConstants::StateTy State) {
+  
+  typedef Stmt::child_iterator iterator;
+  
+  for (iterator I=S->child_begin(), E=S->child_end(); I!=E; ++I)
+    if (Stmt* C = *I)
+      for (iterator CI=C->child_begin(), CE=C->child_end(); CI!=CE; ++CI) {
+        // Observe that this will only remove mappings to non-block level
+        // expressions.  This is valid even if *CI is a block-level expression,
+        // since it simply won't be in the map in the first place.
+        State = StateMgr.Remove(State, DSPtr(*CI,false));
+      }
+  
+  return State;
+}
 
 void GRConstants::DoStmt(Stmt* S) {  
   for (Stmt::child_iterator I=S->child_begin(), E=S->child_end(); I!=E; ++I)
-    DoStmt(*I);
+    if (*I) DoStmt(*I);
   
   if (!DoNotSwitch) SwitchNodeSets();
   DoNotSwitch = false;
   
   for (NodeSetTy::iterator I=OldNodes->begin(), E=OldNodes->end(); I!=E; ++I) {
-    Pred = *I;    
+    NodeTy* Pred = *I;
+    CurrentState = Pred->getState();
+
+    StateTy CleanedState = RemoveGrandchildrenMappings(S, CurrentState);
+    bool AlwaysGenerateNode = false;
+    
+    if (CleanedState != CurrentState) {
+      CurrentState = CleanedState;
+      AlwaysGenerateNode = true;
+    }
+    
     Visit(S);
-    Pred = NULL;
+    
+    if (AlwaysGenerateNode || CurrentState != CleanedState) {
+      NodeTy* N = Builder->generateNode(S, CurrentState, Pred);
+      if (N) Nodes->insert(N);
+    }
+    else Nodes->insert(Pred);    
   }
 }
 
