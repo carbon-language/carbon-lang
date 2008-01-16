@@ -4055,16 +4055,54 @@ SDOperand DAGCombiner::visitLOAD(SDNode *N) {
   if (!LD->isVolatile()) {
     if (N->getValueType(1) == MVT::Other) {
       // Unindexed loads.
-      if (N->hasNUsesOfValue(0, 0))
-        return CombineTo(N, DAG.getNode(ISD::UNDEF, N->getValueType(0)), Chain);
+      if (N->hasNUsesOfValue(0, 0)) {
+        // It's not safe to use the two value CombineTo variant here. e.g.
+        // v1, chain2 = load chain1, loc
+        // v2, chain3 = load chain2, loc
+        // v3         = add v2, c
+        // Now we replace use of v1 with undef, use of chain2 with chain1.
+        // ReplaceAllUsesWith() will iterate through uses of the first load and
+        // update operands:
+        // v1, chain2 = load chain1, loc
+        // v2, chain3 = load chain1, loc
+        // v3         = add v2, c
+        // Now the second load is the same as the first load, SelectionDAG cse
+        // will ensure the use of second load is replaced with the first load.
+        // v1, chain2 = load chain1, loc
+        // v3         = add v1, c
+        // Then v1 is replaced with undef and bad things happen.
+        std::vector<SDNode*> NowDead;
+        SDOperand Undef = DAG.getNode(ISD::UNDEF, N->getValueType(0));
+        DOUT << "\nReplacing.6 "; DEBUG(N->dump(&DAG));
+        DOUT << "\nWith: "; DEBUG(Undef.Val->dump(&DAG));
+        DOUT << " and 1 other value\n";
+        DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 0), Undef, &NowDead);
+        DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 1), Chain, &NowDead);
+        removeFromWorkList(N);
+        for (unsigned i = 0, e = NowDead.size(); i != e; ++i)
+          removeFromWorkList(NowDead[i]);
+        DAG.DeleteNode(N);
+        return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
+      }
     } else {
       // Indexed loads.
       assert(N->getValueType(2) == MVT::Other && "Malformed indexed loads?");
       if (N->hasNUsesOfValue(0, 0) && N->hasNUsesOfValue(0, 1)) {
-        SDOperand Undef0 = DAG.getNode(ISD::UNDEF, N->getValueType(0));
-        SDOperand Undef1 = DAG.getNode(ISD::UNDEF, N->getValueType(1));
-        SDOperand To[] = { Undef0, Undef1, Chain };
-        return CombineTo(N, To, 3);
+        std::vector<SDNode*> NowDead;
+        SDOperand Undef = DAG.getNode(ISD::UNDEF, N->getValueType(0));
+        DOUT << "\nReplacing.6 "; DEBUG(N->dump(&DAG));
+        DOUT << "\nWith: "; DEBUG(Undef.Val->dump(&DAG));
+        DOUT << " and 2 other values\n";
+        DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 0), Undef, &NowDead);
+        DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 1),
+                                      DAG.getNode(ISD::UNDEF, N->getValueType(1)),
+                                      &NowDead);
+        DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 2), Chain, &NowDead);
+        removeFromWorkList(N);
+        for (unsigned i = 0, e = NowDead.size(); i != e; ++i)
+          removeFromWorkList(NowDead[i]);
+        DAG.DeleteNode(N);
+        return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
       }
     }
   }
