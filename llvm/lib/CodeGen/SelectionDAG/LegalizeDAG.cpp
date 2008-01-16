@@ -3573,20 +3573,12 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     break;
 
   case ISD::FP_EXTEND: {
-      MVT::ValueType newVT = Op.getValueType();
-      MVT::ValueType oldVT = Op.getOperand(0).getValueType();
-      if (TLI.getConvertAction(oldVT, newVT) == TargetLowering::Expand) {
+      MVT::ValueType DstVT = Op.getValueType();
+      MVT::ValueType SrcVT = Op.getOperand(0).getValueType();
+      if (TLI.getConvertAction(SrcVT, DstVT) == TargetLowering::Expand) {
         // The only other way we can lower this is to turn it into a STORE,
         // LOAD pair, targetting a temporary location (a stack slot).
-
-        // NOTE: there is a choice here between constantly creating new stack
-        // slots and always reusing the same one.  We currently always create
-        // new ones, as reuse may inhibit scheduling.
-        SDOperand StackSlot = DAG.CreateStackTemporary(oldVT);
-        Result = DAG.getStore(DAG.getEntryNode(), Node->getOperand(0),
-                                   StackSlot, NULL, 0);
-        Result = DAG.getExtLoad(ISD::EXTLOAD, newVT,
-                                Result, StackSlot, NULL, 0, oldVT);
+        Result = EmitStackConvert(Node->getOperand(0), SrcVT, DstVT);
         break;
       }
     }
@@ -3603,25 +3595,18 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     break;
   case ISD::FP_ROUND: {
-      MVT::ValueType newVT = Op.getValueType();
-      MVT::ValueType oldVT = Op.getOperand(0).getValueType();
-      if (TLI.getConvertAction(oldVT, newVT) == TargetLowering::Expand) {
-        if (oldVT == MVT::ppcf128) {
+      MVT::ValueType DstVT = Op.getValueType();
+      MVT::ValueType SrcVT = Op.getOperand(0).getValueType();
+      if (TLI.getConvertAction(SrcVT, DstVT) == TargetLowering::Expand) {
+        if (SrcVT == MVT::ppcf128) {
           SDOperand Lo, Hi;
           ExpandOp(Node->getOperand(0), Lo, Hi);
-          Result = DAG.getNode(ISD::FP_ROUND, newVT, Hi);
+          Result = DAG.getNode(ISD::FP_ROUND, DstVT, Hi);
           break;
         } else {
           // The only other way we can lower this is to turn it into a STORE,
           // LOAD pair, targetting a temporary location (a stack slot).
-
-          // NOTE: there is a choice here between constantly creating new stack
-          // slots and always reusing the same one.  We currently always create
-          // new ones, as reuse may inhibit scheduling.
-          SDOperand StackSlot = DAG.CreateStackTemporary(newVT);
-          Result = DAG.getTruncStore(DAG.getEntryNode(), Node->getOperand(0),
-                                     StackSlot, NULL, 0, newVT);
-          Result = DAG.getLoad(newVT, Result, StackSlot, NULL, 0);
+          Result = EmitStackConvert(Node->getOperand(0), DstVT, DstVT);
           break;
         }
       }
@@ -3700,11 +3685,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         // NOTE: there is a choice here between constantly creating new stack
         // slots and always reusing the same one.  We currently always create
         // new ones, as reuse may inhibit scheduling.
-        SDOperand StackSlot = DAG.CreateStackTemporary(ExtraVT);
-        Result = DAG.getTruncStore(DAG.getEntryNode(), Node->getOperand(0),
-                                   StackSlot, NULL, 0, ExtraVT);
-        Result = DAG.getExtLoad(ISD::EXTLOAD, Node->getValueType(0),
-                                Result, StackSlot, NULL, 0, ExtraVT);
+        Result = EmitStackConvert(Node->getOperand(0), ExtraVT, 
+                                  Node->getValueType(0));
       } else {
         assert(0 && "Unknown op");
       }
