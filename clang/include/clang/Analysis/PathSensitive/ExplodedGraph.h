@@ -253,6 +253,8 @@ protected:
   }
     
 public:
+  ExplodedGraph() : CheckerState(new CheckerTy()) {}
+  
   /// getCheckerState - Returns the internal checker state associated
   ///  with the exploded graph.  Ownership remains with the ExplodedGraph
   ///  objecct.
