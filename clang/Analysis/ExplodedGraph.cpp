@@ -80,7 +80,7 @@ ExplodedGraphImpl::~ExplodedGraphImpl() {
     
     for (llvm::FoldingSet<ExplodedNodeImpl>::iterator
          I=ENodes->begin(), E=ENodes->end(); I!=E; ++I)
-      delete &*I;
+      (*I).~ExplodedNodeImpl();
     
     delete ENodes;
   }
