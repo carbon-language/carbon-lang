@@ -39,7 +39,7 @@ protected:
   ProgramPoint() : Data(0) {}
   
 public:    
-  unsigned getKind() const { return Data & 0x5; }  
+  unsigned getKind() const { return Data & 0x7; }  
   void* getRawPtr() const { return reinterpret_cast<void*>(Data & ~0x7); }
   void* getRawData() const { return reinterpret_cast<void*>(Data); }
   
