@@ -2764,15 +2764,14 @@ private:
     bool hasCalls;
     bool hasLandingPads;
     std::vector<MachineMove> Moves;
-    Function::LinkageTypes linkage;
+    const Function * function;
 
     FunctionEHFrameInfo(const std::string &FN, unsigned Num, unsigned P,
                         bool hC, bool hL,
                         const std::vector<MachineMove> &M,
-                        Function::LinkageTypes l):
+                        const Function *f):
       FnName(FN), Number(Num), PersonalityIndex(P),
-      hasCalls(hC), hasLandingPads(hL), Moves(M),
-      linkage(l) { }
+      hasCalls(hC), hasLandingPads(hL), Moves(M), function (f) { }
   };
 
   std::vector<FunctionEHFrameInfo> EHFrames;
@@ -2869,19 +2868,21 @@ private:
   /// EmitEHFrame - Emit function exception frame information.
   ///
   void EmitEHFrame(const FunctionEHFrameInfo &EHFrameInfo) {
+    Function::LinkageTypes linkage = EHFrameInfo.function->getLinkage();
+
     Asm->SwitchToTextSection(TAI->getDwarfEHFrameSection());
 
     // Externally visible entry into the functions eh frame info.
     // If the corresponding function is static, this should not be
     // externally visible.
-    if (EHFrameInfo.linkage != Function::InternalLinkage) {
+    if (linkage != Function::InternalLinkage) {
       if (const char *GlobalEHDirective = TAI->getGlobalEHDirective())
         O << GlobalEHDirective << EHFrameInfo.FnName << "\n";
     }
 
     // If corresponding function is weak definition, this should be too.
-    if ((EHFrameInfo.linkage == Function::WeakLinkage || 
-         EHFrameInfo.linkage == Function::LinkOnceLinkage) &&
+    if ((linkage == Function::WeakLinkage || 
+         linkage == Function::LinkOnceLinkage) &&
         TAI->getWeakDefDirective())
       O << TAI->getWeakDefDirective() << EHFrameInfo.FnName << "\n";
 
@@ -2889,12 +2890,17 @@ private:
     // omit the EH Frame, but some environments do not handle weak absolute
     // symbols.
     if (!EHFrameInfo.hasCalls &&
-        ((EHFrameInfo.linkage != Function::WeakLinkage && 
-          EHFrameInfo.linkage != Function::LinkOnceLinkage) ||
+        ((linkage != Function::WeakLinkage && 
+          linkage != Function::LinkOnceLinkage) ||
          !TAI->getWeakDefDirective() ||
          TAI->getSupportsWeakOmittedEHFrame()))
     { 
       O << EHFrameInfo.FnName << " = 0\n";
+      // This name has no connection to the function, so it might get 
+      // dead-stripped when the function is not, erroneously.  Prohibit 
+      // dead-stripping unconditionally.
+      if (const char *UsedDirective = TAI->getUsedDirective())
+        O << UsedDirective << EHFrameInfo.FnName << "\n\n";
     } else {
       O << EHFrameInfo.FnName << ":\n";
 
@@ -2941,10 +2947,16 @@ private:
       
       Asm->EmitAlignment(2);
       EmitLabel("eh_frame_end", EHFrameInfo.Number);
-    }
     
-    if (const char *UsedDirective = TAI->getUsedDirective())
-      O << UsedDirective << EHFrameInfo.FnName << "\n\n";
+      // If the function is marked used, this table should be also.  We cannot 
+      // make the mark unconditional in this case, since retaining the table
+      // also retains the function in this case, and there is code around 
+      // that depends on unused functions (calling undefined externals) being
+      // dead-stripped to link correctly.  Yes, there really is.
+      if (MMI->getUsedFunctions().count(EHFrameInfo.function))
+        if (const char *UsedDirective = TAI->getUsedDirective())
+          O << UsedDirective << EHFrameInfo.FnName << "\n\n";
+    }
   }
 
   /// EmitExceptionTable - Emit landing pads and actions.
@@ -3414,7 +3426,7 @@ public:
                                     MF->getFrameInfo()->hasCalls(),
                                     !MMI->getLandingPads().empty(),
                                     MMI->getFrameMoves(),
-                                    MF->getFunction()->getLinkage()));
+                                    MF->getFunction()));
   }
 };
 

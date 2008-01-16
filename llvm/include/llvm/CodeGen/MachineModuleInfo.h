@@ -35,6 +35,7 @@
 #include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/UniqueVector.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/Pass.h"
 
@@ -1037,6 +1038,10 @@ private:
   // common EH frames.
   std::vector<Function *> Personalities;
 
+  // UsedFunctions - the functions in the llvm.used list in a more easily
+  // searchable format.
+  SmallPtrSet<const Function *, 32> UsedFunctions;
+
   bool CallsEHReturn;
   bool CallsUnwindInit;
 public:
@@ -1233,6 +1238,11 @@ public:
   /// getPersonalities - Return array of personality functions ever seen.
   const std::vector<Function *>& getPersonalities() const {
     return Personalities;
+  }
+
+  // UsedFunctions - Return set of the functions in the llvm.used list.
+  const SmallPtrSet<const Function *, 32>& getUsedFunctions() const {
+    return UsedFunctions;
   }
 
   /// addCatchTypeInfo - Provide the catch typeinfo for a landing pad.

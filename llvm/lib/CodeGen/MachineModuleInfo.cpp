@@ -1552,6 +1552,21 @@ bool MachineModuleInfo::Verify(Value *V) {
 ///
 void MachineModuleInfo::AnalyzeModule(Module &M) {
   SetupCompileUnits(M);
+
+  // Insert functions in the llvm.used array into UsedFunctions.
+  GlobalVariable *GV = M.getGlobalVariable("llvm.used");
+  if (!GV || !GV->hasInitializer()) return;
+
+  // Should be an array of 'i8*'.
+  ConstantArray *InitList = dyn_cast<ConstantArray>(GV->getInitializer());
+  if (InitList == 0) return;
+
+  for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i) {
+    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(InitList->getOperand(i)))
+      if (CE->getOpcode() == Instruction::BitCast)
+        if (Function *F = dyn_cast<Function>(CE->getOperand(0)))
+          UsedFunctions.insert(F);
+  }
 }
 
 /// needsFrameInfo - Returns true if we need to gather callee-saved register
