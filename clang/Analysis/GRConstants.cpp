@@ -204,12 +204,18 @@ public:
   void BlockStmt_VisitStmt(Stmt* S) { DoStmt(S); }
   
   void VisitAssign(BinaryOperator* O);
-  void VisitIntegerLiteral(IntegerLiteral* L);
   void VisitBinAdd(BinaryOperator* O);
   void VisitBinSub(BinaryOperator* O);
   void VisitBinAssign(BinaryOperator* D);
 };
 } // end anonymous namespace
+
+static inline Expr* IgnoreParen(Expr* E) {
+  while (ParenExpr* P = dyn_cast<ParenExpr>(E))
+    E = P->getSubExpr();
+  
+  return E;
+}
 
 void GRConstants::ProcessStmt(Stmt* S, NodeBuilder& builder) {
   Builder = &builder;
@@ -224,9 +230,20 @@ void GRConstants::ProcessStmt(Stmt* S, NodeBuilder& builder) {
 
 ExprVariantTy GRConstants::GetBinding(Expr* E) {
   DSPtr P(NULL);
+  E = IgnoreParen(E);
   
-  if (DeclRefExpr* D = dyn_cast<DeclRefExpr>(E)) P = DSPtr(D->getDecl());
-  else P = DSPtr(E, getCFG().isBlkExpr(E));
+  switch (E->getStmtClass()) {
+    case Stmt::DeclRefExprClass:
+      P = DSPtr(cast<DeclRefExpr>(E)->getDecl());
+      break;
+
+    case Stmt::IntegerLiteralClass:
+      return cast<IntegerLiteral>(E)->getValue().getZExtValue();
+      
+    default:    
+      P = DSPtr(E, getCFG().isBlkExpr(E));
+      break;
+  }
 
   StateTy::iterator I = CurrentState.find(P);
 
@@ -297,24 +314,12 @@ void GRConstants::DoStmt(Stmt* S) {
   SwitchNodeSets();
 }
 
-void GRConstants::VisitIntegerLiteral(IntegerLiteral* L) {
-  AddBinding(L, L->getValue().getZExtValue());
-}
-
 void GRConstants::VisitBinAdd(BinaryOperator* B) {
   AddBinding(B, GetBinding(B->getLHS()) + GetBinding(B->getRHS()));
 }
 
 void GRConstants::VisitBinSub(BinaryOperator* B) {
   AddBinding(B, GetBinding(B->getLHS()) - GetBinding(B->getRHS()));
-}
-
-
-static inline Expr* IgnoreParen(Expr* E) {
-  while (ParenExpr* P = dyn_cast<ParenExpr>(E))
-    E = P->getSubExpr();
-  
-  return E;
 }
 
 
