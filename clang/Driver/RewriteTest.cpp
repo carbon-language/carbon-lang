@@ -58,7 +58,7 @@ namespace {
     FileVarDecl *ConstantStringClassReference;
     RecordDecl *NSStringRecord;
     
-    // ObjC foreach break/continue generation supper.
+    // ObjC foreach break/continue generation support.
     int BcLabelCount;
     
     // Needed for super.
