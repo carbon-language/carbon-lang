@@ -297,18 +297,18 @@ public:
   }
   
   // Iterators.
-  typedef NodeTy*         roots_iterator;
-  typedef const NodeTy*   const_roots_iterator;
-  typedef NodeTy*         eop_iterator;
-  typedef const NodeTy*   const_eop_iterator;
+  typedef NodeTy**         roots_iterator;
+  typedef const NodeTy**   const_roots_iterator;
+  typedef NodeTy**         eop_iterator;
+  typedef const NodeTy**   const_eop_iterator;
   
   
   roots_iterator roots_begin() {
-    return static_cast<NodeTy*>(Roots.begin());
+    return reinterpret_cast<roots_iterator>(Roots.begin());
   }
   
   roots_iterator roots_end() { 
-    return static_cast<NodeTy*>(Roots.end());
+    return reinterpret_cast<roots_iterator>(Roots.end());
   }
   
   const_roots_iterator roots_begin() const { 
@@ -320,11 +320,11 @@ public:
   }  
 
   eop_iterator eop_begin() {
-    return static_cast<NodeTy*>(EndNodes.begin());
+    return reinterpret_cast<eop_iterator>(EndNodes.begin());
   }
     
   eop_iterator eop_end() { 
-    return static_cast<NodeTy*>(EndNodes.end());
+    return reinterpret_cast<eop_iterator>(EndNodes.end());
   }
   
   const_eop_iterator eop_begin() const {
