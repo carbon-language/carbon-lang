@@ -251,11 +251,16 @@ FunctionDecl *Sema::MergeFunctionDecl(FunctionDecl *New, ScopedDecl *OldD) {
   if (Context.functionTypesAreCompatible(OldQType, NewQType))
     return New;
 
+  // A function that has already been declared has been redeclared or defined
+  // with a different type- show appropriate diagnostic
+  diag::kind PrevDiag = Old->getBody() ? diag::err_previous_definition :
+                                         diag::err_previous_declaration; 
+
   // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
   // TODO: This is totally simplistic.  It should handle merging functions
   // together etc, merging extern int X; int X; ...
-  Diag(New->getLocation(), diag::err_redefinition, New->getName());
-  Diag(Old->getLocation(), diag::err_previous_definition);
+  Diag(New->getLocation(), diag::err_conflicting_types, New->getName());
+  Diag(Old->getLocation(), PrevDiag);
   return New;
 }
 

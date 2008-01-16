@@ -3,9 +3,9 @@
 void foo(void);
 void foo(void) {} 
 void foo(void);
-void foo(void); // expected-error{{previous definition is here}}
+void foo(void); // expected-error{{previous declaration is here}}
 
-void foo(int); // expected-error {{redefinition of 'foo'}}
+void foo(int); // expected-error {{conflicting types for 'foo'}}
 
 int funcdef()
 {
