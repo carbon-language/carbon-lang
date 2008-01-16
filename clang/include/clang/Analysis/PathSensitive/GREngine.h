@@ -173,7 +173,7 @@ protected:
   
   
   virtual void* getInitialState() {
-    return GRTrait<StateTy>::toPtr(getCheckerState()->getInitialState());
+    return GRTrait<StateTy>::toPtr(getCheckerState().getInitialState());
   }
   
   virtual void* ProcessEOP(CFGBlock* Blk, void* State) {

@@ -44,6 +44,10 @@ public:
 };
 } // end anonymous namespace
 
+// Place the dstor for GRWorkList here because it contains virtual member
+// functions, and we the code for the dstor generated in one compilation unit.
+GRWorkList::~GRWorkList() {}
+
 GRWorkList* GRWorkList::MakeDFS() { return new DFS(); }
 
 /// ExecuteWorkList - Run the worklist algorithm for a maximum number of steps.

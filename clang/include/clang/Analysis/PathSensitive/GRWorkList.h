@@ -38,7 +38,7 @@ public:
 
 class GRWorkList {
 public:
-  virtual ~GRWorkList() = 0;
+  virtual ~GRWorkList();
   virtual bool hasWork() const = 0;
   virtual void Enqueue(const GRWorkListUnit& U) = 0;
 

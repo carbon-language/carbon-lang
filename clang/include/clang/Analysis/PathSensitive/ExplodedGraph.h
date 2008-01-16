@@ -40,9 +40,17 @@ protected:
     enum { Size1 = 0x0, SizeOther = 0x1, Infeasible = 0x2, Flags = 0x3 };
     uintptr_t P;
     
-    unsigned getKind() const { return P & Flags; }
-    void* getPtr() const { return reinterpret_cast<void*>(P & ~Flags); }
-    ExplodedNodeImpl* getNode() const;
+    unsigned getKind() const {
+      return P & Flags;
+    }
+    
+    void* getPtr() const {
+      return reinterpret_cast<void*>(P & ~Flags);
+    }
+
+    ExplodedNodeImpl* getNode() const {
+      return reinterpret_cast<ExplodedNodeImpl*>(getPtr());
+    }
     
   public:
     NodeGroup() : P(0) {}
@@ -136,8 +144,8 @@ class ExplodedNode : public ExplodedNodeImpl {
 public:
   /// Construct a ExplodedNodeImpl with the given node ID, program edge,
   ///  and state.
-  explicit ExplodedNode(unsigned ID, const ProgramPoint& loc, StateTy state)
-  : ExplodedNodeImpl(ID, loc, GRTrait<StateTy>::toPtr(state)) {}
+  explicit ExplodedNode(const ProgramPoint& loc, StateTy state)
+  : ExplodedNodeImpl(loc, GRTrait<StateTy>::toPtr(state)) {}
   
   /// getState - Returns the state associated with the node.  
   inline StateTy getState() const {
@@ -186,13 +194,7 @@ protected:
   typedef llvm::DenseMap<ProgramPoint,void*>        EdgeNodeSetMap;
   typedef llvm::SmallVector<ExplodedNodeImpl*,2>    RootsTy;
   typedef llvm::SmallVector<ExplodedNodeImpl*,10>   EndNodesTy;
-  
-  /// NodeCounter - The number of nodes that have been created, although
-  ///  this need not be the current number of nodes in the graph that
-  ///  are reachable from the roots.  This counter is used to assign a unique
-  ///  number to each node (which is useful for debugging).
-  unsigned NodeCounter;
-  
+    
   /// Roots - The roots of the simulation graph. Usually there will be only
   /// one, but clients are free to establish multiple subgraphs within a single
   /// SimulGraph. Moreover, these subgraphs can often merge when paths from
@@ -232,7 +234,6 @@ public:
 
   unsigned num_roots() const { return Roots.size(); }
   unsigned num_eops() const { return EndNodes.size(); }
-  unsigned getCounter() const { return NodeCounter; }
 };
   
 template <typename CHECKER>
@@ -248,7 +249,7 @@ protected:
 protected:
   virtual ExplodedNodeImpl*
   getNodeImpl(const ProgramPoint& L, void* State, bool* IsNew) {
-    return getNode(L,GRTrait<StateTy>::toState(State),IsNew);
+    return getNode(L, GRTrait<StateTy>::toState(State), IsNew);
   }
     
 public:
@@ -275,15 +276,15 @@ public:
     void* InsertPos = 0;
     
     StateTy::Profile(profile, State);
-    NodeTy* V = VSet.FindNodeOrInsertPos(profile, InsertPos);
+    NodeTy* V = VSet->FindNodeOrInsertPos(profile, InsertPos);
 
     if (!V) {
       // Allocate a new node.
       V = (NodeTy*) Allocator.Allocate<NodeTy>();
-      new (V) NodeTy(NodeCounter++, L, State);
+      new (V) NodeTy(L, State);
       
       // Insert the node into the node set and return it.
-      VSet.InsertNode(V, InsertPos);
+      VSet->InsertNode(V, InsertPos);
       
       if (IsNew) *IsNew = true;
     }

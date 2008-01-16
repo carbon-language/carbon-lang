@@ -19,6 +19,7 @@
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/CFG.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
+#include "clang/Analysis/Analyses/GRConstants.h"
 #include "clang/Analysis/LocalCheckers.h"
 #include "llvm/Support/Streams.h"
 #include <fstream>
@@ -562,22 +563,21 @@ ASTConsumer *clang::CreateUnitValsChecker(Diagnostic &Diags) {
 }
 
 //===----------------------------------------------------------------------===//
-// GRConstProp - Perform intra-procedural, path-sensitive constant propagation.
+// GRConstants - Perform intra-procedural, path-sensitive constant propagation.
 
 namespace {
-  class GRConstPropVisitor : public CFGVisitor {
+  class GRConstantsVisitor : public CFGVisitor {
   public:
     virtual void Initialize(ASTContext &Context) {}
     
     virtual void VisitCFG(CFG& C) {
-      // FIXME: Implement.
-      assert (false && "Not yet implemented.");
+      RunGRConstants(C);
     }
   };
 } // end anonymous namespace
 
-ASTConsumer *clang::CreateGRConstProp() {
-  return new GRConstPropVisitor();
+ASTConsumer *clang::CreateGRConstants() {
+  return new GRConstantsVisitor();
 }
 
 //===----------------------------------------------------------------------===//

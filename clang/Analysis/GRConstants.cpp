@@ -288,4 +288,14 @@ void GRConstants::VisitBinAdd(BinaryOperator* B) {
 void GRConstants::VisitBinSub(BinaryOperator* B) {
   AddBinding(B, GetBinding(B->getLHS()) - GetBinding(B->getRHS()));
 }
-    
+
+//===----------------------------------------------------------------------===//
+// Driver.
+//===----------------------------------------------------------------------===//
+
+namespace clang {
+void RunGRConstants(CFG& cfg) {
+  GREngine<GRConstants> Engine(cfg);
+  Engine.ExecuteWorkList();  
+}
+}
