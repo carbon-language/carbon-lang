@@ -22,3 +22,9 @@ int test() {
   return sizeof(enum e) ;
 }
 
+enum gccForwardEnumExtension ve; // expected-warning {{ISO C forbids forward references to 'enum' types}}
+
+int test2(int i)
+{
+  ve + i; // expected-error{{invalid operands to binary expression ('enum gccForwardEnumExtension' and 'int')}}
+}

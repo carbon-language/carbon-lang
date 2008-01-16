@@ -663,6 +663,7 @@ public:
   EnumDecl(SourceLocation L, IdentifierInfo *Id, ScopedDecl *PrevDecl)
     : TagDecl(Enum, L, Id, PrevDecl) {
     ElementList = 0;
+	IntegerType = QualType();
   }
   
   /// defineElements - When created, EnumDecl correspond to a forward declared
