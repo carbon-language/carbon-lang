@@ -167,7 +167,7 @@ void GREngineImpl::HandlePostStmt(const PostStmt& L, CFGBlock* B,
     HandleBlockExit(B, Pred);
   else {
     GRNodeBuilderImpl Builder(B, StmtIdx, Pred, this);
-    ProcessStmt(L.getStmt(), Builder);
+    ProcessStmt((*B)[StmtIdx], Builder);
   }
 }
 

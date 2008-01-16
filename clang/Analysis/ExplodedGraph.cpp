@@ -60,7 +60,7 @@ ExplodedNodeImpl** ExplodedNodeImpl::NodeGroup::begin() const {
 
 ExplodedNodeImpl** ExplodedNodeImpl::NodeGroup::end() const {
   if (getKind() == Size1)
-    return ((ExplodedNodeImpl**) &P)+1;
+    return (ExplodedNodeImpl**) (P ? &P+1 : &P);
   else
     return const_cast<ExplodedNodeImpl**>(&*(getVector(getPtr()).rbegin())+1);
 }
