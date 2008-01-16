@@ -225,7 +225,8 @@ ExprVariantTy GRConstants::GetBinding(Expr* E) {
 }
 
 void GRConstants::AddBinding(Expr* E, ExprVariantTy V, bool isBlkLvl) {
-  CurrentState = StateMgr.Add(CurrentState, DSPtr(E,isBlkLvl), V.getVal());
+  if (V) 
+    CurrentState = StateMgr.Add(CurrentState, DSPtr(E,isBlkLvl), V.getVal());
 }
 
 void GRConstants::SwitchNodeSets() {
