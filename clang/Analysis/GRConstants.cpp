@@ -134,7 +134,7 @@ public:
   
   ExprVariantTy operator-(const ExprVariantTy& X) const {
     if (!isConstant || !X.isConstant) return ExprVariantTy();
-    else return ExprVariantTy(val+X.val);
+    else return ExprVariantTy(val-X.val);
   }    
 };
 } // end anonymous namespace
