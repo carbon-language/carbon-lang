@@ -52,7 +52,7 @@ public:
   bool isSubExpr() const { return getKind() == IsSubExp; }
   
   inline void Profile(llvm::FoldingSetNodeID& ID) const {
-    ID.AddPointer(getPtr());
+    ID.AddInteger(Raw);
   }      
   inline bool operator==(const DSPtr& X) const { return Raw == X.Raw; }  
   inline bool operator!=(const DSPtr& X) const { return Raw != X.Raw; }
