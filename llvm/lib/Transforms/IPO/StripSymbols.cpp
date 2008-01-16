@@ -29,6 +29,7 @@
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/ADT/SmallPtrSet.h"
 using namespace llvm;
 
 namespace {
@@ -100,13 +101,34 @@ bool StripSymbols::runOnModule(Module &M) {
   // If we're not just stripping debug info, strip all symbols from the
   // functions and the names from any internal globals.
   if (!OnlyDebugInfo) {
+    SmallPtrSet<const Constant *, 8> llvmUsedValues;
+    Value *LLVMUsed = M.getValueSymbolTable().lookup("llvm.used");
+    if (LLVMUsed) {
+      // Collect values that are preserved as per explicit request.
+      // llvm.used is used to list these values.
+      if (GlobalVariable *GV = dyn_cast<GlobalVariable>(LLVMUsed)) {
+        if (ConstantArray *InitList = 
+            dyn_cast<ConstantArray>(GV->getInitializer())) {
+          for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i) {
+            if (ConstantExpr *CE = 
+                dyn_cast<ConstantExpr>(InitList->getOperand(i)))
+              if (CE->isCast())
+                llvmUsedValues.insert(CE->getOperand(0));
+          }
+        }
+      }
+    }
+
     for (Module::global_iterator I = M.global_begin(), E = M.global_end();
-         I != E; ++I)
-      if (I->hasInternalLinkage())
+         I != E; ++I) {
+      if (I->hasInternalLinkage() && llvmUsedValues.count(I) == 0)
         I->setName("");     // Internal symbols can't participate in linkage
+      else if (I->getName() == "llvm.used") {
+      }
+    }
 
     for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
-      if (I->hasInternalLinkage())
+      if (I->hasInternalLinkage() && llvmUsedValues.count(I) == 0)
         I->setName("");     // Internal symbols can't participate in linkage
       StripSymtab(I->getValueSymbolTable());
     }
