@@ -446,8 +446,7 @@ bool Type::isArithmeticType() const {
   if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
     if (const EnumDecl *ED = dyn_cast<EnumDecl>(TT->getDecl()))
       // GCC allows forward declaration of enum types (forbid by C99 6.7.2.3p2).
-      // If a body isn't seen by the time we get here, we exclude it from
-      // being allowed in arithmetic expressions.
+      // If a body isn't seen by the time we get here, return false.
       return ED->isDefinition();
   return isa<ComplexType>(CanonicalType) || isa<VectorType>(CanonicalType);
 }
