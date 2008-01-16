@@ -3579,13 +3579,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         // NOTE: there is a choice here between constantly creating new stack
         // slots and always reusing the same one.  We currently always create
         // new ones, as reuse may inhibit scheduling.
-        const Type *Ty = MVT::getTypeForValueType(oldVT);
-        uint64_t TySize = TLI.getTargetData()->getABITypeSize(Ty);
-        unsigned Align  = TLI.getTargetData()->getPrefTypeAlignment(Ty);
-        MachineFunction &MF = DAG.getMachineFunction();
-        int SSFI =
-          MF.getFrameInfo()->CreateStackObject(TySize, Align);
-        SDOperand StackSlot = DAG.getFrameIndex(SSFI, TLI.getPointerTy());
+        SDOperand StackSlot = DAG.CreateStackTemporary(oldVT);
         Result = DAG.getStore(DAG.getEntryNode(), Node->getOperand(0),
                                    StackSlot, NULL, 0);
         Result = DAG.getExtLoad(ISD::EXTLOAD, newVT,
@@ -3621,12 +3615,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           // NOTE: there is a choice here between constantly creating new stack
           // slots and always reusing the same one.  We currently always create
           // new ones, as reuse may inhibit scheduling.
-          const Type *Ty = MVT::getTypeForValueType(newVT);
-          uint64_t TySize = TLI.getTargetData()->getABITypeSize(Ty);
-          unsigned Align  = TLI.getTargetData()->getPrefTypeAlignment(Ty);
-          MachineFunction &MF = DAG.getMachineFunction();
-          int SSFI = MF.getFrameInfo()->CreateStackObject(TySize, Align);
-          SDOperand StackSlot = DAG.getFrameIndex(SSFI, TLI.getPointerTy());
+          SDOperand StackSlot = DAG.CreateStackTemporary(newVT);
           Result = DAG.getTruncStore(DAG.getEntryNode(), Node->getOperand(0),
                                      StackSlot, NULL, 0, newVT);
           Result = DAG.getLoad(newVT, Result, StackSlot, NULL, 0);
@@ -3708,13 +3697,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         // NOTE: there is a choice here between constantly creating new stack
         // slots and always reusing the same one.  We currently always create
         // new ones, as reuse may inhibit scheduling.
-        const Type *Ty = MVT::getTypeForValueType(ExtraVT);
-        uint64_t TySize = TLI.getTargetData()->getABITypeSize(Ty);
-        unsigned Align  = TLI.getTargetData()->getPrefTypeAlignment(Ty);
-        MachineFunction &MF = DAG.getMachineFunction();
-        int SSFI =
-          MF.getFrameInfo()->CreateStackObject(TySize, Align);
-        SDOperand StackSlot = DAG.getFrameIndex(SSFI, TLI.getPointerTy());
+        SDOperand StackSlot = DAG.CreateStackTemporary(ExtraVT);
         Result = DAG.getTruncStore(DAG.getEntryNode(), Node->getOperand(0),
                                    StackSlot, NULL, 0, ExtraVT);
         Result = DAG.getExtLoad(ISD::EXTLOAD, Node->getValueType(0),
@@ -5070,14 +5053,9 @@ SDOperand SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
   if (Op0.getValueType() == MVT::i32) {
     // simple 32-bit [signed|unsigned] integer to float/double expansion
     
-    // get the stack frame index of a 8 byte buffer, pessimistically aligned
-    MachineFunction &MF = DAG.getMachineFunction();
-    const Type *F64Type = MVT::getTypeForValueType(MVT::f64);
-    unsigned StackAlign =
-      (unsigned)TLI.getTargetData()->getPrefTypeAlignment(F64Type);
-    int SSFI = MF.getFrameInfo()->CreateStackObject(8, StackAlign);
-    // get address of 8 byte buffer
-    SDOperand StackSlot = DAG.getFrameIndex(SSFI, TLI.getPointerTy());
+    // Get the stack frame index of a 8 byte buffer.
+    SDOperand StackSlot = DAG.CreateStackTemporary(MVT::f64);
+    
     // word offset constant for Hi/Lo address computation
     SDOperand WordOff = DAG.getConstant(sizeof(int), TLI.getPointerTy());
     // set up Hi and Lo (into buffer) address based on endian
