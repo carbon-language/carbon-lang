@@ -101,20 +101,21 @@ bool StripSymbols::runOnModule(Module &M) {
   // If we're not just stripping debug info, strip all symbols from the
   // functions and the names from any internal globals.
   if (!OnlyDebugInfo) {
-    SmallPtrSet<const Constant *, 8> llvmUsedValues;
-    Value *LLVMUsed = M.getValueSymbolTable().lookup("llvm.used");
-    if (LLVMUsed) {
+    SmallPtrSet<const GlobalValue*, 8> llvmUsedValues;
+    if (GlobalVariable *LLVMUsed = M.getGlobalVariable("llvm.used")) {
+      llvmUsedValues.insert(LLVMUsed);
       // Collect values that are preserved as per explicit request.
       // llvm.used is used to list these values.
-      if (GlobalVariable *GV = dyn_cast<GlobalVariable>(LLVMUsed)) {
-        if (ConstantArray *InitList = 
-            dyn_cast<ConstantArray>(GV->getInitializer())) {
-          for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i) {
-            if (ConstantExpr *CE = 
-                dyn_cast<ConstantExpr>(InitList->getOperand(i)))
-              if (CE->isCast())
-                llvmUsedValues.insert(CE->getOperand(0));
-          }
+      if (ConstantArray *Inits = 
+            dyn_cast<ConstantArray>(LLVMUsed->getInitializer())) {
+        for (unsigned i = 0, e = Inits->getNumOperands(); i != e; ++i) {
+          if (GlobalValue *GV = dyn_cast<GlobalValue>(Inits->getOperand(i)))
+            llvmUsedValues.insert(GV);
+          else if (ConstantExpr *CE =
+                       dyn_cast<ConstantExpr>(Inits->getOperand(i)))
+            if (CE->getOpcode() == Instruction::BitCast)
+              if (GlobalValue *GV = dyn_cast<GlobalValue>(CE->getOperand(0)))
+                llvmUsedValues.insert(GV);
         }
       }
     }
@@ -123,8 +124,6 @@ bool StripSymbols::runOnModule(Module &M) {
          I != E; ++I) {
       if (I->hasInternalLinkage() && llvmUsedValues.count(I) == 0)
         I->setName("");     // Internal symbols can't participate in linkage
-      else if (I->getName() == "llvm.used") {
-      }
     }
 
     for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
