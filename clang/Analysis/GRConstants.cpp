@@ -40,7 +40,7 @@ using llvm::cast;
 //===----------------------------------------------------------------------===//
 namespace {
 class VISIBILITY_HIDDEN DSPtr {
-  const uintptr_t Raw;
+  uintptr_t Raw;
 public:
   enum  VariantKind { IsDecl=0x1, IsBlkLvl=0x2, IsSubExp=0x3, Flags=0x3 };
   inline void* getPtr() const { return reinterpret_cast<void*>(Raw & ~Flags); }
@@ -218,7 +218,11 @@ void GRConstants::ProcessStmt(Stmt* S, NodeBuilder& builder) {
 }
 
 ExprVariantTy GRConstants::GetBinding(Expr* E) {
-  DSPtr P(E, getCFG().isBlkExpr(E));
+  DSPtr P(NULL);
+  
+  if (DeclRefExpr* D = dyn_cast<DeclRefExpr>(E)) P = DSPtr(D->getDecl());
+  else P = DSPtr(E, getCFG().isBlkExpr(E));
+
   StateTy::iterator I = CurrentState.find(P);
 
   if (I == CurrentState.end())
