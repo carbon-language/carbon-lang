@@ -760,8 +760,7 @@ SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
     
     // If this is an FP return with ScalarSSE, we need to move the value from
     // an XMM register onto the fp-stack.
-    if ((X86ScalarSSEf32 && RVLocs[0].getValVT()==MVT::f32) ||
-        (X86ScalarSSEf64 && RVLocs[0].getValVT()==MVT::f64)) {
+    if (isTypeInSSEReg(RVLocs[0].getValVT())) {
       SDOperand MemLoc;
         
       // If this is a load into a scalarsse value, don't store the loaded value
@@ -836,8 +835,7 @@ LowerCallResult(SDOperand Chain, SDOperand InFlag, SDNode *TheCall,
     
     // If we are using ScalarSSE, store ST(0) to the stack and reload it into
     // an XMM register.
-    if ((X86ScalarSSEf32 && RVLocs[0].getValVT() == MVT::f32) ||
-        (X86ScalarSSEf64 && RVLocs[0].getValVT() == MVT::f64)) {
+    if (isTypeInSSEReg(RVLocs[0].getValVT())) {
       SDOperand StoreLoc;
       const Value *SrcVal = 0;
       int SrcValOffset = 0;
@@ -3862,18 +3860,15 @@ SDOperand X86TargetLowering::LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
                                  StackSlot, NULL, 0);
 
   // These are really Legal; caller falls through into that case.
-  if (SrcVT==MVT::i32 && Op.getValueType() == MVT::f32 && X86ScalarSSEf32)
+  if (SrcVT == MVT::i32 && isTypeInSSEReg(Op.getValueType()))
     return Result;
-  if (SrcVT==MVT::i32 && Op.getValueType() == MVT::f64 && X86ScalarSSEf64)
-    return Result;
-  if (SrcVT==MVT::i64 && Op.getValueType() != MVT::f80 && 
+  if (SrcVT == MVT::i64 && Op.getValueType() != MVT::f80 && 
       Subtarget->is64Bit())
     return Result;
 
   // Build the FILD
   SDVTList Tys;
-  bool useSSE = (X86ScalarSSEf32 && Op.getValueType() == MVT::f32) ||
-                (X86ScalarSSEf64 && Op.getValueType() == MVT::f64);
+  bool useSSE = isTypeInSSEReg(Op.getValueType());
   if (useSSE)
     Tys = DAG.getVTList(MVT::f64, MVT::Other, MVT::Flag);
   else
@@ -3916,10 +3911,7 @@ FP_TO_SINTHelper(SDOperand Op, SelectionDAG &DAG) {
 
   // These are really Legal.
   if (Op.getValueType() == MVT::i32 && 
-      X86ScalarSSEf32 && Op.getOperand(0).getValueType() == MVT::f32)
-    return std::make_pair(SDOperand(), SDOperand());
-  if (Op.getValueType() == MVT::i32 && 
-      X86ScalarSSEf64 && Op.getOperand(0).getValueType() == MVT::f64)
+      isTypeInSSEReg(Op.getOperand(0).getValueType()))
     return std::make_pair(SDOperand(), SDOperand());
   if (Subtarget->is64Bit() &&
       Op.getValueType() == MVT::i64 &&
@@ -3942,8 +3934,7 @@ FP_TO_SINTHelper(SDOperand Op, SelectionDAG &DAG) {
 
   SDOperand Chain = DAG.getEntryNode();
   SDOperand Value = Op.getOperand(0);
-  if ((X86ScalarSSEf32 && Op.getOperand(0).getValueType() == MVT::f32) ||
-      (X86ScalarSSEf64 && Op.getOperand(0).getValueType() == MVT::f64)) {
+  if (isTypeInSSEReg(Op.getOperand(0).getValueType())) {
     assert(Op.getValueType() == MVT::i64 && "Invalid FP_TO_SINT to lower!");
     Chain = DAG.getStore(Chain, Value, StackSlot, NULL, 0);
     SDVTList Tys = DAG.getVTList(Op.getOperand(0).getValueType(), MVT::Other);
@@ -4172,13 +4163,12 @@ SDOperand X86TargetLowering::LowerSELECT(SDOperand Op, SelectionDAG &DAG) {
     SDOperand Cmp = Cond.getOperand(1);
     unsigned Opc = Cmp.getOpcode();
     MVT::ValueType VT = Op.getValueType();
+    
     bool IllegalFPCMov = false;
-    if (VT == MVT::f32 && !X86ScalarSSEf32)
+    if (MVT::isFloatingPoint(VT) && !MVT::isVector(VT) &&
+        !isTypeInSSEReg(VT))  // FPStack?
       IllegalFPCMov = !hasFPCMov(cast<ConstantSDNode>(CC)->getSignExtended());
-    else if (VT == MVT::f64 && !X86ScalarSSEf64)
-      IllegalFPCMov = !hasFPCMov(cast<ConstantSDNode>(CC)->getSignExtended());
-    else if (VT == MVT::f80)
-      IllegalFPCMov = !hasFPCMov(cast<ConstantSDNode>(CC)->getSignExtended());
+    
     if ((Opc == X86ISD::CMP ||
          Opc == X86ISD::COMI ||
          Opc == X86ISD::UCOMI) && !IllegalFPCMov) {
