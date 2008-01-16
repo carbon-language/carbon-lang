@@ -33,7 +33,7 @@ protected:
     assert ((reinterpret_cast<uintptr_t>(const_cast<void*>(Ptr)) & 0x7) == 0
             && "Address must have at least an 8-byte alignment.");
     
-    Data = reinterpret_cast<uintptr_t>(const_cast<void*>(Ptr)) & k;
+    Data = reinterpret_cast<uintptr_t>(const_cast<void*>(Ptr)) | k;
   }
   
   ProgramPoint() : Data(0) {}
