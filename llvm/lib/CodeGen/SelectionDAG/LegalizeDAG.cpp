@@ -3569,18 +3569,50 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     break;
 
-  case ISD::FP_EXTEND: 
+  case ISD::FP_EXTEND: {
+      MVT::ValueType newVT = Op.getValueType();
+      MVT::ValueType oldVT = Op.getOperand(0).getValueType();
+      if (TLI.getConvertAction(oldVT, newVT) == TargetLowering::Expand) {
+        // The only other way we can lower this is to turn it into a STORE,
+        // LOAD pair, targetting a temporary location (a stack slot).
+
+        // NOTE: there is a choice here between constantly creating new stack
+        // slots and always reusing the same one.  We currently always create
+        // new ones, as reuse may inhibit scheduling.
+        const Type *Ty = MVT::getTypeForValueType(oldVT);
+        uint64_t TySize = TLI.getTargetData()->getABITypeSize(Ty);
+        unsigned Align  = TLI.getTargetData()->getPrefTypeAlignment(Ty);
+        MachineFunction &MF = DAG.getMachineFunction();
+        int SSFI =
+          MF.getFrameInfo()->CreateStackObject(TySize, Align);
+        SDOperand StackSlot = DAG.getFrameIndex(SSFI, TLI.getPointerTy());
+        Result = DAG.getStore(DAG.getEntryNode(), Node->getOperand(0),
+                                   StackSlot, NULL, 0);
+        Result = DAG.getExtLoad(ISD::EXTLOAD, newVT,
+                                   Result, StackSlot, NULL, 0, oldVT);
+        break;
+      }
+    }
+    switch (getTypeAction(Node->getOperand(0).getValueType())) {
+    case Expand: assert(0 && "Shouldn't need to expand other operators here!");
+    case Legal:
+      Tmp1 = LegalizeOp(Node->getOperand(0));
+      Result = DAG.UpdateNodeOperands(Result, Tmp1);
+      break;
+    case Promote:
+      Tmp1 = PromoteOp(Node->getOperand(0));
+      Result = DAG.getNode(ISD::FP_EXTEND, Op.getValueType(), Tmp1);
+      break;
+    }
+    break;
   case ISD::FP_ROUND: {
       MVT::ValueType newVT = Op.getValueType();
       MVT::ValueType oldVT = Op.getOperand(0).getValueType();
       if (TLI.getConvertAction(oldVT, newVT) == TargetLowering::Expand) {
-        if (Node->getOpcode() == ISD::FP_ROUND && oldVT == MVT::ppcf128) {
+        if (oldVT == MVT::ppcf128) {
           SDOperand Lo, Hi;
           ExpandOp(Node->getOperand(0), Lo, Hi);
-          if (newVT == MVT::f64)
-            Result = Hi;
-          else
-            Result = DAG.getNode(ISD::FP_ROUND, newVT, Hi);
+          Result = DAG.getNode(ISD::FP_ROUND, newVT, Hi);
           break;
         } else {
           // The only other way we can lower this is to turn it into a STORE,
@@ -3589,30 +3621,31 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           // NOTE: there is a choice here between constantly creating new stack
           // slots and always reusing the same one.  We currently always create
           // new ones, as reuse may inhibit scheduling.
-          MVT::ValueType slotVT = 
-                  (Node->getOpcode() == ISD::FP_EXTEND) ? oldVT : newVT;
-          const Type *Ty = MVT::getTypeForValueType(slotVT);
+          const Type *Ty = MVT::getTypeForValueType(newVT);
           uint64_t TySize = TLI.getTargetData()->getABITypeSize(Ty);
           unsigned Align  = TLI.getTargetData()->getPrefTypeAlignment(Ty);
           MachineFunction &MF = DAG.getMachineFunction();
-          int SSFI =
-            MF.getFrameInfo()->CreateStackObject(TySize, Align);
+          int SSFI = MF.getFrameInfo()->CreateStackObject(TySize, Align);
           SDOperand StackSlot = DAG.getFrameIndex(SSFI, TLI.getPointerTy());
-          if (Node->getOpcode() == ISD::FP_EXTEND) {
-            Result = DAG.getStore(DAG.getEntryNode(), Node->getOperand(0),
-                                       StackSlot, NULL, 0);
-            Result = DAG.getExtLoad(ISD::EXTLOAD, newVT,
-                                       Result, StackSlot, NULL, 0, oldVT);
-          } else {
-            Result = DAG.getTruncStore(DAG.getEntryNode(), Node->getOperand(0),
-                                       StackSlot, NULL, 0, newVT);
-            Result = DAG.getLoad(newVT, Result, StackSlot, NULL, 0);
-          }
+          Result = DAG.getTruncStore(DAG.getEntryNode(), Node->getOperand(0),
+                                     StackSlot, NULL, 0, newVT);
+          Result = DAG.getLoad(newVT, Result, StackSlot, NULL, 0);
           break;
         }
       }
     }
-    // FALL THROUGH
+    switch (getTypeAction(Node->getOperand(0).getValueType())) {
+    case Expand: assert(0 && "Shouldn't need to expand other operators here!");
+    case Legal:
+      Tmp1 = LegalizeOp(Node->getOperand(0));
+      Result = DAG.UpdateNodeOperands(Result, Tmp1);
+      break;
+    case Promote:
+      Tmp1 = PromoteOp(Node->getOperand(0));
+      Result = DAG.getNode(ISD::FP_ROUND, Op.getValueType(), Tmp1);
+      break;
+    }
+    break;
   case ISD::ANY_EXTEND:
   case ISD::ZERO_EXTEND:
   case ISD::SIGN_EXTEND:
@@ -3640,16 +3673,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Result = DAG.getNode(ISD::SIGN_EXTEND_INREG, Result.getValueType(),
                              Result,
                           DAG.getValueType(Node->getOperand(0).getValueType()));
-        break;
-      case ISD::FP_EXTEND:
-        Result = PromoteOp(Node->getOperand(0));
-        if (Result.getValueType() != Op.getValueType())
-          // Dynamically dead while we have only 2 FP types.
-          Result = DAG.getNode(ISD::FP_EXTEND, Op.getValueType(), Result);
-        break;
-      case ISD::FP_ROUND:
-        Result = PromoteOp(Node->getOperand(0));
-        Result = DAG.getNode(Node->getOpcode(), Op.getValueType(), Result);
         break;
       }
     }
