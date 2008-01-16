@@ -47,7 +47,7 @@ namespace {
 class VISIBILITY_HIDDEN DSPtr {
   uintptr_t Raw;
 public:
-  enum  VariantKind { IsValueDecl=0x1, IsBlkLvl=0x2, IsSubExp=0x3, Flags=0x3 };
+  enum  VariantKind { IsValueDecl=0x0, IsSubExp=0x1, IsBlkLvl=0x2, Flags=0x3 };
   inline void* getPtr() const { return reinterpret_cast<void*>(Raw & ~Flags); }
   inline VariantKind getKind() const { return (VariantKind) (Raw & Flags); }
   
@@ -63,7 +63,10 @@ public:
   }      
   inline bool operator==(const DSPtr& X) const { return Raw == X.Raw; }  
   inline bool operator!=(const DSPtr& X) const { return Raw != X.Raw; }
-  inline bool operator<(const DSPtr& X) const { return Raw < X.Raw; }  
+  inline bool operator<(const DSPtr& X) const { 
+    VariantKind k = getKind(), Xk = X.getKind();
+    return k == Xk ? getPtr() < X.getPtr() : k < Xk;
+  }
 };
 } // end anonymous namespace
 
