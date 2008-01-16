@@ -28,6 +28,11 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Compiler.h"
 
+#ifndef NDEBUG
+#include "llvm/Support/GraphWriter.h"
+#include <sstream>
+#endif
+
 using namespace clang;
 using llvm::APInt;
 using llvm::APFloat;
@@ -35,18 +40,18 @@ using llvm::dyn_cast;
 using llvm::cast;
 
 //===----------------------------------------------------------------------===//
-/// DSPtr - A variant smart pointer that wraps either a Decl* or a
+/// DSPtr - A variant smart pointer that wraps either a ValueDecl* or a
 ///  Stmt*.  Use cast<> or dyn_cast<> to get actual pointer type
 //===----------------------------------------------------------------------===//
 namespace {
 class VISIBILITY_HIDDEN DSPtr {
   uintptr_t Raw;
 public:
-  enum  VariantKind { IsDecl=0x1, IsBlkLvl=0x2, IsSubExp=0x3, Flags=0x3 };
+  enum  VariantKind { IsValueDecl=0x1, IsBlkLvl=0x2, IsSubExp=0x3, Flags=0x3 };
   inline void* getPtr() const { return reinterpret_cast<void*>(Raw & ~Flags); }
   inline VariantKind getKind() const { return (VariantKind) (Raw & Flags); }
   
-  DSPtr(Decl* D) : Raw(reinterpret_cast<uintptr_t>(D) | IsDecl) {}
+  DSPtr(ValueDecl* D) : Raw(reinterpret_cast<uintptr_t>(D) | IsValueDecl) {}
   DSPtr(Stmt* S, bool isBlkLvl) 
     : Raw(reinterpret_cast<uintptr_t>(S) | (isBlkLvl ? IsBlkLvl : IsSubExp)) {}
   
@@ -64,14 +69,14 @@ public:
 
 // Machinery to get cast<> and dyn_cast<> working with DSPtr.
 namespace llvm {
-  template<> inline bool isa<Decl,DSPtr>(const DSPtr& V) {
-    return V.getKind() == DSPtr::IsDecl;
+  template<> inline bool isa<ValueDecl,DSPtr>(const DSPtr& V) {
+    return V.getKind() == DSPtr::IsValueDecl;
   }
   template<> inline bool isa<Stmt,DSPtr>(const DSPtr& V) {
-    return ((unsigned) V.getKind()) > DSPtr::IsDecl;
+    return ((unsigned) V.getKind()) > DSPtr::IsValueDecl;
   }
-  template<> struct VISIBILITY_HIDDEN cast_retty_impl<Decl,DSPtr> {
-    typedef const Decl* ret_type;
+  template<> struct VISIBILITY_HIDDEN cast_retty_impl<ValueDecl,DSPtr> {
+    typedef const ValueDecl* ret_type;
   };
   template<> struct VISIBILITY_HIDDEN cast_retty_impl<Stmt,DSPtr> {
     typedef const Stmt* ret_type;
@@ -147,7 +152,7 @@ public:
   typedef ExplodedNode<StateTy> NodeTy;
                                                               
 protected:
-  // Liveness - live-variables information the Decl* and Expr* (block-level)
+  // Liveness - live-variables information the ValueDecl* and Expr* (block-level)
   //  in the CFG.  Used to prune out dead state.
   LiveVariables* Liveness;
 
@@ -192,7 +197,7 @@ public:
   StateTy RemoveGrandchildrenMappings(Stmt* S, StateTy M);
 
   void AddBinding(Expr* E, ExprVariantTy V, bool isBlkLvl = false);
-  void AddBinding(Decl* D, ExprVariantTy V);
+  void AddBinding(ValueDecl* D, ExprVariantTy V);
   
   ExprVariantTy GetBinding(Expr* E);
   
@@ -236,7 +241,7 @@ void GRConstants::AddBinding(Expr* E, ExprVariantTy V, bool isBlkLvl) {
     CurrentState = StateMgr.Add(CurrentState, DSPtr(E,isBlkLvl), V.getVal());
 }
 
-void GRConstants::AddBinding(Decl* D, ExprVariantTy V) {
+void GRConstants::AddBinding(ValueDecl* D, ExprVariantTy V) {
   if (V)
     CurrentState = StateMgr.Add(CurrentState, DSPtr(D), V.getVal());
   else
@@ -322,9 +327,78 @@ void GRConstants::VisitBinAssign(BinaryOperator* B) {
 // Driver.
 //===----------------------------------------------------------------------===//
 
+#ifndef NDEBUG
+namespace llvm {
+template<>
+struct VISIBILITY_HIDDEN DOTGraphTraits<GRConstants::NodeTy*> :
+  public DefaultDOTGraphTraits {
+    
+  static std::string getNodeLabel(const GRConstants::NodeTy* N, void*) {
+    std::ostringstream Out;
+        
+    Out << "Vertex: " << (void*) N << '\n';
+    ProgramPoint Loc = N->getLocation();
+    
+    switch (Loc.getKind()) {
+      case ProgramPoint::BlockEntranceKind:
+        Out << "Block Entrance: B" 
+            << cast<BlockEntrance>(Loc).getBlock()->getBlockID();
+        break;
+      
+      case ProgramPoint::BlockExitKind:
+        assert (false);
+        break;
+        
+      case ProgramPoint::PostStmtKind: {
+        const PostStmt& L = cast<PostStmt>(Loc);
+        Out << "Stmt: " << (void*) L.getStmt() << '\n';
+        L.getStmt()->printPretty(Out);
+        break;
+      }
+    
+      default: {
+        const BlockEdge& E = cast<BlockEdge>(Loc);
+        Out << "Edge: (B" << E.getSrc()->getBlockID() << ", B"
+            << E.getDst()->getBlockID()  << ')';
+      }
+    }
+    
+    Out << "\n{";
+    
+    GRConstants::StateTy M = N->getState();
+    bool isFirst = true;
+
+    for (GRConstants::StateTy::iterator I=M.begin(), E=M.end(); I!=E; ++I) {
+      if (!isFirst)
+        Out << '\n';
+      else
+        isFirst = false;
+      
+      if (ValueDecl* V = dyn_cast<ValueDecl>(I.getKey())) {
+        Out << "Decl: " << (void*) V << ", " << V->getName();          
+      }
+      else {
+        Stmt* E = cast<Stmt>(I.getKey());
+        Out << "Stmt: " << (void*) E;
+      }
+      
+      Out << " => " << I.getData();
+    }
+    
+    Out << " }";
+    
+    return Out.str();
+  }
+};
+} // end llvm namespace    
+#endif
+
 namespace clang {
 void RunGRConstants(CFG& cfg) {
   GREngine<GRConstants> Engine(cfg);
   Engine.ExecuteWorkList();  
+#ifndef NDEBUG
+  llvm::ViewGraph(*Engine.getGraph().roots_begin(),"GRConstants");
+#endif  
 }
 }
