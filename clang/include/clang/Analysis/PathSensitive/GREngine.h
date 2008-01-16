@@ -195,7 +195,7 @@ protected:
 public:  
   /// Construct a GREngine object to analyze the provided CFG using
   ///  a DFS exploration of the exploded graph.
-  GREngine(CFG& Cfg)
+  GREngine(CFG& cfg)
   : GREngineImpl(cfg, new GraphTy(), GRWorkList::MakeDFS()),
       Checker(static_cast<GraphTy*>(G.get())->getCheckerState()) {
     Checker->Initialize(cfg);
@@ -206,7 +206,9 @@ public:
   ///  The GREngine object assumes ownership of 'wlist'.
   GREngine(CFG& cfg, GRWorkList* wlist) 
     : GREngineImpl(cfg, new GraphTy(), wlist),
-      Checker(static_cast<GraphTy*>(G.get())->getCheckerState()) {}
+      Checker(static_cast<GraphTy*>(G.get())->getCheckerState()) {
+    Checker->Initialize(cfg);
+  }
   
   virtual ~GREngine() {}
   
