@@ -25,6 +25,7 @@
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/ImmutableMap.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Compiler.h"
 
 using namespace clang;
@@ -159,19 +160,17 @@ protected:
   // cfg - the current CFG.
   CFG* cfg;
 
-  typedef llvm::SmallPtrSet<NodeTy*,16> NodeSetTy;
+  typedef llvm::SmallVector<NodeTy*,8> NodeSetTy;
   NodeSetTy NodeSetA;
   NodeSetTy NodeSetB;
   NodeSetTy* Nodes;
   NodeSetTy* OldNodes;
   StateTy CurrentState;
   
-  bool DoNotSwitch;
-      
 public:
   GRConstants() : Liveness(NULL), Builder(NULL), cfg(NULL), 
-    Nodes(&NodeSetA), OldNodes(&NodeSetB),
-    CurrentState(StateMgr.GetEmptyMap()), DoNotSwitch(false) {} 
+    Nodes(&NodeSetA), OldNodes(&NodeSetB), 
+    CurrentState(StateMgr.GetEmptyMap()) {} 
     
   ~GRConstants() { delete Liveness; }
   
@@ -196,7 +195,6 @@ public:
   ExprVariantTy GetBinding(Expr* E);
   
   void BlockStmt_VisitStmt(Stmt* S) { DoStmt(S); }
-  void VisitStmt(Stmt* S) { DoNotSwitch = true; }
   
   void VisitAssign(BinaryOperator* O);
   void VisitIntegerLiteral(IntegerLiteral* L);
@@ -211,8 +209,7 @@ void GRConstants::ProcessStmt(Stmt* S, NodeBuilder& builder) {
   OldNodes->clear();
   NodeTy* N = Builder->getLastNode();
   assert (N);
-  OldNodes->insert(N);
-  DoNotSwitch = true;
+  OldNodes->push_back(N);
   BlockStmt_Visit(S);
   Builder = NULL;  
 }
@@ -249,6 +246,8 @@ GRConstants::RemoveGrandchildrenMappings(Stmt* S, GRConstants::StateTy State) {
         // Observe that this will only remove mappings to non-block level
         // expressions.  This is valid even if *CI is a block-level expression,
         // since it simply won't be in the map in the first place.
+        // Note: This should also work if 'C' is a block-level expression,
+        // although ideally we would want to skip processing C's children.
         State = StateMgr.Remove(State, DSPtr(*CI,false));
       }
   
@@ -259,29 +258,23 @@ void GRConstants::DoStmt(Stmt* S) {
   for (Stmt::child_iterator I=S->child_begin(), E=S->child_end(); I!=E; ++I)
     if (*I) DoStmt(*I);
   
-  if (!DoNotSwitch) SwitchNodeSets();
-  DoNotSwitch = false;
-  
   for (NodeSetTy::iterator I=OldNodes->begin(), E=OldNodes->end(); I!=E; ++I) {
     NodeTy* Pred = *I;
     CurrentState = Pred->getState();
 
-    StateTy CleanedState = RemoveGrandchildrenMappings(S, CurrentState);
-    bool AlwaysGenerateNode = false;
-    
-    if (CleanedState != CurrentState) {
-      CurrentState = CleanedState;
-      AlwaysGenerateNode = true;
-    }
+    StateTy OldState = CurrentState;
+    CurrentState = RemoveGrandchildrenMappings(S, CurrentState);
     
     Visit(S);
     
-    if (AlwaysGenerateNode || CurrentState != CleanedState) {
+    if (CurrentState != OldState) {
       NodeTy* N = Builder->generateNode(S, CurrentState, Pred);
-      if (N) Nodes->insert(N);
+      if (N) Nodes->push_back(N);
     }
-    else Nodes->insert(Pred);    
+    else Nodes->push_back(Pred);    
   }
+  
+  SwitchNodeSets();
 }
 
 void GRConstants::VisitIntegerLiteral(IntegerLiteral* L) {
