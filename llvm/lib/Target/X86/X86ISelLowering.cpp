@@ -683,16 +683,16 @@ SDOperand X86TargetLowering::getPICJumpTableRelocBase(SDOperand Table,
 /// GetPossiblePreceedingTailCall - Get preceeding X86ISD::TAILCALL node if it
 /// exists skip possible ISD:TokenFactor.
 static SDOperand GetPossiblePreceedingTailCall(SDOperand Chain) {
-  if (Chain.getOpcode()==X86ISD::TAILCALL) {
+  if (Chain.getOpcode() == X86ISD::TAILCALL) {
     return Chain;
-  } else if (Chain.getOpcode()==ISD::TokenFactor) {
+  } else if (Chain.getOpcode() == ISD::TokenFactor) {
     if (Chain.getNumOperands() &&
-        Chain.getOperand(0).getOpcode()==X86ISD::TAILCALL)
+        Chain.getOperand(0).getOpcode() == X86ISD::TAILCALL)
       return Chain.getOperand(0);
   }
   return Chain;
 }
-    
+
 /// LowerRET - Lower an ISD::RET node.
 SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
   assert((Op.getNumOperands() & 1) == 1 && "ISD::RET should have odd # args");
@@ -718,14 +718,14 @@ SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
     SDOperand TailCall = Chain;
     SDOperand TargetAddress = TailCall.getOperand(1);
     SDOperand StackAdjustment = TailCall.getOperand(2);
-    assert ( ((TargetAddress.getOpcode() == ISD::Register &&
+    assert(((TargetAddress.getOpcode() == ISD::Register &&
                (cast<RegisterSDNode>(TargetAddress)->getReg() == X86::ECX ||
                 cast<RegisterSDNode>(TargetAddress)->getReg() == X86::R9)) ||
               TargetAddress.getOpcode() == ISD::TargetExternalSymbol ||
               TargetAddress.getOpcode() == ISD::TargetGlobalAddress) && 
              "Expecting an global address, external symbol, or register");
-    assert( StackAdjustment.getOpcode() == ISD::Constant &&
-            "Expecting a const value");
+    assert(StackAdjustment.getOpcode() == ISD::Constant &&
+           "Expecting a const value");
 
     SmallVector<SDOperand,8> Operands;
     Operands.push_back(Chain.getOperand(0));
