@@ -120,6 +120,19 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt)
   TUScope = 0;
 }
 
+/// ImpCastExprToType - If Expr is not of type 'Type', insert an implicit cast. 
+/// If there is already an implicit cast, merge into the existing one.
+void Sema::ImpCastExprToType(Expr *&Expr, QualType Type) {
+  if (Expr->getType() == Type) return;
+  
+  if (ImplicitCastExpr *ImpCast = dyn_cast<ImplicitCastExpr>(Expr))
+    ImpCast->setType(Type);
+  else 
+    Expr = new ImplicitCastExpr(Type, Expr);
+}
+
+
+
 void Sema::DeleteExpr(ExprTy *E) {
   delete static_cast<Expr*>(E);
 }

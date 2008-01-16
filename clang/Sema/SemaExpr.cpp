@@ -750,16 +750,6 @@ ActOnCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
   return new CastExpr(castType, castExpr, LParenLoc);
 }
 
-// promoteExprToType - a helper function to ensure we create exactly one 
-// ImplicitCastExpr.
-static void promoteExprToType(Expr *&expr, QualType type) {
-  if (ImplicitCastExpr *impCast = dyn_cast<ImplicitCastExpr>(expr))
-    impCast->setType(type);
-  else 
-    expr = new ImplicitCastExpr(type, expr);
-  return;
-}
-
 /// Note that lex is not null here, even if this is the gnu "x ?: y" extension.
 /// In that case, lex = cond.
 inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
@@ -804,11 +794,11 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
   // C99 6.5.15p6 - "if one operand is a null pointer constant, the result has
   // the type of the other operand."
   if (lexT->isPointerType() && rex->isNullPointerConstant(Context)) {
-    promoteExprToType(rex, lexT); // promote the null to a pointer.
+    ImpCastExprToType(rex, lexT); // promote the null to a pointer.
     return lexT;
   }
   if (rexT->isPointerType() && lex->isNullPointerConstant(Context)) {
-    promoteExprToType(lex, rexT); // promote the null to a pointer.
+    ImpCastExprToType(lex, rexT); // promote the null to a pointer.
     return rexT;
   }
   // Handle the case where both operands are pointers before we handle null
@@ -882,9 +872,9 @@ void Sema::DefaultArgumentPromotion(Expr *&Expr) {
   assert(!Ty.isNull() && "DefaultArgumentPromotion - missing type");
 
   if (Ty->isPromotableIntegerType()) // C99 6.3.1.1p2
-    promoteExprToType(Expr, Context.IntTy);
+    ImpCastExprToType(Expr, Context.IntTy);
   if (Ty == Context.FloatTy)
-    promoteExprToType(Expr, Context.DoubleTy);
+    ImpCastExprToType(Expr, Context.DoubleTy);
 }
 
 /// DefaultFunctionArrayConversion (C99 6.3.2.1p3, C99 6.3.2.1p4).
@@ -893,13 +883,13 @@ void Sema::DefaultFunctionArrayConversion(Expr *&e) {
   assert(!t.isNull() && "DefaultFunctionArrayConversion - missing type");
 
   if (const ReferenceType *ref = t->getAsReferenceType()) {
-    promoteExprToType(e, ref->getReferenceeType()); // C++ [expr]
+    ImpCastExprToType(e, ref->getReferenceeType()); // C++ [expr]
     t = e->getType();
   }
   if (t->isFunctionType())
-    promoteExprToType(e, Context.getPointerType(t));
+    ImpCastExprToType(e, Context.getPointerType(t));
   else if (const ArrayType *ary = t->getAsArrayType())
-    promoteExprToType(e, Context.getPointerType(ary->getElementType()));
+    ImpCastExprToType(e, Context.getPointerType(ary->getElementType()));
 }
 
 /// UsualUnaryConversion - Performs various conversions that are common to most
@@ -912,11 +902,11 @@ Expr *Sema::UsualUnaryConversions(Expr *&Expr) {
   assert(!Ty.isNull() && "UsualUnaryConversions - missing type");
   
   if (const ReferenceType *Ref = Ty->getAsReferenceType()) {
-    promoteExprToType(Expr, Ref->getReferenceeType()); // C++ [expr]
+    ImpCastExprToType(Expr, Ref->getReferenceeType()); // C++ [expr]
     Ty = Expr->getType();
   }
   if (Ty->isPromotableIntegerType()) // C99 6.3.1.1p2
-    promoteExprToType(Expr, Context.IntTy);
+    ImpCastExprToType(Expr, Context.IntTy);
   else
     DefaultFunctionArrayConversion(Expr);
   
@@ -955,12 +945,12 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
     // if we have an integer operand, the result is the complex type.
     if (rhs->isIntegerType() || rhs->isComplexIntegerType()) { 
 	  // convert the rhs to the lhs complex type.
-      if (!isCompAssign) promoteExprToType(rhsExpr, lhs);
+      if (!isCompAssign) ImpCastExprToType(rhsExpr, lhs);
       return lhs;
     }
     if (lhs->isIntegerType() || lhs->isComplexIntegerType()) { 
 	  // convert the lhs to the rhs complex type.
-      if (!isCompAssign) promoteExprToType(lhsExpr, rhs);
+      if (!isCompAssign) ImpCastExprToType(lhsExpr, rhs);
       return rhs;
     }
     // This handles complex/complex, complex/float, or float/complex.
@@ -978,11 +968,11 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
     if (result > 0) { // The left side is bigger, convert rhs. 
       rhs = Context.getFloatingTypeOfSizeWithinDomain(lhs, rhs);
       if (!isCompAssign)
-        promoteExprToType(rhsExpr, rhs);
+        ImpCastExprToType(rhsExpr, rhs);
     } else if (result < 0) { // The right side is bigger, convert lhs. 
       lhs = Context.getFloatingTypeOfSizeWithinDomain(rhs, lhs);
       if (!isCompAssign)
-        promoteExprToType(lhsExpr, lhs);
+        ImpCastExprToType(lhsExpr, lhs);
     } 
     // At this point, lhs and rhs have the same rank/size. Now, make sure the
     // domains match. This is a requirement for our implementation, C99
@@ -990,11 +980,11 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
     if (lhs != rhs) { // Domains don't match, we have complex/float mix.
       if (lhs->isRealFloatingType()) { // handle "double, _Complex double".
         if (!isCompAssign)
-          promoteExprToType(lhsExpr, rhs);
+          ImpCastExprToType(lhsExpr, rhs);
         return rhs;
       } else { // handle "_Complex double, double".
         if (!isCompAssign)
-          promoteExprToType(rhsExpr, lhs);
+          ImpCastExprToType(rhsExpr, lhs);
         return lhs;
       }
     }
@@ -1005,12 +995,12 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
     // if we have an integer operand, the result is the real floating type.
     if (rhs->isIntegerType() || rhs->isComplexIntegerType()) { 
 	  // convert rhs to the lhs floating point type.
-      if (!isCompAssign) promoteExprToType(rhsExpr, lhs);
+      if (!isCompAssign) ImpCastExprToType(rhsExpr, lhs);
       return lhs;
     }
     if (lhs->isIntegerType() || lhs->isComplexIntegerType()) { 
 	  // convert lhs to the rhs floating point type.
-      if (!isCompAssign) promoteExprToType(lhsExpr, rhs);
+      if (!isCompAssign) ImpCastExprToType(lhsExpr, rhs);
       return rhs;
     }
     // We have two real floating types, float/complex combos were handled above.
@@ -1018,11 +1008,11 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
     int result = Context.compareFloatingType(lhs, rhs);
     
     if (result > 0) { // convert the rhs
-      if (!isCompAssign) promoteExprToType(rhsExpr, lhs);
+      if (!isCompAssign) ImpCastExprToType(rhsExpr, lhs);
       return lhs;
     }
     if (result < 0) { // convert the lhs
-      if (!isCompAssign) promoteExprToType(lhsExpr, rhs); // convert the lhs
+      if (!isCompAssign) ImpCastExprToType(lhsExpr, rhs); // convert the lhs
       return rhs;
     }
     assert(0 && "Sema::UsualArithmeticConversions(): illegal float comparison");
@@ -1034,28 +1024,30 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
 
 	if (lhsComplexInt && rhsComplexInt) {
 	  if (Context.maxIntegerType(lhsComplexInt->getElementType(), 
-								 rhsComplexInt->getElementType()) == lhs) { 
-		if (!isCompAssign) promoteExprToType(rhsExpr, lhs); // convert the rhs
-		return lhs;
+                                     rhsComplexInt->getElementType()) == lhs) { 
+            // convert the rhs
+            if (!isCompAssign) ImpCastExprToType(rhsExpr, lhs);
+            return lhs;
 	  }
-	  if (!isCompAssign) promoteExprToType(lhsExpr, rhs); // convert the lhs
+	  if (!isCompAssign) 
+            ImpCastExprToType(lhsExpr, rhs); // convert the lhs
 	  return rhs;
 	} else if (lhsComplexInt && rhs->isIntegerType()) {
 	  // convert the rhs to the lhs complex type.
-	  if (!isCompAssign) promoteExprToType(rhsExpr, lhs);
+	  if (!isCompAssign) ImpCastExprToType(rhsExpr, lhs);
 	  return lhs;
 	} else if (rhsComplexInt && lhs->isIntegerType()) {
 	  // convert the lhs to the rhs complex type.
-	  if (!isCompAssign) promoteExprToType(lhsExpr, rhs);
+	  if (!isCompAssign) ImpCastExprToType(lhsExpr, rhs);
 	  return rhs;
 	}
   }
   // Finally, we have two differing integer types.
   if (Context.maxIntegerType(lhs, rhs) == lhs) { // convert the rhs
-    if (!isCompAssign) promoteExprToType(rhsExpr, lhs);
+    if (!isCompAssign) ImpCastExprToType(rhsExpr, lhs);
     return lhs;
   }
-  if (!isCompAssign) promoteExprToType(lhsExpr, rhs); // convert the lhs
+  if (!isCompAssign) ImpCastExprToType(lhsExpr, rhs); // convert the lhs
   return rhs;
 }
 
@@ -1212,7 +1204,7 @@ Sema::CheckSingleAssignmentConstraints(QualType lhsType, Expr *&rExpr) {
   // a null pointer constant.
   if ((lhsType->isPointerType() || lhsType->isObjCQualifiedIdType()) 
       && rExpr->isNullPointerConstant(Context)) {
-    promoteExprToType(rExpr, lhsType);
+    ImpCastExprToType(rExpr, lhsType);
     return Compatible;
   }
   // This check seems unnatural, however it is necessary to ensure the proper
@@ -1231,7 +1223,7 @@ Sema::CheckSingleAssignmentConstraints(QualType lhsType, Expr *&rExpr) {
   // C99 6.5.16.1p2: The value of the right operand is converted to the
   // type of the assignment expression.
   if (rExpr->getType() != lhsType)
-    promoteExprToType(rExpr, lhsType);
+    ImpCastExprToType(rExpr, lhsType);
   return result;
 }
 
@@ -1260,7 +1252,7 @@ inline QualType Sema::CheckVectorOperands(SourceLocation loc, Expr *&lex,
   if (const OCUVectorType *V = lhsType->getAsOCUVectorType()) {
     if (V->getElementType().getCanonicalType().getTypePtr()
         == rhsType.getCanonicalType().getTypePtr()) {
-      promoteExprToType(rex, lhsType);
+      ImpCastExprToType(rex, lhsType);
       return lhsType;
     }
   }
@@ -1270,7 +1262,7 @@ inline QualType Sema::CheckVectorOperands(SourceLocation loc, Expr *&lex,
   if (const OCUVectorType *V = rhsType->getAsOCUVectorType()) {
     if (V->getElementType().getCanonicalType().getTypePtr()
         == lhsType.getCanonicalType().getTypePtr()) {
-      promoteExprToType(lex, rhsType);
+      ImpCastExprToType(lex, rhsType);
       return rhsType;
     }
   }
@@ -1463,12 +1455,12 @@ inline QualType Sema::CheckCompareOperands( // C99 6.5.8
            lType.getAsString(), rType.getAsString(),
            lex->getSourceRange(), rex->getSourceRange());
     }
-    promoteExprToType(rex, lType); // promote the pointer to pointer
+    ImpCastExprToType(rex, lType); // promote the pointer to pointer
     return Context.IntTy;
   }
   if ((lType->isObjCQualifiedIdType() || rType->isObjCQualifiedIdType())
       && Context.ObjCQualifiedIdTypesAreCompatible(lType, rType, true)) {
-    promoteExprToType(rex, lType); 
+    ImpCastExprToType(rex, lType); 
     return Context.IntTy;
   }
   if (lType->isPointerType() && rType->isIntegerType()) {
@@ -1476,7 +1468,7 @@ inline QualType Sema::CheckCompareOperands( // C99 6.5.8
       Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer,
            lType.getAsString(), rType.getAsString(),
            lex->getSourceRange(), rex->getSourceRange());
-    promoteExprToType(rex, lType); // promote the integer to pointer
+    ImpCastExprToType(rex, lType); // promote the integer to pointer
     return Context.IntTy;
   }
   if (lType->isIntegerType() && rType->isPointerType()) {
@@ -1484,7 +1476,7 @@ inline QualType Sema::CheckCompareOperands( // C99 6.5.8
       Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer,
            lType.getAsString(), rType.getAsString(),
            lex->getSourceRange(), rex->getSourceRange());
-    promoteExprToType(lex, rType); // promote the integer to pointer
+    ImpCastExprToType(lex, rType); // promote the integer to pointer
     return Context.IntTy;
   }
   return InvalidOperands(loc, lex, rex);

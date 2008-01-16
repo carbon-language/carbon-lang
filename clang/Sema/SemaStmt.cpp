@@ -346,13 +346,19 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch,
       // We already verified that the expression has a i-c-e value (C99
       // 6.8.4.2p3) - get that value now.
       llvm::APSInt LoVal(32);
-      CS->getLHS()->isIntegerConstantExpr(LoVal, Context);
+      Expr *Lo = CS->getLHS();
+      Lo->isIntegerConstantExpr(LoVal, Context);
       
       // Convert the value to the same width/sign as the condition.
       ConvertIntegerToTypeWarnOnOverflow(LoVal, CondWidth, CondIsSigned,
                                          CS->getLHS()->getLocStart(),
                                          diag::warn_case_value_overflow);
 
+      // If the LHS is not the same type as the condition, insert an implicit
+      // cast.
+      ImpCastExprToType(Lo, CondType);
+      CS->setLHS(Lo);
+      
       // If this is a case range, remember it in CaseRanges, otherwise CaseVals.
       if (CS->getRHS())
         CaseRanges.push_back(std::make_pair(LoVal, CS));
@@ -391,12 +397,18 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch,
     for (unsigned i = 0, e = CaseRanges.size(); i != e; ++i) {
       CaseStmt *CR = CaseRanges[i].second;
       llvm::APSInt HiVal(32);
-      CR->getRHS()->isIntegerConstantExpr(HiVal, Context);
+      Expr *Hi = CR->getRHS();
+      Hi->isIntegerConstantExpr(HiVal, Context);
 
       // Convert the value to the same width/sign as the condition.
       ConvertIntegerToTypeWarnOnOverflow(HiVal, CondWidth, CondIsSigned,
                                          CR->getRHS()->getLocStart(),
                                          diag::warn_case_value_overflow);
+      
+      // If the LHS is not the same type as the condition, insert an implicit
+      // cast.
+      ImpCastExprToType(Hi, CondType);
+      CR->setRHS(Hi);
       
       // If the low value is bigger than the high value, the case is empty.
       if (CaseRanges[i].first > HiVal) {

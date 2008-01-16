@@ -596,6 +596,10 @@ public:
     SourceLocation lbrac, SourceLocation rbrac, 
     ExprTy **ArgExprs, unsigned NumArgs);
 private:
+  /// ImpCastExprToType - If Expr is not of type 'Type', insert an implicit
+  /// cast.  If there is already an implicit cast, merge into the existing one.
+  void ImpCastExprToType(Expr *&Expr, QualType Type);
+
   // UsualUnaryConversions - promotes integers (C99 6.3.1.1p2) and converts
   // functions and arrays to their respective pointers (C99 6.3.2.1).
   Expr *UsualUnaryConversions(Expr *&expr); 
