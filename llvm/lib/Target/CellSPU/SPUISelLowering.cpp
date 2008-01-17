@@ -100,6 +100,14 @@ namespace {
             || Opc == ISD::TargetExternalSymbol
             || Opc == SPUISD::AFormAddr);
   }
+
+  //! Predicate that returns true if the operand is an indirect target
+  bool isIndirectOperand(const SDOperand &Op)
+  {
+    const unsigned Opc = Op.getOpcode();
+    return (Opc == ISD::Register
+	    || Opc == SPUISD::LDRESULT);
+  }
 }
 
 SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
@@ -126,7 +134,7 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   addRegisterClass(MVT::i128, SPU::GPRCRegisterClass);
   
   // SPU has no sign or zero extended loads for i1, i8, i16:
-  setLoadXAction(ISD::EXTLOAD,  MVT::i1, Custom);
+  setLoadXAction(ISD::EXTLOAD,  MVT::i1, Promote);
   setLoadXAction(ISD::SEXTLOAD, MVT::i1, Promote);
   setLoadXAction(ISD::ZEXTLOAD, MVT::i1, Promote);
   setTruncStoreAction(MVT::i8, MVT::i1, Custom);
@@ -160,10 +168,9 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
     setOperationAction(ISD::STORE, sctype, Custom);
   }
 
-  // SPU supports BRCOND, although DAGCombine will convert BRCONDs
-  // into BR_CCs. BR_CC instructions are custom selected in
-  // SPUDAGToDAGISel.
-  setOperationAction(ISD::BRCOND, MVT::Other, Legal);
+  // Custom lower BRCOND for i1, i8 to "promote" the result to
+  // i32 and i16, respectively.
+  setOperationAction(ISD::BRCOND, MVT::Other, Custom);
 
   // Expand the jumptable branches
   setOperationAction(ISD::BR_JT,        MVT::Other, Expand);
@@ -472,7 +479,7 @@ AlignedLoad(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST,
     SDOperand Op1 = basePtr.Val->getOperand(1);
 
     if (Op1.getOpcode() == ISD::Constant || Op1.getOpcode() == ISD::TargetConstant) {
-      const ConstantSDNode *CN = cast<ConstantSDNode>(basePtr.Val->getOperand(1));
+      const ConstantSDNode *CN = cast<ConstantSDNode>(basePtr.getOperand(1));
 
       alignOffs = (int) CN->getValue();
       prefSlotOffs = (int) (alignOffs & 0xf);
@@ -482,15 +489,13 @@ AlignedLoad(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST,
       prefSlotOffs -= vtm->prefslot_byte;
       basePtr = basePtr.getOperand(0);
 
-      // Modify alignment, since the ADD is likely from getElementPtr:
-      switch (basePtr.getOpcode()) {
-      case ISD::GlobalAddress:
-      case ISD::TargetGlobalAddress: {
-        GlobalAddressSDNode *GN = cast<GlobalAddressSDNode>(basePtr.Val);
-        const GlobalValue *GV = GN->getGlobal();
-        alignment = GV->getAlignment();
-        break;
-      }
+      // Loading from memory, can we adjust alignment?
+      if (basePtr.getOpcode() == SPUISD::AFormAddr) {
+        SDOperand APtr = basePtr.getOperand(0);
+        if (APtr.getOpcode() == ISD::TargetGlobalAddress) {
+          GlobalAddressSDNode *GSDN = cast<GlobalAddressSDNode>(APtr);
+          alignment = GSDN->getGlobal()->getAlignment();
+        }
       }
     } else {
       alignOffs = 0;
@@ -504,15 +509,9 @@ AlignedLoad(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST,
   if (alignment == 16) {
     // Realign the base pointer as a D-Form address:
     if (!isMemoryOperand(basePtr) || (alignOffs & ~0xf) != 0) {
-      if (isMemoryOperand(basePtr)) {
-        SDOperand Zero = DAG.getConstant(0, PtrVT);
-        unsigned Opc = (!ST->usingLargeMem()
-                        ? SPUISD::AFormAddr
-                        : SPUISD::XFormAddr);
-        basePtr = DAG.getNode(Opc, PtrVT, basePtr, Zero);
-      }
-      basePtr = DAG.getNode(SPUISD::DFormAddr, PtrVT,
-                          basePtr, DAG.getConstant((alignOffs & ~0xf), PtrVT));
+      basePtr = DAG.getNode(ISD::ADD, PtrVT,
+                            basePtr,
+			    DAG.getConstant((alignOffs & ~0xf), PtrVT));
     }
 
     // Emit the vector load:
@@ -524,7 +523,7 @@ AlignedLoad(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST,
 
   // Unaligned load or we're using the "large memory" model, which means that
   // we have to be very pessimistic:
-  if (isMemoryOperand(basePtr)) {
+  if (isMemoryOperand(basePtr) || isIndirectOperand(basePtr)) {
     basePtr = DAG.getNode(SPUISD::XFormAddr, PtrVT, basePtr, DAG.getConstant(0, PtrVT));
   }
 
@@ -551,13 +550,6 @@ LowerLOAD(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   unsigned alignment = LN->getAlignment();
   SDOperand Ops[8];
 
-  // For an extending load of an i1 variable, just call it i8 (or whatever we
-  // were passed) and make it zero-extended:
-  if (VT == MVT::i1) {
-    VT = OpVT;
-    ExtType = ISD::ZEXTLOAD;
-  }
-
   switch (LN->getAddressingMode()) {
   case ISD::UNINDEXED: {
     int offset, rotamt;
@@ -575,15 +567,13 @@ LowerLOAD(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
     if (rotamt != 0 || !was16aligned) {
       SDVTList vecvts = DAG.getVTList(MVT::v16i8, MVT::Other);
 
+      Ops[0] = the_chain;
+      Ops[1] = result;
       if (was16aligned) {
-        Ops[0] = the_chain;
-        Ops[1] = result;
         Ops[2] = DAG.getConstant(rotamt, MVT::i16);
       } else {
 	MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
         LoadSDNode *LN1 = cast<LoadSDNode>(result);
-        Ops[0] = the_chain;
-        Ops[1] = result;
         Ops[2] = DAG.getNode(ISD::ADD, PtrVT, LN1->getBasePtr(),
 			     DAG.getConstant(rotamt, PtrVT));
       }
@@ -628,9 +618,14 @@ LowerLOAD(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
     }
 
     SDVTList retvts = DAG.getVTList(OpVT, MVT::Other);
-    SDOperand retops[2] = { result, the_chain };
+    SDOperand retops[3] = {
+      result,
+      the_chain,
+      DAG.getConstant(alignment, MVT::i32)
+    };
 
-    result = DAG.getNode(SPUISD::LDRESULT, retvts, retops, 2);
+    result = DAG.getNode(SPUISD::LDRESULT, retvts,
+                         retops, sizeof(retops) / sizeof(retops[0]));
     return result;
   }
   case ISD::PRE_INC:
@@ -712,6 +707,7 @@ LowerSTORE(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
     DEBUG(cerr << "\n");
 
     if (basePtr.getOpcode() == SPUISD::DFormAddr) {
+      // Hmmmm... do we ever actually hit this code?
       insertEltPtr = DAG.getNode(SPUISD::DFormAddr, PtrVT,
 				 basePtr.getOperand(0),
 				 insertEltOffs);
@@ -720,6 +716,8 @@ LowerSTORE(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
 		&& basePtr.getOperand(0).getOpcode() == SPUISD::XFormAddr)) {
       insertEltPtr = basePtr;
     } else {
+      // $sp is always aligned, so use it instead of potentially loading an
+      // address into a new register:
       insertEltPtr = DAG.getNode(SPUISD::DFormAddr, PtrVT,
 				 DAG.getRegister(SPU::R1, PtrVT),
 				 insertEltOffs);
@@ -766,10 +764,9 @@ LowerConstantPool(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   if (TM.getRelocationModel() == Reloc::Static) {
     if (!ST->usingLargeMem()) {
       // Just return the SDOperand with the constant pool address in it.
-      return CPI;
+      return DAG.getNode(SPUISD::AFormAddr, PtrVT, CPI, Zero);
     } else {
 #if 1
-      // Generate hi/lo address pair
       SDOperand Hi = DAG.getNode(SPUISD::Hi, PtrVT, CPI, Zero);
       SDOperand Lo = DAG.getNode(SPUISD::Lo, PtrVT, CPI, Zero);
 
@@ -795,7 +792,7 @@ LowerJumpTable(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
 
   if (TM.getRelocationModel() == Reloc::Static) {
     return (!ST->usingLargeMem()
-            ? JTI
+            ? DAG.getNode(SPUISD::AFormAddr, PtrVT, JTI, Zero)
             : DAG.getNode(SPUISD::XFormAddr, PtrVT, JTI, Zero));
   }
 
@@ -815,7 +812,7 @@ LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   
   if (TM.getRelocationModel() == Reloc::Static) {
     return (!ST->usingLargeMem()
-            ? GA
+            ? DAG.getNode(SPUISD::AFormAddr, PtrVT, GA, Zero)
             : DAG.getNode(SPUISD::XFormAddr, PtrVT, GA, Zero));
   } else {
     cerr << "LowerGlobalAddress: Relocation model other than static not "
@@ -878,6 +875,24 @@ LowerConstantFP(SDOperand Op, SelectionDAG &DAG) {
   }
 
   return SDOperand();
+}
+
+//! Lower MVT::i1, MVT::i8 brcond to a promoted type (MVT::i32, MVT::i16)
+static SDOperand
+LowerBRCOND(SDOperand Op, SelectionDAG &DAG)
+{
+  SDOperand Cond = Op.getOperand(1);
+  MVT::ValueType CondVT = Cond.getValueType();
+  MVT::ValueType CondNVT;
+
+  if (CondVT == MVT::i1 || CondVT == MVT::i8) {
+    CondNVT = (CondVT == MVT::i1 ? MVT::i32 : MVT::i16);
+    return DAG.getNode(ISD::BRCOND, Op.getValueType(),
+                      Op.getOperand(0),
+                      DAG.getNode(ISD::ZERO_EXTEND, CondNVT, Op.getOperand(1)),
+                      Op.getOperand(2));
+  } else
+    return SDOperand();                // Unchanged
 }
 
 static SDOperand
@@ -2458,8 +2473,10 @@ SPUTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG)
     return LowerConstant(Op, DAG);
   case ISD::ConstantFP:
     return LowerConstantFP(Op, DAG);
+  case ISD::BRCOND:
+    return LowerBRCOND(Op, DAG);
   case ISD::FORMAL_ARGUMENTS:
-      return LowerFORMAL_ARGUMENTS(Op, DAG, VarArgsFrameIndex);
+    return LowerFORMAL_ARGUMENTS(Op, DAG, VarArgsFrameIndex);
   case ISD::CALL:
     return LowerCALL(Op, DAG, SPUTM.getSubtargetImpl());
   case ISD::RET:
@@ -2537,48 +2554,16 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
 #if 0
   TargetMachine &TM = getTargetMachine();
   SelectionDAG &DAG = DCI.DAG;
-#endif
   SDOperand N0 = N->getOperand(0);	// everything has at least one operand
 
   switch (N->getOpcode()) {
   default: break;
-
-  // Look for obvious optimizations for shift left:
-  // a) Replace 0 << V with 0
-  // b) Replace V << 0 with V
-  //
-  // N.B: llvm will generate an undef node if the shift amount is greater than
-  // 15 (e.g.: V << 16), which will naturally trigger an assert.
-  case SPU::SHLIr32:
-  case SPU::SHLHIr16:
-  case SPU::SHLQBIIvec:
-  case SPU::ROTHIr16:
-  case SPU::ROTHIr16_i32:
-  case SPU::ROTIr32:
-  case SPU::ROTIr32_i16:
-  case SPU::ROTQBYIvec:
-  case SPU::ROTQBYBIvec:
-  case SPU::ROTQBIIvec:
-  case SPU::ROTHMIr16:
-  case SPU::ROTMIr32:
-  case SPU::ROTQMBYIvec: {
-    if (N0.getOpcode() == ISD::Constant) {
-      if (ConstantSDNode *C = cast<ConstantSDNode>(N0)) {
-	if (C->getValue() == 0)   	// 0 << V -> 0.
-	  return N0;
-      }
-    }
-    SDOperand N1 = N->getOperand(1);
-    if (N1.getOpcode() == ISD::Constant) {
-      if (ConstantSDNode *C = cast<ConstantSDNode>(N1)) {
-	if (C->getValue() == 0)		// V << 0 -> V
-	  return N1;
-      }
-    }
-    break;
+    // Do something creative here for ISD nodes that can be coalesced in unique
+    // ways.
   }
-  }
+#endif
   
+  // Otherwise, return unchanged.
   return SDOperand();
 }
 

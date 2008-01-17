@@ -1359,6 +1359,9 @@ def ORi8_v16i8:
 def : Pat<(SPUextract_elt0 (v16i8 VECREG:$rA)),
 	  (ORi8_v16i8 VECREG:$rA, VECREG:$rA)>;
 
+def : Pat<(SPUextract_elt0_chained (v16i8 VECREG:$rA)),
+	  (ORi8_v16i8 VECREG:$rA, VECREG:$rA)>;
+
 def ORi16_v8i16:
     RRForm<0b10000010000, (outs R16C:$rT), (ins VECREG:$rA, VECREG:$rB),
       "or\t$rT, $rA, $rB", IntegerOp,
@@ -2868,6 +2871,9 @@ let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, isBarrier = 1 in {
 */
 }
 
+//===----------------------------------------------------------------------===//
+// brcond predicates:
+//===----------------------------------------------------------------------===//
 def : Pat<(brcond (i16 (seteq R16C:$rA, 0)), bb:$dest), 
           (BRHZ R16C:$rA, bb:$dest)>;
 def : Pat<(brcond (i16 (setne R16C:$rA, 0)), bb:$dest), 
@@ -2876,7 +2882,7 @@ def : Pat<(brcond (i16 (setne R16C:$rA, 0)), bb:$dest),
 def : Pat<(brcond (i32 (seteq R32C:$rA, 0)), bb:$dest), 
           (BRZ R32C:$rA, bb:$dest)>;
 def : Pat<(brcond (i32 (setne R32C:$rA, 0)), bb:$dest), 
-          (BRZ R32C:$rA, bb:$dest)>;
+          (BRNZ R32C:$rA, bb:$dest)>;
 
 let isTerminator = 1, isBarrier = 1 in {
   let isReturn = 1 in {
@@ -2884,23 +2890,6 @@ let isTerminator = 1, isBarrier = 1 in {
         RETForm<"bi\t$$lr", [(retflag)]>;
   }
 }
-
-//===----------------------------------------------------------------------===//
-// Various brcond predicates:
-//===----------------------------------------------------------------------===//
-/*
-def : Pat<(brcond (i32 (seteq R32C:$rA, 0)), bb:$dest),
-          (BRZ R32C:$rA, bb:$dest)>;
-
-def : Pat<(brcond (i32 (seteq R32C:$rA, R32C:$rB)), bb:$dest),
-          (BRNZ (CEQr32 R32C:$rA, R32C:$rB), bb:$dest)>;
-
-def : Pat<(brcond (i16 (seteq R16C:$rA, i16ImmSExt10:$val)), bb:$dest),
-          (BRHNZ (CEQHIr16 R16C:$rA, i16ImmSExt10:$val), bb:$dest)>;
-
-def : Pat<(brcond (i16 (seteq R16C:$rA, R16C:$rB)), bb:$dest),
-          (BRHNZ (CEQHr16 R16C:$rA, R16C:$rB), bb:$dest)>;
-*/
 
 //===----------------------------------------------------------------------===//
 // Single precision floating point instructions
@@ -3475,21 +3464,20 @@ def : Pat<(i32 (anyext R16C:$rSrc)),
 // low parts in order to load them into a register.
 //===----------------------------------------------------------------------===//
 
-def : Pat<(SPUhi    tglobaladdr:$in, 0),        (ILHUhi tglobaladdr:$in)>;
-def : Pat<(SPUlo    tglobaladdr:$in, 0),        (ILAlo  tglobaladdr:$in)>;
 def : Pat<(SPUaform tglobaladdr:$in, 0),        (ILAlsa tglobaladdr:$in)>;
 def : Pat<(SPUxform tglobaladdr:$in, 0),
           (IOHLlo (ILHUhi tglobaladdr:$in), tglobaladdr:$in)>;
-def : Pat<(SPUhi    tjumptable:$in, 0),         (ILHUhi tjumptable:$in)>;
-def : Pat<(SPUlo    tjumptable:$in, 0),         (ILAlo  tjumptable:$in)>;
+
 def : Pat<(SPUaform tjumptable:$in, 0),         (ILAlsa tjumptable:$in)>;
 def : Pat<(SPUxform tjumptable:$in, 0),
           (IOHLlo (ILHUhi tjumptable:$in), tjumptable:$in)>;
-def : Pat<(SPUhi    tconstpool:$in , 0),        (ILHUhi tconstpool:$in)>;
-def : Pat<(SPUlo    tconstpool:$in , 0),        (ILAlo  tconstpool:$in)>;
-def : Pat<(SPUaform tconstpool:$in, 0),         (ILAlsa tconstpool:$in)>;
-/* def : Pat<(SPUxform tconstpool:$in, 0),
-          (IOHLlo (ILHUhi tconstpool:$in), tconstpool:$in)>; */
+
+def : Pat<(SPUhi    tconstpool:$in , 0),        (ILHUhi  tconstpool:$in)>;
+def : Pat<(SPUlo    tconstpool:$in , 0),        (ILAlsa  tconstpool:$in)>;
+def : Pat<(SPUaform tconstpool:$in, 0),         (ILAlsa  tconstpool:$in)>;
+// tblgen bug prevents this from working.
+// def : Pat<(SPUxform tconstpool:$in, 0),
+//           (IOHLlo (ILHUhi tconstpool:$in), tconstpool:$in)>;
 
 // Instrinsics:
 include "CellSDKIntrinsics.td"

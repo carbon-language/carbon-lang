@@ -16,9 +16,10 @@
 ; RUN: grep rotqbyi %t2.s | count 5 &&
 ; RUN: grep xshw    %t2.s | count 1 &&
 ; RUN: grep andi    %t2.s | count 4 &&
-; RUN: grep cbd     %t2.s | count 3 &&
-; RUN: grep chd     %t2.s | count 1 &&
-; RUN: grep cwd     %t2.s | count 3 &&
+; RUN: grep cbx     %t2.s | count 3 &&
+; RUN: grep chx     %t2.s | count 1 &&
+; RUN: grep cwx     %t2.s | count 1 &&
+; RUN: grep cwd     %t2.s | count 2 &&
 ; RUN: grep shufb   %t2.s | count 7 &&
 ; RUN: grep stqx    %t2.s | count 7
 
