@@ -91,13 +91,15 @@ namespace {
     // scavenged.  If a virtual register has simply been rematerialized, there
     // is no reason to spill it to memory when we need the register back.
     //
-    std::vector<bool> VirtRegModified;
+    BitVector VirtRegModified;
 
     void markVirtRegModified(unsigned Reg, bool Val = true) {
       assert(MRegisterInfo::isVirtualRegister(Reg) && "Illegal VirtReg!");
       Reg -= MRegisterInfo::FirstVirtualRegister;
-      if (VirtRegModified.size() <= Reg) VirtRegModified.resize(Reg+1);
-      VirtRegModified[Reg] = Val;
+      if (Val)
+        VirtRegModified.set(Reg);
+      else
+        VirtRegModified.reset(Reg);
     }
 
     bool isVirtRegModified(unsigned Reg) const {
@@ -819,7 +821,9 @@ bool RALocal::runOnMachineFunction(MachineFunction &Fn) {
 
   // initialize the virtual->physical register map to have a 'null'
   // mapping for all virtual registers
-  Virt2PhysRegMap.grow(MF->getRegInfo().getLastVirtReg());
+  unsigned LastVirtReg = MF->getRegInfo().getLastVirtReg();
+  Virt2PhysRegMap.grow(LastVirtReg);
+  VirtRegModified.resize(LastVirtReg-MRegisterInfo::FirstVirtualRegister);
 
   // Loop over all of the basic blocks, eliminating virtual register references
   for (MachineFunction::iterator MBB = Fn.begin(), MBBe = Fn.end();
