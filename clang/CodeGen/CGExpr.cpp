@@ -450,7 +450,7 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {
           return EmitBuiltinExpr(builtinID, E);
         
   llvm::Value *Callee = EmitScalarExpr(E->getCallee());
-  return EmitCallExpr(Callee, E->getType(), E->arg_begin());
+  return EmitCallExpr(Callee, E->getCallee()->getType(), E->arg_begin());
 }
 
 RValue CodeGenFunction::EmitCallExpr(Expr *FnExpr, Expr *const *Args) {
