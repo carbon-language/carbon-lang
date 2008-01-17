@@ -65,7 +65,7 @@ public:
   inline bool operator!=(const DSPtr& X) const { return Raw != X.Raw; }
   inline bool operator<(const DSPtr& X) const { 
     VariantKind k = getKind(), Xk = X.getKind();
-    return k == Xk ? getPtr() < X.getPtr() : k < Xk;
+    return k == Xk ? getPtr() < X.getPtr() : ((unsigned) k) < ((unsigned) Xk);
   }
 };
 } // end anonymous namespace
@@ -76,7 +76,7 @@ namespace llvm {
     return V.getKind() == DSPtr::IsValueDecl;
   }
   template<> inline bool isa<Stmt,DSPtr>(const DSPtr& V) {
-    return ((unsigned) V.getKind()) > DSPtr::IsValueDecl;
+    return ((unsigned) V.getKind()) != DSPtr::IsValueDecl;
   }
   template<> struct VISIBILITY_HIDDEN cast_retty_impl<ValueDecl,DSPtr> {
     typedef const ValueDecl* ret_type;
@@ -174,11 +174,12 @@ protected:
   NodeSetTy* Nodes;
   NodeSetTy* OldNodes;
   StateTy CurrentState;
+  NodeTy* InitialPred;
   
 public:
   GRConstants() : Liveness(NULL), Builder(NULL), cfg(NULL), 
     Nodes(&NodeSetA), OldNodes(&NodeSetB), 
-    CurrentState(StateMgr.GetEmptyMap()) {} 
+    CurrentState(StateMgr.GetEmptyMap()), InitialPred(NULL) {} 
     
   ~GRConstants() { delete Liveness; }
   
@@ -197,7 +198,9 @@ public:
   void ProcessStmt(Stmt* S, NodeBuilder& builder);    
   void SwitchNodeSets();
   void DoStmt(Stmt* S);
-  StateTy RemoveGrandchildrenMappings(Stmt* S, StateTy M);
+  
+  StateTy RemoveDescendantMappings(Stmt* S, StateTy M, unsigned Levels=2);
+  StateTy RemoveSubExprMappings(StateTy M);
 
   void AddBinding(Expr* E, ExprVariantTy V, bool isBlkLvl = false);
   void AddBinding(ValueDecl* D, ExprVariantTy V);
@@ -224,9 +227,10 @@ void GRConstants::ProcessStmt(Stmt* S, NodeBuilder& builder) {
   Builder = &builder;
   Nodes->clear();
   OldNodes->clear();
-  NodeTy* N = Builder->getLastNode();
-  assert (N);
-  OldNodes->push_back(N);
+  InitialPred = Builder->getLastNode();
+  assert (InitialPred);
+  OldNodes->push_back(InitialPred);  
+  CurrentState = RemoveSubExprMappings(InitialPred->getState());  
   BlockStmt_Visit(S);
   Builder = NULL;  
 }
@@ -276,22 +280,51 @@ void GRConstants::SwitchNodeSets() {
 }
 
 GRConstants::StateTy
-GRConstants::RemoveGrandchildrenMappings(Stmt* S, GRConstants::StateTy State) {
-  
+GRConstants::RemoveSubExprMappings(StateTy M) {
+#if 0
+  return M;
+#else
+  for (StateTy::iterator I = M.begin(), E = M.end();
+       I!=E && I.getKey().getKind() == DSPtr::IsSubExp; ++I) {
+    // Note: we can assign a new map to M since the iterators are
+    //  iterating over the tree of the original map (aren't immutable maps
+    //  nice?).
+    M = StateMgr.Remove(M, I.getKey());
+  }
+
+  return M;
+#endif
+}
+
+
+GRConstants::StateTy
+GRConstants::RemoveDescendantMappings(Stmt* S, GRConstants::StateTy State,
+                                      unsigned Levels) {
+#if 1
+  return State;
+#else
   typedef Stmt::child_iterator iterator;
   
   for (iterator I=S->child_begin(), E=S->child_end(); I!=E; ++I)
-    if (Stmt* C = *I)
-      for (iterator CI=C->child_begin(), CE=C->child_end(); CI!=CE; ++CI) {
+    if (Stmt* C = *I) {
+      if (Levels == 1) {
         // Observe that this will only remove mappings to non-block level
         // expressions.  This is valid even if *CI is a block-level expression,
         // since it simply won't be in the map in the first place.
         // Note: This should also work if 'C' is a block-level expression,
         // although ideally we would want to skip processing C's children.
-        State = StateMgr.Remove(State, DSPtr(*CI,false));
+        State = StateMgr.Remove(State, DSPtr(C,false));
       }
+      else {
+        if (ParenExpr* P = dyn_cast<ParenExpr>(C))
+          State = RemoveDescendantMappings(P, State, Levels);
+        else
+          State = RemoveDescendantMappings(C, State, Levels-1);
+      }
+    }
   
   return State;
+#endif
 }
 
 void GRConstants::DoStmt(Stmt* S) {  
@@ -300,10 +333,14 @@ void GRConstants::DoStmt(Stmt* S) {
   
   for (NodeSetTy::iterator I=OldNodes->begin(), E=OldNodes->end(); I!=E; ++I) {
     NodeTy* Pred = *I;
-    CurrentState = Pred->getState();
+    
+    if (Pred != InitialPred)
+      CurrentState = Pred->getState();
 
     StateTy OldState = CurrentState;
-    CurrentState = RemoveGrandchildrenMappings(S, CurrentState);
+    
+    if (Pred != InitialPred)
+      CurrentState = RemoveDescendantMappings(S, CurrentState);
     
     Visit(S);
     
