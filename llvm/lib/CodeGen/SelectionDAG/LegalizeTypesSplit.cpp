@@ -139,7 +139,7 @@ void DAGTypeLegalizer::SplitRes_LOAD(LoadSDNode *LD,
   Lo = DAG.getLoad(LoVT, Ch, Ptr, SV, SVOffset, isVolatile, Alignment);
   unsigned IncrementSize = MVT::getSizeInBits(LoVT)/8;
   Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
-                    getIntPtrConstant(IncrementSize));
+                    DAG.getIntPtrConstant(IncrementSize));
   SVOffset += IncrementSize;
   Alignment = MinAlign(Alignment, IncrementSize);
   Hi = DAG.getLoad(HiVT, Ch, Ptr, SV, SVOffset, isVolatile, Alignment);
@@ -380,7 +380,7 @@ SDOperand DAGTypeLegalizer::SplitOp_STORE(StoreSDNode *N, unsigned OpNo) {
   
   // Increment the pointer to the other half.
   Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
-                    getIntPtrConstant(IncrementSize));
+                    DAG.getIntPtrConstant(IncrementSize));
   
   Hi = DAG.getStore(Ch, Hi, Ptr, N->getSrcValue(), SVOffset+IncrementSize,
                     isVol, MinAlign(Alignment, IncrementSize));

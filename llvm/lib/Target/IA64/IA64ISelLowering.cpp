@@ -193,7 +193,8 @@ IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
             argt = newroot = DAG.getCopyFromReg(DAG.getRoot(), argVreg[count],
                                                 MVT::f64);
             if (I->getType() == Type::FloatTy)
-              argt = DAG.getNode(ISD::FP_ROUND, MVT::f32, argt);
+              argt = DAG.getNode(ISD::FP_ROUND, MVT::f32, argt,
+                                 DAG.getIntPtrConstant(0));
             break;
           case MVT::i1: // NOTE: as far as C abi stuff goes,
                         // bools are just boring old ints

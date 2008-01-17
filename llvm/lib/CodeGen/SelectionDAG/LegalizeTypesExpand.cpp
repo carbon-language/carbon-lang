@@ -253,7 +253,7 @@ void DAGTypeLegalizer::ExpandResult_LOAD(LoadSDNode *N,
     // Increment the pointer to the other half.
     unsigned IncrementSize = MVT::getSizeInBits(NVT)/8;
     Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
-                      getIntPtrConstant(IncrementSize));
+                      DAG.getIntPtrConstant(IncrementSize));
     Hi = DAG.getLoad(NVT, Ch, Ptr, N->getSrcValue(), SVOffset+IncrementSize,
                      isVolatile, MinAlign(Alignment, IncrementSize));
 
@@ -300,7 +300,7 @@ void DAGTypeLegalizer::ExpandResult_LOAD(LoadSDNode *N,
     // Increment the pointer to the other half.
     unsigned IncrementSize = MVT::getSizeInBits(NVT)/8;
     Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
-                      getIntPtrConstant(IncrementSize));
+                      DAG.getIntPtrConstant(IncrementSize));
     Hi = DAG.getExtLoad(ExtType, NVT, Ch, Ptr, N->getSrcValue(),
                         SVOffset+IncrementSize, NEVT,
                         isVolatile, MinAlign(Alignment, IncrementSize));
@@ -324,7 +324,7 @@ void DAGTypeLegalizer::ExpandResult_LOAD(LoadSDNode *N,
 
     // Increment the pointer to the other half.
     Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
-                      getIntPtrConstant(IncrementSize));
+                      DAG.getIntPtrConstant(IncrementSize));
     // Load the rest of the low bits.
     Lo = DAG.getExtLoad(ISD::ZEXTLOAD, NVT, Ch, Ptr, N->getSrcValue(),
                         SVOffset+IncrementSize, MVT::getIntegerType(ExcessBits),
@@ -869,7 +869,7 @@ SDOperand DAGTypeLegalizer::ExpandOperand_UINT_TO_FP(SDOperand Source,
   SDOperand SignSet = DAG.getSetCC(TLI.getSetCCResultTy(), Hi,
                                    DAG.getConstant(0, Hi.getValueType()),
                                    ISD::SETLT);
-  SDOperand Zero = getIntPtrConstant(0), Four = getIntPtrConstant(4);
+  SDOperand Zero = DAG.getIntPtrConstant(0), Four = DAG.getIntPtrConstant(4);
   SDOperand CstOffset = DAG.getNode(ISD::SELECT, Zero.getValueType(),
                                     SignSet, Four, Zero);
   uint64_t FF = 0x5f800000ULL;
@@ -1053,7 +1053,7 @@ SDOperand DAGTypeLegalizer::ExpandOperand_STORE(StoreSDNode *N, unsigned OpNo) {
                       SVOffset, isVolatile, Alignment);
 
     Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
-                      getIntPtrConstant(IncrementSize));
+                      DAG.getIntPtrConstant(IncrementSize));
     assert(isTypeLegal(Ptr.getValueType()) && "Pointers must be legal!");
     Hi = DAG.getStore(Ch, Hi, Ptr, N->getSrcValue(), SVOffset+IncrementSize,
                       isVolatile, MinAlign(Alignment, IncrementSize));
@@ -1076,7 +1076,7 @@ SDOperand DAGTypeLegalizer::ExpandOperand_STORE(StoreSDNode *N, unsigned OpNo) {
     // Increment the pointer to the other half.
     unsigned IncrementSize = MVT::getSizeInBits(NVT)/8;
     Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
-                      getIntPtrConstant(IncrementSize));
+                      DAG.getIntPtrConstant(IncrementSize));
     Hi = DAG.getTruncStore(Ch, Hi, Ptr, N->getSrcValue(),
                            SVOffset+IncrementSize, NEVT,
                            isVolatile, MinAlign(Alignment, IncrementSize));
@@ -1110,7 +1110,7 @@ SDOperand DAGTypeLegalizer::ExpandOperand_STORE(StoreSDNode *N, unsigned OpNo) {
 
     // Increment the pointer to the other half.
     Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
-                      getIntPtrConstant(IncrementSize));
+                      DAG.getIntPtrConstant(IncrementSize));
     // Store the lowest ExcessBits bits in the second half.
     Lo = DAG.getTruncStore(Ch, Lo, Ptr, N->getSrcValue(),
                            SVOffset+IncrementSize,

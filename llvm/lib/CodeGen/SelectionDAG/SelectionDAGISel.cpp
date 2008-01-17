@@ -483,10 +483,6 @@ public:
                         const Value *SV, SDOperand Root,
                         bool isVolatile, unsigned Alignment);
 
-  SDOperand getIntPtrConstant(uint64_t Val) {
-    return DAG.getConstant(Val, TLI.getPointerTy());
-  }
-
   SDOperand getValue(const Value *V);
 
   void setValue(const Value *V, SDOperand NewN) {
@@ -677,12 +673,10 @@ static SDOperand getCopyFromParts(SelectionDAG &DAG,
       }
     }
   
-    if (MVT::isFloatingPoint(PartVT) &&
-        MVT::isFloatingPoint(ValueVT))
-      return DAG.getNode(ISD::FP_ROUND, ValueVT, Val);
+    if (MVT::isFloatingPoint(PartVT) && MVT::isFloatingPoint(ValueVT))
+      return DAG.getNode(ISD::FP_ROUND, ValueVT, Val, DAG.getIntPtrConstant(0));
 
-    if (MVT::getSizeInBits(PartVT) == 
-        MVT::getSizeInBits(ValueVT))
+    if (MVT::getSizeInBits(PartVT) == MVT::getSizeInBits(ValueVT))
       return DAG.getNode(ISD::BIT_CONVERT, ValueVT, Val);
 
     assert(0 && "Unknown mismatch!");
@@ -2163,7 +2157,7 @@ void SelectionDAGLowering::visitFPTrunc(User &I) {
   // FPTrunc is never a no-op cast, no need to check
   SDOperand N = getValue(I.getOperand(0));
   MVT::ValueType DestVT = TLI.getValueType(I.getType());
-  setValue(&I, DAG.getNode(ISD::FP_ROUND, DestVT, N));
+  setValue(&I, DAG.getNode(ISD::FP_ROUND, DestVT, N, DAG.getIntPtrConstant(0)));
 }
 
 void SelectionDAGLowering::visitFPExt(User &I){ 
@@ -2284,7 +2278,7 @@ void SelectionDAGLowering::visitGetElementPtr(User &I) {
         // N = N + Offset
         uint64_t Offset = TD->getStructLayout(StTy)->getElementOffset(Field);
         N = DAG.getNode(ISD::ADD, N.getValueType(), N,
-                        getIntPtrConstant(Offset));
+                        DAG.getIntPtrConstant(Offset));
       }
       Ty = StTy->getElementType(Field);
     } else {
@@ -2295,7 +2289,8 @@ void SelectionDAGLowering::visitGetElementPtr(User &I) {
         if (CI->getZExtValue() == 0) continue;
         uint64_t Offs = 
             TD->getABITypeSize(Ty)*cast<ConstantInt>(CI)->getSExtValue();
-        N = DAG.getNode(ISD::ADD, N.getValueType(), N, getIntPtrConstant(Offs));
+        N = DAG.getNode(ISD::ADD, N.getValueType(), N,
+                        DAG.getIntPtrConstant(Offs));
         continue;
       }
       
@@ -2320,7 +2315,7 @@ void SelectionDAGLowering::visitGetElementPtr(User &I) {
         continue;
       }
       
-      SDOperand Scale = getIntPtrConstant(ElementSize);
+      SDOperand Scale = DAG.getIntPtrConstant(ElementSize);
       IdxN = DAG.getNode(ISD::MUL, N.getValueType(), IdxN, Scale);
       N = DAG.getNode(ISD::ADD, N.getValueType(), N, IdxN);
     }
@@ -2348,7 +2343,7 @@ void SelectionDAGLowering::visitAlloca(AllocaInst &I) {
     AllocSize = DAG.getNode(ISD::ZERO_EXTEND, IntPtr, AllocSize);
 
   AllocSize = DAG.getNode(ISD::MUL, IntPtr, AllocSize,
-                          getIntPtrConstant(TySize));
+                          DAG.getIntPtrConstant(TySize));
 
   // Handle alignment.  If the requested alignment is less than or equal to
   // the stack alignment, ignore it.  If the size is greater than or equal to
@@ -2361,12 +2356,12 @@ void SelectionDAGLowering::visitAlloca(AllocaInst &I) {
   // Round the size of the allocation up to the stack alignment size
   // by add SA-1 to the size.
   AllocSize = DAG.getNode(ISD::ADD, AllocSize.getValueType(), AllocSize,
-                          getIntPtrConstant(StackAlign-1));
+                          DAG.getIntPtrConstant(StackAlign-1));
   // Mask out the low bits for alignment purposes.
   AllocSize = DAG.getNode(ISD::AND, AllocSize.getValueType(), AllocSize,
-                          getIntPtrConstant(~(uint64_t)(StackAlign-1)));
+                          DAG.getIntPtrConstant(~(uint64_t)(StackAlign-1)));
 
-  SDOperand Ops[] = { getRoot(), AllocSize, getIntPtrConstant(Align) };
+  SDOperand Ops[] = { getRoot(), AllocSize, DAG.getIntPtrConstant(Align) };
   const MVT::ValueType *VTs = DAG.getNodeValueTypes(AllocSize.getValueType(),
                                                     MVT::Other);
   SDOperand DSA = DAG.getNode(ISD::DYNAMIC_STACKALLOC, VTs, 2, Ops, 3);
@@ -3815,7 +3810,7 @@ void SelectionDAGLowering::visitMalloc(MallocInst &I) {
   // Scale the source by the type size.
   uint64_t ElementSize = TD->getABITypeSize(I.getType()->getElementType());
   Src = DAG.getNode(ISD::MUL, Src.getValueType(),
-                    Src, getIntPtrConstant(ElementSize));
+                    Src, DAG.getIntPtrConstant(ElementSize));
 
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
@@ -3994,7 +3989,7 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         Op = DAG.getNode(ISD::TRUNCATE, VT, Op);
       } else {
         assert(MVT::isFloatingPoint(VT) && "Not int or FP?");
-        Op = DAG.getNode(ISD::FP_ROUND, VT, Op);
+        Op = DAG.getNode(ISD::FP_ROUND, VT, Op, DAG.getIntPtrConstant(1));
       }
       Ops.push_back(Op);
       break;

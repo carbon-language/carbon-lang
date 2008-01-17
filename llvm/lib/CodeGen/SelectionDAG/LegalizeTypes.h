@@ -82,10 +82,6 @@ class VISIBILITY_HIDDEN DAGTypeLegalizer {
     return getTypeAction(VT) == Legal;
   }
   
-  SDOperand getIntPtrConstant(uint64_t Val) {
-    return DAG.getConstant(Val, TLI.getPointerTy());
-  }
-  
   /// PromotedNodes - For nodes that are below legal width, this map indicates
   /// what promoted value to use.
   DenseMap<SDOperand, SDOperand> PromotedNodes;

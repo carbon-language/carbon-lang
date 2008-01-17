@@ -710,6 +710,11 @@ SDOperand SelectionDAG::getConstant(uint64_t Val, MVT::ValueType VT, bool isT) {
   return Result;
 }
 
+SDOperand SelectionDAG::getIntPtrConstant(uint64_t Val, bool isTarget) {
+  return getConstant(Val, TLI.getPointerTy(), isTarget);
+}
+
+
 SDOperand SelectionDAG::getConstantFP(const APFloat& V, MVT::ValueType VT,
                                       bool isTarget) {
   assert(MVT::isFloatingPoint(VT) && "Cannot create integer FP constant!");
@@ -1704,7 +1709,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   // Constant fold unary operations with a floating point constant operand.
   if (ConstantFPSDNode *C = dyn_cast<ConstantFPSDNode>(Operand.Val)) {
     APFloat V = C->getValueAPF();    // make copy
-    if (VT!=MVT::ppcf128 && Operand.getValueType()!=MVT::ppcf128) {
+    if (VT != MVT::ppcf128 && Operand.getValueType() != MVT::ppcf128) {
       switch (Opcode) {
       case ISD::FNEG:
         V.changeSign();
@@ -1749,13 +1754,13 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   switch (Opcode) {
   case ISD::TokenFactor:
     return Operand;         // Factor of one node?  No factor.
-  case ISD::FP_ROUND:
+  case ISD::FP_ROUND: assert(0 && "Invalid method to make FP_ROUND node");
   case ISD::FP_EXTEND:
     assert(MVT::isFloatingPoint(VT) &&
            MVT::isFloatingPoint(Operand.getValueType()) && "Invalid FP cast!");
     if (Operand.getValueType() == VT) return Operand;  // noop conversion.
     break;
-  case ISD::SIGN_EXTEND:
+    case ISD::SIGN_EXTEND:
     assert(MVT::isInteger(VT) && MVT::isInteger(Operand.getValueType()) &&
            "Invalid SIGN_EXTEND!");
     if (Operand.getValueType() == VT) return Operand;   // noop extension
@@ -1909,6 +1914,13 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
            "Not rounding down!");
     break;
   }
+  case ISD::FP_ROUND:
+    assert(MVT::isFloatingPoint(VT) &&
+           MVT::isFloatingPoint(N1.getValueType()) &&
+           MVT::getSizeInBits(VT) <= MVT::getSizeInBits(N1.getValueType()) &&
+           isa<ConstantSDNode>(N2) && "Invalid FP_ROUND!");
+    if (N1.getValueType() == VT) return N1;  // noop conversion.
+    break;
   case ISD::AssertSext:
   case ISD::AssertZext:
   case ISD::SIGN_EXTEND_INREG: {

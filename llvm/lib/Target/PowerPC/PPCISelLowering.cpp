@@ -2171,7 +2171,7 @@ static SDOperand LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
     SDOperand Bits = DAG.getNode(ISD::BIT_CONVERT, MVT::f64, Op.getOperand(0));
     SDOperand FP = DAG.getNode(PPCISD::FCFID, MVT::f64, Bits);
     if (Op.getValueType() == MVT::f32)
-      FP = DAG.getNode(ISD::FP_ROUND, MVT::f32, FP);
+      FP = DAG.getNode(ISD::FP_ROUND, MVT::f32, FP, DAG.getIntPtrConstant(0));
     return FP;
   }
   
@@ -2199,7 +2199,7 @@ static SDOperand LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
   // FCFID it and return it.
   SDOperand FP = DAG.getNode(PPCISD::FCFID, MVT::f64, Ld);
   if (Op.getValueType() == MVT::f32)
-    FP = DAG.getNode(ISD::FP_ROUND, MVT::f32, FP);
+    FP = DAG.getNode(ISD::FP_ROUND, MVT::f32, FP, DAG.getIntPtrConstant(0));
   return FP;
 }
 
@@ -3170,7 +3170,8 @@ SDOperand PPCTargetLowering::PerformDAGCombine(SDNode *N,
           Val = DAG.getNode(PPCISD::FCFID, MVT::f64, Val);
           DCI.AddToWorklist(Val.Val);
           if (N->getValueType(0) == MVT::f32) {
-            Val = DAG.getNode(ISD::FP_ROUND, MVT::f32, Val);
+            Val = DAG.getNode(ISD::FP_ROUND, MVT::f32, Val, 
+                              DAG.getIntPtrConstant(0));
             DCI.AddToWorklist(Val.Val);
           }
           return Val;

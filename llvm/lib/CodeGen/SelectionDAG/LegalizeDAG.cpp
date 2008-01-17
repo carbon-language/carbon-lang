@@ -220,10 +220,6 @@ private:
 
   SDOperand ExpandEXTRACT_SUBVECTOR(SDOperand Op);
   SDOperand ExpandEXTRACT_VECTOR_ELT(SDOperand Op);
-  
-  SDOperand getIntPtrConstant(uint64_t Val) {
-    return DAG.getConstant(Val, TLI.getPointerTy());
-  }
 };
 }
 
@@ -2123,7 +2119,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
             Lo = DAG.getStore(Tmp1, Lo, Tmp2, ST->getSrcValue(),
                               SVOffset, isVolatile, Alignment);
             Tmp2 = DAG.getNode(ISD::ADD, Tmp2.getValueType(), Tmp2,
-                               getIntPtrConstant(4));
+                               DAG.getIntPtrConstant(4));
             Hi = DAG.getStore(Tmp1, Hi, Tmp2, ST->getSrcValue(), SVOffset+4,
                               isVolatile, MinAlign(Alignment, 4U));
 
@@ -2186,8 +2182,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         if (MVT::isVector(ST->getValue().getValueType())) {
           SDNode *InVal = ST->getValue().Val;
           int InIx = ST->getValue().ResNo;
-          unsigned NumElems = MVT::getVectorNumElements(InVal->getValueType(InIx));
-          MVT::ValueType EVT = MVT::getVectorElementType(InVal->getValueType(InIx));
+          MVT::ValueType InVT = InVal->getValueType(InIx);
+          unsigned NumElems = MVT::getVectorNumElements(InVT);
+          MVT::ValueType EVT = MVT::getVectorElementType(InVT);
 
           // Figure out if there is a simple type corresponding to this Vector
           // type.  If so, convert to the vector type.
@@ -2231,7 +2228,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         }
 
         Tmp2 = DAG.getNode(ISD::ADD, Tmp2.getValueType(), Tmp2,
-                           getIntPtrConstant(IncrementSize));
+                           DAG.getIntPtrConstant(IncrementSize));
         assert(isTypeLegal(Tmp2.getValueType()) &&
                "Pointers must be legal!");
         SVOffset += IncrementSize;
@@ -2429,7 +2426,11 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Tmp3 = DAG.getNode(ExtOp, NVT, Tmp3);
       // Perform the larger operation, then round down.
       Result = DAG.getNode(ISD::SELECT, NVT, Tmp1, Tmp2,Tmp3);
-      Result = DAG.getNode(TruncOp, Node->getValueType(0), Result);
+      if (TruncOp != ISD::FP_ROUND)
+        Result = DAG.getNode(TruncOp, Node->getValueType(0), Result);
+      else
+        Result = DAG.getNode(TruncOp, Node->getValueType(0), Result,
+                             DAG.getIntPtrConstant(0));
       break;
     }
     }
@@ -3496,13 +3497,13 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       MVT::ValueType OVT = Node->getOperand(0).getValueType();
       // Convert ppcf128 to i32
       if (OVT == MVT::ppcf128 && VT == MVT::i32) {
-        if (Node->getOpcode()==ISD::FP_TO_SINT)
-          Result = DAG.getNode(ISD::FP_TO_SINT, VT,
-                             DAG.getNode(ISD::FP_ROUND, MVT::f64,
-                                         (DAG.getNode(ISD::FP_ROUND_INREG, 
-                                          MVT::ppcf128, Node->getOperand(0),
-                                          DAG.getValueType(MVT::f64)))));
-        else {
+        if (Node->getOpcode() == ISD::FP_TO_SINT) {
+          Result = DAG.getNode(ISD::FP_ROUND_INREG, MVT::ppcf128, 
+                               Node->getOperand(0), DAG.getValueType(MVT::f64));
+          Result = DAG.getNode(ISD::FP_ROUND, MVT::f64, Result, 
+                               DAG.getIntPtrConstant(1));
+          Result = DAG.getNode(ISD::FP_TO_SINT, VT, Result);
+        } else {
           const uint64_t TwoE31[] = {0x41e0000000000000LL, 0};
           APFloat apf = APFloat(APInt(128, 2, TwoE31));
           Tmp2 = DAG.getConstantFP(apf, OVT);
@@ -3573,14 +3574,13 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     break;
 
   case ISD::FP_EXTEND: {
-      MVT::ValueType DstVT = Op.getValueType();
-      MVT::ValueType SrcVT = Op.getOperand(0).getValueType();
-      if (TLI.getConvertAction(SrcVT, DstVT) == TargetLowering::Expand) {
-        // The only other way we can lower this is to turn it into a STORE,
-        // LOAD pair, targetting a temporary location (a stack slot).
-        Result = EmitStackConvert(Node->getOperand(0), SrcVT, DstVT);
-        break;
-      }
+    MVT::ValueType DstVT = Op.getValueType();
+    MVT::ValueType SrcVT = Op.getOperand(0).getValueType();
+    if (TLI.getConvertAction(SrcVT, DstVT) == TargetLowering::Expand) {
+      // The only other way we can lower this is to turn it into a STORE,
+      // LOAD pair, targetting a temporary location (a stack slot).
+      Result = EmitStackConvert(Node->getOperand(0), SrcVT, DstVT);
+      break;
     }
     switch (getTypeAction(Node->getOperand(0).getValueType())) {
     case Expand: assert(0 && "Shouldn't need to expand other operators here!");
@@ -3594,35 +3594,37 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       break;
     }
     break;
+  }
   case ISD::FP_ROUND: {
-      MVT::ValueType DstVT = Op.getValueType();
-      MVT::ValueType SrcVT = Op.getOperand(0).getValueType();
-      if (TLI.getConvertAction(SrcVT, DstVT) == TargetLowering::Expand) {
-        if (SrcVT == MVT::ppcf128) {
-          SDOperand Lo, Hi;
-          ExpandOp(Node->getOperand(0), Lo, Hi);
-          Result = DAG.getNode(ISD::FP_ROUND, DstVT, Hi);
-          break;
-        } else {
-          // The only other way we can lower this is to turn it into a STORE,
-          // LOAD pair, targetting a temporary location (a stack slot).
-          Result = EmitStackConvert(Node->getOperand(0), DstVT, DstVT);
-          break;
-        }
+    MVT::ValueType DstVT = Op.getValueType();
+    MVT::ValueType SrcVT = Op.getOperand(0).getValueType();
+    if (TLI.getConvertAction(SrcVT, DstVT) == TargetLowering::Expand) {
+      if (SrcVT == MVT::ppcf128) {
+        SDOperand Lo, Hi;
+        ExpandOp(Node->getOperand(0), Lo, Hi);
+        // Round it the rest of the way (e.g. to f32) if needed.
+        Result = DAG.getNode(ISD::FP_ROUND, DstVT, Hi, Op.getOperand(1));
+        break;
       }
+      // The only other way we can lower this is to turn it into a STORE,
+      // LOAD pair, targetting a temporary location (a stack slot).
+      Result = EmitStackConvert(Node->getOperand(0), DstVT, DstVT);
+      break;
     }
     switch (getTypeAction(Node->getOperand(0).getValueType())) {
     case Expand: assert(0 && "Shouldn't need to expand other operators here!");
     case Legal:
       Tmp1 = LegalizeOp(Node->getOperand(0));
-      Result = DAG.UpdateNodeOperands(Result, Tmp1);
+      Result = DAG.UpdateNodeOperands(Result, Tmp1, Node->getOperand(1));
       break;
     case Promote:
       Tmp1 = PromoteOp(Node->getOperand(0));
-      Result = DAG.getNode(ISD::FP_ROUND, Op.getValueType(), Tmp1);
+      Result = DAG.getNode(ISD::FP_ROUND, Op.getValueType(), Tmp1,
+                           Node->getOperand(1));
       break;
     }
     break;
+  }
   case ISD::ANY_EXTEND:
   case ISD::ZERO_EXTEND:
   case ISD::SIGN_EXTEND:
@@ -3869,13 +3871,18 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     case Expand: assert(0 && "BUG: Cannot expand FP regs!");
     case Promote:  assert(0 && "Unreachable with 2 FP types!");
     case Legal:
-      // Input is legal?  Do an FP_ROUND_INREG.
-      Result = DAG.getNode(ISD::FP_ROUND_INREG, NVT, Node->getOperand(0),
-                           DAG.getValueType(VT));
+      if (Node->getConstantOperandVal(1) == 0) {
+        // Input is legal?  Do an FP_ROUND_INREG.
+        Result = DAG.getNode(ISD::FP_ROUND_INREG, NVT, Node->getOperand(0),
+                             DAG.getValueType(VT));
+      } else {
+        // Just remove the truncate, it isn't affecting the value.
+        Result = DAG.getNode(ISD::FP_ROUND, NVT, Node->getOperand(0), 
+                             Node->getOperand(1));
+      }
       break;
     }
     break;
-
   case ISD::SINT_TO_FP:
   case ISD::UINT_TO_FP:
     switch (getTypeAction(Node->getOperand(0).getValueType())) {
@@ -4028,24 +4035,14 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
   case ISD::FCOPYSIGN:
     // These operators require that their input be fp extended.
     switch (getTypeAction(Node->getOperand(0).getValueType())) {
-      case Legal:
-        Tmp1 = LegalizeOp(Node->getOperand(0));
-        break;
-      case Promote:
-        Tmp1 = PromoteOp(Node->getOperand(0));
-        break;
-      case Expand:
-        assert(0 && "not implemented");
+    case Expand: assert(0 && "not implemented");
+    case Legal:   Tmp1 = LegalizeOp(Node->getOperand(0)); break;
+    case Promote: Tmp1 = PromoteOp(Node->getOperand(0));  break;
     }
     switch (getTypeAction(Node->getOperand(1).getValueType())) {
-      case Legal:
-        Tmp2 = LegalizeOp(Node->getOperand(1));
-        break;
-      case Promote:
-        Tmp2 = PromoteOp(Node->getOperand(1));
-        break;
-      case Expand:
-        assert(0 && "not implemented");
+    case Expand: assert(0 && "not implemented");
+    case Legal:   Tmp2 = LegalizeOp(Node->getOperand(1)); break;
+    case Promote: Tmp2 = PromoteOp(Node->getOperand(1)); break;
     }
     Result = DAG.getNode(Node->getOpcode(), NVT, Tmp1, Tmp2);
     
@@ -4978,7 +4975,7 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
     SDOperand SignSet = DAG.getSetCC(TLI.getSetCCResultTy(), Hi,
                                      DAG.getConstant(0, Hi.getValueType()),
                                      ISD::SETLT);
-    SDOperand Zero = getIntPtrConstant(0), Four = getIntPtrConstant(4);
+    SDOperand Zero = DAG.getIntPtrConstant(0), Four = DAG.getIntPtrConstant(4);
     SDOperand CstOffset = DAG.getNode(ISD::SELECT, Zero.getValueType(),
                                       SignSet, Four, Zero);
     uint64_t FF = 0x5f800000ULL;
@@ -5100,7 +5097,8 @@ SDOperand SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
       // do nothing
       Result = Sub;
     } else if (MVT::getSizeInBits(DestVT) < MVT::getSizeInBits(MVT::f64)) {
-      Result = DAG.getNode(ISD::FP_ROUND, DestVT, Sub);
+      Result = DAG.getNode(ISD::FP_ROUND, DestVT, Sub,
+                           DAG.getIntPtrConstant(0));
     } else if (MVT::getSizeInBits(DestVT) > MVT::getSizeInBits(MVT::f64)) {
       Result = DAG.getNode(ISD::FP_EXTEND, DestVT, Sub);
     }
@@ -5112,7 +5110,7 @@ SDOperand SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
   SDOperand SignSet = DAG.getSetCC(TLI.getSetCCResultTy(), Op0,
                                    DAG.getConstant(0, Op0.getValueType()),
                                    ISD::SETLT);
-  SDOperand Zero = getIntPtrConstant(0), Four = getIntPtrConstant(4);
+  SDOperand Zero = DAG.getIntPtrConstant(0), Four = DAG.getIntPtrConstant(4);
   SDOperand CstOffset = DAG.getNode(ISD::SELECT, Zero.getValueType(),
                                     SignSet, Four, Zero);
 
@@ -5570,7 +5568,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       // Increment the pointer to the other half.
       unsigned IncrementSize = MVT::getSizeInBits(Lo.getValueType())/8;
       Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
-                        getIntPtrConstant(IncrementSize));
+                        DAG.getIntPtrConstant(IncrementSize));
       SVOffset += IncrementSize;
       Alignment = MinAlign(Alignment, IncrementSize);
       Hi = DAG.getLoad(NVT, Ch, Ptr, LD->getSrcValue(), SVOffset,
@@ -6523,7 +6521,7 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
     Lo = DAG.getLoad(NewVT_Lo, Ch, Ptr, SV, SVOffset, isVolatile, Alignment);
     unsigned IncrementSize = NewNumElts_Lo * MVT::getSizeInBits(NewEltVT)/8;
     Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
-                      getIntPtrConstant(IncrementSize));
+                      DAG.getIntPtrConstant(IncrementSize));
     SVOffset += IncrementSize;
     Alignment = MinAlign(Alignment, IncrementSize);
     Hi = DAG.getLoad(NewVT_Hi, Ch, Ptr, SV, SVOffset, isVolatile, Alignment);

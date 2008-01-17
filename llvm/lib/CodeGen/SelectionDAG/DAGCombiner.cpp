@@ -135,6 +135,7 @@ namespace {
       SDOperand To[] = { Res0, Res1 };
       return CombineTo(N, To, 2, AddTo);
     }
+    
   private:    
     
     /// SimplifyDemandedBits - Check the specified integer node value to see if
@@ -460,10 +461,13 @@ static SDOperand GetNegatedExpression(SDOperand Op, SelectionDAG &DAG,
                        GetNegatedExpression(Op.getOperand(1), DAG, Depth+1));
     
   case ISD::FP_EXTEND:
-  case ISD::FP_ROUND:
   case ISD::FSIN:
     return DAG.getNode(Op.getOpcode(), Op.getValueType(),
                        GetNegatedExpression(Op.getOperand(0), DAG, Depth+1));
+  case ISD::FP_ROUND:
+      return DAG.getNode(ISD::FP_ROUND, Op.getValueType(),
+                         GetNegatedExpression(Op.getOperand(0), DAG, Depth+1),
+                         Op.getOperand(1));
   }
 }
 
@@ -3632,12 +3636,13 @@ SDOperand DAGCombiner::visitFP_TO_UINT(SDNode *N) {
 
 SDOperand DAGCombiner::visitFP_ROUND(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
+  SDOperand N1 = N->getOperand(1);
   ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0);
   MVT::ValueType VT = N->getValueType(0);
   
   // fold (fp_round c1fp) -> c1fp
   if (N0CFP && N0.getValueType() != MVT::ppcf128)
-    return DAG.getNode(ISD::FP_ROUND, VT, N0);
+    return DAG.getNode(ISD::FP_ROUND, VT, N0, N1);
   
   // fold (fp_round (fp_extend x)) -> x
   if (N0.getOpcode() == ISD::FP_EXTEND && VT == N0.getOperand(0).getValueType())
@@ -3645,7 +3650,7 @@ SDOperand DAGCombiner::visitFP_ROUND(SDNode *N) {
   
   // fold (fp_round (copysign X, Y)) -> (copysign (fp_round X), Y)
   if (N0.getOpcode() == ISD::FCOPYSIGN && N0.Val->hasOneUse()) {
-    SDOperand Tmp = DAG.getNode(ISD::FP_ROUND, VT, N0.getOperand(0));
+    SDOperand Tmp = DAG.getNode(ISD::FP_ROUND, VT, N0.getOperand(0), N1);
     AddToWorkList(Tmp.Val);
     return DAG.getNode(ISD::FCOPYSIGN, VT, Tmp, N0.getOperand(1));
   }
@@ -3675,12 +3680,22 @@ SDOperand DAGCombiner::visitFP_EXTEND(SDNode *N) {
   // If this is fp_round(fpextend), don't fold it, allow ourselves to be folded.
   if (N->hasOneUse() && (*N->use_begin())->getOpcode() == ISD::FP_ROUND)
     return SDOperand();
-  
+
   // fold (fp_extend c1fp) -> c1fp
   if (N0CFP && VT != MVT::ppcf128)
     return DAG.getNode(ISD::FP_EXTEND, VT, N0);
-  
-  // fold (fpext (load x)) -> (fpext (fpround (extload x)))
+
+  // Turn fp_extend(fp_round(X, 1)) -> x since the fp_round doesn't affect the
+  // value of X.
+  if (N0.getOpcode() == ISD::FP_ROUND && N0.Val->getConstantOperandVal(1) == 1){
+    SDOperand In = N0.getOperand(0);
+    if (In.getValueType() == VT) return In;
+    if (VT < In.getValueType())
+      return DAG.getNode(ISD::FP_ROUND, VT, In, N0.getOperand(1));
+    return DAG.getNode(ISD::FP_EXTEND, VT, In);
+  }
+      
+  // fold (fpext (load x)) -> (fpext (fptrunc (extload x)))
   if (ISD::isNON_EXTLoad(N0.Val) && N0.hasOneUse() &&
       (!AfterLegalize||TLI.isLoadXLegal(ISD::EXTLOAD, N0.getValueType()))) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
@@ -3691,7 +3706,8 @@ SDOperand DAGCombiner::visitFP_EXTEND(SDNode *N) {
                                        LN0->isVolatile(), 
                                        LN0->getAlignment());
     CombineTo(N, ExtLoad);
-    CombineTo(N0.Val, DAG.getNode(ISD::FP_ROUND, N0.getValueType(), ExtLoad),
+    CombineTo(N0.Val, DAG.getNode(ISD::FP_ROUND, N0.getValueType(), ExtLoad,
+                                  DAG.getIntPtrConstant(1)),
               ExtLoad.getValue(1));
     return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
   }
@@ -4435,13 +4451,11 @@ SDOperand DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
 
       // Otherwise, use InIdx + VecSize
       unsigned Idx = cast<ConstantSDNode>(Extract.getOperand(1))->getValue();
-      BuildVecIndices.push_back(DAG.getConstant(Idx+NumInScalars,
-                                                TLI.getPointerTy()));
+      BuildVecIndices.push_back(DAG.getIntPtrConstant(Idx+NumInScalars));
     }
     
     // Add count and size info.
-    MVT::ValueType BuildVecVT =
-      MVT::getVectorType(TLI.getPointerTy(), NumElts);
+    MVT::ValueType BuildVecVT = MVT::getVectorType(TLI.getPointerTy(), NumElts);
     
     // Return the new VECTOR_SHUFFLE node.
     SDOperand Ops[5];

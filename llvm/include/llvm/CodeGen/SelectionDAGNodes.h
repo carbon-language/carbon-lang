@@ -385,15 +385,24 @@ namespace ISD {
     // operand, a ValueType node.
     SIGN_EXTEND_INREG,
 
-    // FP_TO_[US]INT - Convert a floating point value to a signed or unsigned
-    // integer.
+    /// FP_TO_[US]INT - Convert a floating point value to a signed or unsigned
+    /// integer.
     FP_TO_SINT,
     FP_TO_UINT,
 
-    // FP_ROUND - Perform a rounding operation from the current
-    // precision down to the specified precision (currently always 64->32).
+    /// X = FP_ROUND(Y, TRUNC) - Rounding 'Y' from a larger floating point type
+    /// down to the precision of the destination VT.  TRUNC is a flag, which is
+    /// always an integer that is zero or one.  If TRUNC is 0, this is a
+    /// normal rounding, if it is 1, this FP_ROUND is known to not change the
+    /// value of Y.
+    ///
+    /// The TRUNC = 1 case is used in cases where we know that the value will
+    /// not be modified by the node, because Y is not using any of the extra
+    /// precision of source type.  This allows certain transformations like
+    /// FP_EXTEND(FP_ROUND(X,1)) -> X which are not safe for 
+    /// FP_EXTEND(FP_ROUND(X,0)) because the extra bits aren't removed.
     FP_ROUND,
-
+    
     // FLT_ROUNDS - Returns current rounding mode:
     // -1 Undefined
     //  0 Round to 0
@@ -402,14 +411,14 @@ namespace ISD {
     //  3 Round to -inf
     FLT_ROUNDS,
 
-    // FP_ROUND_INREG - This operator takes a floating point register, and
-    // rounds it to a floating point value.  It then promotes it and returns it
-    // in a register of the same size.  This operation effectively just discards
-    // excess precision.  The type to round down to is specified by the 1th
-    // operation, a VTSDNode (currently always 64->32->64).
+    /// X = FP_ROUND_INREG(Y, VT) - This operator takes an FP register, and
+    /// rounds it to a floating point value.  It then promotes it and returns it
+    /// in a register of the same size.  This operation effectively just
+    /// discards excess precision.  The type to round down to is specified by
+    /// the VT operand, a VTSDNode.
     FP_ROUND_INREG,
 
-    // FP_EXTEND - Extend a smaller FP type into a larger FP type.
+    /// X = FP_EXTEND(Y) - Extend a smaller FP type into a larger FP type.
     FP_EXTEND,
 
     // BIT_CONVERT - Theis operator converts between integer and FP values, as

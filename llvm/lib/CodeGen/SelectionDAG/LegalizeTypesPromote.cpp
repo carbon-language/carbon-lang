@@ -144,8 +144,11 @@ SDOperand DAGTypeLegalizer::PromoteResult_INT_EXTEND(SDNode *N) {
 
 SDOperand DAGTypeLegalizer::PromoteResult_FP_ROUND(SDNode *N) {
   // NOTE: Assumes input is legal.
-  return DAG.getNode(ISD::FP_ROUND_INREG, N->getOperand(0).getValueType(),
-                     N->getOperand(0), DAG.getValueType(N->getValueType(0)));
+  if (N->getConstantOperandVal(1) == 0) 
+    return DAG.getNode(ISD::FP_ROUND_INREG, N->getOperand(0).getValueType(),
+                       N->getOperand(0), DAG.getValueType(N->getValueType(0)));
+  // If the precision discard isn't needed, just return the operand unrounded.
+  return N->getOperand(0);
 }
 
 SDOperand DAGTypeLegalizer::PromoteResult_FP_TO_XINT(SDNode *N) {
@@ -353,7 +356,8 @@ SDOperand DAGTypeLegalizer::PromoteOperand_FP_EXTEND(SDNode *N) {
 
 SDOperand DAGTypeLegalizer::PromoteOperand_FP_ROUND(SDNode *N) {
   SDOperand Op = GetPromotedOp(N->getOperand(0));
-  return DAG.getNode(ISD::FP_ROUND, N->getValueType(0), Op);
+  return DAG.getNode(ISD::FP_ROUND, N->getValueType(0), Op,
+                     DAG.getIntPtrConstant(0));
 }
 
 SDOperand DAGTypeLegalizer::PromoteOperand_INT_TO_FP(SDNode *N) {
