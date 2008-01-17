@@ -1562,6 +1562,12 @@ public:
   ISD::LoadExtType getExtensionType() const { return ExtType; }
   MVT::ValueType getLoadedVT() const { return LoadedVT; }
 
+  /// isIndexed - Return true if this is a pre/post inc/dec load.
+  bool isIndexed() const { return AddrMode != ISD::UNINDEXED; }
+  
+  /// isUnindexed - Return true if this is NOT a pre/post inc/dec load.
+  bool isUnindexed() const { return AddrMode == ISD::UNINDEXED; }
+  
   static bool classof(const LoadSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::LOAD;
@@ -1594,16 +1600,21 @@ protected:
     Ops[3] = ChainValuePtrOff[3]; // Off
     InitOperands(Ops, 4);
     assert(Align != 0 && "Stores should have non-zero aligment");
-    assert((getOffset().getOpcode() == ISD::UNDEF || 
-            AddrMode != ISD::UNINDEXED) &&
+    assert((getOffset().getOpcode() == ISD::UNDEF || isIndexed()) &&
            "Only indexed store has a non-undef offset operand");
   }
 public:
 
-  ISD::MemIndexedMode getAddressingMode() const { return AddrMode; }
   bool isTruncatingStore() const { return IsTruncStore; }
   MVT::ValueType getStoredVT() const { return StoredVT; }
+  ISD::MemIndexedMode getAddressingMode() const { return AddrMode; }
 
+  /// isIndexed - Return true if this is a pre/post inc/dec store.
+  bool isIndexed() const { return AddrMode != ISD::UNINDEXED; }
+
+  /// isUnindexed - Return true if this is NOT a pre/post inc/dec store.
+  bool isUnindexed() const { return AddrMode == ISD::UNINDEXED; }
+  
   static bool classof(const StoreSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::STORE;
