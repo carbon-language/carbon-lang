@@ -19,15 +19,6 @@
 
 namespace clang {
 
-/// Utility method to plow through parentheses to get the first nested
-/// non-ParenExpr expr.
-static inline Expr* IgnoreParen(Expr* E) {
-  while (ParenExpr* P = dyn_cast<ParenExpr>(E))
-    E = P->getSubExpr();
-  
-  return E;
-}
-
 /// Utility method to plow through parenthesis and casts.
 static inline Expr* IgnoreParenCasts(Expr* E) {
   while(true) {

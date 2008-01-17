@@ -439,6 +439,14 @@ bool Expr::hasStaticStorage() const {
   }
 }
 
+Expr* Expr::IgnoreParens() {
+  Expr* E = this;
+  while (ParenExpr* P = dyn_cast<ParenExpr>(E))
+    E = P->getSubExpr();
+  
+  return E;
+}
+
 bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
   switch (getStmtClass()) {
   default:

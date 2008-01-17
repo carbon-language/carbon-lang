@@ -109,7 +109,17 @@ public:
   /// hasStaticStorage - Return true if this expression has static storage
   /// duration.  This means that the address of this expression is a link-time
   /// constant.
-  bool hasStaticStorage() const;
+  bool hasStaticStorage() const;  
+  
+  /// IgnoreParens - Ignore parentheses.  If this Expr is a ParenExpr, return
+  ///  its subexpression.  If that subexpression is also a ParenExpr, 
+  ///  then this method recursively returns its subexpression, and so forth.
+  ///  Otherwise, the method returns the current Expr.
+  Expr* IgnoreParens();
+  
+  const Expr* IgnoreParens() const {
+    return const_cast<Expr*>(this)->IgnoreParens();
+  }
 
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() >= firstExprConstant &&

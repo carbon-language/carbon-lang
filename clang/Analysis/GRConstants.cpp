@@ -216,13 +216,6 @@ public:
 };
 } // end anonymous namespace
 
-static inline Expr* IgnoreParen(Expr* E) {
-  while (ParenExpr* P = dyn_cast<ParenExpr>(E))
-    E = P->getSubExpr();
-  
-  return E;
-}
-
 void GRConstants::ProcessStmt(Stmt* S, NodeBuilder& builder) {
   Builder = &builder;
   Nodes->clear();
@@ -237,7 +230,7 @@ void GRConstants::ProcessStmt(Stmt* S, NodeBuilder& builder) {
 
 ExprVariantTy GRConstants::GetBinding(Expr* E) {
   DSPtr P(NULL);
-  E = IgnoreParen(E);
+  E = E->IgnoreParens();
   
   switch (E->getStmtClass()) {
     case Stmt::DeclRefExprClass:
@@ -364,7 +357,7 @@ void GRConstants::VisitBinSub(BinaryOperator* B) {
 
 
 void GRConstants::VisitBinAssign(BinaryOperator* B) {
-  if (DeclRefExpr* D = dyn_cast<DeclRefExpr>(IgnoreParen(B->getLHS())))
+  if (DeclRefExpr* D = dyn_cast<DeclRefExpr>(B->getLHS()->IgnoreParens()))
     AddBinding(D->getDecl(), GetBinding(B->getRHS()));
 }
 

@@ -751,8 +751,8 @@ static DeclRefExpr* EvalVal(Expr *E) {
 void Sema::CheckFloatComparison(SourceLocation loc, Expr* lex, Expr *rex) {
   bool EmitWarning = true;
   
-  Expr* LeftExprSansParen = IgnoreParen(lex);
-  Expr* RightExprSansParen = IgnoreParen(rex);
+  Expr* LeftExprSansParen = lex->IgnoreParens();
+  Expr* RightExprSansParen = lex->IgnoreParens();
 
   // Special case: check for x == x (which is OK).
   // Do not emit warnings for such cases.
