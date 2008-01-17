@@ -834,6 +834,10 @@ DIAG(err_invalid_conversion_between_vector_and_integer, ERROR,
     "of different size")
 DIAG(err_invalid_conversion_between_vector_and_scalar, ERROR,
     "invalid conversion between vector type '%0' and scalar type '%1'")
+DIAG(err_overload_expr_requires_non_zero_constant, ERROR,
+     "overload requires a non-zero constant expression as first argument")
+DIAG(err_overload_no_match, ERROR,
+     "no matching overload found for arguments of type '%0'")
 
 // CHECK: printf format string errors
 DIAG(warn_printf_not_string_constant, WARNING,

@@ -1124,6 +1124,57 @@ public:
   virtual child_iterator child_end();
 };
 
+/// OverloadExpr - Clang builtin-in function __builtin_overload.
+/// This AST node provides a way to overload functions in C
+/// i.e. float Z = __builtin_overload(2, X, Y, modf, mod, modl);
+/// would pick whichever of the functions modf, mod, and modl that took two
+/// arguments of the same type as X and Y.  
+class OverloadExpr : public Expr {
+  Expr **SubExprs;
+  unsigned NumArgs;
+  unsigned FnIndex;
+  SourceLocation BuiltinLoc;
+  SourceLocation RParenLoc;
+public:
+  OverloadExpr(Expr **args, unsigned narg, unsigned idx, QualType t, 
+               SourceLocation bloc, SourceLocation rploc)
+    : Expr(OverloadExprClass, t), NumArgs(narg), FnIndex(idx), BuiltinLoc(bloc), 
+      RParenLoc(rploc) {
+    SubExprs = new Expr*[narg];
+    for (unsigned i = 0; i != narg; ++i)
+      SubExprs[i] = args[i];
+  }
+  ~OverloadExpr() {
+    delete [] SubExprs;
+  }
+
+  typedef Expr * const *arg_const_iterator;
+  arg_const_iterator arg_begin() const { return SubExprs+1; }
+
+  /// getNumArgs - Return the number of actual arguments to this call.
+  ///
+  unsigned getNumArgs() const { return NumArgs; }
+  
+  /// getArg - Return the specified argument.
+  Expr *getArg(unsigned Arg) {
+    assert(Arg < NumArgs && "Arg access out of range!");
+    return SubExprs[Arg];
+  }
+  Expr *getFn() { return SubExprs[FnIndex]; }
+  
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(BuiltinLoc, RParenLoc);
+  }
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == OverloadExprClass; 
+  }
+  static bool classof(const OverloadExpr *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+};
+
 /// VAArgExpr, used for the builtin function __builtin_va_start.
 class VAArgExpr : public Expr {
   Expr *Val;

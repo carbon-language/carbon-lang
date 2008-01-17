@@ -282,6 +282,7 @@ public:
   // Other Operators.
   Value *VisitConditionalOperator(const ConditionalOperator *CO);
   Value *VisitChooseExpr(ChooseExpr *CE);
+  Value *VisitOverloadExpr(OverloadExpr *OE);
   Value *VisitVAArgExpr(VAArgExpr *VE);
   Value *VisitObjCStringLiteral(const ObjCStringLiteral *E) {
     return CGF.EmitObjCStringLiteral(E);
@@ -989,6 +990,10 @@ Value *ScalarExprEmitter::VisitChooseExpr(ChooseExpr *E) {
   // Emit the LHS or RHS as appropriate.
   return
     Visit(E->isConditionTrue(CGF.getContext()) ? E->getLHS() : E->getRHS());
+}
+
+Value *ScalarExprEmitter::VisitOverloadExpr(OverloadExpr *E) {
+  return CGF.EmitCallExpr(E->getFn(), E->arg_begin()).getScalarVal();
 }
 
 Value *ScalarExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {

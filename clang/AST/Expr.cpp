@@ -78,6 +78,7 @@ const char *UnaryOperator::getOpcodeStr(Opcode Op) {
 // Postfix Operators.
 //===----------------------------------------------------------------------===//
 
+
 CallExpr::CallExpr(Expr *fn, Expr **args, unsigned numargs, QualType t,
                    SourceLocation rparenloc)
   : Expr(CallExprClass, t), NumArgs(numargs) {
@@ -1236,6 +1237,14 @@ Stmt::child_iterator ChooseExpr::child_begin() {
 
 Stmt::child_iterator ChooseExpr::child_end() {
   return reinterpret_cast<Stmt**>(&SubExprs)+END_EXPR;
+}
+
+// OverloadExpr
+Stmt::child_iterator OverloadExpr::child_begin() {
+  return reinterpret_cast<Stmt**>(&SubExprs[0]);
+}
+Stmt::child_iterator OverloadExpr::child_end() {
+  return reinterpret_cast<Stmt**>(&SubExprs[NumArgs]);
 }
 
 // VAArgExpr

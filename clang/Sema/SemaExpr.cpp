@@ -892,7 +892,7 @@ void Sema::DefaultFunctionArrayConversion(Expr *&e) {
     ImpCastExprToType(e, Context.getPointerType(ary->getElementType()));
 }
 
-/// UsualUnaryConversion - Performs various conversions that are common to most
+/// UsualUnaryConversions - Performs various conversions that are common to most
 /// operators (C99 6.3). The conversions of array and function types are 
 /// sometimes surpressed. For example, the array->pointer conversion doesn't
 /// apply if the array is an argument to the sizeof or address (&) operators.
@@ -2072,6 +2072,76 @@ Sema::ExprResult Sema::ActOnChooseExpr(SourceLocation BuiltinLoc, ExprTy *cond,
   QualType resType = condEval.getZExtValue() ? LHSExpr->getType() : 
                                                RHSExpr->getType();
   return new ChooseExpr(BuiltinLoc, CondExpr, LHSExpr, RHSExpr, resType, RPLoc);
+}
+
+/// ExprsCompatibleWithFnType - return true if the Exprs in array Args have
+/// QualTypes that match the QualTypes of the arguments of the FnType.
+static bool ExprsCompatibleWithFnType(Expr **Args, FunctionTypeProto *FnType) {
+  unsigned NumParams = FnType->getNumArgs();
+  for (unsigned i = 0; i != NumParams; ++i)
+    if (Args[i]->getType() != FnType->getArgType(i))
+      return false;
+  return true;
+}
+
+Sema::ExprResult Sema::ActOnOverloadExpr(ExprTy **args, unsigned NumArgs,
+                                         SourceLocation *CommaLocs,
+                                         SourceLocation BuiltinLoc,
+                                         SourceLocation RParenLoc) {
+  assert((NumArgs > 1) && "Too few arguments for OverloadExpr!");
+
+  Expr **Args = reinterpret_cast<Expr**>(args);
+  // The first argument is required to be a constant expression.  It tells us
+  // the number of arguments to pass to each of the functions to be overloaded.
+  Expr *NParamsExpr = Args[0];
+  llvm::APSInt constEval(32);
+  SourceLocation ExpLoc;
+  if (!NParamsExpr->isIntegerConstantExpr(constEval, Context, &ExpLoc))
+    return Diag(ExpLoc, diag::err_overload_expr_requires_non_zero_constant,
+                NParamsExpr->getSourceRange());
+  
+  // Verify that the number of parameters is > 0
+  unsigned NumParams = constEval.getZExtValue();
+  if (NumParams == 0)
+    return Diag(ExpLoc, diag::err_overload_expr_requires_non_zero_constant,
+                NParamsExpr->getSourceRange());
+  // Verify that we have at least 1 + NumParams arguments to the builtin.
+  if ((NumParams + 1) > NumArgs)
+    return Diag(RParenLoc, diag::err_typecheck_call_too_few_args,
+                SourceRange(BuiltinLoc, RParenLoc));
+
+  // Figure out the return type, by matching the args to one of the functions
+  // listed after the paramters.
+  for (unsigned i = NumParams + 1; i < NumArgs; ++i) {
+    // UsualUnaryConversions will convert the function DeclRefExpr into a 
+    // pointer to function.
+    Expr *Fn = UsualUnaryConversions(Args[i]);
+    FunctionTypeProto *FnType = 0;
+    if (const PointerType *PT = Fn->getType()->getAsPointerType())
+      FnType = dyn_cast<FunctionTypeProto>(PT->getPointeeType());
+ 
+    // The Expr type must be FunctionTypeProto, since FunctionTypeProto has no
+    // parameters, and the number of parameters must match the value passed to
+    // the builtin.
+    if (!FnType || (FnType->getNumArgs() != NumParams))
+      continue;
+
+    // Scan the parameter list for the FunctionType, checking the QualType of
+    // each paramter against the QualTypes of the arguments to the builtin.
+    // If they match, return a new OverloadExpr.
+    if (ExprsCompatibleWithFnType(Args+1, FnType))
+      return new OverloadExpr(Args, NumArgs, i, FnType->getResultType(),
+                              BuiltinLoc, RParenLoc);
+  }
+
+  // If we didn't find a matching function Expr in the __builtin_overload list
+  // the return an error.
+  std::string typeNames;
+  for (unsigned i = 0; i != NumParams; ++i)
+    typeNames += Args[i+1]->getType().getAsString() + " ";
+
+  return Diag(BuiltinLoc, diag::err_overload_no_match, typeNames,
+              SourceRange(BuiltinLoc, RParenLoc));
 }
 
 Sema::ExprResult Sema::ActOnVAArg(SourceLocation BuiltinLoc,

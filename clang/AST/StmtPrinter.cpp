@@ -733,6 +733,15 @@ void StmtPrinter::VisitChooseExpr(ChooseExpr *Node) {
   OS << ")";
 }
 
+void StmtPrinter::VisitOverloadExpr(OverloadExpr *Node) {
+  OS << "__builtin_overload(";
+  for (unsigned i = 0, e = Node->getNumArgs(); i != e; ++i) {
+    if (i) OS << ", ";
+    PrintExpr(Node->getArg(i));
+  }
+  OS << ")";
+}
+
 void StmtPrinter::VisitInitListExpr(InitListExpr* Node) {
   OS << "{ ";
   for (unsigned i = 0, e = Node->getNumInits(); i != e; ++i) {

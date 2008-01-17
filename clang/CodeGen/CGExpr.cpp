@@ -450,7 +450,12 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {
           return EmitBuiltinExpr(builtinID, E);
         
   llvm::Value *Callee = EmitScalarExpr(E->getCallee());
-  return EmitCallExpr(Callee, E);
+  return EmitCallExpr(Callee, E->getType(), E->arg_begin());
+}
+
+RValue CodeGenFunction::EmitCallExpr(Expr *FnExpr, Expr *const *Args) {
+  llvm::Value *Callee = EmitScalarExpr(FnExpr);
+  return EmitCallExpr(Callee, FnExpr->getType(), Args);
 }
 
 LValue CodeGenFunction::EmitCallExprLValue(const CallExpr *E) {
@@ -459,45 +464,42 @@ LValue CodeGenFunction::EmitCallExprLValue(const CallExpr *E) {
   return LValue::MakeAddr(RV.getAggregateAddr());
 }
 
-RValue CodeGenFunction::EmitCallExpr(llvm::Value *Callee, const CallExpr *E) {
+RValue CodeGenFunction::EmitCallExpr(llvm::Value *Callee, QualType FnType, 
+                                     Expr *const *ArgExprs) {
   // The callee type will always be a pointer to function type, get the function
   // type.
-  QualType CalleeTy = E->getCallee()->getType();
-  CalleeTy = cast<PointerType>(CalleeTy.getCanonicalType())->getPointeeType();
-  
-  // Get information about the argument types.
-  FunctionTypeProto::arg_type_iterator ArgTyIt = 0, ArgTyEnd = 0;
+  FnType = cast<PointerType>(FnType.getCanonicalType())->getPointeeType();
+  QualType ResultType = cast<FunctionType>(FnType)->getResultType();
   
   // Calling unprototyped functions provides no argument info.
-  if (const FunctionTypeProto *FTP = dyn_cast<FunctionTypeProto>(CalleeTy)) {
-    ArgTyIt  = FTP->arg_type_begin();
-    ArgTyEnd = FTP->arg_type_end();
-  }
+  unsigned NumArgs = 0;
+  if (const FunctionTypeProto *FTP = dyn_cast<FunctionTypeProto>(FnType))
+    NumArgs = FTP->getNumArgs();
   
   llvm::SmallVector<llvm::Value*, 16> Args;
   
   // Handle struct-return functions by passing a pointer to the location that
   // we would like to return into.
-  if (hasAggregateLLVMType(E->getType())) {
+  if (hasAggregateLLVMType(ResultType)) {
     // Create a temporary alloca to hold the result of the call. :(
-    Args.push_back(CreateTempAlloca(ConvertType(E->getType())));
+    Args.push_back(CreateTempAlloca(ConvertType(ResultType)));
     // FIXME: set the stret attribute on the argument.
   }
   
-  for (unsigned i = 0, e = E->getNumArgs(); i != e; ++i) {
-    QualType ArgTy = E->getArg(i)->getType();
+  for (unsigned i = 0, e = NumArgs; i != e; ++i) {
+    QualType ArgTy = ArgExprs[i]->getType();
     
     if (!hasAggregateLLVMType(ArgTy)) {
       // Scalar argument is passed by-value.
-      Args.push_back(EmitScalarExpr(E->getArg(i)));
+      Args.push_back(EmitScalarExpr(ArgExprs[i]));
     } else if (ArgTy->isComplexType()) {
       // Make a temporary alloca to pass the argument.
       llvm::Value *DestMem = CreateTempAlloca(ConvertType(ArgTy));
-      EmitComplexExprIntoAddr(E->getArg(i), DestMem, false);
+      EmitComplexExprIntoAddr(ArgExprs[i], DestMem, false);
       Args.push_back(DestMem);
     } else {
       llvm::Value *DestMem = CreateTempAlloca(ConvertType(ArgTy));
-      EmitAggExpr(E->getArg(i), DestMem, false);
+      EmitAggExpr(ArgExprs[i], DestMem, false);
       Args.push_back(DestMem);
     }
   }
@@ -505,14 +507,14 @@ RValue CodeGenFunction::EmitCallExpr(llvm::Value *Callee, const CallExpr *E) {
   llvm::Value *V = Builder.CreateCall(Callee, &Args[0], &Args[0]+Args.size());
   if (V->getType() != llvm::Type::VoidTy)
     V->setName("call");
-  else if (E->getType()->isComplexType())
+  else if (ResultType->isComplexType())
     return RValue::getComplex(LoadComplexFromAddr(Args[0], false));
-  else if (hasAggregateLLVMType(E->getType()))
+  else if (hasAggregateLLVMType(ResultType))
     // Struct return.
     return RValue::getAggregate(Args[0]);
   else {
     // void return.
-    assert(E->getType()->isVoidType() && "Should only have a void expr here");
+    assert(ResultType->isVoidType() && "Should only have a void expr here");
     V = 0;
   }
       

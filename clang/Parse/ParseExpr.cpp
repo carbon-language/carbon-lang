@@ -550,6 +550,7 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   case tok::kw___builtin_va_arg:
   case tok::kw___builtin_offsetof:
   case tok::kw___builtin_choose_expr:
+  case tok::kw___builtin_overload:
   case tok::kw___builtin_types_compatible_p:
     return ParseBuiltinPrimaryExpression();
   case tok::plusplus:      // unary-expression: '++' unary-expression
@@ -774,6 +775,7 @@ Parser::ExprResult Parser::ParseSizeofAlignofExpression() {
 /// [GNU]   '__builtin_choose_expr' '(' assign-expr ',' assign-expr ','
 ///                                     assign-expr ')'
 /// [GNU]   '__builtin_types_compatible_p' '(' type-name ',' type-name ')'
+/// [CLANG] '__builtin_overload' '(' expr (',' expr)* ')'
 /// 
 /// [GNU] offsetof-member-designator:
 /// [GNU]   identifier
@@ -907,6 +909,44 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
     }
     Res = Actions.ActOnChooseExpr(StartLoc, Cond.Val, Expr1.Val, Expr2.Val,
                                   ConsumeParen());
+    break;
+  }
+  case tok::kw___builtin_overload: {
+    llvm::SmallVector<ExprTy*, 8> ArgExprs;
+    llvm::SmallVector<SourceLocation, 8> CommaLocs;
+
+    // For each iteration through the loop look for assign-expr followed by a
+    // comma.  If there is no comma, break and attempt to match r-paren.
+    if (Tok.isNot(tok::r_paren)) {
+      while (1) {
+        ExprResult ArgExpr = ParseAssignmentExpression();
+        if (ArgExpr.isInvalid) {
+          SkipUntil(tok::r_paren);
+          return ExprResult(true);
+        } else
+          ArgExprs.push_back(ArgExpr.Val);
+        
+        if (Tok.isNot(tok::comma))
+          break;
+        // Move to the next argument, remember where the comma was.
+        CommaLocs.push_back(ConsumeToken());
+      }
+    }
+    
+    // Attempt to consume the r-paren
+    if (Tok.isNot(tok::r_paren)) {
+      Diag(Tok, diag::err_expected_rparen);
+      SkipUntil(tok::r_paren);
+      return ExprResult(true);
+    }
+    
+    // __builtin_overload requires at least 2 arguments
+    if (ArgExprs.size() < 2) {
+      Diag(Tok, diag::err_typecheck_call_too_few_args);
+      return ExprResult(true);
+    }
+    Res = Actions.ActOnOverloadExpr(&ArgExprs[0], ArgExprs.size(), 
+                                    &CommaLocs[0], StartLoc, ConsumeParen());
     break;
   }
   case tok::kw___builtin_types_compatible_p:

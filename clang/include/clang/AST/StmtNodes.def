@@ -98,7 +98,10 @@ STMT(73, ObjCSelectorExpr     , Expr)
 STMT(74, ObjCProtocolExpr     , Expr)
 STMT(75, ObjCIvarRefExpr      , Expr)
 
-LAST_EXPR(75)
+// Clang Extensions.
+STMT(76, OverloadExpr         , Expr)
+
+LAST_EXPR(76)
 
 #undef STMT
 #undef FIRST_STMT
