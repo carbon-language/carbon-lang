@@ -549,12 +549,19 @@ ObjCMethodDecl *ObjCProtocolDecl::lookupClassMethod(Selector Sel) {
   return NULL;
 }
 
-int ObjCMethodDecl::getSynthesizedSelectorSize() const {
+/// getSynthesizedMethodSize - Compute size of synthesized method name
+/// as done be the rewrite.
+///
+unsigned ObjCMethodDecl::getSynthesizedMethodSize() const {
   // syntesized method name is a concatenation of -/+[class-name selector]
   // Get length of this name.
-  int length = 4;  // for '+' or '-', '[', space in between and ']'
-  length += getSelector().getName().size(); // for selector name.
-  length += strlen(getMethodContext()->getName()); // for its class name
+  unsigned length = 3;  // _I_ or _C_
+  length += strlen(getClassInterface()->getName()) +1; // extra for _
+  NamedDecl *MethodContext = getMethodContext();
+  if (ObjCCategoryImplDecl *CID = 
+      dyn_cast<ObjCCategoryImplDecl>(MethodContext))
+    length += strlen(CID->getName()) +1;
+  length += getSelector().getName().size(); // selector name
   return length; 
 }
 

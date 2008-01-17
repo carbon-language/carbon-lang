@@ -131,7 +131,7 @@ Sema::ExprResult Sema::ActOnPreDefinedExpr(SourceLocation Loc,
   if (CurFunctionDecl)
     Length = CurFunctionDecl->getIdentifier()->getLength();
   else
-    Length = CurMethodDecl->getSynthesizedSelectorSize();
+    Length = CurMethodDecl->getSynthesizedMethodSize();
   
   llvm::APInt LengthI(32, Length + 1);
   QualType ResTy = Context.CharTy.getQualifiedType(QualType::Const);

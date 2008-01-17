@@ -116,7 +116,7 @@ public:
   ObjCInterfaceDecl *const getClassInterface() const;
   
   Selector getSelector() const { return SelName; }
-  int getSynthesizedSelectorSize() const;
+  unsigned getSynthesizedMethodSize() const;
   QualType getResultType() const { return MethodDeclType; }
   
   // Iterator access to formal parameters.
