@@ -120,10 +120,14 @@ public:
         continue;
       }
       
-      // FIXME: need to compare data values, not key values, but our
-      // traits don't support this yet.
+      // Compare the keys.
       if (!ImutInfo::isEqual(ImutInfo::KeyOfValue(LItr->getValue()),
                              ImutInfo::KeyOfValue(RItr->getValue())))
+        return false;
+      
+      // Also compare the data values.
+      if (!ImutInfo::isDataEqual(ImutInfo::DataOfValue(LItr->getValue()),
+                                 ImutInfo::DataOfValue(RItr->getValue())))
         return false;
       
       ++LItr;
@@ -773,8 +777,11 @@ struct ImutContainerInfo : public ImutProfileInfo<T> {
   typedef typename ImutProfileInfo<T>::value_type_ref  value_type_ref;
   typedef value_type      key_type;
   typedef value_type_ref  key_type_ref;
+  typedef bool            data_type;
+  typedef bool            data_type_ref;
   
   static inline key_type_ref KeyOfValue(value_type_ref D) { return D; }
+  static inline data_type_ref DataOfValue(value_type_ref) { return true; }
   
   static inline bool isEqual(key_type_ref LHS, key_type_ref RHS) { 
     return std::equal_to<key_type>()(LHS,RHS);
@@ -783,6 +790,8 @@ struct ImutContainerInfo : public ImutProfileInfo<T> {
   static inline bool isLess(key_type_ref LHS, key_type_ref RHS) {
     return std::less<key_type>()(LHS,RHS);
   }
+  
+  static inline bool isDataEqual(data_type_ref,data_type_ref) { return true; }
 };
 
 /// ImutContainerInfo - Specialization for pointer values to treat pointers
@@ -794,8 +803,11 @@ struct ImutContainerInfo<T*> : public ImutProfileInfo<T*> {
   typedef typename ImutProfileInfo<T*>::value_type_ref  value_type_ref;
   typedef value_type      key_type;
   typedef value_type_ref  key_type_ref;
+  typedef bool            data_type;
+  typedef bool            data_type_ref;
   
   static inline key_type_ref KeyOfValue(value_type_ref D) { return D; }
+  static inline data_type_ref DataOfValue(value_type_ref) { return true; }
   
   static inline bool isEqual(key_type_ref LHS, key_type_ref RHS) {
     return LHS == RHS;
@@ -804,6 +816,8 @@ struct ImutContainerInfo<T*> : public ImutProfileInfo<T*> {
   static inline bool isLess(key_type_ref LHS, key_type_ref RHS) {
     return LHS < RHS;
   }
+  
+  static inline bool isDataEqual(data_type_ref,data_type_ref) { return true; }
 };
 
 //===----------------------------------------------------------------------===//    

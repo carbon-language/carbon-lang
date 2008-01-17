@@ -34,12 +34,19 @@ struct ImutKeyValueInfo {
     return V.first;
   }
   
-  static inline bool isEqual(key_type_ref L, key_type_ref R) {
-    return ImutContainerInfo<T>::isEqual(L,R);
+  static inline data_type_ref DataOfValue(value_type_ref V) {
+    return V.second;
   }
   
+  static inline bool isEqual(key_type_ref L, key_type_ref R) {
+    return ImutContainerInfo<T>::isEqual(L,R);
+  }  
   static inline bool isLess(key_type_ref L, key_type_ref R) {
     return ImutContainerInfo<T>::isLess(L,R);
+  }
+  
+  static inline bool isDataEqual(data_type_ref L, data_type_ref R) {
+    return ImutContainerInfo<S>::isEqual(L,R);
   }
   
   static inline void Profile(FoldingSetNodeID& ID, value_type_ref V) {
