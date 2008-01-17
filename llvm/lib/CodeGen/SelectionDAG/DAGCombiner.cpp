@@ -846,8 +846,9 @@ SDOperand combineSelectAndUse(SDNode *N, SDOperand Slct, SDOperand OtherOp,
            RHS.getOpcode() == ISD::Constant &&
            cast<ConstantSDNode>(RHS)->isNullValue()) {
     std::swap(LHS, RHS);
-    bool isInt = MVT::isInteger(isSlctCC ? Slct.getOperand(0).getValueType()
-                                : Slct.getOperand(0).getOperand(0).getValueType());
+    SDOperand Op0 = Slct.getOperand(0);
+    bool isInt = MVT::isInteger(isSlctCC ? Op0.getValueType()
+                                : Op0.getOperand(0).getValueType());
     CC = ISD::getSetCCInverse(CC, isInt);
     DoXform = true;
     InvCC = true;
@@ -4111,7 +4112,7 @@ SDOperand DAGCombiner::visitLOAD(SDNode *N) {
         DOUT << " and 2 other values\n";
         DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 0), Undef, &NowDead);
         DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 1),
-                                      DAG.getNode(ISD::UNDEF, N->getValueType(1)),
+                                    DAG.getNode(ISD::UNDEF, N->getValueType(1)),
                                       &NowDead);
         DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 2), Chain, &NowDead);
         removeFromWorkList(N);
@@ -4261,12 +4262,13 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
       SDOperand ReplStore;
       if (ST->isTruncatingStore()) {
         ReplStore = DAG.getTruncStore(BetterChain, Value, Ptr,
-          ST->getSrcValue(), ST->getSrcValueOffset(), ST->getStoredVT(),
-          ST->isVolatile(), ST->getAlignment());
+                                      ST->getSrcValue(),ST->getSrcValueOffset(),
+                                      ST->getStoredVT(),
+                                      ST->isVolatile(), ST->getAlignment());
       } else {
         ReplStore = DAG.getStore(BetterChain, Value, Ptr,
-          ST->getSrcValue(), ST->getSrcValueOffset(),
-          ST->isVolatile(), ST->getAlignment());
+                                 ST->getSrcValue(), ST->getSrcValueOffset(),
+                                 ST->isVolatile(), ST->getAlignment());
       }
       
       // Create token to keep both nodes around.
