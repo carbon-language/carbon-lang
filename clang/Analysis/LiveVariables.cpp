@@ -77,7 +77,16 @@ void TransferFuncs::Visit(Stmt *S) {
   if (AD.Observer)
     AD.Observer->ObserveStmt(S,AD,LiveState);
   
-  static_cast<CFGStmtVisitor<TransferFuncs>*>(this)->Visit(S);
+
+  if (S == getCurrentBlkStmt()) {
+    StmtVisitor<TransferFuncs,void>::Visit(S);
+    if (getCFG().isBlkExpr(S)) LiveState(S,AD) = Dead;
+  }
+  else if (!getCFG().isBlkExpr(S))
+    StmtVisitor<TransferFuncs,void>::Visit(S);
+  else
+    // For block-level expressions, mark that they are live.
+    LiveState(S,AD) = Alive;
 }
 
 void TransferFuncs::VisitDeclRefExpr(DeclRefExpr* DR) {
@@ -184,6 +193,10 @@ bool LiveVariables::isLive(const CFGBlock* B, const VarDecl* D) const {
 
 bool LiveVariables::isLive(const ValTy& Live, const VarDecl* D) const {
   return Live(D,getAnalysisData());
+}
+
+bool LiveVariables::isLive(const Stmt* Loc, const Stmt* StmtVal) const {
+  return getStmtData(Loc)(StmtVal,getAnalysisData());
 }
 
 //===----------------------------------------------------------------------===//

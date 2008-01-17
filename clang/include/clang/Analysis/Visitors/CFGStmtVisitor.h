@@ -33,7 +33,7 @@ static_cast<ImplClass*>(this)->BlockStmt_Visit ## CLASS(static_cast<CLASS*>(S));
 
 template <typename ImplClass, typename RetTy=void>
 class CFGStmtVisitor : public StmtVisitor<ImplClass,RetTy> {
-  Stmt* CurrentBlkExpr;
+  Stmt* CurrentBlkStmt;
 
   struct NullifyStmt {
     Stmt*& S;  
@@ -42,11 +42,13 @@ class CFGStmtVisitor : public StmtVisitor<ImplClass,RetTy> {
     ~NullifyStmt() { S = NULL; }
   };
   
-public:  
-  CFGStmtVisitor() : CurrentBlkExpr(NULL) {}  
+public:
+  CFGStmtVisitor() : CurrentBlkStmt(NULL) {}  
+  
+  Stmt* getCurrentBlkStmt() const { return CurrentBlkStmt; }
   
   RetTy Visit(Stmt* S) {
-    if (S == CurrentBlkExpr || 
+    if (S == CurrentBlkStmt || 
         !static_cast<ImplClass*>(this)->getCFG().isBlkExpr(S))
       return StmtVisitor<ImplClass,RetTy>::Visit(S);
     else
@@ -59,8 +61,8 @@ public:
   /// is no implementation provided for a BlockStmt_XXX method, we default
   /// to using StmtVisitor's Visit method.
   RetTy BlockStmt_Visit(Stmt* S) {
-    CurrentBlkExpr = S;
-    NullifyStmt cleanup(CurrentBlkExpr);
+    CurrentBlkStmt = S;
+    NullifyStmt cleanup(CurrentBlkStmt);
     
     switch (S->getStmtClass()) {
       DISPATCH_CASE(CallExpr)

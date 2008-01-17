@@ -139,11 +139,11 @@ struct ExprDeclBitVector_Types {
     void setCFG(CFG* c) { cfg = c; }
     CFG& getCFG() { assert(cfg && "CFG should not be NULL."); return *cfg; }
     
-    bool isTracked(const Expr* E) { return cfg->isBlkExpr(E); }
+    bool isTracked(const Stmt* S) { return cfg->isBlkExpr(S); }
     using DeclBitVector_Types::AnalysisDataTy::isTracked;
 
-    unsigned getIdx(const Expr* E) const {
-      CFG::BlkExprNumTy I = cfg->getBlkExprNum(E);
+    unsigned getIdx(const Stmt* S) const {
+      CFG::BlkExprNumTy I = cfg->getBlkExprNum(S);
       assert(I && "expression not tracked for bitvector.");
       return I;
     }
@@ -187,12 +187,12 @@ struct ExprDeclBitVector_Types {
     }
         
     llvm::BitVector::reference
-    operator()(const Expr* E, const AnalysisDataTy& AD) {
-      return ExprBV[AD.getIdx(E)];      
+    operator()(const Stmt* S, const AnalysisDataTy& AD) {
+      return ExprBV[AD.getIdx(S)];      
     }    
     const llvm::BitVector::reference
-    operator()(const Expr* E, const AnalysisDataTy& AD) const {
-      return const_cast<ValTy&>(*this)(E,AD);
+    operator()(const Stmt* S, const AnalysisDataTy& AD) const {
+      return const_cast<ValTy&>(*this)(S,AD);
     }
     
     using DeclBitVector_Types::ValTy::operator();

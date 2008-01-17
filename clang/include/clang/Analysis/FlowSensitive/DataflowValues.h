@@ -110,9 +110,9 @@ public:
   
   /// getStmtData - Retrieves the dataflow values associated with a 
   ///  specified Stmt.  If the dataflow analysis is a forward analysis,
-  ///  this data corresponds to the point immediately after a Stmt. 
+  ///  this data corresponds to the point immediately before a Stmt. 
   ///  If the analysis is a backwards analysis, it is associated with
-  ///  the point before a Stmt.  This data is only computed for block-level
+  ///  the point after a Stmt.  This data is only computed for block-level
   ///  expressions, and only when requested when the analysis is executed.
   ValTy& getStmtData(const Stmt* S) {
     assert (StmtDataMap && "Dataflow values were not computed for statements.");

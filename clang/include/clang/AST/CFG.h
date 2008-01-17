@@ -255,9 +255,8 @@ public:
     operator unsigned() const { assert(Idx >=0); return (unsigned) Idx; }
   };
     
-  bool          isBlkExpr(const Stmt* S);
-  bool          isBlkExpr(const Expr* E) { return getBlkExprNum(E); }
-  BlkExprNumTy  getBlkExprNum(const Expr* E);
+  bool          isBlkExpr(const Stmt* S) { return getBlkExprNum(S); }
+  BlkExprNumTy  getBlkExprNum(const Stmt* S);
   unsigned      getNumBlkExprs();
   
   unsigned getNumBlockIDs() const { return NumBlockIDs; }

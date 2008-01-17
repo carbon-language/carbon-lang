@@ -988,7 +988,7 @@ void CFGBlock::reverseStmts() { std::reverse(Stmts.begin(),Stmts.end()); }
 //===----------------------------------------------------------------------===//
 
 namespace {
-  typedef llvm::DenseMap<const Expr*,unsigned> BlkExprMapTy;
+  typedef llvm::DenseMap<const Stmt*,unsigned> BlkExprMapTy;
 }
 
 static BlkExprMapTy* PopulateBlkExprMap(CFG& cfg) {
@@ -999,23 +999,27 @@ static BlkExprMapTy* PopulateBlkExprMap(CFG& cfg) {
       if (const Expr* E = dyn_cast<Expr>(*BI)) {
         unsigned x = M->size();
         (*M)[E] = x;
+
+        // Special handling for statement expressions.  The last statement
+        // in the statement expression is also a block-level expr.
+        if (const StmtExpr* S = dyn_cast<StmtExpr>(E)) {
+          const CompoundStmt* C = S->getSubStmt();
+          if (!C->body_empty()) {
+            x = M->size();
+            (*M)[C->body_back()] = x;
+          }
+        }
       }
-  
+
   return M;
 }
 
-bool CFG::isBlkExpr(const Stmt* S) {
-  assert (S != NULL);
-  if (const Expr* E = dyn_cast<Expr>(S)) return getBlkExprNum(E);
-  else return true;  // Statements are by default "block-level expressions."
-}
-
-CFG::BlkExprNumTy CFG::getBlkExprNum(const Expr* E) {
-  assert(E != NULL);
+CFG::BlkExprNumTy CFG::getBlkExprNum(const Stmt* S) {
+  assert(S != NULL);
   if (!BlkExprMap) { BlkExprMap = (void*) PopulateBlkExprMap(*this); }
   
   BlkExprMapTy* M = reinterpret_cast<BlkExprMapTy*>(BlkExprMap);
-  BlkExprMapTy::iterator I = M->find(E);
+  BlkExprMapTy::iterator I = M->find(S);
   
   if (I == M->end()) return CFG::BlkExprNumTy();
   else return CFG::BlkExprNumTy(I->second);

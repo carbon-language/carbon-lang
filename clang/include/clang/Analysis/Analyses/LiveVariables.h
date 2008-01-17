@@ -30,11 +30,10 @@ struct LiveVariables_ValueTypes {
 
 
   // We need to keep track of both declarations and CFGBlock-level expressions,
-  // (so that we don't explore such expressions twice), but we only need
-  // liveness information for declarations (hence 
-  // ValTy = DeclBitVector_Types::ValTy instead of 
-  // ValTy = ExprDeclBitVector_Types::ValTy).
-
+  // (so that we don't explore such expressions twice).  We also want
+  // to compute liveness information for block-level expressions, since these
+  // act as "temporary" values.
+  
   struct AnalysisDataTy : public ExprDeclBitVector_Types::AnalysisDataTy {
     ObserverTy* Observer;
     
@@ -42,7 +41,7 @@ struct LiveVariables_ValueTypes {
   };
 
     // We only keep actual dataflow state for declarations.
-  typedef DeclBitVector_Types::ValTy ValTy;
+  typedef ExprDeclBitVector_Types::ValTy ValTy;
   
   //===-----------------------------------------------------===//
   // ObserverTy - Observer for uninitialized values queries.
@@ -76,6 +75,10 @@ public:
   ///  has been recorded at the statement level (see runOnAllBlocks), and
   ///  only returns liveness information for block-level expressions.
   bool isLive(const Stmt* S, const VarDecl* D) const;
+                                              
+  /// IsLive - Returns true the block-level expression "value" is live
+  ///  before the given block-level expression (see runOnAllBlocks).
+  bool isLive(const Stmt* Loc, const Stmt* StmtVal) const;
   
   /// IsLive - Return true if a variable is live according to the
   ///  provided livness bitvector.

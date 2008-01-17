@@ -236,8 +236,8 @@ private:
   /// ProcessBlock - Process the transfer functions for a given block.
   void ProcessBlock(const CFGBlock* B, bool recordStmtValues) {
     for (StmtItr I=ItrTraits::StmtBegin(B), E=ItrTraits::StmtEnd(B); I!=E;++I) {
-      TF.BlockStmt_Visit(const_cast<Stmt*>(*I));
       if (recordStmtValues) D.getStmtDataMap()[*I] = TF.getVal();
+      TF.BlockStmt_Visit(const_cast<Stmt*>(*I));
     }      
   }
 
