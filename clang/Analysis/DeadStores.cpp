@@ -80,7 +80,7 @@ void CheckDeadStores(CFG& cfg, ASTContext &Ctx, Diagnostic &Diags) {
   LiveVariables L(cfg);
   L.runOnCFG(cfg);
   DeadStoreObs A(Ctx, Diags);
-  L.runOnAllBlocks(cfg,A);
+  L.runOnAllBlocks(cfg,&A);
 }
 
 } // end namespace clang

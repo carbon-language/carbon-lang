@@ -50,6 +50,7 @@ public:
   typedef _AnalysisDirTag                          AnalysisDirTag;
   typedef llvm::DenseMap<ProgramPoint, ValTy>      EdgeDataMapTy;
   typedef llvm::DenseMap<const CFGBlock*, ValTy>   BlockDataMapTy;
+  typedef llvm::DenseMap<const Stmt*, ValTy>       StmtDataMapTy;
 
   //===--------------------------------------------------------------------===//
   // Predicates.
@@ -73,6 +74,9 @@ private:
   //===--------------------------------------------------------------------===//
 
 public:
+  DataflowValues() : StmtDataMap(NULL) {}
+  ~DataflowValues() { delete StmtDataMap; }
+  
   /// InitializeValues - Invoked by the solver to initialize state needed for
   ///  dataflow analysis.  This method is usually specialized by subclasses.
   void InitializeValues(const CFG& cfg) {};  
@@ -102,7 +106,24 @@ public:
   
   const ValTy& getBlockData(const CFGBlock* B) const {
     return const_cast<DataflowValues*>(this)->getBlockData(B);
-  }  
+  }
+  
+  /// getStmtData - Retrieves the dataflow values associated with a 
+  ///  specified Stmt.  If the dataflow analysis is a forward analysis,
+  ///  this data corresponds to the point immediately after a Stmt. 
+  ///  If the analysis is a backwards analysis, it is associated with
+  ///  the point before a Stmt.  This data is only computed for block-level
+  ///  expressions, and only when requested when the analysis is executed.
+  ValTy& getStmtData(const Stmt* S) {
+    assert (StmtDataMap && "Dataflow values were not computed for statements.");
+    typename StmtDataMapTy::iterator I = StmtDataMap->find(S);
+    assert (I != StmtDataMap->end() && "No data associated with statement.");
+    return I->second;
+  }
+  
+  const ValTy& getStmtData(const Stmt* S) const {
+    return const_cast<DataflowValues*>(this)->getStmtData(S);
+  }
   
   /// getEdgeDataMap - Retrieves the internal map between CFG edges and
   ///  dataflow values.  Usually used by a dataflow solver to compute
@@ -117,6 +138,17 @@ public:
   /// to the dataflow values at the end of the block.
   BlockDataMapTy& getBlockDataMap() { return BlockDataMap; }
   const BlockDataMapTy& getBlockDataMap() const { return BlockDataMap; }
+  
+  /// getStmtDataMap - Retrieves the internal map between Stmts and
+  /// dataflow values.
+  StmtDataMapTy& getStmtDataMap() {
+    if (!StmtDataMap) StmtDataMap = new StmtDataMapTy();
+    return *StmtDataMap;
+  }
+    
+  const StmtDataMapTy& getStmtDataMap() const {
+    return const_cast<DataflowValues*>(this)->getStmtDataMap();
+  }
 
   /// getAnalysisData - Retrieves the meta data associated with a 
   ///  dataflow analysis for analyzing a particular CFG.  
@@ -132,6 +164,7 @@ public:
 protected:
   EdgeDataMapTy      EdgeDataMap;
   BlockDataMapTy     BlockDataMap;
+  StmtDataMapTy*     StmtDataMap;
   AnalysisDataTy     AnalysisData;
 };          
 

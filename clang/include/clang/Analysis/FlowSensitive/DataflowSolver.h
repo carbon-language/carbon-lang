@@ -140,12 +140,12 @@ public:
   ~DataflowSolver() {}  
   
   /// runOnCFG - Computes dataflow values for all blocks in a CFG.
-  void runOnCFG(CFG& cfg) {
+  void runOnCFG(CFG& cfg, bool recordStmtValues = false) {
     // Set initial dataflow values and boundary conditions.
     D.InitializeValues(cfg);     
     // Solve the dataflow equations.  This will populate D.EdgeDataMap
     // with dataflow values.
-    SolveDataflowEquations(cfg);    
+    SolveDataflowEquations(cfg, recordStmtValues);
   }
   
   /// runOnBlock - Computes dataflow values for a given block.  This
@@ -153,23 +153,29 @@ public:
   ///  dataflow values using runOnCFG, as runOnBlock is intended to
   ///  only be used for querying the dataflow values within a block
   ///  with and Observer object.
-  void runOnBlock(const CFGBlock* B) {
+  void runOnBlock(const CFGBlock* B, bool recordStmtValues) {
     BlockDataMapTy& M = D.getBlockDataMap();
     typename BlockDataMapTy::iterator I = M.find(B);
 
     if (I != M.end()) {
       TF.getVal().copyValues(I->second);
-      ProcessBlock(B);
+      ProcessBlock(B, recordStmtValues);
     }
   }
   
-  void runOnBlock(const CFGBlock& B) { runOnBlock(&B); }
-  void runOnBlock(CFG::iterator& I) { runOnBlock(*I); }
-  void runOnBlock(CFG::const_iterator& I) { runOnBlock(*I); }
+  void runOnBlock(const CFGBlock& B, bool recordStmtValues) {
+    runOnBlock(&B, recordStmtValues);
+  }  
+  void runOnBlock(CFG::iterator& I, bool recordStmtValues) {
+    runOnBlock(*I, recordStmtValues);
+  }
+  void runOnBlock(CFG::const_iterator& I, bool recordStmtValues) {
+    runOnBlock(*I, recordStmtValues);
+  }
 
-  void runOnAllBlocks(const CFG& cfg) {
+  void runOnAllBlocks(const CFG& cfg, bool recordStmtValues = false) {
     for (CFG::const_iterator I=cfg.begin(), E=cfg.end(); I!=E; ++I)
-      runOnBlock(I);
+      runOnBlock(I, recordStmtValues);
   }
   
   //===----------------------------------------------------===//
@@ -180,13 +186,13 @@ private:
  
   /// SolveDataflowEquations - Perform the actual worklist algorithm
   ///  to compute dataflow values.
-  void SolveDataflowEquations(CFG& cfg) {
+  void SolveDataflowEquations(CFG& cfg, bool recordStmtValues) {
     EnqueueFirstBlock(cfg,AnalysisDirTag());
     
     while (!WorkList.isEmpty()) {
       const CFGBlock* B = WorkList.dequeue();
       ProcessMerge(cfg,B);
-      ProcessBlock(B);
+      ProcessBlock(B, recordStmtValues);
       UpdateEdges(cfg,B,TF.getVal());
     }
   }
@@ -228,9 +234,11 @@ private:
   
 
   /// ProcessBlock - Process the transfer functions for a given block.
-  void ProcessBlock(const CFGBlock* B) {
-    for (StmtItr I=ItrTraits::StmtBegin(B), E=ItrTraits::StmtEnd(B); I!=E; ++I)
+  void ProcessBlock(const CFGBlock* B, bool recordStmtValues) {
+    for (StmtItr I=ItrTraits::StmtBegin(B), E=ItrTraits::StmtEnd(B); I!=E;++I) {
       TF.BlockStmt_Visit(const_cast<Stmt*>(*I));
+      if (recordStmtValues) D.getStmtDataMap()[*I] = TF.getVal();
+    }      
   }
 
   /// UpdateEdges - After processing the transfer functions for a

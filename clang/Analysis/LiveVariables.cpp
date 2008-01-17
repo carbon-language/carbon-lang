@@ -165,11 +165,12 @@ void LiveVariables::runOnCFG(CFG& cfg) {
 }
 
 void LiveVariables::runOnAllBlocks(const CFG& cfg,
-                                   LiveVariables::ObserverTy& Obs) {
+                                   LiveVariables::ObserverTy* Obs,
+                                   bool recordStmtValues) {
   Solver S(*this);
   ObserverTy* OldObserver = getAnalysisData().Observer;
-  getAnalysisData().Observer = &Obs;
-  S.runOnAllBlocks(cfg);
+  getAnalysisData().Observer = Obs;
+  S.runOnAllBlocks(cfg, recordStmtValues);
   getAnalysisData().Observer = OldObserver;
 }
 

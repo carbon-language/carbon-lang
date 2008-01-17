@@ -70,6 +70,12 @@ public:
   /// IsLive - Return true if a variable is live at beginning of a
   /// specified block.
   bool isLive(const CFGBlock* B, const VarDecl* D) const;
+                                              
+  /// IsLive - Returns true if a variable is live at the beginning of the
+  ///  the statement.  This query only works if liveness information
+  ///  has been recorded at the statement level (see runOnAllBlocks), and
+  ///  only returns liveness information for block-level expressions.
+  bool isLive(const Stmt* S, const VarDecl* D) const;
   
   /// IsLive - Return true if a variable is live according to the
   ///  provided livness bitvector.
@@ -93,7 +99,13 @@ public:
   void InitializeValues(const CFG& cfg);
   
   void runOnCFG(CFG& cfg);
-  void runOnAllBlocks(const CFG& cfg, ObserverTy& Obs);
+                                              
+  /// runOnAllBlocks - Propagate the dataflow values once for each block,
+  ///  starting from the current dataflow values.  'recordStmtValues' indicates
+  ///  whether the method should store dataflow values per each individual
+  ///  block-level expression.
+  void runOnAllBlocks(const CFG& cfg, ObserverTy* Obs,
+                      bool recordStmtValues=false);
 };
 
 } // end namespace clang

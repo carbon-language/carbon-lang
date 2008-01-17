@@ -189,6 +189,7 @@ public:
     cfg = &c;    
     Liveness = new LiveVariables(c);
     Liveness->runOnCFG(c);
+    Liveness->runOnAllBlocks(c, NULL, true);
   }
   
   StateTy getInitialState() {
@@ -274,9 +275,6 @@ void GRConstants::SwitchNodeSets() {
 
 GRConstants::StateTy
 GRConstants::RemoveSubExprMappings(StateTy M) {
-#if 0
-  return M;
-#else
   for (StateTy::iterator I = M.begin(), E = M.end();
        I!=E && I.getKey().getKind() == DSPtr::IsSubExp; ++I) {
     // Note: we can assign a new map to M since the iterators are
@@ -286,16 +284,12 @@ GRConstants::RemoveSubExprMappings(StateTy M) {
   }
 
   return M;
-#endif
 }
 
 
 GRConstants::StateTy
 GRConstants::RemoveDescendantMappings(Stmt* S, GRConstants::StateTy State,
                                       unsigned Levels) {
-#if 1
-  return State;
-#else
   typedef Stmt::child_iterator iterator;
   
   for (iterator I=S->child_begin(), E=S->child_end(); I!=E; ++I)
@@ -317,7 +311,6 @@ GRConstants::RemoveDescendantMappings(Stmt* S, GRConstants::StateTy State,
     }
   
   return State;
-#endif
 }
 
 void GRConstants::DoStmt(Stmt* S) {  
@@ -357,8 +350,11 @@ void GRConstants::VisitBinSub(BinaryOperator* B) {
 
 
 void GRConstants::VisitBinAssign(BinaryOperator* B) {
-  if (DeclRefExpr* D = dyn_cast<DeclRefExpr>(B->getLHS()->IgnoreParens()))
-    AddBinding(D->getDecl(), GetBinding(B->getRHS()));
+  if (DeclRefExpr* D = dyn_cast<DeclRefExpr>(B->getLHS()->IgnoreParens())) {
+    ExprVariantTy V = GetBinding(B->getRHS());
+    AddBinding(D->getDecl(), V);
+    AddBinding(B, V);
+  }
 }
 
 //===----------------------------------------------------------------------===//
