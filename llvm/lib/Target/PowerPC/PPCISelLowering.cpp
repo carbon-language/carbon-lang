@@ -54,10 +54,9 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   // PowerPC has an i16 but no i8 (or i1) SEXTLOAD
   setLoadXAction(ISD::SEXTLOAD, MVT::i1, Expand);
   setLoadXAction(ISD::SEXTLOAD, MVT::i8, Expand);
-  
-  // PowerPC does not have truncstore for i1.
-  setStoreXAction(MVT::i1, Promote);
-
+    
+  setTruncStoreAction(MVT::f64, MVT::f32, Expand);
+    
   // PowerPC has pre-inc load and store's.
   setIndexedLoadAction(ISD::PRE_INC, MVT::i1, Legal);
   setIndexedLoadAction(ISD::PRE_INC, MVT::i8, Legal);

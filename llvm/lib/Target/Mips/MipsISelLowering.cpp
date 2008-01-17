@@ -72,9 +72,6 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
   setLoadXAction(ISD::ZEXTLOAD, MVT::i1,  Promote);
   setLoadXAction(ISD::SEXTLOAD, MVT::i1,  Promote);
 
-  // Store operations for i1 types must be promoted
-  setStoreXAction(MVT::i1, Promote);
-
   // Mips does not have these NodeTypes below.
   setOperationAction(ISD::BR_JT,     MVT::Other, Expand);
   setOperationAction(ISD::BR_CC,     MVT::Other, Expand);

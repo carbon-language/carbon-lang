@@ -2239,15 +2239,24 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         break;
       }
     } else {
-      // Truncating store
-      assert(isTypeLegal(ST->getValue().getValueType()) &&
-             "Cannot handle illegal TRUNCSTORE yet!");
-      Tmp3 = LegalizeOp(ST->getValue());
+      switch (getTypeAction(ST->getValue().getValueType())) {
+      case Legal:
+        Tmp3 = LegalizeOp(ST->getValue());
+        break;
+      case Promote:
+        // We can promote the value, the truncstore will still take care of it.
+        Tmp3 = PromoteOp(ST->getValue());
+        break;
+      case Expand:
+        // Just store the low part.  This may become a non-trunc store, so make
+        // sure to use getTruncStore, not UpdateNodeOperands below.
+        ExpandOp(ST->getValue(), Tmp3, Tmp4);
+        return DAG.getTruncStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
+                                 SVOffset, MVT::i8, isVolatile, Alignment);
+      }
     
-      // The only promote case we handle is TRUNCSTORE:i1 X into
-      //   -> TRUNCSTORE:i8 (and X, 1)
-      if (ST->getStoredVT() == MVT::i1 &&
-          TLI.getStoreXAction(MVT::i1) == TargetLowering::Promote) {
+      // Unconditionally promote TRUNCSTORE:i1 X -> TRUNCSTORE:i8 (and X, 1)
+      if (ST->getStoredVT() == MVT::i1) {
         // Promote the bool to a mask then store.
         Tmp3 = DAG.getNode(ISD::AND, Tmp3.getValueType(), Tmp3,
                            DAG.getConstant(1, Tmp3.getValueType()));
@@ -2261,7 +2270,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       }
 
       MVT::ValueType StVT = cast<StoreSDNode>(Result.Val)->getStoredVT();
-      switch (TLI.getStoreXAction(StVT)) {
+      switch (TLI.getTruncStoreAction(ST->getValue().getValueType(), StVT)) {
       default: assert(0 && "This action is not supported yet!");
       case TargetLowering::Legal:
         // If this is an unaligned store and the target doesn't support it,
@@ -2275,8 +2284,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         }
         break;
       case TargetLowering::Custom:
-        Tmp1 = TLI.LowerOperation(Result, DAG);
-        if (Tmp1.Val) Result = Tmp1;
+        Result = TLI.LowerOperation(Result, DAG);
         break;
       }
     }

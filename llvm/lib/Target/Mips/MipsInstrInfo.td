@@ -534,8 +534,6 @@ def : Pat<(not CPURegs:$in),
 def : Pat<(i32 (extloadi1  addr:$src)), (LBu addr:$src)>;
 def : Pat<(i32 (extloadi8  addr:$src)), (LBu addr:$src)>;
 def : Pat<(i32 (extloadi16 addr:$src)), (LHu addr:$src)>;
-def : Pat<(truncstorei1 CPURegs:$src, addr:$addr),
-           (SB CPURegs:$src, addr:$addr)>;
 
 // some peepholes
 def : Pat<(store (i32 0), addr:$dst), (SW ZERO, addr:$dst)>;

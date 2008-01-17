@@ -82,6 +82,14 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
 
   setLoadXAction(ISD::SEXTLOAD, MVT::i1, Expand);
 
+  // We don't accept any truncstore of integer registers.  
+  setTruncStoreAction(MVT::i64, MVT::i32, Expand);
+  setTruncStoreAction(MVT::i64, MVT::i16, Expand);
+  setTruncStoreAction(MVT::i64, MVT::i8 , Expand);
+  setTruncStoreAction(MVT::i32, MVT::i16, Expand);
+  setTruncStoreAction(MVT::i32, MVT::i8 , Expand);
+  setTruncStoreAction(MVT::i16, MVT::i8, Expand);
+
   // Promote all UINT_TO_FP to larger SINT_TO_FP's, as X86 doesn't have this
   // operation.
   setOperationAction(ISD::UINT_TO_FP       , MVT::i1   , Promote);
@@ -638,6 +646,8 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
       AddPromotedToType (ISD::SELECT, (MVT::ValueType)VT, MVT::v2i64);
     }
 
+    setTruncStoreAction(MVT::f64, MVT::f32, Expand);
+    
     // Custom lower v2i64 and v2f64 selects.
     setOperationAction(ISD::LOAD,               MVT::v2f64, Legal);
     setOperationAction(ISD::LOAD,               MVT::v2i64, Legal);

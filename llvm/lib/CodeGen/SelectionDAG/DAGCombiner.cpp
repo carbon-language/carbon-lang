@@ -1690,8 +1690,7 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
   if (N1C && N0.getOpcode() == ISD::LOAD) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
     if (LN0->getExtensionType() != ISD::SEXTLOAD &&
-        LN0->getAddressingMode() == ISD::UNINDEXED &&
-        N0.hasOneUse()) {
+        LN0->isUnindexed() && N0.hasOneUse()) {
       MVT::ValueType EVT, LoadedVT;
       if (N1C->getValue() == 255)
         EVT = MVT::i8;
@@ -3810,7 +3809,7 @@ bool DAGCombiner::CombineToPreIndexedLoadStore(SDNode *N) {
   SDOperand Ptr;
   MVT::ValueType VT;
   if (LoadSDNode *LD  = dyn_cast<LoadSDNode>(N)) {
-    if (LD->getAddressingMode() != ISD::UNINDEXED)
+    if (LD->isIndexed())
       return false;
     VT = LD->getLoadedVT();
     if (!TLI.isIndexedLoadLegal(ISD::PRE_INC, VT) &&
@@ -3818,7 +3817,7 @@ bool DAGCombiner::CombineToPreIndexedLoadStore(SDNode *N) {
       return false;
     Ptr = LD->getBasePtr();
   } else if (StoreSDNode *ST  = dyn_cast<StoreSDNode>(N)) {
-    if (ST->getAddressingMode() != ISD::UNINDEXED)
+    if (ST->isIndexed())
       return false;
     VT = ST->getStoredVT();
     if (!TLI.isIndexedStoreLegal(ISD::PRE_INC, VT) &&
@@ -3937,7 +3936,7 @@ bool DAGCombiner::CombineToPostIndexedLoadStore(SDNode *N) {
   SDOperand Ptr;
   MVT::ValueType VT;
   if (LoadSDNode *LD  = dyn_cast<LoadSDNode>(N)) {
-    if (LD->getAddressingMode() != ISD::UNINDEXED)
+    if (LD->isIndexed())
       return false;
     VT = LD->getLoadedVT();
     if (!TLI.isIndexedLoadLegal(ISD::POST_INC, VT) &&
@@ -3945,7 +3944,7 @@ bool DAGCombiner::CombineToPostIndexedLoadStore(SDNode *N) {
       return false;
     Ptr = LD->getBasePtr();
   } else if (StoreSDNode *ST  = dyn_cast<StoreSDNode>(N)) {
-    if (ST->getAddressingMode() != ISD::UNINDEXED)
+    if (ST->isIndexed())
       return false;
     VT = ST->getStoredVT();
     if (!TLI.isIndexedStoreLegal(ISD::POST_INC, VT) &&
@@ -4187,7 +4186,7 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
   // If this is a store of a bit convert, store the input value if the
   // resultant store does not need a higher alignment than the original.
   if (Value.getOpcode() == ISD::BIT_CONVERT && !ST->isTruncatingStore() &&
-      ST->getAddressingMode() == ISD::UNINDEXED) {
+      ST->isUnindexed()) {
     unsigned Align = ST->getAlignment();
     MVT::ValueType SVT = Value.getOperand(0).getValueType();
     unsigned OrigAlign = TLI.getTargetMachine().getTargetData()->
@@ -4285,7 +4284,7 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
     return SDOperand(N, 0);
 
   // FIXME: is there such a thing as a truncating indexed store?
-  if (ST->isTruncatingStore() && ST->getAddressingMode() == ISD::UNINDEXED &&
+  if (ST->isTruncatingStore() && ST->isUnindexed() &&
       MVT::isInteger(Value.getValueType())) {
     // See if we can simplify the input to this truncstore with knowledge that
     // only the low bits are being used.  For example:
@@ -4308,14 +4307,25 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
   // is dead/noop.
   if (LoadSDNode *Ld = dyn_cast<LoadSDNode>(Value)) {
     if (Ld->getBasePtr() == Ptr && ST->getStoredVT() == Ld->getLoadedVT() &&
-        ST->getAddressingMode() == ISD::UNINDEXED &&
-        !ST->isVolatile() &&
+        ST->isUnindexed() && !ST->isVolatile() &&
         // There can't be any side effects between the load and store, such as
         // a call or store.
         Chain.reachesChainWithoutSideEffects(SDOperand(Ld, 1))) {
       // The store is dead, remove it.
       return Chain;
     }
+  }
+  
+  // If this is an FP_ROUND or TRUNC followed by a store, fold this into a
+  // truncating store.  We can do this even if this is already a truncstore.
+  if ((Value.getOpcode() == ISD::FP_ROUND || Value.getOpcode() == ISD::TRUNCATE)
+      && TLI.isTypeLegal(Value.getOperand(0).getValueType()) &&
+      Value.Val->hasOneUse() && ST->isUnindexed() &&
+      TLI.isTruncStoreLegal(Value.getOperand(0).getValueType(),
+                            ST->getStoredVT())) {
+    return DAG.getTruncStore(Chain, Value.getOperand(0), Ptr, ST->getSrcValue(),
+                             ST->getSrcValueOffset(), ST->getStoredVT(),
+                             ST->isVolatile(), ST->getAlignment());
   }
   
   return SDOperand();

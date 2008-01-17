@@ -125,6 +125,8 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   if (!UseSoftFloat && Subtarget->hasVFP2() && !Subtarget->isThumb()) {
     addRegisterClass(MVT::f32, ARM::SPRRegisterClass);
     addRegisterClass(MVT::f64, ARM::DPRRegisterClass);
+    
+    setTruncStoreAction(MVT::f64, MVT::f32, Expand);
   }
   computeRegisterProperties();
 

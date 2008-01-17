@@ -158,7 +158,7 @@ TargetLowering::TargetLowering(TargetMachine &tm)
   // All operations default to being supported.
   memset(OpActions, 0, sizeof(OpActions));
   memset(LoadXActions, 0, sizeof(LoadXActions));
-  memset(&StoreXActions, 0, sizeof(StoreXActions));
+  memset(TruncStoreActions, 0, sizeof(TruncStoreActions));
   memset(&IndexedModeActions, 0, sizeof(IndexedModeActions));
   memset(&ConvertActions, 0, sizeof(ConvertActions));
 

@@ -551,13 +551,6 @@ def store : PatFrag<(ops node:$val, node:$ptr),
 }]>;
 
 // truncstore fragments.
-def truncstorei1 : PatFrag<(ops node:$val, node:$ptr),
-                           (st node:$val, node:$ptr), [{
-  if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N))
-    return ST->isTruncatingStore() && ST->getStoredVT() == MVT::i1 &&
-           ST->getAddressingMode() == ISD::UNINDEXED;
-  return false;
-}]>;
 def truncstorei8 : PatFrag<(ops node:$val, node:$ptr),
                            (st node:$val, node:$ptr), [{
   if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N))

@@ -2598,11 +2598,6 @@ def : Pat<(subc GR32:$src1, imm:$src2),
 def : Pat<(subc GR32:$src1, i32immSExt8:$src2),
           (SUB32ri8 GR32:$src1, i32immSExt8:$src2)>;
 
-def : Pat<(truncstorei1 (i8 imm:$src), addr:$dst), 
-          (MOV8mi addr:$dst, imm:$src)>;
-def : Pat<(truncstorei1 GR8:$src, addr:$dst), 
-          (MOV8mr addr:$dst, GR8:$src)>;
-
 // Comparisons.
 
 // TEST R,R is smaller than CMP R,0
