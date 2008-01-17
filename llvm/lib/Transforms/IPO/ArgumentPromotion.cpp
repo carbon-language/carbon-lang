@@ -404,9 +404,9 @@ Function *ArgPromotion::DoPromotion(Function *F,
   ParamAttrsVector ParamAttrsVec;
   const ParamAttrsList *PAL = F->getParamAttrs();
 
-  unsigned index = 1;
+  unsigned ArgIndex = 1;
   for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E;
-       ++I, ++index) {
+       ++I, ++ArgIndex) {
     if (ByValArgsToTransform.count(I)) {
       // Just add all the struct element types.
       const Type *AgTy = cast<PointerType>(I->getType())->getElementType();
@@ -416,7 +416,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
       ++NumByValArgsPromoted;
     } else if (!ArgsToPromote.count(I)) {
       Params.push_back(I->getType());
-      if (unsigned attrs = PAL ? PAL->getParamAttrs(index) : 0)
+      if (unsigned attrs = PAL ? PAL->getParamAttrs(ArgIndex) : 0)
         ParamAttrsVec.push_back(ParamAttrsWithIndex::get(Params.size(), attrs));
     } else if (I->use_empty()) {
       ++NumArgumentsDead;
@@ -454,10 +454,6 @@ Function *ArgPromotion::DoPromotion(Function *F,
 
   const Type *RetTy = FTy->getReturnType();
 
-  // Recompute the parameter attributes list based on the new arguments for
-  // the function.
-  PAL = ParamAttrsList::get(ParamAttrsVec);
-
   // Work around LLVM bug PR56: the CWriter cannot emit varargs functions which
   // have zero fixed arguments.
   bool ExtraArgHack = false;
@@ -472,7 +468,12 @@ Function *ArgPromotion::DoPromotion(Function *F,
   // Create the new function body and insert it into the module...
   Function *NF = new Function(NFTy, F->getLinkage(), F->getName());
   NF->setCallingConv(F->getCallingConv());
-  NF->setParamAttrs(PAL);
+
+  // Recompute the parameter attributes list based on the new arguments for
+  // the function.
+  NF->setParamAttrs(ParamAttrsList::get(ParamAttrsVec));
+  ParamAttrsVec.clear(); PAL = 0;
+  
   if (F->hasCollector())
     NF->setCollector(F->getCollector());
   F->getParent()->getFunctionList().insert(F, NF);
@@ -484,18 +485,24 @@ Function *ArgPromotion::DoPromotion(Function *F,
   // Loop over all of the callers of the function, transforming the call sites
   // to pass in the loaded pointers.
   //
-  std::vector<Value*> Args;
+  SmallVector<Value*, 16> Args;
   while (!F->use_empty()) {
     CallSite CS = CallSite::get(F->use_back());
     Instruction *Call = CS.getInstruction();
-
+    PAL = CS.getParamAttrs();
+    
     // Loop over the operands, inserting GEP and loads in the caller as
     // appropriate.
     CallSite::arg_iterator AI = CS.arg_begin();
+    ArgIndex = 1;
     for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end();
-         I != E; ++I, ++AI)
+         I != E; ++I, ++AI, ++ArgIndex)
       if (!ArgsToPromote.count(I) && !ByValArgsToTransform.count(I)) {
         Args.push_back(*AI);          // Unmodified argument
+        
+        if (unsigned Attrs = PAL ? PAL->getParamAttrs(ArgIndex) : 0)
+          ParamAttrsVec.push_back(ParamAttrsWithIndex::get(Args.size(), Attrs));
+        
       } else if (ByValArgsToTransform.count(I)) {
         // Emit a GEP and load for each element of the struct.
         const Type *AgTy = cast<PointerType>(I->getType())->getElementType();
@@ -530,23 +537,27 @@ Function *ArgPromotion::DoPromotion(Function *F,
       Args.push_back(Constant::getNullValue(Type::Int32Ty));
 
     // Push any varargs arguments on the list
-    for (; AI != CS.arg_end(); ++AI)
+    for (; AI != CS.arg_end(); ++AI, ++ArgIndex) {
       Args.push_back(*AI);
+      if (unsigned Attrs = PAL ? PAL->getParamAttrs(ArgIndex) : 0)
+        ParamAttrsVec.push_back(ParamAttrsWithIndex::get(Args.size(), Attrs));
+    }
 
     Instruction *New;
     if (InvokeInst *II = dyn_cast<InvokeInst>(Call)) {
       New = new InvokeInst(NF, II->getNormalDest(), II->getUnwindDest(),
                            Args.begin(), Args.end(), "", Call);
       cast<InvokeInst>(New)->setCallingConv(CS.getCallingConv());
-      cast<InvokeInst>(New)->setParamAttrs(PAL);
+      cast<InvokeInst>(New)->setParamAttrs(ParamAttrsList::get(ParamAttrsVec));
     } else {
       New = new CallInst(NF, Args.begin(), Args.end(), "", Call);
       cast<CallInst>(New)->setCallingConv(CS.getCallingConv());
-      cast<CallInst>(New)->setParamAttrs(PAL);
+      cast<CallInst>(New)->setParamAttrs(ParamAttrsList::get(ParamAttrsVec));
       if (cast<CallInst>(Call)->isTailCall())
         cast<CallInst>(New)->setTailCall();
     }
     Args.clear();
+    ParamAttrsVec.clear();
 
     // Update the alias analysis implementation to know that we are replacing
     // the old call with a new one.
