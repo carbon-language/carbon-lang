@@ -753,7 +753,7 @@ DIAG(err_typecheck_sclass_func, ERROR,
 DIAG(err_typecheck_address_of_register, ERROR,
      "address of register variable requested")
 DIAG(err_typecheck_invalid_lvalue_addrof, ERROR,
-     "invalid lvalue in address expression")
+     "address expression must be an lvalue or a function designator")
 DIAG(err_typecheck_unary_expr, ERROR,
      "invalid argument type to unary expression '%0'")
 DIAG(err_typecheck_indirection_requires_pointer, ERROR,
