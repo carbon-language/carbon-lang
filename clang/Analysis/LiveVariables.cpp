@@ -71,8 +71,6 @@ public:
   void VisitDeclStmt(DeclStmt* DS);
   void VisitUnaryOperator(UnaryOperator* U);
   void Visit(Stmt *S);
-  
-  DeclRefExpr* FindDeclRef(Stmt *S);
 };
       
 void TransferFuncs::Visit(Stmt *S) {
@@ -93,7 +91,7 @@ void TransferFuncs::VisitBinaryOperator(BinaryOperator* B) {
 }
 
 void TransferFuncs::VisitUnaryOperator(UnaryOperator* U) {
-  Stmt *S = U->getSubExpr();
+  Expr *E = U->getSubExpr();
   
   switch (U->getOpcode()) {
   case UnaryOperator::SizeOf: return;      
@@ -105,7 +103,7 @@ void TransferFuncs::VisitUnaryOperator(UnaryOperator* U) {
     // Walk through the subexpressions, blasting through ParenExprs
     // until we either find a DeclRefExpr or some non-DeclRefExpr
     // expression.
-    if (DeclRefExpr* DR = FindDeclRef(S)) {
+    if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(E->IgnoreParens())) {
       // Treat the --/++/& operator as a kill.
       LiveState(DR->getDecl(),AD) = Dead;
       if (AD.Observer) { AD.Observer->ObserverKill(DR); }
@@ -115,26 +113,15 @@ void TransferFuncs::VisitUnaryOperator(UnaryOperator* U) {
     // Fall-through.
   
   default:
-    return Visit(S);
+    return Visit(E);
   }
-}
-
-DeclRefExpr* TransferFuncs::FindDeclRef(Stmt *S) {
-  for (;;)
-    if (ParenExpr* P = dyn_cast<ParenExpr>(S)) {
-      S = P->getSubExpr(); continue;
-    }
-    else if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(S))
-      return DR;
-    else
-      return NULL;
 }
   
 void TransferFuncs::VisitAssign(BinaryOperator* B) {    
-  Stmt* LHS = B->getLHS();
+  Expr* LHS = B->getLHS();
 
   // Assigning to a variable?
-  if (DeclRefExpr* DR = FindDeclRef(LHS)) {
+  if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(LHS->IgnoreParens())) {
     LiveState(DR->getDecl(),AD) = Dead;
     if (AD.Observer) { AD.Observer->ObserverKill(DR); }
     
