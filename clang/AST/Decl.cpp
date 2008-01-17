@@ -549,6 +549,15 @@ ObjCMethodDecl *ObjCProtocolDecl::lookupClassMethod(Selector Sel) {
   return NULL;
 }
 
+int ObjCMethodDecl::getSynthesizedSelectorSize() const {
+  // syntesized method name is a concatenation of -/+[class-name selector]
+  // Get length of this name.
+  int length = 4;  // for '+' or '-', '[', space in between and ']'
+  length += getSelector().getName().size(); // for selector name.
+  length += strlen(getMethodContext()->getName()); // for its class name
+  return length; 
+}
+
 ObjCInterfaceDecl *const ObjCMethodDecl::getClassInterface() const {
   if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(MethodContext))
     return ID;
