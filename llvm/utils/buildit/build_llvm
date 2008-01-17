@@ -85,7 +85,7 @@ cd $DIR/obj-llvm || exit 1
 
 if [ \! -f Makefile.config ]; then
     $SRC_DIR/llvm/configure --prefix=$DEST_DIR$DEST_ROOT \
-        --enable-targets=x86,powerpc --enable-assertions=$LLVM_ASSERTIONS \
+        --enable-targets=x86,powerpc,cbe --enable-assertions=$LLVM_ASSERTIONS \
         || exit 1
 fi
 
