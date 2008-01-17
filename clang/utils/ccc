@@ -53,6 +53,8 @@ def main(args):
         if arg == '-o':
             output = args[i+1]
             i += 1
+        if arg == '--param':
+            i += 1
         if arg[:2] in ['-D', '-I', '-U']:
             if not arg[2:]:
                 arg += args[i+1]
