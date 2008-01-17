@@ -86,6 +86,16 @@ namespace {
     //
     std::vector<unsigned> PhysRegsUseOrder;
 
+    // Virt2LastUseMap - This maps each virtual register to its last use
+    // (MachineInstr*, operand index pair).
+    IndexedMap<std::pair<MachineInstr*, unsigned>, VirtReg2IndexFunctor>
+    Virt2LastUseMap;
+
+    std::pair<MachineInstr*,unsigned>& getVirtRegLastUse(unsigned Reg) {
+      assert(MRegisterInfo::isVirtualRegister(Reg) && "Illegal VirtReg!");
+      return Virt2LastUseMap[Reg];
+    }
+
     // VirtRegModified - This bitset contains information about which virtual
     // registers need to be spilled back to memory when their registers are
     // scavenged.  If a virtual register has simply been rematerialized, there
@@ -282,8 +292,12 @@ void RALocal::spillVirtReg(MachineBasicBlock &MBB,
   
   const TargetInstrInfo* TII = MBB.getParent()->getTarget().getInstrInfo();
   
-  if (!isVirtRegModified(VirtReg))
+  if (!isVirtRegModified(VirtReg)) {
     DOUT << " which has not been modified, so no store necessary!";
+    std::pair<MachineInstr*, unsigned> &LastUse = getVirtRegLastUse(VirtReg);
+    if (LastUse.first)
+      LastUse.first->getOperand(LastUse.second).setIsKill();
+  }
 
   // Otherwise, there is a virtual register corresponding to this physical
   // register.  We only need to spill it into its stack slot if it has been
@@ -507,6 +521,7 @@ MachineInstr *RALocal::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
 
   MF->getRegInfo().setPhysRegUsed(PhysReg);
   MI->getOperand(OpNum).setReg(PhysReg);  // Assign the input register
+  getVirtRegLastUse(VirtReg) = std::make_pair(MI, OpNum);
   return MI;
 }
 
@@ -722,6 +737,7 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
           DestPhysReg = getReg(MBB, MI, DestVirtReg);
         MF->getRegInfo().setPhysRegUsed(DestPhysReg);
         markVirtRegModified(DestVirtReg);
+        getVirtRegLastUse(DestVirtReg) = std::make_pair((MachineInstr*)0, 0);
         MI->getOperand(i).setReg(DestPhysReg);  // Assign the output register
       }
     }
@@ -823,7 +839,8 @@ bool RALocal::runOnMachineFunction(MachineFunction &Fn) {
   // mapping for all virtual registers
   unsigned LastVirtReg = MF->getRegInfo().getLastVirtReg();
   Virt2PhysRegMap.grow(LastVirtReg);
-  VirtRegModified.resize(LastVirtReg-MRegisterInfo::FirstVirtualRegister);
+  Virt2LastUseMap.grow(LastVirtReg);
+  VirtRegModified.resize(LastVirtReg+1-MRegisterInfo::FirstVirtualRegister);
 
   // Loop over all of the basic blocks, eliminating virtual register references
   for (MachineFunction::iterator MBB = Fn.begin(), MBBe = Fn.end();
@@ -834,6 +851,7 @@ bool RALocal::runOnMachineFunction(MachineFunction &Fn) {
   PhysRegsUsed.clear();
   VirtRegModified.clear();
   Virt2PhysRegMap.clear();
+  Virt2LastUseMap.clear();
   return true;
 }
 
