@@ -590,15 +590,19 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
           ParamAttrsVec.push_back(ParamAttrsWithIndex::get(Args.size(), Attrs));
       }
 
-    // Reconstruct the ParamAttrsList based on the vector we constructed.
-    PAL = ParamAttrsList::get(ParamAttrsVec);
-
     if (ExtraArgHack)
       Args.push_back(UndefValue::get(Type::Int32Ty));
 
-    // Push any varargs arguments on the list
-    for (; AI != CS.arg_end(); ++AI)
+    // Push any varargs arguments on the list. Don't forget their attributes.
+    for (; AI != CS.arg_end(); ++AI) {
       Args.push_back(*AI);
+      uint16_t Attrs = PAL ? PAL->getParamAttrs(index++) : 0;
+      if (Attrs)
+        ParamAttrsVec.push_back(ParamAttrsWithIndex::get(Args.size(), Attrs));
+    }
+
+    // Reconstruct the ParamAttrsList based on the vector we constructed.
+    PAL = ParamAttrsList::get(ParamAttrsVec);
 
     Instruction *New;
     if (InvokeInst *II = dyn_cast<InvokeInst>(Call)) {
