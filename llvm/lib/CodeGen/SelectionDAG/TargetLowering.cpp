@@ -159,8 +159,8 @@ TargetLowering::TargetLowering(TargetMachine &tm)
   memset(OpActions, 0, sizeof(OpActions));
   memset(LoadXActions, 0, sizeof(LoadXActions));
   memset(TruncStoreActions, 0, sizeof(TruncStoreActions));
-  memset(&IndexedModeActions, 0, sizeof(IndexedModeActions));
-  memset(&ConvertActions, 0, sizeof(ConvertActions));
+  memset(IndexedModeActions, 0, sizeof(IndexedModeActions));
+  memset(ConvertActions, 0, sizeof(ConvertActions));
 
   // Set default actions for various operations.
   for (unsigned VT = 0; VT != (unsigned)MVT::LAST_VALUETYPE; ++VT) {
