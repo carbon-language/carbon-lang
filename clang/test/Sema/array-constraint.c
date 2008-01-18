@@ -24,7 +24,8 @@ struct vari *func(struct vari a[]) { // expected-error {{'struct vari' may not b
   return a;
 }
 
-int foo[](void);  // expected-error {{'foo' declared as array of functions}}
+int foo[](void);  // expected-error {{variable has incomplete type 'int (*[])(void)'}} expected-error {{'foo' declared as array of functions}}
+int foo2[1](void);  // expected-error {{'foo2' declared as array of functions}}
 
 typedef int (*pfunc)(void);
 

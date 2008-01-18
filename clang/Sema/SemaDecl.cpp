@@ -853,7 +853,8 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
     // storage-class specifier or with the storage-class specifier "static",
     // constitutes a tentative definition. Note: A tentative definition with
     // external linkage is valid (C99 6.2.2p5).
-    if (FVD && !FVD->getInit() && FVD->getStorageClass() == VarDecl::Static) {
+    if (FVD && !FVD->getInit() && (FVD->getStorageClass() == VarDecl::Static || 
+                                   FVD->getStorageClass() == VarDecl::None)) {
       // C99 6.9.2p3: If the declaration of an identifier for an object is
       // a tentative definition and has internal linkage (C99 6.2.2p3), the  
       // declared type shall not be an incomplete type.
