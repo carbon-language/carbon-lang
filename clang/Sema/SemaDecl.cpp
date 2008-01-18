@@ -855,10 +855,15 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
     // external linkage is valid (C99 6.2.2p5).
     if (FVD && !FVD->getInit() && (FVD->getStorageClass() == VarDecl::Static || 
                                    FVD->getStorageClass() == VarDecl::None)) {
-      // C99 6.9.2p3: If the declaration of an identifier for an object is
-      // a tentative definition and has internal linkage (C99 6.2.2p3), the  
-      // declared type shall not be an incomplete type.
-      if (T->isIncompleteType()) {
+      const VariableArrayType *VAT = T->getAsVariableArrayType();
+      
+      if (VAT && VAT->getSizeExpr() == 0) {
+        // C99 6.9.2 (p2, p5): Implicit initialization causes an incomplete
+        // array to be completed. Don't issue a diagnostic.
+      } else if (T->isIncompleteType()) {
+        // C99 6.9.2p3: If the declaration of an identifier for an object is
+        // a tentative definition and has internal linkage (C99 6.2.2p3), the  
+        // declared type shall not be an incomplete type.
         Diag(IDecl->getLocation(), diag::err_typecheck_decl_incomplete_type,
              T.getAsString());
         IDecl->setInvalidDecl();
