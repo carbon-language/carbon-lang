@@ -77,10 +77,9 @@ void TransferFuncs::Visit(Stmt *S) {
   if (AD.Observer)
     AD.Observer->ObserveStmt(S,AD,LiveState);
   
-
   if (S == getCurrentBlkStmt()) {
-    StmtVisitor<TransferFuncs,void>::Visit(S);
     if (getCFG().isBlkExpr(S)) LiveState(S,AD) = Dead;
+    StmtVisitor<TransferFuncs,void>::Visit(S);
   }
   else if (!getCFG().isBlkExpr(S))
     StmtVisitor<TransferFuncs,void>::Visit(S);
@@ -197,6 +196,10 @@ bool LiveVariables::isLive(const ValTy& Live, const VarDecl* D) const {
 
 bool LiveVariables::isLive(const Stmt* Loc, const Stmt* StmtVal) const {
   return getStmtData(Loc)(StmtVal,getAnalysisData());
+}
+
+bool LiveVariables::isLive(const Stmt* Loc, const VarDecl* D) const {
+  return getStmtData(Loc)(D,getAnalysisData());
 }
 
 //===----------------------------------------------------------------------===//
