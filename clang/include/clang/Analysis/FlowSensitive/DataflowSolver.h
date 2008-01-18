@@ -235,10 +235,18 @@ private:
 
   /// ProcessBlock - Process the transfer functions for a given block.
   void ProcessBlock(const CFGBlock* B, bool recordStmtValues) {
-    for (StmtItr I=ItrTraits::StmtBegin(B), E=ItrTraits::StmtEnd(B); I!=E;++I) {
-      if (recordStmtValues) D.getStmtDataMap()[*I] = TF.getVal();
-      TF.BlockStmt_Visit(const_cast<Stmt*>(*I));
-    }      
+    for (StmtItr I=ItrTraits::StmtBegin(B), E=ItrTraits::StmtEnd(B); I!=E;++I)
+      ProcessStmt(*I, recordStmtValues, AnalysisDirTag());
+  }
+  
+  void ProcessStmt(const Stmt* S, bool record, dataflow::forward_analysis_tag) {
+    if (record) D.getStmtDataMap()[S] = TF.getVal();
+    TF.BlockStmt_Visit(const_cast<Stmt*>(S));  
+  }
+  
+  void ProcessStmt(const Stmt* S, bool record, dataflow::backward_analysis_tag){
+    TF.BlockStmt_Visit(const_cast<Stmt*>(S));
+    if (record) D.getStmtDataMap()[S] = TF.getVal();
   }
 
   /// UpdateEdges - After processing the transfer functions for a
