@@ -48,7 +48,8 @@ ASTConsumer *CreateBCWriter(const std::string& InFile,
                             Diagnostic &Diags,
                             const LangOptions &LOpts);
 
-ASTConsumer *CreateCodeRewriterTest(Diagnostic &Diags);
+ASTConsumer *CreateCodeRewriterTest(const std::string& InFile,
+                                    Diagnostic &Diags);
 
 ASTConsumer *CreateSerializationTest(Diagnostic &Diags,
                                      FileManager& FMgr, 
