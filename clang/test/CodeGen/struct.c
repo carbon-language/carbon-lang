@@ -127,3 +127,12 @@ void f11()
     a1 = a2;
     a2 = a1;
 }
+
+/* Implicit casts (due to const) */
+void f12()
+{
+	struct _a a1;
+	const struct _a a2;
+	
+	a1 = a2;
+}

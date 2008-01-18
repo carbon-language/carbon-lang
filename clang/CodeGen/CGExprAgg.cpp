@@ -142,7 +142,7 @@ void AggExprEmitter::VisitImplicitCastExpr(ImplicitCastExpr *E)
   QualType STy = E->getSubExpr()->getType().getCanonicalType();
   QualType Ty = E->getType().getCanonicalType();
   
-  assert(STy == Ty && "Implicit cast types must be equal");
+  assert(STy.getUnqualifiedType() == Ty && "Implicit cast types must be equal");
   
   Visit(E->getSubExpr());
 }
