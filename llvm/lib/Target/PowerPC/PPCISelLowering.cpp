@@ -3184,6 +3184,7 @@ SDOperand PPCTargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::STORE:
     // Turn STORE (FP_TO_SINT F) -> STFIWX(FCTIWZ(F)).
     if (TM.getSubtarget<PPCSubtarget>().hasSTFIWX() &&
+        !cast<StoreSDNode>(N)->isTruncatingStore() &&
         N->getOperand(1).getOpcode() == ISD::FP_TO_SINT &&
         N->getOperand(1).getValueType() == MVT::i32 &&
         N->getOperand(1).getOperand(0).getValueType() != MVT::ppcf128) {
