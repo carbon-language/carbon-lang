@@ -410,6 +410,13 @@ namespace llvm {
       return static_cast<const TargetSubtarget*>(Subtarget);
     }
 
+    /// isScalarFPTypeInSSEReg - Return true if the specified scalar FP type is
+    /// computed in an SSE register, not on the X87 floating point stack.
+    bool isScalarFPTypeInSSEReg(MVT::ValueType VT) const {
+      return (VT == MVT::f64 && X86ScalarSSEf64) || // f64 is when SSE2
+      (VT == MVT::f32 && X86ScalarSSEf32);   // f32 is when SSE1
+    }
+    
   private:
     /// Subtarget - Keep a pointer to the X86Subtarget around so that we can
     /// make the right decision when generating code for different targets.
@@ -426,13 +433,6 @@ namespace llvm {
     bool X86ScalarSSEf32;
     bool X86ScalarSSEf64;
     
-    /// isScalarFPTypeInSSEReg - Return true if the specified scalar FP type is
-    /// computed in an SSE register, not on the X87 floating point stack.
-    bool isScalarFPTypeInSSEReg(MVT::ValueType VT) const {
-      return (VT == MVT::f64 && X86ScalarSSEf64) || // f64 is when SSE2
-             (VT == MVT::f32 && X86ScalarSSEf32);   // f32 is when SSE1
-    }
-
     SDNode *LowerCallResult(SDOperand Chain, SDOperand InFlag, SDNode*TheCall,
                             unsigned CallingConv, SelectionDAG &DAG);
         
