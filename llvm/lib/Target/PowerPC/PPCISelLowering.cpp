@@ -382,6 +382,11 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PPCISD::LBRX:          return "PPCISD::LBRX";
   case PPCISD::STBRX:         return "PPCISD::STBRX";
   case PPCISD::COND_BRANCH:   return "PPCISD::COND_BRANCH";
+  case PPCISD::MFFS:          return "PPCISD::MFFS";
+  case PPCISD::MTFSB0:        return "PPCISD::MTFSB0";
+  case PPCISD::MTFSB1:        return "PPCISD::MTFSB1";
+  case PPCISD::FADDRTZ:       return "PPCISD::FADDRTZ";
+  case PPCISD::MTFSF:         return "PPCISD::MTFSF";
   }
 }
 
