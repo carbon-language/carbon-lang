@@ -109,6 +109,8 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   setOperationAction(ISD::FCOS , MVT::f32, Expand);
   setOperationAction(ISD::FREM , MVT::f32, Expand);
   setOperationAction(ISD::FPOW , MVT::f32, Expand);
+
+  setOperationAction(ISD::FLT_ROUNDS, MVT::i32, Custom);
   
   // If we're enabling GP optimizations, use hardware square root
   if (!TM.getSubtarget<PPCSubtarget>().hasFSQRT()) {
@@ -2207,6 +2209,67 @@ static SDOperand LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
   return FP;
 }
 
+static SDOperand LowerFLT_ROUNDS(SDOperand Op, SelectionDAG &DAG) {
+  /*
+   The rounding mode is in bits 30:31 of FPSR, and has the following
+   settings:
+     00 Round to nearest
+     01 Round to 0
+     10 Round to +inf
+     11 Round to -inf
+
+  FLT_ROUNDS, on the other hand, expects the following:
+    -1 Undefined
+     0 Round to 0
+     1 Round to nearest
+     2 Round to +inf
+     3 Round to -inf
+
+  To perform the conversion, we do:
+    ((FPSCR & 0x3) ^ ((~FPSCR & 0x3) >> 1))
+  */
+
+  MachineFunction &MF = DAG.getMachineFunction();
+  MVT::ValueType VT = Op.getValueType();
+  MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
+  std::vector<MVT::ValueType> NodeTys;
+  SDOperand MFFSreg, InFlag;
+
+  // Save FP Control Word to register
+  NodeTys.push_back(MVT::f64);    // return register
+  NodeTys.push_back(MVT::Flag);   // unused in this context
+  SDOperand Chain = DAG.getNode(PPCISD::MFFS, NodeTys, &InFlag, 0);
+
+  // Save FP register to stack slot
+  int SSFI = MF.getFrameInfo()->CreateStackObject(8, 8);
+  SDOperand StackSlot = DAG.getFrameIndex(SSFI, PtrVT);
+  SDOperand Store = DAG.getStore(DAG.getEntryNode(), Chain,
+                                 StackSlot, NULL, 0);
+
+  // Load FP Control Word from low 32 bits of stack slot.
+  SDOperand Four = DAG.getConstant(4, PtrVT);
+  SDOperand Addr = DAG.getNode(ISD::ADD, PtrVT, StackSlot, Four);
+  SDOperand CWD = DAG.getLoad(MVT::i32, Store, Addr, NULL, 0);
+
+  // Transform as necessary
+  SDOperand CWD1 =
+    DAG.getNode(ISD::AND, MVT::i32,
+                CWD, DAG.getConstant(3, MVT::i32));
+  SDOperand CWD2 =
+    DAG.getNode(ISD::SRL, MVT::i32,
+                DAG.getNode(ISD::AND, MVT::i32,
+                            DAG.getNode(ISD::XOR, MVT::i32,
+                                        CWD, DAG.getConstant(3, MVT::i32)),
+                            DAG.getConstant(3, MVT::i32)),
+                DAG.getConstant(1, MVT::i8));
+
+  SDOperand RetVal =
+    DAG.getNode(ISD::XOR, MVT::i32, CWD1, CWD2);
+
+  return DAG.getNode((MVT::getSizeInBits(VT) < 16 ?
+                      ISD::TRUNCATE : ISD::ZERO_EXTEND), VT, RetVal);
+}
+
 static SDOperand LowerSHL_PARTS(SDOperand Op, SelectionDAG &DAG) {
   assert(Op.getNumOperands() == 3 && Op.getValueType() == MVT::i32 &&
          Op.getOperand(1).getValueType() == MVT::i32 && "Unexpected SHL!");
@@ -3027,6 +3090,7 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::FP_TO_SINT:         return LowerFP_TO_SINT(Op, DAG);
   case ISD::SINT_TO_FP:         return LowerSINT_TO_FP(Op, DAG);
   case ISD::FP_ROUND_INREG:     return LowerFP_ROUND_INREG(Op, DAG);
+  case ISD::FLT_ROUNDS:         return LowerFLT_ROUNDS(Op, DAG);
 
   // Lower 64-bit shifts.
   case ISD::SHL_PARTS:          return LowerSHL_PARTS(Op, DAG);
