@@ -131,13 +131,13 @@ public:
   uint64_t getVal() const { assert (isConstant); return val; }
   
   ExprVariantTy operator+(const ExprVariantTy& X) const {
-    if (!isConstant || !X.isConstant) return ExprVariantTy();
-    else return ExprVariantTy(val+X.val);
+    return (isConstant && X.isConstant) ? ExprVariantTy(val + X.val)
+                                        : ExprVariantTy();
   }
   
   ExprVariantTy operator-(const ExprVariantTy& X) const {
-    if (!isConstant || !X.isConstant) return ExprVariantTy();
-    else return ExprVariantTy(val-X.val);
+    return (isConstant && X.isConstant) ? ExprVariantTy(val - X.val)
+                                        : ExprVariantTy();
   }    
 };
 } // end anonymous namespace
@@ -201,7 +201,7 @@ public:
   void DoStmt(Stmt* S);
   
   StateTy RemoveDescendantMappings(Stmt* S, StateTy M, unsigned Levels=2);
-  StateTy RemoveSubExprMappings(StateTy M);
+  StateTy RemoveDeadMappings(Stmt* S, StateTy M);
 
   void AddBinding(Expr* E, ExprVariantTy V, bool isBlkLvl = false);
   void AddBinding(ValueDecl* D, ExprVariantTy V);
@@ -219,13 +219,18 @@ public:
 
 void GRConstants::ProcessStmt(Stmt* S, NodeBuilder& builder) {
   Builder = &builder;
+  
   Nodes->clear();
   OldNodes->clear();
+  
   InitialPred = Builder->getLastNode();
   assert (InitialPred);
   OldNodes->push_back(InitialPred);  
-  CurrentState = RemoveSubExprMappings(InitialPred->getState());  
+  
+  CurrentState = RemoveDeadMappings(S, InitialPred->getState());
+  
   BlockStmt_Visit(S);
+  
   Builder = NULL;  
 }
 
@@ -246,24 +251,21 @@ ExprVariantTy GRConstants::GetBinding(Expr* E) {
       break;
   }
 
-  StateTy::iterator I = CurrentState.find(P);
+  StateTy::TreeTy* T = CurrentState.SlimFind(P);
 
-  if (I == CurrentState.end())
+  if (!T)
     return ExprVariantTy();
   
-  return (*I).second;
+  return T->getValue().second;
 }
 
 void GRConstants::AddBinding(Expr* E, ExprVariantTy V, bool isBlkLvl) {
-  if (V) 
-    CurrentState = StateMgr.Add(CurrentState, DSPtr(E,isBlkLvl), V.getVal());
+  if (V) CurrentState = StateMgr.Add(CurrentState, DSPtr(E,isBlkLvl), V.getVal());
 }
 
 void GRConstants::AddBinding(ValueDecl* D, ExprVariantTy V) {
-  if (V)
-    CurrentState = StateMgr.Add(CurrentState, DSPtr(D), V.getVal());
-  else
-    CurrentState = StateMgr.Remove(CurrentState, DSPtr(D));
+  if (V) CurrentState = StateMgr.Add(CurrentState, DSPtr(D), V.getVal());
+  else CurrentState = StateMgr.Remove(CurrentState, DSPtr(D));
 }
 
 void GRConstants::SwitchNodeSets() {
@@ -273,17 +275,35 @@ void GRConstants::SwitchNodeSets() {
   Nodes->clear(); 
 }
 
-GRConstants::StateTy
-GRConstants::RemoveSubExprMappings(StateTy M) {
-  for (StateTy::iterator I = M.begin(), E = M.end();
-       I!=E && I.getKey().getKind() == DSPtr::IsSubExp; ++I) {
-    // Note: we can assign a new map to M since the iterators are
-    //  iterating over the tree of the original map (aren't immutable maps
-    //  nice?).
+GRConstants::StateTy GRConstants::RemoveDeadMappings(Stmt* Loc, StateTy M) {
+#if 0
+  return M;
+#else
+  // Note: in the code below, we can assign a new map to M since the
+  //  iterators are iterating over the tree of the *original* map.
+
+  StateTy::iterator I = M.begin(), E = M.end();
+
+  // First remove mappings for subexpressions, since they are not needed.
+  for (; I!=E && I.getKey().getKind() == DSPtr::IsSubExp; ++I)
     M = StateMgr.Remove(M, I.getKey());
+
+  // Next, remove any decls or block-level expressions whose mappings are dead.
+  for (; I != E; ++I) {
+    if (ValueDecl* VD = dyn_cast<ValueDecl>(I.getKey())) {
+      if (VarDecl* V = dyn_cast<VarDecl>(VD)) {
+        if (!Liveness->isLive(Loc, V)) M = StateMgr.Remove(M, I.getKey());
+      }
+    }
+    else {
+      Stmt* S = cast<Stmt>(I.getKey());
+      assert (I.getKey().getKind() == DSPtr::IsBlkLvl);
+      if (!Liveness->isLive(Loc, S)) M = StateMgr.Remove(M, I.getKey());
+    }
   }
 
   return M;
+#endif
 }
 
 
@@ -340,12 +360,15 @@ void GRConstants::DoStmt(Stmt* S) {
   SwitchNodeSets();
 }
 
-void GRConstants::VisitBinAdd(BinaryOperator* B) {
+void GRConstants::VisitBinAdd(BinaryOperator* B) {  
   AddBinding(B, GetBinding(B->getLHS()) + GetBinding(B->getRHS()));
 }
 
 void GRConstants::VisitBinSub(BinaryOperator* B) {
-  AddBinding(B, GetBinding(B->getLHS()) - GetBinding(B->getRHS()));
+  ExprVariantTy V1 = GetBinding(B->getLHS());
+  ExprVariantTy V2 = GetBinding(B->getRHS());
+                                                 
+  AddBinding(B, V1 - V2 );
 }
 
 
