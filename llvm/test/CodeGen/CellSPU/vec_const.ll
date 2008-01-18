@@ -1,23 +1,23 @@
 ; RUN: llvm-as -o - %s | llc -march=cellspu > %t1.s
 ; RUN: llvm-as -o - %s | llc -march=cellspu -mattr=large_mem > %t2.s
-; RUN: grep il     %t1.s | count 16 &&
-; RUN: grep ilhu   %t1.s | count 8 &&
-; RUN: grep ilh    %t1.s | count 13 &&
-; RUN: grep iohl   %t1.s | count 7 &&
-; RUN: grep lqa    %t1.s | count 6 &&
-; RUN: grep 24672  %t1.s | count 2 &&
-; RUN: grep 16429  %t1.s | count 1 &&
-; RUN: grep 63572  %t1.s | count 1 &&
-; RUN: grep  4660  %t1.s | count 1 &&
-; RUN: grep 22136  %t1.s | count 1 &&
-; RUN: grep 43981  %t1.s | count 1 &&
-; RUN: grep 61202  %t1.s | count 1 &&
-; RUN: grep 16393  %t1.s | count 1 &&
-; RUN: grep  8699  %t1.s | count 1 &&
-; RUN: grep 21572  %t1.s | count 1 &&
-; RUN: grep 11544  %t1.s | count 1 &&
-; RUN: grep 1311768467750121234 %t1.s | count 1 &&
-; RUN: grep lqx    %t2.s | count 6 &&
+; RUN: grep il     %t1.s | count 16 
+; RUN: grep ilhu   %t1.s | count 8 
+; RUN: grep ilh    %t1.s | count 13
+; RUN: grep iohl   %t1.s | count 7
+; RUN: grep lqa    %t1.s | count 6
+; RUN: grep 24672  %t1.s | count 2 
+; RUN: grep 16429  %t1.s | count 1
+; RUN: grep 63572  %t1.s | count 1
+; RUN: grep  4660  %t1.s | count 1
+; RUN: grep 22136  %t1.s | count 1
+; RUN: grep 43981  %t1.s | count 1
+; RUN: grep 61202  %t1.s | count 1
+; RUN: grep 16393  %t1.s | count 1
+; RUN: grep  8699  %t1.s | count 1
+; RUN: grep 21572  %t1.s | count 1
+; RUN: grep 11544  %t1.s | count 1
+; RUN: grep 1311768467750121234 %t1.s | count 1
+; RUN: grep lqx    %t2.s | count 6
 ; RUN: grep ila    %t2.s | count 6
 
 target datalayout = "E-p:32:32:128-f64:64:128-f32:32:128-i64:32:128-i32:32:128-i16:16:128-i8:8:128-i1:8:128-a0:0:128-v128:128:128"

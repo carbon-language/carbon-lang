@@ -1,9 +1,9 @@
 ; RUN: llvm-as -o - %s | llc -march=cellspu > %t1.s
-; RUN: grep fa %t1.s | count 2 &&
-; RUN: grep fs %t1.s | count 2 &&
-; RUN: grep fm %t1.s | count 6 &&
-; RUN: grep fma %t1.s | count 2 &&
-; RUN: grep fms %t1.s | count 2 &&
+; RUN: grep fa %t1.s | count 2
+; RUN: grep fs %t1.s | count 2
+; RUN: grep fm %t1.s | count 6
+; RUN: grep fma %t1.s | count 2
+; RUN: grep fms %t1.s | count 2
 ; RUN: grep fnms %t1.s | count 3
 ;
 ; This file includes standard floating point arithmetic instructions

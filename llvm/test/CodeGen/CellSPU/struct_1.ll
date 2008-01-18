@@ -1,26 +1,26 @@
 ; RUN: llvm-as -o - %s | llc -march=cellspu > %t1.s
 ; RUN: llvm-as -o - %s | llc -march=cellspu -mattr=large_mem > %t2.s
-; RUN: grep lqa     %t1.s | count 10 &&
-; RUN: grep lqd     %t1.s | count 4 &&
-; RUN: grep rotqbyi %t1.s | count 5 &&
-; RUN: grep xshw    %t1.s | count 1 &&
-; RUN: grep andi    %t1.s | count 4 &&
-; RUN: grep cbd     %t1.s | count 3 &&
-; RUN: grep chd     %t1.s | count 1 &&
-; RUN: grep cwd     %t1.s | count 3 &&
-; RUN: grep shufb   %t1.s | count 7 &&
+; RUN: grep lqa     %t1.s | count 10
+; RUN: grep lqd     %t1.s | count 4
+; RUN: grep rotqbyi %t1.s | count 5
+; RUN: grep xshw    %t1.s | count 1
+; RUN: grep andi    %t1.s | count 4
+; RUN: grep cbd     %t1.s | count 3
+; RUN: grep chd     %t1.s | count 1
+; RUN: grep cwd     %t1.s | count 3
+; RUN: grep shufb   %t1.s | count 7
 ; RUN: grep stqa    %t1.s | count 5
-; RUN: grep iohl    %t2.s | count 14 &&
-; RUN: grep ilhu    %t2.s | count 14 &&
-; RUN: grep lqx     %t2.s | count 14 &&
-; RUN: grep rotqbyi %t2.s | count 5 &&
-; RUN: grep xshw    %t2.s | count 1 &&
-; RUN: grep andi    %t2.s | count 4 &&
-; RUN: grep cbx     %t2.s | count 3 &&
-; RUN: grep chx     %t2.s | count 1 &&
-; RUN: grep cwx     %t2.s | count 1 &&
-; RUN: grep cwd     %t2.s | count 2 &&
-; RUN: grep shufb   %t2.s | count 7 &&
+; RUN: grep iohl    %t2.s | count 14
+; RUN: grep ilhu    %t2.s | count 14
+; RUN: grep lqx     %t2.s | count 14
+; RUN: grep rotqbyi %t2.s | count 5 
+; RUN: grep xshw    %t2.s | count 1
+; RUN: grep andi    %t2.s | count 4
+; RUN: grep cbx     %t2.s | count 3
+; RUN: grep chx     %t2.s | count 1
+; RUN: grep cwx     %t2.s | count 1
+; RUN: grep cwd     %t2.s | count 2
+; RUN: grep shufb   %t2.s | count 7
 ; RUN: grep stqx    %t2.s | count 7
 
 ; ModuleID = 'struct_1.bc'

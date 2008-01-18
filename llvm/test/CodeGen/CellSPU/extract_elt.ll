@@ -1,9 +1,9 @@
 ; RUN: llvm-as -o - %s | llc -march=cellspu > %t1.s
 ; RUN: llvm-as -o - %s | llc -march=cellspu -mattr=large_mem > %t2.s
-; RUN: grep shufb %t1.s | count 27 &&
-; RUN: grep   lqa %t1.s | count 27 &&
-; RUN: grep   lqx %t2.s | count 27 &&
-; RUN: grep space %t1.s | count 8 &&
+; RUN: grep shufb %t1.s | count 27
+; RUN: grep   lqa %t1.s | count 27
+; RUN: grep   lqx %t2.s | count 27
+; RUN: grep space %t1.s | count 8
 ; RUN: grep  byte %t1.s | count 424
 target datalayout = "E-p:32:32:128-f64:64:128-f32:32:128-i64:32:128-i32:32:128-i16:16:128-i8:8:128-i1:8:128-a0:0:128-v128:128:128-s0:128:128"
 target triple = "spu"

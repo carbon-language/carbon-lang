@@ -1,9 +1,9 @@
 ; RUN: llvm-as -o - %s | llc -march=cellspu > %t1.s
-; RUN: grep dfa    %t1.s | count 2 &&
-; RUN: grep dfs    %t1.s | count 2 &&
-; RUN: grep dfm    %t1.s | count 6 &&
-; RUN: grep dfma   %t1.s | count 2 &&
-; RUN: grep dfms   %t1.s | count 2 &&
+; RUN: grep dfa    %t1.s | count 2
+; RUN: grep dfs    %t1.s | count 2
+; RUN: grep dfm    %t1.s | count 6
+; RUN: grep dfma   %t1.s | count 2
+; RUN: grep dfms   %t1.s | count 2
 ; RUN: grep dfnms  %t1.s | count 4
 ;
 ; This file includes double precision floating point arithmetic instructions

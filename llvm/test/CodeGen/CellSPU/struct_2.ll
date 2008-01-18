@@ -1,13 +1,13 @@
 ; RUN: llvm-as -o - %s | llc -march=cellspu > %t1.s
-; RUN: grep lqx     %t1.s | count 14 &&
-; RUN: grep rotqby  %t1.s | count 7 &&
-; RUN: grep xshw    %t1.s | count 1 &&
-; RUN: grep andi    %t1.s | count 4 &&
-; RUN: grep cbx     %t1.s | count 1 &&
-; RUN: grep cbd     %t1.s | count 2 &&
-; RUN: grep chd     %t1.s | count 1 &&
-; RUN: grep cwd     %t1.s | count 3 &&
-; RUN: grep shufb   %t1.s | count 7 &&
+; RUN: grep lqx     %t1.s | count 14 
+; RUN: grep rotqby  %t1.s | count 7 
+; RUN: grep xshw    %t1.s | count 1
+; RUN: grep andi    %t1.s | count 4
+; RUN: grep cbx     %t1.s | count 1
+; RUN: grep cbd     %t1.s | count 2
+; RUN: grep chd     %t1.s | count 1
+; RUN: grep cwd     %t1.s | count 3
+; RUN: grep shufb   %t1.s | count 7
 ; RUN: grep stqx    %t1.s | count 7
 
 ; ModuleID = 'struct_1.bc'

@@ -1,16 +1,16 @@
 ; RUN: llvm-as -o - %s | llc -march=cellspu > %t1.s
-; RUN: grep cbd     %t1.s | count 3 &&
-; RUN: grep chd     %t1.s | count 3 &&
-; RUN: grep cwd     %t1.s | count 6 &&
-; RUN: grep il      %t1.s | count 4 &&
-; RUN: grep ilh     %t1.s | count 3 &&
-; RUN: grep iohl    %t1.s | count 1 &&
-; RUN: grep ilhu    %t1.s | count 1 &&
-; RUN: grep shufb   %t1.s | count 12 &&
-; RUN: grep 17219   %t1.s | count 1 &&
-; RUN: grep 22598   %t1.s | count 1 &&
-; RUN: grep -- -39  %t1.s | count 1 &&
-; RUN: grep    24   %t1.s | count 1 &&
+; RUN: grep cbd     %t1.s | count 3 
+; RUN: grep chd     %t1.s | count 3
+; RUN: grep cwd     %t1.s | count 6
+; RUN: grep il      %t1.s | count 4
+; RUN: grep ilh     %t1.s | count 3
+; RUN: grep iohl    %t1.s | count 1
+; RUN: grep ilhu    %t1.s | count 1
+; RUN: grep shufb   %t1.s | count 12
+; RUN: grep 17219   %t1.s | count 1 
+; RUN: grep 22598   %t1.s | count 1
+; RUN: grep -- -39  %t1.s | count 1
+; RUN: grep    24   %t1.s | count 1
 ; RUN: grep  1159   %t1.s | count 1
 ; ModuleID = 'vecinsert.bc'
 target datalayout = "E-p:32:32:128-f64:64:128-f32:32:128-i64:32:128-i32:32:128-i16:16:128-i8:8:128-i1:8:128-a0:0:128-v128:128:128"
