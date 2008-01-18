@@ -307,8 +307,8 @@ public:
   /// expander for it.
   LegalizeAction getTruncStoreAction(MVT::ValueType ValVT, 
                                      MVT::ValueType MemVT) const {
-    assert(ValVT < MVT::LAST_VALUETYPE && MemVT < 32 && 
-           "Table isn't big enough!");
+    assert(ValVT < array_lengthof(TruncStoreActions) && 
+           MemVT < sizeof(TruncStoreActions[0])*4 && "Table isn't big enough!");
     return (LegalizeAction)((TruncStoreActions[ValVT] >> (2*MemVT)) & 3);
   }
   
@@ -359,8 +359,8 @@ public:
   /// for it.
   LegalizeAction
   getConvertAction(MVT::ValueType FromVT, MVT::ValueType ToVT) const {
-    assert(FromVT < MVT::LAST_VALUETYPE && ToVT < 32 && 
-           "Table isn't big enough!");
+    assert(FromVT < array_lengthof(ConvertActions) && 
+           ToVT < sizeof(ConvertActions[0])*4 && "Table isn't big enough!");
     return (LegalizeAction)((ConvertActions[FromVT] >> (2*ToVT)) & 3);
   }
 
@@ -747,7 +747,7 @@ protected:
   /// with the specified type and indicate what to do about it.
   void setOperationAction(unsigned Op, MVT::ValueType VT,
                           LegalizeAction Action) {
-    assert(VT < 32 && Op < array_lengthof(OpActions) &&
+    assert(VT < sizeof(OpActions[0])*4 && Op < array_lengthof(OpActions) &&
            "Table isn't big enough!");
     OpActions[Op] &= ~(uint64_t(3UL) << VT*2);
     OpActions[Op] |= (uint64_t)Action << VT*2;
@@ -757,7 +757,8 @@ protected:
   /// work with the with specified type and indicate what to do about it.
   void setLoadXAction(unsigned ExtType, MVT::ValueType VT,
                       LegalizeAction Action) {
-    assert(VT < 32 && ExtType < array_lengthof(LoadXActions) &&
+    assert(VT < sizeof(LoadXActions[0])*4 && 
+           ExtType < array_lengthof(LoadXActions) &&
            "Table isn't big enough!");
     LoadXActions[ExtType] &= ~(uint64_t(3UL) << VT*2);
     LoadXActions[ExtType] |= (uint64_t)Action << VT*2;
@@ -767,8 +768,8 @@ protected:
   /// not work with the with specified type and indicate what to do about it.
   void setTruncStoreAction(MVT::ValueType ValVT, MVT::ValueType MemVT,
                            LegalizeAction Action) {
-    assert(ValVT < MVT::LAST_VALUETYPE && MemVT < 32 && 
-           "Table isn't big enough!");
+    assert(ValVT < array_lengthof(TruncStoreActions) && 
+           MemVT < sizeof(TruncStoreActions[0])*4 && "Table isn't big enough!");
     TruncStoreActions[ValVT] &= ~(uint64_t(3UL) << MemVT*2);
     TruncStoreActions[ValVT] |= (uint64_t)Action << MemVT*2;
   }
@@ -779,7 +780,7 @@ protected:
   /// TargetLowering.cpp
   void setIndexedLoadAction(unsigned IdxMode, MVT::ValueType VT,
                             LegalizeAction Action) {
-    assert(VT < 32 && IdxMode <
+    assert(VT < sizeof(IndexedModeActions[0])*4 && IdxMode <
            array_lengthof(IndexedModeActions[0]) &&
            "Table isn't big enough!");
     IndexedModeActions[0][IdxMode] &= ~(uint64_t(3UL) << VT*2);
@@ -792,8 +793,8 @@ protected:
   /// TargetLowering.cpp
   void setIndexedStoreAction(unsigned IdxMode, MVT::ValueType VT,
                              LegalizeAction Action) {
-    assert(VT < 32 && IdxMode <
-           array_lengthof(IndexedModeActions[1]) &&
+    assert(VT < sizeof(IndexedModeActions[1][0])*4 &&
+           IdxMode < array_lengthof(IndexedModeActions[1]) &&
            "Table isn't big enough!");
     IndexedModeActions[1][IdxMode] &= ~(uint64_t(3UL) << VT*2);
     IndexedModeActions[1][IdxMode] |= (uint64_t)Action << VT*2;
@@ -803,8 +804,8 @@ protected:
   /// not work with the with specified type and indicate what to do about it.
   void setConvertAction(MVT::ValueType FromVT, MVT::ValueType ToVT, 
                         LegalizeAction Action) {
-    assert(FromVT < MVT::LAST_VALUETYPE && ToVT < 32 && 
-           "Table isn't big enough!");
+    assert(FromVT < array_lengthof(ConvertActions) &&
+           ToVT < sizeof(ConvertActions[0])*4 && "Table isn't big enough!");
     ConvertActions[FromVT] &= ~(uint64_t(3UL) << ToVT*2);
     ConvertActions[FromVT] |= (uint64_t)Action << ToVT*2;
   }
