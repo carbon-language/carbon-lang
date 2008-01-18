@@ -44,6 +44,10 @@ LLVM_SUBMIT_SUBVERSION="$8"
 # enabled in the LLVM libs/tools.
 LLVM_ASSERTIONS="$9"
 
+# The tenth parameter is a yes/no that indicates whether this is an optimized
+# build.
+LLVM_OPTIMIZED="${10}"
+
 # The current working directory is where the build will happen. It may already
 # contain a partial result of an interrupted build, in which case this script
 # will continue where it left off.
@@ -54,19 +58,6 @@ echo DARWIN_VERS = $DARWIN_VERS
 
 # If the user has CC set in their environment unset it now
 unset CC
-
-# The B&I build srcript (~rc/bin/buildit) accepts an '-othercflags' command-line
-# flag, and captures the argument to that flag in $RC_NONARCH_CFLAGS (and
-# mysteriously prepends '-pipe' thereto). We will allow this to override the
-# default $CFLAGS and $CXXFLAGS.
-
-if [ "x$LLVM_DEBUG" == "x" ]; then
-    CFLAGS="-g -O2 ${RC_NONARCH_CFLAGS/-pipe/}"
-    OPTIMIZE_OPTS="ENABLE_OPTIMIZED=1"
-else
-    CFLAGS="-g"
-    OPTIMIZE_OPTS=
-fi
 
 ################################################################################
 # Run the build.
@@ -85,7 +76,9 @@ cd $DIR/obj-llvm || exit 1
 
 if [ \! -f Makefile.config ]; then
     $SRC_DIR/llvm/configure --prefix=$DEST_DIR$DEST_ROOT \
-        --enable-targets=x86,powerpc,cbe --enable-assertions=$LLVM_ASSERTIONS \
+        --enable-targets=x86,powerpc,cbe \
+        --enable-assertions=$LLVM_ASSERTIONS \
+        --enable-optimized=$LLVM_OPTIMIZED \
         || exit 1
 fi
 
