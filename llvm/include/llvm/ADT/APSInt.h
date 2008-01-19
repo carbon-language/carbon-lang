@@ -125,6 +125,10 @@ public:
     assert(IsUnsigned == RHS.IsUnsigned && "Signedness mismatch!");
     return IsUnsigned ? uge(RHS) : sge(RHS);
   }
+  
+  /// Profile - Used to insert APSInt objects, or objects that contain APSInt
+  ///  objects, into FoldingSets.
+  void Profile(FoldingSetNodeID& ID) const;
 };
   
 } // end namespace llvm
