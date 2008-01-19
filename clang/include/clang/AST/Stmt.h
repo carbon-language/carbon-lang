@@ -974,8 +974,11 @@ public:
   
   Expr *const getThrowExpr() const { return reinterpret_cast<Expr*>(Throw); }
   
-  virtual SourceRange getSourceRange() const { 
-    return SourceRange(AtThrowLoc, Throw->getLocEnd()); 
+  virtual SourceRange getSourceRange() const {
+    if (Throw)
+      return SourceRange(AtThrowLoc, Throw->getLocEnd()); 
+	else 
+	  return SourceRange(AtThrowLoc);
   }
   
   static bool classof(const Stmt *T) {

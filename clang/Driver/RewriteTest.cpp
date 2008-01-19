@@ -1207,7 +1207,10 @@ Stmt *RewriteTest::RewriteObjCThrowStmt(ObjCAtThrowStmt *S) {
 
   std::string buf;
   /* void objc_exception_throw(id) __attribute__((noreturn)); */
-  buf = "objc_exception_throw(";
+  if (S->getThrowExpr())
+    buf = "objc_exception_throw(";
+  else // add an implicit argument
+    buf = "objc_exception_throw(_caught";
   Rewrite.ReplaceText(startLoc, 6, buf.c_str(), buf.size());
   const char *semiBuf = strchr(startBuf, ';');
   assert((*semiBuf == ';') && "@throw: can't find ';'");
