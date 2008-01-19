@@ -96,8 +96,9 @@ namespace llvm {
 ///    bool WasRemoved = RemoveNode(N);
 ///
 /// The result indicates whether the node existed in the folding set.
-
-
+  
+class FoldingSetNodeID;
+  
 //===----------------------------------------------------------------------===//
 /// FoldingSetImpl - Implements the folding set functionality.  The main
 /// structure is an array of buckets.  Each bucket is indexed by the hash of
@@ -123,49 +124,6 @@ public:
   explicit FoldingSetImpl(unsigned Log2InitSize = 6);
   virtual ~FoldingSetImpl();
   
-  // Forward declaration.
-  class Node;
-
-  //===--------------------------------------------------------------------===//
-  /// NodeID - This class is used to gather all the unique data bits of a
-  /// node.  When all the bits are gathered this class is used to produce a
-  /// hash value for the node.  
-  ///
-  class NodeID {
-    /// Bits - Vector of all the data bits that make the node unique.
-    /// Use a SmallVector to avoid a heap allocation in the common case.
-    SmallVector<unsigned, 32> Bits;
-    
-  public:
-    NodeID() {}
-    
-    /// getRawData - Return the ith entry in the Bits data.
-    ///
-    unsigned getRawData(unsigned i) const {
-      return Bits[i];
-    }
-    
-    /// Add* - Add various data types to Bit data.
-    ///
-    void AddPointer(const void *Ptr);
-    void AddInteger(signed I);
-    void AddInteger(unsigned I);
-    void AddInteger(int64_t I);
-    void AddInteger(uint64_t I);
-    void AddFloat(float F);
-    void AddDouble(double D);
-    void AddAPFloat(const APFloat& apf);
-    void AddString(const std::string &String);
-    
-    /// ComputeHash - Compute a strong hash value for this NodeID, used to 
-    /// lookup the node in the FoldingSetImpl.
-    unsigned ComputeHash() const;
-    
-    /// operator== - Used to compare two nodes to each other.
-    ///
-    bool operator==(const NodeID &RHS) const;
-  };
-
   //===--------------------------------------------------------------------===//
   /// Node - This class is used to maintain the singly linked bucket list in
   /// a folding set.
@@ -196,7 +154,7 @@ public:
   /// FindNodeOrInsertPos - Look up the node specified by ID.  If it exists,
   /// return it.  If not, return the insertion token that will make insertion
   /// faster.
-  Node *FindNodeOrInsertPos(const NodeID &ID, void *&InsertPos);
+  Node *FindNodeOrInsertPos(const FoldingSetNodeID &ID, void *&InsertPos);
   
   /// InsertNode - Insert the specified node into the folding set, knowing that
   /// it is not already in the folding set.  InsertPos must be obtained from 
@@ -216,13 +174,51 @@ protected:
 
   /// GetNodeProfile - Instantiations of the FoldingSet template implement
   /// this function to gather data bits for the given node.
-  virtual void GetNodeProfile(NodeID &ID, Node *N) const = 0;
+  virtual void GetNodeProfile(FoldingSetNodeID &ID, Node *N) const = 0;
 };
 
-// Convenience types to hide the implementation of the folding set.
-typedef FoldingSetImpl::Node FoldingSetNode;
-typedef FoldingSetImpl::NodeID FoldingSetNodeID;
+//===--------------------------------------------------------------------===//
+/// FoldingSetNodeID - This class is used to gather all the unique data bits of
+/// a node.  When all the bits are gathered this class is used to produce a
+/// hash value for the node.  
+///
+class FoldingSetNodeID {
+  /// Bits - Vector of all the data bits that make the node unique.
+  /// Use a SmallVector to avoid a heap allocation in the common case.
+  SmallVector<unsigned, 32> Bits;
+  
+public:
+  FoldingSetNodeID() {}
+  
+  /// getRawData - Return the ith entry in the Bits data.
+  ///
+  unsigned getRawData(unsigned i) const {
+    return Bits[i];
+  }
+  
+  /// Add* - Add various data types to Bit data.
+  ///
+  void AddPointer(const void *Ptr);
+  void AddInteger(signed I);
+  void AddInteger(unsigned I);
+  void AddInteger(int64_t I);
+  void AddInteger(uint64_t I);
+  void AddFloat(float F);
+  void AddDouble(double D);
+  void AddAPFloat(const APFloat& apf);
+  void AddString(const std::string &String);
+  
+  /// ComputeHash - Compute a strong hash value for this FoldingSetNodeID, used
+  ///  to lookup the node in the FoldingSetImpl.
+  unsigned ComputeHash() const;
+  
+  /// operator== - Used to compare two nodes to each other.
+  ///
+  bool operator==(const FoldingSetNodeID &RHS) const;
+};  
 
+// Convenience type to hide the implementation of the folding set.
+typedef FoldingSetImpl::Node FoldingSetNode;
 template<class T> class FoldingSetIterator;
 
 //===----------------------------------------------------------------------===//
@@ -247,7 +243,7 @@ template<class T> class FoldingSet : public FoldingSetImpl {
 private:
   /// GetNodeProfile - Each instantiatation of the FoldingSet needs to provide a
   /// way to convert nodes into a unique specifier.
-  virtual void GetNodeProfile(NodeID &ID, Node *N) const {
+  virtual void GetNodeProfile(FoldingSetNodeID &ID, Node *N) const {
     T *TN = static_cast<T *>(N);
     FoldingSetTrait<T>::Profile(*TN,ID);
   }

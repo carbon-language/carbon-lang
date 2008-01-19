@@ -21,11 +21,11 @@
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
-// FoldingSetImpl::NodeID Implementation
+// FoldingSetNodeID Implementation
 
 /// Add* - Add various data types to Bit data.
 ///
-void FoldingSetImpl::NodeID::AddPointer(const void *Ptr) {
+void FoldingSetNodeID::AddPointer(const void *Ptr) {
   // Note: this adds pointers to the hash using sizes and endianness that
   // depend on the host.  It doesn't matter however, because hashing on
   // pointer values in inherently unstable.  Nothing  should depend on the 
@@ -35,35 +35,35 @@ void FoldingSetImpl::NodeID::AddPointer(const void *Ptr) {
   if (sizeof(intptr_t) > sizeof(unsigned))
     Bits.push_back(unsigned(uint64_t(PtrI) >> 32));
 }
-void FoldingSetImpl::NodeID::AddInteger(signed I) {
+void FoldingSetNodeID::AddInteger(signed I) {
   Bits.push_back(I);
 }
-void FoldingSetImpl::NodeID::AddInteger(unsigned I) {
+void FoldingSetNodeID::AddInteger(unsigned I) {
   Bits.push_back(I);
 }
-void FoldingSetImpl::NodeID::AddInteger(int64_t I) {
+void FoldingSetNodeID::AddInteger(int64_t I) {
   AddInteger((uint64_t)I);
 }
-void FoldingSetImpl::NodeID::AddInteger(uint64_t I) {
+void FoldingSetNodeID::AddInteger(uint64_t I) {
   Bits.push_back(unsigned(I));
   
   // If the integer is small, encode it just as 32-bits.
   if ((uint64_t)(int)I != I)
     Bits.push_back(unsigned(I >> 32));
 }
-void FoldingSetImpl::NodeID::AddFloat(float F) {
+void FoldingSetNodeID::AddFloat(float F) {
   Bits.push_back(FloatToBits(F));
 }
-void FoldingSetImpl::NodeID::AddDouble(double D) {
+void FoldingSetNodeID::AddDouble(double D) {
  AddInteger(DoubleToBits(D));
 }
-void FoldingSetImpl::NodeID::AddAPFloat(const APFloat& apf) {
+void FoldingSetNodeID::AddAPFloat(const APFloat& apf) {
   APInt api = apf.convertToAPInt();
   const uint64_t *p = api.getRawData();
   for (unsigned i=0; i<api.getNumWords(); i++)
     AddInteger(*p++);
 }
-void FoldingSetImpl::NodeID::AddString(const std::string &String) {
+void FoldingSetNodeID::AddString(const std::string &String) {
   unsigned Size = String.size();
   Bits.push_back(Size);
   if (!Size) return;
@@ -100,9 +100,9 @@ void FoldingSetImpl::NodeID::AddString(const std::string &String) {
   Bits.push_back(V);
 }
 
-/// ComputeHash - Compute a strong hash value for this NodeID, used to 
+/// ComputeHash - Compute a strong hash value for this FoldingSetNodeID, used to 
 /// lookup the node in the FoldingSetImpl.
-unsigned FoldingSetImpl::NodeID::ComputeHash() const {
+unsigned FoldingSetNodeID::ComputeHash() const {
   // This is adapted from SuperFastHash by Paul Hsieh.
   unsigned Hash = Bits.size();
   for (const unsigned *BP = &Bits[0], *E = BP+Bits.size(); BP != E; ++BP) {
@@ -125,7 +125,7 @@ unsigned FoldingSetImpl::NodeID::ComputeHash() const {
 
 /// operator== - Used to compare two nodes to each other.
 ///
-bool FoldingSetImpl::NodeID::operator==(const FoldingSetImpl::NodeID &RHS)const{
+bool FoldingSetNodeID::operator==(const FoldingSetNodeID &RHS)const{
   if (Bits.size() != RHS.Bits.size()) return false;
   return memcmp(&Bits[0], &RHS.Bits[0], Bits.size()*sizeof(Bits[0])) == 0;
 }
@@ -158,7 +158,7 @@ static void **GetBucketPtr(void *NextInBucketPtr) {
 
 /// GetBucketFor - Hash the specified node ID and return the hash bucket for
 /// the specified ID.
-static void **GetBucketFor(const FoldingSetImpl::NodeID &ID,
+static void **GetBucketFor(const FoldingSetNodeID &ID,
                            void **Buckets, unsigned NumBuckets) {
   // NumBuckets is always a power of 2.
   unsigned BucketNum = ID.ComputeHash() & (NumBuckets-1);
@@ -209,7 +209,7 @@ void FoldingSetImpl::GrowHashTable() {
       NodeInBucket->SetNextInBucket(0);
 
       // Insert the node into the new bucket, after recomputing the hash.
-      NodeID ID;
+      FoldingSetNodeID ID;
       GetNodeProfile(ID, NodeInBucket);
       InsertNode(NodeInBucket, GetBucketFor(ID, Buckets, NumBuckets));
     }
@@ -221,7 +221,7 @@ void FoldingSetImpl::GrowHashTable() {
 /// FindNodeOrInsertPos - Look up the node specified by ID.  If it exists,
 /// return it.  If not, return the insertion token that will make insertion
 /// faster.
-FoldingSetImpl::Node *FoldingSetImpl::FindNodeOrInsertPos(const NodeID &ID,
+FoldingSetImpl::Node *FoldingSetImpl::FindNodeOrInsertPos(const FoldingSetNodeID &ID,
                                                           void *&InsertPos) {
   void **Bucket = GetBucketFor(ID, Buckets, NumBuckets);
   void *Probe = *Bucket;
@@ -229,7 +229,7 @@ FoldingSetImpl::Node *FoldingSetImpl::FindNodeOrInsertPos(const NodeID &ID,
   InsertPos = 0;
   
   while (Node *NodeInBucket = GetNextPtr(Probe)) {
-    NodeID OtherID;
+    FoldingSetNodeID OtherID;
     GetNodeProfile(OtherID, NodeInBucket);
     if (OtherID == ID)
       return NodeInBucket;
@@ -250,7 +250,7 @@ void FoldingSetImpl::InsertNode(Node *N, void *InsertPos) {
   // Do we need to grow the hashtable?
   if (NumNodes+1 > NumBuckets*2) {
     GrowHashTable();
-    NodeID ID;
+    FoldingSetNodeID ID;
     GetNodeProfile(ID, N);
     InsertPos = GetBucketFor(ID, Buckets, NumBuckets);
   }
@@ -317,7 +317,7 @@ bool FoldingSetImpl::RemoveNode(Node *N) {
 /// equal to the specified node, return it.  Otherwise, insert 'N' and it
 /// instead.
 FoldingSetImpl::Node *FoldingSetImpl::GetOrInsertNode(FoldingSetImpl::Node *N) {
-  NodeID ID;
+  FoldingSetNodeID ID;
   GetNodeProfile(ID, N);
   void *IP;
   if (Node *E = FindNodeOrInsertPos(ID, IP))
