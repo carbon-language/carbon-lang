@@ -362,7 +362,7 @@ void RewriteTest::RewriteInclude() {
   size_t ImportLen = strlen("import");
   size_t IncludeLen = strlen("include");
                              
-  // Loop over the whole file, looking for tabs.
+  // Loop over the whole file, looking for includes.
   for (const char *BufPtr = MainBufStart; BufPtr < MainBufEnd; ++BufPtr) {
     if (*BufPtr == '#') {
       if (++BufPtr == MainBufEnd)
