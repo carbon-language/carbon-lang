@@ -24,6 +24,7 @@
 namespace llvm {
   class Serializer;
   class Deserializer;
+  class FoldingSetNodeID;
   
   /* An unsigned host type used as a single part of a multi-part
      bignum.  */
@@ -209,6 +210,10 @@ public:
   /// Default constructor that creates an uninitialized APInt.  This is useful
   ///  for object deserialization (pair this with the static method Read).
   explicit APInt() : BitWidth(1) {}
+  
+  /// Profile - Used to insert APInt objects, or objects that contain APInt 
+  ///  objects, into FoldingSets.
+  void Profile(FoldingSetNodeID& ID) const;
   
   /// @brief Used by the Bitcode serializer to emit APInts to Bitcode.
   void Emit(Serializer& S) const;

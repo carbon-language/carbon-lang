@@ -14,6 +14,7 @@
 
 #define DEBUG_TYPE "apint"
 #include "llvm/ADT/APInt.h"
+#include "llvm/ADT/FoldingSet.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
 #include <math.h>
@@ -23,7 +24,6 @@
 #include <iomanip>
 
 using namespace llvm;
-
 
 /// This enumeration just provides for internal constants used in this
 /// translation unit. 
@@ -163,6 +163,18 @@ APInt& APInt::operator=(uint64_t RHS) {
     memset(pVal+1, 0, (getNumWords() - 1) * APINT_WORD_SIZE);
   }
   return clearUnusedBits();
+}
+
+/// Profile - This method 'profiles' an APInt for use with FoldingSet.
+void APInt::Profile(FoldingSetNodeID& ID) const {
+  if (isSingleWord()) {
+    ID.AddInteger(VAL);
+    return;
+  }
+
+  uint32_t NumWords = getNumWords();
+  for (unsigned i = 0; i < NumWords; ++i)
+    ID.AddInteger(pVal[i]);
 }
 
 /// add_1 - This function adds a single "digit" integer, y, to the multiple 
