@@ -213,7 +213,7 @@ public:
   
   /// Profile - Used to insert APInt objects, or objects that contain APInt 
   ///  objects, into FoldingSets.
-  void Profile(FoldingSetNodeID& ID) const;
+  void Profile(FoldingSetNodeID& id) const;
   
   /// @brief Used by the Bitcode serializer to emit APInts to Bitcode.
   void Emit(Serializer& S) const;
