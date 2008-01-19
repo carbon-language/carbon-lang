@@ -226,6 +226,19 @@ typedef FoldingSetImpl::NodeID FoldingSetNodeID;
 template<class T> class FoldingSetIterator;
 
 //===----------------------------------------------------------------------===//
+/// FoldingSetTrait - This trait class is used to define behavior of how
+///  to "profile" (in the FoldingSet parlance) an object of a given type.
+///  The default behavior is to invoke a 'Profile' method on an object, but
+///  through template specialization the behavior can be tailored for specific
+///  types.  Combined with the FoldingSetNodeWrapper classs, one can add objects
+///  to FoldingSets that were not originally designed to have that behavior.
+///
+template<typename T> struct FoldingSetTrait {
+  static inline void Profile(const T& X, FoldingSetNodeID& ID) { X.Profile(ID);}
+  static inline void Profile(T& X, FoldingSetNodeID& ID) { X.Profile(ID); }
+};
+  
+//===----------------------------------------------------------------------===//
 /// FoldingSet - This template class is used to instantiate a specialized
 /// implementation of the folding set to the node class T.  T must be a 
 /// subclass of FoldingSetNode and implement a Profile function.
@@ -236,7 +249,7 @@ private:
   /// way to convert nodes into a unique specifier.
   virtual void GetNodeProfile(NodeID &ID, Node *N) const {
     T *TN = static_cast<T *>(N);
-    TN->Profile(ID);
+    FoldingSetTrait<T>::Profile(*TN,ID);
   }
   
 public:
@@ -306,6 +319,45 @@ public:
   FoldingSetIterator operator++(int) {        // Postincrement
     FoldingSetIterator tmp = *this; ++*this; return tmp;
   }
+};
+  
+//===----------------------------------------------------------------------===//
+/// FoldingSetNodeWrapper - This template class is used to "wrap" arbitrary
+/// types in an enclosing object so that they can be inserted into FoldingSets.
+template <typename T>
+class FoldingSetNodeWrapper : public FoldingSetNode {
+  T data;
+public:
+  FoldingSetNodeWrapper(const T& x) : data(x) {}
+  virtual ~FoldingSetNodeWrapper();
+  
+  template<typename A1>
+  explicit FoldingSetNodeWrapper(const A1& a1)
+    : data(a1) {}
+  
+  template <typename A1, typename A2>
+  explicit FoldingSetNodeWrapper(const A1& a1, const A2& a2)
+    : data(a1,a2) {}
+  
+  template <typename A1, typename A2, typename A3>
+  explicit FoldingSetNodeWrapper(const A1& a1, const A2& a2, const A3& a3)
+    : data(a1,a2,a3) {}
+  
+  template <typename A1, typename A2, typename A3, typename A4>
+  explicit FoldingSetNodeWrapper(const A1& a1, const A2& a2, const A3& a3,
+                                 const A4& a4)
+    : data(a1,a2,a3,a4) {}
+  
+  template <typename A1, typename A2, typename A3, typename A4, typename A5>
+  explicit FoldingSetNodeWrapper(const A1& a1, const A2& a2, const A3& a3,
+                                 const A4& a4, const A5& a5)
+  : data(a1,a2,a3,a4,a5) {}
+
+  
+  void Profile(FoldingSetNodeID& ID) { FoldingSetTrait<T>::Profile(data, ID); }
+
+  operator T&() { return data; }
+  operator const T&() const { return data; }
 };
 
 } // End of namespace llvm.
