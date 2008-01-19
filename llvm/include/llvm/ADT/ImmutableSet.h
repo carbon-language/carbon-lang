@@ -717,8 +717,8 @@ struct ImutProfileInfo {
   typedef const T& value_type_ref;
   
   static inline void Profile(FoldingSetNodeID& ID, value_type_ref X) {
-    X.Profile(ID);
-  }  
+    FoldingSetTrait<T>::Profile(X,ID);
+  }
 };
 
 /// Profile traits for integers.
