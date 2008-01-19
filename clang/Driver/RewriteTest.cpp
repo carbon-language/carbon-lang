@@ -161,7 +161,7 @@ namespace {
 
     // Syntactic Rewriting.
     void RewritePrologue(SourceLocation Loc);
-    void RewriteInclude(SourceLocation Loc);
+    void RewriteInclude();
     void RewriteTabs();
     void RewriteForwardClassDecl(ObjCClassDecl *Dcl);
     void RewriteInterfaceDecl(ObjCInterfaceDecl *Dcl);
@@ -293,10 +293,6 @@ void RewriteTest::HandleTopLevelDecl(Decl *D) {
   // If we have a decl in the main file, see if we should rewrite it.
   if (SM->getDecomposedFileLoc(Loc).first == MainFileID)
     return HandleDeclInMainFile(D);
-
-  // Otherwise, see if there is a #import in the main file that should be
-  // rewritten.
-  //RewriteInclude(Loc);
 }
 
 /// HandleDeclInMainFile - This is called for each top-level decl defined in the
@@ -334,6 +330,8 @@ RewriteTest::~RewriteTest() {
   // Rewrite tabs if we care.
   //RewriteTabs();
   
+  RewriteInclude();
+  
   // Rewrite Objective-c meta data*
   std::string ResultStr;
   RewriteImplementations(ResultStr);
@@ -356,28 +354,31 @@ RewriteTest::~RewriteTest() {
 // Syntactic (non-AST) Rewriting Code
 //===----------------------------------------------------------------------===//
 
-void RewriteTest::RewriteInclude(SourceLocation Loc) {
-  // Rip up the #include stack to the main file.
-  SourceLocation IncLoc = Loc, NextLoc = Loc;
-  do {
-    IncLoc = Loc;
-    Loc = SM->getLogicalLoc(NextLoc);
-    NextLoc = SM->getIncludeLoc(Loc);
-  } while (!NextLoc.isInvalid());
-
-  // Loc is now the location of the #include filename "foo" or <foo/bar.h>.
-  // IncLoc indicates the header that was included if it is useful.
-  IncLoc = SM->getLogicalLoc(IncLoc);
-  if (SM->getDecomposedFileLoc(Loc).first != MainFileID ||
-      Loc == LastIncLoc)
-    return;
-  LastIncLoc = Loc;
-  
-  unsigned IncCol = SM->getColumnNumber(Loc);
-  SourceLocation LineStartLoc = Loc.getFileLocWithOffset(-IncCol+1);
-
-  // Replace the #import with #include.
-  Rewrite.ReplaceText(LineStartLoc, IncCol-1, "#include ", strlen("#include "));
+void RewriteTest::RewriteInclude() {
+  SourceLocation LocStart = SourceLocation::getFileLoc(MainFileID, 0);
+  std::pair<const char*, const char*> MainBuf = SM->getBufferData(MainFileID);
+  const char *MainBufStart = MainBuf.first;
+  const char *MainBufEnd = MainBuf.second;
+  size_t ImportLen = strlen("import");
+  size_t IncludeLen = strlen("include");
+                             
+  // Loop over the whole file, looking for tabs.
+  for (const char *BufPtr = MainBufStart; BufPtr < MainBufEnd; ++BufPtr) {
+    if (*BufPtr == '#') {
+      if (++BufPtr == MainBufEnd)
+        return;
+      while (*BufPtr == ' ' || *BufPtr == '\t')
+        if (++BufPtr == MainBufEnd)
+          return;
+      if (!strncmp(BufPtr, "import", ImportLen)) {
+        // replace import with include
+        SourceLocation ImportLoc = 
+          LocStart.getFileLocWithOffset(BufPtr-MainBufStart);
+        Rewrite.ReplaceText(ImportLoc, ImportLen, "include", IncludeLen);
+        BufPtr += ImportLen;
+      }
+    }
+  }
 }
 
 void RewriteTest::RewriteTabs() {
