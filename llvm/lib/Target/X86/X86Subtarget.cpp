@@ -41,7 +41,7 @@ bool X86Subtarget::GVRequiresExtraLoad(const GlobalValue* GV,
       return (!isDirectCall &&
               (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage() ||
                (GV->isDeclaration() && !GV->hasNotBeenReadFromBitcode())));
-    } else if (TM.getRelocationModel() == Reloc::PIC_ && isPICStyleGOT()) {
+    } else if (isTargetELF()) {
       // Extra load is needed for all non-statics.
       return (!isDirectCall &&
               (GV->isDeclaration() || !GV->hasInternalLinkage()));
