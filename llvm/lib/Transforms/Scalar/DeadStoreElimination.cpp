@@ -211,11 +211,11 @@ bool DSE::handleFreeWithNonTrivialDependency(FreeInst* F, Instruction* dep,
   Value* depPointer = dependency->getPointerOperand();
   const Type* depType = dependency->getOperand(0)->getType();
   unsigned depPointerSize = TD.getTypeStoreSize(depType);
-  
+
   // Check for aliasing
-  AliasAnalysis::AliasResult A = AA.alias(F->getPointerOperand(), ~0UL,
+  AliasAnalysis::AliasResult A = AA.alias(F->getPointerOperand(), ~0U,
                                           depPointer, depPointerSize);
-    
+
   if (A == AliasAnalysis::MustAlias) {
     // Remove it!
     MD.removeInstruction(dependency);
@@ -324,13 +324,13 @@ bool DSE::handleEndBlock(BasicBlock& BB,
           deadPointers.clear();
           return MadeChange;
         }
-        
+
         // Get size information for the alloca
-        unsigned pointerSize = ~0UL;
+        unsigned pointerSize = ~0U;
         if (ConstantInt* C = dyn_cast<ConstantInt>((*I)->getArraySize()))
           pointerSize = C->getZExtValue() * \
                         TD.getABITypeSize((*I)->getAllocatedType());
-        
+
         // See if the call site touches it
         AliasAnalysis::ModRefResult A = AA.getModRefInfo(CS, *I, pointerSize);
         
@@ -392,14 +392,14 @@ bool DSE::RemoveUndeadPointers(Value* killPointer,
   for (SmallPtrSet<AllocaInst*, 64>::iterator I = deadPointers.begin(),
       E = deadPointers.end(); I != E; ++I) {
     // Get size information for the alloca
-    unsigned pointerSize = ~0UL;
+    unsigned pointerSize = ~0U;
     if (ConstantInt* C = dyn_cast<ConstantInt>((*I)->getArraySize()))
       pointerSize = C->getZExtValue() * \
                     TD.getABITypeSize((*I)->getAllocatedType());
-      
+
     // See if this pointer could alias it
     AliasAnalysis::AliasResult A = AA.alias(*I, pointerSize,
-                                            killPointer, ~0UL);
+                                            killPointer, ~0U);
 
     // If it must-alias and a store, we can delete it
     if (isa<StoreInst>(BBI) && A == AliasAnalysis::MustAlias) {
