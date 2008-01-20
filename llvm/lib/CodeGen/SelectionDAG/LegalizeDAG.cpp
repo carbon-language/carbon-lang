@@ -3608,10 +3608,11 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     MVT::ValueType SrcVT = Op.getOperand(0).getValueType();
     if (TLI.getConvertAction(SrcVT, DstVT) == TargetLowering::Expand) {
       if (SrcVT == MVT::ppcf128) {
-        SDOperand Lo, Hi;
-        ExpandOp(Node->getOperand(0), Lo, Hi);
+        SDOperand Lo;
+        ExpandOp(Node->getOperand(0), Lo, Result);
         // Round it the rest of the way (e.g. to f32) if needed.
-        Result = DAG.getNode(ISD::FP_ROUND, DstVT, Hi, Op.getOperand(1));
+        if (DstVT!=MVT::f64)
+          Result = DAG.getNode(ISD::FP_ROUND, DstVT, Result, Op.getOperand(1));
         break;
       }
       // The only other way we can lower this is to turn it into a STORE,
