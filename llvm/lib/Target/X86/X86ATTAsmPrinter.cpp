@@ -363,10 +363,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
           O << "@GOTOFF";
       } else if (Subtarget->isPICStyleRIPRel() && !NotRIPRel &&
                  TM.getRelocationModel() != Reloc::Static) {
-        if ((GV->isDeclaration() ||
-             GV->hasWeakLinkage() ||
-             GV->hasLinkOnceLinkage()) &&
-            TM.getRelocationModel() != Reloc::Static)
+        if (Subtarget->GVRequiresExtraLoad(GV, TM, false))
           O << "@GOTPCREL";
 
         if (needCloseParen) {
