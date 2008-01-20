@@ -194,19 +194,20 @@ static void getX86Defines(std::vector<char> &Defs, bool is64Bit) {
     Define(Defs, "__LONG_MAX__", "9223372036854775807L");
     Define(Defs, "__PTRDIFF_TYPE__", "long int");
     Define(Defs, "__UINTMAX_TYPE__", "long unsigned int");
+    Define(Defs, "__SIZE_TYPE__", "long unsigned int");
   } else {
     Define(Defs, "__INTMAX_MAX__", "9223372036854775807LL");
     Define(Defs, "__INTMAX_TYPE__", "long long int");
     Define(Defs, "__LONG_MAX__", "2147483647L");
     Define(Defs, "__PTRDIFF_TYPE__", "int");
     Define(Defs, "__UINTMAX_TYPE__", "long long unsigned int");
+    Define(Defs, "__SIZE_TYPE__", "unsigned int");
   }
   Define(Defs, "__CHAR_BIT__", "8");
   Define(Defs, "__INT_MAX__", "2147483647");
   Define(Defs, "__LONG_LONG_MAX__", "9223372036854775807LL");
   Define(Defs, "__SCHAR_MAX__", "127");
   Define(Defs, "__SHRT_MAX__", "32767");
-  Define(Defs, "__SIZE_TYPE__", "long unsigned int");
   
   // Subtarget options.
   Define(Defs, "__nocona");
