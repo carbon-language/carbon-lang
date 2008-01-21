@@ -847,6 +847,10 @@ static void InitializeIncludePaths(HeaderSearch &Headers, FileManager &FM,
             "4.0.1/../../../../powerpc-apple-darwin8/include", 
             System, false, false, false, Headers);
 
+    // Ubuntu 7.10 - Gutsy Gibbon
+    AddPath("/usr/lib/gcc/i486-linux-gnu/4.1.3/include", System,
+	    false, false, false, Headers);
+
     AddPath("/usr/include", System, false, false, false, Headers);
     AddPath("/System/Library/Frameworks", System, true, false, true, Headers);
     AddPath("/Library/Frameworks", System, true, false, true, Headers);
