@@ -606,6 +606,8 @@ void RewriteTest::RewriteObjCMethodDecl(ObjCMethodDecl *OMD,
     ResultStr += " ";
     ResultStr += PDecl->getName();
   }
+  if (OMD->isVariadic())
+    ResultStr += ", ...";
   ResultStr += ") ";
   
 }
