@@ -231,9 +231,12 @@ private:
   }
   
   inline unsigned ComputeHash() {
-    if (!isMutable() && Hash) return Hash;
-    Hash = ComputeHash(getSafeLeft(), getRight(), getValue());
-    return Hash;
+    if (Hash) return Hash;
+    
+    unsigned X = ComputeHash(getSafeLeft(), getRight(), getValue());
+    if (!isMutable()) Hash = X;
+    
+    return X;
   }    
   
   /// Profile - Generates a FoldingSet profile for a tree node before it is
