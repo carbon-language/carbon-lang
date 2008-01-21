@@ -202,8 +202,8 @@ uint16_t ParamAttr::typeIncompatible (const Type *Ty) {
 
   if (const PointerType *PTy = dyn_cast<PointerType>(Ty)) {
     if (!PTy->getElementType()->isSized())
-      // The byval attribute only applies to pointers to types with a size.
-      Incompatible |= ParamAttr::ByVal;
+      // The byval and sret attributes only apply to pointers to sized types.
+      Incompatible |= ByVal | StructRet;
   } else {
     // Attributes that only apply to pointers.
     Incompatible |= ByVal | Nest | NoAlias | StructRet;
