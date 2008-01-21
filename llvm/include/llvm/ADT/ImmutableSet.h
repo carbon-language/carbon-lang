@@ -219,9 +219,9 @@ private:
     //  of the last item hash and the the next item.
     
     unsigned X = ID.ComputeHash();
-    ID.clear();
     
     if (R) {
+      ID.clear();
       ID.AddInteger(X);
       ID.AddInteger(R->ComputeHash());
       X = ID.ComputeHash();
