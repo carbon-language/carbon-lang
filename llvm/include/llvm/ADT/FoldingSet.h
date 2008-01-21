@@ -208,6 +208,10 @@ public:
   void AddAPFloat(const APFloat& apf);
   void AddString(const std::string &String);
   
+  /// clear - Clear the accumulated profile, allowing this FoldingSetNodeID
+  ///  object to be used to compute a new profile.
+  inline void clear() { Bits.clear(); }
+  
   /// ComputeHash - Compute a strong hash value for this FoldingSetNodeID, used
   ///  to lookup the node in the FoldingSetImpl.
   unsigned ComputeHash() const;
