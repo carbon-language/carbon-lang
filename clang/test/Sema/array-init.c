@@ -162,3 +162,8 @@ void charArrays()
   int i3[] = {}; //expected-error{{at least one initializer value required to size array}} expected-warning{{use of GNU empty initializer extension}}
 }
 
+void variableArrayInit() {
+  int a = 4;
+  char strlit[a] = "foo"; //expected-error{{variable-sized object may not be initialized}}
+  int b[a] = { 1, 2, 4 }; //expected-error{{variable-sized object may not be initialized}}
+}

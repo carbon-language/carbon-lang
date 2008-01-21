@@ -513,6 +513,13 @@ void Sema::CheckConstantInitList(QualType DeclType, InitListExpr *IList,
 bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType) {
   bool hadError = false;
   
+  // C99 6.7.8p3: The type of the entity to be initialized shall be an array
+  // of unknown size ("[]") or an object type that is not a variable array type.
+  if (const VariableArrayType *VAT = DeclType->getAsVariablyModifiedType())
+    return Diag(VAT->getSizeExpr()->getLocStart(), 
+                diag::err_variable_object_no_init, 
+                VAT->getSizeExpr()->getSourceRange());
+  
   InitListExpr *InitList = dyn_cast<InitListExpr>(Init);
   if (!InitList) {
     if (StringLiteral *strLiteral = dyn_cast<StringLiteral>(Init)) {
@@ -550,10 +557,7 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType) {
 
   // C99 6.7.8p3: The type of the entity to be initialized shall be an array
   // of unknown size ("[]") or an object type that is not a variable array type.
-  if (const VariableArrayType *VAT = DeclType->getAsVariableArrayType()) { 
-    if (const Expr *expr = VAT->getSizeExpr())
-      return Diag(expr->getLocStart(), diag::err_variable_object_no_init, 
-                  expr->getSourceRange());
+  if (const VariableArrayType *VAT = DeclType->getAsIncompleteArrayType()) { 
 
     // We have a VariableArrayType with unknown size. Note that only the first
     // array can have unknown size. For example, "int [][]" is illegal.
