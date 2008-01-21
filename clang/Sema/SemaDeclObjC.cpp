@@ -64,7 +64,7 @@ void Sema::ObjCActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
     PI.Ident = PDecl->getIdentifier();
     PI.IdentLoc = PDecl->getLocation(); // user vars have a real location.
     PI.TypeInfo = PDecl->getType().getAsOpaquePtr();
-    ActOnParamDeclarator(PI, FnBodyScope);
+    MDecl->setParamDecl(i, ActOnParamDeclarator(PI, FnBodyScope));
   }
 }
 

@@ -135,6 +135,9 @@ public:
     assert(i < getNumParams() && "Illegal param #");
     return ParamInfo[i];
   }  
+  void setParamDecl(int i, ParmVarDecl *pDecl) {
+    ParamInfo[i] = pDecl;
+  }  
   void setMethodParams(ParmVarDecl **NewParamInfo, unsigned NumParams);
   
   AttributeList *getMethodAttrs() const {return MethodAttrs;}

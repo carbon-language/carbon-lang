@@ -1,4 +1,4 @@
-// RUN: clang -rewrite-test %s | clang
+// RUN: clang -fsyntax-only -verify %s
 
 #include <stdarg.h>
 
