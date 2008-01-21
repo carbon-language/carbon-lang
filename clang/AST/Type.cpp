@@ -235,6 +235,22 @@ const VariableArrayType *Type::getAsVariablyModifiedType() const {
   return 0;
 }
 
+bool Type::isIncompleteArrayType() const {
+  if (const VariableArrayType *VAT = getAsVariableArrayType()) {
+    if (!VAT->getSizeExpr())
+      return true;
+  }
+  return false;
+}
+
+const VariableArrayType *Type::getAsIncompleteArrayType() const {
+  if (const VariableArrayType *VAT = getAsVariableArrayType()) {
+    if (!VAT->getSizeExpr())
+      return VAT;
+  }
+  return 0;
+}
+
 const RecordType *Type::getAsRecordType() const {
   // If this is directly a reference type, return it.
   if (const RecordType *RTy = dyn_cast<RecordType>(this))

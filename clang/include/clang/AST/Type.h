@@ -263,6 +263,10 @@ public:
   /// types that have a non-constant expression. This does not include "[]".
   bool isVariablyModifiedType() const;
   
+  /// isIncompleteArrayType (C99 6.2.5p22) - Return true for variable array
+  /// types that don't have any expression ("[]").
+  bool isIncompleteArrayType() const;
+  
   /// Helper methods to distinguish type categories. All type predicates
   /// operate on the canonical type, ignoring typedefs.
   
@@ -313,6 +317,7 @@ public:
   const ArrayType *getAsArrayType() const;
   const ConstantArrayType *getAsConstantArrayType() const;
   const VariableArrayType *getAsVariableArrayType() const;
+  const VariableArrayType *getAsIncompleteArrayType() const;
   const VariableArrayType *getAsVariablyModifiedType() const;
   const RecordType *getAsRecordType() const;
   const RecordType *getAsStructureType() const;   
