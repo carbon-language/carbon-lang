@@ -210,11 +210,24 @@ private:
   unsigned ComputeHash(ImutAVLTree* L, ImutAVLTree* R, value_type_ref V) {
     FoldingSetNodeID ID;
     
-    ID.AddInteger(L ? L->ComputeHash() : 0);
+    if (L) ID.AddInteger(L->ComputeHash());
     ImutInfo::Profile(ID,V);
-    ID.AddInteger(R ? R->ComputeHash() : 0);
     
-    return ID.ComputeHash();    
+    // Compute the "intermediate" hash.  Basically, we want the net profile to
+    // be:  H(H(....H(H(H(item0),item1),item2)...),itemN), where
+    //  H(item) is the hash of the data item and H(hash,item) is a hash
+    //  of the last item hash and the the next item.
+    
+    unsigned X = ID.ComputeHash();
+    ID.clear();
+    
+    if (R) {
+      ID.AddInteger(X);
+      ID.AddInteger(R->ComputeHash());
+      X = ID.ComputeHash();
+    }
+    
+    return X;
   }
   
   inline unsigned ComputeHash() {
