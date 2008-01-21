@@ -550,7 +550,9 @@ void StrongPHIElimination::processPHIUnion(MachineInstr* Inst,
     for (DomForestNode::iterator CI = DFNode->begin(), CE = DFNode->end();
          CI != CE; ++CI) {
       DomForestNode* child = *CI;   
-        
+      
+      // If the current node is live-out of the defining block of one of its
+      // children, insert a copy for it
       if (isLiveOut(DFNode->getReg(),
           MRI.getVRegDef(child->getReg())->getParent(), MRI, LV)) {
         // Insert copies for parent
@@ -565,6 +567,9 @@ void StrongPHIElimination::processPHIUnion(MachineInstr* Inst,
             PHIUnion.erase(SrcReg);
           }
         }
+      
+      // If a node is live-in to the defining block of one of its children, but
+      // not live-out, then we need to scan that block for local interferences.
       } else if (isLiveIn(DFNode->getReg(),
                           MRI.getVRegDef(child->getReg())->getParent(),
                           MRI, LV) ||
