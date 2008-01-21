@@ -552,7 +552,10 @@ void StrongPHIElimination::processPHIUnion(MachineInstr* Inst,
       DomForestNode* child = *CI;   
       
       // If the current node is live-out of the defining block of one of its
-      // children, insert a copy for it
+      // children, insert a copy for it.  NOTE: The paper actually calls for
+      // a more elaborate heuristic for determining whether to insert copies
+      // for the child or the parent.  In the interest of simplicity, we're
+      // just always choosing the parent.
       if (isLiveOut(DFNode->getReg(),
           MRI.getVRegDef(child->getReg())->getParent(), MRI, LV)) {
         // Insert copies for parent
