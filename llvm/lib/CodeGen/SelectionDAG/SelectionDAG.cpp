@@ -1919,7 +1919,6 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
            MVT::isFloatingPoint(N1.getValueType()) &&
            MVT::getSizeInBits(VT) <= MVT::getSizeInBits(N1.getValueType()) &&
            isa<ConstantSDNode>(N2) && "Invalid FP_ROUND!");
-    if (N1.getValueType() == VT) return N1;  // noop conversion.
     break;
   case ISD::AssertSext:
   case ISD::AssertZext:
@@ -2121,6 +2120,9 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     // worth handling here.
     if (N2C && N2C->getValue() == 0)
       return N1;
+    break;
+  case ISD::FP_ROUND:
+    if (N1.getValueType() == VT) return N1;  // noop conversion.
     break;
   case ISD::FP_ROUND_INREG:
     if (cast<VTSDNode>(N2)->getVT() == VT) return N1;  // Not actually rounding.
