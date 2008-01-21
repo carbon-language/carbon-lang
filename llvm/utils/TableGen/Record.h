@@ -643,6 +643,17 @@ public:
   virtual Init *resolveReferences(Record &R, const RecordVal *RV);
 
   virtual std::string getAsString() const;
+
+  typedef std::vector<Init*>::iterator       iterator;
+  typedef std::vector<Init*>::const_iterator const_iterator;
+
+  inline iterator       begin()       { return Values.begin(); }
+  inline const_iterator begin() const { return Values.begin(); }
+  inline iterator       end  ()       { return Values.end();   }
+  inline const_iterator end  () const { return Values.end();   }
+
+  inline size_t         size () const { return Values.size();  }
+  inline bool           empty() const { return Values.empty(); }
 };
 
 /// BinOpInit - !op (X, Y) - Combine two inits.
