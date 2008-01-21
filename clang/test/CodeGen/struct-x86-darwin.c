@@ -6,6 +6,8 @@
 // RUN: grep "STestB2 = type { i8, i8, i8 }" %t1 &&
 // RUN: grep "STestB3 = type { i8, i8 }" %t1 &&
 // RUN: grep "STestB4 = type { i8, i8, i8, i8 }" %t1
+// RUN: grep "STestB5 = type { i8, i8, i8, i8, i8, i8 }" %t1
+// RUN: grep "STestB6 = type { i8, i8, i8, i8 }" %t1
 // Test struct layout for x86-darwin target
 // FIXME : Enable this test for x86-darwin only. At the moment clang hard codes
 // x86-darwin as the target
@@ -19,6 +21,7 @@ struct STestB1 {char a; char b:2; } stb1;
 struct STestB2 {char a; char b:5; char c:4; } stb2;
 struct STestB3 {char a; char b:2; } stb3;
 struct STestB4 {char a; short b:2; char c; } stb4;
+struct STestB5 {char a; short b:10; char c; } stb5;
+struct STestB6 {int a:1; char b; int c:13 } stb6;
 
-//struct STestB {int a:1; char b; int c:13 } stb;
 // Packed struct STestP1 {char a; short b; int c; } __attribute__((__packed__)) stp1;

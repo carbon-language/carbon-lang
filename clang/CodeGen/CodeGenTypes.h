@@ -78,18 +78,11 @@ class CodeGenTypes {
 
   class BitFieldInfo {
   public:
-    explicit BitFieldInfo(unsigned N, unsigned B, unsigned E)
-      : No(N), Begin(B), End(E) {}
-  private:
-    // No -  llvm struct field number that is used to
-    // access this field. It may be not same as struct field number. 
-    // For example,
-    //   struct S { char a; short b:2; }
-    // Here field 'b' is second field however it is accessed as
-    // 9th and 10th bitfield of first field whose type is short.
-    unsigned No;
+    explicit BitFieldInfo(unsigned B, unsigned S)
+      : Begin(B), Size(S) {}
+
     unsigned Begin;
-    unsigned End;
+    unsigned Size;
   };
   llvm::DenseMap<const FieldDecl *, BitFieldInfo> BitFields;
 
@@ -140,8 +133,13 @@ public:  // These are internal details of CGT that shouldn't be used externally.
                            std::vector<const llvm::Type*> &ArgTys);
 
   /// addFieldInfo - Assign field number to field FD.
-  void addFieldInfo(const FieldDecl *FD, unsigned No, unsigned Begin, 
-                    unsigned End);
+  void addFieldInfo(const FieldDecl *FD, unsigned No);
+
+  /// addBitFieldInfo - Assign a start bit and a size to field FD.
+  void addBitFieldInfo(const FieldDecl *FD, unsigned Begin, unsigned Size);
+
+  /// getBitFieldInfo - Return the BitFieldInfo  that corresponds to the field FD.
+  BitFieldInfo getBitFieldInfo(const FieldDecl *FD);
 };
 
 }  // end namespace CodeGen
