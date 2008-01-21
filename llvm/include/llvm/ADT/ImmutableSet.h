@@ -198,6 +198,7 @@ private:
   ImutAVLTree*     Right;
   unsigned         Height;
   value_type       Value;
+  unsigned         Hash;
   
   //===----------------------------------------------------===//  
   // Profiling or FoldingSet.
@@ -205,22 +206,38 @@ private:
 
 private:
 
+  static inline
+  unsigned ComputeHash(ImutAVLTree* L, ImutAVLTree* R, value_type_ref V) {
+    FoldingSetNodeID ID;
+    
+    ID.AddInteger(L ? L->ComputeHash() : 0);
+    ImutInfo::Profile(ID,V);
+    ID.AddInteger(R ? R->ComputeHash() : 0);
+    
+    return ID.ComputeHash();    
+  }
+  
+  inline unsigned ComputeHash() {
+    if (!isMutable() && Hash) return Hash;
+    Hash = ComputeHash(getSafeLeft(), getRight(), getValue());
+    return Hash;
+  }    
+  
   /// Profile - Generates a FoldingSet profile for a tree node before it is
   ///   created.  This is used by the ImutAVLFactory when creating
   ///   trees.
   static inline
   void Profile(FoldingSetNodeID& ID, ImutAVLTree* L, ImutAVLTree* R,
-               value_type_ref V) {    
-    ID.AddPointer(L);
-    ID.AddPointer(R);
-    ImutInfo::Profile(ID,V);
+               value_type_ref V) {
+    
+    ID.AddInteger(ComputeHash(L, R, V));
   }
   
 public:
 
   /// Profile - Generates a FoldingSet profile for an existing tree node.
   void Profile(FoldingSetNodeID& ID) {
-    Profile(ID,getSafeLeft(),getRight(),getValue());    
+    ID.AddInteger(ComputeHash());
   }
   
   //===----------------------------------------------------===//    
@@ -235,7 +252,7 @@ private:
   ///   ImutAVLFactory.
   ImutAVLTree(ImutAVLTree* l, ImutAVLTree* r, value_type_ref v, unsigned height)
   : Left(reinterpret_cast<uintptr_t>(l) | Mutable),
-  Right(r), Height(height), Value(v) {}
+    Right(r), Height(height), Value(v), Hash(0) {}
   
   
   /// isMutable - Returns true if the left and right subtree references
