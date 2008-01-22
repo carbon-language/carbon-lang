@@ -751,11 +751,17 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
   // FIXME: Insert last-minute copies
   
   // Remove PHIs
-  for (MachineFunction::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
+  std::vector<MachineInstr*> phis;
+  for (MachineFunction::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I) {
     for (MachineBasicBlock::iterator BI = I->begin(), BE = I->end();
          BI != BE; ++BI)
       if (BI->getOpcode() == TargetInstrInfo::PHI)
-        BI->eraseFromParent();
+        phis.push_back(BI);
+  }
+  
+  for (std::vector<MachineInstr*>::iterator I = phis.begin(), E = phis.end();
+       I != E; ++I)
+    (*I)->eraseFromParent();
   
   return false;
 }
