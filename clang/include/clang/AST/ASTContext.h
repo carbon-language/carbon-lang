@@ -46,6 +46,8 @@ class ASTContext {
   /// ASTRecordLayouts - A cache mapping from RecordDecls to ASTRecordLayouts.
   ///  This is lazily created.  This is intentionally not serialized.
   llvm::DenseMap<const RecordDecl*, const ASTRecordLayout*> ASTRecordLayouts;
+  
+  llvm::SmallVector<const RecordType *, 8> EncodingRecordTypes;
     
   /// BuiltinVaListType - built-in va list type.
   /// This is initially null and set by Sema::LazilyCreateBuiltin when
@@ -204,7 +206,8 @@ public:
   }
 
   // Return the ObjC type encoding for a given type.
-  void getObjCEncodingForType(QualType t, std::string &S) const;
+  void getObjCEncodingForType(QualType t, std::string &S, 
+			      llvm::SmallVector<const RecordType *, 8> &RT) const;
   
   // Put the string version of type qualifiers into S.
   void getObjCEncodingForTypeQualifier(Decl::ObjCDeclQualifier QT, 

@@ -984,7 +984,7 @@ void ASTContext::getObjCEncodingForMethodDecl(ObjCMethodDecl *Decl,
   // Encode type qualifer, 'in', 'inout', etc. for the return type.
   getObjCEncodingForTypeQualifier(Decl->getObjCDeclQualifier(), S);
   // Encode result type.
-  getObjCEncodingForType(Decl->getResultType(), S);
+  getObjCEncodingForType(Decl->getResultType(), S, EncodingRecordTypes);
   // Compute size of all parameters.
   // Start with computing size of a pointer in number of bytes.
   // FIXME: There might(should) be a better way of doing this computation!
@@ -1012,13 +1012,14 @@ void ASTContext::getObjCEncodingForMethodDecl(ObjCMethodDecl *Decl,
     // 'in', 'inout', etc.
     getObjCEncodingForTypeQualifier(
       Decl->getParamDecl(i)->getObjCDeclQualifier(), S);
-    getObjCEncodingForType(PType, S);
+    getObjCEncodingForType(PType, S, EncodingRecordTypes);
     S += llvm::utostr(ParmOffset);
     ParmOffset += getObjCEncodingTypeSize(PType);
   }
 }
 
-void ASTContext::getObjCEncodingForType(QualType T, std::string& S) const
+void ASTContext::getObjCEncodingForType(QualType T, std::string& S,
+       llvm::SmallVector<const RecordType *, 8> &ERType) const
 {
   // FIXME: This currently doesn't encode:
   // @ An object (whether statically typed or typed id)
@@ -1086,7 +1087,7 @@ void ASTContext::getObjCEncodingForType(QualType T, std::string& S) const
   }
   else if (T->isObjCQualifiedIdType()) {
     // Treat id<P...> same as 'id' for encoding purposes.
-    return getObjCEncodingForType(getObjCIdType(), S);
+    return getObjCEncodingForType(getObjCIdType(), S, ERType);
     
   }
   else if (const PointerType *PT = T->getAsPointerType()) {
@@ -1112,7 +1113,7 @@ void ASTContext::getObjCEncodingForType(QualType T, std::string& S) const
     }
     
     S += '^';
-    getObjCEncodingForType(PT->getPointeeType(), S);
+    getObjCEncodingForType(PT->getPointeeType(), S, ERType);
   } else if (const ArrayType *AT = T->getAsArrayType()) {
     S += '[';
     
@@ -1121,7 +1122,7 @@ void ASTContext::getObjCEncodingForType(QualType T, std::string& S) const
     else
       assert(0 && "Unhandled array type!");
     
-    getObjCEncodingForType(AT->getElementType(), S);
+    getObjCEncodingForType(AT->getElementType(), S, ERType);
     S += ']';
   } else if (T->getAsFunctionType()) {
     S += '?';
@@ -1129,10 +1130,21 @@ void ASTContext::getObjCEncodingForType(QualType T, std::string& S) const
     RecordDecl *RDecl= RTy->getDecl();
     S += '{';
     S += RDecl->getName();
-    S += '=';
-    for (int i = 0; i < RDecl->getNumMembers(); i++) {
-      FieldDecl *field = RDecl->getMember(i);
-      getObjCEncodingForType(field->getType(), S);
+    bool found = false;
+    for (unsigned i = 0, e = ERType.size(); i != e; ++i)
+      if (ERType[i] == RTy) {
+        found = true;
+        break;
+      }
+    if (!found) {
+      ERType.push_back(RTy);
+      S += '=';
+      for (int i = 0; i < RDecl->getNumMembers(); i++) {
+        FieldDecl *field = RDecl->getMember(i);
+        getObjCEncodingForType(field->getType(), S, ERType);
+      }
+      assert(ERType.back() == RTy && "Record Type stack mismatch.");
+      ERType.pop_back();
     }
     S += '}';
   } else if (T->isEnumeralType()) {
