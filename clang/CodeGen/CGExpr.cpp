@@ -237,8 +237,11 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst,
     // If this is an update of elements of a vector, insert them as appropriate.
     if (Dst.isOCUVectorElt())
       return EmitStoreThroughOCUComponentLValue(Src, Dst, Ty);
-  
-    assert(0 && "FIXME: Don't support store to bitfield yet");
+
+    if (Dst.isBitfield())
+      return EmitStoreThroughBitfieldLValue(Src, Dst, Ty);
+
+    assert(0 && "Unknown bitfield type");
   }
   
   llvm::Value *DstAddr = Dst.getAddress();
@@ -254,6 +257,38 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst,
                                     llvm::PointerType::get(SrcTy, AS),
                                     "storetmp");
   Builder.CreateStore(Src.getScalarVal(), DstAddr);
+}
+
+void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
+                                                     QualType Ty) {
+  unsigned short StartBit = Dst.getBitfieldStartBit();
+  unsigned short BitfieldSize = Dst.getBitfieldSize();
+  llvm::Value *Ptr = Dst.getBitfieldAddr();
+  const llvm::Type *EltTy =
+    cast<llvm::PointerType>(Ptr->getType())->getElementType();
+  unsigned EltTySize = EltTy->getPrimitiveSizeInBits();
+
+  llvm::Value *NewVal = Src.getScalarVal();
+  llvm::Value *OldVal = Builder.CreateLoad(Ptr, "tmp");
+
+  llvm::Value *ShAmt = llvm::ConstantInt::get(EltTy, StartBit);
+  NewVal = Builder.CreateShl(NewVal, ShAmt, "tmp");
+
+  llvm::Constant *Mask = llvm::ConstantInt::get(
+           llvm::APInt::getBitsSet(EltTySize, StartBit,
+                                   StartBit + BitfieldSize - 1));
+
+  // Mask out any bits that shouldn't be set in the result.
+  NewVal = Builder.CreateAnd(NewVal, Mask, "tmp");
+
+  // Next, mask out the bits this bit-field should include from the old value.
+  Mask = llvm::ConstantExpr::getNot(Mask);
+  OldVal = Builder.CreateAnd(OldVal, Mask, "tmp");
+
+  // Finally, merge the two together and store it.
+  NewVal = Builder.CreateOr(OldVal, NewVal, "tmp");
+
+  Builder.CreateStore(NewVal, Ptr);
 }
 
 void CodeGenFunction::EmitStoreThroughOCUComponentLValue(RValue Src, LValue Dst,

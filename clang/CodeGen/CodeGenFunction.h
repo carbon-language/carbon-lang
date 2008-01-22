@@ -401,6 +401,7 @@ public:
   /// is 'Ty'.
   void EmitStoreThroughLValue(RValue Src, LValue Dst, QualType Ty);
   void EmitStoreThroughOCUComponentLValue(RValue Src, LValue Dst, QualType Ty);
+  void EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst, QualType Ty);
    
   // Note: only availabe for agg return types
   LValue EmitCallExprLValue(const CallExpr *E);
