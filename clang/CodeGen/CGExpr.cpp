@@ -241,7 +241,7 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst,
     if (Dst.isBitfield())
       return EmitStoreThroughBitfieldLValue(Src, Dst, Ty);
 
-    assert(0 && "Unknown bitfield type");
+    assert(0 && "Unknown LValue type");
   }
   
   llvm::Value *DstAddr = Dst.getAddress();
