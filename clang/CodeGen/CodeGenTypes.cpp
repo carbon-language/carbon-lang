@@ -578,8 +578,8 @@ void RecordOrganizer::placeBitField(const FieldDecl *FD) {
 	// This is : struct { char a; int CurrentField:10;};
 	// where 'CurrentField' shares first field with 'a'.
 	addPaddingFields(Cursor + BitFieldSize);
-	CGT.addFieldInfo(FD, i);
-	CGT.addBitFieldInfo(FD, Cursor, BitFieldSize);
+	CGT.addFieldInfo(FD, i - 1);
+	CGT.addBitFieldInfo(FD, Cursor - O, BitFieldSize);
 	Cursor += BitFieldSize;
       } else {
 	// Place the bitfield in a new LLVM field.
