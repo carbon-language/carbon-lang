@@ -2254,38 +2254,99 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         return DAG.getTruncStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
                                  SVOffset, MVT::i8, isVolatile, Alignment);
       }
-    
-      // Unconditionally promote TRUNCSTORE:i1 X -> TRUNCSTORE:i8 (and X, 1)
-      if (ST->getStoredVT() == MVT::i1) {
-        // Promote the bool to a mask then store.
-        Tmp3 = DAG.getNode(ISD::AND, Tmp3.getValueType(), Tmp3,
-                           DAG.getConstant(1, Tmp3.getValueType()));
-        Result = DAG.getTruncStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
-                                   SVOffset, MVT::i8,
-                                   isVolatile, Alignment);
-      } else if (Tmp1 != ST->getChain() || Tmp3 != ST->getValue() ||
-                 Tmp2 != ST->getBasePtr()) {
-        Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp3, Tmp2,
-                                        ST->getOffset());
-      }
 
-      MVT::ValueType StVT = cast<StoreSDNode>(Result.Val)->getStoredVT();
-      switch (TLI.getTruncStoreAction(ST->getValue().getValueType(), StVT)) {
-      default: assert(0 && "This action is not supported yet!");
-      case TargetLowering::Legal:
-        // If this is an unaligned store and the target doesn't support it,
-        // expand it.
-        if (!TLI.allowsUnalignedMemoryAccesses()) {
-          unsigned ABIAlignment = TLI.getTargetData()->
-            getABITypeAlignment(MVT::getTypeForValueType(ST->getStoredVT()));
-          if (ST->getAlignment() < ABIAlignment)
-            Result = ExpandUnalignedStore(cast<StoreSDNode>(Result.Val), DAG,
-                                          TLI);
+      MVT::ValueType StVT = ST->getStoredVT();
+      unsigned StWidth = MVT::getSizeInBits(StVT);
+
+      if (StWidth != MVT::getStoreSizeInBits(StVT)) {
+        // Promote to a byte-sized store with upper bits zero if not
+        // storing an integral number of bytes.  For example, promote
+        // TRUNCSTORE:i1 X -> TRUNCSTORE:i8 (and X, 1)
+        MVT::ValueType NVT = MVT::getIntegerType(MVT::getStoreSizeInBits(StVT));
+        Tmp3 = DAG.getZeroExtendInReg(Tmp3, StVT);
+        Result = DAG.getTruncStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
+                                   SVOffset, NVT, isVolatile, Alignment);
+      } else if (StWidth & (StWidth - 1)) {
+        // If not storing a power-of-2 number of bits, expand as two stores.
+        assert(MVT::isExtendedVT(StVT) && !MVT::isVector(StVT) &&
+               "Unsupported truncstore!");
+        unsigned RoundWidth = 1 << Log2_32(StWidth);
+        assert(RoundWidth < StWidth);
+        unsigned ExtraWidth = StWidth - RoundWidth;
+        assert(ExtraWidth < RoundWidth);
+        assert(!(RoundWidth % 8) && !(ExtraWidth % 8) &&
+               "Store size not an integral number of bytes!");
+        MVT::ValueType RoundVT = MVT::getIntegerType(RoundWidth);
+        MVT::ValueType ExtraVT = MVT::getIntegerType(ExtraWidth);
+        SDOperand Lo, Hi;
+        unsigned IncrementSize;
+
+        if (TLI.isLittleEndian()) {
+          // TRUNCSTORE:i24 X -> TRUNCSTORE:i16 X, TRUNCSTORE@+2:i8 (srl X, 16)
+          // Store the bottom RoundWidth bits.
+          Lo = DAG.getTruncStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
+                                 SVOffset, RoundVT,
+                                 isVolatile, Alignment);
+
+          // Store the remaining ExtraWidth bits.
+          IncrementSize = RoundWidth / 8;
+          Tmp2 = DAG.getNode(ISD::ADD, Tmp2.getValueType(), Tmp2,
+                             DAG.getIntPtrConstant(IncrementSize));
+          Hi = DAG.getNode(ISD::SRL, Tmp3.getValueType(), Tmp3,
+                           DAG.getConstant(RoundWidth, TLI.getShiftAmountTy()));
+          Hi = DAG.getTruncStore(Tmp1, Hi, Tmp2, ST->getSrcValue(),
+                                 SVOffset + IncrementSize, ExtraVT, isVolatile,
+                                 MinAlign(Alignment, IncrementSize));
+        } else {
+          // Big endian - avoid unaligned stores.
+          // TRUNCSTORE:i24 X -> TRUNCSTORE:i16 (srl X, 8), TRUNCSTORE@+2:i8 X
+          // Store the top RoundWidth bits.
+          Hi = DAG.getNode(ISD::SRL, Tmp3.getValueType(), Tmp3,
+                           DAG.getConstant(ExtraWidth, TLI.getShiftAmountTy()));
+          Hi = DAG.getTruncStore(Tmp1, Hi, Tmp2, ST->getSrcValue(), SVOffset,
+                                 RoundVT, isVolatile, Alignment);
+
+          // Store the remaining ExtraWidth bits.
+          IncrementSize = RoundWidth / 8;
+          Tmp2 = DAG.getNode(ISD::ADD, Tmp2.getValueType(), Tmp2,
+                             DAG.getIntPtrConstant(IncrementSize));
+          Lo = DAG.getTruncStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
+                                 SVOffset + IncrementSize, ExtraVT, isVolatile,
+                                 MinAlign(Alignment, IncrementSize));
         }
-        break;
-      case TargetLowering::Custom:
-        Result = TLI.LowerOperation(Result, DAG);
-        break;
+
+        // The order of the stores doesn't matter.
+        Result = DAG.getNode(ISD::TokenFactor, MVT::Other, Lo, Hi);
+      } else {
+        if (Tmp1 != ST->getChain() || Tmp3 != ST->getValue() ||
+            Tmp2 != ST->getBasePtr())
+          Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp3, Tmp2,
+                                          ST->getOffset());
+
+        switch (TLI.getTruncStoreAction(ST->getValue().getValueType(), StVT)) {
+        default: assert(0 && "This action is not supported yet!");
+        case TargetLowering::Legal:
+          // If this is an unaligned store and the target doesn't support it,
+          // expand it.
+          if (!TLI.allowsUnalignedMemoryAccesses()) {
+            unsigned ABIAlignment = TLI.getTargetData()->
+              getABITypeAlignment(MVT::getTypeForValueType(ST->getStoredVT()));
+            if (ST->getAlignment() < ABIAlignment)
+              Result = ExpandUnalignedStore(cast<StoreSDNode>(Result.Val), DAG,
+                                            TLI);
+          }
+          break;
+        case TargetLowering::Custom:
+          Result = TLI.LowerOperation(Result, DAG);
+          break;
+        case Expand:
+          // TRUNCSTORE:i16 i32 -> STORE i16
+          assert(isTypeLegal(StVT) && "Do not know how to expand this store!");
+          Tmp3 = DAG.getNode(ISD::TRUNCATE, StVT, Tmp3);
+          Result = DAG.getStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(), SVOffset,
+                                isVolatile, Alignment);
+          break;
+        }
       }
     }
     break;
