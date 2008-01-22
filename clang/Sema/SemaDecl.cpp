@@ -510,6 +510,38 @@ void Sema::CheckConstantInitList(QualType DeclType, InitListExpr *IList,
   }
 }
 
+bool Sema::CheckStringLiteralInit(StringLiteral *strLiteral, QualType &DeclT) {
+  if (const VariableArrayType *VAT = DeclT->getAsIncompleteArrayType()) {
+    // C99 6.7.8p14. We have an array of character type with unknown size 
+    // being initialized to a string literal.
+    llvm::APSInt ConstVal(32);
+    ConstVal = strLiteral->getByteLength() + 1;
+    // Return a new array type (C99 6.7.8p22).
+    DeclT = Context.getConstantArrayType(VAT->getElementType(), ConstVal, 
+                                         ArrayType::Normal, 0);
+  } else if (const ConstantArrayType *CAT = DeclT->getAsConstantArrayType()) {
+    // C99 6.7.8p14. We have an array of character type with known size.
+    if (strLiteral->getByteLength() > (unsigned)CAT->getMaximumElements())
+      Diag(strLiteral->getSourceRange().getBegin(),
+           diag::warn_initializer_string_for_char_array_too_long,
+           strLiteral->getSourceRange());
+  } else {
+    assert(0 && "HandleStringLiteralInit(): Invalid array type");
+  }
+  // Set type from "char *" to "constant array of char".
+  strLiteral->setType(DeclT);
+  // For now, we always return false (meaning success).
+  return false;
+}
+
+StringLiteral *Sema::IsStringLiteralInit(Expr *Init, QualType DeclType) {
+  StringLiteral *strLiteral = dyn_cast<StringLiteral>(Init);
+  const ArrayType *AT = DeclType->getAsArrayType();
+  if (strLiteral && (AT && AT->getElementType()->isCharType()))
+    return strLiteral;
+  return 0;
+}
+
 bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType) {
   bool hadError = false;
   
@@ -522,34 +554,9 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType) {
   
   InitListExpr *InitList = dyn_cast<InitListExpr>(Init);
   if (!InitList) {
-    if (StringLiteral *strLiteral = dyn_cast<StringLiteral>(Init)) {
-      const VariableArrayType *VAT = DeclType->getAsVariableArrayType();
-      // FIXME: Handle wide strings
-      if (VAT && VAT->getElementType()->isCharType()) {
-        // C99 6.7.8p14. We have an array of character type with unknown size 
-        // being initialized to a string literal.
-        llvm::APSInt ConstVal(32);
-        ConstVal = strLiteral->getByteLength() + 1;
-        // Return a new array type (C99 6.7.8p22).
-        DeclType = Context.getConstantArrayType(VAT->getElementType(), ConstVal, 
-                                                ArrayType::Normal, 0);
-        // set type from "char *" to "constant array of char".
-        strLiteral->setType(DeclType); 
-        return hadError;
-      }
-      const ConstantArrayType *CAT = DeclType->getAsConstantArrayType();
-      if (CAT && CAT->getElementType()->isCharType()) {
-        // C99 6.7.8p14. We have an array of character type with known size.
-        if (strLiteral->getByteLength() > (unsigned)CAT->getMaximumElements()) {
-          Diag(strLiteral->getSourceRange().getBegin(),
-               diag::warn_initializer_string_for_char_array_too_long,
-               strLiteral->getSourceRange());
-        }
-        // set type from "char *" to "constant array of char".
-        strLiteral->setType(DeclType); 
-        return hadError;
-      }
-    }
+    // FIXME: Handle wide strings
+    if (StringLiteral *strLiteral = IsStringLiteralInit(Init, DeclType))
+      return CheckStringLiteralInit(strLiteral, DeclType);
     return CheckSingleInitializer(Init, DeclType);
   }
   // We have an InitListExpr, make sure we set the type.

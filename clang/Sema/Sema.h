@@ -43,6 +43,7 @@ namespace clang {
   struct LangOptions;
   class Token;
   class IntegerLiteral;
+  class StringLiteral;
   class ArrayType;
   class LabelStmt;
   class SwitchStmt;
@@ -750,6 +751,9 @@ private:
                                     int &nInitializers, bool isConstant,
                                     bool &hadError);
   bool CheckForConstantInitializer(Expr *e, QualType t);
+  
+  StringLiteral *IsStringLiteralInit(Expr *Init, QualType DeclType);
+  bool CheckStringLiteralInit(StringLiteral *strLiteral, QualType &DeclT);
   
   // CheckVectorCast - check type constraints for vectors. 
   // Since vectors are an extension, there are no C standard reference for this.
