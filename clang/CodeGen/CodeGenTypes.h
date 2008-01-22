@@ -76,14 +76,17 @@ class CodeGenTypes {
   /// field no. This info is populated by record organizer.
   llvm::DenseMap<const FieldDecl *, unsigned> FieldInfo;
 
+public:
   class BitFieldInfo {
   public:
-    explicit BitFieldInfo(unsigned B, unsigned S)
+    explicit BitFieldInfo(unsigned short B, unsigned short S)
       : Begin(B), Size(S) {}
 
-    unsigned Begin;
-    unsigned Size;
+    unsigned short Begin;
+    unsigned short Size;
   };
+
+private:
   llvm::DenseMap<const FieldDecl *, BitFieldInfo> BitFields;
 
   /// RecordTypesToResolve - This keeps track of record types that are not 

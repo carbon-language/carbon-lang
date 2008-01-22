@@ -132,11 +132,35 @@ RValue CodeGenFunction::EmitLoadOfLValue(LValue LV, QualType ExprType) {
   // shuffle the input or extract/insert them as appropriate.
   if (LV.isOCUVectorElt())
     return EmitLoadOfOCUElementLValue(LV, ExprType);
-  
-  assert(0 && "Bitfield ref not impl!");
+
+  if (LV.isBitfield())
+    return EmitLoadOfBitfieldLValue(LV, ExprType);
+
+  assert(0 && "Unknown LValue type!");
   //an invalid RValue, but the assert will
   //ensure that this point is never reached
   return RValue();
+}
+
+RValue CodeGenFunction::EmitLoadOfBitfieldLValue(LValue LV,
+                                                 QualType ExprType) {
+  llvm::Value *Ptr = LV.getBitfieldAddr();
+  const llvm::Type *EltTy =
+    cast<llvm::PointerType>(Ptr->getType())->getElementType();
+  unsigned EltTySize = EltTy->getPrimitiveSizeInBits();
+  unsigned short BitfieldSize = LV.getBitfieldSize();
+  unsigned short EndBit = LV.getBitfieldStartBit() + BitfieldSize;
+
+  llvm::Value *V = Builder.CreateLoad(Ptr, "tmp");
+
+  llvm::Value *ShAmt = llvm::ConstantInt::get(EltTy, EltTySize - EndBit);
+  V = Builder.CreateShl(V, ShAmt, "tmp");
+
+  ShAmt = llvm::ConstantInt::get(EltTy, EltTySize - BitfieldSize);
+  V = LV.isBitfieldSigned() ?
+    Builder.CreateAShr(V, ShAmt, "tmp") :
+    Builder.CreateLShr(V, ShAmt, "tmp");
+  return RValue::get(V);
 }
 
 // If this is a reference to a subset of the elements of a vector, either
@@ -409,15 +433,13 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
 
   FieldDecl *Field = E->getMemberDecl();
 
-  assert (!Field->isBitField() && "Bit-field access is not yet implmented");
-
   unsigned idx = CGM.getTypes().getLLVMFieldNo(Field);
   llvm::Value *Idxs[2] = { llvm::Constant::getNullValue(llvm::Type::Int32Ty), 
                            llvm::ConstantInt::get(llvm::Type::Int32Ty, idx) };
 
   llvm::Value *V = Builder.CreateGEP(BaseValue,Idxs, Idxs + 2, "tmp");
   // Match union field type.
-  if (isUnion) {
+  if (isUnion || Field->isBitField()) {
     const llvm::Type * FieldTy = ConvertType(Field->getType());
     const llvm::PointerType * BaseTy = 
       cast<llvm::PointerType>(BaseValue->getType());
@@ -428,10 +450,14 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
                                 "tmp");
     }
   }
-  return LValue::MakeAddr(V);
-  
-  // FIXME: If record field does not have one to one match with llvm::StructType
-  // field then apply appropriate masks to select only member field bits.
+
+  if (Field->isBitField()) {
+    CodeGenTypes::BitFieldInfo bitFieldInfo =
+      CGM.getTypes().getBitFieldInfo(Field);
+    return LValue::MakeBitfield(V, bitFieldInfo.Begin, bitFieldInfo.Size,
+                                Field->getType()->isSignedIntegerType());
+  } else
+    return LValue::MakeAddr(V);
 }
 
 //===--------------------------------------------------------------------===//

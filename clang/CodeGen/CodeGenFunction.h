@@ -159,6 +159,11 @@ class LValue {
   union {
     llvm::Value *VectorIdx;   // Index into a vector subscript: V[i]
     unsigned VectorElts;      // Encoded OCUVector element subset: V.xyx
+    struct {
+      unsigned short StartBit;
+      unsigned short Size;
+      bool IsSigned;
+    } BitfieldData;           // BitField start bit and size
   };
 public:
   bool isSimple() const { return LVType == Simple; }
@@ -177,8 +182,21 @@ public:
     assert(isOCUVectorElt());
     return VectorElts;
   }
-  
-  
+  // bitfield lvalue
+  llvm::Value *getBitfieldAddr() const { assert(isBitfield()); return V; }
+  unsigned short getBitfieldStartBit() const {
+    assert(isBitfield());
+    return BitfieldData.StartBit;
+  }
+  unsigned short getBitfieldSize() const {
+    assert(isBitfield());
+    return BitfieldData.Size;
+  }
+  bool isBitfieldSigned() const {
+    assert(isBitfield());
+    return BitfieldData.IsSigned;
+  }
+
   static LValue MakeAddr(llvm::Value *V) {
     LValue R;
     R.LVType = Simple;
@@ -199,6 +217,17 @@ public:
     R.LVType = OCUVectorElt;
     R.V = Vec;
     R.VectorElts = Elements;
+    return R;
+  }
+
+  static LValue MakeBitfield(llvm::Value *V, unsigned short StartBit,
+                             unsigned short Size, bool IsSigned) {
+    LValue R;
+    R.LVType = BitField;
+    R.V = V;
+    R.BitfieldData.StartBit = StartBit;
+    R.BitfieldData.Size = Size;
+    R.BitfieldData.IsSigned = IsSigned;
     return R;
   }
 };
@@ -364,6 +393,7 @@ public:
   /// rvalue, returning the rvalue.
   RValue EmitLoadOfLValue(LValue V, QualType LVType);
   RValue EmitLoadOfOCUElementLValue(LValue V, QualType LVType);
+  RValue EmitLoadOfBitfieldLValue(LValue LV, QualType ExprType);
 
   
   /// EmitStoreThroughLValue - Store the specified rvalue into the specified
