@@ -939,9 +939,9 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
       // an argument value in a macro could expand to ',' or '(' or ')'.
       LexUnexpandedToken(Tok);
       
-      if (Tok.is(tok::eof)) {
+      if (Tok.is(tok::eof) || Tok.is(tok::eom)) { // "#if f(<eof>" & "#if f(\n"
         Diag(MacroName, diag::err_unterm_macro_invoc);
-        // Do not lose the EOF.  Return it to the client.
+        // Do not lose the EOF/EOM.  Return it to the client.
         MacroName = Tok;
         return 0;
       } else if (Tok.is(tok::r_paren)) {
