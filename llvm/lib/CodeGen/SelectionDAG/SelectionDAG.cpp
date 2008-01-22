@@ -1859,15 +1859,34 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 
 SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
                                 SDOperand N1, SDOperand N2) {
-#ifndef NDEBUG
+  ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.Val);
+  ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2.Val);
   switch (Opcode) {
+  default: break;
   case ISD::TokenFactor:
     assert(VT == MVT::Other && N1.getValueType() == MVT::Other &&
            N2.getValueType() == MVT::Other && "Invalid token factor!");
+    // Fold trivial token factors.
+    if (N1.getOpcode() == ISD::EntryToken) return N2;
+    if (N2.getOpcode() == ISD::EntryToken) return N1;
     break;
   case ISD::AND:
+    assert(MVT::isInteger(VT) && N1.getValueType() == N2.getValueType() &&
+           N1.getValueType() == VT && "Binary operator types must match!");
+    // (X & 0) -> 0.  This commonly occurs when legalizing i64 values, so it's
+    // worth handling here.
+    if (N2C && N2C->getValue() == 0)
+      return N2;
+    break;
   case ISD::OR:
   case ISD::XOR:
+    assert(MVT::isInteger(VT) && N1.getValueType() == N2.getValueType() &&
+           N1.getValueType() == VT && "Binary operator types must match!");
+    // (X ^| 0) -> X.  This commonly occurs when legalizing i64 values, so it's
+    // worth handling here.
+    if (N2C && N2C->getValue() == 0)
+      return N1;
+    break;
   case ISD::UDIV:
   case ISD::UREM:
   case ISD::MULHU:
@@ -1879,8 +1898,6 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   case ISD::MUL:
   case ISD::SDIV:
   case ISD::SREM:
-    assert(MVT::isInteger(N1.getValueType()) && "Should use F* for FP ops");
-    // fall through.
   case ISD::FADD:
   case ISD::FSUB:
   case ISD::FMUL:
@@ -1912,6 +1929,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
            "Cannot FP_ROUND_INREG integer types");
     assert(MVT::getSizeInBits(EVT) <= MVT::getSizeInBits(VT) &&
            "Not rounding down!");
+    if (cast<VTSDNode>(N2)->getVT() == VT) return N1;  // Not actually rounding.
     break;
   }
   case ISD::FP_ROUND:
@@ -1919,9 +1937,18 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
            MVT::isFloatingPoint(N1.getValueType()) &&
            MVT::getSizeInBits(VT) <= MVT::getSizeInBits(N1.getValueType()) &&
            isa<ConstantSDNode>(N2) && "Invalid FP_ROUND!");
+    if (N1.getValueType() == VT) return N1;  // noop conversion.
     break;
   case ISD::AssertSext:
-  case ISD::AssertZext:
+  case ISD::AssertZext: {
+    MVT::ValueType EVT = cast<VTSDNode>(N2)->getVT();
+    assert(VT == N1.getValueType() && "Not an inreg extend!");
+    assert(MVT::isInteger(VT) && MVT::isInteger(EVT) &&
+           "Cannot *_EXTEND_INREG FP types");
+    assert(MVT::getSizeInBits(EVT) <= MVT::getSizeInBits(VT) &&
+           "Not extending!");
+    break;
+  }
   case ISD::SIGN_EXTEND_INREG: {
     MVT::ValueType EVT = cast<VTSDNode>(N2)->getVT();
     assert(VT == N1.getValueType() && "Not an inreg extend!");
@@ -1929,23 +1956,64 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
            "Cannot *_EXTEND_INREG FP types");
     assert(MVT::getSizeInBits(EVT) <= MVT::getSizeInBits(VT) &&
            "Not extending!");
-  }
+    if (EVT == VT) return N1;  // Not actually extending
 
-  default: break;
-  }
-#endif
-
-  ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.Val);
-  ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2.Val);
-  if (N1C) {
-    if (Opcode == ISD::SIGN_EXTEND_INREG) {
+    if (N1C) {
       int64_t Val = N1C->getValue();
       unsigned FromBits = MVT::getSizeInBits(cast<VTSDNode>(N2)->getVT());
       Val <<= 64-FromBits;
       Val >>= 64-FromBits;
       return getConstant(Val, VT);
     }
+    break;
+  }
+  case ISD::EXTRACT_VECTOR_ELT:
+    assert(N2C && "Bad EXTRACT_VECTOR_ELT!");
+
+    // EXTRACT_VECTOR_ELT of CONCAT_VECTORS is often formed while lowering is
+    // expanding copies of large vectors from registers.
+    if (N1.getOpcode() == ISD::CONCAT_VECTORS &&
+        N1.getNumOperands() > 0) {
+      unsigned Factor =
+        MVT::getVectorNumElements(N1.getOperand(0).getValueType());
+      return getNode(ISD::EXTRACT_VECTOR_ELT, VT,
+                     N1.getOperand(N2C->getValue() / Factor),
+                     getConstant(N2C->getValue() % Factor, N2.getValueType()));
+    }
+
+    // EXTRACT_VECTOR_ELT of BUILD_VECTOR is often formed while lowering is
+    // expanding large vector constants.
+    if (N1.getOpcode() == ISD::BUILD_VECTOR)
+      return N1.getOperand(N2C->getValue());
+
+    // EXTRACT_VECTOR_ELT of INSERT_VECTOR_ELT is often formed when vector
+    // operations are lowered to scalars.
+    if (N1.getOpcode() == ISD::INSERT_VECTOR_ELT)
+      if (ConstantSDNode *IEC = dyn_cast<ConstantSDNode>(N1.getOperand(2))) {
+        if (IEC == N2C)
+          return N1.getOperand(1);
+        else
+          return getNode(ISD::EXTRACT_VECTOR_ELT, VT, N1.getOperand(0), N2);
+      }
+    break;
+  case ISD::EXTRACT_ELEMENT:
+    assert(N2C && (unsigned)N2C->getValue() < 2 && "Bad EXTRACT_ELEMENT!");
     
+    // EXTRACT_ELEMENT of BUILD_PAIR is often formed while legalize is expanding
+    // 64-bit integers into 32-bit parts.  Instead of building the extract of
+    // the BUILD_PAIR, only to have legalize rip it apart, just do it now. 
+    if (N1.getOpcode() == ISD::BUILD_PAIR)
+      return N1.getOperand(N2C->getValue());
+    
+    // EXTRACT_ELEMENT of a constant int is also very common.
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(N1)) {
+      unsigned Shift = MVT::getSizeInBits(VT) * N2C->getValue();
+      return getConstant(C->getValue() >> Shift, VT);
+    }
+    break;
+  }
+
+  if (N1C) {
     if (N2C) {
       uint64_t C1 = N1C->getValue(), C2 = N2C->getValue();
       switch (Opcode) {
@@ -1988,16 +2056,21 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     }
   }
 
+  // Constant fold FP operations.
   ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1.Val);
   ConstantFPSDNode *N2CFP = dyn_cast<ConstantFPSDNode>(N2.Val);
   if (N1CFP) {
-    if (N2CFP && VT!=MVT::ppcf128) {
+    if (!N2CFP && isCommutativeBinOp(Opcode)) {
+      // Cannonicalize constant to RHS if commutative
+      std::swap(N1CFP, N2CFP);
+      std::swap(N1, N2);
+    } else if (N2CFP && VT != MVT::ppcf128) {
       APFloat V1 = N1CFP->getValueAPF(), V2 = N2CFP->getValueAPF();
       APFloat::opStatus s;
       switch (Opcode) {
       case ISD::FADD: 
         s = V1.add(V2, APFloat::rmNearestTiesToEven);
-        if (s!=APFloat::opInvalidOp)
+        if (s != APFloat::opInvalidOp)
           return getConstantFP(V1, VT);
         break;
       case ISD::FSUB: 
@@ -2024,11 +2097,6 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
         V1.copySign(V2);
         return getConstantFP(V1, VT);
       default: break;
-      }
-    } else {      // Cannonicalize constant to RHS if commutative
-      if (isCommutativeBinOp(Opcode)) {
-        std::swap(N1CFP, N2CFP);
-        std::swap(N1, N2);
       }
     }
   }
@@ -2098,105 +2166,6 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     case ISD::SRA:
       return N1;
     }
-  }
-
-  // Fold operations.
-  switch (Opcode) {
-  case ISD::TokenFactor:
-    // Fold trivial token factors.
-    if (N1.getOpcode() == ISD::EntryToken) return N2;
-    if (N2.getOpcode() == ISD::EntryToken) return N1;
-    break;
-      
-  case ISD::AND:
-    // (X & 0) -> 0.  This commonly occurs when legalizing i64 values, so it's
-    // worth handling here.
-    if (N2C && N2C->getValue() == 0)
-      return N2;
-    break;
-  case ISD::OR:
-  case ISD::XOR:
-    // (X ^| 0) -> X.  This commonly occurs when legalizing i64 values, so it's
-    // worth handling here.
-    if (N2C && N2C->getValue() == 0)
-      return N1;
-    break;
-  case ISD::FP_ROUND:
-    if (N1.getValueType() == VT) return N1;  // noop conversion.
-    break;
-  case ISD::FP_ROUND_INREG:
-    if (cast<VTSDNode>(N2)->getVT() == VT) return N1;  // Not actually rounding.
-    break;
-  case ISD::SIGN_EXTEND_INREG: {
-    MVT::ValueType EVT = cast<VTSDNode>(N2)->getVT();
-    if (EVT == VT) return N1;  // Not actually extending
-    break;
-  }
-  case ISD::EXTRACT_VECTOR_ELT:
-    assert(N2C && "Bad EXTRACT_VECTOR_ELT!");
-
-    // EXTRACT_VECTOR_ELT of CONCAT_VECTORS is often formed while lowering is
-    // expanding copies of large vectors from registers.
-    if (N1.getOpcode() == ISD::CONCAT_VECTORS &&
-        N1.getNumOperands() > 0) {
-      unsigned Factor =
-        MVT::getVectorNumElements(N1.getOperand(0).getValueType());
-      return getNode(ISD::EXTRACT_VECTOR_ELT, VT,
-                     N1.getOperand(N2C->getValue() / Factor),
-                     getConstant(N2C->getValue() % Factor, N2.getValueType()));
-    }
-
-    // EXTRACT_VECTOR_ELT of BUILD_VECTOR is often formed while lowering is
-    // expanding large vector constants.
-    if (N1.getOpcode() == ISD::BUILD_VECTOR)
-      return N1.getOperand(N2C->getValue());
-
-    // EXTRACT_VECTOR_ELT of INSERT_VECTOR_ELT is often formed when vector
-    // operations are lowered to scalars.
-    if (N1.getOpcode() == ISD::INSERT_VECTOR_ELT)
-      if (ConstantSDNode *IEC = dyn_cast<ConstantSDNode>(N1.getOperand(2))) {
-        if (IEC == N2C)
-          return N1.getOperand(1);
-        else
-          return getNode(ISD::EXTRACT_VECTOR_ELT, VT, N1.getOperand(0), N2);
-      }
-    break;
-  case ISD::EXTRACT_ELEMENT:
-    assert(N2C && (unsigned)N2C->getValue() < 2 && "Bad EXTRACT_ELEMENT!");
-    
-    // EXTRACT_ELEMENT of BUILD_PAIR is often formed while legalize is expanding
-    // 64-bit integers into 32-bit parts.  Instead of building the extract of
-    // the BUILD_PAIR, only to have legalize rip it apart, just do it now. 
-    if (N1.getOpcode() == ISD::BUILD_PAIR)
-      return N1.getOperand(N2C->getValue());
-    
-    // EXTRACT_ELEMENT of a constant int is also very common.
-    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(N1)) {
-      unsigned Shift = MVT::getSizeInBits(VT) * N2C->getValue();
-      return getConstant(C->getValue() >> Shift, VT);
-    }
-    break;
-
-  // FIXME: figure out how to safely handle things like
-  // int foo(int x) { return 1 << (x & 255); }
-  // int bar() { return foo(256); }
-#if 0
-  case ISD::SHL:
-  case ISD::SRL:
-  case ISD::SRA:
-    if (N2.getOpcode() == ISD::SIGN_EXTEND_INREG &&
-        cast<VTSDNode>(N2.getOperand(1))->getVT() != MVT::i1)
-      return getNode(Opcode, VT, N1, N2.getOperand(0));
-    else if (N2.getOpcode() == ISD::AND)
-      if (ConstantSDNode *AndRHS = dyn_cast<ConstantSDNode>(N2.getOperand(1))) {
-        // If the and is only masking out bits that cannot effect the shift,
-        // eliminate the and.
-        unsigned NumBits = MVT::getSizeInBits(VT);
-        if ((AndRHS->getValue() & (NumBits-1)) == NumBits-1)
-          return getNode(Opcode, VT, N1, N2.getOperand(0));
-      }
-    break;
-#endif
   }
 
   // Memoize this node if possible.
