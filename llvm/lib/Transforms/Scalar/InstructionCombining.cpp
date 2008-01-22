@@ -6513,7 +6513,6 @@ static bool CanEvaluateInDifferentType(Value *V, const IntegerType *Ty,
                                       NumCastsRemoved);
 
   case Instruction::Mul:
-    break;
     // A multiply can be truncated by truncating its operands.
     return Ty->getBitWidth() < OrigTy->getBitWidth() && 
            CanEvaluateInDifferentType(I->getOperand(0), Ty, CastOpc,
