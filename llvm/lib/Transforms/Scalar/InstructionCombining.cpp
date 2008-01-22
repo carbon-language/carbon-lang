@@ -6512,6 +6512,15 @@ static bool CanEvaluateInDifferentType(Value *V, const IntegerType *Ty,
            CanEvaluateInDifferentType(I->getOperand(1), Ty, CastOpc,
                                       NumCastsRemoved);
 
+  case Instruction::Mul:
+    break;
+    // A multiply can be truncated by truncating its operands.
+    return Ty->getBitWidth() < OrigTy->getBitWidth() && 
+           CanEvaluateInDifferentType(I->getOperand(0), Ty, CastOpc,
+                                      NumCastsRemoved) &&
+           CanEvaluateInDifferentType(I->getOperand(1), Ty, CastOpc,
+                                      NumCastsRemoved);
+
   case Instruction::Shl:
     // If we are truncating the result of this SHL, and if it's a shift of a
     // constant amount, we can always perform a SHL in a smaller type.
@@ -6571,6 +6580,7 @@ Value *InstCombiner::EvaluateInDifferentType(Value *V, const Type *Ty,
   switch (I->getOpcode()) {
   case Instruction::Add:
   case Instruction::Sub:
+  case Instruction::Mul:
   case Instruction::And:
   case Instruction::Or:
   case Instruction::Xor:
