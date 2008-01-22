@@ -898,6 +898,28 @@ public:
   virtual Init *resolveReferences(Record &R, const RecordVal *RV);
 
   virtual std::string getAsString() const;
+
+  typedef std::vector<Init*>::iterator             arg_iterator;
+  typedef std::vector<Init*>::const_iterator       const_arg_iterator;
+  typedef std::vector<std::string>::iterator       name_iterator;
+  typedef std::vector<std::string>::const_iterator const_name_iterator;
+
+  inline arg_iterator        arg_begin()       { return Args.begin(); }
+  inline const_arg_iterator  arg_begin() const { return Args.begin(); }
+  inline arg_iterator        arg_end  ()       { return Args.end();   }
+  inline const_arg_iterator  arg_end  () const { return Args.end();   }
+
+  inline size_t              arg_size () const { return Args.size();  }
+  inline bool                arg_empty() const { return Args.empty(); }
+
+  inline name_iterator       name_begin()       { return ArgNames.begin(); }
+  inline const_name_iterator name_begin() const { return ArgNames.begin(); }
+  inline name_iterator       name_end  ()       { return ArgNames.end();   }
+  inline const_name_iterator name_end  () const { return ArgNames.end();   }
+
+  inline size_t              name_size () const { return ArgNames.size();  }
+  inline bool                name_empty() const { return ArgNames.empty(); }
+
 };
 
 //===----------------------------------------------------------------------===//
