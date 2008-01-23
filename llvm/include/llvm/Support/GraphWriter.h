@@ -48,8 +48,13 @@ namespace DOT {  // Private functions...
         Str[i] = ' ';
         break;
       case '\\':
-        if (i+1 != Str.length() && Str[i+1] == 'l')
-          break;  // don't disturb \l
+        if (i+1 != Str.length())
+          switch (Str[i+1]) {
+            case 'l': continue; // don't disturb \l
+            case '|': case '{': case '}':
+               Str.erase(Str.begin()+i); continue;
+            default: break;
+          }
       case '{': case '}':
       case '<': case '>':
       case '|': case '"':
