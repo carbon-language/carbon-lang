@@ -705,6 +705,10 @@ Stmt *RewriteTest::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
     delete IV;
     return Replacement;
   } else {
+#if 0
+    /// This code is not right. It seems unnecessary. It breaks use of 
+    /// ivar reference used as 'receiver' of an expression; as in:
+    /// [newInv->_container addObject:0];
     if (CurMethodDecl) {
       if (const PointerType *pType = IV->getBase()->getType()->getAsPointerType()) {
         ObjCInterfaceType *intT = dyn_cast<ObjCInterfaceType>(pType->getPointeeType());
@@ -729,6 +733,7 @@ Stmt *RewriteTest::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
         }
       }
     }
+#endif
     return IV;
   }
 }
