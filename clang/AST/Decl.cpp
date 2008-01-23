@@ -158,8 +158,19 @@ void Decl::PrintStats() {
 	      nFieldDecls*sizeof(FieldDecl)+nSUC*sizeof(RecordDecl)+
 	      nEnumDecls*sizeof(EnumDecl)+nEnumConst*sizeof(EnumConstantDecl)+
 	      nTypedef*sizeof(TypedefDecl)+
-	      nLinkageSpecDecl*sizeof(LinkageSpecDecl))
-	  /* FIXME: add ObjC decls */);
+              nInterfaceDecls*sizeof(ObjCInterfaceDecl)+
+              nIvarDecls*sizeof(ObjCIvarDecl)+
+              nClassDecls*sizeof(ObjCClassDecl)+
+              nMethodDecls*sizeof(ObjCMethodDecl)+
+              nProtocolDecls*sizeof(ObjCProtocolDecl)+
+              nForwardProtocolDecls*sizeof(ObjCForwardProtocolDecl)+
+              nCategoryDecls*sizeof(ObjCCategoryDecl)+
+              nObjCImplementationDecls*sizeof(ObjCImplementationDecl)+
+              nObjCCategoryImpl*sizeof(ObjCCategoryImplDecl)+
+              nObjCCompatibleAlias*sizeof(ObjCCompatibleAliasDecl)+
+              nObjCPropertyDecl*sizeof(ObjCPropertyDecl)+
+              nLinkageSpecDecl*sizeof(LinkageSpecDecl)));
+    
 }
 
 void Decl::addDeclKind(const Kind k) {
