@@ -341,13 +341,16 @@ void ExprValue::print(std::ostream& Out) const {
         Out << "Invalid"; break;
       
     case RValueMayEqualSetKind: {
-      Out << "MayEqual{";
       APSIntSetTy S = cast<RValueMayEqualSet>(this)->GetValues();
+      bool first = true;
 
-      for (APSIntSetTy::iterator I=S.begin(), E=S.end(); I!=E; ++I)
-        Out << ' ' << (*I).toString();
-
-      Out << " }";
+      for (APSIntSetTy::iterator I=S.begin(), E=S.end(); I!=E; ++I) {
+        if (first) first = false;
+        else Out << " | ";
+        
+        Out << (*I).toString();
+      }
+      
       break;
     }
       
@@ -720,10 +723,24 @@ template<>
 struct VISIBILITY_HIDDEN DOTGraphTraits<GRConstants::NodeTy*> :
   public DefaultDOTGraphTraits {
     
+ 
+  static std::string getNodeAttributes(void*, void*) {
+    return "fontname=\"monaco,fixed\", fontsize=\"11\""; 
+  }
+  
+  static void PrintKind(std::ostringstream& Out, ValueKey::Kind kind) {
+    switch (kind) {
+      case ValueKey::IsSubExp:  Out << "Sub-Expressions:\\l"; break;
+      case ValueKey::IsDecl:    Out << "Variables:\\l"; break;
+      case ValueKey::IsBlkExpr: Out << "Block-level Expressions:\\l"; break;
+      default: assert (false && "Unknown ValueKey type.");
+    }
+  }
+    
   static std::string getNodeLabel(const GRConstants::NodeTy* N, void*) {
     std::ostringstream Out;
-        
-    Out << "Vertex: " << (void*) N << '\n';
+
+    // Program Location.
     ProgramPoint Loc = N->getLocation();
     
     switch (Loc.getKind()) {
@@ -738,7 +755,7 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRConstants::NodeTy*> :
         
       case ProgramPoint::PostStmtKind: {
         const PostStmt& L = cast<PostStmt>(Loc);
-        Out << "Stmt: " << (void*) L.getStmt() << '\n';
+        Out << "(" << (void*) L.getStmt() << ") ";
         L.getStmt()->printPretty(Out);
         break;
       }
@@ -750,31 +767,47 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRConstants::NodeTy*> :
       }
     }
     
-    Out << "\n{";
+    Out << "\\|";
     
     GRConstants::StateTy M = N->getState();
     bool isFirst = true;
+    ValueKey::Kind kind;
 
     for (GRConstants::StateTy::iterator I=M.begin(), E=M.end(); I!=E; ++I) {
-      if (!isFirst)
-        Out << '\n';
-      else
+      if (!isFirst) {
+        ValueKey::Kind newKind = I.getKey().getKind();
+        
+        if (newKind != kind) {
+          Out << "\\l\\l";
+          PrintKind(Out, newKind);
+        }
+        else
+          Out << "\\l";
+        
+        kind = newKind;
+      }
+      else {
+        kind = I.getKey().getKind();
+        PrintKind(Out, kind); 
         isFirst = false;
+      }
+      
+      Out << ' ';
       
       if (ValueDecl* V = dyn_cast<ValueDecl>(I.getKey())) {
-        Out << "Decl: " << (void*) V << ", " << V->getName();          
+        Out << V->getName();          
       }
       else {
         Stmt* E = cast<Stmt>(I.getKey());
-        Out << "Stmt: " << (void*) E;
+        Out << " (" << (void*) E << ") ";
+        E->printPretty(Out);
       }
       
-      Out << " => ";
+      Out << " : ";
       I.getData().print(Out);
     }
     
-    Out << " }";
-    
+    Out << "\\l";
     return Out.str();
   }
 };
