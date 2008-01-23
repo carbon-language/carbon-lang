@@ -206,6 +206,7 @@ protected:
 public:
   RValue Add(ValueManager& ValMgr, const RValue& RHS) const;
   RValue Sub(ValueManager& ValMgr, const RValue& RHS) const;
+  RValue Mul(ValueManager& ValMgr, const RValue& RHS) const;
   
   static RValue GetRValue(ValueManager& ValMgr, IntegerLiteral* S);
   
@@ -225,7 +226,8 @@ public:
   }
   
   RValueMayEqualSet Add(ValueManager& ValMgr, const RValueMayEqualSet& V) const;
-  RValueMayEqualSet Sub(ValueManager& ValMgr, const RValueMayEqualSet& V) const;  
+  RValueMayEqualSet Sub(ValueManager& ValMgr, const RValueMayEqualSet& V) const;
+  RValueMayEqualSet Mul(ValueManager& ValMgr, const RValueMayEqualSet& V) const;
   
   // Implement isa<T> support.
   static inline bool classof(const ExprValue* V) {
@@ -259,6 +261,10 @@ RValue RValue::Sub(ValueManager& ValMgr, const RValue& RHS) const {
   RVALUE_DISPATCH(Sub)
 }
 
+RValue RValue::Mul(ValueManager& ValMgr, const RValue& RHS) const {
+  RVALUE_DISPATCH(Mul)
+}
+
 #undef RVALUE_DISPATCH_CASE
 #undef RVALUE_DISPATCH
 
@@ -290,6 +296,22 @@ RValueMayEqualSet::Sub(ValueManager& ValMgr,
   for (APSIntSetTy::iterator I1=S1.begin(), E1=S2.end(); I1!=E1; ++I1)
     for (APSIntSetTy::iterator I2=S2.begin(), E2=S2.end(); I2!=E2; ++I2)
       M = ValMgr.AddToSet(M, *I1 - *I2);
+  
+  return M;
+}
+
+RValueMayEqualSet
+RValueMayEqualSet::Mul(ValueManager& ValMgr,
+                       const RValueMayEqualSet& RHS) const {
+  
+  APSIntSetTy S1 = GetValues();
+  APSIntSetTy S2 = RHS.GetValues();
+  
+  APSIntSetTy M = ValMgr.GetEmptyAPSIntSet();
+  
+  for (APSIntSetTy::iterator I1=S1.begin(), E1=S2.end(); I1!=E1; ++I1)
+    for (APSIntSetTy::iterator I2=S2.begin(), E2=S2.end(); I2!=E2; ++I2)
+      M = ValMgr.AddToSet(M, *I1 * *I2);
   
   return M;
 }
@@ -668,6 +690,13 @@ void GRConstants::VisitBinaryOperator(BinaryOperator* B,
           break;
         }
           
+        case BinaryOperator::Mul: {
+          const RValue& R1 = cast<RValue>(V1);
+          const RValue& R2 = cast<RValue>(V2);
+	        Nodify(Dst, B, N2, SetValue(St, B, R1.Mul(ValMgr, R2)));
+          break;
+        }
+          
         case BinaryOperator::Assign: {
           const LValue& L1 = cast<LValue>(V1);
           const RValue& R2 = cast<RValue>(V2);
@@ -687,6 +716,14 @@ void GRConstants::VisitBinaryOperator(BinaryOperator* B,
           const LValue& L1 = cast<LValue>(V1);
           RValue R1 = cast<RValue>(GetValue(N1->getState(), L1));
           RValue Result = R1.Sub(ValMgr, cast<RValue>(V2));
+          Nodify(Dst, B, N2, SetValue(SetValue(St, B, Result), L1, Result));
+          break;
+        }
+          
+        case BinaryOperator::MulAssign: {
+          const LValue& L1 = cast<LValue>(V1);
+          RValue R1 = cast<RValue>(GetValue(N1->getState(), L1));
+          RValue Result = R1.Mul(ValMgr, cast<RValue>(V2));
           Nodify(Dst, B, N2, SetValue(SetValue(St, B, Result), L1, Result));
           break;
         }
