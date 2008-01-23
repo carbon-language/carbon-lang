@@ -138,7 +138,10 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
 
   // Turn FP extload into load/fextend
   setLoadXAction(ISD::EXTLOAD, MVT::f32, Expand);
-  
+
+  // Sparc doesn't have i1 sign extending load
+  setLoadXAction(ISD::SEXTLOAD, MVT::i1, Promote);
+
   // Custom legalize GlobalAddress nodes into LO/HI parts.
   setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
   setOperationAction(ISD::GlobalTLSAddress, MVT::i32, Custom);

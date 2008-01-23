@@ -37,9 +37,9 @@ IA64TargetLowering::IA64TargetLowering(TargetMachine &TM)
 
       setLoadXAction(ISD::EXTLOAD          , MVT::i1   , Promote);
 
-      setLoadXAction(ISD::ZEXTLOAD         , MVT::i1   , Expand);
+      setLoadXAction(ISD::ZEXTLOAD         , MVT::i1   , Promote);
 
-      setLoadXAction(ISD::SEXTLOAD         , MVT::i1   , Expand);
+      setLoadXAction(ISD::SEXTLOAD         , MVT::i1   , Promote);
       setLoadXAction(ISD::SEXTLOAD         , MVT::i8   , Expand);
       setLoadXAction(ISD::SEXTLOAD         , MVT::i16  , Expand);
       setLoadXAction(ISD::SEXTLOAD         , MVT::i32  , Expand);

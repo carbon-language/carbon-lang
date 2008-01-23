@@ -133,6 +133,9 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   // ARM does not have f32 extending load.
   setLoadXAction(ISD::EXTLOAD, MVT::f32, Expand);
 
+  // ARM does not have i1 sign extending load.
+  setLoadXAction(ISD::SEXTLOAD, MVT::i1, Promote);
+
   // ARM supports all 4 flavors of integer indexed load / store.
   for (unsigned im = (unsigned)ISD::PRE_INC;
        im != (unsigned)ISD::LAST_INDEXED_MODE; ++im) {

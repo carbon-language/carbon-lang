@@ -1820,76 +1820,188 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       return Op.ResNo ? Tmp4 : Tmp3;
     } else {
       MVT::ValueType SrcVT = LD->getLoadedVT();
-      switch (TLI.getLoadXAction(ExtType, SrcVT)) {
-      default: assert(0 && "This action is not supported yet!");
-      case TargetLowering::Promote:
-        assert(SrcVT == MVT::i1 &&
-               "Can only promote extending LOAD from i1 -> i8!");
-        Result = DAG.getExtLoad(ExtType, Node->getValueType(0), Tmp1, Tmp2,
-                                LD->getSrcValue(), LD->getSrcValueOffset(),
-                                MVT::i8, LD->isVolatile(), LD->getAlignment());
-        Tmp1 = Result.getValue(0);
-        Tmp2 = Result.getValue(1);
-      break;
-      case TargetLowering::Custom:
-        isCustom = true;
-        // FALLTHROUGH
-      case TargetLowering::Legal:
-        Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, LD->getOffset());
-        Tmp1 = Result.getValue(0);
-        Tmp2 = Result.getValue(1);
-      
-        if (isCustom) {
-          Tmp3 = TLI.LowerOperation(Result, DAG);
-          if (Tmp3.Val) {
-            Tmp1 = LegalizeOp(Tmp3);
-            Tmp2 = LegalizeOp(Tmp3.getValue(1));
-          }
+      unsigned SrcWidth = MVT::getSizeInBits(SrcVT);
+      int SVOffset = LD->getSrcValueOffset();
+      unsigned Alignment = LD->getAlignment();
+      bool isVolatile = LD->isVolatile();
+
+      if (SrcWidth != MVT::getStoreSizeInBits(SrcVT) &&
+          // Some targets pretend to have an i1 loading operation, and actually
+          // load an i8.  This trick is correct for ZEXTLOAD because the top 7
+          // bits are guaranteed to be zero; it helps the optimizers understand
+          // that these bits are zero.  It is also useful for EXTLOAD, since it
+          // tells the optimizers that those bits are undefined.  It would be
+          // nice to have an effective generic way of getting these benefits...
+          // Until such a way is found, don't insist on promoting i1 here.
+          (SrcVT != MVT::i1 ||
+           TLI.getLoadXAction(ExtType, MVT::i1) == TargetLowering::Promote)) {
+        // Promote to a byte-sized load if not loading an integral number of
+        // bytes.  For example, promote EXTLOAD:i20 -> EXTLOAD:i24.
+        unsigned NewWidth = MVT::getStoreSizeInBits(SrcVT);
+        MVT::ValueType NVT = MVT::getIntegerType(NewWidth);
+        SDOperand Ch;
+
+        // The extra bits are guaranteed to be zero, since we stored them that
+        // way.  A zext load from NVT thus automatically gives zext from SrcVT.
+
+        ISD::LoadExtType NewExtType =
+          ExtType == ISD::ZEXTLOAD ? ISD::ZEXTLOAD : ISD::EXTLOAD;
+
+        Result = DAG.getExtLoad(NewExtType, Node->getValueType(0),
+                                Tmp1, Tmp2, LD->getSrcValue(), SVOffset,
+                                NVT, isVolatile, Alignment);
+
+        Ch = Result.getValue(1); // The chain.
+
+        if (ExtType == ISD::SEXTLOAD)
+          // Having the top bits zero doesn't help when sign extending.
+          Result = DAG.getNode(ISD::SIGN_EXTEND_INREG, Result.getValueType(),
+                               Result, DAG.getValueType(SrcVT));
+        else if (ExtType == ISD::ZEXTLOAD || NVT == Result.getValueType())
+          // All the top bits are guaranteed to be zero - inform the optimizers.
+          Result = DAG.getNode(ISD::AssertZext, Result.getValueType(), Result,
+                               DAG.getValueType(SrcVT));
+
+        Tmp1 = LegalizeOp(Result);
+        Tmp2 = LegalizeOp(Ch);
+      } else if (SrcWidth & (SrcWidth - 1)) {
+        // If not loading a power-of-2 number of bits, expand as two loads.
+        assert(MVT::isExtendedVT(SrcVT) && !MVT::isVector(SrcVT) &&
+               "Unsupported extload!");
+        unsigned RoundWidth = 1 << Log2_32(SrcWidth);
+        assert(RoundWidth < SrcWidth);
+        unsigned ExtraWidth = SrcWidth - RoundWidth;
+        assert(ExtraWidth < RoundWidth);
+        assert(!(RoundWidth % 8) && !(ExtraWidth % 8) &&
+               "Load size not an integral number of bytes!");
+        MVT::ValueType RoundVT = MVT::getIntegerType(RoundWidth);
+        MVT::ValueType ExtraVT = MVT::getIntegerType(ExtraWidth);
+        SDOperand Lo, Hi, Ch;
+        unsigned IncrementSize;
+
+        if (TLI.isLittleEndian()) {
+          // EXTLOAD:i24 -> ZEXTLOAD:i16 | (shl EXTLOAD@+2:i8, 16)
+          // Load the bottom RoundWidth bits.
+          Lo = DAG.getExtLoad(ISD::ZEXTLOAD, Node->getValueType(0), Tmp1, Tmp2,
+                              LD->getSrcValue(), SVOffset, RoundVT, isVolatile,
+                              Alignment);
+
+          // Load the remaining ExtraWidth bits.
+          IncrementSize = RoundWidth / 8;
+          Tmp2 = DAG.getNode(ISD::ADD, Tmp2.getValueType(), Tmp2,
+                             DAG.getIntPtrConstant(IncrementSize));
+          Hi = DAG.getExtLoad(ExtType, Node->getValueType(0), Tmp1, Tmp2,
+                              LD->getSrcValue(), SVOffset + IncrementSize,
+                              ExtraVT, isVolatile,
+                              MinAlign(Alignment, IncrementSize));
+
+          // Build a factor node to remember that this load is independent of the
+          // other one.
+          Ch = DAG.getNode(ISD::TokenFactor, MVT::Other, Lo.getValue(1),
+                           Hi.getValue(1));
+
+          // Move the top bits to the right place.
+          Hi = DAG.getNode(ISD::SHL, Hi.getValueType(), Hi,
+                           DAG.getConstant(RoundWidth, TLI.getShiftAmountTy()));
+
+          // Join the hi and lo parts.
+          Result = DAG.getNode(ISD::OR, Node->getValueType(0), Lo, Hi);
         } else {
-          // If this is an unaligned load and the target doesn't support it,
-          // expand it.
-          if (!TLI.allowsUnalignedMemoryAccesses()) {
-            unsigned ABIAlignment = TLI.getTargetData()->
-              getABITypeAlignment(MVT::getTypeForValueType(LD->getLoadedVT()));
-            if (LD->getAlignment() < ABIAlignment){
-              Result = ExpandUnalignedLoad(cast<LoadSDNode>(Result.Val), DAG,
-                                           TLI);
-              Tmp1 = Result.getOperand(0);
-              Tmp2 = Result.getOperand(1);
-              Tmp1 = LegalizeOp(Tmp1);
-              Tmp2 = LegalizeOp(Tmp2);
+          // Big endian - avoid unaligned loads.
+          // EXTLOAD:i24 -> (shl EXTLOAD:i16, 8) | ZEXTLOAD@+2:i8
+          // Load the top RoundWidth bits.
+          Hi = DAG.getExtLoad(ExtType, Node->getValueType(0), Tmp1, Tmp2,
+                              LD->getSrcValue(), SVOffset, RoundVT, isVolatile,
+                              Alignment);
+
+          // Load the remaining ExtraWidth bits.
+          IncrementSize = RoundWidth / 8;
+          Tmp2 = DAG.getNode(ISD::ADD, Tmp2.getValueType(), Tmp2,
+                             DAG.getIntPtrConstant(IncrementSize));
+          Lo = DAG.getExtLoad(ISD::ZEXTLOAD, Node->getValueType(0), Tmp1, Tmp2,
+                              LD->getSrcValue(), SVOffset + IncrementSize,
+                              ExtraVT, isVolatile,
+                              MinAlign(Alignment, IncrementSize));
+
+          // Build a factor node to remember that this load is independent of the
+          // other one.
+          Ch = DAG.getNode(ISD::TokenFactor, MVT::Other, Lo.getValue(1),
+                           Hi.getValue(1));
+
+          // Move the top bits to the right place.
+          Hi = DAG.getNode(ISD::SHL, Hi.getValueType(), Hi,
+                           DAG.getConstant(ExtraWidth, TLI.getShiftAmountTy()));
+
+          // Join the hi and lo parts.
+          Result = DAG.getNode(ISD::OR, Node->getValueType(0), Lo, Hi);
+        }
+
+        Tmp1 = LegalizeOp(Result);
+        Tmp2 = LegalizeOp(Ch);
+      } else {
+        switch (TLI.getLoadXAction(ExtType, SrcVT)) {
+        default: assert(0 && "This action is not supported yet!");
+        case TargetLowering::Custom:
+          isCustom = true;
+          // FALLTHROUGH
+        case TargetLowering::Legal:
+          Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, LD->getOffset());
+          Tmp1 = Result.getValue(0);
+          Tmp2 = Result.getValue(1);
+
+          if (isCustom) {
+            Tmp3 = TLI.LowerOperation(Result, DAG);
+            if (Tmp3.Val) {
+              Tmp1 = LegalizeOp(Tmp3);
+              Tmp2 = LegalizeOp(Tmp3.getValue(1));
+            }
+          } else {
+            // If this is an unaligned load and the target doesn't support it,
+            // expand it.
+            if (!TLI.allowsUnalignedMemoryAccesses()) {
+              unsigned ABIAlignment = TLI.getTargetData()->
+                getABITypeAlignment(MVT::getTypeForValueType(LD->getLoadedVT()));
+              if (LD->getAlignment() < ABIAlignment){
+                Result = ExpandUnalignedLoad(cast<LoadSDNode>(Result.Val), DAG,
+                                             TLI);
+                Tmp1 = Result.getOperand(0);
+                Tmp2 = Result.getOperand(1);
+                Tmp1 = LegalizeOp(Tmp1);
+                Tmp2 = LegalizeOp(Tmp2);
+              }
             }
           }
-        }
-        break;
-      case TargetLowering::Expand:
-        // f64 = EXTLOAD f32 should expand to LOAD, FP_EXTEND
-        if (SrcVT == MVT::f32 && Node->getValueType(0) == MVT::f64) {
-          SDOperand Load = DAG.getLoad(SrcVT, Tmp1, Tmp2, LD->getSrcValue(),
-                                       LD->getSrcValueOffset(),
-                                       LD->isVolatile(), LD->getAlignment());
-          Result = DAG.getNode(ISD::FP_EXTEND, Node->getValueType(0), Load);
-          Tmp1 = LegalizeOp(Result);  // Relegalize new nodes.
-          Tmp2 = LegalizeOp(Load.getValue(1));
+          break;
+        case TargetLowering::Expand:
+          // f64 = EXTLOAD f32 should expand to LOAD, FP_EXTEND
+          if (SrcVT == MVT::f32 && Node->getValueType(0) == MVT::f64) {
+            SDOperand Load = DAG.getLoad(SrcVT, Tmp1, Tmp2, LD->getSrcValue(),
+                                         LD->getSrcValueOffset(),
+                                         LD->isVolatile(), LD->getAlignment());
+            Result = DAG.getNode(ISD::FP_EXTEND, Node->getValueType(0), Load);
+            Tmp1 = LegalizeOp(Result);  // Relegalize new nodes.
+            Tmp2 = LegalizeOp(Load.getValue(1));
+            break;
+          }
+          assert(ExtType != ISD::EXTLOAD &&"EXTLOAD should always be supported!");
+          // Turn the unsupported load into an EXTLOAD followed by an explicit
+          // zero/sign extend inreg.
+          Result = DAG.getExtLoad(ISD::EXTLOAD, Node->getValueType(0),
+                                  Tmp1, Tmp2, LD->getSrcValue(),
+                                  LD->getSrcValueOffset(), SrcVT,
+                                  LD->isVolatile(), LD->getAlignment());
+          SDOperand ValRes;
+          if (ExtType == ISD::SEXTLOAD)
+            ValRes = DAG.getNode(ISD::SIGN_EXTEND_INREG, Result.getValueType(),
+                                 Result, DAG.getValueType(SrcVT));
+          else
+            ValRes = DAG.getZeroExtendInReg(Result, SrcVT);
+          Tmp1 = LegalizeOp(ValRes);  // Relegalize new nodes.
+          Tmp2 = LegalizeOp(Result.getValue(1));  // Relegalize new nodes.
           break;
         }
-        assert(ExtType != ISD::EXTLOAD &&"EXTLOAD should always be supported!");
-        // Turn the unsupported load into an EXTLOAD followed by an explicit
-        // zero/sign extend inreg.
-        Result = DAG.getExtLoad(ISD::EXTLOAD, Node->getValueType(0),
-                                Tmp1, Tmp2, LD->getSrcValue(),
-                                LD->getSrcValueOffset(), SrcVT,
-                                LD->isVolatile(), LD->getAlignment());
-        SDOperand ValRes;
-        if (ExtType == ISD::SEXTLOAD)
-          ValRes = DAG.getNode(ISD::SIGN_EXTEND_INREG, Result.getValueType(),
-                               Result, DAG.getValueType(SrcVT));
-        else
-          ValRes = DAG.getZeroExtendInReg(Result, SrcVT);
-        Tmp1 = LegalizeOp(ValRes);  // Relegalize new nodes.
-        Tmp2 = LegalizeOp(Result.getValue(1));  // Relegalize new nodes.
-        break;
       }
+
       // Since loads produce two values, make sure to remember that we legalized
       // both of them.
       AddLegalizedOperand(SDOperand(Node, 0), Tmp1);

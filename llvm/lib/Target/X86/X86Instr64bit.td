@@ -61,7 +61,6 @@ def i64immSExt8  : PatLeaf<(i64 imm), [{
   return (int64_t)N->getValue() == (int8_t)N->getValue();
 }]>;
 
-def sextloadi64i1  : PatFrag<(ops node:$ptr), (i64 (sextloadi1 node:$ptr))>;
 def sextloadi64i8  : PatFrag<(ops node:$ptr), (i64 (sextloadi8 node:$ptr))>;
 def sextloadi64i16 : PatFrag<(ops node:$ptr), (i64 (sextloadi16 node:$ptr))>;
 def sextloadi64i32 : PatFrag<(ops node:$ptr), (i64 (sextloadi32 node:$ptr))>;
@@ -1177,8 +1176,7 @@ def : Pat<(X86tcret (i64 texternalsym:$dst), imm:$off),
 def : Pat<(parallel (X86cmp GR64:$src1, 0), (implicit EFLAGS)),
           (TEST64rr GR64:$src1, GR64:$src1)>;
 
-// {s|z}extload bool -> {s|z}extload byte
-def : Pat<(sextloadi64i1 addr:$src), (MOVSX64rm8 addr:$src)>;
+// zextload bool -> zextload byte
 def : Pat<(zextloadi64i1 addr:$src), (MOVZX64rm8 addr:$src)>;
 
 // extload

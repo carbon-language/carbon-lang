@@ -226,8 +226,6 @@ def loadf32 : PatFrag<(ops node:$ptr), (f32 (load node:$ptr))>;
 def loadf64 : PatFrag<(ops node:$ptr), (f64 (load node:$ptr))>;
 def loadf80 : PatFrag<(ops node:$ptr), (f80 (load node:$ptr))>;
 
-def sextloadi16i1  : PatFrag<(ops node:$ptr), (i16 (sextloadi1 node:$ptr))>;
-def sextloadi32i1  : PatFrag<(ops node:$ptr), (i32 (sextloadi1 node:$ptr))>;
 def sextloadi16i8  : PatFrag<(ops node:$ptr), (i16 (sextloadi8 node:$ptr))>;
 def sextloadi32i8  : PatFrag<(ops node:$ptr), (i32 (sextloadi8 node:$ptr))>;
 def sextloadi32i16 : PatFrag<(ops node:$ptr), (i32 (sextloadi16 node:$ptr))>;
@@ -2608,9 +2606,7 @@ def : Pat<(parallel (X86cmp GR16:$src1, 0), (implicit EFLAGS)),
 def : Pat<(parallel (X86cmp GR32:$src1, 0), (implicit EFLAGS)),
           (TEST32rr GR32:$src1, GR32:$src1)>;
 
-// {s|z}extload bool -> {s|z}extload byte
-def : Pat<(sextloadi16i1 addr:$src), (MOVSX16rm8 addr:$src)>;
-def : Pat<(sextloadi32i1 addr:$src), (MOVSX32rm8 addr:$src)>;
+// zextload bool -> zextload byte
 def : Pat<(zextloadi8i1  addr:$src), (MOV8rm     addr:$src)>;
 def : Pat<(zextloadi16i1 addr:$src), (MOVZX16rm8 addr:$src)>;
 def : Pat<(zextloadi32i1 addr:$src), (MOVZX32rm8 addr:$src)>;
