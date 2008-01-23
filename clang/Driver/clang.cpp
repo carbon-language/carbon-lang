@@ -404,6 +404,11 @@ static llvm::cl::opt<bool>
 WarnNoFormatNonLiteral("Wno-format-nonliteral",
    llvm::cl::desc("Do not warn about non-literal format strings."));
 
+static llvm::cl::opt<bool>
+WarnUndefMacros("Wundef",
+   llvm::cl::desc("Warn on use of undefined macros in #if's"));
+
+
 /// InitializeDiagnostics - Initialize the diagnostic object, based on the
 /// current command line option settings.
 static void InitializeDiagnostics(Diagnostic &Diags) {
@@ -423,7 +428,8 @@ static void InitializeDiagnostics(Diagnostic &Diags) {
   if (WarnNoFormatNonLiteral)
     Diags.setDiagnosticMapping(diag::warn_printf_not_string_constant,
                                diag::MAP_IGNORE);
-
+  if (!WarnUndefMacros)
+    Diags.setDiagnosticMapping(diag::warn_pp_undef_identifier,diag::MAP_IGNORE);
 }
 
 //===----------------------------------------------------------------------===//

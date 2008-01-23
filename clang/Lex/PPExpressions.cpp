@@ -74,6 +74,7 @@ static bool EvaluateValue(llvm::APSInt &Result, Token &PeekTok,
     // into a simple 0, unless it is the C++ keyword "true", in which case it
     // turns into "1".
     if (II->getPPKeywordID() != tok::pp_defined) {
+      PP.Diag(PeekTok, diag::warn_pp_undef_identifier, II->getName());
       Result = II->getTokenID() == tok::kw_true;
       Result.setIsUnsigned(false);  // "0" is signed intmax_t 0.
       PP.LexNonComment(PeekTok);

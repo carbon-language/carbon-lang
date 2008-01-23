@@ -206,6 +206,8 @@ DIAG(err_pp_expected_rparen, ERROR,
      "expected ')' in preprocessor expression")
 DIAG(err_pp_expected_eol, ERROR,
      "expected end of line in preprocessor expression")
+DIAG(warn_pp_undef_identifier, WARNING,
+     "\"%0\" is not defined, evaluates to 0")
 DIAG(err_pp_defined_requires_identifier, ERROR,
      "operator \"defined\" requires an identifier")
 DIAG(err_pp_missing_rparen, ERROR,
