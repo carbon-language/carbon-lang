@@ -723,11 +723,6 @@ template<>
 struct VISIBILITY_HIDDEN DOTGraphTraits<GRConstants::NodeTy*> :
   public DefaultDOTGraphTraits {
     
- 
-  static std::string getNodeAttributes(void*, void*) {
-    return "fontname=\"monaco,fixed\", fontsize=\"11\""; 
-  }
-  
   static void PrintKind(std::ostringstream& Out, ValueKey::Kind kind) {
     switch (kind) {
       case ValueKey::IsSubExp:  Out << "Sub-Expressions:\\l"; break;
