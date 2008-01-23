@@ -862,14 +862,17 @@ class ImmutableSet {
 public:
   typedef typename ValInfo::value_type      value_type;
   typedef typename ValInfo::value_type_ref  value_type_ref;
-  
-private:  
   typedef ImutAVLTree<ValInfo> TreeTy;
+
+private:  
   TreeTy* Root;
-  
-  ImmutableSet(TreeTy* R) : Root(R) {}
-  
+
 public:
+  /// Constructs a set from a pointer to a tree root.  In general one
+  /// should use a Factory object to create sets instead of directly
+  /// invoking the constructor, but there are cases where make this
+  /// constructor public is useful.
+  explicit ImmutableSet(TreeTy* R) : Root(R) {}
   
   class Factory {
     typename TreeTy::Factory F;
@@ -923,6 +926,8 @@ public:
   bool operator!=(ImmutableSet RHS) const {
     return Root && RHS.Root ? Root->isNotEqual(*RHS.Root) : Root != RHS.Root;
   }
+  
+  TreeTy* getRoot() const { return Root; }
   
   /// isEmpty - Return true if the set contains no elements.
   bool isEmpty() const { return !Root; }
