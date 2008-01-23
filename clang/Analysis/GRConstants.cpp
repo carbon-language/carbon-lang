@@ -664,7 +664,6 @@ void GRConstants::VisitBinaryOperator(BinaryOperator* B,
         case BinaryOperator::Sub: {
           const RValue& R1 = cast<RValue>(V1);
           const RValue& R2 = cast<RValue>(V2);
-
 	        Nodify(Dst, B, N2, SetValue(St, B, R1.Sub(ValMgr, R2)));
           break;
         }
@@ -672,8 +671,23 @@ void GRConstants::VisitBinaryOperator(BinaryOperator* B,
         case BinaryOperator::Assign: {
           const LValue& L1 = cast<LValue>(V1);
           const RValue& R2 = cast<RValue>(V2);
-          
           Nodify(Dst, B, N2, SetValue(SetValue(St, B, R2), L1, R2));
+          break;
+        }
+          
+        case BinaryOperator::AddAssign: {
+          const LValue& L1 = cast<LValue>(V1);
+          RValue R1 = cast<RValue>(GetValue(N1->getState(), L1));
+          RValue Result = R1.Add(ValMgr, cast<RValue>(V2));
+          Nodify(Dst, B, N2, SetValue(SetValue(St, B, Result), L1, Result));
+          break;
+        }
+          
+        case BinaryOperator::SubAssign: {
+          const LValue& L1 = cast<LValue>(V1);
+          RValue R1 = cast<RValue>(GetValue(N1->getState(), L1));
+          RValue Result = R1.Sub(ValMgr, cast<RValue>(V2));
+          Nodify(Dst, B, N2, SetValue(SetValue(St, B, Result), L1, Result));
           break;
         }
 
@@ -700,6 +714,7 @@ void GRConstants::Visit(Stmt* S, GRConstants::NodeTy* Pred,
 
   switch (S->getStmtClass()) {
     case Stmt::BinaryOperatorClass:
+    case Stmt::CompoundAssignOperatorClass:
       VisitBinaryOperator(cast<BinaryOperator>(S), Pred, Dst);
       break;
       
