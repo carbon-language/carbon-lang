@@ -322,6 +322,12 @@ namespace llvm {
     /// getStackPtrReg - Return the stack pointer register we are using: either
     /// ESP or RSP.
     unsigned getStackPtrReg() const { return X86StackPtr; }
+
+    /// getByValTypeAlignment - Return the desired alignment for ByVal aggregate
+    /// function arguments in the caller parameter area. For X86, aggregates
+    /// that contains are placed at 16-byte boundaries while the rest are at
+    /// 4-byte boundaries.
+    virtual unsigned getByValTypeAlignment(const Type *Ty) const;
     
     /// LowerOperation - Provide custom lowering hooks for some operations.
     ///

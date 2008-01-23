@@ -672,6 +672,46 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   allowUnalignedMemoryAccesses = true; // x86 supports it!
 }
 
+/// getMaxByValAlign - Helper for getByValTypeAlignment to determine
+/// the desired ByVal argument alignment.
+static void getMaxByValAlign(const Type *Ty, unsigned &MaxAlign) {
+  if (MaxAlign == 16)
+    return;
+  if (const VectorType *VTy = dyn_cast<VectorType>(Ty)) {
+    if (VTy->getBitWidth() == 128)
+      MaxAlign = 16;
+    else if (VTy->getBitWidth() == 64)
+      if (MaxAlign < 8)
+        MaxAlign = 8;
+  } else if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
+    unsigned EltAlign = 0;
+    getMaxByValAlign(ATy->getElementType(), EltAlign);
+    if (EltAlign > MaxAlign)
+      MaxAlign = EltAlign;
+  } else if (const StructType *STy = dyn_cast<StructType>(Ty)) {
+    for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
+      unsigned EltAlign = 0;
+      getMaxByValAlign(STy->getElementType(i), EltAlign);
+      if (EltAlign > MaxAlign)
+        MaxAlign = EltAlign;
+      if (MaxAlign == 16)
+        break;
+    }
+  }
+  return;
+}
+
+/// getByValTypeAlignment - Return the desired alignment for ByVal aggregate
+/// function arguments in the caller parameter area. For X86, aggregates
+/// that contains are placed at 16-byte boundaries while the rest are at
+/// 4-byte boundaries.
+unsigned X86TargetLowering::getByValTypeAlignment(const Type *Ty) const {
+  if (Subtarget->is64Bit())
+    return getTargetData()->getABITypeAlignment(Ty);
+  unsigned Align = 4;
+  getMaxByValAlign(Ty, Align);
+  return Align;
+}
 
 /// getPICJumpTableRelocaBase - Returns relocation base for the given PIC
 /// jumptable.

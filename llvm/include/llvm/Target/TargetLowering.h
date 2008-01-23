@@ -405,6 +405,10 @@ public:
     return VT == MVT::iPTR ? PointerTy : VT;
   }
 
+  /// getByValTypeAlignment - Return the desired alignment for ByVal aggregate
+  /// function arguments in the caller parameter area.
+  virtual unsigned getByValTypeAlignment(const Type *Ty) const;
+  
   /// getRegisterType - Return the type of registers that this ValueType will
   /// eventually require.
   MVT::ValueType getRegisterType(MVT::ValueType VT) const {
@@ -433,7 +437,7 @@ public:
     }
     assert(0 && "Unsupported extended type!");
   }
-  
+
   /// hasTargetDAGCombine - If true, the target has custom DAG combine
   /// transformations that it can perform for the specified node.
   bool hasTargetDAGCombine(ISD::NodeType NT) const {
