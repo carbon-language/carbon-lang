@@ -908,6 +908,10 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
         std::string SectionName = ".section " + I->getSection();
         SectionName += ",\"aw\",%progbits";
         SwitchToDataSection(SectionName.c_str());
+      } else if (I->hasSection() && Subtarget->isTargetDarwin()) {
+        // Honor all section names on Darwin; ObjC uses this
+        std::string SectionName = ".section " + I->getSection();
+        SwitchToDataSection(SectionName.c_str());
       } else {
         if (C->isNullValue() && !NoZerosInBSS && TAI->getBSSSection())
           SwitchToDataSection(I->isThreadLocal() ? TAI->getTLSBSSSection() :

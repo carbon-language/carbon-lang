@@ -958,8 +958,11 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
             break;
           }
         }
-
-        if (!I->isConstant())
+        if (I->hasSection()) {
+          // Honor all section names on Darwin; ObjC uses this
+          std::string SectionName = ".section " + I->getSection();
+          SwitchToDataSection(SectionName.c_str());
+        } else if (!I->isConstant())
           SwitchToDataSection(TAI->getDataSection(), I);
         else {
           // Read-only data.
