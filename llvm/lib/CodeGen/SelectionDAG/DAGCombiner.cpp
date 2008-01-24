@@ -607,8 +607,9 @@ void DAGCombiner::Run(bool RunningAfterLegalize) {
         AddToWorkList(RV.Val);
         AddUsersToWorkList(RV.Val);
         
-        // Add any uses of the old node to the worklist if they have a single
-        // use.  They may be dead after this node is deleted.
+        // Add any uses of the old node to the worklist in case this node is the
+        // last one that uses them.  They may become dead after this node is
+        // deleted.
         for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
           AddToWorkList(N->getOperand(i).Val);
           
