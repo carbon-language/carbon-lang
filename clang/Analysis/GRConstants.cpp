@@ -457,7 +457,8 @@ public:
 
 class VISIBILITY_HIDDEN LValueDecl : public LValue {
 public:
-  LValueDecl(ValueDecl* vd) : LValue(LValueDeclKind,vd) {}
+  LValueDecl(const ValueDecl* vd) 
+    : LValue(LValueDeclKind,const_cast<ValueDecl*>(vd)) {}
   
   ValueDecl* getDecl() const {
     return static_cast<ValueDecl*>(getRawPtr());
@@ -544,6 +545,7 @@ public:
     typedef ImplTy::const_iterator const_iterator;
         
     unsigned size() const { return Impl.size(); }
+    bool empty() const { return Impl.empty(); }
     
     iterator begin() { return Impl.begin(); }
     iterator end()   { return Impl.end(); }
@@ -616,11 +618,19 @@ public:
   ///  mappings removed.
   StateTy RemoveDeadBindings(Stmt* S, StateTy M);
 
-  StateTy SetValue(StateTy St, Stmt* S, const ExprValue& V);
+  StateTy SetValue(StateTy St, Stmt* S, const ExprValue& V);  
 
+  StateTy SetValue(StateTy St, const Stmt* S, const ExprValue& V) {
+    return SetValue(St, const_cast<Stmt*>(S), V);
+  }
+  
   StateTy SetValue(StateTy St, const LValue& LV, const ExprValue& V);
   
-  ExprValue GetValue(const StateTy& St, Stmt* S);
+  ExprValue GetValue(const StateTy& St, Stmt* S);  
+  inline ExprValue GetValue(const StateTy& St, const Stmt* S) {
+    return GetValue(St, const_cast<Stmt*>(S));
+  }
+  
   ExprValue GetValue(const StateTy& St, const LValue& LV);
   LValue GetLValue(const StateTy& St, Stmt* S);
   
@@ -637,7 +647,10 @@ public:
   void VisitUnaryOperator(UnaryOperator* B, NodeTy* Pred, NodeSet& Dst);
   
   /// VisitBinaryOperator - Transfer function logic for binary operators.
-  void VisitBinaryOperator(BinaryOperator* B, NodeTy* Pred, NodeSet& Dst);  
+  void VisitBinaryOperator(BinaryOperator* B, NodeTy* Pred, NodeSet& Dst);
+  
+  /// VisitDeclStmt - Transfer function logic for DeclStmts.
+  void VisitDeclStmt(DeclStmt* DS, NodeTy* Pred, NodeSet& Dst);
 };
 } // end anonymous namespace
 
@@ -768,6 +781,7 @@ GRConstants::StateTy GRConstants::SetValue(StateTy St, const LValue& LV,
 }
 
 GRConstants::StateTy GRConstants::RemoveDeadBindings(Stmt* Loc, StateTy M) {
+#if 0
   // Note: in the code below, we can assign a new map to M since the
   //  iterators are iterating over the tree of the *original* map.
   StateTy::iterator I = M.begin(), E = M.end();
@@ -786,7 +800,7 @@ GRConstants::StateTy GRConstants::RemoveDeadBindings(Stmt* Loc, StateTy M) {
       if (!Liveness->isLive(Loc, V))
         M = StateMgr.Remove(M, I.getKey());
   }
-
+#endif
   return M;
 }
 
@@ -820,7 +834,22 @@ void GRConstants::VisitCast(Expr* CastE, Expr* E, GRConstants::NodeTy* Pred,
     const ExprValue& V = GetValue(St, E);
     Nodify(Dst, CastE, N, SetValue(St, CastE, V.EvalCast(ValMgr, CastE)));
   }
- }
+}
+
+void GRConstants::VisitDeclStmt(DeclStmt* DS, GRConstants::NodeTy* Pred,
+                                GRConstants::NodeSet& Dst) {
+  
+  StateTy St = Pred->getState();
+  
+  for (const ScopedDecl* D = DS->getDecl(); D; D = D->getNextDeclarator())
+    if (const VarDecl* VD = dyn_cast<VarDecl>(D))
+      St = SetValue(St, LValueDecl(VD), GetValue(St, VD->getInit()));
+
+  Nodify(Dst, DS, Pred, St);
+  
+  if (Dst.empty())
+    Dst.Add(Pred);  
+}
 
 void GRConstants::VisitUnaryOperator(UnaryOperator* U,
                                      GRConstants::NodeTy* Pred,
@@ -1026,6 +1055,10 @@ void GRConstants::Visit(Stmt* S, GRConstants::NodeTy* Pred,
       VisitCast(C, C->getSubExpr(), Pred, Dst);
       break;
     }
+      
+    case Stmt::DeclStmtClass:
+      VisitDeclStmt(cast<DeclStmt>(S), Pred, Dst);
+      break;
       
     default:
       Dst.Add(Pred); // No-op. Simply propagate the current state unchanged.
