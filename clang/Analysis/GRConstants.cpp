@@ -213,7 +213,7 @@ public:
   RValue EvalSub(ValueManager& ValMgr, const RValue& RHS) const;
   RValue EvalMul(ValueManager& ValMgr, const RValue& RHS) const;
   
-  static RValue GetRValue(ValueManager& ValMgr, IntegerLiteral* S);
+  static RValue GetRValue(ValueManager& ValMgr, const llvm::APSInt& V);
   
   // Implement isa<T> support.
   static inline bool classof(const ExprValue* V) {
@@ -359,9 +359,8 @@ RValueMayEqualSet::EvalMul(ValueManager& ValMgr,
   return M;
 }
 
-RValue RValue::GetRValue(ValueManager& ValMgr, IntegerLiteral* S) {
-  return RValueMayEqualSet(ValMgr.AddToSet(ValMgr.GetEmptyAPSIntSet(),
-                                           S->getValue()));
+RValue RValue::GetRValue(ValueManager& ValMgr, const llvm::APSInt& V) {
+  return RValueMayEqualSet(ValMgr.AddToSet(ValMgr.GetEmptyAPSIntSet(), V));
 }    
 
 //===----------------------------------------------------------------------===//
@@ -504,6 +503,8 @@ protected:
   
   bool StateCleaned;
   
+  ASTContext* getContext() const { return ValMgr.getContext(); }
+  
 public:
   GRConstants() : Liveness(NULL), Builder(NULL), cfg(NULL),
     StmtEntryNode(NULL), CurrentStmt(NULL) {}
@@ -557,6 +558,9 @@ public:
 
   /// VisitCast - Transfer function logic for all casts (implicit and explicit).
   void VisitCast(Expr* CastE, Expr* E, NodeTy* Pred, NodeSet& Dst);
+  
+  /// VisitUnaryOperator - Transfer function logic for unary operators.
+  void VisitUnaryOperator(UnaryOperator* B, NodeTy* Pred, NodeSet& Dst);
   
   /// VisitBinaryOperator - Transfer function logic for binary operators.
   void VisitBinaryOperator(BinaryOperator* B, NodeTy* Pred, NodeSet& Dst);  
@@ -612,7 +616,7 @@ ExprValue GRConstants::GetValue(const StateTy& St, Stmt* S) {
         return GetValue(St, LValueDecl(cast<DeclRefExpr>(S)->getDecl()));
 
       case Stmt::IntegerLiteralClass:
-        return RValue::GetRValue(ValMgr, cast<IntegerLiteral>(S));
+        return RValue::GetRValue(ValMgr, cast<IntegerLiteral>(S)->getValue());
       
       case Stmt::ImplicitCastExprClass: {
         ImplicitCastExpr* C = cast<ImplicitCastExpr>(S);
@@ -742,6 +746,75 @@ void GRConstants::VisitCast(Expr* CastE, Expr* E, GRConstants::NodeTy* Pred,
   }
  }
 
+void GRConstants::VisitUnaryOperator(UnaryOperator* U,
+                                     GRConstants::NodeTy* Pred,
+                                     GRConstants::NodeSet& Dst) {
+  NodeSet S1;
+  Visit(U->getSubExpr(), Pred, S1);
+    
+  for (NodeSet::iterator I1=S1.begin(), E1=S1.end(); I1 != E1; ++I1) {
+    NodeTy* N1 = *I1;
+    StateTy St = N1->getState();
+    
+    switch (U->getOpcode()) {
+      case UnaryOperator::PostInc: {
+        const LValue& L1 = GetLValue(St, U->getSubExpr());
+        RValue R1 = cast<RValue>(GetValue(St, L1));
+
+        QualType T = U->getType();
+        llvm::APInt One(getContext()->getTypeSize(T,U->getLocStart()), 1);
+        RValue R2 = RValue::GetRValue(ValMgr, One);        
+
+        RValue Result = R1.EvalAdd(ValMgr, R2);
+        Nodify(Dst, U, N1, SetValue(SetValue(St, U, R1), L1, Result));
+        break;
+      }
+        
+      case UnaryOperator::PostDec: {
+        const LValue& L1 = GetLValue(St, U->getSubExpr());
+        RValue R1 = cast<RValue>(GetValue(St, L1));
+        
+        QualType T = U->getType();
+        llvm::APInt One(getContext()->getTypeSize(T,U->getLocStart()), 1);
+        RValue R2 = RValue::GetRValue(ValMgr, One);        
+        
+        RValue Result = R1.EvalSub(ValMgr, R2);
+        Nodify(Dst, U, N1, SetValue(SetValue(St, U, R1), L1, Result));
+        break;
+      }
+        
+      case UnaryOperator::PreInc: {
+        const LValue& L1 = GetLValue(St, U->getSubExpr());
+        RValue R1 = cast<RValue>(GetValue(St, L1));
+        
+        QualType T = U->getType();
+        llvm::APInt One(getContext()->getTypeSize(T,U->getLocStart()), 1);
+        RValue R2 = RValue::GetRValue(ValMgr, One);        
+        
+        RValue Result = R1.EvalAdd(ValMgr, R2);
+        Nodify(Dst, U, N1, SetValue(SetValue(St, U, Result), L1, Result));
+        break;
+      }
+        
+      case UnaryOperator::PreDec: {
+        const LValue& L1 = GetLValue(St, U->getSubExpr());
+        RValue R1 = cast<RValue>(GetValue(St, L1));
+        
+        QualType T = U->getType();
+        llvm::APInt One(getContext()->getTypeSize(T,U->getLocStart()), 1);
+        RValue R2 = RValue::GetRValue(ValMgr, One);        
+        
+        RValue Result = R1.EvalSub(ValMgr, R2);
+        Nodify(Dst, U, N1, SetValue(SetValue(St, U, Result), L1, Result));
+        break;
+      }
+        
+      default: ;
+        assert (false && "Not implemented.");
+    }    
+  }
+}
+
 void GRConstants::VisitBinaryOperator(BinaryOperator* B,
                                       GRConstants::NodeTy* Pred,
                                       GRConstants::NodeSet& Dst) {
@@ -846,6 +919,10 @@ void GRConstants::Visit(Stmt* S, GRConstants::NodeTy* Pred,
     case Stmt::BinaryOperatorClass:
     case Stmt::CompoundAssignOperatorClass:
       VisitBinaryOperator(cast<BinaryOperator>(S), Pred, Dst);
+      break;
+      
+    case Stmt::UnaryOperatorClass:
+      VisitUnaryOperator(cast<UnaryOperator>(S), Pred, Dst);
       break;
       
     case Stmt::ParenExprClass:
