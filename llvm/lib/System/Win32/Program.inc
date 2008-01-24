@@ -134,7 +134,7 @@ Program::ExecuteAndWait(const Path& path,
   }
 
   // Now build the command line.
-  char *command = reinterpret_cast<char *>(_alloca(len));
+  char *command = reinterpret_cast<char *>(_alloca(len+1));
   char *p = command;
 
   for (unsigned i = 0; args[i]; i++) {
