@@ -212,8 +212,10 @@ public:
   RValue EvalAdd(ValueManager& ValMgr, const RValue& RHS) const;
   RValue EvalSub(ValueManager& ValMgr, const RValue& RHS) const;
   RValue EvalMul(ValueManager& ValMgr, const RValue& RHS) const;
+  RValue EvalMinus(ValueManager& ValMgr, UnaryOperator* U) const;
   
   static RValue GetRValue(ValueManager& ValMgr, const llvm::APSInt& V);
+  static RValue GetRValue(ValueManager& ValMgr, IntegerLiteral* I);
   
   // Implement isa<T> support.
   static inline bool classof(const ExprValue* V) {
@@ -240,6 +242,9 @@ public:
                             const RValueMayEqualSet& V) const;
 
   RValueMayEqualSet EvalCast(ValueManager& ValMgr, Expr* CastExpr) const;
+  
+  RValueMayEqualSet EvalMinus(ValueManager& ValMgr, UnaryOperator* U) const;
+
   
   // Implement isa<T> support.
   static inline bool classof(const ExprValue* V) {
@@ -278,6 +283,44 @@ RValueMayEqualSet::EvalCast(ValueManager& ValMgr, Expr* CastExpr) const {
   
   return S2;
 }
+
+//===----------------------------------------------------------------------===//
+// Transfer functions: Unary Operations over R-Values.
+//===----------------------------------------------------------------------===//
+
+RValue RValue::EvalMinus(ValueManager& ValMgr, UnaryOperator* U) const {
+  switch (getKind()) {
+    case RValueMayEqualSetKind:
+      return cast<RValueMayEqualSet>(this)->EvalMinus(ValMgr, U);
+    default:
+      return cast<RValue>(InvalidValue());
+  }
+}
+
+RValueMayEqualSet
+RValueMayEqualSet::EvalMinus(ValueManager& ValMgr, UnaryOperator* U) const {
+  
+  assert (U->getType() == U->getSubExpr()->getType());  
+  assert (U->getType()->isIntegerType());
+  
+  APSIntSetTy S1 = GetValues();  
+  APSIntSetTy S2 = ValMgr.GetEmptyAPSIntSet();
+  
+  for (APSIntSetTy::iterator I=S1.begin(), E=S1.end(); I!=E; ++I) {
+    assert ((*I).isSigned());
+    
+    // FIXME: Shouldn't operator- on APSInt return an APSInt with the proper
+    //  sign?
+    llvm::APSInt X(-(*I));
+    X.setIsSigned(true);
+    
+    S2 = ValMgr.AddToSet(S2, X);
+  }
+  
+  return S2;
+}
+
+
 
 //===----------------------------------------------------------------------===//
 // Transfer functions: Binary Operations over R-Values.
@@ -321,8 +364,14 @@ RValueMayEqualSet::EvalAdd(ValueManager& ValMgr,
   APSIntSetTy M = ValMgr.GetEmptyAPSIntSet();
     
   for (APSIntSetTy::iterator I1=S1.begin(), E1=S2.end(); I1!=E1; ++I1)
-    for (APSIntSetTy::iterator I2=S2.begin(), E2=S2.end(); I2!=E2; ++I2)
-      M = ValMgr.AddToSet(M, *I1 + *I2);
+    for (APSIntSetTy::iterator I2=S2.begin(), E2=S2.end(); I2!=E2; ++I2) {
+      // FIXME: operator- on APSInt is really operator* on APInt, which loses
+      //  the "signess" information (although the bits are correct).
+      const llvm::APSInt& X = *I1;      
+      llvm::APSInt Y = X + *I2;
+      Y.setIsSigned(X.isSigned());
+      M = ValMgr.AddToSet(M, Y);
+    }
   
   return M;
 }
@@ -337,8 +386,14 @@ RValueMayEqualSet::EvalSub(ValueManager& ValMgr,
   APSIntSetTy M = ValMgr.GetEmptyAPSIntSet();
   
   for (APSIntSetTy::iterator I1=S1.begin(), E1=S2.end(); I1!=E1; ++I1)
-    for (APSIntSetTy::iterator I2=S2.begin(), E2=S2.end(); I2!=E2; ++I2)
-      M = ValMgr.AddToSet(M, *I1 - *I2);
+    for (APSIntSetTy::iterator I2=S2.begin(), E2=S2.end(); I2!=E2; ++I2) {
+      // FIXME: operator- on APSInt is really operator* on APInt, which loses
+      //  the "signess" information (although the bits are correct).
+      const llvm::APSInt& X = *I1;      
+      llvm::APSInt Y = X - *I2;
+      Y.setIsSigned(X.isSigned());
+      M = ValMgr.AddToSet(M, Y);
+    }
   
   return M;
 }
@@ -353,15 +408,27 @@ RValueMayEqualSet::EvalMul(ValueManager& ValMgr,
   APSIntSetTy M = ValMgr.GetEmptyAPSIntSet();
   
   for (APSIntSetTy::iterator I1=S1.begin(), E1=S2.end(); I1!=E1; ++I1)
-    for (APSIntSetTy::iterator I2=S2.begin(), E2=S2.end(); I2!=E2; ++I2)
-      M = ValMgr.AddToSet(M, *I1 * *I2);
+    for (APSIntSetTy::iterator I2=S2.begin(), E2=S2.end(); I2!=E2; ++I2) {
+      // FIXME: operator* on APSInt is really operator* on APInt, which loses
+      //  the "signess" information (although the bits are correct).
+      const llvm::APSInt& X = *I1;      
+      llvm::APSInt Y = X * *I2;
+      Y.setIsSigned(X.isSigned());
+      M = ValMgr.AddToSet(M, Y);
+    }
   
   return M;
 }
 
 RValue RValue::GetRValue(ValueManager& ValMgr, const llvm::APSInt& V) {
   return RValueMayEqualSet(ValMgr.AddToSet(ValMgr.GetEmptyAPSIntSet(), V));
-}    
+}
+
+RValue RValue::GetRValue(ValueManager& ValMgr, IntegerLiteral* I) {
+  llvm::APSInt X(I->getValue());
+  X.setIsSigned(I->getType()->isSignedIntegerType());  
+  return GetRValue(ValMgr, X); 
+}
 
 //===----------------------------------------------------------------------===//
 // "L-Values".
@@ -616,7 +683,7 @@ ExprValue GRConstants::GetValue(const StateTy& St, Stmt* S) {
         return GetValue(St, LValueDecl(cast<DeclRefExpr>(S)->getDecl()));
 
       case Stmt::IntegerLiteralClass:
-        return RValue::GetRValue(ValMgr, cast<IntegerLiteral>(S)->getValue());
+        return RValue::GetRValue(ValMgr, cast<IntegerLiteral>(S));
       
       case Stmt::ImplicitCastExprClass: {
         ImplicitCastExpr* C = cast<ImplicitCastExpr>(S);
@@ -806,6 +873,12 @@ void GRConstants::VisitUnaryOperator(UnaryOperator* U,
         
         RValue Result = R1.EvalSub(ValMgr, R2);
         Nodify(Dst, U, N1, SetValue(SetValue(St, U, Result), L1, Result));
+        break;
+      }
+        
+      case UnaryOperator::Minus: {
+        const RValue& R1 = cast<RValue>(GetValue(St, U->getSubExpr()));
+        Nodify(Dst, U, N1, SetValue(St, U, R1.EvalMinus(ValMgr, U)));
         break;
       }
         
