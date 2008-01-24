@@ -285,7 +285,6 @@ static void ComputeLineNumbers(ContentCache* FI) {
       ++Offs, ++Buf;
     }
   }
-  LineOffsets.push_back(Offs);
   
   // Copy the offsets into the FileInfo structure.
   FI->NumLines = LineOffsets.size();
