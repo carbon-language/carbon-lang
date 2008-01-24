@@ -146,48 +146,47 @@ public:
 //===----------------------------------------------------------------------===//
 // Expression Values.
 //===----------------------------------------------------------------------===//
-  
+
 namespace {
   
 class VISIBILITY_HIDDEN ExprValue {
 public:
-  enum Kind { // L-Values.
-              LValueDeclKind = 0x0,
-              // Special "Invalid" value.
-              InvalidValueKind = 0x1, 
-              // R-Values.
-              RValueMayEqualSetKind = 0x2,
-              // Note that the Lvalue and RValue "kinds" overlap; 
-              // the "InvalidValue" class can be used either as
-              // an LValue or RValue.  
-              MinLValueKind = 0x0, MaxLValueKind = 0x1,
-              MinRValueKind = 0x1, MaxRValueKind = 0x2 };
-  
+  enum BaseKind { LValueKind=0x1, RValueKind=0x2, InvalidKind=0x0 };
+    
 private:
-  enum Kind kind;
   void* Data;
+  unsigned Kind;
     
 protected:
-  ExprValue(Kind k, void* d) : kind(k), Data(d) {}
+  ExprValue(void* d, bool isRValue, unsigned ValKind)
+    : Data(d),
+      Kind((isRValue ? RValueKind : LValueKind) | (ValKind << 2)) {}
   
-  void* getRawPtr() const { return Data; }
+  ExprValue() : Data(NULL), Kind(0) {}    
+  
+  void* getRawPtr() const { return Data; }   
   
 public:
   ~ExprValue() {};
 
   ExprValue EvalCast(ValueManager& ValMgr, Expr* CastExpr) const;
   
+  unsigned getRawKind() const { return Kind; }
+  BaseKind getBaseKind() const { return (BaseKind) (Kind & 0x3); }
+  unsigned getSubKind() const { return (Kind & ~0x3) >> 2; }   
+  
   void Profile(llvm::FoldingSetNodeID& ID) const {
-    ID.AddInteger((unsigned) getKind());
+    ID.AddInteger((unsigned) getRawKind());
     ID.AddPointer(Data);
   }
   
   bool operator==(const ExprValue& RHS) const {
-    return kind == RHS.kind && Data == RHS.Data;
+    return getRawKind() == RHS.getRawKind() && Data == RHS.Data;
   }
 
-  Kind getKind() const { return kind; }  
-  bool isValid() const { return getKind() != InvalidValueKind; }
+  inline bool isValid() const { return getRawKind() != InvalidKind; }
+  inline bool isInvalid() const { return getRawKind() == InvalidKind; }
+  
   
   void print(std::ostream& OS) const;
   void print() const { print(*llvm::cerr.stream()); }
@@ -198,25 +197,31 @@ public:
 
 class VISIBILITY_HIDDEN InvalidValue : public ExprValue {
 public:
-  InvalidValue() : ExprValue(InvalidValueKind, NULL) {}
+  InvalidValue() {}
   
   static inline bool classof(const ExprValue* V) {
-    return V->getKind() == InvalidValueKind;
+    return V->getBaseKind() == InvalidKind;
   }  
 };
 
-} // end anonymous namespace
+class VISIBILITY_HIDDEN LValue : public ExprValue {
+protected:
+  LValue(unsigned SubKind, void* D) : ExprValue(D, false, SubKind) {}
+  
+public:  
+  // Implement isa<T> support.
+  static inline bool classof(const ExprValue* V) {
+    return V->getBaseKind() == LValueKind;
+  }
+};
 
-//===----------------------------------------------------------------------===//
-// "R-Values": Interface.
-//===----------------------------------------------------------------------===//
-
-namespace {
 class VISIBILITY_HIDDEN RValue : public ExprValue {
 protected:
-  RValue(Kind k, void* d) : ExprValue(k,d) {}
+  RValue(unsigned SubKind, void* d) : ExprValue(d, true, SubKind) {}
   
 public:
+  void print(std::ostream& Out) const;
+  
   RValue EvalAdd(ValueManager& ValMgr, const RValue& RHS) const;
   RValue EvalSub(ValueManager& ValMgr, const RValue& RHS) const;
   RValue EvalMul(ValueManager& ValMgr, const RValue& RHS) const;
@@ -227,9 +232,19 @@ public:
   
   // Implement isa<T> support.
   static inline bool classof(const ExprValue* V) {
-    return V->getKind() >= MinRValueKind;
+    return V->getBaseKind() == RValueKind;
   }
 };
+    
+} // end anonymous namespace
+
+//===----------------------------------------------------------------------===//
+// "R-Values": Interface.
+//===----------------------------------------------------------------------===//
+
+namespace {
+  
+enum { RValueMayEqualSetKind = 0x0, NumRValueKind };
   
 class VISIBILITY_HIDDEN RValueMayEqualSet : public RValue {
 public:
@@ -256,7 +271,7 @@ public:
   
   // Implement isa<T> support.
   static inline bool classof(const ExprValue* V) {
-    return V->getKind() == RValueMayEqualSetKind;
+    return V->getSubKind() == RValueMayEqualSetKind;
   }
 };
 } // end anonymous namespace
@@ -266,7 +281,7 @@ public:
 //===----------------------------------------------------------------------===//
 
 ExprValue ExprValue::EvalCast(ValueManager& ValMgr, Expr* CastExpr) const {
-  switch (getKind()) {
+  switch (getSubKind()) {
     case RValueMayEqualSetKind:
       return cast<RValueMayEqualSet>(this)->EvalCast(ValMgr, CastExpr);
     default:
@@ -297,7 +312,7 @@ RValueMayEqualSet::EvalCast(ValueManager& ValMgr, Expr* CastExpr) const {
 //===----------------------------------------------------------------------===//
 
 RValue RValue::EvalMinus(ValueManager& ValMgr, UnaryOperator* U) const {
-  switch (getKind()) {
+  switch (getSubKind()) {
     case RValueMayEqualSetKind:
       return cast<RValueMayEqualSet>(this)->EvalMinus(ValMgr, U);
     default:
@@ -335,11 +350,11 @@ RValueMayEqualSet::EvalMinus(ValueManager& ValMgr, UnaryOperator* U) const {
 //===----------------------------------------------------------------------===//
 
 #define RVALUE_DISPATCH_CASE(k1,k2,Op)\
-case ((k1##Kind+(MaxRValueKind-MinRValueKind))+(k2##Kind - MinRValueKind)):\
+case (k1##Kind*NumRValueKind+k2##Kind):\
   return cast<k1>(*this).Eval##Op(ValMgr,cast<k2>(RHS));
 
 #define RVALUE_DISPATCH(Op)\
-switch (getKind()+(MaxRValueKind-MinRValueKind)+(RHS.getKind()-MinRValueKind)){\
+switch (getSubKind()*NumRValueKind+RHS.getSubKind()){\
   RVALUE_DISPATCH_CASE(RValueMayEqualSet,RValueMayEqualSet,Op)\
   default:\
     assert (!isValid() || !RHS.isValid() && "Missing case.");\
@@ -443,17 +458,8 @@ RValue RValue::GetRValue(ValueManager& ValMgr, IntegerLiteral* I) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-  
-class VISIBILITY_HIDDEN LValue : public ExprValue {
-protected:
-  LValue(Kind k, void* D) : ExprValue(k, D) {}
-  
-public:  
-  // Implement isa<T> support.
-  static inline bool classof(const ExprValue* V) {
-    return V->getKind() <= MaxLValueKind;
-  }
-};
+
+enum { LValueDeclKind=0x0, MaxLValueKind };
 
 class VISIBILITY_HIDDEN LValueDecl : public LValue {
 public:
@@ -466,7 +472,7 @@ public:
   
   // Implement isa<T> support.
   static inline bool classof(const ExprValue* V) {
-    return V->getKind() == LValueDeclKind;
+    return V->getSubKind() == LValueDeclKind;
   }
 };  
 } // end anonymous namespace
@@ -476,10 +482,26 @@ public:
 //===----------------------------------------------------------------------===//
 
 void ExprValue::print(std::ostream& Out) const {
-  switch (getKind()) {
-    case InvalidValueKind:
-        Out << "Invalid"; break;
+  switch (getBaseKind()) {
+    case InvalidKind:
+      Out << "Invalid";
+      break;
       
+    case RValueKind:
+      cast<RValue>(this)->print(Out);
+      break;
+      
+    case LValueKind:
+      assert (false && "FIXME: LValue printing not implemented.");  
+      break;
+      
+    default:
+      assert (false && "Invalid ExprValue.");
+  }
+}
+
+void RValue::print(std::ostream& Out) const {
+  switch (getSubKind()) {  
     case RValueMayEqualSetKind: {
       APSIntSetTy S = cast<RValueMayEqualSet>(this)->GetValues();
       bool first = true;
@@ -495,7 +517,7 @@ void ExprValue::print(std::ostream& Out) const {
     }
       
     default:
-      assert (false && "Pretty-printed not implemented for this ExprValue.");
+      assert (false && "Pretty-printed not implemented for this RValue.");
       break;
   }
 }
@@ -679,8 +701,8 @@ void GRConstants::ProcessStmt(Stmt* S, NodeBuilder& builder) {
 
 
 ExprValue GRConstants::GetValue(const StateTy& St, const LValue& LV) {
-  switch (LV.getKind()) {
-    case ExprValue::LValueDeclKind: {
+  switch (LV.getSubKind()) {
+    case LValueDeclKind: {
       StateTy::TreeTy* T = St.SlimFind(cast<LValueDecl>(LV).getDecl()); 
       return T ? T->getValue().second : InvalidValue();
     }
@@ -776,8 +798,8 @@ GRConstants::StateTy GRConstants::SetValue(StateTy St, const LValue& LV,
     StateCleaned = true;
   }
 
-  switch (LV.getKind()) {
-    case ExprValue::LValueDeclKind:        
+  switch (LV.getSubKind()) {
+    case LValueDeclKind:        
       return V.isValid() ? StateMgr.Add(St, cast<LValueDecl>(LV).getDecl(), V)
                          : StateMgr.Remove(St, cast<LValueDecl>(LV).getDecl());
       
