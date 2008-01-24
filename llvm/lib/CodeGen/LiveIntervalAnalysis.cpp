@@ -717,7 +717,7 @@ bool LiveIntervals::tryFoldMemoryOperand(MachineInstr* &MI,
     if (lv_)
       lv_->instructionChanged(MI, fmi);
     else
-      LiveVariables::transferKillDeadInfo(MI, fmi, mri_);
+      fmi->copyKillDeadInfo(MI, mri_);
     MachineBasicBlock &MBB = *MI->getParent();
     if (isSS && !mf_->getFrameInfo()->isImmutableObjectIndex(Slot))
       vrm.virtFolded(Reg, MI, fmi, (VirtRegMap::ModRef)MRInfo);

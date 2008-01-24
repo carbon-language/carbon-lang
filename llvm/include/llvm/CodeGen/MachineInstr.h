@@ -21,6 +21,7 @@
 namespace llvm {
 
 class TargetInstrDesc;
+class MRegisterInfo;
 
 template <typename T> struct ilist_traits;
 template <typename T> struct ilist;
@@ -143,6 +144,24 @@ public:
 
   /// copyPredicates - Copies predicate operand(s) from MI.
   void copyPredicates(const MachineInstr *MI);
+
+  /// addRegisterKilled - We have determined MI kills a register. Look for the
+  /// operand that uses it and mark it as IsKill. If AddIfNotFound is true,
+  /// add a implicit operand if it's not found. Returns true if the operand
+  /// exists / is added.
+  bool addRegisterKilled(unsigned IncomingReg, const MRegisterInfo *RegInfo,
+                         bool AddIfNotFound = false);
+  
+  /// addRegisterDead - We have determined MI defined a register without a use.
+  /// Look for the operand that defines it and mark it as IsDead. If
+  /// AddIfNotFound is true, add a implicit operand if it's not found. Returns
+  /// true if the operand exists / is added.
+  bool addRegisterDead(unsigned IncomingReg, const MRegisterInfo *RegInfo,
+                       bool AddIfNotFound = false);
+
+  /// copyKillDeadInfo - copies killed/dead information from one instr to another
+  void copyKillDeadInfo(MachineInstr *OldMI,
+                        const MRegisterInfo *RegInfo);
 
   //
   // Debugging support

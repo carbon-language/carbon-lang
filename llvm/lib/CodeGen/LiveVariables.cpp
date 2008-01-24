@@ -192,73 +192,6 @@ void LiveVariables::HandleVirtRegUse(unsigned reg, MachineBasicBlock *MBB,
     MarkVirtRegAliveInBlock(VRInfo, MRI.getVRegDef(reg)->getParent(), *PI);
 }
 
-bool LiveVariables::addRegisterKilled(unsigned IncomingReg, MachineInstr *MI,
-                                      const MRegisterInfo *RegInfo,
-                                      bool AddIfNotFound) {
-  bool Found = false;
-  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-    MachineOperand &MO = MI->getOperand(i);
-    if (MO.isRegister() && MO.isUse()) {
-      unsigned Reg = MO.getReg();
-      if (!Reg)
-        continue;
-      if (Reg == IncomingReg) {
-        MO.setIsKill();
-        Found = true;
-        break;
-      } else if (MRegisterInfo::isPhysicalRegister(Reg) &&
-                 MRegisterInfo::isPhysicalRegister(IncomingReg) &&
-                 RegInfo->isSuperRegister(IncomingReg, Reg) &&
-                 MO.isKill())
-        // A super-register kill already exists.
-        Found = true;
-    }
-  }
-
-  // If not found, this means an alias of one of the operand is killed. Add a
-  // new implicit operand if required.
-  if (!Found && AddIfNotFound) {
-    MI->addOperand(MachineOperand::CreateReg(IncomingReg, false/*IsDef*/,
-                                             true/*IsImp*/,true/*IsKill*/));
-    return true;
-  }
-  return Found;
-}
-
-bool LiveVariables::addRegisterDead(unsigned IncomingReg, MachineInstr *MI,
-                                    const MRegisterInfo *RegInfo,
-                                    bool AddIfNotFound) {
-  bool Found = false;
-  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-    MachineOperand &MO = MI->getOperand(i);
-    if (MO.isRegister() && MO.isDef()) {
-      unsigned Reg = MO.getReg();
-      if (!Reg)
-        continue;
-      if (Reg == IncomingReg) {
-        MO.setIsDead();
-        Found = true;
-        break;
-      } else if (MRegisterInfo::isPhysicalRegister(Reg) &&
-                 MRegisterInfo::isPhysicalRegister(IncomingReg) &&
-                 RegInfo->isSuperRegister(IncomingReg, Reg) &&
-                 MO.isDead())
-        // There exists a super-register that's marked dead.
-        return true;
-    }
-  }
-
-  // If not found, this means an alias of one of the operand is dead. Add a
-  // new implicit operand.
-  if (!Found && AddIfNotFound) {
-    MI->addOperand(MachineOperand::CreateReg(IncomingReg, true/*IsDef*/,
-                                             true/*IsImp*/,false/*IsKill*/,
-                                             true/*IsDead*/));
-    return true;
-  }
-  return Found;
-}
-
 void LiveVariables::HandlePhysRegUse(unsigned Reg, MachineInstr *MI) {
   // Turn previous partial def's into read/mod/write.
   for (unsigned i = 0, e = PhysRegPartDef[Reg].size(); i != e; ++i) {
@@ -337,7 +270,7 @@ bool LiveVariables::HandlePhysRegKill(unsigned Reg, MachineInstr *RefMI,
 void LiveVariables::addRegisterKills(unsigned Reg, MachineInstr *MI,
                                      SmallSet<unsigned, 4> &SubKills) {
   if (SubKills.count(Reg) == 0)
-    addRegisterKilled(Reg, MI, RegInfo, true);
+    MI->addRegisterKilled(Reg, RegInfo, true);
   else {
     for (const unsigned *SubRegs = RegInfo->getImmediateSubRegisters(Reg);
          unsigned SubReg = *SubRegs; ++SubRegs)
@@ -348,7 +281,7 @@ void LiveVariables::addRegisterKills(unsigned Reg, MachineInstr *MI,
 bool LiveVariables::HandlePhysRegKill(unsigned Reg, MachineInstr *RefMI) {
   SmallSet<unsigned, 4> SubKills;
   if (HandlePhysRegKill(Reg, RefMI, SubKills)) {
-    addRegisterKilled(Reg, RefMI, RegInfo, true);
+    RefMI->addRegisterKilled(Reg, RegInfo, true);
     return true;
   } else {
     // Some sub-registers are killed by another MI.
@@ -365,15 +298,15 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI) {
     if (PhysRegUsed[Reg]) {
       if (!HandlePhysRegKill(Reg, LastRef)) {
         if (PhysRegPartUse[Reg])
-          addRegisterKilled(Reg, PhysRegPartUse[Reg], RegInfo, true);
+          PhysRegPartUse[Reg]->addRegisterKilled(Reg, RegInfo, true);
       }
     } else if (PhysRegPartUse[Reg])
       // Add implicit use / kill to last partial use.
-      addRegisterKilled(Reg, PhysRegPartUse[Reg], RegInfo, true);
+      PhysRegPartUse[Reg]->addRegisterKilled(Reg, RegInfo, true);
     else if (LastRef != MI)
       // Defined, but not used. However, watch out for cases where a super-reg
       // is also defined on the same MI.
-      addRegisterDead(Reg, LastRef, RegInfo);
+      LastRef->addRegisterDead(Reg, RegInfo);
   }
 
   for (const unsigned *SubRegs = RegInfo->getSubRegisters(Reg);
@@ -382,14 +315,14 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI) {
       if (PhysRegUsed[SubReg]) {
         if (!HandlePhysRegKill(SubReg, LastRef)) {
           if (PhysRegPartUse[SubReg])
-            addRegisterKilled(SubReg, PhysRegPartUse[SubReg], RegInfo, true);
+            PhysRegPartUse[SubReg]->addRegisterKilled(SubReg, RegInfo, true);
         }
       } else if (PhysRegPartUse[SubReg])
         // Add implicit use / kill to last use of a sub-register.
-        addRegisterKilled(SubReg, PhysRegPartUse[SubReg], RegInfo, true);
+        PhysRegPartUse[SubReg]->addRegisterKilled(SubReg, RegInfo, true);
       else if (LastRef != MI)
         // This must be a def of the subreg on the same MI.
-        addRegisterDead(SubReg, LastRef, RegInfo);
+        LastRef->addRegisterDead(SubReg, RegInfo);
     }
   }
 
@@ -565,11 +498,13 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
     for (unsigned j = 0, e2 = VirtRegInfo[i].Kills.size(); j != e2; ++j) {
       if (VirtRegInfo[i].Kills[j] == MRI.getVRegDef(i + 
                                            MRegisterInfo::FirstVirtualRegister))
-        addRegisterDead(i + MRegisterInfo::FirstVirtualRegister,
-                        VirtRegInfo[i].Kills[j], RegInfo);
+        VirtRegInfo[i].Kills[j]->addRegisterDead(i +
+                                            MRegisterInfo::FirstVirtualRegister,
+                                                 RegInfo);
       else
-        addRegisterKilled(i + MRegisterInfo::FirstVirtualRegister,
-                          VirtRegInfo[i].Kills[j], RegInfo);
+        VirtRegInfo[i].Kills[j]->addRegisterKilled(i +
+                                            MRegisterInfo::FirstVirtualRegister,
+                                                  RegInfo);
     }
 
   // Check to make sure there are no unreachable blocks in the MC CFG for the
@@ -619,33 +554,6 @@ void LiveVariables::instructionChanged(MachineInstr *OldMI,
     }
   }
 }
-
-/// transferKillDeadInfo - Similar to instructionChanged except it does not
-/// update live variables internal data structures.
-void LiveVariables::transferKillDeadInfo(MachineInstr *OldMI,
-                                         MachineInstr *NewMI,
-                                         const MRegisterInfo *RegInfo) {
-  // If the instruction defines any virtual registers, update the VarInfo,
-  // kill and dead information for the instruction.
-  for (unsigned i = 0, e = OldMI->getNumOperands(); i != e; ++i) {
-    MachineOperand &MO = OldMI->getOperand(i);
-    if (MO.isRegister() && MO.getReg() &&
-        MRegisterInfo::isVirtualRegister(MO.getReg())) {
-      unsigned Reg = MO.getReg();
-      if (MO.isDef()) {
-        if (MO.isDead()) {
-          MO.setIsDead(false);
-          addRegisterDead(Reg, NewMI, RegInfo);
-        }
-      }
-      if (MO.isKill()) {
-        MO.setIsKill(false);
-        addRegisterKilled(Reg, NewMI, RegInfo);
-      }
-    }
-  }
-}
-
 
 /// removeVirtualRegistersKilled - Remove all killed info for the specified
 /// instruction.
