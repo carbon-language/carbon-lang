@@ -829,9 +829,10 @@ void GRConstants::VisitUnaryOperator(UnaryOperator* U,
         RValue R1 = cast<RValue>(GetValue(St, L1));
 
         QualType T = U->getType();
-        llvm::APInt One(getContext()->getTypeSize(T,U->getLocStart()), 1);
-        RValue R2 = RValue::GetRValue(ValMgr, One);        
-
+        unsigned bits = getContext()->getTypeSize(T, U->getLocStart());
+        llvm::APSInt One(llvm::APInt(bits, 1), T->isUnsignedIntegerType());
+        RValue R2 = RValue::GetRValue(ValMgr, One);
+        
         RValue Result = R1.EvalAdd(ValMgr, R2);
         Nodify(Dst, U, N1, SetValue(SetValue(St, U, R1), L1, Result));
         break;
@@ -842,8 +843,9 @@ void GRConstants::VisitUnaryOperator(UnaryOperator* U,
         RValue R1 = cast<RValue>(GetValue(St, L1));
         
         QualType T = U->getType();
-        llvm::APInt One(getContext()->getTypeSize(T,U->getLocStart()), 1);
-        RValue R2 = RValue::GetRValue(ValMgr, One);        
+        unsigned bits = getContext()->getTypeSize(T, U->getLocStart());
+        llvm::APSInt One(llvm::APInt(bits, 1), T->isUnsignedIntegerType());
+        RValue R2 = RValue::GetRValue(ValMgr, One);
         
         RValue Result = R1.EvalSub(ValMgr, R2);
         Nodify(Dst, U, N1, SetValue(SetValue(St, U, R1), L1, Result));
@@ -855,7 +857,8 @@ void GRConstants::VisitUnaryOperator(UnaryOperator* U,
         RValue R1 = cast<RValue>(GetValue(St, L1));
         
         QualType T = U->getType();
-        llvm::APInt One(getContext()->getTypeSize(T,U->getLocStart()), 1);
+        unsigned bits = getContext()->getTypeSize(T, U->getLocStart());
+        llvm::APSInt One(llvm::APInt(bits, 1), T->isUnsignedIntegerType());
         RValue R2 = RValue::GetRValue(ValMgr, One);        
         
         RValue Result = R1.EvalAdd(ValMgr, R2);
@@ -868,8 +871,9 @@ void GRConstants::VisitUnaryOperator(UnaryOperator* U,
         RValue R1 = cast<RValue>(GetValue(St, L1));
         
         QualType T = U->getType();
-        llvm::APInt One(getContext()->getTypeSize(T,U->getLocStart()), 1);
-        RValue R2 = RValue::GetRValue(ValMgr, One);        
+        unsigned bits = getContext()->getTypeSize(T, U->getLocStart());
+        llvm::APSInt One(llvm::APInt(bits, 1), T->isUnsignedIntegerType());
+        RValue R2 = RValue::GetRValue(ValMgr, One);       
         
         RValue Result = R1.EvalSub(ValMgr, R2);
         Nodify(Dst, U, N1, SetValue(SetValue(St, U, Result), L1, Result));
