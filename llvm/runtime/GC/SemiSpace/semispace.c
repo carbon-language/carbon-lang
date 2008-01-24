@@ -97,25 +97,28 @@ void llvm_gc_write(void *V, void *ObjPtr, void **FieldPtr) { *FieldPtr = V; }
  * FIXME: This should be in a code-generator specific library, but for now this
  * will work for all code generators.
  */
+typedef struct FrameMap FrameMap;
 struct FrameMap {
   int32_t NumRoots; // Number of roots in stack frame.
   int32_t NumMeta;  // Number of metadata descriptors. May be < NumRoots.
   void *Meta[];     // May be absent for roots without metadata.
 };
 
+typedef struct StackEntry StackEntry;
 struct StackEntry {
-  ShadowStackEntry *Next; // Caller's stack entry.
+  StackEntry *Next;       // Caller's stack entry.
   const FrameMap *Map;    // Pointer to constant FrameMap.
   void *Roots[];          // Stack roots (in-place array).
 };
 StackEntry *llvm_gc_root_chain;
 
 void llvm_cg_walk_gcroots(void (*FP)(void **Root, void *Meta)) {
-  for (StackEntry *R; R; R = R->Next) {
+  StackEntry *R;
+  for (R = llvm_gc_root_chain; R; R = R->Next) {
     unsigned i, e;
-    for (i = 0, e = R->NumMeta; i != e; ++i)
+    for (i = 0, e = R->Map->NumMeta; i != e; ++i)
       FP(&R->Roots[i], R->Map->Meta[i]);
-    for (e = R->NumRoots; i != e; ++i)
+    for (e = R->Map->NumRoots; i != e; ++i)
       FP(&R->Roots[i], NULL);
   }
 }
