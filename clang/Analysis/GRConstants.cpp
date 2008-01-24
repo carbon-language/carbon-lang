@@ -49,14 +49,14 @@ namespace {
 class VISIBILITY_HIDDEN ValueKey {
   uintptr_t Raw;
 public:
-  enum  Kind { IsSubExp=0x0, IsDecl=0x1, IsBlkExpr=0x2, Flags=0x3 };
+  enum  Kind { IsSubExp=0x0, IsBlkExpr=0x1, IsDecl=0x2, Flags=0x3 };
   inline void* getPtr() const { return reinterpret_cast<void*>(Raw & ~Flags); }
   inline Kind getKind() const { return (Kind) (Raw & Flags); }
   
   ValueKey(const ValueDecl* VD)
     : Raw(reinterpret_cast<uintptr_t>(VD) | IsDecl) {}
 
-  ValueKey(Stmt* S, bool isBlkExpr) 
+  ValueKey(Stmt* S, bool isBlkExpr = false) 
     : Raw(reinterpret_cast<uintptr_t>(S) | (isBlkExpr ? IsBlkExpr : IsSubExp)){}
   
   bool isSubExpr() const { return getKind() == IsSubExp; }
@@ -68,7 +68,7 @@ public:
   }
   
   inline bool operator==(const ValueKey& X) const {
-    return Raw == X.Raw;
+    return getPtr() == X.getPtr();
   }
   
   inline bool operator!=(const ValueKey& X) const {
@@ -77,9 +77,17 @@ public:
   
   inline bool operator<(const ValueKey& X) const { 
     Kind k = getKind(), Xk = X.getKind();
+    
+    if (k == IsDecl) {
+      if (Xk != IsDecl)
+        return false;
+    }
+    else {
+      if (Xk == IsDecl)
+        return true;
+    }
 
-    return k == Xk ? getPtr() < X.getPtr() 
-                   : ((unsigned) k) < ((unsigned) Xk);
+    return getPtr() < X.getPtr();    
   }
 };
 } // end anonymous namespace
@@ -709,7 +717,7 @@ ExprValue GRConstants::GetValue(const StateTy& St, Stmt* S) {
     break;
   }
   
-  StateTy::TreeTy* T = St.SlimFind(ValueKey(S, getCFG().isBlkExpr(S)));
+  StateTy::TreeTy* T = St.SlimFind(S);
     
   return T ? T->getValue().second : InvalidValue();
 }
@@ -764,20 +772,20 @@ GRConstants::StateTy GRConstants::RemoveDeadBindings(Stmt* Loc, StateTy M) {
   //  iterators are iterating over the tree of the *original* map.
   StateTy::iterator I = M.begin(), E = M.end();
 
-  // Remove old bindings for subexpressions.
-  for (; I!=E && I.getKey().getKind() == ValueKey::IsSubExp; ++I)
-    M = StateMgr.Remove(M, I.getKey());
+  // Remove old bindings for subexpressions and "dead" block-level expressions.
+  for (; I!=E && !I.getKey().isDecl(); ++I) {
+    if (I.getKey().isSubExpr() || !Liveness->isLive(Loc,cast<Stmt>(I.getKey())))
+      M = StateMgr.Remove(M, I.getKey());
+  }
 
   // Remove bindings for "dead" decls.
-  for (; I!=E && I.getKey().getKind() == ValueKey::IsDecl; ++I)
+  for (; I!=E ; ++I) {
+    assert (I.getKey().isDecl());
+    
     if (VarDecl* V = dyn_cast<VarDecl>(cast<ValueDecl>(I.getKey())))
       if (!Liveness->isLive(Loc, V))
         M = StateMgr.Remove(M, I.getKey());
-
-  // Remove bindings for "dead" block-level expressions.
-  for (; I!=E; ++I)
-    if (!Liveness->isLive(Loc, cast<Stmt>(I.getKey())))
-      M = StateMgr.Remove(M, I.getKey());
+  }
 
   return M;
 }
