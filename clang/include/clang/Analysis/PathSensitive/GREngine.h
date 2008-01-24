@@ -22,6 +22,7 @@
 namespace clang {
   
 class CFG;
+class ASTContext;
 class GRNodeBuilderImpl;
 class GRWorkList;
   
@@ -195,10 +196,10 @@ protected:
 public:  
   /// Construct a GREngine object to analyze the provided CFG using
   ///  a DFS exploration of the exploded graph.
-  GREngine(CFG& cfg)
+  GREngine(CFG& cfg, ASTContext& Ctx)
   : GREngineImpl(cfg, new GraphTy(), GRWorkList::MakeDFS()),
       Checker(static_cast<GraphTy*>(G.get())->getCheckerState()) {
-    Checker->Initialize(cfg);
+    Checker->Initialize(cfg, Ctx);
   }
   
   /// Construct a GREngine object to analyze the provided CFG and to

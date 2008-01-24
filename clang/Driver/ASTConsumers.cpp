@@ -567,16 +567,17 @@ ASTConsumer *clang::CreateUnitValsChecker(Diagnostic &Diags) {
 
 namespace {
   class GRConstantsVisitor : public CFGVisitor {
+    ASTContext* Ctx;
   public:
-    virtual void Initialize(ASTContext &Context) {}
+    virtual void Initialize(ASTContext &Context) { Ctx = &Context; }
     
     virtual void VisitCFG(CFG& C) {
-      RunGRConstants(C);
+      RunGRConstants(C, *Ctx);
     }
   };
 } // end anonymous namespace
 
-ASTConsumer *clang::CreateGRConstants() {
+ASTConsumer* clang::CreateGRConstants() {
   return new GRConstantsVisitor();
 }
 

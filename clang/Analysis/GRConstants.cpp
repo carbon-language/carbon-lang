@@ -17,6 +17,7 @@
 
 #include "clang/Analysis/PathSensitive/GREngine.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/ASTContext.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
 
 #include "llvm/Support/Casting.h"
@@ -114,13 +115,15 @@ namespace {
 typedef llvm::ImmutableSet<llvm::APSInt > APSIntSetTy;
     
 class VISIBILITY_HIDDEN ValueManager {
-  
-  
   APSIntSetTy::Factory APSIntSetFactory;
+  ASTContext* Ctx;
   
 public:
   ValueManager() {}
   ~ValueManager() {}
+  
+  void setContext(ASTContext* ctx) { Ctx = ctx; }
+  ASTContext* getContext() const { return Ctx; }
   
   APSIntSetTy GetEmptyAPSIntSet() {
     return APSIntSetFactory.GetEmptySet();
@@ -164,6 +167,8 @@ protected:
 public:
   ~ExprValue() {};
 
+  ExprValue EvalCast(ValueManager& ValMgr, Expr* CastExpr) const;
+  
   void Profile(llvm::FoldingSetNodeID& ID) const {
     ID.AddInteger((unsigned) getKind());
     ID.AddPointer(Data);
@@ -204,9 +209,9 @@ protected:
   RValue(Kind k, void* d) : ExprValue(k,d) {}
   
 public:
-  RValue Add(ValueManager& ValMgr, const RValue& RHS) const;
-  RValue Sub(ValueManager& ValMgr, const RValue& RHS) const;
-  RValue Mul(ValueManager& ValMgr, const RValue& RHS) const;
+  RValue EvalAdd(ValueManager& ValMgr, const RValue& RHS) const;
+  RValue EvalSub(ValueManager& ValMgr, const RValue& RHS) const;
+  RValue EvalMul(ValueManager& ValMgr, const RValue& RHS) const;
   
   static RValue GetRValue(ValueManager& ValMgr, IntegerLiteral* S);
   
@@ -225,9 +230,16 @@ public:
     return APSIntSetTy(reinterpret_cast<APSIntSetTy::TreeTy*>(getRawPtr()));
   }
   
-  RValueMayEqualSet Add(ValueManager& ValMgr, const RValueMayEqualSet& V) const;
-  RValueMayEqualSet Sub(ValueManager& ValMgr, const RValueMayEqualSet& V) const;
-  RValueMayEqualSet Mul(ValueManager& ValMgr, const RValueMayEqualSet& V) const;
+  RValueMayEqualSet EvalAdd(ValueManager& ValMgr,
+                            const RValueMayEqualSet& V) const;
+  
+  RValueMayEqualSet EvalSub(ValueManager& ValMgr,
+                            const RValueMayEqualSet& V) const;
+  
+  RValueMayEqualSet EvalMul(ValueManager& ValMgr,
+                            const RValueMayEqualSet& V) const;
+
+  RValueMayEqualSet EvalCast(ValueManager& ValMgr, Expr* CastExpr) const;
   
   // Implement isa<T> support.
   static inline bool classof(const ExprValue* V) {
@@ -237,12 +249,43 @@ public:
 } // end anonymous namespace
 
 //===----------------------------------------------------------------------===//
-// "R-Values": Implementation.
+// Transfer functions: Casts.
+//===----------------------------------------------------------------------===//
+
+ExprValue ExprValue::EvalCast(ValueManager& ValMgr, Expr* CastExpr) const {
+  switch (getKind()) {
+    case RValueMayEqualSetKind:
+      return cast<RValueMayEqualSet>(this)->EvalCast(ValMgr, CastExpr);
+    default:
+      return InvalidValue();
+  }
+}
+
+RValueMayEqualSet
+RValueMayEqualSet::EvalCast(ValueManager& ValMgr, Expr* CastExpr) const {
+  QualType T = CastExpr->getType();
+  assert (T->isIntegerType());
+  
+  APSIntSetTy S1 = GetValues();  
+  APSIntSetTy S2 = ValMgr.GetEmptyAPSIntSet();
+  
+  for (APSIntSetTy::iterator I=S1.begin(), E=S1.end(); I!=E; ++I) {
+    llvm::APSInt X = *I;
+    X.setIsSigned(T->isSignedIntegerType());
+    X.extOrTrunc(ValMgr.getContext()->getTypeSize(T,CastExpr->getLocStart()));    
+    S2 = ValMgr.AddToSet(S2, X);
+  }
+  
+  return S2;
+}
+
+//===----------------------------------------------------------------------===//
+// Transfer functions: Binary Operations over R-Values.
 //===----------------------------------------------------------------------===//
 
 #define RVALUE_DISPATCH_CASE(k1,k2,Op)\
 case ((k1##Kind+(MaxRValueKind-MinRValueKind))+(k2##Kind - MinRValueKind)):\
-  return cast<k1>(*this).Op(ValMgr,cast<k2>(RHS));
+  return cast<k1>(*this).Eval##Op(ValMgr,cast<k2>(RHS));
 
 #define RVALUE_DISPATCH(Op)\
 switch (getKind()+(MaxRValueKind-MinRValueKind)+(RHS.getKind()-MinRValueKind)){\
@@ -253,15 +296,15 @@ switch (getKind()+(MaxRValueKind-MinRValueKind)+(RHS.getKind()-MinRValueKind)){\
 }\
 return cast<RValue>(InvalidValue());
 
-RValue RValue::Add(ValueManager& ValMgr, const RValue& RHS) const {
+RValue RValue::EvalAdd(ValueManager& ValMgr, const RValue& RHS) const {
   RVALUE_DISPATCH(Add)
 }
 
-RValue RValue::Sub(ValueManager& ValMgr, const RValue& RHS) const {
+RValue RValue::EvalSub(ValueManager& ValMgr, const RValue& RHS) const {
   RVALUE_DISPATCH(Sub)
 }
 
-RValue RValue::Mul(ValueManager& ValMgr, const RValue& RHS) const {
+RValue RValue::EvalMul(ValueManager& ValMgr, const RValue& RHS) const {
   RVALUE_DISPATCH(Mul)
 }
 
@@ -269,8 +312,8 @@ RValue RValue::Mul(ValueManager& ValMgr, const RValue& RHS) const {
 #undef RVALUE_DISPATCH
 
 RValueMayEqualSet
-RValueMayEqualSet::Add(ValueManager& ValMgr,
-                       const RValueMayEqualSet& RHS) const {
+RValueMayEqualSet::EvalAdd(ValueManager& ValMgr,
+                           const RValueMayEqualSet& RHS) const {
   
   APSIntSetTy S1 = GetValues();
   APSIntSetTy S2 = RHS.GetValues();
@@ -285,8 +328,8 @@ RValueMayEqualSet::Add(ValueManager& ValMgr,
 }
 
 RValueMayEqualSet
-RValueMayEqualSet::Sub(ValueManager& ValMgr,
-                       const RValueMayEqualSet& RHS) const {
+RValueMayEqualSet::EvalSub(ValueManager& ValMgr,
+                           const RValueMayEqualSet& RHS) const {
   
   APSIntSetTy S1 = GetValues();
   APSIntSetTy S2 = RHS.GetValues();
@@ -301,8 +344,8 @@ RValueMayEqualSet::Sub(ValueManager& ValMgr,
 }
 
 RValueMayEqualSet
-RValueMayEqualSet::Mul(ValueManager& ValMgr,
-                       const RValueMayEqualSet& RHS) const {
+RValueMayEqualSet::EvalMul(ValueManager& ValMgr,
+                           const RValueMayEqualSet& RHS) const {
   
   APSIntSetTy S1 = GetValues();
   APSIntSetTy S2 = RHS.GetValues();
@@ -473,8 +516,9 @@ public:
   /// Initialize - Initialize the checker's state based on the specified
   ///  CFG.  This results in liveness information being computed for
   ///  each block-level statement in the CFG.
-  void Initialize(CFG& c) {
-    cfg = &c;    
+  void Initialize(CFG& c, ASTContext& ctx) {
+    cfg = &c;
+    ValMgr.setContext(&ctx);
     Liveness = new LiveVariables(c);
     Liveness->runOnCFG(c);
     Liveness->runOnAllBlocks(c, NULL, true);
@@ -510,6 +554,9 @@ public:
   /// Visit - Transfer function logic for all statements.  Dispatches to
   ///  other functions that handle specific kinds of statements.
   void Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst);
+
+  /// VisitCast - Transfer function logic for all casts (implicit and explicit).
+  void VisitCast(Expr* CastE, Expr* E, NodeTy* Pred, NodeSet& Dst);
   
   /// VisitBinaryOperator - Transfer function logic for binary operators.
   void VisitBinaryOperator(BinaryOperator* B, NodeTy* Pred, NodeSet& Dst);  
@@ -566,6 +613,24 @@ ExprValue GRConstants::GetValue(const StateTy& St, Stmt* S) {
 
       case Stmt::IntegerLiteralClass:
         return RValue::GetRValue(ValMgr, cast<IntegerLiteral>(S));
+      
+      case Stmt::ImplicitCastExprClass: {
+        ImplicitCastExpr* C = cast<ImplicitCastExpr>(S);
+        if (C->getType() == C->getSubExpr()->getType()) {
+          S = C->getSubExpr();
+          continue;
+        }
+        break;
+      }
+        
+      case Stmt::CastExprClass: {
+        CastExpr* C = cast<CastExpr>(S);
+        if (C->getType() == C->getSubExpr()->getType()) {
+          S = C->getSubExpr();
+          continue;
+        }
+        break;
+      }
 
       default:
         break;
@@ -575,6 +640,7 @@ ExprValue GRConstants::GetValue(const StateTy& St, Stmt* S) {
   }
   
   StateTy::TreeTy* T = St.SlimFind(ValueKey(S, getCFG().isBlkExpr(S)));
+    
   return T ? T->getValue().second : InvalidValue();
 }
 
@@ -654,6 +720,28 @@ void GRConstants::Nodify(NodeSet& Dst, Stmt* S, GRConstants::NodeTy* Pred,
   Dst.Add(Builder->generateNode(S, St, Pred));
 }
 
+void GRConstants::VisitCast(Expr* CastE, Expr* E, GRConstants::NodeTy* Pred,
+                            GRConstants::NodeSet& Dst) {
+  
+  QualType T = CastE->getType();
+
+  // Check for redundant casts.
+  if (E->getType() == T) {
+    Dst.Add(Pred);
+    return;
+  }
+  
+  NodeSet S1;
+  Visit(E, Pred, S1);
+  
+  for (NodeSet::iterator I1=S1.begin(), E1=S1.end(); I1 != E1; ++I1) {
+    NodeTy* N = *I1;
+    StateTy St = N->getState();
+    const ExprValue& V = GetValue(St, E);
+    Nodify(Dst, CastE, N, SetValue(St, CastE, V.EvalCast(ValMgr, CastE)));
+  }
+ }
+
 void GRConstants::VisitBinaryOperator(BinaryOperator* B,
                                       GRConstants::NodeTy* Pred,
                                       GRConstants::NodeSet& Dst) {
@@ -684,21 +772,21 @@ void GRConstants::VisitBinaryOperator(BinaryOperator* B,
           const RValue& R1 = cast<RValue>(V1);
           const RValue& R2 = cast<RValue>(V2);
           
-          Nodify(Dst, B, N2, SetValue(St, B, R1.Add(ValMgr, R2)));
+          Nodify(Dst, B, N2, SetValue(St, B, R1.EvalAdd(ValMgr, R2)));
           break;
         }
 
         case BinaryOperator::Sub: {
           const RValue& R1 = cast<RValue>(V1);
           const RValue& R2 = cast<RValue>(V2);
-	        Nodify(Dst, B, N2, SetValue(St, B, R1.Sub(ValMgr, R2)));
+	        Nodify(Dst, B, N2, SetValue(St, B, R1.EvalSub(ValMgr, R2)));
           break;
         }
           
         case BinaryOperator::Mul: {
           const RValue& R1 = cast<RValue>(V1);
           const RValue& R2 = cast<RValue>(V2);
-	        Nodify(Dst, B, N2, SetValue(St, B, R1.Mul(ValMgr, R2)));
+	        Nodify(Dst, B, N2, SetValue(St, B, R1.EvalMul(ValMgr, R2)));
           break;
         }
           
@@ -712,7 +800,7 @@ void GRConstants::VisitBinaryOperator(BinaryOperator* B,
         case BinaryOperator::AddAssign: {
           const LValue& L1 = cast<LValue>(V1);
           RValue R1 = cast<RValue>(GetValue(N1->getState(), L1));
-          RValue Result = R1.Add(ValMgr, cast<RValue>(V2));
+          RValue Result = R1.EvalAdd(ValMgr, cast<RValue>(V2));
           Nodify(Dst, B, N2, SetValue(SetValue(St, B, Result), L1, Result));
           break;
         }
@@ -720,7 +808,7 @@ void GRConstants::VisitBinaryOperator(BinaryOperator* B,
         case BinaryOperator::SubAssign: {
           const LValue& L1 = cast<LValue>(V1);
           RValue R1 = cast<RValue>(GetValue(N1->getState(), L1));
-          RValue Result = R1.Sub(ValMgr, cast<RValue>(V2));
+          RValue Result = R1.EvalSub(ValMgr, cast<RValue>(V2));
           Nodify(Dst, B, N2, SetValue(SetValue(St, B, Result), L1, Result));
           break;
         }
@@ -728,7 +816,7 @@ void GRConstants::VisitBinaryOperator(BinaryOperator* B,
         case BinaryOperator::MulAssign: {
           const LValue& L1 = cast<LValue>(V1);
           RValue R1 = cast<RValue>(GetValue(N1->getState(), L1));
-          RValue Result = R1.Mul(ValMgr, cast<RValue>(V2));
+          RValue Result = R1.EvalMul(ValMgr, cast<RValue>(V2));
           Nodify(Dst, B, N2, SetValue(SetValue(St, B, Result), L1, Result));
           break;
         }
@@ -763,6 +851,18 @@ void GRConstants::Visit(Stmt* S, GRConstants::NodeTy* Pred,
     case Stmt::ParenExprClass:
       Visit(cast<ParenExpr>(S)->getSubExpr(), Pred, Dst);
       break;
+      
+    case Stmt::ImplicitCastExprClass: {
+      ImplicitCastExpr* C = cast<ImplicitCastExpr>(S);
+      VisitCast(C, C->getSubExpr(), Pred, Dst);
+      break;
+    }
+      
+    case Stmt::CastExprClass: {
+      CastExpr* C = cast<CastExpr>(S);
+      VisitCast(C, C->getSubExpr(), Pred, Dst);
+      break;
+    }
       
     default:
       Dst.Add(Pred); // No-op. Simply propagate the current state unchanged.
@@ -867,8 +967,8 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRConstants::NodeTy*> :
 #endif
 
 namespace clang {
-void RunGRConstants(CFG& cfg) {
-  GREngine<GRConstants> Engine(cfg);
+void RunGRConstants(CFG& cfg, ASTContext& Ctx) {
+  GREngine<GRConstants> Engine(cfg, Ctx);
   Engine.ExecuteWorkList();  
 #ifndef NDEBUG
   llvm::ViewGraph(*Engine.getGraph().roots_begin(),"GRConstants");
