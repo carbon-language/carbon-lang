@@ -608,8 +608,7 @@ public:
   ///  mappings removed.
   StateTy RemoveDeadBindings(Stmt* S, StateTy M);
 
-  StateTy SetValue(StateTy St, Stmt* S, const ExprValue& V,
-                   bool isBlkExpr = false);
+  StateTy SetValue(StateTy St, Stmt* S, const ExprValue& V);
 
   StateTy SetValue(StateTy St, const LValue& LV, const ExprValue& V);
   
@@ -726,12 +725,14 @@ LValue GRConstants::GetLValue(const StateTy& St, Stmt* S) {
 }
 
 GRConstants::StateTy GRConstants::SetValue(StateTy St, Stmt* S,
-                                           const ExprValue& V, bool isBlkExpr) {
+                                           const ExprValue& V) {
   
   if (!StateCleaned) {
     St = RemoveDeadBindings(CurrentStmt, St);
     StateCleaned = true;
   }
+  
+  bool isBlkExpr = S == CurrentStmt && getCFG().isBlkExpr(S);
   
   return V.isValid() ? StateMgr.Add(St, ValueKey(S,isBlkExpr), V)
                      : St;
