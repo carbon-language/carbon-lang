@@ -3648,6 +3648,15 @@ SDOperand DAGCombiner::visitFP_ROUND(SDNode *N) {
   if (N0.getOpcode() == ISD::FP_EXTEND && VT == N0.getOperand(0).getValueType())
     return N0.getOperand(0);
   
+  // fold (fp_round (fp_round x)) -> (fp_round x)
+  if (N0.getOpcode() == ISD::FP_ROUND) {
+    // This is a value preserving truncation if both round's are.
+    bool IsTrunc = N->getConstantOperandVal(1) == 1 &&
+                   N0.Val->getConstantOperandVal(1) == 1;
+    return DAG.getNode(ISD::FP_ROUND, VT, N0.getOperand(0),
+                       DAG.getIntPtrConstant(IsTrunc));
+  }
+  
   // fold (fp_round (copysign X, Y)) -> (copysign (fp_round X), Y)
   if (N0.getOpcode() == ISD::FCOPYSIGN && N0.Val->hasOneUse()) {
     SDOperand Tmp = DAG.getNode(ISD::FP_ROUND, VT, N0.getOperand(0), N1);
