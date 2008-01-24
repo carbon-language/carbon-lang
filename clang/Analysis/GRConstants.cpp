@@ -753,7 +753,14 @@ GRConstants::StateTy GRConstants::SetValue(StateTy St, Stmt* S,
     StateCleaned = true;
   }
   
-  bool isBlkExpr = S == CurrentStmt && getCFG().isBlkExpr(S);
+  bool isBlkExpr = false;
+  
+  if (S == CurrentStmt) {
+    isBlkExpr = getCFG().isBlkExpr(S);
+
+    if (!isBlkExpr)
+      return St;
+  }
   
   return V.isValid() ? StateMgr.Add(St, ValueKey(S,isBlkExpr), V)
                      : St;
@@ -1075,13 +1082,44 @@ namespace llvm {
 template<>
 struct VISIBILITY_HIDDEN DOTGraphTraits<GRConstants::NodeTy*> :
   public DefaultDOTGraphTraits {
-    
-  static void PrintKind(std::ostringstream& Out, ValueKey::Kind kind) {
+
+  static void PrintKindLabel(std::ostream& Out, ValueKey::Kind kind) {
     switch (kind) {
       case ValueKey::IsSubExp:  Out << "Sub-Expressions:\\l"; break;
       case ValueKey::IsDecl:    Out << "Variables:\\l"; break;
       case ValueKey::IsBlkExpr: Out << "Block-level Expressions:\\l"; break;
       default: assert (false && "Unknown ValueKey type.");
+    }
+  }
+    
+  static void PrintKind(std::ostream& Out, GRConstants::StateTy M,
+                        ValueKey::Kind kind, bool isFirstGroup = false) {
+    bool isFirst = true;
+    
+    for (GRConstants::StateTy::iterator I=M.begin(), E=M.end();I!=E;++I) {        
+      if (I.getKey().getKind() != kind)
+        continue;
+    
+      if (isFirst) {
+        if (!isFirstGroup) Out << "\\l\\l";
+        PrintKindLabel(Out, kind);
+        isFirst = false;
+      }
+      else
+        Out << "\\l";
+      
+      Out << ' ';
+    
+      if (ValueDecl* V = dyn_cast<ValueDecl>(I.getKey()))
+        Out << V->getName();          
+      else {
+        Stmt* E = cast<Stmt>(I.getKey());
+        Out << " (" << (void*) E << ") ";
+        E->printPretty(Out);
+      }
+    
+      Out << " : ";
+      I.getData().print(Out);
     }
   }
     
@@ -1103,7 +1141,9 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRConstants::NodeTy*> :
         
       case ProgramPoint::PostStmtKind: {
         const PostStmt& L = cast<PostStmt>(Loc);
-        Out << "(" << (void*) L.getStmt() << ") ";
+        Out << L.getStmt()->getStmtClassName() << ':' 
+            << (void*) L.getStmt() << ' ';
+        
         L.getStmt()->printPretty(Out);
         break;
       }
@@ -1117,44 +1157,10 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRConstants::NodeTy*> :
     
     Out << "\\|";
     
-    GRConstants::StateTy M = N->getState();
-    bool isFirst = true;
-    ValueKey::Kind kind;
-
-    for (GRConstants::StateTy::iterator I=M.begin(), E=M.end(); I!=E; ++I) {
-      if (!isFirst) {
-        ValueKey::Kind newKind = I.getKey().getKind();
-        
-        if (newKind != kind) {
-          Out << "\\l\\l";
-          PrintKind(Out, newKind);
-        }
-        else
-          Out << "\\l";
-        
-        kind = newKind;
-      }
-      else {
-        kind = I.getKey().getKind();
-        PrintKind(Out, kind); 
-        isFirst = false;
-      }
+    PrintKind(Out, N->getState(), ValueKey::IsDecl, true);
+    PrintKind(Out, N->getState(), ValueKey::IsBlkExpr);
+    PrintKind(Out, N->getState(), ValueKey::IsSubExp);
       
-      Out << ' ';
-      
-      if (ValueDecl* V = dyn_cast<ValueDecl>(I.getKey())) {
-        Out << V->getName();          
-      }
-      else {
-        Stmt* E = cast<Stmt>(I.getKey());
-        Out << " (" << (void*) E << ") ";
-        E->printPretty(Out);
-      }
-      
-      Out << " : ";
-      I.getData().print(Out);
-    }
-    
     Out << "\\l";
     return Out.str();
   }
