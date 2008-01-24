@@ -2734,6 +2734,14 @@ def : Pat<(v8i16 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
 def : Pat<(v4i32 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
 def : Pat<(v2i64 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
 
+// extload f32 -> f64.  This matches load+fextend because we have a hack in 
+// the isel (PreprocessForFPConvert) that can introduce loads after dag combine.
+// Since these loads aren't folded into the fextend, we have to match it
+// explicitly here.
+let Predicates = [HasSSE2] in
+ def : Pat<(fextend (loadf32 addr:$src)),
+           (CVTSS2SDrm addr:$src)>;
+
 // Scalar to v8i16 / v16i8. The source may be a GR32, but only the lower 8 or
 // 16-bits matter.
 def : Pat<(v8i16 (X86s2vec GR32:$src)), (MOVDI2PDIrr GR32:$src)>,

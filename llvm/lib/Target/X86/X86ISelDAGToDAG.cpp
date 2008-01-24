@@ -156,7 +156,8 @@ namespace {
     bool TryFoldLoad(SDOperand P, SDOperand N,
                      SDOperand &Base, SDOperand &Scale,
                      SDOperand &Index, SDOperand &Disp);
-    void InstructionSelectPreprocess(SelectionDAG &DAG);
+    void PreprocessForRMW(SelectionDAG &DAG);
+    void PreprocessForFPConvert(SelectionDAG &DAG);
 
     /// SelectInlineAsmMemoryOperand - Implement addressing mode selection for
     /// inline asm expressions.
@@ -350,9 +351,10 @@ static void MoveBelowTokenFactor(SelectionDAG &DAG, SDOperand Load,
                          Store.getOperand(2), Store.getOperand(3));
 }
 
-/// InstructionSelectPreprocess - Preprocess the DAG to allow the instruction
-/// selector to pick more load-modify-store instructions. This is a common
-/// case:
+/// PreprocessForRMW - Preprocess the DAG to make instruction selection better.
+/// This is only run if not in -fast mode (aka -O0).
+/// This allows the instruction selector to pick more read-modify-write
+/// instructions. This is a common case:
 ///
 ///     [Load chain]
 ///         ^
@@ -389,7 +391,7 @@ static void MoveBelowTokenFactor(SelectionDAG &DAG, SDOperand Load,
 ///       \      /
 ///        \    /
 ///       [Store]
-void X86DAGToDAGISel::InstructionSelectPreprocess(SelectionDAG &DAG) {
+void X86DAGToDAGISel::PreprocessForRMW(SelectionDAG &DAG) {
   for (SelectionDAG::allnodes_iterator I = DAG.allnodes_begin(),
          E = DAG.allnodes_end(); I != E; ++I) {
     if (!ISD::isNON_TRUNCStore(I))
@@ -459,6 +461,66 @@ void X86DAGToDAGISel::InstructionSelectPreprocess(SelectionDAG &DAG) {
   }
 }
 
+
+/// PreprocessForFPConvert - Walk over the dag lowering fpround and fpextend
+/// nodes that target the FP stack to be store and load to the stack.  This is a
+/// gross hack.  We would like to simply mark these as being illegal, but when
+/// we do that, legalize produces these when it expands calls, then expands
+/// these in the same legalize pass.  We would like dag combine to be able to
+/// hack on these between the call expansion and the node legalization.  As such
+/// this pass basically does "really late" legalization of these inline with the
+/// X86 isel pass.
+void X86DAGToDAGISel::PreprocessForFPConvert(SelectionDAG &DAG) {
+  for (SelectionDAG::allnodes_iterator I = DAG.allnodes_begin(),
+       E = DAG.allnodes_end(); I != E; ) {
+    SDNode *N = I++;  // Preincrement iterator to avoid invalidation issues.
+    if (N->getOpcode() != ISD::FP_ROUND && N->getOpcode() != ISD::FP_EXTEND)
+      continue;
+    
+    // If the source and destination are SSE registers, then this is a legal
+    // conversion that should not be lowered.
+    MVT::ValueType SrcVT = N->getOperand(0).getValueType();
+    MVT::ValueType DstVT = N->getValueType(0);
+    bool SrcIsSSE = X86Lowering.isScalarFPTypeInSSEReg(SrcVT);
+    bool DstIsSSE = X86Lowering.isScalarFPTypeInSSEReg(DstVT);
+    if (SrcIsSSE && DstIsSSE)
+      continue;
+
+    // If this is an FPStack extension (but not a truncation), it is a noop.
+    if (!SrcIsSSE && !DstIsSSE && N->getOpcode() == ISD::FP_EXTEND)
+      continue;
+    
+    // Here we could have an FP stack truncation or an FPStack <-> SSE convert.
+    // FPStack has extload and truncstore.  SSE can fold direct loads into other
+    // operations.  Based on this, decide what we want to do.
+    MVT::ValueType MemVT;
+    if (N->getOpcode() == ISD::FP_ROUND)
+      MemVT = DstVT;  // FP_ROUND must use DstVT, we can't do a 'trunc load'.
+    else
+      MemVT = SrcIsSSE ? SrcVT : DstVT;
+    
+    SDOperand MemTmp = DAG.CreateStackTemporary(MemVT);
+    
+    // FIXME: optimize the case where the src/dest is a load or store?
+    SDOperand Store = DAG.getTruncStore(DAG.getEntryNode(), N->getOperand(0),
+                                        MemTmp, NULL, 0, MemVT);
+    SDOperand Result = DAG.getExtLoad(ISD::EXTLOAD, DstVT, Store, MemTmp,
+                                      NULL, 0, MemVT);
+
+    // We're about to replace all uses of the FP_ROUND/FP_EXTEND with the
+    // extload we created.  This will cause general havok on the dag because
+    // anything below the conversion could be folded into other existing nodes.
+    // To avoid invalidating 'I', back it up to the convert node.
+    --I;
+    DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 0), Result);
+    
+    // Now that we did that, the node is dead.  Increment the iterator to the
+    // next node to process, then delete N.
+    ++I;
+    DAG.DeleteNode(N);
+  }  
+}
+
 /// InstructionSelectBasicBlock - This callback is invoked by SelectionDAGISel
 /// when it has created a SelectionDAG for us to codegen.
 void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
@@ -466,7 +528,10 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   MachineFunction::iterator FirstMBB = BB;
 
   if (!FastISel)
-    InstructionSelectPreprocess(DAG);
+    PreprocessForRMW(DAG);
+
+  // FIXME: This should only happen when not -fast.
+  PreprocessForFPConvert(DAG);
 
   // Codegen the basic block.
 #ifndef NDEBUG

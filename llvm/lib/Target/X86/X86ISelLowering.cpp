@@ -47,6 +47,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   X86ScalarSSEf32 = Subtarget->hasSSE1();
   X86StackPtr = Subtarget->is64Bit() ? X86::RSP : X86::ESP;
   
+  bool Fast = false;
 
   RegInfo = TM.getRegisterInfo();
 
@@ -355,13 +356,15 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     addLegalFPImmediate(APFloat(+0.0)); // xorpd
     addLegalFPImmediate(APFloat(+0.0f)); // xorps
 
-    // Conversions to long double (in X87) go through memory.
-    setConvertAction(MVT::f32, MVT::f80, Expand);
-    setConvertAction(MVT::f64, MVT::f80, Expand);
-
-    // Conversions from long double (in X87) go through memory.
-    setConvertAction(MVT::f80, MVT::f32, Expand);
-    setConvertAction(MVT::f80, MVT::f64, Expand);
+    // Floating truncations from f80 and extensions to f80 go through memory.
+    // If optimizing, we lie about this though and handle it in
+    // InstructionSelectPreprocess so that dagcombine2 can hack on these.
+    if (Fast) {
+      setConvertAction(MVT::f32, MVT::f80, Expand);
+      setConvertAction(MVT::f64, MVT::f80, Expand);
+      setConvertAction(MVT::f80, MVT::f32, Expand);
+      setConvertAction(MVT::f80, MVT::f64, Expand);
+    }
   } else if (X86ScalarSSEf32) {
     // Use SSE for f32, x87 for f64.
     // Set up the FP register classes.
@@ -395,15 +398,17 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     addLegalFPImmediate(APFloat(-0.0)); // FLD0/FCHS
     addLegalFPImmediate(APFloat(-1.0)); // FLD1/FCHS
 
-    // SSE->x87 conversions go through memory.
-    setConvertAction(MVT::f32, MVT::f64, Expand);
-    setConvertAction(MVT::f32, MVT::f80, Expand);
-
-    // x87->SSE truncations need to go through memory.
-    setConvertAction(MVT::f80, MVT::f32, Expand);    
-    setConvertAction(MVT::f64, MVT::f32, Expand);
-    // And x87->x87 truncations also.
-    setConvertAction(MVT::f80, MVT::f64, Expand);
+    // SSE <-> X87 conversions go through memory.  If optimizing, we lie about
+    // this though and handle it in InstructionSelectPreprocess so that
+    // dagcombine2 can hack on these.
+    if (Fast) {
+      setConvertAction(MVT::f32, MVT::f64, Expand);
+      setConvertAction(MVT::f32, MVT::f80, Expand);
+      setConvertAction(MVT::f80, MVT::f32, Expand);    
+      setConvertAction(MVT::f64, MVT::f32, Expand);
+      // And x87->x87 truncations also.
+      setConvertAction(MVT::f80, MVT::f64, Expand);
+    }
 
     if (!UnsafeFPMath) {
       setOperationAction(ISD::FSIN           , MVT::f64  , Expand);
@@ -420,10 +425,14 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::FCOPYSIGN, MVT::f64, Expand);
     setOperationAction(ISD::FCOPYSIGN, MVT::f32, Expand);
 
-    // Floating truncations need to go through memory.
-    setConvertAction(MVT::f80, MVT::f32, Expand);    
-    setConvertAction(MVT::f64, MVT::f32, Expand);
-    setConvertAction(MVT::f80, MVT::f64, Expand);
+    // Floating truncations go through memory.  If optimizing, we lie about
+    // this though and handle it in InstructionSelectPreprocess so that
+    // dagcombine2 can hack on these.
+    if (Fast) {
+      setConvertAction(MVT::f80, MVT::f32, Expand);    
+      setConvertAction(MVT::f64, MVT::f32, Expand);
+      setConvertAction(MVT::f80, MVT::f64, Expand);
+    }
 
     if (!UnsafeFPMath) {
       setOperationAction(ISD::FSIN           , MVT::f64  , Expand);
@@ -647,7 +656,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     }
 
     setTruncStoreAction(MVT::f64, MVT::f32, Expand);
-    
+
     // Custom lower v2i64 and v2f64 selects.
     setOperationAction(ISD::LOAD,               MVT::v2f64, Legal);
     setOperationAction(ISD::LOAD,               MVT::v2i64, Legal);
@@ -808,30 +817,10 @@ SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
     // a register.
     SDOperand Value = Op.getOperand(1);
     
-    // If this is an FP return with ScalarSSE, we need to move the value from
-    // an XMM register onto the fp-stack.
-    if (isScalarFPTypeInSSEReg(RVLocs[0].getValVT())) {
-      SDOperand MemLoc;
-        
-      // If this is a load into a scalarsse value, don't store the loaded value
-      // back to the stack, only to reload it: just replace the scalar-sse load.
-      if (ISD::isNON_EXTLoad(Value.Val) &&
-           Chain.reachesChainWithoutSideEffects(Value.getOperand(0))) {
-        Chain  = Value.getOperand(0);
-        MemLoc = Value.getOperand(1);
-      } else {
-        // Spill the value to memory and reload it into top of stack.
-        unsigned Size = MVT::getSizeInBits(RVLocs[0].getValVT())/8;
-        MachineFunction &MF = DAG.getMachineFunction();
-        int SSFI = MF.getFrameInfo()->CreateStackObject(Size, Size);
-        MemLoc = DAG.getFrameIndex(SSFI, getPointerTy());
-        Chain = DAG.getStore(Op.getOperand(0), Value, MemLoc, NULL, 0);
-      }
-      SDVTList Tys = DAG.getVTList(RVLocs[0].getValVT(), MVT::Other);
-      SDOperand Ops[] = {Chain, MemLoc, DAG.getValueType(RVLocs[0].getValVT())};
-      Value = DAG.getNode(X86ISD::FLD, Tys, Ops, 3);
-      Chain = Value.getValue(1);
-    }
+    // an XMM register onto the fp-stack.  Do this with an FP_EXTEND to f80.
+    // This will get legalized into a load/store if it can't get optimized away.
+    if (isScalarFPTypeInSSEReg(RVLocs[0].getValVT()))
+      Value = DAG.getNode(ISD::FP_EXTEND, MVT::f80, Value);
     
     SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
     SDOperand Ops[] = { Chain, Value };
@@ -876,87 +865,26 @@ LowerCallResult(SDOperand Chain, SDOperand InFlag, SDNode *TheCall,
     // Copies from the FP stack are special, as ST0 isn't a valid register
     // before the fp stackifier runs.
     
-    // Copy ST0 into an RFP register with FP_GET_RESULT.
-    SDVTList Tys = DAG.getVTList(RVLocs[0].getValVT(), MVT::Other, MVT::Flag);
+    // Copy ST0 into an RFP register with FP_GET_RESULT.  If this will end up
+    // in an SSE register, copy it out as F80 and do a truncate, otherwise use
+    // the specified value type.
+    MVT::ValueType GetResultTy = RVLocs[0].getValVT();
+    if (isScalarFPTypeInSSEReg(GetResultTy))
+      GetResultTy = MVT::f80;
+    SDVTList Tys = DAG.getVTList(GetResultTy, MVT::Other, MVT::Flag);
+    
     SDOperand GROps[] = { Chain, InFlag };
     SDOperand RetVal = DAG.getNode(X86ISD::FP_GET_RESULT, Tys, GROps, 2);
     Chain  = RetVal.getValue(1);
     InFlag = RetVal.getValue(2);
-    
-    // If we are using ScalarSSE, store ST(0) to the stack and reload it into
-    // an XMM register.
-    if (isScalarFPTypeInSSEReg(RVLocs[0].getValVT())) {
-      SDOperand StoreLoc;
-      const Value *SrcVal = 0;
-      int SrcValOffset = 0;
-      MVT::ValueType RetStoreVT = RVLocs[0].getValVT();
-      
-      // Determine where to store the value.  If the call result is directly
-      // used by a store, see if we can store directly into the location.  In
-      // this case, we'll end up producing a fst + movss[load] + movss[store] to
-      // the same location, and the two movss's will be nuked as dead.  This
-      // optimizes common things like "*D = atof(..)" to not need an
-      // intermediate stack slot.
-      if (SDOperand(TheCall, 0).hasOneUse() && 
-          SDOperand(TheCall, 1).hasOneUse()) {
-        // In addition to direct uses, we also support a FP_ROUND that uses the
-        // value, if it is directly stored somewhere.
-        SDNode *User = *TheCall->use_begin();
-        if (User->getOpcode() == ISD::FP_ROUND && User->hasOneUse())
-          User = *User->use_begin();
-        
-        // Ok, we have one use of the value and one use of the chain.  See if
-        // they are the same node: a store.
-        if (StoreSDNode *N = dyn_cast<StoreSDNode>(User)) {
-          // Verify that the value being stored is either the call or a
-          // truncation of the call.
-          SDNode *StoreVal = N->getValue().Val;
-          if (StoreVal == TheCall)
-            ; // ok.
-          else if (StoreVal->getOpcode() == ISD::FP_ROUND &&
-                   StoreVal->hasOneUse() && 
-                   StoreVal->getOperand(0).Val == TheCall)
-            ; // ok.
-          else
-            N = 0;  // not ok.
-            
-          if (N && N->getChain().Val == TheCall &&
-              !N->isVolatile() && !N->isTruncatingStore() && 
-              N->getAddressingMode() == ISD::UNINDEXED) {
-            StoreLoc = N->getBasePtr();
-            SrcVal = N->getSrcValue();
-            SrcValOffset = N->getSrcValueOffset();
-            RetStoreVT = N->getValue().getValueType();
-          }
-        }
-      }
 
-      // If we weren't able to optimize the result, just create a temporary
-      // stack slot.
-      if (StoreLoc.Val == 0) {
-        MachineFunction &MF = DAG.getMachineFunction();
-        int SSFI = MF.getFrameInfo()->CreateStackObject(8, 8);
-        StoreLoc = DAG.getFrameIndex(SSFI, getPointerTy());
-      }
-      
-      // FIXME: Currently the FST is flagged to the FP_GET_RESULT. This
-      // shouldn't be necessary except that RFP cannot be live across
-      // multiple blocks (which could happen if a select gets lowered into
-      // multiple blocks and scheduled in between them). When stackifier is
-      // fixed, they can be uncoupled.
-      SDOperand Ops[] = {
-        Chain, RetVal, StoreLoc, DAG.getValueType(RetStoreVT), InFlag
-      };
-      Chain = DAG.getNode(X86ISD::FST, MVT::Other, Ops, 5);
-      RetVal = DAG.getLoad(RetStoreVT, Chain,
-                           StoreLoc, SrcVal, SrcValOffset);
-      Chain = RetVal.getValue(1);
-      
-      // If we optimized a truncate, then extend the result back to its desired
-      // type.
-      if (RVLocs[0].getValVT() != RetStoreVT)
-        RetVal = DAG.getNode(ISD::FP_EXTEND, RVLocs[0].getValVT(), RetVal);
-    }
+    // If we want the result in an SSE register, use an FP_TRUNCATE to get it
+    // there.
+    if (GetResultTy != RVLocs[0].getValVT())
+      RetVal = DAG.getNode(ISD::FP_ROUND, RVLocs[0].getValVT(), RetVal,
+                           // This truncation won't change the value.
+                           DAG.getIntPtrConstant(1));
+    
     ResultVals.push_back(RetVal);
   }
   
