@@ -245,8 +245,9 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
   if (!isa<Constant>(P)) {
     const Value *Object = getUnderlyingObject(P);
     // Allocations and byval arguments are "new" objects.
-    if (isa<AllocationInst>(Object) ||
-        (isa<Argument>(Object) && cast<Argument>(Object)->hasByValAttr())) {
+    if (Object &&
+        (isa<AllocationInst>(Object) ||
+         (isa<Argument>(Object) && cast<Argument>(Object)->hasByValAttr()))) {
       // Okay, the pointer is to a stack allocated object.  If we can prove that
       // the pointer never "escapes", then we know the call cannot clobber it,
       // because it simply can't get its address.
