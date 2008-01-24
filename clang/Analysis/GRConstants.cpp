@@ -555,19 +555,24 @@ ExprValue GRConstants::GetValue(const StateTy& St, const LValue& LV) {
 }
   
 ExprValue GRConstants::GetValue(const StateTy& St, Stmt* S) {
-  if (Expr* E = dyn_cast<Expr>(S))
-    S = E->IgnoreParens();
-  
-  switch (S->getStmtClass()) {
-    case Stmt::DeclRefExprClass:
-      return GetValue(St, LValueDecl(cast<DeclRefExpr>(S)->getDecl()));
+  for (;;) {
+    switch (S->getStmtClass()) {
+      case Stmt::ParenExprClass:
+        S = cast<ParenExpr>(S)->getSubExpr();
+        continue;
+        
+      case Stmt::DeclRefExprClass:
+        return GetValue(St, LValueDecl(cast<DeclRefExpr>(S)->getDecl()));
 
-    case Stmt::IntegerLiteralClass:
-      return RValue::GetRValue(ValMgr, cast<IntegerLiteral>(S));
+      case Stmt::IntegerLiteralClass:
+        return RValue::GetRValue(ValMgr, cast<IntegerLiteral>(S));
 
-    default:
-      break;
-  };
+      default:
+        break;
+    };
+    
+    break;
+  }
   
   StateTy::TreeTy* T = St.SlimFind(ValueKey(S, getCFG().isBlkExpr(S)));
   return T ? T->getValue().second : InvalidValue();
