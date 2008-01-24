@@ -4090,28 +4090,19 @@ SDOperand DAGCombiner::visitLOAD(SDNode *N) {
         // v1, chain2 = load chain1, loc
         // v2, chain3 = load chain2, loc
         // v3         = add v2, c
-        // Now we replace use of v1 with undef, use of chain2 with chain1.
-        // ReplaceAllUsesWith() will iterate through uses of the first load and
-        // update operands:
-        // v1, chain2 = load chain1, loc
-        // v2, chain3 = load chain1, loc
-        // v3         = add v2, c
-        // Now the second load is the same as the first load, SelectionDAG cse
-        // will ensure the use of second load is replaced with the first load.
-        // v1, chain2 = load chain1, loc
-        // v3         = add v1, c
-        // Then v1 is replaced with undef and bad things happen.
+        // Now we replace use of chain2 with chain1.  This makes the second load
+        // isomorphic to the one we are deleting, and thus makes this load live.
         std::vector<SDNode*> NowDead;
-        SDOperand Undef = DAG.getNode(ISD::UNDEF, N->getValueType(0));
         DOUT << "\nReplacing.6 "; DEBUG(N->dump(&DAG));
-        DOUT << "\nWith: "; DEBUG(Undef.Val->dump(&DAG));
-        DOUT << " and 1 other value\n";
-        DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 0), Undef, &NowDead);
+        DOUT << "\nWith chain: "; DEBUG(Chain.Val->dump(&DAG));
+        DOUT << "\n";
         DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 1), Chain, &NowDead);
-        removeFromWorkList(N);
         for (unsigned i = 0, e = NowDead.size(); i != e; ++i)
           removeFromWorkList(NowDead[i]);
-        DAG.DeleteNode(N);
+        if (N->use_empty()) {
+          removeFromWorkList(N);
+          DAG.DeleteNode(N);
+        }
         return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
       }
     } else {
