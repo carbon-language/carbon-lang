@@ -49,7 +49,7 @@ namespace {
 class VISIBILITY_HIDDEN ValueKey {
   uintptr_t Raw;
 public:
-  enum  Kind { IsSubExp=0x0, IsBlkExpr=0x1, IsDecl=0x2, Flags=0x3 };
+  enum  Kind { IsSubExpr=0x0, IsBlkExpr=0x1, IsDecl=0x2, Flags=0x3 };
   inline void* getPtr() const { return reinterpret_cast<void*>(Raw & ~Flags); }
   inline Kind getKind() const { return (Kind) (Raw & Flags); }
   
@@ -57,9 +57,9 @@ public:
     : Raw(reinterpret_cast<uintptr_t>(VD) | IsDecl) {}
 
   ValueKey(Stmt* S, bool isBlkExpr = false) 
-    : Raw(reinterpret_cast<uintptr_t>(S) | (isBlkExpr ? IsBlkExpr : IsSubExp)){}
+    : Raw(reinterpret_cast<uintptr_t>(S) | (isBlkExpr ? IsBlkExpr : IsSubExpr)){}
   
-  bool isSubExpr() const { return getKind() == IsSubExp; }
+  bool isSubExpr() const { return getKind() == IsSubExpr; }
   bool isDecl() const { return getKind() == IsDecl; }
   
   inline void Profile(llvm::FoldingSetNodeID& ID) const {
@@ -788,7 +788,6 @@ GRConstants::StateTy GRConstants::SetValue(StateTy St, const LValue& LV,
 }
 
 GRConstants::StateTy GRConstants::RemoveDeadBindings(Stmt* Loc, StateTy M) {
-#if 0
   // Note: in the code below, we can assign a new map to M since the
   //  iterators are iterating over the tree of the *original* map.
   StateTy::iterator I = M.begin(), E = M.end();
@@ -807,7 +806,7 @@ GRConstants::StateTy GRConstants::RemoveDeadBindings(Stmt* Loc, StateTy M) {
       if (!Liveness->isLive(Loc, V))
         M = StateMgr.Remove(M, I.getKey());
   }
-#endif
+
   return M;
 }
 
@@ -1085,7 +1084,7 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRConstants::NodeTy*> :
 
   static void PrintKindLabel(std::ostream& Out, ValueKey::Kind kind) {
     switch (kind) {
-      case ValueKey::IsSubExp:  Out << "Sub-Expressions:\\l"; break;
+      case ValueKey::IsSubExpr:  Out << "Sub-Expressions:\\l"; break;
       case ValueKey::IsDecl:    Out << "Variables:\\l"; break;
       case ValueKey::IsBlkExpr: Out << "Block-level Expressions:\\l"; break;
       default: assert (false && "Unknown ValueKey type.");
@@ -1159,7 +1158,7 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRConstants::NodeTy*> :
     
     PrintKind(Out, N->getState(), ValueKey::IsDecl, true);
     PrintKind(Out, N->getState(), ValueKey::IsBlkExpr);
-    PrintKind(Out, N->getState(), ValueKey::IsSubExp);
+    PrintKind(Out, N->getState(), ValueKey::IsSubExpr);
       
     Out << "\\l";
     return Out.str();
