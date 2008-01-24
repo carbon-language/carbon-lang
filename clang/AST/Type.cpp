@@ -476,7 +476,6 @@ bool Type::isScalarType() const {
     return false;
   }
   return isa<PointerType>(CanonicalType) || isa<ComplexType>(CanonicalType) ||
-         isa<VectorType>(CanonicalType) || 
          isa<ObjCQualifiedIdType>(CanonicalType);
 }
 
