@@ -138,9 +138,10 @@ ImmutablePass *llvm::createBasicAliasAnalysisPass() {
   return new BasicAliasAnalysis();
 }
 
-// getUnderlyingObject - This traverses the use chain to figure out what object
-// the specified value points to.  If the value points to, or is derived from, a
-// unique object or an argument, return it.
+/// getUnderlyingObject - This traverses the use chain to figure out what object
+/// the specified value points to.  If the value points to, or is derived from,
+/// a unique object or an argument, return it.  This returns:
+///    Arguments, GlobalVariables, Functions, Allocas, Mallocs.
 static const Value *getUnderlyingObject(const Value *V) {
   if (!isa<PointerType>(V->getType())) return 0;
 
@@ -241,39 +242,27 @@ static bool AddressMightEscape(const Value *V) {
 //
 AliasAnalysis::ModRefResult
 BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
-  if (!isa<Constant>(P))
-    if (const AllocationInst *AI =
-                  dyn_cast_or_null<AllocationInst>(getUnderlyingObject(P))) {
+  if (!isa<Constant>(P)) {
+    const Value *Object = getUnderlyingObject(P);
+    // Allocations and byval arguments are "new" objects.
+    if (isa<AllocationInst>(Object) ||
+        (isa<Argument>(Object) && cast<Argument>(Object)->hasByValAttr())) {
       // Okay, the pointer is to a stack allocated object.  If we can prove that
       // the pointer never "escapes", then we know the call cannot clobber it,
       // because it simply can't get its address.
-      if (!AddressMightEscape(AI))
+      if (!AddressMightEscape(Object))
         return NoModRef;
 
       // If this is a tail call and P points to a stack location, we know that
       // the tail call cannot access or modify the local stack.
       if (CallInst *CI = dyn_cast<CallInst>(CS.getInstruction()))
-        if (CI->isTailCall() && isa<AllocaInst>(AI))
+        if (CI->isTailCall() && !isa<MallocInst>(Object))
           return NoModRef;
     }
+  }
 
   // The AliasAnalysis base class has some smarts, lets use them.
   return AliasAnalysis::getModRefInfo(CS, P, Size);
-}
-
-static bool isNoAliasArgument(const Argument *Arg) {
-  const Function *Func = Arg->getParent();
-  const ParamAttrsList *Attr = Func->getParamAttrs();
-  if (Attr) {
-    unsigned Idx = 1;
-    for (Function::const_arg_iterator I = Func->arg_begin(), 
-          E = Func->arg_end(); I != E; ++I, ++Idx) {
-      if (&(*I) == Arg && 
-           Attr->paramHasAttr(Idx, ParamAttr::NoAlias))
-        return true;
-    }
-  }
-  return false;
 }
 
 // alias - Provide a bunch of ad-hoc rules to disambiguate in common cases, such
@@ -317,9 +306,12 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
         
         // If they are two different objects, and one is a noalias argument
         // then they do not alias.
-        if (O1 != O2 && isNoAliasArgument(O1Arg))
+        if (O1 != O2 && O1Arg->hasNoAliasAttr())
           return NoAlias;
-          
+
+        // Byval arguments can't alias globals or other arguments.
+        if (O1 != O2 && O1Arg->hasByValAttr()) return NoAlias;
+        
         // Otherwise, nothing is known...
       } 
       
@@ -329,16 +321,18 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
         
         // If they are two different objects, and one is a noalias argument
         // then they do not alias.
-        if (O1 != O2 && isNoAliasArgument(O2Arg))
+        if (O1 != O2 && O2Arg->hasNoAliasAttr())
           return NoAlias;
           
+        // Byval arguments can't alias globals or other arguments.
+        if (O1 != O2 && O2Arg->hasByValAttr()) return NoAlias;
+        
         // Otherwise, nothing is known...
       
-      } else if (O1 != O2) {
-        if (!isa<Argument>(O1))
-          // If they are two different objects, and neither is an argument,
-          // we know that we have no alias...
-          return NoAlias;
+      } else if (O1 != O2 && !isa<Argument>(O1)) {
+        // If they are two different objects, and neither is an argument,
+        // we know that we have no alias.
+        return NoAlias;
       }
 
       // If they are the same object, they we can look at the indexes.  If they
@@ -347,9 +341,15 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
       // can't tell anything.
     }
 
-
-    if (!isa<Argument>(O1) && isa<ConstantPointerNull>(V2))
-      return NoAlias;                    // Unique values don't alias null
+    // Unique values don't alias null, except non-byval arguments.
+    if (isa<ConstantPointerNull>(V2)) {
+      if (const Argument *O1Arg = dyn_cast<Argument>(O1)) {
+        if (O1Arg->hasByValAttr()) 
+          return NoAlias;
+      } else {
+        return NoAlias;                    
+      }
+    }
 
     if (isa<GlobalVariable>(O1) ||
         (isa<AllocationInst>(O1) &&
