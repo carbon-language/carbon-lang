@@ -3917,8 +3917,7 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       Flags |= ISD::ParamFlags::ByVal;
       const PointerType *Ty = cast<PointerType>(I->getType());
       const Type *ElementTy = Ty->getElementType();
-      unsigned FrameAlign =
-          Log2_32(getTargetData()->getCallFrameTypeAlignment(ElementTy));
+      unsigned FrameAlign = Log2_32(getByValTypeAlignment(ElementTy));
       unsigned FrameSize  = getTargetData()->getABITypeSize(ElementTy);
       Flags |= (FrameAlign << ISD::ParamFlags::ByValAlignOffs);
       Flags |= (FrameSize  << ISD::ParamFlags::ByValSizeOffs);
@@ -4047,8 +4046,7 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
       Flags |= ISD::ParamFlags::ByVal;
       const PointerType *Ty = cast<PointerType>(Args[i].Ty);
       const Type *ElementTy = Ty->getElementType();
-      unsigned FrameAlign =
-          Log2_32(getTargetData()->getCallFrameTypeAlignment(ElementTy));
+      unsigned FrameAlign = Log2_32(getByValTypeAlignment(ElementTy));
       unsigned FrameSize  = getTargetData()->getABITypeSize(ElementTy);
       Flags |= (FrameAlign << ISD::ParamFlags::ByValAlignOffs);
       Flags |= (FrameSize  << ISD::ParamFlags::ByValSizeOffs);
