@@ -39,13 +39,24 @@ public:
   /// Argument ctor - If Function argument is specified, this argument is
   /// inserted at the end of the argument list for the function.
   ///
-  explicit Argument(const Type *Ty,
-                    const std::string &Name = "",
+  explicit Argument(const Type *Ty, const std::string &Name = "",
                     Function *F = 0);
 
   inline const Function *getParent() const { return Parent; }
   inline       Function *getParent()       { return Parent; }
 
+  /// getArgNo - Return the index of this formal argument in its containing
+  /// function.  For example in "void foo(int a, float b)" a is 0 and b is 1. 
+  unsigned getArgNo() const;
+  
+  /// hasByValAttr - Return true if this argument has the byval attribute on it
+  /// in its containing function.
+  bool hasByValAttr() const;
+
+  /// hasNoAliasAttr - Return true if this argument has the noalias attribute on
+  /// it in its containing function.
+  bool hasNoAliasAttr() const;
+  
   virtual void print(std::ostream &OS) const;
   void print(std::ostream *OS) const {
     if (OS) print(*OS);

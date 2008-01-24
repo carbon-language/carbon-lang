@@ -75,6 +75,37 @@ void Argument::setParent(Function *parent) {
     LeakDetector::removeGarbageObject(this);
 }
 
+/// getArgNo - Return the index of this formal argument in its containing
+/// function.  For example in "void foo(int a, float b)" a is 0 and b is 1. 
+unsigned Argument::getArgNo() const {
+  const Function *F = getParent();
+  assert(F && "Argument is not in a function");
+  
+  Function::const_arg_iterator AI = F->arg_begin();
+  unsigned ArgIdx = 0;
+  for (; &*AI != this; ++AI)
+    ++ArgIdx;
+
+  return ArgIdx;
+}
+
+/// hasByValAttr - Return true if this argument has the byval attribute on it
+/// in its containing function.
+bool Argument::hasByValAttr() const {
+  if (!isa<PointerType>(getType())) return false;
+  return getParent()->paramHasAttr(getArgNo()+1, ParamAttr::ByVal);
+}
+
+/// hasNoAliasAttr - Return true if this argument has the noalias attribute on
+/// it in its containing function.
+bool Argument::hasNoAliasAttr() const {
+  if (!isa<PointerType>(getType())) return false;
+  return getParent()->paramHasAttr(getArgNo()+1, ParamAttr::NoAlias);
+}
+
+
+
+
 //===----------------------------------------------------------------------===//
 // Helper Methods in Function
 //===----------------------------------------------------------------------===//
