@@ -1296,10 +1296,26 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
     // Client should lex another token.
     return false;
   }
+
+  // If the file ends with a newline, form the EOF token on the newline itself,
+  // rather than "on the line following it", which doesn't exist.  This makes
+  // diagnostics relating to the end of file include the last file that the user
+  // actually typed, which is goodness.
+  const char *EndPos = CurLexer->BufferEnd;
+  if (EndPos != CurLexer->BufferStart && 
+      (EndPos[-1] == '\n' || EndPos[-1] == '\r')) {
+    --EndPos;
+    
+    // Handle \n\r and \r\n:
+    if (EndPos != CurLexer->BufferStart && 
+        (EndPos[-1] == '\n' || EndPos[-1] == '\r') &&
+        EndPos[-1] != EndPos[0])
+      --EndPos;
+  }
   
   Result.startToken();
-  CurLexer->BufferPtr = CurLexer->BufferEnd;
-  CurLexer->FormTokenWithChars(Result, CurLexer->BufferEnd);
+  CurLexer->BufferPtr = EndPos;
+  CurLexer->FormTokenWithChars(Result, EndPos);
   Result.setKind(tok::eof);
   
   // We're done with the #included file.
