@@ -244,34 +244,35 @@ public:
 
 namespace {
   
-enum { RValueMayEqualSetKind = 0x0, NumRValueKind };
+enum { RValueDisjunctiveEqualKind = 0x0, NumRValueKind };
   
-class VISIBILITY_HIDDEN RValueMayEqualSet : public RValue {
+class VISIBILITY_HIDDEN RValueDisjunctiveEqual : public RValue {
 public:
-  RValueMayEqualSet(const APSIntSetTy& S)
-    : RValue(RValueMayEqualSetKind, S.getRoot()) {}
+  RValueDisjunctiveEqual(const APSIntSetTy& S)
+    : RValue(RValueDisjunctiveEqualKind, S.getRoot()) {}
   
   APSIntSetTy GetValues() const {
     return APSIntSetTy(reinterpret_cast<APSIntSetTy::TreeTy*>(getRawPtr()));
   }
   
-  RValueMayEqualSet EvalAdd(ValueManager& ValMgr,
-                            const RValueMayEqualSet& V) const;
+  RValueDisjunctiveEqual
+  EvalAdd(ValueManager& ValMgr, const RValueDisjunctiveEqual& V) const;
   
-  RValueMayEqualSet EvalSub(ValueManager& ValMgr,
-                            const RValueMayEqualSet& V) const;
+  RValueDisjunctiveEqual
+  EvalSub(ValueManager& ValMgr, const RValueDisjunctiveEqual& V) const;
   
-  RValueMayEqualSet EvalMul(ValueManager& ValMgr,
-                            const RValueMayEqualSet& V) const;
+  RValueDisjunctiveEqual
+  EvalMul(ValueManager& ValMgr, const RValueDisjunctiveEqual& V) const;
 
-  RValueMayEqualSet EvalCast(ValueManager& ValMgr, Expr* CastExpr) const;
+  RValueDisjunctiveEqual
+  EvalCast(ValueManager& ValMgr, Expr* CastExpr) const;
   
-  RValueMayEqualSet EvalMinus(ValueManager& ValMgr, UnaryOperator* U) const;
-
+  RValueDisjunctiveEqual
+  EvalMinus(ValueManager& ValMgr, UnaryOperator* U) const;
   
   // Implement isa<T> support.
   static inline bool classof(const ExprValue* V) {
-    return V->getSubKind() == RValueMayEqualSetKind;
+    return V->getSubKind() == RValueDisjunctiveEqualKind;
   }
 };
 } // end anonymous namespace
@@ -282,15 +283,15 @@ public:
 
 ExprValue ExprValue::EvalCast(ValueManager& ValMgr, Expr* CastExpr) const {
   switch (getSubKind()) {
-    case RValueMayEqualSetKind:
-      return cast<RValueMayEqualSet>(this)->EvalCast(ValMgr, CastExpr);
+    case RValueDisjunctiveEqualKind:
+      return cast<RValueDisjunctiveEqual>(this)->EvalCast(ValMgr, CastExpr);
     default:
       return InvalidValue();
   }
 }
 
-RValueMayEqualSet
-RValueMayEqualSet::EvalCast(ValueManager& ValMgr, Expr* CastExpr) const {
+RValueDisjunctiveEqual
+RValueDisjunctiveEqual::EvalCast(ValueManager& ValMgr, Expr* CastExpr) const {
   QualType T = CastExpr->getType();
   assert (T->isIntegerType());
   
@@ -313,15 +314,15 @@ RValueMayEqualSet::EvalCast(ValueManager& ValMgr, Expr* CastExpr) const {
 
 RValue RValue::EvalMinus(ValueManager& ValMgr, UnaryOperator* U) const {
   switch (getSubKind()) {
-    case RValueMayEqualSetKind:
-      return cast<RValueMayEqualSet>(this)->EvalMinus(ValMgr, U);
+    case RValueDisjunctiveEqualKind:
+      return cast<RValueDisjunctiveEqual>(this)->EvalMinus(ValMgr, U);
     default:
       return cast<RValue>(InvalidValue());
   }
 }
 
-RValueMayEqualSet
-RValueMayEqualSet::EvalMinus(ValueManager& ValMgr, UnaryOperator* U) const {
+RValueDisjunctiveEqual
+RValueDisjunctiveEqual::EvalMinus(ValueManager& ValMgr, UnaryOperator* U) const{
   
   assert (U->getType() == U->getSubExpr()->getType());  
   assert (U->getType()->isIntegerType());
@@ -343,8 +344,6 @@ RValueMayEqualSet::EvalMinus(ValueManager& ValMgr, UnaryOperator* U) const {
   return S2;
 }
 
-
-
 //===----------------------------------------------------------------------===//
 // Transfer functions: Binary Operations over R-Values.
 //===----------------------------------------------------------------------===//
@@ -355,7 +354,7 @@ case (k1##Kind*NumRValueKind+k2##Kind):\
 
 #define RVALUE_DISPATCH(Op)\
 switch (getSubKind()*NumRValueKind+RHS.getSubKind()){\
-  RVALUE_DISPATCH_CASE(RValueMayEqualSet,RValueMayEqualSet,Op)\
+  RVALUE_DISPATCH_CASE(RValueDisjunctiveEqual,RValueDisjunctiveEqual,Op)\
   default:\
     assert (!isValid() || !RHS.isValid() && "Missing case.");\
     break;\
@@ -377,9 +376,9 @@ RValue RValue::EvalMul(ValueManager& ValMgr, const RValue& RHS) const {
 #undef RVALUE_DISPATCH_CASE
 #undef RVALUE_DISPATCH
 
-RValueMayEqualSet
-RValueMayEqualSet::EvalAdd(ValueManager& ValMgr,
-                           const RValueMayEqualSet& RHS) const {
+RValueDisjunctiveEqual
+RValueDisjunctiveEqual::EvalAdd(ValueManager& ValMgr,
+                           const RValueDisjunctiveEqual& RHS) const {
   
   APSIntSetTy S1 = GetValues();
   APSIntSetTy S2 = RHS.GetValues();
@@ -399,9 +398,9 @@ RValueMayEqualSet::EvalAdd(ValueManager& ValMgr,
   return M;
 }
 
-RValueMayEqualSet
-RValueMayEqualSet::EvalSub(ValueManager& ValMgr,
-                           const RValueMayEqualSet& RHS) const {
+RValueDisjunctiveEqual
+RValueDisjunctiveEqual::EvalSub(ValueManager& ValMgr,
+                                const RValueDisjunctiveEqual& RHS) const {
   
   APSIntSetTy S1 = GetValues();
   APSIntSetTy S2 = RHS.GetValues();
@@ -421,9 +420,9 @@ RValueMayEqualSet::EvalSub(ValueManager& ValMgr,
   return M;
 }
 
-RValueMayEqualSet
-RValueMayEqualSet::EvalMul(ValueManager& ValMgr,
-                           const RValueMayEqualSet& RHS) const {
+RValueDisjunctiveEqual
+RValueDisjunctiveEqual::EvalMul(ValueManager& ValMgr,
+                                const RValueDisjunctiveEqual& RHS) const {
   
   APSIntSetTy S1 = GetValues();
   APSIntSetTy S2 = RHS.GetValues();
@@ -444,7 +443,7 @@ RValueMayEqualSet::EvalMul(ValueManager& ValMgr,
 }
 
 RValue RValue::GetRValue(ValueManager& ValMgr, const llvm::APSInt& V) {
-  return RValueMayEqualSet(ValMgr.AddToSet(ValMgr.GetEmptyAPSIntSet(), V));
+  return RValueDisjunctiveEqual(ValMgr.AddToSet(ValMgr.GetEmptyAPSIntSet(), V));
 }
 
 RValue RValue::GetRValue(ValueManager& ValMgr, IntegerLiteral* I) {
@@ -502,8 +501,8 @@ void ExprValue::print(std::ostream& Out) const {
 
 void RValue::print(std::ostream& Out) const {
   switch (getSubKind()) {  
-    case RValueMayEqualSetKind: {
-      APSIntSetTy S = cast<RValueMayEqualSet>(this)->GetValues();
+    case RValueDisjunctiveEqualKind: {
+      APSIntSetTy S = cast<RValueDisjunctiveEqual>(this)->GetValues();
       bool first = true;
 
       for (APSIntSetTy::iterator I=S.begin(), E=S.end(); I!=E; ++I) {
