@@ -324,6 +324,20 @@ PPCJITInfo::getLazyResolverFunction(JITCompilerFn Fn) {
   return is64Bit ? PPC64CompilationCallback : PPC32CompilationCallback;
 }
 
+#if (defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)) && \
+defined(__APPLE__)
+extern "C" void sys_icache_invalidate(const void *Addr, size_t len);
+#endif
+
+/// SyncICache - On PPC, the JIT emitted code must be explicitly refetched to
+/// ensure correct execution.
+static void SyncICache(const void *Addr, size_t len) {
+#if (defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)) && \
+defined(__APPLE__)
+  sys_icache_invalidate(Addr, len);
+#endif
+}
+
 void *PPCJITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
   // If this is just a call to an external function, emit a branch instead of a
   // call.  The code is the same except for one bit of the last instruction.
@@ -339,10 +353,12 @@ void *PPCJITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
     MCE.emitWordBE(0);
     MCE.emitWordBE(0);
     EmitBranchToAt(Addr, (intptr_t)Fn, false, is64Bit);
+    SyncICache((void*)Addr, 7*4);
     return MCE.finishFunctionStub(0);
   }
 
   MCE.startFunctionStub(10*4);
+  intptr_t Addr = (intptr_t)MCE.getCurrentPCValue();
   if (is64Bit) {
     MCE.emitWordBE(0xf821ffb1);     // stdu r1,-80(r1)
     MCE.emitWordBE(0x7d6802a6);     // mflr r11
@@ -356,7 +372,7 @@ void *PPCJITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
     MCE.emitWordBE(0x7d6802a6);     // mflr r11
     MCE.emitWordBE(0x91610024);     // stw r11, 36(r1)
   }
-  intptr_t Addr = (intptr_t)MCE.getCurrentPCValue();
+  intptr_t BranchAddr = (intptr_t)MCE.getCurrentPCValue();
   MCE.emitWordBE(0);
   MCE.emitWordBE(0);
   MCE.emitWordBE(0);
@@ -364,7 +380,8 @@ void *PPCJITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
   MCE.emitWordBE(0);
   MCE.emitWordBE(0);
   MCE.emitWordBE(0);
-  EmitBranchToAt(Addr, (intptr_t)Fn, true, is64Bit);
+  EmitBranchToAt(BranchAddr, (intptr_t)Fn, true, is64Bit);
+  SyncICache((void*)Addr, 10*4);
   return MCE.finishFunctionStub(0);
 }
 

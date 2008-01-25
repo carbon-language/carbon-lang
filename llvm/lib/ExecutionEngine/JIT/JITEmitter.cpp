@@ -182,10 +182,6 @@ void *JITResolver::getFunctionStub(Function *F) {
     TheJIT->updateGlobalMapping(F, Stub);
   }
 
-  // Invalidate the icache if necessary.
-  synchronizeICache(Stub, TheJIT->getCodeEmitter()->getCurrentPCValue() -
-                          (intptr_t)Stub);
-
   DOUT << "JIT: Stub emitted at [" << Stub << "] for function '"
        << F->getName() << "'\n";
 
@@ -223,10 +219,6 @@ void *JITResolver::getExternalFunctionStub(void *FnAddr) {
 
   Stub = TheJIT->getJITInfo().emitFunctionStub(FnAddr,
                                                *TheJIT->getCodeEmitter());
-
-  // Invalidate the icache if necessary.
-  synchronizeICache(Stub, TheJIT->getCodeEmitter()->getCurrentPCValue() -
-                    (intptr_t)Stub);
 
   DOUT << "JIT: Stub emitted at [" << Stub
        << "] for external function at '" << FnAddr << "'\n";
