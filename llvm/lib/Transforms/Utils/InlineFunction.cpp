@@ -245,8 +245,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
       // or readnone, because the copy would be unneeded: the callee doesn't
       // modify the struct.
       if (CalledFunc->paramHasAttr(ArgNo+1, ParamAttr::ByVal) &&
-          !CalledFunc->paramHasAttr(0, ParamAttr::ReadOnly) &&
-          !CalledFunc->paramHasAttr(0, ParamAttr::ReadNone)) {
+          !CalledFunc->onlyReadsMemory()) {
         const Type *AggTy = cast<PointerType>(I->getType())->getElementType();
         const Type *VoidPtrTy = PointerType::getUnqual(Type::Int8Ty);
         
