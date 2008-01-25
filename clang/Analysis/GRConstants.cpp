@@ -1050,6 +1050,14 @@ void GRConstants::VisitBinaryOperator(BinaryOperator* B,
           Nodify(Dst, B, N2, SetValue(SetValue(St, B, Result), L1, Result));
           break;
         }
+          
+        case BinaryOperator::DivAssign: {
+          const LValue& L1 = cast<LValue>(V1);
+          RValue R1 = cast<RValue>(GetValue(N1->getState(), L1));
+          RValue Result = R1.EvalDiv(ValMgr, cast<RValue>(V2));
+          Nodify(Dst, B, N2, SetValue(SetValue(St, B, Result), L1, Result));
+          break;
+        }
 
         default: 
           Dst.Add(N2);
