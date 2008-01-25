@@ -164,13 +164,20 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
       break;
     }
     if (doExt)
-      Op = Op + MVT::getValueTypeString(LD->getLoadedVT()) + ">";
-
+      Op += MVT::getValueTypeString(LD->getLoadedVT()) + ">";
+    if (LD->isVolatile())
+      Op += "<V>";
     Op += LD->getIndexedModeName(LD->getAddressingMode());
+    if (LD->getAlignment() > 1)
+      Op += " A=" + utostr(LD->getAlignment());
   } else if (const StoreSDNode *ST = dyn_cast<StoreSDNode>(Node)) {
     if (ST->isTruncatingStore())
-      Op = Op + "<trunc " + MVT::getValueTypeString(ST->getStoredVT()) + ">";
+      Op += "<trunc " + MVT::getValueTypeString(ST->getStoredVT()) + ">";
+    if (ST->isVolatile())
+      Op += "<V>";
     Op += ST->getIndexedModeName(ST->getAddressingMode());
+    if (ST->getAlignment() > 1)
+      Op += " A=" + utostr(ST->getAlignment());
   }
 
 #if 0
