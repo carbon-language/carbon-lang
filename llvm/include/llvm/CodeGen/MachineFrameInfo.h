@@ -6,7 +6,10 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-
+//
+// The file defines the MachineFrameInfo class.
+//
+//===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CODEGEN_MACHINEFRAMEINFO_H
 #define LLVM_CODEGEN_MACHINEFRAMEINFO_H
@@ -83,17 +86,17 @@ class MachineFrameInfo {
     // Alignment - The required alignment of this stack slot.
     unsigned Alignment;
 
-    // SPOffset - The offset of this object from the stack pointer on entry to
-    // the function.  This field has no meaning for a variable sized element.
-    int64_t SPOffset;
-    
     // isImmutable - If true, the value of the stack object is set before
     // entering the function and is not modified inside the function. By
     // default, fixed objects are immutable unless marked otherwise.
     bool isImmutable;
+
+    // SPOffset - The offset of this object from the stack pointer on entry to
+    // the function.  This field has no meaning for a variable sized element.
+    int64_t SPOffset;
     
     StackObject(uint64_t Sz, unsigned Al, int64_t SP, bool IM = false)
-      : Size(Sz), Alignment(Al), SPOffset(SP), isImmutable(IM) {}
+      : Size(Sz), Alignment(Al), isImmutable(IM), SPOffset(SP) {}
   };
 
   /// Objects - The list of stack objects allocated...
@@ -194,13 +197,15 @@ public:
   /// getObjectSize - Return the size of the specified object
   ///
   int64_t getObjectSize(int ObjectIdx) const {
-    assert(ObjectIdx+NumFixedObjects < Objects.size() && "Invalid Object Idx!");
+    assert(unsigned(ObjectIdx+NumFixedObjects) < Objects.size() &&
+           "Invalid Object Idx!");
     return Objects[ObjectIdx+NumFixedObjects].Size;
   }
 
   /// getObjectAlignment - Return the alignment of the specified stack object...
   int getObjectAlignment(int ObjectIdx) const {
-    assert(ObjectIdx+NumFixedObjects < Objects.size() && "Invalid Object Idx!");
+    assert(unsigned(ObjectIdx+NumFixedObjects) < Objects.size() &&
+           "Invalid Object Idx!");
     return Objects[ObjectIdx+NumFixedObjects].Alignment;
   }
 
@@ -208,7 +213,8 @@ public:
   /// from the incoming stack pointer.
   ///
   int64_t getObjectOffset(int ObjectIdx) const {
-    assert(ObjectIdx+NumFixedObjects < Objects.size() && "Invalid Object Idx!");
+    assert(unsigned(ObjectIdx+NumFixedObjects) < Objects.size() &&
+           "Invalid Object Idx!");
     return Objects[ObjectIdx+NumFixedObjects].SPOffset;
   }
 
@@ -216,7 +222,8 @@ public:
   /// offset is relative to the stack pointer on entry to the function.
   ///
   void setObjectOffset(int ObjectIdx, int64_t SPOffset) {
-    assert(ObjectIdx+NumFixedObjects < Objects.size() && "Invalid Object Idx!");
+    assert(unsigned(ObjectIdx+NumFixedObjects) < Objects.size() &&
+           "Invalid Object Idx!");
     Objects[ObjectIdx+NumFixedObjects].SPOffset = SPOffset;
   }
 
@@ -280,6 +287,8 @@ public:
   /// isImmutableObjectIndex - Returns true if the specified index corresponds
   /// to an immutable object.
   bool isImmutableObjectIndex(int ObjectIdx) const {
+    assert(unsigned(ObjectIdx+NumFixedObjects) < Objects.size() &&
+           "Invalid Object Idx!");
     return Objects[ObjectIdx+NumFixedObjects].isImmutable;
   }
 
