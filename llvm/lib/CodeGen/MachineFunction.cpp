@@ -126,7 +126,7 @@ MachineFunction::MachineFunction(const Function *F,
   : Annotation(MF_AID), Fn(F), Target(TM) {
   RegInfo = new MachineRegisterInfo(*TM.getRegisterInfo());
   MFInfo = 0;
-  FrameInfo = new MachineFrameInfo();
+  FrameInfo = new MachineFrameInfo(*TM.getFrameInfo());
   ConstantPool = new MachineConstantPool(TM.getTargetData());
   
   // Set up jump table.
@@ -330,6 +330,19 @@ MachineFunction& MachineFunction::get(const Function *F)
 //===----------------------------------------------------------------------===//
 //  MachineFrameInfo implementation
 //===----------------------------------------------------------------------===//
+
+/// CreateFixedObject - Create a new object at a fixed location on the stack.
+/// All fixed objects should be created before other objects are created for
+/// efficiency. By default, fixed objects are immutable. This returns an
+/// index with a negative value.
+///
+int MachineFrameInfo::CreateFixedObject(uint64_t Size, int64_t SPOffset,
+                                        bool Immutable) {
+  assert(Size != 0 && "Cannot allocate zero size fixed stack objects!");
+  Objects.insert(Objects.begin(), StackObject(Size, 1, SPOffset, Immutable));
+  return -++NumFixedObjects;
+}
+
 
 void MachineFrameInfo::print(const MachineFunction &MF, std::ostream &OS) const{
   int ValOffset = MF.getTarget().getFrameInfo()->getOffsetOfLocalArea();

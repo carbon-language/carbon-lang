@@ -19,6 +19,7 @@ class TargetRegisterClass;
 class Type;
 class MachineModuleInfo;
 class MachineFunction;
+class TargetFrameInfo;
 
 /// The CalleeSavedInfo class tracks the information need to locate where a
 /// callee saved register in the current frame.  
@@ -82,17 +83,17 @@ class MachineFrameInfo {
     // Alignment - The required alignment of this stack slot.
     unsigned Alignment;
 
-    // SPOffset - The offset of this object from the stack pointer on entry to
-    // the function.  This field has no meaning for a variable sized element.
-    int64_t SPOffset;
-
     // isImmutable - If true, the value of the stack object is set before
     // entering the function and is not modified inside the function. By
     // default, fixed objects are immutable unless marked otherwise.
     bool isImmutable;
+    
+    // SPOffset - The offset of this object from the stack pointer on entry to
+    // the function.  This field has no meaning for a variable sized element.
+    int64_t SPOffset;
 
     StackObject(uint64_t Sz, unsigned Al, int64_t SP, bool IM = false)
-      : Size(Sz), Alignment(Al), SPOffset(SP), isImmutable(IM) {}
+      : Size(Sz), Alignment(Al), isImmutable(IM), SPOffset(SP) {}
   };
 
   /// Objects - The list of stack objects allocated...
@@ -159,8 +160,11 @@ class MachineFrameInfo {
   /// of frame layouts.
   MachineModuleInfo *MMI;
   
+  /// TargetFrameInfo - Target information about frame layout.
+  ///
+  const TargetFrameInfo &TFI;
 public:
-  MachineFrameInfo() {
+  MachineFrameInfo(const TargetFrameInfo &tfi) : TFI(tfi) {
     StackSize = NumFixedObjects = OffsetAdjustment = MaxAlignment = 0;
     HasVarSizedObjects = false;
     HasCalls = false;
@@ -264,12 +268,9 @@ public:
   /// index with a negative value.
   ///
   int CreateFixedObject(uint64_t Size, int64_t SPOffset,
-                        bool Immutable = true) {
-    assert(Size != 0 && "Cannot allocate zero size fixed stack objects!");
-    Objects.insert(Objects.begin(), StackObject(Size, 1, SPOffset, Immutable));
-    return -++NumFixedObjects;
-  }
-
+                        bool Immutable = true);
+  
+  
   /// isFixedObjectIndex - Returns true if the specified index corresponds to a
   /// fixed stack object.
   bool isFixedObjectIndex(int ObjectIdx) const {
