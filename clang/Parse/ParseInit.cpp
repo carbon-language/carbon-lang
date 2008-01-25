@@ -94,6 +94,8 @@ Parser::ExprResult Parser::ParseInitializerWithPotentialDesignator() {
       // If Objective-C is enabled and this is a typename or other identifier
       // receiver, parse this as a message send expression.
       if (getLang().ObjC1 && isTokObjCMessageIdentifierReceiver()) {
+        // FIXME: Emit ext_gnu_missing_equal_designator for inits like
+        // [4][foo bar].
         IdentifierInfo *Name = Tok.getIdentifierInfo();
         ConsumeToken();
         ExprResult R = ParseObjCMessageExpressionBody(StartLoc, Name, 0);
@@ -101,12 +103,23 @@ Parser::ExprResult Parser::ParseInitializerWithPotentialDesignator() {
       }
       
       // Note that we parse this as an assignment expression, not a constant
-      // expression (allowing *=, =, etc).  Sema needs to validate that the
-      // expression is a constant.
+      // expression (allowing *=, =, etc) to handle the objc case.  Sema needs
+      // to validate that the expression is a constant.
       ExprResult Idx = ParseAssignmentExpression();
       if (Idx.isInvalid) {
         SkipUntil(tok::r_square);
         return Idx;
+      }
+      
+      // Given an expression, we could either have a designator (if the next
+      // tokens are '...' or ']' or an objc message send.  If this is an objc
+      // message send, handle it now.
+      if (getLang().ObjC1 && Tok.isNot(tok::ellipsis) && 
+          Tok.isNot(tok::r_square)) {
+        // FIXME: Emit ext_gnu_missing_equal_designator for inits like
+        // [4][foo bar].
+        ExprResult R = ParseObjCMessageExpressionBody(StartLoc, 0, Idx.Val);
+        return ParsePostfixExpressionSuffix(R);
       }
       
       // Handle the gnu array range extension.

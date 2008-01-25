@@ -3,11 +3,15 @@
 
 @interface NSNumber;
 - () METH;
-
 @end
 
-int main() {
+void test1() {
 	id objects[] = {[NSNumber METH]};
+}
+
+void test2(NSNumber x) {
+	id objects[] = {[x METH]};
 	return 0;
 }
+
 
