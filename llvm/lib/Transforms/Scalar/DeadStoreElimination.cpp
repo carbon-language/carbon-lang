@@ -261,9 +261,6 @@ bool DSE::handleEndBlock(BasicBlock& BB,
   for (BasicBlock::iterator BBI = BB.end(); BBI != BB.begin(); ){
     --BBI;
     
-    if (deadPointers.empty())
-      break;
-    
     // If we find a store whose pointer is dead...
     if (StoreInst* S = dyn_cast<StoreInst>(BBI)) {
       if (!S->isVolatile()) {
@@ -271,8 +268,12 @@ bool DSE::handleEndBlock(BasicBlock& BB,
         // See through pointer-to-pointer bitcasts
         TranslatePointerBitCasts(pointerOperand);
       
-        if (isa<AllocaInst>(pointerOperand) && 
-            deadPointers.count(cast<AllocaInst>(pointerOperand))) {
+        // Alloca'd pointers or byval arguments (which are functionally like
+        // alloca's) are valid candidates for removal.
+        if ( (isa<AllocaInst>(pointerOperand) && 
+              deadPointers.count(cast<AllocaInst>(pointerOperand))) ||
+             (isa<Argument>(pointerOperand) &&
+              cast<Argument>(pointerOperand)->hasByValAttr())) {
           // Remove it!
           MD.removeInstruction(S);
         
