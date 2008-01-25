@@ -39,7 +39,7 @@ def link(args):
 def main(args):
     action = 'link'
     output = ''
-    compile_opts = ['-U__GNUC__']
+    compile_opts = []
     link_opts = []
     files = []
 
@@ -50,6 +50,8 @@ def main(args):
             action = 'preprocess'
         if arg == '-c':
             action = 'compile'
+        if arg.startswith('-print-prog-name'):
+            action = 'print-prog-name'
         if arg == '-o':
             output = args[i+1]
             i += 1
@@ -67,6 +69,11 @@ def main(args):
         if arg[0] != '-':
             files.append(arg)
         i += 1
+
+    if action == 'print-prog-name':
+        # assume we can handle everything
+        print sys.argv[0]
+        return
 
     if not files:
         error('no input files')
