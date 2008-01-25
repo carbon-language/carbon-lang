@@ -83,17 +83,17 @@ class MachineFrameInfo {
     // Alignment - The required alignment of this stack slot.
     unsigned Alignment;
 
+    // SPOffset - The offset of this object from the stack pointer on entry to
+    // the function.  This field has no meaning for a variable sized element.
+    int64_t SPOffset;
+    
     // isImmutable - If true, the value of the stack object is set before
     // entering the function and is not modified inside the function. By
     // default, fixed objects are immutable unless marked otherwise.
     bool isImmutable;
     
-    // SPOffset - The offset of this object from the stack pointer on entry to
-    // the function.  This field has no meaning for a variable sized element.
-    int64_t SPOffset;
-
     StackObject(uint64_t Sz, unsigned Al, int64_t SP, bool IM = false)
-      : Size(Sz), Alignment(Al), isImmutable(IM), SPOffset(SP) {}
+      : Size(Sz), Alignment(Al), SPOffset(SP), isImmutable(IM) {}
   };
 
   /// Objects - The list of stack objects allocated...
