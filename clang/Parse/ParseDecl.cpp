@@ -447,8 +447,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
       isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_extern, Loc, PrevSpec);
       break;
     case tok::kw___private_extern__:
-	  // FIXME: Implement private extern.
-      isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_extern, Loc, PrevSpec);
+      isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_private_extern, Loc, PrevSpec);
       break;
     case tok::kw_static:
       if (DS.isThreadSpecified())

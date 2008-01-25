@@ -281,7 +281,7 @@ protected:
 class VarDecl : public ValueDecl {
 public:
   enum StorageClass {
-    None, Extern, Static, Auto, Register
+    None, Extern, Static, Auto, Register, PrivateExtern
   };
   StorageClass getStorageClass() const { return (StorageClass)SClass; }
 

@@ -572,6 +572,7 @@ void CodeGenModule::EmitGlobalVar(const FileVarDecl *D) {
     assert(0 && "Can't have auto or register globals");
   case VarDecl::None:
   case VarDecl::Extern:
+  case VarDecl::PrivateExtern:
     // todo: common
     break;
   case VarDecl::Static:

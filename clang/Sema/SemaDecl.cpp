@@ -705,11 +705,12 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     VarDecl::StorageClass SC;
     switch (D.getDeclSpec().getStorageClassSpec()) {
       default: assert(0 && "Unknown storage class!");
-      case DeclSpec::SCS_unspecified: SC = VarDecl::None; break;
-      case DeclSpec::SCS_extern:      SC = VarDecl::Extern; break;
-      case DeclSpec::SCS_static:      SC = VarDecl::Static; break;
-      case DeclSpec::SCS_auto:        SC = VarDecl::Auto; break;
-      case DeclSpec::SCS_register:    SC = VarDecl::Register; break;
+      case DeclSpec::SCS_unspecified:    SC = VarDecl::None; break;
+      case DeclSpec::SCS_extern:         SC = VarDecl::Extern; break;
+      case DeclSpec::SCS_static:         SC = VarDecl::Static; break;
+      case DeclSpec::SCS_auto:           SC = VarDecl::Auto; break;
+      case DeclSpec::SCS_register:       SC = VarDecl::Register; break;
+      case DeclSpec::SCS_private_extern: SC = VarDecl::PrivateExtern; break;
     }    
     if (S->getParent() == 0) {
       // C99 6.9p2: The storage-class specifiers auto and register shall not
