@@ -258,8 +258,10 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
              SourceRange(lbrac, rbrac));
     }
     else {
-      assert(ObjCInterfaceType::classof(receiverType.getTypePtr()) &&
-             "bad receiver type");
+      if (!isa<ObjCInterfaceType>(receiverType.getTypePtr())) {
+        Diag(lbrac, diag::error_bad_receiver_type, receiverType.getAsString());
+        return true;
+      }
       ClassDecl = static_cast<ObjCInterfaceType*>(
                     receiverType.getTypePtr())->getDecl();
       // FIXME: consider using InstanceMethodPool, since it will be faster

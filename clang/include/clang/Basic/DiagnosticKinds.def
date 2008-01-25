@@ -482,6 +482,8 @@ DIAG(err_toomany_element_decls, ERROR,
      "Only one element declaration is allowed")
 DIAG(warn_expected_implementation, WARNING,
      "@end must appear in an @implementation context")
+DIAG(error_bad_receiver_type, ERROR,
+     "bad receiver type (its type is '%0')")
 
 //===----------------------------------------------------------------------===//
 // Semantic Analysis
