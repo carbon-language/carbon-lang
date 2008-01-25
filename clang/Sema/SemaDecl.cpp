@@ -1031,8 +1031,13 @@ Sema::DeclTy *Sema::ActOnFinishFunctionBody(DeclTy *D, StmtTy *Body) {
       // At this point, we have gotos that use the bogus label.  Stitch it into
       // the function body so that they aren't leaked and that the AST is well
       // formed.
-      L->setSubStmt(new NullStmt(L->getIdentLoc()));
-      cast<CompoundStmt>((Stmt*)Body)->push_back(L);
+      if (Body) {
+        L->setSubStmt(new NullStmt(L->getIdentLoc()));
+        cast<CompoundStmt>((Stmt*)Body)->push_back(L);
+      } else {
+        // The whole function wasn't parsed correctly, just delete this.
+        delete L;
+      }
     }
   }
   LabelMap.clear();

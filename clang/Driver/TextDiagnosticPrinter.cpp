@@ -131,7 +131,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic &Diags,
     ColNo = LPos.getColumnNumber();
     const char *TokLogicalPtr = LPos.getCharacterData();
     LineStart = TokLogicalPtr-ColNo+1;  // Column # is 1-based
-  
+
     // Compute the line end.  Scan forward from the error position to the end of
     // the line.
     const llvm::MemoryBuffer *Buffer = LPos.getBuffer();
