@@ -582,49 +582,51 @@ void DAGCombiner::Run(bool RunningAfterLegalize) {
     
     SDOperand RV = combine(N);
     
-    if (RV.Val) {
-      ++NodesCombined;
-      // If we get back the same node we passed in, rather than a new node or
-      // zero, we know that the node must have defined multiple values and
-      // CombineTo was used.  Since CombineTo takes care of the worklist 
-      // mechanics for us, we have no work to do in this case.
-      if (RV.Val != N) {
-        assert(N->getOpcode() != ISD::DELETED_NODE &&
-               RV.Val->getOpcode() != ISD::DELETED_NODE &&
-               "Node was deleted but visit returned new node!");
+    if (RV.Val == 0)
+      continue;
+    
+    ++NodesCombined;
+    // If we get back the same node we passed in, rather than a new node or
+    // zero, we know that the node must have defined multiple values and
+    // CombineTo was used.  Since CombineTo takes care of the worklist 
+    // mechanics for us, we have no work to do in this case.
+    if (RV.Val == N)
+      continue;
+    
+    assert(N->getOpcode() != ISD::DELETED_NODE &&
+           RV.Val->getOpcode() != ISD::DELETED_NODE &&
+           "Node was deleted but visit returned new node!");
 
-        DOUT << "\nReplacing.3 "; DEBUG(N->dump(&DAG));
-        DOUT << "\nWith: "; DEBUG(RV.Val->dump(&DAG));
-        DOUT << '\n';
-        std::vector<SDNode*> NowDead;
-        if (N->getNumValues() == RV.Val->getNumValues())
-          DAG.ReplaceAllUsesWith(N, RV.Val, &NowDead);
-        else {
-          assert(N->getValueType(0) == RV.getValueType() && "Type mismatch");
-          SDOperand OpV = RV;
-          DAG.ReplaceAllUsesWith(N, &OpV, &NowDead);
-        }
-          
-        // Push the new node and any users onto the worklist
-        AddToWorkList(RV.Val);
-        AddUsersToWorkList(RV.Val);
-        
-        // Add any uses of the old node to the worklist in case this node is the
-        // last one that uses them.  They may become dead after this node is
-        // deleted.
-        for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
-          AddToWorkList(N->getOperand(i).Val);
-          
-        // Nodes can be reintroduced into the worklist.  Make sure we do not
-        // process a node that has been replaced.
-        removeFromWorkList(N);
-        for (unsigned i = 0, e = NowDead.size(); i != e; ++i)
-          removeFromWorkList(NowDead[i]);
-        
-        // Finally, since the node is now dead, remove it from the graph.
-        DAG.DeleteNode(N);
-      }
+    DOUT << "\nReplacing.3 "; DEBUG(N->dump(&DAG));
+    DOUT << "\nWith: "; DEBUG(RV.Val->dump(&DAG));
+    DOUT << '\n';
+    std::vector<SDNode*> NowDead;
+    if (N->getNumValues() == RV.Val->getNumValues())
+      DAG.ReplaceAllUsesWith(N, RV.Val, &NowDead);
+    else {
+      assert(N->getValueType(0) == RV.getValueType() && "Type mismatch");
+      SDOperand OpV = RV;
+      DAG.ReplaceAllUsesWith(N, &OpV, &NowDead);
     }
+      
+    // Push the new node and any users onto the worklist
+    AddToWorkList(RV.Val);
+    AddUsersToWorkList(RV.Val);
+    
+    // Add any uses of the old node to the worklist in case this node is the
+    // last one that uses them.  They may become dead after this node is
+    // deleted.
+    for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
+      AddToWorkList(N->getOperand(i).Val);
+      
+    // Nodes can be reintroduced into the worklist.  Make sure we do not
+    // process a node that has been replaced.
+    removeFromWorkList(N);
+    for (unsigned i = 0, e = NowDead.size(); i != e; ++i)
+      removeFromWorkList(NowDead[i]);
+    
+    // Finally, since the node is now dead, remove it from the graph.
+    DAG.DeleteNode(N);
   }
   
   // If the root changed (e.g. it was a dead load, update the root).
