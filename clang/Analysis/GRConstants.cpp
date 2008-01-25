@@ -28,8 +28,9 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Compiler.h"
-
 #include "llvm/Support/Streams.h"
+
+#include <functional>
 
 #ifndef NDEBUG
 #include "llvm/Support/GraphWriter.h"
@@ -39,6 +40,7 @@
 using namespace clang;
 using llvm::dyn_cast;
 using llvm::cast;
+using llvm::APSInt;
 
 //===----------------------------------------------------------------------===//
 /// ValueKey - A variant smart pointer that wraps either a ValueDecl* or a
@@ -57,7 +59,7 @@ public:
     : Raw(reinterpret_cast<uintptr_t>(VD) | IsDecl) {}
 
   ValueKey(Stmt* S, bool isBlkExpr = false) 
-    : Raw(reinterpret_cast<uintptr_t>(S) | isBlkExpr ? IsBlkExpr : IsSubExpr){}
+    : Raw(reinterpret_cast<uintptr_t>(S) | isBlkExpr ? IsBlkExpr : IsSubExpr) {}
   
   bool isSubExpr() const { return getKind() == IsSubExpr; }
   bool isDecl() const { return getKind() == IsDecl; }
@@ -120,8 +122,9 @@ namespace llvm {
 
 namespace {
   
-typedef llvm::ImmutableSet<llvm::APSInt > APSIntSetTy;
-    
+typedef llvm::ImmutableSet<APSInt > APSIntSetTy;
+
+  
 class VISIBILITY_HIDDEN ValueManager {
   APSIntSetTy::Factory APSIntSetFactory;
   ASTContext* Ctx;
@@ -137,11 +140,25 @@ public:
     return APSIntSetFactory.GetEmptySet();
   }
   
-  APSIntSetTy AddToSet(const APSIntSetTy& Set, const llvm::APSInt& Val) {
+  APSIntSetTy AddToSet(const APSIntSetTy& Set, const APSInt& Val) {
     return APSIntSetFactory.Add(Set, Val);
   }
 };
 } // end anonymous namespace
+
+template <typename OpTy>
+static inline APSIntSetTy APSIntSetOp(ValueManager& ValMgr,
+                                      APSIntSetTy S1, APSIntSetTy S2,
+                                      OpTy Op) {
+  
+  APSIntSetTy M = ValMgr.GetEmptyAPSIntSet();
+  
+  for (APSIntSetTy::iterator I1=S1.begin(), E1=S2.end(); I1!=E1; ++I1)
+    for (APSIntSetTy::iterator I2=S2.begin(), E2=S2.end(); I2!=E2; ++I2)
+      M = ValMgr.AddToSet(M, Op(*I1,*I2));
+  
+  return M;
+}
 
 //===----------------------------------------------------------------------===//
 // Expression Values.
@@ -225,9 +242,10 @@ public:
   RValue EvalAdd(ValueManager& ValMgr, const RValue& RHS) const;
   RValue EvalSub(ValueManager& ValMgr, const RValue& RHS) const;
   RValue EvalMul(ValueManager& ValMgr, const RValue& RHS) const;
+  RValue EvalDiv(ValueManager& ValMgr, const RValue& RHS) const;
   RValue EvalMinus(ValueManager& ValMgr, UnaryOperator* U) const;
   
-  static RValue GetRValue(ValueManager& ValMgr, const llvm::APSInt& V);
+  static RValue GetRValue(ValueManager& ValMgr, const APSInt& V);
   static RValue GetRValue(ValueManager& ValMgr, IntegerLiteral* I);
   
   // Implement isa<T> support.
@@ -244,37 +262,88 @@ public:
 
 namespace {
   
-enum { RValueDisjunctiveEqualKind = 0x0, NumRValueKind };
+enum { RValEqualityORSetKind,
+       RValInequalityANDSetKind,
+       NumRValueKind };
   
-class VISIBILITY_HIDDEN RValueDisjunctiveEqual : public RValue {
+class VISIBILITY_HIDDEN RValEqualityORSet : public RValue {
 public:
-  RValueDisjunctiveEqual(const APSIntSetTy& S)
-    : RValue(RValueDisjunctiveEqualKind, S.getRoot()) {}
+  RValEqualityORSet(const APSIntSetTy& S)
+    : RValue(RValEqualityORSetKind, S.getRoot()) {}
   
   APSIntSetTy GetValues() const {
     return APSIntSetTy(reinterpret_cast<APSIntSetTy::TreeTy*>(getRawPtr()));
   }
   
-  RValueDisjunctiveEqual
-  EvalAdd(ValueManager& ValMgr, const RValueDisjunctiveEqual& V) const;
+  RValEqualityORSet
+  EvalAdd(ValueManager& ValMgr, const RValEqualityORSet& V) const {
+    return APSIntSetOp(ValMgr, GetValues(), V.GetValues(),
+                       std::plus<APSInt>());
+  }
   
-  RValueDisjunctiveEqual
-  EvalSub(ValueManager& ValMgr, const RValueDisjunctiveEqual& V) const;
+  RValEqualityORSet
+  EvalSub(ValueManager& ValMgr, const RValEqualityORSet& V) const {
+    return APSIntSetOp(ValMgr, GetValues(), V.GetValues(),
+                       std::minus<APSInt>());
+  }
   
-  RValueDisjunctiveEqual
-  EvalMul(ValueManager& ValMgr, const RValueDisjunctiveEqual& V) const;
+  RValEqualityORSet
+  EvalMul(ValueManager& ValMgr, const RValEqualityORSet& V) const {
+    return APSIntSetOp(ValMgr, GetValues(), V.GetValues(),
+                       std::multiplies<APSInt>());
+  }
+  
+  RValEqualityORSet
+  EvalDiv(ValueManager& ValMgr, const RValEqualityORSet& V) const {
+    return APSIntSetOp(ValMgr, GetValues(), V.GetValues(),
+                       std::divides<APSInt>());
+  }
 
-  RValueDisjunctiveEqual
+  RValEqualityORSet
   EvalCast(ValueManager& ValMgr, Expr* CastExpr) const;
   
-  RValueDisjunctiveEqual
+  RValEqualityORSet
   EvalMinus(ValueManager& ValMgr, UnaryOperator* U) const;
   
   // Implement isa<T> support.
   static inline bool classof(const ExprValue* V) {
-    return V->getSubKind() == RValueDisjunctiveEqualKind;
+    return V->getSubKind() == RValEqualityORSetKind;
   }
 };
+  
+class VISIBILITY_HIDDEN RValInequalityANDSet : public RValue {
+public:
+  RValInequalityANDSet(const APSIntSetTy& S)
+  : RValue(RValInequalityANDSetKind, S.getRoot()) {}
+  
+  APSIntSetTy GetValues() const {
+    return APSIntSetTy(reinterpret_cast<APSIntSetTy::TreeTy*>(getRawPtr()));
+  }
+  
+  RValInequalityANDSet
+  EvalAdd(ValueManager& ValMgr, const RValInequalityANDSet& V) const;
+  
+  RValInequalityANDSet
+  EvalSub(ValueManager& ValMgr, const RValInequalityANDSet& V) const;
+  
+  RValInequalityANDSet
+  EvalMul(ValueManager& ValMgr, const RValInequalityANDSet& V) const;
+  
+  RValInequalityANDSet
+  EvalDiv(ValueManager& ValMgr, const RValInequalityANDSet& V) const;
+  
+  RValInequalityANDSet
+  EvalCast(ValueManager& ValMgr, Expr* CastExpr) const;
+  
+  RValInequalityANDSet
+  EvalMinus(ValueManager& ValMgr, UnaryOperator* U) const;
+  
+  // Implement isa<T> support.
+  static inline bool classof(const ExprValue* V) {
+    return V->getSubKind() == RValInequalityANDSetKind;
+  }
+};
+  
 } // end anonymous namespace
 
 //===----------------------------------------------------------------------===//
@@ -283,15 +352,15 @@ public:
 
 ExprValue ExprValue::EvalCast(ValueManager& ValMgr, Expr* CastExpr) const {
   switch (getSubKind()) {
-    case RValueDisjunctiveEqualKind:
-      return cast<RValueDisjunctiveEqual>(this)->EvalCast(ValMgr, CastExpr);
+    case RValEqualityORSetKind:
+      return cast<RValEqualityORSet>(this)->EvalCast(ValMgr, CastExpr);
     default:
       return InvalidValue();
   }
 }
 
-RValueDisjunctiveEqual
-RValueDisjunctiveEqual::EvalCast(ValueManager& ValMgr, Expr* CastExpr) const {
+RValEqualityORSet
+RValEqualityORSet::EvalCast(ValueManager& ValMgr, Expr* CastExpr) const {
   QualType T = CastExpr->getType();
   assert (T->isIntegerType());
   
@@ -299,7 +368,7 @@ RValueDisjunctiveEqual::EvalCast(ValueManager& ValMgr, Expr* CastExpr) const {
   APSIntSetTy S2 = ValMgr.GetEmptyAPSIntSet();
   
   for (APSIntSetTy::iterator I=S1.begin(), E=S1.end(); I!=E; ++I) {
-    llvm::APSInt X = *I;
+    APSInt X = *I;
     X.setIsSigned(T->isSignedIntegerType());
     X.extOrTrunc(ValMgr.getContext()->getTypeSize(T,CastExpr->getLocStart()));    
     S2 = ValMgr.AddToSet(S2, X);
@@ -314,15 +383,15 @@ RValueDisjunctiveEqual::EvalCast(ValueManager& ValMgr, Expr* CastExpr) const {
 
 RValue RValue::EvalMinus(ValueManager& ValMgr, UnaryOperator* U) const {
   switch (getSubKind()) {
-    case RValueDisjunctiveEqualKind:
-      return cast<RValueDisjunctiveEqual>(this)->EvalMinus(ValMgr, U);
+    case RValEqualityORSetKind:
+      return cast<RValEqualityORSet>(this)->EvalMinus(ValMgr, U);
     default:
       return cast<RValue>(InvalidValue());
   }
 }
 
-RValueDisjunctiveEqual
-RValueDisjunctiveEqual::EvalMinus(ValueManager& ValMgr, UnaryOperator* U) const{
+RValEqualityORSet
+RValEqualityORSet::EvalMinus(ValueManager& ValMgr, UnaryOperator* U) const{
   
   assert (U->getType() == U->getSubExpr()->getType());  
   assert (U->getType()->isIntegerType());
@@ -335,7 +404,7 @@ RValueDisjunctiveEqual::EvalMinus(ValueManager& ValMgr, UnaryOperator* U) const{
     
     // FIXME: Shouldn't operator- on APSInt return an APSInt with the proper
     //  sign?
-    llvm::APSInt X(-(*I));
+    APSInt X(-(*I));
     X.setIsSigned(true);
     
     S2 = ValMgr.AddToSet(S2, X);
@@ -354,7 +423,7 @@ case (k1##Kind*NumRValueKind+k2##Kind):\
 
 #define RVALUE_DISPATCH(Op)\
 switch (getSubKind()*NumRValueKind+RHS.getSubKind()){\
-  RVALUE_DISPATCH_CASE(RValueDisjunctiveEqual,RValueDisjunctiveEqual,Op)\
+  RVALUE_DISPATCH_CASE(RValEqualityORSet,RValEqualityORSet,Op)\
   default:\
     assert (!isValid() || !RHS.isValid() && "Missing case.");\
     break;\
@@ -373,83 +442,21 @@ RValue RValue::EvalMul(ValueManager& ValMgr, const RValue& RHS) const {
   RVALUE_DISPATCH(Mul)
 }
 
+RValue RValue::EvalDiv(ValueManager& ValMgr, const RValue& RHS) const {
+  RVALUE_DISPATCH(Div)
+}
+
 #undef RVALUE_DISPATCH_CASE
 #undef RVALUE_DISPATCH
 
-RValueDisjunctiveEqual
-RValueDisjunctiveEqual::EvalAdd(ValueManager& ValMgr,
-                           const RValueDisjunctiveEqual& RHS) const {
-  
-  APSIntSetTy S1 = GetValues();
-  APSIntSetTy S2 = RHS.GetValues();
-  
-  APSIntSetTy M = ValMgr.GetEmptyAPSIntSet();
-    
-  for (APSIntSetTy::iterator I1=S1.begin(), E1=S2.end(); I1!=E1; ++I1)
-    for (APSIntSetTy::iterator I2=S2.begin(), E2=S2.end(); I2!=E2; ++I2) {
-      // FIXME: operator- on APSInt is really operator* on APInt, which loses
-      //  the "signess" information (although the bits are correct).
-      const llvm::APSInt& X = *I1;      
-      llvm::APSInt Y = X + *I2;
-      Y.setIsSigned(X.isSigned());
-      M = ValMgr.AddToSet(M, Y);
-    }
-  
-  return M;
-}
 
-RValueDisjunctiveEqual
-RValueDisjunctiveEqual::EvalSub(ValueManager& ValMgr,
-                                const RValueDisjunctiveEqual& RHS) const {
-  
-  APSIntSetTy S1 = GetValues();
-  APSIntSetTy S2 = RHS.GetValues();
-  
-  APSIntSetTy M = ValMgr.GetEmptyAPSIntSet();
-  
-  for (APSIntSetTy::iterator I1=S1.begin(), E1=S2.end(); I1!=E1; ++I1)
-    for (APSIntSetTy::iterator I2=S2.begin(), E2=S2.end(); I2!=E2; ++I2) {
-      // FIXME: operator- on APSInt is really operator* on APInt, which loses
-      //  the "signess" information (although the bits are correct).
-      const llvm::APSInt& X = *I1;      
-      llvm::APSInt Y = X - *I2;
-      Y.setIsSigned(X.isSigned());
-      M = ValMgr.AddToSet(M, Y);
-    }
-  
-  return M;
-}
-
-RValueDisjunctiveEqual
-RValueDisjunctiveEqual::EvalMul(ValueManager& ValMgr,
-                                const RValueDisjunctiveEqual& RHS) const {
-  
-  APSIntSetTy S1 = GetValues();
-  APSIntSetTy S2 = RHS.GetValues();
-  
-  APSIntSetTy M = ValMgr.GetEmptyAPSIntSet();
-  
-  for (APSIntSetTy::iterator I1=S1.begin(), E1=S2.end(); I1!=E1; ++I1)
-    for (APSIntSetTy::iterator I2=S2.begin(), E2=S2.end(); I2!=E2; ++I2) {
-      // FIXME: operator* on APSInt is really operator* on APInt, which loses
-      //  the "signess" information (although the bits are correct).
-      const llvm::APSInt& X = *I1;      
-      llvm::APSInt Y = X * *I2;
-      Y.setIsSigned(X.isSigned());
-      M = ValMgr.AddToSet(M, Y);
-    }
-  
-  return M;
-}
-
-RValue RValue::GetRValue(ValueManager& ValMgr, const llvm::APSInt& V) {
-  return RValueDisjunctiveEqual(ValMgr.AddToSet(ValMgr.GetEmptyAPSIntSet(), V));
+RValue RValue::GetRValue(ValueManager& ValMgr, const APSInt& V) {
+  return RValEqualityORSet(ValMgr.AddToSet(ValMgr.GetEmptyAPSIntSet(), V));
 }
 
 RValue RValue::GetRValue(ValueManager& ValMgr, IntegerLiteral* I) {
-  llvm::APSInt X(I->getValue());
-  X.setIsSigned(I->getType()->isSignedIntegerType());  
-  return GetRValue(ValMgr, X); 
+  return GetRValue(ValMgr,
+                   APSInt(I->getValue(),I->getType()->isUnsignedIntegerType()));
 }
 
 //===----------------------------------------------------------------------===//
@@ -458,7 +465,7 @@ RValue RValue::GetRValue(ValueManager& ValMgr, IntegerLiteral* I) {
 
 namespace {
 
-enum { LValueDeclKind=0x0, MaxLValueKind };
+enum { LValueDeclKind, MaxLValueKind };
 
 class VISIBILITY_HIDDEN LValueDecl : public LValue {
 public:
@@ -501,8 +508,8 @@ void ExprValue::print(std::ostream& Out) const {
 
 void RValue::print(std::ostream& Out) const {
   switch (getSubKind()) {  
-    case RValueDisjunctiveEqualKind: {
-      APSIntSetTy S = cast<RValueDisjunctiveEqual>(this)->GetValues();
+    case RValEqualityORSetKind: {
+      APSIntSetTy S = cast<RValEqualityORSet>(this)->GetValues();
       bool first = true;
 
       for (APSIntSetTy::iterator I=S.begin(), E=S.end(); I!=E; ++I) {
@@ -895,7 +902,7 @@ void GRConstants::VisitUnaryOperator(UnaryOperator* U,
 
         QualType T = U->getType();
         unsigned bits = getContext()->getTypeSize(T, U->getLocStart());
-        llvm::APSInt One(llvm::APInt(bits, 1), T->isUnsignedIntegerType());
+        APSInt One(llvm::APInt(bits, 1), T->isUnsignedIntegerType());
         RValue R2 = RValue::GetRValue(ValMgr, One);
         
         RValue Result = R1.EvalAdd(ValMgr, R2);
@@ -909,7 +916,7 @@ void GRConstants::VisitUnaryOperator(UnaryOperator* U,
         
         QualType T = U->getType();
         unsigned bits = getContext()->getTypeSize(T, U->getLocStart());
-        llvm::APSInt One(llvm::APInt(bits, 1), T->isUnsignedIntegerType());
+        APSInt One(llvm::APInt(bits, 1), T->isUnsignedIntegerType());
         RValue R2 = RValue::GetRValue(ValMgr, One);
         
         RValue Result = R1.EvalSub(ValMgr, R2);
@@ -923,7 +930,7 @@ void GRConstants::VisitUnaryOperator(UnaryOperator* U,
         
         QualType T = U->getType();
         unsigned bits = getContext()->getTypeSize(T, U->getLocStart());
-        llvm::APSInt One(llvm::APInt(bits, 1), T->isUnsignedIntegerType());
+        APSInt One(llvm::APInt(bits, 1), T->isUnsignedIntegerType());
         RValue R2 = RValue::GetRValue(ValMgr, One);        
         
         RValue Result = R1.EvalAdd(ValMgr, R2);
@@ -937,7 +944,7 @@ void GRConstants::VisitUnaryOperator(UnaryOperator* U,
         
         QualType T = U->getType();
         unsigned bits = getContext()->getTypeSize(T, U->getLocStart());
-        llvm::APSInt One(llvm::APInt(bits, 1), T->isUnsignedIntegerType());
+        APSInt One(llvm::APInt(bits, 1), T->isUnsignedIntegerType());
         RValue R2 = RValue::GetRValue(ValMgr, One);       
         
         RValue Result = R1.EvalSub(ValMgr, R2);
@@ -1002,6 +1009,13 @@ void GRConstants::VisitBinaryOperator(BinaryOperator* B,
           const RValue& R1 = cast<RValue>(V1);
           const RValue& R2 = cast<RValue>(V2);
 	        Nodify(Dst, B, N2, SetValue(St, B, R1.EvalMul(ValMgr, R2)));
+          break;
+        }
+          
+        case BinaryOperator::Div: {
+          const RValue& R1 = cast<RValue>(V1);
+          const RValue& R2 = cast<RValue>(V2);
+	        Nodify(Dst, B, N2, SetValue(St, B, R1.EvalDiv(ValMgr, R2)));
           break;
         }
           
