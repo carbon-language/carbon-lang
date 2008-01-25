@@ -5627,10 +5627,12 @@ static SDOperand PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
   return SDOperand();
 }
 
-/// PerformFORCombine - Do target-specific dag combines on X86ISD::FOR nodes.
+/// PerformFORCombine - Do target-specific dag combines on X86ISD::FOR and
+/// X86ISD::FXOR nodes.
 static SDOperand PerformFORCombine(SDNode *N, SelectionDAG &DAG) {
-  // FOR(0.0, x) -> x
-  // FOR(x, 0.0) -> x
+  assert(N->getOpcode() == X86ISD::FOR || N->getOpcode() == X86ISD::FXOR);
+  // F[X]OR(0.0, x) -> x
+  // F[X]OR(x, 0.0) -> x
   if (ConstantFPSDNode *C = dyn_cast<ConstantFPSDNode>(N->getOperand(0)))
     if (C->getValueAPF().isPosZero())
       return N->getOperand(1);
@@ -5661,6 +5663,7 @@ SDOperand X86TargetLowering::PerformDAGCombine(SDNode *N,
   default: break;
   case ISD::VECTOR_SHUFFLE: return PerformShuffleCombine(N, DAG, Subtarget);
   case ISD::SELECT:         return PerformSELECTCombine(N, DAG, Subtarget);
+  case X86ISD::FXOR:
   case X86ISD::FOR:         return PerformFORCombine(N, DAG);
   case X86ISD::FAND:        return PerformFANDCombine(N, DAG);
   }
