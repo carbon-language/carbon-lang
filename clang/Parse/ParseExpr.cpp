@@ -197,7 +197,6 @@ Parser::ExprResult Parser::ParseConstantExpression() {
   ExprResult LHS = ParseCastExpression(false);
   if (LHS.isInvalid) return LHS;
   
-  // TODO: Validate that this is a constant expr!
   return ParseRHSOfBinaryExpression(LHS, prec::Conditional);
 }
 
@@ -440,7 +439,7 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
 ///                                     assign-expr ')'
 /// [GNU]   '__builtin_types_compatible_p' '(' type-name ',' type-name ')'
 /// [OBJC]  '[' objc-message-expr ']'    
-/// [OBJC]  '@selector' '(' objc-selector-arg ')'      [TODO]
+/// [OBJC]  '@selector' '(' objc-selector-arg ')'
 /// [OBJC]  '@protocol' '(' identifier ')'             
 /// [OBJC]  '@encode' '(' type-name ')'                
 /// [OBJC]  objc-string-literal
