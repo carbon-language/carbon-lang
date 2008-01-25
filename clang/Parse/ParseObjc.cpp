@@ -1262,6 +1262,30 @@ Parser::ExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {
 ///     expression
 ///     class-name
 ///     type-name
+Parser::ExprResult Parser::ParseObjCMessageExpression() {
+  assert(Tok.is(tok::l_square) && "'[' expected");
+  SourceLocation LBracLoc = ConsumeBracket(); // consume '['
+
+  // Parse receiver
+  if (Tok.is(tok::identifier) &&
+      (Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope)
+       || Tok.isNamedIdentifier("super"))) {
+    IdentifierInfo *ReceiverName = Tok.getIdentifierInfo();
+    ConsumeToken();
+    return ParseObjCMessageExpressionBody(LBracLoc, ReceiverName, 0);
+  }
+
+  ExprResult Res = ParseAssignmentExpression();
+  if (Res.isInvalid) {
+    Diag(Tok, diag::err_invalid_receiver_to_message);
+    SkipUntil(tok::identifier);
+    return Res;
+  }
+  return ParseObjCMessageExpressionBody(LBracLoc, 0, Res.Val);
+}
+  
+/// ParseObjCMessageExpressionBody - Having parsed "'[' objc-receiver", parse
+/// the rest of a message expression.
 ///  
 ///   objc-message-args:
 ///     objc-selector
@@ -1281,26 +1305,10 @@ Parser::ExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {
 ///     assignment-expression
 ///     nonempty-expr-list , assignment-expression
 ///   
-Parser::ExprResult Parser::ParseObjCMessageExpression() {
-  assert(Tok.is(tok::l_square) && "'[' expected");
-  SourceLocation LBracloc = ConsumeBracket(); // consume '['
-  IdentifierInfo *ReceiverName = 0;
-  ExprTy *ReceiverExpr = 0;
-  // Parse receiver
-  if (Tok.is(tok::identifier) &&
-      (Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope)
-       || Tok.isNamedIdentifier("super"))) {
-    ReceiverName = Tok.getIdentifierInfo();
-    ConsumeToken();
-  } else {
-    ExprResult Res = ParseAssignmentExpression();
-    if (Res.isInvalid) {
-      Diag(Tok, diag::err_invalid_receiver_to_message);
-      SkipUntil(tok::identifier);
-      return Res;
-    }
-    ReceiverExpr = Res.Val;
-  }
+Parser::ExprResult
+Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
+                                       IdentifierInfo *ReceiverName,
+                                       ExprTy *ReceiverExpr) {
   // Parse objc-selector
   SourceLocation Loc;
   IdentifierInfo *selIdent = ParseObjCSelector(Loc);
@@ -1357,7 +1365,7 @@ Parser::ExprResult Parser::ParseObjCMessageExpression() {
     SkipUntil(tok::semi);
     return true;
   }
-  SourceLocation RBracloc = ConsumeBracket(); // consume ']'
+  SourceLocation RBracLoc = ConsumeBracket(); // consume ']'
   
   unsigned nKeys = KeyIdents.size();
   if (nKeys == 0)
@@ -1367,9 +1375,9 @@ Parser::ExprResult Parser::ParseObjCMessageExpression() {
   // We've just parsed a keyword message.
   if (ReceiverName) 
     return Actions.ActOnClassMessage(CurScope,
-                                     ReceiverName, Sel, LBracloc, RBracloc,
+                                     ReceiverName, Sel, LBracLoc, RBracLoc,
                                      &KeyExprs[0], KeyExprs.size());
-  return Actions.ActOnInstanceMessage(ReceiverExpr, Sel, LBracloc, RBracloc,
+  return Actions.ActOnInstanceMessage(ReceiverExpr, Sel, LBracLoc, RBracLoc,
                                       &KeyExprs[0], KeyExprs.size());
 }
 

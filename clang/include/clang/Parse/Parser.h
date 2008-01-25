@@ -368,7 +368,10 @@ private:
   ExprResult ParseObjCSelectorExpression(SourceLocation AtLoc);
   ExprResult ParseObjCProtocolExpression(SourceLocation AtLoc);
   ExprResult ParseObjCMessageExpression();
-
+  ExprResult ParseObjCMessageExpressionBody(SourceLocation LBracloc,
+                                            IdentifierInfo *ReceiverName,
+                                            ExprTy *ReceiverExpr);
+    
   //===--------------------------------------------------------------------===//
   // C99 6.8: Statements and Blocks.
   
