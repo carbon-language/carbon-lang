@@ -57,7 +57,7 @@ public:
     : Raw(reinterpret_cast<uintptr_t>(VD) | IsDecl) {}
 
   ValueKey(Stmt* S, bool isBlkExpr = false) 
-    : Raw(reinterpret_cast<uintptr_t>(S) | (isBlkExpr ? IsBlkExpr : IsSubExpr)){}
+    : Raw(reinterpret_cast<uintptr_t>(S) | isBlkExpr ? IsBlkExpr : IsSubExpr){}
   
   bool isSubExpr() const { return getKind() == IsSubExpr; }
   bool isDecl() const { return getKind() == IsDecl; }
