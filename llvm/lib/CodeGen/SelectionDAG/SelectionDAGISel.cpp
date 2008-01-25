@@ -57,7 +57,7 @@ ViewSchedDAGs("view-sched-dags", cl::Hidden,
           cl::desc("Pop up a window to show sched dags as they are processed"));
 static cl::opt<bool>
 ViewSUnitDAGs("view-sunit-dags", cl::Hidden,
-          cl::desc("Pop up a window to show SUnit dags after they are processed"));
+      cl::desc("Pop up a window to show SUnit dags after they are processed"));
 #else
 static const bool ViewISelDAGs = 0, ViewSchedDAGs = 0, ViewSUnitDAGs = 0;
 #endif
@@ -79,7 +79,8 @@ namespace {
           RegisterPassParser<RegisterScheduler> >
   ISHeuristic("pre-RA-sched",
               cl::init(&createDefaultScheduler),
-              cl::desc("Instruction schedulers available (before register allocation):"));
+              cl::desc("Instruction schedulers available (before register"
+                       " allocation):"));
 
   static RegisterScheduler
   defaultListDAGScheduler("default", "  Best scheduler for the target",
