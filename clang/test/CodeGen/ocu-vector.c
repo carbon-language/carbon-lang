@@ -3,6 +3,7 @@
 typedef __attribute__(( ocu_vector_type(4) )) float float4;
 typedef __attribute__(( ocu_vector_type(2) )) float float2;
 
+float4 foo = (float4){ 1.0, 2.0, 3.0, 4.0 };
 
 float4 test1(float4 V) {
   return V.wzyx+V;

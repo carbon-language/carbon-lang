@@ -487,7 +487,8 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
   case CompoundLiteralExprClass:
     if (Loc) *Loc = getLocStart();
     // Allow "(int []){2,4}", since the array will be converted to a pointer.
-    return TR->isArrayType();
+    // Allow "(vector type){2,4}" since the elements are all constant.
+    return TR->isArrayType() || TR->isVectorType();
   case UnaryOperatorClass: {
     const UnaryOperator *Exp = cast<UnaryOperator>(this);
     

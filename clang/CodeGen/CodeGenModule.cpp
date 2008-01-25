@@ -300,7 +300,8 @@ static llvm::Constant *GenerateAggregateInit(const InitListExpr *ILE,
     return 0;
   }
   
-  assert((ILE->getType()->isArrayType() || ILE->getType()->isStructureType()) &&
+  assert((ILE->getType()->isArrayType() || ILE->getType()->isStructureType() ||
+          ILE->getType()->isVectorType()) &&
          "Bad type for init list!");
   CodeGenTypes& Types = CGM.getTypes();
 
@@ -341,6 +342,9 @@ static llvm::Constant *GenerateAggregateInit(const InitListExpr *ILE,
 
   if (ILE->getType()->isStructureType())
     return llvm::ConstantStruct::get(cast<llvm::StructType>(CType), Elts);
+
+  if (ILE->getType()->isVectorType())
+    return llvm::ConstantVector::get(cast<llvm::VectorType>(CType), Elts);
 
   // Make sure we have an array at this point
   assert(AType);
@@ -415,6 +419,12 @@ static llvm::Constant *GenerateConstantExpr(const Expr *Expression,
       Str.resize(RealLen);
     
     return llvm::ConstantArray::get(Str, false);
+  }
+
+  // Generate initializer for the CompoundLiteral
+  case Stmt::CompoundLiteralExprClass: {
+    const CompoundLiteralExpr *CLE = cast<CompoundLiteralExpr>(Expression);
+    return GenerateConstantExpr(CLE->getInitializer(), CGM);
   }
 
   // Elide parenthesis.
