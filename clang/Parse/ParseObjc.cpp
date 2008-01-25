@@ -1267,9 +1267,7 @@ Parser::ExprResult Parser::ParseObjCMessageExpression() {
   SourceLocation LBracLoc = ConsumeBracket(); // consume '['
 
   // Parse receiver
-  if (Tok.is(tok::identifier) &&
-      (Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope)
-       || Tok.isNamedIdentifier("super"))) {
+  if (isTokObjCMessageIdentifierReceiver()) {
     IdentifierInfo *ReceiverName = Tok.getIdentifierInfo();
     ConsumeToken();
     return ParseObjCMessageExpressionBody(LBracLoc, ReceiverName, 0);

@@ -362,6 +362,17 @@ private:
   
   //===--------------------------------------------------------------------===//
   // Objective-C Expressions
+  
+  bool isTokObjCMessageIdentifierReceiver() const {
+    if (!Tok.is(tok::identifier))
+      return false;
+    
+    if (Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope))
+      return true;
+    
+    return Tok.isNamedIdentifier("super");
+  }
+  
   ExprResult ParseObjCAtExpression(SourceLocation AtLocation);
   ExprResult ParseObjCStringLiteral(SourceLocation AtLoc);
   ExprResult ParseObjCEncodeExpression(SourceLocation AtLoc);
