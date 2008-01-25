@@ -86,9 +86,24 @@ Parser::ExprResult Parser::ParseInitializerWithPotentialDesignator() {
     case tok::l_square: {
       // array-designator: '[' constant-expression ']'
       // array-designator: '[' constant-expression '...' constant-expression ']'
+      // When designation is empty, this can be '[' objc-message-expr ']'.  Note
+      // that we also have the case of [4][foo bar], which is the gnu designator
+      // extension + objc message send.
       SourceLocation StartLoc = ConsumeBracket();
       
-      ExprResult Idx = ParseConstantExpression();
+      // If Objective-C is enabled and this is a typename or other identifier
+      // receiver, parse this as a message send expression.
+      if (getLang().ObjC1 && isTokObjCMessageIdentifierReceiver()) {
+        IdentifierInfo *Name = Tok.getIdentifierInfo();
+        ConsumeToken();
+        ExprResult R = ParseObjCMessageExpressionBody(StartLoc, Name, 0);
+        return ParsePostfixExpressionSuffix(R);
+      }
+      
+      // Note that we parse this as an assignment expression, not a constant
+      // expression (allowing *=, =, etc).  Sema needs to validate that the
+      // expression is a constant.
+      ExprResult Idx = ParseAssignmentExpression();
       if (Idx.isInvalid) {
         SkipUntil(tok::r_square);
         return Idx;
