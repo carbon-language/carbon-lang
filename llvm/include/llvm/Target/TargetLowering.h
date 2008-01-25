@@ -123,7 +123,7 @@ public:
   /// getRegClassFor - Return the register class that should be used for the
   /// specified value type.  This may only be called on legal types.
   TargetRegisterClass *getRegClassFor(MVT::ValueType VT) const {
-    assert(!MVT::isExtendedVT(VT));
+    assert(VT < array_lengthof(RegClassForVT));
     TargetRegisterClass *RC = RegClassForVT[VT];
     assert(RC && "This value type is not natively supported!");
     return RC;
@@ -133,6 +133,7 @@ public:
   /// specified value type.  This means that it has a register that directly
   /// holds it without promotions or expansions.
   bool isTypeLegal(MVT::ValueType VT) const {
+    assert(MVT::isExtendedVT(VT) || VT < array_lengthof(RegClassForVT));
     return !MVT::isExtendedVT(VT) && RegClassForVT[VT] != 0;
   }
 
@@ -158,11 +159,11 @@ public:
           return VT == MVT::RoundIntegerType(VT) ? Expand : Promote;
         assert(0 && "Unsupported extended type!");
       }
+      assert(VT<4*array_lengthof(ValueTypeActions)*sizeof(ValueTypeActions[0]));
       return (LegalizeAction)((ValueTypeActions[VT>>4] >> ((2*VT) & 31)) & 3);
     }
     void setTypeAction(MVT::ValueType VT, LegalizeAction Action) {
-      assert(!MVT::isExtendedVT(VT));
-      assert(unsigned(VT >> 4) < array_lengthof(ValueTypeActions));
+      assert(VT<4*array_lengthof(ValueTypeActions)*sizeof(ValueTypeActions[0]));
       ValueTypeActions[VT>>4] |= Action << ((VT*2) & 31);
     }
   };
@@ -187,6 +188,7 @@ public:
   /// returns the integer type to transform to.
   MVT::ValueType getTypeToTransformTo(MVT::ValueType VT) const {
     if (!MVT::isExtendedVT(VT)) {
+      assert(VT < array_lengthof(TransformToType));
       MVT::ValueType NVT = TransformToType[VT];
       assert(getTypeAction(NVT) != Promote &&
              "Promote may not follow Expand or Promote");
@@ -275,6 +277,8 @@ public:
   /// for it.
   LegalizeAction getOperationAction(unsigned Op, MVT::ValueType VT) const {
     if (MVT::isExtendedVT(VT)) return Expand;
+    assert(Op < array_lengthof(OpActions) &&
+           VT < sizeof(OpActions[0])*4 && "Table isn't big enough!");
     return (LegalizeAction)((OpActions[Op] >> (2*VT)) & 3);
   }
   
@@ -290,15 +294,17 @@ public:
   /// expanded to some other code sequence, or the target has a custom expander
   /// for it.
   LegalizeAction getLoadXAction(unsigned LType, MVT::ValueType VT) const {
-    if (MVT::isExtendedVT(VT)) return getTypeAction(VT);
+    assert(LType < array_lengthof(LoadXActions) &&
+           VT < sizeof(LoadXActions[0])*4 && "Table isn't big enough!");
     return (LegalizeAction)((LoadXActions[LType] >> (2*VT)) & 3);
   }
   
   /// isLoadXLegal - Return true if the specified load with extension is legal
   /// on this target.
   bool isLoadXLegal(unsigned LType, MVT::ValueType VT) const {
-    return getLoadXAction(LType, VT) == Legal ||
-           getLoadXAction(LType, VT) == Custom;
+    return !MVT::isExtendedVT(VT) &&
+      (getLoadXAction(LType, VT) == Legal ||
+       getLoadXAction(LType, VT) == Custom);
   }
   
   /// getTruncStoreAction - Return how this store with truncation should be
@@ -315,8 +321,9 @@ public:
   /// isTruncStoreLegal - Return true if the specified store with truncation is
   /// legal on this target.
   bool isTruncStoreLegal(MVT::ValueType ValVT, MVT::ValueType MemVT) const {
-    return getTruncStoreAction(ValVT, MemVT) == Legal ||
-           getTruncStoreAction(ValVT, MemVT) == Custom;
+    return !MVT::isExtendedVT(MemVT) &&
+      (getTruncStoreAction(ValVT, MemVT) == Legal ||
+       getTruncStoreAction(ValVT, MemVT) == Custom);
   }
 
   /// getIndexedLoadAction - Return how the indexed load should be treated:
@@ -325,7 +332,9 @@ public:
   /// for it.
   LegalizeAction
   getIndexedLoadAction(unsigned IdxMode, MVT::ValueType VT) const {
-    if (MVT::isExtendedVT(VT)) return getTypeAction(VT);
+    assert(IdxMode < array_lengthof(IndexedModeActions[0]) &&
+           VT < sizeof(IndexedModeActions[0][0])*4 &&
+           "Table isn't big enough!");
     return (LegalizeAction)((IndexedModeActions[0][IdxMode] >> (2*VT)) & 3);
   }
 
@@ -342,7 +351,9 @@ public:
   /// for it.
   LegalizeAction
   getIndexedStoreAction(unsigned IdxMode, MVT::ValueType VT) const {
-    if (MVT::isExtendedVT(VT)) return getTypeAction(VT);
+    assert(IdxMode < array_lengthof(IndexedModeActions[1]) &&
+           VT < sizeof(IndexedModeActions[1][0])*4 &&
+           "Table isn't big enough!");
     return (LegalizeAction)((IndexedModeActions[1][IdxMode] >> (2*VT)) & 3);
   }  
   
@@ -412,8 +423,10 @@ public:
   /// getRegisterType - Return the type of registers that this ValueType will
   /// eventually require.
   MVT::ValueType getRegisterType(MVT::ValueType VT) const {
-    if (!MVT::isExtendedVT(VT))
+    if (!MVT::isExtendedVT(VT)) {
+      assert(VT < array_lengthof(RegisterTypeForVT));
       return RegisterTypeForVT[VT];
+    }
     if (MVT::isVector(VT)) {
       MVT::ValueType VT1, RegisterVT;
       unsigned NumIntermediates;
@@ -428,8 +441,10 @@ public:
   /// registers, but may be more than one for types (like i64) that are split
   /// into pieces.
   unsigned getNumRegisters(MVT::ValueType VT) const {
-    if (!MVT::isExtendedVT(VT))
+    if (!MVT::isExtendedVT(VT)) {
+      assert(VT < array_lengthof(NumRegistersForVT));
       return NumRegistersForVT[VT];
+    }
     if (MVT::isVector(VT)) {
       MVT::ValueType VT1, VT2;
       unsigned NumIntermediates;
@@ -441,6 +456,7 @@ public:
   /// hasTargetDAGCombine - If true, the target has custom DAG combine
   /// transformations that it can perform for the specified node.
   bool hasTargetDAGCombine(ISD::NodeType NT) const {
+    assert(unsigned(NT >> 3) < array_lengthof(TargetDAGCombineArray));
     return TargetDAGCombineArray[NT >> 3] & (1 << (NT&7));
   }
 
@@ -738,7 +754,7 @@ protected:
   /// regclass for the specified value type.  This indicates the selector can
   /// handle values of that class natively.
   void addRegisterClass(MVT::ValueType VT, TargetRegisterClass *RC) {
-    assert(!MVT::isExtendedVT(VT));
+    assert(VT < array_lengthof(RegClassForVT));
     AvailableRegClasses.push_back(std::make_pair(VT, RC));
     RegClassForVT[VT] = RC;
   }
@@ -833,6 +849,7 @@ protected:
   /// independent node that they want to provide a custom DAG combiner for by
   /// implementing the PerformDAGCombine virtual method.
   void setTargetDAGCombine(ISD::NodeType NT) {
+    assert(unsigned(NT >> 3) < array_lengthof(TargetDAGCombineArray));
     TargetDAGCombineArray[NT >> 3] |= 1 << (NT&7);
   }
   
