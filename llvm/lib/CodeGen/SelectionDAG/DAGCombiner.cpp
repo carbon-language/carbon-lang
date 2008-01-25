@@ -14,6 +14,8 @@
 
 #define DEBUG_TYPE "dagcombine"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLowering.h"
@@ -4074,11 +4076,37 @@ bool DAGCombiner::CombineToPostIndexedLoadStore(SDNode *N) {
   return false;
 }
 
+/// InferAlignment - If we can infer some alignment information from this
+/// pointer, return it.
+static unsigned InferAlignment(SDOperand Ptr, SelectionDAG &DAG) {
+  // If this is a direct reference to a stack slot, use information about the
+  // stack slot's alignment.
+  if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(Ptr)) {
+    return DAG.getMachineFunction().getFrameInfo()->
+         getObjectAlignment(FI->getIndex());
+  }
+  
+  // FIXME: Handle FI+CST.
+  
+  return 0;
+}
 
 SDOperand DAGCombiner::visitLOAD(SDNode *N) {
   LoadSDNode *LD  = cast<LoadSDNode>(N);
   SDOperand Chain = LD->getChain();
   SDOperand Ptr   = LD->getBasePtr();
+  
+  // Try to infer better alignment information than the load already has.
+  if (LD->isUnindexed()) {
+    if (unsigned Align = InferAlignment(Ptr, DAG)) {
+      if (Align > LD->getAlignment())
+        return DAG.getExtLoad(LD->getExtensionType(), LD->getValueType(0),
+                              Chain, Ptr, LD->getSrcValue(),
+                              LD->getSrcValueOffset(), LD->getLoadedVT(),
+                              LD->isVolatile(), Align);
+    }
+  }
+  
 
   // If load is not volatile and there are no uses of the loaded value (and
   // the updated indexed value in case of indexed loads), change uses of the
@@ -4188,6 +4216,16 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
   SDOperand Chain = ST->getChain();
   SDOperand Value = ST->getValue();
   SDOperand Ptr   = ST->getBasePtr();
+  
+  // Try to infer better alignment information than the store already has.
+  if (ST->isUnindexed()) {
+    if (unsigned Align = InferAlignment(Ptr, DAG)) {
+      if (Align > ST->getAlignment())
+        return DAG.getTruncStore(Chain, Value, Ptr, ST->getSrcValue(),
+                                 ST->getSrcValueOffset(), ST->getStoredVT(),
+                                 ST->isVolatile(), Align);
+    }
+  }
   
   // If this is a store of a bit convert, store the input value if the
   // resultant store does not need a higher alignment than the original.
