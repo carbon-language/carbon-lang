@@ -703,7 +703,7 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
       }
       break;
     case UnaryOperator::LNot: {
-      bool Val = Result != 0;
+      bool Val = Result == 0;
       Result.zextOrTrunc(
         static_cast<uint32_t>(Ctx.getTypeSize(getType(),
                                               Exp->getOperatorLoc())));
