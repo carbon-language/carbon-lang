@@ -991,26 +991,53 @@ namespace {
   typedef llvm::DenseMap<const Stmt*,unsigned> BlkExprMapTy;
 }
 
+static void FindSubExprAssignments(Stmt* S, llvm::SmallPtrSet<Expr*,50>& Set) {
+  for (Stmt::child_iterator I=S->child_begin(), E=S->child_end(); I!=E; ++I) {
+    if (BinaryOperator* B = dyn_cast<BinaryOperator>(*I))
+      if (B->isAssignmentOp()) Set.insert(B);
+    
+    FindSubExprAssignments(*I, Set);
+  }
+}
+
 static BlkExprMapTy* PopulateBlkExprMap(CFG& cfg) {
   BlkExprMapTy* M = new BlkExprMapTy();
   
+  // Look for assignments that are used as subexpressions.  These are the
+  // only assignments that we want to register as a block-level expression.
+  llvm::SmallPtrSet<Expr*,50> SubExprAssignments;
+  
   for (CFG::iterator I=cfg.begin(), E=cfg.end(); I != E; ++I)
     for (CFGBlock::iterator BI=I->begin(), EI=I->end(); BI != EI; ++BI)
-      if (const Expr* E = dyn_cast<Expr>(*BI)) {
-        unsigned x = M->size();
-        (*M)[E] = x;
+      FindSubExprAssignments(*BI, SubExprAssignments);
 
-        // Special handling for statement expressions.  The last statement
-        // in the statement expression is also a block-level expr.
-        if (const StmtExpr* S = dyn_cast<StmtExpr>(E)) {
+  // Iterate over the statements again on identify the Expr* and Stmt* at
+  // the block-level that are block-level expressions.
+  for (CFG::iterator I=cfg.begin(), E=cfg.end(); I != E; ++I)
+    for (CFGBlock::iterator BI=I->begin(), EI=I->end(); BI != EI; ++BI)
+      if (Expr* E = dyn_cast<Expr>(*BI)) {
+        
+        if (BinaryOperator* B = dyn_cast<BinaryOperator>(E)) {
+          // Assignment expressions that are not nested within another
+          // expression are really "statements" whose value is never
+          // used by another expression.
+          if (B->isAssignmentOp() && !SubExprAssignments.count(E))
+            continue;
+        }
+        else if (const StmtExpr* S = dyn_cast<StmtExpr>(E)) {
+          // Special handling for statement expressions.  The last statement
+          // in the statement expression is also a block-level expr.
           const CompoundStmt* C = S->getSubStmt();
           if (!C->body_empty()) {
-            x = M->size();
+            unsigned x = M->size();
             (*M)[C->body_back()] = x;
           }
         }
-      }
 
+        unsigned x = M->size();
+        (*M)[E] = x;
+      }
+    
   return M;
 }
 
