@@ -50,23 +50,26 @@ namespace {
   
 class VISIBILITY_HIDDEN ValueKey {
   uintptr_t Raw;
+  
+  void operator=(const ValueKey& RHS); // Do not implement.
 public:
   enum  Kind { IsSubExpr=0x0, IsBlkExpr=0x1, IsDecl=0x2, Flags=0x3 };
   inline void* getPtr() const { return reinterpret_cast<void*>(Raw & ~Flags); }
   inline Kind getKind() const { return (Kind) (Raw & Flags); }
   
   ValueKey(const ValueDecl* VD)
-    : Raw(reinterpret_cast<uintptr_t>(VD) | IsDecl) {}
+    : Raw(reinterpret_cast<uintptr_t>(VD) | IsDecl) { assert(VD); }
 
   ValueKey(Stmt* S, bool isBlkExpr = false) 
-    : Raw(reinterpret_cast<uintptr_t>(S) | isBlkExpr ? IsBlkExpr : IsSubExpr) {}
+    : Raw(reinterpret_cast<uintptr_t>(S) | (isBlkExpr ? IsBlkExpr : IsSubExpr)){
+      assert(S);
+    }
   
   bool isSubExpr() const { return getKind() == IsSubExpr; }
   bool isDecl() const { return getKind() == IsDecl; }
   
   inline void Profile(llvm::FoldingSetNodeID& ID) const {
     ID.AddPointer(getPtr());
-    ID.AddInteger((unsigned) getKind());
   }
   
   inline bool operator==(const ValueKey& X) const {
@@ -146,16 +149,17 @@ public:
 };
 } // end anonymous namespace
 
-template <typename OpTy>
+template <template <typename T> class OpTy>
 static inline APSIntSetTy APSIntSetOp(ValueManager& ValMgr,
-                                      APSIntSetTy S1, APSIntSetTy S2,
-                                      OpTy Op) {
+                                      APSIntSetTy S1, APSIntSetTy S2) {
   
   APSIntSetTy M = ValMgr.GetEmptyAPSIntSet();
   
+  OpTy<APSInt> Op;
+  
   for (APSIntSetTy::iterator I1=S1.begin(), E1=S2.end(); I1!=E1; ++I1)
     for (APSIntSetTy::iterator I2=S2.begin(), E2=S2.end(); I2!=E2; ++I2)
-      M = ValMgr.AddToSet(M, Op(*I1,*I2));
+      M = ValMgr.AddToSet(M, Op(*I1, *I2));
   
   return M;
 }
@@ -277,26 +281,22 @@ public:
   
   RValEqualityORSet
   EvalAdd(ValueManager& ValMgr, const RValEqualityORSet& V) const {
-    return APSIntSetOp(ValMgr, GetValues(), V.GetValues(),
-                       std::plus<APSInt>());
+    return APSIntSetOp<std::plus>(ValMgr, GetValues(), V.GetValues());
   }
   
   RValEqualityORSet
   EvalSub(ValueManager& ValMgr, const RValEqualityORSet& V) const {
-    return APSIntSetOp(ValMgr, GetValues(), V.GetValues(),
-                       std::minus<APSInt>());
+    return APSIntSetOp<std::minus>(ValMgr, GetValues(), V.GetValues());
   }
   
   RValEqualityORSet
   EvalMul(ValueManager& ValMgr, const RValEqualityORSet& V) const {
-    return APSIntSetOp(ValMgr, GetValues(), V.GetValues(),
-                       std::multiplies<APSInt>());
+    return APSIntSetOp<std::multiplies>(ValMgr, GetValues(), V.GetValues());
   }
   
   RValEqualityORSet
   EvalDiv(ValueManager& ValMgr, const RValEqualityORSet& V) const {
-    return APSIntSetOp(ValMgr, GetValues(), V.GetValues(),
-                       std::divides<APSInt>());
+    return APSIntSetOp<std::divides>(ValMgr, GetValues(), V.GetValues());
   }
 
   RValEqualityORSet
@@ -775,6 +775,7 @@ LValue GRConstants::GetLValue(const StateTy& St, Stmt* S) {
 
 GRConstants::StateTy GRConstants::SetValue(StateTy St, Stmt* S,
                                            const ExprValue& V) {
+  assert (S);
   
   if (!StateCleaned) {
     St = RemoveDeadBindings(CurrentStmt, St);
