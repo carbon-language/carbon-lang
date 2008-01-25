@@ -66,7 +66,7 @@ void test() {
     { 1, 3, 5, 2 }, // expected-warning{{excess elements in array initializer}}
     { 4, 6 },
     { 3, 5, 7 },
-    { 4, 6, 8 }, // expected-warning{{excess elements in array initializer}}
+    { 4, 6, 8 },
   };
 }
 
@@ -152,14 +152,14 @@ void charArrays()
   char c[] = { "Hello" };
   int l[sizeof(c) == 6 ? 1 : -1];
   
-  int i[] = { "Hello "}; // expected-error{{array of wrong type 'int' initialized from string constant}}
+  int i[] = { "Hello "}; // expected-warning{{incompatible pointer to integer conversion initializing 'char *', expected 'int'}}
   char c2[] = { "Hello", "Good bye" }; //expected-error{{excess elements in char array initializer}}
 
-  int i2[1] = { "Hello" }; //expected-error{{array of wrong type 'int' initialized from string constant}}
+  int i2[1] = { "Hello" }; //expected-warning{{incompatible pointer to integer conversion initializing 'char *', expected 'int'}}
   char c3[5] = { "Hello" };
   char c4[4] = { "Hello" }; //expected-warning{{initializer-string for char array is too long}}
 
-  int i3[] = {}; //expected-error{{at least one initializer value required to size array}} expected-warning{{use of GNU empty initializer extension}}
+  int i3[] = {}; //expected-error{{at least one initializer value required to size array}} expected-error{{variable has incomplete type 'int []'}} expected-warning{{use of GNU empty initializer extension}}
 }
 
 void variableArrayInit() {
@@ -167,3 +167,40 @@ void variableArrayInit() {
   char strlit[a] = "foo"; //expected-error{{variable-sized object may not be initialized}}
   int b[a] = { 1, 2, 4 }; //expected-error{{variable-sized object may not be initialized}}
 }
+
+// Pure array tests
+float r1[10] = {{7}}; //expected-warning{{braces around scalar initializer}}
+float r2[] = {{8}}; //expected-warning{{braces around scalar initializer}}
+char r3[][5] = {1,2,3,4,5,6};
+char r3_2[sizeof r3 == 10 ? 1 : -1];
+float r4[1][2] = {1,{2},3,4}; //expected-warning{{braces around scalar initializer}} expected-warning{{excess elements in array initializer}}
+char r5[][5] = {"aa", "bbb", "ccccc"};
+char r6[sizeof r5 == 15 ? 1 : -1];
+const char r7[] = "zxcv";
+char r8[5] = "5char";
+char r9[5] = "6chars"; //expected-warning{{initializer-string for char array is too long}}
+
+int r11[0] = {}; //expected-warning{{zero size arrays are an extension}} expected-warning{{use of GNU empty initializer extension}}
+
+// Some struct tests
+void autoStructTest() {
+struct s1 {char a; char b;} t1;
+struct s2 {struct s1 c;} t2 = { t1 };
+// The following is a less than great diagnostic (though it's on par with EDG).
+struct s1 t3[] = {t1, t1, "abc", 0}; //expected-warning{{incompatible pointer to integer conversion initializing 'char *', expected 'char'}}
+int t4[sizeof t3 == 6 ? 1 : -1];
+}
+struct s3 {void (*a)(void);} t5 = {autoStructTest};
+// GCC extension; flexible array init. Once this is implemented, the warning should be removed.
+// Note that clang objc implementation depends on this extension.
+struct {int a; int b[];} t6 = {1, {1, 2, 3}}; //expected-warning{{excess elements in array initializer}}
+union {char a; int b;} t7[] = {1, 2, 3};
+int t8[sizeof t7 == (3*sizeof(int)) ? 1 : -1];
+
+struct bittest{int : 31, a, :21, :12, b;};
+struct bittest bittestvar = {1, 2, 3, 4}; //expected-warning{{excess elements in array initializer}}
+
+// Not completely sure what should happen here...
+int u1 = {}; //expected-warning{{use of GNU empty initializer extension}} expected-warning{{braces around scalar initializer}}
+int u2 = {{3}}; //expected-warning{{braces around scalar initializer}}
+

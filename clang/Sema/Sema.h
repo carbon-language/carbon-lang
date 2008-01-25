@@ -740,16 +740,8 @@ private:
   bool CheckSingleInitializer(Expr *&simpleInit, QualType declType);
   bool CheckInitExpr(Expr *expr, InitListExpr *IList, unsigned slot,
                      QualType ElementType);
-                     
-  void CheckVariableInitList(QualType DeclType, InitListExpr *IList, 
-                             QualType ElementType,
-                             int &nInitializers, bool &hadError);
-  void CheckConstantInitList(QualType DeclType, InitListExpr *IList, 
-                             QualType ElementType,
-                             int &nInitializers, bool &hadError);
-  bool CheckForCharArrayInitializer(InitListExpr *IList, QualType ElementType,
-                                    int &nInitializers, bool isConstant,
-                                    bool &hadError);
+  bool CheckInitializerListTypes(InitListExpr*& IList, QualType &DeclType,
+								 bool topLevel, unsigned& startIndex);
   bool CheckForConstantInitializer(Expr *e, QualType t);
   
   StringLiteral *IsStringLiteralInit(Expr *Init, QualType DeclType);
