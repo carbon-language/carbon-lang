@@ -499,6 +499,8 @@ public:
   /// isCommutativeBinOp - Returns true if the opcode is a commutative binary
   /// operation.
   static bool isCommutativeBinOp(unsigned Opcode) {
+    // FIXME: This should get its info from the td file, so that we can include
+    // target info.
     switch (Opcode) {
     case ISD::ADD:
     case ISD::MUL:
