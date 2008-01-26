@@ -1877,6 +1877,8 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     // worth handling here.
     if (N2C && N2C->getValue() == 0)
       return N2;
+    if (N2C && N2C->isAllOnesValue())  // X & -1 -> X
+      return N1;
     break;
   case ISD::OR:
   case ISD::XOR:
