@@ -21,3 +21,11 @@ struct S2525 {
  } e;
 };
 struct S2525 s2525;
+
+struct {
+  signed char f;
+  char :0;
+  struct{}h;
+  char * i[5];
+} data; 
+
