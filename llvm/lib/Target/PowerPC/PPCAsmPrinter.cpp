@@ -819,12 +819,8 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // be associated with. We emit a noop in this situation.
   MachineFunction::iterator I = MF.begin();
 
-  if (++I == MF.end()) {
-    MachineBasicBlock &MBB = MF.front();
-
-    if (MBB.begin() == MBB.end())
-      BuildMI(MBB, MBB.end(), TM.getInstrInfo()->get(PPC::NOP));
-  }
+  if (++I == MF.end() && MF.front().empty())
+    O << "\tnop\n";
 
   // Print out code for the function.
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
