@@ -201,9 +201,9 @@ bool TransferFuncs::Visit(Stmt *S) {
 }
 
 bool TransferFuncs::BlockStmt_VisitExpr(Expr* E) {
-  assert (AD.isTracked(E));
-  return V(E,AD) = 
-    static_cast<CFGStmtVisitor<TransferFuncs,bool>*>(this)->Visit(E);
+  bool x = static_cast<CFGStmtVisitor<TransferFuncs,bool>*>(this)->Visit(E);  
+  if (AD.isTracked(E)) V(E,AD) = x;
+  return x;
 }
   
 } // end anonymous namespace
