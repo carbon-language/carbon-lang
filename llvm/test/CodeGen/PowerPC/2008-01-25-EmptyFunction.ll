@@ -1,7 +1,6 @@
-// RUN: %llvmgcc -O2 -S -o - -emit-llvm %s | grep llvm.trap
-// RUN: %llvmgcc -O2 -S -o - -emit-llvm %s | grep unreachable
+; RUN: llvm-as < %s | llc -march=ppc32 | grep nop
 
-void bork() {
-  int *address = 0;
-  *address = 0;
+define void @bork() noreturn nounwind  {
+entry:
+        unreachable
 }
