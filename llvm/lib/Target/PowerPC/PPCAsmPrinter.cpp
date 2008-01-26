@@ -30,6 +30,7 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/CommandLine.h"
@@ -813,6 +814,18 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Emit pre-function debug information.
   DW.BeginFunction(&MF);
 
+  // If the function is empty, then we need to emit *something*. Otherwise, the
+  // function's label might be associated with something that it wasn't meant to
+  // be associated with. We emit a noop in this situation.
+  MachineFunction::iterator I = MF.begin();
+
+  if (++I == MF.end()) {
+    MachineBasicBlock &MBB = MF.front();
+
+    if (MBB.begin() == MBB.end())
+      BuildMI(MBB, MBB.end(), TM.getInstrInfo()->get(PPC::NOP));
+  }
+
   // Print out code for the function.
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
@@ -821,8 +834,8 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       printBasicBlockLabel(I, true);
       O << '\n';
     }
-    for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
-         II != E; ++II) {
+    for (MachineBasicBlock::const_iterator II = I->begin(), IE = I->end();
+         II != IE; ++II) {
       // Print the assembly for the instruction.
       O << "\t";
       printMachineInstruction(II);
