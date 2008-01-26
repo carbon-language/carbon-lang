@@ -704,3 +704,21 @@ This currently compiles to:
 
 We should use movmskp{s|d} instead.
 
+//===---------------------------------------------------------------------===//
+
+CodeGen/X86/vec_align.ll tests whether we can turn 4 scalar loads into a single
+(aligned) vector load.  This functionality has a couple of problems.
+
+1. The code to infer alignment from loads of globals is in the X86 backend,
+   not the dag combiner.  This is because dagcombine2 needs to be able to see
+   through the X86ISD::Wrapper node, which DAGCombine can't really do.
+2. The code for turning 4 x load into a single vector load is target 
+   independent and should be moved to the dag combiner.
+3. The code for turning 4 x load into a vector load can only handle a direct 
+   load from a global or a direct load from the stack.  It should be generalized
+   to handle any load from P, P+4, P+8, P+12, where P can be anything.
+4. The alignment inference code cannot handle loads from globals in non-static
+   mode because it doesn't look through the extra dyld stub load.  If you try
+   vec_align.ll without -relocation-model=static, you'll see what I mean.
+
+//===---------------------------------------------------------------------===//
