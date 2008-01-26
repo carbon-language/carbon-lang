@@ -26,6 +26,7 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
+#include "llvm/Intrinsics.h"
 #include "llvm/Module.h"
 #include "llvm/ParameterAttributes.h"
 #include "llvm/Support/CFG.h"
@@ -154,8 +155,20 @@ static bool RemoveUnreachableBlocks(Function &F) {
   bool Changed = MarkAliveBlocks(F.begin(), Reachable);
   
   // If there are unreachable blocks in the CFG...
-  if (Reachable.size() == F.size())
+  if (Reachable.size() == F.size()) {
+    if (F.size() == 1) {
+      // If the function has only one block with an "unreachable" instruction,
+      // then we should create *some* code for it. Issue a "trap" instead.
+      BasicBlock &BB = F.front();
+
+      if (BB.size() == 1 && dyn_cast<UnreachableInst>(&BB.front()))
+        new CallInst(Intrinsic::getDeclaration(F.getParent(),
+                                               Intrinsic::trap),
+                     "", &BB.front());
+    }
+
     return Changed;
+  }
   
   assert(Reachable.size() < F.size());
   NumSimpl += F.size()-Reachable.size();
