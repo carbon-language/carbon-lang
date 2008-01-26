@@ -277,7 +277,8 @@ namespace {
                                bool NotExtCompare = false);
     SDOperand SimplifySetCC(MVT::ValueType VT, SDOperand N0, SDOperand N1,
                             ISD::CondCode Cond, bool foldBooleans = true);
-    bool SimplifyNodeWithTwoResults(SDNode *N, unsigned LoOp, unsigned HiOp);
+    SDOperand SimplifyNodeWithTwoResults(SDNode *N, unsigned LoOp, 
+                                         unsigned HiOp);
     SDOperand ConstantFoldBIT_CONVERTofBUILD_VECTOR(SDNode *, MVT::ValueType);
     SDOperand BuildSDIV(SDNode *N);
     SDOperand BuildUDIV(SDNode *N);
@@ -586,6 +587,7 @@ void DAGCombiner::Run(bool RunningAfterLegalize) {
       continue;
     
     ++NodesCombined;
+    
     // If we get back the same node we passed in, rather than a new node or
     // zero, we know that the node must have defined multiple values and
     // CombineTo was used.  Since CombineTo takes care of the worklist 
@@ -604,7 +606,8 @@ void DAGCombiner::Run(bool RunningAfterLegalize) {
     if (N->getNumValues() == RV.Val->getNumValues())
       DAG.ReplaceAllUsesWith(N, RV.Val, &NowDead);
     else {
-      assert(N->getValueType(0) == RV.getValueType() && "Type mismatch");
+      assert(N->getValueType(0) == RV.getValueType() &&
+             N->getNumValues() == 1 && "Type mismatch");
       SDOperand OpV = RV;
       DAG.ReplaceAllUsesWith(N, &OpV, &NowDead);
     }
@@ -1311,6 +1314,7 @@ SDOperand DAGCombiner::visitSREM(SDNode *N) {
   // X%C to the equivalent of X-X/C*C.
   if (N1C && !N1C->isNullValue()) {
     SDOperand Div = DAG.getNode(ISD::SDIV, VT, N0, N1);
+    AddToWorkList(Div.Val);
     SDOperand OptimizedDiv = combine(Div.Val);
     if (OptimizedDiv.Val && OptimizedDiv.Val != Div.Val) {
       SDOperand Mul = DAG.getNode(ISD::MUL, VT, OptimizedDiv, N1);
@@ -1421,18 +1425,16 @@ SDOperand DAGCombiner::visitMULHU(SDNode *N) {
 /// compute two values. LoOp and HiOp give the opcodes for the two computations
 /// that are being performed. Return true if a simplification was made.
 ///
-bool DAGCombiner::SimplifyNodeWithTwoResults(SDNode *N,
-                                             unsigned LoOp, unsigned HiOp) {
+SDOperand DAGCombiner::SimplifyNodeWithTwoResults(SDNode *N, unsigned LoOp, 
+                                                  unsigned HiOp) {
   // If the high half is not needed, just compute the low half.
   bool HiExists = N->hasAnyUseOfValue(1);
   if (!HiExists &&
       (!AfterLegalize ||
        TLI.isOperationLegal(LoOp, N->getValueType(0)))) {
-    DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 0),
-                                  DAG.getNode(LoOp, N->getValueType(0),
-                                              N->op_begin(),
-                                              N->getNumOperands()));
-    return true;
+    SDOperand Res = DAG.getNode(LoOp, N->getValueType(0), N->op_begin(),
+                                N->getNumOperands());
+    return CombineTo(N, Res, Res);
   }
 
   // If the low half is not needed, just compute the high half.
@@ -1440,74 +1442,62 @@ bool DAGCombiner::SimplifyNodeWithTwoResults(SDNode *N,
   if (!LoExists &&
       (!AfterLegalize ||
        TLI.isOperationLegal(HiOp, N->getValueType(1)))) {
-    DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 1),
-                                  DAG.getNode(HiOp, N->getValueType(1),
-                                              N->op_begin(),
-                                              N->getNumOperands()));
-    return true;
+    SDOperand Res = DAG.getNode(HiOp, N->getValueType(1), N->op_begin(),
+                                N->getNumOperands());
+    return CombineTo(N, Res, Res);
   }
 
   // If both halves are used, return as it is.
   if (LoExists && HiExists)
-    return false;
+    return SDOperand();
 
   // If the two computed results can be simplified separately, separate them.
-  bool RetVal = false;
   if (LoExists) {
     SDOperand Lo = DAG.getNode(LoOp, N->getValueType(0),
                                N->op_begin(), N->getNumOperands());
+    AddToWorkList(Lo.Val);
     SDOperand LoOpt = combine(Lo.Val);
-    if (LoOpt.Val && LoOpt != Lo &&
-        TLI.isOperationLegal(LoOpt.getOpcode(), LoOpt.getValueType())) {
-      RetVal = true;
-      DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 0), LoOpt);
-    } else
-      DAG.DeleteNode(Lo.Val);
+    if (LoOpt.Val && LoOpt.Val != Lo.Val &&
+        TLI.isOperationLegal(LoOpt.getOpcode(), LoOpt.getValueType()))
+      return CombineTo(N, LoOpt, LoOpt);
   }
 
   if (HiExists) {
     SDOperand Hi = DAG.getNode(HiOp, N->getValueType(1),
                                N->op_begin(), N->getNumOperands());
+    AddToWorkList(Hi.Val);
     SDOperand HiOpt = combine(Hi.Val);
     if (HiOpt.Val && HiOpt != Hi &&
-        TLI.isOperationLegal(HiOpt.getOpcode(), HiOpt.getValueType())) {
-      RetVal = true;
-      DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 1), HiOpt);
-    } else
-      DAG.DeleteNode(Hi.Val);
+        TLI.isOperationLegal(HiOpt.getOpcode(), HiOpt.getValueType()))
+      return CombineTo(N, HiOpt, HiOpt);
   }
-
-  return RetVal;
+  return SDOperand();
 }
 
 SDOperand DAGCombiner::visitSMUL_LOHI(SDNode *N) {
-  
-  if (SimplifyNodeWithTwoResults(N, ISD::MUL, ISD::MULHS))
-    return SDOperand();
+  SDOperand Res = SimplifyNodeWithTwoResults(N, ISD::MUL, ISD::MULHS);
+  if (Res.Val) return Res;
 
   return SDOperand();
 }
 
 SDOperand DAGCombiner::visitUMUL_LOHI(SDNode *N) {
-  
-  if (SimplifyNodeWithTwoResults(N, ISD::MUL, ISD::MULHU))
-    return SDOperand();
+  SDOperand Res = SimplifyNodeWithTwoResults(N, ISD::MUL, ISD::MULHU);
+  if (Res.Val) return Res;
 
   return SDOperand();
 }
 
 SDOperand DAGCombiner::visitSDIVREM(SDNode *N) {
-  
-  if (SimplifyNodeWithTwoResults(N, ISD::SDIV, ISD::SREM))
-    return SDOperand();
+  SDOperand Res = SimplifyNodeWithTwoResults(N, ISD::SDIV, ISD::SREM);
+  if (Res.Val) return Res;
   
   return SDOperand();
 }
 
 SDOperand DAGCombiner::visitUDIVREM(SDNode *N) {
-  
-  if (SimplifyNodeWithTwoResults(N, ISD::UDIV, ISD::UREM))
-    return SDOperand();
+  SDOperand Res = SimplifyNodeWithTwoResults(N, ISD::UDIV, ISD::UREM);
+  if (Res.Val) return Res;
   
   return SDOperand();
 }
