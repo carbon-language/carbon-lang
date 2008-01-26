@@ -5499,16 +5499,7 @@ static bool isBaseAlignment16(SDNode *Base, MachineFrameInfo *MFI,
   int64_t Offset;
   if (isGAPlusOffset(Base, GV, Offset))
     return (GV->getAlignment() >= 16 && (Offset % 16) == 0);
-  else {
-    assert(Base->getOpcode() == ISD::FrameIndex && "Unexpected base node!");
-    int BFI = cast<FrameIndexSDNode>(Base)->getIndex();
-    if (BFI < 0)
-      // Fixed objects do not specify alignment, however the offsets are known.
-      return ((Subtarget->getStackAlignment() % 16) == 0 &&
-              (MFI->getObjectOffset(BFI) % 16) == 0);
-    else
-      return MFI->getObjectAlignment(BFI) >= 16;
-  }
+  // DAG combine handles the stack object case.
   return false;
 }
 
