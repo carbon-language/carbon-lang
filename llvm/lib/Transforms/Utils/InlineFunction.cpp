@@ -240,12 +240,15 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
          E = CalledFunc->arg_end(); I != E; ++I, ++AI, ++ArgNo) {
       Value *ActualArg = *AI;
       
-      // When byval arguments actually inlined, we need to make the copy implied
-      // by them explicit.  However, we don't do this if the callee is readonly
-      // or readnone, because the copy would be unneeded: the callee doesn't
-      // modify the struct.
-      if (CalledFunc->paramHasAttr(ArgNo+1, ParamAttr::ByVal) &&
-          !CalledFunc->onlyReadsMemory()) {
+      // When byval arguments are inlined, we need to make the copy implied
+      // by them explicit.  It is tempting to think that this is not needed if
+      // the callee is readonly, because the callee doesn't modify the struct.
+      // However this would be wrong: readonly means that any writes the callee
+      // performs are not visible to the caller.  But writes by the callee to
+      // an argument passed byval are by definition not visible to the caller!
+      // Since we allow this kind of readonly function, there needs to be an
+      // explicit copy in order to keep the writes invisible after inlining.
+      if (CalledFunc->paramHasAttr(ArgNo+1, ParamAttr::ByVal)) {
         const Type *AggTy = cast<PointerType>(I->getType())->getElementType();
         const Type *VoidPtrTy = PointerType::getUnqual(Type::Int8Ty);
         
