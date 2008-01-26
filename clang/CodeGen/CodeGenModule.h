@@ -87,12 +87,14 @@ public:
   void EmitFunction(const FunctionDecl *FD);
   void EmitGlobalVar(const FileVarDecl *D);
   void EmitGlobalVarDeclarator(const FileVarDecl *D);
-  llvm::Constant *EmitGlobalInit(const Expr *Expression);
-  
+  llvm::Constant *EmitGlobalInit(const Expr *E);
+  llvm::Constant *EmitConstantExpr(const Expr *E);
+    
   void PrintStats() {}
   
   /// WarnUnsupported - Print out a warning that codegen doesn't support the
   /// specified stmt yet.
+    
   void WarnUnsupported(const Stmt *S, const char *Type);
   
   /// WarnUnsupported - Print out a warning that codegen doesn't support the
