@@ -360,11 +360,11 @@ int IsInf(double d);
 
 /// MinAlign - A and B are either alignments or offsets.  Return the minimum
 /// alignment that may be assumed after adding the two together.
-static inline unsigned MinAlign(unsigned A, unsigned B) {
+static inline uint64_t MinAlign(uint64_t A, uint64_t B) {
   // The largest power of 2 that divides both A and B.
   return (A | B) & -(A | B);
 }
-
+  
 } // End llvm namespace
 
 #endif
