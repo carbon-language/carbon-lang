@@ -237,6 +237,9 @@ public:
   llvm::Constant *VisitUnaryAlignOf(const UnaryOperator *E) {
     return EmitSizeAlignOf(E->getSubExpr()->getType(), E->getType(), false);
   }
+  llvm::Constant *VisitUnaryAddrOf(const UnaryOperator *E) {
+    return EmitLValue(E->getSubExpr());
+  }
   
   // Utility methods
   const llvm::Type *ConvertType(QualType T) {
@@ -351,7 +354,91 @@ public:
     return llvm::ConstantInt::get(llvm::APInt(ResultWidth, Val));
   }
   
-  };
+  llvm::Constant *EmitLValue(const Expr *E) {
+    switch (E->getStmtClass()) {
+    default: {
+      CGM.WarnUnsupported(E, "constant l-value expression");
+      llvm::Type *Ty = llvm::PointerType::getUnqual(ConvertType(E->getType()));
+      return llvm::UndefValue::get(Ty);
+    }
+    case Expr::ParenExprClass:
+      // Elide parenthesis
+      return EmitLValue(cast<ParenExpr>(E)->getSubExpr());
+    case Expr::CompoundLiteralExprClass: {
+      // Note that due to the nature of compound literals, this is guaranteed
+      // to be the only use of the variable, so we just generate it here.
+      const CompoundLiteralExpr *CLE = cast<CompoundLiteralExpr>(E);
+      llvm::Constant* C = CGM.EmitGlobalInit(CLE->getInitializer());
+      C =new llvm::GlobalVariable(C->getType(), E->getType().isConstQualified(), 
+                                   llvm::GlobalValue::InternalLinkage,
+                                   C, ".compoundliteral", &CGM.getModule());
+      return C;
+    }      
+    case Expr::DeclRefExprClass: {
+      const ValueDecl *Decl = cast<DeclRefExpr>(E)->getDecl();
+      if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(Decl))
+        return CGM.GetAddrOfFunctionDecl(FD, false);
+      if (const FileVarDecl* FVD = dyn_cast<FileVarDecl>(Decl))
+        return CGM.GetAddrOfGlobalVar(FVD, false);
+      // We can end up here with static block-scope variables (and others?)
+      // FIXME: How do we implement block-scope variables?!
+      assert(0 && "Unimplemented Decl type");
+      return 0;
+    }
+    case Expr::MemberExprClass: {
+      const MemberExpr* ME = cast<MemberExpr>(E);
+      unsigned FieldNumber = CGM.getTypes().getLLVMFieldNo(ME->getMemberDecl());
+      llvm::Constant *Base = EmitLValue(ME->getBase());
+      llvm::Constant *Zero = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
+      llvm::Constant *Idx = llvm::ConstantInt::get(llvm::Type::Int32Ty,
+                                                   FieldNumber);
+      llvm::Value *Ops[] = {Zero, Idx};
+      return llvm::ConstantExpr::getGetElementPtr(Base, Ops, 2);
+    }
+    case Expr::ArraySubscriptExprClass: {
+      const ArraySubscriptExpr* ASExpr = cast<ArraySubscriptExpr>(E);
+      llvm::Constant *Base = EmitLValue(ASExpr->getBase());
+      llvm::Constant *Index = EmitLValue(ASExpr->getIdx());
+      assert(!ASExpr->getBase()->getType()->isVectorType() &&
+             "Taking the address of a vector component is illegal!");
+      return llvm::ConstantExpr::getGetElementPtr(Base, &Index, 1);
+    }
+    case Expr::StringLiteralClass: {
+      const StringLiteral *String = cast<StringLiteral>(E);
+      assert(!String->isWide() && "Cannot codegen wide strings yet");
+    const char *StrData = String->getStrData();
+    unsigned Len = String->getByteLength();
+
+    return CGM.GetAddrOfConstantString(std::string(StrData, StrData + Len));
+  }
+  case Expr::UnaryOperatorClass: {
+    const UnaryOperator *Exp = cast<UnaryOperator>(E);
+    switch (Exp->getOpcode()) {
+    default: assert(0 && "Unsupported unary operator.");
+    case UnaryOperator::Extension:
+      // Extension is just a wrapper for expressions
+      return EmitLValue(Exp->getSubExpr());
+    case UnaryOperator::Real:
+    case UnaryOperator::Imag: {
+      // The address of __real or __imag is just a GEP off the address
+      // of the internal expression
+      llvm::Constant* C = EmitLValue(Exp->getSubExpr());
+      llvm::Constant *Zero = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
+      llvm::Constant *Idx  = llvm::ConstantInt::get(llvm::Type::Int32Ty,
+                                       Exp->getOpcode() == UnaryOperator::Imag);
+      llvm::Value *Ops[] = {Zero, Idx};
+      return llvm::ConstantExpr::getGetElementPtr(C, Ops, 2);
+    }
+    case UnaryOperator::Deref:
+      // The address of a deref is just the value of the expression
+      return Visit(Exp->getSubExpr());
+    }
+  }
+  } 
+}
+
+};
+  
 }  // end anonymous namespace.
 
 
