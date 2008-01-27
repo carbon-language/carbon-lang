@@ -19,7 +19,6 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -51,7 +50,6 @@ namespace {
     MachineFunction *MF;
     const MRegisterInfo *MRI;
     const TargetInstrInfo *TII;
-    LiveVariables *LV;
 
     // StackSlotForVirtReg - Maps virtual regs to the frame index where these
     // values are spilled.
@@ -148,7 +146,6 @@ namespace {
     }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired<LiveVariables>();
       AU.addRequiredID(PHIEliminationID);
       AU.addRequiredID(TwoAddressInstructionPassID);
       MachineFunctionPass::getAnalysisUsage(AU);
@@ -497,9 +494,8 @@ MachineInstr *RALocal::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
     Ops.push_back(OpNum);
     if (MachineInstr* FMI = TII->foldMemoryOperand(MI, Ops, FrameIndex)) {
       ++NumFolded;
-      // Since we changed the address of MI, make sure to update live variables
-      // to know that the new instruction has the properties of the old one.
-      LV->instructionChanged(MI, FMI);
+      // Update kill/dead flags.
+      FMI->copyKillDeadInfo(MI);
       return MBB.insert(MBB.erase(MI), FMI);
     }
 
@@ -778,8 +774,6 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
     // Finally, if this is a noop copy instruction, zap it.
     unsigned SrcReg, DstReg;
     if (TII.isMoveInstr(*MI, SrcReg, DstReg) && SrcReg == DstReg) {
-      LV->removeVirtualRegistersKilled(MI);
-      LV->removeVirtualRegistersDead(MI);
       MBB.erase(MI);
     }
   }
@@ -821,7 +815,6 @@ bool RALocal::runOnMachineFunction(MachineFunction &Fn) {
   TM = &Fn.getTarget();
   MRI = TM->getRegisterInfo();
   TII = TM->getInstrInfo();
-  LV = &getAnalysis<LiveVariables>();
 
   PhysRegsUsed.assign(MRI->getNumRegs(), -1);
   
