@@ -33,13 +33,14 @@ MachineBasicBlock* SplitCriticalMachineEdge(MachineBasicBlock* src,
 
   // insert the new block into the machine function.
   src->getParent()->getBasicBlockList().insert(src->getParent()->end(),
-                                               crit_mbb);
+                                                 crit_mbb);
 
   // insert a unconditional branch linking the new block to dst
   const TargetMachine& TM = src->getParent()->getTarget();
   const TargetInstrInfo* TII = TM.getInstrInfo();
   std::vector<MachineOperand> emptyConditions;
-  TII->InsertBranch(*crit_mbb, dst, (MachineBasicBlock*)0, emptyConditions);
+  TII->InsertBranch(*crit_mbb, dst, (MachineBasicBlock*)0, 
+                    emptyConditions);
 
   // modify every branch in src that points to dst to point to the new
   // machine basic block instead:
@@ -48,18 +49,18 @@ MachineBasicBlock* SplitCriticalMachineEdge(MachineBasicBlock* src,
   while (mii != src->begin()) {
     mii--;
     // if there are no more branches, finish the loop
-    if (!TII->isTerminatorInstr(mii->getOpcode())) {
+    if (!mii->getDesc().isTerminator()) {
       break;
     }
-    
+
     // Scan the operands of this branch, replacing any uses of dst with
     // crit_mbb.
     for (unsigned i = 0, e = mii->getNumOperands(); i != e; ++i) {
       MachineOperand & mo = mii->getOperand(i);
       if (mo.isMachineBasicBlock() &&
-          mo.getMachineBasicBlock() == dst) {
+          mo.getMBB() == dst) {
         found_branch = true;
-        mo.setMachineBasicBlock(crit_mbb);
+        mo.setMBB(crit_mbb);
       }
     }
   }
@@ -68,7 +69,8 @@ MachineBasicBlock* SplitCriticalMachineEdge(MachineBasicBlock* src,
   // I am inserting too many gotos, but I am trusting that the asm printer
   // will optimize the unnecessary gotos.
   if(!found_branch) {
-    TII->InsertBranch(*src, crit_mbb, (MachineBasicBlock*)0, emptyConditions);
+    TII->InsertBranch(*src, crit_mbb, (MachineBasicBlock*)0, 
+                      emptyConditions);
   }
 
   /// Change all the phi functions in dst, so that the incoming block be
@@ -77,29 +79,28 @@ MachineBasicBlock* SplitCriticalMachineEdge(MachineBasicBlock* src,
     /// the first instructions are always phi functions.
     if(mii->getOpcode() != TargetInstrInfo::PHI)
       break;
-    
+
     // Find the operands corresponding to the source block
     std::vector<unsigned> toRemove;
     unsigned reg = 0;
     for (unsigned u = 0; u != mii->getNumOperands(); ++u)
       if (mii->getOperand(u).isMachineBasicBlock() &&
-          mii->getOperand(u).getMachineBasicBlock() == src) {
+          mii->getOperand(u).getMBB() == src) {
         reg = mii->getOperand(u-1).getReg();
         toRemove.push_back(u-1);
       }
-    
     // Remove all uses of this MBB
     for (std::vector<unsigned>::reverse_iterator I = toRemove.rbegin(),
          E = toRemove.rend(); I != E; ++I) {
       mii->RemoveOperand(*I+1);
       mii->RemoveOperand(*I);
     }
-    
+
     // Add a single use corresponding to the new MBB
-    mii->addRegOperand(reg, false);
-    mii->addMachineBasicBlockOperand(crit_mbb);
+    mii->addOperand(MachineOperand::CreateReg(reg, false));
+    mii->addOperand(MachineOperand::CreateMBB(crit_mbb));
   }
-  
+
   return crit_mbb;
 }
 
