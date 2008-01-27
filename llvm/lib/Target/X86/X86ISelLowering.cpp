@@ -455,7 +455,20 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   addRegisterClass(MVT::f80, X86::RFP80RegisterClass);
   setOperationAction(ISD::UNDEF,     MVT::f80, Expand);
   setOperationAction(ISD::FCOPYSIGN, MVT::f80, Expand);
-  setOperationAction(ISD::ConstantFP, MVT::f80, Expand);
+  {
+    setOperationAction(ISD::ConstantFP, MVT::f80, Expand);
+    APFloat TmpFlt(+0.0);
+    TmpFlt.convert(APFloat::x87DoubleExtended, APFloat::rmNearestTiesToEven);
+    addLegalFPImmediate(TmpFlt);  // FLD0
+    TmpFlt.changeSign();
+    addLegalFPImmediate(TmpFlt);  // FLD0/FCHS
+    APFloat TmpFlt2(+1.0);
+    TmpFlt2.convert(APFloat::x87DoubleExtended, APFloat::rmNearestTiesToEven);
+    addLegalFPImmediate(TmpFlt2);  // FLD1
+    TmpFlt2.changeSign();
+    addLegalFPImmediate(TmpFlt2);  // FLD1/FCHS
+  }
+    
   if (!UnsafeFPMath) {
     setOperationAction(ISD::FSIN           , MVT::f80  , Expand);
     setOperationAction(ISD::FCOS           , MVT::f80  , Expand);
