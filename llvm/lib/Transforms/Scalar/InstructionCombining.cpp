@@ -203,7 +203,7 @@ namespace {
     Instruction *visitTrunc(TruncInst &CI);
     Instruction *visitZExt(ZExtInst &CI);
     Instruction *visitSExt(SExtInst &CI);
-    Instruction *visitFPTrunc(CastInst &CI);
+    Instruction *visitFPTrunc(FPTruncInst &CI);
     Instruction *visitFPExt(CastInst &CI);
     Instruction *visitFPToUI(CastInst &CI);
     Instruction *visitFPToSI(CastInst &CI);
@@ -7141,8 +7141,80 @@ Instruction *InstCombiner::visitSExt(SExtInst &CI) {
   return 0;
 }
 
-Instruction *InstCombiner::visitFPTrunc(CastInst &CI) {
-  return commonCastTransforms(CI);
+/// FitsInFPType - Return a Constant* for the specified FP constant if it fits
+/// in the specified FP type without changing its value.
+static Constant *FitsInFPType(ConstantFP *CFP, const Type *FPTy, 
+                              const fltSemantics &Sem) {
+  APFloat F = CFP->getValueAPF();
+  if (F.convert(Sem, APFloat::rmNearestTiesToEven) == APFloat::opOK)
+    return ConstantFP::get(FPTy, F);
+  return 0;
+}
+
+/// LookThroughFPExtensions - If this is an fp extension instruction, look
+/// through it until we get the source value.
+static Value *LookThroughFPExtensions(Value *V) {
+  if (Instruction *I = dyn_cast<Instruction>(V))
+    if (I->getOpcode() == Instruction::FPExt)
+      return LookThroughFPExtensions(I->getOperand(0));
+  
+  // If this value is a constant, return the constant in the smallest FP type
+  // that can accurately represent it.  This allows us to turn
+  // (float)((double)X+2.0) into x+2.0f.
+  if (ConstantFP *CFP = dyn_cast<ConstantFP>(V)) {
+    if (CFP->getType() == Type::PPC_FP128Ty)
+      return V;  // No constant folding of this.
+    // See if the value can be truncated to float and then reextended.
+    if (Value *V = FitsInFPType(CFP, Type::FloatTy, APFloat::IEEEsingle))
+      return V;
+    if (CFP->getType() == Type::DoubleTy)
+      return V;  // Won't shrink.
+    if (Value *V = FitsInFPType(CFP, Type::DoubleTy, APFloat::IEEEdouble))
+      return V;
+    // Don't try to shrink to various long double types.
+  }
+  
+  return V;
+}
+
+Instruction *InstCombiner::visitFPTrunc(FPTruncInst &CI) {
+  if (Instruction *I = commonCastTransforms(CI))
+    return I;
+  
+  // If we have fptrunc(add (fpextend x), (fpextend y)), where x and y are
+  // smaller than the destination type, we can eliminate the truncate by doing
+  // the add as the smaller type.  This applies to add/sub/mul/div as well as
+  // many builtins (sqrt, etc).
+  BinaryOperator *OpI = dyn_cast<BinaryOperator>(CI.getOperand(0));
+  if (OpI && OpI->hasOneUse()) {
+    switch (OpI->getOpcode()) {
+    default: break;
+    case Instruction::Add:
+    case Instruction::Sub:
+    case Instruction::Mul:
+    case Instruction::FDiv:
+    case Instruction::FRem:
+      const Type *SrcTy = OpI->getType();
+      Value *LHSTrunc = LookThroughFPExtensions(OpI->getOperand(0));
+      Value *RHSTrunc = LookThroughFPExtensions(OpI->getOperand(1));
+      if (LHSTrunc->getType() != SrcTy && 
+          RHSTrunc->getType() != SrcTy) {
+        unsigned DstSize = CI.getType()->getPrimitiveSizeInBits();
+        // If the source types were both smaller than the destination type of
+        // the cast, do this xform.
+        if (LHSTrunc->getType()->getPrimitiveSizeInBits() <= DstSize &&
+            RHSTrunc->getType()->getPrimitiveSizeInBits() <= DstSize) {
+          LHSTrunc = InsertCastBefore(Instruction::FPExt, LHSTrunc,
+                                      CI.getType(), CI);
+          RHSTrunc = InsertCastBefore(Instruction::FPExt, RHSTrunc,
+                                      CI.getType(), CI);
+          return BinaryOperator::create(OpI->getOpcode(), LHSTrunc, RHSTrunc);
+        }
+      }
+      break;  
+    }
+  }
+  return 0;
 }
 
 Instruction *InstCombiner::visitFPExt(CastInst &CI) {
