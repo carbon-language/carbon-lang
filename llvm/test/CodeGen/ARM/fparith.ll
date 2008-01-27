@@ -3,7 +3,7 @@
 ; RUN: grep faddd %t
 ; RUN: grep fmuls %t
 ; RUN: grep fmuld %t
-; RUN: grep fnegs %t
+; RUN: grep eor %t
 ; RUN: grep fnegd %t
 ; RUN: grep fdivs %t
 ; RUN: grep fdivd %t
