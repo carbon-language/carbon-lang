@@ -1190,7 +1190,7 @@ SDOperand DAGCombiner::visitSDIV(SDNode *N) {
     return DAG.getNode(ISD::SUB, VT, DAG.getConstant(0, VT), N0);
   // If we know the sign bits of both operands are zero, strength reduce to a
   // udiv instead.  Handles (X&15) /s 4 -> X&15 >> 2
-  uint64_t SignBit = 1ULL << (MVT::getSizeInBits(VT)-1);
+  uint64_t SignBit = MVT::getIntVTSignBit(VT);
   if (DAG.MaskedValueIsZero(N1, SignBit) &&
       DAG.MaskedValueIsZero(N0, SignBit))
     return DAG.getNode(ISD::UDIV, N1.getValueType(), N0, N1);
@@ -1306,7 +1306,7 @@ SDOperand DAGCombiner::visitSREM(SDNode *N) {
     return DAG.getNode(ISD::SREM, VT, N0, N1);
   // If we know the sign bits of both operands are zero, strength reduce to a
   // urem instead.  Handles (X & 0x0FFFFFFF) %s 16 -> X&15
-  uint64_t SignBit = 1ULL << (MVT::getSizeInBits(VT)-1);
+  uint64_t SignBit = MVT::getIntVTSignBit(VT);
   if (DAG.MaskedValueIsZero(N1, SignBit) &&
       DAG.MaskedValueIsZero(N0, SignBit))
     return DAG.getNode(ISD::UREM, VT, N0, N1);
@@ -3276,6 +3276,57 @@ SDOperand DAGCombiner::visitBIT_CONVERT(SDNode *N) {
     }
   }
   
+  // Fold bitconvert(fneg(x)) -> xor(bitconvert(x), signbit)
+  // Fold bitconvert(fabs(x)) -> and(bitconvert(x), ~signbit)
+  // This often reduces constant pool loads.
+  if ((N0.getOpcode() == ISD::FNEG || N0.getOpcode() == ISD::FABS) &&
+      N0.Val->hasOneUse() && MVT::isInteger(VT) && !MVT::isVector(VT)) {
+    SDOperand NewConv = DAG.getNode(ISD::BIT_CONVERT, VT, N0.getOperand(0));
+    AddToWorkList(NewConv.Val);
+    
+    uint64_t SignBit = MVT::getIntVTSignBit(VT);
+    if (N0.getOpcode() == ISD::FNEG)
+      return DAG.getNode(ISD::XOR, VT, NewConv, DAG.getConstant(SignBit, VT));
+    assert(N0.getOpcode() == ISD::FABS);
+    return DAG.getNode(ISD::AND, VT, NewConv, DAG.getConstant(~SignBit, VT));
+  }
+  
+  // Fold bitconvert(fcopysign(cst, x)) -> bitconvert(x)&sign | cst&~sign'
+  // Note that we don't handle copysign(x,cst) because this can always be folded
+  // to an fneg or fabs.
+  if (N0.getOpcode() == ISD::FCOPYSIGN && N0.Val->hasOneUse() &&
+      isa<ConstantFPSDNode>(N0.getOperand(0))) {
+    unsigned OrigXWidth = MVT::getSizeInBits(N0.getOperand(1).getValueType());
+    SDOperand X = DAG.getNode(ISD::BIT_CONVERT, MVT::getIntegerType(OrigXWidth),
+                              N0.getOperand(1));
+    AddToWorkList(X.Val);
+
+    // If X has a different width than the result/lhs, sext it or truncate it.
+    unsigned VTWidth = MVT::getSizeInBits(VT);
+    if (OrigXWidth < VTWidth) {
+      X = DAG.getNode(ISD::SIGN_EXTEND, VT, X);
+      AddToWorkList(X.Val);
+    } else if (OrigXWidth > VTWidth) {
+      // To get the sign bit in the right place, we have to shift it right
+      // before truncating.
+      X = DAG.getNode(ISD::SRL, X.getValueType(), X, 
+                      DAG.getConstant(OrigXWidth-VTWidth, X.getValueType()));
+      AddToWorkList(X.Val);
+      X = DAG.getNode(ISD::TRUNCATE, VT, X);
+      AddToWorkList(X.Val);
+    }
+    
+    uint64_t SignBit = MVT::getIntVTSignBit(VT);
+    X = DAG.getNode(ISD::AND, VT, X, DAG.getConstant(SignBit, VT));
+    AddToWorkList(X.Val);
+
+    SDOperand Cst = DAG.getNode(ISD::BIT_CONVERT, VT, N0.getOperand(0));
+    Cst = DAG.getNode(ISD::AND, VT, Cst, DAG.getConstant(~SignBit, VT));
+    AddToWorkList(Cst.Val);
+
+    return DAG.getNode(ISD::OR, VT, X, Cst);
+  }
+  
   return SDOperand();
 }
 
@@ -3732,6 +3783,19 @@ SDOperand DAGCombiner::visitFNEG(SDNode *N) {
   if (isNegatibleForFree(N0))
     return GetNegatedExpression(N0, DAG);
 
+  // Transform fneg(bitconvert(x)) -> bitconvert(x^sign) to avoid loading
+  // constant pool values.
+  if (N0.getOpcode() == ISD::BIT_CONVERT && N0.Val->hasOneUse()) {
+    SDOperand Int = N0.getOperand(0);
+    MVT::ValueType IntVT = Int.getValueType();
+    if (MVT::isInteger(IntVT) && !MVT::isVector(IntVT)) {
+      Int = DAG.getNode(ISD::XOR, IntVT, Int, 
+                        DAG.getConstant(MVT::getIntVTSignBit(IntVT), IntVT));
+      AddToWorkList(Int.Val);
+      return DAG.getNode(ISD::BIT_CONVERT, N->getValueType(0), Int);
+    }
+  }
+  
   return SDOperand();
 }
 
@@ -3750,6 +3814,19 @@ SDOperand DAGCombiner::visitFABS(SDNode *N) {
   // fold (fabs (fcopysign x, y)) -> (fabs x)
   if (N0.getOpcode() == ISD::FNEG || N0.getOpcode() == ISD::FCOPYSIGN)
     return DAG.getNode(ISD::FABS, VT, N0.getOperand(0));
+  
+  // Transform fabs(bitconvert(x)) -> bitconvert(x&~sign) to avoid loading
+  // constant pool values.
+  if (N0.getOpcode() == ISD::BIT_CONVERT && N0.Val->hasOneUse()) {
+    SDOperand Int = N0.getOperand(0);
+    MVT::ValueType IntVT = Int.getValueType();
+    if (MVT::isInteger(IntVT) && !MVT::isVector(IntVT)) {
+      Int = DAG.getNode(ISD::AND, IntVT, Int, 
+                        DAG.getConstant(~MVT::getIntVTSignBit(IntVT), IntVT));
+      AddToWorkList(Int.Val);
+      return DAG.getNode(ISD::BIT_CONVERT, N->getValueType(0), Int);
+    }
+  }
   
   return SDOperand();
 }
