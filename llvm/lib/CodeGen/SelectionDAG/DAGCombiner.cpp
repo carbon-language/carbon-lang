@@ -1190,10 +1190,12 @@ SDOperand DAGCombiner::visitSDIV(SDNode *N) {
     return DAG.getNode(ISD::SUB, VT, DAG.getConstant(0, VT), N0);
   // If we know the sign bits of both operands are zero, strength reduce to a
   // udiv instead.  Handles (X&15) /s 4 -> X&15 >> 2
-  uint64_t SignBit = MVT::getIntVTSignBit(VT);
-  if (DAG.MaskedValueIsZero(N1, SignBit) &&
-      DAG.MaskedValueIsZero(N0, SignBit))
-    return DAG.getNode(ISD::UDIV, N1.getValueType(), N0, N1);
+  if (!MVT::isVector(VT)) {
+    uint64_t SignBit = MVT::getIntVTSignBit(VT);
+    if (DAG.MaskedValueIsZero(N1, SignBit) &&
+        DAG.MaskedValueIsZero(N0, SignBit))
+      return DAG.getNode(ISD::UDIV, N1.getValueType(), N0, N1);
+  }
   // fold (sdiv X, pow2) -> simple ops after legalize
   if (N1C && N1C->getValue() && !TLI.isIntDivCheap() &&
       (isPowerOf2_64(N1C->getSignExtended()) || 
@@ -3297,7 +3299,8 @@ SDOperand DAGCombiner::visitBIT_CONVERT(SDNode *N) {
   // Note that we don't handle copysign(x,cst) because this can always be folded
   // to an fneg or fabs.
   if (N0.getOpcode() == ISD::FCOPYSIGN && N0.Val->hasOneUse() &&
-      isa<ConstantFPSDNode>(N0.getOperand(0))) {
+      isa<ConstantFPSDNode>(N0.getOperand(0)) &&
+      MVT::isInteger(VT) && !MVT::isVector(VT)) {
     unsigned OrigXWidth = MVT::getSizeInBits(N0.getOperand(1).getValueType());
     SDOperand X = DAG.getNode(ISD::BIT_CONVERT, MVT::getIntegerType(OrigXWidth),
                               N0.getOperand(1));
@@ -3787,7 +3790,9 @@ SDOperand DAGCombiner::visitFNEG(SDNode *N) {
 
   // Transform fneg(bitconvert(x)) -> bitconvert(x^sign) to avoid loading
   // constant pool values.
-  if (N0.getOpcode() == ISD::BIT_CONVERT && N0.Val->hasOneUse()) {
+  if (N0.getOpcode() == ISD::BIT_CONVERT && N0.Val->hasOneUse() &&
+      MVT::isInteger(N0.getOperand(0).getValueType()) &&
+      !MVT::isVector(N0.getOperand(0).getValueType())) {
     SDOperand Int = N0.getOperand(0);
     MVT::ValueType IntVT = Int.getValueType();
     if (MVT::isInteger(IntVT) && !MVT::isVector(IntVT)) {
@@ -3819,7 +3824,9 @@ SDOperand DAGCombiner::visitFABS(SDNode *N) {
   
   // Transform fabs(bitconvert(x)) -> bitconvert(x&~sign) to avoid loading
   // constant pool values.
-  if (N0.getOpcode() == ISD::BIT_CONVERT && N0.Val->hasOneUse()) {
+  if (N0.getOpcode() == ISD::BIT_CONVERT && N0.Val->hasOneUse() &&
+      MVT::isInteger(N0.getOperand(0).getValueType()) &&
+      !MVT::isVector(N0.getOperand(0).getValueType())) {
     SDOperand Int = N0.getOperand(0);
     MVT::ValueType IntVT = Int.getValueType();
     if (MVT::isInteger(IntVT) && !MVT::isVector(IntVT)) {
