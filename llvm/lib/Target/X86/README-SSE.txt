@@ -722,3 +722,42 @@ CodeGen/X86/vec_align.ll tests whether we can turn 4 scalar loads into a single
    vec_align.ll without -relocation-model=static, you'll see what I mean.
 
 //===---------------------------------------------------------------------===//
+
+We should lower store(fneg(load p), q) into an integer load+xor+store, which
+eliminates a constant pool load.  For example, consider:
+
+define i64 @ccosf(float %z.0, float %z.1) nounwind readonly  {
+entry:
+	%tmp6 = sub float -0.000000e+00, %z.1		; <float> [#uses=1]
+	%tmp20 = tail call i64 @ccoshf( float %tmp6, float %z.0 ) nounwind readonly 		; <i64> [#uses=1]
+	ret i64 %tmp20
+}
+
+This currently compiles to:
+
+LCPI1_0:					#  <4 x float>
+	.long	2147483648	# float -0
+	.long	2147483648	# float -0
+	.long	2147483648	# float -0
+	.long	2147483648	# float -0
+_ccosf:
+	subl	$12, %esp
+	movss	16(%esp), %xmm0
+	movss	%xmm0, 4(%esp)
+	movss	20(%esp), %xmm0
+	xorps	LCPI1_0, %xmm0
+	movss	%xmm0, (%esp)
+	call	L_ccoshf$stub
+	addl	$12, %esp
+	ret
+
+Note the load into xmm0, then xor (to negate), then store.  In PIC mode,
+this code computes the pic base and does two loads to do the constant pool 
+load, so the improvement is much bigger.
+
+The tricky part about this xform is that the argument load/store isn't exposed
+until post-legalize, and at that point, the fneg has been custom expanded into 
+an X86 fxor.  This means that we need to handle this case in the x86 backend
+instead of in target independent code.
+
+//===---------------------------------------------------------------------===//
