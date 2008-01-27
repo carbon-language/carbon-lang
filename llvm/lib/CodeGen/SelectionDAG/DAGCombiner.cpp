@@ -1306,10 +1306,12 @@ SDOperand DAGCombiner::visitSREM(SDNode *N) {
     return DAG.getNode(ISD::SREM, VT, N0, N1);
   // If we know the sign bits of both operands are zero, strength reduce to a
   // urem instead.  Handles (X & 0x0FFFFFFF) %s 16 -> X&15
-  uint64_t SignBit = MVT::getIntVTSignBit(VT);
-  if (DAG.MaskedValueIsZero(N1, SignBit) &&
-      DAG.MaskedValueIsZero(N0, SignBit))
-    return DAG.getNode(ISD::UREM, VT, N0, N1);
+  if (!MVT::isVector(VT)) {
+    uint64_t SignBit = MVT::getIntVTSignBit(VT);
+    if (DAG.MaskedValueIsZero(N1, SignBit) &&
+        DAG.MaskedValueIsZero(N0, SignBit))
+      return DAG.getNode(ISD::UREM, VT, N0, N1);
+  }
   
   // If X/C can be simplified by the division-by-constant logic, lower
   // X%C to the equivalent of X-X/C*C.
