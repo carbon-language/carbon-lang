@@ -1208,10 +1208,9 @@ public:
   /// convenient to write "2.0" and the like.  Without this function we'd 
   /// have to duplicate its logic everywhere it's called.
   bool isExactlyValue(double V) const { 
-    if (getValueType(0)==MVT::f64)
-      return isExactlyValue(APFloat(V));
-    else
-      return isExactlyValue(APFloat((float)V));
+    APFloat Tmp(V);
+    Tmp.convert(Value.getSemantics(), APFloat::rmNearestTiesToEven);
+    return isExactlyValue(Tmp);
   }
   bool isExactlyValue(const APFloat& V) const;
 
