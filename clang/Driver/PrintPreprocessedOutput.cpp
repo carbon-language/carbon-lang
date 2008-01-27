@@ -36,32 +36,52 @@ using namespace clang;
 // slow system code.  In practice, using 'write' directly makes 'clang -E -P'
 // about 10% faster than using the stdio path on darwin.
 
-#ifdef HAVE_UNISTD_H
+#if defined(HAVE_UNISTD_H) && defined(HAVE_FCNTL_H)
 #include <unistd.h>
+#include <fcntl.h>
 #else
 #define USE_STDIO 1
 #endif
 
+#ifdef USE_STDIO
+FILE *OutputFILE;
+#else
+static int OutputFD;
 static char *OutBufStart = 0, *OutBufEnd, *OutBufCur;
+#endif
 
 /// InitOutputBuffer - Initialize our output buffer.
 ///
-static void InitOutputBuffer() {
-#ifndef USE_STDIO
+static void InitOutputBuffer(const std::string& Output) {
+#ifdef USE_STDIO
+  if (!Output.size() || Output == "-")
+    OutputFILE = stdout;
+  else
+    OutputFILE = fopen(Output.c_str(), "w+");
+
+  assert(OutputFILE && "failed to open output file");
+#else
   OutBufStart = new char[64*1024];
   OutBufEnd = OutBufStart+64*1024;
   OutBufCur = OutBufStart;
+
+  if (!Output.size() || Output == "-")
+    OutputFD = STDOUT_FILENO;
+  else
+    OutputFD = open(Output.c_str(), O_WRONLY|O_CREAT|O_TRUNC, 0644);
+
+  assert(OutputFD >= 0 && "failed to open output file");
 #endif
 }
 
+#ifndef USE_STDIO
 /// FlushBuffer - Write the accumulated bytes to the output stream.
 ///
 static void FlushBuffer() {
-#ifndef USE_STDIO
-  write(STDOUT_FILENO, OutBufStart, OutBufCur-OutBufStart);
+  write(OutputFD, OutBufStart, OutBufCur-OutBufStart);
   OutBufCur = OutBufStart;
-#endif
 }
+#endif
 
 /// CleanupOutputBuffer - Finish up output.
 ///
@@ -74,9 +94,9 @@ static void CleanupOutputBuffer() {
 
 static void OutputChar(char c) {
 #if defined(_MSC_VER)
-  putchar(c);
+  putc(c, OutputFILE);
 #elif defined(USE_STDIO)
-  putchar_unlocked(c);
+  putc_unlocked(c, OutputFILE);
 #else
   if (OutBufCur >= OutBufEnd)
     FlushBuffer();
@@ -86,7 +106,7 @@ static void OutputChar(char c) {
 
 static void OutputString(const char *Ptr, unsigned Size) {
 #ifdef USE_STDIO
-  fwrite(Ptr, Size, 1, stdout);
+  fwrite(Ptr, Size, 1, OutputFILE);
 #else
   if (OutBufCur+Size >= OutBufEnd)
     FlushBuffer();
@@ -571,12 +591,12 @@ bool PrintPPOutputPPCallbacks::AvoidConcat(const Token &PrevTok,
 
 /// DoPrintPreprocessedInput - This implements -E mode.
 ///
-void clang::DoPrintPreprocessedInput(Preprocessor &PP) {
+void clang::DoPrintPreprocessedInput(Preprocessor &PP, const std::string& OutFile) {
   // Inform the preprocessor whether we want it to retain comments or not, due
   // to -C or -CC.
   PP.SetCommentRetentionState(EnableCommentOutput, EnableMacroCommentOutput);
   
-  InitOutputBuffer();
+  InitOutputBuffer(OutFile);
   InitAvoidConcatTokenInfo();
   
   Token Tok, PrevTok;

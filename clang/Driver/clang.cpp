@@ -1024,7 +1024,7 @@ static void ProcessInputFile(Preprocessor &PP, const std::string &InFile,
   }
     
   case PrintPreprocessedInput:       // -E mode.
-    DoPrintPreprocessedInput(PP);
+    DoPrintPreprocessedInput(PP, OutputFile);
     ClearSourceMgr = true;
     break;
     
