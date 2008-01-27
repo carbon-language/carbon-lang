@@ -1,5 +1,7 @@
 ; RUN: llvm-as < %s | opt -disable-output -loop-unroll
 ; PR1770
+; PR1947
+
 	%struct.cl_engine = type { i32, i16, i32, i8**, i8**, i8*, i8*, i8*, i8*, i8*, i8*, i8* }
 	%struct.cl_limits = type { i32, i32, i32, i32, i16, i64 }
 	%struct.cli_ac_alt = type { i8, i8*, i16, i16, %struct.cli_ac_alt* }
