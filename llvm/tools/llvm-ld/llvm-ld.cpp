@@ -55,9 +55,17 @@ static cl::list<std::string> LibPaths("L", cl::Prefix,
   cl::desc("Specify a library search path"),
   cl::value_desc("directory"));
 
+static cl::list<std::string> FrameworkPaths("F", cl::Prefix,
+  cl::desc("Specify a framework search path"),
+  cl::value_desc("directory"));
+
 static cl::list<std::string> Libraries("l", cl::Prefix,
   cl::desc("Specify libraries to link to"),
   cl::value_desc("library prefix"));
+
+static cl::list<std::string> Frameworks("framework",
+  cl::desc("Specify frameworks to link to"),
+  cl::value_desc("framework"));
 
 // Options to control the linking, optimization, and code gen processes
 static cl::opt<bool> LinkAsLibrary("link-as-library",
@@ -287,6 +295,8 @@ static int GenerateCFile(const std::string &OutputFile,
 ///  OutputFilename  - The name of the file to generate.
 ///  NativeLinkItems - The native libraries, files, code with which to link
 ///  LibPaths        - The list of directories in which to find libraries.
+///  FrameworksPaths - The list of directories in which to find frameworks.
+///  Frameworks      - The list of frameworks (dynamic libraries)
 ///  gcc             - The pathname to use for GGC.
 ///  envp            - A copy of the process's current environment.
 ///
@@ -331,10 +341,12 @@ static int GenerateNative(const std::string &OutputFilename,
   args.push_back(OutputFilename);
   args.push_back(InputFilename);
 
-  // Add in the library paths
+  // Add in the library and framework paths
   for (unsigned index = 0; index < LibPaths.size(); index++) {
-    args.push_back("-L");
-    args.push_back(LibPaths[index]);
+    args.push_back("-L" + LibPaths[index]);
+  }
+  for (unsigned index = 0; index < FrameworkPaths.size(); index++) {
+    args.push_back("-F" + FrameworkPaths[index]);
   }
 
   // Add the requested options
@@ -350,6 +362,11 @@ static int GenerateNative(const std::string &OutputFilename,
         args.push_back(LinkItems[index].first);
     }
 
+  // Add in frameworks to link.
+  for (unsigned index = 0; index < Frameworks.size(); index++) {
+    args.push_back("-framework");
+    args.push_back(Frameworks[index]);
+  }
       
   // Now that "args" owns all the std::strings for the arguments, call the c_str
   // method to get the underlying string array.  We do this game so that the
