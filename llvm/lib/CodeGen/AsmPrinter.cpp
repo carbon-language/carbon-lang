@@ -939,10 +939,13 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV, bool Packed) {
       // api needed to prevent premature destruction
       APInt api = CFP->getValueAPF().convertToAPInt();
       const uint64_t *p = api.getRawData();
+      APFloat DoubleVal = CFP->getValueAPF();
+      DoubleVal.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven);
       if (TD->isBigEndian()) {
         O << TAI->getData16bitsDirective() << uint16_t(p[0] >> 48)
           << "\t" << TAI->getCommentString()
-          << " long double most significant halfword\n";
+          << " long double most significant halfword of ~"
+          << DoubleVal.convertToDouble() << "\n";
         O << TAI->getData16bitsDirective() << uint16_t(p[0] >> 32)
           << "\t" << TAI->getCommentString()
           << " long double next halfword\n";
@@ -958,7 +961,8 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV, bool Packed) {
        } else {
         O << TAI->getData16bitsDirective() << uint16_t(p[1])
           << "\t" << TAI->getCommentString()
-          << " long double least significant halfword\n";
+          << " long double least significant halfword of ~"
+          << DoubleVal.convertToDouble() << "\n";
         O << TAI->getData16bitsDirective() << uint16_t(p[0])
           << "\t" << TAI->getCommentString()
           << " long double next halfword\n";
