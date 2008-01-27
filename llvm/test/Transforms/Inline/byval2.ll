@@ -1,7 +1,7 @@
-; RUN: llvm-as < %s | opt -inline | llvm-dis | grep {llvm.memcpy}
+; RUN: llvm-as < %s | opt -inline | llvm-dis | not grep {llvm.memcpy}
 
-; Inlining a byval struct should cause an explicit copy 
-; into an alloca even if the function is readonly
+; Inlining a byval struct should NOT cause an explicit copy 
+; into an alloca if the function is readonly
 
 	%struct.ss = type { i32, i64 }
 @.str = internal constant [10 x i8] c"%d, %lld\0A\00"		; <[10 x i8]*> [#uses=1]
