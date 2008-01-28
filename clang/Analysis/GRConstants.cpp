@@ -1009,6 +1009,13 @@ void GRConstants::VisitBinaryOperator(BinaryOperator* B,
           break;
         }
           
+        case BinaryOperator::Rem: {
+          const NonLValue& R1 = cast<NonLValue>(V1);
+          const NonLValue& R2 = cast<NonLValue>(V2);
+	        Nodify(Dst, B, N2, SetValue(St, B, R1.Rem(ValMgr, R2)));
+          break;
+        }
+          
         case BinaryOperator::Assign: {
           const LValue& L1 = cast<LValue>(V1);
           const NonLValue& R2 = cast<NonLValue>(V2);
