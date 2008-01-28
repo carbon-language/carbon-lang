@@ -2494,14 +2494,15 @@ Instruction *InstCombiner::commonDivTransforms(BinaryOperator &I) {
   if (isa<UndefValue>(Op1))
     return ReplaceInstUsesWith(I, Op1);
 
-  // Handle cases involving: div X, (select Cond, Y, Z)
+  // Handle cases involving: [su]div X, (select Cond, Y, Z)
+  // This does not apply for fdiv.
   if (SelectInst *SI = dyn_cast<SelectInst>(Op1)) {
-    // div X, (Cond ? 0 : Y) -> div X, Y.  If the div and the select are in the
-    // same basic block, then we replace the select with Y, and the condition 
-    // of the select with false (if the cond value is in the same BB).  If the
-    // select has uses other than the div, this allows them to be simplified
-    // also. Note that div X, Y is just as good as div X, 0 (undef)
-    if (Constant *ST = dyn_cast<Constant>(SI->getOperand(1)))
+    // [su]div X, (Cond ? 0 : Y) -> div X, Y.  If the div and the select are in
+    // the same basic block, then we replace the select with Y, and the
+    // condition of the select with false (if the cond value is in the same BB).
+    // If the select has uses other than the div, this allows them to be
+    // simplified also. Note that div X, Y is just as good as div X, 0 (undef)
+    if (ConstantInt *ST = dyn_cast<ConstantInt>(SI->getOperand(1)))
       if (ST->isNullValue()) {
         Instruction *CondI = dyn_cast<Instruction>(SI->getOperand(0));
         if (CondI && CondI->getParent() == I.getParent())
@@ -2513,8 +2514,8 @@ Instruction *InstCombiner::commonDivTransforms(BinaryOperator &I) {
         return &I;
       }
 
-    // Likewise for: div X, (Cond ? Y : 0) -> div X, Y
-    if (Constant *ST = dyn_cast<Constant>(SI->getOperand(2)))
+    // Likewise for: [su]div X, (Cond ? Y : 0) -> div X, Y
+    if (ConstantInt *ST = dyn_cast<ConstantInt>(SI->getOperand(2)))
       if (ST->isNullValue()) {
         Instruction *CondI = dyn_cast<Instruction>(SI->getOperand(0));
         if (CondI && CondI->getParent() == I.getParent())
