@@ -454,8 +454,8 @@ endif
 LD.Flags      += -L$(LibDir) -L$(LLVMLibDir) 
 CPP.BaseFlags += -D_GNU_SOURCE -D__STDC_LIMIT_MACROS
 # All -I flags should go here, so that they don't confuse llvm-config.
-CPP.Flags     += $(patsubst %,-I%/include,$(sort \
-	         $(PROJ_OBJ_DIR) $(PROJ_SRC_DIR) \
+CPP.Flags     += $(sort -I$(PROJ_OBJ_DIR) -I$(PROJ_SRC_DIR) \
+	         $(patsubst %,-I%/include,\
 	         $(PROJ_OBJ_ROOT) $(PROJ_SRC_ROOT) \
 	         $(LLVM_OBJ_ROOT) $(LLVM_SRC_ROOT))) \
 	         $(CPP.BaseFlags)
