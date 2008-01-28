@@ -190,6 +190,11 @@ struct s2 {struct s1 c;} t2 = { t1 };
 struct s1 t3[] = {t1, t1, "abc", 0}; //expected-warning{{incompatible pointer to integer conversion initializing 'char *', expected 'char'}}
 int t4[sizeof t3 == 6 ? 1 : -1];
 }
+struct foo { int z; } w;
+int bar (void) { 
+  struct foo z = { w }; //expected-error{{incompatible type initializing 'struct foo', expected 'int'}}
+  return z.z; 
+} 
 struct s3 {void (*a)(void);} t5 = {autoStructTest};
 // GCC extension; flexible array init. Once this is implemented, the warning should be removed.
 // Note that clang objc implementation depends on this extension.

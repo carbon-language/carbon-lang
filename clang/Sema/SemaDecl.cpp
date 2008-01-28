@@ -461,8 +461,9 @@ bool Sema::CheckInitializerListTypes(InitListExpr*& IList, QualType &DeclType,
     }
   } else if (DeclType->isAggregateType() || DeclType->isUnionType()) {
     if (DeclType->isStructureType() || DeclType->isUnionType()) {
-      if (startIndex < IList->getNumInits() &&
-          Context.typesAreCompatible(IList->getInit(startIndex)->getType(), DeclType)) {
+      if (startIndex < IList->getNumInits() && !topLevel &&
+          Context.typesAreCompatible(IList->getInit(startIndex)->getType(), 
+                                     DeclType)) {
         // We found a compatible struct; per the standard, this initializes the
         // struct.  (The C standard technically says that this only applies for
         // initializers for declarations with automatic scope; however, this
