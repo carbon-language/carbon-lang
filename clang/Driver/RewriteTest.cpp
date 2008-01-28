@@ -22,14 +22,21 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/CommandLine.h"
 #include <sstream>
 using namespace clang;
 using llvm::utostr;
+
+static llvm::cl::opt<bool>
+SilenceRewriteMacroWarning("Wno-rewrite-macros", llvm::cl::init(false),
+                           llvm::cl::desc("Silence ObjC rewriting warnings"));
 
 namespace {
   class RewriteTest : public ASTConsumer {
     Rewriter Rewrite;
     Diagnostic &Diags;
+	unsigned RewriteFailedDiag;
+	
     ASTContext *Context;
     SourceManager *SM;
     unsigned MainFileID;
@@ -89,7 +96,7 @@ namespace {
       CurMethodDecl = 0;
       SuperStructDecl = 0;
       BcLabelCount = 0;
-      
+	  
       // Get the ID and start/end of the main file.
       MainFileID = SM->getMainFileID();
       const llvm::MemoryBuffer *MainBuf = SM->getBuffer(MainFileID);
@@ -157,7 +164,11 @@ namespace {
     // Top Level Driver code.
     virtual void HandleTopLevelDecl(Decl *D);
     void HandleDeclInMainFile(Decl *D);
-    RewriteTest(bool isHeader, Diagnostic &D) : Diags(D) {IsHeader = isHeader;}
+    RewriteTest(bool isHeader, Diagnostic &D) : Diags(D) {
+	  IsHeader = isHeader;
+      RewriteFailedDiag = Diags.getCustomDiagID(Diagnostic::Warning, 
+               "rewriting sub-expression within a macro (may not be correct)");
+	}
     ~RewriteTest();
 
     // Syntactic Rewriting.
@@ -697,10 +708,10 @@ Stmt *RewriteTest::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
                                        IV->getLocation());
     if (Rewrite.ReplaceStmt(IV, Replacement)) {
       // replacement failed.
-      unsigned DiagID = Diags.getCustomDiagID(Diagnostic::Warning, 
-                     "rewriting sub-expression within a macro (may not be correct)");
       SourceRange Range = IV->getSourceRange();
-      Diags.Report(Context->getFullLoc(IV->getLocation()), DiagID, 0, 0, &Range, 1);
+	  if (!SilenceRewriteMacroWarning)
+        Diags.Report(Context->getFullLoc(IV->getLocation()), RewriteFailedDiag, 
+	                                     0, 0, &Range, 1);
     }
     delete IV;
     return Replacement;
@@ -723,10 +734,10 @@ Stmt *RewriteTest::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
           ParenExpr *PE = new ParenExpr(SourceLocation(), SourceLocation(), castExpr);
           if (Rewrite.ReplaceStmt(IV->getBase(), PE)) {
             // replacement failed.
-            unsigned DiagID = Diags.getCustomDiagID(Diagnostic::Warning, 
-                           "rewriting sub-expression within a macro (may not be correct)");
             SourceRange Range = IV->getBase()->getSourceRange();
-            Diags.Report(Context->getFullLoc(IV->getBase()->getLocStart()), DiagID, 0, 0, &Range, 1);
+	        if (!SilenceRewriteMacroWarning)
+              Diags.Report(Context->getFullLoc(IV->getBase()->getLocStart()), 
+						   RewriteFailedDiag, 0, 0, &Range, 1);
           }
           delete IV->getBase();
           return PE;
@@ -1239,10 +1250,10 @@ Stmt *RewriteTest::RewriteAtEncode(ObjCEncodeExpr *Exp) {
                                         SourceLocation(), SourceLocation());
   if (Rewrite.ReplaceStmt(Exp, Replacement)) {
     // replacement failed.
-    unsigned DiagID = Diags.getCustomDiagID(Diagnostic::Warning, 
-                     "rewriting sub-expression within a macro (may not be correct)");
     SourceRange Range = Exp->getSourceRange();
-    Diags.Report(Context->getFullLoc(Exp->getAtLoc()), DiagID, 0, 0, &Range, 1);
+    if (!SilenceRewriteMacroWarning)
+      Diags.Report(Context->getFullLoc(Exp->getAtLoc()), RewriteFailedDiag,
+	                                   0, 0, &Range, 1);
   }
   
   // Replace this subexpr in the parent.
@@ -1263,10 +1274,10 @@ Stmt *RewriteTest::RewriteAtSelector(ObjCSelectorExpr *Exp) {
                                                  &SelExprs[0], SelExprs.size());
   if (Rewrite.ReplaceStmt(Exp, SelExp)) {
     // replacement failed.
-    unsigned DiagID = Diags.getCustomDiagID(Diagnostic::Warning, 
-                     "rewriting sub-expression within a macro (may not be correct)");
     SourceRange Range = Exp->getSourceRange();
-    Diags.Report(Context->getFullLoc(Exp->getAtLoc()), DiagID, 0, 0, &Range, 1);
+    if (!SilenceRewriteMacroWarning)
+      Diags.Report(Context->getFullLoc(Exp->getAtLoc()), RewriteFailedDiag,
+	                                   0, 0, &Range, 1);
   }
   delete Exp;
   return SelExp;
@@ -1595,10 +1606,10 @@ Stmt *RewriteTest::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
   CastExpr *cast = new CastExpr(Exp->getType(), call, SourceLocation());
   if (Rewrite.ReplaceStmt(Exp, cast)) {
     // replacement failed.
-    unsigned DiagID = Diags.getCustomDiagID(Diagnostic::Warning, 
-                     "rewriting sub-expression within a macro (may not be correct)");
     SourceRange Range = Exp->getSourceRange();
-    Diags.Report(Context->getFullLoc(Exp->getAtLoc()), DiagID, 0, 0, &Range, 1);
+    if (!SilenceRewriteMacroWarning)
+      Diags.Report(Context->getFullLoc(Exp->getAtLoc()), RewriteFailedDiag,
+	                                   0, 0, &Range, 1);
   }
   delete Exp;
   return cast;
@@ -1975,10 +1986,10 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
   // Now do the actual rewrite.
   if (Rewrite.ReplaceStmt(Exp, ReplacingStmt)) {
     // replacement failed.
-    unsigned DiagID = Diags.getCustomDiagID(Diagnostic::Warning, 
-                     "rewriting sub-expression within a macro (may not be correct)");
     SourceRange Range = Exp->getSourceRange();
-    Diags.Report(Context->getFullLoc(Exp->getLocStart()), DiagID, 0, 0, &Range, 1);
+    if (!SilenceRewriteMacroWarning)
+      Diags.Report(Context->getFullLoc(Exp->getLocStart()), RewriteFailedDiag,
+	                                   0, 0, &Range, 1);
   }
   
   delete Exp;
@@ -2002,10 +2013,10 @@ Stmt *RewriteTest::RewriteObjCProtocolExpr(ObjCProtocolExpr *Exp) {
                                                     ProtoExprs.size());
   if (Rewrite.ReplaceStmt(Exp, ProtoExp)) {
     // replacement failed.
-    unsigned DiagID = Diags.getCustomDiagID(Diagnostic::Warning, 
-                     "rewriting sub-expression within a macro (may not be correct)");
     SourceRange Range = Exp->getSourceRange();
-    Diags.Report(Context->getFullLoc(Exp->getAtLoc()), DiagID, 0, 0, &Range, 1);
+    if (!SilenceRewriteMacroWarning)
+      Diags.Report(Context->getFullLoc(Exp->getAtLoc()), RewriteFailedDiag,
+	                                   0, 0, &Range, 1);
   }
   delete Exp;
   return ProtoExp;
