@@ -1054,6 +1054,14 @@ void GRConstants::VisitBinaryOperator(BinaryOperator* B,
           Nodify(Dst, B, N2, SetValue(SetValue(St, B, Result), L1, Result));
           break;
         }
+          
+        case BinaryOperator::RemAssign: {
+          const LValue& L1 = cast<LValue>(V1);
+          NonLValue R1 = cast<NonLValue>(GetValue(N1->getState(), L1));
+          NonLValue Result = R1.Rem(ValMgr, cast<NonLValue>(V2));
+          Nodify(Dst, B, N2, SetValue(SetValue(St, B, Result), L1, Result));
+          break;
+        }
 
         default: 
           Dst.Add(N2);
