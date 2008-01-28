@@ -919,6 +919,36 @@ struct VISIBILITY_HIDDEN memcmpOptimization : public LibCallOptimization {
   }
 } memcmpOptimizer;
 
+/// This LibCallOptimization will simplify a call to the memcpy library
+/// function.  It simply converts them into calls to llvm.memcpy.*;
+/// the resulting call should be optimized later.
+/// @brief Simplify the memcpy library function.
+struct VISIBILITY_HIDDEN MemCpyOptimization : public LibCallOptimization {
+public:
+  MemCpyOptimization() : LibCallOptimization("memcpy",
+      "Number of 'memcpy' calls simplified") {}
+
+  /// @brief Make sure that the "memcpy" function has the right prototype
+  virtual bool ValidateCalledFunction(const Function *F, SimplifyLibCalls &SLC){
+    const FunctionType *FT = F->getFunctionType();
+    const Type* voidPtr = PointerType::getUnqual(Type::Int8Ty);
+    return FT->getReturnType() == voidPtr && FT->getNumParams() == 3 &&
+           FT->getParamType(0) == voidPtr &&
+           FT->getParamType(1) == voidPtr &&
+           FT->getParamType(2) == SLC.getIntPtrType();
+  }
+
+  /// @brief Perform the memcpy optimization
+  virtual bool OptimizeCall(CallInst *CI, SimplifyLibCalls &SLC) {
+    Value *MemcpyOps[] = {
+      CI->getOperand(1), CI->getOperand(2), CI->getOperand(3),
+      ConstantInt::get(Type::Int32Ty, 1)   // align = 1 always.
+    };
+    new CallInst(SLC.get_memcpy(), MemcpyOps, MemcpyOps + 4, "", CI);
+    // memcpy always returns the destination
+    return ReplaceCallWith(CI, CI->getOperand(1));
+  }
+} MemCpyOptimizer;
 
 /// This LibCallOptimization will simplify a call to the memcpy library
 /// function by expanding it out to a single store of size 0, 1, 2, 4, or 8
