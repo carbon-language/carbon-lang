@@ -1,5 +1,6 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep zext
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {icmp ugt}
 ; PR1107
+; PR1940
 
 define i1 @test(i8 %A, i8 %B) {
 	%a = zext i8 %A to i32
