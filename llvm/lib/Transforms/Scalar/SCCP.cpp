@@ -1313,15 +1313,30 @@ bool SCCPSolver::ResolvedUndefsIn(Function &F) {
       continue;
     }
     
-    // If the edge to the first successor isn't thought to be feasible yet, mark
-    // it so now.
-    if (KnownFeasibleEdges.count(Edge(BB, TI->getSuccessor(0))))
+    // If the edge to the second successor isn't thought to be feasible yet,
+    // mark it so now.  We pick the second one so that this goes to some
+    // enumerated value in a switch instead of going to the default destination.
+    if (KnownFeasibleEdges.count(Edge(BB, TI->getSuccessor(1))))
       continue;
     
     // Otherwise, it isn't already thought to be feasible.  Mark it as such now
     // and return.  This will make other blocks reachable, which will allow new
     // values to be discovered and existing ones to be moved in the lattice.
-    markEdgeExecutable(BB, TI->getSuccessor(0));
+    markEdgeExecutable(BB, TI->getSuccessor(1));
+    
+    // This must be a conditional branch of switch on undef.  At this point,
+    // force the old terminator to branch to the first successor.  This is
+    // required because we are now influencing the dataflow of the function with
+    // the assumption that this edge is taken.  If we leave the branch condition
+    // as undef, then further analysis could think the undef went another way
+    // leading to an inconsistent set of conclusions.
+    if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
+      BI->setCondition(ConstantInt::getFalse());
+    } else {
+      SwitchInst *SI = cast<SwitchInst>(TI);
+      SI->setCondition(SI->getCaseValue(1));
+    }
+    
     return true;
   }
 
