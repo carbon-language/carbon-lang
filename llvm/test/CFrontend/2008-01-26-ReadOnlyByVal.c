@@ -1,6 +1,6 @@
 // RUN: %llvmgcc %s -S -O1 -o - | llvm-as | opt -std-compile-opts | llvm-dis | not grep add
 
-struct S { int A; int B; int C; int D; };
+struct S { int A; int B; char C[1000]; };
 
 int f(struct S x) __attribute__ ((const));
 
