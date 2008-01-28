@@ -425,7 +425,7 @@ protected:
 class FunctionDecl : public ValueDecl {
 public:
   enum StorageClass {
-    None, Extern, Static
+    None, Extern, Static, PrivateExtern
   };
   FunctionDecl(SourceLocation L, IdentifierInfo *Id, QualType T,
                StorageClass S = None, bool isInline = false, 

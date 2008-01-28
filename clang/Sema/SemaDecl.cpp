@@ -678,6 +678,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
       case DeclSpec::SCS_unspecified: SC = FunctionDecl::None; break;
       case DeclSpec::SCS_extern:      SC = FunctionDecl::Extern; break;
       case DeclSpec::SCS_static:      SC = FunctionDecl::Static; break;
+      case DeclSpec::SCS_private_extern: SC = FunctionDecl::PrivateExtern;break;
     }
 
     FunctionDecl *NewFD = new FunctionDecl(D.getIdentifierLoc(), II, R, SC,
