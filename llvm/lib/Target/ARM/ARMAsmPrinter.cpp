@@ -233,6 +233,16 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Emit pre-function debug information.
   DW.BeginFunction(&MF);
 
+  if (Subtarget->isTargetDarwin()) {
+    // If the function is empty, then we need to emit *something*. Otherwise,
+    // the function's label might be associated with something that it wasn't
+    // meant to be associated with. We emit a noop in this situation.
+    MachineFunction::iterator I = MF.begin();
+
+    if (++I == MF.end() && MF.front().empty())
+      O << "\tnop\n";
+  }
+
   // Print out code for the function.
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
