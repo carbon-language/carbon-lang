@@ -203,8 +203,8 @@ namespace {
   
 class VISIBILITY_HIDDEN RValue {
 public:
-  enum BaseKind { InvalidKind=0x0, LValueKind=0x1, NonLValueKind=0x2,
-                  BaseFlags = 0x3 };
+  enum BaseKind { LValueKind=0x0, NonLValueKind=0x1,
+                  UninitializedKind=0x2, InvalidKind=0x3, BaseFlags = 0x3 };
     
 private:
   void* Data;
@@ -215,8 +215,8 @@ protected:
     : Data(const_cast<void*>(d)),
       Kind((isLValue ? LValueKind : NonLValueKind) | (ValKind << 2)) {}
   
-  explicit RValue()
-    : Data(0), Kind(InvalidKind) {}
+  explicit RValue(BaseKind k)
+    : Data(0), Kind(k) {}
 
   void* getRawPtr() const {
     return reinterpret_cast<void*>(Data);
@@ -252,10 +252,19 @@ public:
 
 class VISIBILITY_HIDDEN InvalidValue : public RValue {
 public:
-  InvalidValue() {}
+  InvalidValue() : RValue(InvalidKind) {}
   
   static inline bool classof(const RValue* V) {
     return V->getBaseKind() == InvalidKind;
+  }  
+};
+  
+class VISIBILITY_HIDDEN UninitializedValue : public RValue {
+public:
+  UninitializedValue() : RValue(UninitializedKind) {}
+  
+  static inline bool classof(const RValue* V) {
+    return V->getBaseKind() == UninitializedKind;
   }  
 };
 
@@ -289,7 +298,7 @@ public:
   
   // Implement isa<T> support.
   static inline bool classof(const RValue* V) {
-    return V->getBaseKind() == NonLValueKind;
+    return V->getBaseKind() >= NonLValueKind;
   }
 };
     
@@ -425,6 +434,9 @@ case (k1##Kind*NumNonLValueKind+k2##Kind):\
 switch (getSubKind()*NumNonLValueKind+RHS.getSubKind()){\
   RVALUE_DISPATCH_CASE(ConcreteInt,ConcreteInt,Op)\
   default:\
+    if (getBaseKind() == UninitializedKind ||\
+        RHS.getBaseKind() == UninitializedKind)\
+      return cast<NonLValue>(UninitializedValue());\
     assert (!isValid() || !RHS.isValid() && "Missing case.");\
     break;\
 }\
@@ -483,6 +495,10 @@ void RValue::print(std::ostream& Out) const {
       
     case LValueKind:
       assert (false && "FIXME: LValue printing not implemented.");  
+      break;
+      
+    case UninitializedKind:
+      Out << "Uninitialized";
       break;
       
     default:
@@ -866,8 +882,11 @@ void GRConstants::VisitDeclStmt(DeclStmt* DS, GRConstants::NodeTy* Pred,
   StateTy St = Pred->getState();
   
   for (const ScopedDecl* D = DS->getDecl(); D; D = D->getNextDeclarator())
-    if (const VarDecl* VD = dyn_cast<VarDecl>(D))
-      St = SetValue(St, LValueDecl(VD), GetValue(St, VD->getInit()));
+    if (const VarDecl* VD = dyn_cast<VarDecl>(D)) {
+      const Expr* E = VD->getInit();      
+      St = SetValue(St, LValueDecl(VD),
+                    E ? GetValue(St, E) : UninitializedValue());
+    }
 
   Nodify(Dst, DS, Pred, St);
   
