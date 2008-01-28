@@ -48,7 +48,7 @@ using llvm::APSInt;
 //===----------------------------------------------------------------------===//
 namespace {
 
-typedef uintptr_t SymbolID;
+typedef unsigned SymbolID;
   
 class VISIBILITY_HIDDEN ValueKey {
   uintptr_t Raw;  
@@ -70,7 +70,7 @@ public:
   
   inline SymbolID getSymbolID() const {
     assert (getKind() == IsSymbol);
-    return Raw >> 2;
+    return (SymbolID) (Raw >> 2);
   }
   
   ValueKey(const ValueDecl* VD)
@@ -94,7 +94,7 @@ public:
     ID.AddInteger(isSymbol() ? 1 : 0);
 
     if (isSymbol())
-      ID.AddInteger((uint64_t) getSymbolID());
+      ID.AddInteger(getSymbolID());
     else    
       ID.AddPointer(getPtr());
   }
@@ -204,30 +204,22 @@ namespace {
 class VISIBILITY_HIDDEN RValue {
 public:
   enum BaseKind { InvalidKind=0x0, LValueKind=0x1, NonLValueKind=0x2,
-                  SymbolKind=0x3, BaseFlags = 0x3 };
+                  BaseFlags = 0x3 };
     
 private:
-  uintptr_t Data;
+  void* Data;
   unsigned Kind;
     
 protected:
   RValue(const void* d, bool isLValue, unsigned ValKind)
-    : Data(reinterpret_cast<uintptr_t>(const_cast<void*>(d))),
+    : Data(const_cast<void*>(d)),
       Kind((isLValue ? LValueKind : NonLValueKind) | (ValKind << 2)) {}
   
   explicit RValue()
     : Data(0), Kind(InvalidKind) {}
-  
-  explicit RValue(unsigned SymID)
-    : Data(SymID), Kind(SymbolKind) {}
-    
+
   void* getRawPtr() const {
-    assert (getBaseKind() != InvalidKind && getBaseKind() != SymbolKind);
     return reinterpret_cast<void*>(Data);
-  }
-  
-  uintptr_t getRawData() const {
-    return Data;
   }
   
 public:
@@ -264,19 +256,6 @@ public:
   
   static inline bool classof(const RValue* V) {
     return V->getBaseKind() == InvalidKind;
-  }  
-};
-
-class VISIBILITY_HIDDEN SymbolValue : public RValue {
-public:
-  SymbolValue(unsigned SymID) : RValue(SymID) {}
-  
-  unsigned getID() const {
-    return (unsigned) getRawData();
-  }
-  
-  static inline bool classof(const RValue* V) {
-    return V->getBaseKind() == SymbolKind;
   }  
 };
 
@@ -347,7 +326,23 @@ public:
 
 namespace {
   
-enum { ConcreteIntKind, ConstrainedIntegerKind, NumNonLValueKind };
+enum { SymbolicNonLValueKind, ConcreteIntKind, ConstrainedIntegerKind,
+       NumNonLValueKind };
+
+class VISIBILITY_HIDDEN SymbolicNonLValue : public NonLValue {
+public:
+  SymbolicNonLValue(unsigned SymID)
+    : NonLValue(SymbolicNonLValueKind,
+                reinterpret_cast<void*>((uintptr_t) SymID)) {}
+  
+  SymbolID getSymbolID() const {
+    return (SymbolID) reinterpret_cast<uintptr_t>(getRawPtr());
+  }
+  
+  static inline bool classof(const RValue* V) {
+    return V->getSubKind() == SymbolicNonLValueKind;
+  }  
+};
   
 class VISIBILITY_HIDDEN ConcreteInt : public NonLValue {
 public:
