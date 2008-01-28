@@ -2051,6 +2051,11 @@ Both arguments must have identical types.</p>
 <h5>Semantics:</h5>
 <p>The value produced is the integer or floating point sum of the two
 operands.</p>
+<p>If an integer sum has unsigned overflow, the result returned is the
+mathematical result modulo 2<sup>n</sup>, where n is the bit width of
+the result.</p>
+<p>Because LLVM integers use a two's complement representation, this
+instruction is appropriate for both signed and unsigned integers.</p>
 <h5>Example:</h5>
 <pre>  &lt;result&gt; = add i32 4, %var          <i>; yields {i32}:result = 4 + %var</i>
 </pre>
@@ -2076,6 +2081,11 @@ Both arguments must have identical types.</p>
 <h5>Semantics:</h5>
 <p>The value produced is the integer or floating point difference of
 the two operands.</p>
+<p>If an integer difference has unsigned overflow, the result returned is the
+mathematical result modulo 2<sup>n</sup>, where n is the bit width of
+the result.</p>
+<p>Because LLVM integers use a two's complement representation, this
+instruction is appropriate for both signed and unsigned integers.</p>
 <h5>Example:</h5>
 <pre>
   &lt;result&gt; = sub i32 4, %var          <i>; yields {i32}:result = 4 - %var</i>
@@ -2101,9 +2111,15 @@ Both arguments must have identical types.</p>
 <h5>Semantics:</h5>
 <p>The value produced is the integer or floating point product of the
 two operands.</p>
-<p>Because the operands are the same width, the result of an integer
-multiplication is the same whether the operands should be deemed unsigned or
-signed.</p>
+<p>If the result of an integer multiplication has unsigned overflow,
+the result returned is the mathematical result modulo 
+2<sup>n</sup>, where n is the bit width of the result.</p>
+<p>Because LLVM integers use a two's complement representation, and the
+result is the same width as the operands, this instruction returns the
+correct result for both signed and unsigned integers.  If a full product
+(e.g. <tt>i32</tt>x<tt>i32</tt>-><tt>i64</tt>) is needed, the operands
+should be sign-extended or zero-extended as appropriate to the
+width of the full product.</p>
 <h5>Example:</h5>
 <pre>  &lt;result&gt; = mul i32 4, %var          <i>; yields {i32}:result = 4 * %var</i>
 </pre>
@@ -2124,9 +2140,10 @@ operands.</p>
 types. This instruction can also take <a href="#t_vector">vector</a> versions 
 of the values in which case the elements must be integers.</p>
 <h5>Semantics:</h5>
-<p>The value produced is the unsigned integer quotient of the two operands. This
-instruction always performs an unsigned division operation, regardless of 
-whether the arguments are unsigned or not.</p>
+<p>The value produced is the unsigned integer quotient of the two operands.</p>
+<p>Note that unsigned integer division and signed integer division are distinct
+operations; for signed integer division, use '<tt>sdiv</tt>'.</p>
+<p>Division by zero leads to undefined behavior.</p>
 <h5>Example:</h5>
 <pre>  &lt;result&gt; = udiv i32 4, %var          <i>; yields {i32}:result = 4 / %var</i>
 </pre>
@@ -2147,9 +2164,12 @@ operands.</p>
 types. This instruction can also take <a href="#t_vector">vector</a> versions 
 of the values in which case the elements must be integers.</p>
 <h5>Semantics:</h5>
-<p>The value produced is the signed integer quotient of the two operands. This
-instruction always performs a signed division operation, regardless of whether
-the arguments are signed or not.</p>
+<p>The value produced is the signed integer quotient of the two operands.</p>
+<p>Note that signed integer division and unsigned integer division are distinct
+operations; for unsigned integer division, use '<tt>udiv</tt>'.</p>
+<p>Division by zero leads to undefined behavior. Overflow also leads to
+undefined behavior; this is a rare case, but can occur, for example,
+by doing a 32-bit division of -2147483648 by -1.</p>
 <h5>Example:</h5>
 <pre>  &lt;result&gt; = sdiv i32 4, %var          <i>; yields {i32}:result = 4 / %var</i>
 </pre>
@@ -2194,6 +2214,9 @@ of the values in which case the elements must be integers.</p>
 <p>This instruction returns the unsigned integer <i>remainder</i> of a division.
 This instruction always performs an unsigned division to get the remainder,
 regardless of whether the arguments are unsigned or not.</p>
+<p>Note that unsigned integer remainder and signed integer remainder are
+distinct operations; for signed integer remainder, use '<tt>srem</tt>'.</p>
+<p>Taking the remainder of a division by zero leads to undefined behavior.</p>
 <h5>Example:</h5>
 <pre>  &lt;result&gt; = urem i32 4, %var          <i>; yields {i32}:result = 4 % %var</i>
 </pre>
@@ -2225,6 +2248,14 @@ a value.  For more information about the difference, see <a
 Math Forum</a>. For a table of how this is implemented in various languages,
 please see <a href="http://en.wikipedia.org/wiki/Modulo_operation">
 Wikipedia: modulo operation</a>.</p>
+<p>Note that signed integer remainder and unsigned integer remainder are
+distinct operations; for unsigned integer remainder, use '<tt>urem</tt>'.</p>
+<p>Taking the remainder of a division by zero leads to undefined behavior.
+Overflow also leads to undefined behavior; this is a rare case, but can occur,
+for example, by taking the remainder of a 32-bit division of -2147483648 by -1.
+(The remainder doesn't actually overflow, but this rule lets srem be 
+implemented using instructions that return both the result of the division
+and the remainder.)</p>
 <h5>Example:</h5>
 <pre>  &lt;result&gt; = srem i32 4, %var          <i>; yields {i32}:result = 4 % %var</i>
 </pre>
