@@ -329,7 +329,7 @@ class FoldingSetNodeWrapper : public FoldingSetNode {
   T data;
 public:
   FoldingSetNodeWrapper(const T& x) : data(x) {}
-  virtual ~FoldingSetNodeWrapper();
+  virtual ~FoldingSetNodeWrapper() {}
   
   template<typename A1>
   explicit FoldingSetNodeWrapper(const A1& a1)
@@ -355,6 +355,9 @@ public:
 
   
   void Profile(FoldingSetNodeID& ID) { FoldingSetTrait<T>::Profile(data, ID); }
+
+  T& getValue() { return data; }
+  const T& getValue() const { return data; }
 
   operator T&() { return data; }
   operator const T&() const { return data; }
