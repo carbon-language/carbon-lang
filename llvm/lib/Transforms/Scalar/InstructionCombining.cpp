@@ -5820,18 +5820,22 @@ Instruction *InstCombiner::visitICmpInstWithCastAndCast(ICmpInst &ICI) {
     if (RHSCIOp->getType() != LHSCIOp->getType()) 
       return 0;
     
-    // If the signedness of the two compares doesn't agree (i.e. one is a sext
+    // If the signedness of the two casts doesn't agree (i.e. one is a sext
     // and the other is a zext), then we can't handle this.
     if (CI->getOpcode() != LHSCI->getOpcode())
       return 0;
 
-    // Likewise, if the signedness of the [sz]exts and the compare don't match, 
-    // then we can't handle this.
-    if (isSignedExt != isSignedCmp && !ICI.isEquality())
-      return 0;
-    
-    // Okay, just insert a compare of the reduced operands now!
-    return new ICmpInst(ICI.getPredicate(), LHSCIOp, RHSCIOp);
+    // Deal with equality cases early.
+    if (ICI.isEquality())
+      return new ICmpInst(ICI.getPredicate(), LHSCIOp, RHSCIOp);
+
+    // A signed comparison of sign extended values simplifies into a
+    // signed comparison.
+    if (isSignedCmp && isSignedExt)
+      return new ICmpInst(ICI.getPredicate(), LHSCIOp, RHSCIOp);
+
+    // The other three cases all fold into an unsigned comparison.
+    return new ICmpInst(ICI.getUnsignedPredicate(), LHSCIOp, RHSCIOp);
   }
 
   // If we aren't dealing with a constant on the RHS, exit early

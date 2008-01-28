@@ -642,6 +642,18 @@ public:
   /// @brief Return the signed version of the predicate.
   static Predicate getSignedPredicate(Predicate pred);
 
+  /// For example, EQ->EQ, SLE->ULE, UGT->UGT, etc.
+  /// @returns the predicate that would be the result if the operand were
+  /// regarded as unsigned.
+  /// @brief Return the unsigned version of the predicate
+  Predicate getUnsignedPredicate() const {
+    return getUnsignedPredicate(getPredicate());
+  }
+
+  /// This is a static version that you can use without an instruction.
+  /// @brief Return the unsigned version of the predicate.
+  static Predicate getUnsignedPredicate(Predicate pred);
+
   /// isEquality - Return true if this predicate is either EQ or NE.  This also
   /// tests for commutativity.
   static bool isEquality(Predicate P) {

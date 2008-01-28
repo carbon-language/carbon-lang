@@ -2429,6 +2429,19 @@ ICmpInst::Predicate ICmpInst::getSignedPredicate(Predicate pred) {
   }
 }
 
+ICmpInst::Predicate ICmpInst::getUnsignedPredicate(Predicate pred) {
+  switch (pred) {
+    default: assert(! "Unknown icmp predicate!");
+    case ICMP_EQ: case ICMP_NE: 
+    case ICMP_UGT: case ICMP_ULT: case ICMP_UGE: case ICMP_ULE: 
+       return pred;
+    case ICMP_SGT: return ICMP_UGT;
+    case ICMP_SLT: return ICMP_ULT;
+    case ICMP_SGE: return ICMP_UGE;
+    case ICMP_SLE: return ICMP_ULE;
+  }
+}
+
 bool ICmpInst::isSignedPredicate(Predicate pred) {
   switch (pred) {
     default: assert(! "Unknown icmp predicate!");
