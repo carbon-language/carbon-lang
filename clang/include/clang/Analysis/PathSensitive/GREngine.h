@@ -166,7 +166,7 @@ class GRBranchNodeBuilderImpl {
   CFGBlock* DstT;
   CFGBlock* DstF;
   ExplodedNodeImpl* Pred;
-  
+
   bool GeneratedTrue;
   bool GeneratedFalse;
   
@@ -181,6 +181,11 @@ public:
   const ExplodedGraphImpl& getGraph() const { return *Eng.G; }
     
   void generateNodeImpl(void* State, bool branch);  
+  
+  void markInfeasible(bool branch) {
+    if (branch) GeneratedTrue = true;
+    else GeneratedFalse = true;
+  }
 };
 
 template<typename CHECKER>
@@ -199,9 +204,13 @@ public:
     return static_cast<const GraphTy&>(NB.getGraph());
   }
 
-  void generateNode(StateTy State, bool branch) {
+  inline void generateNode(StateTy State, bool branch) {
     void *state = GRTrait<StateTy>::toPtr(State);        
     NB.generateNodeImpl(state, branch);
+  }
+  
+  inline void markInfeasible(bool branch) {
+    NB.markInfeasible(branch);
   }
 };
   
