@@ -355,7 +355,7 @@ void *JIT::getOrEmitGlobalVariable(const GlobalVariable *GV) {
     // compilation.
     const Type *GlobalType = GV->getType()->getElementType();
     size_t S = getTargetData()->getABITypeSize(GlobalType);
-    size_t A = getTargetData()->getPrefTypeAlignment(GlobalType);
+    size_t A = getTargetData()->getPreferredAlignment(GV);
     if (A <= 8) {
       Ptr = malloc(S);
     } else {

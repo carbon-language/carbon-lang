@@ -200,7 +200,7 @@ public:
 
 
   /// getPrefTypeAlignment - Return the preferred stack/global alignment for
-  /// the specified type.
+  /// the specified type.  This is always at least as good as the ABI alignment.
   unsigned char getPrefTypeAlignment(const Type *Ty) const;
 
   /// getPreferredTypeAlignmentShift - Return the preferred alignment for the
@@ -229,6 +229,11 @@ public:
   /// removed, this method must be called whenever a StructType is removed to
   /// avoid a dangling pointer in this cache.
   void InvalidateStructLayoutInfo(const StructType *Ty) const;
+
+  /// getPreferredAlignment - Return the preferred alignment of the specified
+  /// global.  This includes an explicitly requested alignment (if the global
+  /// has one).
+  unsigned getPreferredAlignment(const GlobalVariable *GV) const;
 
   /// getPreferredAlignmentLog - Return the preferred alignment of the
   /// specified global, returned in log form.  This includes an explicitly

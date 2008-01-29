@@ -101,6 +101,7 @@ unsigned StructLayout::getElementContainingOffset(uint64_t Offset) const {
 TargetAlignElem
 TargetAlignElem::get(AlignTypeEnum align_type, unsigned char abi_align,
                      unsigned char pref_align, uint32_t bit_width) {
+  assert(abi_align <= pref_align && "Preferred alignment worse than ABI!");
   TargetAlignElem retval;
   retval.AlignType = align_type;
   retval.ABIAlign = abi_align;
@@ -242,6 +243,7 @@ TargetData::TargetData(const Module *M)
 void
 TargetData::setAlignment(AlignTypeEnum align_type, unsigned char abi_align,
                          unsigned char pref_align, uint32_t bit_width) {
+  assert(abi_align <= pref_align && "Preferred alignment worse than ABI!");
   for (unsigned i = 0, e = Alignments.size(); i != e; ++i) {
     if (Alignments[i].AlignType == align_type &&
         Alignments[i].TypeBitWidth == bit_width) {
@@ -576,22 +578,29 @@ uint64_t TargetData::getIndexedOffset(const Type *ptrTy, Value* const* Indices,
   return Result;
 }
 
+/// getPreferredAlignment - Return the preferred alignment of the specified
+/// global.  This includes an explicitly requested alignment (if the global
+/// has one).
+unsigned TargetData::getPreferredAlignment(const GlobalVariable *GV) const {
+  const Type *ElemType = GV->getType()->getElementType();
+  unsigned Alignment = getPrefTypeAlignment(ElemType);
+  if (GV->getAlignment() > Alignment)
+    Alignment = GV->getAlignment();
+
+  if (GV->hasInitializer()) {
+    if (Alignment < 16) {
+      // If the global is not external, see if it is large.  If so, give it a
+      // larger alignment.
+      if (getTypeSizeInBits(ElemType) > 128)
+        Alignment = 16;    // 16-byte alignment.
+    }
+  }
+  return Alignment;
+}
+
 /// getPreferredAlignmentLog - Return the preferred alignment of the
 /// specified global, returned in log form.  This includes an explicitly
 /// requested alignment (if the global has one).
 unsigned TargetData::getPreferredAlignmentLog(const GlobalVariable *GV) const {
-  const Type *ElemType = GV->getType()->getElementType();
-  unsigned Alignment = getPreferredTypeAlignmentShift(ElemType);
-  if (GV->getAlignment() > (1U << Alignment))
-    Alignment = Log2_32(GV->getAlignment());
-  
-  if (GV->hasInitializer()) {
-    if (Alignment < 4) {
-      // If the global is not external, see if it is large.  If so, give it a
-      // larger alignment.
-      if (getTypeSizeInBits(ElemType) > 128)
-        Alignment = 4;    // 16-byte alignment.
-    }
-  }
-  return Alignment;
+  return Log2_32(getPreferredAlignment(GV));
 }

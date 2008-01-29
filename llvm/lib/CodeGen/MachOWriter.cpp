@@ -334,10 +334,8 @@ MachOWriter::~MachOWriter() {
 void MachOWriter::AddSymbolToSection(MachOSection *Sec, GlobalVariable *GV) {
   const Type *Ty = GV->getType()->getElementType();
   unsigned Size = TM.getTargetData()->getABITypeSize(Ty);
-  unsigned Align = GV->getAlignment();
-  if (Align == 0)
-    Align = TM.getTargetData()->getPrefTypeAlignment(Ty);
-  
+  unsigned Align = TM.getTargetData()->getPreferredAlignment(GV);
+
   // Reserve space in the .bss section for this symbol while maintaining the
   // desired section alignment, which must be at least as much as required by
   // this symbol.

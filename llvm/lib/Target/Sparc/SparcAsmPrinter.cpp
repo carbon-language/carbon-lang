@@ -229,7 +229,7 @@ bool SparcAsmPrinter::doFinalization(Module &M) {
       std::string name = Mang->getValueName(I);
       Constant *C = I->getInitializer();
       unsigned Size = TD->getABITypeSize(C->getType());
-      unsigned Align = TD->getPrefTypeAlignment(C->getType());
+      unsigned Align = TD->getPreferredAlignment(I);
 
       if (C->isNullValue() &&
           (I->hasLinkOnceLinkage() || I->hasInternalLinkage() ||

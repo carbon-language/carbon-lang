@@ -257,7 +257,7 @@ void ELFWriter::EmitGlobal(GlobalVariable *GV) {
   }
 
   const Type *GVType = (const Type*)GV->getType();
-  unsigned Align = TM.getTargetData()->getPrefTypeAlignment(GVType);
+  unsigned Align = TM.getTargetData()->getPreferredAlignment(GV);
   unsigned Size  = TM.getTargetData()->getABITypeSize(GVType);
 
   // If this global has a zero initializer, it is part of the .bss or common
