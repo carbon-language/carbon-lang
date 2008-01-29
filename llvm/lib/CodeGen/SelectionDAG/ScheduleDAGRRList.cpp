@@ -58,7 +58,6 @@ private:
   bool isBottomUp;
   
   /// AvailableQueue - The priority queue to use for the available SUnits.
-  ///a
   SchedulingPriorityQueue *AvailableQueue;
 
   /// LiveRegs / LiveRegDefs - A set of physical registers and their definition
