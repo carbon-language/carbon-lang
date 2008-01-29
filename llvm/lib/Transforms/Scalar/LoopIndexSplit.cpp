@@ -301,23 +301,23 @@ void LoopIndexSplit::findIndVar(Value *V, Loop *L) {
   Value *Op0 = I->getOperand(0);
   Value *Op1 = I->getOperand(1);
   
-  if (PHINode *PN = dyn_cast<PHINode>(Op0)) {
-    if (PN->getParent() == L->getHeader()
-        && isa<ConstantInt>(Op1)) {
-      IndVar = PN;
-      IndVarIncrement = I;
-      return;
-    }
-  }
-  
-  if (PHINode *PN = dyn_cast<PHINode>(Op1)) {
-    if (PN->getParent() == L->getHeader()
-        && isa<ConstantInt>(Op0)) {
-      IndVar = PN;
-      IndVarIncrement = I;
-      return;
-    }
-  }
+  if (PHINode *PN = dyn_cast<PHINode>(Op0)) 
+    if (PN->getParent() == L->getHeader()) 
+      if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) 
+        if (CI->isOne()) {
+          IndVar = PN;
+          IndVarIncrement = I;
+          return;
+        }
+
+  if (PHINode *PN = dyn_cast<PHINode>(Op1)) 
+    if (PN->getParent() == L->getHeader()) 
+      if (ConstantInt *CI = dyn_cast<ConstantInt>(Op0)) 
+        if (CI->isOne()) {
+          IndVar = PN;
+          IndVarIncrement = I;
+          return;
+        }
   
   return;
 }
