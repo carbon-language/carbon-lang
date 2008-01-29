@@ -163,11 +163,14 @@ static bool AnalyzeGlobal(Value *V, GlobalStatus &GS,
         else if (GS.AccessingFunction != F)
           GS.HasMultipleAccessingFunctions = true;
       }
-      if (isa<LoadInst>(I)) {
+      if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
         GS.isLoaded = true;
+        if (LI->isVolatile()) return true;  // Don't hack on volatile loads.
       } else if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
         // Don't allow a store OF the address, only stores TO the address.
         if (SI->getOperand(0) == V) return true;
+
+        if (SI->isVolatile()) return true;  // Don't hack on volatile stores.
 
         // If this is a direct store to the global (i.e., the global is a scalar
         // value, not an aggregate), keep more specific information about
