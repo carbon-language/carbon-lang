@@ -28,7 +28,7 @@ void ExplodedNodeImpl::NodeGroup::addNode(ExplodedNodeImpl* N) {
       std::vector<ExplodedNodeImpl*>* V = new std::vector<ExplodedNodeImpl*>();
       V->push_back(NOld);
       V->push_back(N);
-      P = reinterpret_cast<uintptr_t>(V) & SizeOther;
+      P = reinterpret_cast<uintptr_t>(V) | SizeOther;
     }
     else
       P = reinterpret_cast<uintptr_t>(N);
