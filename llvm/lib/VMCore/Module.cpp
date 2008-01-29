@@ -46,7 +46,8 @@ GlobalVariable *ilist_traits<GlobalVariable>::createSentinel() {
   return Ret;
 }
 GlobalAlias *ilist_traits<GlobalAlias>::createSentinel() {
-  GlobalAlias *Ret = new GlobalAlias(Type::Int32Ty, GlobalValue::ExternalLinkage);
+  GlobalAlias *Ret = new GlobalAlias(Type::Int32Ty,
+                                     GlobalValue::ExternalLinkage);
   // This should not be garbage monitored.
   LeakDetector::removeGarbageObject(Ret);
   return Ret;

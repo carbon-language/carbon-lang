@@ -90,7 +90,8 @@ bool FunctionPass::runOnModule(Module &M) {
 // run - On a function, we simply initialize, run the function, then finalize.
 //
 bool FunctionPass::run(Function &F) {
-  if (F.isDeclaration()) return false;// Passes are not run on external functions!
+  // Passes are not run on external functions!
+  if (F.isDeclaration()) return false;
 
   bool Changed = doInitialization(*F.getParent());
   Changed |= runOnFunction(F);
