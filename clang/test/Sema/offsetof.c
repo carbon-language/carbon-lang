@@ -19,5 +19,9 @@ void swap()
   
   x = __builtin_offsetof(struct external_sun3_core, X[42].f2);  // expected-error {{no member named 'f2'}}
   x = __builtin_offsetof(int, X[42].f2);  // expected-error {{offsetof requires struct}}
+  
+  int a[__builtin_offsetof(struct external_sun3_core, X) == 4 ? 1 : -1];
+  int b[__builtin_offsetof(struct external_sun3_core, X[42]) == 340 ? 1 : -1];
+  int c[__builtin_offsetof(struct external_sun3_core, X[42].f2) == 344 ? 1 : -1];
 }    
 

@@ -235,6 +235,15 @@ public:
   llvm::Constant *VisitUnaryAddrOf(const UnaryOperator *E) {
     return EmitLValue(E->getSubExpr());
   }
+  llvm::Constant *VisitUnaryOffsetOf(const UnaryOperator *E) {
+    int64_t Val = E->evaluateOffsetOf(CGM.getContext());
+    
+    assert(E->getType()->isIntegerType() && "Result type must be an integer!");
+    
+    uint32_t ResultWidth = static_cast<uint32_t>(
+      CGM.getContext().getTypeSize(E->getType(), SourceLocation()));
+    return llvm::ConstantInt::get(llvm::APInt(ResultWidth, Val));    
+  }
   
   // Binary operators
   llvm::Constant *VisitBinOr(const BinaryOperator *E) {

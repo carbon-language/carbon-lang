@@ -429,6 +429,7 @@ public:
   bool isPostfix() const { return isPostfix(Opc); }
   bool isIncrementDecrementOp() const { return Opc>=PostInc && Opc<=PreDec; }
   bool isSizeOfAlignOfOp() const { return Opc == SizeOf || Opc == AlignOf; }
+  bool isOffsetOfOp() const { return Opc == OffsetOf; }
   static bool isArithmeticOp(Opcode Op) { return Op >= Plus && Op <= LNot; }
   
   /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it
@@ -447,6 +448,8 @@ public:
     return T->getStmtClass() == UnaryOperatorClass; 
   }
   static bool classof(const UnaryOperator *) { return true; }
+  
+  int64_t evaluateOffsetOf(ASTContext& C) const;
   
   // Iterators
   virtual child_iterator child_begin();

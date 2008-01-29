@@ -213,7 +213,8 @@ public:
   Value *VisitUnaryExtension(const UnaryOperator *E) {
     return Visit(E->getSubExpr());
   }
-  
+  Value *VisitUnaryOffsetOf(const UnaryOperator *E);
+    
   // Binary Operators.
   Value *EmitMul(const BinOpInfo &Ops) {
     return Builder.CreateMul(Ops.LHS, Ops.RHS, "mul");
@@ -628,6 +629,16 @@ Value *ScalarExprEmitter::VisitUnaryImag(const UnaryOperator *E) {
   return llvm::Constant::getNullValue(ConvertType(E->getType()));
 }
 
+Value *ScalarExprEmitter::VisitUnaryOffsetOf(const UnaryOperator *E)
+{
+  int64_t Val = E->evaluateOffsetOf(CGF.getContext());
+  
+  assert(E->getType()->isIntegerType() && "Result type must be an integer!");
+  
+  uint32_t ResultWidth = static_cast<uint32_t>(
+    CGF.getContext().getTypeSize(E->getType(), SourceLocation()));
+  return llvm::ConstantInt::get(llvm::APInt(ResultWidth, Val));
+}
 
 //===----------------------------------------------------------------------===//
 //                           Binary Operators

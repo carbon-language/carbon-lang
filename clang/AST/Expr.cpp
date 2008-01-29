@@ -662,7 +662,7 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     
     // Get the operand value.  If this is sizeof/alignof, do not evalute the
     // operand.  This affects C99 6.6p3.
-    if (!Exp->isSizeOfAlignOfOp() &&
+    if (!Exp->isSizeOfAlignOfOp() && !Exp->isOffsetOfOp() &&
         !Exp->getSubExpr()->isIntegerConstantExpr(Result, Ctx, Loc,isEvaluated))
       return false;
 
@@ -718,6 +718,8 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     case UnaryOperator::Not:
       Result = ~Result;
       break;
+    case UnaryOperator::OffsetOf:
+      Result = Exp->evaluateOffsetOf(Ctx);
     }
     break;
   }
@@ -1067,6 +1069,50 @@ bool ChooseExpr::isConditionTrue(ASTContext &C) const {
   bool IsConst = getCond()->isIntegerConstantExpr(CondVal, C);
   assert(IsConst && "Condition of choose expr must be i-c-e"); IsConst=IsConst;
   return CondVal != 0;
+}
+
+static int64_t evaluateOffsetOf(ASTContext& C, const Expr *E)
+{
+  if (const MemberExpr *ME = dyn_cast<MemberExpr>(E)) {
+    QualType Ty = ME->getBase()->getType();
+    
+    RecordDecl *RD = Ty->getAsRecordType()->getDecl();
+    const ASTRecordLayout &RL = C.getASTRecordLayout(RD, SourceLocation());
+    FieldDecl *FD = ME->getMemberDecl();
+    
+    // FIXME: This is linear time.
+    unsigned i = 0, e = 0;
+    for (i = 0, e = RD->getNumMembers(); i != e; i++) {
+      if (RD->getMember(i) == FD)
+        break;
+    }
+    
+    return RL.getFieldOffset(i) + evaluateOffsetOf(C, ME->getBase());
+  } else if (const ArraySubscriptExpr *ASE = dyn_cast<ArraySubscriptExpr>(E)) {
+    const Expr *Base = ASE->getBase();
+    llvm::APSInt Idx(32);
+    bool ICE = ASE->getIdx()->isIntegerConstantExpr(Idx, C);
+    assert(ICE && "Array index is not a constant integer!");
+    
+    int64_t size = C.getTypeSize(ASE->getType(), SourceLocation());
+    size *= Idx.getSExtValue();
+    
+    return size + evaluateOffsetOf(C, Base);
+  } else if (isa<CompoundLiteralExpr>(E))
+    return 0;  
+
+  assert(0 && "Unknown offsetof subexpression!");
+  return 0;
+}
+
+int64_t UnaryOperator::evaluateOffsetOf(ASTContext& C) const
+{
+  assert(Opc == OffsetOf && "Unary operator not offsetof!");
+  
+  unsigned CharSize = 
+    C.Target.getCharWidth(C.getFullLoc(getOperatorLoc()));
+  
+  return ::evaluateOffsetOf(C, Val) / CharSize;
 }
 
 //===----------------------------------------------------------------------===//
