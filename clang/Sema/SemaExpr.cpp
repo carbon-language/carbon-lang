@@ -866,16 +866,16 @@ Action::ExprResult Sema::ActOnConditionalOp(SourceLocation QuestionLoc,
 }
 
 /// DefaultArgumentPromotion (C99 6.5.2.2p6). Used for function calls that
-/// do not have a prototype. Integer promotions are performed on each 
-/// argument, and arguments that have type float are promoted to double.
+/// do not have a prototype. Arguments that have type float are promoted to 
+/// double. All other argument types are converted by UsualUnaryConversions().
 void Sema::DefaultArgumentPromotion(Expr *&Expr) {
   QualType Ty = Expr->getType();
   assert(!Ty.isNull() && "DefaultArgumentPromotion - missing type");
 
-  if (Ty->isPromotableIntegerType()) // C99 6.3.1.1p2
-    ImpCastExprToType(Expr, Context.IntTy);
   if (Ty == Context.FloatTy)
     ImpCastExprToType(Expr, Context.DoubleTy);
+  else
+    UsualUnaryConversions(Expr);
 }
 
 /// DefaultFunctionArrayConversion (C99 6.3.2.1p3, C99 6.3.2.1p4).
