@@ -289,14 +289,12 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   
   // We want to legalize GlobalAddress and ConstantPool nodes into the 
   // appropriate instructions to materialize the address.
-  setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
-  setOperationAction(ISD::ConstantPool,  MVT::i32, Custom);
-  setOperationAction(ISD::ConstantPool,  MVT::f32, Custom);
-  setOperationAction(ISD::JumpTable,     MVT::i32, Custom);
-  setOperationAction(ISD::GlobalAddress, MVT::i64, Custom);
-  setOperationAction(ISD::ConstantPool,  MVT::i64, Custom);
-  setOperationAction(ISD::ConstantPool,  MVT::f64, Custom);
-  setOperationAction(ISD::JumpTable,     MVT::i64, Custom);
+  for (unsigned sctype = (unsigned) MVT::i1; sctype < (unsigned) MVT::f128;
+       ++sctype) {
+    setOperationAction(ISD::GlobalAddress, sctype, Custom);
+    setOperationAction(ISD::ConstantPool,  sctype, Custom);
+    setOperationAction(ISD::JumpTable,     sctype, Custom);
+  }
 
   // RET must be custom lowered, to meet ABI requirements
   setOperationAction(ISD::RET,           MVT::Other, Custom);
@@ -377,7 +375,7 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   setStackPointerRegisterToSaveRestore(SPU::R1);
   
   // We have target-specific dag combine patterns for the following nodes:
-  // e.g., setTargetDAGCombine(ISD::SUB);
+  setTargetDAGCombine(ISD::ADD);
   
   computeRegisterProperties();
 }
@@ -391,8 +389,7 @@ SPUTargetLowering::getTargetNodeName(unsigned Opcode) const
     node_names[(unsigned) SPUISD::Lo] = "SPUISD::Lo";
     node_names[(unsigned) SPUISD::PCRelAddr] = "SPUISD::PCRelAddr";
     node_names[(unsigned) SPUISD::AFormAddr] = "SPUISD::AFormAddr";
-    node_names[(unsigned) SPUISD::DFormAddr] = "SPUISD::DFormAddr";
-    node_names[(unsigned) SPUISD::XFormAddr] = "SPUISD::XFormAddr";
+    node_names[(unsigned) SPUISD::IndirectAddr] = "SPUISD::IndirectAddr";
     node_names[(unsigned) SPUISD::LDRESULT] = "SPUISD::LDRESULT";
     node_names[(unsigned) SPUISD::CALL] = "SPUISD::CALL";
     node_names[(unsigned) SPUISD::SHUFB] = "SPUISD::SHUFB";
@@ -524,11 +521,12 @@ AlignedLoad(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST,
   // Unaligned load or we're using the "large memory" model, which means that
   // we have to be very pessimistic:
   if (isMemoryOperand(basePtr) || isIndirectOperand(basePtr)) {
-    basePtr = DAG.getNode(SPUISD::XFormAddr, PtrVT, basePtr, DAG.getConstant(0, PtrVT));
+    basePtr = DAG.getNode(SPUISD::IndirectAddr, PtrVT, basePtr, DAG.getConstant(0, PtrVT));
   }
 
   // Add the offset
-  basePtr = DAG.getNode(ISD::ADD, PtrVT, basePtr, DAG.getConstant(alignOffs, PtrVT));
+  basePtr = DAG.getNode(ISD::ADD, PtrVT, basePtr,
+			DAG.getConstant((alignOffs & ~0xf), PtrVT));
   was16aligned = false;
   return DAG.getLoad(MVT::v16i8, chain, basePtr,
                      LSN->getSrcValue(), LSN->getSrcValueOffset(),
@@ -706,21 +704,20 @@ LowerSTORE(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
     DEBUG(basePtr.Val->dump(&DAG));
     DEBUG(cerr << "\n");
 
-    if (basePtr.getOpcode() == SPUISD::DFormAddr) {
-      // Hmmmm... do we ever actually hit this code?
-      insertEltPtr = DAG.getNode(SPUISD::DFormAddr, PtrVT,
-				 basePtr.getOperand(0),
-				 insertEltOffs);
-    } else if (basePtr.getOpcode() == SPUISD::XFormAddr ||
-	       (basePtr.getOpcode() == ISD::ADD
-		&& basePtr.getOperand(0).getOpcode() == SPUISD::XFormAddr)) {
+    if (basePtr.getOpcode() == SPUISD::IndirectAddr ||
+        (basePtr.getOpcode() == ISD::ADD
+         && basePtr.getOperand(0).getOpcode() == SPUISD::IndirectAddr)) {
       insertEltPtr = basePtr;
     } else {
-      // $sp is always aligned, so use it instead of potentially loading an
-      // address into a new register:
-      insertEltPtr = DAG.getNode(SPUISD::DFormAddr, PtrVT,
-				 DAG.getRegister(SPU::R1, PtrVT),
-				 insertEltOffs);
+#if 0
+      // $sp is always aligned, so use it when necessary to avoid loading
+      // an address
+      SDOperand ptrP =
+        basePtr.Val->hasOneUse() ? DAG.getRegister(SPU::R1, PtrVT) : basePtr;
+      insertEltPtr = DAG.getNode(ISD::ADD, PtrVT, ptrP, insertEltOffs);
+#else
+      insertEltPtr = DAG.getNode(ISD::ADD, PtrVT, basePtr, insertEltOffs);
+#endif
     }
 
     insertEltOp = DAG.getNode(SPUISD::INSERT_MASK, stVecVT, insertEltPtr);
@@ -772,7 +769,7 @@ LowerConstantPool(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
 
       return DAG.getNode(ISD::ADD, PtrVT, Lo, Hi);
 #else
-      return DAG.getNode(SPUISD::XFormAddr, PtrVT, CPI, Zero);
+      return DAG.getNode(SPUISD::IndirectAddr, PtrVT, CPI, Zero);
 #endif
     }
   }
@@ -791,9 +788,10 @@ LowerJumpTable(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   const TargetMachine &TM = DAG.getTarget();
 
   if (TM.getRelocationModel() == Reloc::Static) {
+    SDOperand JmpAForm = DAG.getNode(SPUISD::AFormAddr, PtrVT, JTI, Zero);
     return (!ST->usingLargeMem()
-            ? DAG.getNode(SPUISD::AFormAddr, PtrVT, JTI, Zero)
-            : DAG.getNode(SPUISD::XFormAddr, PtrVT, JTI, Zero));
+            ? JmpAForm
+            : DAG.getNode(SPUISD::IndirectAddr, PtrVT, JmpAForm, Zero));
   }
 
   assert(0 &&
@@ -811,9 +809,13 @@ LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   SDOperand Zero = DAG.getConstant(0, PtrVT);
   
   if (TM.getRelocationModel() == Reloc::Static) {
-    return (!ST->usingLargeMem()
-            ? DAG.getNode(SPUISD::AFormAddr, PtrVT, GA, Zero)
-            : DAG.getNode(SPUISD::XFormAddr, PtrVT, GA, Zero));
+    if (!ST->usingLargeMem()) {
+      return DAG.getNode(SPUISD::AFormAddr, PtrVT, GA, Zero);
+    } else {
+      SDOperand Hi = DAG.getNode(SPUISD::Hi, PtrVT, GA, Zero);
+      SDOperand Lo = DAG.getNode(SPUISD::Lo, PtrVT, GA, Zero);
+      return DAG.getNode(SPUISD::IndirectAddr, PtrVT, Hi, Lo);
+    }
   } else {
     cerr << "LowerGlobalAddress: Relocation model other than static not "
 	 << "supported.\n";
@@ -1202,7 +1204,7 @@ LowerCALL(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
     } else {
       // "Large memory" mode: Turn all calls into indirect calls with a X-form
       // address pairs:
-      Callee = DAG.getNode(SPUISD::XFormAddr, PtrVT, GA, Zero);
+      Callee = DAG.getNode(SPUISD::IndirectAddr, PtrVT, GA, Zero);
     }
   } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
     Callee = DAG.getExternalSymbol(S->getSymbol(), Callee.getValueType());
@@ -2553,16 +2555,80 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
 {
 #if 0
   TargetMachine &TM = getTargetMachine();
+#endif
+  const SPUSubtarget *ST = SPUTM.getSubtargetImpl();
   SelectionDAG &DAG = DCI.DAG;
   SDOperand N0 = N->getOperand(0);	// everything has at least one operand
 
   switch (N->getOpcode()) {
   default: break;
-    // Do something creative here for ISD nodes that can be coalesced in unique
-    // ways.
+  case SPUISD::IndirectAddr: {
+    if (!ST->usingLargeMem() && N0.getOpcode() == SPUISD::AFormAddr) {
+      ConstantSDNode *CN = cast<ConstantSDNode>(N->getOperand(1));
+      if (CN->getValue() == 0) {
+        // (SPUindirect (SPUaform <addr>, 0), 0) ->
+        // (SPUaform <addr>, 0)
+
+        DEBUG(cerr << "Replace: ");
+        DEBUG(N->dump(&DAG));
+        DEBUG(cerr << "\nWith:    ");
+        DEBUG(N0.Val->dump(&DAG));
+        DEBUG(cerr << "\n");
+
+        return N0;
+      }
+    }
   }
-#endif
-  
+  case ISD::ADD: {
+    SDOperand Op0 = N->getOperand(0);
+    SDOperand Op1 = N->getOperand(1);
+
+    if ((Op1.getOpcode() == ISD::Constant
+         || Op1.getOpcode() == ISD::TargetConstant)
+        && Op0.getOpcode() == SPUISD::IndirectAddr) {
+      SDOperand Op01 = Op0.getOperand(1);
+      if (Op01.getOpcode() == ISD::Constant
+          || Op01.getOpcode() == ISD::TargetConstant) {
+        // (add <const>, (SPUindirect <arg>, <const>)) ->
+        // (SPUindirect <arg>, <const + const>)
+        ConstantSDNode *CN0 = cast<ConstantSDNode>(Op1);
+        ConstantSDNode *CN1 = cast<ConstantSDNode>(Op01);
+        SDOperand combinedConst =
+          DAG.getConstant(CN0->getValue() + CN1->getValue(),
+                          Op0.getValueType());
+
+        DEBUG(cerr << "Replace: (add " << CN0->getValue() << ", "
+                   << "(SPUindirect <arg>, " << CN1->getValue() << "))\n");
+        DEBUG(cerr << "With:    (SPUindirect <arg>, "
+                   << CN0->getValue() + CN1->getValue() << ")\n");
+        return DAG.getNode(SPUISD::IndirectAddr, Op0.getValueType(),
+                           Op0.getOperand(0), combinedConst);
+      }
+    } else if ((Op0.getOpcode() == ISD::Constant
+                || Op0.getOpcode() == ISD::TargetConstant)
+               && Op1.getOpcode() == SPUISD::IndirectAddr) {
+      SDOperand Op11 = Op1.getOperand(1);
+      if (Op11.getOpcode() == ISD::Constant
+          || Op11.getOpcode() == ISD::TargetConstant) {
+        // (add (SPUindirect <arg>, <const>), <const>) ->
+        // (SPUindirect <arg>, <const + const>)
+        ConstantSDNode *CN0 = cast<ConstantSDNode>(Op0);
+        ConstantSDNode *CN1 = cast<ConstantSDNode>(Op11);
+        SDOperand combinedConst =
+          DAG.getConstant(CN0->getValue() + CN1->getValue(),
+                          Op0.getValueType());
+
+        DEBUG(cerr << "Replace: (add " << CN0->getValue() << ", "
+                   << "(SPUindirect <arg>, " << CN1->getValue() << "))\n");
+        DEBUG(cerr << "With:    (SPUindirect <arg>, "
+                   << CN0->getValue() + CN1->getValue() << ")\n");
+
+        return DAG.getNode(SPUISD::IndirectAddr, Op1.getValueType(),
+                           Op1.getOperand(0), combinedConst);
+      }
+    }
+  }
+  }
   // Otherwise, return unchanged.
   return SDOperand();
 }

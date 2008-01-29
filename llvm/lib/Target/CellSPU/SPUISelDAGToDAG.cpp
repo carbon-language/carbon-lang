@@ -150,6 +150,16 @@ namespace {
     return false;
   }
 
+  bool
+  isHighLow(const SDOperand &Op) 
+  {
+    return (Op.getOpcode() == SPUISD::IndirectAddr
+            && ((Op.getOperand(0).getOpcode() == SPUISD::Hi
+                 && Op.getOperand(1).getOpcode() == SPUISD::Lo)
+                || (Op.getOperand(0).getOpcode() == SPUISD::Lo
+                    && Op.getOperand(1).getOpcode() == SPUISD::Hi)));
+  }
+
   //===------------------------------------------------------------------===//
   //! MVT::ValueType to "useful stuff" mapping structure:
 
@@ -157,40 +167,24 @@ namespace {
     MVT::ValueType VT;
     unsigned ldresult_ins;	/// LDRESULT instruction (0 = undefined)
     int prefslot_byte;		/// Byte offset of the "preferred" slot
-    unsigned brcc_eq_ins;	/// br_cc equal instruction
-    unsigned brcc_neq_ins;	/// br_cc not equal instruction
-    unsigned load_aform;        /// A-form load instruction for this VT
-    unsigned store_aform;       /// A-form store instruction for this VT
+    unsigned insmask_ins;       /// Insert mask instruction for a-form
   };
 
   const valtype_map_s valtype_map[] = {
-    { MVT::i1,    0,            3, 0,         0,          0,
-      0 },
-    { MVT::i8,    SPU::ORBIr8,  3, 0,         0,          SPU::LQAr8,
-      SPU::STQAr8 },
-    { MVT::i16,   SPU::ORHIr16, 2, SPU::BRHZ, SPU::BRHNZ, SPU::LQAr16,
-      SPU::STQAr16 },
-    { MVT::i32,   SPU::ORIr32,  0, SPU::BRZ,  SPU::BRNZ,  SPU::LQAr32,
-      SPU::STQAr32 },
-    { MVT::i64,   SPU::ORIr64,  0, 0,         0,          SPU::LQAr64,
-      SPU::STQAr64 },
-    { MVT::f32,   0,            0, 0,         0,          SPU::LQAf32,
-      SPU::STQAf32 },
-    { MVT::f64,   0,            0, 0,         0,          SPU::LQAf64,
-      SPU::STQAf64 },
+    { MVT::i1,    0,            3, 0 },
+    { MVT::i8,    SPU::ORBIr8,  3, 0 },
+    { MVT::i16,   SPU::ORHIr16, 2, 0 },
+    { MVT::i32,   SPU::ORIr32,  0, 0 },
+    { MVT::i64,   SPU::ORIr64,  0, 0 },
+    { MVT::f32,   0,            0, 0 },
+    { MVT::f64,   0,            0, 0 },
     // vector types... (sigh!)
-    { MVT::v16i8, 0,            0, 0,         0,          SPU::LQAv16i8,
-      SPU::STQAv16i8 },
-    { MVT::v8i16, 0,            0, 0,         0,          SPU::LQAv8i16,
-      SPU::STQAv8i16 },
-    { MVT::v4i32, 0,            0, 0,         0,          SPU::LQAv4i32,
-      SPU::STQAv4i32 },
-    { MVT::v2i64, 0,            0, 0,         0,          SPU::LQAv2i64,
-      SPU::STQAv2i64 },
-    { MVT::v4f32, 0,            0, 0,         0,          SPU::LQAv4f32,
-      SPU::STQAv4f32 },
-    { MVT::v2f64, 0,            0, 0,         0,          SPU::LQAv2f64,
-      SPU::STQAv2f64 },
+    { MVT::v16i8, 0,            0, SPU::CBD },
+    { MVT::v8i16, 0,            0, SPU::CHD },
+    { MVT::v4i32, 0,            0, SPU::CWD },
+    { MVT::v2i64, 0,            0, 0 },
+    { MVT::v4f32, 0,            0, SPU::CWD },
+    { MVT::v2f64, 0,            0, 0 }
   };
 
   const size_t n_valtype_map = sizeof(valtype_map) / sizeof(valtype_map[0]);
@@ -381,18 +375,20 @@ SPUDAGToDAGISel::SelectDForm2Addr(SDOperand Op, SDOperand N, SDOperand &Disp,
     Disp = CurDAG->getTargetConstant(0, VT);
     Base = N;
     return true;
-  } else if (Opc == SPUISD::DFormAddr) {
-    // D-Form address: This is pretty straightforward, naturally...
-    CN = cast<ConstantSDNode>(N.getOperand(1));
-    assert(CN != 0 && "SelectDFormAddr/SPUISD::DForm2Addr expecting constant");
-    Imm = unsigned(CN->getValue());
-    if (Imm < 0xff) {
-      Disp = CurDAG->getTargetConstant(CN->getValue(), PtrVT);
-      Base = N.getOperand(0);
-      return true;
+  } else if (Opc == SPUISD::IndirectAddr) {
+    SDOperand Op1 = N.getOperand(1);
+    if (Op1.getOpcode() == ISD::TargetConstant
+        || Op1.getOpcode() == ISD::Constant) {
+      CN = cast<ConstantSDNode>(N.getOperand(1));
+      assert(CN != 0 && "SelectIndirectAddr/SPUISD::DForm2Addr expecting constant");
+      Imm = unsigned(CN->getValue());
+      if (Imm < 0xff) {
+        Disp = CurDAG->getTargetConstant(CN->getValue(), PtrVT);
+        Base = N.getOperand(0);
+        return true;
+      }
     }
   }
-
   return false;
 }
 
@@ -407,7 +403,7 @@ SPUDAGToDAGISel::SelectAFormAddr(SDOperand Op, SDOperand N, SDOperand &Base,
 		    SDOperand &Index) {
   // These match the addr256k operand type:
   MVT::ValueType OffsVT = MVT::i16;
-  MVT::ValueType PtrVT = SPUtli.getPointerTy();
+  SDOperand Zero = CurDAG->getTargetConstant(0, OffsVT);
 
   switch (N.getOpcode()) {
   case ISD::Constant:
@@ -417,28 +413,40 @@ SPUDAGToDAGISel::SelectAFormAddr(SDOperand Op, SDOperand N, SDOperand &Base,
     abort();
     /*NOTREACHED*/
 
-  case ISD::TargetConstant: {
-    // Loading from a constant address.
-    ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N);
-    int Imm = (int)CN->getValue();
-    if (Imm < 0x3ffff && (Imm & 0x3) == 0) {
-      Base = CurDAG->getTargetConstant(Imm, PtrVT);
-      // Note that this operand will be ignored by the assembly printer...
-      Index = CurDAG->getTargetConstant(0, OffsVT);
-      return true;
-    }
-  }
+  case ISD::TargetConstant:
   case ISD::TargetGlobalAddress:
-  case ISD::TargetConstantPool:
-  case SPUISD::AFormAddr: {
-    // The address is in Base. N is a dummy that will be ignored by
-    // the assembly printer.
-    Base = N;
-    Index = CurDAG->getTargetConstant(0, OffsVT);
-    return true;
-  }
-  }
+  case ISD::TargetJumpTable:
+    cerr << "SPUSelectAFormAddr: Target Constant/Pool/Global not wrapped as "
+         << "A-form address.\n";
+    abort();
+    /*NOTREACHED*/
 
+  case SPUISD::AFormAddr: 
+    // Just load from memory if there's only a single use of the location,
+    // otherwise, this will get handled below with D-form offset addresses
+    if (N.hasOneUse()) {
+      SDOperand Op0 = N.getOperand(0);
+      switch (Op0.getOpcode()) {
+      case ISD::TargetConstantPool:
+      case ISD::TargetJumpTable:
+        Base = Op0;
+        Index = Zero;
+        return true;
+
+      case ISD::TargetGlobalAddress: {
+        GlobalAddressSDNode *GSDN = cast<GlobalAddressSDNode>(Op0);
+        GlobalValue *GV = GSDN->getGlobal();
+        if (GV->getAlignment() == 16) {
+          Base = Op0;
+          Index = Zero;
+          return true;
+        }
+        break;
+      }
+      }
+    }
+    break;
+  }
   return false;
 }
 
@@ -460,14 +468,11 @@ SPUDAGToDAGISel::SelectDFormAddr(SDOperand Op, SDOperand N, SDOperand &Base,
   unsigned Opc = N.getOpcode();
   unsigned PtrTy = SPUtli.getPointerTy();
 
-  if (Opc == ISD::Register) {
-    Base = N;
-    Index = CurDAG->getTargetConstant(0, PtrTy);
-    return true;
-  } else if (Opc == ISD::FrameIndex) {
+  if (Opc == ISD::FrameIndex) {
+    // Stack frame index must be less than 512 (divided by 16):
     FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(N);
     DEBUG(cerr << "SelectDFormAddr: ISD::FrameIndex = "
-	       << FI->getIndex() << "\n");
+	  << FI->getIndex() << "\n");
     if (FI->getIndex() < SPUFrameInfo::maxFrameOffset()) {
       Base = CurDAG->getTargetConstant(0, PtrTy);
       Index = CurDAG->getTargetFrameIndex(FI->getIndex(), PtrTy);
@@ -475,19 +480,20 @@ SPUDAGToDAGISel::SelectDFormAddr(SDOperand Op, SDOperand N, SDOperand &Base,
     }
   } else if (Opc == ISD::ADD) {
     // Generated by getelementptr
-    const SDOperand Op0 = N.getOperand(0); // Frame index/base
-    const SDOperand Op1 = N.getOperand(1); // Offset within base
+    const SDOperand Op0 = N.getOperand(0);
+    const SDOperand Op1 = N.getOperand(1);
 
-    if ((Op1.getOpcode() == ISD::Constant
-	 || Op1.getOpcode() == ISD::TargetConstant)
-	&& Op0.getOpcode() != SPUISD::XFormAddr) {
+    if ((Op0.getOpcode() == SPUISD::Hi && Op1.getOpcode() == SPUISD::Lo)
+        || (Op1.getOpcode() == SPUISD::Hi && Op0.getOpcode() == SPUISD::Lo)) {
+      Base = CurDAG->getTargetConstant(0, PtrTy);
+      Index = N;
+      return true;
+    } else if (Op1.getOpcode() == ISD::Constant
+               || Op1.getOpcode() == ISD::TargetConstant) {
       ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Op1);
-      assert(CN != 0 && "SelectDFormAddr: Expected a constant");
+      int32_t offset = int32_t(CN->getSignExtended());
 
-      int32_t offset = (int32_t) CN->getSignExtended();
-      unsigned Opc0 = Op0.getOpcode();
-
-      if (Opc0 == ISD::FrameIndex) {
+      if (Op0.getOpcode() == ISD::FrameIndex) {
         FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(Op0);
         DEBUG(cerr << "SelectDFormAddr: ISD::ADD offset = " << offset
               << " frame index = " << FI->getIndex() << "\n");
@@ -500,51 +506,69 @@ SPUDAGToDAGISel::SelectDFormAddr(SDOperand Op, SDOperand N, SDOperand &Base,
       } else if (offset > SPUFrameInfo::minFrameOffset()
                  && offset < SPUFrameInfo::maxFrameOffset()) {
         Base = CurDAG->getTargetConstant(offset, PtrTy);
-        if (Opc0 == ISD::GlobalAddress) {
-          // Convert global address to target global address
-          GlobalAddressSDNode *GV = dyn_cast<GlobalAddressSDNode>(Op0);
-          Index = CurDAG->getTargetGlobalAddress(GV->getGlobal(), PtrTy);
-          return true;
-        } else {
-          // Otherwise, just take operand 0
-          Index = Op0;
+        Index = Op0;
+        return true;
+      }
+    } else if (Op0.getOpcode() == ISD::Constant
+               || Op0.getOpcode() == ISD::TargetConstant) {
+      ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Op0);
+      int32_t offset = int32_t(CN->getSignExtended());
+
+      if (Op1.getOpcode() == ISD::FrameIndex) {
+        FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(Op1);
+        DEBUG(cerr << "SelectDFormAddr: ISD::ADD offset = " << offset
+              << " frame index = " << FI->getIndex() << "\n");
+
+        if (FI->getIndex() < SPUFrameInfo::maxFrameOffset()) {
+          Base = CurDAG->getTargetConstant(offset, PtrTy);
+          Index = CurDAG->getTargetFrameIndex(FI->getIndex(), PtrTy);
           return true;
         }
+      } else if (offset > SPUFrameInfo::minFrameOffset()
+                 && offset < SPUFrameInfo::maxFrameOffset()) {
+        Base = CurDAG->getTargetConstant(offset, PtrTy);
+        Index = Op1;
+        return true;
       }
-    } else
-      return false;
-  } else if (Opc == SPUISD::DFormAddr) {
-    // D-Form address: This is pretty straightforward,
-    // naturally... but make sure that this isn't a D-form address
-    // with a X-form address embedded within:
-    const SDOperand Op0 = N.getOperand(0); // Frame index/base
-    const SDOperand Op1 = N.getOperand(1); // Offset within base
+    }
+  } else if (Opc == SPUISD::IndirectAddr) {
+    // Indirect with constant offset -> D-Form address
+    const SDOperand Op0 = N.getOperand(0);
+    const SDOperand Op1 = N.getOperand(1);
+    SDOperand Zero = CurDAG->getTargetConstant(0, N.getValueType());
 
-    if (Op0.getOpcode() == ISD::Constant
-        || Op0.getOpcode() == ISD::TargetConstant) {
+    if (Op1.getOpcode() == ISD::Constant
+        || Op1.getOpcode() == ISD::TargetConstant) {
       ConstantSDNode *CN = cast<ConstantSDNode>(Op1);
-      assert(CN != 0 && "SelectDFormAddr/SPUISD::DFormAddr expecting constant"); 
-      Base = CurDAG->getTargetConstant(CN->getValue(), PtrTy);
-      Index = Op0;
-      return true;
-    }
-  } else if (Opc == ISD::FrameIndex) {
-    // Stack frame index must be less than 512 (divided by 16):
-    FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(N);
-    DEBUG(cerr << "SelectDFormAddr: ISD::FrameIndex = "
-	  << FI->getIndex() << "\n");
-    if (FI->getIndex() < SPUFrameInfo::maxFrameOffset()) {
+      int32_t offset = int32_t(CN->getSignExtended());
+      if (offset > SPUFrameInfo::minFrameOffset()
+          && offset < SPUFrameInfo::maxFrameOffset()) {
+        Base = CurDAG->getTargetConstant(CN->getValue(), PtrTy);
+        Index = Op0;
+        return true;
+      }
+    } else if (Op0.getOpcode() == ISD::Constant
+               || Op0.getOpcode() == ISD::TargetConstant) {
+      ConstantSDNode *CN = cast<ConstantSDNode>(Op0);
+      int32_t offset = int32_t(CN->getSignExtended());
+      if (offset > SPUFrameInfo::minFrameOffset()
+          && offset < SPUFrameInfo::maxFrameOffset()) {
+        Base = CurDAG->getTargetConstant(CN->getValue(), PtrTy);
+        Index = Op1;
+        return true;
+      }
+    } else if (Op0.getOpcode() == SPUISD::Hi
+               && Op1.getOpcode() == SPUISD::Lo) {
+      // (SPUindirect (SPUhi <arg>, 0), (SPUlo <arg>, 0))
       Base = CurDAG->getTargetConstant(0, PtrTy);
-      Index = CurDAG->getTargetFrameIndex(FI->getIndex(), PtrTy);
+      Index = N;
       return true;
     }
-  } else if (Opc == SPUISD::LDRESULT) {
-    // It's a load result dereference
-    Base = CurDAG->getTargetConstant(0, PtrTy);
-    Index = N.getOperand(0);
+  } else if (Opc == SPUISD::AFormAddr) {
+    Base = CurDAG->getTargetConstant(0, N.getValueType());
+    Index = N;
     return true;
   }
-
   return false;
 }
 
@@ -565,108 +589,10 @@ SPUDAGToDAGISel::SelectXFormAddr(SDOperand Op, SDOperand N, SDOperand &Base,
       || SelectDFormAddr(Op, N, Base, Index))
     return false;
 
-  unsigned Opc = N.getOpcode();
-
-  if (Opc == ISD::ADD) {
-    SDOperand N1 = N.getOperand(0);
-    SDOperand N2 = N.getOperand(1);
-    Base = N.getOperand(0);
-    Index = N.getOperand(1);
-    return true;
-  } else if (Opc == SPUISD::XFormAddr) {
-    Base = N;
-    Index = N.getOperand(1);
-    return true;
-  } else if (Opc == SPUISD::DFormAddr) {
-    // Must be a D-form address with an X-form address embedded
-    // within:
-    Base = N.getOperand(0);
-    Index = N.getOperand(1);
-    return true;
-  } else if (N.getNumOperands() == 2) {
-    SDOperand N1 = N.getOperand(0);
-    SDOperand N2 = N.getOperand(1);
-    unsigned N1Opc = N1.getOpcode();
-    unsigned N2Opc = N2.getOpcode();
-
-    if ((N1Opc == ISD::CopyToReg || N1Opc == ISD::Register)
-	&& (N2Opc == ISD::CopyToReg || N2Opc == ISD::Register)) {
-      Base = N.getOperand(0);
-      Index = N.getOperand(1);
-      return true;
-      /*UNREACHED*/
-    } else {
-      cerr << "SelectXFormAddr: 2-operand unhandled operand:\n";
-      N.Val->dump(CurDAG);
-      cerr << "\n";
-      abort();
-    /*UNREACHED*/
-    }
-  } else {
-    cerr << "SelectXFormAddr: Unhandled operand type:\n";
-    N.Val->dump(CurDAG);
-    cerr << "\n";
-    abort();
-    /*UNREACHED*/
-  }
-
-  return false;
-}
-
-//! Emit load for A-form addresses
-/*
- */
-SDNode *
-Emit_LOAD_AFormAddr(SDOperand Op, SelectionDAG &CurDAG, SPUDAGToDAGISel &ISel)
-{
-  SDNode *Result;
-  MVT::ValueType OpVT = Op.getValueType();
-  SDOperand Chain = Op.getOperand(0);
-  SDOperand Ptr = Op.getOperand(1);
-  SDOperand PtrArg = Ptr.getOperand(0);
-  SDOperand PtrOffs = Ptr.getOperand(1);
-  const valtype_map_s *vtm = getValueTypeMapEntry(OpVT);
-
-  if (PtrOffs.getOpcode() == ISD::Constant) {
-    ConstantSDNode *CN = cast<ConstantSDNode>(PtrOffs);
-    MVT::ValueType PVT = PtrOffs.getValueType();
-    PtrOffs = CurDAG.getTargetConstant(CN->getValue(), PVT);
-  }
-  ISel.AddToISelQueue(PtrArg);
-  ISel.AddToISelQueue(PtrOffs);
-  ISel.AddToISelQueue(Chain);
-  Result = CurDAG.getTargetNode(vtm->load_aform, OpVT, MVT::Other, PtrArg, PtrOffs, Chain);
-  Chain = SDOperand(Result, 1);
-  return Result;
-}
-
-//! Emit store for A-form addresses
-/*
- */
-SDNode *
-Emit_STORE_AFormAddr(SDOperand Op, SelectionDAG &CurDAG, SPUDAGToDAGISel &ISel)
-{
-  SDNode *Result;
-  SDOperand Chain = Op.getOperand(0);
-  SDOperand Val = Op.getOperand(1);
-  SDOperand Ptr = Op.getOperand(2);
-  SDOperand PtrArg = Ptr.getOperand(0);
-  SDOperand PtrOffs = Ptr.getOperand(1);
-  const valtype_map_s *vtm = getValueTypeMapEntry(Val.getValueType());
-
-  if (PtrOffs.getOpcode() == ISD::Constant) {
-    ConstantSDNode *CN = cast<ConstantSDNode>(PtrOffs);
-    MVT::ValueType PVT = PtrOffs.getValueType();
-    PtrOffs = CurDAG.getTargetConstant(CN->getValue(), PVT);
-  }
-  ISel.AddToISelQueue(Val);
-  ISel.AddToISelQueue(PtrArg);
-  ISel.AddToISelQueue(PtrOffs);
-  ISel.AddToISelQueue(Chain);
-  SDOperand Ops[4] = { Val, PtrArg, PtrOffs, Chain };
-  Result = CurDAG.getTargetNode(vtm->store_aform, MVT::Other, Ops, 4);
-  Chain = SDOperand(Result, 1);
-  return Result;
+  // All else fails, punt and use an X-form address:
+  Base = N.getOperand(0);
+  Index = N.getOperand(1);
+  return true;
 }
 
 //! Convert the operand from a target-independent to a target-specific node
@@ -695,12 +621,6 @@ SPUDAGToDAGISel::Select(SDOperand Op) {
     Ops[0] = TFI;
     Ops[1] = Zero;
     n_ops = 2;
-  } else if (Opc == ISD::LOAD
-             && Op.getOperand(1).getOpcode() == SPUISD::AFormAddr) {
-    return Emit_LOAD_AFormAddr(Op, *CurDAG, *this);
-  } else if (Opc == ISD::STORE
-             && Op.getOperand(2).getOpcode() == SPUISD::AFormAddr) {
-    return Emit_STORE_AFormAddr(Op, *CurDAG, *this);
   } else if (Opc == ISD::ZERO_EXTEND) {
     // (zero_extend:i16 (and:i8 <arg>, <const>))
     const SDOperand &Op1 = N->getOperand(0);
@@ -716,6 +636,38 @@ SPUDAGToDAGISel::Select(SDOperand Op) {
         Ops[1] = Op1.getOperand(1);
         n_ops = 2;
       }
+    }
+  } else if (Opc == SPUISD::INSERT_MASK) {
+    SDOperand Op0 = Op.getOperand(0);
+    if (Op0.getOpcode() == SPUISD::AFormAddr) {
+      // (SPUvecinsmask (SPUaform <arg>, 0)) ->
+      // (CBD|CHD|CWD 0, arg)
+      const valtype_map_s *vtm = getValueTypeMapEntry(OpVT);
+      ConstantSDNode *CN = cast<ConstantSDNode>(Op0.getOperand(1));
+      assert(vtm->insmask_ins != 0 && "missing insert mask instruction");
+      NewOpc = vtm->insmask_ins;
+      Ops[0] = CurDAG->getTargetConstant(CN->getValue(), Op0.getValueType());
+      Ops[1] = Op0;
+      n_ops = 2;
+
+      AddToISelQueue(Op0);
+    } else if (Op0.getOpcode() == ISD::FrameIndex) {
+      // (SPUvecinsmask <fi>) ->
+      // (CBD|CHD|CWD 0, <fi>)
+      const valtype_map_s *vtm = getValueTypeMapEntry(OpVT);
+      NewOpc = vtm->insmask_ins;
+      Ops[0] = CurDAG->getTargetConstant(0, Op0.getValueType());
+      Ops[1] = Op0;
+      n_ops = 2;
+    } else if (isHighLow(Op0)) {
+      // (SPUvecinsmask (SPUindirect (SPUhi <arg>, 0), (SPUlow <arg>, 0))) ->
+      // (CBD|CHD|CWD 0, arg)
+      const valtype_map_s *vtm = getValueTypeMapEntry(OpVT);
+      NewOpc = vtm->insmask_ins;
+      Ops[0] = CurDAG->getTargetConstant(0, Op0.getValueType());
+      Ops[1] = Op0;
+      n_ops = 2;
+      AddToISelQueue(Op0);
     }
   } else if (Opc == SPUISD::LDRESULT) {
     // Custom select instructions for LDRESULT
@@ -748,19 +700,19 @@ SPUDAGToDAGISel::Select(SDOperand Op) {
     AddToISelQueue(Chain);
 
     return Result;
-  } else if (Opc == SPUISD::XFormAddr) {
+  } else if (Opc == SPUISD::IndirectAddr) {
     SDOperand Op0 = Op.getOperand(0);
     if (Op0.getOpcode() == SPUISD::LDRESULT
         || Op0.getOpcode() == SPUISD::AFormAddr) {
-      // (XFormAddr (LDRESULT|AFormAddr, imm))
+      // (IndirectAddr (LDRESULT|AFormAddr, imm))
       SDOperand Op1 = Op.getOperand(1);
       MVT::ValueType VT = Op.getValueType();
 
-      DEBUG(cerr << "CellSPU: XFormAddr("
-            << (Op0.getOpcode() == SPUISD::LDRESULT
-                ? "LDRESULT"
-                : "AFormAddr")
-            << ", imm):\nOp0 = ");
+      DEBUG(cerr << "CellSPU: IndirectAddr("
+                 << (Op0.getOpcode() == SPUISD::LDRESULT
+                     ? "LDRESULT"
+                     : "AFormAddr")
+                 << ", imm):\nOp0 = ");
       DEBUG(Op.getOperand(0).Val->dump(CurDAG));
       DEBUG(cerr << "\nOp1 = ");
       DEBUG(Op.getOperand(1).Val->dump(CurDAG));

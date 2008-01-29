@@ -58,14 +58,8 @@ def SPUv4i32_binop: SDTypeProfile<1, 2, [
 
 // FSMBI type constraints: There are several variations for the various
 // vector types (this avoids having to bit_convert all over the place.)
-def SPUfsmbi_type_v16i8: SDTypeProfile<1, 1, [
-  SDTCisVT<0, v16i8>, SDTCisVT<1, i32>]>;
-
-def SPUfsmbi_type_v8i16: SDTypeProfile<1, 1, [
-  SDTCisVT<0, v8i16>, SDTCisVT<1, i32>]>;
-
-def SPUfsmbi_type_v4i32: SDTypeProfile<1, 1, [
-  SDTCisVT<0, v4i32>, SDTCisVT<1, i32>]>;
+def SPUfsmbi_type: SDTypeProfile<1, 1, [
+  SDTCisVT<1, i32>]>;
 
 // SELB type constraints:
 def SPUselb_type_v16i8: SDTypeProfile<1, 3, [
@@ -148,9 +142,7 @@ def SPUrotbytes_left_chained : SDNode<"SPUISD::ROTBYTES_LEFT_CHAINED",
                                       SPUvecshift_type_v16i8, [SDNPHasChain]>;
 
 // SPU form select mask for bytes, immediate
-def SPUfsmbi_v16i8: SDNode<"SPUISD::FSMBI", SPUfsmbi_type_v16i8, []>;
-def SPUfsmbi_v8i16: SDNode<"SPUISD::FSMBI", SPUfsmbi_type_v8i16, []>;
-def SPUfsmbi_v4i32: SDNode<"SPUISD::FSMBI", SPUfsmbi_type_v4i32, []>;
+def SPUfsmbi: SDNode<"SPUISD::FSMBI", SPUfsmbi_type, []>;
 
 // SPU select bits instruction
 def SPUselb_v16i8: SDNode<"SPUISD::SELB", SPUselb_type_v16i8, []>;
@@ -189,11 +181,8 @@ def SPUpcrel : SDNode<"SPUISD::PCRelAddr", SDTIntBinOp, []>;
 // A-Form local store addresses
 def SPUaform : SDNode<"SPUISD::AFormAddr", SDTIntBinOp, []>;
 
-// D-Form "imm($reg)" addresses
-def SPUdform : SDNode<"SPUISD::DFormAddr", SDTIntBinOp, []>;
-
-// X-Form "$reg($reg)" addresses
-def SPUxform : SDNode<"SPUISD::XFormAddr", SDTIntBinOp, []>;
+// Indirect [D-Form "imm($reg)" and X-Form "$reg($reg)"] addresses
+def SPUindirect : SDNode<"SPUISD::IndirectAddr", SDTIntBinOp, []>;
 
 // Load result node
 def SPUload_result : SDTypeProfile<1, 3, []>;

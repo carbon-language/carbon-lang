@@ -48,205 +48,109 @@ def DWARF_LOC        : Pseudo<(outs), (ins i32imm:$line, i32imm:$col, i32imm:$fi
 //===----------------------------------------------------------------------===//
 
 let isSimpleLoad = 1 in {
-  def LQDv16i8:
-      RI10Form<0b00101100, (outs VECREG:$rT), (ins memri10:$src),
-        "lqd\t$rT, $src", LoadStore,
-        [(set (v16i8 VECREG:$rT), (load dform_addr:$src))]>;
+  class LoadDFormVec<ValueType vectype>
+    : RI10Form<0b00101100, (outs VECREG:$rT), (ins memri10:$src),
+               "lqd\t$rT, $src",
+               LoadStore,
+               [(set (vectype VECREG:$rT), (load dform_addr:$src))]>
+  { }
 
-  def LQDv8i16:
-      RI10Form<0b00101100, (outs VECREG:$rT), (ins memri10:$src),
-        "lqd\t$rT, $src", LoadStore,
-        [(set (v8i16 VECREG:$rT), (load dform_addr:$src))]>;
+  class LoadDForm<RegisterClass rclass>
+    : RI10Form<0b00101100, (outs rclass:$rT), (ins memri10:$src),
+               "lqd\t$rT, $src",
+               LoadStore,
+               [(set rclass:$rT, (load dform_addr:$src))]>
+  { }
 
-  def LQDv4i32:
-      RI10Form<0b00101100, (outs VECREG:$rT), (ins memri10:$src),
-        "lqd\t$rT, $src", LoadStore,
-        [(set (v4i32 VECREG:$rT), (load dform_addr:$src))]>;
+  multiclass LoadDForms
+  {
+    def v16i8: LoadDFormVec<v16i8>;
+    def v8i16: LoadDFormVec<v8i16>;
+    def v4i32: LoadDFormVec<v4i32>;
+    def v2i64: LoadDFormVec<v2i64>;
+    def v4f32: LoadDFormVec<v4f32>;
+    def v2f64: LoadDFormVec<v2f64>;
 
-  def LQDv2i64:
-      RI10Form<0b00101100, (outs VECREG:$rT), (ins memri10:$src),
-        "lqd\t$rT, $src", LoadStore,
-        [(set (v2i64 VECREG:$rT), (load dform_addr:$src))]>;
+    def r128:  LoadDForm<GPRC>;
+    def r64:   LoadDForm<R64C>;
+    def r32:   LoadDForm<R32C>;
+    def f32:   LoadDForm<R32FP>;
+    def f64:   LoadDForm<R64FP>;
+    def r16:   LoadDForm<R16C>;
+    def r8:    LoadDForm<R8C>;
+  }
 
-  def LQDv4f32:
-      RI10Form<0b00101100, (outs VECREG:$rT), (ins memri10:$src),
-        "lqd\t$rT, $src", LoadStore,
-        [(set (v4f32 VECREG:$rT), (load dform_addr:$src))]>;
+  class LoadAFormVec<ValueType vectype>
+    : RI16Form<0b100001100, (outs VECREG:$rT), (ins addr256k:$src),
+               "lqa\t$rT, $src",
+               LoadStore,
+               [(set (vectype VECREG:$rT), (load aform_addr:$src))]>
+  { }
 
-  def LQDv2f64:
-      RI10Form<0b00101100, (outs VECREG:$rT), (ins memri10:$src),
-        "lqd\t$rT, $src", LoadStore,
-        [(set (v2f64 VECREG:$rT), (load dform_addr:$src))]>;
+  class LoadAForm<RegisterClass rclass>
+    : RI16Form<0b100001100, (outs rclass:$rT), (ins addr256k:$src),
+               "lqa\t$rT, $src",
+               LoadStore,
+               [(set rclass:$rT, (load aform_addr:$src))]>
+  { }
 
-  def LQDr128:
-      RI10Form<0b00101100, (outs GPRC:$rT), (ins memri10:$src),
-        "lqd\t$rT, $src", LoadStore,
-        [(set GPRC:$rT, (load dform_addr:$src))]>;
+  multiclass LoadAForms
+  {
+    def v16i8: LoadAFormVec<v16i8>;
+    def v8i16: LoadAFormVec<v8i16>;
+    def v4i32: LoadAFormVec<v4i32>;
+    def v2i64: LoadAFormVec<v2i64>;
+    def v4f32: LoadAFormVec<v4f32>;
+    def v2f64: LoadAFormVec<v2f64>;
 
-  def LQDr64:
-      RI10Form<0b00101100, (outs R64C:$rT), (ins memri10:$src),
-        "lqd\t$rT, $src", LoadStore,
-         [(set R64C:$rT, (load dform_addr:$src))]>;
+    def r128:  LoadAForm<GPRC>;
+    def r64:   LoadAForm<R64C>;
+    def r32:   LoadAForm<R32C>;
+    def f32:   LoadAForm<R32FP>;
+    def f64:   LoadAForm<R64FP>;
+    def r16:   LoadAForm<R16C>;
+    def r8:    LoadAForm<R8C>;
+  }
 
-  def LQDr32:
-      RI10Form<0b00101100, (outs R32C:$rT), (ins memri10:$src),
-        "lqd\t$rT, $src", LoadStore,
-        [(set R32C:$rT, (load dform_addr:$src))]>;
+  class LoadXFormVec<ValueType vectype>
+    : RRForm<0b00100011100, (outs VECREG:$rT), (ins memrr:$src),
+             "lqx\t$rT, $src",
+             LoadStore,
+             [(set (vectype VECREG:$rT), (load xform_addr:$src))]>
+  { }
 
-  // Floating Point
-  def LQDf32:
-      RI10Form<0b00101100, (outs R32FP:$rT), (ins memri10:$src),
-        "lqd\t$rT, $src", LoadStore,
-        [(set R32FP:$rT, (load dform_addr:$src))]>;
+  class LoadXForm<RegisterClass rclass>
+    : RRForm<0b00100011100, (outs rclass:$rT), (ins memrr:$src),
+             "lqx\t$rT, $src",
+             LoadStore,
+             [(set rclass:$rT, (load xform_addr:$src))]>
+  { }
 
-  def LQDf64:
-      RI10Form<0b00101100, (outs R64FP:$rT), (ins memri10:$src),
-        "lqd\t$rT, $src", LoadStore,
-        [(set R64FP:$rT, (load dform_addr:$src))]>;
-  // END Floating Point
+  multiclass LoadXForms
+  {
+    def v16i8: LoadXFormVec<v16i8>;
+    def v8i16: LoadXFormVec<v8i16>;
+    def v4i32: LoadXFormVec<v4i32>;
+    def v2i64: LoadXFormVec<v2i64>;
+    def v4f32: LoadXFormVec<v4f32>;
+    def v2f64: LoadXFormVec<v2f64>;
 
-  def LQDr16:
-      RI10Form<0b00101100, (outs R16C:$rT), (ins memri10:$src),
-        "lqd\t$rT, $src", LoadStore,
-        [(set R16C:$rT, (load dform_addr:$src))]>;
+    def r128:  LoadXForm<GPRC>;
+    def r64:   LoadXForm<R64C>;
+    def r32:   LoadXForm<R32C>;
+    def f32:   LoadXForm<R32FP>;
+    def f64:   LoadXForm<R64FP>;
+    def r16:   LoadXForm<R16C>;
+    def r8:    LoadXForm<R8C>;
+  }
 
-  def LQDr8:
-      RI10Form<0b00101100, (outs R8C:$rT), (ins memri10:$src),
-        "lqd\t$rT, $src", LoadStore,
-        [(set R8C:$rT, (load dform_addr:$src))]>;
-
-  def LQAv16i8:
-      RI16Form<0b100001100, (outs VECREG:$rT), (ins addr256k:$src),
-        "lqa\t$rT, $src", LoadStore,
-        [(set (v16i8 VECREG:$rT), (load aform_addr:$src))]>;
-
-  def LQAv8i16:
-      RI16Form<0b100001100, (outs VECREG:$rT), (ins addr256k:$src),
-        "lqa\t$rT, $src", LoadStore,
-        [(set (v8i16 VECREG:$rT), (load aform_addr:$src))]>;
-
-  def LQAv4i32:
-      RI16Form<0b100001100, (outs VECREG:$rT), (ins addr256k:$src),
-        "lqa\t$rT, $src", LoadStore,
-        [(set (v4i32 VECREG:$rT), (load aform_addr:$src))]>;
-
-  def LQAv2i64:
-      RI16Form<0b100001100, (outs VECREG:$rT), (ins addr256k:$src),
-        "lqa\t$rT, $src", LoadStore,
-        [(set (v2i64 VECREG:$rT), (load aform_addr:$src))]>;
-
-  def LQAv4f32:
-      RI16Form<0b100001100, (outs VECREG:$rT), (ins addr256k:$src),
-        "lqa\t$rT, $src", LoadStore,
-        [(set (v4f32 VECREG:$rT), (load aform_addr:$src))]>;
-
-  def LQAv2f64:
-      RI16Form<0b100001100, (outs VECREG:$rT), (ins addr256k:$src),
-        "lqa\t$rT, $src", LoadStore,
-        [(set (v2f64 VECREG:$rT), (load aform_addr:$src))]>;
-
-  def LQAr128:
-      RI16Form<0b100001100, (outs GPRC:$rT), (ins addr256k:$src),
-        "lqa\t$rT, $src", LoadStore,
-        [(set GPRC:$rT, (load aform_addr:$src))]>;
-
-  def LQAr64:
-      RI16Form<0b100001100, (outs R64C:$rT), (ins addr256k:$src),
-        "lqa\t$rT, $src", LoadStore,
-        [(set R64C:$rT, (load aform_addr:$src))]>;
-
-  def LQAr32:
-      RI16Form<0b100001100, (outs R32C:$rT), (ins addr256k:$src),
-        "lqa\t$rT, $src", LoadStore,
-        [(set R32C:$rT, (load  aform_addr:$src))]>;
-
-  def LQAf32:
-      RI16Form<0b100001100, (outs R32FP:$rT), (ins addr256k:$src),
-        "lqa\t$rT, $src", LoadStore,
-        [(set R32FP:$rT, (load aform_addr:$src))]>;
-
-  def LQAf64:
-      RI16Form<0b100001100, (outs R64FP:$rT), (ins addr256k:$src),
-        "lqa\t$rT, $src", LoadStore,
-        [(set R64FP:$rT, (load aform_addr:$src))]>;
-
-  def LQAr16:
-      RI16Form<0b100001100, (outs R16C:$rT), (ins addr256k:$src),
-        "lqa\t$rT, $src", LoadStore,
-        [(set R16C:$rT, (load aform_addr:$src))]>;
-
- def LQAr8:
-      RI16Form<0b100001100, (outs R8C:$rT), (ins addr256k:$src),
-        "lqa\t$rT, $src", LoadStore,
-        [(set R8C:$rT, (load aform_addr:$src))]>;
-
-  def LQXv16i8:
-      RRForm<0b00100011100, (outs VECREG:$rT), (ins memrr:$src),
-        "lqx\t$rT, $src", LoadStore,
-        [(set (v16i8 VECREG:$rT), (load xform_addr:$src))]>;
-
-  def LQXv8i16:
-      RRForm<0b00100011100, (outs VECREG:$rT), (ins memrr:$src),
-        "lqx\t$rT, $src", LoadStore,
-        [(set (v8i16 VECREG:$rT), (load xform_addr:$src))]>;
-
-  def LQXv4i32:
-      RRForm<0b00100011100, (outs VECREG:$rT), (ins memrr:$src),
-        "lqx\t$rT, $src", LoadStore,
-        [(set (v4i32 VECREG:$rT), (load xform_addr:$src))]>;
-
-  def LQXv2i64:
-      RRForm<0b00100011100, (outs VECREG:$rT), (ins memrr:$src),
-        "lqx\t$rT, $src", LoadStore,
-        [(set (v2i64 VECREG:$rT), (load xform_addr:$src))]>;
-
-  def LQXv4f32:
-      RRForm<0b00100011100, (outs VECREG:$rT), (ins memrr:$src),
-        "lqx\t$rT, $src", LoadStore,
-        [(set (v4f32 VECREG:$rT), (load xform_addr:$src))]>;
-
-  def LQXv2f64:
-      RRForm<0b00100011100, (outs VECREG:$rT), (ins memrr:$src),
-        "lqx\t$rT, $src", LoadStore,
-        [(set (v2f64 VECREG:$rT), (load xform_addr:$src))]>;
-
-  def LQXr128:
-      RRForm<0b00100011100, (outs GPRC:$rT), (ins memrr:$src),
-        "lqx\t$rT, $src", LoadStore,
-        [(set GPRC:$rT, (load xform_addr:$src))]>;
-
-  def LQXr64:
-      RRForm<0b00100011100, (outs R64C:$rT), (ins memrr:$src),
-        "lqx\t$rT, $src", LoadStore,
-        [(set R64C:$rT, (load xform_addr:$src))]>;
-
-  def LQXr32:
-      RRForm<0b00100011100, (outs R32C:$rT), (ins memrr:$src),
-        "lqx\t$rT, $src", LoadStore,
-        [(set R32C:$rT, (load xform_addr:$src))]>;
-
-  def LQXf32:
-      RRForm<0b00100011100, (outs R32FP:$rT), (ins memrr:$src),
-        "lqx\t$rT, $src", LoadStore,
-        [(set R32FP:$rT, (load xform_addr:$src))]>;
-
-  def LQXf64:
-      RRForm<0b00100011100, (outs R64FP:$rT), (ins memrr:$src),
-        "lqx\t$rT, $src", LoadStore,
-        [(set R64FP:$rT, (load xform_addr:$src))]>;
-
-  def LQXr16:
-      RRForm<0b00100011100, (outs R16C:$rT), (ins memrr:$src),
-        "lqx\t$rT, $src", LoadStore,
-        [(set R16C:$rT, (load xform_addr:$src))]>;
-
-  def LQXr8:
-      RRForm<0b00100011100, (outs R8C:$rT), (ins memrr:$src),
-        "lqx\t$rT, $src", LoadStore,
-        [(set R8C:$rT, (load xform_addr:$src))]>;
+  defm LQA : LoadAForms;
+  defm LQD : LoadDForms;
+  defm LQX : LoadXForms;
 
 /* Load quadword, PC relative: Not much use at this point in time.
-   Might be of use later for relocatable code.
+   Might be of use later for relocatable code. It's effectively the
+   same as LQA, but uses PC-relative addressing.
   def LQR : RI16Form<0b111001100, (outs VECREG:$rT), (ins s16imm:$disp),
                      "lqr\t$rT, $disp", LoadStore,
                      [(set VECREG:$rT, (load iaddr:$disp))]>;
@@ -256,174 +160,108 @@ let isSimpleLoad = 1 in {
 //===----------------------------------------------------------------------===//
 // Stores:
 //===----------------------------------------------------------------------===//
+class StoreDFormVec<ValueType vectype>
+  : RI10Form<0b00100100, (outs), (ins VECREG:$rT, memri10:$src),
+             "stqd\t$rT, $src",
+             LoadStore,
+             [(store (vectype VECREG:$rT), dform_addr:$src)]>
+{ }
 
-def STQDv16i8 : RI10Form<0b00100100, (outs), (ins VECREG:$rT, memri10:$src),
-    "stqd\t$rT, $src", LoadStore,
-    [(store (v16i8 VECREG:$rT), dform_addr:$src)]>;
+class StoreDForm<RegisterClass rclass>
+  : RI10Form<0b00100100, (outs), (ins rclass:$rT, memri10:$src),
+             "stqd\t$rT, $src",
+             LoadStore,
+             [(store rclass:$rT, dform_addr:$src)]>
+{ }
 
-def STQDv8i16 : RI10Form<0b00100100, (outs), (ins VECREG:$rT, memri10:$src),
-    "stqd\t$rT, $src", LoadStore,
-    [(store (v8i16 VECREG:$rT), dform_addr:$src)]>;
+multiclass StoreDForms
+{
+  def v16i8: StoreDFormVec<v16i8>;
+  def v8i16: StoreDFormVec<v8i16>;
+  def v4i32: StoreDFormVec<v4i32>;
+  def v2i64: StoreDFormVec<v2i64>;
+  def v4f32: StoreDFormVec<v4f32>;
+  def v2f64: StoreDFormVec<v2f64>;
 
-def STQDv4i32 : RI10Form<0b00100100, (outs), (ins VECREG:$rT, memri10:$src),
-    "stqd\t$rT, $src", LoadStore,
-    [(store (v4i32 VECREG:$rT), dform_addr:$src)]>;
+  def r128:  StoreDForm<GPRC>;
+  def r64:   StoreDForm<R64C>;
+  def r32:   StoreDForm<R32C>;
+  def f32:   StoreDForm<R32FP>;
+  def f64:   StoreDForm<R64FP>;
+  def r16:   StoreDForm<R16C>;
+  def r8:    StoreDForm<R8C>;
+}
 
-def STQDv2i64 : RI10Form<0b00100100, (outs), (ins VECREG:$rT, memri10:$src),
-    "stqd\t$rT, $src", LoadStore,
-    [(store (v2i64 VECREG:$rT), dform_addr:$src)]>;
+class StoreAFormVec<ValueType vectype>
+  : RI16Form<0b0010010, (outs), (ins VECREG:$rT, addr256k:$src),
+	     "stqa\t$rT, $src",
+	     LoadStore,
+	     [(store (vectype VECREG:$rT), aform_addr:$src)]>
+{ }
 
-def STQDv4f32 : RI10Form<0b00100100, (outs), (ins VECREG:$rT, memri10:$src),
-    "stqd\t$rT, $src", LoadStore,
-    [(store (v4f32 VECREG:$rT), dform_addr:$src)]>;
+class StoreAForm<RegisterClass rclass>
+  : RI16Form<0b001001, (outs), (ins rclass:$rT, addr256k:$src),
+	     "stqa\t$rT, $src",
+	     LoadStore,
+	     [(store rclass:$rT, aform_addr:$src)]>
+{ }
 
-def STQDv2f64 : RI10Form<0b00100100, (outs), (ins VECREG:$rT, memri10:$src),
-    "stqd\t$rT, $src", LoadStore,
-    [(store (v2f64 VECREG:$rT), dform_addr:$src)]>;
+multiclass StoreAForms
+{
+  def v16i8: StoreAFormVec<v16i8>;
+  def v8i16: StoreAFormVec<v8i16>;
+  def v4i32: StoreAFormVec<v4i32>;
+  def v2i64: StoreAFormVec<v2i64>;
+  def v4f32: StoreAFormVec<v4f32>;
+  def v2f64: StoreAFormVec<v2f64>;
 
-def STQDr128 : RI10Form<0b00100100, (outs), (ins GPRC:$rT, memri10:$src),
-    "stqd\t$rT, $src", LoadStore,
-    [(store GPRC:$rT, dform_addr:$src)]>;
+  def r128:  StoreAForm<GPRC>;
+  def r64:   StoreAForm<R64C>;
+  def r32:   StoreAForm<R32C>;
+  def f32:   StoreAForm<R32FP>;
+  def f64:   StoreAForm<R64FP>;
+  def r16:   StoreAForm<R16C>;
+  def r8:    StoreAForm<R8C>;
+}
 
-def STQDr64 : RI10Form<0b00100100, (outs), (ins R64C:$rT, memri10:$src),
-    "stqd\t$rT, $src", LoadStore,
-    [(store R64C:$rT, dform_addr:$src)]>;
+class StoreXFormVec<ValueType vectype>
+  : RRForm<0b00100100, (outs), (ins VECREG:$rT, memrr:$src),
+	   "stqx\t$rT, $src",
+	   LoadStore,
+	   [(store (vectype VECREG:$rT), xform_addr:$src)]>
+{ }
 
-def STQDr32 : RI10Form<0b00100100, (outs), (ins R32C:$rT, memri10:$src),
-    "stqd\t$rT, $src", LoadStore,
-    [(store R32C:$rT, dform_addr:$src)]>;
+class StoreXForm<RegisterClass rclass>
+  : RRForm<0b00100100, (outs), (ins rclass:$rT, memrr:$src),
+	   "stqx\t$rT, $src",
+	   LoadStore,
+	   [(store rclass:$rT, xform_addr:$src)]>
+{ }
 
-// Floating Point
-def STQDf32 : RI10Form<0b00100100, (outs), (ins R32FP:$rT, memri10:$src),
-    "stqd\t$rT, $src", LoadStore,
-    [(store R32FP:$rT, dform_addr:$src)]>;
+multiclass StoreXForms
+{
+  def v16i8: StoreXFormVec<v16i8>;
+  def v8i16: StoreXFormVec<v8i16>;
+  def v4i32: StoreXFormVec<v4i32>;
+  def v2i64: StoreXFormVec<v2i64>;
+  def v4f32: StoreXFormVec<v4f32>;
+  def v2f64: StoreXFormVec<v2f64>;
 
-def STQDf64 : RI10Form<0b00100100, (outs), (ins R64FP:$rT, memri10:$src),
-    "stqd\t$rT, $src", LoadStore,
-    [(store R64FP:$rT, dform_addr:$src)]>;
+  def r128:  StoreXForm<GPRC>;
+  def r64:   StoreXForm<R64C>;
+  def r32:   StoreXForm<R32C>;
+  def f32:   StoreXForm<R32FP>;
+  def f64:   StoreXForm<R64FP>;
+  def r16:   StoreXForm<R16C>;
+  def r8:    StoreXForm<R8C>;
+}
 
-def STQDr16 : RI10Form<0b00100100, (outs), (ins R16C:$rT, memri10:$src),
-    "stqd\t$rT, $src", LoadStore,
-    [(store R16C:$rT, dform_addr:$src)]>;
-
-def STQDr8 : RI10Form<0b00100100, (outs), (ins R8C:$rT, memri10:$src),
-    "stqd\t$rT, $src", LoadStore,
-    [(store R8C:$rT, dform_addr:$src)]>;
-
-def STQAv16i8 : RI10Form<0b00100100, (outs), (ins VECREG:$rT, addr256k:$src),
-    "stqa\t$rT, $src", LoadStore,
-    [(store (v16i8 VECREG:$rT), aform_addr:$src)]>;
-
-def STQAv8i16 : RI10Form<0b00100100, (outs), (ins VECREG:$rT, addr256k:$src),
-    "stqa\t$rT, $src", LoadStore,
-    [(store (v8i16 VECREG:$rT), aform_addr:$src)]>;
-
-def STQAv4i32 : RI10Form<0b00100100, (outs), (ins VECREG:$rT, addr256k:$src),
-    "stqa\t$rT, $src", LoadStore,
-    [(store (v4i32 VECREG:$rT), aform_addr:$src)]>;
-
-def STQAv2i64 : RI10Form<0b00100100, (outs), (ins VECREG:$rT, addr256k:$src),
-    "stqa\t$rT, $src", LoadStore,
-    [(store (v2i64 VECREG:$rT), aform_addr:$src)]>;
-
-def STQAv4f32 : RI10Form<0b00100100, (outs), (ins VECREG:$rT, addr256k:$src),
-    "stqa\t$rT, $src", LoadStore,
-    [(store (v4f32 VECREG:$rT), aform_addr:$src)]>;
-
-def STQAv2f64 : RI10Form<0b00100100, (outs), (ins VECREG:$rT, addr256k:$src),
-    "stqa\t$rT, $src", LoadStore,
-    [(store (v2f64 VECREG:$rT), aform_addr:$src)]>;
-
-def STQAr128 : RI10Form<0b00100100, (outs), (ins GPRC:$rT, addr256k:$src),
-    "stqa\t$rT, $src", LoadStore,
-    [(store GPRC:$rT, aform_addr:$src)]>;
-
-def STQAr64 : RI10Form<0b00100100, (outs), (ins R64C:$rT, addr256k:$src),
-    "stqa\t$rT, $src", LoadStore,
-    [(store R64C:$rT, aform_addr:$src)]>;
-
-def STQAr32 : RI10Form<0b00100100, (outs), (ins R32C:$rT, addr256k:$src),
-    "stqa\t$rT, $src", LoadStore,
-    [(store R32C:$rT, aform_addr:$src)]>;
-
-// Floating Point
-def STQAf32 : RI10Form<0b00100100, (outs), (ins R32FP:$rT, addr256k:$src),
-    "stqa\t$rT, $src", LoadStore,
-    [(store R32FP:$rT, aform_addr:$src)]>;
-
-def STQAf64 : RI10Form<0b00100100, (outs), (ins R64FP:$rT, addr256k:$src),
-    "stqa\t$rT, $src", LoadStore,
-    [(store R64FP:$rT, aform_addr:$src)]>;
-
-def STQAr16 : RI10Form<0b00100100, (outs), (ins R16C:$rT, addr256k:$src),
-    "stqa\t$rT, $src", LoadStore,
-    [(store R16C:$rT, aform_addr:$src)]>;
-
-def STQAr8 : RI10Form<0b00100100, (outs), (ins R8C:$rT, addr256k:$src),
-    "stqa\t$rT, $src", LoadStore,
-    [(store R8C:$rT, aform_addr:$src)]>;
-
-def STQXv16i8 : RI10Form<0b00100100, (outs), (ins VECREG:$rT, memrr:$src),
-    "stqx\t$rT, $src", LoadStore,
-    [(store (v16i8 VECREG:$rT), xform_addr:$src)]>;
-
-def STQXv8i16 : RI10Form<0b00100100, (outs), (ins VECREG:$rT, memrr:$src),
-    "stqx\t$rT, $src", LoadStore,
-    [(store (v8i16 VECREG:$rT), xform_addr:$src)]>;
-
-def STQXv4i32 : RI10Form<0b00100100, (outs), (ins VECREG:$rT, memrr:$src),
-    "stqx\t$rT, $src", LoadStore,
-    [(store (v4i32 VECREG:$rT), xform_addr:$src)]>;
-
-def STQXv2i64 : RI10Form<0b00100100, (outs), (ins VECREG:$rT, memrr:$src),
-    "stqx\t$rT, $src", LoadStore,
-    [(store (v2i64 VECREG:$rT), xform_addr:$src)]>;
-
-def STQXv4f32 : RI10Form<0b00100100, (outs), (ins VECREG:$rT, memrr:$src),
-    "stqx\t$rT, $src", LoadStore,
-    [(store (v4f32 VECREG:$rT), xform_addr:$src)]>;
-
-def STQXv2f64 : RI10Form<0b00100100, (outs), (ins VECREG:$rT, memrr:$src),
-    "stqx\t$rT, $src", LoadStore,
-    [(store (v2f64 VECREG:$rT), xform_addr:$src)]>;
-
-def STQXr128 : RI10Form<0b00100100, (outs), (ins GPRC:$rT, memrr:$src),
-    "stqx\t$rT, $src", LoadStore,
-    [(store GPRC:$rT, xform_addr:$src)]>;
-
-def STQXr64:
-  RI10Form<0b00100100, (outs), (ins R64C:$rT, memrr:$src),
-    "stqx\t$rT, $src", LoadStore,
-    [(store R64C:$rT, xform_addr:$src)]>;
-
-def STQXr32:
-  RI10Form<0b00100100, (outs), (ins R32C:$rT, memrr:$src),
-    "stqx\t$rT, $src", LoadStore,
-    [(store R32C:$rT, xform_addr:$src)]>;
-
-// Floating Point
-def STQXf32:
-  RI10Form<0b00100100, (outs), (ins R32FP:$rT, memrr:$src),
-    "stqx\t$rT, $src", LoadStore,
-    [(store R32FP:$rT, xform_addr:$src)]>;
-
-def STQXf64:
-  RI10Form<0b00100100, (outs), (ins R64FP:$rT, memrr:$src),
-    "stqx\t$rT, $src", LoadStore,
-    [(store R64FP:$rT, xform_addr:$src)]>;
-
-def STQXr16:
-  RI10Form<0b00100100, (outs), (ins R16C:$rT, memrr:$src),
-    "stqx\t$rT, $src", LoadStore,
-    [(store R16C:$rT, xform_addr:$src)]>;
-
-def STQXr8:
-   RI10Form<0b00100100, (outs), (ins R8C:$rT, memrr:$src),
-     "stqx\t$rT, $src", LoadStore,
-     [(store R8C:$rT, xform_addr:$src)]>;
+defm STQD : StoreDForms;
+defm STQA : StoreAForms;
+defm STQX : StoreXForms;
 
 /* Store quadword, PC relative: Not much use at this point in time. Might
- be useful for relocatable code.
+   be useful for relocatable code.
 def STQR : RI16Form<0b111000100, (outs), (ins VECREG:$rT, s16imm:$disp),
                    "stqr\t$rT, $disp", LoadStore,
                    [(store VECREG:$rT, iaddr:$disp)]>;
@@ -620,17 +458,22 @@ def IOHLlo:
 // Form select mask for bytes using immediate, used in conjunction with the
 // SELB instruction:
 
-def FSMBIv16i8 : RI16Form<0b101001100, (outs VECREG:$rT), (ins u16imm:$val),
-    "fsmbi\t$rT, $val", SelectOp,
-    [(set (v16i8 VECREG:$rT), (SPUfsmbi_v16i8 immU16:$val))]>;
+class FSMBIVec<ValueType vectype>
+  : RI16Form<0b101001100, (outs VECREG:$rT), (ins u16imm:$val),
+	     "fsmbi\t$rT, $val",
+	     SelectOp,
+	     [(set (vectype VECREG:$rT), (SPUfsmbi immU16:$val))]>
+{ }
 
-def FSMBIv8i16 : RI16Form<0b101001100, (outs VECREG:$rT), (ins u16imm:$val),
-    "fsmbi\t$rT, $val", SelectOp,
-    [(set (v8i16 VECREG:$rT), (SPUfsmbi_v8i16 immU16:$val))]>;
+multiclass FSMBIs
+{
+  def v16i8: FSMBIVec<v16i8>;
+  def v8i16: FSMBIVec<v8i16>;
+  def v4i32: FSMBIVec<v4i32>;
+  def v2i64: FSMBIVec<v2i64>;
+}
 
-def FSMBIvecv4i32 : RI16Form<0b101001100, (outs VECREG:$rT), (ins u16imm:$val),
-    "fsmbi\t$rT, $val", SelectOp,
-    [(set (v4i32 VECREG:$rT), (SPUfsmbi_v4i32 immU16:$val))]>;
+defm FSMBI : FSMBIs;
 
 //===----------------------------------------------------------------------===//
 // Integer and Logical Operations:
@@ -2762,17 +2605,17 @@ def CEQHIv8i16:
 def CEQr32:
   RRForm<0b00000011110, (outs R32C:$rT), (ins R32C:$rA, R32C:$rB),
     "ceq\t$rT, $rA, $rB", ByteOp,
-    [/* no pattern to match: intrinsic */]>;
+    [(set R32C:$rT, (seteq R32C:$rA, R32C:$rB))]>;
 
 def CEQv4i32:
   RRForm<0b00000011110, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
     "ceq\t$rT, $rA, $rB", ByteOp,
-    [/* no pattern to match: intrinsic */]>;
+    [(set (v4i32 VECREG:$rT), (seteq (v4i32 VECREG:$rA), (v4i32 VECREG:$rB)))]>;
 
 def CEQIr32:
-  RI10Form<0b00111110, (outs R32C:$rT), (ins R32C:$rA, s10imm:$val),
+  RI10Form<0b00111110, (outs R32C:$rT), (ins R32C:$rA, s10imm_i32:$val),
     "ceqi\t$rT, $rA, $val", ByteOp,
-    [/* no pattern to match: intrinsic */]>;
+    [(set R32C:$rT, (seteq R32C:$rA, i32ImmSExt10:$val))]>;
 
 def CEQIv4i32:
   RI10Form<0b00111110, (outs VECREG:$rT), (ins VECREG:$rA, s10imm:$val),
@@ -2872,17 +2715,28 @@ let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, isBarrier = 1 in {
 }
 
 //===----------------------------------------------------------------------===//
-// brcond predicates:
+// setcc and brcond patterns:
 //===----------------------------------------------------------------------===//
+
 def : Pat<(brcond (i16 (seteq R16C:$rA, 0)), bb:$dest), 
           (BRHZ R16C:$rA, bb:$dest)>;
-def : Pat<(brcond (i16 (setne R16C:$rA, 0)), bb:$dest), 
-          (BRHNZ R16C:$rA, bb:$dest)>;
-
 def : Pat<(brcond (i32 (seteq R32C:$rA, 0)), bb:$dest), 
           (BRZ R32C:$rA, bb:$dest)>;
+
+def : Pat<(brcond (i16 (setne R16C:$rA, 0)), bb:$dest), 
+          (BRHNZ R16C:$rA, bb:$dest)>;
 def : Pat<(brcond (i32 (setne R32C:$rA, 0)), bb:$dest), 
           (BRNZ R32C:$rA, bb:$dest)>;
+
+def : Pat<(brcond (i16 (setne R16C:$rA, i16ImmSExt10:$val)), bb:$dest),
+          (BRHNZ (CEQHIr16 R16C:$rA, i16ImmSExt10:$val), bb:$dest)>;
+def : Pat<(brcond (i32 (setne R32C:$rA, i32ImmSExt10:$val)), bb:$dest),
+          (BRNZ (CEQIr32 R32C:$rA, i32ImmSExt10:$val), bb:$dest)>;
+
+def : Pat<(brcond (i16 (setne R16C:$rA, R16C:$rB)), bb:$dest),
+          (BRHNZ (CEQHr16 R16C:$rA, R16:$rB), bb:$dest)>;
+def : Pat<(brcond (i32 (setne R32C:$rA, R32C:$rB)), bb:$dest),
+          (BRNZ (CEQr32 R32C:$rA, R32C:$rB), bb:$dest)>;
 
 let isTerminator = 1, isBarrier = 1 in {
   let isReturn = 1 in {
@@ -3460,24 +3314,42 @@ def : Pat<(i32 (anyext R16C:$rSrc)),
           (ORI2To4 R16C:$rSrc, 0)>;
 
 //===----------------------------------------------------------------------===//
-// Address translation: SPU, like PPC, has to split addresses into high and
+// Address generation: SPU, like PPC, has to split addresses into high and
 // low parts in order to load them into a register.
 //===----------------------------------------------------------------------===//
 
-def : Pat<(SPUaform tglobaladdr:$in, 0),        (ILAlsa tglobaladdr:$in)>;
-def : Pat<(SPUxform tglobaladdr:$in, 0),
+def : Pat<(SPUaform tglobaladdr:$in, 0),  (ILAlsa tglobaladdr:$in)>;
+def : Pat<(SPUaform texternalsym:$in, 0), (ILAlsa texternalsym:$in)>;
+def : Pat<(SPUaform tjumptable:$in, 0),   (ILAlsa tjumptable:$in)>;
+def : Pat<(SPUaform tconstpool:$in, 0),   (ILAlsa  tconstpool:$in)>;
+
+def : Pat<(SPUindirect (SPUhi tglobaladdr:$in, 0),
+                       (SPUlo tglobaladdr:$in, 0)),
           (IOHLlo (ILHUhi tglobaladdr:$in), tglobaladdr:$in)>;
 
-def : Pat<(SPUaform tjumptable:$in, 0),         (ILAlsa tjumptable:$in)>;
-def : Pat<(SPUxform tjumptable:$in, 0),
+def : Pat<(SPUindirect (SPUhi texternalsym:$in, 0),
+                       (SPUlo texternalsym:$in, 0)),
+          (IOHLlo (ILHUhi texternalsym:$in), texternalsym:$in)>;
+
+def : Pat<(SPUindirect (SPUhi tjumptable:$in, 0),
+                       (SPUlo tjumptable:$in, 0)),
           (IOHLlo (ILHUhi tjumptable:$in), tjumptable:$in)>;
 
-def : Pat<(SPUhi    tconstpool:$in , 0),        (ILHUhi  tconstpool:$in)>;
-def : Pat<(SPUlo    tconstpool:$in , 0),        (ILAlsa  tconstpool:$in)>;
-def : Pat<(SPUaform tconstpool:$in, 0),         (ILAlsa  tconstpool:$in)>;
-// tblgen bug prevents this from working.
-// def : Pat<(SPUxform tconstpool:$in, 0),
-//           (IOHLlo (ILHUhi tconstpool:$in), tconstpool:$in)>;
+def : Pat<(SPUindirect (SPUhi tconstpool:$in, 0),
+                       (SPUlo tconstpool:$in, 0)),
+          (IOHLlo (ILHUhi tconstpool:$in), tconstpool:$in)>;
+
+def : Pat<(add (SPUhi tglobaladdr:$in, 0), (SPUlo tglobaladdr:$in, 0)),
+          (IOHLlo (ILHUhi tglobaladdr:$in), tglobaladdr:$in)>;
+
+def : Pat<(add (SPUhi texternalsym:$in, 0), (SPUlo texternalsym:$in, 0)),
+          (IOHLlo (ILHUhi texternalsym:$in), texternalsym:$in)>;
+
+def : Pat<(add (SPUhi tjumptable:$in, 0), (SPUlo tjumptable:$in, 0)),
+          (IOHLlo (ILHUhi tjumptable:$in), tjumptable:$in)>;
+
+def : Pat<(add (SPUhi tconstpool:$in, 0), (SPUlo tconstpool:$in, 0)),
+          (IOHLlo (ILHUhi tconstpool:$in), tconstpool:$in)>;
 
 // Instrinsics:
 include "CellSDKIntrinsics.td"

@@ -1,5 +1,5 @@
 ; RUN: llvm-as -o - %s | llc -march=cellspu > %t1.s
-; RUN: grep fceq  %t1.s | count 1 &&
+; RUN: grep fceq  %t1.s | count 1
 ; RUN: grep fcmeq %t1.s | count 1
 ;
 ; This file includes standard floating point arithmetic instructions

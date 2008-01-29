@@ -195,12 +195,18 @@ namespace {
     void
     printAddr256K(const MachineInstr *MI, unsigned OpNo)
     {
-      /* Note: operand 1 is an offset or symbol name. Operand 2 is
-	 ignored. */
+      /* Note: operand 1 is an offset or symbol name. */
       if (MI->getOperand(OpNo).isImmediate()) {
         printS16ImmOperand(MI, OpNo);
       } else {
         printOp(MI->getOperand(OpNo));
+        if (MI->getOperand(OpNo+1).isImmediate()) {
+          int displ = int(MI->getOperand(OpNo+1).getImm());
+          if (displ > 0)
+            O << "+" << displ;
+          else if (displ < 0)
+            O << displ;
+        }
       }
     }
 
@@ -309,7 +315,6 @@ void SPUAsmPrinter::printOp(const MachineOperand &MO) {
   case MachineOperand::MO_JumpTableIndex:
     O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
       << '_' << MO.getIndex();
-    // FIXME: PIC relocation model
     return;
   case MachineOperand::MO_ConstantPoolIndex:
     O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber()
@@ -521,7 +526,8 @@ bool LinuxAsmPrinter::doFinalization(Module &M) {
         O << "\t.zero\t" << Size;
       } else if (I->hasInternalLinkage()) {
         SwitchToDataSection("\t.data", I);
-        O << TAI->getLCOMMDirective() << name << "," << Size << "," << Align;
+        O << ".local " << name << "\n";
+        O << TAI->getCOMMDirective() << name << "," << Size << "," << Align << "\n";
       } else {
         SwitchToDataSection("\t.data", I);
         O << ".comm " << name << "," << Size;
