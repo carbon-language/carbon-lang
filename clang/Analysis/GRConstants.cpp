@@ -625,7 +625,7 @@ NonLValue LValue::EQ(ValueManager& ValMgr, const LValue& RHS) const {
 
 NonLValue LValue::NE(ValueManager& ValMgr, const LValue& RHS) const {
   if (getSubKind() != RHS.getSubKind())
-    return NonLValue::GetIntTruthValue(ValMgr, false);
+    return NonLValue::GetIntTruthValue(ValMgr, true);
 
   switch (getSubKind()) {
     default:
