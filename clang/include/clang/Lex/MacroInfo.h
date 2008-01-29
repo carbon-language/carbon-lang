@@ -51,7 +51,7 @@ class MacroInfo {
   bool IsC99Varargs : 1;
   
   /// IsGNUVarargs -  True if this macro is of the form "#define X(a...)".  The
-  /// "a" identifier in th replacement list will be replaced with all arguments
+  /// "a" identifier in the replacement list will be replaced with all arguments
   /// of the macro starting with the specified one.
   bool IsGNUVarargs : 1;
   
