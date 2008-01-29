@@ -627,14 +627,14 @@ APFloat::bitwiseIsEqual(const APFloat &rhs) const {
       category != rhs.category ||
       sign != rhs.sign)
     return false;
-  if (semantics==(const llvm::fltSemantics* const)&PPCDoubleDouble &&
+  if (semantics==(const llvm::fltSemantics*)&PPCDoubleDouble &&
       sign2 != rhs.sign2)
     return false;
   if (category==fcZero || category==fcInfinity)
     return true;
   else if (category==fcNormal && exponent!=rhs.exponent)
     return false;
-  else if (semantics==(const llvm::fltSemantics* const)&PPCDoubleDouble &&
+  else if (semantics==(const llvm::fltSemantics*)&PPCDoubleDouble &&
            exponent2!=rhs.exponent2)
     return false;
   else {
@@ -2435,7 +2435,7 @@ APFloat::getHashValue() const
 APInt
 APFloat::convertF80LongDoubleAPFloatToAPInt() const
 {
-  assert(semantics == (const llvm::fltSemantics* const)&x87DoubleExtended);
+  assert(semantics == (const llvm::fltSemantics*)&x87DoubleExtended);
   assert (partCount()==2);
 
   uint64_t myexponent, mysignificand;
@@ -2468,7 +2468,7 @@ APFloat::convertF80LongDoubleAPFloatToAPInt() const
 APInt
 APFloat::convertPPCDoubleDoubleAPFloatToAPInt() const
 {
-  assert(semantics == (const llvm::fltSemantics* const)&PPCDoubleDouble);
+  assert(semantics == (const llvm::fltSemantics*)&PPCDoubleDouble);
   assert (partCount()==2);
 
   uint64_t myexponent, mysignificand, myexponent2, mysignificand2;
@@ -2576,16 +2576,16 @@ APFloat::convertFloatAPFloatToAPInt() const
 APInt
 APFloat::convertToAPInt() const
 {
-  if (semantics == (const llvm::fltSemantics* const)&IEEEsingle)
+  if (semantics == (const llvm::fltSemantics*)&IEEEsingle)
     return convertFloatAPFloatToAPInt();
   
-  if (semantics == (const llvm::fltSemantics* const)&IEEEdouble)
+  if (semantics == (const llvm::fltSemantics*)&IEEEdouble)
     return convertDoubleAPFloatToAPInt();
 
-  if (semantics == (const llvm::fltSemantics* const)&PPCDoubleDouble)
+  if (semantics == (const llvm::fltSemantics*)&PPCDoubleDouble)
     return convertPPCDoubleDoubleAPFloatToAPInt();
 
-  assert(semantics == (const llvm::fltSemantics* const)&x87DoubleExtended &&
+  assert(semantics == (const llvm::fltSemantics*)&x87DoubleExtended &&
          "unknown format!");
   return convertF80LongDoubleAPFloatToAPInt();
 }
@@ -2593,7 +2593,7 @@ APFloat::convertToAPInt() const
 float
 APFloat::convertToFloat() const
 {
-  assert(semantics == (const llvm::fltSemantics* const)&IEEEsingle);
+  assert(semantics == (const llvm::fltSemantics*)&IEEEsingle);
   APInt api = convertToAPInt();
   return api.bitsToFloat();
 }
@@ -2601,7 +2601,7 @@ APFloat::convertToFloat() const
 double
 APFloat::convertToDouble() const
 {
-  assert(semantics == (const llvm::fltSemantics* const)&IEEEdouble);
+  assert(semantics == (const llvm::fltSemantics*)&IEEEdouble);
   APInt api = convertToAPInt();
   return api.bitsToDouble();
 }
