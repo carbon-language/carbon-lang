@@ -1943,6 +1943,48 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
   return ReplaceInstUsesWith(I, NewPN);
 }
 
+
+/// CannotBeNegativeZero - Return true if we can prove that the specified FP 
+/// value is never equal to -0.0.
+///
+/// Note that this function will need to be revisited when we support nondefault
+/// rounding modes!
+///
+static bool CannotBeNegativeZero(const Value *V) {
+  if (const ConstantFP *CFP = dyn_cast<ConstantFP>(V))
+    return !CFP->getValueAPF().isNegZero();
+
+  // (add x, 0.0) is guaranteed to return +0.0, not -0.0.
+  if (const Instruction *I = dyn_cast<Instruction>(V)) {
+    if (I->getOpcode() == Instruction::Add &&
+        isa<ConstantFP>(I->getOperand(1)) && 
+        cast<ConstantFP>(I->getOperand(1))->isNullValue())
+      return true;
+    
+    if (const IntrinsicInst *II = dyn_cast<IntrinsicInst>(I))
+      if (II->getIntrinsicID() == Intrinsic::sqrt)
+        return CannotBeNegativeZero(II->getOperand(1));
+    
+    if (const CallInst *CI = dyn_cast<CallInst>(I))
+      if (const Function *F = CI->getCalledFunction()) {
+        if (F->isDeclaration()) {
+          switch (F->getNameLen()) {
+          case 3:  // abs(x) != -0.0
+            if (!strcmp(F->getNameStart(), "abs")) return true;
+            break;
+          case 4:  // abs[lf](x) != -0.0
+            if (!strcmp(F->getNameStart(), "absf")) return true;
+            if (!strcmp(F->getNameStart(), "absl")) return true;
+            break;
+          }
+        }
+      }
+  }
+  
+  return false;
+}
+
+
 Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   bool Changed = SimplifyCommutative(I);
   Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
@@ -2160,6 +2202,11 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
         return new SelectInst(SI->getCondition(), A, N);
     }
   }
+  
+  // Check for X+0.0.  Simplify it to X if we know X is not -0.0.
+  if (ConstantFP *CFP = dyn_cast<ConstantFP>(RHS))
+    if (CFP->getValueAPF().isPosZero() && CannotBeNegativeZero(LHS))
+      return ReplaceInstUsesWith(I, LHS);
 
   return Changed ? &I : 0;
 }
