@@ -97,10 +97,6 @@ namespace {
     /// etc)
     const MRegisterInfo *RegInfo;
 
-    /// LV - Our generic LiveVariables pointer
-    ///
-    LiveVariables *LV;
-
     typedef SmallVector<unsigned, 2> VRegTimes;
 
     /// VRegReadTable - maps VRegs in a BB to the set of times they are read
@@ -182,7 +178,6 @@ namespace {
     /// getAnalaysisUsage - declares the required analyses
     ///
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired<LiveVariables>();
       AU.addRequiredID(PHIEliminationID);
       AU.addRequiredID(TwoAddressInstructionPassID);
       MachineFunctionPass::getAnalysisUsage(AU);
@@ -528,9 +523,7 @@ MachineInstr *RABigBlock::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI
     Ops.push_back(OpNum);
     if(MachineInstr* FMI = TII->foldMemoryOperand(MI, Ops, FrameIndex)) {
       ++NumFolded;
-      // Since we changed the address of MI, make sure to update live variables
-      // to know that the new instruction has the properties of the old one.
-      LV->instructionChanged(MI, FMI);
+      FMI->copyKillDeadInfo(MI);
       return MBB.insert(MBB.erase(MI), FMI);
     }
     
@@ -832,11 +825,8 @@ void RABigBlock::AllocateBasicBlock(MachineBasicBlock &MBB) {
     
     // Finally, if this is a noop copy instruction, zap it.
     unsigned SrcReg, DstReg;
-    if (TII.isMoveInstr(*MI, SrcReg, DstReg) && SrcReg == DstReg) {
-      LV->removeVirtualRegistersKilled(MI);
-      LV->removeVirtualRegistersDead(MI);
+    if (TII.isMoveInstr(*MI, SrcReg, DstReg) && SrcReg == DstReg)
       MBB.erase(MI);
-    }
   }
 
   MachineBasicBlock::iterator MI = MBB.getFirstTerminator();
@@ -857,7 +847,6 @@ bool RABigBlock::runOnMachineFunction(MachineFunction &Fn) {
   MF = &Fn;
   TM = &Fn.getTarget();
   RegInfo = TM->getRegisterInfo();
-  LV = &getAnalysis<LiveVariables>();
 
   PhysRegsUsed.assign(RegInfo->getNumRegs(), -1);
   
