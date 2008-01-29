@@ -992,6 +992,9 @@ public:
   }
   static bool classof(const ObjCAtSynchronizedStmt *) { return true; }
   
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+  
   virtual void EmitImpl(llvm::Serializer& S) const;
   static ObjCAtSynchronizedStmt* CreateImpl(llvm::Deserializer& D);
 };

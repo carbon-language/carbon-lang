@@ -893,6 +893,20 @@ ObjCAtThrowStmt* ObjCAtThrowStmt::CreateImpl(Deserializer& D) {
   Stmt* Throw = D.ReadOwnedPtr<Stmt>();
   return new ObjCAtThrowStmt(L,Throw);  
 }
+
+void ObjCAtSynchronizedStmt::EmitImpl(Serializer& S) const {
+  S.Emit(AtSynchronizedLoc);
+  S.EmitOwnedPtr(SynchExpr);
+  S.EmitOwnedPtr(SynchBody);
+}
+
+ObjCAtSynchronizedStmt* ObjCAtSynchronizedStmt::CreateImpl(Deserializer& D) {
+  SourceLocation L = SourceLocation::ReadVal(D);
+  Expr *syncExpr = D.ReadOwnedPtr<Expr>();
+  Stmt *synchBody = D.ReadOwnedPtr<Stmt>();
+  ObjCAtSynchronizedStmt* stmt = new ObjCAtSynchronizedStmt(L,syncExpr,synchBody);
+  return stmt;
+}
   
 void ObjCAtTryStmt::EmitImpl(Serializer& S) const {
   S.Emit(AtTryLoc);

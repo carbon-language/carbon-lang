@@ -378,6 +378,9 @@ public:
   
   virtual StmtResult ActOnObjCAtThrowStmt(SourceLocation AtLoc, 
                                           StmtTy *Throw);
+  virtual StmtResult ActOnObjCAtSynchronizedStmt(SourceLocation AtLoc, 
+                                                 ExprTy *SynchExpr, 
+                                                 StmtTy *SynchBody);
   
   //===--------------------------------------------------------------------===//
   // Expression Parsing Callbacks: SemaExpr.cpp.

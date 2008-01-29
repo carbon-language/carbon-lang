@@ -249,3 +249,13 @@ Stmt::child_iterator ObjCAtThrowStmt::child_begin() {
 Stmt::child_iterator ObjCAtThrowStmt::child_end() {
   return &Throw+1;
 }
+
+// ObjCAtSynchronizedStmt
+Stmt::child_iterator ObjCAtSynchronizedStmt::child_begin() {
+  return &SynchBody;
+}
+
+Stmt::child_iterator ObjCAtSynchronizedStmt::child_end() {
+  return &SynchBody+1;
+}
+

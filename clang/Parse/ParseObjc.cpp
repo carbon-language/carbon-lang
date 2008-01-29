@@ -1113,7 +1113,27 @@ Parser::StmtResult Parser::ParseObjCThrowStmt(SourceLocation atLoc) {
 ///   @synchronized '(' expression ')'
 ///
 Parser::StmtResult Parser::ParseObjCSynchronizedStmt(SourceLocation atLoc) {
-  return 0;
+  ExprResult Res;
+  ConsumeToken(); // consume synchronized
+  if (Tok.isNot(tok::l_paren)) {
+    Diag (Tok, diag::err_expected_lparen_after, "@synchronized");
+    return true;
+  }
+  ConsumeParen();  // '('
+  Res = ParseExpression();
+  if (Res.isInvalid) {
+    SkipUntil(tok::semi);
+    return true;
+  }
+  if (Tok.isNot(tok::r_paren)) {
+    Diag (Tok, diag::err_expected_rparen);
+    return true;
+  }
+  ConsumeParen();  // ')'
+  StmtResult SynchBody = ParseCompoundStatementBody();
+  if (SynchBody.isInvalid)
+    SynchBody = Actions.ActOnNullStmt(Tok.getLocation());
+  return Actions.ActOnObjCAtSynchronizedStmt(atLoc, Res.Val, SynchBody.Val);
 }
 
 ///  objc-try-catch-statement:

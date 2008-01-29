@@ -335,6 +335,12 @@ public:
     return 0;
   }
   
+  virtual StmtResult ActOnObjCAtSynchronizedStmt(SourceLocation AtLoc, 
+                                        ExprTy *SynchExpr, 
+                                        StmtTy *SynchBody) {
+    return 0;
+  }
+  
   //===--------------------------------------------------------------------===//
   // Expression Parsing Callbacks.
   //===--------------------------------------------------------------------===//
