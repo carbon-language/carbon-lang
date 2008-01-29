@@ -588,7 +588,7 @@ Archive::findModulesDefiningSymbols(std::set<std::string>& symbols,
 bool Archive::isBitcodeArchive() {
   // Make sure the symTab has been loaded. In most cases this should have been
   // done when the archive was constructed, but still,  this is just in case.
-  if (!symTab.size())
+  if (symTab.empty())
     if (!loadSymbolTable(0))
       return false;
 

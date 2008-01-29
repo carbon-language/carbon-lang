@@ -169,7 +169,7 @@ void ScheduleDAGList::ListScheduleTopDown() {
   // All leaves to Available queue.
   for (unsigned i = 0, e = SUnits.size(); i != e; ++i) {
     // It is available if it has no predecessors.
-    if (SUnits[i].Preds.size() == 0 && &SUnits[i] != Entry) {
+    if (SUnits[i].Preds.empty() && &SUnits[i] != Entry) {
       AvailableQueue->push(&SUnits[i]);
       SUnits[i].isAvailable = SUnits[i].isPending = true;
     }
@@ -477,7 +477,7 @@ void LatencyPriorityQueue::CalculatePriorities() {
   std::vector<std::pair<const SUnit*, unsigned> > WorkList;
   for (unsigned i = 0, e = SUnits->size(); i != e; ++i) {
     const SUnit *SU = &(*SUnits)[i];
-    if (SU->Succs.size() == 0)
+    if (SU->Succs.empty())
       WorkList.push_back(std::make_pair(SU, 0U));
   }
 

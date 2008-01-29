@@ -722,7 +722,7 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
       
       ++NumFactor;
       
-      if (Ops.size() == 0)
+      if (Ops.empty())
         return V2;
 
       // Add the new value to the list of things being added.

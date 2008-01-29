@@ -1784,7 +1784,7 @@ void MachineModuleInfo::TidyLandingPads() {
     }
 
     // Remove landing pads with no try-ranges.
-    if (!LandingPads[i].BeginLabels.size()) {
+    if (LandingPads[i].BeginLabels.empty()) {
       LandingPads.erase(LandingPads.begin() + i);
       continue;
     }

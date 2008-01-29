@@ -646,7 +646,7 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
             } else if (FBB) {
               if (TBB!=IBB && FBB!=IBB)   // cbr then ubr
                 continue;
-            } else if (Cond.size() == 0) {
+            } else if (Cond.empty()) {
               if (TBB!=IBB)               // ubr
                 continue;
             } else {

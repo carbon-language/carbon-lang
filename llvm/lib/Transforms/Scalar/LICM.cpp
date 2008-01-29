@@ -476,7 +476,7 @@ void LICM::sink(Instruction &I) {
       while (isa<PHINode>(InsertPt)) ++InsertPt;
       ExitBlocks[0]->getInstList().insert(InsertPt, &I);
     }
-  } else if (ExitBlocks.size() == 0) {
+  } else if (ExitBlocks.empty()) {
     // The instruction is actually dead if there ARE NO exit blocks.
     CurAST->deleteValue(&I);
     if (!I.use_empty())  // If I has users in unreachable blocks, eliminate.

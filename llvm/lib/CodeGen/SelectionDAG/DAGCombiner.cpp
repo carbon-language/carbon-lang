@@ -801,7 +801,7 @@ SDOperand DAGCombiner::visitTokenFactor(SDNode *N) {
 
   // If we've change things around then replace token factor.
   if (Changed) {
-    if (Ops.size() == 0) {
+    if (Ops.empty()) {
       // The entry token is the only possible outcome.
       Result = DAG.getEntryNode();
     } else {

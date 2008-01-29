@@ -115,7 +115,7 @@ void Deserializer::ReadRecord() {
   if (Stream.AtEndOfStream())
     return;
   
-  assert (Record.size() == 0);
+  assert (Record.empty());
   assert (AbbrevNo >= bitc::UNABBREV_RECORD);
   RecordCode = Stream.ReadRecord(AbbrevNo,Record);
   assert (Record.size() > 0);

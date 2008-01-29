@@ -257,7 +257,7 @@ GenericValue lle_X_floor(FunctionType *FT, const vector<GenericValue> &Args) {
 
 // double drand48()
 GenericValue lle_X_drand48(FunctionType *FT, const vector<GenericValue> &Args) {
-  assert(Args.size() == 0);
+  assert(Args.empty());
   GenericValue GV;
   GV.DoubleVal = drand48();
   return GV;
@@ -265,7 +265,7 @@ GenericValue lle_X_drand48(FunctionType *FT, const vector<GenericValue> &Args) {
 
 // long lrand48()
 GenericValue lle_X_lrand48(FunctionType *FT, const vector<GenericValue> &Args) {
-  assert(Args.size() == 0);
+  assert(Args.empty());
   GenericValue GV;
   GV.IntVal = APInt(32, lrand48());
   return GV;
@@ -282,7 +282,7 @@ GenericValue lle_X_srand48(FunctionType *FT, const vector<GenericValue> &Args) {
 
 // int rand()
 GenericValue lle_X_rand(FunctionType *FT, const vector<GenericValue> &Args) {
-  assert(Args.size() == 0);
+  assert(Args.empty());
   GenericValue GV;
   GV.IntVal = APInt(32, rand());
   return GV;

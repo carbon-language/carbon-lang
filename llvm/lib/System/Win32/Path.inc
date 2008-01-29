@@ -418,7 +418,7 @@ Path::getDirectoryContents(std::set<Path>& result, std::string* ErrMsg) const {
 
 bool
 Path::set(const std::string& a_path) {
-  if (a_path.size() == 0)
+  if (a_path.empty())
     return false;
   std::string save(path);
   path = a_path;

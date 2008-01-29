@@ -1214,7 +1214,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
                                                       Loop *L,
                                                       bool isOnlyStride) {
   // If all the users are moved to another stride, then there is nothing to do.
-  if (Uses.Users.size() == 0)
+  if (Uses.Users.empty())
     return;
 
   // Keep track if every use in UsersToProcess is an address. If they all are,

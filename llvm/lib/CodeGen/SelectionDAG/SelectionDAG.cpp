@@ -3497,7 +3497,7 @@ bool SDNode::hasNUsesOfValue(unsigned NUses, unsigned Value) const {
 bool SDNode::hasAnyUseOfValue(unsigned Value) const {
   assert(Value < getNumValues() && "Bad value!");
 
-  if (use_size() == 0) return false;
+  if (use_empty()) return false;
 
   SDOperand TheValue(const_cast<SDNode *>(this), Value);
 

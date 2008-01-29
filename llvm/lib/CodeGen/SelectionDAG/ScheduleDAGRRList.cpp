@@ -898,7 +898,7 @@ void ScheduleDAGRRList::ListScheduleTopDown() {
   // All leaves to Available queue.
   for (unsigned i = 0, e = SUnits.size(); i != e; ++i) {
     // It is available if it has no predecessors.
-    if (SUnits[i].Preds.size() == 0 && &SUnits[i] != Entry) {
+    if (SUnits[i].Preds.empty() && &SUnits[i] != Entry) {
       AvailableQueue->push(&SUnits[i]);
       SUnits[i].isAvailable = true;
     }

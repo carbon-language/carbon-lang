@@ -740,7 +740,7 @@ public:
     
     // If the constant string's length is zero we can optimize this by just
     // doing a store of 0 at the first byte of the destination
-    if (SrcStr.size() == 0) {
+    if (SrcStr.empty()) {
       new StoreInst(ConstantInt::get(Type::Int8Ty, 0), Dst, CI);
       return ReplaceCallWith(CI, Dst);
     }
