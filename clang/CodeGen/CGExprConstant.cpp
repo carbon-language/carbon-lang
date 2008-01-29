@@ -236,6 +236,14 @@ public:
     return EmitLValue(E->getSubExpr());
   }
   
+  // Binary operators
+  llvm::Constant *VisitBinOr(const BinaryOperator *E) {
+    llvm::Constant *LHS = Visit(E->getLHS());
+    llvm::Constant *RHS = Visit(E->getRHS());
+    
+    return llvm::ConstantExpr::getOr(LHS, RHS);
+  }
+
   // Utility methods
   const llvm::Type *ConvertType(QualType T) {
     return CGM.getTypes().ConvertType(T);

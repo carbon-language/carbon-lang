@@ -36,8 +36,12 @@ void booltest2() {
 static int a = { 1 };
 static int b = { 1, 2 };
 
+// References to enums.
 enum {
 	EnumA, EnumB
 };
 
 int c[] = { EnumA, EnumB };
+
+// Binary operators
+int d[] = { EnumA | EnumB };
