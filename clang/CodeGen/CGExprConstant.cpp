@@ -186,6 +186,8 @@ public:
     const ValueDecl *Decl = E->getDecl();
     if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(Decl))
       return CGM.GetAddrOfFunctionDecl(FD, false);
+    if (const EnumConstantDecl *EC = dyn_cast<EnumConstantDecl>(Decl))
+      return llvm::ConstantInt::get(EC->getInitVal());
     assert(0 && "Unsupported decl ref type!");
     return 0;
   }

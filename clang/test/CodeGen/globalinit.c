@@ -32,6 +32,12 @@ void booltest2() {
   static _Bool booltest3 = 4;
 }
 
-// Braces in a scalar
-int a = { 1 };
-int b = { 1, 2 };
+// Scalars in braces.
+static int a = { 1 };
+static int b = { 1, 2 };
+
+enum {
+	EnumA, EnumB
+};
+
+int c[] = { EnumA, EnumB };
