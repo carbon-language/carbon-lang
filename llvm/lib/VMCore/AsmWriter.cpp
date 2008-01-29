@@ -57,10 +57,10 @@ public:
 /// @{
 public:
   /// @brief Construct from a module
-  SlotMachine(const Module *M);
+  explicit SlotMachine(const Module *M);
 
   /// @brief Construct from a function, starting out in incorp state.
-  SlotMachine(const Function *F);
+  explicit SlotMachine(const Function *F);
 
 /// @}
 /// @name Accessors

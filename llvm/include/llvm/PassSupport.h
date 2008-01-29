@@ -144,7 +144,7 @@ struct RegisterPassBase {
     : PIObj(Name, Arg, TI, NormalCtor, CFGOnly) {
     registerPass();
   }
-  RegisterPassBase(intptr_t TI)
+  explicit RegisterPassBase(intptr_t TI)
     : PIObj("", "", TI) {
     // This ctor may only be used for analysis groups: it does not auto-register
     // the pass.

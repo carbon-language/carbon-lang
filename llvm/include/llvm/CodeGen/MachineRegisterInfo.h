@@ -54,7 +54,7 @@ class MachineRegisterInfo {
   MachineRegisterInfo(const MachineRegisterInfo&); // DO NOT IMPLEMENT
   void operator=(const MachineRegisterInfo&);      // DO NOT IMPLEMENT
 public:
-  MachineRegisterInfo(const MRegisterInfo &MRI);
+  explicit MachineRegisterInfo(const MRegisterInfo &MRI);
   ~MachineRegisterInfo();
   
   //===--------------------------------------------------------------------===//
@@ -203,7 +203,7 @@ public:
   class defusechain_iterator
     : public forward_iterator<MachineInstr, ptrdiff_t> {
     MachineOperand *Op;
-    defusechain_iterator(MachineOperand *op) : Op(op) {
+    explicit defusechain_iterator(MachineOperand *op) : Op(op) {
       // If the first node isn't one we're interested in, advance to one that
       // we are interested in.
       if (op) {
