@@ -296,8 +296,8 @@ static bool areEquivalentArrayTypes(QualType NewQType, QualType OldQType) {
   if (hasUndefinedLength(NewAT) || hasUndefinedLength(OldAT)) {
     if (NewAT->getIndexTypeQualifier() != OldAT->getIndexTypeQualifier())
       return false;
-    NewQType = NewAT->getElementType();
-    OldQType = OldAT->getElementType();
+    NewQType = NewAT->getElementType().getCanonicalType();
+    OldQType = OldAT->getElementType().getCanonicalType();
   }
   
   return NewQType == OldQType;
