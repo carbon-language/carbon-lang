@@ -449,7 +449,7 @@ namespace {
 class CFGVisitor : public ASTConsumer {
 public:
   // CFG Visitor interface to be implemented by subclass.
-  virtual void VisitCFG(CFG& C) = 0;
+  virtual void VisitCFG(CFG& C, FunctionDecl& FD) = 0;
   virtual bool printFuncDeclStart() { return true; }
   
   virtual void HandleTopLevelDecl(Decl *D);
@@ -468,7 +468,7 @@ void CFGVisitor::HandleTopLevelDecl(Decl *D) {
   }
     
   CFG *C = CFG::buildCFG(FD->getBody());
-  VisitCFG(*C);
+  VisitCFG(*C, *FD);
   delete C;
 }
 
@@ -481,7 +481,7 @@ namespace {
   public:
     CFGDumper(bool use_graphviz) : UseGraphviz(use_graphviz) {}
     
-    virtual void VisitCFG(CFG &C) {
+    virtual void VisitCFG(CFG& C, FunctionDecl&) {
       if (UseGraphviz)
         C.viewCFG();
       else
@@ -505,8 +505,8 @@ namespace {
       SM = &Context.getSourceManager();
     }
 
-    virtual void VisitCFG(CFG& C) {
-      LiveVariables L(C);
+    virtual void VisitCFG(CFG& C, FunctionDecl& FD) {
+      LiveVariables L(C, FD);
       L.runOnCFG(C);
       L.dumpBlockLiveness(*SM);
     }
@@ -530,7 +530,10 @@ namespace {
       Ctx = &Context;
     }
     
-    virtual void VisitCFG(CFG& C) { CheckDeadStores(C, *Ctx, Diags); }
+    virtual void VisitCFG(CFG& C, FunctionDecl& FD) {
+      CheckDeadStores(C, FD, *Ctx, Diags);
+    }
+    
     virtual bool printFuncDeclStart() { return false; }
   }; 
 } // end anonymous namespace
@@ -553,7 +556,10 @@ namespace {
       Ctx = &Context;
     }
     
-    virtual void VisitCFG(CFG& C) { CheckUninitializedValues(C, *Ctx, Diags); }
+    virtual void VisitCFG(CFG& C, FunctionDecl&) { 
+      CheckUninitializedValues(C, *Ctx, Diags);
+    }
+    
     virtual bool printFuncDeclStart() { return false; }
   }; 
 } // end anonymous namespace
@@ -566,12 +572,12 @@ ASTConsumer *clang::CreateUnitValsChecker(Diagnostic &Diags) {
 // GRConstants - Perform intra-procedural, path-sensitive constant propagation.
 
 namespace {
-  class GRConstantsVisitor : public ASTConsumer {
+  class GRConstantsVisitor : public CFGVisitor {
     ASTContext* Ctx;
   public:
     
     virtual void Initialize(ASTContext &Context) { Ctx = &Context; }    
-    virtual void HandleTopLevelDecl(Decl *D);
+    virtual void VisitCFG(CFG& C, FunctionDecl&);
   };
 } // end anonymous namespace
 
@@ -579,18 +585,8 @@ ASTConsumer* clang::CreateGRConstants() {
   return new GRConstantsVisitor();
 }
 
-void GRConstantsVisitor::HandleTopLevelDecl(Decl *D) {
-  FunctionDecl *FD = dyn_cast<FunctionDecl>(D);
-
-  if (!FD || !FD->getBody())
-    return;
-
-  DeclPrinter().PrintFunctionDeclStart(FD);
-  llvm::cerr << '\n';
-  
-  CFG *C = CFG::buildCFG(FD->getBody());
-  RunGRConstants(*C, *FD, *Ctx);
-  delete C;
+void GRConstantsVisitor::VisitCFG(CFG& C, FunctionDecl& FD) {
+  RunGRConstants(C, FD, *Ctx);
 }
 
 //===----------------------------------------------------------------------===//

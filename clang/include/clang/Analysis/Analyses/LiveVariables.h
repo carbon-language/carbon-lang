@@ -64,7 +64,7 @@ class LiveVariables : public DataflowValues<LiveVariables_ValueTypes,
 public:
   typedef LiveVariables_ValueTypes::ObserverTy ObserverTy;
     
-  LiveVariables(CFG& cfg) { getAnalysisData().setCFG(&cfg); }
+  LiveVariables(CFG& cfg, FunctionDecl& FD);
   
   /// IsLive - Return true if a variable is live at beginning of a
   /// specified block.
@@ -97,9 +97,10 @@ public:
   ///  analysis.
   unsigned getNumDecls() const { return getAnalysisData().getNumDecls(); }
     
-  /// IntializeValues - Create initial dataflow values and meta data for
-  ///  a given CFG.  This is intended to be called by the dataflow solver.
-  void InitializeValues(const CFG& cfg);
+  /// IntializeValues - This routine can perform extra initialization, but
+  ///  for LiveVariables this does nothing since all that logic is in
+  ///  the constructor.                                              
+  void InitializeValues(const CFG& cfg) {}
   
   void runOnCFG(CFG& cfg);
                                               

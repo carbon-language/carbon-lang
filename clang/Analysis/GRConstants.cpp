@@ -577,7 +577,7 @@ protected:
   
   /// Liveness - live-variables information the ValueDecl* and block-level
   ///  Expr* in the CFG.  Used to prune out dead state.
-  LiveVariables* Liveness;
+  LiveVariables Liveness;
 
   /// Builder - The current GRNodeBuilder which is used when building the nodes
   ///  for a given statement.
@@ -600,17 +600,14 @@ protected:
   ASTContext& getContext() const { return G.getContext(); }
   
 public:
-  GRConstants(GraphTy& g) : G(g), Liveness(NULL), Builder(NULL), 
-      ValMgr(G.getContext()), StmtEntryNode(NULL), CurrentStmt(NULL) {
+  GRConstants(GraphTy& g) : G(g), Liveness(G.getCFG(), G.getFunctionDecl()),
+      Builder(NULL), ValMgr(G.getContext()), StmtEntryNode(NULL),
+      CurrentStmt(NULL) {
     
     // Compute liveness information.
-    CFG& c = G.getCFG();
-    Liveness = new LiveVariables(c);
-    Liveness->runOnCFG(c);
-    Liveness->runOnAllBlocks(c, NULL, true);
+    Liveness.runOnCFG(G.getCFG());
+    Liveness.runOnAllBlocks(G.getCFG(), NULL, true);
   }
-    
-  ~GRConstants() { delete Liveness; }
   
   /// getCFG - Returns the CFG associated with this analysis.
   CFG& getCFG() { return G.getCFG(); }
@@ -843,14 +840,14 @@ GRConstants::StateTy GRConstants::RemoveDeadBindings(Stmt* Loc, StateTy M) {
 
   // Remove old bindings for subexpressions and "dead" block-level expressions.
   for (; I!=E && !I.getKey().isDecl(); ++I) {
-    if (I.getKey().isSubExpr() || !Liveness->isLive(Loc,cast<Stmt>(I.getKey())))
+    if (I.getKey().isSubExpr() || !Liveness.isLive(Loc,cast<Stmt>(I.getKey())))
       M = StateMgr.Remove(M, I.getKey());
   }
 
   // Remove bindings for "dead" decls.
   for (; I!=E && I.getKey().isDecl(); ++I)
     if (VarDecl* V = dyn_cast<VarDecl>(cast<ValueDecl>(I.getKey())))
-      if (!Liveness->isLive(Loc, V))
+      if (!Liveness.isLive(Loc, V))
         M = StateMgr.Remove(M, I.getKey());
 
   return M;

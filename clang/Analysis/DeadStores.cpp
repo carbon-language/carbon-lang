@@ -76,8 +76,10 @@ public:
 
 namespace clang {
 
-void CheckDeadStores(CFG& cfg, ASTContext &Ctx, Diagnostic &Diags) {
-  LiveVariables L(cfg);
+void CheckDeadStores(CFG& cfg, FunctionDecl& FD, ASTContext &Ctx, 
+                     Diagnostic &Diags) {
+  
+  LiveVariables L(cfg, FD);
   L.runOnCFG(cfg);
   DeadStoreObs A(Ctx, Diags);
   L.runOnAllBlocks(cfg,&A);

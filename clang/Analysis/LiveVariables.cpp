@@ -42,7 +42,15 @@ public:
 };
 } // end anonymous namespace
 
-void LiveVariables::InitializeValues(const CFG& cfg) {
+
+LiveVariables::LiveVariables(CFG& cfg, FunctionDecl& FD) {
+  getAnalysisData().setCFG(&cfg);
+
+  for (FunctionDecl::param_iterator I=FD.param_begin(), E=FD.param_end();
+       I !=E; ++I)
+    getAnalysisData().Register(*I);
+  
+  // Now register all the other VarDecls;
   RegisterDecls R(getAnalysisData());
   cfg.VisitBlockStmts(R);
 }
