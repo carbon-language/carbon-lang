@@ -1617,6 +1617,9 @@ bool ASTContext::arrayTypesAreCompatible(QualType lhs, QualType rhs) {
 /// C99 6.2.7p1: Two types have compatible types if their types are the 
 /// same. See 6.7.[2,3,5] for additional rules.
 bool ASTContext::typesAreCompatible(QualType lhs, QualType rhs) {
+  if (lhs.getQualifiers() != rhs.getQualifiers())
+    return false;
+
   QualType lcanon = lhs.getCanonicalType();
   QualType rcanon = rhs.getCanonicalType();
 

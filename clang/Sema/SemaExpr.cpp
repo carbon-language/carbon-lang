@@ -1337,10 +1337,12 @@ inline QualType Sema::CheckSubtractionOperands( // C99 6.5.6
   
   // Either ptr - int   or   ptr - ptr.
   if (const PointerType *LHSPTy = lex->getType()->getAsPointerType()) {
+    QualType lpointee = LHSPTy->getPointeeType();
+	
     // The LHS must be an object type, not incomplete, function, etc.
-    if (!LHSPTy->getPointeeType()->isObjectType()) {
+    if (!lpointee->isObjectType()) {
       // Handle the GNU void* extension.
-      if (LHSPTy->getPointeeType()->isVoidType()) {
+      if (lpointee->isVoidType()) {
         Diag(loc, diag::ext_gnu_void_ptr, 
              lex->getSourceRange(), rex->getSourceRange());
       } else {
@@ -1356,11 +1358,13 @@ inline QualType Sema::CheckSubtractionOperands( // C99 6.5.6
     
     // Handle pointer-pointer subtractions.
     if (const PointerType *RHSPTy = rex->getType()->getAsPointerType()) {
+	  QualType rpointee = RHSPTy->getPointeeType();
+	  
       // RHS must be an object type, unless void (GNU).
-      if (!RHSPTy->getPointeeType()->isObjectType()) {
+      if (!rpointee->isObjectType()) {
         // Handle the GNU void* extension.
-        if (RHSPTy->getPointeeType()->isVoidType()) {
-          if (!LHSPTy->getPointeeType()->isVoidType())
+        if (rpointee->isVoidType()) {
+          if (!lpointee->isVoidType())
             Diag(loc, diag::ext_gnu_void_ptr, 
                  lex->getSourceRange(), rex->getSourceRange());
         } else {
@@ -1371,8 +1375,8 @@ inline QualType Sema::CheckSubtractionOperands( // C99 6.5.6
       }
       
       // Pointee types must be compatible.
-      if (!Context.typesAreCompatible(LHSPTy->getPointeeType(), 
-                                      RHSPTy->getPointeeType())) {
+      if (!Context.typesAreCompatible(lpointee.getUnqualifiedType(), 
+                                      rpointee.getUnqualifiedType())) {
         Diag(loc, diag::err_typecheck_sub_ptr_compatible,
              lex->getType().getAsString(), rex->getType().getAsString(),
              lex->getSourceRange(), rex->getSourceRange());
@@ -1446,12 +1450,13 @@ inline QualType Sema::CheckCompareOperands( // C99 6.5.8
   // when handling null pointer constants. One day, we can consider making them
   // errors (when -pedantic-errors is enabled).
   if (lType->isPointerType() && rType->isPointerType()) { // C99 6.5.8p2
-                                                        
+	QualType lpointee = lType->getAsPointerType()->getPointeeType();
+	QualType rpointee = rType->getAsPointerType()->getPointeeType();
+	
     if (!LHSIsNull && !RHSIsNull &&                       // C99 6.5.9p2
-        !lType->getAsPointerType()->getPointeeType()->isVoidType() &&
-        !rType->getAsPointerType()->getPointeeType()->isVoidType() &&
-        !Context.pointerTypesAreCompatible(lType.getUnqualifiedType(),
-                                           rType.getUnqualifiedType())) {
+        !lpointee->isVoidType() && !lpointee->isVoidType() &&
+        !Context.typesAreCompatible(lpointee.getUnqualifiedType(),
+									rpointee.getUnqualifiedType())) {
       Diag(loc, diag::ext_typecheck_comparison_of_distinct_pointers,
            lType.getAsString(), rType.getAsString(),
            lex->getSourceRange(), rex->getSourceRange());
