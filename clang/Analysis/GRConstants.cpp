@@ -619,6 +619,22 @@ public:
   ///  in the ExplodedGraph.
   StateTy getInitialState() {
     StateTy St = StateMgr.GetEmptyMap();
+    
+    // Iterate the parameters.
+    FunctionDecl& F = G.getFunctionDecl();
+    
+    for (FunctionDecl::param_iterator I=F.param_begin(), E=F.param_end(); 
+          I!=E; ++I) {
+
+      // For now we only support symbolic values for non-pointer types.
+      if ((*I)->getType()->isPointerType() || 
+          (*I)->getType()->isReferenceType())
+        continue;
+      
+      // FIXME: Set these values to a symbol, not Uninitialized.
+      St = SetValue(St, LValueDecl(*I), UninitializedValue());
+    }
+    
     return St;
   }
 
