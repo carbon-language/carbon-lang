@@ -12,8 +12,7 @@ void test2411(void) {
   checkx2411(a2411[0]);
 }
 
-// A field that is an aggregates of size zero should be dropped during
-// type conversion.
+// Proper handling of zero sized fields during type conversion.
 typedef unsigned long long int Tal2ullong __attribute__((aligned(2)));
 struct S2525 {
  Tal2ullong: 0;
@@ -29,3 +28,12 @@ struct {
   char * i[5];
 } data; 
 
+// Taking address of a zero sized field.
+struct Z {};
+struct Y {
+  int i;
+  struct Z z;
+};
+void *f(struct Y *y) {
+  return &y->z;
+}
