@@ -88,7 +88,9 @@ public:
   
   bool isSymbol()  const { return getKind() == IsSymbol; }
   bool isSubExpr() const { return getKind() == IsSubExpr; }
+  bool isBlkExpr() const { return getKind() == IsBlkExpr; }
   bool isDecl()    const { return getKind() == IsDecl; }
+  bool isStmt()    const { return getKind() <= IsBlkExpr; }
   
   inline void Profile(llvm::FoldingSetNodeID& ID) const {
     ID.AddInteger(isSymbol() ? 1 : 0);
@@ -838,17 +840,20 @@ GRConstants::StateTy GRConstants::RemoveDeadBindings(Stmt* Loc, StateTy M) {
   //  iterators are iterating over the tree of the *original* map.
   StateTy::iterator I = M.begin(), E = M.end();
 
-  // Remove old bindings for subexpressions and "dead" block-level expressions.
-  for (; I!=E && !I.getKey().isDecl(); ++I) {
-    if (I.getKey().isSubExpr() || !Liveness.isLive(Loc,cast<Stmt>(I.getKey())))
-      M = StateMgr.Remove(M, I.getKey());
-  }
 
-  // Remove bindings for "dead" decls.
-  for (; I!=E && I.getKey().isDecl(); ++I)
-    if (VarDecl* V = dyn_cast<VarDecl>(cast<ValueDecl>(I.getKey())))
-      if (!Liveness.isLive(Loc, V))
-        M = StateMgr.Remove(M, I.getKey());
+  for (; I!=E && !I.getKey().isSymbol(); ++I) {
+    // Remove old bindings for subexpressions and "dead" 
+    // block-level expressions.    
+    if (I.getKey().isSubExpr() ||
+        I.getKey().isBlkExpr() && !Liveness.isLive(Loc,cast<Stmt>(I.getKey()))){
+      M = StateMgr.Remove(M, I.getKey());
+    }
+    else if (I.getKey().isDecl()) { // Remove bindings for "dead" decls.
+      if (VarDecl* V = dyn_cast<VarDecl>(cast<ValueDecl>(I.getKey())))
+        if (!Liveness.isLive(Loc, V))
+          M = StateMgr.Remove(M, I.getKey());
+    }
+  }
 
   return M;
 }
