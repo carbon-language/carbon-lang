@@ -4677,7 +4677,9 @@ types however.
 The '<tt>llvm.sqrt</tt>' intrinsics return the sqrt of the specified operand,
 returning the same value as the libm '<tt>sqrt</tt>' functions would.  Unlike
 <tt>sqrt</tt> in libm, however, <tt>llvm.sqrt</tt> has undefined behavior for
-negative numbers (which allows for better optimization).
+negative numbers other than -0.0 (which allows for better optimization, because
+there is no need to worry about errno being set).  <tt>llvm.sqrt(-0.0)</tt> is
+defined to return -0.0 like IEEE sqrt.
 </p>
 
 <h5>Arguments:</h5>
