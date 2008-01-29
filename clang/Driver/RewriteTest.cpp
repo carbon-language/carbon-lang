@@ -199,6 +199,7 @@ namespace {
     Stmt *RewriteObjCStringLiteral(ObjCStringLiteral *Exp);
     Stmt *RewriteObjCProtocolExpr(ObjCProtocolExpr *Exp);
     Stmt *RewriteObjCTryStmt(ObjCAtTryStmt *S);
+    Stmt *RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S);
     Stmt *RewriteObjCCatchStmt(ObjCAtCatchStmt *S);
     Stmt *RewriteObjCFinallyStmt(ObjCAtFinallyStmt *S);
     Stmt *RewriteObjCThrowStmt(ObjCAtThrowStmt *S);
@@ -807,6 +808,9 @@ Stmt *RewriteTest::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
   if (ObjCAtTryStmt *StmtTry = dyn_cast<ObjCAtTryStmt>(S))
     return RewriteObjCTryStmt(StmtTry);
 
+  if (ObjCAtSynchronizedStmt *StmtTry = dyn_cast<ObjCAtSynchronizedStmt>(S))
+    return RewriteObjCSynchronizedStmt(StmtTry);
+
   if (ObjCAtThrowStmt *StmtThrow = dyn_cast<ObjCAtThrowStmt>(S))
     return RewriteObjCThrowStmt(StmtThrow);
   
@@ -903,7 +907,7 @@ Stmt *RewriteTest::RewriteContinueStmt(ContinueStmt *S) {
   return 0;
 }
 
-/// RewriteObjCTryStmt - Rewriter for ObjC2's foreach statement.
+/// RewriteObjCForCollectionStmt - Rewriter for ObjC2's foreach statement.
 ///  It rewrites:
 /// for ( type elem in collection) { stmts; }
  
@@ -1067,6 +1071,54 @@ Stmt *RewriteTest::RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S) {
   Stmts.pop_back();
   ObjCBcLabelNo.pop_back();
  
+  return 0;
+}
+
+/// RewriteObjCSynchronizedStmt - 
+/// This routine rewrites @synchronized(expr) stmt;
+/// into:
+/// objc_sync_enter(expr);
+/// @try stmt @finally { objc_sync_exit(expr); }
+///
+Stmt *RewriteTest::RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S) {
+  // Get the start location and compute the semi location.
+  SourceLocation startLoc = S->getLocStart();
+  const char *startBuf = SM->getCharacterData(startLoc);
+  
+  assert((*startBuf == '@') && "bogus @synchronized location");
+  
+  std::string buf; 
+  buf = "objc_sync_enter";
+  Rewrite.ReplaceText(startLoc, 13, buf.c_str(), buf.size());
+  SourceLocation endLoc = S->getSynchExpr()->getLocEnd();
+  const char *endBuf = SM->getCharacterData(endLoc);
+  endBuf++;
+  const char *rparenBuf = strchr(endBuf, ')');
+  SourceLocation rparenLoc = startLoc.getFileLocWithOffset(rparenBuf-startBuf);
+  buf = ");\n";
+  // declare a new scope with two variables, _stack and _rethrow.
+  buf += "/* @try scope begin */ \n{ struct _objc_exception_data {\n";
+  buf += "int buf[18/*32-bit i386*/];\n";
+  buf += "char *pointers[4];} _stack;\n";
+  buf += "id volatile _rethrow = 0;\n";
+  buf += "objc_exception_try_enter(&_stack);\n";
+  buf += "if (!_setjmp(_stack.buf)) /* @try block continue */\n";
+  Rewrite.ReplaceText(rparenLoc, 1, buf.c_str(), buf.size());
+  startLoc = S->getSynchBody()->getLocEnd();
+  startBuf = SM->getCharacterData(startLoc);
+  
+  assert((*startBuf == '}') && "bogus @try block");
+  SourceLocation lastCurlyLoc = startLoc;
+  buf = "}\nelse {\n";
+  buf += "  _rethrow = objc_exception_extract(&_stack);\n";
+  buf += "  if (!_rethrow) objc_exception_try_exit(&_stack);\n";
+  // FIXME: This must be objc_sync_exit(syncExpr);
+  buf += "  objc_sync_exit();\n";
+  buf += "  if (_rethrow) objc_exception_throw(_rethrow);\n";
+  buf += "}\n";
+  buf += "}";
+  
+  Rewrite.ReplaceText(lastCurlyLoc, 1, buf.c_str(), buf.size());
   return 0;
 }
 

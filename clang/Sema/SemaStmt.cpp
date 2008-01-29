@@ -813,7 +813,7 @@ Action::StmtResult
 Sema::ActOnObjCAtSynchronizedStmt(SourceLocation AtLoc, ExprTy *SynchExpr, 
                                   StmtTy *SynchBody) {
   ObjCAtSynchronizedStmt *SS = new ObjCAtSynchronizedStmt(AtLoc, 
-    static_cast<Expr*>(SynchExpr), static_cast<Stmt*>(SynchBody));
+    static_cast<Stmt*>(SynchExpr), static_cast<Stmt*>(SynchBody));
   return SS;
 }
 

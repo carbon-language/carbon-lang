@@ -966,25 +966,31 @@ public:
 ///
 class ObjCAtSynchronizedStmt : public Stmt {
 private:
-  Expr* SynchExpr;
-  Stmt* SynchBody;
+  enum { SYNC_EXPR, SYNC_BODY, END_EXPR };
+  Stmt* SubStmts[END_EXPR];
   SourceLocation AtSynchronizedLoc;
   
 public:
-  ObjCAtSynchronizedStmt(SourceLocation atSynchronizedLoc, Expr *synchExpr,
+  ObjCAtSynchronizedStmt(SourceLocation atSynchronizedLoc, Stmt *synchExpr,
                          Stmt *synchBody)
-  : Stmt(ObjCAtSynchronizedStmtClass), 
-    SynchExpr(synchExpr), SynchBody(synchBody),  
-    AtSynchronizedLoc(atSynchronizedLoc) {}
+  : Stmt(ObjCAtSynchronizedStmtClass) {
+      SubStmts[SYNC_EXPR] = synchExpr;
+      SubStmts[SYNC_BODY] = synchBody;
+      AtSynchronizedLoc = atSynchronizedLoc;
+    }
   
-  const Stmt *getSynchBody() const { return SynchBody; }
-  Stmt *getSynchBody() { return SynchBody; }
+  const Stmt *getSynchBody() const { return SubStmts[SYNC_BODY]; }
+  Stmt *getSynchBody() { return SubStmts[SYNC_BODY]; }
   
-  const Expr *getSynchExpr() const { return SynchExpr; }
-  Expr *getSynchExpr() { return SynchExpr; }
+  const Expr *getSynchExpr() const { 
+    return reinterpret_cast<Expr*>(SubStmts[SYNC_EXPR]); 
+  }
+  Expr *getSynchExpr() { 
+    return reinterpret_cast<Expr*>(SubStmts[SYNC_EXPR]); 
+  }
   
   virtual SourceRange getSourceRange() const { 
-    return SourceRange(AtSynchronizedLoc, SynchBody->getLocEnd()); 
+    return SourceRange(AtSynchronizedLoc, getSynchBody()->getLocEnd()); 
   }
   
   static bool classof(const Stmt *T) {

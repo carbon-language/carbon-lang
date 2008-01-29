@@ -252,10 +252,10 @@ Stmt::child_iterator ObjCAtThrowStmt::child_end() {
 
 // ObjCAtSynchronizedStmt
 Stmt::child_iterator ObjCAtSynchronizedStmt::child_begin() {
-  return &SynchBody;
+  return &SubStmts[0];
 }
 
 Stmt::child_iterator ObjCAtSynchronizedStmt::child_end() {
-  return &SynchBody+1;
+  return &SubStmts[0]+END_EXPR;
 }
 

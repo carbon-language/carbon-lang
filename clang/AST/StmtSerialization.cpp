@@ -888,15 +888,13 @@ ObjCAtFinallyStmt* ObjCAtFinallyStmt::CreateImpl(Deserializer& D) {
 
 void ObjCAtSynchronizedStmt::EmitImpl(Serializer& S) const {
   S.Emit(AtSynchronizedLoc);
-  S.BatchEmitOwnedPtrs(SynchExpr, SynchBody);
-}
+  S.BatchEmitOwnedPtrs((unsigned) END_EXPR,&SubStmts[0]);
+ }
 
 ObjCAtSynchronizedStmt* ObjCAtSynchronizedStmt::CreateImpl(Deserializer& D) {
   SourceLocation L = SourceLocation::ReadVal(D);
-  Expr *syncExpr;
-  Stmt *synchBody;
-  D.BatchReadOwnedPtrs(syncExpr, synchBody);
-  ObjCAtSynchronizedStmt* stmt = new ObjCAtSynchronizedStmt(L,syncExpr,synchBody);
+  ObjCAtSynchronizedStmt* stmt = new ObjCAtSynchronizedStmt(L,0,0);
+  D.BatchReadOwnedPtrs((unsigned) END_EXPR, &stmt->SubStmts[0]);
   return stmt;
 }
 
