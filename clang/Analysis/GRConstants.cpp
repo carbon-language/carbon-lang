@@ -730,7 +730,7 @@ class VISIBILITY_HIDDEN GRConstants {
     
 public:
   typedef ValueMapTy StateTy;
-  typedef GRNodeBuilder<GRConstants> NodeBuilder;
+  typedef GRStmtNodeBuilder<GRConstants> NodeBuilder;
   typedef ExplodedGraph<GRConstants> GraphTy;
   typedef GraphTy::NodeTy NodeTy;
   
@@ -765,7 +765,7 @@ protected:
   ///  Expr* in the CFG.  Used to prune out dead state.
   LiveVariables Liveness;
 
-  /// Builder - The current GRNodeBuilder which is used when building the nodes
+  /// Builder - The current GRStmtNodeBuilder which is used when building the nodes
   ///  for a given statement.
   NodeBuilder* Builder;
 

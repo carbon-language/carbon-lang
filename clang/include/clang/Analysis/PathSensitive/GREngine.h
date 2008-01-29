@@ -21,12 +21,12 @@
 
 namespace clang {
   
-class GRNodeBuilderImpl;
+class GRStmtNodeBuilderImpl;
 class GRWorkList;
   
 class GREngineImpl {
 protected:
-  friend class GRNodeBuilderImpl;
+  friend class GRStmtNodeBuilderImpl;
   
   typedef llvm::DenseMap<Stmt*,Stmt*> ParentMapTy;
     
@@ -62,7 +62,7 @@ protected:
 
   virtual void* ProcessEOP(CFGBlock* Blk, void* State) = 0;  
 
-  virtual void ProcessStmt(Stmt* S, GRNodeBuilderImpl& Builder) = 0;
+  virtual void ProcessStmt(Stmt* S, GRStmtNodeBuilderImpl& Builder) = 0;
 
   virtual void ProcessTerminator(Stmt* Terminator, CFGBlock* B, 
                                  ExplodedNodeImpl* Pred) = 0;
@@ -84,7 +84,7 @@ public:
   CFG& getCFG() { return G->getCFG(); }
 };
   
-class GRNodeBuilderImpl {
+class GRStmtNodeBuilderImpl {
   GREngineImpl& Eng;
   CFGBlock& B;
   const unsigned Idx;
@@ -98,10 +98,10 @@ class GRNodeBuilderImpl {
   void GenerateAutoTransition(ExplodedNodeImpl* N);
   
 public:
-  GRNodeBuilderImpl(CFGBlock* b, unsigned idx,
+  GRStmtNodeBuilderImpl(CFGBlock* b, unsigned idx,
                     ExplodedNodeImpl* N, GREngineImpl* e);      
   
-  ~GRNodeBuilderImpl();
+  ~GRStmtNodeBuilderImpl();
   
   const ExplodedGraphImpl& getGraph() const { return *Eng.G; }
   
@@ -124,16 +124,16 @@ public:
 };
 
 template<typename CHECKER>
-class GRNodeBuilder  {
+class GRStmtNodeBuilder  {
   typedef CHECKER                                CheckerTy; 
   typedef typename CheckerTy::StateTy            StateTy;
   typedef ExplodedGraph<CheckerTy>               GraphTy;
   typedef typename GraphTy::NodeTy               NodeTy;
   
-  GRNodeBuilderImpl& NB;
+  GRStmtNodeBuilderImpl& NB;
   
 public:
-  GRNodeBuilder(GRNodeBuilderImpl& nb) : NB(nb) {}
+  GRStmtNodeBuilder(GRStmtNodeBuilderImpl& nb) : NB(nb) {}
   
   const GraphTy& getGraph() const {
     return static_cast<const GraphTy&>(NB.getGraph());
@@ -177,8 +177,8 @@ protected:
     return State;
   }
   
-  virtual void ProcessStmt(Stmt* S, GRNodeBuilderImpl& BuilderImpl) {
-    GRNodeBuilder<CHECKER> Builder(BuilderImpl);
+  virtual void ProcessStmt(Stmt* S, GRStmtNodeBuilderImpl& BuilderImpl) {
+    GRStmtNodeBuilder<CHECKER> Builder(BuilderImpl);
     Checker->ProcessStmt(S, Builder);
   }
 

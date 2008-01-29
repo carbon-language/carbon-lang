@@ -139,7 +139,7 @@ void GREngineImpl::HandleBlockEntrance(const BlockEntrance& L,
                                        ExplodedNodeImpl* Pred) {
   
   if (Stmt* S = L.getFirstStmt()) {
-    GRNodeBuilderImpl Builder(L.getBlock(), 0, Pred, this);
+    GRStmtNodeBuilderImpl Builder(L.getBlock(), 0, Pred, this);
     ProcessStmt(S, Builder);
   }
   else 
@@ -167,7 +167,7 @@ void GREngineImpl::HandlePostStmt(const PostStmt& L, CFGBlock* B,
   if (StmtIdx == B->size())
     HandleBlockExit(B, Pred);
   else {
-    GRNodeBuilderImpl Builder(B, StmtIdx, Pred, this);
+    GRStmtNodeBuilderImpl Builder(B, StmtIdx, Pred, this);
     ProcessStmt((*B)[StmtIdx], Builder);
   }
 }
@@ -204,19 +204,19 @@ void GREngineImpl::GenerateNode(const ProgramPoint& Loc, void* State,
   if (IsNew) WList->Enqueue(GRWorkListUnit(Node));
 }
 
-GRNodeBuilderImpl::GRNodeBuilderImpl(CFGBlock* b, unsigned idx,
+GRStmtNodeBuilderImpl::GRStmtNodeBuilderImpl(CFGBlock* b, unsigned idx,
                                      ExplodedNodeImpl* N, GREngineImpl* e)
   : Eng(*e), B(*b), Idx(idx), LastNode(N), Populated(false) {
   Deferred.insert(N);
 }
 
-GRNodeBuilderImpl::~GRNodeBuilderImpl() {
+GRStmtNodeBuilderImpl::~GRStmtNodeBuilderImpl() {
   for (DeferredTy::iterator I=Deferred.begin(), E=Deferred.end(); I!=E; ++I)
     if (!(*I)->isInfeasible())
       GenerateAutoTransition(*I);
 }
 
-void GRNodeBuilderImpl::GenerateAutoTransition(ExplodedNodeImpl* N) {
+void GRStmtNodeBuilderImpl::GenerateAutoTransition(ExplodedNodeImpl* N) {
   assert (!N->isInfeasible());
   
   PostStmt Loc(getStmt());
@@ -236,7 +236,7 @@ void GRNodeBuilderImpl::GenerateAutoTransition(ExplodedNodeImpl* N) {
     Eng.WList->Enqueue(Succ, B, Idx+1);
 }
 
-ExplodedNodeImpl* GRNodeBuilderImpl::generateNodeImpl(Stmt* S, void* State,
+ExplodedNodeImpl* GRStmtNodeBuilderImpl::generateNodeImpl(Stmt* S, void* State,
                                                       ExplodedNodeImpl* Pred) {
   
   bool IsNew;
