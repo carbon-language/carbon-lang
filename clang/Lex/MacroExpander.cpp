@@ -409,6 +409,19 @@ void MacroExpander::ExpandFunctionArguments() {
     const Token *ArgToks = ActualArgs->getUnexpArgument(ArgNo);
     unsigned NumToks = MacroArgs::getArgLength(ArgToks);
     if (NumToks) {  // Not an empty argument?
+      // If this is the GNU ", ## __VA_ARG__" extension, and we just learned
+      // that __VA_ARG__ expands to multiple tokens, avoid a pasting error when
+      // the expander trys to paste ',' with the first token of the __VA_ARG__
+      // expansion.
+      if (PasteBefore && ResultToks.size() >= 2 &&
+          ResultToks[ResultToks.size()-2].is(tok::comma) &&
+          (unsigned)ArgNo == Macro->getNumArgs()-1 &&
+          Macro->isVariadic()) {
+        // Remove the paste operator, report use of the extension.
+        PP.Diag(ResultToks.back().getLocation(), diag::ext_paste_comma);
+        ResultToks.pop_back();
+      }
+      
       ResultToks.append(ArgToks, ArgToks+NumToks);
       
       // If the next token was supposed to get leading whitespace, ensure it has
@@ -447,6 +460,8 @@ void MacroExpander::ExpandFunctionArguments() {
         !ResultToks.empty() && ResultToks.back().is(tok::comma)) {
       // Never add a space, even if the comma, ##, or arg had a space.
       NextTokGetsSpace = false;
+      // Remove the paste operator, report use of the extension.
+      PP.Diag(ResultToks.back().getLocation(), diag::ext_paste_comma);
       ResultToks.pop_back();
     }
     continue;
@@ -615,7 +630,7 @@ void MacroExpander::PasteTokens(Token &Tok) {
     // Turn ## into 'other' to avoid # ## # from looking like a paste operator.
     if (Result.is(tok::hashhash))
       Result.setKind(tok::unknown);
-    // FIXME: Turn __VARRGS__ into "not a token"?
+    // FIXME: Turn __VA_ARGS__ into "not a token"?
     
     // Transfer properties of the LHS over the the Result.
     Result.setFlagValue(Token::StartOfLine , Tok.isAtStartOfLine());
