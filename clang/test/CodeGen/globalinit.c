@@ -32,3 +32,6 @@ void booltest2() {
   static _Bool booltest3 = 4;
 }
 
+// Braces in a scalar
+int a = { 1 };
+int b = { 1, 2 };

@@ -68,26 +68,18 @@ public:
   }
   
   llvm::Constant *VisitInitListExpr(InitListExpr *ILE) {
-    if (ILE->getType()->isVoidType()) {
-      // FIXME: Remove this when sema of initializers is finished (and the code
-      // below).
-      CGM.WarnUnsupported(ILE, "initializer");
-      return 0;
+    const llvm::CompositeType *CType = 
+      dyn_cast<llvm::CompositeType>(ConvertType(ILE->getType()));
+
+    if (!CType) {
+        // We have a scalar in braces. Just use the first element.
+        return Visit(ILE->getInit(0));
     }
-    
-    assert((ILE->getType()->isArrayType() || ILE->getType()->isStructureType() ||
-            ILE->getType()->isVectorType()) &&
-           "Bad type for init list!");
-    CodeGenTypes& Types = CGM.getTypes();
-    
+      
     unsigned NumInitElements = ILE->getNumInits();
     unsigned NumInitableElts = NumInitElements;
-    
-    const llvm::CompositeType *CType = 
-    cast<llvm::CompositeType>(Types.ConvertType(ILE->getType()));
-    assert(CType);
     std::vector<llvm::Constant*> Elts;    
-    
+      
     // Initialising an array requires us to automatically initialise any 
     // elements that have not been initialised explicitly
     const llvm::ArrayType *AType = 0; 

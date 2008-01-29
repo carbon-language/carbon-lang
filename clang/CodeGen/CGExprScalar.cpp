@@ -130,7 +130,11 @@ public:
     unsigned NumInitElements = E->getNumInits();
     
     const llvm::VectorType *VType = 
-      cast<llvm::VectorType>(ConvertType(E->getType()));
+      dyn_cast<llvm::VectorType>(ConvertType(E->getType()));
+    
+    // We have a scalar in braces. Just use the first element.
+    if (!VType) 
+      return Visit(E->getInit(0));
     
     unsigned NumVectorElements = VType->getNumElements();
     const llvm::Type *ElementType = VType->getElementType();
