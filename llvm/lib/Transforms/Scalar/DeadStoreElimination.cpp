@@ -20,6 +20,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Pass.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -53,7 +54,7 @@ namespace {
     bool handleEndBlock(BasicBlock& BB, SetVector<Instruction*>& possiblyDead);
     bool RemoveUndeadPointers(Value* pointer,
                               BasicBlock::iterator& BBI,
-                              SmallPtrSet<AllocaInst*, 64>& deadPointers, 
+                              SmallPtrSet<Value*, 64>& deadPointers, 
                               SetVector<Instruction*>& possiblyDead);
     void DeleteDeadInstructionChains(Instruction *I,
                                      SetVector<Instruction*> &DeadInsts);
@@ -249,12 +250,16 @@ bool DSE::handleEndBlock(BasicBlock& BB,
   bool MadeChange = false;
   
   // Pointers alloca'd in this function are dead in the end block
-  SmallPtrSet<AllocaInst*, 64> deadPointers;
+  SmallPtrSet<Value*, 64> deadPointers;
   
   // Find all of the alloca'd pointers in the entry block
   BasicBlock *Entry = BB.getParent()->begin();
   for (BasicBlock::iterator I = Entry->begin(), E = Entry->end(); I != E; ++I)
     if (AllocaInst *AI = dyn_cast<AllocaInst>(I))
+      deadPointers.insert(AI);
+  for (Function::arg_iterator AI = BB.getParent()->arg_begin(),
+       AE = BB.getParent()->arg_end(); AI != AE; ++AI)
+    if (AI->hasByValAttr())
       deadPointers.insert(AI);
   
   // Scan the basic block backwards
@@ -270,10 +275,7 @@ bool DSE::handleEndBlock(BasicBlock& BB,
       
         // Alloca'd pointers or byval arguments (which are functionally like
         // alloca's) are valid candidates for removal.
-        if ( (isa<AllocaInst>(pointerOperand) && 
-              deadPointers.count(cast<AllocaInst>(pointerOperand))) ||
-             (isa<Argument>(pointerOperand) &&
-              cast<Argument>(pointerOperand)->hasByValAttr())) {
+        if (deadPointers.count(pointerOperand)) {
           // Remove it!
           MD.removeInstruction(S);
         
@@ -291,6 +293,32 @@ bool DSE::handleEndBlock(BasicBlock& BB,
       }
       
       continue;
+    
+    // We can also remove memcpy's to local variables at the end of a function
+    } else if (MemCpyInst* M = dyn_cast<MemCpyInst>(BBI)) {
+      Value* dest = M->getDest();
+      TranslatePointerBitCasts(dest);
+      
+      if (deadPointers.count(dest)) {
+        MD.removeInstruction(M);
+        
+        // DCE instructions only used to calculate that memcpy
+        if (Instruction* D = dyn_cast<Instruction>(M->getSource()))
+          possiblyDead.insert(D);
+        if (Instruction* D = dyn_cast<Instruction>(M->getLength()))
+          possiblyDead.insert(D);
+        if (Instruction* D = dyn_cast<Instruction>(M->getRawDest()))
+          possiblyDead.insert(D);
+        
+        BBI++;
+        M->eraseFromParent();
+        NumFastOther++;
+        MadeChange = true;
+        
+        continue;
+      }
+      
+      // Because a memcpy is also a load, we can't skip it if we didn't remove it
     }
     
     Value* killPointer = 0;
@@ -314,8 +342,8 @@ bool DSE::handleEndBlock(BasicBlock& BB,
       unsigned other = 0;
       
       // Remove any pointers made undead by the call from the dead set
-      std::vector<Instruction*> dead;
-      for (SmallPtrSet<AllocaInst*, 64>::iterator I = deadPointers.begin(),
+      std::vector<Value*> dead;
+      for (SmallPtrSet<Value*, 64>::iterator I = deadPointers.begin(),
            E = deadPointers.end(); I != E; ++I) {
         // HACK: if we detect that our AA is imprecise, it's not
         // worth it to scan the rest of the deadPointers set.  Just
@@ -328,9 +356,15 @@ bool DSE::handleEndBlock(BasicBlock& BB,
 
         // Get size information for the alloca
         unsigned pointerSize = ~0U;
-        if (ConstantInt* C = dyn_cast<ConstantInt>((*I)->getArraySize()))
-          pointerSize = C->getZExtValue() * \
-                        TD.getABITypeSize((*I)->getAllocatedType());
+        if (AllocaInst* A = dyn_cast<AllocaInst>(*I)) {
+          if (ConstantInt* C = dyn_cast<ConstantInt>(A->getArraySize()))
+            pointerSize = C->getZExtValue() * \
+                          TD.getABITypeSize(A->getAllocatedType());
+        } else {
+          const PointerType* PT = cast<PointerType>(
+                                                 cast<Argument>(*I)->getType());
+          pointerSize = TD.getABITypeSize(PT->getElementType());
+        }
 
         // See if the call site touches it
         AliasAnalysis::ModRefResult A = AA.getModRefInfo(CS, *I, pointerSize);
@@ -344,10 +378,9 @@ bool DSE::handleEndBlock(BasicBlock& BB,
           dead.push_back(*I);
       }
 
-      for (std::vector<Instruction*>::iterator I = dead.begin(), E = dead.end();
+      for (std::vector<Value*>::iterator I = dead.begin(), E = dead.end();
            I != E; ++I)
-        if (AllocaInst *AI = dyn_cast<AllocaInst>(*I))
-          deadPointers.erase(AI);
+        deadPointers.erase(*I);
       
       continue;
     }
@@ -369,7 +402,7 @@ bool DSE::handleEndBlock(BasicBlock& BB,
 /// undead when scanning for dead stores to alloca's.
 bool DSE::RemoveUndeadPointers(Value* killPointer,
                                 BasicBlock::iterator& BBI,
-                                SmallPtrSet<AllocaInst*, 64>& deadPointers, 
+                                SmallPtrSet<Value*, 64>& deadPointers, 
                                 SetVector<Instruction*>& possiblyDead) {
   TargetData &TD = getAnalysis<TargetData>();
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
@@ -377,9 +410,8 @@ bool DSE::RemoveUndeadPointers(Value* killPointer,
                                   
   // If the kill pointer can be easily reduced to an alloca,
   // don't bother doing extraneous AA queries
-  if (AllocaInst* A = dyn_cast<AllocaInst>(killPointer)) {
-    if (deadPointers.count(A))
-      deadPointers.erase(A);
+  if (deadPointers.count(killPointer)) {
+    deadPointers.erase(killPointer);
     return false;
   } else if (isa<GlobalValue>(killPointer)) {
     // A global can't be in the dead pointer set
@@ -388,15 +420,21 @@ bool DSE::RemoveUndeadPointers(Value* killPointer,
   
   bool MadeChange = false;
   
-  std::vector<Instruction*> undead;
+  std::vector<Value*> undead;
     
-  for (SmallPtrSet<AllocaInst*, 64>::iterator I = deadPointers.begin(),
+  for (SmallPtrSet<Value*, 64>::iterator I = deadPointers.begin(),
       E = deadPointers.end(); I != E; ++I) {
     // Get size information for the alloca
     unsigned pointerSize = ~0U;
-    if (ConstantInt* C = dyn_cast<ConstantInt>((*I)->getArraySize()))
-      pointerSize = C->getZExtValue() * \
-                    TD.getABITypeSize((*I)->getAllocatedType());
+    if (AllocaInst* A = dyn_cast<AllocaInst>(*I)) {
+      if (ConstantInt* C = dyn_cast<ConstantInt>(A->getArraySize()))
+        pointerSize = C->getZExtValue() * \
+                      TD.getABITypeSize(A->getAllocatedType());
+    } else {
+      const PointerType* PT = cast<PointerType>(
+                                                cast<Argument>(*I)->getType());
+      pointerSize = TD.getABITypeSize(PT->getElementType());
+    }
 
     // See if this pointer could alias it
     AliasAnalysis::AliasResult A = AA.alias(*I, pointerSize,
@@ -427,10 +465,9 @@ bool DSE::RemoveUndeadPointers(Value* killPointer,
         undead.push_back(*I);
   }
 
-  for (std::vector<Instruction*>::iterator I = undead.begin(), E = undead.end();
+  for (std::vector<Value*>::iterator I = undead.begin(), E = undead.end();
        I != E; ++I)
-    if (AllocaInst *AI = dyn_cast<AllocaInst>(*I))
-      deadPointers.erase(AI);
+      deadPointers.erase(*I);
   
   return MadeChange;
 }
