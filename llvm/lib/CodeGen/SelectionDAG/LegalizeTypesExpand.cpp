@@ -747,8 +747,8 @@ bool DAGTypeLegalizer::ExpandOperand(SDNode *N, unsigned OpNo) {
   DEBUG(cerr << "Expand node operand: "; N->dump(&DAG); cerr << "\n");
   SDOperand Res(0, 0);
   
-  if (TLI.getOperationAction(N->getOpcode(), N->getValueType(0)) == 
-      TargetLowering::Custom)
+  if (TLI.getOperationAction(N->getOpcode(), N->getOperand(OpNo).getValueType())
+      == TargetLowering::Custom)
     Res = TLI.LowerOperation(SDOperand(N, 0), DAG);
   
   if (Res.Val == 0) {
