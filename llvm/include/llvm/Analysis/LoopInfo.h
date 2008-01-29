@@ -84,9 +84,12 @@ public:
       delete SubLoops[i];
   }
 
+  /// getLoopDepth - Return the nesting level of this loop.  An outer-most
+  /// loop has depth 1, for consistency with loop depth values used for basic
+  /// blocks, where depth 0 is used for blocks not inside any loops.
   unsigned getLoopDepth() const {
-    unsigned D = 0;
-    for (const LoopBase<BlockT> *CurLoop = this; CurLoop;
+    unsigned D = 1;
+    for (const LoopBase<BlockT> *CurLoop = ParentLoop; CurLoop;
          CurLoop = CurLoop->ParentLoop)
       ++D;
     return D;
@@ -603,7 +606,8 @@ public:
     return getLoopFor(BB);
   }
   
-  /// getLoopDepth - Return the loop nesting level of the specified block...
+  /// getLoopDepth - Return the loop nesting level of the specified block.  A
+  /// depth of 0 means the block is not inside any loop.
   ///
   unsigned getLoopDepth(const BlockT *BB) const {
     const LoopBase<BlockT> *L = getLoopFor(BB);
@@ -898,7 +902,8 @@ public:
     return LI->getLoopFor(BB);
   }
 
-  /// getLoopDepth - Return the loop nesting level of the specified block...
+  /// getLoopDepth - Return the loop nesting level of the specified block.  A
+  /// depth of 0 means the block is not inside any loop.
   ///
   inline unsigned getLoopDepth(const BasicBlock *BB) const {
     return LI->getLoopDepth(BB);
