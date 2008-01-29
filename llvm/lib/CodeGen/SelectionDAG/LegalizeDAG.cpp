@@ -4405,14 +4405,15 @@ SDOperand SelectionDAGLegalize::ExpandEXTRACT_VECTOR_ELT(SDOperand Op) {
     // This must be an access of the only element.  Return it.
     Op = ScalarizeVectorOp(Vec);
   } else if (!TLI.isTypeLegal(TVT) && isa<ConstantSDNode>(Idx)) {
+    unsigned NumLoElts =  1 << Log2_32(NumElems-1);
     ConstantSDNode *CIdx = cast<ConstantSDNode>(Idx);
     SDOperand Lo, Hi;
     SplitVectorOp(Vec, Lo, Hi);
-    if (CIdx->getValue() < NumElems/2) {
+    if (CIdx->getValue() < NumLoElts) {
       Vec = Lo;
     } else {
       Vec = Hi;
-      Idx = DAG.getConstant(CIdx->getValue() - NumElems/2,
+      Idx = DAG.getConstant(CIdx->getValue() - NumLoElts,
                             Idx.getValueType());
     }
   
