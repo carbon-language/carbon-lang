@@ -161,6 +161,9 @@ Stmt* Stmt::Create(Deserializer& D) {
       
     case ObjCAtFinallyStmtClass:
       return ObjCAtFinallyStmt::CreateImpl(D);
+    
+    case ObjCAtSynchronizedStmtClass:
+      return ObjCAtSynchronizedStmt::CreateImpl(D);
       
     case ObjCAtThrowStmtClass:
       return ObjCAtThrowStmt::CreateImpl(D);
@@ -883,6 +886,20 @@ ObjCAtFinallyStmt* ObjCAtFinallyStmt::CreateImpl(Deserializer& D) {
   return new ObjCAtFinallyStmt(Loc,AtFinallyStmt);  
 }
 
+void ObjCAtSynchronizedStmt::EmitImpl(Serializer& S) const {
+  S.Emit(AtSynchronizedLoc);
+  S.BatchEmitOwnedPtrs(SynchExpr, SynchBody);
+}
+
+ObjCAtSynchronizedStmt* ObjCAtSynchronizedStmt::CreateImpl(Deserializer& D) {
+  SourceLocation L = SourceLocation::ReadVal(D);
+  Expr *syncExpr;
+  Stmt *synchBody;
+  D.BatchReadOwnedPtrs(syncExpr, synchBody);
+  ObjCAtSynchronizedStmt* stmt = new ObjCAtSynchronizedStmt(L,syncExpr,synchBody);
+  return stmt;
+}
+
 void ObjCAtThrowStmt::EmitImpl(Serializer& S) const {
   S.Emit(AtThrowLoc);
   S.EmitOwnedPtr(Throw);
@@ -892,20 +909,6 @@ ObjCAtThrowStmt* ObjCAtThrowStmt::CreateImpl(Deserializer& D) {
   SourceLocation L = SourceLocation::ReadVal(D);
   Stmt* Throw = D.ReadOwnedPtr<Stmt>();
   return new ObjCAtThrowStmt(L,Throw);  
-}
-
-void ObjCAtSynchronizedStmt::EmitImpl(Serializer& S) const {
-  S.Emit(AtSynchronizedLoc);
-  S.EmitOwnedPtr(SynchExpr);
-  S.EmitOwnedPtr(SynchBody);
-}
-
-ObjCAtSynchronizedStmt* ObjCAtSynchronizedStmt::CreateImpl(Deserializer& D) {
-  SourceLocation L = SourceLocation::ReadVal(D);
-  Expr *syncExpr = D.ReadOwnedPtr<Expr>();
-  Stmt *synchBody = D.ReadOwnedPtr<Stmt>();
-  ObjCAtSynchronizedStmt* stmt = new ObjCAtSynchronizedStmt(L,syncExpr,synchBody);
-  return stmt;
 }
   
 void ObjCAtTryStmt::EmitImpl(Serializer& S) const {
