@@ -136,3 +136,7 @@ void f12()
 	
 	a1 = a2;
 }
+
+/* struct initialization */
+struct a13 {int b; int c};
+struct a13 c13 = {5};

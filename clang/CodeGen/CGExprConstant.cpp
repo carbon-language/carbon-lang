@@ -80,19 +80,26 @@ public:
     unsigned NumInitableElts = NumInitElements;
     std::vector<llvm::Constant*> Elts;    
       
-    // Initialising an array requires us to automatically initialise any 
-    // elements that have not been initialised explicitly
+    // Initialising an array or structure requires us to automatically 
+    // initialise any elements that have not been initialised explicitly
     const llvm::ArrayType *AType = 0; 
-    const llvm::Type *AElemTy = 0;
-    unsigned NumArrayElements = 0;
+    const llvm::StructType *SType = 0; 
+    const llvm::Type *ElemTy = 0;
+    unsigned NumElements = 0;
     
     // If this is an array, we may have to truncate the initializer
     if ((AType = dyn_cast<llvm::ArrayType>(CType))) {
-      NumArrayElements = AType->getNumElements();
-      AElemTy = AType->getElementType();
-      NumInitableElts = std::min(NumInitableElts, NumArrayElements);
+      NumElements = AType->getNumElements();
+      ElemTy = AType->getElementType();
+      NumInitableElts = std::min(NumInitableElts, NumElements);
     }
-    
+
+    // If this is a structure, we may have to truncate the initializer
+    if ((SType = dyn_cast<llvm::StructType>(CType))) {
+      NumElements = SType->getNumElements();
+      NumInitableElts = std::min(NumInitableElts, NumElements);
+    }
+
     // Copy initializer elements.
     unsigned i = 0;
     for (i = 0; i < NumInitableElts; ++i) {
@@ -107,19 +114,25 @@ public:
       Elts.push_back(C);
     }
     
-    if (ILE->getType()->isStructureType())
-      return llvm::ConstantStruct::get(cast<llvm::StructType>(CType), Elts);
+    if (SType) {
+      // Initialize remaining structure elements.
+      for (; i < NumElements; ++i) {
+        ElemTy = SType->getElementType(i);
+        Elts.push_back(llvm::Constant::getNullValue(ElemTy));
+      }
+      return llvm::ConstantStruct::get(SType, Elts);
+    }
     
     if (ILE->getType()->isVectorType())
       return llvm::ConstantVector::get(cast<llvm::VectorType>(CType), Elts);
     
     // Make sure we have an array at this point
     assert(AType);
-    
+
     // Initialize remaining array elements.
-    for (; i < NumArrayElements; ++i)
-      Elts.push_back(llvm::Constant::getNullValue(AElemTy));
-    
+    for (; i < NumElements; ++i)
+      Elts.push_back(llvm::Constant::getNullValue(ElemTy));
+
     return llvm::ConstantArray::get(AType, Elts);    
   }
   
