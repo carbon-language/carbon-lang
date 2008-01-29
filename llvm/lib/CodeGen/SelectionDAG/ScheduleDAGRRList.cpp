@@ -1386,7 +1386,7 @@ void BURegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
           if (!SuccSU->Node || !SuccSU->Node->isTargetOpcode())
             continue;
           // Don't constrain nodes with physical register defs if the
-          // predecessor can cloober them.
+          // predecessor can clobber them.
           if (SuccSU->hasPhysRegDefs) {
             if (canClobberPhysRegDefs(SuccSU, SU, TII, MRI))
               continue;
