@@ -694,7 +694,9 @@ public:
     std::vector<std::string> NodeOps;
     // This is something selected from the pattern we matched.
     if (!N->getName().empty()) {
-      std::string &Val = VariableMap[N->getName()];
+      const std::string &VarName = N->getName();
+      std::string Val = VariableMap[VarName];
+      bool ModifiedVal = false;
       assert(!Val.empty() &&
              "Variable referenced but not defined and not caught earlier!");
       if (Val[0] == 'T' && Val[1] == 'm' && Val[2] == 'p') {
@@ -708,6 +710,7 @@ public:
       if (!N->isLeaf() && N->getOperator()->getName() == "imm") {
         assert(N->getExtTypes().size() == 1 && "Multiple types not handled!");
         std::string CastType;
+        std::string TmpVar =  "Tmp" + utostr(ResNo);
         switch (N->getTypeNum(0)) {
         default:
           cerr << "Cannot handle " << getEnumName(N->getTypeNum(0))
@@ -719,56 +722,53 @@ public:
         case MVT::i32: CastType = "unsigned"; break;
         case MVT::i64: CastType = "uint64_t"; break;
         }
-        emitCode("SDOperand Tmp" + utostr(ResNo) + 
+        emitCode("SDOperand " + TmpVar + 
                  " = CurDAG->getTargetConstant(((" + CastType +
                  ") cast<ConstantSDNode>(" + Val + ")->getValue()), " +
                  getEnumName(N->getTypeNum(0)) + ");");
-        NodeOps.push_back("Tmp" + utostr(ResNo));
         // Add Tmp<ResNo> to VariableMap, so that we don't multiply select this
         // value if used multiple times by this pattern result.
-        Val = "Tmp"+utostr(ResNo);
+        Val = TmpVar;
+        ModifiedVal = true;
+        NodeOps.push_back(Val);
       } else if (!N->isLeaf() && N->getOperator()->getName() == "texternalsym"){
         Record *Op = OperatorMap[N->getName()];
         // Transform ExternalSymbol to TargetExternalSymbol
         if (Op && Op->getName() == "externalsym") {
-          emitCode("SDOperand Tmp" + utostr(ResNo) + " = CurDAG->getTarget"
+          std::string TmpVar = "Tmp"+utostr(ResNo);
+          emitCode("SDOperand " + TmpVar + " = CurDAG->getTarget"
                    "ExternalSymbol(cast<ExternalSymbolSDNode>(" +
                    Val + ")->getSymbol(), " +
                    getEnumName(N->getTypeNum(0)) + ");");
-          NodeOps.push_back("Tmp" + utostr(ResNo));
           // Add Tmp<ResNo> to VariableMap, so that we don't multiply select
           // this value if used multiple times by this pattern result.
-          Val = "Tmp"+utostr(ResNo);
-        } else {
-          NodeOps.push_back(Val);
+          Val = TmpVar;
+          ModifiedVal = true;
         }
+        NodeOps.push_back(Val);
       } else if (!N->isLeaf() && (N->getOperator()->getName() == "tglobaladdr"
                  || N->getOperator()->getName() == "tglobaltlsaddr")) {
         Record *Op = OperatorMap[N->getName()];
         // Transform GlobalAddress to TargetGlobalAddress
         if (Op && (Op->getName() == "globaladdr" ||
                    Op->getName() == "globaltlsaddr")) {
-          emitCode("SDOperand Tmp" + utostr(ResNo) + " = CurDAG->getTarget"
+          std::string TmpVar = "Tmp" + utostr(ResNo);
+          emitCode("SDOperand " + TmpVar + " = CurDAG->getTarget"
                    "GlobalAddress(cast<GlobalAddressSDNode>(" + Val +
                    ")->getGlobal(), " + getEnumName(N->getTypeNum(0)) +
                    ");");
-          NodeOps.push_back("Tmp" + utostr(ResNo));
           // Add Tmp<ResNo> to VariableMap, so that we don't multiply select
           // this value if used multiple times by this pattern result.
-          Val = "Tmp"+utostr(ResNo);
-        } else {
-          NodeOps.push_back(Val);
+          Val = TmpVar;
+          ModifiedVal = true;
         }
-      } else if (!N->isLeaf() && N->getOperator()->getName() == "texternalsym"){
         NodeOps.push_back(Val);
-        // Add Tmp<ResNo> to VariableMap, so that we don't multiply select this
-        // value if used multiple times by this pattern result.
-        Val = "Tmp"+utostr(ResNo);
-      } else if (!N->isLeaf() && N->getOperator()->getName() == "tconstpool") {
+      } else if (!N->isLeaf()
+                 && (N->getOperator()->getName() == "texternalsym"
+                      || N->getOperator()->getName() == "tconstpool")) {
+        // Do not rewrite the variable name, since we don't generate a new
+        // temporary.
         NodeOps.push_back(Val);
-        // Add Tmp<ResNo> to VariableMap, so that we don't multiply select this
-        // value if used multiple times by this pattern result.
-        Val = "Tmp"+utostr(ResNo);
       } else if (N->isLeaf() && (CP = NodeGetComplexPattern(N, CGP))) {
         for (unsigned i = 0; i < CP->getNumOperands(); ++i) {
           emitCode("AddToISelQueue(CPTmp" + utostr(i) + ");");
@@ -785,6 +785,10 @@ public:
           }
         }
         NodeOps.push_back(Val);
+      }
+
+      if (ModifiedVal) {
+        VariableMap[VarName] = Val;
       }
       return NodeOps;
     }
