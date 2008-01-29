@@ -3250,27 +3250,41 @@ void AsmOperandInfo::ComputeConstraintToUse(const TargetLowering &TLI) {
   if (Codes.size() == 1) {   // Single-letter constraints ('r') are very common.
     ConstraintCode = *Current;
     ConstraintType = CurType;
-    return;
+  } else {
+    unsigned CurGenerality = getConstraintGenerality(CurType);
+
+    // If we have multiple constraints, try to pick the most general one ahead
+    // of time.  This isn't a wonderful solution, but handles common cases.
+    for (unsigned j = 1, e = Codes.size(); j != e; ++j) {
+      TargetLowering::ConstraintType ThisType = TLI.getConstraintType(Codes[j]);
+      unsigned ThisGenerality = getConstraintGenerality(ThisType);
+      if (ThisGenerality > CurGenerality) {
+        // This constraint letter is more general than the previous one,
+        // use it.
+        CurType = ThisType;
+        Current = &Codes[j];
+        CurGenerality = ThisGenerality;
+      }
+    }
+
+    ConstraintCode = *Current;
+    ConstraintType = CurType;
   }
-  
-  unsigned CurGenerality = getConstraintGenerality(CurType);
-  
-  // If we have multiple constraints, try to pick the most general one ahead
-  // of time.  This isn't a wonderful solution, but handles common cases.
-  for (unsigned j = 1, e = Codes.size(); j != e; ++j) {
-    TargetLowering::ConstraintType ThisType = TLI.getConstraintType(Codes[j]);
-    unsigned ThisGenerality = getConstraintGenerality(ThisType);
-    if (ThisGenerality > CurGenerality) {
-      // This constraint letter is more general than the previous one,
-      // use it.
-      CurType = ThisType;
-      Current = &Codes[j];
-      CurGenerality = ThisGenerality;
+
+  if (ConstraintCode == "X") {
+    if (isa<BasicBlock>(CallOperandVal) || isa<ConstantInt>(CallOperandVal))
+      return;
+    // This matches anything.  Labels and constants we handle elsewhere 
+    // ('X' is the only thing that matches labels).  Otherwise, try to 
+    // resolve it to something we know about by looking at the actual 
+    // operand type.
+    std::string s = "";
+    TLI.lowerXConstraint(ConstraintVT, s);
+    if (s!="") {
+      ConstraintCode = s;
+      ConstraintType = TLI.getConstraintType(ConstraintCode);
     }
   }
-  
-  ConstraintCode = *Current;
-  ConstraintType = CurType;
 }
 
 
@@ -3492,7 +3506,8 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
     if (OpInfo.CallOperandVal) {
       if (isa<BasicBlock>(OpInfo.CallOperandVal))
         OpInfo.CallOperand = 
-          DAG.getBasicBlock(FuncInfo.MBBMap[cast<BasicBlock>(OpInfo.CallOperandVal)]);
+          DAG.getBasicBlock(FuncInfo.MBBMap[cast<BasicBlock>(
+                                                 OpInfo.CallOperandVal)]);
       else {
         OpInfo.CallOperand = getValue(OpInfo.CallOperandVal);
         const Type *OpTy = OpInfo.CallOperandVal->getType();

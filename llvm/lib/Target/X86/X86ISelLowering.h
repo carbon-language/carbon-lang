@@ -366,6 +366,9 @@ namespace llvm {
       getRegClassForInlineAsmConstraint(const std::string &Constraint,
                                         MVT::ValueType VT) const;
 
+    virtual void lowerXConstraint(MVT::ValueType ConstraintVT, 
+                                  std::string&) const;
+
     /// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
     /// vector.  If it is invalid, don't add anything to Ops.
     virtual void LowerAsmOperandForConstraint(SDOperand Op,

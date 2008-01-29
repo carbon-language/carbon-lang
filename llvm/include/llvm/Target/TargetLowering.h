@@ -1006,6 +1006,11 @@ public:
     getRegForInlineAsmConstraint(const std::string &Constraint,
                                  MVT::ValueType VT) const;
   
+  /// LowerXConstraint - try to replace an X constraint, which matches anything,
+  /// with another that has more specific requirements based on the type of the
+  /// corresponding operand.
+  virtual void lowerXConstraint(MVT::ValueType ConstraintVT, 
+                                std::string&) const;
   
   /// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
   /// vector.  If it is invalid, don't add anything to Ops.

@@ -1525,6 +1525,19 @@ TargetLowering::getConstraintType(const std::string &Constraint) const {
   return C_Unknown;
 }
 
+/// LowerXConstraint - try to replace an X constraint, which matches anything,
+/// with another that has more specific requirements based on the type of the
+/// corresponding operand.
+void TargetLowering::lowerXConstraint(MVT::ValueType ConstraintVT, 
+                                      std::string& s) const {
+  if (MVT::isInteger(ConstraintVT))
+    s = "r";
+  else if (MVT::isFloatingPoint(ConstraintVT))
+    s = "f";      // works for many targets
+  else 
+    s = "";
+}
+
 /// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
 /// vector.  If it is invalid, don't add anything to Ops.
 void TargetLowering::LowerAsmOperandForConstraint(SDOperand Op,
