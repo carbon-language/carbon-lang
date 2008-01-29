@@ -831,8 +831,7 @@ public:
   
   /// ProcessBranch - Called by GREngine.  Used to generate successor
   ///  nodes by processing the 'effects' of a branch condition.
-  void ProcessBranch(Stmt* Condition, Stmt* Term, BranchNodeBuilder& builder)
-  {}
+  void ProcessBranch(Stmt* Condition, Stmt* Term, BranchNodeBuilder& builder);
 
   /// RemoveDeadBindings - Return a new state that is the same as 'M' except
   ///  that all subexpression mappings are removed and that any
@@ -876,6 +875,12 @@ public:
 };
 } // end anonymous namespace
 
+
+void GRConstants::ProcessBranch(Stmt* Condition, Stmt* Term,
+                                BranchNodeBuilder& builder) {
+  
+  
+}
 
 void GRConstants::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
   Builder = &builder;

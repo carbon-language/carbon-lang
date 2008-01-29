@@ -296,6 +296,14 @@ void GRBranchNodeBuilderImpl::generateNodeImpl(void* State, bool branch) {
   
   Succ->addPredecessor(Pred);
   
+  if (branch) GeneratedTrue = true;
+  else GeneratedFalse = true;  
+  
   if (IsNew)
     Eng.WList->Enqueue(GRWorkListUnit(Succ));
+}
+
+GRBranchNodeBuilderImpl::~GRBranchNodeBuilderImpl() {
+  if (!GeneratedTrue) generateNodeImpl(Pred->State, true);
+  if (!GeneratedFalse) generateNodeImpl(Pred->State, false);
 }

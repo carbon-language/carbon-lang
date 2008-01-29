@@ -167,12 +167,16 @@ class GRBranchNodeBuilderImpl {
   CFGBlock* DstF;
   ExplodedNodeImpl* Pred;
   
+  bool GeneratedTrue;
+  bool GeneratedFalse;
+  
 public:
   GRBranchNodeBuilderImpl(CFGBlock* src, CFGBlock* dstT, CFGBlock* dstF,
                           ExplodedNodeImpl* pred, GREngineImpl* e) 
-  : Eng(*e), Src(src), DstT(dstT), DstF(dstF), Pred(pred) {}
+  : Eng(*e), Src(src), DstT(dstT), DstF(dstF), Pred(pred),
+    GeneratedTrue(false), GeneratedFalse(false) {}
   
-  ~GRBranchNodeBuilderImpl() {}
+  ~GRBranchNodeBuilderImpl();
   
   const ExplodedGraphImpl& getGraph() const { return *Eng.G; }
     
