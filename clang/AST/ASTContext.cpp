@@ -1579,7 +1579,10 @@ bool ASTContext::functionTypesAreCompatible(QualType lhs, QualType rhs) {
       
     // The use of ellipsis agree...now check the argument types.
     for (unsigned i = 0; i < lproto_nargs; i++)
-      if (!typesAreCompatible(lproto->getArgType(i), rproto->getArgType(i)))
+	  // C99 6.7.5.3p15: ...and each parameter declared with qualified type
+	  // is taken as having the unqualified version of it's declared type.
+      if (!typesAreCompatible(lproto->getArgType(i).getUnqualifiedType(), 
+	                          rproto->getArgType(i).getUnqualifiedType()))
         return false;
     return true;
   }
