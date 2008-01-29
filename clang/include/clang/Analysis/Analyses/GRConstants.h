@@ -23,7 +23,7 @@ namespace clang {
   ///  on a provided CFG.  This interface will eventually be replaced with
   ///  something more elaborate as the requirements on the interface become
   ///  clearer.
-  void RunGRConstants(CFG& cfg, ASTContext& Ctx);
+  void RunGRConstants(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx);
   
 } // end clang namespace
 

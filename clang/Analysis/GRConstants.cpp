@@ -149,7 +149,7 @@ typedef llvm::ImmutableSet<APSInt > APSIntSetTy;
 
   
 class VISIBILITY_HIDDEN ValueManager {
-  ASTContext* Ctx;
+  ASTContext& Ctx;
   
   typedef  llvm::FoldingSet<llvm::FoldingSetNodeWrapper<APSInt> > APSIntSetTy;
   APSIntSetTy APSIntSet;
@@ -157,12 +157,10 @@ class VISIBILITY_HIDDEN ValueManager {
   llvm::BumpPtrAllocator BPAlloc;
   
 public:
-  ValueManager() {}
+  ValueManager(ASTContext& ctx) : Ctx(ctx) {}
   ~ValueManager();
   
-  void setContext(ASTContext* ctx) { Ctx = ctx; }
-  ASTContext* getContext() const { return Ctx; }
-  
+  ASTContext& getContext() const { return Ctx; }  
   APSInt& getValue(const APSInt& X);      
 
 };
@@ -385,8 +383,8 @@ public:
     assert (CastExpr->getType()->isIntegerType());
     
     APSInt X(getValue());  
-    X.extOrTrunc(ValMgr.getContext()->getTypeSize(CastExpr->getType(),
-                                                  CastExpr->getLocStart()));
+    X.extOrTrunc(ValMgr.getContext().getTypeSize(CastExpr->getType(),
+                                                 CastExpr->getLocStart()));
     return ValMgr.getValue(X);
   }
   
@@ -547,7 +545,8 @@ class VISIBILITY_HIDDEN GRConstants {
 public:
   typedef ValueMapTy StateTy;
   typedef GRNodeBuilder<GRConstants> NodeBuilder;
-  typedef ExplodedNode<StateTy> NodeTy;
+  typedef ExplodedGraph<GRConstants> GraphTy;
+  typedef GraphTy::NodeTy NodeTy;
   
   class NodeSet {
     typedef llvm::SmallVector<NodeTy*,3> ImplTy;
@@ -573,6 +572,9 @@ public:
   };
                                                               
 protected:
+  /// G - the simulation graph.
+  GraphTy& G;
+  
   /// Liveness - live-variables information the ValueDecl* and block-level
   ///  Expr* in the CFG.  Used to prune out dead state.
   LiveVariables* Liveness;
@@ -587,9 +589,6 @@ protected:
   /// ValueMgr - Object that manages the data for all created RValues.
   ValueManager ValMgr;
   
-  /// cfg - the current CFG.
-  CFG* cfg;
-  
   /// StmtEntryNode - The immediate predecessor node.
   NodeTy* StmtEntryNode;
   
@@ -598,32 +597,29 @@ protected:
   
   bool StateCleaned;
   
-  ASTContext* getContext() const { return ValMgr.getContext(); }
+  ASTContext& getContext() const { return G.getContext(); }
   
 public:
-  GRConstants() : Liveness(NULL), Builder(NULL), cfg(NULL),
-    StmtEntryNode(NULL), CurrentStmt(NULL) {}
+  GRConstants(GraphTy& g) : G(g), Liveness(NULL), Builder(NULL), 
+      ValMgr(G.getContext()), StmtEntryNode(NULL), CurrentStmt(NULL) {
     
-  ~GRConstants() { delete Liveness; }
-  
-  /// getCFG - Returns the CFG associated with this analysis.
-  CFG& getCFG() { assert (cfg); return *cfg; }
-      
-  /// Initialize - Initialize the checker's state based on the specified
-  ///  CFG.  This results in liveness information being computed for
-  ///  each block-level statement in the CFG.
-  void Initialize(CFG& c, ASTContext& ctx) {
-    cfg = &c;
-    ValMgr.setContext(&ctx);
+    // Compute liveness information.
+    CFG& c = G.getCFG();
     Liveness = new LiveVariables(c);
     Liveness->runOnCFG(c);
     Liveness->runOnAllBlocks(c, NULL, true);
   }
+    
+  ~GRConstants() { delete Liveness; }
+  
+  /// getCFG - Returns the CFG associated with this analysis.
+  CFG& getCFG() { return G.getCFG(); }
   
   /// getInitialState - Return the initial state used for the root vertex
   ///  in the ExplodedGraph.
   StateTy getInitialState() {
-    return StateMgr.GetEmptyMap();
+    StateTy St = StateMgr.GetEmptyMap();
+    return St;
   }
 
   /// ProcessStmt - Called by GREngine. Used to generate new successor
@@ -910,7 +906,7 @@ void GRConstants::VisitUnaryOperator(UnaryOperator* U,
         NonLValue R1 = cast<NonLValue>(GetValue(St, L1));
 
         QualType T = U->getType();
-        unsigned bits = getContext()->getTypeSize(T, U->getLocStart());
+        unsigned bits = getContext().getTypeSize(T, U->getLocStart());
         APSInt One(llvm::APInt(bits, 1), T->isUnsignedIntegerType());
         NonLValue R2 = NonLValue::GetValue(ValMgr, One);
         
@@ -924,7 +920,7 @@ void GRConstants::VisitUnaryOperator(UnaryOperator* U,
         NonLValue R1 = cast<NonLValue>(GetValue(St, L1));
         
         QualType T = U->getType();
-        unsigned bits = getContext()->getTypeSize(T, U->getLocStart());
+        unsigned bits = getContext().getTypeSize(T, U->getLocStart());
         APSInt One(llvm::APInt(bits, 1), T->isUnsignedIntegerType());
         NonLValue R2 = NonLValue::GetValue(ValMgr, One);
         
@@ -938,7 +934,7 @@ void GRConstants::VisitUnaryOperator(UnaryOperator* U,
         NonLValue R1 = cast<NonLValue>(GetValue(St, L1));
         
         QualType T = U->getType();
-        unsigned bits = getContext()->getTypeSize(T, U->getLocStart());
+        unsigned bits = getContext().getTypeSize(T, U->getLocStart());
         APSInt One(llvm::APInt(bits, 1), T->isUnsignedIntegerType());
         NonLValue R2 = NonLValue::GetValue(ValMgr, One);        
         
@@ -952,7 +948,7 @@ void GRConstants::VisitUnaryOperator(UnaryOperator* U,
         NonLValue R1 = cast<NonLValue>(GetValue(St, L1));
         
         QualType T = U->getType();
-        unsigned bits = getContext()->getTypeSize(T, U->getLocStart());
+        unsigned bits = getContext().getTypeSize(T, U->getLocStart());
         APSInt One(llvm::APInt(bits, 1), T->isUnsignedIntegerType());
         NonLValue R2 = NonLValue::GetValue(ValMgr, One);       
         
@@ -1235,8 +1231,8 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRConstants::NodeTy*> :
 #endif
 
 namespace clang {
-void RunGRConstants(CFG& cfg, ASTContext& Ctx) {
-  GREngine<GRConstants> Engine(cfg, Ctx);
+void RunGRConstants(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx) {
+  GREngine<GRConstants> Engine(cfg, FD, Ctx);
   Engine.ExecuteWorkList();  
 #ifndef NDEBUG
   llvm::ViewGraph(*Engine.getGraph().roots_begin(),"GRConstants");

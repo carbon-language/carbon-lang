@@ -56,7 +56,7 @@ bool GREngineImpl::ExecuteWorkList(unsigned Steps) {
   if (G->num_roots() == 0) { // Initialize the analysis by constructing
     // the root if none exists.
     
-    CFGBlock* Entry = &cfg.getEntry();
+    CFGBlock* Entry = &getCFG().getEntry();
     
     assert (Entry->empty() && 
             "Entry block must be empty.");
@@ -69,7 +69,7 @@ bool GREngineImpl::ExecuteWorkList(unsigned Steps) {
     
     // Construct an edge representing the
     // starting location in the function.
-    BlockEdge StartLoc(cfg, Entry, Succ);
+    BlockEdge StartLoc(getCFG(), Entry, Succ);
     
     // Generate the root.
     GenerateNode(StartLoc, getInitialState());
@@ -110,9 +110,10 @@ void GREngineImpl::HandleBlockEdge(const BlockEdge& L, ExplodedNodeImpl* Pred) {
   CFGBlock* Blk = L.getDst();
   
   // Check if we are entering the EXIT block. 
-  if (Blk == &cfg.getExit()) {
+  if (Blk == &getCFG().getExit()) {
     
-    assert (cfg.getExit().size() == 0 && "EXIT block cannot contain Stmts.");
+    assert (getCFG().getExit().size() == 0 
+            && "EXIT block cannot contain Stmts.");
 
     // Process the final state transition.    
     void* State = ProcessEOP(Blk, Pred->State);
@@ -154,7 +155,7 @@ void GREngineImpl::HandleBlockExit(CFGBlock * B, ExplodedNodeImpl* Pred) {
     assert (B->succ_size() == 1 &&
             "Blocks with no terminator should have at most 1 successor.");
     
-    GenerateNode(BlockEdge(cfg,B,*(B->succ_begin())), Pred->State, Pred);    
+    GenerateNode(BlockEdge(getCFG(),B,*(B->succ_begin())), Pred->State, Pred);    
   }
 }
 

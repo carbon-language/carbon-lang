@@ -566,19 +566,31 @@ ASTConsumer *clang::CreateUnitValsChecker(Diagnostic &Diags) {
 // GRConstants - Perform intra-procedural, path-sensitive constant propagation.
 
 namespace {
-  class GRConstantsVisitor : public CFGVisitor {
+  class GRConstantsVisitor : public ASTConsumer {
     ASTContext* Ctx;
   public:
-    virtual void Initialize(ASTContext &Context) { Ctx = &Context; }
     
-    virtual void VisitCFG(CFG& C) {
-      RunGRConstants(C, *Ctx);
-    }
+    virtual void Initialize(ASTContext &Context) { Ctx = &Context; }    
+    virtual void HandleTopLevelDecl(Decl *D);
   };
 } // end anonymous namespace
 
 ASTConsumer* clang::CreateGRConstants() {
   return new GRConstantsVisitor();
+}
+
+void GRConstantsVisitor::HandleTopLevelDecl(Decl *D) {
+  FunctionDecl *FD = dyn_cast<FunctionDecl>(D);
+
+  if (!FD || !FD->getBody())
+    return;
+
+  DeclPrinter().PrintFunctionDeclStart(FD);
+  llvm::cerr << '\n';
+  
+  CFG *C = CFG::buildCFG(FD->getBody());
+  RunGRConstants(*C, *FD, *Ctx);
+  delete C;
 }
 
 //===----------------------------------------------------------------------===//

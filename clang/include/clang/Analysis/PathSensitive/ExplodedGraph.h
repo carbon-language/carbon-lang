@@ -29,7 +29,11 @@ namespace clang {
 class GREngineImpl;
 class ExplodedNodeImpl;
 class GRNodeBuilderImpl;
+class CFG;
+class ASTContext;
+class FunctionDecl;
 
+  
 class ExplodedNodeImpl : public llvm::FoldingSetNode {
 protected:
   friend class ExplodedGraphImpl;
@@ -210,6 +214,15 @@ protected:
   
   /// Allocator - BumpPtrAllocator to create nodes.
   llvm::BumpPtrAllocator Allocator;
+  
+  /// cfg - The CFG associated with this analysis graph.
+  CFG& cfg;
+  
+  /// FD - The function declaration of the function being analyzed.
+  FunctionDecl& FD;
+  
+  /// Ctx - The ASTContext used to "interpret" FD.
+  ASTContext& Ctx;
 
   /// getNodeImpl - Retrieve the node associated with a (Location,State)
   ///  pair, where 'State' is represented as an opaque void*.  This method
@@ -228,12 +241,20 @@ protected:
     EndNodes.push_back(V);
     return V;
   }
+  
+  // ctor.
+  ExplodedGraphImpl(CFG& c, FunctionDecl& f, ASTContext& ctx)
+    : cfg(c), FD(f), Ctx(ctx) {}
 
 public:
   virtual ~ExplodedGraphImpl();
 
   unsigned num_roots() const { return Roots.size(); }
   unsigned num_eops() const { return EndNodes.size(); }
+  
+  CFG& getCFG() { return cfg; }
+  ASTContext& getContext() { return Ctx; }
+  FunctionDecl& getFunctionDecl() { return FD; }
 };
   
 template <typename CHECKER>
@@ -243,7 +264,7 @@ public:
   typedef typename CHECKER::StateTy   StateTy;
   typedef ExplodedNode<StateTy>       NodeTy;
   
-protected:
+protected:  
   llvm::OwningPtr<CheckerTy> CheckerState;
 
 protected:
@@ -253,7 +274,8 @@ protected:
   }
     
 public:
-  ExplodedGraph() : CheckerState(new CheckerTy()) {}
+  ExplodedGraph(CFG& c, FunctionDecl& fd, ASTContext& ctx)
+    : ExplodedGraphImpl(c, fd, ctx), CheckerState(new CheckerTy(*this)) {}
   
   /// getCheckerState - Returns the internal checker state associated
   ///  with the exploded graph.  Ownership remains with the ExplodedGraph

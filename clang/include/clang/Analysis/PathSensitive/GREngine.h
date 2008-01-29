@@ -21,8 +21,6 @@
 
 namespace clang {
   
-class CFG;
-class ASTContext;
 class GRNodeBuilderImpl;
 class GRWorkList;
   
@@ -31,9 +29,6 @@ protected:
   friend class GRNodeBuilderImpl;
   
   typedef llvm::DenseMap<Stmt*,Stmt*> ParentMapTy;
-
-  /// cfg - The control-flow graph of the function being analyzed.
-  CFG& cfg;
     
   /// G - The simulation graph.  Each node is a (location,state) pair.
   llvm::OwningPtr<ExplodedGraphImpl> G;
@@ -77,8 +72,7 @@ private:
   GREngineImpl& operator=(const GREngineImpl&);
   
 protected:  
-  GREngineImpl(CFG& c, ExplodedGraphImpl* g, GRWorkList* wl)
-   : cfg(c), G(g), WList(wl) {}
+  GREngineImpl(ExplodedGraphImpl* g, GRWorkList* wl) : G(g), WList(wl) {}
   
 public:
   /// ExecuteWorkList - Run the worklist algorithm for a maximum number of
@@ -86,6 +80,8 @@ public:
   bool ExecuteWorkList(unsigned Steps = 1000000);
   
   virtual ~GREngineImpl() {}
+  
+  CFG& getCFG() { return G->getCFG(); }
 };
   
 class GRNodeBuilderImpl {
@@ -108,7 +104,7 @@ public:
   ~GRNodeBuilderImpl();
   
   const ExplodedGraphImpl& getGraph() const { return *Eng.G; }
-
+  
   inline ExplodedNodeImpl* getLastNode() {
     return LastNode ? (LastNode->isInfeasible() ? NULL : LastNode) : NULL;
   }
@@ -170,8 +166,7 @@ public:
 protected:
   // A local reference to the checker that avoids an indirect access
   // via the Graph.
-  CheckerTy* Checker;
-  
+  CheckerTy* Checker;  
   
   virtual void* getInitialState() {
     return GRTrait<StateTy>::toPtr(getCheckerState().getInitialState());
@@ -196,20 +191,16 @@ protected:
 public:  
   /// Construct a GREngine object to analyze the provided CFG using
   ///  a DFS exploration of the exploded graph.
-  GREngine(CFG& cfg, ASTContext& Ctx)
-  : GREngineImpl(cfg, new GraphTy(), GRWorkList::MakeDFS()),
-      Checker(static_cast<GraphTy*>(G.get())->getCheckerState()) {
-    Checker->Initialize(cfg, Ctx);
-  }
+  GREngine(CFG& cfg, FunctionDecl& fd, ASTContext& ctx)
+    : GREngineImpl(new GraphTy(cfg, fd, ctx), GRWorkList::MakeDFS()),
+      Checker(static_cast<GraphTy*>(G.get())->getCheckerState()) {}
   
   /// Construct a GREngine object to analyze the provided CFG and to
   ///  use the provided worklist object to execute the worklist algorithm.
   ///  The GREngine object assumes ownership of 'wlist'.
-  GREngine(CFG& cfg, GRWorkList* wlist) 
-    : GREngineImpl(cfg, new GraphTy(), wlist),
-      Checker(static_cast<GraphTy*>(G.get())->getCheckerState()) {
-    Checker->Initialize(cfg);
-  }
+  GREngine(CFG& cfg, FunctionDecl& fd, ASTContext& ctx, GRWorkList* wlist)
+    : GREngineImpl(new GraphTy(cfg, fd, ctx), wlist),
+      Checker(static_cast<GraphTy*>(G.get())->getCheckerState()) {}
   
   virtual ~GREngine() {}
   
