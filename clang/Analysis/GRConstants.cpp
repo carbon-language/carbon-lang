@@ -730,7 +730,8 @@ class VISIBILITY_HIDDEN GRConstants {
     
 public:
   typedef ValueMapTy StateTy;
-  typedef GRStmtNodeBuilder<GRConstants> NodeBuilder;
+  typedef GRStmtNodeBuilder<GRConstants> StmtNodeBuilder;
+  typedef GRBranchNodeBuilder<GRConstants> BranchNodeBuilder;
   typedef ExplodedGraph<GRConstants> GraphTy;
   typedef GraphTy::NodeTy NodeTy;
   
@@ -767,8 +768,8 @@ protected:
 
   /// Builder - The current GRStmtNodeBuilder which is used when building the nodes
   ///  for a given statement.
-  NodeBuilder* Builder;
-
+  StmtNodeBuilder* Builder;
+  
   /// StateMgr - Object that manages the data for all created states.
   ValueMapTy::Factory StateMgr;
   
@@ -826,7 +827,12 @@ public:
 
   /// ProcessStmt - Called by GREngine. Used to generate new successor
   ///  nodes by processing the 'effects' of a block-level statement.
-  void ProcessStmt(Stmt* S, NodeBuilder& builder);    
+  void ProcessStmt(Stmt* S, StmtNodeBuilder& builder);    
+  
+  /// ProcessBranch - Called by GREngine.  Used to generate successor
+  ///  nodes by processing the 'effects' of a branch condition.
+  void ProcessBranch(Stmt* Condition, Stmt* Term, BranchNodeBuilder& builder)
+  {}
 
   /// RemoveDeadBindings - Return a new state that is the same as 'M' except
   ///  that all subexpression mappings are removed and that any
@@ -871,7 +877,7 @@ public:
 } // end anonymous namespace
 
 
-void GRConstants::ProcessStmt(Stmt* S, NodeBuilder& builder) {
+void GRConstants::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
   Builder = &builder;
 
   StmtEntryNode = builder.getLastNode();

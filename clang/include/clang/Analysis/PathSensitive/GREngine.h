@@ -22,11 +22,13 @@
 namespace clang {
   
 class GRStmtNodeBuilderImpl;
+class GRBranchNodeBuilderImpl;
 class GRWorkList;
   
 class GREngineImpl {
 protected:
   friend class GRStmtNodeBuilderImpl;
+  friend class GRBranchNodeBuilderImpl;
   
   typedef llvm::DenseMap<Stmt*,Stmt*> ParentMapTy;
     
@@ -59,13 +61,17 @@ protected:
   void HandleBlockExit(CFGBlock* B, ExplodedNodeImpl* Pred);
   void HandlePostStmt(const PostStmt& S, CFGBlock* B,
                       unsigned StmtIdx, ExplodedNodeImpl *Pred);
-
+  
+  void HandleBranch(Stmt* Cond, Stmt* Term, CFGBlock* B,
+                    ExplodedNodeImpl* Pred);  
+  
   virtual void* ProcessEOP(CFGBlock* Blk, void* State) = 0;  
 
-  virtual void ProcessStmt(Stmt* S, GRStmtNodeBuilderImpl& Builder) = 0;
+  virtual void  ProcessStmt(Stmt* S, GRStmtNodeBuilderImpl& Builder) = 0;
 
-  virtual void ProcessTerminator(Stmt* Terminator, CFGBlock* B, 
-                                 ExplodedNodeImpl* Pred) = 0;
+  virtual void  ProcessBranch(Stmt* Condition, Stmt* Terminator,
+                              GRBranchNodeBuilderImpl& Builder) = 0;
+
 
 private:
   GREngineImpl(const GREngineImpl&); // Do not implement.
@@ -154,6 +160,47 @@ public:
   }  
 };
   
+class GRBranchNodeBuilderImpl {
+  GREngineImpl& Eng;
+  CFGBlock* Src;
+  CFGBlock* DstT;
+  CFGBlock* DstF;
+  ExplodedNodeImpl* Pred;
+  
+public:
+  GRBranchNodeBuilderImpl(CFGBlock* src, CFGBlock* dstT, CFGBlock* dstF,
+                          ExplodedNodeImpl* pred, GREngineImpl* e) 
+  : Eng(*e), Src(src), DstT(dstT), DstF(dstF), Pred(pred) {}
+  
+  ~GRBranchNodeBuilderImpl() {}
+  
+  const ExplodedGraphImpl& getGraph() const { return *Eng.G; }
+    
+  void generateNodeImpl(void* State, bool branch);  
+};
+
+template<typename CHECKER>
+class GRBranchNodeBuilder {
+  typedef CHECKER                                CheckerTy; 
+  typedef typename CheckerTy::StateTy            StateTy;
+  typedef ExplodedGraph<CheckerTy>               GraphTy;
+  typedef typename GraphTy::NodeTy               NodeTy;
+  
+  GRBranchNodeBuilderImpl& NB;
+  
+public:
+  GRBranchNodeBuilder(GRBranchNodeBuilderImpl& nb) : NB(nb) {}
+  
+  const GraphTy& getGraph() const {
+    return static_cast<const GraphTy&>(NB.getGraph());
+  }
+
+  void generateNode(StateTy State, bool branch) {
+    void *state = GRTrait<StateTy>::toPtr(State);        
+    NB.generateNodeImpl(state, branch);
+  }
+};
+  
   
 template<typename CHECKER>
 class GREngine : public GREngineImpl {
@@ -182,9 +229,11 @@ protected:
     Checker->ProcessStmt(S, Builder);
   }
 
-  virtual void ProcessTerminator(Stmt* Terminator, CFGBlock* B, 
-                                 ExplodedNodeImpl* Pred) {
-    // FIXME: Dispatch.    
+
+  virtual void ProcessBranch(Stmt* Condition, Stmt* Terminator,
+                             GRBranchNodeBuilderImpl& BuilderImpl) {
+    GRBranchNodeBuilder<CHECKER> Builder(BuilderImpl);
+    Checker->ProcessBranch(Condition, Terminator, Builder);    
   }
   
   

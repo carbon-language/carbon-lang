@@ -29,6 +29,7 @@ namespace clang {
 class GREngineImpl;
 class ExplodedNodeImpl;
 class GRStmtNodeBuilderImpl;
+class GRBranchNodeBuilderImpl;
 class CFG;
 class ASTContext;
 class FunctionDecl;
@@ -39,6 +40,7 @@ protected:
   friend class ExplodedGraphImpl;
   friend class GREngineImpl;
   friend class GRStmtNodeBuilderImpl;
+  friend class GRBranchNodeBuilderImpl;
   
   class NodeGroup {
     enum { Size1 = 0x0, SizeOther = 0x1, Infeasible = 0x2, Flags = 0x3 };
@@ -193,6 +195,7 @@ class ExplodedGraphImpl {
 protected:
   friend class GREngineImpl;
   friend class GRStmtNodeBuilderImpl;
+  friend class GRBranchNodeBuilderImpl;
   
   // Type definitions.
   typedef llvm::DenseMap<ProgramPoint,void*>        EdgeNodeSetMap;

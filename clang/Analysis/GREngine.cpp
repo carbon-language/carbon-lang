@@ -149,14 +149,45 @@ void GREngineImpl::HandleBlockEntrance(const BlockEntrance& L,
 
 void GREngineImpl::HandleBlockExit(CFGBlock * B, ExplodedNodeImpl* Pred) {
   
-  if (Stmt* Terminator = B->getTerminator())
-    ProcessTerminator(Terminator, B, Pred);
+  if (Stmt* Term = B->getTerminator()) {
+    switch (Term->getStmtClass()) {
+      default:
+        assert(false && "Analysis for this terminator not implemented.");
+        break;
+        
+      case Stmt::IfStmtClass:
+        HandleBranch(cast<IfStmt>(Term)->getCond(), Term, B, Pred);
+        break;
+        
+      case Stmt::ForStmtClass:
+        HandleBranch(cast<ForStmt>(Term)->getCond(), Term, B, Pred);
+        break;
+        
+      case Stmt::WhileStmtClass:
+        HandleBranch(cast<WhileStmt>(Term)->getCond(), Term, B, Pred);
+        break;
+        
+      case Stmt::DoStmtClass:
+        HandleBranch(cast<DoStmt>(Term)->getCond(), Term, B, Pred);
+        break;
+    }
+  }
   else {
     assert (B->succ_size() == 1 &&
             "Blocks with no terminator should have at most 1 successor.");
     
     GenerateNode(BlockEdge(getCFG(),B,*(B->succ_begin())), Pred->State, Pred);    
   }
+}
+
+void GREngineImpl::HandleBranch(Stmt* Cond, Stmt* Term, CFGBlock * B,
+                                ExplodedNodeImpl* Pred) {
+  assert (B->succ_size() == 2);
+
+  GRBranchNodeBuilderImpl Builder(B, *(B->succ_begin()), *(B->succ_begin()+1), 
+                                  Pred, this);
+  
+  ProcessBranch(Cond, Term, Builder);
 }
 
 void GREngineImpl::HandlePostStmt(const PostStmt& L, CFGBlock* B,
@@ -254,4 +285,17 @@ ExplodedNodeImpl* GRStmtNodeBuilderImpl::generateNodeImpl(Stmt* S, void* State,
   
   LastNode = NULL;
   return NULL;  
+}
+
+void GRBranchNodeBuilderImpl::generateNodeImpl(void* State, bool branch) {  
+  bool IsNew;
+  
+  ExplodedNodeImpl* Succ =
+    Eng.G->getNodeImpl(BlockEdge(Eng.getCFG(), Src, branch ? DstT : DstF),
+                       State, &IsNew);
+  
+  Succ->addPredecessor(Pred);
+  
+  if (IsNew)
+    Eng.WList->Enqueue(GRWorkListUnit(Succ));
 }
