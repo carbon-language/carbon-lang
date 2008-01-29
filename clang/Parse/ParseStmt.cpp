@@ -36,7 +36,7 @@ using namespace clang;
 ///         jump-statement
 /// [OBC]   objc-throw-statement
 /// [OBC]   objc-try-catch-statement
-/// [OBC]   objc-synchronized-statement  [TODO]
+/// [OBC]   objc-synchronized-statement
 /// [GNU]   asm-statement
 /// [OMP]   openmp-construct             [TODO]
 ///
@@ -91,6 +91,8 @@ Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
         return ParseObjCTryStmt(AtLoc);
       else if (Tok.isObjCAtKeyword(tok::objc_throw))
         return ParseObjCThrowStmt(AtLoc);
+      else if (Tok.isObjCAtKeyword(tok::objc_synchronized))
+        return ParseObjCSynchronizedStmt(AtLoc);
       ExprResult Res = ParseExpressionWithLeadingAt(AtLoc);
       if (Res.isInvalid) {
         // If the expression is invalid, skip ahead to the next semicolon. Not

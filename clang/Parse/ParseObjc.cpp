@@ -1109,6 +1109,13 @@ Parser::StmtResult Parser::ParseObjCThrowStmt(SourceLocation atLoc) {
   return Actions.ActOnObjCAtThrowStmt(atLoc, Res.Val);
 }
 
+/// objc-synchronized-statement:
+///   @synchronized '(' expression ')'
+///
+Parser::StmtResult Parser::ParseObjCSynchronizedStmt(SourceLocation atLoc) {
+  return 0;
+}
+
 ///  objc-try-catch-statement:
 ///    @try compound-statement objc-catch-list[opt]
 ///    @try compound-statement objc-catch-list[opt] @finally compound-statement

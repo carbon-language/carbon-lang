@@ -962,6 +962,40 @@ public:
   static ObjCAtTryStmt* CreateImpl(llvm::Deserializer& D);     
 };
 
+/// ObjCAtSynchronizedStmt - This is for objective-c's @synchronized statement.
+///
+class ObjCAtSynchronizedStmt : public Stmt {
+private:
+  Expr* SynchExpr;
+  Stmt* SynchBody;
+  SourceLocation AtSynchronizedLoc;
+  
+public:
+  ObjCAtSynchronizedStmt(SourceLocation atSynchronizedLoc, Expr *synchExpr,
+                         Stmt *synchBody)
+  : Stmt(ObjCAtSynchronizedStmtClass), 
+    SynchExpr(synchExpr), SynchBody(synchBody),  
+    AtSynchronizedLoc(atSynchronizedLoc) {}
+  
+  const Stmt *getSynchBody() const { return SynchBody; }
+  Stmt *getSynchBody() { return SynchBody; }
+  
+  const Expr *getSynchExpr() const { return SynchExpr; }
+  Expr *getSynchExpr() { return SynchExpr; }
+  
+  virtual SourceRange getSourceRange() const { 
+    return SourceRange(AtSynchronizedLoc, SynchBody->getLocEnd()); 
+  }
+  
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == ObjCAtSynchronizedStmtClass;
+  }
+  static bool classof(const ObjCAtSynchronizedStmt *) { return true; }
+  
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static ObjCAtSynchronizedStmt* CreateImpl(llvm::Deserializer& D);
+};
+  
 /// ObjCAtThrowStmt - This represents objective-c's @throw statement.
 class ObjCAtThrowStmt : public Stmt {
   Stmt *Throw;

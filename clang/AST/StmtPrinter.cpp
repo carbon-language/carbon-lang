@@ -455,6 +455,17 @@ void StmtPrinter::VisitObjCAtThrowStmt (ObjCAtThrowStmt *Node) {
   OS << ";\n";
 }
 
+void StmtPrinter::VisitObjCAtSynchronizedStmt (ObjCAtSynchronizedStmt *Node) {
+  Indent() << "@synchronized (";
+  PrintExpr(Node->getSynchExpr());
+  OS << ")";
+  if (CompoundStmt *CS = dyn_cast<CompoundStmt>(Node->getSynchBody()))
+    {
+      PrintRawCompoundStmt(CS);
+      OS << "\n";
+    }
+}
+
 //===----------------------------------------------------------------------===//
 //  Expr printing methods.
 //===----------------------------------------------------------------------===//

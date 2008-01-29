@@ -49,8 +49,9 @@ STMT(19, ObjCAtTryStmt        , Stmt)
 STMT(20, ObjCAtCatchStmt      , Stmt)
 STMT(21, ObjCAtFinallyStmt    , Stmt)
 STMT(22, ObjCAtThrowStmt      , Stmt)
+STMT(23, ObjCAtSynchronizedStmt , Stmt)
 // Obj-C2 statements
-STMT(23, ObjCForCollectionStmt, Stmt)
+STMT(24, ObjCForCollectionStmt, Stmt)
 
 LAST_STMT(23)
 
