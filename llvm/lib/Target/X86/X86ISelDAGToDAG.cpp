@@ -1152,6 +1152,26 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
     case X86ISD::GlobalBaseReg: 
       return getGlobalBaseReg();
 
+    case X86ISD::FP_GET_RESULT2: {
+      SDOperand Chain = N.getOperand(0);
+      SDOperand InFlag = N.getOperand(1);
+      AddToISelQueue(Chain);
+      AddToISelQueue(InFlag);
+      std::vector<MVT::ValueType> Tys;
+      Tys.push_back(MVT::f80);
+      Tys.push_back(MVT::f80);
+      Tys.push_back(MVT::Other);
+      Tys.push_back(MVT::Flag);
+      SDOperand Ops[] = { Chain, InFlag };
+      SDNode *ResNode = CurDAG->getTargetNode(X86::FpGETRESULT80x2, Tys,
+                                              Ops, 2);
+      Chain = SDOperand(ResNode, 2);
+      InFlag = SDOperand(ResNode, 3);
+      ReplaceUses(SDOperand(N.Val, 2), Chain);
+      ReplaceUses(SDOperand(N.Val, 3), InFlag);
+      return ResNode;
+    }
+
     case ISD::ADD: {
       // Turn ADD X, c to MOV32ri X+c. This cannot be done with tblgen'd
       // code and is matched first so to prevent it from being turned into

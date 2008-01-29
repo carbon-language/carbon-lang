@@ -18,6 +18,7 @@
 //===----------------------------------------------------------------------===//
 
 def SDTX86FpGet     : SDTypeProfile<1, 0, [SDTCisFP<0>]>;
+def SDTX86FpGet2    : SDTypeProfile<2, 0, [SDTCisFP<0>, SDTCisSameAs<0, 1>]>;
 def SDTX86FpSet     : SDTypeProfile<0, 1, [SDTCisFP<0>]>;
 def SDTX86Fld       : SDTypeProfile<1, 2, [SDTCisFP<0>,
                                            SDTCisPtrTy<1>, 
@@ -32,6 +33,8 @@ def SDTX86FpToIMem  : SDTypeProfile<0, 2, [SDTCisFP<0>, SDTCisPtrTy<1>]>;
 def SDTX86CwdStore  : SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>;
 
 def X86fpget        : SDNode<"X86ISD::FP_GET_RESULT", SDTX86FpGet,
+                             [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
+def X86fpget2       : SDNode<"X86ISD::FP_GET_RESULT2", SDTX86FpGet2,
                              [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
 def X86fpset        : SDNode<"X86ISD::FP_SET_RESULT", SDTX86FpSet,
                              [SDNPHasChain, SDNPOutFlag]>;
@@ -144,6 +147,10 @@ def FpGETRESULT64 : FpI_<(outs RFP64:$dst), (ins), SpecialFP,
 
 def FpGETRESULT80 : FpI_<(outs RFP80:$dst), (ins), SpecialFP,
                       [(set RFP80:$dst, X86fpget)]>;           // FPR = ST(0)
+
+def FpGETRESULT80x2 : FpI_<(outs RFP80:$dst1, RFP80:$dst2), (ins), SpecialFP,
+                      []>;                        // FPR = ST(0), FPR = ST(1)
+
 
 let Defs = [ST0] in {
 def FpSETRESULT32 : FpI_<(outs), (ins RFP32:$src), SpecialFP,

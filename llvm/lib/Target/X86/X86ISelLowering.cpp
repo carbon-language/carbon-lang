@@ -907,6 +907,44 @@ LowerCallResult(SDOperand Chain, SDOperand InFlag, SDNode *TheCall,
                      &ResultVals[0], ResultVals.size()).Val;
 }
 
+/// LowerCallResultToTwo64BitRegs - Lower the result values of an x86-64
+/// ISD::CALL where the results are known to be in two 64-bit registers,
+/// e.g. XMM0 and XMM1. This simplify store the two values back to the
+/// fixed stack slot allocated for StructRet.
+SDNode *X86TargetLowering::
+LowerCallResultToTwo64BitRegs(SDOperand Chain, SDOperand InFlag,
+                              SDNode *TheCall, unsigned Reg1, unsigned Reg2,
+                              MVT::ValueType VT, SelectionDAG &DAG) {
+  SDOperand RetVal1 = DAG.getCopyFromReg(Chain, Reg1, VT, InFlag);
+  Chain = RetVal1.getValue(1);
+  InFlag = RetVal1.getValue(2);
+  SDOperand RetVal2 = DAG.getCopyFromReg(Chain, Reg2, VT, InFlag);
+  Chain = RetVal2.getValue(1);
+  InFlag = RetVal2.getValue(2);
+  SDOperand FIN = TheCall->getOperand(5);
+  Chain = DAG.getStore(Chain, RetVal1, FIN, NULL, 0);
+  FIN = DAG.getNode(ISD::ADD, getPointerTy(), FIN, DAG.getIntPtrConstant(8));
+  Chain = DAG.getStore(Chain, RetVal2, FIN, NULL, 0);
+  return Chain.Val;
+}
+
+/// LowerCallResultToTwoX87Regs - Lower the result values of an x86-64 ISD::CALL
+/// where the results are known to be in ST0 and ST1.
+SDNode *X86TargetLowering::
+LowerCallResultToTwoX87Regs(SDOperand Chain, SDOperand InFlag,
+                            SDNode *TheCall, SelectionDAG &DAG) {
+  SmallVector<SDOperand, 8> ResultVals;
+  const MVT::ValueType VTs[] = { MVT::f80, MVT::f80, MVT::Other, MVT::Flag };
+  SDVTList Tys = DAG.getVTList(VTs, 4);
+  SDOperand Ops[] = { Chain, InFlag };
+  SDOperand RetVal = DAG.getNode(X86ISD::FP_GET_RESULT2, Tys, Ops, 2);
+  Chain = RetVal.getValue(2);
+  SDOperand FIN = TheCall->getOperand(5);
+  Chain = DAG.getStore(Chain, RetVal.getValue(1), FIN, NULL, 0);
+  FIN = DAG.getNode(ISD::ADD, getPointerTy(), FIN, DAG.getIntPtrConstant(16));
+  Chain = DAG.getStore(Chain, RetVal, FIN, NULL, 0);
+  return Chain.Val;
+}
 
 //===----------------------------------------------------------------------===//
 //                C & StdCall & Fast Calling Convention implementation
@@ -1253,6 +1291,64 @@ X86TargetLowering::LowerMemOpCallTo(SDOperand Op, SelectionDAG &DAG,
   return DAG.getStore(Chain, Arg, PtrOff, NULL, 0);
 }
 
+/// ClassifyX86_64SRetCallReturn - Classify how to implement a x86-64
+/// struct return call to the specified function. X86-64 ABI specifies
+/// some SRet calls are actually returned in registers. Since current
+/// LLVM cannot represent multi-value calls, they are represent as 
+/// calls where the results are passed in a hidden struct provided by
+/// the caller. This function examines the type of the struct to
+/// determine the correct way to implement the call.
+X86::X86_64SRet
+X86TargetLowering::ClassifyX86_64SRetCallReturn(const Function *Fn) {
+  // FIXME: Disabled for now.
+  return X86::InMemory;
+
+  const PointerType *PTy = cast<PointerType>(Fn->arg_begin()->getType());
+  const Type *RTy = PTy->getElementType();
+  unsigned Size = getTargetData()->getABITypeSize(RTy);
+  if (Size != 16 && Size != 32)
+    return X86::InMemory;
+
+  if (Size == 32) {
+    const StructType *STy = dyn_cast<StructType>(RTy);
+    if (!STy) return X86::InMemory;
+    if (STy->getNumElements() == 2 &&
+        STy->getElementType(0) == Type::X86_FP80Ty &&
+        STy->getElementType(1) == Type::X86_FP80Ty)
+      return X86::InX87;
+  }
+
+  bool AllFP = true;
+  for (Type::subtype_iterator I = RTy->subtype_begin(), E = RTy->subtype_end();
+       I != E; ++I) {
+    const Type *STy = I->get();
+    if (!STy->isFPOrFPVector()) {
+      AllFP = false;
+      break;
+    }
+  }
+
+  if (AllFP)
+    return X86::InSSE;
+  return X86::InGPR64;
+}
+
+void X86TargetLowering::X86_64AnalyzeSRetCallOperands(SDNode *TheCall,
+                                                      CCAssignFn *Fn,
+                                                      CCState &CCInfo) {
+  unsigned NumOps = (TheCall->getNumOperands() - 5) / 2;
+  for (unsigned i = 1; i != NumOps; ++i) {
+    MVT::ValueType ArgVT = TheCall->getOperand(5+2*i).getValueType();
+    SDOperand FlagOp = TheCall->getOperand(5+2*i+1);
+    unsigned ArgFlags =cast<ConstantSDNode>(FlagOp)->getValue();
+    if (Fn(i, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, CCInfo)) {
+      cerr << "Call operand #" << i << " has unhandled type "
+           << MVT::getValueTypeString(ArgVT) << "\n";
+      abort();
+    }
+  }
+}
+
 SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   MachineFunction &MF = DAG.getMachineFunction();
   SDOperand Chain     = Op.getOperand(0);
@@ -1262,6 +1358,7 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
                         && CC == CallingConv::Fast && PerformTailCallOpt;
   SDOperand Callee    = Op.getOperand(4);
   bool Is64Bit        = Subtarget->is64Bit();
+  bool IsStructRet    = CallIsStructReturn(Op);
 
   assert(!(isVarArg && CC == CallingConv::Fast) &&
          "Var args not supported with calling convention fastcc");
@@ -1269,7 +1366,24 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs);
-  CCInfo.AnalyzeCallOperands(Op.Val, CCAssignFnForNode(Op));
+  CCAssignFn *CCFn = CCAssignFnForNode(Op);
+
+  X86::X86_64SRet SRetMethod = X86::InMemory;
+  if (Is64Bit && IsStructRet)
+    // FIXME: We can't figure out type of the sret structure for indirect
+    // calls. We need to copy more information from CallSite to the ISD::CALL
+    // node.
+    if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
+      SRetMethod =
+        ClassifyX86_64SRetCallReturn(dyn_cast<Function>(G->getGlobal()));
+
+  // UGLY HACK! For x86-64, some 128-bit aggregates are returns in a pair of
+  // registers. Unfortunately, llvm does not support i128 yet so we pretend it's
+  // a sret call.
+  if (SRetMethod != X86::InMemory)
+    X86_64AnalyzeSRetCallOperands(Op.Val, CCFn, CCInfo);
+  else 
+    CCInfo.AnalyzeCallOperands(Op.Val, CCFn);
   
   // Get a count of how many bytes are to be pushed on the stack.
   unsigned NumBytes = CCInfo.getNextStackOffset();
@@ -1540,7 +1654,7 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   unsigned NumBytesForCalleeToPush;
   if (IsCalleePop(Op))
     NumBytesForCalleeToPush = NumBytes;    // Callee pops everything
-  else if (!Is64Bit && CallIsStructReturn(Op))
+  else if (!Is64Bit && IsStructRet)
     // If this is is a call to a struct-return function, the callee
     // pops the hidden struct pointer, so we have to push it back.
     // This is common for Darwin/X86, Linux & Mingw32 targets.
@@ -1557,7 +1671,21 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
 
   // Handle result values, copying them out of physregs into vregs that we
   // return.
-  return SDOperand(LowerCallResult(Chain, InFlag, Op.Val, CC, DAG), Op.ResNo);
+  switch (SRetMethod) {
+  default:
+    return SDOperand(LowerCallResult(Chain, InFlag, Op.Val, CC, DAG), Op.ResNo);
+  case X86::InGPR64:
+    return SDOperand(LowerCallResultToTwo64BitRegs(Chain, InFlag, Op.Val,
+                                                   X86::RAX, X86::RDX,
+                                                   MVT::i64, DAG), Op.ResNo);
+  case X86::InSSE:
+    return SDOperand(LowerCallResultToTwo64BitRegs(Chain, InFlag, Op.Val,
+                                                   X86::XMM0, X86::XMM1,
+                                                   MVT::f64, DAG), Op.ResNo);
+  case X86::InX87:
+    return SDOperand(LowerCallResultToTwoX87Regs(Chain, InFlag, Op.Val, DAG),
+                     Op.ResNo);
+  }
 }
 
 
@@ -5114,6 +5242,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::FLD:                return "X86ISD::FLD";
   case X86ISD::FST:                return "X86ISD::FST";
   case X86ISD::FP_GET_RESULT:      return "X86ISD::FP_GET_RESULT";
+  case X86ISD::FP_GET_RESULT2:     return "X86ISD::FP_GET_RESULT2";
   case X86ISD::FP_SET_RESULT:      return "X86ISD::FP_SET_RESULT";
   case X86ISD::CALL:               return "X86ISD::CALL";
   case X86ISD::TAILCALL:           return "X86ISD::TAILCALL";

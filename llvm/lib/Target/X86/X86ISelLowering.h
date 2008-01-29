@@ -89,6 +89,10 @@ namespace llvm {
       /// writes a RFP result and a chain.
       FP_GET_RESULT,
 
+      /// FP_GET_RESULT2 - Same as FP_GET_RESULT except it copies two values
+      /// ST(0) and ST(1).
+      FP_GET_RESULT2,
+
       /// FP_SET_RESULT - This corresponds to FpSETRESULT pseudo instruction
       /// which copies the source operand to ST(0). It takes a chain+value and
       /// returns a chain and a flag.
@@ -201,96 +205,107 @@ namespace llvm {
     };
   }
 
- /// Define some predicates that are used for node matching.
- namespace X86 {
-   /// isPSHUFDMask - Return true if the specified VECTOR_SHUFFLE operand
-   /// specifies a shuffle of elements that is suitable for input to PSHUFD.
-   bool isPSHUFDMask(SDNode *N);
+  /// Define some predicates that are used for node matching.
+  namespace X86 {
+    /// isPSHUFDMask - Return true if the specified VECTOR_SHUFFLE operand
+    /// specifies a shuffle of elements that is suitable for input to PSHUFD.
+    bool isPSHUFDMask(SDNode *N);
 
-   /// isPSHUFHWMask - Return true if the specified VECTOR_SHUFFLE operand
-   /// specifies a shuffle of elements that is suitable for input to PSHUFD.
-   bool isPSHUFHWMask(SDNode *N);
+    /// isPSHUFHWMask - Return true if the specified VECTOR_SHUFFLE operand
+    /// specifies a shuffle of elements that is suitable for input to PSHUFD.
+    bool isPSHUFHWMask(SDNode *N);
 
-   /// isPSHUFLWMask - Return true if the specified VECTOR_SHUFFLE operand
-   /// specifies a shuffle of elements that is suitable for input to PSHUFD.
-   bool isPSHUFLWMask(SDNode *N);
+    /// isPSHUFLWMask - Return true if the specified VECTOR_SHUFFLE operand
+    /// specifies a shuffle of elements that is suitable for input to PSHUFD.
+    bool isPSHUFLWMask(SDNode *N);
 
-   /// isSHUFPMask - Return true if the specified VECTOR_SHUFFLE operand
-   /// specifies a shuffle of elements that is suitable for input to SHUFP*.
-   bool isSHUFPMask(SDNode *N);
+    /// isSHUFPMask - Return true if the specified VECTOR_SHUFFLE operand
+    /// specifies a shuffle of elements that is suitable for input to SHUFP*.
+    bool isSHUFPMask(SDNode *N);
 
-   /// isMOVHLPSMask - Return true if the specified VECTOR_SHUFFLE operand
-   /// specifies a shuffle of elements that is suitable for input to MOVHLPS.
-   bool isMOVHLPSMask(SDNode *N);
+    /// isMOVHLPSMask - Return true if the specified VECTOR_SHUFFLE operand
+    /// specifies a shuffle of elements that is suitable for input to MOVHLPS.
+    bool isMOVHLPSMask(SDNode *N);
 
-   /// isMOVHLPS_v_undef_Mask - Special case of isMOVHLPSMask for canonical form
-   /// of vector_shuffle v, v, <2, 3, 2, 3>, i.e. vector_shuffle v, undef,
-   /// <2, 3, 2, 3>
-   bool isMOVHLPS_v_undef_Mask(SDNode *N);
+    /// isMOVHLPS_v_undef_Mask - Special case of isMOVHLPSMask for canonical form
+    /// of vector_shuffle v, v, <2, 3, 2, 3>, i.e. vector_shuffle v, undef,
+    /// <2, 3, 2, 3>
+    bool isMOVHLPS_v_undef_Mask(SDNode *N);
 
-   /// isMOVLPMask - Return true if the specified VECTOR_SHUFFLE operand
-   /// specifies a shuffle of elements that is suitable for input to MOVLP{S|D}.
-   bool isMOVLPMask(SDNode *N);
+    /// isMOVLPMask - Return true if the specified VECTOR_SHUFFLE operand
+    /// specifies a shuffle of elements that is suitable for input to MOVLP{S|D}.
+    bool isMOVLPMask(SDNode *N);
 
-   /// isMOVHPMask - Return true if the specified VECTOR_SHUFFLE operand
-   /// specifies a shuffle of elements that is suitable for input to MOVHP{S|D}
-   /// as well as MOVLHPS.
-   bool isMOVHPMask(SDNode *N);
+    /// isMOVHPMask - Return true if the specified VECTOR_SHUFFLE operand
+    /// specifies a shuffle of elements that is suitable for input to MOVHP{S|D}
+    /// as well as MOVLHPS.
+    bool isMOVHPMask(SDNode *N);
 
-   /// isUNPCKLMask - Return true if the specified VECTOR_SHUFFLE operand
-   /// specifies a shuffle of elements that is suitable for input to UNPCKL.
-   bool isUNPCKLMask(SDNode *N, bool V2IsSplat = false);
+    /// isUNPCKLMask - Return true if the specified VECTOR_SHUFFLE operand
+    /// specifies a shuffle of elements that is suitable for input to UNPCKL.
+    bool isUNPCKLMask(SDNode *N, bool V2IsSplat = false);
 
-   /// isUNPCKHMask - Return true if the specified VECTOR_SHUFFLE operand
-   /// specifies a shuffle of elements that is suitable for input to UNPCKH.
-   bool isUNPCKHMask(SDNode *N, bool V2IsSplat = false);
+    /// isUNPCKHMask - Return true if the specified VECTOR_SHUFFLE operand
+    /// specifies a shuffle of elements that is suitable for input to UNPCKH.
+    bool isUNPCKHMask(SDNode *N, bool V2IsSplat = false);
 
-   /// isUNPCKL_v_undef_Mask - Special case of isUNPCKLMask for canonical form
-   /// of vector_shuffle v, v, <0, 4, 1, 5>, i.e. vector_shuffle v, undef,
-   /// <0, 0, 1, 1>
-   bool isUNPCKL_v_undef_Mask(SDNode *N);
+    /// isUNPCKL_v_undef_Mask - Special case of isUNPCKLMask for canonical form
+    /// of vector_shuffle v, v, <0, 4, 1, 5>, i.e. vector_shuffle v, undef,
+    /// <0, 0, 1, 1>
+    bool isUNPCKL_v_undef_Mask(SDNode *N);
 
-   /// isUNPCKH_v_undef_Mask - Special case of isUNPCKHMask for canonical form
-   /// of vector_shuffle v, v, <2, 6, 3, 7>, i.e. vector_shuffle v, undef,
-   /// <2, 2, 3, 3>
-   bool isUNPCKH_v_undef_Mask(SDNode *N);
+    /// isUNPCKH_v_undef_Mask - Special case of isUNPCKHMask for canonical form
+    /// of vector_shuffle v, v, <2, 6, 3, 7>, i.e. vector_shuffle v, undef,
+    /// <2, 2, 3, 3>
+    bool isUNPCKH_v_undef_Mask(SDNode *N);
 
-   /// isMOVLMask - Return true if the specified VECTOR_SHUFFLE operand
-   /// specifies a shuffle of elements that is suitable for input to MOVSS,
-   /// MOVSD, and MOVD, i.e. setting the lowest element.
-   bool isMOVLMask(SDNode *N);
+    /// isMOVLMask - Return true if the specified VECTOR_SHUFFLE operand
+    /// specifies a shuffle of elements that is suitable for input to MOVSS,
+    /// MOVSD, and MOVD, i.e. setting the lowest element.
+    bool isMOVLMask(SDNode *N);
 
-   /// isMOVSHDUPMask - Return true if the specified VECTOR_SHUFFLE operand
-   /// specifies a shuffle of elements that is suitable for input to MOVSHDUP.
-   bool isMOVSHDUPMask(SDNode *N);
+    /// isMOVSHDUPMask - Return true if the specified VECTOR_SHUFFLE operand
+    /// specifies a shuffle of elements that is suitable for input to MOVSHDUP.
+    bool isMOVSHDUPMask(SDNode *N);
 
-   /// isMOVSLDUPMask - Return true if the specified VECTOR_SHUFFLE operand
-   /// specifies a shuffle of elements that is suitable for input to MOVSLDUP.
-   bool isMOVSLDUPMask(SDNode *N);
+    /// isMOVSLDUPMask - Return true if the specified VECTOR_SHUFFLE operand
+    /// specifies a shuffle of elements that is suitable for input to MOVSLDUP.
+    bool isMOVSLDUPMask(SDNode *N);
 
-   /// isSplatMask - Return true if the specified VECTOR_SHUFFLE operand
-   /// specifies a splat of a single element.
-   bool isSplatMask(SDNode *N);
+    /// isSplatMask - Return true if the specified VECTOR_SHUFFLE operand
+    /// specifies a splat of a single element.
+    bool isSplatMask(SDNode *N);
 
-   /// isSplatLoMask - Return true if the specified VECTOR_SHUFFLE operand
-   /// specifies a splat of zero element.
-   bool isSplatLoMask(SDNode *N);
+    /// isSplatLoMask - Return true if the specified VECTOR_SHUFFLE operand
+    /// specifies a splat of zero element.
+    bool isSplatLoMask(SDNode *N);
 
-   /// getShuffleSHUFImmediate - Return the appropriate immediate to shuffle
-   /// the specified isShuffleMask VECTOR_SHUFFLE mask with PSHUF* and SHUFP*
-   /// instructions.
-   unsigned getShuffleSHUFImmediate(SDNode *N);
+    /// getShuffleSHUFImmediate - Return the appropriate immediate to shuffle
+    /// the specified isShuffleMask VECTOR_SHUFFLE mask with PSHUF* and SHUFP*
+    /// instructions.
+    unsigned getShuffleSHUFImmediate(SDNode *N);
 
-   /// getShufflePSHUFHWImmediate - Return the appropriate immediate to shuffle
-   /// the specified isShuffleMask VECTOR_SHUFFLE mask with PSHUFHW
-   /// instructions.
-   unsigned getShufflePSHUFHWImmediate(SDNode *N);
+    /// getShufflePSHUFHWImmediate - Return the appropriate immediate to shuffle
+    /// the specified isShuffleMask VECTOR_SHUFFLE mask with PSHUFHW
+    /// instructions.
+    unsigned getShufflePSHUFHWImmediate(SDNode *N);
 
-   /// getShufflePSHUFKWImmediate - Return the appropriate immediate to shuffle
-   /// the specified isShuffleMask VECTOR_SHUFFLE mask with PSHUFLW
-   /// instructions.
-   unsigned getShufflePSHUFLWImmediate(SDNode *N);
- }
+    /// getShufflePSHUFKWImmediate - Return the appropriate immediate to shuffle
+    /// the specified isShuffleMask VECTOR_SHUFFLE mask with PSHUFLW
+    /// instructions.
+    unsigned getShufflePSHUFLWImmediate(SDNode *N);
+  }
+
+  namespace X86 {
+   /// X86_64SRet - These represent different ways to implement x86_64 struct
+   /// returns call results.
+   enum X86_64SRet {
+     InMemory,    // Really is sret, returns in memory.
+     InGPR64,     // Returns in a pair of 64-bit integer registers.
+     InSSE,       // Returns in a pair of SSE registers.
+     InX87        // Returns in a pair of f80 X87 registers.
+   };
+  }
 
   //===--------------------------------------------------------------------===//
   //  X86TargetLowering - X86 Implementation of the TargetLowering interface
@@ -441,10 +456,21 @@ namespace llvm {
     /// When SSE2 is available, use it for f64 operations.
     bool X86ScalarSSEf32;
     bool X86ScalarSSEf64;
-    
+
+    X86::X86_64SRet ClassifyX86_64SRetCallReturn(const Function *Fn);
+
+    void X86_64AnalyzeSRetCallOperands(SDNode*, CCAssignFn*, CCState&);
+
     SDNode *LowerCallResult(SDOperand Chain, SDOperand InFlag, SDNode*TheCall,
                             unsigned CallingConv, SelectionDAG &DAG);
-        
+
+    SDNode *LowerCallResultToTwo64BitRegs(SDOperand Chain, SDOperand InFlag,
+                                          SDNode *TheCall, unsigned Reg1,
+                                          unsigned Reg2, MVT::ValueType VT,
+                                          SelectionDAG &DAG);        
+
+    SDNode *LowerCallResultToTwoX87Regs(SDOperand Chain, SDOperand InFlag,
+                                        SDNode *TheCall, SelectionDAG &DAG);        
 
     SDOperand LowerMemArgument(SDOperand Op, SelectionDAG &DAG,
                                const CCValAssign &VA,  MachineFrameInfo *MFI,

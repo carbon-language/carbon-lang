@@ -935,6 +935,11 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
     assert(StackTop == 0 && "Stack should be empty after a call!");
     pushReg(getFPReg(MI->getOperand(0)));
     break;
+  case X86::FpGETRESULT80x2:
+    assert(StackTop == 0 && "Stack should be empty after a call!");
+    pushReg(getFPReg(MI->getOperand(0)));
+    pushReg(getFPReg(MI->getOperand(1)));
+    break;
   case X86::FpSETRESULT32:
   case X86::FpSETRESULT64:
   case X86::FpSETRESULT80:
