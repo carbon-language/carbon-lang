@@ -235,8 +235,10 @@ public:
   ~ValueManager();
   
   ASTContext& getContext() const { return Ctx; }  
-  APSInt& getValue(const APSInt& X);      
-
+  APSInt& getValue(const APSInt& X);
+  APSInt& getValue(uint64_t X, unsigned BitWidth, bool isUnsigned);
+  APSInt& getValue(uint64_t X, QualType T,
+                   SourceLocation Loc = SourceLocation());
 };
 } // end anonymous namespace
 
@@ -247,8 +249,6 @@ ValueManager::~ValueManager() {
   for (APSIntSetTy::iterator I=APSIntSet.begin(), E=APSIntSet.end(); I!=E; ++I)
     I->getValue().~APSInt();
 }
-  
-  
 
 APSInt& ValueManager::getValue(const APSInt& X) {
   llvm::FoldingSetNodeID ID;
@@ -265,6 +265,19 @@ APSInt& ValueManager::getValue(const APSInt& X) {
   }
   
   return *P;
+}
+
+APSInt& ValueManager::getValue(uint64_t X, unsigned BitWidth, bool isUnsigned) {
+  APSInt V(BitWidth, isUnsigned);
+  V = X;  
+  return getValue(V);
+}
+
+APSInt& ValueManager::getValue(uint64_t X, QualType T, SourceLocation Loc) {
+  unsigned bits = Ctx.getTypeSize(T, Loc);
+  APSInt V(bits, T->isUnsignedIntegerType());
+  V = X;
+  return getValue(V);
 }
 
 //===----------------------------------------------------------------------===//
@@ -340,17 +353,6 @@ public:
   }  
 };
 
-class VISIBILITY_HIDDEN LValue : public RValue {
-protected:
-  LValue(unsigned SubKind, void* D) : RValue(D, true, SubKind) {}
-  
-public:  
-  // Implement isa<T> support.
-  static inline bool classof(const RValue* V) {
-    return V->getBaseKind() == LValueKind;
-  }
-};
-
 class VISIBILITY_HIDDEN NonLValue : public RValue {
 protected:
   NonLValue(unsigned SubKind, const void* d) : RValue(d, false, SubKind) {}
@@ -358,6 +360,7 @@ protected:
 public:
   void print(std::ostream& Out) const;
   
+  // Arithmetic operators.
   NonLValue Add(ValueManager& ValMgr, const NonLValue& RHS) const;
   NonLValue Sub(ValueManager& ValMgr, const NonLValue& RHS) const;
   NonLValue Mul(ValueManager& ValMgr, const NonLValue& RHS) const;
@@ -365,14 +368,40 @@ public:
   NonLValue Rem(ValueManager& ValMgr, const NonLValue& RHS) const;
   NonLValue UnaryMinus(ValueManager& ValMgr, UnaryOperator* U) const;
   
-  static NonLValue GetValue(ValueManager& ValMgr, const APSInt& V);
-  static NonLValue GetValue(ValueManager& ValMgr, IntegerLiteral* I);
+  // Equality operators.
+  NonLValue EQ(ValueManager& ValMgr, const NonLValue& RHS) const;
+  NonLValue NE(ValueManager& ValMgr, const NonLValue& RHS) const;
 
+  // Utility methods to create NonLValues.
+  static NonLValue GetValue(ValueManager& ValMgr, uint64_t X, QualType T,
+                            SourceLocation Loc = SourceLocation());
+  
+  static NonLValue GetValue(ValueManager& ValMgr, IntegerLiteral* I);
   static NonLValue GetSymbolValue(SymbolManager& SymMgr, ParmVarDecl *D);
   
+  static inline NonLValue GetIntTruthValue(ValueManager& ValMgr, bool X) {
+    return GetValue(ValMgr, X ? 1U : 0U, ValMgr.getContext().IntTy);
+  }
+    
   // Implement isa<T> support.
   static inline bool classof(const RValue* V) {
     return V->getBaseKind() >= NonLValueKind;
+  }
+};
+  
+class VISIBILITY_HIDDEN LValue : public RValue {
+protected:
+  LValue(unsigned SubKind, void* D) : RValue(D, true, SubKind) {}
+  
+public:
+  
+  // Equality operators.
+  NonLValue EQ(ValueManager& ValMgr, const LValue& RHS) const;
+  NonLValue NE(ValueManager& ValMgr, const LValue& RHS) const;
+  
+  // Implement isa<T> support.
+  static inline bool classof(const RValue* V) {
+    return V->getBaseKind() == LValueKind;
   }
 };
     
@@ -393,6 +422,14 @@ public:
   
   ValueDecl* getDecl() const {
     return static_cast<ValueDecl*>(getRawPtr());
+  }
+  
+  inline bool operator==(const LValueDecl& R) const {
+    return getDecl() == R.getDecl();
+  }
+
+  inline bool operator!=(const LValueDecl& R) const {
+    return getDecl() != R.getDecl();
   }
   
   // Implement isa<T> support.
@@ -435,10 +472,12 @@ public:
     return *static_cast<APSInt*>(getRawPtr());
   }
 
+  // Arithmetic operators.
+  
   ConcreteInt Add(ValueManager& ValMgr, const ConcreteInt& V) const {
     return ValMgr.getValue(getValue() + V.getValue());
   }
-
+  
   ConcreteInt Sub(ValueManager& ValMgr, const ConcreteInt& V) const {
     return ValMgr.getValue(getValue() - V.getValue());
   }
@@ -455,6 +494,14 @@ public:
     return ValMgr.getValue(getValue() % V.getValue());
   }
   
+  ConcreteInt UnaryMinus(ValueManager& ValMgr, UnaryOperator* U) const {
+    assert (U->getType() == U->getSubExpr()->getType());  
+    assert (U->getType()->isIntegerType());  
+    return ValMgr.getValue(-getValue()); 
+  }
+  
+  // Casting.
+  
   ConcreteInt Cast(ValueManager& ValMgr, Expr* CastExpr) const {
     assert (CastExpr->getType()->isIntegerType());
     
@@ -464,10 +511,18 @@ public:
     return ValMgr.getValue(X);
   }
   
-  ConcreteInt UnaryMinus(ValueManager& ValMgr, UnaryOperator* U) const {
-    assert (U->getType() == U->getSubExpr()->getType());  
-    assert (U->getType()->isIntegerType());  
-    return ValMgr.getValue(-getValue()); 
+  // Equality operators.
+
+  ConcreteInt EQ(ValueManager& ValMgr, const ConcreteInt& V) const {
+    const APSInt& Val = getValue();    
+    return ValMgr.getValue(Val == V.getValue() ? 1U : 0U,
+                           Val.getBitWidth(), Val.isUnsigned());
+  }
+  
+  ConcreteInt NE(ValueManager& ValMgr, const ConcreteInt& V) const {
+    const APSInt& Val = getValue();    
+    return ValMgr.getValue(Val != V.getValue() ? 1U : 0U,
+                           Val.getBitWidth(), Val.isUnsigned());
   }
 
   // Implement isa<T> support.
@@ -479,7 +534,7 @@ public:
 } // end anonymous namespace
 
 //===----------------------------------------------------------------------===//
-// Transfer function dispatch.
+// Transfer function dispatch for Non-LValues.
 //===----------------------------------------------------------------------===//
 
 RValue RValue::Cast(ValueManager& ValMgr, Expr* CastExpr) const {
@@ -500,13 +555,13 @@ NonLValue NonLValue::UnaryMinus(ValueManager& ValMgr, UnaryOperator* U) const {
   }
 }
 
-#define RVALUE_DISPATCH_CASE(k1,k2,Op)\
+#define NONLVALUE_DISPATCH_CASE(k1,k2,Op)\
 case (k1##Kind*NumNonLValueKind+k2##Kind):\
   return cast<k1>(*this).Op(ValMgr,cast<k2>(RHS));
 
-#define RVALUE_DISPATCH(Op)\
+#define NONLVALUE_DISPATCH(Op)\
 switch (getSubKind()*NumNonLValueKind+RHS.getSubKind()){\
-  RVALUE_DISPATCH_CASE(ConcreteInt,ConcreteInt,Op)\
+  NONLVALUE_DISPATCH_CASE(ConcreteInt,ConcreteInt,Op)\
   default:\
     if (getBaseKind() == UninitializedKind ||\
         RHS.getBaseKind() == UninitializedKind)\
@@ -517,35 +572,82 @@ switch (getSubKind()*NumNonLValueKind+RHS.getSubKind()){\
 return cast<NonLValue>(InvalidValue());
 
 NonLValue NonLValue::Add(ValueManager& ValMgr, const NonLValue& RHS) const {
-  RVALUE_DISPATCH(Add)
+  NONLVALUE_DISPATCH(Add)
 }
 
 NonLValue NonLValue::Sub(ValueManager& ValMgr, const NonLValue& RHS) const {
-  RVALUE_DISPATCH(Sub)
+  NONLVALUE_DISPATCH(Sub)
 }
 
 NonLValue NonLValue::Mul(ValueManager& ValMgr, const NonLValue& RHS) const {
-  RVALUE_DISPATCH(Mul)
+  NONLVALUE_DISPATCH(Mul)
 }
 
 NonLValue NonLValue::Div(ValueManager& ValMgr, const NonLValue& RHS) const {
-  RVALUE_DISPATCH(Div)
+  NONLVALUE_DISPATCH(Div)
 }
 
 NonLValue NonLValue::Rem(ValueManager& ValMgr, const NonLValue& RHS) const {
-  RVALUE_DISPATCH(Rem)
+  NONLVALUE_DISPATCH(Rem)
+}
+
+NonLValue NonLValue::EQ(ValueManager& ValMgr, const NonLValue& RHS) const {  
+  NONLVALUE_DISPATCH(EQ)
+}
+
+NonLValue NonLValue::NE(ValueManager& ValMgr, const NonLValue& RHS) const {
+  NONLVALUE_DISPATCH(NE)
+}
+
+#undef NONLVALUE_DISPATCH_CASE
+#undef NONLVALUE_DISPATCH
+
+//===----------------------------------------------------------------------===//
+// Transfer function dispatch for LValues.
+//===----------------------------------------------------------------------===//
+
+
+NonLValue LValue::EQ(ValueManager& ValMgr, const LValue& RHS) const {
+  if (getSubKind() != RHS.getSubKind())
+    return NonLValue::GetIntTruthValue(ValMgr, false);
+  
+  switch (getSubKind()) {
+    default:
+      assert(false && "EQ not implemented for this LValue.");
+      return cast<NonLValue>(InvalidValue());
+      
+    case LValueDeclKind: {
+      bool b = cast<LValueDecl>(*this) == cast<LValueDecl>(RHS);
+      return NonLValue::GetIntTruthValue(ValMgr, b);
+    }
+  }
+}
+
+NonLValue LValue::NE(ValueManager& ValMgr, const LValue& RHS) const {
+  if (getSubKind() != RHS.getSubKind())
+    return NonLValue::GetIntTruthValue(ValMgr, false);
+
+  switch (getSubKind()) {
+    default:
+      assert(false && "EQ not implemented for this LValue.");
+      return cast<NonLValue>(InvalidValue());
+      
+    case LValueDeclKind: {
+      bool b = cast<LValueDecl>(*this) != cast<LValueDecl>(RHS);
+      return NonLValue::GetIntTruthValue(ValMgr, b);
+    }
+  }
 }
 
 
-#undef RVALUE_DISPATCH_CASE
-#undef RVALUE_DISPATCH
-
 //===----------------------------------------------------------------------===//
-// Utility methods for constructing RValues.
+// Utility methods for constructing Non-LValues.
 //===----------------------------------------------------------------------===//
 
-NonLValue NonLValue::GetValue(ValueManager& ValMgr, const APSInt& V) {
-  return ConcreteInt(ValMgr.getValue(V));
+NonLValue NonLValue::GetValue(ValueManager& ValMgr, uint64_t X, QualType T,
+                              SourceLocation Loc) {
+
+  return ConcreteInt(ValMgr.getValue(X, T, Loc));
 }
 
 NonLValue NonLValue::GetValue(ValueManager& ValMgr, IntegerLiteral* I) {
@@ -1007,11 +1109,8 @@ void GRConstants::VisitUnaryOperator(UnaryOperator* U,
       case UnaryOperator::PostInc: {
         const LValue& L1 = GetLValue(St, U->getSubExpr());
         NonLValue R1 = cast<NonLValue>(GetValue(St, L1));
-
-        QualType T = U->getType();
-        unsigned bits = getContext().getTypeSize(T, U->getLocStart());
-        APSInt One(llvm::APInt(bits, 1), T->isUnsignedIntegerType());
-        NonLValue R2 = NonLValue::GetValue(ValMgr, One);
+        NonLValue R2 = NonLValue::GetValue(ValMgr, 1U, U->getType(),
+                                           U->getLocStart());
         
         NonLValue Result = R1.Add(ValMgr, R2);
         Nodify(Dst, U, N1, SetValue(SetValue(St, U, R1), L1, Result));
@@ -1021,11 +1120,8 @@ void GRConstants::VisitUnaryOperator(UnaryOperator* U,
       case UnaryOperator::PostDec: {
         const LValue& L1 = GetLValue(St, U->getSubExpr());
         NonLValue R1 = cast<NonLValue>(GetValue(St, L1));
-        
-        QualType T = U->getType();
-        unsigned bits = getContext().getTypeSize(T, U->getLocStart());
-        APSInt One(llvm::APInt(bits, 1), T->isUnsignedIntegerType());
-        NonLValue R2 = NonLValue::GetValue(ValMgr, One);
+        NonLValue R2 = NonLValue::GetValue(ValMgr, 1U, U->getType(),
+                                           U->getLocStart());
         
         NonLValue Result = R1.Sub(ValMgr, R2);
         Nodify(Dst, U, N1, SetValue(SetValue(St, U, R1), L1, Result));
@@ -1035,11 +1131,8 @@ void GRConstants::VisitUnaryOperator(UnaryOperator* U,
       case UnaryOperator::PreInc: {
         const LValue& L1 = GetLValue(St, U->getSubExpr());
         NonLValue R1 = cast<NonLValue>(GetValue(St, L1));
-        
-        QualType T = U->getType();
-        unsigned bits = getContext().getTypeSize(T, U->getLocStart());
-        APSInt One(llvm::APInt(bits, 1), T->isUnsignedIntegerType());
-        NonLValue R2 = NonLValue::GetValue(ValMgr, One);        
+        NonLValue R2 = NonLValue::GetValue(ValMgr, 1U, U->getType(),
+                                           U->getLocStart());        
         
         NonLValue Result = R1.Add(ValMgr, R2);
         Nodify(Dst, U, N1, SetValue(SetValue(St, U, Result), L1, Result));
@@ -1049,11 +1142,8 @@ void GRConstants::VisitUnaryOperator(UnaryOperator* U,
       case UnaryOperator::PreDec: {
         const LValue& L1 = GetLValue(St, U->getSubExpr());
         NonLValue R1 = cast<NonLValue>(GetValue(St, L1));
-        
-        QualType T = U->getType();
-        unsigned bits = getContext().getTypeSize(T, U->getLocStart());
-        APSInt One(llvm::APInt(bits, 1), T->isUnsignedIntegerType());
-        NonLValue R2 = NonLValue::GetValue(ValMgr, One);       
+        NonLValue R2 = NonLValue::GetValue(ValMgr, 1U, U->getType(),
+                                           U->getLocStart());
         
         NonLValue Result = R1.Sub(ValMgr, R2);
         Nodify(Dst, U, N1, SetValue(SetValue(St, U, Result), L1, Result));
@@ -1098,6 +1188,12 @@ void GRConstants::VisitBinaryOperator(BinaryOperator* B,
       const RValue& V2 = GetValue(St, B->getRHS());
 
       switch (B->getOpcode()) {
+        default: 
+          Dst.Add(N2);
+          break;
+          
+        // Arithmetic opreators.
+          
         case BinaryOperator::Add: {
           const NonLValue& R1 = cast<NonLValue>(V1);
           const NonLValue& R2 = cast<NonLValue>(V2);
@@ -1133,6 +1229,8 @@ void GRConstants::VisitBinaryOperator(BinaryOperator* B,
 	        Nodify(Dst, B, N2, SetValue(St, B, R1.Rem(ValMgr, R2)));
           break;
         }
+          
+        // Assignment operators.
           
         case BinaryOperator::Assign: {
           const LValue& L1 = cast<LValue>(V1);
@@ -1180,9 +1278,28 @@ void GRConstants::VisitBinaryOperator(BinaryOperator* B,
           Nodify(Dst, B, N2, SetValue(SetValue(St, B, Result), L1, Result));
           break;
         }
+          
+        // Equality operators.
 
-        default: 
-          Dst.Add(N2);
+        case BinaryOperator::EQ:
+          // FIXME: should we allow XX.EQ() to return a set of values,
+          //  allowing state bifurcation?  In such cases, they will also
+          //  modify the state (meaning that a new state will be returned
+          //  as well).
+          assert (B->getType() == getContext().IntTy);
+          
+          if (isa<LValue>(V1)) {
+            const LValue& L1 = cast<LValue>(V1);
+            const LValue& L2 = cast<LValue>(V2);
+            St = SetValue(St, B, L1.EQ(ValMgr, L2));
+          }
+          else {
+            const NonLValue& R1 = cast<NonLValue>(V1);
+            const NonLValue& R2 = cast<NonLValue>(V2);
+            St = SetValue(St, B, R1.EQ(ValMgr, R2));
+          }
+          
+          Nodify(Dst, B, N2, St);
           break;
       }
     }
