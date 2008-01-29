@@ -48,8 +48,16 @@ using llvm::APSInt;
 //===----------------------------------------------------------------------===//
 namespace {
 
-typedef unsigned SymbolID;
+class SymbolID {
+  unsigned Data;
+public:
+  SymbolID() : Data(~0) {}
+  SymbolID(unsigned x) : Data(x) {}
   
+  bool isInitialized() const { return Data != (unsigned) ~0; }
+  operator unsigned() const { assert (isInitialized()); return Data; }
+};
+
 class VISIBILITY_HIDDEN ValueKey {
   uintptr_t Raw;  
   void operator=(const ValueKey& RHS); // Do not implement.
@@ -70,7 +78,7 @@ public:
   
   inline SymbolID getSymbolID() const {
     assert (getKind() == IsSymbol);
-    return (SymbolID) (Raw >> 2);
+    return Raw >> 2;
   }
   
   ValueKey(const ValueDecl* VD)
@@ -140,6 +148,70 @@ namespace llvm {
     }
   };
 } // end llvm namespace
+
+
+//===----------------------------------------------------------------------===//
+// SymbolManager.
+//===----------------------------------------------------------------------===//
+
+namespace {
+class VISIBILITY_HIDDEN SymbolData {
+  uintptr_t Data;
+public:
+  enum Kind { ParmKind = 0x0, Mask = 0x3 };
+  
+  SymbolData(ParmVarDecl* D)
+    : Data(reinterpret_cast<uintptr_t>(D) | ParmKind) {}
+  
+  inline Kind getKind() const { return (Kind) (Data & Mask); }
+  inline void* getPtr() const { return reinterpret_cast<void*>(Data & ~Mask); }  
+  inline bool operator==(const SymbolData& R) const { return Data == R.Data; }  
+};
+}
+
+// Machinery to get cast<> and dyn_cast<> working with SymbolData.
+namespace llvm {
+  template<> inline bool isa<ParmVarDecl,SymbolData>(const SymbolData& V) {
+    return V.getKind() == SymbolData::ParmKind;
+  }
+  template<> struct VISIBILITY_HIDDEN cast_retty_impl<ParmVarDecl,SymbolData> {
+    typedef const ParmVarDecl* ret_type;
+  };
+  template<> struct VISIBILITY_HIDDEN simplify_type<SymbolData> {
+    typedef void* SimpleType;
+    static inline SimpleType getSimplifiedValue(const SymbolData &V) {
+      return V.getPtr();
+    }
+  };
+} // end llvm namespace
+
+namespace {
+class VISIBILITY_HIDDEN SymbolManager {
+  std::vector<SymbolData> SymbolToData;
+  
+  typedef llvm::DenseMap<void*,SymbolID> MapTy;
+  MapTy DataToSymbol;
+  
+public:
+  SymbolData getSymbolData(SymbolID id) const {
+    assert (id < SymbolToData.size());
+    return SymbolToData[id];
+  }
+  
+  SymbolID getSymbol(ParmVarDecl* D);
+};
+} // end anonymous namespace
+
+SymbolID SymbolManager::getSymbol(ParmVarDecl* D) {
+  SymbolID& X = DataToSymbol[D];
+
+  if (!X.isInitialized()) {
+    X = SymbolToData.size();
+    SymbolToData.push_back(D);
+  }
+  
+  return X;
+}
 
 //===----------------------------------------------------------------------===//
 // ValueManager.
@@ -295,6 +367,8 @@ public:
   
   static NonLValue GetValue(ValueManager& ValMgr, const APSInt& V);
   static NonLValue GetValue(ValueManager& ValMgr, IntegerLiteral* I);
+
+  static NonLValue GetSymbolValue(SymbolManager& SymMgr, ParmVarDecl *D);
   
   // Implement isa<T> support.
   static inline bool classof(const RValue* V) {
@@ -479,6 +553,10 @@ NonLValue NonLValue::GetValue(ValueManager& ValMgr, IntegerLiteral* I) {
                                        I->getType()->isUnsignedIntegerType())));
 }
 
+NonLValue NonLValue::GetSymbolValue(SymbolManager& SymMgr, ParmVarDecl* D) {
+  return SymbolicNonLValue(SymMgr.getSymbol(D));
+}
+
 //===----------------------------------------------------------------------===//
 // Pretty-Printing.
 //===----------------------------------------------------------------------===//
@@ -492,7 +570,7 @@ void RValue::print(std::ostream& Out) const {
     case NonLValueKind:
       cast<NonLValue>(this)->print(Out);
       break;
-      
+
     case LValueKind:
       assert (false && "FIXME: LValue printing not implemented.");  
       break;
@@ -510,6 +588,10 @@ void NonLValue::print(std::ostream& Out) const {
   switch (getSubKind()) {  
     case ConcreteIntKind:
       Out << cast<ConcreteInt>(this)->getValue().toString();
+      break;
+      
+    case SymbolicNonLValueKind:
+      Out << "sym-" << cast<SymbolicNonLValue>(this)->getSymbolID();
       break;
       
     default:
@@ -591,6 +673,9 @@ protected:
   /// ValueMgr - Object that manages the data for all created RValues.
   ValueManager ValMgr;
   
+  /// SymMgr - Object that manages the symbol information.
+  SymbolManager SymMgr;
+  
   /// StmtEntryNode - The immediate predecessor node.
   NodeTy* StmtEntryNode;
   
@@ -631,7 +716,7 @@ public:
         continue;
       
       // FIXME: Set these values to a symbol, not Uninitialized.
-      St = SetValue(St, LValueDecl(*I), UninitializedValue());
+      St = SetValue(St, LValueDecl(*I), NonLValue::GetSymbolValue(SymMgr, *I));
     }
     
     return St;
