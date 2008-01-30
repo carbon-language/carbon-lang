@@ -1110,26 +1110,29 @@ Parser::StmtResult Parser::ParseObjCThrowStmt(SourceLocation atLoc) {
 }
 
 /// objc-synchronized-statement:
-///   @synchronized '(' expression ')'
+///   @synchronized '(' expression ')' compound-statement
 ///
 Parser::StmtResult Parser::ParseObjCSynchronizedStmt(SourceLocation atLoc) {
-  ExprResult Res;
   ConsumeToken(); // consume synchronized
   if (Tok.isNot(tok::l_paren)) {
     Diag (Tok, diag::err_expected_lparen_after, "@synchronized");
     return true;
   }
   ConsumeParen();  // '('
-  Res = ParseExpression();
+  ExprResult Res = ParseExpression();
   if (Res.isInvalid) {
     SkipUntil(tok::semi);
     return true;
   }
   if (Tok.isNot(tok::r_paren)) {
-    Diag (Tok, diag::err_expected_rparen);
+    Diag (Tok, diag::err_expected_lbrace);
     return true;
   }
   ConsumeParen();  // ')'
+  if (Tok.isNot(tok::l_brace)) {
+    Diag (Tok, diag::err_expected_lbrace);
+    return true;
+  }
   StmtResult SynchBody = ParseCompoundStatementBody();
   if (SynchBody.isInvalid)
     SynchBody = Actions.ActOnNullStmt(Tok.getLocation());

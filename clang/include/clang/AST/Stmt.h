@@ -934,6 +934,9 @@ public:
 };
 
 /// ObjCAtSynchronizedStmt - This is for objective-c's @synchronized statement.
+/// Example: @synchronized (sem) {
+///             do-somthing;
+///          }
 ///
 class ObjCAtSynchronizedStmt : public Stmt {
 private:
@@ -950,8 +953,12 @@ public:
       AtSynchronizedLoc = atSynchronizedLoc;
     }
   
-  const Stmt *getSynchBody() const { return SubStmts[SYNC_BODY]; }
-  Stmt *getSynchBody() { return SubStmts[SYNC_BODY]; }
+  const CompoundStmt *getSynchBody() const {
+    return reinterpret_cast<CompoundStmt*>(SubStmts[SYNC_BODY]);
+  }
+  CompoundStmt *getSynchBody() { 
+    return reinterpret_cast<CompoundStmt*>(SubStmts[SYNC_BODY]); 
+  }
   
   const Expr *getSynchExpr() const { 
     return reinterpret_cast<Expr*>(SubStmts[SYNC_EXPR]); 

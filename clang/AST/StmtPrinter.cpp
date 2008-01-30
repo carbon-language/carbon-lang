@@ -446,7 +446,7 @@ void StmtPrinter::VisitObjCAtCatchStmt (ObjCAtCatchStmt *Node) {
   Indent() << "@catch (...) { /* todo */ } \n";
 }
 
-void StmtPrinter::VisitObjCAtThrowStmt (ObjCAtThrowStmt *Node) {
+void StmtPrinter::VisitObjCAtThrowStmt(ObjCAtThrowStmt *Node) {
   Indent() << "@throw";
   if (Node->getThrowExpr()) {
     OS << " ";
@@ -455,15 +455,12 @@ void StmtPrinter::VisitObjCAtThrowStmt (ObjCAtThrowStmt *Node) {
   OS << ";\n";
 }
 
-void StmtPrinter::VisitObjCAtSynchronizedStmt (ObjCAtSynchronizedStmt *Node) {
+void StmtPrinter::VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt *Node) {
   Indent() << "@synchronized (";
   PrintExpr(Node->getSynchExpr());
   OS << ")";
-  if (CompoundStmt *CS = dyn_cast<CompoundStmt>(Node->getSynchBody()))
-    {
-      PrintRawCompoundStmt(CS);
-      OS << "\n";
-    }
+  PrintRawCompoundStmt(Node->getSynchBody());
+  OS << "\n";
 }
 
 //===----------------------------------------------------------------------===//
