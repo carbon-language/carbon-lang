@@ -402,9 +402,9 @@ void LiveInterval::MergeValueInAsValue(const LiveInterval &RHS,
     IP = std::upper_bound(IP, end(), Start);
     // If the start of this range overlaps with an existing liverange, trim it.
     if (IP != begin() && IP[-1].end > Start) {
-      if (IP->valno != LHSValNo) {
-        ReplacedValNos.push_back(IP->valno);
-        IP->valno = LHSValNo; // Update val#.
+      if (IP[-1].valno != LHSValNo) {
+        ReplacedValNos.push_back(IP[-1].valno);
+        IP[-1].valno = LHSValNo; // Update val#.
       }
       Start = IP[-1].end;
       // Trimmed away the whole range?
