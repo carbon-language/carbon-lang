@@ -289,7 +289,9 @@ namespace {
 class VISIBILITY_HIDDEN RValue {
 public:
   enum BaseKind { LValueKind=0x0, NonLValueKind=0x1,
-                  UninitializedKind=0x2, InvalidKind=0x3, BaseFlags = 0x3 };
+                  UninitializedKind=0x2, InvalidKind=0x3 };
+  
+  enum { BaseBits = 2, BaseMask = 0x3 };
     
 private:
   void* Data;
@@ -298,7 +300,7 @@ private:
 protected:
   RValue(const void* d, bool isLValue, unsigned ValKind)
     : Data(const_cast<void*>(d)),
-      Kind((isLValue ? LValueKind : NonLValueKind) | (ValKind << 2)) {}
+      Kind((isLValue ? LValueKind : NonLValueKind) | (ValKind << BaseBits)) {}
   
   explicit RValue(BaseKind k)
     : Data(0), Kind(k) {}
@@ -313,8 +315,8 @@ public:
   RValue Cast(ValueManager& ValMgr, Expr* CastExpr) const;
   
   unsigned getRawKind() const { return Kind; }
-  BaseKind getBaseKind() const { return (BaseKind) (Kind & 0x3); }
-  unsigned getSubKind() const { return (Kind & ~0x3) >> 2; }   
+  BaseKind getBaseKind() const { return (BaseKind) (Kind & BaseMask); }
+  unsigned getSubKind() const { return (Kind & ~BaseMask) >> BaseBits; }
   
   void Profile(llvm::FoldingSetNodeID& ID) const {
     ID.AddInteger((unsigned) getRawKind());
@@ -693,7 +695,7 @@ void NonLValue::print(std::ostream& Out) const {
       break;
       
     case SymbolicNonLValueKind:
-      Out << "sym-" << cast<SymbolicNonLValue>(this)->getSymbolID();
+      Out << '$' << cast<SymbolicNonLValue>(this)->getSymbolID();
       break;
       
     default:
