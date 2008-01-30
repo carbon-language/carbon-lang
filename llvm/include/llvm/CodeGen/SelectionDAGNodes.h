@@ -1477,6 +1477,12 @@ public:
 ///
 class LSBaseSDNode : public SDNode {
 private:
+  // AddrMode - unindexed, pre-indexed, post-indexed.
+  ISD::MemIndexedMode AddrMode;
+
+  // MemoryVT - VT of in-memory value.
+  MVT::ValueType MemoryVT;
+
   //! SrcValue - Memory location for alias analysis.
   const Value *SrcValue;
 
@@ -1497,11 +1503,20 @@ protected:
    */
   SDOperand Ops[4];
 public:
-  LSBaseSDNode(ISD::NodeType NodeTy, SDVTList VTs, const Value *SV, int SVO,
-               unsigned Align, bool Vol)
+  LSBaseSDNode(ISD::NodeType NodeTy, SDOperand *Operands, unsigned NumOperands,
+               SDVTList VTs, ISD::MemIndexedMode AM, MVT::ValueType VT, 
+               const Value *SV, int SVO, unsigned Align, bool Vol)
     : SDNode(NodeTy, VTs),
+      AddrMode(AM), MemoryVT(VT),
       SrcValue(SV), SVOffset(SVO), Alignment(Align), IsVolatile(Vol)
-  { }
+  {
+    for (unsigned i = 0; i != NumOperands; ++i)
+      Ops[i] = Operands[i];
+    InitOperands(Ops, NumOperands);
+    assert(Align != 0 && "Loads and stores should have non-zero aligment");
+    assert((getOffset().getOpcode() == ISD::UNDEF || isIndexed()) &&
+           "Only indexed loads and stores have a non-undef offset operand");
+  }
 
   const SDOperand getChain() const {
     return getOperand(0);
@@ -1520,10 +1535,22 @@ public:
   const Value *getSrcValue() const { return SrcValue; }
   int getSrcValueOffset() const { return SVOffset; }
   unsigned getAlignment() const { return Alignment; }
+  MVT::ValueType getMemoryVT() const { return MemoryVT; }
   bool isVolatile() const { return IsVolatile; }
 
+  ISD::MemIndexedMode getAddressingMode() const { return AddrMode; }
+
+  /// isIndexed - Return true if this is a pre/post inc/dec load/store.
+  bool isIndexed() const { return AddrMode != ISD::UNINDEXED; }
+
+  /// isUnindexed - Return true if this is NOT a pre/post inc/dec load/store.
+  bool isUnindexed() const { return AddrMode == ISD::UNINDEXED; }
+
   static bool classof(const LSBaseSDNode *N) { return true; }
-  static bool classof(const SDNode *N) { return true; }
+  static bool classof(const SDNode *N) {
+    return N->getOpcode() == ISD::LOAD ||
+           N->getOpcode() == ISD::STORE;
+  }
 };
 
 /// LoadSDNode - This class is used to represent ISD::LOAD nodes.
@@ -1531,41 +1558,20 @@ public:
 class LoadSDNode : public LSBaseSDNode {
   virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
   
-  // AddrMode - unindexed, pre-indexed, post-indexed.
-  ISD::MemIndexedMode AddrMode;
-
   // ExtType - non-ext, anyext, sext, zext.
   ISD::LoadExtType ExtType;
 
-  // LoadedVT - VT of loaded value before extension.
-  MVT::ValueType LoadedVT;
 protected:
   friend class SelectionDAG;
   LoadSDNode(SDOperand *ChainPtrOff, SDVTList VTs,
              ISD::MemIndexedMode AM, ISD::LoadExtType ETy, MVT::ValueType LVT,
              const Value *SV, int O=0, unsigned Align=0, bool Vol=false)
-    : LSBaseSDNode(ISD::LOAD, VTs, SV, O, Align, Vol),
-      AddrMode(AM), ExtType(ETy), LoadedVT(LVT) {
-    Ops[0] = ChainPtrOff[0]; // Chain
-    Ops[1] = ChainPtrOff[1]; // Ptr
-    Ops[2] = ChainPtrOff[2]; // Off
-    InitOperands(Ops, 3);
-    assert(Align != 0 && "Loads should have non-zero aligment");
-    assert((getOffset().getOpcode() == ISD::UNDEF ||
-            AddrMode != ISD::UNINDEXED) &&
-           "Only indexed load has a non-undef offset operand");
-  }
+    : LSBaseSDNode(ISD::LOAD, ChainPtrOff, 3,
+                   VTs, AM, LVT, SV, O, Align, Vol),
+      ExtType(ETy) { }
 public:
 
-  ISD::MemIndexedMode getAddressingMode() const { return AddrMode; }
   ISD::LoadExtType getExtensionType() const { return ExtType; }
-  MVT::ValueType getLoadedVT() const { return LoadedVT; }
-
-  /// isIndexed - Return true if this is a pre/post inc/dec load.
-  bool isIndexed() const { return AddrMode != ISD::UNINDEXED; }
-  
-  /// isUnindexed - Return true if this is NOT a pre/post inc/dec load.
-  bool isUnindexed() const { return AddrMode == ISD::UNINDEXED; }
   
   static bool classof(const LoadSDNode *) { return true; }
   static bool classof(const SDNode *N) {
@@ -1578,41 +1584,19 @@ public:
 class StoreSDNode : public LSBaseSDNode {
   virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
     
-  // AddrMode - unindexed, pre-indexed, post-indexed.
-  ISD::MemIndexedMode AddrMode;
-
   // IsTruncStore - True if the op does a truncation before store.
   bool IsTruncStore;
-
-  // StoredVT - VT of the value after truncation.
-  MVT::ValueType StoredVT;
 protected:
   friend class SelectionDAG;
   StoreSDNode(SDOperand *ChainValuePtrOff, SDVTList VTs,
               ISD::MemIndexedMode AM, bool isTrunc, MVT::ValueType SVT,
               const Value *SV, int O=0, unsigned Align=0, bool Vol=false)
-    : LSBaseSDNode(ISD::STORE, VTs, SV, O, Align, Vol),
-      AddrMode(AM), IsTruncStore(isTrunc), StoredVT(SVT) {
-    Ops[0] = ChainValuePtrOff[0]; // Chain
-    Ops[1] = ChainValuePtrOff[1]; // Value
-    Ops[2] = ChainValuePtrOff[2]; // Ptr
-    Ops[3] = ChainValuePtrOff[3]; // Off
-    InitOperands(Ops, 4);
-    assert(Align != 0 && "Stores should have non-zero aligment");
-    assert((getOffset().getOpcode() == ISD::UNDEF || isIndexed()) &&
-           "Only indexed store has a non-undef offset operand");
-  }
+    : LSBaseSDNode(ISD::STORE, ChainValuePtrOff, 4,
+                   VTs, AM, SVT, SV, O, Align, Vol),
+      IsTruncStore(isTrunc) { }
 public:
 
   bool isTruncatingStore() const { return IsTruncStore; }
-  MVT::ValueType getStoredVT() const { return StoredVT; }
-  ISD::MemIndexedMode getAddressingMode() const { return AddrMode; }
-
-  /// isIndexed - Return true if this is a pre/post inc/dec store.
-  bool isIndexed() const { return AddrMode != ISD::UNINDEXED; }
-
-  /// isUnindexed - Return true if this is NOT a pre/post inc/dec store.
-  bool isUnindexed() const { return AddrMode == ISD::UNINDEXED; }
   
   static bool classof(const StoreSDNode *) { return true; }
   static bool classof(const SDNode *N) {

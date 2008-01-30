@@ -842,7 +842,7 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op, uint64_t DemandedMask,
   case ISD::LOAD: {
     if (ISD::isZEXTLoad(Op.Val)) {
       LoadSDNode *LD = cast<LoadSDNode>(Op);
-      MVT::ValueType VT = LD->getLoadedVT();
+      MVT::ValueType VT = LD->getMemoryVT();
       KnownZero |= ~MVT::getIntVTBitMask(VT) & DemandedMask;
     }
     break;

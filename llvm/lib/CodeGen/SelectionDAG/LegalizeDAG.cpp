@@ -566,7 +566,7 @@ SDOperand ExpandUnalignedStore(StoreSDNode *ST, SelectionDAG &DAG,
   MVT::ValueType VT = Val.getValueType();
   int Alignment = ST->getAlignment();
   int SVOffset = ST->getSrcValueOffset();
-  if (MVT::isFloatingPoint(ST->getStoredVT())) {
+  if (MVT::isFloatingPoint(ST->getMemoryVT())) {
     // Expand to a bitconvert of the value to the integer type of the 
     // same size, then a (misaligned) int store.
     MVT::ValueType intVT;
@@ -581,10 +581,10 @@ SDOperand ExpandUnalignedStore(StoreSDNode *ST, SelectionDAG &DAG,
     return DAG.getStore(Chain, Result, Ptr, ST->getSrcValue(),
                         SVOffset, ST->isVolatile(), Alignment);
   }
-  assert(MVT::isInteger(ST->getStoredVT()) &&
+  assert(MVT::isInteger(ST->getMemoryVT()) &&
          "Unaligned store of unknown type.");
   // Get the half-size VT
-  MVT::ValueType NewStoredVT = ST->getStoredVT() - 1;
+  MVT::ValueType NewStoredVT = ST->getMemoryVT() - 1;
   int NumBits = MVT::getSizeInBits(NewStoredVT);
   int IncrementSize = NumBits / 8;
 
@@ -616,7 +616,7 @@ SDOperand ExpandUnalignedLoad(LoadSDNode *LD, SelectionDAG &DAG,
   SDOperand Chain = LD->getChain();
   SDOperand Ptr = LD->getBasePtr();
   MVT::ValueType VT = LD->getValueType(0);
-  MVT::ValueType LoadedVT = LD->getLoadedVT();
+  MVT::ValueType LoadedVT = LD->getMemoryVT();
   if (MVT::isFloatingPoint(VT) && !MVT::isVector(VT)) {
     // Expand to a (misaligned) integer load of the same size,
     // then bitconvert to floating point.
@@ -1781,7 +1781,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         // expand it.
         if (!TLI.allowsUnalignedMemoryAccesses()) {
           unsigned ABIAlignment = TLI.getTargetData()->
-            getABITypeAlignment(MVT::getTypeForValueType(LD->getLoadedVT()));
+            getABITypeAlignment(MVT::getTypeForValueType(LD->getMemoryVT()));
           if (LD->getAlignment() < ABIAlignment){
             Result = ExpandUnalignedLoad(cast<LoadSDNode>(Result.Val), DAG,
                                          TLI);
@@ -1819,7 +1819,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       AddLegalizedOperand(SDOperand(Node, 1), Tmp4);
       return Op.ResNo ? Tmp4 : Tmp3;
     } else {
-      MVT::ValueType SrcVT = LD->getLoadedVT();
+      MVT::ValueType SrcVT = LD->getMemoryVT();
       unsigned SrcWidth = MVT::getSizeInBits(SrcVT);
       int SVOffset = LD->getSrcValueOffset();
       unsigned Alignment = LD->getAlignment();
@@ -1960,7 +1960,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
             // expand it.
             if (!TLI.allowsUnalignedMemoryAccesses()) {
               unsigned ABIAlignment = TLI.getTargetData()->
-                getABITypeAlignment(MVT::getTypeForValueType(LD->getLoadedVT()));
+                getABITypeAlignment(MVT::getTypeForValueType(LD->getMemoryVT()));
               if (LD->getAlignment() < ABIAlignment){
                 Result = ExpandUnalignedLoad(cast<LoadSDNode>(Result.Val), DAG,
                                              TLI);
@@ -2241,7 +2241,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         }
       }
       
-      switch (getTypeAction(ST->getStoredVT())) {
+      switch (getTypeAction(ST->getMemoryVT())) {
       case Legal: {
         Tmp3 = LegalizeOp(ST->getValue());
         Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp3, Tmp2, 
@@ -2255,7 +2255,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           // expand it.
           if (!TLI.allowsUnalignedMemoryAccesses()) {
             unsigned ABIAlignment = TLI.getTargetData()->
-              getABITypeAlignment(MVT::getTypeForValueType(ST->getStoredVT()));
+              getABITypeAlignment(MVT::getTypeForValueType(ST->getMemoryVT()));
             if (ST->getAlignment() < ABIAlignment)
               Result = ExpandUnalignedStore(cast<StoreSDNode>(Result.Val), DAG,
                                             TLI);
@@ -2280,7 +2280,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         // Truncate the value and store the result.
         Tmp3 = PromoteOp(ST->getValue());
         Result = DAG.getTruncStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
-                                   SVOffset, ST->getStoredVT(),
+                                   SVOffset, ST->getMemoryVT(),
                                    isVolatile, Alignment);
         break;
 
@@ -2367,7 +2367,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                                  SVOffset, MVT::i8, isVolatile, Alignment);
       }
 
-      MVT::ValueType StVT = ST->getStoredVT();
+      MVT::ValueType StVT = ST->getMemoryVT();
       unsigned StWidth = MVT::getSizeInBits(StVT);
 
       if (StWidth != MVT::getStoreSizeInBits(StVT)) {
@@ -2442,7 +2442,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           // expand it.
           if (!TLI.allowsUnalignedMemoryAccesses()) {
             unsigned ABIAlignment = TLI.getTargetData()->
-              getABITypeAlignment(MVT::getTypeForValueType(ST->getStoredVT()));
+              getABITypeAlignment(MVT::getTypeForValueType(ST->getMemoryVT()));
             if (ST->getAlignment() < ABIAlignment)
               Result = ExpandUnalignedStore(cast<StoreSDNode>(Result.Val), DAG,
                                             TLI);
@@ -4294,7 +4294,7 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     Result = DAG.getExtLoad(ExtType, NVT,
                             LD->getChain(), LD->getBasePtr(),
                             LD->getSrcValue(), LD->getSrcValueOffset(),
-                            LD->getLoadedVT(),
+                            LD->getMemoryVT(),
                             LD->isVolatile(),
                             LD->getAlignment());
     // Remember that we legalized the chain.
@@ -5767,7 +5767,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       if (!TLI.isLittleEndian())
         std::swap(Lo, Hi);
     } else {
-      MVT::ValueType EVT = LD->getLoadedVT();
+      MVT::ValueType EVT = LD->getMemoryVT();
 
       if ((VT == MVT::f64 && EVT == MVT::f32) ||
           (VT == MVT::ppcf128 && (EVT==MVT::f64 || EVT==MVT::f32))) {

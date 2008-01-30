@@ -371,7 +371,7 @@ static void AddNodeIDNode(FoldingSetNodeID &ID, SDNode *N) {
     LoadSDNode *LD = cast<LoadSDNode>(N);
     ID.AddInteger(LD->getAddressingMode());
     ID.AddInteger(LD->getExtensionType());
-    ID.AddInteger((unsigned int)(LD->getLoadedVT()));
+    ID.AddInteger((unsigned int)(LD->getMemoryVT()));
     ID.AddInteger(LD->getAlignment());
     ID.AddInteger(LD->isVolatile());
     break;
@@ -380,7 +380,7 @@ static void AddNodeIDNode(FoldingSetNodeID &ID, SDNode *N) {
     StoreSDNode *ST = cast<StoreSDNode>(N);
     ID.AddInteger(ST->getAddressingMode());
     ID.AddInteger(ST->isTruncatingStore());
-    ID.AddInteger((unsigned int)(ST->getStoredVT()));
+    ID.AddInteger((unsigned int)(ST->getMemoryVT()));
     ID.AddInteger(ST->getAlignment());
     ID.AddInteger(ST->isVolatile());
     break;
@@ -634,13 +634,13 @@ SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N,
   if (const LoadSDNode *LD = dyn_cast<LoadSDNode>(N)) {
     ID.AddInteger(LD->getAddressingMode());
     ID.AddInteger(LD->getExtensionType());
-    ID.AddInteger((unsigned int)(LD->getLoadedVT()));
+    ID.AddInteger((unsigned int)(LD->getMemoryVT()));
     ID.AddInteger(LD->getAlignment());
     ID.AddInteger(LD->isVolatile());
   } else if (const StoreSDNode *ST = dyn_cast<StoreSDNode>(N)) {
     ID.AddInteger(ST->getAddressingMode());
     ID.AddInteger(ST->isTruncatingStore());
-    ID.AddInteger((unsigned int)(ST->getStoredVT()));
+    ID.AddInteger((unsigned int)(ST->getMemoryVT()));
     ID.AddInteger(ST->getAlignment());
     ID.AddInteger(ST->isVolatile());
   }
@@ -1264,7 +1264,7 @@ void SelectionDAG::ComputeMaskedBits(SDOperand Op, uint64_t Mask,
   case ISD::LOAD: {
     if (ISD::isZEXTLoad(Op.Val)) {
       LoadSDNode *LD = cast<LoadSDNode>(Op);
-      MVT::ValueType VT = LD->getLoadedVT();
+      MVT::ValueType VT = LD->getMemoryVT();
       KnownZero |= ~MVT::getIntVTBitMask(VT) & Mask;
     }
     return;
@@ -1561,10 +1561,10 @@ unsigned SelectionDAG::ComputeNumSignBits(SDOperand Op, unsigned Depth) const{
     switch (ExtType) {
     default: break;
     case ISD::SEXTLOAD:    // '17' bits known
-      Tmp = MVT::getSizeInBits(LD->getLoadedVT());
+      Tmp = MVT::getSizeInBits(LD->getMemoryVT());
       return VTBits-Tmp+1;
     case ISD::ZEXTLOAD:    // '16' bits known
-      Tmp = MVT::getSizeInBits(LD->getLoadedVT());
+      Tmp = MVT::getSizeInBits(LD->getMemoryVT());
       return VTBits-Tmp;
     }
   }
@@ -2391,14 +2391,14 @@ SelectionDAG::getIndexedLoad(SDOperand OrigLoad, SDOperand Base,
   AddNodeIDNode(ID, ISD::LOAD, VTs, Ops, 3);
   ID.AddInteger(AM);
   ID.AddInteger(LD->getExtensionType());
-  ID.AddInteger((unsigned int)(LD->getLoadedVT()));
+  ID.AddInteger((unsigned int)(LD->getMemoryVT()));
   ID.AddInteger(LD->getAlignment());
   ID.AddInteger(LD->isVolatile());
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
   SDNode *N = new LoadSDNode(Ops, VTs, AM,
-                             LD->getExtensionType(), LD->getLoadedVT(),
+                             LD->getExtensionType(), LD->getMemoryVT(),
                              LD->getSrcValue(), LD->getSrcValueOffset(),
                              LD->getAlignment(), LD->isVolatile());
   CSEMap.InsertNode(N, IP);
@@ -2501,14 +2501,14 @@ SelectionDAG::getIndexedStore(SDOperand OrigStore, SDOperand Base,
   AddNodeIDNode(ID, ISD::STORE, VTs, Ops, 4);
   ID.AddInteger(AM);
   ID.AddInteger(ST->isTruncatingStore());
-  ID.AddInteger((unsigned int)(ST->getStoredVT()));
+  ID.AddInteger((unsigned int)(ST->getMemoryVT()));
   ID.AddInteger(ST->getAlignment());
   ID.AddInteger(ST->isVolatile());
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
   SDNode *N = new StoreSDNode(Ops, VTs, AM,
-                              ST->isTruncatingStore(), ST->getStoredVT(),
+                              ST->isTruncatingStore(), ST->getMemoryVT(),
                               ST->getSrcValue(), ST->getSrcValueOffset(),
                               ST->getAlignment(), ST->isVolatile());
   CSEMap.InsertNode(N, IP);
@@ -3966,7 +3966,7 @@ void SDNode::dump(const SelectionDAG *G) const {
       break;
     }
     if (doExt)
-      cerr << MVT::getValueTypeString(LD->getLoadedVT()) << ">";
+      cerr << MVT::getValueTypeString(LD->getMemoryVT()) << ">";
 
     const char *AM = getIndexedModeName(LD->getAddressingMode());
     if (*AM)
@@ -3986,7 +3986,7 @@ void SDNode::dump(const SelectionDAG *G) const {
 
     if (ST->isTruncatingStore())
       cerr << " <trunc "
-           << MVT::getValueTypeString(ST->getStoredVT()) << ">";
+           << MVT::getValueTypeString(ST->getMemoryVT()) << ">";
 
     const char *AM = getIndexedModeName(ST->getAddressingMode());
     if (*AM)

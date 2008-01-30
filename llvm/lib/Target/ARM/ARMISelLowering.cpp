@@ -1729,11 +1729,11 @@ ARMTargetLowering::getPreIndexedAddressParts(SDNode *N, SDOperand &Base,
   bool isSEXTLoad = false;
   if (LoadSDNode *LD = dyn_cast<LoadSDNode>(N)) {
     Ptr = LD->getBasePtr();
-    VT  = LD->getLoadedVT();
+    VT  = LD->getMemoryVT();
     isSEXTLoad = LD->getExtensionType() == ISD::SEXTLOAD;
   } else if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N)) {
     Ptr = ST->getBasePtr();
-    VT  = ST->getStoredVT();
+    VT  = ST->getMemoryVT();
   } else
     return false;
 
@@ -1762,10 +1762,10 @@ bool ARMTargetLowering::getPostIndexedAddressParts(SDNode *N, SDNode *Op,
   SDOperand Ptr;
   bool isSEXTLoad = false;
   if (LoadSDNode *LD = dyn_cast<LoadSDNode>(N)) {
-    VT  = LD->getLoadedVT();
+    VT  = LD->getMemoryVT();
     isSEXTLoad = LD->getExtensionType() == ISD::SEXTLOAD;
   } else if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N)) {
-    VT  = ST->getStoredVT();
+    VT  = ST->getMemoryVT();
   } else
     return false;
 

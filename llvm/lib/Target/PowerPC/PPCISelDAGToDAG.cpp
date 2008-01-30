@@ -921,7 +921,7 @@ SDNode *PPCDAGToDAGISel::Select(SDOperand Op) {
   case ISD::LOAD: {
     // Handle preincrement loads.
     LoadSDNode *LD = cast<LoadSDNode>(Op);
-    MVT::ValueType LoadedVT = LD->getLoadedVT();
+    MVT::ValueType LoadedVT = LD->getMemoryVT();
     
     // Normal loads are handled by code generated from the .td file.
     if (LD->getAddressingMode() != ISD::PRE_INC)

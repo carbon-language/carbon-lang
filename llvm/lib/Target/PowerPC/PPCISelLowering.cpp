@@ -963,12 +963,12 @@ bool PPCTargetLowering::getPreIndexedAddressParts(SDNode *N, SDOperand &Base,
   MVT::ValueType VT;
   if (LoadSDNode *LD = dyn_cast<LoadSDNode>(N)) {
     Ptr = LD->getBasePtr();
-    VT = LD->getLoadedVT();
+    VT = LD->getMemoryVT();
     
   } else if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N)) {
     ST = ST;
     Ptr = ST->getBasePtr();
-    VT  = ST->getStoredVT();
+    VT  = ST->getMemoryVT();
   } else
     return false;
 
@@ -992,7 +992,7 @@ bool PPCTargetLowering::getPreIndexedAddressParts(SDNode *N, SDOperand &Base,
   if (LoadSDNode *LD = dyn_cast<LoadSDNode>(N)) {
     // PPC64 doesn't have lwau, but it does have lwaux.  Reject preinc load of
     // sext i32 to i64 when addr mode is r+i.
-    if (LD->getValueType(0) == MVT::i64 && LD->getLoadedVT() == MVT::i32 &&
+    if (LD->getValueType(0) == MVT::i64 && LD->getMemoryVT() == MVT::i32 &&
         LD->getExtensionType() == ISD::SEXTLOAD &&
         isa<ConstantSDNode>(Offset))
       return false;

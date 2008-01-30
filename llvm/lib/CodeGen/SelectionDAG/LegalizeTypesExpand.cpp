@@ -265,8 +265,8 @@ void DAGTypeLegalizer::ExpandResult_LOAD(LoadSDNode *N,
     // Handle endianness of the load.
     if (!TLI.isLittleEndian())
       std::swap(Lo, Hi);
-  } else if (MVT::getSizeInBits(N->getLoadedVT()) <= MVT::getSizeInBits(NVT)) {
-    MVT::ValueType EVT = N->getLoadedVT();
+  } else if (MVT::getSizeInBits(N->getMemoryVT()) <= MVT::getSizeInBits(NVT)) {
+    MVT::ValueType EVT = N->getMemoryVT();
 
     Lo = DAG.getExtLoad(ExtType, NVT, Ch, Ptr, N->getSrcValue(), SVOffset, EVT,
                         isVolatile, Alignment);
@@ -294,7 +294,7 @@ void DAGTypeLegalizer::ExpandResult_LOAD(LoadSDNode *N,
                      isVolatile, Alignment);
 
     unsigned ExcessBits =
-      MVT::getSizeInBits(N->getLoadedVT()) - MVT::getSizeInBits(NVT);
+      MVT::getSizeInBits(N->getMemoryVT()) - MVT::getSizeInBits(NVT);
     MVT::ValueType NEVT = MVT::getIntegerType(ExcessBits);
 
     // Increment the pointer to the other half.
@@ -312,7 +312,7 @@ void DAGTypeLegalizer::ExpandResult_LOAD(LoadSDNode *N,
   } else {
     // Big-endian - high bits are at low addresses.  Favor aligned loads at
     // the cost of some bit-fiddling.
-    MVT::ValueType EVT = N->getLoadedVT();
+    MVT::ValueType EVT = N->getMemoryVT();
     unsigned EBytes = MVT::getStoreSizeInBits(EVT)/8;
     unsigned IncrementSize = MVT::getSizeInBits(NVT)/8;
     unsigned ExcessBits = (EBytes - IncrementSize)*8;
@@ -1058,10 +1058,10 @@ SDOperand DAGTypeLegalizer::ExpandOperand_STORE(StoreSDNode *N, unsigned OpNo) {
     Hi = DAG.getStore(Ch, Hi, Ptr, N->getSrcValue(), SVOffset+IncrementSize,
                       isVolatile, MinAlign(Alignment, IncrementSize));
     return DAG.getNode(ISD::TokenFactor, MVT::Other, Lo, Hi);
-  } else if (MVT::getSizeInBits(N->getStoredVT()) <= MVT::getSizeInBits(NVT)) {
+  } else if (MVT::getSizeInBits(N->getMemoryVT()) <= MVT::getSizeInBits(NVT)) {
     GetExpandedOp(N->getValue(), Lo, Hi);
     return DAG.getTruncStore(Ch, Lo, Ptr, N->getSrcValue(), SVOffset,
-                             N->getStoredVT(), isVolatile, Alignment);
+                             N->getMemoryVT(), isVolatile, Alignment);
   } else if (TLI.isLittleEndian()) {
     // Little-endian - low bits are at low addresses.
     GetExpandedOp(N->getValue(), Lo, Hi);
@@ -1070,7 +1070,7 @@ SDOperand DAGTypeLegalizer::ExpandOperand_STORE(StoreSDNode *N, unsigned OpNo) {
                       isVolatile, Alignment);
 
     unsigned ExcessBits =
-      MVT::getSizeInBits(N->getStoredVT()) - MVT::getSizeInBits(NVT);
+      MVT::getSizeInBits(N->getMemoryVT()) - MVT::getSizeInBits(NVT);
     MVT::ValueType NEVT = MVT::getIntegerType(ExcessBits);
 
     // Increment the pointer to the other half.
@@ -1086,7 +1086,7 @@ SDOperand DAGTypeLegalizer::ExpandOperand_STORE(StoreSDNode *N, unsigned OpNo) {
     // the cost of some bit-fiddling.
     GetExpandedOp(N->getValue(), Lo, Hi);
 
-    MVT::ValueType EVT = N->getStoredVT();
+    MVT::ValueType EVT = N->getMemoryVT();
     unsigned EBytes = MVT::getStoreSizeInBits(EVT)/8;
     unsigned IncrementSize = MVT::getSizeInBits(NVT)/8;
     unsigned ExcessBits = (EBytes - IncrementSize)*8;

@@ -542,7 +542,7 @@ static SDOperand
 LowerLOAD(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   LoadSDNode *LN = cast<LoadSDNode>(Op);
   SDOperand the_chain = LN->getChain();
-  MVT::ValueType VT = LN->getLoadedVT();
+  MVT::ValueType VT = LN->getMemoryVT();
   MVT::ValueType OpVT = Op.Val->getValueType(0);
   ISD::LoadExtType ExtType = LN->getExtensionType();
   unsigned alignment = LN->getAlignment();
@@ -652,7 +652,7 @@ LowerSTORE(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   StoreSDNode *SN = cast<StoreSDNode>(Op);
   SDOperand Value = SN->getValue();
   MVT::ValueType VT = Value.getValueType();
-  MVT::ValueType StVT = (!SN->isTruncatingStore() ? VT : SN->getStoredVT());
+  MVT::ValueType StVT = (!SN->isTruncatingStore() ? VT : SN->getMemoryVT());
   MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   unsigned alignment = SN->getAlignment();
 

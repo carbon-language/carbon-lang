@@ -188,7 +188,7 @@ SDOperand DAGTypeLegalizer::PromoteResult_LOAD(LoadSDNode *N) {
     ISD::isNON_EXTLoad(N) ? ISD::EXTLOAD : N->getExtensionType();
   SDOperand Res = DAG.getExtLoad(ExtType, NVT, N->getChain(), N->getBasePtr(),
                                  N->getSrcValue(), N->getSrcValueOffset(),
-                                 N->getLoadedVT(), N->isVolatile(),
+                                 N->getMemoryVT(), N->isVolatile(),
                                  N->getAlignment());
 
   // Legalized the chain result - switch anything that used the old chain to
@@ -486,6 +486,6 @@ SDOperand DAGTypeLegalizer::PromoteOperand_STORE(StoreSDNode *N, unsigned OpNo){
   
   // Truncate the value and store the result.
   return DAG.getTruncStore(Ch, Val, Ptr, N->getSrcValue(),
-                           SVOffset, N->getStoredVT(),
+                           SVOffset, N->getMemoryVT(),
                            isVolatile, Alignment);
 }

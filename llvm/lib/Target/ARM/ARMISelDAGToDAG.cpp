@@ -659,7 +659,7 @@ SDNode *ARMDAGToDAGISel::Select(SDOperand Op) {
   case ISD::LOAD: {
     LoadSDNode *LD = cast<LoadSDNode>(Op);
     ISD::MemIndexedMode AM = LD->getAddressingMode();
-    MVT::ValueType LoadedVT = LD->getLoadedVT();
+    MVT::ValueType LoadedVT = LD->getMemoryVT();
     if (AM != ISD::UNINDEXED) {
       SDOperand Offset, AMOpc;
       bool isPre = (AM == ISD::PRE_INC) || (AM == ISD::PRE_DEC);

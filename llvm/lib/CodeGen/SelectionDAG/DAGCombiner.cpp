@@ -1655,7 +1655,7 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
   // fold (zext_inreg (extload x)) -> (zextload x)
   if (ISD::isEXTLoad(N0.Val) && ISD::isUNINDEXEDLoad(N0.Val)) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
-    MVT::ValueType EVT = LN0->getLoadedVT();
+    MVT::ValueType EVT = LN0->getMemoryVT();
     // If we zero all the possible extended bits, then we can turn this into
     // a zextload if we are running before legalize or the operation is legal.
     if (DAG.MaskedValueIsZero(N1, ~0ULL << MVT::getSizeInBits(EVT)) &&
@@ -1674,7 +1674,7 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
   if (ISD::isSEXTLoad(N0.Val) && ISD::isUNINDEXEDLoad(N0.Val) &&
       N0.hasOneUse()) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
-    MVT::ValueType EVT = LN0->getLoadedVT();
+    MVT::ValueType EVT = LN0->getMemoryVT();
     // If we zero all the possible extended bits, then we can turn this into
     // a zextload if we are running before legalize or the operation is legal.
     if (DAG.MaskedValueIsZero(N1, ~0ULL << MVT::getSizeInBits(EVT)) &&
@@ -1706,7 +1706,7 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
       else
         EVT = MVT::Other;
     
-      LoadedVT = LN0->getLoadedVT();
+      LoadedVT = LN0->getMemoryVT();
       if (EVT != MVT::Other && LoadedVT > EVT &&
           (!AfterLegalize || TLI.isLoadXLegal(ISD::ZEXTLOAD, EVT))) {
         MVT::ValueType PtrType = N0.getOperand(1).getValueType();
@@ -2744,7 +2744,7 @@ SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
   if ((ISD::isSEXTLoad(N0.Val) || ISD::isEXTLoad(N0.Val)) &&
       ISD::isUNINDEXEDLoad(N0.Val) && N0.hasOneUse()) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
-    MVT::ValueType EVT = LN0->getLoadedVT();
+    MVT::ValueType EVT = LN0->getMemoryVT();
     if (!AfterLegalize || TLI.isLoadXLegal(ISD::SEXTLOAD, EVT)) {
       SDOperand ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, VT, LN0->getChain(),
                                          LN0->getBasePtr(), LN0->getSrcValue(),
@@ -2861,7 +2861,7 @@ SDOperand DAGCombiner::visitZERO_EXTEND(SDNode *N) {
   if ((ISD::isZEXTLoad(N0.Val) || ISD::isEXTLoad(N0.Val)) &&
       ISD::isUNINDEXEDLoad(N0.Val) && N0.hasOneUse()) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
-    MVT::ValueType EVT = LN0->getLoadedVT();
+    MVT::ValueType EVT = LN0->getMemoryVT();
     SDOperand ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, VT, LN0->getChain(),
                                        LN0->getBasePtr(), LN0->getSrcValue(),
                                        LN0->getSrcValueOffset(), EVT,
@@ -2958,7 +2958,7 @@ SDOperand DAGCombiner::visitANY_EXTEND(SDNode *N) {
       !ISD::isNON_EXTLoad(N0.Val) && ISD::isUNINDEXEDLoad(N0.Val) &&
       N0.hasOneUse()) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
-    MVT::ValueType EVT = LN0->getLoadedVT();
+    MVT::ValueType EVT = LN0->getMemoryVT();
     SDOperand ExtLoad = DAG.getExtLoad(LN0->getExtensionType(), VT,
                                        LN0->getChain(), LN0->getBasePtr(),
                                        LN0->getSrcValue(),
@@ -3154,7 +3154,7 @@ SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
   // fold (sext_inreg (extload x)) -> (sextload x)
   if (ISD::isEXTLoad(N0.Val) && 
       ISD::isUNINDEXEDLoad(N0.Val) &&
-      EVT == cast<LoadSDNode>(N0)->getLoadedVT() &&
+      EVT == cast<LoadSDNode>(N0)->getMemoryVT() &&
       (!AfterLegalize || TLI.isLoadXLegal(ISD::SEXTLOAD, EVT))) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
     SDOperand ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, VT, LN0->getChain(),
@@ -3169,7 +3169,7 @@ SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
   // fold (sext_inreg (zextload x)) -> (sextload x) iff load has one use
   if (ISD::isZEXTLoad(N0.Val) && ISD::isUNINDEXEDLoad(N0.Val) &&
       N0.hasOneUse() &&
-      EVT == cast<LoadSDNode>(N0)->getLoadedVT() &&
+      EVT == cast<LoadSDNode>(N0)->getMemoryVT() &&
       (!AfterLegalize || TLI.isLoadXLegal(ISD::SEXTLOAD, EVT))) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
     SDOperand ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, VT, LN0->getChain(),
@@ -3907,7 +3907,7 @@ bool DAGCombiner::CombineToPreIndexedLoadStore(SDNode *N) {
   if (LoadSDNode *LD  = dyn_cast<LoadSDNode>(N)) {
     if (LD->isIndexed())
       return false;
-    VT = LD->getLoadedVT();
+    VT = LD->getMemoryVT();
     if (!TLI.isIndexedLoadLegal(ISD::PRE_INC, VT) &&
         !TLI.isIndexedLoadLegal(ISD::PRE_DEC, VT))
       return false;
@@ -3915,7 +3915,7 @@ bool DAGCombiner::CombineToPreIndexedLoadStore(SDNode *N) {
   } else if (StoreSDNode *ST  = dyn_cast<StoreSDNode>(N)) {
     if (ST->isIndexed())
       return false;
-    VT = ST->getStoredVT();
+    VT = ST->getMemoryVT();
     if (!TLI.isIndexedStoreLegal(ISD::PRE_INC, VT) &&
         !TLI.isIndexedStoreLegal(ISD::PRE_DEC, VT))
       return false;
@@ -4034,7 +4034,7 @@ bool DAGCombiner::CombineToPostIndexedLoadStore(SDNode *N) {
   if (LoadSDNode *LD  = dyn_cast<LoadSDNode>(N)) {
     if (LD->isIndexed())
       return false;
-    VT = LD->getLoadedVT();
+    VT = LD->getMemoryVT();
     if (!TLI.isIndexedLoadLegal(ISD::POST_INC, VT) &&
         !TLI.isIndexedLoadLegal(ISD::POST_DEC, VT))
       return false;
@@ -4042,7 +4042,7 @@ bool DAGCombiner::CombineToPostIndexedLoadStore(SDNode *N) {
   } else if (StoreSDNode *ST  = dyn_cast<StoreSDNode>(N)) {
     if (ST->isIndexed())
       return false;
-    VT = ST->getStoredVT();
+    VT = ST->getMemoryVT();
     if (!TLI.isIndexedStoreLegal(ISD::POST_INC, VT) &&
         !TLI.isIndexedStoreLegal(ISD::POST_DEC, VT))
       return false;
@@ -4209,7 +4209,7 @@ SDOperand DAGCombiner::visitLOAD(SDNode *N) {
       if (Align > LD->getAlignment())
         return DAG.getExtLoad(LD->getExtensionType(), LD->getValueType(0),
                               Chain, Ptr, LD->getSrcValue(),
-                              LD->getSrcValueOffset(), LD->getLoadedVT(),
+                              LD->getSrcValueOffset(), LD->getMemoryVT(),
                               LD->isVolatile(), Align);
     }
   }
@@ -4295,7 +4295,7 @@ SDOperand DAGCombiner::visitLOAD(SDNode *N) {
                                   LD->getValueType(0),
                                   BetterChain, Ptr, LD->getSrcValue(),
                                   LD->getSrcValueOffset(),
-                                  LD->getLoadedVT(),
+                                  LD->getMemoryVT(),
                                   LD->isVolatile(), 
                                   LD->getAlignment());
       }
@@ -4329,7 +4329,7 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
     if (unsigned Align = InferAlignment(Ptr, DAG)) {
       if (Align > ST->getAlignment())
         return DAG.getTruncStore(Chain, Value, Ptr, ST->getSrcValue(),
-                                 ST->getSrcValueOffset(), ST->getStoredVT(),
+                                 ST->getSrcValueOffset(), ST->getMemoryVT(),
                                  ST->isVolatile(), Align);
     }
   }
@@ -4413,7 +4413,7 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
       if (ST->isTruncatingStore()) {
         ReplStore = DAG.getTruncStore(BetterChain, Value, Ptr,
                                       ST->getSrcValue(),ST->getSrcValueOffset(),
-                                      ST->getStoredVT(),
+                                      ST->getMemoryVT(),
                                       ST->isVolatile(), ST->getAlignment());
       } else {
         ReplStore = DAG.getStore(BetterChain, Value, Ptr,
@@ -4441,23 +4441,23 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
     // only the low bits are being used.  For example:
     // "truncstore (or (shl x, 8), y), i8"  -> "truncstore y, i8"
     SDOperand Shorter = 
-      GetDemandedBits(Value, MVT::getIntVTBitMask(ST->getStoredVT()));
+      GetDemandedBits(Value, MVT::getIntVTBitMask(ST->getMemoryVT()));
     AddToWorkList(Value.Val);
     if (Shorter.Val)
       return DAG.getTruncStore(Chain, Shorter, Ptr, ST->getSrcValue(),
-                               ST->getSrcValueOffset(), ST->getStoredVT(),
+                               ST->getSrcValueOffset(), ST->getMemoryVT(),
                                ST->isVolatile(), ST->getAlignment());
     
     // Otherwise, see if we can simplify the operation with
     // SimplifyDemandedBits, which only works if the value has a single use.
-    if (SimplifyDemandedBits(Value, MVT::getIntVTBitMask(ST->getStoredVT())))
+    if (SimplifyDemandedBits(Value, MVT::getIntVTBitMask(ST->getMemoryVT())))
       return SDOperand(N, 0);
   }
   
   // If this is a load followed by a store to the same location, then the store
   // is dead/noop.
   if (LoadSDNode *Ld = dyn_cast<LoadSDNode>(Value)) {
-    if (Ld->getBasePtr() == Ptr && ST->getStoredVT() == Ld->getLoadedVT() &&
+    if (Ld->getBasePtr() == Ptr && ST->getMemoryVT() == Ld->getMemoryVT() &&
         ST->isUnindexed() && !ST->isVolatile() &&
         // There can't be any side effects between the load and store, such as
         // a call or store.
@@ -4473,9 +4473,9 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
       && TLI.isTypeLegal(Value.getOperand(0).getValueType()) &&
       Value.Val->hasOneUse() && ST->isUnindexed() &&
       TLI.isTruncStoreLegal(Value.getOperand(0).getValueType(),
-                            ST->getStoredVT())) {
+                            ST->getMemoryVT())) {
     return DAG.getTruncStore(Chain, Value.getOperand(0), Ptr, ST->getSrcValue(),
-                             ST->getSrcValueOffset(), ST->getStoredVT(),
+                             ST->getSrcValueOffset(), ST->getMemoryVT(),
                              ST->isVolatile(), ST->getAlignment());
   }
   
@@ -4939,7 +4939,7 @@ bool DAGCombiner::SimplifySelectOps(SDNode *TheSelect, SDOperand LHS,
       LoadSDNode *RLD = cast<LoadSDNode>(RHS);
 
       // If this is an EXTLOAD, the VT's must match.
-      if (LLD->getLoadedVT() == RLD->getLoadedVT()) {
+      if (LLD->getMemoryVT() == RLD->getMemoryVT()) {
         // FIXME: this conflates two src values, discarding one.  This is not
         // the right thing to do, but nothing uses srcvalues now.  When they do,
         // turn SrcValue into a list of locations.
@@ -4981,7 +4981,7 @@ bool DAGCombiner::SimplifySelectOps(SDNode *TheSelect, SDOperand LHS,
                                   TheSelect->getValueType(0),
                                   LLD->getChain(), Addr, LLD->getSrcValue(),
                                   LLD->getSrcValueOffset(),
-                                  LLD->getLoadedVT(),
+                                  LLD->getMemoryVT(),
                                   LLD->isVolatile(), 
                                   LLD->getAlignment());
           }
@@ -5290,13 +5290,13 @@ bool DAGCombiner::FindAliasInfo(SDNode *N,
                         const Value *&SrcValue, int &SrcValueOffset) {
   if (LoadSDNode *LD = dyn_cast<LoadSDNode>(N)) {
     Ptr = LD->getBasePtr();
-    Size = MVT::getSizeInBits(LD->getLoadedVT()) >> 3;
+    Size = MVT::getSizeInBits(LD->getMemoryVT()) >> 3;
     SrcValue = LD->getSrcValue();
     SrcValueOffset = LD->getSrcValueOffset();
     return true;
   } else if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N)) {
     Ptr = ST->getBasePtr();
-    Size = MVT::getSizeInBits(ST->getStoredVT()) >> 3;
+    Size = MVT::getSizeInBits(ST->getMemoryVT()) >> 3;
     SrcValue = ST->getSrcValue();
     SrcValueOffset = ST->getSrcValueOffset();
   } else {
