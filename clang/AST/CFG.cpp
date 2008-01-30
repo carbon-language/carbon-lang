@@ -523,7 +523,7 @@ CFGBlock* CFGBuilder::VisitIfStmt(IfStmt* I) {
   // Add the condition as the last statement in the new block.  This
   // may create new blocks as the condition may contain control-flow.  Any
   // newly created blocks will be pointed to be "Block".
-  return addStmt(I->getCond());
+  return addStmt(I->getCond()->IgnoreParens());
 }
   
     
@@ -1142,7 +1142,6 @@ public:
   void VisitIfStmt(IfStmt* I) {
     OS << "if ";
     I->getCond()->printPretty(OS,Helper);
-    OS << "\n";
   }
   
   // Default case.
@@ -1155,42 +1154,38 @@ public:
     if (Stmt* C = F->getCond()) C->printPretty(OS,Helper);
     OS << "; ";
     if (F->getInc()) OS << "...";
-    OS << ")\n";                                                       
+    OS << ")";
   }
   
   void VisitWhileStmt(WhileStmt* W) {
     OS << "while " ;
     if (Stmt* C = W->getCond()) C->printPretty(OS,Helper);
-    OS << "\n";
   }
   
   void VisitDoStmt(DoStmt* D) {
     OS << "do ... while ";
     if (Stmt* C = D->getCond()) C->printPretty(OS,Helper);
-    OS << '\n';
   }
   
   void VisitSwitchStmt(SwitchStmt* S) {
     OS << "switch ";
     S->getCond()->printPretty(OS,Helper);
-    OS << '\n';
   }
   
   void VisitConditionalOperator(ConditionalOperator* C) {
     C->getCond()->printPretty(OS,Helper);
-    OS << " ? ... : ...\n";  
+    OS << " ? ... : ...";  
   }
   
   void VisitChooseExpr(ChooseExpr* C) {
     OS << "__builtin_choose_expr( ";
     C->getCond()->printPretty(OS,Helper);
-    OS << " )\n";
+    OS << " )";
   }
   
   void VisitIndirectGotoStmt(IndirectGotoStmt* I) {
     OS << "goto *";
     I->getTarget()->printPretty(OS,Helper);
-    OS << '\n';
   }
   
   void VisitBinaryOperator(BinaryOperator* B) {
@@ -1203,10 +1198,10 @@ public:
     
     switch (B->getOpcode()) {
       case BinaryOperator::LOr:
-        OS << " || ...\n";
+        OS << " || ...";
         return;
       case BinaryOperator::LAnd:
-        OS << " && ...\n";
+        OS << " && ...";
         return;
       default:
         assert(false && "Invalid logical operator.");
@@ -1215,7 +1210,6 @@ public:
   
   void VisitExpr(Expr* E) {
     E->printPretty(OS,Helper);
-    OS << '\n';
   }                                                       
 };
   
@@ -1321,6 +1315,7 @@ void print_block(std::ostream& OS, const CFG* cfg, const CFGBlock& B,
     
     CFGBlockTerminatorPrint TPrinter(OS,Helper);
     TPrinter.Visit(const_cast<Stmt*>(B.getTerminator()));
+    OS << '\n';
   }
  
   if (print_edges) {
@@ -1391,6 +1386,13 @@ void CFGBlock::print(std::ostream& OS, const CFG* cfg) const {
   StmtPrinterHelper Helper(cfg);
   print_block(OS, cfg, *this, &Helper, true);
 }
+
+/// printTerminator - A simple pretty printer of the terminator of a CFGBlock.
+void CFGBlock::printTerminator(std::ostream& OS) const {  
+  CFGBlockTerminatorPrint TPrinter(OS,NULL);
+  TPrinter.Visit(const_cast<Stmt*>(getTerminator()));
+}
+
 
 //===----------------------------------------------------------------------===//
 // CFG Graphviz Visualization

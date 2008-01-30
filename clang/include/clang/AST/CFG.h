@@ -166,6 +166,7 @@ public:
   
   void dump(const CFG* cfg) const;
   void print(std::ostream& OS, const CFG* cfg) const;
+  void printTerminator(std::ostream& OS) const;
 };
   
 
