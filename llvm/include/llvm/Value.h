@@ -188,6 +188,7 @@ public:
     ConstantPointerNullVal,   // This is an instance of ConstantPointerNull
     InlineAsmVal,             // This is an instance of InlineAsm
     InstructionVal,           // This is an instance of Instruction
+    PseudoSourceValueVal,     // This is an instance of PseudoSourceValue
     
     // Markers:
     ConstantFirstVal = FunctionVal,
