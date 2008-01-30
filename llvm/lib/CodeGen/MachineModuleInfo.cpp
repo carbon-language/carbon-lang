@@ -106,8 +106,7 @@ static GlobalVariable *getGlobalVariable(Value *V) {
       return dyn_cast<GlobalVariable>(CE->getOperand(0));
     } else if (CE->getOpcode() == Instruction::GetElementPtr) {
       for (unsigned int i=1; i<CE->getNumOperands(); i++) {
-        Constant* CI = cast<Constant>(CE->getOperand(i));
-        if (!CI || !CI->isNullValue())
+        if (!CE->getOperand(i)->isNullValue())
           return NULL;
       }
       return dyn_cast<GlobalVariable>(CE->getOperand(0));
@@ -126,8 +125,7 @@ static bool isGlobalVariable(Value *V) {
       return isa<GlobalVariable>(CE->getOperand(0));
     } else if (CE->getOpcode() == Instruction::GetElementPtr) {
       for (unsigned int i=1; i<CE->getNumOperands(); i++) {
-        Constant* CI = cast<Constant>(CE->getOperand(i));
-        if (!CI || !CI->isNullValue())
+        if (!CE->getOperand(i)->isNullValue())
           return false;
       }
       return isa<GlobalVariable>(CE->getOperand(0));
