@@ -152,7 +152,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
           possiblyDead.insert(D);
         if (Instruction* D = dyn_cast<Instruction>(last->getOperand(1)))
           possiblyDead.insert(D);
-          
+        
         last->eraseFromParent();
         NumFastStores++;
         deletedStore = true;
@@ -303,7 +303,7 @@ bool DSE::handleEndBlock(BasicBlock& BB,
         MD.removeInstruction(M);
         
         // DCE instructions only used to calculate that memcpy
-        if (Instruction* D = dyn_cast<Instruction>(M->getSource()))
+        if (Instruction* D = dyn_cast<Instruction>(M->getRawSource()))
           possiblyDead.insert(D);
         if (Instruction* D = dyn_cast<Instruction>(M->getLength()))
           possiblyDead.insert(D);
@@ -325,11 +325,45 @@ bool DSE::handleEndBlock(BasicBlock& BB,
     
     // If we encounter a use of the pointer, it is no longer considered dead
     if (LoadInst* L = dyn_cast<LoadInst>(BBI)) {
+      // However, if this load is unused, we can go ahead and remove it, and
+      // not have to worry about it making our pointer undead!
+      if (L->getNumUses() == 0) {
+        MD.removeInstruction(L);
+        
+        // DCE instructions only used to calculate that load
+        if (Instruction* D = dyn_cast<Instruction>(L->getPointerOperand()))
+          possiblyDead.insert(D);
+        
+        BBI++;
+        L->eraseFromParent();
+        NumFastOther++;
+        MadeChange = true;
+        possiblyDead.remove(L);
+        
+        continue;
+      }
+      
       killPointer = L->getPointerOperand();
     } else if (VAArgInst* V = dyn_cast<VAArgInst>(BBI)) {
       killPointer = V->getOperand(0);
     } else if (AllocaInst* A = dyn_cast<AllocaInst>(BBI)) {
       deadPointers.erase(A);
+      
+      // Dead alloca's can be DCE'd when we reach them
+      if (A->getNumUses() == 0) {
+        MD.removeInstruction(A);
+        
+        // DCE instructions only used to calculate that load
+        if (Instruction* D = dyn_cast<Instruction>(A->getArraySize()))
+          possiblyDead.insert(D);
+        
+        BBI++;
+        A->eraseFromParent();
+        NumFastOther++;
+        MadeChange = true;
+        possiblyDead.remove(A);
+      }
+      
       continue;
     } else if (CallSite::get(BBI).getInstruction() != 0) {
       // If this call does not access memory, it can't
@@ -383,6 +417,25 @@ bool DSE::handleEndBlock(BasicBlock& BB,
         deadPointers.erase(*I);
       
       continue;
+    } else {
+      // For any non-memory-affecting non-terminators, DCE them as we reach them
+      Instruction *CI = BBI;
+      if (!CI->isTerminator() && CI->getNumUses() == 0) {
+        
+        // DCE instructions only used to calculate that load
+        for (Instruction::op_iterator OI = CI->op_begin(), OE = CI->op_end();
+             OI != OE; ++OI)
+          if (Instruction* D = dyn_cast<Instruction>(OI))
+            possiblyDead.insert(D);
+        
+        BBI++;
+        CI->eraseFromParent();
+        NumFastOther++;
+        MadeChange = true;
+        possiblyDead.remove(CI);
+        
+        continue;
+      }
     }
     
     if (!killPointer)
