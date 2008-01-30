@@ -21,6 +21,10 @@
 #include "clang/Parse/Scope.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/Basic/SourceManager.h"
+// FIXME: layering (ideally, Sema shouldn't be dependent on Lex API's)
+#include "clang/Lex/Preprocessor.h" 
+#include "clang/Lex/HeaderSearch.h" 
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/DenseSet.h"
@@ -210,6 +214,22 @@ TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, ScopedDecl *OldD) {
   // FIXME: Verify the underlying types are equivalent!
   if (getLangOptions().ObjC1 && isBuiltinObjCType(New))
     return Old;
+  
+  // Redeclaration of a type is a constraint violation (6.7.2.3p1).
+  // Apparently GCC, Intel, and Sun all silently ignore the redeclaration if
+  // *either* declaration is in a system header. The code below implements
+  // this adhoc compatibility rule. FIXME: The following code will not
+  // work properly when compiling ".i" files (containing preprocessed output).
+  SourceManager &SrcMgr = Context.getSourceManager();
+  const FileEntry *OldDeclFile = SrcMgr.getFileEntryForLoc(Old->getLocation());
+  const FileEntry *NewDeclFile = SrcMgr.getFileEntryForLoc(New->getLocation());
+  HeaderSearch &HdrInfo = PP.getHeaderSearchInfo();
+  DirectoryLookup::DirType OldDirType = HdrInfo.getFileDirFlavor(OldDeclFile);
+  DirectoryLookup::DirType NewDirType = HdrInfo.getFileDirFlavor(NewDeclFile);
+  
+  if (OldDirType == DirectoryLookup::ExternCSystemHeaderDir || 
+      NewDirType == DirectoryLookup::ExternCSystemHeaderDir)
+    return New;
     
   // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
   // TODO: This is totally simplistic.  It should handle merging functions
