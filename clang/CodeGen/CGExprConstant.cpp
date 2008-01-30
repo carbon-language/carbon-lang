@@ -412,12 +412,13 @@ public:
     }
     case Expr::MemberExprClass: {
       MemberExpr* ME = cast<MemberExpr>(E);
-      unsigned FieldNumber = CGM.getTypes().getLLVMFieldNo(ME->getMemberDecl());
       llvm::Constant *Base;
       if (ME->isArrow())
         Base = Visit(ME->getBase());
       else
         Base = EmitLValue(ME->getBase());
+
+      unsigned FieldNumber = CGM.getTypes().getLLVMFieldNo(ME->getMemberDecl());
       llvm::Constant *Zero = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
       llvm::Constant *Idx = llvm::ConstantInt::get(llvm::Type::Int32Ty,
                                                    FieldNumber);
