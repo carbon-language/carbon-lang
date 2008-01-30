@@ -1218,8 +1218,9 @@ public:
 ///  2. Initializers may have excess initializers which are to be ignored by the
 ///     compiler.  For example:
 ///         int x[1] = { 1, 2 };
-///  3. Redundant InitListExprs may be present.  These always have a single
-///     element whose type is the same as the InitListExpr.
+///  3. Redundant InitListExprs may be present around scalar elements.  These
+///     always have a single element whose type is the same as the InitListExpr.
+///     this can only happen for Type::isScalarType() types.
 ///         int x = { 1 };  int y[2] = { {1}, {2} };
 ///
 class InitListExpr : public Expr {
