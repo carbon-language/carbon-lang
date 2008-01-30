@@ -35,8 +35,8 @@ namespace {
   class RewriteTest : public ASTConsumer {
     Rewriter Rewrite;
     Diagnostic &Diags;
-	unsigned RewriteFailedDiag;
-	
+    unsigned RewriteFailedDiag;
+    
     ASTContext *Context;
     SourceManager *SM;
     unsigned MainFileID;
@@ -96,7 +96,7 @@ namespace {
       CurMethodDecl = 0;
       SuperStructDecl = 0;
       BcLabelCount = 0;
-	  
+      
       // Get the ID and start/end of the main file.
       MainFileID = SM->getMainFileID();
       const llvm::MemoryBuffer *MainBuf = SM->getBuffer(MainFileID);
@@ -165,10 +165,10 @@ namespace {
     virtual void HandleTopLevelDecl(Decl *D);
     void HandleDeclInMainFile(Decl *D);
     RewriteTest(bool isHeader, Diagnostic &D) : Diags(D) {
-	  IsHeader = isHeader;
+      IsHeader = isHeader;
       RewriteFailedDiag = Diags.getCustomDiagID(Diagnostic::Warning, 
                "rewriting sub-expression within a macro (may not be correct)");
-	}
+    }
     ~RewriteTest();
 
     // Syntactic Rewriting.
@@ -314,7 +314,7 @@ void RewriteTest::HandleDeclInMainFile(Decl *D) {
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
     if (Stmt *Body = FD->getBody())
       FD->setBody(RewriteFunctionBodyOrGlobalInitializer(Body));
-	  
+      
   if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
     if (Stmt *Body = MD->getBody()) {
       //Body->dump();
@@ -464,10 +464,10 @@ void RewriteTest::RewriteMethodDeclaration(ObjCMethodDecl *Method) {
   SourceLocation LocEnd = Method->getLocEnd();
     
   if (SM->getLineNumber(LocEnd) > SM->getLineNumber(LocStart)) {
-	Rewrite.InsertText(LocStart, "/* ", 3);
-	Rewrite.ReplaceText(LocEnd, 1, ";*/ ", 4);
+    Rewrite.InsertText(LocStart, "/* ", 3);
+    Rewrite.ReplaceText(LocEnd, 1, ";*/ ", 4);
   } else {
-	Rewrite.InsertText(LocStart, "// ", 3);
+    Rewrite.InsertText(LocStart, "// ", 3);
   }
 }
 
@@ -710,9 +710,9 @@ Stmt *RewriteTest::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
     if (Rewrite.ReplaceStmt(IV, Replacement)) {
       // replacement failed.
       SourceRange Range = IV->getSourceRange();
-	  if (!SilenceRewriteMacroWarning)
+      if (!SilenceRewriteMacroWarning)
         Diags.Report(Context->getFullLoc(IV->getLocation()), RewriteFailedDiag, 
-	                                     0, 0, &Range, 1);
+                                         0, 0, &Range, 1);
     }
     delete IV;
     return Replacement;
@@ -736,9 +736,9 @@ Stmt *RewriteTest::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
           if (Rewrite.ReplaceStmt(IV->getBase(), PE)) {
             // replacement failed.
             SourceRange Range = IV->getBase()->getSourceRange();
-	        if (!SilenceRewriteMacroWarning)
+            if (!SilenceRewriteMacroWarning)
               Diags.Report(Context->getFullLoc(IV->getBase()->getLocStart()), 
-						   RewriteFailedDiag, 0, 0, &Range, 1);
+                           RewriteFailedDiag, 0, 0, &Range, 1);
           }
           delete IV->getBase();
           return PE;
@@ -781,7 +781,7 @@ Stmt *RewriteTest::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
 
   if (ObjCSelectorExpr *AtSelector = dyn_cast<ObjCSelectorExpr>(S))
     return RewriteAtSelector(AtSelector);
-	
+    
   if (ObjCStringLiteral *AtString = dyn_cast<ObjCStringLiteral>(S))
     return RewriteObjCStringLiteral(AtString);
     
@@ -1305,7 +1305,7 @@ Stmt *RewriteTest::RewriteAtEncode(ObjCEncodeExpr *Exp) {
     SourceRange Range = Exp->getSourceRange();
     if (!SilenceRewriteMacroWarning)
       Diags.Report(Context->getFullLoc(Exp->getAtLoc()), RewriteFailedDiag,
-	                                   0, 0, &Range, 1);
+                                       0, 0, &Range, 1);
   }
   
   // Replace this subexpr in the parent.
@@ -1329,7 +1329,7 @@ Stmt *RewriteTest::RewriteAtSelector(ObjCSelectorExpr *Exp) {
     SourceRange Range = Exp->getSourceRange();
     if (!SilenceRewriteMacroWarning)
       Diags.Report(Context->getFullLoc(Exp->getAtLoc()), RewriteFailedDiag,
-	                                   0, 0, &Range, 1);
+                                       0, 0, &Range, 1);
   }
   delete Exp;
   return SelExp;
@@ -1661,7 +1661,7 @@ Stmt *RewriteTest::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
     SourceRange Range = Exp->getSourceRange();
     if (!SilenceRewriteMacroWarning)
       Diags.Report(Context->getFullLoc(Exp->getAtLoc()), RewriteFailedDiag,
-	                                   0, 0, &Range, 1);
+                                       0, 0, &Range, 1);
   }
   delete Exp;
   return cast;
@@ -2041,7 +2041,7 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
     SourceRange Range = Exp->getSourceRange();
     if (!SilenceRewriteMacroWarning)
       Diags.Report(Context->getFullLoc(Exp->getLocStart()), RewriteFailedDiag,
-	                                   0, 0, &Range, 1);
+                                       0, 0, &Range, 1);
   }
   
   delete Exp;
@@ -2068,7 +2068,7 @@ Stmt *RewriteTest::RewriteObjCProtocolExpr(ObjCProtocolExpr *Exp) {
     SourceRange Range = Exp->getSourceRange();
     if (!SilenceRewriteMacroWarning)
       Diags.Report(Context->getFullLoc(Exp->getAtLoc()), RewriteFailedDiag,
-	                                   0, 0, &Range, 1);
+                                       0, 0, &Range, 1);
   }
   delete Exp;
   return ProtoExp;
@@ -2116,11 +2116,11 @@ void RewriteTest::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
     if (RCDecl && ObjCSynthesizedStructs.count(RCDecl)) {
       Result = "\n    struct ";
       Result += RCDecl->getName();
-	  // Note: We don't name the field decl. This simplifies the "codegen" for
-	  // accessing a superclasses instance variables (and is similar to what gcc
-	  // does internally). The unnamed struct field feature is enabled with
-	  // -fms-extensions. If the struct definition were "inlined", we wouldn't
-	  // need to use this switch. That said, I don't want to inline the def.
+      // Note: We don't name the field decl. This simplifies the "codegen" for
+      // accessing a superclasses instance variables (and is similar to what gcc
+      // does internally). The unnamed struct field feature is enabled with
+      // -fms-extensions. If the struct definition were "inlined", we wouldn't
+      // need to use this switch. That said, I don't want to inline the def.
       Result += ";\n";
       
       // insert the super class structure definition.
@@ -2163,11 +2163,11 @@ void RewriteTest::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
     endBuf += Lexer::MeasureTokenLength(LocEnd, *SM);
     Result += " {\n    struct ";
     Result += RCDecl->getName();
-	// Note: We don't name the field decl. This simplifies the "codegen" for
-	// accessing a superclasses instance variables (and is similar to what gcc
-	// does internally). The unnamed struct field feature is enabled with
-	// -fms-extensions. If the struct definition were "inlined", we wouldn't
-	// need to use this switch. That said, I don't want to inline the def.
+    // Note: We don't name the field decl. This simplifies the "codegen" for
+    // accessing a superclasses instance variables (and is similar to what gcc
+    // does internally). The unnamed struct field feature is enabled with
+    // -fms-extensions. If the struct definition were "inlined", we wouldn't
+    // need to use this switch. That said, I don't want to inline the def.
     Result += ";\n};\n";
     Rewrite.ReplaceText(LocStart, endBuf-startBuf, 
                         Result.c_str(), Result.size());

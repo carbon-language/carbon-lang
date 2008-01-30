@@ -1150,7 +1150,7 @@ void ASTContext::getObjCEncodingForType(QualType T, std::string& S,
   } else if (T->isEnumeralType()) {
     S += 'i';
   } else
-	assert(0 && "@encode for type not implemented!");
+    assert(0 && "@encode for type not implemented!");
 }
 
 void ASTContext::getObjCEncodingForTypeQualifier(Decl::ObjCDeclQualifier QT, 
@@ -1579,10 +1579,10 @@ bool ASTContext::functionTypesAreCompatible(QualType lhs, QualType rhs) {
       
     // The use of ellipsis agree...now check the argument types.
     for (unsigned i = 0; i < lproto_nargs; i++)
-	  // C99 6.7.5.3p15: ...and each parameter declared with qualified type
-	  // is taken as having the unqualified version of it's declared type.
+      // C99 6.7.5.3p15: ...and each parameter declared with qualified type
+      // is taken as having the unqualified version of it's declared type.
       if (!typesAreCompatible(lproto->getArgType(i).getUnqualifiedType(), 
-	                          rproto->getArgType(i).getUnqualifiedType()))
+                              rproto->getArgType(i).getUnqualifiedType()))
         return false;
     return true;
   }
@@ -1651,7 +1651,7 @@ bool ASTContext::typesAreCompatible(QualType lhs, QualType rhs) {
     // is an interface, we defer to objcTypesAreCompatible(). 
     if (lcanon->isObjCInterfaceType() || rcanon->isObjCInterfaceType())
       return objcTypesAreCompatible(lcanon, rcanon);
-	  
+      
     // C99 6.7.2.2p4: Each enumerated type shall be compatible with char,
     // a signed integer type, or an unsigned integer type. 
     // FIXME: need to check the size and ensure it's the same.
