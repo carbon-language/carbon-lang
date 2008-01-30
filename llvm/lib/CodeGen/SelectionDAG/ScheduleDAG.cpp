@@ -716,16 +716,16 @@ void ScheduleDAG::EmitNode(SDNode *Node, unsigned InstanceNo,
       // If we are inserting a LABEL and this happens to be the first label in
       // the entry block, it is the "function start" label. Make sure there are
       // no other instructions before it.
-      bool SeenLabel = false;
+      unsigned NumLabels = 0;
       MachineBasicBlock::iterator MBBI = BB->begin();
       while (MBBI != BB->end()) {
         if (MBBI->getOpcode() == TargetInstrInfo::LABEL) {
-          SeenLabel = true;
-          break;
+          if (++NumLabels > 1)
+            break;
         }
         ++MBBI;
       }
-      if (!SeenLabel)
+      if (NumLabels <= 1)
         BB->insert(BB->begin(), MI);
       else
         BB->push_back(MI);
