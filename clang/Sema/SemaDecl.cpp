@@ -1863,13 +1863,16 @@ QualType Sema::HandleVectorTypeAttribute(QualType curType,
 void Sema::HandleAlignedAttribute(Decl *d, AttributeList *rawAttr)
 {
   // check the attribute arguments.
-  // FIXME: Handle the case where are no arguments.
-  if (rawAttr->getNumArgs() != 1) {
+  if (rawAttr->getNumArgs() > 1) {
     Diag(rawAttr->getAttributeLoc(), diag::err_attribute_wrong_number_arguments,
          std::string("1"));
     return;
   }
-  
+
+  // We probably need to actually do something with this at some point...
+  if (rawAttr->getNumArgs() == 0)
+    return;
+
   Expr *alignmentExpr = static_cast<Expr *>(rawAttr->getArg(0));
   llvm::APSInt alignment(32);
   if (!alignmentExpr->isIntegerConstantExpr(alignment, Context)) {
