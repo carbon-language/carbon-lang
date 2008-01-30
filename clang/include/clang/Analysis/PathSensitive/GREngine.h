@@ -167,6 +167,9 @@ class GRBranchNodeBuilderImpl {
   CFGBlock* DstF;
   ExplodedNodeImpl* Pred;
 
+  typedef llvm::SmallVector<ExplodedNodeImpl*,3> DeferredTy;
+  DeferredTy Deferred;
+  
   bool GeneratedTrue;
   bool GeneratedFalse;
   

@@ -842,6 +842,10 @@ public:
     
     return St;
   }
+  
+  bool isUninitControlFlow(const NodeTy* N) const {
+    return N->isSink() && UninitBranches.count(const_cast<NodeTy*>(N)) != 0;
+  }
 
   /// ProcessStmt - Called by GREngine. Used to generate new successor
   ///  nodes by processing the 'effects' of a block-level statement.
@@ -1474,6 +1478,8 @@ StateTy GRConstants::Assume(StateTy St, NonLValue Cond, bool Assumption,
 //===----------------------------------------------------------------------===//
 
 #ifndef NDEBUG
+static GRConstants* GraphPrintCheckerState;
+
 namespace llvm {
 template<>
 struct VISIBILITY_HIDDEN DOTGraphTraits<GRConstants::NodeTy*> :
@@ -1566,6 +1572,10 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRConstants::NodeTy*> :
           
           Out << "\\l";
         }
+        
+        if (GraphPrintCheckerState->isUninitControlFlow(N)) {
+          Out << "\\|Control-flow based on\\lUninitialized value.\\l";
+        }
       }
     }
     
@@ -1587,7 +1597,9 @@ void RunGRConstants(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx) {
   GREngine<GRConstants> Engine(cfg, FD, Ctx);
   Engine.ExecuteWorkList();  
 #ifndef NDEBUG
+  GraphPrintCheckerState = &Engine.getCheckerState();
   llvm::ViewGraph(*Engine.getGraph().roots_begin(),"GRConstants");
+  GraphPrintCheckerState = NULL;
 #endif  
 }
 } // end clang namespace

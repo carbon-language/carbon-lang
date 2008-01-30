@@ -301,7 +301,7 @@ ExplodedNodeImpl* GRBranchNodeBuilderImpl::generateNodeImpl(void* State,
   else GeneratedFalse = true;  
   
   if (IsNew) {
-    Eng.WList->Enqueue(GRWorkListUnit(Succ));
+    Deferred.push_back(Succ);
     return Succ;
   }
   
@@ -311,4 +311,7 @@ ExplodedNodeImpl* GRBranchNodeBuilderImpl::generateNodeImpl(void* State,
 GRBranchNodeBuilderImpl::~GRBranchNodeBuilderImpl() {
   if (!GeneratedTrue) generateNodeImpl(Pred->State, true);
   if (!GeneratedFalse) generateNodeImpl(Pred->State, false);
+  
+  for (DeferredTy::iterator I=Deferred.begin(), E=Deferred.end(); I!=E; ++I)
+    if (!(*I)->isSink()) Eng.WList->Enqueue(GRWorkListUnit(*I));
 }
