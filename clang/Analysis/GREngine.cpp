@@ -243,12 +243,12 @@ GRStmtNodeBuilderImpl::GRStmtNodeBuilderImpl(CFGBlock* b, unsigned idx,
 
 GRStmtNodeBuilderImpl::~GRStmtNodeBuilderImpl() {
   for (DeferredTy::iterator I=Deferred.begin(), E=Deferred.end(); I!=E; ++I)
-    if (!(*I)->isInfeasible())
+    if (!(*I)->isSink())
       GenerateAutoTransition(*I);
 }
 
 void GRStmtNodeBuilderImpl::GenerateAutoTransition(ExplodedNodeImpl* N) {
-  assert (!N->isInfeasible());
+  assert (!N->isSink());
   
   PostStmt Loc(getStmt());
   
@@ -287,7 +287,8 @@ ExplodedNodeImpl* GRStmtNodeBuilderImpl::generateNodeImpl(Stmt* S, void* State,
   return NULL;  
 }
 
-void GRBranchNodeBuilderImpl::generateNodeImpl(void* State, bool branch) {  
+ExplodedNodeImpl* GRBranchNodeBuilderImpl::generateNodeImpl(void* State,
+                                                            bool branch) {  
   bool IsNew;
   
   ExplodedNodeImpl* Succ =
@@ -299,8 +300,12 @@ void GRBranchNodeBuilderImpl::generateNodeImpl(void* State, bool branch) {
   if (branch) GeneratedTrue = true;
   else GeneratedFalse = true;  
   
-  if (IsNew)
+  if (IsNew) {
     Eng.WList->Enqueue(GRWorkListUnit(Succ));
+    return Succ;
+  }
+  
+  return NULL;
 }
 
 GRBranchNodeBuilderImpl::~GRBranchNodeBuilderImpl() {

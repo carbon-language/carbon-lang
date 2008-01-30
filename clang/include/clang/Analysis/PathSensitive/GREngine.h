@@ -112,7 +112,7 @@ public:
   const ExplodedGraphImpl& getGraph() const { return *Eng.G; }
   
   inline ExplodedNodeImpl* getLastNode() {
-    return LastNode ? (LastNode->isInfeasible() ? NULL : LastNode) : NULL;
+    return LastNode ? (LastNode->isSink() ? NULL : LastNode) : NULL;
   }
   
   ExplodedNodeImpl* generateNodeImpl(Stmt* S, void* State,
@@ -178,9 +178,10 @@ public:
   
   ~GRBranchNodeBuilderImpl();
   
+  ExplodedNodeImpl* getPredecessor() const { return Pred; }
   const ExplodedGraphImpl& getGraph() const { return *Eng.G; }
     
-  void generateNodeImpl(void* State, bool branch);  
+  ExplodedNodeImpl* generateNodeImpl(void* State, bool branch);  
   
   void markInfeasible(bool branch) {
     if (branch) GeneratedTrue = true;
@@ -203,10 +204,18 @@ public:
   const GraphTy& getGraph() const {
     return static_cast<const GraphTy&>(NB.getGraph());
   }
+  
+  NodeTy* getPredecessor() const {
+    return static_cast<NodeTy*>(NB.getPredecessor());
+  }
+  
+  StateTy getState() const {
+    return getPredecessor()->getState();
+  }
 
-  inline void generateNode(StateTy State, bool branch) {
+  inline NodeTy* generateNode(StateTy State, bool branch) {
     void *state = GRTrait<StateTy>::toPtr(State);        
-    NB.generateNodeImpl(state, branch);
+    return static_cast<NodeTy*>(NB.generateNodeImpl(state, branch));
   }
   
   inline void markInfeasible(bool branch) {

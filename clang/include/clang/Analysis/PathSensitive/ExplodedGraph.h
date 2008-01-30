@@ -43,15 +43,15 @@ protected:
   friend class GRBranchNodeBuilderImpl;
   
   class NodeGroup {
-    enum { Size1 = 0x0, SizeOther = 0x1, Infeasible = 0x2, Flags = 0x3 };
+    enum { Size1 = 0x0, SizeOther = 0x1, AuxFlag = 0x2, Mask = 0x3 };
     uintptr_t P;
     
     unsigned getKind() const {
-      return P & Flags;
+      return P & Mask;
     }
     
     void* getPtr() const {
-      return reinterpret_cast<void*>(P & ~Flags);
+      return reinterpret_cast<void*>(P & ~Mask);
     }
 
     ExplodedNodeImpl* getNode() const {
@@ -73,15 +73,14 @@ protected:
     
     void addNode(ExplodedNodeImpl* N);
     
-    void setInfeasibleFlag() {
-      P |= Infeasible;
+    void setFlag() {
+      P |= AuxFlag;
     }
     
-    bool getInfeasibleFlag() const {
-      return P & Infeasible ? true : false;
+    bool getFlag() const {
+      return P & AuxFlag ? true : false;
     }
-  };
-  
+  };  
   
   /// Location - The program location (within a function body) associated
   ///  with this node.
@@ -105,7 +104,7 @@ protected:
   /// addPredeccessor - Adds a predecessor to the current node, and 
   ///  in tandem add this node as a successor of the other node.
   void addPredecessor(ExplodedNodeImpl* V) {
-    assert (!V->isInfeasible());
+    assert (!V->isSink());
     Preds.addNode(V);
     V->Succs.addNode(this);
   }
@@ -129,8 +128,8 @@ public:
   bool succ_empty() const { return Succs.empty(); }
   bool pred_empty() const { return Preds.size(); }
   
-  bool isInfeasible() const { return Preds.getInfeasibleFlag(); }
-  void setInfeasible() { Preds.setInfeasibleFlag(); }  
+  bool isSink() const { return Preds.getFlag(); }
+  void markAsSink() { Preds.setFlag(); }  
 };
 
 

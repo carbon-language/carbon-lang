@@ -26,6 +26,7 @@
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/ImmutableMap.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Streams.h"
@@ -722,8 +723,18 @@ namespace clang {
   };
 }
 
+typedef ValueMapTy StateTy;
+
 //===----------------------------------------------------------------------===//
 // The Checker.
+//
+//  FIXME: This checker logic should be eventually broken into two components.
+//         The first is the "meta"-level checking logic; the code that
+//         does the Stmt visitation, fetching values from the map, etc.
+//         The second part does the actual state manipulation.  This way we
+//         get more of a separate of concerns of these two pieces, with the
+//         latter potentially being refactored back into the main checking
+//         logic.
 //===----------------------------------------------------------------------===//
 
 namespace {
@@ -743,9 +754,9 @@ public:
   public:
     
     NodeSet() {}
-    NodeSet(NodeTy* N) { assert (N && !N->isInfeasible()); Impl.push_back(N); }
+    NodeSet(NodeTy* N) { assert (N && !N->isSink()); Impl.push_back(N); }
     
-    void Add(NodeTy* N) { if (N && !N->isInfeasible()) Impl.push_back(N); }
+    void Add(NodeTy* N) { if (N && !N->isSink()) Impl.push_back(N); }
     
     typedef ImplTy::iterator       iterator;
     typedef ImplTy::const_iterator const_iterator;
@@ -786,6 +797,11 @@ protected:
   
   /// CurrentStmt - The current block-level statement.
   Stmt* CurrentStmt;
+  
+  /// UninitBranches - Nodes in the ExplodedGraph that result from
+  ///  taking a branch based on an uninitialized value.
+  typedef llvm::SmallPtrSet<NodeTy*,5> UninitBranchesTy;
+  UninitBranchesTy UninitBranches;
   
   bool StateCleaned;
   
@@ -856,6 +872,19 @@ public:
   
   RValue GetValue(const StateTy& St, const LValue& LV);
   LValue GetLValue(const StateTy& St, Stmt* S);
+    
+  /// Assume - Create new state by assuming that a given expression
+  ///  is true or false.
+  inline StateTy Assume(StateTy St, RValue Cond, bool Assumption, 
+                        bool& isFeasible) {
+    if (isa<LValue>(Cond))
+      return Assume(St, cast<LValue>(Cond), Assumption, isFeasible);
+    else
+      return Assume(St, cast<NonLValue>(Cond), Assumption, isFeasible);
+  }
+  
+  StateTy Assume(StateTy St, LValue Cond, bool Assumption, bool& isFeasible);
+  StateTy Assume(StateTy St, NonLValue Cond, bool Assumption, bool& isFeasible);
   
   void Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred, StateTy St);
   
@@ -880,8 +909,54 @@ public:
 
 void GRConstants::ProcessBranch(Stmt* Condition, Stmt* Term,
                                 BranchNodeBuilder& builder) {
+
+  StateTy PrevState = builder.getState();
   
+  // Remove old bindings for subexpressions.  
+  for (StateTy::iterator I=PrevState.begin(), E=PrevState.end(); I!=E; ++I)
+    if (I.getKey().isSubExpr())
+      PrevState = StateMgr.Remove(PrevState, I.getKey());
   
+  RValue V = GetValue(PrevState, Condition);
+  
+  switch (V.getBaseKind()) {
+    default:
+      break;
+
+    case RValue::InvalidKind:
+      builder.generateNode(PrevState, true);
+      builder.generateNode(PrevState, false);
+      return;
+      
+    case RValue::UninitializedKind: {      
+      NodeTy* N = builder.generateNode(PrevState, true);
+
+      if (N) {
+        N->markAsSink();
+        UninitBranches.insert(N);
+      }
+      
+      builder.markInfeasible(false);
+      return;
+    }      
+  }
+
+  // Process the true branch.
+  bool isFeasible = true;
+  StateTy St = Assume(PrevState, V, true, isFeasible);
+
+  if (isFeasible) builder.generateNode(St, true);
+  else {
+    builder.markInfeasible(true);
+    isFeasible = true;
+  }
+  
+  // Process the false branch.  
+  St = Assume(PrevState, V, false, isFeasible);
+  
+  if (isFeasible) builder.generateNode(St, false);
+  else builder.markInfeasible(false);
+
 }
 
 void GRConstants::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
@@ -1369,6 +1444,32 @@ void GRConstants::Visit(Stmt* S, GRConstants::NodeTy* Pred,
 }
 
 //===----------------------------------------------------------------------===//
+// "Assume" logic.
+//===----------------------------------------------------------------------===//
+
+StateTy GRConstants::Assume(StateTy St, LValue Cond, bool Assumption, 
+                            bool& isFeasible) {    
+  return St;
+}
+
+StateTy GRConstants::Assume(StateTy St, NonLValue Cond, bool Assumption, 
+                            bool& isFeasible) {
+  
+  switch (Cond.getSubKind()) {
+    default:
+      assert (false && "'Assume' not implemented for this NonLValue.");
+      return St;
+      
+    case ConcreteIntKind: {
+      bool b = cast<ConcreteInt>(Cond).getValue() != 0;
+      isFeasible = b ? Assumption : !Assumption;      
+      return St;
+    }
+  }
+}
+
+
+//===----------------------------------------------------------------------===//
 // Driver.
 //===----------------------------------------------------------------------===//
 
@@ -1447,6 +1548,24 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRConstants::NodeTy*> :
         const BlockEdge& E = cast<BlockEdge>(Loc);
         Out << "Edge: (B" << E.getSrc()->getBlockID() << ", B"
             << E.getDst()->getBlockID()  << ')';
+        
+        if (Stmt* T = E.getSrc()->getTerminator()) {
+          Out << "\\|Terminator: ";
+          E.getSrc()->printTerminator(Out);
+          
+          if (isa<SwitchStmt>(T)) {
+            // FIXME
+          }
+          else {
+            Out << "\\lCondition: ";
+            if (*E.getSrc()->succ_begin() == E.getDst())
+              Out << "true";
+            else
+              Out << "false";                        
+          }
+          
+          Out << "\\l";
+        }
       }
     }
     
