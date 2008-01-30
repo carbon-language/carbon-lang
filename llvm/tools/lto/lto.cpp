@@ -489,6 +489,22 @@ LTO::optimizeModules(const std::string &OutputFilename,
 
   std::vector<const char*> args;
   args.push_back(gcc.c_str());
+  if (strncmp(targetTriple.c_str(), "i686-apple-", 11) == 0) {
+    args.push_back("-arch");
+    args.push_back("i386");
+  }
+  if (strncmp(targetTriple.c_str(), "x86_64-apple-", 13) == 0) {
+    args.push_back("-arch");
+    args.push_back("x86_64");
+  }
+  if (strncmp(targetTriple.c_str(), "powerpc-apple-", 14) == 0) {
+    args.push_back("-arch");
+    args.push_back("ppc");
+  }
+  if (strncmp(targetTriple.c_str(), "powerpc64-apple-", 16) == 0) {
+    args.push_back("-arch");
+    args.push_back("ppc64");
+  }
   args.push_back("-c");
   args.push_back("-x");
   args.push_back("assembler");
