@@ -319,17 +319,6 @@ VarDecl *Sema::MergeVarDecl(VarDecl *New, ScopedDecl *OldD) {
     Diag(OldD->getLocation(), diag::err_previous_definition);
     return New;
   }
-  FileVarDecl *OldFSDecl = dyn_cast<FileVarDecl>(Old);
-  FileVarDecl *NewFSDecl = dyn_cast<FileVarDecl>(New);
-  bool OldIsTentative = false;
-  
-  if (OldFSDecl && NewFSDecl) { // C99 6.9.2
-    // Handle C "tentative" external object definitions. FIXME: finish!
-    if (!OldFSDecl->getInit() &&
-        (OldFSDecl->getStorageClass() == VarDecl::None ||
-         OldFSDecl->getStorageClass() == VarDecl::Static))
-      OldIsTentative = true;
-  }
   // Verify the types match.
   if (Old->getCanonicalType() != New->getCanonicalType() && 
       !areEquivalentArrayTypes(New->getCanonicalType(), Old->getCanonicalType())) {
@@ -337,8 +326,49 @@ VarDecl *Sema::MergeVarDecl(VarDecl *New, ScopedDecl *OldD) {
     Diag(Old->getLocation(), diag::err_previous_definition);
     return New;
   }
-  // We've verified the types match, now check if Old is "extern".
-  if (Old->getStorageClass() != VarDecl::Extern) {
+  // C99 6.2.2p4: Check if we have a static decl followed by a non-static.
+  if (New->getStorageClass() == VarDecl::Static &&
+      (Old->getStorageClass() == VarDecl::None ||
+       Old->getStorageClass() == VarDecl::Extern)) {
+    Diag(New->getLocation(), diag::err_static_non_static, New->getName());
+    Diag(Old->getLocation(), diag::err_previous_definition);
+    return New;
+  }
+  // C99 6.2.2p4: Check if we have a non-static decl followed by a static.
+  if (New->getStorageClass() != VarDecl::Static &&
+      Old->getStorageClass() == VarDecl::Static) {
+    Diag(New->getLocation(), diag::err_non_static_static, New->getName());
+    Diag(Old->getLocation(), diag::err_previous_definition);
+    return New;
+  }
+  // We've verified the types match, now handle "tentative" definitions.
+  FileVarDecl *OldFSDecl = dyn_cast<FileVarDecl>(Old);
+  FileVarDecl *NewFSDecl = dyn_cast<FileVarDecl>(New);
+  
+  if (OldFSDecl && NewFSDecl) {
+    // Handle C "tentative" external object definitions (C99 6.9.2).
+    bool OldIsTentative = false;
+    bool NewIsTentative = false;
+    
+    if (!OldFSDecl->getInit() &&
+        (OldFSDecl->getStorageClass() == VarDecl::None ||
+         OldFSDecl->getStorageClass() == VarDecl::Static))
+      OldIsTentative = true;
+      
+    // FIXME: this check doesn't work (since the initializer hasn't been
+    // attached yet). This check should be moved to FinalizeDeclaratorGroup.
+    // Unfortunately, by the time we get to FinializeDeclaratorGroup, we've 
+    // thrown out the old decl.
+    if (!NewFSDecl->getInit() &&
+        (NewFSDecl->getStorageClass() == VarDecl::None ||
+         NewFSDecl->getStorageClass() == VarDecl::Static))
+      ; // change to NewIsTentative = true; once the code is moved.
+    
+    if (NewIsTentative || OldIsTentative)
+      return New;
+  }
+  if (Old->getStorageClass() != VarDecl::Extern &&
+      New->getStorageClass() != VarDecl::Extern) {
     Diag(New->getLocation(), diag::err_redefinition, New->getName());
     Diag(Old->getLocation(), diag::err_previous_definition);
   }
