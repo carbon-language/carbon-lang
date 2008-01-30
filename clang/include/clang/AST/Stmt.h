@@ -935,7 +935,7 @@ public:
 
 /// ObjCAtSynchronizedStmt - This is for objective-c's @synchronized statement.
 /// Example: @synchronized (sem) {
-///             do-somthing;
+///             do-something;
 ///          }
 ///
 class ObjCAtSynchronizedStmt : public Stmt {
