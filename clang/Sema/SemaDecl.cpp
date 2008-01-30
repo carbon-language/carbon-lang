@@ -1869,7 +1869,7 @@ void Sema::HandleAlignedAttribute(Decl *d, AttributeList *rawAttr)
     return;
   }
 
-  // We probably need to actually do something with this at some point...
+  // TODO: We probably need to actually do something with aligned attribute.
   if (rawAttr->getNumArgs() == 0)
     return;
 
