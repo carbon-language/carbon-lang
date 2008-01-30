@@ -327,7 +327,7 @@ bool DSE::handleEndBlock(BasicBlock& BB,
     if (LoadInst* L = dyn_cast<LoadInst>(BBI)) {
       // However, if this load is unused, we can go ahead and remove it, and
       // not have to worry about it making our pointer undead!
-      if (L->getNumUses() == 0) {
+      if (L->use_empty()) {
         MD.removeInstruction(L);
         
         // DCE instructions only used to calculate that load
@@ -350,7 +350,7 @@ bool DSE::handleEndBlock(BasicBlock& BB,
       deadPointers.erase(A);
       
       // Dead alloca's can be DCE'd when we reach them
-      if (A->getNumUses() == 0) {
+      if (A->use_empty()) {
         MD.removeInstruction(A);
         
         // DCE instructions only used to calculate that load
