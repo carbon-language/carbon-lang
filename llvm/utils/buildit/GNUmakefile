@@ -56,12 +56,14 @@ ifndef RC_ProjectSourceSubversion
 RC_ProjectSourceSubversion = 01
 endif
 
+# NOTE : Always put version numbers at the end because they are optional.
 install: $(OBJROOT) $(SYMROOT) $(DSTROOT)
 	cd $(OBJROOT) && \
 	  $(SRC)/build_llvm "$(RC_ARCHS)" "$(TARGETS)" \
 	    $(SRC) $(PREFIX) $(DSTROOT) $(SYMROOT) \
-	    $(RC_ProjectSourceVersion) $(RC_ProjectSourceSubversion) \
-	    $(LLVM_ASSERTIONS) $(LLVM_OPTIMIZED)
+	    $(LLVM_ASSERTIONS) $(LLVM_OPTIMIZED) \
+	    $(RC_ProjectSourceVersion) $(RC_ProjectSourceSubversion) 
+
 
 # installhdrs does nothing, because the headers aren't useful until
 # the compiler is installed.
