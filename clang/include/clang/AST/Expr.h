@@ -1204,7 +1204,24 @@ public:
   virtual child_iterator child_end();  
 };
   
-/// InitListExpr, used for struct and array initializers.
+/// InitListExpr - used for struct and array initializers, such as:
+///    struct foo x = { 1, { 2, 3 } };
+///
+/// Because C is somewhat loose with braces, the AST does not necessarily
+/// directly model the C source.  Instead, the semantic analyzer aims to make
+/// the InitListExprs match up with the type of the decl being initialized.  We
+/// have the following exceptions:
+///
+///  1. Elements at the end of the list may be dropped from the initializer.  
+///     These elements are defined to be initialized to zero.  For example:
+///         int x[20] = { 1 };
+///  2. Initializers may have excess initializers which are to be ignored by the
+///     compiler.  For example:
+///         int x[1] = { 1, 2 };
+///  3. Redundant InitListExprs may be present.  These always have a single
+///     element whose type is the same as the InitListExpr.
+///         int x = { 1 };  int y[2] = { {1}, {2} };
+///
 class InitListExpr : public Expr {
   Expr **InitExprs;
   unsigned NumInits;
