@@ -31,6 +31,7 @@
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/CodeGen/FileWriters.h"
 #include "llvm/Target/SubtargetFeature.h"
+#include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetMachineRegistry.h"
@@ -266,7 +267,11 @@ LTO::optimize(Module *M, std::ostream &Out,
 
   if (!Target)
     return LTO_NO_TARGET;
-  
+
+  // If target supports exception handling then enable it now.
+  if (Target->getTargetAsmInfo()->doesSupportExceptionHandling())
+    ExceptionHandling = true;
+
   // Start off with a verification pass.
   Passes.add(createVerifierPass());
   
