@@ -420,7 +420,7 @@ bool DSE::handleEndBlock(BasicBlock& BB,
     } else {
       // For any non-memory-affecting non-terminators, DCE them as we reach them
       Instruction *CI = BBI;
-      if (!CI->isTerminator() && CI->getNumUses() == 0) {
+      if (!CI->isTerminator() && CI->getNumUses() == 0 && !isa<FreeInst>(CI)) {
         
         // DCE instructions only used to calculate that load
         for (Instruction::op_iterator OI = CI->op_begin(), OE = CI->op_end();
