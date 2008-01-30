@@ -24,6 +24,7 @@ namespace llvm {
   struct InstrStage;
   struct SUnit;
   class MachineConstantPool;
+  class MachineFunction;
   class MachineModuleInfo;
   class MachineRegisterInfo;
   class MachineInstr;
@@ -243,6 +244,7 @@ namespace llvm {
     const TargetMachine &TM;              // Target processor
     const TargetInstrInfo *TII;           // Target instruction information
     const MRegisterInfo *MRI;             // Target processor register info
+    MachineFunction *MF;                  // Machine function
     MachineRegisterInfo &RegInfo;         // Virtual/real register map
     MachineConstantPool *ConstPool;       // Target constant pool
     std::vector<SUnit*> Sequence;         // The schedule. Null SUnit*'s

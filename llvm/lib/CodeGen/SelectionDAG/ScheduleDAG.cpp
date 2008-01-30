@@ -31,6 +31,7 @@ ScheduleDAG::ScheduleDAG(SelectionDAG &dag, MachineBasicBlock *bb,
                          const TargetMachine &tm)
   : DAG(dag), BB(bb), TM(tm), RegInfo(BB->getParent()->getRegInfo()) {
     TII = TM.getInstrInfo();
+    MF  = &DAG.getMachineFunction();
     MRI = TM.getRegisterInfo();
     ConstPool = BB->getParent()->getConstantPool();
 }
@@ -710,13 +711,30 @@ void ScheduleDAG::EmitNode(SDNode *Node, unsigned InstanceNo,
     }
 
     // Now that we have emitted all operands, emit this instruction itself.
-    if (!II.usesCustomDAGSchedInsertionHook()) {
-      BB->insert(BB->end(), MI);
-    } else {
-      // Insert this instruction into the end of the basic block, potentially
-      // taking some custom action.
+    if (Opc == TargetInstrInfo::LABEL &&
+        !BB->empty() && &MF->front() == BB) {
+      // If we are inserting a LABEL and this happens to be the first label in
+      // the entry block, it is the "function start" label. Make sure there are
+      // no other instructions before it.
+      bool SeenLabel = false;
+      MachineBasicBlock::iterator MBBI = BB->begin();
+      while (MBBI != BB->end()) {
+        if (MBBI->getOpcode() == TargetInstrInfo::LABEL) {
+          SeenLabel = true;
+          break;
+        }
+        ++MBBI;
+      }
+      if (!SeenLabel)
+        BB->insert(BB->begin(), MI);
+      else
+        BB->push_back(MI);
+    } else if (II.usesCustomDAGSchedInsertionHook())
+      // Insert this instruction into the basic block using a target
+      // specific inserter which may returns a new basic block.
       BB = DAG.getTargetLoweringInfo().EmitInstrWithCustomInserter(MI, BB);
-    }
+    else
+      BB->push_back(MI);
 
     // Additional results must be an physical register def.
     if (HasPhysRegOuts) {
@@ -870,13 +888,12 @@ void ScheduleDAG::EmitSchedule() {
   // If this is the first basic block in the function, and if it has live ins
   // that need to be copied into vregs, emit the copies into the top of the
   // block before emitting the code for the block.
-  MachineFunction &MF = DAG.getMachineFunction();
-  if (&MF.front() == BB) {
+  if (&MF->front() == BB) {
     for (MachineRegisterInfo::livein_iterator LI = RegInfo.livein_begin(),
          E = RegInfo.livein_end(); LI != E; ++LI)
       if (LI->second) {
         const TargetRegisterClass *RC = RegInfo.getRegClass(LI->second);
-        TII->copyRegToReg(*MF.begin(), MF.begin()->end(), LI->second,
+        TII->copyRegToReg(*MF->begin(), MF->begin()->end(), LI->second,
                           LI->first, RC, RC);
       }
   }
