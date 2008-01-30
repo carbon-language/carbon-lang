@@ -419,8 +419,9 @@ public:
   //===--------------------------------------------------------------------===//
 
   RValue EmitCallExpr(const CallExpr *E);
-  RValue EmitCallExpr(Expr *FnExpr, Expr *const *Args);
-  RValue EmitCallExpr(llvm::Value *Callee, QualType FnType, Expr *const *Args);
+  RValue EmitCallExpr(Expr *FnExpr, Expr *const *Args, unsigned NumArgs);
+  RValue EmitCallExpr(llvm::Value *Callee, QualType FnType,
+                      Expr *const *Args, unsigned NumArgs);
   RValue EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E);
 
   llvm::Value *EmitX86BuiltinExpr(unsigned BuiltinID, const CallExpr *E);

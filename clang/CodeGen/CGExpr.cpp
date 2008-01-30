@@ -511,12 +511,14 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {
           return EmitBuiltinExpr(builtinID, E);
         
   llvm::Value *Callee = EmitScalarExpr(E->getCallee());
-  return EmitCallExpr(Callee, E->getCallee()->getType(), E->arg_begin());
+  return EmitCallExpr(Callee, E->getCallee()->getType(),
+                      E->arg_begin(), E->getNumArgs());
 }
 
-RValue CodeGenFunction::EmitCallExpr(Expr *FnExpr, Expr *const *Args) {
+RValue CodeGenFunction::EmitCallExpr(Expr *FnExpr, Expr *const *Args,
+                                     unsigned NumArgs) {
   llvm::Value *Callee = EmitScalarExpr(FnExpr);
-  return EmitCallExpr(Callee, FnExpr->getType(), Args);
+  return EmitCallExpr(Callee, FnExpr->getType(), Args, NumArgs);
 }
 
 LValue CodeGenFunction::EmitCallExprLValue(const CallExpr *E) {
@@ -526,17 +528,12 @@ LValue CodeGenFunction::EmitCallExprLValue(const CallExpr *E) {
 }
 
 RValue CodeGenFunction::EmitCallExpr(llvm::Value *Callee, QualType FnType, 
-                                     Expr *const *ArgExprs) {
+                                     Expr *const *ArgExprs, unsigned NumArgs) {
   // The callee type will always be a pointer to function type, get the function
   // type.
   FnType = cast<PointerType>(FnType.getCanonicalType())->getPointeeType();
   QualType ResultType = cast<FunctionType>(FnType)->getResultType();
-  
-  // Calling unprototyped functions provides no argument info.
-  unsigned NumArgs = 0;
-  if (const FunctionTypeProto *FTP = dyn_cast<FunctionTypeProto>(FnType))
-    NumArgs = FTP->getNumArgs();
-  
+
   llvm::SmallVector<llvm::Value*, 16> Args;
   
   // Handle struct-return functions by passing a pointer to the location that

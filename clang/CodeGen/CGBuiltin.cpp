@@ -30,7 +30,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
   default: {
     if (getContext().BuiltinInfo.isLibFunction(BuiltinID))
       return EmitCallExpr(CGM.getBuiltinLibFunction(BuiltinID), 
-                          E->getCallee()->getType(), E->arg_begin());
+                          E->getCallee()->getType(), E->arg_begin(),
+                          E->getNumArgs());
   
     // See if we have a target specific intrinsic.
     Intrinsic::ID IntrinsicID;
