@@ -22,6 +22,15 @@ void swap()
   
   int a[__builtin_offsetof(struct external_sun3_core, X) == 4 ? 1 : -1];
   int b[__builtin_offsetof(struct external_sun3_core, X[42]) == 340 ? 1 : -1];
-  int c[__builtin_offsetof(struct external_sun3_core, X[42].f2) == 344 ? 1 : -1];
+  int c[__builtin_offsetof(struct external_sun3_core, X[42].f2) == 344 ? 1 : -1];  // expected-error {{no member named 'f2'}}
 }    
 
+
+struct s1 { int a; }; 
+extern int v1[offsetof (struct s1, a) == 0];
+
+struct s2 { int a; }; 
+extern int v2[__INTADDR__ (&((struct s2 *) 0)->a) == 0];
+
+struct s3 { int a; }; 
+extern int v3[__builtin_offsetof(struct s3, a) == 0];
