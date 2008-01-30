@@ -111,20 +111,17 @@ bool Stmt::hasImplicitControlFlow() const {
   }
 }
 
-AsmStmt::AsmStmt(SourceLocation asmloc, 
-                 bool isvolatile,
-                 unsigned numoutputs,
-                 unsigned numinputs,
-                 std::string *names,
-                 StringLiteral **constraints,
-                 Expr **exprs,
-                 StringLiteral *asmstr,
-                 unsigned numclobbers,
-                 StringLiteral **clobbers,                 
-                 SourceLocation rparenloc)
+//===----------------------------------------------------------------------===//
+// Constructors
+//===----------------------------------------------------------------------===//
+
+AsmStmt::AsmStmt(SourceLocation asmloc,  bool isvolatile,
+                 unsigned numoutputs, unsigned numinputs,
+                 std::string *names, StringLiteral **constraints,
+                 Expr **exprs, StringLiteral *asmstr, unsigned numclobbers,
+                 StringLiteral **clobbers, SourceLocation rparenloc)
   : Stmt(AsmStmtClass), AsmLoc(asmloc), RParenLoc(rparenloc), AsmStr(asmstr)
-  , IsVolatile(isvolatile), NumOutputs(numoutputs), NumInputs(numinputs)
-{
+  , IsVolatile(isvolatile), NumOutputs(numoutputs), NumInputs(numinputs) {
   for (unsigned i = 0, e = numinputs + numoutputs; i != e; i++) {
     Names.push_back(names[i]);
     Exprs.push_back(exprs[i]);
@@ -134,6 +131,39 @@ AsmStmt::AsmStmt(SourceLocation asmloc,
   for (unsigned i = 0; i != numclobbers; i++)
     Clobbers.push_back(clobbers[i]);
 }
+
+ObjCForCollectionStmt::ObjCForCollectionStmt(Stmt *Elem, Expr *Collect,
+                                             Stmt *Body,  SourceLocation FCL,
+                                             SourceLocation RPL) 
+: Stmt(ObjCForCollectionStmtClass) {
+  SubExprs[ELEM] = Elem;
+  SubExprs[COLLECTION] = reinterpret_cast<Stmt*>(Collect);
+  SubExprs[BODY] = Body;
+  ForLoc = FCL;
+  RParenLoc = RPL;
+}
+
+
+ObjCAtCatchStmt::ObjCAtCatchStmt(SourceLocation atCatchLoc, 
+                                 SourceLocation rparenloc, 
+                                 Stmt *catchVarStmtDecl, Stmt *atCatchStmt, 
+                                 Stmt *atCatchList)
+: Stmt(ObjCAtCatchStmtClass) {
+  SubExprs[SELECTOR] = catchVarStmtDecl;
+  SubExprs[BODY] = atCatchStmt;
+  if (!atCatchList)
+    NextAtCatchStmt = NULL;
+  else {
+    ObjCAtCatchStmt *AtCatchList = 
+    static_cast<ObjCAtCatchStmt*>(atCatchList);
+    while (AtCatchList->NextAtCatchStmt)
+      AtCatchList = AtCatchList->NextAtCatchStmt;
+    AtCatchList->NextAtCatchStmt = this;
+  }
+  AtCatchLoc = atCatchLoc;
+  RParenLoc = rparenloc;
+}
+
 
 //===----------------------------------------------------------------------===//
 //  Child Iterators for iterating over subexpressions/substatements

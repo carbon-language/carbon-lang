@@ -588,15 +588,8 @@ class ObjCForCollectionStmt : public Stmt {
   SourceLocation RParenLoc;
 public:
   ObjCForCollectionStmt(Stmt *Elem, Expr *Collect, Stmt *Body, 
-                        SourceLocation FCL, SourceLocation RPL) 
-  : Stmt(ObjCForCollectionStmtClass) {
-    SubExprs[ELEM] = Elem;
-    SubExprs[COLLECTION] = reinterpret_cast<Stmt*>(Collect);
-    SubExprs[BODY] = Body;
-    ForLoc = FCL;
-    RParenLoc = RPL;
-  }
-    
+                        SourceLocation FCL, SourceLocation RPL);
+  
   Stmt *getElement() { return SubExprs[ELEM]; }
   Expr *getCollection() { 
     return reinterpret_cast<Expr*>(SubExprs[COLLECTION]); 
@@ -773,17 +766,10 @@ class AsmStmt : public Stmt {
 
   llvm::SmallVector<StringLiteral*, 4> Clobbers;
 public:
-  AsmStmt(SourceLocation asmloc, 
-          bool isvolatile,
-          unsigned numoutputs,
-          unsigned numinputs,
-          std::string *names,
-          StringLiteral **constraints,
-          Expr **exprs,
-          StringLiteral *asmstr,
-          unsigned numclobbers,
-          StringLiteral **clobbers,
-          SourceLocation rparenloc);
+  AsmStmt(SourceLocation asmloc,  bool isvolatile, unsigned numoutputs,
+          unsigned numinputs, std::string *names, StringLiteral **constraints,
+          Expr **exprs, StringLiteral *asmstr, unsigned numclobbers,
+          StringLiteral **clobbers, SourceLocation rparenloc);
 
   bool isVolatile() const { return IsVolatile; }
   
@@ -843,22 +829,7 @@ private:
 
 public:
   ObjCAtCatchStmt(SourceLocation atCatchLoc, SourceLocation rparenloc,
-                  Stmt *catchVarStmtDecl, Stmt *atCatchStmt, Stmt *atCatchList)
-  : Stmt(ObjCAtCatchStmtClass) {
-      SubExprs[SELECTOR] = catchVarStmtDecl;
-      SubExprs[BODY] = atCatchStmt;
-      if (!atCatchList)
-        NextAtCatchStmt = NULL;
-      else {
-        ObjCAtCatchStmt *AtCatchList = 
-          static_cast<ObjCAtCatchStmt*>(atCatchList);
-        while (AtCatchList->NextAtCatchStmt)
-          AtCatchList = AtCatchList->NextAtCatchStmt;
-        AtCatchList->NextAtCatchStmt = this;
-      }
-      AtCatchLoc = atCatchLoc;
-      RParenLoc = rparenloc;
-    }
+                  Stmt *catchVarStmtDecl, Stmt *atCatchStmt, Stmt *atCatchList);
   
   const Stmt *getCatchBody() const { return SubExprs[BODY]; }
   Stmt *getCatchBody() { return SubExprs[BODY]; }
@@ -1020,8 +991,8 @@ public:
   virtual SourceRange getSourceRange() const {
     if (Throw)
       return SourceRange(AtThrowLoc, Throw->getLocEnd()); 
-	else 
-	  return SourceRange(AtThrowLoc);
+    else 
+      return SourceRange(AtThrowLoc);
   }
   
   static bool classof(const Stmt *T) {

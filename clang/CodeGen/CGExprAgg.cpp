@@ -225,7 +225,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
   // Copy initializer elements.
   bool AllConstElements = true;
   unsigned i = 0;
-  for (i = 0; i < NumInitElements; ++i) {
+  for (i = 0; i != NumInitElements; ++i) {
     if (llvm::Constant *C = 
         dyn_cast<llvm::Constant>(CGF.EmitScalarExpr(E->getInit(i))))
       ArrayElts.push_back(C);
