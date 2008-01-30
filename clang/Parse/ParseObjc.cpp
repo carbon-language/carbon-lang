@@ -1279,10 +1279,8 @@ Parser::ExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {
   default:
     Diag(AtLoc, diag::err_unexpected_at);
     SkipUntil(tok::semi);
-    break;
+    return true;
   }
-  
-  return 0;
 }
 
 ///   objc-message-expr: 
