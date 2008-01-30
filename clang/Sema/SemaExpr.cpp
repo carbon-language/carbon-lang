@@ -2086,12 +2086,15 @@ Sema::ExprResult Sema::ActOnChooseExpr(SourceLocation BuiltinLoc, ExprTy *cond,
   return new ChooseExpr(BuiltinLoc, CondExpr, LHSExpr, RHSExpr, resType, RPLoc);
 }
 
-/// ExprsCompatibleWithFnType - return true if the Exprs in array Args have
+/// ExprsMatchFnType - return true if the Exprs in array Args have
 /// QualTypes that match the QualTypes of the arguments of the FnType.
-static bool ExprsCompatibleWithFnType(Expr **Args, FunctionTypeProto *FnType) {
+/// The number of arguments has already been validated to match the number of
+/// arguments in FnType.
+static bool ExprsMatchFnType(Expr **Args, const FunctionTypeProto *FnType) {
   unsigned NumParams = FnType->getNumArgs();
   for (unsigned i = 0; i != NumParams; ++i)
-    if (Args[i]->getType() != FnType->getArgType(i))
+    if (Args[i]->getType().getCanonicalType() != 
+        FnType->getArgType(i).getCanonicalType())
       return false;
   return true;
 }
@@ -2123,25 +2126,28 @@ Sema::ExprResult Sema::ActOnOverloadExpr(ExprTy **args, unsigned NumArgs,
                 SourceRange(BuiltinLoc, RParenLoc));
 
   // Figure out the return type, by matching the args to one of the functions
-  // listed after the paramters.
+  // listed after the parameters.
   for (unsigned i = NumParams + 1; i < NumArgs; ++i) {
     // UsualUnaryConversions will convert the function DeclRefExpr into a 
     // pointer to function.
     Expr *Fn = UsualUnaryConversions(Args[i]);
     FunctionTypeProto *FnType = 0;
-    if (const PointerType *PT = Fn->getType()->getAsPointerType())
-      FnType = dyn_cast<FunctionTypeProto>(PT->getPointeeType());
+    if (const PointerType *PT = Fn->getType()->getAsPointerType()) {
+      QualType PointeeType = PT->getPointeeType().getCanonicalType();
+      FnType = dyn_cast<FunctionTypeProto>(PointeeType);
+    }
  
     // The Expr type must be FunctionTypeProto, since FunctionTypeProto has no
     // parameters, and the number of parameters must match the value passed to
     // the builtin.
     if (!FnType || (FnType->getNumArgs() != NumParams))
-      continue;
+      return Diag(Fn->getExprLoc(), diag::err_overload_incorrect_fntype, 
+                  Fn->getSourceRange());
 
     // Scan the parameter list for the FunctionType, checking the QualType of
-    // each paramter against the QualTypes of the arguments to the builtin.
+    // each parameter against the QualTypes of the arguments to the builtin.
     // If they match, return a new OverloadExpr.
-    if (ExprsCompatibleWithFnType(Args+1, FnType))
+    if (ExprsMatchFnType(Args+1, FnType))
       return new OverloadExpr(Args, NumArgs, i, FnType->getResultType(),
                               BuiltinLoc, RParenLoc);
   }
@@ -2149,8 +2155,10 @@ Sema::ExprResult Sema::ActOnOverloadExpr(ExprTy **args, unsigned NumArgs,
   // If we didn't find a matching function Expr in the __builtin_overload list
   // the return an error.
   std::string typeNames;
-  for (unsigned i = 0; i != NumParams; ++i)
-    typeNames += Args[i+1]->getType().getAsString() + " ";
+  for (unsigned i = 0; i != NumParams; ++i) {
+    if (i != 0) typeNames += ", ";
+    typeNames += Args[i+1]->getType().getAsString();
+  }
 
   return Diag(BuiltinLoc, diag::err_overload_no_match, typeNames,
               SourceRange(BuiltinLoc, RParenLoc));

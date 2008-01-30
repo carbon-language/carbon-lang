@@ -844,6 +844,8 @@ DIAG(err_invalid_conversion_between_vector_and_scalar, ERROR,
     "invalid conversion between vector type '%0' and scalar type '%1'")
 DIAG(err_overload_expr_requires_non_zero_constant, ERROR,
      "overload requires a non-zero constant expression as first argument")
+DIAG(err_overload_incorrect_fntype, ERROR,
+     "argument is not a function, or has wrong number of parameters")
 DIAG(err_overload_no_match, ERROR,
      "no matching overload found for arguments of type '%0'")
 

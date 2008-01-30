@@ -1291,7 +1291,7 @@ Stmt::child_iterator OverloadExpr::child_begin() {
   return reinterpret_cast<Stmt**>(&SubExprs[0]);
 }
 Stmt::child_iterator OverloadExpr::child_end() {
-  return reinterpret_cast<Stmt**>(&SubExprs[NumArgs]);
+  return reinterpret_cast<Stmt**>(&SubExprs[NumExprs]);
 }
 
 // VAArgExpr

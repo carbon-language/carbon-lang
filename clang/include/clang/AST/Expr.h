@@ -1128,21 +1128,45 @@ public:
 };
 
 /// OverloadExpr - Clang builtin-in function __builtin_overload.
-/// This AST node provides a way to overload functions in C
-/// i.e. float Z = __builtin_overload(2, X, Y, modf, mod, modl);
-/// would pick whichever of the functions modf, mod, and modl that took two
-/// arguments of the same type as X and Y.  
+/// This AST node provides a way to overload functions in C.
+///
+/// The first argument is required to be a constant expression, for the number
+/// of arguments passed to each candidate function.
+///
+/// The next N arguments, where N is the value of the constant expression,
+/// are the values to be passed as arguments.
+///
+/// The rest of the arguments are values of pointer to function type, which 
+/// are the candidate functions for overloading.
+///
+/// The result is a equivalent to a CallExpr taking N arguments to the 
+/// candidate function whose parameter types match the types of the N arguments.
+///
+/// example: float Z = __builtin_overload(2, X, Y, modf, mod, modl);
+/// If X and Y are long doubles, Z will assigned the result of modl(X, Y);
+/// If X and Y are floats, Z will be assigned the result of modf(X, Y);
 class OverloadExpr : public Expr {
+  // SubExprs - the list of values passed to the __builtin_overload function.
+  // SubExpr[0] is a constant expression
+  // SubExpr[1-N] are the parameters to pass to the matching function call
+  // SubExpr[N-...] are the candidate functions, of type pointer to function.
   Expr **SubExprs;
-  unsigned NumArgs;
+
+  // NumExprs - the size of the SubExprs array
+  unsigned NumExprs;
+
+  // NumArgs - the number of arguments 
+  
+  // The index of the matching candidate function
   unsigned FnIndex;
+
   SourceLocation BuiltinLoc;
   SourceLocation RParenLoc;
 public:
   OverloadExpr(Expr **args, unsigned narg, unsigned idx, QualType t, 
                SourceLocation bloc, SourceLocation rploc)
-    : Expr(OverloadExprClass, t), NumArgs(narg), FnIndex(idx), BuiltinLoc(bloc), 
-      RParenLoc(rploc) {
+    : Expr(OverloadExprClass, t), NumExprs(narg), FnIndex(idx),
+      BuiltinLoc(bloc), RParenLoc(rploc) {
     SubExprs = new Expr*[narg];
     for (unsigned i = 0; i != narg; ++i)
       SubExprs[i] = args[i];
@@ -1151,19 +1175,31 @@ public:
     delete [] SubExprs;
   }
 
+  /// arg_begin - Return a pointer to the list of arguments that will be passed
+  /// to the matching candidate function, skipping over the initial constant
+  /// expression.
   typedef Expr * const *arg_const_iterator;
   arg_const_iterator arg_begin() const { return SubExprs+1; }
 
-  /// getNumArgs - Return the number of actual arguments to this call.
-  ///
-  unsigned getNumArgs() const { return NumArgs; }
+  /// getNumArgs - Return the number of arguments to pass to the candidate
+  /// functions.
+  unsigned getNumArgs(ASTContext &Ctx) const {
+    llvm::APSInt constEval(32);
+    (void) SubExprs[0]->isIntegerConstantExpr(constEval, Ctx);
+    return constEval.getZExtValue();
+  }
+
+  /// getNumSubExprs - Return the size of the SubExprs array
+  unsigned getNumSubExprs() const { return NumExprs; }
   
   /// getArg - Return the specified argument.
-  Expr *getArg(unsigned Arg) {
-    assert(Arg < NumArgs && "Arg access out of range!");
-    return SubExprs[Arg];
+  Expr *getExpr(unsigned Expr) {
+    assert((Expr < NumExprs) && "Arg access out of range!");
+    return SubExprs[Expr];
   }
-  Expr *getFn() { return SubExprs[FnIndex]; }
+  
+  /// getFn - Return the matching candidate function for this OverloadExpr
+  Expr *getFn() const { return SubExprs[FnIndex]; }
   
   virtual SourceRange getSourceRange() const {
     return SourceRange(BuiltinLoc, RParenLoc);

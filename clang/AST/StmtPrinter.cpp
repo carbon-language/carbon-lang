@@ -743,9 +743,9 @@ void StmtPrinter::VisitChooseExpr(ChooseExpr *Node) {
 
 void StmtPrinter::VisitOverloadExpr(OverloadExpr *Node) {
   OS << "__builtin_overload(";
-  for (unsigned i = 0, e = Node->getNumArgs(); i != e; ++i) {
+  for (unsigned i = 0, e = Node->getNumSubExprs(); i != e; ++i) {
     if (i) OS << ", ";
-    PrintExpr(Node->getArg(i));
+    PrintExpr(Node->getExpr(i));
   }
   OS << ")";
 }
