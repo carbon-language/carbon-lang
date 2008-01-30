@@ -451,8 +451,6 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction* rem) {
   // Figure out the new dep for things that currently depend on rem
   Instruction* newDep = NonLocal;
 
-  reverseDep[depGraphLocal[rem].first].erase(rem);
-
   for (DenseMap<BasicBlock*, Value*>::iterator DI =
        depGraphNonLocal[rem].begin(), DE = depGraphNonLocal[rem].end();
        DI != DE; ++DI)
@@ -462,6 +460,8 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction* rem) {
   depMapType::iterator depGraphEntry = depGraphLocal.find(rem);
 
   if (depGraphEntry != depGraphLocal.end()) {
+    reverseDep[depGraphLocal[rem].first].erase(rem);
+    
     if (depGraphEntry->second.first != NonLocal &&
         depGraphEntry->second.second) {
       // If we have dep info for rem, set them to it
