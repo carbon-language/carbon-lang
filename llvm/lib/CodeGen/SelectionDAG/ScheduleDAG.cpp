@@ -715,7 +715,7 @@ void ScheduleDAG::EmitNode(SDNode *Node, unsigned InstanceNo,
     } else {
       // Insert this instruction into the end of the basic block, potentially
       // taking some custom action.
-      BB = DAG.getTargetLoweringInfo().InsertAtEndOfBasicBlock(MI, BB);
+      BB = DAG.getTargetLoweringInfo().EmitInstrWithCustomInserter(MI, BB);
     }
 
     // Additional results must be an physical register def.

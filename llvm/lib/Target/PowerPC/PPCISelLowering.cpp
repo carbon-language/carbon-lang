@@ -3124,8 +3124,8 @@ SDNode *PPCTargetLowering::ExpandOperationResult(SDNode *N, SelectionDAG &DAG) {
 //===----------------------------------------------------------------------===//
 
 MachineBasicBlock *
-PPCTargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
-                                           MachineBasicBlock *BB) {
+PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
+                                               MachineBasicBlock *BB) {
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
   assert((MI->getOpcode() == PPC::SELECT_CC_I4 ||
           MI->getOpcode() == PPC::SELECT_CC_I8 ||

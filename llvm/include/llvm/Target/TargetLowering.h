@@ -1022,13 +1022,13 @@ public:
   // Scheduler hooks
   //
   
-  // InsertAtEndOfBasicBlock - This method should be implemented by targets that
-  // mark instructions with the 'usesCustomDAGSchedInserter' flag.  These
+  // EmitInstrWithCustomInserter - This method should be implemented by targets
+  // that mark instructions with the 'usesCustomDAGSchedInserter' flag.  These
   // instructions are special in various ways, which require special support to
   // insert.  The specified MachineInstr is created but not inserted into any
   // basic blocks, and the scheduler passes ownership of it to this method.
-  virtual MachineBasicBlock *InsertAtEndOfBasicBlock(MachineInstr *MI,
-                                                     MachineBasicBlock *MBB);
+  virtual MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
+                                                         MachineBasicBlock *MBB);
 
   //===--------------------------------------------------------------------===//
   // Addressing mode description hooks (used by LSR etc).

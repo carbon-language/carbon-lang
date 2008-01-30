@@ -5383,8 +5383,8 @@ bool X86TargetLowering::isVectorClearMaskLegal(std::vector<SDOperand> &BVOps,
 //===----------------------------------------------------------------------===//
 
 MachineBasicBlock *
-X86TargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
-                                           MachineBasicBlock *BB) {
+X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
+                                               MachineBasicBlock *BB) {
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
   switch (MI->getOpcode()) {
   default: assert(false && "Unexpected instr type to insert");

@@ -1453,7 +1453,7 @@ SDNode *ARMTargetLowering::ExpandOperationResult(SDNode *N, SelectionDAG &DAG) {
 //===----------------------------------------------------------------------===//
 
 MachineBasicBlock *
-ARMTargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
+ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                            MachineBasicBlock *BB) {
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
   switch (MI->getOpcode()) {

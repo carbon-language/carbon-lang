@@ -2535,17 +2535,6 @@ SPUTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG)
 }
 
 //===----------------------------------------------------------------------===//
-//  Other Lowering Code
-//===----------------------------------------------------------------------===//
-
-MachineBasicBlock *
-SPUTargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
-                                           MachineBasicBlock *BB)
-{
-  return BB;
-}
-
-//===----------------------------------------------------------------------===//
 // Target Optimization Hooks
 //===----------------------------------------------------------------------===//
 

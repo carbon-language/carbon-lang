@@ -260,8 +260,8 @@ namespace llvm {
                                                 const SelectionDAG &DAG,
                                                 unsigned Depth = 0) const;
 
-    virtual MachineBasicBlock *InsertAtEndOfBasicBlock(MachineInstr *MI,
-                                                       MachineBasicBlock *MBB);
+    virtual MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
+                                                        MachineBasicBlock *MBB);
     
     ConstraintType getConstraintType(const std::string &Constraint) const;
     std::pair<unsigned, const TargetRegisterClass*> 

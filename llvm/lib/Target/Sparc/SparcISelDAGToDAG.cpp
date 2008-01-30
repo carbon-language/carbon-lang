@@ -121,8 +121,8 @@ namespace {
       LowerCallTo(SDOperand Chain, const Type *RetTy, bool RetTyIsSigned, 
                   bool isVarArg, unsigned CC, bool isTailCall, SDOperand Callee,
                   ArgListTy &Args, SelectionDAG &DAG);
-    virtual MachineBasicBlock *InsertAtEndOfBasicBlock(MachineInstr *MI,
-                                                       MachineBasicBlock *MBB);
+    virtual MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
+                                                        MachineBasicBlock *MBB);
     
     virtual const char *getTargetNodeName(unsigned Opcode) const;
   };
@@ -895,8 +895,8 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
 }
 
 MachineBasicBlock *
-SparcTargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
-                                             MachineBasicBlock *BB) {
+SparcTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
+                                                 MachineBasicBlock *BB) {
   const TargetInstrInfo &TII = *getTargetMachine().getInstrInfo();
   unsigned BROpcode;
   unsigned CC;

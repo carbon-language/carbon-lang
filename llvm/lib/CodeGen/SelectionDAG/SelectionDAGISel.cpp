@@ -3855,16 +3855,16 @@ void SelectionDAGLowering::visitFree(FreeInst &I) {
   DAG.setRoot(Result.second);
 }
 
-// InsertAtEndOfBasicBlock - This method should be implemented by targets that
-// mark instructions with the 'usesCustomDAGSchedInserter' flag.  These
+// EmitInstrWithCustomInserter - This method should be implemented by targets
+// that mark instructions with the 'usesCustomDAGSchedInserter' flag.  These
 // instructions are special in various ways, which require special support to
 // insert.  The specified MachineInstr is created but not inserted into any
 // basic blocks, and the scheduler passes ownership of it to this method.
-MachineBasicBlock *TargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
+MachineBasicBlock *TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                        MachineBasicBlock *MBB) {
   cerr << "If a target marks an instruction with "
        << "'usesCustomDAGSchedInserter', it must implement "
-       << "TargetLowering::InsertAtEndOfBasicBlock!\n";
+       << "TargetLowering::EmitInstrWithCustomInserter!\n";
   abort();
   return 0;  
 }
