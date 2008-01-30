@@ -184,10 +184,6 @@ def SPUaform : SDNode<"SPUISD::AFormAddr", SDTIntBinOp, []>;
 // Indirect [D-Form "imm($reg)" and X-Form "$reg($reg)"] addresses
 def SPUindirect : SDNode<"SPUISD::IndirectAddr", SDTIntBinOp, []>;
 
-// Load result node
-def SPUload_result : SDTypeProfile<1, 3, []>;
-def SPUldresult : SDNode<"SPUISD::LDRESULT", SPUload_result, [SDNPHasChain]>;
-
 // SPU 32-bit sign-extension to 64-bits
 def SPUsext32_to_64: SDNode<"SPUISD::SEXT32TO64", SDTIntExtendOp, []>;
 

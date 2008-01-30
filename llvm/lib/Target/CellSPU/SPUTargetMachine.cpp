@@ -50,7 +50,7 @@ SPUTargetMachine::getModuleMatchQuality(const Module &M)
       || (TT.size() >= 8 && std::string(TT.begin(), TT.begin()+8) == "cellspu-"))
     return 20;
   
-  return 0;			// No match at all...
+  return 0;                     // No match at all...
 }
 
 SPUTargetMachine::SPUTargetMachine(const Module &M, const std::string &FS)

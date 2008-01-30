@@ -38,34 +38,34 @@ namespace llvm {
       CALL,                     ///< CALL instruction
       SHUFB,                    ///< Vector shuffle (permute)
       INSERT_MASK,              ///< Insert element shuffle mask
-      CNTB,			///< Count leading ones in bytes
+      CNTB,                     ///< Count leading ones in bytes
       PROMOTE_SCALAR,           ///< Promote scalar->vector
       EXTRACT_ELT0,             ///< Extract element 0
-      EXTRACT_ELT0_CHAINED,	///< Extract element 0, with chain
+      EXTRACT_ELT0_CHAINED,     ///< Extract element 0, with chain
       EXTRACT_I1_ZEXT,          ///< Extract element 0 as i1, zero extend
       EXTRACT_I1_SEXT,          ///< Extract element 0 as i1, sign extend
       EXTRACT_I8_ZEXT,          ///< Extract element 0 as i8, zero extend
       EXTRACT_I8_SEXT,          ///< Extract element 0 as i8, sign extend
-      MPY,			///< 16-bit Multiply (low parts of a 32-bit)
-      MPYU,			///< Multiply Unsigned
-      MPYH,			///< Multiply High
-      MPYHH,			///< Multiply High-High
-      VEC_SHL,			///< Vector shift left
-      VEC_SRL,			///< Vector shift right (logical)
-      VEC_SRA,			///< Vector shift right (arithmetic)
-      VEC_ROTL,			///< Vector rotate left
-      VEC_ROTR,			///< Vector rotate right
-      ROTBYTES_RIGHT_Z,		///< Vector rotate right, by bytes, zero fill
+      MPY,                      ///< 16-bit Multiply (low parts of a 32-bit)
+      MPYU,                     ///< Multiply Unsigned
+      MPYH,                     ///< Multiply High
+      MPYHH,                    ///< Multiply High-High
+      VEC_SHL,                  ///< Vector shift left
+      VEC_SRL,                  ///< Vector shift right (logical)
+      VEC_SRA,                  ///< Vector shift right (arithmetic)
+      VEC_ROTL,                 ///< Vector rotate left
+      VEC_ROTR,                 ///< Vector rotate right
+      ROTBYTES_RIGHT_Z,         ///< Vector rotate right, by bytes, zero fill
       ROTBYTES_RIGHT_S,         ///< Vector rotate right, by bytes, sign fill
-      ROTBYTES_LEFT,		///< Rotate bytes (loads -> ROTQBYI)
-      ROTBYTES_LEFT_CHAINED,	///< Rotate bytes (loads -> ROTQBYI), with chain
-      FSMBI,			///< Form Select Mask for Bytes, Immediate
-      SELB,			///< Select bits -> (b & mask) | (a & ~mask)
-      SFPConstant,		///< Single precision floating point constant
+      ROTBYTES_LEFT,            ///< Rotate bytes (loads -> ROTQBYI)
+      ROTBYTES_LEFT_CHAINED,    ///< Rotate bytes (loads -> ROTQBYI), with chain
+      FSMBI,                    ///< Form Select Mask for Bytes, Immediate
+      SELB,                     ///< Select bits -> (b & mask) | (a & ~mask)
+      SFPConstant,              ///< Single precision floating point constant
       FPInterp,                 ///< Floating point interpolate
-      FPRecipEst,		///< Floating point reciprocal estimate
-      SEXT32TO64,		///< Sign-extended 32-bit const -> 64-bits
-      LAST_SPUISD		///< Last user-defined instruction
+      FPRecipEst,               ///< Floating point reciprocal estimate
+      SEXT32TO64,               ///< Sign-extended 32-bit const -> 64-bits
+      LAST_SPUISD               ///< Last user-defined instruction
     };
   }
 

@@ -408,8 +408,8 @@ SPUInstrInfo::foldMemoryOperand(MachineInstr *MI,
     if (OpNum == 0) {  // move -> store
       unsigned InReg = MI->getOperand(1).getReg();
       if (FrameIndex < SPUFrameInfo::maxFrameOffset()) {
-	NewMI = addFrameReference(BuildMI(TII.get(SPU::STQDr32)).addReg(InReg),
-				  FrameIndex);
+        NewMI = addFrameReference(BuildMI(TII.get(SPU::STQDr32)).addReg(InReg),
+                                  FrameIndex);
       }
     } else {           // move -> load
       unsigned OutReg = MI->getOperand(0).getReg();

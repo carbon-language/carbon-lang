@@ -35,7 +35,7 @@ namespace llvm {
   inline bool isS10Constant(short Value) {
     int SExtValue = ((int) Value << (32 - 10)) >> (32 - 10);
     return ((Value > 0 && Value <= (1 << 9) - 1)
-	    || (Value < 0 && (short) SExtValue == Value));
+            || (Value < 0 && (short) SExtValue == Value));
   }
 
   inline bool isS10Constant(int Value) {

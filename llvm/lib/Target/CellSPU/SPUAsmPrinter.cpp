@@ -102,7 +102,7 @@ namespace {
       value = (value << (32 - 7)) >> (32 - 7);
 
       assert((value >= -(1 << 8) && value <= (1 << 7) - 1)
-	     && "Invalid s7 argument");
+             && "Invalid s7 argument");
       O << value;
     }
 
@@ -185,7 +185,7 @@ namespace {
     {
       const MachineOperand &MO = MI->getOperand(OpNo);
       assert(MO.isImmediate()
-	     && "printMemRegImmS10 first operand is not immedate");
+             && "printMemRegImmS10 first operand is not immedate");
       printS10ImmOperand(MI, OpNo);
       O << "(";
       printOperand(MI, OpNo+1);
@@ -246,7 +246,7 @@ namespace {
       if (MI->getOperand(OpNo).isImmediate()) {
         int value = (int) MI->getOperand(OpNo).getImm();
         assert((value >= 0 && value < 16)
-	       && "Invalid negated immediate rotate 7-bit argument");
+               && "Invalid negated immediate rotate 7-bit argument");
         O << -value;
       } else {
         assert(0 &&"Invalid/non-immediate rotate amount in printRotateNeg7Imm");
@@ -257,7 +257,7 @@ namespace {
       if (MI->getOperand(OpNo).isImmediate()) {
         int value = (int) MI->getOperand(OpNo).getImm();
         assert((value >= 0 && value < 32)
-	       && "Invalid negated immediate rotate 7-bit argument");
+               && "Invalid negated immediate rotate 7-bit argument");
         O << -value;
       } else {
         assert(0 &&"Invalid/non-immediate rotate amount in printRotateNeg7Imm");
@@ -385,7 +385,7 @@ bool SPUAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
 }
 
 bool SPUAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
-    				          unsigned OpNo,
+                                          unsigned OpNo,
                                           unsigned AsmVariant, 
                                           const char *ExtraCode) {
   if (ExtraCode && ExtraCode[0])

@@ -194,16 +194,16 @@ multiclass StoreDForms
 
 class StoreAFormVec<ValueType vectype>
   : RI16Form<0b0010010, (outs), (ins VECREG:$rT, addr256k:$src),
-	     "stqa\t$rT, $src",
-	     LoadStore,
-	     [(store (vectype VECREG:$rT), aform_addr:$src)]>
+             "stqa\t$rT, $src",
+             LoadStore,
+             [(store (vectype VECREG:$rT), aform_addr:$src)]>
 { }
 
 class StoreAForm<RegisterClass rclass>
   : RI16Form<0b001001, (outs), (ins rclass:$rT, addr256k:$src),
-	     "stqa\t$rT, $src",
-	     LoadStore,
-	     [(store rclass:$rT, aform_addr:$src)]>
+             "stqa\t$rT, $src",
+             LoadStore,
+             [(store rclass:$rT, aform_addr:$src)]>
 { }
 
 multiclass StoreAForms
@@ -226,16 +226,16 @@ multiclass StoreAForms
 
 class StoreXFormVec<ValueType vectype>
   : RRForm<0b00100100, (outs), (ins VECREG:$rT, memrr:$src),
-	   "stqx\t$rT, $src",
-	   LoadStore,
-	   [(store (vectype VECREG:$rT), xform_addr:$src)]>
+           "stqx\t$rT, $src",
+           LoadStore,
+           [(store (vectype VECREG:$rT), xform_addr:$src)]>
 { }
 
 class StoreXForm<RegisterClass rclass>
   : RRForm<0b00100100, (outs), (ins rclass:$rT, memrr:$src),
-	   "stqx\t$rT, $src",
-	   LoadStore,
-	   [(store rclass:$rT, xform_addr:$src)]>
+           "stqx\t$rT, $src",
+           LoadStore,
+           [(store rclass:$rT, xform_addr:$src)]>
 { }
 
 multiclass StoreXForms
@@ -460,9 +460,9 @@ def IOHLlo:
 
 class FSMBIVec<ValueType vectype>
   : RI16Form<0b101001100, (outs VECREG:$rT), (ins u16imm:$val),
-	     "fsmbi\t$rT, $val",
-	     SelectOp,
-	     [(set (vectype VECREG:$rT), (SPUfsmbi immU16:$val))]>
+             "fsmbi\t$rT, $val",
+             SelectOp,
+             [(set (vectype VECREG:$rT), (SPUfsmbi immU16:$val))]>
 { }
 
 multiclass FSMBIs
@@ -1151,7 +1151,7 @@ def ORv16i8_i8:
       [/* no pattern */]>;
 
 def : Pat<(v16i8 (SPUpromote_scalar R8C:$rA)),
-	  (ORv16i8_i8 R8C:$rA, R8C:$rA)>;
+          (ORv16i8_i8 R8C:$rA, R8C:$rA)>;
 
 def ORv8i16_i16:
     RRForm<0b10000010000, (outs VECREG:$rT), (ins R16C:$rA, R16C:$rB),
@@ -1200,10 +1200,10 @@ def ORi8_v16i8:
       [/* no pattern */]>;
 
 def : Pat<(SPUextract_elt0 (v16i8 VECREG:$rA)),
-	  (ORi8_v16i8 VECREG:$rA, VECREG:$rA)>;
+          (ORi8_v16i8 VECREG:$rA, VECREG:$rA)>;
 
 def : Pat<(SPUextract_elt0_chained (v16i8 VECREG:$rA)),
-	  (ORi8_v16i8 VECREG:$rA, VECREG:$rA)>;
+          (ORi8_v16i8 VECREG:$rA, VECREG:$rA)>;
 
 def ORi16_v8i16:
     RRForm<0b10000010000, (outs R16C:$rT), (ins VECREG:$rA, VECREG:$rB),
@@ -2311,7 +2311,7 @@ def: Pat<(SPUvec_srl_v8i16 (v8i16 VECREG:$rA), (i16 imm:$val)),
          (ROTHMIv8i16 VECREG:$rA, imm:$val)>;
  
 def: Pat<(SPUvec_srl_v8i16 (v8i16 VECREG:$rA), (i8 imm:$val)),
-	 (ROTHMIv8i16 VECREG:$rA, imm:$val)>;
+         (ROTHMIv8i16 VECREG:$rA, imm:$val)>;
 
 def ROTHMIr16:
     RI7Form<0b10111110000, (outs R16C:$rT), (ins R16C:$rA, rothNeg7imm:$val),

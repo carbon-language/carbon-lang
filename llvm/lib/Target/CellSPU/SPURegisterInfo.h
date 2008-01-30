@@ -41,7 +41,7 @@ namespace llvm {
     static unsigned getRegisterNumbering(unsigned RegEnum);
 
     void reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
-		       unsigned DestReg, const MachineInstr *Orig) const;
+                       unsigned DestReg, const MachineInstr *Orig) const;
     
     //! Return the array of callee-saved registers
     virtual const unsigned* getCalleeSavedRegs(const MachineFunction *MF) const;
@@ -66,7 +66,7 @@ namespace llvm {
     void determineFrameLayout(MachineFunction &MF) const;
 
     void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
-					      RegScavenger *RS = NULL) const;
+                                              RegScavenger *RS = NULL) const;
     //! Emit the function prologue
     void emitPrologue(MachineFunction &MF) const;
     //! Emit the function epilogue

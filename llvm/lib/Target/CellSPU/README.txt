@@ -28,8 +28,8 @@ SUCH DAMAGES ARE FORESEEABLE.
 If you are brave enough to try this code or help to hack on it, be sure
 to add 'spu' to configure's --enable-targets option, e.g.:
 
-	./configure <your_configure_flags_here> \
-	   --enable-targets=x86,x86_64,powerpc,spu
+        ./configure <your_configure_flags_here> \
+           --enable-targets=x86,x86_64,powerpc,spu
 
 ---------------------------------------------------------------------------
 

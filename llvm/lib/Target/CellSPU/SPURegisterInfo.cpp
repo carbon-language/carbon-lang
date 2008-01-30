@@ -289,9 +289,9 @@ SPURegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const
  */
 BitVector SPURegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
-  Reserved.set(SPU::R0);		// LR
-  Reserved.set(SPU::R1);		// SP
-  Reserved.set(SPU::R2);		// environment pointer
+  Reserved.set(SPU::R0);                // LR
+  Reserved.set(SPU::R1);                // SP
+  Reserved.set(SPU::R2);                // environment pointer
   return Reserved;
 }
 
@@ -331,7 +331,7 @@ SPURegisterInfo::eliminateCallFramePseudoInstr(MachineFunction &MF,
 
 void
 SPURegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
-    				     RegScavenger *RS) const
+                                     RegScavenger *RS) const
 {
   unsigned i = 0;
   MachineInstr &MI = *II;
@@ -464,10 +464,10 @@ void SPURegisterInfo::emitPrologue(MachineFunction &MF) const
     if (isS10Constant(FrameSize)) {
       // Spill $sp to adjusted $sp
       BuildMI(MBB, MBBI, TII.get(SPU::STQDr32), SPU::R1).addImm(FrameSize)
-	.addReg(SPU::R1);
+        .addReg(SPU::R1);
       // Adjust $sp by required amout
       BuildMI(MBB, MBBI, TII.get(SPU::AIr32), SPU::R1).addReg(SPU::R1)
-	.addImm(FrameSize);
+        .addImm(FrameSize);
     } else if (FrameSize <= (1 << 16) - 1 && FrameSize >= -(1 << 16)) {
       // Frame size can be loaded into ILr32n, so temporarily spill $r2 and use
       // $r2 to adjust $sp:
@@ -475,7 +475,7 @@ void SPURegisterInfo::emitPrologue(MachineFunction &MF) const
         .addImm(-16)
         .addReg(SPU::R1);
       BuildMI(MBB, MBBI, TII.get(SPU::ILr32), SPU::R2)
-	.addImm(FrameSize);
+        .addImm(FrameSize);
       BuildMI(MBB, MBBI, TII.get(SPU::STQDr32), SPU::R1)
         .addReg(SPU::R2)
         .addReg(SPU::R1);
@@ -504,12 +504,12 @@ void SPURegisterInfo::emitPrologue(MachineFunction &MF) const
       // Add callee saved registers to move list.
       const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
       for (unsigned I = 0, E = CSI.size(); I != E; ++I) {
-	int Offset = MFI->getObjectOffset(CSI[I].getFrameIdx());
-	unsigned Reg = CSI[I].getReg();
-	if (Reg == SPU::R0) continue;
-	MachineLocation CSDst(MachineLocation::VirtualFP, Offset);
-	MachineLocation CSSrc(Reg);
-	Moves.push_back(MachineMove(FrameLabelId, CSDst, CSSrc));
+        int Offset = MFI->getObjectOffset(CSI[I].getFrameIdx());
+        unsigned Reg = CSI[I].getReg();
+        if (Reg == SPU::R0) continue;
+        MachineLocation CSDst(MachineLocation::VirtualFP, Offset);
+        MachineLocation CSSrc(Reg);
+        Moves.push_back(MachineMove(FrameLabelId, CSDst, CSSrc));
       }
     
       // Mark effective beginning of when frame pointer is ready.
@@ -556,7 +556,7 @@ SPURegisterInfo::emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const
         .addReg(SPU::R1);
       BuildMI(MBB, MBBI, TII.get(SPU::AIr32), SPU::R1)
         .addReg(SPU::R1)
-	.addImm(FrameSize);
+        .addImm(FrameSize);
     } else if (FrameSize <= (1 << 16) - 1 && FrameSize >= -(1 << 16)) {
       // Frame size can be loaded into ILr32n, so temporarily spill $r2 and use
       // $r2 to adjust $sp:
@@ -564,7 +564,7 @@ SPURegisterInfo::emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const
         .addImm(16)
         .addReg(SPU::R1);
       BuildMI(MBB, MBBI, TII.get(SPU::ILr32), SPU::R2)
-	.addImm(FrameSize);
+        .addImm(FrameSize);
       BuildMI(MBB, MBBI, TII.get(SPU::Ar32), SPU::R1)
         .addReg(SPU::R1)
         .addReg(SPU::R2);
