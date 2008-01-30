@@ -1078,7 +1078,7 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
     if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
       // The load is a bit extract from NewAI shifted right by Offset bits.
       Value *NV = new LoadInst(NewAI, LI->getName(), LI);
-      if (NV->getType() == LI->getType()) {
+      if (NV->getType() == LI->getType() && Offset == 0) {
         // We win, no conversion needed.
       } else if (const VectorType *PTy = dyn_cast<VectorType>(NV->getType())) {
         // If the result alloca is a vector type, this is either an element
@@ -1232,7 +1232,7 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
       SI->eraseFromParent();
       
     } else if (BitCastInst *CI = dyn_cast<BitCastInst>(User)) {
-       ConvertUsesToScalar(CI, NewAI, Offset);
+      ConvertUsesToScalar(CI, NewAI, Offset);
       CI->eraseFromParent();
     } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(User)) {
       const PointerType *AggPtrTy = 
