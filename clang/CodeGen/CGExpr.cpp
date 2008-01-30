@@ -115,8 +115,17 @@ RValue CodeGenFunction::EmitLoadOfLValue(LValue LV, QualType ExprType) {
       cast<llvm::PointerType>(Ptr->getType())->getElementType();
     
     // Simple scalar l-value.
-    if (EltTy->isFirstClassType())
-      return RValue::get(Builder.CreateLoad(Ptr, "tmp"));
+    if (EltTy->isFirstClassType()) {
+      llvm::Value *V = Builder.CreateLoad(Ptr, "tmp");
+      
+      // Bool can have different representation in memory than in registers.
+      if (ExprType->isBooleanType()) {
+        if (V->getType() != llvm::Type::Int1Ty)
+          V = Builder.CreateTrunc(V, llvm::Type::Int1Ty, "tobool");
+      }
+      
+      return RValue::get(V);
+    }
     
     assert(ExprType->isFunctionType() && "Unknown scalar value");
     return RValue::get(Ptr);

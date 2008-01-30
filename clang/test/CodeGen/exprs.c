@@ -14,3 +14,6 @@ void *test(int *i) {
  a + i;
 }
 
+_Bool test2b; 
+int test2() {if (test2b);}
+
