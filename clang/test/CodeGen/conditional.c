@@ -15,3 +15,7 @@ void test3(){
    1 ? f() : (void)0;
 }
 
+void test4() {
+int i; short j;
+float* k = 1 ? &i : &j;
+}

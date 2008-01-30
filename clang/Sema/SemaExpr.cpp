@@ -823,7 +823,13 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
         Diag(questionLoc, diag::ext_typecheck_cond_incompatible_pointers,
              lexT.getAsString(), rexT.getAsString(),
              lex->getSourceRange(), rex->getSourceRange());
-        return lexT; // FIXME: this is an _ext - is this return o.k?
+        // In this situation, we assume void* type. No especially good
+        // reason, but this is what gcc does, and we do have to pick
+        // to get a consistent AST.
+        QualType voidPtrTy = Context.getPointerType(Context.VoidTy);
+        ImpCastExprToType(lex, voidPtrTy);
+        ImpCastExprToType(rex, voidPtrTy);
+        return voidPtrTy;
       }
       // The pointer types are compatible.
       // C99 6.5.15p6: If both operands are pointers to compatible types *or* to
