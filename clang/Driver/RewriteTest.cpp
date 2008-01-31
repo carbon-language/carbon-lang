@@ -203,7 +203,8 @@ namespace {
     Stmt *RewriteObjCCatchStmt(ObjCAtCatchStmt *S);
     Stmt *RewriteObjCFinallyStmt(ObjCAtFinallyStmt *S);
     Stmt *RewriteObjCThrowStmt(ObjCAtThrowStmt *S);
-    Stmt *RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S);
+    Stmt *RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S,
+                                       SourceLocation OrigEnd);
     CallExpr *SynthesizeCallToFunctionDecl(FunctionDecl *FD, 
                                            Expr **args, unsigned nargs);
     Stmt *SynthMessageExpr(ObjCMessageExpr *Exp);
@@ -763,7 +764,9 @@ Stmt *RewriteTest::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
     ObjCBcLabelNo.push_back(++BcLabelCount);
   }
   
-  // Otherwise, just rewrite all children.
+  SourceLocation OrigStmtEnd = S->getLocEnd();
+  
+  // Start by rewriting all children.
   for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end();
        CI != E; ++CI)
     if (*CI) {
@@ -819,7 +822,7 @@ Stmt *RewriteTest::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
   
   if (ObjCForCollectionStmt *StmtForCollection = 
         dyn_cast<ObjCForCollectionStmt>(S))
-    return RewriteObjCForCollectionStmt(StmtForCollection);
+    return RewriteObjCForCollectionStmt(StmtForCollection, OrigStmtEnd);
   if (BreakStmt *StmtBreakStmt =
       dyn_cast<BreakStmt>(S))
     return RewriteBreakStmt(StmtBreakStmt);
@@ -939,7 +942,8 @@ Stmt *RewriteTest::RewriteContinueStmt(ContinueStmt *S) {
 ///       elem = nil;
 ///  }
 ///
-Stmt *RewriteTest::RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S) {
+Stmt *RewriteTest::RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S,
+                                                SourceLocation OrigEnd) {
   assert(!Stmts.empty() && "ObjCForCollectionStmt - Statement stack empty");
   assert(isa<ObjCForCollectionStmt>(Stmts.back()) && 
          "ObjCForCollectionStmt Statement stack mismatch");
@@ -1064,13 +1068,10 @@ Stmt *RewriteTest::RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S) {
   buf += " = nil;\n";
   buf += "}\n";
   // Insert all these *after* the statement body.
-  SourceLocation endBodyLoc = S->getBody()->getLocEnd();
-  const char *endBodyBuf = SM->getCharacterData(endBodyLoc)+1;
-  endBodyLoc = startLoc.getFileLocWithOffset(endBodyBuf-startBuf);
+  SourceLocation endBodyLoc = OrigEnd.getFileLocWithOffset(1);
   Rewrite.InsertText(endBodyLoc, buf.c_str(), buf.size());
   Stmts.pop_back();
   ObjCBcLabelNo.pop_back();
- 
   return 0;
 }
 
