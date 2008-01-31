@@ -16,6 +16,7 @@
 
 #include "llvm/Support/Allocator.h"
 #include <cstring>
+#include <string>
 
 namespace llvm {
   template<typename ValueT>
@@ -268,22 +269,34 @@ public:
     if (Bucket == -1) return end();
     return iterator(TheTable+Bucket);
   }
+  iterator find(const char *Key) {
+    return find(Key, Key + strlen(Key));
+  }
+  iterator find(const std::string &Key) {
+    const char* key_start = &Key[0];
+    return find(key_start, key_start + Key.size());
+  }
 
   const_iterator find(const char *KeyStart, const char *KeyEnd) const {
     int Bucket = FindKey(KeyStart, KeyEnd);
     if (Bucket == -1) return end();
     return const_iterator(TheTable+Bucket);
   }
-
-  iterator find(const char *Key) {
-    return find(Key, Key + strlen(Key));
-  }
   const_iterator find(const char *Key) const {
     return find(Key, Key + strlen(Key));
+  }
+  const_iterator find(const std::string &Key) const {
+    const char* key_start = &Key[0];
+    return find(key_start, key_start + Key.size());
   }
 
   ValueTy& operator[](const char *Key) {
     value_type& entry = GetOrCreateValue(Key, Key + strlen(Key));
+    return entry.getValue();
+  }
+  ValueTy& operator[](const std::string &Key) {
+    const char* key_start = &Key[0];
+    value_type& entry = GetOrCreateValue(key_start, key_start + Key.size());
     return entry.getValue();
   }
 
@@ -292,6 +305,10 @@ public:
   }
   size_type count(const char *Key) const {
     return count(Key, Key + strlen(Key));
+  }
+  size_type count(const std::string &Key) const {
+    const char* key_start = &Key[0];
+    return count(key_start, key_start + Key.size());
   }
 
   /// insert - Insert the specified key/value pair into the map.  If the key
