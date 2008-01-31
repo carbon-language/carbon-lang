@@ -130,9 +130,16 @@ bool CallExpr::isBuiltinConstantExpr() const {
   if (!DRE)
     return false;
 
-  // We have a DeclRefExpr.
-  if (strcmp(DRE->getDecl()->getName(), 
-             "__builtin___CFStringMakeConstantString") == 0)
+  const FunctionDecl *FDecl = dyn_cast<FunctionDecl>(DRE->getDecl());
+  if (!FDecl)
+    return false;
+    
+  unsigned builtinID = FDecl->getIdentifier()->getBuiltinID();
+  if (!builtinID)
+    return false;
+
+  // We have a builtin that is a constant expression
+  if (builtinID == Builtin::BI__builtin___CFStringMakeConstantString)
     return true;
   return false;
 }
