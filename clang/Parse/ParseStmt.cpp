@@ -472,7 +472,7 @@ Parser::StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
   // We broke out of the while loop because we found a '}' or EOF.
   if (Tok.isNot(tok::r_brace)) {
     Diag(Tok, diag::err_expected_rbrace);
-    return 0;
+    return true;
   }
   
   SourceLocation RBraceLoc = ConsumeBrace();
@@ -564,8 +564,6 @@ Parser::StmtResult Parser::ParseIfStatement() {
     ThenStmt = Actions.ActOnNullStmt(ThenStmtLoc);
   if (ElseStmt.isInvalid)
     ElseStmt = Actions.ActOnNullStmt(ElseStmtLoc);
-  
-  
   
   return Actions.ActOnIfStmt(IfLoc, CondExp.Val, ThenStmt.Val,
                              ElseLoc, ElseStmt.Val);
