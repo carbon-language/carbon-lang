@@ -105,7 +105,7 @@ int* ret_cpp_reinterpret_cast_no_warning(double x) {
   return reinterpret_cast<int*>(x); // no-warning
 }
 
-int* ret_cpp_const_cast(const x) {
+int* ret_cpp_const_cast(const int x) {
   return const_cast<int*>(&x);  // expected-warning {{address of stack memory}}
 }
 

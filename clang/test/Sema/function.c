@@ -13,3 +13,13 @@ void g(int (*)(const void **, const void **));
 void g(int (*compar)()) {
 }
 
+
+// PR1965
+int t5(b);          // expected-error {{parameter list without types}}
+int t6(int x, g);   // expected-error {{type specifier required for parameter 'g'}}
+
+int t7(, );       // expected-error {{type specifier required}} expected-error {{type specifier required}}
+int t8(, int a);  // expected-error {{type specifier required}}
+int t9(int a, );  // expected-error {{type specifier required}}
+
+
