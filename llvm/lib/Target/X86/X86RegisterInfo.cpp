@@ -835,6 +835,20 @@ unsigned X86RegisterInfo::getFrameRegister(MachineFunction &MF) const {
   return hasFP(MF) ? FramePtr : StackPtr;
 }
 
+int
+X86RegisterInfo::getFrameIndexOffset(MachineFunction &MF, unsigned FI) const {
+  int Offset = MF.getFrameInfo()->getObjectOffset(FI) + SlotSize;
+  if (!hasFP(MF))
+    return Offset + MF.getFrameInfo()->getStackSize();
+
+  Offset += SlotSize;  // Skip the saved EBP
+  // Skip the RETADDR move area
+  X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
+  int TailCallReturnAddrDelta = X86FI->getTCReturnAddrDelta();
+  if (TailCallReturnAddrDelta < 0) Offset -= TailCallReturnAddrDelta;
+  return Offset;
+}
+
 void X86RegisterInfo::getInitialFrameState(std::vector<MachineMove> &Moves)
                                                                          const {
   // Calculate amount of bytes used for return address storing
