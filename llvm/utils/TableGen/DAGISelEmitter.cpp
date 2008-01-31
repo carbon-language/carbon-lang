@@ -550,7 +550,7 @@ public:
           emitCheck(MaskPredicate + RootName + "0, cast<ConstantSDNode>(" +
                     RootName + "1), " + itostr(II->getValue()) + ")");
           
-          EmitChildMatchCode(N->getChild(0), N, RootName + utostr(0),
+          EmitChildMatchCode(N->getChild(0), N, RootName + utostr(0), RootName,
                              ChainSuffix + utostr(0), FoundChain);
           return;
         }
@@ -561,7 +561,7 @@ public:
       emitInit("SDOperand " + RootName + utostr(OpNo) + " = " +
                RootName + ".getOperand(" +utostr(OpNo) + ");");
 
-      EmitChildMatchCode(N->getChild(i), N, RootName + utostr(OpNo),
+      EmitChildMatchCode(N->getChild(i), N, RootName + utostr(OpNo), RootName,
                          ChainSuffix + utostr(OpNo), FoundChain);
     }
 
@@ -593,7 +593,8 @@ public:
   }
 
   void EmitChildMatchCode(TreePatternNode *Child, TreePatternNode *Parent,
-                          const std::string &RootName,
+                          const std::string &RootName, 
+                          const std::string &ParentRootName,
                           const std::string &ChainSuffix, bool &FoundChain) {
     if (!Child->isLeaf()) {
       // If it's not a leaf, recursively match.
@@ -649,7 +650,12 @@ public:
             emitCode("SDOperand " + ChainName + ";");
           }
           
-          std::string Code = Fn + "(N, ";
+          std::string Code = Fn + "(";
+          if (CP->hasAttribute(CPAttrParentAsRoot)) {
+            Code += ParentRootName + ", ";
+          } else {
+            Code += "N, ";
+          }
           if (CP->hasProperty(SDNPHasChain)) {
             std::string ParentName(RootName.begin(), RootName.end()-1);
             Code += ParentName + ", ";
