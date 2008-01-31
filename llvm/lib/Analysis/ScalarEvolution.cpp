@@ -1979,7 +1979,7 @@ static bool CanConstantFold(const Instruction *I) {
 
   if (const CallInst *CI = dyn_cast<CallInst>(I))
     if (const Function *F = CI->getCalledFunction())
-      return canConstantFoldCallTo((Function*)F);  // FIXME: elim cast
+      return canConstantFoldCallTo(F);
   return false;
 }
 

@@ -56,7 +56,7 @@ Constant *ConstantFoldLoadThroughGEPConstantExpr(Constant *C, ConstantExpr *CE);
   
 /// canConstantFoldCallTo - Return true if its even possible to fold a call to
 /// the specified function.
-bool canConstantFoldCallTo(Function *F);
+bool canConstantFoldCallTo(const Function *F);
 
 /// ConstantFoldCall - Attempt to constant fold a call to the specified function
 /// with the specified arguments, returning null if unsuccessful.

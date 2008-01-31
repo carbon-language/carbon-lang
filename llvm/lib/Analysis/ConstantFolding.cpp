@@ -508,7 +508,7 @@ Constant *llvm::ConstantFoldLoadThroughGEPConstantExpr(Constant *C,
 /// canConstantFoldCallTo - Return true if its even possible to fold a call to
 /// the specified function.
 bool
-llvm::canConstantFoldCallTo(Function *F) {
+llvm::canConstantFoldCallTo(const Function *F) {
   switch (F->getIntrinsicID()) {
   case Intrinsic::sqrt:
   case Intrinsic::powi:
