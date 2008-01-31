@@ -16,7 +16,6 @@
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
-#include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/ADT/BitVector.h"
 
 using namespace llvm;
@@ -72,19 +71,14 @@ BitVector MRegisterInfo::getAllocatableSet(MachineFunction &MF,
   return Allocatable;
 }
 
-/// getLocation - This method should return the actual location of a frame
-/// variable given the frame index.  The location is returned in ML.
-/// Subclasses should override this method for special handling of frame
-/// variables and then call MRegisterInfo::getLocation for the default action.
-void MRegisterInfo::getLocation(MachineFunction &MF, unsigned Index,
-                        MachineLocation &ML) const {
+/// getFrameIndexOffset - Returns the displacement from the frame register to
+/// the stack frame of the specified index. This is the default implementation
+/// which is likely incorrect for the target.
+int MRegisterInfo::getFrameIndexOffset(MachineFunction &MF, unsigned FI) const {
   const TargetFrameInfo &TFI = *MF.getTarget().getFrameInfo();
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  ML.set(getFrameRegister(MF),
-         MFI->getObjectOffset(Index) +
-         MFI->getStackSize() -
-         TFI.getOffsetOfLocalArea() +
-         MFI->getOffsetAdjustment());
+  return MFI->getObjectOffset(FI) + MFI->getStackSize() -
+    TFI.getOffsetOfLocalArea() + MFI->getOffsetAdjustment();
 }
 
 /// getInitialFrameState - Returns a list of machine moves that are assumed

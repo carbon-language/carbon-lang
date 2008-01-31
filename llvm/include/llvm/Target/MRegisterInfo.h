@@ -27,7 +27,6 @@ namespace llvm {
 class BitVector;
 class MachineFunction;
 class MachineInstr;
-class MachineLocation;
 class MachineMove;
 class RegScavenger;
 class SDNode;
@@ -586,18 +585,15 @@ public:
   /// getFrameRegister - This method should return the register used as a base
   /// for values allocated in the current stack frame.
   virtual unsigned getFrameRegister(MachineFunction &MF) const = 0;
-  
+
+  /// getFrameIndexOffset - Returns the displacement from the frame register to
+  /// the stack frame of the specified index.
+  virtual int getFrameIndexOffset(MachineFunction &MF, unsigned FI) const;
+                           
   /// getRARegister - This method should return the register where the return
   /// address can be found.
   virtual unsigned getRARegister() const = 0;
   
-  /// getLocation - This method should return the actual location of a frame
-  /// variable given the frame index.  The location is returned in ML.
-  /// Subclasses should override this method for special handling of frame
-  /// variables and call MRegisterInfo::getLocation for the default action.
-  virtual void getLocation(MachineFunction &MF, unsigned Index,
-                           MachineLocation &ML) const;
-                           
   /// getInitialFrameState - Returns a list of machine moves that are assumed
   /// on entry to all functions.  Note that LabelID is ignored (assumed to be
   /// the beginning of the function.)

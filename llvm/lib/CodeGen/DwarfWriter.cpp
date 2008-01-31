@@ -1875,7 +1875,8 @@ private:
     
     // Add variable address.
     MachineLocation Location;
-    RI->getLocation(*MF, DV->getFrameIndex(), Location);
+    Location.set(RI->getFrameRegister(*MF),
+                 RI->getFrameIndexOffset(*MF, DV->getFrameIndex()));
     AddAddress(VariableDie, DW_AT_location, Location);
 
     return VariableDie;
