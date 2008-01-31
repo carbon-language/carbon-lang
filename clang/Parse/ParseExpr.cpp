@@ -938,12 +938,6 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
       SkipUntil(tok::r_paren);
       return ExprResult(true);
     }
-    
-    // __builtin_overload requires at least 2 arguments
-    if (ArgExprs.size() < 2) {
-      Diag(Tok, diag::err_typecheck_call_too_few_args);
-      return ExprResult(true);
-    }
     Res = Actions.ActOnOverloadExpr(&ArgExprs[0], ArgExprs.size(), 
                                     &CommaLocs[0], StartLoc, ConsumeParen());
     break;

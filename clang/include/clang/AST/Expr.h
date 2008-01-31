@@ -1158,20 +1158,18 @@ class OverloadExpr : public Expr {
   // NumExprs - the size of the SubExprs array
   unsigned NumExprs;
 
-  // NumArgs - the number of arguments 
-  
   // The index of the matching candidate function
   unsigned FnIndex;
 
   SourceLocation BuiltinLoc;
   SourceLocation RParenLoc;
 public:
-  OverloadExpr(Expr **args, unsigned narg, unsigned idx, QualType t, 
+  OverloadExpr(Expr **args, unsigned nexprs, unsigned idx, QualType t, 
                SourceLocation bloc, SourceLocation rploc)
-    : Expr(OverloadExprClass, t), NumExprs(narg), FnIndex(idx),
+    : Expr(OverloadExprClass, t), NumExprs(nexprs), FnIndex(idx),
       BuiltinLoc(bloc), RParenLoc(rploc) {
-    SubExprs = new Expr*[narg];
-    for (unsigned i = 0; i != narg; ++i)
+    SubExprs = new Expr*[nexprs];
+    for (unsigned i = 0; i != nexprs; ++i)
       SubExprs[i] = args[i];
   }
   ~OverloadExpr() {
@@ -1192,16 +1190,18 @@ public:
     return constEval.getZExtValue();
   }
 
-  /// getNumSubExprs - Return the size of the SubExprs array
+  /// getNumSubExprs - Return the size of the SubExprs array.  This includes the
+  /// constant expression, the actual arguments passed in, and the function
+  /// pointers.
   unsigned getNumSubExprs() const { return NumExprs; }
   
-  /// getArg - Return the specified argument.
-  Expr *getExpr(unsigned Expr) {
-    assert((Expr < NumExprs) && "Arg access out of range!");
-    return SubExprs[Expr];
+  /// getExpr - Return the Expr at the specified index.
+  Expr *getExpr(unsigned Index) {
+    assert((Index < NumExprs) && "Arg access out of range!");
+    return SubExprs[Index];
   }
   
-  /// getFn - Return the matching candidate function for this OverloadExpr
+  /// getFn - Return the matching candidate function for this OverloadExpr.
   Expr *getFn() const { return SubExprs[FnIndex]; }
   
   virtual SourceRange getSourceRange() const {

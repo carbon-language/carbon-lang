@@ -848,6 +848,8 @@ DIAG(err_overload_incorrect_fntype, ERROR,
      "argument is not a function, or has wrong number of parameters")
 DIAG(err_overload_no_match, ERROR,
      "no matching overload found for arguments of type '%0'")
+DIAG(err_overload_multiple_match, ERROR,
+     "more than one matching function found in __builtin_overload")
 
 // CHECK: printf format string errors
 DIAG(warn_printf_not_string_constant, WARNING,

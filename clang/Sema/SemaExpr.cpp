@@ -2103,11 +2103,14 @@ Sema::ExprResult Sema::ActOnOverloadExpr(ExprTy **args, unsigned NumArgs,
                                          SourceLocation *CommaLocs,
                                          SourceLocation BuiltinLoc,
                                          SourceLocation RParenLoc) {
-  assert((NumArgs > 1) && "Too few arguments for OverloadExpr!");
+  // __builtin_overload requires at least 2 arguments
+  if (NumArgs < 2)
+    return Diag(RParenLoc, diag::err_typecheck_call_too_few_args,
+                SourceRange(BuiltinLoc, RParenLoc));
 
-  Expr **Args = reinterpret_cast<Expr**>(args);
   // The first argument is required to be a constant expression.  It tells us
   // the number of arguments to pass to each of the functions to be overloaded.
+  Expr **Args = reinterpret_cast<Expr**>(args);
   Expr *NParamsExpr = Args[0];
   llvm::APSInt constEval(32);
   SourceLocation ExpLoc;
@@ -2127,6 +2130,7 @@ Sema::ExprResult Sema::ActOnOverloadExpr(ExprTy **args, unsigned NumArgs,
 
   // Figure out the return type, by matching the args to one of the functions
   // listed after the parameters.
+  OverloadExpr *OE = 0;
   for (unsigned i = NumParams + 1; i < NumArgs; ++i) {
     // UsualUnaryConversions will convert the function DeclRefExpr into a 
     // pointer to function.
@@ -2147,10 +2151,20 @@ Sema::ExprResult Sema::ActOnOverloadExpr(ExprTy **args, unsigned NumArgs,
     // Scan the parameter list for the FunctionType, checking the QualType of
     // each parameter against the QualTypes of the arguments to the builtin.
     // If they match, return a new OverloadExpr.
-    if (ExprsMatchFnType(Args+1, FnType))
-      return new OverloadExpr(Args, NumArgs, i, FnType->getResultType(),
-                              BuiltinLoc, RParenLoc);
+    if (ExprsMatchFnType(Args+1, FnType)) {
+      if (OE)
+        return Diag(Fn->getExprLoc(), diag::err_overload_multiple_match,
+                    OE->getFn()->getSourceRange());
+      // Remember our match, and continue processing the remaining arguments
+      // to catch any errors.
+      OE = new OverloadExpr(Args, NumArgs, i, FnType->getResultType(),
+                            BuiltinLoc, RParenLoc);
+    }
   }
+  // Return the newly created OverloadExpr node, if we succeded in matching
+  // exactly one of the candidate functions.
+  if (OE)
+    return OE;
 
   // If we didn't find a matching function Expr in the __builtin_overload list
   // the return an error.

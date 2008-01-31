@@ -76,6 +76,7 @@ public:
   void VisitStmtExpr(const StmtExpr *E);
   void VisitBinaryOperator(const BinaryOperator *BO);
   void VisitBinAssign(const BinaryOperator *E);
+  void VisitOverloadExpr(const OverloadExpr *E);
 
   
   void VisitConditionalOperator(const ConditionalOperator *CO);
@@ -150,6 +151,20 @@ void AggExprEmitter::VisitImplicitCastExpr(ImplicitCastExpr *E)
 void AggExprEmitter::VisitCallExpr(const CallExpr *E)
 {
   RValue RV = CGF.EmitCallExpr(E);
+  assert(RV.isAggregate() && "Return value must be aggregate value!");
+  
+  // If the result is ignored, don't copy from the value.
+  if (DestPtr == 0)
+    // FIXME: If the source is volatile, we must read from it.
+    return;
+  
+  EmitAggregateCopy(DestPtr, RV.getAggregateAddr(), E->getType());
+}
+
+void AggExprEmitter::VisitOverloadExpr(const OverloadExpr *E)
+{
+  RValue RV = CGF.EmitCallExpr(E->getFn(), E->arg_begin(),
+                               E->getNumArgs(CGF.getContext()));
   assert(RV.isAggregate() && "Return value must be aggregate value!");
   
   // If the result is ignored, don't copy from the value.
