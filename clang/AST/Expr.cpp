@@ -118,6 +118,24 @@ void CallExpr::setNumArgs(unsigned NumArgs) {
   this->NumArgs = NumArgs;
 }
 
+bool CallExpr::isBuiltinConstantExpr() const {
+  // All simple function calls (e.g. func()) are implicitly cast to pointer to
+  // function. As a result, we try and obtain the DeclRefExpr from the 
+  // ImplicitCastExpr.
+  const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(getCallee());
+  if (!ICE) // FIXME: deal with more complex calls (e.g. (func)(), (*func)()).
+    return false;
+    
+  const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(ICE->getSubExpr());
+  if (!DRE)
+    return false;
+
+  // We have a DeclRefExpr.
+  if (strcmp(DRE->getDecl()->getName(), 
+             "__builtin___CFStringMakeConstantString") == 0)
+    return true;
+  return false;
+}
 
 bool CallExpr::isBuiltinClassifyType(llvm::APSInt &Result) const {
   // The following enum mimics gcc's internal "typeclass.h" file.
@@ -470,6 +488,8 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
     Result.zextOrTrunc(
       static_cast<uint32_t>(Ctx.getTypeSize(getType(), CE->getLocStart())));
     if (CE->isBuiltinClassifyType(Result))
+      return true;
+    if (CE->isBuiltinConstantExpr())
       return true;
     if (Loc) *Loc = getLocStart();
     return false;

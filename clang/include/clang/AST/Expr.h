@@ -620,6 +620,9 @@ public:
   unsigned getNumCommas() const { return NumArgs ? NumArgs - 1 : 0; }
 
   bool isBuiltinClassifyType(llvm::APSInt &Result) const;
+
+  /// isBuiltinConstantExpr - Return true if this built-in call is constant.
+  bool isBuiltinConstantExpr() const;
   
   SourceLocation getRParenLoc() const { return RParenLoc; }
   SourceRange getSourceRange() const { 
