@@ -92,17 +92,23 @@ namespace {
     ~RewriteTest();
     
     void ReplaceStmt(Stmt *Old, Stmt *New) {
-      if (!Rewrite.ReplaceStmt(Old, New))
+      // If replacement succeeded or warning disabled return with no warning.
+      if (!Rewrite.ReplaceStmt(Old, New) || SilenceRewriteMacroWarning)
         return;
-
-      // Replacement failed, report a warning unless disabled.
-      if (SilenceRewriteMacroWarning) return;
 
       SourceRange Range = Old->getSourceRange();
       Diags.Report(Context->getFullLoc(Old->getLocStart()), RewriteFailedDiag,
                    0, 0, &Range, 1);
     }
     
+    void InsertText(SourceLocation Loc, const char *StrData, unsigned StrLen) {
+      // If replacement succeeded or warning disabled return with no warning.
+      if (!Rewrite.InsertText(Loc, StrData, StrLen) ||
+          SilenceRewriteMacroWarning)
+        return;
+      
+      Diags.Report(Context->getFullLoc(Loc), RewriteFailedDiag);
+    }
     
 
     // Syntactic Rewriting.
@@ -277,14 +283,12 @@ void RewriteTest::Initialize(ASTContext &context) {
   "#endif\n";
   if (IsHeader) {
     // insert the whole string when rewriting a header file
-    Rewrite.InsertText(SourceLocation::getFileLoc(MainFileID, 0), 
-                       s, strlen(s));
+    InsertText(SourceLocation::getFileLoc(MainFileID, 0), s, strlen(s));
   }
   else {
     // Not rewriting header, exclude the #pragma once pragma
     const char *p = s + strlen("#pragma once\n");
-    Rewrite.InsertText(SourceLocation::getFileLoc(MainFileID, 0), 
-                       p, strlen(p));
+    InsertText(SourceLocation::getFileLoc(MainFileID, 0), p, strlen(p));
   }
 }
 
@@ -483,10 +487,10 @@ void RewriteTest::RewriteMethodDeclaration(ObjCMethodDecl *Method) {
   SourceLocation LocEnd = Method->getLocEnd();
     
   if (SM->getLineNumber(LocEnd) > SM->getLineNumber(LocStart)) {
-    Rewrite.InsertText(LocStart, "/* ", 3);
+    InsertText(LocStart, "/* ", 3);
     Rewrite.ReplaceText(LocEnd, 1, ";*/ ", 4);
   } else {
-    Rewrite.InsertText(LocStart, "// ", 3);
+    InsertText(LocStart, "// ", 3);
   }
 }
 
@@ -648,9 +652,9 @@ void RewriteTest::RewriteImplementationDecl(NamedDecl *OID) {
   ObjCCategoryImplDecl *CID = dyn_cast<ObjCCategoryImplDecl>(OID);
   
   if (IMD)
-    Rewrite.InsertText(IMD->getLocStart(), "// ", 3);
+    InsertText(IMD->getLocStart(), "// ", 3);
   else
-    Rewrite.InsertText(CID->getLocStart(), "// ", 3);
+    InsertText(CID->getLocStart(), "// ", 3);
   
   for (ObjCCategoryImplDecl::instmeth_iterator
        I = IMD ? IMD->instmeth_begin() : CID->instmeth_begin(),
@@ -682,9 +686,9 @@ void RewriteTest::RewriteImplementationDecl(NamedDecl *OID) {
                         ResultStr.c_str(), ResultStr.size());    
   }
   if (IMD)
-    Rewrite.InsertText(IMD->getLocEnd(), "// ", 3);
+    InsertText(IMD->getLocEnd(), "// ", 3);
   else
-   Rewrite.InsertText(CID->getLocEnd(), "// ", 3); 
+   InsertText(CID->getLocEnd(), "// ", 3); 
 }
 
 void RewriteTest::RewriteInterfaceDecl(ObjCInterfaceDecl *ClassDecl) {
@@ -807,10 +811,11 @@ Stmt *RewriteTest::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
     messString.append(startBuf, endBuf-startBuf+1);
     messString += "\n";
         
-    // FIXME: Missing definition of Rewrite.InsertText(clang::SourceLocation, char const*, unsigned int).
-    // Rewrite.InsertText(startLoc, messString.c_str(), messString.size());
+    // FIXME: Missing definition of 
+    // InsertText(clang::SourceLocation, char const*, unsigned int).
+    // InsertText(startLoc, messString.c_str(), messString.size());
     // Tried this, but it didn't work either...
-    // Rewrite.ReplaceText(startLoc, 0, messString.c_str(), messString.size());
+    // ReplaceText(startLoc, 0, messString.c_str(), messString.size());
     return RewriteMessageExpr(MessExpr);
   }
   
@@ -853,7 +858,7 @@ Stmt *RewriteTest::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
     const std::string &Str = Buf.str();
 
     printf("CAST = %s\n", &Str[0]);
-    Rewrite.InsertText(ICE->getSubExpr()->getLocStart(), &Str[0], Str.size());
+    InsertText(ICE->getSubExpr()->getLocStart(), &Str[0], Str.size());
     delete S;
     return Replacement;
   }
@@ -1075,7 +1080,7 @@ Stmt *RewriteTest::RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S,
   buf += "}\n";
   // Insert all these *after* the statement body.
   SourceLocation endBodyLoc = OrigEnd.getFileLocWithOffset(1);
-  Rewrite.InsertText(endBodyLoc, buf.c_str(), buf.size());
+  InsertText(endBodyLoc, buf.c_str(), buf.size());
   Stmts.pop_back();
   ObjCBcLabelNo.pop_back();
   return 0;
@@ -1162,7 +1167,7 @@ Stmt *RewriteTest::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
   buf += "   _rethrow = objc_exception_extract(&_stack);\n";
   buf += " else { /* @catch continue */";
   
-  Rewrite.InsertText(startLoc, buf.c_str(), buf.size());
+  InsertText(startLoc, buf.c_str(), buf.size());
   
   bool sawIdTypedCatch = false;
   Stmt *lastCatchBody = 0;
@@ -1227,7 +1232,7 @@ Stmt *RewriteTest::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
     bodyLoc = bodyLoc.getFileLocWithOffset(1);
     buf = " } } /* @catch end */\n";
   
-    Rewrite.InsertText(bodyLoc, buf.c_str(), buf.size());
+    InsertText(bodyLoc, buf.c_str(), buf.size());
     
     // Set lastCurlyLoc
     lastCurlyLoc = lastCatchBody->getLocEnd();
@@ -1250,10 +1255,10 @@ Stmt *RewriteTest::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
   
     startLoc = startLoc.getFileLocWithOffset(1);
     buf = " if (!_rethrow) objc_exception_try_exit(&_stack);\n";
-    Rewrite.InsertText(startLoc, buf.c_str(), buf.size());
+    InsertText(startLoc, buf.c_str(), buf.size());
     endLoc = endLoc.getFileLocWithOffset(-1);
     buf = " if (_rethrow) objc_exception_throw(_rethrow);\n";
-    Rewrite.InsertText(endLoc, buf.c_str(), buf.size());
+    InsertText(endLoc, buf.c_str(), buf.size());
     
     // Set lastCurlyLoc
     lastCurlyLoc = body->getLocEnd();
@@ -1261,7 +1266,7 @@ Stmt *RewriteTest::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
   // Now emit the final closing curly brace...
   lastCurlyLoc = lastCurlyLoc.getFileLocWithOffset(1);
   buf = " } /* @try scope end */\n";
-  Rewrite.InsertText(lastCurlyLoc, buf.c_str(), buf.size());
+  InsertText(lastCurlyLoc, buf.c_str(), buf.size());
   return 0;
 }
 
@@ -1427,8 +1432,8 @@ void RewriteTest::RewriteObjCQualifiedInterfaceTypes(Decl *Dcl) {
       SourceLocation LessLoc = Loc.getFileLocWithOffset(startRef-endBuf);
       SourceLocation GreaterLoc = Loc.getFileLocWithOffset(endRef-endBuf+1);
       // Comment out the protocol references.
-      Rewrite.InsertText(LessLoc, "/*", 2);
-      Rewrite.InsertText(GreaterLoc, "*/", 2);
+      InsertText(LessLoc, "/*", 2);
+      InsertText(GreaterLoc, "*/", 2);
     }
   }
   if (!proto)
@@ -1451,8 +1456,8 @@ void RewriteTest::RewriteObjCQualifiedInterfaceTypes(Decl *Dcl) {
         SourceLocation GreaterLoc = 
           Loc.getFileLocWithOffset(endRef-startFuncBuf+1);
         // Comment out the protocol references.
-        Rewrite.InsertText(LessLoc, "/*", 2);
-        Rewrite.InsertText(GreaterLoc, "*/", 2);
+        InsertText(LessLoc, "/*", 2);
+        InsertText(GreaterLoc, "*/", 2);
       }
       startBuf = ++endBuf;
     }
@@ -2101,8 +2106,9 @@ void RewriteTest::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
       Result += ";\n";
       
       // insert the super class structure definition.
-      SourceLocation OnePastCurly = LocStart.getFileLocWithOffset(cursor-startBuf+1);
-      Rewrite.InsertText(OnePastCurly, Result.c_str(), Result.size());
+      SourceLocation OnePastCurly =
+        LocStart.getFileLocWithOffset(cursor-startBuf+1);
+      InsertText(OnePastCurly, Result.c_str(), Result.size());
     }
     cursor++; // past '{'
     
@@ -2119,23 +2125,23 @@ void RewriteTest::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
         if (!strncmp(cursor, "public", strlen("public")) ||
             !strncmp(cursor, "private", strlen("private")) ||
             !strncmp(cursor, "protected", strlen("protected")))
-          Rewrite.InsertText(atLoc, "// ", 3);
+          InsertText(atLoc, "// ", 3);
       }
       // FIXME: If there are cases where '<' is used in ivar declaration part
       // of user code, then scan the ivar list and use needToScanForQualifiers
       // for type checking.
       else if (*cursor == '<') {
         SourceLocation atLoc = LocStart.getFileLocWithOffset(cursor-startBuf);
-        Rewrite.InsertText(atLoc, "/* ", 3);
+        InsertText(atLoc, "/* ", 3);
         cursor = strchr(cursor, '>');
         cursor++;
         atLoc = LocStart.getFileLocWithOffset(cursor-startBuf);
-        Rewrite.InsertText(atLoc, " */", 3);
+        InsertText(atLoc, " */", 3);
       }
       cursor++;
     }
     // Don't forget to add a ';'!!
-    Rewrite.InsertText(LocEnd.getFileLocWithOffset(1), ";", 1);
+    InsertText(LocEnd.getFileLocWithOffset(1), ";", 1);
   } else { // we don't have any instance variables - insert super struct.
     endBuf += Lexer::MeasureTokenLength(LocEnd, *SM);
     Result += " {\n    struct ";
