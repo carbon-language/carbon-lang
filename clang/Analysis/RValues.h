@@ -217,7 +217,8 @@ public:
 
 class LValue : public RValue {
 protected:
-  LValue(unsigned SubKind, void* D) : RValue(D, true, SubKind) {}
+  LValue(unsigned SubKind, const void* D) : RValue(const_cast<void*>(D), 
+                                                   true, SubKind) {}
   
 public:
   void print(std::ostream& Out) const;
@@ -229,49 +230,6 @@ public:
   // Implement isa<T> support.
   static inline bool classof(const RValue* V) {
     return V->getBaseKind() == LValueKind;
-  }
-};
-
-//==------------------------------------------------------------------------==//
-//  Subclasses of LValue.
-//==------------------------------------------------------------------------==// 
-  
-enum LValueKind { SymbolicLValueKind, LValueDeclKind, NumLValueKind };
-
-class SymbolicLValue : public LValue {
-public:
-  SymbolicLValue(unsigned SymID)
-  : LValue(SymbolicLValueKind, reinterpret_cast<void*>((uintptr_t) SymID)) {}
-  
-  SymbolID getSymbolID() const {
-    return (SymbolID) reinterpret_cast<uintptr_t>(getRawPtr());
-  }
-  
-  static inline bool classof(const RValue* V) {
-    return V->getSubKind() == SymbolicLValueKind;
-  }  
-};
-
-class LValueDecl : public LValue {
-public:
-  LValueDecl(const ValueDecl* vd) 
-  : LValue(LValueDeclKind,const_cast<ValueDecl*>(vd)) {}
-  
-  ValueDecl* getDecl() const {
-    return static_cast<ValueDecl*>(getRawPtr());
-  }
-  
-  inline bool operator==(const LValueDecl& R) const {
-    return getDecl() == R.getDecl();
-  }
-  
-  inline bool operator!=(const LValueDecl& R) const {
-    return getDecl() != R.getDecl();
-  }
-  
-  // Implement isa<T> support.
-  static inline bool classof(const RValue* V) {
-    return V->getSubKind() == LValueDeclKind;
   }
 };
   
@@ -363,6 +321,87 @@ public:
     return V->getSubKind() == ConcreteIntKind;
   }
 };
+
+//==------------------------------------------------------------------------==//
+//  Subclasses of LValue.
+//==------------------------------------------------------------------------==// 
+
+enum LValueKind { SymbolicLValueKind, LValueDeclKind,
+ConcreteIntLValueKind, NumLValueKind };
+
+class SymbolicLValue : public LValue {
+public:
+  SymbolicLValue(unsigned SymID)
+  : LValue(SymbolicLValueKind, reinterpret_cast<void*>((uintptr_t) SymID)) {}
+  
+  SymbolID getSymbolID() const {
+    return (SymbolID) reinterpret_cast<uintptr_t>(getRawPtr());
+  }
+  
+  static inline bool classof(const RValue* V) {
+    return V->getSubKind() == SymbolicLValueKind;
+  }  
+};
+
+class LValueDecl : public LValue {
+public:
+  LValueDecl(const ValueDecl* vd) : LValue(LValueDeclKind,vd) {}
+  
+  ValueDecl* getDecl() const {
+    return static_cast<ValueDecl*>(getRawPtr());
+  }
+  
+  inline bool operator==(const LValueDecl& R) const {
+    return getDecl() == R.getDecl();
+  }
+  
+  inline bool operator!=(const LValueDecl& R) const {
+    return getDecl() != R.getDecl();
+  }
+  
+  // Implement isa<T> support.
+  static inline bool classof(const RValue* V) {
+    return V->getSubKind() == LValueDeclKind;
+  }
+};
+
+class ConcreteIntLValue : public LValue {
+public:
+  ConcreteIntLValue(const llvm::APSInt& V) : LValue(ConcreteIntLValueKind, &V) {}
+  
+  const llvm::APSInt& getValue() const {
+    return *static_cast<llvm::APSInt*>(getRawPtr());
+  }
+  
+  // Arithmetic operators.
+  
+  ConcreteIntLValue Add(ValueManager& ValMgr, const ConcreteInt& V) const {
+    return ValMgr.getValue(getValue() + V.getValue());
+  }
+  
+  ConcreteIntLValue Sub(ValueManager& ValMgr, const ConcreteInt& V) const {
+    return ValMgr.getValue(getValue() - V.getValue());
+  }
+  
+  // Equality operators.
+  
+  ConcreteInt EQ(ValueManager& ValMgr, const ConcreteIntLValue& V) const {
+    const llvm::APSInt& Val = getValue();    
+    return ValMgr.getValue(Val == V.getValue() ? 1U : 0U,
+                           Val.getBitWidth(), Val.isUnsigned());
+  }
+  
+  ConcreteInt NE(ValueManager& ValMgr, const ConcreteIntLValue& V) const {
+    const llvm::APSInt& Val = getValue();    
+    return ValMgr.getValue(Val != V.getValue() ? 1U : 0U,
+                           Val.getBitWidth(), Val.isUnsigned());
+  }
+  
+  // Implement isa<T> support.
+  static inline bool classof(const RValue* V) {
+    return V->getSubKind() == ConcreteIntLValueKind;
+  }
+};  
   
 } // end clang namespace  
 
