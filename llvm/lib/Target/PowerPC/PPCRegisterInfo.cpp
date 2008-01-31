@@ -712,6 +712,16 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   // Prepare for frame info.
   unsigned FrameLabelId = 0;
   
+  // Skip over the labels which mark the beginning of the function.
+  if (MMI && MMI->needsFrameInfo()) {
+    unsigned NumLabels = 0;
+    while (NumLabels <= 1 &&
+           MBBI != MBB.end() && MBBI->getOpcode() == PPC::LABEL) {
+      ++NumLabels;
+      ++MBBI;
+    }
+  }
+
   // Scan the prolog, looking for an UPDATE_VRSAVE instruction.  If we find it,
   // process it.
   for (unsigned i = 0; MBBI != MBB.end(); ++i, ++MBBI) {
