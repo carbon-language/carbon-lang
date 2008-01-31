@@ -243,11 +243,19 @@ void PEI::saveCalleeSavedRegisters(MachineFunction &Fn) {
     return;
 
   const TargetInstrInfo &TII = *Fn.getTarget().getInstrInfo();
-  
+
   // Now that we have a stack slot for each register to be saved, insert spill
   // code into the entry block.
   MachineBasicBlock *MBB = Fn.begin();
   MachineBasicBlock::iterator I = MBB->begin();
+
+  // Do not insert prologue code before debug LABELs at the start of the
+  // entry block.
+  MachineModuleInfo *MMI = FFI->getMachineModuleInfo();
+  if (MMI && MMI->hasDebugInfo())
+    while (I != MBB->end() && I->getOpcode() == TargetInstrInfo::LABEL)
+      ++I;
+
   if (!TII.spillCalleeSavedRegisters(*MBB, I, CSI)) {
     for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
       // Add the callee-saved register as live-in. It's killed at the spill.
