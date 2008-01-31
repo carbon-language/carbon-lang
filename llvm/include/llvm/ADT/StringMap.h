@@ -126,22 +126,25 @@ public:
 /// and data.
 template<typename ValueTy>
 class StringMapEntry : public StringMapEntryBase {
-  ValueTy Val;
 public:
+  ValueTy second;
+
   explicit StringMapEntry(unsigned StrLen)
-    : StringMapEntryBase(StrLen), Val() {}
+    : StringMapEntryBase(StrLen), second() {}
   StringMapEntry(unsigned StrLen, const ValueTy &V)
-    : StringMapEntryBase(StrLen), Val(V) {}
+    : StringMapEntryBase(StrLen), second(V) {}
 
-  const ValueTy &getValue() const { return Val; }
-  ValueTy &getValue() { return Val; }
+  const ValueTy &getValue() const { return second; }
+  ValueTy &getValue() { return second; }
 
-  void setValue(const ValueTy &V) { Val = V; }
+  void setValue(const ValueTy &V) { second = V; }
 
   /// getKeyData - Return the start of the string data that is the key for this
   /// value.  The string data is always stored immediately after the
   /// StringMapEntry object.
   const char *getKeyData() const {return reinterpret_cast<const char*>(this+1);}
+
+  const char *first() const { return getKeyData(); }
 
   /// Create - Create a StringMapEntry for the specified key and default
   /// construct the value.
@@ -198,7 +201,7 @@ public:
   static StringMapEntry &GetStringMapEntryFromValue(ValueTy &V) {
     StringMapEntry *EPtr = 0;
     char *Ptr = reinterpret_cast<char*>(&V) -
-                  (reinterpret_cast<char*>(&EPtr->Val) -
+                  (reinterpret_cast<char*>(&EPtr->second) -
                    reinterpret_cast<char*>(EPtr));
     return *reinterpret_cast<StringMapEntry*>(Ptr);
   }
@@ -239,6 +242,11 @@ public:
   AllocatorTy &getAllocator() { return Allocator; }
   const AllocatorTy &getAllocator() const { return Allocator; }
 
+  typedef const char* key_type;
+  typedef ValueTy mapped_type;
+  typedef StringMapEntry<ValueTy> value_type;
+  typedef size_t size_type;
+
   typedef StringMapConstIterator<ValueTy> const_iterator;
   typedef StringMapIterator<ValueTy> iterator;
 
@@ -265,6 +273,25 @@ public:
     int Bucket = FindKey(KeyStart, KeyEnd);
     if (Bucket == -1) return end();
     return const_iterator(TheTable+Bucket);
+  }
+
+  iterator find(const char *Key) {
+    return find(Key, Key + strlen(Key));
+  }
+  const_iterator find(const char *Key) const {
+    return find(Key, Key + strlen(Key));
+  }
+
+  ValueTy& operator[](const char *Key) {
+    value_type& entry = GetOrCreateValue(Key, Key + strlen(Key));
+    return entry.getValue();
+  }
+
+  size_type count(const char *KeyStart, const char *KeyEnd) const {
+    return find(KeyStart, KeyEnd) == end() ? 0 : 1;
+  }
+  size_type count(const char *Key) const {
+    return count(Key, Key + strlen(Key));
   }
 
   /// insert - Insert the specified key/value pair into the map.  If the key
