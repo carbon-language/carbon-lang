@@ -597,10 +597,11 @@ void ScheduleDAG::EmitSubregNode(SDNode *Node,
       // Grab the destination register
       const TargetRegisterClass *DRC = 0;
       DRC = RegInfo.getRegClass(VRBase);
-      assert(SRC == DRC && 
+      assert(SRC && DRC && SRC == DRC && 
              "Source subregister and destination must have the same class");
     } else {
       // Create the reg
+      assert(SRC && "Couldn't find source register class");
       VRBase = RegInfo.createVirtualRegister(SRC);
     }
     
