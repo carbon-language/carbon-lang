@@ -1350,6 +1350,20 @@ void Parser::ParseParenDeclarator(Declarator &D) {
              ParmII->getName());
         ParmII = 0;
       }
+
+      // If no parameter was specified, verify that *something* was specified,
+      // otherwise we have a missing type and identifier.
+      if (!DS.hasTypeSpecifier()) {
+        if (ParmII)
+          Diag(ParmDecl.getIdentifierLoc(),
+               diag::err_param_requires_type_specifier, ParmII->getName());
+        else
+          Diag(Tok.getLocation(), diag::err_anon_param_requires_type_specifier);
+          
+        // Default the parameter to 'int'.
+        const char *PrevSpec = 0;
+        DS.SetTypeSpecType(DeclSpec::TST_int, Tok.getLocation(), PrevSpec);
+      }
         
       ParamInfo.push_back(DeclaratorChunk::ParamInfo(ParmII, 
         ParmDecl.getIdentifierLoc(), ParamTy.Val, ParmDecl.getInvalidType(),

@@ -542,6 +542,11 @@ DIAG(ext_vla, EXTENSION,
      "variable length arrays are a C99 feature, accepted as an extension")
 DIAG(err_invalid_storage_class_in_func_decl, ERROR,
      "invalid storage class specifier in function declarator")
+DIAG(err_anon_param_requires_type_specifier, ERROR,
+     "type specifier required for unnamed parameter")
+DIAG(err_param_requires_type_specifier, ERROR,
+     "type specifier required for parameter '%0'")
+
 DIAG(err_invalid_reference_qualifier_application, ERROR,
      "'%0' qualifier may not be applied to a reference")
 DIAG(err_declarator_need_ident, ERROR,
