@@ -327,6 +327,8 @@ public:
   bool operator==(const RValue& RHS) const {
     return getRawKind() == RHS.getRawKind() && Data == RHS.Data;
   }
+  
+  static RValue GetSymbolValue(SymbolManager& SymMgr, ParmVarDecl *D);
 
   inline bool isValid() const { return getRawKind() != InvalidKind; }
   inline bool isInvalid() const { return getRawKind() == InvalidKind; }
@@ -380,7 +382,6 @@ public:
                             SourceLocation Loc = SourceLocation());
   
   static NonLValue GetValue(ValueManager& ValMgr, IntegerLiteral* I);
-  static NonLValue GetSymbolValue(SymbolManager& SymMgr, ParmVarDecl *D);
   
   static inline NonLValue GetIntTruthValue(ValueManager& ValMgr, bool X) {
     return GetValue(ValMgr, X ? 1U : 0U, ValMgr.getContext().IntTy);
@@ -397,6 +398,7 @@ protected:
   LValue(unsigned SubKind, void* D) : RValue(D, true, SubKind) {}
   
 public:
+  void print(std::ostream& Out) const;
   
   // Equality operators.
   NonLValue EQ(ValueManager& ValMgr, const LValue& RHS) const;
@@ -416,8 +418,22 @@ public:
 
 namespace {
   
-enum { LValueDeclKind, NumLValueKind };
+enum { SymbolicLValueKind, LValueDeclKind, NumLValueKind };
 
+class VISIBILITY_HIDDEN SymbolicLValue : public LValue {
+public:
+  SymbolicLValue(unsigned SymID)
+   : LValue(SymbolicLValueKind, reinterpret_cast<void*>((uintptr_t) SymID)) {}
+  
+  SymbolID getSymbolID() const {
+    return (SymbolID) reinterpret_cast<uintptr_t>(getRawPtr());
+  }
+  
+  static inline bool classof(const RValue* V) {
+    return V->getSubKind() == SymbolicLValueKind;
+  }  
+};
+  
 class VISIBILITY_HIDDEN LValueDecl : public LValue {
 public:
   LValueDecl(const ValueDecl* vd) 
@@ -658,8 +674,13 @@ NonLValue NonLValue::GetValue(ValueManager& ValMgr, IntegerLiteral* I) {
                                        I->getType()->isUnsignedIntegerType())));
 }
 
-NonLValue NonLValue::GetSymbolValue(SymbolManager& SymMgr, ParmVarDecl* D) {
-  return SymbolicNonLValue(SymMgr.getSymbol(D));
+RValue RValue::GetSymbolValue(SymbolManager& SymMgr, ParmVarDecl* D) {
+  QualType T = D->getType();
+  
+  if (T->isPointerType() || T->isReferenceType())
+    return SymbolicLValue(SymMgr.getSymbol(D));
+  else
+    return SymbolicNonLValue(SymMgr.getSymbol(D));
 }
 
 //===----------------------------------------------------------------------===//
@@ -677,7 +698,7 @@ void RValue::print(std::ostream& Out) const {
       break;
 
     case LValueKind:
-      assert (false && "FIXME: LValue printing not implemented.");  
+      cast<LValue>(this)->print(Out);
       break;
       
     case UninitializedKind:
@@ -701,6 +722,22 @@ void NonLValue::print(std::ostream& Out) const {
       
     default:
       assert (false && "Pretty-printed not implemented for this NonLValue.");
+      break;
+  }
+}
+
+void LValue::print(std::ostream& Out) const {
+  switch (getSubKind()) {  
+    case SymbolicLValueKind:
+      Out << '$' << cast<SymbolicLValue>(this)->getSymbolID();
+      break;
+      
+    case LValueDeclKind:
+      Out << cast<LValueDecl>(this)->getDecl()->getIdentifier();
+      break;
+      
+    default:
+      assert (false && "Pretty-printed not implemented for this LValue.");
       break;
   }
 }
@@ -829,16 +866,8 @@ public:
     FunctionDecl& F = G.getFunctionDecl();
     
     for (FunctionDecl::param_iterator I=F.param_begin(), E=F.param_end(); 
-          I!=E; ++I) {
-
-      // For now we only support symbolic values for non-pointer types.
-      if ((*I)->getType()->isPointerType() || 
-          (*I)->getType()->isReferenceType())
-        continue;
-      
-      // FIXME: Set these values to a symbol, not Uninitialized.
-      St = SetValue(St, LValueDecl(*I), NonLValue::GetSymbolValue(SymMgr, *I));
-    }
+          I!=E; ++I)
+      St = SetValue(St, LValueDecl(*I), RValue::GetSymbolValue(SymMgr, *I));
     
     return St;
   }
