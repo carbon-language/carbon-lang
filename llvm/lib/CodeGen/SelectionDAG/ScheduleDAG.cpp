@@ -741,6 +741,10 @@ void ScheduleDAG::EmitNode(SDNode *Node, unsigned InstanceNo,
       unsigned NumLabels = 0;
       MachineBasicBlock::iterator MBBI = BB->begin();
       while (MBBI != BB->end()) {
+        // FIXME: This is a nasty short term workaround. For now, we are
+        // assuming there are two debug labels at the beginning of the
+        // entry block: one for dbg_func_start, one for the first
+        // dbg_stoppoint before actual code.
         if (!MBBI->isDebugLabel() || ++NumLabels > 1)
           break;
         ++MBBI;
