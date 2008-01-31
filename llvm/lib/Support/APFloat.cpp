@@ -1712,6 +1712,8 @@ APFloat::convert(const fltSemantics &toSemantics,
     fs = normalize(rounding_mode, lostFraction);
   } else if (category == fcNaN) {
     int shift = toSemantics.precision - semantics->precision;
+    // Do this now so significandParts gets the right answer
+    semantics = &toSemantics;
     // No normalization here, just truncate
     if (shift>0)
       APInt::tcShiftLeft(significandParts(), newPartCount, shift);
@@ -1721,7 +1723,6 @@ APFloat::convert(const fltSemantics &toSemantics,
     // does not give you back the same bits.  This is dubious, and we
     // don't currently do it.  You're really supposed to get
     // an invalid operation signal at runtime, but nobody does that.
-    semantics = &toSemantics;
     fs = opOK;
   } else {
     semantics = &toSemantics;
