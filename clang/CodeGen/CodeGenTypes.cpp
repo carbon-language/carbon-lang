@@ -95,9 +95,9 @@ CodeGenTypes::~CodeGenTypes() {
 /// and T is tag definition. This helper routine does not check
 /// relationship between T and LT.
 static bool isOpaqueTypeDefinition(QualType T, const llvm::Type *LT) {
-  if (T->isPointerType()) {
+  if (const PointerType* PTy = T->getAsPointerType()) {
     return
-      isOpaqueTypeDefinition(cast<PointerType>(*T).getPointeeType(),
+      isOpaqueTypeDefinition(PTy->getPointeeType(),
                              cast<llvm::PointerType>(LT)->getElementType());
   }
   if (!isa<llvm::OpaqueType>(LT))
