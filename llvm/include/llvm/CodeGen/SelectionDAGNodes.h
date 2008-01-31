@@ -404,13 +404,13 @@ namespace ISD {
     /// FP_EXTEND(FP_ROUND(X,0)) because the extra bits aren't removed.
     FP_ROUND,
     
-    // FLT_ROUNDS - Returns current rounding mode:
+    // FLT_ROUNDS_ - Returns current rounding mode:
     // -1 Undefined
     //  0 Round to 0
     //  1 Round to nearest
     //  2 Round to +inf
     //  3 Round to -inf
-    FLT_ROUNDS,
+    FLT_ROUNDS_,
 
     /// X = FP_ROUND_INREG(Y, VT) - This operator takes an FP register, and
     /// rounds it to a floating point value.  It then promotes it and returns it

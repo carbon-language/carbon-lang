@@ -216,7 +216,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1   , Expand);
   setOperationAction(ISD::FP_ROUND_INREG   , MVT::f32  , Expand);
   setOperationAction(ISD::FREM             , MVT::f64  , Expand);
-  setOperationAction(ISD::FLT_ROUNDS       , MVT::i32  , Custom);
+  setOperationAction(ISD::FLT_ROUNDS_      , MVT::i32  , Custom);
   
   setOperationAction(ISD::CTPOP            , MVT::i8   , Expand);
   setOperationAction(ISD::CTTZ             , MVT::i8   , Custom);
@@ -5048,7 +5048,7 @@ SDOperand X86TargetLowering::LowerTRAMPOLINE(SDOperand Op,
   }
 }
 
-SDOperand X86TargetLowering::LowerFLT_ROUNDS(SDOperand Op, SelectionDAG &DAG) {
+SDOperand X86TargetLowering::LowerFLT_ROUNDS_(SDOperand Op, SelectionDAG &DAG) {
   /*
    The rounding mode is in bits 11:10 of FPSR, and has the following
    settings:
@@ -5209,7 +5209,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::DYNAMIC_STACKALLOC: return LowerDYNAMIC_STACKALLOC(Op, DAG);
   case ISD::EH_RETURN:          return LowerEH_RETURN(Op, DAG);
   case ISD::TRAMPOLINE:         return LowerTRAMPOLINE(Op, DAG);
-  case ISD::FLT_ROUNDS:         return LowerFLT_ROUNDS(Op, DAG);
+  case ISD::FLT_ROUNDS_:        return LowerFLT_ROUNDS_(Op, DAG);
   case ISD::CTLZ:               return LowerCTLZ(Op, DAG);
   case ISD::CTTZ:               return LowerCTTZ(Op, DAG);
       

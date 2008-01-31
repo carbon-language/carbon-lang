@@ -111,7 +111,7 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   setOperationAction(ISD::FREM , MVT::f32, Expand);
   setOperationAction(ISD::FPOW , MVT::f32, Expand);
 
-  setOperationAction(ISD::FLT_ROUNDS, MVT::i32, Custom);
+  setOperationAction(ISD::FLT_ROUNDS_, MVT::i32, Custom);
   
   // If we're enabling GP optimizations, use hardware square root
   if (!TM.getSubtarget<PPCSubtarget>().hasFSQRT()) {
@@ -2215,7 +2215,7 @@ static SDOperand LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
   return FP;
 }
 
-static SDOperand LowerFLT_ROUNDS(SDOperand Op, SelectionDAG &DAG) {
+static SDOperand LowerFLT_ROUNDS_(SDOperand Op, SelectionDAG &DAG) {
   /*
    The rounding mode is in bits 30:31 of FPSR, and has the following
    settings:
@@ -3096,7 +3096,7 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::FP_TO_SINT:         return LowerFP_TO_SINT(Op, DAG);
   case ISD::SINT_TO_FP:         return LowerSINT_TO_FP(Op, DAG);
   case ISD::FP_ROUND_INREG:     return LowerFP_ROUND_INREG(Op, DAG);
-  case ISD::FLT_ROUNDS:         return LowerFLT_ROUNDS(Op, DAG);
+  case ISD::FLT_ROUNDS_:        return LowerFLT_ROUNDS_(Op, DAG);
 
   // Lower 64-bit shifts.
   case ISD::SHL_PARTS:          return LowerSHL_PARTS(Op, DAG);

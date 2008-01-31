@@ -525,7 +525,7 @@ namespace llvm {
     SDOperand LowerFRAME_TO_ARGS_OFFSET(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerEH_RETURN(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerTRAMPOLINE(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerFLT_ROUNDS(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerFLT_ROUNDS_(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerCTLZ(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerCTTZ(SDOperand Op, SelectionDAG &DAG);
     SDNode *ExpandFP_TO_SINT(SDNode *N, SelectionDAG &DAG);
