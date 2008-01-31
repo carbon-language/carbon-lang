@@ -173,6 +173,22 @@ bool ISD::isBuildVectorAllZeros(const SDNode *N) {
   return true;
 }
 
+/// isDebugLabel - Return true if the specified node represents a debug
+/// label (i.e. ISD::LABEL or TargetInstrInfo::LANEL node and third operand
+/// is 0).
+bool ISD::isDebugLabel(const SDNode *N) {
+  SDOperand Zero;
+  if (N->getOpcode() == ISD::LABEL)
+    Zero = N->getOperand(2);
+  else if (N->isTargetOpcode() &&
+           N->getTargetOpcode() == TargetInstrInfo::LABEL)
+    // Chain moved to last operand.
+    Zero = N->getOperand(1);
+  else
+    return false;
+  return isa<ConstantSDNode>(Zero) && cast<ConstantSDNode>(Zero)->isNullValue();
+}
+
 /// getSetCCSwappedOperands - Return the operation corresponding to (Y op X)
 /// when given the operation for (X op Y).
 ISD::CondCode ISD::getSetCCSwappedOperands(ISD::CondCode Operation) {

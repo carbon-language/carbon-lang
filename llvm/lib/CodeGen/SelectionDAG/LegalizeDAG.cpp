@@ -1060,7 +1060,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           unsigned Col = cast<ConstantSDNode>(ColOp)->getValue();
           unsigned ID = MMI->RecordLabel(Line, Col, SrcFile);
           Ops.push_back(DAG.getConstant(ID, MVT::i32));
-          Result = DAG.getNode(ISD::LABEL, MVT::Other,&Ops[0],Ops.size());
+          Ops.push_back(DAG.getConstant(0, MVT::i32)); // a debug label
+          Result = DAG.getNode(ISD::LABEL, MVT::Other, &Ops[0], Ops.size());
         }
       } else {
         Result = Tmp1;  // chain
@@ -1103,13 +1104,14 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     break;    
 
   case ISD::LABEL:
-    assert(Node->getNumOperands() == 2 && "Invalid LABEL node!");
+    assert(Node->getNumOperands() == 3 && "Invalid LABEL node!");
     switch (TLI.getOperationAction(ISD::LABEL, MVT::Other)) {
     default: assert(0 && "This action is not supported yet!");
     case TargetLowering::Legal:
       Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
       Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the label id.
-      Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
+      Tmp3 = LegalizeOp(Node->getOperand(2));  // Legalize the "flavor" operand.
+      Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Tmp3);
       break;
     case TargetLowering::Expand:
       Result = LegalizeOp(Node->getOperand(0));

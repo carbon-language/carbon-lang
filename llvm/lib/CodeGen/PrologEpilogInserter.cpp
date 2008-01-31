@@ -253,7 +253,7 @@ void PEI::saveCalleeSavedRegisters(MachineFunction &Fn) {
   // entry block.
   MachineModuleInfo *MMI = FFI->getMachineModuleInfo();
   if (MMI && MMI->hasDebugInfo())
-    while (I != MBB->end() && I->getOpcode() == TargetInstrInfo::LABEL)
+    while (I != MBB->end() && I->isDebugLabel())
       ++I;
 
   if (!TII.spillCalleeSavedRegisters(*MBB, I, CSI)) {

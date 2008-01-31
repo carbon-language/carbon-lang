@@ -134,6 +134,10 @@ public:
     delete removeFromParent();
   }
 
+  /// isDebugLabel - Returns true if the MachineInstr represents a debug label.
+  ///
+  bool isDebugLabel() const;
+
   /// findRegisterUseOperandIdx() - Returns the operand index that is a use of
   /// the specific register or -1 if it is not found. It further tightening
   /// the search criteria to a use that kills the register if isKill is true.

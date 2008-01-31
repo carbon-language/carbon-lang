@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetInstrDesc.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Support/LeakDetector.h"
@@ -511,6 +512,12 @@ unsigned MachineInstr::getNumExplicitOperands() const {
   return NumOperands;
 }
 
+
+/// isDebugLabel - Returns true if the MachineInstr represents a debug label.
+///
+bool MachineInstr::isDebugLabel() const {
+  return getOpcode() == TargetInstrInfo::LABEL && getOperand(1).getImm() == 0;
+}
 
 /// findRegisterUseOperandIdx() - Returns the MachineOperand that is a use of
 /// the specific register or -1 if it is not found. It further tightening

@@ -525,11 +525,11 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
           X86FI->getCalleeSavedFrameSize() +(-TailCallReturnAddrDelta));
   uint64_t NumBytes = StackSize - X86FI->getCalleeSavedFrameSize();
 
-  // Skip over the labels which mark the beginning of the function.
+  // Skip over the debug labels which mark the beginning of the function.
   if (MMI && MMI->needsFrameInfo()) {
     unsigned NumLabels = 0;
     while (NumLabels <= 1 &&
-           MBBI != MBB.end() && MBBI->getOpcode() == X86::LABEL) {
+           MBBI != MBB.end() && MBBI->isDebugLabel()) {
       ++NumLabels;
       ++MBBI;
     }
@@ -557,7 +557,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     if (MMI && MMI->needsFrameInfo()) {
       // Mark effective beginning of when frame pointer becomes valid.
       FrameLabelId = MMI->NextLabelID();
-      BuildMI(MBB, MBBI, TII.get(X86::LABEL)).addImm(FrameLabelId);
+      BuildMI(MBB, MBBI, TII.get(X86::LABEL)).addImm(FrameLabelId).addImm(0);
     }
 
     // Update EBP with the new base value...
@@ -569,7 +569,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   if (MMI && MMI->needsFrameInfo()) {
     // Mark effective beginning of when frame pointer is ready.
     ReadyLabelId = MMI->NextLabelID();
-    BuildMI(MBB, MBBI, TII.get(X86::LABEL)).addImm(ReadyLabelId);
+    BuildMI(MBB, MBBI, TII.get(X86::LABEL)).addImm(ReadyLabelId).addImm(0);
   }
 
   // Skip the callee-saved push instructions.

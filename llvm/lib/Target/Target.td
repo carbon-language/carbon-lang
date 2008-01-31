@@ -334,7 +334,7 @@ def INLINEASM : Instruction {
 }
 def LABEL : Instruction {
   let OutOperandList = (ops);
-  let InOperandList = (ops i32imm:$id);
+  let InOperandList = (ops i32imm:$id, i32imm:$flavor);
   let AsmString = "";
   let Namespace = "TargetInstrInfo";
   let hasCtrlDep = 1;

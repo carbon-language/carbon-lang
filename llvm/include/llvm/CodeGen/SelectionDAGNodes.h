@@ -496,6 +496,8 @@ namespace ISD {
     // returns a chain.
     //   Operand #0 : input chain.
     //   Operand #1 : module unique number use to identify the label.
+    //   Operand #2 : 0 indicates a debug label (e.g. stoppoint), 1 indicates
+    //                a EH label, 2 indicates unknown label type.
     LABEL,
     
     // STACKSAVE - STACKSAVE has one operand, an input chain.  It produces a
@@ -593,6 +595,11 @@ namespace ISD {
   /// isBuildVectorAllZeros - Return true if the specified node is a
   /// BUILD_VECTOR where all of the elements are 0 or undef.
   bool isBuildVectorAllZeros(const SDNode *N);
+
+  /// isDebugLabel - Return true if the specified node represents a debug
+  /// label (i.e. ISD::LABEL or TargetInstrInfo::LANEL node and third operand
+  /// is 0).
+  bool isDebugLabel(const SDNode *N);
   
   //===--------------------------------------------------------------------===//
   /// MemIndexedMode enum - This enum defines the load / store indexed 

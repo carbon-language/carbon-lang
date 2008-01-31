@@ -712,11 +712,11 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   // Prepare for frame info.
   unsigned FrameLabelId = 0;
   
-  // Skip over the labels which mark the beginning of the function.
+  // Skip over the debug labels which mark the beginning of the function.
   if (MMI && MMI->needsFrameInfo()) {
     unsigned NumLabels = 0;
     while (NumLabels <= 1 &&
-           MBBI != MBB.end() && MBBI->getOpcode() == PPC::LABEL) {
+           MBBI != MBB.end() && MBBI->isDebugLabel()) {
       ++NumLabels;
       ++MBBI;
     }
@@ -786,7 +786,7 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   if (MMI && MMI->needsFrameInfo()) {
     // Mark effective beginning of when frame pointer becomes valid.
     FrameLabelId = MMI->NextLabelID();
-    BuildMI(MBB, MBBI, TII.get(PPC::LABEL)).addImm(FrameLabelId);
+    BuildMI(MBB, MBBI, TII.get(PPC::LABEL)).addImm(FrameLabelId).addImm(0);
   }
   
   // Adjust stack pointer: r1 += NegFrameSize.
@@ -870,7 +870,7 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
     
     // Mark effective beginning of when frame pointer is ready.
     unsigned ReadyLabelId = MMI->NextLabelID();
-    BuildMI(MBB, MBBI, TII.get(PPC::LABEL)).addImm(ReadyLabelId);
+    BuildMI(MBB, MBBI, TII.get(PPC::LABEL)).addImm(ReadyLabelId).addImm(0);
     
     MachineLocation FPDst(HasFP ? (IsPPC64 ? PPC::X31 : PPC::R31) :
                                   (IsPPC64 ? PPC::X1 : PPC::R1));
