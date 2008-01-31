@@ -17,3 +17,9 @@ void *test(int *i) {
 _Bool test2b; 
 int test2() {if (test2b);}
 
+// PR1921
+int test3() {
+  const unsigned char *bp;
+  bp -= (short)1;
+}
+

@@ -767,8 +767,20 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
   assert(!isa<llvm::PointerType>(Ops.RHS->getType()) &&
          "ptr-ptr shouldn't get here");
   // FIXME: The pointer could point to a VLA.
-  Value *NegatedRHS = Builder.CreateNeg(Ops.RHS, "sub.ptr.neg");
-  return Builder.CreateGEP(Ops.LHS, NegatedRHS, "sub.ptr");
+  Value *Idx = Builder.CreateNeg(Ops.RHS, "sub.ptr.neg");
+  
+  unsigned Width = cast<llvm::IntegerType>(Idx->getType())->getBitWidth();
+  if (Width < CGF.LLVMPointerWidth) {
+    // Zero or sign extend the pointer value based on whether the index is
+    // signed or not.
+    const llvm::Type *IdxType = llvm::IntegerType::get(CGF.LLVMPointerWidth);
+    if (Ops.E->getRHS()->getType().getCanonicalType()->isSignedIntegerType())
+      Idx = Builder.CreateSExt(Idx, IdxType, "idx.ext");
+    else
+      Idx = Builder.CreateZExt(Idx, IdxType, "idx.ext");
+  }
+  
+  return Builder.CreateGEP(Ops.LHS, Idx, "sub.ptr");
 }
 
 Value *ScalarExprEmitter::VisitBinSub(const BinaryOperator *E) {
