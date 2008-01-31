@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the LiveVariable analysis pass.  For each machine
+// This file implements the LiveVariables analysis pass.  For each machine
 // instruction in the function, this pass calculates the set of registers that
 // are immediately dead after the instruction (i.e., the instruction calculates
 // the value, but it is never used) and the set of registers that are used by
