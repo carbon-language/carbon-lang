@@ -1,5 +1,5 @@
 //===-- GRConstants.cpp - Simple, Path-Sens. Constant Prop. ------*- C++ -*-==//
-//   
+//
 //                     The LLValM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
@@ -733,7 +733,8 @@ void LValue::print(std::ostream& Out) const {
       break;
       
     case LValueDeclKind:
-      Out << cast<LValueDecl>(this)->getDecl()->getIdentifier();
+      Out << '&' 
+          << cast<LValueDecl>(this)->getDecl()->getIdentifier()->getName();
       break;
       
     default:
@@ -1277,6 +1278,18 @@ void GRConstants::VisitUnaryOperator(UnaryOperator* U,
         break;
       }
         
+      case UnaryOperator::AddrOf: {
+        const LValue& L1 = GetLValue(St, U->getSubExpr());
+        Nodify(Dst, U, N1, SetValue(St, U, L1));
+        break;
+      }
+        
+      case UnaryOperator::Deref: {
+        const LValue& L1 = GetLValue(St, U->getSubExpr());
+        Nodify(Dst, U, N1, SetValue(St, U, GetValue(St, L1)));
+        break;
+      }
+        
       default: ;
         assert (false && "Not implemented.");
     }    
@@ -1608,7 +1621,7 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRConstants::NodeTy*> :
       }
     }
     
-    Out << "\\|";
+    Out << "\\|StateID: " << (void*) N->getState().getRoot() << "\\|";
     
     PrintKind(Out, N->getState(), ValueKey::IsDecl, true);
     PrintKind(Out, N->getState(), ValueKey::IsBlkExpr);
