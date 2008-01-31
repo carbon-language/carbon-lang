@@ -131,14 +131,13 @@ public:
   /// location was not rewritable, false otherwise.
   bool InsertText(SourceLocation Loc, const char *StrData, unsigned StrLen);
   
-  /// RemoveText - Remove the specified text region.  This method is only valid
-  /// on a rewritable source location.
-  void RemoveText(SourceLocation Start, unsigned Length);
+  /// RemoveText - Remove the specified text region.
+  bool RemoveText(SourceLocation Start, unsigned Length);
   
   /// ReplaceText - This method replaces a range of characters in the input
   /// buffer with a new string.  This is effectively a combined "remove/insert"
   /// operation.
-  void ReplaceText(SourceLocation Start, unsigned OrigLength,
+  bool ReplaceText(SourceLocation Start, unsigned OrigLength,
                    const char *NewStr, unsigned NewLength);
   
   /// ReplaceStmt - This replaces a Stmt/Expr with another, using the pretty

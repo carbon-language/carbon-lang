@@ -204,8 +204,7 @@ RewriteBuffer &Rewriter::getEditBuffer(unsigned FileID) {
 }
 
 /// InsertText - Insert the specified string at the specified location in the
-/// original buffer.  This method is only valid on rewritable source
-/// locations.
+/// original buffer.
 bool Rewriter::InsertText(SourceLocation Loc,
                           const char *StrData, unsigned StrLen) {
   if (!isRewritable(Loc)) return true;
@@ -215,26 +214,27 @@ bool Rewriter::InsertText(SourceLocation Loc,
   return false;
 }
 
-/// RemoveText - Remove the specified text region.  This method is only valid
-/// on a rewritable source location.
-void Rewriter::RemoveText(SourceLocation Start, unsigned Length) {
-  assert(isRewritable(Start) && "Not a rewritable location!");
+/// RemoveText - Remove the specified text region.
+bool Rewriter::RemoveText(SourceLocation Start, unsigned Length) {
+  if (!isRewritable(Start)) return true;
   unsigned FileID;
   unsigned StartOffs = getLocationOffsetAndFileID(Start, FileID);
   getEditBuffer(FileID).RemoveText(StartOffs, Length);
+  return false;
 }
 
 /// ReplaceText - This method replaces a range of characters in the input
 /// buffer with a new string.  This is effectively a combined "remove/insert"
 /// operation.
-void Rewriter::ReplaceText(SourceLocation Start, unsigned OrigLength,
+bool Rewriter::ReplaceText(SourceLocation Start, unsigned OrigLength,
                            const char *NewStr, unsigned NewLength) {
-  assert(isRewritable(Start) && "Not a rewritable location!");
+  if (!isRewritable(Start)) return true;
   unsigned StartFileID;
   unsigned StartOffs = getLocationOffsetAndFileID(Start, StartFileID);
   
   getEditBuffer(StartFileID).ReplaceText(StartOffs, OrigLength,
                                          NewStr, NewLength);
+  return false;
 }
 
 /// ReplaceStmt - This replaces a Stmt/Expr with another, using the pretty
