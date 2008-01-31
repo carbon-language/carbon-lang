@@ -170,6 +170,20 @@ namespace {
                "rewriting sub-expression within a macro (may not be correct)");
     }
     ~RewriteTest();
+    
+    void ReplaceStmt(Stmt *Old, Stmt *New) {
+      if (!Rewrite.ReplaceStmt(Old, New))
+        return;
+
+      // Replacement failed, report a warning unless disabled.
+      if (SilenceRewriteMacroWarning) return;
+
+      SourceRange Range = Old->getSourceRange();
+      Diags.Report(Context->getFullLoc(Old->getLocStart()), RewriteFailedDiag,
+                   0, 0, &Range, 1);
+    }
+    
+    
 
     // Syntactic Rewriting.
     void RewritePrologue(SourceLocation Loc);
@@ -708,13 +722,7 @@ Stmt *RewriteTest::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
   if (IV->isFreeIvar()) {
     Expr *Replacement = new MemberExpr(IV->getBase(), true, D, 
                                        IV->getLocation());
-    if (Rewrite.ReplaceStmt(IV, Replacement)) {
-      // replacement failed.
-      SourceRange Range = IV->getSourceRange();
-      if (!SilenceRewriteMacroWarning)
-        Diags.Report(Context->getFullLoc(IV->getLocation()), RewriteFailedDiag, 
-                                         0, 0, &Range, 1);
-    }
+    ReplaceStmt(IV, Replacement);
     delete IV;
     return Replacement;
   } else {
@@ -734,13 +742,7 @@ Stmt *RewriteTest::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
           CastExpr *castExpr = new CastExpr(castT, IV->getBase(), SourceLocation());
           // Don't forget the parens to enforce the proper binding.
           ParenExpr *PE = new ParenExpr(SourceLocation(), SourceLocation(), castExpr);
-          if (Rewrite.ReplaceStmt(IV->getBase(), PE)) {
-            // replacement failed.
-            SourceRange Range = IV->getBase()->getSourceRange();
-            if (!SilenceRewriteMacroWarning)
-              Diags.Report(Context->getFullLoc(IV->getBase()->getLocStart()), 
-                           RewriteFailedDiag, 0, 0, &Range, 1);
-          }
+          ReplaceStmt(IV->getBase(), PE);
           delete IV->getBase();
           return PE;
         }
@@ -1267,7 +1269,7 @@ Stmt *RewriteTest::RewriteObjCFinallyStmt(ObjCAtFinallyStmt *S) {
   return 0;
 }
 
-// This can't be done with Rewrite.ReplaceStmt(S, ThrowExpr), since 
+// This can't be done with ReplaceStmt(S, ThrowExpr), since 
 // the throw expression is typically a message expression that's already 
 // been rewritten! (which implies the SourceLocation's are invalid).
 Stmt *RewriteTest::RewriteObjCThrowStmt(ObjCAtThrowStmt *S) {
@@ -1301,13 +1303,7 @@ Stmt *RewriteTest::RewriteAtEncode(ObjCEncodeExpr *Exp) {
   Expr *Replacement = new StringLiteral(StrEncoding.c_str(),
                                         StrEncoding.length(), false, StrType, 
                                         SourceLocation(), SourceLocation());
-  if (Rewrite.ReplaceStmt(Exp, Replacement)) {
-    // replacement failed.
-    SourceRange Range = Exp->getSourceRange();
-    if (!SilenceRewriteMacroWarning)
-      Diags.Report(Context->getFullLoc(Exp->getAtLoc()), RewriteFailedDiag,
-                                       0, 0, &Range, 1);
-  }
+  ReplaceStmt(Exp, Replacement);
   
   // Replace this subexpr in the parent.
   delete Exp;
@@ -1325,13 +1321,7 @@ Stmt *RewriteTest::RewriteAtSelector(ObjCSelectorExpr *Exp) {
                                        SourceLocation()));
   CallExpr *SelExp = SynthesizeCallToFunctionDecl(SelGetUidFunctionDecl,
                                                  &SelExprs[0], SelExprs.size());
-  if (Rewrite.ReplaceStmt(Exp, SelExp)) {
-    // replacement failed.
-    SourceRange Range = Exp->getSourceRange();
-    if (!SilenceRewriteMacroWarning)
-      Diags.Report(Context->getFullLoc(Exp->getAtLoc()), RewriteFailedDiag,
-                                       0, 0, &Range, 1);
-  }
+  ReplaceStmt(Exp, SelExp);
   delete Exp;
   return SelExp;
 }
@@ -1657,13 +1647,7 @@ Stmt *RewriteTest::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
                                                 &StrExpr[0], StrExpr.size());
   // cast to NSConstantString *
   CastExpr *cast = new CastExpr(Exp->getType(), call, SourceLocation());
-  if (Rewrite.ReplaceStmt(Exp, cast)) {
-    // replacement failed.
-    SourceRange Range = Exp->getSourceRange();
-    if (!SilenceRewriteMacroWarning)
-      Diags.Report(Context->getFullLoc(Exp->getAtLoc()), RewriteFailedDiag,
-                                       0, 0, &Range, 1);
-  }
+  ReplaceStmt(Exp, cast);
   delete Exp;
   return cast;
 #else
@@ -1701,7 +1685,7 @@ Stmt *RewriteTest::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
                            SourceLocation());
   // cast to NSConstantString *
   cast = new CastExpr(Exp->getType(), Unop, SourceLocation());
-  Rewrite.ReplaceStmt(Exp, cast);
+  ReplaceStmt(Exp, cast);
   delete Exp;
   return cast;
 #endif
@@ -2037,13 +2021,7 @@ Stmt *RewriteTest::SynthMessageExpr(ObjCMessageExpr *Exp) {
 Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
   Stmt *ReplacingStmt = SynthMessageExpr(Exp);
   // Now do the actual rewrite.
-  if (Rewrite.ReplaceStmt(Exp, ReplacingStmt)) {
-    // replacement failed.
-    SourceRange Range = Exp->getSourceRange();
-    if (!SilenceRewriteMacroWarning)
-      Diags.Report(Context->getFullLoc(Exp->getLocStart()), RewriteFailedDiag,
-                                       0, 0, &Range, 1);
-  }
+  ReplaceStmt(Exp, ReplacingStmt);
   
   delete Exp;
   return ReplacingStmt;
@@ -2064,13 +2042,7 @@ Stmt *RewriteTest::RewriteObjCProtocolExpr(ObjCProtocolExpr *Exp) {
   CallExpr *ProtoExp = SynthesizeCallToFunctionDecl(GetProtocolFunctionDecl,
                                                     &ProtoExprs[0], 
                                                     ProtoExprs.size());
-  if (Rewrite.ReplaceStmt(Exp, ProtoExp)) {
-    // replacement failed.
-    SourceRange Range = Exp->getSourceRange();
-    if (!SilenceRewriteMacroWarning)
-      Diags.Report(Context->getFullLoc(Exp->getAtLoc()), RewriteFailedDiag,
-                                       0, 0, &Range, 1);
-  }
+  ReplaceStmt(Exp, ProtoExp);
   delete Exp;
   return ProtoExp;
   

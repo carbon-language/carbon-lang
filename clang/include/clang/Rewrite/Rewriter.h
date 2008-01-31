@@ -127,9 +127,9 @@ public:
   int getRangeSize(SourceRange Range) const;
   
   /// InsertText - Insert the specified string at the specified location in the
-  /// original buffer.  This method is only valid on rewritable source
-  /// locations.
-  void InsertText(SourceLocation Loc, const char *StrData, unsigned StrLen);
+  /// original buffer.  This method returns true (and does nothing) if the input
+  /// location was not rewritable, false otherwise.
+  bool InsertText(SourceLocation Loc, const char *StrData, unsigned StrLen);
   
   /// RemoveText - Remove the specified text region.  This method is only valid
   /// on a rewritable source location.
