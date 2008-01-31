@@ -78,88 +78,8 @@ namespace {
     
     static const int OBJC_ABI_VERSION =7 ;
   public:
-    void Initialize(ASTContext &context) {
-      Context = &context;
-      SM = &Context->getSourceManager();
-      MsgSendFunctionDecl = 0;
-      MsgSendSuperFunctionDecl = 0;
-      MsgSendStretFunctionDecl = 0;
-      MsgSendSuperStretFunctionDecl = 0;
-      MsgSendFpretFunctionDecl = 0;
-      GetClassFunctionDecl = 0;
-      GetMetaClassFunctionDecl = 0;
-      SelGetUidFunctionDecl = 0;
-      CFStringFunctionDecl = 0;
-      GetProtocolFunctionDecl = 0;
-      ConstantStringClassReference = 0;
-      NSStringRecord = 0;
-      CurMethodDecl = 0;
-      SuperStructDecl = 0;
-      BcLabelCount = 0;
-      
-      // Get the ID and start/end of the main file.
-      MainFileID = SM->getMainFileID();
-      const llvm::MemoryBuffer *MainBuf = SM->getBuffer(MainFileID);
-      MainFileStart = MainBuf->getBufferStart();
-      MainFileEnd = MainBuf->getBufferEnd();
-      
-      
-      Rewrite.setSourceMgr(Context->getSourceManager());
-      // declaring objc_selector outside the parameter list removes a silly
-      // scope related warning...
-      const char *s = "#pragma once\n"
-                      "struct objc_selector; struct objc_class;\n"
-                      "#ifndef OBJC_SUPER\n"
-                      "struct objc_super { struct objc_object *o; "
-                      "struct objc_object *superClass; };\n"
-                      "#define OBJC_SUPER\n"
-                      "#endif\n"
-                      "#ifndef _REWRITER_typedef_Protocol\n"
-                      "typedef struct objc_object Protocol;\n"
-                      "#define _REWRITER_typedef_Protocol\n"
-                      "#endif\n"
-                      "extern struct objc_object *objc_msgSend"
-                      "(struct objc_object *, struct objc_selector *, ...);\n"
-                      "extern struct objc_object *objc_msgSendSuper"
-                      "(struct objc_super *, struct objc_selector *, ...);\n"
-                      "extern struct objc_object *objc_msgSend_stret"
-                      "(struct objc_object *, struct objc_selector *, ...);\n"
-                      "extern struct objc_object *objc_msgSendSuper_stret"
-                      "(struct objc_super *, struct objc_selector *, ...);\n"
-                      "extern struct objc_object *objc_msgSend_fpret"
-                      "(struct objc_object *, struct objc_selector *, ...);\n"
-                      "extern struct objc_object *objc_getClass"
-                      "(const char *);\n"
-                      "extern struct objc_object *objc_getMetaClass"
-                      "(const char *);\n"
-                      "extern void objc_exception_throw(struct objc_object *);\n"
-                      "extern void objc_exception_try_enter(void *);\n"
-                      "extern void objc_exception_try_exit(void *);\n"
-                      "extern struct objc_object *objc_exception_extract(void *);\n"
-                      "extern int objc_exception_match"
-                      "(struct objc_class *, struct objc_object *, ...);\n"
-                      "extern Protocol *objc_getProtocol(const char *);\n"
-                      "#include <objc/objc.h>\n"
-                      "#ifndef __FASTENUMERATIONSTATE\n"
-                      "struct __objcFastEnumerationState {\n\t"
-                      "unsigned long state;\n\t"
-                      "id *itemsPtr;\n\t"
-                      "unsigned long *mutationsPtr;\n\t"
-                      "unsigned long extra[5];\n};\n"
-                      "#define __FASTENUMERATIONSTATE\n"
-                      "#endif\n";
-      if (IsHeader) {
-        // insert the whole string when rewriting a header file
-        Rewrite.InsertText(SourceLocation::getFileLoc(MainFileID, 0), 
-                           s, strlen(s));
-      }
-      else {
-        // Not rewriting header, exclude the #pragma once pragma
-        const char *p = s + strlen("#pragma once\n");
-        Rewrite.InsertText(SourceLocation::getFileLoc(MainFileID, 0), 
-                           p, strlen(p));
-      }
-    }
+    void Initialize(ASTContext &context);
+    
 
     // Top Level Driver code.
     virtual void HandleTopLevelDecl(Decl *D);
@@ -284,6 +204,90 @@ ASTConsumer *clang::CreateCodeRewriterTest(const std::string& InFile,
                                            Diagnostic &Diags) {
   return new RewriteTest(IsHeaderFile(InFile), Diags);
 }
+
+void RewriteTest::Initialize(ASTContext &context) {
+  Context = &context;
+  SM = &Context->getSourceManager();
+  MsgSendFunctionDecl = 0;
+  MsgSendSuperFunctionDecl = 0;
+  MsgSendStretFunctionDecl = 0;
+  MsgSendSuperStretFunctionDecl = 0;
+  MsgSendFpretFunctionDecl = 0;
+  GetClassFunctionDecl = 0;
+  GetMetaClassFunctionDecl = 0;
+  SelGetUidFunctionDecl = 0;
+  CFStringFunctionDecl = 0;
+  GetProtocolFunctionDecl = 0;
+  ConstantStringClassReference = 0;
+  NSStringRecord = 0;
+  CurMethodDecl = 0;
+  SuperStructDecl = 0;
+  BcLabelCount = 0;
+  
+  // Get the ID and start/end of the main file.
+  MainFileID = SM->getMainFileID();
+  const llvm::MemoryBuffer *MainBuf = SM->getBuffer(MainFileID);
+  MainFileStart = MainBuf->getBufferStart();
+  MainFileEnd = MainBuf->getBufferEnd();
+  
+  
+  Rewrite.setSourceMgr(Context->getSourceManager());
+  // declaring objc_selector outside the parameter list removes a silly
+  // scope related warning...
+  const char *s = "#pragma once\n"
+  "struct objc_selector; struct objc_class;\n"
+  "#ifndef OBJC_SUPER\n"
+  "struct objc_super { struct objc_object *o; "
+  "struct objc_object *superClass; };\n"
+  "#define OBJC_SUPER\n"
+  "#endif\n"
+  "#ifndef _REWRITER_typedef_Protocol\n"
+  "typedef struct objc_object Protocol;\n"
+  "#define _REWRITER_typedef_Protocol\n"
+  "#endif\n"
+  "extern struct objc_object *objc_msgSend"
+  "(struct objc_object *, struct objc_selector *, ...);\n"
+  "extern struct objc_object *objc_msgSendSuper"
+  "(struct objc_super *, struct objc_selector *, ...);\n"
+  "extern struct objc_object *objc_msgSend_stret"
+  "(struct objc_object *, struct objc_selector *, ...);\n"
+  "extern struct objc_object *objc_msgSendSuper_stret"
+  "(struct objc_super *, struct objc_selector *, ...);\n"
+  "extern struct objc_object *objc_msgSend_fpret"
+  "(struct objc_object *, struct objc_selector *, ...);\n"
+  "extern struct objc_object *objc_getClass"
+  "(const char *);\n"
+  "extern struct objc_object *objc_getMetaClass"
+  "(const char *);\n"
+  "extern void objc_exception_throw(struct objc_object *);\n"
+  "extern void objc_exception_try_enter(void *);\n"
+  "extern void objc_exception_try_exit(void *);\n"
+  "extern struct objc_object *objc_exception_extract(void *);\n"
+  "extern int objc_exception_match"
+  "(struct objc_class *, struct objc_object *, ...);\n"
+  "extern Protocol *objc_getProtocol(const char *);\n"
+  "#include <objc/objc.h>\n"
+  "#ifndef __FASTENUMERATIONSTATE\n"
+  "struct __objcFastEnumerationState {\n\t"
+  "unsigned long state;\n\t"
+  "id *itemsPtr;\n\t"
+  "unsigned long *mutationsPtr;\n\t"
+  "unsigned long extra[5];\n};\n"
+  "#define __FASTENUMERATIONSTATE\n"
+  "#endif\n";
+  if (IsHeader) {
+    // insert the whole string when rewriting a header file
+    Rewrite.InsertText(SourceLocation::getFileLoc(MainFileID, 0), 
+                       s, strlen(s));
+  }
+  else {
+    // Not rewriting header, exclude the #pragma once pragma
+    const char *p = s + strlen("#pragma once\n");
+    Rewrite.InsertText(SourceLocation::getFileLoc(MainFileID, 0), 
+                       p, strlen(p));
+  }
+}
+
 
 //===----------------------------------------------------------------------===//
 // Top Level Driver Code
