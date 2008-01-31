@@ -581,16 +581,16 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   }
   case ISD::VAARG: {
     MVT::ValueType VT = getPointerTy();
-    const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
+    SrcValueSDNode *SV = cast<SrcValueSDNode>(Op.getOperand(2));
     SDOperand VAList = DAG.getLoad(VT, Op.getOperand(0), Op.getOperand(1), 
-                                   SV, 0);
+                                   SV->getValue(), SV->getOffset());
     // Increment the pointer, VAList, to the next vaarg
     SDOperand VAIncr = DAG.getNode(ISD::ADD, VT, VAList, 
                                    DAG.getConstant(MVT::getSizeInBits(VT)/8, 
                                                    VT));
     // Store the incremented VAList to the legalized pointer
     VAIncr = DAG.getStore(VAList.getValue(1), VAIncr,
-                          Op.getOperand(1), SV, 0);
+                          Op.getOperand(1), SV->getValue(), SV->getOffset());
     // Load the actual argument out of the pointer VAList
     return DAG.getLoad(Op.getValueType(), VAIncr, VAList, NULL, 0);
   }
@@ -598,8 +598,9 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     // vastart just stores the address of the VarArgsFrameIndex slot into the
     // memory location argument.
     SDOperand FR = DAG.getFrameIndex(VarArgsFrameIndex, MVT::i64);
-    const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
-    return DAG.getStore(Op.getOperand(0), FR, Op.getOperand(1), SV, 0);
+    SrcValueSDNode *SV = cast<SrcValueSDNode>(Op.getOperand(2));
+    return DAG.getStore(Op.getOperand(0), FR, 
+                        Op.getOperand(1), SV->getValue(), SV->getOffset());
   }
   // Frame & Return address.  Currently unimplemented
   case ISD::RETURNADDR:         break;

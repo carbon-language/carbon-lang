@@ -83,12 +83,6 @@ public:
     MI->addOperand(MachineOperand::CreateES(FnName, 0));
     return *this;
   }
-
-  /// addMemOperand - Add a memory operand to the machine instruction.
-  const MachineInstrBuilder &addMemOperand(const MemOperand &MO) const {
-    MI->addMemOperand(MO);
-    return *this;
-  }
 };
 
 /// BuildMI - Builder interface.  Specify how to create the initial instruction

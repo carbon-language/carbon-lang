@@ -15,8 +15,6 @@
 #include "llvm/Value.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/CodeGen/PseudoSourceValue.h"
-#include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetInstrDesc.h"
@@ -294,7 +292,6 @@ MachineInstr::MachineInstr(const MachineInstr &MI) {
   TID = &MI.getDesc();
   NumImplicitOps = MI.NumImplicitOps;
   Operands.reserve(MI.getNumOperands());
-  MemOperands = MI.MemOperands;
 
   // Add operands
   for (unsigned i = 0; i != MI.getNumOperands(); ++i) {
@@ -628,34 +625,6 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine *TM) const {
       OS << ",";
     OS << " ";
     getOperand(i).print(OS, TM);
-  }
-
-  if (getNumMemOperands() > 0) {
-    OS << ", SV:";
-    for (unsigned i = 0; i < getNumMemOperands(); i++) {
-      const MemOperand &MRO = getMemOperand(i);
-      const Value *V = MRO.getValue();
-
-      assert(V && "SV missing.");
-      assert((MRO.isLoad() || MRO.isStore()) &&
-             "SV has to be a load, store or both.");
-      
-      if (MRO.isVolatile())
-        OS << "Volatile";
-      if (MRO.isLoad())
-        OS << "LD";
-      if (MRO.isStore())
-        OS << "ST";
-        
-      OS  << MRO.getSize();
-      
-      if (!V->getName().empty())
-        OS << "[" << V->getName() << " + " << MRO.getOffset() << "]";
-      else if (isa<PseudoSourceValue>(V))
-        OS << "[" << *V << " + " << MRO.getOffset() << "]";
-      else
-        OS << "[" << V << " + " << MRO.getOffset() << "]";
-    }
   }
 
   OS << "\n";

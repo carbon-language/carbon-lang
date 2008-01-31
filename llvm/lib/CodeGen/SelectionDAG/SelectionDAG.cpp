@@ -20,7 +20,6 @@
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
-#include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
@@ -359,16 +358,10 @@ static void AddNodeIDNode(FoldingSetNodeID &ID, SDNode *N) {
   case ISD::Register:
     ID.AddInteger(cast<RegisterSDNode>(N)->getReg());
     break;
-  case ISD::SRCVALUE:
-    ID.AddPointer(cast<SrcValueSDNode>(N)->getValue());
-    break;
-  case ISD::MEMOPERAND: {
-    const MemOperand &MO = cast<MemOperandSDNode>(N)->MO;
-    ID.AddPointer(MO.getValue());
-    ID.AddInteger(MO.getFlags());
-    ID.AddInteger(MO.getOffset());
-    ID.AddInteger(MO.getSize());
-    ID.AddInteger(MO.getAlignment());
+  case ISD::SRCVALUE: {
+    SrcValueSDNode *SV = cast<SrcValueSDNode>(N);
+    ID.AddPointer(SV->getValue());
+    ID.AddInteger(SV->getOffset());
     break;
   }
   case ISD::FrameIndex:
@@ -939,42 +932,18 @@ SDOperand SelectionDAG::getRegister(unsigned RegNo, MVT::ValueType VT) {
   return SDOperand(N, 0);
 }
 
-SDOperand SelectionDAG::getSrcValue(const Value *V) {
+SDOperand SelectionDAG::getSrcValue(const Value *V, int Offset) {
   assert((!V || isa<PointerType>(V->getType())) &&
          "SrcValue is not a pointer?");
 
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, ISD::SRCVALUE, getVTList(MVT::Other), 0, 0);
   ID.AddPointer(V);
-
+  ID.AddInteger(Offset);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-
-  SDNode *N = new SrcValueSDNode(V);
-  CSEMap.InsertNode(N, IP);
-  AllNodes.push_back(N);
-  return SDOperand(N, 0);
-}
-
-SDOperand SelectionDAG::getMemOperand(const MemOperand &MO) {
-  const Value *v = MO.getValue();
-  assert((!v || isa<PointerType>(v->getType())) &&
-         "SrcValue is not a pointer?");
-
-  FoldingSetNodeID ID;
-  AddNodeIDNode(ID, ISD::MEMOPERAND, getVTList(MVT::Other), 0, 0);
-  ID.AddPointer(v);
-  ID.AddInteger(MO.getFlags());
-  ID.AddInteger(MO.getOffset());
-  ID.AddInteger(MO.getSize());
-  ID.AddInteger(MO.getAlignment());
-
-  void *IP = 0;
-  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return SDOperand(E, 0);
-
-  SDNode *N = new MemOperandSDNode(MO);
+  SDNode *N = new SrcValueSDNode(V, Offset);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
@@ -3464,7 +3433,6 @@ void JumpTableSDNode::ANCHOR() {}
 void ConstantPoolSDNode::ANCHOR() {}
 void BasicBlockSDNode::ANCHOR() {}
 void SrcValueSDNode::ANCHOR() {}
-void MemOperandSDNode::ANCHOR() {}
 void RegisterSDNode::ANCHOR() {}
 void ExternalSymbolSDNode::ANCHOR() {}
 void CondCodeSDNode::ANCHOR() {}
@@ -3487,26 +3455,6 @@ GlobalAddressSDNode::GlobalAddressSDNode(bool isTarget, const GlobalValue *GA,
            (isTarget ? ISD::TargetGlobalAddress : ISD::GlobalAddress),
            getSDVTList(VT)), Offset(o) {
   TheGlobal = const_cast<GlobalValue*>(GA);
-}
-
-/// getMemOperand - Return a MemOperand object describing the memory
-/// reference performed by this load or store.
-MemOperand LSBaseSDNode::getMemOperand() const {
-  int Size = (MVT::getSizeInBits(getMemoryVT()) + 7) >> 3;
-  int Flags =
-    getOpcode() == ISD::LOAD ? MemOperand::MOLoad : MemOperand::MOStore;
-  if (IsVolatile) Flags |= MemOperand::MOVolatile;
-
-  // Check if the load references a frame index, and does not have
-  // an SV attached.
-  const FrameIndexSDNode *FI =
-    dyn_cast<const FrameIndexSDNode>(getBasePtr().Val);
-  if (!getSrcValue() && FI)
-    return MemOperand(&PseudoSourceValue::FPRel, Flags,
-                      FI->getIndex(), Size, Alignment);
-  else
-    return MemOperand(getSrcValue(), Flags,
-                      getSrcValueOffset(), Size, Alignment);
 }
 
 /// Profile - Gather unique data for the node.
@@ -3701,7 +3649,6 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::PCMARKER:      return "PCMarker";
   case ISD::READCYCLECOUNTER: return "ReadCycleCounter";
   case ISD::SRCVALUE:      return "SrcValue";
-  case ISD::MEMOPERAND:    return "MemOperand";
   case ISD::EntryToken:    return "EntryToken";
   case ISD::TokenFactor:   return "TokenFactor";
   case ISD::AssertSext:    return "AssertSext";
@@ -4006,14 +3953,9 @@ void SDNode::dump(const SelectionDAG *G) const {
     cerr << "'" << ES->getSymbol() << "'";
   } else if (const SrcValueSDNode *M = dyn_cast<SrcValueSDNode>(this)) {
     if (M->getValue())
-      cerr << "<" << M->getValue() << ">";
+      cerr << "<" << M->getValue() << ":" << M->getOffset() << ">";
     else
-      cerr << "<null>";
-  } else if (const MemOperandSDNode *M = dyn_cast<MemOperandSDNode>(this)) {
-    if (M->MO.getValue())
-      cerr << "<" << M->MO.getValue() << ":" << M->MO.getOffset() << ">";
-    else
-      cerr << "<null:" << M->MO.getOffset() << ">";
+      cerr << "<null:" << M->getOffset() << ">";
   } else if (const VTSDNode *N = dyn_cast<VTSDNode>(this)) {
     cerr << ":" << MVT::getValueTypeString(N->getVT());
   } else if (const LoadSDNode *LD = dyn_cast<LoadSDNode>(this)) {

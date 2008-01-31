@@ -381,12 +381,8 @@ public:
   SDOperand getIndexedStore(SDOperand OrigStoe, SDOperand Base,
                            SDOperand Offset, ISD::MemIndexedMode AM);
 
-  // getSrcValue - Construct a node to track a Value* through the backend.
-  SDOperand getSrcValue(const Value *v);
-
-  // getMemOperand - Construct a node to track a memory reference
-  // through the backend.
-  SDOperand getMemOperand(const MemOperand &MO);
+  // getSrcValue - construct a node to track a Value* through the backend
+  SDOperand getSrcValue(const Value* I, int offset = 0);
 
   /// UpdateNodeOperands - *Mutate* the specified node in-place to have the
   /// specified operands.  If the resultant node already exists in the DAG,

@@ -24,7 +24,6 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
@@ -1173,8 +1172,9 @@ static SDOperand LowerVASTART(SDOperand Op, SelectionDAG &DAG,
     // memory location argument.
     MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
     SDOperand FR = DAG.getFrameIndex(VarArgsFrameIndex, PtrVT);
-    const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
-    return DAG.getStore(Op.getOperand(0), FR, Op.getOperand(1), SV, 0);
+    SrcValueSDNode *SV = cast<SrcValueSDNode>(Op.getOperand(2));
+    return DAG.getStore(Op.getOperand(0), FR, Op.getOperand(1), SV->getValue(),
+                        SV->getOffset());
   }
 
   // For ELF 32 ABI we follow the layout of the va_list struct.
@@ -1208,41 +1208,37 @@ static SDOperand LowerVASTART(SDOperand Op, SelectionDAG &DAG,
 
   MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   
-  SDOperand StackOffsetFI = DAG.getFrameIndex(VarArgsStackOffset, PtrVT);
+  SDOperand StackOffset = DAG.getFrameIndex(VarArgsStackOffset, PtrVT);
   SDOperand FR = DAG.getFrameIndex(VarArgsFrameIndex, PtrVT);
   
-  uint64_t FrameOffset = MVT::getSizeInBits(PtrVT)/8;
-  SDOperand ConstFrameOffset = DAG.getConstant(FrameOffset, PtrVT);
-
-  uint64_t StackOffset = MVT::getSizeInBits(PtrVT)/8 - 1;
-  SDOperand ConstStackOffset = DAG.getConstant(StackOffset, PtrVT);
-
-  uint64_t FPROffset = 1;
-  SDOperand ConstFPROffset = DAG.getConstant(FPROffset, PtrVT);
+  SDOperand ConstFrameOffset = DAG.getConstant(MVT::getSizeInBits(PtrVT)/8,
+                                               PtrVT);
+  SDOperand ConstStackOffset = DAG.getConstant(MVT::getSizeInBits(PtrVT)/8 - 1,
+                                               PtrVT);
+  SDOperand ConstFPROffset   = DAG.getConstant(1, PtrVT);
   
-  const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
+  SrcValueSDNode *SV = cast<SrcValueSDNode>(Op.getOperand(2));
   
   // Store first byte : number of int regs
   SDOperand firstStore = DAG.getStore(Op.getOperand(0), ArgGPR,
-                                      Op.getOperand(1), SV, 0);
-  uint64_t nextOffset = FPROffset;
+                                      Op.getOperand(1), SV->getValue(),
+                                      SV->getOffset());
   SDOperand nextPtr = DAG.getNode(ISD::ADD, PtrVT, Op.getOperand(1),
                                   ConstFPROffset);
   
   // Store second byte : number of float regs
-  SDOperand secondStore =
-    DAG.getStore(firstStore, ArgFPR, nextPtr, SV, nextOffset);
-  nextOffset += StackOffset;
+  SDOperand secondStore = DAG.getStore(firstStore, ArgFPR, nextPtr,
+                                       SV->getValue(), SV->getOffset());
   nextPtr = DAG.getNode(ISD::ADD, PtrVT, nextPtr, ConstStackOffset);
   
   // Store second word : arguments given on stack
-  SDOperand thirdStore =
-    DAG.getStore(secondStore, StackOffsetFI, nextPtr, SV, nextOffset);
-  nextOffset += FrameOffset;
+  SDOperand thirdStore = DAG.getStore(secondStore, StackOffset, nextPtr,
+                                      SV->getValue(), SV->getOffset());
   nextPtr = DAG.getNode(ISD::ADD, PtrVT, nextPtr, ConstFrameOffset);
 
   // Store third word : arguments given in registers
-  return DAG.getStore(thirdStore, FR, nextPtr, SV, nextOffset);
+  return DAG.getStore(thirdStore, FR, nextPtr, SV->getValue(),
+                      SV->getOffset());
 
 }
 
@@ -2200,11 +2196,9 @@ static SDOperand LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
                                 Op.getOperand(0));
   
   // STD the extended value into the stack slot.
-  MemOperand MO(&PseudoSourceValue::FPRel,
-                MemOperand::MOStore, FrameIdx, 8, 8);
   SDOperand Store = DAG.getNode(PPCISD::STD_32, MVT::Other,
                                 DAG.getEntryNode(), Ext64, FIdx,
-                                DAG.getMemOperand(MO));
+                                DAG.getSrcValue(NULL));
   // Load the value as a double.
   SDOperand Ld = DAG.getLoad(MVT::f64, Store, FIdx, NULL, 0);
   
@@ -3303,11 +3297,11 @@ SDOperand PPCTargetLowering::PerformDAGCombine(SDNode *N,
       std::vector<MVT::ValueType> VTs;
       VTs.push_back(MVT::i32);
       VTs.push_back(MVT::Other);
-      SDOperand MO = DAG.getMemOperand(LD->getMemOperand());
+      SDOperand SV = DAG.getSrcValue(LD->getSrcValue(), LD->getSrcValueOffset());
       SDOperand Ops[] = {
         LD->getChain(),    // Chain
         LD->getBasePtr(),  // Ptr
-        MO,                // MemOperand
+        SV,                // SrcValue
         DAG.getValueType(N->getValueType(0)) // VT
       };
       SDOperand BSLoad = DAG.getNode(PPCISD::LBRX, VTs, Ops, 4);
