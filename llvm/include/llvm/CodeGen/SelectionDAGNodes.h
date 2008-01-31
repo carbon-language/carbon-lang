@@ -25,6 +25,7 @@
 #include "llvm/ADT/iterator"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/CodeGen/ValueTypes.h"
+#include "llvm/CodeGen/MemOperand.h"
 #include "llvm/Support/DataTypes.h"
 #include <cassert>
 
@@ -534,10 +535,14 @@ namespace ISD {
     // pointer, and a SRCVALUE.
     VAEND, VASTART,
 
-    // SRCVALUE - This corresponds to a Value*, and is used to associate memory
-    // locations with their value.  This allows one use alias analysis
-    // information in the backend.
+    // SRCVALUE - This is a node type that holds a Value* that is used to
+    // make reference to a value in the LLVM IR.
     SRCVALUE,
+
+    // MEMOPERAND - This is a node that contains a MemOperand which records
+    // information about a memory reference. This is used to make AliasAnalysis
+    // queries from the backend.
+    MEMOPERAND,
 
     // PCMARKER - This corresponds to the pcmarker intrinsic.
     PCMARKER,
@@ -1378,21 +1383,43 @@ public:
 
 class SrcValueSDNode : public SDNode {
   const Value *V;
-  int offset;
   virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
 protected:
   friend class SelectionDAG;
-  SrcValueSDNode(const Value* v, int o)
-    : SDNode(ISD::SRCVALUE, getSDVTList(MVT::Other)), V(v), offset(o) {
-  }
+  /// Create a SrcValue for a general value.
+  explicit SrcValueSDNode(const Value *v)
+    : SDNode(ISD::SRCVALUE, getSDVTList(MVT::Other)), V(v) {}
 
 public:
+  /// getValue - return the contained Value.
   const Value *getValue() const { return V; }
-  int getOffset() const { return offset; }
 
   static bool classof(const SrcValueSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::SRCVALUE;
+  }
+};
+
+
+/// MemOperandSDNode - An SDNode that holds a MemOperand. This is
+/// used to represent a reference to memory after ISD::LOAD
+/// and ISD::STORE have been lowered.
+///
+class MemOperandSDNode : public SDNode {
+  virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
+protected:
+  friend class SelectionDAG;
+  /// Create a MemOperand node
+  explicit MemOperandSDNode(MemOperand mo)
+    : SDNode(ISD::MEMOPERAND, getSDVTList(MVT::Other)), MO(mo) {}
+
+public:
+  /// MO - The contained MemOperand.
+  const MemOperand MO;
+
+  static bool classof(const MemOperandSDNode *) { return true; }
+  static bool classof(const SDNode *N) {
+    return N->getOpcode() == ISD::MEMOPERAND;
   }
 };
 
@@ -1545,6 +1572,10 @@ public:
 
   /// isUnindexed - Return true if this is NOT a pre/post inc/dec load/store.
   bool isUnindexed() const { return AddrMode == ISD::UNINDEXED; }
+
+  /// getMemOperand - Return a MemOperand object describing the memory
+  /// reference performed by this load or store.
+  MemOperand getMemOperand() const;
 
   static bool classof(const LSBaseSDNode *N) { return true; }
   static bool classof(const SDNode *N) {

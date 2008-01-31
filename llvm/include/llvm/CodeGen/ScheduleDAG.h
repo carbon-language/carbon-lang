@@ -279,6 +279,7 @@ namespace llvm {
       if (isa<ConstantPoolSDNode>(Node))   return true;
       if (isa<JumpTableSDNode>(Node))      return true;
       if (isa<ExternalSymbolSDNode>(Node)) return true;
+      if (isa<MemOperandSDNode>(Node))     return true;
       return false;
     }
 
@@ -312,10 +313,14 @@ namespace llvm {
     /// (which do not go into the machine instrs.)
     static unsigned CountResults(SDNode *Node);
 
-    /// CountOperands  The inputs to target nodes have any actual inputs first,
-    /// followed by an optional chain operand, then flag operands.  Compute the
-    /// number of actual operands that  will go into the machine instr.
+    /// CountOperands - The inputs to target nodes have any actual inputs first,
+    /// followed by optional memory operands chain operand, then flag operands.
+    /// Compute the number of actual operands that  will go into the machine
+    /// instr.
     static unsigned CountOperands(SDNode *Node);
+
+    /// CountMemOperands - Find the index of the last MemOperandSDNode
+    static unsigned CountMemOperands(SDNode *Node);
 
     /// EmitNode - Generate machine code for an node and needed dependencies.
     /// VRBaseMap contains, for each already emitted node, the first virtual
@@ -357,6 +362,8 @@ namespace llvm {
     void AddOperand(MachineInstr *MI, SDOperand Op, unsigned IIOpNum,
                     const TargetInstrDesc *II,
                     DenseMap<SDOperand, unsigned> &VRBaseMap);
+
+    void AddMemOperand(MachineInstr *MI, const MemOperand &MO);
   };
 
   /// createBURRListDAGScheduler - This creates a bottom up register usage

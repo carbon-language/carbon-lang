@@ -491,10 +491,9 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::VAARG: {
     SDOperand Chain = Op.getOperand(0);
     SDOperand VAListP = Op.getOperand(1);
-    SrcValueSDNode *VAListS = cast<SrcValueSDNode>(Op.getOperand(2));
+    const Value *VAListS = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
     
-    SDOperand Base = DAG.getLoad(MVT::i64, Chain, VAListP, VAListS->getValue(),
-                                 VAListS->getOffset());
+    SDOperand Base = DAG.getLoad(MVT::i64, Chain, VAListP, VAListS, 0);
     SDOperand Tmp = DAG.getNode(ISD::ADD, MVT::i64, VAListP,
                                 DAG.getConstant(8, MVT::i64));
     SDOperand Offset = DAG.getExtLoad(ISD::SEXTLOAD, MVT::i64, Base.getValue(1),
@@ -527,13 +526,11 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     SDOperand Chain = Op.getOperand(0);
     SDOperand DestP = Op.getOperand(1);
     SDOperand SrcP = Op.getOperand(2);
-    SrcValueSDNode *DestS = cast<SrcValueSDNode>(Op.getOperand(3));
-    SrcValueSDNode *SrcS = cast<SrcValueSDNode>(Op.getOperand(4));
+    const Value *DestS = cast<SrcValueSDNode>(Op.getOperand(3))->getValue();
+    const Value *SrcS = cast<SrcValueSDNode>(Op.getOperand(4))->getValue();
     
-    SDOperand Val = DAG.getLoad(getPointerTy(), Chain, SrcP,
-                                SrcS->getValue(), SrcS->getOffset());
-    SDOperand Result = DAG.getStore(Val.getValue(1), Val, DestP, DestS->getValue(),
-                                    DestS->getOffset());
+    SDOperand Val = DAG.getLoad(getPointerTy(), Chain, SrcP, SrcS, 0);
+    SDOperand Result = DAG.getStore(Val.getValue(1), Val, DestP, DestS, 0);
     SDOperand NP = DAG.getNode(ISD::ADD, MVT::i64, SrcP, 
                                DAG.getConstant(8, MVT::i64));
     Val = DAG.getExtLoad(ISD::SEXTLOAD, MVT::i64, Result, NP, NULL,0, MVT::i32);
@@ -544,12 +541,11 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::VASTART: {
     SDOperand Chain = Op.getOperand(0);
     SDOperand VAListP = Op.getOperand(1);
-    SrcValueSDNode *VAListS = cast<SrcValueSDNode>(Op.getOperand(2));
+    const Value *VAListS = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
     
     // vastart stores the address of the VarArgsBase and VarArgsOffset
     SDOperand FR  = DAG.getFrameIndex(VarArgsBase, MVT::i64);
-    SDOperand S1  = DAG.getStore(Chain, FR, VAListP, VAListS->getValue(),
-                                 VAListS->getOffset());
+    SDOperand S1  = DAG.getStore(Chain, FR, VAListP, VAListS, 0);
     SDOperand SA2 = DAG.getNode(ISD::ADD, MVT::i64, VAListP,
                                 DAG.getConstant(8, MVT::i64));
     return DAG.getTruncStore(S1, DAG.getConstant(VarArgsOffset, MVT::i64),
