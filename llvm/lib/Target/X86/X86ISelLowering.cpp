@@ -4977,7 +4977,7 @@ SDOperand X86TargetLowering::LowerTRAMPOLINE(SDOperand Op,
       { Trmp, DAG.getNode(ISD::TokenFactor, MVT::Other, OutChains, 6) };
     return DAG.getNode(ISD::MERGE_VALUES, Op.Val->getVTList(), Ops, 2);
   } else {
-    Function *Func = (Function *)
+    const Function *Func =
       cast<Function>(cast<SrcValueSDNode>(Op.getOperand(5))->getValue());
     unsigned CC = Func->getCallingConv();
     unsigned NestReg;
