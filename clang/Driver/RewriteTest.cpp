@@ -1203,7 +1203,20 @@ Stmt *RewriteTest::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
     
     const char *lParenLoc = strchr(startBuf, '(');
 
-    if (DeclStmt *declStmt = dyn_cast<DeclStmt>(catchStmt)) {
+    if (!catchStmt) { // handle "..."
+      // Now rewrite the body...
+      lastCatchBody = catchList->getCatchBody();
+      SourceLocation rParenLoc = catchList->getRParenLoc();
+      SourceLocation bodyLoc = lastCatchBody->getLocStart();
+      const char *bodyBuf = SM->getCharacterData(bodyLoc);
+      const char *rParenBuf = SM->getCharacterData(rParenLoc);
+      assert((*rParenBuf == ')') && "bogus @catch paren location");
+      assert((*bodyBuf == '{') && "bogus @catch body location");
+      
+      buf += "1) { id _tmp = _caught;";
+      Rewrite.ReplaceText(startLoc, bodyBuf-startBuf+1, 
+                          buf.c_str(), buf.size());      
+    } else if (DeclStmt *declStmt = dyn_cast<DeclStmt>(catchStmt)) {
       QualType t = dyn_cast<ValueDecl>(declStmt->getDecl())->getType();
       if (t == Context->getObjCIdType()) {
         buf += "1) { ";
@@ -1236,6 +1249,10 @@ Stmt *RewriteTest::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
     } else if (!isa<NullStmt>(catchStmt)) {
       assert(false && "@catch rewrite bug");
     }
+    // make sure all the catch bodies get rewritten!
+    // FIXME: this call should be removed when the iterator for ObjCAtTryStmt
+    // is fixed. Currently, it only returns the first catch statement!
+    RewriteFunctionBodyOrGlobalInitializer(lastCatchBody);
     catchList = catchList->getNextCatchStmt();
   }
   // Complete the catch list...

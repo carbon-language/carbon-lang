@@ -1,7 +1,12 @@
 // RUN: clang -rewrite-test %s | clang
 
-@interface foo @end
+@interface Foo @end
 @interface GARF @end
+
+void foo() {
+  @try  { TRY(); } 
+  @catch (...) { SPLATCH(); @throw; }
+}
 
 int main()
 {
@@ -10,7 +15,7 @@ int main()
    MYTRY();
 }
 
-@catch (foo* localException) {
+@catch (Foo* localException) {
    MYCATCH();
    @throw;
 }
