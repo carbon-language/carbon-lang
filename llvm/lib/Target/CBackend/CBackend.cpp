@@ -147,6 +147,9 @@ namespace {
     void writeOperandWithCast(Value* Operand, const ICmpInst &I);
     bool writeInstructionCast(const Instruction &I);
 
+    void writeMemoryAccess(Value *Operand, const Type *OperandType,
+                           bool IsVolatile, unsigned Alignment);
+
   private :
     std::string InterpretASMConstraint(InlineAsm::ConstraintInfo& c);
 
@@ -2935,29 +2938,47 @@ void CWriter::printIndexingExpression(Value *Ptr, gep_type_iterator I,
     }
 }
 
-void CWriter::visitLoadInst(LoadInst &I) {
-  Out << '*';
-  if (I.isVolatile()) {
+void CWriter::writeMemoryAccess(Value *Operand, const Type *OperandType,
+                                bool IsVolatile, unsigned Alignment) {
+
+  bool IsUnaligned = Alignment &&
+    Alignment < TD->getABITypeAlignment(OperandType);
+
+  if (!IsUnaligned)
+    Out << '*';
+  if (IsVolatile || IsUnaligned) {
     Out << "((";
-    printType(Out, I.getType(), false, "volatile*");
+    if (IsUnaligned)
+      Out << "struct __attribute__ ((packed, aligned(" << Alignment << "))) {";
+    printType(Out, OperandType, false, IsUnaligned ? "data" : "volatile*");
+    if (IsUnaligned) {
+      Out << "; } ";
+      if (IsVolatile) Out << "volatile ";
+      Out << "*";
+    }
     Out << ")";
   }
 
-  writeOperand(I.getOperand(0));
+  writeOperand(Operand);
 
-  if (I.isVolatile())
+  if (IsVolatile || IsUnaligned) {
     Out << ')';
+    if (IsUnaligned)
+      Out << "->data";
+  }
+}
+
+void CWriter::visitLoadInst(LoadInst &I) {
+
+  writeMemoryAccess(I.getOperand(0), I.getType(), I.isVolatile(),
+                    I.getAlignment());
+
 }
 
 void CWriter::visitStoreInst(StoreInst &I) {
-  Out << '*';
-  if (I.isVolatile()) {
-    Out << "((";
-    printType(Out, I.getOperand(0)->getType(), false, " volatile*");
-    Out << ")";
-  }
-  writeOperand(I.getPointerOperand());
-  if (I.isVolatile()) Out << ')';
+
+  writeMemoryAccess(I.getPointerOperand(), I.getOperand(0)->getType(),
+                    I.isVolatile(), I.getAlignment());
   Out << " = ";
   Value *Operand = I.getOperand(0);
   Constant *BitMask = 0;
