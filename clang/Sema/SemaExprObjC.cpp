@@ -201,6 +201,9 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
   QualType returnType;
   ObjCMethodDecl *Method = 0;
   
+  // FIXME:
+  // FIXME: This code is not stripping off type qualifiers or typedefs!
+  // FIXME:
   if (receiverType == Context.getObjCIdType() ||
       receiverType == Context.getObjCClassType()) {
     Method = InstanceMethodPool[Sel].Method;
@@ -221,11 +224,9 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
     // FIXME (snaroff): checking in this code from Patrick. Needs to be
     // revisited. how do we get the ClassDecl from the receiver expression?
     if (!receiverIsQualId)
-      while (receiverType->isPointerType()) {
-        PointerType *pointerType =
-          static_cast<PointerType*>(receiverType.getTypePtr());
-        receiverType = pointerType->getPointeeType();
-      }
+      while (const PointerType *PTy = receiverType->getAsPointerType())
+        receiverType = PTy->getPointeeType();
+    
     ObjCInterfaceDecl* ClassDecl = 0;
     if (ObjCQualifiedInterfaceType *QIT = 
         dyn_cast<ObjCQualifiedInterfaceType>(receiverType)) {
@@ -258,12 +259,12 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
              SourceRange(lbrac, rbrac));
     }
     else {
-      if (!isa<ObjCInterfaceType>(receiverType.getTypePtr())) {
+      ObjCInterfaceType *OCIReceiver =dyn_cast<ObjCInterfaceType>(receiverType);
+      if (OCIReceiver == 0) {
         Diag(lbrac, diag::error_bad_receiver_type, receiverType.getAsString());
         return true;
       }
-      ClassDecl = static_cast<ObjCInterfaceType*>(
-                    receiverType.getTypePtr())->getDecl();
+      ClassDecl = OCIReceiver->getDecl();
       // FIXME: consider using InstanceMethodPool, since it will be faster
       // than the following method (which can do *many* linear searches). The
       // idea is to add class info to InstanceMethodPool...
