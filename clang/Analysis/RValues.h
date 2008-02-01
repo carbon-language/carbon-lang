@@ -187,6 +187,8 @@ protected:
 public:
   void print(std::ostream& Out) const;
   
+  RValue Cast(ValueManager& ValMgr, Expr* CastExpr) const;
+
   // Arithmetic operators.
   NonLValue Add(ValueManager& ValMgr, const NonLValue& RHS) const;
   NonLValue Sub(ValueManager& ValMgr, const NonLValue& RHS) const;
@@ -198,6 +200,7 @@ public:
   // Equality operators.
   NonLValue EQ(ValueManager& ValMgr, const NonLValue& RHS) const;
   NonLValue NE(ValueManager& ValMgr, const NonLValue& RHS) const;
+  
   
   // Utility methods to create NonLValues.
   static NonLValue GetValue(ValueManager& ValMgr, uint64_t X, QualType T,
@@ -223,6 +226,8 @@ protected:
 public:
   void print(std::ostream& Out) const;
   
+  RValue Cast(ValueManager& ValMgr, Expr* CastExpr) const;
+
   // Equality operators.
   NonLValue EQ(ValueManager& ValMgr, const LValue& RHS) const;
   NonLValue NE(ValueManager& ValMgr, const LValue& RHS) const;
@@ -237,8 +242,7 @@ public:
 //  Subclasses of NonLValue.
 //==------------------------------------------------------------------------==// 
 
-enum NonLValueKind { SymbolicNonLValueKind, ConcreteIntKind,
-NumNonLValueKind };
+enum NonLValueKind { SymbolicNonLValueKind, ConcreteIntKind, NumNonLValueKind };
 
 class SymbolicNonLValue : public NonLValue {
 public:
@@ -326,9 +330,9 @@ public:
 //  Subclasses of LValue.
 //==------------------------------------------------------------------------==// 
 
-enum LValueKind { SymbolicLValueKind, LValueDeclKind,
-ConcreteIntLValueKind, NumLValueKind };
-
+enum LValueKind { SymbolicLValueKind, LValueDeclKind, ConcreteIntLValueKind,
+                  NumLValueKind };
+  
 class SymbolicLValue : public LValue {
 public:
   SymbolicLValue(unsigned SymID)

@@ -778,7 +778,22 @@ void GRConstants::Visit(Stmt* S, GRConstants::NodeTy* Pred,
 
 GRConstants::StateTy GRConstants::Assume(StateTy St, LValue Cond, bool Assumption, 
                                          bool& isFeasible) {    
-  return St;
+  
+  switch (Cond.getSubKind()) {
+    default:
+      assert (false && "'Assume' not implemented for this NonLValue.");
+      return St;
+      
+    case LValueDeclKind:
+      isFeasible = Assumption;
+      return St;
+      
+    case ConcreteIntLValueKind: {
+      bool b = cast<ConcreteIntLValue>(Cond).getValue() != 0;
+      isFeasible = b ? Assumption : !Assumption;      
+      return St;
+    }
+  }
 }
 
 GRConstants::StateTy GRConstants::Assume(StateTy St, NonLValue Cond, bool Assumption, 

@@ -79,19 +79,55 @@ APSInt& ValueManager::getValue(uint64_t X, QualType T, SourceLocation Loc) {
   return getValue(V);
 }
 
+//===----------------------------------------------------------------------===//
+// Transfer function for Casts.
+//===----------------------------------------------------------------------===//
+
+RValue RValue::Cast(ValueManager& ValMgr, Expr* CastExpr) const {
+  switch (getBaseKind()) {
+    default: assert(false && "Invalid RValue."); break;
+    case LValueKind: return cast<LValue>(this)->Cast(ValMgr, CastExpr);
+    case NonLValueKind: return cast<NonLValue>(this)->Cast(ValMgr, CastExpr);      
+    case UninitializedKind: case InvalidKind: break;
+  }
+  
+  return *this;
+}
+ 
+RValue LValue::Cast(ValueManager& ValMgr, Expr* CastExpr) const {
+  if (CastExpr->getType()->isPointerType())
+    return *this;
+  
+  assert (CastExpr->getType()->isIntegerType());
+
+  if (!isa<ConcreteIntLValue>(*this))
+    return InvalidValue();
+  
+  APSInt V = cast<ConcreteIntLValue>(this)->getValue();
+  QualType T = CastExpr->getType();
+  V.setIsUnsigned(T->isUnsignedIntegerType());
+  V.extOrTrunc(ValMgr.getContext().getTypeSize(T, CastExpr->getLocStart()));
+  return ConcreteInt(ValMgr.getValue(V));
+}
+
+RValue NonLValue::Cast(ValueManager& ValMgr, Expr* CastExpr) const {
+  if (!isa<ConcreteInt>(this))
+    return InvalidValue();
+    
+  APSInt V = cast<ConcreteInt>(this)->getValue();
+  QualType T = CastExpr->getType();
+  V.setIsUnsigned(T->isUnsignedIntegerType());
+  V.extOrTrunc(ValMgr.getContext().getTypeSize(T, CastExpr->getLocStart()));
+  
+  if (CastExpr->getType()->isPointerType())
+    return ConcreteIntLValue(ValMgr.getValue(V));
+  else
+    return ConcreteInt(ValMgr.getValue(V));
+}
 
 //===----------------------------------------------------------------------===//
 // Transfer function dispatch for Non-LValues.
 //===----------------------------------------------------------------------===//
-
-RValue RValue::Cast(ValueManager& ValMgr, Expr* CastExpr) const {
-  switch (getSubKind()) {
-    case ConcreteIntKind:
-      return cast<ConcreteInt>(this)->Cast(ValMgr, CastExpr);
-    default:
-      return InvalidValue();
-  }
-}
 
 NonLValue NonLValue::UnaryMinus(ValueManager& ValMgr, UnaryOperator* U) const {
   switch (getSubKind()) {
@@ -162,6 +198,13 @@ NonLValue LValue::EQ(ValueManager& ValMgr, const LValue& RHS) const {
     default:
       assert(false && "EQ not implemented for this LValue.");
       return cast<NonLValue>(InvalidValue());
+    
+    case ConcreteIntLValueKind: {
+      bool b = cast<ConcreteIntLValue>(this)->getValue() ==
+               cast<ConcreteIntLValue>(RHS).getValue();
+            
+      return NonLValue::GetIntTruthValue(ValMgr, b);
+    }
       
     case LValueDeclKind: {
       bool b = cast<LValueDecl>(*this) == cast<LValueDecl>(RHS);
@@ -178,6 +221,13 @@ NonLValue LValue::NE(ValueManager& ValMgr, const LValue& RHS) const {
     default:
       assert(false && "EQ not implemented for this LValue.");
       return cast<NonLValue>(InvalidValue());
+      
+    case ConcreteIntLValueKind: {
+      bool b = cast<ConcreteIntLValue>(this)->getValue() !=
+               cast<ConcreteIntLValue>(RHS).getValue();
+      
+      return NonLValue::GetIntTruthValue(ValMgr, b);
+    }  
       
     case LValueDeclKind: {
       bool b = cast<LValueDecl>(*this) != cast<LValueDecl>(RHS);
@@ -255,7 +305,12 @@ void NonLValue::print(std::ostream& Out) const {
 }
 
 void LValue::print(std::ostream& Out) const {
-  switch (getSubKind()) {  
+  switch (getSubKind()) {        
+    case ConcreteIntLValueKind:
+      Out << cast<ConcreteIntLValue>(this)->getValue().toString() 
+          << " (LValue)";
+      break;
+      
     case SymbolicLValueKind:
       Out << '$' << cast<SymbolicLValue>(this)->getSymbolID();
       break;
