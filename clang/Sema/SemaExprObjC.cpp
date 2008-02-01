@@ -197,18 +197,16 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
   
   Expr **ArgExprs = reinterpret_cast<Expr **>(Args);
   Expr *RExpr = static_cast<Expr *>(receiver);
-  QualType receiverType = RExpr->getType();
+  QualType receiverType = RExpr->getType().getCanonicalType();
   QualType returnType;
   ObjCMethodDecl *Method = 0;
   
-  // FIXME:
-  // FIXME: This code is not stripping off type qualifiers or typedefs!
-  // FIXME:
-  if (receiverType == Context.getObjCIdType() ||
-      receiverType == Context.getObjCClassType()) {
+  // FIXME: This code is not stripping off type qualifiers! Should it?
+  if (receiverType == Context.getObjCIdType().getCanonicalType() ||
+      receiverType == Context.getObjCClassType().getCanonicalType()) {
     Method = InstanceMethodPool[Sel].Method;
-	if (!Method)
-	  Method = FactoryMethodPool[Sel].Method;
+    if (!Method)
+      Method = FactoryMethodPool[Sel].Method;
     if (!Method) {
       Diag(lbrac, diag::warn_method_not_found, std::string("-"), Sel.getName(),
            SourceRange(lbrac, rbrac));
@@ -261,7 +259,8 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
     else {
       ObjCInterfaceType *OCIReceiver =dyn_cast<ObjCInterfaceType>(receiverType);
       if (OCIReceiver == 0) {
-        Diag(lbrac, diag::error_bad_receiver_type, receiverType.getAsString());
+        Diag(lbrac, diag::error_bad_receiver_type,
+             RExpr->getType().getAsString());
         return true;
       }
       ClassDecl = OCIReceiver->getDecl();

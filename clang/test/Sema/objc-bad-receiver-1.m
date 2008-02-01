@@ -5,5 +5,5 @@
 @end
 
 void __raiseExc1() {
- [objc_lookUpClass("NSString") retain]; // expected-error {{ "bad receiver type (its type is 'int')" }}
+ [objc_lookUpClass("NSString") retain]; // expected-error {{ "bad receiver type 'int'" }}
 }
