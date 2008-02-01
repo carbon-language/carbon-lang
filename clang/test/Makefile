@@ -3,6 +3,6 @@ include $(LEVEL)/Makefile.common
 
 all::
 	PATH=$$PATH:$(ToolDir):$(LLVM_SRC_ROOT)/test/Scripts find\
-	     CodeGen Lexer Preprocessor Parser Sema Analysis Serialization\
+	     Rewriter CodeGen Lexer Preprocessor Parser Sema Analysis Serialization\
 	     \( -name '*.c' -or -name '*.cpp' -or -name '*.m' \)\
 	      -print -exec ./TestRunner.sh {} \;
