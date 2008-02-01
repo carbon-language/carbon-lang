@@ -820,7 +820,7 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
 
       if (!Context.typesAreCompatible(lhptee.getUnqualifiedType(), 
                                       rhptee.getUnqualifiedType())) {
-        Diag(questionLoc, diag::ext_typecheck_cond_incompatible_pointers,
+        Diag(questionLoc, diag::warn_typecheck_cond_incompatible_pointers,
              lexT.getAsString(), rexT.getAsString(),
              lex->getSourceRange(), rex->getSourceRange());
         // In this situation, we assume void* type. No especially good
