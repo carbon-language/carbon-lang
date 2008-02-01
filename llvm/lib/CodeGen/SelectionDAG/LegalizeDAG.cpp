@@ -1055,7 +1055,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         } else {
           unsigned Line = cast<ConstantSDNode>(LineOp)->getValue();
           unsigned Col = cast<ConstantSDNode>(ColOp)->getValue();
-          unsigned ID = MMI->RecordLabel(Line, Col, SrcFile);
+          unsigned ID = MMI->RecordSourceLine(Line, Col, SrcFile);
           Ops.push_back(DAG.getConstant(ID, MVT::i32));
           Ops.push_back(DAG.getConstant(0, MVT::i32)); // a debug label
           Result = DAG.getNode(ISD::LABEL, MVT::Other, &Ops[0], Ops.size());

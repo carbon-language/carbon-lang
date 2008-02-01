@@ -1611,11 +1611,11 @@ MachineModuleInfo::getGlobalVariablesUsing(Module &M,
   return ::getGlobalVariablesUsing(M, RootName);
 }
 
-/// RecordLabel - Records location information and associates it with a
+/// RecordSourceLine - Records location information and associates it with a
 /// debug label.  Returns a unique label ID used to generate a label and 
 /// provide correspondence to the source line list.
-unsigned MachineModuleInfo::RecordLabel(unsigned Line, unsigned Column,
-                                       unsigned Source) {
+unsigned MachineModuleInfo::RecordSourceLine(unsigned Line, unsigned Column,
+                                             unsigned Source) {
   unsigned ID = NextLabelID();
   Lines.push_back(SourceLineInfo(Line, Column, Source, ID));
   return ID;
