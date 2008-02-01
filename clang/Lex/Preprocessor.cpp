@@ -500,19 +500,20 @@ const FileEntry *Preprocessor::LookupFile(const char *FilenameStart,
   // to one of the headers on the #include stack.  Walk the list of the current
   // headers on the #include stack and pass them to HeaderInfo.
   if (CurLexer && !CurLexer->Is_PragmaLexer) {
-    CurFileEnt = SourceMgr.getFileEntryForLoc(CurLexer->getFileLoc());
-    if ((FE = HeaderInfo.LookupSubframeworkHeader(FilenameStart, FilenameEnd,
-                                                  CurFileEnt)))
-      return FE;
+    if ((CurFileEnt = SourceMgr.getFileEntryForLoc(CurLexer->getFileLoc())))
+      if ((FE = HeaderInfo.LookupSubframeworkHeader(FilenameStart, FilenameEnd,
+                                                    CurFileEnt)))
+        return FE;
   }
   
   for (unsigned i = 0, e = IncludeMacroStack.size(); i != e; ++i) {
     IncludeStackInfo &ISEntry = IncludeMacroStack[e-i-1];
     if (ISEntry.TheLexer && !ISEntry.TheLexer->Is_PragmaLexer) {
-      CurFileEnt = SourceMgr.getFileEntryForLoc(ISEntry.TheLexer->getFileLoc());
-      if ((FE = HeaderInfo.LookupSubframeworkHeader(FilenameStart, FilenameEnd,
-                                                    CurFileEnt)))
-        return FE;
+      if ((CurFileEnt = 
+           SourceMgr.getFileEntryForLoc(ISEntry.TheLexer->getFileLoc())))
+        if ((FE = HeaderInfo.LookupSubframeworkHeader(FilenameStart,
+                                                      FilenameEnd, CurFileEnt)))
+          return FE;
     }
   }
   

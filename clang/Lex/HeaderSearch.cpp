@@ -293,6 +293,8 @@ const FileEntry *HeaderSearch::
 LookupSubframeworkHeader(const char *FilenameStart,
                          const char *FilenameEnd,
                          const FileEntry *ContextFileEnt) {
+  assert(ContextFileEnt && "No context file?");
+  
   // Framework names must have a '/' in the filename.  Find it.
   const char *SlashPos = std::find(FilenameStart, FilenameEnd, '/');
   if (SlashPos == FilenameEnd) return 0;
