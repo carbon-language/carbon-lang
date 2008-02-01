@@ -93,6 +93,9 @@ public:
   HeaderSearch(FileManager &FM);
   ~HeaderSearch();
 
+  // HeaderSearch doesn't support copy construction.
+  explicit HeaderSearch(const HeaderSearch&);
+
   FileManager &getFileMgr() const { return FileMgr; }
 
   /// SetSearchPaths - Interface for setting the file search paths.

@@ -227,6 +227,9 @@ public:
   SourceManager() : LastLineNoFileIDQuery(~0U), MainFileID(0) {}
   ~SourceManager() {}
   
+  // SourceManager doesn't support copy construction.
+  explicit SourceManager(const SourceManager&);
+  
   void clearIDTables() {
     FileIDs.clear();
     MacroIDs.clear();
