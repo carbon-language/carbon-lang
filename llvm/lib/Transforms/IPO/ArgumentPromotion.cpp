@@ -404,6 +404,10 @@ Function *ArgPromotion::DoPromotion(Function *F,
   ParamAttrsVector ParamAttrsVec;
   const ParamAttrsList *PAL = F->getParamAttrs();
 
+  // Add any return attributes.
+  if (unsigned attrs = PAL ? PAL->getParamAttrs(0) : 0)
+    ParamAttrsVec.push_back(ParamAttrsWithIndex::get(0, attrs));
+
   unsigned ArgIndex = 1;
   for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E;
        ++I, ++ArgIndex) {
@@ -491,6 +495,10 @@ Function *ArgPromotion::DoPromotion(Function *F,
     Instruction *Call = CS.getInstruction();
     PAL = CS.getParamAttrs();
     
+    // Add any return attributes.
+    if (unsigned attrs = PAL ? PAL->getParamAttrs(0) : 0)
+      ParamAttrsVec.push_back(ParamAttrsWithIndex::get(0, attrs));
+
     // Loop over the operands, inserting GEP and loads in the caller as
     // appropriate.
     CallSite::arg_iterator AI = CS.arg_begin();
