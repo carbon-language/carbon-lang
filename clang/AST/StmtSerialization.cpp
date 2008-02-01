@@ -859,8 +859,7 @@ WhileStmt* WhileStmt::CreateImpl(Deserializer& D) {
 void ObjCAtCatchStmt::EmitImpl(Serializer& S) const {
   S.Emit(AtCatchLoc);
   S.Emit(RParenLoc);
-  S.EmitPtr(NextAtCatchStmt);
-  S.BatchEmitOwnedPtrs((unsigned) END_EXPR,&SubExprs[0]);
+  S.BatchEmitOwnedPtrs((unsigned) END_EXPR, &SubExprs[0]);
 }
 
 ObjCAtCatchStmt* ObjCAtCatchStmt::CreateImpl(Deserializer& D) {
@@ -868,8 +867,6 @@ ObjCAtCatchStmt* ObjCAtCatchStmt::CreateImpl(Deserializer& D) {
   SourceLocation RParenLoc = SourceLocation::ReadVal(D);
   
   ObjCAtCatchStmt* stmt = new ObjCAtCatchStmt(AtCatchLoc,RParenLoc);
-  
-  D.ReadPtr(stmt->NextAtCatchStmt); // Allows backpatching.
   D.BatchReadOwnedPtrs((unsigned) END_EXPR, &stmt->SubExprs[0]);
 
   return stmt;

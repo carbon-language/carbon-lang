@@ -152,13 +152,14 @@ ObjCAtCatchStmt::ObjCAtCatchStmt(SourceLocation atCatchLoc,
   SubExprs[SELECTOR] = catchVarStmtDecl;
   SubExprs[BODY] = atCatchStmt;
   if (!atCatchList)
-    NextAtCatchStmt = NULL;
+    SubExprs[NEXT_CATCH] = NULL;
   else {
-    ObjCAtCatchStmt *AtCatchList = 
-    static_cast<ObjCAtCatchStmt*>(atCatchList);
-    while (AtCatchList->NextAtCatchStmt)
-      AtCatchList = AtCatchList->NextAtCatchStmt;
-    AtCatchList->NextAtCatchStmt = this;
+    ObjCAtCatchStmt *AtCatchList = static_cast<ObjCAtCatchStmt*>(atCatchList);
+
+    while (ObjCAtCatchStmt* NextCatch = AtCatchList->getNextCatchStmt())      
+      AtCatchList = NextCatch;
+    
+    AtCatchList->SubExprs[NEXT_CATCH] = this;
   }
   AtCatchLoc = atCatchLoc;
   RParenLoc = rparenloc;

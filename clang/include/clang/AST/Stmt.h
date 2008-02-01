@@ -817,9 +817,7 @@ public:
 /// ObjCAtCatchStmt - This represents objective-c's @catch statement.
 class ObjCAtCatchStmt : public Stmt {
 private:
-  // Points to next @catch statement, or null
-  ObjCAtCatchStmt *NextAtCatchStmt;
-  enum { SELECTOR, BODY, END_EXPR };
+  enum { SELECTOR, BODY, NEXT_CATCH, END_EXPR };
   Stmt *SubExprs[END_EXPR];
   SourceLocation AtCatchLoc, RParenLoc;
 
@@ -833,8 +831,14 @@ public:
   
   const Stmt *getCatchBody() const { return SubExprs[BODY]; }
   Stmt *getCatchBody() { return SubExprs[BODY]; }
-  const ObjCAtCatchStmt *getNextCatchStmt() const { return NextAtCatchStmt; }
-  ObjCAtCatchStmt *getNextCatchStmt() { return NextAtCatchStmt; }
+
+  const ObjCAtCatchStmt *getNextCatchStmt() const {
+    return static_cast<const ObjCAtCatchStmt*>(SubExprs[NEXT_CATCH]);
+  }
+  ObjCAtCatchStmt *getNextCatchStmt() { 
+    return static_cast<ObjCAtCatchStmt*>(SubExprs[NEXT_CATCH]);
+  }
+
   const Stmt *getCatchParamStmt() const { return SubExprs[SELECTOR]; }
   Stmt *getCatchParamStmt() { return SubExprs[SELECTOR]; }
   
