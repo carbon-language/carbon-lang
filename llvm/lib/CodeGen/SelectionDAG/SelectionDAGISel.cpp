@@ -2641,13 +2641,21 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   }
   case Intrinsic::dbg_func_start: {
     MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
+    if (!MMI) return 0;
     DbgFuncStartInst &FSI = cast<DbgFuncStartInst>(I);
-    if (MMI && FSI.getSubprogram() &&
-        MMI->Verify(FSI.getSubprogram())) {
-      unsigned LabelID = MMI->RecordRegionStart(FSI.getSubprogram());
-      DAG.setRoot(DAG.getNode(ISD::LABEL, MVT::Other, getRoot(),
-                              DAG.getConstant(LabelID, MVT::i32),
-                              DAG.getConstant(0, MVT::i32)));
+    Value *SP = FSI.getSubprogram();
+    if (SP && MMI->Verify(SP)) {
+      // llvm.dbg.func.start implicitly defines a dbg_stoppoint which is
+      // what (most?) gdb expects.
+      DebugInfoDesc *DD = MMI->getDescFor(SP);
+      assert(DD && "Not a debug information descriptor");
+      SubprogramDesc *Subprogram = cast<SubprogramDesc>(DD);
+      const CompileUnitDesc *CompileUnit = Subprogram->getFile();
+      unsigned SrcFile = MMI->RecordSource(CompileUnit->getDirectory(),
+                                           CompileUnit->getFileName());
+      // Record the source line but does create a label. It will be emitted
+      // at asm emission time.
+      MMI->RecordSourceLine(Subprogram->getLine(), 0, SrcFile);
     }
 
     return 0;

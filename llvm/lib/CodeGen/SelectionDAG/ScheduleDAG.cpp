@@ -711,28 +711,7 @@ void ScheduleDAG::EmitNode(SDNode *Node, unsigned InstanceNo,
       }
     }
 
-    // Now that we have emitted all operands, emit this instruction itself.
-    if (ISD::isDebugLabel(Node) &&
-        !BB->empty() && &MF->front() == BB) {
-      // If we are inserting a debug label and this happens to be the first
-      // debug label in the entry block, it is the "function start" label.
-      // Make sure there are no other instructions before it.
-      unsigned NumLabels = 0;
-      MachineBasicBlock::iterator MBBI = BB->begin();
-      while (MBBI != BB->end()) {
-        // FIXME: This is a nasty short term workaround. For now, we are
-        // assuming there are two debug labels at the beginning of the
-        // entry block: one for dbg_func_start, one for the first
-        // dbg_stoppoint before actual code.
-        if (!MBBI->isDebugLabel() || ++NumLabels > 1)
-          break;
-        ++MBBI;
-      }
-      if (NumLabels <= 1)
-        BB->insert(BB->begin(), MI);
-      else
-        BB->push_back(MI);
-    } else if (II.usesCustomDAGSchedInsertionHook())
+    if (II.usesCustomDAGSchedInsertionHook())
       // Insert this instruction into the basic block using a target
       // specific inserter which may returns a new basic block.
       BB = DAG.getTargetLoweringInfo().EmitInstrWithCustomInserter(MI, BB);

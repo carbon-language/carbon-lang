@@ -525,16 +525,6 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
           X86FI->getCalleeSavedFrameSize() +(-TailCallReturnAddrDelta));
   uint64_t NumBytes = StackSize - X86FI->getCalleeSavedFrameSize();
 
-  // Skip over the debug labels which mark the beginning of the function.
-  if (MMI && MMI->needsFrameInfo()) {
-    unsigned NumLabels = 0;
-    while (NumLabels <= 1 &&
-           MBBI != MBB.end() && MBBI->isDebugLabel()) {
-      ++NumLabels;
-      ++MBBI;
-    }
-  }
-
   // Insert stack pointer adjustment for later moving of return addr.  Only
   // applies to tail call optimized functions where the callee argument stack
   // size is bigger than the callers.

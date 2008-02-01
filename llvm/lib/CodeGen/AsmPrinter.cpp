@@ -1285,6 +1285,10 @@ void AsmPrinter::printLabel(const MachineInstr *MI) const {
     << "label" << MI->getOperand(0).getImm() << ":\n";
 }
 
+void AsmPrinter::printLabel(unsigned Id) const {
+  O << "\n" << TAI->getPrivateGlobalPrefix() << "label" << Id << ":\n";
+}
+
 /// PrintAsmOperand - Print the specified operand of MI, an INLINEASM
 /// instruction, using the specified assembler variant.  Targets should
 /// overried this to format as appropriate.
