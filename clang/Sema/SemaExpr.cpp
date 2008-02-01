@@ -1616,11 +1616,11 @@ QualType Sema::CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc) {
   return resType;
 }
 
-/// getPrimaryDeclaration - Helper function for CheckAddressOfOperand().
+/// getPrimaryDecl - Helper function for CheckAddressOfOperand().
 /// This routine allows us to typecheck complex/recursive expressions
 /// where the declaration is needed for type checking. Here are some
 /// examples: &s.xx, &s.zz[1].yy, &(1+2), &(XX), &"123"[2].
-static Decl *getPrimaryDeclaration(Expr *e) {
+static ValueDecl *getPrimaryDecl(Expr *e) {
   switch (e->getStmtClass()) {
   case Stmt::DeclRefExprClass:
     return cast<DeclRefExpr>(e)->getDecl();
@@ -1629,17 +1629,23 @@ static Decl *getPrimaryDeclaration(Expr *e) {
     // &X->f is always ok, even if X is declared register.
     if (cast<MemberExpr>(e)->isArrow())
       return 0;
-    return getPrimaryDeclaration(cast<MemberExpr>(e)->getBase());
-  case Stmt::ArraySubscriptExprClass:
-    // &X[4] and &4[X] is invalid if X is invalid.
-    return getPrimaryDeclaration(cast<ArraySubscriptExpr>(e)->getBase());
+    return getPrimaryDecl(cast<MemberExpr>(e)->getBase());
+  case Stmt::ArraySubscriptExprClass: {
+    // &X[4] and &4[X] is invalid if X is invalid and X is not a pointer.
+  
+    ValueDecl *VD = getPrimaryDecl(cast<ArraySubscriptExpr>(e)->getBase());
+    if (VD->getType()->isPointerType())
+      return 0;
+    else
+      return VD;
+  }
   case Stmt::UnaryOperatorClass:
-    return getPrimaryDeclaration(cast<UnaryOperator>(e)->getSubExpr());
+    return getPrimaryDecl(cast<UnaryOperator>(e)->getSubExpr());
   case Stmt::ParenExprClass:
-    return getPrimaryDeclaration(cast<ParenExpr>(e)->getSubExpr());
+    return getPrimaryDecl(cast<ParenExpr>(e)->getSubExpr());
   case Stmt::ImplicitCastExprClass:
     // &X[4] when X is an array, has an implicit cast from array to pointer.
-    return getPrimaryDeclaration(cast<ImplicitCastExpr>(e)->getSubExpr());
+    return getPrimaryDecl(cast<ImplicitCastExpr>(e)->getSubExpr());
   default:
     return 0;
   }
@@ -1662,7 +1668,7 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
     // Technically, there should be a check for array subscript
     // expressions here, but the result of one is always an lvalue anyway.
   }
-  Decl *dcl = getPrimaryDeclaration(op);
+  ValueDecl *dcl = getPrimaryDecl(op);
   Expr::isLvalueResult lval = op->isLvalue();
   
   if (lval != Expr::LV_Valid) { // C99 6.5.3.2p1
