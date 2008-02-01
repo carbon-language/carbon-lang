@@ -158,6 +158,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
     Value *F = CGM.getIntrinsic(Intrinsic::bswap, &ArgType, 1);
     return RValue::get(Builder.CreateCall(F, ArgValue, "tmp"));
   }
+  case Builtin::BI__builtin_huge_val:
   case Builtin::BI__builtin_inff: {
     APFloat f(APFloat::IEEEsingle, APFloat::fcInfinity, false);
     return RValue::get(ConstantFP::get(llvm::Type::FloatTy, f));
