@@ -370,8 +370,8 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
     return Builder.CreatePtrToInt(Src, DstTy, "conv");
   }
   
-  // A scalar source can be splatted to a vector of the same element type
-  if (isa<llvm::VectorType>(DstTy) && !isa<VectorType>(SrcType)) {
+  // A scalar source can be splatted to an OCU vector of the same element type
+  if (DstType->isOCUVectorType() && !isa<VectorType>(SrcType)) {
     const llvm::VectorType *VT = cast<llvm::VectorType>(DstTy);
     assert((VT->getElementType() == Src->getType()) &&
            "Vector element type must match scalar type to splat.");
