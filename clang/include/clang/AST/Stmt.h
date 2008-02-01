@@ -847,7 +847,9 @@ public:
   virtual SourceRange getSourceRange() const { 
     return SourceRange(AtCatchLoc, SubExprs[BODY]->getLocEnd()); 
   }
-   
+
+  bool hasEllipsis() const { return getCatchParamStmt() == 0; }
+  
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ObjCAtCatchStmtClass;
   }

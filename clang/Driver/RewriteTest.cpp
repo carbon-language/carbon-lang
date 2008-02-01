@@ -1203,7 +1203,7 @@ Stmt *RewriteTest::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
     
     const char *lParenLoc = strchr(startBuf, '(');
 
-    if (!catchStmt) { // handle "..."
+    if (catchList->hasEllipsis()) {
       // Now rewrite the body...
       lastCatchBody = catchList->getCatchBody();
       SourceLocation rParenLoc = catchList->getRParenLoc();
