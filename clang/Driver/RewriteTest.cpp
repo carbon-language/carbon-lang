@@ -1250,9 +1250,6 @@ Stmt *RewriteTest::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
       assert(false && "@catch rewrite bug");
     }
     // make sure all the catch bodies get rewritten!
-    // FIXME: this call should be removed when the iterator for ObjCAtTryStmt
-    // is fixed. Currently, it only returns the first catch statement!
-    RewriteFunctionBodyOrGlobalInitializer(lastCatchBody);
     catchList = catchList->getNextCatchStmt();
   }
   // Complete the catch list...
