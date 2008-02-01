@@ -1634,7 +1634,7 @@ static ValueDecl *getPrimaryDecl(Expr *e) {
     // &X[4] and &4[X] is invalid if X is invalid and X is not a pointer.
   
     ValueDecl *VD = getPrimaryDecl(cast<ArraySubscriptExpr>(e)->getBase());
-    if (VD->getType()->isPointerType())
+    if (!VD || VD->getType()->isPointerType())
       return 0;
     else
       return VD;
