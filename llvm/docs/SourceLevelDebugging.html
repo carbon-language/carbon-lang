@@ -767,10 +767,13 @@ href="#format_common_stoppoint">lvm.dbg.stoppoint</a></tt>.</p>
 </pre>
 
 <p>This intrinsic is used to link the debug information in <tt>%<a
-href="#format_subprograms">llvm.dbg.subprogram</a></tt> to the function. It also
-defines the beginning of the function's declarative region (scope.)  The
-intrinsic should be called early in the function after the all the alloca
-instructions.  It should be paired off with a closing <tt>%<a
+href="#format_subprograms">llvm.dbg.subprogram</a></tt> to the function. It
+defines the beginning of the function's declarative region (scope). It also
+implies a call to %<tt><a
+href="#format_common_stoppoint">llvm.dbg.stoppoint</a></tt> which defines a
+source line "stop point". The intrinsic should be called early in the function
+after the all the alloca instructions.  It should be paired off with a closing
+<tt>%<a
 href="#format_common_region_end">llvm.dbg.region.end</a></tt>.  The function's
 single argument is the <tt>%<a
 href="#format_subprograms">llvm.dbg.subprogram.type</a></tt>.</p>
