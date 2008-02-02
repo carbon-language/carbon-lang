@@ -826,7 +826,7 @@ unsigned X86RegisterInfo::getFrameRegister(MachineFunction &MF) const {
 }
 
 int
-X86RegisterInfo::getFrameIndexOffset(MachineFunction &MF, unsigned FI) const {
+X86RegisterInfo::getFrameIndexOffset(MachineFunction &MF, int FI) const {
   int Offset = MF.getFrameInfo()->getObjectOffset(FI) + SlotSize;
   if (!hasFP(MF))
     return Offset + MF.getFrameInfo()->getStackSize();

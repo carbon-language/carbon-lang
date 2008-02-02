@@ -74,7 +74,7 @@ BitVector MRegisterInfo::getAllocatableSet(MachineFunction &MF,
 /// getFrameIndexOffset - Returns the displacement from the frame register to
 /// the stack frame of the specified index. This is the default implementation
 /// which is likely incorrect for the target.
-int MRegisterInfo::getFrameIndexOffset(MachineFunction &MF, unsigned FI) const {
+int MRegisterInfo::getFrameIndexOffset(MachineFunction &MF, int FI) const {
   const TargetFrameInfo &TFI = *MF.getTarget().getFrameInfo();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   return MFI->getObjectOffset(FI) + MFI->getStackSize() -

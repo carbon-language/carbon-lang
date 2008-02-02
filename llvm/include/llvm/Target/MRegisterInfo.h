@@ -588,7 +588,7 @@ public:
 
   /// getFrameIndexOffset - Returns the displacement from the frame register to
   /// the stack frame of the specified index.
-  virtual int getFrameIndexOffset(MachineFunction &MF, unsigned FI) const;
+  virtual int getFrameIndexOffset(MachineFunction &MF, int FI) const;
                            
   /// getRARegister - This method should return the register where the return
   /// address can be found.
