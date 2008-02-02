@@ -921,6 +921,16 @@ void PMDataManager::addLowerLevelRequiredPass(Pass *P, Pass *RequiredPass) {
     TPM->dumpArguments();
     TPM->dumpPasses();
   }
+
+  // Module Level pass may required Function Level analysis info 
+  // (e.g. dominator info). Pass manager uses on the fly function pass manager 
+  // to provide this on demand. In that case, in Pass manager terminology, 
+  // module level pass is requiring lower level analysis info managed by
+  // lower level pass manager.
+
+  // When Pass manager is not able to order required analysis info, Pass manager
+  // checks whether any lower level manager will be able to provide this 
+  // analysis info on demand or not.
   assert (0 && "Unable to handle Pass that requires lower level Analysis pass");
 }
 
