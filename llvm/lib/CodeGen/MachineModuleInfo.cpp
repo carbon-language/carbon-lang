@@ -1471,6 +1471,14 @@ bool DIVerifier::Verify(GlobalVariable *GV) {
   return true;
 }
 
+/// isVerified - Return true if the specified GV has already been
+/// verified as a debug information descriptor.
+bool DIVerifier::isVerified(GlobalVariable *GV) {
+  unsigned &ValiditySlot = Validity[GV];
+  if (ValiditySlot) return ValiditySlot == Valid;
+  return false;
+}
+
 //===----------------------------------------------------------------------===//
 
 DebugScope::~DebugScope() {
@@ -1552,12 +1560,6 @@ void MachineModuleInfo::EndFunction() {
 // FIXME - use new Value type when available.
 DebugInfoDesc *MachineModuleInfo::getDescFor(Value *V) {
   return DR.Deserialize(V);
-}
-
-/// Verify - Verify that a Value is debug information descriptor.
-///
-bool MachineModuleInfo::Verify(Value *V) {
-  return VR.Verify(V);
 }
 
 /// AnalyzeModule - Scan the module for global debug information.
@@ -1657,8 +1659,8 @@ unsigned MachineModuleInfo::RecordRegionEnd(Value *V) {
 
 /// RecordVariable - Indicate the declaration of  a local variable.
 ///
-void MachineModuleInfo::RecordVariable(Value *V, unsigned FrameIndex) {
-  VariableDesc *VD = cast<VariableDesc>(DR.Deserialize(V));
+void MachineModuleInfo::RecordVariable(GlobalValue *GV, unsigned FrameIndex) {
+  VariableDesc *VD = cast<VariableDesc>(DR.Deserialize(GV));
   DebugScope *Scope = getOrCreateScope(VD->getContext());
   DebugVariable *DV = new DebugVariable(VD, FrameIndex);
   Scope->AddVariable(DV);

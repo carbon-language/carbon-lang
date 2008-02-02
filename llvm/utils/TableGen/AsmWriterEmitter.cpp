@@ -625,6 +625,9 @@ void AsmWriterEmitter::run(std::ostream &O) {
     << "  } else if (MI->getOpcode() == TargetInstrInfo::LABEL) {\n"
     << "    printLabel(MI);\n"
     << "    return true;\n"
+    << "  } else if (MI->getOpcode() == TargetInstrInfo::DECLARE) {\n"
+    << "    printDeclare(MI);\n"
+    << "    return true;\n"
     << "  }\n\n";
   
   O << "  // Emit the opcode for the instruction.\n"

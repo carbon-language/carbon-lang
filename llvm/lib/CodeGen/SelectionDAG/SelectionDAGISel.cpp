@@ -2663,12 +2663,10 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::dbg_declare: {
     MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
     DbgDeclareInst &DI = cast<DbgDeclareInst>(I);
-    if (MMI && DI.getVariable() && MMI->Verify(DI.getVariable())) {
-      SDOperand AddressOp  = getValue(DI.getAddress());
-      if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(AddressOp))
-        MMI->RecordVariable(DI.getVariable(), FI->getIndex());
-    }
-
+    Value *Variable = DI.getVariable();
+    if (MMI && Variable && MMI->Verify(Variable))
+      DAG.setRoot(DAG.getNode(ISD::DECLARE, MVT::Other, getRoot(),
+                              getValue(DI.getAddress()), getValue(Variable)));
     return 0;
   }
     

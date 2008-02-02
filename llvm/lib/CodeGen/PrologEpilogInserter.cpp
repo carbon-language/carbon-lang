@@ -513,9 +513,9 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ) {
       MachineInstr *MI = I;
 
-      // Remember how much SP has been adjustment to create the call frame.
       if (I->getOpcode() == FrameSetupOpcode ||
           I->getOpcode() == FrameDestroyOpcode) {
+        // Remember how much SP has been adjustment to create the call frame.
         int Size = I->getOperand(0).getImm();
         if ((!StackGrowsDown && I->getOpcode() == FrameSetupOpcode) ||
             (StackGrowsDown && I->getOpcode() == FrameDestroyOpcode))
@@ -526,7 +526,10 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
         // Visit the instructions created by eliminateCallFramePseudoInstr().
         I = next(PrevI);
         MI = NULL;
-      } else {
+      } else if (I->getOpcode() == TargetInstrInfo::DECLARE)
+        // Ignore it.
+        I++;
+      else {
         I++;
         for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i)
           if (MI->getOperand(i).isFrameIndex()) {

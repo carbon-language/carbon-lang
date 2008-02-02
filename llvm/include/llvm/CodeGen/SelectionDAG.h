@@ -551,6 +551,10 @@ public:
   /// implement the ComputeNumSignBitsForTarget method in the TargetLowering
   /// class to allow target nodes to be understood.
   unsigned ComputeNumSignBits(SDOperand Op, unsigned Depth = 0) const;
+
+  /// isVerifiedDebugInfoDesc - Returns true if the specified SDOperand has
+  /// been verified as a debug information descriptor.
+  bool isVerifiedDebugInfoDesc(SDOperand Op) const;
   
 private:
   void RemoveNodeFromCSEMaps(SDNode *N);

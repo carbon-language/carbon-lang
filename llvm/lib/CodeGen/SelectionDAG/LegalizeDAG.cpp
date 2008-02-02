@@ -1085,6 +1085,19 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       break;
     }
     break;
+
+  case ISD::DECLARE:
+    assert(Node->getNumOperands() == 3 && "Invalid DECLARE node!");
+    switch (TLI.getOperationAction(ISD::DECLARE, MVT::Other)) {
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Legal:
+      Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
+      Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the address.
+      Tmp3 = LegalizeOp(Node->getOperand(2));  // Legalize the variable.
+      Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Tmp3);
+      break;
+    }
+    break;    
     
   case ISD::DEBUG_LOC:
     assert(Node->getNumOperands() == 4 && "Invalid DEBUG_LOC node!");

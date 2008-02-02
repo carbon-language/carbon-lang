@@ -1779,6 +1779,30 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "                               MVT::Other, Ops, 3);\n"
      << "}\n\n";
 
+  OS << "SDNode *Select_DECLARE(const SDOperand &N) {\n"
+     << "  MachineModuleInfo *MMI = CurDAG->getMachineModuleInfo();\n"
+     << "  SDOperand Chain = N.getOperand(0);\n"
+     << "  SDOperand N1 = N.getOperand(1);\n"
+     << "  SDOperand N2 = N.getOperand(2);\n"
+     << "  if (!isa<FrameIndexSDNode>(N1) || !isa<GlobalAddressSDNode>(N2)) {\n"
+     << "    cerr << \"Cannot yet select llvm.dbg.declare: \";\n"
+     << "    N.Val->dump(CurDAG);\n"
+     << "    abort();\n"
+     << "  }\n"
+     << "  int FI = cast<FrameIndexSDNode>(N1)->getIndex();\n"
+     << "  GlobalValue *GV = cast<GlobalAddressSDNode>(N2)->getGlobal();\n"
+     << "  // FIXME. Handle variable declarations later since it lives on.\n"
+     << "  MMI->RecordVariable(GV, FI);\n"
+     << "  SDOperand Tmp1 = "
+     << "CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());\n"
+     << "  SDOperand Tmp2 = "
+     << "CurDAG->getTargetGlobalAddress(GV, TLI.getPointerTy());\n"
+     << "  AddToISelQueue(Chain);\n"
+     << "  SDOperand Ops[] = { Tmp1, Tmp2, Chain };\n"
+     << "  return CurDAG->getTargetNode(TargetInstrInfo::DECLARE,\n"
+     << "                               MVT::Other, Ops, 3);\n"
+     << "}\n\n";
+
   OS << "SDNode *Select_EXTRACT_SUBREG(const SDOperand &N) {\n"
      << "  SDOperand N0 = N.getOperand(0);\n"
      << "  SDOperand N1 = N.getOperand(1);\n"
@@ -1846,6 +1870,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  }\n"
      << "  case ISD::INLINEASM: return Select_INLINEASM(N);\n"
      << "  case ISD::LABEL: return Select_LABEL(N);\n"
+     << "  case ISD::DECLARE: return Select_DECLARE(N);\n"
      << "  case ISD::EXTRACT_SUBREG: return Select_EXTRACT_SUBREG(N);\n"
      << "  case ISD::INSERT_SUBREG:  return Select_INSERT_SUBREG(N);\n";
 

@@ -736,6 +736,7 @@ void ScheduleDAG::EmitNode(SDNode *Node, unsigned InstanceNo,
     case ISD::EntryToken: // fall thru
     case ISD::TokenFactor:
     case ISD::LABEL:
+    case ISD::DECLARE:
       break;
     case ISD::CopyToReg: {
       unsigned InReg;

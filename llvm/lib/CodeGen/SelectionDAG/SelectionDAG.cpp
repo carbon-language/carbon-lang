@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
@@ -1617,6 +1618,16 @@ unsigned SelectionDAG::ComputeNumSignBits(SDOperand Op, unsigned Depth) const{
   // Return # leading zeros.  We use 'min' here in case Val was zero before
   // shifting.  We don't want to return '64' as for an i32 "0".
   return std::min(VTBits, CountLeadingZeros_64(Mask));
+}
+
+
+bool SelectionDAG::isVerifiedDebugInfoDesc(SDOperand Op) const {
+  GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(Op);
+  if (!GA) return false;
+  GlobalVariable *GV = dyn_cast<GlobalVariable>(GA->getGlobal());
+  if (!GV) return false;
+  MachineModuleInfo *MMI = getMachineModuleInfo();
+  return MMI && MMI->hasDebugInfo() && MMI->isVerified(GV);
 }
 
 
@@ -3700,6 +3711,7 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::MERGE_VALUES:  return "merge_values";
   case ISD::INLINEASM:     return "inlineasm";
   case ISD::LABEL:         return "label";
+  case ISD::DECLARE:       return "declare";
   case ISD::HANDLENODE:    return "handlenode";
   case ISD::FORMAL_ARGUMENTS: return "formal_arguments";
   case ISD::CALL:          return "call";

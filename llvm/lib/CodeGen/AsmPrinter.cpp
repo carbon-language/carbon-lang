@@ -1289,6 +1289,12 @@ void AsmPrinter::printLabel(unsigned Id) const {
   O << "\n" << TAI->getPrivateGlobalPrefix() << "label" << Id << ":\n";
 }
 
+/// printDeclare - This method prints a local variable declaration used by
+/// debug tables.
+void AsmPrinter::printDeclare(const MachineInstr *MI) const {
+  O << "\n";
+}
+
 /// PrintAsmOperand - Print the specified operand of MI, an INLINEASM
 /// instruction, using the specified assembler variant.  Targets should
 /// overried this to format as appropriate.

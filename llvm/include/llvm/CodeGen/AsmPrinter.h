@@ -281,6 +281,10 @@ namespace llvm {
     void printLabel(const MachineInstr *MI) const;
     void printLabel(unsigned Id) const;
 
+    /// printDeclare - This method prints a local variable declaration used by
+    /// debug tables.
+    void printDeclare(const MachineInstr *MI) const;
+
   protected:
     /// EmitZeros - Emit a block of zeros.
     ///

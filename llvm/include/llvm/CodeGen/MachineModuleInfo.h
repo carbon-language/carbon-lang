@@ -844,6 +844,10 @@ public:
   /// serialization of a DebugInfoDesc.
   bool Verify(Value *V);
   bool Verify(GlobalVariable *GV);
+
+  /// isVerified - Return true if the specified GV has already been
+  /// verified as a debug information descriptor.
+  bool isVerified(GlobalVariable *GV);
 };
 
 //===----------------------------------------------------------------------===//
@@ -1073,7 +1077,11 @@ public:
   
   /// Verify - Verify that a Value is debug information descriptor.
   ///
-  bool Verify(Value *V);
+  bool Verify(Value *V) { return VR.Verify(V); }
+
+  /// isVerified - Return true if the specified GV has already been
+  /// verified as a debug information descriptor.
+  bool isVerified(GlobalVariable *GV) { return VR.isVerified(GV); }
   
   /// AnalyzeModule - Scan the module for global debug information.
   ///
@@ -1197,7 +1205,7 @@ public:
 
   /// RecordVariable - Indicate the declaration of  a local variable.
   ///
-  void RecordVariable(Value *V, unsigned FrameIndex);
+  void RecordVariable(GlobalValue *GV, unsigned FrameIndex);
   
   /// getRootScope - Return current functions root scope.
   ///
