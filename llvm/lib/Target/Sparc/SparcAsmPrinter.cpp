@@ -76,7 +76,7 @@ FunctionPass *llvm::createSparcCodePrinterPass(std::ostream &o,
   return new SparcAsmPrinter(o, tm, tm.getTargetAsmInfo());
 }
 
-/// runOnMachineFunction - This uses the printMachineInstruction()
+/// runOnMachineFunction - This uses the printInstruction()
 /// method to print assembly for each instruction.
 ///
 bool SparcAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
@@ -121,7 +121,6 @@ bool SparcAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
          II != E; ++II) {
       // Print the assembly for the instruction.
-      O << "\t";
       printInstruction(II);
       ++EmittedInsts;
     }

@@ -154,7 +154,6 @@ bool IA64AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
          II != E; ++II) {
       // Print the assembly for the instruction.
-      O << "\t";
       printMachineInstruction(II);
     }
   }

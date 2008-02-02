@@ -620,6 +620,7 @@ void AsmWriterEmitter::run(std::ostream &O) {
   O << "\";\n\n";
 
   O << "  if (MI->getOpcode() == TargetInstrInfo::INLINEASM) {\n"
+    << "    O << \"\\t\";\n"
     << "    printInlineAsm(MI);\n"
     << "    return true;\n"
     << "  } else if (MI->getOpcode() == TargetInstrInfo::LABEL) {\n"
@@ -630,6 +631,8 @@ void AsmWriterEmitter::run(std::ostream &O) {
     << "    return true;\n"
     << "  }\n\n";
   
+  O << "  O << \"\\t\";\n\n";
+
   O << "  // Emit the opcode for the instruction.\n"
     << "  unsigned Bits = OpInfo[MI->getOpcode()];\n"
     << "  if (Bits == 0) return false;\n"

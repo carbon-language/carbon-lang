@@ -1281,18 +1281,18 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
 /// printLabel - This method prints a local label used by debug and
 /// exception handling tables.
 void AsmPrinter::printLabel(const MachineInstr *MI) const {
-  O << "\n" << TAI->getPrivateGlobalPrefix()
+  O << TAI->getPrivateGlobalPrefix()
     << "label" << MI->getOperand(0).getImm() << ":\n";
 }
 
 void AsmPrinter::printLabel(unsigned Id) const {
-  O << "\n" << TAI->getPrivateGlobalPrefix() << "label" << Id << ":\n";
+  O << TAI->getPrivateGlobalPrefix() << "label" << Id << ":\n";
 }
 
 /// printDeclare - This method prints a local variable declaration used by
 /// debug tables.
 void AsmPrinter::printDeclare(const MachineInstr *MI) const {
-  O << "\n";
+  // Do nothing.
 }
 
 /// PrintAsmOperand - Print the specified operand of MI, an INLINEASM

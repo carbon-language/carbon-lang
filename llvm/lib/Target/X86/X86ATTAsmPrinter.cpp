@@ -186,7 +186,6 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     for (MachineBasicBlock::const_iterator II = I->begin(), IE = I->end();
          II != IE; ++II) {
       // Print the assembly for the instruction.
-      O << "\t";
       printMachineInstruction(II);
     }
   }

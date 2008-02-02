@@ -786,7 +786,6 @@ void ARMAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
     case ARM::tPICADD:
       break;
     default:
-      O << "\t";
       break;
     }
   }}
