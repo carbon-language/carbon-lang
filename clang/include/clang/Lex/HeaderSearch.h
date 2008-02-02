@@ -89,12 +89,14 @@ class HeaderSearch {
   unsigned NumIncluded;
   unsigned NumMultiIncludeFileOptzn;
   unsigned NumFrameworkLookups, NumSubFrameworkLookups;
+
+  // HeaderSearch doesn't support default or copy construction.
+  explicit HeaderSearch();  
+  explicit HeaderSearch(const HeaderSearch&);
+  void operator=(const HeaderSearch&);
 public:
   HeaderSearch(FileManager &FM);
   ~HeaderSearch();
-
-  // HeaderSearch doesn't support copy construction.
-  explicit HeaderSearch(const HeaderSearch&);
 
   FileManager &getFileMgr() const { return FileMgr; }
 

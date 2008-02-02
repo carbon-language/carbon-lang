@@ -222,13 +222,13 @@ class SourceManager {
   
   /// MainFileID - The file ID for the main source file of the translation unit.
   unsigned MainFileID;
-  
+
+  // SourceManager doesn't support copy construction.
+  explicit SourceManager(const SourceManager&);
+  void operator=(const SourceManager&);  
 public:
   SourceManager() : LastLineNoFileIDQuery(~0U), MainFileID(0) {}
   ~SourceManager() {}
-  
-  // SourceManager doesn't support copy construction.
-  explicit SourceManager(const SourceManager&);
   
   void clearIDTables() {
     FileIDs.clear();
