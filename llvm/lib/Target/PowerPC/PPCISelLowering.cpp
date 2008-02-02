@@ -1076,6 +1076,9 @@ static SDOperand LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG) {
   GlobalAddressSDNode *GSDN = cast<GlobalAddressSDNode>(Op);
   GlobalValue *GV = GSDN->getGlobal();
   SDOperand GA = DAG.getTargetGlobalAddress(GV, PtrVT, GSDN->getOffset());
+  // If it's a debug information descriptor, don't mess with it.
+  if (DAG.isVerifiedDebugInfoDesc(Op))
+    return GA;
   SDOperand Zero = DAG.getConstant(0, PtrVT);
   
   const TargetMachine &TM = DAG.getTarget();
