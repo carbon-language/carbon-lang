@@ -289,6 +289,7 @@ int LLVMIsUndef(LLVMValueRef Val);
 LLVMValueRef LLVMConstInt(LLVMTypeRef IntTy, unsigned long long N,
                           int SignExtend);
 LLVMValueRef LLVMConstReal(LLVMTypeRef RealTy, double N);
+LLVMValueRef LLVMConstRealOfString(LLVMTypeRef RealTy, const char *Text);
 
 /* Operations on composite constants */
 LLVMValueRef LLVMConstString(const char *Str, unsigned Length,
