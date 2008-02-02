@@ -371,18 +371,15 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
   }
   
   // A scalar source can be splatted to an OCU vector of the same element type
-  if (DstType->isOCUVectorType() && !isa<VectorType>(SrcType)) {
-    const llvm::VectorType *VT = cast<llvm::VectorType>(DstTy);
-    assert((VT->getElementType() == Src->getType()) &&
-           "Vector element type must match scalar type to splat.");
+  if (DstType->isOCUVectorType() && !isa<VectorType>(SrcType) &&
+      cast<llvm::VectorType>(DstTy)->getElementType() == Src->getType())
     return CGF.EmitVector(&Src, DstType->getAsVectorType()->getNumElements(), 
                           true);
-  }
 
+  // Allow bitcast from vector to integer/fp of the same size.
   if (isa<llvm::VectorType>(Src->getType()) ||
-      isa<llvm::VectorType>(DstTy)) {
+      isa<llvm::VectorType>(DstTy))
     return Builder.CreateBitCast(Src, DstTy, "conv");
-  }
       
   // Finally, we have the arithmetic types: real int/float.
   if (isa<llvm::IntegerType>(Src->getType())) {
