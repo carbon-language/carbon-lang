@@ -567,13 +567,23 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   case tok::tilde:         // unary-expression: '~' cast-expression
   case tok::exclaim:       // unary-expression: '!' cast-expression
   case tok::kw___real:     // unary-expression: '__real' cast-expression [GNU]
-  case tok::kw___imag:     // unary-expression: '__imag' cast-expression [GNU]
-  case tok::kw___extension__:{//unary-expression:'__extension__' cast-expr [GNU]
-    // FIXME: Extension should silence extwarns in subexpressions.
+  case tok::kw___imag: {   // unary-expression: '__imag' cast-expression [GNU]
     SourceLocation SavedLoc = ConsumeToken();
     Res = ParseCastExpression(false);
     if (!Res.isInvalid)
       Res = Actions.ActOnUnaryOp(SavedLoc, SavedKind, Res.Val);
+    return Res;
+  }    
+      
+  case tok::kw___extension__:{//unary-expression:'__extension__' cast-expr [GNU]
+    // __extension__ silences extension warnings in the subexpression.
+    bool SavedExtWarn = Diags.getWarnOnExtensions();
+    Diags.setWarnOnExtensions(false);
+    SourceLocation SavedLoc = ConsumeToken();
+    Res = ParseCastExpression(false);
+    if (!Res.isInvalid)
+      Res = Actions.ActOnUnaryOp(SavedLoc, SavedKind, Res.Val);
+    Diags.setWarnOnExtensions(SavedExtWarn);
     return Res;
   }
   case tok::kw_sizeof:     // unary-expression: 'sizeof' unary-expression
