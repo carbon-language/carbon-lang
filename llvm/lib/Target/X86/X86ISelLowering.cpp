@@ -5642,7 +5642,7 @@ static bool isConsecutiveLoad(SDNode *N, SDNode *Base, int Dist, int Size,
 static bool isBaseAlignment16(SDNode *Base, MachineFrameInfo *MFI,
                               const X86Subtarget *Subtarget) {
   GlobalValue *GV;
-  int64_t Offset;
+  int64_t Offset = 0;
   if (isGAPlusOffset(Base, GV, Offset))
     return (GV->getAlignment() >= 16 && (Offset % 16) == 0);
   // DAG combine handles the stack object case.
