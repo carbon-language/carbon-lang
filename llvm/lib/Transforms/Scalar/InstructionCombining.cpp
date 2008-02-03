@@ -2124,7 +2124,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
       return R;
 
   // W*X + Y*Z --> W * (X+Z)  iff W == Y
-  if (I.getType()->isInteger()) {
+  if (I.getType()->isIntOrIntVector()) {
     Value *W, *X, *Y, *Z;
     if (match(LHS, m_Mul(m_Value(W), m_Value(X))) &&
         match(RHS, m_Mul(m_Value(Y), m_Value(Z)))) {
