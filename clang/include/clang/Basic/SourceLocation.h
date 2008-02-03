@@ -43,10 +43,8 @@ public:
     // MacroID Layout:
     // bit 31: 1 -> MacroID, 0 -> FileID (invalid for MacroID)
 
-    // bit 30: 1 -> Start of macro expansion marker.
-    MacroStartOfExpansionBit = 30,
-    // bit 29: 1 -> End of macro expansion marker.
-    MacroEndOfExpansionBit = 29,
+    // bit 29,30: unused.
+    
     // bits 28...9 -> MacroID number.
     MacroIDBits       = 20,
     // bits 8...0  -> Macro Physical offset
@@ -92,8 +90,7 @@ public:
     return -Val < (1 << (MacroPhysOffsBits-1));
   }
   
-  static SourceLocation getMacroLoc(unsigned MacroID, int PhysOffs,
-                                    bool isExpansionStart, bool isExpansionEnd){
+  static SourceLocation getMacroLoc(unsigned MacroID, int PhysOffs){
     assert(MacroID < (1 << MacroIDBits) && "Too many macros!");
     assert(isValidMacroPhysOffs(PhysOffs) && "Physoffs too large!");
     
@@ -102,8 +99,6 @@ public:
     
     SourceLocation L;
     L.ID = (1 << 31) |
-           (isExpansionStart << MacroStartOfExpansionBit) |
-           (isExpansionEnd << MacroEndOfExpansionBit) |
            (MacroID << MacroPhysOffsBits) |
            PhysOffs;
     return L;
