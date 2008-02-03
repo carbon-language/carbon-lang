@@ -2123,6 +2123,30 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     if (Instruction *R = AssociativeOpt(I, AddMaskingAnd(C2)))
       return R;
 
+  // W*X + Y*Z --> W * (X+Z)  iff W == Y
+  if (I.getType()->isInteger()) {
+    Value *W, *X, *Y, *Z;
+    if (match(LHS, m_Mul(m_Value(W), m_Value(X))) &&
+        match(RHS, m_Mul(m_Value(Y), m_Value(Z)))) {
+      if (W != Y) {
+        if (W == Z) {
+	  std::swap(Y, Z);
+        } else if (Y == X) {
+	  std::swap(W, X);
+	} else if (X == Z) {
+          std::swap(Y, Z);
+          std::swap(W, X);
+        }
+      }
+
+      if (W == Y) {
+        Value *NewAdd = InsertNewInstBefore(BinaryOperator::createAdd(X, Z,
+                                                            LHS->getName()), I);
+        return BinaryOperator::createMul(W, NewAdd);
+      }
+    }
+  }
+
   if (ConstantInt *CRHS = dyn_cast<ConstantInt>(RHS)) {
     Value *X = 0;
     if (match(LHS, m_Not(m_Value(X))))    // ~X + C --> (C-1) - X
