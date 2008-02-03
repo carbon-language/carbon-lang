@@ -264,7 +264,6 @@ public:
   WorkListRemover(DAGCombiner &dc) : DC(dc) {}
   
   virtual void NodeDeleted(SDNode *N) {
-    printf("remove from WL: %p\n", (void*)N);
     DC.removeFromWorkList(N);
   }
   
