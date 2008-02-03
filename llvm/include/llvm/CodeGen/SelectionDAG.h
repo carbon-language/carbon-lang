@@ -139,11 +139,6 @@ public:
   /// SelectionDAG.
   void RemoveDeadNodes();
 
-  /// RemoveDeadNode - Remove the specified node from the system. If any of its
-  /// operands then becomes dead, remove them as well. The vector Deleted is
-  /// populated with nodes that are deleted.
-  void RemoveDeadNode(SDNode *N, std::vector<SDNode*> &Deleted);
-  
   /// DeleteNode - Remove the specified node from the system.  This node must
   /// have no referrers.
   void DeleteNode(SDNode *N);
@@ -464,28 +459,41 @@ public:
   SDNode *getTargetNode(unsigned Opcode, std::vector<MVT::ValueType> &ResultTys,
                         const SDOperand *Ops, unsigned NumOps);
   
+  /// DAGUpdateListener - Clients of various APIs that cause global effects on
+  /// the DAG can optionally implement this interface.  This allows the clients
+  /// to handle the various sorts of updates that happen.
+  class DAGUpdateListener {
+  public:
+    virtual ~DAGUpdateListener();
+    virtual void NodeDeleted(SDNode *N) = 0;
+    virtual void NodeUpdated(SDNode *N) = 0;
+  };
+  
+  /// RemoveDeadNode - Remove the specified node from the system. If any of its
+  /// operands then becomes dead, remove them as well. Inform UpdateListener
+  /// for each node deleted.
+  void RemoveDeadNode(SDNode *N, DAGUpdateListener *UpdateListener = 0);
+  
   /// ReplaceAllUsesWith - Modify anything using 'From' to use 'To' instead.
   /// This can cause recursive merging of nodes in the DAG.  Use the first
   /// version if 'From' is known to have a single result, use the second
   /// if you have two nodes with identical results, use the third otherwise.
   ///
-  /// These methods all take an optional vector, which (if not null) is 
-  /// populated with any nodes that are deleted from the SelectionDAG, due to
-  /// new equivalences that are discovered.
+  /// These methods all take an optional UpdateListener, which (if not null) is 
+  /// informed about nodes that are deleted and modified due to recursive
+  /// changes in the dag.
   ///
   void ReplaceAllUsesWith(SDOperand From, SDOperand Op,
-                          std::vector<SDNode*> *Deleted = 0);
+                          DAGUpdateListener *UpdateListener = 0);
   void ReplaceAllUsesWith(SDNode *From, SDNode *To,
-                          std::vector<SDNode*> *Deleted = 0);
+                          DAGUpdateListener *UpdateListener = 0);
   void ReplaceAllUsesWith(SDNode *From, const SDOperand *To,
-                          std::vector<SDNode*> *Deleted = 0);
+                          DAGUpdateListener *UpdateListener = 0);
 
   /// ReplaceAllUsesOfValueWith - Replace any uses of From with To, leaving
-  /// uses of other values produced by From.Val alone.  The Deleted vector is
-  /// handled the same was as for ReplaceAllUsesWith, but it is required for
-  /// this method.
+  /// uses of other values produced by From.Val alone.
   void ReplaceAllUsesOfValueWith(SDOperand From, SDOperand To,
-                                 std::vector<SDNode*> *Deleted = 0);
+                                 DAGUpdateListener *UpdateListener = 0);
 
   /// AssignNodeIds - Assign a unique node id for each node in the DAG based on
   /// their allnodes order. It returns the maximum id.

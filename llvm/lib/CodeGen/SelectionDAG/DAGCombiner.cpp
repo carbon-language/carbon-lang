@@ -81,13 +81,6 @@ namespace {
         AddToWorkList(*UI);
     }
 
-    /// removeFromWorkList - remove all instances of N from the worklist.
-    ///
-    void removeFromWorkList(SDNode *N) {
-      WorkList.erase(std::remove(WorkList.begin(), WorkList.end(), N),
-                     WorkList.end());
-    }
-    
     /// visit - call the node-specific routine that knows how to fold each
     /// particular type of node.
     SDOperand visit(SDNode *N);
@@ -100,34 +93,15 @@ namespace {
       WorkList.push_back(N);
     }
 
-    SDOperand CombineTo(SDNode *N, const SDOperand *To, unsigned NumTo,
-                        bool AddTo = true) {
-      assert(N->getNumValues() == NumTo && "Broken CombineTo call!");
-      ++NodesCombined;
-      DOUT << "\nReplacing.1 "; DEBUG(N->dump(&DAG));
-      DOUT << "\nWith: "; DEBUG(To[0].Val->dump(&DAG));
-      DOUT << " and " << NumTo-1 << " other values\n";
-      std::vector<SDNode*> NowDead;
-      DAG.ReplaceAllUsesWith(N, To, &NowDead);
-      
-      if (AddTo) {
-        // Push the new nodes and any users onto the worklist
-        for (unsigned i = 0, e = NumTo; i != e; ++i) {
-          AddToWorkList(To[i].Val);
-          AddUsersToWorkList(To[i].Val);
-        }
-      }
-      
-      // Nodes can be reintroduced into the worklist.  Make sure we do not
-      // process a node that has been replaced.
-      removeFromWorkList(N);
-      for (unsigned i = 0, e = NowDead.size(); i != e; ++i)
-        removeFromWorkList(NowDead[i]);
-      
-      // Finally, since the node is now dead, remove it from the graph.
-      DAG.DeleteNode(N);
-      return SDOperand(N, 0);
+    /// removeFromWorkList - remove all instances of N from the worklist.
+    ///
+    void removeFromWorkList(SDNode *N) {
+      WorkList.erase(std::remove(WorkList.begin(), WorkList.end(), N),
+                     WorkList.end());
     }
+    
+    SDOperand CombineTo(SDNode *N, const SDOperand *To, unsigned NumTo,
+                        bool AddTo = true);
     
     SDOperand CombineTo(SDNode *N, SDOperand Res, bool AddTo = true) {
       return CombineTo(N, &Res, 1, AddTo);
@@ -144,50 +118,7 @@ namespace {
     /// SimplifyDemandedBits - Check the specified integer node value to see if
     /// it can be simplified or if things it uses can be simplified by bit
     /// propagation.  If so, return true.
-    bool SimplifyDemandedBits(SDOperand Op, uint64_t Demanded = ~0ULL) {
-      TargetLowering::TargetLoweringOpt TLO(DAG, AfterLegalize);
-      uint64_t KnownZero, KnownOne;
-      Demanded &= MVT::getIntVTBitMask(Op.getValueType());
-      if (!TLI.SimplifyDemandedBits(Op, Demanded, KnownZero, KnownOne, TLO))
-        return false;
-
-      // Revisit the node.
-      AddToWorkList(Op.Val);
-      
-      // Replace the old value with the new one.
-      ++NodesCombined;
-      DOUT << "\nReplacing.2 "; DEBUG(TLO.Old.Val->dump(&DAG));
-      DOUT << "\nWith: "; DEBUG(TLO.New.Val->dump(&DAG));
-      DOUT << '\n';
-
-      std::vector<SDNode*> NowDead;
-      DAG.ReplaceAllUsesOfValueWith(TLO.Old, TLO.New, &NowDead);
-      
-      // Push the new node and any (possibly new) users onto the worklist.
-      AddToWorkList(TLO.New.Val);
-      AddUsersToWorkList(TLO.New.Val);
-      
-      // Nodes can end up on the worklist more than once.  Make sure we do
-      // not process a node that has been replaced.
-      for (unsigned i = 0, e = NowDead.size(); i != e; ++i)
-        removeFromWorkList(NowDead[i]);
-      
-      // Finally, if the node is now dead, remove it from the graph.  The node
-      // may not be dead if the replacement process recursively simplified to
-      // something else needing this node.
-      if (TLO.Old.Val->use_empty()) {
-        removeFromWorkList(TLO.Old.Val);
-        
-        // If the operands of this node are only used by the node, they will now
-        // be dead.  Make sure to visit them first to delete dead nodes early.
-        for (unsigned i = 0, e = TLO.Old.Val->getNumOperands(); i != e; ++i)
-          if (TLO.Old.Val->getOperand(i).Val->hasOneUse())
-            AddToWorkList(TLO.Old.Val->getOperand(i).Val);
-        
-        DAG.DeleteNode(TLO.Old.Val);
-      }
-      return true;
-    }
+    bool SimplifyDemandedBits(SDOperand Op, uint64_t Demanded = ~0ULL);
 
     bool CombineToPreIndexedLoadStore(SDNode *N);
     bool CombineToPostIndexedLoadStore(SDNode *N);
@@ -320,6 +251,27 @@ public:
     /// Run - runs the dag combiner on all nodes in the work list
     void Run(bool RunningAfterLegalize); 
   };
+}
+
+
+namespace {
+/// WorkListRemover - This class is a DAGUpdateListener that removes any deleted
+/// nodes from the worklist.
+class VISIBILITY_HIDDEN WorkListRemover : 
+  public SelectionDAG::DAGUpdateListener {
+  DAGCombiner &DC;
+public:
+  WorkListRemover(DAGCombiner &dc) : DC(dc) {}
+  
+  virtual void NodeDeleted(SDNode *N) {
+    printf("remove from WL: %p\n", (void*)N);
+    DC.removeFromWorkList(N);
+  }
+  
+  virtual void NodeUpdated(SDNode *N) {
+    // Ignore updates.
+  }
+};
 }
 
 //===----------------------------------------------------------------------===//
@@ -543,6 +495,78 @@ SDOperand DAGCombiner::ReassociateOps(unsigned Opc, SDOperand N0, SDOperand N1){
   return SDOperand();
 }
 
+SDOperand DAGCombiner::CombineTo(SDNode *N, const SDOperand *To, unsigned NumTo,
+                                 bool AddTo) {
+  assert(N->getNumValues() == NumTo && "Broken CombineTo call!");
+  ++NodesCombined;
+  DOUT << "\nReplacing.1 "; DEBUG(N->dump(&DAG));
+  DOUT << "\nWith: "; DEBUG(To[0].Val->dump(&DAG));
+  DOUT << " and " << NumTo-1 << " other values\n";
+  WorkListRemover DeadNodes(*this);
+  DAG.ReplaceAllUsesWith(N, To, &DeadNodes);
+  
+  if (AddTo) {
+    // Push the new nodes and any users onto the worklist
+    for (unsigned i = 0, e = NumTo; i != e; ++i) {
+      AddToWorkList(To[i].Val);
+      AddUsersToWorkList(To[i].Val);
+    }
+  }
+  
+  // Nodes can be reintroduced into the worklist.  Make sure we do not
+  // process a node that has been replaced.
+  removeFromWorkList(N);
+  
+  // Finally, since the node is now dead, remove it from the graph.
+  DAG.DeleteNode(N);
+  return SDOperand(N, 0);
+}
+
+/// SimplifyDemandedBits - Check the specified integer node value to see if
+/// it can be simplified or if things it uses can be simplified by bit
+/// propagation.  If so, return true.
+bool DAGCombiner::SimplifyDemandedBits(SDOperand Op, uint64_t Demanded) {
+  TargetLowering::TargetLoweringOpt TLO(DAG, AfterLegalize);
+  uint64_t KnownZero, KnownOne;
+  Demanded &= MVT::getIntVTBitMask(Op.getValueType());
+  if (!TLI.SimplifyDemandedBits(Op, Demanded, KnownZero, KnownOne, TLO))
+    return false;
+  
+  // Revisit the node.
+  AddToWorkList(Op.Val);
+  
+  // Replace the old value with the new one.
+  ++NodesCombined;
+  DOUT << "\nReplacing.2 "; DEBUG(TLO.Old.Val->dump(&DAG));
+  DOUT << "\nWith: "; DEBUG(TLO.New.Val->dump(&DAG));
+  DOUT << '\n';
+  
+  // Replace all uses.  If any nodes become isomorphic to other nodes and 
+  // are deleted, make sure to remove them from our worklist.
+  WorkListRemover DeadNodes(*this);
+  DAG.ReplaceAllUsesOfValueWith(TLO.Old, TLO.New, &DeadNodes);
+  
+  // Push the new node and any (possibly new) users onto the worklist.
+  AddToWorkList(TLO.New.Val);
+  AddUsersToWorkList(TLO.New.Val);
+  
+  // Finally, if the node is now dead, remove it from the graph.  The node
+  // may not be dead if the replacement process recursively simplified to
+  // something else needing this node.
+  if (TLO.Old.Val->use_empty()) {
+    removeFromWorkList(TLO.Old.Val);
+    
+    // If the operands of this node are only used by the node, they will now
+    // be dead.  Make sure to visit them first to delete dead nodes early.
+    for (unsigned i = 0, e = TLO.Old.Val->getNumOperands(); i != e; ++i)
+      if (TLO.Old.Val->getOperand(i).Val->hasOneUse())
+        AddToWorkList(TLO.Old.Val->getOperand(i).Val);
+    
+    DAG.DeleteNode(TLO.Old.Val);
+  }
+  return true;
+}
+
 //===----------------------------------------------------------------------===//
 //  Main DAG Combiner implementation
 //===----------------------------------------------------------------------===//
@@ -603,14 +627,14 @@ void DAGCombiner::Run(bool RunningAfterLegalize) {
     DOUT << "\nReplacing.3 "; DEBUG(N->dump(&DAG));
     DOUT << "\nWith: "; DEBUG(RV.Val->dump(&DAG));
     DOUT << '\n';
-    std::vector<SDNode*> NowDead;
+    WorkListRemover DeadNodes(*this);
     if (N->getNumValues() == RV.Val->getNumValues())
-      DAG.ReplaceAllUsesWith(N, RV.Val, &NowDead);
+      DAG.ReplaceAllUsesWith(N, RV.Val, &DeadNodes);
     else {
       assert(N->getValueType(0) == RV.getValueType() &&
              N->getNumValues() == 1 && "Type mismatch");
       SDOperand OpV = RV;
-      DAG.ReplaceAllUsesWith(N, &OpV, &NowDead);
+      DAG.ReplaceAllUsesWith(N, &OpV, &DeadNodes);
     }
       
     // Push the new node and any users onto the worklist
@@ -626,8 +650,6 @@ void DAGCombiner::Run(bool RunningAfterLegalize) {
     // Nodes can be reintroduced into the worklist.  Make sure we do not
     // process a node that has been replaced.
     removeFromWorkList(N);
-    for (unsigned i = 0, e = NowDead.size(); i != e; ++i)
-      removeFromWorkList(NowDead[i]);
     
     // Finally, since the node is now dead, remove it from the graph.
     DAG.DeleteNode(N);
@@ -3084,7 +3106,9 @@ SDOperand DAGCombiner::ReduceLoadWidth(SDNode *N) {
                        LN0->isVolatile(), NewAlign);
     AddToWorkList(N);
     if (CombineSRL) {
-      DAG.ReplaceAllUsesOfValueWith(N0.getValue(1), Load.getValue(1));
+      WorkListRemover DeadNodes(*this);
+      DAG.ReplaceAllUsesOfValueWith(N0.getValue(1), Load.getValue(1),
+                                    &DeadNodes);
       CombineTo(N->getOperand(0).Val, Load);
     } else
       CombineTo(N0.Val, Load, Load.getValue(1));
@@ -3990,30 +4014,24 @@ bool DAGCombiner::CombineToPreIndexedLoadStore(SDNode *N) {
   DOUT << "\nReplacing.4 "; DEBUG(N->dump(&DAG));
   DOUT << "\nWith: "; DEBUG(Result.Val->dump(&DAG));
   DOUT << '\n';
-  std::vector<SDNode*> NowDead;
+  WorkListRemover DeadNodes(*this);
   if (isLoad) {
     DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 0), Result.getValue(0),
-                                  &NowDead);
+                                  &DeadNodes);
     DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 1), Result.getValue(2),
-                                  &NowDead);
+                                  &DeadNodes);
   } else {
     DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 0), Result.getValue(1),
-                                  &NowDead);
+                                  &DeadNodes);
   }
 
-  // Nodes can end up on the worklist more than once.  Make sure we do
-  // not process a node that has been replaced.
-  for (unsigned i = 0, e = NowDead.size(); i != e; ++i)
-    removeFromWorkList(NowDead[i]);
   // Finally, since the node is now dead, remove it from the graph.
   DAG.DeleteNode(N);
 
   // Replace the uses of Ptr with uses of the updated base value.
   DAG.ReplaceAllUsesOfValueWith(Ptr, Result.getValue(isLoad ? 1 : 0),
-                                &NowDead);
+                                &DeadNodes);
   removeFromWorkList(Ptr.Val);
-  for (unsigned i = 0, e = NowDead.size(); i != e; ++i)
-    removeFromWorkList(NowDead[i]);
   DAG.DeleteNode(Ptr.Val);
 
   return true;
@@ -4121,33 +4139,26 @@ bool DAGCombiner::CombineToPostIndexedLoadStore(SDNode *N) {
         DOUT << "\nReplacing.5 "; DEBUG(N->dump(&DAG));
         DOUT << "\nWith: "; DEBUG(Result.Val->dump(&DAG));
         DOUT << '\n';
-        std::vector<SDNode*> NowDead;
+        WorkListRemover DeadNodes(*this);
         if (isLoad) {
           DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 0), Result.getValue(0),
-                                        &NowDead);
+                                        &DeadNodes);
           DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 1), Result.getValue(2),
-                                        &NowDead);
+                                        &DeadNodes);
         } else {
           DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 0), Result.getValue(1),
-                                        &NowDead);
+                                        &DeadNodes);
         }
 
-        // Nodes can end up on the worklist more than once.  Make sure we do
-        // not process a node that has been replaced.
-        for (unsigned i = 0, e = NowDead.size(); i != e; ++i)
-          removeFromWorkList(NowDead[i]);
         // Finally, since the node is now dead, remove it from the graph.
         DAG.DeleteNode(N);
 
         // Replace the uses of Use with uses of the updated base value.
         DAG.ReplaceAllUsesOfValueWith(SDOperand(Op, 0),
                                       Result.getValue(isLoad ? 1 : 0),
-                                      &NowDead);
+                                      &DeadNodes);
         removeFromWorkList(Op);
-        for (unsigned i = 0, e = NowDead.size(); i != e; ++i)
-          removeFromWorkList(NowDead[i]);
         DAG.DeleteNode(Op);
-
         return true;
       }
     }
@@ -4228,13 +4239,11 @@ SDOperand DAGCombiner::visitLOAD(SDNode *N) {
         // v3         = add v2, c
         // Now we replace use of chain2 with chain1.  This makes the second load
         // isomorphic to the one we are deleting, and thus makes this load live.
-        std::vector<SDNode*> NowDead;
         DOUT << "\nReplacing.6 "; DEBUG(N->dump(&DAG));
         DOUT << "\nWith chain: "; DEBUG(Chain.Val->dump(&DAG));
         DOUT << "\n";
-        DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 1), Chain, &NowDead);
-        for (unsigned i = 0, e = NowDead.size(); i != e; ++i)
-          removeFromWorkList(NowDead[i]);
+        WorkListRemover DeadNodes(*this);
+        DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 1), Chain, &DeadNodes);
         if (N->use_empty()) {
           removeFromWorkList(N);
           DAG.DeleteNode(N);
@@ -4245,19 +4254,17 @@ SDOperand DAGCombiner::visitLOAD(SDNode *N) {
       // Indexed loads.
       assert(N->getValueType(2) == MVT::Other && "Malformed indexed loads?");
       if (N->hasNUsesOfValue(0, 0) && N->hasNUsesOfValue(0, 1)) {
-        std::vector<SDNode*> NowDead;
         SDOperand Undef = DAG.getNode(ISD::UNDEF, N->getValueType(0));
         DOUT << "\nReplacing.6 "; DEBUG(N->dump(&DAG));
         DOUT << "\nWith: "; DEBUG(Undef.Val->dump(&DAG));
         DOUT << " and 2 other values\n";
-        DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 0), Undef, &NowDead);
+        WorkListRemover DeadNodes(*this);
+        DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 0), Undef, &DeadNodes);
         DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 1),
                                     DAG.getNode(ISD::UNDEF, N->getValueType(1)),
-                                      &NowDead);
-        DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 2), Chain, &NowDead);
+                                      &DeadNodes);
+        DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 2), Chain, &DeadNodes);
         removeFromWorkList(N);
-        for (unsigned i = 0, e = NowDead.size(); i != e; ++i)
-          removeFromWorkList(NowDead[i]);
         DAG.DeleteNode(N);
         return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
       }

@@ -43,6 +43,8 @@ static SDVTList makeVTList(const MVT::ValueType *VTs, unsigned NumVTs) {
   return Res;
 }
 
+SelectionDAG::DAGUpdateListener::~DAGUpdateListener() {}
+
 //===----------------------------------------------------------------------===//
 //                              ConstantFPSDNode Class
 //===----------------------------------------------------------------------===//
@@ -455,7 +457,7 @@ void SelectionDAG::RemoveDeadNodes() {
   setRoot(Dummy.getValue());
 }
 
-void SelectionDAG::RemoveDeadNode(SDNode *N, std::vector<SDNode*> &Deleted) {
+void SelectionDAG::RemoveDeadNode(SDNode *N, DAGUpdateListener *UpdateListener){
   SmallVector<SDNode*, 16> DeadNodes;
   DeadNodes.push_back(N);
 
@@ -464,6 +466,9 @@ void SelectionDAG::RemoveDeadNode(SDNode *N, std::vector<SDNode*> &Deleted) {
   while (!DeadNodes.empty()) {
     SDNode *N = DeadNodes.back();
     DeadNodes.pop_back();
+    
+    if (UpdateListener)
+      UpdateListener->NodeDeleted(N);
     
     // Take the node out of the appropriate CSE map.
     RemoveNodeFromCSEMaps(N);
@@ -484,7 +489,6 @@ void SelectionDAG::RemoveDeadNode(SDNode *N, std::vector<SDNode*> &Deleted) {
     N->NumOperands = 0;
     
     // Finally, remove N itself.
-    Deleted.push_back(N);
     AllNodes.erase(N);
   }
 }
@@ -3170,13 +3174,14 @@ SDNode *SelectionDAG::getTargetNode(unsigned Opcode,
                  Ops, NumOps).Val;
 }
 
+
 /// ReplaceAllUsesWith - Modify anything using 'From' to use 'To' instead.
 /// This can cause recursive merging of nodes in the DAG.
 ///
 /// This version assumes From has a single result value.
 ///
 void SelectionDAG::ReplaceAllUsesWith(SDOperand FromN, SDOperand To,
-                                      std::vector<SDNode*> *Deleted) {
+                                      DAGUpdateListener *UpdateListener) {
   SDNode *From = FromN.Val;
   // FIXME: This works around a dag isel emitter bug.
   if (From->getNumValues() == 1 && FromN.ResNo != 0)
@@ -3204,10 +3209,16 @@ void SelectionDAG::ReplaceAllUsesWith(SDOperand FromN, SDOperand To,
     // Now that we have modified U, add it back to the CSE maps.  If it already
     // exists there, recursively merge the results together.
     if (SDNode *Existing = AddNonLeafNodeToCSEMaps(U)) {
-      ReplaceAllUsesWith(U, Existing, Deleted);
-      // U is now dead.
-      if (Deleted) Deleted->push_back(U);
+      ReplaceAllUsesWith(U, Existing, UpdateListener);
+      // U is now dead.  Inform the listener if it exists and delete it.
+      if (UpdateListener) 
+        UpdateListener->NodeDeleted(U);
       DeleteNodeNotInCSEMaps(U);
+    } else {
+      // If the node doesn't already exist, we updated it.  Inform a listener if
+      // it exists.
+      if (UpdateListener) 
+        UpdateListener->NodeUpdated(U);
     }
   }
 }
@@ -3219,12 +3230,13 @@ void SelectionDAG::ReplaceAllUsesWith(SDOperand FromN, SDOperand To,
 /// values.
 ///
 void SelectionDAG::ReplaceAllUsesWith(SDNode *From, SDNode *To,
-                                      std::vector<SDNode*> *Deleted) {
+                                      DAGUpdateListener *UpdateListener) {
   assert(From != To && "Cannot replace uses of with self");
   assert(From->getNumValues() == To->getNumValues() &&
          "Cannot use this version of ReplaceAllUsesWith!");
   if (From->getNumValues() == 1)   // If possible, use the faster version.
-    return ReplaceAllUsesWith(SDOperand(From, 0), SDOperand(To, 0), Deleted);
+    return ReplaceAllUsesWith(SDOperand(From, 0), SDOperand(To, 0),
+                              UpdateListener);
   
   while (!From->use_empty()) {
     // Process users until they are all gone.
@@ -3244,10 +3256,16 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From, SDNode *To,
     // Now that we have modified U, add it back to the CSE maps.  If it already
     // exists there, recursively merge the results together.
     if (SDNode *Existing = AddNonLeafNodeToCSEMaps(U)) {
-      ReplaceAllUsesWith(U, Existing, Deleted);
-      // U is now dead.
-      if (Deleted) Deleted->push_back(U);
+      ReplaceAllUsesWith(U, Existing, UpdateListener);
+      // U is now dead.  Inform the listener if it exists and delete it.
+      if (UpdateListener) 
+        UpdateListener->NodeDeleted(U);
       DeleteNodeNotInCSEMaps(U);
+    } else {
+      // If the node doesn't already exist, we updated it.  Inform a listener if
+      // it exists.
+      if (UpdateListener) 
+        UpdateListener->NodeUpdated(U);
     }
   }
 }
@@ -3259,9 +3277,9 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From, SDNode *To,
 /// number and types of values returned by From.
 void SelectionDAG::ReplaceAllUsesWith(SDNode *From,
                                       const SDOperand *To,
-                                      std::vector<SDNode*> *Deleted) {
+                                      DAGUpdateListener *UpdateListener) {
   if (From->getNumValues() == 1)  // Handle the simple case efficiently.
-    return ReplaceAllUsesWith(SDOperand(From, 0), To[0], Deleted);
+    return ReplaceAllUsesWith(SDOperand(From, 0), To[0], UpdateListener);
 
   while (!From->use_empty()) {
     // Process users until they are all gone.
@@ -3282,35 +3300,67 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From,
     // Now that we have modified U, add it back to the CSE maps.  If it already
     // exists there, recursively merge the results together.
     if (SDNode *Existing = AddNonLeafNodeToCSEMaps(U)) {
-      ReplaceAllUsesWith(U, Existing, Deleted);
-      // U is now dead.
-      if (Deleted) Deleted->push_back(U);
+      ReplaceAllUsesWith(U, Existing, UpdateListener);
+      // U is now dead.  Inform the listener if it exists and delete it.
+      if (UpdateListener) 
+        UpdateListener->NodeDeleted(U);
       DeleteNodeNotInCSEMaps(U);
+    } else {
+      // If the node doesn't already exist, we updated it.  Inform a listener if
+      // it exists.
+      if (UpdateListener) 
+        UpdateListener->NodeUpdated(U);
     }
   }
 }
 
+namespace {
+  /// ChainedSetUpdaterListener - This class is a DAGUpdateListener that removes
+  /// any deleted nodes from the set passed into its constructor and recursively
+  /// notifies another update listener if specified.
+  class ChainedSetUpdaterListener : 
+  public SelectionDAG::DAGUpdateListener {
+    SmallSetVector<SDNode*, 16> &Set;
+    SelectionDAG::DAGUpdateListener *Chain;
+  public:
+    ChainedSetUpdaterListener(SmallSetVector<SDNode*, 16> &set,
+                              SelectionDAG::DAGUpdateListener *chain)
+      : Set(set), Chain(chain) {}
+    
+    virtual void NodeDeleted(SDNode *N) {
+      Set.remove(N);
+      if (Chain) Chain->NodeDeleted(N);
+    }
+    virtual void NodeUpdated(SDNode *N) {
+      if (Chain) Chain->NodeUpdated(N);
+    }
+  };
+}
+
 /// ReplaceAllUsesOfValueWith - Replace any uses of From with To, leaving
 /// uses of other values produced by From.Val alone.  The Deleted vector is
-/// handled the same was as for ReplaceAllUsesWith.
+/// handled the same way as for ReplaceAllUsesWith.
 void SelectionDAG::ReplaceAllUsesOfValueWith(SDOperand From, SDOperand To,
-                                             std::vector<SDNode*> *Deleted) {
+                                             DAGUpdateListener *UpdateListener){
   assert(From != To && "Cannot replace a value with itself");
+  
   // Handle the simple, trivial, case efficiently.
   if (From.Val->getNumValues() == 1) {
-    ReplaceAllUsesWith(From, To, Deleted);
+    ReplaceAllUsesWith(From, To, UpdateListener);
     return;
   }
-  
+
+  if (From.use_empty()) return;
+
   // Get all of the users of From.Val.  We want these in a nice,
   // deterministically ordered and uniqued set, so we use a SmallSetVector.
   SmallSetVector<SDNode*, 16> Users(From.Val->use_begin(), From.Val->use_end());
 
-  std::vector<SDNode*> LocalDeletionVector;
+  // When one of the recursive merges deletes nodes from the graph, we need to
+  // make sure that UpdateListener is notified *and* that the node is removed
+  // from Users if present.  CSUL does this.
+  ChainedSetUpdaterListener CSUL(Users, UpdateListener);
   
-  // Pick a deletion vector to use.  If the user specified one, use theirs,
-  // otherwise use a local one.
-  std::vector<SDNode*> *DeleteVector = Deleted ? Deleted : &LocalDeletionVector;
   while (!Users.empty()) {
     // We know that this user uses some value of From.  If it is the right
     // value, update it.
@@ -3329,7 +3379,7 @@ void SelectionDAG::ReplaceAllUsesOfValueWith(SDOperand From, SDOperand To,
     // from the CSE maps.
     RemoveNodeFromCSEMaps(User);
     
-    // Update all operands that match "From".
+    // Update all operands that match "From" in case there are multiple uses.
     for (; Op != E; ++Op) {
       if (*Op == From) {
         From.Val->removeUser(User);
@@ -3341,31 +3391,21 @@ void SelectionDAG::ReplaceAllUsesOfValueWith(SDOperand From, SDOperand To,
     // Now that we have modified User, add it back to the CSE maps.  If it
     // already exists there, recursively merge the results together.
     SDNode *Existing = AddNonLeafNodeToCSEMaps(User);
-    if (!Existing) continue;  // Continue on to next user.
+    if (!Existing) {
+      if (UpdateListener) UpdateListener->NodeUpdated(User);
+      continue;  // Continue on to next user.
+    }
     
     // If there was already an existing matching node, use ReplaceAllUsesWith
-    // to replace the dead one with the existing one.  However, this can cause
+    // to replace the dead one with the existing one.  This can cause
     // recursive merging of other unrelated nodes down the line.  The merging
-    // can cause deletion of nodes that used the old value.  In this case,
-    // we have to be certain to remove them from the Users set.
-    unsigned NumDeleted = DeleteVector->size();
-    ReplaceAllUsesWith(User, Existing, DeleteVector);
+    // can cause deletion of nodes that used the old value.  To handle this, we
+    // use CSUL to remove them from the Users set.
+    ReplaceAllUsesWith(User, Existing, &CSUL);
     
-    // User is now dead.
-    DeleteVector->push_back(User);
+    // User is now dead.  Notify a listener if present.
+    if (UpdateListener) UpdateListener->NodeDeleted(User);
     DeleteNodeNotInCSEMaps(User);
-    
-    // We have to be careful here, because ReplaceAllUsesWith could have
-    // deleted a user of From, which means there may be dangling pointers
-    // in the "Users" setvector.  Scan over the deleted node pointers and
-    // remove them from the setvector.
-    for (unsigned i = NumDeleted, e = DeleteVector->size(); i != e; ++i)
-      Users.remove((*DeleteVector)[i]);
-
-    // If the user doesn't need the set of deleted elements, don't retain them
-    // to the next loop iteration.
-    if (Deleted == 0)
-      LocalDeletionVector.clear();
   }
 }
 

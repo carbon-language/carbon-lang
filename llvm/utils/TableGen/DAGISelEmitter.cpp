@@ -1952,16 +1952,13 @@ void DAGISelEmitter::run(std::ostream &OS) {
      << "// *** instruction selector class.  These functions are really "
      << "methods.\n\n";
   
-  OS << "#include \"llvm/Support/Compiler.h\"\n";
-
   OS << "// Instruction selector priority queue:\n"
      << "std::vector<SDNode*> ISelQueue;\n";
   OS << "/// Keep track of nodes which have already been added to queue.\n"
      << "unsigned char *ISelQueued;\n";
   OS << "/// Keep track of nodes which have already been selected.\n"
      << "unsigned char *ISelSelected;\n";
-  OS << "/// Dummy parameter to ReplaceAllUsesOfValueWith().\n"
-     << "std::vector<SDNode*> ISelKilled;\n\n";
+
 
   OS << "/// IsChainCompatible - Returns true if Chain is Op or Chain does\n";
   OS << "/// not reach Op.\n";
@@ -2009,37 +2006,52 @@ void DAGISelEmitter::run(std::ostream &OS) {
   OS << "  }\n";
   OS << "}\n\n";
 
-  OS << "inline void RemoveKilled() {\n";
-OS << "  unsigned NumKilled = ISelKilled.size();\n";
-  OS << "  if (NumKilled) {\n";
-  OS << "    for (unsigned i = 0; i != NumKilled; ++i) {\n";
-  OS << "      SDNode *Temp = ISelKilled[i];\n";
-  OS << "      ISelQueue.erase(std::remove(ISelQueue.begin(), ISelQueue.end(), "
-     << "Temp), ISelQueue.end());\n";
-  OS << "    };\n";
- OS << "    std::make_heap(ISelQueue.begin(), ISelQueue.end(), isel_sort());\n";
-  OS << "    ISelKilled.clear();\n";
-  OS << "  }\n";
+  
+  OS << "class VISIBILITY_HIDDEN ISelQueueUpdater :\n";
+  OS << "  public SelectionDAG::DAGUpdateListener {\n";
+  OS << "    std::vector<SDNode*> &ISelQueue;\n";
+  OS << "    bool HadDelete;\n";
+  OS << "  public:\n";
+  OS << "    ISelQueueUpdater(std::vector<SDNode*> &isq)\n";
+  OS << "      : ISelQueue(isq), HadDelete(false) {}\n";
+  OS << "    \n";
+  OS << "    bool hadDelete() const { return HadDelete; }\n";
+  OS << "    \n";
+  OS << "    virtual void NodeDeleted(SDNode *N) {\n";
+  OS << "      ISelQueue.erase(std::remove(ISelQueue.begin(), ISelQueue.end(),";
+  OS << " N),\n                      ISelQueue.end());\n";
+  OS << "      HadDelete = true;\n";
+  OS << "    }\n";
+  OS << "    \n";
+  OS << "    // Ignore updates.\n";
+  OS << "    virtual void NodeUpdated(SDNode *N) {}\n";
+  OS << "  };\n";
+  
+  OS << "inline void UpdateQueue(const ISelQueueUpdater &ISQU) {\n";
+  OS << "  if (ISQU.hadDelete())\n";
+  OS << "    std::make_heap(ISelQueue.begin(), ISelQueue.end(),isel_sort());\n";
   OS << "}\n\n";
 
   OS << "void ReplaceUses(SDOperand F, SDOperand T) DISABLE_INLINE {\n";
-  OS << "  CurDAG->ReplaceAllUsesOfValueWith(F, T, &ISelKilled);\n";
+  OS << "  ISelQueueUpdater ISQU(ISelQueue);\n";
+  OS << "  CurDAG->ReplaceAllUsesOfValueWith(F, T, &ISQU);\n";
   OS << "  setSelected(F.Val->getNodeId());\n";
-  OS << "  RemoveKilled();\n";
+  OS << "  UpdateQueue(ISQU);\n";
   OS << "}\n";
   OS << "void ReplaceUses(SDNode *F, SDNode *T) DISABLE_INLINE {\n";
   OS << "  unsigned FNumVals = F->getNumValues();\n";
   OS << "  unsigned TNumVals = T->getNumValues();\n";
+  OS << "  ISelQueueUpdater ISQU(ISelQueue);\n";
   OS << "  if (FNumVals != TNumVals) {\n";
   OS << "    for (unsigned i = 0, e = std::min(FNumVals, TNumVals); "
      << "i < e; ++i)\n";
   OS << "      CurDAG->ReplaceAllUsesOfValueWith(SDOperand(F, i), "
-     << "SDOperand(T, i), &ISelKilled);\n";
+     << "SDOperand(T, i), &ISQU);\n";
   OS << "  } else {\n";
-  OS << "    CurDAG->ReplaceAllUsesWith(F, T, &ISelKilled);\n";
+  OS << "    CurDAG->ReplaceAllUsesWith(F, T, &ISQU);\n";
   OS << "  }\n";
   OS << "  setSelected(F->getNodeId());\n";
-  OS << "  RemoveKilled();\n";
+  OS << "  UpdateQueue(ISQU);\n";
   OS << "}\n\n";
 
   OS << "// SelectRoot - Top level entry to DAG isel.\n";
@@ -2066,8 +2078,9 @@ OS << "  unsigned NumKilled = ISelKilled.size();\n";
   OS << "        if (ResNode)\n";
   OS << "          ReplaceUses(Node, ResNode);\n";
   OS << "        if (Node->use_empty()) { // Don't delete EntryToken, etc.\n";
-  OS << "          CurDAG->RemoveDeadNode(Node, ISelKilled);\n";
-  OS << "          RemoveKilled();\n";
+  OS << "          ISelQueueUpdater ISQU(ISelQueue);\n";
+  OS << "          CurDAG->RemoveDeadNode(Node, &ISQU);\n";
+  OS << "          UpdateQueue(ISQU);\n";
   OS << "        }\n";
   OS << "      }\n";
   OS << "    }\n";
