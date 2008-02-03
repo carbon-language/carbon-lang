@@ -11,37 +11,37 @@
 #
 ##===----------------------------------------------------------------------===##
 
+import os
 import sys
-import subprocess
 
 def error(message):
     print >> sys.stderr, 'ccc: ' + message
     sys.exit(1)
 
 def run(args):
-    print >> sys.stderr, ' '.join(args)
-    code = subprocess.call(args)
+    cmd = ' '.join(args)
+    print >> sys.stderr, cmd
+    code = os.system(cmd)
     if code:
         sys.exit(code)
 
 def preprocess(args):
-    command = 'clang -E'.split()
-    run(command + args)
+    run(['clang -E'] + args)
 
 def compile(args):
-    command = 'clang -emit-llvm-bc'.split()
-    run(command + args)
+    run(['clang -emit-llvm-bc'] + args)
 
 def link(args):
-    command = 'llvm-ld -native'.split()
-    run(command + args)
+    run(['llvm-ld -native'] + args)
 
 def extension(path):
-    return path.rpartition(".")[2]
+    return path.split(".")[-1]
 
 def changeextension(path, newext):
-    components = path.rpartition(".")
-    return "".join([components[0], components[1], newext])
+    i = path.rfind('.')
+    if i < 0:
+        return path
+    return path[:i] + newext
 
 def inferlanguage(extension):
     if extension == "c":
