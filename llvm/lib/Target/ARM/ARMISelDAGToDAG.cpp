@@ -732,8 +732,10 @@ SDNode *ARMDAGToDAGISel::Select(SDOperand Op) {
     SDOperand Ops[] = { N1, Tmp2, N3, Chain, InFlag };
     SDNode *ResNode = CurDAG->getTargetNode(Opc, MVT::Other, MVT::Flag, Ops, 5);
     Chain = SDOperand(ResNode, 0);
-    InFlag = SDOperand(ResNode, 1);
-    ReplaceUses(SDOperand(Op.Val, 1), InFlag);
+    if (Op.Val->getNumValues() == 2) {
+      InFlag = SDOperand(ResNode, 1);
+      ReplaceUses(SDOperand(Op.Val, 1), InFlag);
+    }
     ReplaceUses(SDOperand(Op.Val, 0), SDOperand(Chain.Val, Chain.ResNo));
     return NULL;
   }
