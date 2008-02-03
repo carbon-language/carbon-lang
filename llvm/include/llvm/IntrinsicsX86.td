@@ -674,6 +674,156 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 }
 
 //===----------------------------------------------------------------------===//
+// SSE4.1
+
+// FP rounding ops
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse41_round_ss        : GCCBuiltin<"__builtin_ia32_roundss">,
+              Intrinsic<[llvm_v4f32_ty, llvm_v4f32_ty,
+                         llvm_i32_ty], [IntrNoMem]>;
+  def int_x86_sse41_round_ps        : GCCBuiltin<"__builtin_ia32_roundps">,
+              Intrinsic<[llvm_v4f32_ty, llvm_v4f32_ty,
+                         llvm_i32_ty], [IntrNoMem]>;
+  def int_x86_sse41_round_sd        : GCCBuiltin<"__builtin_ia32_roundsd">,
+              Intrinsic<[llvm_v2f64_ty, llvm_v2f64_ty,
+                         llvm_i32_ty], [IntrNoMem]>;
+  def int_x86_sse41_round_pd        : GCCBuiltin<"__builtin_ia32_roundpd">,
+              Intrinsic<[llvm_v2f64_ty, llvm_v2f64_ty,
+                         llvm_i32_ty], [IntrNoMem]>;
+}
+
+// Vector sign and zero extend
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse41_pmovsxbd        : GCCBuiltin<"__builtin_ia32_pmovsxbd128">,
+              Intrinsic<[llvm_v4i32_ty, llvm_v16i8_ty]>;
+  def int_x86_sse41_pmovsxbq        : GCCBuiltin<"__builtin_ia32_pmovsxbq128">,
+              Intrinsic<[llvm_v2i64_ty, llvm_v16i8_ty]>;
+  def int_x86_sse41_pmovsxbw        : GCCBuiltin<"__builtin_ia32_pmovsxbw128">,
+              Intrinsic<[llvm_v8i16_ty, llvm_v16i8_ty]>;
+  def int_x86_sse41_pmovsxdq        : GCCBuiltin<"__builtin_ia32_pmovsxdq128">,
+              Intrinsic<[llvm_v2i64_ty, llvm_v4i32_ty]>;
+  def int_x86_sse41_pmovsxwd        : GCCBuiltin<"__builtin_ia32_pmovsxwd128">,
+              Intrinsic<[llvm_v4i32_ty, llvm_v8i16_ty]>;
+  def int_x86_sse41_pmovsxwq        : GCCBuiltin<"__builtin_ia32_pmovsxwq128">,
+              Intrinsic<[llvm_v2i64_ty, llvm_v8i16_ty]>;
+  def int_x86_sse41_pmovzxbd        : GCCBuiltin<"__builtin_ia32_pmovzxbd128">,
+              Intrinsic<[llvm_v4i32_ty, llvm_v16i8_ty]>;
+  def int_x86_sse41_pmovzxbq        : GCCBuiltin<"__builtin_ia32_pmovzxbq128">,
+              Intrinsic<[llvm_v2i64_ty, llvm_v16i8_ty]>;
+  def int_x86_sse41_pmovzxbw        : GCCBuiltin<"__builtin_ia32_pmovzxbw128">,
+              Intrinsic<[llvm_v8i16_ty, llvm_v16i8_ty]>;
+  def int_x86_sse41_pmovzxdq        : GCCBuiltin<"__builtin_ia32_pmovzxdq128">,
+              Intrinsic<[llvm_v2i64_ty, llvm_v4i32_ty]>;
+  def int_x86_sse41_pmovzxwd        : GCCBuiltin<"__builtin_ia32_pmovzxwd128">,
+              Intrinsic<[llvm_v4i32_ty, llvm_v8i16_ty]>;
+  def int_x86_sse41_pmovzxwq        : GCCBuiltin<"__builtin_ia32_pmovzxwq128">,
+              Intrinsic<[llvm_v2i64_ty, llvm_v8i16_ty]>;
+}
+
+// Vector min element
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse41_phminposuw     : GCCBuiltin<"__builtin_ia32_phminposuw128">,
+              Intrinsic<[llvm_v8i16_ty, llvm_v8i16_ty]>;
+}
+
+// Vector compare, min, max
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse41_pcmpeqq         : GCCBuiltin<"__builtin_ia32_pcmpeqq">,
+              Intrinsic<[llvm_v2i64_ty, llvm_v2i64_ty, llvm_v2i64_ty]>;
+  def int_x86_sse41_pmaxsb          : GCCBuiltin<"__builtin_ia32_pmaxsb128">,
+              Intrinsic<[llvm_v16i8_ty, llvm_v16i8_ty, llvm_v16i8_ty]>;
+  def int_x86_sse41_pmaxsd          : GCCBuiltin<"__builtin_ia32_pmaxsd128">,
+              Intrinsic<[llvm_v4i32_ty, llvm_v4i32_ty, llvm_v4i32_ty]>;
+  def int_x86_sse41_pmaxud          : GCCBuiltin<"__builtin_ia32_pmaxud128">,
+              Intrinsic<[llvm_v4i32_ty, llvm_v4i32_ty, llvm_v4i32_ty]>;
+  def int_x86_sse41_pmaxuw          : GCCBuiltin<"__builtin_ia32_pmaxuw128">,
+              Intrinsic<[llvm_v8i16_ty, llvm_v8i16_ty, llvm_v8i16_ty]>;
+  def int_x86_sse41_pminsb          : GCCBuiltin<"__builtin_ia32_pminsb128">,
+              Intrinsic<[llvm_v16i8_ty, llvm_v16i8_ty, llvm_v16i8_ty]>;
+  def int_x86_sse41_pminsd          : GCCBuiltin<"__builtin_ia32_pminsd128">,
+              Intrinsic<[llvm_v4i32_ty, llvm_v4i32_ty, llvm_v4i32_ty]>;
+  def int_x86_sse41_pminud          : GCCBuiltin<"__builtin_ia32_pminud128">,
+              Intrinsic<[llvm_v4i32_ty, llvm_v4i32_ty, llvm_v4i32_ty]>;
+  def int_x86_sse41_pminuw          : GCCBuiltin<"__builtin_ia32_pminuw128">,
+              Intrinsic<[llvm_v8i16_ty, llvm_v8i16_ty, llvm_v8i16_ty]>;
+}
+
+// Vector pack
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse41_packusdw        : GCCBuiltin<"__builtin_ia32_packusdw128">,
+              Intrinsic<[llvm_v8i16_ty, llvm_v4i32_ty, llvm_v4i32_ty]>;
+}
+
+// Vector multiply
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse41_pmuldq          : GCCBuiltin<"__builtin_ia32_pmuldq128">,
+              Intrinsic<[llvm_v2i64_ty, llvm_v4i32_ty, llvm_v4i32_ty]>;
+  def int_x86_sse41_pmulld          : GCCBuiltin<"__builtin_ia32_pmulld128">,
+              Intrinsic<[llvm_v4i32_ty, llvm_v4i32_ty, llvm_v4i32_ty]>;
+}
+
+// Vector extract
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse41_pextrb         : GCCBuiltin<"__builtin_ia32_vec_ext_v16qi">,
+              Intrinsic<[llvm_i32_ty, llvm_v16i8_ty, llvm_i32_ty]>;
+  def int_x86_sse41_pextrd         : GCCBuiltin<"__builtin_ia32_vec_ext_v4si">,
+              Intrinsic<[llvm_i32_ty, llvm_v4i32_ty, llvm_i32_ty]>;
+  def int_x86_sse41_pextrq         : GCCBuiltin<"__builtin_ia32_vec_ext_v2di">,
+              Intrinsic<[llvm_i64_ty, llvm_v2i64_ty, llvm_i32_ty]>;
+  def int_x86_sse41_extractps      : GCCBuiltin<"__builtin_ia32_extractps128">,
+              Intrinsic<[llvm_i32_ty, llvm_v4f32_ty, llvm_i32_ty]>;
+}
+
+// Vector insert
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse41_pinsrb         : GCCBuiltin<"__builtin_ia32_vec_set_v16qi">,
+          Intrinsic<[llvm_v16i8_ty, llvm_v16i8_ty, llvm_i32_ty, llvm_i32_ty]>;
+  def int_x86_sse41_pinsrd         : GCCBuiltin<"__builtin_ia32_vec_set_v4si">,
+          Intrinsic<[llvm_v4i32_ty, llvm_v4i32_ty, llvm_i32_ty, llvm_i32_ty]>;
+  def int_x86_sse41_pinsrq         : GCCBuiltin<"__builtin_ia32_vec_set_v2di">,
+          Intrinsic<[llvm_v2i64_ty, llvm_v2i64_ty, llvm_i64_ty, llvm_i32_ty]>;
+  def int_x86_sse41_insertps       : GCCBuiltin<"__builtin_ia32_insertps128">,
+          Intrinsic<[llvm_v4f32_ty, llvm_v4f32_ty, llvm_v4f32_ty, llvm_i32_ty]>;
+}
+
+// Vector blend
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse41_pblendvb         : GCCBuiltin<"__builtin_ia32_pblendvb128">,
+        Intrinsic<[llvm_v16i8_ty, llvm_v16i8_ty, llvm_v16i8_ty, llvm_v16i8_ty]>;
+  def int_x86_sse41_pblendw          : GCCBuiltin<"__builtin_ia32_pblendw128">,
+        Intrinsic<[llvm_v8i16_ty, llvm_v8i16_ty, llvm_v8i16_ty, llvm_i32_ty]>;
+  def int_x86_sse41_blendpd          : GCCBuiltin<"__builtin_ia32_blendpd">,
+        Intrinsic<[llvm_v2f64_ty, llvm_v2f64_ty, llvm_v2f64_ty, llvm_i32_ty]>;
+  def int_x86_sse41_blendps          : GCCBuiltin<"__builtin_ia32_blendps">,
+        Intrinsic<[llvm_v4f32_ty, llvm_v4f32_ty, llvm_v4f32_ty, llvm_i32_ty]>;
+  def int_x86_sse41_blendvpd         : GCCBuiltin<"__builtin_ia32_blendvpd">,
+        Intrinsic<[llvm_v2f64_ty, llvm_v2f64_ty, llvm_v2f64_ty, llvm_v2f64_ty]>;
+  def int_x86_sse41_blendvps         : GCCBuiltin<"__builtin_ia32_blendvps">,
+        Intrinsic<[llvm_v4f32_ty, llvm_v4f32_ty, llvm_v4f32_ty, llvm_v4f32_ty]>;
+}
+
+// Vector dot product
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse41_dppd            : GCCBuiltin<"__builtin_ia32_dppd">,
+          Intrinsic<[llvm_v2f64_ty, llvm_v2f64_ty, llvm_v2f64_ty, llvm_i32_ty]>;
+  def int_x86_sse41_dpps            : GCCBuiltin<"__builtin_ia32_dpps">,
+          Intrinsic<[llvm_v4f32_ty, llvm_v4f32_ty, llvm_v4f32_ty, llvm_i32_ty]>;
+}
+
+// Vector sum of absolute differences
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse41_mpsadbw         : GCCBuiltin<"__builtin_ia32_mpsadbw128">,
+          Intrinsic<[llvm_v16i8_ty, llvm_v16i8_ty, llvm_v16i8_ty, llvm_i32_ty]>;
+}
+
+// Vector sum of absolute differences
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse41_movntdqa        : GCCBuiltin<"__builtin_ia32_movntdqa">,
+          Intrinsic<[llvm_v2i64_ty, llvm_ptr_ty]>;
+}
+
+
+//===----------------------------------------------------------------------===//
 // MMX
 
 // Empty MMX state op.

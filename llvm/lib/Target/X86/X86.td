@@ -34,6 +34,12 @@ def FeatureSSE3    : SubtargetFeature<"sse3", "X86SSELevel", "SSE3",
 def FeatureSSSE3   : SubtargetFeature<"ssse3", "X86SSELevel", "SSSE3",
                                       "Enable SSSE3 instructions",
                                       [FeatureSSE3]>;
+def FeatureSSE41   : SubtargetFeature<"sse41", "X86SSELevel", "SSE41",
+                                      "Enable SSE 4.1 instructions",
+                                      [FeatureSSSE3]>;
+def FeatureSSE42   : SubtargetFeature<"sse42", "X86SSELevel", "SSE42",
+                                      "Enable SSE 4.2 instructions",
+                                      [FeatureSSE41]>;
 def Feature3DNow   : SubtargetFeature<"3dnow", "X863DNowLevel", "ThreeDNow",
                                       "Enable 3DNow! instructions">;
 def Feature3DNowA  : SubtargetFeature<"3dnowa", "X863DNowLevel", "ThreeDNowA",
@@ -66,6 +72,7 @@ def : Proc<"yonah",           [FeatureSSE3]>;
 def : Proc<"prescott",        [FeatureSSE3]>;
 def : Proc<"nocona",          [FeatureSSE3]>;
 def : Proc<"core2",           [FeatureSSSE3]>;
+def : Proc<"penryn",          [FeatureSSE41]>;
 
 def : Proc<"k6",              [FeatureMMX]>;
 def : Proc<"k6-2",            [FeatureMMX,    Feature3DNow]>;

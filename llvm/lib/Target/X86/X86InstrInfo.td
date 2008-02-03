@@ -166,6 +166,8 @@ def HasSSE1      : Predicate<"Subtarget->hasSSE1()">;
 def HasSSE2      : Predicate<"Subtarget->hasSSE2()">;
 def HasSSE3      : Predicate<"Subtarget->hasSSE3()">;
 def HasSSSE3     : Predicate<"Subtarget->hasSSSE3()">;
+def HasSSE41     : Predicate<"Subtarget->hasSSE41()">;
+def HasSSE42     : Predicate<"Subtarget->hasSSE42()">;
 def FPStackf32   : Predicate<"!Subtarget->hasSSE1()">;
 def FPStackf64   : Predicate<"!Subtarget->hasSSE2()">;
 def In32BitMode  : Predicate<"!Subtarget->is64Bit()">;

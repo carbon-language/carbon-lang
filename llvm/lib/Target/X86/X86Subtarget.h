@@ -38,7 +38,7 @@ public:
   };
 protected:
   enum X86SSEEnum {
-    NoMMXSSE, MMX, SSE1, SSE2, SSE3, SSSE3
+    NoMMXSSE, MMX, SSE1, SSE2, SSE3, SSSE3, SSE41, SSE42
   };
 
   enum X863DNowEnum {
@@ -127,6 +127,8 @@ public:
   bool hasSSE2() const { return X86SSELevel >= SSE2; }
   bool hasSSE3() const { return X86SSELevel >= SSE3; }
   bool hasSSSE3() const { return X86SSELevel >= SSSE3; }
+  bool hasSSE41() const { return X86SSELevel >= SSE41; }
+  bool hasSSE42() const { return X86SSELevel >= SSE42; }
   bool has3DNow() const { return X863DNowLevel >= ThreeDNow; }
   bool has3DNowA() const { return X863DNowLevel >= ThreeDNowA; }
 

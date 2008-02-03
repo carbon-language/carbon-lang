@@ -3038,3 +3038,98 @@ def : Pat<(store (v8i16 VR128:$src), addr:$dst),
           (MOVUPSmr addr:$dst, VR128:$src)>, Requires<[HasSSE2]>;
 def : Pat<(store (v16i8 VR128:$src), addr:$dst),
           (MOVUPSmr addr:$dst, VR128:$src)>, Requires<[HasSSE2]>;
+          
+//===----------------------------------------------------------------------===//
+// SSE4.1 Instructions
+//===----------------------------------------------------------------------===//
+
+// SSE4.1 Instruction Templates:
+// 
+//   SS418I - SSE 4.1 instructions with T8 prefix.
+//   SS41AI - SSE 4.1 instructions with TA prefix.
+//
+class SS418I<bits<8> o, Format F, dag outs, dag ins, string asm,
+             list<dag> pattern>
+      : I<o, F, outs, ins, asm, pattern>, T8, Requires<[HasSSE41]>;
+class SS41AI<bits<8> o, Format F, dag outs, dag ins, string asm,
+             list<dag> pattern>
+      : I<o, F, outs, ins, asm, pattern>, TA, Requires<[HasSSE41]>;
+
+
+multiclass sse41_fp_unop_rm<bits<8> opcss, bits<8> opcps, 
+                            bits<8> opcsd, bits<8> opcpd, 
+                            string OpcodeStr,
+                            Intrinsic F32Int,
+                            Intrinsic V4F32Int,
+                            Intrinsic F64Int,
+                            Intrinsic V2F64Int,
+                            bit Commutable = 0> {
+  // Intrinsic operation, reg.
+  def SSr_Int : SS41AI<opcss, MRMSrcReg,
+                    (outs VR128:$dst), (ins VR128:$src1, i32imm:$src2),
+                    !strconcat(OpcodeStr,
+                    "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                    [(set VR128:$dst, (F32Int VR128:$src1, imm:$src2))]> {
+    let isCommutable = Commutable;
+  }
+
+  // Intrinsic operation, mem.
+  def SSm_Int : SS41AI<opcss, MRMSrcMem, 
+                    (outs VR128:$dst), (ins ssmem:$src1, i32imm:$src2),
+                    !strconcat(OpcodeStr, 
+                    "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                    [(set VR128:$dst, (F32Int sse_load_f32:$src1, imm:$src2))]>;
+
+  // Vector intrinsic operation, reg
+  def PSr_Int : SS41AI<opcps, MRMSrcReg, 
+                    (outs VR128:$dst), (ins VR128:$src1, i32imm:$src2),
+                    !strconcat(OpcodeStr,
+                    "ps\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                    [(set VR128:$dst, (V4F32Int VR128:$src1, imm:$src2))]> {
+    let isCommutable = Commutable;
+  }
+
+  // Vector intrinsic operation, mem
+  def PSm_Int : SS41AI<opcps, MRMSrcMem,
+                    (outs VR128:$dst), (ins f128mem:$src1, i32imm:$src2),
+                    !strconcat(OpcodeStr,
+                    "ps\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                    [(set VR128:$dst, (V4F32Int (load addr:$src1), imm:$src2))]>;
+
+  // Intrinsic operation, reg.
+  def SDr_Int : SS41AI<opcsd, MRMSrcReg,
+                    (outs VR128:$dst), (ins VR128:$src1, i32imm:$src2),
+                    !strconcat(OpcodeStr,
+                    "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                    [(set VR128:$dst, (F64Int VR128:$src1, imm:$src2))]> {
+    let isCommutable = Commutable;
+  }
+
+  // Intrinsic operation, mem.
+  def SDm_Int : SS41AI<opcsd, MRMSrcMem,
+                    (outs VR128:$dst), (ins sdmem:$src1, i32imm:$src2),
+                    !strconcat(OpcodeStr,
+                    "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                    [(set VR128:$dst, (F64Int sse_load_f64:$src1, imm:$src2))]>;
+
+  // Vector intrinsic operation, reg
+  def PDr_Int : SS41AI<opcpd, MRMSrcReg,
+                    (outs VR128:$dst), (ins VR128:$src1, i32imm:$src2),
+                    !strconcat(OpcodeStr,
+                    "pd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                    [(set VR128:$dst, (V2F64Int VR128:$src1, imm:$src2))]> {
+    let isCommutable = Commutable;
+  }
+
+  // Vector intrinsic operation, mem
+  def PDm_Int : SS41AI<opcpd, MRMSrcMem,
+                    (outs VR128:$dst), (ins f128mem:$src1, i32imm:$src2),
+                    !strconcat(OpcodeStr,
+                    "pd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                    [(set VR128:$dst, (V2F64Int (load addr:$src1), imm:$src2))]>;
+}
+
+// FP round - roundss, roundps, roundsd, roundpd
+defm ROUND  : sse41_fp_unop_rm<0x0A, 0x08, 0x0B, 0x09, "round",
+                               int_x86_sse41_round_ss, int_x86_sse41_round_ps,
+                               int_x86_sse41_round_sd, int_x86_sse41_round_pd>;

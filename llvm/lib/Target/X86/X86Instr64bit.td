@@ -1266,3 +1266,13 @@ def MOVSDto64rr  : RPDI<0x7E, MRMDestReg, (outs GR64:$dst), (ins FR64:$src),
 def MOVSDto64mr  : RPDI<0x7E, MRMDestMem, (outs), (ins i64mem:$dst, FR64:$src),
                         "mov{d|q}\t{$src, $dst|$dst, $src}",
                         [(store (i64 (bitconvert FR64:$src)), addr:$dst)]>;
+
+//===----------------------------------------------------------------------===//
+// X86-64 SSE4.1 Instructions
+//===----------------------------------------------------------------------===//
+
+// PEXTRB, unary, TA, 0x14, REX.W
+// PEXTRW, unary, TA, 0x15, REX.W
+// PEXTRQ, unary, TA, 0x16, REX.W
+// EXTRACTPS, unary, TA, 0x17, REX.W
+// PINSRQ, 2addr, binary, TA, 0x22, REX.W
