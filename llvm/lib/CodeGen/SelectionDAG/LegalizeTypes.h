@@ -40,7 +40,7 @@ namespace llvm {
 class VISIBILITY_HIDDEN DAGTypeLegalizer {
   TargetLowering &TLI;
   SelectionDAG &DAG;
-  
+public:
   // NodeIDFlags - This pass uses the NodeID on the SDNodes to hold information
   // about the state of the node.  The enum has all the values.
   enum NodeIDFlags {
@@ -57,7 +57,7 @@ class VISIBILITY_HIDDEN DAGTypeLegalizer {
     
     // 1+ - This is a node which has this many unlegalized operands.
   };
-  
+private:
   enum LegalizeAction {
     Legal,      // The target natively supports this type.
     Promote,    // This type should be executed in a larger type.
