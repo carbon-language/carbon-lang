@@ -39,19 +39,14 @@ std::string TextDiagnostics::FormatDiagnostic(Diagnostic &Diags,
   return Msg;
 }
 
-bool TextDiagnostics::IgnoreDiagnostic(Diagnostic::Level Level,
-                                       FullSourceLoc Pos) {
-  if (Pos.isValid()) {
-    // If this is a warning or note, and if it a system header, suppress the
-    // diagnostic.
-    if (Level == Diagnostic::Warning || Level == Diagnostic::Note) {
-      if (const FileEntry *F = Pos.getFileEntryForLoc()) {
-        DirectoryLookup::DirType DirInfo = TheHeaderSearch->getFileDirFlavor(F);
-        if (DirInfo == DirectoryLookup::SystemHeaderDir ||
-            DirInfo == DirectoryLookup::ExternCSystemHeaderDir)
-          return true;
-      }
-    }
+bool TextDiagnostics::isInSystemHeader(FullSourceLoc Pos) const {
+  if (!Pos.isValid()) return false;
+  
+  if (const FileEntry *F = Pos.getFileEntryForLoc()) {
+    DirectoryLookup::DirType DirInfo = TheHeaderSearch->getFileDirFlavor(F);
+    if (DirInfo == DirectoryLookup::SystemHeaderDir ||
+        DirInfo == DirectoryLookup::ExternCSystemHeaderDir)
+      return true;
   }
 
   return false;

@@ -166,10 +166,9 @@ class DiagnosticClient {
 public:
   virtual ~DiagnosticClient();
 
-  /// IgnoreDiagnostic - If the client wants to ignore this diagnostic, then
+  /// isInSystemHeader - If the client can tell that this is a system header,
   /// return true.
-  virtual bool IgnoreDiagnostic(Diagnostic::Level DiagLevel,
-                                FullSourceLoc Pos) = 0;
+  virtual bool isInSystemHeader(FullSourceLoc Pos) const { return false; }
 
   /// HandleDiagnostic - Handle this diagnostic, reporting it to the user or
   /// capturing it to a log as needed.

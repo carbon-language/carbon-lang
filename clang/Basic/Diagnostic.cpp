@@ -200,21 +200,27 @@ Diagnostic::Level Diagnostic::getDiagnosticLevel(unsigned DiagID) const {
 void Diagnostic::Report(FullSourceLoc Pos, unsigned DiagID,
                         const std::string *Strs, unsigned NumStrs,
                         const SourceRange *Ranges, unsigned NumRanges) {
+  
   // Figure out the diagnostic level of this message.
   Diagnostic::Level DiagLevel = getDiagnosticLevel(DiagID);
   
   // If the client doesn't care about this message, don't issue it.
   if (DiagLevel == Diagnostic::Ignored)
     return;
+
+  // If this is not an error and we are in a system header, ignore it.  We have
+  // to check on the original class here, because we also want to ignore
+  // extensions and warnings in -Werror and -pedantic-errors modes, which *map*
+  // warnings/extensions to errors.
+  if (DiagID < diag::NUM_BUILTIN_DIAGNOSTICS &&
+      getBuiltinDiagClass(DiagID) != ERROR &&
+      Client.isInSystemHeader(Pos))
+    return;
   
   if (DiagLevel >= Diagnostic::Error) {
     ErrorOccurred = true;
     ++NumErrors;
   }
-
-  // Are we going to ignore this diagnosic?
-  if (Client.IgnoreDiagnostic(DiagLevel, Pos))
-    return;
 
   // Finally, report it.
   Client.HandleDiagnostic(*this, DiagLevel, Pos, (diag::kind)DiagID,

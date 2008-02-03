@@ -34,8 +34,7 @@ public:
 
   void setHeaderSearch(HeaderSearch &HS) { TheHeaderSearch = &HS; }
 
-  virtual bool IgnoreDiagnostic(Diagnostic::Level Level, 
-                                FullSourceLoc Pos);
+  virtual bool isInSystemHeader(FullSourceLoc Pos) const;
 
   virtual void HandleDiagnostic(Diagnostic &Diags, Diagnostic::Level DiagLevel,
                                 FullSourceLoc Pos,
