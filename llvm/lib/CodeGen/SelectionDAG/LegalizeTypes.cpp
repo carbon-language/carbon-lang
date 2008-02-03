@@ -233,7 +233,7 @@ namespace {
     virtual void NodeUpdated(SDNode *N) {
       // Node updates can mean pretty much anything.  It is possible that an
       // operand was set to something already processed (f.e.) in which case
-      // this node could become ready.  Recompoute its flags.
+      // this node could become ready.  Recompute its flags.
       if (N->getNodeId() != DAGTypeLegalizer::ReadyToProcess)
         DTL.ReanalyzeNodeFlags(N);
     }
