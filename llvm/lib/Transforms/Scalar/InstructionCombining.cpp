@@ -45,6 +45,7 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/CallSite.h"
+#include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/InstVisitor.h"
@@ -5703,6 +5704,37 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
       if (Instruction *R = FoldICmpDivCst(ICI, cast<BinaryOperator>(LHSI),
                                           DivRHS))
         return R;
+    break;
+
+  case Instruction::Add:
+    // Fold: icmp pred (add, X, C1), C2
+
+    if (!ICI.isEquality()) {
+      ConstantInt *LHSC = dyn_cast<ConstantInt>(LHSI->getOperand(1));
+      if (!LHSC) break;
+      const APInt &LHSV = LHSC->getValue();
+
+      ConstantRange CR = ICI.makeConstantRange(ICI.getPredicate(), RHSV)
+                            .subtract(LHSV);
+
+      if (ICI.isSignedPredicate()) {
+        if (CR.getLower().isSignBit()) {
+          return new ICmpInst(ICmpInst::ICMP_SLT, LHSI->getOperand(0),
+                              ConstantInt::get(CR.getUpper()));
+        } else if (CR.getUpper().isSignBit()) {
+          return new ICmpInst(ICmpInst::ICMP_SGE, LHSI->getOperand(0),
+                              ConstantInt::get(CR.getLower()));
+        }
+      } else {
+        if (CR.getLower().isMinValue()) {
+          return new ICmpInst(ICmpInst::ICMP_ULT, LHSI->getOperand(0),
+                              ConstantInt::get(CR.getUpper()));
+        } else if (CR.getUpper().isMinValue()) {
+          return new ICmpInst(ICmpInst::ICMP_UGE, LHSI->getOperand(0),
+                              ConstantInt::get(CR.getLower()));
+        }
+      }
+    }
     break;
   }
   
