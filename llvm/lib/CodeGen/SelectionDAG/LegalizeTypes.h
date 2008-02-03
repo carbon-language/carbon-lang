@@ -117,6 +117,13 @@ public:
   
   void run();
   
+  /// ReanalyzeNodeFlags - Recompute the NodeID flags for the specified node,
+  /// adding it to the worklist if ready.
+  void ReanalyzeNodeFlags(SDNode *N) {
+    N->setNodeId(NewNode);
+    MarkNewNodes(N);
+  }
+  
 private:
   void MarkNewNodes(SDNode *N);
   
