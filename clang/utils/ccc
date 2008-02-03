@@ -22,6 +22,8 @@ def run(args):
     cmd = ' '.join(args)
     print >> sys.stderr, cmd
     code = os.system(cmd)
+    if code > 255:
+        code = 1
     if code:
         sys.exit(code)
 
@@ -41,7 +43,11 @@ def changeextension(path, newext):
     i = path.rfind('.')
     if i < 0:
         return path
-    return path[:i] + newext
+    j = path.rfind('/', 0, i)
+    print path
+    if j < 0:
+        return path[:i] + "." + newext
+    return path[j+1:i] + "." + newext
 
 def inferlanguage(extension):
     if extension == "c":
