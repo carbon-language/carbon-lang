@@ -16,8 +16,19 @@
 #include "LegalizeTypes.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MathExtras.h"
 using namespace llvm;
+
+#ifndef NDEBUG
+static cl::opt<bool>
+ViewLegalizeTypesDAGs("view-legalize-types-dags", cl::Hidden,
+                cl::desc("Pop up a window to show dags before legalize types"));
+#else
+static const bool ViewLegalizeTypesDAGs = 0;
+#endif
+
+
 
 /// run - This is the main entry point for the type legalizer.  This does a
 /// top-down traversal of the dag, legalizing types as it goes.
@@ -438,5 +449,7 @@ void DAGTypeLegalizer::SplitOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi) {
 /// Note that this is an involved process that may invalidate pointers into
 /// the graph.
 void SelectionDAG::LegalizeTypes() {
+  if (ViewLegalizeTypesDAGs) viewGraph();
+  
   DAGTypeLegalizer(*this).run();
 }
