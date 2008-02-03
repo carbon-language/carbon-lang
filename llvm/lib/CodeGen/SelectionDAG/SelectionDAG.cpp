@@ -3173,14 +3173,18 @@ SDNode *SelectionDAG::getTargetNode(unsigned Opcode,
 /// ReplaceAllUsesWith - Modify anything using 'From' to use 'To' instead.
 /// This can cause recursive merging of nodes in the DAG.
 ///
-/// This version assumes From/To have a single result value.
+/// This version assumes From has a single result value.
 ///
-void SelectionDAG::ReplaceAllUsesWith(SDOperand FromN, SDOperand ToN,
+void SelectionDAG::ReplaceAllUsesWith(SDOperand FromN, SDOperand To,
                                       std::vector<SDNode*> *Deleted) {
-  SDNode *From = FromN.Val, *To = ToN.Val;
-  assert(From->getNumValues() == 1 && To->getNumValues() == 1 &&
+  SDNode *From = FromN.Val;
+  // FIXME: This works around a dag isel emitter bug.
+  if (From->getNumValues() == 1 && FromN.ResNo != 0)
+    return;  // FIXME: THIS IS BOGUS
+  
+  assert(From->getNumValues() == 1 && FromN.ResNo == 0 && 
          "Cannot replace with this method!");
-  assert(From != To && "Cannot replace uses of with self");
+  assert(From != To.Val && "Cannot replace uses of with self");
   
   while (!From->use_empty()) {
     // Process users until they are all gone.
@@ -3193,8 +3197,8 @@ void SelectionDAG::ReplaceAllUsesWith(SDOperand FromN, SDOperand ToN,
          I != E; ++I)
       if (I->Val == From) {
         From->removeUser(U);
-        I->Val = To;
-        To->addUser(U);
+        *I = To;
+        To.Val->addUser(U);
       }
 
     // Now that we have modified U, add it back to the CSE maps.  If it already
@@ -3219,10 +3223,8 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From, SDNode *To,
   assert(From != To && "Cannot replace uses of with self");
   assert(From->getNumValues() == To->getNumValues() &&
          "Cannot use this version of ReplaceAllUsesWith!");
-  if (From->getNumValues() == 1) {  // If possible, use the faster version.
-    ReplaceAllUsesWith(SDOperand(From, 0), SDOperand(To, 0), Deleted);
-    return;
-  }
+  if (From->getNumValues() == 1)   // If possible, use the faster version.
+    return ReplaceAllUsesWith(SDOperand(From, 0), SDOperand(To, 0), Deleted);
   
   while (!From->use_empty()) {
     // Process users until they are all gone.
@@ -3258,11 +3260,8 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From, SDNode *To,
 void SelectionDAG::ReplaceAllUsesWith(SDNode *From,
                                       const SDOperand *To,
                                       std::vector<SDNode*> *Deleted) {
-  if (From->getNumValues() == 1 && To[0].Val->getNumValues() == 1) {
-    // Degenerate case handled above.
-    ReplaceAllUsesWith(SDOperand(From, 0), To[0], Deleted);
-    return;
-  }
+  if (From->getNumValues() == 1)  // Handle the simple case efficiently.
+    return ReplaceAllUsesWith(SDOperand(From, 0), To[0], Deleted);
 
   while (!From->use_empty()) {
     // Process users until they are all gone.
@@ -3298,7 +3297,7 @@ void SelectionDAG::ReplaceAllUsesOfValueWith(SDOperand From, SDOperand To,
                                              std::vector<SDNode*> *Deleted) {
   assert(From != To && "Cannot replace a value with itself");
   // Handle the simple, trivial, case efficiently.
-  if (From.Val->getNumValues() == 1 && To.Val->getNumValues() == 1) {
+  if (From.Val->getNumValues() == 1) {
     ReplaceAllUsesWith(From, To, Deleted);
     return;
   }
