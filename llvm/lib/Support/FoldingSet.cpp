@@ -148,7 +148,7 @@ static FoldingSetImpl::Node *GetNextPtr(void *NextInBucketPtr) {
   return static_cast<FoldingSetImpl::Node*>(NextInBucketPtr);
 }
 
-/// GetBucketPtr - Provides a casting of a bucket pointer for isNode
+
 /// testing.
 static void **GetBucketPtr(void *NextInBucketPtr) {
   intptr_t Ptr = reinterpret_cast<intptr_t>(NextInBucketPtr);
@@ -358,3 +358,9 @@ void FoldingSetIteratorImpl::advance() {
   }
 }
 
+//===----------------------------------------------------------------------===//
+// FoldingSetBucketIteratorImpl Implementation
+
+FoldingSetBucketIteratorImpl::FoldingSetBucketIteratorImpl(void **Bucket) {
+  Ptr = (*Bucket == 0 || GetNextPtr(*Bucket) == 0) ? (void*) Bucket : *Bucket;
+}
