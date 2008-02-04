@@ -1760,6 +1760,19 @@ void Sema::HandleDeclAttribute(Decl *New, AttributeList *rawAttr) {
     else
       Diag(rawAttr->getAttributeLoc(), 
            diag::err_typecheck_ocu_vector_not_typedef);
+  } else if (attrLen == 13 && !memcmp(attrName, "address_space", 13)) {
+    if (TypedefDecl *tDecl = dyn_cast<TypedefDecl>(New)) {
+      QualType newType = HandleAddressSpaceTypeAttribute(
+                                                  tDecl->getUnderlyingType(), 
+                                                  rawAttr);
+      if (!newType.isNull()) // install the new addr spaced type into the decl
+        tDecl->setUnderlyingType(newType);
+    } else if (ValueDecl *vDecl = dyn_cast<ValueDecl>(New)) {
+      QualType newType = HandleAddressSpaceTypeAttribute(vDecl->getType(), 
+                                                         rawAttr);
+      if (!newType.isNull()) // install the new addr spaced  type into the decl
+        vDecl->setType(newType);
+    }
   } else if (attrLen == 7 && !memcmp(attrName, "aligned", 7)) {
       HandleAlignedAttribute(New, rawAttr);
   }
@@ -1777,6 +1790,34 @@ void Sema::HandleDeclAttributes(Decl *New, AttributeList *declspec_prefix,
     HandleDeclAttribute(New, declarator_postfix);
     declarator_postfix = declarator_postfix->getNext();
   }
+}
+
+QualType Sema::HandleAddressSpaceTypeAttribute(QualType curType, 
+                                               AttributeList *rawAttr) {
+  // check the attribute arugments.
+  if (rawAttr->getNumArgs() != 1) {
+    Diag(rawAttr->getAttributeLoc(), diag::err_attribute_wrong_number_arguments,
+         std::string("1"));
+    return QualType();
+  }
+  Expr *addrSpaceExpr = static_cast<Expr *>(rawAttr->getArg(0));
+  llvm::APSInt addrSpace(32);
+  if (!addrSpaceExpr->isIntegerConstantExpr(addrSpace, Context)) {
+    Diag(rawAttr->getAttributeLoc(), diag::err_attribute_address_space_not_int,
+         addrSpaceExpr->getSourceRange());
+    return QualType();
+  }
+  unsigned addressSpace = static_cast<unsigned>(addrSpace.getZExtValue()); 
+  
+  // Zero is the default memory space, so no qualification is needed
+  if (addressSpace == 0)
+    return curType;
+  
+  // TODO: Should we convert contained types of address space 
+  // qualified types here or or where they directly participate in conversions
+  // (i.e. elsewhere)
+  
+  return Context.getASQualType(curType, addressSpace);
 }
 
 void Sema::HandleOCUVectorTypeAttribute(TypedefDecl *tDecl, 

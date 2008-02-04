@@ -50,6 +50,7 @@ namespace clang {
   class FunctionType;
   class OCUVectorType;
   class BuiltinType;
+  class ASQualType;
   class ObjCQualifiedInterfaceType;
   class StmtIteratorBase;
   
@@ -132,9 +133,7 @@ public:
     return QualType(getTypePtr(), TQs);
   }
   
-  QualType getUnqualifiedType() const {
-    return QualType(getTypePtr(), 0);
-  }
+  inline QualType getUnqualifiedType() const;
   
   /// operator==/!= - Indicate whether the specified types and qualifiers are
   /// identical.
@@ -156,6 +155,9 @@ public:
   /// getCanonicalType - Return the canonical version of this type, with the
   /// appropriate type qualifiers on it.
   inline QualType getCanonicalType() const;
+  
+  /// getAddressSpace - Return the address space of this type.
+  inline unsigned getAddressSpace() const;
   
   /// Emit - Serialize a QualType to Bitcode.
   void Emit(llvm::Serializer& S) const;
@@ -218,7 +220,7 @@ public:
     ConstantArray, VariableArray, 
     Vector, OCUVector,
     FunctionNoProto, FunctionProto,
-    TypeName, Tagged, 
+    TypeName, Tagged, ASQual,
     ObjCInterface, ObjCQualifiedInterface,
     ObjCQualifiedId,
     TypeOfExp, TypeOfTyp // GNU typeof extension.
@@ -229,7 +231,7 @@ private:
   /// TypeClass bitfield - Enum that specifies what subclass this belongs to.
   /// Note that this should stay at the end of the ivars for Type so that
   /// subclasses can pack their bitfields into the same word.
-  unsigned TC : 4;
+  unsigned TC : 5;
 protected:
   // silence VC++ warning C4355: 'this' : used in base member initializer list
   Type *this_() { return this; }
@@ -268,7 +270,7 @@ public:
   bool isIncompleteArrayType() const;
   
   /// Helper methods to distinguish type categories. All type predicates
-  /// operate on the canonical type, ignoring typedefs.
+  /// operate on the canonical type, ignoring typedefs and qualifiers.
   
   /// isIntegerType() does *not* include complex integers (a GCC extension).
   /// isComplexIntegerType() can be used to test for complex integers.
@@ -292,7 +294,7 @@ public:
   bool isAggregateType() const;    // C99 6.2.5p21 (arrays, structures)
   
   // Type Predicates: Check to see if this type is structurally the specified
-  // type, ignoring typedefs.
+  // type, ignoring typedefs and qualifiers.
   bool isFunctionType() const;
   bool isPointerType() const;
   bool isFunctionPointerType() const;
@@ -308,7 +310,7 @@ public:
   bool isObjCQualifiedIdType() const; // id includes conforming protocol type
   
   // Type Checking Functions: Check to see if this type is structurally the
-  // specified type, ignoring typedefs, and return a pointer to the best type
+  // specified type, ignoring typedefs and qualifiers, and return a pointer to the best type
   // we can.
   const BuiltinType *getAsBuiltinType() const;   
   const FunctionType *getAsFunctionType() const;   
@@ -372,6 +374,42 @@ protected:
   ///  be serialized.
   virtual void EmitImpl(llvm::Serializer& S) const;  
 };
+
+/// ASQualType - TR18037 (C embedded extensions) 6.2.5p26 
+/// This supports address space qualified types.
+///
+class ASQualType : public Type, public llvm::FoldingSetNode {
+  QualType BaseType;
+  /// Address Space ID - The address space ID this type is qualified with.
+  unsigned AddressSpace;
+  ASQualType(QualType Base, QualType CanonicalPtr, unsigned AddrSpace) :
+    Type(ASQual, CanonicalPtr), BaseType(Base), AddressSpace(AddrSpace) {
+  }
+  friend class ASTContext;  // ASTContext creates these.
+public:
+  QualType getBaseType() const { return BaseType; }
+  unsigned getAddressSpace() const { return AddressSpace; }
+  
+  virtual void getAsStringInternal(std::string &InnerString) const;
+  
+  void Profile(llvm::FoldingSetNodeID &ID) {
+    Profile(ID, getBaseType(), AddressSpace);
+  }
+  static void Profile(llvm::FoldingSetNodeID &ID, QualType Base, 
+                      unsigned AddrSpace) {
+    ID.AddPointer(Base.getAsOpaquePtr());
+    ID.AddInteger(AddrSpace);
+  }
+  
+  static bool classof(const Type *T) { return T->getTypeClass() == ASQual; }
+  static bool classof(const ASQualType *) { return true; }
+  
+protected:
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static Type* CreateImpl(ASTContext& Context,llvm::Deserializer& D);
+  friend class Type;
+};
+
 
 /// BuiltinType - This class is used for builtin types like 'int'.  Builtin
 /// types are always canonical and have a literal name field.
@@ -1036,12 +1074,25 @@ inline QualType QualType::getCanonicalType() const {
                   getTypePtr()->getCanonicalTypeInternal().getQualifiers());
 }
 
+/// getUnqualifiedType - Return the type without any qualifiers.
+inline QualType QualType::getUnqualifiedType() const {
+  if (const ASQualType *ASQT = dyn_cast<ASQualType>(getTypePtr()))
+    return ASQT->getBaseType().getUnqualifiedType();
+  return QualType(getTypePtr(), 0);
+}
+
+/// getAddressSpace - Return the address space of this type.
+inline unsigned QualType::getAddressSpace() const {
+  if (const ASQualType *ASQT = dyn_cast<ASQualType>(getTypePtr()))
+    return ASQT->getAddressSpace();
+  return 0;
+}
 
 inline bool Type::isFunctionType() const {
-  return isa<FunctionType>(CanonicalType);
+  return isa<FunctionType>(CanonicalType.getUnqualifiedType());
 }
 inline bool Type::isPointerType() const {
-  return isa<PointerType>(CanonicalType); 
+  return isa<PointerType>(CanonicalType.getUnqualifiedType()); 
 }
 inline bool Type::isFunctionPointerType() const {
   if (const PointerType* T = getAsPointerType())
@@ -1050,19 +1101,19 @@ inline bool Type::isFunctionPointerType() const {
     return false;
 }
 inline bool Type::isReferenceType() const {
-  return isa<ReferenceType>(CanonicalType);
+  return isa<ReferenceType>(CanonicalType.getUnqualifiedType());
 }
 inline bool Type::isArrayType() const {
-  return isa<ArrayType>(CanonicalType);
+  return isa<ArrayType>(CanonicalType.getUnqualifiedType());
 }
 inline bool Type::isRecordType() const {
-  return isa<RecordType>(CanonicalType);
+  return isa<RecordType>(CanonicalType.getUnqualifiedType());
 }
 inline bool Type::isVectorType() const {
-  return isa<VectorType>(CanonicalType);
+  return isa<VectorType>(CanonicalType.getUnqualifiedType());
 }
 inline bool Type::isOCUVectorType() const {
-  return isa<OCUVectorType>(CanonicalType);
+  return isa<OCUVectorType>(CanonicalType.getUnqualifiedType());
 }
 inline bool Type::isObjCInterfaceType() const {
   return isa<ObjCInterfaceType>(CanonicalType)

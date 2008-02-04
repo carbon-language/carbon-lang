@@ -575,6 +575,8 @@ DIAG(err_ocuvector_component_name_illegal, ERROR,
      "illegal vector component name '%0'")
 DIAG(err_ocuvector_component_access, ERROR,
      "vector component access limited to variables")
+DIAG(err_attribute_address_space_not_int, ERROR,
+     "address space attribute requires an integer constant")
 
 // Function Parameter Semantic Analysis.
 DIAG(err_param_with_void_type, ERROR,
@@ -951,7 +953,6 @@ DIAG(ext_return_missing_expr, EXTENSION,
      "non-void function '%0' should return a value")
 DIAG(ext_return_has_expr, EXTENSION,
      "void function '%0' should not return a value")
-
 
 
 #undef DIAG

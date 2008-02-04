@@ -256,6 +256,8 @@ ASTContext::getTypeInfo(QualType T, SourceLocation L) {
     }
     break;
   }
+  case Type::ASQual:
+    return getTypeInfo(cast<ASQualType>(T)->getBaseType(), L);
   case Type::ObjCQualifiedId:
     Target.getPointerInfo(Size, Align, getFullLoc(L));
     break;
@@ -367,6 +369,30 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D,
 //===----------------------------------------------------------------------===//
 //                   Type creation/memoization methods
 //===----------------------------------------------------------------------===//
+
+QualType ASTContext::getASQualType(QualType T, unsigned AddressSpace) {
+  // Check if we've already instantiated an address space qual'd type of this type.
+  llvm::FoldingSetNodeID ID;
+  ASQualType::Profile(ID, T, AddressSpace);      
+  void *InsertPos = 0;
+  if (ASQualType *ASQy = ASQualTypes.FindNodeOrInsertPos(ID, InsertPos))
+    return QualType(ASQy, 0);
+    
+  // If the base type isn't canonical, this won't be a canonical type either,
+  // so fill in the canonical type field.
+  QualType Canonical;
+  if (!T->isCanonical()) {
+    Canonical = getASQualType(T.getCanonicalType(), AddressSpace);
+    
+    // Get the new insert position for the node we care about.
+    ASQualType *NewIP = ASQualTypes.FindNodeOrInsertPos(ID, InsertPos);
+    assert(NewIP == 0 && "Shouldn't be in the map!");
+  }
+  ASQualType *New = new ASQualType(T, Canonical, AddressSpace);
+  ASQualTypes.InsertNode(New, InsertPos);
+  Types.push_back(New);
+  return QualType(New, 0);
+}
 
 
 /// getComplexType - Return the uniqued reference to the type for a complex
@@ -817,7 +843,7 @@ static int getIntegerRank(QualType t) {
     return 4;
   }
   
-  const BuiltinType *BT = cast<BuiltinType>(t.getCanonicalType());
+  const BuiltinType *BT = t.getCanonicalType()->getAsBuiltinType();
   switch (BT->getKind()) {
   default:
     assert(0 && "getIntegerRank(): not a built-in integer");
@@ -847,10 +873,10 @@ static int getIntegerRank(QualType t) {
 /// This routine will assert if passed a built-in type that isn't a float.
 static int getFloatingRank(QualType T) {
   T = T.getCanonicalType();
-  if (ComplexType *CT = dyn_cast<ComplexType>(T))
+  if (const ComplexType *CT = T->getAsComplexType())
     return getFloatingRank(CT->getElementType());
   
-  switch (cast<BuiltinType>(T)->getKind()) {
+  switch (T->getAsBuiltinType()->getKind()) {
   default:  assert(0 && "getFloatingRank(): not a floating type");
   case BuiltinType::Float:      return FloatRank;
   case BuiltinType::Double:     return DoubleRank;

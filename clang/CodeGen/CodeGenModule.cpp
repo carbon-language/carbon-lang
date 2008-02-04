@@ -131,7 +131,8 @@ llvm::Constant *CodeGenModule::GetAddrOfGlobalVar(const VarDecl *D,
   llvm::Constant *&Entry = GlobalDeclMap[D];
   if (Entry) return Entry;
   
-  const llvm::Type *Ty = getTypes().ConvertTypeForMem(D->getType());
+  QualType ASTTy = D->getType();
+  const llvm::Type *Ty = getTypes().ConvertTypeForMem(ASTTy);
 
   // Check to see if the global already exists.
   llvm::GlobalVariable *GV = getModule().getGlobalVariable(D->getName(), true);
@@ -140,7 +141,8 @@ llvm::Constant *CodeGenModule::GetAddrOfGlobalVar(const VarDecl *D,
   if (GV == 0) {
     return Entry = new llvm::GlobalVariable(Ty, false, 
                                             llvm::GlobalValue::ExternalLinkage,
-                                            0, D->getName(), &getModule());
+                                            0, D->getName(), &getModule(), 0,
+                                            ASTTy.getAddressSpace());
   }
   
   // If the pointer type matches, just return it.
@@ -162,7 +164,8 @@ llvm::Constant *CodeGenModule::GetAddrOfGlobalVar(const VarDecl *D,
   // making a new global of the correct type, RAUW, then steal the name.
   llvm::GlobalVariable *NewGV = 
     new llvm::GlobalVariable(Ty, false, llvm::GlobalValue::ExternalLinkage,
-                             0, D->getName(), &getModule());
+                             0, D->getName(), &getModule(), 0,
+                             ASTTy.getAddressSpace());
   NewGV->takeName(GV);
   
   // Replace uses of GV with the globalvalue we will endow with a body.

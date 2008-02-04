@@ -84,7 +84,8 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const BlockVarDecl &D) {
   DMEntry = 
     new llvm::GlobalVariable(LTy, false, 
                             llvm::GlobalValue::InternalLinkage,
-                             Init, D.getName(), &CGM.getModule());
+                             Init, D.getName(), &CGM.getModule(), 0,
+                             Ty.getAddressSpace());
   
 }
   

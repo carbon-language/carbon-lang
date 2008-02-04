@@ -125,8 +125,12 @@ const BuiltinType *Type::getAsBuiltinType() const {
     return BTy;
 
   // If the canonical form of this type isn't a builtin type, reject it.
-  if (!isa<BuiltinType>(CanonicalType))
+  if (!isa<BuiltinType>(CanonicalType)) {
+    // Look through type qualifiers
+    if (isa<BuiltinType>(CanonicalType.getUnqualifiedType()))
+      return CanonicalType.getUnqualifiedType()->getAsBuiltinType();
     return 0;
+  }
 
   // If this is a typedef for a builtin type, strip the typedef off without
   // losing all typedef information.
@@ -137,10 +141,14 @@ const FunctionType *Type::getAsFunctionType() const {
   // If this is directly a function type, return it.
   if (const FunctionType *FTy = dyn_cast<FunctionType>(this))
     return FTy;
-  
+
   // If the canonical form of this type isn't the right kind, reject it.
-  if (!isa<FunctionType>(CanonicalType))
+  if (!isa<FunctionType>(CanonicalType)) {
+    // Look through type qualifiers
+    if (isa<FunctionType>(CanonicalType.getUnqualifiedType()))
+      return CanonicalType.getUnqualifiedType()->getAsFunctionType();
     return 0;
+  }
   
   // If this is a typedef for a function type, strip the typedef off without
   // losing all typedef information.
@@ -153,8 +161,12 @@ const PointerType *Type::getAsPointerType() const {
     return PTy;
   
   // If the canonical form of this type isn't the right kind, reject it.
-  if (!isa<PointerType>(CanonicalType))
+  if (!isa<PointerType>(CanonicalType)) {
+    // Look through type qualifiers
+    if (isa<PointerType>(CanonicalType.getUnqualifiedType()))
+      return CanonicalType.getUnqualifiedType()->getAsPointerType();
     return 0;
+  }
 
   // If this is a typedef for a pointer type, strip the typedef off without
   // losing all typedef information.
@@ -167,8 +179,12 @@ const ReferenceType *Type::getAsReferenceType() const {
     return RTy;
   
   // If the canonical form of this type isn't the right kind, reject it.
-  if (!isa<ReferenceType>(CanonicalType))
+  if (!isa<ReferenceType>(CanonicalType)) {    
+    // Look through type qualifiers
+    if (isa<ReferenceType>(CanonicalType.getUnqualifiedType()))
+      return CanonicalType.getUnqualifiedType()->getAsReferenceType();
     return 0;
+  }
 
   // If this is a typedef for a reference type, strip the typedef off without
   // losing all typedef information.
@@ -181,8 +197,12 @@ const ArrayType *Type::getAsArrayType() const {
     return ATy;
   
   // If the canonical form of this type isn't the right kind, reject it.
-  if (!isa<ArrayType>(CanonicalType))
+  if (!isa<ArrayType>(CanonicalType)) {
+    // Look through type qualifiers
+    if (isa<ArrayType>(CanonicalType.getUnqualifiedType()))
+      return CanonicalType.getUnqualifiedType()->getAsArrayType();
     return 0;
+  }
   
   // If this is a typedef for an array type, strip the typedef off without
   // losing all typedef information.
@@ -193,10 +213,14 @@ const ConstantArrayType *Type::getAsConstantArrayType() const {
   // If this is directly a constant array type, return it.
   if (const ConstantArrayType *ATy = dyn_cast<ConstantArrayType>(this))
     return ATy;
-  
+
   // If the canonical form of this type isn't the right kind, reject it.
-  if (!isa<ConstantArrayType>(CanonicalType))
+  if (!isa<ConstantArrayType>(CanonicalType)) {
+    // Look through type qualifiers
+    if (isa<ConstantArrayType>(CanonicalType.getUnqualifiedType()))
+      return CanonicalType.getUnqualifiedType()->getAsConstantArrayType();
     return 0;
+  }
   
   // If this is a typedef for a constant array type, strip the typedef off
   // without losing all typedef information.
@@ -209,8 +233,12 @@ const VariableArrayType *Type::getAsVariableArrayType() const {
     return ATy;
   
   // If the canonical form of this type isn't the right kind, reject it.
-  if (!isa<VariableArrayType>(CanonicalType))
+  if (!isa<VariableArrayType>(CanonicalType)) {
+    // Look through type qualifiers
+    if (isa<VariableArrayType>(CanonicalType.getUnqualifiedType()))
+      return CanonicalType.getUnqualifiedType()->getAsVariableArrayType();
     return 0;
+  }
 
   // If this is a typedef for a variable array type, strip the typedef off
   // without losing all typedef information.
@@ -257,8 +285,12 @@ const RecordType *Type::getAsRecordType() const {
     return RTy;
   
   // If the canonical form of this type isn't the right kind, reject it.
-  if (!isa<RecordType>(CanonicalType))
+  if (!isa<RecordType>(CanonicalType)) {
+    // Look through type qualifiers
+    if (isa<RecordType>(CanonicalType.getUnqualifiedType()))
+      return CanonicalType.getUnqualifiedType()->getAsRecordType();
     return 0;
+  }
 
   // If this is a typedef for a record type, strip the typedef off without
   // losing all typedef information.
@@ -281,6 +313,9 @@ const RecordType *Type::getAsStructureType() const {
     // losing all typedef information.
     return getDesugaredType()->getAsStructureType();
   }
+  // Look through type qualifiers
+  if (isa<RecordType>(CanonicalType.getUnqualifiedType()))
+    return CanonicalType.getUnqualifiedType()->getAsStructureType();
   return 0;
 }
 
@@ -290,6 +325,7 @@ const RecordType *Type::getAsUnionType() const {
     if (RT->getDecl()->getKind() == Decl::Union)
       return RT;
   }
+    
   // If the canonical form of this type isn't the right kind, reject it.
   if (const RecordType *RT = dyn_cast<RecordType>(CanonicalType)) {
     if (RT->getDecl()->getKind() != Decl::Union)
@@ -299,6 +335,10 @@ const RecordType *Type::getAsUnionType() const {
     // losing all typedef information.
     return getDesugaredType()->getAsUnionType();
   }
+  
+  // Look through type qualifiers
+  if (isa<RecordType>(CanonicalType.getUnqualifiedType()))
+    return CanonicalType.getUnqualifiedType()->getAsUnionType();
   return 0;
 }
 
@@ -308,8 +348,12 @@ const ComplexType *Type::getAsComplexType() const {
     return CTy;
   
   // If the canonical form of this type isn't the right kind, reject it.
-  if (!isa<ComplexType>(CanonicalType))
+  if (!isa<ComplexType>(CanonicalType)) {
+    // Look through type qualifiers
+    if (isa<ComplexType>(CanonicalType.getUnqualifiedType()))
+      return CanonicalType.getUnqualifiedType()->getAsComplexType();
     return 0;
+  }
 
   // If this is a typedef for a complex type, strip the typedef off without
   // losing all typedef information.
@@ -322,8 +366,12 @@ const VectorType *Type::getAsVectorType() const {
     return VTy;
   
   // If the canonical form of this type isn't the right kind, reject it.
-  if (!isa<VectorType>(CanonicalType))
+  if (!isa<VectorType>(CanonicalType)) {
+    // Look through type qualifiers
+    if (isa<VectorType>(CanonicalType.getUnqualifiedType()))
+      return CanonicalType.getUnqualifiedType()->getAsVectorType();
     return 0;
+  }
 
   // If this is a typedef for a vector type, strip the typedef off without
   // losing all typedef information.
@@ -336,8 +384,12 @@ const OCUVectorType *Type::getAsOCUVectorType() const {
     return VTy;
   
   // If the canonical form of this type isn't the right kind, reject it.
-  if (!isa<OCUVectorType>(CanonicalType))
+  if (!isa<OCUVectorType>(CanonicalType)) {  
+    // Look through type qualifiers
+    if (isa<OCUVectorType>(CanonicalType.getUnqualifiedType()))
+      return CanonicalType.getUnqualifiedType()->getAsOCUVectorType();
     return 0;
+  }
 
   // If this is a typedef for an ocuvector type, strip the typedef off without
   // losing all typedef information.
@@ -353,6 +405,8 @@ bool Type::isIntegerType() const {
       return true;
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
     return VT->getElementType()->isIntegerType();
+  if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
+    return ASQT->getBaseType()->isIntegerType();
   return false;
 }
 
@@ -363,18 +417,24 @@ bool Type::isIntegralType() const {
   if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
     if (TT->getDecl()->getKind() == Decl::Enum)
       return true;
+  if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
+    return ASQT->getBaseType()->isIntegralType();
   return false;
 }
 
 bool Type::isEnumeralType() const {
   if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
     return TT->getDecl()->getKind() == Decl::Enum;
+  if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
+    return ASQT->getBaseType()->isEnumeralType();
   return false;
 }
 
 bool Type::isBooleanType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() == BuiltinType::Bool;
+  if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
+    return ASQT->getBaseType()->isBooleanType();
   return false;
 }
 
@@ -384,6 +444,8 @@ bool Type::isCharType() const {
            BT->getKind() == BuiltinType::UChar ||
            BT->getKind() == BuiltinType::Char_S ||
            BT->getKind() == BuiltinType::SChar;
+  if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
+    return ASQT->getBaseType()->isCharType();
   return false;
 }
 
@@ -403,6 +465,8 @@ bool Type::isSignedIntegerType() const {
   
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
     return VT->getElementType()->isSignedIntegerType();
+  if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
+    return ASQT->getBaseType()->isSignedIntegerType();
   return false;
 }
 
@@ -422,6 +486,8 @@ bool Type::isUnsignedIntegerType() const {
 
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
     return VT->getElementType()->isUnsignedIntegerType();
+  if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
+    return ASQT->getBaseType()->isUnsignedIntegerType();
   return false;
 }
 
@@ -433,6 +499,8 @@ bool Type::isFloatingType() const {
     return CT->getElementType()->isFloatingType();
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
     return VT->getElementType()->isFloatingType();
+  if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
+    return ASQT->getBaseType()->isFloatingType();
   return false;
 }
 
@@ -442,6 +510,8 @@ bool Type::isRealFloatingType() const {
            BT->getKind() <= BuiltinType::LongDouble;
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
     return VT->getElementType()->isRealFloatingType();
+  if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
+    return ASQT->getBaseType()->isRealFloatingType();
   return false;
 }
 
@@ -453,6 +523,8 @@ bool Type::isRealType() const {
     return TT->getDecl()->getKind() == Decl::Enum;
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
     return VT->getElementType()->isRealType();
+  if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
+    return ASQT->getBaseType()->isRealType();
   return false;
 }
 
@@ -464,6 +536,8 @@ bool Type::isArithmeticType() const {
       // GCC allows forward declaration of enum types (forbid by C99 6.7.2.3p2).
       // If a body isn't seen by the time we get here, return false.
       return ED->isDefinition();
+  if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
+    return ASQT->getBaseType()->isArithmeticType();
   return isa<ComplexType>(CanonicalType) || isa<VectorType>(CanonicalType);
 }
 
@@ -475,6 +549,8 @@ bool Type::isScalarType() const {
       return true;
     return false;
   }
+  if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
+    return ASQT->getBaseType()->isScalarType();
   return isa<PointerType>(CanonicalType) || isa<ComplexType>(CanonicalType) ||
          isa<ObjCQualifiedIdType>(CanonicalType);
 }
@@ -485,6 +561,8 @@ bool Type::isAggregateType() const {
       return true;
     return false;
   }
+  if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
+    return ASQT->getBaseType()->isAggregateType();
   return CanonicalType->getTypeClass() == ConstantArray ||
          CanonicalType->getTypeClass() == VariableArray;
 }
@@ -493,6 +571,8 @@ bool Type::isAggregateType() const {
 /// according to the rules of C99 6.7.5p3.  It is not legal to call this on
 /// incomplete types.
 bool Type::isConstantSizeType(ASTContext &Ctx) const {
+  if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
+    return ASQT->getBaseType()->isConstantSizeType(Ctx);
   assert(!isIncompleteType() && "This doesn't make sense for incomplete types");
   // The VAT must have a size, as it is known to be complete.
   return !isa<VariableArrayType>(CanonicalType);
@@ -504,6 +584,8 @@ bool Type::isConstantSizeType(ASTContext &Ctx) const {
 bool Type::isIncompleteType() const { 
   switch (CanonicalType->getTypeClass()) { 
   default: return false;
+  case ASQual:
+    return cast<ASQualType>(CanonicalType)->getBaseType()->isIncompleteType();
   case Builtin:
     // Void is the only incomplete builtin type.  Per C99 6.2.5p19, it can never
     // be completed.
@@ -519,6 +601,8 @@ bool Type::isIncompleteType() const {
 }
 
 bool Type::isPromotableIntegerType() const {
+  if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
+    return ASQT->getBaseType()->isPromotableIntegerType();
   const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType);
   if (!BT) return false;
   switch (BT->getKind()) {
@@ -683,6 +767,11 @@ void BuiltinType::getAsStringInternal(std::string &S) const {
 void ComplexType::getAsStringInternal(std::string &S) const {
   ElementType->getAsStringInternal(S);
   S = "_Complex " + S;
+}
+
+void ASQualType::getAsStringInternal(std::string &S) const {
+  S = "__attribute__((address_space("+llvm::utostr_32(AddressSpace)+")))" + S;
+  BaseType->getAsStringInternal(S);
 }
 
 void PointerType::getAsStringInternal(std::string &S) const {

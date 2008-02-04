@@ -245,7 +245,14 @@ private:
   void HandleDeclAttributes(Decl *New, AttributeList *declspec_prefix,
                             AttributeList *declarator_postfix);
   void HandleDeclAttribute(Decl *New, AttributeList *rawAttr);
-                                
+
+  /// HandleAddressSpaceTypeAttribute - this attribute is only applicable to 
+  /// objects without automatic storage duration. 
+  /// The raw attribute contains 1 argument, the id of the address space 
+  /// for the type.
+  QualType HandleAddressSpaceTypeAttribute(QualType curType, 
+                                           AttributeList *rawAttr);                                
+
   // HandleVectorTypeAttribute - this attribute is only applicable to 
   // integral and float scalars, although arrays, pointers, and function
   // return values are allowed in conjunction with this construct. Aggregates

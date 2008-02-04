@@ -199,7 +199,8 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
   }
   case Type::Pointer: {
     const PointerType &P = cast<PointerType>(Ty);
-    return llvm::PointerType::getUnqual(ConvertType(P.getPointeeType())); 
+    QualType ETy = P.getPointeeType();
+    return llvm::PointerType::get(ConvertType(ETy), ETy.getAddressSpace()); 
   }
   case Type::Reference: {
     const ReferenceType &R = cast<ReferenceType>(Ty);
@@ -245,7 +246,8 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     
     // Struct return passes the struct byref.
     if (!ResultType->isFirstClassType() && ResultType != llvm::Type::VoidTy) {
-      const llvm::Type *RType = llvm::PointerType::getUnqual(ResultType);
+      const llvm::Type *RType = llvm::PointerType::get(ResultType, 
+                                          FP.getResultType().getAddressSpace());
       QualType RTy = Context.getPointerType(FP.getResultType());
       TypeHolderMap.insert(std::make_pair(RTy.getTypePtr(), 
                                           llvm::PATypeHolder(RType)));
@@ -263,6 +265,10 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     
     return llvm::FunctionType::get(ResultType, ArgTys, isVarArg);
   }
+  
+  case Type::ASQual:
+    return ConvertType(cast<ASQualType>(Ty).getBaseType());
+    break;
 
   case Type::ObjCInterface:
     assert(0 && "FIXME: add missing functionality here");
@@ -386,8 +392,10 @@ void CodeGenTypes::DecodeArgumentTypes(const FunctionTypeProto &FTP,
     if (Ty->isFirstClassType())
       ArgTys.push_back(Ty);
     else {
-      QualType PTy = Context.getPointerType(FTP.getArgType(i));
-      const llvm::Type *PtrTy = llvm::PointerType::getUnqual(Ty);
+      QualType ATy = FTP.getArgType(i);
+      QualType PTy = Context.getPointerType(ATy);
+      unsigned AS = ATy.getAddressSpace();
+      const llvm::Type *PtrTy = llvm::PointerType::get(Ty, AS);
       TypeHolderMap.insert(std::make_pair(PTy.getTypePtr(), 
                                           llvm::PATypeHolder(PtrTy)));
 
