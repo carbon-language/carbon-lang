@@ -125,6 +125,42 @@ struct GRTrait<ValueState> {
   }
 };
   
+  
+class ValueStateManager {
+public:
+  typedef ValueState StateTy;
+
+private:
+  typedef ValueState::Factory FactoryTy;
+  FactoryTy Factory;
+
+  /// ValueMgr - Object that manages the data for all created RValues.
+  ValueManager ValMgr;
+  
+  /// SymMgr - Object that manages the symbol information.
+  SymbolManager SymMgr;
+  
+public:  
+  ValueStateManager(ASTContext& Ctx) : ValMgr(Ctx) {}
+  
+  StateTy getInitialState() {
+    return Factory.GetEmptyMap();
+  }
+        
+  ValueManager& getValueManager() { return ValMgr; }
+  SymbolManager& getSymbolManager() { return SymMgr; }
+  
+  StateTy SetValue(StateTy St, Stmt* S, bool isBlkExpr, const RValue& V);
+  StateTy SetValue(StateTy St, const LValue& LV, const RValue& V);
+
+  RValue GetValue(const StateTy& St, Stmt* S);
+  RValue GetValue(const StateTy& St, const LValue& LV);
+  LValue GetLValue(const StateTy& St, Stmt* S);
+  
+  StateTy Remove(StateTy St, ValueKey K);
+  
+};
+  
 } // end clang namespace
 
 //==------------------------------------------------------------------------==//

@@ -63,7 +63,7 @@ namespace {
 class VISIBILITY_HIDDEN GRConstants {
     
 public:
-  typedef ValueState StateTy;
+  typedef ValueStateManager::StateTy StateTy;
   typedef GRStmtNodeBuilder<GRConstants> StmtNodeBuilder;
   typedef GRBranchNodeBuilder<GRConstants> BranchNodeBuilder;
   typedef ExplodedGraph<GRConstants> GraphTy;
@@ -105,13 +105,13 @@ protected:
   StmtNodeBuilder* Builder;
   
   /// StateMgr - Object that manages the data for all created states.
-  StateTy::Factory StateMgr;
+  ValueStateManager StateMgr;
   
   /// ValueMgr - Object that manages the data for all created RValues.
-  ValueManager ValMgr;
+  ValueManager& ValMgr;
   
   /// SymMgr - Object that manages the symbol information.
-  SymbolManager SymMgr;
+  SymbolManager& SymMgr;
   
   /// StmtEntryNode - The immediate predecessor node.
   NodeTy* StmtEntryNode;
@@ -130,8 +130,11 @@ protected:
   
 public:
   GRConstants(GraphTy& g) : G(g), Liveness(G.getCFG(), G.getFunctionDecl()),
-      Builder(NULL), ValMgr(G.getContext()), StmtEntryNode(NULL),
-      CurrentStmt(NULL) {
+      Builder(NULL),
+      StateMgr(G.getContext()),
+      ValMgr(StateMgr.getValueManager()),
+      SymMgr(StateMgr.getSymbolManager()),
+      StmtEntryNode(NULL), CurrentStmt(NULL) {
     
     // Compute liveness information.
     Liveness.runOnCFG(G.getCFG());
@@ -144,7 +147,7 @@ public:
   /// getInitialState - Return the initial state used for the root vertex
   ///  in the ExplodedGraph.
   StateTy getInitialState() {
-    StateTy St = StateMgr.GetEmptyMap();
+    StateTy St = StateMgr.getInitialState();
     
     // Iterate the parameters.
     FunctionDecl& F = G.getFunctionDecl();
@@ -174,7 +177,7 @@ public:
   ///  mappings removed.
   StateTy RemoveDeadBindings(Stmt* S, StateTy M);
 
-  StateTy SetValue(StateTy St, Stmt* S, const RValue& V);  
+  StateTy SetValue(StateTy St, Stmt* S, const RValue& V);
 
   StateTy SetValue(StateTy St, const Stmt* S, const RValue& V) {
     return SetValue(St, const_cast<Stmt*>(S), V);
@@ -182,13 +185,21 @@ public:
   
   StateTy SetValue(StateTy St, const LValue& LV, const RValue& V);
   
-  RValue GetValue(const StateTy& St, Stmt* S);  
+  inline RValue GetValue(const StateTy& St, Stmt* S) {
+    return StateMgr.GetValue(St, S);
+  }
+    
   inline RValue GetValue(const StateTy& St, const Stmt* S) {
     return GetValue(St, const_cast<Stmt*>(S));
   }
   
-  RValue GetValue(const StateTy& St, const LValue& LV);
-  LValue GetLValue(const StateTy& St, Stmt* S);
+  inline RValue GetValue(const StateTy& St, const LValue& LV) {
+    return StateMgr.GetValue(St, LV);
+  }
+  
+  inline LValue GetLValue(const StateTy& St, Stmt* S) {
+    return StateMgr.GetLValue(St, S);
+  }
     
   /// Assume - Create new state by assuming that a given expression
   ///  is true or false.
@@ -223,6 +234,40 @@ public:
 };
 } // end anonymous namespace
 
+
+GRConstants::StateTy
+GRConstants::SetValue(StateTy St, Stmt* S, const RValue& V) {
+  
+  if (!StateCleaned) {
+    St = RemoveDeadBindings(CurrentStmt, St);
+    StateCleaned = true;
+  }
+  
+  bool isBlkExpr = false;
+  
+  if (S == CurrentStmt) {
+    isBlkExpr = getCFG().isBlkExpr(S);
+    
+    if (!isBlkExpr)
+      return St;
+  }
+  
+  return StateMgr.SetValue(St, S, isBlkExpr, V);
+}
+
+GRConstants::StateTy
+GRConstants::SetValue(StateTy St, const LValue& LV, const RValue& V) {
+  
+  if (!LV.isValid())
+    return St;
+  
+  if (!StateCleaned) {
+    St = RemoveDeadBindings(CurrentStmt, St);
+    StateCleaned = true;
+  }
+  
+  return StateMgr.SetValue(St, LV, V);
+}
 
 void GRConstants::ProcessBranch(Stmt* Condition, Stmt* Term,
                                 BranchNodeBuilder& builder) {
@@ -296,135 +341,6 @@ void GRConstants::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
   CurrentStmt = NULL;
   StmtEntryNode = NULL;
   Builder = NULL;
-}
-
-
-RValue GRConstants::GetValue(const StateTy& St, const LValue& LV) {
-  switch (LV.getSubKind()) {
-    case LValueDeclKind: {
-      StateTy::TreeTy* T = St.SlimFind(cast<LValueDecl>(LV).getDecl()); 
-      return T ? T->getValue().second : InvalidValue();
-    }
-    default:
-      assert (false && "Invalid LValue.");
-      break;
-  }
-  
-  return InvalidValue();
-}
-  
-RValue GRConstants::GetValue(const StateTy& St, Stmt* S) {
-  for (;;) {
-    switch (S->getStmtClass()) {
-        
-      // ParenExprs are no-ops.
-        
-      case Stmt::ParenExprClass:
-        S = cast<ParenExpr>(S)->getSubExpr();
-        continue;
-        
-      // DeclRefExprs can either evaluate to an LValue or a Non-LValue
-      // (assuming an implicit "load") depending on the context.  In this
-      // context we assume that we are retrieving the value contained
-      // within the referenced variables.
-        
-      case Stmt::DeclRefExprClass:
-        return GetValue(St, LValueDecl(cast<DeclRefExpr>(S)->getDecl()));
-
-      // Integer literals evaluate to an RValue.  Simply retrieve the
-      // RValue for the literal.
-        
-      case Stmt::IntegerLiteralClass:
-        return NonLValue::GetValue(ValMgr, cast<IntegerLiteral>(S));
-              
-      // Casts where the source and target type are the same
-      // are no-ops.  We blast through these to get the descendant
-      // subexpression that has a value.
-        
-      case Stmt::ImplicitCastExprClass: {
-        ImplicitCastExpr* C = cast<ImplicitCastExpr>(S);
-        if (C->getType() == C->getSubExpr()->getType()) {
-          S = C->getSubExpr();
-          continue;
-        }
-        break;
-      }
-
-      case Stmt::CastExprClass: {
-        CastExpr* C = cast<CastExpr>(S);
-        if (C->getType() == C->getSubExpr()->getType()) {
-          S = C->getSubExpr();
-          continue;
-        }
-        break;
-      }
-
-      // Handle all other Stmt* using a lookup.
-
-      default:
-        break;
-    };
-    
-    break;
-  }
-  
-  StateTy::TreeTy* T = St.SlimFind(S);
-    
-  return T ? T->getValue().second : InvalidValue();
-}
-
-LValue GRConstants::GetLValue(const StateTy& St, Stmt* S) {
-  while (ParenExpr* P = dyn_cast<ParenExpr>(S))
-    S = P->getSubExpr();
-  
-  if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(S))
-    return LValueDecl(DR->getDecl());
-    
-  return cast<LValue>(GetValue(St, S));
-}
-
-
-GRConstants::StateTy GRConstants::SetValue(StateTy St, Stmt* S,
-                                           const RValue& V) {
-  assert (S);
-  
-  if (!StateCleaned) {
-    St = RemoveDeadBindings(CurrentStmt, St);
-    StateCleaned = true;
-  }
-  
-  bool isBlkExpr = false;
-  
-  if (S == CurrentStmt) {
-    isBlkExpr = getCFG().isBlkExpr(S);
-
-    if (!isBlkExpr)
-      return St;
-  }
-  
-  return V.isValid() ? StateMgr.Add(St, ValueKey(S,isBlkExpr), V)
-                     : St;
-}
-
-GRConstants::StateTy GRConstants::SetValue(StateTy St, const LValue& LV,
-                                           const RValue& V) {
-  if (!LV.isValid())
-    return St;
-  
-  if (!StateCleaned) {
-    St = RemoveDeadBindings(CurrentStmt, St);
-    StateCleaned = true;
-  }
-
-  switch (LV.getSubKind()) {
-    case LValueDeclKind:        
-      return V.isValid() ? StateMgr.Add(St, cast<LValueDecl>(LV).getDecl(), V)
-                         : StateMgr.Remove(St, cast<LValueDecl>(LV).getDecl());
-      
-    default:
-      assert ("SetValue for given LValue type not yet implemented.");
-      return St;
-  }
 }
 
 GRConstants::StateTy GRConstants::RemoveDeadBindings(Stmt* Loc, StateTy M) {
