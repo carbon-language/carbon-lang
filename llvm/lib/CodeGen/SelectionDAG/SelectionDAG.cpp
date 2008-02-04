@@ -176,7 +176,7 @@ bool ISD::isBuildVectorAllZeros(const SDNode *N) {
 }
 
 /// isDebugLabel - Return true if the specified node represents a debug
-/// label (i.e. ISD::LABEL or TargetInstrInfo::LANEL node and third operand
+/// label (i.e. ISD::LABEL or TargetInstrInfo::LABEL node and third operand
 /// is 0).
 bool ISD::isDebugLabel(const SDNode *N) {
   SDOperand Zero;
