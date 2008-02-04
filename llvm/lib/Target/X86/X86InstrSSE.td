@@ -2539,6 +2539,7 @@ let isTwoAddress = 1 in {
   }
 }
 
+// FIXME: are these really two-address?
 defm PABSB       : SS3I_unop_rm_int_8 <0x1C, "pabsb",
                                        int_x86_ssse3_pabs_b,
                                        int_x86_ssse3_pabs_b_128>;
@@ -3045,14 +3046,14 @@ def : Pat<(store (v16i8 VR128:$src), addr:$dst),
 
 // SSE4.1 Instruction Templates:
 // 
-//   SS418I - SSE 4.1 instructions with T8 prefix.
+//   SS48I - SSE 4.1 instructions with T8 prefix.
 //   SS41AI - SSE 4.1 instructions with TA prefix.
 //
-class SS418I<bits<8> o, Format F, dag outs, dag ins, string asm,
-             list<dag> pattern>
+class SS48I<bits<8> o, Format F, dag outs, dag ins, string asm,
+            list<dag> pattern>
       : I<o, F, outs, ins, asm, pattern>, T8, Requires<[HasSSE41]>;
-class SS41AI<bits<8> o, Format F, dag outs, dag ins, string asm,
-             list<dag> pattern>
+class SS4AI<bits<8> o, Format F, dag outs, dag ins, string asm,
+            list<dag> pattern>
       : I<o, F, outs, ins, asm, pattern>, TA, Requires<[HasSSE41]>;
 
 
@@ -3062,74 +3063,136 @@ multiclass sse41_fp_unop_rm<bits<8> opcss, bits<8> opcps,
                             Intrinsic F32Int,
                             Intrinsic V4F32Int,
                             Intrinsic F64Int,
-                            Intrinsic V2F64Int,
-                            bit Commutable = 0> {
+                            Intrinsic V2F64Int> {
   // Intrinsic operation, reg.
-  def SSr_Int : SS41AI<opcss, MRMSrcReg,
+  def SSr_Int : SS4AI<opcss, MRMSrcReg,
                     (outs VR128:$dst), (ins VR128:$src1, i32imm:$src2),
                     !strconcat(OpcodeStr,
                     "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                    [(set VR128:$dst, (F32Int VR128:$src1, imm:$src2))]> {
-    let isCommutable = Commutable;
-  }
+                    [(set VR128:$dst, (F32Int VR128:$src1, imm:$src2))]>,
+                    OpSize;
 
   // Intrinsic operation, mem.
-  def SSm_Int : SS41AI<opcss, MRMSrcMem, 
+  def SSm_Int : SS4AI<opcss, MRMSrcMem, 
                     (outs VR128:$dst), (ins ssmem:$src1, i32imm:$src2),
                     !strconcat(OpcodeStr, 
                     "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                    [(set VR128:$dst, (F32Int sse_load_f32:$src1, imm:$src2))]>;
+                    [(set VR128:$dst, (F32Int sse_load_f32:$src1, imm:$src2))]>,
+                    OpSize;
 
   // Vector intrinsic operation, reg
-  def PSr_Int : SS41AI<opcps, MRMSrcReg, 
+  def PSr_Int : SS4AI<opcps, MRMSrcReg, 
                     (outs VR128:$dst), (ins VR128:$src1, i32imm:$src2),
                     !strconcat(OpcodeStr,
                     "ps\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                    [(set VR128:$dst, (V4F32Int VR128:$src1, imm:$src2))]> {
-    let isCommutable = Commutable;
-  }
+                    [(set VR128:$dst, (V4F32Int VR128:$src1, imm:$src2))]>,
+                    OpSize;
 
   // Vector intrinsic operation, mem
-  def PSm_Int : SS41AI<opcps, MRMSrcMem,
+  def PSm_Int : SS4AI<opcps, MRMSrcMem,
                     (outs VR128:$dst), (ins f128mem:$src1, i32imm:$src2),
                     !strconcat(OpcodeStr,
                     "ps\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                    [(set VR128:$dst, (V4F32Int (load addr:$src1), imm:$src2))]>;
+                    [(set VR128:$dst, (V4F32Int (load addr:$src1),imm:$src2))]>,
+                    OpSize;
 
   // Intrinsic operation, reg.
-  def SDr_Int : SS41AI<opcsd, MRMSrcReg,
+  def SDr_Int : SS4AI<opcsd, MRMSrcReg,
                     (outs VR128:$dst), (ins VR128:$src1, i32imm:$src2),
                     !strconcat(OpcodeStr,
                     "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                    [(set VR128:$dst, (F64Int VR128:$src1, imm:$src2))]> {
-    let isCommutable = Commutable;
-  }
+                    [(set VR128:$dst, (F64Int VR128:$src1, imm:$src2))]>,
+                    OpSize;
 
   // Intrinsic operation, mem.
-  def SDm_Int : SS41AI<opcsd, MRMSrcMem,
+  def SDm_Int : SS4AI<opcsd, MRMSrcMem,
                     (outs VR128:$dst), (ins sdmem:$src1, i32imm:$src2),
                     !strconcat(OpcodeStr,
                     "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                    [(set VR128:$dst, (F64Int sse_load_f64:$src1, imm:$src2))]>;
+                    [(set VR128:$dst, (F64Int sse_load_f64:$src1, imm:$src2))]>,
+                    OpSize;
 
   // Vector intrinsic operation, reg
-  def PDr_Int : SS41AI<opcpd, MRMSrcReg,
+  def PDr_Int : SS4AI<opcpd, MRMSrcReg,
                     (outs VR128:$dst), (ins VR128:$src1, i32imm:$src2),
                     !strconcat(OpcodeStr,
                     "pd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                    [(set VR128:$dst, (V2F64Int VR128:$src1, imm:$src2))]> {
-    let isCommutable = Commutable;
-  }
+                    [(set VR128:$dst, (V2F64Int VR128:$src1, imm:$src2))]>,
+                    OpSize;
 
   // Vector intrinsic operation, mem
-  def PDm_Int : SS41AI<opcpd, MRMSrcMem,
+  def PDm_Int : SS4AI<opcpd, MRMSrcMem,
                     (outs VR128:$dst), (ins f128mem:$src1, i32imm:$src2),
                     !strconcat(OpcodeStr,
                     "pd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                    [(set VR128:$dst, (V2F64Int (load addr:$src1), imm:$src2))]>;
+                    [(set VR128:$dst, (V2F64Int (load addr:$src1),imm:$src2))]>,
+                    OpSize;
 }
 
 // FP round - roundss, roundps, roundsd, roundpd
 defm ROUND  : sse41_fp_unop_rm<0x0A, 0x08, 0x0B, 0x09, "round",
                                int_x86_sse41_round_ss, int_x86_sse41_round_ps,
                                int_x86_sse41_round_sd, int_x86_sse41_round_pd>;
+
+// SS41I_unop_rm_int_v16 - SSE 4.1 unary operator whose type is v8i16.
+multiclass SS41I_unop_rm_int_v16<bits<8> opc, string OpcodeStr,
+                                 Intrinsic IntId128> {
+  def rr128 : SS48I<opc, MRMSrcReg, (outs VR128:$dst),
+                    (ins VR128:$src),
+                    !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                    [(set VR128:$dst, (IntId128 VR128:$src))]>, OpSize;
+  def rm128 : SS48I<opc, MRMSrcMem, (outs VR128:$dst),
+                     (ins i128mem:$src),
+                     !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                     [(set VR128:$dst,
+                       (IntId128
+                       (bitconvert (memopv8i16 addr:$src))))]>, OpSize;
+}
+
+defm PHMINPOSUW : SS41I_unop_rm_int_v16 <0x41, "phminposuw",
+                                         int_x86_sse41_phminposuw>;
+
+/// SS41I_binop_rm_int - Simple SSE 4.1 binary operator
+let isTwoAddress = 1 in {
+  multiclass SS41I_binop_rm_int<bits<8> opc, string OpcodeStr,
+                                Intrinsic IntId128, bit Commutable = 0> {
+    def rr128 : SS48I<opc, MRMSrcReg, (outs VR128:$dst),
+                      (ins VR128:$src1, VR128:$src2),
+                      !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+                      [(set VR128:$dst, (IntId128 VR128:$src1, VR128:$src2))]>,
+                      OpSize {
+      let isCommutable = Commutable;
+    }
+    def rm128 : SS48I<opc, MRMSrcMem, (outs VR128:$dst),
+                      (ins VR128:$src1, i128mem:$src2),
+                      !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+                      [(set VR128:$dst,
+                        (IntId128 VR128:$src1,
+                         (bitconvert (memopv16i8 addr:$src2))))]>, OpSize;
+  }
+}
+
+defm PCMPEQQ      : SS41I_binop_rm_int<0x29, "pcmpeqq",
+                                       int_x86_sse41_pcmpeqq, 1>;
+defm PACKUSDW     : SS41I_binop_rm_int<0x2B, "packusdw",
+                                       int_x86_sse41_packusdw, 0>;
+defm PMINSB       : SS41I_binop_rm_int<0x38, "pminsb",
+                                       int_x86_sse41_pminsb, 1>;
+defm PMINSD       : SS41I_binop_rm_int<0x39, "pminsd",
+                                       int_x86_sse41_pminsd, 1>;
+defm PMINUD       : SS41I_binop_rm_int<0x3B, "pminud",
+                                       int_x86_sse41_pminud, 1>;
+defm PMINUW       : SS41I_binop_rm_int<0x3A, "pminuw",
+                                       int_x86_sse41_pminuw, 1>;
+defm PMAXSB       : SS41I_binop_rm_int<0x3C, "pmaxsb",
+                                       int_x86_sse41_pmaxsb, 1>;
+defm PMAXSD       : SS41I_binop_rm_int<0x3D, "pmaxsd",
+                                       int_x86_sse41_pmaxsd, 1>;
+defm PMAXUD       : SS41I_binop_rm_int<0x3F, "pmaxud",
+                                       int_x86_sse41_pmaxud, 1>;
+defm PMAXUW       : SS41I_binop_rm_int<0x3E, "pmaxuw",
+                                       int_x86_sse41_pmaxuw, 1>;
+defm PMULLD       : SS41I_binop_rm_int<0x40, "pmulld",
+                                       int_x86_sse41_pmulld, 1>;
+defm PMULDQ       : SS41I_binop_rm_int<0x28, "pmuldq",
+                                       int_x86_sse41_pmuldq, 1>;
