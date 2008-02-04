@@ -3066,7 +3066,7 @@ multiclass sse41_fp_unop_rm<bits<8> opcss, bits<8> opcps,
                             Intrinsic V2F64Int> {
   // Intrinsic operation, reg.
   def SSr_Int : SS4AI<opcss, MRMSrcReg,
-                    (outs VR128:$dst), (ins VR128:$src1, i32imm:$src2),
+                    (outs VR128:$dst), (ins VR128:$src1, i32i8imm:$src2),
                     !strconcat(OpcodeStr,
                     "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                     [(set VR128:$dst, (F32Int VR128:$src1, imm:$src2))]>,
@@ -3074,7 +3074,7 @@ multiclass sse41_fp_unop_rm<bits<8> opcss, bits<8> opcps,
 
   // Intrinsic operation, mem.
   def SSm_Int : SS4AI<opcss, MRMSrcMem, 
-                    (outs VR128:$dst), (ins ssmem:$src1, i32imm:$src2),
+                    (outs VR128:$dst), (ins ssmem:$src1, i32i8imm:$src2),
                     !strconcat(OpcodeStr, 
                     "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                     [(set VR128:$dst, (F32Int sse_load_f32:$src1, imm:$src2))]>,
@@ -3082,7 +3082,7 @@ multiclass sse41_fp_unop_rm<bits<8> opcss, bits<8> opcps,
 
   // Vector intrinsic operation, reg
   def PSr_Int : SS4AI<opcps, MRMSrcReg, 
-                    (outs VR128:$dst), (ins VR128:$src1, i32imm:$src2),
+                    (outs VR128:$dst), (ins VR128:$src1, i32i8imm:$src2),
                     !strconcat(OpcodeStr,
                     "ps\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                     [(set VR128:$dst, (V4F32Int VR128:$src1, imm:$src2))]>,
@@ -3090,7 +3090,7 @@ multiclass sse41_fp_unop_rm<bits<8> opcss, bits<8> opcps,
 
   // Vector intrinsic operation, mem
   def PSm_Int : SS4AI<opcps, MRMSrcMem,
-                    (outs VR128:$dst), (ins f128mem:$src1, i32imm:$src2),
+                    (outs VR128:$dst), (ins f128mem:$src1, i32i8imm:$src2),
                     !strconcat(OpcodeStr,
                     "ps\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                     [(set VR128:$dst, (V4F32Int (load addr:$src1),imm:$src2))]>,
@@ -3098,7 +3098,7 @@ multiclass sse41_fp_unop_rm<bits<8> opcss, bits<8> opcps,
 
   // Intrinsic operation, reg.
   def SDr_Int : SS4AI<opcsd, MRMSrcReg,
-                    (outs VR128:$dst), (ins VR128:$src1, i32imm:$src2),
+                    (outs VR128:$dst), (ins VR128:$src1, i32i8imm:$src2),
                     !strconcat(OpcodeStr,
                     "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                     [(set VR128:$dst, (F64Int VR128:$src1, imm:$src2))]>,
@@ -3106,7 +3106,7 @@ multiclass sse41_fp_unop_rm<bits<8> opcss, bits<8> opcps,
 
   // Intrinsic operation, mem.
   def SDm_Int : SS4AI<opcsd, MRMSrcMem,
-                    (outs VR128:$dst), (ins sdmem:$src1, i32imm:$src2),
+                    (outs VR128:$dst), (ins sdmem:$src1, i32i8imm:$src2),
                     !strconcat(OpcodeStr,
                     "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                     [(set VR128:$dst, (F64Int sse_load_f64:$src1, imm:$src2))]>,
@@ -3114,7 +3114,7 @@ multiclass sse41_fp_unop_rm<bits<8> opcss, bits<8> opcps,
 
   // Vector intrinsic operation, reg
   def PDr_Int : SS4AI<opcpd, MRMSrcReg,
-                    (outs VR128:$dst), (ins VR128:$src1, i32imm:$src2),
+                    (outs VR128:$dst), (ins VR128:$src1, i32i8imm:$src2),
                     !strconcat(OpcodeStr,
                     "pd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                     [(set VR128:$dst, (V2F64Int VR128:$src1, imm:$src2))]>,
@@ -3122,7 +3122,7 @@ multiclass sse41_fp_unop_rm<bits<8> opcss, bits<8> opcps,
 
   // Vector intrinsic operation, mem
   def PDm_Int : SS4AI<opcpd, MRMSrcMem,
-                    (outs VR128:$dst), (ins f128mem:$src1, i32imm:$src2),
+                    (outs VR128:$dst), (ins f128mem:$src1, i32i8imm:$src2),
                     !strconcat(OpcodeStr,
                     "pd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                     [(set VR128:$dst, (V2F64Int (load addr:$src1),imm:$src2))]>,
@@ -3196,3 +3196,40 @@ defm PMULLD       : SS41I_binop_rm_int<0x40, "pmulld",
                                        int_x86_sse41_pmulld, 1>;
 defm PMULDQ       : SS41I_binop_rm_int<0x28, "pmuldq",
                                        int_x86_sse41_pmuldq, 1>;
+
+/// SS41I_binop_rmi_int - SSE 4.1 binary operator with immediate
+let isTwoAddress = 1 in {
+  multiclass SS41I_binop_rmi_int<bits<8> opc, string OpcodeStr,
+                                 Intrinsic IntId128, bit Commutable = 0> {
+    def rri128 : SS4AI<opc, MRMSrcReg, (outs VR128:$dst),
+                       (ins VR128:$src1, VR128:$src2, i32i8imm:$src3),
+                       !strconcat(OpcodeStr, 
+                        "\t{$$src3, src2, $dst|$dst, $src2, $src3}"),
+                       [(set VR128:$dst, 
+                        (IntId128 VR128:$src1, VR128:$src2, imm:$src3))]>,
+                       OpSize {
+      let isCommutable = Commutable;
+    }
+    def rmi128 : SS4AI<opc, MRMSrcMem, (outs VR128:$dst),
+                       (ins VR128:$src1, i128mem:$src2, i32i8imm:$src3),
+                       !strconcat(OpcodeStr,
+                        "\t{$$src3, src2, $dst|$dst, $src2, $src3}"),
+                       [(set VR128:$dst,
+                         (IntId128 VR128:$src1,
+                          (bitconvert (memopv16i8 addr:$src2)), imm:$src3))]>,
+                        OpSize;
+  }
+}
+
+defm BLENDPS      : SS41I_binop_rmi_int<0x0C, "blendps",
+                                        int_x86_sse41_blendps, 0>;
+defm BLENDPD      : SS41I_binop_rmi_int<0x0D, "blendpd",
+                                        int_x86_sse41_blendpd, 0>;
+defm PBLENDW      : SS41I_binop_rmi_int<0x0E, "pblendw",
+                                        int_x86_sse41_pblendw, 0>;
+defm DPPS         : SS41I_binop_rmi_int<0x40, "dpps",
+                                        int_x86_sse41_dpps, 1>;
+defm DPPD         : SS41I_binop_rmi_int<0x41, "dppd",
+                                        int_x86_sse41_dppd, 1>;
+defm MPSADBW      : SS41I_binop_rmi_int<0x42, "mpsadbw",
+                                        int_x86_sse41_mpsadbw, 0>;
