@@ -220,22 +220,27 @@ void DAGTypeLegalizer::MarkNewNodes(SDNode *N) {
 namespace {
   /// NodeUpdateListener - This class is a DAGUpdateListener that listens for
   /// updates to nodes and recomputes their ready state.
-  class VISIBILITY_HIDDEN NodeUpdateListener : 
+  class VISIBILITY_HIDDEN NodeUpdateListener :
     public SelectionDAG::DAGUpdateListener {
     DAGTypeLegalizer &DTL;
   public:
     NodeUpdateListener(DAGTypeLegalizer &dtl) : DTL(dtl) {}
-    
+
     virtual void NodeDeleted(SDNode *N) {
       // Ignore deletes.
+      assert(N->getNodeId() != DAGTypeLegalizer::Processed &&
+             N->getNodeId() != DAGTypeLegalizer::ReadyToProcess &&
+             "RAUW deleted processed node!");
     }
-    
+
     virtual void NodeUpdated(SDNode *N) {
       // Node updates can mean pretty much anything.  It is possible that an
       // operand was set to something already processed (f.e.) in which case
       // this node could become ready.  Recompute its flags.
-      if (N->getNodeId() != DAGTypeLegalizer::ReadyToProcess)
-        DTL.ReanalyzeNodeFlags(N);
+      assert(N->getNodeId() != DAGTypeLegalizer::Processed &&
+             N->getNodeId() != DAGTypeLegalizer::ReadyToProcess &&
+             "RAUW updated processed node!");
+      DTL.ReanalyzeNodeFlags(N);
     }
   };
 }
