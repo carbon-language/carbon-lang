@@ -221,8 +221,10 @@ void FoldingSetImpl::GrowHashTable() {
 /// FindNodeOrInsertPos - Look up the node specified by ID.  If it exists,
 /// return it.  If not, return the insertion token that will make insertion
 /// faster.
-FoldingSetImpl::Node *FoldingSetImpl::FindNodeOrInsertPos(const FoldingSetNodeID &ID,
-                                                          void *&InsertPos) {
+FoldingSetImpl::Node
+*FoldingSetImpl::FindNodeOrInsertPos(const FoldingSetNodeID &ID,
+                                     void *&InsertPos) {
+  
   void **Bucket = GetBucketFor(ID, Buckets, NumBuckets);
   void *Probe = *Bucket;
   
