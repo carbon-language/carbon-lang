@@ -118,9 +118,8 @@ bool AsmPrinter::doInitialization(Module &M) {
 
   SwitchToDataSection("");   // Reset back to no section.
   
-  if (MachineModuleInfo *MMI = getAnalysisToUpdate<MachineModuleInfo>()) {
-    MMI->AnalyzeModule(M);
-  }
+  MMI = getAnalysisToUpdate<MachineModuleInfo>();
+  if (MMI) MMI->AnalyzeModule(M);
   
   return false;
 }
@@ -1291,8 +1290,12 @@ void AsmPrinter::printLabel(unsigned Id) const {
 
 /// printDeclare - This method prints a local variable declaration used by
 /// debug tables.
+/// FIXME: It doesn't really print anything rather it inserts a DebugVariable
+/// entry into dwarf table.
 void AsmPrinter::printDeclare(const MachineInstr *MI) const {
-  // Do nothing.
+  int FI = MI->getOperand(0).getIndex();
+  GlobalValue *GV = MI->getOperand(1).getGlobal();
+  MMI->RecordVariable(GV, FI);
 }
 
 /// PrintAsmOperand - Print the specified operand of MI, an INLINEASM

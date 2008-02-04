@@ -1780,7 +1780,6 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "}\n\n";
 
   OS << "SDNode *Select_DECLARE(const SDOperand &N) {\n"
-     << "  MachineModuleInfo *MMI = CurDAG->getMachineModuleInfo();\n"
      << "  SDOperand Chain = N.getOperand(0);\n"
      << "  SDOperand N1 = N.getOperand(1);\n"
      << "  SDOperand N2 = N.getOperand(2);\n"
@@ -1791,8 +1790,6 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  }\n"
      << "  int FI = cast<FrameIndexSDNode>(N1)->getIndex();\n"
      << "  GlobalValue *GV = cast<GlobalAddressSDNode>(N2)->getGlobal();\n"
-     << "  // FIXME. Handle variable declarations later since it lives on.\n"
-     << "  MMI->RecordVariable(GV, FI);\n"
      << "  SDOperand Tmp1 = "
      << "CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());\n"
      << "  SDOperand Tmp2 = "
