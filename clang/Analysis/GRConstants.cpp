@@ -561,6 +561,12 @@ void GRConstants::VisitUnaryOperator(UnaryOperator* U,
         break;
       }
         
+      case UnaryOperator::Not: {
+        const NonLValue& R1 = cast<NonLValue>(GetValue(St, U->getSubExpr()));
+        Nodify(Dst, U, N1, SetValue(St, U, R1.BitwiseComplement(ValMgr)));
+        break;
+      }
+        
       case UnaryOperator::AddrOf: {
         const LValue& L1 = GetLValue(St, U->getSubExpr());
         Nodify(Dst, U, N1, SetValue(St, U, L1));

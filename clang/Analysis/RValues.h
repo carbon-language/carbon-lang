@@ -196,6 +196,7 @@ public:
   NonLValue Div(ValueManager& ValMgr, const NonLValue& RHS) const;
   NonLValue Rem(ValueManager& ValMgr, const NonLValue& RHS) const;
   NonLValue UnaryMinus(ValueManager& ValMgr, UnaryOperator* U) const;
+  NonLValue BitwiseComplement(ValueManager& ValMgr) const;
   
   // Equality operators.
   NonLValue EQ(ValueManager& ValMgr, const NonLValue& RHS) const;
@@ -293,6 +294,10 @@ public:
     assert (U->getType() == U->getSubExpr()->getType());  
     assert (U->getType()->isIntegerType());  
     return ValMgr.getValue(-getValue()); 
+  }
+  
+  ConcreteInt BitwiseComplement(ValueManager& ValMgr) const {
+    return ValMgr.getValue(~getValue()); 
   }
   
   // Casting.

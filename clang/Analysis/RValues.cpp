@@ -138,6 +138,16 @@ NonLValue NonLValue::UnaryMinus(ValueManager& ValMgr, UnaryOperator* U) const {
   }
 }
 
+NonLValue NonLValue::BitwiseComplement(ValueManager& ValMgr) const {
+  switch (getSubKind()) {
+    case ConcreteIntKind:
+      return cast<ConcreteInt>(this)->BitwiseComplement(ValMgr);
+    default:
+      return cast<NonLValue>(InvalidValue());
+  }
+}
+
+
 #define NONLVALUE_DISPATCH_CASE(k1,k2,Op)\
 case (k1##Kind*NumNonLValueKind+k2##Kind):\
 return cast<k1>(*this).Op(ValMgr,cast<k2>(RHS));
