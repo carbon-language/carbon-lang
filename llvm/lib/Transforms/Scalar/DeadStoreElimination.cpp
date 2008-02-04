@@ -52,7 +52,7 @@ namespace {
                                             Instruction* dependency,
                                         SetVector<Instruction*>& possiblyDead);
     bool handleEndBlock(BasicBlock& BB, SetVector<Instruction*>& possiblyDead);
-    bool RemoveUndeadPointers(Value* pointer,
+    bool RemoveUndeadPointers(Value* pointer, uint64_t killPointerSize,
                               BasicBlock::iterator& BBI,
                               SmallPtrSet<Value*, 64>& deadPointers, 
                               SetVector<Instruction*>& possiblyDead);
@@ -322,6 +322,7 @@ bool DSE::handleEndBlock(BasicBlock& BB,
     }
     
     Value* killPointer = 0;
+    uint64_t killPointerSize = ~0UL;
     
     // If we encounter a use of the pointer, it is no longer considered dead
     if (LoadInst* L = dyn_cast<LoadInst>(BBI)) {
@@ -346,6 +347,11 @@ bool DSE::handleEndBlock(BasicBlock& BB,
       killPointer = L->getPointerOperand();
     } else if (VAArgInst* V = dyn_cast<VAArgInst>(BBI)) {
       killPointer = V->getOperand(0);
+    } else if (isa<MemCpyInst>(BBI) &&
+               isa<ConstantInt>(cast<MemCpyInst>(BBI)->getLength())) {
+      killPointer = cast<MemCpyInst>(BBI)->getSource();
+      killPointerSize = cast<ConstantInt>(
+                            cast<MemCpyInst>(BBI)->getLength())->getZExtValue();
     } else if (AllocaInst* A = dyn_cast<AllocaInst>(BBI)) {
       deadPointers.erase(A);
       
@@ -444,7 +450,7 @@ bool DSE::handleEndBlock(BasicBlock& BB,
     TranslatePointerBitCasts(killPointer);
     
     // Deal with undead pointers
-    MadeChange |= RemoveUndeadPointers(killPointer, BBI,
+    MadeChange |= RemoveUndeadPointers(killPointer, killPointerSize, BBI,
                                        deadPointers, possiblyDead);
   }
   
@@ -453,7 +459,7 @@ bool DSE::handleEndBlock(BasicBlock& BB,
 
 /// RemoveUndeadPointers - check for uses of a pointer that make it
 /// undead when scanning for dead stores to alloca's.
-bool DSE::RemoveUndeadPointers(Value* killPointer,
+bool DSE::RemoveUndeadPointers(Value* killPointer, uint64_t killPointerSize,
                                 BasicBlock::iterator& BBI,
                                 SmallPtrSet<Value*, 64>& deadPointers, 
                                 SetVector<Instruction*>& possiblyDead) {
@@ -491,7 +497,7 @@ bool DSE::RemoveUndeadPointers(Value* killPointer,
 
     // See if this pointer could alias it
     AliasAnalysis::AliasResult A = AA.alias(*I, pointerSize,
-                                            killPointer, ~0U);
+                                            killPointer, killPointerSize);
 
     // If it must-alias and a store, we can delete it
     if (isa<StoreInst>(BBI) && A == AliasAnalysis::MustAlias) {
