@@ -223,7 +223,7 @@ public:
     assert(IsUnsigned == RHS.IsUnsigned && "Signedness mismatch!");
     return APSInt(static_cast<const APInt&>(*this) - RHS, IsUnsigned);
   }
-  APSInt operator~() {    
+  APSInt operator~() const {    
     return APSInt(~static_cast<const APInt&>(*this), IsUnsigned);
   }
   
