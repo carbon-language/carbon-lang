@@ -242,9 +242,11 @@ Program::ExecuteAndWait(const Path& path,
       // Wait for child to die
       if (wait(&status) != child)
         MakeErrMsg(ErrMsg, "Child timed out but wouldn't die");
-        
+      else
+        MakeErrMsg(ErrMsg, "Child timed out", 0);
+
       return -1;   // Timeout detected
-    } else {
+    } else if (errno != EINTR) {
       MakeErrMsg(ErrMsg, "Error waiting for child process");
       return -1;
     }
