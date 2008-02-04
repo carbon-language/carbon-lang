@@ -25,8 +25,8 @@ namespace llvm {
 //===----------------------------------------------------------------------===//
 
 template <typename ImutInfo> class ImutAVLFactory;
-
 template <typename ImutInfo> class ImutAVLTreeInOrderIterator;
+template <typename ImutInfo> class ImutAVLTreeGenericIterator;
   
 template <typename ImutInfo >
 class ImutAVLTree : public FoldingSetNode {
@@ -37,6 +37,9 @@ public:
 
   typedef ImutAVLFactory<ImutInfo>          Factory;
   friend class ImutAVLFactory<ImutInfo>;
+  
+  friend class ImutAVLTreeGenericIterator<ImutInfo>;
+  friend class FoldingSet<ImutAVLTree>;
   
   typedef ImutAVLTreeInOrderIterator<ImutInfo>  iterator;
   
@@ -102,6 +105,24 @@ public:
   /// end - Returns an iterator for the tree that denotes the end of an
   ///  inorder traversal.
   iterator end() const { return iterator(); }
+    
+  bool ElementEqual(value_type_ref V) const {
+    // Compare the keys.
+    if (!ImutInfo::isEqual(ImutInfo::KeyOfValue(getValue()),
+                           ImutInfo::KeyOfValue(V)))
+      return false;
+    
+    // Also compare the data values.
+    if (!ImutInfo::isDataEqual(ImutInfo::DataOfValue(getValue()),
+                               ImutInfo::DataOfValue(V)))
+      return false;
+    
+    return true;
+  }
+  
+  bool ElementEqual(const ImutAVLTree* RHS) const {
+    return ElementEqual(RHS->getValue());
+  }
   
   /// isEqual - Compares two trees for structural equality and returns true
   ///   if they are equal.  This worst case performance of this operation is
@@ -120,14 +141,7 @@ public:
         continue;
       }
       
-      // Compare the keys.
-      if (!ImutInfo::isEqual(ImutInfo::KeyOfValue(LItr->getValue()),
-                             ImutInfo::KeyOfValue(RItr->getValue())))
-        return false;
-      
-      // Also compare the data values.
-      if (!ImutInfo::isDataEqual(ImutInfo::DataOfValue(LItr->getValue()),
-                                 ImutInfo::DataOfValue(RItr->getValue())))
+      if (!LItr->ElementEqual(*RItr))
         return false;
       
       ++LItr;
@@ -187,7 +201,15 @@ public:
             && "Current value is not less that value of right child.");
     
     return getHeight();
-  }  
+  }
+  
+  /// Profile - Profiling for ImutAVLTree.  This is not used by the
+  //    Factory object (which internally uses a FoldingSet), but can
+  //    be used by external clients that wish to insert an ImutAVLTree
+  //    object into a FoldingSet.
+  void Profile(llvm::FoldingSetNodeID& ID) const {
+    ID.AddPointer(this);
+  }   
   
   //===----------------------------------------------------===//  
   // Internal Values.
@@ -200,70 +222,14 @@ private:
   value_type       Value;
   unsigned         Hash;
   
-  //===----------------------------------------------------===//  
-  // Profiling or FoldingSet.
-  //===----------------------------------------------------===//
-
-private:
-
-  static inline
-  unsigned ComputeHash(ImutAVLTree* L, ImutAVLTree* R, value_type_ref V) {
-    FoldingSetNodeID ID;
-    
-    if (L) ID.AddInteger(L->ComputeHash());
-    ImutInfo::Profile(ID,V);
-    
-    // Compute the "intermediate" hash.  Basically, we want the net profile to
-    // be:  H(H(....H(H(H(item0),item1),item2)...),itemN), where
-    //  H(item) is the hash of the data item and H(hash,item) is a hash
-    //  of the last item hash and the the next item.
-    
-    unsigned X = ID.ComputeHash();
-    
-    if (R) {
-      ID.clear();
-      ID.AddInteger(X);
-      ID.AddInteger(R->ComputeHash());
-      X = ID.ComputeHash();
-    }
-    
-    return X;
-  }
-  
-  inline unsigned ComputeHash() {
-    if (Hash) return Hash;
-    
-    unsigned X = ComputeHash(getSafeLeft(), getRight(), getValue());
-    if (!isMutable()) Hash = X;
-    
-    return X;
-  }    
-  
-  /// Profile - Generates a FoldingSet profile for a tree node before it is
-  ///   created.  This is used by the ImutAVLFactory when creating
-  ///   trees.
-  static inline
-  void Profile(FoldingSetNodeID& ID, ImutAVLTree* L, ImutAVLTree* R,
-               value_type_ref V) {
-    
-    ID.AddInteger(ComputeHash(L, R, V));
-  }
-  
-public:
-
-  /// Profile - Generates a FoldingSet profile for an existing tree node.
-  void Profile(FoldingSetNodeID& ID) {
-    ID.AddInteger(ComputeHash());
-  }
-  
   //===----------------------------------------------------===//    
   // Internal methods (node manipulation; used by Factory).
   //===----------------------------------------------------===//
-  
+
 private:
   
   enum { Mutable = 0x1 };
-  
+
   /// ImutAVLTree - Internal constructor that is only called by
   ///   ImutAVLFactory.
   ImutAVLTree(ImutAVLTree* l, ImutAVLTree* r, value_type_ref v, unsigned height)
@@ -330,6 +296,33 @@ private:
     assert (isMutable() && "Only a mutable tree can have its height changed.");
     Height = h;
   }
+  
+  
+  static inline
+  unsigned ComputeHash(ImutAVLTree* L, ImutAVLTree* R, value_type_ref V) {
+    unsigned hash = 0;
+    
+    if (L) hash += L->ComputeHash();
+    
+    { // Compute hash of stored data.
+      FoldingSetNodeID ID;
+      ImutInfo::Profile(ID,V);
+      hash += ID.ComputeHash();
+    }
+    
+    if (R) hash += R->ComputeHash();
+    
+    return hash;
+  }
+  
+  inline unsigned ComputeHash() {
+    if (Hash) return Hash;
+    
+    unsigned X = ComputeHash(getSafeLeft(), getRight(), getValue());
+    if (!isMutable()) Hash = X;
+    
+    return X;
+  }
 };
 
 //===----------------------------------------------------------------------===//    
@@ -390,6 +383,20 @@ private:
     return ( hl > hr ? hl : hr ) + 1;
   }
   
+  
+  static bool CompareTreeWithSection(TreeTy* T,
+                                     typename TreeTy::iterator& TI,
+                                     typename TreeTy::iterator& TE) {
+    
+    typename TreeTy::iterator I = T->begin(), E = T->end();
+    
+    for ( ; I!=E ; ++I, ++TI)
+      if (TI == TE || !I->ElementEqual(*TI))
+        return false;
+
+    return true;
+  }                     
+  
   //===--------------------------------------------------===//    
   // "CreateNode" is used to generate new tree roots that link
   // to other trees.  The functon may also simply move links
@@ -401,21 +408,57 @@ private:
   //===--------------------------------------------------===//
   
   TreeTy* CreateNode(TreeTy* L, value_type_ref V, TreeTy* R) {
-    FoldingSetNodeID ID;      
-    TreeTy::Profile(ID,L,R,V);      
-    void* InsertPos;
+    // Search the FoldingSet bucket for a Tree with the same hash.
+    unsigned hash = TreeTy::ComputeHash(L, R, V);
+    typename CacheTy::bucket_iterator I = Cache.bucket_begin(hash);
+    typename CacheTy::bucket_iterator E = Cache.bucket_end(hash);
     
-    if (TreeTy* T = Cache.FindNodeOrInsertPos(ID,InsertPos))
+    for (; I != E; ++I) {
+      TreeTy* T = &*I;
+
+      if (T->ComputeHash() != hash)
+        continue;
+      
+      // We found a collision.  Perform a comparison of Contents('T')
+      // with Contents('L')+'V'+Contents('R').
+      
+      typename TreeTy::iterator TI = T->begin(), TE = T->end();
+      
+      // First compare Contents('L') with the (initial) contents of T.
+      if (!CompareTreeWithSection(L, TI, TE))
+        continue;
+      
+      // Now compare the new data element.
+      if (TI == TE || !TI->ElementEqual(V))
+        continue;
+      
+      ++TI;
+
+      // Now compare the remainder of 'T' with 'R'.
+      if (!CompareTreeWithSection(R, TI, TE))
+        continue;
+      
+      if (TI != TE) // Contents('R') did not match suffix of 'T'.
+        continue;
+      
+      // Trees did match!  Return 'T'.
       return T;
+    }
     
-    assert (InsertPos != NULL);
-    
+    // No tree with the contents: Contents('L')+'V'+Contents('R').
+    // Create it.
+
     // Allocate the new tree node and insert it into the cache.
     TreeTy* T = (TreeTy*) Allocator.Allocate<TreeTy>();    
     new (T) TreeTy(L,R,V,IncrementHeight(L,R));
-    Cache.InsertNode(T,InsertPos);
 
-    return T;      
+    // We do not insert 'T' into the FoldingSet here.  This is because
+    // this tree is still mutable and things may get rebalanced.
+    // Because our hash is associative and based on the contents of
+    // the set, this should hopefully not cause any strange bugs.
+    // 'T' is inserted by 'MarkImmutable'.
+
+    return T;
   }
   
   TreeTy* CreateNode(TreeTy* L, TreeTy* OldTree, TreeTy* R) {      
@@ -546,6 +589,10 @@ private:
     T->MarkImmutable();
     MarkImmutable(Left(T));
     MarkImmutable(Right(T));
+        
+    // Now that the node is immutable it can safely be inserted
+    // into the node cache.
+    Cache.InsertNode(T, (void*) &*Cache.bucket_end(T->ComputeHash()));
   }
 };
   
@@ -626,7 +673,7 @@ public:
     
     switch (getVisitState()) {
       case VisitedNone:
-        if (TreeTy* L = Current->getLeft())
+        if (TreeTy* L = Current->getSafeLeft())
           stack.push_back(reinterpret_cast<uintptr_t>(L));
         else
           stack.back() |= VisitedLeft;
