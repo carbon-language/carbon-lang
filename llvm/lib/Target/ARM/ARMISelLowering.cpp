@@ -203,7 +203,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::MEMMOVE         , MVT::Other, Expand);
 
   // Use the default implementation.
-  setOperationAction(ISD::VASTART           , MVT::Other, Expand);
+  setOperationAction(ISD::VASTART           , MVT::Other, Custom);
   setOperationAction(ISD::VAARG             , MVT::Other, Expand);
   setOperationAction(ISD::VACOPY            , MVT::Other, Expand);
   setOperationAction(ISD::VAEND             , MVT::Other, Expand);
@@ -239,12 +239,6 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::BR_CC    , MVT::f32,   Custom);
   setOperationAction(ISD::BR_CC    , MVT::f64,   Custom);
   setOperationAction(ISD::BR_JT    , MVT::Other, Custom);
-
-  setOperationAction(ISD::VASTART,       MVT::Other, Custom);
-  setOperationAction(ISD::VACOPY,        MVT::Other, Expand); 
-  setOperationAction(ISD::VAEND,         MVT::Other, Expand);
-  setOperationAction(ISD::STACKSAVE,     MVT::Other, Expand); 
-  setOperationAction(ISD::STACKRESTORE,  MVT::Other, Expand);
 
   // FP Constants can't be immediates.
   setOperationAction(ISD::ConstantFP, MVT::f64, Expand);
