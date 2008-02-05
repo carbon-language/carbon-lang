@@ -24,12 +24,7 @@ using namespace CodeGen;
 namespace {
   /// RecordOrganizer - This helper class, used by CGRecordLayout, layouts 
   /// structs and unions. It manages transient information used during layout.
-  /// FIXME : At the moment assume 
-  ///    - one to one mapping between AST FieldDecls and 
-  ///      llvm::StructType elements.
-  ///    - Ignore bit fields
-  ///    - Ignore field aligments
-  ///    - Ignore packed structs
+  /// FIXME : Handle field aligments. Handle packed structs.
   class RecordOrganizer {
   public:
     explicit RecordOrganizer(CodeGenTypes &Types) : 
