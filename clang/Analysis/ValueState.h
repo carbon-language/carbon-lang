@@ -151,10 +151,10 @@ public:
   // Iterators.
   
   typedef vstate::VariableBindingsTy VariableBindingsTy;
-  typedef VariableBindingsTy::iterator iterator;
+  typedef VariableBindingsTy::iterator vb_iterator;
   
-  iterator begin() { return Data->VariableBindings.begin(); }
-  iterator end() { return Data->VariableBindings.end(); }
+  vb_iterator begin() { return Data->VariableBindings.begin(); }
+  vb_iterator end() { return Data->VariableBindings.end(); }
   
   // Profiling and equality testing.
   

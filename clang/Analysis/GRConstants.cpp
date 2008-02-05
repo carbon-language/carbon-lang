@@ -290,7 +290,7 @@ void GRConstants::ProcessBranch(Expr* Condition, Stmt* Term,
   StateTy PrevState = builder.getState();
   
   // Remove old bindings for subexpressions.  
-  for (StateTy::iterator I=PrevState.begin(), E=PrevState.end(); I!=E; ++I)
+  for (StateTy::vb_iterator I=PrevState.begin(), E=PrevState.end(); I!=E; ++I)
     if (I.getKey().isSubExpr())
       PrevState = StateMgr.Remove(PrevState, I.getKey());
   
@@ -453,7 +453,7 @@ void GRConstants::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
 GRConstants::StateTy GRConstants::RemoveDeadBindings(Stmt* Loc, StateTy M) {
   // Note: in the code below, we can assign a new map to M since the
   //  iterators are iterating over the tree of the *original* map.
-  StateTy::iterator I = M.begin(), E = M.end();
+  StateTy::vb_iterator I = M.begin(), E = M.end();
 
 
   for (; I!=E && !I.getKey().isSymbol(); ++I) {
@@ -887,7 +887,7 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRConstants::NodeTy*> :
                         VarBindKey::Kind kind, bool isFirstGroup = false) {
     bool isFirst = true;
     
-    for (GRConstants::StateTy::iterator I=M.begin(), E=M.end();I!=E;++I) {        
+    for (GRConstants::StateTy::vb_iterator I=M.begin(), E=M.end();I!=E;++I) {        
       if (I.getKey().getKind() != kind)
         continue;
     
