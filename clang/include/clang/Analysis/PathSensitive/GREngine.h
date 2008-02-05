@@ -62,14 +62,14 @@ protected:
   void HandlePostStmt(const PostStmt& S, CFGBlock* B,
                       unsigned StmtIdx, ExplodedNodeImpl *Pred);
   
-  void HandleBranch(Stmt* Cond, Stmt* Term, CFGBlock* B,
+  void HandleBranch(Expr* Cond, Stmt* Term, CFGBlock* B,
                     ExplodedNodeImpl* Pred);  
   
   virtual void* ProcessEOP(CFGBlock* Blk, void* State) = 0;  
 
   virtual void  ProcessStmt(Stmt* S, GRStmtNodeBuilderImpl& Builder) = 0;
 
-  virtual void  ProcessBranch(Stmt* Condition, Stmt* Terminator,
+  virtual void  ProcessBranch(Expr* Condition, Stmt* Terminator,
                               GRBranchNodeBuilderImpl& Builder) = 0;
 
 
@@ -255,7 +255,7 @@ protected:
   }
 
 
-  virtual void ProcessBranch(Stmt* Condition, Stmt* Terminator,
+  virtual void ProcessBranch(Expr* Condition, Stmt* Terminator,
                              GRBranchNodeBuilderImpl& BuilderImpl) {
     GRBranchNodeBuilder<CHECKER> Builder(BuilderImpl);
     Checker->ProcessBranch(Condition, Terminator, Builder);    

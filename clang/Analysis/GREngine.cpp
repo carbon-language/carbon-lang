@@ -155,6 +155,18 @@ void GREngineImpl::HandleBlockExit(CFGBlock * B, ExplodedNodeImpl* Pred) {
         assert(false && "Analysis for this terminator not implemented.");
         break;
         
+      case Stmt::ConditionalOperatorClass:
+        HandleBranch(cast<ConditionalOperator>(Term)->getCond(), Term, B, Pred);
+        break;
+        
+      case Stmt::ChooseExprClass:
+        HandleBranch(cast<ChooseExpr>(Term)->getCond(), Term, B, Pred);
+        break;
+        
+      case Stmt::BinaryOperatorClass: // '&&' and '||'
+        HandleBranch(cast<BinaryOperator>(Term)->getLHS(), Term, B, Pred);
+        break;
+        
       case Stmt::IfStmtClass:
         HandleBranch(cast<IfStmt>(Term)->getCond(), Term, B, Pred);
         break;
@@ -180,7 +192,7 @@ void GREngineImpl::HandleBlockExit(CFGBlock * B, ExplodedNodeImpl* Pred) {
   }
 }
 
-void GREngineImpl::HandleBranch(Stmt* Cond, Stmt* Term, CFGBlock * B,
+void GREngineImpl::HandleBranch(Expr* Cond, Stmt* Term, CFGBlock * B,
                                 ExplodedNodeImpl* Pred) {
   assert (B->succ_size() == 2);
 

@@ -16,7 +16,7 @@ RValue ValueStateManager::GetValue(const StateTy& St, const LValue& LV) {
   return InvalidValue();
 }
 
-RValue ValueStateManager::GetValue(const StateTy& St, Stmt* S) {
+RValue ValueStateManager::GetValue(const StateTy& St, Stmt* S, bool* hasVal) {
   for (;;) {
     switch (S->getStmtClass()) {
         
@@ -73,7 +73,14 @@ RValue ValueStateManager::GetValue(const StateTy& St, Stmt* S) {
   
   StateTy::TreeTy* T = St.SlimFind(S);
   
-  return T ? T->getValue().second : InvalidValue();
+  if (T) {
+    if (hasVal) *hasVal = true;
+    return T->getValue().second;
+  }
+  else {
+    if (hasVal) *hasVal = false;
+    return InvalidValue();
+  }
 }
 
 LValue ValueStateManager::GetLValue(const StateTy& St, Stmt* S) {

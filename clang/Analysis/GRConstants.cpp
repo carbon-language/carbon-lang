@@ -169,7 +169,7 @@ public:
   
   /// ProcessBranch - Called by GREngine.  Used to generate successor
   ///  nodes by processing the 'effects' of a branch condition.
-  void ProcessBranch(Stmt* Condition, Stmt* Term, BranchNodeBuilder& builder);
+  void ProcessBranch(Expr* Condition, Stmt* Term, BranchNodeBuilder& builder);
 
   /// RemoveDeadBindings - Return a new state that is the same as 'M' except
   ///  that all subexpression mappings are removed and that any
@@ -188,7 +188,11 @@ public:
   inline RValue GetValue(const StateTy& St, Stmt* S) {
     return StateMgr.GetValue(St, S);
   }
-    
+  
+  inline RValue GetValue(const StateTy& St, Stmt* S, bool& hasVal) {
+    return StateMgr.GetValue(St, S, &hasVal);
+  }
+  
   inline RValue GetValue(const StateTy& St, const Stmt* S) {
     return GetValue(St, const_cast<Stmt*>(S));
   }
@@ -199,6 +203,10 @@ public:
   
   inline LValue GetLValue(const StateTy& St, Stmt* S) {
     return StateMgr.GetLValue(St, S);
+  }
+  
+  inline NonLValue GetRValueConstant(uint64_t X, Expr* E) {
+    return NonLValue::GetValue(ValMgr, X, E->getType(), E->getLocStart());
   }
     
   /// Assume - Create new state by assuming that a given expression
@@ -230,7 +238,14 @@ public:
   void VisitBinaryOperator(BinaryOperator* B, NodeTy* Pred, NodeSet& Dst);
   
   /// VisitDeclStmt - Transfer function logic for DeclStmts.
-  void VisitDeclStmt(DeclStmt* DS, NodeTy* Pred, NodeSet& Dst);
+  void VisitDeclStmt(DeclStmt* DS, NodeTy* Pred, NodeSet& Dst); 
+  
+  /// VisitGuardedExpr - Transfer function logic for ?, __builtin_choose
+  void VisitGuardedExpr(Stmt* S, Stmt* LHS, Stmt* RHS,
+                        NodeTy* Pred, NodeSet& Dst);
+  
+  /// VisitLogicalExpr - Transfer function logic for '&&', '||'
+  void VisitLogicalExpr(BinaryOperator* B, NodeTy* Pred, NodeSet& Dst);
 };
 } // end anonymous namespace
 
@@ -269,7 +284,7 @@ GRConstants::SetValue(StateTy St, const LValue& LV, const RValue& V) {
   return StateMgr.SetValue(St, LV, V);
 }
 
-void GRConstants::ProcessBranch(Stmt* Condition, Stmt* Term,
+void GRConstants::ProcessBranch(Expr* Condition, Stmt* Term,
                                 BranchNodeBuilder& builder) {
 
   StateTy PrevState = builder.getState();
@@ -278,6 +293,37 @@ void GRConstants::ProcessBranch(Stmt* Condition, Stmt* Term,
   for (StateTy::iterator I=PrevState.begin(), E=PrevState.end(); I!=E; ++I)
     if (I.getKey().isSubExpr())
       PrevState = StateMgr.Remove(PrevState, I.getKey());
+  
+  // Remove terminator-specific bindings.
+  switch (Term->getStmtClass()) {
+    default: break;
+      
+    case Stmt::BinaryOperatorClass: { // '&&', '||'
+      BinaryOperator* B = cast<BinaryOperator>(Term);
+      // FIXME: Liveness analysis should probably remove these automatically.
+      //   Verify later when we converge to an 'optimization' stage.
+      PrevState = StateMgr.Remove(PrevState, B->getRHS());
+      break;
+    }
+      
+    case Stmt::ConditionalOperatorClass: { // '?' operator
+      ConditionalOperator* C = cast<ConditionalOperator>(Term);
+      // FIXME: Liveness analysis should probably remove these automatically.
+      //   Verify later when we converge to an 'optimization' stage.
+      if (Expr* L = C->getLHS()) PrevState = StateMgr.Remove(PrevState, L);
+      PrevState = StateMgr.Remove(PrevState, C->getRHS());
+      break;
+    }
+      
+    case Stmt::ChooseExprClass: { // __builtin_choose_expr
+      ChooseExpr* C = cast<ChooseExpr>(Term);
+      // FIXME: Liveness analysis should probably remove these automatically.
+      //   Verify later when we converge to an 'optimization' stage.
+      PrevState = StateMgr.Remove(PrevState, C->getRHS());
+      PrevState = StateMgr.Remove(PrevState, C->getRHS());
+      break;   
+    }
+  }
   
   RValue V = GetValue(PrevState, Condition);
   
@@ -305,9 +351,11 @@ void GRConstants::ProcessBranch(Stmt* Condition, Stmt* Term,
 
   // Process the true branch.
   bool isFeasible = true;
+  
   StateTy St = Assume(PrevState, V, true, isFeasible);
 
-  if (isFeasible) builder.generateNode(St, true);
+  if (isFeasible)
+    builder.generateNode(St, true);
   else {
     builder.markInfeasible(true);
     isFeasible = true;
@@ -316,10 +364,69 @@ void GRConstants::ProcessBranch(Stmt* Condition, Stmt* Term,
   // Process the false branch.  
   St = Assume(PrevState, V, false, isFeasible);
   
-  if (isFeasible) builder.generateNode(St, false);
-  else builder.markInfeasible(false);
-
+  if (isFeasible)
+    builder.generateNode(St, false);
+  else
+    builder.markInfeasible(false);
 }
+
+
+void GRConstants::VisitLogicalExpr(BinaryOperator* B, NodeTy* Pred,
+                                   NodeSet& Dst) {
+
+  bool hasR2;
+  StateTy PrevState = Pred->getState();
+
+  RValue R1 = GetValue(PrevState, B->getLHS());
+  RValue R2 = GetValue(PrevState, B->getRHS(), hasR2);
+    
+  if (isa<InvalidValue>(R1) && 
+       (isa<InvalidValue>(R2) ||
+        isa<UninitializedValue>(R2))) {    
+
+    Nodify(Dst, B, Pred, SetValue(PrevState, B, R2));
+    return;
+  }    
+  else if (isa<UninitializedValue>(R1)) {
+    Nodify(Dst, B, Pred, SetValue(PrevState, B, R1));
+    return;
+  }
+
+  // R1 is an expression that can evaluate to either 'true' or 'false'.
+  if (B->getOpcode() == BinaryOperator::LAnd) {
+    // hasR2 == 'false' means that LHS evaluated to 'false' and that
+    // we short-circuited, leading to a value of '0' for the '&&' expression.
+    if (hasR2 == false) { 
+      Nodify(Dst, B, Pred, SetValue(PrevState, B, GetRValueConstant(0U, B)));
+      return;
+    }
+  }
+  else {
+    assert (B->getOpcode() == BinaryOperator::LOr);
+    // hasR2 == 'false' means that the LHS evaluate to 'true' and that
+    //  we short-circuited, leading to a value of '1' for the '||' expression.
+    if (hasR2 == false) {
+      Nodify(Dst, B, Pred, SetValue(PrevState, B, GetRValueConstant(1U, B)));
+      return;      
+    }
+  }
+    
+  // If we reach here we did not short-circuit.  Assume R2 == true and
+  // R2 == false.
+    
+  bool isFeasible;
+  StateTy St = Assume(PrevState, R2, true, isFeasible);
+  
+  if (isFeasible)
+    Nodify(Dst, B, Pred, SetValue(PrevState, B, GetRValueConstant(1U, B)));
+
+  St = Assume(PrevState, R2, false, isFeasible);
+  
+  if (isFeasible)
+    Nodify(Dst, B, Pred, SetValue(PrevState, B, GetRValueConstant(0U, B)));  
+}
+
+
 
 void GRConstants::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
   Builder = &builder;
@@ -414,6 +521,18 @@ void GRConstants::VisitDeclStmt(DeclStmt* DS, GRConstants::NodeTy* Pred,
   
   if (Dst.empty())
     Dst.Add(Pred);  
+}
+
+
+void GRConstants::VisitGuardedExpr(Stmt* S, Stmt* LHS, Stmt* RHS,
+                                   NodeTy* Pred, NodeSet& Dst) {
+  
+  StateTy St = Pred->getState();
+  
+  RValue R = GetValue(St, LHS);
+  if (isa<InvalidValue>(R)) R = GetValue(St, RHS);
+  
+  Nodify(Dst, S, Pred, SetValue(St, S, R));
 }
 
 void GRConstants::VisitUnaryOperator(UnaryOperator* U,
@@ -531,7 +650,7 @@ void GRConstants::VisitBinaryOperator(BinaryOperator* B,
           Dst.Add(N2);
           break;
           
-        // Arithmetic opreators.
+        // Arithmetic operators.
           
         case BinaryOperator::Add: {
           const NonLValue& R1 = cast<NonLValue>(V1);
@@ -660,6 +779,14 @@ void GRConstants::Visit(Stmt* S, GRConstants::NodeTy* Pred,
 
   switch (S->getStmtClass()) {
     case Stmt::BinaryOperatorClass:
+ 
+      if (cast<BinaryOperator>(S)->isLogicalOp()) {
+        VisitLogicalExpr(cast<BinaryOperator>(S), Pred, Dst);
+        break;
+      }
+      
+      // Fall-through.
+      
     case Stmt::CompoundAssignOperatorClass:
       VisitBinaryOperator(cast<BinaryOperator>(S), Pred, Dst);
       break;
@@ -681,6 +808,18 @@ void GRConstants::Visit(Stmt* S, GRConstants::NodeTy* Pred,
     case Stmt::CastExprClass: {
       CastExpr* C = cast<CastExpr>(S);
       VisitCast(C, C->getSubExpr(), Pred, Dst);
+      break;
+    }
+      
+    case Stmt::ConditionalOperatorClass: { // '?' operator
+      ConditionalOperator* C = cast<ConditionalOperator>(S);
+      VisitGuardedExpr(S, C->getLHS(), C->getRHS(), Pred, Dst);
+      break;
+    }
+
+    case Stmt::ChooseExprClass: { // __builtin_choose_expr
+      ChooseExpr* C = cast<ChooseExpr>(S);
+      VisitGuardedExpr(S, C->getLHS(), C->getRHS(), Pred, Dst);
       break;
     }
       
