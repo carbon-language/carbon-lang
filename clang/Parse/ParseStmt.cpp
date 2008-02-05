@@ -87,23 +87,7 @@ Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
   case tok::at: // May be a @try or @throw statement
     {
       AtLoc = ConsumeToken();  // consume @
-      if (Tok.isObjCAtKeyword(tok::objc_try))
-        return ParseObjCTryStmt(AtLoc);
-      else if (Tok.isObjCAtKeyword(tok::objc_throw))
-        return ParseObjCThrowStmt(AtLoc);
-      else if (Tok.isObjCAtKeyword(tok::objc_synchronized))
-        return ParseObjCSynchronizedStmt(AtLoc);
-      ExprResult Res = ParseExpressionWithLeadingAt(AtLoc);
-      if (Res.isInvalid) {
-        // If the expression is invalid, skip ahead to the next semicolon. Not
-        // doing this opens us up to the possibility of infinite loops if
-        // ParseExpression does not consume any tokens.
-        SkipUntil(tok::semi);
-        return true;
-      }
-      // Otherwise, eat the semicolon.
-      ExpectAndConsume(tok::semi, diag::err_expected_semi_after_expr);
-      return Actions.ActOnExprStmt(Res.Val);
+      return ParseObjCAtStatement(AtLoc);
     }
 
   default:

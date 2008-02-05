@@ -403,7 +403,8 @@ private:
   StmtResult ParseBreakStatement();
   StmtResult ParseReturnStatement();
   StmtResult ParseAsmStatement();
-  StmtResult ParseObjCTryStmt(SourceLocation atLoc);
+  StmtResult ParseObjCAtStatement(SourceLocation atLoc);
+  StmtResult ParseObjCTryStmt(SourceLocation atLoc, bool &processAtKeyword);
   StmtResult ParseObjCThrowStmt(SourceLocation atLoc);
   StmtResult ParseObjCSynchronizedStmt(SourceLocation atLoc);
   void ParseAsmOperandsOpt(llvm::SmallVectorImpl<std::string> &Names,

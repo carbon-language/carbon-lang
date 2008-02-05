@@ -1150,8 +1150,11 @@ Parser::StmtResult Parser::ParseObjCSynchronizedStmt(SourceLocation atLoc) {
 ///     parameter-declaration
 ///     '...' [OBJC2]
 ///
-Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
+Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc, 
+                                            bool &processAtKeyword) {
   bool catch_or_finally_seen = false;
+  processAtKeyword = false;
+  
   ConsumeToken(); // consume try
   if (Tok.isNot(tok::l_brace)) {
     Diag (Tok, diag::err_expected_lbrace);
@@ -1180,8 +1183,7 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
                                                            DeclaratorInfo, 0);
           StmtResult stmtResult = Actions.ActOnDeclStmt(aBlockVarDecl);
           FirstPart = stmtResult.isInvalid ? 0 : stmtResult.Val;
-        }
-        else
+        } else
           ConsumeToken(); // consume '...'
         SourceLocation RParenLoc = ConsumeParen();
         StmtResult CatchBody = ParseCompoundStatementBody();
@@ -1190,22 +1192,23 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
         CatchStmts = Actions.ActOnObjCAtCatchStmt(AtCatchFinallyLoc, RParenLoc, 
           FirstPart, CatchBody.Val, CatchStmts.Val);
         ExitScope();
-      }
-      else {
+      } else {
         Diag(AtCatchFinallyLoc, diag::err_expected_lparen_after, 
              "@catch clause");
         return true;
       }
       catch_or_finally_seen = true;
-    }
-    else if (Tok.isObjCAtKeyword(tok::objc_finally)) {
-       ConsumeToken(); // consume finally
+    } else if (Tok.isObjCAtKeyword(tok::objc_finally)) {
+      ConsumeToken(); // consume finally
       StmtResult FinallyBody = ParseCompoundStatementBody();
       if (FinallyBody.isInvalid)
         FinallyBody = Actions.ActOnNullStmt(Tok.getLocation());
       FinallyStmt = Actions.ActOnObjCAtFinallyStmt(AtCatchFinallyLoc, 
                                                    FinallyBody.Val);
       catch_or_finally_seen = true;
+      break;
+    } else {
+      processAtKeyword = true;
       break;
     }
   }
@@ -1257,6 +1260,31 @@ Parser::DeclTy *Parser::ParseObjCMethodDefinition() {
   // TODO: Pass argument information.
   Actions.ActOnFinishFunctionBody(MDecl, FnBody.Val);
   return MDecl;
+}
+
+Parser::StmtResult Parser::ParseObjCAtStatement(SourceLocation AtLoc) {
+  if (Tok.isObjCAtKeyword(tok::objc_try)) {
+    bool parsedAtSign;
+    
+    StmtResult Res = ParseObjCTryStmt(AtLoc, parsedAtSign);
+    if (!Res.isInvalid && parsedAtSign)
+      return ParseObjCAtStatement(AtLoc);
+    return Res;
+  } else if (Tok.isObjCAtKeyword(tok::objc_throw))
+    return ParseObjCThrowStmt(AtLoc);
+  else if (Tok.isObjCAtKeyword(tok::objc_synchronized))
+    return ParseObjCSynchronizedStmt(AtLoc);
+  ExprResult Res = ParseExpressionWithLeadingAt(AtLoc);
+  if (Res.isInvalid) {
+    // If the expression is invalid, skip ahead to the next semicolon. Not
+    // doing this opens us up to the possibility of infinite loops if
+    // ParseExpression does not consume any tokens.
+    SkipUntil(tok::semi);
+    return true;
+  }
+  // Otherwise, eat the semicolon.
+  ExpectAndConsume(tok::semi, diag::err_expected_semi_after_expr);
+  return Actions.ActOnExprStmt(Res.Val);
 }
 
 Parser::ExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {

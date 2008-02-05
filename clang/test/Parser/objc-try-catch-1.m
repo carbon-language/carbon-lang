@@ -50,3 +50,13 @@ void baz()
   @finally {}
 }
 
+void noTwoTokenLookAheadRequiresABitOfFancyFootworkInTheParser() {
+    @try {
+        // Do something
+    } @catch (...) {}
+    @try {
+        // Do something
+    } @catch (...) {}
+    return 0;
+}
+
