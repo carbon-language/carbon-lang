@@ -506,13 +506,30 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
 }
 
 static inline std::string ConvertAsmString(const char *Start,
-                                           unsigned NumOperands)
+                                           unsigned NumOperands,
+                                           bool IsSimple)
 {
   static unsigned AsmCounter = 0;
   
   AsmCounter++;
   
   std::string Result;
+  if (IsSimple) {
+    while (*Start) {
+      switch (*Start) {
+      default:
+        Result += *Start;
+        break;
+      case '$':
+        Result += "$$";
+        break;
+      }
+      
+      Start++;
+    }
+    
+    return Result;
+  }
   
   while (*Start) {
     switch (*Start) {
@@ -552,6 +569,21 @@ static inline std::string ConvertAsmString(const char *Start,
         }
         
         Result += '$' + llvm::utostr(n);
+        Start = End;
+      } else if (isalpha(EscapedChar)) {
+        char *End;
+        
+        unsigned long n = strtoul(Start + 1, &End, 10);
+        if (Start == End) {
+          // FIXME: This should be caught during Sema.
+          assert(0 && "Missing operand!");
+        } else if (n >= NumOperands) {
+          // FIXME: This should be caught during Sema.
+          assert(0 && "Operand number out of range!");
+        }
+        
+        Result += "${" + llvm::utostr(n) + ':' + EscapedChar + '}';
+        Start = End;
       } else {
         assert(0 && "Unhandled asm escaped character!");
       }
@@ -591,7 +623,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
   std::string AsmString = 
     ConvertAsmString(std::string(S.getAsmString()->getStrData(),
                                  S.getAsmString()->getByteLength()).c_str(),
-                     S.getNumOutputs() + S.getNumInputs());
+                     S.getNumOutputs() + S.getNumInputs(), S.isSimple());
   
   std::string Constraints;
   
