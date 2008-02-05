@@ -1012,11 +1012,24 @@ public:
   iterator end() const { return iterator(); }  
   
   //===--------------------------------------------------===//    
+  // Utility methods.
+  //===--------------------------------------------------===//  
+  
+  inline unsigned getHeight() const { return Root ? Root->getHeight() : 0; }
+  
+  static inline void Profile(FoldingSetNodeID& ID, const ImmutableSet& S) {
+    ID.AddPointer(S.Root);
+  }
+  
+  inline void Profile(FoldingSetNodeID& ID) const {
+    return Profile(ID,*this);
+  }
+  
+  //===--------------------------------------------------===//    
   // For testing.
   //===--------------------------------------------------===//  
   
   void verify() const { if (Root) Root->verify(); }
-  unsigned getHeight() const { return Root ? Root->getHeight() : 0; }
 };
 
 } // end namespace llvm
