@@ -1227,6 +1227,13 @@ LowerCALL(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   Chain = DAG.getNode(CallOpc, NodeTys, &Ops[0], Ops.size());
   InFlag = Chain.getValue(1);
 
+  Chain = DAG.getCALLSEQ_END(Chain,
+                             DAG.getConstant(NumStackBytes, PtrVT),
+                             DAG.getConstant(0, PtrVT),
+                             InFlag);
+  if (Op.Val->getValueType(0) != MVT::Other)
+    InFlag = Chain.getValue(1);
+
   SDOperand ResultVals[3];
   unsigned NumResults = 0;
   NodeTys.clear();
@@ -1278,8 +1285,6 @@ LowerCALL(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
     break;
   }
   
-  Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, Chain,
-                      DAG.getConstant(NumStackBytes, PtrVT));
   NodeTys.push_back(MVT::Other);
   
   // If the function returns void, just return the chain.
