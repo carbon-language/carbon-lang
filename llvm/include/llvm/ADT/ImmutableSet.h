@@ -203,13 +203,10 @@ public:
     return getHeight();
   }
   
-  /// Profile - Profiling for ImutAVLTree.  This is not used by the
-  //    Factory object (which internally uses a FoldingSet), but can
-  //    be used by external clients that wish to insert an ImutAVLTree
-  //    object into a FoldingSet.
-  void Profile(llvm::FoldingSetNodeID& ID) const {
-    ID.AddPointer(this);
-  }   
+  /// Profile - Profiling for ImutAVLTree.
+  void Profile(llvm::FoldingSetNodeID& ID) {
+    ID.AddInteger(ComputeDigest());
+  }
   
   //===----------------------------------------------------===//  
   // Internal Values.
@@ -220,7 +217,7 @@ private:
   ImutAVLTree*     Right;
   unsigned         Height;
   value_type       Value;
-  unsigned         Hash;
+  unsigned         Digest;
   
   //===----------------------------------------------------===//    
   // Internal methods (node manipulation; used by Factory).
@@ -234,7 +231,7 @@ private:
   ///   ImutAVLFactory.
   ImutAVLTree(ImutAVLTree* l, ImutAVLTree* r, value_type_ref v, unsigned height)
   : Left(reinterpret_cast<uintptr_t>(l) | Mutable),
-    Right(r), Height(height), Value(v), Hash(0) {}
+    Right(r), Height(height), Value(v), Digest(0) {}
   
   
   /// isMutable - Returns true if the left and right subtree references
@@ -299,27 +296,27 @@ private:
   
   
   static inline
-  unsigned ComputeHash(ImutAVLTree* L, ImutAVLTree* R, value_type_ref V) {
-    unsigned hash = 0;
+  unsigned ComputeDigest(ImutAVLTree* L, ImutAVLTree* R, value_type_ref V) {
+    unsigned digest = 0;
     
-    if (L) hash += L->ComputeHash();
+    if (L) digest += L->ComputeDigest();
     
-    { // Compute hash of stored data.
+    { // Compute digest of stored data.
       FoldingSetNodeID ID;
       ImutInfo::Profile(ID,V);
-      hash += ID.ComputeHash();
+      digest += ID.ComputeHash();
     }
     
-    if (R) hash += R->ComputeHash();
+    if (R) digest += R->ComputeDigest();
     
-    return hash;
+    return digest;
   }
   
-  inline unsigned ComputeHash() {
-    if (Hash) return Hash;
+  inline unsigned ComputeDigest() {
+    if (Digest) return Digest;
     
-    unsigned X = ComputeHash(getSafeLeft(), getRight(), getValue());
-    if (!isMutable()) Hash = X;
+    unsigned X = ComputeDigest(getSafeLeft(), getRight(), getValue());
+    if (!isMutable()) Digest = X;
     
     return X;
   }
@@ -408,15 +405,19 @@ private:
   //===--------------------------------------------------===//
   
   TreeTy* CreateNode(TreeTy* L, value_type_ref V, TreeTy* R) {
-    // Search the FoldingSet bucket for a Tree with the same hash.
-    unsigned hash = TreeTy::ComputeHash(L, R, V);
+    // Search the FoldingSet bucket for a Tree with the same digest.
+    FoldingSetNodeID ID;
+    unsigned digest = TreeTy::ComputeDigest(L, R, V);
+    ID.AddInteger(digest);
+    unsigned hash = ID.ComputeHash();
+    
     typename CacheTy::bucket_iterator I = Cache.bucket_begin(hash);
     typename CacheTy::bucket_iterator E = Cache.bucket_end(hash);
     
     for (; I != E; ++I) {
       TreeTy* T = &*I;
 
-      if (T->ComputeHash() != hash)
+      if (T->ComputeDigest() != digest)
         continue;
       
       // We found a collision.  Perform a comparison of Contents('T')
@@ -454,7 +455,7 @@ private:
 
     // We do not insert 'T' into the FoldingSet here.  This is because
     // this tree is still mutable and things may get rebalanced.
-    // Because our hash is associative and based on the contents of
+    // Because our digest is associative and based on the contents of
     // the set, this should hopefully not cause any strange bugs.
     // 'T' is inserted by 'MarkImmutable'.
 
@@ -592,7 +593,9 @@ private:
         
     // Now that the node is immutable it can safely be inserted
     // into the node cache.
-    Cache.InsertNode(T, (void*) &*Cache.bucket_end(T->ComputeHash()));
+    llvm::FoldingSetNodeID ID;
+    ID.AddInteger(T->ComputeDigest());
+    Cache.InsertNode(T, (void*) &*Cache.bucket_end(ID.ComputeHash()));
   }
 };
   

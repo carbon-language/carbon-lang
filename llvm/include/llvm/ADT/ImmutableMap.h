@@ -206,7 +206,7 @@ public:
   inline unsigned getHeight() const { return Root ? Root->getHeight() : 0; }
 
   static inline void Profile(FoldingSetNodeID& ID, const ImmutableMap& M) {
-    M.Root->Profile(ID);
+    ID.AddPointer(M.Root);
   }
   
   inline void Profile(FoldingSetNodeID& ID) const {
