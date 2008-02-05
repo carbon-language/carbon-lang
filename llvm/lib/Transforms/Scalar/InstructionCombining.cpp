@@ -4629,60 +4629,11 @@ Instruction *InstCombiner::FoldGEPICmp(User *GEPLHS, Value *RHS,
 
   Value *PtrBase = GEPLHS->getOperand(0);
   if (PtrBase == RHS) {
-    // As an optimization, we don't actually have to compute the actual value of
-    // OFFSET if this is a icmp_eq or icmp_ne comparison, just return whether 
-    // each index is zero or not.
-    if (Cond == ICmpInst::ICMP_EQ || Cond == ICmpInst::ICMP_NE) {
-      Instruction *InVal = 0;
-      gep_type_iterator GTI = gep_type_begin(GEPLHS);
-      for (unsigned i = 1, e = GEPLHS->getNumOperands(); i != e; ++i, ++GTI) {
-        bool EmitIt = true;
-        if (Constant *C = dyn_cast<Constant>(GEPLHS->getOperand(i))) {
-          if (isa<UndefValue>(C))  // undef index -> undef.
-            return ReplaceInstUsesWith(I, UndefValue::get(I.getType()));
-          if (C->isNullValue())
-            EmitIt = false;
-          else if (TD->getABITypeSize(GTI.getIndexedType()) == 0) {
-            EmitIt = false;  // This is indexing into a zero sized array?
-          } else if (isa<ConstantInt>(C))
-            return ReplaceInstUsesWith(I, // No comparison is needed here.
-                                 ConstantInt::get(Type::Int1Ty, 
-                                                  Cond == ICmpInst::ICMP_NE));
-        }
-
-        if (EmitIt) {
-          Instruction *Comp =
-            new ICmpInst(Cond, GEPLHS->getOperand(i),
-                    Constant::getNullValue(GEPLHS->getOperand(i)->getType()));
-          if (InVal == 0)
-            InVal = Comp;
-          else {
-            InVal = InsertNewInstBefore(InVal, I);
-            InsertNewInstBefore(Comp, I);
-            if (Cond == ICmpInst::ICMP_NE)   // True if any are unequal
-              InVal = BinaryOperator::createOr(InVal, Comp);
-            else                              // True if all are equal
-              InVal = BinaryOperator::createAnd(InVal, Comp);
-          }
-        }
-      }
-
-      if (InVal)
-        return InVal;
-      else
-        // No comparison is needed here, all indexes = 0
-        ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 
-                                                Cond == ICmpInst::ICMP_EQ));
-    }
-
-    // Only lower this if the icmp is the only user of the GEP or if we expect
-    // the result to fold to a constant!
-    if (isa<ConstantExpr>(GEPLHS) || GEPLHS->hasOneUse()) {
-      // ((gep Ptr, OFFSET) cmp Ptr)   ---> (OFFSET cmp 0).
-      Value *Offset = EmitGEPOffset(GEPLHS, I, *this);
-      return new ICmpInst(ICmpInst::getSignedPredicate(Cond), Offset,
-                          Constant::getNullValue(Offset->getType()));
-    }
+    // ((gep Ptr, OFFSET) cmp Ptr)   ---> (OFFSET cmp 0).
+    // This transformation is valid because we know pointers can't overflow.
+    Value *Offset = EmitGEPOffset(GEPLHS, I, *this);
+    return new ICmpInst(ICmpInst::getSignedPredicate(Cond), Offset,
+                        Constant::getNullValue(Offset->getType()));
   } else if (User *GEPRHS = dyn_castGetElementPtr(RHS)) {
     // If the base pointers are different, but the indices are the same, just
     // compare the base pointer.
