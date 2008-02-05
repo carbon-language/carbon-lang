@@ -152,11 +152,39 @@ public:
   const SymIntConstraint& getConstraint(SymbolID sym, BinaryOperator::Opcode Op,
                                         const llvm::APSInt& V);
 };
+  
+} // end clang namespace
+
+//==------------------------------------------------------------------------==//
+// Casting machinery to get cast<> and dyn_cast<> working with SymbolData.
+//==------------------------------------------------------------------------==//
+
+namespace llvm {
+  
+  template<> inline bool
+  isa<clang::ParmVarDecl,clang::SymbolData>(const clang::SymbolData& V) {
+    return V.getKind() == clang::SymbolData::ParmKind;
+  }
+  
+  template<> struct cast_retty_impl<clang::ParmVarDecl,clang::SymbolData> {
+    typedef const clang::ParmVarDecl* ret_type;
+  };
+  
+  template<> struct simplify_type<clang::SymbolData> {
+    typedef void* SimpleType;
+    static inline SimpleType getSimplifiedValue(const clang::SymbolData &V) {
+      return V.getPtr();
+    }
+  };
+  
+} // end llvm namespace
 
 //==------------------------------------------------------------------------==//
 //  Base RValue types.
 //==------------------------------------------------------------------------==// 
 
+namespace clang {
+  
 class RValue {
 public:
   enum BaseKind { LValueKind=0x0,
@@ -495,29 +523,5 @@ namespace lval {
   
   
 } // end clang namespace  
-
-//==------------------------------------------------------------------------==//
-// Casting machinery to get cast<> and dyn_cast<> working with SymbolData.
-//==------------------------------------------------------------------------==//
-
-namespace llvm {
-
-template<> inline bool
-isa<clang::ParmVarDecl,clang::SymbolData>(const clang::SymbolData& V) {
-  return V.getKind() == clang::SymbolData::ParmKind;
-}
-
-template<> struct cast_retty_impl<clang::ParmVarDecl,clang::SymbolData> {
-  typedef const clang::ParmVarDecl* ret_type;
-};
-
-template<> struct simplify_type<clang::SymbolData> {
-  typedef void* SimpleType;
-  static inline SimpleType getSimplifiedValue(const clang::SymbolData &V) {
-    return V.getPtr();
-  }
-};
-
-} // end llvm namespace
 
 #endif
