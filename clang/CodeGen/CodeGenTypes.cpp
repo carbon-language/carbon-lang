@@ -290,7 +290,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
   case Type::Tagged:
     const TagType &TT = cast<TagType>(Ty);
     const TagDecl *TD = TT.getDecl();
-    llvm::Type *&ResultType = TagDeclTypes[TD];
+    llvm::Type *ResultType = TagDeclTypes[TD];
       
     // If corresponding llvm type is not a opaque struct type
     // then use it.
@@ -298,7 +298,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
       return ResultType;
     
     if (!TD->isDefinition()) {
-      ResultType = llvm::OpaqueType::get();  
+      ResultType = TagDeclTypes[TD] = llvm::OpaqueType::get();  
     } else if (TD->getKind() == Decl::Enum) {
       return ConvertType(cast<EnumDecl>(TD)->getIntegerType());
     } else if (TD->getKind() == Decl::Struct) {
@@ -335,7 +335,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
 
       // Get llvm::StructType.
       CGRecordLayout *RLI = new CGRecordLayout(RO.getLLVMType());
-      ResultType = RLI->getLLVMType();
+      ResultType = TagDeclTypes[TD] = RLI->getLLVMType();
       CGRecordLayouts[ResultType] = RLI;
 
       // Refine any OpaqueType associated with this RecordDecl.
@@ -358,11 +358,11 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
 
         // Get llvm::StructType.
         CGRecordLayout *RLI = new CGRecordLayout(RO.getLLVMType());
-        ResultType = RLI->getLLVMType();
+        ResultType = TagDeclTypes[TD] = RLI->getLLVMType();
         CGRecordLayouts[ResultType] = RLI;
       } else {       
         std::vector<const llvm::Type*> Fields;
-        ResultType = llvm::StructType::get(Fields);
+        ResultType = TagDeclTypes[TD] = llvm::StructType::get(Fields);
       }
     } else {
       assert(0 && "FIXME: Implement tag decl kind!");
