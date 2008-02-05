@@ -600,6 +600,11 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
   
   std::vector<const llvm::Type*> ArgTypes;
   std::vector<llvm::Value*> Args;
+
+  // Keep track of inout constraints.
+  std::string InOutConstraints;
+  std::vector<llvm::Value*> InOutArgs;
+  std::vector<const llvm::Type*> InOutArgTypes;
   
   for (unsigned i = 0, e = S.getNumOutputs(); i != e; i++) {    
     std::string OutputConstraint(S.getOutputConstraint(i)->getStrData(),
@@ -629,9 +634,33 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
       Args.push_back(Dest.getAddress());
       if (i != 0)
         Constraints += ',';
-      Constraints += '*';
+      Constraints += "=*";
       Constraints += OutputConstraint;
-    }      
+    }
+    
+    if (Info & TargetInfo::CI_ReadWrite) {
+      // FIXME: This code should be shared with the code that handles inputs.
+      InOutConstraints += ',';
+      
+      const Expr *InputExpr = S.getOutputExpr(i);
+      llvm::Value *Arg;
+      if ((Info & TargetInfo::CI_AllowsRegister) ||
+          !(Info & TargetInfo::CI_AllowsMemory)) {      
+        if (ConvertType(InputExpr->getType())->isFirstClassType()) {
+          Arg = EmitScalarExpr(InputExpr);
+        } else {
+          assert(0 && "FIXME: Implement passing non first class types as inputs");
+        }
+      } else {
+        LValue Dest = EmitLValue(InputExpr);
+        Arg = Dest.getAddress();
+        InOutConstraints += '*';
+      }
+      
+      InOutArgTypes.push_back(Arg->getType());
+      InOutArgs.push_back(Arg);
+      InOutConstraints += OutputConstraint;
+    }
   }
   
   unsigned NumConstraints = S.getNumOutputs() + S.getNumInputs();
@@ -674,6 +703,13 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
     Constraints += InputConstraint;
   }
   
+  // Append the "input" part of inout constraints last.
+  for (unsigned i = 0, e = InOutArgs.size(); i != e; i++) {
+    ArgTypes.push_back(InOutArgTypes[i]);
+    Args.push_back(InOutArgs[i]);
+  }
+  Constraints += InOutConstraints;
+  
   // Clobbers
   for (unsigned i = 0, e = S.getNumClobbers(); i != e; i++) {
     std::string Clobber(S.getClobber(i)->getStrData(),
@@ -692,7 +728,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
       Constraints += ',';
     Constraints += C;
   }
-
+    
   const llvm::FunctionType *FTy = 
     llvm::FunctionType::get(ResultType, ArgTypes, false);
   
