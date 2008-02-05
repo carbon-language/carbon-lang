@@ -13,9 +13,12 @@
 
 #include "CodeGenFunction.h"
 #include "clang/AST/AST.h"
+#include "clang/Basic/TargetInfo.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
+#include "llvm/InlineAsm.h"
+#include "llvm/ADT/StringExtras.h"
 using namespace clang;
 using namespace CodeGen;
 
@@ -59,6 +62,7 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
   case Stmt::SwitchStmtClass:   EmitSwitchStmt(cast<SwitchStmt>(*S));     break;
   case Stmt::DefaultStmtClass:  EmitDefaultStmt(cast<DefaultStmt>(*S));   break;
   case Stmt::CaseStmtClass:     EmitCaseStmt(cast<CaseStmt>(*S));         break;
+  case Stmt::AsmStmtClass:      EmitAsmStmt(cast<AsmStmt>(*S));           break;
   }
 }
 
@@ -499,4 +503,202 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
   Builder.SetInsertPoint(NextBlock);
   SwitchInsn = SavedSwitchInsn;
   CaseRangeBlock = SavedCRBlock;
+}
+
+static inline std::string ConvertAsmString(const char *Start,
+                                           unsigned NumOperands)
+{
+  static unsigned AsmCounter = 0;
+  
+  AsmCounter++;
+  
+  std::string Result;
+  
+  while (*Start) {
+    switch (*Start) {
+    default:
+      Result += *Start;
+      break;
+    case '$':
+      Result += "$$";
+      break;
+    case '%':
+      // Escaped character
+      Start++;
+      if (!*Start) {
+        // FIXME: This should be caught during Sema.
+        assert(0 && "Trailing '%' in asm string.");
+      }
+      
+      char EscapedChar = *Start;
+      if (EscapedChar == '%') {
+        // Escaped percentage sign.
+        Result += '%';
+      }
+      else if (EscapedChar == '=') {
+        // Generate an unique ID.
+        Result += llvm::utostr(AsmCounter);
+      } else if (isdigit(EscapedChar)) {
+        // %n - Assembler operand n
+        char *End;
+        
+        unsigned long n = strtoul(Start, &End, 10);
+        if (Start == End) {
+          // FIXME: This should be caught during Sema.
+          assert(0 && "Missing operand!");
+        } else if (n >= NumOperands) {
+          // FIXME: This should be caught during Sema.
+          assert(0 && "Operand number out of range!");
+        }
+        
+        Result += '$' + llvm::utostr(n);
+      } else {
+        assert(0 && "Unhandled asm escaped character!");
+      }
+    }
+    Start++;
+  }
+  
+  return Result;
+}
+
+static std::string SimplifyConstraint(const char* Constraint)
+{
+  std::string Result;
+  
+  while (*Constraint) {
+    switch (*Constraint) {
+    default:
+      Result += *Constraint;
+      break;
+    // Ignore these
+    case '*':
+    case '?':
+    case '!':
+      break;
+    case 'g':
+      Result += "imr";
+      break;
+    }
+    
+    Constraint++;
+  }
+  
+  return Result;
+}
+
+void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
+  std::string AsmString = 
+    ConvertAsmString(std::string(S.getAsmString()->getStrData(),
+                                 S.getAsmString()->getByteLength()).c_str(),
+                     S.getNumOutputs() + S.getNumInputs());
+  
+  std::string Constraints;
+  
+  llvm::Value *ResultAddr = 0;
+  const llvm::Type *ResultType = llvm::Type::VoidTy;
+  
+  std::vector<const llvm::Type*> ArgTypes;
+  std::vector<llvm::Value*> Args;
+  
+  for (unsigned i = 0, e = S.getNumOutputs(); i != e; i++) {    
+    std::string OutputConstraint(S.getOutputConstraint(i)->getStrData(),
+                                 S.getOutputConstraint(i)->getByteLength());
+    
+    TargetInfo::ConstraintInfo Info;
+    bool result = Target.validateOutputConstraint(OutputConstraint.c_str(), 
+                                                  Info);
+    assert(result && "Failed to parse output constraint");
+    
+    // Simplify the output constraint.
+    OutputConstraint = SimplifyConstraint(OutputConstraint.c_str() + 1);
+    
+    LValue Dest = EmitLValue(S.getOutputExpr(i));
+    const llvm::Type *DestValueType = 
+      cast<llvm::PointerType>(Dest.getAddress()->getType())->getElementType();
+    
+    // If the first output operand is not a memory dest, we'll
+    // make it the return value.
+    if (i == 0 && !(Info & TargetInfo::CI_AllowsMemory) &&
+        DestValueType->isFirstClassType()) {
+      ResultAddr = Dest.getAddress();
+      ResultType = DestValueType;
+      Constraints += "=" + OutputConstraint;
+    } else {
+      ArgTypes.push_back(Dest.getAddress()->getType());
+      if (i != 0)
+        Constraints += ',';
+      Constraints += '*';
+      Constraints += OutputConstraint;
+    }      
+  }
+  
+  unsigned NumConstraints = S.getNumOutputs() + S.getNumInputs();
+  
+  for (unsigned i = 0, e = S.getNumInputs(); i != e; i++) {
+    const Expr *InputExpr = S.getInputExpr(i);
+
+    std::string InputConstraint(S.getInputConstraint(i)->getStrData(),
+                                S.getInputConstraint(i)->getByteLength());
+    
+    TargetInfo::ConstraintInfo Info;
+    bool result = Target.validateInputConstraint(InputConstraint.c_str(),
+                                                 NumConstraints, 
+                                                 Info);
+    assert(result && "Failed to parse input constraint");
+    
+    if (i != 0 || S.getNumOutputs() > 0)
+      Constraints += ',';
+    
+    // Simplify the input constraint.
+    InputConstraint = SimplifyConstraint(InputConstraint.c_str());
+
+    llvm::Value *Arg;
+    
+    if ((Info & TargetInfo::CI_AllowsRegister) ||
+        !(Info & TargetInfo::CI_AllowsMemory)) {      
+      if (ConvertType(InputExpr->getType())->isFirstClassType()) {
+        Arg = EmitScalarExpr(InputExpr);
+      } else {
+        assert(0 && "FIXME: Implement passing non first class types as inputs");
+      }
+    } else {
+      LValue Dest = EmitLValue(InputExpr);
+      Arg = Dest.getAddress();
+      Constraints += '*';
+    }
+    
+    ArgTypes.push_back(Arg->getType());
+    Args.push_back(Arg);
+    Constraints += InputConstraint;
+  }
+  
+  // Clobbers
+  for (unsigned i = 0, e = S.getNumClobbers(); i != e; i++) {
+    std::string Clobber(S.getClobber(i)->getStrData(),
+                        S.getClobber(i)->getByteLength());
+
+    Clobber = Target.getNormalizedGCCRegisterName(Clobber.c_str());
+    
+    if (i != 0)
+      Constraints += ',';
+    Constraints += Clobber;
+  }
+  
+  // Add machine specific clobbers
+  if (const char *C = Target.getClobbers()) {
+    if (!Constraints.empty())
+      Constraints += ',';
+    Constraints += C;
+  }
+
+  const llvm::FunctionType *FTy = 
+    llvm::FunctionType::get(ResultType, ArgTypes, false);
+  
+  llvm::InlineAsm *IA = 
+    llvm::InlineAsm::get(FTy, AsmString, Constraints, 
+                         S.isVolatile() || S.getNumOutputs() == 0);
+  llvm::Value *Result = Builder.CreateCall(IA, Args.begin(), Args.end(), "");
+  if (ResultAddr)
+    Builder.CreateStore(Result, ResultAddr);
 }
