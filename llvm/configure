@@ -2263,7 +2263,7 @@ else
     llvm_cv_platform_type="Unix" ;;
   *-*-darwin*)
     llvm_cv_link_all_option="-Wl,-all_load"
-    llvm_cv_link_all_option="-Wl,-noall_load"
+    llvm_cv_no_link_all_option="-Wl,-noall_load"
     llvm_cv_os_type="Darwin"
     llvm_cv_platform_type="Unix" ;;
   *-*-freebsd*)
@@ -26953,13 +26953,57 @@ fi
 
 if test "$GCC" = "yes"
 then
-  gccmajor=`$CC --version | head -n 1 | sed 's/[^0-9]*\([0-9.]\).*/\1/'`
-  if test "$gccmajor" -lt "3"
-  then
-    { { echo "$as_me:$LINENO: error: gcc 3.x required, but you have a lower version" >&5
+  cat >conftest.$ac_ext <<_ACEOF
+#if !defined(__GNUC__) || __GNUC__ < 3
+#error Unsupported GCC version
+#endif
+
+_ACEOF
+rm -f conftest.$ac_objext
+if { (ac_try="$ac_compile"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_compile") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag" || test ! -s conftest.err'
+  { (case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_try") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_try") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  :
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	{ { echo "$as_me:$LINENO: error: gcc 3.x required, but you have a lower version" >&5
 echo "$as_me: error: gcc 3.x required, but you have a lower version" >&2;}
    { (exit 1); exit 1; }; }
-  fi
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
 
 if test -z "$llvm_cv_gnu_make_command"
