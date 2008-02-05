@@ -223,49 +223,109 @@ NonLValue NonLValue::NE(ValueManager& ValMgr, const NonLValue& RHS) const {
 
 
 NonLValue LValue::EQ(ValueManager& ValMgr, const LValue& RHS) const {
-  if (getSubKind() != RHS.getSubKind())
-    return NonLValue::GetIntTruthValue(ValMgr, false);
-  
   switch (getSubKind()) {
     default:
       assert(false && "EQ not implemented for this LValue.");
       return cast<NonLValue>(InvalidValue());
     
-    case lval::ConcreteIntKind: {
-      bool b = cast<lval::ConcreteInt>(this)->getValue() ==
-               cast<lval::ConcreteInt>(RHS).getValue();
-            
-      return NonLValue::GetIntTruthValue(ValMgr, b);
+    case lval::ConcreteIntKind:
+      if (isa<lval::ConcreteInt>(RHS)) {
+        bool b = cast<lval::ConcreteInt>(this)->getValue() ==
+                 cast<lval::ConcreteInt>(RHS).getValue();
+              
+        return NonLValue::GetIntTruthValue(ValMgr, b);
+      }
+      else if (isa<lval::SymbolVal>(RHS)) {
+
+        const SymIntConstraint& C =
+          ValMgr.getConstraint(cast<lval::SymbolVal>(RHS).getSymbol(),
+                               BinaryOperator::EQ,
+                               cast<lval::ConcreteInt>(this)->getValue());
+        
+        return nonlval::SymIntConstraintVal(C);        
+      }
+      
+      break;
+      
+    case lval::SymbolValKind: {
+      if (isa<lval::ConcreteInt>(RHS)) {
+
+        const SymIntConstraint& C =
+          ValMgr.getConstraint(cast<lval::SymbolVal>(this)->getSymbol(),
+                               BinaryOperator::EQ,
+                               cast<lval::ConcreteInt>(RHS).getValue());
+        
+        return nonlval::SymIntConstraintVal(C);
+      }
+
+      assert (!isa<lval::SymbolVal>(RHS) && "FIXME: Implement unification.");
+      
+      break;
     }
       
-    case lval::DeclValKind: {
-      bool b = cast<lval::DeclVal>(*this) == cast<lval::DeclVal>(RHS);
-      return NonLValue::GetIntTruthValue(ValMgr, b);
-    }
+    case lval::DeclValKind:
+      if (isa<lval::DeclVal>(RHS)) {        
+        bool b = cast<lval::DeclVal>(*this) == cast<lval::DeclVal>(RHS);
+        return NonLValue::GetIntTruthValue(ValMgr, b);
+      }
+      
+      break;
   }
+  
+  return NonLValue::GetIntTruthValue(ValMgr, false);
 }
 
 NonLValue LValue::NE(ValueManager& ValMgr, const LValue& RHS) const {
-  if (getSubKind() != RHS.getSubKind())
-    return NonLValue::GetIntTruthValue(ValMgr, true);
-  
   switch (getSubKind()) {
     default:
-      assert(false && "EQ not implemented for this LValue.");
+      assert(false && "NE not implemented for this LValue.");
       return cast<NonLValue>(InvalidValue());
       
-    case lval::ConcreteIntKind: {
-      bool b = cast<lval::ConcreteInt>(this)->getValue() !=
-               cast<lval::ConcreteInt>(RHS).getValue();
+    case lval::ConcreteIntKind:
+      if (isa<lval::ConcreteInt>(RHS)) {
+        bool b = cast<lval::ConcreteInt>(this)->getValue() !=
+                 cast<lval::ConcreteInt>(RHS).getValue();
+        
+        return NonLValue::GetIntTruthValue(ValMgr, b);
+      }
+      else if (isa<lval::SymbolVal>(RHS)) {
+        
+        const SymIntConstraint& C =
+        ValMgr.getConstraint(cast<lval::SymbolVal>(RHS).getSymbol(),
+                             BinaryOperator::NE,
+                             cast<lval::ConcreteInt>(this)->getValue());
+        
+        return nonlval::SymIntConstraintVal(C);        
+      }
       
-      return NonLValue::GetIntTruthValue(ValMgr, b);
-    }  
+      break;
       
-    case lval::DeclValKind: {
-      bool b = cast<lval::DeclVal>(*this) != cast<lval::DeclVal>(RHS);
-      return NonLValue::GetIntTruthValue(ValMgr, b);
-    }
+      case lval::SymbolValKind: {
+        if (isa<lval::ConcreteInt>(RHS)) {
+          
+          const SymIntConstraint& C =
+          ValMgr.getConstraint(cast<lval::SymbolVal>(this)->getSymbol(),
+                               BinaryOperator::NE,
+                               cast<lval::ConcreteInt>(RHS).getValue());
+          
+          return nonlval::SymIntConstraintVal(C);
+        }
+        
+        assert (!isa<lval::SymbolVal>(RHS) && "FIXME: Implement sym !=.");
+        
+        break;
+      }
+      
+      case lval::DeclValKind:
+      if (isa<lval::DeclVal>(RHS)) {        
+        bool b = cast<lval::DeclVal>(*this) == cast<lval::DeclVal>(RHS);
+        return NonLValue::GetIntTruthValue(ValMgr, b);
+      }
+      
+      break;
   }
+  
+  return NonLValue::GetIntTruthValue(ValMgr, true);
 }
 
 
@@ -320,6 +380,14 @@ void RValue::print(std::ostream& Out) const {
   }
 }
 
+static void printOpcode(std::ostream& Out, BinaryOperator::Opcode Op) {
+  switch (Op) {
+    case BinaryOperator::EQ: Out << "=="; break;
+    case BinaryOperator::NE: Out << "!="; break;
+    default: assert(false && "Not yet implemented.");
+  }        
+}
+
 void NonLValue::print(std::ostream& Out) const {
   switch (getSubKind()) {  
     case nonlval::ConcreteIntKind:
@@ -327,14 +395,25 @@ void NonLValue::print(std::ostream& Out) const {
       break;
       
     case nonlval::SymbolValKind:
-      Out << '$' << cast<nonlval::SymbolVal>(this)->getSymbolID();
+      Out << '$' << cast<nonlval::SymbolVal>(this)->getSymbol();
       break;
+     
+    case nonlval::SymIntConstraintValKind: {
+      const nonlval::SymIntConstraintVal& C = 
+        *cast<nonlval::SymIntConstraintVal>(this);
+      
+      Out << '$' << C.getConstraint().getSymbol() << ' ';
+      printOpcode(Out, C.getConstraint().getOpcode());
+      Out << ' ' << C.getConstraint().getInt().toString();
+      break;
+    }  
       
     default:
       assert (false && "Pretty-printed not implemented for this NonLValue.");
       break;
   }
 }
+
 
 void LValue::print(std::ostream& Out) const {
   switch (getSubKind()) {        
@@ -344,8 +423,18 @@ void LValue::print(std::ostream& Out) const {
       break;
       
     case lval::SymbolValKind:
-      Out << '$' << cast<lval::SymbolVal>(this)->getSymbolID();
+      Out << '$' << cast<lval::SymbolVal>(this)->getSymbol();
       break;
+      
+    case lval::SymIntConstraintValKind: {
+      const lval::SymIntConstraintVal& C = 
+        *cast<lval::SymIntConstraintVal>(this);
+      
+      Out << '$' << C.getConstraint().getSymbol() << ' ';
+      printOpcode(Out, C.getConstraint().getOpcode());
+      Out << ' ' << C.getConstraint().getInt().toString();
+      break;
+    }
       
     case lval::DeclValKind:
       Out << '&' 

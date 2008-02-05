@@ -339,7 +339,7 @@ namespace nonlval {
     : NonLValue(SymbolValKind,
                 reinterpret_cast<void*>((uintptr_t) SymID)) {}
     
-    SymbolID getSymbolID() const {
+    SymbolID getSymbol() const {
       return (SymbolID) reinterpret_cast<uintptr_t>(getRawPtr());
     }
     
@@ -442,6 +442,7 @@ namespace nonlval {
 namespace lval {
   
   enum Kind { SymbolValKind,
+              SymIntConstraintValKind,
               DeclValKind,
               ConcreteIntKind,
               NumKind };
@@ -451,13 +452,27 @@ namespace lval {
     SymbolVal(unsigned SymID)
     : LValue(SymbolValKind, reinterpret_cast<void*>((uintptr_t) SymID)) {}
     
-    SymbolID getSymbolID() const {
+    SymbolID getSymbol() const {
       return (SymbolID) reinterpret_cast<uintptr_t>(getRawPtr());
     }
     
     static inline bool classof(const RValue* V) {
       return V->getSubKind() == SymbolValKind;
     }  
+  };
+  
+  class SymIntConstraintVal : public LValue {    
+  public:
+    SymIntConstraintVal(const SymIntConstraint& C)
+    : LValue(SymIntConstraintValKind, reinterpret_cast<const void*>(&C)) {}
+    
+    const SymIntConstraint& getConstraint() const {
+      return *reinterpret_cast<SymIntConstraint*>(getRawPtr());
+    }
+    
+    static inline bool classof(const RValue* V) {
+      return isa<LValue>(V) && V->getSubKind() == SymIntConstraintValKind;
+    }    
   };
 
   class DeclVal : public LValue {
