@@ -66,7 +66,115 @@ public:
     
     return EmitConversion(C, E->getSubExpr()->getType(), E->getType());    
   }
-  
+
+  llvm::Constant *EmitArrayInitialization(InitListExpr *ILE,
+                                          const llvm::ArrayType *AType) {
+    
+    std::vector<llvm::Constant*> Elts;    
+    unsigned NumInitElements = ILE->getNumInits();      
+    const llvm::Type *ElemTy = AType->getElementType();
+    unsigned NumElements = AType->getNumElements();
+
+    // Initialising an array requires us to automatically 
+    // initialise any elements that have not been initialised explicitly
+    unsigned NumInitableElts = std::min(NumInitElements, NumElements);
+
+    // Copy initializer elements.
+    unsigned i = 0;
+    for (; i < NumInitableElts; ++i) {
+        
+      llvm::Constant *C = Visit(ILE->getInit(i));
+      // FIXME: Remove this when sema of initializers is finished (and the code
+      // above).
+      if (C == 0 && ILE->getInit(i)->getType()->isVoidType()) {
+        if (ILE->getType()->isVoidType()) return 0;
+        return llvm::UndefValue::get(AType);
+      }
+      assert (C && "Failed to create initializer expression");
+      Elts.push_back(C);
+    }
+    
+    // Initialize remaining array elements.
+    for (; i < NumElements; ++i)
+      Elts.push_back(llvm::Constant::getNullValue(ElemTy));
+
+    return llvm::ConstantArray::get(AType, Elts);    
+  }
+
+  llvm::Constant *EmitStructInitialization(InitListExpr *ILE,
+                                           const llvm::StructType *SType) {
+
+    std::vector<llvm::Constant*> Elts;
+    const CGRecordLayout *CGR = CGM.getTypes().getCGRecordLayout(SType);
+    unsigned NumInitElements = ILE->getNumInits();
+    unsigned NumElements = SType->getNumElements();
+      
+    // Initialising an structure requires us to automatically 
+    // initialise any elements that have not been initialised explicitly
+    unsigned NumInitableElts = std::min(NumInitElements, NumElements);
+
+    // Copy initializer elements. Skip padding fields.
+    unsigned EltNo = 0;  // Element no in ILE
+    unsigned FieldNo = 0; // Field no in  SType
+    while (EltNo < NumInitableElts) {
+      
+      // Zero initialize padding field.
+      if (CGR->isPaddingField(FieldNo)) {
+        const llvm::Type *FieldTy = SType->getElementType(FieldNo);
+        Elts.push_back(llvm::Constant::getNullValue(FieldTy));
+        FieldNo++;
+        continue;
+      }
+        
+      llvm::Constant *C = Visit(ILE->getInit(EltNo));
+      // FIXME: Remove this when sema of initializers is finished (and the code
+      // above).
+      if (C == 0 && ILE->getInit(EltNo)->getType()->isVoidType()) {
+        if (ILE->getType()->isVoidType()) return 0;
+        return llvm::UndefValue::get(SType);
+      }
+      assert (C && "Failed to create initializer expression");
+      Elts.push_back(C);
+      EltNo++;
+      FieldNo++;
+    }
+    
+    // Initialize remaining structure elements.
+    for (unsigned i = Elts.size(); i < NumElements; ++i) {
+      const llvm::Type *FieldTy = SType->getElementType(i);
+      Elts.push_back(llvm::Constant::getNullValue(FieldTy));
+    }
+     
+    return llvm::ConstantStruct::get(SType, Elts);
+  }
+
+  llvm::Constant *EmitVectorInitialization(InitListExpr *ILE,
+                                           const llvm::VectorType *VType) {
+
+    std::vector<llvm::Constant*> Elts;    
+    unsigned NumInitElements = ILE->getNumInits();      
+    unsigned NumElements = VType->getNumElements();
+
+    assert (NumInitElements == NumElements 
+            && "Unsufficient vector init elelments");
+    // Copy initializer elements.
+    unsigned i = 0;
+    for (; i < NumElements; ++i) {
+        
+      llvm::Constant *C = Visit(ILE->getInit(i));
+      // FIXME: Remove this when sema of initializers is finished (and the code
+      // above).
+      if (C == 0 && ILE->getInit(i)->getType()->isVoidType()) {
+        if (ILE->getType()->isVoidType()) return 0;
+        return llvm::UndefValue::get(VType);
+      }
+      assert (C && "Failed to create initializer expression");
+      Elts.push_back(C);
+    }
+
+    return llvm::ConstantVector::get(VType, Elts);    
+  }
+                                          
   llvm::Constant *VisitInitListExpr(InitListExpr *ILE) {
     const llvm::CompositeType *CType = 
       dyn_cast<llvm::CompositeType>(ConvertType(ILE->getType()));
@@ -76,64 +184,17 @@ public:
         return Visit(ILE->getInit(0));
     }
       
-    unsigned NumInitElements = ILE->getNumInits();
-    unsigned NumInitableElts = NumInitElements;
-    std::vector<llvm::Constant*> Elts;    
-      
-    // Initialising an array or structure requires us to automatically 
-    // initialise any elements that have not been initialised explicitly
-    const llvm::ArrayType *AType = 0; 
-    const llvm::StructType *SType = 0; 
-    const llvm::Type *ElemTy = 0;
-    unsigned NumElements = 0;
-    
-    // If this is an array, we may have to truncate the initializer
-    if ((AType = dyn_cast<llvm::ArrayType>(CType))) {
-      NumElements = AType->getNumElements();
-      ElemTy = AType->getElementType();
-      NumInitableElts = std::min(NumInitableElts, NumElements);
-    }
+    if (const llvm::ArrayType *AType = dyn_cast<llvm::ArrayType>(CType))
+      return EmitArrayInitialization(ILE, AType);
 
-    // If this is a structure, we may have to truncate the initializer
-    if ((SType = dyn_cast<llvm::StructType>(CType))) {
-      NumElements = SType->getNumElements();
-      NumInitableElts = std::min(NumInitableElts, NumElements);
-    }
+    if (const llvm::StructType *SType = dyn_cast<llvm::StructType>(CType))
+      return EmitStructInitialization(ILE, SType);
 
-    // Copy initializer elements.
-    unsigned i = 0;
-    for (i = 0; i < NumInitableElts; ++i) {
-      llvm::Constant *C = Visit(ILE->getInit(i));
-      // FIXME: Remove this when sema of initializers is finished (and the code
-      // above).
-      if (C == 0 && ILE->getInit(i)->getType()->isVoidType()) {
-        if (ILE->getType()->isVoidType()) return 0;
-        return llvm::UndefValue::get(CType);
-      }
-      assert (C && "Failed to create initializer expression");
-      Elts.push_back(C);
-    }
-    
-    if (SType) {
-      // Initialize remaining structure elements.
-      for (; i < NumElements; ++i) {
-        ElemTy = SType->getElementType(i);
-        Elts.push_back(llvm::Constant::getNullValue(ElemTy));
-      }
-      return llvm::ConstantStruct::get(SType, Elts);
-    }
-    
-    if (ILE->getType()->isVectorType())
-      return llvm::ConstantVector::get(cast<llvm::VectorType>(CType), Elts);
+    if (const llvm::VectorType *VType = dyn_cast<llvm::VectorType>(CType))
+      return EmitVectorInitialization(ILE, VType);
     
     // Make sure we have an array at this point
-    assert(AType);
-
-    // Initialize remaining array elements.
-    for (; i < NumElements; ++i)
-      Elts.push_back(llvm::Constant::getNullValue(ElemTy));
-
-    return llvm::ConstantArray::get(AType, Elts);    
+    assert(0 && "Unable to handle InitListExpr");
   }
   
   llvm::Constant *VisitImplicitCastExpr(ImplicitCastExpr *ICExpr) {

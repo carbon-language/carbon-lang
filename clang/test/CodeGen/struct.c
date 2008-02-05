@@ -140,3 +140,4 @@ void f12()
 /* struct initialization */
 struct a13 {int b; int c};
 struct a13 c13 = {5};
+struct a14 { short a; int b; } x = {1, 1};

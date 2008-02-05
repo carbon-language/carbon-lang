@@ -66,7 +66,7 @@ namespace {
     /// placeBitField - Find a place for FD, which is a bit-field. 
     void placeBitField(const FieldDecl *FD);
 
-    llvm::SmallVector<unsigned, 8> &getPaddingFields() {
+    llvm::SmallSet<unsigned, 8> &getPaddingFields() {
       return PaddingFields;
     }
 
@@ -79,7 +79,7 @@ namespace {
     llvm::SmallVector<const FieldDecl *, 8> FieldDecls;
     std::vector<const llvm::Type*> LLVMFields;
     llvm::SmallVector<uint64_t, 8> Offsets;
-    llvm::SmallVector<unsigned, 8> PaddingFields;
+    llvm::SmallSet<unsigned, 8> PaddingFields;
   };
 }
 
@@ -334,7 +334,8 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
       RO.layoutStructFields(RL);
 
       // Get llvm::StructType.
-      CGRecordLayout *RLI = new CGRecordLayout(RO.getLLVMType());
+      CGRecordLayout *RLI = new CGRecordLayout(RO.getLLVMType(), 
+                                               RO.getPaddingFields());
       ResultType = TagDeclTypes[TD] = RLI->getLLVMType();
       CGRecordLayouts[ResultType] = RLI;
 
@@ -357,7 +358,8 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
         RO.layoutUnionFields();
 
         // Get llvm::StructType.
-        CGRecordLayout *RLI = new CGRecordLayout(RO.getLLVMType());
+        CGRecordLayout *RLI = new CGRecordLayout(RO.getLLVMType(),
+                                                 RO.getPaddingFields());
         ResultType = TagDeclTypes[TD] = RLI->getLLVMType();
         CGRecordLayouts[ResultType] = RLI;
       } else {       
@@ -520,7 +522,7 @@ void RecordOrganizer::addLLVMField(const llvm::Type *Ty, bool isPaddingField) {
   Offsets.push_back(llvmSize);
   llvmSize += TySize;
   if (isPaddingField)
-    PaddingFields.push_back(llvmFieldNo);
+    PaddingFields.insert(llvmFieldNo);
   LLVMFields.push_back(Ty);
   ++llvmFieldNo;
 }
