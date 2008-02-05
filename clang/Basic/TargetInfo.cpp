@@ -328,6 +328,9 @@ const char *TargetInfo::getNormalizedGCCRegisterName(const char *Name) const
 {
   assert(isValidGCCRegisterName(Name) && "Invalid register passed in");
   
+  if (strcmp(Name, "memory") == 0)
+    return "~{memory}";
+    
   const char * const *Names;
   unsigned NumNames;
 
