@@ -45,3 +45,8 @@ int c[] = { EnumA, EnumB };
 
 // Binary operators
 int d[] = { EnumA | EnumB };
+
+// PR1968
+static int array[];
+static int array[4];
+

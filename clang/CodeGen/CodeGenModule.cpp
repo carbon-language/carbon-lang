@@ -123,6 +123,12 @@ llvm::Constant *CodeGenModule::GetAddrOfFunctionDecl(const FunctionDecl *D,
   return Entry = NewFn;
 }
 
+static bool IsZeroElementArray(const llvm::Type *Ty) {
+  if (const llvm::ArrayType *ATy = dyn_cast<llvm::ArrayType>(Ty))
+    return ATy->getNumElements() == 0;
+  return false;
+}
+
 llvm::Constant *CodeGenModule::GetAddrOfGlobalVar(const VarDecl *D,
                                                   bool isDefinition) {
   assert(D->hasGlobalStorage() && "Not a global variable");
@@ -178,8 +184,13 @@ llvm::Constant *CodeGenModule::GetAddrOfGlobalVar(const VarDecl *D,
   // is incredibly slow!
   ReplaceMapValuesWith(GV, NewPtrForOldDecl);
   
+  // Verify that GV was a declaration or something like x[] which turns into
+  // [0 x type].
+  assert((GV->isDeclaration() || 
+          IsZeroElementArray(GV->getType()->getElementType())) &&
+         "Shouldn't replace non-declaration");
+         
   // Ok, delete the old global now, which is dead.
-  assert(GV->isDeclaration() && "Shouldn't replace non-declaration");
   GV->eraseFromParent();
   
   // Return the new global which has the right type.
