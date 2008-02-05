@@ -104,8 +104,9 @@ public:
   llvm::Constant *EmitStructInitialization(InitListExpr *ILE,
                                            const llvm::StructType *SType) {
 
+    TagDecl *TD = ILE->getType()->getAsRecordType()->getDecl();
     std::vector<llvm::Constant*> Elts;
-    const CGRecordLayout *CGR = CGM.getTypes().getCGRecordLayout(SType);
+    const CGRecordLayout *CGR = CGM.getTypes().getCGRecordLayout(TD);
     unsigned NumInitElements = ILE->getNumInits();
     unsigned NumElements = SType->getNumElements();
       

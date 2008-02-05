@@ -139,14 +139,11 @@ void CodeGenFunction::StartBlock(const char *N) {
 
 /// getCGRecordLayout - Return record layout info.
 const CGRecordLayout *CodeGenFunction::getCGRecordLayout(CodeGenTypes &CGT,
-                                                         QualType RTy) {
-  assert (isa<RecordType>(RTy) 
-          && "Unexpected type. RecordType expected here.");
+                                                         QualType Ty) {
+  const RecordType *RTy = Ty->getAsRecordType();
+  assert (RTy && "Unexpected type. RecordType expected here.");
 
-  const llvm::Type *Ty = ConvertType(RTy);
-  assert (Ty && "Unable to find llvm::Type");
-  
-  return CGT.getCGRecordLayout(Ty);
+  return CGT.getCGRecordLayout(RTy->getDecl());
 }
 
 /// WarnUnsupported - Print out a warning that codegen doesn't support the

@@ -84,7 +84,7 @@ CodeGenTypes::CodeGenTypes(ASTContext &Ctx, llvm::Module& M,
 }
 
 CodeGenTypes::~CodeGenTypes() {
-  for(llvm::DenseMap<const llvm::Type *, CGRecordLayout *>::iterator
+  for(llvm::DenseMap<const TagDecl *, CGRecordLayout *>::iterator
         I = CGRecordLayouts.begin(), E = CGRecordLayouts.end();
       I != E; ++I)
     delete I->second;
@@ -332,7 +332,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
       CGRecordLayout *RLI = new CGRecordLayout(RO.getLLVMType(), 
                                                RO.getPaddingFields());
       ResultType = TagDeclTypes[TD] = RLI->getLLVMType();
-      CGRecordLayouts[ResultType] = RLI;
+      CGRecordLayouts[TD] = RLI;
 
       // Refine any OpaqueType associated with this RecordDecl.
       OpaqueTy->refineAbstractTypeTo(ResultType);
@@ -356,7 +356,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
         CGRecordLayout *RLI = new CGRecordLayout(RO.getLLVMType(),
                                                  RO.getPaddingFields());
         ResultType = TagDeclTypes[TD] = RLI->getLLVMType();
-        CGRecordLayouts[ResultType] = RLI;
+        CGRecordLayouts[TD] = RLI;
       } else {       
         std::vector<const llvm::Type*> Fields;
         ResultType = TagDeclTypes[TD] = llvm::StructType::get(Fields);
@@ -436,9 +436,9 @@ void CodeGenTypes::addBitFieldInfo(const FieldDecl *FD, unsigned Begin,
 
 /// getCGRecordLayout - Return record layout info for the given llvm::Type.
 const CGRecordLayout *
-CodeGenTypes::getCGRecordLayout(const llvm::Type* Ty) const {
-  llvm::DenseMap<const llvm::Type*, CGRecordLayout *>::iterator I
-    = CGRecordLayouts.find(Ty);
+CodeGenTypes::getCGRecordLayout(const TagDecl *TD) const {
+  llvm::DenseMap<const TagDecl*, CGRecordLayout *>::iterator I
+    = CGRecordLayouts.find(TD);
   assert (I != CGRecordLayouts.end() 
           && "Unable to find record layout information for type");
   return I->second;

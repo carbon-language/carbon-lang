@@ -81,7 +81,7 @@ class CodeGenTypes {
   /// record layout info. 
   /// FIXME : If CGRecordLayout is less than 16 bytes then use 
   /// inline it in the map.
-  llvm::DenseMap<const llvm::Type*, CGRecordLayout *> CGRecordLayouts;
+  llvm::DenseMap<const TagDecl*, CGRecordLayout *> CGRecordLayouts;
 
   /// FieldInfo - This maps struct field with corresponding llvm struct type
   /// field no. This info is populated by record organizer.
@@ -136,7 +136,7 @@ public:
   const llvm::Type *ConvertTypeForMem(QualType T);
   
   
-  const CGRecordLayout *getCGRecordLayout(const llvm::Type*) const;
+  const CGRecordLayout *getCGRecordLayout(const TagDecl*) const;
   
   /// getLLVMFieldNo - Return llvm::StructType element number
   /// that corresponds to the field FD.
