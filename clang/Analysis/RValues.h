@@ -143,6 +143,10 @@ protected:
 public:
   ~RValue() {};
   
+  /// BufferTy - A temporary buffer to hold a set of RValues.
+  typedef llvm::SmallVector<RValue,5> BufferTy;
+
+  
   RValue Cast(ValueManager& ValMgr, Expr* CastExpr) const;
   
   unsigned getRawKind() const { return Kind; }

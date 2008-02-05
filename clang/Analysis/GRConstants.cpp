@@ -91,7 +91,7 @@ public:
     const_iterator begin() const { return Impl.begin(); }
     const_iterator end() const { return Impl.end(); }
   };
-                                                              
+                                                                
 protected:
   /// G - the simulation graph.
   GraphTy& G;
@@ -183,6 +183,12 @@ public:
     return SetValue(St, const_cast<Stmt*>(S), V);
   }
   
+  /// SetValue - This version of SetValue is used to batch process a set
+  ///  of different possible RValues and return a set of different states.
+  const StateTy::BufferTy& SetValue(StateTy St, Stmt* S,
+                                    const RValue::BufferTy& V,
+                                    StateTy::BufferTy& RetBuf);
+  
   StateTy SetValue(StateTy St, const LValue& LV, const RValue& V);
   
   inline RValue GetValue(const StateTy& St, Stmt* S) {
@@ -223,6 +229,10 @@ public:
   StateTy Assume(StateTy St, NonLValue Cond, bool Assumption, bool& isFeasible);
   
   void Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred, StateTy St);
+  
+  /// Nodify - This version of Nodify is used to batch process a set of states.
+  ///  The states are not guaranteed to be unique.
+  void Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred, const StateTy::BufferTy& SB);
   
   /// Visit - Transfer function logic for all statements.  Dispatches to
   ///  other functions that handle specific kinds of statements.
@@ -268,6 +278,18 @@ GRConstants::SetValue(StateTy St, Stmt* S, const RValue& V) {
   }
   
   return StateMgr.SetValue(St, S, isBlkExpr, V);
+}
+
+const GRConstants::StateTy::BufferTy&
+GRConstants::SetValue(StateTy St, Stmt* S, const RValue::BufferTy& RB,
+                      StateTy::BufferTy& RetBuf) {
+  
+  assert (RetBuf.empty());
+  
+  for (RValue::BufferTy::const_iterator I=RB.begin(), E=RB.end(); I!=E; ++I)
+    RetBuf.push_back(SetValue(St, S, *I));
+                     
+  return RetBuf;
 }
 
 GRConstants::StateTy
@@ -473,8 +495,7 @@ GRConstants::StateTy GRConstants::RemoveDeadBindings(Stmt* Loc, StateTy M) {
   return M;
 }
 
-void GRConstants::Nodify(NodeSet& Dst, Stmt* S, GRConstants::NodeTy* Pred, 
-                         GRConstants::StateTy St) {
+void GRConstants::Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred, StateTy St) {
  
   // If the state hasn't changed, don't generate a new node.
   if (St == Pred->getState())
@@ -483,8 +504,14 @@ void GRConstants::Nodify(NodeSet& Dst, Stmt* S, GRConstants::NodeTy* Pred,
   Dst.Add(Builder->generateNode(S, St, Pred));
 }
 
-void GRConstants::VisitCast(Expr* CastE, Expr* E, GRConstants::NodeTy* Pred,
-                            GRConstants::NodeSet& Dst) {
+void GRConstants::Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred,
+                         const StateTy::BufferTy& SB) {
+  
+  for (StateTy::BufferTy::const_iterator I=SB.begin(), E=SB.end(); I!=E; ++I)
+    Nodify(Dst, S, Pred, *I);
+}
+
+void GRConstants::VisitCast(Expr* CastE, Expr* E, NodeTy* Pred, NodeSet& Dst) {
   
   QualType T = CastE->getType();
 
@@ -737,15 +764,14 @@ void GRConstants::VisitBinaryOperator(BinaryOperator* B,
           if (isa<LValue>(V1)) {
             const LValue& L1 = cast<LValue>(V1);
             const LValue& L2 = cast<LValue>(V2);
-            St = SetValue(St, B, L1.EQ(ValMgr, L2));
+            Nodify(Dst, B, N2, SetValue(St, B, L1.EQ(ValMgr, L2)));
           }
           else {
             const NonLValue& R1 = cast<NonLValue>(V1);
             const NonLValue& R2 = cast<NonLValue>(V2);
-            St = SetValue(St, B, R1.EQ(ValMgr, R2));
+            Nodify(Dst, B, N2, SetValue(St, B, R1.EQ(ValMgr, R2)));
           }
           
-          Nodify(Dst, B, N2, St);
           break;
       }
     }

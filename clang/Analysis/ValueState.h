@@ -167,15 +167,13 @@ public:
   ValueState() : Data(0) {}  
   void operator=(ValueStateImpl* D) { Data = D; }
   
-  // Accessors.
-  
+  // Accessors.  
   ValueStateImpl* getImpl() const { return Data; }
 
-
-  // Binding maps typedefs.
-  
-  typedef vstate::VariableBindingsTy VariableBindingsTy;
-  typedef vstate::ConstantNotEqTy    ConstantNotEqTy;
+  // Typedefs.
+  typedef vstate::VariableBindingsTy       VariableBindingsTy;
+  typedef vstate::ConstantNotEqTy          ConstantNotEqTy;
+  typedef llvm::SmallVector<ValueState,5>  BufferTy;
 
   // Iterators.
 
