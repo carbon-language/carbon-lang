@@ -939,7 +939,7 @@ Parser::StmtResult Parser::ParseAsmStatement() {
   
   // Remember if this was a volatile asm.
   bool isVolatile = DS.getTypeQualifiers() & DeclSpec::TQ_volatile;
-  
+  bool isSimple = false;
   if (Tok.isNot(tok::l_paren)) {
     Diag(Tok, diag::err_expected_lparen_after, "asm");
     SkipUntil(tok::r_paren);
@@ -954,43 +954,53 @@ Parser::StmtResult Parser::ParseAsmStatement() {
   llvm::SmallVector<std::string, 4> Names;
   llvm::SmallVector<ExprTy*, 4> Constraints;
   llvm::SmallVector<ExprTy*, 4> Exprs;
-  
-  // Parse Outputs, if present. 
-  ParseAsmOperandsOpt(Names, Constraints, Exprs);
-  
-  unsigned NumOutputs = Names.size();
-  
-  // Parse Inputs, if present.
-  ParseAsmOperandsOpt(Names, Constraints, Exprs);
-  assert(Names.size() == Constraints.size() &&
-         Constraints.size() == Exprs.size() 
-         && "Input operand size mismatch!");
-
-  unsigned NumInputs = Names.size() - NumOutputs;
-  
   llvm::SmallVector<ExprTy*, 4> Clobbers;
-  
-  // Parse the clobbers, if present.
-  if (Tok.is(tok::colon)) {
-    ConsumeToken();
-    
-    // Parse the asm-string list for clobbers.
-    while (1) {
-      ExprResult Clobber = ParseAsmStringLiteral();
 
-      if (Clobber.isInvalid)
-        break;
-      
-      Clobbers.push_back(Clobber.Val);
-      
-      if (Tok.isNot(tok::comma)) break;
+  unsigned NumInputs = 0, NumOutputs = 0;
+  
+  SourceLocation RParenLoc;
+  if (Tok.is(tok::r_paren)) {
+    // We have a simple asm expression
+    isSimple = true;
+    
+    RParenLoc = ConsumeParen();
+  } else {
+    // Parse Outputs, if present. 
+    ParseAsmOperandsOpt(Names, Constraints, Exprs);
+  
+    NumOutputs = Names.size();
+  
+    // Parse Inputs, if present.
+    ParseAsmOperandsOpt(Names, Constraints, Exprs);
+    assert(Names.size() == Constraints.size() &&
+           Constraints.size() == Exprs.size() 
+           && "Input operand size mismatch!");
+
+    NumInputs = Names.size() - NumOutputs;
+  
+    // Parse the clobbers, if present.
+    if (Tok.is(tok::colon)) {
       ConsumeToken();
+    
+      // Parse the asm-string list for clobbers.
+      while (1) {
+        ExprResult Clobber = ParseAsmStringLiteral();
+
+        if (Clobber.isInvalid)
+          break;
+      
+        Clobbers.push_back(Clobber.Val);
+      
+        if (Tok.isNot(tok::comma)) break;
+        ConsumeToken();
+      }
     }
+  
+    RParenLoc = MatchRHSPunctuation(tok::r_paren, Loc);
   }
   
-  SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, Loc);
-  
-  return Actions.ActOnAsmStmt(AsmLoc, isVolatile, NumOutputs, NumInputs,
+  return Actions.ActOnAsmStmt(AsmLoc, isSimple, isVolatile,
+                              NumOutputs, NumInputs,
                               &Names[0], &Constraints[0], &Exprs[0],
                               AsmString.Val,
                               Clobbers.size(), &Clobbers[0],

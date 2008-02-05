@@ -115,13 +115,14 @@ bool Stmt::hasImplicitControlFlow() const {
 // Constructors
 //===----------------------------------------------------------------------===//
 
-AsmStmt::AsmStmt(SourceLocation asmloc,  bool isvolatile,
+AsmStmt::AsmStmt(SourceLocation asmloc, bool issimple, bool isvolatile,
                  unsigned numoutputs, unsigned numinputs,
                  std::string *names, StringLiteral **constraints,
                  Expr **exprs, StringLiteral *asmstr, unsigned numclobbers,
                  StringLiteral **clobbers, SourceLocation rparenloc)
   : Stmt(AsmStmtClass), AsmLoc(asmloc), RParenLoc(rparenloc), AsmStr(asmstr)
-  , IsVolatile(isvolatile), NumOutputs(numoutputs), NumInputs(numinputs) {
+  , IsSimple(issimple), IsVolatile(isvolatile)
+  , NumOutputs(numoutputs), NumInputs(numinputs) {
   for (unsigned i = 0, e = numinputs + numoutputs; i != e; i++) {
     Names.push_back(names[i]);
     Exprs.push_back(exprs[i]);

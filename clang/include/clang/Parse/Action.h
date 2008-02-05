@@ -299,6 +299,7 @@ public:
     return 0;
   }
   virtual StmtResult ActOnAsmStmt(SourceLocation AsmLoc,
+                                  bool IsSimple,                                  
                                   bool IsVolatile,
                                   unsigned NumOutputs,
                                   unsigned NumInputs,

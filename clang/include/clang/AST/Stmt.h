@@ -755,6 +755,7 @@ class AsmStmt : public Stmt {
   SourceLocation AsmLoc, RParenLoc;
   StringLiteral *AsmStr;
 
+  bool IsSimple;
   bool IsVolatile;
   
   unsigned NumOutputs;
@@ -766,13 +767,15 @@ class AsmStmt : public Stmt {
 
   llvm::SmallVector<StringLiteral*, 4> Clobbers;
 public:
-  AsmStmt(SourceLocation asmloc,  bool isvolatile, unsigned numoutputs,
-          unsigned numinputs, std::string *names, StringLiteral **constraints,
+  AsmStmt(SourceLocation asmloc, bool issimple, bool isvolatile, 
+          unsigned numoutputs, unsigned numinputs, 
+          std::string *names, StringLiteral **constraints,
           Expr **exprs, StringLiteral *asmstr, unsigned numclobbers,
           StringLiteral **clobbers, SourceLocation rparenloc);
 
   bool isVolatile() const { return IsVolatile; }
-  
+  bool isSimple() const { return IsSimple; }
+
   unsigned getNumOutputs() const { return NumOutputs; }
   const std::string &getOutputName(unsigned i) const
     { return Names[i]; }

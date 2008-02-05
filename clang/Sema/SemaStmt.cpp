@@ -668,6 +668,7 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprTy *rex) {
 }
 
 Sema::StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
+                                    bool IsSimple,                                    
                                     bool IsVolatile,
                                     unsigned NumOutputs,
                                     unsigned NumInputs,
@@ -765,6 +766,7 @@ Sema::StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
   }
   
   return new AsmStmt(AsmLoc,
+                     IsSimple,
                      IsVolatile,
                      NumOutputs,
                      NumInputs, 

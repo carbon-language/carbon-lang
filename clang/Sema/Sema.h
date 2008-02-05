@@ -361,6 +361,7 @@ public:
                                      ExprTy *RetValExp);
   
   virtual StmtResult ActOnAsmStmt(SourceLocation AsmLoc,
+                                  bool IsSimple,
                                   bool IsVolatile,
                                   unsigned NumOutputs,
                                   unsigned NumInputs,

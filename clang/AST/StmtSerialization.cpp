@@ -229,6 +229,7 @@ void AsmStmt::EmitImpl(Serializer& S) const {
   S.Emit(RParenLoc);  
 
   S.EmitBool(IsVolatile);
+  S.EmitBool(IsSimple);
   S.EmitInt(NumOutputs);
   S.EmitInt(NumInputs);
 
@@ -254,7 +255,8 @@ AsmStmt* AsmStmt::CreateImpl(Deserializer& D) {
   SourceLocation PLoc = SourceLocation::ReadVal(D);
   
   bool IsVolatile = D.ReadBool();
-  AsmStmt *Stmt = new AsmStmt(ALoc, IsVolatile, 0, 0, 0, 0, 0,  
+  bool IsSimple = D.ReadBool();
+  AsmStmt *Stmt = new AsmStmt(ALoc, IsSimple, IsVolatile, 0, 0, 0, 0, 0,  
                               AsmStr, 
                               0, 0, PLoc);  
 
