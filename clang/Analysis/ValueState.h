@@ -116,7 +116,11 @@ public:
 namespace vstate {
   typedef llvm::ImmutableMap<VarBindKey,RValue> VariableBindingsTy;  
 }
-  
+
+/// ValueStateImpl - This class encapsulates the actual data values for
+///  for a "state" in our symbolic value tracking.  It is intended to be
+///  used as a functional object; that is once it is created and made
+///  "persistent" in a FoldingSet its values will never change.
 struct ValueStateImpl : public llvm::FoldingSetNode {
   vstate::VariableBindingsTy VariableBindings;
   
@@ -124,7 +128,8 @@ struct ValueStateImpl : public llvm::FoldingSetNode {
     : VariableBindings(VB) {}
   
   ValueStateImpl(const ValueStateImpl& RHS)
-    : llvm::FoldingSetNode(), VariableBindings(RHS.VariableBindings) {} 
+    : llvm::FoldingSetNode(),
+      VariableBindings(RHS.VariableBindings) {} 
     
   
   static void Profile(llvm::FoldingSetNodeID& ID, const ValueStateImpl& V) {
@@ -137,6 +142,13 @@ struct ValueStateImpl : public llvm::FoldingSetNode {
   
 };
   
+/// ValueState - This class represents a "state" in our symbolic value
+///  tracking. It is really just a "smart pointer", wrapping a pointer
+///  to ValueStateImpl object.  Making this class a smart pointer means that its
+///  size is always the size of a pointer, which allows easy conversion to
+///  void* when being handled by GREngine.  It also forces us to unique states;
+///  consequently, a ValueStateImpl* with a specific address will always refer
+///  to the unique state with those values.
 class ValueState : public llvm::FoldingSetNode {
   ValueStateImpl* Data;
 public:
