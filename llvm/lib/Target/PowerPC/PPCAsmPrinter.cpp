@@ -514,10 +514,10 @@ void PPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
     unsigned char MB = MI->getOperand(3).getImm();
     unsigned char ME = MI->getOperand(4).getImm();
     if (SH <= 31 && MB == 0 && ME == (31-SH)) {
-      O << "slwi "; FoundMnemonic = true;
+      O << "\tslwi "; FoundMnemonic = true;
     }
     if (SH <= 31 && MB == (32-SH) && ME == 31) {
-      O << "srwi "; FoundMnemonic = true;
+      O << "\tsrwi "; FoundMnemonic = true;
       SH = 32-SH;
     }
     if (FoundMnemonic) {
@@ -529,7 +529,7 @@ void PPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
     }
   } else if (MI->getOpcode() == PPC::OR || MI->getOpcode() == PPC::OR8) {
     if (MI->getOperand(1).getReg() == MI->getOperand(2).getReg()) {
-      O << "mr ";
+      O << "\tmr ";
       printOperand(MI, 0);
       O << ", ";
       printOperand(MI, 1);
@@ -541,7 +541,7 @@ void PPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
     unsigned char ME = MI->getOperand(3).getImm();
     // rldicr RA, RS, SH, 63-SH == sldi RA, RS, SH
     if (63-SH == ME) {
-      O << "sldi ";
+      O << "\tsldi ";
       printOperand(MI, 0);
       O << ", ";
       printOperand(MI, 1);
