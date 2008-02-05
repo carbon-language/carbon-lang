@@ -1137,9 +1137,9 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG) {
         RC = X86::GR32RegisterClass;
       else if (Is64Bit && RegVT == MVT::i64)
         RC = X86::GR64RegisterClass;
-      else if (Is64Bit && RegVT == MVT::f32)
+      else if (RegVT == MVT::f32)
         RC = X86::FR32RegisterClass;
-      else if (Is64Bit && RegVT == MVT::f64)
+      else if (RegVT == MVT::f64)
         RC = X86::FR64RegisterClass;
       else {
         assert(MVT::isVector(RegVT));
