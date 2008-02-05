@@ -805,7 +805,7 @@ SharedLibKindMessage := "Loadable Module"
 else
 SharedLibKindMessage := "Shared Library"
 endif
-$(LibName.LA): $(ObjectsLO) $(LibDir)/.dir
+$(LibName.LA): $(ObjectsLO) $(ProjLibsPaths) $(LLVMLibsPaths) $(LibDir)/.dir
 	$(Echo) Linking $(BuildMode) $(SharedLibKindMessage) \
 	  $(LIBRARYNAME)$(SHLIBEXT)
 	$(Verb) $(LTLink) -o $@ $(ObjectsLO) $(ProjLibsOptions) \
