@@ -141,7 +141,8 @@ private:
   SymbolManager SymMgr;
   
 public:  
-  ValueStateManager(ASTContext& Ctx) : ValMgr(Ctx) {}
+  ValueStateManager(ASTContext& Ctx, llvm::BumpPtrAllocator& Alloc) 
+    : ValMgr(Ctx, Alloc) {}
   
   StateTy getInitialState() {
     return Factory.GetEmptyMap();

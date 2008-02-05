@@ -89,10 +89,12 @@ class ValueManager {
   
   ASTContext& Ctx;
   APSIntSetTy APSIntSet;
-  llvm::BumpPtrAllocator BPAlloc;
+  llvm::BumpPtrAllocator& BPAlloc;
   
 public:
-  ValueManager(ASTContext& ctx) : Ctx(ctx) {}
+  ValueManager(ASTContext& ctx, llvm::BumpPtrAllocator& Alloc) 
+    : Ctx(ctx), BPAlloc(Alloc) {}
+  
   ~ValueManager();
   
   ASTContext& getContext() const { return Ctx; }  

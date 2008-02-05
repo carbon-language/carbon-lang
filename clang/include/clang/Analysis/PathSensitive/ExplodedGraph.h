@@ -254,6 +254,7 @@ public:
   unsigned num_roots() const { return Roots.size(); }
   unsigned num_eops() const { return EndNodes.size(); }
   
+  llvm::BumpPtrAllocator& getAllocator() { return Allocator; }
   CFG& getCFG() { return cfg; }
   ASTContext& getContext() { return Ctx; }
   FunctionDecl& getFunctionDecl() { return FD; }

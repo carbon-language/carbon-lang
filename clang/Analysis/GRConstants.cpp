@@ -131,7 +131,7 @@ protected:
 public:
   GRConstants(GraphTy& g) : G(g), Liveness(G.getCFG(), G.getFunctionDecl()),
       Builder(NULL),
-      StateMgr(G.getContext()),
+      StateMgr(G.getContext(), G.getAllocator()),
       ValMgr(StateMgr.getValueManager()),
       SymMgr(StateMgr.getSymbolManager()),
       StmtEntryNode(NULL), CurrentStmt(NULL) {
