@@ -41,7 +41,7 @@ namespace {
 
     /// addLLVMField - Add llvm struct field that corresponds to llvm type Ty. 
     /// Increment field count.
-    void addLLVMField(const llvm::Type *Ty);
+    void addLLVMField(const llvm::Type *Ty, bool isPaddingField = false);
 
     /// addPaddingFields - Current cursor is not suitable place to add next 
     /// field. Add required padding fields.
@@ -66,6 +66,10 @@ namespace {
     /// placeBitField - Find a place for FD, which is a bit-field. 
     void placeBitField(const FieldDecl *FD);
 
+    llvm::SmallVector<unsigned, 8> &getPaddingFields() {
+      return PaddingFields;
+    }
+
   private:
     CodeGenTypes &CGT;
     llvm::Type *STy;
@@ -75,6 +79,7 @@ namespace {
     llvm::SmallVector<const FieldDecl *, 8> FieldDecls;
     std::vector<const llvm::Type*> LLVMFields;
     llvm::SmallVector<uint64_t, 8> Offsets;
+    llvm::SmallVector<unsigned, 8> PaddingFields;
   };
 }
 
@@ -494,12 +499,12 @@ void RecordOrganizer::addPaddingFields(unsigned WaterMark) {
   unsigned RequiredBits = WaterMark - llvmSize;
   unsigned RequiredBytes = (RequiredBits + 7) / 8;
   for (unsigned i = 0; i != RequiredBytes; ++i)
-    addLLVMField(llvm::Type::Int8Ty);
+    addLLVMField(llvm::Type::Int8Ty, true);
 }
 
 /// addLLVMField - Add llvm struct field that corresponds to llvm type Ty.
 /// Increment field count.
-void RecordOrganizer::addLLVMField(const llvm::Type *Ty) {
+void RecordOrganizer::addLLVMField(const llvm::Type *Ty, bool isPaddingField) {
 
   unsigned AlignmentInBits = CGT.getTargetData().getABITypeAlignment(Ty) * 8;
   if (llvmSize % AlignmentInBits) {
@@ -514,6 +519,8 @@ void RecordOrganizer::addLLVMField(const llvm::Type *Ty) {
   unsigned TySize = CGT.getTargetData().getABITypeSizeInBits(Ty);
   Offsets.push_back(llvmSize);
   llvmSize += TySize;
+  if (isPaddingField)
+    PaddingFields.push_back(llvmFieldNo);
   LLVMFields.push_back(Ty);
   ++llvmFieldNo;
 }
