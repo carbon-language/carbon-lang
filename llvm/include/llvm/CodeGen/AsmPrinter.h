@@ -27,6 +27,7 @@ namespace llvm {
   class GlobalAlias;
   class MachineConstantPoolEntry;
   class MachineConstantPoolValue;
+  class MachineModuleInfo;
   class Mangler;
   class TargetAsmInfo;
   class Type;
@@ -42,6 +43,11 @@ namespace llvm {
     /// IncrementFunctionNumber().
     ///
     unsigned FunctionNumber;
+
+    /// MachineModuleInfo - This is needed because printDeclare() has to insert
+    /// DebugVariable entries into the dwarf table. This is a short term hack
+    /// that ought be fixed soon.
+    MachineModuleInfo *MMI;
 
   protected:
     // Necessary for external weak linkage support
