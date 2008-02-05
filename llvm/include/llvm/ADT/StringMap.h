@@ -273,7 +273,7 @@ public:
     return find(Key, Key + strlen(Key));
   }
   iterator find(const std::string &Key) {
-    const char* key_start = &Key[0];
+    const char* key_start = (Key.empty() ? NULL : &Key[0]);
     return find(key_start, key_start + Key.size());
   }
 
@@ -286,7 +286,7 @@ public:
     return find(Key, Key + strlen(Key));
   }
   const_iterator find(const std::string &Key) const {
-    const char* key_start = &Key[0];
+    const char* key_start = (Key.empty() ? NULL : &Key[0]);
     return find(key_start, key_start + Key.size());
   }
 
@@ -295,7 +295,7 @@ public:
     return entry.getValue();
   }
   ValueTy& operator[](const std::string &Key) {
-    const char* key_start = &Key[0];
+    const char* key_start = (Key.empty() ? NULL : &Key[0]);
     value_type& entry = GetOrCreateValue(key_start, key_start + Key.size());
     return entry.getValue();
   }
@@ -307,7 +307,7 @@ public:
     return count(Key, Key + strlen(Key));
   }
   size_type count(const std::string &Key) const {
-    const char* key_start = &Key[0];
+    const char* key_start = (Key.empty() ? NULL : &Key[0]);
     return count(key_start, key_start + Key.size());
   }
 
