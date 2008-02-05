@@ -37,7 +37,7 @@
 #include <functional>
 
 //==------------------------------------------------------------------------==//
-//  RValue "management" data structures.
+//  Values and ValueManager.
 //==------------------------------------------------------------------------==// 
 
 namespace clang {
@@ -51,7 +51,10 @@ public:
   bool isInitialized() const { return Data != (unsigned) ~0; }
   operator unsigned() const { assert (isInitialized()); return Data; }
 
-  void Profile(llvm::FoldingSetNodeID& ID) const { ID.AddInteger(Data); }
+  void Profile(llvm::FoldingSetNodeID& ID) const { 
+    assert (isInitialized());
+    ID.AddInteger(Data);
+  }
 
   static inline void Profile(llvm::FoldingSetNodeID& ID, SymbolID X) {
     X.Profile(ID);
@@ -70,6 +73,36 @@ public:
   inline void* getPtr() const { return reinterpret_cast<void*>(Data & ~Mask); }  
   inline bool operator==(const SymbolData& R) const { return Data == R.Data; }  
 };
+  
+
+class SymIntConstraint : public llvm::FoldingSetNode {
+  SymbolID Symbol;
+  BinaryOperator::Opcode Op;
+  const llvm::APSInt& Val;
+public:  
+  SymIntConstraint(SymbolID sym, BinaryOperator::Opcode op, 
+                   const llvm::APSInt& V)
+    : Symbol(sym),
+      Op(op), Val(V) {}
+  
+  BinaryOperator::Opcode getOpcode() const { return Op; }
+  SymbolID getSymbol() const { return Symbol; }
+  const llvm::APSInt& getInt() const { return Val; }
+  
+  static inline void Profile(llvm::FoldingSetNodeID& ID,
+                             const SymbolID& Symbol,
+                             BinaryOperator::Opcode Op,
+                             const llvm::APSInt& Val) {
+    Symbol.Profile(ID);
+    ID.AddInteger(Op);
+    ID.AddPointer(&Val);
+  }
+  
+  void Profile(llvm::FoldingSetNodeID& ID) {
+    Profile(ID, Symbol, Op, Val);
+  }
+};
+  
 
 class SymbolManager {
   std::vector<SymbolData> SymbolToData;
@@ -88,14 +121,21 @@ public:
   
   SymbolID getSymbol(ParmVarDecl* D);
 };
+  
 
 class ValueManager {
   typedef llvm::FoldingSet<llvm::FoldingSetNodeWrapper<llvm::APSInt> >
           APSIntSetTy;
   
+  typedef llvm::FoldingSet<SymIntConstraint>
+          SymIntCSetTy;
+  
+  
   ASTContext& Ctx;
-  APSIntSetTy APSIntSet;
   llvm::BumpPtrAllocator& BPAlloc;
+  
+  APSIntSetTy   APSIntSet;
+  SymIntCSetTy  SymIntCSet;
   
 public:
   ValueManager(ASTContext& ctx, llvm::BumpPtrAllocator& Alloc) 
@@ -104,10 +144,13 @@ public:
   ~ValueManager();
   
   ASTContext& getContext() const { return Ctx; }  
-  llvm::APSInt& getValue(const llvm::APSInt& X);
-  llvm::APSInt& getValue(uint64_t X, unsigned BitWidth, bool isUnsigned);
-  llvm::APSInt& getValue(uint64_t X, QualType T,
-                   SourceLocation Loc = SourceLocation());
+  const llvm::APSInt& getValue(const llvm::APSInt& X);
+  const llvm::APSInt& getValue(uint64_t X, unsigned BitWidth, bool isUnsigned);
+  const llvm::APSInt& getValue(uint64_t X, QualType T,
+                               SourceLocation Loc = SourceLocation());
+  
+  const SymIntConstraint& getConstraint(SymbolID sym, BinaryOperator::Opcode Op,
+                                        const llvm::APSInt& V);
 };
 
 //==------------------------------------------------------------------------==//

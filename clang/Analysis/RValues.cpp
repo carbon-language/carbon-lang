@@ -38,7 +38,7 @@ SymbolManager::SymbolManager() {}
 SymbolManager::~SymbolManager() {}
 
 //===----------------------------------------------------------------------===//
-// ValueManager.
+// Values and ValueManager.
 //===----------------------------------------------------------------------===//
 
 ValueManager::~ValueManager() {
@@ -49,7 +49,7 @@ ValueManager::~ValueManager() {
     I->getValue().~APSInt();
 }
 
-APSInt& ValueManager::getValue(const APSInt& X) {
+const APSInt& ValueManager::getValue(const APSInt& X) {
   llvm::FoldingSetNodeID ID;
   void* InsertPos;
   typedef llvm::FoldingSetNodeWrapper<APSInt> FoldNodeTy;
@@ -66,17 +66,39 @@ APSInt& ValueManager::getValue(const APSInt& X) {
   return *P;
 }
 
-APSInt& ValueManager::getValue(uint64_t X, unsigned BitWidth, bool isUnsigned) {
+const APSInt& ValueManager::getValue(uint64_t X, unsigned BitWidth,
+                                     bool isUnsigned) {
   APSInt V(BitWidth, isUnsigned);
   V = X;  
   return getValue(V);
 }
 
-APSInt& ValueManager::getValue(uint64_t X, QualType T, SourceLocation Loc) {
+const APSInt& ValueManager::getValue(uint64_t X, QualType T,
+                                     SourceLocation Loc) {
+  
   unsigned bits = Ctx.getTypeSize(T, Loc);
   APSInt V(bits, T->isUnsignedIntegerType());
   V = X;
   return getValue(V);
+}
+
+const SymIntConstraint&
+ValueManager::getConstraint(SymbolID sym, BinaryOperator::Opcode Op,
+                            const llvm::APSInt& V) {
+  
+  llvm::FoldingSetNodeID ID;
+  SymIntConstraint::Profile(ID, sym, Op, V);
+  void* InsertPos;
+  
+  SymIntConstraint* C = SymIntCSet.FindNodeOrInsertPos(ID, InsertPos);
+  
+  if (!C) {
+    C = (SymIntConstraint*) BPAlloc.Allocate<SymIntConstraint>();
+    new (C) SymIntConstraint(sym, Op, V);
+    SymIntCSet.InsertNode(C, InsertPos);
+  }
+  
+  return *C;
 }
 
 //===----------------------------------------------------------------------===//
