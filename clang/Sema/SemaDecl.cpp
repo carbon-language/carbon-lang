@@ -1463,14 +1463,11 @@ void Sema::ActOnFields(Scope* S,
   if (Record)
     Record->defineBody(&RecFields[0], RecFields.size());
   else {
-    ObjCIvarDecl **ClsFields = 
-                    reinterpret_cast<ObjCIvarDecl**>(&RecFields[0]);
-    if (isa<ObjCInterfaceDecl>(static_cast<Decl*>(RecDecl)))
-      cast<ObjCInterfaceDecl>(static_cast<Decl*>(RecDecl))->
-        addInstanceVariablesToClass(ClsFields, RecFields.size(), RBrac);
-    else if (isa<ObjCImplementationDecl>(static_cast<Decl*>(RecDecl))) {
-      ObjCImplementationDecl* IMPDecl = 
-        cast<ObjCImplementationDecl>(static_cast<Decl*>(RecDecl));
+    ObjCIvarDecl **ClsFields = reinterpret_cast<ObjCIvarDecl**>(&RecFields[0]);
+    if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(EnclosingDecl))
+      ID->addInstanceVariablesToClass(ClsFields, RecFields.size(), RBrac);
+    else if (ObjCImplementationDecl *IMPDecl = 
+               dyn_cast<ObjCImplementationDecl>(EnclosingDecl)) {
       assert(IMPDecl && "ActOnFields - missing ObjCImplementationDecl");
       IMPDecl->ObjCAddInstanceVariablesToClassImpl(ClsFields, RecFields.size());
       CheckImplementationIvars(IMPDecl, ClsFields, RecFields.size(), RBrac);
