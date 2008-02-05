@@ -109,7 +109,7 @@ public:
     const CGRecordLayout *CGR = CGM.getTypes().getCGRecordLayout(TD);
     unsigned NumInitElements = ILE->getNumInits();
     unsigned NumElements = SType->getNumElements();
-      
+    
     // Initialising an structure requires us to automatically 
     // initialise any elements that have not been initialised explicitly
     unsigned NumInitableElts = std::min(NumInitElements, NumElements);
@@ -327,7 +327,75 @@ public:
     
     return llvm::ConstantExpr::getOr(LHS, RHS);
   }
+  llvm::Constant *VisitBinSub(const BinaryOperator *E) {
+    llvm::Constant *LHS = Visit(E->getLHS());
+    llvm::Constant *RHS = Visit(E->getRHS());
+    
+    if (!isa<llvm::PointerType>(RHS->getType())) {
+      // pointer - int
+      if (isa<llvm::PointerType>(LHS->getType())) {
+        llvm::Constant *Idx = llvm::ConstantExpr::getNeg(RHS);
+      
+        return llvm::ConstantExpr::getGetElementPtr(LHS, &Idx, 1);
+      }
+      
+      // int - int
+      return llvm::ConstantExpr::getSub(LHS, RHS);
+    }
+    
+    assert(0 && "Unhandled bin sub case!");
+    return 0;
+  }
+    
+  llvm::Constant *VisitBinShl(const BinaryOperator *E) {
+    llvm::Constant *LHS = Visit(E->getLHS());
+    llvm::Constant *RHS = Visit(E->getRHS());
 
+    // LLVM requires the LHS and RHS to be the same type: promote or truncate the
+    // RHS to the same size as the LHS.
+    if (LHS->getType() != RHS->getType())
+      RHS = llvm::ConstantExpr::getIntegerCast(RHS, LHS->getType(), false);
+    
+    return llvm::ConstantExpr::getShl(LHS, RHS);
+  }
+    
+  llvm::Constant *VisitBinMul(const BinaryOperator *E) {
+    llvm::Constant *LHS = Visit(E->getLHS());
+    llvm::Constant *RHS = Visit(E->getRHS());
+
+    return llvm::ConstantExpr::getMul(LHS, RHS);
+  }
+
+  llvm::Constant *VisitBinDiv(const BinaryOperator *E) {
+    llvm::Constant *LHS = Visit(E->getLHS());
+    llvm::Constant *RHS = Visit(E->getRHS());
+    
+    if (LHS->getType()->isFPOrFPVector())
+      return llvm::ConstantExpr::getFDiv(LHS, RHS);
+    else if (E->getType()->isUnsignedIntegerType())
+      return llvm::ConstantExpr::getUDiv(LHS, RHS);
+    else
+      return llvm::ConstantExpr::getSDiv(LHS, RHS);
+  }
+
+  llvm::Constant *VisitBinAdd(const BinaryOperator *E) {
+    llvm::Constant *LHS = Visit(E->getLHS());
+    llvm::Constant *RHS = Visit(E->getRHS());
+
+    if (!E->getType()->isPointerType())
+      return llvm::ConstantExpr::getAdd(LHS, RHS);
+    
+    assert(0 && "Unhandled bin add types!");
+    return 0;
+  }
+    
+  llvm::Constant *VisitBinAnd(const BinaryOperator *E) {
+    llvm::Constant *LHS = Visit(E->getLHS());
+    llvm::Constant *RHS = Visit(E->getRHS());
+
+    return llvm::ConstantExpr::getAnd(LHS, RHS);
+  }
+    
   // Utility methods
   const llvm::Type *ConvertType(QualType T) {
     return CGM.getTypes().ConvertType(T);
