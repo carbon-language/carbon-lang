@@ -50,6 +50,12 @@ public:
   
   bool isInitialized() const { return Data != (unsigned) ~0; }
   operator unsigned() const { assert (isInitialized()); return Data; }
+
+  void Profile(llvm::FoldingSetNodeID& ID) const { ID.AddInteger(Data); }
+
+  static inline void Profile(llvm::FoldingSetNodeID& ID, SymbolID X) {
+    X.Profile(ID);
+  }
 };
   
 class SymbolData {

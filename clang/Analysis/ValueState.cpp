@@ -162,7 +162,8 @@ ValueStateManager::StateTy
 ValueStateManager::getInitialState() {
 
   // Create a state with empty variable bindings.
-  ValueStateImpl StateImpl(VBFactory.GetEmptyMap());
+  ValueStateImpl StateImpl(VBFactory.GetEmptyMap(),
+                           CNEFactory.GetEmptyMap());
   
   return getPersistentState(StateImpl);
 }

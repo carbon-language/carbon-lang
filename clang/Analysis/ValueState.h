@@ -114,7 +114,10 @@ public:
 //===----------------------------------------------------------------------===//
 
 namespace vstate {
+  typedef llvm::ImmutableSet<llvm::APSInt*> IntSetTy;
+  
   typedef llvm::ImmutableMap<VarBindKey,RValue> VariableBindingsTy;  
+  typedef llvm::ImmutableMap<SymbolID,IntSetTy> ConstantNotEqTy;
 }
 
 /// ValueStateImpl - This class encapsulates the actual data values for
@@ -123,19 +126,27 @@ namespace vstate {
 ///  "persistent" in a FoldingSet its values will never change.
 struct ValueStateImpl : public llvm::FoldingSetNode {
   vstate::VariableBindingsTy VariableBindings;
+  vstate::ConstantNotEqTy    ConstantNotEq;
   
-  ValueStateImpl(vstate::VariableBindingsTy VB)
-    : VariableBindings(VB) {}
+  /// This ctor is used when creating the first ValueStateImpl object.
+  ValueStateImpl(vstate::VariableBindingsTy VB, vstate::ConstantNotEqTy CNE)
+    : VariableBindings(VB), ConstantNotEq(CNE) {}
   
+  /// Copy ctor - We must explicitly define this or else the "Next" ptr
+  ///  in FoldingSetNode will also get copied.
   ValueStateImpl(const ValueStateImpl& RHS)
     : llvm::FoldingSetNode(),
-      VariableBindings(RHS.VariableBindings) {} 
-    
+      VariableBindings(RHS.VariableBindings),
+      ConstantNotEq(RHS.ConstantNotEq) {} 
   
+  /// Profile - Profile the contents of a ValueStateImpl object for use
+  ///  in a FoldingSet.
   static void Profile(llvm::FoldingSetNodeID& ID, const ValueStateImpl& V) {
     V.VariableBindings.Profile(ID);
   }
-  
+
+  /// Profile - Used to profile the contents of this object for inclusion
+  ///  in a FoldingSet.
   void Profile(llvm::FoldingSetNodeID& ID) const {
     Profile(ID, *this);
   }
@@ -159,12 +170,16 @@ public:
   // Accessors.
   
   ValueStateImpl* getImpl() const { return Data; }
-  
-  // Iterators.
+
+
+  // Binding maps typedefs.
   
   typedef vstate::VariableBindingsTy VariableBindingsTy;
-  typedef VariableBindingsTy::iterator vb_iterator;
-  
+  typedef vstate::ConstantNotEqTy    ConstantNotEqTy;
+
+  // Iterators.
+
+  typedef VariableBindingsTy::iterator vb_iterator;  
   vb_iterator begin() { return Data->VariableBindings.begin(); }
   vb_iterator end() { return Data->VariableBindings.end(); }
   
@@ -199,6 +214,10 @@ public:
 
 private:
   ValueState::VariableBindingsTy::Factory VBFactory;
+  ValueState::ConstantNotEqTy::Factory    CNEFactory;
+  
+  /// StateSet - FoldingSet containing all the states created for analyzing
+  ///  a particular function.  This is used to unique states.
   llvm::FoldingSet<ValueStateImpl> StateSet;
 
   /// ValueMgr - Object that manages the data for all created RValues.
