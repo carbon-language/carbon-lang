@@ -301,7 +301,7 @@ public:
 namespace nonlval {
   
   enum Kind { SymbolValKind,
-              SymIntConstraintKind,
+              SymIntConstraintValKind,
               ConcreteIntKind,
               NumKind };
 
@@ -316,8 +316,22 @@ namespace nonlval {
     }
     
     static inline bool classof(const RValue* V) {
-      return V->getSubKind() == SymbolValKind;
-    }  
+      return isa<NonLValue>(V) && V->getSubKind() == SymbolValKind;
+    }
+  };
+  
+  class SymIntConstraintVal : public NonLValue {    
+  public:
+    SymIntConstraintVal(const SymIntConstraint& C)
+    : NonLValue(SymIntConstraintValKind, reinterpret_cast<const void*>(&C)) {}
+
+    const SymIntConstraint& getConstraint() const {
+      return *reinterpret_cast<SymIntConstraint*>(getRawPtr());
+    }
+    
+    static inline bool classof(const RValue* V) {
+      return isa<NonLValue>(V) && V->getSubKind() == SymIntConstraintValKind;
+    }    
   };
 
   class ConcreteInt : public NonLValue {
@@ -387,7 +401,7 @@ namespace nonlval {
     
     // Implement isa<T> support.
     static inline bool classof(const RValue* V) {
-      return V->getSubKind() == ConcreteIntKind;
+      return isa<NonLValue>(V) && V->getSubKind() == ConcreteIntKind;
     }
   };
   
