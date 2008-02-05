@@ -436,8 +436,9 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
         if (MO.isRegister() && MO.isDef() && MO.getReg()) {
           if (MRegisterInfo::isVirtualRegister(MO.getReg())) {
             VarInfo &VRInfo = getVarInfo(MO.getReg());
-            // Defaults to dead
-            VRInfo.Kills.push_back(MI);
+            if (VRInfo.AliveBlocks.none())
+              // If vr is not alive in any block, then defaults to dead.
+              VRInfo.Kills.push_back(MI);
           } else if (MRegisterInfo::isPhysicalRegister(MO.getReg()) &&
                      !ReservedRegisters[MO.getReg()]) {
             HandlePhysRegDef(MO.getReg(), MI);
