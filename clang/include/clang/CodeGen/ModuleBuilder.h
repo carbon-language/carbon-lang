@@ -24,6 +24,7 @@ namespace clang {
   class FunctionDecl;
   class LinkageSpecDecl;
   class FileVarDecl;
+  class TypeDecl;
   struct LangOptions;
   class Diagnostic;
 
@@ -44,6 +45,9 @@ namespace CodeGen {
   /// CodeGenGlobalVar - Emit the specified global variable to LLVM.
   void CodeGenGlobalVar(CodeGenModule *Builder, FileVarDecl *D);
   
+  /// CodeGenTypeDecl - Compile a type.
+  void CodeGenTypeDecl(CodeGenModule *Builder, TypeDecl *D);
+
   /// PrintStats - Emit statistic information to stderr.
   ///
   void PrintStats(CodeGenModule *Builder);

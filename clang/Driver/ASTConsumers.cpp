@@ -635,10 +635,7 @@ namespace {
       } else if (LinkageSpecDecl *LSD = dyn_cast<LinkageSpecDecl>(D)) {
         CodeGen::CodeGenLinkageSpec(Builder, LSD);
       } else {
-        assert(isa<TypeDecl>(D) && "Only expected type decls here");
-        // don't codegen for now, eventually pass down for debug info.
-        //std::cerr << "Read top-level typedef decl: '"
-        //    << D->getName() << "'\n";
+        CodeGen::CodeGenTypeDecl(Builder, cast<TypeDecl>(D));
       }
     }
   };

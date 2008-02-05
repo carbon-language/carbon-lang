@@ -261,6 +261,27 @@ void CodeGenModule::EmitGlobalVarDeclarator(const FileVarDecl *D) {
     EmitGlobalVar(D);
 }
 
+void CodeGenModule::EmitType(const TypeDecl *D) {
+  if (isa<TypedefDecl>(D)) {
+    // TODO: Emit debug info.
+    return;
+  }
+  
+  assert(!isa<ObjCInterfaceDecl>(D) && "FIXME: ADD OBJC SUPPORT");
+  
+  // This must be a tag decl.
+  const TagDecl *TD = cast<TagDecl>(D);
+  
+  // Get the LLVM type for this TagDecl.  If it is non-opaque or if this decl
+  // is still a forward declaration, just return.
+  QualType NewTy = Context.getTagDeclType(const_cast<TagDecl *>(TD));
+  const llvm::Type *T = Types.ConvertType(NewTy);
+  if (isa<llvm::OpaqueType>(T) && TD->isDefinition())
+    // Make sure that this type is translated.
+    Types.ForceTypeCompilation(NewTy);
+}
+
+
 /// getBuiltinLibFunction
 llvm::Function *CodeGenModule::getBuiltinLibFunction(unsigned BuiltinID) {
   if (BuiltinID > BuiltinFunctions.size())

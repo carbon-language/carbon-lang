@@ -50,6 +50,11 @@ void clang::CodeGen::CodeGenGlobalVar(CodeGenModule *Builder, FileVarDecl *D) {
   Builder->EmitGlobalVarDeclarator(D);
 }
 
+/// CodeGenTypeDecl - Compile a type.
+void clang::CodeGen::CodeGenTypeDecl(CodeGenModule *Builder, TypeDecl *D) {
+  Builder->EmitType(D);
+}
+
 
 /// PrintStats - Emit statistic information to stderr.
 ///

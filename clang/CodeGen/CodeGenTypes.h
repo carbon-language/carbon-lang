@@ -75,7 +75,7 @@ class CodeGenTypes {
   llvm::Module& TheModule;
   const llvm::TargetData& TheTargetData;
   
-  llvm::DenseMap<const TagDecl*, llvm::Type*> TagDeclTypes;
+  llvm::DenseMap<const TagDecl*, llvm::PATypeHolder> TagDeclTypes;
 
   /// CGRecordLayouts - This maps llvm struct type with corresponding 
   /// record layout info. 
@@ -99,11 +99,6 @@ public:
 
 private:
   llvm::DenseMap<const FieldDecl *, BitFieldInfo> BitFields;
-
-  /// RecordTypesToResolve - This keeps track of record types that are not 
-  /// yet incomplete. One llvm::OpaqueType is associated with each incomplete
-  /// record.
-  llvm::DenseMap<const RecordDecl *, llvm::Type *> RecordTypesToResolve;
 
   /// TypeHolderMap - This map keeps cache of llvm::Types (through PATypeHolder)
   /// and maps llvm::Types to corresponding clang::Type. llvm::PATypeHolder is
@@ -142,6 +137,12 @@ public:
   /// that corresponds to the field FD.
   unsigned getLLVMFieldNo(const FieldDecl *FD);
     
+  
+  /// ForceTypeCompilation - When we find the definition for a type, we require
+  /// it to be recompiled, to update the lazy understanding of what it is in our
+  /// maps.
+  void ForceTypeCompilation(QualType T);
+  
 public:  // These are internal details of CGT that shouldn't be used externally.
   void DecodeArgumentTypes(const FunctionTypeProto &FTP, 
                            std::vector<const llvm::Type*> &ArgTys);
