@@ -626,6 +626,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
       Constraints += "=" + OutputConstraint;
     } else {
       ArgTypes.push_back(Dest.getAddress()->getType());
+      Args.push_back(Dest.getAddress());
       if (i != 0)
         Constraints += ',';
       Constraints += '*';
