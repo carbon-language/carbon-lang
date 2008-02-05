@@ -549,10 +549,7 @@ void GRConstants::VisitUnaryOperator(UnaryOperator* U,
       case UnaryOperator::PostInc: {
         const LValue& L1 = GetLValue(St, U->getSubExpr());
         NonLValue R1 = cast<NonLValue>(GetValue(St, L1));
-        NonLValue R2 = NonLValue::GetValue(ValMgr, 1U, U->getType(),
-                                           U->getLocStart());
-        
-        NonLValue Result = R1.Add(ValMgr, R2);
+        NonLValue Result = R1.Add(ValMgr, GetRValueConstant(1U, U));
         Nodify(Dst, U, N1, SetValue(SetValue(St, U, R1), L1, Result));
         break;
       }
@@ -560,10 +557,7 @@ void GRConstants::VisitUnaryOperator(UnaryOperator* U,
       case UnaryOperator::PostDec: {
         const LValue& L1 = GetLValue(St, U->getSubExpr());
         NonLValue R1 = cast<NonLValue>(GetValue(St, L1));
-        NonLValue R2 = NonLValue::GetValue(ValMgr, 1U, U->getType(),
-                                           U->getLocStart());
-        
-        NonLValue Result = R1.Sub(ValMgr, R2);
+        NonLValue Result = R1.Sub(ValMgr, GetRValueConstant(1U, U));
         Nodify(Dst, U, N1, SetValue(SetValue(St, U, R1), L1, Result));
         break;
       }
@@ -571,10 +565,7 @@ void GRConstants::VisitUnaryOperator(UnaryOperator* U,
       case UnaryOperator::PreInc: {
         const LValue& L1 = GetLValue(St, U->getSubExpr());
         NonLValue R1 = cast<NonLValue>(GetValue(St, L1));
-        NonLValue R2 = NonLValue::GetValue(ValMgr, 1U, U->getType(),
-                                           U->getLocStart());        
-        
-        NonLValue Result = R1.Add(ValMgr, R2);
+        NonLValue Result = R1.Add(ValMgr, GetRValueConstant(1U, U));
         Nodify(Dst, U, N1, SetValue(SetValue(St, U, Result), L1, Result));
         break;
       }
@@ -582,10 +573,7 @@ void GRConstants::VisitUnaryOperator(UnaryOperator* U,
       case UnaryOperator::PreDec: {
         const LValue& L1 = GetLValue(St, U->getSubExpr());
         NonLValue R1 = cast<NonLValue>(GetValue(St, L1));
-        NonLValue R2 = NonLValue::GetValue(ValMgr, 1U, U->getType(),
-                                           U->getLocStart());
-        
-        NonLValue Result = R1.Sub(ValMgr, R2);
+        NonLValue Result = R1.Sub(ValMgr, GetRValueConstant(1U, U));
         Nodify(Dst, U, N1, SetValue(SetValue(St, U, Result), L1, Result));
         break;
       }
