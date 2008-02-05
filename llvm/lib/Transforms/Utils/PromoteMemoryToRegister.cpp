@@ -849,7 +849,6 @@ bool PromoteMem2Reg::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo,
   return true;
 }
 
-
 // RenamePass - Recursively traverse the CFG of the function, renaming loads and
 // stores to the allocas which we are promoting.  IncomingVals indicates what
 // value each Alloca contains on exit from the predecessor block Pred.
@@ -877,6 +876,14 @@ NextIteration:
     // If we have PHI nodes to update, compute the number of edges from Pred to
     // BB.
     if (!HasPredEntries) {
+      // We want to be able to distinguish between PHI nodes being inserted by
+      // this invocation of mem2reg from those phi nodes that already existed in
+      // the IR before mem2reg was run.  We determine that APN is being inserted
+      // because it is missing incoming edges.  All other PHI nodes being
+      // inserted by this pass of mem2reg will have the same number of incoming
+      // operands so far.  Remember this count.
+      unsigned NewPHINumOperands = APN->getNumOperands();
+      
       TerminatorInst *PredTerm = Pred->getTerminator();
       unsigned NumEdges = 0;
       for (unsigned i = 0, e = PredTerm->getNumSuccessors(); i != e; ++i) {
@@ -902,16 +909,9 @@ NextIteration:
         APN = dyn_cast<PHINode>(PNI);
         if (APN == 0) break;
         
-        // Verify it doesn't already have entries for Pred.  If it does, it is
-        // not being inserted by this mem2reg invocation.
-        HasPredEntries = false;
-        for (unsigned i = 0, e = APN->getNumIncomingValues(); i != e; ++i) {
-          if (APN->getIncomingBlock(i) == Pred) {
-            HasPredEntries = true;
-            break;
-          }
-        }
-      } while (!HasPredEntries);
+        // Verify that it is missing entries.  If not, it is not being inserted
+        // by this mem2reg invocation so we want to ignore it.
+      } while (APN->getNumOperands() == NewPHINumOperands);
     }
   }
   
