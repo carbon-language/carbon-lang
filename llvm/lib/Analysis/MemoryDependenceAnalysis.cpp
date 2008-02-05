@@ -463,15 +463,17 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction* rem) {
     reverseDep[depGraphLocal[rem].first].erase(rem);
     
     if (depGraphEntry->second.first != NonLocal &&
+        depGraphEntry->second.first != None &&
         depGraphEntry->second.second) {
       // If we have dep info for rem, set them to it
       BasicBlock::iterator RI = depGraphEntry->second.first;
       RI++;
       newDep = RI;
-    } else if (depGraphEntry->second.first == NonLocal &&
+    } else if ( (depGraphEntry->second.first == NonLocal ||
+                 depGraphEntry->second.first == None ) &&
                depGraphEntry->second.second ) {
       // If we have a confirmed non-local flag, use it
-      newDep = NonLocal;
+      newDep = depGraphEntry->second.first;
     } else {
       // Otherwise, use the immediate successor of rem
       // NOTE: This is because, when getDependence is called, it will first
@@ -480,14 +482,22 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction* rem) {
       RI++;
       newDep = RI;
     }
-    
-    SmallPtrSet<Instruction*, 4>& set = reverseDep[rem];
-    for (SmallPtrSet<Instruction*, 4>::iterator I = set.begin(), E = set.end();
-         I != E; ++I) {
-      // Insert the new dependencies
-      // Mark it as unconfirmed as long as it is not the non-local flag
-      depGraphLocal[*I] = std::make_pair(newDep, !newDep);
-    }
+  } else {
+    // Otherwise, use the immediate successor of rem
+    // NOTE: This is because, when getDependence is called, it will first
+    // check the immediate predecessor of what is in the cache.
+    BasicBlock::iterator RI = rem;
+    RI++;
+    newDep = RI;
+  }
+  
+  SmallPtrSet<Instruction*, 4>& set = reverseDep[rem];
+  for (SmallPtrSet<Instruction*, 4>::iterator I = set.begin(), E = set.end();
+       I != E; ++I) {
+    // Insert the new dependencies
+    // Mark it as unconfirmed as long as it is not the non-local flag
+    depGraphLocal[*I] = std::make_pair(newDep, (newDep == NonLocal ||
+                                                newDep == None));
   }
   
   depGraphLocal.erase(rem);
