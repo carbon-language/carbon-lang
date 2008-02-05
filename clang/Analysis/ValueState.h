@@ -140,13 +140,23 @@ struct ValueStateImpl : public llvm::FoldingSetNode {
 class ValueState : public llvm::FoldingSetNode {
   ValueStateImpl* Data;
 public:
+  ValueState(ValueStateImpl* D) : Data(D) {}
+  ValueState() : Data(0) {}  
+  void operator=(ValueStateImpl* D) { Data = D; }
+  
+  // Accessors.
+  
+  ValueStateImpl* getImpl() const { return Data; }
+  
+  // Iterators.
+  
   typedef vstate::VariableBindingsTy VariableBindingsTy;
   typedef VariableBindingsTy::iterator iterator;
   
-
-  
   iterator begin() { return Data->VariableBindings.begin(); }
   iterator end() { return Data->VariableBindings.end(); }
+  
+  // Profiling and equality testing.
   
   bool operator==(const ValueState& RHS) const {
     return Data == RHS.Data;
@@ -159,15 +169,6 @@ public:
   void Profile(llvm::FoldingSetNodeID& ID) const {
     Profile(ID, *this);
   }
-    
-  ValueState(ValueStateImpl* D) : Data(D) {}
-  ValueState() : Data(0) {}
-  
-  void operator=(ValueStateImpl* D) {
-    Data = D;
-  }
-  
-  ValueStateImpl* getImpl() const { return Data; }
 };  
   
 template<> struct GRTrait<ValueState> {
