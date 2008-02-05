@@ -154,7 +154,7 @@ public:
     
     for (FunctionDecl::param_iterator I=F.param_begin(), E=F.param_end(); 
           I!=E; ++I)
-      St = SetValue(St, LValueDecl(*I), RValue::GetSymbolValue(SymMgr, *I));
+      St = SetValue(St, lval::DeclVal(*I), RValue::GetSymbolValue(SymMgr, *I));
     
     return St;
   }
@@ -540,7 +540,7 @@ void GRConstants::VisitDeclStmt(DeclStmt* DS, GRConstants::NodeTy* Pred,
   for (const ScopedDecl* D = DS->getDecl(); D; D = D->getNextDeclarator())
     if (const VarDecl* VD = dyn_cast<VarDecl>(D)) {
       const Expr* E = VD->getInit();      
-      St = SetValue(St, LValueDecl(VD),
+      St = SetValue(St, lval::DeclVal(VD),
                     E ? GetValue(St, E) : UninitializedValue());
     }
 
@@ -859,12 +859,12 @@ GRConstants::StateTy GRConstants::Assume(StateTy St, LValue Cond, bool Assumptio
       assert (false && "'Assume' not implemented for this NonLValue.");
       return St;
       
-    case LValueDeclKind:
+    case lval::DeclValKind:
       isFeasible = Assumption;
       return St;
       
-    case ConcreteIntLValueKind: {
-      bool b = cast<ConcreteIntLValue>(Cond).getValue() != 0;
+    case lval::ConcreteIntKind: {
+      bool b = cast<lval::ConcreteInt>(Cond).getValue() != 0;
       isFeasible = b ? Assumption : !Assumption;      
       return St;
     }
@@ -879,8 +879,8 @@ GRConstants::StateTy GRConstants::Assume(StateTy St, NonLValue Cond, bool Assump
       assert (false && "'Assume' not implemented for this NonLValue.");
       return St;
       
-    case ConcreteIntKind: {
-      bool b = cast<ConcreteInt>(Cond).getValue() != 0;
+    case nonlval::ConcreteIntKind: {
+      bool b = cast<nonlval::ConcreteInt>(Cond).getValue() != 0;
       isFeasible = b ? Assumption : !Assumption;      
       return St;
     }

@@ -17,9 +17,9 @@ using namespace clang;
 
 RValue ValueStateManager::GetValue(const StateTy& St, const LValue& LV) {
   switch (LV.getSubKind()) {
-    case LValueDeclKind: {
+    case lval::DeclValKind: {
       StateTy::VariableBindingsTy::TreeTy* T =
-        St.getImpl()->VariableBindings.SlimFind(cast<LValueDecl>(LV).getDecl());
+        St.getImpl()->VariableBindings.SlimFind(cast<lval::DeclVal>(LV).getDecl());
       
       return T ? T->getValue().second : InvalidValue();
     }
@@ -47,7 +47,7 @@ RValue ValueStateManager::GetValue(const StateTy& St, Stmt* S, bool* hasVal) {
         // within the referenced variables.
         
       case Stmt::DeclRefExprClass:
-        return GetValue(St, LValueDecl(cast<DeclRefExpr>(S)->getDecl()));
+        return GetValue(St, lval::DeclVal(cast<DeclRefExpr>(S)->getDecl()));
         
         // Integer literals evaluate to an RValue.  Simply retrieve the
         // RValue for the literal.
@@ -105,7 +105,7 @@ LValue ValueStateManager::GetLValue(const StateTy& St, Stmt* S) {
     S = P->getSubExpr();
   
   if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(S))
-    return LValueDecl(DR->getDecl());
+    return lval::DeclVal(DR->getDecl());
   
   return cast<LValue>(GetValue(St, S));
 }
@@ -123,9 +123,9 @@ ValueStateManager::StateTy
 ValueStateManager::SetValue(StateTy St, const LValue& LV, const RValue& V) {
   
   switch (LV.getSubKind()) {
-    case LValueDeclKind:        
-      return V.isValid() ? Add(St, cast<LValueDecl>(LV).getDecl(), V)
-                         : Remove(St, cast<LValueDecl>(LV).getDecl());
+    case lval::DeclValKind:        
+      return V.isValid() ? Add(St, cast<lval::DeclVal>(LV).getDecl(), V)
+                         : Remove(St, cast<lval::DeclVal>(LV).getDecl());
       
     default:
       assert ("SetValue for given LValue type not yet implemented.");

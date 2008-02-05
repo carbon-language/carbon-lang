@@ -122,29 +122,29 @@ RValue LValue::Cast(ValueManager& ValMgr, Expr* CastExpr) const {
   
   assert (CastExpr->getType()->isIntegerType());
 
-  if (!isa<ConcreteIntLValue>(*this))
+  if (!isa<lval::ConcreteInt>(*this))
     return InvalidValue();
   
-  APSInt V = cast<ConcreteIntLValue>(this)->getValue();
+  APSInt V = cast<lval::ConcreteInt>(this)->getValue();
   QualType T = CastExpr->getType();
   V.setIsUnsigned(T->isUnsignedIntegerType());
   V.extOrTrunc(ValMgr.getContext().getTypeSize(T, CastExpr->getLocStart()));
-  return ConcreteInt(ValMgr.getValue(V));
+  return nonlval::ConcreteInt(ValMgr.getValue(V));
 }
 
 RValue NonLValue::Cast(ValueManager& ValMgr, Expr* CastExpr) const {
-  if (!isa<ConcreteInt>(this))
+  if (!isa<nonlval::ConcreteInt>(this))
     return InvalidValue();
     
-  APSInt V = cast<ConcreteInt>(this)->getValue();
+  APSInt V = cast<nonlval::ConcreteInt>(this)->getValue();
   QualType T = CastExpr->getType();
   V.setIsUnsigned(T->isUnsignedIntegerType());
   V.extOrTrunc(ValMgr.getContext().getTypeSize(T, CastExpr->getLocStart()));
   
   if (CastExpr->getType()->isPointerType())
-    return ConcreteIntLValue(ValMgr.getValue(V));
+    return lval::ConcreteInt(ValMgr.getValue(V));
   else
-    return ConcreteInt(ValMgr.getValue(V));
+    return nonlval::ConcreteInt(ValMgr.getValue(V));
 }
 
 //===----------------------------------------------------------------------===//
@@ -153,8 +153,8 @@ RValue NonLValue::Cast(ValueManager& ValMgr, Expr* CastExpr) const {
 
 NonLValue NonLValue::UnaryMinus(ValueManager& ValMgr, UnaryOperator* U) const {
   switch (getSubKind()) {
-    case ConcreteIntKind:
-      return cast<ConcreteInt>(this)->UnaryMinus(ValMgr, U);
+    case nonlval::ConcreteIntKind:
+      return cast<nonlval::ConcreteInt>(this)->UnaryMinus(ValMgr, U);
     default:
       return cast<NonLValue>(InvalidValue());
   }
@@ -162,8 +162,8 @@ NonLValue NonLValue::UnaryMinus(ValueManager& ValMgr, UnaryOperator* U) const {
 
 NonLValue NonLValue::BitwiseComplement(ValueManager& ValMgr) const {
   switch (getSubKind()) {
-    case ConcreteIntKind:
-      return cast<ConcreteInt>(this)->BitwiseComplement(ValMgr);
+    case nonlval::ConcreteIntKind:
+      return cast<nonlval::ConcreteInt>(this)->BitwiseComplement(ValMgr);
     default:
       return cast<NonLValue>(InvalidValue());
   }
@@ -171,12 +171,12 @@ NonLValue NonLValue::BitwiseComplement(ValueManager& ValMgr) const {
 
 
 #define NONLVALUE_DISPATCH_CASE(k1,k2,Op)\
-case (k1##Kind*NumNonLValueKind+k2##Kind):\
+case (k1##Kind*nonlval::NumKind+k2##Kind):\
 return cast<k1>(*this).Op(ValMgr,cast<k2>(RHS));
 
 #define NONLVALUE_DISPATCH(Op)\
-switch (getSubKind()*NumNonLValueKind+RHS.getSubKind()){\
-NONLVALUE_DISPATCH_CASE(ConcreteInt,ConcreteInt,Op)\
+switch (getSubKind()*nonlval::NumKind+RHS.getSubKind()){\
+NONLVALUE_DISPATCH_CASE(nonlval::ConcreteInt,nonlval::ConcreteInt,Op)\
 default:\
 if (getBaseKind() == UninitializedKind ||\
 RHS.getBaseKind() == UninitializedKind)\
@@ -231,15 +231,15 @@ NonLValue LValue::EQ(ValueManager& ValMgr, const LValue& RHS) const {
       assert(false && "EQ not implemented for this LValue.");
       return cast<NonLValue>(InvalidValue());
     
-    case ConcreteIntLValueKind: {
-      bool b = cast<ConcreteIntLValue>(this)->getValue() ==
-               cast<ConcreteIntLValue>(RHS).getValue();
+    case lval::ConcreteIntKind: {
+      bool b = cast<lval::ConcreteInt>(this)->getValue() ==
+               cast<lval::ConcreteInt>(RHS).getValue();
             
       return NonLValue::GetIntTruthValue(ValMgr, b);
     }
       
-    case LValueDeclKind: {
-      bool b = cast<LValueDecl>(*this) == cast<LValueDecl>(RHS);
+    case lval::DeclValKind: {
+      bool b = cast<lval::DeclVal>(*this) == cast<lval::DeclVal>(RHS);
       return NonLValue::GetIntTruthValue(ValMgr, b);
     }
   }
@@ -254,15 +254,15 @@ NonLValue LValue::NE(ValueManager& ValMgr, const LValue& RHS) const {
       assert(false && "EQ not implemented for this LValue.");
       return cast<NonLValue>(InvalidValue());
       
-    case ConcreteIntLValueKind: {
-      bool b = cast<ConcreteIntLValue>(this)->getValue() !=
-               cast<ConcreteIntLValue>(RHS).getValue();
+    case lval::ConcreteIntKind: {
+      bool b = cast<lval::ConcreteInt>(this)->getValue() !=
+               cast<lval::ConcreteInt>(RHS).getValue();
       
       return NonLValue::GetIntTruthValue(ValMgr, b);
     }  
       
-    case LValueDeclKind: {
-      bool b = cast<LValueDecl>(*this) != cast<LValueDecl>(RHS);
+    case lval::DeclValKind: {
+      bool b = cast<lval::DeclVal>(*this) != cast<lval::DeclVal>(RHS);
       return NonLValue::GetIntTruthValue(ValMgr, b);
     }
   }
@@ -276,21 +276,21 @@ NonLValue LValue::NE(ValueManager& ValMgr, const LValue& RHS) const {
 NonLValue NonLValue::GetValue(ValueManager& ValMgr, uint64_t X, QualType T,
                               SourceLocation Loc) {
   
-  return ConcreteInt(ValMgr.getValue(X, T, Loc));
+  return nonlval::ConcreteInt(ValMgr.getValue(X, T, Loc));
 }
 
 NonLValue NonLValue::GetValue(ValueManager& ValMgr, IntegerLiteral* I) {
-  return ConcreteInt(ValMgr.getValue(APSInt(I->getValue(),
-                                            I->getType()->isUnsignedIntegerType())));
+  return nonlval::ConcreteInt(ValMgr.getValue(APSInt(I->getValue(),
+                                   I->getType()->isUnsignedIntegerType())));
 }
 
 RValue RValue::GetSymbolValue(SymbolManager& SymMgr, ParmVarDecl* D) {
   QualType T = D->getType();
   
   if (T->isPointerType() || T->isReferenceType())
-    return SymbolicLValue(SymMgr.getSymbol(D));
+    return lval::SymbolVal(SymMgr.getSymbol(D));
   else
-    return SymbolicNonLValue(SymMgr.getSymbol(D));
+    return nonlval::SymbolVal(SymMgr.getSymbol(D));
 }
 
 //===----------------------------------------------------------------------===//
@@ -322,12 +322,12 @@ void RValue::print(std::ostream& Out) const {
 
 void NonLValue::print(std::ostream& Out) const {
   switch (getSubKind()) {  
-    case ConcreteIntKind:
-      Out << cast<ConcreteInt>(this)->getValue().toString();
+    case nonlval::ConcreteIntKind:
+      Out << cast<nonlval::ConcreteInt>(this)->getValue().toString();
       break;
       
-    case SymbolicNonLValueKind:
-      Out << '$' << cast<SymbolicNonLValue>(this)->getSymbolID();
+    case nonlval::SymbolValKind:
+      Out << '$' << cast<nonlval::SymbolVal>(this)->getSymbolID();
       break;
       
     default:
@@ -338,18 +338,18 @@ void NonLValue::print(std::ostream& Out) const {
 
 void LValue::print(std::ostream& Out) const {
   switch (getSubKind()) {        
-    case ConcreteIntLValueKind:
-      Out << cast<ConcreteIntLValue>(this)->getValue().toString() 
+    case lval::ConcreteIntKind:
+      Out << cast<lval::ConcreteInt>(this)->getValue().toString() 
           << " (LValue)";
       break;
       
-    case SymbolicLValueKind:
-      Out << '$' << cast<SymbolicLValue>(this)->getSymbolID();
+    case lval::SymbolValKind:
+      Out << '$' << cast<lval::SymbolVal>(this)->getSymbolID();
       break;
       
-    case LValueDeclKind:
+    case lval::DeclValKind:
       Out << '&' 
-      << cast<LValueDecl>(this)->getDecl()->getIdentifier()->getName();
+      << cast<lval::DeclVal>(this)->getDecl()->getIdentifier()->getName();
       break;
       
     default:

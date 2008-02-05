@@ -298,174 +298,187 @@ public:
 //  Subclasses of NonLValue.
 //==------------------------------------------------------------------------==// 
 
-enum NonLValueKind { SymbolicNonLValueKind, ConcreteIntKind, NumNonLValueKind };
+namespace nonlval {
+  
+  enum Kind { SymbolValKind,
+              SymIntConstraintKind,
+              ConcreteIntKind,
+              NumKind };
 
-class SymbolicNonLValue : public NonLValue {
-public:
-  SymbolicNonLValue(unsigned SymID)
-  : NonLValue(SymbolicNonLValueKind,
-              reinterpret_cast<void*>((uintptr_t) SymID)) {}
-  
-  SymbolID getSymbolID() const {
-    return (SymbolID) reinterpret_cast<uintptr_t>(getRawPtr());
-  }
-  
-  static inline bool classof(const RValue* V) {
-    return V->getSubKind() == SymbolicNonLValueKind;
-  }  
-};
-
-class ConcreteInt : public NonLValue {
-public:
-  ConcreteInt(const llvm::APSInt& V) : NonLValue(ConcreteIntKind, &V) {}
-  
-  const llvm::APSInt& getValue() const {
-    return *static_cast<llvm::APSInt*>(getRawPtr());
-  }
-  
-  // Arithmetic operators.
-  
-  ConcreteInt Add(ValueManager& ValMgr, const ConcreteInt& V) const {
-    return ValMgr.getValue(getValue() + V.getValue());
-  }
-  
-  ConcreteInt Sub(ValueManager& ValMgr, const ConcreteInt& V) const {
-    return ValMgr.getValue(getValue() - V.getValue());
-  }
-  
-  ConcreteInt Mul(ValueManager& ValMgr, const ConcreteInt& V) const {
-    return ValMgr.getValue(getValue() * V.getValue());
-  }
-  
-  ConcreteInt Div(ValueManager& ValMgr, const ConcreteInt& V) const {
-    return ValMgr.getValue(getValue() / V.getValue());
-  }
-  
-  ConcreteInt Rem(ValueManager& ValMgr, const ConcreteInt& V) const {
-    return ValMgr.getValue(getValue() % V.getValue());
-  }
-  
-  ConcreteInt UnaryMinus(ValueManager& ValMgr, UnaryOperator* U) const {
-    assert (U->getType() == U->getSubExpr()->getType());  
-    assert (U->getType()->isIntegerType());  
-    return ValMgr.getValue(-getValue()); 
-  }
-  
-  ConcreteInt BitwiseComplement(ValueManager& ValMgr) const {
-    return ValMgr.getValue(~getValue()); 
-  }
-  
-  // Casting.
-  
-  ConcreteInt Cast(ValueManager& ValMgr, Expr* CastExpr) const {
-    assert (CastExpr->getType()->isIntegerType());
+  class SymbolVal : public NonLValue {
+  public:
+    SymbolVal(unsigned SymID)
+    : NonLValue(SymbolValKind,
+                reinterpret_cast<void*>((uintptr_t) SymID)) {}
     
-    llvm::APSInt X(getValue());  
-    X.extOrTrunc(ValMgr.getContext().getTypeSize(CastExpr->getType(),
-                                                 CastExpr->getLocStart()));
-    return ValMgr.getValue(X);
-  }
+    SymbolID getSymbolID() const {
+      return (SymbolID) reinterpret_cast<uintptr_t>(getRawPtr());
+    }
+    
+    static inline bool classof(const RValue* V) {
+      return V->getSubKind() == SymbolValKind;
+    }  
+  };
+
+  class ConcreteInt : public NonLValue {
+  public:
+    ConcreteInt(const llvm::APSInt& V) : NonLValue(ConcreteIntKind, &V) {}
+    
+    const llvm::APSInt& getValue() const {
+      return *static_cast<llvm::APSInt*>(getRawPtr());
+    }
+    
+    // Arithmetic operators.
+    
+    ConcreteInt Add(ValueManager& ValMgr, const ConcreteInt& V) const {
+      return ValMgr.getValue(getValue() + V.getValue());
+    }
+    
+    ConcreteInt Sub(ValueManager& ValMgr, const ConcreteInt& V) const {
+      return ValMgr.getValue(getValue() - V.getValue());
+    }
+    
+    ConcreteInt Mul(ValueManager& ValMgr, const ConcreteInt& V) const {
+      return ValMgr.getValue(getValue() * V.getValue());
+    }
+    
+    ConcreteInt Div(ValueManager& ValMgr, const ConcreteInt& V) const {
+      return ValMgr.getValue(getValue() / V.getValue());
+    }
+    
+    ConcreteInt Rem(ValueManager& ValMgr, const ConcreteInt& V) const {
+      return ValMgr.getValue(getValue() % V.getValue());
+    }
+    
+    ConcreteInt UnaryMinus(ValueManager& ValMgr, UnaryOperator* U) const {
+      assert (U->getType() == U->getSubExpr()->getType());  
+      assert (U->getType()->isIntegerType());  
+      return ValMgr.getValue(-getValue()); 
+    }
+    
+    ConcreteInt BitwiseComplement(ValueManager& ValMgr) const {
+      return ValMgr.getValue(~getValue()); 
+    }
+    
+    // Casting.
+    
+    ConcreteInt Cast(ValueManager& ValMgr, Expr* CastExpr) const {
+      assert (CastExpr->getType()->isIntegerType());
+      
+      llvm::APSInt X(getValue());  
+      X.extOrTrunc(ValMgr.getContext().getTypeSize(CastExpr->getType(),
+                                                   CastExpr->getLocStart()));
+      return ValMgr.getValue(X);
+    }
+    
+    // Equality operators.
+    
+    ConcreteInt EQ(ValueManager& ValMgr, const ConcreteInt& V) const {
+      const llvm::APSInt& Val = getValue();    
+      return ValMgr.getValue(Val == V.getValue() ? 1U : 0U,
+                             Val.getBitWidth(), Val.isUnsigned());
+    }
+    
+    ConcreteInt NE(ValueManager& ValMgr, const ConcreteInt& V) const {
+      const llvm::APSInt& Val = getValue();    
+      return ValMgr.getValue(Val != V.getValue() ? 1U : 0U,
+                             Val.getBitWidth(), Val.isUnsigned());
+    }
+    
+    // Implement isa<T> support.
+    static inline bool classof(const RValue* V) {
+      return V->getSubKind() == ConcreteIntKind;
+    }
+  };
   
-  // Equality operators.
-  
-  ConcreteInt EQ(ValueManager& ValMgr, const ConcreteInt& V) const {
-    const llvm::APSInt& Val = getValue();    
-    return ValMgr.getValue(Val == V.getValue() ? 1U : 0U,
-                           Val.getBitWidth(), Val.isUnsigned());
-  }
-  
-  ConcreteInt NE(ValueManager& ValMgr, const ConcreteInt& V) const {
-    const llvm::APSInt& Val = getValue();    
-    return ValMgr.getValue(Val != V.getValue() ? 1U : 0U,
-                           Val.getBitWidth(), Val.isUnsigned());
-  }
-  
-  // Implement isa<T> support.
-  static inline bool classof(const RValue* V) {
-    return V->getSubKind() == ConcreteIntKind;
-  }
-};
+} // end namespace clang::nonlval
 
 //==------------------------------------------------------------------------==//
 //  Subclasses of LValue.
 //==------------------------------------------------------------------------==// 
 
-enum LValueKind { SymbolicLValueKind, LValueDeclKind, ConcreteIntLValueKind,
-                  NumLValueKind };
+namespace lval {
   
-class SymbolicLValue : public LValue {
-public:
-  SymbolicLValue(unsigned SymID)
-  : LValue(SymbolicLValueKind, reinterpret_cast<void*>((uintptr_t) SymID)) {}
+  enum Kind { SymbolValKind,
+              DeclValKind,
+              ConcreteIntKind,
+              NumKind };
   
-  SymbolID getSymbolID() const {
-    return (SymbolID) reinterpret_cast<uintptr_t>(getRawPtr());
-  }
-  
-  static inline bool classof(const RValue* V) {
-    return V->getSubKind() == SymbolicLValueKind;
-  }  
-};
+  class SymbolVal : public LValue {
+  public:
+    SymbolVal(unsigned SymID)
+    : LValue(SymbolValKind, reinterpret_cast<void*>((uintptr_t) SymID)) {}
+    
+    SymbolID getSymbolID() const {
+      return (SymbolID) reinterpret_cast<uintptr_t>(getRawPtr());
+    }
+    
+    static inline bool classof(const RValue* V) {
+      return V->getSubKind() == SymbolValKind;
+    }  
+  };
 
-class LValueDecl : public LValue {
-public:
-  LValueDecl(const ValueDecl* vd) : LValue(LValueDeclKind,vd) {}
-  
-  ValueDecl* getDecl() const {
-    return static_cast<ValueDecl*>(getRawPtr());
-  }
-  
-  inline bool operator==(const LValueDecl& R) const {
-    return getDecl() == R.getDecl();
-  }
-  
-  inline bool operator!=(const LValueDecl& R) const {
-    return getDecl() != R.getDecl();
-  }
-  
-  // Implement isa<T> support.
-  static inline bool classof(const RValue* V) {
-    return V->getSubKind() == LValueDeclKind;
-  }
-};
+  class DeclVal : public LValue {
+  public:
+    DeclVal(const ValueDecl* vd) : LValue(DeclValKind,vd) {}
+    
+    ValueDecl* getDecl() const {
+      return static_cast<ValueDecl*>(getRawPtr());
+    }
+    
+    inline bool operator==(const DeclVal& R) const {
+      return getDecl() == R.getDecl();
+    }
+    
+    inline bool operator!=(const DeclVal& R) const {
+      return getDecl() != R.getDecl();
+    }
+    
+    // Implement isa<T> support.
+    static inline bool classof(const RValue* V) {
+      return V->getSubKind() == DeclValKind;
+    }
+  };
 
-class ConcreteIntLValue : public LValue {
-public:
-  ConcreteIntLValue(const llvm::APSInt& V) : LValue(ConcreteIntLValueKind, &V) {}
+  class ConcreteInt : public LValue {
+  public:
+    ConcreteInt(const llvm::APSInt& V) : LValue(ConcreteIntKind, &V) {}
+    
+    const llvm::APSInt& getValue() const {
+      return *static_cast<llvm::APSInt*>(getRawPtr());
+    }
+    
+    // Arithmetic operators.
+    
+    ConcreteInt Add(ValueManager& ValMgr, const ConcreteInt& V) const {
+      return ValMgr.getValue(getValue() + V.getValue());
+    }
+    
+    ConcreteInt Sub(ValueManager& ValMgr, const ConcreteInt& V) const {
+      return ValMgr.getValue(getValue() - V.getValue());
+    }
+    
+    // Equality operators.
+    
+    ConcreteInt EQ(ValueManager& ValMgr, const ConcreteInt& V) const {
+      const llvm::APSInt& Val = getValue();    
+      return ValMgr.getValue(Val == V.getValue() ? 1U : 0U,
+                             Val.getBitWidth(), Val.isUnsigned());
+    }
+    
+    ConcreteInt NE(ValueManager& ValMgr, const ConcreteInt& V) const {
+      const llvm::APSInt& Val = getValue();    
+      return ValMgr.getValue(Val != V.getValue() ? 1U : 0U,
+                             Val.getBitWidth(), Val.isUnsigned());
+    }
+    
+    // Implement isa<T> support.
+    static inline bool classof(const RValue* V) {
+      return V->getSubKind() == ConcreteIntKind;
+    }
+  };  
+} // end clang::lval namespace
   
-  const llvm::APSInt& getValue() const {
-    return *static_cast<llvm::APSInt*>(getRawPtr());
-  }
-  
-  // Arithmetic operators.
-  
-  ConcreteIntLValue Add(ValueManager& ValMgr, const ConcreteInt& V) const {
-    return ValMgr.getValue(getValue() + V.getValue());
-  }
-  
-  ConcreteIntLValue Sub(ValueManager& ValMgr, const ConcreteInt& V) const {
-    return ValMgr.getValue(getValue() - V.getValue());
-  }
-  
-  // Equality operators.
-  
-  ConcreteInt EQ(ValueManager& ValMgr, const ConcreteIntLValue& V) const {
-    const llvm::APSInt& Val = getValue();    
-    return ValMgr.getValue(Val == V.getValue() ? 1U : 0U,
-                           Val.getBitWidth(), Val.isUnsigned());
-  }
-  
-  ConcreteInt NE(ValueManager& ValMgr, const ConcreteIntLValue& V) const {
-    const llvm::APSInt& Val = getValue();    
-    return ValMgr.getValue(Val != V.getValue() ? 1U : 0U,
-                           Val.getBitWidth(), Val.isUnsigned());
-  }
-  
-  // Implement isa<T> support.
-  static inline bool classof(const RValue* V) {
-    return V->getSubKind() == ConcreteIntLValueKind;
-  }
-};  
   
 } // end clang namespace  
 
