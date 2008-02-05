@@ -218,7 +218,7 @@ public:
     CI_None = 0x00,
     CI_AllowsMemory = 0x01,
     CI_AllowsRegister = 0x02,
-    CI_ReadWrite = 0x03
+    CI_ReadWrite = 0x04
   };
 
   // validateOutputConstraint, validateInputConstraint - Checks that
