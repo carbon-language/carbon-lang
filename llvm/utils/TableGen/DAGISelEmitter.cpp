@@ -305,6 +305,8 @@ private:
   std::map<std::string, std::string> VariableMap;
   // Node to operator mapping
   std::map<std::string, Record*> OperatorMap;
+  // Name of the folded node which produces a flag.
+  std::pair<std::string, unsigned> FoldedFlag;
   // Names of all the folded nodes which produce chains.
   std::vector<std::pair<std::string, unsigned> > FoldedChains;
   // Original input chain(s).
@@ -587,8 +589,17 @@ public:
       emitCheck(RootName + ".getOpcode() == " +
                 CInfo.getEnumName());
       EmitMatchCode(Child, Parent, RootName, ChainSuffix, FoundChain);
-      if (NodeHasProperty(Child, SDNPHasChain, CGP))
+      bool HasChain = false;
+      if (NodeHasProperty(Child, SDNPHasChain, CGP)) {
+        HasChain = true;
         FoldedChains.push_back(std::make_pair(RootName, CInfo.getNumResults()));
+      }
+      if (NodeHasProperty(Child, SDNPOutFlag, CGP)) {
+        assert(FoldedFlag.first == "" && FoldedFlag.second == 0 &&
+               "Pattern folded multiple nodes which produce flags?");
+        FoldedFlag = std::make_pair(RootName,
+                                    CInfo.getNumResults() + (unsigned)HasChain);
+      }
     } else {
       // If this child has a name associated with it, capture it in VarMap. If
       // we already saw this in the pattern, emit code to verify dagness.
@@ -1105,9 +1116,15 @@ public:
         }
 
         if (NodeHasOutFlag) {
-          emitCode("ReplaceUses(SDOperand(N.Val, " +
-                   utostr(NumPatResults + (unsigned)InputHasChain)
-                   +"), InFlag);");
+          if (FoldedFlag.first != "") {
+            emitCode("ReplaceUses(SDOperand(" + FoldedFlag.first + ".Val, " +
+                     utostr(FoldedFlag.second) + "), InFlag);");
+          } else {
+            assert(NodeHasProperty(Pattern, SDNPOutFlag, CGP));
+            emitCode("ReplaceUses(SDOperand(N.Val, " +
+                     utostr(NumPatResults + (unsigned)InputHasChain)
+                     +"), InFlag);");
+          }
           NeedReplace = true;
         }
 

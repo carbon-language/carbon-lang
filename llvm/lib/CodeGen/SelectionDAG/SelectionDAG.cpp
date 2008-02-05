@@ -3183,10 +3183,6 @@ SDNode *SelectionDAG::getTargetNode(unsigned Opcode,
 void SelectionDAG::ReplaceAllUsesWith(SDOperand FromN, SDOperand To,
                                       DAGUpdateListener *UpdateListener) {
   SDNode *From = FromN.Val;
-  // FIXME: This works around a dag isel emitter bug.
-  if (From->getNumValues() == 1 && FromN.ResNo != 0)
-    return;  // FIXME: THIS IS BOGUS
-  
   assert(From->getNumValues() == 1 && FromN.ResNo == 0 && 
          "Cannot replace with this method!");
   assert(From != To.Val && "Cannot replace uses of with self");
