@@ -1267,6 +1267,12 @@ Parser::StmtResult Parser::ParseObjCAtStatement(SourceLocation AtLoc) {
     bool parsedAtSign;
     
     StmtResult Res = ParseObjCTryStmt(AtLoc, parsedAtSign);
+    // FIXME: This hack results in a dropped AST node. To correctly implement 
+    // the hack, parseAtSign would need to bubble up to 
+    // ParseCompoundStatement(). This would involve adding an argument to this 
+    // routine and ParseStatementOrDeclaration(). Changing the parser in this
+    // fashion to solve such a conceptually simple problem is undesirable.
+    // Rework this clause once 2-token lookahead is implemented.
     if (!Res.isInvalid && parsedAtSign)
       return ParseObjCAtStatement(AtLoc);
     return Res;
