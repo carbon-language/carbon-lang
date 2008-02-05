@@ -874,17 +874,17 @@ template<>
 struct VISIBILITY_HIDDEN DOTGraphTraits<GRConstants::NodeTy*> :
   public DefaultDOTGraphTraits {
 
-  static void PrintKindLabel(std::ostream& Out, ValueKey::Kind kind) {
+  static void PrintKindLabel(std::ostream& Out, VarBindKey::Kind kind) {
     switch (kind) {
-      case ValueKey::IsSubExpr:  Out << "Sub-Expressions:\\l"; break;
-      case ValueKey::IsDecl:    Out << "Variables:\\l"; break;
-      case ValueKey::IsBlkExpr: Out << "Block-level Expressions:\\l"; break;
-      default: assert (false && "Unknown ValueKey type.");
+      case VarBindKey::IsSubExpr:  Out << "Sub-Expressions:\\l"; break;
+      case VarBindKey::IsDecl:    Out << "Variables:\\l"; break;
+      case VarBindKey::IsBlkExpr: Out << "Block-level Expressions:\\l"; break;
+      default: assert (false && "Unknown VarBindKey type.");
     }
   }
     
   static void PrintKind(std::ostream& Out, GRConstants::StateTy M,
-                        ValueKey::Kind kind, bool isFirstGroup = false) {
+                        VarBindKey::Kind kind, bool isFirstGroup = false) {
     bool isFirst = true;
     
     for (GRConstants::StateTy::iterator I=M.begin(), E=M.end();I!=E;++I) {        
@@ -968,11 +968,11 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRConstants::NodeTy*> :
       }
     }
     
-    Out << "\\|StateID: " << (void*) N->getState().getRoot() << "\\|";
+    Out << "\\|StateID: " << (void*) N->getState().getImpl() << "\\|";
     
-    PrintKind(Out, N->getState(), ValueKey::IsDecl, true);
-    PrintKind(Out, N->getState(), ValueKey::IsBlkExpr);
-    PrintKind(Out, N->getState(), ValueKey::IsSubExpr);
+    PrintKind(Out, N->getState(), VarBindKey::IsDecl, true);
+    PrintKind(Out, N->getState(), VarBindKey::IsBlkExpr);
+    PrintKind(Out, N->getState(), VarBindKey::IsSubExpr);
       
     Out << "\\l";
     return Out.str();

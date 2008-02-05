@@ -1,3 +1,16 @@
+//= ValueState.cpp - Path-Sens. "State" for tracking valuues -----*- C++ -*--=//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+//  This files defines SymbolID, VarBindKey, and ValueState.
+//
+//===----------------------------------------------------------------------===//
+
 #include "ValueState.h"
 
 using namespace clang;
@@ -5,7 +18,9 @@ using namespace clang;
 RValue ValueStateManager::GetValue(const StateTy& St, const LValue& LV) {
   switch (LV.getSubKind()) {
     case LValueDeclKind: {
-      StateTy::TreeTy* T = St.SlimFind(cast<LValueDecl>(LV).getDecl()); 
+      StateTy::VariableBindingsTy::TreeTy* T =
+        St.getImpl()->VariableBindings.SlimFind(cast<LValueDecl>(LV).getDecl());
+      
       return T ? T->getValue().second : InvalidValue();
     }
     default:
@@ -71,7 +86,8 @@ RValue ValueStateManager::GetValue(const StateTy& St, Stmt* S, bool* hasVal) {
     break;
   }
   
-  StateTy::TreeTy* T = St.SlimFind(S);
+  StateTy::VariableBindingsTy::TreeTy* T =
+    St.getImpl()->VariableBindings.SlimFind(S);
   
   if (T) {
     if (hasVal) *hasVal = true;
@@ -100,7 +116,7 @@ ValueStateManager::SetValue(StateTy St, Stmt* S, bool isBlkExpr,
                             const RValue& V) {
   
   assert (S);
-  return V.isValid() ? Factory.Add(St, ValueKey(S, isBlkExpr), V) : St;
+  return V.isValid() ? Add(St, VarBindKey(S, isBlkExpr), V) : St;
 }
 
 ValueStateManager::StateTy
@@ -108,8 +124,8 @@ ValueStateManager::SetValue(StateTy St, const LValue& LV, const RValue& V) {
   
   switch (LV.getSubKind()) {
     case LValueDeclKind:        
-      return V.isValid() ? Factory.Add(St, cast<LValueDecl>(LV).getDecl(), V)
-      : Factory.Remove(St, cast<LValueDecl>(LV).getDecl());
+      return V.isValid() ? Add(St, cast<LValueDecl>(LV).getDecl(), V)
+                         : Remove(St, cast<LValueDecl>(LV).getDecl());
       
     default:
       assert ("SetValue for given LValue type not yet implemented.");
@@ -117,7 +133,52 @@ ValueStateManager::SetValue(StateTy St, const LValue& LV, const RValue& V) {
   }
 }
 
-ValueStateManager::StateTy ValueStateManager::Remove(StateTy St, ValueKey K) {
-  return Factory.Remove(St, K);
+ValueStateManager::StateTy
+ValueStateManager::Remove(StateTy St, VarBindKey K) {
+
+  // Create a new state with the old binding removed.
+  ValueStateImpl NewStateImpl = *St.getImpl();
+  NewStateImpl.VariableBindings =
+    VBFactory.Remove(NewStateImpl.VariableBindings, K);
+
+  // Get the persistent copy.
+  return getPersistentState(NewStateImpl);
 }
+
+ValueStateManager::StateTy
+ValueStateManager::Add(StateTy St, VarBindKey K, const RValue& V) {
   
+  // Create a new state with the old binding removed.
+  ValueStateImpl NewStateImpl = *St.getImpl();
+  NewStateImpl.VariableBindings =
+    VBFactory.Add(NewStateImpl.VariableBindings, K, V);
+  
+  // Get the persistent copy.
+  return getPersistentState(NewStateImpl);
+}
+
+
+ValueStateManager::StateTy
+ValueStateManager::getInitialState() {
+
+  // Create a state with empty variable bindings.
+  ValueStateImpl StateImpl(VBFactory.GetEmptyMap());
+  
+  return getPersistentState(StateImpl);
+}
+
+ValueStateManager::StateTy
+ValueStateManager::getPersistentState(const ValueStateImpl &State) {
+  
+  llvm::FoldingSetNodeID ID;
+  State.Profile(ID);  
+  void* InsertPos;  
+  
+  if (ValueStateImpl* I = StateSet.FindNodeOrInsertPos(ID, InsertPos))
+    return I;
+  
+  ValueStateImpl* I = (ValueStateImpl*) Alloc.Allocate<ValueState>();
+  new (I) ValueStateImpl(State);  
+  StateSet.InsertNode(I, InsertPos);
+  return I;
+}

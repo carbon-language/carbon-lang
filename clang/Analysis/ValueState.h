@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This files defines SymbolID, ValueKey, and ValueState.
+//  This files defines SymbolID, VarBindKey, and ValueState.
 //
 //===----------------------------------------------------------------------===//
 
@@ -39,11 +39,11 @@
 
 namespace clang {  
 
-/// ValueKey - A variant smart pointer that wraps either a ValueDecl* or a
+/// VarBindKey - A variant smart pointer that wraps either a ValueDecl* or a
 ///  Stmt*.  Use cast<> or dyn_cast<> to get actual pointer type
-class ValueKey {
+class VarBindKey {
   uintptr_t Raw;  
-  void operator=(const ValueKey& RHS); // Do not implement.
+  void operator=(const VarBindKey& RHS); // Do not implement.
   
 public:
   enum  Kind { IsSubExpr=0x0, IsBlkExpr=0x1, IsDecl=0x2, // L-Value Bindings.
@@ -64,17 +64,17 @@ public:
     return Raw >> 2;
   }
   
-  ValueKey(const ValueDecl* VD)
+  VarBindKey(const ValueDecl* VD)
   : Raw(reinterpret_cast<uintptr_t>(VD) | IsDecl) {
     assert(VD && "ValueDecl cannot be NULL.");
   }
   
-  ValueKey(Stmt* S, bool isBlkExpr = false) 
+  VarBindKey(Stmt* S, bool isBlkExpr = false) 
   : Raw(reinterpret_cast<uintptr_t>(S) | (isBlkExpr ? IsBlkExpr : IsSubExpr)){
     assert(S && "Tracked statement cannot be NULL.");
   }
   
-  ValueKey(SymbolID V)
+  VarBindKey(SymbolID V)
   : Raw((V << 2) | IsSymbol) {}  
   
   bool isSymbol()  const { return getKind() == IsSymbol; }
@@ -92,16 +92,16 @@ public:
       ID.AddPointer(getPtr());
   }
   
-  inline bool operator==(const ValueKey& X) const {
+  inline bool operator==(const VarBindKey& X) const {
     return isSymbol() ? getSymbolID() == X.getSymbolID()
     : getPtr() == X.getPtr();
   }
   
-  inline bool operator!=(const ValueKey& X) const {
+  inline bool operator!=(const VarBindKey& X) const {
     return !operator==(X);
   }
   
-  inline bool operator<(const ValueKey& X) const { 
+  inline bool operator<(const VarBindKey& X) const { 
     if (isSymbol())
       return X.isSymbol() ? getSymbolID() < X.getSymbolID() : false;
     
@@ -113,40 +113,97 @@ public:
 // ValueState - An ImmutableMap type Stmt*/Decl*/Symbols to RValues.
 //===----------------------------------------------------------------------===//
 
-typedef llvm::ImmutableMap<ValueKey,RValue> ValueState;
-
-template<>
-struct GRTrait<ValueState> {
-  static inline void* toPtr(ValueState M) {
-    return reinterpret_cast<void*>(M.getRoot());
-  }  
-  static inline ValueState toState(void* P) {
-    return ValueState(static_cast<ValueState::TreeTy*>(P));
+namespace vstate {
+  typedef llvm::ImmutableMap<VarBindKey,RValue> VariableBindingsTy;  
+}
+  
+struct ValueStateImpl : public llvm::FoldingSetNode {
+  vstate::VariableBindingsTy VariableBindings;
+  
+  ValueStateImpl(vstate::VariableBindingsTy VB)
+    : VariableBindings(VB) {}
+  
+  ValueStateImpl(const ValueStateImpl& RHS)
+    : llvm::FoldingSetNode(), VariableBindings(RHS.VariableBindings) {} 
+    
+  
+  static void Profile(llvm::FoldingSetNodeID& ID, const ValueStateImpl& V) {
+    V.VariableBindings.Profile(ID);
   }
+  
+  void Profile(llvm::FoldingSetNodeID& ID) const {
+    Profile(ID, *this);
+  }
+  
 };
   
+class ValueState : public llvm::FoldingSetNode {
+  ValueStateImpl* Data;
+public:
+  typedef vstate::VariableBindingsTy VariableBindingsTy;
+  typedef VariableBindingsTy::iterator iterator;
+  
+
+  
+  iterator begin() { return Data->VariableBindings.begin(); }
+  iterator end() { return Data->VariableBindings.end(); }
+  
+  bool operator==(const ValueState& RHS) const {
+    return Data == RHS.Data;
+  }
+  
+  static void Profile(llvm::FoldingSetNodeID& ID, const ValueState& V) {
+    ID.AddPointer(V.getImpl());
+  }
+  
+  void Profile(llvm::FoldingSetNodeID& ID) const {
+    Profile(ID, *this);
+  }
+    
+  ValueState(ValueStateImpl* D) : Data(D) {}
+  ValueState() : Data(0) {}
+  
+  void operator=(ValueStateImpl* D) {
+    Data = D;
+  }
+  
+  ValueStateImpl* getImpl() const { return Data; }
+};  
+  
+template<> struct GRTrait<ValueState> {
+  static inline void* toPtr(ValueState St) {
+    return reinterpret_cast<void*>(St.getImpl());
+  }  
+  static inline ValueState toState(void* P) {    
+    return ValueState(static_cast<ValueStateImpl*>(P));
+  }
+};
+    
   
 class ValueStateManager {
 public:
   typedef ValueState StateTy;
 
 private:
-  typedef ValueState::Factory FactoryTy;
-  FactoryTy Factory;
+  ValueState::VariableBindingsTy::Factory VBFactory;
+  llvm::FoldingSet<ValueStateImpl> StateSet;
 
   /// ValueMgr - Object that manages the data for all created RValues.
   ValueManager ValMgr;
-  
+
   /// SymMgr - Object that manages the symbol information.
   SymbolManager SymMgr;
+
+  /// Alloc - A BumpPtrAllocator to allocate states.
+  llvm::BumpPtrAllocator& Alloc;
+
+  StateTy getPersistentState(const ValueState& St);
   
 public:  
-  ValueStateManager(ASTContext& Ctx, llvm::BumpPtrAllocator& Alloc) 
-    : ValMgr(Ctx, Alloc) {}
+  ValueStateManager(ASTContext& Ctx, llvm::BumpPtrAllocator& alloc) 
+    : ValMgr(Ctx, alloc), Alloc(alloc) {}
   
-  StateTy getInitialState() {
-    return Factory.GetEmptyMap();
-  }
+  StateTy getInitialState();
         
   ValueManager& getValueManager() { return ValMgr; }
   SymbolManager& getSymbolManager() { return SymMgr; }
@@ -158,40 +215,41 @@ public:
   RValue GetValue(const StateTy& St, const LValue& LV);
     
   LValue GetLValue(const StateTy& St, Stmt* S);
-  
-  StateTy Remove(StateTy St, ValueKey K);
-  
+
+  StateTy Add(StateTy St, VarBindKey K, const RValue& V);
+  StateTy Remove(StateTy St, VarBindKey K);
+  StateTy getPersistentState(const ValueStateImpl& Impl);
 };
   
 } // end clang namespace
 
 //==------------------------------------------------------------------------==//
-// Casting machinery to get cast<> and dyn_cast<> working with ValueKey.
+// Casting machinery to get cast<> and dyn_cast<> working with VarBindKey.
 //==------------------------------------------------------------------------==//
 
 namespace llvm {
   
   template<> inline bool
-  isa<clang::ValueDecl,clang::ValueKey>(const clang::ValueKey& V) {
-    return V.getKind() == clang::ValueKey::IsDecl;
+  isa<clang::ValueDecl,clang::VarBindKey>(const clang::VarBindKey& V) {
+    return V.getKind() == clang::VarBindKey::IsDecl;
   }
   
   template<> inline bool
-  isa<clang::Stmt,clang::ValueKey>(const clang::ValueKey& V) {
-    return ((unsigned) V.getKind()) < clang::ValueKey::IsDecl;
+  isa<clang::Stmt,clang::VarBindKey>(const clang::VarBindKey& V) {
+    return ((unsigned) V.getKind()) < clang::VarBindKey::IsDecl;
   }
   
-  template<> struct cast_retty_impl<clang::ValueDecl,clang::ValueKey> {
+  template<> struct cast_retty_impl<clang::ValueDecl,clang::VarBindKey> {
     typedef const clang::ValueDecl* ret_type;
   };
   
-  template<> struct cast_retty_impl<clang::Stmt,clang::ValueKey> {
+  template<> struct cast_retty_impl<clang::Stmt,clang::VarBindKey> {
     typedef const clang::Stmt* ret_type;
   };
   
-  template<> struct simplify_type<clang::ValueKey> {
+  template<> struct simplify_type<clang::VarBindKey> {
     typedef void* SimpleType;
-    static inline SimpleType getSimplifiedValue(const clang::ValueKey &V) {
+    static inline SimpleType getSimplifiedValue(const clang::VarBindKey &V) {
       return V.getPtr();
     }
   };
