@@ -71,9 +71,19 @@ namespace {
         // FIXME: implement C++ linkage, C linkage works mostly by C
         // language reuse already.
       } else {
-        Builder->EmitType(cast<TypeDecl>(D));
+        assert(isa<TypeDecl>(D) && "Unknown top level decl");
+        // TODO: handle debug info?
       }
     }
+    
+    /// HandleTagDeclDefinition - This callback is invoked each time a TagDecl
+    /// (e.g. struct, union, enum, class) is completed.  This allows the client to
+    /// hack on the type, which can occur at any point in the file (because these
+    /// can be defined in declspecs).
+    virtual void HandleTagDeclDefinition(TagDecl *D) {
+      Builder->EmitType(D);
+    }
+    
   };
 }
 

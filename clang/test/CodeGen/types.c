@@ -1,4 +1,4 @@
-// RUN: clang -emit-llvm %s
+// RUN: clang -emit-llvm <%s
 
 struct FileName {
     struct FileName *next;
@@ -10,7 +10,12 @@ struct ieeeExternal {
 } *exthead;
 
 
-void f()
+void test1()
 {
     struct ieeeExternal *exttmp = exthead;
 }
+
+struct MpegEncContext;
+typedef struct MpegEncContext {int pb;} MpegEncContext;
+static void test2(void) {MpegEncContext s; s.pb;}
+
