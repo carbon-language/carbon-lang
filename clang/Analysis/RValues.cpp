@@ -138,7 +138,7 @@ RValue NonLValue::Cast(ValueManager& ValMgr, Expr* CastExpr) const {
     
   APSInt V = cast<nonlval::ConcreteInt>(this)->getValue();
   QualType T = CastExpr->getType();
-  V.setIsUnsigned(T->isUnsignedIntegerType());
+  V.setIsUnsigned(T->isUnsignedIntegerType() || T->isPointerType());
   V.extOrTrunc(ValMgr.getContext().getTypeSize(T, CastExpr->getLocStart()));
   
   if (CastExpr->getType()->isPointerType())
@@ -425,17 +425,7 @@ void LValue::print(std::ostream& Out) const {
     case lval::SymbolValKind:
       Out << '$' << cast<lval::SymbolVal>(this)->getSymbol();
       break;
-      
-    case lval::SymIntConstraintValKind: {
-      const lval::SymIntConstraintVal& C = 
-        *cast<lval::SymIntConstraintVal>(this);
-      
-      Out << '$' << C.getConstraint().getSymbol() << ' ';
-      printOpcode(Out, C.getConstraint().getOpcode());
-      Out << ' ' << C.getConstraint().getInt().toString();
-      break;
-    }
-      
+
     case lval::DeclValKind:
       Out << '&' 
       << cast<lval::DeclVal>(this)->getDecl()->getIdentifier()->getName();

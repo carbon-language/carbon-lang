@@ -234,6 +234,9 @@ public:
   StateTy AssumeSymEQ(StateTy St, SymbolID sym, const llvm::APSInt& V,
                       bool& isFeasible);
   
+  StateTy AssumeSymInt(StateTy St, bool Assumption, const SymIntConstraint& C,
+                       bool& isFeasible);
+  
   void Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred, StateTy St);
   
   /// Nodify - This version of Nodify is used to batch process a set of states.
@@ -874,6 +877,7 @@ GRConstants::StateTy GRConstants::Assume(StateTy St, LValue Cond,
         return AssumeSymEQ(St, cast<lval::SymbolVal>(Cond).getSymbol(),
                            ValMgr.getZeroWithPtrWidth(), isFeasible);
       
+      
     case lval::DeclValKind:
       isFeasible = Assumption;
       return St;
@@ -894,6 +898,12 @@ GRConstants::StateTy GRConstants::Assume(StateTy St, NonLValue Cond,
     default:
       assert (false && "'Assume' not implemented for this NonLValue.");
       return St;
+      
+    case nonlval::SymIntConstraintValKind:
+      return
+        AssumeSymInt(St, Assumption,
+                     cast<nonlval::SymIntConstraintVal>(Cond).getConstraint(),
+                     isFeasible);
       
     case nonlval::ConcreteIntKind: {
       bool b = cast<nonlval::ConcreteInt>(Cond).getValue() != 0;
@@ -947,6 +957,29 @@ GRConstants::AssumeSymEQ(StateTy St, SymbolID sym,
   
   isFeasible = true;
   return StateMgr.AddEQ(St, sym, V);
+}
+
+GRConstants::StateTy
+GRConstants::AssumeSymInt(StateTy St, bool Assumption,
+                          const SymIntConstraint& C, bool& isFeasible) {
+  
+  switch (C.getOpcode()) {
+    default:
+      // No logic yet for other operators.
+      return St;
+      
+    case BinaryOperator::EQ:
+      if (Assumption)
+        return AssumeSymEQ(St, C.getSymbol(), C.getInt(), isFeasible);
+      else
+        return AssumeSymNE(St, C.getSymbol(), C.getInt(), isFeasible);
+      
+    case BinaryOperator::NE:
+      if (Assumption)
+        return AssumeSymNE(St, C.getSymbol(), C.getInt(), isFeasible);
+      else
+        return AssumeSymEQ(St, C.getSymbol(), C.getInt(), isFeasible);
+  }
 }
 
 //===----------------------------------------------------------------------===//
