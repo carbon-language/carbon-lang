@@ -42,43 +42,44 @@ bool Sema::isObjCObjectPointerType(QualType type) const {
 
 void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   TUScope = S;
-  if (PP.getLangOptions().ObjC1) {
-    TypedefType *t;
-    
-    // Add the built-in ObjC types.
-    t = dyn_cast<TypedefType>(Context.getObjCIdType().getTypePtr());
-    t->getDecl()->getIdentifier()->setFETokenInfo(t->getDecl());
-    TUScope->AddDecl(t->getDecl());
-    t = dyn_cast<TypedefType>(Context.getObjCClassType().getTypePtr());
-    t->getDecl()->getIdentifier()->setFETokenInfo(t->getDecl());
-    TUScope->AddDecl(t->getDecl());
-    ObjCInterfaceType *it = dyn_cast<ObjCInterfaceType>(Context.getObjCProtoType());
-    ObjCInterfaceDecl *IDecl = it->getDecl();
-    IDecl->getIdentifier()->setFETokenInfo(IDecl);
-    TUScope->AddDecl(IDecl);
-    t = dyn_cast<TypedefType>(Context.getObjCSelType().getTypePtr());
-    t->getDecl()->getIdentifier()->setFETokenInfo(t->getDecl());
-    TUScope->AddDecl(t->getDecl());
-  }
+  if (!PP.getLangOptions().ObjC1) return;
+  
+  TypedefType *t;
+  
+  // Add the built-in ObjC types.
+  t = cast<TypedefType>(Context.getObjCIdType().getTypePtr());
+  t->getDecl()->getIdentifier()->setFETokenInfo(t->getDecl());
+  TUScope->AddDecl(t->getDecl());
+  t = cast<TypedefType>(Context.getObjCClassType().getTypePtr());
+  t->getDecl()->getIdentifier()->setFETokenInfo(t->getDecl());
+  TUScope->AddDecl(t->getDecl());
+  ObjCInterfaceType *it = cast<ObjCInterfaceType>(Context.getObjCProtoType());
+  ObjCInterfaceDecl *IDecl = it->getDecl();
+  IDecl->getIdentifier()->setFETokenInfo(IDecl);
+  TUScope->AddDecl(IDecl);
+  t = cast<TypedefType>(Context.getObjCSelType().getTypePtr());
+  t->getDecl()->getIdentifier()->setFETokenInfo(t->getDecl());
+  TUScope->AddDecl(t->getDecl());
 }
 
-Sema::Sema(Preprocessor &pp, ASTContext &ctxt)
-  : PP(pp), Context(ctxt), CurFunctionDecl(0), CurMethodDecl(0) {
+Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer)
+  : PP(pp), Context(ctxt), Consumer(consumer), 
+    CurFunctionDecl(0), CurMethodDecl(0) {
   
   // Get IdentifierInfo objects for known functions for which we
   // do extra checking.  
-  IdentifierTable& IT = PP.getIdentifierTable();  
+  IdentifierTable &IT = PP.getIdentifierTable();  
 
-  KnownFunctionIDs[ id_printf  ] = &IT.get("printf");
-  KnownFunctionIDs[ id_fprintf ] = &IT.get("fprintf");
-  KnownFunctionIDs[ id_sprintf ] = &IT.get("sprintf");
-  KnownFunctionIDs[ id_snprintf ] = &IT.get("snprintf");
-  KnownFunctionIDs[ id_asprintf ] = &IT.get("asprintf");
-  KnownFunctionIDs[ id_vsnprintf ] = &IT.get("vsnprintf");
-  KnownFunctionIDs[ id_vasprintf ] = &IT.get("vasprintf");
-  KnownFunctionIDs[ id_vfprintf ] = &IT.get("vfprintf");
-  KnownFunctionIDs[ id_vsprintf ] = &IT.get("vsprintf");
-  KnownFunctionIDs[ id_vprintf ] = &IT.get("vprintf");
+  KnownFunctionIDs[id_printf]    = &IT.get("printf");
+  KnownFunctionIDs[id_fprintf]   = &IT.get("fprintf");
+  KnownFunctionIDs[id_sprintf]   = &IT.get("sprintf");
+  KnownFunctionIDs[id_snprintf]  = &IT.get("snprintf");
+  KnownFunctionIDs[id_asprintf]  = &IT.get("asprintf");
+  KnownFunctionIDs[id_vsnprintf] = &IT.get("vsnprintf");
+  KnownFunctionIDs[id_vasprintf] = &IT.get("vasprintf");
+  KnownFunctionIDs[id_vfprintf]  = &IT.get("vfprintf");
+  KnownFunctionIDs[id_vsprintf]  = &IT.get("vsprintf");
+  KnownFunctionIDs[id_vprintf]   = &IT.get("vprintf");
 
   if (PP.getLangOptions().ObjC1) {
     // Synthesize "typedef struct objc_class *Class;"

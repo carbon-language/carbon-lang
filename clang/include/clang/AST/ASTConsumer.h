@@ -17,6 +17,8 @@
 namespace clang {
   class ASTContext;
   class Decl;
+  class TagDecl;
+  class HandleTagDeclDefinition;
   
 /// ASTConsumer - This is an abstract interface that should be implemented by
 /// clients that read ASTs.  This abstraction layer allows the client to be
@@ -31,7 +33,7 @@ public:
   
   /// HandleTopLevelDecl - Handle the specified top-level declaration.  This is
   ///  called by HandleTopLevelDeclaration to process every top-level Decl*.
-  virtual void HandleTopLevelDecl(Decl *D) {};
+  virtual void HandleTopLevelDecl(Decl *D) {}
     
   
   /// HandleTopLevelDeclaration - Handle the specified top-level declaration.
@@ -40,6 +42,13 @@ public:
   ///  can override its behavior; by default it calls HandleTopLevelDecl
   ///  for every Decl* in a decl chain.
   virtual void HandleTopLevelDeclaration(Decl *D);
+
+  
+  /// HandleTagDeclDefinition - This callback is invoked each time a TagDecl
+  /// (e.g. struct, union, enum, class) is completed.  This allows the client to
+  /// hack on the type, which can occur at any point in the file (because these
+  /// can be defined in declspecs).
+  virtual void HandleTagDeclDefinition(TagDecl *D) {}
   
   /// PrintStats - If desired, print any statistics.
   virtual void PrintStats() {

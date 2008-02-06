@@ -29,6 +29,7 @@ namespace llvm {
 
 namespace clang {
   class ASTContext;
+  class ASTConsumer;
   class Preprocessor;
   class Decl;
   class ScopedDecl;
@@ -60,8 +61,8 @@ namespace clang {
 /// Sema - This implements semantic analysis and AST building for C.
 class Sema : public Action {
   Preprocessor &PP;
-  
   ASTContext &Context;
+  ASTConsumer &Consumer;
   
   /// CurFunctionDecl - If inside of a function body, this contains a pointer to
   /// the function decl for the function being parsed.
@@ -139,7 +140,7 @@ class Sema : public Action {
   llvm::DenseMap<Selector, ObjCMethodList> InstanceMethodPool;
   llvm::DenseMap<Selector, ObjCMethodList> FactoryMethodPool;
 public:
-  Sema(Preprocessor &pp, ASTContext &ctxt);
+  Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer);
   
   const LangOptions &getLangOptions() const;
   

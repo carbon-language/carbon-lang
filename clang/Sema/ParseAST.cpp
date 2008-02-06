@@ -38,7 +38,7 @@ void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer, bool PrintStats) {
   ASTContext Context(PP.getSourceManager(), PP.getTargetInfo(),
                      PP.getIdentifierTable(), PP.getSelectorTable());
   
-  Parser P(PP, *new Sema(PP, Context));
+  Parser P(PP, *new Sema(PP, Context, *Consumer));
   PP.EnterMainSourceFile();
     
   // Initialize the parser.
