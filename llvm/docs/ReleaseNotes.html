@@ -79,14 +79,38 @@ llvm-gcc 4.2 in this release cycle because <b>LLVM 2.2 is the last release
 that will support llvm-gcc 4.0</b>:  LLVM 2.3 will only support the llvm-gcc
 4.2 front-end.</p>
 
-<p>The <a href="http://clang.llvm.org/">clang project</a> is an effort
-to build a set of new front-end technology for the LLVM optimizer and code
-generator.  Currently, its C and Objective-C support is maturing nicely, and it
-has advanced source-to-source analysis and transformation capabilities.  If you
-are interested in building source-level tools for C and Objective-C (and
-eventually C++), you should take a look.  However, note that clang is not an
-official part of the LLVM 2.2 release.  If you are interested in this project,
-please see the web site and check it out from SVN head.</p>
+<p>The <a href="http://clang.llvm.org/">clang project</a> is an effort to build
+a set of new 'llvm native' front-end technologies for the LLVM optimizer
+and code generator.  Currently, its C and Objective-C support is maturing 
+nicely, and it has advanced source-to-source analysis and transformation
+capabilities.  If you are interested in building source-level tools for C and
+Objective-C (and eventually C++), you should take a look.  However, note that
+clang is not an official part of the LLVM 2.2 release.  If you are interested in
+this project, please see the web site.</p>
+
+</div>
+
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="majorfeatures">Major New Features</a>
+</div>
+
+<div class="doc_text">
+
+<p>Dale contributed full support for long double on x86/x86-64 (where it is 80
+bits) and on Darwin PPC/PPC64 (where it is 128 bits).</p>
+
+<p>Ada, gfortran</p>
+
+<p>
+debug improvements -O0
+EH.
+
+Gordon: GC Revamp. docs/GarbageCollection.html
+
+Kaleidescope: docs/tutorial
+
+Gordon: C and Ocaml Bindings
 
 </div>
 
@@ -102,8 +126,12 @@ optimizer, speeding it up and making it more aggressive.  For example:</p>
 
 <ul>
 
-<li>.</li>
+<li>Daniel Berlin and (?) rewrote Andersen's alias analysis (which is not
+enabled by default) to be several orders of magnitude faster, implmented Offline
+Variable Substitution.</li>
 
+
+Devang: LoopIndexSplit is enabled by default.
 </ul>
 
 </div>
@@ -115,13 +143,17 @@ optimizer, speeding it up and making it more aggressive.  For example:</p>
 
 <div class="doc_text">
 
-<p>One of the main focuses of this release was performance tuning and bug
+<p>foci of this release was performance tuning and bug
    fixing.  In addition to these, several new major changes occurred:</p>
 
 <ul>
 
-<li>.</li>
+<li>Owen contributed Machine Loop info, domintors, etc.</li>
 
+<li>Dan added support for emitting debug information with .file and .loc on 
+targets that support it</li>
+
+<li>Evan physical register dependencies in the BURR scheduler</li>
 </ul>
 
 </div>
@@ -137,7 +169,8 @@ optimizer, speeding it up and making it more aggressive.  For example:</p>
 </p>
 
 <ul>
-<li>.</li>
+<li>Evan X86 now models EFLAGS in instructions.</li>
+<li>Evan: If conversion on by default for ARM.</li>
 </ul>
   
 </div>
@@ -204,7 +237,7 @@ optimizer, speeding it up and making it more aggressive.  For example:</p>
       (and probably other unix-like systems).</li>
 <li>PowerPC and X86-based Mac OS X systems, running 10.3 and above in 32-bit and
     64-bit modes.</li>
-<li>Intel and AMD machines running on Win32 using MinGW libraries (native)</li>
+<li>Intel and AMD machines running on Win32 using MinGW libraries (native).</li>
 <li>Intel and AMD machines running on Win32 with the Cygwin libraries (limited
     support is available for native builds with Visual C++).</li>
 <li>Sun UltraSPARC workstations running Solaris 8.</li>
@@ -250,8 +283,8 @@ useful to some people.  In particular, if you would like to work on one of these
 components, please contact us on the <a href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev">LLVMdev list</a>.</p>
 
 <ul>
-<li>The <tt>-cee</tt> pass is known to be buggy, and may be removed in a 
-    future release.</li>
+<li>The <tt>-cee</tt> pass is known to be buggy and will be removed in
+    LLVM 2.3.</li>
 <li>The MSIL, IA64, Alpha, and MIPS backends are experimental.</li>
 <li>The LLC "<tt>-filetype=asm</tt>" (the default) is the only supported
     value for this option.</li>
@@ -400,8 +433,8 @@ programs.</li>
 
 <div class="doc_text">
 
-<p>llvm-gcc4 does not currently support <a href="http://llvm.org/PR869">Link-Time 
-Optimization</a> on most platforms "out-of-the-box".  Please inquire on the 
+<p>llvm-gcc does not currently support <a href="http://llvm.org/PR869">Link-Time
+Optimization</a> on most platforms "out-of-the-box".  Please inquire on the
 llvmdev mailing list if you are interested.</p>
 
 </div>
