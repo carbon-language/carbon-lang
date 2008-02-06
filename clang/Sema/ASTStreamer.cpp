@@ -21,52 +21,6 @@ using namespace clang;
 
 ASTConsumer::~ASTConsumer() {}
 
-namespace {
-  class ASTStreamer {
-    Parser P;
-  public:
-    ASTStreamer(Preprocessor &pp, ASTContext &ctxt)
-      : P(pp, *new Sema(pp, ctxt)) {
-        
-      pp.EnterMainSourceFile();
-      
-      // Initialize the parser.
-      P.Initialize();
-    }
-    
-    /// ReadTopLevelDecl - Parse and return the next top-level declaration.
-    Decl *ReadTopLevelDecl();
-    
-    void PrintStats() const;
-
-    ~ASTStreamer() {
-      P.Finalize();
-      delete &P.getActions();
-    }
-  };
-}
-
-/// ReadTopLevelDecl - Parse and return the next top-level declaration.
-///
-Decl *ASTStreamer::ReadTopLevelDecl() {
-  Parser::DeclTy *Result;
-  
-  do {
-    if (P.ParseTopLevelDecl(Result))
-      return 0;  // End of file.
-    
-    // If we got a null return and something *was* parsed, try again.  This
-    // is due to a top-level semicolon, an action override, or a parse error
-    // skipping something.
-  } while (Result == 0);
-  
-  return static_cast<Decl*>(Result);
-}
-
-void ASTStreamer::PrintStats() const {
-  P.getActions().PrintStats();
-}
-
 //===----------------------------------------------------------------------===//
 // Public interface to the file
 //===----------------------------------------------------------------------===//
@@ -84,16 +38,26 @@ void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer, bool PrintStats) {
   ASTContext Context(PP.getSourceManager(), PP.getTargetInfo(),
                      PP.getIdentifierTable(), PP.getSelectorTable());
   
-  ASTStreamer Streamer(PP, Context);
+  Parser P(PP, *new Sema(PP, Context));
+  PP.EnterMainSourceFile();
+    
+  // Initialize the parser.
+  P.Initialize();
   
   Consumer->Initialize(Context);
   
-  while (Decl *D = Streamer.ReadTopLevelDecl())
-    Consumer->HandleTopLevelDecl(D);
+  Parser::DeclTy *ADecl;
+  while (!P.ParseTopLevelDecl(ADecl)) {  // Not end of file.
+    // If we got a null return and something *was* parsed, ignore it.  This
+    // is due to a top-level semicolon, an action override, or a parse error
+    // skipping something.
+    if (ADecl)
+      Consumer->HandleTopLevelDecl(static_cast<Decl*>(ADecl));
+  };
 
   if (PrintStats) {
     fprintf(stderr, "\nSTATISTICS:\n");
-    Streamer.PrintStats();
+    P.getActions().PrintStats();
     Context.PrintStats();
     Decl::PrintStats();
     Stmt::PrintStats();
