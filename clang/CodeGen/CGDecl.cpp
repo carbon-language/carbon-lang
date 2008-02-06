@@ -81,10 +81,17 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const BlockVarDecl &D) {
 
   assert(Init && "Unable to create initialiser for static decl");
   
+  std::string ContextName;
+  if (CurFuncDecl)
+    ContextName = CurFuncDecl->getName();
+  else
+    assert(0 && "Unknown context for block var decl"); // FIXME Handle objc.
+  
   DMEntry = 
     new llvm::GlobalVariable(LTy, false, 
                             llvm::GlobalValue::InternalLinkage,
-                             Init, D.getName(), &CGM.getModule(), 0,
+                             Init, ContextName + "." + D.getName(),
+                             &CGM.getModule(), 0,
                              Ty.getAddressSpace());
   
 }
