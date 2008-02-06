@@ -156,7 +156,7 @@ public:  // These are internal details of CGT that shouldn't be used externally.
 
   /// ConvertTagDeclType - Lay out a tagged decl type like struct or union or
   /// enum.
-  const llvm::Type *ConvertTagDeclType(QualType T, const TagDecl *TD);
+  const llvm::Type *ConvertTagDeclType(const TagDecl *TD);
 };
 
 }  // end namespace CodeGen

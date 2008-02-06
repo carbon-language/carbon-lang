@@ -139,13 +139,11 @@ void CodeGenTypes::UpdateCompletedType(const TagDecl *TD) {
   // Remove it from TagDeclTypes so that it will be regenerated.
   TagDeclTypes.erase(TDTI);
 
-  QualType NewTy = Context.getTagDeclType(const_cast<TagDecl*>(TD));
-  const llvm::Type *NT = ConvertNewType(NewTy);
+  // Generate the new type.
+  const llvm::Type *NT = ConvertTagDeclType(TD);
 
-  // If getting the type didn't itself refine it, refine it to its actual type
-  // now.
-  if (llvm::OpaqueType *OT = dyn_cast<llvm::OpaqueType>(OpaqueHolder.get()))
-    OT->refineAbstractTypeTo(NT);
+  // Refine the old opaque type to its new definition.
+  cast<llvm::OpaqueType>(OpaqueHolder.get())->refineAbstractTypeTo(NT);
 }
 
 
@@ -279,7 +277,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
 
   case Type::Tagged: {
     const TagDecl *TD = cast<TagType>(Ty).getDecl();
-    const llvm::Type *Res = ConvertTagDeclType(T, TD);
+    const llvm::Type *Res = ConvertTagDeclType(TD);
     
     std::string TypeName(TD->getKindName());
     TypeName += '.';
@@ -316,8 +314,7 @@ void CodeGenTypes::DecodeArgumentTypes(const FunctionTypeProto &FTP,
 
 /// ConvertTagDeclType - Lay out a tagged decl type like struct or union or
 /// enum.
-const llvm::Type *CodeGenTypes::ConvertTagDeclType(QualType T,
-                                                   const TagDecl *TD) {
+const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
   llvm::DenseMap<const TagDecl*, llvm::PATypeHolder>::iterator TDTI = 
     TagDeclTypes.find(TD);
   
