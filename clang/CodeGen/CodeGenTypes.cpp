@@ -277,8 +277,25 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     assert(0 && "FIXME: add missing functionality here");
     break;
 
-  case Type::Tagged:
-    return ConvertTagDeclType(T, cast<TagType>(Ty).getDecl());
+  case Type::Tagged: {
+    const TagDecl *TD = cast<TagType>(Ty).getDecl();
+    const llvm::Type *Res = ConvertTagDeclType(T, TD);
+    
+    std::string TypeName(TD->getKindName());
+    TypeName += '.';
+    
+    // Name the codegen type after the typedef name
+    // if there is no tag type name available
+    if (TD->getIdentifier())
+      TypeName += TD->getName();
+    else if (const TypedefType *TdT = dyn_cast<TypedefType>(T))
+      TypeName += TdT->getDecl()->getName();
+    else
+      TypeName += "anon";
+    
+    TheModule.addTypeName(TypeName, Res);  
+    return Res;
+  }
   }
   
   // FIXME: implement.
@@ -386,22 +403,6 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(QualType T,
     assert(0 && "FIXME: Unknown tag decl kind!");
   }
   
-  std::string TypeName(TD->getKindName());
-  TypeName += '.';
-  
-  // Name the codegen type after the typedef name
-  // if there is no tag type name available
-  if (TD->getIdentifier() == 0) {
-    if (T->getTypeClass() == Type::TypeName) {
-      const TypedefType *TdT = cast<TypedefType>(T);
-      TypeName += TdT->getDecl()->getName();
-    } else
-      TypeName += "anon";
-  } else {
-    TypeName += TD->getName();
-  }
-    
-  TheModule.addTypeName(TypeName, ResultType);  
   return ResultType;
 }  
 
