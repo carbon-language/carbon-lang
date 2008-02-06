@@ -1,4 +1,4 @@
-//===--- ASTStreamer.h - Stream ASTs for top-level decls --------*- C++ -*-===//
+//===--- ParseAST.h - Define the ParseAST method ----------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,17 +7,15 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines the ASTStreamer interface.
+//  This file defines the clang::ParseAST method.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_AST_ASTSTREAMER_H
-#define LLVM_CLANG_AST_ASTSTREAMER_H
+#ifndef LLVM_CLANG_SEMA_PARSEAST_H
+#define LLVM_CLANG_SEMA_PARSEAST_H
 
 namespace clang {
   class Preprocessor;
-  class ASTContext;
-  class Decl;
   class ASTConsumer;
   
   /// ParseAST - Parse the entire file specified, notifying the ASTConsumer as

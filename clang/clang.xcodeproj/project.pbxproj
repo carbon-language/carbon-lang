@@ -82,8 +82,8 @@
 		DE67E7130C020ED900F66BC5 /* SemaDecl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE67E7120C020ED900F66BC5 /* SemaDecl.cpp */; };
 		DE67E7150C020EDF00F66BC5 /* Sema.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE67E7140C020EDF00F66BC5 /* Sema.h */; };
 		DE67E7170C020EE400F66BC5 /* Sema.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE67E7160C020EE400F66BC5 /* Sema.cpp */; };
-		DE67E71A0C020F4F00F66BC5 /* ASTStreamer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE67E7190C020F4F00F66BC5 /* ASTStreamer.cpp */; };
-		DE67E7280C02109800F66BC5 /* ASTStreamer.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE67E7270C02109800F66BC5 /* ASTStreamer.h */; };
+		DE67E71A0C020F4F00F66BC5 /* ParseAST.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE67E7190C020F4F00F66BC5 /* ParseAST.cpp */; };
+		DE67E7280C02109800F66BC5 /* ParseAST.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE67E7270C02109800F66BC5 /* ParseAST.h */; };
 		DE6951C70C4D1F5D00A5826B /* RecordLayout.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE6951C60C4D1F5D00A5826B /* RecordLayout.h */; };
 		DE6954640C5121BD00A5826B /* Token.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE6954630C5121BD00A5826B /* Token.h */; };
 		DE704B260D0FBEBE009C7762 /* SemaDeclObjC.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE704B250D0FBEBE009C7762 /* SemaDeclObjC.cpp */; };
@@ -196,7 +196,7 @@
 				1A30A9E90B93A4C800201A91 /* ExprCXX.h in CopyFiles */,
 				1A869A700BA2164C008DA07A /* LiteralSupport.h in CopyFiles */,
 				DE67E7150C020EDF00F66BC5 /* Sema.h in CopyFiles */,
-				DE67E7280C02109800F66BC5 /* ASTStreamer.h in CopyFiles */,
+				DE67E7280C02109800F66BC5 /* ParseAST.h in CopyFiles */,
 				DE928B200C0565B000231DA4 /* ModuleBuilder.h in CopyFiles */,
 				DE928B7D0C0A615100231DA4 /* CodeGenModule.h in CopyFiles */,
 				DE928B810C0A615B00231DA4 /* CodeGenFunction.h in CopyFiles */,
@@ -317,8 +317,8 @@
 		DE67E7120C020ED900F66BC5 /* SemaDecl.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = SemaDecl.cpp; path = Sema/SemaDecl.cpp; sourceTree = "<group>"; tabWidth = 8; usesTabs = 0; };
 		DE67E7140C020EDF00F66BC5 /* Sema.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Sema.h; path = Sema/Sema.h; sourceTree = "<group>"; };
 		DE67E7160C020EE400F66BC5 /* Sema.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Sema.cpp; path = Sema/Sema.cpp; sourceTree = "<group>"; };
-		DE67E7190C020F4F00F66BC5 /* ASTStreamer.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ASTStreamer.cpp; path = Sema/ASTStreamer.cpp; sourceTree = "<group>"; };
-		DE67E7270C02109800F66BC5 /* ASTStreamer.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ASTStreamer.h; path = clang/Sema/ASTStreamer.h; sourceTree = "<group>"; };
+		DE67E7190C020F4F00F66BC5 /* ParseAST.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ParseAST.cpp; path = Sema/ParseAST.cpp; sourceTree = "<group>"; };
+		DE67E7270C02109800F66BC5 /* ParseAST.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ParseAST.h; path = clang/Sema/ParseAST.h; sourceTree = "<group>"; };
 		DE6951C60C4D1F5D00A5826B /* RecordLayout.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = RecordLayout.h; path = clang/AST/RecordLayout.h; sourceTree = "<group>"; };
 		DE6954630C5121BD00A5826B /* Token.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = Token.h; sourceTree = "<group>"; };
 		DE704B250D0FBEBE009C7762 /* SemaDeclObjC.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SemaDeclObjC.cpp; path = Sema/SemaDeclObjC.cpp; sourceTree = "<group>"; };
@@ -544,7 +544,7 @@
 		DE67E7070C020EAB00F66BC5 /* Sema */ = {
 			isa = PBXGroup;
 			children = (
-				DE67E7190C020F4F00F66BC5 /* ASTStreamer.cpp */,
+				DE67E7190C020F4F00F66BC5 /* ParseAST.cpp */,
 				DE67E7140C020EDF00F66BC5 /* Sema.h */,
 				35A2B8610CF8FFA300E6C317 /* SemaUtil.h */,
 				DE67E7160C020EE400F66BC5 /* Sema.cpp */,
@@ -563,7 +563,7 @@
 		DE67E7260C02108300F66BC5 /* Sema */ = {
 			isa = PBXGroup;
 			children = (
-				DE67E7270C02109800F66BC5 /* ASTStreamer.h */,
+				DE67E7270C02109800F66BC5 /* ParseAST.h */,
 			);
 			name = Sema;
 			sourceTree = "<group>";
@@ -859,7 +859,7 @@
 				DE67E7110C020ED400F66BC5 /* SemaExpr.cpp in Sources */,
 				DE67E7130C020ED900F66BC5 /* SemaDecl.cpp in Sources */,
 				DE67E7170C020EE400F66BC5 /* Sema.cpp in Sources */,
-				DE67E71A0C020F4F00F66BC5 /* ASTStreamer.cpp in Sources */,
+				DE67E71A0C020F4F00F66BC5 /* ParseAST.cpp in Sources */,
 				DE06756C0C051CFE00EBBFD8 /* ParseExprCXX.cpp in Sources */,
 				DE928B130C05659200231DA4 /* ModuleBuilder.cpp in Sources */,
 				DE928B7F0C0A615600231DA4 /* CodeGenModule.cpp in Sources */,

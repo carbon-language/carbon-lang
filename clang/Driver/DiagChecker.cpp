@@ -14,7 +14,7 @@
 #include "clang.h"
 #include "ASTConsumers.h"
 #include "TextDiagnosticBuffer.h"
-#include "clang/Sema/ASTStreamer.h"
+#include "clang/Sema/ParseAST.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/Preprocessor.h"

@@ -1,4 +1,4 @@
-//===--- ASTStreamer.cpp - Provide streaming interface to ASTs ------------===//
+//===--- ParseAST.cpp - Provide the clang::ParseAST method ----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,11 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the ASTStreamer interface.
+// This file implements the clang::ParseAST method.
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Sema/ASTStreamer.h"
+#include "clang/Sema/ParseAST.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTConsumer.h"
 #include "Sema.h"
