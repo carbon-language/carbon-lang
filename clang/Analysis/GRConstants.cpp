@@ -1001,6 +1001,43 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRConstants::NodeTy*> :
     }
   }
     
+  static void PrintEQ(std::ostream& Out, GRConstants::StateTy St) {
+    ValueState::ConstantEqTy CE = St.getImpl()->ConstantEq;
+    
+    if (CE.isEmpty())
+      return;
+    
+    Out << "\\l\\|'==' constraints:";
+
+    for (ValueState::ConstantEqTy::iterator I=CE.begin(), E=CE.end(); I!=E;++I)
+      Out << "\\l $" << I.getKey() << " : " << I.getData()->toString();
+  }
+    
+  static void PrintNE(std::ostream& Out, GRConstants::StateTy St) {
+    ValueState::ConstantNotEqTy NE = St.getImpl()->ConstantNotEq;
+    
+    if (NE.isEmpty())
+      return;
+    
+    Out << "\\l\\|'!=' constraints:";
+    
+    for (ValueState::ConstantNotEqTy::iterator I=NE.begin(), EI=NE.end();
+         I != EI; ++I){
+      
+      Out << "\\l $" << I.getKey() << " : ";
+      bool isFirst = true;
+      
+      ValueState::IntSetTy::iterator J=I.getData().begin(),
+                                    EJ=I.getData().end();      
+      for ( ; J != EJ; ++J) {        
+        if (isFirst) isFirst = false;
+        else Out << ", ";
+        
+        Out << (*J)->toString();
+      }    
+    }
+  }    
+    
   static std::string getNodeLabel(const GRConstants::NodeTy* N, void*) {
     std::ostringstream Out;
 
@@ -1060,6 +1097,9 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRConstants::NodeTy*> :
     PrintKind(Out, N->getState(), VarBindKey::IsDecl, true);
     PrintKind(Out, N->getState(), VarBindKey::IsBlkExpr);
     PrintKind(Out, N->getState(), VarBindKey::IsSubExpr);
+    
+    PrintEQ(Out, N->getState());
+    PrintNE(Out, N->getState());
       
     Out << "\\l";
     return Out.str();
