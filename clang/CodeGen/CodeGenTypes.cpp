@@ -128,23 +128,19 @@ const llvm::Type *CodeGenTypes::ConvertTypeForMem(QualType T) {
 /// UpdateCompletedType - When we find the full definition for a TagDecl,
 /// replace the 'opaque' type we previously made for it if applicable.
 void CodeGenTypes::UpdateCompletedType(const TagDecl *TD) {
-  // Get the LLVM type for this TagDecl.  If it is non-opaque or if this decl
-  // is still a forward declaration, just return.
-  QualType NewTy = Context.getTagDeclType(const_cast<TagDecl *>(TD));
-  const llvm::Type *T = ConvertType(NewTy);
-  if (!isa<llvm::OpaqueType>(T))
-    return;
-
-  // Remember the opaque LLVM type for this tagdecl.
   llvm::DenseMap<const TagDecl*, llvm::PATypeHolder>::iterator TDTI = 
-     TagDeclTypes.find(TD);
+    TagDeclTypes.find(TD);
+  if (TDTI == TagDeclTypes.end()) return;
+  
+  // Remember the opaque LLVM type for this tagdecl.
   llvm::PATypeHolder OpaqueHolder = TDTI->second;
   assert(isa<llvm::OpaqueType>(OpaqueHolder.get()) &&
-         "Forcing compilation of non-opaque type?");
+         "Updating compilation of an already non-opaque type?");
   
   // Remove it from TagDeclTypes so that it will be regenerated.
   TagDeclTypes.erase(TDTI);
 
+  QualType NewTy = Context.getTagDeclType(const_cast<TagDecl*>(TD));
   const llvm::Type *NT = ConvertNewType(NewTy);
 
   // If getting the type didn't itself refine it, refine it to its actual type
