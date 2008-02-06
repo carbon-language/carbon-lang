@@ -4,11 +4,11 @@
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <link rel="stylesheet" href="llvm.css" type="text/css">
-  <title>LLVM 2.1 Release Notes</title>
+  <title>LLVM 2.2 Release Notes</title>
 </head>
 <body>
 
-<div class="doc_title">LLVM 2.1 Release Notes</div>
+<div class="doc_title">LLVM 2.2 Release Notes</div>
  
 <ol>
   <li><a href="#intro">Introduction</a></li>
@@ -32,7 +32,7 @@
 <div class="doc_text">
 
 <p>This document contains the release notes for the LLVM compiler
-infrastructure, release 2.1.  Here we describe the status of LLVM, including
+infrastructure, release 2.2.  Here we describe the status of LLVM, including
 major improvements from the previous release and any known problems.  All LLVM
 releases may be downloaded from the <a href="http://llvm.org/releases/">LLVM
 releases web site</a>.</p>
@@ -58,31 +58,35 @@ current one.  To see the release notes for a specific releases, please see the
 
 <div class="doc_text">
 
-<p>This is the twelfth public release of the LLVM Compiler Infrastructure. 
-It includes many features and refinements from LLVM 2.0.</p>
+<p>This is the thirteenth public release of the LLVM Compiler Infrastructure. 
+It includes many features and refinements from LLVM 2.1.</p>
 
 </div>
 
 <!--=========================================================================-->
 <div class="doc_subsection">
-<a name="frontends">New Frontends</a>
+<a name="frontends">llvm-gcc 4.0, llvm-gcc 4.2, and clang</a>
 </div>
 
 <div class="doc_text">
 
-<p>LLVM 2.1 brings two new beta C front-ends.  First, a new version of llvm-gcc
-based on GCC 4.2, innovatively called "llvm-gcc-4.2".  This promises to bring
-FORTRAN and Ada support to LLVM as well as features like atomic builtins and
-OpenMP.  None of these actually work yet, but don't let that stop you checking
-it out!</p>
+<p>LLVM 2.2 fully supports both the llvm-gcc 4.0 and llvm-gcc 4.2 front-ends (in
+LLVM 2.1, llvm-gcc 4.2 was beta).  Since LLVM 2.1, the llvm-gcc 4.2 front-end
+has made leaps and bounds and is now at least as good as 4.0 in virtually every
+area, and is better in several areas (for example, exception handling
+correctness).  We strongly recommend that you migrate from llvm-gcc 4.0 to
+llvm-gcc 4.2 in this release cycle because <b>LLVM 2.2 is the last release
+that will support llvm-gcc 4.0</b>:  LLVM 2.3 will only support the llvm-gcc
+4.2 front-end.</p>
 
-<p>Second, LLVM now includes its own native C and Objective-C front-end (C++ is
-in progress, but is not very far along) code named "<a
-href="http://clang.llvm.org/">clang</a>".  This front-end has a number of great
-features, primarily aimed at source-level analysis and speeding up compile-time.
-At this point though, the LLVM Code Generator component is still very early in
-development, so it's mostly useful for people looking to build source-level
-analysis tools or source-to-source translators.</p>
+<p>The <a href="http://clang.llvm.org/">clang project</a> is an effort
+to build a set of new front-end technology for the LLVM optimizer and code
+generator.  Currently, its C and Objective-C support is maturing nicely, and it
+has advanced source-to-source analysis and transformation capabilities.  If you
+are interested in building source-level tools for C and Objective-C (and
+eventually C++), you should take a look.  However, note that clang is not an
+official part of the LLVM 2.2 release.  If you are interested in this project,
+please see the web site and check it out from SVN head.</p>
 
 </div>
 
@@ -98,24 +102,7 @@ optimizer, speeding it up and making it more aggressive.  For example:</p>
 
 <ul>
 
-<li>Owen Anderson wrote the new MemoryDependenceAnalysis pass, which provides 
-    a lazy, caching layer on top of <a 
-    href="AliasAnalysis.html">AliasAnalysis</a>.  He then used it to rewrite
-    DeadStoreElimination which resulted in significantly better compile time in 
-    common cases, </li>
-<li>Owen implemented the new GVN pass, which is also based on 
-    MemoryDependenceAnalysis.  This pass replaces GCSE/LoadVN in the standard
-    set of passes, providing more aggressive optimization at a some-what 
-    improved compile-time cost.</li>
-<li>Owen implemented GVN-PRE, a partial redundancy elimination algorithm that
-    shares some details with the new GVN pass.  It is still in need of compile
-    time tuning, and is not turned on by default.</li>
-<li>Devang merged ETForest and DomTree into a single easier to use data
-    structure.  This makes it more obvious which datastructure to choose
-    (because there is only one) and makes the compiler more memory and time
-    efficient (less stuff to keep up-to-date).</li>
-<li>Nick Lewycky improved loop trip count analysis to handle many more common
-    cases.</li>
+<li>.</li>
 
 </ul>
 
@@ -133,38 +120,7 @@ optimizer, speeding it up and making it more aggressive.  For example:</p>
 
 <ul>
 
-<li>Dale finished up the Tail Merging optimization in the code generator, and
-    enabled it by default.  This produces smaller code that is also faster in
-    some cases.</li>
-
-<li>Christopher Lamb implemented support for virtual register sub-registers,
-    which can be used to better model many forms of subregisters.  As an example
-    use, he modified the X86 backend to use this to model truncates and
-    extends more accurately (leading to better code).</li>
-
-<li>Dan Gohman changed the way we represent vectors before legalization,
-    significantly simplifying the SelectionDAG representation for these and
-    making the code generator faster for vector code.</li>
-
-<li>Evan contributed a new target independent if-converter.  While it is 
-    target independent, so far only the ARM backend uses it.</li>
-
-<li>Evan rewrote the way the register allocator handles rematerialization,
-    allowing it to be much more effective on two-address targets like X86,
-    and taught it to fold loads away when possible (also a big win on X86).</li>
-
-<li>Dan Gohman contributed support for better alignment and volatility handling
-    in the code generator, and significantly enhanced alignment analysis for SSE
-    load/store instructions.  With his changes, an insufficiently-aligned SSE
-    load instruction turns into <tt>movups</tt>, for example.</li>
-
-<li>Duraid Madina contributed a new "bigblock" register allocator, and Roman
-    Levenstein contributed several big improvements.  BigBlock is optimized for
-    code that uses very large basic blocks.  It is slightly slower than the
-    "local" allocator, but produces much better code.</li>
-
-<li>David Greene refactored the register allocator to split coalescing out from
-    allocation, making coalescers pluggable.</li>
+<li>.</li>
 
 </ul>
 
@@ -181,19 +137,7 @@ optimizer, speeding it up and making it more aggressive.  For example:</p>
 </p>
 
 <ul>
-<li>Bruno Cardoso Lopes contributed initial MIPS support.  It is sufficient to
-    run many small programs, but is still incomplete and is not yet
-    fully performant.</li>
-    
-<li>Bill Wendling added SSSE3 support to the X86 backend.</li>
-
-<li>Nicholas Geoffray contributed improved linux/ppc ABI and JIT support.</li>
-
-<li>Dale Johannesen rewrote handling of 32-bit float values in the X86 backend
-    when using the floating point stack, fixing several nasty bugs.</li>
-
-<li>Dan contributed rematerialization support for the X86 backend, in addition
-    to several X86-specific micro optimizations.</li>
+<li>.</li>
 </ul>
   
 </div>
@@ -209,28 +153,7 @@ optimizer, speeding it up and making it more aggressive.  For example:</p>
 </p>
 
 <ul>
-<li>Duncan and Anton made significant progress chasing down a number of problems
-    with C++ Zero-Cost exception handling in llvm-gcc 4.0 and 4.2.  It is now at
-    the point where it "just works" on linux/X86-32 and has partial support on
-    other targets.</li>
-
-<li>Devang and Duncan fixed a huge number of bugs relating to bitfields, pragma
-    pack, and variable sized fields in structures.</li>
-
-<li>Tanya implemented support for <tt>__attribute__((noinline))</tt> in
-    llvm-gcc, and added support for generic variable annotations which are
-    propagated into the LLVM IR, e.g.
-    "<tt>int X __attribute__((annotate("myproperty")));</tt>".</li>
-
-<li>Sheng Zhou and Christopher Lamb implemented alias analysis support for
-"restrict" pointer arguments to functions.</li>
-
-<li>Duncan contributed support for trampolines (taking the address of a nested
-    function).  Currently this is only supported on the X86-32 target.</li>
-
-<li>Lauro Ramos Venancio contributed support to encode alignment info in 
-    load and store instructions, the foundation for other alignment-related
-    work.</li>
+<li>.</li>
 </ul>
   
 </div>
@@ -246,22 +169,7 @@ optimizer, speeding it up and making it more aggressive.  For example:</p>
 </p>
 
 <ul>
-<li>Neil Booth contributed a new "APFloat" class, which ensures that floating
-    point representation and constant folding is not dependent on the host 
-    architecture that builds the application.  This support is the foundation
-    for "long double" support that will be wrapped up in LLVM 2.2.</li>
-    
-<li>Based on the APFloat class, Dale redesigned the internals of the ConstantFP
-    class and has been working on extending the core and optimizer components to
-    support various target-specific 'long double's.  We expect this work to be
-    completed in LLVM 2.2.</li>
-
-<li>LLVM now provides an LLVMBuilder class, which makes it significantly easier
-    to create LLVM IR instructions.</li>
-
-<li>Reid contributed support for intrinsics that take arbitrary integer typed
-    arguments.  Dan Gohman and Chandler extended it to support arbitrary
-    floating point arguments and vectors.</li>
+<li>.</li>
 </ul>
   
 </div>
@@ -276,13 +184,7 @@ optimizer, speeding it up and making it more aggressive.  For example:</p>
 </p>
 
 <ul>
-<li>Sterling Stein contributed a new BrainF frontend, located in llvm/examples.
-    This shows a some of the more modern APIs for building a front-end, and
-    demonstrates JIT compiler support.</li>
-
-<li>David Green contributed a new <tt>--enable-expensive-checks</tt> configure
-    option which enables STL checking, and fixed several bugs exposed by
-    it.</li>
+<li>.</li>
 </ul>
   
 </div>
@@ -300,7 +202,7 @@ optimizer, speeding it up and making it more aggressive.  For example:</p>
 <ul>
 <li>Intel and AMD machines running Red Hat Linux, Fedora Core and FreeBSD 
       (and probably other unix-like systems).</li>
-<li>PowerPC and X86-based Mac OS X systems, running 10.2 and above in 32-bit and
+<li>PowerPC and X86-based Mac OS X systems, running 10.3 and above in 32-bit and
     64-bit modes.</li>
 <li>Intel and AMD machines running on Win32 using MinGW libraries (native)</li>
 <li>Intel and AMD machines running on Win32 with the Cygwin libraries (limited
@@ -350,11 +252,10 @@ components, please contact us on the <a href="http://lists.cs.uiuc.edu/mailman/l
 <ul>
 <li>The <tt>-cee</tt> pass is known to be buggy, and may be removed in a 
     future release.</li>
-<li>The MSIL backend is experimental.</li>
-<li>The IA64 code generator is experimental.</li>
-<li>The Alpha backend is experimental.</li>
-<li>"<tt>-filetype=asm</tt>" (the default) is the only supported value for the 
-    <tt>-filetype</tt> llc option.</li>
+<li>The MSIL, IA64, Alpha, and MIPS backends are experimental.</li>
+<li>The LLC "<tt>-filetype=asm</tt>" (the default) is the only supported
+    value for this option.</li>
+<li>The llvmc tool is not supported.</li>
 </ul>
 
 </div>
@@ -384,8 +285,6 @@ components, please contact us on the <a href="http://lists.cs.uiuc.edu/mailman/l
 <div class="doc_text">
 
 <ul>
-<li><a href="http://llvm.org/PR642">PowerPC backend does not correctly
-implement ordered FP comparisons</a>.</li>
 <li>The Linux PPC32/ABI support needs testing for the interpreter and static
 compilation, and lacks support for debug information.</li>
 </ul>
@@ -515,10 +414,6 @@ llvmdev mailing list if you are interested.</p>
 <div class="doc_text">
 <ul>
 
-<li><p>"long double" is silently transformed by the front-end into "double".  There
-is no support for floating point data types of any size other than 32 and 64
-bits.</p></li>
-    
 <li><p>llvm-gcc does <b>not</b> support <tt>__builtin_apply</tt> yet.
   See <a href="http://gcc.gnu.org/onlinedocs/gcc/Constructing-Calls.html#Constructing%20Calls">Constructing Calls</a>: Dispatching a call to another function.</p>
 </li>
@@ -623,29 +518,7 @@ tested and works for a number of non-trivial programs, including LLVM
 itself, Qt, Mozilla, etc.</p>
 
 <ul>
-<li>Exception handling only works well on the linux/X86-32 target.
-In some cases, illegally throwing an exception does not result
-in a call to terminate.</li>
-
-<!-- NO EH Support!
-
-<li>Destructors for local objects are not always run when a <tt>longjmp</tt> is
-    performed. In particular, destructors for objects in the <tt>longjmp</tt>ing
-    function and in the <tt>setjmp</tt> receiver function may not be run.
-    Objects in intervening stack frames will be destroyed, however (which is
-    better than most compilers).</li>
-
-<li>The LLVM C++ front-end follows the <a
-    href="http://www.codesourcery.com/cxx-abi">Itanium C++ ABI</a>.
-    This document, which is not Itanium specific, specifies a standard for name
-    mangling, class layout, v-table layout, RTTI formats, and other C++
-    representation issues.  Because we use this API, code generated by the LLVM
-    compilers should be binary compatible with machine code generated by other
-    Itanium ABI C++ compilers (such as G++, the Intel and HP compilers, etc).
-    <i>However</i>, the exception handling mechanism used by llvm-gcc3 is very
-    different from the model used in the Itanium ABI, so <b>exceptions will not
-    interact correctly</b>. </li>
--->
+<li>Exception handling only works well on the X86 and PowerPC targets.</li>
 </ul>
 
 </div>
