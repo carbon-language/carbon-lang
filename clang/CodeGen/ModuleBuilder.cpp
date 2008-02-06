@@ -81,7 +81,7 @@ namespace {
     /// hack on the type, which can occur at any point in the file (because these
     /// can be defined in declspecs).
     virtual void HandleTagDeclDefinition(TagDecl *D) {
-      Builder->EmitType(D);
+      Builder->UpdateCompletedType(D);
     }
     
   };

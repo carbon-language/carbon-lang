@@ -88,7 +88,7 @@ public:
   void EmitFunction(const FunctionDecl *FD);
   void EmitGlobalVar(const FileVarDecl *D);
   void EmitGlobalVarDeclarator(const FileVarDecl *D);
-  void EmitType(const TypeDecl *D);
+  void UpdateCompletedType(const TagDecl *D);
   llvm::Constant *EmitGlobalInit(const Expr *E);
   llvm::Constant *EmitConstantExpr(const Expr *E);
     

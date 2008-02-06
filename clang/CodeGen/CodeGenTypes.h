@@ -138,10 +138,9 @@ public:
   unsigned getLLVMFieldNo(const FieldDecl *FD);
     
   
-  /// ForceTypeCompilation - When we find the definition for a type, we require
-  /// it to be recompiled, to update the lazy understanding of what it is in our
-  /// maps.
-  void ForceTypeCompilation(QualType T);
+  /// UpdateCompletedType - When we find the full definition for a TagDecl,
+  /// replace the 'opaque' type we previously made for it if applicable.
+  void UpdateCompletedType(const TagDecl *TD);
   
 public:  // These are internal details of CGT that shouldn't be used externally.
   void DecodeArgumentTypes(const FunctionTypeProto &FTP, 
