@@ -115,37 +115,157 @@ ValueManager::getConstraint(SymbolID sym, BinaryOperator::Opcode Op,
 // Transfer function for Casts.
 //===----------------------------------------------------------------------===//
 
-RValue RValue::Cast(ValueManager& ValMgr, Expr* CastExpr) const {
+RValue RValue::EvalCast(ValueManager& ValMgr, Expr* CastExpr) const {
   switch (getBaseKind()) {
     default: assert(false && "Invalid RValue."); break;
-    case LValueKind: return cast<LValue>(this)->Cast(ValMgr, CastExpr);
-    case NonLValueKind: return cast<NonLValue>(this)->Cast(ValMgr, CastExpr);      
+    case LValueKind: return cast<LValue>(this)->EvalCast(ValMgr, CastExpr);
+    case NonLValueKind: return cast<NonLValue>(this)->EvalCast(ValMgr, CastExpr);      
     case UninitializedKind: case InvalidKind: break;
   }
   
   return *this;
 }
  
-RValue LValue::Cast(ValueManager& ValMgr, Expr* CastExpr) const {
-  if (CastExpr->getType()->isPointerType())
-    return *this;
-  
-  assert (CastExpr->getType()->isIntegerType());
 
-  if (!isa<lval::ConcreteInt>(*this))
-    return InvalidValue();
+//===----------------------------------------------------------------------===//
+// Transfer function dispatch for Non-LValues.
+//===----------------------------------------------------------------------===//
   
-  APSInt V = cast<lval::ConcreteInt>(this)->getValue();
-  QualType T = CastExpr->getType();
-  V.setIsUnsigned(T->isUnsignedIntegerType());
-  V.extOrTrunc(ValMgr.getContext().getTypeSize(T, CastExpr->getLocStart()));
-  return nonlval::ConcreteInt(ValMgr.getValue(V));
+  // Binary Operators (except assignments and comma).
+
+NonLValue NonLValue::EvalBinaryOp(ValueManager& ValMgr,
+                                  BinaryOperator::Opcode Op,
+                                  const NonLValue& RHS) const {
+  
+  if (isa<InvalidValue>(this) || isa<InvalidValue>(RHS))
+    return cast<NonLValue>(InvalidValue());
+  
+  if (isa<UninitializedValue>(this) || isa<UninitializedValue>(RHS))
+    return cast<NonLValue>(UninitializedValue());
+  
+  switch (getSubKind()) {
+    default:
+      assert (false && "Binary Operators not implemented for this NonLValue");
+      
+    case nonlval::ConcreteIntKind:
+      
+      if (isa<nonlval::ConcreteInt>(RHS)) {
+        nonlval::ConcreteInt& self = cast<nonlval::ConcreteInt>(*this);
+        return self.EvalBinaryOp(ValMgr, Op,
+                                       cast<nonlval::ConcreteInt>(RHS));
+      }
+      else if(isa<InvalidValue>(RHS))
+        return cast<NonLValue>(InvalidValue());
+      else
+        return RHS.EvalBinaryOp(ValMgr, Op, *this);
+      
+    case nonlval::SymbolValKind: {
+      const nonlval::SymbolVal& self = cast<nonlval::SymbolVal>(*this);
+      
+      switch (RHS.getSubKind()) {
+        default: assert ("Not Implemented." && false);
+        case nonlval::ConcreteIntKind: {
+          const SymIntConstraint& C =
+            ValMgr.getConstraint(self.getSymbol(), Op,
+                                 cast<nonlval::ConcreteInt>(RHS).getValue());
+          
+          return nonlval::SymIntConstraintVal(C);
+        }
+      }
+    }
+  }
 }
 
-RValue NonLValue::Cast(ValueManager& ValMgr, Expr* CastExpr) const {
+static const
+llvm::APSInt& EvaluateAPSInt(ValueManager& ValMgr, BinaryOperator::Opcode Op,
+                             const llvm::APSInt& V1, const llvm::APSInt& V2) {
+  
+  switch (Op) {
+    default:
+      assert (false && "Invalid Opcode.");
+      
+    case BinaryOperator::Mul:
+      return ValMgr.getValue( V1 * V2 );
+      
+    case BinaryOperator::Div:
+      return ValMgr.getValue( V1 / V2 );
+      
+    case BinaryOperator::Rem:
+      return ValMgr.getValue( V1 % V2 );
+      
+    case BinaryOperator::Add:
+      return ValMgr.getValue( V1 + V2 );
+
+    case BinaryOperator::Sub:
+      return ValMgr.getValue( V1 - V2 );
+
+#if 0
+    case BinaryOperator::Shl:
+      return ValMgr.getValue( V1 << V2 );
+      
+    case BinaryOperator::Shr:
+      return ValMgr.getValue( V1 >> V2 );
+#endif     
+    
+    case BinaryOperator::LT:
+      return ValMgr.getTruthValue( V1 < V2 );
+      
+    case BinaryOperator::GT:
+      return ValMgr.getTruthValue( V1 > V2 );
+      
+    case BinaryOperator::LE:
+      return ValMgr.getTruthValue( V1 <= V2 );
+      
+    case BinaryOperator::GE:
+      return ValMgr.getTruthValue( V1 >= V2 );
+      
+    case BinaryOperator::EQ:
+      return ValMgr.getTruthValue( V1 == V2 );
+      
+    case BinaryOperator::NE:
+      return ValMgr.getTruthValue( V1 != V2 );
+      
+    // Note: LAnd, LOr, Comma are handled specially by higher-level logic.
+      
+    case BinaryOperator::And:
+      return ValMgr.getValue( V1 & V2 );
+      
+    case BinaryOperator::Or:
+      return ValMgr.getValue( V1 | V2 );
+  }
+}
+
+nonlval::ConcreteInt
+nonlval::ConcreteInt::EvalBinaryOp(ValueManager& ValMgr,
+                                   BinaryOperator::Opcode Op,
+                                   const nonlval::ConcreteInt& RHS) const {
+
+  return EvaluateAPSInt(ValMgr, Op, getValue(), RHS.getValue());
+}
+
+
+  // Bitwise-Complement.
+
+NonLValue NonLValue::EvalComplement(ValueManager& ValMgr) const {
+  switch (getSubKind()) {
+    case nonlval::ConcreteIntKind:
+      return cast<nonlval::ConcreteInt>(this)->EvalComplement(ValMgr);
+    default:
+      return cast<NonLValue>(InvalidValue());
+  }
+}
+
+nonlval::ConcreteInt
+nonlval::ConcreteInt::EvalComplement(ValueManager& ValMgr) const {
+  return ValMgr.getValue(~getValue()); 
+}
+
+  // Casts.
+
+RValue NonLValue::EvalCast(ValueManager& ValMgr, Expr* CastExpr) const {
   if (!isa<nonlval::ConcreteInt>(this))
     return InvalidValue();
-    
+  
   APSInt V = cast<nonlval::ConcreteInt>(this)->getValue();
   QualType T = CastExpr->getType();
   V.setIsUnsigned(T->isUnsignedIntegerType() || T->isPointerType());
@@ -157,123 +277,100 @@ RValue NonLValue::Cast(ValueManager& ValMgr, Expr* CastExpr) const {
     return nonlval::ConcreteInt(ValMgr.getValue(V));
 }
 
-//===----------------------------------------------------------------------===//
-// Transfer function dispatch for Non-LValues.
-//===----------------------------------------------------------------------===//
+  // Unary Minus.
 
-NonLValue NonLValue::UnaryMinus(ValueManager& ValMgr, UnaryOperator* U) const {
+NonLValue NonLValue::EvalMinus(ValueManager& ValMgr, UnaryOperator* U) const {
   switch (getSubKind()) {
     case nonlval::ConcreteIntKind:
-      return cast<nonlval::ConcreteInt>(this)->UnaryMinus(ValMgr, U);
+      return cast<nonlval::ConcreteInt>(this)->EvalMinus(ValMgr, U);
     default:
       return cast<NonLValue>(InvalidValue());
   }
 }
 
-NonLValue NonLValue::BitwiseComplement(ValueManager& ValMgr) const {
-  switch (getSubKind()) {
-    case nonlval::ConcreteIntKind:
-      return cast<nonlval::ConcreteInt>(this)->BitwiseComplement(ValMgr);
-    default:
-      return cast<NonLValue>(InvalidValue());
-  }
+nonlval::ConcreteInt
+nonlval::ConcreteInt::EvalMinus(ValueManager& ValMgr, UnaryOperator* U) const {
+  assert (U->getType() == U->getSubExpr()->getType());  
+  assert (U->getType()->isIntegerType());  
+  return ValMgr.getValue(-getValue()); 
 }
-
-
-#define NONLVALUE_DISPATCH_CASE(k1,k2,Op)\
-case (k1##Kind*nonlval::NumKind+k2##Kind):\
-return cast<k1>(*this).Op(ValMgr,cast<k2>(RHS));
-
-#define NONLVALUE_DISPATCH(Op)\
-switch (getSubKind()*nonlval::NumKind+RHS.getSubKind()){\
-NONLVALUE_DISPATCH_CASE(nonlval::ConcreteInt,nonlval::ConcreteInt,Op)\
-default:\
-if (getBaseKind() == UninitializedKind ||\
-RHS.getBaseKind() == UninitializedKind)\
-return cast<NonLValue>(UninitializedValue());\
-assert (!isValid() || !RHS.isValid() && "Missing case.");\
-break;\
-}\
-return cast<NonLValue>(InvalidValue());
-
-NonLValue NonLValue::Add(ValueManager& ValMgr, const NonLValue& RHS) const {
-  NONLVALUE_DISPATCH(Add)
-}
-
-NonLValue NonLValue::Sub(ValueManager& ValMgr, const NonLValue& RHS) const {
-  NONLVALUE_DISPATCH(Sub)
-}
-
-NonLValue NonLValue::Mul(ValueManager& ValMgr, const NonLValue& RHS) const {
-  NONLVALUE_DISPATCH(Mul)
-}
-
-NonLValue NonLValue::Div(ValueManager& ValMgr, const NonLValue& RHS) const {
-  NONLVALUE_DISPATCH(Div)
-}
-
-NonLValue NonLValue::Rem(ValueManager& ValMgr, const NonLValue& RHS) const {
-  NONLVALUE_DISPATCH(Rem)
-}
-
-NonLValue NonLValue::EQ(ValueManager& ValMgr, const NonLValue& RHS) const {  
-  NONLVALUE_DISPATCH(EQ)
-}
-
-NonLValue NonLValue::NE(ValueManager& ValMgr, const NonLValue& RHS) const {
-  NONLVALUE_DISPATCH(NE)
-}
-
-#undef NONLVALUE_DISPATCH_CASE
-#undef NONLVALUE_DISPATCH
 
 //===----------------------------------------------------------------------===//
 // Transfer function dispatch for LValues.
 //===----------------------------------------------------------------------===//
 
+  // Binary Operators (except assignments and comma).
+
+RValue LValue::EvalBinaryOp(ValueManager& ValMgr, 
+                                  BinaryOperator::Opcode Op,
+                                  const LValue& RHS) const {
+  
+  switch (Op) {
+    default:
+      assert (false && "Not yet implemented.");
+      
+    case BinaryOperator::EQ:
+      return EQ(ValMgr, RHS);
+    
+    case BinaryOperator::NE:
+      return NE(ValMgr, RHS);
+  }
+}
+
+
+lval::ConcreteInt
+lval::ConcreteInt::EvalBinaryOp(ValueManager& ValMgr,
+                                BinaryOperator::Opcode Op,
+                                const lval::ConcreteInt& RHS) const {
+  
+  assert (Op == BinaryOperator::Add || Op == BinaryOperator::Sub ||
+          (Op >= BinaryOperator::LT && Op <= BinaryOperator::NE));
+  
+  return EvaluateAPSInt(ValMgr, Op, getValue(), RHS.getValue());
+}
 
 NonLValue LValue::EQ(ValueManager& ValMgr, const LValue& RHS) const {
   switch (getSubKind()) {
     default:
       assert(false && "EQ not implemented for this LValue.");
       return cast<NonLValue>(InvalidValue());
-    
+      
     case lval::ConcreteIntKind:
       if (isa<lval::ConcreteInt>(RHS)) {
         bool b = cast<lval::ConcreteInt>(this)->getValue() ==
-                 cast<lval::ConcreteInt>(RHS).getValue();
-              
+        cast<lval::ConcreteInt>(RHS).getValue();
+        
         return NonLValue::GetIntTruthValue(ValMgr, b);
       }
       else if (isa<lval::SymbolVal>(RHS)) {
-
+        
         const SymIntConstraint& C =
-          ValMgr.getConstraint(cast<lval::SymbolVal>(RHS).getSymbol(),
-                               BinaryOperator::EQ,
-                               cast<lval::ConcreteInt>(this)->getValue());
+        ValMgr.getConstraint(cast<lval::SymbolVal>(RHS).getSymbol(),
+                             BinaryOperator::EQ,
+                             cast<lval::ConcreteInt>(this)->getValue());
         
         return nonlval::SymIntConstraintVal(C);        
       }
       
       break;
       
-    case lval::SymbolValKind: {
-      if (isa<lval::ConcreteInt>(RHS)) {
-
-        const SymIntConstraint& C =
+      case lval::SymbolValKind: {
+        if (isa<lval::ConcreteInt>(RHS)) {
+          
+          const SymIntConstraint& C =
           ValMgr.getConstraint(cast<lval::SymbolVal>(this)->getSymbol(),
                                BinaryOperator::EQ,
                                cast<lval::ConcreteInt>(RHS).getValue());
+          
+          return nonlval::SymIntConstraintVal(C);
+        }
         
-        return nonlval::SymIntConstraintVal(C);
+        assert (!isa<lval::SymbolVal>(RHS) && "FIXME: Implement unification.");
+        
+        break;
       }
-
-      assert (!isa<lval::SymbolVal>(RHS) && "FIXME: Implement unification.");
       
-      break;
-    }
-      
-    case lval::DeclValKind:
+      case lval::DeclValKind:
       if (isa<lval::DeclVal>(RHS)) {        
         bool b = cast<lval::DeclVal>(*this) == cast<lval::DeclVal>(RHS);
         return NonLValue::GetIntTruthValue(ValMgr, b);
@@ -294,7 +391,7 @@ NonLValue LValue::NE(ValueManager& ValMgr, const LValue& RHS) const {
     case lval::ConcreteIntKind:
       if (isa<lval::ConcreteInt>(RHS)) {
         bool b = cast<lval::ConcreteInt>(this)->getValue() !=
-                 cast<lval::ConcreteInt>(RHS).getValue();
+        cast<lval::ConcreteInt>(RHS).getValue();
         
         return NonLValue::GetIntTruthValue(ValMgr, b);
       }
@@ -338,6 +435,23 @@ NonLValue LValue::NE(ValueManager& ValMgr, const LValue& RHS) const {
   return NonLValue::GetIntTruthValue(ValMgr, true);
 }
 
+  // Casts.
+
+RValue LValue::EvalCast(ValueManager& ValMgr, Expr* CastExpr) const {
+  if (CastExpr->getType()->isPointerType())
+    return *this;
+  
+  assert (CastExpr->getType()->isIntegerType());
+  
+  if (!isa<lval::ConcreteInt>(*this))
+    return InvalidValue();
+  
+  APSInt V = cast<lval::ConcreteInt>(this)->getValue();
+  QualType T = CastExpr->getType();
+  V.setIsUnsigned(T->isUnsignedIntegerType() || T->isPointerType());
+  V.extOrTrunc(ValMgr.getContext().getTypeSize(T, CastExpr->getLocStart()));
+  return nonlval::ConcreteInt(ValMgr.getValue(V));
+}
 
 //===----------------------------------------------------------------------===//
 // Utility methods for constructing Non-LValues.
@@ -354,6 +468,10 @@ NonLValue NonLValue::GetValue(ValueManager& ValMgr, IntegerLiteral* I) {
                                    I->getType()->isUnsignedIntegerType())));
 }
 
+NonLValue NonLValue::GetIntTruthValue(ValueManager& ValMgr, bool b) {
+  return nonlval::ConcreteInt(ValMgr.getTruthValue(b));
+}
+
 RValue RValue::GetSymbolValue(SymbolManager& SymMgr, ParmVarDecl* D) {
   QualType T = D->getType();
   
@@ -362,6 +480,8 @@ RValue RValue::GetSymbolValue(SymbolManager& SymMgr, ParmVarDecl* D) {
   else
     return nonlval::SymbolVal(SymMgr.getSymbol(D));
 }
+
+
 
 //===----------------------------------------------------------------------===//
 // Pretty-Printing.
@@ -402,6 +522,10 @@ void NonLValue::print(std::ostream& Out) const {
   switch (getSubKind()) {  
     case nonlval::ConcreteIntKind:
       Out << cast<nonlval::ConcreteInt>(this)->getValue().toString();
+
+      if (cast<nonlval::ConcreteInt>(this)->getValue().isUnsigned())
+        Out << 'U';
+      
       break;
       
     case nonlval::SymbolValKind:
@@ -415,6 +539,10 @@ void NonLValue::print(std::ostream& Out) const {
       Out << '$' << C.getConstraint().getSymbol() << ' ';
       printOpcode(Out, C.getConstraint().getOpcode());
       Out << ' ' << C.getConstraint().getInt().toString();
+      
+      if (C.getConstraint().getInt().isUnsigned())
+        Out << 'U';
+      
       break;
     }  
       

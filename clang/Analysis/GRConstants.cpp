@@ -537,7 +537,7 @@ void GRConstants::VisitCast(Expr* CastE, Expr* E, NodeTy* Pred, NodeSet& Dst) {
     NodeTy* N = *I1;
     StateTy St = N->getState();
     const RValue& V = GetValue(St, E);
-    Nodify(Dst, CastE, N, SetValue(St, CastE, V.Cast(ValMgr, CastE)));
+    Nodify(Dst, CastE, N, SetValue(St, CastE, V.EvalCast(ValMgr, CastE)));
   }
 }
 
@@ -585,7 +585,10 @@ void GRConstants::VisitUnaryOperator(UnaryOperator* U,
       case UnaryOperator::PostInc: {
         const LValue& L1 = GetLValue(St, U->getSubExpr());
         NonLValue R1 = cast<NonLValue>(GetValue(St, L1));
-        NonLValue Result = R1.Add(ValMgr, GetRValueConstant(1U, U));
+        
+        NonLValue Result = R1.EvalBinaryOp(ValMgr, BinaryOperator::Add,
+                                           GetRValueConstant(1U, U));
+        
         Nodify(Dst, U, N1, SetValue(SetValue(St, U, R1), L1, Result));
         break;
       }
@@ -593,7 +596,10 @@ void GRConstants::VisitUnaryOperator(UnaryOperator* U,
       case UnaryOperator::PostDec: {
         const LValue& L1 = GetLValue(St, U->getSubExpr());
         NonLValue R1 = cast<NonLValue>(GetValue(St, L1));
-        NonLValue Result = R1.Sub(ValMgr, GetRValueConstant(1U, U));
+        
+        NonLValue Result = R1.EvalBinaryOp(ValMgr, BinaryOperator::Sub,
+                                           GetRValueConstant(1U, U));
+        
         Nodify(Dst, U, N1, SetValue(SetValue(St, U, R1), L1, Result));
         break;
       }
@@ -601,7 +607,10 @@ void GRConstants::VisitUnaryOperator(UnaryOperator* U,
       case UnaryOperator::PreInc: {
         const LValue& L1 = GetLValue(St, U->getSubExpr());
         NonLValue R1 = cast<NonLValue>(GetValue(St, L1));
-        NonLValue Result = R1.Add(ValMgr, GetRValueConstant(1U, U));
+        
+        NonLValue Result = R1.EvalBinaryOp(ValMgr, BinaryOperator::Add,
+                                           GetRValueConstant(1U, U));
+        
         Nodify(Dst, U, N1, SetValue(SetValue(St, U, Result), L1, Result));
         break;
       }
@@ -609,20 +618,23 @@ void GRConstants::VisitUnaryOperator(UnaryOperator* U,
       case UnaryOperator::PreDec: {
         const LValue& L1 = GetLValue(St, U->getSubExpr());
         NonLValue R1 = cast<NonLValue>(GetValue(St, L1));
-        NonLValue Result = R1.Sub(ValMgr, GetRValueConstant(1U, U));
+        
+        NonLValue Result = R1.EvalBinaryOp(ValMgr, BinaryOperator::Sub,
+                                           GetRValueConstant(1U, U));
+
         Nodify(Dst, U, N1, SetValue(SetValue(St, U, Result), L1, Result));
         break;
       }
         
       case UnaryOperator::Minus: {
         const NonLValue& R1 = cast<NonLValue>(GetValue(St, U->getSubExpr()));
-        Nodify(Dst, U, N1, SetValue(St, U, R1.UnaryMinus(ValMgr, U)));
+        Nodify(Dst, U, N1, SetValue(St, U, R1.EvalMinus(ValMgr, U)));
         break;
       }
         
       case UnaryOperator::Not: {
         const NonLValue& R1 = cast<NonLValue>(GetValue(St, U->getSubExpr()));
-        Nodify(Dst, U, N1, SetValue(St, U, R1.BitwiseComplement(ValMgr)));
+        Nodify(Dst, U, N1, SetValue(St, U, R1.EvalComplement(ValMgr)));
         break;
       }
         
@@ -635,14 +647,18 @@ void GRConstants::VisitUnaryOperator(UnaryOperator* U,
         RValue V1 = GetValue(St, U->getSubExpr());
         
         if (isa<LValue>(V1)) {
-          lval::ConcreteInt V2(ValMgr.getValue(0, U->getSubExpr()->getType()));
-          Nodify(Dst, U, N1, SetValue(St, U,
-                                      cast<LValue>(V1).EQ(ValMgr, V2)));
+          const LValue& L1 = cast<LValue>(V1);
+          lval::ConcreteInt V2(ValMgr.getZeroWithPtrWidth());
+          Nodify(Dst, U, N1,
+                 SetValue(St, U, L1.EvalBinaryOp(ValMgr, BinaryOperator::EQ,
+                                                 V2)));
         }
         else {
+          const NonLValue& R1 = cast<NonLValue>(V1);
           nonlval::ConcreteInt V2(ValMgr.getZeroWithPtrWidth());
-          Nodify(Dst, U, N1, SetValue(St, U,
-                                      cast<NonLValue>(V1).EQ(ValMgr, V2)));
+          Nodify(Dst, U, N1,
+                 SetValue(St, U, R1.EvalBinaryOp(ValMgr, BinaryOperator::EQ,
+                                                 V2)));
         }
         
         break;
@@ -687,122 +703,63 @@ void GRConstants::VisitBinaryOperator(BinaryOperator* B,
     Visit(B->getRHS(), N1, S2);
   
     for (NodeSet::iterator I2=S2.begin(), E2=S2.end(); I2 != E2; ++I2) {
+
       NodeTy* N2 = *I2;
       StateTy St = N2->getState();
       const RValue& V2 = GetValue(St, B->getRHS());
 
-      switch (B->getOpcode()) {
-        default: 
-          Dst.Add(N2);
-          break;
+      BinaryOperator::Opcode Op = B->getOpcode();
+      
+      if (Op <= BinaryOperator::Or) {
+        
+        if (isa<LValue>(V1)) {
+          // FIXME: Add support for RHS being a non-lvalue.
+          const LValue& L1 = cast<LValue>(V1);
+          const LValue& L2 = cast<LValue>(V2);
           
-        // Arithmetic operators.
-          
-        case BinaryOperator::Add: {
+          Nodify(Dst, B, N2, SetValue(St, B, L1.EvalBinaryOp(ValMgr, Op, L2)));
+        }
+        else {
           const NonLValue& R1 = cast<NonLValue>(V1);
           const NonLValue& R2 = cast<NonLValue>(V2);
-          
-          Nodify(Dst, B, N2, SetValue(St, B, R1.Add(ValMgr, R2)));
-          break;
+            
+          Nodify(Dst, B, N2, SetValue(St, B, R1.EvalBinaryOp(ValMgr, Op, R2)));
         }
-
-        case BinaryOperator::Sub: {
-          const NonLValue& R1 = cast<NonLValue>(V1);
-          const NonLValue& R2 = cast<NonLValue>(V2);
-	        Nodify(Dst, B, N2, SetValue(St, B, R1.Sub(ValMgr, R2)));
-          break;
-        }
-          
-        case BinaryOperator::Mul: {
-          const NonLValue& R1 = cast<NonLValue>(V1);
-          const NonLValue& R2 = cast<NonLValue>(V2);
-	        Nodify(Dst, B, N2, SetValue(St, B, R1.Mul(ValMgr, R2)));
-          break;
-        }
-          
-        case BinaryOperator::Div: {
-          const NonLValue& R1 = cast<NonLValue>(V1);
-          const NonLValue& R2 = cast<NonLValue>(V2);
-	        Nodify(Dst, B, N2, SetValue(St, B, R1.Div(ValMgr, R2)));
-          break;
-        }
-          
-        case BinaryOperator::Rem: {
-          const NonLValue& R1 = cast<NonLValue>(V1);
-          const NonLValue& R2 = cast<NonLValue>(V2);
-	        Nodify(Dst, B, N2, SetValue(St, B, R1.Rem(ValMgr, R2)));
-          break;
-        }
-          
-        // Assignment operators.
-          
+        
+        continue;
+      }
+      
+      switch (Op) {
         case BinaryOperator::Assign: {
           const LValue& L1 = cast<LValue>(V1);
           Nodify(Dst, B, N2, SetValue(SetValue(St, B, V2), L1, V2));
           break;
         }
-          
-        case BinaryOperator::AddAssign: {
-          const LValue& L1 = cast<LValue>(V1);
-          NonLValue R1 = cast<NonLValue>(GetValue(N1->getState(), L1));
-          NonLValue Result = R1.Add(ValMgr, cast<NonLValue>(V2));
-          Nodify(Dst, B, N2, SetValue(SetValue(St, B, Result), L1, Result));
-          break;
-        }
-          
-        case BinaryOperator::SubAssign: {
-          const LValue& L1 = cast<LValue>(V1);
-          NonLValue R1 = cast<NonLValue>(GetValue(N1->getState(), L1));
-          NonLValue Result = R1.Sub(ValMgr, cast<NonLValue>(V2));
-          Nodify(Dst, B, N2, SetValue(SetValue(St, B, Result), L1, Result));
-          break;
-        }
-          
-        case BinaryOperator::MulAssign: {
-          const LValue& L1 = cast<LValue>(V1);
-          NonLValue R1 = cast<NonLValue>(GetValue(N1->getState(), L1));
-          NonLValue Result = R1.Mul(ValMgr, cast<NonLValue>(V2));
-          Nodify(Dst, B, N2, SetValue(SetValue(St, B, Result), L1, Result));
-          break;
-        }
-          
-        case BinaryOperator::DivAssign: {
-          const LValue& L1 = cast<LValue>(V1);
-          NonLValue R1 = cast<NonLValue>(GetValue(N1->getState(), L1));
-          NonLValue Result = R1.Div(ValMgr, cast<NonLValue>(V2));
-          Nodify(Dst, B, N2, SetValue(SetValue(St, B, Result), L1, Result));
-          break;
-        }
-          
-        case BinaryOperator::RemAssign: {
-          const LValue& L1 = cast<LValue>(V1);
-          NonLValue R1 = cast<NonLValue>(GetValue(N1->getState(), L1));
-          NonLValue Result = R1.Rem(ValMgr, cast<NonLValue>(V2));
-          Nodify(Dst, B, N2, SetValue(SetValue(St, B, Result), L1, Result));
-          break;
-        }
-          
-        // Equality operators.
 
-        case BinaryOperator::EQ:
-          // FIXME: should we allow XX.EQ() to return a set of values,
-          //  allowing state bifurcation?  In such cases, they will also
-          //  modify the state (meaning that a new state will be returned
-          //  as well).
-          assert (B->getType() == getContext().IntTy);
+        default: { // Compound assignment operators.
           
-          if (isa<LValue>(V1)) {
-            const LValue& L1 = cast<LValue>(V1);
+          assert (B->isCompoundAssignmentOp());
+                          
+          const LValue& L1 = cast<LValue>(V1);
+          RValue Result = cast<NonLValue>(InvalidValue());
+          
+          Op = (BinaryOperator::Opcode)
+                  (((unsigned) Op) - ((unsigned) BinaryOperator::MulAssign));
+          
+          if (isa<LValue>(V2)) {
+            // FIXME: Add support for Non-LValues on RHS.
             const LValue& L2 = cast<LValue>(V2);
-            Nodify(Dst, B, N2, SetValue(St, B, L1.EQ(ValMgr, L2)));
+            Result = L1.EvalBinaryOp(ValMgr, Op, L2);
           }
           else {
-            const NonLValue& R1 = cast<NonLValue>(V1);
+            const NonLValue& R1 = cast<NonLValue>(GetValue(N1->getState(), L1));
             const NonLValue& R2 = cast<NonLValue>(V2);
-            Nodify(Dst, B, N2, SetValue(St, B, R1.EQ(ValMgr, R2)));
+            Result = R1.EvalBinaryOp(ValMgr, Op, R2);
           }
           
+          Nodify(Dst, B, N2, SetValue(SetValue(St, B, Result), L1, Result));
           break;
+        }
       }
     }
   }

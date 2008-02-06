@@ -150,13 +150,23 @@ public:
   ~ValueManager();
   
   ASTContext& getContext() const { return Ctx; }  
+
   const llvm::APSInt& getValue(const llvm::APSInt& X);
   const llvm::APSInt& getValue(uint64_t X, unsigned BitWidth, bool isUnsigned);
   const llvm::APSInt& getValue(uint64_t X, QualType T,
                                SourceLocation Loc = SourceLocation());
   
   inline const llvm::APSInt& getZeroWithPtrWidth() {
-    return getValue(0, Ctx.getTypeSize(Ctx.VoidPtrTy, SourceLocation()), true);
+    return getValue( 0,
+                     Ctx.getTypeSize(Ctx.VoidPtrTy, SourceLocation()),
+                     true );
+  }
+  
+  inline const llvm::APSInt& getTruthValue(bool b) {
+    return getValue( b ? 1 : 0,
+                     Ctx.getTypeSize(Ctx.IntTy, SourceLocation()),
+                     false );
+    
   }
   
   const SymIntConstraint& getConstraint(SymbolID sym, BinaryOperator::Opcode Op,
@@ -228,7 +238,7 @@ public:
   typedef llvm::SmallVector<RValue,5> BufferTy;
 
   
-  RValue Cast(ValueManager& ValMgr, Expr* CastExpr) const;
+  RValue EvalCast(ValueManager& ValMgr, Expr* CastExpr) const;
   
   unsigned getRawKind() const { return Kind; }
   BaseKind getBaseKind() const { return (BaseKind) (Kind & BaseMask); }
@@ -244,6 +254,7 @@ public:
   }
   
   static RValue GetSymbolValue(SymbolManager& SymMgr, ParmVarDecl *D);
+  
   
   inline bool isValid() const { return getRawKind() != InvalidKind; }
   inline bool isInvalid() const { return getRawKind() == InvalidKind; }
@@ -280,21 +291,13 @@ protected:
 public:
   void print(std::ostream& Out) const;
   
-  RValue Cast(ValueManager& ValMgr, Expr* CastExpr) const;
+  NonLValue EvalBinaryOp(ValueManager& ValMgr,
+                               BinaryOperator::Opcode Op,
+                               const NonLValue& RHS) const;
 
-  // Arithmetic operators.
-  NonLValue Add(ValueManager& ValMgr, const NonLValue& RHS) const;
-  NonLValue Sub(ValueManager& ValMgr, const NonLValue& RHS) const;
-  NonLValue Mul(ValueManager& ValMgr, const NonLValue& RHS) const;
-  NonLValue Div(ValueManager& ValMgr, const NonLValue& RHS) const;
-  NonLValue Rem(ValueManager& ValMgr, const NonLValue& RHS) const;
-  NonLValue UnaryMinus(ValueManager& ValMgr, UnaryOperator* U) const;
-  NonLValue BitwiseComplement(ValueManager& ValMgr) const;
-  
-  // Equality operators.
-  NonLValue EQ(ValueManager& ValMgr, const NonLValue& RHS) const;
-  NonLValue NE(ValueManager& ValMgr, const NonLValue& RHS) const;
-  
+  RValue EvalCast(ValueManager& ValMgr, Expr* CastExpr) const;
+  NonLValue EvalMinus(ValueManager& ValMgr, UnaryOperator* U) const;
+  NonLValue EvalComplement(ValueManager& ValMgr) const;
   
   // Utility methods to create NonLValues.
   static NonLValue GetValue(ValueManager& ValMgr, uint64_t X, QualType T,
@@ -302,10 +305,8 @@ public:
   
   static NonLValue GetValue(ValueManager& ValMgr, IntegerLiteral* I);
   
-  static inline NonLValue GetIntTruthValue(ValueManager& ValMgr, bool X) {
-    return GetValue(ValMgr, X ? 1U : 0U, ValMgr.getContext().IntTy);
-  }
-  
+  static NonLValue GetIntTruthValue(ValueManager& ValMgr, bool b);
+    
   // Implement isa<T> support.
   static inline bool classof(const RValue* V) {
     return V->getBaseKind() >= NonLValueKind;
@@ -316,15 +317,18 @@ class LValue : public RValue {
 protected:
   LValue(unsigned SubKind, const void* D) : RValue(const_cast<void*>(D), 
                                                    true, SubKind) {}
-  
-public:
-  void print(std::ostream& Out) const;
-  
-  RValue Cast(ValueManager& ValMgr, Expr* CastExpr) const;
 
   // Equality operators.
   NonLValue EQ(ValueManager& ValMgr, const LValue& RHS) const;
   NonLValue NE(ValueManager& ValMgr, const LValue& RHS) const;
+  
+public:
+  void print(std::ostream& Out) const;
+
+  RValue EvalBinaryOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
+                            const LValue& RHS) const;
+  
+  RValue EvalCast(ValueManager& ValMgr, Expr* CastExpr) const;
   
   // Implement isa<T> support.
   static inline bool classof(const RValue* V) {
@@ -380,66 +384,21 @@ namespace nonlval {
       return *static_cast<llvm::APSInt*>(getRawPtr());
     }
     
-    // Arithmetic operators.
+    // Transfer functions for binary/unary operations on ConcreteInts.
+    ConcreteInt EvalBinaryOp(ValueManager& ValMgr,
+                             BinaryOperator::Opcode Op,
+                             const ConcreteInt& RHS) const;
     
-    ConcreteInt Add(ValueManager& ValMgr, const ConcreteInt& V) const {
-      return ValMgr.getValue(getValue() + V.getValue());
-    }
-    
-    ConcreteInt Sub(ValueManager& ValMgr, const ConcreteInt& V) const {
-      return ValMgr.getValue(getValue() - V.getValue());
-    }
-    
-    ConcreteInt Mul(ValueManager& ValMgr, const ConcreteInt& V) const {
-      return ValMgr.getValue(getValue() * V.getValue());
-    }
-    
-    ConcreteInt Div(ValueManager& ValMgr, const ConcreteInt& V) const {
-      return ValMgr.getValue(getValue() / V.getValue());
-    }
-    
-    ConcreteInt Rem(ValueManager& ValMgr, const ConcreteInt& V) const {
-      return ValMgr.getValue(getValue() % V.getValue());
-    }
-    
-    ConcreteInt UnaryMinus(ValueManager& ValMgr, UnaryOperator* U) const {
-      assert (U->getType() == U->getSubExpr()->getType());  
-      assert (U->getType()->isIntegerType());  
-      return ValMgr.getValue(-getValue()); 
-    }
-    
-    ConcreteInt BitwiseComplement(ValueManager& ValMgr) const {
-      return ValMgr.getValue(~getValue()); 
-    }
-    
-    // Casting.
-    
-    ConcreteInt Cast(ValueManager& ValMgr, Expr* CastExpr) const {
-      assert (CastExpr->getType()->isIntegerType());
-      
-      llvm::APSInt X(getValue());  
-      X.extOrTrunc(ValMgr.getContext().getTypeSize(CastExpr->getType(),
-                                                   CastExpr->getLocStart()));
-      return ValMgr.getValue(X);
-    }
-    
-    // Equality operators.
-    
-    ConcreteInt EQ(ValueManager& ValMgr, const ConcreteInt& V) const {
-      const llvm::APSInt& Val = getValue();    
-      return ValMgr.getValue(Val == V.getValue() ? 1U : 0U,
-                             Val.getBitWidth(), Val.isUnsigned());
-    }
-    
-    ConcreteInt NE(ValueManager& ValMgr, const ConcreteInt& V) const {
-      const llvm::APSInt& Val = getValue();    
-      return ValMgr.getValue(Val != V.getValue() ? 1U : 0U,
-                             Val.getBitWidth(), Val.isUnsigned());
-    }
+    ConcreteInt EvalComplement(ValueManager& ValMgr) const;
+    ConcreteInt EvalMinus(ValueManager& ValMgr, UnaryOperator* U) const;
     
     // Implement isa<T> support.
     static inline bool classof(const RValue* V) {
       return isa<NonLValue>(V) && V->getSubKind() == ConcreteIntKind;
+    }
+    
+    static inline bool classof(const NonLValue* V) {
+      return V->getSubKind() == ConcreteIntKind;
     }
   };
   
@@ -500,34 +459,21 @@ namespace lval {
       return *static_cast<llvm::APSInt*>(getRawPtr());
     }
     
-    // Arithmetic operators.
-    
-    ConcreteInt Add(ValueManager& ValMgr, const ConcreteInt& V) const {
-      return ValMgr.getValue(getValue() + V.getValue());
-    }
-    
-    ConcreteInt Sub(ValueManager& ValMgr, const ConcreteInt& V) const {
-      return ValMgr.getValue(getValue() - V.getValue());
-    }
-    
-    // Equality operators.
-    
-    ConcreteInt EQ(ValueManager& ValMgr, const ConcreteInt& V) const {
-      const llvm::APSInt& Val = getValue();    
-      return ValMgr.getValue(Val == V.getValue() ? 1U : 0U,
-                             Val.getBitWidth(), Val.isUnsigned());
-    }
-    
-    ConcreteInt NE(ValueManager& ValMgr, const ConcreteInt& V) const {
-      const llvm::APSInt& Val = getValue();    
-      return ValMgr.getValue(Val != V.getValue() ? 1U : 0U,
-                             Val.getBitWidth(), Val.isUnsigned());
-    }
-    
+
+    // Transfer functions for binary/unary operations on ConcreteInts.
+    ConcreteInt EvalBinaryOp(ValueManager& ValMgr,
+                             BinaryOperator::Opcode Op,
+                             const ConcreteInt& RHS) const;
+        
     // Implement isa<T> support.
     static inline bool classof(const RValue* V) {
+      return isa<LValue>(V) && V->getSubKind() == ConcreteIntKind;
+    }
+    
+    static inline bool classof(const LValue* V) {
       return V->getSubKind() == ConcreteIntKind;
     }
+    
   };  
 } // end clang::lval namespace
   
