@@ -15,6 +15,24 @@
 
 using namespace clang;
 
+bool ValueState::isNotEqual(SymbolID sym, const llvm::APSInt& V) const {
+  // First, retrieve the NE-set associated with the given symbol.
+  ConstantNotEqTy::TreeTy* T = Data->ConstantNotEq.SlimFind(sym);
+  
+  if (!T)
+    return false;
+  
+  // Second, see if V is present in the NE-set.
+  return T->getValue().second.contains(&V);
+}
+
+const llvm::APSInt* ValueState::getSymVal(SymbolID sym) const {
+  ConstantEqTy::TreeTy* T = Data->ConstantEq.SlimFind(sym);
+  return T ? T->getValue().second : NULL;  
+}
+
+
+
 RValue ValueStateManager::GetValue(const StateTy& St, const LValue& LV) {
   switch (LV.getSubKind()) {
     case lval::DeclValKind: {
@@ -29,6 +47,36 @@ RValue ValueStateManager::GetValue(const StateTy& St, const LValue& LV) {
   }
   
   return InvalidValue();
+}
+
+ValueStateManager::StateTy
+ValueStateManager::AddNE(StateTy St, SymbolID sym, const llvm::APSInt& V) {
+  // First, retrieve the NE-set associated with the given symbol.
+  ValueState::ConstantNotEqTy::TreeTy* T =
+    St.getImpl()->ConstantNotEq.SlimFind(sym);    
+  
+  ValueState::IntSetTy S = T ? T->getValue().second : ISetFactory.GetEmptySet();
+  
+  // Now add V to the NE set.  
+  S = ISetFactory.Add(S, &V);
+  
+  // Create a new state with the old binding replaced.
+  ValueStateImpl NewStateImpl = *St.getImpl();
+  NewStateImpl.ConstantNotEq = CNEFactory.Add(NewStateImpl.ConstantNotEq,
+                                              sym, S);
+    
+  // Get the persistent copy.
+  return getPersistentState(NewStateImpl);
+}
+
+ValueStateManager::StateTy
+ValueStateManager::AddEQ(StateTy St, SymbolID sym, const llvm::APSInt& V) {
+  // Create a new state with the old binding replaced.
+  ValueStateImpl NewStateImpl = *St.getImpl();
+  NewStateImpl.ConstantEq = CEFactory.Add(NewStateImpl.ConstantEq, sym, &V);
+  
+  // Get the persistent copy.
+  return getPersistentState(NewStateImpl);
 }
 
 RValue ValueStateManager::GetValue(const StateTy& St, Stmt* S, bool* hasVal) {
@@ -163,7 +211,8 @@ ValueStateManager::getInitialState() {
 
   // Create a state with empty variable bindings.
   ValueStateImpl StateImpl(VBFactory.GetEmptyMap(),
-                           CNEFactory.GetEmptyMap());
+                           CNEFactory.GetEmptyMap(),
+                           CEFactory.GetEmptyMap());
   
   return getPersistentState(StateImpl);
 }

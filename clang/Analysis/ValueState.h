@@ -116,8 +116,9 @@ public:
 namespace vstate {
   typedef llvm::ImmutableSet<llvm::APSInt*> IntSetTy;
   
-  typedef llvm::ImmutableMap<VarBindKey,RValue> VariableBindingsTy;  
-  typedef llvm::ImmutableMap<SymbolID,IntSetTy> ConstantNotEqTy;
+  typedef llvm::ImmutableMap<VarBindKey,RValue>            VariableBindingsTy;  
+  typedef llvm::ImmutableMap<SymbolID,IntSetTy>            ConstantNotEqTy;
+  typedef llvm::ImmutableMap<SymbolID,const llvm::APSInt*> ConstantEqTy;
 }
 
 /// ValueStateImpl - This class encapsulates the actual data values for
@@ -127,22 +128,28 @@ namespace vstate {
 struct ValueStateImpl : public llvm::FoldingSetNode {
   vstate::VariableBindingsTy VariableBindings;
   vstate::ConstantNotEqTy    ConstantNotEq;
+  vstate::ConstantEqTy       ConstantEq;
   
   /// This ctor is used when creating the first ValueStateImpl object.
-  ValueStateImpl(vstate::VariableBindingsTy VB, vstate::ConstantNotEqTy CNE)
-    : VariableBindings(VB), ConstantNotEq(CNE) {}
+  ValueStateImpl(vstate::VariableBindingsTy VB,
+                 vstate::ConstantNotEqTy CNE,
+                 vstate::ConstantEqTy CE)
+    : VariableBindings(VB), ConstantNotEq(CNE), ConstantEq(CE) {}
   
   /// Copy ctor - We must explicitly define this or else the "Next" ptr
   ///  in FoldingSetNode will also get copied.
   ValueStateImpl(const ValueStateImpl& RHS)
     : llvm::FoldingSetNode(),
       VariableBindings(RHS.VariableBindings),
-      ConstantNotEq(RHS.ConstantNotEq) {} 
+      ConstantNotEq(RHS.ConstantNotEq),
+      ConstantEq(RHS.ConstantEq) {} 
   
   /// Profile - Profile the contents of a ValueStateImpl object for use
   ///  in a FoldingSet.
   static void Profile(llvm::FoldingSetNodeID& ID, const ValueStateImpl& V) {
     V.VariableBindings.Profile(ID);
+    V.ConstantNotEq.Profile(ID);
+    V.ConstantEq.Profile(ID);
   }
 
   /// Profile - Used to profile the contents of this object for inclusion
@@ -171,10 +178,18 @@ public:
   ValueStateImpl* getImpl() const { return Data; }
 
   // Typedefs.
+  typedef vstate::IntSetTy                 IntSetTy;
   typedef vstate::VariableBindingsTy       VariableBindingsTy;
   typedef vstate::ConstantNotEqTy          ConstantNotEqTy;
+  typedef vstate::ConstantEqTy             ConstantEqTy;
+
   typedef llvm::SmallVector<ValueState,5>  BufferTy;
 
+  // Queries.
+  
+  bool isNotEqual(SymbolID sym, const llvm::APSInt& V) const;
+  const llvm::APSInt* getSymVal(SymbolID sym) const;
+  
   // Iterators.
 
   typedef VariableBindingsTy::iterator vb_iterator;  
@@ -211,8 +226,10 @@ public:
   typedef ValueState StateTy;
 
 private:
+  ValueState::IntSetTy::Factory           ISetFactory;
   ValueState::VariableBindingsTy::Factory VBFactory;
   ValueState::ConstantNotEqTy::Factory    CNEFactory;
+  ValueState::ConstantEqTy::Factory       CEFactory;
   
   /// StateSet - FoldingSet containing all the states created for analyzing
   ///  a particular function.  This is used to unique states.
@@ -249,6 +266,9 @@ public:
   StateTy Add(StateTy St, VarBindKey K, const RValue& V);
   StateTy Remove(StateTy St, VarBindKey K);
   StateTy getPersistentState(const ValueStateImpl& Impl);
+  
+  StateTy AddEQ(StateTy St, SymbolID sym, const llvm::APSInt& V);
+  StateTy AddNE(StateTy St, SymbolID sym, const llvm::APSInt& V);
 };
   
 } // end clang namespace

@@ -149,6 +149,10 @@ public:
   const llvm::APSInt& getValue(uint64_t X, QualType T,
                                SourceLocation Loc = SourceLocation());
   
+  inline const llvm::APSInt& getZeroWithPtrWidth() {
+    return getValue(0, Ctx.getTypeSize(Ctx.VoidPtrTy, SourceLocation()), true);
+  }
+  
   const SymIntConstraint& getConstraint(SymbolID sym, BinaryOperator::Opcode Op,
                                         const llvm::APSInt& V);
 };

@@ -228,6 +228,12 @@ public:
   StateTy Assume(StateTy St, LValue Cond, bool Assumption, bool& isFeasible);
   StateTy Assume(StateTy St, NonLValue Cond, bool Assumption, bool& isFeasible);
   
+  StateTy AssumeSymNE(StateTy St, SymbolID sym, const llvm::APSInt& V,
+                      bool& isFeasible);
+
+  StateTy AssumeSymEQ(StateTy St, SymbolID sym, const llvm::APSInt& V,
+                      bool& isFeasible);
+  
   void Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred, StateTy St);
   
   /// Nodify - This version of Nodify is used to batch process a set of states.
@@ -851,18 +857,27 @@ void GRConstants::Visit(Stmt* S, GRConstants::NodeTy* Pred,
 // "Assume" logic.
 //===----------------------------------------------------------------------===//
 
-GRConstants::StateTy GRConstants::Assume(StateTy St, LValue Cond, bool Assumption, 
+GRConstants::StateTy GRConstants::Assume(StateTy St, LValue Cond,
+                                         bool Assumption, 
                                          bool& isFeasible) {    
   
   switch (Cond.getSubKind()) {
     default:
-      assert (false && "'Assume' not implemented for this NonLValue.");
+      assert (false && "'Assume' not implemented for this LValue.");
       return St;
+      
+    case lval::SymbolValKind:
+      if (Assumption)
+        return AssumeSymNE(St, cast<lval::SymbolVal>(Cond).getSymbol(),
+                           ValMgr.getZeroWithPtrWidth(), isFeasible);
+      else
+        return AssumeSymEQ(St, cast<lval::SymbolVal>(Cond).getSymbol(),
+                           ValMgr.getZeroWithPtrWidth(), isFeasible);
       
     case lval::DeclValKind:
       isFeasible = Assumption;
       return St;
-      
+
     case lval::ConcreteIntKind: {
       bool b = cast<lval::ConcreteInt>(Cond).getValue() != 0;
       isFeasible = b ? Assumption : !Assumption;      
@@ -871,7 +886,8 @@ GRConstants::StateTy GRConstants::Assume(StateTy St, LValue Cond, bool Assumptio
   }
 }
 
-GRConstants::StateTy GRConstants::Assume(StateTy St, NonLValue Cond, bool Assumption, 
+GRConstants::StateTy GRConstants::Assume(StateTy St, NonLValue Cond,
+                                         bool Assumption, 
                                          bool& isFeasible) {
   
   switch (Cond.getSubKind()) {
@@ -887,6 +903,51 @@ GRConstants::StateTy GRConstants::Assume(StateTy St, NonLValue Cond, bool Assump
   }
 }
 
+GRConstants::StateTy
+GRConstants::AssumeSymNE(StateTy St, SymbolID sym,
+                         const llvm::APSInt& V, bool& isFeasible) {
+
+  // First, determine if sym == X, where X != V.
+  if (const llvm::APSInt* X = St.getSymVal(sym)) {
+    isFeasible = *X != V;
+    return St;
+  }
+  
+  // Second, determine if sym != V.
+  if (St.isNotEqual(sym, V)) {
+    isFeasible = true;
+    return St;
+  }
+      
+  // If we reach here, sym is not a constant and we don't know if it is != V.
+  // Make that assumption.
+  
+  isFeasible = true;
+  return StateMgr.AddNE(St, sym, V);
+}
+
+GRConstants::StateTy
+GRConstants::AssumeSymEQ(StateTy St, SymbolID sym,
+                         const llvm::APSInt& V, bool& isFeasible) {
+  
+  // First, determine if sym == X, where X != V.
+  if (const llvm::APSInt* X = St.getSymVal(sym)) {
+    isFeasible = *X == V;
+    return St;
+  }
+  
+  // Second, determine if sym != V.
+  if (St.isNotEqual(sym, V)) {
+    isFeasible = false;
+    return St;
+  }
+  
+  // If we reach here, sym is not a constant and we don't know if it is == V.
+  // Make that assumption.
+  
+  isFeasible = true;
+  return StateMgr.AddEQ(St, sym, V);
+}
 
 //===----------------------------------------------------------------------===//
 // Driver.
