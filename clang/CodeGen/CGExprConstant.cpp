@@ -385,8 +385,16 @@ public:
     if (!E->getType()->isPointerType())
       return llvm::ConstantExpr::getAdd(LHS, RHS);
     
-    assert(0 && "Unhandled bin add types!");
-    return 0;
+    llvm::Constant *Ptr, *Idx;
+    if (isa<llvm::PointerType>(LHS->getType())) { // pointer + int
+      Ptr = LHS;
+      Idx = RHS;
+    } else { // int + pointer
+      Ptr = RHS;
+      Idx = LHS;
+    }
+    
+    return llvm::ConstantExpr::getGetElementPtr(Ptr, &Idx, 1);
   }
     
   llvm::Constant *VisitBinAnd(const BinaryOperator *E) {
