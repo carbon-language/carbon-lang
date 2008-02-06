@@ -29,6 +29,7 @@
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/STLExtras.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -296,16 +297,24 @@ void RALocal::spillVirtReg(MachineBasicBlock &MBB,
     std::pair<MachineInstr*, unsigned> &LastUse = getVirtRegLastUse(VirtReg);
     if (LastUse.first)
       LastUse.first->getOperand(LastUse.second).setIsKill();
-  }
-
-  // Otherwise, there is a virtual register corresponding to this physical
-  // register.  We only need to spill it into its stack slot if it has been
-  // modified.
-  if (isVirtRegModified(VirtReg)) {
+  } else {
+    // Otherwise, there is a virtual register corresponding to this physical
+    // register.  We only need to spill it into its stack slot if it has been
+    // modified.
     const TargetRegisterClass *RC = MF->getRegInfo().getRegClass(VirtReg);
     int FrameIndex = getStackSpaceFor(VirtReg, RC);
     DOUT << " to stack slot #" << FrameIndex;
     TII->storeRegToStackSlot(MBB, I, PhysReg, true, FrameIndex, RC);
+
+    // If the instruction reads the register that's spilled, (e.g. this can
+    // happen if it is a move to a physical register), then the spill
+    // instruction is not a kill.
+    if (I != MBB.end() && I->findRegisterUseOperandIdx(PhysReg) != -1) {
+      MachineBasicBlock::iterator StoreMI = prior(I);
+      int Idx = StoreMI->findRegisterUseOperandIdx(PhysReg, true);
+      assert(Idx != -1 && "Unrecognized spill instruction!");
+      StoreMI->getOperand(Idx).setIsKill(false);
+    }
     ++NumStores;   // Update statistics
   }
 
@@ -494,12 +503,6 @@ MachineInstr *RALocal::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
     // If we can fold this spill into this instruction, do so now.
     SmallVector<unsigned, 2> Ops;
     Ops.push_back(OpNum);
-    if (MachineInstr* FMI = TII->foldMemoryOperand(MI, Ops, FrameIndex)) {
-      ++NumFolded;
-      // Update kill/dead flags.
-      FMI->copyKillDeadInfo(MI);
-      return MBB.insert(MBB.erase(MI), FMI);
-    }
 
     // It looks like we can't fold this virtual register load into this
     // instruction.  Force some poor hapless value out of the register file to
@@ -775,9 +778,8 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
     
     // Finally, if this is a noop copy instruction, zap it.
     unsigned SrcReg, DstReg;
-    if (TII.isMoveInstr(*MI, SrcReg, DstReg) && SrcReg == DstReg) {
+    if (TII.isMoveInstr(*MI, SrcReg, DstReg) && SrcReg == DstReg)
       MBB.erase(MI);
-    }
   }
 
   MachineBasicBlock::iterator MI = MBB.getFirstTerminator();
