@@ -749,9 +749,12 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
 
     Clobber = Target.getNormalizedGCCRegisterName(Clobber.c_str());
     
-    if (i != 0)
+    if (i != 0 || NumConstraints != 0)
       Constraints += ',';
+    
+    Constraints += "~{";
     Constraints += Clobber;
+    Constraints += '}';
   }
   
   // Add machine specific clobbers

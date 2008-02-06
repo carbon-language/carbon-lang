@@ -276,6 +276,12 @@ const char *TargetInfo::getVAListDeclaration() const {
   return PrimaryTarget->getVAListDeclaration();
 }
 
+static void removeGCCRegisterPrefix(const char *&Name)
+{
+  if (Name[0] == '%' || Name[0] == '#')
+    Name++;
+}
+
 /// isValidGCCRegisterName - Returns whether the passed in string
 /// is a valid register name according to GCC. This is used by Sema for
 /// inline asm statements.
@@ -284,8 +290,8 @@ bool TargetInfo::isValidGCCRegisterName(const char *Name) const {
   unsigned NumNames;
   
   // Get rid of any register prefix.
-  if (Name[0] == '%' || Name[0] == '#')
-    Name++;
+  removeGCCRegisterPrefix(Name);
+
   
   if (strcmp(Name, "memory") == 0 ||
       strcmp(Name, "cc") == 0)
@@ -328,8 +334,7 @@ const char *TargetInfo::getNormalizedGCCRegisterName(const char *Name) const
 {
   assert(isValidGCCRegisterName(Name) && "Invalid register passed in");
   
-  if (strcmp(Name, "memory") == 0)
-    return "~{memory}";
+  removeGCCRegisterPrefix(Name);
     
   const char * const *Names;
   unsigned NumNames;
