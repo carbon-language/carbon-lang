@@ -626,6 +626,28 @@ void GRConstants::VisitUnaryOperator(UnaryOperator* U,
         break;
       }
         
+      case UnaryOperator::LNot: {
+        // C99 6.5.3.3: "The expression !E is equivalent to (0==E)."
+        //
+        //  Note: technically we do "E == 0", but this is the same in the
+        //    transfer functions as "0 == E".
+        
+        RValue V1 = GetValue(St, U->getSubExpr());
+        
+        if (isa<LValue>(V1)) {
+          lval::ConcreteInt V2(ValMgr.getValue(0, U->getSubExpr()->getType()));
+          Nodify(Dst, U, N1, SetValue(St, U,
+                                      cast<LValue>(V1).EQ(ValMgr, V2)));
+        }
+        else {
+          nonlval::ConcreteInt V2(ValMgr.getZeroWithPtrWidth());
+          Nodify(Dst, U, N1, SetValue(St, U,
+                                      cast<NonLValue>(V1).EQ(ValMgr, V2)));
+        }
+        
+        break;
+      }
+        
       case UnaryOperator::AddrOf: {
         const LValue& L1 = GetLValue(St, U->getSubExpr());
         Nodify(Dst, U, N1, SetValue(St, U, L1));
