@@ -11,30 +11,32 @@
 #
 ##===----------------------------------------------------------------------===##
 
-import os
 import sys
+import subprocess
 
 def error(message):
     print >> sys.stderr, 'ccc: ' + message
     sys.exit(1)
 
 def run(args):
-    cmd = ' '.join(args)
-    print >> sys.stderr, cmd
-    code = os.system(cmd)
+    print >> sys.stderr, ' '.join(args)
+    code = subprocess.call(args)
     if code > 255:
         code = 1
     if code:
         sys.exit(code)
 
 def preprocess(args):
-    run(['clang -E'] + args)
+    command = 'clang -E'.split()
+    run(command + args)
 
 def compile(args):
-    run(['clang -emit-llvm-bc'] + args)
+    command = 'clang -emit-llvm-bc'.split()
+    run(command + args)
 
 def link(args):
-    run(['llvm-ld -native'] + args)
+    command = 'llvm-ld -native'.split()
+    run(command + args)
 
 def extension(path):
     return path.split(".")[-1]
