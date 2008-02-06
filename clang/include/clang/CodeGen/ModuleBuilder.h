@@ -16,46 +16,15 @@
 
 namespace llvm {
   class Module;
-  class TargetData;
 }
 
 namespace clang {
-  class ASTContext;
-  class FunctionDecl;
-  class LinkageSpecDecl;
-  class FileVarDecl;
-  class TypeDecl;
-  struct LangOptions;
   class Diagnostic;
-
-namespace CodeGen {
-  class CodeGenModule;
+  struct LangOptions;
+  class ASTConsumer;
   
-  /// Init - Create an ModuleBuilder with the specified ASTContext.
-  CodeGenModule *Init(ASTContext &Context, const LangOptions &Features,
-                      llvm::Module &M, const llvm::TargetData &TD,
-                      Diagnostic &Diags);
-  
-  /// CodeGenFunction - Convert the AST node for a FunctionDecl into LLVM.
-  ///
-  void CodeGenFunction(CodeGenModule *Builder, FunctionDecl *D);
-
-  void CodeGenLinkageSpec(CodeGenModule *Builder, LinkageSpecDecl *LS);
-  
-  /// CodeGenGlobalVar - Emit the specified global variable to LLVM.
-  void CodeGenGlobalVar(CodeGenModule *Builder, FileVarDecl *D);
-  
-  /// CodeGenTypeDecl - Compile a type.
-  void CodeGenTypeDecl(CodeGenModule *Builder, TypeDecl *D);
-
-  /// PrintStats - Emit statistic information to stderr.
-  ///
-  void PrintStats(CodeGenModule *Builder);
-  
-  /// Terminate - Gracefully shut down the builder.
-  ///
-  void Terminate(CodeGenModule *Builder);
-}  // end namespace CodeGen
-}  // end namespace clang
+  ASTConsumer *CreateLLVMCodeGen(Diagnostic &Diags, const LangOptions &Features,
+                                 llvm::Module *&DestModule);
+}
 
 #endif

@@ -19,8 +19,6 @@
 #include "clang/Parse/Parser.h"
 using namespace clang;
 
-ASTConsumer::~ASTConsumer() {}
-
 //===----------------------------------------------------------------------===//
 // Public interface to the file
 //===----------------------------------------------------------------------===//

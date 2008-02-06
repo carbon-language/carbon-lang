@@ -27,6 +27,7 @@
 #include "TextDiagnosticBuffer.h"
 #include "TextDiagnosticPrinter.h"
 #include "clang/AST/TranslationUnit.h"
+#include "clang/CodeGen/ModuleBuilder.h"
 #include "clang/Sema/ParseAST.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/Parse/Parser.h"

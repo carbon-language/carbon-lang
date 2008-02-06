@@ -92,8 +92,6 @@ public:
   llvm::Constant *EmitGlobalInit(const Expr *E);
   llvm::Constant *EmitConstantExpr(const Expr *E);
     
-  void PrintStats() {}
-  
   /// WarnUnsupported - Print out a warning that codegen doesn't support the
   /// specified stmt yet.
     

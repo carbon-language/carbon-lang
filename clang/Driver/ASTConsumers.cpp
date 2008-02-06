@@ -13,6 +13,7 @@
 
 #include "ASTConsumers.h"
 #include "clang/AST/TranslationUnit.h"
+#include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/AST/AST.h"
@@ -585,69 +586,6 @@ ASTConsumer* clang::CreateGRConstants() {
 
 void GRConstantsVisitor::VisitCFG(CFG& C, FunctionDecl& FD) {
   RunGRConstants(C, FD, *Ctx);
-}
-
-//===----------------------------------------------------------------------===//
-// LLVM Emitter
-
-#include "clang/Basic/Diagnostic.h"
-#include "clang/Basic/TargetInfo.h"
-#include "clang/CodeGen/ModuleBuilder.h"
-#include "llvm/Module.h"
-#include "llvm/Target/TargetData.h"
-#include "llvm/Target/TargetMachine.h"
-#include "llvm/Bitcode/ReaderWriter.h"
-
-namespace {
-  class CodeGenerator : public ASTConsumer {
-    Diagnostic &Diags;
-    const llvm::TargetData *TD;
-    ASTContext *Ctx;
-    const LangOptions &Features;
-  protected:
-    llvm::Module *&M;
-    CodeGen::CodeGenModule *Builder;
-  public:
-    CodeGenerator(Diagnostic &diags, const LangOptions &LO,
-                  llvm::Module *&DestModule)
-      : Diags(diags), Features(LO), M(DestModule) {}
-    
-    ~CodeGenerator() {
-      CodeGen::Terminate(Builder);
-    }
-    
-    virtual void Initialize(ASTContext &Context) {
-      Ctx = &Context;
-      
-      M->setTargetTriple(Ctx->Target.getTargetTriple());
-      M->setDataLayout(Ctx->Target.getTargetDescription());
-      TD = new llvm::TargetData(Ctx->Target.getTargetDescription());
-      Builder = CodeGen::Init(Context, Features, *M, *TD, Diags);
-    }
-    
-    virtual void HandleTopLevelDecl(Decl *D) {
-      // If an error occurred, stop code generation, but continue parsing and
-      // semantic analysis (to ensure all warnings and errors are emitted).
-      if (Diags.hasErrorOccurred())
-        return;
-      
-      if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-        CodeGen::CodeGenFunction(Builder, FD);
-      } else if (FileVarDecl *FVD = dyn_cast<FileVarDecl>(D)) {
-        CodeGen::CodeGenGlobalVar(Builder, FVD);
-      } else if (LinkageSpecDecl *LSD = dyn_cast<LinkageSpecDecl>(D)) {
-        CodeGen::CodeGenLinkageSpec(Builder, LSD);
-      } else {
-        CodeGen::CodeGenTypeDecl(Builder, cast<TypeDecl>(D));
-      }
-    }
-  };
-}
-
-ASTConsumer *clang::CreateLLVMCodeGen(Diagnostic &Diags, 
-                                      const LangOptions &Features,
-                                      llvm::Module *&DestModule) {
-  return new CodeGenerator(Diags, Features, DestModule);
 }
 
 //===----------------------------------------------------------------------===//

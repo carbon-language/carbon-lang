@@ -13,8 +13,9 @@
 
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/Decl.h"
-
 using namespace clang;
+
+ASTConsumer::~ASTConsumer() {}
 
 void ASTConsumer::HandleTopLevelDeclaration(Decl* d) {
   if (ScopedDecl* sd = dyn_cast<ScopedDecl>(d))

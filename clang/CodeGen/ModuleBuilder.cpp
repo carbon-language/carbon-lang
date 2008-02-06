@@ -13,51 +13,73 @@
 
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "CodeGenModule.h"
+#include "clang/AST/ASTConsumer.h"
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 using namespace clang;
 
+//===----------------------------------------------------------------------===//
+// LLVM Emitter
 
-/// Init - Create an ModuleBuilder with the specified ASTContext.
-clang::CodeGen::CodeGenModule *
-clang::CodeGen::Init(ASTContext &Context, const LangOptions &Features, 
-                     llvm::Module &M, const llvm::TargetData &TD, 
-                     Diagnostic &Diags) {
-  return new CodeGenModule(Context, Features, M, TD, Diags);
+#include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/TargetInfo.h"
+#include "clang/CodeGen/ModuleBuilder.h"
+#include "llvm/Module.h"
+#include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetMachine.h"
+
+namespace {
+  class CodeGenerator : public ASTConsumer {
+    Diagnostic &Diags;
+    const llvm::TargetData *TD;
+    ASTContext *Ctx;
+    const LangOptions &Features;
+  protected:
+    llvm::Module *&M;
+    CodeGen::CodeGenModule *Builder;
+  public:
+    CodeGenerator(Diagnostic &diags, const LangOptions &LO,
+                  llvm::Module *&DestModule)
+    : Diags(diags), Features(LO), M(DestModule) {}
+    
+    ~CodeGenerator() {
+      delete Builder;
+    }
+    
+    virtual void Initialize(ASTContext &Context) {
+      Ctx = &Context;
+      
+      M->setTargetTriple(Ctx->Target.getTargetTriple());
+      M->setDataLayout(Ctx->Target.getTargetDescription());
+      TD = new llvm::TargetData(Ctx->Target.getTargetDescription());
+      Builder = new CodeGen::CodeGenModule(Context, Features, *M, *TD, Diags);
+    }
+    
+    virtual void HandleTopLevelDecl(Decl *D) {
+      // If an error occurred, stop code generation, but continue parsing and
+      // semantic analysis (to ensure all warnings and errors are emitted).
+      if (Diags.hasErrorOccurred())
+        return;
+      
+      if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+        Builder->EmitFunction(FD);
+      } else if (FileVarDecl *FVD = dyn_cast<FileVarDecl>(D)) {
+        Builder->EmitGlobalVarDeclarator(FVD);
+      } else if (LinkageSpecDecl *LSD = dyn_cast<LinkageSpecDecl>(D)) {
+        if (LSD->getLanguage() == LinkageSpecDecl::lang_cxx)
+          Builder->WarnUnsupported(LSD, "linkage spec");
+        // FIXME: implement C++ linkage, C linkage works mostly by C
+        // language reuse already.
+      } else {
+        Builder->EmitType(cast<TypeDecl>(D));
+      }
+    }
+  };
 }
 
-void clang::CodeGen::Terminate(CodeGenModule *B) {
-  delete B;
+ASTConsumer *clang::CreateLLVMCodeGen(Diagnostic &Diags, 
+                                      const LangOptions &Features,
+                                      llvm::Module *&DestModule) {
+  return new CodeGenerator(Diags, Features, DestModule);
 }
 
-/// CodeGenFunction - Convert the AST node for a FunctionDecl into LLVM.
-///
-void clang::CodeGen::CodeGenFunction(CodeGenModule *B, FunctionDecl *D) {
-  B->EmitFunction(D);
-}
-
-/// CodeGenLinkageSpec - Emit the specified linkage space to LLVM.
-void clang::CodeGen::CodeGenLinkageSpec(CodeGenModule *Builder,
-					LinkageSpecDecl *LS) {
-  if (LS->getLanguage() == LinkageSpecDecl::lang_cxx)
-    Builder->WarnUnsupported(LS, "linkage spec");
-
-  // FIXME: implement C++ linkage, C linkage works mostly by C
-  // language reuse already.
-}
-
-/// CodeGenGlobalVar - Emit the specified global variable to LLVM.
-void clang::CodeGen::CodeGenGlobalVar(CodeGenModule *Builder, FileVarDecl *D) {
-  Builder->EmitGlobalVarDeclarator(D);
-}
-
-/// CodeGenTypeDecl - Compile a type.
-void clang::CodeGen::CodeGenTypeDecl(CodeGenModule *Builder, TypeDecl *D) {
-  Builder->EmitType(D);
-}
-
-
-/// PrintStats - Emit statistic information to stderr.
-///
-void clang::CodeGen::PrintStats(CodeGenModule *B) {
-  B->PrintStats();
-}

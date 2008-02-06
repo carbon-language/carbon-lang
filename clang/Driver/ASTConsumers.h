@@ -43,10 +43,6 @@ ASTConsumer *CreateUnitValsChecker(Diagnostic &Diags);
   
 ASTConsumer *CreateGRConstants();
 
-  
-ASTConsumer *CreateLLVMCodeGen(Diagnostic &Diags, const LangOptions &Features,
-                               llvm::Module *&DestModule);
-
 ASTConsumer *CreateCodeRewriterTest(const std::string& InFile,
                                     Diagnostic &Diags);
 
