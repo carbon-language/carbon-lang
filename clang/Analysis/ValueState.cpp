@@ -227,7 +227,7 @@ ValueStateManager::getPersistentState(const ValueStateImpl &State) {
   if (ValueStateImpl* I = StateSet.FindNodeOrInsertPos(ID, InsertPos))
     return I;
   
-  ValueStateImpl* I = (ValueStateImpl*) Alloc.Allocate<ValueState>();
+  ValueStateImpl* I = (ValueStateImpl*) Alloc.Allocate<ValueStateImpl>();
   new (I) ValueStateImpl(State);  
   StateSet.InsertNode(I, InsertPos);
   return I;
