@@ -313,6 +313,12 @@ private:
   std::vector<std::pair<std::string, std::string> > OrigChains;
   std::set<std::string> Duplicates;
 
+  /// LSI - Load/Store information.
+  /// Save loads/stores matched by a pattern, and generate a MemOperandSDNode
+  /// for each memory access. This facilitates the use of AliasAnalysis in
+  /// the backend.
+  std::vector<std::string> LSI;
+
   /// GeneratedCode - This is the buffer that we emit code to.  The first int
   /// indicates whether this is an exit predicate (something that should be
   /// tested, and if true, the match fails) [when 1], or normal code to emit
@@ -373,6 +379,16 @@ public:
   void EmitMatchCode(TreePatternNode *N, TreePatternNode *P,
                      const std::string &RootName, const std::string &ChainSuffix,
                      bool &FoundChain) {
+
+    // Save loads/stores matched by a pattern.
+    if (!N->isLeaf() && N->getName().empty()) {
+      std::string EnumName = N->getOperator()->getValueAsString("Opcode");
+      if (EnumName == "ISD::LOAD" ||
+          EnumName == "ISD::STORE") {
+        LSI.push_back(RootName);
+      }
+    }
+
     bool isRoot = (P == NULL);
     // Emit instruction predicates. Each predicate is just a string for now.
     if (isRoot) {
@@ -941,6 +957,18 @@ public:
             AllOps.insert(AllOps.end(), Ops.begin(), Ops.end());
             NumEAInputs += Ops.size();
           }
+        }
+      }
+
+      // Generate MemOperandSDNodes nodes for each memory accesses covered by this
+      // pattern.
+      if (isRoot) {
+        std::vector<std::string>::const_iterator mi, mie;
+        for (mi = LSI.begin(), mie = LSI.end(); mi != mie; ++mi) {
+          emitCode("SDOperand LSI_" + *mi + " = "
+                   "CurDAG->getMemOperand(cast<LSBaseSDNode>(" +
+                   *mi + ")->getMemOperand());");
+          AllOps.push_back("LSI_" + *mi);
         }
       }
 

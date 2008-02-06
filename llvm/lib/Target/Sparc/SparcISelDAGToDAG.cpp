@@ -805,25 +805,23 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     SDOperand Offset = DAG.getNode(ISD::ADD, MVT::i32,
                                    DAG.getRegister(SP::I6, MVT::i32),
                                 DAG.getConstant(VarArgsFrameOffset, MVT::i32));
-    SrcValueSDNode *SV = cast<SrcValueSDNode>(Op.getOperand(2));
-    return DAG.getStore(Op.getOperand(0), Offset, 
-                        Op.getOperand(1), SV->getValue(), SV->getOffset());
+    const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
+    return DAG.getStore(Op.getOperand(0), Offset, Op.getOperand(1), SV, 0);
   }
   case ISD::VAARG: {
     SDNode *Node = Op.Val;
     MVT::ValueType VT = Node->getValueType(0);
     SDOperand InChain = Node->getOperand(0);
     SDOperand VAListPtr = Node->getOperand(1);
-    SrcValueSDNode *SV = cast<SrcValueSDNode>(Node->getOperand(2));
-    SDOperand VAList = DAG.getLoad(getPointerTy(), InChain, VAListPtr,
-                                   SV->getValue(), SV->getOffset());
+    const Value *SV = cast<SrcValueSDNode>(Node->getOperand(2))->getValue();
+    SDOperand VAList = DAG.getLoad(getPointerTy(), InChain, VAListPtr, SV, 0);
     // Increment the pointer, VAList, to the next vaarg
     SDOperand NextPtr = DAG.getNode(ISD::ADD, getPointerTy(), VAList, 
                                     DAG.getConstant(MVT::getSizeInBits(VT)/8, 
                                                     getPointerTy()));
     // Store the incremented VAList to the legalized pointer
     InChain = DAG.getStore(VAList.getValue(1), NextPtr,
-                           VAListPtr, SV->getValue(), SV->getOffset());
+                           VAListPtr, SV, 0);
     // Load the actual argument out of the pointer VAList, unless this is an
     // f64 load.
     if (VT != MVT::f64) {

@@ -905,9 +905,8 @@ static SDOperand LowerVASTART(SDOperand Op, SelectionDAG &DAG,
   // memory location argument.
   MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   SDOperand FR = DAG.getFrameIndex(VarArgsFrameIndex, PtrVT);
-  SrcValueSDNode *SV = cast<SrcValueSDNode>(Op.getOperand(2));
-  return DAG.getStore(Op.getOperand(0), FR, Op.getOperand(1), SV->getValue(),
-                      SV->getOffset());
+  const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
+  return DAG.getStore(Op.getOperand(0), FR, Op.getOperand(1), SV, 0);
 }
 
 static SDOperand LowerFORMAL_ARGUMENT(SDOperand Op, SelectionDAG &DAG,

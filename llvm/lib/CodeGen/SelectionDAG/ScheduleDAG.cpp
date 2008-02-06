@@ -277,10 +277,22 @@ unsigned ScheduleDAG::CountResults(SDNode *Node) {
   return N;
 }
 
-/// CountOperands  The inputs to target nodes have any actual inputs first,
-/// followed by an optional chain operand, then flag operands.  Compute the
-/// number of actual operands that  will go into the machine instr.
+/// CountOperands - The inputs to target nodes have any actual inputs first,
+/// followed by optional memory operands chain operand, then flag operands.
+/// Compute the number of actual operands that  will go into the machine istr.
 unsigned ScheduleDAG::CountOperands(SDNode *Node) {
+  unsigned N = Node->getNumOperands();
+  while (N && Node->getOperand(N - 1).getValueType() == MVT::Flag)
+    --N;
+  if (N && Node->getOperand(N - 1).getValueType() == MVT::Other)
+    --N; // Ignore chain if it exists.
+  while (N && MemOperandSDNode::classof(Node->getOperand(N - 1).Val))
+    --N; // Ignore MemOperand nodes
+  return N;
+}
+
+/// CountMemOperands - Find the index of the last MemOperandSDNode operand
+unsigned ScheduleDAG::CountMemOperands(SDNode *Node) {
   unsigned N = Node->getNumOperands();
   while (N && Node->getOperand(N - 1).getValueType() == MVT::Flag)
     --N;
@@ -517,6 +529,10 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
   
 }
 
+void ScheduleDAG::AddMemOperand(MachineInstr *MI, const MemOperand &MO) {
+  MI->addMemOperand(MO);
+}
+
 // Returns the Register Class of a subregister
 static const TargetRegisterClass *getSubRegisterRegClass(
         const TargetRegisterClass *TRC,
@@ -675,6 +691,7 @@ void ScheduleDAG::EmitNode(SDNode *Node, unsigned InstanceNo,
 
     unsigned NumResults = CountResults(Node);
     unsigned NodeOperands = CountOperands(Node);
+    unsigned NodeMemOperands = CountMemOperands(Node);
     unsigned NumMIOperands = NodeOperands + NumResults;
     bool HasPhysRegOuts = (NumResults > II.getNumDefs()) &&
                           II.getImplicitDefs() != 0;
@@ -696,6 +713,10 @@ void ScheduleDAG::EmitNode(SDNode *Node, unsigned InstanceNo,
     // instruction as appropriate.
     for (unsigned i = 0; i != NodeOperands; ++i)
       AddOperand(MI, Node->getOperand(i), i+II.getNumDefs(), &II, VRBaseMap);
+
+    // Emit all of the memory operands of this instruction
+    for (unsigned i = NodeOperands; i != NodeMemOperands; ++i)
+      AddMemOperand(MI, cast<MemOperandSDNode>(Node->getOperand(i))->MO);
 
     // Commute node if it has been determined to be profitable.
     if (CommuteSet.count(Node)) {
@@ -737,6 +758,7 @@ void ScheduleDAG::EmitNode(SDNode *Node, unsigned InstanceNo,
     case ISD::TokenFactor:
     case ISD::LABEL:
     case ISD::DECLARE:
+    case ISD::SRCVALUE:
       break;
     case ISD::CopyToReg: {
       unsigned InReg;
