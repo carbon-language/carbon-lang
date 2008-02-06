@@ -20,12 +20,22 @@
 #include "llvm/Function.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/ADT/Statistic.h"
 
 #define DEBUG_TYPE "memdep"
 
 using namespace llvm;
+
+namespace {
+  // Control the calculation of non-local dependencies by only examining the
+  // predecessors if the basic block has less than X amount (50 by default).
+  cl::opt<int> 
+  PredLimit("nonlocaldep-threshold", cl::Hidden, cl::init(50),
+            cl::desc("Control the calculation of non-local"
+                     "dependencies (default = 50)"));           
+}
 
 STATISTIC(NumCacheNonlocal, "Number of cached non-local responses");
 STATISTIC(NumUncacheNonlocal, "Number of uncached non-local responses");
@@ -211,15 +221,18 @@ void MemoryDependenceAnalysis::nonLocalHelper(Instruction* query,
     }
     
     // If we didn't find anything, recurse on the precessors of this block
+    // Only do this for blocks with a small number of predecessors.
     bool predOnStack = false;
     bool inserted = false;
-    for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB);
-         PI != PE; ++PI)
-      if (!visited.count(*PI)) {
-        stack.push_back(*PI);
-        inserted = true;
-      } else
-        predOnStack = true;
+    if (std::distance(pred_begin(BB), pred_end(BB)) <= PredLimit) { 
+      for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB);
+           PI != PE; ++PI)
+        if (!visited.count(*PI)) {
+          stack.push_back(*PI);
+          inserted = true;
+        } else
+          predOnStack = true;
+    }
     
     // If we inserted a new predecessor, then we'll come back to this block
     if (inserted)
