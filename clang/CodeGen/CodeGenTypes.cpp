@@ -97,7 +97,7 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
   llvm::DenseMap<Type *, llvm::PATypeHolder>::iterator
     I = TypeCache.find(T.getTypePtr());
   // If type is found in map and this is not a definition for a opaque
-  // place holder type then use it. Otherwise convert type T.
+  // place holder type then use it. Otherwise, convert type T.
   if (I != TypeCache.end())
     return I->second.get();
 
@@ -247,13 +247,8 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     
     // Struct return passes the struct byref.
     if (!ResultType->isFirstClassType() && ResultType != llvm::Type::VoidTy) {
-      const llvm::Type *RType = llvm::PointerType::get(ResultType, 
-                                          FP.getResultType().getAddressSpace());
-      QualType RTy = Context.getPointerType(FP.getResultType());
-      TypeCache.insert(std::make_pair(RTy.getTypePtr(), 
-                                      llvm::PATypeHolder(RType)));
-  
-      ArgTys.push_back(RType);
+      ArgTys.push_back(llvm::PointerType::get(ResultType, 
+                                        FP.getResultType().getAddressSpace()));
       ResultType = llvm::Type::VoidTy;
     }
     
@@ -296,16 +291,9 @@ void CodeGenTypes::DecodeArgumentTypes(const FunctionTypeProto &FTP,
     const llvm::Type *Ty = ConvertType(FTP.getArgType(i));
     if (Ty->isFirstClassType())
       ArgTys.push_back(Ty);
-    else {
-      QualType ATy = FTP.getArgType(i);
-      QualType PTy = Context.getPointerType(ATy);
-      unsigned AS = ATy.getAddressSpace();
-      const llvm::Type *PtrTy = llvm::PointerType::get(Ty, AS);
-      TypeCache.insert(std::make_pair(PTy.getTypePtr(), 
-                                      llvm::PATypeHolder(PtrTy)));
-
-      ArgTys.push_back(PtrTy);
-    }
+    else
+      // byval arguments are always on the stack, which is addr space #0.
+      ArgTys.push_back(llvm::PointerType::getUnqual(Ty));
   }
 }
 
@@ -334,13 +322,17 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(QualType T,
   } else if (TD->getKind() == Decl::Struct) {
     const RecordDecl *RD = cast<const RecordDecl>(TD);
     
-    // If this is nested record and this RecordDecl is already under
-    // process then return associated OpaqueType for now.
+    // This decl could well be recursive.  In this case, insert (unless we
+    // already have one) an opaque definition of this type, which the recursive
+    // uses will get.  We will then refine this opaque version later.
     if (TDTI == TagDeclTypes.end()) {
       // Create new OpaqueType now for later use in case this is a recursive
       // type.  This will later be refined to the actual type.
       ResultType = llvm::OpaqueType::get();
       TagDeclTypes.insert(std::make_pair(TD, ResultType));
+      
+      // Insert this into TypeCache so that later uses won't even get to
+      // ConvertTagDeclType.
       TypeCache.insert(std::make_pair(T.getTypePtr(), ResultType));
     }
     
@@ -365,7 +357,7 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(QualType T,
     
     // Refine the OpaqueType associated with this RecordDecl.
     cast<llvm::OpaqueType>(TagDeclTypes.find(TD)->second.get())
-    ->refineAbstractTypeTo(ResultType);
+                ->refineAbstractTypeTo(ResultType);
     
     ResultType = Holder.get();
   } else if (TD->getKind() == Decl::Union) {
@@ -391,7 +383,7 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(QualType T,
       TagDeclTypes.insert(std::make_pair(TD, ResultType));
     }
   } else {
-    assert(0 && "FIXME: Implement tag decl kind!");
+    assert(0 && "FIXME: Unknown tag decl kind!");
   }
   
   std::string TypeName(TD->getKindName());
