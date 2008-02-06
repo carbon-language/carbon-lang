@@ -722,7 +722,14 @@ public:
 };
 
 
-/// ReturnStmt - This represents a return, optionally of an expression.
+/// ReturnStmt - This represents a return, optionally of an expression:
+///   return;
+///   return 4;
+///
+/// Note that GCC allows return with no argument in a function declared to
+/// return a value, and it allows returning a value in functions declared to
+/// return void.  We explicitly model this in the AST, which means you can't
+/// depend on the return type of the function and the presence of an argument.
 ///
 class ReturnStmt : public Stmt {
   Expr *RetExpr;
