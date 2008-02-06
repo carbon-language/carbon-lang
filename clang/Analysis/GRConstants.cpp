@@ -716,8 +716,7 @@ void GRConstants::VisitBinaryOperator(BinaryOperator* B,
           
         case BinaryOperator::Assign: {
           const LValue& L1 = cast<LValue>(V1);
-          const NonLValue& R2 = cast<NonLValue>(V2);
-          Nodify(Dst, B, N2, SetValue(SetValue(St, B, R2), L1, R2));
+          Nodify(Dst, B, N2, SetValue(SetValue(St, B, V2), L1, V2));
           break;
         }
           
