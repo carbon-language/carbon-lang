@@ -685,16 +685,16 @@ void MemberExpr::EmitImpl(Serializer& S) const {
   S.Emit(MemberLoc);
   S.EmitPtr(MemberDecl);
   S.EmitBool(IsArrow);
-  S.EmitOwnedPtr(Base);
   S.Emit(getType());
+  S.EmitOwnedPtr(Base);
 }
 
 MemberExpr* MemberExpr::CreateImpl(Deserializer& D) {
   SourceLocation L = SourceLocation::ReadVal(D);
   FieldDecl* MemberDecl = cast<FieldDecl>(D.ReadPtr<Decl>());
   bool IsArrow = D.ReadBool();
-  Expr* base = D.ReadOwnedPtr<Expr>();
   QualType T = QualType::ReadVal(D);
+  Expr* base = D.ReadOwnedPtr<Expr>();
   
   return new MemberExpr(base,IsArrow,MemberDecl,L,T); 
 }
