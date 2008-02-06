@@ -22,6 +22,7 @@
 
 namespace llvm {
   class APFloat;
+  class APInt;
 
 /// This folding set used for two purposes:
 ///   1. Given information about a node we want to create, look up the unique
@@ -206,6 +207,7 @@ public:
   void AddFloat(float F);
   void AddDouble(double D);
   void AddAPFloat(const APFloat& apf);
+  void AddAPInt(const APInt& api);
   void AddString(const std::string &String);
   
   /// clear - Clear the accumulated profile, allowing this FoldingSetNodeID

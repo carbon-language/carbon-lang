@@ -16,6 +16,7 @@
 
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/APInt.h"
 #include "llvm/Support/MathExtras.h"
 #include <cassert>
 using namespace llvm;
@@ -59,6 +60,9 @@ void FoldingSetNodeID::AddDouble(double D) {
 }
 void FoldingSetNodeID::AddAPFloat(const APFloat& apf) {
   APInt api = apf.convertToAPInt();
+  AddAPInt(api);
+}
+void FoldingSetNodeID::AddAPInt(const APInt& api) {
   const uint64_t *p = api.getRawData();
   for (unsigned i=0; i<api.getNumWords(); i++)
     AddInteger(*p++);
