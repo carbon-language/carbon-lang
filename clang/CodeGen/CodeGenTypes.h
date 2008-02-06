@@ -152,8 +152,13 @@ public:  // These are internal details of CGT that shouldn't be used externally.
   /// addBitFieldInfo - Assign a start bit and a size to field FD.
   void addBitFieldInfo(const FieldDecl *FD, unsigned Begin, unsigned Size);
 
-  /// getBitFieldInfo - Return the BitFieldInfo  that corresponds to the field FD.
+  /// getBitFieldInfo - Return the BitFieldInfo  that corresponds to the field
+  /// FD.
   BitFieldInfo getBitFieldInfo(const FieldDecl *FD);
+
+  /// ConvertTagDeclType - Lay out a tagged decl type like struct or union or
+  /// enum.
+  const llvm::Type *ConvertTagDeclType(QualType T, const TagDecl *TD);
 };
 
 }  // end namespace CodeGen
