@@ -95,14 +95,14 @@ CodeGenTypes::~CodeGenTypes() {
 const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
   // See if type is already cached.
   llvm::DenseMap<Type *, llvm::PATypeHolder>::iterator
-    I = TypeCache.find(T.getTypePtr());
+    I = TypeCache.find(T.getCanonicalType().getTypePtr());
   // If type is found in map and this is not a definition for a opaque
   // place holder type then use it. Otherwise, convert type T.
   if (I != TypeCache.end())
     return I->second.get();
 
   const llvm::Type *ResultType = ConvertNewType(T);
-  TypeCache.insert(std::make_pair(T.getTypePtr(), 
+  TypeCache.insert(std::make_pair(T.getCanonicalType().getTypePtr(), 
                                   llvm::PATypeHolder(ResultType)));
   return ResultType;
 }
@@ -321,89 +321,76 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(QualType T,
   llvm::DenseMap<const TagDecl*, llvm::PATypeHolder>::iterator TDTI = 
     TagDeclTypes.find(TD);
   
-  // If corresponding llvm type is not a opaque struct type
-  // then use it.
-  if (TDTI != TagDeclTypes.end() &&   // Don't have a type?
-      // Have a type, but it was opaque before and now we have a definition.
-      (!isa<llvm::OpaqueType>(TDTI->second.get()) || !TD->isDefinition()))
+  // If we've already compiled this tag type, use the previous definition.
+  if (TDTI != TagDeclTypes.end())
     return TDTI->second;
   
-  llvm::Type *ResultType = 0;
-  
+  // If this is still a forward definition, just define an opaque type to use
+  // for this tagged decl.
   if (!TD->isDefinition()) {
-    ResultType = llvm::OpaqueType::get();  
+    llvm::Type *ResultType = llvm::OpaqueType::get();  
     TagDeclTypes.insert(std::make_pair(TD, ResultType));
-  } else if (TD->getKind() == Decl::Enum) {
+    return ResultType;
+  }
+  
+  // Okay, this is a definition of a type.  Compile the implementation now.
+  
+  if (TD->getKind() == Decl::Enum) {
     // Don't bother storing enums in TagDeclTypes.
     return ConvertType(cast<EnumDecl>(TD)->getIntegerType());
-  } else if (TD->getKind() == Decl::Struct) {
-    const RecordDecl *RD = cast<const RecordDecl>(TD);
-    
-    // This decl could well be recursive.  In this case, insert (unless we
-    // already have one) an opaque definition of this type, which the recursive
-    // uses will get.  We will then refine this opaque version later.
-    if (TDTI == TagDeclTypes.end()) {
-      // Create new OpaqueType now for later use in case this is a recursive
-      // type.  This will later be refined to the actual type.
-      ResultType = llvm::OpaqueType::get();
-      TagDeclTypes.insert(std::make_pair(TD, ResultType));
-      
-      // Insert this into TypeCache so that later uses won't even get to
-      // ConvertTagDeclType.
-      TypeCache.insert(std::make_pair(T.getTypePtr(), ResultType));
-    }
-    
+  }
+  
+  // This decl could well be recursive.  In this case, insert an opaque
+  // definition of this type, which the recursive uses will get.  We will then
+  // refine this opaque version later.
+
+  // Create new OpaqueType now for later use in case this is a recursive
+  // type.  This will later be refined to the actual type.
+  llvm::PATypeHolder ResultHolder = llvm::OpaqueType::get();
+  TagDeclTypes.insert(std::make_pair(TD, ResultHolder));
+  
+  const llvm::Type *ResultType;
+  const RecordDecl *RD = cast<const RecordDecl>(TD);
+  if (TD->getKind() == Decl::Struct || TD->getKind() == Decl::Class) {
     // Layout fields.
     RecordOrganizer RO(*this);
     for (unsigned i = 0, e = RD->getNumMembers(); i != e; ++i)
       RO.addField(RD->getMember(i));
-      const ASTRecordLayout &RL = Context.getASTRecordLayout(RD, 
-                                                             SourceLocation());
-      RO.layoutStructFields(RL);
-      
-      // Get llvm::StructType.
-      CGRecordLayout *RLI = new CGRecordLayout(RO.getLLVMType(), 
-                                               RO.getPaddingFields());
-      ResultType = RLI->getLLVMType();
-      TagDeclTypes.insert(std::make_pair(TD, ResultType));
-      CGRecordLayouts[TD] = RLI;
     
-    // Refining away Opaque could cause ResultType to become invalidated.
-    // Keep it in a happy little type holder to handle this.
-    llvm::PATypeHolder Holder(ResultType);
+    RO.layoutStructFields(Context.getASTRecordLayout(RD, SourceLocation()));
     
-    // Refine the OpaqueType associated with this RecordDecl.
-    cast<llvm::OpaqueType>(TagDeclTypes.find(TD)->second.get())
-                ->refineAbstractTypeTo(ResultType);
+    // Get llvm::StructType.
+    CGRecordLayouts[TD] = new CGRecordLayout(RO.getLLVMType(), 
+                                             RO.getPaddingFields());
+    ResultType = RO.getLLVMType();
     
-    ResultType = Holder.get();
   } else if (TD->getKind() == Decl::Union) {
-    const RecordDecl *RD = cast<const RecordDecl>(TD);
     // Just use the largest element of the union, breaking ties with the
     // highest aligned member.
-    
     if (RD->getNumMembers() != 0) {
       RecordOrganizer RO(*this);
       for (unsigned i = 0, e = RD->getNumMembers(); i != e; ++i)
         RO.addField(RD->getMember(i));
-        RO.layoutUnionFields();
-        
-        // Get llvm::StructType.
-        CGRecordLayout *RLI = new CGRecordLayout(RO.getLLVMType(),
-                                                 RO.getPaddingFields());
-        ResultType = RLI->getLLVMType();
-        TagDeclTypes.insert(std::make_pair(TD, ResultType));
-        CGRecordLayouts[TD] = RLI;
+      
+      RO.layoutUnionFields();
+      
+      // Get llvm::StructType.
+      CGRecordLayouts[TD] = new CGRecordLayout(RO.getLLVMType(),
+                                               RO.getPaddingFields());
+      ResultType = RO.getLLVMType();
     } else {       
-      std::vector<const llvm::Type*> Fields;
-      ResultType = llvm::StructType::get(Fields);
-      TagDeclTypes.insert(std::make_pair(TD, ResultType));
+      ResultType = llvm::StructType::get(std::vector<const llvm::Type*>());
     }
   } else {
     assert(0 && "FIXME: Unknown tag decl kind!");
   }
   
-  return ResultType;
+  // Refine our Opaque type to ResultType.  This can invalidate ResultType, so
+  // make sure to read the result out of the holder.
+  cast<llvm::OpaqueType>(ResultHolder.get())
+    ->refineAbstractTypeTo(ResultType);
+  
+  return ResultHolder.get();
 }  
 
 /// getLLVMFieldNo - Return llvm::StructType element number
