@@ -19,7 +19,6 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
-#include "llvm/IntrinsicInst.h"
 #include "llvm/Instructions.h"
 #include "llvm/Value.h"
 #include "llvm/ADT/BitVector.h"
@@ -737,7 +736,6 @@ namespace {
                             SmallVector<Instruction*, 4>& toErase);
     bool processNonLocalLoad(LoadInst* L,
                              SmallVector<Instruction*, 4>& toErase);
-    bool processMemCpy(MemCpyInst* M, SmallVector<Instruction*, 4>& toErase);
     Value *GetValueForBlock(BasicBlock *BB, LoadInst* orig,
                             DenseMap<BasicBlock*, Value*> &Phis,
                             bool top_level = false);
@@ -1019,84 +1017,6 @@ bool GVN::processLoad(LoadInst* L,
   return deletedLoad;
 }
 
-/// processMemCpy - perform simplication of memcpy's.  If we have memcpy A which
-/// copies X to Y, and memcpy B which copies Y to Z, then we can rewrite B to be
-/// a memcpy from X to Z (or potentially a memmove, depending on circumstances).
-///  This allows later passes to remove the first memcpy altogether.
-bool GVN::processMemCpy(MemCpyInst* M,
-                        SmallVector<Instruction*, 4>& toErase) {
-  MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
-  
-  // First, we have to check that the dependency is another memcpy
-  Instruction* dep = MD.getDependency(M);
-  if  (dep == MemoryDependenceAnalysis::None ||
-       dep == MemoryDependenceAnalysis::NonLocal ||
-       !isa<MemCpyInst>(dep))
-    return false;
-  
-  // We can only transforms memcpy's where the dest of one is the source of the
-  // other
-  MemCpyInst* MDep = cast<MemCpyInst>(dep);
-  if (M->getSource() != MDep->getDest())
-    return false;
-  
-  // Second, the length of the memcpy's must be the same, or the preceeding one
-  // must be larger than the following one.
-  Value* DepLength = MDep->getLength();
-  uint64_t CpySize = ~0UL;
-  uint64_t DepSize = ~0UL;
-  if (isa<ConstantInt>(DepLength)) {
-    if (isa<ConstantInt>(M->getLength())) {
-      if (cast<ConstantInt>(DepLength)->getLimitedValue() <
-          cast<ConstantInt>(M->getLength())->getLimitedValue()) {
-        return false;
-      } else {
-        CpySize = cast<ConstantInt>(M->getLength())->getLimitedValue();
-        DepSize = cast<ConstantInt>(DepLength)->getLimitedValue();
-      }
-    } else {
-      return false;
-    }
-  } else {
-    return false;
-  }
-  
-  // Finally, we have to make sure that the dest of the second does not
-  // alias the source of the first
-  AliasAnalysis& AA = getAnalysis<AliasAnalysis>();
-  if (AA.alias(M->getRawDest(), CpySize, MDep->getRawSource(), DepSize) !=
-      AliasAnalysis::NoAlias) {
-    // If they don't, we can still make the transformation by first turning M
-    // into a memmove rather than a memcpy.
-    bool is32bit = M->getIntrinsicID() == Intrinsic::memcpy_i32;
-    Function* MemMoveFun = Intrinsic::getDeclaration(
-                                 M->getParent()->getParent()->getParent(),
-                                 is32bit ? Intrinsic::memmove_i32 : 
-                                           Intrinsic::memmove_i64);
-    
-    std::vector<Value*> args;
-    args.push_back(M->getRawDest());
-    args.push_back(MDep->getRawSource());
-    args.push_back(M->getLength());
-    args.push_back(M->getAlignment());
-                                           
-    new CallInst(MemMoveFun, args.begin(), args.end(), "", M);
-    
-    MD.removeInstruction(M);
-    toErase.push_back(M);
-    
-    return true;
-  }
-  
-  // If all checks passed, then we can transform these memcpy's
-  M->setSource(MDep->getRawSource());
-  
-  // Reset dependence information for the memcpy
-  MD.removeInstruction(M);
-  
-  return true;
-}
-
 /// processInstruction - When calculating availability, handle an instruction
 /// by inserting it into the appropriate sets
 bool GVN::processInstruction(Instruction* I,
@@ -1105,8 +1025,6 @@ bool GVN::processInstruction(Instruction* I,
                                 SmallVector<Instruction*, 4>& toErase) {
   if (LoadInst* L = dyn_cast<LoadInst>(I)) {
     return processLoad(L, lastSeenLoad, toErase);
-  } else if (MemCpyInst* M = dyn_cast<MemCpyInst>(I)) {
-    return processMemCpy(M, toErase);
   }
   
   unsigned num = VN.lookup_or_add(I);
