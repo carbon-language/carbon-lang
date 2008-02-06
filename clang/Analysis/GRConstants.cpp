@@ -898,6 +898,19 @@ GRConstants::StateTy GRConstants::Assume(StateTy St, NonLValue Cond,
       assert (false && "'Assume' not implemented for this NonLValue.");
       return St;
       
+      
+    case nonlval::SymbolValKind: {
+      lval::SymbolVal& SV = cast<lval::SymbolVal>(Cond);
+      SymbolID sym = SV.getSymbol();
+      
+      if (Assumption)
+        return AssumeSymNE(St, sym, ValMgr.getValue(0, SymMgr.getType(sym)),
+                           isFeasible);
+      else
+        return AssumeSymEQ(St, sym, ValMgr.getValue(0, SymMgr.getType(sym)),
+                           isFeasible);
+    }
+      
     case nonlval::SymIntConstraintValKind:
       return
         AssumeSymInt(St, Assumption,

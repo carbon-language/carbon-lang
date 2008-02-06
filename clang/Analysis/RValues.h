@@ -71,7 +71,9 @@ public:
   
   inline Kind getKind() const { return (Kind) (Data & Mask); }
   inline void* getPtr() const { return reinterpret_cast<void*>(Data & ~Mask); }  
-  inline bool operator==(const SymbolData& R) const { return Data == R.Data; }  
+  inline bool operator==(const SymbolData& R) const { return Data == R.Data; }
+  
+  QualType getType() const;  
 };
   
 
@@ -114,12 +116,16 @@ public:
   SymbolManager();
   ~SymbolManager();
   
-  SymbolData getSymbolData(SymbolID id) const {
-    assert (id < SymbolToData.size());
-    return SymbolToData[id];
+  SymbolID getSymbol(ParmVarDecl* D);
+  
+  inline SymbolData getSymbolData(SymbolID ID) const {
+    assert (ID < SymbolToData.size());
+    return SymbolToData[ID];
   }
   
-  SymbolID getSymbol(ParmVarDecl* D);
+  inline QualType getType(SymbolID ID) const {
+    return getSymbolData(ID).getType();
+  }
 };
   
 

@@ -34,6 +34,16 @@ SymbolID SymbolManager::getSymbol(ParmVarDecl* D) {
   return X;
 }
 
+QualType SymbolData::getType() const {
+  switch (getKind()) {
+    default:
+      assert (false && "getType() not implemented for this symbol.");
+    
+    case ParmKind:
+      return static_cast<ParmVarDecl*>(getPtr())->getType();
+  }
+}
+
 SymbolManager::SymbolManager() {}
 SymbolManager::~SymbolManager() {}
 
