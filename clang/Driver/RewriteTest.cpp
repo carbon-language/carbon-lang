@@ -746,7 +746,7 @@ Stmt *RewriteTest::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
   ObjCIvarDecl *D = IV->getDecl();
   if (IV->isFreeIvar()) {
     Expr *Replacement = new MemberExpr(IV->getBase(), true, D, 
-                                       IV->getLocation());
+                                       IV->getLocation(), D->getType());
     ReplaceStmt(IV, Replacement);
     delete IV;
     return Replacement;

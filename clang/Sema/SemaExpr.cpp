@@ -532,7 +532,15 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
     if (!MemberDecl)
       return Diag(OpLoc, diag::err_typecheck_no_member, Member.getName(),
                   SourceRange(MemberLoc));
-    return new MemberExpr(BaseExpr, OpKind==tok::arrow, MemberDecl, MemberLoc);
+
+    // Figure out the type of the member; see C99 6.5.2.3p3
+    QualType MemberType = MemberDecl->getType();
+    unsigned combinedQualifiers =
+        MemberType.getQualifiers() | BaseType.getQualifiers();
+    MemberType = MemberType.getQualifiedType(combinedQualifiers);
+
+    return new MemberExpr(BaseExpr, OpKind==tok::arrow, MemberDecl,
+                          MemberLoc, MemberType);
   } else if (BaseType->isOCUVectorType() && OpKind == tok::period) {
     // Component access limited to variables (reject vec4.rg.g).
     if (!isa<DeclRefExpr>(BaseExpr)) 
@@ -2050,8 +2058,9 @@ Sema::ExprResult Sema::ActOnBuiltinOffsetOf(SourceLocation BuiltinLoc,
     
     // FIXME: C++: Verify that MemberDecl isn't a static field.
     // FIXME: Verify that MemberDecl isn't a bitfield.
-    
-    Res = new MemberExpr(Res, false, MemberDecl, OC.LocEnd);
+    // MemberDecl->getType() doesn't get the right qualifiers, but it doesn't
+    // matter here.
+    Res = new MemberExpr(Res, false, MemberDecl, OC.LocEnd, MemberDecl->getType());
   }
   
   return new UnaryOperator(Res, UnaryOperator::OffsetOf, Context.getSizeType(),

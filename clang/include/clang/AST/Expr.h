@@ -650,10 +650,11 @@ class MemberExpr : public Expr {
   SourceLocation MemberLoc;
   bool IsArrow;      // True if this is "X->F", false if this is "X.F".
 public:
-  MemberExpr(Expr *base, bool isarrow, FieldDecl *memberdecl, SourceLocation l) 
-    : Expr(MemberExprClass, memberdecl->getType()),
+  MemberExpr(Expr *base, bool isarrow, FieldDecl *memberdecl, SourceLocation l,
+             QualType ty) 
+    : Expr(MemberExprClass, ty),
       Base(base), MemberDecl(memberdecl), MemberLoc(l), IsArrow(isarrow) {}
-  
+
   Expr *getBase() const { return Base; }
   FieldDecl *getMemberDecl() const { return MemberDecl; }
   bool isArrow() const { return IsArrow; }
