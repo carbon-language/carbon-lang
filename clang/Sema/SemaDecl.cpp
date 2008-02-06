@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
+#include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Builtins.h"
 #include "clang/AST/Decl.h"
@@ -23,7 +24,7 @@
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/SourceManager.h"
 // FIXME: layering (ideally, Sema shouldn't be dependent on Lex API's)
-#include "clang/Lex/Preprocessor.h" 
+#include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/HeaderSearch.h" 
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallSet.h"
@@ -1248,7 +1249,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
     Name->setFETokenInfo(New);
     S->AddDecl(New);
   }
-
+  
   return New;
 }
 
@@ -1460,9 +1461,10 @@ void Sema::ActOnFields(Scope* S,
   }
  
   // Okay, we successfully defined 'Record'.
-  if (Record)
+  if (Record) {
     Record->defineBody(&RecFields[0], RecFields.size());
-  else {
+    Consumer.HandleTagDeclDefinition(Record);
+  } else {
     ObjCIvarDecl **ClsFields = reinterpret_cast<ObjCIvarDecl**>(&RecFields[0]);
     if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(EnclosingDecl))
       ID->addInstanceVariablesToClass(ClsFields, RecFields.size(), RBrac);
@@ -1705,6 +1707,7 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
   }
   
   Enum->defineElements(EltList, BestType);
+  Consumer.HandleTagDeclDefinition(Enum);
 }
 
 Sema::DeclTy* Sema::ActOnLinkageSpec(SourceLocation Loc,
