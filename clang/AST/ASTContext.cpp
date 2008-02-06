@@ -1627,14 +1627,18 @@ bool ASTContext::functionTypesAreCompatible(QualType lhs, QualType rhs) {
 }
 
 bool ASTContext::arrayTypesAreCompatible(QualType lhs, QualType rhs) {
-  QualType ltype = cast<ArrayType>(lhs.getCanonicalType())->getElementType();
-  QualType rtype = cast<ArrayType>(rhs.getCanonicalType())->getElementType();
-  
+  // Compatible arrays must have compatible element types
+  QualType ltype = lhs->getAsArrayType()->getElementType();
+  QualType rtype = rhs->getAsArrayType()->getElementType();
+
   if (!typesAreCompatible(ltype, rtype))
     return false;
-    
-  // FIXME: If both types specify constant sizes, then the sizes must also be 
-  // the same. Even if the sizes are the same, GCC produces an error.
+
+  // Compatible arrays must be the same size
+  if (const ConstantArrayType* LCAT = lhs->getAsConstantArrayType())
+    if (const ConstantArrayType* RCAT = rhs->getAsConstantArrayType())
+      return RCAT->getSize() == LCAT->getSize();
+
   return true;
 }
 
