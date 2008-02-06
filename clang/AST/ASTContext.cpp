@@ -323,10 +323,22 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D,
     // the future, this will need to be tweakable by targets.
     for (unsigned i = 0, e = D->getNumMembers(); i != e; ++i) {
       const FieldDecl *FD = D->getMember(i);
-      std::pair<uint64_t, unsigned> FieldInfo = getTypeInfo(FD->getType(), L);
-      uint64_t FieldSize = FieldInfo.first;
-      unsigned FieldAlign = FieldInfo.second;
-      
+      uint64_t FieldSize;
+      unsigned FieldAlign;
+      if (FD->getType()->isIncompleteType()) {
+        // This must be a flexible array member; we can't directly
+        // query getTypeInfo about these, so we figure it out here.
+        // Flexible array members don't have any size, but they
+        // have to be aligned appropriately for their element type.
+        const ArrayType* ATy = FD->getType()->getAsArrayType();
+        FieldAlign = getTypeAlign(ATy->getElementType(), L);
+        FieldSize = 0;
+      } else {
+        std::pair<uint64_t, unsigned> FieldInfo = getTypeInfo(FD->getType(), L);
+        FieldSize = FieldInfo.first;
+        FieldAlign = FieldInfo.second;
+      }
+
       // Round up the current record size to the field's alignment boundary.
       RecordSize = (RecordSize+FieldAlign-1) & ~(FieldAlign-1);
       
