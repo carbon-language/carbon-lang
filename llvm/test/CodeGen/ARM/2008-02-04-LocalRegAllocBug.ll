@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llc -mtriple=arm-linux-gnueabi -regalloc=local
-; PR1609
+; PR1925
 
 	%struct.encode_aux_nearestmatch = type { i32*, i32*, i32*, i32*, i32, i32 }
 	%struct.encode_aux_pigeonhole = type { float, float, i32, i32, i32*, i32, i32*, i32*, i32* }
