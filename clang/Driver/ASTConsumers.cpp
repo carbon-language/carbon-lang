@@ -22,8 +22,6 @@
 #include "clang/Analysis/Analyses/GRConstants.h"
 #include "clang/Analysis/LocalCheckers.h"
 #include "llvm/Support/Streams.h"
-#include <fstream>
-
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -607,15 +605,20 @@ namespace {
     ASTContext *Ctx;
     const LangOptions &Features;
   protected:
-    llvm::Module *M;
+    llvm::Module *&M;
     CodeGen::CodeGenModule *Builder;
   public:
-    CodeGenerator(Diagnostic &diags, const LangOptions &LO)
-      : Diags(diags)
-      , Features(LO) {}
+    CodeGenerator(Diagnostic &diags, const LangOptions &LO,
+                  llvm::Module *&DestModule)
+      : Diags(diags), Features(LO), M(DestModule) {}
+    
+    ~CodeGenerator() {
+      CodeGen::Terminate(Builder);
+    }
+    
     virtual void Initialize(ASTContext &Context) {
       Ctx = &Context;
-      M = new llvm::Module("foo");
+      
       M->setTargetTriple(Ctx->Target.getTargetTriple());
       M->setDataLayout(Ctx->Target.getTargetDescription());
       TD = new llvm::TargetData(Ctx->Target.getTargetDescription());
@@ -641,70 +644,10 @@ namespace {
   };
 }
 
-namespace {
-  class LLVMEmitter : public CodeGenerator {
-  public:
-    LLVMEmitter(Diagnostic &diags, const LangOptions &LO)
-    : CodeGenerator(diags,LO) {}
-
-    ~LLVMEmitter() {
-      CodeGen::Terminate(Builder);
-      
-      // Print the generated code.
-      M->print(llvm::cout.stream());
-      delete M;
-    }
-  };
-}
-
-ASTConsumer *clang::CreateLLVMEmitter(Diagnostic &Diags, 
-                                      const LangOptions &Features) {
-  return new LLVMEmitter(Diags, Features);
-}
-
-namespace {
-  class BCWriter : public CodeGenerator {
-  public:
-    std::ostream& Out;
-
-    BCWriter(std::ostream* out, Diagnostic &diags, const LangOptions &LO)
-    : CodeGenerator(diags,LO)
-    , Out(*out) {}
-
-    ~BCWriter() {
-      CodeGen::Terminate(Builder);
-      llvm::WriteBitcodeToFile(M, Out);
-      delete M;
-    }
-  };
-}
-
-ASTConsumer *clang::CreateBCWriter(const std::string& InFile,
-                                   const std::string& OutputFile,
-                                   Diagnostic &Diags,
-                                   const LangOptions &Features) {
-  std::string FileName = OutputFile;
-  
-  std::ostream *Out;
-  if (OutputFile == "-")
-    Out = llvm::cout.stream();
-  else if (!OutputFile.size()) {
-    if (InFile == "-")
-      Out = llvm::cout.stream();
-    else {
-      llvm::sys::Path Path(InFile);
-      Path.eraseSuffix();
-      Path.appendSuffix("bc");
-      FileName = Path.toString();
-      Out = new std::ofstream(FileName.c_str(), 
-                              std::ios_base::binary|std::ios_base::out);
-    }
-  } else {
-    Out = new std::ofstream(FileName.c_str(), 
-                            std::ios_base::binary|std::ios_base::out);
-  }
-
-  return new BCWriter(Out, Diags, Features);
+ASTConsumer *clang::CreateLLVMCodeGen(Diagnostic &Diags, 
+                                      const LangOptions &Features,
+                                      llvm::Module *&DestModule) {
+  return new CodeGenerator(Diags, Features, DestModule);
 }
 
 //===----------------------------------------------------------------------===//

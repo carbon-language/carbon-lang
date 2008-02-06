@@ -1,4 +1,4 @@
-// RUN: clang %s -emit-llvm > %t1
+// RUN: clang < %s -emit-llvm > %t1
 // Run  grep "STest1 = type { i32, \[4 x i16\], double }" %t1 &&
 // RUN: grep "STest2 = type { i16, i16, i32, i32 }" %t1 &&
 // RUN: grep "STest3 = type { i8, i8, i16, i32 }" %t1 &&

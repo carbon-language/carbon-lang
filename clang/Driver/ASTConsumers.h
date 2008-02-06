@@ -16,8 +16,10 @@
 
 #include <iosfwd>
 
-namespace llvm { namespace sys { class Path; }}
-
+namespace llvm {
+  class Module;
+  namespace sys { class Path; }
+}
 namespace clang {
 
 class ASTConsumer;
@@ -41,12 +43,9 @@ ASTConsumer *CreateUnitValsChecker(Diagnostic &Diags);
   
 ASTConsumer *CreateGRConstants();
 
-ASTConsumer *CreateLLVMEmitter(Diagnostic &Diags, const LangOptions &Features);
-
-ASTConsumer *CreateBCWriter(const std::string& InFile,
-                            const std::string& OutFile,
-                            Diagnostic &Diags,
-                            const LangOptions &LOpts);
+  
+ASTConsumer *CreateLLVMCodeGen(Diagnostic &Diags, const LangOptions &Features,
+                               llvm::Module *&DestModule);
 
 ASTConsumer *CreateCodeRewriterTest(const std::string& InFile,
                                     Diagnostic &Diags);

@@ -1,4 +1,4 @@
-// RUN: clang %s -emit-llvm > %t1
+// RUN: clang %s -emit-llvm -o - > %t1
 // RUN: grep "shl i32 %tmp, 19" %t1 &&
 // RUN: grep "ashr i32 %tmp1, 19" %t1 &&
 // RUN: grep "shl i16 %tmp4, 1" %t1 &&
