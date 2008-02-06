@@ -205,6 +205,10 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
     return RValue::get(Builder.CreateZExt(LHS, ConvertType(E->getType()),
                                           "tmp"));
   }
+  case Builtin::BI__builtin_alloca:
+    return RValue::get(Builder.CreateAlloca(llvm::Type::Int8Ty,
+                                            EmitScalarExpr(E->getArg(0)),
+                                            "tmp"));
   }
   return RValue::get(0);
 }
