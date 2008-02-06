@@ -95,23 +95,22 @@ CodeGenTypes::~CodeGenTypes() {
 const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
   // See if type is already cached.
   llvm::DenseMap<Type *, llvm::PATypeHolder>::iterator
-    I = TypeHolderMap.find(T.getTypePtr());
+    I = TypeCache.find(T.getTypePtr());
   // If type is found in map and this is not a definition for a opaque
   // place holder type then use it. Otherwise convert type T.
-  if (I != TypeHolderMap.end())
+  if (I != TypeCache.end())
     return I->second.get();
 
   const llvm::Type *ResultType = ConvertNewType(T);
-  TypeHolderMap.insert(std::make_pair(T.getTypePtr(), 
-                                      llvm::PATypeHolder(ResultType)));
+  TypeCache.insert(std::make_pair(T.getTypePtr(), 
+                                  llvm::PATypeHolder(ResultType)));
   return ResultType;
 }
 
-/// ConvertTypeForMem - Convert type T into a llvm::Type. Maintain and use
-/// type cache through TypeHolderMap.  This differs from ConvertType in that
-/// it is used to convert to the memory representation for a type.  For
-/// example, the scalar representation for _Bool is i1, but the memory
-/// representation is usually i8 or i32, depending on the target.
+/// ConvertTypeForMem - Convert type T into a llvm::Type.  This differs from
+/// ConvertType in that it is used to convert to the memory representation for
+/// a type.  For example, the scalar representation for _Bool is i1, but the
+/// memory representation is usually i8 or i32, depending on the target.
 const llvm::Type *CodeGenTypes::ConvertTypeForMem(QualType T) {
   const llvm::Type *R = ConvertType(T);
   
@@ -251,8 +250,8 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
       const llvm::Type *RType = llvm::PointerType::get(ResultType, 
                                           FP.getResultType().getAddressSpace());
       QualType RTy = Context.getPointerType(FP.getResultType());
-      TypeHolderMap.insert(std::make_pair(RTy.getTypePtr(), 
-                                          llvm::PATypeHolder(RType)));
+      TypeCache.insert(std::make_pair(RTy.getTypePtr(), 
+                                      llvm::PATypeHolder(RType)));
   
       ArgTys.push_back(RType);
       ResultType = llvm::Type::VoidTy;
@@ -302,8 +301,8 @@ void CodeGenTypes::DecodeArgumentTypes(const FunctionTypeProto &FTP,
       QualType PTy = Context.getPointerType(ATy);
       unsigned AS = ATy.getAddressSpace();
       const llvm::Type *PtrTy = llvm::PointerType::get(Ty, AS);
-      TypeHolderMap.insert(std::make_pair(PTy.getTypePtr(), 
-                                          llvm::PATypeHolder(PtrTy)));
+      TypeCache.insert(std::make_pair(PTy.getTypePtr(), 
+                                      llvm::PATypeHolder(PtrTy)));
 
       ArgTys.push_back(PtrTy);
     }
@@ -342,7 +341,7 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(QualType T,
       // type.  This will later be refined to the actual type.
       ResultType = llvm::OpaqueType::get();
       TagDeclTypes.insert(std::make_pair(TD, ResultType));
-      TypeHolderMap.insert(std::make_pair(T.getTypePtr(), ResultType));
+      TypeCache.insert(std::make_pair(T.getTypePtr(), ResultType));
     }
     
     // Layout fields.

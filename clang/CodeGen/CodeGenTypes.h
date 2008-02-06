@@ -100,11 +100,11 @@ public:
 private:
   llvm::DenseMap<const FieldDecl *, BitFieldInfo> BitFields;
 
-  /// TypeHolderMap - This map keeps cache of llvm::Types (through PATypeHolder)
+  /// TypeCache - This map keeps cache of llvm::Types (through PATypeHolder)
   /// and maps llvm::Types to corresponding clang::Type. llvm::PATypeHolder is
   /// used instead of llvm::Type because it allows us to bypass potential 
   /// dangling type pointers due to type refinement on llvm side.
-  llvm::DenseMap<Type *, llvm::PATypeHolder> TypeHolderMap;
+  llvm::DenseMap<Type *, llvm::PATypeHolder> TypeCache;
 
   /// ConvertNewType - Convert type T into a llvm::Type. Do not use this
   /// method directly because it does not do any type caching. This method
@@ -119,15 +119,13 @@ public:
   TargetInfo &getTarget() const { return Target; }
   ASTContext &getContext() const { return Context; }
 
-  /// ConvertType - Convert type T into a llvm::Type. Maintain and use
-  /// type cache through TypeHolderMap.
+  /// ConvertType - Convert type T into a llvm::Type.  
   const llvm::Type *ConvertType(QualType T);
   
-  /// ConvertTypeForMem - Convert type T into a llvm::Type. Maintain and use
-  /// type cache through TypeHolderMap.  This differs from ConvertType in that
-  /// it is used to convert to the memory representation for a type.  For
-  /// example, the scalar representation for _Bool is i1, but the memory
-  /// representation is usually i8 or i32, depending on the target.
+  /// ConvertTypeForMem - Convert type T into a llvm::Type.  This differs from
+  /// ConvertType in that it is used to convert to the memory representation for
+  /// a type.  For example, the scalar representation for _Bool is i1, but the
+  /// memory representation is usually i8 or i32, depending on the target.
   const llvm::Type *ConvertTypeForMem(QualType T);
   
   
