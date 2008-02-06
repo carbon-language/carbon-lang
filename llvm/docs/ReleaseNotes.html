@@ -129,7 +129,7 @@ optimizer, speeding it up and making it more aggressive.  For example:</p>
 
 <ul>
 
-<li>Daniel Berlin and (?) rewrote Andersen's alias analysis (which is not
+<li>Daniel Berlin and (Curtis?) rewrote Andersen's alias analysis (which is not
 enabled by default) to be several orders of magnitude faster, implmented Offline
 Variable Substitution.</li>
 
@@ -151,12 +151,15 @@ Devang: LoopIndexSplit is enabled by default.
 
 <ul>
 
-<li>Owen contributed Machine Loop info, domintors, etc.</li>
+<li>Owen contributed Machine Loop info, domintors, etc. Merged dom and
+ postdom.</li>
 
 <li>Dan added support for emitting debug information with .file and .loc on 
 targets that support it</li>
 
 <li>Evan physical register dependencies in the BURR scheduler</li>
+
+<li>Evan EXTRACT_SUBREG coalescing support</li>
 </ul>
 
 </div>
@@ -174,6 +177,8 @@ targets that support it</li>
 <ul>
 <li>Evan X86 now models EFLAGS in instructions.</li>
 <li>Evan: If conversion on by default for ARM.</li>
+<li>Bruno: MIPS PIC support.</li>
+<li>Arnold Schwaighofer: X86 tail call support.</li>
 </ul>
   
 </div>
@@ -205,7 +210,8 @@ targets that support it</li>
 </p>
 
 <ul>
-<li>.</li>
+<li>Devang added LLVMFoldingBuilder.</li>
+<li>Dan added support for vector sin, cos, and pow intrinsics.</li>
 </ul>
   
 </div>
