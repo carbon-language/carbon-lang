@@ -125,7 +125,11 @@ namespace vstate {
 ///  for a "state" in our symbolic value tracking.  It is intended to be
 ///  used as a functional object; that is once it is created and made
 ///  "persistent" in a FoldingSet its values will never change.
-struct ValueStateImpl : public llvm::FoldingSetNode {
+class ValueStateImpl : public llvm::FoldingSetNode {
+private:
+  void operator=(const ValueStateImpl& R) const;
+
+public:
   vstate::VariableBindingsTy VariableBindings;
   vstate::ConstantNotEqTy    ConstantNotEq;
   vstate::ConstantEqTy       ConstantEq;
@@ -143,6 +147,8 @@ struct ValueStateImpl : public llvm::FoldingSetNode {
       VariableBindings(RHS.VariableBindings),
       ConstantNotEq(RHS.ConstantNotEq),
       ConstantEq(RHS.ConstantEq) {} 
+  
+
   
   /// Profile - Profile the contents of a ValueStateImpl object for use
   ///  in a FoldingSet.
@@ -167,12 +173,11 @@ struct ValueStateImpl : public llvm::FoldingSetNode {
 ///  void* when being handled by GREngine.  It also forces us to unique states;
 ///  consequently, a ValueStateImpl* with a specific address will always refer
 ///  to the unique state with those values.
-class ValueState : public llvm::FoldingSetNode {
+class ValueState {
   ValueStateImpl* Data;
 public:
   ValueState(ValueStateImpl* D) : Data(D) {}
-  ValueState() : Data(0) {}  
-  void operator=(ValueStateImpl* D) { Data = D; }
+  ValueState() : Data(0) {}
   
   // Accessors.  
   ValueStateImpl* getImpl() const { return Data; }
