@@ -525,7 +525,9 @@ void RValue::print(std::ostream& Out) const {
 }
 
 static void printOpcode(std::ostream& Out, BinaryOperator::Opcode Op) {
-  switch (Op) {
+  switch (Op) {      
+    case BinaryOperator::Add: Out << "+" ; break;
+    case BinaryOperator::Sub: Out << "-" ; break;
     case BinaryOperator::EQ: Out << "=="; break;
     case BinaryOperator::NE: Out << "!="; break;
     default: assert(false && "Not yet implemented.");

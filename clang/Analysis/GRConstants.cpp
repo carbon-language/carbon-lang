@@ -260,8 +260,7 @@ public:
   StateTy AssumeSymInt(StateTy St, bool Assumption, const SymIntConstraint& C,
                        bool& isFeasible);
   
-  NodeTy* Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred, StateTy St,
-                 bool AlwaysMakeNode = false);
+  NodeTy* Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred, StateTy St);
   
   /// Nodify - This version of Nodify is used to batch process a set of states.
   ///  The states are not guaranteed to be unique.
@@ -582,11 +581,10 @@ GRConstants::StateTy GRConstants::RemoveDeadBindings(Stmt* Loc, StateTy M) {
 }
 
 GRConstants::NodeTy*
-GRConstants::Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred, StateTy St,
-                    bool AlwaysMakeNode) {
+GRConstants::Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred, StateTy St) {
  
   // If the state hasn't changed, don't generate a new node.
-  if (!AlwaysMakeNode && St == Pred->getState())
+  if (St == Pred->getState())
     return NULL;
   
   NodeTy* N = Builder->generateNode(S, St, Pred);
@@ -807,7 +805,10 @@ void GRConstants::VisitUnaryOperator(UnaryOperator* U,
         StateTy StNull = Assume(St, L1, false, isFeasibleNull);
         
         if (isFeasibleNull) {
-          NodeTy* NullNode = Nodify(Dst, U, N1, StNull, true);
+          // We don't use "Nodify" here because the node will be a sink
+          // and we have no intention of processing it later.
+          NodeTy* NullNode = Builder->generateNode(U, StNull, N1);
+
           if (NullNode) {
             NullNode->markAsSink();
             
