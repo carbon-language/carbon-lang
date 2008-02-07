@@ -631,30 +631,34 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine *TM) const {
   }
 
   if (getNumMemOperands() > 0) {
-    OS << ", SV:";
+    OS << ", Mem:";
     for (unsigned i = 0; i < getNumMemOperands(); i++) {
       const MemOperand &MRO = getMemOperand(i);
       const Value *V = MRO.getValue();
 
-      assert(V && "SV missing.");
       assert((MRO.isLoad() || MRO.isStore()) &&
              "SV has to be a load, store or both.");
       
       if (MRO.isVolatile())
         OS << "Volatile ";
+
       if (MRO.isLoad())
-        OS << "LD ";
+        OS << "LD";
       if (MRO.isStore())
-        OS << "ST ";
+        OS << "ST";
         
-      OS  << MRO.getSize();
+      OS << "(" << MRO.getSize() << ") [";
       
-      if (!V->getName().empty())
-        OS << "[" << V->getName() << " + " << MRO.getOffset() << "]";
+      if (!V)
+        OS << "<unknown>";
+      else if (!V->getName().empty())
+        OS << V->getName();
       else if (isa<PseudoSourceValue>(V))
-        OS << "[" << *V << " + " << MRO.getOffset() << "]";
+        OS << *V;
       else
-        OS << "[" << V << " + " << MRO.getOffset() << "]";
+        OS << V;
+
+      OS << " + " << MRO.getOffset() << "]";
     }
   }
 
