@@ -228,7 +228,6 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS, bool is64Bit)
   // FIXME: this is a known good value for Yonah. How about others?
   , MaxInlineSizeThreshold(128)
   , Is64Bit(is64Bit)
-  , HasLow4GUserAddress(true)
   , TargetType(isELF) { // Default to ELF unless otherwise specified.
 
   // Determine default and user specified characteristics
@@ -299,9 +298,6 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS, bool is64Bit)
     AsmFlavor = (TargetType == isWindows)
       ? X86Subtarget::Intel : X86Subtarget::ATT;
   }
-
-  if (TargetType == isDarwin && Is64Bit)
-    HasLow4GUserAddress = false;
 
   if (TargetType == isDarwin ||
       TargetType == isCygwin ||

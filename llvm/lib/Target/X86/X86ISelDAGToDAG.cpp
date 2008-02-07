@@ -63,7 +63,7 @@ namespace {
       int FrameIndex;
     } Base;
 
-    bool isRIPRel;     // RIP relative?
+    bool isRIPRel;     // RIP as base?
     unsigned Scale;
     SDOperand IndexReg; 
     unsigned Disp;
@@ -664,7 +664,9 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
   case X86ISD::Wrapper: {
     bool is64Bit = Subtarget->is64Bit();
     // Under X86-64 non-small code model, GV (and friends) are 64-bits.
-    if (is64Bit && TM.getCodeModel() != CodeModel::Small)
+    // Also, base and index reg must be 0 in order to use rip as base.
+    if (is64Bit && (TM.getCodeModel() != CodeModel::Small ||
+                    AM.Base.Reg.Val || AM.IndexReg.Val))
       break;
     if (AM.GV != 0 || AM.CP != 0 || AM.ES != 0 || AM.JT != -1)
       break;
@@ -672,39 +674,27 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
     // been picked, we can't fit the result available in the register in the
     // addressing mode. Duplicate GlobalAddress or ConstantPool as displacement.
     if (!AlreadySelected || (AM.Base.Reg.Val && AM.IndexReg.Val)) {
-      bool isStatic = TM.getRelocationModel() == Reloc::Static;
       SDOperand N0 = N.getOperand(0);
-      // Mac OS X X86-64 lower 4G address is not available.
-      bool isAbs32 = !is64Bit ||
-        (isStatic && Subtarget->hasLow4GUserSpaceAddress());
       if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(N0)) {
         GlobalValue *GV = G->getGlobal();
-        if (isAbs32 || isRoot) {
-          AM.GV = GV;
-          AM.Disp += G->getOffset();
-          AM.isRIPRel = !isAbs32;
-          return false;
-        }
+        AM.GV = GV;
+        AM.Disp += G->getOffset();
+        AM.isRIPRel = is64Bit;
+        return false;
       } else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(N0)) {
-        if (isAbs32 || isRoot) {
-          AM.CP = CP->getConstVal();
-          AM.Align = CP->getAlignment();
-          AM.Disp += CP->getOffset();
-          AM.isRIPRel = !isAbs32;
-          return false;
-        }
+        AM.CP = CP->getConstVal();
+        AM.Align = CP->getAlignment();
+        AM.Disp += CP->getOffset();
+        AM.isRIPRel = is64Bit;
+        return false;
       } else if (ExternalSymbolSDNode *S =dyn_cast<ExternalSymbolSDNode>(N0)) {
-        if (isAbs32 || isRoot) {
-          AM.ES = S->getSymbol();
-          AM.isRIPRel = !isAbs32;
-          return false;
-        }
+        AM.ES = S->getSymbol();
+        AM.isRIPRel = is64Bit;
+        return false;
       } else if (JumpTableSDNode *J = dyn_cast<JumpTableSDNode>(N0)) {
-        if (isAbs32 || isRoot) {
-          AM.JT = J->getIndex();
-          AM.isRIPRel = !isAbs32;
-          return false;
-        }
+        AM.JT = J->getIndex();
+        AM.isRIPRel = is64Bit;
+        return false;
       }
     }
     break;
@@ -719,7 +709,7 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
     break;
 
   case ISD::SHL:
-    if (AlreadySelected || AM.IndexReg.Val != 0 || AM.Scale != 1)
+    if (AlreadySelected || AM.IndexReg.Val != 0 || AM.Scale != 1 || AM.isRIPRel)
       break;
       
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.Val->getOperand(1))) {
@@ -759,7 +749,8 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
     if (!AlreadySelected &&
         AM.BaseType == X86ISelAddressMode::RegBase &&
         AM.Base.Reg.Val == 0 &&
-        AM.IndexReg.Val == 0) {
+        AM.IndexReg.Val == 0 &&
+        !AM.isRIPRel) {
       if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.Val->getOperand(1)))
         if (CN->getValue() == 3 || CN->getValue() == 5 || CN->getValue() == 9) {
           AM.Scale = unsigned(CN->getValue())-1;
@@ -834,6 +825,9 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
     
     // Scale must not be used already.
     if (AM.IndexReg.Val != 0 || AM.Scale != 1) break;
+
+    // Not when RIP is used as the base.
+    if (AM.isRIPRel) break;
       
     ConstantSDNode *C2 = dyn_cast<ConstantSDNode>(N.getOperand(1));
     ConstantSDNode *C1 = dyn_cast<ConstantSDNode>(Shift.getOperand(1));
@@ -874,7 +868,7 @@ bool X86DAGToDAGISel::MatchAddressBase(SDOperand N, X86ISelAddressMode &AM,
   // Is the base register already occupied?
   if (AM.BaseType != X86ISelAddressMode::RegBase || AM.Base.Reg.Val) {
     // If so, check to see if the scale index register is set.
-    if (AM.IndexReg.Val == 0) {
+    if (AM.IndexReg.Val == 0 && !AM.isRIPRel) {
       AM.IndexReg = N;
       AM.Scale = 1;
       return false;

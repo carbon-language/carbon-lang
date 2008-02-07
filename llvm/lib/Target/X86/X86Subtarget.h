@@ -82,10 +82,6 @@ private:
   /// pointer size is 64 bit.
   bool Is64Bit;
 
-  /// HasLow4GUserAddress - True if the low 4G user-space address is available.
-  ///
-  bool HasLow4GUserAddress;
-
 public:
   enum {
     isELF, isCygwin, isDarwin, isWindows, isMingw
@@ -114,10 +110,6 @@ public:
   void AutoDetectSubtargetFeatures();
 
   bool is64Bit() const { return Is64Bit; }
-
-  /// hasLow4GUserSpaceAddress - True if lower 4G user-space address is
-  /// available.
-  bool hasLow4GUserSpaceAddress() const { return HasLow4GUserAddress; }
 
   PICStyle::Style getPICStyle() const { return PICStyle; }
   void setPICStyle(PICStyle::Style Style)  { PICStyle = Style; }

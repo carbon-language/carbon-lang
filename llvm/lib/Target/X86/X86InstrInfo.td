@@ -172,7 +172,6 @@ def FPStackf32   : Predicate<"!Subtarget->hasSSE1()">;
 def FPStackf64   : Predicate<"!Subtarget->hasSSE2()">;
 def In32BitMode  : Predicate<"!Subtarget->is64Bit()">;
 def In64BitMode  : Predicate<"Subtarget->is64Bit()">;
-def HasLow4G     : Predicate<"Subtarget->hasLow4GUserSpaceAddress()">;
 def SmallCode    : Predicate<"TM.getCodeModel() == CodeModel::Small">;
 def NotSmallCode : Predicate<"TM.getCodeModel() != CodeModel::Small">;
 def IsStatic     : Predicate<"TM.getRelocationModel() == Reloc::Static">;
