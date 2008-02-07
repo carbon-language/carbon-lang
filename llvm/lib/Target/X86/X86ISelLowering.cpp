@@ -1290,14 +1290,16 @@ X86TargetLowering::LowerMemOpCallTo(SDOperand Op, SelectionDAG &DAG,
                                     const CCValAssign &VA,
                                     SDOperand Chain,
                                     SDOperand Arg) {
-  SDOperand PtrOff = DAG.getIntPtrConstant(VA.getLocMemOffset());
+  unsigned LocMemOffset = VA.getLocMemOffset();
+  SDOperand PtrOff = DAG.getIntPtrConstant(LocMemOffset);
   PtrOff = DAG.getNode(ISD::ADD, getPointerTy(), StackPtr, PtrOff);
   SDOperand FlagsOp = Op.getOperand(6+2*VA.getValNo());
   unsigned Flags    = cast<ConstantSDNode>(FlagsOp)->getValue();
   if (Flags & ISD::ParamFlags::ByVal) {
     return CreateCopyOfByValArgument(Arg, PtrOff, Chain, Flags, DAG);
   }
-  return DAG.getStore(Chain, Arg, PtrOff, NULL, 0);
+  return DAG.getStore(Chain, Arg, PtrOff,
+                      &PseudoSourceValue::getStack(), LocMemOffset);
 }
 
 /// ClassifyX86_64SRetCallReturn - Classify how to implement a x86-64
