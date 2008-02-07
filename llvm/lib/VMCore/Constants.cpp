@@ -225,7 +225,7 @@ ConstantInt *ConstantInt::get(const Type *Ty, uint64_t V, bool isSigned) {
 }
 
 // Get a ConstantInt from an APInt. Note that the value stored in the DenseMap 
-// as the key, is a DensMapAPIntKeyInfo::KeyTy which has provided the
+// as the key, is a DenseMapAPIntKeyInfo::KeyTy which has provided the
 // operator== and operator!= to ensure that the DenseMap doesn't attempt to
 // compare APInt's of different widths, which would violate an APInt class
 // invariant which generates an assertion.
