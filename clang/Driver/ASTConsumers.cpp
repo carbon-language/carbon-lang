@@ -572,20 +572,22 @@ ASTConsumer *clang::CreateUnitValsChecker(Diagnostic &Diags) {
 
 namespace {
   class GRConstantsVisitor : public CFGVisitor {
+    Diagnostic &Diags;
     ASTContext* Ctx;
   public:
+    GRConstantsVisitor(Diagnostic &diags) : Diags(diags) {}
     
     virtual void Initialize(ASTContext &Context) { Ctx = &Context; }    
     virtual void VisitCFG(CFG& C, FunctionDecl&);
   };
 } // end anonymous namespace
 
-ASTConsumer* clang::CreateGRConstants() {
-  return new GRConstantsVisitor();
+ASTConsumer* clang::CreateGRConstants(Diagnostic &Diags) {
+  return new GRConstantsVisitor(Diags);
 }
 
 void GRConstantsVisitor::VisitCFG(CFG& C, FunctionDecl& FD) {
-  RunGRConstants(C, FD, *Ctx);
+  RunGRConstants(C, FD, *Ctx, Diags);
 }
 
 //===----------------------------------------------------------------------===//

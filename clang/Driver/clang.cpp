@@ -969,7 +969,7 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
       return CreateUnitValsChecker(Diag);
       
     case AnalysisGRConstants:
-      return CreateGRConstants();
+      return CreateGRConstants(Diag);
       
     case TestSerialization:
       return CreateSerializationTest(Diag, FileMgr, LangOpts);

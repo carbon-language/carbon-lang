@@ -18,12 +18,14 @@
 #define LLVM_CLANG_GRCONSTANTS
 
 namespace clang {
+  class Diagnostic;
   
   /// RunGRConstants - This is a simple driver to run the GRConstants analysis
   ///  on a provided CFG.  This interface will eventually be replaced with
   ///  something more elaborate as the requirements on the interface become
   ///  clearer.
-  void RunGRConstants(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx);
+  void RunGRConstants(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx,
+                      Diagnostic& Diag);
   
 } // end clang namespace
 

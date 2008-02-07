@@ -22,6 +22,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
+#include "clang/Basic/Diagnostic.h"
 
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/DataTypes.h"
@@ -133,8 +134,6 @@ protected:
   
   bool StateCleaned;
   
-  ASTContext& getContext() const { return G.getContext(); }
-  
 public:
   GRConstants(GraphTy& g) : G(g), Liveness(G.getCFG(), G.getFunctionDecl()),
       Builder(NULL),
@@ -147,6 +146,9 @@ public:
     Liveness.runOnCFG(G.getCFG());
     Liveness.runOnAllBlocks(G.getCFG(), NULL, true);
   }
+  
+  /// getContext - Return the ASTContext associated with this analysis.
+  ASTContext& getContext() const { return G.getContext(); }
   
   /// getCFG - Returns the CFG associated with this analysis.
   CFG& getCFG() { return G.getCFG(); }
@@ -178,6 +180,9 @@ public:
     return N->isSink() && ExplicitNullDeref.count(const_cast<NodeTy*>(N)) != 0;
   }
   
+  typedef NullDerefTy::iterator null_iterator;
+  null_iterator null_begin() { return ExplicitNullDeref.begin(); }
+  null_iterator null_end() { return ExplicitNullDeref.end(); }
 
   /// ProcessStmt - Called by GREngine. Used to generate new successor
   ///  nodes by processing the 'effects' of a block-level statement.
@@ -1321,11 +1326,28 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRConstants::NodeTy*> :
 #endif
 
 namespace clang {
-void RunGRConstants(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx) {
+void RunGRConstants(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx,
+                    Diagnostic& Diag) {
+  
   GREngine<GRConstants> Engine(cfg, FD, Ctx);
-  Engine.ExecuteWorkList();  
+  Engine.ExecuteWorkList();
+  
+  // Look for explicit-Null dereferences and warn about them.
+  GRConstants* CheckerState = &Engine.getCheckerState();
+  
+  for (GRConstants::null_iterator I=CheckerState->null_begin(),
+                                  E=CheckerState->null_end(); I!=E; ++I) {
+    
+    const PostStmt& L = cast<PostStmt>((*I)->getLocation());
+    Expr* E = cast<Expr>(L.getStmt());
+    
+    Diag.Report(FullSourceLoc(E->getExprLoc(), Ctx.getSourceManager()),
+                diag::chkr_null_deref_after_check);
+  }
+  
+  
 #ifndef NDEBUG
-  GraphPrintCheckerState = &Engine.getCheckerState();
+  GraphPrintCheckerState = CheckerState;
   llvm::ViewGraph(*Engine.getGraph().roots_begin(),"GRConstants");
   GraphPrintCheckerState = NULL;
 #endif  
