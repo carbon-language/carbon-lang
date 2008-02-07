@@ -73,7 +73,6 @@ namespace {
     uint64_t llvmSize;
     llvm::SmallVector<const FieldDecl *, 8> FieldDecls;
     std::vector<const llvm::Type*> LLVMFields;
-    llvm::SmallVector<uint64_t, 8> Offsets;
     llvm::SmallSet<unsigned, 8> PaddingFields;
   };
 }
@@ -449,7 +448,6 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
   llvmFieldNo = 0;
   Cursor = 0;
   LLVMFields.clear();
-  Offsets.clear();
 
   for (llvm::SmallVector<const FieldDecl *, 8>::iterator I = FieldDecls.begin(),
          E = FieldDecls.end(); I != E; ++I) {
@@ -499,7 +497,6 @@ void RecordOrganizer::addLLVMField(const llvm::Type *Ty, bool isPaddingField) {
   }
 
   unsigned TySize = CGT.getTargetData().getABITypeSizeInBits(Ty);
-  Offsets.push_back(llvmSize);
   llvmSize += TySize;
   if (isPaddingField)
     PaddingFields.insert(llvmFieldNo);
@@ -555,51 +552,26 @@ void RecordOrganizer::placeBitField(const FieldDecl *FD) {
   assert (isBitField  && "Invalid BitField size expression");
   uint64_t BitFieldSize =  FieldSize.getZExtValue();
 
-  bool FoundPrevField = false;
-  unsigned TotalOffsets = Offsets.size();
   const llvm::Type *Ty = CGT.ConvertType(FD->getType());
   uint64_t TySize = CGT.getTargetData().getABITypeSizeInBits(Ty);
-  
-  if (!TotalOffsets) {
-    // Special case: the first field. 
-    CGT.addFieldInfo(FD, llvmFieldNo);
+
+  unsigned Idx = Cursor / TySize;
+  unsigned BitsLeft = TySize - (Cursor % TySize);
+
+  if (BitsLeft >= BitFieldSize) {
+    // The bitfield fits in the last aligned field.
+    // This is : struct { char a; int CurrentField:10;};
+    // where 'CurrentField' shares first field with 'a'.
+    CGT.addFieldInfo(FD, Idx);
+    CGT.addBitFieldInfo(FD, TySize - BitsLeft, BitFieldSize);
+    Cursor += BitFieldSize;
+  } else {
+    // Place the bitfield in a new LLVM field.
+    // This is : struct { char a; short CurrentField:10;};
+    // where 'CurrentField' needs a new llvm field.
+    CGT.addFieldInfo(FD, Idx + 1);
     CGT.addBitFieldInfo(FD, 0, BitFieldSize);
-    addPaddingFields(BitFieldSize);
-    Cursor = BitFieldSize;
-    return;
+    Cursor = (Idx + 1) * TySize + BitFieldSize;
   }
-
-  // Search for the last aligned field.
-  for (unsigned i = TotalOffsets; i != 0; --i) {
-    uint64_t O = Offsets[i - 1];
-    if (O % TySize == 0) {
-      FoundPrevField = true;
-      if (TySize > (Cursor - O) && TySize - (Cursor - O) >= BitFieldSize) {
-	// The bitfield fits in the last aligned field.
-	// This is : struct { char a; int CurrentField:10;};
-	// where 'CurrentField' shares first field with 'a'.
-	addPaddingFields(Cursor + BitFieldSize);
-	CGT.addFieldInfo(FD, i - 1);
-	CGT.addBitFieldInfo(FD, Cursor - O, BitFieldSize);
-	Cursor += BitFieldSize;
-      } else {
-	// Place the bitfield in a new LLVM field.
-	// This is : struct { char a; short CurrentField:10;};
-	// where 'CurrentField' needs a new llvm field.
-        unsigned Padding = 0;
-        if (Cursor % TySize) {
-          Padding = TySize - (Cursor % TySize);
-          addPaddingFields(Cursor + Padding);
-        }
-	CGT.addFieldInfo(FD, llvmFieldNo);
-	CGT.addBitFieldInfo(FD, 0, BitFieldSize);
-        Cursor += Padding + BitFieldSize;
-	addPaddingFields(Cursor);
-      }
-      break;
-    }
-  }
-
-  assert(FoundPrevField && 
-	 "Unable to find a place for bitfield in struct layout");
+  addPaddingFields(Cursor);
 }

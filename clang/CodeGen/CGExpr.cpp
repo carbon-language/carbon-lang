@@ -454,7 +454,7 @@ EmitOCUVectorElementExpr(const OCUVectorElementExpr *E) {
 }
 
 LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
-
+  llvm::Value *V;
   bool isUnion = false;
   Expr *BaseExpr = E->getBase();
   llvm::Value *BaseValue = NULL;
@@ -476,14 +476,27 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
   }
 
   FieldDecl *Field = E->getMemberDecl();
-
   unsigned idx = CGM.getTypes().getLLVMFieldNo(Field);
-  llvm::Value *Idxs[2] = { llvm::Constant::getNullValue(llvm::Type::Int32Ty), 
-                           llvm::ConstantInt::get(llvm::Type::Int32Ty, idx) };
 
-  llvm::Value *V = Builder.CreateGEP(BaseValue,Idxs, Idxs + 2, "tmp");
+
+  if (Field->isBitField()) {
+    const llvm::Type * FieldTy = ConvertType(Field->getType());
+    const llvm::PointerType * BaseTy =
+      cast<llvm::PointerType>(BaseValue->getType());
+    unsigned AS = BaseTy->getAddressSpace();
+    BaseValue = Builder.CreateBitCast(BaseValue,
+                                      llvm::PointerType::get(FieldTy, AS),
+                                      "tmp");
+    V = Builder.CreateGEP(BaseValue,
+                          llvm::ConstantInt::get(llvm::Type::Int32Ty, idx),
+                          "tmp");
+  } else {
+    llvm::Value *Idxs[2] = { llvm::Constant::getNullValue(llvm::Type::Int32Ty),
+                             llvm::ConstantInt::get(llvm::Type::Int32Ty, idx) };
+    V = Builder.CreateGEP(BaseValue,Idxs, Idxs + 2, "tmp");
+  }
   // Match union field type.
-  if (isUnion || Field->isBitField()) {
+  if (isUnion) {
     const llvm::Type * FieldTy = ConvertType(Field->getType());
     const llvm::PointerType * BaseTy = 
       cast<llvm::PointerType>(BaseValue->getType());
