@@ -309,6 +309,11 @@ static llvm::cl::opt<bool>
 PascalStrings("fpascal-strings",
               llvm::cl::desc("Recognize and construct Pascal-style "
                              "string literals"));
+                             
+static llvm::cl::opt<bool>
+MSExtensions("fms-extensions",
+             llvm::cl::desc("Accept some non-standard constructs used in "
+                            "Microsoft header files. "));
 
 static llvm::cl::opt<bool>
 WritableStrings("fwritable-strings",
@@ -376,6 +381,7 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK) {
   Options.Trigraphs = 1; // -trigraphs or -ansi
   Options.DollarIdents = 1;  // FIXME: Really a target property.
   Options.PascalStrings = PascalStrings;
+  Options.Microsoft = MSExtensions;
   Options.WritableStrings = WritableStrings;
   Options.LaxVectorConversions = LaxVectorConversions;
 }

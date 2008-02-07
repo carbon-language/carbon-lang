@@ -424,7 +424,13 @@ static void InitializePredefinedMacros(Preprocessor &PP,
     DefineBuiltinMacro(Buf, "__cplusplus=1");
     DefineBuiltinMacro(Buf, "__private_extern__=extern");
   }
-  
+  if (PP.getLangOptions().Microsoft) {
+    DefineBuiltinMacro(Buf, "__stdcall=");
+    DefineBuiltinMacro(Buf, "__cdecl=");
+    DefineBuiltinMacro(Buf, "_cdecl=");
+    DefineBuiltinMacro(Buf, "__ptr64=");
+    DefineBuiltinMacro(Buf, "__forceinline=");
+  }
   // FIXME: Should emit a #line directive here.
 }
 

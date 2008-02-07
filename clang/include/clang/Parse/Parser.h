@@ -130,6 +130,8 @@ private:
       return ConsumeBracket();
     else if (isTokenBrace())
       return ConsumeBrace();
+    else if (isTokenStringLiteral())
+      return ConsumeStringToken();
     else
       return ConsumeToken();
   }
@@ -402,7 +404,8 @@ private:
   StmtResult ParseContinueStatement();
   StmtResult ParseBreakStatement();
   StmtResult ParseReturnStatement();
-  StmtResult ParseAsmStatement();
+  StmtResult ParseAsmStatement(bool &msAsm);
+  StmtResult FuzzyParseMicrosoftAsmStatement();
   StmtResult ParseObjCAtStatement(SourceLocation atLoc);
   StmtResult ParseObjCTryStmt(SourceLocation atLoc, bool &processAtKeyword);
   StmtResult ParseObjCThrowStmt(SourceLocation atLoc);
@@ -438,6 +441,7 @@ private:
   bool isTypeSpecifierQualifier() const;
 
   TypeTy *ParseTypeName();
+  void FuzzyParseMicrosoftDeclspec();
   AttributeList *ParseAttributes();
   void ParseTypeofSpecifier(DeclSpec &DS);
   

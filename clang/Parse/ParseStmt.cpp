@@ -153,7 +153,9 @@ Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
     break;
     
   case tok::kw_asm:
-    Res = ParseAsmStatement();
+    bool msAsm = false;
+    Res = ParseAsmStatement(msAsm);
+    if (msAsm) return Res;
     SemiError = "asm statement";
     break;
   }
@@ -908,6 +910,14 @@ Parser::StmtResult Parser::ParseReturnStatement() {
   return Actions.ActOnReturnStmt(ReturnLoc, R.Val);
 }
 
+Parser::StmtResult Parser::FuzzyParseMicrosoftAsmStatement() {
+  unsigned short savedBraceCount = BraceCount;
+  do {
+    ConsumeAnyToken();
+  } while (BraceCount > savedBraceCount && Tok.isNot(tok::eof));
+  return false;
+}
+
 /// ParseAsmStatement - Parse a GNU extended asm statement.
 /// [GNU] asm-statement:
 ///         'asm' type-qualifier[opt] '(' asm-argument ')' ';'
@@ -923,10 +933,14 @@ Parser::StmtResult Parser::ParseReturnStatement() {
 ///         asm-string-literal
 ///         asm-clobbers ',' asm-string-literal
 ///
-Parser::StmtResult Parser::ParseAsmStatement() {
+Parser::StmtResult Parser::ParseAsmStatement(bool &msAsm) {
   assert(Tok.is(tok::kw_asm) && "Not an asm stmt");
   SourceLocation AsmLoc = ConsumeToken();
   
+  if (Tok.is(tok::l_brace)) {
+    msAsm = true;
+    return FuzzyParseMicrosoftAsmStatement();
+  }
   DeclSpec DS;
   SourceLocation Loc = Tok.getLocation();
   ParseTypeQualifierListOpt(DS);
