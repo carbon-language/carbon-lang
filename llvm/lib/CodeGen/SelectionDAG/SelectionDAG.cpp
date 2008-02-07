@@ -3548,7 +3548,7 @@ MemOperand LSBaseSDNode::getMemOperand() const {
   const FrameIndexSDNode *FI =
     dyn_cast<const FrameIndexSDNode>(getBasePtr().Val);
   if (!getSrcValue() && FI)
-    return MemOperand(&PseudoSourceValue::getFixedStack(), Flags,
+    return MemOperand(PseudoSourceValue::getFixedStack(), Flags,
                       FI->getIndex(), Size, Alignment);
   else
     return MemOperand(getSrcValue(), Flags,

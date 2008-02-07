@@ -37,21 +37,21 @@ namespace llvm {
 
     /// A pseudo source value referencing to the stack frame of a function,
     /// e.g., a spill slot.
-    static const PseudoSourceValue &getFixedStack();
+    static const PseudoSourceValue *getFixedStack();
 
     /// A source value referencing the area below the stack frame of a function,
     /// e.g., the argument space.
-    static const PseudoSourceValue &getStack();
+    static const PseudoSourceValue *getStack();
 
     /// A source value referencing the global offset table (or something the
     /// like).
-    static const PseudoSourceValue &getGOT();
+    static const PseudoSourceValue *getGOT();
 
     /// A SV referencing the constant pool
-    static const PseudoSourceValue &getConstantPool();
+    static const PseudoSourceValue *getConstantPool();
 
     /// A SV referencing the jump table
-    static const PseudoSourceValue &getJumpTable();
+    static const PseudoSourceValue *getJumpTable();
   };
 } // End llvm namespace
 

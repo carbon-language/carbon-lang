@@ -510,11 +510,11 @@ static SDOperand ExpandConstantFP(ConstantFPSDNode *CFP, bool UseCP,
   SDOperand CPIdx = DAG.getConstantPool(LLVMC, TLI.getPointerTy());
   if (Extend) {
     return DAG.getExtLoad(ISD::EXTLOAD, MVT::f64, DAG.getEntryNode(),
-                          CPIdx, &PseudoSourceValue::getConstantPool(),
+                          CPIdx, PseudoSourceValue::getConstantPool(),
                           0, MVT::f32);
   } else {
     return DAG.getLoad(VT, DAG.getEntryNode(), CPIdx,
-                       &PseudoSourceValue::getConstantPool(), 0);
+                       PseudoSourceValue::getConstantPool(), 0);
   }
 }
 
@@ -1327,7 +1327,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 
       // Store the vector.
       SDOperand Ch = DAG.getStore(DAG.getEntryNode(), Tmp1, StackPtr,
-                                  &PseudoSourceValue::getFixedStack(),
+                                  PseudoSourceValue::getFixedStack(),
                                   SPFI);
 
       // Truncate or zero extend offset to target pointer type.
@@ -1339,10 +1339,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       SDOperand StackPtr2 = DAG.getNode(ISD::ADD, IdxVT, Tmp3, StackPtr);
       // Store the scalar value.
       Ch = DAG.getStore(Ch, Tmp2, StackPtr2,
-                        &PseudoSourceValue::getFixedStack(), SPFI);
+                        PseudoSourceValue::getFixedStack(), SPFI);
       // Load the updated vector.
       Result = DAG.getLoad(VT, Ch, StackPtr,
-                           &PseudoSourceValue::getFixedStack(), SPFI);
+                           PseudoSourceValue::getFixedStack(), SPFI);
       break;
     }
     }
@@ -1692,9 +1692,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       switch (EntrySize) {
       default: assert(0 && "Size of jump table not supported yet."); break;
       case 4: LD = DAG.getLoad(MVT::i32, Chain, Addr,
-                               &PseudoSourceValue::getJumpTable(), 0); break;
+                               PseudoSourceValue::getJumpTable(), 0); break;
       case 8: LD = DAG.getLoad(MVT::i64, Chain, Addr,
-                               &PseudoSourceValue::getJumpTable(), 0); break;
+                               PseudoSourceValue::getJumpTable(), 0); break;
       }
 
       Addr = LD;
@@ -4772,12 +4772,12 @@ SDOperand SelectionDAGLegalize::EmitStackConvert(SDOperand SrcOp,
   SDOperand Store;
   if (SrcSize > SlotSize)
     Store = DAG.getTruncStore(DAG.getEntryNode(), SrcOp, FIPtr,
-                              &PseudoSourceValue::getFixedStack(),
+                              PseudoSourceValue::getFixedStack(),
                               SPFI, SlotVT);
   else {
     assert(SrcSize == SlotSize && "Invalid store");
     Store = DAG.getStore(DAG.getEntryNode(), SrcOp, FIPtr,
-                         &PseudoSourceValue::getFixedStack(),
+                         PseudoSourceValue::getFixedStack(),
                          SPFI, SlotVT);
   }
   
@@ -4799,9 +4799,9 @@ SDOperand SelectionDAGLegalize::ExpandSCALAR_TO_VECTOR(SDNode *Node) {
   int SPFI = StackPtrFI->getIndex();
 
   SDOperand Ch = DAG.getStore(DAG.getEntryNode(), Node->getOperand(0), StackPtr,
-                              &PseudoSourceValue::getFixedStack(), SPFI);
+                              PseudoSourceValue::getFixedStack(), SPFI);
   return DAG.getLoad(Node->getValueType(0), Ch, StackPtr,
-                     &PseudoSourceValue::getFixedStack(), SPFI);
+                     PseudoSourceValue::getFixedStack(), SPFI);
 }
 
 
@@ -4866,7 +4866,7 @@ SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
     Constant *CP = ConstantVector::get(CV);
     SDOperand CPIdx = DAG.getConstantPool(CP, TLI.getPointerTy());
     return DAG.getLoad(VT, DAG.getEntryNode(), CPIdx,
-                       &PseudoSourceValue::getConstantPool(), 0);
+                       PseudoSourceValue::getConstantPool(), 0);
   }
   
   if (SplatValue.Val) {   // Splat of one value?
@@ -5209,12 +5209,12 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
     SDOperand FudgeInReg;
     if (DestTy == MVT::f32)
       FudgeInReg = DAG.getLoad(MVT::f32, DAG.getEntryNode(), CPIdx,
-                               &PseudoSourceValue::getConstantPool(), 0);
+                               PseudoSourceValue::getConstantPool(), 0);
     else if (MVT::getSizeInBits(DestTy) > MVT::getSizeInBits(MVT::f32))
       // FIXME: Avoid the extend by construction the right constantpool?
       FudgeInReg = DAG.getExtLoad(ISD::EXTLOAD, DestTy, DAG.getEntryNode(),
                                   CPIdx,
-                                  &PseudoSourceValue::getConstantPool(), 0,
+                                  PseudoSourceValue::getConstantPool(), 0,
                                   MVT::f32);
     else 
       assert(0 && "Unexpected conversion");
@@ -5358,12 +5358,12 @@ SDOperand SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
   SDOperand FudgeInReg;
   if (DestVT == MVT::f32)
     FudgeInReg = DAG.getLoad(MVT::f32, DAG.getEntryNode(), CPIdx,
-                             &PseudoSourceValue::getConstantPool(), 0);
+                             PseudoSourceValue::getConstantPool(), 0);
   else {
     FudgeInReg =
       LegalizeOp(DAG.getExtLoad(ISD::EXTLOAD, DestVT,
                                 DAG.getEntryNode(), CPIdx,
-                                &PseudoSourceValue::getConstantPool(), 0,
+                                PseudoSourceValue::getConstantPool(), 0,
                                 MVT::f32));
   }
 
@@ -6778,10 +6778,10 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
 
       SDOperand St = DAG.getStore(DAG.getEntryNode(),
                                   InOp, Ptr,
-                                  &PseudoSourceValue::getFixedStack(),
+                                  PseudoSourceValue::getFixedStack(),
                                   FI->getIndex());
       InOp = DAG.getLoad(Op.getValueType(), St, Ptr,
-                         &PseudoSourceValue::getFixedStack(),
+                         PseudoSourceValue::getFixedStack(),
                          FI->getIndex());
     }
     // Split the vector and convert each of the pieces now.
