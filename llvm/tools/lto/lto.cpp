@@ -247,8 +247,19 @@ LTO::getTarget (Module *M) {
     return;
   
   // Create target
-  std::string Features;
-  Target = March->CtorFn(*M, Features);
+  SubtargetFeatures Features;
+  std::string FeatureStr;
+  std::string TargetTriple = M->getTargetTriple();
+
+  if (strncmp(TargetTriple.c_str(), "powerpc-apple-", 14) == 0) 
+    Features.AddFeature("altivec", true);
+  else if (strncmp(TargetTriple.c_str(), "powerpc64-apple-", 16) == 0) {
+    Features.AddFeature("64bit", true);
+    Features.AddFeature("altivec", true);
+  }
+
+  FeatureStr = Features.getString();
+  Target = March->CtorFn(*M, FeatureStr);
 }
 
 /// Optimize module M using various IPO passes. Use exportList to 
