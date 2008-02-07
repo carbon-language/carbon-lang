@@ -477,6 +477,7 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
 /// addPaddingFields - Current cursor is not suitable place to add next field.
 /// Add required padding fields.
 void RecordOrganizer::addPaddingFields(unsigned WaterMark) {
+  assert(WaterMark >= llvmSize && "Invalid padding Field");
   unsigned RequiredBits = WaterMark - llvmSize;
   unsigned RequiredBytes = (RequiredBits + 7) / 8;
   for (unsigned i = 0; i != RequiredBytes; ++i)
@@ -573,7 +574,7 @@ void RecordOrganizer::placeBitField(const FieldDecl *FD) {
     uint64_t O = Offsets[i - 1];
     if (O % TySize == 0) {
       FoundPrevField = true;
-      if (TySize - (Cursor - O) >= BitFieldSize) {
+      if (TySize > (Cursor - O) && TySize - (Cursor - O) >= BitFieldSize) {
 	// The bitfield fits in the last aligned field.
 	// This is : struct { char a; int CurrentField:10;};
 	// where 'CurrentField' shares first field with 'a'.
@@ -585,11 +586,15 @@ void RecordOrganizer::placeBitField(const FieldDecl *FD) {
 	// Place the bitfield in a new LLVM field.
 	// This is : struct { char a; short CurrentField:10;};
 	// where 'CurrentField' needs a new llvm field.
-	addPaddingFields(O + TySize);
+        unsigned Padding = 0;
+        if (Cursor % TySize) {
+          Padding = TySize - (Cursor % TySize);
+          addPaddingFields(Cursor + Padding);
+        }
 	CGT.addFieldInfo(FD, llvmFieldNo);
 	CGT.addBitFieldInfo(FD, 0, BitFieldSize);
-	addPaddingFields(O + TySize +  BitFieldSize);
-	Cursor = O + TySize +  BitFieldSize;
+        Cursor += Padding + BitFieldSize;
+	addPaddingFields(Cursor);
       }
       break;
     }
