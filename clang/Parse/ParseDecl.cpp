@@ -516,11 +516,9 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
       break;
       
     // type-specifiers
-    case tok::kw___int16:
     case tok::kw_short:
       isInvalid = DS.SetTypeSpecWidth(DeclSpec::TSW_short, Loc, PrevSpec);
       break;
-    case tok::kw___int64:
     case tok::kw_long:
       if (DS.getTypeSpecWidth() != DeclSpec::TSW_long)
         isInvalid = DS.SetTypeSpecWidth(DeclSpec::TSW_long, Loc, PrevSpec);
@@ -542,11 +540,9 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
     case tok::kw_void:
       isInvalid = DS.SetTypeSpecType(DeclSpec::TST_void, Loc, PrevSpec);
       break;
-    case tok::kw___int8:
     case tok::kw_char:
       isInvalid = DS.SetTypeSpecType(DeclSpec::TST_char, Loc, PrevSpec);
       break;
-    case tok::kw___int32:
     case tok::kw_int:
       isInvalid = DS.SetTypeSpecType(DeclSpec::TST_int, Loc, PrevSpec);
       break;

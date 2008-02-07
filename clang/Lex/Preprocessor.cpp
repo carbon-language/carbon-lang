@@ -430,6 +430,10 @@ static void InitializePredefinedMacros(Preprocessor &PP,
     DefineBuiltinMacro(Buf, "_cdecl=");
     DefineBuiltinMacro(Buf, "__ptr64=");
     DefineBuiltinMacro(Buf, "__forceinline=");
+    DefineBuiltinMacro(Buf, "__int8=char");
+    DefineBuiltinMacro(Buf, "__int16=short");
+    DefineBuiltinMacro(Buf, "__int32=int");
+    DefineBuiltinMacro(Buf, "__int64=long");
   }
   // FIXME: Should emit a #line directive here.
 }
