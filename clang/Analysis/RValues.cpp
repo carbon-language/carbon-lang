@@ -481,7 +481,9 @@ RValue RValue::GetSymbolValue(SymbolManager& SymMgr, ParmVarDecl* D) {
     return nonlval::SymbolVal(SymMgr.getSymbol(D));
 }
 
-
+void RValue::print() const {
+  print(*llvm::cerr.stream());
+}
 
 //===----------------------------------------------------------------------===//
 // Pretty-Printing.

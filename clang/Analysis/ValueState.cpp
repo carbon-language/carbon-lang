@@ -155,6 +155,10 @@ LValue ValueStateManager::GetLValue(const StateTy& St, Stmt* S) {
   if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(S))
     return lval::DeclVal(DR->getDecl());
   
+  if (UnaryOperator* U = dyn_cast<UnaryOperator>(S))
+    if (U->getOpcode() == UnaryOperator::Deref)
+      return cast<LValue>(GetValue(St, U->getSubExpr()));
+  
   return cast<LValue>(GetValue(St, S));
 }
 

@@ -256,6 +256,8 @@ public:
   /// VisitBinaryOperator - Transfer function logic for binary operators.
   void VisitBinaryOperator(BinaryOperator* B, NodeTy* Pred, NodeSet& Dst);
   
+  void VisitAssignmentLHS(Expr* E, NodeTy* Pred, NodeSet& Dst);
+  
   /// VisitDeclStmt - Transfer function logic for DeclStmts.
   void VisitDeclStmt(DeclStmt* DS, NodeTy* Pred, NodeSet& Dst); 
   
@@ -671,7 +673,7 @@ void GRConstants::VisitUnaryOperator(UnaryOperator* U,
       }
         
       case UnaryOperator::Deref: {
-        const LValue& L1 = GetLValue(St, U->getSubExpr());
+        const LValue& L1 = cast<LValue>(GetValue(St, U->getSubExpr()));
         Nodify(Dst, U, N1, SetValue(St, U, GetValue(St, L1)));
         break;
       }
@@ -682,11 +684,31 @@ void GRConstants::VisitUnaryOperator(UnaryOperator* U,
   }
 }
 
+void GRConstants::VisitAssignmentLHS(Expr* E, GRConstants::NodeTy* Pred,
+                                     GRConstants::NodeSet& Dst) {
+
+  if (isa<DeclRefExpr>(E))
+    return;
+  
+  if (UnaryOperator* U = dyn_cast<UnaryOperator>(E)) {
+    if (U->getOpcode() == UnaryOperator::Deref) {
+      Visit(U->getSubExpr(), Pred, Dst);
+      return;
+    }
+  }
+  
+  Visit(E, Pred, Dst);
+}
+
 void GRConstants::VisitBinaryOperator(BinaryOperator* B,
                                       GRConstants::NodeTy* Pred,
                                       GRConstants::NodeSet& Dst) {
   NodeSet S1;
-  Visit(B->getLHS(), Pred, S1);
+  
+  if (B->isAssignmentOp())
+    VisitAssignmentLHS(B->getLHS(), Pred, S1);
+  else
+    Visit(B->getLHS(), Pred, S1);
 
   for (NodeSet::iterator I1=S1.begin(), E1=S1.end(); I1 != E1; ++I1) {
     NodeTy* N1 = *I1;
@@ -711,6 +733,11 @@ void GRConstants::VisitBinaryOperator(BinaryOperator* B,
       BinaryOperator::Opcode Op = B->getOpcode();
       
       if (Op <= BinaryOperator::Or) {
+        
+        if (isa<InvalidValue>(V1) || isa<UninitializedValue>(V1)) {
+          Nodify(Dst, B, N2, SetValue(St, B, V1));
+          continue;
+        }
         
         if (isa<LValue>(V1)) {
           // FIXME: Add support for RHS being a non-lvalue.
@@ -823,6 +850,14 @@ void GRConstants::Visit(Stmt* S, GRConstants::NodeTy* Pred,
       VisitGuardedExpr(S, C->getLHS(), C->getRHS(), Pred, Dst);
       break;
     }
+      
+    case Stmt::ReturnStmtClass:
+      if (Expr* R = cast<ReturnStmt>(S)->getRetValue())
+        Visit(R, Pred, Dst);
+      else
+        Dst.Add(Pred);
+      
+      break;
       
     case Stmt::DeclStmtClass:
       VisitDeclStmt(cast<DeclStmt>(S), Pred, Dst);

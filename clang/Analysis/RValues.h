@@ -260,7 +260,7 @@ public:
   inline bool isInvalid() const { return getRawKind() == InvalidKind; }
   
   void print(std::ostream& OS) const;
-  void print() const { print(*llvm::cerr.stream()); }
+  void print() const;
   
   // Implement isa<T> support.
   static inline bool classof(const RValue*) { return true; }
@@ -323,7 +323,7 @@ protected:
   NonLValue NE(ValueManager& ValMgr, const LValue& RHS) const;
   
 public:
-  void print(std::ostream& Out) const;
+//  void print(std::ostream& Out) const;
 
   RValue EvalBinaryOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
                             const LValue& RHS) const;
