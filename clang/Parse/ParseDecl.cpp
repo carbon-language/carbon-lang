@@ -483,8 +483,6 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
     case tok::kw_typedef:
       isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_typedef, Loc, PrevSpec);
       break;
-    case tok::kw___w64: // ignore Microsoft specifier
-      break;
     case tok::kw___declspec:
       FuzzyParseMicrosoftDeclspec();
       // Don't consume the next token, __declspec's can appear one after

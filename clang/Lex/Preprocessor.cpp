@@ -429,6 +429,7 @@ static void InitializePredefinedMacros(Preprocessor &PP,
     DefineBuiltinMacro(Buf, "__cdecl=");
     DefineBuiltinMacro(Buf, "_cdecl=");
     DefineBuiltinMacro(Buf, "__ptr64=");
+    DefineBuiltinMacro(Buf, "__w64=");
     DefineBuiltinMacro(Buf, "__forceinline=");
     DefineBuiltinMacro(Buf, "__int8=char");
     DefineBuiltinMacro(Buf, "__int16=short");

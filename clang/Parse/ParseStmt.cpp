@@ -14,6 +14,7 @@
 
 #include "clang/Parse/Parser.h"
 #include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/SourceManager.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Scope.h"
 using namespace clang;
@@ -911,10 +912,21 @@ Parser::StmtResult Parser::ParseReturnStatement() {
 }
 
 Parser::StmtResult Parser::FuzzyParseMicrosoftAsmStatement() {
-  unsigned short savedBraceCount = BraceCount;
-  do {
-    ConsumeAnyToken();
-  } while (BraceCount > savedBraceCount && Tok.isNot(tok::eof));
+  if (Tok.is(tok::l_brace)) {
+    unsigned short savedBraceCount = BraceCount;
+    do {
+      ConsumeAnyToken();
+    } while (BraceCount > savedBraceCount && Tok.isNot(tok::eof));
+  } else { 
+    // From the MS website: If used without braces, the __asm keyword means
+    // that the rest of the line is an assembly-language statement.
+    SourceManager &SrcMgr = PP.getSourceManager();
+    unsigned lineNo = SrcMgr.getLineNumber(Tok.getLocation());
+    do {
+      ConsumeAnyToken();
+    } while ((SrcMgr.getLineNumber(Tok.getLocation()) == lineNo) && 
+             Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof));
+  }
   return false;
 }
 
@@ -937,7 +949,7 @@ Parser::StmtResult Parser::ParseAsmStatement(bool &msAsm) {
   assert(Tok.is(tok::kw_asm) && "Not an asm stmt");
   SourceLocation AsmLoc = ConsumeToken();
   
-  if (Tok.is(tok::l_brace)) {
+  if (getLang().Microsoft && Tok.isNot(tok::l_paren)) {
     msAsm = true;
     return FuzzyParseMicrosoftAsmStatement();
   }
