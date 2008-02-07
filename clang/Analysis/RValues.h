@@ -332,7 +332,7 @@ public:
   
   // Implement isa<T> support.
   static inline bool classof(const RValue* V) {
-    return V->getBaseKind() == LValueKind;
+    return V->getBaseKind() != NonLValueKind;
   }
 };
   

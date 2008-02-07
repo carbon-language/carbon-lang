@@ -34,6 +34,9 @@ const llvm::APSInt* ValueState::getSymVal(SymbolID sym) const {
 
 
 RValue ValueStateManager::GetValue(const StateTy& St, const LValue& LV) {
+  if (isa<InvalidValue>(LV))
+    return InvalidValue();
+  
   switch (LV.getSubKind()) {
     case lval::DeclValKind: {
       StateTy::VariableBindingsTy::TreeTy* T =

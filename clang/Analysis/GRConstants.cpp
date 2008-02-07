@@ -257,7 +257,10 @@ public:
   void VisitBinaryOperator(BinaryOperator* B, NodeTy* Pred, NodeSet& Dst);
   
   void VisitAssignmentLHS(Expr* E, NodeTy* Pred, NodeSet& Dst);
-  
+
+  /// VisitDeclRefExpr - Transfer function logic for DeclRefExprs.
+  void VisitDeclRefExpr(DeclRefExpr* DR, NodeTy* Pred, NodeSet& Dst); 
+
   /// VisitDeclStmt - Transfer function logic for DeclStmts.
   void VisitDeclStmt(DeclStmt* DS, NodeTy* Pred, NodeSet& Dst); 
   
@@ -273,21 +276,21 @@ public:
 
 GRConstants::StateTy
 GRConstants::SetValue(StateTy St, Stmt* S, const RValue& V) {
-  
+
   if (!StateCleaned) {
     St = RemoveDeadBindings(CurrentStmt, St);
     StateCleaned = true;
   }
-  
+
   bool isBlkExpr = false;
-  
+    
   if (S == CurrentStmt) {
     isBlkExpr = getCFG().isBlkExpr(S);
     
     if (!isBlkExpr)
       return St;
   }
-  
+
   return StateMgr.SetValue(St, S, isBlkExpr, V);
 }
 
@@ -484,24 +487,72 @@ void GRConstants::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
 }
 
 GRConstants::StateTy GRConstants::RemoveDeadBindings(Stmt* Loc, StateTy M) {
-  // Note: in the code below, we can assign a new map to M since the
-  //  iterators are iterating over the tree of the *original* map.
-  StateTy::vb_iterator I = M.begin(), E = M.end();
+  
+  // This code essentially performs a "mark-and-sweep" of the VariableBindings.
+  // The roots are any Block-level exprs and Decls that our liveness algorithm
+  // tells us are live.  We then see what Decls they may reference, and keep
+  // those around.  This code more than likely can be made faster, and the
+  // frequency of which this method is called should be experimented with
+  // for optimum performance.
 
+  llvm::SmallVector<ValueDecl*, 10> WList;
 
-  for (; I!=E && !I.getKey().isSymbol(); ++I) {
-    // Remove old bindings for subexpressions and "dead" 
-    // block-level expressions.    
-    if (I.getKey().isSubExpr() ||
-        I.getKey().isBlkExpr() && !Liveness.isLive(Loc,cast<Stmt>(I.getKey()))){
+  for (StateTy::vb_iterator I = M.begin(), E = M.end();
+       I!=E && !I.getKey().isSymbol(); ++I) {
+
+    // Remove old bindings for subexpressions.
+    if (I.getKey().isSubExpr()) {
       M = StateMgr.Remove(M, I.getKey());
+      continue;
     }
-    else if (I.getKey().isDecl()) { // Remove bindings for "dead" decls.
-      if (VarDecl* V = dyn_cast<VarDecl>(cast<ValueDecl>(I.getKey())))
-        if (!Liveness.isLive(Loc, V))
-          M = StateMgr.Remove(M, I.getKey());
+    
+    if (I.getKey().isBlkExpr()) {
+      if (Liveness.isLive(Loc, cast<Stmt>(I.getKey()))) {
+        if (isa<lval::DeclVal>(I.getData())) {
+          lval::DeclVal LV = cast<lval::DeclVal>(I.getData());
+          WList.push_back(LV.getDecl());
+        }
+      }
+      else
+        M = StateMgr.Remove(M, I.getKey());
+    
+      continue;
     }
+    
+    assert (I.getKey().isDecl());
+
+    if (VarDecl* V = dyn_cast<VarDecl>(cast<ValueDecl>(I.getKey())))
+      if (Liveness.isLive(Loc, V))
+        WList.push_back(V);
   }
+
+  llvm::SmallPtrSet<ValueDecl*, 10> Marked;
+  
+  while (!WList.empty()) {
+    ValueDecl* V = WList.back();
+    WList.pop_back();
+    
+    if (Marked.count(V))
+      continue;
+    
+    Marked.insert(V);
+    
+    if (V->getType()->isPointerType()) {
+      const LValue& LV = cast<LValue>(GetValue(M, lval::DeclVal(V)));
+
+      if (!isa<lval::DeclVal>(LV))
+        continue;
+      
+      const lval::DeclVal& LVD = cast<lval::DeclVal>(LV);
+      WList.push_back(LVD.getDecl());
+    }    
+  }
+
+  for (StateTy::vb_iterator I = M.begin(), E = M.end(); I!=E ; ++I)
+    if (I.getKey().isDecl())
+      if (VarDecl* V = dyn_cast<VarDecl>(cast<ValueDecl>(I.getKey())))
+        if (!Marked.count(V))
+          M = StateMgr.Remove(M, V);
 
   return M;
 }
@@ -520,6 +571,21 @@ void GRConstants::Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred,
   
   for (StateTy::BufferTy::const_iterator I=SB.begin(), E=SB.end(); I!=E; ++I)
     Nodify(Dst, S, Pred, *I);
+}
+
+void GRConstants::VisitDeclRefExpr(DeclRefExpr* D, NodeTy* Pred, NodeSet& Dst) {
+  if (D != CurrentStmt) {
+    Dst.Add(Pred); // No-op. Simply propagate the current state unchanged.
+    return;
+  }
+  
+  // If we are here, we are loading the value of the decl and binding
+  // it to the block-level expression.
+  
+  StateTy St = Pred->getState();
+  
+  Nodify(Dst, D, Pred,
+         SetValue(St, D, GetValue(St, lval::DeclVal(D->getDecl()))));
 }
 
 void GRConstants::VisitCast(Expr* CastE, Expr* E, NodeTy* Pred, NodeSet& Dst) {
@@ -576,8 +642,19 @@ void GRConstants::VisitGuardedExpr(Stmt* S, Stmt* LHS, Stmt* RHS,
 void GRConstants::VisitUnaryOperator(UnaryOperator* U,
                                      GRConstants::NodeTy* Pred,
                                      GRConstants::NodeSet& Dst) {
+  
   NodeSet S1;
-  Visit(U->getSubExpr(), Pred, S1);
+  UnaryOperator::Opcode Op = U->getOpcode();
+  
+  // FIXME: This is a hack so that for '*' and '&' we don't recurse
+  //  on visiting the subexpression if it is a DeclRefExpr.  We should
+  //  probably just handle AddrOf and Deref in their own methods to make
+  //  this cleaner.
+  if ((Op == UnaryOperator::Deref || Op == UnaryOperator::AddrOf) &&
+      isa<DeclRefExpr>(U->getSubExpr()))
+    S1.Add(Pred);
+  else
+    Visit(U->getSubExpr(), Pred, S1);
     
   for (NodeSet::iterator I1=S1.begin(), E1=S1.end(); I1 != E1; ++I1) {
     NodeTy* N1 = *I1;
@@ -673,7 +750,12 @@ void GRConstants::VisitUnaryOperator(UnaryOperator* U,
       }
         
       case UnaryOperator::Deref: {
-        const LValue& L1 = cast<LValue>(GetValue(St, U->getSubExpr()));
+        // FIXME: Stop when dereferencing an uninitialized value.
+        // FIXME: Bifurcate when dereferencing a symbolic with no constraints?
+        
+        const RValue& V = GetValue(St, U->getSubExpr());
+        const LValue& L1 = cast<LValue>(V);
+        
         Nodify(Dst, U, N1, SetValue(St, U, GetValue(St, L1)));
         break;
       }
@@ -687,8 +769,10 @@ void GRConstants::VisitUnaryOperator(UnaryOperator* U,
 void GRConstants::VisitAssignmentLHS(Expr* E, GRConstants::NodeTy* Pred,
                                      GRConstants::NodeSet& Dst) {
 
-  if (isa<DeclRefExpr>(E))
+  if (isa<DeclRefExpr>(E)) {
+    Dst.Add(Pred);
     return;
+  }
   
   if (UnaryOperator* U = dyn_cast<UnaryOperator>(E)) {
     if (U->getOpcode() == UnaryOperator::Deref) {
@@ -754,6 +838,7 @@ void GRConstants::VisitBinaryOperator(BinaryOperator* B,
         }
         
         continue;
+      
       }
       
       switch (Op) {
@@ -825,6 +910,10 @@ void GRConstants::Visit(Stmt* S, GRConstants::NodeTy* Pred,
       
     case Stmt::ParenExprClass:
       Visit(cast<ParenExpr>(S)->getSubExpr(), Pred, Dst);
+      break;
+    
+    case Stmt::DeclRefExprClass:
+      VisitDeclRefExpr(cast<DeclRefExpr>(S), Pred, Dst);
       break;
       
     case Stmt::ImplicitCastExprClass: {
