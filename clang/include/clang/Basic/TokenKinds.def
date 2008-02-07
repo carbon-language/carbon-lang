@@ -171,9 +171,6 @@ TOK(coloncolon)          // ::
 // Objective C support.
 TOK(at)                  // @
 
-// at_identifier         // @foo
-// at_string             // @"foo"
-
 
 // C99 6.4.1: Keywords.  These turn into kw_* tokens.
 // Flags allowed:
