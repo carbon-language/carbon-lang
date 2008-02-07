@@ -97,6 +97,10 @@ void DeclPrinter:: PrintDecl(Decl *D) {
     Out << "Read top-level variable decl: '" << SD->getName() << "'\n";
   } else if (LinkageSpecDecl *LSD = dyn_cast<LinkageSpecDecl>(D)) {
     PrintLinkageSpec(LSD);
+  } else if (FileScopeAsmDecl *AD = dyn_cast<FileScopeAsmDecl>(D)) {
+    Out << "asm(";
+    AD->getAsmString()->printPretty(Out);
+    Out << ")\n";
   } else {
     assert(0 && "Unknown decl type!");
   }
@@ -402,6 +406,8 @@ namespace {
         Out << "Read objc fwd protocol decl\n";
       } else if (isa<ObjCClassDecl>(D)) {
         Out << "Read objc fwd class decl\n";
+      } else if (isa<FileScopeAsmDecl>(D)) {
+        Out << "Read file scope asm decl\n";
       } else {
         assert(0 && "Unknown decl type!");
       }

@@ -38,6 +38,7 @@ static unsigned nObjCCategoryImpl = 0;
 static unsigned nObjCCompatibleAlias = 0;
 static unsigned nObjCPropertyDecl = 0;
 static unsigned nLinkageSpecDecl = 0;
+static unsigned nFileScopeAsmDecl = 0;
 
 static bool StatSwitch = false;
 
@@ -169,7 +170,8 @@ void Decl::PrintStats() {
               nObjCCategoryImpl*sizeof(ObjCCategoryImplDecl)+
               nObjCCompatibleAlias*sizeof(ObjCCompatibleAliasDecl)+
               nObjCPropertyDecl*sizeof(ObjCPropertyDecl)+
-              nLinkageSpecDecl*sizeof(LinkageSpecDecl)));
+              nLinkageSpecDecl*sizeof(LinkageSpecDecl)+
+              nFileScopeAsmDecl*sizeof(FileScopeAsmDecl)));
     
 }
 
@@ -239,6 +241,9 @@ void Decl::addDeclKind(const Kind k) {
       break;
     case LinkageSpec:
       nLinkageSpecDecl++;
+      break;
+    case FileScopeAsm:
+      nFileScopeAsmDecl++;
       break;
   }
 }

@@ -197,7 +197,8 @@ private:
   virtual DeclTy *ActOnLinkageSpec(SourceLocation Loc, SourceLocation LBrace,
 				   SourceLocation RBrace, const char *Lang,
 				   unsigned StrSize, DeclTy *D);
-  
+  virtual DeclTy *ActOnFileScopeAsmDecl(SourceLocation Loc, ExprTy *expr);
+
   /// Scope actions.
   virtual void ActOnPopScope(SourceLocation Loc, Scope *S);
   virtual void ActOnTranslationUnitScope(SourceLocation Loc, Scope *S);

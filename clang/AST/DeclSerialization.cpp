@@ -67,6 +67,9 @@ Decl* Decl::Create(Deserializer& D) {
       
     case Typedef:
       return TypedefDecl::CreateImpl(D);
+      
+    case FileScopeAsm:
+      return FileScopeAsmDecl::CreateImpl(D);
   }
 }
 
@@ -437,4 +440,24 @@ void LinkageSpecDecl::ReadInRec(Deserializer& D) {
   Decl::ReadInRec(D);
   Language = static_cast<LanguageIDs>(D.ReadInt());
   D.ReadPtr(this->D);
+}
+
+//===----------------------------------------------------------------------===//
+//      FileScopeAsm Serialization.
+//===----------------------------------------------------------------------===//
+
+void FileScopeAsmDecl::EmitImpl(llvm::Serializer& S) const
+{
+  Decl::EmitInRec(S);
+  S.EmitOwnedPtr(AsmString);
+}
+
+FileScopeAsmDecl* FileScopeAsmDecl::CreateImpl(Deserializer& D) { 
+  FileScopeAsmDecl* decl = new FileScopeAsmDecl(SourceLocation(), 0);
+
+  decl->Decl::ReadInRec(D);
+  decl->AsmString = cast<StringLiteral>(D.ReadOwnedPtr<Expr>());
+//  D.ReadOwnedPtr(D.ReadOwnedPtr<StringLiteral>())<#T * * Ptr#>, <#bool AutoRegister#>)(decl->AsmString);
+  
+  return decl;
 }
