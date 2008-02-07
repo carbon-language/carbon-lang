@@ -534,6 +534,7 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
                   SourceRange(MemberLoc));
 
     // Figure out the type of the member; see C99 6.5.2.3p3
+    // FIXME: Handle address space modifiers
     QualType MemberType = MemberDecl->getType();
     unsigned combinedQualifiers =
         MemberType.getQualifiers() | BaseType.getQualifiers();
