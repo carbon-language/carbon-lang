@@ -33,7 +33,8 @@ const llvm::APSInt* ValueState::getSymVal(SymbolID sym) const {
 
 
 
-RValue ValueStateManager::GetValue(const StateTy& St, const LValue& LV) {
+RValue ValueStateManager::GetValue(const StateTy& St, const LValue& LV,
+                                   QualType* T) {
   if (isa<InvalidValue>(LV))
     return InvalidValue();
   
@@ -44,6 +45,19 @@ RValue ValueStateManager::GetValue(const StateTy& St, const LValue& LV) {
       
       return T ? T->getValue().second : InvalidValue();
     }
+     
+      // FIXME: We should bind how far a "ContentsOf" will go...
+      
+    case lval::SymbolValKind: {
+      const lval::SymbolVal& SV = cast<lval::SymbolVal>(LV);
+      assert (T);
+      
+      if (T->getTypePtr()->isPointerType())
+        return lval::SymbolVal(SymMgr.getContentsOfSymbol(SV.getSymbol()));
+      else
+        return nonlval::SymbolVal(SymMgr.getContentsOfSymbol(SV.getSymbol()));
+    }
+      
     default:
       assert (false && "Invalid LValue.");
       break;

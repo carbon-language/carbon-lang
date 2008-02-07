@@ -61,21 +61,70 @@ public:
   }
 };
   
+  // SymbolData: Used to record meta data about symbols.
+  
 class SymbolData {
-  uintptr_t Data;
 public:
-  enum Kind { ParmKind = 0x0, Mask = 0x3 };
+  enum Kind { UninitKind, ParmKind, ContentsOfKind };
+
+private:
+  uintptr_t Data;
+  Kind K;
   
-  SymbolData(ParmVarDecl* D)
-  : Data(reinterpret_cast<uintptr_t>(D) | ParmKind) {}
+protected:
+  SymbolData(uintptr_t D, Kind k) : Data(D), K(k) {}
+  SymbolData(void* D, Kind k) : Data(reinterpret_cast<uintptr_t>(D)), K(k) {}
   
-  inline Kind getKind() const { return (Kind) (Data & Mask); }
-  inline void* getPtr() const { return reinterpret_cast<void*>(Data & ~Mask); }  
-  inline bool operator==(const SymbolData& R) const { return Data == R.Data; }
+  void* getPtr() const { 
+    assert (K != UninitKind);
+    return reinterpret_cast<void*>(Data);
+  }
   
-  QualType getType() const;  
+  uintptr_t getInt() const {
+    assert (K != UninitKind);
+    return Data;
+  }
+  
+public:
+  SymbolData() : Data(0), K(UninitKind) {}
+  
+  Kind  getKind() const { return K; }  
+
+  inline bool operator==(const SymbolData& R) const { 
+    return K == R.K && Data == R.Data;
+  }
+  
+  QualType getType() const;
+  
+  // Implement isa<T> support.
+  static inline bool classof(const SymbolData*) { return true; }
+};
+
+class SymbolDataParmVar : public SymbolData {
+public:
+  SymbolDataParmVar(ParmVarDecl* VD) : SymbolData(VD, ParmKind) {}
+  
+  ParmVarDecl* getDecl() const { return (ParmVarDecl*) getPtr(); }
+  
+  // Implement isa<T> support.
+  static inline bool classof(const SymbolData* D) {
+    return D->getKind() == ParmKind;
+  }
 };
   
+class SymbolDataContentsOf : public SymbolData {
+public:
+  SymbolDataContentsOf(SymbolID ID) : SymbolData(ID, ContentsOfKind) {}
+  
+  SymbolID getSymbol() const { return (SymbolID) getInt(); }
+  
+  // Implement isa<T> support.
+  static inline bool classof(const SymbolData* D) {
+    return D->getKind() == ContentsOfKind;
+  }  
+};
+    
+    // Constraints on symbols.  Usually wrapped by RValues.
 
 class SymIntConstraint : public llvm::FoldingSetNode {
   SymbolID Symbol;
@@ -112,13 +161,22 @@ class SymbolManager {
   typedef llvm::DenseMap<void*,SymbolID> MapTy;
   MapTy DataToSymbol;
   
+  void* getKey(void* P) const {
+    return reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(P) | 0x1);
+  }
+  
+  void* getKey(SymbolID sym) const {
+    return reinterpret_cast<void*>((uintptr_t) (sym << 1));
+  }
+  
 public:
   SymbolManager();
   ~SymbolManager();
   
   SymbolID getSymbol(ParmVarDecl* D);
+  SymbolID getContentsOfSymbol(SymbolID sym);
   
-  inline SymbolData getSymbolData(SymbolID ID) const {
+  inline const SymbolData& getSymbolData(SymbolID ID) const {
     assert (ID < SymbolToData.size());
     return SymbolToData[ID];
   }
@@ -174,30 +232,6 @@ public:
 };
   
 } // end clang namespace
-
-//==------------------------------------------------------------------------==//
-// Casting machinery to get cast<> and dyn_cast<> working with SymbolData.
-//==------------------------------------------------------------------------==//
-
-namespace llvm {
-  
-  template<> inline bool
-  isa<clang::ParmVarDecl,clang::SymbolData>(const clang::SymbolData& V) {
-    return V.getKind() == clang::SymbolData::ParmKind;
-  }
-  
-  template<> struct cast_retty_impl<clang::ParmVarDecl,clang::SymbolData> {
-    typedef const clang::ParmVarDecl* ret_type;
-  };
-  
-  template<> struct simplify_type<clang::SymbolData> {
-    typedef void* SimpleType;
-    static inline SimpleType getSimplifiedValue(const clang::SymbolData &V) {
-      return V.getPtr();
-    }
-  };
-  
-} // end llvm namespace
 
 //==------------------------------------------------------------------------==//
 //  Base RValue types.
@@ -323,7 +357,7 @@ protected:
   NonLValue NE(ValueManager& ValMgr, const LValue& RHS) const;
   
 public:
-//  void print(std::ostream& Out) const;
+  void print(std::ostream& Out) const;
 
   RValue EvalBinaryOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
                             const LValue& RHS) const;

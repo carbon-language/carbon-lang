@@ -24,14 +24,25 @@ using llvm::APSInt;
 //===----------------------------------------------------------------------===//
 
 SymbolID SymbolManager::getSymbol(ParmVarDecl* D) {
-  SymbolID& X = DataToSymbol[D];
+  SymbolID& X = DataToSymbol[getKey(D)];
   
   if (!X.isInitialized()) {
     X = SymbolToData.size();
-    SymbolToData.push_back(D);
+    SymbolToData.push_back(SymbolDataParmVar(D));
   }
   
   return X;
+}
+
+SymbolID SymbolManager::getContentsOfSymbol(SymbolID sym) {
+  SymbolID& X = DataToSymbol[getKey(sym)];
+  
+  if (!X.isInitialized()) {
+    X = SymbolToData.size();
+    SymbolToData.push_back(SymbolDataContentsOf(sym));
+  }
+  
+  return X;  
 }
 
 QualType SymbolData::getType() const {
@@ -40,7 +51,8 @@ QualType SymbolData::getType() const {
       assert (false && "getType() not implemented for this symbol.");
     
     case ParmKind:
-      return static_cast<ParmVarDecl*>(getPtr())->getType();
+      return cast<SymbolDataParmVar>(this)->getDecl()->getType();
+
   }
 }
 
@@ -554,7 +566,7 @@ void NonLValue::print(std::ostream& Out) const {
   }
 }
 
-#if 0
+
 void LValue::print(std::ostream& Out) const {
   switch (getSubKind()) {        
     case lval::ConcreteIntKind:
@@ -576,4 +588,4 @@ void LValue::print(std::ostream& Out) const {
       break;
   }
 }
-#endif
+

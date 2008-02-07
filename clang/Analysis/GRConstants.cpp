@@ -124,6 +124,12 @@ protected:
   typedef llvm::SmallPtrSet<NodeTy*,5> UninitBranchesTy;
   UninitBranchesTy UninitBranches;
   
+  /// ImplicitNullDeref - Nodes in the ExplodedGraph that result from
+  ///  taking a dereference on a symbolic pointer that may be NULL.
+  typedef llvm::SmallPtrSet<NodeTy*,5> ImplicitNullDerefTy;
+  ImplicitNullDerefTy ImplicitNullDeref;
+  
+  
   bool StateCleaned;
   
   ASTContext& getContext() const { return G.getContext(); }
@@ -161,6 +167,10 @@ public:
   
   bool isUninitControlFlow(const NodeTy* N) const {
     return N->isSink() && UninitBranches.count(const_cast<NodeTy*>(N)) != 0;
+  }
+  
+  bool isImplicitNullDeref(const NodeTy* N) const {
+    return N->isSink() && ImplicitNullDeref.count(const_cast<NodeTy*>(N)) != 0;
   }
 
   /// ProcessStmt - Called by GREngine. Used to generate new successor
@@ -203,8 +213,10 @@ public:
     return GetValue(St, const_cast<Stmt*>(S));
   }
   
-  inline RValue GetValue(const StateTy& St, const LValue& LV) {
-    return StateMgr.GetValue(St, LV);
+  inline RValue GetValue(const StateTy& St, const LValue& LV,
+                         QualType* T = NULL) {
+    
+    return StateMgr.GetValue(St, LV, T);
   }
   
   inline LValue GetLValue(const StateTy& St, Stmt* S) {
@@ -237,7 +249,7 @@ public:
   StateTy AssumeSymInt(StateTy St, bool Assumption, const SymIntConstraint& C,
                        bool& isFeasible);
   
-  void Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred, StateTy St);
+  NodeTy* Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred, StateTy St);
   
   /// Nodify - This version of Nodify is used to batch process a set of states.
   ///  The states are not guaranteed to be unique.
@@ -557,13 +569,16 @@ GRConstants::StateTy GRConstants::RemoveDeadBindings(Stmt* Loc, StateTy M) {
   return M;
 }
 
-void GRConstants::Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred, StateTy St) {
+GRConstants::NodeTy*
+GRConstants::Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred, StateTy St) {
  
   // If the state hasn't changed, don't generate a new node.
   if (St == Pred->getState())
-    return;
+    return NULL;
   
-  Dst.Add(Builder->generateNode(S, St, Pred));
+  NodeTy* N = Builder->generateNode(S, St, Pred);
+  Dst.Add(N);
+  return N;
 }
 
 void GRConstants::Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred,
@@ -756,7 +771,34 @@ void GRConstants::VisitUnaryOperator(UnaryOperator* U,
         const RValue& V = GetValue(St, U->getSubExpr());
         const LValue& L1 = cast<LValue>(V);
         
-        Nodify(Dst, U, N1, SetValue(St, U, GetValue(St, L1)));
+        // After a dereference, one of two possible situations arise:
+        //  (1) A crash, because the pointer was NULL.
+        //  (2) The pointer is not NULL, and the dereference works.
+        // 
+        // We add these assumptions.
+                
+        bool isFeasible;
+        
+        // "Assume" that the pointer is NULL.
+        StateTy StNull = Assume(St, L1, false, isFeasible);
+        
+        if (isFeasible) {
+          NodeTy* NullNode = Nodify(Dst, U, N1, StNull);
+          if (NullNode) {
+            NullNode->markAsSink();
+            ImplicitNullDeref.insert(NullNode);
+          }
+        }
+        
+        // "Assume" that the pointer is Not-NULL.
+        StateTy StNotNull = Assume(St, L1, true, isFeasible);
+
+        if (isFeasible) {
+          QualType T = U->getType();
+          Nodify(Dst, U, N1, SetValue(StNotNull, U,
+                                      GetValue(StNotNull, L1, &T)));
+        }
+        
         break;
       }
         
@@ -1208,6 +1250,11 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRConstants::NodeTy*> :
             << (void*) L.getStmt() << ' ';
         
         L.getStmt()->printPretty(Out);
+        
+        if (GraphPrintCheckerState->isImplicitNullDeref(N)) {
+          Out << "\\|Implicit-Null Dereference.\\l";
+        }
+        
         break;
       }
     

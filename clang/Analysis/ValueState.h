@@ -264,7 +264,7 @@ public:
   StateTy SetValue(StateTy St, const LValue& LV, const RValue& V);
 
   RValue GetValue(const StateTy& St, Stmt* S, bool* hasVal = NULL);
-  RValue GetValue(const StateTy& St, const LValue& LV);
+  RValue GetValue(const StateTy& St, const LValue& LV, QualType* T = NULL);
     
   LValue GetLValue(const StateTy& St, Stmt* S);
 
