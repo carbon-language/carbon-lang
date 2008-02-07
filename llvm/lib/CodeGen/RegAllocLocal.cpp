@@ -35,7 +35,6 @@ using namespace llvm;
 
 STATISTIC(NumStores, "Number of stores added");
 STATISTIC(NumLoads , "Number of loads added");
-STATISTIC(NumFolded, "Number of loads/stores folded into instructions");
 
 namespace {
   static RegisterRegAlloc
@@ -500,12 +499,7 @@ MachineInstr *RALocal::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
   if (PhysReg) {   // Register is available, allocate it!
     assignVirtToPhysReg(VirtReg, PhysReg);
   } else {         // No registers available.
-    // If we can fold this spill into this instruction, do so now.
-    SmallVector<unsigned, 2> Ops;
-    Ops.push_back(OpNum);
-
-    // It looks like we can't fold this virtual register load into this
-    // instruction.  Force some poor hapless value out of the register file to
+    // Force some poor hapless value out of the register file to
     // make room for the new register, and reload it.
     PhysReg = getReg(MBB, MI, VirtReg);
   }
