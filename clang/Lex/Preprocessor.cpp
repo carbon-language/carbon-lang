@@ -1358,6 +1358,71 @@ bool Preprocessor::HandleEndOfMacro(Token &Result) {
   return HandleEndOfFile(Result, true);
 }
 
+/// HandleMicrosoftCommentPaste - When the macro expander pastes together a
+/// comment (/##/) in microsoft mode, this method handles updating the current
+/// state, returning the token on the next source line.
+void Preprocessor::HandleMicrosoftCommentPaste(Token &Tok) {
+  assert(CurMacroExpander && !CurLexer &&
+         "Pasted comment can only be formed from macro");
+  
+  // We handle this by scanning for the closest real lexer, switching it to
+  // raw mode and preprocessor mode.  This will cause it to return \n as an
+  // explicit EOM token.
+  Lexer *FoundLexer = 0;
+  bool LexerWasInPPMode = false;
+  for (unsigned i = 0, e = IncludeMacroStack.size(); i != e; ++i) {
+    IncludeStackInfo &ISI = *(IncludeMacroStack.end()-i-1);
+    if (ISI.TheLexer == 0) continue;  // Scan for a real lexer.
+    
+    // Once we find a real lexer, mark it as raw mode (disabling macro
+    // expansions) and preprocessor mode (return EOM).  We know that the lexer
+    // was *not* in raw mode before, because the macro that the comment came
+    // from was expanded.  However, it could have already been in preprocessor
+    // mode (#if COMMENT) in which case we have to return it to that mode and
+    // return EOM.
+    FoundLexer = ISI.TheLexer;
+    FoundLexer->LexingRawMode = true;
+    LexerWasInPPMode = FoundLexer->ParsingPreprocessorDirective;
+    FoundLexer->ParsingPreprocessorDirective = true;
+    break;
+  }
+  
+  // Okay, we either found and switched over the lexer, or we didn't find a
+  // lexer.  In either case, finish off the macro the comment came from, getting
+  // the next token.
+  if (!HandleEndOfMacro(Tok)) Lex(Tok);
+  
+  // Discarding comments as long as we don't have EOF or EOM.  This 'comments
+  // out' the rest of the line, including any tokens that came from other macros
+  // that were active, as in:
+  //  #define submacro a COMMENT b
+  //    submacro c
+  // which should lex to 'a' only: 'b' and 'c' should be removed.
+  while (Tok.isNot(tok::eom) && Tok.isNot(tok::eof))
+    Lex(Tok);
+  
+  // If we got an eom token, then we successfully found the end of the line.
+  if (Tok.is(tok::eom)) {
+    assert(FoundLexer && "Can't get end of line without an active lexer");
+    // Restore the lexer back to normal mode instead of raw mode.
+    FoundLexer->LexingRawMode = false;
+    
+    // If the lexer was already in preprocessor mode, just return the EOM token
+    // to finish the preprocessor line.
+    if (LexerWasInPPMode) return;
+    
+    // Otherwise, switch out of PP mode and return the next lexed token.
+    FoundLexer->ParsingPreprocessorDirective = false;
+    return Lex(Tok);
+  }
+  
+  // If we got an EOF token, then we reached the end of the token stream but
+  // didn't find an explicit \n.  This can only happen if there was no lexer
+  // active (an active lexer would return EOM at EOF if there was no \n in
+  // preprocessor directive mode), so just return EOF as our token.
+  assert(!FoundLexer && "Lexer should return EOM before EOF in PP mode");
+  return;
+}
 
 //===----------------------------------------------------------------------===//
 // Utility Methods for Preprocessor Directive Handling.

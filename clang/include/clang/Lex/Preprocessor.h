@@ -333,6 +333,11 @@ public:
   
   void PrintStats();
 
+  /// HandleMicrosoftCommentPaste - When the macro expander pastes together a
+  /// comment (/##/) in microsoft mode, this method handles updating the current
+  /// state, returning the token on the next source line.
+  void HandleMicrosoftCommentPaste(Token &Tok);
+  
   //===--------------------------------------------------------------------===//
   // Preprocessor callback methods.  These are invoked by a lexer as various
   // directives and events are found.

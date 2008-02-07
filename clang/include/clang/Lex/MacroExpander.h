@@ -189,12 +189,20 @@ private:
   /// PasteTokens - Tok is the LHS of a ## operator, and CurToken is the ##
   /// operator.  Read the ## and RHS, and paste the LHS/RHS together.  If there
   /// are is another ## after it, chomp it iteratively.  Return the result as
-  /// Tok.
-  void PasteTokens(Token &Tok);
+  /// Tok.  If this returns true, the caller should immediately return the
+  /// token.
+  bool PasteTokens(Token &Tok);
   
   /// Expand the arguments of a function-like macro so that we can quickly
   /// return preexpanded tokens from MacroTokens.
   void ExpandFunctionArguments();
+  
+  /// HandleMicrosoftCommentPaste - In microsoft compatibility mode, /##/ pastes
+  /// together to form a comment that comments out everything in the current
+  /// macro, other active macros, and anything left on the current physical
+  /// source line of the instantiated buffer.  Handle this by returning the
+  /// first token on the next line.
+  void HandleMicrosoftCommentPaste(Token &Tok);
 };
 
 }  // end namespace clang

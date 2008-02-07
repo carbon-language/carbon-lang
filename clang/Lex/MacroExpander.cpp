@@ -508,7 +508,11 @@ void MacroExpander::Lex(Token &Tok) {
   
   // If this token is followed by a token paste (##) operator, paste the tokens!
   if (!isAtEnd() && MacroTokens[CurToken].is(tok::hashhash))
-    PasteTokens(Tok);
+    if (PasteTokens(Tok)) {
+      // When handling the microsoft /##/ extension, the final token is
+      // returned by PasteTokens, not the pasted token.
+      return;
+    }
 
   // The token's current location indicate where the token was lexed from.  We
   // need this information to compute the spelling of the token, but any
@@ -538,7 +542,8 @@ void MacroExpander::Lex(Token &Tok) {
 /// PasteTokens - Tok is the LHS of a ## operator, and CurToken is the ##
 /// operator.  Read the ## and RHS, and paste the LHS/RHS together.  If there
 /// are is another ## after it, chomp it iteratively.  Return the result as Tok.
-void MacroExpander::PasteTokens(Token &Tok) {
+/// If this returns true, the caller should immediately return the token.
+bool MacroExpander::PasteTokens(Token &Tok) {
   llvm::SmallVector<char, 128> Buffer;
   do {
     // Consume the ## operator.
@@ -621,10 +626,18 @@ void MacroExpander::PasteTokens(Token &Tok) {
     // This occurs with "x ## +"  and other stuff.  Return with Tok unmodified
     // and with RHS as the next token to lex.
     if (isInvalid) {
-      // If not in assembler language mode.
-      PP.Diag(PasteOpLoc, diag::err_pp_bad_paste, 
-              std::string(Buffer.begin(), Buffer.end()-1));
-      return;
+      // Test for the Microsoft extension of /##/ turning into // here on the
+      // error path.
+      if (PP.getLangOptions().Microsoft && Tok.is(tok::slash) && 
+          RHS.is(tok::slash)) {
+        HandleMicrosoftCommentPaste(Tok);
+        return true;
+      } else {
+        // TODO: If not in assembler language mode.
+        PP.Diag(PasteOpLoc, diag::err_pp_bad_paste, 
+                std::string(Buffer.begin(), Buffer.end()-1));
+        return false;
+      }
     }
     
     // Turn ## into 'other' to avoid # ## # from looking like a paste operator.
@@ -649,6 +662,7 @@ void MacroExpander::PasteTokens(Token &Tok) {
     // by saying we're skipping contents, so we need to do this manually.
     Tok.setIdentifierInfo(PP.LookUpIdentifierInfo(Tok));
   }
+  return false;
 }
 
 /// isNextTokenLParen - If the next token lexed will pop this macro off the
@@ -659,4 +673,22 @@ unsigned MacroExpander::isNextTokenLParen() const {
   if (isAtEnd())
     return 2;
   return MacroTokens[CurToken].is(tok::l_paren);
+}
+
+
+/// HandleMicrosoftCommentPaste - In microsoft compatibility mode, /##/ pastes
+/// together to form a comment that comments out everything in the current
+/// macro, other active macros, and anything left on the current physical
+/// source line of the instantiated buffer.  Handle this by returning the
+/// first token on the next line.
+void MacroExpander::HandleMicrosoftCommentPaste(Token &Tok) {
+  // We 'comment out' the rest of this macro by just ignoring the rest of the
+  // tokens that have not been lexed yet, if any.
+  
+  // Since this must be a macro, mark the macro enabled now that it is no longer
+  // being expanded.
+  assert(Macro && "Token streams can't paste comments");
+  Macro->EnableMacro();
+  
+  PP.HandleMicrosoftCommentPaste(Tok);
 }
