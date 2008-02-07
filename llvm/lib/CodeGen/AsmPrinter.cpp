@@ -157,7 +157,7 @@ bool AsmPrinter::doFinalization(Module &M) {
       else if (!I->hasInternalLinkage())
         assert(0 && "Invalid alias linkage");
       
-      O << TAI->getSetDirective() << Name << ", " << Target << "\n";
+      O << TAI->getSetDirective() << ' ' << Name << ", " << Target << "\n";
 
       // If the aliasee has external weak linkage it can be referenced only by
       // alias itself. In this case it can be not in ExtWeakSymbols list. Emit
