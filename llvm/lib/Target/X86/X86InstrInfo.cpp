@@ -1011,6 +1011,8 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
   }
   }
 
+  if (!NewMI) return 0;
+
   NewMI->copyKillDeadInfo(MI);
   LV.instructionChanged(MI, NewMI);  // Update live variables
   MFI->insert(MBBI, NewMI);          // Insert the new inst    
