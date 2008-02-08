@@ -130,8 +130,8 @@ public:
   // The remaining operators just wrap the logic of APInt, but retain the
   // signedness information.
   
-  APSInt operator<<(unsigned Bits) {
-    return APSInt(static_cast<APInt&>(*this) << Bits, IsUnsigned);
+  APSInt operator<<(unsigned Bits) const {
+    return APSInt(static_cast<const APInt&>(*this) << Bits, IsUnsigned);
   }  
   APSInt& operator<<=(unsigned Amt) {
     *this = *this << Amt;
