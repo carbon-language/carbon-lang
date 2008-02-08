@@ -3563,10 +3563,10 @@ void SDNode::Profile(FoldingSetNodeID &ID) {
 
 /// getValueTypeList - Return a pointer to the specified value type.
 ///
-MVT::ValueType *SDNode::getValueTypeList(MVT::ValueType VT) {
+const MVT::ValueType *SDNode::getValueTypeList(MVT::ValueType VT) {
   if (MVT::isExtendedVT(VT)) {
     static std::set<MVT::ValueType> EVTs;
-    return (MVT::ValueType *)&(*EVTs.insert(VT).first);
+    return &(*EVTs.insert(VT).first);
   } else {
     static MVT::ValueType VTs[MVT::LAST_VALUETYPE];
     VTs[VT] = VT;

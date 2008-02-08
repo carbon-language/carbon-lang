@@ -1001,7 +1001,7 @@ protected:
   
   /// getValueTypeList - Return a pointer to the specified value type.
   ///
-  static MVT::ValueType *getValueTypeList(MVT::ValueType VT);
+  static const MVT::ValueType *getValueTypeList(MVT::ValueType VT);
   static SDVTList getSDVTList(MVT::ValueType VT) {
     SDVTList Ret = { getValueTypeList(VT), 1 };
     return Ret;
