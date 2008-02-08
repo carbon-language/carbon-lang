@@ -332,7 +332,7 @@ GRConstants::SetValue(StateTy St, Stmt* S, const RValue::BufferTy& RB,
 GRConstants::StateTy
 GRConstants::SetValue(StateTy St, const LValue& LV, const RValue& V) {
   
-  if (!LV.isValid())
+  if (LV.isUnknown())
     return St;
   
   if (!StateCleaned) {
@@ -390,7 +390,7 @@ void GRConstants::ProcessBranch(Expr* Condition, Stmt* Term,
     default:
       break;
 
-    case RValue::InvalidKind:
+    case RValue::UnknownKind:
       builder.generateNode(PrevState, true);
       builder.generateNode(PrevState, false);
       return;

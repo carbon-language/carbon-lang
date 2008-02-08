@@ -116,7 +116,7 @@ public:
 namespace vstate {
   typedef llvm::ImmutableSet<llvm::APSInt*> IntSetTy;
   
-  typedef llvm::ImmutableMap<VarBindKey,RValue>            VariableBindingsTy;  
+  typedef llvm::ImmutableMap<VarBindKey,RValue>            VarBindingsTy;  
   typedef llvm::ImmutableMap<SymbolID,IntSetTy>            ConstantNotEqTy;
   typedef llvm::ImmutableMap<SymbolID,const llvm::APSInt*> ConstantEqTy;
 }
@@ -130,21 +130,21 @@ private:
   void operator=(const ValueStateImpl& R) const;
 
 public:
-  vstate::VariableBindingsTy VariableBindings;
+  vstate::VarBindingsTy      VarBindings;
   vstate::ConstantNotEqTy    ConstantNotEq;
   vstate::ConstantEqTy       ConstantEq;
   
   /// This ctor is used when creating the first ValueStateImpl object.
-  ValueStateImpl(vstate::VariableBindingsTy VB,
+  ValueStateImpl(vstate::VarBindingsTy VB,
                  vstate::ConstantNotEqTy CNE,
                  vstate::ConstantEqTy CE)
-    : VariableBindings(VB), ConstantNotEq(CNE), ConstantEq(CE) {}
+    : VarBindings(VB), ConstantNotEq(CNE), ConstantEq(CE) {}
   
   /// Copy ctor - We must explicitly define this or else the "Next" ptr
   ///  in FoldingSetNode will also get copied.
   ValueStateImpl(const ValueStateImpl& RHS)
     : llvm::FoldingSetNode(),
-      VariableBindings(RHS.VariableBindings),
+      VarBindings(RHS.VarBindings),
       ConstantNotEq(RHS.ConstantNotEq),
       ConstantEq(RHS.ConstantEq) {} 
   
@@ -153,7 +153,7 @@ public:
   /// Profile - Profile the contents of a ValueStateImpl object for use
   ///  in a FoldingSet.
   static void Profile(llvm::FoldingSetNodeID& ID, const ValueStateImpl& V) {
-    V.VariableBindings.Profile(ID);
+    V.VarBindings.Profile(ID);
     V.ConstantNotEq.Profile(ID);
     V.ConstantEq.Profile(ID);
   }
@@ -184,7 +184,7 @@ public:
 
   // Typedefs.
   typedef vstate::IntSetTy                 IntSetTy;
-  typedef vstate::VariableBindingsTy       VariableBindingsTy;
+  typedef vstate::VarBindingsTy       VarBindingsTy;
   typedef vstate::ConstantNotEqTy          ConstantNotEqTy;
   typedef vstate::ConstantEqTy             ConstantEqTy;
 
@@ -197,9 +197,9 @@ public:
   
   // Iterators.
 
-  typedef VariableBindingsTy::iterator vb_iterator;  
-  vb_iterator begin() { return Data->VariableBindings.begin(); }
-  vb_iterator end() { return Data->VariableBindings.end(); }
+  typedef VarBindingsTy::iterator vb_iterator;  
+  vb_iterator begin() { return Data->VarBindings.begin(); }
+  vb_iterator end() { return Data->VarBindings.end(); }
   
   // Profiling and equality testing.
   
@@ -232,7 +232,7 @@ public:
 
 private:
   ValueState::IntSetTy::Factory           ISetFactory;
-  ValueState::VariableBindingsTy::Factory VBFactory;
+  ValueState::VarBindingsTy::Factory VBFactory;
   ValueState::ConstantNotEqTy::Factory    CNEFactory;
   ValueState::ConstantEqTy::Factory       CEFactory;
   

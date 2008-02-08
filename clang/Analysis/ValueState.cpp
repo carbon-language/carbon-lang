@@ -40,8 +40,8 @@ RValue ValueStateManager::GetValue(const StateTy& St, const LValue& LV,
   
   switch (LV.getSubKind()) {
     case lval::DeclValKind: {
-      StateTy::VariableBindingsTy::TreeTy* T =
-        St.getImpl()->VariableBindings.SlimFind(cast<lval::DeclVal>(LV).getDecl());
+      StateTy::VarBindingsTy::TreeTy* T =
+        St.getImpl()->VarBindings.SlimFind(cast<lval::DeclVal>(LV).getDecl());
       
       return T ? T->getValue().second : UnknownVal();
     }
@@ -151,8 +151,8 @@ RValue ValueStateManager::GetValue(const StateTy& St, Stmt* S, bool* hasVal) {
     break;
   }
   
-  StateTy::VariableBindingsTy::TreeTy* T =
-    St.getImpl()->VariableBindings.SlimFind(S);
+  StateTy::VarBindingsTy::TreeTy* T =
+    St.getImpl()->VarBindings.SlimFind(S);
   
   if (T) {
     if (hasVal) *hasVal = true;
@@ -207,8 +207,8 @@ ValueStateManager::Remove(StateTy St, VarBindKey K) {
 
   // Create a new state with the old binding removed.
   ValueStateImpl NewStateImpl = *St.getImpl();
-  NewStateImpl.VariableBindings =
-    VBFactory.Remove(NewStateImpl.VariableBindings, K);
+  NewStateImpl.VarBindings =
+    VBFactory.Remove(NewStateImpl.VarBindings, K);
 
   // Get the persistent copy.
   return getPersistentState(NewStateImpl);
@@ -219,8 +219,8 @@ ValueStateManager::Add(StateTy St, VarBindKey K, const RValue& V) {
   
   // Create a new state with the old binding removed.
   ValueStateImpl NewStateImpl = *St.getImpl();
-  NewStateImpl.VariableBindings =
-    VBFactory.Add(NewStateImpl.VariableBindings, K, V);
+  NewStateImpl.VarBindings =
+    VBFactory.Add(NewStateImpl.VarBindings, K, V);
   
   // Get the persistent copy.
   return getPersistentState(NewStateImpl);

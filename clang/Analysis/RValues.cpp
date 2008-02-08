@@ -132,7 +132,7 @@ RValue RValue::EvalCast(ValueManager& ValMgr, Expr* CastExpr) const {
     default: assert(false && "Invalid RValue."); break;
     case LValueKind: return cast<LValue>(this)->EvalCast(ValMgr, CastExpr);
     case NonLValueKind: return cast<NonLValue>(this)->EvalCast(ValMgr, CastExpr);      
-    case UninitializedKind: case InvalidKind: break;
+    case UninitializedKind: case UnknownKind: break;
   }
   
   return *this;
@@ -503,7 +503,7 @@ void RValue::print() const {
 
 void RValue::print(std::ostream& Out) const {
   switch (getBaseKind()) {
-    case InvalidKind:
+    case UnknownKind:
       Out << "Invalid";
       break;
       
