@@ -39,30 +39,25 @@
 
 namespace clang {  
 
-/// ExprBindKey - A variant smart pointer that wraps either a ValueDecl* or a
-///  Stmt*.  Use cast<> or dyn_cast<> to get actual pointer type
 class ExprBindKey {
   uintptr_t Raw;  
   void operator=(const ExprBindKey& RHS); // Do not implement.
-  
-public:
-  enum  Kind { IsSubExpr=0x0, IsBlkExpr=0x1, IsDecl=0x2, // L-Value Bindings.
-               IsSymbol=0x3, // Symbol Bindings.
-               Mask=0x3 };
-  
-  inline Kind getKind() const {
-    return (Kind) (Raw & Mask);
-  }
   
   inline void* getPtr() const { 
     return reinterpret_cast<void*>(Raw & ~Mask);
   }
   
-  ExprBindKey(const ValueDecl* VD)
-  : Raw(reinterpret_cast<uintptr_t>(VD) | IsDecl) {
-    assert(VD && "ValueDecl cannot be NULL.");
-  }
+public:
+  enum  Kind { IsSubExpr=0x0, IsBlkExpr=0x1, Mask=0x1 };
   
+  inline Kind getKind() const {
+    return (Kind) (Raw & Mask);
+  }
+    
+  inline Expr* getExpr() const {
+    return (Expr*) getPtr();
+  }
+    
   ExprBindKey(Expr* E, bool isBlkExpr = false) 
   : Raw(reinterpret_cast<uintptr_t>(E) | (isBlkExpr ? IsBlkExpr : IsSubExpr)){
     assert(E && "Tracked statement cannot be NULL.");
@@ -70,12 +65,6 @@ public:
   
   bool isSubExpr() const { return getKind() == IsSubExpr; }
   bool isBlkExpr() const { return getKind() == IsBlkExpr; }
-  
-  
-  
-  
-  bool isDecl()    const { return getKind() == IsDecl; }
-  bool isStmt()    const { return getKind() <= IsBlkExpr; }
   
   inline void Profile(llvm::FoldingSetNodeID& ID) const {
     ID.AddPointer(getPtr());
@@ -101,7 +90,8 @@ public:
 namespace vstate {
   typedef llvm::ImmutableSet<llvm::APSInt*> IntSetTy;
   
-  typedef llvm::ImmutableMap<ExprBindKey,RValue>            VarBindingsTy;  
+  typedef llvm::ImmutableMap<ExprBindKey,RValue>           ExprBindingsTy;  
+  typedef llvm::ImmutableMap<VarDecl*,RValue>              VarBindingsTy;  
   typedef llvm::ImmutableMap<SymbolID,IntSetTy>            ConstantNotEqTy;
   typedef llvm::ImmutableMap<SymbolID,const llvm::APSInt*> ConstantEqTy;
 }
@@ -115,20 +105,23 @@ private:
   void operator=(const ValueStateImpl& R) const;
 
 public:
+  vstate::ExprBindingsTy     ExprBindings;
   vstate::VarBindingsTy      VarBindings;
   vstate::ConstantNotEqTy    ConstantNotEq;
   vstate::ConstantEqTy       ConstantEq;
   
   /// This ctor is used when creating the first ValueStateImpl object.
-  ValueStateImpl(vstate::VarBindingsTy VB,
+  ValueStateImpl(vstate::ExprBindingsTy EB,
+                 vstate::VarBindingsTy VB,
                  vstate::ConstantNotEqTy CNE,
                  vstate::ConstantEqTy CE)
-    : VarBindings(VB), ConstantNotEq(CNE), ConstantEq(CE) {}
+    : ExprBindings(EB), VarBindings(VB), ConstantNotEq(CNE), ConstantEq(CE) {}
   
   /// Copy ctor - We must explicitly define this or else the "Next" ptr
   ///  in FoldingSetNode will also get copied.
   ValueStateImpl(const ValueStateImpl& RHS)
     : llvm::FoldingSetNode(),
+      ExprBindings(RHS.ExprBindings),
       VarBindings(RHS.VarBindings),
       ConstantNotEq(RHS.ConstantNotEq),
       ConstantEq(RHS.ConstantEq) {} 
@@ -138,6 +131,7 @@ public:
   /// Profile - Profile the contents of a ValueStateImpl object for use
   ///  in a FoldingSet.
   static void Profile(llvm::FoldingSetNodeID& ID, const ValueStateImpl& V) {
+    V.ExprBindings.Profile(ID);
     V.VarBindings.Profile(ID);
     V.ConstantNotEq.Profile(ID);
     V.ConstantEq.Profile(ID);
@@ -169,7 +163,8 @@ public:
 
   // Typedefs.
   typedef vstate::IntSetTy                 IntSetTy;
-  typedef vstate::VarBindingsTy       VarBindingsTy;
+  typedef vstate::ExprBindingsTy           ExprBindingsTy;
+  typedef vstate::VarBindingsTy            VarBindingsTy;
   typedef vstate::ConstantNotEqTy          ConstantNotEqTy;
   typedef vstate::ConstantEqTy             ConstantEqTy;
 
@@ -183,8 +178,12 @@ public:
   // Iterators.
 
   typedef VarBindingsTy::iterator vb_iterator;  
-  vb_iterator begin() { return Data->VarBindings.begin(); }
-  vb_iterator end() { return Data->VarBindings.end(); }
+  vb_iterator vb_begin() { return Data->VarBindings.begin(); }
+  vb_iterator vb_end() { return Data->VarBindings.end(); }
+  
+  typedef ExprBindingsTy::iterator eb_iterator;
+  eb_iterator eb_begin() { return Data->ExprBindings.begin(); }
+  eb_iterator eb_end() { return Data->ExprBindings.end(); }
   
   // Profiling and equality testing.
   
@@ -217,7 +216,8 @@ public:
 
 private:
   ValueState::IntSetTy::Factory           ISetFactory;
-  ValueState::VarBindingsTy::Factory VBFactory;
+  ValueState::ExprBindingsTy::Factory     EXFactory;
+  ValueState::VarBindingsTy::Factory      VBFactory;
   ValueState::ConstantNotEqTy::Factory    CNEFactory;
   ValueState::ConstantEqTy::Factory       CEFactory;
   
@@ -255,11 +255,12 @@ public:
   RValue GetValue(const StateTy& St, const LValue& LV, QualType* T = NULL);    
   LValue GetLValue(const StateTy& St, Expr* S);
   
-  
-  
-
   StateTy Add(StateTy St, ExprBindKey K, const RValue& V);
   StateTy Remove(StateTy St, ExprBindKey K);
+  
+  StateTy Add(StateTy St, VarDecl* D, const RValue& V);
+  StateTy Remove(StateTy St, VarDecl* D);
+  
   StateTy getPersistentState(const ValueStateImpl& Impl);
   
   StateTy AddEQ(StateTy St, SymbolID sym, const llvm::APSInt& V);
@@ -267,37 +268,5 @@ public:
 };
   
 } // end clang namespace
-
-//==------------------------------------------------------------------------==//
-// Casting machinery to get cast<> and dyn_cast<> working with ExprBindKey.
-//==------------------------------------------------------------------------==//
-
-namespace llvm {
-  
-  template<> inline bool
-  isa<clang::ValueDecl,clang::ExprBindKey>(const clang::ExprBindKey& V) {
-    return V.getKind() == clang::ExprBindKey::IsDecl;
-  }
-  
-  template<> inline bool
-  isa<clang::Stmt,clang::ExprBindKey>(const clang::ExprBindKey& V) {
-    return ((unsigned) V.getKind()) < clang::ExprBindKey::IsDecl;
-  }
-  
-  template<> struct cast_retty_impl<clang::ValueDecl,clang::ExprBindKey> {
-    typedef const clang::ValueDecl* ret_type;
-  };
-  
-  template<> struct cast_retty_impl<clang::Stmt,clang::ExprBindKey> {
-    typedef const clang::Stmt* ret_type;
-  };
-  
-  template<> struct simplify_type<clang::ExprBindKey> {
-    typedef void* SimpleType;
-    static inline SimpleType getSimplifiedValue(const clang::ExprBindKey &V) {
-      return V.getPtr();
-    }
-  };
-} // end llvm namespace
 
 #endif

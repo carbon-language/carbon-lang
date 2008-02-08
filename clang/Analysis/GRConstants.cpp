@@ -351,7 +351,7 @@ void GRConstants::ProcessBranch(Expr* Condition, Stmt* Term,
   StateTy PrevState = builder.getState();
   
   // Remove old bindings for subexpressions.  
-  for (StateTy::vb_iterator I=PrevState.begin(), E=PrevState.end(); I!=E; ++I)
+  for (StateTy::eb_iterator I=PrevState.eb_begin(), E=PrevState.eb_end(); I!=E; ++I)
     if (I.getKey().isSubExpr())
       PrevState = StateMgr.Remove(PrevState, I.getKey());
   
@@ -1123,38 +1123,52 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRConstants::NodeTy*> :
   static void PrintKindLabel(std::ostream& Out, ExprBindKey::Kind kind) {
     switch (kind) {
       case ExprBindKey::IsSubExpr:  Out << "Sub-Expressions:\\l"; break;
-      case ExprBindKey::IsDecl:    Out << "Variables:\\l"; break;
       case ExprBindKey::IsBlkExpr: Out << "Block-level Expressions:\\l"; break;
       default: assert (false && "Unknown ExprBindKey type.");
     }
   }
     
-  static void PrintKind(std::ostream& Out, GRConstants::StateTy M,
-                        ExprBindKey::Kind kind, bool isFirstGroup = false) {
+    
+  static void PrintVarBindings(std::ostream& Out, GRConstants::StateTy St) {
+
+    Out << "Variables:\\l";
+    
     bool isFirst = true;
     
-    for (GRConstants::StateTy::vb_iterator I=M.begin(), E=M.end();I!=E;++I) {        
+    for (GRConstants::StateTy::vb_iterator I=St.vb_begin(),
+                                           E=St.vb_end(); I!=E;++I) {        
+
+      if (isFirst)
+        isFirst = false;
+      else
+        Out << "\\l";
+      
+      Out << ' ' << I.getKey()->getName() << " : ";
+      I.getData().print(Out);
+    }
+    
+  }
+    
+  static void PrintExprBindings(std::ostream& Out, GRConstants::StateTy St,
+                                ExprBindKey::Kind kind) {
+    bool isFirst = true;
+
+    for (GRConstants::StateTy::eb_iterator I=St.eb_begin(),
+                                           E=St.eb_end(); I!=E;++I) {        
+      
       if (I.getKey().getKind() != kind)
         continue;
     
       if (isFirst) {
-        if (!isFirstGroup) Out << "\\l\\l";
+        Out << "\\l\\l";
         PrintKindLabel(Out, kind);
         isFirst = false;
       }
       else
         Out << "\\l";
-      
-      Out << ' ';
-    
-      if (ValueDecl* V = dyn_cast<ValueDecl>(I.getKey()))
-        Out << V->getName();          
-      else {
-        Stmt* E = cast<Stmt>(I.getKey());
-        Out << " (" << (void*) E << ") ";
-        E->printPretty(Out);
-      }
-    
+
+      Out << " (" << (void*) I.getKey().getExpr() << ") ";
+      I.getKey().getExpr()->printPretty(Out);
       Out << " : ";
       I.getData().print(Out);
     }
@@ -1260,10 +1274,10 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRConstants::NodeTy*> :
     }
     
     Out << "\\|StateID: " << (void*) N->getState().getImpl() << "\\|";
-    
-    PrintKind(Out, N->getState(), ExprBindKey::IsDecl, true);
-    PrintKind(Out, N->getState(), ExprBindKey::IsBlkExpr);
-    PrintKind(Out, N->getState(), ExprBindKey::IsSubExpr);
+
+    PrintVarBindings(Out, N->getState());
+    PrintExprBindings(Out, N->getState(), ExprBindKey::IsBlkExpr);
+    PrintExprBindings(Out, N->getState(), ExprBindKey::IsSubExpr);
     
     PrintEQ(Out, N->getState());
     PrintNE(Out, N->getState());

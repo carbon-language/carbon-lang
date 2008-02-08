@@ -43,34 +43,34 @@ ValueStateManager::RemoveDeadBindings(ValueState St, Stmt* Loc,
   // for optimum performance.
   
   llvm::SmallVector<ValueDecl*, 10> WList;
-  
-  for (StateTy::vb_iterator I = St.begin(), E = St.end(); I!=E ; ++I) {
+
+  for (StateTy::eb_iterator I = St.eb_begin(), E = St.eb_end(); I!=E ; ++I) {
+    
+    ExprBindKey K = I.getKey();
     
     // Remove old bindings for subexpressions.
-    if (I.getKey().isSubExpr()) {
-      St = Remove(St, I.getKey());
+    if (K.isSubExpr()) {
+      St = Remove(St, K);
       continue;
     }
     
-    if (I.getKey().isBlkExpr()) {
-      if (Liveness.isLive(Loc, cast<Stmt>(I.getKey()))) {
-        if (isa<lval::DeclVal>(I.getData())) {
-          lval::DeclVal LV = cast<lval::DeclVal>(I.getData());
-          WList.push_back(LV.getDecl());
-        }
+    assert (I.getKey().isBlkExpr());
+    
+    if (Liveness.isLive(Loc, K.getExpr())) {
+      if (isa<lval::DeclVal>(I.getData())) {
+        lval::DeclVal LV = cast<lval::DeclVal>(I.getData());
+        WList.push_back(LV.getDecl());
       }
-      else
-        St = Remove(St, I.getKey());
-      
-      continue;
     }
+    else
+      St = Remove(St, K);
     
-    assert (I.getKey().isDecl());
-    
-    if (VarDecl* V = dyn_cast<VarDecl>(cast<ValueDecl>(I.getKey())))
-      if (Liveness.isLive(Loc, V))
-        WList.push_back(V);
+    continue;
   }
+
+  for (StateTy::vb_iterator I = St.vb_begin(), E = St.vb_end(); I!=E ; ++I)
+    if (Liveness.isLive(Loc, I.getKey()))
+      WList.push_back(I.getKey());
   
   llvm::SmallPtrSet<ValueDecl*, 10> Marked;
   
@@ -94,11 +94,9 @@ ValueStateManager::RemoveDeadBindings(ValueState St, Stmt* Loc,
     }    
   }
   
-  for (StateTy::vb_iterator I = St.begin(), E = St.end(); I!=E ; ++I)
-    if (I.getKey().isDecl())
-      if (VarDecl* V = dyn_cast<VarDecl>(cast<ValueDecl>(I.getKey())))
-        if (!Marked.count(V))
-          St = Remove(St, V);
+  for (StateTy::vb_iterator I = St.vb_begin(), E = St.vb_end(); I!=E ; ++I)
+    if (!Marked.count(I.getKey()))
+      St = Remove(St, I.getKey());
   
   return St;
 }
@@ -112,7 +110,9 @@ RValue ValueStateManager::GetValue(const StateTy& St, const LValue& LV,
   switch (LV.getSubKind()) {
     case lval::DeclValKind: {
       StateTy::VarBindingsTy::TreeTy* T =
-        St.getImpl()->VarBindings.SlimFind(cast<lval::DeclVal>(LV).getDecl());
+      // FIXME: We should make lval::DeclVal only contain VarDecl
+        St.getImpl()->VarBindings.SlimFind(
+              cast<VarDecl>(cast<lval::DeclVal>(LV).getDecl()));
       
       return T ? T->getValue().second : UnknownVal();
     }
@@ -222,8 +222,8 @@ RValue ValueStateManager::GetValue(const StateTy& St, Expr* S, bool* hasVal) {
     break;
   }
   
-  StateTy::VarBindingsTy::TreeTy* T =
-    St.getImpl()->VarBindings.SlimFind(S);
+  StateTy::ExprBindingsTy::TreeTy* T =
+    St.getImpl()->ExprBindings.SlimFind(S);
   
   if (T) {
     if (hasVal) *hasVal = true;
@@ -235,28 +235,28 @@ RValue ValueStateManager::GetValue(const StateTy& St, Expr* S, bool* hasVal) {
   }
 }
 
-LValue ValueStateManager::GetLValue(const StateTy& St, Expr* S) {
+LValue ValueStateManager::GetLValue(const StateTy& St, Expr* E) {
   
-  while (ParenExpr* P = dyn_cast<ParenExpr>(S))
-    S = P->getSubExpr();
+  while (ParenExpr* P = dyn_cast<ParenExpr>(E))
+    E = P->getSubExpr();
   
-  if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(S))
+  if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(E))
     return lval::DeclVal(DR->getDecl());
   
-  if (UnaryOperator* U = dyn_cast<UnaryOperator>(S))
+  if (UnaryOperator* U = dyn_cast<UnaryOperator>(E))
     if (U->getOpcode() == UnaryOperator::Deref)
       return cast<LValue>(GetValue(St, U->getSubExpr()));
   
-  return cast<LValue>(GetValue(St, S));
+  return cast<LValue>(GetValue(St, E));
 }
 
 
 ValueStateManager::StateTy 
-ValueStateManager::SetValue(StateTy St, Expr* S, bool isBlkExpr,
+ValueStateManager::SetValue(StateTy St, Expr* E, bool isBlkExpr,
                             const RValue& V) {
   
-  assert (S);
-  return V.isKnown() ? Add(St, ExprBindKey(S, isBlkExpr), V) : St;
+  assert (E);
+  return V.isKnown() ? Add(St, ExprBindKey(E, isBlkExpr), V) : St;
 }
 
 ValueStateManager::StateTy
@@ -264,8 +264,9 @@ ValueStateManager::SetValue(StateTy St, const LValue& LV, const RValue& V) {
   
   switch (LV.getSubKind()) {
     case lval::DeclValKind:        
-      return V.isKnown() ? Add(St, cast<lval::DeclVal>(LV).getDecl(), V)
-                         : Remove(St, cast<lval::DeclVal>(LV).getDecl());
+      return V.isKnown()   // FIXME: Have DeclVal only contain VarDecl
+        ? Add(St, cast<VarDecl>(cast<lval::DeclVal>(LV).getDecl()), V)
+        : Remove(St, cast<VarDecl>(cast<lval::DeclVal>(LV).getDecl()));
       
     default:
       assert ("SetValue for given LValue type not yet implemented.");
@@ -274,35 +275,59 @@ ValueStateManager::SetValue(StateTy St, const LValue& LV, const RValue& V) {
 }
 
 ValueStateManager::StateTy
-ValueStateManager::Remove(StateTy St, ExprBindKey K) {
-
+ValueStateManager::Add(StateTy St, ExprBindKey K, const RValue& V) {
+  
   // Create a new state with the old binding removed.
   ValueStateImpl NewStateImpl = *St.getImpl();
-  NewStateImpl.VarBindings =
-    VBFactory.Remove(NewStateImpl.VarBindings, K);
-
+  NewStateImpl.ExprBindings =
+    EXFactory.Add(NewStateImpl.ExprBindings, K, V);
+  
   // Get the persistent copy.
   return getPersistentState(NewStateImpl);
 }
 
 ValueStateManager::StateTy
-ValueStateManager::Add(StateTy St, ExprBindKey K, const RValue& V) {
+ValueStateManager::Remove(StateTy St, ExprBindKey K) {
   
   // Create a new state with the old binding removed.
   ValueStateImpl NewStateImpl = *St.getImpl();
-  NewStateImpl.VarBindings =
-    VBFactory.Add(NewStateImpl.VarBindings, K, V);
+  NewStateImpl.ExprBindings =
+    EXFactory.Remove(NewStateImpl.ExprBindings, K);
   
   // Get the persistent copy.
   return getPersistentState(NewStateImpl);
 }
 
+ValueStateManager::StateTy
+ValueStateManager::Add(StateTy St, VarDecl* D, const RValue& V) {
+  
+  // Create a new state with the old binding removed.
+  ValueStateImpl NewStateImpl = *St.getImpl();
+  NewStateImpl.VarBindings =
+    VBFactory.Add(NewStateImpl.VarBindings, D, V);
+  
+  // Get the persistent copy.
+  return getPersistentState(NewStateImpl);
+}
+
+ValueStateManager::StateTy
+ValueStateManager::Remove(StateTy St, VarDecl* D) {
+  
+  // Create a new state with the old binding removed.
+  ValueStateImpl NewStateImpl = *St.getImpl();
+  NewStateImpl.VarBindings =
+    VBFactory.Remove(NewStateImpl.VarBindings, D);
+  
+  // Get the persistent copy.
+  return getPersistentState(NewStateImpl);
+}
 
 ValueStateManager::StateTy
 ValueStateManager::getInitialState() {
 
   // Create a state with empty variable bindings.
-  ValueStateImpl StateImpl(VBFactory.GetEmptyMap(),
+  ValueStateImpl StateImpl(EXFactory.GetEmptyMap(),
+                           VBFactory.GetEmptyMap(),
                            CNEFactory.GetEmptyMap(),
                            CEFactory.GetEmptyMap());
   
