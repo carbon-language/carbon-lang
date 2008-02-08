@@ -141,10 +141,6 @@ public:
     return Decl;
   }
 
-  virtual DeclTy *ActOnFileScopeAsmDecl(SourceLocation Loc, ExprTy *AsmString) {
-    return 0;
-  }
-  
   /// ActOnPopScope - This callback is called immediately before the specified
   /// scope is popped and deleted.
   virtual void ActOnPopScope(SourceLocation Loc, Scope *S) {}

@@ -1711,13 +1711,6 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
   Consumer.HandleTagDeclDefinition(Enum);
 }
 
-Sema::DeclTy *Sema::ActOnFileScopeAsmDecl(SourceLocation Loc,
-                                          ExprTy *expr) {
-  StringLiteral *AsmString = cast<StringLiteral>((Expr*)expr);
-  
-  return new FileScopeAsmDecl(Loc, AsmString);
-}
-
 Sema::DeclTy* Sema::ActOnLinkageSpec(SourceLocation Loc,
 				     SourceLocation LBrace,
 				     SourceLocation RBrace,

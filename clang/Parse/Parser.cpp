@@ -321,7 +321,11 @@ Parser::DeclTy *Parser::ParseExternalDeclaration() {
     return RV;
   }
   case tok::kw_asm:
-    return ParseSimpleAsm();
+    ParseSimpleAsm();
+    ExpectAndConsume(tok::semi, diag::err_expected_semi_after,
+                     "top-level asm block");
+    // TODO: Invoke action for top-level asm.
+    return 0;
   case tok::at:
     // @ is not a legal token unless objc is enabled, no need to check.
     return ParseObjCAtDirectives();
@@ -606,25 +610,19 @@ Parser::ExprResult Parser::ParseAsmStringLiteral() {
 /// [GNU] simple-asm-expr:
 ///         'asm' '(' asm-string-literal ')'
 ///
-Parser::DeclTy *Parser::ParseSimpleAsm() {
+void Parser::ParseSimpleAsm() {
   assert(Tok.is(tok::kw_asm) && "Not an asm!");
-  SourceLocation Loc = ConsumeToken();
+  ConsumeToken();
   
   if (Tok.isNot(tok::l_paren)) {
     Diag(Tok, diag::err_expected_lparen_after, "asm");
-    return 0;
+    return;
   }
   
-  ConsumeParen();
+  SourceLocation Loc = ConsumeParen();
   
-  ExprResult Result = ParseAsmStringLiteral();
+  ParseAsmStringLiteral();
   
   MatchRHSPunctuation(tok::r_paren, Loc);
-  
-  if (ExpectAndConsume(tok::semi, diag::err_expected_semi_after,
-                       "top-level asm block"))
-    return 0;
-  
-  return Actions.ActOnFileScopeAsmDecl(Loc, Result.Val);
 }
 
