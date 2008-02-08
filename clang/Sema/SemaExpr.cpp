@@ -1040,13 +1040,13 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
 
     if (lhsComplexInt && rhsComplexInt) {
       if (Context.maxIntegerType(lhsComplexInt->getElementType(), 
-                                     rhsComplexInt->getElementType()) == lhs) { 
-            // convert the rhs
-            if (!isCompAssign) ImpCastExprToType(rhsExpr, lhs);
-            return lhs;
+                                 rhsComplexInt->getElementType()) == lhs) {
+        // convert the rhs
+        if (!isCompAssign) ImpCastExprToType(rhsExpr, lhs);
+        return lhs;
       }
       if (!isCompAssign) 
-            ImpCastExprToType(lhsExpr, rhs); // convert the lhs
+        ImpCastExprToType(lhsExpr, rhs); // convert the lhs
       return rhs;
     } else if (lhsComplexInt && rhs->isIntegerType()) {
       // convert the rhs to the lhs complex type.
