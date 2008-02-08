@@ -211,13 +211,11 @@ llvm::APSInt& EvaluateAPSInt(ValueManager& ValMgr, BinaryOperator::Opcode Op,
     case BinaryOperator::Sub:
       return ValMgr.getValue( V1 - V2 );
 
-#if 0
     case BinaryOperator::Shl:
-      return ValMgr.getValue( V1 << V2 );
+      return ValMgr.getValue( V1.operator<<( (unsigned) V2.getZExtValue() ));
       
     case BinaryOperator::Shr:
-      return ValMgr.getValue( V1 >> V2 );
-#endif     
+      return ValMgr.getValue( V1.operator>>( (unsigned) V2.getZExtValue() ));
     
     case BinaryOperator::LT:
       return ValMgr.getTruthValue( V1 < V2 );
