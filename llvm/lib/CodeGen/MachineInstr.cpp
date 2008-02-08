@@ -647,7 +647,7 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine *TM) const {
       if (MRO.isStore())
         OS << "ST";
         
-      OS << "(" << MRO.getSize() << ") [";
+      OS << "(" << MRO.getSize() << "," << MRO.getAlignment() << ") [";
       
       if (!V)
         OS << "<unknown>";
