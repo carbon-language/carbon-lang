@@ -921,11 +921,22 @@ Parser::StmtResult Parser::FuzzyParseMicrosoftAsmStatement() {
     // From the MS website: If used without braces, the __asm keyword means
     // that the rest of the line is an assembly-language statement.
     SourceManager &SrcMgr = PP.getSourceManager();
-    unsigned lineNo = SrcMgr.getLineNumber(Tok.getLocation());
-    do {
-      ConsumeAnyToken();
-    } while ((SrcMgr.getLineNumber(Tok.getLocation()) == lineNo) && 
-             Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof));
+    SourceLocation TokLoc = Tok.getLocation();
+    if (TokLoc.isFileID()) {
+      unsigned lineNo = SrcMgr.getLineNumber(TokLoc);
+      do {
+        ConsumeAnyToken();
+        TokLoc = Tok.getLocation();
+      } while (TokLoc.isFileID() && (SrcMgr.getLineNumber(TokLoc) == lineNo) && 
+               Tok.isNot(tok::r_brace) && Tok.isNot(tok::semi) && 
+               Tok.isNot(tok::eof));
+    } else { // The asm tokens come from a macro expansion.
+      do {
+        ConsumeAnyToken();
+        TokLoc = Tok.getLocation();
+      } while (TokLoc.isMacroID() && Tok.isNot(tok::r_brace) && 
+               Tok.isNot(tok::semi) && Tok.isNot(tok::eof));
+    }
   }
   return false;
 }
