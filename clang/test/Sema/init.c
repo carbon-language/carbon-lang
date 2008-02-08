@@ -13,3 +13,7 @@ extern int x;
 void *g = &x;
 int *h = &x;
 
+int test() {
+int a[10];
+int b[10] = a; // expected-error {{initialization with "{...}" expected}}
+}

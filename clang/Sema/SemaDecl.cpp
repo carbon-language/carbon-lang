@@ -659,6 +659,12 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType) {
     // FIXME: Handle wide strings
     if (StringLiteral *strLiteral = IsStringLiteralInit(Init, DeclType))
       return CheckStringLiteralInit(strLiteral, DeclType);
+
+    if (DeclType->isArrayType())
+      return Diag(Init->getLocStart(),
+                  diag::err_array_init_list_required, 
+                  Init->getSourceRange());
+
     return CheckSingleInitializer(Init, DeclType);
   }
   unsigned newIndex = 0;
