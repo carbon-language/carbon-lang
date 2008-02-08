@@ -706,18 +706,25 @@ SDOperand SelectionDAG::getString(const std::string &Val) {
 }
 
 SDOperand SelectionDAG::getConstant(uint64_t Val, MVT::ValueType VT, bool isT) {
+  MVT::ValueType EltVT =
+    MVT::isVector(VT) ? MVT::getVectorElementType(VT) : VT;
+
+  return getConstant(APInt(MVT::getSizeInBits(EltVT), Val), VT, isT);
+}
+
+SDOperand SelectionDAG::getConstant(const APInt &Val, MVT::ValueType VT, bool isT) {
   assert(MVT::isInteger(VT) && "Cannot create FP integer constant!");
 
   MVT::ValueType EltVT =
     MVT::isVector(VT) ? MVT::getVectorElementType(VT) : VT;
   
-  // Mask out any bits that are not valid for this constant.
-  Val &= MVT::getIntVTBitMask(EltVT);
+  assert(Val.getBitWidth() == MVT::getSizeInBits(EltVT) &&
+         "APInt size does not match type size!");
 
   unsigned Opc = isT ? ISD::TargetConstant : ISD::Constant;
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, Opc, getVTList(EltVT), 0, 0);
-  ID.AddInteger(Val);
+  ID.AddAPInt(Val);
   void *IP = 0;
   SDNode *N = NULL;
   if ((N = CSEMap.FindNodeOrInsertPos(ID, IP)))

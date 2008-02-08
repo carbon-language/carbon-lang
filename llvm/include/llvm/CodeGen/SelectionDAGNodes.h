@@ -24,6 +24,7 @@
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/iterator"
 #include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/APInt.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/CodeGen/MemOperand.h"
 #include "llvm/Support/DataTypes.h"
@@ -1173,21 +1174,22 @@ public:
 };  
 
 class ConstantSDNode : public SDNode {
-  uint64_t Value;
+  APInt Value;
   virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
 protected:
   friend class SelectionDAG;
-  ConstantSDNode(bool isTarget, uint64_t val, MVT::ValueType VT)
+  ConstantSDNode(bool isTarget, const APInt &val, MVT::ValueType VT)
     : SDNode(isTarget ? ISD::TargetConstant : ISD::Constant, getSDVTList(VT)),
       Value(val) {
   }
 public:
 
-  uint64_t getValue() const { return Value; }
+  const APInt &getAPIntValue() const { return Value; }
+  uint64_t getValue() const { return Value.getZExtValue(); }
 
   int64_t getSignExtended() const {
     unsigned Bits = MVT::getSizeInBits(getValueType(0));
-    return ((int64_t)Value << (64-Bits)) >> (64-Bits);
+    return ((int64_t)Value.getZExtValue() << (64-Bits)) >> (64-Bits);
   }
 
   bool isNullValue() const { return Value == 0; }

@@ -172,8 +172,12 @@ public:
   //
   SDOperand getString(const std::string &Val);
   SDOperand getConstant(uint64_t Val, MVT::ValueType VT, bool isTarget = false);
+  SDOperand getConstant(const APInt &Val, MVT::ValueType VT, bool isTarget = false);
   SDOperand getIntPtrConstant(uint64_t Val, bool isTarget = false);
   SDOperand getTargetConstant(uint64_t Val, MVT::ValueType VT) {
+    return getConstant(Val, VT, true);
+  }
+  SDOperand getTargetConstant(const APInt &Val, MVT::ValueType VT) {
     return getConstant(Val, VT, true);
   }
   SDOperand getConstantFP(double Val, MVT::ValueType VT, bool isTarget = false);
