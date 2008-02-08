@@ -52,7 +52,7 @@ is:</p>
 <ol>
   <li><a href="http://www.llvm.org/docs/GettingStarted.html#checkout">Checkout
    and build LLVM</a> from SVN head:</li>
-  
+
   <ul>
     <li><tt>svn co http://llvm.org/svn/llvm-project/llvm/trunk llvm</tt></li>
     <li><tt>cd llvm</tt></li>
@@ -64,36 +64,36 @@ is:</p>
      built llvm):</li>
      <li><tt>cd llvm/tools</tt>
      <li><tt>svn co http://llvm.org/svn/llvm-project/cfe/trunk clang</tt></li>
-     
+
   </ul>
   <li>Non-mac users: Paths to system header files are currently hard coded
       into clang; as a result, if clang can't find your system headers,
       please follow these instructions:</li>
-      
+
   <ul>
-    <li>'<tt>touch empty.c; gcc -v empty.c -fsyntax-only</tt>' to get the 
+    <li>'<tt>touch empty.c; gcc -v empty.c -fsyntax-only</tt>' to get the
     path.</li>
     <li>Look for the comment "FIXME: temporary hack:
     hard-coded paths" in <tt>clang/Driver/clang.cpp</tt> and
     change the lines below to include that path.</li>
   </ul>
-  
+
   <li>Build clang:</li>
   <ul>
     <li><tt>cd clang</tt> (assuming that you are in <tt>llvm/tools</tt>)</li>
     <li><tt>make</tt> (this will give you a debug build)</li>
   </ul>
-  
+
   <li>Try it out (assuming you add llvm/Debug/bin to your path):</li>
   <ul>
     <li><tt>clang --help</tt></li>
     <li><tt>clang file.c -fsyntax-only</tt> (check for correctness)</li>
     <li><tt>clang file.c -ast-dump</tt> (internal debug dump of ast)</li>
-    <li><tt>clang file.c -ast-view</tt> (<a 
+    <li><tt>clang file.c -ast-view</tt> (<a
     href="http://llvm.org/docs/ProgrammersManual.html#ViewGraph">set up graphviz
      and rebuild llvm first</a>)</li>
     <li><tt>clang file.c -emit-llvm</tt> (print out unoptimized llvm code)</li>
-    <li><tt>clang file.c -emit-llvm | llvm-as | opt -std-compile-opts | 
+    <li><tt>clang file.c -emit-llvm | llvm-as | opt -std-compile-opts |
          llvm-dis</tt> (print out optimized llvm code)</li>
     <li><tt>clang file.c -emit-llvm | llvm-as | opt -std-compile-opts | llc
          &gt; file.s</tt> (output native machine code)</li>
@@ -105,7 +105,7 @@ is:</p>
   sure you have the latest SVN version of LLVM.  LLVM contains
   support libraries for clang that will be updated as well as
   development on clang progresses.</p>
-  
+
 <h3>Examples of using clang</h3>
 
 <p>The clang driver takes a lot of GCC compatible options, which you can see
@@ -207,7 +207,7 @@ llvm-ld -native -o a.out t.o
 $ <b>ls</b>
 a.out a.out.bc t.c t.o
 </pre>
-  
+
 
 
 
