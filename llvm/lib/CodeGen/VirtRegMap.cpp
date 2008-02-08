@@ -839,7 +839,7 @@ bool LocalSpiller::PrepForUnfoldOpti(MachineBasicBlock &MBB,
       assert(Idx != -1);
       SmallVector<unsigned, 2> Ops;
       Ops.push_back(Idx);
-      MachineInstr *FoldedMI = TII->foldMemoryOperand(NewMI, Ops, SS);
+      MachineInstr *FoldedMI = TII->foldMemoryOperand(MF, NewMI, Ops, SS);
       if (FoldedMI) {
         if (!VRM.hasPhys(UnfoldVR))
           VRM.assignVirt2Phys(UnfoldVR, UnfoldPR);

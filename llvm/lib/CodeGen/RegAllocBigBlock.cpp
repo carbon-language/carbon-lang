@@ -521,7 +521,7 @@ MachineInstr *RABigBlock::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI
     // try to fold the spill into the instruction
     SmallVector<unsigned, 2> Ops;
     Ops.push_back(OpNum);
-    if(MachineInstr* FMI = TII->foldMemoryOperand(MI, Ops, FrameIndex)) {
+    if(MachineInstr* FMI = TII->foldMemoryOperand(*MF, MI, Ops, FrameIndex)) {
       ++NumFolded;
       FMI->copyKillDeadInfo(MI);
       return MBB.insert(MBB.erase(MI), FMI);
