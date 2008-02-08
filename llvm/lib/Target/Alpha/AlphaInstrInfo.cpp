@@ -250,9 +250,10 @@ void AlphaInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
   NewMIs.push_back(MIB);
 }
 
-MachineInstr *AlphaInstrInfo::foldMemoryOperand(MachineInstr *MI,
-                                                 SmallVectorImpl<unsigned> &Ops,
-                                                 int FrameIndex) const {
+MachineInstr *AlphaInstrInfo::foldMemoryOperand(MachineFunction &MF,
+                                                MachineInstr *MI,
+                                                SmallVectorImpl<unsigned> &Ops,
+                                                int FrameIndex) const {
    if (Ops.size() != 1) return NULL;
 
    // Make sure this is a reg-reg copy.

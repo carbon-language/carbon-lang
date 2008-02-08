@@ -324,14 +324,16 @@ public:
   /// folding and return true, otherwise it should return false.  If it folds
   /// the instruction, it is likely that the MachineInstruction the iterator
   /// references has been changed.
-  virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
+  virtual MachineInstr* foldMemoryOperand(MachineFunction &MF,
+                                          MachineInstr* MI,
                                           SmallVectorImpl<unsigned> &Ops,
                                           int FrameIndex) const;
 
   /// foldMemoryOperand - Same as the previous version except it allows folding
   /// of any load and store from / to any address, not just from a specific
   /// stack slot.
-  virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
+  virtual MachineInstr* foldMemoryOperand(MachineFunction &MF,
+                                          MachineInstr* MI,
                                   SmallVectorImpl<unsigned> &Ops,
                                   MachineInstr* LoadMI) const;
 

@@ -94,11 +94,13 @@ public:
                                const TargetRegisterClass *RC,
                                SmallVectorImpl<MachineInstr*> &NewMIs) const;
   
-  virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
+  virtual MachineInstr* foldMemoryOperand(MachineFunction &MF,
+                                          MachineInstr* MI,
                                           SmallVectorImpl<unsigned> &Ops,
                                           int FrameIndex) const;
 
-  virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
+  virtual MachineInstr* foldMemoryOperand(MachineFunction &MF,
+                                          MachineInstr* MI,
                                           SmallVectorImpl<unsigned> &Ops,
                                           MachineInstr* LoadMI) const {
     return 0;

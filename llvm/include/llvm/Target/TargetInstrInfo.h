@@ -262,7 +262,8 @@ public:
   /// operand folded, otherwise NULL is returned. The client is responsible for
   /// removing the old instruction and adding the new one in the instruction
   /// stream.
-  virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
+  virtual MachineInstr* foldMemoryOperand(MachineFunction &MF,
+                                          MachineInstr* MI,
                                           SmallVectorImpl<unsigned> &Ops,
                                           int FrameIndex) const {
     return 0;
@@ -271,7 +272,8 @@ public:
   /// foldMemoryOperand - Same as the previous version except it allows folding
   /// of any load and store from / to any address, not just from a specific
   /// stack slot.
-  virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
+  virtual MachineInstr* foldMemoryOperand(MachineFunction &MF,
+                                          MachineInstr* MI,
                                           SmallVectorImpl<unsigned> &Ops,
                                           MachineInstr* LoadMI) const {
     return 0;
