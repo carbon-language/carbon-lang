@@ -704,9 +704,6 @@ static void getMaxByValAlign(const Type *Ty, unsigned &MaxAlign) {
   if (const VectorType *VTy = dyn_cast<VectorType>(Ty)) {
     if (VTy->getBitWidth() == 128)
       MaxAlign = 16;
-    else if (VTy->getBitWidth() == 64)
-      if (MaxAlign < 8)
-        MaxAlign = 8;
   } else if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
     unsigned EltAlign = 0;
     getMaxByValAlign(ATy->getElementType(), EltAlign);
@@ -727,13 +724,14 @@ static void getMaxByValAlign(const Type *Ty, unsigned &MaxAlign) {
 
 /// getByValTypeAlignment - Return the desired alignment for ByVal aggregate
 /// function arguments in the caller parameter area. For X86, aggregates
-/// that contains are placed at 16-byte boundaries while the rest are at
-/// 4-byte boundaries.
+/// that contain SSE vectors are placed at 16-byte boundaries while the rest
+/// are at 4-byte boundaries.
 unsigned X86TargetLowering::getByValTypeAlignment(const Type *Ty) const {
   if (Subtarget->is64Bit())
     return getTargetData()->getABITypeAlignment(Ty);
   unsigned Align = 4;
-  getMaxByValAlign(Ty, Align);
+  if (Subtarget->hasSSE1())
+    getMaxByValAlign(Ty, Align);
   return Align;
 }
 
