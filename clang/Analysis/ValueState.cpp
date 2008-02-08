@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This files defines SymbolID, VarBindKey, and ValueState.
+//  This files defines SymbolID, ExprBindKey, and ValueState.
 //
 //===----------------------------------------------------------------------===//
 
@@ -167,7 +167,7 @@ ValueStateManager::AddEQ(StateTy St, SymbolID sym, const llvm::APSInt& V) {
   return getPersistentState(NewStateImpl);
 }
 
-RValue ValueStateManager::GetValue(const StateTy& St, Stmt* S, bool* hasVal) {
+RValue ValueStateManager::GetValue(const StateTy& St, Expr* S, bool* hasVal) {
   for (;;) {
     switch (S->getStmtClass()) {
         
@@ -235,7 +235,7 @@ RValue ValueStateManager::GetValue(const StateTy& St, Stmt* S, bool* hasVal) {
   }
 }
 
-LValue ValueStateManager::GetLValue(const StateTy& St, Stmt* S) {
+LValue ValueStateManager::GetLValue(const StateTy& St, Expr* S) {
   
   while (ParenExpr* P = dyn_cast<ParenExpr>(S))
     S = P->getSubExpr();
@@ -252,11 +252,11 @@ LValue ValueStateManager::GetLValue(const StateTy& St, Stmt* S) {
 
 
 ValueStateManager::StateTy 
-ValueStateManager::SetValue(StateTy St, Stmt* S, bool isBlkExpr,
+ValueStateManager::SetValue(StateTy St, Expr* S, bool isBlkExpr,
                             const RValue& V) {
   
   assert (S);
-  return V.isKnown() ? Add(St, VarBindKey(S, isBlkExpr), V) : St;
+  return V.isKnown() ? Add(St, ExprBindKey(S, isBlkExpr), V) : St;
 }
 
 ValueStateManager::StateTy
@@ -274,7 +274,7 @@ ValueStateManager::SetValue(StateTy St, const LValue& LV, const RValue& V) {
 }
 
 ValueStateManager::StateTy
-ValueStateManager::Remove(StateTy St, VarBindKey K) {
+ValueStateManager::Remove(StateTy St, ExprBindKey K) {
 
   // Create a new state with the old binding removed.
   ValueStateImpl NewStateImpl = *St.getImpl();
@@ -286,7 +286,7 @@ ValueStateManager::Remove(StateTy St, VarBindKey K) {
 }
 
 ValueStateManager::StateTy
-ValueStateManager::Add(StateTy St, VarBindKey K, const RValue& V) {
+ValueStateManager::Add(StateTy St, ExprBindKey K, const RValue& V) {
   
   // Create a new state with the old binding removed.
   ValueStateImpl NewStateImpl = *St.getImpl();

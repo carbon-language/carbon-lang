@@ -200,30 +200,30 @@ public:
     return StateMgr.RemoveDeadBindings(St, S, Liveness);
   }
 
-  StateTy SetValue(StateTy St, Stmt* S, const RValue& V);
+  StateTy SetValue(StateTy St, Expr* S, const RValue& V);
 
-  StateTy SetValue(StateTy St, const Stmt* S, const RValue& V) {
-    return SetValue(St, const_cast<Stmt*>(S), V);
+  StateTy SetValue(StateTy St, const Expr* S, const RValue& V) {
+    return SetValue(St, const_cast<Expr*>(S), V);
   }
   
   /// SetValue - This version of SetValue is used to batch process a set
   ///  of different possible RValues and return a set of different states.
-  const StateTy::BufferTy& SetValue(StateTy St, Stmt* S,
+  const StateTy::BufferTy& SetValue(StateTy St, Expr* S,
                                     const RValue::BufferTy& V,
                                     StateTy::BufferTy& RetBuf);
   
   StateTy SetValue(StateTy St, const LValue& LV, const RValue& V);
   
-  inline RValue GetValue(const StateTy& St, Stmt* S) {
+  inline RValue GetValue(const StateTy& St, Expr* S) {
     return StateMgr.GetValue(St, S);
   }
   
-  inline RValue GetValue(const StateTy& St, Stmt* S, bool& hasVal) {
+  inline RValue GetValue(const StateTy& St, Expr* S, bool& hasVal) {
     return StateMgr.GetValue(St, S, &hasVal);
   }
   
-  inline RValue GetValue(const StateTy& St, const Stmt* S) {
-    return GetValue(St, const_cast<Stmt*>(S));
+  inline RValue GetValue(const StateTy& St, const Expr* S) {
+    return GetValue(St, const_cast<Expr*>(S));
   }
   
   inline RValue GetValue(const StateTy& St, const LValue& LV,
@@ -232,7 +232,7 @@ public:
     return StateMgr.GetValue(St, LV, T);
   }
   
-  inline LValue GetLValue(const StateTy& St, Stmt* S) {
+  inline LValue GetLValue(const StateTy& St, Expr* S) {
     return StateMgr.GetLValue(St, S);
   }
   
@@ -290,7 +290,7 @@ public:
   void VisitDeclStmt(DeclStmt* DS, NodeTy* Pred, NodeSet& Dst); 
   
   /// VisitGuardedExpr - Transfer function logic for ?, __builtin_choose
-  void VisitGuardedExpr(Stmt* S, Stmt* LHS, Stmt* RHS,
+  void VisitGuardedExpr(Expr* S, Expr* LHS, Expr* RHS,
                         NodeTy* Pred, NodeSet& Dst);
   
   /// VisitLogicalExpr - Transfer function logic for '&&', '||'
@@ -300,7 +300,7 @@ public:
 
 
 GRConstants::StateTy
-GRConstants::SetValue(StateTy St, Stmt* S, const RValue& V) {
+GRConstants::SetValue(StateTy St, Expr* S, const RValue& V) {
 
   if (!StateCleaned) {
     St = RemoveDeadBindings(CurrentStmt, St);
@@ -320,7 +320,7 @@ GRConstants::SetValue(StateTy St, Stmt* S, const RValue& V) {
 }
 
 const GRConstants::StateTy::BufferTy&
-GRConstants::SetValue(StateTy St, Stmt* S, const RValue::BufferTy& RB,
+GRConstants::SetValue(StateTy St, Expr* S, const RValue::BufferTy& RB,
                       StateTy::BufferTy& RetBuf) {
   
   assert (RetBuf.empty());
@@ -585,7 +585,7 @@ void GRConstants::VisitDeclStmt(DeclStmt* DS, GRConstants::NodeTy* Pred,
 }
 
 
-void GRConstants::VisitGuardedExpr(Stmt* S, Stmt* LHS, Stmt* RHS,
+void GRConstants::VisitGuardedExpr(Expr* S, Expr* LHS, Expr* RHS,
                                    NodeTy* Pred, NodeSet& Dst) {
   
   StateTy St = Pred->getState();
@@ -886,18 +886,19 @@ void GRConstants::Visit(Stmt* S, GRConstants::NodeTy* Pred,
   }
 
   switch (S->getStmtClass()) {
-    case Stmt::BinaryOperatorClass:
+    case Stmt::BinaryOperatorClass: {
+      BinaryOperator* B = cast<BinaryOperator>(S);
  
-      if (cast<BinaryOperator>(S)->isLogicalOp()) {
-        VisitLogicalExpr(cast<BinaryOperator>(S), Pred, Dst);
+      if (B->isLogicalOp()) {
+        VisitLogicalExpr(B, Pred, Dst);
         break;
       }
-      else if (cast<BinaryOperator>(S)->getOpcode() == BinaryOperator::Comma) {
+      else if (B->getOpcode() == BinaryOperator::Comma) {
         StateTy St = Pred->getState();
-        Stmt* LastStmt = cast<BinaryOperator>(S)->getRHS();
-        Nodify(Dst, S, Pred, SetValue(St, S, GetValue(St, LastStmt)));
+        Nodify(Dst, B, Pred, SetValue(St, B, GetValue(St, B->getRHS())));
         break;
       }
+    }
       
       // Fall-through.
       
@@ -906,9 +907,11 @@ void GRConstants::Visit(Stmt* S, GRConstants::NodeTy* Pred,
       break;
       
     case Stmt::StmtExprClass: {
+      StmtExpr* SE = cast<StmtExpr>(S);
+      
       StateTy St = Pred->getState();
-      Stmt* LastStmt = *(cast<StmtExpr>(S)->getSubStmt()->body_rbegin());
-      Nodify(Dst, S, Pred, SetValue(St, S, GetValue(St, LastStmt)));
+      Expr* LastExpr = cast<Expr>(*SE->getSubStmt()->body_rbegin());
+      Nodify(Dst, SE, Pred, SetValue(St, SE, GetValue(St, LastExpr)));
       break;      
     }
       
@@ -938,13 +941,13 @@ void GRConstants::Visit(Stmt* S, GRConstants::NodeTy* Pred,
       
     case Stmt::ConditionalOperatorClass: { // '?' operator
       ConditionalOperator* C = cast<ConditionalOperator>(S);
-      VisitGuardedExpr(S, C->getLHS(), C->getRHS(), Pred, Dst);
+      VisitGuardedExpr(C, C->getLHS(), C->getRHS(), Pred, Dst);
       break;
     }
 
     case Stmt::ChooseExprClass: { // __builtin_choose_expr
       ChooseExpr* C = cast<ChooseExpr>(S);
-      VisitGuardedExpr(S, C->getLHS(), C->getRHS(), Pred, Dst);
+      VisitGuardedExpr(C, C->getLHS(), C->getRHS(), Pred, Dst);
       break;
     }
       
@@ -1117,17 +1120,17 @@ template<>
 struct VISIBILITY_HIDDEN DOTGraphTraits<GRConstants::NodeTy*> :
   public DefaultDOTGraphTraits {
 
-  static void PrintKindLabel(std::ostream& Out, VarBindKey::Kind kind) {
+  static void PrintKindLabel(std::ostream& Out, ExprBindKey::Kind kind) {
     switch (kind) {
-      case VarBindKey::IsSubExpr:  Out << "Sub-Expressions:\\l"; break;
-      case VarBindKey::IsDecl:    Out << "Variables:\\l"; break;
-      case VarBindKey::IsBlkExpr: Out << "Block-level Expressions:\\l"; break;
-      default: assert (false && "Unknown VarBindKey type.");
+      case ExprBindKey::IsSubExpr:  Out << "Sub-Expressions:\\l"; break;
+      case ExprBindKey::IsDecl:    Out << "Variables:\\l"; break;
+      case ExprBindKey::IsBlkExpr: Out << "Block-level Expressions:\\l"; break;
+      default: assert (false && "Unknown ExprBindKey type.");
     }
   }
     
   static void PrintKind(std::ostream& Out, GRConstants::StateTy M,
-                        VarBindKey::Kind kind, bool isFirstGroup = false) {
+                        ExprBindKey::Kind kind, bool isFirstGroup = false) {
     bool isFirst = true;
     
     for (GRConstants::StateTy::vb_iterator I=M.begin(), E=M.end();I!=E;++I) {        
@@ -1258,9 +1261,9 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRConstants::NodeTy*> :
     
     Out << "\\|StateID: " << (void*) N->getState().getImpl() << "\\|";
     
-    PrintKind(Out, N->getState(), VarBindKey::IsDecl, true);
-    PrintKind(Out, N->getState(), VarBindKey::IsBlkExpr);
-    PrintKind(Out, N->getState(), VarBindKey::IsSubExpr);
+    PrintKind(Out, N->getState(), ExprBindKey::IsDecl, true);
+    PrintKind(Out, N->getState(), ExprBindKey::IsBlkExpr);
+    PrintKind(Out, N->getState(), ExprBindKey::IsSubExpr);
     
     PrintEQ(Out, N->getState());
     PrintNE(Out, N->getState());

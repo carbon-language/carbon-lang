@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This files defines SymbolID, VarBindKey, and ValueState.
+//  This files defines SymbolID, ExprBindKey, and ValueState.
 //
 //===----------------------------------------------------------------------===//
 
@@ -39,11 +39,11 @@
 
 namespace clang {  
 
-/// VarBindKey - A variant smart pointer that wraps either a ValueDecl* or a
+/// ExprBindKey - A variant smart pointer that wraps either a ValueDecl* or a
 ///  Stmt*.  Use cast<> or dyn_cast<> to get actual pointer type
-class VarBindKey {
+class ExprBindKey {
   uintptr_t Raw;  
-  void operator=(const VarBindKey& RHS); // Do not implement.
+  void operator=(const ExprBindKey& RHS); // Do not implement.
   
 public:
   enum  Kind { IsSubExpr=0x0, IsBlkExpr=0x1, IsDecl=0x2, // L-Value Bindings.
@@ -58,18 +58,22 @@ public:
     return reinterpret_cast<void*>(Raw & ~Mask);
   }
   
-  VarBindKey(const ValueDecl* VD)
+  ExprBindKey(const ValueDecl* VD)
   : Raw(reinterpret_cast<uintptr_t>(VD) | IsDecl) {
     assert(VD && "ValueDecl cannot be NULL.");
   }
   
-  VarBindKey(Stmt* S, bool isBlkExpr = false) 
-  : Raw(reinterpret_cast<uintptr_t>(S) | (isBlkExpr ? IsBlkExpr : IsSubExpr)){
-    assert(S && "Tracked statement cannot be NULL.");
+  ExprBindKey(Expr* E, bool isBlkExpr = false) 
+  : Raw(reinterpret_cast<uintptr_t>(E) | (isBlkExpr ? IsBlkExpr : IsSubExpr)){
+    assert(E && "Tracked statement cannot be NULL.");
   }
   
   bool isSubExpr() const { return getKind() == IsSubExpr; }
   bool isBlkExpr() const { return getKind() == IsBlkExpr; }
+  
+  
+  
+  
   bool isDecl()    const { return getKind() == IsDecl; }
   bool isStmt()    const { return getKind() <= IsBlkExpr; }
   
@@ -77,15 +81,15 @@ public:
     ID.AddPointer(getPtr());
   }
   
-  inline bool operator==(const VarBindKey& X) const {
+  inline bool operator==(const ExprBindKey& X) const {
     return getPtr() == X.getPtr();
   }
   
-  inline bool operator!=(const VarBindKey& X) const {
+  inline bool operator!=(const ExprBindKey& X) const {
     return !operator==(X);
   }
   
-  inline bool operator<(const VarBindKey& X) const { 
+  inline bool operator<(const ExprBindKey& X) const { 
     return getPtr() < X.getPtr();
   }
 };
@@ -97,7 +101,7 @@ public:
 namespace vstate {
   typedef llvm::ImmutableSet<llvm::APSInt*> IntSetTy;
   
-  typedef llvm::ImmutableMap<VarBindKey,RValue>            VarBindingsTy;  
+  typedef llvm::ImmutableMap<ExprBindKey,RValue>            VarBindingsTy;  
   typedef llvm::ImmutableMap<SymbolID,IntSetTy>            ConstantNotEqTy;
   typedef llvm::ImmutableMap<SymbolID,const llvm::APSInt*> ConstantEqTy;
 }
@@ -244,18 +248,18 @@ public:
   StateTy RemoveDeadBindings(StateTy St, Stmt* Loc, 
                              const LiveVariables& Liveness);
   
-  StateTy SetValue(StateTy St, Stmt* S, bool isBlkExpr, const RValue& V);
+  StateTy SetValue(StateTy St, Expr* S, bool isBlkExpr, const RValue& V);
   StateTy SetValue(StateTy St, const LValue& LV, const RValue& V);
 
-  RValue GetValue(const StateTy& St, Stmt* S, bool* hasVal = NULL);
+  RValue GetValue(const StateTy& St, Expr* S, bool* hasVal = NULL);
   RValue GetValue(const StateTy& St, const LValue& LV, QualType* T = NULL);    
-  LValue GetLValue(const StateTy& St, Stmt* S);
+  LValue GetLValue(const StateTy& St, Expr* S);
   
   
   
 
-  StateTy Add(StateTy St, VarBindKey K, const RValue& V);
-  StateTy Remove(StateTy St, VarBindKey K);
+  StateTy Add(StateTy St, ExprBindKey K, const RValue& V);
+  StateTy Remove(StateTy St, ExprBindKey K);
   StateTy getPersistentState(const ValueStateImpl& Impl);
   
   StateTy AddEQ(StateTy St, SymbolID sym, const llvm::APSInt& V);
@@ -265,32 +269,32 @@ public:
 } // end clang namespace
 
 //==------------------------------------------------------------------------==//
-// Casting machinery to get cast<> and dyn_cast<> working with VarBindKey.
+// Casting machinery to get cast<> and dyn_cast<> working with ExprBindKey.
 //==------------------------------------------------------------------------==//
 
 namespace llvm {
   
   template<> inline bool
-  isa<clang::ValueDecl,clang::VarBindKey>(const clang::VarBindKey& V) {
-    return V.getKind() == clang::VarBindKey::IsDecl;
+  isa<clang::ValueDecl,clang::ExprBindKey>(const clang::ExprBindKey& V) {
+    return V.getKind() == clang::ExprBindKey::IsDecl;
   }
   
   template<> inline bool
-  isa<clang::Stmt,clang::VarBindKey>(const clang::VarBindKey& V) {
-    return ((unsigned) V.getKind()) < clang::VarBindKey::IsDecl;
+  isa<clang::Stmt,clang::ExprBindKey>(const clang::ExprBindKey& V) {
+    return ((unsigned) V.getKind()) < clang::ExprBindKey::IsDecl;
   }
   
-  template<> struct cast_retty_impl<clang::ValueDecl,clang::VarBindKey> {
+  template<> struct cast_retty_impl<clang::ValueDecl,clang::ExprBindKey> {
     typedef const clang::ValueDecl* ret_type;
   };
   
-  template<> struct cast_retty_impl<clang::Stmt,clang::VarBindKey> {
+  template<> struct cast_retty_impl<clang::Stmt,clang::ExprBindKey> {
     typedef const clang::Stmt* ret_type;
   };
   
-  template<> struct simplify_type<clang::VarBindKey> {
+  template<> struct simplify_type<clang::ExprBindKey> {
     typedef void* SimpleType;
-    static inline SimpleType getSimplifiedValue(const clang::VarBindKey &V) {
+    static inline SimpleType getSimplifiedValue(const clang::ExprBindKey &V) {
       return V.getPtr();
     }
   };
