@@ -4948,9 +4948,9 @@ SDOperand X86TargetLowering::LowerTRAMPOLINE(SDOperand Op,
     const unsigned char MOV64ri = TII->getBaseOpcodeFor(X86::MOV64ri);
 
     const unsigned char N86R10 =
-      ((X86RegisterInfo*)RegInfo)->getX86RegNum(X86::R10);
+      ((const X86RegisterInfo*)RegInfo)->getX86RegNum(X86::R10);
     const unsigned char N86R11 =
-      ((X86RegisterInfo*)RegInfo)->getX86RegNum(X86::R11);
+      ((const X86RegisterInfo*)RegInfo)->getX86RegNum(X86::R11);
 
     const unsigned char REX_WB = 0x40 | 0x08 | 0x01; // REX prefix
 
@@ -5038,7 +5038,7 @@ SDOperand X86TargetLowering::LowerTRAMPOLINE(SDOperand Op,
 
     const unsigned char MOV32ri = TII->getBaseOpcodeFor(X86::MOV32ri);
     const unsigned char N86Reg =
-      ((X86RegisterInfo*)RegInfo)->getX86RegNum(NestReg);
+      ((const X86RegisterInfo*)RegInfo)->getX86RegNum(NestReg);
     OutChains[0] = DAG.getStore(Root, DAG.getConstant(MOV32ri|N86Reg, MVT::i8),
                                 Trmp, TrmpAddr, 0);
 

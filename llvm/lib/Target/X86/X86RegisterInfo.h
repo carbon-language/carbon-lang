@@ -71,7 +71,7 @@ public:
 
   /// getX86RegNum - Returns the native X86 register number for the given LLVM
   /// register identifier.
-  unsigned getX86RegNum(unsigned RegNo);
+  unsigned getX86RegNum(unsigned RegNo) const;
 
   unsigned getStackAlignment() const { return StackAlign; }
 

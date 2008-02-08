@@ -84,7 +84,7 @@ namespace {
                           unsigned Op, unsigned RegOpcodeField,
                           intptr_t PCAdj = 0);
 
-    unsigned getX86RegNum(unsigned RegNo);
+    unsigned getX86RegNum(unsigned RegNo) const;
     bool isX86_64ExtendedReg(const MachineOperand &MO);
     unsigned determineREX(const MachineInstr &MI);
 
@@ -210,8 +210,8 @@ void Emitter::emitJumpTableAddress(unsigned JTI, unsigned Reloc,
   MCE.emitWordLE(0); // The relocated value will be added to the displacement
 }
 
-unsigned Emitter::getX86RegNum(unsigned RegNo) {
-  return ((X86RegisterInfo&)II->getRegisterInfo()).getX86RegNum(RegNo);
+unsigned Emitter::getX86RegNum(unsigned RegNo) const {
+  return ((const X86RegisterInfo&)II->getRegisterInfo()).getX86RegNum(RegNo);
 }
 
 inline static unsigned char ModRMByte(unsigned Mod, unsigned RegOpcode,
