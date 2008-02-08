@@ -244,7 +244,7 @@ public:
   enum BaseKind { LValueKind=0x0,
                   NonLValueKind=0x1,
                   UninitializedKind=0x2,
-                  InvalidKind=0x3 };
+                  UnknownKind=0x3 };
   
   enum { BaseBits = 2, 
          BaseMask = 0x3 };
@@ -290,8 +290,8 @@ public:
   static RValue GetSymbolValue(SymbolManager& SymMgr, ParmVarDecl *D);
   
   
-  inline bool isValid() const { return getRawKind() != InvalidKind; }
-  inline bool isInvalid() const { return getRawKind() == InvalidKind; }
+  inline bool isKnown() const { return getRawKind() != UnknownKind; }
+  inline bool isUnknown() const { return getRawKind() == UnknownKind; }
   
   void print(std::ostream& OS) const;
   void print() const;
@@ -300,18 +300,18 @@ public:
   static inline bool classof(const RValue*) { return true; }
 };
 
-class InvalidValue : public RValue {
+class UnknownVal : public RValue {
 public:
-  InvalidValue() : RValue(InvalidKind) {}
+  UnknownVal() : RValue(UnknownKind) {}
   
   static inline bool classof(const RValue* V) {
-    return V->getBaseKind() == InvalidKind;
+    return V->getBaseKind() == UnknownKind;
   }  
 };
 
-class UninitializedValue : public RValue {
+class UninitializedVal : public RValue {
 public:
-  UninitializedValue() : RValue(UninitializedKind) {}
+  UninitializedVal() : RValue(UninitializedKind) {}
   
   static inline bool classof(const RValue* V) {
     return V->getBaseKind() == UninitializedKind;

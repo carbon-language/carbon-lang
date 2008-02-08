@@ -35,15 +35,15 @@ const llvm::APSInt* ValueState::getSymVal(SymbolID sym) const {
 
 RValue ValueStateManager::GetValue(const StateTy& St, const LValue& LV,
                                    QualType* T) {
-  if (isa<InvalidValue>(LV))
-    return InvalidValue();
+  if (isa<UnknownVal>(LV))
+    return UnknownVal();
   
   switch (LV.getSubKind()) {
     case lval::DeclValKind: {
       StateTy::VariableBindingsTy::TreeTy* T =
         St.getImpl()->VariableBindings.SlimFind(cast<lval::DeclVal>(LV).getDecl());
       
-      return T ? T->getValue().second : InvalidValue();
+      return T ? T->getValue().second : UnknownVal();
     }
      
       // FIXME: We should bind how far a "ContentsOf" will go...
@@ -63,7 +63,7 @@ RValue ValueStateManager::GetValue(const StateTy& St, const LValue& LV,
       break;
   }
   
-  return InvalidValue();
+  return UnknownVal();
 }
 
 ValueStateManager::StateTy
@@ -160,7 +160,7 @@ RValue ValueStateManager::GetValue(const StateTy& St, Stmt* S, bool* hasVal) {
   }
   else {
     if (hasVal) *hasVal = false;
-    return InvalidValue();
+    return UnknownVal();
   }
 }
 
@@ -185,7 +185,7 @@ ValueStateManager::SetValue(StateTy St, Stmt* S, bool isBlkExpr,
                             const RValue& V) {
   
   assert (S);
-  return V.isValid() ? Add(St, VarBindKey(S, isBlkExpr), V) : St;
+  return V.isKnown() ? Add(St, VarBindKey(S, isBlkExpr), V) : St;
 }
 
 ValueStateManager::StateTy
@@ -193,7 +193,7 @@ ValueStateManager::SetValue(StateTy St, const LValue& LV, const RValue& V) {
   
   switch (LV.getSubKind()) {
     case lval::DeclValKind:        
-      return V.isValid() ? Add(St, cast<lval::DeclVal>(LV).getDecl(), V)
+      return V.isKnown() ? Add(St, cast<lval::DeclVal>(LV).getDecl(), V)
                          : Remove(St, cast<lval::DeclVal>(LV).getDecl());
       
     default:

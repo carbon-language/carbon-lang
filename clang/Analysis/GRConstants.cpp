@@ -439,14 +439,14 @@ void GRConstants::VisitLogicalExpr(BinaryOperator* B, NodeTy* Pred,
   RValue R1 = GetValue(PrevState, B->getLHS());
   RValue R2 = GetValue(PrevState, B->getRHS(), hasR2);
     
-  if (isa<InvalidValue>(R1) && 
-       (isa<InvalidValue>(R2) ||
-        isa<UninitializedValue>(R2))) {    
+  if (isa<UnknownVal>(R1) && 
+       (isa<UnknownVal>(R2) ||
+        isa<UninitializedVal>(R2))) {    
 
     Nodify(Dst, B, Pred, SetValue(PrevState, B, R2));
     return;
   }    
-  else if (isa<UninitializedValue>(R1)) {
+  else if (isa<UninitializedVal>(R1)) {
     Nodify(Dst, B, Pred, SetValue(PrevState, B, R1));
     return;
   }
@@ -644,7 +644,7 @@ void GRConstants::VisitDeclStmt(DeclStmt* DS, GRConstants::NodeTy* Pred,
     if (const VarDecl* VD = dyn_cast<VarDecl>(D)) {
       const Expr* E = VD->getInit();      
       St = SetValue(St, lval::DeclVal(VD),
-                    E ? GetValue(St, E) : UninitializedValue());
+                    E ? GetValue(St, E) : UninitializedVal());
     }
 
   Nodify(Dst, DS, Pred, St);
@@ -660,7 +660,7 @@ void GRConstants::VisitGuardedExpr(Stmt* S, Stmt* LHS, Stmt* RHS,
   StateTy St = Pred->getState();
   
   RValue R = GetValue(St, LHS);
-  if (isa<InvalidValue>(R)) R = GetValue(St, RHS);
+  if (isa<UnknownVal>(R)) R = GetValue(St, RHS);
   
   Nodify(Dst, S, Pred, SetValue(St, S, R));
 }
@@ -880,7 +880,7 @@ void GRConstants::VisitBinaryOperator(BinaryOperator* B,
       
       if (Op <= BinaryOperator::Or) {
         
-        if (isa<InvalidValue>(V1) || isa<UninitializedValue>(V1)) {
+        if (isa<UnknownVal>(V1) || isa<UninitializedVal>(V1)) {
           Nodify(Dst, B, N2, SetValue(St, B, V1));
           continue;
         }
@@ -915,7 +915,7 @@ void GRConstants::VisitBinaryOperator(BinaryOperator* B,
           assert (B->isCompoundAssignmentOp());
                           
           const LValue& L1 = cast<LValue>(V1);
-          RValue Result = cast<NonLValue>(InvalidValue());
+          RValue Result = cast<NonLValue>(UnknownVal());
           
           Op = (BinaryOperator::Opcode)
                   (((unsigned) Op) - ((unsigned) BinaryOperator::MulAssign));

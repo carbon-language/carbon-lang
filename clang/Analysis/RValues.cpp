@@ -149,11 +149,11 @@ NonLValue NonLValue::EvalBinaryOp(ValueManager& ValMgr,
                                   BinaryOperator::Opcode Op,
                                   const NonLValue& RHS) const {
   
-  if (isa<InvalidValue>(this) || isa<InvalidValue>(RHS))
-    return cast<NonLValue>(InvalidValue());
+  if (isa<UnknownVal>(this) || isa<UnknownVal>(RHS))
+    return cast<NonLValue>(UnknownVal());
   
-  if (isa<UninitializedValue>(this) || isa<UninitializedValue>(RHS))
-    return cast<NonLValue>(UninitializedValue());
+  if (isa<UninitializedVal>(this) || isa<UninitializedVal>(RHS))
+    return cast<NonLValue>(UninitializedVal());
   
   switch (getSubKind()) {
     default:
@@ -166,8 +166,8 @@ NonLValue NonLValue::EvalBinaryOp(ValueManager& ValMgr,
         return self.EvalBinaryOp(ValMgr, Op,
                                        cast<nonlval::ConcreteInt>(RHS));
       }
-      else if(isa<InvalidValue>(RHS))
-        return cast<NonLValue>(InvalidValue());
+      else if(isa<UnknownVal>(RHS))
+        return cast<NonLValue>(UnknownVal());
       else
         return RHS.EvalBinaryOp(ValMgr, Op, *this);
       
@@ -263,7 +263,7 @@ NonLValue NonLValue::EvalComplement(ValueManager& ValMgr) const {
     case nonlval::ConcreteIntKind:
       return cast<nonlval::ConcreteInt>(this)->EvalComplement(ValMgr);
     default:
-      return cast<NonLValue>(InvalidValue());
+      return cast<NonLValue>(UnknownVal());
   }
 }
 
@@ -276,7 +276,7 @@ nonlval::ConcreteInt::EvalComplement(ValueManager& ValMgr) const {
 
 RValue NonLValue::EvalCast(ValueManager& ValMgr, Expr* CastExpr) const {
   if (!isa<nonlval::ConcreteInt>(this))
-    return InvalidValue();
+    return UnknownVal();
   
   APSInt V = cast<nonlval::ConcreteInt>(this)->getValue();
   QualType T = CastExpr->getType();
@@ -296,7 +296,7 @@ NonLValue NonLValue::EvalMinus(ValueManager& ValMgr, UnaryOperator* U) const {
     case nonlval::ConcreteIntKind:
       return cast<nonlval::ConcreteInt>(this)->EvalMinus(ValMgr, U);
     default:
-      return cast<NonLValue>(InvalidValue());
+      return cast<NonLValue>(UnknownVal());
   }
 }
 
@@ -345,7 +345,7 @@ NonLValue LValue::EQ(ValueManager& ValMgr, const LValue& RHS) const {
   switch (getSubKind()) {
     default:
       assert(false && "EQ not implemented for this LValue.");
-      return cast<NonLValue>(InvalidValue());
+      return cast<NonLValue>(UnknownVal());
       
     case lval::ConcreteIntKind:
       if (isa<lval::ConcreteInt>(RHS)) {
@@ -398,7 +398,7 @@ NonLValue LValue::NE(ValueManager& ValMgr, const LValue& RHS) const {
   switch (getSubKind()) {
     default:
       assert(false && "NE not implemented for this LValue.");
-      return cast<NonLValue>(InvalidValue());
+      return cast<NonLValue>(UnknownVal());
       
     case lval::ConcreteIntKind:
       if (isa<lval::ConcreteInt>(RHS)) {
@@ -456,7 +456,7 @@ RValue LValue::EvalCast(ValueManager& ValMgr, Expr* CastExpr) const {
   assert (CastExpr->getType()->isIntegerType());
   
   if (!isa<lval::ConcreteInt>(*this))
-    return InvalidValue();
+    return UnknownVal();
   
   APSInt V = cast<lval::ConcreteInt>(this)->getValue();
   QualType T = CastExpr->getType();
