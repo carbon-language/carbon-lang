@@ -280,7 +280,7 @@ public:
                            isNegative() && countPopulation() == 1;
   }
 
-  /// @brief Check if this APInt has an N-bits integer value.
+  /// @brief Check if this APInt has an N-bits unsigned integer value.
   inline bool isIntN(uint32_t N) const {
     assert(N && "N == 0 ???");
     if (isSingleWord()) {
@@ -289,6 +289,12 @@ public:
       APInt Tmp(N, getNumWords(), pVal);
       return Tmp == (*this);
     }
+  }
+
+  /// @brief Check if this APInt has an N-bits signed integer value.
+  inline bool isSignedIntN(uint32_t N) const {
+    assert(N && "N == 0 ???");
+    return getMinSignedBits() <= N;
   }
 
   /// @returns true if the argument APInt value is a power of two > 0.
@@ -1221,9 +1227,14 @@ inline APInt umax(const APInt &A, const APInt &B) {
   return A.ugt(B) ? A : B;
 }
 
-/// @brief Check if the specified APInt has a N-bits integer value.
+/// @brief Check if the specified APInt has a N-bits unsigned integer value.
 inline bool isIntN(uint32_t N, const APInt& APIVal) {
   return APIVal.isIntN(N);
+}
+
+/// @brief Check if the specified APInt has a N-bits signed integer value.
+inline bool isSignedIntN(uint32_t N, const APInt& APIVal) {
+  return APIVal.isSignedIntN(N);
 }
 
 /// @returns true if the argument APInt value is a sequence of ones
