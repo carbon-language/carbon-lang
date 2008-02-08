@@ -100,6 +100,12 @@ is:</p>
   </ul>
 </ol>
 
+<p>Note that the C front-end uses LLVM, but does not depend on
+  llvm-gcc.  If you encounter problems with building clang, make
+  sure you have the latest SVN version of LLVM.  LLVM contains
+  support libraries for clang that will be updated as well as
+  development on clang progresses.</p>
+  
 <h3>Building clang while building llvm:</h3>
    <p>Since you've checked out clang into the llvm source tree you can
    build them all at once with a simple Makefile change. This moves
@@ -111,12 +117,6 @@ is:</p>
     <li>then just build llvm normally as above and clang will build at
         the same time</li>
   </ul>
-
-<p>Note that the C front-end uses LLVM, but does not depend on
-  llvm-gcc.  If you encounter problems with building clang, make
-  sure you have the latest SVN version of LLVM.  LLVM contains
-  support libraries for clang that will be updated as well as
-  development on clang progresses.</p>
 
 <h3>Examples of using clang</h3>
 
