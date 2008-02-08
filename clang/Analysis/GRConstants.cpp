@@ -192,11 +192,13 @@ public:
   ///  nodes by processing the 'effects' of a branch condition.
   void ProcessBranch(Expr* Condition, Stmt* Term, BranchNodeBuilder& builder);
 
-  /// RemoveDeadBindings - Return a new state that is the same as 'M' except
+  /// RemoveDeadBindings - Return a new state that is the same as 'St' except
   ///  that all subexpression mappings are removed and that any
   ///  block-level expressions that are not live at 'S' also have their
   ///  mappings removed.
-  StateTy RemoveDeadBindings(Stmt* S, StateTy M);
+  inline StateTy RemoveDeadBindings(Stmt* S, StateTy St) {
+    return StateMgr.RemoveDeadBindings(St, S, Liveness);
+  }
 
   StateTy SetValue(StateTy St, Stmt* S, const RValue& V);
 
@@ -507,76 +509,6 @@ void GRConstants::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
   CurrentStmt = NULL;
   StmtEntryNode = NULL;
   Builder = NULL;
-}
-
-GRConstants::StateTy GRConstants::RemoveDeadBindings(Stmt* Loc, StateTy M) {
-  
-  // This code essentially performs a "mark-and-sweep" of the VariableBindings.
-  // The roots are any Block-level exprs and Decls that our liveness algorithm
-  // tells us are live.  We then see what Decls they may reference, and keep
-  // those around.  This code more than likely can be made faster, and the
-  // frequency of which this method is called should be experimented with
-  // for optimum performance.
-
-  llvm::SmallVector<ValueDecl*, 10> WList;
-
-  for (StateTy::vb_iterator I = M.begin(), E = M.end(); I!=E ; ++I) {
-
-    // Remove old bindings for subexpressions.
-    if (I.getKey().isSubExpr()) {
-      M = StateMgr.Remove(M, I.getKey());
-      continue;
-    }
-    
-    if (I.getKey().isBlkExpr()) {
-      if (Liveness.isLive(Loc, cast<Stmt>(I.getKey()))) {
-        if (isa<lval::DeclVal>(I.getData())) {
-          lval::DeclVal LV = cast<lval::DeclVal>(I.getData());
-          WList.push_back(LV.getDecl());
-        }
-      }
-      else
-        M = StateMgr.Remove(M, I.getKey());
-    
-      continue;
-    }
-    
-    assert (I.getKey().isDecl());
-
-    if (VarDecl* V = dyn_cast<VarDecl>(cast<ValueDecl>(I.getKey())))
-      if (Liveness.isLive(Loc, V))
-        WList.push_back(V);
-  }
-
-  llvm::SmallPtrSet<ValueDecl*, 10> Marked;
-  
-  while (!WList.empty()) {
-    ValueDecl* V = WList.back();
-    WList.pop_back();
-    
-    if (Marked.count(V))
-      continue;
-    
-    Marked.insert(V);
-    
-    if (V->getType()->isPointerType()) {
-      const LValue& LV = cast<LValue>(GetValue(M, lval::DeclVal(V)));
-
-      if (!isa<lval::DeclVal>(LV))
-        continue;
-      
-      const lval::DeclVal& LVD = cast<lval::DeclVal>(LV);
-      WList.push_back(LVD.getDecl());
-    }    
-  }
-
-  for (StateTy::vb_iterator I = M.begin(), E = M.end(); I!=E ; ++I)
-    if (I.getKey().isDecl())
-      if (VarDecl* V = dyn_cast<VarDecl>(cast<ValueDecl>(I.getKey())))
-        if (!Marked.count(V))
-          M = StateMgr.Remove(M, V);
-
-  return M;
 }
 
 GRConstants::NodeTy*

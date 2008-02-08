@@ -241,13 +241,18 @@ public:
   ValueManager& getValueManager() { return ValMgr; }
   SymbolManager& getSymbolManager() { return SymMgr; }
   
+  StateTy RemoveDeadBindings(StateTy St, Stmt* Loc, 
+                             const LiveVariables& Liveness);
+  
   StateTy SetValue(StateTy St, Stmt* S, bool isBlkExpr, const RValue& V);
   StateTy SetValue(StateTy St, const LValue& LV, const RValue& V);
 
   RValue GetValue(const StateTy& St, Stmt* S, bool* hasVal = NULL);
-  RValue GetValue(const StateTy& St, const LValue& LV, QualType* T = NULL);
-    
+  RValue GetValue(const StateTy& St, const LValue& LV, QualType* T = NULL);    
   LValue GetLValue(const StateTy& St, Stmt* S);
+  
+  
+  
 
   StateTy Add(StateTy St, VarBindKey K, const RValue& V);
   StateTy Remove(StateTy St, VarBindKey K);
