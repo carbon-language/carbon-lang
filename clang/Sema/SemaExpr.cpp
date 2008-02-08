@@ -960,12 +960,12 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
   if (lhs->isComplexType() || rhs->isComplexType()) {
     // if we have an integer operand, the result is the complex type.
     if (rhs->isIntegerType() || rhs->isComplexIntegerType()) { 
-	  // convert the rhs to the lhs complex type.
+      // convert the rhs to the lhs complex type.
       if (!isCompAssign) ImpCastExprToType(rhsExpr, lhs);
       return lhs;
     }
     if (lhs->isIntegerType() || lhs->isComplexIntegerType()) { 
-	  // convert the lhs to the rhs complex type.
+      // convert the lhs to the rhs complex type.
       if (!isCompAssign) ImpCastExprToType(lhsExpr, rhs);
       return rhs;
     }
@@ -1010,12 +1010,12 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
   if (lhs->isRealFloatingType() || rhs->isRealFloatingType()) {
     // if we have an integer operand, the result is the real floating type.
     if (rhs->isIntegerType() || rhs->isComplexIntegerType()) { 
-	  // convert rhs to the lhs floating point type.
+      // convert rhs to the lhs floating point type.
       if (!isCompAssign) ImpCastExprToType(rhsExpr, lhs);
       return lhs;
     }
     if (lhs->isIntegerType() || lhs->isComplexIntegerType()) { 
-	  // convert lhs to the rhs floating point type.
+      // convert lhs to the rhs floating point type.
       if (!isCompAssign) ImpCastExprToType(lhsExpr, rhs);
       return rhs;
     }
@@ -1036,27 +1036,27 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
   if (lhs->isComplexIntegerType() || rhs->isComplexIntegerType()) {
     // Handle GCC complex int extension.
     const ComplexType *lhsComplexInt = lhs->getAsComplexIntegerType();
-	const ComplexType *rhsComplexInt = rhs->getAsComplexIntegerType();
+    const ComplexType *rhsComplexInt = rhs->getAsComplexIntegerType();
 
-	if (lhsComplexInt && rhsComplexInt) {
-	  if (Context.maxIntegerType(lhsComplexInt->getElementType(), 
+    if (lhsComplexInt && rhsComplexInt) {
+      if (Context.maxIntegerType(lhsComplexInt->getElementType(), 
                                      rhsComplexInt->getElementType()) == lhs) { 
             // convert the rhs
             if (!isCompAssign) ImpCastExprToType(rhsExpr, lhs);
             return lhs;
-	  }
-	  if (!isCompAssign) 
+      }
+      if (!isCompAssign) 
             ImpCastExprToType(lhsExpr, rhs); // convert the lhs
-	  return rhs;
-	} else if (lhsComplexInt && rhs->isIntegerType()) {
-	  // convert the rhs to the lhs complex type.
-	  if (!isCompAssign) ImpCastExprToType(rhsExpr, lhs);
-	  return lhs;
-	} else if (rhsComplexInt && lhs->isIntegerType()) {
-	  // convert the lhs to the rhs complex type.
-	  if (!isCompAssign) ImpCastExprToType(lhsExpr, rhs);
-	  return rhs;
-	}
+      return rhs;
+    } else if (lhsComplexInt && rhs->isIntegerType()) {
+      // convert the rhs to the lhs complex type.
+      if (!isCompAssign) ImpCastExprToType(rhsExpr, lhs);
+      return lhs;
+    } else if (rhsComplexInt && lhs->isIntegerType()) {
+      // convert the lhs to the rhs complex type.
+      if (!isCompAssign) ImpCastExprToType(lhsExpr, rhs);
+      return rhs;
+    }
   }
   // Finally, we have two differing integer types.
   if (Context.maxIntegerType(lhs, rhs) == lhs) { // convert the rhs
@@ -1353,7 +1353,7 @@ inline QualType Sema::CheckSubtractionOperands( // C99 6.5.6
   // Either ptr - int   or   ptr - ptr.
   if (const PointerType *LHSPTy = lex->getType()->getAsPointerType()) {
     QualType lpointee = LHSPTy->getPointeeType();
-	
+    
     // The LHS must be an object type, not incomplete, function, etc.
     if (!lpointee->isObjectType()) {
       // Handle the GNU void* extension.
@@ -1373,8 +1373,8 @@ inline QualType Sema::CheckSubtractionOperands( // C99 6.5.6
     
     // Handle pointer-pointer subtractions.
     if (const PointerType *RHSPTy = rex->getType()->getAsPointerType()) {
-	  QualType rpointee = RHSPTy->getPointeeType();
-	  
+      QualType rpointee = RHSPTy->getPointeeType();
+      
       // RHS must be an object type, unless void (GNU).
       if (!rpointee->isObjectType()) {
         // Handle the GNU void* extension.
@@ -1465,13 +1465,13 @@ inline QualType Sema::CheckCompareOperands( // C99 6.5.8
   // when handling null pointer constants. One day, we can consider making them
   // errors (when -pedantic-errors is enabled).
   if (lType->isPointerType() && rType->isPointerType()) { // C99 6.5.8p2
-	QualType lpointee = lType->getAsPointerType()->getPointeeType();
-	QualType rpointee = rType->getAsPointerType()->getPointeeType();
-	
+    QualType lpointee = lType->getAsPointerType()->getPointeeType();
+    QualType rpointee = rType->getAsPointerType()->getPointeeType();
+    
     if (!LHSIsNull && !RHSIsNull &&                       // C99 6.5.9p2
         !lpointee->isVoidType() && !lpointee->isVoidType() &&
         !Context.typesAreCompatible(lpointee.getUnqualifiedType(),
-									rpointee.getUnqualifiedType())) {
+                                    rpointee.getUnqualifiedType())) {
       Diag(loc, diag::ext_typecheck_comparison_of_distinct_pointers,
            lType.getAsString(), rType.getAsString(),
            lex->getSourceRange(), rex->getSourceRange());
