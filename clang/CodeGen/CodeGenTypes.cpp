@@ -573,5 +573,6 @@ void RecordOrganizer::placeBitField(const FieldDecl *FD) {
     CGT.addBitFieldInfo(FD, 0, BitFieldSize);
     Cursor = (Idx + 1) * TySize + BitFieldSize;
   }
-  addPaddingFields(Cursor);
+  if (Cursor > llvmSize)
+    addPaddingFields(Cursor);
 }
