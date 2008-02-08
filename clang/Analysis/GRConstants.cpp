@@ -917,8 +917,10 @@ void GRConstants::VisitBinaryOperator(BinaryOperator* B,
           const LValue& L1 = cast<LValue>(V1);
           RValue Result = cast<NonLValue>(UnknownVal());
           
-          Op = (BinaryOperator::Opcode)
-                  (((unsigned) Op) - ((unsigned) BinaryOperator::MulAssign));
+          if (Op >= BinaryOperator::AndAssign)
+            ((int&) Op) -= (BinaryOperator::AndAssign - BinaryOperator::And);
+          else
+            ((int&) Op) -= BinaryOperator::MulAssign;
           
           if (isa<LValue>(V2)) {
             // FIXME: Add support for Non-LValues on RHS.
@@ -959,12 +961,25 @@ void GRConstants::Visit(Stmt* S, GRConstants::NodeTy* Pred,
         VisitLogicalExpr(cast<BinaryOperator>(S), Pred, Dst);
         break;
       }
+      else if (cast<BinaryOperator>(S)->getOpcode() == BinaryOperator::Comma) {
+        StateTy St = Pred->getState();
+        Stmt* LastStmt = cast<BinaryOperator>(S)->getRHS();
+        Nodify(Dst, S, Pred, SetValue(St, S, GetValue(St, LastStmt)));
+        break;
+      }
       
       // Fall-through.
       
     case Stmt::CompoundAssignOperatorClass:
       VisitBinaryOperator(cast<BinaryOperator>(S), Pred, Dst);
       break;
+      
+    case Stmt::StmtExprClass: {
+      StateTy St = Pred->getState();
+      Stmt* LastStmt = *(cast<StmtExpr>(S)->getSubStmt()->body_rbegin());
+      Nodify(Dst, S, Pred, SetValue(St, S, GetValue(St, LastStmt)));
+      break;      
+    }
       
     case Stmt::UnaryOperatorClass:
       VisitUnaryOperator(cast<UnaryOperator>(S), Pred, Dst);
