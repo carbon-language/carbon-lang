@@ -4,23 +4,27 @@
 @end
 
 @protocol P
-- (void) Pmeth;	// expected-warning {{method definition for 'Pmeth' not found}}
-- (void) Pmeth1; // expected-warning {{method definition for 'Pmeth1' not found}}
+- (void) Pmeth;	
+- (void) Pmeth1;  
 @end
 
 @interface MyClass1(CAT) <P>
-- (void) meth2;	// expected-warning {{method definition for 'meth2' not found}}
+- (void) meth2;	
 @end
 
-@implementation MyClass1(CAT) // expected-warning {{incomplete implementation of category 'CAT'}}
+@implementation MyClass1(CAT) // expected-warning {{incomplete implementation}} \
+                                 expected-warning {{method definition for 'meth2' not found}} \
+                                 expected-warning {{method definition for 'Pmeth' not found}}
 - (void) Pmeth1{}
 @end
 
 @interface MyClass1(DOG) <P>
-- (void)ppp;  // expected-warning {{method definition for 'ppp' not found}}
+- (void)ppp;   
 @end
 
-@implementation MyClass1(DOG) // expected-warning {{incomplete implementation of category 'DOG'}}
+@implementation MyClass1(DOG) // expected-warning {{incomplete implementation}} \
+                                 expected-warning {{method definition for 'ppp' not found}} \
+                                 expected-warning {{method definition for 'Pmeth1' not found}}
 - (void) Pmeth {}
 @end
 

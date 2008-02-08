@@ -23,6 +23,7 @@ class SourceManager;
 
 class TextDiagnosticPrinter : public TextDiagnostics {
   FullSourceLoc LastWarningLoc;
+  FullSourceLoc LastLoc;
 public:
   TextDiagnosticPrinter() {}
 

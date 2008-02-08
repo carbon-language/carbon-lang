@@ -270,7 +270,8 @@ private:
     
   /// CheckProtocolMethodDefs - This routine checks unimpletented methods
   /// Declared in protocol, and those referenced by it.
-  void CheckProtocolMethodDefs(ObjCProtocolDecl *PDecl,
+  void CheckProtocolMethodDefs(SourceLocation ImpLoc,
+                               ObjCProtocolDecl *PDecl,
                                bool& IncompleteImpl,
                                const llvm::DenseSet<Selector> &InsMap,
                                const llvm::DenseSet<Selector> &ClsMap);
