@@ -55,13 +55,7 @@ public:
   }
   
   inline void* getPtr() const { 
-    assert (getKind() != IsSymbol);
     return reinterpret_cast<void*>(Raw & ~Mask);
-  }
-  
-  inline SymbolID getSymbolID() const {
-    assert (getKind() == IsSymbol);
-    return Raw >> 2;
   }
   
   VarBindKey(const ValueDecl* VD)
@@ -74,27 +68,17 @@ public:
     assert(S && "Tracked statement cannot be NULL.");
   }
   
-  VarBindKey(SymbolID V)
-  : Raw((V << 2) | IsSymbol) {}  
-  
-  bool isSymbol()  const { return getKind() == IsSymbol; }
   bool isSubExpr() const { return getKind() == IsSubExpr; }
   bool isBlkExpr() const { return getKind() == IsBlkExpr; }
   bool isDecl()    const { return getKind() == IsDecl; }
   bool isStmt()    const { return getKind() <= IsBlkExpr; }
   
   inline void Profile(llvm::FoldingSetNodeID& ID) const {
-    ID.AddInteger(isSymbol() ? 1 : 0);
-    
-    if (isSymbol())
-      ID.AddInteger(getSymbolID());
-    else    
-      ID.AddPointer(getPtr());
+    ID.AddPointer(getPtr());
   }
   
   inline bool operator==(const VarBindKey& X) const {
-    return isSymbol() ? getSymbolID() == X.getSymbolID()
-    : getPtr() == X.getPtr();
+    return getPtr() == X.getPtr();
   }
   
   inline bool operator!=(const VarBindKey& X) const {
@@ -102,9 +86,6 @@ public:
   }
   
   inline bool operator<(const VarBindKey& X) const { 
-    if (isSymbol())
-      return X.isSymbol() ? getSymbolID() < X.getSymbolID() : false;
-    
     return getPtr() < X.getPtr();
   }
 };

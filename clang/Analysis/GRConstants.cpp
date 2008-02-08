@@ -520,8 +520,7 @@ GRConstants::StateTy GRConstants::RemoveDeadBindings(Stmt* Loc, StateTy M) {
 
   llvm::SmallVector<ValueDecl*, 10> WList;
 
-  for (StateTy::vb_iterator I = M.begin(), E = M.end();
-       I!=E && !I.getKey().isSymbol(); ++I) {
+  for (StateTy::vb_iterator I = M.begin(), E = M.end(); I!=E ; ++I) {
 
     // Remove old bindings for subexpressions.
     if (I.getKey().isSubExpr()) {
