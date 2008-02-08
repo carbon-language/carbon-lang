@@ -27,6 +27,7 @@ class Decl;
 namespace clang {
 class Expr;
 class Stmt;
+class StringLiteral;
 class FunctionDecl;
 class IdentifierInfo;
 
@@ -71,6 +72,7 @@ public:
          ObjCClass,
          ObjCForwardProtocol,
  	 LinkageSpec,
+   FileScopeAsm,
   
     // For each non-leaf class, we now define a mapping to the first/last member
     // of the class, to allow efficient classof.
@@ -755,6 +757,27 @@ protected:
   friend Decl* Decl::Create(llvm::Deserializer& D);
 };
 
+class FileScopeAsmDecl : public Decl {
+  StringLiteral *AsmString;
+public:
+  FileScopeAsmDecl(SourceLocation L, StringLiteral *asmstring)
+    : Decl(FileScopeAsm, L), AsmString(asmstring) {}
+
+  const StringLiteral *getAsmString() const { return AsmString; }
+  StringLiteral *getAsmString() { return AsmString; }
+  static bool classof(const Decl *D) {
+    return D->getKind() == FileScopeAsm;
+  }
+  static bool classof(const FileScopeAsmDecl *D) { return true; }  
+protected:
+  /// EmitImpl - Serialize this FileScopeAsmDecl. Called by Decl::Emit.
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  
+  /// CreateImpl - Deserialize a FileScopeAsmDecl.  Called by Decl::Create.
+  static FileScopeAsmDecl* CreateImpl(llvm::Deserializer& D);
+  
+  friend Decl* Decl::Create(llvm::Deserializer& D);
+};
 
 /// LinkageSpecDecl - This represents a linkage specification.  For example:
 ///   extern "C" void foo();

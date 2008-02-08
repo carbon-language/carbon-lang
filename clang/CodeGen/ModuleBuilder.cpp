@@ -70,6 +70,15 @@ namespace {
           Builder->WarnUnsupported(LSD, "linkage spec");
         // FIXME: implement C++ linkage, C linkage works mostly by C
         // language reuse already.
+      } else if (FileScopeAsmDecl *AD = dyn_cast<FileScopeAsmDecl>(D)) {
+        std::string AsmString(AD->getAsmString()->getStrData(),
+                              AD->getAsmString()->getByteLength());
+        
+        const std::string &S = Builder->getModule().getModuleInlineAsm();
+        if (S.empty())
+          Builder->getModule().setModuleInlineAsm(AsmString);
+        else
+          Builder->getModule().setModuleInlineAsm(S + '\n' + AsmString);
       } else {
         assert(isa<TypeDecl>(D) && "Unknown top level decl");
         // TODO: handle debug info?
