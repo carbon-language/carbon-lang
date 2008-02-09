@@ -60,6 +60,13 @@ class SDTCisIntVectorOfSameSize<int ThisOp, int OtherOp>
   int OtherOpNum = OtherOp;
 }
 
+/// SDTCisEltOfVec - This indicates that ThisOp is a scalar type of the same
+/// type as the element type of OtherOp, which is a vector type.
+class  SDTCisEltOfVec<int ThisOp, int OtherOp>
+  : SDTypeConstraint<ThisOp> {
+  int OtherOpNum = OtherOp;
+}
+
 //===----------------------------------------------------------------------===//
 // Selection DAG Type Profile definitions.
 //
@@ -170,6 +177,12 @@ def SDTIStore : SDTypeProfile<1, 3, [ // indexed store
 
 def SDTVecShuffle : SDTypeProfile<1, 3, [
   SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>, SDTCisIntVectorOfSameSize<3, 0>
+]>;
+def SDTVecExtract : SDTypeProfile<1, 2, [ // vector extract
+  SDTCisEltOfVec<0, 1>, SDTCisPtrTy<2>
+]>;
+def SDTVecInsert : SDTypeProfile<1, 2, [  // vector insert
+  SDTCisEltOfVec<1, 0>, SDTCisPtrTy<2>
 ]>;
 
 class SDCallSeqStart<list<SDTypeConstraint> constraints> :
@@ -283,6 +296,9 @@ def zext       : SDNode<"ISD::ZERO_EXTEND", SDTIntExtendOp>;
 def anyext     : SDNode<"ISD::ANY_EXTEND" , SDTIntExtendOp>;
 def trunc      : SDNode<"ISD::TRUNCATE"   , SDTIntTruncOp>;
 def bitconvert : SDNode<"ISD::BIT_CONVERT", SDTUnaryOp>;
+def extractelt : SDNode<"ISD::EXTRACT_VECTOR_ELT", SDTVecExtract>;
+def insertelt  : SDNode<"ISD::INSERT_VECTOR_ELT", SDTVecInsert>;
+
                         
 def fadd       : SDNode<"ISD::FADD"       , SDTFPBinOp, [SDNPCommutative]>;
 def fsub       : SDNode<"ISD::FSUB"       , SDTFPBinOp>;
