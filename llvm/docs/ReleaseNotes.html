@@ -107,14 +107,14 @@ bits) and on Darwin PPC/PPC64 (where it is 128 bits).</p>
 
 <p>
 debug improvements -O0
-EH.
 
 Gordon: GC Revamp. docs/GarbageCollection.html
 
-Kaleidescope: docs/tutorial
+Kaleidoscope: docs/tutorial
 
 Gordon: C and Ocaml Bindings
 
+Christopher Lamb: Multiple address spaces.
 </div>
 
 <!--=========================================================================-->
@@ -129,12 +129,18 @@ optimizer, speeding it up and making it more aggressive.  For example:</p>
 
 <ul>
 
-<li>Daniel Berlin and (Curtis?) rewrote Andersen's alias analysis (which is not
-enabled by default) to be several orders of magnitude faster, implmented Offline
-Variable Substitution.</li>
-
+<li>Daniel Berlin and Curtis Dunham rewrote Andersen's alias analysis (which is
+not enabled by default) to be several orders of magnitude faster, implemented
+Offline Variable Substitution.</li>
 
 Devang: LoopIndexSplit is enabled by default.
+
+Dan Gohman: LSR improvements for SSE intrinsics and 
+
+Evan added simple exit value substitution to LSR.
+
+Anton added readnone/readonly attributes for modelling GCC pure/const
+attributes. 
 </ul>
 
 </div>
@@ -160,6 +166,14 @@ targets that support it</li>
 <li>Evan physical register dependencies in the BURR scheduler</li>
 
 <li>Evan EXTRACT_SUBREG coalescing support</li>
+<li>Evan enhanced LSR to support induction variable reuse when the induction
+ variables have different widths.</li>
+
+<li>Rafael Espindola byval support, finished by Evan.</li>
+
+<li>mod/ref info for machineinstrs</li>
+
+<li>Evan: Live interval splitting on MBB boundaries.</li>
 </ul>
 
 </div>
@@ -179,6 +193,8 @@ targets that support it</li>
 <li>Evan: If conversion on by default for ARM.</li>
 <li>Bruno: MIPS PIC support.</li>
 <li>Arnold Schwaighofer: X86 tail call support.</li>
+<li>Dale darwin/x86-64 and darwin/ppc eh</li>
+<li>Evan: darwin/x86 debug info</li>
 </ul>
   
 </div>
@@ -212,6 +228,12 @@ targets that support it</li>
 <ul>
 <li>Devang added LLVMFoldingBuilder.</li>
 <li>Dan added support for vector sin, cos, and pow intrinsics.</li>
+<li>Ted added a framework for generic object serialization to bitcode files,
+    only used by clang right now for ASTs but could be used for other
+    stuff.</li>
+<li>Duncan fixed TargetData to distinguish between the size/alignment of a type 
+    in a register, in memory according to the platform ABI, and in memory when
+    we have a choice.</li>
 </ul>
   
 </div>
@@ -226,7 +248,8 @@ targets that support it</li>
 </p>
 
 <ul>
-<li>.</li>
+<li>Gordon Henriksen updated docs/Passes.html</li>
+<li>New lexer and parser for tblgen, new lexer for asmparser</li>
 </ul>
   
 </div>
