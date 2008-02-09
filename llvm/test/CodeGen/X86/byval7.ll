@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep add | grep 16
+; RUN: llvm-as < %s | llc -march=x86 -mcpu=yonah | grep add | grep 16
 
 	%struct.S = type { <2 x i64> }
 
