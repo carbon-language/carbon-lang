@@ -1051,6 +1051,11 @@ void Verifier::visitInstruction(Instruction &I) {
               !DT->dominates(&BB->getParent()->getEntryBlock(), BB),
               "Only PHI nodes may reference their own value!", &I);
   }
+  
+  // Verify that if this is a terminator that it is at the end of the block.
+  if (isa<TerminatorInst>(I))
+    Assert1(BB->getTerminator() == &I, "Terminator not at end of block!", &I);
+  
 
   // Check that void typed values don't have names
   Assert1(I.getType() != Type::VoidTy || !I.hasName(),
