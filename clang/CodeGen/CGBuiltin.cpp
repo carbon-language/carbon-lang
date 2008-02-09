@@ -125,6 +125,25 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
       Intrinsic::vastart : Intrinsic::vaend;
     return RValue::get(Builder.CreateCall(CGM.getIntrinsic(inst), ArgValue));
   }
+  case Builtin::BI__builtin_va_copy: {
+    // FIXME: This does not yet handle architectures where va_list is a struct.
+    Value *DstPtr = EmitScalarExpr(E->getArg(0));
+    Value *SrcValue = EmitScalarExpr(E->getArg(1));
+    
+    Value *SrcPtr = CreateTempAlloca(SrcValue->getType(), "dst_ptr");
+    
+    // FIXME: Volatile
+    Builder.CreateStore(SrcValue, SrcPtr, false);
+
+    const llvm::Type *Type = 
+      llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+
+    DstPtr = Builder.CreateBitCast(DstPtr, Type);
+    SrcPtr = Builder.CreateBitCast(SrcPtr, Type);
+    Value *Args[] = { DstPtr, SrcPtr };
+    return RValue::get(Builder.CreateCall(CGM.getIntrinsic(Intrinsic::vacopy), 
+                                          &Args[0], &Args[2]));
+  }
   case Builtin::BI__builtin_classify_type: {
     APSInt Result(32);
     if (!E->isBuiltinClassifyType(Result))
