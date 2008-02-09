@@ -3192,10 +3192,44 @@ defm PMAXUD       : SS41I_binop_rm_int<0x3F, "pmaxud",
                                        int_x86_sse41_pmaxud, 1>;
 defm PMAXUW       : SS41I_binop_rm_int<0x3E, "pmaxuw",
                                        int_x86_sse41_pmaxuw, 1>;
-defm PMULLD       : SS41I_binop_rm_int<0x40, "pmulld",
-                                       int_x86_sse41_pmulld, 1>;
 defm PMULDQ       : SS41I_binop_rm_int<0x28, "pmuldq",
                                        int_x86_sse41_pmuldq, 1>;
+
+
+/// SS41I_binop_rm_int - Simple SSE 4.1 binary operator
+let isTwoAddress = 1 in {
+  multiclass SS41I_binop_patint<bits<8> opc, string OpcodeStr, SDNode OpNode,
+                                Intrinsic IntId128, bit Commutable = 0> {
+    def rr : SS48I<opc, MRMSrcReg, (outs VR128:$dst),
+                   (ins VR128:$src1, VR128:$src2),
+                   !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+                   [(set VR128:$dst, (OpNode (v4i32 VR128:$src1),
+                                                    VR128:$src2))]>, OpSize {
+      let isCommutable = Commutable;
+    }
+    def rr_int : SS48I<opc, MRMSrcReg, (outs VR128:$dst),
+                      (ins VR128:$src1, VR128:$src2),
+                      !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+                      [(set VR128:$dst, (IntId128 VR128:$src1, VR128:$src2))]>,
+                      OpSize {
+      let isCommutable = Commutable;
+    }
+    def rm : SS48I<opc, MRMSrcMem, (outs VR128:$dst),
+                   (ins VR128:$src1, i128mem:$src2),
+                   !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+                   [(set VR128:$dst,
+                     (OpNode VR128:$src1, (memopv4i32 addr:$src2)))]>, OpSize;
+    def rm_int : SS48I<opc, MRMSrcMem, (outs VR128:$dst),
+                       (ins VR128:$src1, i128mem:$src2),
+                       !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+                       [(set VR128:$dst,
+                        (IntId128 VR128:$src1, (memopv4i32 addr:$src2)))]>,
+                       OpSize;
+  }
+}
+defm PMULLD       : SS41I_binop_patint<0x40, "pmulld", mul,
+                                       int_x86_sse41_pmulld, 1>;
+
 
 /// SS41I_binop_rmi_int - SSE 4.1 binary operator with immediate
 let isTwoAddress = 1 in {
@@ -3233,3 +3267,29 @@ defm DPPD         : SS41I_binop_rmi_int<0x41, "dppd",
                                         int_x86_sse41_dppd, 1>;
 defm MPSADBW      : SS41I_binop_rmi_int<0x42, "mpsadbw",
                                         int_x86_sse41_mpsadbw, 0>;
+
+/// SS41I_binop_ext32 - SSE 4.1 binary operator with immediate
+multiclass SS41I_binop_ext32<bits<8> opc, string OpcodeStr> {
+  def rri128 : SS4AI<opc, MRMSrcReg, (outs GR32:$dst),
+                     (ins VR128:$src1, i32i8imm:$src2),
+                     !strconcat(OpcodeStr, 
+                      "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                     [(set GR32:$dst,
+                      (extractelt (v4i32 VR128:$src1), imm:$src2))]>,
+                     OpSize;
+}
+
+defm PEXTRD      : SS41I_binop_ext32<0x16, "pextrd">;
+
+/// SS41I_binop_extf32 - SSE 4.1 binary operator with immediate
+multiclass SS41I_binop_extf32<bits<8> opc, string OpcodeStr> {
+  def rri128 : SS4AI<opc, MRMSrcReg, (outs FR32:$dst),
+                     (ins VR128:$src1, i32i8imm:$src2),
+                     !strconcat(OpcodeStr, 
+                      "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                     [(set FR32:$dst,
+                      (extractelt (v4f32 VR128:$src1), imm:$src2))]>,
+                     OpSize;
+}
+
+defm EXTRACTPS   : SS41I_binop_extf32<0x17, "extractps">;
