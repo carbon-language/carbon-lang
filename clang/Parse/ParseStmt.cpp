@@ -995,12 +995,15 @@ Parser::StmtResult Parser::ParseAsmStatement(bool &msAsm) {
     RParenLoc = ConsumeParen();
   } else {
     // Parse Outputs, if present. 
-    ParseAsmOperandsOpt(Names, Constraints, Exprs);
+    if (ParseAsmOperandsOpt(Names, Constraints, Exprs))
+        return true;
   
     NumOutputs = Names.size();
   
     // Parse Inputs, if present.
-    ParseAsmOperandsOpt(Names, Constraints, Exprs);
+    if (ParseAsmOperandsOpt(Names, Constraints, Exprs))
+        return true;
+      
     assert(Names.size() == Constraints.size() &&
            Constraints.size() == Exprs.size() 
            && "Input operand size mismatch!");
@@ -1048,16 +1051,16 @@ Parser::StmtResult Parser::ParseAsmStatement(bool &msAsm) {
 ///         asm-string-literal '(' expression ')'
 ///         '[' identifier ']' asm-string-literal '(' expression ')'
 ///
-void Parser::ParseAsmOperandsOpt(llvm::SmallVectorImpl<std::string> &Names,
+bool Parser::ParseAsmOperandsOpt(llvm::SmallVectorImpl<std::string> &Names,
                                  llvm::SmallVectorImpl<ExprTy*> &Constraints,
                                  llvm::SmallVectorImpl<ExprTy*> &Exprs) {
   // Only do anything if this operand is present.
-  if (Tok.isNot(tok::colon)) return;
+  if (Tok.isNot(tok::colon)) return false;
   ConsumeToken();
   
   // 'asm-operands' isn't present?
   if (!isTokenStringLiteral() && Tok.isNot(tok::l_square))
-    return;
+    return false;
   
   while (1) {   
     // Read the [id] if present.
@@ -1067,7 +1070,7 @@ void Parser::ParseAsmOperandsOpt(llvm::SmallVectorImpl<std::string> &Names,
       if (Tok.isNot(tok::identifier)) {
         Diag(Tok, diag::err_expected_ident);
         SkipUntil(tok::r_paren);
-        return;
+        return true;
       }
       
       IdentifierInfo *II = Tok.getIdentifierInfo();
@@ -1081,27 +1084,29 @@ void Parser::ParseAsmOperandsOpt(llvm::SmallVectorImpl<std::string> &Names,
     ExprResult Constraint = ParseAsmStringLiteral();
     if (Constraint.isInvalid) {
         SkipUntil(tok::r_paren);
-        return;
+        return true;
     }
     Constraints.push_back(Constraint.Val);
 
     if (Tok.isNot(tok::l_paren)) {
       Diag(Tok, diag::err_expected_lparen_after, "asm operand");
       SkipUntil(tok::r_paren);
-      return;
+      return true;
     }
     
     // Read the parenthesized expression.
     ExprResult Res = ParseSimpleParenExpression();
     if (Res.isInvalid) {
       SkipUntil(tok::r_paren);
-      return;
+      return true;
     }
     Exprs.push_back(Res.Val);
     // Eat the comma and continue parsing if it exists.
-    if (Tok.isNot(tok::comma)) return;
+    if (Tok.isNot(tok::comma)) return false;
     ConsumeToken();
   }
+
+  return true;
 }
 
 Parser::DeclTy *Parser::ParseFunctionStatementBody(DeclTy *Decl, 

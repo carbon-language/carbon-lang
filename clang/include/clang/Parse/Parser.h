@@ -410,7 +410,7 @@ private:
   StmtResult ParseObjCTryStmt(SourceLocation atLoc, bool &processAtKeyword);
   StmtResult ParseObjCThrowStmt(SourceLocation atLoc);
   StmtResult ParseObjCSynchronizedStmt(SourceLocation atLoc);
-  void ParseAsmOperandsOpt(llvm::SmallVectorImpl<std::string> &Names,
+  bool ParseAsmOperandsOpt(llvm::SmallVectorImpl<std::string> &Names,
                            llvm::SmallVectorImpl<ExprTy*> &Constraints,
                            llvm::SmallVectorImpl<ExprTy*> &Exprs);
 
