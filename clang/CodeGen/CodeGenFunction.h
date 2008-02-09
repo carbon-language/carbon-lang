@@ -71,6 +71,7 @@ namespace clang {
   class BlockVarDecl;
   class EnumConstantDecl;
   class ParmVarDecl;
+  class FieldDecl;
 namespace CodeGen {
   class CodeGenModule;
   class CodeGenTypes;
@@ -415,6 +416,9 @@ public:
   LValue EmitArraySubscriptExpr(const ArraySubscriptExpr *E);
   LValue EmitOCUVectorElementExpr(const OCUVectorElementExpr *E);
   LValue EmitMemberExpr(const MemberExpr *E);
+
+  LValue EmitLValueForField(llvm::Value* Base, FieldDecl* Field,
+                            bool isUnion);
     
   //===--------------------------------------------------------------------===//
   //                         Scalar Expression Emission

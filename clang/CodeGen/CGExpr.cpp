@@ -454,7 +454,6 @@ EmitOCUVectorElementExpr(const OCUVectorElementExpr *E) {
 }
 
 LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
-  llvm::Value *V;
   bool isUnion = false;
   Expr *BaseExpr = E->getBase();
   llvm::Value *BaseValue = NULL;
@@ -476,8 +475,15 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
   }
 
   FieldDecl *Field = E->getMemberDecl();
-  unsigned idx = CGM.getTypes().getLLVMFieldNo(Field);
+  return EmitLValueForField(BaseValue, Field, isUnion);
+}
 
+LValue CodeGenFunction::EmitLValueForField(llvm::Value* BaseValue,
+                                           FieldDecl* Field,
+                                           bool isUnion)
+{
+  llvm::Value *V;
+  unsigned idx = CGM.getTypes().getLLVMFieldNo(Field);
 
   if (Field->isBitField()) {
     const llvm::Type * FieldTy = ConvertType(Field->getType());
@@ -568,7 +574,7 @@ RValue CodeGenFunction::EmitCallExpr(llvm::Value *Callee, QualType FnType,
   
   for (unsigned i = 0, e = NumArgs; i != e; ++i) {
     QualType ArgTy = ArgExprs[i]->getType();
-    
+
     if (!hasAggregateLLVMType(ArgTy)) {
       // Scalar argument is passed by-value.
       Args.push_back(EmitScalarExpr(ArgExprs[i]));
