@@ -30,36 +30,38 @@ Value *SCEVExpander::InsertCastOfTo(Instruction::CastOps opcode, Value *V,
     for (Value::use_iterator UI = A->use_begin(), E = A->use_end();
          UI != E; ++UI) {
       if ((*UI)->getType() == Ty)
-        if (CastInst *CI = dyn_cast<CastInst>(cast<Instruction>(*UI))) {
-          // If the cast isn't the first instruction of the function, move it.
-          if (BasicBlock::iterator(CI) != 
-              A->getParent()->getEntryBlock().begin()) {
-            CI->moveBefore(A->getParent()->getEntryBlock().begin());
+        if (CastInst *CI = dyn_cast<CastInst>(cast<Instruction>(*UI)))
+          if (CI->getOpcode() == opcode) {
+            // If the cast isn't the first instruction of the function, move it.
+            if (BasicBlock::iterator(CI) != 
+                A->getParent()->getEntryBlock().begin()) {
+              CI->moveBefore(A->getParent()->getEntryBlock().begin());
+            }
+            return CI;
           }
-          return CI;
-        }
     }
     return CastInst::create(opcode, V, Ty, V->getName(), 
                             A->getParent()->getEntryBlock().begin());
   }
-    
+
   Instruction *I = cast<Instruction>(V);
-  
+
   // Check to see if there is already a cast.  If there is, use it.
   for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
        UI != E; ++UI) {
     if ((*UI)->getType() == Ty)
-      if (CastInst *CI = dyn_cast<CastInst>(cast<Instruction>(*UI))) {
-        BasicBlock::iterator It = I; ++It;
-        if (isa<InvokeInst>(I))
-          It = cast<InvokeInst>(I)->getNormalDest()->begin();
-        while (isa<PHINode>(It)) ++It;
-        if (It != BasicBlock::iterator(CI)) {
-          // Splice the cast immediately after the operand in question.
-          CI->moveBefore(It);
+      if (CastInst *CI = dyn_cast<CastInst>(cast<Instruction>(*UI)))
+        if (CI->getOpcode() == opcode) {
+          BasicBlock::iterator It = I; ++It;
+          if (isa<InvokeInst>(I))
+            It = cast<InvokeInst>(I)->getNormalDest()->begin();
+          while (isa<PHINode>(It)) ++It;
+          if (It != BasicBlock::iterator(CI)) {
+            // Splice the cast immediately after the operand in question.
+            CI->moveBefore(It);
+          }
+          return CI;
         }
-        return CI;
-      }
   }
   BasicBlock::iterator IP = I; ++IP;
   if (InvokeInst *II = dyn_cast<InvokeInst>(I))
