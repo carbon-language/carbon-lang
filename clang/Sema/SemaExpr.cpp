@@ -905,7 +905,7 @@ void Sema::DefaultFunctionArrayConversion(Expr *&e) {
   if (t->isFunctionType())
     ImpCastExprToType(e, Context.getPointerType(t));
   else if (const ArrayType *ary = t->getAsArrayType()) {
-    // Make sure we don't loose qualifiers when dealing with typedefs. Example:
+    // Make sure we don't lose qualifiers when dealing with typedefs. Example:
     //   typedef int arr[10];
     //   void test2() {
     //     const arr b;
