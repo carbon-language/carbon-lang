@@ -192,3 +192,10 @@ It would be good to detect collector/target compatibility instead of silently
 doing the wrong thing.
 
 //===---------------------------------------------------------------------===//
+
+It would be really nice to be able to write patterns in .td files for copies,
+which would eliminate a bunch of explicit predicates on them (e.g. no side 
+effects).  Once this is in place, it would be even better to have tblgen 
+synthesize the various copy insertion/inspection methods in TargetInstrInfo.
+
+//===---------------------------------------------------------------------===//
