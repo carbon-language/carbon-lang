@@ -268,6 +268,9 @@ private:
   
   void HandleAlignedAttribute(Decl *d, AttributeList *rawAttr);
     
+  void WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
+                           bool &IncompleteImpl);
+                           
   /// CheckProtocolMethodDefs - This routine checks unimpletented methods
   /// Declared in protocol, and those referenced by it.
   void CheckProtocolMethodDefs(SourceLocation ImpLoc,
@@ -280,7 +283,7 @@ private:
   /// listed in the implelementation match those listed in the interface. 
   void CheckImplementationIvars(ObjCImplementationDecl *ImpDecl,
                                 ObjCIvarDecl **Fields, unsigned nIvars,
-				SourceLocation Loc);
+                                SourceLocation Loc);
   
   /// ImplMethodsVsClassMethods - This is main routine to warn if any method
   /// remains unimplemented in the @implementation class.

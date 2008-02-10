@@ -457,6 +457,15 @@ void Sema::CheckImplementationIvars(ObjCImplementationDecl *ImpDecl,
     Diag((*IVI)->getLocation(), diag::err_inconsistant_ivar_count);
 }
 
+void Sema::WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
+                               bool &IncompleteImpl) {
+  if (!IncompleteImpl) {
+    Diag(ImpLoc, diag::warn_incomplete_impl);
+    IncompleteImpl = true;
+  }
+  Diag(ImpLoc, diag::warn_undef_method_impl, method->getSelector().getName());
+}
+
 /// CheckProtocolMethodDefs - This routine checks unimplemented methods
 /// Declared in protocol, and those referenced by it.
 void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
@@ -469,28 +478,16 @@ void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
        E = PDecl->instmeth_end(); I != E; ++I) {
     ObjCMethodDecl *method = *I;
     if (!InsMap.count(method->getSelector()) && 
-        method->getImplementationControl() != ObjCMethodDecl::Optional) {
-      if (!IncompleteImpl) {
-        Diag(ImpLoc, diag::warn_incomplete_impl);
-        IncompleteImpl = true;
-      }
-      Diag(ImpLoc, diag::warn_undef_method_impl,
-           method->getSelector().getName());
-    }
+        method->getImplementationControl() != ObjCMethodDecl::Optional)
+      WarnUndefinedMethod(ImpLoc, method, IncompleteImpl);
   }
   // check unimplemented class methods
   for (ObjCProtocolDecl::classmeth_iterator I = PDecl->classmeth_begin(), 
        E = PDecl->classmeth_end(); I != E; ++I) {
     ObjCMethodDecl *method = *I;
     if (!ClsMap.count(method->getSelector()) &&
-        method->getImplementationControl() != ObjCMethodDecl::Optional) {
-      if (!IncompleteImpl) {
-        Diag(ImpLoc, diag::warn_incomplete_impl);
-        IncompleteImpl = true;
-      }
-      Diag(ImpLoc, diag::warn_undef_method_impl,
-           method->getSelector().getName());
-    }
+        method->getImplementationControl() != ObjCMethodDecl::Optional)
+      WarnUndefinedMethod(ImpLoc, method, IncompleteImpl);
   }
   // Check on this protocols's referenced protocols, recursively
   ObjCProtocolDecl** RefPDecl = PDecl->getReferencedProtocols();
@@ -510,14 +507,8 @@ void Sema::ImplMethodsVsClassMethods(ObjCImplementationDecl* IMPDecl,
   bool IncompleteImpl = false;
   for (ObjCInterfaceDecl::instmeth_iterator I = IDecl->instmeth_begin(),
        E = IDecl->instmeth_end(); I != E; ++I)
-    if (!InsMap.count((*I)->getSelector())) {
-      if (!IncompleteImpl) {
-        Diag(IMPDecl->getLocation(), diag::warn_incomplete_impl);
-        IncompleteImpl = true;
-      }
-      Diag(IMPDecl->getLocation(), diag::warn_undef_method_impl, 
-           (*I)->getSelector().getName());
-    }
+    if (!InsMap.count((*I)->getSelector()))
+      WarnUndefinedMethod(IMPDecl->getLocation(), *I, IncompleteImpl);
       
   llvm::DenseSet<Selector> ClsMap;
   // Check and see if class methods in class interface have been
@@ -528,14 +519,8 @@ void Sema::ImplMethodsVsClassMethods(ObjCImplementationDecl* IMPDecl,
   
   for (ObjCInterfaceDecl::classmeth_iterator I = IDecl->classmeth_begin(),
        E = IDecl->classmeth_end(); I != E; ++I)
-    if (!ClsMap.count((*I)->getSelector())) {
-      if (!IncompleteImpl) {
-        Diag(IMPDecl->getLocation(), diag::warn_incomplete_impl);
-        IncompleteImpl = true;
-      }
-      Diag(IMPDecl->getLocation(), diag::warn_undef_method_impl,
-           (*I)->getSelector().getName());
-    }
+    if (!ClsMap.count((*I)->getSelector()))
+      WarnUndefinedMethod(IMPDecl->getLocation(), *I, IncompleteImpl);
   
   // Check the protocol list for unimplemented methods in the @implementation
   // class.
@@ -559,14 +544,9 @@ void Sema::ImplCategoryMethodsVsIntfMethods(ObjCCategoryImplDecl *CatImplDecl,
   bool IncompleteImpl = false;
   for (ObjCCategoryDecl::instmeth_iterator I = CatClassDecl->instmeth_begin(),
        E = CatClassDecl->instmeth_end(); I != E; ++I)
-    if (!InsMap.count((*I)->getSelector())) {
-      if (!IncompleteImpl) {
-        Diag(CatImplDecl->getLocation(), diag::warn_incomplete_impl);
-        IncompleteImpl = true;
-      }
-      Diag(CatImplDecl->getLocation(), diag::warn_undef_method_impl,
-           (*I)->getSelector().getName());
-    }
+    if (!InsMap.count((*I)->getSelector()))
+      WarnUndefinedMethod(CatImplDecl->getLocation(), *I, IncompleteImpl);
+
   llvm::DenseSet<Selector> ClsMap;
   // Check and see if class methods in category interface have been
   // implemented in its implementation class.
@@ -577,14 +557,8 @@ void Sema::ImplCategoryMethodsVsIntfMethods(ObjCCategoryImplDecl *CatImplDecl,
   
   for (ObjCCategoryDecl::classmeth_iterator I = CatClassDecl->classmeth_begin(),
        E = CatClassDecl->classmeth_end(); I != E; ++I)
-    if (!ClsMap.count((*I)->getSelector())) {
-      if (!IncompleteImpl) {
-        Diag(CatImplDecl->getLocation(), diag::warn_incomplete_impl);
-        IncompleteImpl = true;
-      }
-      Diag(CatImplDecl->getLocation(), diag::warn_undef_method_impl,
-           (*I)->getSelector().getName());
-    }
+    if (!ClsMap.count((*I)->getSelector()))
+      WarnUndefinedMethod(CatImplDecl->getLocation(), *I, IncompleteImpl);
   
   // Check the protocol list for unimplemented methods in the @implementation
   // class.
