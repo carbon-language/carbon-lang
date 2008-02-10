@@ -209,6 +209,8 @@ private:
   void ExpandResult_ANY_EXTEND (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_ZERO_EXTEND(SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_SIGN_EXTEND(SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandResult_AssertZext (SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandResult_TRUNCATE   (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_BIT_CONVERT(SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_SIGN_EXTEND_INREG(SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_LOAD       (LoadSDNode *N, SDOperand &Lo, SDOperand &Hi);

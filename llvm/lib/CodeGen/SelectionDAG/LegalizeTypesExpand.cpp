@@ -60,6 +60,8 @@ void DAGTypeLegalizer::ExpandResult(SDNode *N, unsigned ResNo) {
   case ISD::ANY_EXTEND:  ExpandResult_ANY_EXTEND(N, Lo, Hi); break;
   case ISD::ZERO_EXTEND: ExpandResult_ZERO_EXTEND(N, Lo, Hi); break;
   case ISD::SIGN_EXTEND: ExpandResult_SIGN_EXTEND(N, Lo, Hi); break;
+  case ISD::AssertZext:  ExpandResult_AssertZext(N, Lo, Hi); break;
+  case ISD::TRUNCATE:    ExpandResult_TRUNCATE(N, Lo, Hi); break;
   case ISD::BIT_CONVERT: ExpandResult_BIT_CONVERT(N, Lo, Hi); break;
   case ISD::SIGN_EXTEND_INREG: ExpandResult_SIGN_EXTEND_INREG(N, Lo, Hi); break;
   case ISD::LOAD:        ExpandResult_LOAD(cast<LoadSDNode>(N), Lo, Hi); break;
@@ -200,6 +202,34 @@ void DAGTypeLegalizer::ExpandResult_SIGN_EXTEND(SDNode *N,
     Hi = DAG.getNode(ISD::SIGN_EXTEND_INREG, Hi.getValueType(), Hi,
                      DAG.getValueType(MVT::getIntegerType(ExcessBits)));
   }
+}
+
+void DAGTypeLegalizer::ExpandResult_AssertZext(SDNode *N,
+                                               SDOperand &Lo, SDOperand &Hi) {
+  GetExpandedOp(N->getOperand(0), Lo, Hi);
+  MVT::ValueType NVT = Lo.getValueType();
+  MVT::ValueType EVT = cast<VTSDNode>(N->getOperand(1))->getVT();
+  unsigned NVTBits = MVT::getSizeInBits(NVT);
+  unsigned EVTBits = MVT::getSizeInBits(EVT);
+
+  if (NVTBits < EVTBits) {
+    Hi = DAG.getNode(ISD::AssertZext, NVT, Hi,
+                     DAG.getValueType(MVT::getIntegerType(EVTBits - NVTBits)));
+  } else {
+    Lo = DAG.getNode(ISD::AssertZext, NVT, Lo, DAG.getValueType(EVT));
+    // The high part must be zero, make it explicit.
+    Hi = DAG.getConstant(0, NVT);
+  }
+}
+
+void DAGTypeLegalizer::ExpandResult_TRUNCATE(SDNode *N,
+                                             SDOperand &Lo, SDOperand &Hi) {
+  MVT::ValueType NVT = TLI.getTypeToTransformTo(N->getValueType(0));
+  Lo = DAG.getNode(ISD::TRUNCATE, NVT, N->getOperand(0));
+  Hi = DAG.getNode(ISD::SRL, N->getOperand(0).getValueType(), N->getOperand(0),
+                   DAG.getConstant(MVT::getSizeInBits(NVT),
+                                   TLI.getShiftAmountTy()));
+  Hi = DAG.getNode(ISD::TRUNCATE, NVT, Hi);
 }
 
 void DAGTypeLegalizer::ExpandResult_BIT_CONVERT(SDNode *N,

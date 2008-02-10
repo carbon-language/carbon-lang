@@ -2018,6 +2018,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
            "Cannot *_EXTEND_INREG FP types");
     assert(MVT::getSizeInBits(EVT) <= MVT::getSizeInBits(VT) &&
            "Not extending!");
+    if (VT == EVT) return N1; // noop assertion.
     break;
   }
   case ISD::SIGN_EXTEND_INREG: {
