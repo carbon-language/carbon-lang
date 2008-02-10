@@ -68,6 +68,21 @@ It includes many features and refinements from LLVM 2.1.</p>
 
 <!--=========================================================================-->
 <div class="doc_subsection">
+<a name="deprecation">Deprecated features in LLVM 2.2</a>
+</div>
+
+<div class="doc_text">
+
+<p>This is the last LLVM release to support llvm-gcc 4.0, llvm-upgrade, and
+llvmc in its current form.  llvm-gcc 4.0 has been replaced with llvm-gcc 4.2.
+llvm-upgrade is useful for upgrading llvm 1.9 files to llvm 2.x syntax, but you
+can always use an old release to do this.  llvmc is currently mostly useless in
+llvm 2.2, and will be redesigned or removed in llvm 2.3.</p>
+
+</div>
+
+<!--=========================================================================-->
+<div class="doc_subsection">
 <a name="frontends">llvm-gcc 4.0, llvm-gcc 4.2, and clang</a>
 </div>
 
@@ -100,6 +115,8 @@ this project, please see the web site.</p>
 
 <div class="doc_text">
 
+<p>Scott Michel contributed Cell backend</p>
+
 <p>Dale contributed full support for long double on x86/x86-64 (where it is 80
 bits) and on Darwin PPC/PPC64 (where it is 128 bits).</p>
 
@@ -131,7 +148,7 @@ optimizer, speeding it up and making it more aggressive.  For example:</p>
 
 <li>Daniel Berlin and Curtis Dunham rewrote Andersen's alias analysis (which is
 not enabled by default) to be several orders of magnitude faster, implemented
-Offline Variable Substitution.</li>
+Offline Variable Substitution and Lazy Cycle Detection.</li>
 
 Devang: LoopIndexSplit is enabled by default.
 
@@ -139,8 +156,9 @@ Dan Gohman: LSR improvements for SSE intrinsics and
 
 Evan added simple exit value substitution to LSR.
 
-Anton added readnone/readonly attributes for modelling GCC pure/const
-attributes. 
+Anton added readnone/readonly attributes for modeling function side effects
+and Duncan hooked up GCC's pure/const attributes to use them and enhanced alias
+analysis to use them.
 </ul>
 
 </div>
@@ -169,11 +187,16 @@ targets that support it</li>
 <li>Evan enhanced LSR to support induction variable reuse when the induction
  variables have different widths.</li>
 
-<li>Rafael Espindola byval support, finished by Evan.</li>
+<li>Rafael Espindola byval support, finished by Evan for x86 (32/64).</li>
 
-<li>mod/ref info for machineinstrs</li>
+<li>mod/ref info for machineinstrs, inferred from .td files</li>
 
 <li>Evan: Live interval splitting on MBB boundaries.</li>
+
+Efficient iteration over use/defs of registers like llvm ir.
+
+The MachineInstr, MachineOperand and TargetInstrDesc classes are simpler, more
+consistent, and better documented.
 </ul>
 
 </div>
@@ -234,6 +257,9 @@ targets that support it</li>
 <li>Duncan fixed TargetData to distinguish between the size/alignment of a type 
     in a register, in memory according to the platform ABI, and in memory when
     we have a choice.</li>
+<li>Duncan moved parameter attributes off of function type and onto functions
+    and calls, which makes it much easier to add attributes to a function in a
+    transformation.</li>
 </ul>
   
 </div>
@@ -250,6 +276,7 @@ targets that support it</li>
 <ul>
 <li>Gordon Henriksen updated docs/Passes.html</li>
 <li>New lexer and parser for tblgen, new lexer for asmparser</li>
+<li>Dale GCC testsuite</li>
 </ul>
   
 </div>
