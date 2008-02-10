@@ -1362,6 +1362,8 @@ void Parser::ParseParenDeclarator(Declarator &D) {
         break;
       }
       
+      SourceLocation DSStart = Tok.getLocation();
+      
       // Parse the declaration-specifiers.
       DeclSpec DS;
       ParseDeclarationSpecifiers(DS);
@@ -1406,16 +1408,19 @@ void Parser::ParseParenDeclarator(Declarator &D) {
 
       // If no parameter was specified, verify that *something* was specified,
       // otherwise we have a missing type and identifier.
-      if (!DS.hasTypeSpecifier()) {
+      if (DS.getParsedSpecifiers() == DeclSpec::PQ_None && 
+          ParmDecl.getIdentifier() == 0 && ParmDecl.getNumTypeObjects() == 0) {
+        Diag(DSStart, diag::err_missing_param);
+      } else if (!DS.hasTypeSpecifier() &&
+                 (getLang().C99 || getLang().CPlusPlus)) {
+        // Otherwise, if something was specified but a type specifier wasn't,
+        // (e.g. "x" or "restrict x" or "restrict"), this is a use of implicit
+        // int.  This is valid in C90, but not in C99 or C++.
         if (ParmII)
           Diag(ParmDecl.getIdentifierLoc(),
-               diag::err_param_requires_type_specifier, ParmII->getName());
+               diag::ext_param_requires_type_specifier, ParmII->getName());
         else
-          Diag(Tok.getLocation(), diag::err_anon_param_requires_type_specifier);
-          
-        // Default the parameter to 'int'.
-        const char *PrevSpec = 0;
-        DS.SetTypeSpecType(DeclSpec::TST_int, Tok.getLocation(), PrevSpec);
+          Diag(DSStart, diag::ext_anon_param_requires_type_specifier);
       }
         
       ParamInfo.push_back(DeclaratorChunk::ParamInfo(ParmII, 
