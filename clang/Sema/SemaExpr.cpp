@@ -821,11 +821,22 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
 
       // ignore qualifiers on void (C99 6.5.15p3, clause 6)
       if (lhptee->isVoidType() &&
-          (rhptee->isObjectType() || rhptee->isIncompleteType()))
-        return lexT;
+          (rhptee->isObjectType() || rhptee->isIncompleteType())) {
+        // figure out necessary qualifiers (C99 6.5.15p6)
+        QualType destPointee = lhptee.getQualifiedType(rhptee.getQualifiers());
+        QualType destType = Context.getPointerType(destPointee);
+        ImpCastExprToType(lex, destType); // add qualifiers if necessary
+        ImpCastExprToType(rex, destType); // promote to void*
+        return destType;
+      }
       if (rhptee->isVoidType() &&
-          (lhptee->isObjectType() || lhptee->isIncompleteType()))
-        return rexT;
+          (lhptee->isObjectType() || lhptee->isIncompleteType())) {
+        QualType destPointee = rhptee.getQualifiedType(lhptee.getQualifiers());
+        QualType destType = Context.getPointerType(destPointee);
+        ImpCastExprToType(lex, destType); // add qualifiers if necessary
+        ImpCastExprToType(rex, destType); // promote to void*
+        return destType;
+      }
 
       if (!Context.typesAreCompatible(lhptee.getUnqualifiedType(), 
                                       rhptee.getUnqualifiedType())) {
@@ -846,6 +857,7 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
       // a pointer to an appropriately qualified version of the *composite*
       // type.
       // FIXME: Need to return the composite type.
+      // FIXME: Need to add qualifiers
       return lexT;
     }
   }
