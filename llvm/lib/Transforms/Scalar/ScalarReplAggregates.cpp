@@ -1150,7 +1150,7 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
       // then 'or' into place.
       Value *SV = SI->getOperand(0);
       const Type *AllocaType = NewAI->getType()->getElementType();
-      if (SV->getType() == AllocaType) {
+      if (SV->getType() == AllocaType && Offset == 0) {
         // All is well.
       } else if (const VectorType *PTy = dyn_cast<VectorType>(AllocaType)) {
         Value *Old = new LoadInst(NewAI, NewAI->getName()+".in", SI);
