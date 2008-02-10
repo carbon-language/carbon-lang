@@ -14,7 +14,7 @@
 
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
-#include "llvm/Target/MRegisterInfo.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 using namespace llvm;
@@ -22,11 +22,11 @@ using namespace llvm;
 CCState::CCState(unsigned CC, bool isVarArg, const TargetMachine &tm,
                  SmallVector<CCValAssign, 16> &locs)
   : CallingConv(CC), IsVarArg(isVarArg), TM(tm),
-    MRI(*TM.getRegisterInfo()), Locs(locs) {
+    TRI(*TM.getRegisterInfo()), Locs(locs) {
   // No stack is used.
   StackOffset = 0;
   
-  UsedRegs.resize(MRI.getNumRegs());
+  UsedRegs.resize(TRI.getNumRegs());
 }
 
 // HandleByVal - Allocate a stack slot large enough to pass an argument by
@@ -53,7 +53,7 @@ void CCState::HandleByVal(unsigned ValNo, MVT::ValueType ValVT,
 void CCState::MarkAllocated(unsigned Reg) {
   UsedRegs[Reg/32] |= 1 << (Reg&31);
   
-  if (const unsigned *RegAliases = MRI.getAliasSet(Reg))
+  if (const unsigned *RegAliases = TRI.getAliasSet(Reg))
     for (; (Reg = *RegAliases); ++RegAliases)
       UsedRegs[Reg/32] |= 1 << (Reg&31);
 }

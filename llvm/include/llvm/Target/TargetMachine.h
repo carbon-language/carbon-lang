@@ -28,7 +28,7 @@ class TargetJITInfo;
 class TargetLowering;
 class TargetFrameInfo;
 class MachineCodeEmitter;
-class MRegisterInfo;
+class TargetRegisterInfo;
 class Module;
 class FunctionPassManager;
 class PassManager;
@@ -140,7 +140,7 @@ public:
   /// not, return null.  This is kept separate from RegInfo until RegInfo has
   /// details of graph coloring register allocation removed from it.
   ///
-  virtual const MRegisterInfo *getRegisterInfo() const { return 0; }
+  virtual const TargetRegisterInfo *getRegisterInfo() const { return 0; }
 
   /// getJITInfo - If this target supports a JIT, return information for it,
   /// otherwise return null.

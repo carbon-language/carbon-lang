@@ -43,7 +43,7 @@ public:
   virtual const AlphaInstrInfo *getInstrInfo() const { return &InstrInfo; }
   virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }
   virtual const TargetSubtarget  *getSubtargetImpl() const{ return &Subtarget; }
-  virtual const MRegisterInfo *getRegisterInfo() const {
+  virtual const TargetRegisterInfo *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
   }
   virtual TargetLowering* getTargetLowering() const { 

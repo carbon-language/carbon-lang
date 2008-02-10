@@ -1051,7 +1051,7 @@ static bool IsPossiblyOverwrittenArgumentOfTailCall(SDOperand Op) {
   if (Op.getOpcode() == ISD::FORMAL_ARGUMENTS ||
       (Op.getOpcode()== ISD::CopyFromReg &&
        (OpReg = cast<RegisterSDNode>(Op.getOperand(1))) &&
-       OpReg->getReg() >= MRegisterInfo::FirstVirtualRegister))
+       OpReg->getReg() >= TargetRegisterInfo::FirstVirtualRegister))
     return true;
   return false;
 }

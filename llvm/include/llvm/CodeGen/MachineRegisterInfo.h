@@ -14,7 +14,7 @@
 #ifndef LLVM_CODEGEN_MACHINEREGISTERINFO_H
 #define LLVM_CODEGEN_MACHINEREGISTERINFO_H
 
-#include "llvm/Target/MRegisterInfo.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/iterator"
 #include <vector>
@@ -26,7 +26,7 @@ namespace llvm {
 class MachineRegisterInfo {
   /// VRegInfo - Information we keep for each virtual register.  The entries in
   /// this vector are actually converted to vreg numbers by adding the 
-  /// MRegisterInfo::FirstVirtualRegister delta to their index.
+  /// TargetRegisterInfo::FirstVirtualRegister delta to their index.
   ///
   /// Each element in this list contains the register class of the vreg and the
   /// start of the use/def list for the register.
@@ -54,7 +54,7 @@ class MachineRegisterInfo {
   MachineRegisterInfo(const MachineRegisterInfo&); // DO NOT IMPLEMENT
   void operator=(const MachineRegisterInfo&);      // DO NOT IMPLEMENT
 public:
-  explicit MachineRegisterInfo(const MRegisterInfo &MRI);
+  explicit MachineRegisterInfo(const TargetRegisterInfo &TRI);
   ~MachineRegisterInfo();
   
   //===--------------------------------------------------------------------===//
@@ -98,16 +98,16 @@ public:
   /// getRegUseDefListHead - Return the head pointer for the register use/def
   /// list for the specified virtual or physical register.
   MachineOperand *&getRegUseDefListHead(unsigned RegNo) {
-    if (RegNo < MRegisterInfo::FirstVirtualRegister)
+    if (RegNo < TargetRegisterInfo::FirstVirtualRegister)
       return PhysRegUseDefLists[RegNo];
-    RegNo -= MRegisterInfo::FirstVirtualRegister;
+    RegNo -= TargetRegisterInfo::FirstVirtualRegister;
     return VRegInfo[RegNo].second;
   }
   
   MachineOperand *getRegUseDefListHead(unsigned RegNo) const {
-    if (RegNo < MRegisterInfo::FirstVirtualRegister)
+    if (RegNo < TargetRegisterInfo::FirstVirtualRegister)
       return PhysRegUseDefLists[RegNo];
-    RegNo -= MRegisterInfo::FirstVirtualRegister;
+    RegNo -= TargetRegisterInfo::FirstVirtualRegister;
     return VRegInfo[RegNo].second;
   }
   
@@ -117,7 +117,7 @@ public:
   
   /// getRegClass - Return the register class of the specified virtual register.
   const TargetRegisterClass *getRegClass(unsigned Reg) {
-    Reg -= MRegisterInfo::FirstVirtualRegister;
+    Reg -= TargetRegisterInfo::FirstVirtualRegister;
     assert(Reg < VRegInfo.size() && "Invalid vreg!");
     return VRegInfo[Reg].first;
   }
@@ -142,7 +142,7 @@ public:
   /// getLastVirtReg - Return the highest currently assigned virtual register.
   ///
   unsigned getLastVirtReg() const {
-    return VRegInfo.size()+MRegisterInfo::FirstVirtualRegister-1;
+    return VRegInfo.size()+TargetRegisterInfo::FirstVirtualRegister-1;
   }
   
   /// getVRegDef - Return the machine instr that defines the specified virtual

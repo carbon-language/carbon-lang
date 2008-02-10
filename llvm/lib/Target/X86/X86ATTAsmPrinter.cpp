@@ -216,10 +216,10 @@ static inline bool printStub(TargetMachine &TM, const X86Subtarget* ST) {
 void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
                                     const char *Modifier, bool NotRIPRel) {
   const MachineOperand &MO = MI->getOperand(OpNo);
-  const MRegisterInfo &RI = *TM.getRegisterInfo();
+  const TargetRegisterInfo &RI = *TM.getRegisterInfo();
   switch (MO.getType()) {
   case MachineOperand::MO_Register: {
-    assert(MRegisterInfo::isPhysicalRegister(MO.getReg()) &&
+    assert(TargetRegisterInfo::isPhysicalRegister(MO.getReg()) &&
            "Virtual registers should not make it this far!");
     O << '%';
     unsigned Reg = MO.getReg();
@@ -553,7 +553,7 @@ void X86ATTAsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
 
 bool X86ATTAsmPrinter::printAsmMRegister(const MachineOperand &MO,
                                          const char Mode) {
-  const MRegisterInfo &RI = *TM.getRegisterInfo();
+  const TargetRegisterInfo &RI = *TM.getRegisterInfo();
   unsigned Reg = MO.getReg();
   switch (Mode) {
   default: return true;  // Unknown mode.

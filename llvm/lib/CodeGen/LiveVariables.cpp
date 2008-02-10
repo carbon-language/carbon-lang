@@ -29,7 +29,7 @@
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/Target/MRegisterInfo.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/DepthFirstIterator.h"
@@ -60,9 +60,9 @@ void LiveVariables::VarInfo::dump() const {
 }
 
 LiveVariables::VarInfo &LiveVariables::getVarInfo(unsigned RegIdx) {
-  assert(MRegisterInfo::isVirtualRegister(RegIdx) &&
+  assert(TargetRegisterInfo::isVirtualRegister(RegIdx) &&
          "getVarInfo: not a virtual register!");
-  RegIdx -= MRegisterInfo::FirstVirtualRegister;
+  RegIdx -= TargetRegisterInfo::FirstVirtualRegister;
   if (RegIdx >= VirtRegInfo.size()) {
     if (RegIdx >= 2*VirtRegInfo.size())
       VirtRegInfo.resize(RegIdx*2);
@@ -80,8 +80,8 @@ bool LiveVariables::KillsRegister(MachineInstr *MI, unsigned Reg) const {
     MachineOperand &MO = MI->getOperand(i);
     if (MO.isRegister() && MO.isKill()) {
       if ((MO.getReg() == Reg) ||
-          (MRegisterInfo::isPhysicalRegister(MO.getReg()) &&
-           MRegisterInfo::isPhysicalRegister(Reg) &&
+          (TargetRegisterInfo::isPhysicalRegister(MO.getReg()) &&
+           TargetRegisterInfo::isPhysicalRegister(Reg) &&
            RegInfo->isSubRegister(MO.getReg(), Reg)))
         return true;
     }
@@ -94,8 +94,8 @@ bool LiveVariables::RegisterDefIsDead(MachineInstr *MI, unsigned Reg) const {
     MachineOperand &MO = MI->getOperand(i);
     if (MO.isRegister() && MO.isDead()) {
       if ((MO.getReg() == Reg) ||
-          (MRegisterInfo::isPhysicalRegister(MO.getReg()) &&
-           MRegisterInfo::isPhysicalRegister(Reg) &&
+          (TargetRegisterInfo::isPhysicalRegister(MO.getReg()) &&
+           TargetRegisterInfo::isPhysicalRegister(Reg) &&
            RegInfo->isSubRegister(MO.getReg(), Reg)))
         return true;
     }
@@ -399,7 +399,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
     // Mark live-in registers as live-in.
     for (MachineBasicBlock::const_livein_iterator II = MBB->livein_begin(),
            EE = MBB->livein_end(); II != EE; ++II) {
-      assert(MRegisterInfo::isPhysicalRegister(*II) &&
+      assert(TargetRegisterInfo::isPhysicalRegister(*II) &&
              "Cannot have a live-in virtual register!");
       HandlePhysRegDef(*II, 0);
     }
@@ -421,9 +421,9 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
       for (unsigned i = 0; i != NumOperandsToProcess; ++i) {
         MachineOperand &MO = MI->getOperand(i);
         if (MO.isRegister() && MO.isUse() && MO.getReg()) {
-          if (MRegisterInfo::isVirtualRegister(MO.getReg())){
+          if (TargetRegisterInfo::isVirtualRegister(MO.getReg())){
             HandleVirtRegUse(MO.getReg(), MBB, MI);
-          } else if (MRegisterInfo::isPhysicalRegister(MO.getReg()) &&
+          } else if (TargetRegisterInfo::isPhysicalRegister(MO.getReg()) &&
                      !ReservedRegisters[MO.getReg()]) {
             HandlePhysRegUse(MO.getReg(), MI);
           }
@@ -434,12 +434,12 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
       for (unsigned i = 0; i != NumOperandsToProcess; ++i) {
         MachineOperand &MO = MI->getOperand(i);
         if (MO.isRegister() && MO.isDef() && MO.getReg()) {
-          if (MRegisterInfo::isVirtualRegister(MO.getReg())) {
+          if (TargetRegisterInfo::isVirtualRegister(MO.getReg())) {
             VarInfo &VRInfo = getVarInfo(MO.getReg());
             if (VRInfo.AliveBlocks.none())
               // If vr is not alive in any block, then defaults to dead.
               VRInfo.Kills.push_back(MI);
-          } else if (MRegisterInfo::isPhysicalRegister(MO.getReg()) &&
+          } else if (TargetRegisterInfo::isPhysicalRegister(MO.getReg()) &&
                      !ReservedRegisters[MO.getReg()]) {
             HandlePhysRegDef(MO.getReg(), MI);
           }
@@ -469,7 +469,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
       for (MachineRegisterInfo::liveout_iterator
            I = MF->getRegInfo().liveout_begin(),
            E = MF->getRegInfo().liveout_end(); I != E; ++I) {
-        assert(MRegisterInfo::isPhysicalRegister(*I) &&
+        assert(TargetRegisterInfo::isPhysicalRegister(*I) &&
                "Cannot have a live-in virtual register!");
         HandlePhysRegUse(*I, Ret);
         // Add live-out registers as implicit uses.
@@ -498,13 +498,13 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
   for (unsigned i = 0, e1 = VirtRegInfo.size(); i != e1; ++i)
     for (unsigned j = 0, e2 = VirtRegInfo[i].Kills.size(); j != e2; ++j) {
       if (VirtRegInfo[i].Kills[j] == MRI.getVRegDef(i + 
-                                           MRegisterInfo::FirstVirtualRegister))
+                                           TargetRegisterInfo::FirstVirtualRegister))
         VirtRegInfo[i].Kills[j]->addRegisterDead(i +
-                                            MRegisterInfo::FirstVirtualRegister,
+                                            TargetRegisterInfo::FirstVirtualRegister,
                                                  RegInfo);
       else
         VirtRegInfo[i].Kills[j]->addRegisterKilled(i +
-                                            MRegisterInfo::FirstVirtualRegister,
+                                            TargetRegisterInfo::FirstVirtualRegister,
                                                   RegInfo);
     }
 
@@ -536,7 +536,7 @@ void LiveVariables::instructionChanged(MachineInstr *OldMI,
   for (unsigned i = 0, e = OldMI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = OldMI->getOperand(i);
     if (MO.isRegister() && MO.getReg() &&
-        MRegisterInfo::isVirtualRegister(MO.getReg())) {
+        TargetRegisterInfo::isVirtualRegister(MO.getReg())) {
       unsigned Reg = MO.getReg();
       VarInfo &VI = getVarInfo(Reg);
       if (MO.isDef()) {
@@ -564,7 +564,7 @@ void LiveVariables::removeVirtualRegistersKilled(MachineInstr *MI) {
     if (MO.isRegister() && MO.isKill()) {
       MO.setIsKill(false);
       unsigned Reg = MO.getReg();
-      if (MRegisterInfo::isVirtualRegister(Reg)) {
+      if (TargetRegisterInfo::isVirtualRegister(Reg)) {
         bool removed = getVarInfo(Reg).removeKill(MI);
         assert(removed && "kill not in register's VarInfo?");
       }
@@ -580,7 +580,7 @@ void LiveVariables::removeVirtualRegistersDead(MachineInstr *MI) {
     if (MO.isRegister() && MO.isDead()) {
       MO.setIsDead(false);
       unsigned Reg = MO.getReg();
-      if (MRegisterInfo::isVirtualRegister(Reg)) {
+      if (TargetRegisterInfo::isVirtualRegister(Reg)) {
         bool removed = getVarInfo(Reg).removeKill(MI);
         assert(removed && "kill not in register's VarInfo?");
       }

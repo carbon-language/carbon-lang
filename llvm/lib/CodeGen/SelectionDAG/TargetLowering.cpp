@@ -15,7 +15,7 @@
 #include "llvm/Target/TargetSubtarget.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/MRegisterInfo.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/ADT/StringExtras.h"
@@ -1614,8 +1614,8 @@ getRegForInlineAsmConstraint(const std::string &Constraint,
   std::string RegName(Constraint.begin()+1, Constraint.end()-1);
 
   // Figure out which register class contains this reg.
-  const MRegisterInfo *RI = TM.getRegisterInfo();
-  for (MRegisterInfo::regclass_iterator RCI = RI->regclass_begin(),
+  const TargetRegisterInfo *RI = TM.getRegisterInfo();
+  for (TargetRegisterInfo::regclass_iterator RCI = RI->regclass_begin(),
        E = RI->regclass_end(); RCI != E; ++RCI) {
     const TargetRegisterClass *RC = *RCI;
     

@@ -24,7 +24,7 @@
 #include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/MRegisterInfo.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
@@ -72,7 +72,7 @@ namespace {
                                   MachineBasicBlock::iterator BBI1);
 
     std::vector<std::pair<unsigned,MachineBasicBlock*> > MergePotentials;
-    const MRegisterInfo *RegInfo;
+    const TargetRegisterInfo *RegInfo;
     RegScavenger *RS;
     // Branch optzn.
     bool OptimizeBranches(MachineFunction &MF);

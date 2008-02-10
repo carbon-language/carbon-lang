@@ -272,7 +272,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
   const MachineOperand &MO = MI->getOperand(opNum);
   switch (MO.getType()) {
   case MachineOperand::MO_Register:
-    if (MRegisterInfo::isPhysicalRegister(MO.getReg()))
+    if (TargetRegisterInfo::isPhysicalRegister(MO.getReg()))
       O << TM.getRegisterInfo()->get(MO.getReg()).Name;
     else
       assert(0 && "not implemented");
@@ -392,7 +392,7 @@ void ARMAsmPrinter::printSORegOperand(const MachineInstr *MI, int Op) {
   const MachineOperand &MO2 = MI->getOperand(Op+1);
   const MachineOperand &MO3 = MI->getOperand(Op+2);
 
-  assert(MRegisterInfo::isPhysicalRegister(MO1.getReg()));
+  assert(TargetRegisterInfo::isPhysicalRegister(MO1.getReg()));
   O << TM.getRegisterInfo()->get(MO1.getReg()).Name;
 
   // Print the shift opc.
@@ -401,7 +401,7 @@ void ARMAsmPrinter::printSORegOperand(const MachineInstr *MI, int Op) {
     << " ";
 
   if (MO2.getReg()) {
-    assert(MRegisterInfo::isPhysicalRegister(MO2.getReg()));
+    assert(TargetRegisterInfo::isPhysicalRegister(MO2.getReg()));
     O << TM.getRegisterInfo()->get(MO2.getReg()).Name;
     assert(ARM_AM::getSORegOffset(MO3.getImm()) == 0);
   } else {
@@ -468,7 +468,7 @@ void ARMAsmPrinter::printAddrMode3Operand(const MachineInstr *MI, int Op) {
   const MachineOperand &MO2 = MI->getOperand(Op+1);
   const MachineOperand &MO3 = MI->getOperand(Op+2);
   
-  assert(MRegisterInfo::isPhysicalRegister(MO1.getReg()));
+  assert(TargetRegisterInfo::isPhysicalRegister(MO1.getReg()));
   O << "[" << TM.getRegisterInfo()->get(MO1.getReg()).Name;
 
   if (MO2.getReg()) {
@@ -532,7 +532,7 @@ void ARMAsmPrinter::printAddrMode5Operand(const MachineInstr *MI, int Op,
     return;
   }
   
-  assert(MRegisterInfo::isPhysicalRegister(MO1.getReg()));
+  assert(TargetRegisterInfo::isPhysicalRegister(MO1.getReg()));
 
   if (Modifier && strcmp(Modifier, "submode") == 0) {
     ARM_AM::AMSubMode Mode = ARM_AM::getAM5SubMode(MO2.getImm());
@@ -569,7 +569,7 @@ void ARMAsmPrinter::printAddrModePCOperand(const MachineInstr *MI, int Op,
   }
 
   const MachineOperand &MO1 = MI->getOperand(Op);
-  assert(MRegisterInfo::isPhysicalRegister(MO1.getReg()));
+  assert(TargetRegisterInfo::isPhysicalRegister(MO1.getReg()));
   O << "[pc, +" << TM.getRegisterInfo()->get(MO1.getReg()).Name << "]";
 }
 

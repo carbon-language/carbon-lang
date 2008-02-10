@@ -207,14 +207,14 @@ void MachineFunction::print(std::ostream &OS) const {
   // Print Constant Pool
   getConstantPool()->print(OS);
   
-  const MRegisterInfo *MRI = getTarget().getRegisterInfo();
+  const TargetRegisterInfo *TRI = getTarget().getRegisterInfo();
   
   if (!RegInfo->livein_empty()) {
     OS << "Live Ins:";
     for (MachineRegisterInfo::livein_iterator
          I = RegInfo->livein_begin(), E = RegInfo->livein_end(); I != E; ++I) {
-      if (MRI)
-        OS << " " << MRI->getName(I->first);
+      if (TRI)
+        OS << " " << TRI->getName(I->first);
       else
         OS << " Reg #" << I->first;
       
@@ -227,8 +227,8 @@ void MachineFunction::print(std::ostream &OS) const {
     OS << "Live Outs:";
     for (MachineRegisterInfo::liveout_iterator
          I = RegInfo->liveout_begin(), E = RegInfo->liveout_end(); I != E; ++I)
-      if (MRI)
-        OS << " " << MRI->getName(*I);
+      if (TRI)
+        OS << " " << TRI->getName(*I);
       else
         OS << " Reg #" << *I;
     OS << "\n";

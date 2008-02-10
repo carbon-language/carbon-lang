@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the PowerPC implementation of the MRegisterInfo class.
+// This file contains the PowerPC implementation of the TargetRegisterInfo
+// class.
 //
 //===----------------------------------------------------------------------===//
 

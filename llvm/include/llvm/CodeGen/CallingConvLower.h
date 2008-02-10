@@ -19,7 +19,7 @@
 #include "llvm/CodeGen/ValueTypes.h"
 
 namespace llvm {
-  class MRegisterInfo;
+  class TargetRegisterInfo;
   class TargetMachine;
   class CCState;
   class SDNode;
@@ -107,7 +107,7 @@ class CCState {
   unsigned CallingConv;
   bool IsVarArg;
   const TargetMachine &TM;
-  const MRegisterInfo &MRI;
+  const TargetRegisterInfo &TRI;
   SmallVector<CCValAssign, 16> &Locs;
   
   unsigned StackOffset;

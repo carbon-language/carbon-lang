@@ -132,7 +132,7 @@ bool SparcAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
 void SparcAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
   const MachineOperand &MO = MI->getOperand (opNum);
-  const MRegisterInfo &RI = *TM.getRegisterInfo();
+  const TargetRegisterInfo &RI = *TM.getRegisterInfo();
   bool CloseParen = false;
   if (MI->getOpcode() == SP::SETHIi && !MO.isRegister() && !MO.isImmediate()) {
     O << "%hi(";
@@ -144,7 +144,7 @@ void SparcAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
   }
   switch (MO.getType()) {
   case MachineOperand::MO_Register:
-    if (MRegisterInfo::isPhysicalRegister(MO.getReg()))
+    if (TargetRegisterInfo::isPhysicalRegister(MO.getReg()))
       O << "%" << LowercaseString (RI.get(MO.getReg()).Name);
     else
       O << "%reg" << MO.getReg();

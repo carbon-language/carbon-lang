@@ -35,7 +35,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SchedulerRegistry.h"
 #include "llvm/CodeGen/SelectionDAG.h"
-#include "llvm/Target/MRegisterInfo.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -3148,11 +3148,12 @@ void RegsForValue::AddInlineAsmOperands(unsigned Code, SelectionDAG &DAG,
 /// register class for the register.  Otherwise, return null.
 static const TargetRegisterClass *
 isAllocatableRegister(unsigned Reg, MachineFunction &MF,
-                      const TargetLowering &TLI, const MRegisterInfo *MRI) {
+                      const TargetLowering &TLI,
+                      const TargetRegisterInfo *TRI) {
   MVT::ValueType FoundVT = MVT::Other;
   const TargetRegisterClass *FoundRC = 0;
-  for (MRegisterInfo::regclass_iterator RCI = MRI->regclass_begin(),
-       E = MRI->regclass_end(); RCI != E; ++RCI) {
+  for (TargetRegisterInfo::regclass_iterator RCI = TRI->regclass_begin(),
+       E = TRI->regclass_end(); RCI != E; ++RCI) {
     MVT::ValueType ThisVT = MVT::Other;
 
     const TargetRegisterClass *RC = *RCI;
@@ -3416,7 +3417,7 @@ GetRegistersForValue(AsmOperandInfo &OpInfo, bool HasEarlyClobber,
                                                          OpInfo.ConstraintVT);
   }
   
-  const MRegisterInfo *MRI = DAG.getTarget().getRegisterInfo();
+  const TargetRegisterInfo *TRI = DAG.getTarget().getRegisterInfo();
   unsigned NumAllocated = 0;
   for (unsigned i = 0, e = RegClassRegs.size(); i != e; ++i) {
     unsigned Reg = RegClassRegs[i];
@@ -3431,7 +3432,7 @@ GetRegistersForValue(AsmOperandInfo &OpInfo, bool HasEarlyClobber,
     // Check to see if this register is allocatable (i.e. don't give out the
     // stack pointer).
     if (RC == 0) {
-      RC = isAllocatableRegister(Reg, MF, TLI, MRI);
+      RC = isAllocatableRegister(Reg, MF, TLI, TRI);
       if (!RC) {        // Couldn't allocate this register.
         // Reset NumAllocated to make sure we return consecutive registers.
         NumAllocated = 0;

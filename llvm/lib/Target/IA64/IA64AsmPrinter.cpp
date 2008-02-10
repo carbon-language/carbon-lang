@@ -53,7 +53,8 @@ namespace {
     void printOperand(const MachineInstr *MI, unsigned OpNo){
       const MachineOperand &MO = MI->getOperand(OpNo);
       if (MO.getType() == MachineOperand::MO_Register) {
-        assert(MRegisterInfo::isPhysicalRegister(MO.getReg())&&"Not physref??");
+        assert(TargetRegisterInfo::isPhysicalRegister(MO.getReg()) &&
+               "Not physref??");
         //XXX Bug Workaround: See note in Printer::doInitialization about %.
         O << TM.getRegisterInfo()->get(MO.getReg()).Name;
       } else {
@@ -164,7 +165,7 @@ bool IA64AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
 void IA64AsmPrinter::printOp(const MachineOperand &MO,
                              bool isBRCALLinsn /* = false */) {
-  const MRegisterInfo &RI = *TM.getRegisterInfo();
+  const TargetRegisterInfo &RI = *TM.getRegisterInfo();
   switch (MO.getType()) {
   case MachineOperand::MO_Register:
     O << RI.get(MO.getReg()).Name;

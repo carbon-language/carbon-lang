@@ -282,7 +282,7 @@ ARMInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
     if (MO.isRegister() && MO.getReg() &&
-        MRegisterInfo::isVirtualRegister(MO.getReg())) {
+        TargetRegisterInfo::isVirtualRegister(MO.getReg())) {
       unsigned Reg = MO.getReg();
       LiveVariables::VarInfo &VI = LV.getVarInfo(Reg);
       if (MO.isDef()) {

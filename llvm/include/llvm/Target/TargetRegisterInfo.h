@@ -1,4 +1,4 @@
-//===- Target/MRegisterInfo.h - Target Register Information -----*- C++ -*-===//
+//=== Target/TargetRegisterInfo.h - Target Register Information -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_MREGISTERINFO_H
-#define LLVM_TARGET_MREGISTERINFO_H
+#ifndef LLVM_TARGET_TARGETREGISTERINFO_H
+#define LLVM_TARGET_TARGETREGISTERINFO_H
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
@@ -268,12 +268,13 @@ public:
 };
 
 
-/// MRegisterInfo base class - We assume that the target defines a static array
-/// of TargetRegisterDesc objects that represent all of the machine registers
-/// that the target has.  As such, we simply have to track a pointer to this
-/// array so that we can turn register number into a register descriptor.
+/// TargetRegisterInfo base class - We assume that the target defines a static
+/// array of TargetRegisterDesc objects that represent all of the machine
+/// registers that the target has.  As such, we simply have to track a pointer
+/// to this array so that we can turn register number into a register
+/// descriptor.
 ///
-class MRegisterInfo {
+class TargetRegisterInfo {
 public:
   typedef const TargetRegisterClass * const * regclass_iterator;
 private:
@@ -284,10 +285,12 @@ private:
 
   int CallFrameSetupOpcode, CallFrameDestroyOpcode;
 protected:
-  MRegisterInfo(const TargetRegisterDesc *D, unsigned NR,
-                regclass_iterator RegClassBegin, regclass_iterator RegClassEnd,
-                int CallFrameSetupOpcode = -1, int CallFrameDestroyOpcode = -1);
-  virtual ~MRegisterInfo();
+  TargetRegisterInfo(const TargetRegisterDesc *D, unsigned NR,
+                     regclass_iterator RegClassBegin,
+                     regclass_iterator RegClassEnd,
+                     int CallFrameSetupOpcode = -1,
+                     int CallFrameDestroyOpcode = -1);
+  virtual ~TargetRegisterInfo();
 public:
 
   enum {                        // Define some target independent constants
@@ -603,7 +606,7 @@ public:
 // This is useful when building IndexedMaps keyed on virtual registers
 struct VirtReg2IndexFunctor : std::unary_function<unsigned, unsigned> {
   unsigned operator()(unsigned Reg) const {
-    return Reg - MRegisterInfo::FirstVirtualRegister;
+    return Reg - TargetRegisterInfo::FirstVirtualRegister;
   }
 };
 

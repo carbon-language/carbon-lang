@@ -134,7 +134,7 @@ int Emitter::getMachineOpValue(const MachineInstr &MI, unsigned OpIndex) {
   intptr_t rv = 0;
   const MachineOperand &MO = MI.getOperand(OpIndex);
   if (MO.isRegister()) {
-    assert(MRegisterInfo::isPhysicalRegister(MO.getReg()));
+    assert(TargetRegisterInfo::isPhysicalRegister(MO.getReg()));
     rv = ARMRegisterInfo::getRegisterNumbering(MO.getReg());
   } else if (MO.isImmediate()) {
     rv = MO.getImm();
@@ -478,7 +478,7 @@ unsigned Emitter::getBinaryCodeForInstr(const MachineInstr &MI) {
       if(ARM_AM::getSORegShOp(MO2.getImm()) != ARM_AM::rrx)
         if(IsShiftByRegister) {
           // set the value of bit[11:8] (register Rs).
-          assert(MRegisterInfo::isPhysicalRegister(MO1.getReg()));
+          assert(TargetRegisterInfo::isPhysicalRegister(MO1.getReg()));
           op = ARMRegisterInfo::getRegisterNumbering(MO1.getReg());
           assert(ARM_AM::getSORegOffset(MO2.getImm()) == 0);
           Value |= op << ARMII::RegRsShift;
@@ -540,7 +540,7 @@ unsigned Emitter::getBinaryCodeForInstr(const MachineInstr &MI) {
 
     // set bit I(25), because this is not in immediate enconding.
     Value |= 1 << ARMII::I_BitShift;
-    assert(MRegisterInfo::isPhysicalRegister(MO2.getReg()));
+    assert(TargetRegisterInfo::isPhysicalRegister(MO2.getReg()));
     // set bit[3:0] to the corresponding Rm register
     Value |= ARMRegisterInfo::getRegisterNumbering(MO2.getReg());
 
@@ -640,7 +640,8 @@ unsigned Emitter::getBinaryCodeForInstr(const MachineInstr &MI) {
     for (unsigned i = OpIndex + 4, e = MI.getNumOperands(); i != e; ++i) {
       const MachineOperand &MOR = MI.getOperand(i);
       unsigned RegNumber = ARMRegisterInfo::getRegisterNumbering(MOR.getReg());
-      assert(MRegisterInfo::isPhysicalRegister(MOR.getReg()) && RegNumber < 16);
+      assert(TargetRegisterInfo::isPhysicalRegister(MOR.getReg()) &&
+             RegNumber < 16);
       Value |= 0x1 << RegNumber;
     }
 

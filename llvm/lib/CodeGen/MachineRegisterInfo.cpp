@@ -14,13 +14,13 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 using namespace llvm;
 
-MachineRegisterInfo::MachineRegisterInfo(const MRegisterInfo &MRI) {
+MachineRegisterInfo::MachineRegisterInfo(const TargetRegisterInfo &TRI) {
   VRegInfo.reserve(256);
-  UsedPhysRegs.resize(MRI.getNumRegs());
+  UsedPhysRegs.resize(TRI.getNumRegs());
   
   // Create the physreg use/def lists.
-  PhysRegUseDefLists = new MachineOperand*[MRI.getNumRegs()];
-  memset(PhysRegUseDefLists, 0, sizeof(MachineOperand*)*MRI.getNumRegs());
+  PhysRegUseDefLists = new MachineOperand*[TRI.getNumRegs()];
+  memset(PhysRegUseDefLists, 0, sizeof(MachineOperand*)*TRI.getNumRegs());
 }
 
 MachineRegisterInfo::~MachineRegisterInfo() {
@@ -64,7 +64,7 @@ void MachineRegisterInfo::replaceRegWith(unsigned FromReg, unsigned ToReg) {
 /// register or null if none is found.  This assumes that the code is in SSA
 /// form, so there should only be one definition.
 MachineInstr *MachineRegisterInfo::getVRegDef(unsigned Reg) const {
-  assert(Reg-MRegisterInfo::FirstVirtualRegister < VRegInfo.size() &&
+  assert(Reg-TargetRegisterInfo::FirstVirtualRegister < VRegInfo.size() &&
          "Invalid vreg!");
   for (reg_iterator I = reg_begin(Reg), E = reg_end(); I != E; ++I) {
     // Since we are in SSA form, we can stop at the first definition.

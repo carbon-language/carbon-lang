@@ -16,7 +16,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/LiveVariables.h"
-#include "llvm/Target/MRegisterInfo.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/Debug.h"
 
 #ifndef LLVM_CODEGEN_REGISTER_COALESCER_H
@@ -29,7 +29,7 @@ namespace llvm
   class AnalysisUsage;
   class LiveIntervals;
   class MachineInstr;
-  class MRegisterInfo;
+  class TargetRegisterInfo;
 
   /// An abstract interface for register coalescers.  Coalescers must
   /// implement this interface to be part of the coalescer analysis

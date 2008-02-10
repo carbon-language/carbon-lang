@@ -83,7 +83,7 @@ class Inst<dag opnds, string asmstr, bits<8> opcode,
 //  6. Address expressions should become first-class entities.
 
 // Simple copy instruction.  isMoveInstr could easily be inferred from this,
-// as could MRegisterInfo::copyRegToReg.
+// as could TargetRegisterInfo::copyRegToReg.
 def MOV8rr : Inst<(ops R8:$dst, R8:$src),
                   "mov $dst, $src", 0x88, MRMDestReg,
                   [(set R8:$dst, R8:$src)]>;

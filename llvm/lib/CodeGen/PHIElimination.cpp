@@ -181,7 +181,7 @@ void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
   std::set<MachineBasicBlock*> MBBsInsertedInto;
   for (int i = MPhi->getNumOperands() - 1; i >= 2; i-=2) {
     unsigned SrcReg = MPhi->getOperand(i-1).getReg();
-    assert(MRegisterInfo::isVirtualRegister(SrcReg) &&
+    assert(TargetRegisterInfo::isVirtualRegister(SrcReg) &&
            "Machine PHI Operands must all be virtual registers!");
 
     // Get the MachineBasicBlock equivalent of the BasicBlock that is the

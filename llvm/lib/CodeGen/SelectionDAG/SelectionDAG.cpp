@@ -23,7 +23,7 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Target/MRegisterInfo.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -4051,7 +4051,8 @@ void SDNode::dump(const SelectionDAG *G) const {
       cerr << LBB->getName() << " ";
     cerr << (const void*)BBDN->getBasicBlock() << ">";
   } else if (const RegisterSDNode *R = dyn_cast<RegisterSDNode>(this)) {
-    if (G && R->getReg() && MRegisterInfo::isPhysicalRegister(R->getReg())) {
+    if (G && R->getReg() &&
+        TargetRegisterInfo::isPhysicalRegister(R->getReg())) {
       cerr << " " <<G->getTarget().getRegisterInfo()->getName(R->getReg());
     } else {
       cerr << " #" << R->getReg();

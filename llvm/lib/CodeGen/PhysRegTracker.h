@@ -17,52 +17,52 @@
 #ifndef LLVM_CODEGEN_PHYSREGTRACKER_H
 #define LLVM_CODEGEN_PHYSREGTRACKER_H
 
-#include "llvm/Target/MRegisterInfo.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 
 namespace llvm {
 
     class PhysRegTracker {
-        const MRegisterInfo* mri_;
+        const TargetRegisterInfo* tri_;
         std::vector<unsigned> regUse_;
 
     public:
-        explicit PhysRegTracker(const MRegisterInfo& mri)
-            : mri_(&mri),
-              regUse_(mri_->getNumRegs(), 0) {
+        explicit PhysRegTracker(const TargetRegisterInfo& tri)
+            : tri_(&tri),
+              regUse_(tri_->getNumRegs(), 0) {
         }
 
         PhysRegTracker(const PhysRegTracker& rhs)
-            : mri_(rhs.mri_),
+            : tri_(rhs.tri_),
               regUse_(rhs.regUse_) {
         }
 
         const PhysRegTracker& operator=(const PhysRegTracker& rhs) {
-            mri_ = rhs.mri_;
+            tri_ = rhs.tri_;
             regUse_ = rhs.regUse_;
             return *this;
         }
 
         void addRegUse(unsigned physReg) {
-            assert(MRegisterInfo::isPhysicalRegister(physReg) &&
+            assert(TargetRegisterInfo::isPhysicalRegister(physReg) &&
                    "should be physical register!");
             ++regUse_[physReg];
-            for (const unsigned* as = mri_->getAliasSet(physReg); *as; ++as)
+            for (const unsigned* as = tri_->getAliasSet(physReg); *as; ++as)
                 ++regUse_[*as];
         }
 
         void delRegUse(unsigned physReg) {
-            assert(MRegisterInfo::isPhysicalRegister(physReg) &&
+            assert(TargetRegisterInfo::isPhysicalRegister(physReg) &&
                    "should be physical register!");
             assert(regUse_[physReg] != 0);
             --regUse_[physReg];
-            for (const unsigned* as = mri_->getAliasSet(physReg); *as; ++as) {
+            for (const unsigned* as = tri_->getAliasSet(physReg); *as; ++as) {
                 assert(regUse_[*as] != 0);
                 --regUse_[*as];
             }
         }
 
         bool isRegAvail(unsigned physReg) const {
-            assert(MRegisterInfo::isPhysicalRegister(physReg) &&
+            assert(TargetRegisterInfo::isPhysicalRegister(physReg) &&
                    "should be physical register!");
             return regUse_[physReg] == 0;
         }

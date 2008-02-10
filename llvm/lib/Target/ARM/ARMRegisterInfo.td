@@ -157,7 +157,7 @@ def GPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6,
     GPRClass::iterator
     GPRClass::allocation_order_end(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const MRegisterInfo *RI = TM.getRegisterInfo();
+      const TargetRegisterInfo *RI = TM.getRegisterInfo();
       const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
       GPRClass::iterator I;
       if (Subtarget.isThumb())

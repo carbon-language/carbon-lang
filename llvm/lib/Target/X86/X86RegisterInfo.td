@@ -249,7 +249,7 @@ def GR8 : RegisterClass<"X86", [i8],  8,
     GR8Class::iterator
     GR8Class::allocation_order_begin(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const MRegisterInfo *RI = TM.getRegisterInfo();
+      const TargetRegisterInfo *RI = TM.getRegisterInfo();
       const X86Subtarget &Subtarget = TM.getSubtarget<X86Subtarget>();
       if (!Subtarget.is64Bit())
         return X86_GR8_AO_32;
@@ -262,7 +262,7 @@ def GR8 : RegisterClass<"X86", [i8],  8,
     GR8Class::iterator
     GR8Class::allocation_order_end(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const MRegisterInfo *RI = TM.getRegisterInfo();
+      const TargetRegisterInfo *RI = TM.getRegisterInfo();
       const X86Subtarget &Subtarget = TM.getSubtarget<X86Subtarget>();
       if (!Subtarget.is64Bit())
         return X86_GR8_AO_32 + (sizeof(X86_GR8_AO_32) / sizeof(unsigned));
@@ -303,7 +303,7 @@ def GR16 : RegisterClass<"X86", [i16], 16,
     GR16Class::iterator
     GR16Class::allocation_order_begin(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const MRegisterInfo *RI = TM.getRegisterInfo();
+      const TargetRegisterInfo *RI = TM.getRegisterInfo();
       const X86Subtarget &Subtarget = TM.getSubtarget<X86Subtarget>();
       if (Subtarget.is64Bit()) {
         if (RI->hasFP(MF))
@@ -321,7 +321,7 @@ def GR16 : RegisterClass<"X86", [i16], 16,
     GR16Class::iterator
     GR16Class::allocation_order_end(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const MRegisterInfo *RI = TM.getRegisterInfo();
+      const TargetRegisterInfo *RI = TM.getRegisterInfo();
       const X86Subtarget &Subtarget = TM.getSubtarget<X86Subtarget>();
       if (Subtarget.is64Bit()) {
         if (RI->hasFP(MF))
@@ -367,7 +367,7 @@ def GR32 : RegisterClass<"X86", [i32], 32,
     GR32Class::iterator
     GR32Class::allocation_order_begin(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const MRegisterInfo *RI = TM.getRegisterInfo();
+      const TargetRegisterInfo *RI = TM.getRegisterInfo();
       const X86Subtarget &Subtarget = TM.getSubtarget<X86Subtarget>();
       if (Subtarget.is64Bit()) {
         if (RI->hasFP(MF))
@@ -385,7 +385,7 @@ def GR32 : RegisterClass<"X86", [i32], 32,
     GR32Class::iterator
     GR32Class::allocation_order_end(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const MRegisterInfo *RI = TM.getRegisterInfo();
+      const TargetRegisterInfo *RI = TM.getRegisterInfo();
       const X86Subtarget &Subtarget = TM.getSubtarget<X86Subtarget>();
       if (Subtarget.is64Bit()) {
         if (RI->hasFP(MF))
@@ -414,7 +414,7 @@ def GR64 : RegisterClass<"X86", [i64], 64,
     GR64Class::iterator
     GR64Class::allocation_order_end(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const MRegisterInfo *RI = TM.getRegisterInfo();
+      const TargetRegisterInfo *RI = TM.getRegisterInfo();
       if (RI->hasFP(MF)) // Does the function dedicate RBP to being a frame ptr?
         return end()-2;  // If so, don't allocate RSP or RBP
       else

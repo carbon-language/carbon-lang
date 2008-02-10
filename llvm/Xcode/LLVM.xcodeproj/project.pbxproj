@@ -689,7 +689,7 @@
 		DE66EF0B08ABEE5E00323D32 /* IA64TargetMachine.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = IA64TargetMachine.cpp; sourceTree = "<group>"; };
 		DE66EF0C08ABEE5E00323D32 /* IA64TargetMachine.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = IA64TargetMachine.h; sourceTree = "<group>"; };
 		DE66EF0E08ABEE5E00323D32 /* README */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = README; sourceTree = "<group>"; };
-		DE66EF1008ABEE5E00323D32 /* MRegisterInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = MRegisterInfo.cpp; sourceTree = "<group>"; };
+		DE66EF1008ABEE5E00323D32 /* TargetRegisterInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = TargetRegisterInfo.cpp; sourceTree = "<group>"; };
 		DE66F08A08ABEE6000323D32 /* Target.td */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = Target.td; sourceTree = "<group>"; };
 		DE66F08B08ABEE6000323D32 /* TargetData.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = TargetData.cpp; sourceTree = "<group>"; };
 		DE66F08C08ABEE6000323D32 /* TargetFrameInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = TargetFrameInfo.cpp; sourceTree = "<group>"; };
@@ -915,7 +915,7 @@
 		DE66F29C08ABF03200323D32 /* Program.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = Program.h; sourceTree = "<group>"; };
 		DE66F29D08ABF03200323D32 /* Signals.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = Signals.h; sourceTree = "<group>"; };
 		DE66F29E08ABF03200323D32 /* TimeValue.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = TimeValue.h; sourceTree = "<group>"; };
-		DE66F2A008ABF03200323D32 /* MRegisterInfo.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MRegisterInfo.h; sourceTree = "<group>"; };
+		DE66F2A008ABF03200323D32 /* TargetRegisterInfo.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = TargetRegisterInfo.h; sourceTree = "<group>"; };
 		DE66F2A108ABF03200323D32 /* TargetData.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = TargetData.h; sourceTree = "<group>"; };
 		DE66F2A208ABF03200323D32 /* TargetFrameInfo.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = TargetFrameInfo.h; sourceTree = "<group>"; };
 		DE66F2A308ABF03200323D32 /* TargetInstrInfo.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = TargetInstrInfo.h; sourceTree = "<group>"; };
@@ -1765,7 +1765,7 @@
 				DE66EF1108ABEE5E00323D32 /* PowerPC */,
 				DE66EF7008ABEE5F00323D32 /* Sparc */,
 				DE66F09308ABEE6000323D32 /* X86 */,
-				DE66EF1008ABEE5E00323D32 /* MRegisterInfo.cpp */,
+				DE66EF1008ABEE5E00323D32 /* TargetRegisterInfo.cpp */,
 				CF9BCD1508C75070001E7011 /* SubtargetFeature.cpp */,
 				DE66F08A08ABEE6000323D32 /* Target.td */,
 				CF47BD860AAF487E00A8B13E /* TargetAsmInfo.cpp */,
@@ -2445,7 +2445,7 @@
 		DE66F29F08ABF03200323D32 /* Target */ = {
 			isa = PBXGroup;
 			children = (
-				DE66F2A008ABF03200323D32 /* MRegisterInfo.h */,
+				DE66F2A008ABF03200323D32 /* TargetRegisterInfo.h */,
 				CF9BCD0808C74DE0001E7011 /* SubtargetFeature.h */,
 				CF47BD380AAF40BC00A8B13E /* TargetAsmInfo.h */,
 				DE66F2A108ABF03200323D32 /* TargetData.h */,

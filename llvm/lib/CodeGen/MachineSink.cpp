@@ -15,7 +15,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/MachineDominators.h"
-#include "llvm/Target/MRegisterInfo.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/SmallVector.h"
@@ -61,7 +61,8 @@ FunctionPass *llvm::createMachineSinkingPass() { return new MachineSinking(); }
 /// occur in blocks dominated by the specified block.
 bool MachineSinking::AllUsesDominatedByBlock(unsigned Reg, 
                                              MachineBasicBlock *MBB) const {
-  assert(MRegisterInfo::isVirtualRegister(Reg) && "Only makes sense for vregs");
+  assert(TargetRegisterInfo::isVirtualRegister(Reg) &&
+         "Only makes sense for vregs");
   for (MachineRegisterInfo::reg_iterator I = RegInfo->reg_begin(Reg),
        E = RegInfo->reg_end(); I != E; ++I) {
     if (I.getOperand().isDef()) continue;  // ignore def.
@@ -179,7 +180,7 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
     unsigned Reg = MO.getReg();
     if (Reg == 0) continue;
     
-    if (MRegisterInfo::isPhysicalRegister(Reg)) {
+    if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
       // If this is a physical register use, we can't move it.  If it is a def,
       // we can move it, but only if the def is dead.
       if (MO.isUse() || !MO.isDead())

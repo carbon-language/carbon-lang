@@ -40,7 +40,7 @@ public:
   virtual       IA64TargetLowering *getTargetLowering() const { 
     return const_cast<IA64TargetLowering*>(&TLInfo);
   }
-  virtual const MRegisterInfo    *getRegisterInfo() const {
+  virtual const TargetRegisterInfo    *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
   }
   virtual const TargetData       *getTargetData() const { return &DataLayout; }

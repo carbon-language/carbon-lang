@@ -30,7 +30,7 @@
 
 namespace llvm {
   class MachineInstr;
-  class MRegisterInfo;
+  class TargetRegisterInfo;
   struct LiveInterval;
 
   /// VNInfo - If the value number definition is undefined (e.g. phi
@@ -346,9 +346,9 @@ namespace llvm {
       return beginNumber() < other.beginNumber();
     }
 
-    void print(std::ostream &OS, const MRegisterInfo *MRI = 0) const;
-    void print(std::ostream *OS, const MRegisterInfo *MRI = 0) const {
-      if (OS) print(*OS, MRI);
+    void print(std::ostream &OS, const TargetRegisterInfo *TRI = 0) const;
+    void print(std::ostream *OS, const TargetRegisterInfo *TRI = 0) const {
+      if (OS) print(*OS, TRI);
     }
     void dump() const;
 

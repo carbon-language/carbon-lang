@@ -569,7 +569,7 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
         const TargetRegisterClass *clas;
         for (unsigned op = 0, e = I->getNumOperands(); op != e; ++op) {
           if (I->getOperand(op).isRegister() && I->getOperand(op).isDef() &&
-              MRegisterInfo::isVirtualRegister(I->getOperand(op).getReg()) &&
+              TargetRegisterInfo::isVirtualRegister(I->getOperand(op).getReg()) &&
               ((clas = RegInfo->getRegClass(I->getOperand(0).getReg())) == 
                  X86::RFP32RegisterClass ||
                clas == X86::RFP64RegisterClass ||

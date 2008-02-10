@@ -14,7 +14,7 @@
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/Target/MRegisterInfo.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetInstrDesc.h"
 #include "llvm/Target/TargetMachine.h"
@@ -143,10 +143,10 @@ void MachineBasicBlock::dump() const {
 }
 
 static inline void OutputReg(std::ostream &os, unsigned RegNo,
-                             const MRegisterInfo *MRI = 0) {
-  if (!RegNo || MRegisterInfo::isPhysicalRegister(RegNo)) {
-    if (MRI)
-      os << " %" << MRI->get(RegNo).Name;
+                             const TargetRegisterInfo *TRI = 0) {
+  if (!RegNo || TargetRegisterInfo::isPhysicalRegister(RegNo)) {
+    if (TRI)
+      os << " %" << TRI->get(RegNo).Name;
     else
       os << " %mreg(" << RegNo << ")";
   } else
@@ -169,11 +169,11 @@ void MachineBasicBlock::print(std::ostream &OS) const {
   if (isLandingPad()) OS << ", EH LANDING PAD";
   OS << ":\n";
 
-  const MRegisterInfo *MRI = MF->getTarget().getRegisterInfo();  
+  const TargetRegisterInfo *TRI = MF->getTarget().getRegisterInfo();  
   if (!livein_empty()) {
     OS << "Live Ins:";
     for (const_livein_iterator I = livein_begin(),E = livein_end(); I != E; ++I)
-      OutputReg(OS, *I, MRI);
+      OutputReg(OS, *I, TRI);
     OS << "\n";
   }
   // Print the preds of this block according to the CFG.

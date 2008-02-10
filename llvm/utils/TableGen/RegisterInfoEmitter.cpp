@@ -52,12 +52,12 @@ void RegisterInfoEmitter::runHeader(std::ostream &OS) {
   const std::string &TargetName = Target.getName();
   std::string ClassName = TargetName + "GenRegisterInfo";
 
-  OS << "#include \"llvm/Target/MRegisterInfo.h\"\n";
+  OS << "#include \"llvm/Target/TargetRegisterInfo.h\"\n";
   OS << "#include <string>\n\n";
 
   OS << "namespace llvm {\n\n";
 
-  OS << "struct " << ClassName << " : public MRegisterInfo {\n"
+  OS << "struct " << ClassName << " : public TargetRegisterInfo {\n"
      << "  " << ClassName
      << "(int CallFrameSetupOpcode = -1, int CallFrameDestroyOpcode = -1);\n"
      << "  virtual int getDwarfRegNumFull(unsigned RegNum, "
@@ -588,7 +588,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   // Emit the constructor of the class...
   OS << ClassName << "::" << ClassName
      << "(int CallFrameSetupOpcode, int CallFrameDestroyOpcode)\n"
-     << "  : MRegisterInfo(RegisterDescriptors, " << Registers.size()+1
+     << "  : TargetRegisterInfo(RegisterDescriptors, " << Registers.size()+1
      << ", RegisterClasses, RegisterClasses+" << RegisterClasses.size() <<",\n "
      << "                 CallFrameSetupOpcode, CallFrameDestroyOpcode) {}\n\n";
 

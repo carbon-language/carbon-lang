@@ -22,7 +22,7 @@
 namespace llvm {
 
 class TargetInstrDesc;
-class MRegisterInfo;
+class TargetRegisterInfo;
 
 template <typename T> struct ilist_traits;
 template <typename T> struct ilist;
@@ -167,19 +167,20 @@ public:
   /// operand that uses it and mark it as IsKill. If AddIfNotFound is true,
   /// add a implicit operand if it's not found. Returns true if the operand
   /// exists / is added.
-  bool addRegisterKilled(unsigned IncomingReg, const MRegisterInfo *RegInfo,
+  bool addRegisterKilled(unsigned IncomingReg,
+                         const TargetRegisterInfo *RegInfo,
                          bool AddIfNotFound = false);
   
   /// addRegisterDead - We have determined MI defined a register without a use.
   /// Look for the operand that defines it and mark it as IsDead. If
   /// AddIfNotFound is true, add a implicit operand if it's not found. Returns
   /// true if the operand exists / is added.
-  bool addRegisterDead(unsigned IncomingReg, const MRegisterInfo *RegInfo,
+  bool addRegisterDead(unsigned IncomingReg, const TargetRegisterInfo *RegInfo,
                        bool AddIfNotFound = false);
 
   /// copyKillDeadInfo - copies killed/dead information from one instr to another
   void copyKillDeadInfo(MachineInstr *OldMI,
-                        const MRegisterInfo *RegInfo);
+                        const TargetRegisterInfo *RegInfo);
 
   //
   // Debugging support

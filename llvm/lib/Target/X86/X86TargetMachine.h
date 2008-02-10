@@ -49,7 +49,7 @@ public:
   virtual       X86TargetLowering *getTargetLowering() const { 
     return const_cast<X86TargetLowering*>(&TLInfo); 
   }
-  virtual const MRegisterInfo    *getRegisterInfo() const {
+  virtual const TargetRegisterInfo    *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
   }
   virtual const TargetData       *getTargetData() const { return &DataLayout; }

@@ -41,7 +41,7 @@ public:
   virtual const ARMInstrInfo *getInstrInfo() const { return &InstrInfo; }
   virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }
   virtual       TargetJITInfo    *getJITInfo()         { return &JITInfo; }
-  virtual const MRegisterInfo *getRegisterInfo() const {
+  virtual const TargetRegisterInfo *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
   }
   virtual const TargetData       *getTargetData() const { return &DataLayout; }

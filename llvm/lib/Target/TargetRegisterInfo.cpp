@@ -1,4 +1,4 @@
-//===- MRegisterInfo.cpp - Target Register Information Implementation -----===//
+//===- TargetRegisterInfo.cpp - Target Register Information Implementation ===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,12 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the MRegisterInfo interface.
+// This file implements the TargetRegisterInfo interface.
 //
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/MRegisterInfo.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -20,7 +20,7 @@
 
 using namespace llvm;
 
-MRegisterInfo::MRegisterInfo(const TargetRegisterDesc *D, unsigned NR,
+TargetRegisterInfo::TargetRegisterInfo(const TargetRegisterDesc *D, unsigned NR,
                              regclass_iterator RCB, regclass_iterator RCE,
                              int CFSO, int CFDO)
   : Desc(D), NumRegs(NR), RegClassBegin(RCB), RegClassEnd(RCE) {
@@ -31,12 +31,12 @@ MRegisterInfo::MRegisterInfo(const TargetRegisterDesc *D, unsigned NR,
   CallFrameDestroyOpcode = CFDO;
 }
 
-MRegisterInfo::~MRegisterInfo() {}
+TargetRegisterInfo::~TargetRegisterInfo() {}
 
 /// getPhysicalRegisterRegClass - Returns the Register Class of a physical
 /// register.
 const TargetRegisterClass *
-MRegisterInfo::getPhysicalRegisterRegClass(MVT::ValueType VT,
+TargetRegisterInfo::getPhysicalRegisterRegClass(MVT::ValueType VT,
                                            unsigned reg) const {
   assert(isPhysicalRegister(reg) && "reg must be a physical register");
   // Pick the register class of the right type that contains this physreg.
@@ -57,15 +57,15 @@ static void getAllocatableSetForRC(MachineFunction &MF,
     R.set(*I);
 }
 
-BitVector MRegisterInfo::getAllocatableSet(MachineFunction &MF,
-                                           const TargetRegisterClass *RC) const {
+BitVector TargetRegisterInfo::getAllocatableSet(MachineFunction &MF,
+                                          const TargetRegisterClass *RC) const {
   BitVector Allocatable(NumRegs);
   if (RC) {
     getAllocatableSetForRC(MF, RC, Allocatable);
     return Allocatable;
   }
 
-  for (MRegisterInfo::regclass_iterator I = regclass_begin(),
+  for (TargetRegisterInfo::regclass_iterator I = regclass_begin(),
          E = regclass_end(); I != E; ++I)
     getAllocatableSetForRC(MF, *I, Allocatable);
   return Allocatable;
@@ -74,7 +74,7 @@ BitVector MRegisterInfo::getAllocatableSet(MachineFunction &MF,
 /// getFrameIndexOffset - Returns the displacement from the frame register to
 /// the stack frame of the specified index. This is the default implementation
 /// which is likely incorrect for the target.
-int MRegisterInfo::getFrameIndexOffset(MachineFunction &MF, int FI) const {
+int TargetRegisterInfo::getFrameIndexOffset(MachineFunction &MF, int FI) const {
   const TargetFrameInfo &TFI = *MF.getTarget().getFrameInfo();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   return MFI->getObjectOffset(FI) + MFI->getStackSize() -
@@ -84,7 +84,7 @@ int MRegisterInfo::getFrameIndexOffset(MachineFunction &MF, int FI) const {
 /// getInitialFrameState - Returns a list of machine moves that are assumed
 /// on entry to a function.
 void
-MRegisterInfo::getInitialFrameState(std::vector<MachineMove> &Moves) const {
+TargetRegisterInfo::getInitialFrameState(std::vector<MachineMove> &Moves) const {
   // Default is to do nothing.
 }
 

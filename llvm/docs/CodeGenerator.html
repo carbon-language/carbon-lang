@@ -26,7 +26,7 @@
       <li><a href="#targetmachine">The <tt>TargetMachine</tt> class</a></li>
       <li><a href="#targetdata">The <tt>TargetData</tt> class</a></li>
       <li><a href="#targetlowering">The <tt>TargetLowering</tt> class</a></li>
-      <li><a href="#mregisterinfo">The <tt>MRegisterInfo</tt> class</a></li>
+      <li><a href="#targetregisterinfo">The <tt>TargetRegisterInfo</tt> class</a></li>
       <li><a href="#targetinstrinfo">The <tt>TargetInstrInfo</tt> class</a></li>
       <li><a href="#targetframeinfo">The <tt>TargetFrameInfo</tt> class</a></li>
       <li><a href="#targetsubtarget">The <tt>TargetSubtarget</tt> class</a></li>
@@ -388,14 +388,13 @@ operations.  Among other things, this class indicates:</p>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="mregisterinfo">The <tt>MRegisterInfo</tt> class</a>
+  <a name="targetregisterinfo">The <tt>TargetRegisterInfo</tt> class</a>
 </div>
 
 <div class="doc_text">
 
-<p>The <tt>MRegisterInfo</tt> class (which will eventually be renamed to
-<tt>TargetRegisterInfo</tt>) is used to describe the register file of the
-target and any interactions between the registers.</p>
+<p>The <tt>TargetRegisterInfo</tt> class is used to describe the register
+file of the target and any interactions between the registers.</p>
 
 <p>Registers in the code generator are represented in the code generator by
 unsigned integers.  Physical registers (those that actually exist in the target
@@ -408,8 +407,8 @@ register (used for assembly output and debugging dumps) and a set of aliases
 (used to indicate whether one register overlaps with another).
 </p>
 
-<p>In addition to the per-register description, the <tt>MRegisterInfo</tt> class
-exposes a set of processor specific register classes (instances of the
+<p>In addition to the per-register description, the <tt>TargetRegisterInfo</tt>
+class exposes a set of processor specific register classes (instances of the
 <tt>TargetRegisterClass</tt> class).  Each register class contains sets of
 registers that have the same properties (for example, they are all 32-bit
 integer registers).  Each SSA virtual register created by the instruction
@@ -1292,7 +1291,7 @@ X86 architecture, the registers <tt>EAX</tt>, <tt>AX</tt> and
 marked as <i>aliased</i> in LLVM. Given a particular architecture, you
 can check which registers are aliased by inspecting its
 <tt>RegisterInfo.td</tt> file. Moreover, the method
-<tt>MRegisterInfo::getAliasSet(p_reg)</tt> returns an array containing
+<tt>TargetRegisterInfo::getAliasSet(p_reg)</tt> returns an array containing
 all the physical registers aliased to the register <tt>p_reg</tt>.</p>
 
 <p>Physical registers, in LLVM, are grouped in <i>Register Classes</i>.
@@ -1310,7 +1309,7 @@ this code can be used:
 bool RegMapping_Fer::compatible_class(MachineFunction &amp;mf,
                                       unsigned v_reg,
                                       unsigned p_reg) {
-  assert(MRegisterInfo::isPhysicalRegister(p_reg) &amp;&amp;
+  assert(TargetRegisterInfo::isPhysicalRegister(p_reg) &amp;&amp;
          "Target register must be physical");
   const TargetRegisterClass *trc = mf.getRegInfo().getRegClass(v_reg);
   return trc-&gt;contains(p_reg);
@@ -1335,9 +1334,9 @@ physical registers, different virtual registers never share the same
 number. The smallest virtual register is normally assigned the number
 1024. This may change, so, in order to know which is the first virtual
 register, you should access
-<tt>MRegisterInfo::FirstVirtualRegister</tt>. Any register whose
+<tt>TargetRegisterInfo::FirstVirtualRegister</tt>. Any register whose
 number is greater than or equal to
-<tt>MRegisterInfo::FirstVirtualRegister</tt> is considered a virtual
+<tt>TargetRegisterInfo::FirstVirtualRegister</tt> is considered a virtual
 register. Whereas physical registers are statically defined in a
 <tt>TargetRegisterInfo.td</tt> file and cannot be created by the
 application developer, that is not the case with virtual registers.
@@ -1394,7 +1393,7 @@ overwritten by the values of virtual registers while still alive.</p>
 
 <p>There are two ways to map virtual registers to physical registers (or to
 memory slots). The first way, that we will call <i>direct mapping</i>,
-is based on the use of methods of the classes <tt>MRegisterInfo</tt>,
+is based on the use of methods of the classes <tt>TargetRegisterInfo</tt>,
 and <tt>MachineOperand</tt>. The second way, that we will call
 <i>indirect mapping</i>, relies on the <tt>VirtRegMap</tt> class in
 order to insert loads and stores sending and getting values to and from
@@ -1408,8 +1407,8 @@ target function being compiled in order to get and store values in
 memory. To assign a physical register to a virtual register present in
 a given operand, use <tt>MachineOperand::setReg(p_reg)</tt>. To insert
 a store instruction, use
-<tt>MRegisterInfo::storeRegToStackSlot(...)</tt>, and to insert a load
-instruction, use <tt>MRegisterInfo::loadRegFromStackSlot</tt>.</p>
+<tt>TargetRegisterInfo::storeRegToStackSlot(...)</tt>, and to insert a load
+instruction, use <tt>TargetRegisterInfo::loadRegFromStackSlot</tt>.</p>
 
 <p>The indirect mapping shields the application developer from the
 complexities of inserting load and store instructions. In order to map
@@ -1529,7 +1528,7 @@ instance, a sequence of instructions such as:</p>
 </div>
 
 <p>Instructions can be folded with the
-<tt>MRegisterInfo::foldMemoryOperand(...)</tt> method. Care must be
+<tt>TargetRegisterInfo::foldMemoryOperand(...)</tt> method. Care must be
 taken when folding instructions; a folded instruction can be quite
 different from the original instruction. See
 <tt>LiveIntervals::addIntervalsForSpills</tt> in

@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the Alpha implementation of the MRegisterInfo class.
+// This file contains the Alpha implementation of the TargetRegisterInfo class.
 //
 //===----------------------------------------------------------------------===//
 

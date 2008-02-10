@@ -28,7 +28,7 @@ namespace llvm {
   class MachineModuleInfo;
   class MachineRegisterInfo;
   class MachineInstr;
-  class MRegisterInfo;
+  class TargetRegisterInfo;
   class SelectionDAG;
   class SelectionDAGISel;
   class TargetInstrInfo;
@@ -243,7 +243,7 @@ namespace llvm {
     MachineBasicBlock *BB;                // Current basic block
     const TargetMachine &TM;              // Target processor
     const TargetInstrInfo *TII;           // Target instruction information
-    const MRegisterInfo *MRI;             // Target processor register info
+    const TargetRegisterInfo *TRI;        // Target processor register info
     MachineFunction *MF;                  // Machine function
     MachineRegisterInfo &RegInfo;         // Virtual/real register map
     MachineConstantPool *ConstPool;       // Target constant pool

@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the MIPS implementation of the MRegisterInfo class.
+// This file contains the MIPS implementation of the TargetRegisterInfo class.
 //
 //===----------------------------------------------------------------------===//
 

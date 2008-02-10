@@ -159,8 +159,8 @@ class MachineFrameInfo {
   /// MMI - This field is set (via setMachineModuleInfo) by a module info
   /// consumer (ex. DwarfWriter) to indicate that frame layout information
   /// should be acquired.  Typically, it's the responsibility of the target's
-  /// MRegisterInfo prologue/epilogue emitting code to inform MachineModuleInfo
-  /// of frame layouts.
+  /// TargetRegisterInfo prologue/epilogue emitting code to inform
+  /// MachineModuleInfo of frame layouts.
   MachineModuleInfo *MMI;
   
   /// TargetFrameInfo - Target information about frame layout.
@@ -328,8 +328,8 @@ public:
     CSInfo = CSI;
   }
 
-  /// getMachineModuleInfo - Used by a prologue/epilogue emitter (MRegisterInfo)
-  /// to provide frame layout information. 
+  /// getMachineModuleInfo - Used by a prologue/epilogue
+  /// emitter (TargetRegisterInfo) to provide frame layout information. 
   MachineModuleInfo *getMachineModuleInfo() const { return MMI; }
 
   /// setMachineModuleInfo - Used by a meta info consumer (DwarfWriter) to

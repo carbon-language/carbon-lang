@@ -34,7 +34,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/Target/MRegisterInfo.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Debug.h"
@@ -121,8 +121,8 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
           unsigned regA = mi->getOperand(ti).getReg();
           unsigned regB = mi->getOperand(si).getReg();
 
-          assert(MRegisterInfo::isVirtualRegister(regA) &&
-                 MRegisterInfo::isVirtualRegister(regB) &&
+          assert(TargetRegisterInfo::isVirtualRegister(regA) &&
+                 TargetRegisterInfo::isVirtualRegister(regB) &&
                  "cannot update physical register live information");
 
 #ifndef NDEBUG

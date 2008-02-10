@@ -20,7 +20,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetInstrDesc.h"
-#include "llvm/Target/MRegisterInfo.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/Streams.h"
 #include <ostream>
@@ -159,7 +159,7 @@ bool MachineOperand::isIdenticalTo(const MachineOperand &Other) const {
 void MachineOperand::print(std::ostream &OS, const TargetMachine *TM) const {
   switch (getType()) {
   case MachineOperand::MO_Register:
-    if (getReg() == 0 || MRegisterInfo::isVirtualRegister(getReg())) {
+    if (getReg() == 0 || TargetRegisterInfo::isVirtualRegister(getReg())) {
       OS << "%reg" << getReg();
     } else {
       // If the instruction is embedded into a basic block, we can find the
@@ -666,7 +666,7 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine *TM) const {
 }
 
 bool MachineInstr::addRegisterKilled(unsigned IncomingReg,
-                                     const MRegisterInfo *RegInfo,
+                                     const TargetRegisterInfo *RegInfo,
                                      bool AddIfNotFound) {
   bool Found = false;
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
@@ -679,8 +679,8 @@ bool MachineInstr::addRegisterKilled(unsigned IncomingReg,
         MO.setIsKill();
         Found = true;
         break;
-      } else if (MRegisterInfo::isPhysicalRegister(Reg) &&
-                 MRegisterInfo::isPhysicalRegister(IncomingReg) &&
+      } else if (TargetRegisterInfo::isPhysicalRegister(Reg) &&
+                 TargetRegisterInfo::isPhysicalRegister(IncomingReg) &&
                  RegInfo->isSuperRegister(IncomingReg, Reg) &&
                  MO.isKill())
         // A super-register kill already exists.
@@ -699,7 +699,7 @@ bool MachineInstr::addRegisterKilled(unsigned IncomingReg,
 }
 
 bool MachineInstr::addRegisterDead(unsigned IncomingReg,
-                                   const MRegisterInfo *RegInfo,
+                                   const TargetRegisterInfo *RegInfo,
                                    bool AddIfNotFound) {
   bool Found = false;
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
@@ -712,8 +712,8 @@ bool MachineInstr::addRegisterDead(unsigned IncomingReg,
         MO.setIsDead();
         Found = true;
         break;
-      } else if (MRegisterInfo::isPhysicalRegister(Reg) &&
-                 MRegisterInfo::isPhysicalRegister(IncomingReg) &&
+      } else if (TargetRegisterInfo::isPhysicalRegister(Reg) &&
+                 TargetRegisterInfo::isPhysicalRegister(IncomingReg) &&
                  RegInfo->isSuperRegister(IncomingReg, Reg) &&
                  MO.isDead())
         // There exists a super-register that's marked dead.
@@ -734,13 +734,13 @@ bool MachineInstr::addRegisterDead(unsigned IncomingReg,
 
 /// copyKillDeadInfo - copies killed/dead information from one instr to another
 void MachineInstr::copyKillDeadInfo(MachineInstr *OldMI,
-                                    const MRegisterInfo *RegInfo) {
+                                    const TargetRegisterInfo *RegInfo) {
   // If the instruction defines any virtual registers, update the VarInfo,
   // kill and dead information for the instruction.
   for (unsigned i = 0, e = OldMI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = OldMI->getOperand(i);
     if (MO.isRegister() && MO.getReg() &&
-        MRegisterInfo::isVirtualRegister(MO.getReg())) {
+        TargetRegisterInfo::isVirtualRegister(MO.getReg())) {
       unsigned Reg = MO.getReg();
       if (MO.isDef()) {
         if (MO.isDead()) {

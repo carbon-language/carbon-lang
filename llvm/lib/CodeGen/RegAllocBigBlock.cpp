@@ -95,7 +95,7 @@ namespace {
     
     /// RegInfo - For dealing with machine register info (aliases, folds
     /// etc)
-    const MRegisterInfo *RegInfo;
+    const TargetRegisterInfo *RegInfo;
 
     typedef SmallVector<unsigned, 2> VRegTimes;
 
@@ -152,8 +152,8 @@ namespace {
     /// markVirtRegModified - Lets us flip bits in the VirtRegModified bitset
     ///
     void markVirtRegModified(unsigned Reg, bool Val = true) {
-      assert(MRegisterInfo::isVirtualRegister(Reg) && "Illegal VirtReg!");
-      Reg -= MRegisterInfo::FirstVirtualRegister;
+      assert(TargetRegisterInfo::isVirtualRegister(Reg) && "Illegal VirtReg!");
+      Reg -= TargetRegisterInfo::FirstVirtualRegister;
       if (VirtRegModified.size() <= Reg)
         VirtRegModified.resize(Reg+1);
       VirtRegModified[Reg] = Val;
@@ -162,10 +162,10 @@ namespace {
     /// isVirtRegModified - Lets us query the VirtRegModified bitset
     ///
     bool isVirtRegModified(unsigned Reg) const {
-      assert(MRegisterInfo::isVirtualRegister(Reg) && "Illegal VirtReg!");
-      assert(Reg - MRegisterInfo::FirstVirtualRegister < VirtRegModified.size()
+      assert(TargetRegisterInfo::isVirtualRegister(Reg) && "Illegal VirtReg!");
+      assert(Reg - TargetRegisterInfo::FirstVirtualRegister < VirtRegModified.size()
              && "Illegal virtual register!");
-      return VirtRegModified[Reg - MRegisterInfo::FirstVirtualRegister];
+      return VirtRegModified[Reg - TargetRegisterInfo::FirstVirtualRegister];
     }
 
   public:
@@ -562,7 +562,7 @@ void RABigBlock::FillVRegReadTable(MachineBasicBlock &MBB) {
       MachineOperand& MO = MI->getOperand(i);
       // look for vreg reads..
       if (MO.isRegister() && !MO.isDef() && MO.getReg() &&
-          MRegisterInfo::isVirtualRegister(MO.getReg())) {
+          TargetRegisterInfo::isVirtualRegister(MO.getReg())) {
           // ..and add them to the read table.
           VRegTimes* &Times = VRegReadTable[MO.getReg()];
           if(!VRegReadTable[MO.getReg()]) {
@@ -675,7 +675,7 @@ void RABigBlock::AllocateBasicBlock(MachineBasicBlock &MBB) {
       MachineOperand& MO = MI->getOperand(i);
       // here we are looking for only used operands (never def&use)
       if (MO.isRegister() && !MO.isDef() && MO.getReg() && !MO.isImplicit() &&
-          MRegisterInfo::isVirtualRegister(MO.getReg()))
+          TargetRegisterInfo::isVirtualRegister(MO.getReg()))
         MI = reloadVirtReg(MBB, MI, i);
     }
 
@@ -686,7 +686,7 @@ void RABigBlock::AllocateBasicBlock(MachineBasicBlock &MBB) {
     for (unsigned i = 0, e = Kills.size(); i != e; ++i) {
       unsigned VirtReg = Kills[i];
       unsigned PhysReg = VirtReg;
-      if (MRegisterInfo::isVirtualRegister(VirtReg)) {
+      if (TargetRegisterInfo::isVirtualRegister(VirtReg)) {
         // If the virtual register was never materialized into a register, it
         // might not be in the map, but it won't hurt to zero it out anyway.
         unsigned &PhysRegSlot = getVirt2PhysRegMapSlot(VirtReg);
@@ -721,7 +721,7 @@ void RABigBlock::AllocateBasicBlock(MachineBasicBlock &MBB) {
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand& MO = MI->getOperand(i);
       if (MO.isRegister() && MO.isDef() && !MO.isImplicit() && MO.getReg() &&
-          MRegisterInfo::isPhysicalRegister(MO.getReg())) {
+          TargetRegisterInfo::isPhysicalRegister(MO.getReg())) {
         unsigned Reg = MO.getReg();
         if (PhysRegsUsed[Reg] == -2) continue;  // Something like ESP.
         // These are extra physical register defs when a sub-register
@@ -777,7 +777,7 @@ void RABigBlock::AllocateBasicBlock(MachineBasicBlock &MBB) {
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand& MO = MI->getOperand(i);
       if (MO.isRegister() && MO.isDef() && MO.getReg() &&
-          MRegisterInfo::isVirtualRegister(MO.getReg())) {
+          TargetRegisterInfo::isVirtualRegister(MO.getReg())) {
         unsigned DestVirtReg = MO.getReg();
         unsigned DestPhysReg;
 
@@ -796,7 +796,7 @@ void RABigBlock::AllocateBasicBlock(MachineBasicBlock &MBB) {
     for (unsigned i = 0, e = DeadDefs.size(); i != e; ++i) {
       unsigned VirtReg = DeadDefs[i];
       unsigned PhysReg = VirtReg;
-      if (MRegisterInfo::isVirtualRegister(VirtReg)) {
+      if (TargetRegisterInfo::isVirtualRegister(VirtReg)) {
         unsigned &PhysRegSlot = getVirt2PhysRegMapSlot(VirtReg);
         PhysReg = PhysRegSlot;
         assert(PhysReg != 0);
@@ -865,7 +865,7 @@ bool RABigBlock::runOnMachineFunction(MachineFunction &Fn) {
   Virt2PhysRegMap.grow(MF->getRegInfo().getLastVirtReg());
   StackSlotForVirtReg.grow(MF->getRegInfo().getLastVirtReg());
   VirtRegModified.resize(MF->getRegInfo().getLastVirtReg() - 
-                         MRegisterInfo::FirstVirtualRegister + 1, 0);
+                         TargetRegisterInfo::FirstVirtualRegister + 1, 0);
 
   // Loop over all of the basic blocks, eliminating virtual register references
   for (MachineFunction::iterator MBB = Fn.begin(), MBBe = Fn.end();

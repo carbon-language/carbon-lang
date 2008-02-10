@@ -16,7 +16,7 @@
 #include "llvm/CodeGen/RegisterCoalescer.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/Target/MRegisterInfo.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Pass.h"
 
 using namespace llvm;

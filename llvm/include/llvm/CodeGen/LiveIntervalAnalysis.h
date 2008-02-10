@@ -33,7 +33,7 @@ namespace llvm {
 
   class LiveVariables;
   class MachineLoopInfo;
-  class MRegisterInfo;
+  class TargetRegisterInfo;
   class MachineRegisterInfo;
   class TargetInstrInfo;
   class TargetRegisterClass;
@@ -43,7 +43,7 @@ namespace llvm {
   class LiveIntervals : public MachineFunctionPass {
     MachineFunction* mf_;
     const TargetMachine* tm_;
-    const MRegisterInfo* mri_;
+    const TargetRegisterInfo* tri_;
     const TargetInstrInfo* tii_;
     LiveVariables* lv_;
 

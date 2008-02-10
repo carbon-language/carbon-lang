@@ -37,7 +37,7 @@
 
 namespace llvm {
 
-class MRegisterInfo;
+class TargetRegisterInfo;
 
 class LiveVariables : public MachineFunctionPass {
 public:
@@ -130,7 +130,7 @@ private:
 private:   // Intermediate data structures
   MachineFunction *MF;
 
-  const MRegisterInfo *RegInfo;
+  const TargetRegisterInfo *RegInfo;
 
   // PhysRegInfo - Keep track of which instruction was the last def/use of a
   // physical register. This is a purely local property, because all physical

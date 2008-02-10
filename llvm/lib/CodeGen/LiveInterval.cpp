@@ -22,7 +22,7 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Streams.h"
-#include "llvm/Target/MRegisterInfo.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include <algorithm>
 #include <ostream>
 using namespace llvm;
@@ -589,9 +589,10 @@ void LiveRange::dump() const {
   cerr << *this << "\n";
 }
 
-void LiveInterval::print(std::ostream &OS, const MRegisterInfo *MRI) const {
-  if (MRI && MRegisterInfo::isPhysicalRegister(reg))
-    OS << MRI->getName(reg);
+void LiveInterval::print(std::ostream &OS,
+                         const TargetRegisterInfo *TRI) const {
+  if (TRI && TargetRegisterInfo::isPhysicalRegister(reg))
+    OS << TRI->getName(reg);
   else
     OS << "%reg" << reg;
 

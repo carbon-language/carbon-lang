@@ -7,14 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the Alpha implementation of the MRegisterInfo class.
+// This file contains the Alpha implementation of the TargetRegisterInfo class.
 //
 //===----------------------------------------------------------------------===//
 
 #ifndef ALPHAREGISTERINFO_H
 #define ALPHAREGISTERINFO_H
 
-#include "llvm/Target/MRegisterInfo.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include "AlphaGenRegisterInfo.h.inc"
 
 namespace llvm {

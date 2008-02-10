@@ -31,7 +31,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Target/TargetAsmInfo.h"
-#include "llvm/Target/MRegisterInfo.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/Statistic.h"
@@ -73,14 +73,15 @@ namespace {
     ///
     void printRegister(const MachineOperand &MO, bool R0AsZero) {
       unsigned RegNo = MO.getReg();
-      assert(MRegisterInfo::isPhysicalRegister(RegNo) && "Not physreg??");
+      assert(TargetRegisterInfo::isPhysicalRegister(RegNo) &&
+             "Not physreg??");
       O << TM.getRegisterInfo()->get(RegNo).Name;
     }
 
     void printOperand(const MachineInstr *MI, unsigned OpNo) {
       const MachineOperand &MO = MI->getOperand(OpNo);
       if (MO.isRegister()) {
-        assert(MRegisterInfo::isPhysicalRegister(MO.getReg())&&"Not physreg??");
+        assert(TargetRegisterInfo::isPhysicalRegister(MO.getReg())&&"Not physreg??");
         O << TM.getRegisterInfo()->get(MO.getReg()).Name;
       } else if (MO.isImmediate()) {
         O << MO.getImm();

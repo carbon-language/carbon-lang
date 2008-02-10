@@ -30,7 +30,7 @@
 #include "llvm/Support/Mangler.h"
 #include "llvm/System/Path.h"
 #include "llvm/Target/TargetAsmInfo.h"
-#include "llvm/Target/MRegisterInfo.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -782,7 +782,7 @@ protected:
   const TargetData *TD;
   
   /// RI - Register Information.
-  const MRegisterInfo *RI;
+  const TargetRegisterInfo *RI;
   
   /// M - Current module.
   ///

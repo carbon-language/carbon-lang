@@ -32,7 +32,7 @@ ScheduleDAG::ScheduleDAG(SelectionDAG &dag, MachineBasicBlock *bb,
   : DAG(dag), BB(bb), TM(tm), RegInfo(BB->getParent()->getRegInfo()) {
     TII = TM.getInstrInfo();
     MF  = &DAG.getMachineFunction();
-    MRI = TM.getRegisterInfo();
+    TRI = TM.getRegisterInfo();
     ConstPool = BB->getParent()->getConstantPool();
 }
 
@@ -40,14 +40,14 @@ ScheduleDAG::ScheduleDAG(SelectionDAG &dag, MachineBasicBlock *bb,
 /// a specified operand is a physical register dependency. If so, returns the
 /// register and the cost of copying the register.
 static void CheckForPhysRegDependency(SDNode *Def, SDNode *Use, unsigned Op,
-                                      const MRegisterInfo *MRI, 
+                                      const TargetRegisterInfo *TRI, 
                                       const TargetInstrInfo *TII,
                                       unsigned &PhysReg, int &Cost) {
   if (Op != 2 || Use->getOpcode() != ISD::CopyToReg)
     return;
 
   unsigned Reg = cast<RegisterSDNode>(Use->getOperand(1))->getReg();
-  if (MRegisterInfo::isVirtualRegister(Reg))
+  if (TargetRegisterInfo::isVirtualRegister(Reg))
     return;
 
   unsigned ResNo = Use->getOperand(2).ResNo;
@@ -57,7 +57,7 @@ static void CheckForPhysRegDependency(SDNode *Def, SDNode *Use, unsigned Op,
         II.ImplicitDefs[ResNo - II.getNumDefs()] == Reg) {
       PhysReg = Reg;
       const TargetRegisterClass *RC =
-        MRI->getPhysicalRegisterRegClass(Def->getValueType(ResNo), Reg);
+        TRI->getPhysicalRegisterRegClass(Def->getValueType(ResNo), Reg);
       Cost = RC->getCopyCost();
     }
   }
@@ -185,7 +185,7 @@ void ScheduleDAG::BuildSchedUnits() {
         unsigned PhysReg = 0;
         int Cost = 1;
         // Determine if this is a physical register dependency.
-        CheckForPhysRegDependency(OpN, N, i, MRI, TII, PhysReg, Cost);
+        CheckForPhysRegDependency(OpN, N, i, TRI, TII, PhysReg, Cost);
         SU->addPred(OpSU, isChain, false, PhysReg, Cost);
       }
     }
@@ -302,7 +302,7 @@ unsigned ScheduleDAG::CountMemOperands(SDNode *Node) {
 }
 
 static const TargetRegisterClass *getInstrOperandRegClass(
-        const MRegisterInfo *MRI, 
+        const TargetRegisterInfo *TRI, 
         const TargetInstrInfo *TII,
         const TargetInstrDesc &II,
         unsigned Op) {
@@ -312,14 +312,14 @@ static const TargetRegisterClass *getInstrOperandRegClass(
   }
   if (II.OpInfo[Op].isLookupPtrRegClass())
     return TII->getPointerRegClass();
-  return MRI->getRegClass(II.OpInfo[Op].RegClass);
+  return TRI->getRegClass(II.OpInfo[Op].RegClass);
 }
 
 void ScheduleDAG::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
                                   unsigned InstanceNo, unsigned SrcReg,
                                   DenseMap<SDOperand, unsigned> &VRBaseMap) {
   unsigned VRBase = 0;
-  if (MRegisterInfo::isVirtualRegister(SrcReg)) {
+  if (TargetRegisterInfo::isVirtualRegister(SrcReg)) {
     // Just use the input register directly!
     if (InstanceNo > 0)
       VRBaseMap.erase(SDOperand(Node, ResNo));
@@ -339,7 +339,7 @@ void ScheduleDAG::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
         Use->getOperand(2).Val == Node &&
         Use->getOperand(2).ResNo == ResNo) {
       unsigned DestReg = cast<RegisterSDNode>(Use->getOperand(1))->getReg();
-      if (MRegisterInfo::isVirtualRegister(DestReg)) {
+      if (TargetRegisterInfo::isVirtualRegister(DestReg)) {
         VRBase = DestReg;
         Match = false;
       } else if (DestReg != SrcReg)
@@ -364,7 +364,7 @@ void ScheduleDAG::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
   if (VRBase)
     TRC = RegInfo.getRegClass(VRBase);
   else
-    TRC = MRI->getPhysicalRegisterRegClass(Node->getValueType(ResNo), SrcReg);
+    TRC = TRI->getPhysicalRegisterRegClass(Node->getValueType(ResNo), SrcReg);
     
   // If all uses are reading from the src physical register and copying the
   // register is either impossible or very expensive, then don't create a copy.
@@ -398,7 +398,7 @@ void ScheduleDAG::CreateVirtualRegisters(SDNode *Node,
           Use->getOperand(2).Val == Node &&
           Use->getOperand(2).ResNo == i) {
         unsigned Reg = cast<RegisterSDNode>(Use->getOperand(1))->getReg();
-        if (MRegisterInfo::isVirtualRegister(Reg)) {
+        if (TargetRegisterInfo::isVirtualRegister(Reg)) {
           VRBase = Reg;
           MI->addOperand(MachineOperand::CreateReg(Reg, true));
           break;
@@ -409,7 +409,7 @@ void ScheduleDAG::CreateVirtualRegisters(SDNode *Node,
     // Create the result registers for this node and add the result regs to
     // the machine instruction.
     if (VRBase == 0) {
-      const TargetRegisterClass *RC = getInstrOperandRegClass(MRI, TII, II, i);
+      const TargetRegisterClass *RC = getInstrOperandRegClass(TRI, TII, II, i);
       assert(RC && "Isn't a register operand!");
       VRBase = RegInfo.createVirtualRegister(RC);
       MI->addOperand(MachineOperand::CreateReg(VRBase, true));
@@ -453,10 +453,10 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
     MI->addOperand(MachineOperand::CreateReg(VReg, isOptDef));
     
     // Verify that it is right.
-    assert(MRegisterInfo::isVirtualRegister(VReg) && "Not a vreg?");
+    assert(TargetRegisterInfo::isVirtualRegister(VReg) && "Not a vreg?");
     if (II) {
       const TargetRegisterClass *RC =
-                          getInstrOperandRegClass(MRI, TII, *II, IIOpNum);
+                          getInstrOperandRegClass(TRI, TII, *II, IIOpNum);
       assert(RC && "Don't have operand info for this instruction!");
       const TargetRegisterClass *VRC = RegInfo.getRegClass(VReg);
       if (VRC != RC) {
@@ -517,10 +517,10 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
     MI->addOperand(MachineOperand::CreateReg(VReg, false));
     
     // Verify that it is right.
-    assert(MRegisterInfo::isVirtualRegister(VReg) && "Not a vreg?");
+    assert(TargetRegisterInfo::isVirtualRegister(VReg) && "Not a vreg?");
     if (II) {
       const TargetRegisterClass *RC =
-                            getInstrOperandRegClass(MRI, TII, *II, IIOpNum);
+                            getInstrOperandRegClass(TRI, TII, *II, IIOpNum);
       assert(RC && "Don't have operand info for this instruction!");
       assert(RegInfo.getRegClass(VReg) == RC &&
              "Register class of operand and regclass of use don't agree!");
@@ -538,7 +538,8 @@ static const TargetRegisterClass *getSubRegisterRegClass(
         const TargetRegisterClass *TRC,
         unsigned SubIdx) {
   // Pick the register class of the subregister
-  MRegisterInfo::regclass_iterator I = TRC->subregclasses_begin() + SubIdx-1;
+  TargetRegisterInfo::regclass_iterator I =
+    TRC->subregclasses_begin() + SubIdx-1;
   assert(I < TRC->subregclasses_end() && 
          "Invalid subregister index for register class");
   return *I;
@@ -549,7 +550,7 @@ static const TargetRegisterClass *getSuperregRegisterClass(
         unsigned SubIdx,
         MVT::ValueType VT) {
   // Pick the register class of the superegister for this type
-  for (MRegisterInfo::regclass_iterator I = TRC->superregclasses_begin(),
+  for (TargetRegisterInfo::regclass_iterator I = TRC->superregclasses_begin(),
          E = TRC->superregclasses_end(); I != E; ++I)
     if ((*I)->hasType(VT) && getSubRegisterRegClass(*I, SubIdx) == TRC)
       return *I;
@@ -572,7 +573,7 @@ void ScheduleDAG::EmitSubregNode(SDNode *Node,
       if (Use->getOpcode() == ISD::CopyToReg && 
           Use->getOperand(2).Val == Node) {
         unsigned DestReg = cast<RegisterSDNode>(Use->getOperand(1))->getReg();
-        if (MRegisterInfo::isVirtualRegister(DestReg)) {
+        if (TargetRegisterInfo::isVirtualRegister(DestReg)) {
           VRBase = DestReg;
           break;
         }
@@ -638,7 +639,7 @@ void ScheduleDAG::EmitSubregNode(SDNode *Node,
       if (Use->getOpcode() == ISD::CopyToReg && 
           Use->getOperand(2).Val == Node) {
         unsigned DestReg = cast<RegisterSDNode>(Use->getOperand(1))->getReg();
-        if (MRegisterInfo::isVirtualRegister(DestReg)) {
+        if (TargetRegisterInfo::isVirtualRegister(DestReg)) {
           VRBase = DestReg;
           break;
         }
@@ -770,11 +771,11 @@ void ScheduleDAG::EmitNode(SDNode *Node, unsigned InstanceNo,
       if (InReg != DestReg)  {// Coalesced away the copy?
         const TargetRegisterClass *TRC = 0;
         // Get the target register class
-        if (MRegisterInfo::isVirtualRegister(InReg))
+        if (TargetRegisterInfo::isVirtualRegister(InReg))
           TRC = RegInfo.getRegClass(InReg);
         else
           TRC =
-            MRI->getPhysicalRegisterRegClass(Node->getOperand(2).getValueType(),
+            TRI->getPhysicalRegisterRegClass(Node->getOperand(2).getValueType(),
                                             InReg);
         TII->copyRegToReg(*BB, BB->end(), DestReg, InReg, TRC, TRC);
       }

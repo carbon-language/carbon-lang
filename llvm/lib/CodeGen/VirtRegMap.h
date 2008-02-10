@@ -17,7 +17,7 @@
 #ifndef LLVM_CODEGEN_VIRTREGMAP_H
 #define LLVM_CODEGEN_VIRTREGMAP_H
 
-#include "llvm/Target/MRegisterInfo.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/Support/Streams.h"
@@ -115,15 +115,15 @@ namespace llvm {
     /// @brief returns the physical register mapped to the specified
     /// virtual register
     unsigned getPhys(unsigned virtReg) const {
-      assert(MRegisterInfo::isVirtualRegister(virtReg));
+      assert(TargetRegisterInfo::isVirtualRegister(virtReg));
       return Virt2PhysMap[virtReg];
     }
 
     /// @brief creates a mapping for the specified virtual register to
     /// the specified physical register
     void assignVirt2Phys(unsigned virtReg, unsigned physReg) {
-      assert(MRegisterInfo::isVirtualRegister(virtReg) &&
-             MRegisterInfo::isPhysicalRegister(physReg));
+      assert(TargetRegisterInfo::isVirtualRegister(virtReg) &&
+             TargetRegisterInfo::isPhysicalRegister(physReg));
       assert(Virt2PhysMap[virtReg] == NO_PHYS_REG &&
              "attempt to assign physical register to already mapped "
              "virtual register");
@@ -133,7 +133,7 @@ namespace llvm {
     /// @brief clears the specified virtual register's, physical
     /// register mapping
     void clearVirt(unsigned virtReg) {
-      assert(MRegisterInfo::isVirtualRegister(virtReg));
+      assert(TargetRegisterInfo::isVirtualRegister(virtReg));
       assert(Virt2PhysMap[virtReg] != NO_PHYS_REG &&
              "attempt to clear a not assigned virtual register");
       Virt2PhysMap[virtReg] = NO_PHYS_REG;
@@ -169,14 +169,14 @@ namespace llvm {
     /// @brief returns the stack slot mapped to the specified virtual
     /// register
     int getStackSlot(unsigned virtReg) const {
-      assert(MRegisterInfo::isVirtualRegister(virtReg));
+      assert(TargetRegisterInfo::isVirtualRegister(virtReg));
       return Virt2StackSlotMap[virtReg];
     }
 
     /// @brief returns the rematerialization id mapped to the specified virtual
     /// register
     int getReMatId(unsigned virtReg) const {
-      assert(MRegisterInfo::isVirtualRegister(virtReg));
+      assert(TargetRegisterInfo::isVirtualRegister(virtReg));
       return Virt2ReMatIdMap[virtReg];
     }
 

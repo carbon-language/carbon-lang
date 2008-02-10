@@ -25,7 +25,7 @@
 namespace llvm {
   class SimpleRegisterCoalescing;
   class LiveVariables;
-  class MRegisterInfo;
+  class TargetRegisterInfo;
   class TargetInstrInfo;
   class VirtRegMap;
   class MachineLoopInfo;
@@ -81,7 +81,7 @@ namespace llvm {
                                    public RegisterCoalescer {
     MachineFunction* mf_;
     const TargetMachine* tm_;
-    const MRegisterInfo* mri_;
+    const TargetRegisterInfo* tri_;
     const TargetInstrInfo* tii_;
     LiveIntervals *li_;
     LiveVariables *lv_;

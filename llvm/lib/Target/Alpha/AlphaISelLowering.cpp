@@ -261,7 +261,7 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
     VarArgsOffset = (Op.Val->getNumValues()-1) * 8;
     std::vector<SDOperand> LS;
     for (int i = 0; i < 6; ++i) {
-      if (MRegisterInfo::isPhysicalRegister(args_int[i]))
+      if (TargetRegisterInfo::isPhysicalRegister(args_int[i]))
         args_int[i] = AddLiveIn(MF, args_int[i], &Alpha::GPRCRegClass);
       SDOperand argt = DAG.getCopyFromReg(Root, args_int[i], MVT::i64);
       int FI = MFI->CreateFixedObject(8, -8 * (6 - i));
@@ -269,7 +269,7 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
       SDOperand SDFI = DAG.getFrameIndex(FI, MVT::i64);
       LS.push_back(DAG.getStore(Root, argt, SDFI, NULL, 0));
 
-      if (MRegisterInfo::isPhysicalRegister(args_float[i]))
+      if (TargetRegisterInfo::isPhysicalRegister(args_float[i]))
         args_float[i] = AddLiveIn(MF, args_float[i], &Alpha::F8RCRegClass);
       argt = DAG.getCopyFromReg(Root, args_float[i], MVT::f64);
       FI = MFI->CreateFixedObject(8, - 8 * (12 - i));

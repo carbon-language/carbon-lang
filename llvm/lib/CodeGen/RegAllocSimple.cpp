@@ -44,7 +44,7 @@ namespace {
   private:
     MachineFunction *MF;
     const TargetMachine *TM;
-    const MRegisterInfo *MRI;
+    const TargetRegisterInfo *TRI;
 
     // StackSlotForVirtReg - Maps SSA Regs => frame index on the stack where
     // these values are spilled
@@ -169,7 +169,7 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
     // Made to combat the incorrect allocation of r2 = add r1, r1
     std::map<unsigned, unsigned> Virt2PhysRegMap;
 
-    RegsUsed.resize(MRI->getNumRegs());
+    RegsUsed.resize(TRI->getNumRegs());
 
     // This is a preliminary pass that will invalidate any registers that are
     // used by the instruction (including implicit uses).
@@ -192,7 +192,7 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
       MachineOperand &op = MI->getOperand(i);
 
       if (op.isRegister() && op.getReg() &&
-          MRegisterInfo::isVirtualRegister(op.getReg())) {
+          TargetRegisterInfo::isVirtualRegister(op.getReg())) {
         unsigned virtualReg = (unsigned) op.getReg();
         DOUT << "op: " << op << "\n";
         DOUT << "\t inst[" << i << "]: ";
@@ -239,7 +239,7 @@ bool RegAllocSimple::runOnMachineFunction(MachineFunction &Fn) {
   DOUT << "Machine Function\n";
   MF = &Fn;
   TM = &MF->getTarget();
-  MRI = TM->getRegisterInfo();
+  TRI = TM->getRegisterInfo();
 
   // Loop over all of the basic blocks, eliminating virtual register references
   for (MachineFunction::iterator MBB = Fn.begin(), MBBe = Fn.end();

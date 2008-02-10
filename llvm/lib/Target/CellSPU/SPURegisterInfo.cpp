@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the Cell implementation of the MRegisterInfo class.
+// This file contains the Cell implementation of the TargetRegisterInfo class.
 //
 //===----------------------------------------------------------------------===//
 

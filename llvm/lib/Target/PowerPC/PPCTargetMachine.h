@@ -51,7 +51,7 @@ public:
   virtual       PPCTargetLowering *getTargetLowering() const { 
    return const_cast<PPCTargetLowering*>(&TLInfo); 
   }
-  virtual const MRegisterInfo    *getRegisterInfo() const {
+  virtual const TargetRegisterInfo    *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
   }
   

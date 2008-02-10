@@ -17,7 +17,7 @@
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/Target/MRegisterInfo.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/SmallVector.h"
@@ -248,19 +248,19 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
       if (I.getDesc().getImplicitUses()) {
         DOUT << "  * Instruction has implicit uses:\n";
 
-        const MRegisterInfo *MRI = TM->getRegisterInfo();
+        const TargetRegisterInfo *TRI = TM->getRegisterInfo();
         for (const unsigned *ImpUses = I.getDesc().getImplicitUses();
              *ImpUses; ++ImpUses)
-          DOUT << "      -> " << MRI->getName(*ImpUses) << "\n";
+          DOUT << "      -> " << TRI->getName(*ImpUses) << "\n";
       }
 
       if (I.getDesc().getImplicitDefs()) {
         DOUT << "  * Instruction has implicit defines:\n";
 
-        const MRegisterInfo *MRI = TM->getRegisterInfo();
+        const TargetRegisterInfo *TRI = TM->getRegisterInfo();
         for (const unsigned *ImpDefs = I.getDesc().getImplicitDefs();
              *ImpDefs; ++ImpDefs)
-          DOUT << "      -> " << MRI->getName(*ImpDefs) << "\n";
+          DOUT << "      -> " << TRI->getName(*ImpDefs) << "\n";
       }
 
         //if (TII->hasUnmodelledSideEffects(&I))
@@ -277,7 +277,7 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
     unsigned Reg = MO.getReg();
 
     // Don't hoist instructions that access physical registers.
-    if (!MRegisterInfo::isVirtualRegister(Reg))
+    if (!TargetRegisterInfo::isVirtualRegister(Reg))
       return false;
 
     assert(RegInfo->getVRegDef(Reg)&&"Machine instr not mapped for this vreg?");
