@@ -19,3 +19,9 @@ void test4() {
 int i; short j;
 float* k = 1 ? &i : &j;
 }
+
+void test5() {
+  const int* cip;
+  void* vp;
+  cip = 0 ? vp : cip;
+}
