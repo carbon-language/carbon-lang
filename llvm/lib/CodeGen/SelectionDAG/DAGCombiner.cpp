@@ -923,7 +923,7 @@ SDOperand DAGCombiner::visitADD(SDNode *N) {
     return N1;
   // fold (add c1, c2) -> c1+c2
   if (N0C && N1C)
-    return DAG.getNode(ISD::ADD, VT, N0, N1);
+    return DAG.getConstant(N0C->getValue() + N1C->getValue(), VT);
   // canonicalize constant to RHS
   if (N0C && !N1C)
     return DAG.getNode(ISD::ADD, VT, N1, N0);
