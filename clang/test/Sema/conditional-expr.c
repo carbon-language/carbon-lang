@@ -18,5 +18,9 @@ void foo() {
   dp = 0 ? (double *)0 : (void *)0;
   vp = 0 ? (double *)0 : (void *)0;
   ip = 0 ? (double *)0 : (void *)0; // expected-warning {{incompatible pointer types assigning 'double *', expected 'int *'}}
+
+  const int *cip;
+  vp = (0 ? vp : cip); // expected-warning {{discards qualifiers}}
+  vp = (0 ? cip : vp); // expected-warning {{discards qualifiers}}
 }
 
