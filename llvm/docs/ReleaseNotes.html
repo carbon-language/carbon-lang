@@ -97,7 +97,7 @@ llvm 2.2, and will be redesigned or removed in llvm 2.3.</p>
 LLVM 2.1, llvm-gcc 4.2 was beta).  Since LLVM 2.1, the llvm-gcc 4.2 front-end
 has made leaps and bounds and is now at least as good as 4.0 in virtually every
 area, and is better in several areas (for example, exception handling
-correctness, support for Ada and FORTRAN).  We strongly recommend that you
+correctness, support for Ada and Fortran).  We strongly recommend that you
 migrate from llvm-gcc 4.0 to llvm-gcc 4.2 in this release cycle because
 <b>LLVM 2.2 is the last release that will support llvm-gcc 4.0</b>:  LLVM 2.3
 will only support the llvm-gcc 4.2 front-end.</p>
@@ -126,11 +126,11 @@ this project, please see its <a href="http://clang.llvm.org/">web site</a>.</p>
 <li>Scott Michel contributed an SPU backend, which generates code for the
 vector coprocessors on the Cell processor.  (Status?)</li>
 
-<li>llvm-gcc 4.2 has significantly improved support for the GCC Ada (GNAT) and
-FORTRAN (gfortran) frontends.  Duncan has the llvm-gcc 4.2 GNAT front-end
-supporting almost all of the ACATS testsuite (except 2 tests?).  The llvm-gcc
-4.2 gfortran front-end supports a broad range of FORTRAN code, but does <a 
-href="http://llvm.org/PR1971">not support EQUIVALENCE yet</a>.</li>
+<li>Anton and Duncan significantly improved llvm-gcc 4.2 support for the GCC Ada
+(GNAT) and Fortran (gfortran) front-ends.  These front-ends should still be considered
+experimental however: see the <a href="#knownproblems">list of known problems</a>.
+The release binaries do not contain either front-end: they need to be built from
+source (the Ada front-end only builds on x86-32 linux).
 
 <li>Dale contributed full support for long double on x86/x86-64 (where it is 80
 bits) and on Darwin PPC/PPC64 (where it is 128 bits).  In previous LLVM
@@ -168,7 +168,7 @@ language with LLVM and shows how to use several important APIs.</li>
 construction routines as well as several other auxiliary APIs.</li>
 
 <li>Anton added readnone/readonly attributes for modeling function side effects.
-Duncan hooked up GCC's pure/const attributes to use them and enhanced mod/ref
+Duncan hooked up GCC's pure/const attributes to them and enhanced mod/ref
 analysis to use them.</li>
 
 <li>Devang added LLVMFoldingBuilder, a version of LLVMBuilder that implicitly
@@ -182,7 +182,7 @@ and could be used for serializing arbitrary other data into bitcode files.</li>
 type in a register, in memory according to the platform ABI, and in memory when
 we have a choice.</li>
 
-<li>Duncan moved parameter attributes off of FunctionType and onto functions
+<li>Reid moved parameter attributes off of FunctionType and onto functions
 and calls.  This makes it much easier to add attributes to a function in a
 transformation pass.</li>
 
@@ -211,7 +211,7 @@ dominator and loop information on machine code and merged the code for forward
 and backward dominator computation.</li>
 
 <li>Dan added support for emitting debug information with .file and .loc
-directives on that support it, instead of emitting large tables in the .s
+directives on platforms that support it, instead of emitting large tables in the .s
 file.</li>
 
 <li>Evan extended the DAG scheduler to model physical register dependencies
@@ -300,6 +300,7 @@ support for architecture variants.</li>
 details?).</li>
 <li>Evan contributed several enhancements to Darwin/x86 debug information,
 and improvements at -O0 (details?).</li>
+<li>Duncan added x86-64 support for trampolines (pointers to nested functions).</li>
 </ul>
   
 </div>
@@ -528,6 +529,7 @@ programs.</li>
 <li><a href="http://llvm.org/PR1658">The C backend violates the ABI of common
     C++ programs</a>, preventing intermixing between C++ compiled by the CBE and
     C++ code compiled with LLC or native compilers.</li>
+<li>The C backend does not support all exception handling constructs.</li>
 </ul>
 
 </div>
@@ -536,6 +538,52 @@ programs.</li>
 <!-- ======================================================================= -->
 <div class="doc_subsection">
   <a name="c-fe">Known problems with the C front-end</a>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="ada-fe">Known problems with the Ada front-end</a>
+</div>
+
+<div class="doc_text">
+The llvm-gcc 4.2 Ada compiler works fairly well, however this is not a mature
+technology and problems should be expected.
+<ul>
+<li>The Ada front-end currently only builds on x86-32.  This is mainly due
+to lack of trampoline support (pointers to nested functions) on other platforms,
+however it <a href="http://llvm.org/PR2006">also fails to build on x86-64</a>
+which does support trampolines.</li>
+<li>The Ada front-end <a href="http://llvm.org/PR2007">fails to bootstrap</a>.
+Workaround: configure with --disable-bootstrap.</li>
+<li>The c380004 and <a href="http://llvm.org/PR2010">c393010</a> ACATS tests
+fail (c380004 also fails with gcc-4.2 mainline).</li>
+<li>Many gcc specific Ada tests continue to crash the compiler.</li>
+<li>The -E binder option (exception backtraces)
+<a href="http://llvm.org/PR1982">does not work</a> and will result in programs
+crashing if an exception is raised.  Workaround: do not use -E.</li>
+<li>Only discrete types <a href="http://llvm.org/PR1981">are allowed to start
+or finish at a non-byte offset</a> in a record.  Workaround: do not pack records
+or use representation clauses that result in a field of a non-discrete type
+starting or finishing in the middle of a byte.</li>
+<li>The lli interpreter <a href="http://llvm.org/PR2009">considers 'main'
+as generated by the Ada binder to be invalid</a>.
+Workaround: hand edit the file to use pointers for argv and envp rather than
+integers.</li>
+<li>The -fstack-check option <a href="http://llvm.org/PR2008">is ignored</a>.</li>
+</ul>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="fortran-fe">Known problems with the Fortran front-end</a>
+</div>
+
+<div class="doc_text">
+
+<ul>
+<li>The llvm-gcc 4.2 gfortran front-end supports a broad range of Fortran code, but does
+<a href="http://llvm.org/PR1971">not support EQUIVALENCE yet</a>.</li>
+</ul>
 </div>
 
 <!-- _______________________________________________________________________ -->
@@ -567,7 +615,7 @@ llvmdev mailing list if you are interested.</p>
 
       As in Algol and Pascal, lexical scoping of functions.
       Nested functions are supported, but llvm-gcc does not support
-      taking the address of a nested function (except on the X86-32 target)
+      taking the address of a nested function (except on X86 targets)
       or non-local gotos.</li>
 
   <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Function-Attributes.html#Function%20Attributes">Function Attributes</a>:
@@ -661,7 +709,8 @@ tested and works for a number of non-trivial programs, including LLVM
 itself, Qt, Mozilla, etc.</p>
 
 <ul>
-<li>Exception handling only works well on the X86 and PowerPC targets.</li>
+<li>Exception handling only works well on the X86 and PowerPC targets.
+It works well for x86-64 darwin but not x86-64 linux.</li>
 </ul>
 
 </div>
