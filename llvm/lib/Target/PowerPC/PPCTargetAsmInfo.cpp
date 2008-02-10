@@ -92,8 +92,8 @@ LinuxTargetAsmInfo::LinuxTargetAsmInfo(const PPCTargetMachine &TM)
   CommentString = "#";
   GlobalPrefix = "";
   PrivateGlobalPrefix = "";
-  ConstantPoolSection = "\t.section .rodata.cst4\t";
-  JumpTableDataSection = ".section .rodata.cst4";
+  ConstantPoolSection = "\t.section .rodata\t";
+  JumpTableDataSection = ".section .rodata";
   CStringSection = "\t.section\t.rodata";
   StaticCtorsSection = ".section\t.ctors,\"aw\",@progbits";
   StaticDtorsSection = ".section\t.dtors,\"aw\",@progbits";
