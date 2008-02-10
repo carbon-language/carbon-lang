@@ -3223,7 +3223,7 @@ let isTwoAddress = 1 in {
     def rri : SS4AI<opc, MRMSrcReg, (outs VR128:$dst),
                     (ins VR128:$src1, VR128:$src2, i32i8imm:$src3),
                     !strconcat(OpcodeStr, 
-                     "\t{$$src3, src2, $dst|$dst, $src2, $src3}"),
+                     "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
                     [(set VR128:$dst, 
                       (IntId128 VR128:$src1, VR128:$src2, imm:$src3))]>,
                     OpSize {
@@ -3232,7 +3232,7 @@ let isTwoAddress = 1 in {
     def rmi : SS4AI<opc, MRMSrcMem, (outs VR128:$dst),
                     (ins VR128:$src1, i128mem:$src2, i32i8imm:$src3),
                     !strconcat(OpcodeStr,
-                     "\t{$$src3, src2, $dst|$dst, $src2, $src3}"),
+                     "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
                     [(set VR128:$dst,
                       (IntId128 VR128:$src1,
                        (bitconvert (memopv16i8 addr:$src2)), imm:$src3))]>,
@@ -3252,6 +3252,31 @@ defm DPPD         : SS41I_binop_rmi_int<0x41, "dppd",
                                         int_x86_sse41_dppd, 1>;
 defm MPSADBW      : SS41I_binop_rmi_int<0x42, "mpsadbw",
                                         int_x86_sse41_mpsadbw, 0>;
+
+
+/// SS41I_binop_rmi_int - SSE 4.1 binary operator with immediate
+let isTwoAddress = 1 in {
+  multiclass SS41I_ternary_int<bits<8> opc, string OpcodeStr, Intrinsic IntId> {
+    def rr0 : SS48I<opc, MRMSrcReg, (outs VR128:$dst),
+                    (ins VR128:$src1, VR128:$src2),
+                    !strconcat(OpcodeStr, 
+                     "\t{%xmm0, $src2, $dst|$dst, $src2, %xmm0}"),
+                    [(set VR128:$dst, (IntId VR128:$src1, VR128:$src2, XMM0))]>,
+                    OpSize;
+
+    def rm0 : SS48I<opc, MRMSrcMem, (outs VR128:$dst),
+                    (ins VR128:$src1, i128mem:$src2),
+                    !strconcat(OpcodeStr,
+                     "\t{%xmm0, $src2, $dst|$dst, $src2, %xmm0}"),
+                    [(set VR128:$dst,
+                      (IntId VR128:$src1,
+                       (bitconvert (memopv16i8 addr:$src2)), XMM0))]>, OpSize;
+  }
+}
+
+defm BLENDVPD     : SS41I_ternary_int<0x15, "blendvpd", int_x86_sse41_blendvpd>;
+defm BLENDVPS     : SS41I_ternary_int<0x14, "blendvps", int_x86_sse41_blendvps>;
+defm PBLENDVB     : SS41I_ternary_int<0x10, "pblendvb", int_x86_sse41_pblendvb>;
 
 
 multiclass SS41I_binop_rm_int8<bits<8> opc, string OpcodeStr, Intrinsic IntId> {
