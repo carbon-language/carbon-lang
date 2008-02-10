@@ -66,6 +66,13 @@ It includes many features and refinements from LLVM 2.1.</p>
 
 </div>
 
+<!-- Unfinished features in 2.2:
+  Index Set Splitting not enabled by default
+  Machine LICM
+  Machine Sinking
+  LegalizeDAGTypes
+ -->
+
 <!--=========================================================================-->
 <div class="doc_subsection">
 <a name="deprecation">Deprecated features in LLVM 2.2</a>
@@ -92,10 +99,10 @@ llvm 2.2, and will be redesigned or removed in llvm 2.3.</p>
 LLVM 2.1, llvm-gcc 4.2 was beta).  Since LLVM 2.1, the llvm-gcc 4.2 front-end
 has made leaps and bounds and is now at least as good as 4.0 in virtually every
 area, and is better in several areas (for example, exception handling
-correctness).  We strongly recommend that you migrate from llvm-gcc 4.0 to
-llvm-gcc 4.2 in this release cycle because <b>LLVM 2.2 is the last release
-that will support llvm-gcc 4.0</b>:  LLVM 2.3 will only support the llvm-gcc
-4.2 front-end.</p>
+correctness, support for Ada and FORTRAN).  We strongly recommend that you
+migrate from llvm-gcc 4.0 to llvm-gcc 4.2 in this release cycle because
+<b>LLVM 2.2 is the last release that will support llvm-gcc 4.0</b>:  LLVM 2.3
+will only support the llvm-gcc 4.2 front-end.</p>
 
 <p>The <a href="http://clang.llvm.org/">clang project</a> is an effort to build
 a set of new 'llvm native' front-end technologies for the LLVM optimizer
@@ -104,7 +111,7 @@ nicely, and it has advanced source-to-source analysis and transformation
 capabilities.  If you are interested in building source-level tools for C and
 Objective-C (and eventually C++), you should take a look.  However, note that
 clang is not an official part of the LLVM 2.2 release.  If you are interested in
-this project, please see the web site.</p>
+this project, please see its <a href="http://clang.llvm.org/">web site</a>.</p>
 
 </div>
 
@@ -115,51 +122,30 @@ this project, please see the web site.</p>
 
 <div class="doc_text">
 
-<p>Scott Michel contributed Cell backend</p>
-
-<p>Dale contributed full support for long double on x86/x86-64 (where it is 80
-bits) and on Darwin PPC/PPC64 (where it is 128 bits).</p>
-
-<p>Ada, gfortran</p>
-
-<p>
-debug improvements -O0
-
-Gordon: GC Revamp. docs/GarbageCollection.html
-
-Kaleidoscope: docs/tutorial
-
-Gordon: C and Ocaml Bindings
-
-Christopher Lamb: Multiple address spaces.
-</div>
-
-<!--=========================================================================-->
-<div class="doc_subsection">
-<a name="optimizer">Optimizer Improvements</a>
-</div>
-
-<div class="doc_text">
-
-<p>Some of the most noticable feature improvements this release have been in the
-optimizer, speeding it up and making it more aggressive.  For example:</p>
+<p>LLVM 2.2 includes several major new capabilities:</p>
 
 <ul>
+<li>Scott Michel contributed an SPU backend, which generates code for the
+vector coprocessors on the Cell processor.  (Status?)</li>
 
-<li>Daniel Berlin and Curtis Dunham rewrote Andersen's alias analysis (which is
-not enabled by default) to be several orders of magnitude faster, implemented
-Offline Variable Substitution and Lazy Cycle Detection.</li>
+<li>llvm-gcc 4.2 has significantly improved support for the GCC Ada (GNAT) and
+FORTRAN (gfortran) frontends.  Duncan has the llvm-gcc 4.2 GNAT front-end
+supporting almost all of the ACATS testsuite (except 2 tests?).  The llvm-gcc
+4.2 gfortran front-end supports a broad range of FORTRAN code, but does <a 
+href="http://llvm.org/PR1971">not support EQUIVALENCE yet</a>.</li>
 
-Devang: LoopIndexSplit is enabled by default.
+<li>Dale contributed full support for long double on x86/x86-64 (where it is 80
+bits) and on Darwin PPC/PPC64 (where it is 128 bits).  In previous LLVM
+releases, llvm-gcc silently mapped long double to double.</li>
 
-Dan Gohman: LSR improvements for SSE intrinsics and 
+<li>Gordon rewrote most of the <a href="GarbageCollection.html">Accurate Garbage
+Collection</a> code in the code generator, making the generated code more
+efficient and adding support for the Ocaml garbage collector metadata
+format.</li>
 
-Evan added simple exit value substitution to LSR.
-
-Anton added readnone/readonly attributes for modeling function side effects
-and Duncan hooked up GCC's pure/const attributes to use them and enhanced alias
-analysis to use them.
-</ul>
+<li>LLVM now includes a new set of detailed <a 
+href="tutorial/index.html">tutorials</a>, which explain how to implement a
+language with LLVM and shows how to use several important APIs.</li>
 
 </div>
 
@@ -170,33 +156,79 @@ analysis to use them.
 
 <div class="doc_text">
 
-<p>foci of this release was performance tuning and bug
-   fixing.  In addition to these, several new major changes occurred:</p>
+<p>We put a significant amount of work into the code generator infrastructure,
+which allows us to implement more aggressive algorithms and make it run
+faster:</p>
 
 <ul>
 
-<li>Owen contributed Machine Loop info, domintors, etc. Merged dom and
- postdom.</li>
+<li>Owen refactored the existing LLVM dominator and loop information code to
+allow it work on the machine code representation.  He contributed support for
+dominator and loop information on machine code and merged the code for forward
+and backward dominator computation.</li>
 
-<li>Dan added support for emitting debug information with .file and .loc on 
-targets that support it</li>
+<li>Dan added support for emitting debug information with .file and .loc
+directives on that support it, instead of emitting large tables in the .s
+file.</li>
 
-<li>Evan physical register dependencies in the BURR scheduler</li>
+<li>Evan extended the DAG scheduler to model physical register dependencies
+explicitly and have the BURR scheduler pick a correct schedule based on the
+dependencies.  This reduces our use of the 'flag' operand hack.</li>
 
-<li>Evan EXTRACT_SUBREG coalescing support</li>
+<li>Evan added initial support for register coalescing of subregister
+references.</li>
+
+<li>Rafael Espindola implemented initial support for a new 'byval' attribute,
+which allows more efficient by-value argument passing in the LLVM IR.  Evan 
+finished support for it and enabled it in the X86 (32- and 64-bit) and C
+backends.</li>
+
+<li>The LLVM TargetInstrInfo class can now answer queries about the mod/ref and
+side-effect behavior of MachineInstr's.  This information is inferred
+automatically by TableGen from .td files for all instructions with
+patterns.</li>
+
+<li>Evan implemented simple live interval splitting on basic block boundaries.
+This allows the register allocator to be more successful at keeping values in
+registers in some parts of a value's live range, even if they need to be spilled
+in some other block.</li>
+
+<li>The new MachineRegisterInfo.h class provides support for efficiently
+iterating over all defs/uses of a register, and this information is
+automatically kept up-to-date.  This support is similar to the  use_iterator in
+the LLVM IR level.</li>
+
+<li>The MachineInstr, MachineOperand and TargetInstrDesc classes are simpler,
+more consistent, and better documented.</li>
+</ul>
+
+</div>
+
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="optimizer">Optimizer Improvements</a>
+</div>
+
+<div class="doc_text">
+
+<p>In addition to a huge array of bug fixes and minor performance tweaks, LLVM
+2.2 supports a few major enhancements:</p>
+
+<ul>
+
+<li>Daniel Berlin and Curtis Dunham rewrote Andersen's alias analysis to be
+several orders of magnitude faster, implemented Offline Variable Substitution
+and Lazy Cycle Detection.  Note that Andersen's is not enabled in llvm-gcc by
+default.</li>
+
+<li>Dan Gohman contributed several enhancements to Loop Strength Reduction (LSR)
+to make it more aggressive with SSE intrinsics.</li> 
+
+<li>Evan added support for simple exit value substitution to LSR.</li>
+
 <li>Evan enhanced LSR to support induction variable reuse when the induction
- variables have different widths.</li>
+variables have different widths.</li>
 
-<li>Rafael Espindola byval support, finished by Evan for x86 (32/64).</li>
-
-<li>mod/ref info for machineinstrs, inferred from .td files</li>
-
-<li>Evan: Live interval splitting on MBB boundaries.</li>
-
-Efficient iteration over use/defs of registers like llvm ir.
-
-The MachineInstr, MachineOperand and TargetInstrDesc classes are simpler, more
-consistent, and better documented.
 </ul>
 
 </div>
@@ -217,27 +249,10 @@ consistent, and better documented.
 <li>Bruno: MIPS PIC support.</li>
 <li>Arnold Schwaighofer: X86 tail call support.</li>
 <li>Dale darwin/x86-64 and darwin/ppc eh</li>
-<li>Evan: darwin/x86 debug info</li>
+<li>Evan: darwin/x86 debug info, improvements at -O0?</li>
 </ul>
   
 </div>
-
-
-<!--=========================================================================-->
-<div class="doc_subsection">
-<a name="llvmgccimprovements">llvm-gcc Improvements</a>
-</div>
-
-<div class="doc_text">
-<p>New features include:
-</p>
-
-<ul>
-<li>.</li>
-</ul>
-  
-</div>
-
 
 <!--=========================================================================-->
 <div class="doc_subsection">
@@ -260,6 +275,13 @@ consistent, and better documented.
 <li>Duncan moved parameter attributes off of function type and onto functions
     and calls, which makes it much easier to add attributes to a function in a
     transformation.</li>
+<li>Christopher Lamb: Multiple address spaces.</li>
+<li>Gordon: C and Ocaml Bindings</li>
+
+<li>Anton added readnone/readonly attributes for modeling function side effects
+and Duncan hooked up GCC's pure/const attributes to use them and enhanced alias
+analysis to use them.</li>
+
 </ul>
   
 </div>
