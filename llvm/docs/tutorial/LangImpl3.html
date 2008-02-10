@@ -59,8 +59,8 @@ LLVM SVN to work.  LLVM 2.1 and before will not work with it.</p>
 <div class="doc_text">
 
 <p>
-In order to generate LLVM IR, we want some simple setup to get started.  First,
-we define virtual codegen methods in each AST class:</p>
+In order to generate LLVM IR, we want some simple setup to get started.  First
+we define virtual code generation (codegen) methods in each AST class:</p>
 
 <div class="doc_code">
 <pre>
@@ -95,9 +95,11 @@ href="http://en.wikipedia.org/wiki/Static_single_assignment_form">Static Single
 Assignment</a> - the concepts are really quite natural once you grok them.</p>
 
 <p>Note that instead of adding virtual methods to the ExprAST class hierarchy,
-it could also make sense to use a visitor pattern or some other way to model
-this.  Again, this tutorial won't dwell on good software engineering practices:
-for our purposes, adding a virtual method is simplest.</p>
+it could also make sense to use a <a
+href="http://en.wikipedia.org/wiki/Visitor_pattern">visitor pattern</a> or some
+other way to model this.  Again, this tutorial won't dwell on good software
+engineering practices: for our purposes, adding a virtual method is
+simplest.</p>
 
 <p>The
 second thing we want is an "Error" method like we used for the parser, which will
@@ -121,16 +123,15 @@ uses to contain code.</p>
 
 <p>The <tt>Builder</tt> object is a helper object that makes it easy to generate
 LLVM instructions.  Instances of the <a 
-href="http://llvm.org/doxygen/LLVMBuilder_8h-source.html"><tt>LLVMBuilder</tt> 
-class</a> keep track of the current place to
-insert instructions and has methods to create new instructions.</p>
+href="http://llvm.org/doxygen/LLVMBuilder_8h-source.html"><tt>LLVMBuilder</tt></a> 
+class keep track of the current place to insert instructions and has methods to
+create new instructions.</p>
 
 <p>The <tt>NamedValues</tt> map keeps track of which values are defined in the
-current scope and what their LLVM representation is (in other words, it is a 
-symbol table for the code).  In this form of
-Kaleidoscope, the only things that can be referenced are function parameters.
-As such, function parameters will be in this map when generating code for their
-function body.</p>
+current scope and what their LLVM representation is.  (In other words, it is a
+symbol table for the code).  In this form of Kaleidoscope, the only things that
+can be referenced are function parameters.  As such, function parameters will
+be in this map when generating code for their function body.</p>
 
 <p>
 With these basics in place, we can start talking about how to generate code for
@@ -148,7 +149,7 @@ has already been done, and we'll just use it to emit code.
 <div class="doc_text">
 
 <p>Generating LLVM code for expression nodes is very straightforward: less
-than 45 lines of commented code for all four of our expression nodes.  First,
+than 45 lines of commented code for all four of our expression nodes.  First
 we'll do numeric literals:</p>
 
 <div class="doc_code">
@@ -218,11 +219,13 @@ code, we do a simple switch on the opcode to create the right LLVM instruction.
 LLVMBuilder knows where to insert the newly created instruction, all you have to
 do is specify what instruction to create (e.g. with <tt>CreateAdd</tt>), which
 operands to use (<tt>L</tt> and <tt>R</tt> here) and optionally provide a name
-for the generated instruction.  One nice thing about LLVM is that the name is 
-just a hint: if there are multiple additions in a single function, the first
-will be named "addtmp" and the second will be "autorenamed" by adding a suffix,
-giving it a name like "addtmp42".  Local value names for instructions are purely
-optional, but it makes it much easier to read the IR dumps.</p>
+for the generated instruction.</p>
+
+<p>One nice thing about LLVM is that the name is just a hint.  For instance, if
+the code above emits multiple "addtmp" variables, LLVM will automatically
+provide each one with an increasing, unique numeric suffix.  Local value names
+for instructions are purely optional, but it makes it much easier to read the
+IR dumps.</p>
 
 <p><a href="../LangRef.html#instref">LLVM instructions</a> are constrained by
 strict rules: for example, the Left and Right operators of
@@ -1228,6 +1231,7 @@ int main() {
 }
 </pre>
 </div>
+<a href="LangImpl4.html">Next: Adding JIT and Optimizer Support</a>
 </div>
 
 <!-- *********************************************************************** -->
