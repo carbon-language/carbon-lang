@@ -138,15 +138,58 @@ href="http://llvm.org/PR1971">not support EQUIVALENCE yet</a>.</li>
 bits) and on Darwin PPC/PPC64 (where it is 128 bits).  In previous LLVM
 releases, llvm-gcc silently mapped long double to double.</li>
 
-<li>Gordon rewrote most of the <a href="GarbageCollection.html">Accurate Garbage
-Collection</a> code in the code generator, making the generated code more
-efficient and adding support for the Ocaml garbage collector metadata
-format.</li>
+<li>Gordon Henriksen rewrote most of the <a href="GarbageCollection.html"
+>Accurate Garbage Collection</a> code in the code generator, making the
+generated code more efficient and adding support for the Ocaml garbage collector
+metadata format.</li>
+
+<li>Christopher Lamb contributed support for multiple address spaces in LLVM
+IR.  This is useful for supporting targets that have 'near' vs 'far' pointers,
+'RAM' vs 'ROM' pointers, or that have non-local memory that can be accessed with
+special instructions.</li>
 
 <li>LLVM now includes a new set of detailed <a 
 href="tutorial/index.html">tutorials</a>, which explain how to implement a
 language with LLVM and shows how to use several important APIs.</li>
 
+</div>
+
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="coreimprovements">LLVM Core Improvements</a>
+</div>
+
+<div class="doc_text">
+<p>New features include:
+</p>
+
+<ul>
+<li>Gordon contributed support for C and Ocaml Bindings for the basic LLVM IR
+construction routines as well as several other auxiliary APIs.</li>
+
+<li>Anton added readnone/readonly attributes for modeling function side effects.
+Duncan hooked up GCC's pure/const attributes to use them and enhanced mod/ref
+analysis to use them.</li>
+
+<li>Devang added LLVMFoldingBuilder, a version of LLVMBuilder that implicitly
+simplifies the code as it is constructed.</li>
+
+<li>Ted Kremenek added a framework for generic object serialization to bitcode
+files. This support is only used by clang right now for ASTs but is extensible
+and could be used for serializing arbitrary other data into bitcode files.</li>
+    
+<li>Duncan improved TargetData to distinguish between the size/alignment of a
+type in a register, in memory according to the platform ABI, and in memory when
+we have a choice.</li>
+
+<li>Duncan moved parameter attributes off of FunctionType and onto functions
+and calls.  This makes it much easier to add attributes to a function in a
+transformation pass.</li>
+
+<li>Dan Gohman added support for vector sin, cos, and pow intrinsics.</li>
+
+</ul>
+  
 </div>
 
 <!--=========================================================================-->
@@ -211,15 +254,15 @@ more consistent, and better documented.</li>
 
 <div class="doc_text">
 
-<p>In addition to a huge array of bug fixes and minor performance tweaks, LLVM
-2.2 supports a few major enhancements:</p>
+<p>In addition to a huge array of bug fixes and minor performance tweaks, the 
+LLVM 2.2 optimizers support a few major enhancements:</p>
 
 <ul>
 
 <li>Daniel Berlin and Curtis Dunham rewrote Andersen's alias analysis to be
-several orders of magnitude faster, implemented Offline Variable Substitution
-and Lazy Cycle Detection.  Note that Andersen's is not enabled in llvm-gcc by
-default.</li>
+several orders of magnitude faster, and implemented Offline Variable
+Substitution and Lazy Cycle Detection.  Note that Andersen's is not enabled in
+llvm-gcc by default, but can be accessed through 'opt'.</li>
 
 <li>Dan Gohman contributed several enhancements to Loop Strength Reduction (LSR)
 to make it more aggressive with SSE intrinsics.</li> 
@@ -240,48 +283,23 @@ variables have different widths.</li>
 </div>
 
 <div class="doc_text">
-<p>New features include:
+<p>New target-specific features include:
 </p>
 
 <ul>
-<li>Evan X86 now models EFLAGS in instructions.</li>
-<li>Evan: If conversion on by default for ARM.</li>
-<li>Bruno: MIPS PIC support.</li>
-<li>Arnold Schwaighofer: X86 tail call support.</li>
-<li>Dale darwin/x86-64 and darwin/ppc eh</li>
-<li>Evan: darwin/x86 debug info, improvements at -O0?</li>
-</ul>
-  
-</div>
-
-<!--=========================================================================-->
-<div class="doc_subsection">
-<a name="coreimprovements">LLVM Core Improvements</a>
-</div>
-
-<div class="doc_text">
-<p>New features include:
-</p>
-
-<ul>
-<li>Devang added LLVMFoldingBuilder.</li>
-<li>Dan added support for vector sin, cos, and pow intrinsics.</li>
-<li>Ted added a framework for generic object serialization to bitcode files,
-    only used by clang right now for ASTs but could be used for other
-    stuff.</li>
-<li>Duncan fixed TargetData to distinguish between the size/alignment of a type 
-    in a register, in memory according to the platform ABI, and in memory when
-    we have a choice.</li>
-<li>Duncan moved parameter attributes off of function type and onto functions
-    and calls, which makes it much easier to add attributes to a function in a
-    transformation.</li>
-<li>Christopher Lamb: Multiple address spaces.</li>
-<li>Gordon: C and Ocaml Bindings</li>
-
-<li>Anton added readnone/readonly attributes for modeling function side effects
-and Duncan hooked up GCC's pure/const attributes to use them and enhanced alias
-analysis to use them.</li>
-
+<li>Evan contributed support to the X86 backend to model the mod/ref behavior
+of the EFLAGS register explicitly in all instructions.  This gives more freedom
+to the scheduler, and is a more explicit way to model the instructions.</li>
+<li>Dale contributed support for exception handling on Darwin/x86-64 and
+Darwin/ppc.</li> 
+<li>Evan turned on if-conversion by default for ARM, allowing LLVM to take
+advantage of its predication features.</li>
+<li>Bruno added PIC support to the MIPS backend, fixed many bugs and improved
+support for architecture variants.</li>
+<li>Arnold Schwaighofer added support for X86 tail calls (limitations?
+details?).</li>
+<li>Evan contributed several enhancements to Darwin/x86 debug information,
+and improvements at -O0 (details?).</li>
 </ul>
   
 </div>
@@ -296,9 +314,18 @@ analysis to use them.</li>
 </p>
 
 <ul>
-<li>Gordon Henriksen updated docs/Passes.html</li>
-<li>New lexer and parser for tblgen, new lexer for asmparser</li>
-<li>Dale GCC testsuite</li>
+<li>Gordon expanded and updated the <a href="Passes.html">LLVM Analysis and
+Transformation Passes</a> reference to include descriptions for each pass.</li>
+
+<li>We rewrote the lexer and parser used by TableGen to make them simpler
+and cleaner.  This gives tblgen support for 'caret diagnostics'.  The .ll file
+lexer was also rewritten to support caret diagnostics but doesn't use this
+support yet.</li>
+ 
+<li>Dale has been grinding through the GCC testsuite, and marked many 
+LLVM-incompatible tests as not-to-be-run (for example, if they are grepping
+through some GCC dump file that LLVM doesn't produce), he also found and fixed
+many LLVM bugs exposed by the testsuite.</li>
 </ul>
   
 </div>
@@ -387,6 +414,8 @@ components, please contact us on the <a href="http://lists.cs.uiuc.edu/mailman/l
 <li>The X86 backend occasionally has <a href="http://llvm.org/PR1649">alignment
     problems</a> on operating systems that don't require 16-byte stack alignment
     (including most non-darwin OS's like linux).</li>
+<li>The X86 backend generates inefficient floating point code when configured to
+    generate code for systems that don't have SSE2.</li>
 </ul>
 
 </div>
@@ -418,7 +447,7 @@ processors, thumb programs can crash or produce wrong
 results (<a href="http://llvm.org/PR1388">PR1388</a>).</li>
 <li>Compilation for ARM Linux OABI (old ABI) is supported, but not fully tested.
 </li>
-<li>There is a bug in QEMU-ARM (<= 0.9.0) which causes it to incorrectly execute
+<li>There is a bug in QEMU-ARM (&lt;= 0.9.0) which causes it to incorrectly execute
 programs compiled with LLVM.  Please use more recent versions of QEMU.</li>
 </ul>
 
@@ -550,11 +579,11 @@ llvmdev mailing list if you are interested.</p>
       <tt>const</tt>, <tt>constructor</tt>, <tt>destructor</tt>, 
       <tt>deprecated</tt>, <tt>fastcall</tt>, <tt>format</tt>, 
       <tt>format_arg</tt>, <tt>non_null</tt>, <tt>noinline</tt>, 
-      <tt>noreturn</tt>, <tt>pure</tt>, <tt>regparm</tt>
+      <tt>noreturn</tt>, <tt>nothrow</tt>, <tt>pure</tt>, <tt>regparm</tt>
       <tt>section</tt>, <tt>stdcall</tt>, <tt>unused</tt>, <tt>used</tt>, 
       <tt>visibility</tt>, <tt>warn_unused_result</tt>, <tt>weak</tt><br>
 
-      <b>Ignored:</b> <tt>nothrow</tt>, <tt>malloc</tt>,
+      <b>Ignored:</b> <tt>malloc</tt>,
       <tt>no_instrument_function</tt></li>
   </ol>
 </li>
