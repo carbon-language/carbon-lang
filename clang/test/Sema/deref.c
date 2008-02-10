@@ -17,6 +17,12 @@ void foo2 (void)
 void foo3 (void)
 {
  void* x = 0;
- void* y = &*x; // expected-error {{address expression must be an lvalue or a function designator}}
+ void* y = &*x;
+}
+
+extern const void cv1;
+const void *foo4 (void)
+{
+  return &cv1;
 }
 
