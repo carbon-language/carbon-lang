@@ -124,8 +124,13 @@ this project, please see its <a href="http://clang.llvm.org/">web site</a>.</p>
 <p>LLVM 2.2 includes several major new capabilities:</p>
 
 <ul>
-<li>Scott Michel contributed an SPU backend, which generates code for the
-vector coprocessors on the Cell processor.  (Status?)</li>
+<li>A research team led by Scott Michel in the Computer Systems Research
+Department at The Aerospace Corporation contributed the CellSPU backend, which
+generates code for the vector coprocessors on the Sony/Toshiba/IBM Cell BE
+processor. llvm-gcc 4.2 supports CellSPU as a 'configure' target and progress
+is being made so that libgcc.a compiles cleanly. Notable pieces still in
+development include full 64-bit integer and full double precision floating
+point support.</li>
 
 <li>Anton and Duncan significantly improved llvm-gcc 4.2 support for the GCC Ada
 (GNAT) and Fortran (gfortran) front-ends.  These front-ends should still be considered
