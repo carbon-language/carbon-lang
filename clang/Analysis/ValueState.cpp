@@ -71,7 +71,7 @@ ValueStateManager::RemoveDeadBindings(ValueState St, Stmt* Loc,
     if (Liveness.isLive(Loc, I.getKey()))
       WList.push_back(I.getKey());
   
-  llvm::SmallPtrSet<ValueDecl*, 10> Marked;
+  llvm::SmallPtrSet<ValueDecl*, 10> Marked;  
   
   while (!WList.empty()) {
     ValueDecl* V = WList.back();
@@ -253,7 +253,6 @@ LValue ValueStateManager::GetLValue(ValueState St, Expr* E) {
   
   return cast<LValue>(GetValue(St, E));
 }
-
 
 ValueState 
 ValueStateManager::SetValue(ValueState St, Expr* E, bool isBlkExpr,

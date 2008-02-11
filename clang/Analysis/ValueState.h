@@ -231,7 +231,12 @@ private:
   
 public:  
   ValueStateManager(ASTContext& Ctx, llvm::BumpPtrAllocator& alloc) 
-    : ValMgr(Ctx, alloc), Alloc(alloc) {}
+    : ISetFactory(alloc), 
+      EXFactory(alloc),
+      VBFactory(alloc),
+      CNEFactory(alloc),
+      CEFactory(alloc),
+      ValMgr(Ctx, alloc), Alloc(alloc) {}
   
   ValueState getInitialState();
         

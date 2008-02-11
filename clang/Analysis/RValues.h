@@ -459,7 +459,7 @@ namespace lval {
     }
     
     static inline bool classof(const RValue* V) {
-      return V->getSubKind() == SymbolValKind;
+      return isa<LValue>(V) && V->getSubKind() == SymbolValKind;
     }  
   };
   
@@ -481,7 +481,7 @@ namespace lval {
     
     // Implement isa<T> support.
     static inline bool classof(const RValue* V) {
-      return V->getSubKind() == DeclValKind;
+      return isa<LValue>(V) && V->getSubKind() == DeclValKind;
     }
   };
 
