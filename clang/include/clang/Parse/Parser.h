@@ -439,6 +439,7 @@ private:
                               
   bool isDeclarationSpecifier() const;
   bool isTypeSpecifierQualifier() const;
+  bool isTypeQualifier() const;
 
   TypeTy *ParseTypeName();
   AttributeList *ParseAttributes();

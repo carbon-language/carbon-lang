@@ -911,6 +911,8 @@ Parser::StmtResult Parser::ParseReturnStatement() {
   return Actions.ActOnReturnStmt(ReturnLoc, R.Val);
 }
 
+/// FuzzyParseMicrosoftAsmStatement. When -fms-extensions is enabled, this
+/// routine is called to skip/ignore tokens that comprise the MS asm statement.
 Parser::StmtResult Parser::FuzzyParseMicrosoftAsmStatement() {
   if (Tok.is(tok::l_brace)) {
     unsigned short savedBraceCount = BraceCount;
@@ -934,7 +936,11 @@ Parser::StmtResult Parser::FuzzyParseMicrosoftAsmStatement() {
 }
 
 /// ParseAsmStatement - Parse a GNU extended asm statement.
-/// [GNU] asm-statement:
+///       asm-statement:
+///         gnu-asm-statement
+///         ms-asm-statement
+///
+/// [GNU] gnu-asm-statement:
 ///         'asm' type-qualifier[opt] '(' asm-argument ')' ';'
 ///
 /// [GNU] asm-argument:
@@ -948,11 +954,19 @@ Parser::StmtResult Parser::FuzzyParseMicrosoftAsmStatement() {
 ///         asm-string-literal
 ///         asm-clobbers ',' asm-string-literal
 ///
+/// [MS]  ms-asm-statement:
+///         '__asm' assembly-instruction ';'[opt]
+///         '__asm' '{' assembly-instruction-list '}' ';'[opt]
+///
+/// [MS]  assembly-instruction-list:
+///         assembly-instruction ';'[opt]
+///         assembly-instruction-list ';' assembly-instruction ';'[opt]
+///
 Parser::StmtResult Parser::ParseAsmStatement(bool &msAsm) {
   assert(Tok.is(tok::kw_asm) && "Not an asm stmt");
   SourceLocation AsmLoc = ConsumeToken();
   
-  if (getLang().Microsoft && Tok.isNot(tok::l_paren)) {
+  if (getLang().Microsoft && Tok.isNot(tok::l_paren) && !isTypeQualifier()) {
     msAsm = true;
     return FuzzyParseMicrosoftAsmStatement();
   }

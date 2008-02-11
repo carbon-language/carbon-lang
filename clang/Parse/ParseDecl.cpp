@@ -872,6 +872,19 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, DeclTy *EnumDecl) {
 }
 
 /// isTypeSpecifierQualifier - Return true if the current token could be the
+/// start of a type-qualifier-list.
+bool Parser::isTypeQualifier() const {
+  switch (Tok.getKind()) {
+  default: return false;
+    // type-qualifier
+  case tok::kw_const:
+  case tok::kw_volatile:
+  case tok::kw_restrict:
+    return true;
+  }
+}
+
+/// isTypeSpecifierQualifier - Return true if the current token could be the
 /// start of a specifier-qualifier-list.
 bool Parser::isTypeSpecifierQualifier() const {
   switch (Tok.getKind()) {
