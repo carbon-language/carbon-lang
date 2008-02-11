@@ -159,7 +159,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic &Diags,
   
   llvm::cerr << FormatDiagnostic(Diags, Level, ID, Strs, NumStrs) << "\n";
   
-  if (!NoCaretDiagnostics && Pos.isValid() && ((LastLoc != Pos) && !Ranges)) {
+  if (!NoCaretDiagnostics && Pos.isValid() && ((LastLoc != Pos) || Ranges)) {
     // Cache the LastLoc, it allows us to omit duplicate source/caret spewage.
     LastLoc = Pos;
     
