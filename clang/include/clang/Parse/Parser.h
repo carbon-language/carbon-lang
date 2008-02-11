@@ -441,7 +441,6 @@ private:
   bool isTypeSpecifierQualifier() const;
 
   TypeTy *ParseTypeName();
-  void FuzzyParseMicrosoftDeclspec();
   AttributeList *ParseAttributes();
   void ParseTypeofSpecifier(DeclSpec &DS);
   

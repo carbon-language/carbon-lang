@@ -36,48 +36,6 @@ Parser::TypeTy *Parser::ParseTypeName() {
   return Actions.ActOnTypeName(CurScope, DeclaratorInfo).Val;
 }
 
-/// FuzzyParseMicrosoftDeclspec. The following construct is Microsoft's
-/// equivalent of GCC's __attribute__. The grammar below is taken from 
-/// Microsoft's website. Unfortunately, it is incomplete. FIXME: If/when we 
-/// parse this for real, we will need to get a real/current grammar.
-///
-///  decl-specifier:
-///    '__declspec' '(' extended-decl-modifier-seq ')'
-///  
-///  extended-decl-modifier-seq:
-///    extended-decl-modifier opt
-///    extended-decl-modifier extended-decl-modifier-seq
-///
-///  extended-decl-modifier:
-///    align( # )
-///    allocate(" segname ")
-///    appdomain
-///    deprecated
-///    dllimport
-///    dllexport
-///    jitintrinsic
-///    naked
-///    noalias
-///    noinline
-///    noreturn
-///    nothrow
-///    novtable
-///    process
-///    property({get=get_func_name|,put=put_func_name})
-///    restrict
-///    selectany
-///    thread
-///    uuid(" ComObjectGUID ")
-///
-void Parser::FuzzyParseMicrosoftDeclspec() {
-  assert(Tok.is(tok::kw___declspec) && "Not an declspec!");
-  ConsumeToken();
-  do {
-    ConsumeAnyToken();
-  } while (ParenCount > 0 && Tok.isNot(tok::eof));
-  return;
-}
-
 /// ParseAttributes - Parse a non-empty attributes list.
 ///
 /// [GNU] attributes:
@@ -483,13 +441,6 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
     case tok::kw_typedef:
       isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_typedef, Loc, PrevSpec);
       break;
-    case tok::kw___declspec:
-      FuzzyParseMicrosoftDeclspec();
-      // Don't consume the next token, __declspec's can appear one after
-      // another. For example:
-      //   __declspec(deprecated("comment1")) 
-      //   __declspec(deprecated("comment2")) extern unsigned int _winmajor;
-      continue;
     case tok::kw_extern:
       if (DS.isThreadSpecified())
         Diag(Tok, diag::ext_thread_before, "extern");
@@ -674,9 +625,6 @@ void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
     Tok.is(tok::kw_union) ? DeclSpec::TST_union : DeclSpec::TST_struct;
   SourceLocation StartLoc = ConsumeToken();
 
-  if (getLang().Microsoft && Tok.is(tok::kw___declspec))
-    FuzzyParseMicrosoftDeclspec();
-  
   // Parse the tag portion of this.
   DeclTy *TagDecl;
   if (ParseTag(TagDecl, TagType, StartLoc))
