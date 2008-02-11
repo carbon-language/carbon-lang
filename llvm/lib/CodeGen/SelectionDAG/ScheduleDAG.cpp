@@ -267,7 +267,7 @@ void ScheduleDAG::CalculateHeights() {
 
 /// CountResults - The results of target nodes have register or immediate
 /// operands first, then an optional chain, and optional flag operands (which do
-/// not go into the machine instrs.)
+/// not go into the resulting MachineInstr).
 unsigned ScheduleDAG::CountResults(SDNode *Node) {
   unsigned N = Node->getNumValues();
   while (N && Node->getValueType(N - 1) == MVT::Flag)
@@ -279,7 +279,8 @@ unsigned ScheduleDAG::CountResults(SDNode *Node) {
 
 /// CountOperands - The inputs to target nodes have any actual inputs first,
 /// followed by optional memory operands chain operand, then flag operands.
-/// Compute the number of actual operands that  will go into the machine istr.
+/// Compute the number of actual operands that will go into the resulting
+/// MachineInstr.
 unsigned ScheduleDAG::CountOperands(SDNode *Node) {
   unsigned N = Node->getNumOperands();
   while (N && Node->getOperand(N - 1).getValueType() == MVT::Flag)
