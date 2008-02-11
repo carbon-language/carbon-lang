@@ -287,7 +287,7 @@ unsigned ScheduleDAG::CountOperands(SDNode *Node) {
     --N;
   if (N && Node->getOperand(N - 1).getValueType() == MVT::Other)
     --N; // Ignore chain if it exists.
-  while (N && MemOperandSDNode::classof(Node->getOperand(N - 1).Val))
+  while (N && isa<MemOperandSDNode>(Node->getOperand(N - 1).Val))
     --N; // Ignore MemOperand nodes
   return N;
 }
