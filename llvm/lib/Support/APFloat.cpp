@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/FoldingSet.h"
 #include <cassert>
 #include <cstring>
 #include "llvm/Support/MathExtras.h"
@@ -689,6 +690,11 @@ APFloat::APFloat(const APFloat &rhs)
 APFloat::~APFloat()
 {
   freeSignificand();
+}
+
+// Profile - This method 'profiles' an APFloat for use with FoldingSet.
+void APFloat::Profile(FoldingSetNodeID& ID) const {
+  ID.Add(convertToAPInt());
 }
 
 unsigned int

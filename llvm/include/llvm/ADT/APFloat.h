@@ -181,6 +181,10 @@ namespace llvm {
     APFloat(const APFloat &);
     ~APFloat();
     
+    /// Profile - Used to insert APFloat objects, or objects that contain
+    ///  APFloat objects, into FoldingSets.
+    void Profile(FoldingSetNodeID& NID) const;
+    
     /// @brief Used by the Bitcode serializer to emit APInts to Bitcode.
     void Emit(Serializer& S) const;
     

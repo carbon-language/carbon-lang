@@ -344,7 +344,7 @@ static void AddNodeIDNode(FoldingSetNodeID &ID, SDNode *N) {
     break;
   case ISD::TargetConstantFP:
   case ISD::ConstantFP: {
-    ID.AddAPFloat(cast<ConstantFPSDNode>(N)->getValueAPF());
+    ID.Add(cast<ConstantFPSDNode>(N)->getValueAPF());
     break;
   }
   case ISD::TargetGlobalAddress:
@@ -724,7 +724,7 @@ SDOperand SelectionDAG::getConstant(const APInt &Val, MVT::ValueType VT, bool is
   unsigned Opc = isT ? ISD::TargetConstant : ISD::Constant;
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, Opc, getVTList(EltVT), 0, 0);
-  ID.AddAPInt(Val);
+  ID.Add(Val);
   void *IP = 0;
   SDNode *N = NULL;
   if ((N = CSEMap.FindNodeOrInsertPos(ID, IP)))
@@ -763,7 +763,7 @@ SDOperand SelectionDAG::getConstantFP(const APFloat& V, MVT::ValueType VT,
   unsigned Opc = isTarget ? ISD::TargetConstantFP : ISD::ConstantFP;
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, Opc, getVTList(EltVT), 0, 0);
-  ID.AddAPFloat(V);
+  ID.Add(V);
   void *IP = 0;
   SDNode *N = NULL;
   if ((N = CSEMap.FindNodeOrInsertPos(ID, IP)))

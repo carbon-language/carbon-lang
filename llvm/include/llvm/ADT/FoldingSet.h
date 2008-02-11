@@ -178,6 +178,19 @@ protected:
   virtual void GetNodeProfile(FoldingSetNodeID &ID, Node *N) const = 0;
 };
 
+//===----------------------------------------------------------------------===//
+/// FoldingSetTrait - This trait class is used to define behavior of how
+///  to "profile" (in the FoldingSet parlance) an object of a given type.
+///  The default behavior is to invoke a 'Profile' method on an object, but
+///  through template specialization the behavior can be tailored for specific
+///  types.  Combined with the FoldingSetNodeWrapper classs, one can add objects
+///  to FoldingSets that were not originally designed to have that behavior.
+///
+template<typename T> struct FoldingSetTrait {
+  static inline void Profile(const T& X, FoldingSetNodeID& ID) { X.Profile(ID);}
+  static inline void Profile(T& X, FoldingSetNodeID& ID) { X.Profile(ID); }
+};
+  
 //===--------------------------------------------------------------------===//
 /// FoldingSetNodeID - This class is used to gather all the unique data bits of
 /// a node.  When all the bits are gathered this class is used to produce a
@@ -206,9 +219,10 @@ public:
   void AddInteger(uint64_t I);
   void AddFloat(float F);
   void AddDouble(double D);
-  void AddAPFloat(const APFloat& apf);
-  void AddAPInt(const APInt& api);
   void AddString(const std::string &String);
+  
+  template <typename T>
+  inline void Add(const T& x) { FoldingSetTrait<T>::Profile(x, *this); }
   
   /// clear - Clear the accumulated profile, allowing this FoldingSetNodeID
   ///  object to be used to compute a new profile.
@@ -227,19 +241,6 @@ public:
 typedef FoldingSetImpl::Node FoldingSetNode;
 template<class T> class FoldingSetIterator;
 template<class T> class FoldingSetBucketIterator;
-
-//===----------------------------------------------------------------------===//
-/// FoldingSetTrait - This trait class is used to define behavior of how
-///  to "profile" (in the FoldingSet parlance) an object of a given type.
-///  The default behavior is to invoke a 'Profile' method on an object, but
-///  through template specialization the behavior can be tailored for specific
-///  types.  Combined with the FoldingSetNodeWrapper classs, one can add objects
-///  to FoldingSets that were not originally designed to have that behavior.
-///
-template<typename T> struct FoldingSetTrait {
-  static inline void Profile(const T& X, FoldingSetNodeID& ID) { X.Profile(ID);}
-  static inline void Profile(T& X, FoldingSetNodeID& ID) { X.Profile(ID); }
-};
   
 //===----------------------------------------------------------------------===//
 /// FoldingSet - This template class is used to instantiate a specialized
