@@ -620,14 +620,19 @@ public:
 } // end namespace llvm
 
 
-/// getCopyFromParts - Create a value that contains the
-/// specified legal parts combined into the value they represent.
+/// getCopyFromParts - Create a value that contains the specified legal parts
+/// combined into the value they represent.  If the parts combine to a type
+/// larger then ValueVT then AssertOp can be used to specify whether the extra
+/// bits are known to be zero (ISD::AssertZext) or sign extended from ValueVT
+/// (ISD::AssertSext).  Likewise TruncExact is used for floating point types to
+/// indicate that the extra bits can be discarded without losing precision.
 static SDOperand getCopyFromParts(SelectionDAG &DAG,
                                   const SDOperand *Parts,
                                   unsigned NumParts,
                                   MVT::ValueType PartVT,
                                   MVT::ValueType ValueVT,
-                                  ISD::NodeType AssertOp = ISD::DELETED_NODE) {
+                                  ISD::NodeType AssertOp = ISD::DELETED_NODE,
+                                  bool TruncExact = false) {
   if (!MVT::isVector(ValueVT) || NumParts == 1) {
     SDOperand Val = Parts[0];
 
@@ -675,7 +680,8 @@ static SDOperand getCopyFromParts(SelectionDAG &DAG,
     }
   
     if (MVT::isFloatingPoint(PartVT) && MVT::isFloatingPoint(ValueVT))
-      return DAG.getNode(ISD::FP_ROUND, ValueVT, Val, DAG.getIntPtrConstant(0));
+      return DAG.getNode(ISD::FP_ROUND, ValueVT, Val,
+                         DAG.getIntPtrConstant(TruncExact));
 
     if (MVT::getSizeInBits(PartVT) == MVT::getSizeInBits(ValueVT))
       return DAG.getNode(ISD::BIT_CONVERT, ValueVT, Val);
@@ -723,13 +729,15 @@ static SDOperand getCopyFromParts(SelectionDAG &DAG,
                      ValueVT, &Ops[0], NumIntermediates);
 }
 
-/// getCopyToParts - Create a series of nodes that contain the
-/// specified value split into legal parts.
+/// getCopyToParts - Create a series of nodes that contain the specified value
+/// split into legal parts.  If the parts contain more bits than Val, then, for
+/// integers, ExtendKind can be used to specify how to generate the extra bits.
 static void getCopyToParts(SelectionDAG &DAG,
                            SDOperand Val,
                            SDOperand *Parts,
                            unsigned NumParts,
-                           MVT::ValueType PartVT) {
+                           MVT::ValueType PartVT,
+                           ISD::NodeType ExtendKind = ISD::ANY_EXTEND) {
   TargetLowering &TLI = DAG.getTargetLoweringInfo();
   MVT::ValueType PtrVT = TLI.getPointerTy();
   MVT::ValueType ValueVT = Val.getValueType();
@@ -763,7 +771,7 @@ static void getCopyToParts(SelectionDAG &DAG,
         if (PartVT < ValueVT)
           Val = DAG.getNode(ISD::TRUNCATE, PartVT, Val);
         else
-          Val = DAG.getNode(ISD::ANY_EXTEND, PartVT, Val);
+          Val = DAG.getNode(ExtendKind, PartVT, Val);
       } else if (MVT::isFloatingPoint(PartVT) &&
                  MVT::isFloatingPoint(ValueVT)) {
         Val = DAG.getNode(ISD::FP_EXTEND, PartVT, Val);
@@ -919,38 +927,32 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
   NewValues.push_back(getRoot());
   for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {
     SDOperand RetOp = getValue(I.getOperand(i));
-    
-    // If this is an integer return value, we need to promote it ourselves to
-    // the full width of a register, since getCopyToParts and Legalize will use
-    // ANY_EXTEND rather than sign/zero.
+    MVT::ValueType VT = RetOp.getValueType();
+
     // FIXME: C calling convention requires the return type to be promoted to
     // at least 32-bit. But this is not necessary for non-C calling conventions.
-    if (MVT::isInteger(RetOp.getValueType()) && 
-        RetOp.getValueType() < MVT::i64) {
-      MVT::ValueType TmpVT;
-      if (TLI.getTypeAction(MVT::i32) == TargetLowering::Promote)
-        TmpVT = TLI.getTypeToTransformTo(MVT::i32);
-      else
-        TmpVT = MVT::i32;
-      const Function *F = I.getParent()->getParent();
-      ISD::NodeType ExtendKind = ISD::ANY_EXTEND;
-      if (F->paramHasAttr(0, ParamAttr::SExt))
-        ExtendKind = ISD::SIGN_EXTEND;
-      if (F->paramHasAttr(0, ParamAttr::ZExt))
-        ExtendKind = ISD::ZERO_EXTEND;
-      RetOp = DAG.getNode(ExtendKind, TmpVT, RetOp);
-      NewValues.push_back(RetOp);
+    if (MVT::isInteger(VT)) {
+      MVT::ValueType MinVT = TLI.getRegisterType(MVT::i32);
+      if (MVT::getSizeInBits(VT) < MVT::getSizeInBits(MinVT))
+        VT = MinVT;
+    }
+
+    unsigned NumParts = TLI.getNumRegisters(VT);
+    MVT::ValueType PartVT = TLI.getRegisterType(VT);
+    SmallVector<SDOperand, 4> Parts(NumParts);
+    ISD::NodeType ExtendKind = ISD::ANY_EXTEND;
+
+    const Function *F = I.getParent()->getParent();
+    if (F->paramHasAttr(0, ParamAttr::SExt))
+      ExtendKind = ISD::SIGN_EXTEND;
+    else if (F->paramHasAttr(0, ParamAttr::ZExt))
+      ExtendKind = ISD::ZERO_EXTEND;
+
+    getCopyToParts(DAG, RetOp, &Parts[0], NumParts, PartVT, ExtendKind);
+
+    for (unsigned i = 0; i < NumParts; ++i) {
+      NewValues.push_back(Parts[i]);
       NewValues.push_back(DAG.getConstant(false, MVT::i32));
-    } else {
-      MVT::ValueType VT = RetOp.getValueType();
-      unsigned NumParts = TLI.getNumRegisters(VT);
-      MVT::ValueType PartVT = TLI.getRegisterType(VT);
-      SmallVector<SDOperand, 4> Parts(NumParts);
-      getCopyToParts(DAG, RetOp, &Parts[0], NumParts, PartVT);
-      for (unsigned i = 0; i < NumParts; ++i) {
-        NewValues.push_back(Parts[i]);
-        NewValues.push_back(DAG.getConstant(false, MVT::i32));
-      }
     }
   }
   DAG.setRoot(DAG.getNode(ISD::RET, MVT::Other,
@@ -3953,32 +3955,16 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
     if (F.paramHasAttr(j, ParamAttr::Nest))
       Flags |= ISD::ParamFlags::Nest;
     Flags |= (OriginalAlignment << ISD::ParamFlags::OrigAlignmentOffs);
-    
-    switch (getTypeAction(VT)) {
-    default: assert(0 && "Unknown type action!");
-    case Legal: 
-      RetVals.push_back(VT);
+
+    MVT::ValueType RegisterVT = getRegisterType(VT);
+    unsigned NumRegs = getNumRegisters(VT);
+    for (unsigned i = 0; i != NumRegs; ++i) {
+      RetVals.push_back(RegisterVT);
+      // if it isn't first piece, alignment must be 1
+      if (i > 0)
+        Flags = (Flags & (~ISD::ParamFlags::OrigAlignment)) |
+          (1 << ISD::ParamFlags::OrigAlignmentOffs);
       Ops.push_back(DAG.getConstant(Flags, MVT::i32));
-      break;
-    case Promote:
-      RetVals.push_back(getTypeToTransformTo(VT));
-      Ops.push_back(DAG.getConstant(Flags, MVT::i32));
-      break;
-    case Expand: {
-      // If this is an illegal type, it needs to be broken up to fit into 
-      // registers.
-      MVT::ValueType RegisterVT = getRegisterType(VT);
-      unsigned NumRegs = getNumRegisters(VT);
-      for (unsigned i = 0; i != NumRegs; ++i) {
-        RetVals.push_back(RegisterVT);
-        // if it isn't first piece, alignment must be 1
-        if (i > 0)
-          Flags = (Flags & (~ISD::ParamFlags::OrigAlignment)) |
-            (1 << ISD::ParamFlags::OrigAlignmentOffs);
-        Ops.push_back(DAG.getConstant(Flags, MVT::i32));
-      }
-      break;
-    }
     }
   }
 
@@ -3998,39 +3984,21 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; 
       ++I, ++Idx) {
     MVT::ValueType VT = getValueType(I->getType());
-    
-    switch (getTypeAction(VT)) {
-    default: assert(0 && "Unknown type action!");
-    case Legal: 
-      Ops.push_back(SDOperand(Result, i++));
-      break;
-    case Promote: {
-      SDOperand Op(Result, i++);
-      if (MVT::isInteger(VT)) {
-        if (F.paramHasAttr(Idx, ParamAttr::SExt))
-          Op = DAG.getNode(ISD::AssertSext, Op.getValueType(), Op,
-                           DAG.getValueType(VT));
-        else if (F.paramHasAttr(Idx, ParamAttr::ZExt))
-          Op = DAG.getNode(ISD::AssertZext, Op.getValueType(), Op,
-                           DAG.getValueType(VT));
-        Op = DAG.getNode(ISD::TRUNCATE, VT, Op);
-      } else {
-        assert(MVT::isFloatingPoint(VT) && "Not int or FP?");
-        Op = DAG.getNode(ISD::FP_ROUND, VT, Op, DAG.getIntPtrConstant(1));
-      }
-      Ops.push_back(Op);
-      break;
-    }
-    case Expand: {
-      MVT::ValueType PartVT = getRegisterType(VT);
-      unsigned NumParts = getNumRegisters(VT);
-      SmallVector<SDOperand, 4> Parts(NumParts);
-      for (unsigned j = 0; j != NumParts; ++j)
-        Parts[j] = SDOperand(Result, i++);
-      Ops.push_back(getCopyFromParts(DAG, &Parts[0], NumParts, PartVT, VT));
-      break;
-    }
-    }
+    MVT::ValueType PartVT = getRegisterType(VT);
+
+    unsigned NumParts = getNumRegisters(VT);
+    SmallVector<SDOperand, 4> Parts(NumParts);
+    for (unsigned j = 0; j != NumParts; ++j)
+      Parts[j] = SDOperand(Result, i++);
+
+    ISD::NodeType AssertOp = ISD::DELETED_NODE;
+    if (F.paramHasAttr(Idx, ParamAttr::SExt))
+      AssertOp = ISD::AssertSext;
+    else if (F.paramHasAttr(Idx, ParamAttr::ZExt))
+      AssertOp = ISD::AssertZext;
+
+    Ops.push_back(getCopyFromParts(DAG, &Parts[0], NumParts, PartVT, VT,
+                                   AssertOp, true));
   }
   assert(i == NumArgRegs && "Argument register count mismatch!");
   return Ops;
@@ -4082,47 +4050,28 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
     if (Args[i].isNest)
       Flags |= ISD::ParamFlags::Nest;
     Flags |= OriginalAlignment << ISD::ParamFlags::OrigAlignmentOffs;
-    
-    switch (getTypeAction(VT)) {
-    default: assert(0 && "Unknown type action!");
-    case Legal:
-      Ops.push_back(Op);
-      Ops.push_back(DAG.getConstant(Flags, MVT::i32));
-      break;
-    case Promote:
-      if (MVT::isInteger(VT)) {
-        unsigned ExtOp;
-        if (Args[i].isSExt)
-          ExtOp = ISD::SIGN_EXTEND;
-        else if (Args[i].isZExt)
-          ExtOp = ISD::ZERO_EXTEND;
-        else
-          ExtOp = ISD::ANY_EXTEND;
-        Op = DAG.getNode(ExtOp, getTypeToTransformTo(VT), Op);
-      } else {
-        assert(MVT::isFloatingPoint(VT) && "Not int or FP?");
-        Op = DAG.getNode(ISD::FP_EXTEND, getTypeToTransformTo(VT), Op);
-      }
-      Ops.push_back(Op);
-      Ops.push_back(DAG.getConstant(Flags, MVT::i32));
-      break;
-    case Expand: {
-      MVT::ValueType PartVT = getRegisterType(VT);
-      unsigned NumParts = getNumRegisters(VT);
-      SmallVector<SDOperand, 4> Parts(NumParts);
-      getCopyToParts(DAG, Op, &Parts[0], NumParts, PartVT);
-      for (unsigned i = 0; i != NumParts; ++i) {
-        // if it isn't first piece, alignment must be 1
-        unsigned MyFlags = Flags;
-        if (i != 0)
-          MyFlags = (MyFlags & (~ISD::ParamFlags::OrigAlignment)) |
-            (1 << ISD::ParamFlags::OrigAlignmentOffs);
 
-        Ops.push_back(Parts[i]);
-        Ops.push_back(DAG.getConstant(MyFlags, MVT::i32));
-      }
-      break;
-    }
+    MVT::ValueType PartVT = getRegisterType(VT);
+    unsigned NumParts = getNumRegisters(VT);
+    SmallVector<SDOperand, 4> Parts(NumParts);
+    ISD::NodeType ExtendKind = ISD::ANY_EXTEND;
+
+    if (Args[i].isSExt)
+      ExtendKind = ISD::SIGN_EXTEND;
+    else if (Args[i].isZExt)
+      ExtendKind = ISD::ZERO_EXTEND;
+
+    getCopyToParts(DAG, Op, &Parts[0], NumParts, PartVT, ExtendKind);
+
+    for (unsigned i = 0; i != NumParts; ++i) {
+      // if it isn't first piece, alignment must be 1
+      unsigned MyFlags = Flags;
+      if (i != 0)
+        MyFlags = (MyFlags & (~ISD::ParamFlags::OrigAlignment)) |
+          (1 << ISD::ParamFlags::OrigAlignmentOffs);
+
+      Ops.push_back(Parts[i]);
+      Ops.push_back(DAG.getConstant(MyFlags, MVT::i32));
     }
   }
   
