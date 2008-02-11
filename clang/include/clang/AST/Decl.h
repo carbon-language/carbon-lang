@@ -705,6 +705,7 @@ protected:
 /// RecordDecl - Represents a struct/union/class.  For example:
 ///   struct X;                  // Forward declaration, no "body".
 ///   union Y { int A, B; };     // Has body with members A and B (FieldDecls).
+/// This decl will be marked invalid if *any* members are invalid.
 ///
 class RecordDecl : public TagDecl {
   /// HasFlexibleArrayMember - This is true if this struct ends with a flexible
