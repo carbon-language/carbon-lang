@@ -434,13 +434,18 @@ public:
       (void)getVectorTypeBreakdown(VT, VT1, NumIntermediates, RegisterVT);
       return RegisterVT;
     }
+    if (MVT::isInteger(VT)) {
+      return getRegisterType(getTypeToTransformTo(VT));
+    }
     assert(0 && "Unsupported extended type!");
   }
 
   /// getNumRegisters - Return the number of registers that this ValueType will
   /// eventually require.  This is one for any types promoted to live in larger
   /// registers, but may be more than one for types (like i64) that are split
-  /// into pieces.
+  /// into pieces.  For types like i140, which are first promoted then expanded,
+  /// it is the number of registers needed to hold all the bits of the original
+  /// type.  For an i140 on a 32 bit machine this means 5 registers.
   unsigned getNumRegisters(MVT::ValueType VT) const {
     if (!MVT::isExtendedVT(VT)) {
       assert(VT < array_lengthof(NumRegistersForVT));
@@ -450,6 +455,11 @@ public:
       MVT::ValueType VT1, VT2;
       unsigned NumIntermediates;
       return getVectorTypeBreakdown(VT, VT1, NumIntermediates, VT2);
+    }
+    if (MVT::isInteger(VT)) {
+      unsigned BitWidth = MVT::getSizeInBits(VT);
+      unsigned RegWidth = MVT::getSizeInBits(getRegisterType(VT));
+      return (BitWidth + RegWidth - 1) / RegWidth;
     }
     assert(0 && "Unsupported extended type!");
   }
