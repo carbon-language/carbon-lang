@@ -440,6 +440,9 @@ static void InitializeDiagnostics(Diagnostic &Diags) {
                                diag::MAP_IGNORE);
   if (!WarnUndefMacros)
     Diags.setDiagnosticMapping(diag::warn_pp_undef_identifier,diag::MAP_IGNORE);
+    
+  if (MSExtensions) // MS allows unnamed struct/union fields.
+    Diags.setDiagnosticMapping(diag::w_no_declarators, diag::MAP_IGNORE);
 }
 
 //===----------------------------------------------------------------------===//

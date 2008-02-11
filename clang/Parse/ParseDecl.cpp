@@ -671,8 +671,7 @@ void Parser::ParseStructDeclaration(DeclTy *TagDecl,
   
   // If there are no declarators, issue a warning.
   if (Tok.is(tok::semi)) {
-    if (!getLang().Microsoft) // MS allows unnamed struct/union fields.
-      Diag(SpecQualLoc, diag::w_no_declarators);
+    Diag(SpecQualLoc, diag::w_no_declarators);
     return;
   }
 
