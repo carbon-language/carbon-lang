@@ -84,6 +84,9 @@ public:
   public:
     Factory() {}
     
+    Factory(BumpPtrAllocator& Alloc)
+      : F(Alloc) {}
+    
     ImmutableMap GetEmptyMap() { return ImmutableMap(F.GetEmptyTree()); }
     
     ImmutableMap Add(ImmutableMap Old, key_type_ref K, data_type_ref D) {

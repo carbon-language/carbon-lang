@@ -16,6 +16,7 @@
 
 #include "llvm/Support/Allocator.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/Support/DataTypes.h"
 #include <cassert>
 
 namespace llvm {
@@ -334,15 +335,31 @@ class ImutAVLFactory {
   
   typedef FoldingSet<TreeTy> CacheTy;
   
-  CacheTy Cache;  
-  BumpPtrAllocator Allocator;    
+  CacheTy Cache;
+  uintptr_t Allocator;
+  
+  bool ownsAllocator() const {
+    return Allocator & 0x1 ? false : true;
+  }
+
+  BumpPtrAllocator& getAllocator() const { 
+    return *reinterpret_cast<BumpPtrAllocator*>(Allocator & ~0x1);
+  }
   
   //===--------------------------------------------------===//    
   // Public interface.
   //===--------------------------------------------------===//
   
 public:
-  ImutAVLFactory() {}
+  ImutAVLFactory()
+    : Allocator(reinterpret_cast<uintptr_t>(new BumpPtrAllocator())) {}
+  
+  ImutAVLFactory(BumpPtrAllocator& Alloc)
+    : Allocator(reinterpret_cast<uintptr_t>(&Alloc) | 0x1) {}
+  
+  ~ImutAVLFactory() {
+    if (ownsAllocator()) delete &getAllocator();
+  }
   
   TreeTy* Add(TreeTy* T, value_type_ref V) {
     T = Add_internal(V,T);
@@ -357,8 +374,6 @@ public:
   }
   
   TreeTy* GetEmptyTree() const { return NULL; }
-  
-  BumpPtrAllocator& getAllocator() { return Allocator; }
   
   //===--------------------------------------------------===//    
   // A bunch of quick helper functions used for reasoning
@@ -450,7 +465,8 @@ private:
     // Create it.
 
     // Allocate the new tree node and insert it into the cache.
-    TreeTy* T = (TreeTy*) Allocator.Allocate<TreeTy>();    
+    BumpPtrAllocator& A = getAllocator();
+    TreeTy* T = (TreeTy*) A.Allocate<TreeTy>();
     new (T) TreeTy(L,R,V,IncrementHeight(L,R));
 
     // We do not insert 'T' into the FoldingSet here.  This is because
@@ -929,6 +945,9 @@ public:
     
   public:
     Factory() {}
+    
+    Factory(BumpPtrAllocator& Alloc)
+      : F(Alloc) {}
     
     /// GetEmptySet - Returns an immutable set that contains no elements.
     ImmutableSet GetEmptySet() { return ImmutableSet(F.GetEmptyTree()); }
