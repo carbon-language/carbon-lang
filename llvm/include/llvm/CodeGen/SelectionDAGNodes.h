@@ -1425,7 +1425,7 @@ class MemOperandSDNode : public SDNode {
 protected:
   friend class SelectionDAG;
   /// Create a MemOperand node
-  explicit MemOperandSDNode(MemOperand mo)
+  explicit MemOperandSDNode(const MemOperand &mo)
     : SDNode(ISD::MEMOPERAND, getSDVTList(MVT::Other)), MO(mo) {}
 
 public:
