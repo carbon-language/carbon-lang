@@ -303,17 +303,12 @@ void RALocal::spillVirtReg(MachineBasicBlock &MBB,
     const TargetRegisterClass *RC = MF->getRegInfo().getRegClass(VirtReg);
     int FrameIndex = getStackSpaceFor(VirtReg, RC);
     DOUT << " to stack slot #" << FrameIndex;
-    TII->storeRegToStackSlot(MBB, I, PhysReg, true, FrameIndex, RC);
-
     // If the instruction reads the register that's spilled, (e.g. this can
     // happen if it is a move to a physical register), then the spill
     // instruction is not a kill.
-    if (I != MBB.end() && I->findRegisterUseOperandIdx(PhysReg) != -1) {
-      MachineBasicBlock::iterator StoreMI = prior(I);
-      int Idx = StoreMI->findRegisterUseOperandIdx(PhysReg, true);
-      assert(Idx != -1 && "Unrecognized spill instruction!");
-      StoreMI->getOperand(Idx).setIsKill(false);
-    }
+    bool isKill = !(I != MBB.end() &&
+                    I->findRegisterUseOperandIdx(PhysReg) != -1);
+    TII->storeRegToStackSlot(MBB, I, PhysReg, isKill, FrameIndex, RC);
     ++NumStores;   // Update statistics
   }
 
