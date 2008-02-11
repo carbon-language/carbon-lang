@@ -203,8 +203,6 @@ public:
     // an l-value.
     if (ICExpr->getSubExpr()->getType()->isArrayType()) {
       // Note that VLAs can't exist for global variables.
-      // The only thing that can have array type like this is a
-      // DeclRefExpr(FileVarDecl)?
       llvm::Constant *C = EmitLValue(ICExpr->getSubExpr());
       assert(isa<llvm::PointerType>(C->getType()) &&
              isa<llvm::ArrayType>(cast<llvm::PointerType>(C->getType())
