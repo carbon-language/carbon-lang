@@ -126,10 +126,10 @@ namespace llvm {
 
     Value *visitMulExpr(SCEVMulExpr *S);
 
-    Value *visitSDivExpr(SCEVSDivExpr *S) {
+    Value *visitUDivExpr(SCEVUDivExpr *S) {
       Value *LHS = expand(S->getLHS());
       Value *RHS = expand(S->getRHS());
-      return InsertBinop(Instruction::SDiv, LHS, RHS, InsertPt);
+      return InsertBinop(Instruction::UDiv, LHS, RHS, InsertPt);
     }
 
     Value *visitAddRecExpr(SCEVAddRecExpr *S);

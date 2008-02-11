@@ -225,7 +225,7 @@ namespace llvm {
       Ops.push_back(RHS);
       return getMulExpr(Ops);
     }
-    SCEVHandle getSDivExpr(const SCEVHandle &LHS, const SCEVHandle &RHS);
+    SCEVHandle getUDivExpr(const SCEVHandle &LHS, const SCEVHandle &RHS);
     SCEVHandle getAddRecExpr(const SCEVHandle &Start, const SCEVHandle &Step,
                              const Loop *L);
     SCEVHandle getAddRecExpr(std::vector<SCEVHandle> &Operands,
