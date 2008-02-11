@@ -97,7 +97,8 @@ llvm 2.2, and will be redesigned or removed in llvm 2.3.</p>
 LLVM 2.1, llvm-gcc 4.2 was beta).  Since LLVM 2.1, the llvm-gcc 4.2 front-end
 has made leaps and bounds and is now at least as good as 4.0 in virtually every
 area, and is better in several areas (for example, exception handling
-correctness, support for Ada and Fortran).  We strongly recommend that you
+correctness, support for Ada and Fortran, better ABI compatibility, etc).  We 
+strongly recommend that you
 migrate from llvm-gcc 4.0 to llvm-gcc 4.2 in this release cycle because
 <b>LLVM 2.2 is the last release that will support llvm-gcc 4.0</b>:  LLVM 2.3
 will only support the llvm-gcc 4.2 front-end.</p>
@@ -265,7 +266,8 @@ Substitution and Lazy Cycle Detection.  Note that Andersen's is not enabled in
 llvm-gcc by default, but can be accessed through 'opt'.</li>
 
 <li>Dan Gohman contributed several enhancements to Loop Strength Reduction (LSR)
-to make it more aggressive with SSE intrinsics.</li> 
+to make it more aggressive with SSE intrinsics and when induction variables are
+used by non-memory instructions.</li> 
 
 <li>Evan added support for simple exit value substitution to LSR.</li>
 
