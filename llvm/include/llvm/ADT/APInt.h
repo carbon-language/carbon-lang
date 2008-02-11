@@ -371,9 +371,9 @@ public:
 
   /// Constructs an APInt value that has a contiguous range of bits set. The
   /// bits from loBit to hiBit will be set. All other bits will be zero. For
-  /// example, with parameters(32, 15, 0) you would get 0x0000FFFF. If hiBit is
+  /// example, with parameters(32, 0, 15) you would get 0x0000FFFF. If hiBit is
   /// less than loBit then the set bits "wrap". For example, with 
-  /// parameters (32, 3, 28), you would get 0xF000000F. 
+  /// parameters (32, 28, 3), you would get 0xF000000F. 
   /// @param numBits the intended bit width of the result
   /// @param loBit the index of the lowest bit set.
   /// @param hiBit the index of the highest bit set.
@@ -384,7 +384,7 @@ public:
     assert(loBit < numBits && "loBit out of range");
     if (hiBit < loBit)
       return getLowBitsSet(numBits, hiBit+1) |
-             getHighBitsSet(numBits, numBits-loBit+1);
+             getHighBitsSet(numBits, numBits-loBit);
     return getLowBitsSet(numBits, hiBit-loBit+1).shl(loBit);
   }
 
