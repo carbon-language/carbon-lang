@@ -16,3 +16,11 @@ void f2(int a, int b, ...)
     __builtin_va_start(ap, a); // expected-warning {{second parameter of 'va_start' not last named argument}}
     __builtin_va_start(ap, b);
 }
+
+void f3(float a, ...)
+{
+    __builtin_va_list ap;
+    
+    __builtin_va_start(ap, a);
+    __builtin_va_start(ap, (a));
+}
