@@ -36,7 +36,7 @@ public:
     
   llvm::Constant *VisitStmt(Stmt *S) {
     CGM.WarnUnsupported(S, "constant expression");
-    return 0;
+    return llvm::UndefValue::get(CGM.getTypes().ConvertType(cast<Expr>(S)->getType()));
   }
   
   llvm::Constant *VisitParenExpr(ParenExpr *PE) { 
@@ -513,11 +513,7 @@ public:
 
   llvm::Constant *EmitLValue(Expr *E) {
     switch (E->getStmtClass()) {
-    default: {
-      CGM.WarnUnsupported(E, "constant l-value expression");
-      llvm::Type *Ty = llvm::PointerType::getUnqual(ConvertType(E->getType()));
-      return llvm::UndefValue::get(Ty);
-    }
+    default: break;
     case Expr::ParenExprClass:
       // Elide parenthesis
       return EmitLValue(cast<ParenExpr>(E)->getSubExpr());
@@ -535,12 +531,11 @@ public:
       ValueDecl *Decl = cast<DeclRefExpr>(E)->getDecl();
       if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(Decl))
         return CGM.GetAddrOfFunctionDecl(FD, false);
-      if (const VarDecl* VD = dyn_cast<VarDecl>(Decl))
+      if (const FileVarDecl* VD = dyn_cast<FileVarDecl>(Decl))
         return CGM.GetAddrOfGlobalVar(VD, false);
       // We can end up here with static block-scope variables (and others?)
       // FIXME: How do we implement block-scope variables?!
-      assert(0 && "Unimplemented Decl type");
-      return 0;
+      break;
     }
     case Expr::MemberExprClass: {
       MemberExpr* ME = cast<MemberExpr>(E);
@@ -576,8 +571,8 @@ public:
     case Expr::UnaryOperatorClass: {
       UnaryOperator *Exp = cast<UnaryOperator>(E);
       switch (Exp->getOpcode()) {
-        default: assert(0 && "Unsupported unary operator.");
-        case UnaryOperator::Extension:
+      default: break;
+      case UnaryOperator::Extension:
         // Extension is just a wrapper for expressions
         return EmitLValue(Exp->getSubExpr());
       case UnaryOperator::Real:
@@ -595,8 +590,12 @@ public:
         // The address of a deref is just the value of the expression
         return Visit(Exp->getSubExpr());
       }
+      break;
     }
-    } 
+    }
+    CGM.WarnUnsupported(E, "constant l-value expression");
+    llvm::Type *Ty = llvm::PointerType::getUnqual(ConvertType(E->getType()));
+    return llvm::UndefValue::get(Ty);
   }
 
 };
