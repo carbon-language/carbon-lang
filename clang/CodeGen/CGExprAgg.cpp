@@ -142,8 +142,10 @@ void AggExprEmitter::VisitImplicitCastExpr(ImplicitCastExpr *E)
 {
   QualType STy = E->getSubExpr()->getType().getCanonicalType();
   QualType Ty = E->getType().getCanonicalType();
-  
-  assert(STy.getUnqualifiedType() == Ty && "Implicit cast types must be equal");
+
+  assert(CGF.getContext().typesAreCompatible(
+             STy.getUnqualifiedType(), Ty.getUnqualifiedType())
+         && "Implicit cast types must be compatible");
   
   Visit(E->getSubExpr());
 }
@@ -184,17 +186,22 @@ void AggExprEmitter::VisitBinaryOperator(const BinaryOperator *E) {
 }
 
 void AggExprEmitter::VisitBinAssign(const BinaryOperator *E) {
-  assert(E->getLHS()->getType().getCanonicalType() ==
-         E->getRHS()->getType().getCanonicalType() && "Invalid assignment");
+  // For an assignment to work, the value on the right has
+  // to be compatible with the value on the left.
+  assert(CGF.getContext().typesAreCompatible(
+             E->getLHS()->getType().getUnqualifiedType(),
+             E->getRHS()->getType().getUnqualifiedType())
+         && "Invalid assignment");
   LValue LHS = CGF.EmitLValue(E->getLHS());
 
   // Codegen the RHS so that it stores directly into the LHS.
   CGF.EmitAggExpr(E->getRHS(), LHS.getAddress(), false /*FIXME: VOLATILE LHS*/);
 
+  if (DestPtr == 0)
+    return;
+
   // If the result of the assignment is used, copy the RHS there also.
-  if (DestPtr) {
-    assert(0 && "FIXME: Chained agg assignment not implemented yet");
-  }
+  EmitAggregateCopy(DestPtr, LHS.getAddress(), E->getType());
 }
 
 void AggExprEmitter::VisitConditionalOperator(const ConditionalOperator *E) {
