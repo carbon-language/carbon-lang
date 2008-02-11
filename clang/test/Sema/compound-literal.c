@@ -9,7 +9,7 @@ static int *p = (int []){2,4};
 static int x = (int){1}; // -expected-error {{initializer element is not constant}} -expected-warning{{braces around scalar initializer}}
 
 static int *p2 = (int []){2,x}; // -expected-error {{initializer element is not constant}}
-static int *p3 = (int []){2,"x"}; // -expected-warning {{incompatible pointer to integer conversion initializing 'char *', expected 'int'}}
+static int *p3 = (int []){2,"x"}; // -expected-warning {{incompatible pointer to integer conversion initializing 'char [2]', expected 'int'}}
 
 typedef struct Test {int a;int b;} Test;
 static Test* ll = &(Test) {0,0};

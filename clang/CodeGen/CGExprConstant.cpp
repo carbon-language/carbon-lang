@@ -205,9 +205,7 @@ public:
       // Note that VLAs can't exist for global variables.
       // The only thing that can have array type like this is a
       // DeclRefExpr(FileVarDecl)?
-      const DeclRefExpr *DRE = cast<DeclRefExpr>(ICExpr->getSubExpr());
-      const VarDecl *VD = cast<VarDecl>(DRE->getDecl());
-      llvm::Constant *C = CGM.GetAddrOfGlobalVar(VD, false);
+      llvm::Constant *C = EmitLValue(ICExpr->getSubExpr());
       assert(isa<llvm::PointerType>(C->getType()) &&
              isa<llvm::ArrayType>(cast<llvm::PointerType>(C->getType())
                                   ->getElementType()));
@@ -232,11 +230,7 @@ public:
   llvm::Constant *VisitStringLiteral(StringLiteral *E) {
     const char *StrData = E->getStrData();
     unsigned Len = E->getByteLength();
-    
-    // If the string has a pointer type, emit it as a global and use the pointer
-    // to the global as its value.
-    if (E->getType()->isPointerType()) 
-      return CGM.GetAddrOfConstantString(std::string(StrData, StrData + Len));
+    assert(!E->getType()->isPointerType() && "Strings are always arrays");
     
     // Otherwise this must be a string initializing an array in a static
     // initializer.  Don't emit it as the address of the string, emit the string
@@ -532,7 +526,7 @@ public:
       // to be the only use of the variable, so we just generate it here.
       CompoundLiteralExpr *CLE = cast<CompoundLiteralExpr>(E);
       llvm::Constant* C = Visit(CLE->getInitializer());
-      C = new llvm::GlobalVariable(C->getType(), E->getType().isConstQualified(), 
+      C = new llvm::GlobalVariable(C->getType(),E->getType().isConstQualified(), 
                                    llvm::GlobalValue::InternalLinkage,
                                    C, ".compoundliteral", &CGM.getModule());
       return C;
@@ -541,8 +535,8 @@ public:
       ValueDecl *Decl = cast<DeclRefExpr>(E)->getDecl();
       if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(Decl))
         return CGM.GetAddrOfFunctionDecl(FD, false);
-      if (const FileVarDecl* FVD = dyn_cast<FileVarDecl>(Decl))
-        return CGM.GetAddrOfGlobalVar(FVD, false);
+      if (const VarDecl* VD = dyn_cast<VarDecl>(Decl))
+        return CGM.GetAddrOfGlobalVar(VD, false);
       // We can end up here with static block-scope variables (and others?)
       // FIXME: How do we implement block-scope variables?!
       assert(0 && "Unimplemented Decl type");

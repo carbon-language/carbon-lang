@@ -384,7 +384,7 @@ GetAddrOfConstantCFString(const std::string &str) {
   return GV;
 }
 
-/// GenerateWritableString -- Creates storage for a string literal
+/// GenerateWritableString -- Creates storage for a string literal.
 static llvm::Constant *GenerateStringLiteral(const std::string &str, 
                                              bool constant,
                                              CodeGenModule &CGM) {
@@ -395,14 +395,11 @@ static llvm::Constant *GenerateStringLiteral(const std::string &str,
   C = new llvm::GlobalVariable(C->getType(), constant, 
                                llvm::GlobalValue::InternalLinkage,
                                C, ".str", &CGM.getModule());
-  llvm::Constant *Zero = llvm::Constant::getNullValue(llvm::Type::Int32Ty);
-  llvm::Constant *Zeros[] = { Zero, Zero };
-  C = llvm::ConstantExpr::getGetElementPtr(C, Zeros, 2);
   return C;
 }
 
-/// CodeGenModule::GetAddrOfConstantString -- returns a pointer to the first 
-/// element of a character array containing the literal.
+/// CodeGenModule::GetAddrOfConstantString -- returns a pointer to the character
+/// array containing the literal.  The result is pointer to array type.
 llvm::Constant *CodeGenModule::GetAddrOfConstantString(const std::string &str) {
   // Don't share any string literals if writable-strings is turned on.
   if (Features.WritableStrings)

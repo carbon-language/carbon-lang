@@ -42,23 +42,27 @@ Sema::ActOnStringLiteral(const Token *StringToks, unsigned NumStringToks) {
   llvm::SmallVector<SourceLocation, 4> StringTokLocs;
   for (unsigned i = 0; i != NumStringToks; ++i)
     StringTokLocs.push_back(StringToks[i].getLocation());
-  
-  // FIXME: handle wchar_t
-  QualType t;
-  
-  if (Literal.Pascal) 
-    t = Context.getPointerType(Context.UnsignedCharTy);
-  else
-    t = Context.getPointerType(Context.CharTy);
-  
+
+  // Verify that pascal strings aren't too large.
   if (Literal.Pascal && Literal.GetStringLength() > 256)
     return Diag(StringToks[0].getLocation(), diag::err_pascal_string_too_long,
                 SourceRange(StringToks[0].getLocation(),
                             StringToks[NumStringToks-1].getLocation()));
   
+  QualType StrTy = Context.CharTy;
+  // FIXME: handle wchar_t
+  if (Literal.Pascal) StrTy = Context.UnsignedCharTy;
+  
+  // Get an array type for the string, according to C99 6.4.5.  This includes
+  // the nul terminator character as well as the string length for pascal
+  // strings.
+  StrTy = Context.getConstantArrayType(StrTy,
+                                   llvm::APInt(32, Literal.GetStringLength()+1),
+                                       ArrayType::Normal, 0);
+  
   // Pass &StringTokLocs[0], StringTokLocs.size() to factory!
   return new StringLiteral(Literal.GetString(), Literal.GetStringLength(), 
-                           Literal.AnyWide, t, 
+                           Literal.AnyWide, StrTy, 
                            StringToks[0].getLocation(),
                            StringToks[NumStringToks-1].getLocation());
 }

@@ -80,6 +80,9 @@ public:
   ///
   llvm::Function *getBuiltinLibFunction(unsigned BuiltinID);
   llvm::Constant *GetAddrOfConstantCFString(const std::string& str);
+
+  /// GetAddrOfConstantString -- returns a pointer to the character
+  /// array containing the literal.  The result is pointer to array type.
   llvm::Constant *GetAddrOfConstantString(const std::string& str);
   llvm::Function *getMemCpyFn();
   llvm::Function *getIntrinsic(unsigned IID, const llvm::Type **Tys = 0, 

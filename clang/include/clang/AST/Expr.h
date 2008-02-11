@@ -319,7 +319,8 @@ public:
 /// StringLiteral - This represents a string literal expression, e.g. "foo"
 /// or L"bar" (wide strings).  The actual string is returned by getStrData()
 /// is NOT null-terminated, and the length of the string is determined by
-/// calling getByteLength().
+/// calling getByteLength().  The C type for a string is always a
+/// ConstantArrayType.
 class StringLiteral : public Expr {
   const char *StrData;
   unsigned ByteLength;
