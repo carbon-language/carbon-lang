@@ -37,51 +37,7 @@
 
 #include <functional>
 
-namespace clang {  
-
-class ExprBindKey {
-  uintptr_t Raw;  
-  void operator=(const ExprBindKey& RHS); // Do not implement.
-  
-  inline void* getPtr() const { 
-    return reinterpret_cast<void*>(Raw & ~Mask);
-  }
-  
-public:
-  enum  Kind { IsSubExpr=0x0, IsBlkExpr=0x1, Mask=0x1 };
-  
-  inline Kind getKind() const {
-    return (Kind) (Raw & Mask);
-  }
-    
-  inline Expr* getExpr() const {
-    return (Expr*) getPtr();
-  }
-    
-  ExprBindKey(Expr* E, bool isBlkExpr = false) 
-  : Raw(reinterpret_cast<uintptr_t>(E) | (isBlkExpr ? IsBlkExpr : IsSubExpr)){
-    assert(E && "Tracked statement cannot be NULL.");
-  }
-  
-  bool isSubExpr() const { return getKind() == IsSubExpr; }
-  bool isBlkExpr() const { return getKind() == IsBlkExpr; }
-  
-  inline void Profile(llvm::FoldingSetNodeID& ID) const {
-    ID.AddPointer(getPtr());
-  }
-  
-  inline bool operator==(const ExprBindKey& X) const {
-    return getPtr() == X.getPtr();
-  }
-  
-  inline bool operator!=(const ExprBindKey& X) const {
-    return !operator==(X);
-  }
-  
-  inline bool operator<(const ExprBindKey& X) const { 
-    return getPtr() < X.getPtr();
-  }
-};
+namespace clang {
 
 //===----------------------------------------------------------------------===//
 // ValueState - An ImmutableMap type Stmt*/Decl*/Symbols to RValues.
@@ -90,7 +46,7 @@ public:
 namespace vstate {
   typedef llvm::ImmutableSet<llvm::APSInt*> IntSetTy;
   
-  typedef llvm::ImmutableMap<ExprBindKey,RValue>           ExprBindingsTy;  
+  typedef llvm::ImmutableMap<Expr*,RValue>                 ExprBindingsTy;
   typedef llvm::ImmutableMap<VarDecl*,RValue>              VarBindingsTy;  
   typedef llvm::ImmutableMap<SymbolID,IntSetTy>            ConstantNotEqTy;
   typedef llvm::ImmutableMap<SymbolID,const llvm::APSInt*> ConstantEqTy;
@@ -105,7 +61,8 @@ private:
   void operator=(const ValueStateImpl& R) const;
 
 public:
-  vstate::ExprBindingsTy     ExprBindings;
+  vstate::ExprBindingsTy     SubExprBindings;
+  vstate::ExprBindingsTy     BlockExprBindings;  
   vstate::VarBindingsTy      VarBindings;
   vstate::ConstantNotEqTy    ConstantNotEq;
   vstate::ConstantEqTy       ConstantEq;
@@ -115,13 +72,18 @@ public:
                  vstate::VarBindingsTy VB,
                  vstate::ConstantNotEqTy CNE,
                  vstate::ConstantEqTy CE)
-    : ExprBindings(EB), VarBindings(VB), ConstantNotEq(CNE), ConstantEq(CE) {}
+    : SubExprBindings(EB), 
+      BlockExprBindings(EB),
+      VarBindings(VB),
+      ConstantNotEq(CNE),
+      ConstantEq(CE) {}
   
   /// Copy ctor - We must explicitly define this or else the "Next" ptr
   ///  in FoldingSetNode will also get copied.
   ValueStateImpl(const ValueStateImpl& RHS)
     : llvm::FoldingSetNode(),
-      ExprBindings(RHS.ExprBindings),
+      SubExprBindings(RHS.SubExprBindings),
+      BlockExprBindings(RHS.BlockExprBindings),
       VarBindings(RHS.VarBindings),
       ConstantNotEq(RHS.ConstantNotEq),
       ConstantEq(RHS.ConstantEq) {} 
@@ -131,7 +93,8 @@ public:
   /// Profile - Profile the contents of a ValueStateImpl object for use
   ///  in a FoldingSet.
   static void Profile(llvm::FoldingSetNodeID& ID, const ValueStateImpl& V) {
-    V.ExprBindings.Profile(ID);
+    V.SubExprBindings.Profile(ID);
+    V.BlockExprBindings.Profile(ID);
     V.VarBindings.Profile(ID);
     V.ConstantNotEq.Profile(ID);
     V.ConstantEq.Profile(ID);
@@ -160,6 +123,8 @@ public:
   
   // Accessors.  
   ValueStateImpl* getImpl() const { return Data; }
+  ValueStateImpl& operator*() { return *Data; }
+  ValueStateImpl* operator->() { return Data; }
 
   // Typedefs.
   typedef vstate::IntSetTy                 IntSetTy;
@@ -177,13 +142,17 @@ public:
   
   // Iterators.
 
-  typedef VarBindingsTy::iterator vb_iterator;  
-  vb_iterator vb_begin() { return Data->VarBindings.begin(); }
-  vb_iterator vb_end() { return Data->VarBindings.end(); }
+  typedef VarBindingsTy::iterator vb_iterator;
+  vb_iterator vb_begin() const { return Data->VarBindings.begin(); }
+  vb_iterator vb_end() const { return Data->VarBindings.end(); }
+    
+  typedef ExprBindingsTy::iterator seb_iterator;
+  seb_iterator seb_begin() const { return Data->SubExprBindings.begin(); }
+  seb_iterator seb_end() const { return Data->SubExprBindings.end(); }
   
-  typedef ExprBindingsTy::iterator eb_iterator;
-  eb_iterator eb_begin() { return Data->ExprBindings.begin(); }
-  eb_iterator eb_end() { return Data->ExprBindings.end(); }
+  typedef ExprBindingsTy::iterator beb_iterator;
+  beb_iterator beb_begin() const { return Data->BlockExprBindings.begin(); }
+  beb_iterator beb_end() const { return Data->BlockExprBindings.end(); }
   
   // Profiling and equality testing.
   
@@ -198,6 +167,11 @@ public:
   void Profile(llvm::FoldingSetNodeID& ID) const {
     Profile(ID, *this);
   }
+  
+  void printDOT(std::ostream& Out) const;
+  void print(std::ostream& Out) const;
+  void print() const { print(*llvm::cerr); }
+  
 };  
   
 template<> struct GRTrait<ValueState> {
@@ -233,38 +207,58 @@ private:
 
   /// Alloc - A BumpPtrAllocator to allocate states.
   llvm::BumpPtrAllocator& Alloc;
+  
+private:
+  
+  ValueState::ExprBindingsTy Remove(ValueState::ExprBindingsTy B, Expr* E) {
+    return EXFactory.Remove(B, E);
+  }    
+    
+  ValueState::VarBindingsTy  Remove(ValueState::VarBindingsTy B, VarDecl* V) {
+    return VBFactory.Remove(B, V);
+  }
 
-  StateTy getPersistentState(const ValueState& St);
+  inline ValueState::ExprBindingsTy Remove(const ValueStateImpl& V, Expr* E) {
+    return Remove(V.BlockExprBindings, E);
+  }
+  
+  inline ValueState::VarBindingsTy Remove(const ValueStateImpl& V, VarDecl* D) {
+    return Remove(V.VarBindings, D);
+  }
+                  
+  ValueState BindVar(ValueState St, VarDecl* D, const RValue& V);
+  ValueState UnbindVar(ValueState St, VarDecl* D);  
   
 public:  
   ValueStateManager(ASTContext& Ctx, llvm::BumpPtrAllocator& alloc) 
     : ValMgr(Ctx, alloc), Alloc(alloc) {}
   
-  StateTy getInitialState();
+  ValueState getInitialState();
         
   ValueManager& getValueManager() { return ValMgr; }
   SymbolManager& getSymbolManager() { return SymMgr; }
   
-  StateTy RemoveDeadBindings(StateTy St, Stmt* Loc, 
-                             const LiveVariables& Liveness);
+  ValueState RemoveDeadBindings(ValueState St, Stmt* Loc, 
+                                const LiveVariables& Liveness);
   
-  StateTy SetValue(StateTy St, Expr* S, bool isBlkExpr, const RValue& V);
-  StateTy SetValue(StateTy St, const LValue& LV, const RValue& V);
+  ValueState RemoveSubExprBindings(ValueState St) {
+    ValueStateImpl NewSt = *St;
+    NewSt.SubExprBindings = EXFactory.GetEmptyMap();
+    return getPersistentState(NewSt);    
+  }
+    
+  
+  ValueState SetValue(ValueState St, Expr* S, bool isBlkExpr, const RValue& V);
+  ValueState SetValue(ValueState St, const LValue& LV, const RValue& V);
 
-  RValue GetValue(const StateTy& St, Expr* S, bool* hasVal = NULL);
-  RValue GetValue(const StateTy& St, const LValue& LV, QualType* T = NULL);    
-  LValue GetLValue(const StateTy& St, Expr* S);
+  RValue GetValue(ValueState St, Expr* S, bool* hasVal = NULL);
+  RValue GetValue(ValueState St, const LValue& LV, QualType* T = NULL);    
+  LValue GetLValue(ValueState St, Expr* S);
   
-  StateTy Add(StateTy St, ExprBindKey K, const RValue& V);
-  StateTy Remove(StateTy St, ExprBindKey K);
+  ValueState getPersistentState(const ValueStateImpl& Impl);
   
-  StateTy Add(StateTy St, VarDecl* D, const RValue& V);
-  StateTy Remove(StateTy St, VarDecl* D);
-  
-  StateTy getPersistentState(const ValueStateImpl& Impl);
-  
-  StateTy AddEQ(StateTy St, SymbolID sym, const llvm::APSInt& V);
-  StateTy AddNE(StateTy St, SymbolID sym, const llvm::APSInt& V);
+  ValueState AddEQ(ValueState St, SymbolID sym, const llvm::APSInt& V);
+  ValueState AddNE(ValueState St, SymbolID sym, const llvm::APSInt& V);
 };
   
 } // end clang namespace

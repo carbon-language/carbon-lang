@@ -348,43 +348,8 @@ GRConstants::SetValue(StateTy St, const LValue& LV, const RValue& V) {
 void GRConstants::ProcessBranch(Expr* Condition, Stmt* Term,
                                 BranchNodeBuilder& builder) {
 
-  StateTy PrevState = builder.getState();
-  
-  // Remove old bindings for subexpressions.  
-  for (StateTy::eb_iterator I=PrevState.eb_begin(), E=PrevState.eb_end(); I!=E; ++I)
-    if (I.getKey().isSubExpr())
-      PrevState = StateMgr.Remove(PrevState, I.getKey());
-  
-  // Remove terminator-specific bindings.
-  switch (Term->getStmtClass()) {
-    default: break;
-      
-    case Stmt::BinaryOperatorClass: { // '&&', '||'
-      BinaryOperator* B = cast<BinaryOperator>(Term);
-      // FIXME: Liveness analysis should probably remove these automatically.
-      //   Verify later when we converge to an 'optimization' stage.
-      PrevState = StateMgr.Remove(PrevState, B->getRHS());
-      break;
-    }
-      
-    case Stmt::ConditionalOperatorClass: { // '?' operator
-      ConditionalOperator* C = cast<ConditionalOperator>(Term);
-      // FIXME: Liveness analysis should probably remove these automatically.
-      //   Verify later when we converge to an 'optimization' stage.
-      if (Expr* L = C->getLHS()) PrevState = StateMgr.Remove(PrevState, L);
-      PrevState = StateMgr.Remove(PrevState, C->getRHS());
-      break;
-    }
-      
-    case Stmt::ChooseExprClass: { // __builtin_choose_expr
-      ChooseExpr* C = cast<ChooseExpr>(Term);
-      // FIXME: Liveness analysis should probably remove these automatically.
-      //   Verify later when we converge to an 'optimization' stage.
-      PrevState = StateMgr.Remove(PrevState, C->getRHS());
-      PrevState = StateMgr.Remove(PrevState, C->getRHS());
-      break;   
-    }
-  }
+  // Remove old bindings for subexpressions.
+  StateTy PrevState = StateMgr.RemoveSubExprBindings(builder.getState());
   
   RValue V = GetValue(PrevState, Condition);
   
@@ -1119,15 +1084,6 @@ namespace llvm {
 template<>
 struct VISIBILITY_HIDDEN DOTGraphTraits<GRConstants::NodeTy*> :
   public DefaultDOTGraphTraits {
-
-  static void PrintKindLabel(std::ostream& Out, ExprBindKey::Kind kind) {
-    switch (kind) {
-      case ExprBindKey::IsSubExpr:  Out << "Sub-Expressions:\\l"; break;
-      case ExprBindKey::IsBlkExpr: Out << "Block-level Expressions:\\l"; break;
-      default: assert (false && "Unknown ExprBindKey type.");
-    }
-  }
-    
     
   static void PrintVarBindings(std::ostream& Out, GRConstants::StateTy St) {
 
@@ -1149,26 +1105,43 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRConstants::NodeTy*> :
     
   }
     
-  static void PrintExprBindings(std::ostream& Out, GRConstants::StateTy St,
-                                ExprBindKey::Kind kind) {
+    
+  static void PrintSubExprBindings(std::ostream& Out, GRConstants::StateTy St) {
+    
+    bool isFirst = true;
+    
+    for (GRConstants::StateTy::seb_iterator I=St.seb_begin(), E=St.seb_end();
+                                            I != E;++I) {        
+      
+      if (isFirst) {
+        Out << "\\l\\lSub-Expressions:\\l";
+        isFirst = false;
+      }
+      else
+        Out << "\\l";
+      
+      Out << " (" << (void*) I.getKey() << ") ";
+      I.getKey()->printPretty(Out);
+      Out << " : ";
+      I.getData().print(Out);
+    }
+  }
+    
+  static void PrintBlkExprBindings(std::ostream& Out, GRConstants::StateTy St) {
+        
     bool isFirst = true;
 
-    for (GRConstants::StateTy::eb_iterator I=St.eb_begin(),
-                                           E=St.eb_end(); I!=E;++I) {        
-      
-      if (I.getKey().getKind() != kind)
-        continue;
-    
+    for (GRConstants::StateTy::beb_iterator I=St.beb_begin(), E=St.beb_end();
+                                            I != E; ++I) {      
       if (isFirst) {
-        Out << "\\l\\l";
-        PrintKindLabel(Out, kind);
+        Out << "\\l\\lBlock-level Expressions:\\l";
         isFirst = false;
       }
       else
         Out << "\\l";
 
-      Out << " (" << (void*) I.getKey().getExpr() << ") ";
-      I.getKey().getExpr()->printPretty(Out);
+      Out << " (" << (void*) I.getKey() << ") ";
+      I.getKey()->printPretty(Out);
       Out << " : ";
       I.getData().print(Out);
     }
@@ -1275,12 +1248,7 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRConstants::NodeTy*> :
     
     Out << "\\|StateID: " << (void*) N->getState().getImpl() << "\\|";
 
-    PrintVarBindings(Out, N->getState());
-    PrintExprBindings(Out, N->getState(), ExprBindKey::IsBlkExpr);
-    PrintExprBindings(Out, N->getState(), ExprBindKey::IsSubExpr);
-    
-    PrintEQ(Out, N->getState());
-    PrintNE(Out, N->getState());
+    N->getState().printDOT(Out);
       
     Out << "\\l";
     return Out.str();
