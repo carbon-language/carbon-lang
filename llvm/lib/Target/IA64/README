@@ -1,59 +1,11 @@
-*** README for the LLVM IA64 Backend "Version 0.01" - March 18, 2005
-*** Quote for this version:
-
-      "Kaori and Hitomi are naughty!!"
-
-
-Congratulations, you have found:
-
-**************************************************************** 
-* @@@       @@@       @@@  @@@  @@@@@@@@@@                     *
-* @@@       @@@       @@@  @@@  @@@@@@@@@@@                    *
-* @@!       @@!       @@!  @@@  @@! @@! @@!                    *
-* !@!       !@!       !@!  @!@  !@! !@! !@!                    *
-* @!!       @!!       @!@  !@!  @!! !!@ @!@                    *
-* !!!       !!!       !@!  !!!  !@!   ! !@!                    *
-* !!:       !!:       :!:  !!:  !!:     !!:                    *
-*  :!:       :!:       ::!!:!   :!:     :!:                    *
-*  :: ::::   :: ::::    ::::    :::     ::                     *
-* : :: : :  : :: : :     :       :      :                      *
-*                                                              *
-*                                                              *
-*  @@@@@@   @@@  @@@       @@@   @@@@@@     @@@@@@       @@@   *
-* @@@@@@@@  @@@@ @@@       @@@  @@@@@@@@   @@@@@@@      @@@@   *
-* @@!  @@@  @@!@!@@@       @@!  @@!  @@@  !@@          @@!@!   *
-* !@!  @!@  !@!!@!@!       !@!  !@!  @!@  !@!         !@!!@!   *
-* @!@  !@!  @!@ !!@!       !!@  @!@!@!@!  !!@@!@!    @!! @!!   *
-* !@!  !!!  !@!  !!!       !!!  !!!@!!!!  @!!@!!!!  !!!  !@!   *
-* !!:  !!!  !!:  !!!       !!:  !!:  !!!  !:!  !:!  :!!:!:!!:  *
-* :!:  !:!  :!:  !:!       :!:  :!:  !:!  :!:  !:!  !:::!!:::  *
-* ::::: ::   ::   ::        ::  ::   :::  :::: :::       :::   *
-*  : :  :   ::    :        :     :   : :   :: : :        :::   *
-*                                                              *
-****************************************************************
-* Bow down, bow down, before the power of IA64! Or be crushed, *
-* be crushed, by its jolly registers of doom!!                 *
-****************************************************************
-
-DEVELOPMENT PLAN:
-
-   _  you are       2005           maybe 2005       2006            2006 and
-  /   here            |               |              |               beyond 
- v                    v               v              v                |
-                                                                      v
-CLEAN UP        ADD INSTRUCTION      ADD          PLAY WITH
-INSTRUCTION --> SCHEDULING AND  -->  JIT    -->    DYNAMIC     --> FUTURE WORK
-SELECTION       BUNDLING            SUPPORT     REOPTIMIZATION
-
-DISCLAIMER AND PROMISE:
-
-As of the time of this release, you are probably better off using Intel C/C++
-or GCC. The performance of the code emitted right now is, in a word,
-terrible. Check back in a few months - the story will be different then,
-I guarantee it.
-
 TODO:
-
+  - Un-bitrot ISel
+  - Hook up If-Conversion a la ARM target
+  - Hook up all branch analysis functions
+  - Instruction scheduling
+  - Bundling
+  - Dynamic Optimization
+  - Testing and bugfixing
   - stop passing FP args in both FP *and* integer regs when not required
   - allocate low (nonstacked) registers more aggressively
   - clean up and thoroughly test the isel patterns.
@@ -65,14 +17,11 @@ TODO:
     (we will avoid the mess that is:
      http://gcc.gnu.org/ml/gcc/2003-12/msg00832.html )
   - instruction scheduling (hmmmm! ;)
-  - write truly inspirational documentation
-  - if-conversion (predicate database/knowledge? etc etc)
   - counted loop support
   - make integer + FP mul/div more clever (we have fixed pseudocode atm)
   - track and use comparison complements
 
 INFO:
-
   - we are strictly LP64 here, no support for ILP32 on HP-UX. Linux users
     don't need to worry about this.
   - i have instruction scheduling/bundling pseudocode, that really works
@@ -80,7 +29,6 @@ INFO:
     so, before you go write your own, send me an email!
 
 KNOWN DEFECTS AT THE CURRENT TIME:
-
   - C++ vtables contain naked function pointers, not function descriptors,
   which is bad. see http://llvm.cs.uiuc.edu/bugs/show_bug.cgi?id=406
   - varargs are broken
@@ -90,17 +38,11 @@ KNOWN DEFECTS AT THE CURRENT TIME:
     these will probably be fixed soon.
   
 ACKNOWLEDGEMENTS:
-
   - Chris Lattner (x100)
   - Other LLVM developers ("hey, that looks familiar")
 
 CONTACT:
-
   - You can email me at duraid@octopus.com.au. If you find a small bug,
     just email me. If you find a big bug, please file a bug report
     in bugzilla! http://llvm.cs.uiuc.edu is your one stop shop for all
     things LLVM.
-
-
-
-
