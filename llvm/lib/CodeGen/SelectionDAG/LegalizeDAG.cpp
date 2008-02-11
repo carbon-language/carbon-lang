@@ -1321,8 +1321,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       MVT::ValueType PtrVT = TLI.getPointerTy();
       SDOperand StackPtr = DAG.CreateStackTemporary(VT);
 
-      FrameIndexSDNode *StackPtrFI = dyn_cast<FrameIndexSDNode>(StackPtr.Val);
-      assert(StackPtrFI);
+      FrameIndexSDNode *StackPtrFI = cast<FrameIndexSDNode>(StackPtr.Val);
       int SPFI = StackPtrFI->getIndex();
 
       // Store the vector.
@@ -4759,8 +4758,7 @@ SDOperand SelectionDAGLegalize::EmitStackConvert(SDOperand SrcOp,
   // Create the stack frame object.
   SDOperand FIPtr = DAG.CreateStackTemporary(SlotVT);
 
-  FrameIndexSDNode *StackPtrFI = dyn_cast<FrameIndexSDNode>(FIPtr);
-  assert(StackPtrFI);
+  FrameIndexSDNode *StackPtrFI = cast<FrameIndexSDNode>(FIPtr);
   int SPFI = StackPtrFI->getIndex();
 
   unsigned SrcSize = MVT::getSizeInBits(SrcOp.getValueType());
@@ -4794,8 +4792,7 @@ SDOperand SelectionDAGLegalize::ExpandSCALAR_TO_VECTOR(SDNode *Node) {
   // then load the whole vector back out.
   SDOperand StackPtr = DAG.CreateStackTemporary(Node->getValueType(0));
 
-  FrameIndexSDNode *StackPtrFI = dyn_cast<FrameIndexSDNode>(StackPtr);
-  assert(StackPtrFI);
+  FrameIndexSDNode *StackPtrFI = cast<FrameIndexSDNode>(StackPtr);
   int SPFI = StackPtrFI->getIndex();
 
   SDOperand Ch = DAG.getStore(DAG.getEntryNode(), Node->getOperand(0), StackPtr,
@@ -6773,8 +6770,7 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
       // Lower to a store/load so that it can be split.
       // FIXME: this could be improved probably.
       SDOperand Ptr = DAG.CreateStackTemporary(InOp.getValueType());
-      FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(Ptr.Val);
-      assert(FI && "Expecting CreateStackTemporary to return a frame index.\n");
+      FrameIndexSDNode *FI = cast<FrameIndexSDNode>(Ptr.Val);
 
       SDOperand St = DAG.getStore(DAG.getEntryNode(),
                                   InOp, Ptr,
