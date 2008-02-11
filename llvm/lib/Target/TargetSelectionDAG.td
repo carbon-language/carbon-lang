@@ -181,8 +181,8 @@ def SDTVecShuffle : SDTypeProfile<1, 3, [
 def SDTVecExtract : SDTypeProfile<1, 2, [ // vector extract
   SDTCisEltOfVec<0, 1>, SDTCisPtrTy<2>
 ]>;
-def SDTVecInsert : SDTypeProfile<1, 2, [  // vector insert
-  SDTCisEltOfVec<1, 0>, SDTCisPtrTy<2>
+def SDTVecInsert : SDTypeProfile<1, 3, [  // vector insert
+  SDTCisEltOfVec<2, 1>, SDTCisSameAs<0, 1>, SDTCisPtrTy<3>
 ]>;
 
 class SDCallSeqStart<list<SDTypeConstraint> constraints> :

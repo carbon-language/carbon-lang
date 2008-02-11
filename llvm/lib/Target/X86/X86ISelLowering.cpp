@@ -678,6 +678,33 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::SELECT,             MVT::v2f64, Custom);
     setOperationAction(ISD::SELECT,             MVT::v2i64, Custom);
   }
+  
+  if (Subtarget->hasSSE41()) {
+    // FIXME: Do we need to handle scalar-to-vector here?
+    setOperationAction(ISD::MUL,                MVT::v4i32, Legal);
+
+    // i8 and i16 vectors are custom , because the source register and source
+    // source memory operand types are not the same width.  f32 vectors are
+    // custom since the immediate controlling the insert encodes additional
+    // information.
+    setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v16i8, Custom);
+    setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v8i16, Custom);
+    setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v4i32, Legal);
+    setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v4f32, Custom);
+
+    setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v16i8, Custom);
+    setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v8i16, Custom);
+    setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v4i32, Legal);
+    setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v4f32, Legal);
+
+    if (Subtarget->is64Bit()) {
+      setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v2i64, Legal);
+      setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v2f64, Legal);
+
+      setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v2i64, Legal);
+      setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v2f64, Legal);
+    }
+  }
 
   // We want to custom lower some of our intrinsics.
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
@@ -3655,9 +3682,33 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
 }
 
 SDOperand
+X86TargetLowering::LowerEXTRACT_VECTOR_ELT_SSE4(SDOperand Op,
+                                                SelectionDAG &DAG) {
+  MVT::ValueType VT = Op.getValueType();
+  if (MVT::getSizeInBits(VT) == 8) {
+    SDOperand Extract = DAG.getNode(X86ISD::PEXTRB, MVT::i32,
+                                    Op.getOperand(0), Op.getOperand(1));
+    SDOperand Assert  = DAG.getNode(ISD::AssertZext, MVT::i32, Extract,
+                                    DAG.getValueType(VT));
+    return DAG.getNode(ISD::TRUNCATE, VT, Assert);
+  } else if (MVT::getSizeInBits(VT) == 16) {
+    SDOperand Extract = DAG.getNode(X86ISD::PEXTRW, MVT::i32,
+                                    Op.getOperand(0), Op.getOperand(1));
+    SDOperand Assert  = DAG.getNode(ISD::AssertZext, MVT::i32, Extract,
+                                    DAG.getValueType(VT));
+    return DAG.getNode(ISD::TRUNCATE, VT, Assert);
+  }
+  return SDOperand();
+}
+
+
+SDOperand
 X86TargetLowering::LowerEXTRACT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
   if (!isa<ConstantSDNode>(Op.getOperand(1)))
     return SDOperand();
+
+  if (Subtarget->hasSSE41())
+    return LowerEXTRACT_VECTOR_ELT_SSE4(Op, DAG);
 
   MVT::ValueType VT = Op.getValueType();
   // TODO: handle v16i8.
@@ -3699,6 +3750,9 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
     return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, VT, Vec,
                        DAG.getIntPtrConstant(0));
   } else if (MVT::getSizeInBits(VT) == 64) {
+    // FIXME: .td only matches this for <2 x f64>, not <2 x i64> on 32b
+    // FIXME: seems like this should be unnecessary if mov{h,l}pd were taught
+    //        to match extract_elt for f64.
     unsigned Idx = cast<ConstantSDNode>(Op.getOperand(1))->getValue();
     if (Idx == 0)
       return Op;
@@ -3724,9 +3778,47 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
 }
 
 SDOperand
+X86TargetLowering::LowerINSERT_VECTOR_ELT_SSE4(SDOperand Op, SelectionDAG &DAG){
+  MVT::ValueType VT = Op.getValueType();
+  MVT::ValueType EVT = MVT::getVectorElementType(VT);
+
+  SDOperand N0 = Op.getOperand(0);
+  SDOperand N1 = Op.getOperand(1);
+  SDOperand N2 = Op.getOperand(2);
+
+  if ((MVT::getSizeInBits(EVT) == 8) || (MVT::getSizeInBits(EVT) == 16)) {
+    unsigned Opc = (MVT::getSizeInBits(EVT) == 8) ? X86ISD::PINSRB
+                                                  : X86ISD::PINSRW;
+    // Transform it so it match pinsr{b,w} which expects a GR32 as its second
+    // argument.
+    if (N1.getValueType() != MVT::i32)
+      N1 = DAG.getNode(ISD::ANY_EXTEND, MVT::i32, N1);
+    if (N2.getValueType() != MVT::i32)
+      N2 = DAG.getIntPtrConstant(cast<ConstantSDNode>(N2)->getValue());
+    return DAG.getNode(Opc, VT, N0, N1, N2);
+  } else if (EVT == MVT::f32) {
+    // Bits [7:6] of the constant are the source select.  This will always be
+    //  zero here.  The DAG Combiner may combine an extract_elt index into these
+    //  bits.  For example (insert (extract, 3), 2) could be matched by putting
+    //  the '3' into bits [7:6] of X86ISD::INSERTPS.
+    // Bits [5:4] of the constant are the destination select.  This is the 
+    //  value of the incoming immediate.
+    // Bits [3:0] of the constant are the zero mask.  The DAG Combiner may 
+    //   combine either bitwise AND or insert of float 0.0 to set these bits.
+    N2 = DAG.getIntPtrConstant(cast<ConstantSDNode>(N2)->getValue() << 4);
+    return DAG.getNode(X86ISD::INSERTPS, VT, N0, N1, N2);
+  }
+  return SDOperand();
+}
+
+SDOperand
 X86TargetLowering::LowerINSERT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
   MVT::ValueType VT = Op.getValueType();
   MVT::ValueType EVT = MVT::getVectorElementType(VT);
+
+  if (Subtarget->hasSSE41())
+    return LowerINSERT_VECTOR_ELT_SSE4(Op, DAG);
+
   if (EVT == MVT::i8)
     return SDOperand();
 
@@ -5273,7 +5365,10 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::GlobalBaseReg:      return "X86ISD::GlobalBaseReg";
   case X86ISD::Wrapper:            return "X86ISD::Wrapper";
   case X86ISD::S2VEC:              return "X86ISD::S2VEC";
+  case X86ISD::PEXTRB:             return "X86ISD::PEXTRB";
   case X86ISD::PEXTRW:             return "X86ISD::PEXTRW";
+  case X86ISD::INSERTPS:           return "X86ISD::INSERTPS";
+  case X86ISD::PINSRB:             return "X86ISD::PINSRB";
   case X86ISD::PINSRW:             return "X86ISD::PINSRW";
   case X86ISD::FMAX:               return "X86ISD::FMAX";
   case X86ISD::FMIN:               return "X86ISD::FMIN";

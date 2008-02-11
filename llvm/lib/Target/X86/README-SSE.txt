@@ -761,3 +761,23 @@ an X86 fxor.  This means that we need to handle this case in the x86 backend
 instead of in target independent code.
 
 //===---------------------------------------------------------------------===//
+
+Non-SSE4 insert into 16 x i8 is atrociously bad.
+
+//===---------------------------------------------------------------------===//
+
+<2 x i64> extract is substantially worse than <2 x f64>, even if the destination
+is memory.
+
+//===---------------------------------------------------------------------===//
+
+SSE4 extract-to-mem ops aren't being pattern matched because of the AssertZext
+sitting between the truncate and the extract.
+
+//===---------------------------------------------------------------------===//
+
+INSERTPS can match any insert (extract, imm1), imm2 for 4 x float, and insert
+any number of 0.0 simultaneously.  Currently we only use it for simple
+insertions.
+
+See comments in LowerINSERT_VECTOR_ELT_SSE4.

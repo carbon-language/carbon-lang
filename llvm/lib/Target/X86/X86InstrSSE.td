@@ -35,8 +35,19 @@ def X86fsrl    : SDNode<"X86ISD::FSRL",      SDTX86FPShiftOp>;
 def X86comi    : SDNode<"X86ISD::COMI",      SDTX86CmpTest>;
 def X86ucomi   : SDNode<"X86ISD::UCOMI",     SDTX86CmpTest>;
 def X86s2vec   : SDNode<"X86ISD::S2VEC",  SDTypeProfile<1, 1, []>, []>;
-def X86pextrw  : SDNode<"X86ISD::PEXTRW", SDTypeProfile<1, 2, []>, []>;
-def X86pinsrw  : SDNode<"X86ISD::PINSRW", SDTypeProfile<1, 3, []>, []>;
+def X86pextrb  : SDNode<"X86ISD::PEXTRB",
+                 SDTypeProfile<1, 2, [SDTCisVT<0, i32>, SDTCisPtrTy<2>]>>;
+def X86pextrw  : SDNode<"X86ISD::PEXTRW",
+                 SDTypeProfile<1, 2, [SDTCisVT<0, i32>, SDTCisPtrTy<2>]>>;
+def X86pinsrb  : SDNode<"X86ISD::PINSRB", 
+                 SDTypeProfile<1, 3, [SDTCisVT<0, v16i8>, SDTCisSameAs<0,1>,
+                                      SDTCisVT<2, i32>, SDTCisPtrTy<3>]>>;
+def X86pinsrw  : SDNode<"X86ISD::PINSRW", 
+                 SDTypeProfile<1, 3, [SDTCisVT<0, v8i16>, SDTCisSameAs<0,1>,
+                                      SDTCisVT<2, i32>, SDTCisPtrTy<3>]>>;
+def X86insrtps : SDNode<"X86ISD::INSERTPS", 
+                 SDTypeProfile<1, 3, [SDTCisVT<0, v4f32>, SDTCisSameAs<0,1>,
+                                      SDTCisVT<2, f32>, SDTCisPtrTy<3>]>>;
 
 //===----------------------------------------------------------------------===//
 // SSE 'Special' Instructions
@@ -2087,23 +2098,21 @@ def PEXTRWri : PDIi8<0xC5, MRMSrcReg,
                     (outs GR32:$dst), (ins VR128:$src1, i32i8imm:$src2),
                     "pextrw\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                     [(set GR32:$dst, (X86pextrw (v8i16 VR128:$src1),
-                                     (iPTR imm:$src2)))]>;
+                                                imm:$src2))]>;
 let isTwoAddress = 1 in {
   def PINSRWrri : PDIi8<0xC4, MRMSrcReg,
                        (outs VR128:$dst), (ins VR128:$src1,
                         GR32:$src2, i32i8imm:$src3),
                        "pinsrw\t{$src3, $src2, $dst|$dst, $src2, $src3}",
                        [(set VR128:$dst,
-                         (v8i16 (X86pinsrw (v8i16 VR128:$src1),
-                                 GR32:$src2, (iPTR imm:$src3))))]>;
+                         (X86pinsrw VR128:$src1, GR32:$src2, imm:$src3))]>;
   def PINSRWrmi : PDIi8<0xC4, MRMSrcMem,
                        (outs VR128:$dst), (ins VR128:$src1,
                         i16mem:$src2, i32i8imm:$src3),
                        "pinsrw\t{$src3, $src2, $dst|$dst, $src2, $src3}",
-                       [(set VR128:$dst,
-                         (v8i16 (X86pinsrw (v8i16 VR128:$src1),
-                                 (i32 (anyext (loadi16 addr:$src2))),
-                                 (iPTR imm:$src3))))]>;
+                       [(set VR128:$dst, 
+                         (X86pinsrw VR128:$src1, (extloadi16 addr:$src2),
+                                    imm:$src3))]>;
 }
 
 // Mask creation
@@ -3255,7 +3264,7 @@ defm MPSADBW      : SS41I_binop_rmi_int<0x42, "mpsadbw",
 
 
 /// SS41I_binop_rmi_int - SSE 4.1 binary operator with immediate
-let isTwoAddress = 1 in {
+let Uses = [XMM0], isTwoAddress = 1 in {
   multiclass SS41I_ternary_int<bits<8> opc, string OpcodeStr, Intrinsic IntId> {
     def rr0 : SS48I<opc, MRMSrcReg, (outs VR128:$dst),
                     (ins VR128:$src1, VR128:$src2),
@@ -3328,26 +3337,44 @@ defm PMOVSXBQ   : SS41I_binop_rm_int2<0x22, "pmovsxbq", int_x86_sse41_pmovsxbq>;
 defm PMOVZXBQ   : SS41I_binop_rm_int2<0x32, "pmovsxbq", int_x86_sse41_pmovzxbq>;
 
 
-/// SS41I_binop_ext8 - SSE 4.1 binary operator with immediate
-multiclass SS41I_binop_ext8<bits<8> opc, string OpcodeStr> {
+/// SS41I_binop_ext8 - SSE 4.1 extract 8 bits to 32 bit reg or 8 bit mem
+multiclass SS41I_extract8<bits<8> opc, string OpcodeStr> {
   def rr : SS4AI<opc, MRMSrcReg, (outs GR32:$dst),
                  (ins VR128:$src1, i32i8imm:$src2),
                  !strconcat(OpcodeStr, 
                   "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                 [(set GR32:$dst, (zext
-                  (extractelt (v16i8 VR128:$src1), imm:$src2)))]>, OpSize;
+                 [(set GR32:$dst, (X86pextrb (v16i8 VR128:$src1), imm:$src2))]>,
+                 OpSize;
   def mr : SS4AI<opc, MRMDestMem, (outs),
                  (ins i8mem:$dst, VR128:$src1, i32i8imm:$src2),
                  !strconcat(OpcodeStr, 
                   "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                 [(store (extractelt (v16i8 VR128:$src1), imm:$src2),
-                          addr:$dst)]>, OpSize;
+                 []>, OpSize;
+// FIXME:
+// There's an AssertZext in the way of writing the store pattern
+// (store (i8 (trunc (X86pextrb (v16i8 VR128:$src1), imm:$src2))), addr:$dst)
 }
 
-defm PEXTRB      : SS41I_binop_ext8<0x14, "pextrb">;
+defm PEXTRB      : SS41I_extract8<0x14, "pextrb">;
 
-/// SS41I_binop_ext32 - SSE 4.1 binary operator with immediate
-multiclass SS41I_binop_ext32<bits<8> opc, string OpcodeStr> {
+
+/// SS41I_extract16 - SSE 4.1 extract 16 bits to memory destination
+multiclass SS41I_extract16<bits<8> opc, string OpcodeStr> {
+  def mr : SS4AI<opc, MRMDestMem, (outs),
+                 (ins i16mem:$dst, VR128:$src1, i32i8imm:$src2),
+                 !strconcat(OpcodeStr, 
+                  "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                 []>, OpSize;
+// FIXME:
+// There's an AssertZext in the way of writing the store pattern
+// (store (i16 (trunc (X86pextrw (v16i8 VR128:$src1), imm:$src2))), addr:$dst)
+}
+
+defm PEXTRW      : SS41I_extract16<0x15, "pextrw">;
+
+
+/// SS41I_extract32 - SSE 4.1 extract 32 bits to int reg or memory destination
+multiclass SS41I_extract32<bits<8> opc, string OpcodeStr> {
   def rr : SS4AI<opc, MRMSrcReg, (outs GR32:$dst),
                  (ins VR128:$src1, i32i8imm:$src2),
                  !strconcat(OpcodeStr, 
@@ -3362,10 +3389,11 @@ multiclass SS41I_binop_ext32<bits<8> opc, string OpcodeStr> {
                           addr:$dst)]>, OpSize;
 }
 
-defm PEXTRD      : SS41I_binop_ext32<0x16, "pextrd">;
+defm PEXTRD      : SS41I_extract32<0x16, "pextrd">;
 
-/// SS41I_binop_extf32 - SSE 4.1 binary operator with immediate
-multiclass SS41I_binop_extf32<bits<8> opc, string OpcodeStr> {
+
+/// SS41I_extractf32 - SSE 4.1 extract 32 bits to fp reg or memory destination
+multiclass SS41I_extractf32<bits<8> opc, string OpcodeStr> {
   def rr : SS4AI<opc, MRMSrcReg, (outs FR32:$dst),
                  (ins VR128:$src1, i32i8imm:$src2),
                  !strconcat(OpcodeStr, 
@@ -3380,5 +3408,65 @@ multiclass SS41I_binop_extf32<bits<8> opc, string OpcodeStr> {
                           addr:$dst)]>, OpSize;
 }
 
-defm EXTRACTPS   : SS41I_binop_extf32<0x17, "extractps">;
+defm EXTRACTPS   : SS41I_extractf32<0x17, "extractps">;
 
+let isTwoAddress = 1 in {
+  multiclass SS41I_insert8<bits<8> opc, string OpcodeStr> {
+    def rr : SS4AI<opc, MRMSrcReg, (outs VR128:$dst),
+                   (ins VR128:$src1, GR32:$src2, i32i8imm:$src3),
+                   !strconcat(OpcodeStr, 
+                    "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
+                   [(set VR128:$dst, 
+                     (X86pinsrb VR128:$src1, GR32:$src2, imm:$src3))]>, OpSize;
+    def rm : SS4AI<opc, MRMSrcMem, (outs VR128:$dst),
+                   (ins VR128:$src1, i8mem:$src2, i32i8imm:$src3),
+                   !strconcat(OpcodeStr,
+                    "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
+                   [(set VR128:$dst, 
+                     (X86pinsrb VR128:$src1, (extloadi8 addr:$src2),
+                                imm:$src3))]>, OpSize;
+  }
+}
+
+defm PINSRB      : SS41I_insert8<0x20, "pinsrb">;
+
+let isTwoAddress = 1 in {
+  multiclass SS41I_insert32<bits<8> opc, string OpcodeStr> {
+    def rr : SS4AI<opc, MRMSrcReg, (outs VR128:$dst),
+                   (ins VR128:$src1, GR32:$src2, i32i8imm:$src3),
+                   !strconcat(OpcodeStr, 
+                    "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
+                   [(set VR128:$dst, 
+                     (v4i32 (insertelt VR128:$src1, GR32:$src2, imm:$src3)))]>,
+                   OpSize;
+    def rm : SS4AI<opc, MRMSrcMem, (outs VR128:$dst),
+                   (ins VR128:$src1, i32mem:$src2, i32i8imm:$src3),
+                   !strconcat(OpcodeStr,
+                    "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
+                   [(set VR128:$dst, 
+                     (v4i32 (insertelt VR128:$src1, (loadi32 addr:$src2),
+                                       imm:$src3)))]>, OpSize;
+  }
+}
+
+defm PINSRD      : SS41I_insert32<0x22, "pinsrd">;
+
+let isTwoAddress = 1 in {
+  multiclass SS41I_insertf32<bits<8> opc, string OpcodeStr> {
+    def rr : SS4AI<opc, MRMSrcReg, (outs VR128:$dst),
+                   (ins VR128:$src1, FR32:$src2, i32i8imm:$src3),
+                   !strconcat(OpcodeStr, 
+                    "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
+                   [(set VR128:$dst, 
+                     (X86insrtps VR128:$src1, FR32:$src2, imm:$src3))]>, OpSize;
+    def rm : SS4AI<opc, MRMSrcMem, (outs VR128:$dst),
+                   (ins VR128:$src1, f32mem:$src2, i32i8imm:$src3),
+                   !strconcat(OpcodeStr,
+                    "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
+                   [(set VR128:$dst, 
+                     (X86insrtps VR128:$src1, (loadf32 addr:$src2),
+                                 imm:$src3))]>, OpSize;
+  }
+}
+
+defm INSERTPS    : SS41I_insertf32<0x31, "insertps">;

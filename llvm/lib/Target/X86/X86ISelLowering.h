@@ -170,9 +170,21 @@ namespace llvm {
       /// have to match the operand type.
       S2VEC,
 
+      /// PEXTRB - Extract an 8-bit value from a vector and zero extend it to
+      /// i32, corresponds to X86::PEXTRB.
+      PEXTRB,
+
       /// PEXTRW - Extract a 16-bit value from a vector and zero extend it to
       /// i32, corresponds to X86::PEXTRW.
       PEXTRW,
+
+      /// INSERTPS - Insert any element of a 4 x float vector into any element
+      /// of a destination 4 x floatvector.
+      INSERTPS,
+
+      /// PINSRB - Insert the lower 8-bits of a 32-bit value to a vector,
+      /// corresponds to X86::PINSRB.
+      PINSRB,
 
       /// PINSRW - Insert the lower 16-bits of a 32-bit value to a vector,
       /// corresponds to X86::PINSRW.
@@ -493,7 +505,9 @@ namespace llvm {
     SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerEXTRACT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerEXTRACT_VECTOR_ELT_SSE4(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerINSERT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerINSERT_VECTOR_ELT_SSE4(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerSCALAR_TO_VECTOR(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerConstantPool(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG);
