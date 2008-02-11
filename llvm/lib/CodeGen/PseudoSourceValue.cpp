@@ -18,11 +18,16 @@
 namespace llvm {
   static ManagedStatic<PseudoSourceValue[5]> PSVs;
 
-  const PseudoSourceValue *PseudoSourceValue::getFixedStack() { return &(*PSVs)[0]; }
-  const PseudoSourceValue *PseudoSourceValue::getStack() { return &(*PSVs)[1]; }
-  const PseudoSourceValue *PseudoSourceValue::getGOT() { return &(*PSVs)[2]; }
-  const PseudoSourceValue *PseudoSourceValue::getConstantPool() { return &(*PSVs)[3]; }
-  const PseudoSourceValue *PseudoSourceValue::getJumpTable() { return &(*PSVs)[4]; }
+  const PseudoSourceValue *PseudoSourceValue::getFixedStack()
+  { return &(*PSVs)[0]; }
+  const PseudoSourceValue *PseudoSourceValue::getStack()
+  { return &(*PSVs)[1]; }
+  const PseudoSourceValue *PseudoSourceValue::getGOT()
+  { return &(*PSVs)[2]; }
+  const PseudoSourceValue *PseudoSourceValue::getConstantPool()
+  { return &(*PSVs)[3]; }
+  const PseudoSourceValue *PseudoSourceValue::getJumpTable()
+  { return &(*PSVs)[4]; }
 
   static const char *PSVNames[] = {
     "FixedStack",
