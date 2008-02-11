@@ -527,7 +527,11 @@ bool Sema::CheckInitializerListTypes(InitListExpr*& IList, QualType &DeclType,
       } else {
         RecordDecl* structDecl = DeclType->getAsRecordType()->getDecl();
         
-        // If the record is invalid, it's members can't be trusted. 
+        // If the record is invalid, it's members can't be trusted.
+        // FIXME: I'd like to "fix" this at a higher level. That is, we should
+        // never get here if the struct decl is invalid. Considering a
+        // change to Type::isIncompleteType(). Until this happens, the 
+        // following check is certainly better than crashing.
         if (structDecl->isInvalidDecl())
           return true;
           
