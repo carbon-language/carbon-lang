@@ -526,6 +526,11 @@ bool Sema::CheckInitializerListTypes(InitListExpr*& IList, QualType &DeclType,
         ++startIndex;
       } else {
         RecordDecl* structDecl = DeclType->getAsRecordType()->getDecl();
+        
+        // If the record is invalid, it's members can't be trusted. 
+        if (structDecl->isInvalidDecl())
+          return true;
+          
         // If structDecl is a forward declaration, this loop won't do anything;
         // That's okay, because an error should get printed out elsewhere. It
         // might be worthwhile to skip over the rest of the initializer, though.
