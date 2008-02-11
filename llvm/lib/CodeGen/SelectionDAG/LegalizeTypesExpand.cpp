@@ -293,7 +293,7 @@ void DAGTypeLegalizer::ExpandResult_LOAD(LoadSDNode *N,
                      Hi.getValue(1));
 
     // Handle endianness of the load.
-    if (!TLI.isLittleEndian())
+    if (TLI.isBigEndian())
       std::swap(Lo, Hi);
   } else if (MVT::getSizeInBits(N->getMemoryVT()) <= MVT::getSizeInBits(NVT)) {
     MVT::ValueType EVT = N->getMemoryVT();
@@ -1076,7 +1076,7 @@ SDOperand DAGTypeLegalizer::ExpandOperand_STORE(StoreSDNode *N, unsigned OpNo) {
     GetExpandedOp(N->getValue(), Lo, Hi);
     IncrementSize = MVT::getSizeInBits(Hi.getValueType())/8;
 
-    if (!TLI.isLittleEndian())
+    if (TLI.isBigEndian())
       std::swap(Lo, Hi);
 
     Lo = DAG.getStore(Ch, Lo, Ptr, N->getSrcValue(),

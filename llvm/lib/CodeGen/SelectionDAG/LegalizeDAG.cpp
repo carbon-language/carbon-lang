@@ -2117,7 +2117,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           ExpandOp(Tmp2, Lo, Hi);
 
           // Big endian systems want the hi reg first.
-          if (!TLI.isLittleEndian())
+          if (TLI.isBigEndian())
             std::swap(Lo, Hi);
           
           if (Hi.Val)
@@ -2256,7 +2256,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
             uint64_t IntVal =CFP->getValueAPF().convertToAPInt().getZExtValue();
             SDOperand Lo = DAG.getConstant(uint32_t(IntVal), MVT::i32);
             SDOperand Hi = DAG.getConstant(uint32_t(IntVal >>32), MVT::i32);
-            if (!TLI.isLittleEndian()) std::swap(Lo, Hi);
+            if (TLI.isBigEndian()) std::swap(Lo, Hi);
 
             Lo = DAG.getStore(Tmp1, Lo, Tmp2, ST->getSrcValue(),
                               SVOffset, isVolatile, Alignment);
@@ -2356,7 +2356,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           ExpandOp(Node->getOperand(1), Lo, Hi);
           IncrementSize = Hi.Val ? MVT::getSizeInBits(Hi.getValueType())/8 : 0;
 
-          if (!TLI.isLittleEndian())
+          if (TLI.isBigEndian())
             std::swap(Lo, Hi);
         }
 
@@ -5766,7 +5766,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     // Remember that we legalized the chain.
     Hi = LegalizeOp(Hi);
     AddLegalizedOperand(Op.getValue(1), Hi.getValue(1));
-    if (!TLI.isLittleEndian())
+    if (TLI.isBigEndian())
       std::swap(Lo, Hi);
     break;
   }
@@ -5809,7 +5809,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
 
       // Remember that we legalized the chain.
       AddLegalizedOperand(Op.getValue(1), LegalizeOp(TF));
-      if (!TLI.isLittleEndian())
+      if (TLI.isBigEndian())
         std::swap(Lo, Hi);
     } else {
       MVT::ValueType EVT = LD->getMemoryVT();

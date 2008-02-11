@@ -1739,7 +1739,7 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
         unsigned PtrOff = LVTStoreBytes - EVTStoreBytes;
         unsigned Alignment = LN0->getAlignment();
         SDOperand NewPtr = LN0->getBasePtr();
-        if (!TLI.isLittleEndian()) {
+        if (TLI.isBigEndian()) {
           NewPtr = DAG.getNode(ISD::ADD, PtrType, NewPtr,
                                DAG.getConstant(PtrOff, PtrType));
           Alignment = MinAlign(Alignment, PtrOff);
@@ -3086,7 +3086,7 @@ SDOperand DAGCombiner::ReduceLoadWidth(SDNode *N) {
     MVT::ValueType PtrType = N0.getOperand(1).getValueType();
     // For big endian targets, we need to adjust the offset to the pointer to
     // load the correct bytes.
-    if (!TLI.isLittleEndian()) {
+    if (TLI.isBigEndian()) {
       unsigned LVTStoreBits = MVT::getStoreSizeInBits(N0.getValueType());
       unsigned EVTStoreBits = MVT::getStoreSizeInBits(EVT);
       ShAmt = LVTStoreBits - EVTStoreBits - ShAmt;
@@ -3460,7 +3460,7 @@ ConstantFoldBIT_CONVERTofBUILD_VECTOR(SDNode *BV, MVT::ValueType DstEltVT) {
     }
 
     // For big endian targets, swap the order of the pieces of each element.
-    if (!TLI.isLittleEndian())
+    if (TLI.isBigEndian())
       std::reverse(Ops.end()-NumOutputsPerInput, Ops.end());
   }
   MVT::ValueType VT = MVT::getVectorType(DstEltVT, Ops.size());
@@ -4386,7 +4386,7 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
           uint64_t Val = CFP->getValueAPF().convertToAPInt().getZExtValue();
           SDOperand Lo = DAG.getConstant(Val & 0xFFFFFFFF, MVT::i32);
           SDOperand Hi = DAG.getConstant(Val >> 32, MVT::i32);
-          if (!TLI.isLittleEndian()) std::swap(Lo, Hi);
+          if (TLI.isBigEndian()) std::swap(Lo, Hi);
 
           int SVOffset = ST->getSrcValueOffset();
           unsigned Alignment = ST->getAlignment();

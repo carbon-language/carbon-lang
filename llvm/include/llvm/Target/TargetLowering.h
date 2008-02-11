@@ -85,6 +85,7 @@ public:
   TargetMachine &getTargetMachine() const { return TM; }
   const TargetData *getTargetData() const { return TD; }
 
+  bool isBigEndian() const { return !IsLittleEndian; }
   bool isLittleEndian() const { return IsLittleEndian; }
   MVT::ValueType getPointerTy() const { return PointerTy; }
   MVT::ValueType getShiftAmountTy() const { return ShiftAmountTy; }
