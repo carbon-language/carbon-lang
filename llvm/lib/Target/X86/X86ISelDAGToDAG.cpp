@@ -679,21 +679,25 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
         GlobalValue *GV = G->getGlobal();
         AM.GV = GV;
         AM.Disp += G->getOffset();
-        AM.isRIPRel = is64Bit;
+        AM.isRIPRel = TM.getRelocationModel() != Reloc::Static &&
+          Subtarget->isPICStyleRIPRel();
         return false;
       } else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(N0)) {
         AM.CP = CP->getConstVal();
         AM.Align = CP->getAlignment();
         AM.Disp += CP->getOffset();
-        AM.isRIPRel = is64Bit;
+        AM.isRIPRel = TM.getRelocationModel() != Reloc::Static &&
+          Subtarget->isPICStyleRIPRel();
         return false;
       } else if (ExternalSymbolSDNode *S =dyn_cast<ExternalSymbolSDNode>(N0)) {
         AM.ES = S->getSymbol();
-        AM.isRIPRel = is64Bit;
+        AM.isRIPRel = TM.getRelocationModel() != Reloc::Static &&
+          Subtarget->isPICStyleRIPRel();
         return false;
       } else if (JumpTableSDNode *J = dyn_cast<JumpTableSDNode>(N0)) {
         AM.JT = J->getIndex();
-        AM.isRIPRel = is64Bit;
+        AM.isRIPRel = TM.getRelocationModel() != Reloc::Static &&
+          Subtarget->isPICStyleRIPRel();
         return false;
       }
     }
