@@ -272,17 +272,14 @@ public:
   ///  other functions that handle specific kinds of statements.
   void Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst);
 
-  /// VisitCast - Transfer function logic for all casts (implicit and explicit).
-  void VisitCast(Expr* CastE, Expr* E, NodeTy* Pred, NodeSet& Dst);
-  
-  /// VisitUnaryOperator - Transfer function logic for unary operators.
-  void VisitUnaryOperator(UnaryOperator* B, NodeTy* Pred, NodeSet& Dst);
-  
   /// VisitBinaryOperator - Transfer function logic for binary operators.
   void VisitBinaryOperator(BinaryOperator* B, NodeTy* Pred, NodeSet& Dst);
   
   void VisitAssignmentLHS(Expr* E, NodeTy* Pred, NodeSet& Dst);
 
+  /// VisitCast - Transfer function logic for all casts (implicit and explicit).
+  void VisitCast(Expr* CastE, Expr* E, NodeTy* Pred, NodeSet& Dst);  
+  
   /// VisitDeclRefExpr - Transfer function logic for DeclRefExprs.
   void VisitDeclRefExpr(DeclRefExpr* DR, NodeTy* Pred, NodeSet& Dst); 
 
@@ -299,6 +296,10 @@ public:
   /// VisitSizeOfAlignOfTypeExpr - Transfer function for sizeof(type).
   void VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr* S, NodeTy* Pred,
                                   NodeSet& Dst);
+  
+  /// VisitUnaryOperator - Transfer function logic for unary operators.
+  void VisitUnaryOperator(UnaryOperator* B, NodeTy* Pred, NodeSet& Dst);
+  
 };
 } // end anonymous namespace
 
@@ -919,6 +920,14 @@ void GRConstants::Visit(Stmt* S, GRConstants::NodeTy* Pred,
   }
 
   switch (S->getStmtClass()) {
+      
+    default:
+      // Cases we intentionally have "default" handle:
+      //   AddrLabelExpr, CharacterLiteral, IntegerLiteral
+      
+      Dst.Add(Pred); // No-op. Simply propagate the current state unchanged.
+      break;
+                                                       
     case Stmt::BinaryOperatorClass: {
       BinaryOperator* B = cast<BinaryOperator>(S);
  
@@ -1001,10 +1010,6 @@ void GRConstants::Visit(Stmt* S, GRConstants::NodeTy* Pred,
     case Stmt::UnaryOperatorClass:
       VisitUnaryOperator(cast<UnaryOperator>(S), Pred, Dst);
       break;
-      
-    default:
-      Dst.Add(Pred); // No-op. Simply propagate the current state unchanged.
-      break;
   }
 }
 
@@ -1053,7 +1058,7 @@ GRConstants::StateTy GRConstants::Assume(StateTy St, NonLValue Cond,
       
       
     case nonlval::SymbolValKind: {
-      lval::SymbolVal& SV = cast<lval::SymbolVal>(Cond);
+      nonlval::SymbolVal& SV = cast<nonlval::SymbolVal>(Cond);
       SymbolID sym = SV.getSymbol();
       
       if (Assumption)
