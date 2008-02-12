@@ -1052,8 +1052,8 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
       Diag(FD->getLocation(), diag::err_previous_definition);
     }
   }
-  FunctionDecl *FD =
-    static_cast<FunctionDecl*>(ActOnDeclarator(GlobalScope, D, 0));
+  Decl *decl = static_cast<Decl*>(ActOnDeclarator(GlobalScope, D, 0));
+  FunctionDecl *FD = dyn_cast<FunctionDecl>(decl);
   assert(FD != 0 && "ActOnDeclarator() didn't return a FunctionDecl");
   CurFunctionDecl = FD;
   
