@@ -698,11 +698,11 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v4f32, Legal);
 
     if (Subtarget->is64Bit()) {
-      setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v2i64, Legal);
-      setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v2f64, Legal);
+      setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v2i64, Custom);
+      setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v2f64, Custom);
 
-      setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v2i64, Legal);
-      setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v2f64, Legal);
+      setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v2i64, Custom);
+      setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v2f64, Custom);
     }
   }
 
