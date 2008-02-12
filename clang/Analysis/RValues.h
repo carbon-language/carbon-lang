@@ -364,6 +364,8 @@ public:
   
   RValue EvalCast(ValueManager& ValMgr, Expr* CastExpr) const;
   
+  static LValue GetValue(AddrLabelExpr* E);
+  
   // Implement isa<T> support.
   static inline bool classof(const RValue* V) {
     return V->getBaseKind() != NonLValueKind;
@@ -445,6 +447,7 @@ namespace nonlval {
 namespace lval {
   
   enum Kind { SymbolValKind,
+              GotoLabelKind,
               DeclValKind,
               ConcreteIntKind,
               NumKind };
@@ -460,8 +463,30 @@ namespace lval {
     
     static inline bool classof(const RValue* V) {
       return isa<LValue>(V) && V->getSubKind() == SymbolValKind;
-    }  
+    }
+    
+    static inline bool classof(const LValue* V) {
+      return V->getSubKind() == SymbolValKind;
+    }
   };
+  
+  class GotoLabel : public LValue {
+  public:
+    GotoLabel(LabelStmt* Label) : LValue(GotoLabelKind, Label) {}
+    
+    LabelStmt* getLabel() const {
+      return static_cast<LabelStmt*>(getRawPtr());
+    }
+    
+    static inline bool classof(const RValue* V) {
+      return isa<LValue>(V) && V->getSubKind() == GotoLabelKind;
+    }
+    
+    static inline bool classof(const LValue* V) {
+      return V->getSubKind() == GotoLabelKind;
+    }
+  };
+    
   
   class DeclVal : public LValue {
   public:
@@ -482,6 +507,10 @@ namespace lval {
     // Implement isa<T> support.
     static inline bool classof(const RValue* V) {
       return isa<LValue>(V) && V->getSubKind() == DeclValKind;
+    }
+    
+    static inline bool classof(const LValue* V) {
+      return V->getSubKind() == DeclValKind;
     }
   };
 
@@ -510,8 +539,7 @@ namespace lval {
     
   };  
 } // end clang::lval namespace
-  
-  
+
 } // end clang namespace  
 
 #endif

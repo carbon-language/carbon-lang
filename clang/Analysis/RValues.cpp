@@ -491,13 +491,21 @@ RValue RValue::GetSymbolValue(SymbolManager& SymMgr, ParmVarDecl* D) {
     return nonlval::SymbolVal(SymMgr.getSymbol(D));
 }
 
-void RValue::print() const {
-  print(*llvm::cerr.stream());
+//===----------------------------------------------------------------------===//
+// Utility methods for constructing LValues.
+//===----------------------------------------------------------------------===//
+
+LValue LValue::GetValue(AddrLabelExpr* E) {
+  return lval::GotoLabel(E->getLabel());
 }
 
 //===----------------------------------------------------------------------===//
 // Pretty-Printing.
 //===----------------------------------------------------------------------===//
+
+void RValue::print() const {
+  print(*llvm::cerr.stream());
+}
 
 void RValue::print(std::ostream& Out) const {
   switch (getBaseKind()) {
@@ -576,6 +584,11 @@ void LValue::print(std::ostream& Out) const {
       
     case lval::SymbolValKind:
       Out << '$' << cast<lval::SymbolVal>(this)->getSymbol();
+      break;
+      
+    case lval::GotoLabelKind:
+      Out << "&&"
+          << cast<lval::GotoLabel>(this)->getLabel()->getID()->getName();
       break;
 
     case lval::DeclValKind:

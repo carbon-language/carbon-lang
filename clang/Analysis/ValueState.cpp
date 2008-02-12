@@ -168,6 +168,9 @@ ValueStateManager::AddEQ(ValueState St, SymbolID sym, const llvm::APSInt& V) {
 RValue ValueStateManager::GetValue(ValueState St, Expr* E, bool* hasVal) {
   for (;;) {
     switch (E->getStmtClass()) {
+
+      case Stmt::AddrLabelExprClass:
+        return LValue::GetValue(cast<AddrLabelExpr>(E));
         
         // ParenExprs are no-ops.
         
