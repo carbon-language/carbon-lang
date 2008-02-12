@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -analyze -scalar-evolution |& \
+; RUN: llvm-as < %s | opt -analyze -scalar-evolution | \
 ; RUN:   grep {100 iterations}
 ; PR1101
 
