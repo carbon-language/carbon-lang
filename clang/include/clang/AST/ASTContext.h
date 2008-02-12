@@ -55,19 +55,19 @@ class ASTContext {
   /// a builtin that takes a valist is encountered.
   QualType BuiltinVaListType;
   
-  /// ObjCIdType - a psuedo built-in typedef type (set by Sema).
+  /// ObjCIdType - a pseudo built-in typedef type (set by Sema).
   QualType ObjCIdType;
   const RecordType *IdStructType;
   
-  /// ObjCSelType - another psuedo built-in typedef type (set by Sema).
+  /// ObjCSelType - another pseudo built-in typedef type (set by Sema).
   QualType ObjCSelType;
   const RecordType *SelStructType;
   
-  /// ObjCProtoType - another psuedo built-in typedef type (set by Sema).
+  /// ObjCProtoType - another pseudo built-in typedef type (set by Sema).
   QualType ObjCProtoType;
   const RecordType *ProtoStructType;
 
-  /// ObjCClassType - another psuedo built-in typedef type (set by Sema).
+  /// ObjCClassType - another pseudo built-in typedef type (set by Sema).
   QualType ObjCClassType;
   const RecordType *ClassStructType;
   
