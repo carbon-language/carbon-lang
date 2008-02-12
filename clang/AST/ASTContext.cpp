@@ -839,6 +839,15 @@ QualType ASTContext::getSizeType() const {
   return UnsignedLongTy; 
 }
 
+/// getWcharType - Return the unique type for "wchar_t" (C99 7.17), the
+/// width of characters in wide strings, The value is target dependent and 
+/// needs to agree with the definition in <stddef.h>.
+QualType ASTContext::getWcharType() const {
+  // On Darwin, wchar_t is defined as a "int". 
+  // FIXME: should derive from "Target".
+  return IntTy; 
+}
+
 /// getPointerDiffType - Return the unique type for "ptrdiff_t" (ref?)
 /// defined in <stddef.h>. Pointer - pointer requires this (C99 6.5.6p9).
 QualType ASTContext::getPointerDiffType() const {
