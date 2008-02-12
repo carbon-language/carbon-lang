@@ -47,36 +47,40 @@ const char *DeclSpec::getSpecifierName(DeclSpec::SCS S) {
   }
 }
 
-static bool BadSpecifier(DeclSpec::SCS S, const char *&PrevSpec) {
-  PrevSpec = DeclSpec::getSpecifierName(S);
+bool DeclSpec::BadSpecifier(SCS S, const char *&PrevSpec) {
+  Invalid = true;
+  PrevSpec = getSpecifierName(S);
   return true;
 }
 
-static bool BadSpecifier(DeclSpec::TSW W, const char *&PrevSpec) {
+bool DeclSpec::BadSpecifier(TSW W, const char *&PrevSpec) {
+  Invalid = true;
   switch (W) {
-  case DeclSpec::TSW_unspecified: PrevSpec = "unspecified"; break;
-  case DeclSpec::TSW_short:       PrevSpec = "short"; break;
-  case DeclSpec::TSW_long:        PrevSpec = "long"; break;
-  case DeclSpec::TSW_longlong:    PrevSpec = "long long"; break;
+  case TSW_unspecified: PrevSpec = "unspecified"; break;
+  case TSW_short:       PrevSpec = "short"; break;
+  case TSW_long:        PrevSpec = "long"; break;
+  case TSW_longlong:    PrevSpec = "long long"; break;
   }
   return true;
 }
 
-static bool BadSpecifier(DeclSpec::TSC C, const char *&PrevSpec) {
+bool DeclSpec::BadSpecifier(TSC C, const char *&PrevSpec) {
+  Invalid = true;
   switch (C) {
-  case DeclSpec::TSC_unspecified: PrevSpec = "unspecified"; break;
-  case DeclSpec::TSC_imaginary:   PrevSpec = "imaginary"; break;
-  case DeclSpec::TSC_complex:     PrevSpec = "complex"; break;
+  case TSC_unspecified: PrevSpec = "unspecified"; break;
+  case TSC_imaginary:   PrevSpec = "imaginary"; break;
+  case TSC_complex:     PrevSpec = "complex"; break;
   }
   return true;
 }
 
 
-static bool BadSpecifier(DeclSpec::TSS S, const char *&PrevSpec) {
+bool DeclSpec::BadSpecifier(TSS S, const char *&PrevSpec) {
+  Invalid = true;
   switch (S) {
-  case DeclSpec::TSS_unspecified: PrevSpec = "unspecified"; break;
-  case DeclSpec::TSS_signed:      PrevSpec = "signed"; break;
-  case DeclSpec::TSS_unsigned:    PrevSpec = "unsigned"; break;
+  case TSS_unspecified: PrevSpec = "unspecified"; break;
+  case TSS_signed:      PrevSpec = "signed"; break;
+  case TSS_unsigned:    PrevSpec = "unsigned"; break;
   }
   return true;
 }
@@ -103,12 +107,14 @@ const char *DeclSpec::getSpecifierName(DeclSpec::TST T) {
   }
 }
 
-static bool BadSpecifier(DeclSpec::TST T, const char *&PrevSpec) {
-  PrevSpec = DeclSpec::getSpecifierName(T);
+bool DeclSpec::BadSpecifier(TST T, const char *&PrevSpec) {
+  Invalid = true;
+  PrevSpec = getSpecifierName(T);
   return true;
 }
 
-static bool BadSpecifier(DeclSpec::TQ T, const char *&PrevSpec) {
+bool DeclSpec::BadSpecifier(TQ T, const char *&PrevSpec) {
+  Invalid = true;
   switch (T) {
   case DeclSpec::TQ_unspecified: PrevSpec = "unspecified"; break;
   case DeclSpec::TQ_const:       PrevSpec = "const"; break;

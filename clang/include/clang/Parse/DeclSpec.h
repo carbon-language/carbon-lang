@@ -134,6 +134,15 @@ private:
   SourceLocation TSWLoc, TSCLoc, TSSLoc, TSTLoc;
   SourceLocation TQ_constLoc, TQ_restrictLoc, TQ_volatileLoc;
   SourceLocation FS_inlineLoc;
+  
+  bool Invalid;
+  
+  bool BadSpecifier(TST T, const char *&PrevSpec);
+  bool BadSpecifier(TQ T, const char *&PrevSpec);
+  bool BadSpecifier(TSS T, const char *&PrevSpec);
+  bool BadSpecifier(TSC T, const char *&PrevSpec);
+  bool BadSpecifier(TSW T, const char *&PrevSpec);
+  bool BadSpecifier(SCS T, const char *&PrevSpec);
 public:  
   
   DeclSpec()
@@ -147,7 +156,8 @@ public:
       FS_inline_specified(false),
       TypeRep(0),
       AttrList(0),
-      ProtocolQualifiers(0) {
+      ProtocolQualifiers(0),
+      Invalid(false) {
   }
   ~DeclSpec() {
     delete AttrList;
@@ -160,6 +170,7 @@ public:
   SourceLocation getStorageClassSpecLoc() const { return StorageClassSpecLoc; }
   SourceLocation getThreadSpecLoc() const { return SCS_threadLoc; }
   
+  bool isInvalid() { return Invalid; }
   
   void ClearStorageClassSpecs() {
     StorageClassSpec     = DeclSpec::SCS_unspecified;

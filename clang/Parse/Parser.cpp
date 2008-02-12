@@ -367,7 +367,10 @@ Parser::DeclTy *Parser::ParseDeclarationOrFunctionDefinition() {
   // Parse the common declaration-specifiers piece.
   DeclSpec DS;
   ParseDeclarationSpecifiers(DS);
-
+  // If the decl specs are invalid, there is no need to continue.
+  if (DS.isInvalid())
+    return 0;
+    
   // C99 6.7.2.3p6: Handle "struct-or-union identifier;", "enum { X };"
   // declaration-specifiers init-declarator-list[opt] ';'
   if (Tok.is(tok::semi)) {
