@@ -370,22 +370,22 @@ public:
   APInt getLoBits(uint32_t numBits) const;
 
   /// Constructs an APInt value that has a contiguous range of bits set. The
-  /// bits from loBit to hiBit will be set. All other bits will be zero. For
-  /// example, with parameters(32, 0, 15) you would get 0x0000FFFF. If hiBit is
-  /// less than loBit then the set bits "wrap". For example, with 
-  /// parameters (32, 28, 3), you would get 0xF000000F. 
+  /// bits from loBit (inclusive) to hiBit (exclusive) will be set. All other
+  /// bits will be zero. For example, with parameters(32, 0, 16) you would get
+  /// 0x0000FFFF. If hiBit is less than loBit then the set bits "wrap". For
+  /// example, with parameters (32, 28, 4), you would get 0xF000000F. 
   /// @param numBits the intended bit width of the result
   /// @param loBit the index of the lowest bit set.
   /// @param hiBit the index of the highest bit set.
   /// @returns An APInt value with the requested bits set.
   /// @brief Get a value with a block of bits set.
   static APInt getBitsSet(uint32_t numBits, uint32_t loBit, uint32_t hiBit) {
-    assert(hiBit < numBits && "hiBit out of range");
+    assert(hiBit <= numBits && "hiBit out of range");
     assert(loBit < numBits && "loBit out of range");
     if (hiBit < loBit)
-      return getLowBitsSet(numBits, hiBit+1) |
+      return getLowBitsSet(numBits, hiBit) |
              getHighBitsSet(numBits, numBits-loBit);
-    return getLowBitsSet(numBits, hiBit-loBit+1).shl(loBit);
+    return getLowBitsSet(numBits, hiBit-loBit).shl(loBit);
   }
 
   /// Constructs an APInt value that has the top hiBitsSet bits set.
