@@ -304,36 +304,36 @@ The TableGen types are:</p>
 <ul>
 <dl>
 
-<di><tt><b>bit</b></tt></di>
+<dt><tt><b>bit</b></tt></dt>
   <dd>A 'bit' is a boolean value that can hold either 0 or 1.</dd>
 
-<di><tt><b>int</b></tt></di>
+<dt><tt><b>int</b></tt></dt>
   <dd>The 'int' type represents a simple 32-bit integer value, such as 5.</dd>
 
-<di><tt><b>string</b></tt></di>
+<dt><tt><b>string</b></tt></dt>
   <dd>The 'string' type represents an ordered sequence of characters of
   arbitrary length.</dd>
 
-<di><tt><b>bits</b>&lt;n&gt;</tt></di>
+<dt><tt><b>bits</b>&lt;n&gt;</tt></dt>
   <dd>A 'bits' type is an arbitrary, but fixed, size integer that is broken up
   into individual bits.  This type is useful because it can handle some bits
   being defined while others are undefined.</dd>
 
-<di><tt><b>list</b>&lt;ty&gt;</tt></di>
+<dt><tt><b>list</b>&lt;ty&gt;</tt></dt>
   <dd>This type represents a list whose elements are some other type.  The
   contained type is arbitrary: it can even be another list type.</dd>
 
-<di>Class type</di>
+<dt>Class type</dt>
   <dd>Specifying a class name in a type context means that the defined value
   must be a subclass of the specified class.  This is useful in conjunction with
   the <b><tt>list</tt></b> type, for example, to constrain the elements of the
   list to a common base class (e.g., a <tt><b>list</b>&lt;Register&gt;</tt> can
   only contain definitions derived from the "<tt>Register</tt>" class).</dd>
 
-<di><tt><b>dag</b></tt></di>
+<dt><tt><b>dag</b></tt></dt>
   <dd>This type represents a nestable directed graph of elements.</dd>
 
-<di><tt><b>code</b></tt></di>
+<dt><tt><b>code</b></tt></dt>
   <dd>This represents a big hunk of text. NOTE: I don't remember why this is
   distinct from string!</dd>
 </dl>
@@ -359,45 +359,45 @@ supported include:</p>
 
 <ul>
 <dl>
-<di><tt>?</tt></di>
+<dt><tt>?</tt></dt>
   <dd>uninitialized field</dd>
-<di><tt>0b1001011</tt></di>
+<dt><tt>0b1001011</tt></dt>
   <dd>binary integer value</dd>
-<di><tt>07654321</tt></di>
+<dt><tt>07654321</tt></dt>
   <dd>octal integer value (indicated by a leading 0)</dd>
-<di><tt>7</tt></di>
+<dt><tt>7</tt></dt>
   <dd>decimal integer value</dd>
-<di><tt>0x7F</tt></di>
+<dt><tt>0x7F</tt></dt>
   <dd>hexadecimal integer value</dd>
-<di><tt>"foo"</tt></di>
+<dt><tt>"foo"</tt></dt>
   <dd>string value</dd>
-<di><tt>[{ ... }]</tt></di>
+<dt><tt>[{ ... }]</tt></dt>
   <dd>code fragment</dd>
-<di><tt>[ X, Y, Z ]</tt></di>
+<dt><tt>[ X, Y, Z ]</tt></dt>
   <dd>list value.</dd>
-<di><tt>{ a, b, c }</tt></di>
+<dt><tt>{ a, b, c }</tt></dt>
   <dd>initializer for a "bits&lt;3&gt;" value</dd>
-<di><tt>value</tt></di>
+<dt><tt>value</tt></dt>
   <dd>value reference</dd>
-<di><tt>value{17}</tt></di>
+<dt><tt>value{17}</tt></dt>
   <dd>access to one bit of a value</dd>
-<di><tt>value{15-17}</tt></di>
+<dt><tt>value{15-17}</tt></dt>
   <dd>access to multiple bits of a value</dd>
-<di><tt>DEF</tt></di>
+<dt><tt>DEF</tt></dt>
   <dd>reference to a record definition</dd>
-<di><tt>CLASS&lt;val list&gt;</tt></di>
+<dt><tt>CLASS&lt;val list&gt;</tt></dt>
   <dd>reference to a new anonymous definition of CLASS with the specified
       template arguments.</dd>
-<di><tt>X.Y</tt></di>
+<dt><tt>X.Y</tt></dt>
   <dd>reference to the subfield of a value</dd>
-<di><tt>list[4-7,17,2-3]</tt></di>
+<dt><tt>list[4-7,17,2-3]</tt></dt>
   <dd>A slice of the 'list' list, including elements 4,5,6,7,17,2, and 3 from
   it.  Elements may be included multiple times.</dd>
-<di><tt>(DEF a, b)</tt></di>
+<dt><tt>(DEF a, b)</tt></dt>
   <dd>a dag value.  The first element is required to be a record definition, the
   remaining elements in the list may be arbitrary other values, including nested
   `<tt>dag</tt>' values.</dd>
-<di><tt>!strconcat(a, b)</tt></di>
+<dt><tt>!strconcat(a, b)</tt></dt>
   <dd>A string value that is the result of concatenating the 'a' and 'b'
   strings.</dd>
 </dl>
@@ -747,7 +747,7 @@ This should highlight the APIs in <tt>TableGen/Record.h</tt>.</p>
   <a href="http://jigsaw.w3.org/css-validator/check/referer"><img
   src="http://jigsaw.w3.org/css-validator/images/vcss" alt="Valid CSS!"></a>
   <a href="http://validator.w3.org/check/referer"><img
-  src="http://www.w3.org/Icons/valid-html401" alt="Valid HTML 4.01!" /></a>
+  src="http://www.w3.org/Icons/valid-html401" alt="Valid HTML 4.01!"></a>
 
   <a href="mailto:sabre@nondot.org">Chris Lattner</a><br>
   <a href="http://llvm.org">LLVM Compiler Infrastructure</a><br>
