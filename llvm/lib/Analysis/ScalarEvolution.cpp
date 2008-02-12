@@ -2527,19 +2527,17 @@ HowManyLessThans(SCEV *LHS, SCEV *RHS, const Loop *L, bool isSigned) {
   if (AddRec->isAffine()) {
     // The number of iterations for "{n,+,1} < m", is m-n.  However, we don't
     // know that m is >= n on input to the loop.  If it is, the condition
-    // returns true zero times.  To handle both cases, we return SMAX(0, m-n).
+    // returns true zero times.  To handle both cases, we return SMAX(m, n)-n.
 
     // FORNOW: We only support unit strides.
     SCEVHandle One = SE.getIntegerSCEV(1, RHS->getType());
     if (AddRec->getOperand(1) != One)
       return UnknownValue;
 
-    SCEVHandle Iters = SE.getMinusSCEV(RHS, AddRec->getOperand(0));
+    SCEVHandle Start = AddRec->getOperand(0);
+    SCEVHandle End = isSigned ? SE.getSMaxExpr(RHS, Start) : (SCEVHandle)RHS;
 
-    if (isSigned)
-      return SE.getSMaxExpr(SE.getIntegerSCEV(0, RHS->getType()), Iters);
-    else
-      return Iters;
+    return SE.getMinusSCEV(End, Start);
   }
 
   return UnknownValue;
