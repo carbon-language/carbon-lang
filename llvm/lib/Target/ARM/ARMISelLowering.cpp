@@ -910,8 +910,8 @@ static SDOperand LowerVASTART(SDOperand Op, SelectionDAG &DAG,
 }
 
 static SDOperand LowerFORMAL_ARGUMENT(SDOperand Op, SelectionDAG &DAG,
-                                      unsigned *vRegs, unsigned ArgNo,
-                                      unsigned &NumGPRs, unsigned &ArgOffset) {
+                                      unsigned ArgNo, unsigned &NumGPRs,
+                                      unsigned &ArgOffset) {
   MachineFunction &MF = DAG.getMachineFunction();
   MVT::ValueType ObjectVT = Op.getValue(ArgNo).getValueType();
   SDOperand Root = Op.getOperand(0);
@@ -936,19 +936,16 @@ static SDOperand LowerFORMAL_ARGUMENT(SDOperand Op, SelectionDAG &DAG,
   if (ObjGPRs == 1) {
     unsigned VReg = RegInfo.createVirtualRegister(&ARM::GPRRegClass);
     RegInfo.addLiveIn(GPRArgRegs[NumGPRs], VReg);
-    vRegs[NumGPRs] = VReg;
     ArgValue = DAG.getCopyFromReg(Root, VReg, MVT::i32);
     if (ObjectVT == MVT::f32)
       ArgValue = DAG.getNode(ISD::BIT_CONVERT, MVT::f32, ArgValue);
   } else if (ObjGPRs == 2) {
     unsigned VReg = RegInfo.createVirtualRegister(&ARM::GPRRegClass);
     RegInfo.addLiveIn(GPRArgRegs[NumGPRs], VReg);
-    vRegs[NumGPRs] = VReg;
     ArgValue = DAG.getCopyFromReg(Root, VReg, MVT::i32);
 
     VReg = RegInfo.createVirtualRegister(&ARM::GPRRegClass);
     RegInfo.addLiveIn(GPRArgRegs[NumGPRs+1], VReg);
-    vRegs[NumGPRs+1] = VReg;
     SDOperand ArgValue2 = DAG.getCopyFromReg(Root, VReg, MVT::i32);
 
     assert(ObjectVT != MVT::i64 && "i64 should already be lowered");
@@ -987,11 +984,10 @@ ARMTargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG) {
   SDOperand Root = Op.getOperand(0);
   unsigned ArgOffset = 0;   // Frame mechanisms handle retaddr slot
   unsigned NumGPRs = 0;     // GPRs used for parameter passing.
-  unsigned VRegs[4];
 
   unsigned NumArgs = Op.Val->getNumValues()-1;
   for (unsigned ArgNo = 0; ArgNo < NumArgs; ++ArgNo)
-    ArgValues.push_back(LowerFORMAL_ARGUMENT(Op, DAG, VRegs, ArgNo,
+    ArgValues.push_back(LowerFORMAL_ARGUMENT(Op, DAG, ArgNo,
                                              NumGPRs, ArgOffset));
 
   bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
