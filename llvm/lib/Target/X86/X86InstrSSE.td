@@ -2434,22 +2434,6 @@ let AddedComplexity = 20 in
 // SSSE3 Instructions
 //===----------------------------------------------------------------------===//
 
-// SSSE3 Instruction Templates:
-// 
-//   SS38I - SSSE3 instructions with T8 prefix.
-//   SS3AI - SSSE3 instructions with TA prefix.
-//
-// Note: SSSE3 instructions have 64-bit and 128-bit versions. The 64-bit version
-// uses the MMX registers. We put those instructions here because they better
-// fit into the SSSE3 instruction category rather than the MMX category.
-
-class SS38I<bits<8> o, Format F, dag outs, dag ins, string asm,
-            list<dag> pattern>
-      : I<o, F, outs, ins, asm, pattern>, T8, Requires<[HasSSSE3]>;
-class SS3AI<bits<8> o, Format F, dag outs, dag ins, string asm,
-            list<dag> pattern>
-      : I<o, F, outs, ins, asm, pattern>, TA, Requires<[HasSSSE3]>;
-
 /// SS3I_unop_rm_int_8 - Simple SSSE3 unary operator whose type is v*i8.
 multiclass SS3I_unop_rm_int_8<bits<8> opc, string OpcodeStr,
                               Intrinsic IntId64, Intrinsic IntId128> {
@@ -3037,19 +3021,6 @@ def : Pat<(store (v16i8 VR128:$src), addr:$dst),
 //===----------------------------------------------------------------------===//
 // SSE4.1 Instructions
 //===----------------------------------------------------------------------===//
-
-// SSE4.1 Instruction Templates:
-// 
-//   SS48I - SSE 4.1 instructions with T8 prefix.
-//   SS41AI - SSE 4.1 instructions with TA prefix.
-//
-class SS48I<bits<8> o, Format F, dag outs, dag ins, string asm,
-            list<dag> pattern>
-      : I<o, F, outs, ins, asm, pattern>, T8, Requires<[HasSSE41]>;
-class SS4AI<bits<8> o, Format F, dag outs, dag ins, string asm,
-            list<dag> pattern>
-      : I<o, F, outs, ins, asm, pattern>, TA, Requires<[HasSSE41]>;
-
 
 multiclass sse41_fp_unop_rm<bits<8> opcss, bits<8> opcps, 
                             bits<8> opcsd, bits<8> opcpd, 

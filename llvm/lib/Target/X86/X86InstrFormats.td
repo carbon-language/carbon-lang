@@ -185,6 +185,35 @@ class S3I<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern>
       : I<o, F, outs, ins, asm, pattern>, TB, OpSize, Requires<[HasSSE3]>;
 
 
+// SSSE3 Instruction Templates:
+// 
+//   SS38I - SSSE3 instructions with T8 prefix.
+//   SS3AI - SSSE3 instructions with TA prefix.
+//
+// Note: SSSE3 instructions have 64-bit and 128-bit versions. The 64-bit version
+// uses the MMX registers. We put those instructions here because they better
+// fit into the SSSE3 instruction category rather than the MMX category.
+
+class SS38I<bits<8> o, Format F, dag outs, dag ins, string asm,
+            list<dag> pattern>
+      : I<o, F, outs, ins, asm, pattern>, T8, Requires<[HasSSSE3]>;
+class SS3AI<bits<8> o, Format F, dag outs, dag ins, string asm,
+            list<dag> pattern>
+      : I<o, F, outs, ins, asm, pattern>, TA, Requires<[HasSSSE3]>;
+
+// SSE4.1 Instruction Templates:
+// 
+//   SS48I - SSE 4.1 instructions with T8 prefix.
+//   SS41AI - SSE 4.1 instructions with TA prefix.
+//
+class SS48I<bits<8> o, Format F, dag outs, dag ins, string asm,
+            list<dag> pattern>
+      : I<o, F, outs, ins, asm, pattern>, T8, Requires<[HasSSE41]>;
+class SS4AI<bits<8> o, Format F, dag outs, dag ins, string asm,
+            list<dag> pattern>
+      : I<o, F, outs, ins, asm, pattern>, TA, Requires<[HasSSE41]>;
+
+
 // X86-64 Instruction templates...
 //
 

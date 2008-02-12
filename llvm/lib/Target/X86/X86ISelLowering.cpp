@@ -636,7 +636,6 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v8i16, Custom);
     setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v8i16, Custom);
     setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v4i32, Custom);
-    // Implement v4f32 insert_vector_elt in terms of SSE2 v8i16 ones.
     setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v4f32, Custom);
 
     // Custom lower build_vector, vector_shuffle, and extract_vector_elt.
@@ -652,9 +651,12 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::BUILD_VECTOR,       MVT::v2i64, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v2f64, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v2i64, Custom);
+    setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v2f64, Custom);
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v2f64, Custom);
-    if (Subtarget->is64Bit())
+    if (Subtarget->is64Bit()) {
+      setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v2i64, Custom);
       setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v2i64, Custom);
+    }
 
     // Promote v16i8, v8i16, v4i32 load, select, and, or, xor to v2i64.
     for (unsigned VT = (unsigned)MVT::v16i8; VT != (unsigned)MVT::v2i64; VT++) {
@@ -698,11 +700,8 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v4f32, Legal);
 
     if (Subtarget->is64Bit()) {
-      setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v2i64, Custom);
-      setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v2f64, Custom);
-
-      setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v2i64, Custom);
-      setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v2f64, Custom);
+      setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v2i64, Legal);
+      setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v2i64, Legal);
     }
   }
 
