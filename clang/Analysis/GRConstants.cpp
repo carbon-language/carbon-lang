@@ -295,6 +295,10 @@ public:
   
   /// VisitLogicalExpr - Transfer function logic for '&&', '||'
   void VisitLogicalExpr(BinaryOperator* B, NodeTy* Pred, NodeSet& Dst);
+  
+  /// VisitSizeOfAlignOfTypeExpr - Transfer function for sizeof(type).
+  void VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr* S, NodeTy* Pred,
+                                  NodeSet& Dst);
 };
 } // end anonymous namespace
 
@@ -378,7 +382,8 @@ void GRConstants::ProcessBranch(Expr* Condition, Stmt* Term,
   // Get the current block counter.
   GRBlockCounter BC = builder.getBlockCounter();
     
-  unsigned NumVisited = BC.getNumVisited(builder.getTargetBlock(true)->getBlockID());
+  unsigned BlockID = builder.getTargetBlock(true)->getBlockID();
+  unsigned NumVisited = BC.getNumVisited(BlockID);
   
   if (isa<nonlval::ConcreteInt>(V) || 
       BC.getNumVisited(builder.getTargetBlock(true)->getBlockID()) < 1) {
@@ -397,8 +402,8 @@ void GRConstants::ProcessBranch(Expr* Condition, Stmt* Term,
   else
     builder.markInfeasible(true);
   
-  NumVisited = BC.getNumVisited(builder.getTargetBlock(true)->getBlockID());
-
+  BlockID = builder.getTargetBlock(false)->getBlockID();
+  NumVisited = BC.getNumVisited(BlockID);
   
   if (isa<nonlval::ConcreteInt>(V) || 
       BC.getNumVisited(builder.getTargetBlock(false)->getBlockID()) < 1) {
@@ -583,6 +588,28 @@ void GRConstants::VisitGuardedExpr(Expr* S, Expr* LHS, Expr* RHS,
   Nodify(Dst, S, Pred, SetValue(St, S, R));
 }
 
+/// VisitSizeOfAlignOfTypeExpr - Transfer function for sizeof(type).
+void GRConstants::VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr* S,
+                                             NodeTy* Pred,
+                                             NodeSet& Dst) {
+  
+  // 6.5.3.4 sizeof: "The result type is an integer."
+  
+  QualType T = S->getArgumentType();
+  
+  // FIXME: Add support for VLAs.
+  if (isa<VariableArrayType>(T.getTypePtr()))
+    return;
+  
+  SourceLocation L = S->getExprLoc();
+  uint64_t size = getContext().getTypeSize(T, L) / 8;
+  
+  Nodify(Dst, S, Pred,
+         SetValue(Pred->getState(), S,
+                  NonLValue::GetValue(ValMgr, size, getContext().IntTy, L)));
+  
+}
+
 void GRConstants::VisitUnaryOperator(UnaryOperator* U,
                                      GRConstants::NodeTy* Pred,
                                      GRConstants::NodeSet& Dst) {
@@ -683,6 +710,25 @@ void GRConstants::VisitUnaryOperator(UnaryOperator* U,
                  SetValue(St, U, R1.EvalBinaryOp(ValMgr, BinaryOperator::EQ,
                                                  V2)));
         }
+        
+        break;
+      }
+      
+      case UnaryOperator::SizeOf: {
+        // 6.5.3.4 sizeof: "The result type is an integer."
+        
+        QualType T = U->getSubExpr()->getType();
+        
+        // FIXME: Add support for VLAs.
+        if (isa<VariableArrayType>(T.getTypePtr()))
+          return;
+        
+        SourceLocation L = U->getExprLoc();
+        uint64_t size = getContext().getTypeSize(T, L) / 8;
+                
+        Nodify(Dst, U, N1,
+               SetValue(St, U, NonLValue::GetValue(ValMgr, size,
+                                                   getContext().IntTy, L)));
         
         break;
       }
@@ -885,12 +931,53 @@ void GRConstants::Visit(Stmt* S, GRConstants::NodeTy* Pred,
         Nodify(Dst, B, Pred, SetValue(St, B, GetValue(St, B->getRHS())));
         break;
       }
+      
+      VisitBinaryOperator(cast<BinaryOperator>(S), Pred, Dst);
+      break;
+    }
+
+    case Stmt::CastExprClass: {
+      CastExpr* C = cast<CastExpr>(S);
+      VisitCast(C, C->getSubExpr(), Pred, Dst);
+      break;
     }
       
-      // Fall-through.
+    case Stmt::ChooseExprClass: { // __builtin_choose_expr
+      ChooseExpr* C = cast<ChooseExpr>(S);
+      VisitGuardedExpr(C, C->getLHS(), C->getRHS(), Pred, Dst);
+      break;
+    }
       
     case Stmt::CompoundAssignOperatorClass:
       VisitBinaryOperator(cast<BinaryOperator>(S), Pred, Dst);
+      break;
+      
+    case Stmt::ConditionalOperatorClass: { // '?' operator
+      ConditionalOperator* C = cast<ConditionalOperator>(S);
+      VisitGuardedExpr(C, C->getLHS(), C->getRHS(), Pred, Dst);
+      break;
+    }
+      
+    case Stmt::DeclRefExprClass:
+      VisitDeclRefExpr(cast<DeclRefExpr>(S), Pred, Dst);
+      break;
+      
+    case Stmt::DeclStmtClass:
+      VisitDeclStmt(cast<DeclStmt>(S), Pred, Dst);
+      break;
+      
+    case Stmt::ImplicitCastExprClass: {
+      ImplicitCastExpr* C = cast<ImplicitCastExpr>(S);
+      VisitCast(C, C->getSubExpr(), Pred, Dst);
+      break;
+    }
+
+    case Stmt::ParenExprClass:
+      Visit(cast<ParenExpr>(S)->getSubExpr(), Pred, Dst);
+      break;
+      
+    case Stmt::SizeOfAlignOfTypeExprClass:
+      VisitSizeOfAlignOfTypeExpr(cast<SizeOfAlignOfTypeExpr>(S), Pred, Dst);
       break;
       
     case Stmt::StmtExprClass: {
@@ -902,52 +989,17 @@ void GRConstants::Visit(Stmt* S, GRConstants::NodeTy* Pred,
       break;      
     }
       
-    case Stmt::UnaryOperatorClass:
-      VisitUnaryOperator(cast<UnaryOperator>(S), Pred, Dst);
-      break;
-      
-    case Stmt::ParenExprClass:
-      Visit(cast<ParenExpr>(S)->getSubExpr(), Pred, Dst);
-      break;
-    
-    case Stmt::DeclRefExprClass:
-      VisitDeclRefExpr(cast<DeclRefExpr>(S), Pred, Dst);
-      break;
-      
-    case Stmt::ImplicitCastExprClass: {
-      ImplicitCastExpr* C = cast<ImplicitCastExpr>(S);
-      VisitCast(C, C->getSubExpr(), Pred, Dst);
-      break;
-    }
-      
-    case Stmt::CastExprClass: {
-      CastExpr* C = cast<CastExpr>(S);
-      VisitCast(C, C->getSubExpr(), Pred, Dst);
-      break;
-    }
-      
-    case Stmt::ConditionalOperatorClass: { // '?' operator
-      ConditionalOperator* C = cast<ConditionalOperator>(S);
-      VisitGuardedExpr(C, C->getLHS(), C->getRHS(), Pred, Dst);
-      break;
-    }
-
-    case Stmt::ChooseExprClass: { // __builtin_choose_expr
-      ChooseExpr* C = cast<ChooseExpr>(S);
-      VisitGuardedExpr(C, C->getLHS(), C->getRHS(), Pred, Dst);
-      break;
-    }
-      
-    case Stmt::ReturnStmtClass:
+    case Stmt::ReturnStmtClass: {
       if (Expr* R = cast<ReturnStmt>(S)->getRetValue())
         Visit(R, Pred, Dst);
       else
         Dst.Add(Pred);
       
       break;
+    }
       
-    case Stmt::DeclStmtClass:
-      VisitDeclStmt(cast<DeclStmt>(S), Pred, Dst);
+    case Stmt::UnaryOperatorClass:
+      VisitUnaryOperator(cast<UnaryOperator>(S), Pred, Dst);
       break;
       
     default:
