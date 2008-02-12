@@ -285,7 +285,7 @@ void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
 
   llvm::Constant *Mask = llvm::ConstantInt::get(
            llvm::APInt::getBitsSet(EltTySize, StartBit,
-                                   StartBit + BitfieldSize - 1));
+                                   StartBit + BitfieldSize));
 
   // Mask out any bits that shouldn't be set in the result.
   NewVal = Builder.CreateAnd(NewVal, Mask, "tmp");
