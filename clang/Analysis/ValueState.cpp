@@ -165,14 +165,14 @@ ValueStateManager::AddEQ(ValueState St, SymbolID sym, const llvm::APSInt& V) {
   return getPersistentState(NewSt);
 }
 
-RValue ValueStateManager::GetValue(ValueState St, Expr* S, bool* hasVal) {
+RValue ValueStateManager::GetValue(ValueState St, Expr* E, bool* hasVal) {
   for (;;) {
-    switch (S->getStmtClass()) {
+    switch (E->getStmtClass()) {
         
         // ParenExprs are no-ops.
         
       case Stmt::ParenExprClass:
-        S = cast<ParenExpr>(S)->getSubExpr();
+        E = cast<ParenExpr>(E)->getSubExpr();
         continue;
         
         // DeclRefExprs can either evaluate to an LValue or a Non-LValue
@@ -181,31 +181,39 @@ RValue ValueStateManager::GetValue(ValueState St, Expr* S, bool* hasVal) {
         // within the referenced variables.
         
       case Stmt::DeclRefExprClass:
-        return GetValue(St, lval::DeclVal(cast<DeclRefExpr>(S)->getDecl()));
+        return GetValue(St, lval::DeclVal(cast<DeclRefExpr>(E)->getDecl()));
         
         // Integer literals evaluate to an RValue.  Simply retrieve the
         // RValue for the literal.
         
       case Stmt::IntegerLiteralClass:
-        return NonLValue::GetValue(ValMgr, cast<IntegerLiteral>(S));
+        return NonLValue::GetValue(ValMgr, cast<IntegerLiteral>(E));
         
+      case Stmt::CharacterLiteralClass: {
+        CharacterLiteral* C = cast<CharacterLiteral>(E);
+        
+        return NonLValue::GetValue(ValMgr, C->getValue(), C->getType(),
+                                   C->getLoc());
+      }
+
         // Casts where the source and target type are the same
         // are no-ops.  We blast through these to get the descendant
         // subexpression that has a value.
         
+        
       case Stmt::ImplicitCastExprClass: {
-        ImplicitCastExpr* C = cast<ImplicitCastExpr>(S);
+        ImplicitCastExpr* C = cast<ImplicitCastExpr>(E);
         if (C->getType() == C->getSubExpr()->getType()) {
-          S = C->getSubExpr();
+          E = C->getSubExpr();
           continue;
         }
         break;
       }
         
       case Stmt::CastExprClass: {
-        CastExpr* C = cast<CastExpr>(S);
+        CastExpr* C = cast<CastExpr>(E);
         if (C->getType() == C->getSubExpr()->getType()) {
-          S = C->getSubExpr();
+          E = C->getSubExpr();
           continue;
         }
         break;
@@ -220,14 +228,14 @@ RValue ValueStateManager::GetValue(ValueState St, Expr* S, bool* hasVal) {
     break;
   }
   
-  ValueState::ExprBindingsTy::TreeTy* T = St->SubExprBindings.SlimFind(S);
+  ValueState::ExprBindingsTy::TreeTy* T = St->SubExprBindings.SlimFind(E);
   
   if (T) {
     if (hasVal) *hasVal = true;
     return T->getValue().second;
   }
   
-  T = St->BlockExprBindings.SlimFind(S);  
+  T = St->BlockExprBindings.SlimFind(E);  
   
   if (T) {
     if (hasVal) *hasVal = true;
