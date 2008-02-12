@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 //  This file defines a generic engine for intraprocedural, path-sensitive,
-//  dataflow analysis via graph reachability engine.
+//  dataflow analysis via graph reachability.
 //
 //===----------------------------------------------------------------------===//
 
@@ -17,6 +17,7 @@
 
 #include "clang/Analysis/PathSensitive/ExplodedGraph.h"
 #include "clang/Analysis/PathSensitive/GRWorkList.h"
+#include "clang/Analysis/PathSensitive/GRBlockCounter.h"
 #include "llvm/ADT/OwningPtr.h"
 
 namespace clang {
@@ -47,7 +48,12 @@ protected:
   ///  the order that nodes are processed.
   GRWorkList* WList;
   
-  void GenerateNode(const ProgramPoint& Loc, void* State, 
+  /// BCounterFactory - A factory object for created GRBlockCounter objects.
+  ///   These are used to record for key nodes in the ExplodedGraph the
+  ///   number of times different CFGBlocks have been visited along a path.
+  GRBlockCounter::Factory BCounterFactory;
+  
+  void GenerateNode(const ProgramPoint& Loc, void* State,
                     ExplodedNodeImpl* Pred = NULL);
   
   /// getInitialState - Gets the void* representing the initial 'state'
@@ -78,7 +84,8 @@ private:
   GREngineImpl& operator=(const GREngineImpl&);
   
 protected:  
-  GREngineImpl(ExplodedGraphImpl* g, GRWorkList* wl) : G(g), WList(wl) {}
+  GREngineImpl(ExplodedGraphImpl* g, GRWorkList* wl)
+    : G(g), WList(wl), BCounterFactory(g->getAllocator()) {}
   
 public:
   /// ExecuteWorkList - Run the worklist algorithm for a maximum number of
@@ -183,8 +190,13 @@ public:
   
   ExplodedNodeImpl* getPredecessor() const { return Pred; }
   const ExplodedGraphImpl& getGraph() const { return *Eng.G; }
+  GRBlockCounter getBlockCounter() const { return Eng.WList->getBlockCounter();}
     
-  ExplodedNodeImpl* generateNodeImpl(void* State, bool branch);  
+  ExplodedNodeImpl* generateNodeImpl(void* State, bool branch);
+  
+  CFGBlock* getTargetBlock(bool branch) const {
+    return branch ? DstT : DstF;
+  }    
   
   void markInfeasible(bool branch) {
     if (branch) GeneratedTrue = true;
@@ -219,6 +231,14 @@ public:
   inline NodeTy* generateNode(StateTy State, bool branch) {
     void *state = GRTrait<StateTy>::toPtr(State);        
     return static_cast<NodeTy*>(NB.generateNodeImpl(state, branch));
+  }
+  
+  GRBlockCounter getBlockCounter() const {
+    return NB.getBlockCounter();
+  }
+  
+  CFGBlock* getTargetBlock(bool branch) const {
+    return NB.getTargetBlock(branch);
   }
   
   inline void markInfeasible(bool branch) {

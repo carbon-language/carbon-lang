@@ -71,6 +71,9 @@ bool GREngineImpl::ExecuteWorkList(unsigned Steps) {
     // starting location in the function.
     BlockEdge StartLoc(getCFG(), Entry, Succ);
     
+    // Set the current block counter to being empty.
+    WList->setBlockCounter(BCounterFactory.GetEmptyCounter());
+    
     // Generate the root.
     GenerateNode(StartLoc, getInitialState());
   }
@@ -78,6 +81,11 @@ bool GREngineImpl::ExecuteWorkList(unsigned Steps) {
   while (Steps && WList->hasWork()) {
     --Steps;
     const GRWorkListUnit& WU = WList->Dequeue();
+    
+    // Set the current block counter.
+    WList->setBlockCounter(WU.getBlockCounter());
+
+    // Retrieve the node.
     ExplodedNodeImpl* Node = WU.getNode();
     
     // Dispatch on the location type.
@@ -138,6 +146,12 @@ void GREngineImpl::HandleBlockEdge(const BlockEdge& L, ExplodedNodeImpl* Pred) {
 void GREngineImpl::HandleBlockEntrance(const BlockEntrance& L,
                                        ExplodedNodeImpl* Pred) {
   
+  // Increment the block counter.
+  GRBlockCounter Counter = WList->getBlockCounter();
+  Counter = BCounterFactory.IncrementCount(Counter, L.getBlock()->getBlockID());
+  WList->setBlockCounter(Counter);
+  
+  // Process the entrance of the block.  
   if (Stmt* S = L.getFirstStmt()) {
     GRStmtNodeBuilderImpl Builder(L.getBlock(), 0, Pred, this);
     ProcessStmt(S, Builder);
@@ -196,7 +210,7 @@ void GREngineImpl::HandleBranch(Expr* Cond, Stmt* Term, CFGBlock * B,
                                 ExplodedNodeImpl* Pred) {
   assert (B->succ_size() == 2);
 
-  GRBranchNodeBuilderImpl Builder(B, *(B->succ_begin()), *(B->succ_begin()+1), 
+  GRBranchNodeBuilderImpl Builder(B, *(B->succ_begin()), *(B->succ_begin()+1),
                                   Pred, this);
   
   ProcessBranch(Cond, Term, Builder);
@@ -244,7 +258,7 @@ void GREngineImpl::GenerateNode(const ProgramPoint& Loc, void* State,
   }
   
   // Only add 'Node' to the worklist if it was freshly generated.
-  if (IsNew) WList->Enqueue(GRWorkListUnit(Node));
+  if (IsNew) WList->Enqueue(Node);
 }
 
 GRStmtNodeBuilderImpl::GRStmtNodeBuilderImpl(CFGBlock* b, unsigned idx,
@@ -325,5 +339,5 @@ GRBranchNodeBuilderImpl::~GRBranchNodeBuilderImpl() {
   if (!GeneratedFalse) generateNodeImpl(Pred->State, false);
   
   for (DeferredTy::iterator I=Deferred.begin(), E=Deferred.end(); I!=E; ++I)
-    if (!(*I)->isSink()) Eng.WList->Enqueue(GRWorkListUnit(*I));
+    if (!(*I)->isSink()) Eng.WList->Enqueue(*I);
 }

@@ -375,23 +375,45 @@ void GRConstants::ProcessBranch(Expr* Condition, Stmt* Term,
     }      
   }
 
-  // Process the true branch.
-  bool isFeasible = true;
+  // Get the current block counter.
+  GRBlockCounter BC = builder.getBlockCounter();
+    
+  unsigned NumVisited = BC.getNumVisited(builder.getTargetBlock(true)->getBlockID());
   
-  StateTy St = Assume(PrevState, V, true, isFeasible);
+  if (isa<nonlval::ConcreteInt>(V) || 
+      BC.getNumVisited(builder.getTargetBlock(true)->getBlockID()) < 1) {
+    
+    // Process the true branch.
 
-  if (isFeasible)
-    builder.generateNode(St, true);
-  else {
-    builder.markInfeasible(true);
-    isFeasible = true;
+    bool isFeasible = true;
+    
+    StateTy St = Assume(PrevState, V, true, isFeasible);
+
+    if (isFeasible)
+      builder.generateNode(St, true);
+    else
+      builder.markInfeasible(true);
   }
+  else
+    builder.markInfeasible(true);
   
-  // Process the false branch.  
-  St = Assume(PrevState, V, false, isFeasible);
+  NumVisited = BC.getNumVisited(builder.getTargetBlock(true)->getBlockID());
+
   
-  if (isFeasible)
-    builder.generateNode(St, false);
+  if (isa<nonlval::ConcreteInt>(V) || 
+      BC.getNumVisited(builder.getTargetBlock(false)->getBlockID()) < 1) {
+    
+    // Process the false branch.  
+    
+    bool isFeasible = false;
+    
+    StateTy St = Assume(PrevState, V, false, isFeasible);
+    
+    if (isFeasible)
+      builder.generateNode(St, false);
+    else
+      builder.markInfeasible(false);
+  }
   else
     builder.markInfeasible(false);
 }

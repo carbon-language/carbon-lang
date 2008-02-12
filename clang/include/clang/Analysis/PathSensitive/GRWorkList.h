@@ -15,38 +15,58 @@
 #ifndef LLVM_CLANG_ANALYSIS_GRWORKLIST
 #define LLVM_CLANG_ANALYSIS_GRWORKLIST
 
+#include "clang/Analysis/PathSensitive/GRBlockCounter.h"
+
 namespace clang {  
 
 class ExplodedNodeImpl;
   
 class GRWorkListUnit {
   ExplodedNodeImpl* Node;
+  GRBlockCounter Counter;
   CFGBlock* Block;
   unsigned BlockIdx;
   
 public:
-  GRWorkListUnit(ExplodedNodeImpl* N, CFGBlock* B, unsigned idx)
-  : Node(N), Block(B), BlockIdx(idx) {}
+  GRWorkListUnit(ExplodedNodeImpl* N, GRBlockCounter C,
+                 CFGBlock* B, unsigned idx)
+  : Node(N),
+    Counter(C),
+    Block(B),
+    BlockIdx(idx) {}
   
-  explicit GRWorkListUnit(ExplodedNodeImpl* N)
-  : Node(N), Block(NULL), BlockIdx(0) {}
+  explicit GRWorkListUnit(ExplodedNodeImpl* N, GRBlockCounter C)
+  : Node(N),
+    Counter(C),
+    Block(NULL),
+    BlockIdx(0) {}
   
-  ExplodedNodeImpl* getNode()  const { return Node; }    
-  CFGBlock*         getBlock() const { return Block; }
-  unsigned          getIndex() const { return BlockIdx; }
+  ExplodedNodeImpl* getNode()         const { return Node; }
+  GRBlockCounter    getBlockCounter() const { return Counter; }
+  CFGBlock*         getBlock()        const { return Block; }
+  unsigned          getIndex()        const { return BlockIdx; }
 };
 
 class GRWorkList {
+  GRBlockCounter CurrentCounter;
 public:
   virtual ~GRWorkList();
   virtual bool hasWork() const = 0;
+    
   virtual void Enqueue(const GRWorkListUnit& U) = 0;
 
-  void Enqueue(ExplodedNodeImpl* N, CFGBlock& B, unsigned idx) {
-    Enqueue(GRWorkListUnit(N,&B,idx));
+  void Enqueue(ExplodedNodeImpl* N, CFGBlock& B, unsigned idx) {    
+    Enqueue(GRWorkListUnit(N, CurrentCounter, &B, idx));
+  }
+  
+  void Enqueue(ExplodedNodeImpl* N) {
+    Enqueue(GRWorkListUnit(N, CurrentCounter));
   }
   
   virtual GRWorkListUnit Dequeue() = 0;
+  
+  void setBlockCounter(GRBlockCounter C) { CurrentCounter = C; }
+  GRBlockCounter getBlockCounter() const { return CurrentCounter; }
   
   static GRWorkList* MakeDFS(); 
 };
