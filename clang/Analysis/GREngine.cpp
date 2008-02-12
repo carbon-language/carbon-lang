@@ -168,42 +168,47 @@ void GREngineImpl::HandleBlockExit(CFGBlock * B, ExplodedNodeImpl* Pred) {
       default:
         assert(false && "Analysis for this terminator not implemented.");
         break;
+                
+      case Stmt::BinaryOperatorClass: // '&&' and '||'
+        HandleBranch(cast<BinaryOperator>(Term)->getLHS(), Term, B, Pred);
+        return;
         
       case Stmt::ConditionalOperatorClass:
         HandleBranch(cast<ConditionalOperator>(Term)->getCond(), Term, B, Pred);
-        break;
+        return;
+        
+        // FIXME: Use constant-folding in CFG construction to simplify this
+        // case.
         
       case Stmt::ChooseExprClass:
         HandleBranch(cast<ChooseExpr>(Term)->getCond(), Term, B, Pred);
-        break;
+        return;
         
-      case Stmt::BinaryOperatorClass: // '&&' and '||'
-        HandleBranch(cast<BinaryOperator>(Term)->getLHS(), Term, B, Pred);
+      case Stmt::DoStmtClass:
+        HandleBranch(cast<DoStmt>(Term)->getCond(), Term, B, Pred);
+        return;
+        
+      case Stmt::ForStmtClass:
+        HandleBranch(cast<ForStmt>(Term)->getCond(), Term, B, Pred);
+        return;
+        
+      case Stmt::GotoStmtClass:
         break;
         
       case Stmt::IfStmtClass:
         HandleBranch(cast<IfStmt>(Term)->getCond(), Term, B, Pred);
-        break;
-        
-      case Stmt::ForStmtClass:
-        HandleBranch(cast<ForStmt>(Term)->getCond(), Term, B, Pred);
-        break;
+        return;
         
       case Stmt::WhileStmtClass:
         HandleBranch(cast<WhileStmt>(Term)->getCond(), Term, B, Pred);
-        break;
-        
-      case Stmt::DoStmtClass:
-        HandleBranch(cast<DoStmt>(Term)->getCond(), Term, B, Pred);
-        break;
+        return;
     }
   }
-  else {
-    assert (B->succ_size() == 1 &&
-            "Blocks with no terminator should have at most 1 successor.");
+
+  assert (B->succ_size() == 1 &&
+          "Blocks with no terminator should have at most 1 successor.");
     
-    GenerateNode(BlockEdge(getCFG(),B,*(B->succ_begin())), Pred->State, Pred);    
-  }
+  GenerateNode(BlockEdge(getCFG(),B,*(B->succ_begin())), Pred->State, Pred);
 }
 
 void GREngineImpl::HandleBranch(Expr* Cond, Stmt* Term, CFGBlock * B,
