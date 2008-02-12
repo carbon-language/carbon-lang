@@ -22,5 +22,10 @@ void foo() {
   const int *cip;
   vp = (0 ? vp : cip); // expected-warning {{discards qualifiers}}
   vp = (0 ? cip : vp); // expected-warning {{discards qualifiers}}
+
+  int i = 2;
+  int (*pf)[2];
+  int (*pv)[i];
+  pf = (i ? pf : pv);
 }
 

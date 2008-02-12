@@ -1685,6 +1685,10 @@ bool ASTContext::typesAreCompatible(QualType lhs, QualType rhs) {
   // comparisons, just force one to the other.
   if (LHSClass == Type::FunctionProto) LHSClass = Type::FunctionNoProto;
   if (RHSClass == Type::FunctionProto) RHSClass = Type::FunctionNoProto;
+
+  // Same as above for arrays
+  if (LHSClass == Type::VariableArray) LHSClass = Type::ConstantArray;
+  if (RHSClass == Type::VariableArray) RHSClass = Type::ConstantArray;
   
   // If the canonical type classes don't match...
   if (LHSClass != RHSClass) {
