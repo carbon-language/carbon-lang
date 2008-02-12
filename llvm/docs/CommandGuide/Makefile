@@ -8,67 +8,59 @@
 ##===----------------------------------------------------------------------===##
 
 ifdef BUILD_FOR_WEBSITE
-
 # This special case is for keeping the CommandGuide on the LLVM web site
 # up to date automatically as the documents are checked in. It must build
 # the POD files to HTML only and keep them in the src directories. It must also
 # build in an unconfigured tree, hence the ifdef. To use this, run
 # make -s BUILD_FOR_WEBSITE=1 inside the cvs commit script.
+SRC_DOC_DIR=
+DST_HTML_DIR=html/
+DST_MAN_DIR=man/man1/
+DST_PS_DIR=ps/
 
-POD  := $(wildcard *.pod)
-HTML := $(patsubst %.pod, html/%.html, $(POD))
-MAN  := $(patsubst %.pod, man/man1/%.1, $(POD))
-PS   := $(patsubst %.pod, ps/%.ps, $(POD))
-
-all: $(HTML) $(MAN) $(PS)
-
-.SUFFIXES:
-.SUFFIXES: .html .pod .1 .ps
-
-html/%.html: %.pod
-	pod2html --css=manpage.css --htmlroot=. \
-	  --podpath=. --noindex --infile=$< --outfile=$@ --title=$*
-
-man/man1/%.1: %.pod
-	pod2man --release=CVS --center="LLVM Command Guide" $< $@
-
-ps/%.ps: man/man1/%.1
-	groff -Tps -man $< > $@
+# If we are in BUILD_FOR_WEBSITE mode, default to the all target.
+all:: html man ps
 
 clean:
 	rm -f pod2htm*.*~~ $(HTML) $(MAN) $(PS)
+else
 
-else 
-
+# Otherwise, if not in BUILD_FOR_WEBSITE mode, use the project info.
 LEVEL := ../..
-
 include $(LEVEL)/Makefile.common
 
-POD := $(wildcard $(PROJ_SRC_DIR)/*.pod)
+SRC_DOC_DIR=$(PROJ_SRC_DIR)/
+DST_HTML_DIR=$(PROJ_OBJ_DIR)/
+DST_MAN_DIR=$(PROJ_OBJ_DIR)/
+DST_PS_DIR=$(PROJ_OBJ_DIR)/
 
-EXTRA_DIST := $(POD) index.html
+endif
 
-HTML = $(patsubst $(PROJ_SRC_DIR)/%.pod, $(PROJ_OBJ_DIR)/%.html, $(POD))
-MAN = $(patsubst $(PROJ_SRC_DIR)/%.pod, $(PROJ_OBJ_DIR)/%.1, $(POD))
-PS = $(patsubst $(PROJ_SRC_DIR)/%.pod, $(PROJ_OBJ_DIR)/%.ps, $(POD))
+
+POD  := $(wildcard $(SRC_DOC_DIR)*.pod)
+HTML := $(patsubst $(SRC_DOC_DIR)%.pod, $(DST_HTML_DIR)%.html, $(POD))
+MAN  := $(patsubst $(SRC_DOC_DIR)%.pod, $(DST_MAN_DIR)%.1, $(POD))
+PS   := $(patsubst $(SRC_DOC_DIR)%.pod, $(DST_PS_DIR)%.ps, $(POD))
 
 .SUFFIXES:
 .SUFFIXES: .html .pod .1 .ps
 
-$(HTML) : html/.dir man/.dir man/man1/.dir ps/.dir
+$(DST_HTML_DIR)%.html: %.pod $(DST_HTML_DIR)/.dir
+	pod2html --css=manpage.css --htmlroot=. \
+	  --podpath=. --noindex --infile=$< --outfile=$@ --title=$*
+
+$(DST_MAN_DIR)%.1: %.pod $(DST_MAN_DIR)/.dir
+	pod2man --release=CVS --center="LLVM Command Guide" $< $@
+
+$(DST_PS_DIR)%.ps: $(DST_MAN_DIR)%.1 $(DST_PS_DIR)/.dir
+	groff -Tps -man $< > $@
+
 
 html: $(HTML)
+man: $(MAN)
+ps: $(PS)
 
-$(PROJ_OBJ_DIR)/%.html: %.pod
-	$(POD2HTML) --css=manpage.css --htmlroot=. --podpath=. \
-	  --noindex --infile=$< --outfile=$@ --title=$*
-
-$(PROJ_OBJ_DIR)/%.1: %.pod
-	$(POD2MAN) --release=$(LLVMVersion) \
-	  --center="LLVM Command Guide" $< $@
-
-$(PROJ_OBJ_DIR)/%.ps: $(PROJ_OBJ_DIR)/%.1
-	$(GROFF) -Tps -man $< > $@
+EXTRA_DIST := $(POD) index.html
 
 clean-local::
 	$(Verb) $(RM) -f pod2htm*.*~~ $(HTML) $(MAN) $(PS)
@@ -97,5 +89,3 @@ uninstall-local::
 printvars::
 	$(Echo) "POD            : " '$(POD)'
 	$(Echo) "HTML           : " '$(HTML)'
-
-endif
