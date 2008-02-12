@@ -183,7 +183,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
       if (I->hasExternalLinkage()) {
         if (const char *Directive = TAI->getZeroFillDirective()) {
           O << "\t.globl " << name << "\n";
-          O << Directive << "__DATA__, __common, " << name << ", "
+          O << Directive << "__DATA, __common, " << name << ", "
             << Size << ", " << Align << "\n";
           continue;
         }
