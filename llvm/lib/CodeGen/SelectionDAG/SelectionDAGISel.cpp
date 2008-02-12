@@ -633,100 +633,136 @@ static SDOperand getCopyFromParts(SelectionDAG &DAG,
                                   MVT::ValueType ValueVT,
                                   ISD::NodeType AssertOp = ISD::DELETED_NODE,
                                   bool TruncExact = false) {
-  if (!MVT::isVector(ValueVT) || NumParts == 1) {
-    SDOperand Val = Parts[0];
+  assert(NumParts > 0 && "No parts to assemble!");
+  TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  SDOperand Val = Parts[0];
 
-    // If the value was expanded, copy from the top part.
-    if (NumParts > 1) {
-      assert(NumParts == 2 &&
-             "Cannot expand to more than 2 elts yet!");
-      SDOperand Hi = Parts[1];
-      if (!DAG.getTargetLoweringInfo().isLittleEndian())
-        std::swap(Val, Hi);
-      return DAG.getNode(ISD::BUILD_PAIR, ValueVT, Val, Hi);
-    }
+  if (NumParts > 1) {
+    // Assemble the value from multiple parts.
+    if (!MVT::isVector(ValueVT)) {
+      unsigned PartBits = MVT::getSizeInBits(PartVT);
+      unsigned ValueBits = MVT::getSizeInBits(ValueVT);
 
-    // Otherwise, if the value was promoted or extended, truncate it to the
-    // appropriate type.
-    if (PartVT == ValueVT)
-      return Val;
-  
-    if (MVT::isVector(PartVT)) {
-      assert(MVT::isVector(ValueVT) && "Unknown vector conversion!");
-      return DAG.getNode(ISD::BIT_CONVERT, ValueVT, Val);
-    }
-  
-    if (MVT::isVector(ValueVT)) {
-      assert(NumParts == 1 &&
-             MVT::getVectorElementType(ValueVT) == PartVT &&
-             MVT::getVectorNumElements(ValueVT) == 1 &&
-             "Only trivial scalar-to-vector conversions should get here!");
-      return DAG.getNode(ISD::BUILD_VECTOR, ValueVT, Val);
-    }
-  
-    if (MVT::isInteger(PartVT) &&
-        MVT::isInteger(ValueVT)) {
-      if (ValueVT < PartVT) {
-        // For a truncate, see if we have any information to
-        // indicate whether the truncated bits will always be
-        // zero or sign-extension.
-        if (AssertOp != ISD::DELETED_NODE)
-          Val = DAG.getNode(AssertOp, PartVT, Val,
-                            DAG.getValueType(ValueVT));
-        return DAG.getNode(ISD::TRUNCATE, ValueVT, Val);
+      // Assemble the power of 2 part.
+      unsigned RoundParts = NumParts & (NumParts - 1) ?
+        1 << Log2_32(NumParts) : NumParts;
+      unsigned RoundBits = PartBits * RoundParts;
+      MVT::ValueType RoundVT = RoundBits == ValueBits ?
+        ValueVT : MVT::getIntegerType(RoundBits);
+      SDOperand Lo, Hi;
+
+      if (RoundParts > 2) {
+        MVT::ValueType HalfVT = MVT::getIntegerType(RoundBits/2);
+        Lo = getCopyFromParts(DAG, Parts, RoundParts/2, PartVT, HalfVT);
+        Hi = getCopyFromParts(DAG, Parts+RoundParts/2, RoundParts/2,
+                              PartVT, HalfVT);
       } else {
-        return DAG.getNode(ISD::ANY_EXTEND, ValueVT, Val);
+        Lo = Parts[0];
+        Hi = Parts[1];
       }
+      if (TLI.isBigEndian())
+        std::swap(Lo, Hi);
+      Val = DAG.getNode(ISD::BUILD_PAIR, RoundVT, Lo, Hi);
+
+      if (RoundParts < NumParts) {
+        // Assemble the trailing non-power-of-2 part.
+        unsigned OddParts = NumParts - RoundParts;
+        MVT::ValueType OddVT = MVT::getIntegerType(OddParts * PartBits);
+        Hi = getCopyFromParts(DAG, Parts+RoundParts, OddParts, PartVT, OddVT);
+
+        // Combine the round and odd parts.
+        Lo = Val;
+        if (TLI.isBigEndian())
+          std::swap(Lo, Hi);
+        MVT::ValueType TotalVT = MVT::getIntegerType(NumParts * PartBits);
+        Hi = DAG.getNode(ISD::ANY_EXTEND, TotalVT, Hi);
+        Hi = DAG.getNode(ISD::SHL, TotalVT, Hi,
+                         DAG.getConstant(MVT::getSizeInBits(Lo.getValueType()),
+                                         TLI.getShiftAmountTy()));
+        Lo = DAG.getNode(ISD::ZERO_EXTEND, TotalVT, Lo);
+        Val = DAG.getNode(ISD::OR, TotalVT, Lo, Hi);
+      }
+    } else {
+      // Handle a multi-element vector.
+      MVT::ValueType IntermediateVT, RegisterVT;
+      unsigned NumIntermediates;
+      unsigned NumRegs =
+        TLI.getVectorTypeBreakdown(ValueVT, IntermediateVT, NumIntermediates,
+                                   RegisterVT);
+
+      assert(NumRegs == NumParts && "Part count doesn't match vector breakdown!");
+      assert(RegisterVT == PartVT && "Part type doesn't match vector breakdown!");
+      assert(RegisterVT == Parts[0].getValueType() &&
+             "Part type doesn't match part!");
+
+      // Assemble the parts into intermediate operands.
+      SmallVector<SDOperand, 8> Ops(NumIntermediates);
+      if (NumIntermediates == NumParts) {
+        // If the register was not expanded, truncate or copy the value,
+        // as appropriate.
+        for (unsigned i = 0; i != NumParts; ++i)
+          Ops[i] = getCopyFromParts(DAG, &Parts[i], 1,
+                                    PartVT, IntermediateVT);
+      } else if (NumParts > 0) {
+        // If the intermediate type was expanded, build the intermediate operands
+        // from the parts.
+        assert(NumParts % NumIntermediates == 0 &&
+               "Must expand into a divisible number of parts!");
+        unsigned Factor = NumParts / NumIntermediates;
+        for (unsigned i = 0; i != NumIntermediates; ++i)
+          Ops[i] = getCopyFromParts(DAG, &Parts[i * Factor], Factor,
+                                    PartVT, IntermediateVT);
+      }
+
+      // Build a vector with BUILD_VECTOR or CONCAT_VECTORS from the intermediate
+      // operands.
+      Val = DAG.getNode(MVT::isVector(IntermediateVT) ?
+                        ISD::CONCAT_VECTORS : ISD::BUILD_VECTOR,
+                        ValueVT, &Ops[0], NumIntermediates);
     }
-  
-    if (MVT::isFloatingPoint(PartVT) && MVT::isFloatingPoint(ValueVT))
-      return DAG.getNode(ISD::FP_ROUND, ValueVT, Val,
-                         DAG.getIntPtrConstant(TruncExact));
-
-    if (MVT::getSizeInBits(PartVT) == MVT::getSizeInBits(ValueVT))
-      return DAG.getNode(ISD::BIT_CONVERT, ValueVT, Val);
-
-    assert(0 && "Unknown mismatch!");
   }
 
-  // Handle a multi-element vector.
-  MVT::ValueType IntermediateVT, RegisterVT;
-  unsigned NumIntermediates;
-  unsigned NumRegs =
-    DAG.getTargetLoweringInfo()
-      .getVectorTypeBreakdown(ValueVT, IntermediateVT, NumIntermediates,
-                              RegisterVT);
+  // There is now one part, held in Val.  Correct it to match ValueVT.
+  PartVT = Val.getValueType();
 
-  assert(NumRegs == NumParts && "Part count doesn't match vector breakdown!");
-  assert(RegisterVT == PartVT && "Part type doesn't match vector breakdown!");
-  assert(RegisterVT == Parts[0].getValueType() &&
-         "Part type doesn't match part!");
+  if (PartVT == ValueVT)
+    return Val;
 
-  // Assemble the parts into intermediate operands.
-  SmallVector<SDOperand, 8> Ops(NumIntermediates);
-  if (NumIntermediates == NumParts) {
-    // If the register was not expanded, truncate or copy the value,
-    // as appropriate.
-    for (unsigned i = 0; i != NumParts; ++i)
-      Ops[i] = getCopyFromParts(DAG, &Parts[i], 1,
-                                PartVT, IntermediateVT);
-  } else if (NumParts > 0) {
-    // If the intermediate type was expanded, build the intermediate operands
-    // from the parts.
-    assert(NumParts % NumIntermediates == 0 &&
-           "Must expand into a divisible number of parts!");
-    unsigned Factor = NumParts / NumIntermediates;
-    for (unsigned i = 0; i != NumIntermediates; ++i)
-      Ops[i] = getCopyFromParts(DAG, &Parts[i * Factor], Factor,
-                                PartVT, IntermediateVT);
+  if (MVT::isVector(PartVT)) {
+    assert(MVT::isVector(ValueVT) && "Unknown vector conversion!");
+    return DAG.getNode(ISD::BIT_CONVERT, ValueVT, Val);
   }
-  
-  // Build a vector with BUILD_VECTOR or CONCAT_VECTORS from the intermediate
-  // operands.
-  return DAG.getNode(MVT::isVector(IntermediateVT) ?
-                       ISD::CONCAT_VECTORS :
-                       ISD::BUILD_VECTOR,
-                     ValueVT, &Ops[0], NumIntermediates);
+
+  if (MVT::isVector(ValueVT)) {
+    assert(MVT::getVectorElementType(ValueVT) == PartVT &&
+           MVT::getVectorNumElements(ValueVT) == 1 &&
+           "Only trivial scalar-to-vector conversions should get here!");
+    return DAG.getNode(ISD::BUILD_VECTOR, ValueVT, Val);
+  }
+
+  if (MVT::isInteger(PartVT) &&
+      MVT::isInteger(ValueVT)) {
+    if (MVT::getSizeInBits(ValueVT) < MVT::getSizeInBits(PartVT)) {
+      // For a truncate, see if we have any information to
+      // indicate whether the truncated bits will always be
+      // zero or sign-extension.
+      if (AssertOp != ISD::DELETED_NODE)
+        Val = DAG.getNode(AssertOp, PartVT, Val,
+                          DAG.getValueType(ValueVT));
+      return DAG.getNode(ISD::TRUNCATE, ValueVT, Val);
+    } else {
+      return DAG.getNode(ISD::ANY_EXTEND, ValueVT, Val);
+    }
+  }
+
+  if (MVT::isFloatingPoint(PartVT) && MVT::isFloatingPoint(ValueVT))
+    return DAG.getNode(ISD::FP_ROUND, ValueVT, Val,
+                       DAG.getIntPtrConstant(TruncExact));
+
+  if (MVT::getSizeInBits(PartVT) == MVT::getSizeInBits(ValueVT))
+    return DAG.getNode(ISD::BIT_CONVERT, ValueVT, Val);
+
+  assert(0 && "Unknown mismatch!");
 }
 
 /// getCopyToParts - Create a series of nodes that contain the specified value
@@ -741,47 +777,113 @@ static void getCopyToParts(SelectionDAG &DAG,
   TargetLowering &TLI = DAG.getTargetLoweringInfo();
   MVT::ValueType PtrVT = TLI.getPointerTy();
   MVT::ValueType ValueVT = Val.getValueType();
+  unsigned PartBits = MVT::getSizeInBits(PartVT);
+  assert(TLI.isTypeLegal(PartVT) && "Copying to an illegal type!");
 
-  if (!MVT::isVector(ValueVT) || NumParts == 1) {
-    // If the value was expanded, copy from the parts.
-    if (NumParts > 1) {
-      for (unsigned i = 0; i != NumParts; ++i)
-        Parts[i] = DAG.getNode(ISD::EXTRACT_ELEMENT, PartVT, Val,
-                               DAG.getConstant(i, PtrVT));
-      if (!DAG.getTargetLoweringInfo().isLittleEndian())
-        std::reverse(Parts, Parts + NumParts);
+  if (!NumParts)
+    return;
+
+  if (!MVT::isVector(ValueVT)) {
+    if (PartVT == ValueVT) {
+      assert(NumParts == 1 && "No-op copy with multiple parts!");
+      Parts[0] = Val;
       return;
     }
 
-    // If there is a single part and the types differ, this must be
-    // a promotion.
-    if (PartVT != ValueVT) {
-      if (MVT::isVector(PartVT)) {
-        assert(MVT::isVector(ValueVT) &&
-               "Not a vector-vector cast?");
-        Val = DAG.getNode(ISD::BIT_CONVERT, PartVT, Val);
-      } else if (MVT::isVector(ValueVT)) {
-        assert(NumParts == 1 &&
-               MVT::getVectorElementType(ValueVT) == PartVT &&
-               MVT::getVectorNumElements(ValueVT) == 1 &&
-               "Only trivial vector-to-scalar conversions should get here!");
-        Val = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, PartVT, Val,
-                          DAG.getConstant(0, PtrVT));
-      } else if (MVT::isInteger(PartVT) && MVT::isInteger(ValueVT)) {
-        if (PartVT < ValueVT)
-          Val = DAG.getNode(ISD::TRUNCATE, PartVT, Val);
-        else
-          Val = DAG.getNode(ExtendKind, PartVT, Val);
-      } else if (MVT::isFloatingPoint(PartVT) &&
-                 MVT::isFloatingPoint(ValueVT)) {
+    if (NumParts * PartBits > MVT::getSizeInBits(ValueVT)) {
+      // If the parts cover more bits than the value has, promote the value.
+      if (MVT::isFloatingPoint(PartVT) && MVT::isFloatingPoint(ValueVT)) {
+        assert(NumParts == 1 && "Do not know what to promote to!");
         Val = DAG.getNode(ISD::FP_EXTEND, PartVT, Val);
-      } else if (MVT::getSizeInBits(PartVT) == 
-                 MVT::getSizeInBits(ValueVT)) {
-        Val = DAG.getNode(ISD::BIT_CONVERT, PartVT, Val);
+      } else if (MVT::isInteger(PartVT) && MVT::isInteger(ValueVT)) {
+        ValueVT = MVT::getIntegerType(NumParts * PartBits);
+        Val = DAG.getNode(ExtendKind, ValueVT, Val);
+      } else {
+        assert(0 && "Unknown mismatch!");
+      }
+    } else if (PartBits == MVT::getSizeInBits(ValueVT)) {
+      // Different types of the same size.
+      assert(NumParts == 1 && PartVT != ValueVT);
+      Val = DAG.getNode(ISD::BIT_CONVERT, PartVT, Val);
+    } else if (NumParts * PartBits < MVT::getSizeInBits(ValueVT)) {
+      // If the parts cover less bits than value has, truncate the value.
+      if (MVT::isInteger(PartVT) && MVT::isInteger(ValueVT)) {
+        ValueVT = MVT::getIntegerType(NumParts * PartBits);
+        Val = DAG.getNode(ISD::TRUNCATE, ValueVT, Val);
       } else {
         assert(0 && "Unknown mismatch!");
       }
     }
+
+    // The value may have changed - recompute ValueVT.
+    ValueVT = Val.getValueType();
+    assert(NumParts * PartBits == MVT::getSizeInBits(ValueVT) &&
+           "Failed to tile the value with PartVT!");
+
+    if (NumParts == 1) {
+      assert(PartVT == ValueVT && "Type conversion failed!");
+      Parts[0] = Val;
+      return;
+    }
+
+    // Expand the value into multiple parts.
+    if (NumParts & (NumParts - 1)) {
+      // The number of parts is not a power of 2.  Split off and copy the tail.
+      assert(MVT::isInteger(PartVT) && MVT::isInteger(ValueVT) &&
+             "Do not know what to expand to!");
+      unsigned RoundParts = 1 << Log2_32(NumParts);
+      unsigned RoundBits = RoundParts * PartBits;
+      unsigned OddParts = NumParts - RoundParts;
+      SDOperand OddVal = DAG.getNode(ISD::SRL, ValueVT, Val,
+                                     DAG.getConstant(RoundBits,
+                                                     TLI.getShiftAmountTy()));
+      getCopyToParts(DAG, OddVal, Parts + RoundParts, OddParts, PartVT);
+      if (TLI.isBigEndian())
+        // The odd parts were reversed by getCopyToParts - unreverse them.
+        std::reverse(Parts + RoundParts, Parts + NumParts);
+      NumParts = RoundParts;
+      ValueVT = MVT::getIntegerType(NumParts * PartBits);
+      Val = DAG.getNode(ISD::TRUNCATE, ValueVT, Val);
+    }
+
+    // The number of parts is a power of 2.  Repeatedly bisect the value using
+    // EXTRACT_ELEMENT.
+    Parts[0] = Val;
+    for (unsigned StepSize = NumParts; StepSize > 1; StepSize /= 2) {
+      for (unsigned i = 0; i < NumParts; i += StepSize) {
+        unsigned ThisBits = StepSize * PartBits / 2;
+        MVT::ValueType ThisVT =
+          ThisBits == PartBits ? PartVT : MVT::getIntegerType (ThisBits);
+
+        Parts[i+StepSize/2] =
+          DAG.getNode(ISD::EXTRACT_ELEMENT, ThisVT, Parts[i],
+                      DAG.getConstant(1, PtrVT));
+        Parts[i] =
+          DAG.getNode(ISD::EXTRACT_ELEMENT, ThisVT, Parts[i],
+                      DAG.getConstant(0, PtrVT));
+      }
+    }
+
+    if (TLI.isBigEndian())
+      std::reverse(Parts, Parts + NumParts);
+
+    return;
+  }
+
+  // Vector ValueVT.
+  if (NumParts == 1) {
+    if (PartVT != ValueVT) {
+      if (MVT::isVector(PartVT)) {
+        Val = DAG.getNode(ISD::BIT_CONVERT, PartVT, Val);
+      } else {
+        assert(MVT::getVectorElementType(ValueVT) == PartVT &&
+               MVT::getVectorNumElements(ValueVT) == 1 &&
+               "Only trivial vector-to-scalar conversions should get here!");
+        Val = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, PartVT, Val,
+                          DAG.getConstant(0, PtrVT));
+      }
+    }
+
     Parts[0] = Val;
     return;
   }
