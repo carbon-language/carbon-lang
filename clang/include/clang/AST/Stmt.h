@@ -577,48 +577,6 @@ public:
   virtual void EmitImpl(llvm::Serializer& S) const;
   static ForStmt* CreateImpl(llvm::Deserializer& D);
 };
-
-/// ObjCForCollectionStmt - This represents Objective-c's collection statement;
-/// represented as 'for (element 'in' collection-expression)' stmt.
-///
-class ObjCForCollectionStmt : public Stmt {
-  enum { ELEM, COLLECTION, BODY, END_EXPR };
-  Stmt* SubExprs[END_EXPR]; // SubExprs[ELEM] is an expression or declstmt.
-  SourceLocation ForLoc;
-  SourceLocation RParenLoc;
-public:
-  ObjCForCollectionStmt(Stmt *Elem, Expr *Collect, Stmt *Body, 
-                        SourceLocation FCL, SourceLocation RPL);
-  
-  Stmt *getElement() { return SubExprs[ELEM]; }
-  Expr *getCollection() { 
-    return reinterpret_cast<Expr*>(SubExprs[COLLECTION]); 
-  }
-  Stmt *getBody() { return SubExprs[BODY]; }
-    
-  const Stmt *getElement() const { return SubExprs[ELEM]; }
-  const Expr *getCollection() const { 
-    return reinterpret_cast<Expr*>(SubExprs[COLLECTION]);
-  }
-  const Stmt *getBody() const { return SubExprs[BODY]; }
-  
-  SourceLocation getRParenLoc() const { return RParenLoc; }
-  
-  virtual SourceRange getSourceRange() const { 
-    return SourceRange(ForLoc, SubExprs[BODY]->getLocEnd()); 
-  }
-  static bool classof(const Stmt *T) { 
-    return T->getStmtClass() == ObjCForCollectionStmtClass; 
-  }
-  static bool classof(const ObjCForCollectionStmt *) { return true; }
-    
-  // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
-    
-  virtual void EmitImpl(llvm::Serializer& S) const;
-  static ObjCForCollectionStmt* CreateImpl(llvm::Deserializer& D);
-};
   
 /// GotoStmt - This represents a direct goto.
 ///
@@ -823,6 +781,48 @@ public:
   virtual void EmitImpl(llvm::Serializer& S) const;
   static AsmStmt* CreateImpl(llvm::Deserializer& D);
 };
+
+/// ObjCForCollectionStmt - This represents Objective-c's collection statement;
+/// represented as 'for (element 'in' collection-expression)' stmt.
+///
+class ObjCForCollectionStmt : public Stmt {
+  enum { ELEM, COLLECTION, BODY, END_EXPR };
+  Stmt* SubExprs[END_EXPR]; // SubExprs[ELEM] is an expression or declstmt.
+  SourceLocation ForLoc;
+  SourceLocation RParenLoc;
+public:
+  ObjCForCollectionStmt(Stmt *Elem, Expr *Collect, Stmt *Body, 
+                        SourceLocation FCL, SourceLocation RPL);
+  
+  Stmt *getElement() { return SubExprs[ELEM]; }
+  Expr *getCollection() { 
+    return reinterpret_cast<Expr*>(SubExprs[COLLECTION]); 
+  }
+  Stmt *getBody() { return SubExprs[BODY]; }
+  
+  const Stmt *getElement() const { return SubExprs[ELEM]; }
+  const Expr *getCollection() const { 
+    return reinterpret_cast<Expr*>(SubExprs[COLLECTION]);
+  }
+  const Stmt *getBody() const { return SubExprs[BODY]; }
+  
+  SourceLocation getRParenLoc() const { return RParenLoc; }
+  
+  virtual SourceRange getSourceRange() const { 
+    return SourceRange(ForLoc, SubExprs[BODY]->getLocEnd()); 
+  }
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == ObjCForCollectionStmtClass; 
+  }
+  static bool classof(const ObjCForCollectionStmt *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+  
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static ObjCForCollectionStmt* CreateImpl(llvm::Deserializer& D);
+};  
   
 /// ObjCAtCatchStmt - This represents objective-c's @catch statement.
 class ObjCAtCatchStmt : public Stmt {
