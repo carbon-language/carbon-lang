@@ -4,11 +4,11 @@
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <link rel="stylesheet" href="llvm.css" type="text/css">
-  <title>LLVM 2.2 Release Notes</title>
+  <title>LLVM 2.3 Release Notes</title>
 </head>
 <body>
 
-<div class="doc_title">LLVM 2.2 Release Notes</div>
+<div class="doc_title">LLVM 2.3 Release Notes</div>
  
 <ol>
   <li><a href="#intro">Introduction</a></li>
@@ -23,6 +23,8 @@
   <p>Written by the <a href="http://llvm.org">LLVM Team</a><p>
 </div>
 
+<h1><font color="red">THIS IS A WORK IN PROGRESS FOR LLVM 2.3 (currently in
+progress on SVN HEAD)</font></h1>
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
@@ -33,7 +35,7 @@
 <div class="doc_text">
 
 <p>This document contains the release notes for the LLVM compiler
-infrastructure, release 2.2.  Here we describe the status of LLVM, including
+infrastructure, release 2.3.  Here we describe the status of LLVM, including
 major improvements from the previous release and any known problems.  All LLVM
 releases may be downloaded from the <a href="http://llvm.org/releases/">LLVM
 releases web site</a>.</p>
@@ -59,12 +61,12 @@ current one.  To see the release notes for a specific releases, please see the
 
 <div class="doc_text">
 
-<p>This is the thirteenth public release of the LLVM Compiler Infrastructure. 
-It includes many features and refinements from LLVM 2.1.</p>
+<p>This is the fourteenth public release of the LLVM Compiler Infrastructure. 
+It includes many features and refinements from LLVM 2.2.</p>
 
 </div>
 
-<!-- Unfinished features in 2.2:
+<!-- Unfinished features in 2.3:
   Index Set Splitting not enabled by default
   Machine LICM
   Machine Sinking
@@ -73,35 +75,26 @@ It includes many features and refinements from LLVM 2.1.</p>
 
 <!--=========================================================================-->
 <div class="doc_subsection">
-<a name="deprecation">Deprecated features in LLVM 2.2</a>
+<a name="deprecation">Removed features in LLVM 2.3</a>
 </div>
 
 <div class="doc_text">
 
-<p>This is the last LLVM release to support llvm-gcc 4.0, llvm-upgrade, and
-llvmc in its current form.  llvm-gcc 4.0 has been replaced with llvm-gcc 4.2.
-llvm-upgrade is useful for upgrading llvm 1.9 files to llvm 2.x syntax, but you
-can always use an old release to do this.  llvmc is currently mostly useless in
-llvm 2.2, and will be redesigned or removed in llvm 2.3.</p>
+<p>LLVM 2.2 was the last LLVM release to support llvm-gcc 4.0 and llvm-upgrade.
+llvm-gcc 4.0 has been replaced with llvm-gcc 4.2.  llvm-upgrade was useful for
+upgrading llvm 1.9 files to llvm 2.x syntax, but you can always use a previous
+llvm release to do this.</p>
 
 </div>
 
 <!--=========================================================================-->
 <div class="doc_subsection">
-<a name="frontends">llvm-gcc 4.0, llvm-gcc 4.2, and clang</a>
+<a name="frontends">llvm-gcc 4.2 and clang</a>
 </div>
 
 <div class="doc_text">
 
-<p>LLVM 2.2 fully supports both the llvm-gcc 4.0 and llvm-gcc 4.2 front-ends (in
-LLVM 2.1, llvm-gcc 4.2 was beta).  Since LLVM 2.1, the llvm-gcc 4.2 front-end
-has made leaps and bounds and is now at least as good as 4.0 in virtually every
-area, and is better in several areas (for example, exception handling
-correctness, support for Ada and Fortran, better ABI compatibility, etc).  We 
-strongly recommend that you
-migrate from llvm-gcc 4.0 to llvm-gcc 4.2 in this release cycle because
-<b>LLVM 2.2 is the last release that will support llvm-gcc 4.0</b>:  LLVM 2.3
-will only support the llvm-gcc 4.2 front-end.</p>
+<p>LLVM 2.3 fully supports llvm-gcc 4.2 front-end. </p>
 
 <p>The <a href="http://clang.llvm.org/">clang project</a> is an effort to build
 a set of new 'llvm native' front-end technologies for the LLVM optimizer
@@ -109,7 +102,7 @@ and code generator.  Currently, its C and Objective-C support is maturing
 nicely, and it has advanced source-to-source analysis and transformation
 capabilities.  If you are interested in building source-level tools for C and
 Objective-C (and eventually C++), you should take a look.  However, note that
-clang is not an official part of the LLVM 2.2 release.  If you are interested in
+clang is not an official part of the LLVM 2.3 release.  If you are interested in
 this project, please see its <a href="http://clang.llvm.org/">web site</a>.</p>
 
 </div>
@@ -121,41 +114,9 @@ this project, please see its <a href="http://clang.llvm.org/">web site</a>.</p>
 
 <div class="doc_text">
 
-<p>LLVM 2.2 includes several major new capabilities:</p>
+<p>LLVM 2.3 includes several major new capabilities:</p>
 
 <ul>
-<li>A research team led by Scott Michel in the Computer Systems Research
-Department at The Aerospace Corporation contributed the CellSPU backend, which
-generates code for the vector coprocessors on the Sony/Toshiba/IBM Cell BE
-processor. llvm-gcc 4.2 supports CellSPU as a 'configure' target and progress
-is being made so that libgcc.a compiles cleanly. Notable pieces still in
-development include full 64-bit integer and full double precision floating
-point support.</li>
-
-<li>Anton and Duncan significantly improved llvm-gcc 4.2 support for the GCC Ada
-(GNAT) and Fortran (gfortran) front-ends.  These front-ends should still be considered
-experimental however: see the <a href="#knownproblems">list of known problems</a>.
-The release binaries do not contain either front-end: they need to be built from
-source (the Ada front-end only builds on x86-32 linux).</li>
-
-<li>Dale contributed full support for long double on x86/x86-64 (where it is 80
-bits) and on Darwin PPC/PPC64 (where it is 128 bits).  In previous LLVM
-releases, llvm-gcc silently mapped long double to double.</li>
-
-<li>Gordon Henriksen rewrote most of the <a href="GarbageCollection.html"
->Accurate Garbage Collection</a> code in the code generator, making the
-generated code more efficient and adding support for the OCaml garbage collector
-metadata format.</li>
-
-<li>Christopher Lamb contributed support for multiple address spaces in LLVM
-IR.  This is useful for supporting targets that have 'near' vs 'far' pointers,
-'RAM' vs 'ROM' pointers, or that have non-local memory that can be accessed with
-special instructions.</li>
-
-<li>LLVM now includes a new set of detailed <a 
-href="tutorial/index.html">tutorials</a>, which explain how to implement a
-language with LLVM and shows how to use several important APIs.</li>
-
 </ul>
 
 </div>
@@ -170,29 +131,6 @@ language with LLVM and shows how to use several important APIs.</li>
 </p>
 
 <ul>
-<li>Gordon contributed support for C and OCaml Bindings for the basic LLVM IR
-construction routines as well as several other auxiliary APIs.</li>
-
-<li>Anton added readnone/readonly attributes for modeling function side effects.
-Duncan hooked up GCC's pure/const attributes to them and enhanced mod/ref
-analysis to use them.</li>
-
-<li>Devang added LLVMFoldingBuilder, a version of LLVMBuilder that implicitly
-simplifies the code as it is constructed.</li>
-
-<li>Ted Kremenek added a framework for generic object serialization to bitcode
-files. This support is only used by clang right now for ASTs but is extensible
-and could be used for serializing arbitrary other data into bitcode files.</li>
-    
-<li>Duncan improved TargetData to distinguish between the size/alignment of a
-type in a register, in memory according to the platform ABI, and in memory when
-we have a choice.</li>
-
-<li>Reid moved parameter attributes off of FunctionType and onto functions
-and calls.  This makes it much easier to add attributes to a function in a
-transformation pass.</li>
-
-<li>Dan Gohman added support for vector sin, cos, and pow intrinsics.</li>
 
 </ul>
   
@@ -210,45 +148,7 @@ which allows us to implement more aggressive algorithms and make it run
 faster:</p>
 
 <ul>
-
-<li>Owen refactored the existing LLVM dominator and loop information code to
-allow it work on the machine code representation.  He contributed support for
-dominator and loop information on machine code and merged the code for forward
-and backward dominator computation.</li>
-
-<li>Dan added support for emitting debug information with .file and .loc
-directives on platforms that support it, instead of emitting large tables in the .s
-file.</li>
-
-<li>Evan extended the DAG scheduler to model physical register dependencies
-explicitly and have the BURR scheduler pick a correct schedule based on the
-dependencies.  This reduces our use of the 'flag' operand hack.</li>
-
-<li>Evan added initial support for register coalescing of subregister
-references.</li>
-
-<li>Rafael Espindola implemented initial support for a new 'byval' attribute,
-which allows more efficient by-value argument passing in the LLVM IR.  Evan 
-finished support for it and enabled it in the X86 (32- and 64-bit) and C
-backends.</li>
-
-<li>The LLVM TargetInstrInfo class can now answer queries about the mod/ref and
-side-effect behavior of MachineInstr's.  This information is inferred
-automatically by TableGen from .td files for all instructions with
-patterns.</li>
-
-<li>Evan implemented simple live interval splitting on basic block boundaries.
-This allows the register allocator to be more successful at keeping values in
-registers in some parts of a value's live range, even if they need to be spilled
-in some other block.</li>
-
-<li>The new MachineRegisterInfo.h class provides support for efficiently
-iterating over all defs/uses of a register, and this information is
-automatically kept up-to-date.  This support is similar to the  use_iterator in
-the LLVM IR level.</li>
-
-<li>The MachineInstr, MachineOperand and TargetInstrDesc classes are simpler,
-more consistent, and better documented.</li>
+<li>MemOperand in the code generator.</li>
 </ul>
 
 </div>
@@ -261,23 +161,11 @@ more consistent, and better documented.</li>
 <div class="doc_text">
 
 <p>In addition to a huge array of bug fixes and minor performance tweaks, the 
-LLVM 2.2 optimizers support a few major enhancements:</p>
+LLVM 2.3 optimizers support a few major enhancements:</p>
 
 <ul>
 
-<li>Daniel Berlin and Curtis Dunham rewrote Andersen's alias analysis to be
-several orders of magnitude faster, and implemented Offline Variable
-Substitution and Lazy Cycle Detection.  Note that Andersen's is not enabled in
-llvm-gcc by default, but can be accessed through 'opt'.</li>
-
-<li>Dan Gohman contributed several enhancements to Loop Strength Reduction (LSR)
-to make it more aggressive with SSE intrinsics and when induction variables are
-used by non-memory instructions.</li> 
-
-<li>Evan added support for simple exit value substitution to LSR.</li>
-
-<li>Evan enhanced LSR to support induction variable reuse when the induction
-variables have different widths.</li>
+<li>Index set splitting on by default.</li>
 
 </ul>
 
@@ -294,18 +182,6 @@ variables have different widths.</li>
 </p>
 
 <ul>
-<li>Evan contributed support to the X86 backend to model the mod/ref behavior
-of the EFLAGS register explicitly in all instructions.  This gives more freedom
-to the scheduler, and is a more explicit way to model the instructions.</li>
-<li>Dale contributed support for exception handling on Darwin/PPC and he and
-Anton got x86-64 working.</li> 
-<li>Evan turned on if-conversion by default for ARM, allowing LLVM to take
-advantage of its predication features.</li>
-<li>Bruno added PIC support to the MIPS backend, fixed many bugs and improved
-support for architecture variants.</li>
-<li>Arnold Schwaighofer added initial support for X86 tail calls.</li>
-<li>Evan contributed several enhancements to Darwin/x86 debug information.</li>
-<li>Duncan added x86-64 support for trampolines (pointers to nested functions).</li>
 </ul>
   
 </div>
@@ -320,18 +196,6 @@ support for architecture variants.</li>
 </p>
 
 <ul>
-<li>Gordon expanded and updated the <a href="Passes.html">LLVM Analysis and
-Transformation Passes</a> reference to include descriptions for each pass.</li>
-
-<li>We rewrote the lexer and parser used by TableGen to make them simpler
-and cleaner.  This gives tblgen support for 'caret diagnostics'.  The .ll file
-lexer was also rewritten to support caret diagnostics but doesn't use this
-support yet.</li>
- 
-<li>Dale has been grinding through the GCC testsuite, and marked many 
-LLVM-incompatible tests as not-to-be-run (for example, if they are grepping
-through some GCC dump file that LLVM doesn't produce), he also found and fixed
-many LLVM bugs exposed by the testsuite.</li>
 </ul>
   
 </div>
@@ -394,12 +258,11 @@ there isn't already one.</p>
 be broken or unreliable, or are in early development.  These components should
 not be relied on, and bugs should not be filed against them, but they may be
 useful to some people.  In particular, if you would like to work on one of these
-components, please contact us on the <a href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev">LLVMdev list</a>.</p>
+components, please contact us on the <a
+href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev">LLVMdev list</a>.</p>
 
 <ul>
-<li>The <tt>-cee</tt> pass is known to be buggy and will be removed in
-    LLVM 2.3.</li>
-<li>The MSIL, IA64, Alpha, and MIPS backends are experimental.</li>
+<li>The MSIL, IA64, Alpha, SPU, and MIPS backends are experimental.</li>
 <li>The LLC "<tt>-filetype=asm</tt>" (the default) is the only supported
     value for this option.</li>
 <li>The llvmc tool is not supported.</li>
@@ -545,52 +408,6 @@ programs.</li>
   <a name="c-fe">Known problems with the C front-end</a>
 </div>
 
-<!-- ======================================================================= -->
-<div class="doc_subsection">
-  <a name="ada-fe">Known problems with the Ada front-end</a>
-</div>
-
-<div class="doc_text">
-The llvm-gcc 4.2 Ada compiler works fairly well, however this is not a mature
-technology and problems should be expected.
-<ul>
-<li>The Ada front-end currently only builds on x86-32.  This is mainly due
-to lack of trampoline support (pointers to nested functions) on other platforms,
-however it <a href="http://llvm.org/PR2006">also fails to build on x86-64</a>
-which does support trampolines.</li>
-<li>The Ada front-end <a href="http://llvm.org/PR2007">fails to bootstrap</a>.
-Workaround: configure with --disable-bootstrap.</li>
-<li>The c380004 and <a href="http://llvm.org/PR2010">c393010</a> ACATS tests
-fail (c380004 also fails with gcc-4.2 mainline).</li>
-<li>Many gcc specific Ada tests continue to crash the compiler.</li>
-<li>The -E binder option (exception backtraces)
-<a href="http://llvm.org/PR1982">does not work</a> and will result in programs
-crashing if an exception is raised.  Workaround: do not use -E.</li>
-<li>Only discrete types <a href="http://llvm.org/PR1981">are allowed to start
-or finish at a non-byte offset</a> in a record.  Workaround: do not pack records
-or use representation clauses that result in a field of a non-discrete type
-starting or finishing in the middle of a byte.</li>
-<li>The lli interpreter <a href="http://llvm.org/PR2009">considers 'main'
-as generated by the Ada binder to be invalid</a>.
-Workaround: hand edit the file to use pointers for argv and envp rather than
-integers.</li>
-<li>The -fstack-check option <a href="http://llvm.org/PR2008">is ignored</a>.</li>
-</ul>
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsection">
-  <a name="fortran-fe">Known problems with the Fortran front-end</a>
-</div>
-
-<div class="doc_text">
-
-<ul>
-<li>The llvm-gcc 4.2 gfortran front-end supports a broad range of Fortran code, but does
-<a href="http://llvm.org/PR1971">not support EQUIVALENCE yet</a>.</li>
-</ul>
-</div>
-
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">Bugs</div>
 
@@ -641,60 +458,6 @@ llvmdev mailing list if you are interested.</p>
   </ol>
 </li>
 
-<li><p>llvm-gcc supports the vast majority of GCC extensions, including:</p>
-
-  <ol>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Pragmas.html#Pragmas">Pragmas</a>: Pragmas accepted by GCC.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Local-Labels.html#Local%20Labels">Local Labels</a>: Labels local to a block.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Other-Builtins.html#Other%20Builtins">Other Builtins</a>:
-      Other built-in functions.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Variable-Attributes.html#Variable%20Attributes">Variable Attributes</a>:
-      Specifying attributes of variables.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Type-Attributes.html#Type%20Attributes">Type Attributes</a>:	Specifying attributes of types.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Thread_002dLocal.html">Thread-Local</a>: Per-thread variables.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Variable-Length.html#Variable%20Length">Variable Length</a>:
-      Arrays whose length is computed at run time.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Labels-as-Values.html#Labels%20as%20Values">Labels as Values</a>: Getting pointers to labels and computed gotos.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Statement-Exprs.html#Statement%20Exprs">Statement Exprs</a>:   Putting statements and declarations inside expressions.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Typeof.html#Typeof">Typeof</a>: <code>typeof</code>: referring to the type of an expression.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc-3.4.0/gcc/Lvalues.html#Lvalues">Lvalues</a>: Using <code>?:</code>, "<code>,</code>" and casts in lvalues.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Conditionals.html#Conditionals">Conditionals</a>: Omitting the middle operand of a <code>?:</code> expression.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Long-Long.html#Long%20Long">Long Long</a>: Double-word integers.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Complex.html#Complex">Complex</a>:   Data types for complex numbers.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Hex-Floats.html#Hex%20Floats">Hex Floats</a>:Hexadecimal floating-point constants.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Zero-Length.html#Zero%20Length">Zero Length</a>: Zero-length arrays.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Empty-Structures.html#Empty%20Structures">Empty Structures</a>: Structures with no members.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Variadic-Macros.html#Variadic%20Macros">Variadic Macros</a>: Macros with a variable number of arguments.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Escaped-Newlines.html#Escaped%20Newlines">Escaped Newlines</a>:  Slightly looser rules for escaped newlines.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Extended-Asm.html#Extended%20Asm">Extended Asm</a>: Assembler instructions with C expressions as operands.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Constraints.html#Constraints">Constraints</a>: Constraints for asm operands.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Asm-Labels.html#Asm%20Labels">Asm Labels</a>: Specifying the assembler name to use for a C symbol.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Explicit-Reg-Vars.html#Explicit%20Reg%20Vars">Explicit Reg Vars</a>: Defining variables residing in specified registers.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Vector-Extensions.html#Vector%20Extensions">Vector Extensions</a>: Using vector instructions through built-in functions.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Target-Builtins.html#Target%20Builtins">Target Builtins</a>:   Built-in functions specific to particular targets.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Subscripting.html#Subscripting">Subscripting</a>: Any array can be subscripted, even if not an lvalue.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Pointer-Arith.html#Pointer%20Arith">Pointer Arith</a>: Arithmetic on <code>void</code>-pointers and function pointers.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Initializers.html#Initializers">Initializers</a>: Non-constant initializers.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Compound-Literals.html#Compound%20Literals">Compound Literals</a>: Compound literals give structures, unions,
-or arrays as values.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Designated-Inits.html#Designated%20Inits">Designated Inits</a>: Labeling elements of initializers.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Cast-to-Union.html#Cast%20to%20Union">Cast to Union</a>: Casting to union type from any member of the union.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Case-Ranges.html#Case%20Ranges">Case Ranges</a>: `case 1 ... 9' and such.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Mixed-Declarations.html#Mixed%20Declarations">Mixed Declarations</a>: Mixing declarations and code.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Function-Prototypes.html#Function%20Prototypes">Function Prototypes</a>: Prototype declarations and old-style definitions.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/C_002b_002b-Comments.html#C_002b_002b-Comments">C++ Comments</a>: C++ comments are recognized.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Dollar-Signs.html#Dollar%20Signs">Dollar Signs</a>: Dollar sign is allowed in identifiers.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Character-Escapes.html#Character%20Escapes">Character Escapes</a>: <code>\e</code> stands for the character &lt;ESC&gt;.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Alignment.html#Alignment">Alignment</a>: Inquiring about the alignment of a type or variable.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Inline.html#Inline">Inline</a>: Defining inline functions (as fast as macros).</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Alternate-Keywords.html#Alternate%20Keywords">Alternate Keywords</a>:<code>__const__</code>, <code>__asm__</code>, etc., for header files.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Incomplete-Enums.html#Incomplete%20Enums">Incomplete Enums</a>:  <code>enum foo;</code>, with details to follow.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Function-Names.html#Function%20Names">Function Names</a>: Printable strings which are the name of the current function.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Return-Address.html#Return%20Address">Return Address</a>: Getting the return or frame address of a function.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Unnamed-Fields.html#Unnamed%20Fields">Unnamed Fields</a>: Unnamed struct/union fields within structs/unions.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Attribute-Syntax.html#Attribute%20Syntax">Attribute Syntax</a>: Formal syntax for attributes.</li>
-  </ol></li>
-
 </ul>
 
 <p>If you run into GCC extensions which have not been included in any of these
@@ -718,6 +481,53 @@ itself, Qt, Mozilla, etc.</p>
 It works well for x86-64 darwin but not x86-64 linux.</li>
 </ul>
 
+</div>
+
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="ada-fe">Known problems with the Ada front-end</a>
+</div>
+
+<div class="doc_text">
+The llvm-gcc 4.2 Ada compiler works fairly well, however this is not a mature
+technology and problems should be expected.
+<ul>
+<li>The Ada front-end currently only builds on x86-32.  This is mainly due
+to lack of trampoline support (pointers to nested functions) on other platforms,
+however it <a href="http://llvm.org/PR2006">also fails to build on x86-64</a>
+which does support trampolines.</li>
+<li>The Ada front-end <a href="http://llvm.org/PR2007">fails to bootstrap</a>.
+Workaround: configure with --disable-bootstrap.</li>
+<li>The c380004 and <a href="http://llvm.org/PR2010">c393010</a> ACATS tests
+fail (c380004 also fails with gcc-4.2 mainline).</li>
+<li>Many gcc specific Ada tests continue to crash the compiler.</li>
+<li>The -E binder option (exception backtraces)
+<a href="http://llvm.org/PR1982">does not work</a> and will result in programs
+crashing if an exception is raised.  Workaround: do not use -E.</li>
+<li>Only discrete types <a href="http://llvm.org/PR1981">are allowed to start
+or finish at a non-byte offset</a> in a record.  Workaround: do not pack records
+or use representation clauses that result in a field of a non-discrete type
+starting or finishing in the middle of a byte.</li>
+<li>The lli interpreter <a href="http://llvm.org/PR2009">considers 'main'
+as generated by the Ada binder to be invalid</a>.
+Workaround: hand edit the file to use pointers for argv and envp rather than
+integers.</li>
+<li>The -fstack-check option <a href="http://llvm.org/PR2008">is ignored</a>.</li>
+</ul>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="fortran-fe">Known problems with the Fortran front-end</a>
+</div>
+
+<div class="doc_text">
+
+<ul>
+<li>The llvm-gcc 4.2 gfortran front-end supports a broad range of Fortran code, but does
+<a href="http://llvm.org/PR1971">not support EQUIVALENCE yet</a>.</li>
+</ul>
 </div>
 
 
