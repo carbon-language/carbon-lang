@@ -1709,10 +1709,14 @@ bool ASTContext::typesAreCompatible(QualType lhs, QualType rhs) {
       
     // C99 6.7.2.2p4: Each enumerated type shall be compatible with char,
     // a signed integer type, or an unsigned integer type. 
-    // FIXME: need to check the size and ensure it's the same.
-    if ((lcanon->isEnumeralType() && rcanon->isIntegralType()) ||
-        (rcanon->isEnumeralType() && lcanon->isIntegralType()))
-      return true;
+    if (lcanon->isEnumeralType() && rcanon->isIntegralType()) {
+      EnumDecl* EDecl = cast<EnumDecl>(cast<TagType>(lcanon)->getDecl());
+      return EDecl->getIntegerType() == rcanon;
+    }
+    if (rcanon->isEnumeralType() && lcanon->isIntegralType()) {
+      EnumDecl* EDecl = cast<EnumDecl>(cast<TagType>(rcanon)->getDecl());
+      return EDecl->getIntegerType() == lcanon;
+    }
 
     return false;
   }

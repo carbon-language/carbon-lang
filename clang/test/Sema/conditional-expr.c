@@ -27,5 +27,9 @@ void foo() {
   int (*pf)[2];
   int (*pv)[i];
   pf = (i ? pf : pv);
+
+  enum {xxx,yyy,zzz} e, *ee;
+  short x;
+  ee = ee ? &x : ee ? &i : &e; // expected-warning {{pointer type mismatch}}
 }
 
