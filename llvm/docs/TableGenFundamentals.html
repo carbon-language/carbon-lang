@@ -301,9 +301,7 @@ and very high-level types (such as <tt>dag</tt>).  This flexibility is what
 allows it to describe a wide range of information conveniently and compactly.
 The TableGen types are:</p>
 
-<ul>
 <dl>
-
 <dt><tt><b>bit</b></tt></dt>
   <dd>A 'bit' is a boolean value that can hold either 0 or 1.</dd>
 
@@ -337,7 +335,6 @@ The TableGen types are:</p>
   <dd>This represents a big hunk of text. NOTE: I don't remember why this is
   distinct from string!</dd>
 </dl>
-</ul>
 
 <p>To date, these types have been sufficient for describing things that
 TableGen has been used for, but it is straight-forward to extend this list if
@@ -357,7 +354,6 @@ when building up values.  These forms allow the TableGen file to be written in a
 natural syntax and flavor for the application.  The current expression forms
 supported include:</p>
 
-<ul>
 <dl>
 <dt><tt>?</tt></dt>
   <dd>uninitialized field</dd>
@@ -401,7 +397,6 @@ supported include:</p>
   <dd>A string value that is the result of concatenating the 'a' and 'b'
   strings.</dd>
 </dl>
-</ul>
 
 <p>Note that all of the values have rules specifying how they convert to values
 for different types.  These rules allow you to assign a value like "<tt>7</tt>"
