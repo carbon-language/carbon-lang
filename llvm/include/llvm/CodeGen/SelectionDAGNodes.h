@@ -1396,6 +1396,14 @@ public:
   }
 };
 
+/// SrcValueSDNode - An SDNode that holds an arbitrary LLVM IR Value. This is
+/// used when the SelectionDAG needs to make a simple reference to something
+/// in the LLVM IR representation.
+///
+/// Note that this is not used for carrying alias information; that is done
+/// with MemOperandSDNode, which includes a Value which is required to be a
+/// pointer, and several other fields specific to memory references.
+///
 class SrcValueSDNode : public SDNode {
   const Value *V;
   virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
