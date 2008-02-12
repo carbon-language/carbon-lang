@@ -53,8 +53,8 @@ protected:
   ///
   PICStyle::Style PICStyle;
   
-  /// X86SSELevel - MMX, SSE1, SSE2, SSE3, SSSE3, or none supported.
-  ///
+  /// X86SSELevel - MMX, SSE1, SSE2, SSE3, SSSE3, SSE41, SSE42, or
+  /// none supported.
   X86SSEEnum X86SSELevel;
 
   /// X863DNowLevel - 3DNow or 3DNow Athlon, or none supported.
