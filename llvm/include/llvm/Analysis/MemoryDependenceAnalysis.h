@@ -100,6 +100,11 @@ class MemoryDependenceAnalysis : public FunctionPass {
     /// updating the dependence of instructions that previously depended on it.
     void removeInstruction(Instruction* rem);
     
+    /// dropInstruction - Remove an instruction from the analysis, making 
+    /// absolutely conservative assumptions when updating the cache.  This is
+    /// useful, for example when an instruction is changed rather than removed.
+    void dropInstruction(Instruction* drop);
+    
   private:
     Instruction* getCallSiteDependency(CallSite C, Instruction* start,
                                        BasicBlock* block);

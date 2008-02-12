@@ -457,6 +457,46 @@ Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
   return NonLocal;
 }
 
+/// dropInstruction - Remove an instruction from the analysis, making 
+/// absolutely conservative assumptions when updating the cache.  This is
+/// useful, for example when an instruction is changed rather than removed.
+void MemoryDependenceAnalysis::dropInstruction(Instruction* drop) {
+  depMapType::iterator depGraphEntry = depGraphLocal.find(drop);
+  if (depGraphEntry != depGraphLocal.end())
+    reverseDep[depGraphEntry->second.first].erase(drop);
+  
+  // Drop dependency information for things that depended on this instr
+  SmallPtrSet<Instruction*, 4>& set = reverseDep[drop];
+  for (SmallPtrSet<Instruction*, 4>::iterator I = set.begin(), E = set.end();
+       I != E; ++I)
+    depGraphLocal.erase(*I);
+  
+  depGraphLocal.erase(drop);
+  reverseDep.erase(drop);
+  
+  for (DenseMap<BasicBlock*, Value*>::iterator DI =
+       depGraphNonLocal[drop].begin(), DE = depGraphNonLocal[drop].end();
+       DI != DE; ++DI)
+    if (DI->second != None)
+      reverseDepNonLocal[DI->second].erase(drop);
+  
+  if (reverseDepNonLocal.count(drop)) {
+    SmallPtrSet<Instruction*, 4>& set = reverseDepNonLocal[drop];
+    for (SmallPtrSet<Instruction*, 4>::iterator I = set.begin(), E = set.end();
+         I != E; ++I)
+      for (DenseMap<BasicBlock*, Value*>::iterator DI =
+           depGraphNonLocal[*I].begin(), DE = depGraphNonLocal[*I].end();
+           DI != DE; ++DI)
+        if (DI->second == drop)
+          DI->second = Dirty;
+  }
+  
+  reverseDepNonLocal.erase(drop);
+  nonLocalDepMapType::iterator I = depGraphNonLocal.find(drop);
+  if (I != depGraphNonLocal.end())
+    depGraphNonLocal.erase(I);
+}
+
 /// removeInstruction - Remove an instruction from the dependence analysis,
 /// updating the dependence of instructions that previously depended on it.
 /// This method attempts to keep the cache coherent using the reverse map.
@@ -473,7 +513,7 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction* rem) {
   depMapType::iterator depGraphEntry = depGraphLocal.find(rem);
 
   if (depGraphEntry != depGraphLocal.end()) {
-    reverseDep[depGraphLocal[rem].first].erase(rem);
+    reverseDep[depGraphEntry->second.first].erase(rem);
     
     if (depGraphEntry->second.first != NonLocal &&
         depGraphEntry->second.first != None &&
