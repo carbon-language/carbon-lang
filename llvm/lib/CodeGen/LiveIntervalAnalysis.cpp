@@ -315,7 +315,6 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
 
       const LiveRange *OldLR = interval.getLiveRangeContaining(RedefIndex-1);
       VNInfo *OldValNo = OldLR->valno;
-      unsigned OldEnd = OldLR->end;
 
       // Delete the initial value, which should be short and continuous,
       // because the 2-addr copy must be in the same MBB as the redef.
@@ -328,7 +327,8 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       // The new value number (#1) is defined by the instruction we claimed
       // defined value #0.
       VNInfo *ValNo = interval.getNextValue(0, 0, VNInfoAllocator);
-      interval.copyValNumInfo(ValNo, OldValNo);
+      ValNo->def = OldValNo->def;
+      ValNo->reg = OldValNo->reg;
       
       // Value#0 is now defined by the 2-addr instruction.
       OldValNo->def = RedefIndex;
@@ -339,7 +339,6 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       DOUT << " replace range with " << LR;
       interval.addRange(LR);
       interval.addKill(ValNo, RedefIndex);
-      interval.removeKills(ValNo, RedefIndex, OldEnd);
 
       // If this redefinition is dead, we need to add a dummy unit live
       // range covering the def slot.
