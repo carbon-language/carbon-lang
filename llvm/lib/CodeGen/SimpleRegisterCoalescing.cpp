@@ -293,7 +293,8 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
     }
   }
 
-  // Commute def machine instr.
+  // At this point we have decided that it is legal to do this
+  // transformation.  Start by commuting the instruction.
   MachineBasicBlock *MBB = DefMI->getParent();
   MachineInstr *NewMI = tii_->commuteInstruction(DefMI);
   if (NewMI != DefMI) {
@@ -312,10 +313,10 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
   for (MachineRegisterInfo::use_iterator UI = mri_->use_begin(IntA.reg),
          UE = mri_->use_end(); UI != UE;) {
     MachineOperand &UseMO = UI.getOperand();
+    MachineInstr *UseMI = &*UI;
     ++UI;
-    MachineInstr *UseMI = UseMO.getParent();
-  if (JoinedCopies.count(UseMI))
-    continue;
+    if (JoinedCopies.count(UseMI))
+      continue;
     unsigned UseIdx = li_->getInstructionIndex(UseMI);
     LiveInterval::iterator ULR = IntA.FindLiveRangeContaining(UseIdx);
     if (ULR->valno != AValNo)
@@ -323,35 +324,35 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
     UseMO.setReg(NewReg);
     if (UseMO.isKill())
       BKills.push_back(li_->getUseIndex(UseIdx)+1);
-    if (UseMI != CopyMI) {
-      unsigned SrcReg, DstReg;
-      if (!tii_->isMoveInstr(*UseMI, SrcReg, DstReg))
-        continue;
-      unsigned repDstReg = rep(DstReg);
-      if (repDstReg != IntB.reg) {
-        // Update dst register interval val# since its source register has
-        // changed.
-        LiveInterval &DLI = li_->getInterval(repDstReg);
-        LiveInterval::iterator DLR =
-          DLI.FindLiveRangeContaining(li_->getDefIndex(UseIdx));
-        DLR->valno->reg = NewReg;
-        ChangedCopies.insert(UseMI);
-      } else {
-        // This copy will become a noop. If it's defining a new val#,
-        // remove that val# as well. However this live range is being
-        // extended to the end of the existing live range defined by the copy.
-        unsigned DefIdx = li_->getDefIndex(UseIdx);
-        LiveInterval::iterator DLR = IntB.FindLiveRangeContaining(DefIdx);
-        BHasPHIKill |= DLR->valno->hasPHIKill;
-        assert(DLR->valno->def == DefIdx);
-        BDeadValNos.push_back(DLR->valno);
-        BExtend[DLR->start] = DLR->end;
-        JoinedCopies.insert(UseMI);
-        // If this is a kill but it's going to be removed, the last use
-        // of the same val# is the new kill.
-        if (UseMO.isKill()) {
-          BKills.pop_back();
-        }
+    if (UseMI == CopyMI)
+      continue;
+    unsigned SrcReg, DstReg;
+    if (!tii_->isMoveInstr(*UseMI, SrcReg, DstReg))
+      continue;
+    unsigned repDstReg = rep(DstReg);
+    if (repDstReg != IntB.reg) {
+      // Update dst register interval val# since its source register has
+      // changed.
+      LiveInterval &DLI = li_->getInterval(repDstReg);
+      LiveInterval::iterator DLR =
+        DLI.FindLiveRangeContaining(li_->getDefIndex(UseIdx));
+      DLR->valno->reg = NewReg;
+      ChangedCopies.insert(UseMI);
+    } else {
+      // This copy will become a noop. If it's defining a new val#,
+      // remove that val# as well. However this live range is being
+      // extended to the end of the existing live range defined by the copy.
+      unsigned DefIdx = li_->getDefIndex(UseIdx);
+      LiveInterval::iterator DLR = IntB.FindLiveRangeContaining(DefIdx);
+      BHasPHIKill |= DLR->valno->hasPHIKill;
+      assert(DLR->valno->def == DefIdx);
+      BDeadValNos.push_back(DLR->valno);
+      BExtend[DLR->start] = DLR->end;
+      JoinedCopies.insert(UseMI);
+      // If this is a kill but it's going to be removed, the last use
+      // of the same val# is the new kill.
+      if (UseMO.isKill()) {
+        BKills.pop_back();
       }
     }
   }
