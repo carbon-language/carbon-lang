@@ -813,6 +813,18 @@ uint32_t APInt::countTrailingZeros() const {
   return std::min(Count, BitWidth);
 }
 
+uint32_t APInt::countTrailingOnes() const {
+  if (isSingleWord())
+    return std::min(uint32_t(CountTrailingOnes_64(VAL)), BitWidth);
+  uint32_t Count = 0;
+  uint32_t i = 0;
+  for (; i < getNumWords() && pVal[i] == -1; ++i)
+    Count += APINT_BITS_PER_WORD;
+  if (i < getNumWords())
+    Count += CountTrailingOnes_64(pVal[i]);
+  return std::min(Count, BitWidth);
+}
+
 uint32_t APInt::countPopulation() const {
   if (isSingleWord())
     return CountPopulation_64(VAL);

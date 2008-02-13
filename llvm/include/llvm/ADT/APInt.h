@@ -913,8 +913,9 @@ public:
   /// one bits.
   uint32_t countLeadingZeros() const;
 
-  /// countLeadingOnes - This function counts the number of contiguous 1 bits
-  /// in the high order bits. The count stops when the first 0 bit is reached.
+  /// countLeadingOnes - This function is an APInt version of the
+  /// countLeadingOnes_{32,64} functions in MathExtras.h. It counts the number
+  /// of ones from the most significant bit to the first zero bit.
   /// @returns 0 if the high order bit is not set
   /// @returns the number of 1 bits from the most significant to the least
   /// @brief Count the number of leading one bits.
@@ -928,6 +929,15 @@ public:
   /// one bit.
   /// @brief Count the number of trailing zero bits.
   uint32_t countTrailingZeros() const;
+
+  /// countTrailingOnes - This function is an APInt version of the 
+  /// countTrailingOnes_{32,64} functions in MathExtras.h. It counts 
+  /// the number of ones from the least significant bit to the first zero bit.
+  /// @returns BitWidth if the value is all ones.
+  /// @returns the number of ones from the least significant bit to the first
+  /// zero bit.
+  /// @brief Count the number of trailing one bits.
+  uint32_t countTrailingOnes() const;
 
   /// countPopulation - This function is an APInt version of the
   /// countPopulation_{32,64} functions in MathExtras.h. It counts the number
