@@ -191,8 +191,10 @@ void GREngineImpl::HandleBlockExit(CFGBlock * B, ExplodedNodeImpl* Pred) {
       case Stmt::ForStmtClass:
         HandleBranch(cast<ForStmt>(Term)->getCond(), Term, B, Pred);
         return;
-        
-      case Stmt::GotoStmtClass:
+      
+      case Stmt::ContinueStmtClass:
+      case Stmt::BreakStmtClass:
+      case Stmt::GotoStmtClass:        
         break;
         
       case Stmt::IfStmtClass:
