@@ -781,3 +781,14 @@ any number of 0.0 simultaneously.  Currently we only use it for simple
 insertions.
 
 See comments in LowerINSERT_VECTOR_ELT_SSE4.
+
+//===---------------------------------------------------------------------===//
+
+On a random note, SSE2 should declare insert/extract of 2 x f64 as legal, not
+Custom.  All combinations of insert/extract reg-reg, reg-mem, and mem-reg are
+legal, it'll just take a few extra patterns written in the .td file.
+
+Note: this is not a code quality issue; the custom lowered code happens to be
+right, but we shouldn't have to custom lower anything.  This is probably related
+to <2 x i64> ops being so bad.
+

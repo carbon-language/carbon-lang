@@ -177,3 +177,12 @@ which prevents the vnot pattern from matching.
 
 
 //===----------------------------------------------------------------------===//
+
+An alternative to the store/store/load approach for illegal insert element 
+lowering would be:
+
+1. store element to any ol' slot
+2. lvx the slot
+3. lvsl 0; splat index; vcmpeq to generate a select mask
+4. lvsl slot + x; vperm to rotate result into correct slot
+5. vsel result together.
