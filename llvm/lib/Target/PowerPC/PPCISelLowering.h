@@ -254,9 +254,9 @@ namespace llvm {
     virtual SDOperand PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
     
     virtual void computeMaskedBitsForTargetNode(const SDOperand Op,
-                                                uint64_t Mask,
-                                                uint64_t &KnownZero, 
-                                                uint64_t &KnownOne,
+                                                APInt Mask,
+                                                APInt &KnownZero, 
+                                                APInt &KnownOne,
                                                 const SelectionDAG &DAG,
                                                 unsigned Depth = 0) const;
 

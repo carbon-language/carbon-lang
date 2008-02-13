@@ -5640,9 +5640,9 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 //===----------------------------------------------------------------------===//
 
 void X86TargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op,
-                                                       uint64_t Mask,
-                                                       uint64_t &KnownZero,
-                                                       uint64_t &KnownOne,
+                                                       APInt Mask,
+                                                       APInt &KnownZero,
+                                                       APInt &KnownOne,
                                                        const SelectionDAG &DAG,
                                                        unsigned Depth) const {
   unsigned Opc = Op.getOpcode();
@@ -5657,7 +5657,8 @@ void X86TargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op,
   switch (Opc) {
   default: break;
   case X86ISD::SETCC:
-    KnownZero |= (MVT::getIntVTBitMask(Op.getValueType()) ^ 1ULL);
+    KnownZero |= APInt::getHighBitsSet(Mask.getBitWidth(),
+                                       Mask.getBitWidth() - 1);
     break;
   }
 }

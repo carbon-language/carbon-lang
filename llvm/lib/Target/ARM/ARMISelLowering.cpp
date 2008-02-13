@@ -1769,13 +1769,12 @@ bool ARMTargetLowering::getPostIndexedAddressParts(SDNode *N, SDNode *Op,
 }
 
 void ARMTargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op,
-                                                       uint64_t Mask,
-                                                       uint64_t &KnownZero, 
-                                                       uint64_t &KnownOne,
+                                                       APInt Mask,
+                                                       APInt &KnownZero, 
+                                                       APInt &KnownOne,
                                                        const SelectionDAG &DAG,
                                                        unsigned Depth) const {
-  KnownZero = 0;
-  KnownOne = 0;
+  KnownZero = KnownOne = APInt(Mask.getBitWidth(), 0);
   switch (Op.getOpcode()) {
   default: break;
   case ARMISD::CMOV: {
@@ -1783,7 +1782,7 @@ void ARMTargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op,
     DAG.ComputeMaskedBits(Op.getOperand(0), Mask, KnownZero, KnownOne, Depth+1);
     if (KnownZero == 0 && KnownOne == 0) return;
 
-    uint64_t KnownZeroRHS, KnownOneRHS;
+    APInt KnownZeroRHS, KnownOneRHS;
     DAG.ComputeMaskedBits(Op.getOperand(1), Mask,
                           KnownZeroRHS, KnownOneRHS, Depth+1);
     KnownZero &= KnownZeroRHS;

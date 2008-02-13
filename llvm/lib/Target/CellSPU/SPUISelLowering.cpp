@@ -2676,13 +2676,12 @@ SPUTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
 
 void
 SPUTargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op,
-                                                  uint64_t Mask,
-                                                  uint64_t &KnownZero, 
-                                                  uint64_t &KnownOne,
+                                                  APInt Mask,
+                                                  APInt &KnownZero, 
+                                                  APInt &KnownOne,
                                                   const SelectionDAG &DAG,
                                                   unsigned Depth ) const {
-  KnownZero = 0;
-  KnownOne = 0;
+  KnownZero = KnownOne = APInt(Mask.getBitWidth(), 0);
 }
 
 // LowerAsmOperandForConstraint

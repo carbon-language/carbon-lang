@@ -1130,10 +1130,11 @@ bool SelectionDAG::MaskedValueIsZero(SDOperand Op, uint64_t Mask,
 /// known to be either zero or one and return them in the KnownZero/KnownOne
 /// bitsets.  This code only analyzes bits in Mask, in order to short-circuit
 /// processing.
-void SelectionDAG::ComputeMaskedBits(SDOperand Op, uint64_t Mask, 
-                                     uint64_t &KnownZero, uint64_t &KnownOne,
+void SelectionDAG::ComputeMaskedBits(SDOperand Op, APInt Mask, 
+                                     APInt &KnownZero, APInt &KnownOne,
                                      unsigned Depth) const {
-  KnownZero = KnownOne = 0;   // Don't know anything.
+  unsigned BitWidth = Mask.getBitWidth();
+  KnownZero = KnownOne = APInt(BitWidth, 0);   // Don't know anything.
   if (Depth == 6 || Mask == 0)
     return;  // Limit search depth.
   
@@ -1141,12 +1142,12 @@ void SelectionDAG::ComputeMaskedBits(SDOperand Op, uint64_t Mask,
   if (Op.getValueType() == MVT::i128)
     return;
   
-  uint64_t KnownZero2, KnownOne2;
+  APInt KnownZero2, KnownOne2;
 
   switch (Op.getOpcode()) {
   case ISD::Constant:
     // We know all of the bits for a constant!
-    KnownOne = cast<ConstantSDNode>(Op)->getValue() & Mask;
+    KnownOne = cast<ConstantSDNode>(Op)->getAPIntValue() & Mask;
     KnownZero = ~KnownOne & Mask;
     return;
   case ISD::AND:
@@ -1181,7 +1182,7 @@ void SelectionDAG::ComputeMaskedBits(SDOperand Op, uint64_t Mask,
     assert((KnownZero2 & KnownOne2) == 0 && "Bits known to be one AND zero?"); 
     
     // Output known-0 bits are known if clear or set in both the LHS & RHS.
-    uint64_t KnownZeroOut = (KnownZero & KnownZero2) | (KnownOne & KnownOne2);
+    APInt KnownZeroOut = (KnownZero & KnownZero2) | (KnownOne & KnownOne2);
     // Output known-1 are known to be set if set in only one of the LHS, RHS.
     KnownOne = (KnownZero & KnownOne2) | (KnownOne & KnownZero2);
     KnownZero = KnownZeroOut;
@@ -1209,71 +1210,61 @@ void SelectionDAG::ComputeMaskedBits(SDOperand Op, uint64_t Mask,
     return;
   case ISD::SETCC:
     // If we know the result of a setcc has the top bits zero, use this info.
-    if (TLI.getSetCCResultContents() == TargetLowering::ZeroOrOneSetCCResult)
-      KnownZero |= (MVT::getIntVTBitMask(Op.getValueType()) ^ 1ULL);
+    if (TLI.getSetCCResultContents() == TargetLowering::ZeroOrOneSetCCResult &&
+        BitWidth > 1)
+      KnownZero |= APInt::getHighBitsSet(BitWidth, BitWidth - 1);
     return;
   case ISD::SHL:
     // (shl X, C1) & C2 == 0   iff   (X & C2 >>u C1) == 0
     if (ConstantSDNode *SA = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
-      ComputeMaskedBits(Op.getOperand(0), Mask >> SA->getValue(),
+      ComputeMaskedBits(Op.getOperand(0), Mask.lshr(SA->getValue()),
                         KnownZero, KnownOne, Depth+1);
       assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
       KnownZero <<= SA->getValue();
       KnownOne  <<= SA->getValue();
-      KnownZero |= (1ULL << SA->getValue())-1;  // low bits known zero.
+      // low bits known zero.
+      KnownZero |= APInt::getLowBitsSet(BitWidth, SA->getValue());
     }
     return;
   case ISD::SRL:
     // (ushr X, C1) & C2 == 0   iff  (-1 >> C1) & C2 == 0
     if (ConstantSDNode *SA = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
-      MVT::ValueType VT = Op.getValueType();
       unsigned ShAmt = SA->getValue();
 
-      uint64_t TypeMask = MVT::getIntVTBitMask(VT);
-      ComputeMaskedBits(Op.getOperand(0), (Mask << ShAmt) & TypeMask,
+      ComputeMaskedBits(Op.getOperand(0), (Mask << ShAmt),
                         KnownZero, KnownOne, Depth+1);
       assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
-      KnownZero &= TypeMask;
-      KnownOne  &= TypeMask;
-      KnownZero >>= ShAmt;
-      KnownOne  >>= ShAmt;
+      KnownZero = KnownZero.lshr(ShAmt);
+      KnownOne  = KnownOne.lshr(ShAmt);
 
-      uint64_t HighBits = (1ULL << ShAmt)-1;
-      HighBits <<= MVT::getSizeInBits(VT)-ShAmt;
+      APInt HighBits = APInt::getHighBitsSet(BitWidth, ShAmt);
       KnownZero |= HighBits;  // High bits known zero.
     }
     return;
   case ISD::SRA:
     if (ConstantSDNode *SA = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
-      MVT::ValueType VT = Op.getValueType();
       unsigned ShAmt = SA->getValue();
 
-      // Compute the new bits that are at the top now.
-      uint64_t TypeMask = MVT::getIntVTBitMask(VT);
-
-      uint64_t InDemandedMask = (Mask << ShAmt) & TypeMask;
+      APInt InDemandedMask = (Mask << ShAmt);
       // If any of the demanded bits are produced by the sign extension, we also
       // demand the input sign bit.
-      uint64_t HighBits = (1ULL << ShAmt)-1;
-      HighBits <<= MVT::getSizeInBits(VT) - ShAmt;
-      if (HighBits & Mask)
-        InDemandedMask |= MVT::getIntVTSignBit(VT);
+      APInt HighBits = APInt::getHighBitsSet(BitWidth, ShAmt);
+      if (!!(HighBits & Mask))
+        InDemandedMask |= APInt::getSignBit(BitWidth);
       
       ComputeMaskedBits(Op.getOperand(0), InDemandedMask, KnownZero, KnownOne,
                         Depth+1);
       assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
-      KnownZero &= TypeMask;
-      KnownOne  &= TypeMask;
-      KnownZero >>= ShAmt;
-      KnownOne  >>= ShAmt;
+      KnownZero = KnownZero.lshr(ShAmt);
+      KnownOne  = KnownOne.lshr(ShAmt);
       
       // Handle the sign bits.
-      uint64_t SignBit = MVT::getIntVTSignBit(VT);
-      SignBit >>= ShAmt;  // Adjust to where it is now in the mask.
+      APInt SignBit = APInt::getSignBit(BitWidth);
+      SignBit = SignBit.lshr(ShAmt);  // Adjust to where it is now in the mask.
       
-      if (KnownZero & SignBit) {       
+      if (!!(KnownZero & SignBit)) {
         KnownZero |= HighBits;  // New bits are known zero.
-      } else if (KnownOne & SignBit) {
+      } else if (!!(KnownOne & SignBit)) {
         KnownOne  |= HighBits;  // New bits are known one.
       }
     }
@@ -1283,14 +1274,18 @@ void SelectionDAG::ComputeMaskedBits(SDOperand Op, uint64_t Mask,
     
     // Sign extension.  Compute the demanded bits in the result that are not 
     // present in the input.
-    uint64_t NewBits = ~MVT::getIntVTBitMask(EVT) & Mask;
+    APInt NewBits = ~APInt::getLowBitsSet(BitWidth,
+                                          MVT::getSizeInBits(EVT)) & Mask;
 
-    uint64_t InSignBit = MVT::getIntVTSignBit(EVT);
-    int64_t InputDemandedBits = Mask & MVT::getIntVTBitMask(EVT);
+    APInt InSignBit = APInt::getSignBit(MVT::getSizeInBits(EVT));
+    APInt InputDemandedBits =
+      Mask & APInt::getLowBitsSet(BitWidth,
+                                  MVT::getSizeInBits(EVT));
     
     // If the sign extended bits are demanded, we know that the sign
     // bit is demanded.
-    if (NewBits)
+    InSignBit.zext(BitWidth);
+    if (!!NewBits)
       InputDemandedBits |= InSignBit;
     
     ComputeMaskedBits(Op.getOperand(0), InputDemandedBits,
@@ -1299,10 +1294,10 @@ void SelectionDAG::ComputeMaskedBits(SDOperand Op, uint64_t Mask,
     
     // If the sign bit of the input is known set or clear, then we know the
     // top bits of the result.
-    if (KnownZero & InSignBit) {          // Input sign bit known clear
+    if (!!(KnownZero & InSignBit)) {          // Input sign bit known clear
       KnownZero |= NewBits;
       KnownOne  &= ~NewBits;
-    } else if (KnownOne & InSignBit) {    // Input sign bit known set
+    } else if (!!(KnownOne & InSignBit)) {    // Input sign bit known set
       KnownOne  |= NewBits;
       KnownZero &= ~NewBits;
     } else {                              // Input sign bit unknown
@@ -1314,49 +1309,58 @@ void SelectionDAG::ComputeMaskedBits(SDOperand Op, uint64_t Mask,
   case ISD::CTTZ:
   case ISD::CTLZ:
   case ISD::CTPOP: {
-    MVT::ValueType VT = Op.getValueType();
-    unsigned LowBits = Log2_32(MVT::getSizeInBits(VT))+1;
-    KnownZero = ~((1ULL << LowBits)-1) & MVT::getIntVTBitMask(VT);
-    KnownOne  = 0;
+    unsigned LowBits = Log2_32(BitWidth)+1;
+    KnownZero = APInt::getHighBitsSet(BitWidth, BitWidth - LowBits);
+    KnownOne  = APInt(BitWidth, 0);
     return;
   }
   case ISD::LOAD: {
     if (ISD::isZEXTLoad(Op.Val)) {
       LoadSDNode *LD = cast<LoadSDNode>(Op);
       MVT::ValueType VT = LD->getMemoryVT();
-      KnownZero |= ~MVT::getIntVTBitMask(VT) & Mask;
+      KnownZero |= ~APInt::getLowBitsSet(BitWidth, MVT::getSizeInBits(VT)) & Mask;
     }
     return;
   }
   case ISD::ZERO_EXTEND: {
-    uint64_t InMask  = MVT::getIntVTBitMask(Op.getOperand(0).getValueType());
-    uint64_t NewBits = (~InMask) & Mask;
-    ComputeMaskedBits(Op.getOperand(0), Mask & InMask, KnownZero, 
-                      KnownOne, Depth+1);
-    KnownZero |= NewBits & Mask;
-    KnownOne  &= ~NewBits;
+    MVT::ValueType InVT = Op.getOperand(0).getValueType();
+    unsigned InBits = MVT::getSizeInBits(InVT);
+    APInt InMask    = APInt::getLowBitsSet(BitWidth, InBits);
+    APInt NewBits = (~InMask) & Mask;
+    Mask.trunc(InBits);
+    KnownZero.trunc(InBits);
+    KnownOne.trunc(InBits);
+    ComputeMaskedBits(Op.getOperand(0), Mask, KnownZero, KnownOne, Depth+1);
+    KnownZero.zext(BitWidth);
+    KnownOne.zext(BitWidth);
+    KnownZero |= NewBits;
     return;
   }
   case ISD::SIGN_EXTEND: {
     MVT::ValueType InVT = Op.getOperand(0).getValueType();
-    unsigned InBits    = MVT::getSizeInBits(InVT);
-    uint64_t InMask    = MVT::getIntVTBitMask(InVT);
-    uint64_t InSignBit = 1ULL << (InBits-1);
-    uint64_t NewBits   = (~InMask) & Mask;
-    uint64_t InDemandedBits = Mask & InMask;
+    unsigned InBits = MVT::getSizeInBits(InVT);
+    APInt InMask    = APInt::getLowBitsSet(BitWidth, InBits);
+    APInt InSignBit = APInt::getSignBit(InBits);
+    APInt NewBits   = (~InMask) & Mask;
 
     // If any of the sign extended bits are demanded, we know that the sign
     // bit is demanded.
-    if (NewBits & Mask)
-      InDemandedBits |= InSignBit;
-    
-    ComputeMaskedBits(Op.getOperand(0), InDemandedBits, KnownZero, 
-                      KnownOne, Depth+1);
+    InSignBit.zext(BitWidth);
+    if (!!(NewBits & Mask))
+      Mask |= InSignBit;
+
+    Mask.trunc(InBits);
+    KnownZero.trunc(InBits);
+    KnownOne.trunc(InBits);
+    ComputeMaskedBits(Op.getOperand(0), Mask, KnownZero, KnownOne, Depth+1);
+    KnownZero.zext(BitWidth);
+    KnownOne.zext(BitWidth);
+
     // If the sign bit is known zero or one, the  top bits match.
-    if (KnownZero & InSignBit) {
+    if (!!(KnownZero & InSignBit)) {
       KnownZero |= NewBits;
       KnownOne  &= ~NewBits;
-    } else if (KnownOne & InSignBit) {
+    } else if (!!(KnownOne & InSignBit)) {
       KnownOne  |= NewBits;
       KnownZero &= ~NewBits;
     } else {   // Otherwise, top bits aren't known.
@@ -1366,22 +1370,31 @@ void SelectionDAG::ComputeMaskedBits(SDOperand Op, uint64_t Mask,
     return;
   }
   case ISD::ANY_EXTEND: {
-    MVT::ValueType VT = Op.getOperand(0).getValueType();
-    ComputeMaskedBits(Op.getOperand(0), Mask & MVT::getIntVTBitMask(VT),
-                      KnownZero, KnownOne, Depth+1);
+    MVT::ValueType InVT = Op.getOperand(0).getValueType();
+    unsigned InBits = MVT::getSizeInBits(InVT);
+    Mask.trunc(InBits);
+    KnownZero.trunc(InBits);
+    KnownOne.trunc(InBits);
+    ComputeMaskedBits(Op.getOperand(0), Mask, KnownZero, KnownOne, Depth+1);
+    KnownZero.zext(BitWidth);
+    KnownOne.zext(BitWidth);
     return;
   }
   case ISD::TRUNCATE: {
+    MVT::ValueType InVT = Op.getOperand(0).getValueType();
+    unsigned InBits = MVT::getSizeInBits(InVT);
+    Mask.zext(InBits);
+    KnownZero.zext(InBits);
+    KnownOne.zext(InBits);
     ComputeMaskedBits(Op.getOperand(0), Mask, KnownZero, KnownOne, Depth+1);
     assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
-    uint64_t OutMask = MVT::getIntVTBitMask(Op.getValueType());
-    KnownZero &= OutMask;
-    KnownOne &= OutMask;
+    KnownZero.trunc(BitWidth);
+    KnownOne.trunc(BitWidth);
     break;
   }
   case ISD::AssertZext: {
     MVT::ValueType VT = cast<VTSDNode>(Op.getOperand(1))->getVT();
-    uint64_t InMask = MVT::getIntVTBitMask(VT);
+    APInt InMask = APInt::getLowBitsSet(BitWidth, MVT::getSizeInBits(VT));
     ComputeMaskedBits(Op.getOperand(0), Mask & InMask, KnownZero, 
                       KnownOne, Depth+1);
     KnownZero |= (~InMask) & Mask;
@@ -1389,7 +1402,7 @@ void SelectionDAG::ComputeMaskedBits(SDOperand Op, uint64_t Mask,
   }
   case ISD::FGETSIGN:
     // All bits are zero except the low bit.
-    KnownZero = MVT::getIntVTBitMask(Op.getValueType()) ^ 1;
+    KnownZero = APInt::getHighBitsSet(BitWidth, BitWidth - 1);
     return;
   
   case ISD::ADD: {
@@ -1402,11 +1415,11 @@ void SelectionDAG::ComputeMaskedBits(SDOperand Op, uint64_t Mask,
     // Output known-0 bits are known if clear or set in both the low clear bits
     // common to both LHS & RHS.  For example, 8+(X<<3) is known to have the
     // low 3 bits clear.
-    uint64_t KnownZeroOut = std::min(CountTrailingZeros_64(~KnownZero), 
-                                     CountTrailingZeros_64(~KnownZero2));
+    unsigned KnownZeroOut = std::min((~KnownZero).countTrailingZeros(), 
+                                     (~KnownZero2).countTrailingZeros());
     
-    KnownZero = (1ULL << KnownZeroOut) - 1;
-    KnownOne = 0;
+    KnownZero = APInt::getLowBitsSet(BitWidth, KnownZeroOut);
+    KnownOne = APInt(BitWidth, 0);
     return;
   }
   case ISD::SUB: {
@@ -1416,21 +1429,23 @@ void SelectionDAG::ComputeMaskedBits(SDOperand Op, uint64_t Mask,
     // We know that the top bits of C-X are clear if X contains less bits
     // than C (i.e. no wrap-around can happen).  For example, 20-X is
     // positive if we can prove that X is >= 0 and < 16.
-    MVT::ValueType VT = CLHS->getValueType(0);
-    if ((CLHS->getValue() & MVT::getIntVTSignBit(VT)) == 0) {  // sign bit clear
-      unsigned NLZ = CountLeadingZeros_64(CLHS->getValue()+1);
-      uint64_t MaskV = (1ULL << (63-NLZ))-1; // NLZ can't be 64 with no sign bit
-      MaskV = ~MaskV & MVT::getIntVTBitMask(VT);
+
+    // sign bit clear
+    if (!(CLHS->getAPIntValue() & APInt::getSignBit(BitWidth))) {
+      unsigned NLZ = (CLHS->getAPIntValue()+1).countLeadingZeros();
+      // NLZ can't be BitWidth with no sign bit
+      APInt MaskV = APInt::getHighBitsSet(BitWidth, NLZ);
       ComputeMaskedBits(Op.getOperand(1), MaskV, KnownZero, KnownOne, Depth+1);
 
       // If all of the MaskV bits are known to be zero, then we know the output
       // top bits are zero, because we now know that the output is from [0-C].
       if ((KnownZero & MaskV) == MaskV) {
-        unsigned NLZ2 = CountLeadingZeros_64(CLHS->getValue());
-        KnownZero = ~((1ULL << (64-NLZ2))-1) & Mask;  // Top bits known zero.
-        KnownOne = 0;   // No one bits known.
+        unsigned NLZ2 = CLHS->getAPIntValue().countLeadingZeros();
+        // Top bits known zero.
+        KnownZero = APInt::getHighBitsSet(BitWidth, NLZ2) & Mask;
+        KnownOne = APInt(BitWidth, 0);   // No one bits known.
       } else {
-        KnownZero = KnownOne = 0;  // Otherwise, nothing known.
+        KnownZero = KnownOne = APInt(BitWidth, 0);  // Otherwise, nothing known.
       }
     }
     return;
@@ -1445,6 +1460,21 @@ void SelectionDAG::ComputeMaskedBits(SDOperand Op, uint64_t Mask,
     }
     return;
   }
+}
+
+/// ComputeMaskedBits - This is a wrapper around the APInt-using
+/// form of ComputeMaskedBits for use by clients that haven't been converted
+/// to APInt yet.
+void SelectionDAG::ComputeMaskedBits(SDOperand Op, uint64_t Mask, 
+                                     uint64_t &KnownZero, uint64_t &KnownOne,
+                                     unsigned Depth) const {
+  unsigned NumBits = MVT::getSizeInBits(Op.getValueType());
+  APInt APIntMask(NumBits, Mask);
+  APInt APIntKnownZero(NumBits, 0);
+  APInt APIntKnownOne(NumBits, 0);
+  ComputeMaskedBits(Op, APIntMask, APIntKnownZero, APIntKnownOne, Depth);
+  KnownZero = APIntKnownZero.getZExtValue();
+  KnownOne = APIntKnownOne.getZExtValue();
 }
 
 /// ComputeNumSignBits - Return the number of times the sign bit of the

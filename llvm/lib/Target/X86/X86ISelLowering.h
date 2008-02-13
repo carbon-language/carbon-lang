@@ -379,9 +379,9 @@ namespace llvm {
     /// in Mask are known to be either zero or one and return them in the 
     /// KnownZero/KnownOne bitsets.
     virtual void computeMaskedBitsForTargetNode(const SDOperand Op,
-                                                uint64_t Mask,
-                                                uint64_t &KnownZero, 
-                                                uint64_t &KnownOne,
+                                                APInt Mask,
+                                                APInt &KnownZero, 
+                                                APInt &KnownOne,
                                                 const SelectionDAG &DAG,
                                                 unsigned Depth = 0) const;
     

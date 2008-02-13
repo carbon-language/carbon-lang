@@ -110,9 +110,9 @@ namespace {
     /// in Mask are known to be either zero or one and return them in the 
     /// KnownZero/KnownOne bitsets.
     virtual void computeMaskedBitsForTargetNode(const SDOperand Op,
-                                                uint64_t Mask,
-                                                uint64_t &KnownZero, 
-                                                uint64_t &KnownOne,
+                                                APInt Mask,
+                                                APInt &KnownZero, 
+                                                APInt &KnownOne,
                                                 const SelectionDAG &DAG,
                                                 unsigned Depth = 0) const;
     
@@ -270,13 +270,13 @@ const char *SparcTargetLowering::getTargetNodeName(unsigned Opcode) const {
 /// be zero. Op is expected to be a target specific node. Used by DAG
 /// combiner.
 void SparcTargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op,
-                                                         uint64_t Mask,
-                                                         uint64_t &KnownZero, 
-                                                         uint64_t &KnownOne,
+                                                         APInt Mask,
+                                                         APInt &KnownZero, 
+                                                         APInt &KnownOne,
                                                          const SelectionDAG &DAG,
                                                          unsigned Depth) const {
-  uint64_t KnownZero2, KnownOne2;
-  KnownZero = KnownOne = 0;   // Don't know anything.
+  APInt KnownZero2, KnownOne2;
+  KnownZero = KnownOne = APInt(Mask.getBitWidth(), 0);   // Don't know anything.
   
   switch (Op.getOpcode()) {
   default: break;

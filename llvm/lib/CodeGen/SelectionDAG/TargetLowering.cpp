@@ -1008,9 +1008,9 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op, uint64_t DemandedMask,
 /// in Mask are known to be either zero or one and return them in the 
 /// KnownZero/KnownOne bitsets.
 void TargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op, 
-                                                    uint64_t Mask,
-                                                    uint64_t &KnownZero, 
-                                                    uint64_t &KnownOne,
+                                                    APInt Mask,
+                                                    APInt &KnownZero, 
+                                                    APInt &KnownOne,
                                                     const SelectionDAG &DAG,
                                                     unsigned Depth) const {
   assert((Op.getOpcode() >= ISD::BUILTIN_OP_END ||
