@@ -65,11 +65,15 @@ class VISIBILITY_HIDDEN GRExprEngine {
     
 public:
   typedef ValueStateManager::StateTy StateTy;
+  typedef ExplodedGraph<GRExprEngine> GraphTy;
+  typedef GraphTy::NodeTy NodeTy;
+  
+  // Builders.
   typedef GRStmtNodeBuilder<GRExprEngine> StmtNodeBuilder;
   typedef GRBranchNodeBuilder<GRExprEngine> BranchNodeBuilder;
   typedef GRIndirectGotoNodeBuilder<GRExprEngine> IndirectGotoNodeBuilder;
-  typedef ExplodedGraph<GRExprEngine> GraphTy;
-  typedef GraphTy::NodeTy NodeTy;
+  typedef GRSwitchNodeBuilder<GRExprEngine> SwitchNodeBuilder;
+  
   
   class NodeSet {
     typedef llvm::SmallVector<NodeTy*,3> ImplTy;
@@ -196,6 +200,10 @@ public:
   /// ProcessIndirectGoto - Called by GRCoreEngine.  Used to generate successor
   ///  nodes by processing the 'effects' of a computed goto jump.
   void ProcessIndirectGoto(IndirectGotoNodeBuilder& builder);
+  
+  /// ProcessSwitch - Called by GRCoreEngine.  Used to generate successor
+  ///  nodes by processing the 'effects' of a switch statement.
+  void ProcessSwitch(SwitchNodeBuilder& builder);  
   
   /// RemoveDeadBindings - Return a new state that is the same as 'St' except
   ///  that all subexpression mappings are removed and that any
@@ -473,6 +481,97 @@ void GRExprEngine::ProcessIndirectGoto(IndirectGotoNodeBuilder& builder) {
   for (iterator I=builder.begin(), E=builder.end(); I != E; ++I)
     builder.generateNode(I, St);
 }
+
+/// ProcessSwitch - Called by GRCoreEngine.  Used to generate successor
+///  nodes by processing the 'effects' of a switch statement.
+void GRExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
+  
+  typedef SwitchNodeBuilder::iterator iterator;
+  
+  StateTy St = builder.getState();  
+  NonLValue CondV = cast<NonLValue>(GetValue(St, builder.getCondition()));
+
+  if (isa<UninitializedVal>(CondV)) {
+    NodeTy* N = builder.generateDefaultCaseNode(St, true);
+    UninitBranches.insert(N);
+    return;
+  }
+  
+  StateTy  DefaultSt = St;
+  
+  // While most of this can be assumed (such as the signedness), having it
+  // just computed makes sure everything makes the same assumptions end-to-end.
+  unsigned bits = getContext().getTypeSize(getContext().IntTy,SourceLocation());
+  APSInt V1(bits, false);
+  APSInt V2 = V1;
+  
+  for (iterator I=builder.begin(), E=builder.end(); I!=E; ++I) {
+
+    CaseStmt* Case = cast<CaseStmt>(I.getCase());
+    
+    // Evaluate the case.
+    if (!Case->getLHS()->isIntegerConstantExpr(V1, getContext(), 0, true)) {
+      assert (false && "Case condition must evaluate to an integer constant.");
+      return;
+    }
+    
+    // Get the RHS of the case, if it exists.
+    
+    if (Expr* E = Case->getRHS()) {
+      if (!E->isIntegerConstantExpr(V2, getContext(), 0, true)) {
+        assert (false &&
+                "Case condition (RHS) must evaluate to an integer constant.");
+        return ;
+      }
+      
+      assert (V1 <= V2);
+    }
+    else V2 = V1;
+    
+    // FIXME: Eventually we should replace the logic below with a range
+    //  comparison, rather than concretize the values within the range.
+    //  This should be easy once we have "ranges" for NonLValues.
+        
+    do {      
+      nonlval::ConcreteInt CaseVal(ValMgr.getValue(V1));
+      
+      NonLValue Result =
+        CondV.EvalBinaryOp(ValMgr, BinaryOperator::EQ, CaseVal);
+      
+      // Now "assume" that the case matches.
+      bool isFeasible;
+      
+      StateTy StNew = Assume(St, Result, true, isFeasible);
+      
+      if (isFeasible) {
+        builder.generateCaseStmtNode(I, StNew);
+       
+        // If CondV evaluates to a constant, then we know that this
+        // is the *only* case that we can take, so stop evaluating the
+        // others.
+        if (isa<nonlval::ConcreteInt>(CondV))
+          return;
+      }
+      
+      // Now "assume" that the case doesn't match.  Add this state
+      // to the default state (if it is feasible).
+      
+      StNew = Assume(DefaultSt, Result, false, isFeasible);
+      
+      if (isFeasible)
+        DefaultSt = StNew;
+
+      // Concretize the next value in the range.      
+      ++V1;
+      
+    } while (V1 < V2);
+  }
+  
+  // If we reach here, than we know that the default branch is
+  // possible.  
+  builder.generateDefaultCaseNode(DefaultSt);
+}
+
 
 void GRExprEngine::VisitLogicalExpr(BinaryOperator* B, NodeTy* Pred,
                                    NodeSet& Dst) {
@@ -861,8 +960,8 @@ void GRExprEngine::VisitAssignmentLHS(Expr* E, GRExprEngine::NodeTy* Pred,
 }
 
 void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
-                                      GRExprEngine::NodeTy* Pred,
-                                      GRExprEngine::NodeSet& Dst) {
+                                       GRExprEngine::NodeTy* Pred,
+                                       GRExprEngine::NodeSet& Dst) {
   NodeSet S1;
   
   if (B->isAssignmentOp())
@@ -1354,7 +1453,30 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
           Out << "\\|Terminator: ";
           E.getSrc()->printTerminator(Out);
           
-          if (isa<SwitchStmt>(T) || isa<IndirectGotoStmt>(T)) {
+          if (isa<SwitchStmt>(T)) {
+            Stmt* Label = E.getDst()->getLabel();
+            
+            if (Label) {                        
+              if (CaseStmt* C = dyn_cast<CaseStmt>(Label)) {
+                Out << "\\lcase ";
+                C->getLHS()->printPretty(Out);
+                
+                if (Stmt* RHS = C->getRHS()) {
+                  Out << " .. ";
+                  RHS->printPretty(Out);
+                }
+                
+                Out << ":";
+              }
+              else {
+                assert (isa<DefaultStmt>(Label));
+                Out << "\\ldefault:";
+              }
+            }
+            else 
+              Out << "\\l(implicit) default:";
+          }
+          else if (isa<IndirectGotoStmt>(T)) {
             // FIXME
           }
           else {

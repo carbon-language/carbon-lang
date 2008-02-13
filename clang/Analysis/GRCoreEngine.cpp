@@ -213,6 +213,15 @@ void GRCoreEngineImpl::HandleBlockExit(CFGBlock * B, ExplodedNodeImpl* Pred) {
         return;
       }
         
+      case Stmt::SwitchStmtClass: {
+        GRSwitchNodeBuilderImpl builder(Pred, B,
+                                        cast<SwitchStmt>(Term)->getCond(),
+                                        this);
+        
+        ProcessSwitch(builder);
+        return;
+      }
+        
       case Stmt::WhileStmtClass:
         HandleBranch(cast<WhileStmt>(Term)->getCond(), Term, B, Pred);
         return;
@@ -384,5 +393,51 @@ GRIndirectGotoNodeBuilderImpl::generateNodeImpl(const Iterator& I,
     return Succ;
   }
                        
+  return NULL;
+}
+
+
+ExplodedNodeImpl*
+GRSwitchNodeBuilderImpl::generateCaseStmtNodeImpl(const Iterator& I, void* St) {
+
+  bool IsNew;
+  
+  ExplodedNodeImpl* Succ = Eng.G->getNodeImpl(BlockEdge(Eng.getCFG(), Src,
+                                                        I.getBlock()),
+                                              St, &IsNew);  
+  Succ->addPredecessor(Pred);
+  
+  if (IsNew) {
+    Eng.WList->Enqueue(Succ);
+    return Succ;
+  }
+  
+  return NULL;
+}
+
+
+ExplodedNodeImpl*
+GRSwitchNodeBuilderImpl::generateDefaultCaseNodeImpl(void* St, bool isSink) {
+  
+  // Get the block for the default case.
+  assert (Src->succ_rbegin() != Src->succ_rend());
+  CFGBlock* DefaultBlock = *Src->succ_rbegin();
+  
+  bool IsNew;
+  
+  ExplodedNodeImpl* Succ = Eng.G->getNodeImpl(BlockEdge(Eng.getCFG(), Src,
+                                                        DefaultBlock),
+                                              St, &IsNew);  
+  Succ->addPredecessor(Pred);
+  
+  if (IsNew) {
+    if (isSink)
+      Succ->markAsSink();
+    else
+      Eng.WList->Enqueue(Succ);
+    
+    return Succ;
+  }
+  
   return NULL;
 }

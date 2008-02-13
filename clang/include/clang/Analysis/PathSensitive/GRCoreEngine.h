@@ -27,8 +27,8 @@ namespace clang {
 class GRStmtNodeBuilderImpl;
 class GRBranchNodeBuilderImpl;
 class GRIndirectGotoNodeBuilderImpl;
+class GRSwitchNodeBuilderImpl;
 class GRWorkList;
-class LabelStmt;
 
 //===----------------------------------------------------------------------===//
 /// GRCoreEngineImpl - Implements the core logic of the graph-reachability analysis.
@@ -44,6 +44,7 @@ protected:
   friend class GRStmtNodeBuilderImpl;
   friend class GRBranchNodeBuilderImpl;
   friend class GRIndirectGotoNodeBuilderImpl;
+  friend class GRSwitchNodeBuilderImpl;
   
   typedef llvm::DenseMap<Stmt*,Stmt*> ParentMapTy;
     
@@ -93,6 +94,8 @@ protected:
                               GRBranchNodeBuilderImpl& Builder) = 0;
 
   virtual void ProcessIndirectGoto(GRIndirectGotoNodeBuilderImpl& Builder) = 0;
+  
+  virtual void ProcessSwitch(GRSwitchNodeBuilderImpl& Builder) = 0;
 
 private:
   GRCoreEngineImpl(const GRCoreEngineImpl&); // Do not implement.
@@ -331,6 +334,79 @@ public:
     return GRTrait<StateTy>::toState(NB.getState());
   }    
 };
+  
+class GRSwitchNodeBuilderImpl {
+  GRCoreEngineImpl& Eng;
+  CFGBlock* Src;
+  Expr* Condition;
+  ExplodedNodeImpl* Pred;  
+public:
+  GRSwitchNodeBuilderImpl(ExplodedNodeImpl* pred, CFGBlock* src,
+                          Expr* condition, GRCoreEngineImpl* eng)
+  : Eng(*eng), Src(src), Condition(condition), Pred(pred) {}
+  
+  class Iterator {
+    CFGBlock::succ_reverse_iterator I;
+    
+    friend class GRSwitchNodeBuilderImpl;    
+    Iterator(CFGBlock::succ_reverse_iterator i) : I(i) {}    
+  public:
+    
+    Iterator& operator++() { ++I; return *this; }
+    bool operator!=(const Iterator& X) const { return I != X.I; }
+    
+    CaseStmt* getCase() const {
+      return llvm::cast<CaseStmt>((*I)->getLabel());
+    }
+    
+    CFGBlock* getBlock() const {
+      return *I;
+    }
+  };
+  
+  Iterator begin() { return Iterator(Src->succ_rbegin()+1); }
+  Iterator end() { return Iterator(Src->succ_rend()); }
+  
+  ExplodedNodeImpl* generateCaseStmtNodeImpl(const Iterator& I, void* State);
+  ExplodedNodeImpl* generateDefaultCaseNodeImpl(void* State, bool isSink);
+  
+  inline Expr* getCondition() const { return Condition; }
+  inline void* getState() const { return Pred->State; }
+};
+
+template<typename CHECKER>
+class GRSwitchNodeBuilder {
+  typedef CHECKER                                CheckerTy; 
+  typedef typename CheckerTy::StateTy            StateTy;
+  typedef ExplodedGraph<CheckerTy>               GraphTy;
+  typedef typename GraphTy::NodeTy               NodeTy;
+  
+  GRSwitchNodeBuilderImpl& NB;
+  
+public:
+  GRSwitchNodeBuilder(GRSwitchNodeBuilderImpl& nb) : NB(nb) {}
+  
+  typedef GRSwitchNodeBuilderImpl::Iterator     iterator;
+  
+  inline iterator begin() { return NB.begin(); }
+  inline iterator end() { return NB.end(); }
+  
+  inline Expr* getCondition() const { return NB.getCondition(); }
+  
+  inline NodeTy* generateCaseStmtNode(const iterator& I, StateTy St) {
+    void *state = GRTrait<StateTy>::toPtr(St);        
+    return static_cast<NodeTy*>(NB.generateCaseStmtNodeImpl(I, state));
+  }
+  
+  inline NodeTy* generateDefaultCaseNode(StateTy St, bool isSink = false) {    
+    void *state = GRTrait<StateTy>::toPtr(St);        
+    return static_cast<NodeTy*>(NB.generateDefaultCaseNodeImpl(state, isSink));
+  }
+  
+  inline StateTy getState() const {
+    return GRTrait<StateTy>::toState(NB.getState());
+  }    
+};
 
   
 template<typename CHECKER>
@@ -369,6 +445,11 @@ protected:
   virtual void ProcessIndirectGoto(GRIndirectGotoNodeBuilderImpl& BuilderImpl) {
     GRIndirectGotoNodeBuilder<CHECKER> Builder(BuilderImpl);
     Checker->ProcessIndirectGoto(Builder);
+  }
+  
+  virtual void ProcessSwitch(GRSwitchNodeBuilderImpl& BuilderImpl) {
+    GRSwitchNodeBuilder<CHECKER> Builder(BuilderImpl);
+    Checker->ProcessSwitch(Builder);
   }
   
 public:  
