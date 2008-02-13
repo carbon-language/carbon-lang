@@ -5653,7 +5653,7 @@ void X86TargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op,
          "Should use MaskedValueIsZero if you don't know whether Op"
          " is a target node!");
 
-  KnownZero = KnownOne = 0;   // Don't know anything.
+  KnownZero = KnownOne = APInt(Mask.getBitWidth(), 0);   // Don't know anything.
   switch (Opc) {
   default: break;
   case X86ISD::SETCC:
