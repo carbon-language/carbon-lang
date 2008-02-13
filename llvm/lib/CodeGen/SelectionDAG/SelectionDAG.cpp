@@ -1134,13 +1134,12 @@ void SelectionDAG::ComputeMaskedBits(SDOperand Op, const APInt &Mask,
                                      APInt &KnownZero, APInt &KnownOne,
                                      unsigned Depth) const {
   unsigned BitWidth = Mask.getBitWidth();
+  assert(BitWidth == MVT::getSizeInBits(Op.getValueType()) &&
+         "Mask size mismatches value type size!");
+
   KnownZero = KnownOne = APInt(BitWidth, 0);   // Don't know anything.
   if (Depth == 6 || Mask == 0)
     return;  // Limit search depth.
-  
-  // The masks are not wide enough to represent this type!  Should use APInt.
-  if (Op.getValueType() == MVT::i128)
-    return;
   
   APInt KnownZero2, KnownOne2;
 
@@ -1477,6 +1476,10 @@ void SelectionDAG::ComputeMaskedBits(SDOperand Op, const APInt &Mask,
 void SelectionDAG::ComputeMaskedBits(SDOperand Op, uint64_t Mask, 
                                      uint64_t &KnownZero, uint64_t &KnownOne,
                                      unsigned Depth) const {
+  // The masks are not wide enough to represent this type!  Should use APInt.
+  if (Op.getValueType() == MVT::i128)
+    return;
+  
   unsigned NumBits = MVT::getSizeInBits(Op.getValueType());
   APInt APIntMask(NumBits, Mask);
   APInt APIntKnownZero(NumBits, 0);
