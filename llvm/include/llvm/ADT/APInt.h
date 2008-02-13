@@ -232,16 +232,17 @@ public:
   }
 
   /// This tests the high bit of the APInt to determine if it is unset.
-  /// @brief Determine if this APInt Value is positive (not negative).
-  bool isPositive() const {
+  /// @brief Determine if this APInt Value is non-negative (>= 0)
+  bool isNonNegative() const {
     return !isNegative();
   }
 
-  /// This tests if the value of this APInt is strictly positive (> 0).
-  /// @returns true if this APInt is Positive and not zero.
-  /// @brief Determine if this APInt Value is strictly positive.
+  /// This tests if the value of this APInt is positive (> 0). Note
+  /// that 0 is not a positive value.
+  /// @returns true if this APInt is positive.
+  /// @brief Determine if this APInt Value is positive.
   inline bool isStrictlyPositive() const {
-    return isPositive() && (*this) != 0;
+    return isNonNegative() && (*this) != 0;
   }
 
   /// This checks to see if the value has all bits of the APInt are set or not.

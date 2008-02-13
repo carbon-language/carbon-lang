@@ -5293,12 +5293,12 @@ Instruction *InstCombiner::FoldICmpDivCst(ICmpInst &ICI, BinaryOperator *DivI,
     HiOverflow = LoOverflow = ProdOV;
     if (!HiOverflow)
       HiOverflow = AddWithOverflow(HiBound, LoBound, DivRHS, false);
-  } else if (DivRHS->getValue().isPositive()) { // Divisor is > 0.
+  } else if (DivRHS->getValue().isStrictlyPositive()) { // Divisor is > 0.
     if (CmpRHSV == 0) {       // (X / pos) op 0
       // Can't overflow.  e.g.  X/2 op 0 --> [-1, 2)
       LoBound = cast<ConstantInt>(ConstantExpr::getNeg(SubOne(DivRHS)));
       HiBound = DivRHS;
-    } else if (CmpRHSV.isPositive()) {   // (X / pos) op pos
+    } else if (CmpRHSV.isStrictlyPositive()) {   // (X / pos) op pos
       LoBound = Prod;     // e.g.   X/5 op 3 --> [15, 20)
       HiOverflow = LoOverflow = ProdOV;
       if (!HiOverflow)
@@ -5311,7 +5311,7 @@ Instruction *InstCombiner::FoldICmpDivCst(ICmpInst &ICI, BinaryOperator *DivI,
       HiBound = AddOne(Prod);
       HiOverflow = ProdOV ? -1 : 0;
     }
-  } else {                         // Divisor is < 0.
+  } else if (DivRHS->getValue().isNegative()) { // Divisor is < 0.
     if (CmpRHSV == 0) {       // (X / neg) op 0
       // e.g. X/-5 op 0  --> [-4, 5)
       LoBound = AddOne(DivRHS);
@@ -5320,7 +5320,7 @@ Instruction *InstCombiner::FoldICmpDivCst(ICmpInst &ICI, BinaryOperator *DivI,
         HiOverflow = 1;            // [INTMIN+1, overflow)
         HiBound = 0;               // e.g. X/INTMIN = 0 --> X > INTMIN
       }
-    } else if (CmpRHSV.isPositive()) {   // (X / neg) op pos
+    } else if (CmpRHSV.isStrictlyPositive()) {   // (X / neg) op pos
       // e.g. X/-5 op 3  --> [-19, -14)
       HiOverflow = LoOverflow = ProdOV ? -1 : 0;
       if (!LoOverflow)
@@ -5434,8 +5434,8 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
         // Extending a relational comparison when we're checking the sign
         // bit would not work.
         if (Cast->hasOneUse() &&
-            (ICI.isEquality() || AndCST->getValue().isPositive() && 
-             RHSV.isPositive())) {
+            (ICI.isEquality() || AndCST->getValue().isNonNegative() && 
+             RHSV.isNonNegative())) {
           uint32_t BitWidth = 
             cast<IntegerType>(Cast->getOperand(0)->getType())->getBitWidth();
           APInt NewCST = AndCST->getValue();
