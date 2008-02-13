@@ -1163,8 +1163,13 @@ void LoopIndexSplit::calculateLoopBounds(SplitInfo &SD) {
   if (ExitCondition->getPredicate() == ICmpInst::ICMP_SGT
       || ExitCondition->getPredicate() == ICmpInst::ICMP_UGT
       || ExitCondition->getPredicate() == ICmpInst::ICMP_SGE
-      || ExitCondition->getPredicate() == ICmpInst::ICMP_UGE)
+      || ExitCondition->getPredicate() == ICmpInst::ICMP_UGE) {
     ExitCondition->swapOperands();
+    if (ExitValueNum)
+      ExitValueNum = 0;
+    else
+      ExitValueNum = 1;
+  }
 
   switch (ExitCondition->getPredicate()) {
   case ICmpInst::ICMP_SGT:
