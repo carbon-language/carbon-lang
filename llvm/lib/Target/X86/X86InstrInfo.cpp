@@ -1055,6 +1055,15 @@ MachineInstr *X86InstrInfo::commuteInstruction(MachineInstr *MI) const {
     unsigned C = MI->getOperand(2).getReg();
     bool BisKill = MI->getOperand(1).isKill();
     bool CisKill = MI->getOperand(2).isKill();
+    // If machine instrs are no longer in two-address forms, update
+    // destination register as well.
+    if (A == B) {
+      // Must be two address instruction!
+      assert(MI->getDesc().getOperandConstraint(0, TOI::TIED_TO) &&
+             "Expecting a two-address instruction!");
+      A = C;
+      CisKill = false;
+    }
     return BuildMI(get(Opc), A).addReg(C, false, false, CisKill)
       .addReg(B, false, false, BisKill).addImm(Size-Amt);
   }

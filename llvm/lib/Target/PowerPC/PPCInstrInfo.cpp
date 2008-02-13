@@ -147,10 +147,20 @@ MachineInstr *PPCInstrInfo::commuteInstruction(MachineInstr *MI) const {
   //   Op0 = (Op2 & ~M) | (Op1 & M)
 
   // Swap op1/op2
+  unsigned Reg0 = MI->getOperand(0).getReg();
   unsigned Reg1 = MI->getOperand(1).getReg();
   unsigned Reg2 = MI->getOperand(2).getReg();
   bool Reg1IsKill = MI->getOperand(1).isKill();
   bool Reg2IsKill = MI->getOperand(2).isKill();
+  // If machine instrs are no longer in two-address forms, update
+  // destination register as well.
+  if (Reg0 == Reg1) {
+    // Must be two address instruction!
+    assert(MI->getDesc().getOperandConstraint(0, TOI::TIED_TO) &&
+           "Expecting a two-address instruction!");
+    MI->getOperand(0).setReg(Reg2);
+    Reg2IsKill = false;
+  }
   MI->getOperand(2).setReg(Reg1);
   MI->getOperand(1).setReg(Reg2);
   MI->getOperand(2).setIsKill(Reg1IsKill);
