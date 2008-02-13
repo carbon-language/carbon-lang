@@ -212,9 +212,6 @@
 /* Define to 1 if you have the `longjmp' function. */
 #undef HAVE_LONGJMP
 
-/* Define if lt_dlopen() is available on this platform */
-#undef HAVE_LT_DLOPEN
-
 /* Define to 1 if you have the <mach/mach.h> header file. */
 #undef HAVE_MACH_MACH_H
 

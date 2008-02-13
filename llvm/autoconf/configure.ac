@@ -685,12 +685,6 @@ if test "$llvm_cv_os_type" = "MingW" ; then
   AC_CHECK_LIB(psapi, main)
 fi
 
-dnl lt_dlopen may be required for plugin support.
-AC_SEARCH_LIBS(lt_dlopen,ltdl,AC_DEFINE([HAVE_LT_DLOPEN],[1],
-              [Define if lt_dlopen() is available on this platform]),
-              AC_MSG_WARN([lt_dlopen() not found - plugin support might
-                           not be available]))
-
 dnl dlopen() is required for plugin support.
 AC_SEARCH_LIBS(dlopen,dl,AC_DEFINE([HAVE_DLOPEN],[1],
                [Define if dlopen() is available on this platform.]),
