@@ -1237,7 +1237,7 @@ void SelectionDAG::ComputeMaskedBits(SDOperand Op, const APInt &Mask,
       KnownZero = KnownZero.lshr(ShAmt);
       KnownOne  = KnownOne.lshr(ShAmt);
 
-      APInt HighBits = APInt::getHighBitsSet(BitWidth, ShAmt);
+      APInt HighBits = APInt::getHighBitsSet(BitWidth, ShAmt) & Mask;
       KnownZero |= HighBits;  // High bits known zero.
     }
     return;
@@ -1248,8 +1248,8 @@ void SelectionDAG::ComputeMaskedBits(SDOperand Op, const APInt &Mask,
       APInt InDemandedMask = (Mask << ShAmt);
       // If any of the demanded bits are produced by the sign extension, we also
       // demand the input sign bit.
-      APInt HighBits = APInt::getHighBitsSet(BitWidth, ShAmt);
-      if (!!(HighBits & Mask))
+      APInt HighBits = APInt::getHighBitsSet(BitWidth, ShAmt) & Mask;
+      if (HighBits.getBoolValue())
         InDemandedMask |= APInt::getSignBit(BitWidth);
       
       ComputeMaskedBits(Op.getOperand(0), InDemandedMask, KnownZero, KnownOne,
