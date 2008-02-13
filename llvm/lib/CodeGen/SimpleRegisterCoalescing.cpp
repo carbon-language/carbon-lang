@@ -237,7 +237,9 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
   // AValNo is the value number in A that defines the copy, A3 in the example.
   LiveInterval::iterator ALR = IntA.FindLiveRangeContaining(CopyIdx-1);
   VNInfo *AValNo = ALR->valno;
-  if (AValNo->def == ~0U || AValNo->def == ~1U)
+  // If other defs can reach uses of this def, then it's not safe to perform
+  // the optimization.
+  if (AValNo->def == ~0U || AValNo->def == ~1U || AValNo->hasPHIKill)
     return false;
   MachineInstr *DefMI = li_->getInstructionFromIndex(AValNo->def);
   const TargetInstrDesc &TID = DefMI->getDesc();
@@ -312,6 +314,8 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
     MachineOperand &UseMO = UI.getOperand();
     ++UI;
     MachineInstr *UseMI = UseMO.getParent();
+  if (JoinedCopies.count(UseMI))
+    continue;
     unsigned UseIdx = li_->getInstructionIndex(UseMI);
     LiveInterval::iterator ULR = IntA.FindLiveRangeContaining(UseIdx);
     if (ULR->valno != AValNo)
