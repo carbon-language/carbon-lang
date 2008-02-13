@@ -23,11 +23,9 @@ MachineInstr *TargetInstrInfoImpl::commuteInstruction(MachineInstr *MI) const {
          "This only knows how to commute register operands so far");
   unsigned Reg1 = MI->getOperand(1).getReg();
   unsigned Reg2 = MI->getOperand(2).getReg();
-  MachineOperand &MO = MI->getOperand(0);
-  bool UpdateReg0 = MO.isReg() && MO.getReg() == Reg1;
   bool Reg1IsKill = MI->getOperand(1).isKill();
   bool Reg2IsKill = MI->getOperand(2).isKill();
-  if (UpdateReg0) {
+  if (MI->getOperand(0).getReg() == Reg1) {
     // Must be two address instruction!
     assert(MI->getDesc().getOperandConstraint(0, TOI::TIED_TO) &&
            "Expecting a two-address instruction!");
