@@ -89,6 +89,17 @@ public:
   /// deallocateMemForFunction - Free JIT memory for the specified function.
   /// This is never called when the JIT is currently emitting a function.
   virtual void deallocateMemForFunction(const Function *F) = 0;
+  
+  /// startExceptionTable - When we finished JITing the function, if exception
+  /// handling is set, we emit the exception table.
+  virtual unsigned char* startExceptionTable(const Function* F,
+                                             uintptr_t &ActualSize) = 0;
+  
+  /// endExceptionTable - This method is called when the JIT is done emitting
+  /// the exception table.
+  virtual void endExceptionTable(const Function *F, unsigned char *TableStart,
+                                 unsigned char *TableEnd, 
+                                 unsigned char* FrameRegister) = 0;
 };
 
 } // end namespace llvm.

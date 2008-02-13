@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Support/Debug.h"                   
 #include "llvm/Support/Compiler.h"
@@ -38,6 +39,11 @@ namespace {
     /// getMachineOpValue - evaluates the MachineOperand of a given MachineInstr
     ///
     int getMachineOpValue(MachineInstr &MI, MachineOperand &MO);
+    
+    void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<MachineModuleInfo>();
+      MachineFunctionPass::getAnalysisUsage(AU);
+    }
 
   public:
     static char ID;
@@ -82,6 +88,8 @@ bool PPCCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
   assert((MF.getTarget().getRelocationModel() != Reloc::Default ||
           MF.getTarget().getRelocationModel() != Reloc::Static) &&
          "JIT relocation model must be set to static or default!");
+
+  MCE.setModuleInfo(&getAnalysis<MachineModuleInfo>());
   do {
     MovePCtoLROffset = 0;
     MCE.startFunction(MF);
@@ -100,6 +108,9 @@ void PPCCodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
     switch (MI.getOpcode()) {
     default:
       MCE.emitWordBE(getBinaryCodeForInstr(*I));
+      break;
+    case TargetInstrInfo::LABEL:
+      MCE.emitLabel(MI.getOperand(0).getImm());
       break;
     case PPC::IMPLICIT_DEF_GPRC:
     case PPC::IMPLICIT_DEF_G8RC:

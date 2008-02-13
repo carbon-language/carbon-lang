@@ -34,6 +34,8 @@ STATISTIC(NumGlobals  , "Number of global vars initialized");
 
 ExecutionEngine::EECtorFn ExecutionEngine::JITCtor = 0;
 ExecutionEngine::EECtorFn ExecutionEngine::InterpCtor = 0;
+ExecutionEngine::EERegisterFn ExecutionEngine::ExceptionTableRegister = 0;
+
 
 ExecutionEngine::ExecutionEngine(ModuleProvider *P) : LazyFunctionCreator(0) {
   LazyCompilationDisabled = false;

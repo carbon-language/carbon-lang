@@ -256,6 +256,7 @@ namespace {
     sys::MemoryBlock getNewMemoryBlock(unsigned size);
     
     std::map<const Function*, MemoryRangeHeader*> FunctionBlocks;
+    std::map<const Function*, MemoryRangeHeader*> TableBlocks;
   public:
     DefaultJITMemoryManager();
     ~DefaultJITMemoryManager();
@@ -290,6 +291,28 @@ namespace {
       FreeMemoryList =CurBlock->TrimAllocationToSize(FreeMemoryList, BlockSize);
     }
     
+    /// startExceptionTable - Use startFunctionBody to allocate memory for the 
+    /// function's exception table.
+    unsigned char* startExceptionTable(const Function* F, uintptr_t &ActualSize) {
+      return startFunctionBody(F, ActualSize);
+    }
+
+    /// endExceptionTable - The exception table of F is now allocated, 
+    /// and takes the memory in the range [TableStart,TableEnd).
+    void endExceptionTable(const Function *F, unsigned char *TableStart,
+                           unsigned char *TableEnd, 
+                           unsigned char* FrameRegister) {
+      assert(TableEnd > TableStart);
+      assert(TableStart == (unsigned char *)(CurBlock+1) &&
+             "Mismatched table start/end!");
+      
+      uintptr_t BlockSize = TableEnd - (unsigned char *)CurBlock;
+      TableBlocks[F] = CurBlock;
+
+      // Release the memory at the end of this block that isn't needed.
+      FreeMemoryList =CurBlock->TrimAllocationToSize(FreeMemoryList, BlockSize);
+    }
+    
     unsigned char *getGOTBase() const {
       return GOTBase;
     }
@@ -315,6 +338,24 @@ namespace {
       
       // Finally, remove this entry from FunctionBlocks.
       FunctionBlocks.erase(I);
+      
+      I = TableBlocks.find(F);
+      if (I == TableBlocks.end()) return;
+      
+      // Find the block that is allocated for this function.
+      MemRange = I->second;
+      assert(MemRange->ThisAllocated && "Block isn't allocated!");
+      
+      // Fill the buffer with garbage!
+#ifndef NDEBUG
+      memset(MemRange+1, 0xCD, MemRange->BlockSize-sizeof(*MemRange));
+#endif
+      
+      // Free the memory.
+      FreeMemoryList = MemRange->FreeBlock(FreeMemoryList);
+      
+      // Finally, remove this entry from TableBlocks.
+      TableBlocks.erase(I);
     }
   };
 }

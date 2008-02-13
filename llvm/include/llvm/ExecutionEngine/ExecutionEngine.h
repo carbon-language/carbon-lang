@@ -85,6 +85,11 @@ protected:
   /// pointer is invoked to create it. If this returns null, the JIT will abort.
   void* (*LazyFunctionCreator)(const std::string &);
   
+  /// ExceptionTableRegister - If Exception Handling is set, the JIT will 
+  /// register dwarf tables with this function
+  typedef void (*EERegisterFn)(void*);
+  static EERegisterFn ExceptionTableRegister;
+
 public:
   /// lock - This lock is protects the ExecutionEngine, JIT, JITResolver and
   /// JITEmitter classes.  It must be held while changing the internal state of
@@ -245,6 +250,19 @@ public:
   /// the JIT will abort.
   void InstallLazyFunctionCreator(void* (*P)(const std::string &)) {
     LazyFunctionCreator = P;
+  }
+  
+  /// InstallExceptionTableRegister - The JIT will use the given function
+  /// to register the exception tables it generates.
+  static void InstallExceptionTableRegister(void (*F)(void*)) {
+    ExceptionTableRegister = F;
+  }
+  
+  /// RegisterTable - Registers the given pointer as an exception table. It uses
+  /// the ExceptionTableRegister function.
+  static void RegisterTable(void* res) {
+    if (ExceptionTableRegister)
+      ExceptionTableRegister(res);
   }
 
 protected:

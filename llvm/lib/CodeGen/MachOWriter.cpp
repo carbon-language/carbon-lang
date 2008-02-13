@@ -125,6 +125,20 @@ namespace llvm {
       return MBBLocations[MBB->getNumber()];
     }
 
+    virtual intptr_t getLabelAddress(uint64_t Label) const {
+      assert(0 && "get Label not implemented");
+      abort();
+      return 0;
+    }
+
+    virtual void emitLabel(uint64_t LabelID) {
+      assert(0 && "emit Label not implemented");
+      abort();
+    }
+
+
+    virtual void setModuleInfo(llvm::MachineModuleInfo* MMI) { }
+
     /// JIT SPECIFIC FUNCTIONS - DO NOT IMPLEMENT THESE HERE!
     virtual void startFunctionStub(unsigned StubSize, unsigned Alignment = 1) {
       assert(0 && "JIT specific function called!");

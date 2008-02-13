@@ -186,8 +186,8 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
   
   PM.add(createGCLoweringPass());
   
-  // FIXME: Implement the invoke/unwind instructions!
-  PM.add(createLowerInvokePass(getTargetLowering()));
+  if (!ExceptionHandling)
+    PM.add(createLowerInvokePass(getTargetLowering()));
   
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());

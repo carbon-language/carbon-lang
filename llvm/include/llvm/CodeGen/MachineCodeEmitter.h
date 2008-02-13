@@ -26,6 +26,7 @@ class MachineBasicBlock;
 class MachineConstantPool;
 class MachineJumpTableInfo;
 class MachineFunction;
+class MachineModuleInfo;
 class MachineRelocation;
 class Value;
 class GlobalValue;
@@ -136,6 +137,72 @@ public:
       CurBufferPtr = BufferEnd;
   }
   
+
+  /// emitULEB128Bytes - This callback is invoked when a ULEB128 needs to be
+  /// written to the output stream.
+  void emitULEB128Bytes(unsigned Value) {
+    do {
+      unsigned char Byte = Value & 0x7f;
+      Value >>= 7;
+      if (Value) Byte |= 0x80;
+      emitByte(Byte);
+    } while (Value);
+  }
+  
+  /// emitSLEB128Bytes - This callback is invoked when a SLEB128 needs to be
+  /// written to the output stream.
+  void emitSLEB128Bytes(int Value) {
+    int Sign = Value >> (8 * sizeof(Value) - 1);
+    bool IsMore;
+  
+    do {
+      unsigned char Byte = Value & 0x7f;
+      Value >>= 7;
+      IsMore = Value != Sign || ((Byte ^ Sign) & 0x40) != 0;
+      if (IsMore) Byte |= 0x80;
+      emitByte(Byte);
+    } while (IsMore);
+  }
+
+  /// emitString - This callback is invoked when a String needs to be
+  /// written to the output stream.
+  void emitString(const std::string &String) {
+    for (unsigned i = 0, N = String.size(); i < N; ++i) {
+      unsigned char C = String[i];
+      emitByte(C);
+    }
+    emitByte(0);
+  }
+  
+  /// emitInt32 - Emit a int32 directive.
+  void emitInt32(int Value) {
+    if (CurBufferPtr+4 <= BufferEnd) {
+      *((uint32_t*)CurBufferPtr) = Value;
+      CurBufferPtr += 4;
+    } else {
+      CurBufferPtr = BufferEnd;
+    }
+  }
+
+  /// emitInt64 - Emit a int64 directive.
+  void emitInt64(uint64_t Value) {
+    if (CurBufferPtr+8 <= BufferEnd) {
+      *((uint64_t*)CurBufferPtr) = Value;
+      CurBufferPtr += 8;
+    } else {
+      CurBufferPtr = BufferEnd;
+    }
+  }
+  
+  /// emitAt - Emit Value in Addr
+  void emitAt(uintptr_t *Addr, uintptr_t Value) {
+    if (Addr >= (uintptr_t*)BufferBegin && Addr < (uintptr_t*)BufferEnd)
+      (*Addr) = Value;
+  }
+  
+  /// emitLabel - Emits a label
+  virtual void emitLabel(uint64_t LabelID) = 0;
+
   /// allocateSpace - Allocate a block of space in the current output buffer,
   /// returning null (and setting conditions to indicate buffer overflow) on
   /// failure.  Alignment is the alignment in bytes of the buffer desired.
@@ -194,6 +261,15 @@ public:
   /// emitted.
   ///
   virtual intptr_t getMachineBasicBlockAddress(MachineBasicBlock *MBB) const= 0;
+
+  /// getLabelAddress - Return the address of the specified LabelID, only usable
+  /// after the LabelID has been emitted.
+  ///
+  virtual intptr_t getLabelAddress(uint64_t LabelID) const = 0;
+  
+  /// Specifies the MachineModuleInfo object. This is used for exception handling
+  /// purposes.
+  virtual void setModuleInfo(MachineModuleInfo* Info) = 0;
 };
 
 } // End llvm namespace

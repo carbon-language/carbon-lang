@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Function.h"
 #include "llvm/ADT/Statistic.h"
@@ -61,6 +62,11 @@ namespace {
 
     void emitInstruction(const MachineInstr &MI,
                          const TargetInstrDesc *Desc);
+    
+    void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<MachineModuleInfo>();
+      MachineFunctionPass::getAnalysisUsage(AU);
+    }
 
   private:
     void emitPCRelativeBlockAddress(MachineBasicBlock *MBB);
@@ -104,10 +110,13 @@ bool Emitter::runOnMachineFunction(MachineFunction &MF) {
   assert((MF.getTarget().getRelocationModel() != Reloc::Default ||
           MF.getTarget().getRelocationModel() != Reloc::Static) &&
          "JIT relocation model must be set to static or default!");
+  
+  MCE.setModuleInfo(&getAnalysis<MachineModuleInfo>());
+  
   II = ((X86TargetMachine&)TM).getInstrInfo();
   TD = ((X86TargetMachine&)TM).getTargetData();
   Is64BitMode = TM.getSubtarget<X86Subtarget>().is64Bit();
-
+  
   do {
     MCE.startFunction(MF);
     for (MachineFunction::iterator MBB = MF.begin(), E = MF.end(); 
@@ -596,13 +605,13 @@ void Emitter::emitInstruction(const MachineInstr &MI,
     // Remember the current PC offset, this is the PIC relocation
     // base address.
     switch (Opcode) {
-#ifndef NDEBUG
     default: 
       assert(0 && "psuedo instructions should be removed before code emission");
     case TargetInstrInfo::INLINEASM:
       assert(0 && "JIT does not support inline asm!\n");
     case TargetInstrInfo::LABEL:
-      assert(0 && "JIT does not support meta labels!\n");
+      MCE.emitLabel(MI.getOperand(0).getImm());
+      break;
     case X86::IMPLICIT_DEF_GR8:
     case X86::IMPLICIT_DEF_GR16:
     case X86::IMPLICIT_DEF_GR32:
@@ -613,7 +622,6 @@ void Emitter::emitInstruction(const MachineInstr &MI,
     case X86::IMPLICIT_DEF_VR128:
     case X86::FP_REG_KILL:
       break;
-#endif
     case X86::MOVPC32r: {
       // This emits the "call" portion of this pseudo instruction.
       MCE.emitByte(BaseOpcode);
@@ -627,7 +635,6 @@ void Emitter::emitInstruction(const MachineInstr &MI,
     }
     CurOp = NumOps;
     break;
-
   case X86II::RawFrm:
     MCE.emitByte(BaseOpcode);
 

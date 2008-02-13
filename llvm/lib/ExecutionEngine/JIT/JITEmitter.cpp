@@ -14,6 +14,7 @@
 
 #define DEBUG_TYPE "jit"
 #include "JIT.h"
+#include "JITDwarfEmitter.h"
 #include "llvm/Constant.h"
 #include "llvm/Module.h"
 #include "llvm/Type.h"
@@ -21,11 +22,13 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRelocation.h"
 #include "llvm/ExecutionEngine/JITMemoryManager.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetJITInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MutexGuard.h"
 #include "llvm/System/Disassembler.h"
@@ -336,6 +339,17 @@ namespace {
 
     /// Resolver - This contains info about the currently resolved functions.
     JITResolver Resolver;
+    
+    /// DE - The dwarf emitter for the jit.
+    JITDwarfEmitter *DE;
+
+    /// LabelLocations - This vector is a mapping from Label ID's to their 
+    /// address.
+    std::vector<intptr_t> LabelLocations;
+
+    /// MMI - Machine module info for exception informations
+    MachineModuleInfo* MMI;
+
   public:
     JITEmitter(JIT &jit, JITMemoryManager *JMM) : Resolver(jit) {
       MemMgr = JMM ? JMM : JITMemoryManager::CreateDefaultMemManager();
@@ -343,9 +357,12 @@ namespace {
         MemMgr->AllocateGOT();
         DOUT << "JIT is managing a GOT\n";
       }
+
+      if (ExceptionHandling) DE = new JITDwarfEmitter(jit);
     }
     ~JITEmitter() { 
       delete MemMgr;
+      if (ExceptionHandling) delete DE;
     }
     
     JITResolver &getJITResolver() { return Resolver; }
@@ -384,6 +401,24 @@ namespace {
     void deallocateMemForFunction(Function *F) {
       MemMgr->deallocateMemForFunction(F);
     }
+    
+    virtual void emitLabel(uint64_t LabelID) {
+      if (LabelLocations.size() <= LabelID)
+        LabelLocations.resize((LabelID+1)*2);
+      LabelLocations[LabelID] = getCurrentPCValue();
+    }
+
+    virtual intptr_t getLabelAddress(uint64_t LabelID) const {
+      assert(LabelLocations.size() > (unsigned)LabelID && 
+             LabelLocations[LabelID] && "Label not emitted!");
+      return LabelLocations[LabelID];
+    }
+ 
+    virtual void setModuleInfo(MachineModuleInfo* Info) {
+      MMI = Info;
+      if (ExceptionHandling) DE->setModuleInfo(Info);
+    }
+
   private:
     void *getPointerToGlobal(GlobalValue *GV, void *Reference, bool NoNeedStub);
     void *getPointerToGVLazyPtr(GlobalValue *V, void *Reference,
@@ -544,7 +579,25 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
     DOUT << "Disassembled code:\n"
          << sys::disassembleBuffer(FnStart, FnEnd-FnStart, (uintptr_t)FnStart);
 #endif
-  
+  if (ExceptionHandling) {
+    uintptr_t ActualSize;
+    SavedBufferBegin = BufferBegin;
+    SavedBufferEnd = BufferEnd;
+    SavedCurBufferPtr = CurBufferPtr;
+
+    BufferBegin = CurBufferPtr = MemMgr->startExceptionTable(F.getFunction(),
+                                                             ActualSize);
+    BufferEnd = BufferBegin+ActualSize;
+    unsigned char* FrameRegister = DE->EmitDwarfTable(F, *this, FnStart, FnEnd);
+    MemMgr->endExceptionTable(F.getFunction(), BufferBegin, CurBufferPtr, FrameRegister);
+    BufferBegin = SavedBufferBegin;
+    BufferEnd = SavedBufferEnd;
+    CurBufferPtr = SavedCurBufferPtr;
+
+    TheJIT->RegisterTable(FrameRegister);
+  }
+  MMI->EndFunction();
+ 
   return false;
 }
 
