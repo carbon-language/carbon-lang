@@ -87,10 +87,6 @@ bool ConstantMerge::runOnModule(Module &M) {
         } else if (GV->hasInternalLinkage()) {    // Yup, this is a duplicate!
           // Make all uses of the duplicate constant use the canonical version.
           Replacements.push_back(std::make_pair(GV, Slot));
-        } else if (GV->hasInternalLinkage()) {
-          // Make all uses of the duplicate constant use the canonical version.
-          Replacements.push_back(std::make_pair(Slot, GV));
-          Slot = GV;
         }
       }
     }
