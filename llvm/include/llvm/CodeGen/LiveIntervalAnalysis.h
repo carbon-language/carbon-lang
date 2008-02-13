@@ -213,6 +213,20 @@ namespace llvm {
       }
     }
 
+    /// ReplaceMachineInstrInMaps - Replacing a machine instr with a new one in
+    /// maps used by register allocator.
+    void ReplaceMachineInstrInMaps(MachineInstr *MI, MachineInstr *NewMI) {
+      Mi2IndexMap::iterator mi2i = mi2iMap_.find(MI);
+      if (mi2i != mi2iMap_.end()) {
+        i2miMap_[mi2i->second/InstrSlots::NUM] = NewMI;
+        Mi2IndexMap::const_iterator it = mi2iMap_.find(MI);
+        assert(it != mi2iMap_.end() && "Invalid instruction!");
+        unsigned Index = it->second;
+        mi2iMap_.erase(MI);
+        mi2iMap_[NewMI] = Index;
+      }
+    }
+
     BumpPtrAllocator& getVNInfoAllocator() { return VNInfoAllocator; }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;

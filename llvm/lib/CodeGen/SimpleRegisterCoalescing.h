@@ -80,6 +80,7 @@ namespace llvm {
   class SimpleRegisterCoalescing : public MachineFunctionPass,
                                    public RegisterCoalescer {
     MachineFunction* mf_;
+    const MachineRegisterInfo* mri_;
     const TargetMachine* tm_;
     const TargetRegisterInfo* tri_;
     const TargetInstrInfo* tii_;
@@ -113,6 +114,9 @@ namespace llvm {
     /// JoinedCopies - Keep track of copies eliminated due to coalescing.
     ///
     SmallPtrSet<MachineInstr*, 32> JoinedCopies;
+
+    /// ChangedCopies - Keep track of copies modified due to commuting.
+    SmallPtrSet<MachineInstr*, 32> ChangedCopies;
 
   public:
     static char ID; // Pass identifcation, replacement for typeid
@@ -168,7 +172,7 @@ namespace llvm {
     /// if the copy was successfully coalesced away. If it is not currently
     /// possible to coalesce this interval, but it may be possible if other
     /// things get coalesced, then it returns true by reference in 'Again'.
-    bool JoinCopy(CopyRec TheCopy, bool &Again);
+    bool JoinCopy(CopyRec &TheCopy, bool &Again);
     
     /// JoinIntervals - Attempt to join these two intervals.  On failure, this
     /// returns false.  Otherwise, if one of the intervals being joined is a
@@ -191,6 +195,9 @@ namespace llvm {
 
     bool AdjustCopiesBackFrom(LiveInterval &IntA, LiveInterval &IntB,
                               MachineInstr *CopyMI);
+
+    bool RemoveCopyByCommutingDef(LiveInterval &IntA, LiveInterval &IntB,
+                                  MachineInstr *CopyMI);
 
     /// AddSubRegIdxPairs - Recursively mark all the registers represented by the
     /// specified register as sub-registers. The recursion level is expected to be
