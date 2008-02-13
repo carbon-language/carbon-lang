@@ -151,7 +151,7 @@ namespace {
     /// Update ExitBB PHINodes' to reflect this change.
     void updatePHINodes(BasicBlock *ExitBB, BasicBlock *Latch, 
                         BasicBlock *Header,
-                        PHINode *IV, Instruction *IVIncrement);
+                        PHINode *IV, Instruction *IVIncrement, Loop *LP);
 
     /// moveExitCondition - Move exit condition EC into split condition block CondBB.
     void moveExitCondition(BasicBlock *CondBB, BasicBlock *ActiveBB,
@@ -1597,7 +1597,7 @@ void LoopIndexSplit::moveExitCondition(BasicBlock *CondBB, BasicBlock *ActiveBB,
   new BranchInst(OrigDestBB, ExitingBB);
 
   // Update PHINodes
-  updatePHINodes(ExitBB, ExitingBB, CondBB, IV, IVAdd);
+  updatePHINodes(ExitBB, ExitingBB, CondBB, IV, IVAdd, LP);
 
   // Fix dominator info.
   // ExitBB is now dominated by CondBB
@@ -1637,7 +1637,8 @@ void LoopIndexSplit::moveExitCondition(BasicBlock *CondBB, BasicBlock *ActiveBB,
 /// Update ExitBB PHINodes' to reflect this change.
 void LoopIndexSplit::updatePHINodes(BasicBlock *ExitBB, BasicBlock *Latch, 
                                     BasicBlock *Header,
-                                    PHINode *IV, Instruction *IVIncrement) {
+                                    PHINode *IV, Instruction *IVIncrement,
+                                    Loop *LP) {
 
   for (BasicBlock::iterator BI = ExitBB->begin(), BE = ExitBB->end(); 
        BI != BE; ++BI) {
@@ -1653,7 +1654,7 @@ void LoopIndexSplit::updatePHINodes(BasicBlock *ExitBB, BasicBlock *Latch,
       for (Value::use_iterator UI = PHV->use_begin(), E = PHV->use_end(); 
            UI != E; ++UI) 
         if (PHINode *U = dyn_cast<PHINode>(*UI)) 
-          if (U->getParent() == Header) {
+          if (LP->contains(U->getParent())) {
             NewV = U;
             break;
           }
