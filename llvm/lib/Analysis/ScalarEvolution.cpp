@@ -2533,7 +2533,7 @@ HowManyLessThans(SCEV *LHS, SCEV *RHS, const Loop *L, bool isSigned) {
     // We know the LHS is of the form {n,+,1} and the RHS is some loop-invariant
     // m.  So, we count the number of iterations in which {n,+,1} < m is true.
     // Note that we cannot simply return max(m-n,0) because it's not safe to
-    // treat m-n as signed nor unsinged due to overflow possibility.
+    // treat m-n as signed nor unsigned due to overflow possibility.
 
     // First, we get the value of the LHS in the first iteration: n
     SCEVHandle Start = AddRec->getOperand(0);
