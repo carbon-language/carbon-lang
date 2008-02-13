@@ -1386,7 +1386,7 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
 #endif
 
 namespace clang {
-void RunGRExprEngine(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx,
+void RunGRConstants(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx,
                     Diagnostic& Diag) {
   
   GRCoreEngine<GRExprEngine> Engine(cfg, FD, Ctx);
