@@ -2525,18 +2525,26 @@ HowManyLessThans(SCEV *LHS, SCEV *RHS, const Loop *L, bool isSigned) {
     return UnknownValue;
 
   if (AddRec->isAffine()) {
-    // The number of iterations for "{n,+,1} < m", is m-n.  However, we don't
-    // know that m is >= n on input to the loop.  If it is, the condition
-    // returns true zero times.  To handle both cases, we return SMAX(m, n)-n.
-
     // FORNOW: We only support unit strides.
     SCEVHandle One = SE.getIntegerSCEV(1, RHS->getType());
     if (AddRec->getOperand(1) != One)
       return UnknownValue;
 
-    SCEVHandle Start = AddRec->getOperand(0);
-    SCEVHandle End = isSigned ? SE.getSMaxExpr(RHS, Start) : (SCEVHandle)RHS;
+    // We know the LHS is of the form {n,+,1} and the RHS is some loop-invariant
+    // m.  So, we count the number of iterations in which {n,+,1} < m is true.
+    // Note that we cannot simply return max(m-n,0) because it's not safe to
+    // treat m-n as signed nor unsinged due to overflow possibility.
 
+    // First, we get the value of the LHS in the first iteration: n
+    SCEVHandle Start = AddRec->getOperand(0);
+
+    // Then, we get the value of the LHS in the first iteration in which the
+    // above condition doesn't hold.  This equals to max(m,n).
+    // FIXME (PR2003): we should have an "umax" operator as well.
+    SCEVHandle End = isSigned ? SE.getSMaxExpr(RHS,Start) : (SCEVHandle)RHS;
+
+    // Finally, we subtract these two values to get the number of times the
+    // backedge is executed: max(m,n)-n.
     return SE.getMinusSCEV(End, Start);
   }
 
