@@ -110,13 +110,22 @@ public:
     RegNo -= TargetRegisterInfo::FirstVirtualRegister;
     return VRegInfo[RegNo].second;
   }
+
+  /// getVRegDef - Return the machine instr that defines the specified virtual
+  /// register or null if none is found.  This assumes that the code is in SSA
+  /// form, so there should only be one definition.
+  MachineInstr *getVRegDef(unsigned Reg) const;
+  
+#ifndef NDEBUG
+  void dumpUses(unsigned RegNo) const;
+#endif
   
   //===--------------------------------------------------------------------===//
   // Virtual Register Info
   //===--------------------------------------------------------------------===//
   
   /// getRegClass - Return the register class of the specified virtual register.
-  const TargetRegisterClass *getRegClass(unsigned Reg) {
+  const TargetRegisterClass *getRegClass(unsigned Reg) const {
     Reg -= TargetRegisterInfo::FirstVirtualRegister;
     assert(Reg < VRegInfo.size() && "Invalid vreg!");
     return VRegInfo[Reg].first;
@@ -144,11 +153,6 @@ public:
   unsigned getLastVirtReg() const {
     return VRegInfo.size()+TargetRegisterInfo::FirstVirtualRegister-1;
   }
-  
-  /// getVRegDef - Return the machine instr that defines the specified virtual
-  /// register or null if none is found.  This assumes that the code is in SSA
-  /// form, so there should only be one definition.
-  MachineInstr *getVRegDef(unsigned Reg) const;
   
   
   //===--------------------------------------------------------------------===//

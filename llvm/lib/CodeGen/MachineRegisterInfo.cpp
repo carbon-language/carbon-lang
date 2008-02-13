@@ -73,3 +73,11 @@ MachineInstr *MachineRegisterInfo::getVRegDef(unsigned Reg) const {
   }
   return 0;
 }
+
+
+#ifndef NDEBUG
+void MachineRegisterInfo::dumpUses(unsigned Reg) const {
+  for (use_iterator I = use_begin(Reg), E = use_end(); I != E; ++I)
+    I.getOperand().getParent()->dump();
+}
+#endif
