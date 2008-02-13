@@ -4074,8 +4074,22 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   
   // Create the node.
   SDNode *Result = DAG.getNode(ISD::FORMAL_ARGUMENTS,
-                               DAG.getNodeValueTypes(RetVals), RetVals.size(),
+                               DAG.getVTList(&RetVals[0], RetVals.size()),
                                &Ops[0], Ops.size()).Val;
+  
+  // Prelower FORMAL_ARGUMENTS.  This isn't required for functionality, but
+  // allows exposing the loads that may be part of the argument access to the
+  // first DAGCombiner pass.
+  SDOperand TmpRes = LowerOperation(SDOperand(Result, 0), DAG);
+  
+  // The number of results should match up, except that the lowered one may have
+  // an extra flag result.
+  assert((Result->getNumValues() == TmpRes.Val->getNumValues() ||
+          (Result->getNumValues()+1 == TmpRes.Val->getNumValues() &&
+           TmpRes.getValue(Result->getNumValues()).getValueType() == MVT::Flag))
+         && "Lowering produced unexpected number of results!");
+  Result = TmpRes.Val;
+  
   unsigned NumArgRegs = Result->getNumValues() - 1;
   DAG.setRoot(SDOperand(Result, NumArgRegs));
 
