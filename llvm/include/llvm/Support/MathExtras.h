@@ -163,6 +163,14 @@ inline unsigned CountLeadingZeros_32(uint32_t Value) {
   return Count;
 }
 
+/// CountLeadingOnes_32 - this function performs the operation of
+/// counting the number of ones from the most significant bit to the first zero
+/// bit.  Ex. CountLeadingOnes_32(0xFF0FFF00) == 8.
+/// Returns 32 if the word is all ones.
+inline unsigned CountLeadingOnes_32(uint32_t Value) {
+  return CountLeadingZeros_32(~Value);
+}
+
 /// CountLeadingZeros_64 - This function performs the platform optimal form
 /// of counting the number of zeros from the most significant bit to the first 
 /// one bit (64 bit edition.)
@@ -207,6 +215,14 @@ inline unsigned CountLeadingZeros_64(uint64_t Value) {
   return Count;
 }
 
+/// CountLeadingOnes_64 - This function performs the operation
+/// of counting the number of ones from the most significant bit to the first 
+/// zero bit (64 bit edition.)
+/// Returns 64 if the word is all ones.
+inline unsigned CountLeadingOnes_64(uint64_t Value) {
+  return CountLeadingZeros_64(~Value);
+}
+
 /// CountTrailingZeros_32 - this function performs the platform optimal form of
 /// counting the number of zeros from the least significant bit to the first one
 /// bit.  Ex. CountTrailingZeros_32(0xFF00FF00) == 8.
@@ -222,6 +238,14 @@ inline unsigned CountTrailingZeros_32(uint32_t Value) {
   };
   return Mod37BitPosition[(-Value & Value) % 37];
 #endif
+}
+
+/// CountTrailingOnes_32 - this function performs the operation of
+/// counting the number of ones from the least significant bit to the first zero
+/// bit.  Ex. CountTrailingOnes_32(0x00FF00FF) == 8.
+/// Returns 32 if the word is all ones.
+inline unsigned CountTrailingOnes_32(uint32_t Value) {
+  return CountTrailingZeros_32(~Value);
 }
 
 /// CountTrailingZeros_64 - This function performs the platform optimal form
@@ -241,6 +265,14 @@ inline unsigned CountTrailingZeros_64(uint64_t Value) {
   };
   return Mod67Position[(-Value & Value) % 67];
 #endif
+}
+
+/// CountTrailingOnes_64 - This function performs the operation
+/// of counting the number of ones from the least significant bit to the first 
+/// zero bit (64 bit edition.)
+/// Returns 64 if the word is all ones.
+inline unsigned CountTrailingOnes_64(uint64_t Value) {
+  return CountTrailingZeros_64(~Value);
 }
 
 /// CountPopulation_32 - this function counts the number of set bits in a value.
