@@ -474,6 +474,23 @@ Expr* Expr::IgnoreParens() {
   return E;
 }
 
+/// IgnoreParenCasts - Ignore parentheses and casts.  Strip off any ParenExpr
+/// or CastExprs or ImplicitCastExprs, returning their operand.
+Expr *Expr::IgnoreParenCasts() {
+  Expr *E = this;
+  while (true) {
+    if (ParenExpr *P = dyn_cast<ParenExpr>(E))
+      E = P->getSubExpr();
+    else if (CastExpr *P = dyn_cast<CastExpr>(E))
+      E = P->getSubExpr();
+    else if (ImplicitCastExpr *P = dyn_cast<ImplicitCastExpr>(E))
+      E = P->getSubExpr();
+    else
+      return E;
+  }
+}
+
+
 bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
   switch (getStmtClass()) {
   default:

@@ -19,23 +19,9 @@
 
 namespace clang {
 
-/// Utility method to plow through parenthesis and casts.
-static inline Expr* IgnoreParenCasts(Expr* E) {
-  while(true) {
-    if (ParenExpr* P = dyn_cast<ParenExpr>(E))
-      E = P->getSubExpr();
-    else if (CastExpr* P = dyn_cast<CastExpr>(E))
-      E = P->getSubExpr();
-    else if (ImplicitCastExpr* P = dyn_cast<ImplicitCastExpr>(E))
-      E = P->getSubExpr();
-    else
-      return E;
-  }
-}
-
 /// Utility method to determine if a CallExpr is a call to a builtin.
 static inline bool isCallBuiltin(CallExpr* cexp) {
-  Expr* sub = IgnoreParenCasts(cexp->getCallee());
+  Expr* sub = cexp->getCallee()->IgnoreParenCasts();
   
   if (DeclRefExpr* E = dyn_cast<DeclRefExpr>(sub))
     if (E->getDecl()->getIdentifier()->getBuiltinID() > 0)

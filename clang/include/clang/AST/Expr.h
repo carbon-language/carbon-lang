@@ -116,11 +116,18 @@ public:
   ///  then this method recursively returns its subexpression, and so forth.
   ///  Otherwise, the method returns the current Expr.
   Expr* IgnoreParens();
+
+  /// IgnoreParenCasts - Ignore parentheses and casts.  Strip off any ParenExpr
+  /// or CastExprs or ImplicitCastExprs, returning their operand.
+  Expr *IgnoreParenCasts();
   
   const Expr* IgnoreParens() const {
     return const_cast<Expr*>(this)->IgnoreParens();
   }
-
+  const Expr *IgnoreParenCasts() const {
+    return const_cast<Expr*>(this)->IgnoreParenCasts();
+  }
+  
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() >= firstExprConstant &&
            T->getStmtClass() <= lastExprConstant; 

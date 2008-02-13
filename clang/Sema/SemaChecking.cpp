@@ -88,7 +88,7 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
 /// CheckBuiltinCFStringArgument - Checks that the argument to the builtin
 /// CFString constructor is correct
 bool Sema::CheckBuiltinCFStringArgument(Expr* Arg) {
-  Arg = IgnoreParenCasts(Arg);
+  Arg = Arg->IgnoreParenCasts();
   
   StringLiteral *Literal = dyn_cast<StringLiteral>(Arg);
 
@@ -267,7 +267,7 @@ Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg,
     return;
   }
   
-  Expr *OrigFormatExpr = IgnoreParenCasts(TheCall->getArg(format_idx));
+  Expr *OrigFormatExpr = TheCall->getArg(format_idx)->IgnoreParenCasts();
   
   // CHECK: format string is not a string literal.
   // 
@@ -527,7 +527,7 @@ static DeclRefExpr* EvalAddr(Expr* E);
 void
 Sema::CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
                            SourceLocation ReturnLoc) {
-  
+   
   // Perform checking for returned stack addresses.
   if (lhsType->isPointerType()) {
     if (DeclRefExpr *DR = EvalAddr(RetValExp))
