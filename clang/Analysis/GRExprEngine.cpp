@@ -1,4 +1,4 @@
-//===-- GRExprEngine.cpp - Simple, Path-Sens. Constant Prop. ------*- C++ -*-==//
+//===-- GRExprEngine.cpp - Simple, Path-Sens. Constant Prop. -----*- C++ -*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -102,8 +102,8 @@ protected:
   ///  Expr* in the CFG.  Used to prune out dead state.
   LiveVariables Liveness;
 
-  /// Builder - The current GRStmtNodeBuilder which is used when building the nodes
-  ///  for a given statement.
+  /// Builder - The current GRStmtNodeBuilder which is used when building the
+  ///  nodes for a given statement.
   StmtNodeBuilder* Builder;
   
   /// StateMgr - Object that manages the data for all created states.
@@ -572,7 +572,7 @@ void GRExprEngine::Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred,
     Nodify(Dst, S, Pred, *I);
 }
 
-void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* D, NodeTy* Pred, NodeSet& Dst) {
+void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* D, NodeTy* Pred, NodeSet& Dst){
   if (D != CurrentStmt) {
     Dst.Add(Pred); // No-op. Simply propagate the current state unchanged.
     return;
@@ -1234,7 +1234,7 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
   }
     
     
-  static void PrintSubExprBindings(std::ostream& Out, GRExprEngine::StateTy St) {
+  static void PrintSubExprBindings(std::ostream& Out, GRExprEngine::StateTy St){
     
     bool isFirst = true;
     
@@ -1255,7 +1255,7 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
     }
   }
     
-  static void PrintBlkExprBindings(std::ostream& Out, GRExprEngine::StateTy St) {
+  static void PrintBlkExprBindings(std::ostream& Out, GRExprEngine::StateTy St){
         
     bool isFirst = true;
 
