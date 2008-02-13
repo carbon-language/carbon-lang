@@ -1,4 +1,4 @@
-//===-- GRConstants.cpp - Simple, Path-Sens. Constant Prop. ------*- C++ -*-==//
+//===-- GRExprEngine.cpp - Simple, Path-Sens. Constant Prop. ------*- C++ -*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -18,7 +18,7 @@
 #include "RValues.h"
 #include "ValueState.h"
 
-#include "clang/Analysis/PathSensitive/GREngine.h"
+#include "clang/Analysis/PathSensitive/GRCoreEngine.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
@@ -61,14 +61,14 @@ using llvm::APSInt;
 
 namespace {
   
-class VISIBILITY_HIDDEN GRConstants {
+class VISIBILITY_HIDDEN GRExprEngine {
     
 public:
   typedef ValueStateManager::StateTy StateTy;
-  typedef GRStmtNodeBuilder<GRConstants> StmtNodeBuilder;
-  typedef GRBranchNodeBuilder<GRConstants> BranchNodeBuilder;
-  typedef GRIndirectGotoNodeBuilder<GRConstants> IndirectGotoNodeBuilder;
-  typedef ExplodedGraph<GRConstants> GraphTy;
+  typedef GRStmtNodeBuilder<GRExprEngine> StmtNodeBuilder;
+  typedef GRBranchNodeBuilder<GRExprEngine> BranchNodeBuilder;
+  typedef GRIndirectGotoNodeBuilder<GRExprEngine> IndirectGotoNodeBuilder;
+  typedef ExplodedGraph<GRExprEngine> GraphTy;
   typedef GraphTy::NodeTy NodeTy;
   
   class NodeSet {
@@ -136,7 +136,7 @@ protected:
   bool StateCleaned;
   
 public:
-  GRConstants(GraphTy& g) : G(g), Liveness(G.getCFG(), G.getFunctionDecl()),
+  GRExprEngine(GraphTy& g) : G(g), Liveness(G.getCFG(), G.getFunctionDecl()),
       Builder(NULL),
       StateMgr(G.getContext(), G.getAllocator()),
       ValMgr(StateMgr.getValueManager()),
@@ -185,15 +185,15 @@ public:
   null_iterator null_begin() { return ExplicitNullDeref.begin(); }
   null_iterator null_end() { return ExplicitNullDeref.end(); }
 
-  /// ProcessStmt - Called by GREngine. Used to generate new successor
+  /// ProcessStmt - Called by GRCoreEngine. Used to generate new successor
   ///  nodes by processing the 'effects' of a block-level statement.
   void ProcessStmt(Stmt* S, StmtNodeBuilder& builder);    
   
-  /// ProcessBranch - Called by GREngine.  Used to generate successor
+  /// ProcessBranch - Called by GRCoreEngine.  Used to generate successor
   ///  nodes by processing the 'effects' of a branch condition.
   void ProcessBranch(Expr* Condition, Stmt* Term, BranchNodeBuilder& builder);
 
-  /// ProcessIndirectGoto - Called by GREngine.  Used to generate successor
+  /// ProcessIndirectGoto - Called by GRCoreEngine.  Used to generate successor
   ///  nodes by processing the 'effects' of a computed goto jump.
   void ProcessIndirectGoto(IndirectGotoNodeBuilder& builder);
   
@@ -309,8 +309,8 @@ public:
 } // end anonymous namespace
 
 
-GRConstants::StateTy
-GRConstants::SetValue(StateTy St, Expr* S, const RValue& V) {
+GRExprEngine::StateTy
+GRExprEngine::SetValue(StateTy St, Expr* S, const RValue& V) {
 
   if (!StateCleaned) {
     St = RemoveDeadBindings(CurrentStmt, St);
@@ -329,8 +329,8 @@ GRConstants::SetValue(StateTy St, Expr* S, const RValue& V) {
   return StateMgr.SetValue(St, S, isBlkExpr, V);
 }
 
-const GRConstants::StateTy::BufferTy&
-GRConstants::SetValue(StateTy St, Expr* S, const RValue::BufferTy& RB,
+const GRExprEngine::StateTy::BufferTy&
+GRExprEngine::SetValue(StateTy St, Expr* S, const RValue::BufferTy& RB,
                       StateTy::BufferTy& RetBuf) {
   
   assert (RetBuf.empty());
@@ -341,8 +341,8 @@ GRConstants::SetValue(StateTy St, Expr* S, const RValue::BufferTy& RB,
   return RetBuf;
 }
 
-GRConstants::StateTy
-GRConstants::SetValue(StateTy St, const LValue& LV, const RValue& V) {
+GRExprEngine::StateTy
+GRExprEngine::SetValue(StateTy St, const LValue& LV, const RValue& V) {
   
   if (LV.isUnknown())
     return St;
@@ -355,7 +355,7 @@ GRConstants::SetValue(StateTy St, const LValue& LV, const RValue& V) {
   return StateMgr.SetValue(St, LV, V);
 }
 
-void GRConstants::ProcessBranch(Expr* Condition, Stmt* Term,
+void GRExprEngine::ProcessBranch(Expr* Condition, Stmt* Term,
                                 BranchNodeBuilder& builder) {
 
   // Remove old bindings for subexpressions.
@@ -429,9 +429,9 @@ void GRConstants::ProcessBranch(Expr* Condition, Stmt* Term,
     builder.markInfeasible(false);
 }
 
-/// ProcessIndirectGoto - Called by GREngine.  Used to generate successor
+/// ProcessIndirectGoto - Called by GRCoreEngine.  Used to generate successor
 ///  nodes by processing the 'effects' of a computed goto jump.
-void GRConstants::ProcessIndirectGoto(IndirectGotoNodeBuilder& builder) {
+void GRExprEngine::ProcessIndirectGoto(IndirectGotoNodeBuilder& builder) {
 
   StateTy St = builder.getState();  
   LValue V = cast<LValue>(GetValue(St, builder.getTarget()));
@@ -474,7 +474,7 @@ void GRConstants::ProcessIndirectGoto(IndirectGotoNodeBuilder& builder) {
     builder.generateNode(I, St);
 }
 
-void GRConstants::VisitLogicalExpr(BinaryOperator* B, NodeTy* Pred,
+void GRExprEngine::VisitLogicalExpr(BinaryOperator* B, NodeTy* Pred,
                                    NodeSet& Dst) {
 
   bool hasR2;
@@ -531,7 +531,7 @@ void GRConstants::VisitLogicalExpr(BinaryOperator* B, NodeTy* Pred,
 
 
 
-void GRConstants::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
+void GRExprEngine::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
   Builder = &builder;
 
   StmtEntryNode = builder.getLastNode();
@@ -553,8 +553,8 @@ void GRConstants::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
   Builder = NULL;
 }
 
-GRConstants::NodeTy*
-GRConstants::Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred, StateTy St) {
+GRExprEngine::NodeTy*
+GRExprEngine::Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred, StateTy St) {
  
   // If the state hasn't changed, don't generate a new node.
   if (St == Pred->getState())
@@ -565,14 +565,14 @@ GRConstants::Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred, StateTy St) {
   return N;
 }
 
-void GRConstants::Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred,
+void GRExprEngine::Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred,
                          const StateTy::BufferTy& SB) {
   
   for (StateTy::BufferTy::const_iterator I=SB.begin(), E=SB.end(); I!=E; ++I)
     Nodify(Dst, S, Pred, *I);
 }
 
-void GRConstants::VisitDeclRefExpr(DeclRefExpr* D, NodeTy* Pred, NodeSet& Dst) {
+void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* D, NodeTy* Pred, NodeSet& Dst) {
   if (D != CurrentStmt) {
     Dst.Add(Pred); // No-op. Simply propagate the current state unchanged.
     return;
@@ -587,7 +587,7 @@ void GRConstants::VisitDeclRefExpr(DeclRefExpr* D, NodeTy* Pred, NodeSet& Dst) {
          SetValue(St, D, GetValue(St, lval::DeclVal(D->getDecl()))));
 }
 
-void GRConstants::VisitCast(Expr* CastE, Expr* E, NodeTy* Pred, NodeSet& Dst) {
+void GRExprEngine::VisitCast(Expr* CastE, Expr* E, NodeTy* Pred, NodeSet& Dst) {
   
   QualType T = CastE->getType();
 
@@ -608,8 +608,8 @@ void GRConstants::VisitCast(Expr* CastE, Expr* E, NodeTy* Pred, NodeSet& Dst) {
   }
 }
 
-void GRConstants::VisitDeclStmt(DeclStmt* DS, GRConstants::NodeTy* Pred,
-                                GRConstants::NodeSet& Dst) {
+void GRExprEngine::VisitDeclStmt(DeclStmt* DS, GRExprEngine::NodeTy* Pred,
+                                GRExprEngine::NodeSet& Dst) {
   
   StateTy St = Pred->getState();
   
@@ -627,7 +627,7 @@ void GRConstants::VisitDeclStmt(DeclStmt* DS, GRConstants::NodeTy* Pred,
 }
 
 
-void GRConstants::VisitGuardedExpr(Expr* S, Expr* LHS, Expr* RHS,
+void GRExprEngine::VisitGuardedExpr(Expr* S, Expr* LHS, Expr* RHS,
                                    NodeTy* Pred, NodeSet& Dst) {
   
   StateTy St = Pred->getState();
@@ -639,7 +639,7 @@ void GRConstants::VisitGuardedExpr(Expr* S, Expr* LHS, Expr* RHS,
 }
 
 /// VisitSizeOfAlignOfTypeExpr - Transfer function for sizeof(type).
-void GRConstants::VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr* S,
+void GRExprEngine::VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr* S,
                                              NodeTy* Pred,
                                              NodeSet& Dst) {
   
@@ -660,9 +660,9 @@ void GRConstants::VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr* S,
   
 }
 
-void GRConstants::VisitUnaryOperator(UnaryOperator* U,
-                                     GRConstants::NodeTy* Pred,
-                                     GRConstants::NodeSet& Dst) {
+void GRExprEngine::VisitUnaryOperator(UnaryOperator* U,
+                                     GRExprEngine::NodeTy* Pred,
+                                     GRExprEngine::NodeSet& Dst) {
   
   NodeSet S1;
   UnaryOperator::Opcode Op = U->getOpcode();
@@ -842,8 +842,8 @@ void GRConstants::VisitUnaryOperator(UnaryOperator* U,
   }
 }
 
-void GRConstants::VisitAssignmentLHS(Expr* E, GRConstants::NodeTy* Pred,
-                                     GRConstants::NodeSet& Dst) {
+void GRExprEngine::VisitAssignmentLHS(Expr* E, GRExprEngine::NodeTy* Pred,
+                                     GRExprEngine::NodeSet& Dst) {
 
   if (isa<DeclRefExpr>(E)) {
     Dst.Add(Pred);
@@ -860,9 +860,9 @@ void GRConstants::VisitAssignmentLHS(Expr* E, GRConstants::NodeTy* Pred,
   Visit(E, Pred, Dst);
 }
 
-void GRConstants::VisitBinaryOperator(BinaryOperator* B,
-                                      GRConstants::NodeTy* Pred,
-                                      GRConstants::NodeSet& Dst) {
+void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
+                                      GRExprEngine::NodeTy* Pred,
+                                      GRExprEngine::NodeSet& Dst) {
   NodeSet S1;
   
   if (B->isAssignmentOp())
@@ -956,8 +956,8 @@ void GRConstants::VisitBinaryOperator(BinaryOperator* B,
 }
 
 
-void GRConstants::Visit(Stmt* S, GRConstants::NodeTy* Pred,
-                        GRConstants::NodeSet& Dst) {
+void GRExprEngine::Visit(Stmt* S, GRExprEngine::NodeTy* Pred,
+                        GRExprEngine::NodeSet& Dst) {
 
   // FIXME: add metadata to the CFG so that we can disable
   //  this check when we KNOW that there is no block-level subexpression.
@@ -1066,7 +1066,7 @@ void GRConstants::Visit(Stmt* S, GRConstants::NodeTy* Pred,
 // "Assume" logic.
 //===----------------------------------------------------------------------===//
 
-GRConstants::StateTy GRConstants::Assume(StateTy St, LValue Cond,
+GRExprEngine::StateTy GRExprEngine::Assume(StateTy St, LValue Cond,
                                          bool Assumption, 
                                          bool& isFeasible) {    
   
@@ -1096,7 +1096,7 @@ GRConstants::StateTy GRConstants::Assume(StateTy St, LValue Cond,
   }
 }
 
-GRConstants::StateTy GRConstants::Assume(StateTy St, NonLValue Cond,
+GRExprEngine::StateTy GRExprEngine::Assume(StateTy St, NonLValue Cond,
                                          bool Assumption, 
                                          bool& isFeasible) {
   
@@ -1132,8 +1132,8 @@ GRConstants::StateTy GRConstants::Assume(StateTy St, NonLValue Cond,
   }
 }
 
-GRConstants::StateTy
-GRConstants::AssumeSymNE(StateTy St, SymbolID sym,
+GRExprEngine::StateTy
+GRExprEngine::AssumeSymNE(StateTy St, SymbolID sym,
                          const llvm::APSInt& V, bool& isFeasible) {
 
   // First, determine if sym == X, where X != V.
@@ -1155,8 +1155,8 @@ GRConstants::AssumeSymNE(StateTy St, SymbolID sym,
   return StateMgr.AddNE(St, sym, V);
 }
 
-GRConstants::StateTy
-GRConstants::AssumeSymEQ(StateTy St, SymbolID sym,
+GRExprEngine::StateTy
+GRExprEngine::AssumeSymEQ(StateTy St, SymbolID sym,
                          const llvm::APSInt& V, bool& isFeasible) {
   
   // First, determine if sym == X, where X != V.
@@ -1178,8 +1178,8 @@ GRConstants::AssumeSymEQ(StateTy St, SymbolID sym,
   return StateMgr.AddEQ(St, sym, V);
 }
 
-GRConstants::StateTy
-GRConstants::AssumeSymInt(StateTy St, bool Assumption,
+GRExprEngine::StateTy
+GRExprEngine::AssumeSymInt(StateTy St, bool Assumption,
                           const SymIntConstraint& C, bool& isFeasible) {
   
   switch (C.getOpcode()) {
@@ -1206,20 +1206,20 @@ GRConstants::AssumeSymInt(StateTy St, bool Assumption,
 //===----------------------------------------------------------------------===//
 
 #ifndef NDEBUG
-static GRConstants* GraphPrintCheckerState;
+static GRExprEngine* GraphPrintCheckerState;
 
 namespace llvm {
 template<>
-struct VISIBILITY_HIDDEN DOTGraphTraits<GRConstants::NodeTy*> :
+struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
   public DefaultDOTGraphTraits {
     
-  static void PrintVarBindings(std::ostream& Out, GRConstants::StateTy St) {
+  static void PrintVarBindings(std::ostream& Out, GRExprEngine::StateTy St) {
 
     Out << "Variables:\\l";
     
     bool isFirst = true;
     
-    for (GRConstants::StateTy::vb_iterator I=St.vb_begin(),
+    for (GRExprEngine::StateTy::vb_iterator I=St.vb_begin(),
                                            E=St.vb_end(); I!=E;++I) {        
 
       if (isFirst)
@@ -1234,11 +1234,11 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRConstants::NodeTy*> :
   }
     
     
-  static void PrintSubExprBindings(std::ostream& Out, GRConstants::StateTy St) {
+  static void PrintSubExprBindings(std::ostream& Out, GRExprEngine::StateTy St) {
     
     bool isFirst = true;
     
-    for (GRConstants::StateTy::seb_iterator I=St.seb_begin(), E=St.seb_end();
+    for (GRExprEngine::StateTy::seb_iterator I=St.seb_begin(), E=St.seb_end();
                                             I != E;++I) {        
       
       if (isFirst) {
@@ -1255,11 +1255,11 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRConstants::NodeTy*> :
     }
   }
     
-  static void PrintBlkExprBindings(std::ostream& Out, GRConstants::StateTy St) {
+  static void PrintBlkExprBindings(std::ostream& Out, GRExprEngine::StateTy St) {
         
     bool isFirst = true;
 
-    for (GRConstants::StateTy::beb_iterator I=St.beb_begin(), E=St.beb_end();
+    for (GRExprEngine::StateTy::beb_iterator I=St.beb_begin(), E=St.beb_end();
                                             I != E; ++I) {      
       if (isFirst) {
         Out << "\\l\\lBlock-level Expressions:\\l";
@@ -1275,7 +1275,7 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRConstants::NodeTy*> :
     }
   }
     
-  static void PrintEQ(std::ostream& Out, GRConstants::StateTy St) {
+  static void PrintEQ(std::ostream& Out, GRExprEngine::StateTy St) {
     ValueState::ConstantEqTy CE = St.getImpl()->ConstantEq;
     
     if (CE.isEmpty())
@@ -1287,7 +1287,7 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRConstants::NodeTy*> :
       Out << "\\l $" << I.getKey() << " : " << I.getData()->toString();
   }
     
-  static void PrintNE(std::ostream& Out, GRConstants::StateTy St) {
+  static void PrintNE(std::ostream& Out, GRExprEngine::StateTy St) {
     ValueState::ConstantNotEqTy NE = St.getImpl()->ConstantNotEq;
     
     if (NE.isEmpty())
@@ -1312,7 +1312,7 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRConstants::NodeTy*> :
     }
   }    
     
-  static std::string getNodeLabel(const GRConstants::NodeTy* N, void*) {
+  static std::string getNodeLabel(const GRExprEngine::NodeTy* N, void*) {
     std::ostringstream Out;
 
     // Program Location.
@@ -1386,16 +1386,16 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRConstants::NodeTy*> :
 #endif
 
 namespace clang {
-void RunGRConstants(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx,
+void RunGRExprEngine(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx,
                     Diagnostic& Diag) {
   
-  GREngine<GRConstants> Engine(cfg, FD, Ctx);
+  GRCoreEngine<GRExprEngine> Engine(cfg, FD, Ctx);
   Engine.ExecuteWorkList();
   
   // Look for explicit-Null dereferences and warn about them.
-  GRConstants* CheckerState = &Engine.getCheckerState();
+  GRExprEngine* CheckerState = &Engine.getCheckerState();
   
-  for (GRConstants::null_iterator I=CheckerState->null_begin(),
+  for (GRExprEngine::null_iterator I=CheckerState->null_begin(),
                                   E=CheckerState->null_end(); I!=E; ++I) {
     
     const PostStmt& L = cast<PostStmt>((*I)->getLocation());
@@ -1408,7 +1408,7 @@ void RunGRConstants(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx,
   
 #ifndef NDEBUG
   GraphPrintCheckerState = CheckerState;
-  llvm::ViewGraph(*Engine.getGraph().roots_begin(),"GRConstants");
+  llvm::ViewGraph(*Engine.getGraph().roots_begin(),"GRExprEngine");
   GraphPrintCheckerState = NULL;
 #endif  
 }

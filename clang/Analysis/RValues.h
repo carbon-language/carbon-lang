@@ -17,7 +17,7 @@
 
 // FIXME: reduce the number of includes.
 
-#include "clang/Analysis/PathSensitive/GREngine.h"
+#include "clang/Analysis/PathSensitive/GRCoreEngine.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/ASTContext.h"

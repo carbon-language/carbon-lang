@@ -1,4 +1,4 @@
-//==- GRWorkList.h - Worklist class used by GREngine ---------------*- C++ -*-//
+//==- GRWorkList.h - Worklist class used by GRCoreEngine ---------------*- C++ -*-//
 //             
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 //  This file defines GRWorkList, a pure virtual class that represents an
-//  opaque worklist used by GREngine to explore the reachability state space.
+//  opaque worklist used by GRCoreEngine to explore the reachability state space.
 //
 //===----------------------------------------------------------------------===//
 

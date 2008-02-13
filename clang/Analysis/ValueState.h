@@ -18,7 +18,7 @@
 
 #include "RValues.h"
 
-#include "clang/Analysis/PathSensitive/GREngine.h"
+#include "clang/Analysis/PathSensitive/GRCoreEngine.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/ASTContext.h"
@@ -112,7 +112,7 @@ public:
 ///  tracking. It is really just a "smart pointer", wrapping a pointer
 ///  to ValueStateImpl object.  Making this class a smart pointer means that its
 ///  size is always the size of a pointer, which allows easy conversion to
-///  void* when being handled by GREngine.  It also forces us to unique states;
+///  void* when being handled by GRCoreEngine.  It also forces us to unique states;
 ///  consequently, a ValueStateImpl* with a specific address will always refer
 ///  to the unique state with those values.
 class ValueState {

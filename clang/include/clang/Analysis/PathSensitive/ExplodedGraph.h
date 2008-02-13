@@ -26,7 +26,7 @@
 
 namespace clang {
 
-class GREngineImpl;
+class GRCoreEngineImpl;
 class ExplodedNodeImpl;
 class GRStmtNodeBuilderImpl;
 class GRBranchNodeBuilderImpl;
@@ -39,7 +39,7 @@ class FunctionDecl;
 class ExplodedNodeImpl : public llvm::FoldingSetNode {
 protected:
   friend class ExplodedGraphImpl;
-  friend class GREngineImpl;
+  friend class GRCoreEngineImpl;
   friend class GRStmtNodeBuilderImpl;
   friend class GRBranchNodeBuilderImpl;
   friend class GRIndirectGotoNodeBuilderImpl;
@@ -194,7 +194,7 @@ public:
 
 class ExplodedGraphImpl {
 protected:
-  friend class GREngineImpl;
+  friend class GRCoreEngineImpl;
   friend class GRStmtNodeBuilderImpl;
   friend class GRBranchNodeBuilderImpl;
   friend class GRIndirectGotoNodeBuilderImpl;
@@ -231,7 +231,7 @@ protected:
 
   /// getNodeImpl - Retrieve the node associated with a (Location,State)
   ///  pair, where 'State' is represented as an opaque void*.  This method
-  ///  is intended to be used only by GREngineImpl.
+  ///  is intended to be used only by GRCoreEngineImpl.
   virtual ExplodedNodeImpl* getNodeImpl(const ProgramPoint& L, void* State,
                                         bool* IsNew) = 0;
 

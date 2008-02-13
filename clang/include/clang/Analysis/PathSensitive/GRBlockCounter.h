@@ -9,7 +9,7 @@
 //
 //  This file defines GRBlockCounter, an abstract data type used to count
 //  the number of times a given block has been visited along a path
-//  analyzed by GREngine.
+//  analyzed by GRCoreEngine.
 //
 //===----------------------------------------------------------------------===//
 

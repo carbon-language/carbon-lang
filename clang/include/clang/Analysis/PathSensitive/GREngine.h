@@ -1,4 +1,4 @@
-//==- GREngine.h - Path-Sensitive Dataflow Engine ------------------*- C++ -*-//
+//==- GRCoreEngine.h - Path-Sensitive Dataflow Engine ------------------*- C++ -*-//
 //             
 //                     The LLVM Compiler Infrastructure
 //
@@ -31,15 +31,15 @@ class GRWorkList;
 class LabelStmt;
 
 //===----------------------------------------------------------------------===//
-/// GREngineImpl - Implements the core logic of the graph-reachability analysis.
+/// GRCoreEngineImpl - Implements the core logic of the graph-reachability analysis.
 ///   It traverses the CFG and generates the ExplodedGraph. Program "states"
-///   are treated as opaque void pointers.  The template class GREngine
-///   (which subclasses GREngineImpl) provides the matching component
+///   are treated as opaque void pointers.  The template class GRCoreEngine
+///   (which subclasses GRCoreEngineImpl) provides the matching component
 ///   to the engine that knows the actual types for states.  Note that this
 ///   engine only dispatches to transfer functions as the statement and
 ///   block-level.  The analyses themselves must implement any transfer
 ///   function logic and the sub-expression level (if any).
-class GREngineImpl {
+class GRCoreEngineImpl {
 protected:
   friend class GRStmtNodeBuilderImpl;
   friend class GRBranchNodeBuilderImpl;
@@ -72,7 +72,7 @@ protected:
   
   /// getInitialState - Gets the void* representing the initial 'state'
   ///  of the analysis.  This is simply a wrapper (implemented
-  ///  in GREngine) that performs type erasure on the initial
+  ///  in GRCoreEngine) that performs type erasure on the initial
   ///  state returned by the checker object.
   virtual void* getInitialState() = 0;
   
@@ -95,11 +95,11 @@ protected:
   virtual void ProcessIndirectGoto(GRIndirectGotoNodeBuilderImpl& Builder) = 0;
 
 private:
-  GREngineImpl(const GREngineImpl&); // Do not implement.
-  GREngineImpl& operator=(const GREngineImpl&);
+  GRCoreEngineImpl(const GRCoreEngineImpl&); // Do not implement.
+  GRCoreEngineImpl& operator=(const GRCoreEngineImpl&);
   
 protected:  
-  GREngineImpl(ExplodedGraphImpl* g, GRWorkList* wl)
+  GRCoreEngineImpl(ExplodedGraphImpl* g, GRWorkList* wl)
     : G(g), WList(wl), BCounterFactory(g->getAllocator()) {}
   
 public:
@@ -107,13 +107,13 @@ public:
   ///  steps.  Returns true if there is still simulation state on the worklist.
   bool ExecuteWorkList(unsigned Steps = 1000000);
   
-  virtual ~GREngineImpl() {}
+  virtual ~GRCoreEngineImpl() {}
   
   CFG& getCFG() { return G->getCFG(); }
 };
   
 class GRStmtNodeBuilderImpl {
-  GREngineImpl& Eng;
+  GRCoreEngineImpl& Eng;
   CFGBlock& B;
   const unsigned Idx;
   ExplodedNodeImpl* LastNode;  
@@ -127,7 +127,7 @@ class GRStmtNodeBuilderImpl {
   
 public:
   GRStmtNodeBuilderImpl(CFGBlock* b, unsigned idx,
-                    ExplodedNodeImpl* N, GREngineImpl* e);      
+                    ExplodedNodeImpl* N, GRCoreEngineImpl* e);      
   
   ~GRStmtNodeBuilderImpl();
   
@@ -183,7 +183,7 @@ public:
 };
   
 class GRBranchNodeBuilderImpl {
-  GREngineImpl& Eng;
+  GRCoreEngineImpl& Eng;
   CFGBlock* Src;
   CFGBlock* DstT;
   CFGBlock* DstF;
@@ -197,7 +197,7 @@ class GRBranchNodeBuilderImpl {
   
 public:
   GRBranchNodeBuilderImpl(CFGBlock* src, CFGBlock* dstT, CFGBlock* dstF,
-                          ExplodedNodeImpl* pred, GREngineImpl* e) 
+                          ExplodedNodeImpl* pred, GRCoreEngineImpl* e) 
   : Eng(*e), Src(src), DstT(dstT), DstF(dstF), Pred(pred),
     GeneratedTrue(false), GeneratedFalse(false) {}
   
@@ -262,7 +262,7 @@ public:
 };
   
 class GRIndirectGotoNodeBuilderImpl {
-  GREngineImpl& Eng;
+  GRCoreEngineImpl& Eng;
   CFGBlock* Src;
   CFGBlock& DispatchBlock;
   Expr* E;
@@ -270,7 +270,7 @@ class GRIndirectGotoNodeBuilderImpl {
 public:
   GRIndirectGotoNodeBuilderImpl(ExplodedNodeImpl* pred, CFGBlock* src,
                                 Expr* e, CFGBlock* dispatch,
-                                GREngineImpl* eng)
+                                GRCoreEngineImpl* eng)
   : Eng(*eng), Src(src), DispatchBlock(*dispatch), E(e), Pred(pred) {}
   
 
@@ -334,7 +334,7 @@ public:
 
   
 template<typename CHECKER>
-class GREngine : public GREngineImpl {
+class GRCoreEngine : public GRCoreEngineImpl {
 public:
   typedef CHECKER                                CheckerTy; 
   typedef typename CheckerTy::StateTy            StateTy;
@@ -372,20 +372,20 @@ protected:
   }
   
 public:  
-  /// Construct a GREngine object to analyze the provided CFG using
+  /// Construct a GRCoreEngine object to analyze the provided CFG using
   ///  a DFS exploration of the exploded graph.
-  GREngine(CFG& cfg, FunctionDecl& fd, ASTContext& ctx)
-    : GREngineImpl(new GraphTy(cfg, fd, ctx), GRWorkList::MakeDFS()),
+  GRCoreEngine(CFG& cfg, FunctionDecl& fd, ASTContext& ctx)
+    : GRCoreEngineImpl(new GraphTy(cfg, fd, ctx), GRWorkList::MakeDFS()),
       Checker(static_cast<GraphTy*>(G.get())->getCheckerState()) {}
   
-  /// Construct a GREngine object to analyze the provided CFG and to
+  /// Construct a GRCoreEngine object to analyze the provided CFG and to
   ///  use the provided worklist object to execute the worklist algorithm.
-  ///  The GREngine object assumes ownership of 'wlist'.
-  GREngine(CFG& cfg, FunctionDecl& fd, ASTContext& ctx, GRWorkList* wlist)
-    : GREngineImpl(new GraphTy(cfg, fd, ctx), wlist),
+  ///  The GRCoreEngine object assumes ownership of 'wlist'.
+  GRCoreEngine(CFG& cfg, FunctionDecl& fd, ASTContext& ctx, GRWorkList* wlist)
+    : GRCoreEngineImpl(new GraphTy(cfg, fd, ctx), wlist),
       Checker(static_cast<GraphTy*>(G.get())->getCheckerState()) {}
   
-  virtual ~GREngine() {}
+  virtual ~GRCoreEngine() {}
   
   /// getGraph - Returns the exploded graph.
   GraphTy& getGraph() {

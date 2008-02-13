@@ -1,4 +1,4 @@
-//==- GREngine.cpp - Path-Sensitive Dataflow Engine ----------------*- C++ -*-//
+//==- GRCoreEngine.cpp - Path-Sensitive Dataflow Engine ----------------*- C++ -*-//
 //             
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Analysis/PathSensitive/GREngine.h"
+#include "clang/Analysis/PathSensitive/GRCoreEngine.h"
 #include "clang/AST/Expr.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Casting.h"
@@ -51,7 +51,7 @@ GRWorkList::~GRWorkList() {}
 GRWorkList* GRWorkList::MakeDFS() { return new DFS(); }
 
 /// ExecuteWorkList - Run the worklist algorithm for a maximum number of steps.
-bool GREngineImpl::ExecuteWorkList(unsigned Steps) {
+bool GRCoreEngineImpl::ExecuteWorkList(unsigned Steps) {
   
   if (G->num_roots() == 0) { // Initialize the analysis by constructing
     // the root if none exists.
@@ -113,7 +113,7 @@ bool GREngineImpl::ExecuteWorkList(unsigned Steps) {
   return WList->hasWork();
 }
 
-void GREngineImpl::HandleBlockEdge(const BlockEdge& L, ExplodedNodeImpl* Pred) {
+void GRCoreEngineImpl::HandleBlockEdge(const BlockEdge& L, ExplodedNodeImpl* Pred) {
   
   CFGBlock* Blk = L.getDst();
   
@@ -143,7 +143,7 @@ void GREngineImpl::HandleBlockEdge(const BlockEdge& L, ExplodedNodeImpl* Pred) {
   GenerateNode(BlockEntrance(Blk), Pred->State, Pred);
 }
 
-void GREngineImpl::HandleBlockEntrance(const BlockEntrance& L,
+void GRCoreEngineImpl::HandleBlockEntrance(const BlockEntrance& L,
                                        ExplodedNodeImpl* Pred) {
   
   // Increment the block counter.
@@ -161,7 +161,7 @@ void GREngineImpl::HandleBlockEntrance(const BlockEntrance& L,
 }
 
 
-void GREngineImpl::HandleBlockExit(CFGBlock * B, ExplodedNodeImpl* Pred) {
+void GRCoreEngineImpl::HandleBlockExit(CFGBlock * B, ExplodedNodeImpl* Pred) {
   
   if (Stmt* Term = B->getTerminator()) {
     switch (Term->getStmtClass()) {
@@ -225,7 +225,7 @@ void GREngineImpl::HandleBlockExit(CFGBlock * B, ExplodedNodeImpl* Pred) {
   GenerateNode(BlockEdge(getCFG(),B,*(B->succ_begin())), Pred->State, Pred);
 }
 
-void GREngineImpl::HandleBranch(Expr* Cond, Stmt* Term, CFGBlock * B,
+void GRCoreEngineImpl::HandleBranch(Expr* Cond, Stmt* Term, CFGBlock * B,
                                 ExplodedNodeImpl* Pred) {
   assert (B->succ_size() == 2);
 
@@ -235,7 +235,7 @@ void GREngineImpl::HandleBranch(Expr* Cond, Stmt* Term, CFGBlock * B,
   ProcessBranch(Cond, Term, Builder);
 }
 
-void GREngineImpl::HandlePostStmt(const PostStmt& L, CFGBlock* B,
+void GRCoreEngineImpl::HandlePostStmt(const PostStmt& L, CFGBlock* B,
                                   unsigned StmtIdx, ExplodedNodeImpl* Pred) {
   
   assert (!B->empty());
@@ -263,7 +263,7 @@ static void PopulateParentMap(Stmt* Parent, ParentMapTy& M) {
 
 /// GenerateNode - Utility method to generate nodes, hook up successors,
 ///  and add nodes to the worklist.
-void GREngineImpl::GenerateNode(const ProgramPoint& Loc, void* State,
+void GRCoreEngineImpl::GenerateNode(const ProgramPoint& Loc, void* State,
                                 ExplodedNodeImpl* Pred) {
   
   bool IsNew;
@@ -281,7 +281,7 @@ void GREngineImpl::GenerateNode(const ProgramPoint& Loc, void* State,
 }
 
 GRStmtNodeBuilderImpl::GRStmtNodeBuilderImpl(CFGBlock* b, unsigned idx,
-                                     ExplodedNodeImpl* N, GREngineImpl* e)
+                                     ExplodedNodeImpl* N, GRCoreEngineImpl* e)
   : Eng(*e), B(*b), Idx(idx), LastNode(N), Populated(false) {
   Deferred.insert(N);
 }
