@@ -1,4 +1,5 @@
 ; RUN: llvm-as < %s | opt -gvn | llvm-dis | not grep load
+; PR1996
 
 %struct.anon = type { i32, i8, i8, i8, i8 }
 
