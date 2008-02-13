@@ -299,12 +299,6 @@ namespace llvm {
     /// contains the specified index, or end() if there is none.
     iterator FindLiveRangeContaining(unsigned Idx);
     
-    /// getOverlapingRanges - Given another live interval which is defined as a
-    /// copy from this one, return a list of all of the live ranges where the
-    /// two overlap and have different value numbers.
-    void getOverlapingRanges(const LiveInterval &Other, unsigned CopyIdx,
-                             std::vector<LiveRange*> &Ranges);
-
     /// overlaps - Return true if the intersection of the two live intervals is
     /// not empty.
     bool overlaps(const LiveInterval& other) const {
@@ -332,11 +326,15 @@ namespace llvm {
 
     /// removeRange - Remove the specified range from this interval.  Note that
     /// the range must already be in this interval in its entirety.
-    void removeRange(unsigned Start, unsigned End);
+    void removeRange(unsigned Start, unsigned End, bool RemoveDeadValNo = false);
 
-    void removeRange(LiveRange LR) {
-      removeRange(LR.start, LR.end);
+    void removeRange(LiveRange LR, bool RemoveDeadValNo = false) {
+      removeRange(LR.start, LR.end, RemoveDeadValNo);
     }
+
+    /// removeValNo - Remove all the ranges defined by the specified value#.
+    /// Also remove the value# from value# list.
+    void removeValNo(VNInfo *ValNo);
 
     /// getSize - Returns the sum of sizes of all the LiveRange's.
     ///

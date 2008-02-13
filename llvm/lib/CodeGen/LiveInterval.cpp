@@ -225,7 +225,8 @@ LiveInterval::addRangeFrom(LiveRange LR, iterator From) {
 
 /// removeRange - Remove the specified range from this interval.  Note that
 /// the range must already be in this interval in its entirety.
-void LiveInterval::removeRange(unsigned Start, unsigned End) {
+void LiveInterval::removeRange(unsigned Start, unsigned End,
+                               bool RemoveDeadValNo) {
   // Find the LiveRange containing this span.
   Ranges::iterator I = std::upper_bound(ranges.begin(), ranges.end(), Start);
   assert(I != ranges.begin() && "Range is not in interval!");
@@ -234,9 +235,34 @@ void LiveInterval::removeRange(unsigned Start, unsigned End) {
          "Range is not entirely in interval!");
 
   // If the span we are removing is at the start of the LiveRange, adjust it.
+  VNInfo *ValNo = I->valno;
   if (I->start == Start) {
     if (I->end == End) {
       removeKills(I->valno, Start, End);
+      if (RemoveDeadValNo) {
+        // Check if val# is dead.
+        bool isDead = true;
+        for (const_iterator II = begin(), EE = end(); II != EE; ++II)
+          if (II != I && II->valno == ValNo) {
+            isDead = false;
+            break;
+          }          
+        if (isDead) {
+          // Now that ValNo is dead, remove it.  If it is the largest value
+          // number, just nuke it (and any other deleted values neighboring it),
+          // otherwise mark it as ~1U so it can be nuked later.
+          if (ValNo->id == getNumValNums()-1) {
+            do {
+              VNInfo *VNI = valnos.back();
+              valnos.pop_back();
+              VNI->~VNInfo();
+            } while (!valnos.empty() && valnos.back()->def == ~1U);
+          } else {
+            ValNo->def = ~1U;
+          }
+        }
+      }
+
       ranges.erase(I);  // Removed the whole LiveRange.
     } else
       I->start = End;
@@ -246,7 +272,7 @@ void LiveInterval::removeRange(unsigned Start, unsigned End) {
   // Otherwise if the span we are removing is at the end of the LiveRange,
   // adjust the other way.
   if (I->end == End) {
-    removeKills(I->valno, Start, End);
+    removeKills(ValNo, Start, End);
     I->end = Start;
     return;
   }
@@ -256,9 +282,34 @@ void LiveInterval::removeRange(unsigned Start, unsigned End) {
   I->end = Start;   // Trim the old interval.
 
   // Insert the new one.
-  ranges.insert(next(I), LiveRange(End, OldEnd, I->valno));
+  ranges.insert(next(I), LiveRange(End, OldEnd, ValNo));
 }
 
+/// removeValNo - Remove all the ranges defined by the specified value#.
+/// Also remove the value# from value# list.
+void LiveInterval::removeValNo(VNInfo *ValNo) {
+  if (empty()) return;
+  Ranges::iterator I = ranges.end();
+  Ranges::iterator E = ranges.begin();
+  do {
+    --I;
+    if (I->valno == ValNo)
+      ranges.erase(I);
+  } while (I != E);
+  // Now that ValNo is dead, remove it.  If it is the largest value
+  // number, just nuke it (and any other deleted values neighboring it),
+  // otherwise mark it as ~1U so it can be nuked later.
+  if (ValNo->id == getNumValNums()-1) {
+    do {
+      VNInfo *VNI = valnos.back();
+      valnos.pop_back();
+      VNI->~VNInfo();
+    } while (!valnos.empty() && valnos.back()->def == ~1U);
+  } else {
+    ValNo->def = ~1U;
+  }
+}
+ 
 /// getLiveRangeContaining - Return the live range that contains the
 /// specified index, or null if there is none.
 LiveInterval::const_iterator 
@@ -445,7 +496,7 @@ void LiveInterval::MergeValueInAsValue(const LiveInterval &RHS,
             VNInfo *VNI = valnos.back();
             valnos.pop_back();
             VNI->~VNInfo();
-          } while (valnos.back()->def == ~1U);
+          } while (!valnos.empty() && valnos.back()->def == ~1U);
         } else {
           V1->def = ~1U;
         }
@@ -624,15 +675,18 @@ void LiveInterval::print(std::ostream &OS,
         else
           OS << vni->def;
         unsigned ee = vni->kills.size();
-        if (ee) {
+        if (ee || vni->hasPHIKill) {
           OS << "-(";
           for (unsigned j = 0; j != ee; ++j) {
             OS << vni->kills[j];
             if (j != ee-1)
               OS << " ";
           }
-          if (vni->hasPHIKill)
-            OS << " phi";
+          if (vni->hasPHIKill) {
+            if (ee)
+              OS << " ";
+            OS << "phi";
+          }
           OS << ")";
         }
       }
