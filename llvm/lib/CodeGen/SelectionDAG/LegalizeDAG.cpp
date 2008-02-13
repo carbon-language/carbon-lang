@@ -1263,8 +1263,16 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     break;
   case ISD::INSERT_VECTOR_ELT:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // InVec
-    Tmp2 = LegalizeOp(Node->getOperand(1));  // InVal
     Tmp3 = LegalizeOp(Node->getOperand(2));  // InEltNo
+
+    // The type of the value to insert may not be legal, even though the vector
+    // type is legal.  Legalize/Promote accordingly.  We do not handle Expand
+    // here.
+    switch (getTypeAction(Node->getOperand(1).getValueType())) {
+    default: assert(0 && "Cannot expand insert element operand");
+    case Legal:   Tmp2 = LegalizeOp(Node->getOperand(1)); break;
+    case Promote: Tmp2 = PromoteOp(Node->getOperand(1));  break;
+    }
     Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Tmp3);
     
     switch (TLI.getOperationAction(ISD::INSERT_VECTOR_ELT,
@@ -1283,30 +1291,35 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // If the insert index is a constant, codegen this as a scalar_to_vector,
       // then a shuffle that inserts it into the right position in the vector.
       if (ConstantSDNode *InsertPos = dyn_cast<ConstantSDNode>(Tmp3)) {
-        SDOperand ScVec = DAG.getNode(ISD::SCALAR_TO_VECTOR, 
-                                      Tmp1.getValueType(), Tmp2);
-        
-        unsigned NumElts = MVT::getVectorNumElements(Tmp1.getValueType());
-        MVT::ValueType ShufMaskVT = MVT::getIntVectorWithNumElements(NumElts);
-        MVT::ValueType ShufMaskEltVT = MVT::getVectorElementType(ShufMaskVT);
-        
-        // We generate a shuffle of InVec and ScVec, so the shuffle mask should
-        // be 0,1,2,3,4,5... with the appropriate element replaced with elt 0 of
-        // the RHS.
-        SmallVector<SDOperand, 8> ShufOps;
-        for (unsigned i = 0; i != NumElts; ++i) {
-          if (i != InsertPos->getValue())
-            ShufOps.push_back(DAG.getConstant(i, ShufMaskEltVT));
-          else
-            ShufOps.push_back(DAG.getConstant(NumElts, ShufMaskEltVT));
+        // SCALAR_TO_VECTOR requires that the type of the value being inserted
+        // match the element type of the vector being created.
+        if (Tmp2.getValueType() == 
+            MVT::getVectorElementType(Op.getValueType())) {
+          SDOperand ScVec = DAG.getNode(ISD::SCALAR_TO_VECTOR, 
+                                        Tmp1.getValueType(), Tmp2);
+          
+          unsigned NumElts = MVT::getVectorNumElements(Tmp1.getValueType());
+          MVT::ValueType ShufMaskVT = MVT::getIntVectorWithNumElements(NumElts);
+          MVT::ValueType ShufMaskEltVT = MVT::getVectorElementType(ShufMaskVT);
+          
+          // We generate a shuffle of InVec and ScVec, so the shuffle mask
+          // should be 0,1,2,3,4,5... with the appropriate element replaced with
+          // elt 0 of the RHS.
+          SmallVector<SDOperand, 8> ShufOps;
+          for (unsigned i = 0; i != NumElts; ++i) {
+            if (i != InsertPos->getValue())
+              ShufOps.push_back(DAG.getConstant(i, ShufMaskEltVT));
+            else
+              ShufOps.push_back(DAG.getConstant(NumElts, ShufMaskEltVT));
+          }
+          SDOperand ShufMask = DAG.getNode(ISD::BUILD_VECTOR, ShufMaskVT,
+                                           &ShufOps[0], ShufOps.size());
+          
+          Result = DAG.getNode(ISD::VECTOR_SHUFFLE, Tmp1.getValueType(),
+                               Tmp1, ScVec, ShufMask);
+          Result = LegalizeOp(Result);
+          break;
         }
-        SDOperand ShufMask = DAG.getNode(ISD::BUILD_VECTOR, ShufMaskVT,
-                                         &ShufOps[0], ShufOps.size());
-        
-        Result = DAG.getNode(ISD::VECTOR_SHUFFLE, Tmp1.getValueType(),
-                             Tmp1, ScVec, ShufMask);
-        Result = LegalizeOp(Result);
-        break;
       }
       
       // If the target doesn't support this, we have to spill the input vector
@@ -1316,7 +1329,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // permute it into place, if the idx is a constant and if the idx is
       // supported by the target.
       MVT::ValueType VT    = Tmp1.getValueType();
-      MVT::ValueType EltVT = Tmp2.getValueType();
+      MVT::ValueType EltVT = MVT::getVectorElementType(VT);
       MVT::ValueType IdxVT = Tmp3.getValueType();
       MVT::ValueType PtrVT = TLI.getPointerTy();
       SDOperand StackPtr = DAG.CreateStackTemporary(VT);
@@ -1337,8 +1350,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Tmp3 = DAG.getNode(ISD::MUL, IdxVT, Tmp3,DAG.getConstant(EltSize, IdxVT));
       SDOperand StackPtr2 = DAG.getNode(ISD::ADD, IdxVT, Tmp3, StackPtr);
       // Store the scalar value.
-      Ch = DAG.getStore(Ch, Tmp2, StackPtr2,
-                        PseudoSourceValue::getFixedStack(), SPFI);
+      Ch = DAG.getTruncStore(Ch, Tmp2, StackPtr2,
+                             PseudoSourceValue::getFixedStack(), SPFI, EltVT);
       // Load the updated vector.
       Result = DAG.getLoad(VT, Ch, StackPtr,
                            PseudoSourceValue::getFixedStack(), SPFI);
