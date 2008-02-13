@@ -3451,7 +3451,7 @@ SDOperand PPCTargetLowering::PerformDAGCombine(SDNode *N,
 //===----------------------------------------------------------------------===//
 
 void PPCTargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op,
-                                                       APInt Mask,
+                                                       const APInt &Mask,
                                                        APInt &KnownZero, 
                                                        APInt &KnownOne,
                                                        const SelectionDAG &DAG,

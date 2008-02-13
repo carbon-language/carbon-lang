@@ -1762,7 +1762,7 @@ bool ARMTargetLowering::getPostIndexedAddressParts(SDNode *N, SDNode *Op,
 }
 
 void ARMTargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op,
-                                                       APInt Mask,
+                                                       const APInt &Mask,
                                                        APInt &KnownZero, 
                                                        APInt &KnownOne,
                                                        const SelectionDAG &DAG,

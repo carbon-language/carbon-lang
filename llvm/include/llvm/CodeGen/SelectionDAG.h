@@ -556,7 +556,7 @@ public:
   /// bitsets.  This code only analyzes bits in Mask, in order to short-circuit
   /// processing.  Targets can implement the computeMaskedBitsForTargetNode 
   /// method in the TargetLowering class to allow target nodes to be understood.
-  void ComputeMaskedBits(SDOperand Op, APInt Mask, APInt &KnownZero,
+  void ComputeMaskedBits(SDOperand Op, const APInt &Mask, APInt &KnownZero,
                          APInt &KnownOne, unsigned Depth = 0) const;
 
   /// ComputeMaskedBits - This is a wrapper around the APInt-using

@@ -1008,7 +1008,7 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op, uint64_t DemandedMask,
 /// in Mask are known to be either zero or one and return them in the 
 /// KnownZero/KnownOne bitsets.
 void TargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op, 
-                                                    APInt Mask,
+                                                    const APInt &Mask,
                                                     APInt &KnownZero, 
                                                     APInt &KnownOne,
                                                     const SelectionDAG &DAG,
@@ -1019,8 +1019,7 @@ void TargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op,
           Op.getOpcode() == ISD::INTRINSIC_VOID) &&
          "Should use MaskedValueIsZero if you don't know whether Op"
          " is a target node!");
-  KnownZero = 0;
-  KnownOne = 0;
+  KnownZero = KnownOne = APInt(Mask.getBitWidth(), 0);
 }
 
 /// ComputeNumSignBitsForTargetNode - This method can be implemented by
