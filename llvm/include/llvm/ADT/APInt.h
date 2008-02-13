@@ -921,7 +921,7 @@ public:
   uint32_t countLeadingOnes() const;
 
   /// countTrailingZeros - This function is an APInt version of the 
-  /// countTrailingZoers_{32,64} functions in MathExtras.h. It counts 
+  /// countTrailingZeros_{32,64} functions in MathExtras.h. It counts 
   /// the number of zeros from the least significant bit to the first set bit.
   /// @returns BitWidth if the value is zero.
   /// @returns the number of zeros from the least significant bit to the first
