@@ -1579,17 +1579,22 @@ void LoopIndexSplit::moveExitCondition(BasicBlock *CondBB, BasicBlock *ActiveBB,
   // destination.
   BranchInst *ExitingBR = cast<BranchInst>(ExitingBB->getTerminator());
   ExitingBR->moveBefore(CurrentBR);
-  if (ExitingBR->getSuccessor(0) == ExitBB)
+  BasicBlock *OrigDestBB = NULL;
+  if (ExitingBR->getSuccessor(0) == ExitBB) {
+    OrigDestBB = ExitingBR->getSuccessor(1);
     ExitingBR->setSuccessor(1, ActiveBB);
-  else
+  }
+  else {
+    OrigDestBB = ExitingBR->getSuccessor(0);
     ExitingBR->setSuccessor(0, ActiveBB);
+  }
     
   // Remove split condition and current split condition branch.
   SC->eraseFromParent();
   CurrentBR->eraseFromParent();
 
-  // Connect exiting block to split condition block.
-  new BranchInst(CondBB, ExitingBB);
+  // Connect exiting block to original destination.
+  new BranchInst(OrigDestBB, ExitingBB);
 
   // Update PHINodes
   updatePHINodes(ExitBB, ExitingBB, CondBB, IV, IVAdd);
