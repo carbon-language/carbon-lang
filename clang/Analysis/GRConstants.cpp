@@ -67,6 +67,7 @@ public:
   typedef ValueStateManager::StateTy StateTy;
   typedef GRStmtNodeBuilder<GRConstants> StmtNodeBuilder;
   typedef GRBranchNodeBuilder<GRConstants> BranchNodeBuilder;
+  typedef GRIndirectGotoNodeBuilder<GRConstants> IndirectGotoNodeBuilder;
   typedef ExplodedGraph<GRConstants> GraphTy;
   typedef GraphTy::NodeTy NodeTy;
   
@@ -192,6 +193,10 @@ public:
   ///  nodes by processing the 'effects' of a branch condition.
   void ProcessBranch(Expr* Condition, Stmt* Term, BranchNodeBuilder& builder);
 
+  /// ProcessIndirectGoto - Called by GREngine.  Used to generate successor
+  ///  nodes by processing the 'effects' of a computed goto jump.
+  void ProcessIndirectGoto(IndirectGotoNodeBuilder& builder);
+  
   /// RemoveDeadBindings - Return a new state that is the same as 'St' except
   ///  that all subexpression mappings are removed and that any
   ///  block-level expressions that are not live at 'S' also have their
@@ -424,6 +429,52 @@ void GRConstants::ProcessBranch(Expr* Condition, Stmt* Term,
     builder.markInfeasible(false);
 }
 
+/// ProcessIndirectGoto - Called by GREngine.  Used to generate successor
+///  nodes by processing the 'effects' of a computed goto jump.
+void GRConstants::ProcessIndirectGoto(IndirectGotoNodeBuilder& builder) {
+
+  StateTy St = builder.getState();  
+  LValue V = cast<LValue>(GetValue(St, builder.getTarget()));
+  
+  // Three possibilities:
+  //
+  //   (1) We know the computed label.
+  //   (2) The label is NULL (or some other constant), or Uninitialized.
+  //   (3) We have no clue about the label.  Dispatch to all targets.
+  //
+  
+  typedef IndirectGotoNodeBuilder::iterator iterator;
+
+  if (isa<lval::GotoLabel>(V)) {
+    LabelStmt* L = cast<lval::GotoLabel>(V).getLabel();
+    
+    for (iterator I=builder.begin(), E=builder.end(); I != E; ++I) {
+      IndirectGotoNodeBuilder::Destination D = *I;
+      
+      if (D.getLabel() == L) {
+        builder.generateNode(D, St);
+        return;
+      }
+    }
+    
+    assert (false && "No block with label.");
+    return;
+  }
+
+  if (isa<lval::ConcreteInt>(V) || isa<UninitializedVal>(V)) {
+    // Dispatch to the first target and mark it as a sink.
+    NodeTy* N = builder.generateNode(*builder.begin(), St, true);
+    UninitBranches.insert(N);
+    return;
+  }
+  
+  // This is really a catch-all.  We don't support symbolics yet.
+  
+  assert (isa<UnknownVal>(V));
+  
+  for (iterator I=builder.begin(), E=builder.end(); I != E; ++I)
+    builder.generateNode(*I, St);
+}
 
 void GRConstants::VisitLogicalExpr(BinaryOperator* B, NodeTy* Pred,
                                    NodeSet& Dst) {
@@ -1305,7 +1356,7 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRConstants::NodeTy*> :
           Out << "\\|Terminator: ";
           E.getSrc()->printTerminator(Out);
           
-          if (isa<SwitchStmt>(T)) {
+          if (isa<SwitchStmt>(T) || isa<IndirectGotoStmt>(T)) {
             // FIXME
           }
           else {

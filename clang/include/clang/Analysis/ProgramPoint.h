@@ -104,6 +104,15 @@ class BlockEdge : public ProgramPoint {
   typedef std::pair<CFGBlock*,CFGBlock*> BPair;
 public:
   BlockEdge(CFG& cfg, const CFGBlock* B1, const CFGBlock* B2);
+  
+  /// This ctor forces the BlockEdge to be constructed using an explicitly
+  ///  allocated pair object that is stored in the CFG.  This is usually
+  ///  used to construct edges representing jumps using computed gotos.
+  BlockEdge(CFG& cfg, const CFGBlock* B1, const CFGBlock* B2, bool) {
+    Data = reinterpret_cast<uintptr_t>(cfg.getBlockEdgeImpl(B1, B2))
+           | BlockEdgeAuxKind;
+  }
+
 
   CFGBlock* getSrc() const;
   CFGBlock* getDst() const;

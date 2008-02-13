@@ -30,6 +30,7 @@ class GREngineImpl;
 class ExplodedNodeImpl;
 class GRStmtNodeBuilderImpl;
 class GRBranchNodeBuilderImpl;
+class GRIndirectGotoNodeBuilderImpl;
 class CFG;
 class ASTContext;
 class FunctionDecl;
@@ -41,6 +42,7 @@ protected:
   friend class GREngineImpl;
   friend class GRStmtNodeBuilderImpl;
   friend class GRBranchNodeBuilderImpl;
+  friend class GRIndirectGotoNodeBuilderImpl;
   
   class NodeGroup {
     enum { Size1 = 0x0, SizeOther = 0x1, AuxFlag = 0x2, Mask = 0x3 };
@@ -195,6 +197,7 @@ protected:
   friend class GREngineImpl;
   friend class GRStmtNodeBuilderImpl;
   friend class GRBranchNodeBuilderImpl;
+  friend class GRIndirectGotoNodeBuilderImpl;
   
   // Type definitions.
   typedef llvm::DenseMap<ProgramPoint,void*>        EdgeNodeSetMap;

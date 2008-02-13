@@ -24,12 +24,15 @@ namespace clang {
   
 class GRStmtNodeBuilderImpl;
 class GRBranchNodeBuilderImpl;
+class GRIndirectGotoNodeBuilderImpl;
 class GRWorkList;
+class LabelStmt;
   
 class GREngineImpl {
 protected:
   friend class GRStmtNodeBuilderImpl;
   friend class GRBranchNodeBuilderImpl;
+  friend class GRIndirectGotoNodeBuilderImpl;
   
   typedef llvm::DenseMap<Stmt*,Stmt*> ParentMapTy;
     
@@ -78,6 +81,7 @@ protected:
   virtual void  ProcessBranch(Expr* Condition, Stmt* Terminator,
                               GRBranchNodeBuilderImpl& Builder) = 0;
 
+  virtual void ProcessIndirectGoto(GRIndirectGotoNodeBuilderImpl& Builder) = 0;
 
 private:
   GREngineImpl(const GREngineImpl&); // Do not implement.
@@ -246,6 +250,87 @@ public:
   }
 };
   
+class GRIndirectGotoNodeBuilderImpl {
+  GREngineImpl& Eng;
+  CFGBlock* Src;
+  CFGBlock& DispatchBlock;
+  Expr* E;
+  ExplodedNodeImpl* Pred;  
+public:
+  GRIndirectGotoNodeBuilderImpl(ExplodedNodeImpl* pred, CFGBlock* src,
+                                Expr* e, CFGBlock* dispatch,
+                                GREngineImpl* eng)
+  : Eng(*eng), Src(src), DispatchBlock(*dispatch), E(e), Pred(pred) {}
+  
+  class Iterator;
+  
+  class Destination {
+    LabelStmt* L;
+    CFGBlock* B;
+
+    friend class Iterator;
+    Destination(LabelStmt* l, CFGBlock* b) : L(l), B(b) {}
+    
+  public:    
+    CFGBlock*  getBlock() const { return B; }
+    LabelStmt* getLabel() const { return L; }
+  };
+  
+  class Iterator {
+    CFGBlock::succ_iterator I;
+    
+    friend class GRIndirectGotoNodeBuilderImpl;    
+    Iterator(CFGBlock::succ_iterator i) : I(i) {}    
+  public:
+    
+    Iterator& operator++() { ++I; return *this; }
+    bool operator!=(const Iterator& X) const { return I != X.I; }
+    
+    Destination operator*();
+  };
+  
+  Iterator begin();
+  Iterator end();
+  
+  ExplodedNodeImpl* generateNodeImpl(const Destination& D, void* State,
+                                     bool isSink);
+  
+  inline Expr* getTarget() const { return E; }
+  inline void* getState() const { return Pred->State; }
+};
+  
+template<typename CHECKER>
+class GRIndirectGotoNodeBuilder {
+  typedef CHECKER                                CheckerTy; 
+  typedef typename CheckerTy::StateTy            StateTy;
+  typedef ExplodedGraph<CheckerTy>               GraphTy;
+  typedef typename GraphTy::NodeTy               NodeTy;
+
+  GRIndirectGotoNodeBuilderImpl& NB;
+
+public:
+  GRIndirectGotoNodeBuilder(GRIndirectGotoNodeBuilderImpl& nb) : NB(nb) {}
+  
+  typedef GRIndirectGotoNodeBuilderImpl::Iterator     iterator;
+  typedef GRIndirectGotoNodeBuilderImpl::Destination  Destination;
+
+  inline iterator begin() { return NB.begin(); }
+  inline iterator end() { return NB.end(); }
+  
+  inline Expr* getTarget() const { return NB.getTarget(); }
+  
+  inline NodeTy* generateNode(const Destination& D, StateTy St,
+                              bool isSink = false) {
+    
+    void *state = GRTrait<StateTy>::toPtr(St);        
+    return static_cast<NodeTy*>(NB.generateNodeImpl(D, state, isSink));
+  }
+  
+  inline StateTy getState() const {
+    return GRTrait<StateTy>::toState(NB.getState());
+  }    
+};
+
   
 template<typename CHECKER>
 class GREngine : public GREngineImpl {
@@ -274,13 +359,16 @@ protected:
     Checker->ProcessStmt(S, Builder);
   }
 
-
   virtual void ProcessBranch(Expr* Condition, Stmt* Terminator,
                              GRBranchNodeBuilderImpl& BuilderImpl) {
     GRBranchNodeBuilder<CHECKER> Builder(BuilderImpl);
     Checker->ProcessBranch(Condition, Terminator, Builder);    
   }
   
+  virtual void ProcessIndirectGoto(GRIndirectGotoNodeBuilderImpl& BuilderImpl) {
+    GRIndirectGotoNodeBuilder<CHECKER> Builder(BuilderImpl);
+    Checker->ProcessIndirectGoto(Builder);
+  }
   
 public:  
   /// Construct a GREngine object to analyze the provided CFG using

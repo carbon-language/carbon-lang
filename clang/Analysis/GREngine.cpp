@@ -198,6 +198,18 @@ void GREngineImpl::HandleBlockExit(CFGBlock * B, ExplodedNodeImpl* Pred) {
       case Stmt::IfStmtClass:
         HandleBranch(cast<IfStmt>(Term)->getCond(), Term, B, Pred);
         return;
+               
+      case Stmt::IndirectGotoStmtClass: {
+        // Only 1 successor: the indirect goto dispatch block.
+        assert (B->succ_size() == 1);
+        
+        GRIndirectGotoNodeBuilderImpl
+           builder(Pred, B, cast<IndirectGotoStmt>(Term)->getTarget(),
+                   *(B->succ_begin()), this);
+        
+        ProcessIndirectGoto(builder);
+        return;
+      }
         
       case Stmt::WhileStmtClass:
         HandleBranch(cast<WhileStmt>(Term)->getCond(), Term, B, Pred);
@@ -345,4 +357,47 @@ GRBranchNodeBuilderImpl::~GRBranchNodeBuilderImpl() {
   
   for (DeferredTy::iterator I=Deferred.begin(), E=Deferred.end(); I!=E; ++I)
     if (!(*I)->isSink()) Eng.WList->Enqueue(*I);
+}
+
+GRIndirectGotoNodeBuilderImpl::Destination
+GRIndirectGotoNodeBuilderImpl::Iterator::operator*() {
+  CFGBlock* B = *I;
+  assert (!B->empty());      
+  LabelStmt* L = cast<LabelStmt>(B->getLabel());
+  return Destination(L, *I);
+}
+
+GRIndirectGotoNodeBuilderImpl::Iterator
+GRIndirectGotoNodeBuilderImpl::begin() {
+  return Iterator(DispatchBlock.succ_begin());
+}
+
+GRIndirectGotoNodeBuilderImpl::Iterator
+GRIndirectGotoNodeBuilderImpl::end() {
+  return Iterator(DispatchBlock.succ_end());
+}
+
+ExplodedNodeImpl*
+GRIndirectGotoNodeBuilderImpl::generateNodeImpl(const Destination& D,
+                                                void* St,
+                                                bool isSink) {
+  bool IsNew;
+  
+  ExplodedNodeImpl* Succ =
+    Eng.G->getNodeImpl(BlockEdge(Eng.getCFG(), Src, D.getBlock(), true),
+                       St, &IsNew);
+              
+  Succ->addPredecessor(Pred);
+  
+  if (IsNew) {
+    
+    if (isSink)
+      Succ->markAsSink();
+    else
+      Eng.WList->Enqueue(Succ);
+    
+    return Succ;
+  }
+                       
+  return NULL;
 }
