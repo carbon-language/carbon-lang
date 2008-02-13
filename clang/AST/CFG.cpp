@@ -65,7 +65,7 @@ class VISIBILITY_HIDDEN CFGBuilder : public StmtVisitor<CFGBuilder,CFGBlock*> {
   CFGBlock* ContinueTargetBlock;
   CFGBlock* BreakTargetBlock;
   CFGBlock* SwitchTerminatedBlock;
-  bool      SwitchHasDefaultCase;
+  CFGBlock* DefaultCaseBlock;
   
   // LabelMap records the mapping from Label expressions to their blocks.
   typedef llvm::DenseMap<LabelStmt*,CFGBlock*> LabelMapTy;
@@ -83,7 +83,7 @@ class VISIBILITY_HIDDEN CFGBuilder : public StmtVisitor<CFGBuilder,CFGBlock*> {
 public:  
   explicit CFGBuilder() : cfg(NULL), Block(NULL), Succ(NULL),
                           ContinueTargetBlock(NULL), BreakTargetBlock(NULL),
-                          SwitchTerminatedBlock(NULL) {
+                          SwitchTerminatedBlock(NULL), DefaultCaseBlock(NULL) {
     // Create an empty CFG.
     cfg = new CFG();                        
   }
@@ -109,7 +109,7 @@ public:
   CFGBlock* VisitContinueStmt(ContinueStmt* C);
   CFGBlock* VisitBreakStmt(BreakStmt* B);
   CFGBlock* VisitSwitchStmt(SwitchStmt* S);
-  CFGBlock* VisitSwitchCase(SwitchCase* S);
+  CFGBlock* VisitCaseStmt(CaseStmt* S);
   CFGBlock* VisitDefaultStmt(DefaultStmt* D);
   CFGBlock* VisitIndirectGotoStmt(IndirectGotoStmt* I);
   
@@ -884,10 +884,13 @@ CFGBlock* CFGBuilder::VisitSwitchStmt(SwitchStmt* S) {
 
   // Save the current "switch" context.
   SaveAndRestore<CFGBlock*> save_switch(SwitchTerminatedBlock),
-                            save_break(BreakTargetBlock);
-  
-  SaveAndRestore<bool> save_has_default_case(SwitchHasDefaultCase);
-  SwitchHasDefaultCase = false;
+                            save_break(BreakTargetBlock),
+                            save_default(DefaultCaseBlock);
+
+  // Set the "default" case to be the block after the switch statement.
+  // If the switch statement contains a "default:", this value will
+  // be overwritten with the block for that code.
+  DefaultCaseBlock = SwitchSuccessor;
   
   // Create a new block that will contain the switch statement.
   SwitchTerminatedBlock = createBlock(false);
@@ -907,8 +910,7 @@ CFGBlock* CFGBuilder::VisitSwitchStmt(SwitchStmt* S) {
 
   // If we have no "default:" case, the default transition is to the
   // code following the switch body.
-  if (!SwitchHasDefaultCase)
-    SwitchTerminatedBlock->addSuccessor(SwitchSuccessor);
+  SwitchTerminatedBlock->addSuccessor(DefaultCaseBlock);
   
   // Add the terminator and condition in the switch block.
   SwitchTerminatedBlock->setTerminator(S);
@@ -918,23 +920,23 @@ CFGBlock* CFGBuilder::VisitSwitchStmt(SwitchStmt* S) {
   return addStmt(S->getCond());
 }
 
-CFGBlock* CFGBuilder::VisitSwitchCase(SwitchCase* S) {
-  // A SwitchCase is either a "default" or "case" statement.  We handle
-  // both in the same way.  They are essentially labels, so they are the
+CFGBlock* CFGBuilder::VisitCaseStmt(CaseStmt* S) {
+  // CaseStmts are essentially labels, so they are the
   // first statement in a block.      
 
   if (S->getSubStmt()) Visit(S->getSubStmt());
   CFGBlock* CaseBlock = Block;
   if (!CaseBlock) CaseBlock = createBlock();  
     
-  // Cases/Default statements partition block, so this is the top of
-  // the basic block we were processing (the case/default is the label).
+  // Cases statements partition blocks, so this is the top of
+  // the basic block we were processing (the "case XXX:" is the label).
   CaseBlock->setLabel(S);
   FinishBlock(CaseBlock);
   
   // Add this block to the list of successors for the block with the
   // switch statement.
-  if (SwitchTerminatedBlock) SwitchTerminatedBlock->addSuccessor(CaseBlock);
+  assert (SwitchTerminatedBlock);
+  SwitchTerminatedBlock->addSuccessor(CaseBlock);
   
   // We set Block to NULL to allow lazy creation of a new block (if necessary)
   Block = NULL;
@@ -945,9 +947,30 @@ CFGBlock* CFGBuilder::VisitSwitchCase(SwitchCase* S) {
   return CaseBlock;    
 }
   
-CFGBlock* CFGBuilder::VisitDefaultStmt(DefaultStmt* D) {
-  SwitchHasDefaultCase = true;
-  return VisitSwitchCase(D);
+CFGBlock* CFGBuilder::VisitDefaultStmt(DefaultStmt* S) {
+  if (S->getSubStmt()) Visit(S->getSubStmt());
+  DefaultCaseBlock = Block;
+  if (!DefaultCaseBlock) DefaultCaseBlock = createBlock();  
+  
+  // Default statements partition blocks, so this is the top of
+  // the basic block we were processing (the "default:" is the label).
+  DefaultCaseBlock->setLabel(S);
+  FinishBlock(DefaultCaseBlock);
+
+  // Unlike case statements, we don't add the default block to the
+  // successors for the switch statement immediately.  This is done
+  // when we finish processing the switch statement.  This allows for
+  // the default case (including a fall-through to the code after the
+  // switch statement) to always be the last successor of a switch-terminated
+  // block.
+  
+  // We set Block to NULL to allow lazy creation of a new block (if necessary)
+  Block = NULL;
+  
+  // This block is now the implicit successor of other blocks.
+  Succ = DefaultCaseBlock;
+  
+  return DefaultCaseBlock;  
 }
 
 CFGBlock* CFGBuilder::VisitIndirectGotoStmt(IndirectGotoStmt* I) {
