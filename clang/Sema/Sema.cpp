@@ -124,7 +124,7 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer)
 /// ImpCastExprToType - If Expr is not of type 'Type', insert an implicit cast. 
 /// If there is already an implicit cast, merge into the existing one.
 void Sema::ImpCastExprToType(Expr *&Expr, QualType Type) {
-  if (Expr->getType() == Type) return;
+  if (Expr->getType().getCanonicalType() == Type.getCanonicalType()) return;
   
   if (ImplicitCastExpr *ImpCast = dyn_cast<ImplicitCastExpr>(Expr))
     ImpCast->setType(Type);
