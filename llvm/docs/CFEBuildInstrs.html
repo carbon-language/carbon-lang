@@ -92,14 +92,22 @@ top-level <tt>README.LLVM</tt> file, adding ",ada" to EXTRALANGS, for example:
       systems without some work.</p></li>
   <li><p>The build requires having a compiler that supports Ada, C and C++.
       The Ada front-end is written in Ada so an Ada compiler is needed to
-      build it.  The LLVM parts of llvm-gcc are written in C++ so a C++
+      build it.  What is more, the Ada compiler must not be more recent
+      than what it is trying to compile, otherwise the build will fail.
+      This rules out gcc-4.3 (but not gcc-4.2) and also the
+      <a href="http://libre.adacore.com/">2007 GNAT GPL Edition</a>.
+      The LLVM parts of llvm-gcc are written in C++ so a C++
       compiler is needed to build them.  The rest of gcc is written in C.
       Some linux distributions provide a version of gcc that supports all
       three languages (the Ada part often comes as an add-on package to
       the rest of gcc).  Otherwise it is possible to combine two versions
-      of gcc, one that supports Ada and C (such as
-      <a href="http://libre.adacore.com/">GNAT GPL Edition</a>) and another
-      which supports C++, see below.</p></li>
+      of gcc, one that supports Ada and C (such as the
+      <a href="http://libre.adacore.com/">2006 GNAT GPL Edition</a>)
+      and another which supports C++, see below.</p></li>
+  <li><p>Because the Ada front-end is experimental, it is wise to build the
+      compiler with checking enabled.  This causes it to run slower, but
+      helps catch mistakes in the compiler (please report any problems using
+      <a href="http://llvm.org/bugs">LLVM bugzilla</a>).</p></li>
 </ol>
 
 <p>Supposing appropriate compilers are available, llvm-gcc with Ada support can
@@ -153,21 +161,22 @@ cd llvm-objects</pre>
   <li><p>Configure LLVM (here it is configured to install into <tt>/usr/local</tt>):</p>
 
 <div class="doc_code">
-<pre>../llvm/configure --prefix=/usr/local</pre>
+<pre>../llvm/configure --prefix=<b>/usr/local</b></pre>
 </div>
 
       <p>If you have a multi-compiler setup and the C++ compiler is not the
       default, then you can configure like this:</p>
 
 <div class="doc_code">
-<pre>CXX=<b>PATH_TO_C++_COMPILER</b> ../llvm/configure --prefix=/usr/local</pre>
+<pre>CXX=<b>PATH_TO_C++_COMPILER</b> ../llvm/configure --prefix=<b>/usr/local</b></pre>
 </div>
       </li>
 
-  <li><p>Build LLVM:</p>
+  <li><p>Build LLVM with checking enabled (use <tt>ENABLE_OPTIMIZED=1</tt> to
+         build without checking):</p>
 
 <div class="doc_code">
-<pre>make</pre>
+<pre>make ENABLE_OPTIMIZED=0</pre>
 </div>
       </li>
 
@@ -190,11 +199,13 @@ cd llvm-gcc-4.2-objects</pre>
       </li>
 
   <li><p>Configure llvm-gcc (here it is configured to install into <tt>/usr/local</tt>).
+      The <tt>--enable-checking</tt> flag turns on sanity checks inside the compiler.
+      If you omit it then LLVM must be built with <tt>make ENABLE_OPTIMIZED=1</tt>.
       Additional languages can be appended to the --enable-languages switch,
       for example <tt>--enable-languages=ada,c,c++</tt>.</p>
 
 <div class="doc_code">
-<pre>../llvm-gcc-4.2/configure --prefix=/usr/local --enable-languages=ada,c --enable-checking --enable-llvm=$PWD/../llvm-objects --disable-shared --disable-bootstrap --disable-multilib</pre>
+<pre>../llvm-gcc-4.2/configure --prefix=<b>/usr/local</b> --enable-languages=ada,c --enable-checking --enable-llvm=$PWD/../llvm-objects --disable-shared --disable-bootstrap --disable-multilib</pre>
 </div>
 
       <p>If you have a multi-compiler setup, then you can configure like this:</p>
@@ -203,7 +214,7 @@ cd llvm-gcc-4.2-objects</pre>
 <pre>
 export CC=<b>PATH_TO_C_AND_ADA_COMPILER</b>
 export CXX=<b>PATH_TO_C++_COMPILER</b>
-../llvm-gcc-4.2/configure --prefix=/usr/local --enable-languages=ada,c --enable-checking --enable-llvm=$PWD/../llvm-objects --disable-shared --disable-bootstrap --disable-multilib</pre>
+../llvm-gcc-4.2/configure --prefix=<b>/usr/local</b> --enable-languages=ada,c --enable-checking --enable-llvm=$PWD/../llvm-objects --disable-shared --disable-bootstrap --disable-multilib</pre>
 </div>
       </li>
 
