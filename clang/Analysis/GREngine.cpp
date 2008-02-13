@@ -361,32 +361,15 @@ GRBranchNodeBuilderImpl::~GRBranchNodeBuilderImpl() {
     if (!(*I)->isSink()) Eng.WList->Enqueue(*I);
 }
 
-GRIndirectGotoNodeBuilderImpl::Destination
-GRIndirectGotoNodeBuilderImpl::Iterator::operator*() {
-  CFGBlock* B = *I;
-  assert (!B->empty());      
-  LabelStmt* L = cast<LabelStmt>(B->getLabel());
-  return Destination(L, *I);
-}
-
-GRIndirectGotoNodeBuilderImpl::Iterator
-GRIndirectGotoNodeBuilderImpl::begin() {
-  return Iterator(DispatchBlock.succ_begin());
-}
-
-GRIndirectGotoNodeBuilderImpl::Iterator
-GRIndirectGotoNodeBuilderImpl::end() {
-  return Iterator(DispatchBlock.succ_end());
-}
 
 ExplodedNodeImpl*
-GRIndirectGotoNodeBuilderImpl::generateNodeImpl(const Destination& D,
+GRIndirectGotoNodeBuilderImpl::generateNodeImpl(const Iterator& I,
                                                 void* St,
                                                 bool isSink) {
   bool IsNew;
   
   ExplodedNodeImpl* Succ =
-    Eng.G->getNodeImpl(BlockEdge(Eng.getCFG(), Src, D.getBlock(), true),
+    Eng.G->getNodeImpl(BlockEdge(Eng.getCFG(), Src, I.getBlock(), true),
                        St, &IsNew);
               
   Succ->addPredecessor(Pred);

@@ -449,10 +449,8 @@ void GRConstants::ProcessIndirectGoto(IndirectGotoNodeBuilder& builder) {
     LabelStmt* L = cast<lval::GotoLabel>(V).getLabel();
     
     for (iterator I=builder.begin(), E=builder.end(); I != E; ++I) {
-      IndirectGotoNodeBuilder::Destination D = *I;
-      
-      if (D.getLabel() == L) {
-        builder.generateNode(D, St);
+      if (I.getLabel() == L) {
+        builder.generateNode(I, St);
         return;
       }
     }
@@ -463,7 +461,7 @@ void GRConstants::ProcessIndirectGoto(IndirectGotoNodeBuilder& builder) {
 
   if (isa<lval::ConcreteInt>(V) || isa<UninitializedVal>(V)) {
     // Dispatch to the first target and mark it as a sink.
-    NodeTy* N = builder.generateNode(*builder.begin(), St, true);
+    NodeTy* N = builder.generateNode(builder.begin(), St, true);
     UninitBranches.insert(N);
     return;
   }
@@ -473,7 +471,7 @@ void GRConstants::ProcessIndirectGoto(IndirectGotoNodeBuilder& builder) {
   assert (isa<UnknownVal>(V));
   
   for (iterator I=builder.begin(), E=builder.end(); I != E; ++I)
-    builder.generateNode(*I, St);
+    builder.generateNode(I, St);
 }
 
 void GRConstants::VisitLogicalExpr(BinaryOperator* B, NodeTy* Pred,

@@ -15,10 +15,12 @@
 #ifndef LLVM_CLANG_ANALYSIS_GRENGINE
 #define LLVM_CLANG_ANALYSIS_GRENGINE
 
+#include "clang/AST/Stmt.h"
 #include "clang/Analysis/PathSensitive/ExplodedGraph.h"
 #include "clang/Analysis/PathSensitive/GRWorkList.h"
 #include "clang/Analysis/PathSensitive/GRBlockCounter.h"
 #include "llvm/ADT/OwningPtr.h"
+
 
 namespace clang {
   
@@ -27,7 +29,16 @@ class GRBranchNodeBuilderImpl;
 class GRIndirectGotoNodeBuilderImpl;
 class GRWorkList;
 class LabelStmt;
-  
+
+//===----------------------------------------------------------------------===//
+/// GREngineImpl - Implements the core logic of the graph-reachability analysis.
+///   It traverses the CFG and generates the ExplodedGraph. Program "states"
+///   are treated as opaque void pointers.  The template class GREngine
+///   (which subclasses GREngineImpl) provides the matching component
+///   to the engine that knows the actual types for states.  Note that this
+///   engine only dispatches to transfer functions as the statement and
+///   block-level.  The analyses themselves must implement any transfer
+///   function logic and the sub-expression level (if any).
 class GREngineImpl {
 protected:
   friend class GRStmtNodeBuilderImpl;
@@ -262,20 +273,7 @@ public:
                                 GREngineImpl* eng)
   : Eng(*eng), Src(src), DispatchBlock(*dispatch), E(e), Pred(pred) {}
   
-  class Iterator;
-  
-  class Destination {
-    LabelStmt* L;
-    CFGBlock* B;
 
-    friend class Iterator;
-    Destination(LabelStmt* l, CFGBlock* b) : L(l), B(b) {}
-    
-  public:    
-    CFGBlock*  getBlock() const { return B; }
-    LabelStmt* getLabel() const { return L; }
-  };
-  
   class Iterator {
     CFGBlock::succ_iterator I;
     
@@ -286,13 +284,19 @@ public:
     Iterator& operator++() { ++I; return *this; }
     bool operator!=(const Iterator& X) const { return I != X.I; }
     
-    Destination operator*();
+    LabelStmt* getLabel() const {
+      return llvm::cast<LabelStmt>((*I)->getLabel());
+    }
+    
+    CFGBlock*  getBlock() const {
+      return *I;
+    }
   };
   
-  Iterator begin();
-  Iterator end();
+  Iterator begin() { return Iterator(DispatchBlock.succ_begin()); }
+  Iterator end() { return Iterator(DispatchBlock.succ_end()); }
   
-  ExplodedNodeImpl* generateNodeImpl(const Destination& D, void* State,
+  ExplodedNodeImpl* generateNodeImpl(const Iterator& I, void* State,
                                      bool isSink);
   
   inline Expr* getTarget() const { return E; }
@@ -312,18 +316,15 @@ public:
   GRIndirectGotoNodeBuilder(GRIndirectGotoNodeBuilderImpl& nb) : NB(nb) {}
   
   typedef GRIndirectGotoNodeBuilderImpl::Iterator     iterator;
-  typedef GRIndirectGotoNodeBuilderImpl::Destination  Destination;
 
   inline iterator begin() { return NB.begin(); }
   inline iterator end() { return NB.end(); }
   
   inline Expr* getTarget() const { return NB.getTarget(); }
   
-  inline NodeTy* generateNode(const Destination& D, StateTy St,
-                              bool isSink = false) {
-    
+  inline NodeTy* generateNode(const iterator& I, StateTy St, bool isSink=false){    
     void *state = GRTrait<StateTy>::toPtr(St);        
-    return static_cast<NodeTy*>(NB.generateNodeImpl(D, state, isSink));
+    return static_cast<NodeTy*>(NB.generateNodeImpl(I, state, isSink));
   }
   
   inline StateTy getState() const {
