@@ -65,6 +65,7 @@ class VISIBILITY_HIDDEN CFGBuilder : public StmtVisitor<CFGBuilder,CFGBlock*> {
   CFGBlock* ContinueTargetBlock;
   CFGBlock* BreakTargetBlock;
   CFGBlock* SwitchTerminatedBlock;
+  bool      SwitchHasDefaultCase;
   
   // LabelMap records the mapping from Label expressions to their blocks.
   typedef llvm::DenseMap<LabelStmt*,CFGBlock*> LabelMapTy;
@@ -109,6 +110,7 @@ public:
   CFGBlock* VisitBreakStmt(BreakStmt* B);
   CFGBlock* VisitSwitchStmt(SwitchStmt* S);
   CFGBlock* VisitSwitchCase(SwitchCase* S);
+  CFGBlock* VisitDefaultStmt(DefaultStmt* D);
   CFGBlock* VisitIndirectGotoStmt(IndirectGotoStmt* I);
   
 private:
@@ -884,6 +886,9 @@ CFGBlock* CFGBuilder::VisitSwitchStmt(SwitchStmt* S) {
   SaveAndRestore<CFGBlock*> save_switch(SwitchTerminatedBlock),
                             save_break(BreakTargetBlock);
   
+  SaveAndRestore<bool> save_has_default_case(SwitchHasDefaultCase);
+  SwitchHasDefaultCase = false;
+  
   // Create a new block that will contain the switch statement.
   SwitchTerminatedBlock = createBlock(false);
   
@@ -900,10 +905,16 @@ CFGBlock* CFGBuilder::VisitSwitchStmt(SwitchStmt* S) {
   CFGBlock *BodyBlock = Visit(S->getBody());
   if (Block) FinishBlock(BodyBlock);
 
+  // If we have no "default:" case, the default transition is to the
+  // code following the switch body.
+  if (!SwitchHasDefaultCase)
+    SwitchTerminatedBlock->addSuccessor(SwitchSuccessor);
+  
   // Add the terminator and condition in the switch block.
   SwitchTerminatedBlock->setTerminator(S);
   assert (S->getCond() && "switch condition must be non-NULL");
   Block = SwitchTerminatedBlock;
+  
   return addStmt(S->getCond());
 }
 
@@ -932,6 +943,11 @@ CFGBlock* CFGBuilder::VisitSwitchCase(SwitchCase* S) {
   Succ = CaseBlock;
   
   return CaseBlock;    
+}
+  
+CFGBlock* CFGBuilder::VisitDefaultStmt(DefaultStmt* D) {
+  SwitchHasDefaultCase = true;
+  return VisitSwitchCase(D);
 }
 
 CFGBlock* CFGBuilder::VisitIndirectGotoStmt(IndirectGotoStmt* I) {
