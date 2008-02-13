@@ -277,7 +277,7 @@ static bool EvaluateValue(llvm::APSInt &Result, Token &PeekTok,
     
     bool Overflow = false;
     if (Result.isUnsigned())
-      Overflow = !Result.isPositive();
+      Overflow = Result.isNegative();
     else if (Result.isMinSignedValue())
       Overflow = true;   // -MININT is the only thing that overflows.
       
@@ -484,7 +484,7 @@ static bool EvaluateDirectiveSubExpr(llvm::APSInt &LHS, unsigned MinPrec,
         Overflow = true, ShAmt = LHS.getBitWidth()-1;
       else if (LHS.isUnsigned())
         Overflow = ShAmt > LHS.countLeadingZeros();
-      else if (LHS.isPositive())
+      else if (LHS.isNonNegative())
         Overflow = ShAmt >= LHS.countLeadingZeros(); // Don't allow sign change.
       else
         Overflow = ShAmt >= LHS.countLeadingOnes();
@@ -504,16 +504,16 @@ static bool EvaluateDirectiveSubExpr(llvm::APSInt &LHS, unsigned MinPrec,
       Res = LHS + RHS;
       if (LHS.isUnsigned())
         Overflow = Res.ult(LHS);
-      else if (LHS.isPositive() == RHS.isPositive() &&
-               Res.isPositive() != LHS.isPositive())
+      else if (LHS.isNonNegative() == RHS.isNonNegative() &&
+               Res.isNonNegative() != LHS.isNonNegative())
         Overflow = true;  // Overflow for signed addition.
       break;
     case tok::minus:
       Res = LHS - RHS;
       if (LHS.isUnsigned())
         Overflow = Res.ugt(LHS);
-      else if (LHS.isPositive() != RHS.isPositive() &&
-               Res.isPositive() != LHS.isPositive())
+      else if (LHS.isNonNegative() != RHS.isNonNegative() &&
+               Res.isNonNegative() != LHS.isNonNegative())
         Overflow = true;  // Overflow for signed subtraction.
       break;
     case tok::lessequal:
