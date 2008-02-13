@@ -123,7 +123,7 @@ class APInt {
     uint32_t wordBits = BitWidth % APINT_BITS_PER_WORD;
     if (wordBits == 0)
       // If all bits are used, we want to leave the value alone. This also
-      // avoids the undefined behavior of >> when the shfit is the same size as
+      // avoids the undefined behavior of >> when the shift is the same size as
       // the word size (64).
       return *this;
 
