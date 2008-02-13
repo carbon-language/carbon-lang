@@ -31,5 +31,8 @@ void foo() {
   enum {xxx,yyy,zzz} e, *ee;
   short x;
   ee = ee ? &x : ee ? &i : &e; // expected-warning {{pointer type mismatch}}
+
+  typedef void *asdf;
+  *(0 ? (asdf) 0 : &x) = 10;
 }
 

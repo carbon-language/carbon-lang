@@ -995,7 +995,7 @@ bool Expr::isNullPointerConstant(ASTContext &Ctx) const {
   // Strip off a cast to void*, if it exists.
   if (const CastExpr *CE = dyn_cast<CastExpr>(this)) {
     // Check that it is a cast to void*.
-    if (const PointerType *PT = dyn_cast<PointerType>(CE->getType())) {
+    if (const PointerType *PT = CE->getType()->getAsPointerType()) {
       QualType Pointee = PT->getPointeeType();
       if (Pointee.getQualifiers() == 0 && Pointee->isVoidType() && // to void*
           CE->getSubExpr()->getType()->isIntegerType())            // from int.
