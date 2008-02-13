@@ -82,8 +82,12 @@ void DAGTypeLegalizer::ExpandResult(SDNode *N, unsigned ResNo) {
   case ISD::SHL:
   case ISD::SRA:
   case ISD::SRL:         ExpandResult_Shift(N, Lo, Hi); break;
+
+  case ISD::CTLZ:        ExpandResult_CTLZ(N, Lo, Hi); break;
+  case ISD::CTPOP:       ExpandResult_CTPOP(N, Lo, Hi); break;
+  case ISD::CTTZ:        ExpandResult_CTTZ(N, Lo, Hi); break;
   }
-  
+
   // If Lo/Hi is null, the sub-method took care of registering results etc.
   if (Lo.Val)
     SetExpandedOp(SDOperand(N, ResNo), Lo, Hi);
@@ -615,6 +619,51 @@ void DAGTypeLegalizer::ExpandResult_Shift(SDNode *N,
 #endif
 }  
 
+void DAGTypeLegalizer::ExpandResult_CTLZ(SDNode *N,
+                                         SDOperand &Lo, SDOperand &Hi) {
+  // ctlz (HiLo) -> Hi != 0 ? ctlz(Hi) : (ctlz(Lo)+32)
+  GetExpandedOp(N->getOperand(0), Lo, Hi);
+  MVT::ValueType NVT = Lo.getValueType();
+
+  SDOperand HiNotZero = DAG.getSetCC(TLI.getSetCCResultTy(), Hi,
+                                     DAG.getConstant(0, NVT), ISD::SETNE);
+
+  SDOperand LoLZ = DAG.getNode(ISD::CTLZ, NVT, Lo);
+  SDOperand HiLZ = DAG.getNode(ISD::CTLZ, NVT, Hi);
+
+  Lo = DAG.getNode(ISD::SELECT, NVT, HiNotZero, HiLZ,
+                   DAG.getNode(ISD::ADD, NVT, LoLZ,
+                               DAG.getConstant(MVT::getSizeInBits(NVT), NVT)));
+  Hi = DAG.getConstant(0, NVT);
+}
+
+void DAGTypeLegalizer::ExpandResult_CTPOP(SDNode *N,
+                                          SDOperand &Lo, SDOperand &Hi) {
+  // ctpop(HiLo) -> ctpop(Hi)+ctpop(Lo)
+  GetExpandedOp(N->getOperand(0), Lo, Hi);
+  MVT::ValueType NVT = Lo.getValueType();
+  Lo = DAG.getNode(ISD::ADD, NVT, DAG.getNode(ISD::CTPOP, NVT, Lo),
+                   DAG.getNode(ISD::CTPOP, NVT, Hi));
+  Hi = DAG.getConstant(0, NVT);
+}
+
+void DAGTypeLegalizer::ExpandResult_CTTZ(SDNode *N,
+                                         SDOperand &Lo, SDOperand &Hi) {
+  // cttz (HiLo) -> Lo != 0 ? cttz(Lo) : (cttz(Hi)+32)
+  GetExpandedOp(N->getOperand(0), Lo, Hi);
+  MVT::ValueType NVT = Lo.getValueType();
+
+  SDOperand LoNotZero = DAG.getSetCC(TLI.getSetCCResultTy(), Lo,
+                                     DAG.getConstant(0, NVT), ISD::SETNE);
+
+  SDOperand LoLZ = DAG.getNode(ISD::CTTZ, NVT, Lo);
+  SDOperand HiLZ = DAG.getNode(ISD::CTTZ, NVT, Hi);
+
+  Lo = DAG.getNode(ISD::SELECT, NVT, LoNotZero, LoLZ,
+                   DAG.getNode(ISD::ADD, NVT, HiLZ,
+                               DAG.getConstant(MVT::getSizeInBits(NVT), NVT)));
+  Hi = DAG.getConstant(0, NVT);
+}
 
 /// ExpandShiftByConstant - N is a shift by a value that needs to be expanded,
 /// and the shift amount is a constant 'Amt'.  Expand the operation.

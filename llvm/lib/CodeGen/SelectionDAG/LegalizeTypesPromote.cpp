@@ -70,6 +70,9 @@ void DAGTypeLegalizer::PromoteResult(SDNode *N, unsigned ResNo) {
   case ISD::SELECT:    Result = PromoteResult_SELECT(N); break;
   case ISD::SELECT_CC: Result = PromoteResult_SELECT_CC(N); break;
 
+  case ISD::CTLZ:     Result = PromoteResult_CTLZ(N); break;
+  case ISD::CTPOP:    Result = PromoteResult_CTPOP(N); break;
+  case ISD::CTTZ:     Result = PromoteResult_CTTZ(N); break;
   }      
   
   // If Result is null, the sub-method took care of registering the result.
@@ -265,6 +268,38 @@ SDOperand DAGTypeLegalizer::PromoteResult_SELECT_CC(SDNode *N) {
                      N->getOperand(1), LHS, RHS, N->getOperand(4));
 }
 
+SDOperand DAGTypeLegalizer::PromoteResult_CTLZ(SDNode *N) {
+  SDOperand Op = GetPromotedOp(N->getOperand(0));
+  MVT::ValueType OVT = N->getValueType(0);
+  MVT::ValueType NVT = Op.getValueType();
+  // Zero extend to the promoted type and do the count there.
+  Op = DAG.getNode(ISD::CTLZ, NVT, DAG.getZeroExtendInReg(Op, OVT));
+  // Subtract off the extra leading bits in the bigger type.
+  return DAG.getNode(ISD::SUB, NVT, Op,
+                     DAG.getConstant(MVT::getSizeInBits(NVT) -
+                                     MVT::getSizeInBits(OVT), NVT));
+}
+
+SDOperand DAGTypeLegalizer::PromoteResult_CTPOP(SDNode *N) {
+  SDOperand Op = GetPromotedOp(N->getOperand(0));
+  MVT::ValueType OVT = N->getValueType(0);
+  MVT::ValueType NVT = Op.getValueType();
+  // Zero extend to the promoted type and do the count there.
+  return DAG.getNode(ISD::CTPOP, NVT, DAG.getZeroExtendInReg(Op, OVT));
+}
+
+SDOperand DAGTypeLegalizer::PromoteResult_CTTZ(SDNode *N) {
+  SDOperand Op = GetPromotedOp(N->getOperand(0));
+  MVT::ValueType OVT = N->getValueType(0);
+  MVT::ValueType NVT = Op.getValueType();
+  // The count is the same in the promoted type except if the original
+  // value was zero.  This can be handled by setting the bit just off
+  // the top of the original type.
+  Op = DAG.getNode(ISD::OR, NVT, Op,
+                   // FIXME: Do this using an APINT constant.
+                   DAG.getConstant(1UL << MVT::getSizeInBits(OVT), NVT));
+  return DAG.getNode(ISD::CTTZ, NVT, Op);
+}
 
 //===----------------------------------------------------------------------===//
 //  Operand Promotion

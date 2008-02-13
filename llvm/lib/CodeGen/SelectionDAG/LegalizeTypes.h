@@ -159,23 +159,26 @@ private:
     
   // Result Promotion.
   void PromoteResult(SDNode *N, unsigned ResNo);
-  SDOperand PromoteResult_UNDEF(SDNode *N);
   SDOperand PromoteResult_Constant(SDNode *N);
-  SDOperand PromoteResult_TRUNCATE(SDNode *N);
-  SDOperand PromoteResult_INT_EXTEND(SDNode *N);
+  SDOperand PromoteResult_CTLZ(SDNode *N);
+  SDOperand PromoteResult_CTPOP(SDNode *N);
+  SDOperand PromoteResult_CTTZ(SDNode *N);
   SDOperand PromoteResult_FP_ROUND(SDNode *N);
   SDOperand PromoteResult_FP_TO_XINT(SDNode *N);
-  SDOperand PromoteResult_SETCC(SDNode *N);
+  SDOperand PromoteResult_INT_EXTEND(SDNode *N);
   SDOperand PromoteResult_LOAD(LoadSDNode *N);
-  SDOperand PromoteResult_SimpleIntBinOp(SDNode *N);
   SDOperand PromoteResult_SDIV(SDNode *N);
-  SDOperand PromoteResult_UDIV(SDNode *N);
-  SDOperand PromoteResult_SHL(SDNode *N);
-  SDOperand PromoteResult_SRA(SDNode *N);
-  SDOperand PromoteResult_SRL(SDNode *N);
   SDOperand PromoteResult_SELECT   (SDNode *N);
   SDOperand PromoteResult_SELECT_CC(SDNode *N);
-  
+  SDOperand PromoteResult_SETCC(SDNode *N);
+  SDOperand PromoteResult_SHL(SDNode *N);
+  SDOperand PromoteResult_SimpleIntBinOp(SDNode *N);
+  SDOperand PromoteResult_SRA(SDNode *N);
+  SDOperand PromoteResult_SRL(SDNode *N);
+  SDOperand PromoteResult_TRUNCATE(SDNode *N);
+  SDOperand PromoteResult_UDIV(SDNode *N);
+  SDOperand PromoteResult_UNDEF(SDNode *N);
+
   // Operand Promotion.
   bool PromoteOperand(SDNode *N, unsigned OperandNo);
   SDOperand PromoteOperand_ANY_EXTEND(SDNode *N);
@@ -202,18 +205,21 @@ private:
     
   // Result Expansion.
   void ExpandResult(SDNode *N, unsigned ResNo);
-  void ExpandResult_UNDEF      (SDNode *N, SDOperand &Lo, SDOperand &Hi);
-  void ExpandResult_Constant   (SDNode *N, SDOperand &Lo, SDOperand &Hi);
-  void ExpandResult_BUILD_PAIR (SDNode *N, SDOperand &Lo, SDOperand &Hi);
-  void ExpandResult_MERGE_VALUES(SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_ANY_EXTEND (SDNode *N, SDOperand &Lo, SDOperand &Hi);
-  void ExpandResult_ZERO_EXTEND(SDNode *N, SDOperand &Lo, SDOperand &Hi);
-  void ExpandResult_SIGN_EXTEND(SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_AssertZext (SDNode *N, SDOperand &Lo, SDOperand &Hi);
-  void ExpandResult_TRUNCATE   (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_BIT_CONVERT(SDNode *N, SDOperand &Lo, SDOperand &Hi);
-  void ExpandResult_SIGN_EXTEND_INREG(SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandResult_BUILD_PAIR (SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandResult_Constant   (SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandResult_CTLZ       (SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandResult_CTPOP      (SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandResult_CTTZ       (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_LOAD       (LoadSDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandResult_MERGE_VALUES(SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandResult_SIGN_EXTEND(SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandResult_SIGN_EXTEND_INREG(SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandResult_TRUNCATE   (SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandResult_UNDEF      (SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandResult_ZERO_EXTEND(SDNode *N, SDOperand &Lo, SDOperand &Hi);
 
   void ExpandResult_Logical    (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_BSWAP      (SDNode *N, SDOperand &Lo, SDOperand &Hi);
