@@ -954,22 +954,15 @@ static SDOperand LowerFORMAL_ARGUMENT(SDOperand Op, SelectionDAG &DAG,
   NumGPRs += ObjGPRs;
 
   if (ObjSize) {
-    // If the argument is actually used, emit a load from the right stack
-    // slot.
-    if (!Op.Val->hasNUsesOfValue(0, ArgNo)) {
-      MachineFrameInfo *MFI = MF.getFrameInfo();
-      int FI = MFI->CreateFixedObject(ObjSize, ArgOffset);
-      SDOperand FIN = DAG.getFrameIndex(FI, MVT::i32);
-      if (ObjGPRs == 0)
-        ArgValue = DAG.getLoad(ObjectVT, Root, FIN, NULL, 0);
-      else {
-        SDOperand ArgValue2 = DAG.getLoad(MVT::i32, Root, FIN, NULL, 0);
-        assert(ObjectVT != MVT::i64 && "i64 should already be lowered");
-        ArgValue = DAG.getNode(ARMISD::FMDRR, MVT::f64, ArgValue, ArgValue2);
-      }
-    } else {
-      // Don't emit a dead load.
-      ArgValue = DAG.getNode(ISD::UNDEF, ObjectVT);
+    MachineFrameInfo *MFI = MF.getFrameInfo();
+    int FI = MFI->CreateFixedObject(ObjSize, ArgOffset);
+    SDOperand FIN = DAG.getFrameIndex(FI, MVT::i32);
+    if (ObjGPRs == 0)
+      ArgValue = DAG.getLoad(ObjectVT, Root, FIN, NULL, 0);
+    else {
+      SDOperand ArgValue2 = DAG.getLoad(MVT::i32, Root, FIN, NULL, 0);
+      assert(ObjectVT != MVT::i64 && "i64 should already be lowered");
+      ArgValue = DAG.getNode(ARMISD::FMDRR, MVT::f64, ArgValue, ArgValue2);
     }
 
     ArgOffset += ObjSize;   // Move on to the next argument.

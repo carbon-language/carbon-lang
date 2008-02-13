@@ -1008,17 +1008,9 @@ LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG, int &VarArgsFrameIndex)
     // We need to load the argument to a virtual register if we determined above
     // that we ran out of physical registers of the appropriate type
     if (needsLoad) {
-      // If the argument is actually used, emit a load from the right stack
-      // slot.
-      if (!Op.Val->hasNUsesOfValue(0, ArgNo)) {
-        int FI = MFI->CreateFixedObject(ObjSize, ArgOffset);
-        SDOperand FIN = DAG.getFrameIndex(FI, PtrVT);
-        ArgVal = DAG.getLoad(ObjectVT, Root, FIN, NULL, 0);
-      } else {
-        // Don't emit a dead load.
-        ArgVal = DAG.getNode(ISD::UNDEF, ObjectVT);
-      }
-
+      int FI = MFI->CreateFixedObject(ObjSize, ArgOffset);
+      SDOperand FIN = DAG.getFrameIndex(FI, PtrVT);
+      ArgVal = DAG.getLoad(ObjectVT, Root, FIN, NULL, 0);
       ArgOffset += StackSlotSize;
     }
     
