@@ -137,6 +137,7 @@ namespace {
     //   otherwise            - N should be replaced by the returned Operand.
     //
     SDOperand visitTokenFactor(SDNode *N);
+    SDOperand visitMERGE_VALUES(SDNode *N);
     SDOperand visitADD(SDNode *N);
     SDOperand visitSUB(SDNode *N);
     SDOperand visitADDC(SDNode *N);
@@ -662,6 +663,7 @@ SDOperand DAGCombiner::visit(SDNode *N) {
   switch(N->getOpcode()) {
   default: break;
   case ISD::TokenFactor:        return visitTokenFactor(N);
+  case ISD::MERGE_VALUES:       return visitMERGE_VALUES(N);
   case ISD::ADD:                return visitADD(N);
   case ISD::SUB:                return visitSUB(N);
   case ISD::ADDC:               return visitADDC(N);
@@ -836,6 +838,18 @@ SDOperand DAGCombiner::visitTokenFactor(SDNode *N) {
   
   return Result;
 }
+
+/// MERGE_VALUES can always be eliminated.
+SDOperand DAGCombiner::visitMERGE_VALUES(SDNode *N) {
+  WorkListRemover DeadNodes(*this);
+  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
+    DAG.ReplaceAllUsesOfValueWith(SDOperand(N, i), N->getOperand(i),
+                                  &DeadNodes);
+  removeFromWorkList(N);
+  DAG.DeleteNode(N);
+  return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
+}
+
 
 static
 SDOperand combineShlAddConstant(SDOperand N0, SDOperand N1, SelectionDAG &DAG) {
