@@ -80,6 +80,6 @@ foo:
 	addl $20, %esp
 	ret
 
-This will be solved when we go to a dynamic programming based isel.
+This just requires being smarter when custom expanding fptoui.
 
 //===---------------------------------------------------------------------===//
