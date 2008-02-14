@@ -367,9 +367,6 @@ Parser::DeclTy *Parser::ParseDeclarationOrFunctionDefinition() {
   // Parse the common declaration-specifiers piece.
   DeclSpec DS;
   ParseDeclarationSpecifiers(DS);
-  // If the decl specs are invalid, there is no need to continue.
-  if (DS.isInvalid())
-    return 0;
     
   // C99 6.7.2.3p6: Handle "struct-or-union identifier;", "enum { X };"
   // declaration-specifiers init-declarator-list[opt] ';'
@@ -422,6 +419,20 @@ Parser::DeclTy *Parser::ParseDeclarationOrFunctionDefinition() {
   } else if (DeclaratorInfo.isFunctionDeclarator() &&
              (Tok.is(tok::l_brace) ||           // int X() {}
               isDeclarationSpecifier())) {      // int X(f) int f; {}
+    if (DS.getStorageClassSpec() == DeclSpec::SCS_typedef) {
+      Diag(Tok, diag::err_function_declared_typedef);
+      
+      if (Tok.is(tok::l_brace)) {
+        // This recovery skips the entire function body. It would be nice
+        // to simply call ParseFunctionDefintion() below, however Sema 
+        // assumes the declarator represents a function, not a typedef.
+        ConsumeBrace();
+        SkipUntil(tok::r_brace, true);
+      } else {
+        SkipUntil(tok::semi);
+      }
+      return 0;
+    }
     return ParseFunctionDefinition(DeclaratorInfo);
   } else {
     if (DeclaratorInfo.isFunctionDeclarator())
