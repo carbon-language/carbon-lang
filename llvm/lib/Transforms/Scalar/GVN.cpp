@@ -857,6 +857,8 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, LoadInst* orig,
     
     PN->addIncoming(val, *PI);
   }
+  AliasAnalysis& AA = getAnalysis<AliasAnalysis>();
+  AA.copyValue(orig, PN);
   
   // Attempt to collapse PHI nodes that are trivially redundant
   Value* v = CollapsePhi(PN);
