@@ -26,6 +26,7 @@ namespace llvm {
 
   namespace SPU {
     enum {
+      PROC_NONE,
       DEFAULT_PROC
     };
   }

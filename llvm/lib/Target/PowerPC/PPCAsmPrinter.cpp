@@ -849,6 +849,7 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
 bool DarwinAsmPrinter::doInitialization(Module &M) {
   static const char *CPUDirectives[] = {
+    "",
     "ppc",
     "ppc601",
     "ppc602",

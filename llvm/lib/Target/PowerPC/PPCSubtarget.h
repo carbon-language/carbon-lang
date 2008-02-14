@@ -27,6 +27,7 @@ namespace llvm {
 namespace PPC {
   // -m directive values.
   enum {
+    DIR_NONE,
     DIR_32,
     DIR_601, 
     DIR_602, 

@@ -482,8 +482,12 @@ void SubtargetEmitter::ParseFeaturesFunction(std::ostream &OS) {
     const std::string &Value = R->getValueAsString("Value");
     const std::string &Attribute = R->getValueAsString("Attribute");
 
-    OS << "  if ((Bits & " << Instance << ") != 0) "
-       << Attribute << " = " << Value << ";\n";
+    if (Value=="true" || Value=="false")
+      OS << "  if ((Bits & " << Instance << ") != 0) "
+         << Attribute << " = " << Value << ";\n";
+    else
+      OS << "  if ((Bits & " << Instance << ") != 0 && " << Attribute << 
+            " < " << Value << ") " << Attribute << " = " << Value << ";\n";
   }
 
   if (HasItineraries) {

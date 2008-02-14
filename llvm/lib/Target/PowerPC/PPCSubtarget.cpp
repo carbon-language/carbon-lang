@@ -60,6 +60,7 @@ PPCSubtarget::PPCSubtarget(const TargetMachine &tm, const Module &M,
                            const std::string &FS, bool is64Bit)
   : TM(tm)
   , StackAlignment(16)
+  , DarwinDirective(PPC::DIR_NONE)
   , IsGigaProcessor(false)
   , Has64BitSupport(false)
   , Use64BitRegs(false)
