@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ValueState.h"
+#include "llvm/ADT/SmallSet.h"
 
 using namespace clang;
 
@@ -43,6 +44,8 @@ ValueStateManager::RemoveDeadBindings(ValueState St, Stmt* Loc,
   // for optimum performance.
   
   llvm::SmallVector<ValueDecl*, 10> WList;
+  llvm::SmallPtrSet<ValueDecl*, 10> Marked;  
+  llvm::SmallSet<SymbolID, 20> MarkedSymbols;
   
   ValueStateImpl NewSt = *St;
   
@@ -55,10 +58,16 @@ ValueStateManager::RemoveDeadBindings(ValueState St, Stmt* Loc,
     Expr* BlkExpr = I.getKey();
     
     if (Liveness.isLive(Loc, BlkExpr)) {
-      if (isa<lval::DeclVal>(I.getData())) {
-        lval::DeclVal LV = cast<lval::DeclVal>(I.getData());
+      RValue X = I.getData();
+      
+      if (isa<lval::DeclVal>(X)) {
+        lval::DeclVal LV = cast<lval::DeclVal>(X);
         WList.push_back(LV.getDecl());
       }
+      
+      for (RValue::symbol_iterator SI=X.symbol_begin(), SE=X.symbol_end();
+                                   SI != SE; ++SI)
+        MarkedSymbols.insert(*SI);      
     }
     else
       NewSt.BlockExprBindings = Remove(NewSt, BlkExpr);
@@ -70,8 +79,7 @@ ValueStateManager::RemoveDeadBindings(ValueState St, Stmt* Loc,
   for (ValueState::vb_iterator I = St.vb_begin(), E = St.vb_end(); I!=E ; ++I)
     if (Liveness.isLive(Loc, I.getKey()))
       WList.push_back(I.getKey());
-  
-  llvm::SmallPtrSet<ValueDecl*, 10> Marked;  
+
   
   while (!WList.empty()) {
     ValueDecl* V = WList.back();
@@ -83,7 +91,11 @@ ValueStateManager::RemoveDeadBindings(ValueState St, Stmt* Loc,
     Marked.insert(V);
     
     if (V->getType()->isPointerType()) {
-      const LValue& LV = cast<LValue>(GetValue(St, lval::DeclVal(V)));
+      const LValue& LV = cast<LValue>(GetValue(St, lval::DeclVal(V)));      
+      
+      for (RValue::symbol_iterator SI=LV.symbol_begin(), SE=LV.symbol_end();
+           SI != SE; ++SI)
+        MarkedSymbols.insert(*SI); 
       
       if (!isa<lval::DeclVal>(LV))
         continue;
@@ -93,9 +105,19 @@ ValueStateManager::RemoveDeadBindings(ValueState St, Stmt* Loc,
     }    
   }
   
+  // Remove dead variable bindings.
   for (ValueState::vb_iterator I = St.vb_begin(), E = St.vb_end(); I!=E ; ++I)
     if (!Marked.count(I.getKey()))
       NewSt.VarBindings = Remove(NewSt, I.getKey());
+  
+  // Remove dead symbols.
+  for (ValueState::ce_iterator I = St.ce_begin(), E=St.ce_end(); I!=E; ++I)
+    if (!MarkedSymbols.count(I.getKey()))
+      NewSt.ConstantEq = CEFactory.Remove(NewSt.ConstantEq, I.getKey());
+  
+  for (ValueState::cne_iterator I = St.cne_begin(), E=St.cne_end(); I!=E; ++I)
+    if (!MarkedSymbols.count(I.getKey()))
+      NewSt.ConstantNotEq = CNEFactory.Remove(NewSt.ConstantNotEq, I.getKey());
   
   return getPersistentState(NewSt);
 }

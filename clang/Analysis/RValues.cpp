@@ -123,8 +123,32 @@ ValueManager::getConstraint(SymbolID sym, BinaryOperator::Opcode Op,
   return *C;
 }
 
+//===----------------------------------------------------------------------===//
+// Symbol Iteration.
+//===----------------------------------------------------------------------===//
 
- 
+RValue::symbol_iterator RValue::symbol_begin() const {
+  if (isa<LValue>(this)) {
+    if (isa<lval::SymbolVal>(this))
+      return (symbol_iterator) (&Data);
+  }
+  else {
+    if (isa<nonlval::SymbolVal>(this))
+      return (symbol_iterator) (&Data);
+    else if (isa<nonlval::SymIntConstraintVal>(this)) {
+      const SymIntConstraint& C =
+        cast<nonlval::SymIntConstraintVal>(this)->getConstraint();
+      return (symbol_iterator) &C.getSymbol();
+    }
+  }
+  
+  return NULL;
+}
+
+RValue::symbol_iterator RValue::symbol_end() const {
+  symbol_iterator X = symbol_begin();
+  return X ? X+1 : NULL;
+}
 
 //===----------------------------------------------------------------------===//
 // Transfer function dispatch for Non-LValues.

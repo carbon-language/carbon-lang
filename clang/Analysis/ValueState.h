@@ -153,6 +153,14 @@ public:
   beb_iterator beb_begin() const { return Data->BlockExprBindings.begin(); }
   beb_iterator beb_end() const { return Data->BlockExprBindings.end(); }
   
+  typedef ConstantNotEqTy::iterator cne_iterator;
+  cne_iterator cne_begin() const { return Data->ConstantNotEq.begin(); }
+  cne_iterator cne_end() const { return Data->ConstantNotEq.end(); }
+  
+  typedef ConstantEqTy::iterator ce_iterator;
+  ce_iterator ce_begin() const { return Data->ConstantEq.begin(); }
+  ce_iterator ce_end() const { return Data->ConstantEq.end(); }
+  
   // Profiling and equality testing.
   
   bool operator==(const ValueState& RHS) const {

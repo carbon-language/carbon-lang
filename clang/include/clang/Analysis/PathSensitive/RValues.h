@@ -137,7 +137,7 @@ public:
       Op(op), Val(V) {}
   
   BinaryOperator::Opcode getOpcode() const { return Op; }
-  SymbolID getSymbol() const { return Symbol; }
+  const SymbolID& getSymbol() const { return Symbol; }
   const llvm::APSInt& getInt() const { return Val; }
   
   static inline void Profile(llvm::FoldingSetNodeID& ID,
@@ -249,7 +249,7 @@ public:
   enum { BaseBits = 2, 
          BaseMask = 0x3 };
   
-private:
+protected:
   void* Data;
   unsigned Kind;
   
@@ -260,10 +260,6 @@ protected:
   
   explicit RValue(BaseKind k)
     : Data(0), Kind(k) {}
-  
-  void* getRawPtr() const {
-    return reinterpret_cast<void*>(Data);
-  }
   
 public:
   ~RValue() {};
@@ -292,6 +288,10 @@ public:
   
   void print(std::ostream& OS) const;
   void print() const;
+  
+  typedef const SymbolID* symbol_iterator;
+  symbol_iterator symbol_begin() const;
+  symbol_iterator symbol_end() const;  
   
   // Implement isa<T> support.
   static inline bool classof(const RValue*) { return true; }
@@ -374,7 +374,7 @@ namespace nonlval {
                 reinterpret_cast<void*>((uintptr_t) SymID)) {}
     
     SymbolID getSymbol() const {
-      return (SymbolID) reinterpret_cast<uintptr_t>(getRawPtr());
+      return (SymbolID) reinterpret_cast<uintptr_t>(Data);
     }
     
     static inline bool classof(const RValue* V) {
@@ -388,7 +388,7 @@ namespace nonlval {
     : NonLValue(SymIntConstraintValKind, reinterpret_cast<const void*>(&C)) {}
 
     const SymIntConstraint& getConstraint() const {
-      return *reinterpret_cast<SymIntConstraint*>(getRawPtr());
+      return *reinterpret_cast<SymIntConstraint*>(Data);
     }
     
     static inline bool classof(const RValue* V) {
@@ -401,7 +401,7 @@ namespace nonlval {
     ConcreteInt(const llvm::APSInt& V) : NonLValue(ConcreteIntKind, &V) {}
     
     const llvm::APSInt& getValue() const {
-      return *static_cast<llvm::APSInt*>(getRawPtr());
+      return *static_cast<llvm::APSInt*>(Data);
     }
     
     // Transfer functions for binary/unary operations on ConcreteInts.
@@ -442,7 +442,7 @@ namespace lval {
     : LValue(SymbolValKind, reinterpret_cast<void*>((uintptr_t) SymID)) {}
     
     SymbolID getSymbol() const {
-      return (SymbolID) reinterpret_cast<uintptr_t>(getRawPtr());
+      return (SymbolID) reinterpret_cast<uintptr_t>(Data);
     }
     
     static inline bool classof(const RValue* V) {
@@ -459,7 +459,7 @@ namespace lval {
     GotoLabel(LabelStmt* Label) : LValue(GotoLabelKind, Label) {}
     
     LabelStmt* getLabel() const {
-      return static_cast<LabelStmt*>(getRawPtr());
+      return static_cast<LabelStmt*>(Data);
     }
     
     static inline bool classof(const RValue* V) {
@@ -477,7 +477,7 @@ namespace lval {
     DeclVal(const ValueDecl* vd) : LValue(DeclValKind,vd) {}
     
     ValueDecl* getDecl() const {
-      return static_cast<ValueDecl*>(getRawPtr());
+      return static_cast<ValueDecl*>(Data);
     }
     
     inline bool operator==(const DeclVal& R) const {
@@ -503,7 +503,7 @@ namespace lval {
     ConcreteInt(const llvm::APSInt& V) : LValue(ConcreteIntKind, &V) {}
     
     const llvm::APSInt& getValue() const {
-      return *static_cast<llvm::APSInt*>(getRawPtr());
+      return *static_cast<llvm::APSInt*>(Data);
     }
     
 
