@@ -1114,7 +1114,16 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
         Out << (*J)->toString();
       }    
     }
-  }    
+  }
+    
+  static std::string getNodeAttributes(const GRExprEngine::NodeTy* N, void*) {
+    
+    if (GraphPrintCheckerState->isImplicitNullDeref(N) ||
+        GraphPrintCheckerState->isExplicitNullDeref(N))
+      return "color=\"red\",style=\"filled\"";
+    
+    return "";
+  }
     
   static std::string getNodeLabel(const GRExprEngine::NodeTy* N, void*) {
     std::ostringstream Out;
