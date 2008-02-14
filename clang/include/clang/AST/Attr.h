@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_AST_EXPR_H
-#define LLVM_CLANG_AST_EXPR_H
+#ifndef LLVM_CLANG_AST_ATTR_H
+#define LLVM_CLANG_AST_ATTR_H
 
 namespace clang {
 
@@ -20,39 +20,33 @@ namespace clang {
 class Attr {
 public:
   enum Kind {
-    AddressSpace,
     Aligned,
-    OCUVectorType,
-    Packed,
-    VectorSize
+    Packed
   };
     
 private:
-  Attr *next;
-  
+  Attr *Next;
   Kind AttrKind;
   
 protected:
   Attr(Kind AK) : AttrKind(AK) {}
   virtual ~Attr() {
-    if (Next)
-      delete Next;
+    delete Next;
   }
   
 public:
   Kind getKind() const { return AttrKind; }
 
-  Attr *getNext() const { return Next; }
-  void setNext(Attr *N) { Next = N; }
+  Attr *getNext() { return Next; }
+  const Attr *getNext() const { return Next; }
+  void setNext(Attr *next) { Next = next; }
   
   void addAttr(Attr *attr) {
     assert((attr != 0) && "addAttr(): attr is null");
-    Attr *next = this, *prev;
-    do {
-      prev = next;
-      next = next->getNext();
-    } while (next);
-    prev->setNext(attr);
+    
+    // FIXME: This doesn't preserve the order in any way.
+    attr->Next = Next;
+    Next = attr;
   }
   
   // Implement isa/cast/dyncast/etc.
@@ -69,7 +63,7 @@ public:
   }
   static bool classof(const PackedAttr *A) { return true; }
 };
-  
+
 }  // end namespace clang
 
 #endif
