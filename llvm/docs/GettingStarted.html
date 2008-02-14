@@ -338,7 +338,7 @@ on your platform.</p>
 
 <p>The GCC front end is not very portable at the moment.  If you want to get it
 to work on another platform, you can download a copy of the source and <a
-href="CFEBuildInstrs.html">try to compile it</a> on your platform.</p>
+href="GCCFEBuildInstrs.html">try to compile it</a> on your platform.</p>
 
 </div>
 
@@ -518,7 +518,7 @@ href="http://gcc.gnu.org/PR13392">serious bug</a> which causes it to crash in
 the "<tt>convert_from_eh_region_ranges_1</tt>" GCC function.</p>
 
 <p><b>Cygwin GCC 3.3.3</b>: The version of GCC 3.3.3 commonly shipped with 
-   Cygwin does not work.  Please <a href="CFEBuildInstrs.html#cygwin">upgrade 
+   Cygwin does not work.  Please <a href="GCCFEBuildInstrs.html#cygwin">upgrade 
    to a newer version</a> if possible.</p>
 <p><b>SuSE GCC 3.3.3</b>: The version of GCC 3.3.3 shipped with SuSE 9.1 (and 
    possibly others) does not compile LLVM correctly (it appears that exception 
@@ -741,7 +741,7 @@ configured by the LLVM configure script as well as automatically updated when
 you run <tt>svn update</tt>.</p>
 
 <p>If you would like to get the GCC front end source code, you can also get it 
-and build it yourself.  Please follow <a href="CFEBuildInstrs.html">these 
+and build it yourself.  Please follow <a href="GCCFEBuildInstrs.html">these 
 instructions</a> to successfully get and build the LLVM GCC front-end.</p>
 
 </div>
@@ -756,7 +756,7 @@ instructions</a> to successfully get and build the LLVM GCC front-end.</p>
 <p>Before configuring and compiling the LLVM suite, you can optionally extract the 
 LLVM GCC front end from the binary distribution.  It is used for running the 
 llvm-test testsuite and for compiling C/C++ programs.  Note that you can optionally
-<a href="CFEBuildInstrs.html">build llvm-gcc yourself</a> after building the
+<a href="GCCFEBuildInstrs.html">build llvm-gcc yourself</a> after building the
 main LLVM repository.</p>
 
 <p>To install the GCC front end, do the following:</p>
@@ -781,7 +781,7 @@ file, not "fix" a header file that needs to be fixed for GCC, or it may be
 linked with libraries not available on your system.</p>
 
 <p>In cases like these, you may want to try <a
-href="CFEBuildInstrs.html">building the GCC front end from source.</a> This is
+href="GCCFEBuildInstrs.html">building the GCC front end from source.</a> This is
 much easier now than it was in the past.</p>
 
 </div>
@@ -836,7 +836,7 @@ script to configure the build system:</p>
   will fail as these libraries require llvm-gcc and llvm-g++. See 
   <a href="#installcf">Install the GCC Front End</a> for details on installing
   the C/C++ Front End. See
-  <a href="CFEBuildInstrs.html">Bootstrapping the LLVM C/C++ Front-End</a>
+  <a href="GCCFEBuildInstrs.html">Bootstrapping the LLVM C/C++ Front-End</a>
   for details on building the C/C++ Front End.</dd>
   <dt><i>--with-tclinclude</i></dt>
   <dd>Path to the tcl include directory under which <tt>tclsh</tt> can be

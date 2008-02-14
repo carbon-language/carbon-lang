@@ -979,7 +979,7 @@
 		DE66F38C08ABF35300323D32 /* CREDITS.TXT */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; name = CREDITS.TXT; path = ../CREDITS.TXT; sourceTree = SOURCE_ROOT; };
 		DE66F38F08ABF35C00323D32 /* AliasAnalysis.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = AliasAnalysis.html; sourceTree = "<group>"; };
 		DE66F39008ABF35C00323D32 /* Bugpoint.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = Bugpoint.html; sourceTree = "<group>"; };
-		DE66F39208ABF35C00323D32 /* CFEBuildInstrs.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = CFEBuildInstrs.html; sourceTree = "<group>"; };
+		DE66F39208ABF35C00323D32 /* GCCFEBuildInstrs.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = GCCFEBuildInstrs.html; sourceTree = "<group>"; };
 		DE66F39308ABF35C00323D32 /* CodeGenerator.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = CodeGenerator.html; sourceTree = "<group>"; };
 		DE66F39408ABF35C00323D32 /* CodingStandards.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = CodingStandards.html; sourceTree = "<group>"; };
 		DE66F39808ABF35C00323D32 /* bugpoint.pod */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = bugpoint.pod; sourceTree = "<group>"; };
@@ -2593,7 +2593,7 @@
 			children = (
 				DE66F38F08ABF35C00323D32 /* AliasAnalysis.html */,
 				DE66F39008ABF35C00323D32 /* Bugpoint.html */,
-				DE66F39208ABF35C00323D32 /* CFEBuildInstrs.html */,
+				DE66F39208ABF35C00323D32 /* GCCFEBuildInstrs.html */,
 				DE66F39308ABF35C00323D32 /* CodeGenerator.html */,
 				DE66F39408ABF35C00323D32 /* CodingStandards.html */,
 				DE66F39508ABF35C00323D32 /* CommandGuide */,
