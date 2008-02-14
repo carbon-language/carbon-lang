@@ -322,10 +322,6 @@ protected:
 public:
   void print(std::ostream& Out) const;
   
-  NonLValue EvalBinaryOp(ValueManager& ValMgr,
-                               BinaryOperator::Opcode Op,
-                               const NonLValue& RHS) const;
-  
   // Utility methods to create NonLValues.
   static NonLValue GetValue(ValueManager& ValMgr, uint64_t X, QualType T,
                             SourceLocation Loc = SourceLocation());
@@ -351,9 +347,6 @@ protected:
   
 public:
   void print(std::ostream& Out) const;
-
-  RValue EvalBinaryOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
-                            const LValue& RHS) const;
     
   static LValue GetValue(AddrLabelExpr* E);
   

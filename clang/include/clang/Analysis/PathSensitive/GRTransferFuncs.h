@@ -37,7 +37,19 @@ public:
 
   virtual NonLValue EvalComplement(ValueManager& ValMgr, NonLValue X) = 0;
 
+  // Binary Operators.
   
+  virtual NonLValue EvalBinaryOp(ValueManager& ValMgr,
+                                 BinaryOperator::Opcode Op,
+                                 NonLValue LHS, NonLValue RHS) = 0;
+  
+  RValue EvalBinaryOp(ValueManager& ValMgr,
+                      BinaryOperator::Opcode Op,
+                      LValue LHS, LValue RHS);
+  
+  // Equality operators for LValues.
+  virtual NonLValue EvalEQ(ValueManager& ValMgr, LValue LHS, LValue RHS) = 0;
+  virtual NonLValue EvalNE(ValueManager& ValMgr, LValue LHS, LValue RHS) = 0;
 };
   
 } // end clang namespace

@@ -129,51 +129,6 @@ ValueManager::getConstraint(SymbolID sym, BinaryOperator::Opcode Op,
 //===----------------------------------------------------------------------===//
 // Transfer function dispatch for Non-LValues.
 //===----------------------------------------------------------------------===//
-  
-  // Binary Operators (except assignments and comma).
-
-NonLValue NonLValue::EvalBinaryOp(ValueManager& ValMgr,
-                                  BinaryOperator::Opcode Op,
-                                  const NonLValue& RHS) const {
-  
-  if (isa<UnknownVal>(this) || isa<UnknownVal>(RHS))
-    return cast<NonLValue>(UnknownVal());
-  
-  if (isa<UninitializedVal>(this) || isa<UninitializedVal>(RHS))
-    return cast<NonLValue>(UninitializedVal());
-  
-  switch (getSubKind()) {
-    default:
-      assert (false && "Binary Operators not implemented for this NonLValue");
-      
-    case nonlval::ConcreteIntKind:
-      
-      if (isa<nonlval::ConcreteInt>(RHS)) {
-        nonlval::ConcreteInt& self = cast<nonlval::ConcreteInt>(*this);
-        return self.EvalBinaryOp(ValMgr, Op,
-                                       cast<nonlval::ConcreteInt>(RHS));
-      }
-      else if(isa<UnknownVal>(RHS))
-        return cast<NonLValue>(UnknownVal());
-      else
-        return RHS.EvalBinaryOp(ValMgr, Op, *this);
-      
-    case nonlval::SymbolValKind: {
-      const nonlval::SymbolVal& self = cast<nonlval::SymbolVal>(*this);
-      
-      switch (RHS.getSubKind()) {
-        default: assert ("Not Implemented." && false);
-        case nonlval::ConcreteIntKind: {
-          const SymIntConstraint& C =
-            ValMgr.getConstraint(self.getSymbol(), Op,
-                                 cast<nonlval::ConcreteInt>(RHS).getValue());
-          
-          return nonlval::SymIntConstraintVal(C);
-        }
-      }
-    }
-  }
-}
 
 static const
 llvm::APSInt& EvaluateAPSInt(ValueManager& ValMgr, BinaryOperator::Opcode Op,
@@ -261,25 +216,6 @@ nonlval::ConcreteInt::EvalMinus(ValueManager& ValMgr, UnaryOperator* U) const {
 //===----------------------------------------------------------------------===//
 // Transfer function dispatch for LValues.
 //===----------------------------------------------------------------------===//
-
-  // Binary Operators (except assignments and comma).
-
-RValue LValue::EvalBinaryOp(ValueManager& ValMgr, 
-                                  BinaryOperator::Opcode Op,
-                                  const LValue& RHS) const {
-  
-  switch (Op) {
-    default:
-      assert (false && "Not yet implemented.");
-      
-    case BinaryOperator::EQ:
-      return EQ(ValMgr, RHS);
-    
-    case BinaryOperator::NE:
-      return NE(ValMgr, RHS);
-  }
-}
-
 
 lval::ConcreteInt
 lval::ConcreteInt::EvalBinaryOp(ValueManager& ValMgr,

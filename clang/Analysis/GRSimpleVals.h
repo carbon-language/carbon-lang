@@ -36,6 +36,16 @@ public:
                               NonLValue X);
   
   virtual NonLValue EvalComplement(ValueManager& ValMgr, NonLValue X);
+  
+  // Binary Operators.
+  
+  virtual NonLValue EvalBinaryOp(ValueManager& ValMgr,
+                                 BinaryOperator::Opcode Op,
+                                 NonLValue LHS, NonLValue RHS);
+  
+  // Equality operators for LValues.
+  virtual NonLValue EvalEQ(ValueManager& ValMgr, LValue LHS, LValue RHS);
+  virtual NonLValue EvalNE(ValueManager& ValMgr, LValue LHS, LValue RHS);
 };
   
   

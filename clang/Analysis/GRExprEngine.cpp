@@ -333,6 +333,16 @@ public:
   inline NonLValue EvalComplement(ValueManager& ValMgr, NonLValue X) {
     return TF.EvalComplement(ValMgr, X);
   }
+  
+  inline NonLValue EvalBinaryOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
+                                NonLValue LHS, NonLValue RHS) {
+    return TF.EvalBinaryOp(ValMgr, Op, LHS, RHS);
+  }    
+  
+  inline RValue EvalBinaryOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
+                             LValue LHS, LValue RHS) {
+    return TF.EvalBinaryOp(ValMgr, Op, LHS, RHS);
+  }
 };
 } // end anonymous namespace
 
@@ -555,13 +565,12 @@ void GRExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
     do {      
       nonlval::ConcreteInt CaseVal(ValMgr.getValue(V1));
       
-      NonLValue Result =
-        CondV.EvalBinaryOp(ValMgr, BinaryOperator::EQ, CaseVal);
+      NonLValue Res = EvalBinaryOp(ValMgr, BinaryOperator::EQ, CondV, CaseVal);
       
       // Now "assume" that the case matches.
       bool isFeasible;
       
-      StateTy StNew = Assume(St, Result, true, isFeasible);
+      StateTy StNew = Assume(St, Res, true, isFeasible);
       
       if (isFeasible) {
         builder.generateCaseStmtNode(I, StNew);
@@ -576,7 +585,7 @@ void GRExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
       // Now "assume" that the case doesn't match.  Add this state
       // to the default state (if it is feasible).
       
-      StNew = Assume(DefaultSt, Result, false, isFeasible);
+      StNew = Assume(DefaultSt, Res, false, isFeasible);
       
       if (isFeasible)
         DefaultSt = StNew;
@@ -805,8 +814,8 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U,
         const LValue& L1 = GetLValue(St, U->getSubExpr());
         NonLValue R1 = cast<NonLValue>(GetValue(St, L1));
         
-        NonLValue Result = R1.EvalBinaryOp(ValMgr, BinaryOperator::Add,
-                                           GetRValueConstant(1U, U));
+        NonLValue Result = EvalBinaryOp(ValMgr, BinaryOperator::Add,
+                                        R1, GetRValueConstant(1U, U));
         
         Nodify(Dst, U, N1, SetValue(SetValue(St, U, R1), L1, Result));
         break;
@@ -816,8 +825,8 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U,
         const LValue& L1 = GetLValue(St, U->getSubExpr());
         NonLValue R1 = cast<NonLValue>(GetValue(St, L1));
         
-        NonLValue Result = R1.EvalBinaryOp(ValMgr, BinaryOperator::Sub,
-                                           GetRValueConstant(1U, U));
+        NonLValue Result = EvalBinaryOp(ValMgr, BinaryOperator::Sub,
+                                        R1, GetRValueConstant(1U, U));
         
         Nodify(Dst, U, N1, SetValue(SetValue(St, U, R1), L1, Result));
         break;
@@ -827,8 +836,8 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U,
         const LValue& L1 = GetLValue(St, U->getSubExpr());
         NonLValue R1 = cast<NonLValue>(GetValue(St, L1));
         
-        NonLValue Result = R1.EvalBinaryOp(ValMgr, BinaryOperator::Add,
-                                           GetRValueConstant(1U, U));
+        NonLValue Result = EvalBinaryOp(ValMgr, BinaryOperator::Add,
+                                        R1, GetRValueConstant(1U, U));
         
         Nodify(Dst, U, N1, SetValue(SetValue(St, U, Result), L1, Result));
         break;
@@ -838,8 +847,8 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U,
         const LValue& L1 = GetLValue(St, U->getSubExpr());
         NonLValue R1 = cast<NonLValue>(GetValue(St, L1));
         
-        NonLValue Result = R1.EvalBinaryOp(ValMgr, BinaryOperator::Sub,
-                                           GetRValueConstant(1U, U));
+        NonLValue Result = EvalBinaryOp(ValMgr, BinaryOperator::Sub,
+                                        R1, GetRValueConstant(1U, U));
 
         Nodify(Dst, U, N1, SetValue(SetValue(St, U, Result), L1, Result));
         break;
@@ -869,15 +878,15 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U,
           const LValue& L1 = cast<LValue>(V1);
           lval::ConcreteInt V2(ValMgr.getZeroWithPtrWidth());
           Nodify(Dst, U, N1,
-                 SetValue(St, U, L1.EvalBinaryOp(ValMgr, BinaryOperator::EQ,
-                                                 V2)));
+                 SetValue(St, U, EvalBinaryOp(ValMgr, BinaryOperator::EQ,
+                                              L1, V2)));
         }
         else {
           const NonLValue& R1 = cast<NonLValue>(V1);
           nonlval::ConcreteInt V2(ValMgr.getZeroWithPtrWidth());
           Nodify(Dst, U, N1,
-                 SetValue(St, U, R1.EvalBinaryOp(ValMgr, BinaryOperator::EQ,
-                                                 V2)));
+                 SetValue(St, U, EvalBinaryOp(ValMgr, BinaryOperator::EQ,
+                                              R1, V2)));
         }
         
         break;
@@ -1023,13 +1032,13 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           const LValue& L1 = cast<LValue>(V1);
           const LValue& L2 = cast<LValue>(V2);
           
-          Nodify(Dst, B, N2, SetValue(St, B, L1.EvalBinaryOp(ValMgr, Op, L2)));
+          Nodify(Dst, B, N2, SetValue(St, B, EvalBinaryOp(ValMgr, Op, L1, L2)));
         }
         else {
           const NonLValue& R1 = cast<NonLValue>(V1);
           const NonLValue& R2 = cast<NonLValue>(V2);
             
-          Nodify(Dst, B, N2, SetValue(St, B, R1.EvalBinaryOp(ValMgr, Op, R2)));
+          Nodify(Dst, B, N2, SetValue(St, B, EvalBinaryOp(ValMgr, Op, R1, R2)));
         }
         
         continue;
@@ -1058,12 +1067,12 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           if (isa<LValue>(V2)) {
             // FIXME: Add support for Non-LValues on RHS.
             const LValue& L2 = cast<LValue>(V2);
-            Result = L1.EvalBinaryOp(ValMgr, Op, L2);
+            Result = EvalBinaryOp(ValMgr, Op, L1, L2);
           }
           else {
             const NonLValue& R1 = cast<NonLValue>(GetValue(N1->getState(), L1));
             const NonLValue& R2 = cast<NonLValue>(V2);
-            Result = R1.EvalBinaryOp(ValMgr, Op, R2);
+            Result = EvalBinaryOp(ValMgr, Op, R1, R2);
           }
           
           Nodify(Dst, B, N2, SetValue(SetValue(St, B, Result), L1, Result));
