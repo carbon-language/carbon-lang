@@ -1,6 +1,6 @@
-; RUN: llvm-upgrade < %s | llvm-as | llvm-dis
+; RUN: llvm-as < %s | llvm-dis
 
-void %test() {
-	%tmp.123 = cast long cast ([5 x { ubyte, sbyte }]* getelementptr ([30 x [5 x { ubyte, sbyte }]]* null, long 0, long 0) to long) to int
-	ret void
+define void @test() {
+        %tmp.123 = trunc i64 0 to i32           ; <i32> [#uses=0]
+        ret void
 }

@@ -1,10 +1,7 @@
-; RUN: llvm-upgrade < %s 2>/dev/null | llvm-as -o /dev/null -f
-; RUN: llvm-upgrade < %s |& grep {Renaming global variable 'X' to}
+; RUN: llvm-as < %s -o /dev/null -f
 
-%X = external global uint *
-%X = external global %T* 
-%X = external global int *
+@X = external global i32*
+@X1 = external global %T* 
+@X2 = external global i32*
 
-%T = type int
-
-implementation
+%T = type i32

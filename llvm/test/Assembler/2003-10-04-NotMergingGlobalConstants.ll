@@ -1,7 +1,6 @@
-; RUN: llvm-upgrade < %s | llvm-as -o /dev/null -f
+; RUN: llvm-as < %s -o /dev/null -f
 
-%T = type opaque
-%X = global %T* null
-%Y = global int* null
+%T = type i32
+@X = global i32* null           ; <i32**> [#uses=0]
+@Y = global i32* null           ; <i32**> [#uses=0]
 
-%T = type int

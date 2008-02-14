@@ -1,10 +1,10 @@
-; RUN: llvm-upgrade < %s | llvm-as | llvm-dis | not grep { bitcast (}
+; RUN: llvm-as < %s | llvm-dis | not grep { bitcast (}
 
-%.Base64_1 = external constant [4 x sbyte] 
+@.Base64_1 = external constant [4 x i8]         ; <[4 x i8]*> [#uses=1]
 
-ubyte %test(sbyte %Y) {         ; No predecessors!
-        %X = cast sbyte %Y to ubyte             ; <ubyte> [#uses=1]
-        %tmp.13 = add ubyte %X, cast (sbyte sub (sbyte 0, sbyte cast ([4 x sbyte]* %.Base64_1 to sbyte)) to ubyte)              ; <ubyte> [#uses=1]
-        ret ubyte %tmp.13
+define i8 @test(i8 %Y) {
+        %X = bitcast i8 %Y to i8                ; <i8> [#uses=1]
+        %tmp.13 = add i8 %X, sub (i8 0, i8 ptrtoint ([4 x i8]* @.Base64_1 to i8))     ; <i8> [#uses=1]
+        ret i8 %tmp.13
 }
 

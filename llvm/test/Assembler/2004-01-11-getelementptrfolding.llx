@@ -1,12 +1,12 @@
-; RUN: llvm-upgrade < %s | llvm-as | llvm-dis | \
+; RUN: llvm-as < %s | llvm-dis | \
 ; RUN:   not grep {getelementptr.*getelementptr}
 
-        %struct.TUVVertex = type { short, short, short, short }
-        %struct.TTriangleItem = type { sbyte*, sbyte*, [3 x %struct.TUVVertex] }
+%struct.TTriangleItem = type { i8*, i8*, [3 x %struct.TUVVertex] }
+%struct.TUVVertex = type { i16, i16, i16, i16 }
+@data_triangleItems = internal constant [2908 x %struct.TTriangleItem] zeroinitializer; <[2908 x %struct.TTriangleItem]*> [#uses=2]
 
-%data_triangleItems = internal constant [2908 x %struct.TTriangleItem] zeroinitializer          
-
-void %foo() {
-        store short 0, short* getelementptr ([3 x %struct.TUVVertex]* getelementptr ([2908 x %struct.TTriangleItem]* %data_triangleItems, long 0, long 0, ubyte 2), long 0, long 0, ubyte 0)
-	ret void
+define void @foo() {
+        store i16 0, i16* getelementptr ([2908 x %struct.TTriangleItem]* @data_triangleItems, i64 0, i64 0, i32 2, i64 0, i32 0)
+        ret void
 }
+

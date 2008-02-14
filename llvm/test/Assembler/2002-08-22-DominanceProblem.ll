@@ -1,15 +1,17 @@
-; RUN: llvm-upgrade < %s | llvm-as -o /dev/null -f
+; RUN: llvm-as < %s -o /dev/null -f
 
 ; Dominance relationships is not calculated correctly for unreachable blocks,
 ; which causes the verifier to barf on this input.
 
-int %test(bool %b) {
-BB0:  ret int 7                                 ; Loop is unreachable
+define i32 @test(i1 %b) {
+BB0:
+        ret i32 7 ; Loop is unreachable
 
-Loop:
-        %B = phi int [%B, %L2], [%B, %Loop]     ; PHI has same value always.
-        br bool %b, label %L2, label %Loop
-L2:
+Loop:           ; preds = %L2, %Loop
+        %B = phi i32 [ %B, %L2 ], [ %B, %Loop ]         ;PHI has same value always. 
+        br i1 %b, label %L2, label %Loop
+
+L2:             ; preds = %Loop
         br label %Loop
 }
 

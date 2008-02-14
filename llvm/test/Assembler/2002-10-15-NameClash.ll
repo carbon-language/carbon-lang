@@ -1,7 +1,7 @@
-; RUN: llvm-upgrade < %s | llvm-as -o /dev/null -f
+; RUN: llvm-as < %s -o /dev/null -f
 
-declare int "ArrayRef"([100 x int] * %Array)
+declare i32 @"ArrayRef"([100 x i32] * %Array)
 
-int "ArrayRef"([100 x int] * %Array) {
-	ret int 0
+define i32 @"ArrayRef"([100 x i32] * %Array) {
+	ret i32 0
 }

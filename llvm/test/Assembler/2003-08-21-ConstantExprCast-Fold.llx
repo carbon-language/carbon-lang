@@ -1,5 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llvm-dis | not grep getelementptr
+; RUN: llvm-as < %s | llvm-dis | not grep getelementptr
 
-%A = external global { float }          ; <{ float }*> [#uses=1]
-global int* cast (float* getelementptr ({ float }* %A, long 0, ubyte 0) to int*)
-
+@A = external global { float }          ; <{ float }*> [#uses=2]
+global i32* bitcast ({ float }* @A to i32*)             ; <i32**>:0 [#uses=0]

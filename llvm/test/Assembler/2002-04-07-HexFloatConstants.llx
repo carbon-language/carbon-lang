@@ -5,15 +5,12 @@
 ; of the bug that was causing the Olden Health benchmark to output incorrect
 ; results!
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -constprop | llvm-dis > %t.1
-; RUN: llvm-upgrade < %s | llvm-as | llvm-dis | llvm-as | opt -constprop | \
-; RUN:    llvm-dis > %t.2
+; RUN: llvm-as < %s | opt -constprop | llvm-dis > %t.1
+; RUN: llvm-as < %s | llvm-dis | llvm-as | opt -constprop | \
+; RUN: llvm-dis > %t.2
 ; RUN: diff %t.1 %t.2
 
-implementation
-
-double "test"()
-begin
-	%tmp = mul double 72.0e100, 0x427f4000
-	ret double %tmp
-end
+define double @test() {
+        %tmp = mul double 7.200000e+101, 0x427F4000             ; <double> [#uses=1]
+        ret double %tmp
+}

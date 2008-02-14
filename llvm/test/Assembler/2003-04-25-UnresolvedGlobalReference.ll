@@ -1,9 +1,7 @@
-; RUN: llvm-upgrade < %s | llvm-as -o /dev/null -f
-
+; RUN: llvm-as < %s -o /dev/null -f
 ; There should be absolutely no problem with this testcase.
 
-implementation
-
-int %test(int %arg1, int %arg2) {  
-	ret int cast (int (int, int)* %test to int)
+define i32 @test(i32 %arg1, i32 %arg2) {
+        ret i32 ptrtoint (i32 (i32, i32)* @test to i32)
 }
+

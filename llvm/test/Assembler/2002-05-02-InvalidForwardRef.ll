@@ -1,13 +1,10 @@
-; RUN: llvm-upgrade < %s | llvm-as -o /dev/null -f
-
+; RUN: llvm-as < %s -o /dev/null -f
 ; It looks like the assembler is not forward resolving the function declaraion
 ; correctly.
 
-void "test"()
-begin
-	call void %foo()
-	ret void
-end
+define void @test() {
+        call void @foo( )
+        ret void
+}
 
-declare void "foo"()
-
+declare void @foo()

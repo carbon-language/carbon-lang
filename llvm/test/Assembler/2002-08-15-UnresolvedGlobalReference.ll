@@ -1,10 +1,8 @@
-; RUN: llvm-upgrade < %s | llvm-as -o /dev/null -f
+; RUN: llvm-as < %s -o /dev/null -f
 
-%.LC0 = internal global [12 x sbyte] c"hello world\00"          ; <[12 x sbyte]*> [#uses=1]
+@.LC0 = internal global [12 x i8] c"hello world\00"             ; <[12 x i8]*> [#uses=1]
 
-implementation   ; Functions:
-
-sbyte* %test() {
-        ret sbyte* getelementptr ([12 x sbyte]* %.LC0, long 0, long 0)
+define i8* @test() {
+        ret i8* getelementptr ([12 x i8]* @.LC0, i64 0, i64 0)
 }
 

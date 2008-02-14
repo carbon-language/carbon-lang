@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as -o /dev/null -f
+; RUN: llvm-as < %s -o /dev/null -f
 
 ; This testcase used to fail due to a lack of this diff in Value.cpp:
 ; diff -r1.16 Value.cpp
@@ -13,16 +13,11 @@
 ; >   if (OldTy == NewTy && !OldTy->isAbstract())
 ; >     Ty.removeUserFromConcrete();
 ;
-; This was causing an assertion failure, due to the "foo" Method object never 
+; This was causing an assertion failure, due to the "foo" Method object never
 ; releasing it's reference to the opaque %bb value.
 ;
-declare void "foo"(%bb)
+	
+%bb = type i32
+%exception_descriptor = type i32
 
-%exception_descriptor = type opaque  
-
-%bb = type int
-
-%exception_descriptor = type int
-
-implementation
-
+declare void @foo(i32)
