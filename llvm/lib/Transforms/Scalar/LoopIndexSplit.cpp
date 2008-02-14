@@ -1465,7 +1465,13 @@ bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
         PN->addIncoming(SD.B_StartValue, A_ExitingBlock);
       else { 
         PHINode *OrigPN = cast<PHINode>(InverseMap[PN]);
-        Value *V2 = OrigPN->getIncomingValueForBlock(A_ExitingBlock);
+        Value *V2 = NULL;
+        // If loop header is also loop exiting block then
+        // OrigPN is incoming value for B loop header.
+        if (A_ExitingBlock == L->getHeader())
+          V2 = OrigPN;
+        else
+          V2 = OrigPN->getIncomingValueForBlock(A_ExitingBlock);
         PN->addIncoming(V2, A_ExitingBlock);
       }
     } else
