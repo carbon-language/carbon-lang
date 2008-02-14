@@ -48,13 +48,11 @@ const char *DeclSpec::getSpecifierName(DeclSpec::SCS S) {
 }
 
 bool DeclSpec::BadSpecifier(SCS S, const char *&PrevSpec) {
-  Invalid = true;
   PrevSpec = getSpecifierName(S);
   return true;
 }
 
 bool DeclSpec::BadSpecifier(TSW W, const char *&PrevSpec) {
-  Invalid = true;
   switch (W) {
   case TSW_unspecified: PrevSpec = "unspecified"; break;
   case TSW_short:       PrevSpec = "short"; break;
@@ -65,7 +63,6 @@ bool DeclSpec::BadSpecifier(TSW W, const char *&PrevSpec) {
 }
 
 bool DeclSpec::BadSpecifier(TSC C, const char *&PrevSpec) {
-  Invalid = true;
   switch (C) {
   case TSC_unspecified: PrevSpec = "unspecified"; break;
   case TSC_imaginary:   PrevSpec = "imaginary"; break;
@@ -76,7 +73,6 @@ bool DeclSpec::BadSpecifier(TSC C, const char *&PrevSpec) {
 
 
 bool DeclSpec::BadSpecifier(TSS S, const char *&PrevSpec) {
-  Invalid = true;
   switch (S) {
   case TSS_unspecified: PrevSpec = "unspecified"; break;
   case TSS_signed:      PrevSpec = "signed"; break;
@@ -108,13 +104,11 @@ const char *DeclSpec::getSpecifierName(DeclSpec::TST T) {
 }
 
 bool DeclSpec::BadSpecifier(TST T, const char *&PrevSpec) {
-  Invalid = true;
   PrevSpec = getSpecifierName(T);
   return true;
 }
 
 bool DeclSpec::BadSpecifier(TQ T, const char *&PrevSpec) {
-  Invalid = true;
   switch (T) {
   case DeclSpec::TQ_unspecified: PrevSpec = "unspecified"; break;
   case DeclSpec::TQ_const:       PrevSpec = "const"; break;
