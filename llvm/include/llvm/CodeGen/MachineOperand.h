@@ -21,6 +21,7 @@
 
 namespace llvm {
   
+class ConstantFP;
 class MachineBasicBlock;
 class GlobalValue;
 class MachineInstr;
@@ -34,6 +35,7 @@ public:
   enum MachineOperandType {
     MO_Register,                // Register operand.
     MO_Immediate,               // Immediate Operand
+    MO_FPImmediate,
     MO_MachineBasicBlock,       // MachineBasicBlock reference
     MO_FrameIndex,              // Abstract Stack Frame Index
     MO_ConstantPoolIndex,       // Address of indexed Constant in Constant Pool
@@ -77,6 +79,7 @@ private:
   /// Contents union - This contains the payload for the various operand types.
   union {
     MachineBasicBlock *MBB;   // For MO_MachineBasicBlock.
+    ConstantFP *CFP;          // For MO_FPImmediate.
     int64_t ImmVal;           // For MO_Immediate.
 
     struct {                  // For MO_Register.
@@ -120,6 +123,7 @@ public:
   ///
   bool isRegister() const { return OpKind == MO_Register; }
   bool isImmediate() const { return OpKind == MO_Immediate; }
+  bool isFPImmediate() const { return OpKind == MO_FPImmediate; }
   bool isMachineBasicBlock() const { return OpKind == MO_MachineBasicBlock; }
   bool isFrameIndex() const { return OpKind == MO_FrameIndex; }
   bool isConstantPoolIndex() const { return OpKind == MO_ConstantPoolIndex; }
@@ -231,6 +235,11 @@ public:
     return Contents.ImmVal;
   }
   
+  ConstantFP *getFPImm() const {
+    assert(isFPImmediate() && "Wrong MachineOperand accessor");
+    return Contents.CFP;
+  }
+  
   MachineBasicBlock *getMBB() const {
     assert(isMachineBasicBlock() && "Wrong MachineOperand accessor");
     return Contents.MBB;
@@ -310,6 +319,12 @@ public:
   static MachineOperand CreateImm(int64_t Val) {
     MachineOperand Op(MachineOperand::MO_Immediate);
     Op.setImm(Val);
+    return Op;
+  }
+  
+  static MachineOperand CreateFPImm(ConstantFP *CFP) {
+    MachineOperand Op(MachineOperand::MO_FPImmediate);
+    Op.Contents.CFP = CFP;
     return Op;
   }
   

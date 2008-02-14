@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Constants.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Value.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -138,6 +139,8 @@ bool MachineOperand::isIdenticalTo(const MachineOperand &Other) const {
            getSubReg() == Other.getSubReg();
   case MachineOperand::MO_Immediate:
     return getImm() == Other.getImm();
+  case MachineOperand::MO_FPImmediate:
+    return getFPImm() == Other.getFPImm();
   case MachineOperand::MO_MachineBasicBlock:
     return getMBB() == Other.getMBB();
   case MachineOperand::MO_FrameIndex:
@@ -196,6 +199,13 @@ void MachineOperand::print(std::ostream &OS, const TargetMachine *TM) const {
     break;
   case MachineOperand::MO_Immediate:
     OS << getImm();
+    break;
+  case MachineOperand::MO_FPImmediate:
+    if (getFPImm()->getType() == Type::FloatTy) {
+      OS << getFPImm()->getValueAPF().convertToFloat();
+    } else {
+      OS << getFPImm()->getValueAPF().convertToDouble();
+    }
     break;
   case MachineOperand::MO_MachineBasicBlock:
     OS << "mbb<"
