@@ -30,8 +30,7 @@ using namespace llvm;
 /// recreate the failure. This returns true if a compiler error is found.
 ///
 bool BugDriver::runManyPasses(const std::vector<const PassInfo*> &AllPasses) {
-  std::string Filename;
-  std::vector<const PassInfo*> TempPass(AllPasses);
+  setPassesToRun(AllPasses);
   std::cout << "Starting bug finding procedure...\n\n";
   
   // Creating a reference output if necessary
@@ -45,26 +44,24 @@ bool BugDriver::runManyPasses(const std::vector<const PassInfo*> &AllPasses) {
   }
   
   srand(time(NULL));  
-  std::vector<const PassInfo*>::iterator I = TempPass.begin();
-  std::vector<const PassInfo*>::iterator E = TempPass.end();
-
+  
   unsigned num = 1;
   while(1) {  
     //
     // Step 1: Randomize the order of the optimizer passes.
     //
-    std::random_shuffle(TempPass.begin(), TempPass.end());
+    std::random_shuffle(PassesToRun.begin(), PassesToRun.end());
     
     //
     // Step 2: Run optimizer passes on the program and check for success.
     //
     std::cout << "Running selected passes on program to test for crash: ";
-    for(int i = 0, e = TempPass.size(); i != e; i++) {
-      std::cout << "-" << TempPass[i]->getPassArgument( )<< " ";
+    for(int i = 0, e = PassesToRun.size(); i != e; i++) {
+      std::cout << "-" << PassesToRun[i]->getPassArgument( )<< " ";
     }
     
     std::string Filename;
-    if(runPasses(TempPass, Filename, false)) {
+    if(runPasses(PassesToRun, Filename, false)) {
       std::cout << "\n";
       std::cout << "Optimizer passes caused failure!\n\n";
       debugOptimizerCrash();
@@ -72,7 +69,7 @@ bool BugDriver::runManyPasses(const std::vector<const PassInfo*> &AllPasses) {
     } else {
       std::cout << "Combination " << num << " optimized successfully!\n";
     }
-     
+    
     //
     // Step 3: Compile the optimized code.
     //
@@ -85,7 +82,7 @@ bool BugDriver::runManyPasses(const std::vector<const PassInfo*> &AllPasses) {
       std::cout << TEE.what();
       return debugCodeGeneratorCrash();
     }
-     
+    
     //
     // Step 4: Run the program and compare its output to the reference 
     // output (created above).
