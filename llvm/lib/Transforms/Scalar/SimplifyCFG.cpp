@@ -162,13 +162,15 @@ static bool RemoveUnreachableBlocks(Function &F) {
   
   // Loop over all of the basic blocks that are not reachable, dropping all of
   // their internal references...
-  for (Function::iterator BB = ++F.begin(), E = F.end(); BB != E; ++BB)
-    if (!Reachable.count(BB)) {
-      for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI!=SE; ++SI)
-        if (Reachable.count(*SI))
-          (*SI)->removePredecessor(BB);
-      BB->dropAllReferences();
-    }
+  for (Function::iterator BB = ++F.begin(), E = F.end(); BB != E; ++BB) {
+    if (Reachable.count(BB))
+      continue;
+    
+    for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI != SE; ++SI)
+      if (Reachable.count(*SI))
+        (*SI)->removePredecessor(BB);
+    BB->dropAllReferences();
+  }
   
   for (Function::iterator I = ++F.begin(); I != F.end();)
     if (!Reachable.count(I))
