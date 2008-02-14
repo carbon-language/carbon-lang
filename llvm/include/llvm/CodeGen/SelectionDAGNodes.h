@@ -1207,8 +1207,6 @@ public:
 class ConstantFPSDNode : public SDNode {
   APFloat Value;
   virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
-  // Longterm plan: replace all uses of getValue with getValueAPF, remove
-  // getValue, rename getValueAPF to getValue.
 protected:
   friend class SelectionDAG;
   ConstantFPSDNode(bool isTarget, const APFloat& val, MVT::ValueType VT)
