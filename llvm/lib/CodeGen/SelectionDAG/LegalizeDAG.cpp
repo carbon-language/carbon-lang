@@ -1155,24 +1155,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     // leave these constants as ConstantFP nodes for the target to deal with.
     ConstantFPSDNode *CFP = cast<ConstantFPSDNode>(Node);
 
-    // Check to see if this FP immediate is already legal.
-    bool isLegal = false;
-    for (TargetLowering::legal_fpimm_iterator I = TLI.legal_fpimm_begin(),
-           E = TLI.legal_fpimm_end(); I != E; ++I)
-      if (CFP->isExactlyValue(*I)) {
-        isLegal = true;
-        break;
-      }
-
-    // If this is a legal constant, turn it into a TargetConstantFP node.
-    if (isLegal) {
-      Result = DAG.getTargetConstantFP(CFP->getValueAPF(), 
-                                       CFP->getValueType(0));
-      break;
-    }
-
     switch (TLI.getOperationAction(ISD::ConstantFP, CFP->getValueType(0))) {
     default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Legal:
+      break;
     case TargetLowering::Custom:
       Tmp3 = TLI.LowerOperation(Result, DAG);
       if (Tmp3.Val) {
@@ -1180,8 +1166,21 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         break;
       }
       // FALLTHROUGH
-    case TargetLowering::Expand:
+    case TargetLowering::Expand: {
+      // Check to see if this FP immediate is already legal.
+      bool isLegal = false;
+      for (TargetLowering::legal_fpimm_iterator I = TLI.legal_fpimm_begin(),
+             E = TLI.legal_fpimm_end(); I != E; ++I) {
+        if (CFP->isExactlyValue(*I)) {
+          isLegal = true;
+          break;
+        }
+      }
+      // If this is a legal constant, turn it into a TargetConstantFP node.
+      if (isLegal)
+        break;
       Result = ExpandConstantFP(CFP, true, DAG, TLI);
+    }
     }
     break;
   }

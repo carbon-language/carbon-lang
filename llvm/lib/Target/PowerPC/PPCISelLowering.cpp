@@ -70,9 +70,6 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   setIndexedStoreAction(ISD::PRE_INC, MVT::i32, Legal);
   setIndexedStoreAction(ISD::PRE_INC, MVT::i64, Legal);
 
-  setOperationAction(ISD::ConstantFP, MVT::f64, Expand);
-  setOperationAction(ISD::ConstantFP, MVT::f32, Expand);
-
   // Shortening conversions involving ppcf128 get expanded (2 regs -> 1 reg)
   setConvertAction(MVT::ppcf128, MVT::f64, Expand);
   setConvertAction(MVT::ppcf128, MVT::f32, Expand);

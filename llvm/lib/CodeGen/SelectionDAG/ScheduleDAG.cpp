@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "pre-RA-sched"
+#include "llvm/Constants.h"
 #include "llvm/Type.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
@@ -478,6 +479,10 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
     }
   } else if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op)) {
     MI->addOperand(MachineOperand::CreateImm(C->getValue()));
+  } else if (ConstantFPSDNode *F = dyn_cast<ConstantFPSDNode>(Op)) {
+    const Type *FType = MVT::getTypeForValueType(Op.getValueType());
+    ConstantFP *CFP = ConstantFP::get(FType, F->getValueAPF());
+    MI->addOperand(MachineOperand::CreateFPImm(CFP));
   } else if (RegisterSDNode *R = dyn_cast<RegisterSDNode>(Op)) {
     MI->addOperand(MachineOperand::CreateReg(R->getReg(), false));
   } else if (GlobalAddressSDNode *TGA = dyn_cast<GlobalAddressSDNode>(Op)) {

@@ -688,6 +688,23 @@ def FP_TO_SINT : Pat<(i64 (fp_to_sint FP:$src)),
 def FP_TO_UINT : Pat<(i64 (fp_to_uint FP:$src)),
   (GETFSIG (FCVTFXUTRUNC FP:$src))>;
 
+def fpimm0 : PatLeaf<(fpimm), [{
+  return N->isExactlyValue(+0.0);
+}]>;
+def fpimm1 : PatLeaf<(fpimm), [{
+  return N->isExactlyValue(+1.0);
+}]>;
+def fpimmn0 : PatLeaf<(fpimm), [{
+  return N->isExactlyValue(-0.0);
+}]>;
+def fpimmn1 : PatLeaf<(fpimm), [{
+  return N->isExactlyValue(-1.0);
+}]>;
+
+def : Pat<(f64 fpimm0), (FMOV F0)>;
+def : Pat<(f64 fpimm1), (FMOV F1)>;
+def : Pat<(f64 fpimmn0), (FNEG F0)>;
+def : Pat<(f64 fpimmn1), (FNEG F1)>;
 
 let isTerminator = 1, isBranch = 1 in {
   def BRL_NOTCALL : RawForm<0x03, 0xb0, (outs), (ins i64imm:$dst),

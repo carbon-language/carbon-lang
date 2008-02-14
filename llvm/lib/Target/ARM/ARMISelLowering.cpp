@@ -240,10 +240,6 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::BR_CC    , MVT::f64,   Custom);
   setOperationAction(ISD::BR_JT    , MVT::Other, Custom);
 
-  // FP Constants can't be immediates.
-  setOperationAction(ISD::ConstantFP, MVT::f64, Expand);
-  setOperationAction(ISD::ConstantFP, MVT::f32, Expand);
-
   // We don't support sin/cos/fmod/copysign/pow
   setOperationAction(ISD::FSIN     , MVT::f64, Expand);
   setOperationAction(ISD::FSIN     , MVT::f32, Expand);

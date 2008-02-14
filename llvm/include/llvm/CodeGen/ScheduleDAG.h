@@ -272,6 +272,7 @@ namespace llvm {
     ///
     static bool isPassiveNode(SDNode *Node) {
       if (isa<ConstantSDNode>(Node))       return true;
+      if (isa<ConstantFPSDNode>(Node))     return true;
       if (isa<RegisterSDNode>(Node))       return true;
       if (isa<GlobalAddressSDNode>(Node))  return true;
       if (isa<BasicBlockSDNode>(Node))     return true;

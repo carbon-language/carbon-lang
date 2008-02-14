@@ -174,6 +174,13 @@ TargetLowering::TargetLowering(TargetMachine &tm)
     // These operations default to expand.
     setOperationAction(ISD::FGETSIGN, (MVT::ValueType)VT, Expand);
   }
+  
+  // ConstantFP nodes default to expand.  Targets can either change this to 
+  // Legal, in which case all fp constants are legal, or use addLegalFPImmediate
+  // to optimize expansions for certain constants.
+  setOperationAction(ISD::ConstantFP, MVT::f32, Expand);
+  setOperationAction(ISD::ConstantFP, MVT::f64, Expand);
+  setOperationAction(ISD::ConstantFP, MVT::f80, Expand);
 
   // Default ISD::TRAP to expand (which turns it into abort).
   setOperationAction(ISD::TRAP, MVT::Other, Expand);

@@ -353,8 +353,6 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
 
     // Expand FP immediates into loads from the stack, except for the special
     // cases we handle.
-    setOperationAction(ISD::ConstantFP, MVT::f64, Expand);
-    setOperationAction(ISD::ConstantFP, MVT::f32, Expand);
     addLegalFPImmediate(APFloat(+0.0)); // xorpd
     addLegalFPImmediate(APFloat(+0.0f)); // xorps
 
@@ -390,10 +388,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::FCOS , MVT::f32, Expand);
     setOperationAction(ISD::FREM , MVT::f32, Expand);
 
-    // Expand FP immediates into loads from the stack, except for the special
-    // cases we handle.
-    setOperationAction(ISD::ConstantFP, MVT::f64, Expand);
-    setOperationAction(ISD::ConstantFP, MVT::f32, Expand);
+    // Special cases we handle for FP constants.
     addLegalFPImmediate(APFloat(+0.0f)); // xorps
     addLegalFPImmediate(APFloat(+0.0)); // FLD0
     addLegalFPImmediate(APFloat(+1.0)); // FLD1
@@ -440,9 +435,6 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
       setOperationAction(ISD::FSIN           , MVT::f64  , Expand);
       setOperationAction(ISD::FCOS           , MVT::f64  , Expand);
     }
-
-    setOperationAction(ISD::ConstantFP, MVT::f64, Expand);
-    setOperationAction(ISD::ConstantFP, MVT::f32, Expand);
     addLegalFPImmediate(APFloat(+0.0)); // FLD0
     addLegalFPImmediate(APFloat(+1.0)); // FLD1
     addLegalFPImmediate(APFloat(-0.0)); // FLD0/FCHS
@@ -458,7 +450,6 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::UNDEF,     MVT::f80, Expand);
   setOperationAction(ISD::FCOPYSIGN, MVT::f80, Expand);
   {
-    setOperationAction(ISD::ConstantFP, MVT::f80, Expand);
     APFloat TmpFlt(+0.0);
     TmpFlt.convert(APFloat::x87DoubleExtended, APFloat::rmNearestTiesToEven);
     addLegalFPImmediate(TmpFlt);  // FLD0
