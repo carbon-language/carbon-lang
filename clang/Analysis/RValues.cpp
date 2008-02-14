@@ -123,20 +123,7 @@ ValueManager::getConstraint(SymbolID sym, BinaryOperator::Opcode Op,
   return *C;
 }
 
-//===----------------------------------------------------------------------===//
-// Transfer function for Casts.
-//===----------------------------------------------------------------------===//
 
-RValue RValue::EvalCast(ValueManager& ValMgr, Expr* CastExpr) const {
-  switch (getBaseKind()) {
-    default: assert(false && "Invalid RValue."); break;
-    case LValueKind: return cast<LValue>(this)->EvalCast(ValMgr, CastExpr);
-    case NonLValueKind: return cast<NonLValue>(this)->EvalCast(ValMgr, CastExpr);      
-    case UninitializedKind: case UnknownKind: break;
-  }
-  
-  return *this;
-}
  
 
 //===----------------------------------------------------------------------===//
@@ -268,23 +255,6 @@ NonLValue NonLValue::EvalComplement(ValueManager& ValMgr) const {
 nonlval::ConcreteInt
 nonlval::ConcreteInt::EvalComplement(ValueManager& ValMgr) const {
   return ValMgr.getValue(~getValue()); 
-}
-
-  // Casts.
-
-RValue NonLValue::EvalCast(ValueManager& ValMgr, Expr* CastExpr) const {
-  if (!isa<nonlval::ConcreteInt>(this))
-    return UnknownVal();
-  
-  APSInt V = cast<nonlval::ConcreteInt>(this)->getValue();
-  QualType T = CastExpr->getType();
-  V.setIsUnsigned(T->isUnsignedIntegerType() || T->isPointerType());
-  V.extOrTrunc(ValMgr.getContext().getTypeSize(T, CastExpr->getLocStart()));
-  
-  if (CastExpr->getType()->isPointerType())
-    return lval::ConcreteInt(ValMgr.getValue(V));
-  else
-    return nonlval::ConcreteInt(ValMgr.getValue(V));
 }
 
   // Unary Minus.
@@ -445,23 +415,7 @@ NonLValue LValue::NE(ValueManager& ValMgr, const LValue& RHS) const {
   return NonLValue::GetIntTruthValue(ValMgr, true);
 }
 
-  // Casts.
 
-RValue LValue::EvalCast(ValueManager& ValMgr, Expr* CastExpr) const {
-  if (CastExpr->getType()->isPointerType())
-    return *this;
-  
-  assert (CastExpr->getType()->isIntegerType());
-  
-  if (!isa<lval::ConcreteInt>(*this))
-    return UnknownVal();
-  
-  APSInt V = cast<lval::ConcreteInt>(this)->getValue();
-  QualType T = CastExpr->getType();
-  V.setIsUnsigned(T->isUnsignedIntegerType() || T->isPointerType());
-  V.extOrTrunc(ValMgr.getContext().getTypeSize(T, CastExpr->getLocStart()));
-  return nonlval::ConcreteInt(ValMgr.getValue(V));
-}
 
 //===----------------------------------------------------------------------===//
 // Utility methods for constructing Non-LValues.

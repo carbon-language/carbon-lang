@@ -270,9 +270,6 @@ public:
   
   /// BufferTy - A temporary buffer to hold a set of RValues.
   typedef llvm::SmallVector<RValue,5> BufferTy;
-
-  
-  RValue EvalCast(ValueManager& ValMgr, Expr* CastExpr) const;
   
   unsigned getRawKind() const { return Kind; }
   BaseKind getBaseKind() const { return (BaseKind) (Kind & BaseMask); }
@@ -329,7 +326,6 @@ public:
                                BinaryOperator::Opcode Op,
                                const NonLValue& RHS) const;
 
-  RValue EvalCast(ValueManager& ValMgr, Expr* CastExpr) const;
   NonLValue EvalMinus(ValueManager& ValMgr, UnaryOperator* U) const;
   NonLValue EvalComplement(ValueManager& ValMgr) const;
   
@@ -361,9 +357,7 @@ public:
 
   RValue EvalBinaryOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
                             const LValue& RHS) const;
-  
-  RValue EvalCast(ValueManager& ValMgr, Expr* CastExpr) const;
-  
+    
   static LValue GetValue(AddrLabelExpr* E);
   
   // Implement isa<T> support.

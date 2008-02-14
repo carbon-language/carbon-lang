@@ -18,6 +18,9 @@
 #include "ValueState.h"
 
 #include "clang/Analysis/PathSensitive/GRCoreEngine.h"
+#include "clang/Analysis/PathSensitive/GRTransferFuncs.h"
+#include "GRSimpleVals.h"
+
 #include "clang/AST/Expr.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
@@ -73,7 +76,6 @@ public:
   typedef GRIndirectGotoNodeBuilder<GRExprEngine> IndirectGotoNodeBuilder;
   typedef GRSwitchNodeBuilder<GRExprEngine> SwitchNodeBuilder;
   
-  
   class NodeSet {
     typedef llvm::SmallVector<NodeTy*,3> ImplTy;
     ImplTy Impl;
@@ -115,6 +117,10 @@ protected:
   /// ValueMgr - Object that manages the data for all created RValues.
   ValueManager& ValMgr;
   
+  /// TF - Object that represents a bundle of transfer functions
+  ///  for manipulating and creating RValues.
+  GRTransferFuncs& TF;
+  
   /// SymMgr - Object that manages the symbol information.
   SymbolManager& SymMgr;
   
@@ -139,10 +145,12 @@ protected:
   bool StateCleaned;
   
 public:
-  GRExprEngine(GraphTy& g) : G(g), Liveness(G.getCFG(), G.getFunctionDecl()),
+  GRExprEngine(GraphTy& g) : 
+      G(g), Liveness(G.getCFG(), G.getFunctionDecl()),
       Builder(NULL),
       StateMgr(G.getContext(), G.getAllocator()),
       ValMgr(StateMgr.getValueManager()),
+      TF(*(new GRSimpleVals())), // FIXME.
       SymMgr(StateMgr.getSymbolManager()),
       StmtEntryNode(NULL), CurrentStmt(NULL) {
     
@@ -311,6 +319,11 @@ public:
   
   /// VisitUnaryOperator - Transfer function logic for unary operators.
   void VisitUnaryOperator(UnaryOperator* B, NodeTy* Pred, NodeSet& Dst);
+  
+  
+  inline RValue EvalCast(ValueManager& ValMgr, RValue R, Expr* CastExpr) {
+    return TF.EvalCast(ValMgr, R, CastExpr);
+  }
   
 };
 } // end anonymous namespace
@@ -702,7 +715,7 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* E, NodeTy* Pred, NodeSet& Dst) {
     NodeTy* N = *I1;
     StateTy St = N->getState();
     const RValue& V = GetValue(St, E);
-    Nodify(Dst, CastE, N, SetValue(St, CastE, V.EvalCast(ValMgr, CastE)));
+    Nodify(Dst, CastE, N, SetValue(St, CastE, EvalCast(ValMgr, V, CastE)));
   }
 }
 
@@ -1511,10 +1524,13 @@ void RunGRConstants(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx,
                     Diagnostic& Diag) {
   
   GRCoreEngine<GRExprEngine> Engine(cfg, FD, Ctx);
+  GRExprEngine* CheckerState = &Engine.getCheckerState();
+  
+  // Execute the worklist algorithm.
   Engine.ExecuteWorkList();
   
   // Look for explicit-Null dereferences and warn about them.
-  GRExprEngine* CheckerState = &Engine.getCheckerState();
+
   
   for (GRExprEngine::null_iterator I=CheckerState->null_begin(),
                                   E=CheckerState->null_end(); I!=E; ++I) {
