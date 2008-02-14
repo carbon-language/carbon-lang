@@ -435,44 +435,6 @@ require a copy to be inserted (in X86InstrInfo::convertToThreeAddress).
 
 //===---------------------------------------------------------------------===//
 
-Consider this:
-
-typedef struct pair { float A, B; } pair;
-void pairtest(pair P, float *FP) {
-        *FP = P.A+P.B;
-}
-
-We currently generate this code with llvmgcc4:
-
-_pairtest:
-        movl 8(%esp), %eax
-        movl 4(%esp), %ecx
-        movd %eax, %xmm0
-        movd %ecx, %xmm1
-        addss %xmm0, %xmm1
-        movl 12(%esp), %eax
-        movss %xmm1, (%eax)
-        ret
-
-we should be able to generate:
-_pairtest:
-        movss 4(%esp), %xmm0
-        movl 12(%esp), %eax
-        addss 8(%esp), %xmm0
-        movss %xmm0, (%eax)
-        ret
-
-The issue is that llvmgcc4 is forcing the struct to memory, then passing it as
-integer chunks.  It does this so that structs like {short,short} are passed in
-a single 32-bit integer stack slot.  We should handle the safe cases above much
-nicer, while still handling the hard cases.
-
-While true in general, in this specific case we could do better by promoting
-load int + bitcast to float -> load fload.  This basically needs alignment info,
-the code is already implemented (but disabled) in dag combine).
-
-//===---------------------------------------------------------------------===//
-
 Another instruction selector deficiency:
 
 void %bar() {
@@ -551,25 +513,24 @@ do not make use of.
 
 //===---------------------------------------------------------------------===//
 
-int %foo(int* %a, int %t) {
+define i32 @foo(i32* %a, i32 %t) {
 entry:
-        br label %cond_true
+	br label %cond_true
 
-cond_true:              ; preds = %cond_true, %entry
-        %x.0.0 = phi int [ 0, %entry ], [ %tmp9, %cond_true ]  
-        %t_addr.0.0 = phi int [ %t, %entry ], [ %tmp7, %cond_true ]
-        %tmp2 = getelementptr int* %a, int %x.0.0              
-        %tmp3 = load int* %tmp2         ; <int> [#uses=1]
-        %tmp5 = add int %t_addr.0.0, %x.0.0             ; <int> [#uses=1]
-        %tmp7 = add int %tmp5, %tmp3            ; <int> [#uses=2]
-        %tmp9 = add int %x.0.0, 1               ; <int> [#uses=2]
-        %tmp = setgt int %tmp9, 39              ; <bool> [#uses=1]
-        br bool %tmp, label %bb12, label %cond_true
+cond_true:		; preds = %cond_true, %entry
+	%x.0.0 = phi i32 [ 0, %entry ], [ %tmp9, %cond_true ]		; <i32> [#uses=3]
+	%t_addr.0.0 = phi i32 [ %t, %entry ], [ %tmp7, %cond_true ]		; <i32> [#uses=1]
+	%tmp2 = getelementptr i32* %a, i32 %x.0.0		; <i32*> [#uses=1]
+	%tmp3 = load i32* %tmp2		; <i32> [#uses=1]
+	%tmp5 = add i32 %t_addr.0.0, %x.0.0		; <i32> [#uses=1]
+	%tmp7 = add i32 %tmp5, %tmp3		; <i32> [#uses=2]
+	%tmp9 = add i32 %x.0.0, 1		; <i32> [#uses=2]
+	%tmp = icmp sgt i32 %tmp9, 39		; <i1> [#uses=1]
+	br i1 %tmp, label %bb12, label %cond_true
 
-bb12:           ; preds = %cond_true
-        ret int %tmp7
+bb12:		; preds = %cond_true
+	ret i32 %tmp7
 }
-
 is pessimized by -loop-reduce and -indvars
 
 //===---------------------------------------------------------------------===//
@@ -704,9 +665,9 @@ The add\sub pair is really unneeded here.
 
 Consider the expansion of:
 
-uint %test3(uint %X) {
-        %tmp1 = rem uint %X, 255
-        ret uint %tmp1
+define i32 @test3(i32 %X) {
+        %tmp1 = urem i32 %X, 255
+        ret i32 %tmp1
 }
 
 Currently it compiles to:
@@ -948,22 +909,22 @@ Another example is:
 ;; allocator turns the shift into an LEA.  This also occurs for ADD.
 
 ; Check that the shift gets turned into an LEA.
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -x86-asm-syntax=intel | \
+; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=intel | \
 ; RUN:   not grep {mov E.X, E.X}
 
-%G = external global int
+@G = external global i32		; <i32*> [#uses=3]
 
-int %test1(int %X, int %Y) {
-        %Z = add int %X, %Y
-        volatile store int %Y, int* %G
-        volatile store int %Z, int* %G
-        ret int %X
+define i32 @test1(i32 %X, i32 %Y) {
+	%Z = add i32 %X, %Y		; <i32> [#uses=1]
+	volatile store i32 %Y, i32* @G
+	volatile store i32 %Z, i32* @G
+	ret i32 %X
 }
 
-int %test2(int %X) {
-        %Z = add int %X, 1  ;; inc
-        volatile store int %Z, int* %G
-        ret int %X
+define i32 @test2(i32 %X) {
+	%Z = add i32 %X, 1		; <i32> [#uses=1]
+	volatile store i32 %Z, i32* @G
+	ret i32 %X
 }
 
 //===---------------------------------------------------------------------===//
@@ -1235,37 +1196,6 @@ produces this:
 
 Shark tells us that using %cx in the testw instruction is sub-optimal. It
 suggests using the 32-bit register (which is what ICC uses).
-
-//===---------------------------------------------------------------------===//
-
-rdar://5506677 - We compile this:
-
-define i32 @foo(double %x) {
-        %x14 = bitcast double %x to i64         ; <i64> [#uses=1]
-        %tmp713 = trunc i64 %x14 to i32         ; <i32> [#uses=1]
-        %tmp8 = and i32 %tmp713, 2147483647             ; <i32> [#uses=1]
-        ret i32 %tmp8
-}
-
-to:
-
-_foo:
-        subl    $12, %esp
-        fldl    16(%esp)
-        fstpl   (%esp)
-        movl    $2147483647, %eax
-        andl    (%esp), %eax
-        addl    $12, %esp
-        #FP_REG_KILL
-        ret
-
-It would be much better to eliminate the fldl/fstpl by folding the bitcast 
-into the load SDNode.  That would give us:
-
-_foo:
-        movl    $2147483647, %eax
-        andl    4(%esp), %eax
-        ret
 
 //===---------------------------------------------------------------------===//
 

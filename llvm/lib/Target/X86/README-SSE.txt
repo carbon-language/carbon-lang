@@ -56,22 +56,23 @@ store tmp -> [xslot]
 time, not at spiller time).  *Note* however that this can only be done
 if Y is dead.  Here's a testcase:
 
-%.str_3 = external global [15 x sbyte]          ; <[15 x sbyte]*> [#uses=0]
-implementation   ; Functions:
-declare void %printf(int, ...)
-void %main() {
+@.str_3 = external global [15 x i8]		; <[15 x i8]*> [#uses=0]
+declare void @printf(i32, ...)
+define void @main() {
 build_tree.exit:
-        br label %no_exit.i7
-no_exit.i7:             ; preds = %no_exit.i7, %build_tree.exit
-        %tmp.0.1.0.i9 = phi double [ 0.000000e+00, %build_tree.exit ], [ %tmp.34.i18, %no_exit.i7 ]      ; <double> [#uses=1]
-        %tmp.0.0.0.i10 = phi double [ 0.000000e+00, %build_tree.exit ], [ %tmp.28.i16, %no_exit.i7 ]     ; <double> [#uses=1]
-        %tmp.28.i16 = add double %tmp.0.0.0.i10, 0.000000e+00
-        %tmp.34.i18 = add double %tmp.0.1.0.i9, 0.000000e+00
-        br bool false, label %Compute_Tree.exit23, label %no_exit.i7
-Compute_Tree.exit23:            ; preds = %no_exit.i7
-        tail call void (int, ...)* %printf( int 0 )
-        store double %tmp.34.i18, double* null
-        ret void
+	br label %no_exit.i7
+
+no_exit.i7:		; preds = %no_exit.i7, %build_tree.exit
+	%tmp.0.1.0.i9 = phi double [ 0.000000e+00, %build_tree.exit ], [ %tmp.34.i18, %no_exit.i7 ]		; <double> [#uses=1]
+	%tmp.0.0.0.i10 = phi double [ 0.000000e+00, %build_tree.exit ], [ %tmp.28.i16, %no_exit.i7 ]		; <double> [#uses=1]
+	%tmp.28.i16 = add double %tmp.0.0.0.i10, 0.000000e+00		; <double> [#uses=1]
+	%tmp.34.i18 = add double %tmp.0.1.0.i9, 0.000000e+00		; <double> [#uses=2]
+	br i1 false, label %Compute_Tree.exit23, label %no_exit.i7
+
+Compute_Tree.exit23:		; preds = %no_exit.i7
+	tail call void (i32, ...)* @printf( i32 0 )
+	store double %tmp.34.i18, double* null
+	ret void
 }
 
 We currently emit:
@@ -122,25 +123,6 @@ LBB_X_2:
 It's not clear whether we should use pxor or xorps / xorpd to clear XMM
 registers. The choice may depend on subtarget information. We should do some
 more experiments on different x86 machines.
-
-//===---------------------------------------------------------------------===//
-
-Currently the x86 codegen isn't very good at mixing SSE and FPStack
-code:
-
-unsigned int foo(double x) { return x; }
-
-foo:
-	subl $20, %esp
-	movsd 24(%esp), %xmm0
-	movsd %xmm0, 8(%esp)
-	fldl 8(%esp)
-	fisttpll (%esp)
-	movl (%esp), %eax
-	addl $20, %esp
-	ret
-
-This will be solved when we go to a dynamic programming based isel.
 
 //===---------------------------------------------------------------------===//
 
