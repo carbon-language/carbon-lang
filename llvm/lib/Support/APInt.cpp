@@ -818,7 +818,7 @@ uint32_t APInt::countTrailingOnes() const {
     return std::min(uint32_t(CountTrailingOnes_64(VAL)), BitWidth);
   uint32_t Count = 0;
   uint32_t i = 0;
-  for (; i < getNumWords() && pVal[i] == -1; ++i)
+  for (; i < getNumWords() && pVal[i] == -1ULL; ++i)
     Count += APINT_BITS_PER_WORD;
   if (i < getNumWords())
     Count += CountTrailingOnes_64(pVal[i]);
