@@ -17,7 +17,6 @@
 
 #include "clang/Analysis/PathSensitive/GRCoreEngine.h"
 #include "clang/Analysis/PathSensitive/GRTransferFuncs.h"
-#include "GRSimpleVals.h"
 
 #include "clang/AST/Expr.h"
 #include "clang/AST/ASTContext.h"
@@ -33,7 +32,6 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Compiler.h"
-#include "llvm/Support/Streams.h"
 
 #include <functional>
 
@@ -149,6 +147,10 @@ public:
   /// setTransferFunctions
   void setTransferFunctions(GRTransferFuncs* tf) { TF = tf; }
   void setTransferFunctions(GRTransferFuncs& tf) { TF = &tf; }
+  
+  /// ViewGraph - Visualize the ExplodedGraph created by executing the
+  ///  simulation.
+  void ViewGraph();
   
   /// getInitialState - Return the initial state used for the root vertex
   ///  in the ExplodedGraph.

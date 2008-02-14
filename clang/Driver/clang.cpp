@@ -68,7 +68,7 @@ enum ProgActions {
   ParseCFGDump,                 // Parse ASTS. Build CFGs. Print CFGs.
   ParseCFGView,                 // Parse ASTS. Build CFGs. View CFGs.
   AnalysisLiveVariables,        // Print results of live-variable analysis.
-  AnalysisGRConstants,          // Perform graph-reachability constant prop.
+  AnalysisGRSimpleVals,          // Perform graph-reachability constant prop.
   WarnDeadStores,               // Run DeadStores checker on parsed ASTs.
   WarnDeadStoresCheck,          // Check diagnostics for "DeadStores".
   WarnUninitVals,               // Run UnitializedVariables checker.
@@ -113,7 +113,7 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Flag warnings of stores to dead variables."),
              clEnumValN(WarnUninitVals, "warn-uninit-values",
                         "Flag warnings of uses of unitialized variables."),
-             clEnumValN(AnalysisGRConstants, "grconstants",
+             clEnumValN(AnalysisGRSimpleVals, "grsimple",
                         "Perform path-sensitive constant propagation."),
              clEnumValN(TestSerialization, "test-pickling",
                         "Run prototype serializtion code."),
@@ -971,8 +971,8 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
     case WarnUninitVals:
       return CreateUnitValsChecker(Diag);
       
-    case AnalysisGRConstants:
-      return CreateGRConstants(Diag);
+    case AnalysisGRSimpleVals:
+      return CreateGRSimpleVals(Diag);
       
     case TestSerialization:
       return CreateSerializationTest(Diag, FileMgr, LangOpts);

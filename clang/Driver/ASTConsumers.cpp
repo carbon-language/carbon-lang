@@ -20,7 +20,7 @@
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/CFG.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
-#include "clang/Analysis/Analyses/GRConstants.h"
+#include "clang/Analysis/Analyses/GRSimpleVals.h"
 #include "clang/Analysis/LocalCheckers.h"
 #include "llvm/Support/Streams.h"
 using namespace clang;
@@ -574,26 +574,26 @@ ASTConsumer *clang::CreateUnitValsChecker(Diagnostic &Diags) {
 }
 
 //===----------------------------------------------------------------------===//
-// GRConstants - Perform intra-procedural, path-sensitive constant propagation.
+// GRSimpleVals - Perform intra-procedural, path-sensitive constant propagation.
 
 namespace {
-  class GRConstantsVisitor : public CFGVisitor {
+  class GRSimpleValsVisitor : public CFGVisitor {
     Diagnostic &Diags;
     ASTContext* Ctx;
   public:
-    GRConstantsVisitor(Diagnostic &diags) : Diags(diags) {}
+    GRSimpleValsVisitor(Diagnostic &diags) : Diags(diags) {}
     
     virtual void Initialize(ASTContext &Context) { Ctx = &Context; }    
     virtual void VisitCFG(CFG& C, FunctionDecl&);
   };
 } // end anonymous namespace
 
-ASTConsumer* clang::CreateGRConstants(Diagnostic &Diags) {
-  return new GRConstantsVisitor(Diags);
+ASTConsumer* clang::CreateGRSimpleVals(Diagnostic &Diags) {
+  return new GRSimpleValsVisitor(Diags);
 }
 
-void GRConstantsVisitor::VisitCFG(CFG& C, FunctionDecl& FD) {
-  RunGRConstants(C, FD, *Ctx, Diags);
+void GRSimpleValsVisitor::VisitCFG(CFG& C, FunctionDecl& FD) {
+  RunGRSimpleVals(C, FD, *Ctx, Diags);
 }
 
 //===----------------------------------------------------------------------===//

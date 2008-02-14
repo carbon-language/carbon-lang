@@ -41,7 +41,7 @@ ASTConsumer *CreateDeadStoreChecker(Diagnostic &Diags);
 
 ASTConsumer *CreateUnitValsChecker(Diagnostic &Diags);
   
-ASTConsumer *CreateGRConstants(Diagnostic &Diags);
+ASTConsumer *CreateGRSimpleVals(Diagnostic &Diags);
 
 ASTConsumer *CreateCodeRewriterTest(const std::string& InFile,
                                     Diagnostic &Diags);

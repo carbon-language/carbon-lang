@@ -14,7 +14,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
-#include "GRSimpleVals.h"
+#include "clang/Analysis/PathSensitive/GRTransferFuncs.h"
+
+#include "llvm/Support/Streams.h"
 
 using namespace clang;
 using llvm::dyn_cast;
@@ -1004,7 +1006,7 @@ GRExprEngine::AssumeSymInt(StateTy St, bool Assumption,
 }
 
 //===----------------------------------------------------------------------===//
-// Driver.
+// Visualization.
 //===----------------------------------------------------------------------===//
 
 #ifndef NDEBUG
@@ -1210,36 +1212,10 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
 } // end llvm namespace    
 #endif
 
-namespace clang {
-void RunGRConstants(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx,
-                    Diagnostic& Diag) {
-  
-  GRCoreEngine<GRExprEngine> Engine(cfg, FD, Ctx);
-  GRExprEngine* CheckerState = &Engine.getCheckerState();
-  GRSimpleVals GRSV;
-  CheckerState->setTransferFunctions(GRSV);
-  
-  // Execute the worklist algorithm.
-  Engine.ExecuteWorkList();
-  
-  // Look for explicit-Null dereferences and warn about them.
-
-  
-  for (GRExprEngine::null_iterator I=CheckerState->null_begin(),
-                                  E=CheckerState->null_end(); I!=E; ++I) {
-    
-    const PostStmt& L = cast<PostStmt>((*I)->getLocation());
-    Expr* E = cast<Expr>(L.getStmt());
-    
-    Diag.Report(FullSourceLoc(E->getExprLoc(), Ctx.getSourceManager()),
-                diag::chkr_null_deref_after_check);
-  }
-  
-  
+void GRExprEngine::ViewGraph() {
 #ifndef NDEBUG
-  GraphPrintCheckerState = CheckerState;
-  llvm::ViewGraph(*Engine.getGraph().roots_begin(),"GRExprEngine");
+  GraphPrintCheckerState = this;
+  llvm::ViewGraph(*G.roots_begin(), "GRExprEngine");
   GraphPrintCheckerState = NULL;
-#endif  
+#endif
 }
-} // end clang namespace

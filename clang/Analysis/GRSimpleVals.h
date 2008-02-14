@@ -17,6 +17,7 @@
 #define LLVM_CLANG_ANALYSIS_GRSIMPLEVALS
 
 #include "clang/Analysis/PathSensitive/GRTransferFuncs.h"
+#include "clang/Analysis/PathSensitive/GRExprEngine.h"
 
 namespace clang {
   

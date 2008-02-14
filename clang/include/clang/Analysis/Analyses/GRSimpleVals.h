@@ -1,4 +1,4 @@
-//===-- GRConstants.h- Simple, Path-Sens. Constant Prop. ---------*- C++ -*-==//
+//===-- GRSimpleVals.h- Simple, Path-Sens. Constant Prop. ---------*- C++ -*-==//
 //   
 //                     The LLVM Compiler Infrastructure
 //
@@ -9,7 +9,7 @@
 //
 //               Constant Propagation via Graph Reachability
 //
-//  This files defines the interface to use the 'GRConstants' path-sensitive
+//  This files defines the interface to use the 'GRSimpleVals' path-sensitive
 //  constant-propagation analysis.
 //
 //===----------------------------------------------------------------------===//
@@ -20,11 +20,11 @@
 namespace clang {
   class Diagnostic;
   
-  /// RunGRConstants - This is a simple driver to run the GRConstants analysis
+  /// RunGRSimpleVals - This is a simple driver to run the GRSimpleVals analysis
   ///  on a provided CFG.  This interface will eventually be replaced with
   ///  something more elaborate as the requirements on the interface become
   ///  clearer.
-  void RunGRConstants(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx,
+  void RunGRSimpleVals(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx,
                       Diagnostic& Diag);
   
 } // end clang namespace

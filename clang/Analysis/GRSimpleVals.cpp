@@ -14,8 +14,38 @@
 //===----------------------------------------------------------------------===//
 
 #include "GRSimpleVals.h"
+#include "clang/Basic/Diagnostic.h"
 
 using namespace clang;
+
+namespace clang {
+  void RunGRSimpleVals(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx,
+                      Diagnostic& Diag) {
+    
+    GRCoreEngine<GRExprEngine> Engine(cfg, FD, Ctx);
+    GRExprEngine* CheckerState = &Engine.getCheckerState();
+    GRSimpleVals GRSV;
+    CheckerState->setTransferFunctions(GRSV);
+    
+    // Execute the worklist algorithm.
+    Engine.ExecuteWorkList();
+    
+    // Look for explicit-Null dereferences and warn about them.
+    for (GRExprEngine::null_iterator I=CheckerState->null_begin(),
+         E=CheckerState->null_end(); I!=E; ++I) {
+      
+      const PostStmt& L = cast<PostStmt>((*I)->getLocation());
+      Expr* E = cast<Expr>(L.getStmt());
+      
+      Diag.Report(FullSourceLoc(E->getExprLoc(), Ctx.getSourceManager()),
+                  diag::chkr_null_deref_after_check);
+    }
+        
+#ifndef NDEBUG
+    CheckerState->ViewGraph();
+#endif  
+  }
+} // end clang namespace
 
 //===----------------------------------------------------------------------===//
 // Transfer function for Casts.
