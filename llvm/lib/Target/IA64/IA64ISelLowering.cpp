@@ -298,8 +298,8 @@ IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
 }
 
 std::pair<SDOperand, SDOperand>
-IA64TargetLowering::LowerCallTo(SDOperand Chain,
-                                const Type *RetTy, bool RetTyIsSigned, 
+IA64TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
+                                bool RetSExt, bool RetZExt,
                                 bool isVarArg, unsigned CallingConv, 
                                 bool isTailCall, SDOperand Callee, 
                                 ArgListTy &Args, SelectionDAG &DAG) {

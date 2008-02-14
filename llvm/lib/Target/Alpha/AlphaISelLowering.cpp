@@ -319,7 +319,7 @@ static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
 
 std::pair<SDOperand, SDOperand>
 AlphaTargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy, 
-                                 bool RetTyIsSigned, bool isVarArg,
+                                 bool RetSExt, bool RetZExt, bool isVarArg,
                                  unsigned CallingConv, bool isTailCall,
                                  SDOperand Callee, ArgListTy &Args,
                                  SelectionDAG &DAG) {
@@ -378,8 +378,16 @@ AlphaTargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
   SDOperand RetVal = TheCall;
 
   if (RetTyVT != ActualRetTyVT) {
-    RetVal = DAG.getNode(RetTyIsSigned ? ISD::AssertSext : ISD::AssertZext,
-                         MVT::i64, RetVal, DAG.getValueType(RetTyVT));
+    ISD::NodeType AssertKind = ISD::DELETED_NODE;
+    if (RetSExt)
+      AssertKind = ISD::AssertSext;
+    else if (RetZExt)
+      AssertKind = ISD::AssertZext;
+
+    if (AssertKind != ISD::DELETED_NODE)
+      RetVal = DAG.getNode(AssertKind, MVT::i64, RetVal,
+                           DAG.getValueType(RetTyVT));
+
     RetVal = DAG.getNode(ISD::TRUNCATE, RetTyVT, RetVal);
   }
 

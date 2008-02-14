@@ -264,8 +264,8 @@ SDOperand TargetLowering::LowerMEMCPYCall(SDOperand Chain,
   Entry.Node = Source; Args.push_back(Entry);
   Entry.Node = Count; Args.push_back(Entry);
   std::pair<SDOperand,SDOperand> CallResult =
-      LowerCallTo(Chain, Type::VoidTy, false, false, CallingConv::C, false,
-                  DAG.getExternalSymbol("memcpy", IntPtr), Args, DAG);
+      LowerCallTo(Chain, Type::VoidTy, false, false, false, CallingConv::C,
+                  false, DAG.getExternalSymbol("memcpy", IntPtr), Args, DAG);
   return CallResult.second;
 }
 

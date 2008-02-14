@@ -119,8 +119,9 @@ namespace {
     virtual std::vector<SDOperand>
       LowerArguments(Function &F, SelectionDAG &DAG);
     virtual std::pair<SDOperand, SDOperand>
-      LowerCallTo(SDOperand Chain, const Type *RetTy, bool RetTyIsSigned, 
-                  bool isVarArg, unsigned CC, bool isTailCall, SDOperand Callee,
+      LowerCallTo(SDOperand Chain, const Type *RetTy,
+                  bool RetSExt, bool RetZExt, bool isVarArg,
+                  unsigned CC, bool isTailCall, SDOperand Callee,
                   ArgListTy &Args, SelectionDAG &DAG);
     virtual MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
                                                         MachineBasicBlock *MBB);
@@ -481,8 +482,8 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
 
 std::pair<SDOperand, SDOperand>
 SparcTargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
-                                 bool RetTyIsSigned, bool isVarArg, unsigned CC,
-                                 bool isTailCall, SDOperand Callee, 
+                                 bool RetSExt, bool RetZExt, bool isVarArg,
+                                 unsigned CC, bool isTailCall, SDOperand Callee,
                                  ArgListTy &Args, SelectionDAG &DAG) {
   // Count the size of the outgoing arguments.
   unsigned ArgsSize = 0;
@@ -646,11 +647,16 @@ SparcTargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
       Chain = RetVal.getValue(1);
       
       // Add a note to keep track of whether it is sign or zero extended.
-      ISD::NodeType AssertKind = ISD::AssertZext;
-      if (RetTyIsSigned)
+      ISD::NodeType AssertKind = ISD::DELETED_NODE;
+      if (RetSExt)
         AssertKind = ISD::AssertSext;
-      RetVal = DAG.getNode(AssertKind, MVT::i32, RetVal, 
-                           DAG.getValueType(RetTyVT));
+      else if (RetZExt)
+        AssertKind = ISD::AssertZext;
+
+      if (AssertKind != ISD::DELETED_NODE)
+        RetVal = DAG.getNode(AssertKind, MVT::i32, RetVal,
+                             DAG.getValueType(RetTyVT));
+
       RetVal = DAG.getNode(ISD::TRUNCATE, RetTyVT, RetVal);
       break;
     }

@@ -4519,8 +4519,8 @@ SDOperand X86TargetLowering::LowerMEMSET(SDOperand Op, SelectionDAG &DAG) {
     Entry.Node = Op.getOperand(3);
     Args.push_back(Entry);
     std::pair<SDOperand,SDOperand> CallResult =
-      LowerCallTo(Chain, Type::VoidTy, false, false, CallingConv::C, false,
-                  DAG.getExternalSymbol("memset", IntPtr), Args, DAG);
+      LowerCallTo(Chain, Type::VoidTy, false, false, false, CallingConv::C,
+                  false, DAG.getExternalSymbol("memset", IntPtr), Args, DAG);
     return CallResult.second;
   }
 

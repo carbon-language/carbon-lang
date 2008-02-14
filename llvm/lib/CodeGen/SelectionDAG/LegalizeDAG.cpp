@@ -2862,7 +2862,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       }
 
       std::pair<SDOperand,SDOperand> CallResult =
-        TLI.LowerCallTo(Tmp1, Type::VoidTy, false, false, CallingConv::C, false,
+        TLI.LowerCallTo(Tmp1, Type::VoidTy,
+                        false, false, false, CallingConv::C, false,
                         DAG.getExternalSymbol(FnName, IntPtr), Args, DAG);
       Result = CallResult.second;
       break;
@@ -3963,7 +3964,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Tmp1 = LegalizeOp(Node->getOperand(0));
       TargetLowering::ArgListTy Args;
       std::pair<SDOperand,SDOperand> CallResult =
-        TLI.LowerCallTo(Tmp1, Type::VoidTy, false, false, CallingConv::C, false,
+        TLI.LowerCallTo(Tmp1, Type::VoidTy,
+                        false, false, false, CallingConv::C, false,
                         DAG.getExternalSymbol("abort", TLI.getPointerTy()),
                         Args, DAG);
       Result = CallResult.second;
@@ -5153,6 +5155,7 @@ SDOperand SelectionDAGLegalize::ExpandLibCall(const char *Name, SDNode *Node,
     const Type *ArgTy = MVT::getTypeForValueType(ArgVT);
     Entry.Node = Node->getOperand(i); Entry.Ty = ArgTy; 
     Entry.isSExt = isSigned;
+    Entry.isZExt = !isSigned;
     Args.push_back(Entry);
   }
   SDOperand Callee = DAG.getExternalSymbol(Name, TLI.getPointerTy());
@@ -5160,8 +5163,8 @@ SDOperand SelectionDAGLegalize::ExpandLibCall(const char *Name, SDNode *Node,
   // Splice the libcall in wherever FindInputOutputChains tells us to.
   const Type *RetTy = MVT::getTypeForValueType(Node->getValueType(0));
   std::pair<SDOperand,SDOperand> CallInfo =
-    TLI.LowerCallTo(InChain, RetTy, isSigned, false, CallingConv::C, false,
-                    Callee, Args, DAG);
+    TLI.LowerCallTo(InChain, RetTy, isSigned, !isSigned, false, CallingConv::C,
+                    false, Callee, Args, DAG);
 
   // Legalize the call sequence, starting with the chain.  This will advance
   // the LastCALLSEQ_END to the legalized version of the CALLSEQ_END node that

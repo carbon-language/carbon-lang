@@ -3092,6 +3092,7 @@ void SelectionDAGLowering::LowerCallTo(CallSite CS, SDOperand Callee,
   std::pair<SDOperand,SDOperand> Result =
     TLI.LowerCallTo(getRoot(), CS.getType(),
                     CS.paramHasAttr(0, ParamAttr::SExt),
+                    CS.paramHasAttr(0, ParamAttr::ZExt),
                     FTy->isVarArg(), CS.getCallingConv(), IsTailCall,
                     Callee, Args, DAG);
   if (CS.getType() != Type::VoidTy)
@@ -3951,9 +3952,8 @@ void SelectionDAGLowering::visitMalloc(MallocInst &I) {
   Args.push_back(Entry);
 
   std::pair<SDOperand,SDOperand> Result =
-    TLI.LowerCallTo(getRoot(), I.getType(), false, false, CallingConv::C, true,
-                    DAG.getExternalSymbol("malloc", IntPtr),
-                    Args, DAG);
+    TLI.LowerCallTo(getRoot(), I.getType(), false, false, false, CallingConv::C,
+                    true, DAG.getExternalSymbol("malloc", IntPtr), Args, DAG);
   setValue(&I, Result.first);  // Pointers always fit in registers
   DAG.setRoot(Result.second);
 }
@@ -3966,7 +3966,8 @@ void SelectionDAGLowering::visitFree(FreeInst &I) {
   Args.push_back(Entry);
   MVT::ValueType IntPtr = TLI.getPointerTy();
   std::pair<SDOperand,SDOperand> Result =
-    TLI.LowerCallTo(getRoot(), Type::VoidTy, false, false, CallingConv::C, true,
+    TLI.LowerCallTo(getRoot(), Type::VoidTy, false, false, false,
+                    CallingConv::C, true,
                     DAG.getExternalSymbol("free", IntPtr), Args, DAG);
   DAG.setRoot(Result.second);
 }
@@ -4126,9 +4127,9 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
 /// lowered by the target to something concrete.  FIXME: When all targets are
 /// migrated to using ISD::CALL, this hook should be integrated into SDISel.
 std::pair<SDOperand, SDOperand>
-TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy, 
-                            bool RetTyIsSigned, bool isVarArg,
-                            unsigned CallingConv, bool isTailCall, 
+TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
+                            bool RetSExt, bool RetZExt, bool isVarArg,
+                            unsigned CallingConv, bool isTailCall,
                             SDOperand Callee,
                             ArgListTy &Args, SelectionDAG &DAG) {
   SmallVector<SDOperand, 32> Ops;
@@ -4209,13 +4210,18 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
 
   // Gather up the call result into a single value.
   if (RetTy != Type::VoidTy) {
-    ISD::NodeType AssertOp = ISD::AssertSext;
-    if (!RetTyIsSigned)
+    ISD::NodeType AssertOp = ISD::DELETED_NODE;
+
+    if (RetSExt)
+      AssertOp = ISD::AssertSext;
+    else if (RetZExt)
       AssertOp = ISD::AssertZext;
+
     SmallVector<SDOperand, 4> Results(NumRegs);
     for (unsigned i = 0; i != NumRegs; ++i)
       Results[i] = Res.getValue(i);
-    Res = getCopyFromParts(DAG, &Results[0], NumRegs, RegisterVT, VT, AssertOp);
+    Res = getCopyFromParts(DAG, &Results[0], NumRegs, RegisterVT, VT,
+                           AssertOp, true);
   }
 
   return std::make_pair(Res, Chain);

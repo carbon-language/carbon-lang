@@ -924,8 +924,8 @@ public:
   };
   typedef std::vector<ArgListEntry> ArgListTy;
   virtual std::pair<SDOperand, SDOperand>
-  LowerCallTo(SDOperand Chain, const Type *RetTy, bool RetTyIsSigned, 
-              bool isVarArg, unsigned CallingConv, bool isTailCall, 
+  LowerCallTo(SDOperand Chain, const Type *RetTy, bool RetSExt, bool RetZExt,
+              bool isVarArg, unsigned CallingConv, bool isTailCall,
               SDOperand Callee, ArgListTy &Args, SelectionDAG &DAG);
 
 
