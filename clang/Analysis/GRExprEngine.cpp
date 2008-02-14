@@ -14,6 +14,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
+#include "GRSimpleVals.h"
+
+using namespace clang;
+using llvm::dyn_cast;
+using llvm::cast;
+using llvm::APSInt;
 
 GRExprEngine::StateTy
 GRExprEngine::SetValue(StateTy St, Expr* S, const RValue& V) {
