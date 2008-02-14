@@ -1437,12 +1437,10 @@ void SelectionDAG::ComputeMaskedBits(SDOperand Op, const APInt &Mask,
     // We know that the top bits of C-X are clear if X contains less bits
     // than C (i.e. no wrap-around can happen).  For example, 20-X is
     // positive if we can prove that X is >= 0 and < 16.
-
-    // sign bit clear
     if (CLHS->getAPIntValue().isNonNegative()) {
       unsigned NLZ = (CLHS->getAPIntValue()+1).countLeadingZeros();
       // NLZ can't be BitWidth with no sign bit
-      APInt MaskV = APInt::getHighBitsSet(BitWidth, NLZ);
+      APInt MaskV = APInt::getHighBitsSet(BitWidth, NLZ+1);
       ComputeMaskedBits(Op.getOperand(1), MaskV, KnownZero, KnownOne, Depth+1);
 
       // If all of the MaskV bits are known to be zero, then we know the output
