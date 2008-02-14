@@ -22,6 +22,9 @@ namespace clang {
   void RunGRSimpleVals(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx,
                       Diagnostic& Diag) {
     
+    if (Diag.hasErrorOccurred())
+      return;
+    
     GRCoreEngine<GRExprEngine> Engine(cfg, FD, Ctx);
     GRExprEngine* CheckerState = &Engine.getCheckerState();
     GRSimpleVals GRSV;
