@@ -538,9 +538,6 @@ def rotNeg7imm_i16 : Operand<i16> {
   let PrintMethod = "printROTNeg7Imm";
 }
 
-// Floating point immediate operands
-def f32imm : Operand<f32>;
-
 def target : Operand<OtherVT> {
   let PrintMethod = "printBranchOperand";
 }
