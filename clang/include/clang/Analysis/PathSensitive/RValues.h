@@ -325,9 +325,6 @@ public:
   NonLValue EvalBinaryOp(ValueManager& ValMgr,
                                BinaryOperator::Opcode Op,
                                const NonLValue& RHS) const;
-
-  NonLValue EvalMinus(ValueManager& ValMgr, UnaryOperator* U) const;
-  NonLValue EvalComplement(ValueManager& ValMgr) const;
   
   // Utility methods to create NonLValues.
   static NonLValue GetValue(ValueManager& ValMgr, uint64_t X, QualType T,

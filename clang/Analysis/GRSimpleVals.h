@@ -25,8 +25,17 @@ public:
   GRSimpleVals() {}
   virtual ~GRSimpleVals() {}
   
+  // Casts.
+  
   virtual RValue EvalCast(ValueManager& ValMgr, NonLValue V, Expr* CastExpr);
   virtual RValue EvalCast(ValueManager& ValMgr, LValue V, Expr* CastExpr);
+  
+  // Unary Operators.
+  
+  virtual NonLValue EvalMinus(ValueManager& ValMgr, UnaryOperator* U,
+                              NonLValue X);
+  
+  virtual NonLValue EvalComplement(ValueManager& ValMgr, NonLValue X);
 };
   
   

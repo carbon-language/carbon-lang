@@ -243,14 +243,6 @@ nonlval::ConcreteInt::EvalBinaryOp(ValueManager& ValMgr,
 
   // Bitwise-Complement.
 
-NonLValue NonLValue::EvalComplement(ValueManager& ValMgr) const {
-  switch (getSubKind()) {
-    case nonlval::ConcreteIntKind:
-      return cast<nonlval::ConcreteInt>(this)->EvalComplement(ValMgr);
-    default:
-      return cast<NonLValue>(UnknownVal());
-  }
-}
 
 nonlval::ConcreteInt
 nonlval::ConcreteInt::EvalComplement(ValueManager& ValMgr) const {
@@ -258,15 +250,6 @@ nonlval::ConcreteInt::EvalComplement(ValueManager& ValMgr) const {
 }
 
   // Unary Minus.
-
-NonLValue NonLValue::EvalMinus(ValueManager& ValMgr, UnaryOperator* U) const {
-  switch (getSubKind()) {
-    case nonlval::ConcreteIntKind:
-      return cast<nonlval::ConcreteInt>(this)->EvalMinus(ValMgr, U);
-    default:
-      return cast<NonLValue>(UnknownVal());
-  }
-}
 
 nonlval::ConcreteInt
 nonlval::ConcreteInt::EvalMinus(ValueManager& ValMgr, UnaryOperator* U) const {

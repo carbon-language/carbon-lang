@@ -57,3 +57,25 @@ RValue GRSimpleVals::EvalCast(ValueManager& ValMgr, LValue X, Expr* CastExpr) {
 
   return nonlval::ConcreteInt(ValMgr.getValue(V));
 }
+
+// Unary operators.
+
+NonLValue GRSimpleVals::EvalMinus(ValueManager& ValMgr, UnaryOperator* U,
+                                  NonLValue X) {
+  
+  switch (X.getSubKind()) {
+    case nonlval::ConcreteIntKind:
+      return cast<nonlval::ConcreteInt>(X).EvalMinus(ValMgr, U);
+    default:
+      return cast<NonLValue>(UnknownVal());
+  }
+}
+
+NonLValue GRSimpleVals::EvalComplement(ValueManager& ValMgr, NonLValue X) {
+  switch (X.getSubKind()) {
+    case nonlval::ConcreteIntKind:
+      return cast<nonlval::ConcreteInt>(X).EvalComplement(ValMgr);
+    default:
+      return cast<NonLValue>(UnknownVal());
+  }
+}

@@ -325,6 +325,14 @@ public:
     return TF.EvalCast(ValMgr, R, CastExpr);
   }
   
+  inline NonLValue EvalMinus(ValueManager& ValMgr, UnaryOperator* U,
+                              NonLValue X) {
+    return TF.EvalMinus(ValMgr, U, X);    
+  }
+  
+  inline NonLValue EvalComplement(ValueManager& ValMgr, NonLValue X) {
+    return TF.EvalComplement(ValMgr, X);
+  }
 };
 } // end anonymous namespace
 
@@ -839,13 +847,13 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U,
         
       case UnaryOperator::Minus: {
         const NonLValue& R1 = cast<NonLValue>(GetValue(St, U->getSubExpr()));
-        Nodify(Dst, U, N1, SetValue(St, U, R1.EvalMinus(ValMgr, U)));
+        Nodify(Dst, U, N1, SetValue(St, U, EvalMinus(ValMgr, U, R1)));
         break;
       }
         
       case UnaryOperator::Not: {
         const NonLValue& R1 = cast<NonLValue>(GetValue(St, U->getSubExpr()));
-        Nodify(Dst, U, N1, SetValue(St, U, R1.EvalComplement(ValMgr)));
+        Nodify(Dst, U, N1, SetValue(St, U, EvalComplement(ValMgr, R1)));
         break;
       }
         
