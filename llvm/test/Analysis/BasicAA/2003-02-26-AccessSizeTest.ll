@@ -2,17 +2,17 @@
 ; is performed.  It is not legal to delete the second load instruction because
 ; the value computed by the first load instruction is changed by the store.
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -load-vn -gcse -instcombine | llvm-dis | grep DONOTREMOVE
+; RUN: llvm-as < %s | opt -load-vn -gcse -instcombine | llvm-dis | grep DONOTREMOVE
 
-int %test() {
-	%A = alloca int
-	store int 0, int* %A
-        %X = load int* %A
-        %B = cast int* %A to sbyte*
-        %C = getelementptr sbyte* %B, long 1
-	store sbyte 1, sbyte* %C    ; Aliases %A
-        %Y.DONOTREMOVE = load int* %A
-	%Z = sub int %X, %Y.DONOTREMOVE
-        ret int %Z
+define i32 @test() {
+	%A = alloca i32
+	store i32 0, i32* %A
+    %X = load i32* %A
+    %B = bitcast i32* %A to i8*
+    %C = getelementptr i8* %B, i64 1
+	store i8 1, i8* %C    ; Aliases %A
+    %Y.DONOTREMOVE = load i32* %A
+	%Z = sub i32 %X, %Y.DONOTREMOVE
+    ret i32 %Z
 }
 

@@ -1,11 +1,11 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -basicaa -aa-eval -disable-output
+; RUN: llvm-as < %s | opt -basicaa -aa-eval -disable-output
 
-int %MTConcat([3 x int]* %a.1) {
-	%tmp.961 = getelementptr [3 x int]* %a.1, long 0, long 4
-	%tmp.97 = load int* %tmp.961
-	%tmp.119 = getelementptr [3 x int]* %a.1, long 1, long 0
-	%tmp.120 = load int* %tmp.119
-	%tmp.1541 = getelementptr [3 x int]* %a.1, long 0, long 4
-	%tmp.155 = load int* %tmp.1541
-	ret int 0
+define i32 @MTConcat([3 x i32]* %a.1) {
+	%tmp.961 = getelementptr [3 x i32]* %a.1, i64 0, i64 4
+	%tmp.97 = load i32* %tmp.961
+	%tmp.119 = getelementptr [3 x i32]* %a.1, i64 1, i64 0
+	%tmp.120 = load i32* %tmp.119
+	%tmp.1541 = getelementptr [3 x i32]* %a.1, i64 0, i64 4
+	%tmp.155 = load i32* %tmp.1541
+	ret i32 0
 }

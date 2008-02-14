@@ -1,7 +1,7 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -basicaa -aa-eval -disable-output
+; RUN: llvm-as < %s | opt -basicaa -aa-eval -disable-output
 ; Test for a bug in BasicAA which caused a crash when querying equality of P1&P2
-void %test({[2 x int],[2 x int]}* %A, long %X, long %Y) {
-	%P1 = getelementptr {[2 x int],[2 x int]}* %A, long 0, uint 0, long %X
-	%P2 = getelementptr {[2 x int],[2 x int]}* %A, long 0, uint 1, long %Y
+define void @test({[2 x i32],[2 x i32]}* %A, i64 %X, i64 %Y) {
+	%P1 = getelementptr {[2 x i32],[2 x i32]}* %A, i64 0, i32 0, i64 %X
+	%P2 = getelementptr {[2 x i32],[2 x i32]}* %A, i64 0, i32 1, i64 %Y
 	ret void
 }

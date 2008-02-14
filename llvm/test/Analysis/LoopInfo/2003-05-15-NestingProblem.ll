@@ -1,30 +1,30 @@
 ; This testcase was incorrectly computing that the loopentry.7 loop was
 ; not a child of the loopentry.6 loop.
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -analyze -loops | \
+; RUN: llvm-as < %s | opt -analyze -loops | \
 ; RUN:   grep {^            Loop Containing:  %loopentry.7}
 
-void %getAndMoveToFrontDecode() {		; No predecessors!
+define void @getAndMoveToFrontDecode() {
 	br label %endif.2
 
-endif.2:		; preds = %0, %loopexit.5
-	br bool false, label %loopentry.5, label %UnifiedExitNode
+endif.2:		; preds = %loopexit.5, %0
+	br i1 false, label %loopentry.5, label %UnifiedExitNode
 
-loopentry.5:		; preds = %endif.2, %loopexit.6
-	br bool false, label %loopentry.6, label %UnifiedExitNode
+loopentry.5:		; preds = %loopexit.6, %endif.2
+	br i1 false, label %loopentry.6, label %UnifiedExitNode
 
-loopentry.6:		; preds = %loopentry.5, %loopentry.7
-	br bool false, label %loopentry.7, label %loopexit.6
+loopentry.6:		; preds = %loopentry.7, %loopentry.5
+	br i1 false, label %loopentry.7, label %loopexit.6
 
-loopentry.7:		; preds = %loopentry.6, %loopentry.7
-	br bool false, label %loopentry.7, label %loopentry.6
+loopentry.7:		; preds = %loopentry.7, %loopentry.6
+	br i1 false, label %loopentry.7, label %loopentry.6
 
 loopexit.6:		; preds = %loopentry.6
-	br bool false, label %loopentry.5, label %loopexit.5
+	br i1 false, label %loopentry.5, label %loopexit.5
 
 loopexit.5:		; preds = %loopexit.6
-	br bool false, label %endif.2, label %UnifiedExitNode
+	br i1 false, label %endif.2, label %UnifiedExitNode
 
-UnifiedExitNode:		; preds = %endif.2, %loopexit.5, %loopentry.5
+UnifiedExitNode:		; preds = %loopexit.5, %loopentry.5, %endif.2
 	ret void
 }

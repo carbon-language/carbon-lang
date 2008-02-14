@@ -1,15 +1,15 @@
-; RUN: llvm-upgrade < %s | llvm-as | \
-; RUN:   opt -anders-aa -load-vn -gcse -instcombine | llvm-dis | \
-; RUN:   grep {ret i1 true}
+; RUN: llvm-as < %s | opt -anders-aa -load-vn -gcse -instcombine | llvm-dis \  
+; RUN: | grep {ret i1 true}
 
-%G = internal global int* null
-declare int *%ext()
-bool %bar() {
-  %V1 = load int** %G
-  %X2 = call int *%ext()
-  %V2 = load int** %G
-  store int* %X2, int** %G
+@G = internal global i32* null
+declare i32 *@ext()
 
-  %C = seteq int* %V1, %V2
-  ret bool %C
+define i1 @bar() {
+  %V1 = load i32** @G
+  %X2 = call i32 *@ext()
+  %V2 = load i32** @G
+  store i32* %X2, i32** @G
+
+  %C = icmp eq i32* %V1, %V2
+  ret i1 %C
 }

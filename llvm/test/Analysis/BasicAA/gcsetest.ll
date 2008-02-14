@@ -2,45 +2,45 @@
 ; disambiguating some obvious cases.  All loads should be removable in 
 ; this testcase.
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -basicaa -load-vn -gcse -instcombine -dce | llvm-dis | not grep load
+; RUN: llvm-as < %s | opt -basicaa -load-vn -gcse -instcombine -dce \
+; RUN: | llvm-dis | not grep load
 
-%A = global int 7
-%B = global int 8
-implementation
+@A = global i32 7
+@B = global i32 8
 
-int %test() {
-	%A1 = load int* %A
+define i32 @test() {
+	%A1 = load i32* @A
 
-	store int 123, int* %B  ; Store cannot alias %A
+	store i32 123, i32* @B  ; Store cannot alias @A
 
-	%A2 = load int* %A
-	%X = sub int %A1, %A2
-	ret int %X
+	%A2 = load i32* @A
+	%X = sub i32 %A1, %A2
+	ret i32 %X
 }
 
-int %test2() {
-        %A1 = load int* %A
+define i32 @test2() {
+        %A1 = load i32* @A
         br label %Loop
 Loop:
-        %AP = phi int [0, %0], [%X, %Loop]
-        store int %AP, int* %B  ; Store cannot alias %A
+        %AP = phi i32 [0, %0], [%X, %Loop]
+        store i32 %AP, i32* @B  ; Store cannot alias @A
 
-        %A2 = load int* %A
-        %X = sub int %A1, %A2
-        %c = seteq int %X, 0
-        br bool %c, label %out, label %Loop
+        %A2 = load i32* @A
+        %X = sub i32 %A1, %A2
+        %c = icmp eq i32 %X, 0
+        br i1 %c, label %out, label %Loop
 
 out:
-        ret int %X
+        ret i32 %X
 }
 
-declare void %external()
+declare void @external()
 
-int %test3() {
-	%X = alloca int
-	store int 7, int* %X
-	call void %external()
-	%V = load int* %X
-	ret int %V
+define i32 @test3() {
+	%X = alloca i32
+	store i32 7, i32* %X
+	call void @external()
+	%V = load i32* %X
+	ret i32 %V
 }
 

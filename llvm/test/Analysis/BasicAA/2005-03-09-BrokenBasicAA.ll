@@ -1,15 +1,15 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -basicaa -load-vn -gcse -instcombine |\
-; RUN:    llvm-dis | grep {load i32\\* %A}
+; RUN: llvm-as < %s | opt -basicaa -load-vn -gcse -instcombine |\
+; RUN: llvm-dis | grep {load i32\\* %A}
 
-declare double* %useit(int*)
+declare double* @useit(i32*)
 
-int %foo(uint %Amt) {
-	%A = malloc int, uint %Amt
-	%P = call double*  %useit(int* %A)
+define i32 @foo(i32 %Amt) {
+	%A = malloc i32, i32 %Amt
+	%P = call double*  @useit(i32* %A)
 
-	%X = load int* %A
+	%X = load i32* %A
 	store double 0.0, double* %P
-	%Y = load int* %A
-	%Z = sub int %X, %Y
-	ret int %Z
+	%Y = load i32* %A
+	%Z = sub i32 %X, %Y
+	ret i32 %Z
 }

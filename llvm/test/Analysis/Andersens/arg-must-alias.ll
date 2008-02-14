@@ -1,17 +1,15 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -anders-aa -load-vn -gcse -deadargelim | llvm-dis | not grep ARG
+; RUN: llvm-as < %s | opt -anders-aa -load-vn -gcse -deadargelim | llvm-dis | not grep ARG
 
-%G = internal constant int* null
+@G = internal constant i32* null
 
-implementation
-
-internal int %internal(int* %ARG) {
+define internal i32 @internal(i32* %ARG) {
 	;; The 'Arg' argument must-aliases the null pointer, so it can be subsituted
 	;; directly here, making it dead.
-	store int* %ARG, int** %G
-	ret int 0
+	store i32* %ARG, i32** @G
+	ret i32 0
 }
 
-int %foo() {
-	%V = call int %internal(int* null)
-	ret int %V
+define i32 @foo() {
+	%V = call i32 @internal(i32* null)
+	ret i32 %V
 }

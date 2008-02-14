@@ -1,17 +1,15 @@
 ; A store or load cannot alias a global if the accessed amount is larger then
 ; the global.
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -basicaa -load-vn -gcse -instcombine | llvm-dis | not grep load
+; RUN: llvm-as < %s | opt -basicaa -load-vn -gcse -instcombine | llvm-dis | not grep load
 
-%B = global short 8
+@B = global i16 8               ; <i16*> [#uses=2]
 
-implementation
-
-short %test(int *%P) {
-	%X = load short* %B
-	store int 7, int* %P
-	%Y = load short* %B
-	%Z = sub short %Y, %X
-	ret short %Z
+define i16 @test(i32* %P) {
+        %X = load i16* @B               ; <i16> [#uses=1]
+        store i32 7, i32* %P
+        %Y = load i16* @B               ; <i16> [#uses=1]
+        %Z = sub i16 %Y, %X             ; <i16> [#uses=1]
+        ret i16 %Z
 }
 

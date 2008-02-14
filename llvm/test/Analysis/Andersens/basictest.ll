@@ -1,30 +1,28 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -anders-aa -aa-eval
+; RUN: llvm-as < %s | opt -anders-aa -aa-eval
 
-implementation
-
-void %test1() {
-	%X = malloc int*
-	%Y = malloc int
-	%Z = cast int* %Y to int
-	%W = cast int %Z to int*
-	store int* %W, int** %X
+define void @test1() {
+	%X = malloc i32*
+	%Y = malloc i32
+	%Z = ptrtoint i32* %Y to i32
+	%W = inttoptr i32 %Z to i32*
+	store i32* %W, i32** %X
 	ret void
 }
 
-void %test2(int* %P) {
-	%X = malloc int*
-	%Y = malloc int
-	store int* %P, int** %X
+define void @test2(i32* %P) {
+	%X = malloc i32*
+	%Y = malloc i32
+	store i32* %P, i32** %X
 	ret void
 }
 
-internal int *%test3(int* %P) {
-	ret int* %P
+define internal i32 *@test3(i32* %P) {
+	ret i32* %P
 }
 
-void %test4() {
-	%X = malloc int
-	%Y = call int* %test3(int* %X)
-	%ZZ = getelementptr int* null, int 17
+define void @test4() {
+	%X = malloc i32
+	%Y = call i32* @test3(i32* %X)
+	%ZZ = getelementptr i32* null, i32 17
 	ret void
 }

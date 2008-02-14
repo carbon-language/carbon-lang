@@ -1,3 +1,3 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -anders-aa -disable-output
+; RUN: llvm-as < %s | opt -anders-aa -disable-output
 
-void %foo() { ret void }
+define void @foo() { ret void }

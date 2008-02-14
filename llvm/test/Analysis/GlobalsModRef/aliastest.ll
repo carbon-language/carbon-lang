@@ -1,9 +1,9 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -globalsmodref-aa -load-vn -gcse | llvm-dis | not grep load
-%X = internal global int 4
+; RUN: llvm-as < %s | opt -globalsmodref-aa -load-vn -gcse | llvm-dis | not grep load
+@X = internal global i32 4		; <i32*> [#uses=1]
 
-int %test(int *%P) {
-  store int 7, int* %P
-  store int 12,  int* %X   ;; cannot alias P, X's addr isn't taken
-  %V = load int* %P
-  ret int %V
+define i32 @test(i32* %P) {
+	store i32 7, i32* %P
+	store i32 12, i32* @X
+	%V = load i32* %P		; <i32> [#uses=1]
+	ret i32 %V
 }

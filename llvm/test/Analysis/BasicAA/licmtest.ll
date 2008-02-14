@@ -3,40 +3,40 @@
 ; two pointers, then the load should be hoisted, and the store sunk.  Thus
 ; the loop becomes empty and can be deleted by ADCE. 
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -basicaa -licm --adce | llvm-dis | not grep Loop
+; RUN: llvm-as < %s | opt -basicaa -licm --adce | llvm-dis | not grep Loop
 
-%A = global int 7
-%B = global int 8
-%C = global [2 x int ] [ int 4, int 8 ]
-implementation
+@A = global i32 7               ; <i32*> [#uses=3]
+@B = global i32 8               ; <i32*> [#uses=2]
+@C = global [2 x i32] [ i32 4, i32 8 ]          ; <[2 x i32]*> [#uses=2]
 
-int %test(bool %c) {
-	%Atmp = load int* %A
-	br label %Loop
-Loop:
-	%ToRemove = load int* %A
-	store int %Atmp, int* %B  ; Store cannot alias %A
+define i32 @test(i1 %c) {
+        %Atmp = load i32* @A            ; <i32> [#uses=2]
+        br label %Loop
 
-	br bool %c, label %Out, label %Loop
-Out:
-	%X = sub int %ToRemove, %Atmp
-	ret int %X
+Loop:           ; preds = %Loop, %0
+        %ToRemove = load i32* @A                ; <i32> [#uses=1]
+        store i32 %Atmp, i32* @B
+        br i1 %c, label %Out, label %Loop
+
+Out:            ; preds = %Loop
+        %X = sub i32 %ToRemove, %Atmp           ; <i32> [#uses=1]
+        ret i32 %X
 }
 
-int %test2(bool %c) {
-	br label %Loop
-Loop:
-	%AVal = load int* %A
-	%C0 = getelementptr [2 x int ]* %C, long 0, long 0
-	store int %AVal, int* %C0  ; Store cannot alias %A
+define i32 @test2(i1 %c) {
+        br label %Loop
 
-	%BVal = load int* %B
-	%C1 = getelementptr [2 x int ]* %C, long 0, long 1
-	store int %BVal, int* %C1  ; Store cannot alias %A, %B, or %C0
+Loop:           ; preds = %Loop, %0
+        %AVal = load i32* @A            ; <i32> [#uses=2]
+        %C0 = getelementptr [2 x i32]* @C, i64 0, i64 0         ; <i32*> [#uses=1]
+        store i32 %AVal, i32* %C0
+        %BVal = load i32* @B            ; <i32> [#uses=2]
+        %C1 = getelementptr [2 x i32]* @C, i64 0, i64 1         ; <i32*> [#uses=1]
+        store i32 %BVal, i32* %C1
+        br i1 %c, label %Out, label %Loop
 
-	br bool %c, label %Out, label %Loop
-Out:
-	%X = sub int %AVal, %BVal
-	ret int %X
+Out:            ; preds = %Loop
+        %X = sub i32 %AVal, %BVal               ; <i32> [#uses=1]
+        ret i32 %X
 }
 

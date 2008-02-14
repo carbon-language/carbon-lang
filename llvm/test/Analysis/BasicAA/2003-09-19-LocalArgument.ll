@@ -1,12 +1,12 @@
 ; In this test, a local alloca cannot alias an incoming argument.
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -load-vn -gcse -instcombine | llvm-dis | not grep sub
+; RUN: llvm-as < %s | opt -load-vn -gcse -instcombine | llvm-dis | not grep sub
 
-int %test(int* %P) {
-	%X = alloca int
-	%V1 = load int* %P
-	store int 0, int* %X
-	%V2 = load int* %P
-	%Diff = sub int %V1, %V2
-	ret int %Diff
+define i32 @test(i32* %P) {
+	%X = alloca i32
+	%V1 = load i32* %P
+	store i32 0, i32* %X
+	%V2 = load i32* %P
+	%Diff = sub i32 %V1, %V2
+	ret i32 %Diff
 }

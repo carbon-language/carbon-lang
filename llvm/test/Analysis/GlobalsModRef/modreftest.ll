@@ -1,13 +1,13 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -globalsmodref-aa -load-vn -gcse | llvm-dis | not grep load
-%X = internal global int 4
+; RUN: llvm-as < %s | opt -globalsmodref-aa -load-vn -gcse | llvm-dis | not grep load
+@X = internal global i32 4		; <i32*> [#uses=2]
 
-int %test(int *%P) {
-  store int 12,  int* %X
-  call void %doesnotmodX()
-  %V = load int* %X
-  ret int %V
+define i32 @test(i32* %P) {
+	store i32 12, i32* @X
+	call void @doesnotmodX( )
+	%V = load i32* @X		; <i32> [#uses=1]
+	ret i32 %V
 }
 
-void %doesnotmodX() {
-  ret void
+define void @doesnotmodX() {
+	ret void
 }

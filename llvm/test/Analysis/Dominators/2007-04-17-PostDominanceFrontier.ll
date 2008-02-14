@@ -1,6 +1,6 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -postdomfrontier -disable-output
+; RUN: llvm-as < %s | opt -postdomfrontier -disable-output
 
-void @SManager() {
+define void @SManager() {
 entry:
 	br label %bb.outer
 
@@ -590,7 +590,7 @@ bb442:		; preds = %bb442.outer, %bb442.backedge
 	br i1 false, label %bb420, label %bb.loopexit
 }
 
-void @Invalidate() {
+define void @Invalidate() {
 entry:
 	br i1 false, label %cond_false, label %cond_true
 

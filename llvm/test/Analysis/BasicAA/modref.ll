@@ -1,16 +1,15 @@
 ; A very rudimentary test on AliasAnalysis::getModRefInfo.
-; RUN: llvm-upgrade < %s | llvm-as | \
-; RUN:   opt -print-all-alias-modref-info -aa-eval -disable-output |& \
-; RUN:   not grep NoModRef
+; RUN: llvm-as < %s | opt -print-all-alias-modref-info -aa-eval -disable-output |& \
+; RUN: not grep NoModRef
 
-int %callee() {
-  %X = alloca { int, int }
-  %Y = getelementptr { int, int }* %X, uint 0, uint 0
-  %Z = load int* %Y
-  ret int %Z
+define i32 @callee() {
+        %X = alloca { i32, i32 }                ; <{ i32, i32 }*> [#uses=1]
+        %Y = getelementptr { i32, i32 }* %X, i64 0, i32 0               ; <i32*> [#uses=1]
+        %Z = load i32* %Y               ; <i32> [#uses=1]
+        ret i32 %Z
 }
 
-int %caller() {
-  %X = call int %callee()
-  ret int %X
+define i32 @caller() {
+        %X = call i32 @callee( )                ; <i32> [#uses=1]
+        ret i32 %X
 }

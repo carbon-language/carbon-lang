@@ -1,19 +1,19 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -licm -disable-output
-	%struct..apr_array_header_t = type { int*, int, int, int, sbyte* }
-	%struct..apr_table_t = type { %struct..apr_array_header_t, uint, [32 x int], [32 x int] }
+; RUN: llvm-as < %s | opt -licm -disable-output
+	%struct..apr_array_header_t = type { i32*, i32, i32, i32, i8* }
+	%struct..apr_table_t = type { %struct..apr_array_header_t, i32, [32 x i32], [32 x i32] }
 
-void %table_reindex(%struct..apr_table_t* %t.1) {		; No predecessors!
+define void @table_reindex(%struct..apr_table_t* %t.1) {		; No predecessors!
 	br label %loopentry
 
 loopentry:		; preds = %0, %no_exit
-	%tmp.101 = getelementptr %struct..apr_table_t* %t.1, long 0, uint 0, uint 2
-	%tmp.11 = load int* %tmp.101		; <int> [#uses=0]
-	br bool false, label %no_exit, label %UnifiedExitNode
+	%tmp.101 = getelementptr %struct..apr_table_t* %t.1, i64 0, i32 0, i32 2
+	%tmp.11 = load i32* %tmp.101		; <i32> [#uses=0]
+	br i1 false, label %no_exit, label %UnifiedExitNode
 
 no_exit:		; preds = %loopentry
-	%tmp.25 = cast int 0 to long		; <long> [#uses=1]
-	%tmp.261 = getelementptr %struct..apr_table_t* %t.1, long 0, uint 3, long %tmp.25		; <int*> [#uses=1]
-	store int 0, int* %tmp.261
+	%tmp.25 = sext i32 0 to i64		; <i64> [#uses=1]
+	%tmp.261 = getelementptr %struct..apr_table_t* %t.1, i64 0, i32 3, i64 %tmp.25		; <i32*> [#uses=1]
+	store i32 0, i32* %tmp.261
 	br label %loopentry
 
 UnifiedExitNode:		; preds = %loopentry

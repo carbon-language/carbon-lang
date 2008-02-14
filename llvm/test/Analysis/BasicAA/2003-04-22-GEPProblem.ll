@@ -1,15 +1,15 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -load-vn -gcse -instcombine | llvm-dis | grep sub
+; RUN: llvm-as < %s | opt -load-vn -gcse -instcombine | llvm-dis | grep sub
 
 ; BasicAA was incorrectly concluding that P1 and P2 didn't conflict!
 
-int %test(int *%Ptr, long %V) {
-	%P2 = getelementptr int* %Ptr, long 1
-	%P1 = getelementptr int* %Ptr, long %V
-	%X = load int* %P1
-	store int 5, int* %P2
+define i32 @test(i32 *%Ptr, i64 %V) {
+	%P2 = getelementptr i32* %Ptr, i64 1
+	%P1 = getelementptr i32* %Ptr, i64 %V
+	%X = load i32* %P1
+	store i32 5, i32* %P2
 
-	%Y = load int* %P1
+	%Y = load i32* %P1
 
-	%Z = sub int %X, %Y
-	ret int %Z
+	%Z = sub i32 %X, %Y
+	ret i32 %Z
 }

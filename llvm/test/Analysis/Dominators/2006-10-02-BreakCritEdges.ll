@@ -1,21 +1,20 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -domtree -break-crit-edges -analyze \
+; RUN: llvm-as < %s | opt -domtree -break-crit-edges -analyze \
 ; RUN:  -domtree | grep {3.*%brtrue }
 ; PR932
-implementation   ; Functions:
 
-declare void %use1(int)
+declare void @use1(i32)
 
-void %f(int %i, bool %c) {
+define void @f(i32 %i, i1 %c) {
 entry:
-	%A = seteq int %i, 0		; <bool> [#uses=1]
-	br bool %A, label %brtrue, label %brfalse
+	%A = icmp eq i32 %i, 0		; <i1> [#uses=1]
+	br i1 %A, label %brtrue, label %brfalse
 
 brtrue:		; preds = %brtrue, %entry
-	%B = phi bool [ true, %brtrue ], [ false, %entry ]		; <bool> [#uses=1]
-	call void %use1( int %i )
-	br bool %B, label %brtrue, label %brfalse
+	%B = phi i1 [ true, %brtrue ], [ false, %entry ]		; <i1> [#uses=1]
+	call void @use1( i32 %i )
+	br i1 %B, label %brtrue, label %brfalse
 
 brfalse:		; preds = %brtrue, %entry
-	call void %use1( int %i )
+	call void @use1( i32 %i )
 	ret void
 }

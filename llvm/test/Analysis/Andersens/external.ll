@@ -1,22 +1,20 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -anders-aa -load-vn -gcse -deadargelim | llvm-dis | grep store | not grep null
+; RUN: llvm-as < %s | opt -anders-aa -load-vn -gcse -deadargelim | llvm-dis | grep store | not grep null
 
 ; Because the 'internal' function is passed to an external function, we don't
 ; know what the incoming values will alias.  As such, we cannot do the 
 ; optimization checked by the 'arg-must-alias.llx' test.
 
-declare void %external(int(int*)*)
-%G = internal constant int* null
+declare void @external(i32(i32*)*)
+@G = internal constant i32* null
 
-implementation
-
-internal int %internal(int* %ARG) {
+define internal i32 @internal(i32* %ARG) {
 	;;; We *DON'T* know that ARG always points to null!
-	store int* %ARG, int** %G
-	ret int 0
+	store i32* %ARG, i32** @G
+	ret i32 0
 }
 
-int %foo() {
-	call void %external(int(int*)* %internal)
-	%V = call int %internal(int* null)
-	ret int %V
+define i32 @foo() {
+	call void @external(i32(i32*)* @internal)
+	%V = call i32 @internal(i32* null)
+	ret i32 %V
 }

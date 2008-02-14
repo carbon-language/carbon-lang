@@ -1,27 +1,25 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -basicaa -load-vn -gcse -instcombine | llvm-dis | not grep sub
+; RUN: llvm-as < %s | opt -basicaa -load-vn -gcse -instcombine | \
+; RUN: llvm-dis | not grep sub
 
-%S = type { int, sbyte }
+%S = type { i32, i8 }
 
-sbyte %test(sbyte** %P) {
-	%A = load sbyte** %P
-	%B = load sbyte* %A
-
-	%X = load sbyte** %P
-	%Y = load sbyte* %X
-
-	%R = sub sbyte %B, %Y
-	ret sbyte %R
+define i8 @test(i8** %P) {
+        %A = load i8** %P               ; <i8*> [#uses=1]
+        %B = load i8* %A                ; <i8> [#uses=1]
+        %X = load i8** %P               ; <i8*> [#uses=1]
+        %Y = load i8* %X                ; <i8> [#uses=1]
+        %R = sub i8 %B, %Y              ; <i8> [#uses=1]
+        ret i8 %R
 }
 
-sbyte %test(%S ** %P) {
-	%A = load %S** %P
-	%B = getelementptr %S* %A, int 0, uint 1
-	%C = load sbyte* %B
-
-	%X = load %S** %P
-	%Y = getelementptr %S* %X, int 0, uint 1
-	%Z = load sbyte* %Y
-
-	%R = sub sbyte %C, %Z
-	ret sbyte %R
+define i8 @test1(%S** %P) {
+        %A = load %S** %P               ; <%S*> [#uses=1]
+        %B = getelementptr %S* %A, i32 0, i32 1         ; <i8*> [#uses=1]
+        %C = load i8* %B                ; <i8> [#uses=1]
+        %X = load %S** %P               ; <%S*> [#uses=1]
+        %Y = getelementptr %S* %X, i32 0, i32 1         ; <i8*> [#uses=1]
+        %Z = load i8* %Y                ; <i8> [#uses=1]
+        %R = sub i8 %C, %Z              ; <i8> [#uses=1]
+        ret i8 %R
 }
+

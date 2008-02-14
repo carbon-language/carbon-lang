@@ -1,17 +1,16 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -basicaa -load-vn -gcse -instcombine |\
+; RUN: llvm-as < %s | opt -basicaa -load-vn -gcse -instcombine |\
 ; RUN:   llvm-dis | grep {ret i32 0}
-declare void %foo(int*)
-declare void %bar()
 
-int %test() {
-	%A = alloca int
-	call void %foo(int* %A)
+declare void @foo(i32*)
 
-	%X = load int* %A
-	tail call void %bar()   ;; Cannot modify *%A because it's on the stack.
-	%Y = load int* %A
-	%Z = sub int %X, %Y
-	ret int %Z
+declare void @bar()
+
+define i32 @test() {
+        %A = alloca i32         ; <i32*> [#uses=3]
+        call void @foo( i32* %A )
+        %X = load i32* %A               ; <i32> [#uses=1]
+        tail call void @bar( )
+        %Y = load i32* %A               ; <i32> [#uses=1]
+        %Z = sub i32 %X, %Y             ; <i32> [#uses=1]
+        ret i32 %Z
 }
-
-
