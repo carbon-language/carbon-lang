@@ -158,7 +158,7 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
 
   // SPU constant load actions are custom lowered:
   setOperationAction(ISD::Constant,   MVT::i64, Custom);
-  setOperationAction(ISD::ConstantFP, MVT::f32, Custom);
+  setOperationAction(ISD::ConstantFP, MVT::f32, Legal);
   setOperationAction(ISD::ConstantFP, MVT::f64, Custom);
 
   // SPU's loads and stores have to be custom lowered:
@@ -420,7 +420,6 @@ SPUTargetLowering::getTargetNodeName(unsigned Opcode) const
       "SPUISD::ROTBYTES_LEFT_CHAINED";
     node_names[(unsigned) SPUISD::FSMBI] = "SPUISD::FSMBI";
     node_names[(unsigned) SPUISD::SELB] = "SPUISD::SELB";
-    node_names[(unsigned) SPUISD::SFPConstant] = "SPUISD::SFPConstant";
     node_names[(unsigned) SPUISD::FPInterp] = "SPUISD::FPInterp";
     node_names[(unsigned) SPUISD::FPRecipEst] = "SPUISD::FPRecipEst";
     node_names[(unsigned) SPUISD::SEXT32TO64] = "SPUISD::SEXT32TO64";
@@ -851,12 +850,7 @@ LowerConstant(SDOperand Op, SelectionDAG &DAG) {
   return SDOperand();
 }
 
-//! Custom lower single precision floating point constants
-/*!
-  "float" immediates can be lowered as if they were unsigned 32-bit integers.
-  The SPUISD::SFPConstant pseudo-instruction handles this in the instruction
-  target description.
- */
+//! Custom lower double precision floating point constants
 static SDOperand
 LowerConstantFP(SDOperand Op, SelectionDAG &DAG) {
   unsigned VT = Op.getValueType();
@@ -865,11 +859,7 @@ LowerConstantFP(SDOperand Op, SelectionDAG &DAG) {
   assert((FP != 0) &&
          "LowerConstantFP: Node is not ConstantFPSDNode");
 
-  if (VT == MVT::f32) {
-    float targetConst = FP->getValueAPF().convertToFloat();
-    return DAG.getNode(SPUISD::SFPConstant, VT,
-                       DAG.getTargetConstantFP(targetConst, VT));
-  } else if (VT == MVT::f64) {
+  if (VT == MVT::f64) {
     uint64_t dbits = DoubleToBits(FP->getValueAPF().convertToDouble());
     return DAG.getNode(ISD::BIT_CONVERT, VT,
                        LowerConstant(DAG.getConstant(dbits, MVT::i64), DAG));

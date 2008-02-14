@@ -349,12 +349,12 @@ def ILr32:
 def ILf32:
   RI16Form<0b100000010, (outs R32FP:$rT), (ins s16imm_f32:$val),
     "il\t$rT, $val", ImmLoad,
-    [(set R32FP:$rT, (SPUFPconstant fpimmSExt16:$val))]>;
+    [(set R32FP:$rT, fpimmSExt16:$val)]>;
 
 def ILf64:
   RI16Form<0b100000010, (outs R64FP:$rT), (ins s16imm_f64:$val),
     "il\t$rT, $val", ImmLoad,
-    [(set R64FP:$rT, (SPUFPconstant fpimmSExt16:$val))]>;
+    [(set R64FP:$rT, fpimmSExt16:$val)]>;
 
 def ILHUv4i32:
   RI16Form<0b010000010, (outs VECREG:$rT), (ins u16imm:$val),
@@ -370,7 +370,7 @@ def ILHUr32:
 def ILHUf32:
    RI16Form<0b010000010, (outs R32FP:$rT), (ins f16imm:$val),
     "ilhu\t$rT, $val", ImmLoad,
-    [(set R32FP:$rT, (SPUFPconstant hi16_f32:$val))]>;
+    [(set R32FP:$rT, hi16_f32:$val)]>;
 
 // ILHUhi: Used for loading high portion of an address. Note the symbolHi
 // printer used for the operand.
@@ -405,12 +405,12 @@ def ILAr32:
 def ILAf32:
   RI18Form<0b1000010, (outs R32FP:$rT), (ins f18imm:$val),
     "ila\t$rT, $val", LoadNOP,
-    [(set R32FP:$rT, (SPUFPconstant fpimm18:$val))]>;
+    [(set R32FP:$rT, fpimm18:$val)]>;
 
 def ILAf64:
   RI18Form<0b1000010, (outs R64FP:$rT), (ins f18imm_f64:$val),
     "ila\t$rT, $val", LoadNOP,
-    [(set R64FP:$rT, (SPUFPconstant fpimm18:$val))]>;
+    [(set R64FP:$rT, fpimm18:$val)]>;
 
 def ILAlo:
     RI18Form<0b1000010, (outs R32C:$rT), (ins symbolLo:$val),
@@ -3236,7 +3236,7 @@ def : Pat<(i32 imm:$imm),
           (IOHLr32 (ILHUr32 (HI16 imm:$imm)), (LO16 imm:$imm))>;
 
 // Single precision float constants:
-def : Pat<(SPUFPconstant (f32 fpimm:$imm)),
+def : Pat<(f32 fpimm:$imm),
           (IOHLf32 (ILHUf32 (HI16_f32 fpimm:$imm)), (LO16_f32 fpimm:$imm))>;
 
 // General constant 32-bit vectors

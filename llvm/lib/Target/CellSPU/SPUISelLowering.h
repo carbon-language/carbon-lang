@@ -61,7 +61,6 @@ namespace llvm {
       ROTBYTES_LEFT_CHAINED,    ///< Rotate bytes (loads -> ROTQBYI), with chain
       FSMBI,                    ///< Form Select Mask for Bytes, Immediate
       SELB,                     ///< Select bits -> (b & mask) | (a & ~mask)
-      SFPConstant,              ///< Single precision floating point constant
       FPInterp,                 ///< Floating point interpolate
       FPRecipEst,               ///< Floating point reciprocal estimate
       SEXT32TO64,               ///< Sign-extended 32-bit const -> 64-bits
