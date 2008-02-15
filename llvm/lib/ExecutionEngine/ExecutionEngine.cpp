@@ -799,12 +799,12 @@ void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
     for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i)
       InitializeMemory(CP->getOperand(i), (char*)Addr+i*ElementSize);
     return;
+  } else if (isa<ConstantAggregateZero>(Init)) {
+    memset(Addr, 0, (size_t)getTargetData()->getABITypeSize(Init->getType()));
+    return;
   } else if (Init->getType()->isFirstClassType()) {
     GenericValue Val = getConstantValue(Init);
     StoreValueToMemory(Val, (GenericValue*)Addr, Init->getType());
-    return;
-  } else if (isa<ConstantAggregateZero>(Init)) {
-    memset(Addr, 0, (size_t)getTargetData()->getABITypeSize(Init->getType()));
     return;
   }
 
