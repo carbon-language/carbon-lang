@@ -452,7 +452,7 @@ void GRExprEngine::VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr* S,
   QualType T = S->getArgumentType();
   
   // FIXME: Add support for VLAs.
-  if (isa<VariableArrayType>(T.getTypePtr()))
+  if (!T.getTypePtr()->isConstantSizeType())
     return;
   
   SourceLocation L = S->getExprLoc();
@@ -574,7 +574,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U,
         QualType T = U->getSubExpr()->getType();
         
         // FIXME: Add support for VLAs.
-        if (isa<VariableArrayType>(T.getTypePtr()))
+        if (!T.getTypePtr()->isConstantSizeType())
           return;
         
         SourceLocation L = U->getExprLoc();
