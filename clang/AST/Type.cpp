@@ -570,9 +570,9 @@ bool Type::isAggregateType() const {
 /// isConstantSizeType - Return true if this is not a variable sized type,
 /// according to the rules of C99 6.7.5p3.  It is not legal to call this on
 /// incomplete types.
-bool Type::isConstantSizeType(ASTContext &Ctx) const {
+bool Type::isConstantSizeType() const {
   if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
-    return ASQT->getBaseType()->isConstantSizeType(Ctx);
+    return ASQT->getBaseType()->isConstantSizeType();
   assert(!isIncompleteType() && "This doesn't make sense for incomplete types");
   // The VAT must have a size, as it is known to be complete.
   return !isa<VariableArrayType>(CanonicalType);

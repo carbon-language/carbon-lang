@@ -438,7 +438,7 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
 
   // We know that the pointer points to a type of the correct size, unless the
   // size is a VLA.
-  if (!E->getType()->isConstantSizeType(getContext()))
+  if (!E->getType()->isConstantSizeType())
     assert(0 && "VLA idx not implemented");
   return LValue::MakeAddr(Builder.CreateGEP(Base, Idx, "arrayidx"));
 }

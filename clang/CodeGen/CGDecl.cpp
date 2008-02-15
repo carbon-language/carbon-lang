@@ -66,7 +66,7 @@ void CodeGenFunction::EmitBlockVarDecl(const BlockVarDecl &D) {
 
 void CodeGenFunction::EmitStaticBlockVarDecl(const BlockVarDecl &D) {
   QualType Ty = D.getCanonicalType();
-  assert(Ty->isConstantSizeType(getContext()) && "VLAs can't be static");
+  assert(Ty->isConstantSizeType() && "VLAs can't be static");
   
   llvm::Value *&DMEntry = LocalDeclMap[&D];
   assert(DMEntry == 0 && "Decl already exists in localdeclmap!");
@@ -103,7 +103,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const BlockVarDecl &D) {
   QualType Ty = D.getCanonicalType();
 
   llvm::Value *DeclPtr;
-  if (Ty->isConstantSizeType(getContext())) {
+  if (Ty->isConstantSizeType()) {
     // A normal fixed sized variable becomes an alloca in the entry block.
     const llvm::Type *LTy = ConvertType(Ty);
     // TODO: Alignment
@@ -135,7 +135,7 @@ void CodeGenFunction::EmitParmDecl(const ParmVarDecl &D, llvm::Value *Arg) {
   QualType Ty = D.getCanonicalType();
   
   llvm::Value *DeclPtr;
-  if (!Ty->isConstantSizeType(getContext())) {
+  if (!Ty->isConstantSizeType()) {
     // Variable sized values always are passed by-reference.
     DeclPtr = Arg;
   } else {

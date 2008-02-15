@@ -565,7 +565,7 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
     case UnaryOperator::AlignOf:
     case UnaryOperator::OffsetOf:
       // sizeof(vla) is not a constantexpr: C99 6.5.3.4p2.
-      if (!Exp->getSubExpr()->getType()->isConstantSizeType(Ctx)) {
+      if (!Exp->getSubExpr()->getType()->isConstantSizeType()) {
         if (Loc) *Loc = Exp->getOperatorLoc();
         return false;
       }
@@ -580,7 +580,7 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
   case SizeOfAlignOfTypeExprClass: {
     const SizeOfAlignOfTypeExpr *Exp = cast<SizeOfAlignOfTypeExpr>(this);
     // alignof always evaluates to a constant.
-    if (Exp->isSizeOf() && !Exp->getArgumentType()->isConstantSizeType(Ctx)) {
+    if (Exp->isSizeOf() && !Exp->getArgumentType()->isConstantSizeType()) {
       if (Loc) *Loc = Exp->getOperatorLoc();
       return false;
     }
@@ -722,7 +722,7 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     case UnaryOperator::SizeOf:
     case UnaryOperator::AlignOf:
       // sizeof(vla) is not a constantexpr: C99 6.5.3.4p2.
-      if (!Exp->getSubExpr()->getType()->isConstantSizeType(Ctx)) {
+      if (!Exp->getSubExpr()->getType()->isConstantSizeType()) {
         if (Loc) *Loc = Exp->getOperatorLoc();
         return false;
       }
@@ -771,7 +771,7 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
   case SizeOfAlignOfTypeExprClass: {
     const SizeOfAlignOfTypeExpr *Exp = cast<SizeOfAlignOfTypeExpr>(this);
     // alignof always evaluates to a constant.
-    if (Exp->isSizeOf() && !Exp->getArgumentType()->isConstantSizeType(Ctx)) {
+    if (Exp->isSizeOf() && !Exp->getArgumentType()->isConstantSizeType()) {
       if (Loc) *Loc = Exp->getOperatorLoc();
       return false;
     }
