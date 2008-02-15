@@ -56,12 +56,12 @@ namespace {
 
     // LCSSA form makes instruction renaming easier.
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequiredID(LoopSimplifyID);
+      AU.addPreservedID(LoopSimplifyID);
       AU.addRequiredID(LCSSAID);
       AU.addPreservedID(LCSSAID);
       AU.addPreserved<ScalarEvolution>();
       AU.addPreserved<LoopInfo>();
-      AU.addRequiredID(LoopSimplifyID);
-      AU.addPreservedID(LoopSimplifyID);
       AU.addPreserved<DominatorTree>();
       AU.addPreserved<DominanceFrontier>();
     }
