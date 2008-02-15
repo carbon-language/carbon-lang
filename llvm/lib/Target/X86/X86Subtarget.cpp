@@ -235,12 +235,6 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS, bool is64Bit)
     // If feature string is not empty, parse features string.
     std::string CPU = GetCurrentX86CPU();
     ParseSubtargetFeatures(FS, CPU);
-    
-    if (Is64Bit && !HasX86_64)
-      cerr << "Warning: Generation of 64-bit code for a 32-bit processor "
-           << "requested.\n";
-    if (Is64Bit && X86SSELevel < SSE2)
-      cerr << "Warning: 64-bit processors all have at least SSE2.\n";
   } else {
     // Otherwise, use CPUID to auto-detect feature set.
     AutoDetectSubtargetFeatures();

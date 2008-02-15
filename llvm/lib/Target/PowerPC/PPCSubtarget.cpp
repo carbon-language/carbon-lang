@@ -83,8 +83,6 @@ PPCSubtarget::PPCSubtarget(const TargetMachine &tm, const Module &M,
   // If we are generating code for ppc64, verify that options make sense.
   if (is64Bit) {
     if (!has64BitSupport()) {
-      cerr << "PPC: Generation of 64-bit code for a 32-bit processor "
-           << "requested.  Ignoring 32-bit processor feature.\n";
       Has64BitSupport = true;
     }
     // Silently force 64-bit register use on ppc64.
@@ -94,8 +92,6 @@ PPCSubtarget::PPCSubtarget(const TargetMachine &tm, const Module &M,
   // If the user requested use of 64-bit regs, but the cpu selected doesn't
   // support it, warn and ignore.
   if (use64BitRegs() && !has64BitSupport()) {
-    cerr << "PPC: 64-bit registers requested on CPU without support.  "
-         << "Disabling 64-bit register use.\n";
     Use64BitRegs = false;
   }
   
