@@ -1555,22 +1555,14 @@ bool ASTContext::vectorTypesAreCompatible(QualType lhs, QualType rhs) {
 // C99 6.2.7p1: If both are complete types, then the following additional
 // requirements apply...FIXME (handle compatibility across source files).
 bool ASTContext::tagTypesAreCompatible(QualType lhs, QualType rhs) {
-  TagDecl *ldecl = cast<TagType>(lhs.getCanonicalType())->getDecl();
-  TagDecl *rdecl = cast<TagType>(rhs.getCanonicalType())->getDecl();
-  
-  if (ldecl->getKind() == Decl::Struct && rdecl->getKind() == Decl::Struct) {
-    if (ldecl->getIdentifier() == rdecl->getIdentifier())
-      return true;
-  }
-  if (ldecl->getKind() == Decl::Union && rdecl->getKind() == Decl::Union) {
-    if (ldecl->getIdentifier() == rdecl->getIdentifier())
-      return true;
-  }
   // "Class" and "id" are compatible built-in structure types.
   if (isObjCIdType(lhs) && isObjCClassType(rhs) ||
       isObjCClassType(lhs) && isObjCIdType(rhs))
     return true;
-  return false;
+
+  // Within a translation unit a tag type is
+  // only compatible with itself.
+  return lhs.getCanonicalType() == rhs.getCanonicalType();
 }
 
 bool ASTContext::pointerTypesAreCompatible(QualType lhs, QualType rhs) {
