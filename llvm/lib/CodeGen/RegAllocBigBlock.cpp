@@ -44,7 +44,6 @@
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include <algorithm>
 using namespace llvm;
