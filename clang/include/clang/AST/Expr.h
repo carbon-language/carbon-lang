@@ -435,6 +435,7 @@ public:
   static bool isPostfix(Opcode Op);
 
   bool isPostfix() const { return isPostfix(Opc); }
+  bool isIncrementOp() const {return Opc==PreInc || Opc==PostInc; }
   bool isIncrementDecrementOp() const { return Opc>=PostInc && Opc<=PreDec; }
   bool isSizeOfAlignOfOp() const { return Opc == SizeOf || Opc == AlignOf; }
   bool isOffsetOfOp() const { return Opc == OffsetOf; }
