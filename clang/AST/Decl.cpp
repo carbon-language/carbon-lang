@@ -13,6 +13,7 @@
 
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/Attr.h"
 #include "clang/Basic/IdentifierTable.h"
 using namespace clang;
 
@@ -258,6 +259,11 @@ const char *NamedDecl::getName() const {
   return "";
 }
 
+void ValueDecl::addAttr(Attr *attr)
+{
+  attr->setNext(Attrs);
+  Attrs = attr;
+}
 
 FunctionDecl::~FunctionDecl() {
   delete[] ParamInfo;

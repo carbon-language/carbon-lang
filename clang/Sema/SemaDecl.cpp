@@ -14,6 +14,7 @@
 #include "Sema.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/Attr.h"
 #include "clang/AST/Builtins.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/Expr.h"
@@ -737,10 +738,8 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
 
     FunctionDecl *NewFD = new FunctionDecl(D.getIdentifierLoc(), II, R, SC,
                                            D.getDeclSpec().isInlineSpecified(),
-                                           LastDeclarator,
-                                           D.getDeclSpec().getAttributes());
-
-    // Transfer ownership of DeclSpec attributes to FunctionDecl
+                                           LastDeclarator);
+    // FIXME: Handle attributes.
     D.getDeclSpec().clearAttributes();
     
     // Merge the decl with the existing one if appropriate. Since C functions
@@ -989,7 +988,9 @@ Sema::ActOnParamDeclarator(struct DeclaratorChunk::ParamInfo &PI, Scope *FnScope
     parmDeclType = Context.getPointerType(parmDeclType);
   
   ParmVarDecl *New = new ParmVarDecl(PI.IdentLoc, II, parmDeclType, 
-                                     VarDecl::None, 0, PI.AttrList);
+                                     VarDecl::None, 0);
+  // FIXME: Handle attributes
+  
   if (PI.InvalidType)
     New->setInvalidDecl();
     

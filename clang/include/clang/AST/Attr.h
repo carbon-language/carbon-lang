@@ -29,7 +29,7 @@ private:
   Kind AttrKind;
   
 protected:
-  Attr(Kind AK) : AttrKind(AK) {}
+  Attr(Kind AK) : Next(0), AttrKind(AK) {}
   virtual ~Attr() {
     delete Next;
   }
