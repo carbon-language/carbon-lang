@@ -149,7 +149,7 @@ void ScheduleDAGRRList::CommuteNodesToReducePressure() {
       unsigned Opc = SU->Node->getTargetOpcode();
       const TargetInstrDesc &TID = TII->get(Opc);
       unsigned NumRes = TID.getNumDefs();
-      unsigned NumOps = CountOperands(SU->Node);
+      unsigned NumOps = TID.getNumOperands() - NumRes;
       for (unsigned j = 0; j != NumOps; ++j) {
         if (TID.getOperandConstraint(j+NumRes, TOI::TIED_TO) == -1)
           continue;
@@ -1289,7 +1289,7 @@ bool BURegReductionPriorityQueue<SF>::canClobber(SUnit *SU, SUnit *Op) {
     unsigned Opc = SU->Node->getTargetOpcode();
     const TargetInstrDesc &TID = TII->get(Opc);
     unsigned NumRes = TID.getNumDefs();
-    unsigned NumOps = ScheduleDAG::CountOperands(SU->Node);
+    unsigned NumOps = TID.getNumOperands() - NumRes;
     for (unsigned i = 0; i != NumOps; ++i) {
       if (TID.getOperandConstraint(i+NumRes, TOI::TIED_TO) != -1) {
         SDNode *DU = SU->Node->getOperand(i).Val;
@@ -1365,7 +1365,7 @@ void BURegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
     unsigned Opc = Node->getTargetOpcode();
     const TargetInstrDesc &TID = TII->get(Opc);
     unsigned NumRes = TID.getNumDefs();
-    unsigned NumOps = ScheduleDAG::CountOperands(Node);
+    unsigned NumOps = TID.getNumOperands() - NumRes;
     for (unsigned j = 0; j != NumOps; ++j) {
       if (TID.getOperandConstraint(j+NumRes, TOI::TIED_TO) != -1) {
         SDNode *DU = SU->Node->getOperand(j).Val;
