@@ -30,3 +30,6 @@ int test4 = 0LL;		/* expected-warning {{long long}} */
 /* PR1999 */
 void test5(register);
 
+/* PR2041 */
+int *restrict;
+

@@ -204,7 +204,7 @@ KEYWORD(inline                      , EXTC90)  // Ext in C90, ok in C99/C++
 KEYWORD(int                         , 0)
 KEYWORD(long                        , 0)
 KEYWORD(register                    , 0)
-KEYWORD(restrict                    , EXTC90)    // Ext in C90
+KEYWORD(restrict                    , NOTC90)    // Not in C90
 KEYWORD(return                      , 0)
 KEYWORD(short                       , 0)
 KEYWORD(signed                      , 0)
