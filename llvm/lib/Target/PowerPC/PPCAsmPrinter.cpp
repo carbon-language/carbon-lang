@@ -639,6 +639,15 @@ bool LinuxAsmPrinter::doInitialization(Module &M) {
   return Result;
 }
 
+/// PrintUnmangledNameSafely - Print out the printable characters in the name.
+/// Don't print things like \n or \0.
+static void PrintUnmangledNameSafely(const Value *V, std::ostream &OS) {
+  for (const char *Name = V->getNameStart(), *E = Name+V->getNameLen();
+       Name != E; ++Name)
+    if (isprint(*Name))
+      OS << *Name;
+}
+
 bool LinuxAsmPrinter::doFinalization(Module &M) {
   const TargetData *TD = TM.getTargetData();
 
@@ -680,7 +689,9 @@ bool LinuxAsmPrinter::doFinalization(Module &M) {
         SwitchToDataSection("\t.data", I);
         O << ".comm " << name << "," << Size;
       }
-      O << "\t\t" << TAI->getCommentString() << " '" << I->getName() << "'\n";
+      O << "\t\t" << TAI->getCommentString() << " '";
+      PrintUnmangledNameSafely(I, O);
+      O << "'\n";
     } else {
       switch (I->getLinkage()) {
       case GlobalValue::LinkOnceLinkage:
@@ -727,8 +738,9 @@ bool LinuxAsmPrinter::doFinalization(Module &M) {
       }
 
       EmitAlignment(Align, I);
-      O << name << ":\t\t\t\t" << TAI->getCommentString() << " '"
-        << I->getName() << "'\n";
+      O << name << ":\t\t\t\t" << TAI->getCommentString() << " '";
+      PrintUnmangledNameSafely(I, O);
+      O << "'\n";
 
       // If the initializer is a extern weak symbol, remember to emit the weak
       // reference!
@@ -942,7 +954,9 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
         if (Subtarget.isDarwin9())
           O << "," << Align;
       }
-      O << "\t\t" << TAI->getCommentString() << " '" << I->getName() << "'\n";
+      O << "\t\t" << TAI->getCommentString() << " '";
+      PrintUnmangledNameSafely(I, O);
+      O << "'\n";
     } else {
       switch (I->getLinkage()) {
       case GlobalValue::LinkOnceLinkage:
@@ -999,8 +1013,9 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
       }
 
       EmitAlignment(Align, I);
-      O << name << ":\t\t\t\t" << TAI->getCommentString() << " '"
-        << I->getName() << "'\n";
+      O << name << ":\t\t\t\t" << TAI->getCommentString() << " '";
+      PrintUnmangledNameSafely(I, O);
+      O << "'\n";
 
       // If the initializer is a extern weak symbol, remember to emit the weak
       // reference!
