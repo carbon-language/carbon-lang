@@ -75,6 +75,21 @@ void GRExprEngine::ProcessBranch(Expr* Condition, Stmt* Term,
   // Remove old bindings for subexpressions.
   StateTy PrevState = StateMgr.RemoveSubExprBindings(builder.getState());
   
+  // Check for NULL conditions; e.g. "for(;;)"
+  if (!Condition) { 
+    builder.markInfeasible(false);
+    
+    // Get the current block counter.
+    GRBlockCounter BC = builder.getBlockCounter();
+    unsigned BlockID = builder.getTargetBlock(true)->getBlockID();
+    unsigned NumVisited = BC.getNumVisited(BlockID);
+        
+    if (NumVisited < 1) builder.generateNode(PrevState, true);
+    else builder.markInfeasible(true);
+
+    return;
+  }
+  
   RValue V = GetValue(PrevState, Condition);
   
   switch (V.getBaseKind()) {
@@ -98,10 +113,9 @@ void GRExprEngine::ProcessBranch(Expr* Condition, Stmt* Term,
       return;
     }      
   }
-
+  
   // Get the current block counter.
   GRBlockCounter BC = builder.getBlockCounter();
-    
   unsigned BlockID = builder.getTargetBlock(true)->getBlockID();
   unsigned NumVisited = BC.getNumVisited(BlockID);
   
@@ -708,11 +722,22 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
             const NonLValue& R2 = cast<NonLValue>(V2);
             Result = EvalBinaryOp(ValMgr, Op, L1, R2);
           }
-          else if (isa<LValue>(V2)) {          // LValue comparison.
+          else if (isa<LValue>(V2)) {
             const LValue& L2 = cast<LValue>(V2);
-            Result = EvalBinaryOp(ValMgr, Op, L1, L2);
+            
+            if (B->getRHS()->getType()->isPointerType()) {
+              // LValue comparison.
+              Result = EvalBinaryOp(ValMgr, Op, L1, L2);
+            }
+            else {
+              // An operation between two variables of a non-lvalue type.
+              Result =
+                EvalBinaryOp(ValMgr, Op,
+                             cast<NonLValue>(GetValue(N1->getState(), L1)),
+                             cast<NonLValue>(GetValue(N2->getState(), L2)));
+            }
           }
-          else { // Any operation between two Non-LValues.
+          else { // Any other operation between two Non-LValues.
             const NonLValue& R1 = cast<NonLValue>(GetValue(N1->getState(), L1));
             const NonLValue& R2 = cast<NonLValue>(V2);
             Result = EvalBinaryOp(ValMgr, Op, R1, R2);
