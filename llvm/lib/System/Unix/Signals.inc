@@ -61,54 +61,12 @@ void* StackTrace[256];
 // trace so that the user has an indication of why and where we died.
 //
 // On glibc systems we have the 'backtrace' function, which works nicely, but
-// doesn't demangle symbols.  In order to backtrace symbols, we fork and exec a
-// 'c++filt' process to do the demangling.  This seems like the simplest and
-// most robust solution when we can't allocate memory (such as in a signal
-// handler).  If we can't find 'c++filt', we fallback to printing mangled names.
-//
+// doesn't demangle symbols.  
 void PrintStackTrace() {
 #ifdef HAVE_BACKTRACE
   // Use backtrace() to output a backtrace on Linux systems with glibc.
   int depth = backtrace(StackTrace, array_lengthof(StackTrace));
-  
-  // Create a one-way unix pipe.  The backtracing process writes to PipeFDs[1],
-  // the c++filt process reads from PipeFDs[0].
-  int PipeFDs[2];
-  if (pipe(PipeFDs)) {
-    backtrace_symbols_fd(StackTrace, depth, STDERR_FILENO);
-    return;
-  }
-
-  switch (pid_t ChildPID = fork()) {
-  case -1:        // Error forking, print mangled stack trace
-    close(PipeFDs[0]);
-    close(PipeFDs[1]);
-    backtrace_symbols_fd(StackTrace, depth, STDERR_FILENO);
-    return;
-  default:        // backtracing process
-    close(PipeFDs[0]);  // Close the reader side.
-
-    // Print the mangled backtrace into the pipe.
-    backtrace_symbols_fd(StackTrace, depth, PipeFDs[1]);
-    close(PipeFDs[1]);   // We are done writing.
-    while (waitpid(ChildPID, 0, 0) == -1)
-      if (errno != EINTR) break;
-    return;
-
-  case 0:         // c++filt process
-    close(PipeFDs[1]);    // Close the writer side.
-    dup2(PipeFDs[0], 0);  // Read from standard input
-    close(PipeFDs[0]);    // Close the old descriptor
-    dup2(2, 1);           // Revector stdout -> stderr
-
-    // Try to run c++filt or gc++filt.  If neither is found, call back on 'cat'
-    // to print the mangled stack trace.  If we can't find cat, just exit.
-    execlp("c++filt", "c++filt", (char*)NULL);
-    execlp("gc++filt", "gc++filt", (char*)NULL);
-    execlp("cat", "cat", (char*)NULL);
-    execlp("/bin/cat", "cat", (char*)NULL);
-    exit(0);
-  }
+  backtrace_symbols_fd(StackTrace, depth, STDERR_FILENO);
 #endif
 }
 
