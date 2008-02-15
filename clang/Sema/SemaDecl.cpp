@@ -277,14 +277,6 @@ FunctionDecl *Sema::MergeFunctionDecl(FunctionDecl *New, ScopedDecl *OldD) {
   return New;
 }
 
-
-/// hasUndefinedLength - Used by equivalentArrayTypes to determine whether the
-/// the outermost VariableArrayType has no size defined.
-static bool hasUndefinedLength(const ArrayType *Array) {
-  const VariableArrayType *VAT = Array->getAsVariableArrayType();
-  return VAT && !VAT->getSizeExpr();
-}
-
 /// equivalentArrayTypes - Used to determine whether two array types are 
 /// equivalent.
 /// We need to check this explicitly as an incomplete array definition is
@@ -306,7 +298,7 @@ static bool areEquivalentArrayTypes(QualType NewQType, QualType OldQType) {
   // removing the outermost VAT gives
   //     CAT(1, int) and CAT(1, int)
   // which are equal, therefore the array types are equivalent.
-  if (hasUndefinedLength(NewAT) || hasUndefinedLength(OldAT)) {
+  if (NewAT->isIncompleteArrayType() || OldAT->isIncompleteArrayType()) {
     if (NewAT->getIndexTypeQualifier() != OldAT->getIndexTypeQualifier())
       return false;
     NewQType = NewAT->getElementType().getCanonicalType();
@@ -604,7 +596,7 @@ bool Sema::CheckInitializerListTypes(InitListExpr*& IList, QualType &DeclType,
                                                 false, startIndex);
         }
       }
-      if (DeclType->getAsVariableArrayType()) {
+      if (DeclType->isIncompleteArrayType()) {
         // If this is an incomplete array type, the actual type needs to
         // be calculated here
         if (numElements == 0) {
@@ -713,10 +705,9 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     if (S->getParent() == 0) {
       // C99 6.7.7p2: If a typedef name specifies a variably modified type
       // then it shall have block scope.
-      if (const VariableArrayType *VAT = 
-            NewTD->getUnderlyingType()->getAsVariablyModifiedType()) {
-        Diag(D.getIdentifierLoc(), diag::err_typecheck_illegal_vla, 
-             VAT->getSizeExpr()->getSourceRange());
+      if (NewTD->getUnderlyingType()->isVariablyModifiedType()) {
+        // FIXME: Diagnostic needs to be fixed.
+        Diag(D.getIdentifierLoc(), diag::err_typecheck_illegal_vla);
         InvalidDecl = true;
       }
     }
@@ -928,9 +919,7 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
     // external linkage is valid (C99 6.2.2p5).
     if (FVD && !FVD->getInit() && (FVD->getStorageClass() == VarDecl::Static || 
                                    FVD->getStorageClass() == VarDecl::None)) {
-      const VariableArrayType *VAT = T->getAsVariableArrayType();
-      
-      if (VAT && VAT->getSizeExpr() == 0) {
+      if (T->isIncompleteArrayType()) {
         // C99 6.9.2 (p2, p5): Implicit initialization causes an incomplete
         // array to be completed. Don't issue a diagnostic.
       } else if (T->isIncompleteType()) {
@@ -1291,9 +1280,9 @@ Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *TagDecl,
 
   // C99 6.7.2.1p8: A member of a structure or union may have any type other
   // than a variably modified type.
-  if (const VariableArrayType *VAT = T->getAsVariablyModifiedType()) {
-    Diag(Loc, diag::err_typecheck_illegal_vla, 
-           VAT->getSizeExpr()->getSourceRange());
+  if (T->isVariablyModifiedType()) {
+    // FIXME: This diagnostic needs work
+    Diag(Loc, diag::err_typecheck_illegal_vla, Loc);
     InvalidDecl = true;
   }
   // FIXME: Chain fielddecls together.
