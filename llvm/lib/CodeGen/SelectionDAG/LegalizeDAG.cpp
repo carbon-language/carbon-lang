@@ -2344,14 +2344,14 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           MVT::ValueType TVT = MVT::getVectorType(EVT, NumElems);
           if (TLI.isTypeLegal(TVT)) {
             // Turn this into a normal store of the vector type.
-            Tmp3 = LegalizeOp(Node->getOperand(1));
+            Tmp3 = LegalizeOp(ST->getValue());
             Result = DAG.getStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
                                   SVOffset, isVolatile, Alignment);
             Result = LegalizeOp(Result);
             break;
           } else if (NumElems == 1) {
             // Turn this into a normal store of the scalar type.
-            Tmp3 = ScalarizeVectorOp(Node->getOperand(1));
+            Tmp3 = ScalarizeVectorOp(ST->getValue());
             Result = DAG.getStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
                                   SVOffset, isVolatile, Alignment);
             // The scalarized value type may not be legal, e.g. it might require
@@ -2359,12 +2359,12 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
             Result = LegalizeOp(Result);
             break;
           } else {
-            SplitVectorOp(Node->getOperand(1), Lo, Hi);
+            SplitVectorOp(ST->getValue(), Lo, Hi);
             IncrementSize = MVT::getVectorNumElements(Lo.Val->getValueType(0)) * 
                             MVT::getSizeInBits(EVT)/8;
           }
         } else {
-          ExpandOp(Node->getOperand(1), Lo, Hi);
+          ExpandOp(ST->getValue(), Lo, Hi);
           IncrementSize = Hi.Val ? MVT::getSizeInBits(Hi.getValueType())/8 : 0;
 
           if (TLI.isBigEndian())
