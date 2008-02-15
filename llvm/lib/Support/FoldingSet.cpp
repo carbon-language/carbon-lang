@@ -326,7 +326,8 @@ FoldingSetImpl::Node *FoldingSetImpl::GetOrInsertNode(FoldingSetImpl::Node *N) {
 
 FoldingSetIteratorImpl::FoldingSetIteratorImpl(void **Bucket) {
   // Skip to the first non-null non-self-cycle bucket.
-  while (*Bucket == 0 || GetNextPtr(*Bucket) == 0)
+  while (*Bucket != reinterpret_cast<void*>(-1) &&
+         (*Bucket == 0 || GetNextPtr(*Bucket) == 0))
     ++Bucket;
   
   NodePtr = static_cast<FoldingSetNode*>(*Bucket);
@@ -345,7 +346,8 @@ void FoldingSetIteratorImpl::advance() {
     // Skip to the next non-null non-self-cycle bucket.
     do {
       ++Bucket;
-    } while (*Bucket == 0 || GetNextPtr(*Bucket) == 0);
+    } while (*Bucket != reinterpret_cast<void*>(-1) &&
+             (*Bucket == 0 || GetNextPtr(*Bucket) == 0));
     
     NodePtr = static_cast<FoldingSetNode*>(*Bucket);
   }
