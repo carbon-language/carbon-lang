@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_AST_DECL_H
 #define LLVM_CLANG_AST_DECL_H
 
+#include "clang/AST/Attr.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/APSInt.h"
@@ -24,7 +25,6 @@ class Decl;
 }
 
 namespace clang {
-class Attr;
 class Expr;
 class Stmt;
 class StringLiteral;
@@ -138,6 +138,14 @@ public:
   void addAttr(Attr *attr);
   const Attr *getAttrs() const;
 
+  template<typename T> T *getAttr() {
+    for (Attr *attr = getAttrs(); attr; attr = attr->getNext())
+      if (isa<T>(attr))
+        return cast<T>(attr);
+
+    return 0;
+  }
+    
   /// setInvalidDecl - Indicates the Decl had a semantic error. This
   /// allows for graceful error recovery.
   void setInvalidDecl() { InvalidDecl = 1; }
