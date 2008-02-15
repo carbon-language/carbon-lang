@@ -428,11 +428,23 @@ void RValue::print(std::ostream& Out) const {
 }
 
 static void printOpcode(std::ostream& Out, BinaryOperator::Opcode Op) {
-  switch (Op) {      
+  switch (Op) {
+    case BinaryOperator::Mul: Out << "*"; break;
+    case BinaryOperator::Div: Out << "/"; break;
+    case BinaryOperator::Rem: Out << "%" ; break;
     case BinaryOperator::Add: Out << "+" ; break;
     case BinaryOperator::Sub: Out << "-" ; break;
+    case BinaryOperator::Shl: Out << "<<" ; break;
+    case BinaryOperator::Shr: Out << ">>" ; break;
+    case BinaryOperator::LT: Out << "<" ; break;
+    case BinaryOperator::GT: Out << ">" ; break;
+    case BinaryOperator::LE: Out << "<=" ; break;
+    case BinaryOperator::GE: Out << ">=" ; break;    
     case BinaryOperator::EQ: Out << "=="; break;
     case BinaryOperator::NE: Out << "!="; break;
+    case BinaryOperator::And: Out << "&" ; break;
+    case BinaryOperator::Xor: Out << "^" ; break;
+    case BinaryOperator::Or: Out << "|" ; break;      
     default: assert(false && "Not yet implemented.");
   }        
 }

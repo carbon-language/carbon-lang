@@ -203,7 +203,10 @@ protected:
   friend class GRSwitchNodeBuilderImpl;
   
   // Type definitions.
-  typedef llvm::DenseMap<ProgramPoint,void*>        EdgeNodeSetMap;
+  typedef llvm::DenseMap<ProgramPoint, 
+                         llvm::FoldingSet<clang::ExplodedNodeImpl>*> 
+          EdgeNodeSetMap;
+  
   typedef llvm::SmallVector<ExplodedNodeImpl*,2>    RootsTy;
   typedef llvm::SmallVector<ExplodedNodeImpl*,10>   EndNodesTy;
     

@@ -47,11 +47,24 @@ public:
                       BinaryOperator::Opcode Op,
                       LValue LHS, LValue RHS);
   
-  
   // Pointer arithmetic.
   
   virtual LValue EvalBinaryOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
                               LValue LHS, NonLValue RHS) = 0;
+  
+  inline RValue EvalBinaryOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
+                             const RValue& L, const RValue& R) {
+    
+    if (isa<LValue>(L)) {
+      if (isa<LValue>(R))
+        return EvalBinaryOp(ValMgr, Op, cast<LValue>(L), cast<LValue>(R));
+      else
+        return EvalBinaryOp(ValMgr, Op, cast<LValue>(L), cast<NonLValue>(R));
+    }
+    else
+      return EvalBinaryOp(ValMgr, Op, cast<NonLValue>(L), cast<NonLValue>(R));
+  }
+  
   
   // Equality operators for LValues.
   virtual NonLValue EvalEQ(ValueManager& ValMgr, LValue LHS, LValue RHS) = 0;

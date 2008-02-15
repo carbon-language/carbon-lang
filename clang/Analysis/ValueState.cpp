@@ -91,7 +91,8 @@ ValueStateManager::RemoveDeadBindings(ValueState St, Stmt* Loc,
     Marked.insert(V);
     
     if (V->getType()->isPointerType()) {
-      const LValue& LV = cast<LValue>(GetValue(St, lval::DeclVal(V)));      
+      const LValue& LV =
+        cast<LValue>(GetValue(St, lval::DeclVal(cast<VarDecl>(V))));      
       
       for (RValue::symbol_iterator SI=LV.symbol_begin(), SE=LV.symbol_end();
            SI != SE; ++SI)
@@ -205,8 +206,25 @@ RValue ValueStateManager::GetValue(ValueState St, Expr* E, bool* hasVal) {
         // context we assume that we are retrieving the value contained
         // within the referenced variables.
         
-      case Stmt::DeclRefExprClass:
-        return GetValue(St, lval::DeclVal(cast<DeclRefExpr>(E)->getDecl()));
+      case Stmt::DeclRefExprClass: {
+        ValueDecl* D = cast<DeclRefExpr>(E)->getDecl();
+        
+        if (VarDecl* VD = dyn_cast<VarDecl>(D))
+          return GetValue(St, lval::DeclVal(VD));
+        else if (EnumConstantDecl* ED = dyn_cast<EnumConstantDecl>(D)) {
+          // FIXME: Do we need to cache a copy of this enum, since it
+          // already has persistent storage?  We do this because we
+          // are comparing states using pointer equality.  Perhaps there is
+          // a better way, since APInts are fairly lightweight.
+          return nonlval::ConcreteInt(ValMgr.getValue(ED->getInitVal()));
+        }
+        
+        assert (false &&
+                "ValueDecl support for this ValueDecl not implemented.");
+        
+        return UnknownVal();
+      }
+          
         
         // Integer literals evaluate to an RValue.  Simply retrieve the
         // RValue for the literal.
@@ -278,7 +296,7 @@ LValue ValueStateManager::GetLValue(ValueState St, Expr* E) {
     E = P->getSubExpr();
   
   if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(E))
-    return lval::DeclVal(DR->getDecl());
+    return lval::DeclVal(cast<VarDecl>(DR->getDecl()));
   
   if (UnaryOperator* U = dyn_cast<UnaryOperator>(E))
     if (U->getOpcode() == UnaryOperator::Deref)

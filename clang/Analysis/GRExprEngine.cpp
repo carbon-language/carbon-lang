@@ -387,8 +387,7 @@ void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* D, NodeTy* Pred, NodeSet& Dst){
   
   StateTy St = Pred->getState();
   
-  Nodify(Dst, D, Pred,
-         SetValue(St, D, GetValue(St, lval::DeclVal(D->getDecl()))));
+  Nodify(Dst, D, Pred, SetValue(St, D, GetValue(St, D)));
 }
 
 void GRExprEngine::VisitCast(Expr* CastE, Expr* E, NodeTy* Pred, NodeSet& Dst) {
@@ -485,51 +484,29 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U,
     NodeTy* N1 = *I1;
     StateTy St = N1->getState();
     
+    // Handle ++ and -- (both pre- and post-increment).
+    
+    if (U->isIncrementDecrementOp()) {
+      const LValue& L1 = GetLValue(St, U->getSubExpr());
+      RValue R1 = GetValue(St, L1);
+      
+      BinaryOperator::Opcode Op = U->isIncrementOp() ? BinaryOperator::Add
+                                                     : BinaryOperator::Sub;
+      
+      RValue Result = EvalBinaryOp(ValMgr, Op, R1, GetRValueConstant(1U, U));
+      
+      if (U->isPostfix())
+        Nodify(Dst, U, N1, SetValue(SetValue(St, U, R1), L1, Result));
+      else
+        Nodify(Dst, U, N1, SetValue(SetValue(St, U, Result), L1, Result));
+        
+      continue;
+    }    
+    
+    // Handle all other unary operators.
+    
     switch (U->getOpcode()) {
-      case UnaryOperator::PostInc: {
-        const LValue& L1 = GetLValue(St, U->getSubExpr());
-        NonLValue R1 = cast<NonLValue>(GetValue(St, L1));
-        
-        NonLValue Result = EvalBinaryOp(ValMgr, BinaryOperator::Add,
-                                        R1, GetRValueConstant(1U, U));
-        
-        Nodify(Dst, U, N1, SetValue(SetValue(St, U, R1), L1, Result));
-        break;
-      }
-        
-      case UnaryOperator::PostDec: {
-        const LValue& L1 = GetLValue(St, U->getSubExpr());
-        NonLValue R1 = cast<NonLValue>(GetValue(St, L1));
-        
-        NonLValue Result = EvalBinaryOp(ValMgr, BinaryOperator::Sub,
-                                        R1, GetRValueConstant(1U, U));
-        
-        Nodify(Dst, U, N1, SetValue(SetValue(St, U, R1), L1, Result));
-        break;
-      }
-        
-      case UnaryOperator::PreInc: {
-        const LValue& L1 = GetLValue(St, U->getSubExpr());
-        NonLValue R1 = cast<NonLValue>(GetValue(St, L1));
-        
-        NonLValue Result = EvalBinaryOp(ValMgr, BinaryOperator::Add,
-                                        R1, GetRValueConstant(1U, U));
-        
-        Nodify(Dst, U, N1, SetValue(SetValue(St, U, Result), L1, Result));
-        break;
-      }
-        
-      case UnaryOperator::PreDec: {
-        const LValue& L1 = GetLValue(St, U->getSubExpr());
-        NonLValue R1 = cast<NonLValue>(GetValue(St, L1));
-        
-        NonLValue Result = EvalBinaryOp(ValMgr, BinaryOperator::Sub,
-                                        R1, GetRValueConstant(1U, U));
 
-        Nodify(Dst, U, N1, SetValue(SetValue(St, U, Result), L1, Result));
-        break;
-      }
-        
       case UnaryOperator::Minus: {
         const NonLValue& R1 = cast<NonLValue>(GetValue(St, U->getSubExpr()));
         Nodify(Dst, U, N1, SetValue(St, U, EvalMinus(ValMgr, U, R1)));
@@ -703,28 +680,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           continue;
         }
         
-        if (isa<LValue>(V1)) {
-          // FIXME: Add support for RHS being a non-lvalue.
-          const LValue& L1 = cast<LValue>(V1);
-          
-          if (isa<LValue>(V2)) {          
-            const LValue& L2 = cast<LValue>(V2);
-            Nodify(Dst, B, N2, SetValue(St, B,
-                                        EvalBinaryOp(ValMgr, Op, L1, L2)));
-          }
-          else {
-            const NonLValue& R2 = cast<NonLValue>(V2);
-            Nodify(Dst, B, N2, SetValue(St, B,
-                                        EvalBinaryOp(ValMgr, Op, L1, R2)));
-          }
-        }
-        else {
-          const NonLValue& R1 = cast<NonLValue>(V1);
-          const NonLValue& R2 = cast<NonLValue>(V2);
-            
-          Nodify(Dst, B, N2, SetValue(St, B, EvalBinaryOp(ValMgr, Op, R1, R2)));
-        }
-        
+        Nodify(Dst, B, N2, SetValue(St, B, EvalBinaryOp(ValMgr, Op, V1, V2)));
         continue;
       
       }
@@ -746,14 +702,17 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           if (Op >= BinaryOperator::AndAssign)
             ((int&) Op) -= (BinaryOperator::AndAssign - BinaryOperator::And);
           else
-            ((int&) Op) -= BinaryOperator::MulAssign;
+            ((int&) Op) -= BinaryOperator::MulAssign;          
           
-          if (isa<LValue>(V2)) {
-            // FIXME: Add support for Non-LValues on RHS.
+          if (B->getType()->isPointerType()) { // Perform pointer arithmetic.
+            const NonLValue& R2 = cast<NonLValue>(V2);
+            Result = EvalBinaryOp(ValMgr, Op, L1, R2);
+          }
+          else if (isa<LValue>(V2)) {          // LValue comparison.
             const LValue& L2 = cast<LValue>(V2);
             Result = EvalBinaryOp(ValMgr, Op, L1, L2);
           }
-          else {
+          else { // Any operation between two Non-LValues.
             const NonLValue& R1 = cast<NonLValue>(GetValue(N1->getState(), L1));
             const NonLValue& R2 = cast<NonLValue>(V2);
             Result = EvalBinaryOp(ValMgr, Op, R1, R2);

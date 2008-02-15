@@ -474,10 +474,10 @@ namespace lval {
   
   class DeclVal : public LValue {
   public:
-    DeclVal(const ValueDecl* vd) : LValue(DeclValKind,vd) {}
+    DeclVal(const VarDecl* vd) : LValue(DeclValKind, vd) {}
     
-    ValueDecl* getDecl() const {
-      return static_cast<ValueDecl*>(Data);
+    VarDecl* getDecl() const {
+      return static_cast<VarDecl*>(Data);
     }
     
     inline bool operator==(const DeclVal& R) const {
