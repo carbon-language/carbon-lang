@@ -229,6 +229,10 @@ namespace llvm {
 
     BumpPtrAllocator& getVNInfoAllocator() { return VNInfoAllocator; }
 
+    /// getVNInfoSourceReg - Helper function that parses the specified VNInfo
+    /// copy field and returns the source register that defines it.
+    unsigned getVNInfoSourceReg(const VNInfo *VNI) const;
+
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
     virtual void releaseMemory();
 
@@ -276,7 +280,7 @@ namespace llvm {
                                    MachineBasicBlock::iterator mi,
                                    unsigned MIIdx,
                                    LiveInterval &interval,
-                                   unsigned SrcReg);
+                                   MachineInstr *CopyMI);
 
     /// handleLiveInRegister - Create interval for a livein register.
     void handleLiveInRegister(MachineBasicBlock* mbb,

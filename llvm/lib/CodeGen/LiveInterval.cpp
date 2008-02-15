@@ -44,6 +44,27 @@ bool LiveInterval::liveAt(unsigned I) const {
   return r->contains(I);
 }
 
+// liveBeforeAndAt - Check if the interval is live at the index and the index
+// just before it. If index is liveAt, check if it starts a new live range.
+// If it does, then check if the previous live range ends at index-1.
+bool LiveInterval::liveBeforeAndAt(unsigned I) const {
+  Ranges::const_iterator r = std::upper_bound(ranges.begin(), ranges.end(), I);
+
+  if (r == ranges.begin())
+    return false;
+
+  --r;
+  if (!r->contains(I))
+    return false;
+  if (I != r->start)
+    return true;
+  // I is the start of a live range. Check if the previous live range ends
+  // at I-1.
+  if (r == ranges.begin())
+    return false;
+  return r->end == I;
+}
+
 // overlaps - Return true if the intersection of the two live intervals is
 // not empty.
 //

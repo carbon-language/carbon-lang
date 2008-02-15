@@ -37,19 +37,18 @@ namespace llvm {
   /// merge point), it contains ~0u,x. If the value number is not in use, it
   /// contains ~1u,x to indicate that the value # is not used. 
   ///   def   - Instruction # of the definition.
-  ///   reg   - Source reg iff val# is defined by a copy; zero otherwise.
+  ///   copy  - Copy iff val# is defined by a copy; zero otherwise.
   ///   hasPHIKill - One or more of the kills are PHI nodes.
-  ///   kills - Instruction # of the kills. If a kill is an odd #, it means
-  ///           the kill is a phi join point.
+  ///   kills - Instruction # of the kills.
   struct VNInfo {
     unsigned id;
     unsigned def;
-    unsigned reg;
+    MachineInstr *copy;
     bool hasPHIKill;
     SmallVector<unsigned, 4> kills;
-    VNInfo() : id(~1U), def(~1U), reg(0), hasPHIKill(false) {}
-    VNInfo(unsigned i, unsigned d, unsigned r)
-      : id(i), def(d), reg(r), hasPHIKill(false) {}
+    VNInfo() : id(~1U), def(~1U), copy(0), hasPHIKill(false) {}
+    VNInfo(unsigned i, unsigned d, MachineInstr *c)
+      : id(i), def(d), copy(c), hasPHIKill(false) {}
   };
 
   /// LiveRange structure - This represents a simple register range in the
@@ -159,14 +158,14 @@ namespace llvm {
     /// another.
     void copyValNumInfo(VNInfo *DstValNo, const VNInfo *SrcValNo) {
       DstValNo->def = SrcValNo->def;
-      DstValNo->reg = SrcValNo->reg;
+      DstValNo->copy = SrcValNo->copy;
       DstValNo->hasPHIKill = SrcValNo->hasPHIKill;
       DstValNo->kills = SrcValNo->kills;
     }
 
     /// getNextValue - Create a new value number and return it.  MIIdx specifies
     /// the instruction that defines the value number.
-    VNInfo *getNextValue(unsigned MIIdx, unsigned SrcReg,
+    VNInfo *getNextValue(unsigned MIIdx, MachineInstr *CopyMI,
                          BumpPtrAllocator &VNInfoAllocator) {
 #ifdef __GNUC__
       unsigned Alignment = __alignof__(VNInfo);
@@ -176,7 +175,7 @@ namespace llvm {
 #endif
       VNInfo *VNI= static_cast<VNInfo*>(VNInfoAllocator.Allocate(sizeof(VNInfo),
                                                                  Alignment));
-      new (VNI) VNInfo(valnos.size(), MIIdx, SrcReg);
+      new (VNI) VNInfo(valnos.size(), MIIdx, CopyMI);
       valnos.push_back(VNI);
       return VNI;
     }
@@ -199,7 +198,7 @@ namespace llvm {
     void addKills(VNInfo *VNI, const SmallVector<unsigned, 4> &kills) {
       for (unsigned i = 0, e = kills.size(); i != e; ++i) {
         unsigned KillIdx = kills[i];
-        if (!liveAt(KillIdx)) {
+        if (!liveBeforeAndAt(KillIdx)) {
           SmallVector<unsigned, 4>::iterator
             I = std::lower_bound(VNI->kills.begin(), VNI->kills.end(), KillIdx);
           VNI->kills.insert(I, KillIdx);
@@ -229,6 +228,15 @@ namespace llvm {
       SmallVector<unsigned, 4>::iterator
         E = std::upper_bound(kills.begin(), kills.end(), End);
       kills.erase(I, E);
+    }
+
+    /// isKill - Return true if the specified index is a kill of the
+    /// specified val#.
+    bool isKill(const VNInfo *VNI, unsigned KillIdx) const {
+      const SmallVector<unsigned, 4> &kills = VNI->kills;
+      SmallVector<unsigned, 4>::const_iterator
+        I = std::lower_bound(kills.begin(), kills.end(), KillIdx);
+      return I != kills.end() && *I == KillIdx;
     }
     
     /// MergeValueNumberInto - This method is called when two value nubmers
@@ -283,6 +291,11 @@ namespace llvm {
     }
 
     bool liveAt(unsigned index) const;
+
+    // liveBeforeAndAt - Check if the interval is live at the index and the
+    // index just before it. If index is liveAt, check if it starts a new live
+    // range.If it does, then check if the previous live range ends at index-1.
+    bool liveBeforeAndAt(unsigned index) const;
 
     /// getLiveRangeContaining - Return the live range that contains the
     /// specified index, or null if there is none.

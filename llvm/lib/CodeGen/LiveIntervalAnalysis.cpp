@@ -224,14 +224,12 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
     // Get the Idx of the defining instructions.
     unsigned defIndex = getDefIndex(MIIdx);
     VNInfo *ValNo;
+    MachineInstr *CopyMI = NULL;
     unsigned SrcReg, DstReg;
-    if (tii_->isMoveInstr(*mi, SrcReg, DstReg))
-      ValNo = interval.getNextValue(defIndex, SrcReg, VNInfoAllocator);
-    else if (mi->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG)
-      ValNo = interval.getNextValue(defIndex, mi->getOperand(1).getReg(),
-                                    VNInfoAllocator);
-    else
-      ValNo = interval.getNextValue(defIndex, 0, VNInfoAllocator);
+    if (mi->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG ||
+        tii_->isMoveInstr(*mi, SrcReg, DstReg))
+      CopyMI = mi;
+    ValNo = interval.getNextValue(defIndex, CopyMI, VNInfoAllocator);
 
     assert(ValNo->id == 0 && "First value in interval is not 0?");
 
@@ -326,13 +324,12 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
 
       // The new value number (#1) is defined by the instruction we claimed
       // defined value #0.
-      VNInfo *ValNo = interval.getNextValue(0, 0, VNInfoAllocator);
-      ValNo->def = OldValNo->def;
-      ValNo->reg = OldValNo->reg;
+      VNInfo *ValNo = interval.getNextValue(OldValNo->def, OldValNo->copy,
+                                            VNInfoAllocator);
       
       // Value#0 is now defined by the 2-addr instruction.
-      OldValNo->def = RedefIndex;
-      OldValNo->reg = 0;
+      OldValNo->def  = RedefIndex;
+      OldValNo->copy = 0;
       
       // Add the new live interval which replaces the range for the input copy.
       LiveRange LR(DefIndex, RedefIndex, ValNo);
@@ -364,7 +361,6 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
         DOUT << " Removing [" << Start << "," << End << "] from: ";
         interval.print(DOUT, tri_); DOUT << "\n";
         interval.removeRange(Start, End);
-        interval.addKill(VNI, Start);
         VNI->hasPHIKill = true;
         DOUT << " RESULT: "; interval.print(DOUT, tri_);
 
@@ -383,14 +379,12 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       unsigned defIndex = getDefIndex(MIIdx);
       
       VNInfo *ValNo;
+      MachineInstr *CopyMI = NULL;
       unsigned SrcReg, DstReg;
-      if (tii_->isMoveInstr(*mi, SrcReg, DstReg))
-        ValNo = interval.getNextValue(defIndex, SrcReg, VNInfoAllocator);
-      else if (mi->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG)
-        ValNo = interval.getNextValue(defIndex, mi->getOperand(1).getReg(),
-                                      VNInfoAllocator);
-      else
-        ValNo = interval.getNextValue(defIndex, 0, VNInfoAllocator);
+      if (mi->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG ||
+          tii_->isMoveInstr(*mi, SrcReg, DstReg))
+        CopyMI = mi;
+      ValNo = interval.getNextValue(defIndex, CopyMI, VNInfoAllocator);
       
       unsigned killIndex = getInstructionIndex(&mbb->back()) + InstrSlots::NUM;
       LiveRange LR(defIndex, killIndex, ValNo);
@@ -408,7 +402,7 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
                                               MachineBasicBlock::iterator mi,
                                               unsigned MIIdx,
                                               LiveInterval &interval,
-                                              unsigned SrcReg) {
+                                              MachineInstr *CopyMI) {
   // A physical register cannot be live across basic block, so its
   // lifetime must end somewhere in its defining basic block.
   DOUT << "\t\tregister: "; DEBUG(printRegName(interval.reg));
@@ -449,7 +443,7 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
   // The only case we should have a dead physreg here without a killing or
   // instruction where we know it's dead is if it is live-in to the function
   // and never used.
-  assert(!SrcReg && "physreg was not killed in defining block!");
+  assert(!CopyMI && "physreg was not killed in defining block!");
   end = getDefIndex(start) + 1;  // It's dead.
 
 exit:
@@ -458,7 +452,7 @@ exit:
   // Already exists? Extend old live interval.
   LiveInterval::iterator OldLR = interval.FindLiveRangeContaining(start);
   VNInfo *ValNo = (OldLR != interval.end())
-    ? OldLR->valno : interval.getNextValue(start, SrcReg, VNInfoAllocator);
+    ? OldLR->valno : interval.getNextValue(start, CopyMI, VNInfoAllocator);
   LiveRange LR(start, end, ValNo);
   interval.addRange(LR);
   interval.addKill(LR.valno, end);
@@ -472,12 +466,12 @@ void LiveIntervals::handleRegisterDef(MachineBasicBlock *MBB,
   if (TargetRegisterInfo::isVirtualRegister(reg))
     handleVirtualRegisterDef(MBB, MI, MIIdx, getOrCreateInterval(reg));
   else if (allocatableRegs_[reg]) {
+    MachineInstr *CopyMI = NULL;
     unsigned SrcReg, DstReg;
-    if (MI->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG)
-      SrcReg = MI->getOperand(1).getReg();
-    else if (!tii_->isMoveInstr(*MI, SrcReg, DstReg))
-      SrcReg = 0;
-    handlePhysicalRegisterDef(MBB, MI, MIIdx, getOrCreateInterval(reg), SrcReg);
+    if (MI->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG ||
+        tii_->isMoveInstr(*MI, SrcReg, DstReg))
+      CopyMI = MI;
+    handlePhysicalRegisterDef(MBB, MI, MIIdx, getOrCreateInterval(reg), CopyMI);
     // Def of a register also defines its sub-registers.
     for (const unsigned* AS = tri_->getSubRegisters(reg); *AS; ++AS)
       // Avoid processing some defs more than once.
@@ -601,6 +595,20 @@ LiveInterval LiveIntervals::createInterval(unsigned reg) {
   return LiveInterval(reg, Weight);
 }
 
+/// getVNInfoSourceReg - Helper function that parses the specified VNInfo
+/// copy field and returns the source register that defines it.
+unsigned LiveIntervals::getVNInfoSourceReg(const VNInfo *VNI) const {
+  if (!VNI->copy)
+    return 0;
+
+  if (VNI->copy->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG)
+    return VNI->copy->getOperand(1).getReg();
+  unsigned SrcReg, DstReg;
+  if (tii_->isMoveInstr(*VNI->copy, SrcReg, DstReg))
+    return SrcReg;
+  assert(0 && "Unrecognized copy instruction!");
+  return 0;
+}
 
 //===----------------------------------------------------------------------===//
 // Register allocator hooks.

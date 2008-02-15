@@ -34,12 +34,10 @@ namespace llvm {
   ///
   struct CopyRec {
     MachineInstr *MI;
-    unsigned SrcReg, DstReg;
     unsigned LoopDepth;
     bool isBackEdge;
-    CopyRec(MachineInstr *mi, unsigned src, unsigned dst, unsigned depth,
-            bool be)
-      : MI(mi), SrcReg(src), DstReg(dst), LoopDepth(depth), isBackEdge(be) {};
+    CopyRec(MachineInstr *mi, unsigned depth, bool be)
+      : MI(mi), LoopDepth(depth), isBackEdge(be) {};
   };
 
   template<class SF> class JoinPriorityQueue;
@@ -67,7 +65,7 @@ namespace llvm {
     bool empty() const { return Queue.empty(); }
     void push(CopyRec R) { Queue.push(R); }
     CopyRec pop() {
-      if (empty()) return CopyRec(0, 0, 0, 0, false);
+      if (empty()) return CopyRec(0, 0, false);
       CopyRec R = Queue.top();
       Queue.pop();
       return R;
@@ -80,7 +78,7 @@ namespace llvm {
   class SimpleRegisterCoalescing : public MachineFunctionPass,
                                    public RegisterCoalescer {
     MachineFunction* mf_;
-    const MachineRegisterInfo* mri_;
+    MachineRegisterInfo* mri_;
     const TargetMachine* tm_;
     const TargetRegisterInfo* tri_;
     const TargetInstrInfo* tii_;
@@ -91,32 +89,13 @@ namespace llvm {
     BitVector allocatableRegs_;
     DenseMap<const TargetRegisterClass*, BitVector> allocatableRCRegs_;
 
-    /// r2rMap_ - Map from register to its representative register.
-    ///
-    IndexedMap<unsigned> r2rMap_;
-
-    /// r2rRevMap_ - Reverse of r2rRevMap_, i.e. Map from register to all
-    /// the registers it represent.
-    IndexedMap<std::vector<unsigned> > r2rRevMap_;
-
     /// JoinQueue - A priority queue of copy instructions the coalescer is
     /// going to process.
     JoinPriorityQueue<CopyRecSort> *JoinQueue;
 
-    /// JoinedLIs - Keep track which register intervals have been coalesced
-    /// with other intervals.
-    BitVector JoinedLIs;
-
-    /// SubRegIdxes - Keep track of sub-register and indexes.
-    ///
-    SmallVector<std::pair<unsigned, unsigned>, 32> SubRegIdxes;
-
     /// JoinedCopies - Keep track of copies eliminated due to coalescing.
     ///
     SmallPtrSet<MachineInstr*, 32> JoinedCopies;
-
-    /// ChangedCopies - Keep track of copies modified due to commuting.
-    SmallPtrSet<MachineInstr*, 32> ChangedCopies;
 
   public:
     static char ID; // Pass identifcation, replacement for typeid
@@ -146,7 +125,6 @@ namespace llvm {
     /// getRepIntervalSize - Called from join priority queue sorting function.
     /// It returns the size of the interval that represent the given register.
     unsigned getRepIntervalSize(unsigned Reg) {
-      Reg = rep(Reg);
       if (!li_->hasInterval(Reg))
         return 0;
       return li_->getInterval(Reg).getSize();
@@ -193,50 +171,47 @@ namespace llvm {
     bool differingRegisterClasses(unsigned RegA, unsigned RegB) const;
 
 
+    /// AdjustCopiesBackFrom - We found a non-trivially-coalescable copy. If
+    /// the source value number is defined by a copy from the destination reg
+    /// see if we can merge these two destination reg valno# into a single
+    /// value number, eliminating a copy.
     bool AdjustCopiesBackFrom(LiveInterval &IntA, LiveInterval &IntB,
                               MachineInstr *CopyMI);
 
+    /// RemoveCopyByCommutingDef - We found a non-trivially-coalescable copy.
+    /// If the source value number is defined by a commutable instruction and
+    /// its other operand is coalesced to the copy dest register, see if we
+    /// can transform the copy into a noop by commuting the definition.
     bool RemoveCopyByCommutingDef(LiveInterval &IntA, LiveInterval &IntB,
                                   MachineInstr *CopyMI);
 
-    /// AddSubRegIdxPairs - Recursively mark all the registers represented by the
-    /// specified register as sub-registers. The recursion level is expected to be
-    /// shallow.
-    void AddSubRegIdxPairs(unsigned Reg, unsigned SubIdx);
+    /// RemoveUnnecessaryKills - Remove kill markers that are no longer accurate
+    /// due to live range lengthening as the result of coalescing.
+    void RemoveUnnecessaryKills(unsigned Reg, LiveInterval &LI);
 
     /// isBackEdgeCopy - Returns true if CopyMI is a back edge copy.
     ///
     bool isBackEdgeCopy(MachineInstr *CopyMI, unsigned DstReg);
 
+    /// UpdateRegDefsUses - Replace all defs and uses of SrcReg to DstReg and
+    /// update the subregister number if it is not zero. If DstReg is a
+    /// physical register and the existing subregister number of the def / use
+    /// being updated is not zero, make sure to set it to the correct physical
+    /// subregister.
+    void UpdateRegDefsUses(unsigned SrcReg, unsigned DstReg, unsigned SubIdx);
+
     /// lastRegisterUse - Returns the last use of the specific register between
-    /// cycles Start and End. It also returns the use operand by reference. It
-    /// returns NULL if there are no uses.
-    MachineInstr *lastRegisterUse(unsigned Start, unsigned End, unsigned Reg,
-                                  MachineOperand *&MOU);
+    /// cycles Start and End or NULL if there are no uses.
+    MachineOperand *lastRegisterUse(unsigned Start, unsigned End, unsigned Reg,
+                                    unsigned &LastUseIdx) const;
 
     /// findDefOperand - Returns the MachineOperand that is a def of the specific
     /// register. It returns NULL if the def is not found.
-    MachineOperand *findDefOperand(MachineInstr *MI, unsigned Reg);
-
-    /// unsetRegisterKill - Unset IsKill property of all uses of the specific
-    /// register of the specific instruction.
-    void unsetRegisterKill(MachineInstr *MI, unsigned Reg);
+    MachineOperand *findDefOperand(MachineInstr *MI, unsigned Reg) const;
 
     /// unsetRegisterKills - Unset IsKill property of all uses of specific register
     /// between cycles Start and End.
     void unsetRegisterKills(unsigned Start, unsigned End, unsigned Reg);
-
-    /// hasRegisterDef - True if the instruction defines the specific register.
-    ///
-    bool hasRegisterDef(MachineInstr *MI, unsigned Reg);
-
-    /// rep - returns the representative of this register
-    unsigned rep(unsigned Reg) {
-      unsigned Rep = r2rMap_[Reg];
-      if (Rep)
-        return r2rMap_[Reg] = rep(Rep);
-      return Reg;
-    }
 
     void printRegName(unsigned reg) const;
   };
