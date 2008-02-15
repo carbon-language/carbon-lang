@@ -118,8 +118,11 @@ private:
   /// InvalidDecl - This indicates a semantic error occurred.
   unsigned int InvalidDecl :  1;
   
+  /// HasAttrs - This indicates whether the decl has attributes or not.
+  unsigned int HasAttrs : 1;
 protected:
-  Decl(Kind DK, SourceLocation L) : Loc(L), DeclKind(DK), InvalidDecl(0) {
+  Decl(Kind DK, SourceLocation L) : Loc(L), DeclKind(DK), InvalidDecl(0),
+    HasAttrs(false) {
     if (Decl::CollectingStats()) addDeclKind(DK);
   }
   
@@ -132,6 +135,9 @@ public:
   Kind getKind() const { return DeclKind; }
   const char *getDeclKindName() const;
   
+  void addAttr(Attr *attr);
+  const Attr *getAttrs() const;
+
   /// setInvalidDecl - Indicates the Decl had a semantic error. This
   /// allows for graceful error recovery.
   void setInvalidDecl() { InvalidDecl = 1; }
@@ -253,9 +259,6 @@ protected:
 class ValueDecl : public ScopedDecl {
   QualType DeclType;
 
-  /// Attrs - Linked list of attributes that are attached to this
-  /// function.
-  Attr *Attrs;
 protected:
   ValueDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, QualType T,
             ScopedDecl *PrevDecl) 
@@ -264,9 +267,6 @@ public:
   QualType getType() const { return DeclType; }
   void setType(QualType newType) { DeclType = newType; }
   QualType getCanonicalType() const { return DeclType.getCanonicalType(); }
-  
-  void addAttr(Attr *attr);
-  const Attr *getAttrs() const { return Attrs; }
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {

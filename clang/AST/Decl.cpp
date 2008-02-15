@@ -15,6 +15,8 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Attr.h"
 #include "clang/Basic/IdentifierTable.h"
+#include "llvm/ADT/DenseMap.h"
+
 using namespace clang;
 
 // temporary statistics gathering
@@ -42,6 +44,12 @@ static unsigned nLinkageSpecDecl = 0;
 static unsigned nFileScopeAsmDecl = 0;
 
 static bool StatSwitch = false;
+
+// This keeps track of all decl attributes. Since so few decls have attrs, we
+// keep them in a hash map instead of wasting space in the Decl class.
+typedef llvm::DenseMap<const Decl*, Attr*> DeclAttrMapTy;
+
+static DeclAttrMapTy *DeclAttrs = 0;
 
 const char *Decl::getDeclKindName() const {
   switch (DeclKind) {
@@ -251,18 +259,45 @@ void Decl::addDeclKind(const Kind k) {
 
 // Out-of-line virtual method providing a home for Decl.
 Decl::~Decl() {
+  if (!DeclAttrs)
+    return;
+  
+  DeclAttrMapTy::iterator it = DeclAttrs->find(this);
+  if (it != DeclAttrs->end()) {
+    delete it->second;
+    DeclAttrs->erase(it);
+    if (DeclAttrs->empty()) {
+      delete DeclAttrs;
+      DeclAttrs = 0;
+    }        
+  }
+}
+
+void Decl::addAttr(Attr *newattr)
+{
+  if (!DeclAttrs)
+    DeclAttrs = new llvm::DenseMap<const Decl*, Attr*>;
+  
+  Attr *&attr = DeclAttrs->FindAndConstruct(this).second;
+
+  newattr->setNext(attr);
+  attr = newattr;
+  
+  HasAttrs = true;
+}
+
+const Attr *Decl::getAttrs() const
+{
+  if (!HasAttrs || !DeclAttrs)
+    return 0;
+  
+  return DeclAttrs->find(this)->second;
 }
 
 const char *NamedDecl::getName() const {
   if (const IdentifierInfo *II = getIdentifier())
     return II->getName();
   return "";
-}
-
-void ValueDecl::addAttr(Attr *attr)
-{
-  attr->setNext(Attrs);
-  Attrs = attr;
 }
 
 FunctionDecl::~FunctionDecl() {

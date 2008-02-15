@@ -30,11 +30,11 @@ private:
   
 protected:
   Attr(Kind AK) : Next(0), AttrKind(AK) {}
+public:
   virtual ~Attr() {
     delete Next;
   }
-  
-public:
+
   Kind getKind() const { return AttrKind; }
 
   Attr *getNext() { return Next; }
