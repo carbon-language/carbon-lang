@@ -1,9 +1,9 @@
 // RUN: %llvmgxx -S -O0 -emit-llvm %s -o - | grep {retval\\|memtmp} | grep S242 | \
-// RUN:   grep {i32 1} | count 2
+// RUN:   grep {i32 1} | count 1
 
-// Test that all 8 bytes of ret in check242 are copied.  llvm-gcc was
-// treating S242 as if it were S93, which does not need to have the
-// last 4 padding bytes copied.
+// Test that all 8 bytes of ret in check242 are copied, and only 4 bytes of
+// ret in check93 are copied (the same LLVM struct is used for both).
+
 typedef __builtin_va_list va_list;
 typedef unsigned long size_t;
 void *memset(void *, int, size_t);
