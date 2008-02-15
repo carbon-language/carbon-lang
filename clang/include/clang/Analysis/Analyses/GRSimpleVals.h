@@ -25,7 +25,7 @@ namespace clang {
   ///  something more elaborate as the requirements on the interface become
   ///  clearer.
   void RunGRSimpleVals(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx,
-                      Diagnostic& Diag);
+                      Diagnostic& Diag, bool Visualize);
   
 } // end clang namespace
 

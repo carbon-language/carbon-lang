@@ -20,7 +20,7 @@ using namespace clang;
 
 namespace clang {
   void RunGRSimpleVals(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx,
-                      Diagnostic& Diag) {
+                      Diagnostic& Diag, bool Visualize) {
     
     if (Diag.hasErrorOccurred())
       return;
@@ -45,7 +45,7 @@ namespace clang {
     }
         
 #ifndef NDEBUG
-    CheckerState->ViewGraph();
+    if (Visualize) CheckerState->ViewGraph();
 #endif  
   }
 } // end clang namespace

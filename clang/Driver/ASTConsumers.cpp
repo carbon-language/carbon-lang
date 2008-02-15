@@ -580,20 +580,23 @@ namespace {
   class GRSimpleValsVisitor : public CFGVisitor {
     Diagnostic &Diags;
     ASTContext* Ctx;
+    bool Visualize;
   public:
-    GRSimpleValsVisitor(Diagnostic &diags) : Diags(diags) {}
+    GRSimpleValsVisitor(Diagnostic &diags, bool visualize)
+      : Diags(diags), Visualize(visualize) {}
     
     virtual void Initialize(ASTContext &Context) { Ctx = &Context; }    
     virtual void VisitCFG(CFG& C, FunctionDecl&);
+    virtual bool printFuncDeclStart() { return Visualize; }
   };
 } // end anonymous namespace
 
-ASTConsumer* clang::CreateGRSimpleVals(Diagnostic &Diags) {
-  return new GRSimpleValsVisitor(Diags);
+ASTConsumer* clang::CreateGRSimpleVals(Diagnostic &Diags, bool Visualize) {
+  return new GRSimpleValsVisitor(Diags, Visualize);
 }
 
 void GRSimpleValsVisitor::VisitCFG(CFG& C, FunctionDecl& FD) {
-  RunGRSimpleVals(C, FD, *Ctx, Diags);
+  RunGRSimpleVals(C, FD, *Ctx, Diags, Visualize);
 }
 
 //===----------------------------------------------------------------------===//
