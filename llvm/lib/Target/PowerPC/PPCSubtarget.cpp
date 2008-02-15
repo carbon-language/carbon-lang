@@ -82,18 +82,15 @@ PPCSubtarget::PPCSubtarget(const TargetMachine &tm, const Module &M,
 
   // If we are generating code for ppc64, verify that options make sense.
   if (is64Bit) {
-    if (!has64BitSupport()) {
-      Has64BitSupport = true;
-    }
+    Has64BitSupport = true;
     // Silently force 64-bit register use on ppc64.
     Use64BitRegs = true;
   }
   
   // If the user requested use of 64-bit regs, but the cpu selected doesn't
-  // support it, warn and ignore.
-  if (use64BitRegs() && !has64BitSupport()) {
+  // support it, ignore.
+  if (use64BitRegs() && !has64BitSupport())
     Use64BitRegs = false;
-  }
   
   // Set the boolean corresponding to the current target triple, or the default
   // if one cannot be determined, to true.
