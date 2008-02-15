@@ -897,7 +897,7 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
     // C99 6.7.5.2p2: If an identifier is declared to be an object with 
     // static storage duration, it shall not have a variable length array.
     if ((FVD || BVD) && IDecl->getStorageClass() == VarDecl::Static) {
-      if (T->isVariableArrayType()) {
+      if (T->getAsVariableArrayType()) {
         Diag(IDecl->getLocation(), diag::err_typecheck_illegal_vla);
         IDecl->setInvalidDecl();
       }
