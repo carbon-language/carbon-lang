@@ -340,8 +340,10 @@ bool DAGTypeLegalizer::PromoteOperand(SDNode *N, unsigned OpNo) {
   case ISD::MEMSET:
   case ISD::MEMCPY:
   case ISD::MEMMOVE:     Res = HandleMemIntrinsic(N); break;
+
+  case ISD::RET:         Res = PromoteOperand_RET(N, OpNo); break;
   }
-  
+
   // If the result is null, the sub-method took care of registering results etc.
   if (!Res.Val) return false;
   // If the result is N, the sub-method updated N in place.
@@ -523,4 +525,28 @@ SDOperand DAGTypeLegalizer::PromoteOperand_STORE(StoreSDNode *N, unsigned OpNo){
   return DAG.getTruncStore(Ch, Val, Ptr, N->getSrcValue(),
                            SVOffset, N->getMemoryVT(),
                            isVolatile, Alignment);
+}
+
+SDOperand DAGTypeLegalizer::PromoteOperand_RET(SDNode *N, unsigned OpNo) {
+  assert(!(OpNo & 1) && "Return values should be legally typed!");
+  assert((N->getNumOperands() & 1) && "Wrong number of operands!");
+
+  // It's a flag.  Promote all the flags in one hit, as an optimization.
+  SmallVector<SDOperand, 8> NewValues(N->getNumOperands());
+  NewValues[0] = N->getOperand(0); // The chain
+  for (unsigned i = 1, e = N->getNumOperands(); i < e; i += 2) {
+    // The return value.
+    NewValues[i] = N->getOperand(i);
+
+    // The flag.
+    SDOperand Flag = N->getOperand(i + 1);
+    if (getTypeAction(Flag.getValueType()) == Promote)
+      // The promoted value may have rubbish in the new bits, but that
+      // doesn't matter because those bits aren't queried anyway.
+      Flag = GetPromotedOp(Flag);
+    NewValues[i + 1] = Flag;
+  }
+
+  return DAG.UpdateNodeOperands(SDOperand (N, 0),
+                                &NewValues[0], NewValues.size());
 }

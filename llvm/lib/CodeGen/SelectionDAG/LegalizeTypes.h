@@ -182,18 +182,19 @@ private:
   // Operand Promotion.
   bool PromoteOperand(SDNode *N, unsigned OperandNo);
   SDOperand PromoteOperand_ANY_EXTEND(SDNode *N);
-  SDOperand PromoteOperand_ZERO_EXTEND(SDNode *N);
-  SDOperand PromoteOperand_SIGN_EXTEND(SDNode *N);
-  SDOperand PromoteOperand_TRUNCATE(SDNode *N);
+  SDOperand PromoteOperand_BR_CC(SDNode *N, unsigned OpNo);
+  SDOperand PromoteOperand_BRCOND(SDNode *N, unsigned OpNo);
   SDOperand PromoteOperand_FP_EXTEND(SDNode *N);
   SDOperand PromoteOperand_FP_ROUND(SDNode *N);
   SDOperand PromoteOperand_INT_TO_FP(SDNode *N);
+  SDOperand PromoteOperand_RET(SDNode *N, unsigned OpNo);
   SDOperand PromoteOperand_SELECT(SDNode *N, unsigned OpNo);
-  SDOperand PromoteOperand_BRCOND(SDNode *N, unsigned OpNo);
-  SDOperand PromoteOperand_BR_CC(SDNode *N, unsigned OpNo);
   SDOperand PromoteOperand_SETCC(SDNode *N, unsigned OpNo);
+  SDOperand PromoteOperand_SIGN_EXTEND(SDNode *N);
   SDOperand PromoteOperand_STORE(StoreSDNode *N, unsigned OpNo);
-  
+  SDOperand PromoteOperand_TRUNCATE(SDNode *N);
+  SDOperand PromoteOperand_ZERO_EXTEND(SDNode *N);
+
   void PromoteSetCCOperands(SDOperand &LHS,SDOperand &RHS, ISD::CondCode Code);
 
   //===--------------------------------------------------------------------===//
