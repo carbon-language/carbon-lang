@@ -162,6 +162,15 @@ NonLValue GRSimpleVals::EvalBinaryOp(ValueManager& ValMgr,
   }
 }
 
+
+// Pointer arithmetic.
+
+LValue GRSimpleVals::EvalBinaryOp(ValueManager& ValMgr,
+                                  BinaryOperator::Opcode Op,
+                                  LValue LHS, NonLValue RHS) {
+  return cast<LValue>(UnknownVal());
+}
+
 // Equality operators for LValues.
 
 

@@ -330,5 +330,10 @@ public:
                              LValue LHS, LValue RHS) {
     return TF->EvalBinaryOp(ValMgr, Op, LHS, RHS);
   }
+  
+  inline RValue EvalBinaryOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
+                             LValue LHS, NonLValue RHS) {
+    return TF->EvalBinaryOp(ValMgr, Op, LHS, RHS);
+  }
 };
 } // end clang namespace

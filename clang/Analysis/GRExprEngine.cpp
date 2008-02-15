@@ -706,9 +706,17 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
         if (isa<LValue>(V1)) {
           // FIXME: Add support for RHS being a non-lvalue.
           const LValue& L1 = cast<LValue>(V1);
-          const LValue& L2 = cast<LValue>(V2);
           
-          Nodify(Dst, B, N2, SetValue(St, B, EvalBinaryOp(ValMgr, Op, L1, L2)));
+          if (isa<LValue>(V2)) {          
+            const LValue& L2 = cast<LValue>(V2);
+            Nodify(Dst, B, N2, SetValue(St, B,
+                                        EvalBinaryOp(ValMgr, Op, L1, L2)));
+          }
+          else {
+            const NonLValue& R2 = cast<NonLValue>(V2);
+            Nodify(Dst, B, N2, SetValue(St, B,
+                                        EvalBinaryOp(ValMgr, Op, L1, R2)));
+          }
         }
         else {
           const NonLValue& R1 = cast<NonLValue>(V1);
