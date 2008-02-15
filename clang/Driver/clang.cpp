@@ -848,6 +848,13 @@ static void InitializeIncludePaths(HeaderSearch &Headers, FileManager &FM,
               false, Headers);
       AddPath("/usr/include/c++/4.0.0/backward", System, true, false, false,
               Headers);
+
+      // Ubuntu 7.10 - Gutsy Gibbon
+      AddPath("/usr/include/c++/4.1.3", System, true, false, false, Headers);
+      AddPath("/usr/include/c++/4.1.3/i486-linux-gnu", System, true, false,
+              false, Headers);
+      AddPath("/usr/include/c++/4.1.3/backward", System, true, false, false,
+              Headers);
     }
     
     AddPath("/usr/local/include", System, false, false, false, Headers);
