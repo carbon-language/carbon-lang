@@ -300,10 +300,10 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
     if (ULR->valno != AValNo)
       continue;
     UseMO.setReg(NewReg);
-    if (UseMO.isKill())
-      BKills.push_back(li_->getUseIndex(UseIdx)+1);
     if (UseMI == CopyMI)
       continue;
+    if (UseMO.isKill())
+      BKills.push_back(li_->getUseIndex(UseIdx)+1);
     unsigned SrcReg, DstReg;
     if (!tii_->isMoveInstr(*UseMI, SrcReg, DstReg))
       continue;
