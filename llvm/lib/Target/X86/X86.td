@@ -70,9 +70,9 @@ def : Proc<"pentium4",        [FeatureSSE2]>;
 def : Proc<"x86-64",          [Feature64Bit]>;
 def : Proc<"yonah",           [FeatureSSE3]>;
 def : Proc<"prescott",        [FeatureSSE3]>;
-def : Proc<"nocona",          [FeatureSSE3]>;
-def : Proc<"core2",           [FeatureSSSE3]>;
-def : Proc<"penryn",          [FeatureSSE41]>;
+def : Proc<"nocona",          [FeatureSSE3,   Feature64Bit]>;
+def : Proc<"core2",           [FeatureSSSE3,  Feature64Bit]>;
+def : Proc<"penryn",          [FeatureSSE41,  Feature64Bit]>;
 
 def : Proc<"k6",              [FeatureMMX]>;
 def : Proc<"k6-2",            [FeatureMMX,    Feature3DNow]>;
