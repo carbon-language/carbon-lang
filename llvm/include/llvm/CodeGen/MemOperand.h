@@ -31,8 +31,8 @@ class Value;
 class MemOperand {
   const Value *V;
   unsigned int Flags;
-  int Offset;
-  int Size;
+  int64_t Offset;
+  uint64_t Size;
   unsigned int Alignment;
 
 public:
@@ -48,7 +48,8 @@ public:
 
   /// MemOperand - Construct an MemOperand object with the specified
   /// address Value, flags, offset, size, and alignment.
-  MemOperand(const Value *v, unsigned int f, int o, int s, unsigned int a)
+  MemOperand(const Value *v, unsigned int f, int64_t o, uint64_t s,
+             unsigned int a)
     : V(v), Flags(f), Offset(o), Size(s), Alignment(a) {}
 
   /// getValue - Return the base address of the memory access.
@@ -63,10 +64,10 @@ public:
   /// getOffset - For normal values, this is a byte offset added to the base
   /// address. For PseudoSourceValue::FPRel values, this is the FrameIndex
   /// number.
-  int getOffset() const { return Offset; }
+  int64_t getOffset() const { return Offset; }
 
   /// getSize - Return the size in bytes of the memory reference.
-  int getSize() const { return Size; }
+  uint64_t getSize() const { return Size; }
 
   /// getAlignment - Return the minimum known alignment in bytes of the
   /// memory reference.
