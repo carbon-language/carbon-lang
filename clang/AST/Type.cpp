@@ -46,6 +46,7 @@ bool Type::isDerivedType() const {
   case Pointer:
   case VariableArray:
   case ConstantArray:
+  case IncompleteArray:
   case FunctionProto:
   case FunctionNoProto:
   case Reference:
@@ -255,28 +256,26 @@ bool Type::isVariablyModifiedType() const {
   return false;
 }
 
-const VariableArrayType *Type::getAsVariablyModifiedType() const {
-  if (const VariableArrayType *VAT = getAsVariableArrayType()) {
-    if (VAT->getSizeExpr())
-      return VAT;
-  }
-  return 0;
-}
-
 bool Type::isIncompleteArrayType() const {
-  if (const VariableArrayType *VAT = getAsVariableArrayType()) {
-    if (!VAT->getSizeExpr())
-      return true;
-  }
-  return false;
+  return isa<IncompleteArrayType>(CanonicalType);
 }
 
-const VariableArrayType *Type::getAsIncompleteArrayType() const {
-  if (const VariableArrayType *VAT = getAsVariableArrayType()) {
-    if (!VAT->getSizeExpr())
-      return VAT;
+const IncompleteArrayType *Type::getAsIncompleteArrayType() const {
+  // If this is directly a variable array type, return it.
+  if (const IncompleteArrayType *ATy = dyn_cast<IncompleteArrayType>(this))
+    return ATy;
+  
+  // If the canonical form of this type isn't the right kind, reject it.
+  if (!isa<IncompleteArrayType>(CanonicalType)) {
+    // Look through type qualifiers
+    if (isa<IncompleteArrayType>(CanonicalType.getUnqualifiedType()))
+      return CanonicalType.getUnqualifiedType()->getAsIncompleteArrayType();
+    return 0;
   }
-  return 0;
+
+  // If this is a typedef for a variable array type, strip the typedef off
+  // without losing all typedef information.
+  return getDesugaredType()->getAsIncompleteArrayType();
 }
 
 const RecordType *Type::getAsRecordType() const {
@@ -563,8 +562,7 @@ bool Type::isAggregateType() const {
   }
   if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
     return ASQT->getBaseType()->isAggregateType();
-  return CanonicalType->getTypeClass() == ConstantArray ||
-         CanonicalType->getTypeClass() == VariableArray;
+  return isa<ArrayType>(CanonicalType);
 }
 
 /// isConstantSizeType - Return true if this is not a variable sized type,
@@ -594,9 +592,9 @@ bool Type::isIncompleteType() const {
     // A tagged type (struct/union/enum/class) is incomplete if the decl is a
     // forward declaration, but not a full definition (C99 6.2.5p22).
     return !cast<TagType>(CanonicalType)->getDecl()->isDefinition();
-  case VariableArray:
+  case IncompleteArray:
     // An array of unknown size is an incomplete type (C99 6.2.5p22).
-    return cast<VariableArrayType>(CanonicalType)->getSizeExpr() == 0;
+    return true;
   }
 }
 
@@ -801,6 +799,12 @@ void ConstantArrayType::getAsStringInternal(std::string &S) const {
   S += llvm::utostr(getSize().getZExtValue());
   S += ']';
   
+  getElementType().getAsStringInternal(S);
+}
+
+void IncompleteArrayType::getAsStringInternal(std::string &S) const {
+  S += "[]";
+
   getElementType().getAsStringInternal(S);
 }
 

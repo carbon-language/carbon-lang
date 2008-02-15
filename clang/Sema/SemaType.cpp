@@ -231,9 +231,11 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
       }
       llvm::APSInt ConstVal(32);
       // If no expression was provided, we consider it a VLA.
-      if (!ArraySize || !ArraySize->isIntegerConstantExpr(ConstVal, Context))
+      if (!ArraySize) {
+        T = Context.getIncompleteArrayType(T, ASM, ATI.TypeQuals);
+      } else if (!ArraySize->isIntegerConstantExpr(ConstVal, Context)) {
         T = Context.getVariableArrayType(T, ArraySize, ASM, ATI.TypeQuals);
-      else {
+      } else {
         // C99 6.7.5.2p1: If the expression is a constant expression, it shall
         // have a value greater than zero.
         if (ConstVal.isSigned()) {

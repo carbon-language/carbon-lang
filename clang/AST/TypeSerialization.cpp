@@ -91,6 +91,10 @@ void Type::Create(ASTContext& Context, unsigned i, Deserializer& D) {
       D.RegisterPtr(PtrID,FunctionTypeProto::CreateImpl(Context,D));
       break;
       
+    case Type::IncompleteArray:
+      D.RegisterPtr(PtrID,IncompleteArrayType::CreateImpl(Context,D));
+      break;
+      
     case Type::Pointer:
       D.RegisterPtr(PtrID,PointerType::CreateImpl(Context,D));
       break;
@@ -268,4 +272,22 @@ Type* VariableArrayType::CreateImpl(ASTContext& Context, Deserializer& D) {
   Expr* SizeExpr = D.ReadOwnedPtr<Expr>();
   
   return Context.getVariableArrayType(ElTy,SizeExpr,am,ITQ).getTypePtr();
+}
+
+//===----------------------------------------------------------------------===//
+// IncompleteArrayType
+//===----------------------------------------------------------------------===//
+
+void IncompleteArrayType::EmitImpl(Serializer& S) const {
+  S.Emit(getElementType());
+  S.EmitInt(getSizeModifier());
+  S.EmitInt(getIndexTypeQualifier());
+}
+
+Type* IncompleteArrayType::CreateImpl(ASTContext& Context, Deserializer& D) {
+  QualType ElTy = QualType::ReadVal(D);
+  ArraySizeModifier am = static_cast<ArraySizeModifier>(D.ReadInt());
+  unsigned ITQ = D.ReadInt();
+
+  return Context.getIncompleteArrayType(ElTy,am,ITQ).getTypePtr();
 }

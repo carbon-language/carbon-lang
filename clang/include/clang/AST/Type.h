@@ -44,6 +44,7 @@ namespace clang {
   class ArrayType;
   class ConstantArrayType;
   class VariableArrayType;
+  class IncompleteArrayType;
   class RecordType;
   class ComplexType;
   class TagType;
@@ -217,7 +218,7 @@ class Type {
 public:
   enum TypeClass {
     Builtin, Complex, Pointer, Reference, 
-    ConstantArray, VariableArray, 
+    ConstantArray, VariableArray, IncompleteArray,
     Vector, OCUVector,
     FunctionNoProto, FunctionProto,
     TypeName, Tagged, ASQual,
@@ -319,8 +320,7 @@ public:
   const ArrayType *getAsArrayType() const;
   const ConstantArrayType *getAsConstantArrayType() const;
   const VariableArrayType *getAsVariableArrayType() const;
-  const VariableArrayType *getAsIncompleteArrayType() const;
-  const VariableArrayType *getAsVariablyModifiedType() const;
+  const IncompleteArrayType *getAsIncompleteArrayType() const;
   const RecordType *getAsRecordType() const;
   const RecordType *getAsStructureType() const;   
   const RecordType *getAsUnionType() const;
@@ -576,7 +576,8 @@ public:
   }
   static bool classof(const Type *T) {
     return T->getTypeClass() == ConstantArray ||
-           T->getTypeClass() == VariableArray;
+           T->getTypeClass() == VariableArray ||
+           T->getTypeClass() == IncompleteArray;
   }
   static bool classof(const ArrayType *) { return true; }
 };
@@ -623,6 +624,36 @@ protected:
   friend class Type;
 };
 
+class IncompleteArrayType : public ArrayType {
+  IncompleteArrayType(QualType et, QualType can,
+                    ArraySizeModifier sm, unsigned tq)
+    : ArrayType(IncompleteArray, et, can, sm, tq) {}
+  friend class ASTContext;  // ASTContext creates these.
+public:
+
+  virtual void getAsStringInternal(std::string &InnerString) const;
+
+  static bool classof(const Type *T) { 
+    return T->getTypeClass() == IncompleteArray; 
+  }
+  static bool classof(const IncompleteArrayType *) { return true; }
+  
+  friend class StmtIteratorBase;
+  
+  void Profile(llvm::FoldingSetNodeID &ID) {
+    Profile(ID, getElementType());
+  }
+  
+  static void Profile(llvm::FoldingSetNodeID &ID, QualType ET) {
+    ID.AddPointer(ET.getAsOpaquePtr());
+  }
+  
+protected:  
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static Type* CreateImpl(ASTContext& Context,llvm::Deserializer& D);
+  friend class Type;
+};
+
 // FIXME: VariableArrayType's aren't uniqued (since expressions aren't).
 class VariableArrayType : public ArrayType {
   /// SizeExpr - An assignment expression. VLA's are only permitted within 
@@ -647,14 +678,7 @@ public:
   friend class StmtIteratorBase;
   
   void Profile(llvm::FoldingSetNodeID &ID) {
-    assert (SizeExpr == NULL 
-            && "Can only unique VariableArrayTypes with no specified size.");
-    
-    Profile(ID, getElementType());
-  }
-  
-  static void Profile(llvm::FoldingSetNodeID &ID, QualType ET) {
-    ID.AddPointer(ET.getAsOpaquePtr());
+    assert (0 && "Cannnot unique VariableArrayTypes.");
   }
   
 protected:  

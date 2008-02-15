@@ -207,15 +207,18 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     
   case Type::VariableArray: {
     const VariableArrayType &A = cast<VariableArrayType>(Ty);
-    assert(A.getSizeModifier() == ArrayType::Normal &&
-           A.getIndexTypeQualifier() == 0 &&
+    assert(A.getIndexTypeQualifier() == 0 &&
            "FIXME: We only handle trivial array types so far!");
-    if (A.getSizeExpr() == 0) {
-      // int X[] -> [0 x int]
-      return llvm::ArrayType::get(ConvertType(A.getElementType()), 0);
-    } else {
-      assert(0 && "FIXME: VLAs not implemented yet!");
-    }
+    // VLAs resolve to the innermost element type; this matches
+    // the return of alloca, and there isn't any obviously better choice.
+    return ConvertType(A.getElementType());
+  }
+  case Type::IncompleteArray: {
+    const IncompleteArrayType &A = cast<IncompleteArrayType>(Ty);
+    assert(A.getIndexTypeQualifier() == 0 &&
+           "FIXME: We only handle trivial array types so far!");
+    // int X[] -> [0 x int]
+    return llvm::ArrayType::get(ConvertType(A.getElementType()), 0);
   }
   case Type::ConstantArray: {
     const ConstantArrayType &A = cast<ConstantArrayType>(Ty);

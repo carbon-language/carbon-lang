@@ -412,13 +412,13 @@ bool Sema::CheckInitExpr(Expr *expr, InitListExpr *IList, unsigned slot,
 }
 
 bool Sema::CheckStringLiteralInit(StringLiteral *strLiteral, QualType &DeclT) {
-  if (const VariableArrayType *VAT = DeclT->getAsIncompleteArrayType()) {
+  if (const IncompleteArrayType *IAT = DeclT->getAsIncompleteArrayType()) {
     // C99 6.7.8p14. We have an array of character type with unknown size 
     // being initialized to a string literal.
     llvm::APSInt ConstVal(32);
     ConstVal = strLiteral->getByteLength() + 1;
     // Return a new array type (C99 6.7.8p22).
-    DeclT = Context.getConstantArrayType(VAT->getElementType(), ConstVal, 
+    DeclT = Context.getConstantArrayType(IAT->getElementType(), ConstVal, 
                                          ArrayType::Normal, 0);
   } else if (const ConstantArrayType *CAT = DeclT->getAsConstantArrayType()) {
     // C99 6.7.8p14. We have an array of character type with known size.
@@ -564,17 +564,18 @@ bool Sema::CheckInitializerListTypes(InitListExpr*& IList, QualType &DeclType,
         }
       }
       int maxElements;
-      if (const VariableArrayType *VAT = DeclType->getAsVariableArrayType()) {
+      if (DeclType->isIncompleteArrayType()) {
         // FIXME: use a proper constant
         maxElements = 0x7FFFFFFF;
+      } else if (const VariableArrayType *VAT = DeclType->getAsVariableArrayType()) {
         // Check for VLAs; in standard C it would be possible to check this
         // earlier, but I don't know where clang accepts VLAs (gcc accepts
         // them in all sorts of strange places).
-        if (const Expr *expr = VAT->getSizeExpr()) {
-          Diag(expr->getLocStart(), diag::err_variable_object_no_init,
-               expr->getSourceRange());
-          hadError = true;
-        }
+        Diag(VAT->getSizeExpr()->getLocStart(),
+             diag::err_variable_object_no_init,
+             VAT->getSizeExpr()->getSourceRange());
+        hadError = true;
+        maxElements = 0x7FFFFFFF;
       } else {
         const ConstantArrayType *CAT = DeclType->getAsConstantArrayType();
         maxElements = static_cast<int>(CAT->getSize().getZExtValue());
@@ -638,7 +639,7 @@ bool Sema::CheckInitializerListTypes(InitListExpr*& IList, QualType &DeclType,
 bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType) {  
   // C99 6.7.8p3: The type of the entity to be initialized shall be an array
   // of unknown size ("[]") or an object type that is not a variable array type.
-  if (const VariableArrayType *VAT = DeclType->getAsVariablyModifiedType())
+  if (const VariableArrayType *VAT = DeclType->getAsVariableArrayType())
     return Diag(VAT->getSizeExpr()->getLocStart(), 
                 diag::err_variable_object_no_init, 
                 VAT->getSizeExpr()->getSourceRange());
@@ -897,10 +898,8 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
     // static storage duration, it shall not have a variable length array.
     if ((FVD || BVD) && IDecl->getStorageClass() == VarDecl::Static) {
       if (const VariableArrayType *VLA = T->getAsVariableArrayType()) {
-        if (VLA->getSizeExpr()) {  
-          Diag(IDecl->getLocation(), diag::err_typecheck_illegal_vla);
-          IDecl->setInvalidDecl();
-        }
+        Diag(IDecl->getLocation(), diag::err_typecheck_illegal_vla);
+        IDecl->setInvalidDecl();
       }
     }
     // Block scope. C99 6.7p7: If an identifier for an object is declared with

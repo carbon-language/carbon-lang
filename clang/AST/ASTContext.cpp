@@ -532,49 +532,49 @@ QualType ASTContext::getConstantArrayType(QualType EltTy,
 QualType ASTContext::getVariableArrayType(QualType EltTy, Expr *NumElts,
                                           ArrayType::ArraySizeModifier ASM,
                                           unsigned EltTypeQuals) {
-  if (NumElts) {
-    // Since we don't unique expressions, it isn't possible to unique VLA's
-    // that have an expression provided for their size.
-    
-    VariableArrayType *New = new VariableArrayType(EltTy, QualType(), NumElts, 
-                                                   ASM, EltTypeQuals);
-    
-    CompleteVariableArrayTypes.push_back(New);
-    Types.push_back(New);
-    return QualType(New, 0);
-  }
-  else {
-    // No size is provided for the VLA.  These we can unique.
-    llvm::FoldingSetNodeID ID;
-    VariableArrayType::Profile(ID, EltTy);
-    
-    void *InsertPos = 0;
-    if (VariableArrayType *ATP = 
-         IncompleteVariableArrayTypes.FindNodeOrInsertPos(ID, InsertPos))
-      return QualType(ATP, 0);
-    
-    // If the element type isn't canonical, this won't be a canonical type
-    // either, so fill in the canonical type field.
-    QualType Canonical;
-    
-    if (!EltTy->isCanonical()) {
-      Canonical = getVariableArrayType(EltTy.getCanonicalType(), NumElts,
+  // Since we don't unique expressions, it isn't possible to unique VLA's
+  // that have an expression provided for their size.
+
+  VariableArrayType *New = new VariableArrayType(EltTy, QualType(), NumElts, 
+                                                 ASM, EltTypeQuals);
+
+  VariableArrayTypes.push_back(New);
+  Types.push_back(New);
+  return QualType(New, 0);
+}
+
+QualType ASTContext::getIncompleteArrayType(QualType EltTy,
+                                            ArrayType::ArraySizeModifier ASM,
+                                            unsigned EltTypeQuals) {
+  llvm::FoldingSetNodeID ID;
+  IncompleteArrayType::Profile(ID, EltTy);
+
+  void *InsertPos = 0;
+  if (IncompleteArrayType *ATP = 
+       IncompleteArrayTypes.FindNodeOrInsertPos(ID, InsertPos))
+    return QualType(ATP, 0);
+
+  // If the element type isn't canonical, this won't be a canonical type
+  // either, so fill in the canonical type field.
+  QualType Canonical;
+
+  if (!EltTy->isCanonical()) {
+    Canonical = getIncompleteArrayType(EltTy.getCanonicalType(),
                                        ASM, EltTypeQuals);
-      
-      // Get the new insert position for the node we care about.
-      VariableArrayType *NewIP =
-        IncompleteVariableArrayTypes.FindNodeOrInsertPos(ID, InsertPos);
-      
-      assert(NewIP == 0 && "Shouldn't be in the map!");
-    }
-    
-    VariableArrayType *New = new VariableArrayType(EltTy, QualType(), NumElts, 
-                                                   ASM, EltTypeQuals);
-    
-    IncompleteVariableArrayTypes.InsertNode(New, InsertPos);
-    Types.push_back(New);
-    return QualType(New, 0);            
+
+    // Get the new insert position for the node we care about.
+    IncompleteArrayType *NewIP =
+      IncompleteArrayTypes.FindNodeOrInsertPos(ID, InsertPos);
+
+    assert(NewIP == 0 && "Shouldn't be in the map!");
   }
+
+  IncompleteArrayType *New = new IncompleteArrayType(EltTy, Canonical,
+                                                     ASM, EltTypeQuals);
+
+  IncompleteArrayTypes.InsertNode(New, InsertPos);
+  Types.push_back(New);
+  return QualType(New, 0);
 }
 
 /// getVectorType - Return the unique reference to a vector type of
@@ -1690,6 +1690,8 @@ bool ASTContext::typesAreCompatible(QualType lhs, QualType rhs) {
   // Same as above for arrays
   if (LHSClass == Type::VariableArray) LHSClass = Type::ConstantArray;
   if (RHSClass == Type::VariableArray) RHSClass = Type::ConstantArray;
+  if (LHSClass == Type::IncompleteArray) LHSClass = Type::ConstantArray;
+  if (RHSClass == Type::IncompleteArray) RHSClass = Type::ConstantArray;
   
   // If the canonical type classes don't match...
   if (LHSClass != RHSClass) {
@@ -1719,6 +1721,7 @@ bool ASTContext::typesAreCompatible(QualType lhs, QualType rhs) {
     return pointerTypesAreCompatible(lcanon, rcanon);
   case Type::ConstantArray:
   case Type::VariableArray:
+  case Type::IncompleteArray:
     return arrayTypesAreCompatible(lcanon, rcanon);
   case Type::FunctionNoProto:
     return functionTypesAreCompatible(lcanon, rcanon);

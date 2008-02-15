@@ -37,8 +37,8 @@ class ASTContext {
   llvm::FoldingSet<PointerType> PointerTypes;
   llvm::FoldingSet<ReferenceType> ReferenceTypes;
   llvm::FoldingSet<ConstantArrayType> ConstantArrayTypes;
-  llvm::FoldingSet<VariableArrayType> IncompleteVariableArrayTypes;
-  std::vector<VariableArrayType*> CompleteVariableArrayTypes;
+  llvm::FoldingSet<IncompleteArrayType> IncompleteArrayTypes;
+  std::vector<VariableArrayType*> VariableArrayTypes;
   llvm::FoldingSet<VectorType> VectorTypes;
   llvm::FoldingSet<FunctionTypeNoProto> FunctionTypeNoProtos;
   llvm::FoldingSet<FunctionTypeProto> FunctionTypeProtos;
@@ -142,6 +142,12 @@ public:
   QualType getVariableArrayType(QualType EltTy, Expr *NumElts,
                                 ArrayType::ArraySizeModifier ASM,
                                 unsigned EltTypeQuals);
+
+  /// getIncompleteArrayType - Returns a unique reference to the type for a
+  /// incomplete array of the specified element type.
+  QualType getIncompleteArrayType(QualType EltTy,
+                                  ArrayType::ArraySizeModifier ASM,
+                                  unsigned EltTypeQuals);
 
   /// getConstantArrayType - Return the unique reference to the type for a
   /// constant array of the specified element type.
