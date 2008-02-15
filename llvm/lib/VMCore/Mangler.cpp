@@ -96,6 +96,8 @@ std::string Mangler::makeNameProper(const std::string &X, const char *Prefix) {
     for (std::string::const_iterator E = X.end(); I != E; ++I) {
       if (*I == '"')
         Result += "_QQ_";
+      else if (*I == '\n')
+        Result += "_NL_";
       else
         Result += *I;
     }
