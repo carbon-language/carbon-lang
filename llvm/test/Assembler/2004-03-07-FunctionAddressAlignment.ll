@@ -1,15 +1,15 @@
-; RUN: llvm-upgrade < %s | llvm-as | llvm-dis | not grep cast
+; RUN: llvm-as < %s | llvm-dis | not grep ptrtoint
 ; All of these should be eliminable
 
 
-int %foo() {
-	ret int and (int cast (int()* %foo to int), int 1)
+define i32 @foo() {
+	ret i32 and (i32 ptrtoint (i32()* @foo to i32), i32 1)
 }
 
-int %foo2() {
-	ret int and (int 1, int cast (int()* %foo2 to int))
+define i32 @foo2() {
+	ret i32 and (i32 1, i32 ptrtoint (i32()* @foo2 to i32))
 }
 
-bool %foo3() {
-	ret bool cast (bool()* %foo3 to bool)
+define i1 @foo3() {
+	ret i1 icmp ne (i1()* @foo3, i1()* null)
 }
