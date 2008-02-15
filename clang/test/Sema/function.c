@@ -13,6 +13,8 @@ void g(int (*)(const void **, const void **));
 void g(int (*compar)()) {
 }
 
+void h();  //expected-error{{previous declaration is here}}
+void h (const char *fmt, ...) {} //expected-error{{conflicting types for 'h'}}
 
 // PR1965
 int t5(b);          // expected-error {{parameter list without types}}

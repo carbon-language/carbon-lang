@@ -258,16 +258,6 @@ FunctionDecl *Sema::MergeFunctionDecl(FunctionDecl *New, ScopedDecl *OldD) {
   QualType OldQType = Old->getCanonicalType();
   QualType NewQType = New->getCanonicalType();
   
-  // This is not right, but it's a start.
-  // If Old is a function prototype with no defined arguments we only compare 
-  // the return type;  If arguments are defined on the prototype we validate the
-  // entire function type.
-  // FIXME: We should link up decl objects here.
-  if (Old->getBody() == 0) {
-    if (OldQType.getTypePtr()->getTypeClass() == Type::FunctionNoProto && 
-        Old->getResultType() == New->getResultType())
-      return New;
-  }
   // Function types need to be compatible, not identical. This handles
   // duplicate function decls like "void f(int); void f(enum X);" properly.
   if (Context.functionTypesAreCompatible(OldQType, NewQType))
