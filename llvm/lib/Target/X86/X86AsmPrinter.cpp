@@ -138,6 +138,15 @@ bool X86SharedAsmPrinter::doInitialization(Module &M) {
   return Result;
 }
 
+/// PrintUnamedNameSafely - Print out the printable characters in the name.
+/// Don't print things like \n or \0.
+static void PrintUnamedNameSafely(const Value *V, std::ostream &OS) {
+  for (const char *Name = V->getNameStart(), *E = Name+V->getNameLen();
+       Name != E; ++Name)
+    if (isprint(*Name))
+      OS << *Name;
+}
+
 bool X86SharedAsmPrinter::doFinalization(Module &M) {
   // Note: this code is not shared by the Intel printer as it is too different
   // from how MASM does things.  When making changes here don't forget to look
@@ -218,7 +227,9 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
           if (TAI->getCOMMDirectiveTakesAlignment())
             O << "," << (TAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
         }
-        O << "\t\t" << TAI->getCommentString() << " " << I->getName() << "\n";
+        O << "\t\t" << TAI->getCommentString() << " ";
+        PrintUnamedNameSafely(I, O);
+        O << "\n";
         continue;
       }
     }
@@ -319,8 +330,9 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     }
 
     EmitAlignment(Align, I);
-    O << name << ":\t\t\t\t" << TAI->getCommentString() << " " << I->getName()
-      << "\n";
+    O << name << ":\t\t\t\t" << TAI->getCommentString() << " ";
+    PrintUnamedNameSafely(I, O);
+    O << "\n";
     if (TAI->hasDotTypeDotSizeDirective())
       O << "\t.size\t" << name << ", " << Size << "\n";
     // If the initializer is a extern weak symbol, remember to emit the weak
