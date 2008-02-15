@@ -54,6 +54,8 @@ def changeextension(path, newext):
 def inferlanguage(extension):
     if extension == "c":
         return "c"
+    elif extension in ["cpp", "cc"]:
+        return "c++"
     elif extension == "i":
         return "c-cpp-output"
     elif extension == "m":
