@@ -473,7 +473,7 @@ void GRExprEngine::VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr* S,
   
   Nodify(Dst, S, Pred,
          SetValue(Pred->getState(), S,
-                  NonLValue::GetValue(ValMgr, size, getContext().IntTy, L)));
+                  NonLValue::GetValue(ValMgr, size, S->getType(), L)));
   
 }
 
@@ -573,7 +573,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U,
                 
         Nodify(Dst, U, N1,
                SetValue(St, U, NonLValue::GetValue(ValMgr, size,
-                                                   getContext().IntTy, L)));
+                                                   U->getType(), L)));
         
         break;
       }
@@ -730,15 +730,20 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
               Result = EvalBinaryOp(ValMgr, Op, L1, L2);
             }
             else {
+              QualType T1 = B->getLHS()->getType();
+              QualType T2 = B->getRHS()->getType();
+              
               // An operation between two variables of a non-lvalue type.
               Result =
                 EvalBinaryOp(ValMgr, Op,
-                             cast<NonLValue>(GetValue(N1->getState(), L1)),
-                             cast<NonLValue>(GetValue(N2->getState(), L2)));
+                            cast<NonLValue>(GetValue(N1->getState(), L1, &T1)),
+                            cast<NonLValue>(GetValue(N2->getState(), L2, &T2)));
             }
           }
           else { // Any other operation between two Non-LValues.
-            const NonLValue& R1 = cast<NonLValue>(GetValue(N1->getState(), L1));
+            QualType T = B->getLHS()->getType();
+            const NonLValue& R1 = cast<NonLValue>(GetValue(N1->getState(),
+                                                           L1, &T));
             const NonLValue& R2 = cast<NonLValue>(V2);
             Result = EvalBinaryOp(ValMgr, Op, R1, R2);
           }

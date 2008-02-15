@@ -44,14 +44,19 @@ public:
                                  BinaryOperator::Opcode Op,
                                  NonLValue LHS, NonLValue RHS);
   
+  virtual RValue EvalBinaryOp(ValueManager& ValMgr,
+                              BinaryOperator::Opcode Op,
+                              LValue LHS, LValue RHS);
+  
   // Pointer arithmetic.
   
   virtual LValue EvalBinaryOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
                               LValue LHS, NonLValue RHS);  
   
+protected:
   // Equality operators for LValues.
-  virtual NonLValue EvalEQ(ValueManager& ValMgr, LValue LHS, LValue RHS);
-  virtual NonLValue EvalNE(ValueManager& ValMgr, LValue LHS, LValue RHS);
+  NonLValue EvalEQ(ValueManager& ValMgr, LValue LHS, LValue RHS);
+  NonLValue EvalNE(ValueManager& ValMgr, LValue LHS, LValue RHS);
 };
   
   

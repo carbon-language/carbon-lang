@@ -39,21 +39,3 @@ RValue GRTransferFuncs::EvalCast(ValueManager& ValMgr, RValue X,
   
   return X;
 }
-
-// Binary Operators (except assignments and comma).
-
-RValue GRTransferFuncs::EvalBinaryOp(ValueManager& ValMgr,
-                                     BinaryOperator::Opcode Op,
-                                     LValue LHS, LValue RHS) {
-  
-  switch (Op) {
-    default:
-      assert (false && "Not yet implemented.");
-      
-    case BinaryOperator::EQ:
-      return EvalEQ(ValMgr, LHS, RHS);
-      
-    case BinaryOperator::NE:
-      return EvalNE(ValMgr, LHS, RHS);
-  }
-}

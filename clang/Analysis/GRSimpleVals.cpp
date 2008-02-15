@@ -163,6 +163,24 @@ NonLValue GRSimpleVals::EvalBinaryOp(ValueManager& ValMgr,
 }
 
 
+// Binary Operators (except assignments and comma).
+
+RValue GRSimpleVals::EvalBinaryOp(ValueManager& ValMgr,
+                                  BinaryOperator::Opcode Op,
+                                  LValue LHS, LValue RHS) {
+  
+  switch (Op) {
+    default:
+      return UnknownVal();
+      
+    case BinaryOperator::EQ:
+      return EvalEQ(ValMgr, LHS, RHS);
+      
+    case BinaryOperator::NE:
+      return EvalNE(ValMgr, LHS, RHS);      
+  }
+}
+
 // Pointer arithmetic.
 
 LValue GRSimpleVals::EvalBinaryOp(ValueManager& ValMgr,
