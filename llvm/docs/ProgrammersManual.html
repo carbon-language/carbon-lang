@@ -1914,9 +1914,7 @@ erase function to remove your instruction. For example:</p>
 <div class="doc_code">
 <pre>
 <a href="#Instruction">Instruction</a> *I = .. ;
-<a href="#BasicBlock">BasicBlock</a> *BB = I-&gt;getParent();
-
-BB-&gt;getInstList().erase(I);
+I-&gt;eraseFromParent();
 </pre>
 </div>
 
