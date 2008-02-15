@@ -1,4 +1,5 @@
-// RUN: %llvmgxx -S -O0 -emit-llvm %s -o - | grep retval | grep S242 | grep {i32 1} | count 2
+// RUN: %llvmgxx -S -O0 -emit-llvm %s -o - | grep {retval\\|memtmp} | grep S242 | \
+// RUN:   grep {i32 1} | count 2
 
 // Test that all 8 bytes of ret in check242 are copied.  llvm-gcc was
 // treating S242 as if it were S93, which does not need to have the
