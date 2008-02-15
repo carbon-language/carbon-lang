@@ -39,8 +39,28 @@ MachineInstr *TargetInstrInfoImpl::commuteInstruction(MachineInstr *MI) const {
   return MI;
 }
 
+/// CommuteChangesDestination - Return true if commuting the specified
+/// instruction will also changes the destination operand. Also return the
+/// current operand index of the would be new destination register by
+/// reference. This can happen when the commutable instruction is also a
+/// two-address instruction.
+bool TargetInstrInfoImpl::CommuteChangesDestination(MachineInstr *MI,
+                                                    unsigned &OpIdx) const{
+  assert(MI->getOperand(1).isRegister() && MI->getOperand(2).isRegister() &&
+         "This only knows how to commute register operands so far");
+  if (MI->getOperand(0).getReg() == MI->getOperand(1).getReg()) {
+    // Must be two address instruction!
+    assert(MI->getDesc().getOperandConstraint(0, TOI::TIED_TO) &&
+           "Expecting a two-address instruction!");
+    OpIdx = 2;
+    return true;
+  }
+  return false;
+}
+
+
 bool TargetInstrInfoImpl::PredicateInstruction(MachineInstr *MI,
-                                               const std::vector<MachineOperand> &Pred) const {
+                                const std::vector<MachineOperand> &Pred) const {
   bool MadeChange = false;
   const TargetInstrDesc &TID = MI->getDesc();
   if (!TID.isPredicable())

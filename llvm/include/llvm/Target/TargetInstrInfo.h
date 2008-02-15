@@ -149,6 +149,14 @@ public:
   ///
   virtual MachineInstr *commuteInstruction(MachineInstr *MI) const = 0;
 
+  /// CommuteChangesDestination - Return true if commuting the specified
+  /// instruction will also changes the destination operand. Also return the
+  /// current operand index of the would be new destination register by
+  /// reference. This can happen when the commutable instruction is also a
+  /// two-address instruction.
+  virtual bool CommuteChangesDestination(MachineInstr *MI,
+                                         unsigned &OpIdx) const = 0;
+
   /// AnalyzeBranch - Analyze the branching code at the end of MBB, returning
   /// true if it cannot be understood (e.g. it's a switch dispatch or isn't
   /// implemented for a target).  Upon success, this returns false and returns
@@ -384,6 +392,8 @@ protected:
   : TargetInstrInfo(desc, NumOpcodes) {}
 public:
   virtual MachineInstr *commuteInstruction(MachineInstr *MI) const;
+  virtual bool CommuteChangesDestination(MachineInstr *MI,
+                                         unsigned &OpIdx) const;
   virtual bool PredicateInstruction(MachineInstr *MI,
                               const std::vector<MachineOperand> &Pred) const;
   
