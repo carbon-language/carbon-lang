@@ -730,8 +730,11 @@ public:
       const std::string &VarName = N->getName();
       std::string Val = VariableMap[VarName];
       bool ModifiedVal = false;
-      assert(!Val.empty() &&
-             "Variable referenced but not defined and not caught earlier!");
+      if (Val.empty()) {
+	cerr << "Variable '" << VarName << " referenced but not defined "
+	     << "and not caught earlier!\n";
+	abort();
+      }
       if (Val[0] == 'T' && Val[1] == 'm' && Val[2] == 'p') {
         // Already selected this operand, just return the tmpval.
         NodeOps.push_back(Val);
@@ -858,8 +861,8 @@ public:
         unsigned ResNo = TmpNo++;
         assert(N->getExtTypes().size() == 1 && "Multiple types not handled!");
         emitCode("SDOperand Tmp" + utostr(ResNo) + 
-                 " = CurDAG->getTargetConstant(" + itostr(II->getValue()) +
-                 ", " + getEnumName(N->getTypeNum(0)) + ");");
+                 " = CurDAG->getTargetConstant(0x" + itohexstr(II->getValue()) +
+                 "ULL, " + getEnumName(N->getTypeNum(0)) + ");");
         NodeOps.push_back("Tmp" + utostr(ResNo));
         return NodeOps;
       }

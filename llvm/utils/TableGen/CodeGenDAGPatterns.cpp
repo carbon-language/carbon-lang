@@ -702,10 +702,17 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
           // Make sure that the value is representable for this type.
           if (Size < 32) {
             int Val = (II->getValue() << (32-Size)) >> (32-Size);
-            if (Val != II->getValue())
-              TP.error("Sign-extended integer value '" + itostr(II->getValue())+
-                       "' is out of range for type '" + 
-                       getEnumName(getTypeNum(0)) + "'!");
+            if (Val != II->getValue()) {
+	      // If sign-extended doesn't fit, does it fit as unsigned?
+	      unsigned ValueMask = unsigned(MVT::getIntVTBitMask(VT));
+	      unsigned UnsignedVal = unsigned(II->getValue());
+
+	      if ((ValueMask & UnsignedVal) != UnsignedVal) {
+		TP.error("Integer value '" + itostr(II->getValue())+
+			 "' is out of range for type '" + 
+			 getEnumName(getTypeNum(0)) + "'!");
+	      }
+	    }
           }
         }
       }
