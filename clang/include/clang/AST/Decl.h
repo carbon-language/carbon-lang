@@ -140,8 +140,8 @@ public:
 
   template<typename T> T *getAttr() {
     for (Attr *attr = getAttrs(); attr; attr = attr->getNext())
-      if (isa<T>(attr))
-        return cast<T>(attr);
+      if (T *V = dyn_cast<T>(attr))
+        return V;
 
     return 0;
   }

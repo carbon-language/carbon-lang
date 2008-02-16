@@ -14,7 +14,7 @@
 #ifndef LLVM_CLANG_AST_ATTR_H
 #define LLVM_CLANG_AST_ATTR_H
 
-#include <assert.h>
+#include <cassert>
 
 namespace clang {
 
