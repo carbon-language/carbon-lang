@@ -508,16 +508,24 @@ Value *ScalarExprEmitter::VisitImplicitCastExpr(const ImplicitCastExpr *E) {
 // handle things like function to ptr-to-function decay etc.
 Value *ScalarExprEmitter::EmitCastExpr(const Expr *E, QualType DestTy) {
   // Handle cases where the source is an non-complex type.
-  if (!E->getType()->isComplexType()) {
+  
+  if (!CGF.hasAggregateLLVMType(E->getType())) {
     Value *Src = Visit(const_cast<Expr*>(E));
 
     // Use EmitScalarConversion to perform the conversion.
     return EmitScalarConversion(Src, E->getType(), DestTy);
   }
+  
+  if (E->getType()->isComplexType()) {
+    // Handle cases where the source is a complex type.
+    return EmitComplexToScalarConversion(CGF.EmitComplexExpr(E), E->getType(),
+                                         DestTy);
+  }
 
-  // Handle cases where the source is a complex type.
-  return EmitComplexToScalarConversion(CGF.EmitComplexExpr(E), E->getType(),
-                                       DestTy);
+  // Okay, this is a cast from an aggregate.  It must be a cast to void.  Just
+  // evaluate the result and return.
+  CGF.EmitAggExpr(E, 0, false);
+  return 0;
 }
 
 Value *ScalarExprEmitter::VisitStmtExpr(const StmtExpr *E) {

@@ -1,4 +1,4 @@
-// RUN: clang %s -emit-llvm
+// RUN: clang < %s -emit-llvm
 int A;
 long long B;
 int C;
@@ -18,3 +18,8 @@ void foo(char *strbuf) {
   int stufflen = 4;
   strbuf += stufflen;
 }
+
+
+// Aggregate cast to void
+union uu { int a;}; void f(union uu p) { (void) p;}
+
