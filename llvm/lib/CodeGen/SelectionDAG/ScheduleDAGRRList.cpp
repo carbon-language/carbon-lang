@@ -431,7 +431,7 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
     SUnit *NewSU = NewSUnit(N);
     SUnitMap[N].push_back(NewSU);
     const TargetInstrDesc &TID = TII->get(N->getTargetOpcode());
-    for (unsigned i = TID.getNumDefs(); i != TID.getNumOperands(); ++i) {
+    for (unsigned i = 0; i != TID.getNumOperands(); ++i) {
       if (TID.getOperandConstraint(i, TOI::TIED_TO) != -1) {
         NewSU->isTwoAddress = true;
         break;
