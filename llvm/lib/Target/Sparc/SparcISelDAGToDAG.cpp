@@ -195,7 +195,8 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::MEMMOVE, MVT::Other, Expand);
   setOperationAction(ISD::MEMSET, MVT::Other, Expand);
   setOperationAction(ISD::MEMCPY, MVT::Other, Expand);
-  
+  setOperationAction(ISD::MEMBARRIER, MVT::Other, Expand);
+
   setOperationAction(ISD::FSIN , MVT::f64, Expand);
   setOperationAction(ISD::FCOS , MVT::f64, Expand);
   setOperationAction(ISD::FREM , MVT::f64, Expand);

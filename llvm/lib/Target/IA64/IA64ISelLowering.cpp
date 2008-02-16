@@ -69,7 +69,8 @@ IA64TargetLowering::IA64TargetLowering(TargetMachine &TM)
       setOperationAction(ISD::MEMMOVE          , MVT::Other, Expand);
       setOperationAction(ISD::MEMSET           , MVT::Other, Expand);
       setOperationAction(ISD::MEMCPY           , MVT::Other, Expand);
-      
+      setOperationAction(ISD::MEMBARRIER       , MVT::Other, Expand);
+
       setOperationAction(ISD::SINT_TO_FP       , MVT::i1   , Promote);
       setOperationAction(ISD::UINT_TO_FP       , MVT::i1   , Promote);
 

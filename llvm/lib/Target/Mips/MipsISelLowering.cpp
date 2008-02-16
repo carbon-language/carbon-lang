@@ -84,6 +84,7 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
   setOperationAction(ISD::MEMMOVE, MVT::Other, Expand);
   setOperationAction(ISD::MEMSET, MVT::Other, Expand);
   setOperationAction(ISD::MEMCPY, MVT::Other, Expand);
+  setOperationAction(ISD::MEMBARRIER, MVT::Other, Expand);
 
   setOperationAction(ISD::CTPOP, MVT::i32, Expand);
   setOperationAction(ISD::CTTZ , MVT::i32, Expand);

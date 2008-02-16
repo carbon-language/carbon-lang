@@ -1135,11 +1135,21 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 
   case ISD::MEMBARRIER: {
     assert(Node->getNumOperands() == 6 && "Invalid MemBarrier node!");
-    SDOperand Ops[6];
-    Ops[0] = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
-    for (int x = 1; x < 6; ++x)
-      Ops[x] = PromoteOp(Node->getOperand(x));
-    Result = DAG.UpdateNodeOperands(Result, &Ops[0], 6);
+    switch (TLI.getOperationAction(ISD::MEMBARRIER, MVT::Other)) {
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Legal: {
+      SDOperand Ops[6];
+      Ops[0] = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
+      for (int x = 1; x < 6; ++x)
+        Ops[x] = PromoteOp(Node->getOperand(x));
+      Result = DAG.UpdateNodeOperands(Result, &Ops[0], 6);
+      break;
+    }
+    case TargetLowering::Expand:
+      //There is no libgcc call for this op
+      Result = Node->getOperand(0);  // Noop
+    break;
+    }
     break;
   }
 
