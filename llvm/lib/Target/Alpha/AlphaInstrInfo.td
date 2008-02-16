@@ -568,8 +568,14 @@ def LDQl : MForm<0x29, 1, "ldq $RA,$DISP($RB)\t\t!literal",
 def : Pat<(Alpha_rellit texternalsym:$ext, GPRC:$RB),
           (LDQl texternalsym:$ext, GPRC:$RB)>;
 
-
 def RPCC : MfcForm<0x18, 0xC000, "rpcc $RA", s_rpcc>; //Read process cycle counter
+def MB  : MfcPForm<0x18, 0x4000, "mb",  s_imisc>; //memory barrier
+def WMB : MfcPForm<0x18, 0x4400, "wmb", s_imisc>; //write memory barrier
+
+def : Pat<(membarrier (i64 imm:$ll), (i64 imm:$ls), (i64 imm:$sl), (i64 1), (i64 imm:$dev)),
+          (WMB)>;
+def : Pat<(membarrier (i64 imm:$ll), (i64 imm:$ls), (i64 imm:$sl), (i64 imm:$ss), (i64 imm:$dev)),
+          (MB)>;
 
 //Basic Floating point ops
 
@@ -958,6 +964,7 @@ def : Pat<(brcond (setune F8RC:$RA, immFPZ), bb:$DISP),
 
 //S_floating : IEEE Single
 //T_floating : IEEE Double
+
 
 //Unused instructions
 //Mnemonic Format Opcode Description

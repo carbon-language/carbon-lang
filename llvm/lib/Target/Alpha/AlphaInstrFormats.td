@@ -62,6 +62,14 @@ class MfcForm<bits<6> opcode, bits<16> fc, string asmstr, InstrItinClass itin>
   let Inst{20-16} = 0;
   let Inst{15-0} = fc;
 }
+class MfcPForm<bits<6> opcode, bits<16> fc, string asmstr, InstrItinClass itin> 
+        : InstAlpha<opcode, asmstr, itin> {    
+  let OutOperandList = (ops);
+  let InOperandList = (ops);
+  let Inst{25-21} = 0;
+  let Inst{20-16} = 0;
+  let Inst{15-0} = fc;
+}
 
 class MbrForm<bits<6> opcode, bits<2> TB, dag OL, string asmstr, InstrItinClass itin>
     : InstAlpha<opcode, asmstr, itin> {

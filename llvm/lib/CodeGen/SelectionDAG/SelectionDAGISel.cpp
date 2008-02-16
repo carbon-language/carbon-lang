@@ -3046,6 +3046,15 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     DAG.setRoot(DAG.getNode(ISD::TRAP, MVT::Other, getRoot()));
     return 0;
   }
+  case Intrinsic::memory_barrier: {
+    SDOperand Ops[6];
+    Ops[0] = getRoot();
+    for (int x = 1; x < 6; ++x)
+      Ops[x] = getValue(I.getOperand(x));
+
+    DAG.setRoot(DAG.getNode(ISD::MEMBARRIER, MVT::Other, &Ops[0], 6));
+    return 0;
+  }
   }
 }
 

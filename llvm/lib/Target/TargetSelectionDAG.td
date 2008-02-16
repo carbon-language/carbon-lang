@@ -185,6 +185,11 @@ def SDTVecInsert : SDTypeProfile<1, 3, [  // vector insert
   SDTCisEltOfVec<2, 1>, SDTCisSameAs<0, 1>, SDTCisPtrTy<3>
 ]>;
 
+def STDMemBarrier : SDTypeProfile<0, 5, [
+  SDTCisSameAs<0,1>,  SDTCisSameAs<0,2>,  SDTCisSameAs<0,3>, SDTCisSameAs<0,4>,
+  SDTCisInt<0>
+]>;
+
 class SDCallSeqStart<list<SDTypeConstraint> constraints> :
         SDTypeProfile<0, 1, constraints>;
 class SDCallSeqEnd<list<SDTypeConstraint> constraints> :
@@ -328,6 +333,8 @@ def brind      : SDNode<"ISD::BRIND"      , SDTBrind,  [SDNPHasChain]>;
 def br         : SDNode<"ISD::BR"         , SDTBr,     [SDNPHasChain]>;
 def ret        : SDNode<"ISD::RET"        , SDTNone,   [SDNPHasChain]>;
 def trap       : SDNode<"ISD::TRAP"       , SDTNone,
+                        [SDNPHasChain, SDNPSideEffect]>;
+def membarrier : SDNode<"ISD::MEMBARRIER"       , STDMemBarrier,
                         [SDNPHasChain, SDNPSideEffect]>;
 
 // Do not use ld, st directly. Use load, extload, sextload, zextload, store,

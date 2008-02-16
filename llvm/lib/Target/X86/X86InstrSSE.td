@@ -2149,6 +2149,14 @@ def LFENCE : I<0xAE, MRM5m, (outs), (ins),
 def MFENCE : I<0xAE, MRM6m, (outs), (ins),
                "mfence", [(int_x86_sse2_mfence)]>, TB, Requires<[HasSSE2]>;
 
+//TODO: custom lower this so as to never even generate the noop
+def : Pat<(membarrier (i8 imm:$ll), (i8 imm:$ls), (i8 imm:$sl), (i8 imm:$ss), 
+           (i8 0)), (NOOP)>;
+def : Pat<(membarrier (i8 0), (i8 0), (i8 0), (i8 1), (i8 1)), (SFENCE)>;
+def : Pat<(membarrier (i8 1), (i8 0), (i8 0), (i8 0), (i8 1)), (LFENCE)>;
+def : Pat<(membarrier (i8 imm:$ll), (i8 imm:$ls), (i8 imm:$sl), (i8 imm:$ss), 
+           (i8 1)), (MFENCE)>;
+
 // Alias instructions that map zero vector to pxor / xorp* for sse.
 let isReMaterializable = 1 in
   def V_SETALLONES : PDI<0x76, MRMInitReg, (outs VR128:$dst), (ins),

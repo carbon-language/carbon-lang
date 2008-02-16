@@ -1133,6 +1133,16 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     break;
 
+  case ISD::MEMBARRIER: {
+    assert(Node->getNumOperands() == 6 && "Invalid MemBarrier node!");
+    SDOperand Ops[6];
+    Ops[0] = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
+    for (int x = 1; x < 6; ++x)
+      Ops[x] = PromoteOp(Node->getOperand(x));
+    Result = DAG.UpdateNodeOperands(Result, &Ops[0], 6);
+    break;
+  }
+
   case ISD::Constant: {
     ConstantSDNode *CN = cast<ConstantSDNode>(Node);
     unsigned opAction =

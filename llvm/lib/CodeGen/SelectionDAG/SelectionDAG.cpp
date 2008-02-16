@@ -3792,6 +3792,7 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
       return "<<Unknown Target Node>>";
     }
    
+  case ISD::MEMBARRIER:    return "MemBarrier";
   case ISD::PCMARKER:      return "PCMarker";
   case ISD::READCYCLECOUNTER: return "ReadCycleCounter";
   case ISD::SRCVALUE:      return "SrcValue";

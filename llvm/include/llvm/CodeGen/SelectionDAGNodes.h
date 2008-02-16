@@ -589,6 +589,14 @@ namespace ISD {
     // TRAP - Trapping instruction
     TRAP,
 
+    // OUTCHAIN = MEMBARRIER(INCHAIN, load-load, load-store, store-load, 
+    //                       store-store, device)
+    // This corresponds to the atomic.barrier intrinsic.
+    // it takes an input chain, 4 operands to specify the type of barrier, an
+    // operand specifying if the barrier applies to device and uncached memory
+    // and produces an output chain.
+    MEMBARRIER,
+
     // BUILTIN_OP_END - This must be the last enum value in this list.
     BUILTIN_OP_END
   };
