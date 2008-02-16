@@ -54,7 +54,8 @@ void CodeGenFunction::EmitBlockVarDecl(const BlockVarDecl &D) {
   case VarDecl::Static:
     return EmitStaticBlockVarDecl(D);
   case VarDecl::Extern:
-    assert(0 && "FIXME: should call up to codegenmodule");
+    // Don't emit it now, allow it to be emitted lazily on its first use.
+    return;
   default:
     assert((D.getStorageClass() == VarDecl::None ||
             D.getStorageClass() == VarDecl::Auto ||

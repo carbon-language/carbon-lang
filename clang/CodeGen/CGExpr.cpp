@@ -336,9 +336,14 @@ void CodeGenFunction::EmitStoreThroughOCUComponentLValue(RValue Src, LValue Dst,
 LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
   const ValueDecl *D = E->getDecl();
   if (isa<BlockVarDecl>(D) || isa<ParmVarDecl>(D)) {
-    llvm::Value *V = LocalDeclMap[D];
-    assert(V && "BlockVarDecl not entered in LocalDeclMap?");
-    return LValue::MakeAddr(V);
+    const VarDecl *VD = cast<VarDecl>(D);
+    if (VD->getStorageClass() == VarDecl::Extern)
+      return LValue::MakeAddr(CGM.GetAddrOfGlobalVar(VD, false));
+    else {
+      llvm::Value *V = LocalDeclMap[D];
+      assert(V && "BlockVarDecl not entered in LocalDeclMap?");
+      return LValue::MakeAddr(V);
+    }
   } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     return LValue::MakeAddr(CGM.GetAddrOfFunctionDecl(FD, false));
   } else if (const FileVarDecl *FVD = dyn_cast<FileVarDecl>(D)) {
