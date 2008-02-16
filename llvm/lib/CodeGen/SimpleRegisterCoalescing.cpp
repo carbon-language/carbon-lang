@@ -192,6 +192,31 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(LiveInterval &IntA,
   return true;
 }
 
+/// HasOtherReachingDefs - Return true if there are definitions of IntB
+/// other than BValNo val# that can reach uses of AValno val# of IntA.
+bool SimpleRegisterCoalescing::HasOtherReachingDefs(LiveInterval &IntA,
+                                                    LiveInterval &IntB,
+                                                    VNInfo *AValNo,
+                                                    VNInfo *BValNo) {
+  for (LiveInterval::iterator AI = IntA.begin(), AE = IntA.end();
+       AI != AE; ++AI) {
+    if (AI->valno != AValNo) continue;
+    LiveInterval::Ranges::iterator BI =
+      std::upper_bound(IntB.ranges.begin(), IntB.ranges.end(), AI->start);
+    if (BI != IntB.ranges.begin())
+      --BI;
+    for (; BI != IntB.ranges.end() && AI->end >= BI->start; ++BI) {
+      if (BI->valno == BValNo)
+        continue;
+      if (BI->start <= AI->start && BI->end > AI->start)
+        return true;
+      if (BI->start > AI->start && BI->start < AI->end)
+        return true;
+    }
+  }
+  return false;
+}
+
 /// RemoveCopyByCommutingDef - We found a non-trivially-coalescable copy with IntA
 /// being the source and IntB being the dest, thus this defines a value number
 /// in IntB.  If the source value number (in IntA) is defined by a commutable
@@ -254,27 +279,15 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
 
   // Make sure there are no other definitions of IntB that would reach the
   // uses which the new definition can reach.
-  for (LiveInterval::iterator AI = IntA.begin(), AE = IntA.end();
-       AI != AE; ++AI) {
-    if (AI->valno != AValNo) continue;
-    LiveInterval::Ranges::iterator BI =
-      std::upper_bound(IntB.ranges.begin(), IntB.ranges.end(), AI->start);
-    if (BI != IntB.ranges.begin())
-      --BI;
-    for (; BI != IntB.ranges.end() && AI->end >= BI->start; ++BI) {
-      if (BI->valno == BLR->valno)
-        continue;
-      if (BI->start <= AI->start && BI->end > AI->start)
-        return false;
-      if (BI->start > AI->start && BI->start < AI->end)
-        return false;
-    }
-  }
+  if (HasOtherReachingDefs(IntA, IntB, AValNo, BValNo))
+    return false;
 
   // At this point we have decided that it is legal to do this
   // transformation.  Start by commuting the instruction.
   MachineBasicBlock *MBB = DefMI->getParent();
   MachineInstr *NewMI = tii_->commuteInstruction(DefMI);
+  if (!NewMI)
+    return false;
   if (NewMI != DefMI) {
     li_->ReplaceMachineInstrInMaps(DefMI, NewMI);
     MBB->insert(DefMI, NewMI);
@@ -682,7 +695,6 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
       return true;
     }
     
-
     // Otherwise, we are unable to join the intervals.
     DOUT << "Interference!\n";
     Again = true;  // May be possible to coalesce later.

@@ -178,6 +178,11 @@ namespace llvm {
     bool AdjustCopiesBackFrom(LiveInterval &IntA, LiveInterval &IntB,
                               MachineInstr *CopyMI);
 
+    /// HasOtherReachingDefs - Return true if there are definitions of IntB
+    /// other than BValNo val# that can reach uses of AValno val# of IntA.
+    bool HasOtherReachingDefs(LiveInterval &IntA, LiveInterval &IntB,
+                              VNInfo *AValNo, VNInfo *BValNo);
+
     /// RemoveCopyByCommutingDef - We found a non-trivially-coalescable copy.
     /// If the source value number is defined by a commutable instruction and
     /// its other operand is coalesced to the copy dest register, see if we
