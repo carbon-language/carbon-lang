@@ -319,10 +319,13 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D,
   unsigned RecordAlign = 8;  // Default alignment = 1 byte = 8 bits.
 
   if (D->getKind() != Decl::Union) {
+    bool StructIsPacked = D->getAttr<PackedAttr>();
+    
     // Layout each field, for now, just sequentially, respecting alignment.  In
     // the future, this will need to be tweakable by targets.
     for (unsigned i = 0, e = D->getNumMembers(); i != e; ++i) {
       const FieldDecl *FD = D->getMember(i);
+      bool FieldIsPacked = StructIsPacked || FD->getAttr<PackedAttr>();
       uint64_t FieldSize;
       unsigned FieldAlign;
       if (FD->getType()->isIncompleteType()) {
@@ -331,12 +334,12 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D,
         // Flexible array members don't have any size, but they
         // have to be aligned appropriately for their element type.
         const ArrayType* ATy = FD->getType()->getAsArrayType();
-        FieldAlign = getTypeAlign(ATy->getElementType(), L);
+        FieldAlign = FieldIsPacked ? 8 : getTypeAlign(ATy->getElementType(), L);
         FieldSize = 0;
       } else {
         std::pair<uint64_t, unsigned> FieldInfo = getTypeInfo(FD->getType(), L);
         FieldSize = FieldInfo.first;
-        FieldAlign = FieldInfo.second;
+        FieldAlign = FieldIsPacked ? 8 : FieldInfo.second;
       }
 
       // Round up the current record size to the field's alignment boundary.

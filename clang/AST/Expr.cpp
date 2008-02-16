@@ -784,16 +784,18 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     if (Exp->getArgumentType()->isFunctionType()) {
       // GCC extension: sizeof(function) = 1.
       Result = Exp->isSizeOf() ? 1 : 4;
-    } else if (Exp->isSizeOf()) {
+    } else { 
       unsigned CharSize =
         Ctx.Target.getCharWidth(Ctx.getFullLoc(Exp->getOperatorLoc()));
       
-      Result = Ctx.getTypeSize(Exp->getArgumentType(),
-                               Exp->getOperatorLoc()) / CharSize;
+      if (Exp->isSizeOf())
+        Result = Ctx.getTypeSize(Exp->getArgumentType(),
+                                 Exp->getOperatorLoc()) / CharSize;
+      else
+        Result = Ctx.getTypeAlign(Exp->getArgumentType(), 
+                                  Exp->getOperatorLoc()) / CharSize;
     }
-    else
-      Result = Ctx.getTypeAlign(Exp->getArgumentType(), Exp->getOperatorLoc());
-    
+
     break;
   }
   case BinaryOperatorClass: {

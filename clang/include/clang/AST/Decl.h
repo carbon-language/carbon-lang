@@ -138,9 +138,9 @@ public:
   void addAttr(Attr *attr);
   const Attr *getAttrs() const;
 
-  template<typename T> T *getAttr() {
-    for (Attr *attr = getAttrs(); attr; attr = attr->getNext())
-      if (T *V = dyn_cast<T>(attr))
+  template<typename T> const T *getAttr() const {
+    for (const Attr *attr = getAttrs(); attr; attr = attr->getNext())
+      if (const T *V = dyn_cast<T>(attr))
         return V;
 
     return 0;
