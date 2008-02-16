@@ -279,22 +279,19 @@ unsigned ScheduleDAG::CountResults(SDNode *Node) {
 }
 
 /// CountOperands - The inputs to target nodes have any actual inputs first,
-/// followed by optional memory operands chain operand, then flag operands.
-/// Compute the number of actual operands that will go into the resulting
-/// MachineInstr.
+/// followed by special operands that describe memory references, then an
+/// optional chain operand, then flag operands.  Compute the number of
+/// actual operands that will go into the resulting MachineInstr.
 unsigned ScheduleDAG::CountOperands(SDNode *Node) {
-  unsigned N = Node->getNumOperands();
-  while (N && Node->getOperand(N - 1).getValueType() == MVT::Flag)
-    --N;
-  if (N && Node->getOperand(N - 1).getValueType() == MVT::Other)
-    --N; // Ignore chain if it exists.
+  unsigned N = ComputeMemOperandsEnd(Node);
   while (N && isa<MemOperandSDNode>(Node->getOperand(N - 1).Val))
     --N; // Ignore MemOperand nodes
   return N;
 }
 
-/// CountMemOperands - Find the index of the last MemOperandSDNode operand
-unsigned ScheduleDAG::CountMemOperands(SDNode *Node) {
+/// ComputeMemOperandsEnd - Find the index one past the last MemOperandSDNode
+/// operand
+unsigned ScheduleDAG::ComputeMemOperandsEnd(SDNode *Node) {
   unsigned N = Node->getNumOperands();
   while (N && Node->getOperand(N - 1).getValueType() == MVT::Flag)
     --N;
@@ -698,7 +695,7 @@ void ScheduleDAG::EmitNode(SDNode *Node, unsigned InstanceNo,
 
     unsigned NumResults = CountResults(Node);
     unsigned NodeOperands = CountOperands(Node);
-    unsigned NodeMemOperands = CountMemOperands(Node);
+    unsigned MemOperandsEnd = ComputeMemOperandsEnd(Node);
     unsigned NumMIOperands = NodeOperands + NumResults;
     bool HasPhysRegOuts = (NumResults > II.getNumDefs()) &&
                           II.getImplicitDefs() != 0;
@@ -722,7 +719,7 @@ void ScheduleDAG::EmitNode(SDNode *Node, unsigned InstanceNo,
       AddOperand(MI, Node->getOperand(i), i+II.getNumDefs(), &II, VRBaseMap);
 
     // Emit all of the memory operands of this instruction
-    for (unsigned i = NodeOperands; i != NodeMemOperands; ++i)
+    for (unsigned i = NodeOperands; i != MemOperandsEnd; ++i)
       AddMemOperand(MI, cast<MemOperandSDNode>(Node->getOperand(i))->MO);
 
     // Commute node if it has been determined to be profitable.

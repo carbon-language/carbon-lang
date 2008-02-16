@@ -315,13 +315,14 @@ namespace llvm {
     static unsigned CountResults(SDNode *Node);
 
     /// CountOperands - The inputs to target nodes have any actual inputs first,
-    /// followed by optional memory operands chain operand, then flag operands.
-    /// Compute the number of actual operands that  will go into the machine
-    /// instr.
+    /// followed by special operands that describe memory references, then an
+    /// optional chain operand, then flag operands.  Compute the number of
+    /// actual operands that will go into the resulting MachineInstr.
     static unsigned CountOperands(SDNode *Node);
 
-    /// CountMemOperands - Find the index of the last MemOperandSDNode
-    static unsigned CountMemOperands(SDNode *Node);
+    /// ComputeMemOperandsEnd - Find the index one past the last
+    /// MemOperandSDNode operand
+    static unsigned ComputeMemOperandsEnd(SDNode *Node);
 
     /// EmitNode - Generate machine code for an node and needed dependencies.
     /// VRBaseMap contains, for each already emitted node, the first virtual
