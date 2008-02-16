@@ -1,11 +1,11 @@
-; RUN: llvm-upgrade < %s | llvm-as > /dev/null
-void %t() {
+; RUN: llvm-as < %s > /dev/null
+
+define void @t() {
 entry:
-	ret void
+     ret void
 
-loop:
-        %tmp.4.i9 = getelementptr int* null, int %tmp.5.i10
-        %tmp.5.i10 = load int* %tmp.4.i9
-        br label %loop
+loop:           ; preds = %loop
+     %tmp.4.i9 = getelementptr i32* null, i32 %tmp.5.i10             ; <i32*> [#uses=1]
+     %tmp.5.i10 = load i32* %tmp.4.i9                ; <i32> [#uses=1]
+     br label %loop
 }
-

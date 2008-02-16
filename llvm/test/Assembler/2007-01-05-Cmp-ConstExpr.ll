@@ -1,24 +1,18 @@
 ; Test Case for PR1080
-; RUN: llvm-upgrade < %s | llvm-as -o /dev/null -f
+; RUN: llvm-as < %s -o /dev/null -f
 
-%str = internal constant [4 x sbyte] c"-ga\00"		; <[4 x sbyte]*> [#uses=5]
+@str = internal constant [4 x i8] c"-ga\00"             ; <[4 x i8]*> [#uses=2]
 
-int %main(int %argc, sbyte** %argv) {
+define i32 @main(i32 %argc, i8** %argv) {
 entry:
-	%tmp65 = getelementptr sbyte** %argv, int 1		; <sbyte**> [#uses=1]
-	%tmp66 = load sbyte** %tmp65		; <sbyte*> [#uses=3]
-	br bool icmp ne (
-          uint sub (
-            uint ptrtoint (
-              sbyte* getelementptr ([4 x sbyte]* %str, int 0, long 1) 
-              to uint), 
-            uint ptrtoint ([4 x sbyte]* %str to uint)
-          ), 
-          uint 1), 
-        label %exit_1, label %exit_2
+        %tmp65 = getelementptr i8** %argv, i32 1                ; <i8**> [#uses=1]
+        %tmp66 = load i8** %tmp65               ; <i8*> [#uses=0]
+        br i1 icmp ne (i32 sub (i32 ptrtoint (i8* getelementptr ([4 x i8]* @str, i32 0, i64 1) to i32), i32 ptrtoint ([4 x i8]* @str to i32)), i32 1), label %exit_1, label %exit_2
 
-exit_1:
-        ret int 0;
-exit_2:
-        ret int 1;
+exit_1:         ; preds = %entry
+        ret i32 0
+
+exit_2:         ; preds = %entry
+        ret i32 1
 }
+

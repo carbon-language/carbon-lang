@@ -1,9 +1,10 @@
-; RUN: llvm-upgrade < %s | llvm-as -o /dev/null -f
+; RUN: llvm-as < %s -o /dev/null -f
 
-int *%t1({ float, int }* %X) {
-	%W = getelementptr { float, int }* %X, int 20, uint 1
-	%X = getelementptr { float, int }* %X, uint 20, uint 1
-	%Y = getelementptr { float, int }* %X, long 20, uint 1
-	%Z = getelementptr { float, int }* %X, ulong 20, uint 1
-	ret int* %Y
+define i32* @t1({ float, i32 }* %X) {
+        %W = getelementptr { float, i32 }* %X, i32 20, i32 1            ; <i32*> [#uses=0]
+        %X.upgrd.1 = getelementptr { float, i32 }* %X, i64 20, i32 1            ; <i32*> [#uses=0]
+        %Y = getelementptr { float, i32 }* %X, i64 20, i32 1            ; <i32*> [#uses=1]
+        %Z = getelementptr { float, i32 }* %X, i64 20, i32 1            ; <i32*> [#uses=0]
+        ret i32* %Y
 }
+

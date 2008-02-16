@@ -1,5 +1,6 @@
-; RUN: llvm-upgrade < %s | llvm-as > /dev/null
+; RUN: llvm-as < %s > /dev/null
 
-< 4 x int> %foo() {
-  ret <4 x int> zeroinitializer
+define <4 x i32> @foo() {
+        ret <4 x i32> zeroinitializer
 }
+
