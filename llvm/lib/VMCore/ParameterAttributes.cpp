@@ -124,6 +124,7 @@ ParamAttrsList::getModified(const ParamAttrsList *PAL,
   if (!PAL) {
     // Strip any instances of ParamAttr::None from modVec before calling 'get'.
     ParamAttrsVector newVec;
+    newVec.reserve(modVec.size());
     for (unsigned i = 0, e = modVec.size(); i < e; ++i)
       if (modVec[i].attrs != ParamAttr::None)
         newVec.push_back(modVec[i]);
@@ -175,8 +176,8 @@ ParamAttrsList::includeAttrs(const ParamAttrsList *PAL,
   if (NewAttrs == OldAttrs)
     return PAL;
 
-  ParamAttrsVector modVec;
-  modVec.push_back(ParamAttrsWithIndex::get(idx, NewAttrs));
+  ParamAttrsVector modVec(1);
+  modVec[0] = ParamAttrsWithIndex::get(idx, NewAttrs);
   return getModified(PAL, modVec);
 }
 
@@ -188,8 +189,8 @@ ParamAttrsList::excludeAttrs(const ParamAttrsList *PAL,
   if (NewAttrs == OldAttrs)
     return PAL;
 
-  ParamAttrsVector modVec;
-  modVec.push_back(ParamAttrsWithIndex::get(idx, NewAttrs));
+  ParamAttrsVector modVec(1);
+  modVec[0] = ParamAttrsWithIndex::get(idx, NewAttrs);
   return getModified(PAL, modVec);
 }
 
