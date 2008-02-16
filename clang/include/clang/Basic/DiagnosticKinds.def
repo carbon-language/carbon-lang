@@ -561,8 +561,8 @@ DIAG(err_attribute_wrong_number_arguments, ERROR,
      "attribute requires %0 argument(s)")
 DIAG(err_attribute_invalid_vector_type, ERROR,
      "invalid vector type '%0'")
-DIAG(err_attribute_vector_size_not_int, ERROR,
-     "vector_size requires integer constant")
+DIAG(err_attribute_argument_not_int, ERROR,
+     "'%0' attribute requires integer constant")
 DIAG(err_attribute_invalid_size, ERROR,
      "vector size not an integral multiple of component size")
 DIAG(err_attribute_zero_size, ERROR,

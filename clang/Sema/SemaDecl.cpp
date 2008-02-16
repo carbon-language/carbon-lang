@@ -1835,8 +1835,8 @@ void Sema::HandleOCUVectorTypeAttribute(TypedefDecl *tDecl,
   Expr *sizeExpr = static_cast<Expr *>(rawAttr->getArg(0));
   llvm::APSInt vecSize(32);
   if (!sizeExpr->isIntegerConstantExpr(vecSize, Context)) {
-    Diag(rawAttr->getAttributeLoc(), diag::err_attribute_vector_size_not_int,
-         sizeExpr->getSourceRange());
+    Diag(rawAttr->getAttributeLoc(), diag::err_attribute_argument_not_int,
+         "ocu_vector_type", sizeExpr->getSourceRange());
     return;
   }
   // unlike gcc's vector_size attribute, we do not allow vectors to be defined
@@ -1873,8 +1873,8 @@ QualType Sema::HandleVectorTypeAttribute(QualType curType,
   Expr *sizeExpr = static_cast<Expr *>(rawAttr->getArg(0));
   llvm::APSInt vecSize(32);
   if (!sizeExpr->isIntegerConstantExpr(vecSize, Context)) {
-    Diag(rawAttr->getAttributeLoc(), diag::err_attribute_vector_size_not_int,
-         sizeExpr->getSourceRange());
+    Diag(rawAttr->getAttributeLoc(), diag::err_attribute_argument_not_int,
+         "vector_size", sizeExpr->getSourceRange());
     return QualType();
   }
   // navigate to the base type - we need to provide for vector pointers, 
@@ -1959,15 +1959,24 @@ void Sema::HandleAlignedAttribute(Decl *d, AttributeList *rawAttr)
     return;
   }
 
-  // TODO: We probably need to actually do something with aligned attribute.
-  if (rawAttr->getNumArgs() == 0)
+  unsigned Align = 0;
+  
+  if (rawAttr->getNumArgs() == 0) {
+    // FIXME: This should be the target specific maximum alignment.
+    // (For now we just use 128 bits which is the maximum on X86.
+    Align = 128;
     return;
+  } else {
+    Expr *alignmentExpr = static_cast<Expr *>(rawAttr->getArg(0));
+    llvm::APSInt alignment(32);
+    if (!alignmentExpr->isIntegerConstantExpr(alignment, Context)) {
+      Diag(rawAttr->getAttributeLoc(), diag::err_attribute_argument_not_int,
+           "aligned", alignmentExpr->getSourceRange());
+      return;
+    }
+    
+    Align = alignment.getZExtValue() * 8;
+  }
 
-  Expr *alignmentExpr = static_cast<Expr *>(rawAttr->getArg(0));
-  llvm::APSInt alignment(32);
-  if (!alignmentExpr->isIntegerConstantExpr(alignment, Context)) {
-    Diag(rawAttr->getAttributeLoc(), diag::err_attribute_vector_size_not_int,
-         alignmentExpr->getSourceRange());
-    return;
-  }    
+  d->addAttr(new AlignedAttr(Align));
 }

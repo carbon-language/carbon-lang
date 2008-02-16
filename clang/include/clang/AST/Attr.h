@@ -65,6 +65,20 @@ public:
   }
   static bool classof(const PackedAttr *A) { return true; }
 };
+  
+class AlignedAttr : public Attr {
+  unsigned Alignment;
+public:
+  AlignedAttr(unsigned alignment) : Attr(Aligned), Alignment(alignment) {}
+  
+  unsigned getAlignment() const { return Alignment; }
+  
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Attr *A) {
+    return A->getKind() == Aligned;
+  }
+  static bool classof(const AlignedAttr *A) { return true; }
+};
 
 }  // end namespace clang
 
