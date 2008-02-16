@@ -1945,7 +1945,7 @@ void Sema::HandlePackedAttribute(Decl *d, AttributeList *rawAttr)
            rawAttr->getAttributeName()->getName(),
            FD->getType().getAsString());
     else
-      TD->addAttr(new PackedAttr);
+      FD->addAttr(new PackedAttr);
   } else
     Diag(rawAttr->getAttributeLoc(), diag::warn_attribute_ignored,
          rawAttr->getAttributeName()->getName());
