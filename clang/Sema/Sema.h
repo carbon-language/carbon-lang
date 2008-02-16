@@ -267,7 +267,8 @@ private:
   void HandleOCUVectorTypeAttribute(TypedefDecl *d, AttributeList *rawAttr);
   
   void HandleAlignedAttribute(Decl *d, AttributeList *rawAttr);
-    
+  void HandlePackedAttribute(Decl *d, AttributeList *rawAttr);
+  
   void WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
                            bool &IncompleteImpl);
                            

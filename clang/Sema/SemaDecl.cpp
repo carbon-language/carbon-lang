@@ -1242,6 +1242,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
     S->AddDecl(New);
   }
   
+  HandleDeclAttributes(New, Attr, 0);
   return New;
 }
 
@@ -1300,6 +1301,9 @@ Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *TagDecl,
   else
     assert(0 && "Sema::ActOnField(): Unknown TagDecl");
     
+  HandleDeclAttributes(NewFD, D.getDeclSpec().getAttributes(),
+                       D.getAttributes());
+
   if (D.getInvalidType() || InvalidDecl)
     NewFD->setInvalidDecl();
   return NewFD;
@@ -1772,10 +1776,11 @@ void Sema::HandleDeclAttribute(Decl *New, AttributeList *rawAttr) {
       if (!newType.isNull()) // install the new addr spaced  type into the decl
         vDecl->setType(newType);
     }
-  } else if (attrLen == 7 && !memcmp(attrName, "aligned", 7)) {
-      HandleAlignedAttribute(New, rawAttr);
-  }
-  
+  } else if (attrLen == 7 && !memcmp(attrName, "aligned", 7))
+    HandleAlignedAttribute(New, rawAttr);
+  else if (attrLen == 6 && !memcmp(attrName, "packed", 6))
+    HandlePackedAttribute(New, rawAttr);
+
   // FIXME: add other attributes...
 }
 
@@ -1920,6 +1925,32 @@ QualType Sema::HandleVectorTypeAttribute(QualType curType,
   return Context.getVectorType(curType, vectorSize/typeSize);
 }
 
+void Sema::HandlePackedAttribute(Decl *d, AttributeList *rawAttr)
+{
+  // check the attribute arguments.
+  if (rawAttr->getNumArgs() > 0) {
+    Diag(rawAttr->getAttributeLoc(), diag::err_attribute_wrong_number_arguments,
+         std::string("0"));
+    return;
+  }
+  
+  if (TagDecl *TD = dyn_cast<TagDecl>(d))
+    TD->addAttr(new PackedAttr);
+  else if (FieldDecl *FD = dyn_cast<FieldDecl>(d)) {
+    // If the alignment is less than or equal to 8 bits, the packed attribute
+    // has no effect.
+    if (Context.getTypeAlign(FD->getType(), SourceLocation()) <= 8)
+      Diag(rawAttr->getAttributeLoc(), 
+           diag::warn_attribute_ignored_for_field_of_type,
+           rawAttr->getAttributeName()->getName(),
+           FD->getType().getAsString());
+    else
+      TD->addAttr(new PackedAttr);
+  } else
+    Diag(rawAttr->getAttributeLoc(), diag::warn_attribute_ignored,
+         rawAttr->getAttributeName()->getName());
+}
+  
 void Sema::HandleAlignedAttribute(Decl *d, AttributeList *rawAttr)
 {
   // check the attribute arguments.
