@@ -14,6 +14,7 @@
 #ifndef DRIVER_ASTCONSUMERS_H
 #define DRIVER_ASTCONSUMERS_H
 
+#include <string>
 #include <iosfwd>
 
 namespace llvm {

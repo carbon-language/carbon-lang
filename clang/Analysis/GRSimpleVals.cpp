@@ -38,9 +38,9 @@ namespace clang {
          E=CheckerState->null_end(); I!=E; ++I) {
       
       const PostStmt& L = cast<PostStmt>((*I)->getLocation());
-      Expr* E = cast<Expr>(L.getStmt());
+      Expr* Exp = cast<Expr>(L.getStmt());
       
-      Diag.Report(FullSourceLoc(E->getExprLoc(), Ctx.getSourceManager()),
+      Diag.Report(FullSourceLoc(Exp->getExprLoc(), Ctx.getSourceManager()),
                   diag::chkr_null_deref_after_check);
     }
         
