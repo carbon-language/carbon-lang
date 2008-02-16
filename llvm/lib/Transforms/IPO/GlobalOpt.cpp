@@ -21,6 +21,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Module.h"
+#include "llvm/ParameterAttributes.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Target/TargetData.h"
@@ -46,6 +47,7 @@ STATISTIC(NumLocalized , "Number of globals localized");
 STATISTIC(NumShrunkToBool  , "Number of global vars shrunk to booleans");
 STATISTIC(NumFastCallFns   , "Number of functions converted to fastcc");
 STATISTIC(NumCtorsEvaluated, "Number of static ctors evaluated");
+STATISTIC(NumNestRemoved   , "Number of nest attributes removed");
 
 namespace {
   struct VISIBILITY_HIDDEN GlobalOpt : public ModulePass {
@@ -1590,6 +1592,35 @@ static void ChangeCalleesToFastCall(Function *F) {
   }
 }
 
+static const ParamAttrsList *StripNest(const ParamAttrsList *Attrs) {
+  if (Attrs) {
+    for (unsigned i = 0, e = Attrs->size(); i != e; ++i) {
+      uint16_t A = Attrs->getParamAttrsAtIndex(i);
+      if (A & ParamAttr::Nest) {
+        Attrs = ParamAttrsList::excludeAttrs(Attrs, Attrs->getParamIndex(i),
+                                             ParamAttr::Nest);
+        // There can be only one.
+        break;
+      }
+    }
+  }
+
+  return Attrs;
+}
+
+static void RemoveNestAttribute(Function *F) {
+  F->setParamAttrs(StripNest(F->getParamAttrs()));
+  for (Value::use_iterator UI = F->use_begin(), E = F->use_end(); UI != E;++UI){
+    Instruction *User = cast<Instruction>(*UI);
+    if (CallInst *CI = dyn_cast<CallInst>(User)) {
+      CI->setParamAttrs(StripNest(CI->getParamAttrs()));
+    } else {
+      InvokeInst *II = cast<InvokeInst>(User);
+      II->setParamAttrs(StripNest(II->getParamAttrs()));
+    }
+  }
+}
+
 bool GlobalOpt::OptimizeFunctions(Module &M) {
   bool Changed = false;
   // Optimize functions.
@@ -1601,16 +1632,27 @@ bool GlobalOpt::OptimizeFunctions(Module &M) {
       M.getFunctionList().erase(F);
       Changed = true;
       ++NumFnDeleted;
-    } else if (F->hasInternalLinkage() &&
-               F->getCallingConv() == CallingConv::C &&  !F->isVarArg() &&
-               OnlyCalledDirectly(F)) {
-      // If this function has C calling conventions, is not a varargs
-      // function, and is only called directly, promote it to use the Fast
-      // calling convention.
-      F->setCallingConv(CallingConv::Fast);
-      ChangeCalleesToFastCall(F);
-      ++NumFastCallFns;
-      Changed = true;
+    } else if (F->hasInternalLinkage()) {
+      if (F->getCallingConv() == CallingConv::C && !F->isVarArg() &&
+          OnlyCalledDirectly(F)) {
+        // If this function has C calling conventions, is not a varargs
+        // function, and is only called directly, promote it to use the Fast
+        // calling convention.
+        F->setCallingConv(CallingConv::Fast);
+        ChangeCalleesToFastCall(F);
+        ++NumFastCallFns;
+        Changed = true;
+      }
+
+      if (F->getParamAttrs() &&
+          F->getParamAttrs()->hasAttrSomewhere(ParamAttr::Nest) &&
+          OnlyCalledDirectly(F)) {
+        // The function is not used by a trampoline intrinsic, so it is safe
+        // to remove the 'nest' attribute.
+        RemoveNestAttribute(F);
+        ++NumNestRemoved;
+        Changed = true;
+      }
     }
   }
   return Changed;
