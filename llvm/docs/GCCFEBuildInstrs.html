@@ -92,12 +92,13 @@ top-level <tt>README.LLVM</tt> file, adding ",ada" to EXTRALANGS, for example:
       systems without some work.</p></li>
   <li><p>The build requires having a compiler that supports Ada, C and C++.
       The Ada front-end is written in Ada so an Ada compiler is needed to
-      build it.  What is more, the Ada compiler must not be more recent
-      than what it is trying to compile, otherwise the build will fail.
-      This rules out gcc-4.3 (but not gcc-4.2) and also the
-      <a href="http://libre.adacore.com/">2007 GNAT GPL Edition</a>.
-      The LLVM parts of llvm-gcc are written in C++ so a C++
-      compiler is needed to build them.  The rest of gcc is written in C.
+      build it.  Appropriate Ada compilers are gcc-4.2 (or earlier) or the
+      <a href="http://libre.adacore.com/">2006 GNAT GPL Edition</a>
+      (or earlier).  As a general rule, the Ada compiler used for the
+      build must not be more recent than the Ada compiler it is building.
+      This is why the build fails with gcc-4.3 and the 2007 GNAT GPL Edition.
+      The LLVM parts of llvm-gcc are written in C++ so a C++ compiler is
+      needed to build them.  The rest of gcc is written in C.
       Some linux distributions provide a version of gcc that supports all
       three languages (the Ada part often comes as an add-on package to
       the rest of gcc).  Otherwise it is possible to combine two versions
