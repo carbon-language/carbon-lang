@@ -261,7 +261,7 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
       Candidates.reset(MO.getReg());
   }
 
-  // Find the register whose use is furtherest aaway.
+  // Find the register whose use is furthest away.
   unsigned SReg = 0;
   unsigned MaxDist = 0;
   int Reg = Candidates.find_first();
@@ -277,7 +277,7 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
   if (ScavengedReg != 0) {
     // First restore previously scavenged register.
     TII->loadRegFromStackSlot(*MBB, I, ScavengedReg,
-                                  ScavengingFrameIndex, ScavengedRC);
+                              ScavengingFrameIndex, ScavengedRC);
     MachineBasicBlock::iterator II = prior(I);
     RegInfo->eliminateFrameIndex(II, SPAdj, this);
   }
