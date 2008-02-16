@@ -259,18 +259,18 @@ void Decl::addDeclKind(const Kind k) {
 
 // Out-of-line virtual method providing a home for Decl.
 Decl::~Decl() {
-  if (!DeclAttrs)
+  if (!HasAttrs)
     return;
   
   DeclAttrMapTy::iterator it = DeclAttrs->find(this);
-  if (it != DeclAttrs->end()) {
-    delete it->second;
-    DeclAttrs->erase(it);
-    if (DeclAttrs->empty()) {
-      delete DeclAttrs;
-      DeclAttrs = 0;
-    }        
-  }
+  assert(it != DeclAttrs->end() && "No attrs found but HasAttrs is true!");
+
+  delete it->second;
+  DeclAttrs->erase(it);
+  if (DeclAttrs->empty()) {
+    delete DeclAttrs;
+    DeclAttrs = 0;
+  }        
 }
 
 void Decl::addAttr(Attr *newattr)
@@ -278,7 +278,7 @@ void Decl::addAttr(Attr *newattr)
   if (!DeclAttrs)
     DeclAttrs = new llvm::DenseMap<const Decl*, Attr*>;
   
-  Attr *&attr = DeclAttrs->FindAndConstruct(this).second;
+  Attr *&attr = (*DeclAttrs)[this];
 
   newattr->setNext(attr);
   attr = newattr;
@@ -288,10 +288,10 @@ void Decl::addAttr(Attr *newattr)
 
 const Attr *Decl::getAttrs() const
 {
-  if (!HasAttrs || !DeclAttrs)
+  if (!HasAttrs)
     return 0;
   
-  return DeclAttrs->find(this)->second;
+  return (*DeclAttrs)[this];
 }
 
 const char *NamedDecl::getName() const {
