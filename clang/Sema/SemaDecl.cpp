@@ -1032,8 +1032,7 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
     }
   }
   Decl *decl = static_cast<Decl*>(ActOnDeclarator(GlobalScope, D, 0));
-  FunctionDecl *FD = dyn_cast<FunctionDecl>(decl);
-  assert(FD != 0 && "ActOnDeclarator() didn't return a FunctionDecl");
+  FunctionDecl *FD = cast<FunctionDecl>(decl);
   CurFunctionDecl = FD;
   
   // Create Decl objects for each parameter, adding them to the FunctionDecl.

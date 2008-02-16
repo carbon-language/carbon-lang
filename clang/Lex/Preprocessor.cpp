@@ -1498,11 +1498,14 @@ void Preprocessor::ReadMacroName(Token &MacroNameTok, char isDefineUndef) {
 /// not, emit a diagnostic and consume up until the eom.
 void Preprocessor::CheckEndOfDirective(const char *DirType) {
   Token Tmp;
-  Lex(Tmp);
+  // Lex unexpanded tokens: macros might expand to zero tokens, causing us to
+  // miss diagnosing invalid lines.
+  LexUnexpandedToken(Tmp);
+  
   // There should be no tokens after the directive, but we allow them as an
   // extension.
   while (Tmp.is(tok::comment))  // Skip comments in -C mode.
-    Lex(Tmp);
+    LexUnexpandedToken(Tmp);
   
   if (Tmp.isNot(tok::eom)) {
     Diag(Tmp, diag::ext_pp_extra_tokens_at_eol, DirType);
