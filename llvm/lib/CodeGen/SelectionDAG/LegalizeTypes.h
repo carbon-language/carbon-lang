@@ -238,14 +238,15 @@ private:
 
   // Operand Expansion.
   bool ExpandOperand(SDNode *N, unsigned OperandNo);
-  SDOperand ExpandOperand_TRUNCATE(SDNode *N);
   SDOperand ExpandOperand_BIT_CONVERT(SDNode *N);
-  SDOperand ExpandOperand_UINT_TO_FP(SDOperand Source, MVT::ValueType DestTy);
-  SDOperand ExpandOperand_SINT_TO_FP(SDOperand Source, MVT::ValueType DestTy);
+  SDOperand ExpandOperand_BR_CC(SDNode *N);
   SDOperand ExpandOperand_EXTRACT_ELEMENT(SDNode *N);
   SDOperand ExpandOperand_SETCC(SDNode *N);
+  SDOperand ExpandOperand_SINT_TO_FP(SDOperand Source, MVT::ValueType DestTy);
   SDOperand ExpandOperand_STORE(StoreSDNode *N, unsigned OpNo);
-  
+  SDOperand ExpandOperand_TRUNCATE(SDNode *N);
+  SDOperand ExpandOperand_UINT_TO_FP(SDOperand Source, MVT::ValueType DestTy);
+
   void ExpandSetCCOperands(SDOperand &NewLHS, SDOperand &NewRHS,
                            ISD::CondCode &CCCode);
   

@@ -850,6 +850,8 @@ bool DAGTypeLegalizer::ExpandOperand(SDNode *N, unsigned OpNo) {
       Res = ExpandOperand_UINT_TO_FP(N->getOperand(0), N->getValueType(0)); 
       break;
     case ISD::EXTRACT_ELEMENT: Res = ExpandOperand_EXTRACT_ELEMENT(N); break;
+
+    case ISD::BR_CC:           Res = ExpandOperand_BR_CC(N); break;
     case ISD::SETCC:           Res = ExpandOperand_SETCC(N); break;
 
     case ISD::STORE:
@@ -974,6 +976,24 @@ SDOperand DAGTypeLegalizer::ExpandOperand_EXTRACT_ELEMENT(SDNode *N) {
   SDOperand Lo, Hi;
   GetExpandedOp(N->getOperand(0), Lo, Hi);
   return cast<ConstantSDNode>(N->getOperand(1))->getValue() ? Hi : Lo;
+}
+
+SDOperand DAGTypeLegalizer::ExpandOperand_BR_CC(SDNode *N) {
+  SDOperand NewLHS = N->getOperand(2), NewRHS = N->getOperand(3);
+  ISD::CondCode CCCode = cast<CondCodeSDNode>(N->getOperand(1))->get();
+  ExpandSetCCOperands(NewLHS, NewRHS, CCCode);
+
+  // If ExpandSetCCOperands returned a scalar, we need to compare the result
+  // against zero to select between true and false values.
+  if (NewRHS.Val == 0) {
+    NewRHS = DAG.getConstant(0, NewLHS.getValueType());
+    CCCode = ISD::SETNE;
+  }
+
+  // Update N to have the operands specified.
+  return DAG.UpdateNodeOperands(SDOperand(N, 0), N->getOperand(0),
+                                DAG.getCondCode(CCCode), NewLHS, NewRHS,
+                                N->getOperand(4));
 }
 
 SDOperand DAGTypeLegalizer::ExpandOperand_SETCC(SDNode *N) {
