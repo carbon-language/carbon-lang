@@ -391,17 +391,30 @@ static Value *NegateValue(Value *V, Instruction *BI) {
   return BinaryOperator::createNeg(V, V->getName() + ".neg", BI);
 }
 
+/// ShouldBreakUpSubtract - Return true if we should break up this subtract of
+/// X-Y into (X + -Y).
+static bool ShouldBreakUpSubtract(Instruction *Sub) {
+  // If this is a negation, we can't split it up!
+  if (BinaryOperator::isNeg(Sub))
+    return false;
+  
+  // Don't bother to break this up unless either the LHS is an associable add or
+  // if this is only used by one.
+  if (isReassociableOp(Sub->getOperand(0), Instruction::Add))
+    return true;
+  if (isReassociableOp(Sub->getOperand(1), Instruction::Add))
+    return true;
+  
+  if (Sub->hasOneUse() && isReassociableOp(Sub->use_back(), Instruction::Add))
+    return true;
+    
+  return false;
+}
+
 /// BreakUpSubtract - If we have (X-Y), and if either X is an add, or if this is
 /// only used by an add, transform this into (X+(0-Y)) to promote better
 /// reassociation.
 static Instruction *BreakUpSubtract(Instruction *Sub) {
-  // Don't bother to break this up unless either the LHS is an associable add or
-  // if this is only used by one.
-  if (!isReassociableOp(Sub->getOperand(0), Instruction::Add) &&
-      !isReassociableOp(Sub->getOperand(1), Instruction::Add) &&
-      !(Sub->hasOneUse() &&isReassociableOp(Sub->use_back(), Instruction::Add)))
-    return 0;
-
   // Convert a subtract into an add and a neg instruction... so that sub
   // instructions can be commuted with other add instructions...
   //
@@ -762,12 +775,12 @@ void Reassociate::ReassociateBB(BasicBlock *BB) {
     // If this is a subtract instruction which is not already in negate form,
     // see if we can convert it to X+-Y.
     if (BI->getOpcode() == Instruction::Sub) {
-      if (!BinaryOperator::isNeg(BI)) {
+      if (ShouldBreakUpSubtract(BI)) {
         if (Instruction *NI = BreakUpSubtract(BI)) {
           MadeChange = true;
           BI = NI;
         }
-      } else {
+      } else if (BinaryOperator::isNeg(BI)) {
         // Otherwise, this is a negation.  See if the operand is a multiply tree
         // and if this is not an inner node of a multiply tree.
         if (isReassociableOp(BI->getOperand(1), Instruction::Mul) &&
