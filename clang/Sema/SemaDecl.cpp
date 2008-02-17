@@ -936,8 +936,8 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
 
 // Called from Sema::ParseStartOfFunctionDef().
 ParmVarDecl *
-Sema::ActOnParamDeclarator(struct DeclaratorChunk::ParamInfo &PI, Scope *FnScope) 
-{
+Sema::ActOnParamDeclarator(struct DeclaratorChunk::ParamInfo &PI,
+                           Scope *FnScope) {
   IdentifierInfo *II = PI.Ident;
   // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
   // Can this happen for params?  We already checked that they don't conflict
@@ -977,7 +977,6 @@ Sema::ActOnParamDeclarator(struct DeclaratorChunk::ParamInfo &PI, Scope *FnScope
   
   ParmVarDecl *New = new ParmVarDecl(PI.IdentLoc, II, parmDeclType, 
                                      VarDecl::None, 0);
-  // FIXME: Handle attributes
   
   if (PI.InvalidType)
     New->setInvalidDecl();
@@ -989,6 +988,7 @@ Sema::ActOnParamDeclarator(struct DeclaratorChunk::ParamInfo &PI, Scope *FnScope
     FnScope->AddDecl(New);
   }
 
+  HandleDeclAttributes(New, PI.AttrList, 0);
   return New;
 }
 
