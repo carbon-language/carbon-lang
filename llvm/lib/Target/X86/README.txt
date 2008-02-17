@@ -1516,3 +1516,15 @@ should generate:
 lock ; mov %esp, %esp
 
 //===---------------------------------------------------------------------===//
+
+The generated code on x86 for checking for signed overflow on a multiply the
+obvious way is much longer than it needs to be.
+
+int x(int a, int b) {
+  long long prod = (long long)a*b;
+  return  prod > 0x7FFFFFFF || prod < (-0x7FFFFFFF-1);
+}
+
+See PR2053 for more details.
+
+//===---------------------------------------------------------------------===//
