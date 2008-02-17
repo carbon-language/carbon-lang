@@ -21,7 +21,7 @@
 #include "llvm/ParameterAttributes.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Instructions.h"
-#include "llvm/Intrinsics.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Pass.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/ADT/SmallVector.h"
@@ -228,6 +228,13 @@ static bool AddressMightEscape(const Value *V) {
       // If returned, the address will escape to calling functions, but no
       // callees could modify it.
       break; // next use
+    case Instruction::Call:
+      // If the call is to a few known safe intrinsics, we know that it does
+      // not escape
+      if (isa<MemIntrinsic>(I))
+        return false;
+      else
+        return true;
     default:
       return true;
     }
@@ -247,8 +254,11 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
     // Allocations and byval arguments are "new" objects.
     if (Object &&
         (isa<AllocationInst>(Object) ||
-         (isa<Argument>(Object) && cast<Argument>(Object)->hasByValAttr()))) {
-      // Okay, the pointer is to a stack allocated object.  If we can prove that
+         (isa<Argument>(Object) &&
+                                 (cast<Argument>(Object)->hasByValAttr() ||
+                                  cast<Argument>(Object)->hasNoAliasAttr())))) {
+      // Okay, the pointer is to a stack allocated (or effectively so, for 
+      // for noalias parameters) object.  If we can prove that
       // the pointer never "escapes", then we know the call cannot clobber it,
       // because it simply can't get its address.
       if (!AddressMightEscape(Object))
