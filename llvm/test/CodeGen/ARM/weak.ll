@@ -1,17 +1,16 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep .weak.*f
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep .weak.*h
+; RUN: llvm-as < %s | llc -march=arm | grep .weak.*f
+; RUN: llvm-as < %s | llc -march=arm | grep .weak.*h
 
-implementation   ; Functions:
-
-weak uint %f() {
+define weak i32 @f() {
 entry:
-	unreachable
+        unreachable
 }
 
-void %g() {
+define void @g() {
 entry:
-        tail call void %h( )
+        tail call void @h( )
         ret void
 }
 
-declare extern_weak void %h()
+declare extern_weak void @h()
+

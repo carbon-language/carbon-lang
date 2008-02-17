@@ -1,20 +1,20 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+v6,+vfp2 | \
+; RUN: llvm-as < %s | llc -march=arm -mattr=+v6,+vfp2 | \
 ; RUN:   grep fcmpes
 
-void %test3(float* %glob, int %X) {
+define void @test3(float* %glob, i32 %X) {
 entry:
-	%tmp = load float* %glob		; <float> [#uses=1]
-	%tmp2 = getelementptr float* %glob, int 2		; <float*> [#uses=1]
-	%tmp3 = load float* %tmp2		; <float> [#uses=1]
-	%tmp = setgt float %tmp, %tmp3		; <bool> [#uses=1]
-	br bool %tmp, label %cond_true, label %UnifiedReturnBlock
+        %tmp = load float* %glob                ; <float> [#uses=1]
+        %tmp2 = getelementptr float* %glob, i32 2               ; <float*> [#uses=1]
+        %tmp3 = load float* %tmp2               ; <float> [#uses=1]
+        %tmp.upgrd.1 = fcmp ogt float %tmp, %tmp3               ; <i1> [#uses=1]
+        br i1 %tmp.upgrd.1, label %cond_true, label %UnifiedReturnBlock
 
-cond_true:		; preds = %entry
-	%tmp = tail call int (...)* %bar( )		; <int> [#uses=0]
-	ret void
+cond_true:              ; preds = %entry
+        %tmp.upgrd.2 = tail call i32 (...)* @bar( )             ; <i32> [#uses=0]
+        ret void
 
-UnifiedReturnBlock:		; preds = %entry
-	ret void
+UnifiedReturnBlock:             ; preds = %entry
+        ret void
 }
 
-declare int %bar(...)
+declare i32 @bar(...)

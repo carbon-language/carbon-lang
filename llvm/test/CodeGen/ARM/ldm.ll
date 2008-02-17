@@ -1,34 +1,35 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | \
+; RUN: llvm-as < %s | llc -march=arm | \
 ; RUN:   grep ldmia | count 2
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | \
+; RUN: llvm-as < %s | llc -march=arm | \
 ; RUN:   grep ldmib | count 1
-; RUN: llvm-upgrade < %s | llvm-as | llc -mtriple=arm-apple-darwin | \
+; RUN: llvm-as < %s | llc -mtriple=arm-apple-darwin | \
 ; RUN:   grep {ldmfd sp\!} | count 3
 
-%X = external global [0 x int]
+@X = external global [0 x i32]          ; <[0 x i32]*> [#uses=5]
 
-int %t1() {
-	%tmp = load int* getelementptr ([0 x int]* %X, int 0, int 0)
-	%tmp3 = load int* getelementptr ([0 x int]* %X, int 0, int 1)
-	%tmp4 = tail call int %f1( int %tmp, int %tmp3 )
-	ret int %tmp4
+define i32 @t1() {
+        %tmp = load i32* getelementptr ([0 x i32]* @X, i32 0, i32 0)            ; <i32> [#uses=1]
+        %tmp3 = load i32* getelementptr ([0 x i32]* @X, i32 0, i32 1)           ; <i32> [#uses=1]
+        %tmp4 = tail call i32 @f1( i32 %tmp, i32 %tmp3 )                ; <i32> [#uses=1]
+        ret i32 %tmp4
 }
 
-int %t2() {
-	%tmp = load int* getelementptr ([0 x int]* %X, int 0, int 2)
-	%tmp3 = load int* getelementptr ([0 x int]* %X, int 0, int 3)
-	%tmp5 = load int* getelementptr ([0 x int]* %X, int 0, int 4)
-	%tmp6 = tail call int %f2( int %tmp, int %tmp3, int %tmp5 )
-	ret int %tmp6
+define i32 @t2() {
+        %tmp = load i32* getelementptr ([0 x i32]* @X, i32 0, i32 2)            ; <i32> [#uses=1]
+        %tmp3 = load i32* getelementptr ([0 x i32]* @X, i32 0, i32 3)           ; <i32> [#uses=1]
+        %tmp5 = load i32* getelementptr ([0 x i32]* @X, i32 0, i32 4)           ; <i32> [#uses=1]
+        %tmp6 = tail call i32 @f2( i32 %tmp, i32 %tmp3, i32 %tmp5 )             ; <i32> [#uses=1]
+        ret i32 %tmp6
 }
 
-int %t3() {
-	%tmp = load int* getelementptr ([0 x int]* %X, int 0, int 1)
-	%tmp3 = load int* getelementptr ([0 x int]* %X, int 0, int 2)
-	%tmp5 = load int* getelementptr ([0 x int]* %X, int 0, int 3)
-	%tmp6 = tail call int %f2( int %tmp, int %tmp3, int %tmp5 )
-	ret int %tmp6
+define i32 @t3() {
+        %tmp = load i32* getelementptr ([0 x i32]* @X, i32 0, i32 1)            ; <i32> [#uses=1]
+        %tmp3 = load i32* getelementptr ([0 x i32]* @X, i32 0, i32 2)           ; <i32> [#uses=1]
+        %tmp5 = load i32* getelementptr ([0 x i32]* @X, i32 0, i32 3)           ; <i32> [#uses=1]
+        %tmp6 = tail call i32 @f2( i32 %tmp, i32 %tmp3, i32 %tmp5 )             ; <i32> [#uses=1]
+        ret i32 %tmp6
 }
 
-declare int %f1(int, int)
-declare int %f2(int, int, int)
+declare i32 @f1(i32, i32)
+
+declare i32 @f2(i32, i32, i32)

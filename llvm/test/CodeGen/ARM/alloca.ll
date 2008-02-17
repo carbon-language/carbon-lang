@@ -1,13 +1,13 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mtriple=arm-linux-gnu | \
+; RUN: llvm-as < %s | llc -march=arm -mtriple=arm-linux-gnu | \
 ; RUN:   grep {mov r11, sp}
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mtriple=arm-linux-gnu | \
+; RUN: llvm-as < %s | llc -march=arm -mtriple=arm-linux-gnu | \
 ; RUN:   grep {mov sp, r11}
 
-void %f(uint %a) {
+define void @f(i32 %a) {
 entry:
-	%tmp = alloca sbyte, uint %a
-	call void %g( sbyte* %tmp, uint %a, uint 1, uint 2, uint 3 )
-	ret void
+        %tmp = alloca i8, i32 %a                ; <i8*> [#uses=1]
+        call void @g( i8* %tmp, i32 %a, i32 1, i32 2, i32 3 )
+        ret void
 }
 
-declare void %g(sbyte*, uint, uint, uint, uint)
+declare void @g(i8*, i32, i32, i32, i32)

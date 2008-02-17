@@ -1,80 +1,73 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+v6 | \
+; RUN: llvm-as < %s | llc -march=arm -mattr=+v6 | \
 ; RUN:   grep pkhbt | count 5
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+v6 | \
+; RUN: llvm-as < %s | llc -march=arm -mattr=+v6 | \
 ; RUN:   grep pkhtb | count 4
-; END.
 
-implementation   ; Functions:
-
-int %test1(int %X, int %Y) {
-	%tmp1 = and int %X, 65535		; <int> [#uses=1]
-	%tmp4 = shl int %Y, ubyte 16		; <int> [#uses=1]
-	%tmp5 = or int %tmp4, %tmp1		; <int> [#uses=1]
-	ret int %tmp5
+define i32 @test1(i32 %X, i32 %Y) {
+	%tmp1 = and i32 %X, 65535		; <i32> [#uses=1]
+	%tmp4 = shl i32 %Y, 16		; <i32> [#uses=1]
+	%tmp5 = or i32 %tmp4, %tmp1		; <i32> [#uses=1]
+	ret i32 %tmp5
 }
 
-int %test1a(int %X, int %Y) {
-	%tmp19 = and int %X, 65535		; <int> [#uses=1]
-	%tmp37 = shl int %Y, ubyte 16		; <int> [#uses=1]
-	%tmp5 = or int %tmp37, %tmp19		; <int> [#uses=1]
-	ret int %tmp5
+define i32 @test1a(i32 %X, i32 %Y) {
+	%tmp19 = and i32 %X, 65535		; <i32> [#uses=1]
+	%tmp37 = shl i32 %Y, 16		; <i32> [#uses=1]
+	%tmp5 = or i32 %tmp37, %tmp19		; <i32> [#uses=1]
+	ret i32 %tmp5
 }
 
-int %test2(int %X, int %Y) {
-	%tmp1 = and int %X, 65535		; <int> [#uses=1]
-	%tmp3 = shl int %Y, ubyte 12		; <int> [#uses=1]
-	%tmp4 = and int %tmp3, -65536		; <int> [#uses=1]
-	%tmp57 = or int %tmp4, %tmp1		; <int> [#uses=1]
-	ret int %tmp57
+define i32 @test2(i32 %X, i32 %Y) {
+	%tmp1 = and i32 %X, 65535		; <i32> [#uses=1]
+	%tmp3 = shl i32 %Y, 12		; <i32> [#uses=1]
+	%tmp4 = and i32 %tmp3, -65536		; <i32> [#uses=1]
+	%tmp57 = or i32 %tmp4, %tmp1		; <i32> [#uses=1]
+	ret i32 %tmp57
 }
 
-int %test3(int %X, int %Y) {
-	%tmp19 = and int %X, 65535		; <int> [#uses=1]
-	%tmp37 = shl int %Y, ubyte 18		; <int> [#uses=1]
-	%tmp5 = or int %tmp37, %tmp19		; <int> [#uses=1]
-	ret int %tmp5
+define i32 @test3(i32 %X, i32 %Y) {
+	%tmp19 = and i32 %X, 65535		; <i32> [#uses=1]
+	%tmp37 = shl i32 %Y, 18		; <i32> [#uses=1]
+	%tmp5 = or i32 %tmp37, %tmp19		; <i32> [#uses=1]
+	ret i32 %tmp5
 }
 
-int %test4(int %X, int %Y) {
-	%tmp1 = and int %X, 65535		; <int> [#uses=1]
-	%tmp3 = and int %Y, -65536		; <int> [#uses=1]
-	%tmp46 = or int %tmp3, %tmp1		; <int> [#uses=1]
-	ret int %tmp46
+define i32 @test4(i32 %X, i32 %Y) {
+	%tmp1 = and i32 %X, 65535		; <i32> [#uses=1]
+	%tmp3 = and i32 %Y, -65536		; <i32> [#uses=1]
+	%tmp46 = or i32 %tmp3, %tmp1		; <i32> [#uses=1]
+	ret i32 %tmp46
 }
 
-int %test5(int %X, int %Y) {
-	%tmp17 = and int %X, -65536		; <int> [#uses=1]
-	%tmp2 = cast int %Y to uint		; <uint> [#uses=1]
-	%tmp4 = shr uint %tmp2, ubyte 16		; <uint> [#uses=1]
-	%tmp4 = cast uint %tmp4 to int		; <int> [#uses=1]
-	%tmp5 = or int %tmp4, %tmp17		; <int> [#uses=1]
-	ret int %tmp5
+define i32 @test5(i32 %X, i32 %Y) {
+	%tmp17 = and i32 %X, -65536		; <i32> [#uses=1]
+	%tmp2 = bitcast i32 %Y to i32		; <i32> [#uses=1]
+	%tmp4 = lshr i32 %tmp2, 16		; <i32> [#uses=2]
+	%tmp5 = or i32 %tmp4, %tmp17		; <i32> [#uses=1]
+	ret i32 %tmp5
 }
 
-int %test5a(int %X, int %Y) {
-	%tmp110 = and int %X, -65536		; <int> [#uses=1]
-	%Y = cast int %Y to uint		; <uint> [#uses=1]
-	%tmp37 = shr uint %Y, ubyte 16		; <uint> [#uses=1]
-	%tmp39 = cast uint %tmp37 to int		; <int> [#uses=1]
-	%tmp5 = or int %tmp39, %tmp110		; <int> [#uses=1]
-	ret int %tmp5
+define i32 @test5a(i32 %X, i32 %Y) {
+	%tmp110 = and i32 %X, -65536		; <i32> [#uses=1]
+	%tmp37 = lshr i32 %Y, 16		; <i32> [#uses=1]
+	%tmp39 = bitcast i32 %tmp37 to i32		; <i32> [#uses=1]
+	%tmp5 = or i32 %tmp39, %tmp110		; <i32> [#uses=1]
+	ret i32 %tmp5
 }
 
-int %test6(int %X, int %Y) {
-	%tmp1 = and int %X, -65536		; <int> [#uses=1]
-	%Y = cast int %Y to uint		; <uint> [#uses=1]
-	%tmp37 = shr uint %Y, ubyte 12		; <uint> [#uses=1]
-	%tmp38 = cast uint %tmp37 to int		; <int> [#uses=1]
-	%tmp4 = and int %tmp38, 65535		; <int> [#uses=1]
-	%tmp59 = or int %tmp4, %tmp1		; <int> [#uses=1]
-	ret int %tmp59
+define i32 @test6(i32 %X, i32 %Y) {
+	%tmp1 = and i32 %X, -65536		; <i32> [#uses=1]
+	%tmp37 = lshr i32 %Y, 12		; <i32> [#uses=1]
+	%tmp38 = bitcast i32 %tmp37 to i32		; <i32> [#uses=1]
+	%tmp4 = and i32 %tmp38, 65535		; <i32> [#uses=1]
+	%tmp59 = or i32 %tmp4, %tmp1		; <i32> [#uses=1]
+	ret i32 %tmp59
 }
 
-int %test7(int %X, int %Y) {
-	%tmp1 = and int %X, -65536		; <int> [#uses=1]
-	%tmp3 = shr int %Y, ubyte 18		; <int> [#uses=1]
-	%tmp4 = and int %tmp3, 65535		; <int> [#uses=1]
-	%tmp57 = or int %tmp4, %tmp1		; <int> [#uses=1]
-	ret int %tmp57
+define i32 @test7(i32 %X, i32 %Y) {
+	%tmp1 = and i32 %X, -65536		; <i32> [#uses=1]
+	%tmp3 = ashr i32 %Y, 18		; <i32> [#uses=1]
+	%tmp4 = and i32 %tmp3, 65535		; <i32> [#uses=1]
+	%tmp57 = or i32 %tmp4, %tmp1		; <i32> [#uses=1]
+	ret i32 %tmp57
 }
-

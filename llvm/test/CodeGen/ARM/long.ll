@@ -1,86 +1,87 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | \
+; RUN: llvm-as < %s | llc -march=arm | \
 ; RUN:   grep -- {-2147483648} | count 3
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep mvn | count 3
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep adds | count 1
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep adc | count 1
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep {subs } | count 1
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep sbc | count 1
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | \
+; RUN: llvm-as < %s | llc -march=arm | grep mvn | count 3
+; RUN: llvm-as < %s | llc -march=arm | grep adds | count 1
+; RUN: llvm-as < %s | llc -march=arm | grep adc | count 1
+; RUN: llvm-as < %s | llc -march=arm | grep {subs } | count 1
+; RUN: llvm-as < %s | llc -march=arm | grep sbc | count 1
+; RUN: llvm-as < %s | llc -march=arm | \
 ; RUN:   grep smull | count 1
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | \
+; RUN: llvm-as < %s | llc -march=arm | \
 ; RUN:   grep umull | count 1
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=thumb | \
+; RUN: llvm-as < %s | llc -march=thumb | \
 ; RUN:   grep mvn | count 1
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=thumb | \
+; RUN: llvm-as < %s | llc -march=thumb | \
 ; RUN:   grep adc | count 1
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=thumb | \
+; RUN: llvm-as < %s | llc -march=thumb | \
 ; RUN:   grep sbc | count 1
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=thumb | grep __muldi3
-; END.
+; RUN: llvm-as < %s | llc -march=thumb | grep __muldi3
 
-long %f1() {
+define i64 @f1() {
 entry:
-	ret long 0
+        ret i64 0
 }
 
-long %f2() {
+define i64 @f2() {
 entry:
-	ret long 1
+        ret i64 1
 }
 
-long %f3() {
+define i64 @f3() {
 entry:
-	ret long 2147483647
+        ret i64 2147483647
 }
 
-long %f4() {
+define i64 @f4() {
 entry:
-	ret long 2147483648
+        ret i64 2147483648
 }
 
-long %f5() {
+define i64 @f5() {
 entry:
-	ret long 9223372036854775807
+        ret i64 9223372036854775807
 }
 
-ulong %f6(ulong %x, ulong %y) {
+define i64 @f6(i64 %x, i64 %y) {
 entry:
-	%tmp1 = add ulong %y, 1
-	ret ulong %tmp1
+        %tmp1 = add i64 %y, 1           ; <i64> [#uses=1]
+        ret i64 %tmp1
 }
 
-void %f7() {
+define void @f7() {
 entry:
-	%tmp = call long %f8()
-	ret void
-}
-declare long %f8()
-
-long %f9(long %a, long %b) {
-entry:
-	%tmp = sub long %a, %b
-	ret long %tmp
+        %tmp = call i64 @f8( )          ; <i64> [#uses=0]
+        ret void
 }
 
-long %f(int %a, int %b) {
+declare i64 @f8()
+
+define i64 @f9(i64 %a, i64 %b) {
 entry:
-	%tmp = cast int %a to long
-	%tmp1 = cast int %b to long
-	%tmp2 = mul long %tmp1, %tmp
-	ret long %tmp2
+        %tmp = sub i64 %a, %b           ; <i64> [#uses=1]
+        ret i64 %tmp
 }
 
-ulong %g(uint %a, uint %b) {
+define i64 @f(i32 %a, i32 %b) {
 entry:
-	%tmp = cast uint %a to ulong
-	%tmp1 = cast uint %b to ulong
-	%tmp2 = mul ulong %tmp1, %tmp
-	ret ulong %tmp2
+        %tmp = sext i32 %a to i64               ; <i64> [#uses=1]
+        %tmp1 = sext i32 %b to i64              ; <i64> [#uses=1]
+        %tmp2 = mul i64 %tmp1, %tmp             ; <i64> [#uses=1]
+        ret i64 %tmp2
 }
 
-ulong %f10() {
+define i64 @g(i32 %a, i32 %b) {
 entry:
-	%a = alloca ulong, align 8
-	%retval = load ulong* %a
-	ret ulong %retval
+        %tmp = zext i32 %a to i64               ; <i64> [#uses=1]
+        %tmp1 = zext i32 %b to i64              ; <i64> [#uses=1]
+        %tmp2 = mul i64 %tmp1, %tmp             ; <i64> [#uses=1]
+        ret i64 %tmp2
 }
+
+define i64 @f10() {
+entry:
+        %a = alloca i64, align 8                ; <i64*> [#uses=1]
+        %retval = load i64* %a          ; <i64> [#uses=1]
+        ret i64 %retval
+}
+

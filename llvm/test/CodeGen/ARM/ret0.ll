@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm
-int %test() {
-  ret int 0
+; RUN: llvm-as < %s | llc -march=arm
+
+define i32 @test() {
+        ret i32 0
 }

@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 > %t
+; RUN: llvm-as < %s | llc -march=arm -mattr=+vfp2 > %t
 ; RUN: grep fcvtsd %t
 ; RUN: grep fcvtds %t
 ; RUN: grep ftosizs %t
@@ -10,62 +10,62 @@
 ; RUN: grep fuitos %t
 ; RUN: grep fuitod %t
 
-float %f1(double %x) {
+define float @f1(double %x) {
 entry:
-	%tmp1 = cast double %x to float
+	%tmp1 = fptrunc double %x to float		; <float> [#uses=1]
 	ret float %tmp1
 }
 
-double %f2(float %x) {
+define double @f2(float %x) {
 entry:
-	%tmp1 = cast float %x to double
+	%tmp1 = fpext float %x to double		; <double> [#uses=1]
 	ret double %tmp1
 }
 
-int %f3(float %x) {
+define i32 @f3(float %x) {
 entry:
-        %tmp = cast float %x to int
-        ret int %tmp
+	%tmp = fptosi float %x to i32		; <i32> [#uses=1]
+	ret i32 %tmp
 }
 
-uint %f4(float %x) {
+define i32 @f4(float %x) {
 entry:
-        %tmp = cast float %x to uint
-        ret uint %tmp
+	%tmp = fptoui float %x to i32		; <i32> [#uses=1]
+	ret i32 %tmp
 }
 
-int %f5(double %x) {
+define i32 @f5(double %x) {
 entry:
-        %tmp = cast double %x to int
-        ret int %tmp
+	%tmp = fptosi double %x to i32		; <i32> [#uses=1]
+	ret i32 %tmp
 }
 
-uint %f6(double %x) {
+define i32 @f6(double %x) {
 entry:
-        %tmp = cast double %x to uint
-        ret uint %tmp
+	%tmp = fptoui double %x to i32		; <i32> [#uses=1]
+	ret i32 %tmp
 }
 
-float %f7(int %a) {
+define float @f7(i32 %a) {
 entry:
-	%tmp = cast int %a to float
+	%tmp = sitofp i32 %a to float		; <float> [#uses=1]
 	ret float %tmp
 }
 
-double %f8(int %a) {
+define double @f8(i32 %a) {
 entry:
-        %tmp = cast int %a to double
-        ret double %tmp
+	%tmp = sitofp i32 %a to double		; <double> [#uses=1]
+	ret double %tmp
 }
 
-float %f9(uint %a) {
+define float @f9(i32 %a) {
 entry:
-	%tmp = cast uint %a to float
+	%tmp = uitofp i32 %a to float		; <float> [#uses=1]
 	ret float %tmp
 }
 
-double %f10(uint %a) {
+define double @f10(i32 %a) {
 entry:
-	%tmp = cast uint %a to double
+	%tmp = uitofp i32 %a to double		; <double> [#uses=1]
 	ret double %tmp
 }

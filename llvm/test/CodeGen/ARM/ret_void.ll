@@ -1,4 +1,6 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm
-void %test() {
-  ret void
+; RUN: llvm-as < %s | llc -march=arm
+
+define void @test() {
+        ret void
 }
+

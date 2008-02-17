@@ -1,46 +1,42 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | \
+; RUN: llvm-as < %s | llc -march=arm | \
 ; RUN:   grep {mov r0, #0} | count 1
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | \
+; RUN: llvm-as < %s | llc -march=arm | \
 ; RUN:   grep {mov r0, #255$} | count 1
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | \
+; RUN: llvm-as < %s | llc -march=arm | \
 ; RUN:   grep {mov r0.*256} | count 1
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | \
-; RUN:   grep {orr.*256} | count 1
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | \
-; RUN:   grep {mov r0, .*-1073741761} | count 1
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | \
-; RUN:   grep {mov r0, .*1008} | count 1
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | \
-; RUN:   grep {cmp r0, #1, 16} | count 1
+; RUN: llvm-as < %s | llc -march=arm | grep {orr.*256} | count 1
+; RUN: llvm-as < %s | llc -march=arm | grep {mov r0, .*-1073741761} | count 1
+; RUN: llvm-as < %s | llc -march=arm | grep {mov r0, .*1008} | count 1
+; RUN: llvm-as < %s | llc -march=arm | grep {cmp r0, #1, 16} | count 1
 
-uint %f1() {
-  ret uint 0
+define i32 @f1() {
+        ret i32 0
 }
 
-uint %f2() {
-  ret uint 255
+define i32 @f2() {
+        ret i32 255
 }
 
-uint %f3() {
-  ret uint 256
+define i32 @f3() {
+        ret i32 256
 }
 
-uint %f4() {
-  ret uint 257
+define i32 @f4() {
+        ret i32 257
 }
 
-uint %f5() {
-  ret uint 3221225535
+define i32 @f5() {
+        ret i32 -1073741761
 }
 
-uint %f6() {
-  ret uint 1008
+define i32 @f6() {
+        ret i32 1008
 }
 
-void %f7(uint %a) {
-	%b = setgt uint %a, 65536
-	br bool %b, label %r, label %r
+define void @f7(i32 %a) {
+        %b = icmp ugt i32 %a, 65536             ; <i1> [#uses=1]
+        br i1 %b, label %r, label %r
 
-r:
-	ret void
+r:              ; preds = %0, %0
+        ret void
 }

@@ -1,76 +1,74 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+v6 | \
+; RUN: llvm-as < %s | llc -march=arm -mattr=+v6 | \
 ; RUN:   grep uxt | count 10
-; END.
 
-uint %test1(uint %x) {
-	%tmp1 = and uint %x, 16711935		; <uint> [#uses=1]
-	ret uint %tmp1
+define i32 @test1(i32 %x) {
+	%tmp1 = and i32 %x, 16711935		; <i32> [#uses=1]
+	ret i32 %tmp1
 }
 
-uint %test2(uint %x) {
-	%tmp1 = shr uint %x, ubyte 8		; <uint> [#uses=1]
-	%tmp2 = and uint %tmp1, 16711935		; <uint> [#uses=1]
-	ret uint %tmp2
+define i32 @test2(i32 %x) {
+	%tmp1 = lshr i32 %x, 8		; <i32> [#uses=1]
+	%tmp2 = and i32 %tmp1, 16711935		; <i32> [#uses=1]
+	ret i32 %tmp2
 }
 
-uint %test3(uint %x) {
-	%tmp1 = shr uint %x, ubyte 8		; <uint> [#uses=1]
-	%tmp2 = and uint %tmp1, 16711935		; <uint> [#uses=1]
-	ret uint %tmp2
+define i32 @test3(i32 %x) {
+	%tmp1 = lshr i32 %x, 8		; <i32> [#uses=1]
+	%tmp2 = and i32 %tmp1, 16711935		; <i32> [#uses=1]
+	ret i32 %tmp2
 }
 
-uint %test4(uint %x) {
-	%tmp1 = shr uint %x, ubyte 8		; <uint> [#uses=1]
-	%tmp6 = and uint %tmp1, 16711935		; <uint> [#uses=1]
-	ret uint %tmp6
+define i32 @test4(i32 %x) {
+	%tmp1 = lshr i32 %x, 8		; <i32> [#uses=1]
+	%tmp6 = and i32 %tmp1, 16711935		; <i32> [#uses=1]
+	ret i32 %tmp6
 }
 
-uint %test5(uint %x) {
-	%tmp1 = shr uint %x, ubyte 8		; <uint> [#uses=1]
-	%tmp2 = and uint %tmp1, 16711935		; <uint> [#uses=1]
-	ret uint %tmp2
+define i32 @test5(i32 %x) {
+	%tmp1 = lshr i32 %x, 8		; <i32> [#uses=1]
+	%tmp2 = and i32 %tmp1, 16711935		; <i32> [#uses=1]
+	ret i32 %tmp2
 }
 
-uint %test6(uint %x) {
-	%tmp1 = shr uint %x, ubyte 16		; <uint> [#uses=1]
-	%tmp2 = and uint %tmp1, 255		; <uint> [#uses=1]
-	%tmp4 = shl uint %x, ubyte 16		; <uint> [#uses=1]
-	%tmp5 = and uint %tmp4, 16711680		; <uint> [#uses=1]
-	%tmp6 = or uint %tmp2, %tmp5		; <uint> [#uses=1]
-	ret uint %tmp6
+define i32 @test6(i32 %x) {
+	%tmp1 = lshr i32 %x, 16		; <i32> [#uses=1]
+	%tmp2 = and i32 %tmp1, 255		; <i32> [#uses=1]
+	%tmp4 = shl i32 %x, 16		; <i32> [#uses=1]
+	%tmp5 = and i32 %tmp4, 16711680		; <i32> [#uses=1]
+	%tmp6 = or i32 %tmp2, %tmp5		; <i32> [#uses=1]
+	ret i32 %tmp6
 }
 
-uint %test7(uint %x) {
-	%tmp1 = shr uint %x, ubyte 16		; <uint> [#uses=1]
-	%tmp2 = and uint %tmp1, 255		; <uint> [#uses=1]
-	%tmp4 = shl uint %x, ubyte 16		; <uint> [#uses=1]
-	%tmp5 = and uint %tmp4, 16711680		; <uint> [#uses=1]
-	%tmp6 = or uint %tmp2, %tmp5		; <uint> [#uses=1]
-	ret uint %tmp6
+define i32 @test7(i32 %x) {
+	%tmp1 = lshr i32 %x, 16		; <i32> [#uses=1]
+	%tmp2 = and i32 %tmp1, 255		; <i32> [#uses=1]
+	%tmp4 = shl i32 %x, 16		; <i32> [#uses=1]
+	%tmp5 = and i32 %tmp4, 16711680		; <i32> [#uses=1]
+	%tmp6 = or i32 %tmp2, %tmp5		; <i32> [#uses=1]
+	ret i32 %tmp6
 }
 
-uint %test8(uint %x) {
-	%tmp1 = shl uint %x, ubyte 8		; <uint> [#uses=1]
-	%tmp2 = and uint %tmp1, 16711680		; <uint> [#uses=1]
-	%tmp5 = shr uint %x, ubyte 24		; <uint> [#uses=1]
-	%tmp6 = or uint %tmp2, %tmp5		; <uint> [#uses=1]
-	ret uint %tmp6
+define i32 @test8(i32 %x) {
+	%tmp1 = shl i32 %x, 8		; <i32> [#uses=1]
+	%tmp2 = and i32 %tmp1, 16711680		; <i32> [#uses=1]
+	%tmp5 = lshr i32 %x, 24		; <i32> [#uses=1]
+	%tmp6 = or i32 %tmp2, %tmp5		; <i32> [#uses=1]
+	ret i32 %tmp6
 }
 
-uint %test9(uint %x) {
-	%tmp1 = shr uint %x, ubyte 24		; <uint> [#uses=1]
-	%tmp4 = shl uint %x, ubyte 8		; <uint> [#uses=1]
-	%tmp5 = and uint %tmp4, 16711680		; <uint> [#uses=1]
-	%tmp6 = or uint %tmp5, %tmp1		; <uint> [#uses=1]
-	ret uint %tmp6
+define i32 @test9(i32 %x) {
+	%tmp1 = lshr i32 %x, 24		; <i32> [#uses=1]
+	%tmp4 = shl i32 %x, 8		; <i32> [#uses=1]
+	%tmp5 = and i32 %tmp4, 16711680		; <i32> [#uses=1]
+	%tmp6 = or i32 %tmp5, %tmp1		; <i32> [#uses=1]
+	ret i32 %tmp6
 }
 
-uint %test10(uint %p0) {
-        %tmp1 = shr uint %p0, ubyte 7           ; <uint> [#uses=1]
-        %tmp2 = and uint %tmp1, 16253176                ; <uint> [#uses=2]
-        %tmp4 = shr uint %tmp2, ubyte 5         ; <uint> [#uses=1]
-        %tmp5 = and uint %tmp4, 458759          ; <uint> [#uses=1]
-        %tmp7 = or uint %tmp5, %tmp2            ; <uint> [#uses=1]
-        ret uint %tmp7
+define i32 @test10(i32 %p0) {
+	%tmp1 = lshr i32 %p0, 7		; <i32> [#uses=1]
+	%tmp2 = and i32 %tmp1, 16253176		; <i32> [#uses=2]
+	%tmp4 = lshr i32 %tmp2, 5		; <i32> [#uses=1]
+	%tmp5 = and i32 %tmp4, 458759		; <i32> [#uses=1]
+	%tmp7 = or i32 %tmp5, %tmp2		; <i32> [#uses=1]
+	ret i32 %tmp7
 }
-

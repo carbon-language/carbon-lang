@@ -1,29 +1,30 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm > %t
+; RUN: llvm-as < %s | llc -march=arm > %t
 ; RUN: grep __divsi3  %t
 ; RUN: grep __udivsi3 %t
 ; RUN: grep __modsi3  %t
 ; RUN: grep __umodsi3 %t
 
-int %f1(int %a, int %b) {
+define i32 @f1(i32 %a, i32 %b) {
 entry:
-	%tmp1 = div int %a, %b
-	ret int %tmp1
+        %tmp1 = sdiv i32 %a, %b         ; <i32> [#uses=1]
+        ret i32 %tmp1
 }
 
-uint %f2(uint %a, uint %b) {
+define i32 @f2(i32 %a, i32 %b) {
 entry:
-	%tmp1 = div uint %a, %b
-	ret uint %tmp1
+        %tmp1 = udiv i32 %a, %b         ; <i32> [#uses=1]
+        ret i32 %tmp1
 }
 
-int %f3(int %a, int %b) {
+define i32 @f3(i32 %a, i32 %b) {
 entry:
-	%tmp1 = rem int %a, %b
-	ret int %tmp1
+        %tmp1 = srem i32 %a, %b         ; <i32> [#uses=1]
+        ret i32 %tmp1
 }
 
-uint %f4(uint %a, uint %b) {
+define i32 @f4(i32 %a, i32 %b) {
 entry:
-	%tmp1 = rem uint %a, %b
-	ret uint %tmp1
+        %tmp1 = urem i32 %a, %b         ; <i32> [#uses=1]
+        ret i32 %tmp1
 }
+

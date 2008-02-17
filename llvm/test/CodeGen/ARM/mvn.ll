@@ -1,72 +1,74 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep mvn | count 8
-; END.
+; RUN: llvm-as < %s | llc -march=arm | grep mvn | count 8
 
-int %f1() {
+define i32 @f1() {
 entry:
-	ret int -1
+	ret i32 -1
 }
 
-int %f2(int %a) {
+define i32 @f2(i32 %a) {
 entry:
-	%tmpnot = xor int %a, -1		; <int> [#uses=1]
-	ret int %tmpnot
+	%tmpnot = xor i32 %a, -1		; <i32> [#uses=1]
+	ret i32 %tmpnot
 }
 
-int %f3(int %a) {
+define i32 @f3(i32 %a) {
 entry:
-	%tmp1 = shl int %a, ubyte 2		; <int> [#uses=1]
-	%tmp1not = xor int %tmp1, -1		; <int> [#uses=1]
-	ret int %tmp1not
+	%tmp1 = shl i32 %a, 2		; <i32> [#uses=1]
+	%tmp1not = xor i32 %tmp1, -1		; <i32> [#uses=1]
+	ret i32 %tmp1not
 }
 
-int %f4(int %a, ubyte %b) {
+define i32 @f4(i32 %a, i8 %b) {
 entry:
-	%tmp3 = shl int %a, ubyte %b		; <int> [#uses=1]
-	%tmp3not = xor int %tmp3, -1		; <int> [#uses=1]
-	ret int %tmp3not
+	%shift.upgrd.1 = zext i8 %b to i32		; <i32> [#uses=1]
+	%tmp3 = shl i32 %a, %shift.upgrd.1		; <i32> [#uses=1]
+	%tmp3not = xor i32 %tmp3, -1		; <i32> [#uses=1]
+	ret i32 %tmp3not
 }
 
-uint %f5(uint %a) {
+define i32 @f5(i32 %a) {
 entry:
-	%tmp1 = lshr uint %a, ubyte 2		; <uint> [#uses=1]
-	%tmp1not = xor uint %tmp1, 4294967295		; <uint> [#uses=1]
-	ret uint %tmp1not
+	%tmp1 = lshr i32 %a, 2		; <i32> [#uses=1]
+	%tmp1not = xor i32 %tmp1, -1		; <i32> [#uses=1]
+	ret i32 %tmp1not
 }
 
-uint %f6(uint %a, ubyte %b) {
+define i32 @f6(i32 %a, i8 %b) {
 entry:
-	%tmp2 = lshr uint %a, ubyte %b		; <uint> [#uses=1]
-	%tmp2not = xor uint %tmp2, 4294967295		; <uint> [#uses=1]
-	ret uint %tmp2not
+	%shift.upgrd.2 = zext i8 %b to i32		; <i32> [#uses=1]
+	%tmp2 = lshr i32 %a, %shift.upgrd.2		; <i32> [#uses=1]
+	%tmp2not = xor i32 %tmp2, -1		; <i32> [#uses=1]
+	ret i32 %tmp2not
 }
 
-int %f7(int %a) {
+define i32 @f7(i32 %a) {
 entry:
-	%tmp1 = ashr int %a, ubyte 2		; <int> [#uses=1]
-	%tmp1not = xor int %tmp1, -1		; <int> [#uses=1]
-	ret int %tmp1not
+	%tmp1 = ashr i32 %a, 2		; <i32> [#uses=1]
+	%tmp1not = xor i32 %tmp1, -1		; <i32> [#uses=1]
+	ret i32 %tmp1not
 }
 
-int %f8(int %a, ubyte %b) {
+define i32 @f8(i32 %a, i8 %b) {
 entry:
-	%tmp3 = ashr int %a, ubyte %b		; <int> [#uses=1]
-	%tmp3not = xor int %tmp3, -1		; <int> [#uses=1]
-	ret int %tmp3not
+	%shift.upgrd.3 = zext i8 %b to i32		; <i32> [#uses=1]
+	%tmp3 = ashr i32 %a, %shift.upgrd.3		; <i32> [#uses=1]
+	%tmp3not = xor i32 %tmp3, -1		; <i32> [#uses=1]
+	ret i32 %tmp3not
 }
 
-int %f9() {
+define i32 @f9() {
 entry:
-        %tmp4845 = add int 0, 0
-        br  label %cond_true4848
+	%tmp4845 = add i32 0, 0		; <i32> [#uses=1]
+	br label %cond_true4848
 
-cond_true4848:          ; preds = %bb4835
-        %tmp4851 = sub int -3, 0                ; <int> [#uses=1]
-        %abc = add int %tmp4851, %tmp4845
-        ret int %abc
+cond_true4848:		; preds = %entry
+	%tmp4851 = sub i32 -3, 0		; <i32> [#uses=1]
+	%abc = add i32 %tmp4851, %tmp4845		; <i32> [#uses=1]
+	ret i32 %abc
 }
 
-bool %f10(int %a) {
+define i1 @f10(i32 %a) {
 entry:
-        %tmp102 = seteq int -2, %a              ; <bool> [#uses=1]
-        ret bool %tmp102
+	%tmp102 = icmp eq i32 -2, %a		; <i1> [#uses=1]
+	ret i1 %tmp102
 }

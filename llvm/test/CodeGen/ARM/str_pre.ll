@@ -1,18 +1,18 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | \
+; RUN: llvm-as < %s | llc -march=arm | \
 ; RUN:   grep {str.*\\!} | count 2
 
-void %test1(int *%X, int *%A, int **%dest) {
-        %B = load int* %A
-        %Y = getelementptr int* %X, int 4
-        store int %B, int* %Y
-        store int* %Y, int** %dest
+define void @test1(i32* %X, i32* %A, i32** %dest) {
+        %B = load i32* %A               ; <i32> [#uses=1]
+        %Y = getelementptr i32* %X, i32 4               ; <i32*> [#uses=2]
+        store i32 %B, i32* %Y
+        store i32* %Y, i32** %dest
         ret void
 }
 
-short *%test2(short *%X, int *%A) {
-        %B = load int* %A
-        %Y = getelementptr short* %X, int 4
-        %tmp = cast int %B to short
-        store short %tmp, short* %Y
-        ret short* %Y
+define i16* @test2(i16* %X, i32* %A) {
+        %B = load i32* %A               ; <i32> [#uses=1]
+        %Y = getelementptr i16* %X, i32 4               ; <i16*> [#uses=2]
+        %tmp = trunc i32 %B to i16              ; <i16> [#uses=1]
+        store i16 %tmp, i16* %Y
+        ret i16* %Y
 }

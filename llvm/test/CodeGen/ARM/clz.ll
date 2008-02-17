@@ -1,8 +1,8 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+v5t | grep clz
+; RUN: llvm-as < %s | llc -march=arm -mattr=+v5t | grep clz
 
-declare uint %llvm.ctlz.i32(uint)
+declare i32 @llvm.ctlz.i32(i32)
 
-uint %test(uint %x) {
-	%tmp.1 = call uint %llvm.ctlz.i32( uint %x ) 
-	ret uint %tmp.1
+define i32 @test(i32 %x) {
+        %tmp.1 = call i32 @llvm.ctlz.i32( i32 %x )              ; <i32> [#uses=1]
+        ret i32 %tmp.1
 }

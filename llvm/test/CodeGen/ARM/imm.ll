@@ -1,17 +1,16 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | not grep CPI
+; RUN: llvm-as < %s | llc -march=arm | not grep CPI
 
-int %test1(int %A) {
-  %B = add int %A, -268435441  ; 0xF000000F
-  ret int %B
+define i32 @test1(i32 %A) {
+        %B = add i32 %A, -268435441             ; <i32> [#uses=1]
+        ret i32 %B
 }
 
-int %test2() {
-  ret int 65533
+define i32 @test2() {
+        ret i32 65533
 }
 
-int %test3(int %A) {
-  %B = or int %A, 65533
-  ret int %B
+define i32 @test3(i32 %A) {
+        %B = or i32 %A, 65533           ; <i32> [#uses=1]
+        ret i32 %B
 }
-
 

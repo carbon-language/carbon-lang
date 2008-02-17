@@ -1,16 +1,16 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | \
+; RUN: llvm-as < %s | llc -march=arm | \
 ; RUN:   grep strb | count 1
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | \
+; RUN: llvm-as < %s | llc -march=arm | \
 ; RUN:   grep strh | count 1
 
-void %test1(int %v, short* %ptr) {
-        %tmp = cast int %v to short
-	store short %tmp, short* %ptr
-	ret void
+define void @test1(i32 %v, i16* %ptr) {
+        %tmp = trunc i32 %v to i16              ; <i16> [#uses=1]
+        store i16 %tmp, i16* %ptr
+        ret void
 }
 
-void %test2(int %v, ubyte* %ptr) {
-        %tmp = cast int %v to ubyte
-	store ubyte %tmp, ubyte* %ptr
-	ret void
+define void @test2(i32 %v, i8* %ptr) {
+        %tmp = trunc i32 %v to i8               ; <i8> [#uses=1]
+        store i8 %tmp, i8* %ptr
+        ret void
 }

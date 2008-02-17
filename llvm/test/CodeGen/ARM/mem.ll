@@ -1,14 +1,14 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep strb
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep strh
+; RUN: llvm-as < %s | llc -march=arm | grep strb
+; RUN: llvm-as < %s | llc -march=arm | grep strh
 
-void %f1() {
+define void @f1() {
 entry:
-	store ubyte 0, ubyte* null
-	ret void
+        store i8 0, i8* null
+        ret void
 }
 
-void %f2() {
+define void @f2() {
 entry:
-	store short 0, short* null
-	ret void
+        store i16 0, i16* null
+        ret void
 }

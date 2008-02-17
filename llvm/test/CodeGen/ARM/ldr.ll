@@ -1,22 +1,23 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | \
+; RUN: llvm-as < %s | llc -march=arm | \
 ; RUN:   grep {ldr r0} | count 3
 
-int %f1(int* %v) {
+define i32 @f1(i32* %v) {
 entry:
-	%tmp = load int* %v		; <int> [#uses=1]
-	ret int %tmp
+        %tmp = load i32* %v             ; <i32> [#uses=1]
+        ret i32 %tmp
 }
 
-int %f2(int* %v) {
+define i32 @f2(i32* %v) {
 entry:
-	%tmp2 = getelementptr int* %v, int 1023		; <int*> [#uses=1]
-	%tmp = load int* %tmp2		; <int> [#uses=1]
-	ret int %tmp
+        %tmp2 = getelementptr i32* %v, i32 1023         ; <i32*> [#uses=1]
+        %tmp = load i32* %tmp2          ; <i32> [#uses=1]
+        ret i32 %tmp
 }
 
-int %f3(int* %v) {
+define i32 @f3(i32* %v) {
 entry:
-	%tmp2 = getelementptr int* %v, int 1024		; <int*> [#uses=1]
-	%tmp = load int* %tmp2		; <int> [#uses=1]
-	ret int %tmp
+        %tmp2 = getelementptr i32* %v, i32 1024         ; <i32*> [#uses=1]
+        %tmp = load i32* %tmp2          ; <i32> [#uses=1]
+        ret i32 %tmp
 }
+
