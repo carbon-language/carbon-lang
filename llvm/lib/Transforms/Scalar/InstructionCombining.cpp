@@ -2090,8 +2090,16 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   }
 
   // -A + B  -->  B - A
-  if (Value *V = dyn_castNegVal(LHS))
-    return BinaryOperator::createSub(RHS, V);
+  // -A + -B  -->  -(A + B)
+  if (Value *LHSV = dyn_castNegVal(LHS)) {
+    if (Value *RHSV = dyn_castNegVal(RHS)) {
+      Instruction *NewAdd = BinaryOperator::createAdd(LHSV, RHSV, "sum");
+      InsertNewInstBefore(NewAdd, I);
+      return BinaryOperator::createNeg(NewAdd);
+    }
+    
+    return BinaryOperator::createSub(RHS, LHSV);
+  }
 
   // A + -B  -->  A - B
   if (!isa<Constant>(RHS))
