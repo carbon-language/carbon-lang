@@ -1,10 +1,11 @@
 ; With sub reassociation, constant folding can eliminate the 12 and -12 constants.
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -reassociate -constprop -instcombine -die | llvm-dis | not grep 12
+; RUN: llvm-as < %s | opt -reassociate -instcombine | llvm-dis | not grep 12
 
-int "test"(int %A, int %B) {
-	%X = add int -12, %A
-	%Y = sub int %X, %B
-	%Z = add int %Y, 12
-	ret int %Z
+define i32 @test(i32 %A, i32 %B) {
+	%X = add i32 -12, %A		; <i32> [#uses=1]
+	%Y = sub i32 %X, %B		; <i32> [#uses=1]
+	%Z = add i32 %Y, 12		; <i32> [#uses=1]
+	ret i32 %Z
 }
+
