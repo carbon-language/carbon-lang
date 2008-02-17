@@ -399,13 +399,16 @@ static bool ShouldBreakUpSubtract(Instruction *Sub) {
     return false;
   
   // Don't bother to break this up unless either the LHS is an associable add or
-  // if this is only used by one.
-  if (isReassociableOp(Sub->getOperand(0), Instruction::Add))
+  // subtract or if this is only used by one.
+  if (isReassociableOp(Sub->getOperand(0), Instruction::Add) ||
+      isReassociableOp(Sub->getOperand(0), Instruction::Sub))
     return true;
-  if (isReassociableOp(Sub->getOperand(1), Instruction::Add))
+  if (isReassociableOp(Sub->getOperand(1), Instruction::Add) ||
+      isReassociableOp(Sub->getOperand(0), Instruction::Sub))
     return true;
-  
-  if (Sub->hasOneUse() && isReassociableOp(Sub->use_back(), Instruction::Add))
+  if (Sub->hasOneUse() && 
+      (isReassociableOp(Sub->use_back(), Instruction::Add) ||
+       isReassociableOp(Sub->use_back(), Instruction::Sub)))
     return true;
     
   return false;
