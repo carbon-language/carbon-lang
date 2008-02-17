@@ -1,14 +1,10 @@
-; RUN: llvm-upgrade < %s > %t1.ll
-; RUN: bugpoint %t1.ll -dce -bugpoint-deletecalls -simplifycfg
+; RUN: bugpoint %s -dce -bugpoint-deletecalls -simplifycfg
 
-%.LC0 = internal global [13 x sbyte] c"Hello World\0A\00"
+@.LC0 = internal global [13 x i8] c"Hello World\0A\00"          ; <[13 x i8]*> [#uses=1]
 
-implementation
+declare i32 @printf(i8*, ...)
 
-declare int %printf(sbyte*, ...)
-
-int %main() {
-        call int(sbyte*, ...)* %printf( sbyte* getelementptr ([13 x sbyte]* %.LC0, long 0, long 0) )
-        ret int 0
+define i32 @main() {
+        call i32 (i8*, ...)* @printf( i8* getelementptr ([13 x i8]* @.LC0, i64 0, i64 0) )            ; <i32>:1 [#uses=0]
+        ret i32 0
 }
-
