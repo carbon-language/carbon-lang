@@ -404,7 +404,7 @@ static bool ShouldBreakUpSubtract(Instruction *Sub) {
       isReassociableOp(Sub->getOperand(0), Instruction::Sub))
     return true;
   if (isReassociableOp(Sub->getOperand(1), Instruction::Add) ||
-      isReassociableOp(Sub->getOperand(0), Instruction::Sub))
+      isReassociableOp(Sub->getOperand(1), Instruction::Sub))
     return true;
   if (Sub->hasOneUse() && 
       (isReassociableOp(Sub->use_back(), Instruction::Add) ||
