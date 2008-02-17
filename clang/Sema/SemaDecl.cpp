@@ -1010,10 +1010,11 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
         FTI.ArgInfo[i].TypeInfo = Context.IntTy.getAsOpaquePtr();
       }
     }
-   
+
     // Since this is a function definition, act as though we have information
     // about the arguments.
-    FTI.hasPrototype = true;
+    if (FTI.NumArgs)
+      FTI.hasPrototype = true;
   } else {
     // FIXME: Diagnose arguments without names in C.
     

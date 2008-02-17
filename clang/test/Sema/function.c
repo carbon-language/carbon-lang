@@ -25,3 +25,7 @@ int t8(, int a);  // expected-error {{expected parameter declarator}}
 int t9(int a, );  // expected-error {{expected parameter declarator}}
 
 
+// PR2042
+void t10(){}
+void t11(){t10(1);}
+

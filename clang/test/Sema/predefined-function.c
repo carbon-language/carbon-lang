@@ -20,16 +20,18 @@ int bar(int i) // expected-error {{previous definition is here}}
 {
 	return 0;
 }
-int bar() // expected-error {{redefinition of 'bar'}} expected-error {{conflicting types for 'bar'}}
+int bar() // expected-error {{redefinition of 'bar'}} 
 {
 	return 0;
 }
 
+#if 0
 int foobar(int); // expected-error {{previous declaration is here}}
 int foobar() // expected-error {{conflicting types for 'foobar'}}
 {
 	return 0;
 }
+#endif
 
 int wibble(); // expected-error {{previous declaration is here}}
 float wibble() // expected-error {{conflicting types for 'wibble'}}
