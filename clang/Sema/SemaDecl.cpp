@@ -987,8 +987,8 @@ Sema::ActOnParamDeclarator(struct DeclaratorChunk::ParamInfo &PI,
     II->setFETokenInfo(New);
     FnScope->AddDecl(New);
   }
-  // FIXME: Handle Attributes
-  //HandleDeclAttributes(New, PI.AttrList, 0);
+
+  HandleDeclAttributes(New, PI.AttrList, 0);
   return New;
 }
 

@@ -42,6 +42,7 @@ void Sema::ObjCActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
   PI.Ident = &Context.Idents.get("self");
   PI.IdentLoc = SourceLocation(); // synthesized vars have a null location.
   PI.InvalidType = false;
+  PI.AttrList = 0;
   if (MDecl->isInstance()) {
     ObjCInterfaceDecl *OID = MDecl->getClassInterface();
     // There may be no interface context due to error in declaration of the 
