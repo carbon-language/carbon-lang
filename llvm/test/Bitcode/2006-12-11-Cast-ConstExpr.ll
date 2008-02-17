@@ -1,10 +1,10 @@
 ; This test ensures that we get a bitcast constant expression in and out,
 ; not a sitofp constant expression. 
-; RUN: llvm-upgrade < %s | llvm-as | llvm-dis | \
+; RUN: llvm-as < %s | llvm-dis | \
 ; RUN:   grep {bitcast (}
 
-%G = external global int
+@G = external global i32
 
-float %tryit(int %A) {
-   ret float bitcast( int ptrtoint (int* %G to int) to float)
+define float @tryit(i32 %A) {
+   ret float sitofp( i32 ptrtoint (i32* @G to i32) to float)
 }
