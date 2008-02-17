@@ -57,6 +57,10 @@ public:
   /// it in its containing function.
   bool hasNoAliasAttr() const;
   
+  /// hasSRetAttr - Return true if this argument has the sret attribute on it in
+  /// its containing function.
+  bool hasStructRetAttr() const;
+  
   virtual void print(std::ostream &OS) const;
   void print(std::ostream *OS) const {
     if (OS) print(*OS);
