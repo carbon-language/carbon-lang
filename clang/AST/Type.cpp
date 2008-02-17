@@ -246,13 +246,29 @@ const VariableArrayType *Type::getAsVariableArrayType() const {
   return getDesugaredType()->getAsVariableArrayType();
 }
 
-/// isVariablyModifiedType (C99 6.7.5.2p2) - Return true for variable array
-/// types that have a non-constant expression. This does not include "[]".
+/// isVariablyModifiedType (C99 6.7.5p3) - Return true for variable length
+/// array types and types that contain variable array types in their
+/// declarator
 bool Type::isVariablyModifiedType() const {
-  if (const VariableArrayType *VAT = getAsVariableArrayType()) {
-    if (VAT->getSizeExpr())
-      return true;
-  }
+  // A VLA is a veriably modified type
+  if (getAsVariableArrayType())
+    return true;
+
+  // An array can contain a variably modified type
+  if (const ArrayType* AT = getAsArrayType())
+    return AT->getElementType()->isVariablyModifiedType();
+
+  // A pointer can point to a variably modified type
+  if (const PointerType* PT = getAsPointerType())
+    return PT->getPointeeType()->isVariablyModifiedType();
+
+  // A function can return a variably modified type
+  // This one isn't completely obvious, but it follows from the
+  // definition in C99 6.7.5p3. Because of this rule, it's
+  // illegal to declare a function returning a variably modified type.
+  if (const FunctionType* FT = getAsFunctionType())
+    return FT->getResultType()->isVariablyModifiedType();
+
   return false;
 }
 
