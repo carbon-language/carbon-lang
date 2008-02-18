@@ -262,7 +262,8 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
           bool passedAsArg = false;
           for (CallSite::arg_iterator CI = CS.arg_begin(), CE = CS.arg_end();
               CI != CE; ++CI)
-            if (getUnderlyingObject(CI->get()) == P)
+            if (isa<PointerType>((*CI)->getType()) &&
+                getUnderlyingObject(*CI) == P)
               passedAsArg = true;
           
           if (!passedAsArg)
