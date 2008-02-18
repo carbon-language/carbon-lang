@@ -1117,15 +1117,13 @@ bool GVN::processMemCpy(MemCpyInst* M,
   
   // First, we have to check that the dependency is another memcpy
   Instruction* dep = MD.getDependency(M);
-  if  (dep == MemoryDependenceAnalysis::None ||
-       dep == MemoryDependenceAnalysis::NonLocal)
+  if (dep == MemoryDependenceAnalysis::None ||
+      dep == MemoryDependenceAnalysis::NonLocal)
     return false;
-  else if (!isa<MemCpyInst>(dep)) {
-    if (CallInst* C = dyn_cast<CallInst>(dep))
-      return performReturnSlotOptzn(M, C, toErase);
-    else
-      return false;
-  }
+  else if (CallInst* C = dyn_cast<CallInst>(dep))
+    return performReturnSlotOptzn(M, C, toErase);
+  else if (!isa<MemCpyInst>(dep))
+    return false;
   
   // We can only transforms memcpy's where the dest of one is the source of the
   // other
