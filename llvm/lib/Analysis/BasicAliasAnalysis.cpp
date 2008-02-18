@@ -219,8 +219,6 @@ static bool AddressMightEscape(const Value *V) {
         return true;
       break; // next use.
     case Instruction::BitCast:
-      if (!isa<PointerType>(I->getType()))
-        return true;
       if (AddressMightEscape(I))
         return true;
       break; // next use
@@ -231,10 +229,9 @@ static bool AddressMightEscape(const Value *V) {
     case Instruction::Call:
       // If the call is to a few known safe intrinsics, we know that it does
       // not escape
-      if (isa<MemIntrinsic>(I))
-        return false;
-      else
+      if (!isa<MemIntrinsic>(I))
         return true;
+      break;  // next use
     default:
       return true;
     }
