@@ -176,6 +176,27 @@ bool ISD::isBuildVectorAllZeros(const SDNode *N) {
   return true;
 }
 
+/// isScalarToVector - Return true if the specified node is a
+/// ISD::SCALAR_TO_VECTOR node or a BUILD_VECTOR node where only the low
+/// element is not an undef.
+bool ISD::isScalarToVector(const SDNode *N) {
+  if (N->getOpcode() == ISD::SCALAR_TO_VECTOR)
+    return true;
+
+  if (N->getOpcode() != ISD::BUILD_VECTOR)
+    return false;
+  if (N->getOperand(0).getOpcode() == ISD::UNDEF)
+    return false;
+  unsigned NumElems = N->getNumOperands();
+  for (unsigned i = 1; i < NumElems; ++i) {
+    SDOperand V = N->getOperand(i);
+    if (V.getOpcode() != ISD::UNDEF)
+      return false;
+  }
+  return true;
+}
+
+
 /// isDebugLabel - Return true if the specified node represents a debug
 /// label (i.e. ISD::LABEL or TargetInstrInfo::LABEL node and third operand
 /// is 0).

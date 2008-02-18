@@ -3450,14 +3450,16 @@ ConstantFoldBIT_CONVERTofBUILD_VECTOR(SDNode *BV, MVT::ValueType DstEltVT) {
         Ops.push_back(DAG.getConstant(NewBits, DstEltVT));
     }
 
-    MVT::ValueType VT = MVT::getVectorType(DstEltVT,
-                                           Ops.size());
+    MVT::ValueType VT = MVT::getVectorType(DstEltVT, Ops.size()); 
     return DAG.getNode(ISD::BUILD_VECTOR, VT, &Ops[0], Ops.size());
   }
   
   // Finally, this must be the case where we are shrinking elements: each input
   // turns into multiple outputs.
+  bool isS2V = ISD::isScalarToVector(BV);
   unsigned NumOutputsPerInput = SrcBitSize/DstBitSize;
+  MVT::ValueType VT = MVT::getVectorType(DstEltVT,
+                                     NumOutputsPerInput * BV->getNumOperands());
   SmallVector<SDOperand, 8> Ops;
   for (unsigned i = 0, e = BV->getNumOperands(); i != e; ++i) {
     if (BV->getOperand(i).getOpcode() == ISD::UNDEF) {
@@ -3466,18 +3468,19 @@ ConstantFoldBIT_CONVERTofBUILD_VECTOR(SDNode *BV, MVT::ValueType DstEltVT) {
       continue;
     }
     uint64_t OpVal = cast<ConstantSDNode>(BV->getOperand(i))->getValue();
-
     for (unsigned j = 0; j != NumOutputsPerInput; ++j) {
       unsigned ThisVal = OpVal & ((1ULL << DstBitSize)-1);
-      OpVal >>= DstBitSize;
       Ops.push_back(DAG.getConstant(ThisVal, DstEltVT));
+      if (isS2V && i == 0 && j == 0 && ThisVal == OpVal)
+        // Simply turn this into a SCALAR_TO_VECTOR of the new type.
+        return DAG.getNode(ISD::SCALAR_TO_VECTOR, VT, Ops[0]);
+      OpVal >>= DstBitSize;
     }
 
     // For big endian targets, swap the order of the pieces of each element.
     if (TLI.isBigEndian())
       std::reverse(Ops.end()-NumOutputsPerInput, Ops.end());
   }
-  MVT::ValueType VT = MVT::getVectorType(DstEltVT, Ops.size());
   return DAG.getNode(ISD::BUILD_VECTOR, VT, &Ops[0], Ops.size());
 }
 

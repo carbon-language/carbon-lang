@@ -34,7 +34,6 @@ def X86frcp    : SDNode<"X86ISD::FRCP",      SDTFPUnaryOp>;
 def X86fsrl    : SDNode<"X86ISD::FSRL",      SDTX86FPShiftOp>;
 def X86comi    : SDNode<"X86ISD::COMI",      SDTX86CmpTest>;
 def X86ucomi   : SDNode<"X86ISD::UCOMI",     SDTX86CmpTest>;
-def X86s2vec   : SDNode<"X86ISD::S2VEC",  SDTypeProfile<1, 1, []>, []>;
 def X86pextrb  : SDNode<"X86ISD::PEXTRB",
                  SDTypeProfile<1, 2, [SDTCisVT<0, i32>, SDTCisPtrTy<2>]>>;
 def X86pextrw  : SDNode<"X86ISD::PEXTRW",
@@ -1781,22 +1780,6 @@ multiclass PDI_binop_rm_int<bits<8> opc, string OpcodeStr, Intrinsic IntId,
                                         (bitconvert (memopv2i64 addr:$src2))))]>;
 }
 
-multiclass PDI_binop_rmi_int<bits<8> opc, bits<8> opc2, Format ImmForm,
-                             string OpcodeStr, Intrinsic IntId> {
-  def rr : PDI<opc, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
-               !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
-               [(set VR128:$dst, (IntId VR128:$src1, VR128:$src2))]>;
-  def rm : PDI<opc, MRMSrcMem, (outs VR128:$dst), (ins VR128:$src1, i128mem:$src2),
-               !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
-               [(set VR128:$dst, (IntId VR128:$src1,
-                                        (bitconvert (memopv2i64 addr:$src2))))]>;
-  def ri : PDIi8<opc2, ImmForm, (outs VR128:$dst), (ins VR128:$src1, i32i8imm:$src2),
-               !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
-               [(set VR128:$dst, (IntId VR128:$src1,
-                                        (scalar_to_vector (i32 imm:$src2))))]>;
-}
-
-
 /// PDI_binop_rm - Simple SSE2 binary operator.
 multiclass PDI_binop_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
                         ValueType OpVT, bit Commutable = 0> {
@@ -1871,16 +1854,61 @@ defm PMAXSW : PDI_binop_rm_int<0xEE, "pmaxsw", int_x86_sse2_pmaxs_w, 1>;
 defm PSADBW : PDI_binop_rm_int<0xE0, "psadbw", int_x86_sse2_psad_bw, 1>;
 
 
-defm PSLLW : PDI_binop_rmi_int<0xF1, 0x71, MRM6r, "psllw", int_x86_sse2_psll_w>;
-defm PSLLD : PDI_binop_rmi_int<0xF2, 0x72, MRM6r, "pslld", int_x86_sse2_psll_d>;
-defm PSLLQ : PDI_binop_rmi_int<0xF3, 0x73, MRM6r, "psllq", int_x86_sse2_psll_q>;
+defm PSLLW : PDI_binop_rm_int<0xF1, "psllw", int_x86_sse2_psll_w>;
+defm PSLLD : PDI_binop_rm_int<0xF2, "pslld", int_x86_sse2_psll_d>;
+defm PSLLQ : PDI_binop_rm_int<0xF3, "psllq", int_x86_sse2_psll_q>;
 
-defm PSRLW : PDI_binop_rmi_int<0xD1, 0x71, MRM2r, "psrlw", int_x86_sse2_psrl_w>;
-defm PSRLD : PDI_binop_rmi_int<0xD2, 0x72, MRM2r, "psrld", int_x86_sse2_psrl_d>;
-defm PSRLQ : PDI_binop_rmi_int<0xD3, 0x73, MRM2r, "psrlq", int_x86_sse2_psrl_q>;
+defm PSRLW : PDI_binop_rm_int<0xD1, "psrlw", int_x86_sse2_psrl_w>;
+defm PSRLD : PDI_binop_rm_int<0xD2, "psrld", int_x86_sse2_psrl_d>;
+defm PSRLQ : PDI_binop_rm_int<0xD3, "psrlq", int_x86_sse2_psrl_q>;
 
-defm PSRAW : PDI_binop_rmi_int<0xE1, 0x71, MRM4r, "psraw", int_x86_sse2_psra_w>;
-defm PSRAD : PDI_binop_rmi_int<0xE2, 0x72, MRM4r, "psrad", int_x86_sse2_psra_d>;
+defm PSRAW : PDI_binop_rm_int<0xE1, "psraw", int_x86_sse2_psra_w>;
+defm PSRAD : PDI_binop_rm_int<0xE2, "psrad", int_x86_sse2_psra_d>;
+
+// Some immediate variants need to match a bit_convert.
+def PSLLWri : PDIi8<0x71, MRM6r, (outs VR128:$dst),
+                                 (ins VR128:$src1, i32i8imm:$src2),
+                    "psllw\t{$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst, (int_x86_sse2_psll_w VR128:$src1,
+                      (bc_v8i16 (v4i32 (scalar_to_vector (i32 imm:$src2))))))]>;
+def PSLLDri : PDIi8<0x72, MRM6r, (outs VR128:$dst),
+                                 (ins VR128:$src1, i32i8imm:$src2),
+                    "pslld\t{$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst, (int_x86_sse2_psll_d VR128:$src1,
+                          (scalar_to_vector (i32 imm:$src2))))]>;
+def PSLLQri : PDIi8<0x73, MRM6r, (outs VR128:$dst),
+                                 (ins VR128:$src1, i32i8imm:$src2),
+                    "psllq\t{$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst, (int_x86_sse2_psll_q VR128:$src1,
+                      (bc_v2i64 (v4i32 (scalar_to_vector (i32 imm:$src2))))))]>;
+
+def PSRLWri : PDIi8<0x71, MRM2r, (outs VR128:$dst),
+                                 (ins VR128:$src1, i32i8imm:$src2),
+                    "psrlw\t{$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst, (int_x86_sse2_psrl_w VR128:$src1,
+                      (bc_v8i16 (v4i32 (scalar_to_vector (i32 imm:$src2))))))]>;
+def PSRLDri : PDIi8<0x72, MRM2r, (outs VR128:$dst),
+                                 (ins VR128:$src1, i32i8imm:$src2),
+                    "psrld\t{$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst, (int_x86_sse2_psrl_d VR128:$src1,
+                          (scalar_to_vector (i32 imm:$src2))))]>;
+def PSRLQri : PDIi8<0x73, MRM2r, (outs VR128:$dst),
+                                 (ins VR128:$src1, i32i8imm:$src2),
+                    "psrlq\t{$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst, (int_x86_sse2_psrl_q VR128:$src1,
+                      (bc_v2i64 (v4i32 (scalar_to_vector (i32 imm:$src2))))))]>;
+
+def PSRAWri : PDIi8<0x71, MRM4r, (outs VR128:$dst),
+                                 (ins VR128:$src1, i32i8imm:$src2),
+                    "psraw\t{$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst, (int_x86_sse2_psra_w VR128:$src1,
+                      (bc_v8i16 (v4i32 (scalar_to_vector (i32 imm:$src2))))))]>;
+def PSRADri : PDIi8<0x72, MRM4r, (outs VR128:$dst),
+                                 (ins VR128:$src1, i32i8imm:$src2),
+                    "psrad\t{$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst, (int_x86_sse2_psra_d VR128:$src1,
+                          (scalar_to_vector (i32 imm:$src2))))]>;
+
 // PSRAQ doesn't exist in SSE[1-3].
 
 // 128-bit logical shifts.
@@ -2728,13 +2756,6 @@ def : Pat<(v2i64 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
 let Predicates = [HasSSE2] in
  def : Pat<(fextend (loadf32 addr:$src)),
            (CVTSS2SDrm addr:$src)>;
-
-// Scalar to v8i16 / v16i8. The source may be a GR32, but only the lower 8 or
-// 16-bits matter.
-def : Pat<(v8i16 (X86s2vec GR32:$src)), (MOVDI2PDIrr GR32:$src)>,
-      Requires<[HasSSE2]>;
-def : Pat<(v16i8 (X86s2vec GR32:$src)), (MOVDI2PDIrr GR32:$src)>,
-      Requires<[HasSSE2]>;
 
 // bit_convert
 let Predicates = [HasSSE2] in {

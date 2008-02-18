@@ -166,10 +166,6 @@ namespace llvm {
       /// relative displacements.
       WrapperRIP,
 
-      /// S2VEC - X86 version of SCALAR_TO_VECTOR. The destination base does not
-      /// have to match the operand type.
-      S2VEC,
-
       /// PEXTRB - Extract an 8-bit value from a vector and zero extend it to
       /// i32, corresponds to X86::PEXTRB.
       PEXTRB,

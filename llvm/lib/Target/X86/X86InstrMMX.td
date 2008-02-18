@@ -156,12 +156,13 @@ def MMX_FEMMS : MMXI<0x0E, RawFrm, (outs), (ins), "femms", [(int_x86_mmx_femms)]
 //===----------------------------------------------------------------------===//
 
 // Data Transfer Instructions
-let neverHasSideEffects = 1 in
 def MMX_MOVD64rr : MMXI<0x6E, MRMSrcReg, (outs VR64:$dst), (ins GR32:$src),
-                        "movd\t{$src, $dst|$dst, $src}", []>;
-let isSimpleLoad = 1, mayLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
+                        "movd\t{$src, $dst|$dst, $src}",
+                        [(set VR64:$dst, (v2i32 (scalar_to_vector GR32:$src)))]>;
+let isSimpleLoad = 1, isReMaterializable = 1 in
 def MMX_MOVD64rm : MMXI<0x6E, MRMSrcMem, (outs VR64:$dst), (ins i32mem:$src),
-                        "movd\t{$src, $dst|$dst, $src}", []>;
+                        "movd\t{$src, $dst|$dst, $src}",
+              [(set VR64:$dst, (v2i32 (scalar_to_vector (loadi32 addr:$src))))]>;
 let mayStore = 1 in 
 def MMX_MOVD64mr : MMXI<0x7E, MRMDestMem, (outs), (ins i32mem:$dst, VR64:$src),
                         "movd\t{$src, $dst|$dst, $src}", []>;
@@ -547,27 +548,25 @@ def : Pat<(v4i16 (bitconvert (i64 GR64:$src))),
 def : Pat<(v8i8  (bitconvert (i64 GR64:$src))),
           (MMX_MOVD64to64rr GR64:$src)>;
 
-def MMX_X86s2vec : SDNode<"X86ISD::S2VEC",  SDTypeProfile<1, 1, []>, []>;
-
 // Move scalar to XMM zero-extended
 // movd to XMM register zero-extends
 let AddedComplexity = 15 in {
   def : Pat<(v8i8 (vector_shuffle immAllZerosV_bc,
-                    (v8i8 (MMX_X86s2vec GR32:$src)), MMX_MOVL_shuffle_mask)),
+                    (bc_v8i8 (v2i32 (scalar_to_vector GR32:$src))),
+                    MMX_MOVL_shuffle_mask)),
             (MMX_MOVZDI2PDIrr GR32:$src)>;
   def : Pat<(v4i16 (vector_shuffle immAllZerosV_bc,
-                    (v4i16 (MMX_X86s2vec GR32:$src)), MMX_MOVL_shuffle_mask)),
-            (MMX_MOVZDI2PDIrr GR32:$src)>;
-  def : Pat<(v2i32 (vector_shuffle immAllZerosV,
-                    (v2i32 (MMX_X86s2vec GR32:$src)), MMX_MOVL_shuffle_mask)),
+                    (bc_v4i16 (v2i32 (scalar_to_vector GR32:$src))),
+                    MMX_MOVL_shuffle_mask)),
             (MMX_MOVZDI2PDIrr GR32:$src)>;
 }
 
-// Scalar to v2i32 / v4i16 / v8i8. The source may be a GR32, but only the lower
+// Scalar to v4i16 / v8i8. The source may be a GR32, but only the lower
 // 8 or 16-bits matter.
-def : Pat<(v8i8  (MMX_X86s2vec GR32:$src)), (MMX_MOVD64rr GR32:$src)>;
-def : Pat<(v4i16 (MMX_X86s2vec GR32:$src)), (MMX_MOVD64rr GR32:$src)>;
-def : Pat<(v2i32 (MMX_X86s2vec GR32:$src)), (MMX_MOVD64rr GR32:$src)>;
+def : Pat<(bc_v8i8  (v2i32 (scalar_to_vector GR32:$src))),
+          (MMX_MOVD64rr GR32:$src)>;
+def : Pat<(bc_v4i16 (v2i32 (scalar_to_vector GR32:$src))),
+          (MMX_MOVD64rr GR32:$src)>;
 
 // Patterns to perform canonical versions of vector shuffling.
 let AddedComplexity = 10 in {

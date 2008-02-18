@@ -583,7 +583,6 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
 
     setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v8i8,  Custom);
     setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v4i16, Custom);
-    setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v2i32, Custom);
     setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v1i64, Custom);
   }
 
@@ -3834,7 +3833,16 @@ X86TargetLowering::LowerINSERT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
 SDOperand
 X86TargetLowering::LowerSCALAR_TO_VECTOR(SDOperand Op, SelectionDAG &DAG) {
   SDOperand AnyExt = DAG.getNode(ISD::ANY_EXTEND, MVT::i32, Op.getOperand(0));
-  return DAG.getNode(X86ISD::S2VEC, Op.getValueType(), AnyExt);
+  MVT::ValueType VT = MVT::v2i32;
+  switch (Op.getValueType()) {
+  default: break;
+  case MVT::v16i8:
+  case MVT::v8i16:
+    VT = MVT::v4i32;
+    break;
+  }
+  return DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(),
+                     DAG.getNode(ISD::SCALAR_TO_VECTOR, VT, AnyExt));
 }
 
 // ConstantPool, JumpTable, GlobalAddress, and ExternalSymbol are lowered as
@@ -5357,7 +5365,6 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::REP_MOVS:           return "X86ISD::REP_MOVS";
   case X86ISD::GlobalBaseReg:      return "X86ISD::GlobalBaseReg";
   case X86ISD::Wrapper:            return "X86ISD::Wrapper";
-  case X86ISD::S2VEC:              return "X86ISD::S2VEC";
   case X86ISD::PEXTRB:             return "X86ISD::PEXTRB";
   case X86ISD::PEXTRW:             return "X86ISD::PEXTRW";
   case X86ISD::INSERTPS:           return "X86ISD::INSERTPS";

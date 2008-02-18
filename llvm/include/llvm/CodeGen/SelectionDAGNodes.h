@@ -611,6 +611,11 @@ namespace ISD {
   /// BUILD_VECTOR where all of the elements are 0 or undef.
   bool isBuildVectorAllZeros(const SDNode *N);
 
+  /// isScalarToVector - Return true if the specified node is a
+  /// ISD::SCALAR_TO_VECTOR node or a BUILD_VECTOR node where only the low
+  /// element is not an undef.
+  bool isScalarToVector(const SDNode *N);
+
   /// isDebugLabel - Return true if the specified node represents a debug
   /// label (i.e. ISD::LABEL or TargetInstrInfo::LABEL node and third operand
   /// is 0).
