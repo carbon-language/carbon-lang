@@ -34,7 +34,7 @@ AsChild("as-child", cl::desc("Run bugpoint as child process"),
         cl::ReallyHidden);
           
 static cl::opt<bool> 
-FindBugs("find-bugs", cl::desc("Run many different optimization sequences"
+FindBugs("find-bugs", cl::desc("Run many different optimization sequences "
                                "on program to find bugs"), cl::init(false));
 
 static cl::list<std::string>
