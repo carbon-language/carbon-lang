@@ -252,19 +252,21 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
     if (Object &&
         (isa<AllocationInst>(Object) || isa<Argument>(Object))) {
       // Okay, the pointer is to a stack allocated (or effectively so, for 
-      // for noalias parameters) object.  If we can prove that
-      // the pointer never "escapes", then we know the call cannot clobber it,
-      // because it simply can't get its address.
+      // for noalias parameters) object.  If the address of this object doesn't
+      // escape from this function body to a callee, then we know that no
+      // callees can mod/ref it unless they are actually passed it.
       if (isa<AllocationInst>(Object) ||
           cast<Argument>(Object)->hasByValAttr() ||
           cast<Argument>(Object)->hasNoAliasAttr())
         if (!AddressMightEscape(Object)) {
+          bool passedAsArg = false;
           for (CallSite::arg_iterator CI = CS.arg_begin(), CE = CS.arg_end();
               CI != CE; ++CI)
             if (getUnderlyingObject(CI->get()) == P)
-              return AliasAnalysis::getModRefInfo(CS, P, Size);
-        
-          return NoModRef;
+              passedAsArg = true;
+          
+          if (!passedAsArg)
+            return NoModRef;
         }
 
       // If this is a tail call and P points to a stack location, we know that
