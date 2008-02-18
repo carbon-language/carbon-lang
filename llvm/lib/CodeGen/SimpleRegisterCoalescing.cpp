@@ -247,11 +247,11 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
 
   unsigned CopyIdx = li_->getDefIndex(li_->getInstructionIndex(CopyMI));
 
-  // FIXME: For now, only eliminate the copy by commuting its def is the source
-  // does not live pass the move. Coalescing those copies may end up may simply
-  // end up swapping a live interval for another. That and because usually only
-  // the non-two address operand can be folded can end up pessimizing the code.
-  if (CopyMI->findRegisterUseOperandIdx(IntA.reg, true) != -1)
+  // FIXME: For now, only eliminate the copy by commuting its def when the
+  // source register is a virtual register. We want to guard against cases
+  // where the copy is a back edge copy and commuting the def lengthen the
+  // live interval of the source register to the entire loop.
+  if (TargetRegisterInfo::isPhysicalRegister(IntA.reg))
     return false;
 
   // BValNo is a value number in B that is defined by a copy from A. 'B3' in
