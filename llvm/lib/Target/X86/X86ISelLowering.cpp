@@ -169,41 +169,42 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::BIT_CONVERT      , MVT::i32  , Expand);
   }
 
-  // Scalar integer multiply, multiply-high, divide, and remainder are
+  // Scalar integer multiply-high, divide, and remainder are
   // lowered to use operations that produce two results, to match the
   // available instructions. This exposes the two-result form to trivial
   // CSE, which is able to combine x/y and x%y into a single instruction,
   // for example. The single-result multiply instructions are introduced
   // in X86ISelDAGToDAG.cpp, after CSE, for uses where the the high part
   // is not needed.
-  setOperationAction(ISD::MUL             , MVT::i8    , Expand);
   setOperationAction(ISD::MULHS           , MVT::i8    , Expand);
   setOperationAction(ISD::MULHU           , MVT::i8    , Expand);
   setOperationAction(ISD::SDIV            , MVT::i8    , Expand);
   setOperationAction(ISD::UDIV            , MVT::i8    , Expand);
   setOperationAction(ISD::SREM            , MVT::i8    , Expand);
   setOperationAction(ISD::UREM            , MVT::i8    , Expand);
-  setOperationAction(ISD::MUL             , MVT::i16   , Expand);
   setOperationAction(ISD::MULHS           , MVT::i16   , Expand);
   setOperationAction(ISD::MULHU           , MVT::i16   , Expand);
   setOperationAction(ISD::SDIV            , MVT::i16   , Expand);
   setOperationAction(ISD::UDIV            , MVT::i16   , Expand);
   setOperationAction(ISD::SREM            , MVT::i16   , Expand);
   setOperationAction(ISD::UREM            , MVT::i16   , Expand);
-  setOperationAction(ISD::MUL             , MVT::i32   , Expand);
   setOperationAction(ISD::MULHS           , MVT::i32   , Expand);
   setOperationAction(ISD::MULHU           , MVT::i32   , Expand);
   setOperationAction(ISD::SDIV            , MVT::i32   , Expand);
   setOperationAction(ISD::UDIV            , MVT::i32   , Expand);
   setOperationAction(ISD::SREM            , MVT::i32   , Expand);
   setOperationAction(ISD::UREM            , MVT::i32   , Expand);
-  setOperationAction(ISD::MUL             , MVT::i64   , Expand);
   setOperationAction(ISD::MULHS           , MVT::i64   , Expand);
   setOperationAction(ISD::MULHU           , MVT::i64   , Expand);
   setOperationAction(ISD::SDIV            , MVT::i64   , Expand);
   setOperationAction(ISD::UDIV            , MVT::i64   , Expand);
   setOperationAction(ISD::SREM            , MVT::i64   , Expand);
   setOperationAction(ISD::UREM            , MVT::i64   , Expand);
+
+  // 8, 16, and 32-bit plain multiply are legal. And 64-bit multiply
+  // is also legal on x86-64.
+  if (!Subtarget->is64Bit())
+    setOperationAction(ISD::MUL           , MVT::i64   , Expand);
 
   setOperationAction(ISD::BR_JT            , MVT::Other, Expand);
   setOperationAction(ISD::BRCOND           , MVT::Other, Custom);
