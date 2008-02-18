@@ -605,6 +605,28 @@ static ConstantInt *Subtract(ConstantInt *C1, ConstantInt *C2) {
 static ConstantInt *Multiply(ConstantInt *C1, ConstantInt *C2) {
   return ConstantInt::get(C1->getValue() * C2->getValue());
 }
+/// MultiplyOverflows - True if the multiply can not be expressed in an int
+/// this size.
+static bool MultiplyOverflows(ConstantInt *C1, ConstantInt *C2, bool sign) {
+  uint32_t W = C1->getBitWidth();
+  APInt LHSExt = C1->getValue(), RHSExt = C2->getValue();
+  if (sign) {
+    LHSExt.sext(W * 2);
+    RHSExt.sext(W * 2);
+  } else {
+    LHSExt.zext(W * 2);
+    RHSExt.zext(W * 2);
+  }
+
+  APInt MulExt = LHSExt * RHSExt;
+
+  if (sign) {
+    APInt Min = APInt::getSignedMinValue(W).sext(W * 2);
+    APInt Max = APInt::getSignedMaxValue(W).sext(W * 2);
+    return MulExt.slt(Min) || MulExt.sgt(Max);
+  } else 
+    return MulExt.ugt(APInt::getLowBitsSet(W * 2, W));
+}
 
 /// ComputeMaskedBits - Determine which of the bits specified in Mask are
 /// known to be either zero or one and return them in the KnownZero/KnownOne
@@ -2632,8 +2654,11 @@ Instruction *InstCombiner::commonIDivTransforms(BinaryOperator &I) {
     if (Instruction *LHS = dyn_cast<Instruction>(Op0))
       if (Instruction::BinaryOps(LHS->getOpcode()) == I.getOpcode())
         if (ConstantInt *LHSRHS = dyn_cast<ConstantInt>(LHS->getOperand(1))) {
-          return BinaryOperator::create(I.getOpcode(), LHS->getOperand(0),
-                                        Multiply(RHS, LHSRHS));
+          if (MultiplyOverflows(RHS, LHSRHS, I.getOpcode()==Instruction::SDiv))
+            return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
+          else 
+            return BinaryOperator::create(I.getOpcode(), LHS->getOperand(0),
+                                          Multiply(RHS, LHSRHS));
         }
 
     if (!RHS->isZero()) { // avoid X udiv 0
