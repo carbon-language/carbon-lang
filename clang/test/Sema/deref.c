@@ -21,6 +21,7 @@ void foo3 (void)
 }
 
 extern const void cv1;
+
 const void *foo4 (void)
 {
   return &cv1;
@@ -31,3 +32,12 @@ void *foo5 (void)
 {
   return &cv2; // expected-error{{address expression must be an lvalue or a function designator}}
 }
+
+typedef const void CVT;
+extern CVT cv3;
+
+const void *foo6 (void)
+{
+  return &cv3;
+}
+

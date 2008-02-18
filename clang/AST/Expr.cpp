@@ -358,7 +358,7 @@ Expr::isLvalueResult Expr::isLvalue() const {
     return LV_NotObjectType;
 
   // Allow qualified void which is an incomplete type other than void (yuck).
-  if (TR->isVoidType() && !TR.getQualifiers())
+  if (TR->isVoidType() && !TR.getCanonicalType().getQualifiers())
     return LV_IncompleteVoidType;
 
   if (TR->isReferenceType()) // C++ [expr]
