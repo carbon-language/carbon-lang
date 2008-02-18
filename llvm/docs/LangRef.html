@@ -827,8 +827,9 @@ declare i32 @atoi(i8*) nounwind readonly
     that is the return value of the function in the source program.</dd>
 
     <dt><tt>noalias</tt></dt>
-    <dd>This indicates that the parameter not alias any other object or any 
-    other "noalias" objects during the function call.
+    <dd>This indicates that the parameter does not alias any global or any other
+    parameter.  The caller is responsible for ensuring that this is the case,
+    usually by placing the value in a stack allocation.</dd>
 
     <dt><tt>noreturn</tt></dt>
     <dd>This function attribute indicates that the function never returns. This
