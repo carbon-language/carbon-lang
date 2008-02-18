@@ -271,10 +271,10 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
 
       // If this is a tail call and P points to a stack location, we know that
       // the tail call cannot access or modify the local stack.
-      if (isa<AllocationInst>(Object) ||
+      if (isa<AllocaInst>(Object) ||
           cast<Argument>(Object)->hasByValAttr())
         if (CallInst *CI = dyn_cast<CallInst>(CS.getInstruction()))
-          if (CI->isTailCall() && !isa<MallocInst>(Object))
+          if (CI->isTailCall())
             return NoModRef;
     }
   }
