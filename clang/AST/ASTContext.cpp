@@ -331,35 +331,65 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D,
       bool FieldIsPacked = StructIsPacked || FD->getAttr<PackedAttr>();
       uint64_t FieldSize;
       unsigned FieldAlign;
-      if (FD->getType()->isIncompleteType()) {
-        // This must be a flexible array member; we can't directly
-        // query getTypeInfo about these, so we figure it out here.
-        // Flexible array members don't have any size, but they
-        // have to be aligned appropriately for their element type.
+      
+      if (const Expr *BitWidthExpr = FD->getBitWidth()) {
+        llvm::APSInt I(32);
+        bool BitWidthIsICE = 
+          BitWidthExpr->isIntegerConstantExpr(I, *this);
+        assert (BitWidthIsICE  && "Invalid BitField size expression");
+        FieldSize = I.getZExtValue();
+
+        std::pair<uint64_t, unsigned> TypeInfo = getTypeInfo(FD->getType(), L);
+        uint64_t TypeSize = TypeInfo.first;
         
         if (const AlignedAttr *AA = FD->getAttr<AlignedAttr>())
           FieldAlign = AA->getAlignment();
         else if (FieldIsPacked)
           FieldAlign = 8;
         else {
-          const ArrayType* ATy = FD->getType()->getAsArrayType();
-          FieldAlign = getTypeAlign(ATy->getElementType(), L);
+          // FIXME: This is X86 specific, use 32-bit alignment for long long.
+          if (FD->getType()->isIntegerType() && TypeInfo.second > 32)
+            FieldAlign = 32;
+          else
+            FieldAlign = TypeInfo.second;
         }
-        FieldSize = 0;
-      } else {
-        std::pair<uint64_t, unsigned> FieldInfo = getTypeInfo(FD->getType(), L);
-        FieldSize = FieldInfo.first;
-        
-        if (const AlignedAttr *AA = FD->getAttr<AlignedAttr>())
-          FieldAlign = AA->getAlignment();
-        else if (FieldIsPacked)
-          FieldAlign = 8;
-        else
-          FieldAlign = FieldInfo.second;
-      }
 
-      // Round up the current record size to the field's alignment boundary.
-      RecordSize = (RecordSize+FieldAlign-1) & ~(FieldAlign-1);
+        // Check if we need to add padding to give the field the correct
+        // alignment.
+        if (RecordSize % FieldAlign + FieldSize > TypeSize)
+          RecordSize = (RecordSize+FieldAlign-1) & ~(FieldAlign-1);
+
+      } else {
+        if (FD->getType()->isIncompleteType()) {
+          // This must be a flexible array member; we can't directly
+          // query getTypeInfo about these, so we figure it out here.
+          // Flexible array members don't have any size, but they
+          // have to be aligned appropriately for their element type.
+        
+          if (const AlignedAttr *AA = FD->getAttr<AlignedAttr>())
+            FieldAlign = AA->getAlignment();
+          else if (FieldIsPacked)
+            FieldAlign = 8;
+          else {
+            const ArrayType* ATy = FD->getType()->getAsArrayType();
+            FieldAlign = getTypeAlign(ATy->getElementType(), L);
+          }
+          FieldSize = 0;
+        } else {
+          std::pair<uint64_t, unsigned> FieldInfo = getTypeInfo(FD->getType(), L);
+          FieldSize = FieldInfo.first;
+        
+          if (const AlignedAttr *AA = FD->getAttr<AlignedAttr>())
+            FieldAlign = AA->getAlignment();
+          else if (FieldIsPacked)
+            FieldAlign = 8;
+          else
+            FieldAlign = FieldInfo.second;
+        }
+
+        // Round up the current record size to the field's alignment boundary.
+        RecordSize = (RecordSize+FieldAlign-1) & ~(FieldAlign-1);
+      }
       
       // Place this field at the current location.
       FieldOffsets[i] = RecordSize;
@@ -382,6 +412,10 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D,
       uint64_t FieldSize = FieldInfo.first;
       unsigned FieldAlign = FieldInfo.second;
       
+      // FIXME: This is X86 specific, use 32-bit alignment for long long.
+      if (FD->getType()->isIntegerType() && FieldAlign > 32)
+        FieldAlign = 32;
+
       // Round up the current record size to the field's alignment boundary.
       RecordSize = std::max(RecordSize, FieldSize);
       
