@@ -621,3 +621,6 @@ The fact that the caller does not modify byval arg is not enough, we need
 to know that it doesn't modify G either.  This is very tricky.
 
 //===---------------------------------------------------------------------===//
+
+We should add an FRINT node to the DAG to model targets that have legal
+implementations of ceil/floor/rint.
