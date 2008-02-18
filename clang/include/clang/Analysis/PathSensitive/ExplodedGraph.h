@@ -234,6 +234,9 @@ protected:
   
   /// Ctx - The ASTContext used to "interpret" FD.
   ASTContext& Ctx;
+  
+  /// NumNodes - The number of nodes in the graph.
+  unsigned NumNodes;
 
   /// getNodeImpl - Retrieve the node associated with a (Location,State)
   ///  pair, where 'State' is represented as an opaque void*.  This method
@@ -255,13 +258,16 @@ protected:
   
   // ctor.
   ExplodedGraphImpl(CFG& c, FunctionDecl& f, ASTContext& ctx)
-    : cfg(c), FD(f), Ctx(ctx) {}
+    : cfg(c), FD(f), Ctx(ctx), NumNodes(0) {}
 
 public:
   virtual ~ExplodedGraphImpl();
 
   unsigned num_roots() const { return Roots.size(); }
   unsigned num_eops() const { return EndNodes.size(); }
+  
+  bool empty() const { return NumNodes == 0; }
+  unsigned size() const { return NumNodes; }
   
   llvm::BumpPtrAllocator& getAllocator() { return Allocator; }
   CFG& getCFG() { return cfg; }
@@ -321,6 +327,8 @@ public:
       
       // Insert the node into the node set and return it.
       VSet->InsertNode(V, InsertPos);
+      
+      ++NumNodes;
       
       if (IsNew) *IsNew = true;
     }
