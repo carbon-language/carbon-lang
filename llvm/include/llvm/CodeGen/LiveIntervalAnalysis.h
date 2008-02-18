@@ -40,6 +40,20 @@ namespace llvm {
   class VirtRegMap;
   typedef std::pair<unsigned, MachineBasicBlock*> IdxMBBPair;
 
+  inline bool operator<(unsigned V, const IdxMBBPair &IM) {
+    return V < IM.first;
+  }
+
+  inline bool operator<(const IdxMBBPair &IM, unsigned V) {
+    return IM.first < V;
+  }
+
+  struct Idx2MBBCompare {
+    bool operator()(const IdxMBBPair &LHS, const IdxMBBPair &RHS) const {
+      return LHS.first < RHS.first;
+    }
+  };
+
   class LiveIntervals : public MachineFunctionPass {
     MachineFunction* mf_;
     const TargetMachine* tm_;
@@ -151,6 +165,22 @@ namespace llvm {
     unsigned getMBBEndIdx(unsigned MBBNo) const {
       assert(MBBNo < MBB2IdxMap.size() && "Invalid MBB number!");
       return MBB2IdxMap[MBBNo].second;
+    }
+
+    /// getMBBFromIndex - given an index in any instruction of an
+    /// MBB return a pointer the MBB
+    MachineBasicBlock* getMBBFromIndex(unsigned index) const {
+      std::vector<IdxMBBPair>::const_iterator I =
+	    std::lower_bound(Idx2MBBMap.begin(), Idx2MBBMap.end(), index);
+      // Take the pair containing the index
+      std::vector<IdxMBBPair>::const_iterator J =
+	  ((I != Idx2MBBMap.end() && I->first > index) ||
+	   (I == Idx2MBBMap.end() && Idx2MBBMap.size()>0)) ? (I-1): I;
+
+      assert(J != Idx2MBBMap.end() && J->first < index+1 &&
+	     index <= getMBBEndIdx(J->second) &&
+	     "index does not correspond to an MBB");
+      return J->second;
     }
 
     /// getInstructionIndex - returns the base index of instr
