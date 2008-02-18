@@ -158,7 +158,7 @@ static bool TryToSimplifyUncondBranchFromEmptyBlock(BasicBlock *BB,
     // If there is more than one pred of succ, and there are PHI nodes in
     // the successor, then we need to add incoming edges for the PHI nodes
     //
-    const std::vector<BasicBlock*> BBPreds(pred_begin(BB), pred_end(BB));
+    const SmallVector<BasicBlock*, 16> BBPreds(pred_begin(BB), pred_end(BB));
     
     // Loop over all of the PHI nodes in the successor of BB.
     for (BasicBlock::iterator I = Succ->begin(); isa<PHINode>(I); ++I) {
@@ -174,17 +174,15 @@ static bool TryToSimplifyUncondBranchFromEmptyBlock(BasicBlock *BB,
           PN->addIncoming(OldValPN->getIncomingValue(i),
                           OldValPN->getIncomingBlock(i));
       } else {
-        for (std::vector<BasicBlock*>::const_iterator PredI = BBPreds.begin(),
-             End = BBPreds.end(); PredI != End; ++PredI) {
-          // Add an incoming value for each of the new incoming values...
-          PN->addIncoming(OldVal, *PredI);
-        }
+        // Add an incoming value for each of the new incoming values.
+        for (unsigned i = 0, e = BBPreds.size(); i != e; ++i)
+          PN->addIncoming(OldVal, BBPreds[i]);
       }
     }
   }
   
   if (isa<PHINode>(&BB->front())) {
-    std::vector<BasicBlock*>
+    SmallVector<BasicBlock*, 16>
     OldSuccPreds(pred_begin(Succ), pred_end(Succ));
     
     // Move all PHI nodes in BB to Succ if they are alive, otherwise
@@ -464,7 +462,7 @@ static bool GatherValueComparisons(Instruction *Cond, Value *&CompVal,
 static void ErasePossiblyDeadInstructionTree(Instruction *I) {
   if (!isInstructionTriviallyDead(I)) return;
   
-  std::vector<Instruction*> InstrsToInspect;
+  SmallVector<Instruction*, 16> InstrsToInspect;
   InstrsToInspect.push_back(I);
 
   while (!InstrsToInspect.empty()) {
@@ -713,7 +711,7 @@ static bool FoldValueComparisonIntoPredecessors(TerminatorInst *TI) {
   assert(CV && "Not a comparison?");
   bool Changed = false;
 
-  std::vector<BasicBlock*> Preds(pred_begin(BB), pred_end(BB));
+  SmallVector<BasicBlock*, 16> Preds(pred_begin(BB), pred_end(BB));
   while (!Preds.empty()) {
     BasicBlock *Pred = Preds.back();
     Preds.pop_back();
@@ -733,7 +731,7 @@ static bool FoldValueComparisonIntoPredecessors(TerminatorInst *TI) {
       // Based on whether the default edge from PTI goes to BB or not, fill in
       // PredCases and PredDefault with the new switch cases we would like to
       // build.
-      std::vector<BasicBlock*> NewSuccessors;
+      SmallVector<BasicBlock*, 8> NewSuccessors;
 
       if (PredDefault == BB) {
         // If this is the default destination from PTI, only the edges in TI
@@ -1233,8 +1231,8 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
     BasicBlock::iterator BBI = BB->getTerminator();
     if (BBI == BB->begin() || isa<PHINode>(--BBI)) {
       // Find predecessors that end with branches.
-      std::vector<BasicBlock*> UncondBranchPreds;
-      std::vector<BranchInst*> CondBranchPreds;
+      SmallVector<BasicBlock*, 8> UncondBranchPreds;
+      SmallVector<BranchInst*, 8> CondBranchPreds;
       for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
         TerminatorInst *PTI = (*PI)->getTerminator();
         if (BranchInst *BI = dyn_cast<BranchInst>(PTI))
@@ -1357,7 +1355,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
     // destination with call instructions, and any unconditional branch
     // predecessor with an unwind.
     //
-    std::vector<BasicBlock*> Preds(pred_begin(BB), pred_end(BB));
+    SmallVector<BasicBlock*, 8> Preds(pred_begin(BB), pred_end(BB));
     while (!Preds.empty()) {
       BasicBlock *Pred = Preds.back();
       if (BranchInst *BI = dyn_cast<BranchInst>(Pred->getTerminator())) {
@@ -1676,7 +1674,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
     // If the unreachable instruction is the first in the block, take a gander
     // at all of the predecessors of this instruction, and simplify them.
     if (&BB->front() == Unreachable) {
-      std::vector<BasicBlock*> Preds(pred_begin(BB), pred_end(BB));
+      SmallVector<BasicBlock*, 8> Preds(pred_begin(BB), pred_end(BB));
       for (unsigned i = 0, e = Preds.size(); i != e; ++i) {
         TerminatorInst *TI = Preds[i]->getTerminator();
 
