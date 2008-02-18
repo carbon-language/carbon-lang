@@ -129,6 +129,8 @@ RValue ValueStateManager::GetValue(ValueState St, const LValue& LV,
   if (isa<UnknownVal>(LV))
     return UnknownVal();
   
+  assert (!isa<UninitializedVal>(LV));
+  
   switch (LV.getSubKind()) {
     case lval::DeclValKind: {
       ValueState::VarBindingsTy::TreeTy* T =
@@ -327,6 +329,9 @@ ValueStateManager::SetValue(ValueState St, Expr* E, bool isBlkExpr,
 ValueState
 ValueStateManager::SetValue(ValueState St, const LValue& LV, const RValue& V) {
   
+  assert (!isa<UnknownVal>(LV));
+  assert (!isa<UninitializedVal>(LV));
+    
   switch (LV.getSubKind()) {
     case lval::DeclValKind:        
       return V.isKnown()   // FIXME: Have DeclVal only contain VarDecl

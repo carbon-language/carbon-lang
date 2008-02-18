@@ -209,7 +209,8 @@ void GRExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
   typedef SwitchNodeBuilder::iterator iterator;
   
   StateTy St = builder.getState();  
-  NonLValue CondV = cast<NonLValue>(GetValue(St, builder.getCondition()));
+  Expr* CondE = builder.getCondition();
+  NonLValue CondV = cast<NonLValue>(GetValue(St, CondE));
 
   if (isa<UninitializedVal>(CondV)) {
     NodeTy* N = builder.generateDefaultCaseNode(St, true);
@@ -221,7 +222,10 @@ void GRExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
   
   // While most of this can be assumed (such as the signedness), having it
   // just computed makes sure everything makes the same assumptions end-to-end.
-  unsigned bits = getContext().getTypeSize(getContext().IntTy,SourceLocation());
+  
+  unsigned bits = getContext().getTypeSize(CondE->getType(),
+                                           CondE->getExprLoc());
+
   APSInt V1(bits, false);
   APSInt V2 = V1;
   
@@ -258,7 +262,7 @@ void GRExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
       NonLValue Res = EvalBinaryOp(ValMgr, BinaryOperator::EQ, CondV, CaseVal);
       
       // Now "assume" that the case matches.
-      bool isFeasible;
+      bool isFeasible = false;
       
       StateTy StNew = Assume(St, Res, true, isFeasible);
       
@@ -588,7 +592,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U,
         // FIXME: Stop when dereferencing an uninitialized value.
         // FIXME: Bifurcate when dereferencing a symbolic with no constraints?
         
-        const RValue& V = GetValue(St, U->getSubExpr());
+        const RValue& V = GetValue(St, U->getSubExpr());        
         const LValue& L1 = cast<LValue>(V);
         
         // After a dereference, one of two possible situations arise:
@@ -607,6 +611,9 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U,
           Nodify(Dst, U, N1, SetValue(StNotNull, U,
                                       GetValue(StNotNull, L1, &T)));
         }
+        
+        if (V.isUnknown())
+          return;
         
         bool isFeasibleNull;
         
@@ -868,8 +875,15 @@ void GRExprEngine::Visit(Stmt* S, GRExprEngine::NodeTy* Pred,
 //===----------------------------------------------------------------------===//
 
 GRExprEngine::StateTy GRExprEngine::Assume(StateTy St, LValue Cond,
-                                         bool Assumption, 
-                                         bool& isFeasible) {    
+                                           bool Assumption, 
+                                           bool& isFeasible) {    
+  
+  assert (!isa<UninitializedVal>(Cond));
+
+  if (isa<UnknownVal>(Cond)) {
+    isFeasible = true;
+    return St;  
+  }
   
   switch (Cond.getSubKind()) {
     default:
@@ -900,6 +914,13 @@ GRExprEngine::StateTy GRExprEngine::Assume(StateTy St, LValue Cond,
 GRExprEngine::StateTy GRExprEngine::Assume(StateTy St, NonLValue Cond,
                                          bool Assumption, 
                                          bool& isFeasible) {
+  
+  assert (!isa<UninitializedVal>(Cond));
+  
+  if (isa<UnknownVal>(Cond)) {
+    isFeasible = true;
+    return St;  
+  }
   
   switch (Cond.getSubKind()) {
     default:
@@ -936,7 +957,7 @@ GRExprEngine::StateTy GRExprEngine::Assume(StateTy St, NonLValue Cond,
 GRExprEngine::StateTy
 GRExprEngine::AssumeSymNE(StateTy St, SymbolID sym,
                          const llvm::APSInt& V, bool& isFeasible) {
-
+  
   // First, determine if sym == X, where X != V.
   if (const llvm::APSInt* X = St.getSymVal(sym)) {
     isFeasible = *X != V;

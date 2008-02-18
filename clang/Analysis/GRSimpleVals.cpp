@@ -31,7 +31,7 @@ namespace clang {
     CheckerState->setTransferFunctions(GRSV);
     
     // Execute the worklist algorithm.
-    Engine.ExecuteWorkList(200);
+    Engine.ExecuteWorkList(10000);
     
     // Look for explicit-Null dereferences and warn about them.
     for (GRExprEngine::null_iterator I=CheckerState->null_begin(),
@@ -57,6 +57,8 @@ namespace clang {
 RValue GRSimpleVals::EvalCast(ValueManager& ValMgr, NonLValue X,
                               Expr* CastExpr) {
   
+  assert (!isa<UnknownVal>(X) && !isa<UninitializedVal>(X));
+  
   if (!isa<nonlval::ConcreteInt>(X))
     return UnknownVal();
   
@@ -74,6 +76,8 @@ RValue GRSimpleVals::EvalCast(ValueManager& ValMgr, NonLValue X,
 // Casts.
 
 RValue GRSimpleVals::EvalCast(ValueManager& ValMgr, LValue X, Expr* CastExpr) {
+  
+  assert (!isa<UnknownVal>(X) && !isa<UninitializedVal>(X));
 
   if (CastExpr->getType()->isPointerType())
     return X;
@@ -96,6 +100,8 @@ RValue GRSimpleVals::EvalCast(ValueManager& ValMgr, LValue X, Expr* CastExpr) {
 NonLValue GRSimpleVals::EvalMinus(ValueManager& ValMgr, UnaryOperator* U,
                                   NonLValue X) {
   
+  assert (!isa<UnknownVal>(X) && !isa<UninitializedVal>(X));
+  
   switch (X.getSubKind()) {
     case nonlval::ConcreteIntKind:
       return cast<nonlval::ConcreteInt>(X).EvalMinus(ValMgr, U);
@@ -105,6 +111,9 @@ NonLValue GRSimpleVals::EvalMinus(ValueManager& ValMgr, UnaryOperator* U,
 }
 
 NonLValue GRSimpleVals::EvalComplement(ValueManager& ValMgr, NonLValue X) {
+
+  assert (!isa<UnknownVal>(X) && !isa<UninitializedVal>(X));
+  
   switch (X.getSubKind()) {
     case nonlval::ConcreteIntKind:
       return cast<nonlval::ConcreteInt>(X).EvalComplement(ValMgr);
@@ -119,11 +128,8 @@ NonLValue GRSimpleVals::EvalBinaryOp(ValueManager& ValMgr,
                                      BinaryOperator::Opcode Op,
                                      NonLValue LHS, NonLValue RHS)  {
   
-  if (isa<UnknownVal>(LHS) || isa<UnknownVal>(RHS))
-    return cast<NonLValue>(UnknownVal());
-  
-  if (isa<UninitializedVal>(LHS) || isa<UninitializedVal>(RHS))
-    return cast<NonLValue>(UninitializedVal());
+  assert (!isa<UnknownVal>(LHS) && !isa<UninitializedVal>(LHS));
+  assert (!isa<UnknownVal>(RHS) && !isa<UninitializedVal>(RHS));
   
   while(1) {
     
@@ -169,6 +175,9 @@ RValue GRSimpleVals::EvalBinaryOp(ValueManager& ValMgr,
                                   BinaryOperator::Opcode Op,
                                   LValue LHS, LValue RHS) {
   
+  assert (!isa<UnknownVal>(LHS) && !isa<UninitializedVal>(LHS));
+  assert (!isa<UnknownVal>(RHS) && !isa<UninitializedVal>(RHS));
+  
   switch (Op) {
     default:
       return UnknownVal();
@@ -186,6 +195,10 @@ RValue GRSimpleVals::EvalBinaryOp(ValueManager& ValMgr,
 LValue GRSimpleVals::EvalBinaryOp(ValueManager& ValMgr,
                                   BinaryOperator::Opcode Op,
                                   LValue LHS, NonLValue RHS) {
+  
+  assert (!isa<UnknownVal>(LHS) && !isa<UninitializedVal>(LHS));
+  assert (!isa<UnknownVal>(RHS) && !isa<UninitializedVal>(RHS));
+  
   return cast<LValue>(UnknownVal());
 }
 
@@ -193,6 +206,9 @@ LValue GRSimpleVals::EvalBinaryOp(ValueManager& ValMgr,
 
 
 NonLValue GRSimpleVals::EvalEQ(ValueManager& ValMgr, LValue LHS, LValue RHS) {
+  
+  assert (!isa<UnknownVal>(LHS) && !isa<UninitializedVal>(LHS));
+  assert (!isa<UnknownVal>(RHS) && !isa<UninitializedVal>(RHS));
   
   switch (LHS.getSubKind()) {
     default:
@@ -249,6 +265,9 @@ NonLValue GRSimpleVals::EvalEQ(ValueManager& ValMgr, LValue LHS, LValue RHS) {
 }
 
 NonLValue GRSimpleVals::EvalNE(ValueManager& ValMgr, LValue LHS, LValue RHS) {
+  
+  assert (!isa<UnknownVal>(LHS) && !isa<UninitializedVal>(LHS));
+  assert (!isa<UnknownVal>(RHS) && !isa<UninitializedVal>(RHS));
 
   switch (LHS.getSubKind()) {
     default:

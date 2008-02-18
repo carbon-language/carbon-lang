@@ -308,36 +308,73 @@ public:
   void VisitUnaryOperator(UnaryOperator* B, NodeTy* Pred, NodeSet& Dst);
   
   
-  inline RValue EvalCast(ValueManager& ValMgr, RValue R, Expr* CastExpr) {
-    return TF->EvalCast(ValMgr, R, CastExpr);
+  inline RValue EvalCast(ValueManager& ValMgr, RValue X, Expr* CastExpr) {
+    if (isa<UnknownVal>(X) || isa<UninitializedVal>(X))
+      return X;    
+    
+    return TF->EvalCast(ValMgr, X, CastExpr);
   }
   
   inline NonLValue EvalMinus(ValueManager& ValMgr, UnaryOperator* U,
                              NonLValue X) {
+    if (isa<UnknownVal>(X) || isa<UninitializedVal>(X))
+      return X;    
+    
     return TF->EvalMinus(ValMgr, U, X);    
   }
   
   inline NonLValue EvalComplement(ValueManager& ValMgr, NonLValue X) {
+    if (isa<UnknownVal>(X) || isa<UninitializedVal>(X))
+      return X;    
+
     return TF->EvalComplement(ValMgr, X);
   }
   
   inline NonLValue EvalBinaryOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
                                 NonLValue LHS, NonLValue RHS) {
+    
+    if (isa<UninitializedVal>(LHS) || isa<UninitializedVal>(RHS))
+      return cast<NonLValue>(UninitializedVal());
+    
+    if (isa<UnknownVal>(LHS) || isa<UnknownVal>(RHS))
+      return cast<NonLValue>(UnknownVal());
+    
     return TF->EvalBinaryOp(ValMgr, Op, LHS, RHS);
   }    
   
   inline RValue EvalBinaryOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
                              LValue LHS, LValue RHS) {
+    
+    if (isa<UninitializedVal>(LHS) || isa<UninitializedVal>(RHS))
+      return UninitializedVal();
+    
+    if (isa<UnknownVal>(LHS) || isa<UnknownVal>(RHS))
+      return UnknownVal();
+    
     return TF->EvalBinaryOp(ValMgr, Op, LHS, RHS);
   }
   
   inline RValue EvalBinaryOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
                              LValue LHS, NonLValue RHS) {
+    
+    if (isa<UninitializedVal>(LHS) || isa<UninitializedVal>(RHS))
+      return UninitializedVal();
+    
+    if (isa<UnknownVal>(LHS) || isa<UnknownVal>(RHS))
+      return UnknownVal();
+    
     return TF->EvalBinaryOp(ValMgr, Op, LHS, RHS);
   }
   
   inline RValue EvalBinaryOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
                              RValue LHS, RValue RHS) {
+    
+    if (isa<UninitializedVal>(LHS) || isa<UninitializedVal>(RHS))
+      return UninitializedVal();
+    
+    if (isa<UnknownVal>(LHS) || isa<UnknownVal>(RHS))
+      return UnknownVal();
+    
     return TF->EvalBinaryOp(ValMgr, Op, LHS, RHS);
   }
 };
