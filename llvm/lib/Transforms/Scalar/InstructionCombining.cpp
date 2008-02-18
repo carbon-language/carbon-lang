@@ -8199,22 +8199,30 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         }
       }
       
-      // If the stack restore is in a return/unwind block and if there are no
-      // allocas or calls between the restore and the return, nuke the restore.
+      // Scan down this block to see if there is another stack restore in the
+      // same block without an intervening call/alloca.
+      BasicBlock::iterator BI = II;
       TerminatorInst *TI = II->getParent()->getTerminator();
-      if (isa<ReturnInst>(TI) || isa<UnwindInst>(TI)) {
-        BasicBlock::iterator BI = II;
-        bool CannotRemove = false;
-        for (++BI; &*BI != TI; ++BI) {
-          if (isa<AllocaInst>(BI) ||
-              (isa<CallInst>(BI) && !isa<IntrinsicInst>(BI))) {
+      bool CannotRemove = false;
+      for (++BI; &*BI != TI; ++BI) {
+        if (isa<AllocaInst>(BI)) {
+          CannotRemove = true;
+          break;
+        }
+        if (isa<CallInst>(BI)) {
+          if (!isa<IntrinsicInst>(BI)) {
             CannotRemove = true;
             break;
           }
-        }
-        if (!CannotRemove)
+          // If there is a stackrestore below this one, remove this one.
           return EraseInstFromFunction(CI);
+        }
       }
+      
+      // If the stack restore is in a return/unwind block and if there are no
+      // allocas or calls between the restore and the return, nuke the restore.
+      if (!CannotRemove && (isa<ReturnInst>(TI) || isa<UnwindInst>(TI)))
+        return EraseInstFromFunction(CI);
       break;
     }
     }
