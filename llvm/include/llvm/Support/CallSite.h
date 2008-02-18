@@ -114,6 +114,15 @@ public:
     return *(arg_begin()+ArgNo);
   }
 
+  void setArgument(unsigned ArgNo, Value* newVal) {
+    assert(I && "Not a call or invoke instruction!");
+    assert(arg_begin() + ArgNo < arg_end() && "Argument # out of range!");
+    if (I->getOpcode() == Instruction::Call)
+      I->setOperand(ArgNo+1, newVal); // Skip Function
+    else
+      I->setOperand(ArgNo+3, newVal); // Skip Function, BB, BB
+  }
+
   /// arg_iterator - The type of iterator to use when looping over actual
   /// arguments at this call site...
   typedef User::op_iterator arg_iterator;
