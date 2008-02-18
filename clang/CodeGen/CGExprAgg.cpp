@@ -82,6 +82,12 @@ public:
   void VisitConditionalOperator(const ConditionalOperator *CO);
   void VisitInitListExpr(InitListExpr *E);
   //  case Expr::ChooseExprClass:
+
+private:
+
+  llvm::Constant *GetConstantInit(InitListExpr *E,
+                                  const llvm::ArrayType *AType);
+  void EmitNonConstInit(Expr *E, llvm::Value *Dest, const llvm::Type *DestType);
 };
 }  // end anonymous namespace.
 
@@ -230,81 +236,100 @@ void AggExprEmitter::VisitConditionalOperator(const ConditionalOperator *E) {
   CGF.EmitBlock(ContBlock);
 }
 
-void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
-
+llvm::Constant *AggExprEmitter::GetConstantInit(InitListExpr *E,
+                                                const llvm::ArrayType *AType) {
+  std::vector<llvm::Constant*> ArrayElts;
   unsigned NumInitElements = E->getNumInits();
+  const llvm::Type *ElementType = AType->getElementType();
+  unsigned i;
+
+  for (i = 0; i != NumInitElements; ++i) {
+    if (InitListExpr *InitList = dyn_cast<InitListExpr>(E->getInit(i))) {
+      assert(isa<llvm::ArrayType>(ElementType) && "Invalid initilizer");
+      llvm::Constant *C =
+        GetConstantInit(InitList, cast<llvm::ArrayType>(ElementType));
+      if (!C) return NULL;
+      ArrayElts.push_back(C);
+    } else if (llvm::Constant *C =
+        dyn_cast<llvm::Constant>(CGF.EmitScalarExpr(E->getInit(i))))
+      ArrayElts.push_back(C);
+    else
+      return NULL;
+  }
+
+  // Remaining default initializers
+  unsigned NumArrayElements = AType->getNumElements();
+  for (/*Do not initialize i*/; i < NumArrayElements; ++i)
+      ArrayElts.push_back(llvm::Constant::getNullValue(ElementType));
+
+  return llvm::ConstantArray::get(AType, ArrayElts);
+}
+
+void AggExprEmitter::EmitNonConstInit(Expr *E, llvm::Value *DestPtr,
+                                      const llvm::Type *DestType) {
+
+  if (const llvm::ArrayType *AType = dyn_cast<llvm::ArrayType>(DestType)) {
+    unsigned NumInitElements = 0;
+    InitListExpr *InitList = NULL;
+
+    if (E) {
+      InitList = cast<InitListExpr>(E);
+      NumInitElements = InitList->getNumInits();
+    }
+
+    llvm::Value *Idxs[] = {
+      llvm::Constant::getNullValue(llvm::Type::Int32Ty),
+      NULL
+    };
+    llvm::Value *NextVal = NULL;
+    unsigned i;
+    for (i = 0; i != NumInitElements; ++i) {
+      Idxs[1] = llvm::ConstantInt::get(llvm::Type::Int32Ty, i);
+      NextVal = Builder.CreateGEP(DestPtr, Idxs, Idxs + 2,".array");
+      EmitNonConstInit(InitList->getInit(i), NextVal, AType->getElementType());
+    }
+
+    // Emit remaining default initializers
+    unsigned NumArrayElements = AType->getNumElements();
+    for (/*Do not initialize i*/; i < NumArrayElements; ++i) {
+      Idxs[1] = llvm::ConstantInt::get(llvm::Type::Int32Ty, i);
+      NextVal = Builder.CreateGEP(DestPtr, Idxs, Idxs + 2,".array");
+      EmitNonConstInit(NULL, NextVal, AType->getElementType());
+    }
+
+  } else {
+    llvm::Value *V;
+    if (E)
+      V = CGF.EmitScalarExpr(E);
+    else
+      V = llvm::Constant::getNullValue(DestType);
+    Builder.CreateStore(V, DestPtr);
+  }
+}
+
+void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
 
   if (!E->getType()->isArrayType()) {
     CGF.WarnUnsupported(E, "aggregate init-list expression");
     return;
   }
 
-  std::vector<llvm::Constant*> ArrayElts;
   const llvm::PointerType *APType = cast<llvm::PointerType>(DestPtr->getType());
-  const llvm::ArrayType *AType = 
+  const llvm::ArrayType *AType =
     cast<llvm::ArrayType>(APType->getElementType());
 
-  // Copy initializer elements.
-  bool AllConstElements = true;
-  unsigned i = 0;
-  for (i = 0; i != NumInitElements; ++i) {
-    if (llvm::Constant *C = 
-        dyn_cast<llvm::Constant>(CGF.EmitScalarExpr(E->getInit(i))))
-      ArrayElts.push_back(C);
-    else {
-      AllConstElements = false;
-      break;
-    }
-  }
-
-  unsigned NumArrayElements = AType->getNumElements();
-  const llvm::Type *ElementType = CGF.ConvertType(E->getInit(0)->getType());
-
-  if (AllConstElements) {
-    // Initialize remaining array elements.
-    for (/*Do not initialize i*/; i < NumArrayElements; ++i)
-      ArrayElts.push_back(llvm::Constant::getNullValue(ElementType));
-
+  llvm::Constant *V = GetConstantInit(E, AType);
+  if (V) {
     // Create global value to hold this array.
-    llvm::Constant *V = llvm::ConstantArray::get(AType, ArrayElts);
-    V = new llvm::GlobalVariable(V->getType(), true, 
+    V = new llvm::GlobalVariable(V->getType(), true,
                                  llvm::GlobalValue::InternalLinkage,
-                                 V, ".array", 
+                                 V, ".array",
                                  &CGF.CGM.getModule());
-    
+
     EmitAggregateCopy(DestPtr, V , E->getType());
     return;
-  }
-
-  // Emit indiviudal array element stores.
-  unsigned index = 0;
-  llvm::Value *NextVal = NULL;
-  llvm::Value *Idxs[] = {
-    llvm::Constant::getNullValue(llvm::Type::Int32Ty),
-    NULL
-  };
-  
-  // Emit already seen constants initializers.
-  for (i = 0; i < ArrayElts.size(); i++) {
-    Idxs[1] = llvm::ConstantInt::get(llvm::Type::Int32Ty, index++);
-    NextVal = Builder.CreateGEP(DestPtr, Idxs, Idxs + 2, ".array");
-    Builder.CreateStore(ArrayElts[i], NextVal);
-  }
-
-  // Emit remaining initializers
-  for (/*Do not initizalize i*/; i < NumInitElements; ++i) {
-    Idxs[1] = llvm::ConstantInt::get(llvm::Type::Int32Ty, index++);
-    NextVal = Builder.CreateGEP(DestPtr, Idxs, Idxs + 2, ".array");
-    llvm::Value *V = CGF.EmitScalarExpr(E->getInit(i));
-    Builder.CreateStore(V, NextVal);
-  }
-
-  // Emit remaining default initializers
-  for (/*Do not initialize i*/; i < NumArrayElements; ++i) {
-    Idxs[1] = llvm::ConstantInt::get(llvm::Type::Int32Ty, index++);
-    NextVal = Builder.CreateGEP(DestPtr, Idxs, Idxs + 2, ".array");
-    Builder.CreateStore(llvm::Constant::getNullValue(ElementType), NextVal);
-  }
+  } else
+    EmitNonConstInit(E, DestPtr, AType);
 }
 
 //===----------------------------------------------------------------------===//
