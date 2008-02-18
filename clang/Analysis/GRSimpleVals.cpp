@@ -31,7 +31,7 @@ namespace clang {
     CheckerState->setTransferFunctions(GRSV);
     
     // Execute the worklist algorithm.
-    Engine.ExecuteWorkList();
+    Engine.ExecuteWorkList(200);
     
     // Look for explicit-Null dereferences and warn about them.
     for (GRExprEngine::null_iterator I=CheckerState->null_begin(),
@@ -228,7 +228,9 @@ NonLValue GRSimpleVals::EvalEQ(ValueManager& ValMgr, LValue LHS, LValue RHS) {
           return nonlval::SymIntConstraintVal(C);
         }
         
-        assert (!isa<lval::SymbolVal>(RHS) && "FIXME: Implement unification.");
+        // FIXME: Implement unification
+        return cast<NonLValue>(UnknownVal());
+          //assert (!isa<lval::SymbolVal>(RHS) && "FIXME: Implement unification.");
         
         break;
       }
