@@ -21,6 +21,7 @@
 #include "llvm/Function.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Instructions.h"
+#include "llvm/ParameterAttributes.h"
 #include "llvm/Value.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
@@ -738,6 +739,8 @@ namespace {
     bool processNonLocalLoad(LoadInst* L,
                              SmallVector<Instruction*, 4>& toErase);
     bool processMemCpy(MemCpyInst* M, SmallVector<Instruction*, 4>& toErase);
+    bool performReturnSlotOptzn(MemCpyInst* cpy, CallInst* C,
+                                SmallVector<Instruction*, 4>& toErase);
     Value *GetValueForBlock(BasicBlock *BB, LoadInst* orig,
                             DenseMap<BasicBlock*, Value*> &Phis,
                             bool top_level = false);
@@ -1048,6 +1051,62 @@ bool GVN::processLoad(LoadInst* L,
   return deletedLoad;
 }
 
+/// performReturnSlotOptzn - takes a memcpy and a call that it depends on,
+/// and checks for the possibility of a return slot optimization by having
+/// the call write its result directly into the callees return parameter
+/// rather than using memcpy
+bool GVN::performReturnSlotOptzn(MemCpyInst* cpy, CallInst* C,
+                                 SmallVector<Instruction*, 4>& toErase) {
+  // Check that we're copying to an argument...
+  Value* cpyDest = cpy->getDest();
+  if (!isa<Argument>(cpyDest))
+    return false;
+  
+  // And that the argument is the return slot
+  Argument* sretArg = cast<Argument>(cpyDest);
+  if (!sretArg->hasStructRetAttr())
+    return false;
+  
+  // Make sure the return slot is otherwise dead
+  std::set<User*> useList(sretArg->use_begin(), sretArg->use_end());
+  while (!useList.empty()) {
+    User* UI = *useList.begin();
+    
+    if (isa<GetElementPtrInst>(UI) || isa<BitCastInst>(UI)) {
+      useList.insert(UI->use_begin(), UI->use_end());
+      useList.erase(UI);
+    } else if (UI == cpy)
+      useList.erase(UI);
+    else
+      return false;
+  }
+  
+  // Make sure the call cannot modify the return slot in some unpredicted way
+  AliasAnalysis& AA = getAnalysis<AliasAnalysis>();
+  if (AA.getModRefInfo(C, cpy->getRawDest(), ~0UL) != AliasAnalysis::NoModRef)
+    return false;
+  
+  // If all checks passed, then we can perform the transformation
+  CallSite CS = CallSite::get(C);
+  for (unsigned i = 0; i < CS.arg_size(); ++i) {
+    if (CS.paramHasAttr(i+1, ParamAttr::StructRet)) {
+      if (CS.getArgument(i)->getType() != cpyDest->getType())
+        return false;
+      
+      CS.setArgument(i, cpyDest);
+      break;
+    }
+  }
+  
+  MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
+  MD.dropInstruction(C);
+  
+  // Remove the memcpy
+  toErase.push_back(cpy);
+  
+  return true;
+}
+
 /// processMemCpy - perform simplication of memcpy's.  If we have memcpy A which
 /// copies X to Y, and memcpy B which copies Y to Z, then we can rewrite B to be
 /// a memcpy from X to Z (or potentially a memmove, depending on circumstances).
@@ -1059,9 +1118,14 @@ bool GVN::processMemCpy(MemCpyInst* M,
   // First, we have to check that the dependency is another memcpy
   Instruction* dep = MD.getDependency(M);
   if  (dep == MemoryDependenceAnalysis::None ||
-       dep == MemoryDependenceAnalysis::NonLocal ||
-       !isa<MemCpyInst>(dep))
+       dep == MemoryDependenceAnalysis::NonLocal)
     return false;
+  else if (!isa<MemCpyInst>(dep)) {
+    if (CallInst* C = dyn_cast<CallInst>(dep))
+      return performReturnSlotOptzn(M, C, toErase);
+    else
+      return false;
+  }
   
   // We can only transforms memcpy's where the dest of one is the source of the
   // other
