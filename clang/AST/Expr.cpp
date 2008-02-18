@@ -736,15 +736,16 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
       if (Exp->getSubExpr()->getType()->isFunctionType()) {
         // GCC extension: sizeof(function) = 1.
         Result = Exp->getOpcode() == UnaryOperator::AlignOf ? 4 : 1;
-      } else if (Exp->getOpcode() == UnaryOperator::AlignOf) {
-        Result = Ctx.getTypeAlign(Exp->getSubExpr()->getType(),
-                                  Exp->getOperatorLoc());
       } else {
         unsigned CharSize = 
           Ctx.Target.getCharWidth(Ctx.getFullLoc(Exp->getOperatorLoc()));
         
-        Result = Ctx.getTypeSize(Exp->getSubExpr()->getType(),
-                                 Exp->getOperatorLoc()) / CharSize;
+        if (Exp->getOpcode() == UnaryOperator::AlignOf)
+          Result = Ctx.getTypeAlign(Exp->getSubExpr()->getType(),
+                                    Exp->getOperatorLoc()) / CharSize;
+        else
+          Result = Ctx.getTypeSize(Exp->getSubExpr()->getType(),
+                                   Exp->getOperatorLoc()) / CharSize;
       }
       break;
     case UnaryOperator::LNot: {
