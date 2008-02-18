@@ -25,6 +25,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Support/CallSite.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
@@ -1584,25 +1585,23 @@ static bool OnlyCalledDirectly(Function *F) {
 /// function, changing them to FastCC.
 static void ChangeCalleesToFastCall(Function *F) {
   for (Value::use_iterator UI = F->use_begin(), E = F->use_end(); UI != E;++UI){
-    Instruction *User = cast<Instruction>(*UI);
-    if (CallInst *CI = dyn_cast<CallInst>(User))
-      CI->setCallingConv(CallingConv::Fast);
-    else
-      cast<InvokeInst>(User)->setCallingConv(CallingConv::Fast);
+    CallSite User(cast<Instruction>(*UI));
+    User.setCallingConv(CallingConv::Fast);
   }
 }
 
 static const ParamAttrsList *StripNest(const ParamAttrsList *Attrs) {
-  if (Attrs) {
-    for (unsigned i = 0, e = Attrs->size(); i != e; ++i) {
-      uint16_t A = Attrs->getParamAttrsAtIndex(i);
-      if (A & ParamAttr::Nest) {
-        Attrs = ParamAttrsList::excludeAttrs(Attrs, Attrs->getParamIndex(i),
-                                             ParamAttr::Nest);
-        // There can be only one.
-        break;
-      }
-    }
+  if (!Attrs)
+    return NULL;
+
+  for (unsigned i = 0, e = Attrs->size(); i != e; ++i) {
+    if ((Attrs->getParamAttrsAtIndex(i) & ParamAttr::Nest) == 0)
+      continue;
+
+    Attrs = ParamAttrsList::excludeAttrs(Attrs, Attrs->getParamIndex(i),
+                                         ParamAttr::Nest);
+    // There can be only one.
+    break;
   }
 
   return Attrs;
@@ -1611,13 +1610,8 @@ static const ParamAttrsList *StripNest(const ParamAttrsList *Attrs) {
 static void RemoveNestAttribute(Function *F) {
   F->setParamAttrs(StripNest(F->getParamAttrs()));
   for (Value::use_iterator UI = F->use_begin(), E = F->use_end(); UI != E;++UI){
-    Instruction *User = cast<Instruction>(*UI);
-    if (CallInst *CI = dyn_cast<CallInst>(User)) {
-      CI->setParamAttrs(StripNest(CI->getParamAttrs()));
-    } else {
-      InvokeInst *II = cast<InvokeInst>(User);
-      II->setParamAttrs(StripNest(II->getParamAttrs()));
-    }
+    CallSite User(cast<Instruction>(*UI));
+    User.setParamAttrs(StripNest(User.getParamAttrs()));
   }
 }
 

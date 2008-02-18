@@ -27,6 +27,10 @@ using namespace llvm;
 //                            CallSite Class
 //===----------------------------------------------------------------------===//
 
+CallSite::CallSite(Instruction *C) {
+  assert((isa<CallInst>(C) || isa<InvokeInst>(C)) && "Not a call!");
+  I = C;
+}
 unsigned CallSite::getCallingConv() const {
   if (CallInst *CI = dyn_cast<CallInst>(I))
     return CI->getCallingConv();

@@ -35,6 +35,7 @@ public:
   CallSite() : I(0) {}
   CallSite(CallInst *CI) : I(reinterpret_cast<Instruction*>(CI)) {}
   CallSite(InvokeInst *II) : I(reinterpret_cast<Instruction*>(II)) {}
+  CallSite(Instruction *C);
   CallSite(const CallSite &CS) : I(CS.I) {}
   CallSite &operator=(const CallSite &CS) { I = CS.I; return *this; }
 
