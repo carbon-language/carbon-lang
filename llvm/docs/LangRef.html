@@ -823,8 +823,9 @@ declare i32 @atoi(i8*) nounwind readonly
     value, but is also valid on scalars (even though this is silly).</dd>
 
     <dt><tt>sret</tt></dt>
-    <dd>This indicates that the parameter specifies the address of a structure
-    that is the return value of the function in the source program.</dd>
+    <dd>This indicates that the pointer parameter specifies the address of a
+    structure that is the return value of the function in the source program.
+    May only be applied to the first parameter.</dd>
 
     <dt><tt>noalias</tt></dt>
     <dd>This indicates that the parameter does not alias any global or any other
