@@ -779,10 +779,8 @@ void Reassociate::ReassociateBB(BasicBlock *BB) {
     // see if we can convert it to X+-Y.
     if (BI->getOpcode() == Instruction::Sub) {
       if (ShouldBreakUpSubtract(BI)) {
-        if (Instruction *NI = BreakUpSubtract(BI)) {
-          MadeChange = true;
-          BI = NI;
-        }
+        BI = BreakUpSubtract(BI);
+        MadeChange = true;
       } else if (BinaryOperator::isNeg(BI)) {
         // Otherwise, this is a negation.  See if the operand is a multiply tree
         // and if this is not an inner node of a multiply tree.
