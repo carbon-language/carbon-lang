@@ -397,32 +397,32 @@ followed by an uncond branch to an exit block.
 ; This testcase is due to tail-duplication not wanting to copy the return
 ; instruction into the terminating blocks because there was other code
 ; optimized out of the function after the taildup happened.
-;RUN: llvm-upgrade < %s | llvm-as | opt -tailcallelim | llvm-dis | not grep call
+; RUN: llvm-as < %s | opt -tailcallelim | llvm-dis | not grep call
 
-int %t4(int %a) {
+define i32 @t4(i32 %a) {
 entry:
-        %tmp.1 = and int %a, 1
-        %tmp.2 = cast int %tmp.1 to bool
-        br bool %tmp.2, label %then.0, label %else.0
+	%tmp.1 = and i32 %a, 1		; <i32> [#uses=1]
+	%tmp.2 = icmp ne i32 %tmp.1, 0		; <i1> [#uses=1]
+	br i1 %tmp.2, label %then.0, label %else.0
 
-then.0:
-        %tmp.5 = add int %a, -1
-        %tmp.3 = call int %t4( int %tmp.5 )
-        br label %return
+then.0:		; preds = %entry
+	%tmp.5 = add i32 %a, -1		; <i32> [#uses=1]
+	%tmp.3 = call i32 @t4( i32 %tmp.5 )		; <i32> [#uses=1]
+	br label %return
 
-else.0:
-        %tmp.7 = setne int %a, 0
-        br bool %tmp.7, label %then.1, label %return
+else.0:		; preds = %entry
+	%tmp.7 = icmp ne i32 %a, 0		; <i1> [#uses=1]
+	br i1 %tmp.7, label %then.1, label %return
 
-then.1:
-        %tmp.11 = add int %a, -2
-        %tmp.9 = call int %t4( int %tmp.11 )
-        br label %return
+then.1:		; preds = %else.0
+	%tmp.11 = add i32 %a, -2		; <i32> [#uses=1]
+	%tmp.9 = call i32 @t4( i32 %tmp.11 )		; <i32> [#uses=1]
+	br label %return
 
-return:
-        %result.0 = phi int [ 0, %else.0 ], [ %tmp.3, %then.0 ],
+return:		; preds = %then.1, %else.0, %then.0
+	%result.0 = phi i32 [ 0, %else.0 ], [ %tmp.3, %then.0 ],
                             [ %tmp.9, %then.1 ]
-        ret int %result.0
+	ret i32 %result.0
 }
 
 //===---------------------------------------------------------------------===//
@@ -446,21 +446,19 @@ long long fib(const long long n) {
 Argument promotion should promote arguments for recursive functions, like 
 this:
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -argpromotion | llvm-dis | grep x.val
+; RUN: llvm-as < %s | opt -argpromotion | llvm-dis | grep x.val
 
-implementation   ; Functions:
-
-internal int %foo(int* %x) {
+define internal i32 @foo(i32* %x) {
 entry:
-        %tmp = load int* %x
-        %tmp.foo = call int %foo(int *%x)
-        ret int %tmp.foo
+	%tmp = load i32* %x		; <i32> [#uses=0]
+	%tmp.foo = call i32 @foo( i32* %x )		; <i32> [#uses=1]
+	ret i32 %tmp.foo
 }
 
-int %bar(int* %x) {
+define i32 @bar(i32* %x) {
 entry:
-        %tmp3 = call int %foo( int* %x)                ; <int>[#uses=1]
-        ret int %tmp3
+	%tmp3 = call i32 @foo( i32* %x )		; <i32> [#uses=1]
+	ret i32 %tmp3
 }
 
 //===---------------------------------------------------------------------===//
@@ -529,16 +527,22 @@ We should turn things like "load+fabs+store" and "load+fneg+store" into the
 corresponding integer operations.  On a yonah, this loop:
 
 double a[256];
- for (b = 0; b < 10000000; b++)
- for (i = 0; i < 256; i++)
-   a[i] = -a[i];
+void foo() {
+  int i, b;
+  for (b = 0; b < 10000000; b++)
+  for (i = 0; i < 256; i++)
+    a[i] = -a[i];
+}
 
 is twice as slow as this loop:
 
 long long a[256];
- for (b = 0; b < 10000000; b++)
- for (i = 0; i < 256; i++)
-   a[i] ^= (1ULL << 63);
+void foo() {
+  int i, b;
+  for (b = 0; b < 10000000; b++)
+  for (i = 0; i < 256; i++)
+    a[i] ^= (1ULL << 63);
+}
 
 and I suspect other processors are similar.  On X86 in particular this is a
 big win because doing this with integers allows the use of read/modify/write
