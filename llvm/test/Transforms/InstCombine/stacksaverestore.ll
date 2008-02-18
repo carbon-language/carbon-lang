@@ -1,19 +1,19 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep {call.*stackrestore}
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep {call.*stackrestore}
 
 ;; Test that llvm.stackrestore is removed when possible.
-
-int* %test1(uint %P) {
-        %tmp = call sbyte* %llvm.stacksave()
-        call void %llvm.stackrestore(sbyte* %tmp) ;; not restoring anything
-	%A = alloca int, uint %P
-        ret int* %A
+define i32* @test1(i32 %P) {
+	%tmp = call i8* @llvm.stacksave( )
+	call void @llvm.stackrestore( i8* %tmp ) ;; not restoring anything
+	%A = alloca i32, i32 %P		
+	ret i32* %A
 }
 
-void %test2(sbyte* %X) {
-	call void %llvm.stackrestore(sbyte* %X)  ;; no allocas before return.
+define void @test2(i8* %X) {
+	call void @llvm.stackrestore( i8* %X )  ;; no allocas before return.
 	ret void
 }
 
-declare sbyte* %llvm.stacksave()
+declare i8* @llvm.stacksave()
 
-declare void %llvm.stackrestore(sbyte*)
+declare void @llvm.stackrestore(i8*)
+
