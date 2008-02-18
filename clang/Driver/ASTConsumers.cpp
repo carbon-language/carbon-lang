@@ -23,6 +23,7 @@
 #include "clang/Analysis/Analyses/GRSimpleVals.h"
 #include "clang/Analysis/LocalCheckers.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/Support/Timer.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -581,22 +582,43 @@ namespace {
     Diagnostic &Diags;
     ASTContext* Ctx;
     bool Visualize;
+    std::string FName;
   public:
-    GRSimpleValsVisitor(Diagnostic &diags, bool visualize)
-      : Diags(diags), Visualize(visualize) {}
+    GRSimpleValsVisitor(Diagnostic &diags, const std::string& fname, bool visualize)
+      : Diags(diags), Visualize(visualize), FName(fname) {}
     
     virtual void Initialize(ASTContext &Context) { Ctx = &Context; }    
     virtual void VisitCFG(CFG& C, FunctionDecl&);
-    virtual bool printFuncDeclStart() { return Visualize; }
+    virtual bool printFuncDeclStart() { return false; }
   };
 } // end anonymous namespace
 
-ASTConsumer* clang::CreateGRSimpleVals(Diagnostic &Diags, bool Visualize) {
-  return new GRSimpleValsVisitor(Diags, Visualize);
+ASTConsumer* clang::CreateGRSimpleVals(Diagnostic &Diags,
+                                       const std::string& FunctionName,
+                                       bool Visualize) {
+  
+  return new GRSimpleValsVisitor(Diags, FunctionName, Visualize);
 }
 
 void GRSimpleValsVisitor::VisitCFG(CFG& C, FunctionDecl& FD) {
-  RunGRSimpleVals(C, FD, *Ctx, Diags, Visualize);
+  if (FName.size() > 0 && FName != FD.getIdentifier()->getName())
+    return;
+  
+  if (!Visualize) {
+    llvm::cerr << "ANALYZE: " << FD.getIdentifier()->getName() << ' '
+               << Ctx->getSourceManager().getSourceName(FD.getLocation())
+               << ' ';
+
+    llvm::Timer T("GRSimpleVals");
+    T.startTimer();
+    RunGRSimpleVals(C, FD, *Ctx, Diags, Visualize);
+    T.stopTimer();    
+    llvm::cerr << T.getWallTime() << '\n';
+  }
+  else {  
+    llvm::cerr << '\n';    
+    RunGRSimpleVals(C, FD, *Ctx, Diags, Visualize);
+  }    
 }
 
 //===----------------------------------------------------------------------===//

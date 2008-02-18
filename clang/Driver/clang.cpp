@@ -449,6 +449,14 @@ static void InitializeDiagnostics(Diagnostic &Diags) {
 }
 
 //===----------------------------------------------------------------------===//
+// Analysis-specific options.
+//===----------------------------------------------------------------------===//
+
+static llvm::cl::opt<std::string>
+AnalyzeSpecificFunction("analyze-function",
+                llvm::cl::desc("Run analysis on specific function."));
+
+//===----------------------------------------------------------------------===//
 // Target Triple Processing.
 //===----------------------------------------------------------------------===//
 
@@ -982,10 +990,10 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
       return CreateUnitValsChecker(Diag);
       
     case AnalysisGRSimpleVals:
-      return CreateGRSimpleVals(Diag);
+      return CreateGRSimpleVals(Diag, AnalyzeSpecificFunction);
       
     case AnalysisGRSimpleValsView:
-      return CreateGRSimpleVals(Diag, true);
+      return CreateGRSimpleVals(Diag, AnalyzeSpecificFunction, true);
       
     case TestSerialization:
       return CreateSerializationTest(Diag, FileMgr, LangOpts);
