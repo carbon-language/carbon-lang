@@ -461,6 +461,8 @@ namespace X86 {
     case 't': // top of floating point stack.
     case 'u': // second from top of floating point stack.
     case 'q': // a, b, c, d registers or any integer register in 64-bit.
+    case 'Z': // 32-bit integer constant for used with zero-extending x86_64
+              // instructions.
       info = (TargetInfo::ConstraintInfo)(info|TargetInfo::CI_AllowsRegister);
       return true;
     }

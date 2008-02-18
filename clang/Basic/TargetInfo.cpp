@@ -435,6 +435,7 @@ bool TargetInfo::validateInputConstraint(const char *Name,
       // FIXME: Fail if % is used with the last operand.
       break;
     case 'i': // immediate integer.
+    case 'I':
       break;
     case 'r': // general register.
       info = (ConstraintInfo)(info|CI_AllowsRegister);
