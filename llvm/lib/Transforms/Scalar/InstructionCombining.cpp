@@ -2092,10 +2092,12 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   // -A + B  -->  B - A
   // -A + -B  -->  -(A + B)
   if (Value *LHSV = dyn_castNegVal(LHS)) {
-    if (Value *RHSV = dyn_castNegVal(RHS)) {
-      Instruction *NewAdd = BinaryOperator::createAdd(LHSV, RHSV, "sum");
-      InsertNewInstBefore(NewAdd, I);
-      return BinaryOperator::createNeg(NewAdd);
+    if (LHS->getType()->isIntOrIntVector()) {
+      if (Value *RHSV = dyn_castNegVal(RHS)) {
+        Instruction *NewAdd = BinaryOperator::createAdd(LHSV, RHSV, "sum");
+        InsertNewInstBefore(NewAdd, I);
+        return BinaryOperator::createNeg(NewAdd);
+      }
     }
     
     return BinaryOperator::createSub(RHS, LHSV);
