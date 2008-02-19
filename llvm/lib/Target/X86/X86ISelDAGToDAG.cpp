@@ -32,6 +32,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
@@ -43,6 +44,11 @@ using namespace llvm;
 STATISTIC(NumFPKill   , "Number of FP_REG_KILL instructions added");
 STATISTIC(NumLoadMoved, "Number of loads moved below TokenFactor");
 
+namespace {
+  static cl::opt<bool>
+  FoldAndInTest("x86-fold-and-in-test", cl::desc("Fold and operation in test"),
+                cl::init(true), cl::Hidden);
+}
 
 //===----------------------------------------------------------------------===//
 //                      Pattern Matcher Implementation
