@@ -435,6 +435,11 @@ void GRExprEngine::VisitDeclStmt(DeclStmt* DS, GRExprEngine::NodeTy* Pred,
   
   for (const ScopedDecl* D = DS->getDecl(); D; D = D->getNextDeclarator())
     if (const VarDecl* VD = dyn_cast<VarDecl>(D)) {
+      
+      // FIXME: Add support for local arrays.
+      if (VD->getType()->isArrayType())
+        continue;
+      
       const Expr* E = VD->getInit();      
       St = SetValue(St, lval::DeclVal(VD),
                     E ? GetValue(St, E) : UninitializedVal());
