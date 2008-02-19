@@ -91,12 +91,13 @@ static void AddKeyword(const char *Keyword, unsigned KWLen,
 }
 
 static void AddAlias(const char *Keyword, unsigned KWLen,
+                     tok::TokenKind AliaseeID,
                      const char *AliaseeKeyword, unsigned AliaseeKWLen,
                      const LangOptions &LangOpts, IdentifierTable &Table) {
   IdentifierInfo &AliasInfo = Table.get(Keyword, Keyword+KWLen);
   IdentifierInfo &AliaseeInfo = Table.get(AliaseeKeyword,
                                           AliaseeKeyword+AliaseeKWLen);
-  AliasInfo.setTokenID(AliaseeInfo.getTokenID());
+  AliasInfo.setTokenID(AliaseeID);
   AliasInfo.setIsExtensionToken(AliaseeInfo.isExtensionToken());
 }  
 
@@ -148,7 +149,8 @@ void IdentifierTable::AddKeywords(const LangOptions &LangOpts) {
              ((FLAGS) >> CPP0xShift) & Mask, \
              ((FLAGS) >> BoolShift) & Mask, LangOpts, *this);
 #define ALIAS(NAME, TOK) \
-  AddAlias(NAME, strlen(NAME), #TOK, strlen(#TOK), LangOpts, *this);
+  AddAlias(NAME, strlen(NAME), tok::kw_ ## TOK, #TOK, strlen(#TOK),  \
+           LangOpts, *this);
 #define CXX_KEYWORD_OPERATOR(NAME, ALIAS) \
   if (LangOpts.CXXOperatorNames)          \
     AddCXXOperatorKeyword(#NAME, strlen(#NAME), tok::ALIAS, *this);
