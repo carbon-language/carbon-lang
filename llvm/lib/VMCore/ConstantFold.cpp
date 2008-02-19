@@ -175,7 +175,9 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
   if (isa<UndefValue>(V)) {
     // zext(undef) = 0, because the top bits will be zero.
     // sext(undef) = 0, because the top bits will all be the same.
-    if (opc == Instruction::ZExt || opc == Instruction::SExt)
+    // [us]itofp(undef) = 0, because the result value is bounded.
+    if (opc == Instruction::ZExt || opc == Instruction::SExt ||
+        opc == Instruction::UIToFP || opc == Instruction::SIToFP)
       return Constant::getNullValue(DestTy);
     return UndefValue::get(DestTy);
   }
