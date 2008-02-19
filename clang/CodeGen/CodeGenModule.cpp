@@ -31,7 +31,7 @@ CodeGenModule::CodeGenModule(ASTContext &C, const LangOptions &LO,
                              llvm::Module &M, const llvm::TargetData &TD,
                              Diagnostic &diags)
   : Context(C), Features(LO), TheModule(M), TheTargetData(TD), Diags(diags),
-    Types(C, M, TD), MemCpyFn(0), CFConstantStringClassRef(0) {}
+    Types(C, M, TD), MemCpyFn(0), MemSetFn(0), CFConstantStringClassRef(0) {}
 
 /// WarnUnsupported - Print out a warning that codegen doesn't support the
 /// specified stmt yet.
@@ -329,6 +329,18 @@ llvm::Function *CodeGenModule::getMemCpyFn() {
   return MemCpyFn = getIntrinsic(IID);
 }
 
+llvm::Function *CodeGenModule::getMemSetFn() {
+  if (MemSetFn) return MemSetFn;
+  llvm::Intrinsic::ID IID;
+  uint64_t Size; unsigned Align;
+  Context.Target.getPointerInfo(Size, Align, FullSourceLoc());
+  switch (Size) {
+  default: assert(0 && "Unknown ptr width");
+  case 32: IID = llvm::Intrinsic::memset_i32; break;
+  case 64: IID = llvm::Intrinsic::memset_i64; break;
+  }
+  return MemSetFn = getIntrinsic(IID);
+}
 
 llvm::Constant *CodeGenModule::
 GetAddrOfConstantCFString(const std::string &str) {

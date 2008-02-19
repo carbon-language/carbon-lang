@@ -52,6 +52,7 @@ class CodeGenModule {
   CodeGenTypes Types;
 
   llvm::Function *MemCpyFn;
+  llvm::Function *MemSetFn;
   llvm::DenseMap<const Decl*, llvm::Constant*> GlobalDeclMap;
     
   llvm::StringMap<llvm::Constant*> CFConstantStringMap;
@@ -85,6 +86,7 @@ public:
   /// array containing the literal.  The result is pointer to array type.
   llvm::Constant *GetAddrOfConstantString(const std::string& str);
   llvm::Function *getMemCpyFn();
+  llvm::Function *getMemSetFn();
   llvm::Function *getIntrinsic(unsigned IID, const llvm::Type **Tys = 0, 
                                unsigned NumTys = 0);
   
