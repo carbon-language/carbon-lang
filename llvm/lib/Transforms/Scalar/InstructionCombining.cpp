@@ -2590,9 +2590,13 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
 Instruction *InstCombiner::commonDivTransforms(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
-  // undef / X -> 0
-  if (isa<UndefValue>(Op0))
+  // undef / X -> 0        for integer.
+  // undef / X -> undef    for FP (the undef could be a snan).
+  if (isa<UndefValue>(Op0)) {
+    if (Op0->getType()->isFPOrFPVector())
+      return ReplaceInstUsesWith(I, Op0);
     return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
+  }
 
   // X / undef -> undef
   if (isa<UndefValue>(Op1))
@@ -2821,13 +2825,16 @@ static Constant *GetFactor(Value *V) {
 Instruction *InstCombiner::commonRemTransforms(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
-  // 0 % X == 0, we don't need to preserve faults!
+  // 0 % X == 0 for integer, we don't need to preserve faults!
   if (Constant *LHS = dyn_cast<Constant>(Op0))
     if (LHS->isNullValue())
       return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
 
-  if (isa<UndefValue>(Op0))              // undef % X -> 0
+  if (isa<UndefValue>(Op0)) {             // undef % X -> 0
+    if (I.getType()->isFPOrFPVector())
+      return ReplaceInstUsesWith(I, Op0);  // X % undef -> undef (could be SNaN)
     return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
+  }
   if (isa<UndefValue>(Op1))
     return ReplaceInstUsesWith(I, Op1);  // X % undef -> undef
 
