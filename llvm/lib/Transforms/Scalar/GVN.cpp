@@ -1121,7 +1121,8 @@ bool GVN::processMemCpy(MemCpyInst* M,
       dep == MemoryDependenceAnalysis::NonLocal)
     return false;
   else if (CallInst* C = dyn_cast<CallInst>(dep))
-    return performReturnSlotOptzn(M, C, toErase);
+    if (!isa<MemCpyInst>(C))
+      return performReturnSlotOptzn(M, C, toErase);
   else if (!isa<MemCpyInst>(dep))
     return false;
   
