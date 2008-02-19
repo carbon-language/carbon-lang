@@ -38,7 +38,7 @@ SymbolID SymbolManager::getContentsOfSymbol(SymbolID sym) {
   return X;  
 }
 
-QualType SymbolData::getType() const {
+QualType SymbolData::getType(const SymbolManager& SymMgr) const {
   switch (getKind()) {
     default:
       assert (false && "getType() not implemented for this symbol.");
@@ -46,6 +46,11 @@ QualType SymbolData::getType() const {
     case ParmKind:
       return cast<SymbolDataParmVar>(this)->getDecl()->getType();
       
+    case ContentsOfKind: {
+      SymbolID x = cast<SymbolDataContentsOf>(this)->getSymbol();
+      QualType T = SymMgr.getSymbolData(x).getType(SymMgr);
+      return T->getAsPointerType()->getPointeeType();
+    }
   }
 }
 

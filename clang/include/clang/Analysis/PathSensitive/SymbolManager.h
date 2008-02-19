@@ -24,6 +24,8 @@
 
 namespace clang {
   
+class SymbolManager;
+  
 class SymbolID {
   unsigned Data;
 public:
@@ -76,7 +78,7 @@ public:
     return K == R.K && Data == R.Data;
   }
   
-  QualType getType() const;
+  QualType getType(const SymbolManager& SymMgr) const;
   
   // Implement isa<T> support.
   static inline bool classof(const SymbolData*) { return true; }
@@ -164,7 +166,7 @@ public:
   }
   
   inline QualType getType(SymbolID ID) const {
-    return getSymbolData(ID).getType();
+    return getSymbolData(ID).getType(*this);
   }
 };
 
