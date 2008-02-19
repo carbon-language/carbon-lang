@@ -414,7 +414,7 @@ ActOnArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
     IndexExpr = RHSExp;
     
     // Component access limited to variables (reject vec4.rg[1]).
-    if (!isa<DeclRefExpr>(BaseExpr)) 
+    if (!isa<DeclRefExpr>(BaseExpr) && !isa<ArraySubscriptExpr>(BaseExpr)) 
       return Diag(LLoc, diag::err_ocuvector_component_access, 
                   SourceRange(LLoc, RLoc));
     // FIXME: need to deal with const...
