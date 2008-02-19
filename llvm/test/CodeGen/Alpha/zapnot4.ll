@@ -1,8 +1,7 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep zapnot
+; RUN: llvm-as < %s | llc -march=alpha | grep zapnot
 
-ulong %foo(ulong %y) {
-        %tmp = shl ulong %y, ubyte 3            ; <ulong> [#uses=1]
-        %tmp2 = and ulong %tmp, 65535            ; <ulong> [#uses=1]
-        ret ulong %tmp2
+define i64 @foo(i64 %y) {
+        %tmp = shl i64 %y, 3            ; <i64> [#uses=1]
+        %tmp2 = and i64 %tmp, 65535             ; <i64> [#uses=1]
+        ret i64 %tmp2
 }
-

@@ -1,8 +1,6 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=c | grep func1 | grep WEAK
+; RUN: llvm-as < %s | llc -march=c | grep func1 | grep WEAK
 
-implementation
-
-linkonce int %func1 () {
-  ret int 5
+define linkonce i32 @func1() {
+        ret i32 5
 }
 

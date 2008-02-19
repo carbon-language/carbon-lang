@@ -1,34 +1,30 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86
+; RUN: llvm-as < %s | llc -march=x86
 ; PR1049
 target datalayout = "e-p:32:32"
-target endian = little
-target pointersize = 32
 target triple = "i686-pc-linux-gnu"
-	%struct.QBasicAtomic = type { int }
-	%struct.QByteArray = type { "struct.QByteArray::Data"* }
-	"struct.QByteArray::Data" = type { %struct.QBasicAtomic, int, int, sbyte*, [1 x sbyte] }
+	%struct.QBasicAtomic = type { i32 }
+	%struct.QByteArray = type { %"struct.QByteArray::Data"* }
+	%"struct.QByteArray::Data" = type { %struct.QBasicAtomic, i32, i32, i8*, [1 x i8] }
 	%struct.QFactoryLoader = type { %struct.QObject }
-	%struct.QImageIOHandler = type { int (...)**, %struct.QImageIOHandlerPrivate* }
+	%struct.QImageIOHandler = type { i32 (...)**, %struct.QImageIOHandlerPrivate* }
 	%struct.QImageIOHandlerPrivate = type opaque
 	%struct.QImageWriter = type { %struct.QImageWriterPrivate* }
-	%struct.QImageWriterPrivate = type { %struct.QByteArray, %struct.QFactoryLoader*, bool, %struct.QImageIOHandler*, int, float, %struct.QString, %struct.QString, uint, %struct.QString, %struct.QImageWriter* }
-	"struct.QList<QByteArray>" = type { "struct.QList<QByteArray>::._20" }
-	"struct.QList<QByteArray>::._20" = type { %struct.QListData }
-	%struct.QListData = type { "struct.QListData::Data"* }
-	"struct.QListData::Data" = type { %struct.QBasicAtomic, int, int, int, ubyte, [1 x sbyte*] }
-	%struct.QObject = type { int (...)**, %struct.QObjectData* }
-	%struct.QObjectData = type { int (...)**, %struct.QObject*, %struct.QObject*, "struct.QList<QByteArray>", ubyte, [3 x ubyte], int, int }
-	%struct.QString = type { "struct.QString::Data"* }
-	"struct.QString::Data" = type { %struct.QBasicAtomic, int, int, ushort*, ubyte, ubyte, [1 x ushort] }
+	%struct.QImageWriterPrivate = type { %struct.QByteArray, %struct.QFactoryLoader*, i1, %struct.QImageIOHandler*, i32, float, %struct.QString, %struct.QString, i32, %struct.QString, %struct.QImageWriter* }
+	%"struct.QList<QByteArray>" = type { %"struct.QList<QByteArray>::._20" }
+	%"struct.QList<QByteArray>::._20" = type { %struct.QListData }
+	%struct.QListData = type { %"struct.QListData::Data"* }
+	%"struct.QListData::Data" = type { %struct.QBasicAtomic, i32, i32, i32, i8, [1 x i8*] }
+	%struct.QObject = type { i32 (...)**, %struct.QObjectData* }
+	%struct.QObjectData = type { i32 (...)**, %struct.QObject*, %struct.QObject*, %"struct.QList<QByteArray>", i8, [3 x i8], i32, i32 }
+	%struct.QString = type { %"struct.QString::Data"* }
+	%"struct.QString::Data" = type { %struct.QBasicAtomic, i32, i32, i16*, i8, i8, [1 x i16] }
 
-implementation   ; Functions:
-
-bool %_ZNK12QImageWriter8canWriteEv() {
+define i1 @_ZNK12QImageWriter8canWriteEv() {
 	%tmp62 = load %struct.QImageWriterPrivate** null		; <%struct.QImageWriterPrivate*> [#uses=1]
-	%tmp = getelementptr %struct.QImageWriterPrivate* %tmp62, int 0, uint 9		; <%struct.QString*> [#uses=1]
-	%tmp75 = call %struct.QString* %_ZN7QStringaSERKS_( %struct.QString* %tmp, %struct.QString* null )		; <%struct.QString*> [#uses=0]
-	call void asm sideeffect "lock\0Adecl $0\0Asetne 1", "=*m"( int* null )
-	ret bool false
+	%tmp = getelementptr %struct.QImageWriterPrivate* %tmp62, i32 0, i32 9		; <%struct.QString*> [#uses=1]
+	%tmp75 = call %struct.QString* @_ZN7QStringaSERKS_( %struct.QString* %tmp, %struct.QString* null )		; <%struct.QString*> [#uses=0]
+	call void asm sideeffect "lock\0Adecl $0\0Asetne 1", "=*m"( i32* null )
+	ret i1 false
 }
 
-declare %struct.QString* %_ZN7QStringaSERKS_(%struct.QString*, %struct.QString*)
+declare %struct.QString* @_ZN7QStringaSERKS_(%struct.QString*, %struct.QString*)

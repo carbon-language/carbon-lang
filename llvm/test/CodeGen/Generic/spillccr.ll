@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade %s | llvm-as | llc
+; RUN: llvm-as < %s -o - | llc
 
 ; July 6, 2002 -- LLC Regression test
 ; This test case checks if the integer CC register %xcc (or %ccr)
@@ -10,41 +10,40 @@
 ; branch-on-register instruction cannot be used directly, i.e.,
 ; the %xcc register is needed for the first branch.
 ;
-	%Graph = type %struct.graph_st*
-	%Hash = type %struct.hash*
-	%HashEntry = type %struct.hash_entry*
-	%Vertex = type %struct.vert_st*
-	%struct.graph_st = type { [1 x %Vertex] }
-	%struct.hash = type { %HashEntry*, int (uint)*, int }
-	%struct.hash_entry = type { uint, sbyte*, %HashEntry }
-	%struct.vert_st = type { int, %Vertex, %Hash }
-%HashRange = uninitialized global int		; <int*> [#uses=1]
-%.LC0 = internal global [13 x sbyte] c"Make phase 2\00"		; <[13 x sbyte]*> [#uses=1]
-%.LC1 = internal global [13 x sbyte] c"Make phase 3\00"		; <[13 x sbyte]*> [#uses=1]
-%.LC2 = internal global [13 x sbyte] c"Make phase 4\00"		; <[13 x sbyte]*> [#uses=1]
-%.LC3 = internal global [15 x sbyte] c"Make returning\00"		; <[15 x sbyte]*> [#uses=1]
 
-implementation   ; Functions:
+        %Graph = type %struct.graph_st*
+        %Hash = type %struct.hash*
+        %HashEntry = type %struct.hash_entry*
+        %Vertex = type %struct.vert_st*
+        %struct.graph_st = type { [1 x %Vertex] }
+        %struct.hash = type { %HashEntry*, i32 (i32)*, i32 }
+        %struct.hash_entry = type { i32, i8*, %HashEntry }
+        %struct.vert_st = type { i32, %Vertex, %Hash }
+@HashRange = external global i32                ; <i32*> [#uses=0]
+@.LC0 = internal global [13 x i8] c"Make phase 2\00"            ; <[13 x i8]*> [#uses=0]
+@.LC1 = internal global [13 x i8] c"Make phase 3\00"            ; <[13 x i8]*> [#uses=0]
+@.LC2 = internal global [13 x i8] c"Make phase 4\00"            ; <[13 x i8]*> [#uses=0]
+@.LC3 = internal global [15 x i8] c"Make returning\00"          ; <[15 x i8]*> [#uses=0]
 
-%Graph %MakeGraph(int %numvert, int %numproc) {
-bb1:					;[#uses=1]
-	%reg111 = add int %numproc, -1		; <int> [#uses=3]
-	%cond275 = setlt int %reg111, 1		; <bool> [#uses=2]
-	%cond276 = setle int %reg111, 0		; <bool> [#uses=1]
-	%cond277 = setge int %numvert, 0		; <bool> [#uses=2]
-	%reg162 = add int %numvert, 3		; <int> [#uses=2]
-	br bool %cond275, label %bb7, label %bb4
+define %Graph @MakeGraph(i32 %numvert, i32 %numproc) {
+bb1:
+        %reg111 = add i32 %numproc, -1          ; <i32> [#uses=2]
+        %cond275 = icmp slt i32 %reg111, 1              ; <i1> [#uses=1]
+        %cond276 = icmp sle i32 %reg111, 0              ; <i1> [#uses=1]
+        %cond277 = icmp sge i32 %numvert, 0             ; <i1> [#uses=1]
+        %reg162 = add i32 %numvert, 3           ; <i32> [#uses=0]
+        br i1 %cond275, label %bb7, label %bb4
 
-bb4:
-	br bool %cond276, label %bb7, label %bb5
+bb4:            ; preds = %bb1
+        br i1 %cond276, label %bb7, label %bb5
 
-bb5:
-	br bool %cond277, label %bb7, label %bb6
+bb5:            ; preds = %bb4
+        br i1 %cond277, label %bb7, label %bb6
 
-bb6:					;[#uses=2]
-	ret %Graph null
+bb6:            ; preds = %bb5
+        ret %Graph null
 
-bb7:					;[#uses=2]
-	ret %Graph null
+bb7:            ; preds = %bb5, %bb4, %bb1
+        ret %Graph null
 }
 

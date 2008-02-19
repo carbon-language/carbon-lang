@@ -1,26 +1,26 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc
+; RUN: llvm-as < %s | llc
 
-double %fneg(double %X) {
-	%Y = sub double -0.0, %X
-	ret double %Y
+define double @fneg(double %X) {
+        %Y = sub double -0.000000e+00, %X               ; <double> [#uses=1]
+        ret double %Y
 }
 
-float %fnegf(float %X) {
-	%Y = sub float -0.0, %X
-	ret float %Y
+define float @fnegf(float %X) {
+        %Y = sub float -0.000000e+00, %X                ; <float> [#uses=1]
+        ret float %Y
 }
 
-declare double %fabs(double)
-declare float %fabsf(float)
+declare double @fabs(double)
 
+declare float @fabsf(float)
 
-double %fabstest(double %X) {
-	%Y = call double %fabs(double %X)
-	ret double %Y
+define double @fabstest(double %X) {
+        %Y = call double @fabs( double %X )             ; <double> [#uses=1]
+        ret double %Y
 }
 
-float %fabsftest(float %X) {
-	%Y = call float %fabsf(float %X)
-	ret float %Y
+define float @fabsftest(float %X) {
+        %Y = call float @fabsf( float %X )              ; <float> [#uses=1]
+        ret float %Y
 }
 

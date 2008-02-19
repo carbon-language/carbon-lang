@@ -1,33 +1,27 @@
-; RUN: llvm-upgrade %s | llvm-as | llc
+; RUN: llvm-as < %s | llc
 
-implementation
-declare int "printf"(sbyte*, int, float)
+declare i32 @printf(i8*, i32, float)
 
+define i32 @testissue(i32 %i, float %x, float %y) {
+        br label %bb1
 
-int "testissue"(int %i, float %x, float %y)
-begin
-	br label %bb1
-bb1:
-	%x1 = mul float %x, %y			;; x1
-	%y1 = mul float %y, 0.75		;; y1
-	%z1 = add float %x1, %y1		;; z1 = x1 + y1
-	
-	%x2 = mul float %x, 0.5			;; x2
-	%y2 = mul float %y, 0x3FECCCCCC0000000	;; y2
-	%z2 = add float %x2, %y2		;; z2 = x2 + y2
-	
-	%z3 = add float %z1, %z2		;; z3 = z1 + z2
-	    
-	%i1 = shl int   %i, ubyte 3		;; i1
-	%j1 = add int   %i, 7			;; j1
-	%m1 = add int   %i1, %j1		;; k1 = i1 + j1
-;;	%m1 = div int   %k1, 99			;; m1 = k1 / 99
-	
-	%b  = setle int %m1, 6			;; (m1 <= 6)?
-	br bool %b, label %bb1, label %bb2
+bb1:            ; preds = %bb1, %0
+        %x1 = mul float %x, %y          ; <float> [#uses=1]
+        %y1 = mul float %y, 7.500000e-01                ; <float> [#uses=1]
+        %z1 = add float %x1, %y1                ; <float> [#uses=1]
+        %x2 = mul float %x, 5.000000e-01                ; <float> [#uses=1]
+        %y2 = mul float %y, 0x3FECCCCCC0000000          ; <float> [#uses=1]
+        %z2 = add float %x2, %y2                ; <float> [#uses=1]
+        %z3 = add float %z1, %z2                ; <float> [#uses=1]
+        %i1 = shl i32 %i, 3             ; <i32> [#uses=1]
+        %j1 = add i32 %i, 7             ; <i32> [#uses=1]
+        %m1 = add i32 %i1, %j1          ; <i32> [#uses=2]
+        %b = icmp sle i32 %m1, 6                ; <i1> [#uses=1]
+        br i1 %b, label %bb1, label %bb2
 
-bb2:
-	%Msg = cast ulong 0 to sbyte *
-	call int %printf(sbyte* %Msg, int %m1, float %z3)
-	ret int 0
-end
+bb2:            ; preds = %bb1
+        %Msg = inttoptr i64 0 to i8*            ; <i8*> [#uses=1]
+        call i32 @printf( i8* %Msg, i32 %m1, float %z3 )                ; <i32>:1 [#uses=0]
+        ret i32 0
+}
+

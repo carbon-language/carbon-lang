@@ -1,11 +1,11 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | not grep adc
-
+; RUN: llvm-as < %s | llc -march=x86 | not grep adc
 ; PR987
 
-declare void %llvm.memcpy.i64(sbyte*, sbyte*, ulong, uint)
+declare void @llvm.memcpy.i64(i8*, i8*, i64, i32)
 
-void %foo(ulong %a) {
-  %b = add ulong %a, 1
-call void %llvm.memcpy.i64( sbyte* null, sbyte* null, ulong %b, uint 1 )
-  ret void
+define void @foo(i64 %a) {
+        %b = add i64 %a, 1              ; <i64> [#uses=1]
+        call void @llvm.memcpy.i64( i8* null, i8* null, i64 %b, i32 1 )
+        ret void
 }
+

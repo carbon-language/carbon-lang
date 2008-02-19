@@ -1,57 +1,55 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc
+; RUN: llvm-as < %s | llc
 
-%a_str = internal constant [8 x sbyte] c"a = %d\0A\00"
-%a_mul_str = internal constant [13 x sbyte] c"a * %d = %d\0A\00"
-%A = global int 2
-declare int %printf(sbyte*, ...)
+@a_str = internal constant [8 x i8] c"a = %d\0A\00"		; <[8 x i8]*> [#uses=1]
+@a_mul_str = internal constant [13 x i8] c"a * %d = %d\0A\00"		; <[13 x i8]*> [#uses=1]
+@A = global i32 2		; <i32*> [#uses=1]
 
-int %main() {  
-  %a = load int* %A
-  %a_s = getelementptr [8 x sbyte]* %a_str, long 0, long 0
-  %a_mul_s = getelementptr [13 x sbyte]* %a_mul_str, long 0, long 0
-  call int (sbyte*, ...)* %printf(sbyte* %a_s, int %a)
+declare i32 @printf(i8*, ...)
 
-  %r_0 = mul int %a, 0
-  %r_1 = mul int %a, 1
-  %r_2 = mul int %a, 2
-  %r_3 = mul int %a, 3
-  %r_4 = mul int %a, 4
-  %r_5 = mul int %a, 5
-  %r_6 = mul int %a, 6
-  %r_7 = mul int %a, 7
-  %r_8 = mul int %a, 8
-  %r_9 = mul int %a, 9
-  %r_10 = mul int %a, 10
-  %r_11 = mul int %a, 11
-  %r_12 = mul int %a, 12
-  %r_13 = mul int %a, 13
-  %r_14 = mul int %a, 14
-  %r_15 = mul int %a, 15
-  %r_16 = mul int %a, 16
-  %r_17 = mul int %a, 17
-  %r_18 = mul int %a, 18
-  %r_19 = mul int %a, 19
-
-  call int (sbyte*, ...)* %printf(sbyte* %a_mul_s, int 0, int %r_0)
-  call int (sbyte*, ...)* %printf(sbyte* %a_mul_s, int 1, int %r_1)
-  call int (sbyte*, ...)* %printf(sbyte* %a_mul_s, int 2, int %r_2)
-  call int (sbyte*, ...)* %printf(sbyte* %a_mul_s, int 3, int %r_3)
-  call int (sbyte*, ...)* %printf(sbyte* %a_mul_s, int 4, int %r_4)
-  call int (sbyte*, ...)* %printf(sbyte* %a_mul_s, int 5, int %r_5)
-  call int (sbyte*, ...)* %printf(sbyte* %a_mul_s, int 6, int %r_6)
-  call int (sbyte*, ...)* %printf(sbyte* %a_mul_s, int 7, int %r_7)
-  call int (sbyte*, ...)* %printf(sbyte* %a_mul_s, int 8, int %r_8)
-  call int (sbyte*, ...)* %printf(sbyte* %a_mul_s, int 9, int %r_9)
-  call int (sbyte*, ...)* %printf(sbyte* %a_mul_s, int 10, int %r_10)
-  call int (sbyte*, ...)* %printf(sbyte* %a_mul_s, int 11, int %r_11)
-  call int (sbyte*, ...)* %printf(sbyte* %a_mul_s, int 12, int %r_12)
-  call int (sbyte*, ...)* %printf(sbyte* %a_mul_s, int 13, int %r_13)
-  call int (sbyte*, ...)* %printf(sbyte* %a_mul_s, int 14, int %r_14)
-  call int (sbyte*, ...)* %printf(sbyte* %a_mul_s, int 15, int %r_15)
-  call int (sbyte*, ...)* %printf(sbyte* %a_mul_s, int 16, int %r_16)
-  call int (sbyte*, ...)* %printf(sbyte* %a_mul_s, int 17, int %r_17)
-  call int (sbyte*, ...)* %printf(sbyte* %a_mul_s, int 18, int %r_18)
-  call int (sbyte*, ...)* %printf(sbyte* %a_mul_s, int 19, int %r_19)
-
-  ret int 0
+define i32 @main() {
+	%a = load i32* @A		; <i32> [#uses=21]
+	%a_s = getelementptr [8 x i8]* @a_str, i64 0, i64 0		; <i8*> [#uses=1]
+	%a_mul_s = getelementptr [13 x i8]* @a_mul_str, i64 0, i64 0		; <i8*> [#uses=20]
+	call i32 (i8*, ...)* @printf( i8* %a_s, i32 %a )		; <i32>:1 [#uses=0]
+	%r_0 = mul i32 %a, 0		; <i32> [#uses=1]
+	%r_1 = mul i32 %a, 1		; <i32> [#uses=1]
+	%r_2 = mul i32 %a, 2		; <i32> [#uses=1]
+	%r_3 = mul i32 %a, 3		; <i32> [#uses=1]
+	%r_4 = mul i32 %a, 4		; <i32> [#uses=1]
+	%r_5 = mul i32 %a, 5		; <i32> [#uses=1]
+	%r_6 = mul i32 %a, 6		; <i32> [#uses=1]
+	%r_7 = mul i32 %a, 7		; <i32> [#uses=1]
+	%r_8 = mul i32 %a, 8		; <i32> [#uses=1]
+	%r_9 = mul i32 %a, 9		; <i32> [#uses=1]
+	%r_10 = mul i32 %a, 10		; <i32> [#uses=1]
+	%r_11 = mul i32 %a, 11		; <i32> [#uses=1]
+	%r_12 = mul i32 %a, 12		; <i32> [#uses=1]
+	%r_13 = mul i32 %a, 13		; <i32> [#uses=1]
+	%r_14 = mul i32 %a, 14		; <i32> [#uses=1]
+	%r_15 = mul i32 %a, 15		; <i32> [#uses=1]
+	%r_16 = mul i32 %a, 16		; <i32> [#uses=1]
+	%r_17 = mul i32 %a, 17		; <i32> [#uses=1]
+	%r_18 = mul i32 %a, 18		; <i32> [#uses=1]
+	%r_19 = mul i32 %a, 19		; <i32> [#uses=1]
+	call i32 (i8*, ...)* @printf( i8* %a_mul_s, i32 0, i32 %r_0 )		; <i32>:2 [#uses=0]
+	call i32 (i8*, ...)* @printf( i8* %a_mul_s, i32 1, i32 %r_1 )		; <i32>:3 [#uses=0]
+	call i32 (i8*, ...)* @printf( i8* %a_mul_s, i32 2, i32 %r_2 )		; <i32>:4 [#uses=0]
+	call i32 (i8*, ...)* @printf( i8* %a_mul_s, i32 3, i32 %r_3 )		; <i32>:5 [#uses=0]
+	call i32 (i8*, ...)* @printf( i8* %a_mul_s, i32 4, i32 %r_4 )		; <i32>:6 [#uses=0]
+	call i32 (i8*, ...)* @printf( i8* %a_mul_s, i32 5, i32 %r_5 )		; <i32>:7 [#uses=0]
+	call i32 (i8*, ...)* @printf( i8* %a_mul_s, i32 6, i32 %r_6 )		; <i32>:8 [#uses=0]
+	call i32 (i8*, ...)* @printf( i8* %a_mul_s, i32 7, i32 %r_7 )		; <i32>:9 [#uses=0]
+	call i32 (i8*, ...)* @printf( i8* %a_mul_s, i32 8, i32 %r_8 )		; <i32>:10 [#uses=0]
+	call i32 (i8*, ...)* @printf( i8* %a_mul_s, i32 9, i32 %r_9 )		; <i32>:11 [#uses=0]
+	call i32 (i8*, ...)* @printf( i8* %a_mul_s, i32 10, i32 %r_10 )		; <i32>:12 [#uses=0]
+	call i32 (i8*, ...)* @printf( i8* %a_mul_s, i32 11, i32 %r_11 )		; <i32>:13 [#uses=0]
+	call i32 (i8*, ...)* @printf( i8* %a_mul_s, i32 12, i32 %r_12 )		; <i32>:14 [#uses=0]
+	call i32 (i8*, ...)* @printf( i8* %a_mul_s, i32 13, i32 %r_13 )		; <i32>:15 [#uses=0]
+	call i32 (i8*, ...)* @printf( i8* %a_mul_s, i32 14, i32 %r_14 )		; <i32>:16 [#uses=0]
+	call i32 (i8*, ...)* @printf( i8* %a_mul_s, i32 15, i32 %r_15 )		; <i32>:17 [#uses=0]
+	call i32 (i8*, ...)* @printf( i8* %a_mul_s, i32 16, i32 %r_16 )		; <i32>:18 [#uses=0]
+	call i32 (i8*, ...)* @printf( i8* %a_mul_s, i32 17, i32 %r_17 )		; <i32>:19 [#uses=0]
+	call i32 (i8*, ...)* @printf( i8* %a_mul_s, i32 18, i32 %r_18 )		; <i32>:20 [#uses=0]
+	call i32 (i8*, ...)* @printf( i8* %a_mul_s, i32 19, i32 %r_19 )		; <i32>:21 [#uses=0]
+	ret i32 0
 }

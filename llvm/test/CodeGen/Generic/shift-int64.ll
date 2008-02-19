@@ -1,11 +1,12 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc
+; RUN: llvm-as < %s | llc
 
-long %test_imm(long %X) {
-   %Y = shr long %X, ubyte 17 
-   ret long %Y
+define i64 @test_imm(i64 %X) {
+        %Y = ashr i64 %X, 17            ; <i64> [#uses=1]
+        ret i64 %Y
 }
 
-long %test_variable(long %X, ubyte %Amt) {
-   %Y = shr long %X, ubyte %Amt
-   ret long %Y
+define i64 @test_variable(i64 %X, i8 %Amt) {
+        %shift.upgrd.1 = zext i8 %Amt to i64            ; <i64> [#uses=1]
+        %Y = ashr i64 %X, %shift.upgrd.1                ; <i64> [#uses=1]
+        ret i64 %Y
 }

@@ -1,10 +1,7 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=c
+; RUN: llvm-as < %s | llc -march=c
 
-
-
-implementation
-
-void %test() {
-	%X = alloca [4xint]
-	ret void
+define void @test() {
+        %X = alloca [4 x i32]           ; <[4 x i32]*> [#uses=0]
+        ret void
 }
+

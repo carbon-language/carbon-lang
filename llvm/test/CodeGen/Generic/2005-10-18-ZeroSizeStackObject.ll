@@ -1,6 +1,6 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc
+; RUN: llvm-as < %s | llc
 
-void %test() {
-  %X = alloca {}
-  ret void
+define void @test() {
+        %X = alloca {  }                ; <{  }*> [#uses=0]
+        ret void
 }

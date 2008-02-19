@@ -1,12 +1,13 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=c
+; RUN: llvm-as < %s | llc -march=c
+@y = weak global i8 0           ; <i8*> [#uses=1]
 
-%y = weak global sbyte 0
-implementation
-uint %testcaseshr() {
+define i32 @testcaseshr() {
 entry:
-	ret uint shr (uint cast (sbyte* %y to uint), ubyte 4)
+        ret i32 lshr (i32 ptrtoint (i8* @y to i32), i32 4)
 }
-uint %testcaseshl() {
+
+define i32 @testcaseshl() {
 entry:
-	ret uint shl (uint cast (sbyte* %y to uint), ubyte 4)
+        ret i32 shl (i32 ptrtoint (i8* @y to i32), i32 4)
 }
+

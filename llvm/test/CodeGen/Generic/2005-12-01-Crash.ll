@@ -1,23 +1,20 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc
+; RUN: llvm-as < %s | llc
+@str = external global [36 x i8]		; <[36 x i8]*> [#uses=0]
+@str.upgrd.1 = external global [29 x i8]		; <[29 x i8]*> [#uses=0]
+@str1 = external global [29 x i8]		; <[29 x i8]*> [#uses=0]
+@str2 = external global [29 x i8]		; <[29 x i8]*> [#uses=1]
+@str.upgrd.2 = external global [2 x i8]		; <[2 x i8]*> [#uses=0]
+@str3 = external global [2 x i8]		; <[2 x i8]*> [#uses=0]
+@str4 = external global [2 x i8]		; <[2 x i8]*> [#uses=0]
+@str5 = external global [2 x i8]		; <[2 x i8]*> [#uses=0]
 
-%str = external global [36 x sbyte]		; <[36 x sbyte]*> [#uses=0]
-%str = external global [29 x sbyte]		; <[29 x sbyte]*> [#uses=0]
-%str1 = external global [29 x sbyte]		; <[29 x sbyte]*> [#uses=0]
-%str2 = external global [29 x sbyte]		; <[29 x sbyte]*> [#uses=1]
-%str = external global [2 x sbyte]		; <[2 x sbyte]*> [#uses=0]
-%str3 = external global [2 x sbyte]		; <[2 x sbyte]*> [#uses=0]
-%str4 = external global [2 x sbyte]		; <[2 x sbyte]*> [#uses=0]
-%str5 = external global [2 x sbyte]		; <[2 x sbyte]*> [#uses=0]
-
-implementation   ; Functions:
-
-void %printArgsNoRet(int %a1, float %a2, sbyte %a3, double %a4, sbyte* %a5, int %a6, float %a7, sbyte %a8, double %a9, sbyte* %a10, int %a11, float %a12, sbyte %a13, double %a14, sbyte* %a15) {
+define void @printArgsNoRet(i32 %a1, float %a2, i8 %a3, double %a4, i8* %a5, i32 %a6, float %a7, i8 %a8, double %a9, i8* %a10, i32 %a11, float %a12, i8 %a13, double %a14, i8* %a15) {
 entry:
-	%tmp17 = cast sbyte %a13 to int		; <int> [#uses=1]
-	%tmp23 = call int (sbyte*, ...)* %printf( sbyte* getelementptr ([29 x sbyte]* %str2, int 0, uint 0), int %a11, double 0.000000e+00, int %tmp17, double %a14, int 0 )		; <int> [#uses=0]
+	%tmp17 = sext i8 %a13 to i32		; <i32> [#uses=1]
+	%tmp23 = call i32 (i8*, ...)* @printf( i8* getelementptr ([29 x i8]* @str2, i32 0, i64 0), i32 %a11, double 0.000000e+00, i32 %tmp17, double %a14, i32 0 )		; <i32> [#uses=0]
 	ret void
 }
 
-declare int %printf(sbyte*, ...)
+declare i32 @printf(i8*, ...)
 
-declare int %main(int, sbyte**)
+declare i32 @main(i32, i8**)

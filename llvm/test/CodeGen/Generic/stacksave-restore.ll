@@ -1,12 +1,14 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc
+; RUN: llvm-as < %s | llc
 
-declare sbyte* %llvm.stacksave()
-declare void %llvm.stackrestore(sbyte*)
+declare i8* @llvm.stacksave()
 
-int *%test(uint %N) {
-	%tmp = call sbyte* %llvm.stacksave()
-	%P = alloca int, uint %N
-	call void %llvm.stackrestore(sbyte* %tmp)
-	%Q = alloca int, uint %N
-	ret int* %P
+declare void @llvm.stackrestore(i8*)
+
+define i32* @test(i32 %N) {
+        %tmp = call i8* @llvm.stacksave( )              ; <i8*> [#uses=1]
+        %P = alloca i32, i32 %N         ; <i32*> [#uses=1]
+        call void @llvm.stackrestore( i8* %tmp )
+        %Q = alloca i32, i32 %N         ; <i32*> [#uses=0]
+        ret i32* %P
 }
+

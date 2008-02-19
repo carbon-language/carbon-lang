@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade %s | llvm-as | llc
+; RUN: llvm-as < %s | llc
 
 ;; GetMemInstArgs() folded the two getElementPtr instructions together,
 ;; producing an illegal getElementPtr.  That's because the type generated
@@ -10,20 +10,18 @@
 ;; file post_process.c, function build_domain().
 ;; (Modified to replace store with load and return load value.)
 ;; 
+        %Domain = type { i8*, i32, i32*, i32, i32, i32*, %Domain* }
+@domain_array = external global [497 x %Domain]         ; <[497 x %Domain]*> [#uses=2]
 
-%Domain = type { sbyte*, int, int*, int, int, int*, %Domain* }
-%domain_array = uninitialized global [497 x %Domain] 
+declare void @opaque([497 x %Domain]*)
 
-implementation; Functions:
-
-declare void %opaque([497 x %Domain]*)
-
-int %main(int %argc, sbyte** %argv) {
-bb0:					;[#uses=0]
-	call void %opaque([497 x %Domain]* %domain_array)
-	%cann-indvar-idxcast = cast int %argc to long
-        %reg841 = getelementptr [497 x %Domain]* %domain_array, long 0, long %cann-indvar-idxcast, uint 3
-        %reg846 = getelementptr int* %reg841, long 1
-        %reg820 = load int* %reg846
-	ret int %reg820
+define i32 @main(i32 %argc, i8** %argv) {
+bb0:
+        call void @opaque( [497 x %Domain]* @domain_array )
+        %cann-indvar-idxcast = sext i32 %argc to i64            ; <i64> [#uses=1]
+        %reg841 = getelementptr [497 x %Domain]* @domain_array, i64 0, i64 %cann-indvar-idxcast, i32 3          ; <i32*> [#uses=1]
+        %reg846 = getelementptr i32* %reg841, i64 1             ; <i32*> [#uses=1]
+        %reg820 = load i32* %reg846             ; <i32> [#uses=1]
+        ret i32 %reg820
 }
+

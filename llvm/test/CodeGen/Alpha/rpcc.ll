@@ -1,10 +1,9 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep rpcc
+; RUN: llvm-as < %s | llc -march=alpha | grep rpcc
 
-declare ulong %llvm.readcyclecounter()
+declare i64 @llvm.readcyclecounter()
 
-ulong %foo() {
+define i64 @foo() {
 entry:
-%tmp.1 = call ulong %llvm.readcyclecounter ()
-ret ulong %tmp.1
+        %tmp.1 = call i64 @llvm.readcyclecounter( )             ; <i64> [#uses=1]
+        ret i64 %tmp.1
 }
-

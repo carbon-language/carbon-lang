@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc
+; RUN: llvm-as < %s | llc
 
 ;; Date:     Jul 29, 2003.
 ;; From:     test/Programs/MultiSource/Ptrdist-bc
@@ -14,28 +14,27 @@
 ;; 	.ascii	"\000\001\001\001\001\001\001\001\001\002\003\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\002\004\005\001\001\006\a\001\b\t\n\v\f\r\016\017\020\020\020\020\020\020\020\020\020\020\001\021\022\023\024\001\001\025\025\025\025\025\025\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\026\027\030\031\032\001\033\034\035\036\037 !\"#$%&'()*+,-./$0$1$234\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001\001"
 ;;
 
+@yy_ec = internal constant [6 x i8] c"\06\07\01\08\01\09"               ; <[6 x i8]*> [#uses=1]
+@.str_3 = internal constant [8 x i8] c"[%d] = \00"              ; <[8 x i8]*> [#uses=1]
+@.str_4 = internal constant [4 x i8] c"%d\0A\00"                ; <[4 x i8]*> [#uses=1]
 
-%yy_ec = internal constant [6 x sbyte] c"\06\07\01\08\01\09"
+declare i32 @printf(i8*, ...)
 
-%.str_3 = internal constant [8 x sbyte] c"[%d] = \00"
-%.str_4 = internal constant [4 x sbyte] c"%d\0A\00"
-
-implementation
-
-declare int %printf(sbyte*, ...)
-
-int %main() {
+define i32 @main() {
 entry:
-	br label %loopentry
-loopentry:
-	%i = phi long [0, %entry], [%inc.i, %loopentry]
-	%cptr = getelementptr [6 x sbyte]* %yy_ec, long 0, long %i
-	%c = load sbyte* %cptr
-	%ignore = call int (sbyte*, ...)* %printf( sbyte* getelementptr ([8 x sbyte]* %.str_3, long 0, long 0), long %i)
-	%ignore2 = call int (sbyte*, ...)* %printf( sbyte* getelementptr ([4 x sbyte]* %.str_4, long 0, long 0), sbyte %c)
-	%inc.i = add long %i, 1
-	%done = setle long %inc.i, 5
-	br bool %done, label %loopentry, label %exit.1
-exit.1:
-	ret int 0
-};
+        br label %loopentry
+
+loopentry:              ; preds = %loopentry, %entry
+        %i = phi i64 [ 0, %entry ], [ %inc.i, %loopentry ]              ; <i64> [#uses=3]
+        %cptr = getelementptr [6 x i8]* @yy_ec, i64 0, i64 %i           ; <i8*> [#uses=1]
+        %c = load i8* %cptr             ; <i8> [#uses=1]
+        %ignore = call i32 (i8*, ...)* @printf( i8* getelementptr ([8 x i8]* @.str_3, i64 0, i64 0), i64 %i )        ; <i32> [#uses=0]
+        %ignore2 = call i32 (i8*, ...)* @printf( i8* getelementptr ([4 x i8]* @.str_4, i64 0, i64 0), i8 %c )        ; <i32> [#uses=0]
+        %inc.i = add i64 %i, 1          ; <i64> [#uses=2]
+        %done = icmp sle i64 %inc.i, 5          ; <i1> [#uses=1]
+        br i1 %done, label %loopentry, label %exit.1
+
+exit.1:         ; preds = %loopentry
+        ret i32 0
+}
+

@@ -1,6 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=c
+; RUN: llvm-as < %s | llc -march=c
 
 ; The C backend was dying when there was no typename for a struct type!
 
-declare int %test(int,{ [32 x int] }*)
-
+declare i32 @test(i32, { [32 x i32] }*)

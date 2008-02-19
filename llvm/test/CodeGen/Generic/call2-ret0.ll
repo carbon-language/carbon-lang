@@ -1,15 +1,16 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc
+; RUN: llvm-as < %s | llc
 
-int %bar(int %x) {
-  ret int 0
+define i32 @bar(i32 %x) {
+        ret i32 0
 }
 
-int %foo(int %x) {
-  %q = call int %bar(int 1)
-  ret int %q
+define i32 @foo(i32 %x) {
+        %q = call i32 @bar( i32 1 )             ; <i32> [#uses=1]
+        ret i32 %q
 }
 
-int %main() {  
-  %r = call int %foo(int 2) 
-  ret int %r
+define i32 @main() {
+        %r = call i32 @foo( i32 2 )             ; <i32> [#uses=1]
+        ret i32 %r
 }
+

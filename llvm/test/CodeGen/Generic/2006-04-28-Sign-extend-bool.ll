@@ -1,10 +1,9 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc
+; RUN: llvm-as < %s | llc
 
-int %test(int %tmp93) {
-	%tmp98 = shl int %tmp93, ubyte 31		; <int> [#uses=1]
-	%tmp99 = shr int %tmp98, ubyte 31		; <int> [#uses=1]
-	%tmp99 = cast int %tmp99 to sbyte		; <sbyte> [#uses=1]
-	%tmp99100 = cast sbyte %tmp99 to int		; <int> [#uses=1]
-	ret int %tmp99100
+define i32 @test(i32 %tmp93) {
+        %tmp98 = shl i32 %tmp93, 31             ; <i32> [#uses=1]
+        %tmp99 = ashr i32 %tmp98, 31            ; <i32> [#uses=1]
+        %tmp99.upgrd.1 = trunc i32 %tmp99 to i8         ; <i8> [#uses=1]
+        %tmp99100 = sext i8 %tmp99.upgrd.1 to i32               ; <i32> [#uses=1]
+        ret i32 %tmp99100
 }
-

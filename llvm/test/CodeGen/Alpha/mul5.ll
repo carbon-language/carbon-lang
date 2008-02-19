@@ -1,52 +1,53 @@
 ; Make sure this testcase does not use mulq
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | \
+; RUN: llvm-as < %s | llvm-as | llc -march=alpha | \
 ; RUN:   not grep -i mul
 ; XFAIL: *
 
-implementation   ; Functions:
-
-ulong %foo1(ulong %x) {
+define i64 @foo1(i64 %x) {
 entry:
-	%tmp.1 = mul ulong %x, 9		; <ulong> [#uses=1]
-	ret ulong %tmp.1
-}
-ulong %foo3(ulong %x) {
-entry:
-        %tmp.1 = mul ulong %x, 259
-	ret ulong %tmp.1
+        %tmp.1 = mul i64 %x, 9          ; <i64> [#uses=1]
+        ret i64 %tmp.1
 }
 
-ulong %foo4l(ulong %x) {
+define i64 @foo3(i64 %x) {
 entry:
-        %tmp.1 = mul ulong %x, 260
-	ret ulong %tmp.1
+        %tmp.1 = mul i64 %x, 259                ; <i64> [#uses=1]
+        ret i64 %tmp.1
 }
 
-ulong %foo4ln(ulong %x) {
+define i64 @foo4l(i64 %x) {
 entry:
-        %tmp.1 = mul ulong %x, 508
-	ret ulong %tmp.1
-}
-ulong %foo4ln_more(ulong %x) {
-entry:
-        %tmp.1 = mul ulong %x, 252
-	ret ulong %tmp.1
+        %tmp.1 = mul i64 %x, 260                ; <i64> [#uses=1]
+        ret i64 %tmp.1
 }
 
-ulong %foo1n(ulong %x) {
+define i64 @foo4ln(i64 %x) {
 entry:
-        %tmp.1 = mul ulong %x, 511
-	ret ulong %tmp.1
+        %tmp.1 = mul i64 %x, 508                ; <i64> [#uses=1]
+        ret i64 %tmp.1
 }
 
-ulong %foo8l(ulong %x) {
+define i64 @foo4ln_more(i64 %x) {
 entry:
-        %tmp.1 = mul ulong %x, 768
-        ret ulong %tmp.1
+        %tmp.1 = mul i64 %x, 252                ; <i64> [#uses=1]
+        ret i64 %tmp.1
 }
 
-long %bar(long %x) {
+define i64 @foo1n(i64 %x) {
 entry:
-	%tmp.1 = mul long %x, 5		; <long> [#uses=1]
-	ret long %tmp.1
+        %tmp.1 = mul i64 %x, 511                ; <i64> [#uses=1]
+        ret i64 %tmp.1
 }
+
+define i64 @foo8l(i64 %x) {
+entry:
+        %tmp.1 = mul i64 %x, 768                ; <i64> [#uses=1]
+        ret i64 %tmp.1
+}
+
+define i64 @bar(i64 %x) {
+entry:
+        %tmp.1 = mul i64 %x, 5          ; <i64> [#uses=1]
+        ret i64 %tmp.1
+}
+

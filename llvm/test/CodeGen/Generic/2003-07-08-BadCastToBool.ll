@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade %s | llvm-as | llc
+; RUN: llvm-as < %s | llc
 
 ;; Date:     Jul 8, 2003.
 ;; From:     test/Programs/MultiSource/Olden-perimeter
@@ -11,26 +11,24 @@
 ;;	       for bitwise operations but not booleans!  For booleans,
 ;;	       the result has to be compared with 0.
 
-%.str_1 = internal constant [30 x sbyte] c"d = %d, ct = %d, d ^ ct = %d\0A\00"
+@.str_1 = internal constant [30 x i8] c"d = %d, ct = %d, d ^ ct = %d\0A\00"
 
+declare i32 @printf(i8*, ...)
 
-implementation   ; Functions:
-
-declare int %printf(sbyte*, ...)
-
-int %adj(uint %d.1, uint %ct.1) {
+define i32 @adj(i32 %d.1, i32 %ct.1) {
 entry:
-        %tmp.19 = seteq uint %ct.1, 2
-        %tmp.22.not = cast uint %ct.1 to bool
-        %tmp.221 = xor bool %tmp.22.not, true
-        %tmp.26 = or bool %tmp.19, %tmp.221
-        %tmp.27 = cast bool %tmp.26 to int
-        ret int %tmp.27
+        %tmp.19 = icmp eq i32 %ct.1, 2          ; <i1> [#uses=1]
+        %tmp.22.not = trunc i32 %ct.1 to i1              ; <i1> [#uses=1]
+        %tmp.221 = xor i1 %tmp.22.not, true             ; <i1> [#uses=1]
+        %tmp.26 = or i1 %tmp.19, %tmp.221               ; <i1> [#uses=1]
+        %tmp.27 = zext i1 %tmp.26 to i32                ; <i32> [#uses=1]
+        ret i32 %tmp.27
 }
 
-int %main() {
+define i32 @main() {
 entry:
-	%result = call int %adj(uint 3, uint 2)
-	%tmp.0 = call int (sbyte*, ...)* %printf( sbyte* getelementptr ([30 x sbyte]* %.str_1, long 0, long 0), uint 3, uint 2, int %result)
-	ret int 0
+        %result = call i32 @adj( i32 3, i32 2 )         ; <i32> [#uses=1]
+        %tmp.0 = call i32 (i8*, ...)* @printf( i8* getelementptr ([30 x i8]* @.str_1, i64 0, i64 0), i32 3, i32 2, i32 %result )              ; <i32> [#uses=0]
+        ret i32 0
 }
+

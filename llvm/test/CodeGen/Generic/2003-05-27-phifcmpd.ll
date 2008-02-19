@@ -1,18 +1,19 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc
+; RUN: llvm-as < %s | llc
 
-void %QRiterate(int %p.1, double %tmp.212) { 
-entry:          ; No predecessors!
-        %tmp.184 = setgt int %p.1, 0            ; <bool> [#uses=1]
-        br bool %tmp.184, label %shortcirc_next.1, label %shortcirc_done.1
+define void @QRiterate(i32 %p.1, double %tmp.212) {
+entry:
+        %tmp.184 = icmp sgt i32 %p.1, 0         ; <i1> [#uses=1]
+        br i1 %tmp.184, label %shortcirc_next.1, label %shortcirc_done.1
 
-shortcirc_next.1:               ; preds = %entry
-        %tmp.213 = setne double %tmp.212, 0.000000e+00
+shortcirc_next.1:               ; preds = %shortcirc_done.1, %entry
+        %tmp.213 = fcmp une double %tmp.212, 0.000000e+00               ; <i1> [#uses=1]
         br label %shortcirc_done.1
 
-shortcirc_done.1:               ; preds = %entry, %shortcirc_next.1
-        %val.1 = phi bool [ false, %entry ], [ %tmp.213, %shortcirc_next.1 ]
-        br bool %val.1, label %shortcirc_next.1, label %exit.1
+shortcirc_done.1:               ; preds = %shortcirc_next.1, %entry
+        %val.1 = phi i1 [ false, %entry ], [ %tmp.213, %shortcirc_next.1 ]              ; <i1> [#uses=1]
+        br i1 %val.1, label %shortcirc_next.1, label %exit.1
 
-exit.1:
-	ret void
+exit.1:         ; preds = %shortcirc_done.1
+        ret void
 }
+

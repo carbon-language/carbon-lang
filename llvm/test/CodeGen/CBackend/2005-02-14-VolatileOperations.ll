@@ -1,7 +1,8 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=c | grep volatile
+; RUN: llvm-as < %s | llc -march=c | grep volatile
 
-void %test(int* %P) {
-	%X = volatile load int*%P
-	volatile store int %X, int* %P
-	ret void
+define void @test(i32* %P) {
+        %X = volatile load i32* %P              ; <i32> [#uses=1]
+        volatile store i32 %X, i32* %P
+        ret void
 }
+

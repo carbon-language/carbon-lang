@@ -1,10 +1,11 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc
+; RUN: llvm-as < %s | llc
 
-void %foo() {
-  ret void
+define void @foo() {
+        ret void
 }
 
-int %main() {  
-  call void ()* %foo() 
-  ret int 0
+define i32 @main() {
+        call void @foo( )
+        ret i32 0
 }
+

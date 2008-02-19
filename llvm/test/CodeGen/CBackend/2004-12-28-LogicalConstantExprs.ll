@@ -1,5 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=c
+; RUN: llvm-as < %s | llc -march=c
 
-int %foo() {
-  ret int and (int 123456, int cast (int()* %foo to int))
+define i32 @foo() {
+        ret i32 and (i32 123456, i32 ptrtoint (i32 ()* @foo to i32))
 }

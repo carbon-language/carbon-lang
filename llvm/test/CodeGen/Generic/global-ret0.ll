@@ -1,8 +1,8 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc
+; RUN: llvm-as < %s | llc
 
-%g = global int 0
+@g = global i32 0               ; <i32*> [#uses=1]
 
-int %main() {  
-  %h = load int* %g
-  ret int %h
+define i32 @main() {
+        %h = load i32* @g               ; <i32> [#uses=1]
+        ret i32 %h
 }

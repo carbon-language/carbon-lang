@@ -1,24 +1,23 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | not grep cmovlt
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep cmoveq
+; RUN: llvm-as < %s | llc -march=alpha | not grep cmovlt
+; RUN: llvm-as < %s | llc -march=alpha | grep cmoveq
 
-
-long %cmov_lt(long %a, long %c) {
+define i64 @cmov_lt(i64 %a, i64 %c) {
 entry:
-	%tmp.1 = setlt long %c, 0
-	%retval = select bool %tmp.1, long %a, long 10
-	ret long %retval
+        %tmp.1 = icmp slt i64 %c, 0             ; <i1> [#uses=1]
+        %retval = select i1 %tmp.1, i64 %a, i64 10              ; <i64> [#uses=1]
+        ret i64 %retval
 }
 
-long %cmov_const(long %a, long %b, long %c) {
+define i64 @cmov_const(i64 %a, i64 %b, i64 %c) {
 entry:
-        %tmp.1 = setlt long %a, %b
-        %retval = select bool %tmp.1, long %c, long 10
-        ret long %retval
+        %tmp.1 = icmp slt i64 %a, %b            ; <i1> [#uses=1]
+        %retval = select i1 %tmp.1, i64 %c, i64 10              ; <i64> [#uses=1]
+        ret i64 %retval
 }
 
-long %cmov_lt2(long %a, long %c) {
+define i64 @cmov_lt2(i64 %a, i64 %c) {
 entry:
-	%tmp.1 = setgt long %c, 0
-	%retval = select bool %tmp.1, long 10, long %a
-	ret long %retval
+        %tmp.1 = icmp sgt i64 %c, 0             ; <i1> [#uses=1]
+        %retval = select i1 %tmp.1, i64 10, i64 %a              ; <i64> [#uses=1]
+        ret i64 %retval
 }

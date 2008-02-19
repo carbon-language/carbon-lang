@@ -1,9 +1,10 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=c | grep {\\* *volatile *\\*}
+; RUN: llvm-as < %s | llc -march=c | grep {\\* *volatile *\\*}
 
-%G = external global void()*
+@G = external global void ()*           ; <void ()**> [#uses=2]
 
-void %test() {
-	volatile store void()* %test, void()** %G
-	volatile load void()** %G
-	ret void
+define void @test() {
+        volatile store void ()* @test, void ()** @G
+        volatile load void ()** @G              ; <void ()*>:1 [#uses=0]
+        ret void
 }
+

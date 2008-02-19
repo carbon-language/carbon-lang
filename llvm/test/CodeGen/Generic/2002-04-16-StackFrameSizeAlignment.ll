@@ -1,18 +1,14 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc
+; RUN: llvm-as < %s | llc
 
 ; Compiling this file produces:
 ; Sparc.cpp:91: failed assertion `(offset - OFFSET) % getStackFrameSizeAlignment() == 0'
 ;
-implementation
+declare i32 @SIM(i8*, i8*, i32, i32, i32, [256 x i32]*, i32, i32, i32)
 
-declare int "SIM"(sbyte* %A, sbyte* %B, int %M, int %N, int %K, [256 x int]* %V, int %Q, int %R, int %nseq)
-
-void "foo"()
-begin
-bb0:					;[#uses=0]
-	%V = alloca [256 x int], uint 256		; <[256 x int]*> [#uses=1]
-	call int %SIM( sbyte* null, sbyte* null, int 0, int 0, int 0, [256 x int]* %V, int 0, int 0, int 2 )		; <int>:0 [#uses=0]
-	ret void
-end
-
+define void @foo() {
+bb0:
+        %V = alloca [256 x i32], i32 256                ; <[256 x i32]*> [#uses=1]
+        call i32 @SIM( i8* null, i8* null, i32 0, i32 0, i32 0, [256 x i32]* %V, i32 0, i32 0, i32 2 )          ; <i32>:0 [#uses=0]
+        ret void
+}
 

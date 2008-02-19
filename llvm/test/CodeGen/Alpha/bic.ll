@@ -1,11 +1,9 @@
 ; Make sure this testcase codegens to the bic instruction
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep {bic}
+; RUN: llvm-as < %s | llc -march=alpha | grep {bic}
 
-implementation   ; Functions:
-
-long %bar(long %x, long %y) {
+define i64 @bar(i64 %x, i64 %y) {
 entry:
-	%tmp.1 = xor long %x, -1  		; <long> [#uses=1]
-        %tmp.2 = and long %y, %tmp.1
-	ret long %tmp.2
+        %tmp.1 = xor i64 %x, -1         ; <i64> [#uses=1]
+        %tmp.2 = and i64 %y, %tmp.1             ; <i64> [#uses=1]
+        ret i64 %tmp.2
 }

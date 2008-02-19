@@ -1,5 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=c
+; RUN: llvm-as < %s | llc -march=c
 
-%JNIEnv = type %struct.JNINa*
-%struct.JNINa = type { sbyte*, sbyte*, sbyte*, void (%JNIEnv*)* }
+        %JNIEnv = type %struct.JNINa*
+        %struct.JNINa = type { i8*, i8*, i8*, void (%JNIEnv*)* }
 

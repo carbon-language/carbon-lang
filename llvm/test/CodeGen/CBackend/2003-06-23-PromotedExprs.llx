@@ -1,16 +1,17 @@
 
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=c > %t1.cbe.c
+; RUN: llvm-as < %s | llc -march=c > %t1.cbe.c
 ; RUN: gcc -B/usr/bin/ %t1.cbe.c -o %t1.cbe
 ; RUN: ./%t1.cbe
 
-bool %doTest(ubyte %x) {
-	%dec.0 = add ubyte %x, 255
-    %tmp.1001 = trunc ubyte %dec.0 to bool
-    ret bool %tmp.1001
+define i1 @doTest(i8 %x) {
+        %dec.0 = add i8 %x, -1          ; <i8> [#uses=1]
+        %tmp.1001 = trunc i8 %dec.0 to i1               ; <i1> [#uses=1]
+        ret i1 %tmp.1001
 }
 
-int %main () {
-    %result = call bool %doTest(ubyte 1)
-    %p = cast bool %result to int
-    ret int %p
+define i32 @main() {
+        %result = call i1 @doTest( i8 1 )               ; <i1> [#uses=1]
+        %p = zext i1 %result to i32             ; <i32> [#uses=1]
+        ret i32 %p
 }
+

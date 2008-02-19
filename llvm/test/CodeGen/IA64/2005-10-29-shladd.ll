@@ -1,11 +1,9 @@
 ; this should turn into shladd 
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ia64 | grep shladd
+; RUN: llvm-as < %s | llc -march=ia64 | grep shladd
 
-implementation   ; Functions:
-
-long %bogglesmoggle(long %X, long %Y) {
-	%A = shl long %X, ubyte 3
-	%B = add long %A, %Y 
-        ret long %B
+define i64 @bogglesmoggle(i64 %X, i64 %Y) {
+        %A = shl i64 %X, 3              ; <i64> [#uses=1]
+        %B = add i64 %A, %Y             ; <i64> [#uses=1]
+        ret i64 %B
 }
 

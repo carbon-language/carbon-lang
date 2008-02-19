@@ -1,15 +1,15 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep zapnot
+; RUN: llvm-as < %s | llc -march=alpha | grep zapnot
 
 ;demanded bits mess up this mask in a hard to fix way
-;ulong %foo(ulong %y) {
-;        %tmp = and ulong %y,  65535
-;        %tmp2 = shr ulong %tmp,  ubyte 3
-;        ret ulong %tmp2
+;define i64 @foo(i64 %y) {
+;        %tmp = and i64 %y,  65535
+;        %tmp2 = shr i64 %tmp,  i8 3
+;        ret i64 %tmp2
 ;}
 
-ulong %foo2(ulong %y) {
-        %tmp = shr ulong %y, ubyte 3            ; <ulong> [#uses=1]
-        %tmp2 = and ulong %tmp, 8191            ; <ulong> [#uses=1]
-        ret ulong %tmp2
+define i64 @foo2(i64 %y) {
+        %tmp = lshr i64 %y, 3           ; <i64> [#uses=1]
+        %tmp2 = and i64 %tmp, 8191              ; <i64> [#uses=1]
+        ret i64 %tmp2
 }
 

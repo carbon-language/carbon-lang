@@ -1,10 +1,10 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -fast
+; RUN: llvm-as < %s | llc -fast
 
-float %test(uint %tmp12771278) {
-        switch uint %tmp12771278, label %bb1279 [
+define float @test(i32 %tmp12771278) {
+        switch i32 %tmp12771278, label %bb1279 [
         ]
 
-bb1279:         ; preds = %cond_next1272
-        ret float 1.0
+bb1279:         ; preds = %0
+        ret float 1.000000e+00
 }
 

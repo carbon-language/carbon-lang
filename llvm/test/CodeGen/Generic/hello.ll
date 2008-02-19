@@ -1,11 +1,11 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc
+; RUN: llvm-as < %s | llc
 
-%.str_1 = internal constant [7 x sbyte] c"hello\0A\00"
+@.str_1 = internal constant [7 x i8] c"hello\0A\00"             ; <[7 x i8]*> [#uses=1]
 
-declare int %printf(sbyte*, ...)
+declare i32 @printf(i8*, ...)
 
-int %main() {  
-  %s = getelementptr [7 x sbyte]* %.str_1, long 0, long 0
-  call int (sbyte*, ...)* %printf(sbyte* %s)
-  ret int 0
+define i32 @main() {
+        %s = getelementptr [7 x i8]* @.str_1, i64 0, i64 0              ; <i8*> [#uses=1]
+        call i32 (i8*, ...)* @printf( i8* %s )          ; <i32>:1 [#uses=0]
+        ret i32 0
 }

@@ -1,5 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc
+; RUN: llvm-as < %s | llc
 
-int %main() {  
-  ret int 0
+define i32 @main() {  
+  ret i32 0
 }

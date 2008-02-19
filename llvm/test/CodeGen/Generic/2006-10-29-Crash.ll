@@ -1,21 +1,22 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc
+; RUN: llvm-as < %s | llc
 
-void %form_component_prediction(int %dy) {
+define void @form_component_prediction(i32 %dy) {
 entry:
-	%tmp7 = and int %dy, 1		; <int> [#uses=1]
-	%tmp27 = seteq int %tmp7, 0		; <bool> [#uses=1]
-	br bool false, label %cond_next30, label %bb115
+        %tmp7 = and i32 %dy, 1          ; <i32> [#uses=1]
+        %tmp27 = icmp eq i32 %tmp7, 0           ; <i1> [#uses=1]
+        br i1 false, label %cond_next30, label %bb115
 
-cond_next30:		; preds = %entry
-	ret void
+cond_next30:            ; preds = %entry
+        ret void
 
-bb115:		; preds = %entry
-	%bothcond1 = or bool %tmp27, false		; <bool> [#uses=1]
-	br bool %bothcond1, label %bb228, label %cond_next125
+bb115:          ; preds = %entry
+        %bothcond1 = or i1 %tmp27, false                ; <i1> [#uses=1]
+        br i1 %bothcond1, label %bb228, label %cond_next125
 
-cond_next125:		; preds = %bb115
-	ret void
+cond_next125:           ; preds = %bb115
+        ret void
 
-bb228:		; preds = %bb115
-	ret void
+bb228:          ; preds = %bb115
+        ret void
 }
+

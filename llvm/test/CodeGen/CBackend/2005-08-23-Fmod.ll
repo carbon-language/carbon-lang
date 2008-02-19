@@ -1,6 +1,7 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=c | grep fmod
+; RUN: llvm-as < %s | llc -march=c | grep fmod
 
-double %test(double %A, double %B) {
-	%C = rem double %A, %B
-	ret double %C
+define double @test(double %A, double %B) {
+        %C = frem double %A, %B         ; <double> [#uses=1]
+        ret double %C
 }
+

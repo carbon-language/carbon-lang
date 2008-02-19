@@ -1,5 +1,6 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc
-double %test(bool %X) {
-        %Y = cast bool %X to double
+; RUN: llvm-as < %s | llc
+define double @test(i1 %X) {
+        %Y = uitofp i1 %X to double             ; <double> [#uses=1]
         ret double %Y
 }
+

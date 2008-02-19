@@ -1,9 +1,9 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=c
+; RUN: llvm-as < %s | llc -march=c
 
+%X = type { i32, float }
 
-%X = type { int, float }
-
-void %test() {
-  getelementptr %X* null, long 0, uint 1
-  ret void
+define void @test() {
+        getelementptr %X* null, i64 0, i32 1            ; <float*>:1 [#uses=0]
+        ret void
 }
+

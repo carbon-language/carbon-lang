@@ -1,6 +1,8 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=c
+; RUN: llvm-as < %s | llc -march=c
 
+%A = type { i32, i8*, { i32, i32, i32, i32, i32, i32, i32, i32 }*, i16 }
 
-%A = type { uint, sbyte*, { uint, uint, uint, uint, uint, uint, uint, uint }*, ushort }
+define void @test(%A*) {
+        ret void
+}
 
-void %test(%A *) { ret void }

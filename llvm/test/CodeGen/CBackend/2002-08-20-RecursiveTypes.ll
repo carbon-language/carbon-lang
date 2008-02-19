@@ -1,4 +1,3 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=c
+; RUN: llvm-as < %s | llc -march=c
 
-%MyIntList = uninitialized global { \2 *, int }
-
+@MyIntList = external global { \2*, i32 }

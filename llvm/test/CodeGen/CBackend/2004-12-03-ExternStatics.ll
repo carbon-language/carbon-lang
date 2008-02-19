@@ -1,12 +1,10 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=c | not grep extern.*msg
+; RUN: llvm-as < %s | llc -march=c | not grep extern.*msg
+; PR472
 
-; This is PR472
+@msg = internal global [6 x i8] c"hello\00"             ; <[6 x i8]*> [#uses=1]
 
-%msg = internal global [6 x sbyte] c"hello\00"
-
-implementation   ; Functions:
-
-sbyte* %foo() {
+define i8* @foo() {
 entry:
-	ret sbyte* getelementptr ([6 x sbyte]* %msg, int 0, int 0)
+        ret i8* getelementptr ([6 x i8]* @msg, i32 0, i32 0)
 }
+

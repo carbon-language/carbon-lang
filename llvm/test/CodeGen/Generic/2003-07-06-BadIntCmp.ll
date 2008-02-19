@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc
+; RUN: llvm-as < %s | llc
 
 ;; Date: May 28, 2003.
 ;; From: test/Programs/MultiSource/Olden-perimeter/maketree.c
@@ -12,41 +12,40 @@
 ;;        is wrong because the value being compared (int euclid = x*x + y*y)
 ;;	  overflows, so that the 64-bit and 32-bit compares are not equal.
 
-%.str_1 = internal constant [6 x sbyte] c"true\0A\00"
-%.str_2 = internal constant [7 x sbyte] c"false\0A\00"
+@.str_1 = internal constant [6 x i8] c"true\0A\00"              ; <[6 x i8]*> [#uses=1]
+@.str_2 = internal constant [7 x i8] c"false\0A\00"             ; <[7 x i8]*> [#uses=1]
 
-implementation   ; Functions:
+declare i32 @printf(i8*, ...)
 
-declare int %printf(sbyte*, ...)
-
-internal void %__main() {
-entry:		; No predecessors!
-	ret void
+define internal void @__main() {
+entry:
+        ret void
 }
 
-internal void %CheckOutside(int %x.1, int %y.1) {
-entry:		; No predecessors!
-	%tmp.2 = mul int %x.1, %x.1		; <int> [#uses=1]
-	%tmp.5 = mul int %y.1, %y.1		; <int> [#uses=1]
-	%tmp.6 = add int %tmp.2, %tmp.5		; <int> [#uses=1]
-	%tmp.8 = setle int %tmp.6, 4194304		; <bool> [#uses=1]
-	br bool %tmp.8, label %then, label %else
+define internal void @CheckOutside(i32 %x.1, i32 %y.1) {
+entry:
+        %tmp.2 = mul i32 %x.1, %x.1             ; <i32> [#uses=1]
+        %tmp.5 = mul i32 %y.1, %y.1             ; <i32> [#uses=1]
+        %tmp.6 = add i32 %tmp.2, %tmp.5         ; <i32> [#uses=1]
+        %tmp.8 = icmp sle i32 %tmp.6, 4194304           ; <i1> [#uses=1]
+        br i1 %tmp.8, label %then, label %else
 
-then:		; preds = %entry
-	%tmp.11 = call int (sbyte*, ...)* %printf( sbyte* getelementptr ([6 x sbyte]* %.str_1, long 0, long 0) )		; <int> [#uses=0]
-	br label %UnifiedExitNode
+then:           ; preds = %entry
+        %tmp.11 = call i32 (i8*, ...)* @printf( i8* getelementptr ([6 x i8]* @.str_1, i64 0, i64 0) )           ; <i32> [#uses=0]
+        br label %UnifiedExitNode
 
-else:		; preds = %entry
-	%tmp.13 = call int (sbyte*, ...)* %printf( sbyte* getelementptr ([7 x sbyte]* %.str_2, long 0, long 0) )		; <int> [#uses=0]
-	br label %UnifiedExitNode
+else:           ; preds = %entry
+        %tmp.13 = call i32 (i8*, ...)* @printf( i8* getelementptr ([7 x i8]* @.str_2, i64 0, i64 0) )           ; <i32> [#uses=0]
+        br label %UnifiedExitNode
 
-UnifiedExitNode:		; preds = %then, %else
-	ret void
+UnifiedExitNode:                ; preds = %else, %then
+        ret void
 }
 
-int %main() {
-entry:		; No predecessors!
-	call void %__main( )
-	call void %CheckOutside( int 2097152, int 2097152 )
-	ret int 0
+define i32 @main() {
+entry:
+        call void @__main( )
+        call void @CheckOutside( i32 2097152, i32 2097152 )
+        ret i32 0
 }
+

@@ -1,19 +1,17 @@
 ; There should be exactly two calls here (memset and malloc), no more.
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep jsr | count 2
+; RUN: llvm-as < %s | llc -march=alpha | grep jsr | count 2
 
 %typedef.bc_struct = type opaque
+declare void @llvm.memset.i64(i8*, i8, i64, i32)
 
-implementation   ; Functions:
-
-declare void %llvm.memset.i64(sbyte*, ubyte, ulong, uint)
-
-bool %l12_l94_bc_divide_endif_2E_3_2E_ce(int* %tmp.71.reload, uint %scale2.1.3, uint %extra.0, %typedef.bc_struct* %n1, %typedef.bc_struct* %n2, int* %tmp.92.reload, uint %tmp.94.reload, int* %tmp.98.reload, uint %tmp.100.reload, sbyte** %tmp.112.out, uint* %tmp.157.out, sbyte** %tmp.158.out) {
+define i1 @l12_l94_bc_divide_endif_2E_3_2E_ce(i32* %tmp.71.reload, i32 %scale2.1.3, i32 %extra.0, %typedef.bc_struct* %n1, %typedef.bc_struct* %n2, i32* %tmp.92.reload, i32 %tmp.94.reload, i32* %tmp.98.reload, i32 %tmp.100.reload, i8** %tmp.112.out, i32* %tmp.157.out, i8** %tmp.158.out) {
 newFuncRoot:
-	%tmp.120 = add uint %extra.0, 2		; <uint> [#uses=1]
-	%tmp.122 = add uint %tmp.120, %tmp.94.reload		; <uint> [#uses=1]
-	%tmp.123 = add uint %tmp.122, %tmp.100.reload		; <uint> [#uses=2]
-	%tmp.112 = malloc sbyte, uint %tmp.123		; <sbyte*> [#uses=3]
-	%tmp.137 = cast uint %tmp.123 to ulong		; <ulong> [#uses=1]
-	tail call void %llvm.memset.i64( sbyte* %tmp.112, ubyte 0, ulong %tmp.137, uint 0 )
-	ret bool true
+        %tmp.120 = add i32 %extra.0, 2          ; <i32> [#uses=1]
+        %tmp.122 = add i32 %tmp.120, %tmp.94.reload             ; <i32> [#uses=1]
+        %tmp.123 = add i32 %tmp.122, %tmp.100.reload            ; <i32> [#uses=2]
+        %tmp.112 = malloc i8, i32 %tmp.123              ; <i8*> [#uses=1]
+        %tmp.137 = zext i32 %tmp.123 to i64             ; <i64> [#uses=1]
+        tail call void @llvm.memset.i64( i8* %tmp.112, i8 0, i64 %tmp.137, i32 0 )
+        ret i1 true
 }
+

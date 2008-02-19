@@ -1,10 +1,9 @@
 ; Make sure this testcase codegens to the zapnot instruction
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep zapnot
+; RUN: llvm-as < %s | llc -march=alpha | grep zapnot
 
-implementation   ; Functions:
-
-long %bar(long %x) {
+define i64 @bar(i64 %x) {
 entry:
-	%tmp.1 = and long %x, 16711935 		; <long> [#uses=1]
-	ret long %tmp.1
+        %tmp.1 = and i64 %x, 16711935           ; <i64> [#uses=1]
+        ret i64 %tmp.1
 }
+

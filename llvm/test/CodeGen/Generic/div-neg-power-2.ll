@@ -1,6 +1,7 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc
+; RUN: llvm-as < %s | llc
 
-int %test(int %X) {
-  %Y = div int %X, -2
-  ret int %Y
+define i32 @test(i32 %X) {
+        %Y = sdiv i32 %X, -2            ; <i32> [#uses=1]
+        ret i32 %Y
 }
+

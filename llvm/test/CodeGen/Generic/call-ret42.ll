@@ -1,10 +1,10 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc
+; RUN: llvm-as < %s | llc
 
-int %foo(int %x) {
-  ret int 42
+define i32 @foo(i32 %x) {
+        ret i32 42
 }
 
-int %main() {  
-  %r = call int %foo(int 15) 
-  ret int %r
+define i32 @main() {
+        %r = call i32 @foo( i32 15 )            ; <i32> [#uses=1]
+        ret i32 %r
 }

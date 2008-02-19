@@ -1,36 +1,34 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha
+; RUN: llvm-as < %s | llc -march=alpha
 
-target endian = little
-target pointersize = 64
+target datalayout = "e-p:64:64"
 target triple = "alphaev67-unknown-linux-gnu"
-	%llvm.dbg.compile_unit.type = type { uint, {  }*, uint, uint, sbyte*, sbyte*, sbyte* }
-	%struct._Callback_list = type { %struct._Callback_list*, void (uint, %struct.ios_base*, int)*, int, int }
-	%struct._Impl = type { int, %struct.facet**, ulong, %struct.facet**, sbyte** }
-	%struct._Words = type { sbyte*, long }
-	"struct.__codecvt_abstract_base<char,char,__mbstate_t>" = type { %struct.facet }
-	"struct.basic_streambuf<char,std::char_traits<char> >" = type { int (...)**, sbyte*, sbyte*, sbyte*, sbyte*, sbyte*, sbyte*, %struct.locale }
-	%struct.facet = type { int (...)**, int }
-	%struct.ios_base = type { int (...)**, long, long, uint, uint, uint, %struct._Callback_list*, %struct._Words, [8 x %struct._Words], int, %struct._Words*, %struct.locale }
-	%struct.locale = type { %struct._Impl* }
-	"struct.ostreambuf_iterator<char,std::char_traits<char> >" = type { "struct.basic_streambuf<char,std::char_traits<char> >"*, bool }
-%llvm.dbg.compile_unit1047 = external global %llvm.dbg.compile_unit.type		; <%llvm.dbg.compile_unit.type*> [#uses=1]
+        %llvm.dbg.compile_unit.type = type { i32, {  }*, i32, i32, i8*, i8*, i8* }
+        %struct._Callback_list = type { %struct._Callback_list*, void (i32, %struct.ios_base*, i32)*, i32, i32 }
+        %struct._Impl = type { i32, %struct.facet**, i64, %struct.facet**, i8** }
+        %struct._Words = type { i8*, i64 }
+        %"struct.__codecvt_abstract_base<char,char,__mbstate_t>" = type { %struct.facet }
+        %"struct.basic_streambuf<char,std::char_traits<char> >" = type { i32 (...)**, i8*, i8*, i8*, i8*, i8*, i8*, %struct.locale }
+        %struct.facet = type { i32 (...)**, i32 }
+        %struct.ios_base = type { i32 (...)**, i64, i64, i32, i32, i32, %struct._Callback_list*, %struct._Words, [8 x %struct._Words], i32, %struct._Words*, %struct.locale }
+        %struct.locale = type { %struct._Impl* }
+        %"struct.ostreambuf_iterator<char,std::char_traits<char> >" = type { %"struct.basic_streambuf<char,std::char_traits<char> >"*, i1 }
+@llvm.dbg.compile_unit1047 = external global %llvm.dbg.compile_unit.type          ; <%llvm.dbg.compile_unit.type*> [#uses=1]
 
-implementation   ; Functions:
-
-void %_ZNKSt7num_putIcSt19ostreambuf_iteratorIcSt11char_traitsIcEEE15_M_insert_floatIdEES3_S3_RSt8ios_baseccT_() {
+define void @_ZNKSt7num_putIcSt19ostreambuf_iteratorIcSt11char_traitsIcEEE15_M_insert_floatIdEES3_S3_RSt8ios_baseccT_() {
 entry:
-	%tmp234 = seteq sbyte 0, 0		; <bool> [#uses=1]
-	br bool %tmp234, label %cond_next243, label %cond_true235
+        %tmp234 = icmp eq i8 0, 0               ; <i1> [#uses=1]
+        br i1 %tmp234, label %cond_next243, label %cond_true235
 
-cond_true235:		; preds = %entry
-	ret void
+cond_true235:           ; preds = %entry
+        ret void
 
-cond_next243:		; preds = %entry
-	%tmp428 = load long* null		; <long> [#uses=1]
-	%tmp428 = cast long %tmp428 to uint		; <uint> [#uses=1]
-	%tmp429 = alloca sbyte, uint %tmp428		; <sbyte*> [#uses=0]
-	call void %llvm.dbg.stoppoint( uint 1146, uint 0, {  }* cast (%llvm.dbg.compile_unit.type* %llvm.dbg.compile_unit1047 to {  }*) )
-	unreachable
+cond_next243:           ; preds = %entry
+        %tmp428 = load i64* null                ; <i64> [#uses=1]
+        %tmp428.upgrd.1 = trunc i64 %tmp428 to i32              ; <i32> [#uses=1]
+        %tmp429 = alloca i8, i32 %tmp428.upgrd.1                ; <i8*> [#uses=0]
+        call void @llvm.dbg.stoppoint( i32 1146, i32 0, {  }* bitcast (%llvm.dbg.compile_unit.type* @llvm.dbg.compile_unit1047 to {  }*) )
+        unreachable
 }
 
-declare void %llvm.dbg.stoppoint(uint, uint, {  }*)
+declare void @llvm.dbg.stoppoint(i32, i32, {  }*)
+

@@ -1,7 +1,8 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=c
+; RUN: llvm-as < %s | llc -march=c
 
 ; Apparently this constant was unsigned in ISO C 90, but not in C 99.
 
-int %foo() {
-	ret int -2147483648
+define i32 @foo() {
+        ret i32 -2147483648
 }
+

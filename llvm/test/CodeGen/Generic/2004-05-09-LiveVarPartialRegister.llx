@@ -1,15 +1,13 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc
+; RUN: llvm-as < %s | llc
+@global_long_1 = linkonce global i64 7          ; <i64*> [#uses=1]
+@global_long_2 = linkonce global i64 49         ; <i64*> [#uses=1]
 
-%global_long_1 = linkonce global long 7
-%global_long_2 = linkonce global long 49
-
-implementation   ; Functions:
-
-int %main() {
-        %l1 = load long* %global_long_1
-        %l2 = load long* %global_long_2
-        %cond = setle long %l1, %l2
-        %cast2 = cast bool %cond to int
-	%RV = sub int 1, %cast2
-        ret int %RV
+define i32 @main() {
+        %l1 = load i64* @global_long_1          ; <i64> [#uses=1]
+        %l2 = load i64* @global_long_2          ; <i64> [#uses=1]
+        %cond = icmp sle i64 %l1, %l2           ; <i1> [#uses=1]
+        %cast2 = zext i1 %cond to i32           ; <i32> [#uses=1]
+        %RV = sub i32 1, %cast2         ; <i32> [#uses=1]
+        ret i32 %RV
 }
+

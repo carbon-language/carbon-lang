@@ -1,13 +1,17 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -enable-correct-eh-support
+; RUN: llvm-as < %s | llc -enable-correct-eh-support
 
-int %test() {
-  unwind
+define i32 @test() {
+        unwind
 }
 
-int %main() {
-	%X = invoke int %test() to label %cont except label %EH
-cont:
-	ret int 1
-EH:
-	ret int 0
+define i32 @main() {
+        %X = invoke i32 @test( )
+                        to label %cont unwind label %EH         ; <i32> [#uses=0]
+
+cont:           ; preds = %0
+        ret i32 1
+
+EH:             ; preds = %0
+        ret i32 0
 }
+

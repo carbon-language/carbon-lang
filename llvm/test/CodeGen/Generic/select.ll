@@ -1,43 +1,35 @@
-; RUN: llvm-upgrade %s | llvm-as | llc
+; RUN: llvm-as < %s | llc
 
-%AConst    = constant int 123
-
-%Domain = type { sbyte*, int, int*, int, int, int*, %Domain* }
-
-implementation
+%Domain = type { i8*, i32, i32*, i32, i32, i32*, %Domain* }
+@AConst = constant i32 123              ; <i32*> [#uses=1]
 
 ; Test setting values of different constants in registers.
 ; 
-void "testConsts"(int %N, float %X)
-begin
-; <label>:0
-	%a = add int %N, 1		; 1 should be put in immed field
-	%i = add int %N, 12345678	; constant has to be loaded
-	%b = add short 4, 3		; one of the operands shd be immed
-	%c = add float %X, 0.0		; will this be optimzzed?
-	%d = add float %X, 0x400921CAC0000000	; constant has to be loaded
-	%f = add uint 4294967295, 10    ; result shd be  9   (not in immed fld)
-	%g = add ushort 20, 65535	; result shd be 19 (65536 in immed fld)
-	%j = add ushort 65535, 30	; result shd be 29   (not in immed fld)
-	%h = add ubyte  40, 255		; result shd be 39   (255 in immed fld)
-	%k = add ubyte  255, 50		; result shd be 49   (not in immed fld)
-	
-	ret void
-end
+define void @testConsts(i32 %N, float %X) {
+        %a = add i32 %N, 1              ; <i32> [#uses=0]
+        %i = add i32 %N, 12345678               ; <i32> [#uses=0]
+        %b = add i16 4, 3               ; <i16> [#uses=0]
+        %c = add float %X, 0.000000e+00         ; <float> [#uses=0]
+        %d = add float %X, 0x400921CAC0000000           ; <float> [#uses=0]
+        %f = add i32 -1, 10             ; <i32> [#uses=0]
+        %g = add i16 20, -1             ; <i16> [#uses=0]
+        %j = add i16 -1, 30             ; <i16> [#uses=0]
+        %h = add i8 40, -1              ; <i8> [#uses=0]
+        %k = add i8 -1, 50              ; <i8> [#uses=0]
+        ret void
+}
 
 ; A SetCC whose result is used should produce instructions to
 ; compute the boolean value in a register.  One whose result
 ; is unused will only generate the condition code but not
 ; the boolean result.
 ; 
-void "unusedBool"(int * %x, int * %y)
-begin
-; <label>:0				;		[#uses=0]
-	seteq int * %x, %y		; <bool>:0	[#uses=1]
-	xor bool %0, true		; <bool>:1	[#uses=0]
-	setne int * %x, %y		; <bool>:2	[#uses=0]
-	ret void
-end
+define void @unusedBool(i32* %x, i32* %y) {
+        icmp eq i32* %x, %y             ; <i1>:1 [#uses=1]
+        xor i1 %1, true         ; <i1>:2 [#uses=0]
+        icmp ne i32* %x, %y             ; <i1>:3 [#uses=0]
+        ret void
+}
 
 ; A constant argument to a Phi produces a Cast instruction in the
 ; corresponding predecessor basic block.  This checks a few things:
@@ -47,19 +39,20 @@ end
 ; -- use of immediate fields for integral constants of different sizes
 ; -- branch on a constant condition
 ; 
-void "mergeConstants"(int * %x, int * %y)
-begin
+define void @mergeConstants(i32* %x, i32* %y) {
 ; <label>:0
-	br label %Top
-Top:
-	phi int    [ 0,    %0 ], [ 1,    %Top ], [ 524288, %Next ]
-	phi float  [ 0.0,  %0 ], [ 1.0,  %Top ], [ 2.0,    %Next ]
-	phi double [ 0.5,  %0 ], [ 1.5,  %Top ], [ 2.5,    %Next ]
-	phi bool   [ true, %0 ], [ false,%Top ], [ true,   %Next ]
-	br bool true, label %Top, label %Next
-Next:
-	br label %Top
-end
+        br label %Top
+
+Top:            ; preds = %Next, %Top, %0
+        phi i32 [ 0, %0 ], [ 1, %Top ], [ 524288, %Next ]               ; <i32>:1 [#uses=0]
+        phi float [ 0.000000e+00, %0 ], [ 1.000000e+00, %Top ], [ 2.000000e+00, %Next ]         ; <float>:2 [#uses=0]
+        phi double [ 5.000000e-01, %0 ], [ 1.500000e+00, %Top ], [ 2.500000e+00, %Next ]         
+        phi i1 [ true, %0 ], [ false, %Top ], [ true, %Next ]           ; <i1>:4 [#uses=0]
+        br i1 true, label %Top, label %Next
+
+Next:           ; preds = %Top
+        br label %Top
+}
 
 
 
@@ -72,85 +65,76 @@ end
 ;    use but has to be loaded into a virtual register so that the reg.
 ;    allocator can allocate the appropriate phys. reg. for it
 ;  
-int* "castconst"(float)
-begin
-; <label>:0
-	%castbig   = cast ulong 99999999 to int
-	%castsmall = cast ulong 1        to int
-	%usebig    = add int %castbig, %castsmall
-		
-	%castglob = cast int* %AConst to long*
-	%dummyl   = load long* %castglob
-	
-	%castnull = cast ulong 0 to int*
-	ret int* %castnull
-end
-
-
+define i32* @castconst(float) {
+        %castbig = trunc i64 99999999 to i32            ; <i32> [#uses=1]
+        %castsmall = trunc i64 1 to i32         ; <i32> [#uses=1]
+        %usebig = add i32 %castbig, %castsmall          ; <i32> [#uses=0]
+        %castglob = bitcast i32* @AConst to i64*                ; <i64*> [#uses=1]
+        %dummyl = load i64* %castglob           ; <i64> [#uses=0]
+        %castnull = inttoptr i64 0 to i32*              ; <i32*> [#uses=1]
+        ret i32* %castnull
+}
 
 ; Test branch-on-comparison-with-zero, in two ways:
 ; 1. can be folded
 ; 2. cannot be folded because result of comparison is used twice
 ;
-void "testbool"(int %A, int %B) {
-	br label %Top
-Top:
-	%D = add int %A, %B
-	%E = sub int %D, -4
-	%C = setle int %E, 0
-	br bool %C, label %retlbl, label %loop
+define void @testbool(i32 %A, i32 %B) {
+        br label %Top
 
-loop:
-	%F = add int %A, %B
-	%G = sub int %D, -4
-	%D = setle int %G, 0
-	%E = xor bool %D, true
-	br bool %E, label %loop, label %Top
+Top:            ; preds = %loop, %0
+        %D = add i32 %A, %B             ; <i32> [#uses=2]
+        %E = sub i32 %D, -4             ; <i32> [#uses=1]
+        %C = icmp sle i32 %E, 0         ; <i1> [#uses=1]
+        br i1 %C, label %retlbl, label %loop
 
-retlbl:
-	ret void
-end
+loop:           ; preds = %loop, %Top
+        %F = add i32 %A, %B             ; <i32> [#uses=0]
+        %G = sub i32 %D, -4             ; <i32> [#uses=1]
+        %D.upgrd.1 = icmp sle i32 %G, 0         ; <i1> [#uses=1]
+        %E.upgrd.2 = xor i1 %D.upgrd.1, true            ; <i1> [#uses=1]
+        br i1 %E.upgrd.2, label %loop, label %Top
+
+retlbl:         ; preds = %Top
+        ret void
+}
 
 
 ;; Test use of a boolean result in cast operations.
 ;; Requires converting a condition code result into a 0/1 value in a reg.
 ;; 
-implementation
-
-int %castbool(int %A, int %B) {
-bb0:						; [#uses=0]
-    %cond213 = setlt int %A, %B			; <bool> [#uses=1]
-    %cast110 = cast bool %cond213 to ubyte      ; <ubyte> [#uses=1]
-    %cast109 = cast ubyte %cast110 to int       ; <int> [#uses=1]
-    ret int %cast109
+define i32 @castbool(i32 %A, i32 %B) {
+bb0:
+        %cond213 = icmp slt i32 %A, %B          ; <i1> [#uses=1]
+        %cast110 = zext i1 %cond213 to i8               ; <i8> [#uses=1]
+        %cast109 = zext i8 %cast110 to i32              ; <i32> [#uses=1]
+        ret i32 %cast109
 }
-
 
 ;; Test use of a boolean result in arithmetic and logical operations.
 ;; Requires converting a condition code result into a 0/1 value in a reg.
 ;; 
-bool %boolexpr(bool %b, int %N) {
-    %b2 = setge int %N, 0
-    %b3 = and bool %b, %b2
-    ret bool %b3
+define i1 @boolexpr(i1 %b, i32 %N) {
+        %b2 = icmp sge i32 %N, 0                ; <i1> [#uses=1]
+        %b3 = and i1 %b, %b2            ; <i1> [#uses=1]
+        ret i1 %b3
 }
-
 
 ; Test branch on floating point comparison
 ;
-void "testfloatbool"(float %x, float %y)   ; Def %0, %1 - float
-begin
-; <label>:0
-	br label %Top
-Top:
-	%p = add float %x, %y    ; Def 2 - float
-	%z = sub float %x, %y    ; Def 3 - float
-	%b = setle float %p, %z	 ; Def 0 - bool
-	%c = xor bool %b, true	 ; Def 1 - bool
-	br bool %b, label %Top, label %goon
-goon:
-	ret void
-end
+define void @testfloatbool(float %x, float %y) {
+        br label %Top
+
+Top:            ; preds = %Top, %0
+        %p = add float %x, %y           ; <float> [#uses=1]
+        %z = sub float %x, %y           ; <float> [#uses=1]
+        %b = fcmp ole float %p, %z              ; <i1> [#uses=2]
+        %c = xor i1 %b, true            ; <i1> [#uses=0]
+        br i1 %b, label %Top, label %goon
+
+goon:           ; preds = %Top
+        ret void
+}
 
 
 ; Test cases where an LLVM instruction requires no machine
@@ -164,46 +148,40 @@ end
 ;    copy instruction (add-with-0), but this copy should get coalesced
 ;    away by the register allocator.
 ;
-int "checkForward"(int %N, int* %A)
-begin
-
-bb2:		;;<label>
-	%reg114 = shl int %N, ubyte 2		;;
-	%cast115 = cast int %reg114 to long	;; reg114 will be propagated
-	%cast116 = cast int* %A to long		;; %A will be propagated 
-	%reg116  = add long %cast116, %cast115	;;
-	%castPtr = cast long %reg116 to int*    ;; %A will be propagated 
-	%reg118 = load int* %castPtr		;;
-	%cast117 = cast int %reg118 to long	;; reg118 will be copied 'cos
-	%reg159 = add long 1234567, %cast117	;;  cast117 has 2 uses, here
-	%reg160 = add long 7654321, %cast117	;;  and here.
-	ret int 0
-end
+define i32 @checkForward(i32 %N, i32* %A) {
+bb2:
+        %reg114 = shl i32 %N, 2         ; <i32> [#uses=1]
+        %cast115 = sext i32 %reg114 to i64              ; <i64> [#uses=1]
+        %cast116 = ptrtoint i32* %A to i64              ; <i64> [#uses=1]
+        %reg116 = add i64 %cast116, %cast115            ; <i64> [#uses=1]
+        %castPtr = inttoptr i64 %reg116 to i32*         ; <i32*> [#uses=1]
+        %reg118 = load i32* %castPtr            ; <i32> [#uses=1]
+        %cast117 = sext i32 %reg118 to i64              ; <i64> [#uses=2]
+        %reg159 = add i64 1234567, %cast117             ; <i64> [#uses=0]
+        %reg160 = add i64 7654321, %cast117             ; <i64> [#uses=0]
+        ret i32 0
+}
 
 
 ; Test case for unary NOT operation constructed from XOR.
 ; 
-void "checkNot"(bool %b, int %i)
-begin
-	%notB = xor bool %b, true
-	%notI = xor int %i, -1
-	%F    = setge int %notI, 100
-	%J    = add int %i, %i
-	%andNotB = and bool %F, %notB		;; should get folded with notB
-	%andNotI = and int %J, %notI		;; should get folded with notI
-
-	%notB2 = xor bool true, %b		;; should become XNOR
-	%notI2 = xor int -1, %i			;; should become XNOR
-
-	ret void
-end
-
+define void @checkNot(i1 %b, i32 %i) {
+        %notB = xor i1 %b, true         ; <i1> [#uses=1]
+        %notI = xor i32 %i, -1          ; <i32> [#uses=2]
+        %F = icmp sge i32 %notI, 100            ; <i1> [#uses=1]
+        %J = add i32 %i, %i             ; <i32> [#uses=1]
+        %andNotB = and i1 %F, %notB             ; <i1> [#uses=0]
+        %andNotI = and i32 %J, %notI            ; <i32> [#uses=0]
+        %notB2 = xor i1 true, %b                ; <i1> [#uses=0]
+        %notI2 = xor i32 -1, %i         ; <i32> [#uses=0]
+        ret void
+}
 
 ; Test case for folding getelementptr into a load/store
 ;
-int "checkFoldGEP"(%Domain* %D, long %idx)
-begin
-        %reg841 = getelementptr %Domain* %D, long 0, uint 1
-        %reg820 = load int* %reg841
-        ret int %reg820
-end
+define i32 @checkFoldGEP(%Domain* %D, i64 %idx) {
+        %reg841 = getelementptr %Domain* %D, i64 0, i32 1               ; <i32*> [#uses=1]
+        %reg820 = load i32* %reg841             ; <i32> [#uses=1]
+        ret i32 %reg820
+}
+

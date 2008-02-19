@@ -1,10 +1,10 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc
+; RUN: llvm-as < %s | llc
 ; XFAIL: ia64
 
+declare i1 @llvm.isunordered.f64(double, double)
 
-declare bool %llvm.isunordered.f64(double, double)
-
-bool %test(double %X, double %Y) {
-  %tmp27 = call bool %llvm.isunordered.f64( double %X, double %Y)
-  ret bool %tmp27
+define i1 @test(double %X, double %Y) {
+        %tmp27 = fcmp uno double %X, %Y         ; <i1> [#uses=1]
+        ret i1 %tmp27
 }
+

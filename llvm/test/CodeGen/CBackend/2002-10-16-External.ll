@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=c
+; RUN: llvm-as < %s | llc -march=c
 
-%bob = external global int              ; <int*> [#uses=2]
+@bob = external global i32              ; <i32*> [#uses=0]
 

@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade %s | llvm-as | llc
+; RUN: llvm-as < %s | llc
 
 ; Test that a negative constant smaller than 64 bits (e.g., int)
 ; is correctly implemented with sign-extension.
@@ -28,24 +28,20 @@
 ;   instead of:
 ; ioff = 2        fval = 0xffffffff7fffec90       &fval[2] = 0xffffffff7fffeca8
 ; 
+        %Results = type { float, float, float }
+@fmtArg = internal global [39 x i8] c"ioff = %u\09fval = 0x%p\09&fval[2] = 0x%p\0A\00"          ; <[39 x i8]*> [#uses=1]
 
-%Results = type { float, float, float }
+declare i32 @printf(i8*, ...)
 
-%fmtArg = internal global [39 x sbyte] c"ioff = %u\09fval = 0x%p\09&fval[2] = 0x%p\0A\00"; <[39 x sbyte]*> [#uses=1]
+define i32 @main() {
+        %fval = alloca %Results, i32 4          ; <%Results*> [#uses=2]
+        %i = add i32 1, 0               ; <i32> [#uses=1]
+        %iscale = mul i32 %i, -1                ; <i32> [#uses=1]
+        %ioff = add i32 %iscale, 3              ; <i32> [#uses=2]
+        %ioff.upgrd.1 = zext i32 %ioff to i64           ; <i64> [#uses=1]
+        %fptr = getelementptr %Results* %fval, i64 %ioff.upgrd.1                ; <%Results*> [#uses=1]
+        %castFmt = getelementptr [39 x i8]* @fmtArg, i64 0, i64 0               ; <i8*> [#uses=1]
+        call i32 (i8*, ...)* @printf( i8* %castFmt, i32 %ioff, %Results* %fval, %Results* %fptr )               ; <i32>:1 [#uses=0]
+        ret i32 0
+}
 
-implementation
-
-declare int "printf"(sbyte*, ...)
-
-int "main"()
-begin
-	%fval   = alloca %Results, uint 4
-	%i      = add uint 1, 0					; i = 1
-	%iscale = mul uint %i, 4294967295			; i*-1 = -1
-	%ioff   = add uint %iscale, 3				; 3+(-i) = 2
-	%ioff   = cast uint %ioff to long
-	%fptr   = getelementptr %Results* %fval, long %ioff	; &fval[2]
-	%castFmt = getelementptr [39 x sbyte]* %fmtArg, long 0, long 0
-	call int (sbyte*, ...)* %printf(sbyte* %castFmt, uint %ioff, %Results* %fval, %Results* %fptr)
-	ret int 0
-end
