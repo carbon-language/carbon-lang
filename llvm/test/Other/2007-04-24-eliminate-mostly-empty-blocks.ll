@@ -1,6 +1,6 @@
-;RUN: llvm-upgrade < %s | llvm-as | opt -codegenprepare -disable-output
+;RUN: llvm-as < %s | opt -codegenprepare -disable-output
 
-void @foo() {
+define void @foo() {
 entry:
 	br i1 false, label %cond_next31, label %cond_true
 

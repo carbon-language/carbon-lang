@@ -5,21 +5,20 @@
 ;
 ; Fixed by adding new arguments to ConstantFoldTerminator
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -constprop
+; RUN: llvm-as < %s | opt -constprop
 
-implementation
+define void @build_tree(i32 %ml) {
+; <label>:0
+        br label %bb2
 
-void "build_tree"(int %ml)
-begin
-	br label %bb2
+bb2:            ; preds = %bb2, %0
+        %reg137 = phi i32 [ %reg140, %bb2 ], [ 12, %0 ]         ; <i32> [#uses=1]
+        %reg138 = phi i32 [ %reg139, %bb2 ], [ 0, %0 ]          ; <i32> [#uses=1]
+        %reg139 = add i32 %reg138, 1            ; <i32> [#uses=1]
+        %reg140 = add i32 %reg137, -1           ; <i32> [#uses=1]
+        br i1 false, label %bb2, label %bb3
 
-bb2:
-	%reg137 = phi int [ %reg140, %bb2 ], [ 12, %0 ]		; <int> [#uses=2]
-	%reg138 = phi uint [ %reg139, %bb2 ], [ 0, %0 ]		; <uint> [#uses=3]
-	%reg139 = add uint %reg138, 1		; <uint> [#uses=1]
-	%reg140 = add int %reg137, -1		; <int> [#uses=1]
-	br bool false, label %bb2, label %bb3
+bb3:            ; preds = %bb2
+        ret void
+}
 
-bb3:
-	ret void
-end

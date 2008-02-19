@@ -2,27 +2,28 @@
 ; figure out that loop "Inner" should be nested inside of leep "LoopHeader", 
 ; and instead nests it just inside loop "Top"
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -analyze -loops | \
+; RUN: llvm-as < %s | opt -analyze -loops | \
 ; RUN:   grep {     Loop Containing:\[ \]*%Inner}
 ;
+define void @test() {
+        br label %Top
 
-implementation
+Top:            ; preds = %Out, %0
+        br label %LoopHeader
 
-void %test() {
-	br label %Top
-Top:
-	br label %LoopHeader
-Next:
-	br bool false, label %Inner, label %Out
-Inner:
-	br bool false, label %Inner, label %LoopHeader
+Next:           ; preds = %LoopHeader
+        br i1 false, label %Inner, label %Out
 
-LoopHeader:
-	br label %Next
+Inner:          ; preds = %Inner, %Next
+        br i1 false, label %Inner, label %LoopHeader
 
-Out:
-	br bool false, label %Top, label %Done
+LoopHeader:             ; preds = %Inner, %Top
+        br label %Next
 
-Done:
-	ret void
+Out:            ; preds = %Next
+        br i1 false, label %Top, label %Done
+
+Done:           ; preds = %Out
+        ret void
 }
+

@@ -1,15 +1,13 @@
 ;  Call graph construction crash: Not handling indirect calls right
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -analyze -callgraph
+; RUN: llvm-as < %s | opt -analyze -callgraph
 ;
 
-%FunTy = type int(int)
+        %FunTy = type i32 (i32)
 
-implementation
+define void @invoke(%FunTy* %x) {
+        %foo = call i32 %x( i32 123 )           ; <i32> [#uses=0]
+        ret void
+}
 
-void "invoke"(%FunTy *%x)
-begin
-	%foo = call %FunTy* %x(int 123)
-	ret void
-end
 
