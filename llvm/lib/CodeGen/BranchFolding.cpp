@@ -451,7 +451,10 @@ static bool MergeCompare(const std::pair<unsigned,MachineBasicBlock*> &p,
 
 bool BranchFolder::TryMergeBlocks(MachineBasicBlock *SuccBB,
                                   MachineBasicBlock* PredBB) {
-  unsigned minCommonTailLength = (SuccBB ? 1 : 2);
+  // It doesn't make sense to save a single instruction since tail merging
+  // will add a jump.
+  // FIXME: Ask the target to provide the threshold?
+  unsigned minCommonTailLength = (SuccBB ? 1 : 2) + 1;
   MadeChange = false;
   
   // Sort by hash value so that blocks with identical end sequences sort
@@ -476,9 +479,9 @@ bool BranchFolder::TryMergeBlocks(MachineBasicBlock *SuccBB,
     // Look through all the pairs of blocks that have the same hash as this
     // one, and find the pair that has the largest number of instructions in
     // common.
-     // Since instructions may get combined later (e.g. single stores into
+    // Since instructions may get combined later (e.g. single stores into
     // store multiple) this measure is not particularly accurate.
-   MachineBasicBlock::iterator BBI1, BBI2;
+    MachineBasicBlock::iterator BBI1, BBI2;
     
     unsigned FoundI = ~0U, FoundJ = ~0U;
     unsigned maxCommonTailLength = 0U;
@@ -541,6 +544,12 @@ bool BranchFolder::TryMergeBlocks(MachineBasicBlock *SuccBB,
         continue;
       }
       
+      MachineBasicBlock::iterator TrialBBI1, TrialBBI2;
+      unsigned CommonTailLen = ComputeCommonTailLength(CurMBB, MBB2,
+                                                       TrialBBI1, TrialBBI2);
+      if (CommonTailLen < minCommonTailLength)
+        continue;
+
       // Decide whether we want to split CurMBB or MBB2.
       if (ShouldSplitFirstBlock(CurMBB, BBI1, MBB2, BBI2, PredBB)) {
         CurMBB = SplitMBBAt(*CurMBB, BBI1);
