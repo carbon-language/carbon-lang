@@ -216,13 +216,13 @@ struct ValID {
 
 struct TypeWithAttrs {
   llvm::PATypeHolder *Ty;
-  uint16_t Attrs;
+  ParameterAttributes Attrs;
 };
 
 typedef std::vector<TypeWithAttrs> TypeWithAttrsList; 
 
 struct ArgListEntry {
-  uint16_t Attrs;
+  ParameterAttributes Attrs;
   llvm::PATypeHolder *Ty;
   std::string *Name;
 };
@@ -231,7 +231,7 @@ typedef std::vector<struct ArgListEntry> ArgListType;
 
 struct ParamListEntry {
   Value *Val;
-  uint16_t Attrs;
+  ParameterAttributes Attrs;
 };
 
 typedef std::vector<ParamListEntry> ParamList;
