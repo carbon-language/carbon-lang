@@ -1083,6 +1083,8 @@ static bool isReturnSlotOptznProfitable(Value* dest, MemCpyInst* cpy) {
 /// rather than using memcpy
 bool GVN::performReturnSlotOptzn(MemCpyInst* cpy, CallInst* C,
                                  SmallVector<Instruction*, 4>& toErase) {
+  // Deliberately get the source and destination with bitcasts stripped away,
+  // because we'll need to do type comparisons based on the underlying type.
   Value* cpyDest = cpy->getDest();
   Value* cpySrc = cpy->getSource();
   CallSite CS = CallSite::get(C);
@@ -1097,23 +1099,25 @@ bool GVN::performReturnSlotOptzn(MemCpyInst* cpy, CallInst* C,
       !CS.paramHasAttr(1, ParamAttr::NoAlias | ParamAttr::StructRet))
     return false;
   
-  // We only perform the transformation if it will be profitable. 
-  if (!isReturnSlotOptznProfitable(cpyDest, cpy))
-    return false;
-  
   // Check that something sneaky is not happening involving casting
   // return slot types around.
   if (CS.getArgument(0)->getType() != cpyDest->getType())
     return false;
+  // sret --> pointer
+  const PointerType* PT = cast<PointerType>(cpyDest->getType()); 
   
   // We can only perform the transformation if the size of the memcpy
   // is constant and equal to the size of the structure.
-  if (!isa<ConstantInt>(cpy->getLength()))
+  ConstantInt* cpyLength = dyn_cast<ConstantInt>(cpy->getLength());
+  if (!cpyLength)
     return false;
   
-  ConstantInt* cpyLength = cast<ConstantInt>(cpy->getLength());
   TargetData& TD = getAnalysis<TargetData>();
-  if (TD.getTypeStoreSize(cpyDest->getType()) == cpyLength->getZExtValue())
+  if (TD.getTypeStoreSize(PT->getElementType()) != cpyLength->getZExtValue())
+    return false;
+  
+  // We only perform the transformation if it will be profitable. 
+  if (!isReturnSlotOptznProfitable(cpyDest, cpy))
     return false;
   
   // In addition to knowing that the call does not access the return slot
