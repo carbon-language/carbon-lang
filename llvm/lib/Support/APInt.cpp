@@ -167,6 +167,8 @@ APInt& APInt::operator=(uint64_t RHS) {
 
 /// Profile - This method 'profiles' an APInt for use with FoldingSet.
 void APInt::Profile(FoldingSetNodeID& ID) const {
+  ID.AddInteger(BitWidth);
+  
   if (isSingleWord()) {
     ID.AddInteger(VAL);
     return;
