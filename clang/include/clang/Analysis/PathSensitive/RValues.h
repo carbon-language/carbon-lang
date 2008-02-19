@@ -163,7 +163,8 @@ namespace nonlval {
     }
     
     static inline bool classof(const RValue* V) {
-      return isa<NonLValue>(V) && V->getSubKind() == SymbolValKind;
+      return V->getBaseKind() == NonLValueKind && 
+             V->getSubKind() == SymbolValKind;
     }
   };
   
@@ -177,7 +178,8 @@ namespace nonlval {
     }
     
     static inline bool classof(const RValue* V) {
-      return isa<NonLValue>(V) && V->getSubKind() == SymIntConstraintValKind;
+      return V->getBaseKind() == NonLValueKind &&
+             V->getSubKind() == SymIntConstraintValKind;
     }    
   };
 
@@ -199,11 +201,8 @@ namespace nonlval {
     
     // Implement isa<T> support.
     static inline bool classof(const RValue* V) {
-      return isa<NonLValue>(V) && V->getSubKind() == ConcreteIntKind;
-    }
-    
-    static inline bool classof(const NonLValue* V) {
-      return V->getSubKind() == ConcreteIntKind;
+      return V->getBaseKind() == NonLValueKind &&
+             V->getSubKind() == ConcreteIntKind;
     }
   };
   
@@ -232,11 +231,8 @@ namespace lval {
     }
     
     static inline bool classof(const RValue* V) {
-      return isa<LValue>(V) && V->getSubKind() == SymbolValKind;
-    }
-    
-    static inline bool classof(const LValue* V) {
-      return V->getSubKind() == SymbolValKind;
+      return V->getBaseKind() == LValueKind &&
+             V->getSubKind() == SymbolValKind;
     }
   };
   
@@ -249,12 +245,9 @@ namespace lval {
     }
     
     static inline bool classof(const RValue* V) {
-      return isa<LValue>(V) && V->getSubKind() == GotoLabelKind;
-    }
-    
-    static inline bool classof(const LValue* V) {
-      return V->getSubKind() == GotoLabelKind;
-    }
+      return V->getBaseKind() == LValueKind &&
+             V->getSubKind() == GotoLabelKind;
+    }    
   };
     
   
@@ -276,12 +269,9 @@ namespace lval {
     
     // Implement isa<T> support.
     static inline bool classof(const RValue* V) {
-      return isa<LValue>(V) && V->getSubKind() == DeclValKind;
-    }
-    
-    static inline bool classof(const LValue* V) {
-      return V->getSubKind() == DeclValKind;
-    }
+      return V->getBaseKind() == LValueKind &&
+             V->getSubKind() == DeclValKind;
+    }    
   };
   
   class FuncVal : public LValue {
@@ -302,12 +292,9 @@ namespace lval {
     
     // Implement isa<T> support.
     static inline bool classof(const RValue* V) {
-      return isa<LValue>(V) && V->getSubKind() == FuncValKind;
-    }
-    
-    static inline bool classof(const LValue* V) {
-      return V->getSubKind() == FuncValKind;
-    }
+      return V->getBaseKind() == LValueKind &&
+             V->getSubKind() == FuncValKind;
+    }    
   };
 
   class ConcreteInt : public LValue {
@@ -326,13 +313,9 @@ namespace lval {
         
     // Implement isa<T> support.
     static inline bool classof(const RValue* V) {
-      return isa<LValue>(V) && V->getSubKind() == ConcreteIntKind;
+      return V->getBaseKind() == LValueKind &&
+             V->getSubKind() == ConcreteIntKind;
     }
-    
-    static inline bool classof(const LValue* V) {
-      return V->getSubKind() == ConcreteIntKind;
-    }
-    
   };  
 } // end clang::lval namespace
 

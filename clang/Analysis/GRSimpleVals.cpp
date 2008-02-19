@@ -31,7 +31,7 @@ namespace clang {
     CheckerState->setTransferFunctions(GRSV);
     
     // Execute the worklist algorithm.
-    Engine.ExecuteWorkList(200);
+    Engine.ExecuteWorkList(10000);
     
     // Look for explicit-Null dereferences and warn about them.
     for (GRExprEngine::null_iterator I=CheckerState->null_begin(),
