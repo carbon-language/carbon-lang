@@ -121,9 +121,10 @@ protected:
   
   /// ImplicitNullDeref - Nodes in the ExplodedGraph that result from
   ///  taking a dereference on a symbolic pointer that may be NULL.
-  typedef llvm::SmallPtrSet<NodeTy*,5> NullDerefTy;
-  NullDerefTy ImplicitNullDeref;
-  NullDerefTy ExplicitNullDeref;
+  typedef llvm::SmallPtrSet<NodeTy*,5> BadDerefTy;
+  BadDerefTy ImplicitNullDeref;
+  BadDerefTy ExplicitNullDeref;
+  BadDerefTy UninitDeref;
   
   bool StateCleaned;
   
@@ -187,7 +188,11 @@ public:
     return N->isSink() && ExplicitNullDeref.count(const_cast<NodeTy*>(N)) != 0;
   }
   
-  typedef NullDerefTy::iterator null_iterator;
+  bool isUninitDeref(const NodeTy* N) const {
+    return N->isSink() && UninitDeref.count(const_cast<NodeTy*>(N)) != 0;
+  }
+  
+  typedef BadDerefTy::iterator null_iterator;
   null_iterator null_begin() { return ExplicitNullDeref.begin(); }
   null_iterator null_end() { return ExplicitNullDeref.end(); }
   

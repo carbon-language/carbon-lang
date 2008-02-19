@@ -642,6 +642,17 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U,
         const RValue& V = GetValue(St, U->getSubExpr());        
         const LValue& L1 = cast<LValue>(V);
         
+        if (isa<UninitializedVal>(L1)) {
+          NodeTy* N = Builder->generateNode(U, St, N1);
+          
+          if (N) {
+            N->markAsSink();
+            UninitDeref.insert(N);            
+          }
+          
+          return;
+        }
+        
         // After a dereference, one of two possible situations arise:
         //  (1) A crash, because the pointer was NULL.
         //  (2) The pointer is not NULL, and the dereference works.
@@ -773,6 +784,11 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           
           if (isa<UninitializedVal>(L1)) {
             HandleUninitializedStore(B, N2);
+            break;
+          }
+          
+          if (isa<UninitializedVal>(V2)) {
+            Nodify(Dst, B, N2, SetValue(SetValue(St, B, V2), L1, V2));
             break;
           }
           
@@ -1232,6 +1248,7 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
     
     if (GraphPrintCheckerState->isImplicitNullDeref(N) ||
         GraphPrintCheckerState->isExplicitNullDeref(N) ||
+        GraphPrintCheckerState->isUninitDeref(N) ||
         GraphPrintCheckerState->isUninitStore(N) ||
         GraphPrintCheckerState->isUninitControlFlow(N))
       return "color=\"red\",style=\"filled\"";
@@ -1267,6 +1284,9 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
         }
         else if (GraphPrintCheckerState->isExplicitNullDeref(N)) {
           Out << "\\|Explicit-Null Dereference.\\l";
+        }
+        else if (GraphPrintCheckerState->isUninitDeref(N)) {
+          Out << "\\|Dereference of uninitialied value.\\l";
         }
         else if (GraphPrintCheckerState->isUninitStore(N)) {
           Out << "\\|Store to Uninitialized LValue.";
