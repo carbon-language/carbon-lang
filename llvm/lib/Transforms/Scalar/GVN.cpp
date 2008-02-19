@@ -1052,6 +1052,28 @@ bool GVN::processLoad(LoadInst* L,
   return deletedLoad;
 }
 
+/// isReturnSlotOptznProfitable - Determine if performing a return slot 
+/// fusion with the slot dest is profitable
+static bool isReturnSlotOptznProfitable(Value* dest, MemCpyInst* cpy) {
+  // We currently consider it profitable if dest is otherwise dead.
+  SmallVector<User*, 8> useList(dest->use_begin(), dest->use_end());
+  while (!useList.empty()) {
+    User* UI = useList.back();
+    
+    if (isa<GetElementPtrInst>(UI) || isa<BitCastInst>(UI)) {
+      useList.pop_back();
+      for (User::use_iterator I = UI->use_begin(), E = UI->use_end();
+           I != E; ++I)
+        useList.push_back(*I);
+    } else if (UI == cpy)
+      useList.pop_back();
+    else
+      return false;
+  }
+  
+  return true;
+}
+
 /// performReturnSlotOptzn - takes a memcpy and a call that it depends on,
 /// and checks for the possibility of a return slot optimization by having
 /// the call write its result directly into the callees return parameter
@@ -1068,26 +1090,16 @@ bool GVN::performReturnSlotOptzn(MemCpyInst* cpy, CallInst* C,
   if (!sretArg->hasStructRetAttr())
     return false;
   
-  // Make sure the return slot is otherwise dead
-  std::set<User*> useList(sretArg->use_begin(), sretArg->use_end());
-  while (!useList.empty()) {
-    User* UI = *useList.begin();
-    
-    if (isa<GetElementPtrInst>(UI) || isa<BitCastInst>(UI)) {
-      useList.insert(UI->use_begin(), UI->use_end());
-      useList.erase(UI);
-    } else if (UI == cpy)
-      useList.erase(UI);
-    else
-      return false;
-  }
+  // We only perform the transformation if it will be profitable. 
+  if (!isReturnSlotOptznProfitable(sretArg, cpy))
+    return false;
   
   // Make sure the call cannot modify the return slot in some unpredicted way
   AliasAnalysis& AA = getAnalysis<AliasAnalysis>();
   if (AA.getModRefInfo(C, cpy->getRawDest(), ~0UL) != AliasAnalysis::NoModRef)
     return false;
   
-  // If all checks passed, then we can perform the transformation
+  // If all checks passed, then we can perform the transformation.
   CallSite CS = CallSite::get(C);
   if (CS.getArgument(0)->getType() != cpyDest->getType())
     return false;
