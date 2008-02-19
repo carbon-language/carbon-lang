@@ -449,8 +449,9 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* E, NodeTy* Pred, NodeSet& Dst) {
   
   QualType T = CastE->getType();
 
-  // Check for redundant casts.
-  if (E->getType() == T || 
+  // Check for redundant casts or casting to "void"
+  if (T->isVoidType() ||
+      E->getType() == T || 
       (T->isPointerType() && E->getType()->isFunctionType())) {
     Dst.Add(Pred);
     return;

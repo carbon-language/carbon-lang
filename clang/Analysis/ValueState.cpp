@@ -252,6 +252,10 @@ RValue ValueStateManager::GetValue(ValueState St, Expr* E, bool* hasVal) {
       case Stmt::ImplicitCastExprClass: {
         ImplicitCastExpr* C = cast<ImplicitCastExpr>(E);
         QualType CT = C->getType();
+        
+        if (CT->isVoidType())
+          return UnknownVal();
+          
         QualType ST = C->getSubExpr()->getType();
         
         if (CT == ST || (CT->isPointerType() && ST->isFunctionType())) {
@@ -265,6 +269,9 @@ RValue ValueStateManager::GetValue(ValueState St, Expr* E, bool* hasVal) {
         CastExpr* C = cast<CastExpr>(E);
         QualType CT = C->getType();
         QualType ST = C->getSubExpr()->getType();
+        
+        if (CT->isVoidType())
+          return UnknownVal();
         
         if (CT == ST || (CT->isPointerType() && ST->isFunctionType())) {
           E = C->getSubExpr();
