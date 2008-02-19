@@ -604,6 +604,10 @@ void GRSimpleValsVisitor::VisitCFG(CFG& C, FunctionDecl& FD) {
   if (FName.size() > 0 && FName != FD.getIdentifier()->getName())
     return;
   
+  if (FD.getLocation().getFileID() != Ctx->getSourceManager().getMainFileID())
+    return;
+  
+  
   if (!Visualize) {
     llvm::cerr << "ANALYZE: " << FD.getIdentifier()->getName() << ' '
                << Ctx->getSourceManager().getSourceName(FD.getLocation())
