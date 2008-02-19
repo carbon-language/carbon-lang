@@ -37,7 +37,6 @@ void UnifyFunctionExitNodes::getAnalysisUsage(AnalysisUsage &AU) const{
   AU.addPreservedID(BreakCriticalEdgesID);
   // This is a cluster of orthogonal Transforms
   AU.addPreservedID(PromoteMemoryToRegisterID);
-  AU.addPreservedID(LowerSelectID);
   AU.addPreservedID(LowerSwitchID);
 }
 

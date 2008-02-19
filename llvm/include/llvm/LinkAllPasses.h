@@ -84,7 +84,6 @@ namespace {
       (void) llvm::createLoopIndexSplitPass();
       (void) llvm::createLowerAllocationsPass();
       (void) llvm::createLowerInvokePass();
-      (void) llvm::createLowerSelectPass();
       (void) llvm::createLowerSetJmpPass();
       (void) llvm::createLowerSwitchPass();
       (void) llvm::createNoAAPass();

@@ -43,7 +43,6 @@ namespace {
       AU.setPreservesCFG();
       // This is a cluster of orthogonal Transforms
       AU.addPreserved<UnifyFunctionExitNodes>();
-      AU.addPreservedID(LowerSelectID);
       AU.addPreservedID(LowerSwitchID);
       AU.addPreservedID(LowerInvokePassID);
       AU.addPreservedID(LowerAllocationsID);

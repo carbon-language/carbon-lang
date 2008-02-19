@@ -231,15 +231,6 @@ extern const PassInfo *LoopSimplifyID;
 
 //===----------------------------------------------------------------------===//
 //
-// LowerSelect - This pass converts SelectInst instructions into conditional
-// branch and PHI instructions. If the OnlyFP flag is set to true, then only
-// floating point select instructions are lowered.
-//
-FunctionPass *createLowerSelectPass(bool OnlyFP = false);
-extern const PassInfo *LowerSelectID;
-
-//===----------------------------------------------------------------------===//
-//
 // LowerAllocations - Turn malloc and free instructions into %malloc and %free
 // calls.
 //

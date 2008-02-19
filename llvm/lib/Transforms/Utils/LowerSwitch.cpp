@@ -40,7 +40,6 @@ namespace {
       // This is a cluster of orthogonal Transforms
       AU.addPreserved<UnifyFunctionExitNodes>();
       AU.addPreservedID(PromoteMemoryToRegisterID);
-      AU.addPreservedID(LowerSelectID);
       AU.addPreservedID(LowerInvokePassID);
       AU.addPreservedID(LowerAllocationsID);
     }
