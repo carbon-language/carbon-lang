@@ -965,7 +965,7 @@ Linker::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
     }
   }
 
-  // COpy the target triple from the source to dest if the dest's is empty
+  // Copy the target triple from the source to dest if the dest's is empty.
   if (Dest->getTargetTriple().empty() && !Src->getTargetTriple().empty())
     Dest->setTargetTriple(Src->getTargetTriple());
       
@@ -976,7 +976,7 @@ Linker::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
       Dest->getTargetTriple() != Src->getTargetTriple())
     cerr << "WARNING: Linking two modules of different target triples!\n";
 
-  // Append the module inline asm string
+  // Append the module inline asm string.
   if (!Src->getModuleInlineAsm().empty()) {
     if (Dest->getModuleInlineAsm().empty())
       Dest->setModuleInlineAsm(Src->getModuleInlineAsm());
@@ -988,12 +988,9 @@ Linker::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
   // Update the destination module's dependent libraries list with the libraries
   // from the source module. There's no opportunity for duplicates here as the
   // Module ensures that duplicate insertions are discarded.
-  Module::lib_iterator SI = Src->lib_begin();
-  Module::lib_iterator SE = Src->lib_end();
-  while ( SI != SE ) {
+  for (Module::lib_iterator SI = Src->lib_begin(), SE = Src->lib_end();
+       SI != SE; ++SI) 
     Dest->addLibrary(*SI);
-    ++SI;
-  }
 
   // LinkTypes - Go through the symbol table of the Src module and see if any
   // types are named in the src module that are not named in the Dst module.
