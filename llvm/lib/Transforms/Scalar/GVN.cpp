@@ -1089,15 +1089,10 @@ bool GVN::performReturnSlotOptzn(MemCpyInst* cpy, CallInst* C,
   
   // If all checks passed, then we can perform the transformation
   CallSite CS = CallSite::get(C);
-  for (unsigned i = 0; i < CS.arg_size(); ++i) {
-    if (CS.paramHasAttr(i+1, ParamAttr::StructRet)) {
-      if (CS.getArgument(i)->getType() != cpyDest->getType())
-        return false;
+  if (CS.getArgument(0)->getType() != cpyDest->getType())
+    return false;
       
-      CS.setArgument(i, cpyDest);
-      break;
-    }
-  }
+  CS.setArgument(0, cpyDest);
   
   MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
   MD.dropInstruction(C);
