@@ -19,11 +19,11 @@
 using namespace clang;
 
 namespace clang {
-  void RunGRSimpleVals(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx,
-                      Diagnostic& Diag, bool Visualize) {
+  unsigned RunGRSimpleVals(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx,
+                           Diagnostic& Diag, bool Visualize) {
     
     if (Diag.hasErrorOccurred())
-      return;
+      return 0;
     
     GRCoreEngine<GRExprEngine> Engine(cfg, FD, Ctx);
     GRExprEngine* CheckerState = &Engine.getCheckerState();
@@ -31,7 +31,7 @@ namespace clang {
     CheckerState->setTransferFunctions(GRSV);
     
     // Execute the worklist algorithm.
-    Engine.ExecuteWorkList(10000);
+    Engine.ExecuteWorkList(200);
     
     // Look for explicit-Null dereferences and warn about them.
     for (GRExprEngine::null_iterator I=CheckerState->null_begin(),
@@ -46,7 +46,9 @@ namespace clang {
         
 #ifndef NDEBUG
     if (Visualize) CheckerState->ViewGraph();
-#endif  
+#endif
+    
+    return Engine.getGraph().size();
   }
 } // end clang namespace
 

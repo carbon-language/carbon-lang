@@ -329,7 +329,9 @@ ValueStateManager::SetValue(ValueState St, Expr* E, bool isBlkExpr,
 ValueState
 ValueStateManager::SetValue(ValueState St, const LValue& LV, const RValue& V) {
   
-  assert (!isa<UnknownVal>(LV));
+  if (isa<UnknownVal>(LV))
+    return St;
+  
   assert (!isa<UninitializedVal>(LV));
     
   switch (LV.getSubKind()) {

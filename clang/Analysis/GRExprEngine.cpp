@@ -304,15 +304,14 @@ void GRExprEngine::VisitLogicalExpr(BinaryOperator* B, NodeTy* Pred,
 
   RValue R1 = GetValue(PrevState, B->getLHS());
   RValue R2 = GetValue(PrevState, B->getRHS(), hasR2);
-    
-  if (isa<UnknownVal>(R1) && 
-       (isa<UnknownVal>(R2) ||
-        isa<UninitializedVal>(R2))) {    
-
-    Nodify(Dst, B, Pred, SetValue(PrevState, B, R2));
-    return;
-  }    
-  else if (isa<UninitializedVal>(R1)) {
+  
+  if (hasR2) {
+    if (isa<UninitializedVal>(R2) || isa<UnknownVal>(R2)) {
+      Nodify(Dst, B, Pred, SetValue(PrevState, B, R2));
+      return;
+    }
+  }
+  else if (isa<UninitializedVal>(R1) || isa<UnknownVal>(R1)) {
     Nodify(Dst, B, Pred, SetValue(PrevState, B, R1));
     return;
   }
@@ -709,7 +708,12 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
       switch (Op) {
         case BinaryOperator::Assign: {
           const LValue& L1 = cast<LValue>(V1);
-          Nodify(Dst, B, N2, SetValue(SetValue(St, B, V2), L1, V2));
+
+          if (isa<UninitializedVal>(L1))
+            HandleUninitializedStore(B, N2);
+          else          
+            Nodify(Dst, B, N2, SetValue(SetValue(St, B, V2), L1, V2));
+
           break;
         }
 
@@ -718,6 +722,12 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           assert (B->isCompoundAssignmentOp());
                           
           const LValue& L1 = cast<LValue>(V1);
+          
+          if (isa<UninitializedVal>(L1)) {
+            HandleUninitializedStore(B, N2);
+            break;
+          }
+          
           RValue Result = cast<NonLValue>(UnknownVal());
           
           if (Op >= BinaryOperator::AndAssign)
@@ -763,9 +773,14 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
   }
 }
 
+void GRExprEngine::HandleUninitializedStore(Stmt* S, NodeTy* Pred) {
+  
+  NodeTy* N = Builder->generateNode(S, Pred->getState(), Pred);
+  N->markAsSink();
+  UninitStores.insert(N);
+}
 
-void GRExprEngine::Visit(Stmt* S, GRExprEngine::NodeTy* Pred,
-                        GRExprEngine::NodeSet& Dst) {
+void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
 
   // FIXME: add metadata to the CFG so that we can disable
   //  this check when we KNOW that there is no block-level subexpression.
@@ -1137,7 +1152,9 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
   static std::string getNodeAttributes(const GRExprEngine::NodeTy* N, void*) {
     
     if (GraphPrintCheckerState->isImplicitNullDeref(N) ||
-        GraphPrintCheckerState->isExplicitNullDeref(N))
+        GraphPrintCheckerState->isExplicitNullDeref(N) ||
+        GraphPrintCheckerState->isUninitStore(N) ||
+        GraphPrintCheckerState->isUninitControlFlow(N))
       return "color=\"red\",style=\"filled\"";
     
     return "";
@@ -1171,6 +1188,9 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
         }
         else if (GraphPrintCheckerState->isExplicitNullDeref(N)) {
           Out << "\\|Explicit-Null Dereference.\\l";
+        }
+        else if (GraphPrintCheckerState->isUninitStore(N)) {
+          Out << "\\|Store to Uninitialized LValue.";
         }
         
         break;

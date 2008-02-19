@@ -114,12 +114,16 @@ protected:
   typedef llvm::SmallPtrSet<NodeTy*,5> UninitBranchesTy;
   UninitBranchesTy UninitBranches;
   
+  /// UninitStores - Sinks in the ExplodedGraph that result from
+  ///  making a store to an uninitialized lvalue.
+  typedef llvm::SmallPtrSet<NodeTy*,5> UninitStoresTy;
+  UninitStoresTy UninitStores;
+  
   /// ImplicitNullDeref - Nodes in the ExplodedGraph that result from
   ///  taking a dereference on a symbolic pointer that may be NULL.
   typedef llvm::SmallPtrSet<NodeTy*,5> NullDerefTy;
   NullDerefTy ImplicitNullDeref;
   NullDerefTy ExplicitNullDeref;
-  
   
   bool StateCleaned;
   
@@ -169,6 +173,10 @@ public:
   
   bool isUninitControlFlow(const NodeTy* N) const {
     return N->isSink() && UninitBranches.count(const_cast<NodeTy*>(N)) != 0;
+  }
+  
+  bool isUninitStore(const NodeTy* N) const {
+    return N->isSink() && UninitStores.count(const_cast<NodeTy*>(N)) != 0;
   }
   
   bool isImplicitNullDeref(const NodeTy* N) const {
@@ -274,6 +282,10 @@ public:
   /// Nodify - This version of Nodify is used to batch process a set of states.
   ///  The states are not guaranteed to be unique.
   void Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred, const StateTy::BufferTy& SB);
+  
+  /// HandleUninitializedStore - Create the necessary sink node to represent
+  ///  a store to an "uninitialized" LValue.
+  void HandleUninitializedStore(Stmt* S, NodeTy* Pred);
   
   /// Visit - Transfer function logic for all statements.  Dispatches to
   ///  other functions that handle specific kinds of statements.

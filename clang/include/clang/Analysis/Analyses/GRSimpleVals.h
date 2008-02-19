@@ -23,9 +23,9 @@ namespace clang {
   /// RunGRSimpleVals - This is a simple driver to run the GRSimpleVals analysis
   ///  on a provided CFG.  This interface will eventually be replaced with
   ///  something more elaborate as the requirements on the interface become
-  ///  clearer.
-  void RunGRSimpleVals(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx,
-                      Diagnostic& Diag, bool Visualize);
+  ///  clearer.  The value returned is the number of nodes in the ExplodedGraph.
+  unsigned RunGRSimpleVals(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx,
+                           Diagnostic& Diag, bool Visualize);
   
 } // end clang namespace
 
