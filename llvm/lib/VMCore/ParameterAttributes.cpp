@@ -27,7 +27,7 @@ ParamAttrsList::~ParamAttrsList() {
   ParamAttrsLists->RemoveNode(this);
 }
 
-uint16_t
+ParameterAttributes
 ParamAttrsList::getParamAttrs(uint16_t Index) const {
   unsigned limit = attrs.size();
   for (unsigned i = 0; i < limit && attrs[i].index <= Index; ++i)
@@ -44,7 +44,7 @@ bool ParamAttrsList::hasAttrSomewhere(ParameterAttributes attr) const {
 }
 
 std::string 
-ParamAttrsList::getParamAttrsText(uint16_t Attrs) {
+ParamAttrsList::getParamAttrsText(ParameterAttributes Attrs) {
   std::string Result;
   if (Attrs & ParamAttr::ZExt)
     Result += "zeroext ";
@@ -170,9 +170,10 @@ ParamAttrsList::getModified(const ParamAttrsList *PAL,
 
 const ParamAttrsList *
 ParamAttrsList::includeAttrs(const ParamAttrsList *PAL,
-                             uint16_t idx, uint16_t attrs) {
-  uint16_t OldAttrs = PAL ? PAL->getParamAttrs(idx) : 0;
-  uint16_t NewAttrs = OldAttrs | attrs;
+                             uint16_t idx, ParameterAttributes attrs) {
+  ParameterAttributes OldAttrs = PAL ? PAL->getParamAttrs(idx) : 
+                                       ParamAttr::None;
+  ParameterAttributes NewAttrs = OldAttrs | attrs;
   if (NewAttrs == OldAttrs)
     return PAL;
 
@@ -183,9 +184,10 @@ ParamAttrsList::includeAttrs(const ParamAttrsList *PAL,
 
 const ParamAttrsList *
 ParamAttrsList::excludeAttrs(const ParamAttrsList *PAL,
-                             uint16_t idx, uint16_t attrs) {
-  uint16_t OldAttrs = PAL ? PAL->getParamAttrs(idx) : 0;
-  uint16_t NewAttrs = OldAttrs & ~attrs;
+                             uint16_t idx, ParameterAttributes attrs) {
+  ParameterAttributes OldAttrs = PAL ? PAL->getParamAttrs(idx) : 
+                                       ParamAttr::None;
+  ParameterAttributes NewAttrs = OldAttrs & ~attrs;
   if (NewAttrs == OldAttrs)
     return PAL;
 
@@ -194,8 +196,8 @@ ParamAttrsList::excludeAttrs(const ParamAttrsList *PAL,
   return getModified(PAL, modVec);
 }
 
-uint16_t ParamAttr::typeIncompatible (const Type *Ty) {
-  uint16_t Incompatible = None;
+ParameterAttributes ParamAttr::typeIncompatible (const Type *Ty) {
+  ParameterAttributes Incompatible = None;
 
   if (!Ty->isInteger())
     // Attributes that only apply to integers.

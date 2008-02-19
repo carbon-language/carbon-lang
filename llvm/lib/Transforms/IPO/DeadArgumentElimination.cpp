@@ -512,7 +512,7 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
   const ParamAttrsList *PAL = F->getParamAttrs();
 
   // The existing function return attributes.
-  uint16_t RAttrs = PAL ? PAL->getParamAttrs(0) : 0;
+  ParameterAttributes RAttrs = PAL ? PAL->getParamAttrs(0) : ParamAttr::None;
 
   // Make the function return void if the return value is dead.
   const Type *RetTy = FTy->getReturnType();
@@ -532,7 +532,8 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
        ++I, ++index)
     if (!DeadArguments.count(I)) {
       Params.push_back(I->getType());
-      uint16_t Attrs = PAL ? PAL->getParamAttrs(index) : 0;
+      ParameterAttributes Attrs = PAL ? PAL->getParamAttrs(index) : 
+                                        ParamAttr::None;
       if (Attrs)
         ParamAttrsVec.push_back(ParamAttrsWithIndex::get(Params.size(), Attrs));
     }
@@ -572,7 +573,7 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
     PAL = CS.getParamAttrs();
 
     // The call return attributes.
-    uint16_t RAttrs = PAL ? PAL->getParamAttrs(0) : 0;
+    ParameterAttributes RAttrs = PAL ? PAL->getParamAttrs(0) : ParamAttr::None;
     // Adjust in case the function was changed to return void.
     RAttrs &= ~ParamAttr::typeIncompatible(NF->getReturnType());
     if (RAttrs)
@@ -585,7 +586,8 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
          I != E; ++I, ++AI, ++index)
       if (!DeadArguments.count(I)) {    // Remove operands for dead arguments
         Args.push_back(*AI);
-        uint16_t Attrs = PAL ? PAL->getParamAttrs(index) : 0;
+        ParameterAttributes Attrs = PAL ? PAL->getParamAttrs(index) : 
+                                          ParamAttr::None;
         if (Attrs)
           ParamAttrsVec.push_back(ParamAttrsWithIndex::get(Args.size(), Attrs));
       }
@@ -596,7 +598,8 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
     // Push any varargs arguments on the list. Don't forget their attributes.
     for (; AI != CS.arg_end(); ++AI) {
       Args.push_back(*AI);
-      uint16_t Attrs = PAL ? PAL->getParamAttrs(index++) : 0;
+      ParameterAttributes Attrs = PAL ? PAL->getParamAttrs(index++) : 
+                                        ParamAttr::None;
       if (Attrs)
         ParamAttrsVec.push_back(ParamAttrsWithIndex::get(Args.size(), Attrs));
     }

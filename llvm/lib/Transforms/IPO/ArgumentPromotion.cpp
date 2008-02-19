@@ -405,7 +405,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
   const ParamAttrsList *PAL = F->getParamAttrs();
 
   // Add any return attributes.
-  if (unsigned attrs = PAL ? PAL->getParamAttrs(0) : 0)
+  if (ParameterAttributes attrs = PAL ? PAL->getParamAttrs(0) : ParamAttr::None)
     ParamAttrsVec.push_back(ParamAttrsWithIndex::get(0, attrs));
 
   unsigned ArgIndex = 1;
@@ -420,7 +420,8 @@ Function *ArgPromotion::DoPromotion(Function *F,
       ++NumByValArgsPromoted;
     } else if (!ArgsToPromote.count(I)) {
       Params.push_back(I->getType());
-      if (unsigned attrs = PAL ? PAL->getParamAttrs(ArgIndex) : 0)
+      if (ParameterAttributes attrs = PAL ? PAL->getParamAttrs(ArgIndex) : 
+                                            ParamAttr::None)
         ParamAttrsVec.push_back(ParamAttrsWithIndex::get(Params.size(), attrs));
     } else if (I->use_empty()) {
       ++NumArgumentsDead;
@@ -496,7 +497,8 @@ Function *ArgPromotion::DoPromotion(Function *F,
     PAL = CS.getParamAttrs();
     
     // Add any return attributes.
-    if (unsigned attrs = PAL ? PAL->getParamAttrs(0) : 0)
+    if (ParameterAttributes attrs = PAL ? PAL->getParamAttrs(0) : 
+                                          ParamAttr::None)
       ParamAttrsVec.push_back(ParamAttrsWithIndex::get(0, attrs));
 
     // Loop over the operands, inserting GEP and loads in the caller as
@@ -508,7 +510,8 @@ Function *ArgPromotion::DoPromotion(Function *F,
       if (!ArgsToPromote.count(I) && !ByValArgsToTransform.count(I)) {
         Args.push_back(*AI);          // Unmodified argument
         
-        if (unsigned Attrs = PAL ? PAL->getParamAttrs(ArgIndex) : 0)
+        if (ParameterAttributes Attrs = PAL ? PAL->getParamAttrs(ArgIndex) :
+                                              ParamAttr::None)
           ParamAttrsVec.push_back(ParamAttrsWithIndex::get(Args.size(), Attrs));
         
       } else if (ByValArgsToTransform.count(I)) {
@@ -547,7 +550,8 @@ Function *ArgPromotion::DoPromotion(Function *F,
     // Push any varargs arguments on the list
     for (; AI != CS.arg_end(); ++AI, ++ArgIndex) {
       Args.push_back(*AI);
-      if (unsigned Attrs = PAL ? PAL->getParamAttrs(ArgIndex) : 0)
+      if (ParameterAttributes Attrs = PAL ? PAL->getParamAttrs(ArgIndex) :
+                                            ParamAttr::None)
         ParamAttrsVec.push_back(ParamAttrsWithIndex::get(Args.size(), Attrs));
     }
 

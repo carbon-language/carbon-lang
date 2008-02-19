@@ -8384,7 +8384,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
       return false;   // Cannot transform this return value.
 
     if (CallerPAL && !Caller->use_empty()) {
-      uint16_t RAttrs = CallerPAL->getParamAttrs(0);
+      ParameterAttributes RAttrs = CallerPAL->getParamAttrs(0);
       if (RAttrs & ParamAttr::typeIncompatible(FT->getReturnType()))
         return false;   // Attribute not compatible with transformed value.
     }
@@ -8415,7 +8415,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
       return false;   // Cannot transform this parameter value.
 
     if (CallerPAL) {
-      uint16_t PAttrs = CallerPAL->getParamAttrs(i + 1);
+      ParameterAttributes PAttrs = CallerPAL->getParamAttrs(i + 1);
       if (PAttrs & ParamAttr::typeIncompatible(ParamTy))
         return false;   // Attribute not compatible with transformed value.
     }
@@ -8443,7 +8443,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     for (unsigned i = CallerPAL->size(); i; --i) {
       if (CallerPAL->getParamIndex(i - 1) <= FT->getNumParams())
         break;
-      uint16_t PAttrs = CallerPAL->getParamAttrsAtIndex(i - 1);
+      ParameterAttributes PAttrs = CallerPAL->getParamAttrsAtIndex(i - 1);
       if (PAttrs & ParamAttr::VarArgsIncompatible)
         return false;
     }
@@ -8456,7 +8456,8 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   attrVec.reserve(NumCommonArgs);
 
   // Get any return attributes.
-  uint16_t RAttrs = CallerPAL ? CallerPAL->getParamAttrs(0) : 0;
+  ParameterAttributes RAttrs = CallerPAL ? CallerPAL->getParamAttrs(0) :
+                                           ParamAttr::None;
 
   // If the return value is not being used, the type may not be compatible
   // with the existing attributes.  Wipe out any problematic attributes.
@@ -8479,7 +8480,8 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     }
 
     // Add any parameter attributes.
-    uint16_t PAttrs = CallerPAL ? CallerPAL->getParamAttrs(i + 1) : 0;
+    ParameterAttributes PAttrs = CallerPAL ? CallerPAL->getParamAttrs(i + 1) : 
+                                             ParamAttr::None;
     if (PAttrs)
       attrVec.push_back(ParamAttrsWithIndex::get(i + 1, PAttrs));
   }
@@ -8510,7 +8512,9 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
         }
 
         // Add any parameter attributes.
-        uint16_t PAttrs = CallerPAL ? CallerPAL->getParamAttrs(i + 1) : 0;
+        ParameterAttributes PAttrs = CallerPAL ? 
+                                     CallerPAL->getParamAttrs(i + 1) : 
+                                     ParamAttr::None;
         if (PAttrs)
           attrVec.push_back(ParamAttrsWithIndex::get(i + 1, PAttrs));
       }
@@ -8593,7 +8597,7 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
   if (const ParamAttrsList *NestAttrs = NestF->getParamAttrs()) {
     unsigned NestIdx = 1;
     const Type *NestTy = 0;
-    uint16_t NestAttr = 0;
+    ParameterAttributes NestAttr = ParamAttr::None;
 
     // Look for a parameter marked with the 'nest' attribute.
     for (FunctionType::param_iterator I = NestFTy->param_begin(),
@@ -8617,7 +8621,8 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
       // mean appending it.  Likewise for attributes.
 
       // Add any function result attributes.
-      uint16_t Attr = Attrs ? Attrs->getParamAttrs(0) : 0;
+      ParameterAttributes Attr = Attrs ? Attrs->getParamAttrs(0) : 
+                                         ParamAttr::None;
       if (Attr)
         NewAttrs.push_back (ParamAttrsWithIndex::get(0, Attr));
 

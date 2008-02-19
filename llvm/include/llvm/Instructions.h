@@ -20,6 +20,7 @@
 
 #include "llvm/InstrTypes.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/ParameterAttributes.h"
 
 namespace llvm {
 
@@ -1735,7 +1736,7 @@ public:
   void setParamAttrs(const ParamAttrsList *attrs);
 
   /// @brief Determine whether the call or the callee has the given attribute.
-  bool paramHasAttr(uint16_t i, unsigned attr) const;
+  bool paramHasAttr(uint16_t i, ParameterAttributes attr) const;
 
   /// @brief Determine if the call does not access memory.
   bool doesNotAccessMemory() const;

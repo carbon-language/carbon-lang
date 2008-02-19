@@ -139,8 +139,8 @@ void Function::eraseFromParent() {
 }
 
 /// @brief Determine whether the function has the given attribute.
-bool Function::paramHasAttr(uint16_t i, unsigned attr) const {
-  return ParamAttrs && ParamAttrs->paramHasAttr(i, (ParameterAttributes)attr);
+bool Function::paramHasAttr(uint16_t i, ParameterAttributes attr) const {
+  return ParamAttrs && ParamAttrs->paramHasAttr(i, attr);
 }
 
 /// @brief Determine if the function cannot return.
@@ -365,7 +365,7 @@ const FunctionType *Intrinsic::getType(ID id, const Type **Tys,
 
 const ParamAttrsList *Intrinsic::getParamAttrs(ID id) {
   ParamAttrsVector Attrs;
-  uint16_t Attr = ParamAttr::None;
+  ParameterAttributes Attr = ParamAttr::None;
 
 #define GET_INTRINSIC_ATTRIBUTES
 #include "llvm/Intrinsics.gen"

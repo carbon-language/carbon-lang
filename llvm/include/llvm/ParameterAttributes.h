@@ -31,50 +31,55 @@ namespace ParamAttr {
 /// lists the attributes that can be associated with parameters or function 
 /// results.
 /// @brief Function parameter attributes.
-enum Attributes {
-  None       = 0,       ///< No attributes have been set
-  ZExt       = 1 << 0,  ///< Zero extended before/after call
-  SExt       = 1 << 1,  ///< Sign extended before/after call
-  NoReturn   = 1 << 2,  ///< Mark the function as not returning
-  InReg      = 1 << 3,  ///< Force argument to be passed in register
-  StructRet  = 1 << 4,  ///< Hidden pointer to structure to return
-  NoUnwind   = 1 << 5,  ///< Function doesn't unwind stack
-  NoAlias    = 1 << 6,  ///< Considered to not alias after call
-  ByVal      = 1 << 7,  ///< Pass structure by value
-  Nest       = 1 << 8,  ///< Nested function static chain
-  ReadNone   = 1 << 9,  ///< Function does not access memory
-  ReadOnly   = 1 << 10  ///< Function only reads from memory
-};
+
+/// @brief A more friendly way to reference the attributes.
+typedef uint32_t Attributes;
+
+const Attributes None      = 0;     ///< No attributes have been set
+const Attributes ZExt      = 1<<0;  ///< Zero extended before/after call
+const Attributes SExt      = 1<<1;  ///< Sign extended before/after call
+const Attributes NoReturn  = 1<<2;  ///< Mark the function as not returning
+const Attributes InReg     = 1<<3;  ///< Force argument to be passed in register
+const Attributes StructRet = 1<<4;  ///< Hidden pointer to structure to return
+const Attributes NoUnwind  = 1<<5;  ///< Function doesn't unwind stack
+const Attributes NoAlias   = 1<<6;  ///< Considered to not alias after call
+const Attributes ByVal     = 1<<7;  ///< Pass structure by value
+const Attributes Nest      = 1<<8;  ///< Nested function static chain
+const Attributes ReadNone  = 1<<9;  ///< Function does not access memory
+const Attributes ReadOnly  = 1<<10; ///< Function only reads from memory
 
 /// @brief Attributes that only apply to function parameters.
-const uint16_t ParameterOnly = ByVal | InReg | Nest | StructRet;
+const Attributes ParameterOnly = ByVal | InReg | Nest | StructRet;
 
 /// @brief Attributes that only apply to function return values.
-const uint16_t ReturnOnly = NoReturn | NoUnwind | ReadNone | ReadOnly;
+const Attributes ReturnOnly = NoReturn | NoUnwind | ReadNone | ReadOnly;
 
 /// @brief Parameter attributes that do not apply to vararg call arguments.
-const uint16_t VarArgsIncompatible = StructRet;
+const Attributes VarArgsIncompatible = StructRet;
 
 /// @brief Attributes that are mutually incompatible.
-const uint16_t MutuallyIncompatible[3] = {
+const Attributes MutuallyIncompatible[3] = {
   ByVal | InReg | Nest  | StructRet,
   ZExt  | SExt,
   ReadNone | ReadOnly
 };
 
 /// @brief Which attributes cannot be applied to a type.
-uint16_t typeIncompatible (const Type *Ty);
+Attributes typeIncompatible (const Type *Ty);
 
 } // end namespace ParamAttr
+
+/// @brief A more friendly way to reference the attributes.
+typedef ParamAttr::Attributes ParameterAttributes;
 
 /// This is just a pair of values to associate a set of parameter attributes
 /// with a parameter index. 
 /// @brief ParameterAttributes with a parameter index.
 struct ParamAttrsWithIndex {
-  uint16_t attrs; ///< The attributes that are set, or'd together
+  ParameterAttributes attrs; ///< The attributes that are set, or'd together
   uint16_t index; ///< Index of the parameter for which the attributes apply
   
-  static ParamAttrsWithIndex get(uint16_t idx, uint16_t attrs) {
+  static ParamAttrsWithIndex get(uint16_t idx, ParameterAttributes attrs) {
     ParamAttrsWithIndex P;
     P.index = idx;
     P.attrs = attrs;
@@ -84,9 +89,6 @@ struct ParamAttrsWithIndex {
 
 /// @brief A vector of attribute/index pairs.
 typedef SmallVector<ParamAttrsWithIndex,4> ParamAttrsVector;
-
-/// @brief A more friendly way to reference the attributes.
-typedef ParamAttr::Attributes ParameterAttributes;
 
 /// This class represents a list of attribute/index pairs for parameter 
 /// attributes. Each entry in the list contains the index of a function 
@@ -143,11 +145,13 @@ class ParamAttrsList : public FoldingSetNode {
 
     /// @brief Add the specified attributes to those in PAL at index idx.
     static const ParamAttrsList *includeAttrs(const ParamAttrsList *PAL,
-                                              uint16_t idx, uint16_t attrs);
+                                              uint16_t idx, 
+                                              ParameterAttributes attrs);
 
     /// @brief Remove the specified attributes from those in PAL at index idx.
     static const ParamAttrsList *excludeAttrs(const ParamAttrsList *PAL,
-                                              uint16_t idx, uint16_t attrs);
+                                              uint16_t idx, 
+                                              ParameterAttributes attrs);
 
   /// @}
   /// @name Accessors
@@ -161,7 +165,7 @@ class ParamAttrsList : public FoldingSetNode {
     /// @returns The all the ParameterAttributes for the \p indexth parameter
     /// as a uint16_t of enumeration values OR'd together.
     /// @brief Get the attributes for a parameter
-    uint16_t getParamAttrs(uint16_t param_index) const;
+    ParameterAttributes getParamAttrs(uint16_t param_index) const;
 
     /// This checks to see if the \p ith function parameter has the parameter
     /// attribute given by \p attr set.
@@ -181,7 +185,7 @@ class ParamAttrsList : public FoldingSetNode {
     /// string of equivalent mnemonics. This is, presumably, for writing out
     /// the mnemonics for the assembly writer. 
     /// @brief Convert parameter attribute bits to text
-    static std::string getParamAttrsText(uint16_t Attributes);
+    static std::string getParamAttrsText(ParameterAttributes Attributes);
 
     /// The \p Indexth parameter attribute is converted to string.
     /// @brief Get the text for the parmeter attributes for one parameter.
@@ -218,7 +222,7 @@ class ParamAttrsList : public FoldingSetNode {
       return attrs[attr_index].index;
     }
 
-    uint16_t getParamAttrsAtIndex(unsigned attr_index) const {
+    ParameterAttributes getParamAttrsAtIndex(unsigned attr_index) const {
       return attrs[attr_index].attrs;
     }
     

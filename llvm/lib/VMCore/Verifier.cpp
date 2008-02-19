@@ -261,8 +261,8 @@ namespace {  // Anonymous namespace for class
     void VerifyCallSite(CallSite CS);
     void VerifyIntrinsicPrototype(Intrinsic::ID ID, Function *F,
                                   unsigned Count, ...);
-    void VerifyAttrs(uint16_t Attrs, const Type *Ty, bool isReturnValue,
-                     const Value *V);
+    void VerifyAttrs(ParameterAttributes Attrs, const Type *Ty,
+                     bool isReturnValue, const Value *V);
     void VerifyFunctionAttrs(const FunctionType *FT, const ParamAttrsList *Attrs,
                              const Value *V);
 
@@ -386,29 +386,29 @@ void Verifier::verifyTypeSymbolTable(TypeSymbolTable &ST) {
 
 // VerifyAttrs - Check the given parameter attributes for an argument or return
 // value of the specified type.  The value V is printed in error messages.
-void Verifier::VerifyAttrs(uint16_t Attrs, const Type *Ty, bool isReturnValue,
-                           const Value *V) {
+void Verifier::VerifyAttrs(ParameterAttributes Attrs, const Type *Ty, 
+                           bool isReturnValue, const Value *V) {
   if (Attrs == ParamAttr::None)
     return;
 
   if (isReturnValue) {
-    uint16_t RetI = Attrs & ParamAttr::ParameterOnly;
+    ParameterAttributes RetI = Attrs & ParamAttr::ParameterOnly;
     Assert1(!RetI, "Attribute " + ParamAttrsList::getParamAttrsText(RetI) +
             "does not apply to return values!", V);
   } else {
-    uint16_t ParmI = Attrs & ParamAttr::ReturnOnly;
+    ParameterAttributes ParmI = Attrs & ParamAttr::ReturnOnly;
     Assert1(!ParmI, "Attribute " + ParamAttrsList::getParamAttrsText(ParmI) +
             "only applies to return values!", V);
   }
 
   for (unsigned i = 0;
        i < array_lengthof(ParamAttr::MutuallyIncompatible); ++i) {
-    uint16_t MutI = Attrs & ParamAttr::MutuallyIncompatible[i];
+    ParameterAttributes MutI = Attrs & ParamAttr::MutuallyIncompatible[i];
     Assert1(!(MutI & (MutI - 1)), "Attributes " +
             ParamAttrsList::getParamAttrsText(MutI) + "are incompatible!", V);
   }
 
-  uint16_t TypeI = Attrs & ParamAttr::typeIncompatible(Ty);
+  ParameterAttributes TypeI = Attrs & ParamAttr::typeIncompatible(Ty);
   Assert1(!TypeI, "Wrong type for attribute " +
           ParamAttrsList::getParamAttrsText(TypeI), V);
 }
@@ -424,7 +424,7 @@ void Verifier::VerifyFunctionAttrs(const FunctionType *FT,
   bool SawNest = false;
 
   for (unsigned Idx = 0; Idx <= FT->getNumParams(); ++Idx) {
-    uint16_t Attr = Attrs->getParamAttrs(Idx);
+    ParameterAttributes Attr = Attrs->getParamAttrs(Idx);
 
     VerifyAttrs(Attr, FT->getParamType(Idx-1), !Idx, V);
 
@@ -873,11 +873,11 @@ void Verifier::VerifyCallSite(CallSite CS) {
   if (Attrs && FTy->isVarArg())
     // Check attributes on the varargs part.
     for (unsigned Idx = 1 + FTy->getNumParams(); Idx <= CS.arg_size(); ++Idx) {
-      uint16_t Attr = Attrs->getParamAttrs(Idx);
+      ParameterAttributes Attr = Attrs->getParamAttrs(Idx);
 
       VerifyAttrs(Attr, CS.getArgument(Idx-1)->getType(), false, I);
 
-      uint16_t VArgI = Attr & ParamAttr::VarArgsIncompatible;
+      ParameterAttributes VArgI = Attr & ParamAttr::VarArgsIncompatible;
       Assert1(!VArgI, "Attribute " + ParamAttrsList::getParamAttrsText(VArgI) +
               "cannot be used for vararg call arguments!", I);
     }

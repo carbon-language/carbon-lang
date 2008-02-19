@@ -447,7 +447,7 @@ CppWriter::printParamAttrs(const ParamAttrsList* PAL, const std::string &name) {
     Out << "ParamAttrsWithIndex PAWI;"; nl(Out);
     for (unsigned i = 0; i < PAL->size(); ++i) {
       uint16_t index = PAL->getParamIndex(i);
-      uint16_t attrs = PAL->getParamAttrs(index);
+      ParameterAttributes attrs = PAL->getParamAttrs(index);
       Out << "PAWI.index = " << index << "; PAWI.attrs = 0 ";
       if (attrs & ParamAttr::SExt)
         Out << " | ParamAttr::SExt";

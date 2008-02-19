@@ -974,7 +974,7 @@ Module *llvm::RunVMAsmParser(llvm::MemoryBuffer *MB) {
 
   llvm::GlobalValue::LinkageTypes         Linkage;
   llvm::GlobalValue::VisibilityTypes      Visibility;
-  uint16_t                          ParamAttrs;
+  llvm::ParameterAttributes         ParamAttrs;
   llvm::APInt                       *APIntVal;
   int64_t                           SInt64Val;
   uint64_t                          UInt64Val;

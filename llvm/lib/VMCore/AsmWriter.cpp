@@ -742,7 +742,7 @@ public:
   inline void write(const Type *Ty)          { printType(Ty);        }
 
   void writeOperand(const Value *Op, bool PrintType);
-  void writeParamOperand(const Value *Operand, uint16_t Attrs);
+  void writeParamOperand(const Value *Operand, ParameterAttributes Attrs);
 
   const Module* getModule() { return TheModule; }
 
@@ -752,7 +752,7 @@ private:
   void printGlobal(const GlobalVariable *GV);
   void printAlias(const GlobalAlias *GV);
   void printFunction(const Function *F);
-  void printArgument(const Argument *FA, uint16_t ParamAttrs);
+  void printArgument(const Argument *FA, ParameterAttributes Attrs);
   void printBasicBlock(const BasicBlock *BB);
   void printInstruction(const Instruction &I);
 
@@ -839,7 +839,8 @@ void AssemblyWriter::writeOperand(const Value *Operand, bool PrintType) {
   }
 }
 
-void AssemblyWriter::writeParamOperand(const Value *Operand, uint16_t Attrs) {
+void AssemblyWriter::writeParamOperand(const Value *Operand, 
+                                       ParameterAttributes Attrs) {
   if (Operand == 0) {
     Out << "<null operand!>";
   } else {
@@ -1092,7 +1093,7 @@ void AssemblyWriter::printFunction(const Function *F) {
       // Insert commas as we go... the first arg doesn't get a comma
       if (I != F->arg_begin()) Out << ", ";
       printArgument(I, (Attrs ? Attrs->getParamAttrs(Idx)
-                              : uint16_t(ParamAttr::None)));
+                              : ParamAttr::None));
       Idx++;
     }
   } else {
@@ -1104,7 +1105,7 @@ void AssemblyWriter::printFunction(const Function *F) {
       // Output type...
       printType(FT->getParamType(i));
       
-      unsigned ArgAttrs = ParamAttr::None;
+      ParameterAttributes ArgAttrs = ParamAttr::None;
       if (Attrs) ArgAttrs = Attrs->getParamAttrs(i+1);
       if (ArgAttrs != ParamAttr::None)
         Out << ' ' << ParamAttrsList::getParamAttrsText(ArgAttrs);
@@ -1144,7 +1145,8 @@ void AssemblyWriter::printFunction(const Function *F) {
 /// printArgument - This member is called for every argument that is passed into
 /// the function.  Simply print it out
 ///
-void AssemblyWriter::printArgument(const Argument *Arg, uint16_t Attrs) {
+void AssemblyWriter::printArgument(const Argument *Arg, 
+                                   ParameterAttributes Attrs) {
   // Output type...
   printType(Arg->getType());
 
@@ -1323,7 +1325,8 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     for (unsigned op = 1, Eop = I.getNumOperands(); op < Eop; ++op) {
       if (op > 1)
         Out << ',';
-      writeParamOperand(I.getOperand(op), PAL ? PAL->getParamAttrs(op) : 0);
+      writeParamOperand(I.getOperand(op), PAL ? PAL->getParamAttrs(op) : 
+                                          ParamAttr::None);
     }
     Out << " )";
     if (PAL && PAL->getParamAttrs(0) != ParamAttr::None)
@@ -1361,7 +1364,8 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     for (unsigned op = 3, Eop = I.getNumOperands(); op < Eop; ++op) {
       if (op > 3)
         Out << ',';
-      writeParamOperand(I.getOperand(op), PAL ? PAL->getParamAttrs(op-2) : 0);
+      writeParamOperand(I.getOperand(op), PAL ? PAL->getParamAttrs(op-2) : 
+                                          ParamAttr::None);
     }
 
     Out << " )";
@@ -1515,9 +1519,10 @@ ParamAttrsList::dump() const {
   cerr << "PAL[ ";
   for (unsigned i = 0; i < attrs.size(); ++i) {
     uint16_t index = getParamIndex(i);
-    uint16_t attrs = getParamAttrs(index);
+    ParameterAttributes attrs = getParamAttrs(index);
     cerr << "{" << index << "," << attrs << "} ";
   }
+
   cerr << "]\n";
 }
 
