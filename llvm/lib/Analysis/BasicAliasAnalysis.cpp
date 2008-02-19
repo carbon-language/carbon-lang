@@ -264,7 +264,7 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
               CI != CE; ++CI)
             if (isa<PointerType>((*CI)->getType()) &&
                 ( getUnderlyingObject(*CI) == P ||
-                  alias(cast<Value>(CI), ~0ULL, P, ~0ULL) != NoAlias) )
+                  alias(cast<Value>(CI), ~0UL, P, ~0UL) != NoAlias) )
               passedAsArg = true;
           
           if (!passedAsArg)
