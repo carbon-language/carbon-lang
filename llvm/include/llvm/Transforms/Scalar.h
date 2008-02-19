@@ -265,13 +265,6 @@ extern const PassInfo *LowerSwitchID;
 
 //===----------------------------------------------------------------------===//
 //
-// LowerPacked - This pass converts VectorType operations into low-level scalar
-// operations.
-//
-FunctionPass *createLowerPackedPass();
-
-//===----------------------------------------------------------------------===//
-//
 // LowerInvoke - This pass converts invoke and unwind instructions to use sjlj
 // exception handling mechanisms.  Note that after this pass runs the CFG is not
 // entirely accurate (exceptional control flow edges are not correct anymore) so
