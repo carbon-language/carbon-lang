@@ -245,6 +245,12 @@ def extloadi16i8   : PatFrag<(ops node:$ptr), (i16 (extloadi8 node:$ptr))>;
 def extloadi32i8   : PatFrag<(ops node:$ptr), (i32 (extloadi8 node:$ptr))>;
 def extloadi32i16  : PatFrag<(ops node:$ptr), (i32 (extloadi16 node:$ptr))>;
 
+
+// An 'and' node with a single use.
+def and_su : PatFrag<(ops node:$lhs, node:$rhs), (and node:$lhs, node:$rhs), [{
+  return N->hasOneUse();
+}]>;
+
 //===----------------------------------------------------------------------===//
 // Instruction list...
 //
@@ -2078,16 +2084,16 @@ let Defs = [EFLAGS] in {
 let isCommutable = 1 in {   // TEST X, Y   --> TEST Y, X
 def TEST8rr  : I<0x84, MRMDestReg, (outs),  (ins GR8:$src1, GR8:$src2),
                      "test{b}\t{$src2, $src1|$src1, $src2}",
-                     [(X86cmp (and GR8:$src1, GR8:$src2), 0),
+                     [(X86cmp (and_su GR8:$src1, GR8:$src2), 0),
                       (implicit EFLAGS)]>;
 def TEST16rr : I<0x85, MRMDestReg, (outs),  (ins GR16:$src1, GR16:$src2),
                      "test{w}\t{$src2, $src1|$src1, $src2}",
-                     [(X86cmp (and GR16:$src1, GR16:$src2), 0),
+                     [(X86cmp (and_su GR16:$src1, GR16:$src2), 0),
                       (implicit EFLAGS)]>,
                  OpSize;
 def TEST32rr : I<0x85, MRMDestReg, (outs),  (ins GR32:$src1, GR32:$src2),
                      "test{l}\t{$src2, $src1|$src1, $src2}",
-                     [(X86cmp (and GR32:$src1, GR32:$src2), 0),
+                     [(X86cmp (and_su GR32:$src1, GR32:$src2), 0),
                       (implicit EFLAGS)]>;
 }
 
@@ -2107,17 +2113,17 @@ def TEST32rm : I<0x85, MRMSrcMem, (outs),  (ins GR32:$src1, i32mem:$src2),
 def TEST8ri  : Ii8 <0xF6, MRM0r,                     // flags = GR8  & imm8
                     (outs),  (ins GR8:$src1, i8imm:$src2),
                     "test{b}\t{$src2, $src1|$src1, $src2}",
-                    [(X86cmp (and GR8:$src1, imm:$src2), 0),
+                    [(X86cmp (and_su GR8:$src1, imm:$src2), 0),
                      (implicit EFLAGS)]>;
 def TEST16ri : Ii16<0xF7, MRM0r,                     // flags = GR16 & imm16
                     (outs),  (ins GR16:$src1, i16imm:$src2),
                     "test{w}\t{$src2, $src1|$src1, $src2}",
-                    [(X86cmp (and GR16:$src1, imm:$src2), 0),
+                    [(X86cmp (and_su GR16:$src1, imm:$src2), 0),
                      (implicit EFLAGS)]>, OpSize;
 def TEST32ri : Ii32<0xF7, MRM0r,                     // flags = GR32 & imm32
                     (outs),  (ins GR32:$src1, i32imm:$src2),
                     "test{l}\t{$src2, $src1|$src1, $src2}",
-                    [(X86cmp (and GR32:$src1, imm:$src2), 0),
+                    [(X86cmp (and_su GR32:$src1, imm:$src2), 0),
                      (implicit EFLAGS)]>;
 
 def TEST8mi  : Ii8 <0xF6, MRM0m,                   // flags = [mem8]  & imm8
