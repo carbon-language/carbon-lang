@@ -232,7 +232,7 @@ RValue ValueStateManager::GetValue(ValueState St, Expr* E, bool* hasVal) {
         
         // Integer literals evaluate to an RValue.  Simply retrieve the
         // RValue for the literal.
-        
+#if 0        
       case Stmt::IntegerLiteralClass:
         return NonLValue::GetValue(ValMgr, cast<IntegerLiteral>(E));
         
@@ -242,6 +242,7 @@ RValue ValueStateManager::GetValue(ValueState St, Expr* E, bool* hasVal) {
         return NonLValue::GetValue(ValMgr, C->getValue(), C->getType(),
                                    C->getLoc());
       }
+#endif        
 
         // Casts where the source and target type are the same
         // are no-ops.  We blast through these to get the descendant
