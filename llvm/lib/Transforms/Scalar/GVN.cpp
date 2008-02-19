@@ -1090,7 +1090,7 @@ bool GVN::performReturnSlotOptzn(MemCpyInst* cpy, CallInst* C,
   // Since this is a return slot optimization, we need to make sure that
   // the value being copied is, in fact, in a return slot.  We also need to
   // check that the return slot parameter is marked noalias, so that we can
-  // be sure that changing it will cause unexpected behavior changes due
+  // be sure that changing it will not cause unexpected behavior changes due
   // to it being accessed through a global or another parameter.
   if (CS.arg_size() == 0 ||
       cpySrc != CS.getArgument(0) ||
