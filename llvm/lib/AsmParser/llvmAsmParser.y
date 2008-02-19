@@ -378,7 +378,8 @@ static Value *getExistingVal(const Type *Ty, const ValID &D) {
   // Check to make sure that "Ty" is an integral type, and that our
   // value will fit into the specified type...
   case ValID::ConstSIntVal:    // Is it a constant pool reference??
-    if (!ConstantInt::isValueValidForType(Ty, D.ConstPool64)) {
+    if (!isa<IntegerType>(Ty) ||
+        !ConstantInt::isValueValidForType(Ty, D.ConstPool64)) {
       GenerateError("Signed integral constant '" +
                      itostr(D.ConstPool64) + "' is invalid for type '" +
                      Ty->getDescription() + "'");
@@ -387,20 +388,23 @@ static Value *getExistingVal(const Type *Ty, const ValID &D) {
     return ConstantInt::get(Ty, D.ConstPool64, true);
 
   case ValID::ConstUIntVal:     // Is it an unsigned const pool reference?
-    if (!ConstantInt::isValueValidForType(Ty, D.UConstPool64)) {
-      if (!ConstantInt::isValueValidForType(Ty, D.ConstPool64)) {
-        GenerateError("Integral constant '" + utostr(D.UConstPool64) +
-                       "' is invalid or out of range");
-        return 0;
-      } else {     // This is really a signed reference.  Transmogrify.
-        return ConstantInt::get(Ty, D.ConstPool64, true);
-      }
-    } else {
+    if (isa<IntegerType>(Ty) &&
+        ConstantInt::isValueValidForType(Ty, D.UConstPool64))
       return ConstantInt::get(Ty, D.UConstPool64);
+
+    if (!isa<IntegerType>(Ty) ||
+        !ConstantInt::isValueValidForType(Ty, D.ConstPool64)) {
+      GenerateError("Integral constant '" + utostr(D.UConstPool64) +
+                    "' is invalid or out of range for type '" +
+                    Ty->getDescription() + "'");
+      return 0;
     }
+    // This is really a signed reference.  Transmogrify.
+    return ConstantInt::get(Ty, D.ConstPool64, true);
 
   case ValID::ConstFPVal:        // Is it a floating point const pool reference?
-    if (!ConstantFP::isValueValidForType(Ty, *D.ConstPoolFP)) {
+    if (!Ty->isFloatingPoint() ||
+        !ConstantFP::isValueValidForType(Ty, *D.ConstPoolFP)) {
       GenerateError("FP constant invalid for type");
       return 0;
     }
