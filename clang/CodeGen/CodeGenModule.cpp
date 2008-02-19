@@ -244,6 +244,9 @@ void CodeGenModule::EmitGlobalVar(const FileVarDecl *D) {
   case VarDecl::Register:
     assert(0 && "Can't have auto or register globals");
   case VarDecl::None:
+    if (!D->getInit())
+      GV->setLinkage(llvm::GlobalVariable::WeakLinkage);
+    break;
   case VarDecl::Extern:
   case VarDecl::PrivateExtern:
     // todo: common
