@@ -1220,13 +1220,11 @@ bool GVN::processInstruction(Instruction* I,
     if (dep == MemoryDependenceAnalysis::None ||
         dep == MemoryDependenceAnalysis::NonLocal)
       return false;
-    else if (CallInst* C = dyn_cast<CallInst>(dep)) {
-      if (!isa<MemCpyInst>(C))
-        return performReturnSlotOptzn(M, C, toErase);
-    } else if (!isa<MemCpyInst>(dep))
-      return false;
-    
-    return processMemCpy(M, cast<MemCpyInst>(dep), toErase);
+    if (isa<MemCpyInst>(dep))
+      return processMemCpy(M, cast<MemCpyInst>(dep), toErase);
+    if (CallInst* C = dyn_cast<CallInst>(dep))
+      return performReturnSlotOptzn(M, C, toErase);
+    return false;
   }
   
   unsigned num = VN.lookup_or_add(I);
