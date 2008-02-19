@@ -34,6 +34,7 @@
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Target/TargetData.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -721,8 +722,10 @@ namespace {
       AU.addRequired<DominatorTree>();
       AU.addRequired<MemoryDependenceAnalysis>();
       AU.addRequired<AliasAnalysis>();
+      AU.addRequired<TargetData>();
       AU.addPreserved<AliasAnalysis>();
       AU.addPreserved<MemoryDependenceAnalysis>();
+      AU.addPreserved<TargetData>();
     }
   
     // Helper fuctions
@@ -1080,32 +1083,54 @@ static bool isReturnSlotOptznProfitable(Value* dest, MemCpyInst* cpy) {
 /// rather than using memcpy
 bool GVN::performReturnSlotOptzn(MemCpyInst* cpy, CallInst* C,
                                  SmallVector<Instruction*, 4>& toErase) {
-  // Check that we're copying to an argument...
   Value* cpyDest = cpy->getDest();
-  if (!isa<Argument>(cpyDest))
-    return false;
+  Value* cpySrc = cpy->getSource();
+  CallSite CS = CallSite::get(C);
   
-  // And that the argument is the return slot
-  Argument* sretArg = cast<Argument>(cpyDest);
-  if (!sretArg->hasStructRetAttr())
+  // Since this is a return slot optimization, we need to make sure that
+  // the value being copied is, in fact, in a return slot.  We also need to
+  // check that the return slot parameter is marked noalias, so that we can
+  // be sure that changing it will cause unexpected behavior changes due
+  // to it being accessed through a global or another parameter.
+  if (CS.arg_size() == 0 ||
+      cpySrc != CS.getArgument(0) ||
+      !CS.paramHasAttr(1, ParamAttr::NoAlias | ParamAttr::StructRet))
     return false;
   
   // We only perform the transformation if it will be profitable. 
-  if (!isReturnSlotOptznProfitable(sretArg, cpy))
+  if (!isReturnSlotOptznProfitable(cpyDest, cpy))
     return false;
   
-  // Make sure the call cannot modify the return slot in some unpredicted way
-  AliasAnalysis& AA = getAnalysis<AliasAnalysis>();
-  if (AA.getModRefInfo(C, cpy->getRawDest(), ~0UL) != AliasAnalysis::NoModRef)
-    return false;
-  
-  // If all checks passed, then we can perform the transformation.
-  CallSite CS = CallSite::get(C);
+  // Check that something sneaky is not happening involving casting
+  // return slot types around.
   if (CS.getArgument(0)->getType() != cpyDest->getType())
     return false;
-      
+  
+  // We can only perform the transformation if the size of the memcpy
+  // is constant and equal to the size of the structure.
+  if (!isa<ConstantInt>(cpy->getLength()))
+    return false;
+  
+  ConstantInt* cpyLength = cast<ConstantInt>(cpy->getLength());
+  TargetData& TD = getAnalysis<TargetData>();
+  if (TD.getTypeStoreSize(cpyDest->getType()) == cpyLength->getZExtValue())
+    return false;
+  
+  // In addition to knowing that the call does not access the return slot
+  // in some unexpected manner, which we derive from the noalias attribute,
+  // we also need to know that it does not sneakily modify the destination
+  // slot in the caller.  We don't have parameter attributes to go by
+  // for this one, so we just rely on AA to figure it out for us.
+  AliasAnalysis& AA = getAnalysis<AliasAnalysis>();
+  if (AA.getModRefInfo(C, cpy->getRawDest(), cpyLength->getZExtValue()) !=
+      AliasAnalysis::NoModRef)
+    return false;
+  
+  // If all the checks have passed, then we're alright to do the transformation.
   CS.setArgument(0, cpyDest);
   
+  // Drop any cached information about the call, because we may have changed
+  // its dependence information by changing its parameter.
   MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
   MD.dropInstruction(C);
   
