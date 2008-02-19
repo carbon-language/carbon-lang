@@ -1093,6 +1093,7 @@ Module *llvm::RunVMAsmParser(llvm::MemoryBuffer *MB) {
 // Other Operators
 %token <OtherOpVal> PHI_TOK SELECT VAARG
 %token <OtherOpVal> EXTRACTELEMENT INSERTELEMENT SHUFFLEVECTOR
+%token <OtherOpVal> GETRESULT
 
 // Function Attributes
 %token SIGNEXT ZEROEXT NORETURN INREG SRET NOUNWIND NOALIAS BYVAL NEST
@@ -1733,7 +1734,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
       GEN_ERROR("Invalid upreference in type: " + (*$1)->getDescription());
     const PointerType *Ty = dyn_cast<PointerType>($1->get());
     if (Ty == 0)
-      GEN_ERROR("Global const reference must be a pointer type");
+      GEN_ERROR("Global const reference must be a pointer type " + (*$1)->getDescription());
 
     // ConstExprs can exist in the body of a function, thus creating
     // GlobalValues whenever they refer to a variable.  Because we are in
@@ -3129,6 +3130,14 @@ MemoryInst : MALLOC Types OptCAlign {
     CHECK_FOR_ERROR
     $$ = new StoreInst($3, tmpVal, $1, $7);
     delete $5;
+  }
+| GETRESULT Types LocalName ',' ConstVal  {
+  ValID TmpVID = ValID::createLocalName(*$3);
+  Value *TmpVal = getVal($2->get(), TmpVID);
+  if (!GetResultInst::isValidOperands(TmpVal, $5))
+      GEN_ERROR("Invalid getresult operands");
+    $$ = new GetResultInst(TmpVal, $5);
+    CHECK_FOR_ERROR
   }
   | GETELEMENTPTR Types ValueRef IndexList {
     if (!UpRefs.empty())
