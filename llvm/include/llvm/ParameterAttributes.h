@@ -47,6 +47,8 @@ const Attributes ByVal     = 1<<7;  ///< Pass structure by value
 const Attributes Nest      = 1<<8;  ///< Nested function static chain
 const Attributes ReadNone  = 1<<9;  ///< Function does not access memory
 const Attributes ReadOnly  = 1<<10; ///< Function only reads from memory
+const Attributes Alignment = 0xffff<<16; ///< Alignment of parameter (16 bits)
+                                    // 0 = unknown, else in clear (not log)
 
 /// @brief Attributes that only apply to function parameters.
 const Attributes ParameterOnly = ByVal | InReg | Nest | StructRet;

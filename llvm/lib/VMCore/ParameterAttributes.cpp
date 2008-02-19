@@ -14,6 +14,7 @@
 #include "llvm/ParameterAttributes.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Support/ManagedStatic.h"
+#include <sstream>
 
 using namespace llvm;
 
@@ -68,13 +69,20 @@ ParamAttrsList::getParamAttrsText(ParameterAttributes Attrs) {
     Result += "readnone ";
   if (Attrs & ParamAttr::ReadOnly)
     Result += "readonly ";
+  if (Attrs & ParamAttr::Alignment) {
+    std::stringstream s;
+    s << ((Attrs & ParamAttr::Alignment) >> 16);
+    Result += "align ";
+    Result += s.str();
+    Result += " ";
+  }
   return Result;
 }
 
 void ParamAttrsList::Profile(FoldingSetNodeID &ID,
                              const ParamAttrsVector &Attrs) {
   for (unsigned i = 0; i < Attrs.size(); ++i)
-    ID.AddInteger(unsigned(Attrs[i].attrs) << 16 | unsigned(Attrs[i].index));
+    ID.AddInteger(uint64_t(Attrs[i].attrs) << 16 | unsigned(Attrs[i].index));
 }
 
 const ParamAttrsList *
@@ -173,6 +181,15 @@ ParamAttrsList::includeAttrs(const ParamAttrsList *PAL,
                              uint16_t idx, ParameterAttributes attrs) {
   ParameterAttributes OldAttrs = PAL ? PAL->getParamAttrs(idx) : 
                                        ParamAttr::None;
+#ifndef NDEBUG
+  // FIXME it is not obvious how this should work for alignment.
+  // For now, say we can't change a known alignment.
+  ParameterAttributes OldAlign = OldAttrs & ParamAttr::Alignment;
+  ParameterAttributes NewAlign = attrs & ParamAttr::Alignment;
+  assert(!OldAlign || !NewAlign || OldAlign == NewAlign &&
+         "Attempt to change alignment!");
+#endif
+
   ParameterAttributes NewAttrs = OldAttrs | attrs;
   if (NewAttrs == OldAttrs)
     return PAL;
@@ -185,6 +202,11 @@ ParamAttrsList::includeAttrs(const ParamAttrsList *PAL,
 const ParamAttrsList *
 ParamAttrsList::excludeAttrs(const ParamAttrsList *PAL,
                              uint16_t idx, ParameterAttributes attrs) {
+#ifndef NDEBUG
+  // FIXME it is not obvious how this should work for alignment.
+  // For now, say we can't pass in alignment, which no current use does.
+  assert(!(attrs & ParamAttr::Alignment) && "Attempt to exclude alignment!");
+#endif
   ParameterAttributes OldAttrs = PAL ? PAL->getParamAttrs(idx) : 
                                        ParamAttr::None;
   ParameterAttributes NewAttrs = OldAttrs & ~attrs;
