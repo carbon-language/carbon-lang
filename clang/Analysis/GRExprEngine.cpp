@@ -447,18 +447,21 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
 
 void GRExprEngine::VisitCast(Expr* CastE, Expr* E, NodeTy* Pred, NodeSet& Dst) {
   
-  QualType T = CastE->getType();
+  NodeSet S1;
+  Visit(E, Pred, S1);
 
+  QualType T = CastE->getType();
+  
   // Check for redundant casts or casting to "void"
   if (T->isVoidType() ||
       E->getType() == T || 
       (T->isPointerType() && E->getType()->isFunctionType())) {
-    Dst.Add(Pred);
+    
+    for (NodeSet::iterator I1=S1.begin(), E1=S1.end(); I1 != E1; ++I1)
+      Dst.Add(*I1);
+
     return;
   }
-  
-  NodeSet S1;
-  Visit(E, Pred, S1);
   
   for (NodeSet::iterator I1=S1.begin(), E1=S1.end(); I1 != E1; ++I1) {
     NodeTy* N = *I1;
