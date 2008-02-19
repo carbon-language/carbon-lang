@@ -1,13 +1,14 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep mr
+; RUN: llvm-as < %s | llc -march=ppc32 | not grep mr
 
-int %test(int %Y, int %X) {
+define i32 @test(i32 %Y, i32 %X) {
 entry:
-	%tmp = tail call int asm "foo $0", "=r"( )		; <int> [#uses=1]
-	ret int %tmp
+        %tmp = tail call i32 asm "foo $0", "=r"( )              ; <i32> [#uses=1]
+        ret i32 %tmp
 }
 
-int %test2(int %Y, int %X) {
+define i32 @test2(i32 %Y, i32 %X) {
 entry:
-	%tmp1 = tail call int asm "foo $0, $1", "=r,r"( int %X )		; <int> [#uses=1]
-	ret int %tmp1
+        %tmp1 = tail call i32 asm "foo $0, $1", "=r,r"( i32 %X )                ; <i32> [#uses=1]
+        ret i32 %tmp1
 }
+

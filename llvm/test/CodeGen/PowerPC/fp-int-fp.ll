@@ -1,26 +1,27 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 | not grep r1
+; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | not grep r1
 
-double %test1(double %X) {
-        %Y = cast double %X to long
-        %Z = cast long %Y to double
+define double @test1(double %X) {
+        %Y = fptosi double %X to i64            ; <i64> [#uses=1]
+        %Z = sitofp i64 %Y to double            ; <double> [#uses=1]
         ret double %Z
 }
 
-float %test2(double %X) {
-        %Y = cast double %X to long
-        %Z = cast long %Y to float
+define float @test2(double %X) {
+        %Y = fptosi double %X to i64            ; <i64> [#uses=1]
+        %Z = sitofp i64 %Y to float             ; <float> [#uses=1]
         ret float %Z
 }
 
-double %test3(float %X) {
-        %Y = cast float %X to long
-        %Z = cast long %Y to double
+define double @test3(float %X) {
+        %Y = fptosi float %X to i64             ; <i64> [#uses=1]
+        %Z = sitofp i64 %Y to double            ; <double> [#uses=1]
         ret double %Z
 }
 
-float %test4(float %X) {
-        %Y = cast float %X to long
-        %Z = cast long %Y to float
+define float @test4(float %X) {
+        %Y = fptosi float %X to i64             ; <i64> [#uses=1]
+        %Z = sitofp i64 %Y to float             ; <float> [#uses=1]
         ret float %Z
 }
+
 

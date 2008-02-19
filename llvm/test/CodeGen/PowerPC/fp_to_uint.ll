@@ -1,9 +1,8 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep fctiwz | count 1
+; RUN: llvm-as < %s | llc -march=ppc32 | grep fctiwz | count 1
 
-implementation
-
-ushort %foo(float %a) {
+define i16 @foo(float %a) {
 entry:
-        %tmp.1 = cast float %a to ushort
-        ret ushort %tmp.1
+        %tmp.1 = fptoui float %a to i16         ; <i16> [#uses=1]
+        ret i16 %tmp.1
 }
+

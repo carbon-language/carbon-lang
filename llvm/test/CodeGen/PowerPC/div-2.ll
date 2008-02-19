@@ -1,29 +1,30 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep srawi 
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep blr
+; RUN: llvm-as < %s | llc -march=ppc32 | not grep srawi 
+; RUN: llvm-as < %s | llc -march=ppc32 | grep blr
 
-int %test1(int %X) {
-	%Y = and int %X, 15
-	%Z = div int %Y, 4
-	ret int %Z
+define i32 @test1(i32 %X) {
+        %Y = and i32 %X, 15             ; <i32> [#uses=1]
+        %Z = sdiv i32 %Y, 4             ; <i32> [#uses=1]
+        ret i32 %Z
 }
 
-int %test2(int %W) {
-	%X = and int %W, 15
-	%Y = sub int 16, %X
-	%Z = div int %Y, 4
-	ret int %Z
+define i32 @test2(i32 %W) {
+        %X = and i32 %W, 15             ; <i32> [#uses=1]
+        %Y = sub i32 16, %X             ; <i32> [#uses=1]
+        %Z = sdiv i32 %Y, 4             ; <i32> [#uses=1]
+        ret i32 %Z
 }
 
-int %test3(int %W) {
-	%X = and int %W, 15
-	%Y = sub int 15, %X
-	%Z = div int %Y, 4
-	ret int %Z
+define i32 @test3(i32 %W) {
+        %X = and i32 %W, 15             ; <i32> [#uses=1]
+        %Y = sub i32 15, %X             ; <i32> [#uses=1]
+        %Z = sdiv i32 %Y, 4             ; <i32> [#uses=1]
+        ret i32 %Z
 }
 
-int %test4(int %W) {
-	%X = and int %W, 2
-	%Y = sub int 5, %X
-	%Z = div int %Y, 2
-	ret int %Z
+define i32 @test4(i32 %W) {
+        %X = and i32 %W, 2              ; <i32> [#uses=1]
+        %Y = sub i32 5, %X              ; <i32> [#uses=1]
+        %Z = sdiv i32 %Y, 2             ; <i32> [#uses=1]
+        ret i32 %Z
 }
+

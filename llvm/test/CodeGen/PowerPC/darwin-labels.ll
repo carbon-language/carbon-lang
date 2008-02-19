@@ -1,8 +1,6 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc | grep {foo bar":}
+; RUN: llvm-as < %s | llc | grep {foo bar":}
 
-target endian = big
-target pointersize = 32
+target datalayout = "E-p:32:32"
 target triple = "powerpc-apple-darwin8.2.0"
-
-"foo bar" = global int 4
+@"foo bar" = global i32 4               ; <i32*> [#uses=0]
 

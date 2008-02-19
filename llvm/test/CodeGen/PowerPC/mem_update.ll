@@ -1,68 +1,68 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -enable-ppc-preinc | \
+; RUN: llvm-as < %s | llc -march=ppc32 -enable-ppc-preinc | \
 ; RUN:   not grep addi
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc64 -enable-ppc-preinc | \
+; RUN: llvm-as < %s | llc -march=ppc64 -enable-ppc-preinc | \
 ; RUN:   not grep addi
-%Glob = global ulong 4
 
-int *%test0(int *%X,  int *%dest) {
-	%Y = getelementptr int* %X, int 4
-	%A = load int* %Y
-	store int %A, int* %dest
-	ret int* %Y
+@Glob = global i64 4		; <i64*> [#uses=2]
+
+define i32* @test0(i32* %X, i32* %dest) {
+	%Y = getelementptr i32* %X, i32 4		; <i32*> [#uses=2]
+	%A = load i32* %Y		; <i32> [#uses=1]
+	store i32 %A, i32* %dest
+	ret i32* %Y
 }
 
-int *%test1(int *%X,  int *%dest) {
-	%Y = getelementptr int* %X, int 4
-	%A = load int* %Y
-	store int %A, int* %dest
-	ret int* %Y
+define i32* @test1(i32* %X, i32* %dest) {
+	%Y = getelementptr i32* %X, i32 4		; <i32*> [#uses=2]
+	%A = load i32* %Y		; <i32> [#uses=1]
+	store i32 %A, i32* %dest
+	ret i32* %Y
 }
 
-short *%test2(short *%X, int *%dest) {
-	%Y = getelementptr short* %X, int 4
-	%A = load short* %Y
-	%B = cast short %A to int
-	store int %B, int* %dest
-	ret short* %Y
+define i16* @test2(i16* %X, i32* %dest) {
+	%Y = getelementptr i16* %X, i32 4		; <i16*> [#uses=2]
+	%A = load i16* %Y		; <i16> [#uses=1]
+	%B = sext i16 %A to i32		; <i32> [#uses=1]
+	store i32 %B, i32* %dest
+	ret i16* %Y
 }
 
-ushort *%test3(ushort *%X, int *%dest) {
-	%Y = getelementptr ushort* %X, int 4
-	%A = load ushort* %Y
-	%B = cast ushort %A to int
-	store int %B, int* %dest
-	ret ushort* %Y
+define i16* @test3(i16* %X, i32* %dest) {
+	%Y = getelementptr i16* %X, i32 4		; <i16*> [#uses=2]
+	%A = load i16* %Y		; <i16> [#uses=1]
+	%B = zext i16 %A to i32		; <i32> [#uses=1]
+	store i32 %B, i32* %dest
+	ret i16* %Y
 }
 
-short *%test3a(short *%X, long *%dest) {
-	%Y = getelementptr short* %X, int 4
-	%A = load short* %Y
-	%B = cast short %A to long
-	store long %B, long* %dest
-	ret short* %Y
+define i16* @test3a(i16* %X, i64* %dest) {
+	%Y = getelementptr i16* %X, i32 4		; <i16*> [#uses=2]
+	%A = load i16* %Y		; <i16> [#uses=1]
+	%B = sext i16 %A to i64		; <i64> [#uses=1]
+	store i64 %B, i64* %dest
+	ret i16* %Y
 }
 
-long *%test4(long *%X, long *%dest) {
-	%Y = getelementptr long* %X, int 4
-	%A = load long* %Y
-	store long %A, long* %dest
-	ret long* %Y
+define i64* @test4(i64* %X, i64* %dest) {
+	%Y = getelementptr i64* %X, i32 4		; <i64*> [#uses=2]
+	%A = load i64* %Y		; <i64> [#uses=1]
+	store i64 %A, i64* %dest
+	ret i64* %Y
 }
 
-ushort *%test5(ushort *%X) {
-	%Y = getelementptr ushort* %X, int 4
-	store ushort 7, ushort* %Y
-	ret ushort* %Y
+define i16* @test5(i16* %X) {
+	%Y = getelementptr i16* %X, i32 4		; <i16*> [#uses=2]
+	store i16 7, i16* %Y
+	ret i16* %Y
 }
 
-ulong *%test6(ulong *%X, ulong %A) {
-	%Y = getelementptr ulong* %X, int 4
-	store ulong %A, ulong* %Y
-	ret ulong* %Y
+define i64* @test6(i64* %X, i64 %A) {
+	%Y = getelementptr i64* %X, i32 4		; <i64*> [#uses=2]
+	store i64 %A, i64* %Y
+	ret i64* %Y
 }
 
-ulong *%test7(ulong *%X, ulong %A) {
-	store ulong %A, ulong* %Glob
-	ret ulong *%Glob
+define i64* @test7(i64* %X, i64 %A) {
+	store i64 %A, i64* @Glob
+	ret i64* @Glob
 }
-

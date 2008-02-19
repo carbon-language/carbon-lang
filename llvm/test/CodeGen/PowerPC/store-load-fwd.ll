@@ -1,6 +1,8 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep lwz
-int %test(int* %P) {
-	store int 1, int* %P
-	%V = load int* %P
-	ret int %V
+; RUN: llvm-as < %s | llc -march=ppc32 | not grep lwz
+
+define i32 @test(i32* %P) {
+        store i32 1, i32* %P
+        %V = load i32* %P               ; <i32> [#uses=1]
+        ret i32 %V
 }
+

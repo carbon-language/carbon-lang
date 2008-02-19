@@ -1,47 +1,40 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 | not grep CPI
+; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | not grep CPI
 
-
-; Tests spltw(0x80000000) and spltw(0x7FFFFFFF).
-void %test1(<4 x int>* %P1, <4 x int>* %P2, <4 x float>* %P3) {
-        %tmp = load <4 x int>* %P1              
-        %tmp4 = and <4 x int> %tmp, < int -2147483648, int -2147483648, int -2147483648, int -2147483648 >                
-        store <4 x int> %tmp4, <4 x int>* %P1
-        %tmp7 = load <4 x int>* %P2             
-        %tmp9 = and <4 x int> %tmp7, < int 2147483647, int 2147483647, int 2147483647, int 2147483647 >           
-        store <4 x int> %tmp9, <4 x int>* %P2
-        %tmp = load <4 x float>* %P3            
-        %tmp11 = cast <4 x float> %tmp to <4 x int>             
-        %tmp12 = and <4 x int> %tmp11, < int 2147483647, int 2147483647, int 2147483647, int 2147483647 >
-        %tmp13 = cast <4 x int> %tmp12 to <4 x float>
-        store <4 x float> %tmp13, <4 x float>* %P3
-        ret void
+define void @test1(<4 x i32>* %P1, <4 x i32>* %P2, <4 x float>* %P3) {
+	%tmp = load <4 x i32>* %P1		; <<4 x i32>> [#uses=1]
+	%tmp4 = and <4 x i32> %tmp, < i32 -2147483648, i32 -2147483648, i32 -2147483648, i32 -2147483648 >		; <<4 x i32>> [#uses=1]
+	store <4 x i32> %tmp4, <4 x i32>* %P1
+	%tmp7 = load <4 x i32>* %P2		; <<4 x i32>> [#uses=1]
+	%tmp9 = and <4 x i32> %tmp7, < i32 2147483647, i32 2147483647, i32 2147483647, i32 2147483647 >		; <<4 x i32>> [#uses=1]
+	store <4 x i32> %tmp9, <4 x i32>* %P2
+	%tmp.upgrd.1 = load <4 x float>* %P3		; <<4 x float>> [#uses=1]
+	%tmp11 = bitcast <4 x float> %tmp.upgrd.1 to <4 x i32>		; <<4 x i32>> [#uses=1]
+	%tmp12 = and <4 x i32> %tmp11, < i32 2147483647, i32 2147483647, i32 2147483647, i32 2147483647 >		; <<4 x i32>> [#uses=1]
+	%tmp13 = bitcast <4 x i32> %tmp12 to <4 x float>		; <<4 x float>> [#uses=1]
+	store <4 x float> %tmp13, <4 x float>* %P3
+	ret void
 }
 
-<4 x int> %test_30() {
-        ret <4 x int> <int 30, int 30, int 30, int 30>
+define <4 x i32> @test_30() {
+	ret <4 x i32> < i32 30, i32 30, i32 30, i32 30 >
 }
 
-<4 x int> %test_29() {
-        ret <4 x int> <int 29, int 29, int 29, int 29>
+define <4 x i32> @test_29() {
+	ret <4 x i32> < i32 29, i32 29, i32 29, i32 29 >
 }
 
-<8 x short> %test_n30() {
-        ret <8 x short> <short -30, short -30, short -30, short -30,
-                         short -30, short -30, short -30, short -30>
+define <8 x i16> @test_n30() {
+	ret <8 x i16> < i16 -30, i16 -30, i16 -30, i16 -30, i16 -30, i16 -30, i16 -30, i16 -30 >
 }
 
-<16 x sbyte> %test_n104() {
-        ret <16 x sbyte> <sbyte -104, sbyte -104, sbyte -104, sbyte -104,
-                          sbyte -104, sbyte -104, sbyte -104, sbyte -104,
-                          sbyte -104, sbyte -104, sbyte -104, sbyte -104,
-                          sbyte -104, sbyte -104, sbyte -104, sbyte -104>
+define <16 x i8> @test_n104() {
+	ret <16 x i8> < i8 -104, i8 -104, i8 -104, i8 -104, i8 -104, i8 -104, i8 -104, i8 -104, i8 -104, i8 -104, i8 -104, i8 -104, i8 -104, i8 -104, i8 -104, i8 -104 >
 }
 
-<4 x int> %test_vsldoi() {
-        ret <4 x int> <int 512, int 512, int 512, int 512>
+define <4 x i32> @test_vsldoi() {
+	ret <4 x i32> < i32 512, i32 512, i32 512, i32 512 >
 }
 
-<4 x int> %test_rol() {
-        ret <4 x int> <int -11534337, int -11534337, int -11534337, int -11534337>
+define <4 x i32> @test_rol() {
+	ret <4 x i32> < i32 -11534337, i32 -11534337, i32 -11534337, i32 -11534337 >
 }
-

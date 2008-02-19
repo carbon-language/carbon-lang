@@ -1,8 +1,9 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 | grep vxor
+; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | grep vxor
 
-void %foo(<4 x float> *%P) {
-	%T = load <4 x float> * %P
-	%S = add <4 x float> zeroinitializer, %T
-	store <4 x float> %S, <4 x float>* %P
-	ret void
+define void @foo(<4 x float>* %P) {
+        %T = load <4 x float>* %P               ; <<4 x float>> [#uses=1]
+        %S = add <4 x float> zeroinitializer, %T                ; <<4 x float>> [#uses=1]
+        store <4 x float> %S, <4 x float>* %P
+        ret void
 }
+

@@ -1,6 +1,7 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep neg
+; RUN: llvm-as < %s | llc -march=ppc32 | grep neg
 
-int %test(int %X) {
-    %Y = sub int 0, %X
-	ret int %Y
+define i32 @test(i32 %X) {
+        %Y = sub i32 0, %X              ; <i32> [#uses=1]
+        ret i32 %Y
 }
+

@@ -1,7 +1,8 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep lha
+; RUN: llvm-as < %s | llc -march=ppc32 | grep lha
 
-uint %test(short* %a) {
-    %tmp.1 = load short* %a
-    %tmp.2 = cast short %tmp.1 to uint
-    ret uint %tmp.2
+define i32 @test(i16* %a) {
+        %tmp.1 = load i16* %a           ; <i16> [#uses=1]
+        %tmp.2 = sext i16 %tmp.1 to i32         ; <i32> [#uses=1]
+        ret i32 %tmp.2
 }
+

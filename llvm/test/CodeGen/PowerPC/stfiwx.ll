@@ -1,26 +1,26 @@
-; RUN: llvm-upgrade < %s | llvm-as | \
+; RUN: llvm-as < %s | \
 ; RUN:   llc -march=ppc32 -mtriple=powerpc-apple-darwin8 -mattr=stfiwx -o %t1 -f
 ; RUN: grep stfiwx %t1
 ; RUN: not grep r1 %t1
-; RUN: llvm-upgrade < %s | llvm-as | \
+; RUN: llvm-as < %s | \
 ; RUN:   llc -march=ppc32 -mtriple=powerpc-apple-darwin8 -mattr=-stfiwx \
 ; RUN:   -o %t2 -f
 ; RUN: not grep stfiwx %t2
 ; RUN: grep r1 %t2
 
-void %test(float %a, int* %b) {
-        %tmp.2 = cast float %a to int
-        store int %tmp.2, int* %b
+define void @test(float %a, i32* %b) {
+        %tmp.2 = fptosi float %a to i32         ; <i32> [#uses=1]
+        store i32 %tmp.2, i32* %b
         ret void
 }
 
-void %test2(float %a, int* %b, int %i) {
-        %tmp.2 = getelementptr int* %b, int 1
-        %tmp.5 = getelementptr int* %b, int %i
-        %tmp.7 = cast float %a to int
-        store int %tmp.7, int* %tmp.5
-        store int %tmp.7, int* %tmp.2
-        store int %tmp.7, int* %b
+define void @test2(float %a, i32* %b, i32 %i) {
+        %tmp.2 = getelementptr i32* %b, i32 1           ; <i32*> [#uses=1]
+        %tmp.5 = getelementptr i32* %b, i32 %i          ; <i32*> [#uses=1]
+        %tmp.7 = fptosi float %a to i32         ; <i32> [#uses=3]
+        store i32 %tmp.7, i32* %tmp.5
+        store i32 %tmp.7, i32* %tmp.2
+        store i32 %tmp.7, i32* %b
         ret void
 }
 

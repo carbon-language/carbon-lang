@@ -1,8 +1,9 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep rlwinm
+; RUN: llvm-as < %s | llc -march=ppc32 | not grep rlwinm
 
-int %setcc_one_or_zero(int* %a) {
+define i32 @setcc_one_or_zero(i32* %a) {
 entry:
-	%tmp.1 = setne int* %a, null
-	%inc.1 = cast bool %tmp.1 to int
-	ret int %inc.1
+        %tmp.1 = icmp ne i32* %a, null          ; <i1> [#uses=1]
+        %inc.1 = zext i1 %tmp.1 to i32          ; <i32> [#uses=1]
+        ret i32 %inc.1
 }
+

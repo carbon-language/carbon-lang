@@ -1,94 +1,93 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | \
+; RUN: llvm-as < %s | llc -march=ppc32 | \
 ; RUN:   grep eqv | count 3
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 | \
+; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | \
 ; RUN:   grep andc | count 3
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | \
+; RUN: llvm-as < %s | llc -march=ppc32 | \
 ; RUN:   grep orc | count 2
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 | \
+; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | \
 ; RUN:   grep nor | count 3
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | \
+; RUN: llvm-as < %s | llc -march=ppc32 | \
 ; RUN:   grep nand | count 1
 
-int %EQV1(int %X, int %Y) {
-	%A = xor int %X, %Y
-	%B = xor int %A, -1
-	ret int %B
+define i32 @EQV1(i32 %X, i32 %Y) {
+	%A = xor i32 %X, %Y		; <i32> [#uses=1]
+	%B = xor i32 %A, -1		; <i32> [#uses=1]
+	ret i32 %B
 }
 
-int %EQV2(int %X, int %Y) {
-	%A = xor int %X, -1
-	%B = xor int %A, %Y
-	ret int %B
+define i32 @EQV2(i32 %X, i32 %Y) {
+	%A = xor i32 %X, -1		; <i32> [#uses=1]
+	%B = xor i32 %A, %Y		; <i32> [#uses=1]
+	ret i32 %B
 }
 
-int %EQV3(int %X, int %Y) {
-	%A = xor int %X, -1
-	%B = xor int %Y, %A
-	ret int %B
+define i32 @EQV3(i32 %X, i32 %Y) {
+	%A = xor i32 %X, -1		; <i32> [#uses=1]
+	%B = xor i32 %Y, %A		; <i32> [#uses=1]
+	ret i32 %B
 }
 
-int %ANDC1(int %X, int %Y) {
-	%A = xor int %Y, -1
-	%B = and int %X, %A
-	ret int %B
+define i32 @ANDC1(i32 %X, i32 %Y) {
+	%A = xor i32 %Y, -1		; <i32> [#uses=1]
+	%B = and i32 %X, %A		; <i32> [#uses=1]
+	ret i32 %B
 }
 
-int %ANDC2(int %X, int %Y) {
-	%A = xor int %X, -1
-	%B = and int %A, %Y
-	ret int %B
+define i32 @ANDC2(i32 %X, i32 %Y) {
+	%A = xor i32 %X, -1		; <i32> [#uses=1]
+	%B = and i32 %A, %Y		; <i32> [#uses=1]
+	ret i32 %B
 }
 
-int %ORC1(int %X, int %Y) {
-	%A = xor int %Y, -1
-	%B = or  int %X, %A
-	ret int %B
+define i32 @ORC1(i32 %X, i32 %Y) {
+	%A = xor i32 %Y, -1		; <i32> [#uses=1]
+	%B = or i32 %X, %A		; <i32> [#uses=1]
+	ret i32 %B
 }
 
-int %ORC2(int %X, int %Y) {
-	%A = xor int %X, -1
-	%B = or  int %A, %Y
-	ret int %B
+define i32 @ORC2(i32 %X, i32 %Y) {
+	%A = xor i32 %X, -1		; <i32> [#uses=1]
+	%B = or i32 %A, %Y		; <i32> [#uses=1]
+	ret i32 %B
 }
 
-int %NOR1(int %X) {
-        %Y = xor int %X, -1
-        ret int %Y
+define i32 @NOR1(i32 %X) {
+	%Y = xor i32 %X, -1		; <i32> [#uses=1]
+	ret i32 %Y
 }
 
-int %NOR2(int %X, int %Y) {
-        %Z = or int %X, %Y
-        %R = xor int %Z, -1
-        ret int %R
+define i32 @NOR2(i32 %X, i32 %Y) {
+	%Z = or i32 %X, %Y		; <i32> [#uses=1]
+	%R = xor i32 %Z, -1		; <i32> [#uses=1]
+	ret i32 %R
 }
 
-int %NAND1(int %X, int %Y) {
-	%Z = and int %X, %Y
-	%W = xor int %Z, -1
-	ret int %W
+define i32 @NAND1(i32 %X, i32 %Y) {
+	%Z = and i32 %X, %Y		; <i32> [#uses=1]
+	%W = xor i32 %Z, -1		; <i32> [#uses=1]
+	ret i32 %W
 }
 
-void %VNOR(<4 x float>* %P, <4 x float>* %Q) {
-        %tmp = load <4 x float>* %P
-        %tmp = cast <4 x float> %tmp to <4 x int>
-        %tmp2 = load <4 x float>* %Q
-        %tmp2 = cast <4 x float> %tmp2 to <4 x int>
-        %tmp3 = or <4 x int> %tmp, %tmp2
-        %tmp4 = xor <4 x int> %tmp3, < int -1, int -1, int -1, int -1 >
-        %tmp4 = cast <4 x int> %tmp4 to <4 x float>
-        store <4 x float> %tmp4, <4 x float>* %P
-        ret void
+define void @VNOR(<4 x float>* %P, <4 x float>* %Q) {
+	%tmp = load <4 x float>* %P		; <<4 x float>> [#uses=1]
+	%tmp.upgrd.1 = bitcast <4 x float> %tmp to <4 x i32>		; <<4 x i32>> [#uses=1]
+	%tmp2 = load <4 x float>* %Q		; <<4 x float>> [#uses=1]
+	%tmp2.upgrd.2 = bitcast <4 x float> %tmp2 to <4 x i32>		; <<4 x i32>> [#uses=1]
+	%tmp3 = or <4 x i32> %tmp.upgrd.1, %tmp2.upgrd.2		; <<4 x i32>> [#uses=1]
+	%tmp4 = xor <4 x i32> %tmp3, < i32 -1, i32 -1, i32 -1, i32 -1 >		; <<4 x i32>> [#uses=1]
+	%tmp4.upgrd.3 = bitcast <4 x i32> %tmp4 to <4 x float>		; <<4 x float>> [#uses=1]
+	store <4 x float> %tmp4.upgrd.3, <4 x float>* %P
+	ret void
 }
 
-void %VANDC(<4 x float>* %P, <4 x float>* %Q) {
-        %tmp = load <4 x float>* %P
-        %tmp = cast <4 x float> %tmp to <4 x int>
-        %tmp2 = load <4 x float>* %Q
-        %tmp2 = cast <4 x float> %tmp2 to <4 x int>
-        %tmp4 = xor <4 x int> %tmp2, < int -1, int -1, int -1, int -1 >
-        %tmp3 = and <4 x int> %tmp, %tmp4
-        %tmp4 = cast <4 x int> %tmp3 to <4 x float>
-        store <4 x float> %tmp4, <4 x float>* %P
-        ret void
+define void @VANDC(<4 x float>* %P, <4 x float>* %Q) {
+	%tmp = load <4 x float>* %P		; <<4 x float>> [#uses=1]
+	%tmp.upgrd.4 = bitcast <4 x float> %tmp to <4 x i32>		; <<4 x i32>> [#uses=1]
+	%tmp2 = load <4 x float>* %Q		; <<4 x float>> [#uses=1]
+	%tmp2.upgrd.5 = bitcast <4 x float> %tmp2 to <4 x i32>		; <<4 x i32>> [#uses=1]
+	%tmp4 = xor <4 x i32> %tmp2.upgrd.5, < i32 -1, i32 -1, i32 -1, i32 -1 >		; <<4 x i32>> [#uses=1]
+	%tmp3 = and <4 x i32> %tmp.upgrd.4, %tmp4		; <<4 x i32>> [#uses=1]
+	%tmp4.upgrd.6 = bitcast <4 x i32> %tmp3 to <4 x float>		; <<4 x float>> [#uses=1]
+	store <4 x float> %tmp4.upgrd.6, <4 x float>* %P
+	ret void
 }
-
