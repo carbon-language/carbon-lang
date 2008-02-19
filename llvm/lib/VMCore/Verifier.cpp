@@ -257,6 +257,7 @@ namespace {  // Anonymous namespace for class
     void visitUserOp2(Instruction &I) { visitUserOp1(I); }
     void visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI);
     void visitAllocationInst(AllocationInst &AI);
+    void visitGetResultInst(GetResultInst &GRI);
 
     void VerifyCallSite(CallSite CS);
     void VerifyIntrinsicPrototype(Intrinsic::ID ID, Function *F,
@@ -1035,6 +1036,11 @@ void Verifier::visitAllocationInst(AllocationInst &AI) {
   Assert(Ptr->getAddressSpace() == 0, 
     "Allocation instruction pointer not in the generic address space!");
   visitInstruction(AI);
+}
+
+void Verifier::visitGetResultInst(GetResultInst &GRI) {
+  // FIXME : Check operands.
+  visitInstruction(GRI);
 }
 
 

@@ -2340,6 +2340,56 @@ public:
   }
 };
 
+//===----------------------------------------------------------------------===//
+//                             GetResultInst Class
+//===----------------------------------------------------------------------===//
+
+/// GetResultInst - This instruction extracts individual result value from
+/// aggregate value, where aggregate value is returned by CallInst.
+///
+class GetResultInst : public Instruction {
+  Use Ops[2];
+  GetResultInst(const GetResultInst &GRI) :
+    Instruction(GRI.getType(), Instruction::GetResult, Ops, 2) {
+    Ops[0].init(GRI.Ops[0], this);
+    Ops[1].init(GRI.Ops[1], this);
+  }
+
+public:
+  explicit GetResultInst(Value *Aggr, Value *Index, 
+                         const std::string &Name = "",
+                         Instruction *InsertBefore = 0);
+
+  /// isValidOperands - Return true if an getresult instruction can be
+  /// formed with the specified operands.
+  static bool isValidOperands(const Value *Aggr, const Value *Idx);
+  
+  virtual GetResultInst *clone() const;
+  
+  // getType - Get aggregate value element type
+  inline const Type *getType() const {
+    return Ops[0]->getType();
+  }
+  
+  Value *getAggregateValue() {
+    return getOperand(0);
+  }
+  const Value *geIndex() {
+    return getOperand(1);
+  }
+
+  unsigned getNumOperands() const { return 2; }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const GetResultInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return (I->getOpcode() == Instruction::GetResult);
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+};
+
 } // End llvm namespace
 
 #endif

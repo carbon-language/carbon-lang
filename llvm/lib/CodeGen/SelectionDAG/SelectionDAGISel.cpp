@@ -608,6 +608,10 @@ public:
 
   void visitMemIntrinsic(CallInst &I, unsigned Op);
 
+  void visitGetResult(GetResultInst &I) {
+    // FIXME
+  }
+
   void visitUserOp1(Instruction &I) {
     assert(0 && "UserOp1 should not exist at instruction selection time!");
     abort();

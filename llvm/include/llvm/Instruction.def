@@ -164,7 +164,9 @@ HANDLE_OTHER_INST(47, VAArg  , VAArgInst  )  // vaarg instruction
 HANDLE_OTHER_INST(48, ExtractElement, ExtractElementInst)// extract from vector.
 HANDLE_OTHER_INST(49, InsertElement, InsertElementInst)  // insert into vector
 HANDLE_OTHER_INST(50, ShuffleVector, ShuffleVectorInst)  // shuffle two vectors.
-  LAST_OTHER_INST(50)
+HANDLE_OTHER_INST(51, GetResult, GetResultInst) // Extract individual value 
+                                                //from aggregate result
+  LAST_OTHER_INST(51)
 
 #undef  FIRST_TERM_INST
 #undef HANDLE_TERM_INST

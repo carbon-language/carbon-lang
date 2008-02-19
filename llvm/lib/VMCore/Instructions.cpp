@@ -2698,6 +2698,29 @@ void SwitchInst::setSuccessorV(unsigned idx, BasicBlock *B) {
   setSuccessor(idx, B);
 }
 
+//===----------------------------------------------------------------------===//
+//                           GetResultInst Implementation
+//===----------------------------------------------------------------------===//
+
+GetResultInst::GetResultInst(Value *Aggr, Value *Index,
+                             const std::string &Name,
+                             Instruction *InsertBef)
+  : Instruction(Aggr->getType(),
+                GetResult, Ops, 2, InsertBef) {
+  assert(isValidOperands(Aggr, Index) && "Invalid GetResultInst operands!");
+  Ops[0].init(Aggr, this);
+  Ops[1].init(Index, this);
+  setName(Name);
+}
+
+bool GetResultInst::isValidOperands(const Value *Aggr, const Value *Index) {
+  if (!Aggr || !Index)
+    return false;
+  if (!isa<StructType>(Aggr->getType()) || Index->getType() != Type::Int32Ty)
+    return false;
+  return true;
+}
+
 
 // Define these methods here so vtables don't get emitted into every translation
 // unit that uses these classes.
@@ -2754,3 +2777,4 @@ SwitchInst *SwitchInst::clone() const { return new SwitchInst(*this); }
 InvokeInst *InvokeInst::clone() const { return new InvokeInst(*this); }
 UnwindInst *UnwindInst::clone() const { return new UnwindInst(); }
 UnreachableInst *UnreachableInst::clone() const { return new UnreachableInst();}
+GetResultInst *GetResultInst::clone() const { return new GetResultInst(*this); }
