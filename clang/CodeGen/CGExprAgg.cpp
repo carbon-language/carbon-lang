@@ -48,6 +48,10 @@ public:
   
   void EmitAggregateCopy(llvm::Value *DestPtr, llvm::Value *SrcPtr,
                          QualType EltTy);
+
+  void EmitAggregateClear(llvm::Value *DestPtr, QualType Ty);
+
+  void EmitNonConstInit(InitListExpr *E);
   
   //===--------------------------------------------------------------------===//
   //                            Visitor Methods
@@ -83,15 +87,38 @@ public:
   void VisitInitListExpr(InitListExpr *E);
   //  case Expr::ChooseExprClass:
 
-private:
-
-  void EmitNonConstInit(Expr *E, llvm::Value *Dest, const llvm::Type *DestType);
 };
 }  // end anonymous namespace.
 
 //===----------------------------------------------------------------------===//
 //                                Utilities
 //===----------------------------------------------------------------------===//
+
+void AggExprEmitter::EmitAggregateClear(llvm::Value *DestPtr, QualType Ty) {
+  assert(!Ty->isComplexType() && "Shouldn't happen for complex");
+
+  // Aggregate assignment turns into llvm.memset.
+  const llvm::Type *BP = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+  if (DestPtr->getType() != BP)
+    DestPtr = Builder.CreateBitCast(DestPtr, BP, "tmp");
+
+  // Get size and alignment info for this aggregate.
+  std::pair<uint64_t, unsigned> TypeInfo =
+    CGF.getContext().getTypeInfo(Ty, SourceLocation());
+
+  // FIXME: Handle variable sized types.
+  const llvm::Type *IntPtr = llvm::IntegerType::get(CGF.LLVMPointerWidth);
+
+  llvm::Value *MemSetOps[4] = {
+    DestPtr,
+    llvm::ConstantInt::getNullValue(llvm::Type::Int8Ty),
+    // TypeInfo.first describes size in bits.
+    llvm::ConstantInt::get(IntPtr, TypeInfo.first/8),
+    llvm::ConstantInt::get(llvm::Type::Int32Ty, TypeInfo.second/8)
+  };
+ 
+  Builder.CreateCall(CGF.CGM.getMemSetFn(), MemSetOps, MemSetOps+4);
+}
 
 void AggExprEmitter::EmitAggregateCopy(llvm::Value *DestPtr,
                                        llvm::Value *SrcPtr, QualType Ty) {
@@ -115,7 +142,7 @@ void AggExprEmitter::EmitAggregateCopy(llvm::Value *DestPtr,
     DestPtr, SrcPtr,
     // TypeInfo.first describes size in bits.
     llvm::ConstantInt::get(IntPtr, TypeInfo.first/8),
-    llvm::ConstantInt::get(llvm::Type::Int32Ty, TypeInfo.second)
+    llvm::ConstantInt::get(llvm::Type::Int32Ty, TypeInfo.second/8)
   };
   
   Builder.CreateCall(CGF.CGM.getMemCpyFn(), MemCpyOps, MemCpyOps+4);
@@ -234,17 +261,14 @@ void AggExprEmitter::VisitConditionalOperator(const ConditionalOperator *E) {
   CGF.EmitBlock(ContBlock);
 }
 
-void AggExprEmitter::EmitNonConstInit(Expr *E, llvm::Value *DestPtr,
-                                      const llvm::Type *DestType) {
+void AggExprEmitter::EmitNonConstInit(InitListExpr *E) {
+
+  const llvm::PointerType *APType =
+    cast<llvm::PointerType>(DestPtr->getType());
+  const llvm::Type *DestType = APType->getElementType();
 
   if (const llvm::ArrayType *AType = dyn_cast<llvm::ArrayType>(DestType)) {
-    unsigned NumInitElements = 0;
-    InitListExpr *InitList = NULL;
-
-    if (E) {
-      InitList = cast<InitListExpr>(E);
-      NumInitElements = InitList->getNumInits();
-    }
+    unsigned NumInitElements = E->getNumInits();
 
     llvm::Value *Idxs[] = {
       llvm::Constant::getNullValue(llvm::Type::Int32Ty),
@@ -255,25 +279,27 @@ void AggExprEmitter::EmitNonConstInit(Expr *E, llvm::Value *DestPtr,
     for (i = 0; i != NumInitElements; ++i) {
       Idxs[1] = llvm::ConstantInt::get(llvm::Type::Int32Ty, i);
       NextVal = Builder.CreateGEP(DestPtr, Idxs, Idxs + 2,".array");
-      EmitNonConstInit(InitList->getInit(i), NextVal, AType->getElementType());
+      Expr *Init = E->getInit(i);
+      if (isa<InitListExpr>(Init))
+        CGF.EmitAggExpr(Init, NextVal, VolatileDest);
+      else
+        Builder.CreateStore(CGF.EmitScalarExpr(Init), NextVal);
     }
 
     // Emit remaining default initializers
     unsigned NumArrayElements = AType->getNumElements();
+    QualType QType = E->getInit(0)->getType();
+    const llvm::Type *EType = AType->getElementType();
     for (/*Do not initialize i*/; i < NumArrayElements; ++i) {
       Idxs[1] = llvm::ConstantInt::get(llvm::Type::Int32Ty, i);
       NextVal = Builder.CreateGEP(DestPtr, Idxs, Idxs + 2,".array");
-      EmitNonConstInit(NULL, NextVal, AType->getElementType());
+      if (EType->isFirstClassType())
+        Builder.CreateStore(llvm::Constant::getNullValue(EType), NextVal);
+      else
+        EmitAggregateClear(NextVal, QType);
     }
-
-  } else {
-    llvm::Value *V;
-    if (E)
-      V = CGF.EmitScalarExpr(E);
-    else
-      V = llvm::Constant::getNullValue(DestType);
-    Builder.CreateStore(V, DestPtr);
-  }
+  } else
+    assert(false && "Invalid initializer");
 }
 
 void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
@@ -293,13 +319,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
       CGF.WarnUnsupported(E, "aggregate init-list expression");
       return;
     }
-
-    const llvm::PointerType *APType =
-      cast<llvm::PointerType>(DestPtr->getType());
-    const llvm::ArrayType *AType =
-      cast<llvm::ArrayType>(APType->getElementType());
-
-    EmitNonConstInit(E, DestPtr, AType);
+    EmitNonConstInit(E);
   }
 }
 
