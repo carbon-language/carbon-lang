@@ -171,21 +171,22 @@
      EXTRACTELEMENT = 387,
      INSERTELEMENT = 388,
      SHUFFLEVECTOR = 389,
-     SIGNEXT = 390,
-     ZEROEXT = 391,
-     NORETURN = 392,
-     INREG = 393,
-     SRET = 394,
-     NOUNWIND = 395,
-     NOALIAS = 396,
-     BYVAL = 397,
-     NEST = 398,
-     READNONE = 399,
-     READONLY = 400,
-     GC = 401,
-     DEFAULT = 402,
-     HIDDEN = 403,
-     PROTECTED = 404
+     GETRESULT = 390,
+     SIGNEXT = 391,
+     ZEROEXT = 392,
+     NORETURN = 393,
+     INREG = 394,
+     SRET = 395,
+     NOUNWIND = 396,
+     NOALIAS = 397,
+     BYVAL = 398,
+     NEST = 399,
+     READNONE = 400,
+     READONLY = 401,
+     GC = 402,
+     DEFAULT = 403,
+     HIDDEN = 404,
+     PROTECTED = 405
    };
 #endif
 /* Tokens.  */
@@ -321,28 +322,29 @@
 #define EXTRACTELEMENT 387
 #define INSERTELEMENT 388
 #define SHUFFLEVECTOR 389
-#define SIGNEXT 390
-#define ZEROEXT 391
-#define NORETURN 392
-#define INREG 393
-#define SRET 394
-#define NOUNWIND 395
-#define NOALIAS 396
-#define BYVAL 397
-#define NEST 398
-#define READNONE 399
-#define READONLY 400
-#define GC 401
-#define DEFAULT 402
-#define HIDDEN 403
-#define PROTECTED 404
+#define GETRESULT 390
+#define SIGNEXT 391
+#define ZEROEXT 392
+#define NORETURN 393
+#define INREG 394
+#define SRET 395
+#define NOUNWIND 396
+#define NOALIAS 397
+#define BYVAL 398
+#define NEST 399
+#define READNONE 400
+#define READONLY 401
+#define GC 402
+#define DEFAULT 403
+#define HIDDEN 404
+#define PROTECTED 405
 
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 951 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 951 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
 {
   llvm::Module                           *ModuleVal;
   llvm::Function                         *FunctionVal;
@@ -390,7 +392,7 @@ typedef union YYSTYPE
   llvm::FCmpInst::Predicate         FPredicate;
 }
 /* Line 1529 of yacc.c.  */
-#line 394 "llvmAsmParser.tab.h"
+#line 396 "llvmAsmParser.tab.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
