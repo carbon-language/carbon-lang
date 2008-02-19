@@ -130,5 +130,8 @@ ValueManager::EvaluateAPSInt(BinaryOperator::Opcode Op,
       
     case BinaryOperator::Or:
       return getValue( V1 | V2 );
+      
+    case BinaryOperator::Xor:
+      return getValue( V1 ^ V2 );
   }
 }
