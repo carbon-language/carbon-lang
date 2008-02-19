@@ -296,6 +296,11 @@ public:
   
   void VisitAssignmentLHS(Expr* E, NodeTy* Pred, NodeSet& Dst);
   
+  /// VisitCall - Transfer function for function calls.
+  void VisitCall(CallExpr* CE, NodeTy* Pred,
+                 CallExpr::arg_iterator I, CallExpr::arg_iterator E,
+                 NodeSet& Dst);
+  
   /// VisitCast - Transfer function logic for all casts (implicit and explicit).
   void VisitCast(Expr* CastE, Expr* E, NodeTy* Pred, NodeSet& Dst);  
   
@@ -342,7 +347,7 @@ public:
     return TF->EvalComplement(ValMgr, X);
   }
   
-  inline NonLValue EvalBinaryOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
+  inline NonLValue EvalBinaryOp(BinaryOperator::Opcode Op,
                                 NonLValue LHS, NonLValue RHS) {
     
     if (isa<UninitializedVal>(LHS) || isa<UninitializedVal>(RHS))
@@ -354,7 +359,7 @@ public:
     return TF->EvalBinaryOp(ValMgr, Op, LHS, RHS);
   }    
   
-  inline RValue EvalBinaryOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
+  inline RValue EvalBinaryOp(BinaryOperator::Opcode Op,
                              LValue LHS, LValue RHS) {
     
     if (isa<UninitializedVal>(LHS) || isa<UninitializedVal>(RHS))
@@ -366,7 +371,7 @@ public:
     return TF->EvalBinaryOp(ValMgr, Op, LHS, RHS);
   }
   
-  inline RValue EvalBinaryOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
+  inline RValue EvalBinaryOp(BinaryOperator::Opcode Op,
                              LValue LHS, NonLValue RHS) {
     
     if (isa<UninitializedVal>(LHS) || isa<UninitializedVal>(RHS))
@@ -378,7 +383,7 @@ public:
     return TF->EvalBinaryOp(ValMgr, Op, LHS, RHS);
   }
   
-  inline RValue EvalBinaryOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
+  inline RValue EvalBinaryOp(BinaryOperator::Opcode Op,
                              RValue LHS, RValue RHS) {
     
     if (isa<UninitializedVal>(LHS) || isa<UninitializedVal>(RHS))
@@ -388,6 +393,10 @@ public:
       return UnknownVal();
     
     return TF->EvalBinaryOp(ValMgr, Op, LHS, RHS);
+  }
+  
+  StateTy EvalCall(CallExpr* CE, StateTy St) {
+    return St;     
   }
 };
 } // end clang namespace

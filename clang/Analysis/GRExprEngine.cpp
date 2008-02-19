@@ -259,7 +259,7 @@ void GRExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
     do {      
       nonlval::ConcreteInt CaseVal(ValMgr.getValue(V1));
       
-      NonLValue Res = EvalBinaryOp(ValMgr, BinaryOperator::EQ, CondV, CaseVal);
+      NonLValue Res = EvalBinaryOp(BinaryOperator::EQ, CondV, CaseVal);
       
       // Now "assume" that the case matches.
       bool isFeasible = false;
@@ -407,12 +407,51 @@ void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* D, NodeTy* Pred, NodeSet& Dst){
   Nodify(Dst, D, Pred, SetValue(St, D, GetValue(St, D)));
 }
 
+void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
+                             CallExpr::arg_iterator I, CallExpr::arg_iterator E,
+                             NodeSet& Dst) {
+  
+  if (I != E) {
+    NodeSet DstTmp;  
+    Visit(*I, Pred, DstTmp);
+    ++I;
+    
+    for (NodeSet::iterator DI=DstTmp.begin(), DE=DstTmp.end(); DI!=DE; ++DI)
+      VisitCall(CE, *DI, I, E, Dst);
+    
+    return;
+  }
+
+  // If we reach here we have processed all of the arguments.  Evaluate
+  // the callee expression.
+  NodeSet DstTmp;
+  Visit(CE->getCallee(), Pred, DstTmp);
+  
+  // Finally, evaluate the function call.
+  for (NodeSet::iterator DI=DstTmp.begin(), DE=DstTmp.end(); DI!=DE; ++DI) {
+    StateTy St = (*DI)->getState();    
+    LValue L = GetLValue(St, CE->getCallee());
+
+    // Check for uninitialized control-flow.
+    if (isa<UninitializedVal>(L)) {
+      NodeTy* N = Builder->generateNode(CE, St, *DI);
+      N->markAsSink();
+      UninitBranches.insert(N);
+      continue;
+    }
+    
+    // Note: EvalCall must handle the case where the callee is "UnknownVal."
+    Nodify(Dst, CE, *DI, EvalCall(CE, (*DI)->getState()));
+  }
+}
+
 void GRExprEngine::VisitCast(Expr* CastE, Expr* E, NodeTy* Pred, NodeSet& Dst) {
   
   QualType T = CastE->getType();
 
   // Check for redundant casts.
-  if (E->getType() == T) {
+  if (E->getType() == T || 
+      (T->isPointerType() && E->getType()->isFunctionType())) {
     Dst.Add(Pred);
     return;
   }
@@ -515,7 +554,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U,
       BinaryOperator::Opcode Op = U->isIncrementOp() ? BinaryOperator::Add
                                                      : BinaryOperator::Sub;
       
-      RValue Result = EvalBinaryOp(ValMgr, Op, R1, GetRValueConstant(1U, U));
+      RValue Result = EvalBinaryOp(Op, R1, GetRValueConstant(1U, U));
       
       if (U->isPostfix())
         Nodify(Dst, U, N1, SetValue(SetValue(St, U, R1), L1, Result));
@@ -553,14 +592,14 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U,
           const LValue& L1 = cast<LValue>(V1);
           lval::ConcreteInt V2(ValMgr.getZeroWithPtrWidth());
           Nodify(Dst, U, N1,
-                 SetValue(St, U, EvalBinaryOp(ValMgr, BinaryOperator::EQ,
+                 SetValue(St, U, EvalBinaryOp(BinaryOperator::EQ,
                                               L1, V2)));
         }
         else {
           const NonLValue& R1 = cast<NonLValue>(V1);
           nonlval::ConcreteInt V2(ValMgr.getZeroWithPtrWidth());
           Nodify(Dst, U, N1,
-                 SetValue(St, U, EvalBinaryOp(ValMgr, BinaryOperator::EQ,
+                 SetValue(St, U, EvalBinaryOp(BinaryOperator::EQ,
                                               R1, V2)));
         }
         
@@ -705,7 +744,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           continue;
         }
         
-        Nodify(Dst, B, N2, SetValue(St, B, EvalBinaryOp(ValMgr, Op, V1, V2)));
+        Nodify(Dst, B, N2, SetValue(St, B, EvalBinaryOp(Op, V1, V2)));
         continue;
       
       }
@@ -742,14 +781,14 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           
           if (B->getType()->isPointerType()) { // Perform pointer arithmetic.
             const NonLValue& R2 = cast<NonLValue>(V2);
-            Result = EvalBinaryOp(ValMgr, Op, L1, R2);
+            Result = EvalBinaryOp(Op, L1, R2);
           }
           else if (isa<LValue>(V2)) {
             const LValue& L2 = cast<LValue>(V2);
             
             if (B->getRHS()->getType()->isPointerType()) {
               // LValue comparison.
-              Result = EvalBinaryOp(ValMgr, Op, L1, L2);
+              Result = EvalBinaryOp(Op, L1, L2);
             }
             else {
               QualType T1 = B->getLHS()->getType();
@@ -757,7 +796,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
               
               // An operation between two variables of a non-lvalue type.
               Result =
-                EvalBinaryOp(ValMgr, Op,
+                EvalBinaryOp(Op,
                             cast<NonLValue>(GetValue(N1->getState(), L1, &T1)),
                             cast<NonLValue>(GetValue(N2->getState(), L2, &T2)));
             }
@@ -767,7 +806,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
             const NonLValue& R1 = cast<NonLValue>(GetValue(N1->getState(),
                                                            L1, &T));
             const NonLValue& R2 = cast<NonLValue>(V2);
-            Result = EvalBinaryOp(ValMgr, Op, R1, R2);
+            Result = EvalBinaryOp(Op, R1, R2);
           }
           
           Nodify(Dst, B, N2, SetValue(SetValue(St, B, Result), L1, Result));
@@ -820,6 +859,12 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
       
       VisitBinaryOperator(cast<BinaryOperator>(S), Pred, Dst);
       break;
+    }
+      
+    case Stmt::CallExprClass: {
+      CallExpr* C = cast<CallExpr>(S);
+      VisitCall(C, Pred, C->arg_begin(), C->arg_end(), Dst);
+      break;      
     }
 
     case Stmt::CastExprClass: {

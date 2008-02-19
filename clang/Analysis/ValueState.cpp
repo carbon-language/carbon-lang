@@ -220,6 +220,8 @@ RValue ValueStateManager::GetValue(ValueState St, Expr* E, bool* hasVal) {
           // a better way, since APInts are fairly lightweight.
           return nonlval::ConcreteInt(ValMgr.getValue(ED->getInitVal()));
         }
+        else if (FunctionDecl* FD = dyn_cast<FunctionDecl>(D))
+          return lval::FuncVal(FD);
         
         assert (false &&
                 "ValueDecl support for this ValueDecl not implemented.");
@@ -248,7 +250,10 @@ RValue ValueStateManager::GetValue(ValueState St, Expr* E, bool* hasVal) {
         
       case Stmt::ImplicitCastExprClass: {
         ImplicitCastExpr* C = cast<ImplicitCastExpr>(E);
-        if (C->getType() == C->getSubExpr()->getType()) {
+        QualType CT = C->getType();
+        QualType ST = C->getSubExpr()->getType();
+        
+        if (CT == ST || (CT->isPointerType() && ST->isFunctionType())) {
           E = C->getSubExpr();
           continue;
         }
@@ -257,7 +262,10 @@ RValue ValueStateManager::GetValue(ValueState St, Expr* E, bool* hasVal) {
         
       case Stmt::CastExprClass: {
         CastExpr* C = cast<CastExpr>(E);
-        if (C->getType() == C->getSubExpr()->getType()) {
+        QualType CT = C->getType();
+        QualType ST = C->getSubExpr()->getType();
+        
+        if (CT == ST || (CT->isPointerType() && ST->isFunctionType())) {
           E = C->getSubExpr();
           continue;
         }
@@ -297,8 +305,14 @@ LValue ValueStateManager::GetLValue(ValueState St, Expr* E) {
   while (ParenExpr* P = dyn_cast<ParenExpr>(E))
     E = P->getSubExpr();
   
-  if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(E))
-    return lval::DeclVal(cast<VarDecl>(DR->getDecl()));
+  if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(E)) {
+    ValueDecl* VD = DR->getDecl();
+    
+    if (FunctionDecl* FD = dyn_cast<FunctionDecl>(VD))
+      return lval::FuncVal(FD);
+    else
+      return lval::DeclVal(cast<VarDecl>(DR->getDecl()));
+  }
   
   if (UnaryOperator* U = dyn_cast<UnaryOperator>(E))
     if (U->getOpcode() == UnaryOperator::Deref)

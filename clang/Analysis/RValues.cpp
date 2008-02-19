@@ -342,7 +342,12 @@ void LValue::print(std::ostream& Out) const {
 
     case lval::DeclValKind:
       Out << '&' 
-      << cast<lval::DeclVal>(this)->getDecl()->getIdentifier()->getName();
+          << cast<lval::DeclVal>(this)->getDecl()->getIdentifier()->getName();
+      break;
+      
+    case lval::FuncValKind:
+      Out << "function " 
+          << cast<lval::FuncVal>(this)->getDecl()->getIdentifier()->getName();
       break;
       
     default:

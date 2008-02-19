@@ -147,9 +147,9 @@ public:
 
 namespace nonlval {
   
-  enum Kind { SymbolValKind,
+  enum Kind { ConcreteIntKind,
+              SymbolValKind,
               SymIntConstraintValKind,
-              ConcreteIntKind,
               NumKind };
 
   class SymbolVal : public NonLValue {
@@ -218,6 +218,7 @@ namespace lval {
   enum Kind { SymbolValKind,
               GotoLabelKind,
               DeclValKind,
+              FuncValKind,
               ConcreteIntKind,
               NumKind };
   
@@ -280,6 +281,32 @@ namespace lval {
     
     static inline bool classof(const LValue* V) {
       return V->getSubKind() == DeclValKind;
+    }
+  };
+  
+  class FuncVal : public LValue {
+  public:
+    FuncVal(const FunctionDecl* fd) : LValue(FuncValKind, fd) {}
+    
+    FunctionDecl* getDecl() const {
+      return static_cast<FunctionDecl*>(Data);
+    }
+    
+    inline bool operator==(const FuncVal& R) const {
+      return getDecl() == R.getDecl();
+    }
+    
+    inline bool operator!=(const FuncVal& R) const {
+      return getDecl() != R.getDecl();
+    }
+    
+    // Implement isa<T> support.
+    static inline bool classof(const RValue* V) {
+      return isa<LValue>(V) && V->getSubKind() == FuncValKind;
+    }
+    
+    static inline bool classof(const LValue* V) {
+      return V->getSubKind() == FuncValKind;
     }
   };
 
