@@ -85,8 +85,6 @@ public:
 
 private:
 
-  llvm::Constant *GetConstantInit(InitListExpr *E,
-                                  const llvm::ArrayType *AType);
   void EmitNonConstInit(Expr *E, llvm::Value *Dest, const llvm::Type *DestType);
 };
 }  // end anonymous namespace.
@@ -236,35 +234,6 @@ void AggExprEmitter::VisitConditionalOperator(const ConditionalOperator *E) {
   CGF.EmitBlock(ContBlock);
 }
 
-llvm::Constant *AggExprEmitter::GetConstantInit(InitListExpr *E,
-                                                const llvm::ArrayType *AType) {
-  std::vector<llvm::Constant*> ArrayElts;
-  unsigned NumInitElements = E->getNumInits();
-  const llvm::Type *ElementType = AType->getElementType();
-  unsigned i;
-
-  for (i = 0; i != NumInitElements; ++i) {
-    if (InitListExpr *InitList = dyn_cast<InitListExpr>(E->getInit(i))) {
-      assert(isa<llvm::ArrayType>(ElementType) && "Invalid initilizer");
-      llvm::Constant *C =
-        GetConstantInit(InitList, cast<llvm::ArrayType>(ElementType));
-      if (!C) return NULL;
-      ArrayElts.push_back(C);
-    } else if (llvm::Constant *C =
-        dyn_cast<llvm::Constant>(CGF.EmitScalarExpr(E->getInit(i))))
-      ArrayElts.push_back(C);
-    else
-      return NULL;
-  }
-
-  // Remaining default initializers
-  unsigned NumArrayElements = AType->getNumElements();
-  for (/*Do not initialize i*/; i < NumArrayElements; ++i)
-      ArrayElts.push_back(llvm::Constant::getNullValue(ElementType));
-
-  return llvm::ConstantArray::get(AType, ArrayElts);
-}
-
 void AggExprEmitter::EmitNonConstInit(Expr *E, llvm::Value *DestPtr,
                                       const llvm::Type *DestType) {
 
@@ -309,17 +278,8 @@ void AggExprEmitter::EmitNonConstInit(Expr *E, llvm::Value *DestPtr,
 
 void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
 
-  if (!E->getType()->isArrayType()) {
-    CGF.WarnUnsupported(E, "aggregate init-list expression");
-    return;
-  }
-
-  const llvm::PointerType *APType = cast<llvm::PointerType>(DestPtr->getType());
-  const llvm::ArrayType *AType =
-    cast<llvm::ArrayType>(APType->getElementType());
-
-  llvm::Constant *V = GetConstantInit(E, AType);
-  if (V) {
+  if (E->isConstantExpr(CGF.CGM.getContext(), NULL)) {
+    llvm::Constant *V = CGF.CGM.EmitConstantExpr(E);
     // Create global value to hold this array.
     V = new llvm::GlobalVariable(V->getType(), true,
                                  llvm::GlobalValue::InternalLinkage,
@@ -328,8 +288,19 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
 
     EmitAggregateCopy(DestPtr, V , E->getType());
     return;
-  } else
+  } else {
+    if (!E->getType()->isArrayType()) {
+      CGF.WarnUnsupported(E, "aggregate init-list expression");
+      return;
+    }
+
+    const llvm::PointerType *APType =
+      cast<llvm::PointerType>(DestPtr->getType());
+    const llvm::ArrayType *AType =
+      cast<llvm::ArrayType>(APType->getElementType());
+
     EmitNonConstInit(E, DestPtr, AType);
+  }
 }
 
 //===----------------------------------------------------------------------===//
