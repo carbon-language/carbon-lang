@@ -105,7 +105,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       // FIXME: This should be parameterized somewhere.
       EmitAlignment(4, F, 0, true, 0x90);
     else
-      EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
+      EmitAlignment(4, F);
     break;
   case Function::DLLExportLinkage:
     DLLExportedFns.insert(Mang->makeNameProper(F->getName(), ""));
@@ -115,7 +115,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       // FIXME: This should be parameterized somewhere.
       EmitAlignment(4, F, 0, true, 0x90);
     else
-      EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
+      EmitAlignment(4, F);
     O << "\t.globl\t" << CurrentFnName << "\n";    
     break;
   case Function::LinkOnceLinkage:
@@ -126,11 +126,11 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       O << "\t.globl\t" << CurrentFnName << "\n";
       O << TAI->getWeakDefDirective() << CurrentFnName << "\n";
     } else if (Subtarget->isTargetCygMing()) {
-      EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
+      EmitAlignment(4, F);
       O << "\t.globl\t" << CurrentFnName << "\n";
       O << "\t.linkonce discard\n";
     } else {
-      EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
+      EmitAlignment(4, F);
       O << "\t.weak\t" << CurrentFnName << "\n";
     }
     break;
