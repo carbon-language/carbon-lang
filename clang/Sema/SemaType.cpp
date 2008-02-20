@@ -24,23 +24,24 @@ using namespace clang;
 static QualType ConvertDeclSpecToType(const DeclSpec &DS, ASTContext &Ctx) {
   // FIXME: Should move the logic from DeclSpec::Finish to here for validity
   // checking.
+  QualType Result;
   
   switch (DS.getTypeSpecType()) {
   default: return QualType(); // FIXME: Handle unimp cases!
   case DeclSpec::TST_void: return Ctx.VoidTy;
   case DeclSpec::TST_char:
     if (DS.getTypeSpecSign() == DeclSpec::TSS_unspecified)
-      return Ctx.CharTy;
+      Result = Ctx.CharTy;
     else if (DS.getTypeSpecSign() == DeclSpec::TSS_signed)
-      return Ctx.SignedCharTy;
+      Result = Ctx.SignedCharTy;
     else {
       assert(DS.getTypeSpecSign() == DeclSpec::TSS_unsigned &&
              "Unknown TSS value");
-      return Ctx.UnsignedCharTy;
+      Result = Ctx.UnsignedCharTy;
     }
+    break;
   case DeclSpec::TST_unspecified:  // Unspecific typespec defaults to int.
   case DeclSpec::TST_int: {
-    QualType Result;
     if (DS.getTypeSpecSign() != DeclSpec::TSS_unsigned) {
       switch (DS.getTypeSpecWidth()) {
       case DeclSpec::TSW_unspecified: Result = Ctx.IntTy; break;
@@ -56,31 +57,16 @@ static QualType ConvertDeclSpecToType(const DeclSpec &DS, ASTContext &Ctx) {
       case DeclSpec::TSW_longlong:    Result = Ctx.UnsignedLongLongTy; break;
       }
     }
-    // Handle complex integer types.
-    if (DS.getTypeSpecComplex() == DeclSpec::TSC_unspecified)
-      return Result;
-    assert(DS.getTypeSpecComplex() == DeclSpec::TSC_complex &&
-           "FIXME: imaginary types not supported yet!");
-    return Ctx.getComplexType(Result);
+    break;
   }
-  case DeclSpec::TST_float:
-    if (DS.getTypeSpecComplex() == DeclSpec::TSC_unspecified)
-      return Ctx.FloatTy;
-    assert(DS.getTypeSpecComplex() == DeclSpec::TSC_complex &&
-           "FIXME: imaginary types not supported yet!");
-    return Ctx.getComplexType(Ctx.FloatTy);
-    
-  case DeclSpec::TST_double: {
-    bool isLong = DS.getTypeSpecWidth() == DeclSpec::TSW_long;
-    QualType T = isLong ? Ctx.LongDoubleTy : Ctx.DoubleTy;
-    if (DS.getTypeSpecComplex() == DeclSpec::TSC_unspecified)
-      return T;
-    assert(DS.getTypeSpecComplex() == DeclSpec::TSC_complex &&
-           "FIXME: imaginary types not supported yet!");
-    return Ctx.getComplexType(T);
-  }
-  case DeclSpec::TST_bool:         // _Bool or bool
-    return Ctx.BoolTy;
+  case DeclSpec::TST_float: Result = Ctx.FloatTy; break;
+  case DeclSpec::TST_double:
+    if (DS.getTypeSpecWidth() == DeclSpec::TSW_long)
+      Result = Ctx.LongDoubleTy;
+    else
+      Result = Ctx.DoubleTy;
+    break;
+  case DeclSpec::TST_bool: Result = Ctx.BoolTy; break; // _Bool or bool
   case DeclSpec::TST_decimal32:    // _Decimal32
   case DeclSpec::TST_decimal64:    // _Decimal64
   case DeclSpec::TST_decimal128:   // _Decimal128
@@ -94,7 +80,8 @@ static QualType ConvertDeclSpecToType(const DeclSpec &DS, ASTContext &Ctx) {
            DS.getTypeSpecSign() == 0 &&
            "Can't handle qualifiers on typedef names yet!");
     // TypeQuals handled by caller.
-    return Ctx.getTagDeclType(cast<TagDecl>(D));
+    Result = Ctx.getTagDeclType(cast<TagDecl>(D));
+    break;
   }    
   case DeclSpec::TST_typedef: {
     Decl *D = static_cast<Decl *>(DS.getTypeRep());
@@ -105,40 +92,55 @@ static QualType ConvertDeclSpecToType(const DeclSpec &DS, ASTContext &Ctx) {
     // FIXME: Adding a TST_objcInterface clause doesn't seem ideal, so
     // we have this "hack" for now... 
     if (ObjCInterfaceDecl *ObjCIntDecl = dyn_cast<ObjCInterfaceDecl>(D)) {
-      if (DS.getProtocolQualifiers() == 0)
-        return Ctx.getObjCInterfaceType(ObjCIntDecl);
+      if (DS.getProtocolQualifiers() == 0) {
+        Result = Ctx.getObjCInterfaceType(ObjCIntDecl);
+        break;
+      }
       
       Action::DeclTy **PPDecl = &(*DS.getProtocolQualifiers())[0];
-      return Ctx.getObjCQualifiedInterfaceType(ObjCIntDecl,
-               reinterpret_cast<ObjCProtocolDecl**>(PPDecl),
-              DS.NumProtocolQualifiers());
+      Result = Ctx.getObjCQualifiedInterfaceType(ObjCIntDecl,
+                                   reinterpret_cast<ObjCProtocolDecl**>(PPDecl),
+                                                 DS.NumProtocolQualifiers());
+      break;
     }
     else if (TypedefDecl *typeDecl = dyn_cast<TypedefDecl>(D)) {
       if (Ctx.getObjCIdType() == Ctx.getTypedefType(typeDecl)
           && DS.getProtocolQualifiers()) {
           // id<protocol-list>
         Action::DeclTy **PPDecl = &(*DS.getProtocolQualifiers())[0];
-        return Ctx.getObjCQualifiedIdType(typeDecl->getUnderlyingType(),
-                 reinterpret_cast<ObjCProtocolDecl**>(PPDecl),
-                 DS.NumProtocolQualifiers());
+        Result = Ctx.getObjCQualifiedIdType(typeDecl->getUnderlyingType(),
+                                 reinterpret_cast<ObjCProtocolDecl**>(PPDecl),
+                                            DS.NumProtocolQualifiers());
+        break;
       }
     }
     // TypeQuals handled by caller.
-    return Ctx.getTypedefType(cast<TypedefDecl>(D));
+    Result = Ctx.getTypedefType(cast<TypedefDecl>(D));
+    break;
   }
-  case DeclSpec::TST_typeofType: {
-    QualType T = QualType::getFromOpaquePtr(DS.getTypeRep());
-    assert(!T.isNull() && "Didn't get a type for typeof?");
+  case DeclSpec::TST_typeofType:
+    Result = QualType::getFromOpaquePtr(DS.getTypeRep());
+    assert(!Result.isNull() && "Didn't get a type for typeof?");
     // TypeQuals handled by caller.
-    return Ctx.getTypeOfType(T);
-  }
+    Result = Ctx.getTypeOfType(Result);
+    break;
   case DeclSpec::TST_typeofExpr: {
     Expr *E = static_cast<Expr *>(DS.getTypeRep());
     assert(E && "Didn't get an expression for typeof?");
     // TypeQuals handled by caller.
-    return Ctx.getTypeOfExpr(E);
+    Result = Ctx.getTypeOfExpr(E);
+    break;
   }
   }
+  
+  // Handle complex types.
+  if (DS.getTypeSpecComplex() == DeclSpec::TSC_complex)
+    Result = Ctx.getComplexType(Result);
+  
+  assert(DS.getTypeSpecComplex() != DeclSpec::TSC_imaginary &&
+         "FIXME: imaginary types not supported yet!");
+  
+  return Result;
 }
 
 /// GetTypeForDeclarator - Convert the type for the specified declarator to Type
