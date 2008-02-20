@@ -971,11 +971,11 @@ SDOperand DAGCombiner::visitADD(SDNode *N) {
   
   // fold (a+b) -> (a|b) iff a and b share no bits.
   if (MVT::isInteger(VT) && !MVT::isVector(VT)) {
-    uint64_t LHSZero, LHSOne;
-    uint64_t RHSZero, RHSOne;
-    uint64_t Mask = MVT::getIntVTBitMask(VT);
+    APInt LHSZero, LHSOne;
+    APInt RHSZero, RHSOne;
+    APInt Mask = APInt::getAllOnesValue(MVT::getSizeInBits(VT));
     DAG.ComputeMaskedBits(N0, Mask, LHSZero, LHSOne);
-    if (LHSZero) {
+    if (LHSZero.getBoolValue()) {
       DAG.ComputeMaskedBits(N1, Mask, RHSZero, RHSOne);
       
       // If all possibly-set bits on the LHS are clear on the RHS, return an OR.
@@ -1032,11 +1032,11 @@ SDOperand DAGCombiner::visitADDC(SDNode *N) {
     return CombineTo(N, N0, DAG.getNode(ISD::CARRY_FALSE, MVT::Flag));
   
   // fold (addc a, b) -> (or a, b), CARRY_FALSE iff a and b share no bits.
-  uint64_t LHSZero, LHSOne;
-  uint64_t RHSZero, RHSOne;
-  uint64_t Mask = MVT::getIntVTBitMask(VT);
+  APInt LHSZero, LHSOne;
+  APInt RHSZero, RHSOne;
+  APInt Mask = APInt::getAllOnesValue(MVT::getSizeInBits(VT));
   DAG.ComputeMaskedBits(N0, Mask, LHSZero, LHSOne);
-  if (LHSZero) {
+  if (LHSZero.getBoolValue()) {
     DAG.ComputeMaskedBits(N1, Mask, RHSZero, RHSOne);
     
     // If all possibly-set bits on the LHS are clear on the RHS, return an OR.
@@ -2426,16 +2426,17 @@ SDOperand DAGCombiner::visitSRL(SDNode *N) {
   // fold (srl (ctlz x), "5") -> x  iff x has one bit set (the low bit).
   if (N1C && N0.getOpcode() == ISD::CTLZ && 
       N1C->getValue() == Log2_32(MVT::getSizeInBits(VT))) {
-    uint64_t KnownZero, KnownOne, Mask = MVT::getIntVTBitMask(VT);
+    APInt KnownZero, KnownOne;
+    APInt Mask = APInt::getAllOnesValue(MVT::getSizeInBits(VT));
     DAG.ComputeMaskedBits(N0.getOperand(0), Mask, KnownZero, KnownOne);
     
     // If any of the input bits are KnownOne, then the input couldn't be all
     // zeros, thus the result of the srl will always be zero.
-    if (KnownOne) return DAG.getConstant(0, VT);
+    if (KnownOne.getBoolValue()) return DAG.getConstant(0, VT);
     
     // If all of the bits input the to ctlz node are known to be zero, then
     // the result of the ctlz is "32" and the result of the shift is one.
-    uint64_t UnknownBits = ~KnownZero & Mask;
+    APInt UnknownBits = ~KnownZero & Mask;
     if (UnknownBits == 0) return DAG.getConstant(1, VT);
     
     // Otherwise, check to see if there is exactly one bit input to the ctlz.
@@ -2444,7 +2445,7 @@ SDOperand DAGCombiner::visitSRL(SDNode *N) {
       // could be set on input to the CTLZ node.  If this bit is set, the SRL
       // will return 0, if it is clear, it returns 1.  Change the CTLZ/SRL pair
       // to an SRL,XOR pair, which is likely to simplify more.
-      unsigned ShAmt = CountTrailingZeros_64(UnknownBits);
+      unsigned ShAmt = UnknownBits.countTrailingZeros();
       SDOperand Op = N0.getOperand(0);
       if (ShAmt) {
         Op = DAG.getNode(ISD::SRL, VT, Op,
