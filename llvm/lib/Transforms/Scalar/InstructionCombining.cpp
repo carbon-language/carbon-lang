@@ -5481,8 +5481,8 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
         // Extending a relational comparison when we're checking the sign
         // bit would not work.
         if (Cast->hasOneUse() &&
-            (ICI.isEquality() || AndCST->getValue().isNonNegative() && 
-             RHSV.isNonNegative())) {
+            (ICI.isEquality() ||
+             (AndCST->getValue().isNonNegative() && RHSV.isNonNegative()))) {
           uint32_t BitWidth = 
             cast<IntegerType>(Cast->getOperand(0)->getType())->getBitWidth();
           APInt NewCST = AndCST->getValue();

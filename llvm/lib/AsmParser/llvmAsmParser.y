@@ -578,12 +578,13 @@ static BasicBlock *getBBVal(const ValID &ID) {
   } if (ID.Type == ValID::LocalName) {
     std::string Name = ID.getName();
     Value *N = CurFun.CurrentFunction->getValueSymbolTable().lookup(Name);
-    if (N)
+    if (N) {
       if (N->getType()->getTypeID() == Type::LabelTyID)
         BB = cast<BasicBlock>(N);
       else
         GenerateError("Reference to label '" + Name + "' is actually of type '"+
           N->getType()->getDescription() + "'");
+    }
   } else if (ID.Type == ValID::LocalID) {
     if (ID.Num < CurFun.NextValNum && ID.Num < CurFun.Values.size()) {
       if (CurFun.Values[ID.Num]->getType()->getTypeID() == Type::LabelTyID)

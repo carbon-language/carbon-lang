@@ -145,11 +145,12 @@ unsigned X86RegisterInfo::getX86RegNum(unsigned RegNo) const {
 
 const TargetRegisterClass *
 X86RegisterInfo::getCrossCopyRegClass(const TargetRegisterClass *RC) const {
-  if (RC == &X86::CCRRegClass)
+  if (RC == &X86::CCRRegClass) {
     if (Is64Bit)
       return &X86::GR64RegClass;
     else
       return &X86::GR32RegClass;
+  }
   return NULL;
 }
 

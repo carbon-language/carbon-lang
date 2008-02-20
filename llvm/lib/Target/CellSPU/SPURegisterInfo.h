@@ -90,7 +90,7 @@ namespace llvm {
     static const unsigned *getArgRegs();
 
     //! Return the size of the argument passing register array
-    static const unsigned getNumArgRegs();
+    static unsigned getNumArgRegs();
 
     //! Get DWARF debugging register number
     int getDwarfRegNum(unsigned RegNum, bool isEH) const;

@@ -186,7 +186,7 @@ ParamAttrsList::includeAttrs(const ParamAttrsList *PAL,
   // For now, say we can't change a known alignment.
   ParameterAttributes OldAlign = OldAttrs & ParamAttr::Alignment;
   ParameterAttributes NewAlign = attrs & ParamAttr::Alignment;
-  assert(!OldAlign || !NewAlign || OldAlign == NewAlign &&
+  assert((!OldAlign || !NewAlign || OldAlign == NewAlign) &&
          "Attempt to change alignment!");
 #endif
 

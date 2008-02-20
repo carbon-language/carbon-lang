@@ -90,7 +90,7 @@ namespace {
                             std::map<DomTreeNode*, Value*> &Phis);
 
     /// inLoop - returns true if the given block is within the current loop
-    const bool inLoop(BasicBlock* B) {
+    bool inLoop(BasicBlock* B) {
       return std::binary_search(LoopBlocks.begin(), LoopBlocks.end(), B);
     }
   };

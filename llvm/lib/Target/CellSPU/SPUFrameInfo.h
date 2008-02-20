@@ -34,7 +34,7 @@ namespace llvm {
     getCalleeSaveSpillSlots(unsigned &NumEntries) const;
 
     //! Stack slot size (16 bytes)
-    static const int stackSlotSize() {
+    static int stackSlotSize() {
       return 16;
     }
     //! Maximum frame offset representable by a signed 10-bit integer
@@ -42,19 +42,19 @@ namespace llvm {
       This is the maximum frame offset that can be expressed as a 10-bit
       integer, used in D-form addresses.
      */
-    static const int maxFrameOffset() {
+    static int maxFrameOffset() {
       return ((1 << 9) - 1) * stackSlotSize();
     }
     //! Minimum frame offset representable by a signed 10-bit integer
-    static const int minFrameOffset() {
+    static int minFrameOffset() {
       return -(1 << 9) * stackSlotSize();
     }
     //! Minimum frame size (enough to spill LR + SP)
-    static const int minStackSize() {
+    static int minStackSize() {
       return (2 * stackSlotSize());
     }
     //! Frame size required to spill all registers plus frame info
-    static const int fullSpillSize() {
+    static int fullSpillSize() {
       return (SPURegisterInfo::getNumArgRegs() * stackSlotSize());
     }
     //! Number of instructions required to overcome hint-for-branch latency
@@ -65,7 +65,7 @@ namespace llvm {
       of instructions occurs between the HBR and the target. Currently, HBRs
       take 6 cycles, ergo, the magic number 6.
      */
-    static const int branchHintPenalty() {
+    static int branchHintPenalty() {
       return 6;
     }
   };

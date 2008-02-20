@@ -775,11 +775,12 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
 
   // Spill all physical registers holding virtual registers now.
   for (unsigned i = 0, e = TRI->getNumRegs(); i != e; ++i)
-    if (PhysRegsUsed[i] != -1 && PhysRegsUsed[i] != -2)
+    if (PhysRegsUsed[i] != -1 && PhysRegsUsed[i] != -2) {
       if (unsigned VirtReg = PhysRegsUsed[i])
         spillVirtReg(MBB, MI, VirtReg, i);
       else
         removePhysReg(i);
+    }
 
 #if 0
   // This checking code is very expensive.

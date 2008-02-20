@@ -221,7 +221,7 @@ SPURegisterInfo::getArgRegs()
   return SPU_ArgRegs;
 }
 
-const unsigned
+unsigned
 SPURegisterInfo::getNumArgRegs()
 {
   return sizeof(SPU_ArgRegs) / sizeof(SPU_ArgRegs[0]);

@@ -80,7 +80,7 @@ public:
   // ParserOptions in effect.  If positional information is not applicable,
   // these will return a value of -1.
   //
-  inline const void getErrorLocation(int &Line, int &Column) const {
+  inline void getErrorLocation(int &Line, int &Column) const {
     Line = LineNo; Column = ColumnNo;
   }
 

@@ -224,11 +224,12 @@ unsigned RALinScan::attemptTrivialCoalescing(LiveInterval &cur, unsigned Reg) {
   unsigned SrcReg, DstReg;
   if (!CopyMI || !tii_->isMoveInstr(*CopyMI, SrcReg, DstReg))
     return Reg;
-  if (TargetRegisterInfo::isVirtualRegister(SrcReg))
+  if (TargetRegisterInfo::isVirtualRegister(SrcReg)) {
     if (!vrm_->isAssignedReg(SrcReg))
       return Reg;
     else
       SrcReg = vrm_->getPhys(SrcReg);
+  }
   if (Reg == SrcReg)
     return Reg;
 
@@ -864,7 +865,7 @@ unsigned RALinScan::getFreePhysReg(LiveInterval *cur) {
 
   // If copy coalescer has assigned a "preferred" register, check if it's
   // available first.
-  if (cur->preference)
+  if (cur->preference) {
     if (prt_->isRegAvail(cur->preference)) {
       DOUT << "\t\tassigned the preferred register: "
            << tri_->getName(cur->preference) << "\n";
@@ -872,6 +873,7 @@ unsigned RALinScan::getFreePhysReg(LiveInterval *cur) {
     } else
       DOUT << "\t\tunable to assign the preferred register: "
            << tri_->getName(cur->preference) << "\n";
+  }
 
   // Scan for the first available register.
   TargetRegisterClass::iterator I = RC->allocation_order_begin(*mf_);
