@@ -19,6 +19,7 @@
 #include <vector>
 #include <set>
 #include <llvm/ADT/hash_map>
+#include <cstring>
 
 #define LLVM_LTO_VERSION 2
 

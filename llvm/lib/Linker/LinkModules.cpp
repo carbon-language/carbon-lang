@@ -951,16 +951,19 @@ Linker::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
     } else {
       std::string DataLayout;
 
-      if (Dest->getEndianness() == Module::AnyEndianness)
+      if (Dest->getEndianness() == Module::AnyEndianness) {
         if (Src->getEndianness() == Module::BigEndian)
           DataLayout.append("E");
         else if (Src->getEndianness() == Module::LittleEndian)
           DataLayout.append("e");
-      if (Dest->getPointerSize() == Module::AnyPointerSize)
+      }
+
+      if (Dest->getPointerSize() == Module::AnyPointerSize) {
         if (Src->getPointerSize() == Module::Pointer64)
           DataLayout.append(DataLayout.length() == 0 ? "p:64:64" : "-p:64:64");
         else if (Src->getPointerSize() == Module::Pointer32)
           DataLayout.append(DataLayout.length() == 0 ? "p:32:32" : "-p:32:32");
+      }
       Dest->setDataLayout(DataLayout);
     }
   }

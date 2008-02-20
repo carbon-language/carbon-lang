@@ -21,6 +21,7 @@
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/ADT/StringExtras.h"
 #include <iostream>
+#include <cstdlib>
 using namespace llvm;
 
 /// getCurrentLanguage - Return the current source language that the user is
@@ -448,11 +449,12 @@ void CLIDebugger::downCommand(std::string &Options) {
   unsigned CurFrame = RI.getCurrentFrameIdx();
 
   // Check to see if we can go up the specified number of frames.
-  if (CurFrame < Num)
+  if (CurFrame < Num) {
     if (Num == 1)
       throw "Bottom (i.e., innermost) frame selected; you cannot go down.";
     else
       throw "Cannot go down " + utostr(Num) + " frames!";
+  }
 
   RI.setCurrentFrameIdx(CurFrame-Num);
   printProgramLocation();
