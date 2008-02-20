@@ -2705,23 +2705,25 @@ void SwitchInst::setSuccessorV(unsigned idx, BasicBlock *B) {
 //                           GetResultInst Implementation
 //===----------------------------------------------------------------------===//
 
-GetResultInst::GetResultInst(Value *Aggr, Value *Index,
+GetResultInst::GetResultInst(Value *Aggregate, unsigned Index,
                              const std::string &Name,
                              Instruction *InsertBef)
   : Instruction(Aggr->getType(),
-                GetResult, Ops, 2, InsertBef) {
-  assert(isValidOperands(Aggr, Index) && "Invalid GetResultInst operands!");
-  Ops[0].init(Aggr, this);
-  Ops[1].init(Index, this);
+                GetResult, &Aggr, 1, InsertBef) {
+  assert(isValidOperands(Aggregate, Index) && "Invalid GetResultInst operands!");
+  Aggr.init(Aggregate, this);
+  Idx = Index;
   setName(Name);
 }
 
-bool GetResultInst::isValidOperands(const Value *Aggr, const Value *Index) {
-  if (!Aggr || !Index)
+bool GetResultInst::isValidOperands(const Value *Aggregate, unsigned Index) {
+  if (!Aggregate)
     return false;
-  if (!isa<StructType>(Aggr->getType()) || Index->getType() != Type::Int32Ty)
-    return false;
-  return true;
+  if (const StructType *STy = dyn_cast<StructType>(Aggregate->getType())) 
+    if (Index < STy->getNumElements())
+      return true;
+
+  return false;
 }
 
 

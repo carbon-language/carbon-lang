@@ -3132,7 +3132,7 @@ MemoryInst : MALLOC Types OptCAlign {
     $$ = new StoreInst($3, tmpVal, $1, $7);
     delete $5;
   }
-| GETRESULT Types LocalName ',' ConstVal  {
+| GETRESULT Types LocalName ',' EUINT64VAL  {
   ValID TmpVID = ValID::createLocalName(*$3);
   Value *TmpVal = getVal($2->get(), TmpVID);
   if (!GetResultInst::isValidOperands(TmpVal, $5))
