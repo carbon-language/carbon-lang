@@ -299,7 +299,7 @@ public:
   /// VisitBinaryOperator - Transfer function logic for binary operators.
   void VisitBinaryOperator(BinaryOperator* B, NodeTy* Pred, NodeSet& Dst);
   
-  void VisitAssignmentLHS(Expr* E, NodeTy* Pred, NodeSet& Dst);
+  void VisitLValue(Expr* E, NodeTy* Pred, NodeSet& Dst);
   
   /// VisitCall - Transfer function for function calls.
   void VisitCall(CallExpr* CE, NodeTy* Pred,
@@ -328,6 +328,8 @@ public:
   
   /// VisitUnaryOperator - Transfer function logic for unary operators.
   void VisitUnaryOperator(UnaryOperator* B, NodeTy* Pred, NodeSet& Dst);
+  
+  void VisitDeref(UnaryOperator* B, NodeTy* Pred, NodeSet& Dst);
   
   
   inline RValue EvalCast(ValueManager& ValMgr, RValue X, Expr* CastExpr) {

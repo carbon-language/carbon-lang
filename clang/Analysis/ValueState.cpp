@@ -310,9 +310,8 @@ RValue ValueStateManager::GetValue(ValueState St, Expr* E, bool* hasVal) {
 
 LValue ValueStateManager::GetLValue(ValueState St, Expr* E) {
   
-  while (ParenExpr* P = dyn_cast<ParenExpr>(E))
-    E = P->getSubExpr();
-  
+  E = E->IgnoreParens();
+
   if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(E)) {
     ValueDecl* VD = DR->getDecl();
     
@@ -323,9 +322,17 @@ LValue ValueStateManager::GetLValue(ValueState St, Expr* E) {
   }
   
   if (UnaryOperator* U = dyn_cast<UnaryOperator>(E))
-    if (U->getOpcode() == UnaryOperator::Deref)
-      return cast<LValue>(GetValue(St, U->getSubExpr()));
-  
+    if (U->getOpcode() == UnaryOperator::Deref) {
+      E = U->getSubExpr()->IgnoreParens();
+        
+      if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(E)) {
+        lval::DeclVal X(cast<VarDecl>(DR->getDecl()));
+        return cast<LValue>(GetValue(St, X));
+      }
+      else
+        return cast<LValue>(GetValue(St, E));
+    }
+        
   return cast<LValue>(GetValue(St, E));
 }
 

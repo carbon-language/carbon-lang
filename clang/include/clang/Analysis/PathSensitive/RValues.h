@@ -72,7 +72,7 @@ public:
   inline bool isUnknown() const { return getRawKind() == UnknownKind; }
   
   void print(std::ostream& OS) const;
-  void print() const;
+  void printStdErr() const;
   
   typedef const SymbolID* symbol_iterator;
   symbol_iterator symbol_begin() const;

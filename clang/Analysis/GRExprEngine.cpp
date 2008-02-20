@@ -528,32 +528,124 @@ void GRExprEngine::VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr* S,
   
 }
 
+void GRExprEngine::VisitDeref(UnaryOperator* U, NodeTy* Pred, NodeSet& Dst) {
+
+  Expr* E = U->getSubExpr()->IgnoreParens();
+    
+  NodeSet DstTmp;
+  
+  if (!isa<DeclRefExpr>(E))
+    DstTmp.Add(Pred);
+  else
+    Visit(E, Pred, DstTmp);
+  
+  for (NodeSet::iterator I=DstTmp.begin(), DE=DstTmp.end(); I != DE; ++I) {
+
+    NodeTy* N = *I;
+    StateTy St = N->getState();
+    
+    // FIXME: Bifurcate when dereferencing a symbolic with no constraints?
+    
+    LValue L = cast<LValue>(GetValue(St, E));
+    
+    if (isa<UninitializedVal>(L)) {
+      NodeTy* Succ = Builder->generateNode(U, St, N);
+      
+      if (Succ) {
+        Succ->markAsSink();
+        UninitDeref.insert(Succ);
+      }
+      
+      continue;
+    }
+    
+    if (L.isUnknown()) {
+      Dst.Add(N);
+      continue;
+    }
+    
+    // After a dereference, one of two possible situations arise:
+    //  (1) A crash, because the pointer was NULL.
+    //  (2) The pointer is not NULL, and the dereference works.
+    // 
+    // We add these assumptions.
+    
+    bool isFeasibleNotNull;
+    
+    // "Assume" that the pointer is Not-NULL.
+    StateTy StNotNull = Assume(St, L, true, isFeasibleNotNull);
+    
+    if (isFeasibleNotNull) {
+      QualType T = U->getType();
+      
+      // FIXME: Currently symbolic analysis "generates" new symbols
+      //  for the contents of values.  We need a better approach.
+      
+      Nodify(Dst, U, N, SetValue(StNotNull, U, GetValue(StNotNull, L, &T)));
+    }
+    
+    bool isFeasibleNull;
+    
+    // "Assume" that the pointer is NULL.
+    StateTy StNull = Assume(St, L, false, isFeasibleNull);
+    
+    if (isFeasibleNull) {
+      // We don't use "Nodify" here because the node will be a sink
+      // and we have no intention of processing it later.
+      NodeTy* NullNode = Builder->generateNode(U, StNull, N);
+      
+      if (NullNode) {
+        NullNode->markAsSink();
+        
+        if (isFeasibleNotNull)
+          ImplicitNullDeref.insert(NullNode);
+        else
+          ExplicitNullDeref.insert(NullNode);
+      }
+    }    
+  }
+}
+
 void GRExprEngine::VisitUnaryOperator(UnaryOperator* U,
-                                     GRExprEngine::NodeTy* Pred,
-                                     GRExprEngine::NodeSet& Dst) {
+                                      NodeTy* Pred, NodeSet& Dst) {
   
   NodeSet S1;
-  UnaryOperator::Opcode Op = U->getOpcode();
   
-  // FIXME: This is a hack so that for '*' and '&' we don't recurse
-  //  on visiting the subexpression if it is a DeclRefExpr.  We should
-  //  probably just handle AddrOf and Deref in their own methods to make
-  //  this cleaner.
-  if ((Op == UnaryOperator::Deref || Op == UnaryOperator::AddrOf) &&
-      isa<DeclRefExpr>(U->getSubExpr()))
-    S1.Add(Pred);
-  else
-    Visit(U->getSubExpr(), Pred, S1);
-    
+  assert (U->getOpcode() != UnaryOperator::Deref);
+  
+  switch (U->getOpcode()) {
+    case UnaryOperator::PostInc:
+    case UnaryOperator::PostDec:
+    case UnaryOperator::PreInc:
+    case UnaryOperator::PreDec:
+    case UnaryOperator::AddrOf:
+      // Evalue subexpression as an LValue.
+      VisitLValue(U->getSubExpr(), Pred, S1);
+      break;
+      
+    case UnaryOperator::SizeOf:
+    case UnaryOperator::AlignOf:
+      // Do not evaluate subexpression.
+      S1.Add(Pred);
+      break;
+      
+    default:
+      Visit(U->getSubExpr(), Pred, S1);
+      break;
+  }
+
   for (NodeSet::iterator I1=S1.begin(), E1=S1.end(); I1 != E1; ++I1) {
+
     NodeTy* N1 = *I1;
     StateTy St = N1->getState();
     
-    // Handle ++ and -- (both pre- and post-increment).
-    
     if (U->isIncrementDecrementOp()) {
+      
+      // Handle ++ and -- (both pre- and post-increment).
+      
       const LValue& L1 = GetLValue(St, U->getSubExpr());
-      RValue R1 = GetValue(St, L1);
+      QualType T = U->getType();
+      RValue R1 = GetValue(St, L1, &T);
       
       BinaryOperator::Opcode Op = U->isIncrementOp() ? BinaryOperator::Add
                                                      : BinaryOperator::Sub;
@@ -634,77 +726,17 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U,
         Nodify(Dst, U, N1, SetValue(St, U, L1));
         break;
       }
-        
-      case UnaryOperator::Deref: {
-        // FIXME: Stop when dereferencing an uninitialized value.
-        // FIXME: Bifurcate when dereferencing a symbolic with no constraints?
-        
-        const RValue& V = GetValue(St, U->getSubExpr());        
-        const LValue& L1 = cast<LValue>(V);
-        
-        if (isa<UninitializedVal>(L1)) {
-          NodeTy* N = Builder->generateNode(U, St, N1);
-          
-          if (N) {
-            N->markAsSink();
-            UninitDeref.insert(N);            
-          }
-          
-          return;
-        }
-        
-        // After a dereference, one of two possible situations arise:
-        //  (1) A crash, because the pointer was NULL.
-        //  (2) The pointer is not NULL, and the dereference works.
-        // 
-        // We add these assumptions.
                 
-        bool isFeasibleNotNull;
-       
-        // "Assume" that the pointer is Not-NULL.
-        StateTy StNotNull = Assume(St, L1, true, isFeasibleNotNull);
-        
-        if (isFeasibleNotNull) {
-          QualType T = U->getType();
-          Nodify(Dst, U, N1, SetValue(StNotNull, U,
-                                      GetValue(StNotNull, L1, &T)));
-        }
-        
-        if (V.isUnknown())
-          return;
-        
-        bool isFeasibleNull;
-        
-        // "Assume" that the pointer is NULL.
-        StateTy StNull = Assume(St, L1, false, isFeasibleNull);
-        
-        if (isFeasibleNull) {
-          // We don't use "Nodify" here because the node will be a sink
-          // and we have no intention of processing it later.
-          NodeTy* NullNode = Builder->generateNode(U, StNull, N1);
-
-          if (NullNode) {
-            NullNode->markAsSink();
-            
-            if (isFeasibleNotNull)
-              ImplicitNullDeref.insert(NullNode);
-            else
-              ExplicitNullDeref.insert(NullNode);
-          }
-        }
-        
-        break;
-      }
-        
       default: ;
         assert (false && "Not implemented.");
     }    
   }
 }
 
-void GRExprEngine::VisitAssignmentLHS(Expr* E, GRExprEngine::NodeTy* Pred,
-                                     GRExprEngine::NodeSet& Dst) {
-
+void GRExprEngine::VisitLValue(Expr* E, NodeTy* Pred, NodeSet& Dst) {
+  
+  E = E->IgnoreParens();
+  
   if (isa<DeclRefExpr>(E)) {
     Dst.Add(Pred);
     return;
@@ -712,7 +744,13 @@ void GRExprEngine::VisitAssignmentLHS(Expr* E, GRExprEngine::NodeTy* Pred,
   
   if (UnaryOperator* U = dyn_cast<UnaryOperator>(E)) {
     if (U->getOpcode() == UnaryOperator::Deref) {
-      Visit(U->getSubExpr(), Pred, Dst);
+      E = U->getSubExpr()->IgnoreParens();
+      
+      if (isa<DeclRefExpr>(E))
+        Dst.Add(Pred);
+      else
+        Visit(E, Pred, Dst);
+      
       return;
     }
   }
@@ -726,7 +764,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
   NodeSet S1;
   
   if (B->isAssignmentOp())
-    VisitAssignmentLHS(B->getLHS(), Pred, S1);
+    VisitLValue(B->getLHS(), Pred, S1);
   else
     Visit(B->getLHS(), Pred, S1);
 
@@ -974,9 +1012,16 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
       break;
     }
       
-    case Stmt::UnaryOperatorClass:
-      VisitUnaryOperator(cast<UnaryOperator>(S), Pred, Dst);
+    case Stmt::UnaryOperatorClass: {
+      UnaryOperator* U = cast<UnaryOperator>(S);
+      
+      if (U->getOpcode() == UnaryOperator::Deref)
+        VisitDeref(U, Pred, Dst);
+      else
+        VisitUnaryOperator(U, Pred, Dst);
+      
       break;
+    }
   }
 }
 

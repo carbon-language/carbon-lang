@@ -240,7 +240,7 @@ LValue LValue::GetValue(AddrLabelExpr* E) {
 // Pretty-Printing.
 //===----------------------------------------------------------------------===//
 
-void RValue::print() const {
+void RValue::printStdErr() const {
   print(*llvm::cerr.stream());
 }
 
