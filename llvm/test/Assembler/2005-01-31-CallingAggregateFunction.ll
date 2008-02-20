@@ -1,5 +1,4 @@
-; RUN: not llvm-as < %s -o /dev/null -f |& \
-; RUN:    grep {LLVM functions cannot return aggregate types}
+; RUN: not llvm-as < %s -o /dev/null -f 
 
 define void @test() {
 	call {} @foo()
