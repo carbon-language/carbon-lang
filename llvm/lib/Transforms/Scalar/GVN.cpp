@@ -1139,6 +1139,7 @@ bool GVN::performReturnSlotOptzn(MemCpyInst* cpy, CallInst* C,
   MD.dropInstruction(C);
   
   // Remove the memcpy
+  MD.removeInstruction(cpy);
   toErase.push_back(cpy);
   
   return true;
