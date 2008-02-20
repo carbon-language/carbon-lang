@@ -416,7 +416,7 @@ CodeGenTypes::BitFieldInfo CodeGenTypes::getBitFieldInfo(const FieldDecl *FD) {
 
 /// addBitFieldInfo - Assign a start bit and a size to field FD.
 void CodeGenTypes::addBitFieldInfo(const FieldDecl *FD, unsigned Begin,
-				   unsigned Size) {
+                                   unsigned Size) {
   BitFields.insert(std::make_pair(FD, BitFieldInfo(Begin, Size)));
 }
 

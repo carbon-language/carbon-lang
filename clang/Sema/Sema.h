@@ -195,8 +195,8 @@ private:
   
   virtual DeclTy *ActOnFinishFunctionBody(DeclTy *Decl, StmtTy *Body);
   virtual DeclTy *ActOnLinkageSpec(SourceLocation Loc, SourceLocation LBrace,
-				   SourceLocation RBrace, const char *Lang,
-				   unsigned StrSize, DeclTy *D);
+                                   SourceLocation RBrace, const char *Lang,
+                                   unsigned StrSize, DeclTy *D);
   virtual DeclTy *ActOnFileScopeAsmDecl(SourceLocation Loc, ExprTy *expr);
 
   /// Scope actions.
@@ -532,7 +532,7 @@ public:
   
   // Objective-C declarations.
   virtual DeclTy *ActOnStartClassInterface(
-		    SourceLocation AtInterafceLoc,
+                    SourceLocation AtInterafceLoc,
                     IdentifierInfo *ClassName, SourceLocation ClassLoc,
                     IdentifierInfo *SuperName, SourceLocation SuperLoc,
                     IdentifierInfo **ProtocolNames, unsigned NumProtocols,
@@ -544,20 +544,20 @@ public:
                     IdentifierInfo *ClassName, SourceLocation ClassLocation);
                     
   virtual DeclTy *ActOnStartProtocolInterface(
-		    SourceLocation AtProtoInterfaceLoc,
+                    SourceLocation AtProtoInterfaceLoc,
                     IdentifierInfo *ProtocolName, SourceLocation ProtocolLoc,
                     IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs,
                     SourceLocation EndProtoLoc);
   
   virtual DeclTy *ActOnStartCategoryInterface(
-		    SourceLocation AtInterfaceLoc,
+                    SourceLocation AtInterfaceLoc,
                     IdentifierInfo *ClassName, SourceLocation ClassLoc,
                     IdentifierInfo *CategoryName, SourceLocation CategoryLoc,
                     IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs,
                     SourceLocation EndProtoLoc);
   
   virtual DeclTy *ActOnStartClassImplementation(
-		    SourceLocation AtClassImplLoc,
+                    SourceLocation AtClassImplLoc,
                     IdentifierInfo *ClassName, SourceLocation ClassLoc,
                     IdentifierInfo *SuperClassname, 
                     SourceLocation SuperClassLoc);
@@ -759,7 +759,7 @@ private:
   bool CheckInitExpr(Expr *expr, InitListExpr *IList, unsigned slot,
                      QualType ElementType);
   bool CheckInitializerListTypes(InitListExpr*& IList, QualType &DeclType,
-								 bool topLevel, unsigned& startIndex);
+                                 bool topLevel, unsigned& startIndex);
   bool CheckForConstantInitializer(Expr *e, QualType t);
   
   StringLiteral *IsStringLiteralInit(Expr *Init, QualType DeclType);
