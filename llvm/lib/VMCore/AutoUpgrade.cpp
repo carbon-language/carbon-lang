@@ -18,6 +18,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/ParameterAttributes.h"
 #include "llvm/Intrinsics.h"
+#include <cstring>
 using namespace llvm;
 
 

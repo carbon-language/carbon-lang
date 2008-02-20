@@ -2145,13 +2145,14 @@ static PHINode *getConstantEvolvingPHI(Value *V, const Loop *L) {
   Instruction *I = dyn_cast<Instruction>(V);
   if (I == 0 || !L->contains(I->getParent())) return 0;
 
-  if (PHINode *PN = dyn_cast<PHINode>(I))
+  if (PHINode *PN = dyn_cast<PHINode>(I)) {
     if (L->getHeader() == I->getParent())
       return PN;
     else
       // We don't currently keep track of the control flow needed to evaluate
       // PHIs, so we cannot handle PHIs inside of loops.
       return 0;
+  }
 
   // If we won't be able to constant fold this expression even if the operands
   // are constants, return early.

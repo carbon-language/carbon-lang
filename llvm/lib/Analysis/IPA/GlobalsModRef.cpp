@@ -115,11 +115,12 @@ namespace {
     /// case the most generic behavior of this function should be returned.
     virtual ModRefBehavior getModRefBehavior(Function *F, CallSite CS,
                                          std::vector<PointerAccessInfo> *Info) {
-      if (FunctionRecord *FR = getFunctionInfo(F))
+      if (FunctionRecord *FR = getFunctionInfo(F)) {
         if (FR->FunctionEffect == 0)
           return DoesNotAccessMemory;
         else if ((FR->FunctionEffect & Mod) == 0)
           return OnlyReadsMemory;
+      }
       return AliasAnalysis::getModRefBehavior(F, CS, Info);
     }
 

@@ -11,6 +11,7 @@
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <string>
+#include <cstring>
 
 using namespace llvm;
 

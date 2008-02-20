@@ -1123,7 +1123,7 @@ public:
           Code += "), 0";
         emitCode(Code2 + Code + ");");
 
-        if (NodeHasChain)
+        if (NodeHasChain) {
           // Remember which op produces the chain.
           if (!isRoot)
             emitCode(ChainName + " = SDOperand(" + NodeName +
@@ -1131,6 +1131,7 @@ public:
           else
             emitCode(ChainName + " = SDOperand(" + NodeName +
                      ", " + utostr(NumResults+NumDstRegs) + ");");
+        }
 
         if (!isRoot) {
           NodeOps.push_back("Tmp" + utostr(ResNo));

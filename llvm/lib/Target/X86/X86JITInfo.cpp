@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/Config/alloca.h"
 #include <cstdlib>
+#include <cstring>
 using namespace llvm;
 
 #ifdef _MSC_VER

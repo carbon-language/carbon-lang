@@ -404,13 +404,14 @@ public:
     if (BranchInst *BI = dyn_cast<BranchInst>(BackedgeBlock->getTerminator()))
       if (BI->isConditional()) {
         if (ICmpInst *ICI = dyn_cast<ICmpInst>(BI->getCondition())) {
-          if (ICI->getOperand(0) == Inc)
+          if (ICI->getOperand(0) == Inc) {
             if (BI->getSuccessor(0) == getHeader()) {
               if (ICI->getPredicate() == ICmpInst::ICMP_NE)
                 return ICI->getOperand(1);
             } else if (ICI->getPredicate() == ICmpInst::ICMP_EQ) {
               return ICI->getOperand(1);
             }
+          }
         }
       }
 

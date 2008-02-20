@@ -26,7 +26,8 @@
 #include "llvm/System/DynamicLibrary.h"
 #include "llvm/System/Host.h"
 #include "llvm/Target/TargetData.h"
-#include <math.h>
+#include <cmath>
+#include <cstring>
 using namespace llvm;
 
 STATISTIC(NumInitBytes, "Number of bytes of global vars initialized");

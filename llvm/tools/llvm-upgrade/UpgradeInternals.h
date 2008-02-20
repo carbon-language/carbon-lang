@@ -22,7 +22,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include <list>
 #include <iostream>
-
+#include <cstring>
 
 // Global variables exported from the lexer.
 extern int yydebug;

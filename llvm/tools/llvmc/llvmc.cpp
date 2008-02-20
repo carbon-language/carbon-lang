@@ -21,6 +21,7 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/System/Signals.h"
 #include <iostream>
+#include <cstring>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//

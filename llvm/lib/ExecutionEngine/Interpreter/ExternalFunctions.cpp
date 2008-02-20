@@ -29,6 +29,7 @@
 #include <csignal>
 #include <map>
 #include <cmath>
+#include <cstring>
 
 #ifdef __linux__
 #include <cxxabi.h>

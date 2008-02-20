@@ -18,6 +18,8 @@
 #include "llvm/System/TimeValue.h"
 #include "llvm/ADT/StringExtras.h"
 
+#include <cstring>
+
 #define ARFILE_MAGIC "!<arch>\n"                   ///< magic string
 #define ARFILE_MAGIC_LEN (sizeof(ARFILE_MAGIC)-1)  ///< length of magic string
 #define ARFILE_SVR4_SYMTAB_NAME "/               " ///< SVR4 symtab entry name

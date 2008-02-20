@@ -31,6 +31,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MathExtras.h"
 #include <cctype>
+#include <cstring>
 using namespace llvm;
 
 STATISTIC(EmittedInsts, "Number of machine instrs printed");

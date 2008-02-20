@@ -660,25 +660,28 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
       case Instruction::Xor:
         return ConstantInt::get(C1V ^ C2V);
       case Instruction::Shl:
-        if (uint32_t shiftAmt = C2V.getZExtValue())
+        if (uint32_t shiftAmt = C2V.getZExtValue()) {
           if (shiftAmt < C1V.getBitWidth())
             return ConstantInt::get(C1V.shl(shiftAmt));
           else
             return UndefValue::get(C1->getType()); // too big shift is undef
+        }
         return const_cast<ConstantInt*>(CI1); // Zero shift is identity
       case Instruction::LShr:
-        if (uint32_t shiftAmt = C2V.getZExtValue())
+        if (uint32_t shiftAmt = C2V.getZExtValue()) {
           if (shiftAmt < C1V.getBitWidth())
             return ConstantInt::get(C1V.lshr(shiftAmt));
           else
             return UndefValue::get(C1->getType()); // too big shift is undef
+        }
         return const_cast<ConstantInt*>(CI1); // Zero shift is identity
       case Instruction::AShr:
-        if (uint32_t shiftAmt = C2V.getZExtValue())
+        if (uint32_t shiftAmt = C2V.getZExtValue()) {
           if (shiftAmt < C1V.getBitWidth())
             return ConstantInt::get(C1V.ashr(shiftAmt));
           else
             return UndefValue::get(C1->getType()); // too big shift is undef
+        }
         return const_cast<ConstantInt*>(CI1); // Zero shift is identity
       }
     }
@@ -1083,18 +1086,20 @@ static ICmpInst::Predicate evaluateICmpRelation(const Constant *V1,
             // Ok, we ran out of things they have in common.  If any leftovers
             // are non-zero then we have a difference, otherwise we are equal.
             for (; i < CE1->getNumOperands(); ++i)
-              if (!CE1->getOperand(i)->isNullValue())
+              if (!CE1->getOperand(i)->isNullValue()) {
                 if (isa<ConstantInt>(CE1->getOperand(i)))
                   return isSigned ? ICmpInst::ICMP_SGT : ICmpInst::ICMP_UGT;
                 else
                   return ICmpInst::BAD_ICMP_PREDICATE; // Might be equal.
+              }
 
             for (; i < CE2->getNumOperands(); ++i)
-              if (!CE2->getOperand(i)->isNullValue())
+              if (!CE2->getOperand(i)->isNullValue()) {
                 if (isa<ConstantInt>(CE2->getOperand(i)))
                   return isSigned ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT;
                 else
                   return ICmpInst::BAD_ICMP_PREDICATE; // Might be equal.
+              }
             return ICmpInst::ICMP_EQ;
           }
         }
@@ -1123,20 +1128,22 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
   if (C1->isNullValue()) {
     if (const GlobalValue *GV = dyn_cast<GlobalValue>(C2))
       // Don't try to evaluate aliases.  External weak GV can be null.
-      if (!isa<GlobalAlias>(GV) && !GV->hasExternalWeakLinkage())
+      if (!isa<GlobalAlias>(GV) && !GV->hasExternalWeakLinkage()) {
         if (pred == ICmpInst::ICMP_EQ)
           return ConstantInt::getFalse();
         else if (pred == ICmpInst::ICMP_NE)
           return ConstantInt::getTrue();
+      }
   // icmp eq/ne(GV,null) -> false/true
   } else if (C2->isNullValue()) {
     if (const GlobalValue *GV = dyn_cast<GlobalValue>(C1))
       // Don't try to evaluate aliases.  External weak GV can be null.
-      if (!isa<GlobalAlias>(GV) && !GV->hasExternalWeakLinkage())
+      if (!isa<GlobalAlias>(GV) && !GV->hasExternalWeakLinkage()) {
         if (pred == ICmpInst::ICMP_EQ)
           return ConstantInt::getFalse();
         else if (pred == ICmpInst::ICMP_NE)
           return ConstantInt::getTrue();
+      }
   }
 
   if (isa<ConstantInt>(C1) && isa<ConstantInt>(C2)) {

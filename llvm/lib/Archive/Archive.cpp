@@ -18,6 +18,8 @@
 #include "llvm/Module.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Process.h"
+#include <memory>
+#include <cstring>
 using namespace llvm;
 
 // getMemberSize - compute the actual physical size of the file member as seen

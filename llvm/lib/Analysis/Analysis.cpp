@@ -10,6 +10,7 @@
 #include "llvm-c/Analysis.h"
 #include "llvm/Analysis/Verifier.h"
 #include <fstream>
+#include <cstring>
 
 using namespace llvm;
 

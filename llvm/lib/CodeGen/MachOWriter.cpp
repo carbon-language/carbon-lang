@@ -38,6 +38,7 @@
 #include "llvm/Support/OutputBuffer.h"
 #include "llvm/Support/Streams.h"
 #include <algorithm>
+#include <cstring>
 using namespace llvm;
 
 /// AddMachOWriter - Concrete function to add the Mach-O writer to the function

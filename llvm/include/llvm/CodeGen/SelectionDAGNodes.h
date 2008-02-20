@@ -843,8 +843,8 @@ template<> struct DenseMapInfo<SDOperand> {
   static inline SDOperand getEmptyKey() { return SDOperand((SDNode*)-1, -1U); }
   static inline SDOperand getTombstoneKey() { return SDOperand((SDNode*)-1, 0);}
   static unsigned getHashValue(const SDOperand &Val) {
-    return (unsigned)((uintptr_t)Val.Val >> 4) ^
-           (unsigned)((uintptr_t)Val.Val >> 9) + Val.ResNo;
+    return ((unsigned)((uintptr_t)Val.Val >> 4) ^
+            (unsigned)((uintptr_t)Val.Val >> 9)) + Val.ResNo;
   }
   static bool isEqual(const SDOperand &LHS, const SDOperand &RHS) {
     return LHS == RHS;

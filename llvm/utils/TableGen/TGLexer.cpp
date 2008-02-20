@@ -17,6 +17,8 @@
 #include <ostream>
 #include "llvm/Config/config.h"
 #include <cctype>
+#include <cstdlib>
+#include <cstring>
 using namespace llvm;
 
 TGLexer::TGLexer(MemoryBuffer *StartBuf) : CurLineNo(1), CurBuf(StartBuf) {

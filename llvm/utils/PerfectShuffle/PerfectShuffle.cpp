@@ -17,7 +17,7 @@
 #include <iostream>
 #include <vector>
 #include <cassert>
-
+#include <cstdlib>
 struct Operator;
 
 // Masks are 4-nibble hex numbers.  Values 0-7 in any nibble means that it takes

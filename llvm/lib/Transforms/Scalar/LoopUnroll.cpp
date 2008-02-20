@@ -36,8 +36,9 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/IntrinsicInst.h"
-#include <cstdio>
 #include <algorithm>
+#include <climits>
+#include <cstdio>
 using namespace llvm;
 
 STATISTIC(NumCompletelyUnrolled, "Number of loops completely unrolled");

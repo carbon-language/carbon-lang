@@ -1342,14 +1342,14 @@ void CodeGenDAGPatterns::ParseDefaultOperands() {
         while (TPN->ApplyTypeConstraints(P, false))
           /* Resolve all types */;
       
-        if (TPN->ContainsUnresolvedType())
+        if (TPN->ContainsUnresolvedType()) {
           if (iter == 0)
             throw "Value #" + utostr(i) + " of PredicateOperand '" +
               DefaultOps[iter][i]->getName() + "' doesn't have a concrete type!";
           else
             throw "Value #" + utostr(i) + " of OptionalDefOperand '" +
               DefaultOps[iter][i]->getName() + "' doesn't have a concrete type!";
-      
+        }
         DefaultOpInfo.DefaultOps.push_back(TPN);
       }
 

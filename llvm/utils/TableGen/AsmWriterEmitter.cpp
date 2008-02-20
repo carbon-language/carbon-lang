@@ -242,11 +242,12 @@ unsigned AsmWriterInst::MatchesAllButOneOp(const AsmWriterInst &Other)const{
 
   unsigned MismatchOperand = ~0U;
   for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
-    if (Operands[i] != Other.Operands[i])
+    if (Operands[i] != Other.Operands[i]) {
       if (MismatchOperand != ~0U)  // Already have one mismatch?
         return ~1U;
       else
         MismatchOperand = i;
+    }
   }
   return MismatchOperand;
 }

@@ -253,11 +253,12 @@ namespace llvm {
     virtual bool hasComputableLoopEvolution(const Loop *L) const {
       bool HasVarying = false;
       for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
-        if (!getOperand(i)->isLoopInvariant(L))
+        if (!getOperand(i)->isLoopInvariant(L)) {
           if (getOperand(i)->hasComputableLoopEvolution(L))
             HasVarying = true;
           else
             return false;
+        }
       return HasVarying;
     }
 

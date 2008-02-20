@@ -14,6 +14,7 @@
 #include "ParserInternals.h"
 #include "llvm/Module.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include <cstring>
 using namespace llvm;
 
 

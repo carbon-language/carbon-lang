@@ -28,6 +28,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include <algorithm>
 #include <ostream>
+#include <cstring>
 using namespace llvm;
 
 // GetLibSupportInfoOutputFile - Return a file stream to print our output on.

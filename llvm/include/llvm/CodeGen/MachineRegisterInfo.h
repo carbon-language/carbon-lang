@@ -211,8 +211,8 @@ public:
       // If the first node isn't one we're interested in, advance to one that
       // we are interested in.
       if (op) {
-        if (!ReturnUses && op->isUse() || 
-            !ReturnDefs && op->isDef())
+        if ((!ReturnUses && op->isUse()) ||
+            (!ReturnDefs && op->isDef()))
           ++*this;
       }
     }
@@ -240,8 +240,8 @@ public:
       Op = Op->getNextOperandForReg();
       
       // If this is an operand we don't care about, skip it.
-      while (Op && (!ReturnUses && Op->isUse() || 
-                    !ReturnDefs && Op->isDef()))
+      while (Op && ((!ReturnUses && Op->isUse()) || 
+                    (!ReturnDefs && Op->isDef())))
         Op = Op->getNextOperandForReg();
       
       return *this;

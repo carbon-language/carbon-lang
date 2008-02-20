@@ -29,6 +29,7 @@
 #include <cstdlib>
 #include <cerrno>
 #include <cstring>
+#include <climits>
 using namespace llvm;
 using namespace cl;
 

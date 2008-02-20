@@ -18,6 +18,8 @@
 
 #include <list>
 #include "llvmAsmParser.h"
+
+#include <cstring>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//

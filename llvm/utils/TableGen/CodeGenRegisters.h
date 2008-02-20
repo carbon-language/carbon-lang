@@ -15,9 +15,10 @@
 #ifndef CODEGEN_REGISTERS_H
 #define CODEGEN_REGISTERS_H
 
+#include "llvm/CodeGen/ValueTypes.h"
 #include <string>
 #include <vector>
-#include "llvm/CodeGen/ValueTypes.h"
+#include <cstdlib>
 
 namespace llvm {
   class Record;

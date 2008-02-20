@@ -40,6 +40,7 @@
 
 #include "llvm/ADT/iterator"
 #include <cassert>
+#include <cstdlib>
 
 namespace llvm {
 

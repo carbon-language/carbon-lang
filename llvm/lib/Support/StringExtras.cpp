@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/StringExtras.h"
+#include <cstring>
 using namespace llvm;
 
 /// getToken - This function extracts one token from source, ignoring any

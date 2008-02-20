@@ -30,6 +30,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/IPO.h"
+#include <cstring>
 using namespace llvm;
 
 /// This statistic keeps track of the total number of library calls that have

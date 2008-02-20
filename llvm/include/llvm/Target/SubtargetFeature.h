@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 #include <iosfwd>
+#include <cstring>
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {

@@ -313,7 +313,7 @@ private:
     NumEntries = 0;
     NumTombstones = 0;
     NumBuckets = InitBuckets;
-    assert(InitBuckets && (InitBuckets & InitBuckets-1) == 0 &&
+    assert(InitBuckets && (InitBuckets & (InitBuckets-1)) == 0 &&
            "# initial buckets must be a power of two!");
     Buckets = reinterpret_cast<BucketT*>(new char[sizeof(BucketT)*InitBuckets]);
     // Initialize all the keys to EmptyKey.

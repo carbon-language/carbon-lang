@@ -307,7 +307,7 @@ void Value::replaceAllUsesWith(Value *New) {
 void User::replaceUsesOfWith(Value *From, Value *To) {
   if (From == To) return;   // Duh what?
 
-  assert(!isa<Constant>(this) || isa<GlobalValue>(this) &&
+  assert((!isa<Constant>(this) || isa<GlobalValue>(this)) &&
          "Cannot call User::replaceUsesofWith on a constant!");
 
   for (unsigned i = 0, E = getNumOperands(); i != E; ++i)

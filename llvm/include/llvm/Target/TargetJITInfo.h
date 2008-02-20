@@ -17,8 +17,9 @@
 #ifndef LLVM_TARGET_TARGETJITINFO_H
 #define LLVM_TARGET_TARGETJITINFO_H
 
-#include <cassert>
 #include <vector>
+#include <cassert>
+#include "llvm/Support/DataTypes.h"
 
 namespace llvm {
   class Function;

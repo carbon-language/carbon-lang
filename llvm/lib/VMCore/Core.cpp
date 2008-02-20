@@ -22,6 +22,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include <cassert>
 #include <cstdlib>
+#include <cstring>
 
 using namespace llvm;
 

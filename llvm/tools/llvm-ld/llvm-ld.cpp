@@ -38,6 +38,7 @@
 #include "llvm/System/Signals.h"
 #include <fstream>
 #include <memory>
+#include <cstring>
 using namespace llvm;
 
 // Input/Output Options

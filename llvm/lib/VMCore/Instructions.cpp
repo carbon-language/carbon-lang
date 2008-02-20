@@ -186,11 +186,12 @@ void PHINode::resizeOperands(unsigned NumOps) {
 ///
 Value *PHINode::hasConstantValue(bool AllowNonDominatingInstruction) const {
   // If the PHI node only has one incoming value, eliminate the PHI node...
-  if (getNumIncomingValues() == 1)
+  if (getNumIncomingValues() == 1) {
     if (getIncomingValue(0) != this)   // not  X = phi X
       return getIncomingValue(0);
     else
       return UndefValue::get(getType());  // Self cycle is dead.
+  }
       
   // Otherwise if all of the incoming values are the same for the PHI, replace
   // the PHI node with the incoming value.
@@ -198,13 +199,14 @@ Value *PHINode::hasConstantValue(bool AllowNonDominatingInstruction) const {
   Value *InVal = 0;
   bool HasUndefInput = false;
   for (unsigned i = 0, e = getNumIncomingValues(); i != e; ++i)
-    if (isa<UndefValue>(getIncomingValue(i)))
+    if (isa<UndefValue>(getIncomingValue(i))) {
       HasUndefInput = true;
-    else if (getIncomingValue(i) != this)  // Not the PHI node itself...
+    } else if (getIncomingValue(i) != this) { // Not the PHI node itself...
       if (InVal && getIncomingValue(i) != InVal)
         return 0;  // Not the same, bail out.
       else
         InVal = getIncomingValue(i);
+    }
   
   // The only case that could cause InVal to be null is if we have a PHI node
   // that only has entries for itself.  In this case, there is no entry into the
@@ -451,8 +453,8 @@ void InvokeInst::init(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
     cast<FunctionType>(cast<PointerType>(Fn->getType())->getElementType());
   FTy = FTy;  // silence warning.
 
-  assert((NumArgs == FTy->getNumParams()) ||
-         (FTy->isVarArg() && NumArgs > FTy->getNumParams()) &&
+  assert(((NumArgs == FTy->getNumParams()) ||
+          (FTy->isVarArg() && NumArgs > FTy->getNumParams())) &&
          "Calling a function with bad signature");
 
   for (unsigned i = 0, e = NumArgs; i != e; i++) {
@@ -1037,12 +1039,13 @@ const Type* GetElementPtrInst::getIndexedType(const Type *Ptr,
   if (!isa<PointerType>(Ptr)) return 0;   // Type isn't a pointer type!
 
   // Handle the special case of the empty set index set...
-  if (NumIdx == 0)
+  if (NumIdx == 0) {
     if (AllowCompositeLeaf ||
         cast<PointerType>(Ptr)->getElementType()->isFirstClassType())
       return cast<PointerType>(Ptr)->getElementType();
     else
       return 0;
+  }
 
   unsigned CurIdx = 0;
   while (const CompositeType *CT = dyn_cast<CompositeType>(Ptr)) {
@@ -2329,7 +2332,7 @@ CmpInst::CmpInst(OtherOps op, unsigned short predicate, Value *LHS, Value *RHS,
     assert(Op0Ty == Op1Ty &&
           "Both operands to ICmp instruction are not of the same type!");
     // Check that the operands are the right type
-    assert(Op0Ty->isInteger() || isa<PointerType>(Op0Ty) &&
+    assert((Op0Ty->isInteger() || isa<PointerType>(Op0Ty)) &&
            "Invalid operand types for ICmp instruction");
     return;
   }

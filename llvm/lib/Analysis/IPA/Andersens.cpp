@@ -139,7 +139,7 @@ namespace {
 
       Constraint(ConstraintType Ty, unsigned D, unsigned S, unsigned O = 0)
         : Type(Ty), Dest(D), Src(S), Offset(O) {
-        assert(Offset == 0 || Ty != AddressOf &&
+        assert((Offset == 0 || Ty != AddressOf) &&
                "Offset is illegal on addressof constraints");
       }
 
@@ -1931,7 +1931,7 @@ void Andersens::RewriteConstraints() {
 
     C.Src = FindEquivalentNode(RHSNode, RHSLabel);
     C.Dest = FindEquivalentNode(FindNode(LHSNode), LHSLabel);
-    if (C.Src == C.Dest && C.Type == Constraint::Copy
+    if ((C.Src == C.Dest && C.Type == Constraint::Copy)
         || Seen.count(C))
       continue;
 
