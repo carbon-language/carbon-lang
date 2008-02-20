@@ -15,8 +15,8 @@
 #ifndef LLVM_TOOLS_LLVMC_CONFIGDATA_H
 #define LLVM_TOOLS_LLVMC_CONFIGDATA_H
 
+#include "llvm/ADT/StringMap.h"
 #include "CompilerDriver.h"
-#include <llvm/ADT/hash_map>
 
 namespace llvm {
   /// This class provides the high level interface to the LLVM Compiler Driver.
@@ -52,7 +52,7 @@ namespace llvm {
     /// @{
     private:
       /// @brief This type is used internally to hold the configuration data.
-      typedef hash_map<std::string,CompilerDriver::ConfigData*> ConfigDataMap;
+      typedef StringMap<CompilerDriver::ConfigData*> ConfigDataMap;
       ConfigDataMap Configurations; ///< The cache of configurations
       sys::Path configDir;
     /// @}

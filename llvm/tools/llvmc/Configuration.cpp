@@ -609,7 +609,6 @@ LLVMC_ConfigDataProvider::~LLVMC_ConfigDataProvider()
     ++cIt;
     delete cd;
   }
-  Configurations.clear();
 }
 
 CompilerDriver::ConfigData*
@@ -627,7 +626,7 @@ LLVMC_ConfigDataProvider::ProvideConfigData(const std::string& filetype) {
     result = ReadConfigData(filetype);
     // If we got one, cache it
     if (result != 0)
-      Configurations.insert(std::make_pair(filetype,result));
+      Configurations[filetype] = result;
   }
   return result; // Might return 0
 }
