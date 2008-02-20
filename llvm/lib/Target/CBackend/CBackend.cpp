@@ -1198,12 +1198,12 @@ void CWriter::writeOperandRaw(Value *Operand) {
 }
 
 void CWriter::writeOperand(Value *Operand) {
-  if (isa<GlobalVariable>(Operand) || isDirectAlloca(Operand) || ByValParams.count(Operand))
+  if (isa<GlobalVariable>(Operand) || isDirectAlloca(Operand))
     Out << "(&";  // Global variables are referenced as their addresses by llvm
 
   writeOperandInternal(Operand);
 
-  if (isa<GlobalVariable>(Operand) || isDirectAlloca(Operand) || ByValParams.count(Operand))
+  if (isa<GlobalVariable>(Operand) || isDirectAlloca(Operand))
     Out << ')';
 }
 
@@ -2723,11 +2723,13 @@ void CWriter::visitCallInst(CallInst &I) {
     // Check if the argument is expected to be passed by value.
     bool isOutByVal = PAL && PAL->paramHasAttr(ArgNo+1, ParamAttr::ByVal);
     // Check if this argument itself is passed in by reference. 
-    //bool isInByVal = ByValParams.count(*AI);
-    if (isOutByVal)
+    bool isInByVal = ByValParams.count(*AI);
+    if (isOutByVal && !isInByVal)
       Out << "*(";
+    else if (!isOutByVal && isInByVal)
+      Out << "&(";
     writeOperand(*AI);
-    if (isOutByVal)
+    if (isOutByVal ^ isInByVal)
       Out << ")";
     PrintedArg = true;
   }
