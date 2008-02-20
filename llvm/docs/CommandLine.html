@@ -44,7 +44,7 @@
 
       <li><a href="#modifiers">Option Modifiers</a>
         <ul>
-        <li><a href="#hiding">Hiding an option from <tt>--help</tt> 
+        <li><a href="#hiding">Hiding an option from <tt>--help</tt>
             output</a></li>
         <li><a href="#numoccurrences">Controlling the number of occurrences
                                      required and allowed</a></li>
@@ -56,9 +56,9 @@
 
       <li><a href="#toplevel">Top-Level Classes and Functions</a>
         <ul>
-        <li><a href="#cl::ParseCommandLineOptions">The 
+        <li><a href="#cl::ParseCommandLineOptions">The
             <tt>cl::ParseCommandLineOptions</tt> function</a></li>
-        <li><a href="#cl::ParseEnvironmentOptions">The 
+        <li><a href="#cl::ParseEnvironmentOptions">The
             <tt>cl::ParseEnvironmentOptions</tt> function</a></li>
         <li><a href="#cl::SetVersionPrinter">The <tt>cl::SetVersionPrinter</tt>
           function</a></li>
@@ -89,7 +89,7 @@
     <ol>
       <li><a href="#customparser">Writing a custom parser</a></li>
       <li><a href="#explotingexternal">Exploiting external storage</a></li>
-      <li><a href="#dynamicopts">Dynamically adding command line 
+      <li><a href="#dynamicopts">Dynamically adding command line
           options</a></li>
     </ol></li>
 </ol>
@@ -513,7 +513,7 @@ enum OptLevel {
 <p>This declaration defines a variable "<tt>OptimizationLevel</tt>" of the
 "<tt>OptLevel</tt>" enum type.  This variable can be assigned any of the values
 that are listed in the declaration (Note that the declaration list must be
-terminated with the "<tt>clEnumValEnd</tt>" argument!).  The CommandLine 
+terminated with the "<tt>clEnumValEnd</tt>" argument!).  The CommandLine
 library enforces
 that the user can only specify one of the options, and it ensure that only valid
 enum values can be specified.  The "<tt>clEnumVal</tt>" macros ensure that the
@@ -902,10 +902,10 @@ can use it like this:</p>
   example, consider <tt>gcc</tt>'s <tt>-x LANG</tt> option. This tells
   <tt>gcc</tt> to ignore the suffix of subsequent positional arguments and force
   the file to be interpreted as if it contained source code in language
-  <tt>LANG</tt>. In order to handle this properly , you need to know the 
-  absolute position of each argument, especially those in lists, so their 
-  interaction(s) can be applied correctly. This is also useful for options like 
-  <tt>-llibname</tt> which is actually a positional argument that starts with 
+  <tt>LANG</tt>. In order to handle this properly , you need to know the
+  absolute position of each argument, especially those in lists, so their
+  interaction(s) can be applied correctly. This is also useful for options like
+  <tt>-llibname</tt> which is actually a positional argument that starts with
   a dash.</p>
   <p>So, generally, the problem is that you have two <tt>cl::list</tt> variables
   that interact in some way. To ensure the correct interaction, you can use the
@@ -913,7 +913,7 @@ can use it like this:</p>
   absolute position (as found on the command line) of the <tt>optnum</tt>
   item in the <tt>cl::list</tt>.</p>
   <p>The idiom for usage is like this:</p>
-  
+
   <div class="doc_code"><pre>
   static cl::list&lt;std::string&gt; Files(cl::Positional, cl::OneOrMore);
   static cl::list&lt;std::string&gt; Libraries("l", cl::ZeroOrMore);
@@ -948,7 +948,7 @@ can use it like this:</p>
 
   <p>Note that, for compatibility reasons, the <tt>cl::opt</tt> also supports an
   <tt>unsigned getPosition()</tt> option that will provide the absolute position
-  of that option. You can apply the same approach as above with a 
+  of that option. You can apply the same approach as above with a
   <tt>cl::opt</tt> and a <tt>cl::list</tt> option as you can with two lists.</p>
 </div>
 
@@ -1126,7 +1126,7 @@ an alias for.</li>
 
 <li><a name="cl::values">The <b><tt>cl::values</tt></b></a> attribute specifies
 the string-to-value mapping to be used by the generic parser.  It takes a
-<b>clEnumValEnd terminated</b> list of (option, value, description) triplets 
+<b>clEnumValEnd terminated</b> list of (option, value, description) triplets
 that
 specify the option name, the value mapped to, and the description shown in the
 <tt>--help</tt> for the tool.  Because the generic parser is used most
@@ -1428,9 +1428,17 @@ string "<tt>-pos1 -foo -bar baz -pos2 -bork</tt>" would cause the "<tt>-foo -bar
 -baz</tt>" strings to be applied to the "<tt>-pos1</tt>" option and the
 "<tt>-bork</tt>" string to be applied to the "<tt>-pos2</tt>" option.</li>
 
+<li><a name="cl::Sink">The <b><tt>cl::Sink</tt></b></a> modifier is
+used to handle unknown options. If there is at least one option with
+<b><tt>cl::Sink</tt></b></a> modifier specified, the parser passes
+unrecognized option strings to it as values instead of signaling an
+error. As with <b><tt>cl::CommaSeparated</tt></b></a>, this modifier
+only makes sense with a <a href="#cl::list">cl::list</a> option.</li>
+
+
 </ul>
 
-<p>So far, these are the only two miscellaneous option modifiers.</p>
+<p>So far, these are the only three miscellaneous option modifiers.</p>
 
 </div>
 
@@ -1653,7 +1661,7 @@ help text to be printed out for the <tt>--help</tt> option.</p>
 }
 </pre></div>
 
-<p>To use the extrahelp, simply construct one with a <tt>const char*</tt> 
+<p>To use the extrahelp, simply construct one with a <tt>const char*</tt>
 parameter to the constructor. The text passed to the constructor will be printed
 at the bottom of the help message, verbatim. Note that multiple
 <tt>cl::extrahelp</tt> <b>can</b> be used, but this practice is discouraged. If
@@ -1822,7 +1830,7 @@ our example, we implement <tt>parse</tt> as:</p>
                            <b>const</b> std::string &amp;Arg, <b>unsigned</b> &amp;Val) {
   <b>const char</b> *ArgStart = Arg.c_str();
   <b>char</b> *End;
- 
+
   <i>// Parse integer part, leaving 'End' pointing to the first non-integer char</i>
   Val = (unsigned)strtol(ArgStart, &amp;End, 0);
 
