@@ -1233,6 +1233,7 @@ ParamAttr     : ZEROEXT { $$ = ParamAttr::ZExt;      }
               | NOALIAS { $$ = ParamAttr::NoAlias;   }
               | BYVAL   { $$ = ParamAttr::ByVal;     }
               | NEST    { $$ = ParamAttr::Nest;      }
+              | ALIGN EUINT64VAL { $$ = $2 << 16;    }
               ;
 
 OptParamAttrs : /* empty */  { $$ = ParamAttr::None; }
