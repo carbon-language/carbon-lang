@@ -137,8 +137,8 @@ private:   // Intermediate data structures
   // register references as presumed dead across basic blocks.
   MachineInstr **PhysRegInfo;
 
-  // PhysRegUsed - Keep track whether the physical register has been used after
-  // its last definition. This is local property.
+  // PhysRegUsed - Keep track of whether the physical register has been used
+  // after its last definition. This is local property.
   bool          *PhysRegUsed;
 
   // PhysRegPartUse - Keep track of which instruction was the last partial use
@@ -160,7 +160,7 @@ private:   // Intermediate data structures
   /// HandlePhysRegKill - Add kills of Reg and its sub-registers to the
   /// uses. Pay special attention to the sub-register uses which may come below
   /// the last use of the whole register.
-  bool HandlePhysRegKill(unsigned Reg, MachineInstr *MI,
+  bool HandlePhysRegKill(unsigned Reg, const MachineInstr *MI,
                          SmallSet<unsigned, 4> &SubKills);
   bool HandlePhysRegKill(unsigned Reg, MachineInstr *MI);
   void HandlePhysRegUse(unsigned Reg, MachineInstr *MI);
