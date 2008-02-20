@@ -282,8 +282,7 @@ void AlphaRegisterInfo::emitEpilogue(MachineFunction &MF,
   long NumBytes = MFI->getStackSize();
 
   //now if we need to, restore the old FP
-  if (FP)
-  {
+  if (FP) {
     //copy the FP into the SP (discards allocas)
     BuildMI(MBB, MBBI, TII.get(Alpha::BISr), Alpha::R30).addReg(Alpha::R15)
       .addReg(Alpha::R15);
@@ -291,21 +290,20 @@ void AlphaRegisterInfo::emitEpilogue(MachineFunction &MF,
     BuildMI(MBB, MBBI, TII.get(Alpha::LDQ), Alpha::R15).addImm(0).addReg(Alpha::R15);
   }
 
-   if (NumBytes != 0)
-     {
-       if (NumBytes <= IMM_HIGH) {
-         BuildMI(MBB, MBBI, TII.get(Alpha::LDA), Alpha::R30).addImm(NumBytes)
-           .addReg(Alpha::R30);
-       } else if (getUpper16(NumBytes) <= IMM_HIGH) {
-         BuildMI(MBB, MBBI, TII.get(Alpha::LDAH), Alpha::R30)
-           .addImm(getUpper16(NumBytes)).addReg(Alpha::R30);
-         BuildMI(MBB, MBBI, TII.get(Alpha::LDA), Alpha::R30)
-           .addImm(getLower16(NumBytes)).addReg(Alpha::R30);
-       } else {
-         cerr << "Too big a stack frame at " << NumBytes << "\n";
-         abort();
-       }
-     }
+  if (NumBytes != 0) {
+    if (NumBytes <= IMM_HIGH) {
+      BuildMI(MBB, MBBI, TII.get(Alpha::LDA), Alpha::R30).addImm(NumBytes)
+        .addReg(Alpha::R30);
+    } else if (getUpper16(NumBytes) <= IMM_HIGH) {
+      BuildMI(MBB, MBBI, TII.get(Alpha::LDAH), Alpha::R30)
+        .addImm(getUpper16(NumBytes)).addReg(Alpha::R30);
+      BuildMI(MBB, MBBI, TII.get(Alpha::LDA), Alpha::R30)
+        .addImm(getLower16(NumBytes)).addReg(Alpha::R30);
+    } else {
+      cerr << "Too big a stack frame at " << NumBytes << "\n";
+      abort();
+    }
+  }
 }
 
 unsigned AlphaRegisterInfo::getRARegister() const {
