@@ -87,20 +87,20 @@ class APInt {
 
   /// @returns true if the number of bits <= 64, false otherwise.
   /// @brief Determine if this APInt just has one word to store value.
-  inline bool isSingleWord() const { 
+  bool isSingleWord() const { 
     return BitWidth <= APINT_BITS_PER_WORD; 
   }
 
   /// @returns the word position for the specified bit position.
   /// @brief Determine which word a bit is in.
-  static inline uint32_t whichWord(uint32_t bitPosition) { 
+  static uint32_t whichWord(uint32_t bitPosition) { 
     return bitPosition / APINT_BITS_PER_WORD; 
   }
 
   /// @returns the bit position in a word for the specified bit position 
   /// in the APInt.
   /// @brief Determine which bit in a word a bit is in.
-  static inline uint32_t whichBit(uint32_t bitPosition) { 
+  static uint32_t whichBit(uint32_t bitPosition) { 
     return bitPosition % APINT_BITS_PER_WORD; 
   }
 
@@ -109,7 +109,7 @@ class APInt {
   /// corresponding word.
   /// @returns a uint64_t with only bit at "whichBit(bitPosition)" set
   /// @brief Get a single bit mask.
-  static inline uint64_t maskBit(uint32_t bitPosition) { 
+  static uint64_t maskBit(uint32_t bitPosition) { 
     return 1ULL << whichBit(bitPosition); 
   }
 
@@ -118,7 +118,7 @@ class APInt {
   /// significant word is assigned a value to ensure that those bits are 
   /// zero'd out.
   /// @brief Clear unused high order bits
-  inline APInt& clearUnusedBits() {
+  APInt& clearUnusedBits() {
     // Compute how many bits are used in the final word
     uint32_t wordBits = BitWidth % APINT_BITS_PER_WORD;
     if (wordBits == 0)
@@ -138,7 +138,7 @@ class APInt {
 
   /// @returns the corresponding word for the specified bit position.
   /// @brief Get the word corresponding to a bit position
-  inline uint64_t getWord(uint32_t bitPosition) const { 
+  uint64_t getWord(uint32_t bitPosition) const { 
     return isSingleWord() ? VAL : pVal[whichWord(bitPosition)]; 
   }
 
@@ -241,13 +241,13 @@ public:
   /// that 0 is not a positive value.
   /// @returns true if this APInt is positive.
   /// @brief Determine if this APInt Value is positive.
-  inline bool isStrictlyPositive() const {
+  bool isStrictlyPositive() const {
     return isNonNegative() && (*this) != 0;
   }
 
   /// This checks to see if the value has all bits of the APInt are set or not.
   /// @brief Determine if all bits are set
-  inline bool isAllOnesValue() const {
+  bool isAllOnesValue() const {
     return countPopulation() == BitWidth;
   }
 
@@ -282,7 +282,7 @@ public:
   }
 
   /// @brief Check if this APInt has an N-bits unsigned integer value.
-  inline bool isIntN(uint32_t N) const {
+  bool isIntN(uint32_t N) const {
     assert(N && "N == 0 ???");
     if (isSingleWord()) {
       return VAL == (VAL & (~0ULL >> (64 - N)));
@@ -293,7 +293,7 @@ public:
   }
 
   /// @brief Check if this APInt has an N-bits signed integer value.
-  inline bool isSignedIntN(uint32_t N) const {
+  bool isSignedIntN(uint32_t N) const {
     assert(N && "N == 0 ???");
     return getMinSignedBits() <= N;
   }
@@ -306,7 +306,7 @@ public:
   
   /// This converts the APInt to a boolean value as a test against zero.
   /// @brief Boolean conversion function. 
-  inline bool getBoolValue() const {
+  bool getBoolValue() const {
     return *this != 0;
   }
 
@@ -344,7 +344,7 @@ public:
   /// getSignBit - This is just a wrapper function of getSignedMinValue(), and
   /// it helps code readability when we want to get a SignBit.
   /// @brief Get the SignBit for a specific bit width.
-  inline static APInt getSignBit(uint32_t BitWidth) {
+  static APInt getSignBit(uint32_t BitWidth) {
     return getSignedMinValue(BitWidth);
   }
 
@@ -430,7 +430,7 @@ public:
   /// This function returns a pointer to the internal storage of the APInt. 
   /// This is useful for writing out the APInt in binary form without any
   /// conversions.
-  inline const uint64_t* getRawData() const {
+  const uint64_t* getRawData() const {
     if (isSingleWord())
       return &VAL;
     return &pVal[0];
@@ -441,7 +441,7 @@ public:
   /// @{
   /// @returns a new APInt value representing *this incremented by one
   /// @brief Postfix increment operator.
-  inline const APInt operator++(int) {
+  const APInt operator++(int) {
     APInt API(*this);
     ++(*this);
     return API;
@@ -453,7 +453,7 @@ public:
 
   /// @returns a new APInt representing *this decremented by one.
   /// @brief Postfix decrement operator. 
-  inline const APInt operator--(int) {
+  const APInt operator--(int) {
     APInt API(*this);
     --(*this);
     return API;
@@ -471,7 +471,7 @@ public:
   /// Negates *this using two's complement logic.
   /// @returns An APInt value representing the negation of *this.
   /// @brief Unary negation operator
-  inline APInt operator-() const {
+  APInt operator-() const {
     return APInt(BitWidth, 0) - (*this);
   }
 
@@ -530,7 +530,7 @@ public:
   /// Shifts *this left by shiftAmt and assigns the result to *this.
   /// @returns *this after shifting left by shiftAmt
   /// @brief Left-shift assignment function.
-  inline APInt& operator<<=(uint32_t shiftAmt) {
+  APInt& operator<<=(uint32_t shiftAmt) {
     *this = shl(shiftAmt);
     return *this;
   }
@@ -610,7 +610,7 @@ public:
 
   /// Signed divide this APInt by APInt RHS.
   /// @brief Signed division function for APInt.
-  inline APInt sdiv(const APInt& RHS) const {
+  APInt sdiv(const APInt& RHS) const {
     if (isNegative())
       if (RHS.isNegative())
         return (-(*this)).udiv(-RHS);
@@ -632,7 +632,7 @@ public:
 
   /// Signed remainder operation on APInt.
   /// @brief Function for signed remainder operation.
-  inline APInt srem(const APInt& RHS) const {
+  APInt srem(const APInt& RHS) const {
     if (isNegative())
       if (RHS.isNegative())
         return -((-(*this)).urem(-RHS));
@@ -698,7 +698,7 @@ public:
   /// relationship.
   /// @returns true if *this != Val
   /// @brief Inequality operator. 
-  inline bool operator!=(const APInt& RHS) const {
+  bool operator!=(const APInt& RHS) const {
     return !((*this) == RHS);
   }
 
@@ -706,7 +706,7 @@ public:
   /// relationship.
   /// @returns true if *this != Val
   /// @brief Inequality operator. 
-  inline bool operator!=(uint64_t Val) const {
+  bool operator!=(uint64_t Val) const {
     return !((*this) == Val);
   }
   
@@ -845,14 +845,14 @@ public:
   /// @{
 
   /// @returns the total number of bits.
-  inline uint32_t getBitWidth() const { 
+  uint32_t getBitWidth() const { 
     return BitWidth; 
   }
 
   /// Here one word's bitwidth equals to that of uint64_t.
   /// @returns the number of words to hold the integer value of this APInt.
   /// @brief Get the number of words.
-  inline uint32_t getNumWords() const {
+  uint32_t getNumWords() const {
     return (BitWidth + APINT_BITS_PER_WORD - 1) / APINT_BITS_PER_WORD;
   }
 
@@ -860,14 +860,14 @@ public:
   /// bit width minus the number of leading zeros. This is used in several
   /// computations to see how "wide" the value is.
   /// @brief Compute the number of active bits in the value
-  inline uint32_t getActiveBits() const {
+  uint32_t getActiveBits() const {
     return BitWidth - countLeadingZeros();
   }
 
   /// This function returns the number of active words in the value of this
   /// APInt. This is used in conjunction with getActiveData to extract the raw
   /// value of the APInt.
-  inline uint32_t getActiveWords() const {
+  uint32_t getActiveWords() const {
     return whichWord(getActiveBits()-1) + 1;
   }
 
@@ -878,7 +878,7 @@ public:
   /// example, -1 can be written as 0b1 or 0xFFFFFFFFFF. 0b1 is shorter and so
   /// for -1, this function will always return 1.
   /// @brief Get the minimum bit size for this signed APInt 
-  inline uint32_t getMinSignedBits() const {
+  uint32_t getMinSignedBits() const {
     if (isNegative())
       return BitWidth - countLeadingOnes() + 1;
     return getActiveBits()+1;
@@ -888,7 +888,7 @@ public:
   /// uint64_t. The bitwidth must be <= 64 or the value must fit within a
   /// uint64_t. Otherwise an assertion will result.
   /// @brief Get zero extended value
-  inline uint64_t getZExtValue() const {
+  uint64_t getZExtValue() const {
     if (isSingleWord())
       return VAL;
     assert(getActiveBits() <= 64 && "Too many bits for uint64_t");
@@ -899,7 +899,7 @@ public:
   /// int64_t. The bit width must be <= 64 or the value must fit within an
   /// int64_t. Otherwise an assertion will result.
   /// @brief Get sign extended value
-  inline int64_t getSExtValue() const {
+  int64_t getSExtValue() const {
     if (isSingleWord())
       return int64_t(VAL << (APINT_BITS_PER_WORD - BitWidth)) >> 
                      (APINT_BITS_PER_WORD - BitWidth);
@@ -966,7 +966,7 @@ public:
   /// radix given. The radix can be 2, 8, 10 or 16.
   /// @returns a character interpretation of the APInt
   /// @brief Convert unsigned APInt to string representation.
-  inline std::string toStringUnsigned(uint8_t radix = 10) const {
+  std::string toStringUnsigned(uint8_t radix = 10) const {
     return toString(radix, false);
   }
 
@@ -974,7 +974,7 @@ public:
   /// radix given. The radix can be 2, 8, 10 or 16.
   /// @returns a character interpretation of the APInt
   /// @brief Convert unsigned APInt to string representation.
-  inline std::string toStringSigned(uint8_t radix = 10) const {
+  std::string toStringSigned(uint8_t radix = 10) const {
     return toString(radix, true);
   }
 
@@ -1059,13 +1059,13 @@ public:
   /// @{
 
   /// @returns the floor log base 2 of this APInt.
-  inline uint32_t logBase2() const {
+  uint32_t logBase2() const {
     return BitWidth - 1 - countLeadingZeros();
   }
 
   /// @returns the log base 2 of this APInt if its an exact power of two, -1
   /// otherwise
-  inline int32_t exactLogBase2() const {
+  int32_t exactLogBase2() const {
     if (!isPowerOf2())
       return -1;
     return logBase2();
