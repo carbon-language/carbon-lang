@@ -266,6 +266,14 @@ namespace sys {
       /// @brief Get the base name of the path
       std::string getBasename() const;
 
+      /// This function strips off the path and basename(up to and
+      /// including the last dot) of the file or directory name and
+      /// returns just the suffix. For example /a/foo.bar would cause
+      /// this function to return "bar".
+      /// @returns std::string containing the suffix of the path
+      /// @brief Get the suffix of the path
+      std::string getSuffix() const;
+
       /// Obtain a 'C' string for the path name.
       /// @returns a 'C' string containing the path name.
       /// @brief Returns the path as a C string.

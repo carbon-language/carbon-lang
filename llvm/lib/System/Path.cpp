@@ -172,7 +172,10 @@ bool Path::hasMagicNumber(const std::string &Magic) const {
   return false;
 }
 
-
+std::string
+Path::getSuffix() const {
+  return path.substr(path.rfind('.') + 1);
+}
 
 // Include the truly platform-specific parts of this class.
 #if defined(LLVM_ON_UNIX)
