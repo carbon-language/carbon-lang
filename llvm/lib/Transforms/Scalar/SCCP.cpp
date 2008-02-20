@@ -1608,8 +1608,8 @@ bool IPSCCP::runOnModule(Module &M) {
           Instruction *Inst = BI++;
           if (Inst->getType() != Type::VoidTy) {
             LatticeVal &IV = Values[Inst];
-            if (IV.isConstant() || IV.isUndefined() &&
-                !isa<TerminatorInst>(Inst)) {
+            if (IV.isConstant() ||
+                (IV.isUndefined() && !isa<TerminatorInst>(Inst))) {
               Constant *Const = IV.isConstant()
                 ? IV.getConstant() : UndefValue::get(Inst->getType());
               DOUT << "  Constant: " << *Const << " = " << *Inst;

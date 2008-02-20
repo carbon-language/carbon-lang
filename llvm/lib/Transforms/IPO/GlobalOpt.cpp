@@ -178,7 +178,7 @@ static bool AnalyzeGlobal(Value *V, GlobalStatus &GS,
         // If this is a direct store to the global (i.e., the global is a scalar
         // value, not an aggregate), keep more specific information about
         // stores.
-        if (GS.StoredType != GlobalStatus::isStored)
+        if (GS.StoredType != GlobalStatus::isStored) {
           if (GlobalVariable *GV = dyn_cast<GlobalVariable>(SI->getOperand(1))){
             Value *StoredVal = SI->getOperand(0);
             if (StoredVal == GV->getInitializer()) {
@@ -201,6 +201,7 @@ static bool AnalyzeGlobal(Value *V, GlobalStatus &GS,
           } else {
             GS.StoredType = GlobalStatus::isStored;
           }
+        }
       } else if (isa<GetElementPtrInst>(I)) {
         if (AnalyzeGlobal(I, GS, PHIUsers)) return true;
       } else if (isa<SelectInst>(I)) {
@@ -531,7 +532,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV) {
     Value *NewPtr = NewGlobals[Val];
 
     // Form a shorter GEP if needed.
-    if (GEP->getNumOperands() > 3)
+    if (GEP->getNumOperands() > 3) {
       if (ConstantExpr *CE = dyn_cast<ConstantExpr>(GEP)) {
         SmallVector<Constant*, 8> Idxs;
         Idxs.push_back(NullInt);
@@ -548,6 +549,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV) {
         NewPtr = new GetElementPtrInst(NewPtr, Idxs.begin(), Idxs.end(),
                                        GEPI->getName()+"."+utostr(Val), GEPI);
       }
+    }
     GEP->replaceAllUsesWith(NewPtr);
 
     if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(GEP))

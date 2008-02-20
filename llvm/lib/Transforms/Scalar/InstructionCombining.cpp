@@ -2303,7 +2303,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
     // -(X >>u 31) -> (X >>s 31)
     // -(X >>s 31) -> (X >>u 31)
     if (C->isZero()) {
-      if (BinaryOperator *SI = dyn_cast<BinaryOperator>(Op1))
+      if (BinaryOperator *SI = dyn_cast<BinaryOperator>(Op1)) {
         if (SI->getOpcode() == Instruction::LShr) {
           if (ConstantInt *CU = dyn_cast<ConstantInt>(SI->getOperand(1))) {
             // Check to see if we are shifting out everything but the sign bit.
@@ -2325,7 +2325,8 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
                                           SI->getOperand(0), CU, SI->getName());
             }
           }
-        } 
+        }
+      }
     }
 
     // Try to fold constant sub into select arguments.
@@ -2408,7 +2409,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
   }
 
   if (!Op0->getType()->isFPOrFPVector())
-    if (BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0))
+    if (BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0)) {
       if (Op0I->getOpcode() == Instruction::Add) {
         if (Op0I->getOperand(0) == Op1)             // (Y+X)-Y == X
           return ReplaceInstUsesWith(I, Op0I->getOperand(1));
@@ -2418,6 +2419,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
         if (Op0I->getOperand(0) == Op1)             // (X-Y)-X == -Y
           return BinaryOperator::createNeg(Op0I->getOperand(1), I.getName());
       }
+    }
 
   ConstantInt *C1;
   if (Value *X = dyn_castFoldableMul(Op0, C1)) {
@@ -3116,8 +3118,8 @@ struct FoldICmpLogical {
   bool shouldApply(Value *V) const {
     if (ICmpInst *ICI = dyn_cast<ICmpInst>(V))
       if (PredicatesFoldable(pred, ICI->getPredicate()))
-        return (ICI->getOperand(0) == LHS && ICI->getOperand(1) == RHS ||
-                ICI->getOperand(0) == RHS && ICI->getOperand(1) == LHS);
+        return ((ICI->getOperand(0) == LHS && ICI->getOperand(1) == RHS) ||
+                (ICI->getOperand(0) == RHS && ICI->getOperand(1) == LHS));
     return false;
   }
   Instruction *apply(Instruction &Log) const {
@@ -3499,7 +3501,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
       if (Instruction *CastOp = dyn_cast<Instruction>(CI->getOperand(0))) {
         if ((isa<TruncInst>(CI) || isa<BitCastInst>(CI)) &&
             CastOp->getNumOperands() == 2)
-          if (ConstantInt *AndCI = dyn_cast<ConstantInt>(CastOp->getOperand(1)))
+          if (ConstantInt *AndCI = dyn_cast<ConstantInt>(CastOp->getOperand(1))) {
             if (CastOp->getOpcode() == Instruction::And) {
               // Change: and (cast (and X, C1) to T), C2
               // into  : and (cast X to T), trunc_or_bitcast(C1)&C2
@@ -3520,6 +3522,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
               if (ConstantExpr::getAnd(C3, AndRHS) == AndRHS)   // trunc(C1)&C2
                 return ReplaceInstUsesWith(I, AndRHS);
             }
+          }
       }
     }
 
@@ -4384,7 +4387,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
           return BinaryOperator::createAdd(Op0I->getOperand(1), ConstantRHS);
         }
           
-      if (ConstantInt *Op0CI = dyn_cast<ConstantInt>(Op0I->getOperand(1)))
+      if (ConstantInt *Op0CI = dyn_cast<ConstantInt>(Op0I->getOperand(1))) {
         if (Op0I->getOpcode() == Instruction::Add) {
           // ~(X-c) --> (-c-1)-X
           if (RHS->isAllOnesValue()) {
@@ -4414,6 +4417,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
             return &I;
           }
         }
+      }
     }
 
     // Try to fold constant and into select arguments.
@@ -5184,13 +5188,14 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         Op1 = CI2->getOperand(0);
 
       // If Op1 is a constant, we can fold the cast into the constant.
-      if (Op0->getType() != Op1->getType())
+      if (Op0->getType() != Op1->getType()) {
         if (Constant *Op1C = dyn_cast<Constant>(Op1)) {
           Op1 = ConstantExpr::getBitCast(Op1C, Op0->getType());
         } else {
           // Otherwise, cast the RHS right before the icmp
           Op1 = InsertBitCastBefore(Op1, Op0->getType(), I);
         }
+      }
       return new ICmpInst(I.getPredicate(), Op0, Op1);
     }
   }
@@ -5437,8 +5442,8 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
     if (ConstantInt *XorCST = dyn_cast<ConstantInt>(LHSI->getOperand(1))) {
       // If this is a comparison that tests the signbit (X < 0) or (x > -1),
       // fold the xor.
-      if (ICI.getPredicate() == ICmpInst::ICMP_SLT && RHSV == 0 ||
-          ICI.getPredicate() == ICmpInst::ICMP_SGT && RHSV.isAllOnesValue()) {
+      if ((ICI.getPredicate() == ICmpInst::ICMP_SLT && RHSV == 0) ||
+          (ICI.getPredicate() == ICmpInst::ICMP_SGT && RHSV.isAllOnesValue())) {
         Value *CompareVal = LHSI->getOperand(0);
         
         // If the sign bit of the XorCST is not set, there is no change to
@@ -8492,7 +8497,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     Args.push_back(Constant::getNullValue(FT->getParamType(i)));
 
   // If we are removing arguments to the function, emit an obnoxious warning...
-  if (FT->getNumParams() < NumActualArgs)
+  if (FT->getNumParams() < NumActualArgs) {
     if (!FT->isVarArg()) {
       cerr << "WARNING: While resolving call to function '"
            << Callee->getName() << "' arguments were dropped!\n";
@@ -8519,6 +8524,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
           attrVec.push_back(ParamAttrsWithIndex::get(i + 1, PAttrs));
       }
     }
+  }
 
   if (FT->getReturnType() == Type::VoidTy)
     Caller->setName("");   // Void type should not have a name.
@@ -9131,7 +9137,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       // insert it.  This explicit cast can make subsequent optimizations more
       // obvious.
       Value *Op = GEP.getOperand(i);
-      if (TD->getTypeSizeInBits(Op->getType()) > TD->getPointerSizeInBits())
+      if (TD->getTypeSizeInBits(Op->getType()) > TD->getPointerSizeInBits()) {
         if (Constant *C = dyn_cast<Constant>(Op)) {
           GEP.setOperand(i, ConstantExpr::getTrunc(C, TD->getIntPtrType()));
           MadeChange = true;
@@ -9141,6 +9147,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
           GEP.setOperand(i, Op);
           MadeChange = true;
         }
+      }
     }
   }
   if (MadeChange) return &GEP;
@@ -9383,7 +9390,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
 
 Instruction *InstCombiner::visitAllocationInst(AllocationInst &AI) {
   // Convert: malloc Ty, C - where C is a constant != 1 into: malloc [C x Ty], 1
-  if (AI.isArrayAllocation())    // Check C != 1
+  if (AI.isArrayAllocation()) {  // Check C != 1
     if (const ConstantInt *C = dyn_cast<ConstantInt>(AI.getArraySize())) {
       const Type *NewTy = 
         ArrayType::get(AI.getAllocatedType(), C->getZExtValue());
@@ -9421,6 +9428,7 @@ Instruction *InstCombiner::visitAllocationInst(AllocationInst &AI) {
     } else if (isa<UndefValue>(AI.getArraySize())) {
       return ReplaceInstUsesWith(AI, Constant::getNullValue(AI.getType()));
     }
+  }
 
   // If alloca'ing a zero byte object, replace the alloca with a null pointer.
   // Note that we only do this for alloca's, because malloc should allocate and
@@ -9669,7 +9677,7 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
         return ReplaceInstUsesWith(LI, GV->getInitializer());
 
     // Instcombine load (constantexpr_GEP global, 0, ...) into the value loaded.
-    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Op))
+    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Op)) {
       if (CE->getOpcode() == Instruction::GetElementPtr) {
         if (GlobalVariable *GV = dyn_cast<GlobalVariable>(CE->getOperand(0)))
           if (GV->isConstant() && !GV->isDeclaration())
@@ -9690,6 +9698,7 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
         if (Instruction *Res = InstCombineLoadCast(*this, LI, TD))
           return Res;
       }
+    }
   }
     
   // If this load comes from anywhere in a constant global, and if the global

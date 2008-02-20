@@ -680,7 +680,7 @@ ExtractCodeRegion(const std::vector<BasicBlock*> &code) {
       PHINode *PN = cast<PHINode>(I);
       std::set<BasicBlock*> ProcessedPreds;
       for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
-        if (BlocksToExtract.count(PN->getIncomingBlock(i)))
+        if (BlocksToExtract.count(PN->getIncomingBlock(i))) {
           if (ProcessedPreds.insert(PN->getIncomingBlock(i)).second)
             PN->setIncomingBlock(i, codeReplacer);
           else {
@@ -689,6 +689,7 @@ ExtractCodeRegion(const std::vector<BasicBlock*> &code) {
             PN->removeIncomingValue(i, false);
             --i; --e;
           }
+        }
     }
 
   //cerr << "NEW FUNCTION: " << *newFunction;

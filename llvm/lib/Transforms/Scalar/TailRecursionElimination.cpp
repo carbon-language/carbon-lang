@@ -279,8 +279,8 @@ Value *TailCallElim::CanTransformAccumulatorRecursion(Instruction *I,
          "Associative operations should have 2 args!");
 
   // Exactly one operand should be the result of the call instruction...
-  if (I->getOperand(0) == CI && I->getOperand(1) == CI ||
-      I->getOperand(0) != CI && I->getOperand(1) != CI)
+  if ((I->getOperand(0) == CI && I->getOperand(1) == CI) ||
+      (I->getOperand(0) != CI && I->getOperand(1) != CI))
     return 0;
 
   // The only user of this instruction we allow is a single return instruction.

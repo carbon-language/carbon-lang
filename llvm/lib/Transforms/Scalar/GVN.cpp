@@ -174,17 +174,17 @@ template <> struct DenseMapInfo<Expression> {
     hash = e.secondVN + hash * 37;
     hash = e.thirdVN + hash * 37;
     
-    hash = (unsigned)((uintptr_t)e.type >> 4) ^
-            (unsigned)((uintptr_t)e.type >> 9) +
-            hash * 37;
+    hash = ((unsigned)((uintptr_t)e.type >> 4) ^
+            (unsigned)((uintptr_t)e.type >> 9)) +
+           hash * 37;
     
     for (SmallVector<uint32_t, 4>::const_iterator I = e.varargs.begin(),
          E = e.varargs.end(); I != E; ++I)
       hash = *I + hash * 37;
     
-    hash = (unsigned)((uintptr_t)e.function >> 4) ^
-            (unsigned)((uintptr_t)e.function >> 9) +
-            hash * 37;
+    hash = ((unsigned)((uintptr_t)e.function >> 4) ^
+            (unsigned)((uintptr_t)e.function >> 9)) +
+           hash * 37;
     
     return hash;
   }

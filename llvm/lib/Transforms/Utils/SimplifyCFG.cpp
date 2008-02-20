@@ -391,7 +391,7 @@ static bool DominatesMergePoint(Value *V, BasicBlock *BB,
 // icmp_eq instructions that compare a value against a constant, return the 
 // value being compared, and stick the constant into the Values vector.
 static Value *GatherConstantSetEQs(Value *V, std::vector<ConstantInt*> &Values){
-  if (Instruction *Inst = dyn_cast<Instruction>(V))
+  if (Instruction *Inst = dyn_cast<Instruction>(V)) {
     if (Inst->getOpcode() == Instruction::ICmp &&
         cast<ICmpInst>(Inst)->getPredicate() == ICmpInst::ICMP_EQ) {
       if (ConstantInt *C = dyn_cast<ConstantInt>(Inst->getOperand(1))) {
@@ -407,6 +407,7 @@ static Value *GatherConstantSetEQs(Value *V, std::vector<ConstantInt*> &Values){
           if (LHS == RHS)
             return LHS;
     }
+  }
   return 0;
 }
 
@@ -414,7 +415,7 @@ static Value *GatherConstantSetEQs(Value *V, std::vector<ConstantInt*> &Values){
 // setne instructions that compare a value against a constant, return the value
 // being compared, and stick the constant into the Values vector.
 static Value *GatherConstantSetNEs(Value *V, std::vector<ConstantInt*> &Values){
-  if (Instruction *Inst = dyn_cast<Instruction>(V))
+  if (Instruction *Inst = dyn_cast<Instruction>(V)) {
     if (Inst->getOpcode() == Instruction::ICmp &&
                cast<ICmpInst>(Inst)->getPredicate() == ICmpInst::ICMP_NE) {
       if (ConstantInt *C = dyn_cast<ConstantInt>(Inst->getOperand(1))) {
@@ -430,6 +431,7 @@ static Value *GatherConstantSetNEs(Value *V, std::vector<ConstantInt*> &Values){
           if (LHS == RHS)
             return LHS;
     }
+  }
   return 0;
 }
 
@@ -658,11 +660,12 @@ static bool SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
     ConstantInt *TIV = 0;
     BasicBlock *TIBB = TI->getParent();
     for (unsigned i = 0, e = PredCases.size(); i != e; ++i)
-      if (PredCases[i].second == TIBB)
+      if (PredCases[i].second == TIBB) {
         if (TIV == 0)
           TIV = PredCases[i].first;
         else
           return false;  // Cannot handle multiple values coming to this block.
+      }
     assert(TIV && "No edge from pred to succ?");
 
     // Okay, we found the one constant that our value can be if we get into TI's
@@ -1190,8 +1193,8 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
          "Can't Simplify entry block!");
 
   // Remove basic blocks that have no predecessors... which are unreachable.
-  if (pred_begin(BB) == pred_end(BB) ||
-      *pred_begin(BB) == BB && ++pred_begin(BB) == pred_end(BB)) {
+  if ((pred_begin(BB) == pred_end(BB)) ||
+      (*pred_begin(BB) == BB && ++pred_begin(BB) == pred_end(BB))) {
     DOUT << "Removing BB: \n" << *BB;
 
     // Loop through all of our successors and make sure they know that one
@@ -1235,11 +1238,12 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
       SmallVector<BranchInst*, 8> CondBranchPreds;
       for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
         TerminatorInst *PTI = (*PI)->getTerminator();
-        if (BranchInst *BI = dyn_cast<BranchInst>(PTI))
+        if (BranchInst *BI = dyn_cast<BranchInst>(PTI)) {
           if (BI->isUnconditional())
             UncondBranchPreds.push_back(*PI);
           else
             CondBranchPreds.push_back(BI);
+        }
       }
 
       // If we found some, do the transformation!

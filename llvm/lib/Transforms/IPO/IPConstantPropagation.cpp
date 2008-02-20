@@ -144,7 +144,7 @@ bool IPCP::PropagateConstantReturn(Function &F) {
   // Check to see if this function returns a constant.
   Value *RetVal = 0;
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
-    if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator()))
+    if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator())) {
       if (isa<UndefValue>(RI->getOperand(0))) {
         // Ignore.
       } else if (Constant *C = dyn_cast<Constant>(RI->getOperand(0))) {
@@ -155,6 +155,7 @@ bool IPCP::PropagateConstantReturn(Function &F) {
       } else {
         return false;  // Does not return a constant.
       }
+    }
 
   if (RetVal == 0) RetVal = UndefValue::get(F.getReturnType());
 

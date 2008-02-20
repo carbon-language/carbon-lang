@@ -171,9 +171,9 @@ template <> struct DenseMapInfo<Expression> {
     hash = e.secondVN + hash * 37;
     hash = e.thirdVN + hash * 37;
     
-    hash = (unsigned)((uintptr_t)e.type >> 4) ^
-            (unsigned)((uintptr_t)e.type >> 9) +
-            hash * 37;
+    hash = ((unsigned)((uintptr_t)e.type >> 4) ^
+            (unsigned)((uintptr_t)e.type >> 9)) +
+           hash * 37;
     
     for (SmallVector<uint32_t, 4>::const_iterator I = e.varargs.begin(),
          E = e.varargs.end(); I != E; ++I)
@@ -1599,7 +1599,7 @@ void GVNPRE::insertion_pre(Value* e, BasicBlock* BB,
           isa<ShuffleVectorInst>(U) ||
           isa<ExtractElementInst>(U) ||
           isa<InsertElementInst>(U) ||
-          isa<SelectInst>(U))
+          isa<SelectInst>(U)) {
         if (isa<BinaryOperator>(U->getOperand(1)) || 
             isa<CmpInst>(U->getOperand(1)) ||
             isa<ShuffleVectorInst>(U->getOperand(1)) ||
@@ -1612,12 +1612,13 @@ void GVNPRE::insertion_pre(Value* e, BasicBlock* BB,
         } else {
           s2 = U->getOperand(1);
         }
+      }
       
       // Ternary Operators
       Value* s3 = 0;
       if (isa<ShuffleVectorInst>(U) ||
           isa<InsertElementInst>(U) ||
-          isa<SelectInst>(U))
+          isa<SelectInst>(U)) {
         if (isa<BinaryOperator>(U->getOperand(2)) || 
             isa<CmpInst>(U->getOperand(2)) ||
             isa<ShuffleVectorInst>(U->getOperand(2)) ||
@@ -1630,6 +1631,7 @@ void GVNPRE::insertion_pre(Value* e, BasicBlock* BB,
         } else {
           s3 = U->getOperand(2);
         }
+      }
       
       // Vararg operators
       SmallVector<Value*, 4> sVarargs;
