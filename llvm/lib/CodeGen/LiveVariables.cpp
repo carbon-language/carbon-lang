@@ -161,7 +161,6 @@ void LiveVariables::MarkVirtRegAliveInBlock(VarInfo &VRInfo,
   }
 }
 
-
 void LiveVariables::HandleVirtRegUse(unsigned reg, MachineBasicBlock *MBB,
                                      MachineInstr *MI) {
   const MachineRegisterInfo &MRI = MBB->getParent()->getRegInfo();
@@ -201,29 +200,42 @@ void LiveVariables::HandleVirtRegUse(unsigned reg, MachineBasicBlock *MBB,
     MarkVirtRegAliveInBlock(VRInfo, MRI.getVRegDef(reg)->getParent(), *PI);
 }
 
+/// HandlePhysRegUse - Turn previous partial def's into read/mod/writes. Add
+/// implicit defs to a machine instruction if there was an earlier def of its
+/// super-register.
 void LiveVariables::HandlePhysRegUse(unsigned Reg, MachineInstr *MI) {
   // Turn previous partial def's into read/mod/write.
   for (unsigned i = 0, e = PhysRegPartDef[Reg].size(); i != e; ++i) {
     MachineInstr *Def = PhysRegPartDef[Reg][i];
+
     // First one is just a def. This means the use is reading some undef bits.
     if (i != 0)
-      Def->addOperand(MachineOperand::CreateReg(Reg, false/*IsDef*/,
-                                                true/*IsImp*/,true/*IsKill*/));
-    Def->addOperand(MachineOperand::CreateReg(Reg,true/*IsDef*/,true/*IsImp*/));
+      Def->addOperand(MachineOperand::CreateReg(Reg,
+                                                false /*IsDef*/,
+                                                true  /*IsImp*/,
+                                                true  /*IsKill*/));
+
+    Def->addOperand(MachineOperand::CreateReg(Reg,
+                                              true  /*IsDef*/,
+                                              true  /*IsImp*/));
   }
 
   PhysRegPartDef[Reg].clear();
 
   // There was an earlier def of a super-register. Add implicit def to that MI.
-  // A: EAX = ...
-  // B:     = AX
+  //
+  //   A: EAX = ...
+  //   B: ... = AX
+  //
   // Add implicit def to A.
   if (PhysRegInfo[Reg] && PhysRegInfo[Reg] != PhysRegPartUse[Reg] &&
       !PhysRegUsed[Reg]) {
     MachineInstr *Def = PhysRegInfo[Reg];
+
     if (!Def->findRegisterDefOperand(Reg))
-      Def->addOperand(MachineOperand::CreateReg(Reg, true/*IsDef*/,
-                                                true/*IsImp*/));
+      Def->addOperand(MachineOperand::CreateReg(Reg,
+                                                true  /*IsDef*/,
+                                                true  /*IsImp*/));
   }
 
   // There is a now a proper use, forget about the last partial use.
@@ -231,25 +243,30 @@ void LiveVariables::HandlePhysRegUse(unsigned Reg, MachineInstr *MI) {
   PhysRegInfo[Reg] = MI;
   PhysRegUsed[Reg] = true;
 
+  // Now reset the use information for the sub-registers.
   for (const unsigned *SubRegs = RegInfo->getSubRegisters(Reg);
        unsigned SubReg = *SubRegs; ++SubRegs) {
+    // FIXME: Should we do: "PhysRegPartUse[SubReg] = NULL;" here?
     PhysRegInfo[SubReg] = MI;
     PhysRegUsed[SubReg] = true;
   }
 
   for (const unsigned *SuperRegs = RegInfo->getSuperRegisters(Reg);
        unsigned SuperReg = *SuperRegs; ++SuperRegs) {
-    // Remember the partial use of this superreg if it was previously defined.
+    // Remember the partial use of this super-register if it was previously
+    // defined.
     bool HasPrevDef = PhysRegInfo[SuperReg] != NULL;
-    if (!HasPrevDef) {
+
+    if (!HasPrevDef)
+      // FIXME: This only goes back one level of super-registers. It might miss
+      // some.
       for (const unsigned *SSRegs = RegInfo->getSuperRegisters(SuperReg);
-           unsigned SSReg = *SSRegs; ++SSRegs) {
+           unsigned SSReg = *SSRegs; ++SSRegs)
         if (PhysRegInfo[SSReg] != NULL) {
           HasPrevDef = true;
           break;
         }
-      }
-    }
+
     if (HasPrevDef) {
       PhysRegInfo[SuperReg] = MI;
       PhysRegPartUse[SuperReg] = MI;
@@ -413,7 +430,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
   std::fill(PhysRegUsed, PhysRegUsed + NumRegs, false);
   std::fill(PhysRegPartUse, PhysRegPartUse + NumRegs, (MachineInstr*)0);
 
-  /// Get some space for a respectable number of registers...
+  /// Get some space for a respectable number of registers.
   VirtRegInfo.resize(64);
 
   analyzePHINodes(mf);
@@ -422,9 +439,9 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
   // function.  This guarantees that we will see the definition of a virtual
   // register before its uses due to dominance properties of SSA (except for PHI
   // nodes, which are treated as a special case).
-  //
   MachineBasicBlock *Entry = MF->begin();
   SmallPtrSet<MachineBasicBlock*,16> Visited;
+
   for (df_ext_iterator<MachineBasicBlock*, SmallPtrSet<MachineBasicBlock*,16> >
          DFI = df_ext_begin(Entry, Visited), E = df_ext_end(Entry, Visited);
        DFI != E; ++DFI) {
@@ -451,7 +468,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
       if (MI->getOpcode() == TargetInstrInfo::PHI)
         NumOperandsToProcess = 1;
 
-      // Process all uses...
+      // Process all uses.
       for (unsigned i = 0; i != NumOperandsToProcess; ++i) {
         const MachineOperand &MO = MI->getOperand(i);
 
@@ -466,7 +483,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
         }
       }
 
-      // Process all defs...
+      // Process all defs.
       for (unsigned i = 0; i != NumOperandsToProcess; ++i) {
         const MachineOperand &MO = MI->getOperand(i);
 
@@ -501,8 +518,8 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
                                 MBB);
     }
 
-    // Finally, if the last instruction in the block is a return, make sure to mark
-    // it as using all of the live-out values in the function.
+    // Finally, if the last instruction in the block is a return, make sure to
+    // mark it as using all of the live-out values in the function.
     if (!MBB->empty() && MBB->back().getDesc().isReturn()) {
       MachineInstr *Ret = &MBB->back();
 
@@ -520,7 +537,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
     }
 
     // Loop over PhysRegInfo, killing any registers that are available at the
-    // end of the basic block.  This also resets the PhysRegInfo map.
+    // end of the basic block. This also resets the PhysRegInfo map.
     for (unsigned i = 0; i != NumRegs; ++i)
       if (PhysRegInfo[i])
         HandlePhysRegDef(i, 0);
@@ -536,7 +553,6 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
 
   // Convert and transfer the dead / killed information we have gathered into
   // VirtRegInfo onto MI's.
-  //
   for (unsigned i = 0, e1 = VirtRegInfo.size(); i != e1; ++i)
     for (unsigned j = 0, e2 = VirtRegInfo[i].Kills.size(); j != e2; ++j)
       if (VirtRegInfo[i].Kills[j] ==
@@ -568,10 +584,10 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
   return false;
 }
 
-/// instructionChanged - When the address of an instruction changes, this
-/// method should be called so that live variables can update its internal
-/// data structures.  This removes the records for OldMI, transfering them to
-/// the records for NewMI.
+/// instructionChanged - When the address of an instruction changes, this method
+/// should be called so that live variables can update its internal data
+/// structures.  This removes the records for OldMI, transfering them to the
+/// records for NewMI.
 void LiveVariables::instructionChanged(MachineInstr *OldMI,
                                        MachineInstr *NewMI) {
   // If the instruction defines any virtual registers, update the VarInfo,
@@ -632,9 +648,8 @@ void LiveVariables::removeVirtualRegistersDead(MachineInstr *MI) {
 }
 
 /// analyzePHINodes - Gather information about the PHI nodes in here. In
-/// particular, we want to map the variable information of a virtual
-/// register which is used in a PHI node. We map that to the BB the vreg is
-/// coming from.
+/// particular, we want to map the variable information of a virtual register
+/// which is used in a PHI node. We map that to the BB the vreg is coming from.
 ///
 void LiveVariables::analyzePHINodes(const MachineFunction& Fn) {
   for (MachineFunction::const_iterator I = Fn.begin(), E = Fn.end();
