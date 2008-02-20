@@ -1039,8 +1039,8 @@ void Verifier::visitAllocationInst(AllocationInst &AI) {
 }
 
 void Verifier::visitGetResultInst(GetResultInst &GRI) {
-  assert (GRI.isValidOperands(GRI.getAggregateValue(), GRI.getIndex())
-          && "Invalid GetResultInst operands!");
+  Assert1(GRI.isValidOperands(GRI.getAggregateValue(), GRI.getIndex()),
+          "Invalid GetResultInst operands!", &GRI);
   visitInstruction(GRI);
 }
 
