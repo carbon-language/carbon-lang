@@ -166,8 +166,10 @@ bool DAGTypeLegalizer::ScalarizeOperand(SDNode *N, unsigned OpNo) {
       abort();
       
     case ISD::EXTRACT_VECTOR_ELT:
-      Res = ScalarizeOp_EXTRACT_VECTOR_ELT(N, OpNo);
-      break;
+      Res = ScalarizeOp_EXTRACT_VECTOR_ELT(N); break;
+
+    case ISD::STORE:
+      Res = ScalarizeOp_STORE(cast<StoreSDNode>(N), OpNo); break;
     }
   }
   
@@ -193,10 +195,17 @@ bool DAGTypeLegalizer::ScalarizeOperand(SDNode *N, unsigned OpNo) {
 }
 
 /// ScalarizeOp_EXTRACT_VECTOR_ELT - If the input is a vector that needs to be
-/// scalarized, it must be <1 x ty>, just return the operand, ignoring the
+/// scalarized, it must be <1 x ty>, so just return the element, ignoring the
 /// index.
-SDOperand DAGTypeLegalizer::ScalarizeOp_EXTRACT_VECTOR_ELT(SDNode *N, 
-                                                           unsigned OpNo) {
+SDOperand DAGTypeLegalizer::ScalarizeOp_EXTRACT_VECTOR_ELT(SDNode *N) {
   return GetScalarizedOp(N->getOperand(0));
 }
 
+/// ScalarizeOp_STORE - If the value to store is a vector that needs to be
+/// scalarized, it must be <1 x ty>.  Just store the element.
+SDOperand DAGTypeLegalizer::ScalarizeOp_STORE(StoreSDNode *N, unsigned OpNo) {
+  assert(OpNo == 1 && "Do not know how to scalarize this operand!");
+  return DAG.getStore(N->getChain(), GetScalarizedOp(N->getOperand(1)),
+                      N->getBasePtr(), N->getSrcValue(), N->getSrcValueOffset(),
+                      N->isVolatile(), N->getAlignment());
+}

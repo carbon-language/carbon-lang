@@ -2145,6 +2145,10 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       return getConstant(C->getValue() >> Shift, VT);
     }
     break;
+  case ISD::EXTRACT_SUBVECTOR:
+    if (N1.getValueType() == VT) // Trivial extraction.
+      return N1;
+    break;
   }
 
   if (N1C) {

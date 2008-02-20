@@ -339,6 +339,8 @@ bool DAGTypeLegalizer::SplitOperand(SDNode *N, unsigned OpNo) {
       abort();
     case ISD::STORE: Res = SplitOp_STORE(cast<StoreSDNode>(N), OpNo); break;
     case ISD::RET:   Res = SplitOp_RET(N, OpNo); break;
+
+    case ISD::EXTRACT_SUBVECTOR: Res = SplitOp_EXTRACT_SUBVECTOR(N); break;
     }
   }
   
@@ -398,4 +400,25 @@ SDOperand DAGTypeLegalizer::SplitOp_RET(SDNode *N, unsigned OpNo) {
   SDOperand Sign = N->getOperand(2);  // Signness
   
   return DAG.getNode(ISD::RET, MVT::Other, Chain, Lo, Sign, Hi, Sign);
+}
+
+SDOperand DAGTypeLegalizer::SplitOp_EXTRACT_SUBVECTOR(SDNode *N) {
+  // We know that the extracted result type is legal.  For now, assume the index
+  // is a constant.
+  MVT::ValueType SubVT = N->getValueType(0);
+  SDOperand Idx = N->getOperand(1);
+  SDOperand Lo, Hi;
+  GetSplitOp(N->getOperand(0), Lo, Hi);
+
+  uint64_t LoElts = MVT::getVectorNumElements(Lo.getValueType());
+  uint64_t IdxVal = cast<ConstantSDNode>(Idx)->getValue();
+
+  if (IdxVal < LoElts) {
+    assert(IdxVal + MVT::getVectorNumElements(SubVT) <= LoElts &&
+           "Extracted subvector crosses vector split!");
+    return DAG.getNode(ISD::EXTRACT_SUBVECTOR, SubVT, Lo, Idx);
+  } else {
+    return DAG.getNode(ISD::EXTRACT_SUBVECTOR, SubVT, Hi,
+                       DAG.getConstant(IdxVal - LoElts, Idx.getValueType()));
+  }
 }
