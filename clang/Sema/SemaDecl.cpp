@@ -567,7 +567,8 @@ bool Sema::CheckInitializerListTypes(InitListExpr*& IList, QualType &DeclType,
       if (DeclType->isIncompleteArrayType()) {
         // FIXME: use a proper constant
         maxElements = 0x7FFFFFFF;
-      } else if (const VariableArrayType *VAT = DeclType->getAsVariableArrayType()) {
+      } else if (const VariableArrayType *VAT =
+                                DeclType->getAsVariableArrayType()) {
         // Check for VLAs; in standard C it would be possible to check this
         // earlier, but I don't know where clang accepts VLAs (gcc accepts
         // them in all sorts of strange places).
@@ -1735,17 +1736,9 @@ Sema::DeclTy* Sema::ActOnLinkageSpec(SourceLocation Loc,
 }
 
 void Sema::HandleDeclAttribute(Decl *New, AttributeList *rawAttr) {
-  const char *attrName = rawAttr->getAttributeName()->getName();
-  unsigned attrLen = rawAttr->getAttributeName()->getLength();
   
-  // Normalize the attribute name, __foo__ becomes foo.
-  if (attrLen > 4 && attrName[0] == '_' && attrName[1] == '_' &&
-      attrName[attrLen - 2] == '_' && attrName[attrLen - 1] == '_') {
-    attrName += 2;
-    attrLen -= 4;
-  }
-  
-  if (attrLen == 11 && !memcmp(attrName, "vector_size", 11)) {
+  switch (rawAttr->getKind()) {
+  case AttributeList::AT_vector_size:
     if (ValueDecl *vDecl = dyn_cast<ValueDecl>(New)) {
       QualType newType = HandleVectorTypeAttribute(vDecl->getType(), rawAttr);
       if (!newType.isNull()) // install the new vector type into the decl
@@ -1757,13 +1750,15 @@ void Sema::HandleDeclAttribute(Decl *New, AttributeList *rawAttr) {
       if (!newType.isNull()) // install the new vector type into the decl
         tDecl->setUnderlyingType(newType);
     }
-  } else if (attrLen == 15 && !memcmp(attrName, "ocu_vector_type", 15)) {
+    break;
+  case AttributeList::AT_ocu_vector_type:
     if (TypedefDecl *tDecl = dyn_cast<TypedefDecl>(New))
       HandleOCUVectorTypeAttribute(tDecl, rawAttr);
     else
       Diag(rawAttr->getAttributeLoc(), 
            diag::err_typecheck_ocu_vector_not_typedef);
-  } else if (attrLen == 13 && !memcmp(attrName, "address_space", 13)) {
+    break;
+  case AttributeList::AT_address_space:
     if (TypedefDecl *tDecl = dyn_cast<TypedefDecl>(New)) {
       QualType newType = HandleAddressSpaceTypeAttribute(
                                                   tDecl->getUnderlyingType(), 
@@ -1776,12 +1771,17 @@ void Sema::HandleDeclAttribute(Decl *New, AttributeList *rawAttr) {
       if (!newType.isNull()) // install the new addr spaced type into the decl
         vDecl->setType(newType);
     }
-  } else if (attrLen == 7 && !memcmp(attrName, "aligned", 7))
+    break;
+  case AttributeList::AT_aligned:
     HandleAlignedAttribute(New, rawAttr);
-  else if (attrLen == 6 && !memcmp(attrName, "packed", 6))
+    break;
+  case AttributeList::AT_packed:
     HandlePackedAttribute(New, rawAttr);
-
-  // FIXME: add other attributes...
+    break;
+  default:
+    // FIXME: add other attributes...
+    break;
+  }
 }
 
 void Sema::HandleDeclAttributes(Decl *New, AttributeList *declspec_prefix,
