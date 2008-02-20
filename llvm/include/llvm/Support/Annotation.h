@@ -43,7 +43,9 @@ class AnnotationID {
   unsigned ID;
 
   AnnotationID();                             // Default ctor is disabled
-  inline AnnotationID(unsigned i) : ID(i) {}  // Only creatable from AnnMgr
+
+  // AnnotationID is only creatable from AnnMgr.
+  explicit inline AnnotationID(unsigned i) : ID(i) {}
 public:
   inline AnnotationID(const AnnotationID &A) : ID(A.ID) {}
 
@@ -67,7 +69,7 @@ class Annotation {
   AnnotationID ID;         // ID number, as obtained from AnnotationManager
   Annotation *Next;        // The next annotation in the linked list
 public:
-  inline Annotation(AnnotationID id) : ID(id), Next(0) {}
+  explicit inline Annotation(AnnotationID id) : ID(id), Next(0) {}
   virtual ~Annotation();  // Designed to be subclassed
 
   // getID - Return the unique ID# of this annotation

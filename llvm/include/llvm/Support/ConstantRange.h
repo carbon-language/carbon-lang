@@ -44,7 +44,7 @@ class ConstantRange {
  public:
   /// Initialize a full (the default) or empty set for the specified bit width.
   ///
-  ConstantRange(uint32_t BitWidth, bool isFullSet = true);
+  explicit ConstantRange(uint32_t BitWidth, bool isFullSet = true);
 
   /// Initialize a range to hold the single specified value.
   ///

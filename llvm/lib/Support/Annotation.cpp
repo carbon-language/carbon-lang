@@ -57,9 +57,9 @@ AnnotationID AnnotationManager::getID(const std::string &Name) {  // Name -> ID
   IDMapType::iterator I = IDMap->find(Name);
   if (I == IDMap->end()) {
     (*IDMap)[Name] = IDCounter++;   // Add a new element
-    return IDCounter-1;
+    return AnnotationID(IDCounter-1);
   }
-  return I->second;
+  return AnnotationID(I->second);
 }
 
 // getID - Name -> ID + registration of a factory function for demand driven

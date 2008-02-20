@@ -1112,7 +1112,7 @@ namespace {
       else if (isa<ConstantPointerNull>(V))
         return ConstantRange(APInt::getNullValue(typeToWidth(V->getType())));
       else
-        return typeToWidth(V->getType());
+        return ConstantRange(typeToWidth(V->getType()));
     }
 
     // typeToWidth - returns the number of bits necessary to store a value of

@@ -1316,7 +1316,7 @@ struct aliasopt {
 // exit is called.
 struct extrahelp {
   const char * morehelp;
-  extrahelp(const char* help);
+  explicit extrahelp(const char* help);
 };
 
 void PrintVersionMessage();
