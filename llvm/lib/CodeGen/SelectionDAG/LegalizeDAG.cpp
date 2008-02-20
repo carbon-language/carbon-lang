@@ -5027,6 +5027,7 @@ bool SelectionDAGLegalize::ExpandShift(unsigned Opc, SDOperand Op,SDOperand Amt,
   MVT::ValueType NVT = TLI.getTypeToTransformTo(Op.getValueType());
   SDOperand ShAmt = LegalizeOp(Amt);
   MVT::ValueType ShTy = ShAmt.getValueType();
+  unsigned ShBits = MVT::getSizeInBits(ShTy);
   unsigned VTBits = MVT::getSizeInBits(Op.getValueType());
   unsigned NVTBits = MVT::getSizeInBits(NVT);
 
@@ -5096,15 +5097,16 @@ bool SelectionDAGLegalize::ExpandShift(unsigned Opc, SDOperand Op,SDOperand Amt,
   
   // Okay, the shift amount isn't constant.  However, if we can tell that it is
   // >= 32 or < 32, we can still simplify it, without knowing the actual value.
-  uint64_t Mask = NVTBits, KnownZero, KnownOne;
+  APInt Mask = APInt::getHighBitsSet(ShBits, ShBits - Log2_32(NVTBits));
+  APInt KnownZero, KnownOne;
   DAG.ComputeMaskedBits(Amt, Mask, KnownZero, KnownOne);
   
   // If we know that the high bit of the shift amount is one, then we can do
   // this as a couple of simple shifts.
-  if (KnownOne & Mask) {
+  if (KnownOne.intersects(Mask)) {
     // Mask out the high bit, which we know is set.
     Amt = DAG.getNode(ISD::AND, Amt.getValueType(), Amt,
-                      DAG.getConstant(NVTBits-1, Amt.getValueType()));
+                      DAG.getConstant(~Mask, Amt.getValueType()));
     
     // Expand the incoming operand to be shifted, so that we have its parts
     SDOperand InL, InH;
@@ -5128,7 +5130,7 @@ bool SelectionDAGLegalize::ExpandShift(unsigned Opc, SDOperand Op,SDOperand Amt,
   
   // If we know that the high bit of the shift amount is zero, then we can do
   // this as a couple of simple shifts.
-  if (KnownZero & Mask) {
+  if (KnownZero.intersects(Mask)) {
     // Compute 32-amt.
     SDOperand Amt2 = DAG.getNode(ISD::SUB, Amt.getValueType(),
                                  DAG.getConstant(NVTBits, Amt.getValueType()),

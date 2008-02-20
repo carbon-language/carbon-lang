@@ -748,12 +748,16 @@ void DAGTypeLegalizer::ExpandShiftByConstant(SDNode *N, unsigned Amt,
 /// shift amount.
 bool DAGTypeLegalizer::
 ExpandShiftWithKnownAmountBit(SDNode *N, SDOperand &Lo, SDOperand &Hi) {
+  SDOperand Amt = N->getOperand(1);
   MVT::ValueType NVT = TLI.getTypeToTransformTo(N->getValueType(0));
+  MVT::ValueType ShTy = Amt.getValueType();
+  MVT::ValueType ShBits = MVT::getSizeInBits(ShTy);
   unsigned NVTBits = MVT::getSizeInBits(NVT);
-  assert(!(NVTBits & (NVTBits - 1)) &&
+  assert(isPowerOf2_32(NVTBits) &&
          "Expanded integer type size not a power of two!");
 
-  uint64_t HighBitMask = NVTBits, KnownZero, KnownOne;
+  APInt HighBitMask = APInt::getHighBitsSet(ShBits, ShBits - Log2_32(NVTBits));
+  APInt KnownZero, KnownOne;
   DAG.ComputeMaskedBits(N->getOperand(1), HighBitMask, KnownZero, KnownOne);
   
   // If we don't know anything about the high bit, exit.
@@ -763,14 +767,13 @@ ExpandShiftWithKnownAmountBit(SDNode *N, SDOperand &Lo, SDOperand &Hi) {
   // Get the incoming operand to be shifted.
   SDOperand InL, InH;
   GetExpandedOp(N->getOperand(0), InL, InH);
-  SDOperand Amt = N->getOperand(1);
 
   // If we know that the high bit of the shift amount is one, then we can do
   // this as a couple of simple shifts.
-  if (KnownOne & HighBitMask) {
+  if (KnownOne.intersects(HighBitMask)) {
     // Mask out the high bit, which we know is set.
-    Amt = DAG.getNode(ISD::AND, Amt.getValueType(), Amt,
-                      DAG.getConstant(NVTBits-1, Amt.getValueType()));
+    Amt = DAG.getNode(ISD::AND, ShTy, Amt,
+                      DAG.getConstant(~HighBitMask, ShTy));
     
     switch (N->getOpcode()) {
     default: assert(0 && "Unknown shift");
@@ -784,7 +787,7 @@ ExpandShiftWithKnownAmountBit(SDNode *N, SDOperand &Lo, SDOperand &Hi) {
       return true;
     case ISD::SRA:
       Hi = DAG.getNode(ISD::SRA, NVT, InH,       // Sign extend high part.
-                       DAG.getConstant(NVTBits-1, Amt.getValueType()));
+                       DAG.getConstant(NVTBits-1, ShTy));
       Lo = DAG.getNode(ISD::SRA, NVT, InH, Amt); // Lo part from Hi part.
       return true;
     }
@@ -792,11 +795,11 @@ ExpandShiftWithKnownAmountBit(SDNode *N, SDOperand &Lo, SDOperand &Hi) {
   
   // If we know that the high bit of the shift amount is zero, then we can do
   // this as a couple of simple shifts.
-  assert((KnownZero & HighBitMask) && "Bad mask computation above");
+  assert(KnownZero.intersects(HighBitMask) && "Bad mask computation above");
 
   // Compute 32-amt.
-  SDOperand Amt2 = DAG.getNode(ISD::SUB, Amt.getValueType(),
-                               DAG.getConstant(NVTBits, Amt.getValueType()),
+  SDOperand Amt2 = DAG.getNode(ISD::SUB, ShTy,
+                               DAG.getConstant(NVTBits, ShTy),
                                Amt);
   unsigned Op1, Op2;
   switch (N->getOpcode()) {
