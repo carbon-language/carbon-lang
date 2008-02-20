@@ -47,7 +47,7 @@ STATISTIC(NumLoadMoved, "Number of loads moved below TokenFactor");
 namespace {
   static cl::opt<bool>
   FoldAndInTest("x86-fold-and-in-test", cl::desc("Fold and operation in test"),
-                cl::init(true), cl::Hidden);
+                cl::init(false), cl::Hidden);
 }
 
 //===----------------------------------------------------------------------===//
