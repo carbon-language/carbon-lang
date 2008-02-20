@@ -522,7 +522,7 @@ SCEVHandle ScalarEvolution::getNegativeSCEV(const SCEVHandle &V) {
   if (SCEVConstant *VC = dyn_cast<SCEVConstant>(V))
     return getUnknown(ConstantExpr::getNeg(VC->getValue()));
 
-  return getMulExpr(V, getUnknown(ConstantInt::getAllOnesValue(V->getType())));
+  return getMulExpr(V, getConstant(ConstantInt::getAllOnesValue(V->getType())));
 }
 
 /// getNotSCEV - Return a SCEV corresponding to ~V = -1-V
@@ -530,7 +530,7 @@ SCEVHandle ScalarEvolution::getNotSCEV(const SCEVHandle &V) {
   if (SCEVConstant *VC = dyn_cast<SCEVConstant>(V))
     return getUnknown(ConstantExpr::getNot(VC->getValue()));
 
-  SCEVHandle AllOnes = getUnknown(ConstantInt::getAllOnesValue(V->getType()));
+  SCEVHandle AllOnes = getConstant(ConstantInt::getAllOnesValue(V->getType()));
   return getMinusSCEV(AllOnes, V);
 }
 
