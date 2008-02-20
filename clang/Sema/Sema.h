@@ -173,6 +173,7 @@ public:
   //===--------------------------------------------------------------------===//
   // Type Analysis / Processing: SemaType.cpp.
   //
+  QualType ConvertDeclSpecToType(DeclSpec &DS);
   QualType GetTypeForDeclarator(Declarator &D, Scope *S);
   
   QualType ObjCGetTypeForMethodDefinition(DeclTy *D);

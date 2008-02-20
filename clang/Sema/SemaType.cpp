@@ -21,52 +21,52 @@ using namespace clang;
 
 /// ConvertDeclSpecToType - Convert the specified declspec to the appropriate
 /// type object.  This returns null on error.
-static QualType ConvertDeclSpecToType(DeclSpec &DS, ASTContext &Ctx) {
+QualType Sema::ConvertDeclSpecToType(DeclSpec &DS) {
   // FIXME: Should move the logic from DeclSpec::Finish to here for validity
   // checking.
   QualType Result;
   
   switch (DS.getTypeSpecType()) {
   default: return QualType(); // FIXME: Handle unimp cases!
-  case DeclSpec::TST_void: return Ctx.VoidTy;
+  case DeclSpec::TST_void: return Context.VoidTy;
   case DeclSpec::TST_char:
     if (DS.getTypeSpecSign() == DeclSpec::TSS_unspecified)
-      Result = Ctx.CharTy;
+      Result = Context.CharTy;
     else if (DS.getTypeSpecSign() == DeclSpec::TSS_signed)
-      Result = Ctx.SignedCharTy;
+      Result = Context.SignedCharTy;
     else {
       assert(DS.getTypeSpecSign() == DeclSpec::TSS_unsigned &&
              "Unknown TSS value");
-      Result = Ctx.UnsignedCharTy;
+      Result = Context.UnsignedCharTy;
     }
     break;
   case DeclSpec::TST_unspecified:  // Unspecific typespec defaults to int.
   case DeclSpec::TST_int: {
     if (DS.getTypeSpecSign() != DeclSpec::TSS_unsigned) {
       switch (DS.getTypeSpecWidth()) {
-      case DeclSpec::TSW_unspecified: Result = Ctx.IntTy; break;
-      case DeclSpec::TSW_short:       Result = Ctx.ShortTy; break;
-      case DeclSpec::TSW_long:        Result = Ctx.LongTy; break;
-      case DeclSpec::TSW_longlong:    Result = Ctx.LongLongTy; break;
+      case DeclSpec::TSW_unspecified: Result = Context.IntTy; break;
+      case DeclSpec::TSW_short:       Result = Context.ShortTy; break;
+      case DeclSpec::TSW_long:        Result = Context.LongTy; break;
+      case DeclSpec::TSW_longlong:    Result = Context.LongLongTy; break;
       }
     } else {
       switch (DS.getTypeSpecWidth()) {
-      case DeclSpec::TSW_unspecified: Result = Ctx.UnsignedIntTy; break;
-      case DeclSpec::TSW_short:       Result = Ctx.UnsignedShortTy; break;
-      case DeclSpec::TSW_long:        Result = Ctx.UnsignedLongTy; break;
-      case DeclSpec::TSW_longlong:    Result = Ctx.UnsignedLongLongTy; break;
+      case DeclSpec::TSW_unspecified: Result = Context.UnsignedIntTy; break;
+      case DeclSpec::TSW_short:       Result = Context.UnsignedShortTy; break;
+      case DeclSpec::TSW_long:        Result = Context.UnsignedLongTy; break;
+      case DeclSpec::TSW_longlong:    Result =Context.UnsignedLongLongTy; break;
       }
     }
     break;
   }
-  case DeclSpec::TST_float: Result = Ctx.FloatTy; break;
+  case DeclSpec::TST_float: Result = Context.FloatTy; break;
   case DeclSpec::TST_double:
     if (DS.getTypeSpecWidth() == DeclSpec::TSW_long)
-      Result = Ctx.LongDoubleTy;
+      Result = Context.LongDoubleTy;
     else
-      Result = Ctx.DoubleTy;
+      Result = Context.DoubleTy;
     break;
-  case DeclSpec::TST_bool: Result = Ctx.BoolTy; break; // _Bool or bool
+  case DeclSpec::TST_bool: Result = Context.BoolTy; break; // _Bool or bool
   case DeclSpec::TST_decimal32:    // _Decimal32
   case DeclSpec::TST_decimal64:    // _Decimal64
   case DeclSpec::TST_decimal128:   // _Decimal128
@@ -80,7 +80,7 @@ static QualType ConvertDeclSpecToType(DeclSpec &DS, ASTContext &Ctx) {
            DS.getTypeSpecSign() == 0 &&
            "Can't handle qualifiers on typedef names yet!");
     // TypeQuals handled by caller.
-    Result = Ctx.getTagDeclType(cast<TagDecl>(D));
+    Result = Context.getTagDeclType(cast<TagDecl>(D));
     break;
   }    
   case DeclSpec::TST_typedef: {
@@ -93,49 +93,49 @@ static QualType ConvertDeclSpecToType(DeclSpec &DS, ASTContext &Ctx) {
     // we have this "hack" for now... 
     if (ObjCInterfaceDecl *ObjCIntDecl = dyn_cast<ObjCInterfaceDecl>(D)) {
       if (DS.getProtocolQualifiers() == 0) {
-        Result = Ctx.getObjCInterfaceType(ObjCIntDecl);
+        Result = Context.getObjCInterfaceType(ObjCIntDecl);
         break;
       }
       
       Action::DeclTy **PPDecl = &(*DS.getProtocolQualifiers())[0];
-      Result = Ctx.getObjCQualifiedInterfaceType(ObjCIntDecl,
+      Result = Context.getObjCQualifiedInterfaceType(ObjCIntDecl,
                                    reinterpret_cast<ObjCProtocolDecl**>(PPDecl),
-                                                 DS.NumProtocolQualifiers());
+                                                    DS.NumProtocolQualifiers());
       break;
     }
     else if (TypedefDecl *typeDecl = dyn_cast<TypedefDecl>(D)) {
-      if (Ctx.getObjCIdType() == Ctx.getTypedefType(typeDecl)
+      if (Context.getObjCIdType() == Context.getTypedefType(typeDecl)
           && DS.getProtocolQualifiers()) {
           // id<protocol-list>
         Action::DeclTy **PPDecl = &(*DS.getProtocolQualifiers())[0];
-        Result = Ctx.getObjCQualifiedIdType(typeDecl->getUnderlyingType(),
+        Result = Context.getObjCQualifiedIdType(typeDecl->getUnderlyingType(),
                                  reinterpret_cast<ObjCProtocolDecl**>(PPDecl),
                                             DS.NumProtocolQualifiers());
         break;
       }
     }
     // TypeQuals handled by caller.
-    Result = Ctx.getTypedefType(cast<TypedefDecl>(D));
+    Result = Context.getTypedefType(cast<TypedefDecl>(D));
     break;
   }
   case DeclSpec::TST_typeofType:
     Result = QualType::getFromOpaquePtr(DS.getTypeRep());
     assert(!Result.isNull() && "Didn't get a type for typeof?");
     // TypeQuals handled by caller.
-    Result = Ctx.getTypeOfType(Result);
+    Result = Context.getTypeOfType(Result);
     break;
   case DeclSpec::TST_typeofExpr: {
     Expr *E = static_cast<Expr *>(DS.getTypeRep());
     assert(E && "Didn't get an expression for typeof?");
     // TypeQuals handled by caller.
-    Result = Ctx.getTypeOfExpr(E);
+    Result = Context.getTypeOfExpr(E);
     break;
   }
   }
   
   // Handle complex types.
   if (DS.getTypeSpecComplex() == DeclSpec::TSC_complex)
-    Result = Ctx.getComplexType(Result);
+    Result = Context.getComplexType(Result);
   
   assert(DS.getTypeSpecComplex() != DeclSpec::TSC_imaginary &&
          "FIXME: imaginary types not supported yet!");
@@ -180,7 +180,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
       D.getDeclSpec().getTypeSpecWidth() == DeclSpec::TSW_longlong)
     Diag(D.getDeclSpec().getTypeSpecWidthLoc(), diag::ext_longlong);
   
-  QualType T = ConvertDeclSpecToType(D.getDeclSpec(), Context);
+  QualType T = ConvertDeclSpecToType(D.getDeclSpec());
   
   // Apply const/volatile/restrict qualifiers to T.
   T = T.getQualifiedType(D.getDeclSpec().getTypeQualifiers());
