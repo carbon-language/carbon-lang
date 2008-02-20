@@ -443,7 +443,8 @@ FunctionType::FunctionType(const Type *Result,
   ContainedTys = reinterpret_cast<PATypeHandle*>(this+1);
   NumContainedTys = Params.size() + 1; // + 1 for result type
   assert((Result->isFirstClassType() || Result == Type::VoidTy ||
-         isa<OpaqueType>(Result)) &&
+          Result->getTypeID() == Type::StructTyID ||
+          isa<OpaqueType>(Result)) &&
          "LLVM functions cannot return aggregates");
   bool isAbstract = Result->isAbstract();
   new (&ContainedTys[0]) PATypeHandle(Result, this);

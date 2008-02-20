@@ -451,7 +451,8 @@ void Verifier::visitFunction(Function &F) {
           "# formal arguments must match # of arguments for function type!",
           &F, FT);
   Assert1(F.getReturnType()->isFirstClassType() ||
-          F.getReturnType() == Type::VoidTy,
+          F.getReturnType() == Type::VoidTy || 
+          F.getReturnType()->getTypeID() == Type::StructTyID,
           "Functions cannot return aggregate values!", &F);
 
   Assert1(!F.isStructReturn() || FT->getReturnType() == Type::VoidTy,
@@ -1090,7 +1091,9 @@ void Verifier::visitInstruction(Instruction &I) {
 
     // Check to make sure that only first-class-values are operands to
     // instructions.
-    Assert1(I.getOperand(i)->getType()->isFirstClassType(),
+    Assert1(I.getOperand(i)->getType()->isFirstClassType() 
+            || (isa<ReturnInst>(I) 
+                && I.getOperand(i)->getType()->getTypeID() == Type::StructTyID),
             "Instruction operands must be first-class values!", &I);
   
     if (Function *F = dyn_cast<Function>(I.getOperand(i))) {
