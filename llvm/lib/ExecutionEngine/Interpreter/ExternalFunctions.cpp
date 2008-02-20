@@ -597,6 +597,14 @@ GenericValue lle_X_memcpy(FunctionType *FT, const vector<GenericValue> &Args) {
   return PTOGV(memcpy((char*)GVTOP(Args[0]), (char*)GVTOP(Args[1]), count));
 }
 
+// void *memcpy(void *Dest, void *src, size_t Size);
+GenericValue lle_X_memmove(FunctionType *FT, const vector<GenericValue> &Args) {
+  assert(Args.size() == 3);
+  assert(isa<PointerType>(FT->getReturnType()) && "memmove must return pointer");
+  size_t count = GV_to_size_t (Args[2]);
+  return PTOGV(memmove((char*)GVTOP(Args[0]), (char*)GVTOP(Args[1]), count));
+}
+
 //===----------------------------------------------------------------------===//
 // IO Functions...
 //===----------------------------------------------------------------------===//
@@ -793,6 +801,7 @@ void Interpreter::initializeExternalFunctions() {
   FuncNames["lle_X___strdup"]     = lle_X___strdup;
   FuncNames["lle_X_memset"]       = lle_X_memset;
   FuncNames["lle_X_memcpy"]       = lle_X_memcpy;
+  FuncNames["lle_X_memmove"]      = lle_X_memmove;
 
   FuncNames["lle_X_fopen"]        = lle_X_fopen;
   FuncNames["lle_X_fclose"]       = lle_X_fclose;
