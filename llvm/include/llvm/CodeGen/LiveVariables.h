@@ -134,7 +134,7 @@ private:   // Intermediate data structures
 
   // PhysRegInfo - Keep track of which instruction was the last def/use of a
   // physical register. This is a purely local property, because all physical
-  // register references as presumed dead across basic blocks.
+  // register references are presumed dead across basic blocks.
   MachineInstr **PhysRegInfo;
 
   // PhysRegUsed - Keep track of whether the physical register has been used
