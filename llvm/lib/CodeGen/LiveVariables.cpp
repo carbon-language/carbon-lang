@@ -296,6 +296,7 @@ void LiveVariables::addRegisterKills(unsigned Reg, MachineInstr *MI,
 ///     last def/use of the register, or
 ///   - The register has sub-registers and none of them are killed elsewhere.
 ///
+/// SubKills is filled with the set of sub-registers that are killed elsewhere.
 bool LiveVariables::HandlePhysRegKill(unsigned Reg, const MachineInstr *RefMI,
                                       SmallSet<unsigned, 4> &SubKills) {
   const unsigned *SubRegs = RegInfo->getImmediateSubRegisters(Reg);
@@ -320,8 +321,9 @@ bool LiveVariables::HandlePhysRegKill(unsigned Reg, const MachineInstr *RefMI,
   return false;
 }
 
-/// HandlePhysRegKill - Calls the recursive version of HandlePhysRegKill. (See
-/// above for details.)
+/// HandlePhysRegKill - Returns true if the whole register is killed in the
+/// machine instruction. If only some of its sub-registers are killed in this
+/// machine instruction, then mark those as killed and return false.
 bool LiveVariables::HandlePhysRegKill(unsigned Reg, MachineInstr *RefMI) {
   SmallSet<unsigned, 4> SubKills;
 
