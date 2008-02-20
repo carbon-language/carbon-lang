@@ -18,7 +18,7 @@
 #include <cassert>
 
 namespace clang {
-
+  
 /// AttributeList - Represents GCC's __attribute__ declaration. There are
 /// 4 forms of this construct...they are:
 ///
@@ -39,23 +39,23 @@ public:
   AttributeList(IdentifierInfo *AttrName, SourceLocation AttrLoc,
                 IdentifierInfo *ParmName, SourceLocation ParmLoc,
                 Action::ExprTy **args, unsigned numargs, AttributeList *Next);
-  ~AttributeList() {
-    if (Args) {
-      // FIXME: before we delete the vector, we need to make sure the Expr's 
-      // have been deleted. Since Action::ExprTy is "void", we are dependent
-      // on the actions module for actually freeing the memory. The specific
-      // hooks are ActOnDeclarator, ActOnTypeName, ActOnParamDeclaratorType, 
-      // ParseField, ParseTag. Once these routines have freed the expression, 
-      // they should zero out the Args slot (to indicate the memory has been 
-      // freed). If any element of the vector is non-null, we should assert.
-      delete [] Args;
-    }
-    delete Next;
-  }
+  ~AttributeList();
+  
+  enum Kind {
+    UnknownAttribute,
+    AT_vector_size,
+    AT_ocu_vector_type,
+    AT_address_space,
+    AT_aligned,
+    AT_packed
+  };
   
   IdentifierInfo *getAttributeName() const { return AttrName; }
   SourceLocation getAttributeLoc() const { return AttrLoc; }
   IdentifierInfo *getParameterName() const { return ParmName; }
+  
+  Kind getKind() const { return getKind(getAttributeName()); }
+  static Kind getKind(const IdentifierInfo *Name);
   
   AttributeList *getNext() const { return Next; }
   void setNext(AttributeList *N) { Next = N; }
