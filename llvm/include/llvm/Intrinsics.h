@@ -53,6 +53,12 @@ namespace Intrinsic {
 
   /// Intrinsic::getDeclaration(M, ID) - Create or insert an LLVM Function
   /// declaration for an intrinsic, and return it.
+  ///
+  /// The Tys and numTys parameters are for intrinsics with overloaded types
+  /// (i.e., those using iAny or fAny). For a declaration for an overloaded
+  /// intrinsic, Tys should point to an array of numTys pointers to Type,
+  /// and must provide exactly one type for each overloaded type in the
+  /// intrinsic.
   Function *getDeclaration(Module *M, ID id, const Type **Tys = 0, 
                            unsigned numTys = 0);
   
