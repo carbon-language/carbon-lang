@@ -1,4 +1,5 @@
-; RUN: not llvm-as < %s -o /dev/null -f 
+; RUN: llvm-as < %s -o /dev/null -f 
+; XFAIL: *
 
 define void @test() {
 	call {} @foo()
