@@ -361,7 +361,7 @@ static void AddNodeIDNode(FoldingSetNodeID &ID, SDNode *N) {
   default: break;  // Normal nodes don't need extra info.
   case ISD::TargetConstant:
   case ISD::Constant:
-    ID.AddInteger(cast<ConstantSDNode>(N)->getValue());
+    ID.Add(cast<ConstantSDNode>(N)->getAPIntValue());
     break;
   case ISD::TargetConstantFP:
   case ISD::ConstantFP: {
