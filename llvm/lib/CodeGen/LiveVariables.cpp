@@ -258,8 +258,9 @@ void LiveVariables::HandlePhysRegUse(unsigned Reg, MachineInstr *MI) {
     bool HasPrevDef = PhysRegInfo[SuperReg] != NULL;
 
     if (!HasPrevDef)
-      // FIXME: This only goes back one level of super-registers. It might miss
-      // some.
+      // No need to go up more levels. A def of a register also sets its sub-
+      // registers. So if PhysRegInfo[SuperReg] is NULL, it means SuperReg's
+      // super-registers are not previously defined.
       for (const unsigned *SSRegs = RegInfo->getSuperRegisters(SuperReg);
            unsigned SSReg = *SSRegs; ++SSRegs)
         if (PhysRegInfo[SSReg] != NULL) {
