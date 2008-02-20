@@ -21,7 +21,7 @@ using namespace clang;
 
 /// ConvertDeclSpecToType - Convert the specified declspec to the appropriate
 /// type object.  This returns null on error.
-static QualType ConvertDeclSpecToType(const DeclSpec &DS, ASTContext &Ctx) {
+static QualType ConvertDeclSpecToType(DeclSpec &DS, ASTContext &Ctx) {
   // FIXME: Should move the logic from DeclSpec::Finish to here for validity
   // checking.
   QualType Result;
@@ -140,6 +140,35 @@ static QualType ConvertDeclSpecToType(const DeclSpec &DS, ASTContext &Ctx) {
   assert(DS.getTypeSpecComplex() != DeclSpec::TSC_imaginary &&
          "FIXME: imaginary types not supported yet!");
   
+  // See if there are any attributes on the declspec that apply to the type (as
+  // opposed to the decl).
+  if (!DS.getAttributes())
+    return Result;
+  
+  // Scan through and apply attributes to this type where it makes sense.  Some
+  // attributes (such as __address_space__, __vector_size__, etc) apply to the
+  // declspec, but others can be present in the decl spec even though they apply
+  // to the decl.  Here we apply and delete attributes that apply to the
+  // declspec and leave the others alone.
+  llvm::SmallVector<AttributeList *, 8> LeftOverAttrs;
+  AttributeList *AL = DS.getAttributes();
+  while (AL) {
+    AttributeList *ThisAttr = AL;
+    AL = AL->getNext();
+    
+    LeftOverAttrs.push_back(ThisAttr);
+  }
+  
+  // Rechain any attributes that haven't been deleted to the DeclSpec.
+  AttributeList *List = 0;
+  for (unsigned i = 0, e = LeftOverAttrs.size(); i != e; ++i) {
+    LeftOverAttrs[i]->setNext(List);
+    List = LeftOverAttrs[i];
+  }
+  
+  DS.clearAttributes();
+  DS.AddAttributes(List);
+  //DS.setAttributes(List);
   return Result;
 }
 

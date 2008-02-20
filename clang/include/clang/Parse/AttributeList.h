@@ -50,8 +50,7 @@ public:
       // freed). If any element of the vector is non-null, we should assert.
       delete [] Args;
     }
-    if (Next)
-      delete Next;
+    delete Next;
   }
   
   IdentifierInfo *getAttributeName() const { return AttrName; }
