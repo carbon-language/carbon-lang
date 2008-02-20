@@ -609,7 +609,7 @@ public:
   void visitMemIntrinsic(CallInst &I, unsigned Op);
 
   void visitGetResult(GetResultInst &I) {
-    // FIXME
+    assert (0 && "getresult unimplemented");
   }
 
   void visitUserOp1(Instruction &I) {
