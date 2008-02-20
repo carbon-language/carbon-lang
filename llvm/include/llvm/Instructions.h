@@ -2371,10 +2371,15 @@ public:
     return Ops[0]->getType();
   }
   
-  Value *getAggregateValue() {
+  inline Value *getAggregateValue() {
     return getOperand(0);
   }
-  const Value *geIndex() {
+
+  inline const Value *getAggregateValue() const {
+    return getOperand(0);
+  }
+
+  const Value *getIndex() {
     return getOperand(1);
   }
 
