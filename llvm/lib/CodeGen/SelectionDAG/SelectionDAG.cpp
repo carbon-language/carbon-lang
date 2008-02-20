@@ -1283,9 +1283,9 @@ void SelectionDAG::ComputeMaskedBits(SDOperand Op, const APInt &Mask,
       APInt SignBit = APInt::getSignBit(BitWidth);
       SignBit = SignBit.lshr(ShAmt);  // Adjust to where it is now in the mask.
       
-      if (!!(KnownZero & SignBit)) {
+      if (KnownZero.intersects(SignBit)) {
         KnownZero |= HighBits;  // New bits are known zero.
-      } else if (!!(KnownOne & SignBit)) {
+      } else if (KnownOne.intersects(SignBit)) {
         KnownOne  |= HighBits;  // New bits are known one.
       }
     }
@@ -1313,10 +1313,10 @@ void SelectionDAG::ComputeMaskedBits(SDOperand Op, const APInt &Mask,
     
     // If the sign bit of the input is known set or clear, then we know the
     // top bits of the result.
-    if (!!(KnownZero & InSignBit)) {          // Input sign bit known clear
+    if (KnownZero.intersects(InSignBit)) {         // Input sign bit known clear
       KnownZero |= NewBits;
       KnownOne  &= ~NewBits;
-    } else if (!!(KnownOne & InSignBit)) {    // Input sign bit known set
+    } else if (KnownOne.intersects(InSignBit)) {   // Input sign bit known set
       KnownOne  |= NewBits;
       KnownZero &= ~NewBits;
     } else {                              // Input sign bit unknown
