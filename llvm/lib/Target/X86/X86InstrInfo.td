@@ -248,7 +248,7 @@ def extloadi32i16  : PatFrag<(ops node:$ptr), (i32 (extloadi16 node:$ptr))>;
 
 // An 'and' node with a single use.
 def and_su : PatFrag<(ops node:$lhs, node:$rhs), (and node:$lhs, node:$rhs), [{
-  return !FoldAndInTest || N->hasOneUse();
+  return AlwaysFoldAndInTest || N->hasOneUse();
 }]>;
 
 //===----------------------------------------------------------------------===//
