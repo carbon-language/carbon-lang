@@ -136,6 +136,8 @@ namespace llvm {
 
     Value *visitSMaxExpr(SCEVSMaxExpr *S);
 
+    Value *visitUMaxExpr(SCEVUMaxExpr *S);
+
     Value *visitUnknown(SCEVUnknown *S) {
       return S->getValue();
     }

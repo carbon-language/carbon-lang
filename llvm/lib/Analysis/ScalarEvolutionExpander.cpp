@@ -220,6 +220,16 @@ Value *SCEVExpander::visitSMaxExpr(SCEVSMaxExpr *S) {
   return LHS;
 }
 
+Value *SCEVExpander::visitUMaxExpr(SCEVUMaxExpr *S) {
+  Value *LHS = expand(S->getOperand(0));
+  for (unsigned i = 1; i < S->getNumOperands(); ++i) {
+    Value *RHS = expand(S->getOperand(i));
+    Value *ICmp = new ICmpInst(ICmpInst::ICMP_UGT, LHS, RHS, "tmp", InsertPt);
+    LHS = new SelectInst(ICmp, LHS, RHS, "umax", InsertPt);
+  }
+  return LHS;
+}
+
 Value *SCEVExpander::expand(SCEV *S) {
   // Check to see if we already expanded this.
   std::map<SCEVHandle, Value*>::iterator I = InsertedExpressions.find(S);
@@ -230,4 +240,3 @@ Value *SCEVExpander::expand(SCEV *S) {
   InsertedExpressions[S] = V;
   return V;
 }
-

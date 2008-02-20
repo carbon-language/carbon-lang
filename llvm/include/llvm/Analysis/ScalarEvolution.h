@@ -237,11 +237,17 @@ namespace llvm {
     }
     SCEVHandle getSMaxExpr(const SCEVHandle &LHS, const SCEVHandle &RHS);
     SCEVHandle getSMaxExpr(std::vector<SCEVHandle> Operands);
+    SCEVHandle getUMaxExpr(const SCEVHandle &LHS, const SCEVHandle &RHS);
+    SCEVHandle getUMaxExpr(std::vector<SCEVHandle> Operands);
     SCEVHandle getUnknown(Value *V);
 
     /// getNegativeSCEV - Return the SCEV object corresponding to -V.
     ///
     SCEVHandle getNegativeSCEV(const SCEVHandle &V);
+
+    /// getNotSCEV - Return the SCEV object corresponding to ~V.
+    ///
+    SCEVHandle getNotSCEV(const SCEVHandle &V);
 
     /// getMinusSCEV - Return LHS-RHS.
     ///
