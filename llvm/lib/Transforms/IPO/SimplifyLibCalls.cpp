@@ -23,7 +23,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
-#include "llvm/ADT/hash_map"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/Compiler.h"
@@ -172,7 +172,7 @@ public:
     reset(M);
 
     bool result = false;
-    hash_map<std::string, LibCallOptimization*> OptznMap;
+    StringMap<LibCallOptimization*> OptznMap;
     for (LibCallOptimization *Optzn = OptList; Optzn; Optzn = Optzn->getNext())
       OptznMap[Optzn->getFunctionName()] = Optzn;
 
@@ -195,7 +195,7 @@ public:
           continue;
 
         // Get the optimization class that pertains to this function
-        hash_map<std::string, LibCallOptimization*>::iterator OMI =
+        StringMap<LibCallOptimization*>::iterator OMI =
           OptznMap.find(FI->getName());
         if (OMI == OptznMap.end()) continue;
         
