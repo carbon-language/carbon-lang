@@ -778,6 +778,12 @@ public:
     return !slt(RHS);
   }
 
+  /// This operation tests if there are any pairs of corresponding bits
+  /// between this APInt and RHS that are both set.
+  bool intersects(const APInt &RHS) const {
+    return (*this & RHS) != 0;
+  }
+
   /// @}
   /// @name Resizing Operators
   /// @{
