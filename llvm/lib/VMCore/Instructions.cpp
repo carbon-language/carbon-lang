@@ -2708,7 +2708,7 @@ void SwitchInst::setSuccessorV(unsigned idx, BasicBlock *B) {
 GetResultInst::GetResultInst(Value *Aggregate, unsigned Index,
                              const std::string &Name,
                              Instruction *InsertBef)
-  : Instruction(Aggr->getType(),
+  : Instruction(cast<StructType>(Aggregate->getType())->getElementType(Index),
                 GetResult, &Aggr, 1, InsertBef) {
   assert(isValidOperands(Aggregate, Index) && "Invalid GetResultInst operands!");
   Aggr.init(Aggregate, this);
