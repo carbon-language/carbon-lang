@@ -275,8 +275,7 @@ void LiveVariables::HandlePhysRegUse(unsigned Reg, MachineInstr *MI) {
 }
 
 /// addRegisterKills - For all of a register's sub-registers that are killed in
-/// other instructions (?), indicate that they are killed in this machine
-/// instruction by marking the operand as "killed". (If the machine operand
+/// at this machine instruction, mark them as "killed". (If the machine operand
 /// isn't found, add it first.)
 void LiveVariables::addRegisterKills(unsigned Reg, MachineInstr *MI,
                                      SmallSet<unsigned, 4> &SubKills) {
