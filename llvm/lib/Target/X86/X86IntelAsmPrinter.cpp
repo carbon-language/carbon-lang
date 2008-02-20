@@ -221,13 +221,14 @@ void X86IntelAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op,
   } else {
     int DispVal = DispSpec.getImm();
     if (DispVal || (!BaseReg.getReg() && !IndexReg.getReg())) {
-      if (NeedPlus)
+      if (NeedPlus) {
         if (DispVal > 0)
           O << " + ";
         else {
           O << " - ";
           DispVal = -DispVal;
         }
+      }
       O << DispVal;
     }
   }

@@ -1551,7 +1551,7 @@ static bool isLegalAddressImmediate(int64_t V, MVT::ValueType VT,
     if ((V & (Scale - 1)) != 0)
       return false;
     V /= Scale;
-    return V == V & ((1LL << 5) - 1);
+    return V == (V & ((1LL << 5) - 1));
   }
 
   if (V < 0)
@@ -1562,10 +1562,10 @@ static bool isLegalAddressImmediate(int64_t V, MVT::ValueType VT,
   case MVT::i8:
   case MVT::i32:
     // +- imm12
-    return V == V & ((1LL << 12) - 1);
+    return V == (V & ((1LL << 12) - 1));
   case MVT::i16:
     // +- imm8
-    return V == V & ((1LL << 8) - 1);
+    return V == (V & ((1LL << 8) - 1));
   case MVT::f32:
   case MVT::f64:
     if (!Subtarget->hasVFP2())
@@ -1573,7 +1573,7 @@ static bool isLegalAddressImmediate(int64_t V, MVT::ValueType VT,
     if ((V & 3) != 0)
       return false;
     V >>= 2;
-    return V == V & ((1LL << 8) - 1);
+    return V == (V & ((1LL << 8) - 1));
   }
 }
 

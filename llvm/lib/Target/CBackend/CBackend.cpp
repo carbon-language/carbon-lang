@@ -2912,7 +2912,7 @@ void CWriter::printIndexingExpression(Value *Ptr, gep_type_iterator I,
     HasImplicitAddress = false;  // HIA is only true if we haven't addressed yet
   }
 
-  assert(!HasImplicitAddress || (CI && CI->isNullValue()) &&
+  assert((!HasImplicitAddress || (CI && CI->isNullValue())) &&
          "Can only have implicit address with direct accessing");
 
   if (HasImplicitAddress) {

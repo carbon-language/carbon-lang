@@ -92,11 +92,12 @@ PPCTargetMachine::PPCTargetMachine(const Module &M, const std::string &FS,
     FrameInfo(*this, is64Bit), JITInfo(*this, is64Bit), TLInfo(*this),
     InstrItins(Subtarget.getInstrItineraryData()), MachOWriterInfo(*this) {
 
-  if (getRelocationModel() == Reloc::Default)
+  if (getRelocationModel() == Reloc::Default) {
     if (Subtarget.isDarwin())
       setRelocationModel(Reloc::DynamicNoPIC);
     else
       setRelocationModel(Reloc::Static);
+  }
 }
 
 /// Override this for PowerPC.  Tail merging happily breaks up instruction issue

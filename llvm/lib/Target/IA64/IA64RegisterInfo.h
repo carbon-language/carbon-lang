@@ -17,8 +17,6 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "IA64GenRegisterInfo.h.inc"
 
-namespace llvm { class llvm::Type; }
-
 namespace llvm {
 
 class TargetInstrInfo;

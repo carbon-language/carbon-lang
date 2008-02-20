@@ -36,7 +36,7 @@ bool X86Subtarget::GVRequiresExtraLoad(const GlobalValue* GV,
                                        bool isDirectCall) const
 {
   // FIXME: PIC
-  if (TM.getRelocationModel() != Reloc::Static)
+  if (TM.getRelocationModel() != Reloc::Static) {
     if (isTargetDarwin()) {
       return (!isDirectCall &&
               (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage() ||
@@ -48,6 +48,7 @@ bool X86Subtarget::GVRequiresExtraLoad(const GlobalValue* GV,
     } else if (isTargetCygMing() || isTargetWindows()) {
       return (GV->hasDLLImportLinkage());
     }
+  }
   
   return false;
 }

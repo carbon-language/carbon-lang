@@ -1328,7 +1328,7 @@ void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
         if (AFI->getGPRCalleeSavedArea2Size() ||
             AFI->getDPRCalleeSavedAreaSize()  ||
             AFI->getDPRCalleeSavedAreaOffset()||
-            hasFP(MF))
+            hasFP(MF)) {
           if (NumBytes)
             BuildMI(MBB, MBBI, TII.get(ARM::SUBri), ARM::SP).addReg(FramePtr)
               .addImm(NumBytes)
@@ -1336,6 +1336,7 @@ void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
           else
             BuildMI(MBB, MBBI, TII.get(ARM::MOVr), ARM::SP).addReg(FramePtr)
               .addImm((unsigned)ARMCC::AL).addReg(0).addReg(0);
+        }
       } else if (NumBytes) {
         emitSPUpdate(MBB, MBBI, NumBytes, ARMCC::AL, 0, false, TII, *this);
       }

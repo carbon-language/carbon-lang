@@ -119,11 +119,12 @@ X86TargetMachine::X86TargetMachine(const Module &M, const std::string &FS,
               Subtarget.getStackAlignment(), Subtarget.is64Bit() ? -8 : -4),
     InstrInfo(*this), JITInfo(*this), TLInfo(*this) {
   DefRelocModel = getRelocationModel();
-  if (getRelocationModel() == Reloc::Default)
+  if (getRelocationModel() == Reloc::Default) {
     if (Subtarget.isTargetDarwin() || Subtarget.isTargetCygMing())
       setRelocationModel(Reloc::DynamicNoPIC);
     else
       setRelocationModel(Reloc::Static);
+  }
   if (Subtarget.is64Bit()) {
     // No DynamicNoPIC support under X86-64.
     if (getRelocationModel() == Reloc::DynamicNoPIC)
@@ -135,16 +136,17 @@ X86TargetMachine::X86TargetMachine(const Module &M, const std::string &FS,
 
   if (Subtarget.isTargetCygMing())
     Subtarget.setPICStyle(PICStyle::WinPIC);
-  else if (Subtarget.isTargetDarwin())
+  else if (Subtarget.isTargetDarwin()) {
     if (Subtarget.is64Bit())
       Subtarget.setPICStyle(PICStyle::RIPRel);
     else
       Subtarget.setPICStyle(PICStyle::Stub);
-  else if (Subtarget.isTargetELF())
+  } else if (Subtarget.isTargetELF()) {
     if (Subtarget.is64Bit())
       Subtarget.setPICStyle(PICStyle::RIPRel);
     else
       Subtarget.setPICStyle(PICStyle::GOT);
+  }
 }
 
 //===----------------------------------------------------------------------===//

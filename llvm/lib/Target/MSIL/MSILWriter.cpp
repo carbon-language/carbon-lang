@@ -202,7 +202,7 @@ void MSILWriter::printModuleStartup() {
   }
 
   bool RetVoid = (F->getReturnType()->getTypeID() == Type::VoidTyID);
-  if (BadSig || !F->getReturnType()->isInteger() && !RetVoid) {
+  if (BadSig || (!F->getReturnType()->isInteger() && !RetVoid)) {
     Out << "\tldc.i4.0\n";
   } else {
     Out << "\tcall\t" << getTypeName(F->getReturnType()) <<

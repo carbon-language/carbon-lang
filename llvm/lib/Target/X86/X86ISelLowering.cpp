@@ -1029,12 +1029,13 @@ bool X86TargetLowering::IsCalleePop(SDOperand Op) {
 CCAssignFn *X86TargetLowering::CCAssignFnForNode(SDOperand Op) const {
   unsigned CC = cast<ConstantSDNode>(Op.getOperand(1))->getValue();
   
-  if (Subtarget->is64Bit())
+  if (Subtarget->is64Bit()) {
     if (CC == CallingConv::Fast && PerformTailCallOpt)
       return CC_X86_64_TailCall;
     else
       return CC_X86_64_C;
-  
+  }
+
   if (CC == CallingConv::X86_FastCall)
     return CC_X86_32_FastCall;
   else if (CC == CallingConv::Fast && PerformTailCallOpt)
@@ -3358,11 +3359,12 @@ SDOperand RewriteAsNarrowerShuffle(SDOperand V1, SDOperand V2,
   default: assert(false && "Unexpected!");
   }
 
-  if (NewWidth == 2)
+  if (NewWidth == 2) {
     if (MVT::isInteger(VT))
       NewVT = MVT::v2i64;
     else
       NewVT = MVT::v2f64;
+  }
   unsigned Scale = NumElems / NewWidth;
   SmallVector<SDOperand, 8> MaskVec;
   for (unsigned i = 0; i < NumElems; i += Scale) {

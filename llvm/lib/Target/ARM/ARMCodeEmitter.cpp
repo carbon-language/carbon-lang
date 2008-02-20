@@ -475,8 +475,8 @@ unsigned Emitter::getBinaryCodeForInstr(const MachineInstr &MI) {
         }
       }
       // set the field related to shift operations (except rrx).
-      if(ARM_AM::getSORegShOp(MO2.getImm()) != ARM_AM::rrx)
-        if(IsShiftByRegister) {
+      if (ARM_AM::getSORegShOp(MO2.getImm()) != ARM_AM::rrx) {
+        if (IsShiftByRegister) {
           // set the value of bit[11:8] (register Rs).
           assert(TargetRegisterInfo::isPhysicalRegister(MO1.getReg()));
           op = ARMRegisterInfo::getRegisterNumbering(MO1.getReg());
@@ -487,6 +487,7 @@ unsigned Emitter::getBinaryCodeForInstr(const MachineInstr &MI) {
           op = ARM_AM::getSORegOffset(MO2.getImm());
           Value |= op << 7;
         }
+      }
       break;
     }
     default: assert(false && "Unknown operand type!");
