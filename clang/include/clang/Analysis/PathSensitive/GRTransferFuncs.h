@@ -35,6 +35,9 @@ public:
   virtual NonLValue EvalMinus(ValueManager& ValMgr, UnaryOperator* U,
                               NonLValue X) = 0;
 
+  virtual NonLValue EvalPlus(ValueManager& ValMgr, UnaryOperator* U,
+                             NonLValue X) = 0;
+  
   virtual NonLValue EvalComplement(ValueManager& ValMgr, NonLValue X) = 0;
 
   // Binary Operators.

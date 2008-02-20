@@ -670,6 +670,12 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U,
         break;
       }
         
+      case UnaryOperator::Plus: {
+        const NonLValue& R1 = cast<NonLValue>(GetValue(St, U->getSubExpr()));
+        Nodify(Dst, U, N1, SetValue(St, U, EvalPlus(ValMgr, U, R1)));
+        break;
+      }
+        
       case UnaryOperator::Not: {
         const NonLValue& R1 = cast<NonLValue>(GetValue(St, U->getSubExpr()));
         Nodify(Dst, U, N1, SetValue(St, U, EvalComplement(ValMgr, R1)));

@@ -198,6 +198,7 @@ namespace nonlval {
     
     ConcreteInt EvalComplement(ValueManager& ValMgr) const;
     ConcreteInt EvalMinus(ValueManager& ValMgr, UnaryOperator* U) const;
+    ConcreteInt EvalPlus(ValueManager& ValMgr, UnaryOperator* U) const;
     
     // Implement isa<T> support.
     static inline bool classof(const RValue* V) {

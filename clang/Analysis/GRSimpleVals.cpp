@@ -112,6 +112,20 @@ NonLValue GRSimpleVals::EvalMinus(ValueManager& ValMgr, UnaryOperator* U,
   }
 }
 
+NonLValue GRSimpleVals::EvalPlus(ValueManager& ValMgr, UnaryOperator* U,
+                                 NonLValue X) {
+  
+  assert (!isa<UnknownVal>(X) && !isa<UninitializedVal>(X));
+  
+  switch (X.getSubKind()) {
+    case nonlval::ConcreteIntKind:
+      return cast<nonlval::ConcreteInt>(X).EvalPlus(ValMgr, U);
+    default:
+      return cast<NonLValue>(UnknownVal());
+  }
+}
+
+
 NonLValue GRSimpleVals::EvalComplement(ValueManager& ValMgr, NonLValue X) {
 
   assert (!isa<UnknownVal>(X) && !isa<UninitializedVal>(X));

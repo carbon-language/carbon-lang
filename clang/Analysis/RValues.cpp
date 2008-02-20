@@ -77,6 +77,13 @@ nonlval::ConcreteInt::EvalMinus(ValueManager& ValMgr, UnaryOperator* U) const {
   return ValMgr.getValue(-getValue()); 
 }
 
+nonlval::ConcreteInt
+nonlval::ConcreteInt::EvalPlus(ValueManager& ValMgr, UnaryOperator* U) const {
+  assert (U->getType() == U->getSubExpr()->getType());  
+  assert (U->getType()->isIntegerType());  
+  return ValMgr.getValue(getValue()); 
+}
+
 //===----------------------------------------------------------------------===//
 // Transfer function dispatch for LValues.
 //===----------------------------------------------------------------------===//

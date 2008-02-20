@@ -347,6 +347,14 @@ public:
     return TF->EvalMinus(ValMgr, U, X);    
   }
   
+  inline NonLValue EvalPlus(ValueManager& ValMgr, UnaryOperator* U,
+                             NonLValue X) {
+    if (isa<UnknownVal>(X) || isa<UninitializedVal>(X))
+      return X;    
+    
+    return TF->EvalPlus(ValMgr, U, X);    
+  }
+  
   inline NonLValue EvalComplement(ValueManager& ValMgr, NonLValue X) {
     if (isa<UnknownVal>(X) || isa<UninitializedVal>(X))
       return X;    
