@@ -385,16 +385,16 @@ static GenericValue executeFCMP_OGT(GenericValue Src1, GenericValue Src2,
   return Dest;
 }
 
-#define IMPLEMENT_UNORDERED(TY, X,Y) \
-   if (TY == Type::FloatTy) \
-     if (X.FloatVal != X.FloatVal || Y.FloatVal != Y.FloatVal) { \
-       Dest.IntVal = APInt(1,true); \
-       return Dest; \
-     } \
-   else if (X.DoubleVal != X.DoubleVal || Y.DoubleVal != Y.DoubleVal) { \
-     Dest.IntVal = APInt(1,true); \
-     return Dest; \
-   }
+#define IMPLEMENT_UNORDERED(TY, X,Y)                                     \
+  if (TY == Type::FloatTy) {                                             \
+    if (X.FloatVal != X.FloatVal || Y.FloatVal != Y.FloatVal) {          \
+      Dest.IntVal = APInt(1,true);                                       \
+      return Dest;                                                       \
+    }                                                                    \
+  } else if (X.DoubleVal != X.DoubleVal || Y.DoubleVal != Y.DoubleVal) { \
+    Dest.IntVal = APInt(1,true);                                         \
+    return Dest;                                                         \
+  }
 
 
 static GenericValue executeFCMP_UEQ(GenericValue Src1, GenericValue Src2,
@@ -901,11 +901,12 @@ void Interpreter::visitCallSite(CallSite CS) {
     // We do this by zero or sign extending the value as appropriate
     // according to the parameter attributes
     const Type *Ty = V->getType();
-    if (Ty->isInteger() && (ArgVals.back().IntVal.getBitWidth() < 32))
+    if (Ty->isInteger() && (ArgVals.back().IntVal.getBitWidth() < 32)) {
       if (CS.paramHasAttr(pNum, ParamAttr::ZExt))
         ArgVals.back().IntVal = ArgVals.back().IntVal.zext(32);
       else if (CS.paramHasAttr(pNum, ParamAttr::SExt))
         ArgVals.back().IntVal = ArgVals.back().IntVal.sext(32);
+    }
   }
 
   // To handle indirect calls, we must get the pointer value from the argument

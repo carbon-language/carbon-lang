@@ -191,7 +191,7 @@ bool SimpleSpiller::runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM) {
       MachineInstr &MI = *MII;
       for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
         MachineOperand &MO = MI.getOperand(i);
-        if (MO.isRegister() && MO.getReg())
+        if (MO.isRegister() && MO.getReg()) {
           if (TargetRegisterInfo::isVirtualRegister(MO.getReg())) {
             unsigned VirtReg = MO.getReg();
             unsigned PhysReg = VRM.getPhys(VirtReg);
@@ -220,6 +220,7 @@ bool SimpleSpiller::runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM) {
           } else {
             MF.getRegInfo().setPhysRegUsed(MO.getReg());
           }
+        }
       }
 
       DOUT << '\t' << MI;

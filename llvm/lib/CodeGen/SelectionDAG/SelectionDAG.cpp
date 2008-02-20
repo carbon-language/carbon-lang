@@ -1075,7 +1075,7 @@ SDOperand SelectionDAG::FoldSetCC(MVT::ValueType VT, SDOperand N1,
       }
     }
   }
-  if (ConstantFPSDNode *N1C = dyn_cast<ConstantFPSDNode>(N1.Val))
+  if (ConstantFPSDNode *N1C = dyn_cast<ConstantFPSDNode>(N1.Val)) {
     if (ConstantFPSDNode *N2C = dyn_cast<ConstantFPSDNode>(N2.Val)) {
       // No compile time operations on this type yet.
       if (N1C->getValueType(0) == MVT::ppcf128)
@@ -1127,7 +1127,8 @@ SDOperand SelectionDAG::FoldSetCC(MVT::ValueType VT, SDOperand N1,
       // Ensure that the constant occurs on the RHS.
       return getSetCC(VT, N2, N1, ISD::getSetCCSwappedOperands(Cond));
     }
-      
+  }
+
   // Could not fold it.
   return SDOperand();
 }
@@ -2334,20 +2335,22 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     break;
   }
   case ISD::SELECT:
-    if (N1C)
-      if (N1C->getValue())
+    if (N1C) {
+     if (N1C->getValue())
         return N2;             // select true, X, Y -> X
       else
         return N3;             // select false, X, Y -> Y
+    }
 
     if (N2 == N3) return N2;   // select C, X, X -> X
     break;
   case ISD::BRCOND:
-    if (N2C)
+    if (N2C) {
       if (N2C->getValue()) // Unconditional branch
         return getNode(ISD::BR, MVT::Other, N1, N3);
       else
         return N1;         // Never-taken branch
+    }
     break;
   case ISD::VECTOR_SHUFFLE:
     assert(VT == N1.getValueType() && VT == N2.getValueType() &&

@@ -1269,15 +1269,18 @@ bool bu_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
       unsigned RScratch = calcMaxScratches(right);
       if (LScratch > RScratch)
         return true;
-      else if (LScratch == RScratch)
+      else if (LScratch == RScratch) {
         if (left->Height > right->Height)
           return true;
-        else if (left->Height == right->Height)
+        else if (left->Height == right->Height) {
           if (left->Depth < right->Depth)
             return true;
-          else if (left->Depth == right->Depth)
+          else if (left->Depth == right->Depth) {
             if (left->CycleBound > right->CycleBound) 
               return true;
+          }
+        }
+      }
     }
   }
   return false;
@@ -1509,15 +1512,19 @@ bool td_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
 
   if (LPriority+LBonus < RPriority+RBonus)
     return true;
-  else if (LPriority == RPriority)
+  else if (LPriority == RPriority) {
     if (left->Depth < right->Depth)
       return true;
-    else if (left->Depth == right->Depth)
+    else if (left->Depth == right->Depth) {
       if (left->NumSuccsLeft > right->NumSuccsLeft)
         return true;
-      else if (left->NumSuccsLeft == right->NumSuccsLeft)
+      else if (left->NumSuccsLeft == right->NumSuccsLeft) {
         if (left->CycleBound > right->CycleBound) 
           return true;
+      }
+    }
+  }
+
   return false;
 }
 

@@ -695,7 +695,7 @@ void RABigBlock::AllocateBasicBlock(MachineBasicBlock &MBB) {
         // Unallocatable register dead, ignore.
         continue;
       } else {
-        assert(!PhysRegsUsed[PhysReg] || PhysRegsUsed[PhysReg] == -1 &&
+        assert((!PhysRegsUsed[PhysReg] || PhysRegsUsed[PhysReg] == -1) &&
                "Silently clearing a virtual register?");
       }
 
@@ -832,11 +832,12 @@ void RABigBlock::AllocateBasicBlock(MachineBasicBlock &MBB) {
 
   // Spill all physical registers holding virtual registers now.
   for (unsigned i = 0, e = RegInfo->getNumRegs(); i != e; ++i)
-    if (PhysRegsUsed[i] != -1 && PhysRegsUsed[i] != -2)
+    if (PhysRegsUsed[i] != -1 && PhysRegsUsed[i] != -2) {
       if (unsigned VirtReg = PhysRegsUsed[i])
         spillVirtReg(MBB, MI, VirtReg, i);
       else
         removePhysReg(i);
+    }
 }
 
 /// runOnMachineFunction - Register allocate the whole function

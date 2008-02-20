@@ -278,9 +278,10 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
                  : BBI.TrueBB->getNumber()) << ") ";
         RetVal = IfConvertSimple(BBI, Kind);
         DOUT << (RetVal ? "succeeded!" : "failed!") << "\n";
-        if (RetVal)
+        if (RetVal) {
           if (isFalse) NumSimpleFalse++;
           else         NumSimple++;
+        }
        break;
       }
       case ICTriangle:

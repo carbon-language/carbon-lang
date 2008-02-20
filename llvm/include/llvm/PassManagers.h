@@ -13,8 +13,6 @@
 
 #include "llvm/PassManager.h"
 #include "llvm/ADT/SmallVector.h"
-class llvm::PMDataManager;
-class llvm::PMStack;
 
 //===----------------------------------------------------------------------===//
 // Overview:

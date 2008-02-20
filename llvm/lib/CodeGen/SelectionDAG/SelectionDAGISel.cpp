@@ -2602,7 +2602,7 @@ void SelectionDAGLowering::visitTargetIntrinsic(CallInst &I,
 static GlobalVariable *ExtractTypeInfo (Value *V) {
   V = IntrinsicInst::StripPointerCasts(V);
   GlobalVariable *GV = dyn_cast<GlobalVariable>(V);
-  assert (GV || isa<ConstantPointerNull>(V) &&
+  assert ((GV || isa<ConstantPointerNull>(V)) &&
           "TypeInfo must be a global variable or NULL");
   return GV;
 }

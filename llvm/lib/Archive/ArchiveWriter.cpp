@@ -47,11 +47,12 @@ inline unsigned numVbrBytes(unsigned num) {
   // small ones and four for large ones. We expect this to access file offsets
   // in the 2^10 to 2^24 range and symbol lengths in the 2^0 to 2^8 range,
   // so this approach is reasonable.
-  if (num < 1<<14)
+  if (num < 1<<14) {
     if (num < 1<<7)
       return 1;
     else
       return 2;
+  }
   if (num < 1<<21)
     return 3;
 

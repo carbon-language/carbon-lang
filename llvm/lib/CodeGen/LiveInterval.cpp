@@ -217,7 +217,7 @@ LiveInterval::addRangeFrom(LiveRange LR, iterator From) {
 
   // Otherwise, if this range ends in the middle of, or right next to, another
   // interval, merge it into that interval.
-  if (it != ranges.end())
+  if (it != ranges.end()) {
     if (LR.valno == it->valno) {
       if (it->start <= End) {
         it = extendIntervalStartTo(it, Start);
@@ -237,6 +237,7 @@ LiveInterval::addRangeFrom(LiveRange LR, iterator From) {
       assert(it->start >= End &&
              "Cannot overlap two LiveRanges with differing ValID's");
     }
+  }
 
   // Otherwise, this is just a new range that doesn't interact with anything.
   // Insert it.

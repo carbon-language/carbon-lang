@@ -1996,11 +1996,12 @@ SDNode *DAGCombiner::MatchRotate(SDOperand LHS, SDOperand RHS) {
       LHSShiftAmt == RHSShiftAmt.getOperand(1)) {
     if (ConstantSDNode *SUBC = 
           dyn_cast<ConstantSDNode>(RHSShiftAmt.getOperand(0))) {
-      if (SUBC->getValue() == OpSizeInBits)
+      if (SUBC->getValue() == OpSizeInBits) {
         if (HasROTL)
           return DAG.getNode(ISD::ROTL, VT, LHSShiftArg, LHSShiftAmt).Val;
         else
           return DAG.getNode(ISD::ROTR, VT, LHSShiftArg, RHSShiftAmt).Val;
+      }
     }
   }
   
@@ -2010,11 +2011,12 @@ SDNode *DAGCombiner::MatchRotate(SDOperand LHS, SDOperand RHS) {
       RHSShiftAmt == LHSShiftAmt.getOperand(1)) {
     if (ConstantSDNode *SUBC = 
           dyn_cast<ConstantSDNode>(LHSShiftAmt.getOperand(0))) {
-      if (SUBC->getValue() == OpSizeInBits)
+      if (SUBC->getValue() == OpSizeInBits) {
         if (HasROTL)
           return DAG.getNode(ISD::ROTL, VT, LHSShiftArg, LHSShiftAmt).Val;
         else
           return DAG.getNode(ISD::ROTR, VT, LHSShiftArg, RHSShiftAmt).Val;
+      }
     }
   }
 
@@ -2230,7 +2232,7 @@ SDOperand DAGCombiner::visitShiftByConstant(SDNode *N, unsigned Amt) {
   // the constant which would cause it to be modified for this
   // operation.
   if (N->getOpcode() == ISD::SRA) {
-    uint64_t BinOpRHSSign = BinOpCst->getValue() >> MVT::getSizeInBits(VT)-1;
+    uint64_t BinOpRHSSign = BinOpCst->getValue() >> (MVT::getSizeInBits(VT)-1);
     if ((bool)BinOpRHSSign != HighBitSet)
       return SDOperand();
   }
@@ -2552,7 +2554,7 @@ SDOperand DAGCombiner::visitSELECT(SDNode *N) {
     return SDOperand(N, 0);  // Don't revisit N.
   
   // fold selects based on a setcc into other things, such as min/max/abs
-  if (N0.getOpcode() == ISD::SETCC)
+  if (N0.getOpcode() == ISD::SETCC) {
     // FIXME:
     // Check against MVT::Other for SELECT_CC, which is a workaround for targets
     // having to say they don't support SELECT_CC on every type the DAG knows
@@ -2562,6 +2564,7 @@ SDOperand DAGCombiner::visitSELECT(SDNode *N) {
                          N1, N2, N0.getOperand(2));
     else
       return SimplifySelect(N0, N1, N2);
+  }
   return SDOperand();
 }
 
@@ -4013,8 +4016,8 @@ bool DAGCombiner::CombineToPreIndexedLoadStore(SDNode *N) {
 
     if (!((Use->getOpcode() == ISD::LOAD &&
            cast<LoadSDNode>(Use)->getBasePtr() == Ptr) ||
-          (Use->getOpcode() == ISD::STORE) &&
-          cast<StoreSDNode>(Use)->getBasePtr() == Ptr))
+          (Use->getOpcode() == ISD::STORE &&
+           cast<StoreSDNode>(Use)->getBasePtr() == Ptr)))
       RealUse = true;
   }
   if (!RealUse)
@@ -4131,8 +4134,8 @@ bool DAGCombiner::CombineToPostIndexedLoadStore(SDNode *N) {
             SDNode *UseUse = *III;
             if (!((UseUse->getOpcode() == ISD::LOAD &&
                    cast<LoadSDNode>(UseUse)->getBasePtr().Val == Use) ||
-                  (UseUse->getOpcode() == ISD::STORE) &&
-                  cast<StoreSDNode>(UseUse)->getBasePtr().Val == Use))
+                  (UseUse->getOpcode() == ISD::STORE &&
+                   cast<StoreSDNode>(UseUse)->getBasePtr().Val == Use)))
               RealUse = true;
           }
 
