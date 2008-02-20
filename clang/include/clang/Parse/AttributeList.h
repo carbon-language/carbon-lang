@@ -50,11 +50,11 @@ public:
     AT_packed
   };
   
-  IdentifierInfo *getAttributeName() const { return AttrName; }
-  SourceLocation getAttributeLoc() const { return AttrLoc; }
+  IdentifierInfo *getName() const { return AttrName; }
+  SourceLocation getLoc() const { return AttrLoc; }
   IdentifierInfo *getParameterName() const { return ParmName; }
   
-  Kind getKind() const { return getKind(getAttributeName()); }
+  Kind getKind() const { return getKind(getName()); }
   static Kind getKind(const IdentifierInfo *Name);
   
   AttributeList *getNext() const { return Next; }

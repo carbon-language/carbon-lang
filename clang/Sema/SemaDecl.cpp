@@ -1755,7 +1755,7 @@ void Sema::HandleDeclAttribute(Decl *New, AttributeList *rawAttr) {
     if (TypedefDecl *tDecl = dyn_cast<TypedefDecl>(New))
       HandleOCUVectorTypeAttribute(tDecl, rawAttr);
     else
-      Diag(rawAttr->getAttributeLoc(), 
+      Diag(rawAttr->getLoc(), 
            diag::err_typecheck_ocu_vector_not_typedef);
     break;
   case AttributeList::AT_address_space:
@@ -1800,14 +1800,14 @@ QualType Sema::HandleAddressSpaceTypeAttribute(QualType curType,
                                                AttributeList *rawAttr) {
   // check the attribute arguments.
   if (rawAttr->getNumArgs() != 1) {
-    Diag(rawAttr->getAttributeLoc(), diag::err_attribute_wrong_number_arguments,
+    Diag(rawAttr->getLoc(), diag::err_attribute_wrong_number_arguments,
          std::string("1"));
     return QualType();
   }
   Expr *addrSpaceExpr = static_cast<Expr *>(rawAttr->getArg(0));
   llvm::APSInt addrSpace(32);
   if (!addrSpaceExpr->isIntegerConstantExpr(addrSpace, Context)) {
-    Diag(rawAttr->getAttributeLoc(), diag::err_attribute_address_space_not_int,
+    Diag(rawAttr->getLoc(), diag::err_attribute_address_space_not_int,
          addrSpaceExpr->getSourceRange());
     return QualType();
   }
@@ -1828,14 +1828,14 @@ void Sema::HandleOCUVectorTypeAttribute(TypedefDecl *tDecl,
   QualType curType = tDecl->getUnderlyingType();
   // check the attribute arguments.
   if (rawAttr->getNumArgs() != 1) {
-    Diag(rawAttr->getAttributeLoc(), diag::err_attribute_wrong_number_arguments,
+    Diag(rawAttr->getLoc(), diag::err_attribute_wrong_number_arguments,
          std::string("1"));
     return;
   }
   Expr *sizeExpr = static_cast<Expr *>(rawAttr->getArg(0));
   llvm::APSInt vecSize(32);
   if (!sizeExpr->isIntegerConstantExpr(vecSize, Context)) {
-    Diag(rawAttr->getAttributeLoc(), diag::err_attribute_argument_not_int,
+    Diag(rawAttr->getLoc(), diag::err_attribute_argument_not_int,
          "ocu_vector_type", sizeExpr->getSourceRange());
     return;
   }
@@ -1843,7 +1843,7 @@ void Sema::HandleOCUVectorTypeAttribute(TypedefDecl *tDecl,
   // in conjunction with complex types (pointers, arrays, functions, etc.).
   Type *canonType = curType.getCanonicalType().getTypePtr();
   if (!(canonType->isIntegerType() || canonType->isRealFloatingType())) {
-    Diag(rawAttr->getAttributeLoc(), diag::err_attribute_invalid_vector_type,
+    Diag(rawAttr->getLoc(), diag::err_attribute_invalid_vector_type,
          curType.getCanonicalType().getAsString());
     return;
   }
@@ -1852,7 +1852,7 @@ void Sema::HandleOCUVectorTypeAttribute(TypedefDecl *tDecl,
   unsigned vectorSize = static_cast<unsigned>(vecSize.getZExtValue()); 
   
   if (vectorSize == 0) {
-    Diag(rawAttr->getAttributeLoc(), diag::err_attribute_zero_size,
+    Diag(rawAttr->getLoc(), diag::err_attribute_zero_size,
          sizeExpr->getSourceRange());
     return;
   }
@@ -1866,14 +1866,14 @@ QualType Sema::HandleVectorTypeAttribute(QualType curType,
                                          AttributeList *rawAttr) {
   // check the attribute arugments.
   if (rawAttr->getNumArgs() != 1) {
-    Diag(rawAttr->getAttributeLoc(), diag::err_attribute_wrong_number_arguments,
+    Diag(rawAttr->getLoc(), diag::err_attribute_wrong_number_arguments,
          std::string("1"));
     return QualType();
   }
   Expr *sizeExpr = static_cast<Expr *>(rawAttr->getArg(0));
   llvm::APSInt vecSize(32);
   if (!sizeExpr->isIntegerConstantExpr(vecSize, Context)) {
-    Diag(rawAttr->getAttributeLoc(), diag::err_attribute_argument_not_int,
+    Diag(rawAttr->getLoc(), diag::err_attribute_argument_not_int,
          "vector_size", sizeExpr->getSourceRange());
     return QualType();
   }
@@ -1898,23 +1898,23 @@ QualType Sema::HandleVectorTypeAttribute(QualType curType,
   }
   // the base type must be integer or float.
   if (!(canonType->isIntegerType() || canonType->isRealFloatingType())) {
-    Diag(rawAttr->getAttributeLoc(), diag::err_attribute_invalid_vector_type,
+    Diag(rawAttr->getLoc(), diag::err_attribute_invalid_vector_type,
          curType.getCanonicalType().getAsString());
     return QualType();
   }
   unsigned typeSize = static_cast<unsigned>(
-    Context.getTypeSize(curType, rawAttr->getAttributeLoc()));
+    Context.getTypeSize(curType, rawAttr->getLoc()));
   // vecSize is specified in bytes - convert to bits.
   unsigned vectorSize = static_cast<unsigned>(vecSize.getZExtValue() * 8); 
   
   // the vector size needs to be an integral multiple of the type size.
   if (vectorSize % typeSize) {
-    Diag(rawAttr->getAttributeLoc(), diag::err_attribute_invalid_size,
+    Diag(rawAttr->getLoc(), diag::err_attribute_invalid_size,
          sizeExpr->getSourceRange());
     return QualType();
   }
   if (vectorSize == 0) {
-    Diag(rawAttr->getAttributeLoc(), diag::err_attribute_zero_size,
+    Diag(rawAttr->getLoc(), diag::err_attribute_zero_size,
          sizeExpr->getSourceRange());
     return QualType();
   }
@@ -1924,11 +1924,10 @@ QualType Sema::HandleVectorTypeAttribute(QualType curType,
   return Context.getVectorType(curType, vectorSize/typeSize);
 }
 
-void Sema::HandlePackedAttribute(Decl *d, AttributeList *rawAttr)
-{
+void Sema::HandlePackedAttribute(Decl *d, AttributeList *rawAttr) {
   // check the attribute arguments.
   if (rawAttr->getNumArgs() > 0) {
-    Diag(rawAttr->getAttributeLoc(), diag::err_attribute_wrong_number_arguments,
+    Diag(rawAttr->getLoc(), diag::err_attribute_wrong_number_arguments,
          std::string("0"));
     return;
   }
@@ -1939,22 +1938,21 @@ void Sema::HandlePackedAttribute(Decl *d, AttributeList *rawAttr)
     // If the alignment is less than or equal to 8 bits, the packed attribute
     // has no effect.
     if (Context.getTypeAlign(FD->getType(), SourceLocation()) <= 8)
-      Diag(rawAttr->getAttributeLoc(), 
+      Diag(rawAttr->getLoc(), 
            diag::warn_attribute_ignored_for_field_of_type,
-           rawAttr->getAttributeName()->getName(),
-           FD->getType().getAsString());
+           rawAttr->getName()->getName(), FD->getType().getAsString());
     else
       FD->addAttr(new PackedAttr);
   } else
-    Diag(rawAttr->getAttributeLoc(), diag::warn_attribute_ignored,
-         rawAttr->getAttributeName()->getName());
+    Diag(rawAttr->getLoc(), diag::warn_attribute_ignored,
+         rawAttr->getName()->getName());
 }
   
 void Sema::HandleAlignedAttribute(Decl *d, AttributeList *rawAttr)
 {
   // check the attribute arguments.
   if (rawAttr->getNumArgs() > 1) {
-    Diag(rawAttr->getAttributeLoc(), diag::err_attribute_wrong_number_arguments,
+    Diag(rawAttr->getLoc(), diag::err_attribute_wrong_number_arguments,
          std::string("1"));
     return;
   }
@@ -1970,7 +1968,7 @@ void Sema::HandleAlignedAttribute(Decl *d, AttributeList *rawAttr)
     Expr *alignmentExpr = static_cast<Expr *>(rawAttr->getArg(0));
     llvm::APSInt alignment(32);
     if (!alignmentExpr->isIntegerConstantExpr(alignment, Context)) {
-      Diag(rawAttr->getAttributeLoc(), diag::err_attribute_argument_not_int,
+      Diag(rawAttr->getLoc(), diag::err_attribute_argument_not_int,
            "aligned", alignmentExpr->getSourceRange());
       return;
     }
