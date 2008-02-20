@@ -123,7 +123,8 @@ enum FormattingFlags {
 enum MiscFlags {               // Miscellaneous flags to adjust argument
   CommaSeparated     = 0x200,  // Should this cl::list split between commas?
   PositionalEatsArgs = 0x400,  // Should this positional cl::list eat -args?
-  MiscMask           = 0x600   // Union of the above flags.
+  Sink               = 0x800,  // Should this cl::list eat all unknown options?
+  MiscMask           = 0xE00   // Union of the above flags.
 };
 
 

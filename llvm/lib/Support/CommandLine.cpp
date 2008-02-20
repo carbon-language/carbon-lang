@@ -101,6 +101,7 @@ void Option::addArgument() {
 /// GetOptionInfo - Scan the list of registered options, turning them into data
 /// structures that are easier to handle.
 static void GetOptionInfo(std::vector<Option*> &PositionalOpts,
+                          std::vector<Option*> &SinkOpts,
                           std::map<std::string, Option*> &OptionsMap) {
   std::vector<const char*> OptionNames;
   Option *CAOpt = 0;  // The ConsumeAfter option if it exists.
@@ -126,6 +127,8 @@ static void GetOptionInfo(std::vector<Option*> &PositionalOpts,
     // Remember information about positional options.
     if (O->getFormattingFlag() == cl::Positional)
       PositionalOpts.push_back(O);
+    else if (O->getMiscFlags() && cl::Sink) // Remember sink options
+      SinkOpts.push_back(O);
     else if (O->getNumOccurrencesFlag() == cl::ConsumeAfter) {
       if (CAOpt)
         O->error("Cannot specify more than one option with cl::ConsumeAfter!");
@@ -337,8 +340,9 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
                                  const char *Overview) {
   // Process all registered options.
   std::vector<Option*> PositionalOpts;
+  std::vector<Option*> SinkOpts;
   std::map<std::string, Option*> Opts;
-  GetOptionInfo(PositionalOpts, Opts);
+  GetOptionInfo(PositionalOpts, SinkOpts, Opts);
   
   assert((!Opts.empty() || !PositionalOpts.empty()) &&
          "No options specified!");
@@ -418,8 +422,9 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
     // response to things like -load, etc.  If this happens, rescan the options.
     if (OptionListChanged) {
       PositionalOpts.clear();
+      SinkOpts.clear();
       Opts.clear();
-      GetOptionInfo(PositionalOpts, Opts);
+      GetOptionInfo(PositionalOpts, SinkOpts, Opts);
       OptionListChanged = false;
     }
     
@@ -515,9 +520,15 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
     }
 
     if (Handler == 0) {
-      cerr << ProgramName << ": Unknown command line argument '"
-           << argv[i] << "'.  Try: '" << argv[0] << " --help'\n";
-      ErrorParsing = true;
+      if (SinkOpts.empty()) {
+        cerr << ProgramName << ": Unknown command line argument '"
+             << argv[i] << "'.  Try: '" << argv[0] << " --help'\n";
+        ErrorParsing = true;
+      } else {
+        for (std::vector<Option*>::iterator I = SinkOpts.begin(),
+               E = SinkOpts.end(); I != E ; ++I)
+          (*I)->addOccurrence(i, "", argv[i]);
+      }
       continue;
     }
 
@@ -929,8 +940,9 @@ public:
 
     // Get all the options.
     std::vector<Option*> PositionalOpts;
+    std::vector<Option*> SinkOpts;
     std::map<std::string, Option*> OptMap;
-    GetOptionInfo(PositionalOpts, OptMap);
+    GetOptionInfo(PositionalOpts, SinkOpts, OptMap);
     
     // Copy Options into a vector so we can sort them as we like...
     std::vector<std::pair<std::string, Option*> > Opts;
