@@ -1024,6 +1024,7 @@ Module *llvm::RunVMAsmParser(llvm::MemoryBuffer *MB) {
 // ValueRef - Unresolved reference to a definition or BB
 %type <ValIDVal>      ValueRef ConstValueRef SymbolicValueRef
 %type <ValueVal>      ResolvedVal            // <type> <valref> pair
+%type <ValueList>     ReturnedVal
 // Tokens and types for handling constant integer values
 //
 // ESINT64VAL - A negative number within long long range
@@ -1459,7 +1460,7 @@ ResultTypes
   : Types {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$1)->getDescription());
-    if (!(*$1)->isFirstClassType())
+    if (!(*$1)->isFirstClassType() && (*$1)->getTypeID() != Type::StructTyID)
       GEN_ERROR("LLVM functions cannot return aggregate types");
     $$ = $1;
   }
@@ -2523,6 +2524,16 @@ ResolvedVal : Types ValueRef {
   }
   ;
 
+ReturnedVal : ResolvedVal {
+    $$ = new std::vector<Value *>();
+    $$->push_back($1); 
+    CHECK_FOR_ERROR
+  }
+  | ReturnedVal ',' ConstVal {
+    ($$=$1)->push_back($3); 
+    CHECK_FOR_ERROR
+  };
+
 BasicBlockList : BasicBlockList BasicBlock {
     $$ = $1;
     CHECK_FOR_ERROR
@@ -2565,8 +2576,31 @@ InstructionList : InstructionList Inst {
 
   };
 
-BBTerminatorInst : RET ResolvedVal {              // Return with a result...
-    $$ = new ReturnInst($2);
+BBTerminatorInst : 
+  RET ReturnedVal  { // Return with a result...
+    if($2->size() == 1) 
+      $$ = new ReturnInst($2->back());
+    else {
+
+      std::vector<const Type*> Elements;
+      std::vector<Constant*> Vals;
+      for (std::vector<Value *>::iterator I = $2->begin(),
+             E = $2->end(); I != E; ++I) {
+        Value *V = *I;
+        Constant *C = cast<Constant>(V);
+        Elements.push_back(V->getType());
+        Vals.push_back(C);
+      }
+
+      const StructType *STy = StructType::get(Elements);
+      PATypeHolder *PTy = 
+        new PATypeHolder(HandleUpRefs(StructType::get(Elements)));
+
+      Constant *CS = ConstantStruct::get(STy, Vals); // *$2);
+      $$ = new ReturnInst(CS);
+      delete PTy;
+    }
+    delete $2;
     CHECK_FOR_ERROR
   }
   | RET VOID {                                    // Return with no result...
