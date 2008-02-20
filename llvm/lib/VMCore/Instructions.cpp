@@ -2719,10 +2719,21 @@ GetResultInst::GetResultInst(Value *Aggregate, unsigned Index,
 bool GetResultInst::isValidOperands(const Value *Aggregate, unsigned Index) {
   if (!Aggregate)
     return false;
-  if (const StructType *STy = dyn_cast<StructType>(Aggregate->getType())) 
-    if (Index < STy->getNumElements())
-      return true;
 
+  if (const StructType *STy = dyn_cast<StructType>(Aggregate->getType())) {
+    unsigned NumElements = STy->getNumElements();
+    if (Index >= NumElements)
+      return false;
+
+    // getresult aggregate value's element types are restricted to
+    // avoid nested aggregates.
+    for (unsigned i = 0; i < NumElements; ++i)
+      if (!STy->getElementType(i)->isFirstClassType())
+        return false;
+
+    // Otherwise, Aggregate is valid.
+    return true;
+  }
   return false;
 }
 
