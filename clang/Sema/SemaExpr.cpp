@@ -541,7 +541,7 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
     // FIXME: Handle address space modifiers
     QualType MemberType = MemberDecl->getType();
     unsigned combinedQualifiers =
-        MemberType.getQualifiers() | BaseType.getQualifiers();
+        MemberType.getCVRQualifiers() | BaseType.getCVRQualifiers();
     MemberType = MemberType.getQualifiedType(combinedQualifiers);
 
     return new MemberExpr(BaseExpr, OpKind==tok::arrow, MemberDecl,
@@ -826,8 +826,8 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
       // ignore qualifiers on void (C99 6.5.15p3, clause 6)
       if (lhptee->isVoidType() &&
           (rhptee->isObjectType() || rhptee->isIncompleteType())) {
-        // figure out necessary qualifiers (C99 6.5.15p6)
-        QualType destPointee = lhptee.getQualifiedType(rhptee.getQualifiers());
+        // Figure out necessary qualifiers (C99 6.5.15p6)
+        QualType destPointee=lhptee.getQualifiedType(rhptee.getCVRQualifiers());
         QualType destType = Context.getPointerType(destPointee);
         ImpCastExprToType(lex, destType); // add qualifiers if necessary
         ImpCastExprToType(rex, destType); // promote to void*
@@ -835,7 +835,7 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
       }
       if (rhptee->isVoidType() &&
           (lhptee->isObjectType() || lhptee->isIncompleteType())) {
-        QualType destPointee = rhptee.getQualifiedType(lhptee.getQualifiers());
+        QualType destPointee=rhptee.getQualifiedType(lhptee.getCVRQualifiers());
         QualType destType = Context.getPointerType(destPointee);
         ImpCastExprToType(lex, destType); // add qualifiers if necessary
         ImpCastExprToType(rex, destType); // promote to void*
@@ -928,7 +928,8 @@ void Sema::DefaultFunctionArrayConversion(Expr *&e) {
     //     b[4] = 1;
     //   }
     QualType ELT = ary->getElementType();
-    ELT = ELT.getQualifiedType(t.getQualifiers()|ELT.getQualifiers());
+    // FIXME: Handle ASQualType
+    ELT = ELT.getQualifiedType(t.getCVRQualifiers()|ELT.getCVRQualifiers());
     ImpCastExprToType(e, Context.getPointerType(ELT));
   }
 }
@@ -1114,8 +1115,9 @@ Sema::CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
   // C99 6.5.16.1p1: This following citation is common to constraints 
   // 3 & 4 (below). ...and the type *pointed to* by the left has all the 
   // qualifiers of the type *pointed to* by the right; 
-  if ((lhptee.getQualifiers() & rhptee.getQualifiers()) != 
-       rhptee.getQualifiers())
+  // FIXME: Handle ASQualType
+  if ((lhptee.getCVRQualifiers() & rhptee.getCVRQualifiers()) != 
+       rhptee.getCVRQualifiers())
     ConvTy = CompatiblePointerDiscardsQualifiers;
 
   // C99 6.5.16.1p1 (constraint 4): If one operand is a pointer to an object or 

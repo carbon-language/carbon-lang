@@ -25,7 +25,7 @@ using llvm::SerializedPtrID;
 
 void QualType::Emit(Serializer& S) const {
   S.EmitPtr(getTypePtr());
-  S.EmitInt(getQualifiers());
+  S.EmitInt(getCVRQualifiers());
 }
 
 QualType QualType::ReadVal(Deserializer& D) {
@@ -118,7 +118,7 @@ void Type::Create(ASTContext& Context, unsigned i, Deserializer& D) {
 //===----------------------------------------------------------------------===//
 
 void ASQualType::EmitImpl(Serializer& S) const {
-  S.Emit(getBaseType());
+  S.EmitPtr(getBaseType());
   S.EmitInt(getAddressSpace());
 }
 

@@ -263,7 +263,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
   }
   
   case Type::ASQual:
-    return ConvertType(cast<ASQualType>(Ty).getBaseType());
+    return ConvertType(QualType(cast<ASQualType>(Ty).getBaseType(), 0));
 
   case Type::ObjCInterface:
     assert(0 && "FIXME: add missing functionality here");

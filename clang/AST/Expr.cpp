@@ -358,7 +358,7 @@ Expr::isLvalueResult Expr::isLvalue() const {
     return LV_NotObjectType;
 
   // Allow qualified void which is an incomplete type other than void (yuck).
-  if (TR->isVoidType() && !TR.getCanonicalType().getQualifiers())
+  if (TR->isVoidType() && !TR.getCanonicalType().getCVRQualifiers())
     return LV_IncompleteVoidType;
 
   if (TR->isReferenceType()) // C++ [expr]
@@ -1000,7 +1000,8 @@ bool Expr::isNullPointerConstant(ASTContext &Ctx) const {
     // Check that it is a cast to void*.
     if (const PointerType *PT = CE->getType()->getAsPointerType()) {
       QualType Pointee = PT->getPointeeType();
-      if (Pointee.getQualifiers() == 0 && Pointee->isVoidType() && // to void*
+      if (Pointee.getCVRQualifiers() == 0 && 
+          Pointee->isVoidType() &&                                 // to void*
           CE->getSubExpr()->getType()->isIntegerType())            // from int.
         return CE->getSubExpr()->isNullPointerConstant(Ctx);
     }

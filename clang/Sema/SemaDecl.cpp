@@ -1042,7 +1042,7 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
   // Check for C99 6.7.5.3p10 - foo(void) is a non-varargs function that takes
   // no arguments, not a function that takes a single void argument.
   if (FTI.NumArgs == 1 && !FTI.isVariadic && FTI.ArgInfo[0].Ident == 0 &&
-      !QualType::getFromOpaquePtr(FTI.ArgInfo[0].TypeInfo).getQualifiers() &&
+      !QualType::getFromOpaquePtr(FTI.ArgInfo[0].TypeInfo).getCVRQualifiers() &&
       QualType::getFromOpaquePtr(FTI.ArgInfo[0].TypeInfo)->isVoidType()) {
     // empty arg list, don't push any params.
   } else {
@@ -1773,7 +1773,7 @@ void Sema::HandleDeclAttribute(Decl *New, AttributeList *rawAttr) {
     } else if (ValueDecl *vDecl = dyn_cast<ValueDecl>(New)) {
       QualType newType = HandleAddressSpaceTypeAttribute(vDecl->getType(), 
                                                          rawAttr);
-      if (!newType.isNull()) // install the new addr spaced  type into the decl
+      if (!newType.isNull()) // install the new addr spaced type into the decl
         vDecl->setType(newType);
     }
   } else if (attrLen == 7 && !memcmp(attrName, "aligned", 7))
@@ -1798,7 +1798,7 @@ void Sema::HandleDeclAttributes(Decl *New, AttributeList *declspec_prefix,
 
 QualType Sema::HandleAddressSpaceTypeAttribute(QualType curType, 
                                                AttributeList *rawAttr) {
-  // check the attribute arugments.
+  // check the attribute arguments.
   if (rawAttr->getNumArgs() != 1) {
     Diag(rawAttr->getAttributeLoc(), diag::err_attribute_wrong_number_arguments,
          std::string("1"));
@@ -1820,7 +1820,6 @@ QualType Sema::HandleAddressSpaceTypeAttribute(QualType curType,
   // TODO: Should we convert contained types of address space 
   // qualified types here or or where they directly participate in conversions
   // (i.e. elsewhere)
-  
   return Context.getASQualType(curType, addressSpace);
 }
 

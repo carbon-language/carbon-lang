@@ -257,7 +257,7 @@ ASTContext::getTypeInfo(QualType T, SourceLocation L) {
     break;
   }
   case Type::ASQual:
-    return getTypeInfo(cast<ASQualType>(T)->getBaseType(), L);
+    return getTypeInfo(QualType(cast<ASQualType>(T)->getBaseType(), 0), L);
   case Type::ObjCQualifiedId:
     Target.getPointerInfo(Size, Align, getFullLoc(L));
     break;
@@ -436,9 +436,18 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D,
 //===----------------------------------------------------------------------===//
 
 QualType ASTContext::getASQualType(QualType T, unsigned AddressSpace) {
-  // Check if we've already instantiated an address space qual'd type of this type.
+  if (T.getCanonicalType().getAddressSpace() == AddressSpace)
+    return T;
+  
+  // Type's cannot have multiple ASQuals, therefore we know we only have to deal
+  // with CVR qualifiers from here on out.
+  assert(T.getCanonicalType().getAddressSpace() == 0 &&
+         "Type is already address space qualified");
+  
+  // Check if we've already instantiated an address space qual'd type of this
+  // type.
   llvm::FoldingSetNodeID ID;
-  ASQualType::Profile(ID, T, AddressSpace);      
+  ASQualType::Profile(ID, T.getTypePtr(), AddressSpace);      
   void *InsertPos = 0;
   if (ASQualType *ASQy = ASQualTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(ASQy, 0);
@@ -453,10 +462,10 @@ QualType ASTContext::getASQualType(QualType T, unsigned AddressSpace) {
     ASQualType *NewIP = ASQualTypes.FindNodeOrInsertPos(ID, InsertPos);
     assert(NewIP == 0 && "Shouldn't be in the map!");
   }
-  ASQualType *New = new ASQualType(T, Canonical, AddressSpace);
+  ASQualType *New = new ASQualType(T.getTypePtr(), Canonical, AddressSpace);
   ASQualTypes.InsertNode(New, InsertPos);
   Types.push_back(New);
-  return QualType(New, 0);
+  return QualType(New, T.getCVRQualifiers());
 }
 
 
@@ -1621,7 +1630,8 @@ bool ASTContext::tagTypesAreCompatible(QualType lhs, QualType rhs) {
 bool ASTContext::pointerTypesAreCompatible(QualType lhs, QualType rhs) {
   // C99 6.7.5.1p2: For two pointer types to be compatible, both shall be 
   // identically qualified and both shall be pointers to compatible types.
-  if (lhs.getQualifiers() != rhs.getQualifiers())
+  if (lhs.getCVRQualifiers() != rhs.getCVRQualifiers() ||
+      lhs.getAddressSpace() != rhs.getAddressSpace())
     return false;
     
   QualType ltype = cast<PointerType>(lhs.getCanonicalType())->getPointeeType();
@@ -1713,7 +1723,8 @@ bool ASTContext::arrayTypesAreCompatible(QualType lhs, QualType rhs) {
 /// C99 6.2.7p1: Two types have compatible types if their types are the 
 /// same. See 6.7.[2,3,5] for additional rules.
 bool ASTContext::typesAreCompatible(QualType lhs, QualType rhs) {
-  if (lhs.getQualifiers() != rhs.getQualifiers())
+  if (lhs.getCVRQualifiers() != rhs.getCVRQualifiers() ||
+      lhs.getAddressSpace() != rhs.getAddressSpace())
     return false;
 
   QualType lcanon = lhs.getCanonicalType();

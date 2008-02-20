@@ -51,7 +51,6 @@ namespace clang {
   class FunctionType;
   class OCUVectorType;
   class BuiltinType;
-  class ASQualType;
   class ObjCQualifiedInterfaceType;
   class StmtIteratorBase;
   
@@ -90,7 +89,7 @@ public:
     return T;
   }
   
-  unsigned getQualifiers() const {
+  unsigned getCVRQualifiers() const {
     return ThePtr & CVRFlags;
   }
   Type *getTypePtr() const {
@@ -237,7 +236,8 @@ protected:
   // silence VC++ warning C4355: 'this' : used in base member initializer list
   Type *this_() { return this; }
   Type(TypeClass tc, QualType Canonical)
-    : CanonicalType(Canonical.isNull() ? QualType(this_(),0) : Canonical), TC(tc){}
+    : CanonicalType(Canonical.isNull() ? QualType(this_(), 0) : Canonical),
+      TC(tc) {}
   virtual ~Type();
   friend class ASTContext;
   
@@ -311,8 +311,8 @@ public:
   bool isObjCQualifiedIdType() const; // id includes conforming protocol type
   
   // Type Checking Functions: Check to see if this type is structurally the
-  // specified type, ignoring typedefs and qualifiers, and return a pointer to the best type
-  // we can.
+  // specified type, ignoring typedefs and qualifiers, and return a pointer to
+  // the best type we can.
   const BuiltinType *getAsBuiltinType() const;   
   const FunctionType *getAsFunctionType() const;   
   const PointerType *getAsPointerType() const;
@@ -379,15 +379,18 @@ protected:
 /// This supports address space qualified types.
 ///
 class ASQualType : public Type, public llvm::FoldingSetNode {
-  QualType BaseType;
+  /// BaseType - This is the underlying type that this qualifies.  All CVR
+  /// qualifiers are stored on the QualType that references this type, so we
+  /// can't have any here.
+  Type *BaseType;
   /// Address Space ID - The address space ID this type is qualified with.
   unsigned AddressSpace;
-  ASQualType(QualType Base, QualType CanonicalPtr, unsigned AddrSpace) :
+  ASQualType(Type *Base, QualType CanonicalPtr, unsigned AddrSpace) :
     Type(ASQual, CanonicalPtr), BaseType(Base), AddressSpace(AddrSpace) {
   }
   friend class ASTContext;  // ASTContext creates these.
 public:
-  QualType getBaseType() const { return BaseType; }
+  Type *getBaseType() const { return BaseType; }
   unsigned getAddressSpace() const { return AddressSpace; }
   
   virtual void getAsStringInternal(std::string &InnerString) const;
@@ -395,9 +398,9 @@ public:
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, getBaseType(), AddressSpace);
   }
-  static void Profile(llvm::FoldingSetNodeID &ID, QualType Base, 
+  static void Profile(llvm::FoldingSetNodeID &ID, Type *Base, 
                       unsigned AddrSpace) {
-    ID.AddPointer(Base.getAsOpaquePtr());
+    ID.AddPointer(Base);
     ID.AddInteger(AddrSpace);
   }
   
@@ -1093,21 +1096,22 @@ public:
 /// getCanonicalType - Return the canonical version of this type, with the
 /// appropriate type qualifiers on it.
 inline QualType QualType::getCanonicalType() const {
-  return QualType(getTypePtr()->getCanonicalTypeInternal().getTypePtr(),
-                  getQualifiers() |
-                  getTypePtr()->getCanonicalTypeInternal().getQualifiers());
+  QualType CanType = getTypePtr()->getCanonicalTypeInternal();
+  return QualType(CanType.getTypePtr(),
+                  getCVRQualifiers() | CanType.getCVRQualifiers());
 }
 
 /// getUnqualifiedType - Return the type without any qualifiers.
 inline QualType QualType::getUnqualifiedType() const {
-  if (const ASQualType *ASQT = dyn_cast<ASQualType>(getTypePtr()))
-    return ASQT->getBaseType().getUnqualifiedType();
-  return QualType(getTypePtr(), 0);
+  Type *TP = getTypePtr();
+  if (const ASQualType *ASQT = dyn_cast<ASQualType>(TP))
+    TP = ASQT->getBaseType();
+  return QualType(TP, 0);
 }
 
 /// getAddressSpace - Return the address space of this type.
 inline unsigned QualType::getAddressSpace() const {
-  if (const ASQualType *ASQT = dyn_cast<ASQualType>(getTypePtr()))
+  if (const ASQualType *ASQT = dyn_cast<ASQualType>(getCanonicalType()))
     return ASQT->getAddressSpace();
   return 0;
 }

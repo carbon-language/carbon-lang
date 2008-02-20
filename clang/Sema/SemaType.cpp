@@ -328,7 +328,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
               FTI.ArgInfo[i].TypeInfo = ArgTy.getAsOpaquePtr();
             } else {
               // Reject, but continue to parse 'float(const void)'.
-              if (ArgTy.getQualifiers())
+              if (ArgTy.getCVRQualifiers())
                 Diag(DeclType.Loc, diag::err_void_param_qualified);
               
               // Do not add 'void' to the ArgTys list.

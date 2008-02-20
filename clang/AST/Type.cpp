@@ -709,7 +709,12 @@ QualType TypedefType::LookThroughTypedefs() const {
   const TypedefType *TDT = this;
   while (1) {
     QualType CurType = TDT->getDecl()->getUnderlyingType();
-    TypeQuals |= CurType.getQualifiers();
+    
+    
+    /// FIXME:
+    /// FIXME: This is incorrect for ASQuals!
+    /// FIXME:
+    TypeQuals |= CurType.getCVRQualifiers();
 
     TDT = dyn_cast<TypedefType>(CurType);
     if (TDT == 0)
@@ -755,8 +760,7 @@ void QualType::getAsStringInternal(std::string &S) const {
   }
   
   // Print qualifiers as appropriate.
-  unsigned TQ = getQualifiers();
-  if (TQ) {
+  if (unsigned TQ = getCVRQualifiers()) {
     std::string TQS;
     AppendTypeQualList(TQS, TQ);
     if (!S.empty())

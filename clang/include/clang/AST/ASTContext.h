@@ -121,8 +121,10 @@ public:
   //                           Type Constructors
   //===--------------------------------------------------------------------===//
   
-  /// getAddrSpaceQualType - Return the uniqued reference to the type for an
-  /// address space qualified type with the specified type and address space.
+  /// getASQualType - Return the uniqued reference to the type for an address
+  /// space qualified type with the specified type and address space.  The
+  /// resulting type has a union of the qualifiers from T and the address space.
+  // If T already has an address space specifier, it is silently replaced.
   QualType getASQualType(QualType T, unsigned AddressSpace);
   
   /// getComplexType - Return the uniqued reference to the type for a complex
