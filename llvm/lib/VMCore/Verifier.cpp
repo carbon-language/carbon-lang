@@ -1039,7 +1039,8 @@ void Verifier::visitAllocationInst(AllocationInst &AI) {
 }
 
 void Verifier::visitGetResultInst(GetResultInst &GRI) {
-  // FIXME : Check operands.
+  assert (GRI.isValidOperands(GRI.getAggregateValue(), GRI.getIndex())
+          && "Invalid GetResultInst operands!");
   visitInstruction(GRI);
 }
 
