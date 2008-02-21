@@ -580,7 +580,8 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
   case SizeOfAlignOfTypeExprClass: {
     const SizeOfAlignOfTypeExpr *Exp = cast<SizeOfAlignOfTypeExpr>(this);
     // alignof always evaluates to a constant.
-    if (Exp->isSizeOf() && !Exp->getArgumentType()->isConstantSizeType()) {
+    if (Exp->isSizeOf() && !Exp->getArgumentType()->isVoidType() &&
+        !Exp->getArgumentType()->isConstantSizeType()) {
       if (Loc) *Loc = Exp->getOperatorLoc();
       return false;
     }
@@ -721,17 +722,23 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
       return true;  // FIXME: this is wrong.
     case UnaryOperator::SizeOf:
     case UnaryOperator::AlignOf:
+      // Return the result in the right width.
+      Result.zextOrTrunc(
+                         static_cast<uint32_t>(Ctx.getTypeSize(getType(),
+                                                       Exp->getOperatorLoc())));
+        
+      // sizeof(void) and __alignof__(void) = 1 as a gcc extension.
+      if (Exp->getSubExpr()->getType()->isVoidType()) {
+        Result = 1;
+        break;
+      }
+        
       // sizeof(vla) is not a constantexpr: C99 6.5.3.4p2.
       if (!Exp->getSubExpr()->getType()->isConstantSizeType()) {
         if (Loc) *Loc = Exp->getOperatorLoc();
         return false;
       }
       
-      // Return the result in the right width.
-      Result.zextOrTrunc(
-        static_cast<uint32_t>(Ctx.getTypeSize(getType(),
-                                              Exp->getOperatorLoc())));
-
       // Get information about the size or align.
       if (Exp->getSubExpr()->getType()->isFunctionType()) {
         // GCC extension: sizeof(function) = 1.
@@ -771,16 +778,23 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
   }
   case SizeOfAlignOfTypeExprClass: {
     const SizeOfAlignOfTypeExpr *Exp = cast<SizeOfAlignOfTypeExpr>(this);
-    // alignof always evaluates to a constant.
+    
+    // Return the result in the right width.
+    Result.zextOrTrunc(
+      static_cast<uint32_t>(Ctx.getTypeSize(getType(), Exp->getOperatorLoc())));
+    
+    // sizeof(void) and __alignof__(void) = 1 as a gcc extension.
+    if (Exp->getArgumentType()->isVoidType()) {
+      Result = 1;
+      break;
+    }
+    
+    // alignof always evaluates to a constant, sizeof does if arg is not VLA.
     if (Exp->isSizeOf() && !Exp->getArgumentType()->isConstantSizeType()) {
       if (Loc) *Loc = Exp->getOperatorLoc();
       return false;
     }
 
-    // Return the result in the right width.
-    Result.zextOrTrunc(
-      static_cast<uint32_t>(Ctx.getTypeSize(getType(), Exp->getOperatorLoc())));
-    
     // Get information about the size or align.
     if (Exp->getArgumentType()->isFunctionType()) {
       // GCC extension: sizeof(function) = 1.

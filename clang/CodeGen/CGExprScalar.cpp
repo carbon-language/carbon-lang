@@ -607,6 +607,15 @@ Value *ScalarExprEmitter::VisitUnaryLNot(const UnaryOperator *E) {
 /// an integer (RetType).
 Value *ScalarExprEmitter::EmitSizeAlignOf(QualType TypeToSize, 
                                           QualType RetType,bool isSizeOf){
+  assert(RetType->isIntegerType() && "Result type must be an integer!");
+  uint32_t ResultWidth = 
+    static_cast<uint32_t>(CGF.getContext().getTypeSize(RetType, 
+                                                       SourceLocation()));
+
+  // sizeof(void) and __alignof__(void) = 1 as a gcc extension.
+  if (TypeToSize->isVoidType())
+    return llvm::ConstantInt::get(llvm::APInt(ResultWidth, 1));
+  
   /// FIXME: This doesn't handle VLAs yet!
   std::pair<uint64_t, unsigned> Info =
     CGF.getContext().getTypeInfo(TypeToSize, SourceLocation());
@@ -614,10 +623,6 @@ Value *ScalarExprEmitter::EmitSizeAlignOf(QualType TypeToSize,
   uint64_t Val = isSizeOf ? Info.first : Info.second;
   Val /= 8;  // Return size in bytes, not bits.
   
-  assert(RetType->isIntegerType() && "Result type must be an integer!");
-  
-  uint32_t ResultWidth = static_cast<uint32_t>(
-    CGF.getContext().getTypeSize(RetType, SourceLocation()));
   return llvm::ConstantInt::get(llvm::APInt(ResultWidth, Val));
 }
 

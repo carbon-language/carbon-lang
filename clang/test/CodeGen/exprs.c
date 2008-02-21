@@ -23,3 +23,14 @@ int test3() {
   bp -= (short)1;
 }
 
+// PR2080 - sizeof void
+int t1 = sizeof(void);
+int t2 = __alignof__(void);
+void test4() {
+  t1 = sizeof(void);
+  t2 = __alignof__(void);
+  
+  t1 = sizeof(test4());
+  t2 = __alignof__(test4());
+}
+
