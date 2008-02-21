@@ -200,34 +200,36 @@ public:
     // Make sure we have an array at this point
     assert(0 && "Unable to handle InitListExpr");
   }
-  
+
   llvm::Constant *VisitImplicitCastExpr(ImplicitCastExpr *ICExpr) {
-    // If this is due to array->pointer conversion, emit the array expression as
-    // an l-value.
-    if (ICExpr->getSubExpr()->getType()->isArrayType()) {
-      // Note that VLAs can't exist for global variables.
-      llvm::Constant *C = EmitLValue(ICExpr->getSubExpr());
-      assert(isa<llvm::PointerType>(C->getType()) &&
-             isa<llvm::ArrayType>(cast<llvm::PointerType>(C->getType())
-                                  ->getElementType()));
+    Expr* SExpr = ICExpr->getSubExpr();
+    QualType SType = SExpr->getType();
+    llvm::Constant *C; // the intermediate expression
+    QualType T;        // the type of the intermediate expression
+    if (SType->isArrayType()) {
+      // Arrays decay to a pointer to the first element
+      // VLAs would require special handling, but they can't occur here
+      C = EmitLValue(SExpr);
       llvm::Constant *Idx0 = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
-      
       llvm::Constant *Ops[] = {Idx0, Idx0};
       C = llvm::ConstantExpr::getGetElementPtr(C, Ops, 2);
-      
-      // The resultant pointer type can be implicitly cast to other pointer
-      // types as well, for example void*.
-      const llvm::Type *DestPTy = ConvertType(ICExpr->getType());
-      assert(isa<llvm::PointerType>(DestPTy) &&
-             "Only expect implicit cast to pointer");
-      return llvm::ConstantExpr::getBitCast(C, DestPTy);
+
+      QualType ElemType = SType->getAsArrayType()->getElementType();
+      T = CGM.getContext().getPointerType(ElemType);
+    } else if (SType->isFunctionType()) {
+      // Function types decay to a pointer to the function
+      C = EmitLValue(SExpr);
+      T = CGM.getContext().getPointerType(SType);
+    } else {
+      C = Visit(SExpr);
+      T = SType;
     }
-    
-    llvm::Constant *C = Visit(ICExpr->getSubExpr());
-    
-    return EmitConversion(C, ICExpr->getSubExpr()->getType(),ICExpr->getType());
+
+    // Perform the conversion; note that an implicit cast can both promote
+    // and convert an array/function
+    return EmitConversion(C, T, ICExpr->getType());
   }
-  
+
   llvm::Constant *VisitStringLiteral(StringLiteral *E) {
     const char *StrData = E->getStrData();
     unsigned Len = E->getByteLength();
@@ -254,8 +256,6 @@ public:
 
   llvm::Constant *VisitDeclRefExpr(DeclRefExpr *E) {
     const ValueDecl *Decl = E->getDecl();
-    if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(Decl))
-      return CGM.GetAddrOfFunctionDecl(FD, false);
     if (const EnumConstantDecl *EC = dyn_cast<EnumConstantDecl>(Decl))
       return llvm::ConstantInt::get(EC->getInitVal());
     assert(0 && "Unsupported decl ref type!");
