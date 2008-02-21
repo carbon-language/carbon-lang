@@ -477,7 +477,7 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
     NodeTy* N = *I1;
     StateTy St = N->getState();
     RVal V = GetRVal(St, Ex);
-    Nodify(Dst, CastE, N, SetRVal(St, CastE, EvalCast(ValMgr, V, CastE)));
+    Nodify(Dst, CastE, N, SetRVal(St, CastE, EvalCast(V, CastE->getType())));
   }
 }
 
@@ -520,14 +520,13 @@ void GRExprEngine::VisitGuardedExpr(Expr* Ex, Expr* L, Expr* R,
 void GRExprEngine::VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr* Ex,
                                               NodeTy* Pred,
                                               NodeSet& Dst) {
-  
-  assert (Ex->isSizeOf() && "AlignOf(Expr) not yet implemented.");
+
+  assert (Ex->isSizeOf() && "FIXME: AlignOf(Expr) not yet implemented.");
   
   // 6.5.3.4 sizeof: "The result type is an integer."
   
   QualType T = Ex->getArgumentType();
-  
-  // FIXME: Implement alignof
+
 
   // FIXME: Add support for VLAs.
   if (!T.getTypePtr()->isConstantSizeType())
@@ -942,7 +941,16 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           else
             ((int&) Op) -= BinaryOperator::MulAssign;          
           
-          RVal Result = EvalBinOp(Op, V, RightV);
+          // Get the computation type.
+          QualType CTy = cast<CompoundAssignOperator>(B)->getComputationType();
+          
+          // Perform promotions.
+          V = EvalCast(V, CTy);
+          RightV = EvalCast(V, CTy);
+          
+          // Evaluate operands and promote to result type.
+          RVal Result = EvalCast(EvalBinOp(Op, V, RightV), B->getType());
+          
           St = SetRVal(SetRVal(St, B, Result), LeftLV, Result);
         }
       }

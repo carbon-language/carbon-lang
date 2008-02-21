@@ -341,8 +341,14 @@ public:
   
   void VisitDeref(UnaryOperator* B, NodeTy* Pred, NodeSet& Dst);
   
-  RVal EvalCast(ValueManager& ValMgr, RVal X, Expr* CastExpr) {
-    return X.isValid() ? TF->EvalCast(ValMgr, X, CastExpr) : X;
+  RVal EvalCast(RVal X, QualType CastT) {
+    if (X.isUnknownOrUninit())
+      return X;
+    
+    if (isa<LVal>(X))
+      return TF->EvalCast(ValMgr, cast<LVal>(X), CastT);
+    else
+      return TF->EvalCast(ValMgr, cast<NonLVal>(X), CastT);
   }
   
   RVal EvalMinus(UnaryOperator* U, RVal X) {

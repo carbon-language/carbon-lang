@@ -58,17 +58,16 @@ unsigned RunGRSimpleVals(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx,
 // Transfer function for Casts.
 //===----------------------------------------------------------------------===//
 
-RVal GRSimpleVals::EvalCast(ValueManager& ValMgr, NonLVal X, Expr* CastExpr) {
+RVal GRSimpleVals::EvalCast(ValueManager& ValMgr, NonLVal X, QualType T) {
   
   if (!isa<nonlval::ConcreteInt>(X))
     return UnknownVal();
   
   llvm::APSInt V = cast<nonlval::ConcreteInt>(X).getValue();
-  QualType T = CastExpr->getType();
   V.setIsUnsigned(T->isUnsignedIntegerType() || T->isPointerType());
-  V.extOrTrunc(ValMgr.getContext().getTypeSize(T, CastExpr->getLocStart()));
+  V.extOrTrunc(ValMgr.getContext().getTypeSize(T, SourceLocation()));
   
-  if (CastExpr->getType()->isPointerType())
+  if (T->isPointerType())
     return lval::ConcreteInt(ValMgr.getValue(V));
   else
     return nonlval::ConcreteInt(ValMgr.getValue(V));
@@ -76,20 +75,19 @@ RVal GRSimpleVals::EvalCast(ValueManager& ValMgr, NonLVal X, Expr* CastExpr) {
 
 // Casts.
 
-RVal GRSimpleVals::EvalCast(ValueManager& ValMgr, LVal X, Expr* CastExpr) {
+RVal GRSimpleVals::EvalCast(ValueManager& ValMgr, LVal X, QualType T) {
   
-  if (CastExpr->getType()->isPointerType())
+  if (T->isPointerType())
     return X;
   
-  assert (CastExpr->getType()->isIntegerType());
+  assert (T->isIntegerType());
   
   if (!isa<lval::ConcreteInt>(X))
     return UnknownVal();
   
   llvm::APSInt V = cast<lval::ConcreteInt>(X).getValue();
-  QualType T = CastExpr->getType();
   V.setIsUnsigned(T->isUnsignedIntegerType() || T->isPointerType());
-  V.extOrTrunc(ValMgr.getContext().getTypeSize(T, CastExpr->getLocStart()));
+  V.extOrTrunc(ValMgr.getContext().getTypeSize(T, SourceLocation()));
 
   return nonlval::ConcreteInt(ValMgr.getValue(V));
 }

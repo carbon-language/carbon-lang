@@ -26,9 +26,8 @@ public:
   
   // Casts.
   
-  RVal EvalCast(ValueManager& ValMgr, RVal V, Expr* CastExpr);
-  virtual RVal EvalCast(ValueManager& ValMgr, NonLVal V, Expr* CastExpr) =0;
-  virtual RVal EvalCast(ValueManager& ValMgr, LVal V, Expr* CastExpr) = 0;
+  virtual RVal EvalCast(ValueManager& ValMgr, NonLVal V, QualType CastT) =0;
+  virtual RVal EvalCast(ValueManager& ValMgr, LVal V, QualType CastT) = 0;
 
   // Unary Operators.
   
