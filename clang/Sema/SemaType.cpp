@@ -186,7 +186,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
       break;
     case DeclaratorChunk::Reference:
       if (const ReferenceType *RT = T->getAsReferenceType()) {
-        // C++ 8.3.2p4: There shall be no references to references ...
+        // C++ 8.3.2p4: There shall be no references to references.
         Diag(D.getIdentifierLoc(),
              diag::err_illegal_decl_reference_to_reference,
              D.getIdentifier() ? D.getIdentifier()->getName() : "type name");
@@ -195,6 +195,8 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
       }
 
       T = Context.getReferenceType(T);
+        
+      // FIXME: Handle Ref.Restrict!
         
       // See if there are any attributes on the pointer that apply to it.
       if (AttributeList *AL = DeclType.Ref.AttrList)
