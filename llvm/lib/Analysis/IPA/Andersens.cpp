@@ -678,7 +678,7 @@ void Andersens::getMustAliases(Value *P, std::vector<Value*> &RetVals) {
 /// return true.
 ///
 bool Andersens::pointsToConstantMemory(const Value *P) {
-  Node *N = &GraphNodes[FindNode(getNode((Value*)P))];
+  Node *N = &GraphNodes[FindNode(getNode(const_cast<Value*>(P)))];
   unsigned i;
 
   for (SparseBitVector<>::iterator bi = N->PointsTo->begin();
