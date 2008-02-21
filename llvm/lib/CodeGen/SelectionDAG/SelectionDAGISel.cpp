@@ -3347,12 +3347,29 @@ struct AsmOperandInfo : public InlineAsm::ConstraintInfo {
   /// busy in OutputRegs/InputRegs.
   void MarkAllocatedRegs(bool isOutReg, bool isInReg,
                          std::set<unsigned> &OutputRegs, 
-                         std::set<unsigned> &InputRegs) const {
-     if (isOutReg)
-       OutputRegs.insert(AssignedRegs.Regs.begin(), AssignedRegs.Regs.end());
-     if (isInReg)
-       InputRegs.insert(AssignedRegs.Regs.begin(), AssignedRegs.Regs.end());
-   }
+                         std::set<unsigned> &InputRegs,
+                         const TargetRegisterInfo &TRI) const {
+    if (isOutReg) {
+      for (unsigned i = 0, e = AssignedRegs.Regs.size(); i != e; ++i)
+        MarkRegAndAliases(AssignedRegs.Regs[i], OutputRegs, TRI);
+    }
+    if (isInReg) {
+      for (unsigned i = 0, e = AssignedRegs.Regs.size(); i != e; ++i)
+        MarkRegAndAliases(AssignedRegs.Regs[i], InputRegs, TRI);
+    }
+  }
+  
+private:
+  /// MarkRegAndAliases - Mark the specified register and all aliases in the
+  /// specified set.
+  static void MarkRegAndAliases(unsigned Reg, std::set<unsigned> &Regs, 
+                                const TargetRegisterInfo &TRI) {
+    assert(TargetRegisterInfo::isPhysicalRegister(Reg) && "Isn't a physreg");
+    Regs.insert(Reg);
+    if (const unsigned *Aliases = TRI.getAliasSet(Reg))
+      for (; *Aliases; ++Aliases)
+        Regs.insert(*Aliases);
+  }
 };
 } // end anon namespace.
 
@@ -3491,7 +3508,8 @@ GetRegistersForValue(AsmOperandInfo &OpInfo, bool HasEarlyClobber,
       }
     }
     OpInfo.AssignedRegs = RegsForValue(Regs, RegVT, ValueVT);
-    OpInfo.MarkAllocatedRegs(isOutReg, isInReg, OutputRegs, InputRegs);
+    const TargetRegisterInfo *TRI = DAG.getTarget().getRegisterInfo();
+    OpInfo.MarkAllocatedRegs(isOutReg, isInReg, OutputRegs, InputRegs, *TRI);
     return;
   }
   
@@ -3519,7 +3537,6 @@ GetRegistersForValue(AsmOperandInfo &OpInfo, bool HasEarlyClobber,
         Regs.push_back(RegInfo.createVirtualRegister(PhysReg.second));
       
       OpInfo.AssignedRegs = RegsForValue(Regs, RegVT, ValueVT);
-      OpInfo.MarkAllocatedRegs(isOutReg, isInReg, OutputRegs, InputRegs);
       return;
     }
     
@@ -3571,7 +3588,7 @@ GetRegistersForValue(AsmOperandInfo &OpInfo, bool HasEarlyClobber,
       
       OpInfo.AssignedRegs = RegsForValue(Regs, *RC->vt_begin(), 
                                          OpInfo.ConstraintVT);
-      OpInfo.MarkAllocatedRegs(isOutReg, isInReg, OutputRegs, InputRegs);
+      OpInfo.MarkAllocatedRegs(isOutReg, isInReg, OutputRegs, InputRegs, *TRI);
       return;
     }
   }
