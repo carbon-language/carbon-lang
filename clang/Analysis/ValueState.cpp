@@ -156,7 +156,11 @@ RVal ValueStateManager::GetRVal(ValueState St, const LVal& LV, QualType T) {
       const lval::SymbolVal& SV = cast<lval::SymbolVal>(LV);
       assert (T.getTypePtr());
       
-      if (T.getTypePtr()->isPointerType())
+      // Punt on "symbolic" function pointers.
+      if (T->isFunctionType())
+        return UnknownVal();
+      
+      if (T->isPointerType())
         return lval::SymbolVal(SymMgr.getContentsOfSymbol(SV.getSymbol()));
       else
         return nonlval::SymbolVal(SymMgr.getContentsOfSymbol(SV.getSymbol()));
