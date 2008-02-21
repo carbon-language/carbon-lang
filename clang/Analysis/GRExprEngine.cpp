@@ -685,8 +685,10 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
       LVal SubLV = cast<LVal>(SubV); 
       RVal V  = GetRVal(St, SubLV, U->getType());
       
-      // An LVal should never bind to UnknownVal.      
-      assert (!V.isUnknown());
+      if (V.isUnknown()) {
+        Dst.Add(N1);
+        continue;
+      }
 
       // Propagate uninitialized values.      
       if (V.isUninit()) {
@@ -925,8 +927,10 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           
           // Propagate unknown values.
           
-          assert (!V.isUnknown() &&
-                  "An LVal should never bind to UnknownVal");
+          if (V.isUnknown()) {
+            Dst.Add(N2);
+            continue;
+          }
           
           if (RightV.isUnknown()) {
             St = SetRVal(SetRVal(St, LeftLV, RightV), B, RightV);
