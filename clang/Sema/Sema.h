@@ -174,7 +174,9 @@ public:
   // Type Analysis / Processing: SemaType.cpp.
   //
   QualType ConvertDeclSpecToType(DeclSpec &DS);
+  AttributeList *ProcessTypeAttributes(QualType &Result, AttributeList *AL);
   QualType GetTypeForDeclarator(Declarator &D, Scope *S);
+
   
   QualType ObjCGetTypeForMethodDefinition(DeclTy *D);
 
@@ -227,7 +229,7 @@ private:
   virtual void ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDecl,
                              DeclTy **Elements, unsigned NumElements);
 private:
-  /// Subroutines of ActOnDeclarator()...
+  /// Subroutines of ActOnDeclarator().
   TypedefDecl *ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
                                 ScopedDecl *LastDecl);
   TypedefDecl *MergeTypeDefDecl(TypedefDecl *New, ScopedDecl *Old);

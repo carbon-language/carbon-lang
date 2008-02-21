@@ -258,6 +258,7 @@ public:
       alist->addAttributeList(AttrList); 
     AttrList = alist;
   }
+  void SetAttributes(AttributeList *AL) { AttrList = AL; }
   AttributeList *getAttributes() const { return AttrList; }
   void clearAttributes() { AttrList = 0; }
   

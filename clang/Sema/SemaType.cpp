@@ -142,16 +142,19 @@ QualType Sema::ConvertDeclSpecToType(DeclSpec &DS) {
   
   // See if there are any attributes on the declspec that apply to the type (as
   // opposed to the decl).
-  if (!DS.getAttributes())
-    return Result;
-  
+  if (AttributeList *AL = DS.getAttributes())
+    DS.SetAttributes(ProcessTypeAttributes(Result, AL));
+    
+  return Result;
+}
+
+AttributeList *Sema::ProcessTypeAttributes(QualType &Result, AttributeList *AL){
   // Scan through and apply attributes to this type where it makes sense.  Some
   // attributes (such as __address_space__, __vector_size__, etc) apply to the
-  // declspec, but others can be present in the decl spec even though they apply
-  // to the decl.  Here we apply and delete attributes that apply to the
-  // declspec and leave the others alone.
+  // type, but others can be present in the type specifiers even though they
+  // apply to the decl.  Here we apply and delete attributes that apply to the
+  // type and leave the others alone.
   llvm::SmallVector<AttributeList *, 8> LeftOverAttrs;
-  AttributeList *AL = DS.getAttributes();
   while (AL) {
     // Unlink this attribute from the chain, so we can process it independently.
     AttributeList *ThisAttr = AL;
@@ -178,10 +181,7 @@ QualType Sema::ConvertDeclSpecToType(DeclSpec &DS) {
     List = LeftOverAttrs[i];
   }
   
-  DS.clearAttributes();
-  DS.AddAttributes(List);
-  //DS.setAttributes(List);
-  return Result;
+  return List;
 }
 
 /// HandleAddressSpaceTypeAttribute - Process an address_space attribute on the
