@@ -15,6 +15,7 @@
 #define LLVM_CLANG_AST_ATTR_H
 
 #include <cassert>
+#include <string>
 
 namespace clang {
 
@@ -23,7 +24,8 @@ class Attr {
 public:
   enum Kind {
     Aligned,
-    Packed
+    Packed,
+    Annotate
   };
     
 private:
@@ -78,6 +80,20 @@ public:
     return A->getKind() == Aligned;
   }
   static bool classof(const AlignedAttr *A) { return true; }
+};
+
+class AnnotateAttr : public Attr {
+  std::string Annotation;
+public:
+  AnnotateAttr(const std::string &ann) : Attr(Annotate), Annotation(ann) {}
+  
+  const std::string& getAnnotation() const { return Annotation; }
+  
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Attr *A) {
+    return A->getKind() == Annotate;
+  }
+  static bool classof(const AnnotateAttr *A) { return true; }
 };
 
 }  // end namespace clang

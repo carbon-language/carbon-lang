@@ -47,7 +47,8 @@ public:
     AT_ocu_vector_type,
     AT_address_space,
     AT_aligned,
-    AT_packed
+    AT_packed,
+    AT_annotate
   };
   
   IdentifierInfo *getName() const { return AttrName; }

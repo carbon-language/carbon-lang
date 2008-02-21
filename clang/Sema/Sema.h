@@ -271,6 +271,7 @@ private:
   
   void HandleAlignedAttribute(Decl *d, AttributeList *rawAttr);
   void HandlePackedAttribute(Decl *d, AttributeList *rawAttr);
+  void HandleAnnotateAttribute(Decl *d, AttributeList *rawAttr);
   
   void WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
                            bool &IncompleteImpl);

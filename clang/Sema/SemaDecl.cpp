@@ -1777,6 +1777,9 @@ void Sema::HandleDeclAttribute(Decl *New, AttributeList *Attr) {
   case AttributeList::AT_packed:
     HandlePackedAttribute(New, Attr);
     break;
+  case AttributeList::AT_annotate:
+    HandleAnnotateAttribute(New, Attr);
+    break;
   default:
     // FIXME: add other attributes...
     break;
@@ -1890,9 +1893,8 @@ QualType Sema::HandleVectorTypeAttribute(QualType curType,
          sizeExpr->getSourceRange());
     return QualType();
   }
-  // Since OpenCU requires 3 element vectors (OpenCU 5.1.2), we don't restrict
-  // the number of elements to be a power of two (unlike GCC).
-  // Instantiate the vector type, the number of elements is > 0.
+  // Instantiate the vector type, the number of elements is > 0, and not
+  // required to be a power of 2, unlike GCC.
   return Context.getVectorType(curType, vectorSize/typeSize);
 }
 
@@ -1919,7 +1921,27 @@ void Sema::HandlePackedAttribute(Decl *d, AttributeList *rawAttr) {
     Diag(rawAttr->getLoc(), diag::warn_attribute_ignored,
          rawAttr->getName()->getName());
 }
+
+void Sema::HandleAnnotateAttribute(Decl *d, AttributeList *rawAttr) {
+  // check the attribute arguments.
+  if (rawAttr->getNumArgs() != 1) {
+    Diag(rawAttr->getLoc(), diag::err_attribute_wrong_number_arguments,
+         std::string("1"));
+    return;
+  }
+  Expr *argExpr = static_cast<Expr *>(rawAttr->getArg(0));
+  StringLiteral *SE = dyn_cast<StringLiteral>(argExpr);
   
+  // Make sure that there is a string literal as the annotation's single
+  // argument.
+  if (!SE) {
+    Diag(rawAttr->getLoc(), diag::err_attribute_annotate_no_string);
+    return;
+  }
+  d->addAttr(new AnnotateAttr(std::string(SE->getStrData(),
+                                          SE->getByteLength())));
+}
+
 void Sema::HandleAlignedAttribute(Decl *d, AttributeList *rawAttr)
 {
   // check the attribute arguments.

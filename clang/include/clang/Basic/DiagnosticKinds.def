@@ -581,10 +581,12 @@ DIAG(err_attribute_address_space_not_int, ERROR,
      "address space attribute requires an integer constant")
 DIAG(err_attribute_address_multiple_qualifiers, ERROR,
      "multiple address spaces specified for type")
+DIAG(err_attribute_annotate_no_string, ERROR,
+     "argument to annotate attribute was not a string literal")
 DIAG(warn_attribute_ignored, WARNING,
-	"'%0' attribute ignored")
+  "'%0' attribute ignored")
 DIAG(warn_attribute_ignored_for_field_of_type, WARNING,
-	"'%0' attribute ignored for field of type '%1'")
+  "'%0' attribute ignored for field of type '%1'")
 
 // Function Parameter Semantic Analysis.
 DIAG(err_param_with_void_type, ERROR,

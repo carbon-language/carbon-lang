@@ -57,6 +57,9 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
   case 7:
     if (!memcmp(Str, "aligned", 7)) return AT_aligned;
     break;
+  case 8:
+    if (!memcmp(Str, "annotate", 8)) return AT_annotate;
+    break;
   case 11:   
     if (!memcmp(Str, "vector_size", 11)) return AT_vector_size;
     break;
