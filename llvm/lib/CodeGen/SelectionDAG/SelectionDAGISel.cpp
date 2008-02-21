@@ -3467,6 +3467,17 @@ void AsmOperandInfo::ComputeConstraintToUse(const TargetLowering &TLI) {
 }
 
 
+/// GetRegistersForValue - Assign registers (virtual or physical) for the
+/// specified operand.  We prefer to assign virtual registers, to allow the
+/// register allocator handle the assignment process.  However, if the asm uses
+/// features that we can't model on machineinstrs, we have SDISel do the
+/// allocation.  This produces generally horrible, but correct, code.
+///
+///   OpInfo describes the operand.
+///   HasEarlyClobber is true if there are any early clobber constraints (=&r)
+///     or any explicitly clobbered registers.
+///   Input and OutputRegs are the set of already allocated physical registers.
+///
 void SelectionDAGLowering::
 GetRegistersForValue(AsmOperandInfo &OpInfo, bool HasEarlyClobber,
                      std::set<unsigned> &OutputRegs, 
@@ -3722,6 +3733,11 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
 
     // Keep track of whether we see an earlyclobber.
     SawEarlyClobber |= OpInfo.isEarlyClobber;
+    
+    // If we see a clobber of a register, it is an early clobber.
+    if (OpInfo.Type == InlineAsm::isClobber &&
+        OpInfo.ConstraintType == TargetLowering::C_Register)
+      SawEarlyClobber = true;
     
     // If this is a memory input, and if the operand is not indirect, do what we
     // need to to provide an address for the memory input.
