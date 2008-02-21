@@ -452,7 +452,7 @@ void Verifier::visitFunction(Function &F) {
           &F, FT);
   Assert1(F.getReturnType()->isFirstClassType() ||
           F.getReturnType() == Type::VoidTy || 
-          F.getReturnType()->getTypeID() == Type::StructTyID,
+          isa<StructType>(F.getReturnType()),
           "Functions cannot return aggregate values!", &F);
 
   Assert1(!F.isStructReturn() || FT->getReturnType() == Type::VoidTy,
@@ -1072,8 +1072,8 @@ void Verifier::visitInstruction(Instruction &I) {
   // Check that the return value of the instruction is either void or a legal
   // value type.
   Assert1(I.getType() == Type::VoidTy || I.getType()->isFirstClassType()
-          || ((isa<CallInst>(I) || isa<InvokeInst>(I))
-              && I.getType()->getTypeID() == Type::StructTyID),
+          || ((isa<CallInst>(I) || isa<InvokeInst>(I)) 
+              && isa<StructType>(I.getType())),
           "Instruction returns a non-scalar type!", &I);
 
   // Check that all uses of the instruction, if they are instructions
@@ -1095,14 +1095,13 @@ void Verifier::visitInstruction(Instruction &I) {
     // instructions.
     if (!I.getOperand(i)->getType()->isFirstClassType()) {
       if (isa<ReturnInst>(I) || isa<GetResultInst>(I))
-        Assert1(I.getOperand(i)->getType()->getTypeID() == Type::StructTyID,
+        Assert1(isa<StructType>(I.getOperand(i)->getType()),
                 "Invalid ReturnInst operands!", &I);
       else if (isa<CallInst>(I) || isa<InvokeInst>(I)) {
         if (const PointerType *PT = dyn_cast<PointerType>
             (I.getOperand(i)->getType())) {
           const Type *ETy = PT->getElementType();
-          Assert1(ETy->getTypeID() == Type::StructTyID,
-                  "Invalid CallInst operands!", &I);
+          Assert1(isa<StructType>(ETy), "Invalid CallInst operands!", &I);
         }
         else
           Assert1(0, "Invalid CallInst operands!", &I);

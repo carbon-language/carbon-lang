@@ -180,7 +180,7 @@ Function::Function(const FunctionType *Ty, LinkageTypes Linkage,
   SymTab = new ValueSymbolTable();
 
   assert((getReturnType()->isFirstClassType() ||getReturnType() == Type::VoidTy
-          || getReturnType()->getTypeID() == Type::StructTyID)
+          || isa<StructType>(getReturnType()))
          && "LLVM functions cannot return aggregate values!");
 
   // If the function has arguments, mark them as lazily built.
