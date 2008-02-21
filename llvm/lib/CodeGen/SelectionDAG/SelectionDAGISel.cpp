@@ -3846,7 +3846,13 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
           break;
         } else {
           assert((NumOps & 7) == 4/*MEM*/ && "Unknown matching constraint!");
-          assert(0 && "matching constraints for memory operands unimp");
+          assert((NumOps >> 3) == 1 && "Unexpected number of operands"); 
+          // Add information to the INLINEASM node to know about this input.
+          unsigned ResOpType = 4/*MEM*/ | (1 << 3);
+          AsmNodeOperands.push_back(DAG.getTargetConstant(ResOpType,
+                                                          TLI.getPointerTy()));
+          AsmNodeOperands.push_back(AsmNodeOperands[CurOp+1]);
+          break;
         }
       }
       
