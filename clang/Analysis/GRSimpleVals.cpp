@@ -126,7 +126,7 @@ RVal GRSimpleVals::EvalBinOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
     
     switch (L.getSubKind()) {
       default:
-        return cast<NonLVal>(UnknownVal());
+        return UnknownVal();
         
       case nonlval::ConcreteIntKind:
         
@@ -226,7 +226,7 @@ RVal GRSimpleVals::EvalEQ(ValueManager& ValMgr, LVal L, LVal R) {
       }
       
       // FIXME: Implement unification
-      return cast<NonLVal>(UnknownVal());
+      return UnknownVal();
         //assert (!isa<lval::SymbolVal>(R) && "FIXME: Implement unification.");
       
       break;
