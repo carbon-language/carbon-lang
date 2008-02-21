@@ -2600,11 +2600,8 @@ SCEVHandle ScalarEvolutionsImpl::HowFarToNonZero(SCEV *V, const Loop *L) {
   // If the value is a constant, check to see if it is known to be non-zero
   // already.  If so, the backedge will execute zero times.
   if (SCEVConstant *C = dyn_cast<SCEVConstant>(V)) {
-    Constant *Zero = Constant::getNullValue(C->getValue()->getType());
-    Constant *NonZero = 
-      ConstantExpr::getICmp(ICmpInst::ICMP_NE, C->getValue(), Zero);
-    if (NonZero == ConstantInt::getTrue())
-      return getSCEV(Zero);
+    if (!C->getValue()->isNullValue())
+      return SE.getIntegerSCEV(0, C->getType());
     return UnknownValue;  // Otherwise it will loop infinitely.
   }
 
