@@ -54,6 +54,17 @@ One better solution for 1LL << x is:
 
 But that requires good 8-bit subreg support.
 
+Also, this might be better.  It's an extra shift, but it's one instruction
+shorter, and doesn't stress 8-bit subreg support.
+(From http://gcc.gnu.org/ml/gcc-patches/2004-09/msg01148.html,
+but without the unnecessary and.)
+        movl %ecx, %eax
+        shrl $5, %eax
+        movl %eax, %edx
+        xorl $1, %edx
+        sall %cl, %eax
+        sall %cl. %edx
+
 64-bit shifts (in general) expand to really bad code.  Instead of using
 cmovs, we should expand to a conditional branch like GCC produces.
 
@@ -66,6 +77,9 @@ into:
         movzbl  %dil, %eax
         xorl    $1, %eax
         ret
+
+(Although note that this isn't a legal way to express the code that llvm-gcc
+currently generates for that function.)
 
 //===---------------------------------------------------------------------===//
 
@@ -91,34 +105,6 @@ Leave any_extend as pseudo instruction and hint to register
 allocator. Delay codegen until post register allocation.
 Note. any_extend is now turned into an INSERT_SUBREG. We still need to teach
 the coalescer how to deal with it though.
-
-//===---------------------------------------------------------------------===//
-
-Count leading zeros and count trailing zeros:
-
-int clz(int X) { return __builtin_clz(X); }
-int ctz(int X) { return __builtin_ctz(X); }
-
-$ gcc t.c -S -o - -O3  -fomit-frame-pointer -masm=intel
-clz:
-        bsr     %eax, DWORD PTR [%esp+4]
-        xor     %eax, 31
-        ret
-ctz:
-        bsf     %eax, DWORD PTR [%esp+4]
-        ret
-
-however, check that these are defined for 0 and 32.  Our intrinsics are, GCC's
-aren't.
-
-Another example (use predsimplify to eliminate a select):
-
-int foo (unsigned long j) {
-  if (j)
-    return __builtin_ffs (j) - 1;
-  else
-    return 0;
-}
 
 //===---------------------------------------------------------------------===//
 
@@ -233,32 +219,6 @@ _test1:
         ret
 
 which is probably slower, but it's interesting at least :)
-
-//===---------------------------------------------------------------------===//
-
-The first BB of this code:
-
-declare bool %foo()
-int %bar() {
-        %V = call bool %foo()
-        br bool %V, label %T, label %F
-T:
-        ret int 1
-F:
-        call bool %foo()
-        ret int 12
-}
-
-compiles to:
-
-_bar:
-        subl $12, %esp
-        call L_foo$stub
-        xorb $1, %al
-        testb %al, %al
-        jne LBB_bar_2   # F
-
-It would be better to emit "cmp %al, 1" than a xor and test.
 
 //===---------------------------------------------------------------------===//
 
@@ -483,25 +443,39 @@ shorter than movl + leal.
 
 //===---------------------------------------------------------------------===//
 
-Implement CTTZ, CTLZ with bsf and bsr. GCC produces:
+__builtin_ffs codegen is messy.
 
-int ctz_(unsigned X) { return __builtin_ctz(X); }
-int clz_(unsigned X) { return __builtin_clz(X); }
 int ffs_(unsigned X) { return __builtin_ffs(X); }
 
-_ctz_:
-        bsfl    4(%esp), %eax
+llvm produces:
+ffs_:
+        movl    4(%esp), %ecx
+        bsfl    %ecx, %eax
+        movl    $32, %edx
+        cmove   %edx, %eax
+        incl    %eax
+        xorl    %edx, %edx
+        testl   %ecx, %ecx
+        cmove   %edx, %eax
         ret
-_clz_:
-        bsrl    4(%esp), %eax
-        xorl    $31, %eax
-        ret
+
+vs gcc:
+
 _ffs_:
         movl    $-1, %edx
         bsfl    4(%esp), %eax
         cmove   %edx, %eax
         addl    $1, %eax
         ret
+
+Another example of __builtin_ffs (use predsimplify to eliminate a select):
+
+int foo (unsigned long j) {
+  if (j)
+    return __builtin_ffs (j) - 1;
+  else
+    return 0;
+}
 
 //===---------------------------------------------------------------------===//
 
@@ -1062,6 +1036,8 @@ Should compile to:
                 setae   %al
                 ret
 
+FIXME: That code looks wrong; bool return is normally defined as zext.
+
 on x86-64, not:
 
 __Z11no_overflowjj:
@@ -1208,35 +1184,44 @@ void compare (long long foo) {
 
 to:
 
-_compare:
-        subl    $12, %esp
-        cmpl    $0, 16(%esp)
+compare:
+        subl    $4, %esp
+        cmpl    $0, 8(%esp)
         setne   %al
         movzbw  %al, %ax
-        cmpl    $1, 20(%esp)
+        cmpl    $1, 12(%esp)
         setg    %cl
         movzbw  %cl, %cx
         cmove   %ax, %cx
-        movw    %cx, %ax
-        testb   $1, %al
-        je      LBB1_2  # cond_true
+        testb   $1, %cl
+        jne     .LBB1_2 # UnifiedReturnBlock
+.LBB1_1:        # ifthen
+        call    abort
+.LBB1_2:        # UnifiedReturnBlock
+        addl    $4, %esp
+        ret
 
 (also really horrible code on ppc).  This is due to the expand code for 64-bit
 compares.  GCC produces multiple branches, which is much nicer:
 
-_compare:
-        pushl   %ebp
-        movl    %esp, %ebp
-        subl    $8, %esp
-        movl    8(%ebp), %eax
-        movl    12(%ebp), %edx
-        subl    $1, %edx
-        jg     L5
-L7:
-        jl      L4
+compare:
+        subl    $12, %esp
+        movl    20(%esp), %edx
+        movl    16(%esp), %eax
+        decl    %edx
+        jle     .L7
+.L5:
+        addl    $12, %esp
+        ret
+        .p2align 4,,7
+.L7:
+        jl      .L4
         cmpl    $0, %eax
-        jbe      L4
-L5:
+        .p2align 4,,8
+        ja      .L5
+.L4:
+        .p2align 4,,9
+        call    abort
 
 //===---------------------------------------------------------------------===//
 
@@ -1380,7 +1365,7 @@ Should compile into:
 
 _foo:
         movzwl  4(%esp), %eax
-        orb     $-1, %al           ;; 'orl 255' is also fine :)
+        orl     $255, %eax
         ret
 
 instead of:
@@ -1547,6 +1532,48 @@ int x(int a, int b) {
 }
 
 See PR2053 for more details.
+
+//===---------------------------------------------------------------------===//
+
+We should investigate using cdq/ctld (effect: edx = sar eax, 31)
+more aggressively; it should cost the same as a move+shift on any modern
+processor, but it's a lot shorter. Downside is that it puts more
+pressure on register allocation because it has fixed operands.
+
+Example:
+int abs(int x) {return x < 0 ? -x : x;}
+
+gcc compiles this to the following when using march/mtune=pentium2/3/4/m/etc.:
+abs:
+        movl    4(%esp), %eax
+        cltd
+        xorl    %edx, %eax
+        subl    %edx, %eax
+        ret
+
+//===---------------------------------------------------------------------===//
+
+Consider:
+
+#include <inttypes.h>
+uint64_t a;
+uint16_t b;
+uint64_t mul(void) {
+  return a * b;
+}
+
+Currently, we generate the following:
+
+mul:
+        movzwl  b, %ecx
+        movl    %ecx, %eax
+        mull    a
+        imull   a+4, %ecx
+        addl    %edx, %ecx
+        movl    %ecx, %edx
+        ret
+
+llvm should be able to commute the addl so that the movl isn't necessary.
 
 //===---------------------------------------------------------------------===//
 
