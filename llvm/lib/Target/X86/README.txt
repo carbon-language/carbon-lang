@@ -1392,22 +1392,43 @@ _foo:
 
 //===---------------------------------------------------------------------===//
 
-We're missing an obvious fold of a load into imul:
+We're codegen'ing multiply of long longs inefficiently:
 
-int test(long a, long b) { return a * b; } 
+unsigned long long LLM(unsigned long long arg1, unsigned long long arg2) {
+  return arg1 *  arg2;
+}
 
-LLVM produces:
-_test:
-        movl    4(%esp), %ecx
-        movl    8(%esp), %eax
-        imull   %ecx, %eax
+We compile to (fomit-frame-pointer):
+
+_LLM:
+	pushl	%esi
+	movl	8(%esp), %ecx
+	movl	16(%esp), %esi
+	movl	%esi, %eax
+	mull	%ecx
+	imull	12(%esp), %esi
+	addl	%edx, %esi
+	imull	20(%esp), %ecx
+	movl	%esi, %edx
+	addl	%ecx, %edx
+	popl	%esi
+	ret
+
+This looks like a scheduling deficiency and lack of remat of the load from
+the argument area.  ICC apparently produces:
+
+        movl      8(%esp), %ecx
+        imull     12(%esp), %ecx
+        movl      16(%esp), %eax
+        imull     4(%esp), %eax 
+        addl      %eax, %ecx  
+        movl      4(%esp), %eax
+        mull      12(%esp) 
+        addl      %ecx, %edx
         ret
 
-vs:
-_test:
-        movl    8(%esp), %eax
-        imull   4(%esp), %eax
-        ret
+Note that it remat'd loads from 4(esp) and 12(esp).  See this GCC PR:
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=17236
 
 //===---------------------------------------------------------------------===//
 
