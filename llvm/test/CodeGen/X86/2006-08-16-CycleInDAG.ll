@@ -1,23 +1,23 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86
+; RUN: llvm-as < %s | llc -march=x86
+	%struct.expr = type { %struct.rtx_def*, i32, %struct.expr*, %struct.occr*, %struct.occr*, %struct.rtx_def* }
+	%struct.hash_table = type { %struct.expr**, i32, i32, i32 }
+	%struct.occr = type { %struct.occr*, %struct.rtx_def*, i8, i8 }
+	%struct.rtx_def = type { i16, i8, i8, %struct.u }
+	%struct.u = type { [1 x i64] }
 
-	%struct.expr = type { %struct.rtx_def*, int, %struct.expr*, %struct.occr*, %struct.occr*, %struct.rtx_def* }
-	%struct.hash_table = type { %struct.expr**, uint, uint, int }
-	%struct.occr = type { %struct.occr*, %struct.rtx_def*, sbyte, sbyte }
-	%struct.rtx_def = type { ushort, ubyte, ubyte, %struct.u }
-	%struct.u = type { [1 x long] }
+define void @test() {
+	%tmp = load i32* null		; <i32> [#uses=1]
+	%tmp8 = call i32 @hash_rtx( )		; <i32> [#uses=1]
+	%tmp11 = urem i32 %tmp8, %tmp		; <i32> [#uses=1]
+	br i1 false, label %cond_next, label %return
 
-void %test() {
-	%tmp = load uint* null		; <uint> [#uses=1]
-	%tmp8 = call uint %hash_rtx( )		; <uint> [#uses=1]
-	%tmp11 = rem uint %tmp8, %tmp		; <uint> [#uses=1]
-	br bool false, label %cond_next, label %return
-
-cond_next:		; preds = %entry
-	%tmp17 = getelementptr %struct.expr** null, uint %tmp11		; <%struct.expr**> [#uses=0]
+cond_next:		; preds = %0
+	%gep.upgrd.1 = zext i32 %tmp11 to i64		; <i64> [#uses=1]
+	%tmp17 = getelementptr %struct.expr** null, i64 %gep.upgrd.1		; <%struct.expr**> [#uses=0]
 	ret void
 
-return:		; preds = %entry
+return:		; preds = %0
 	ret void
 }
 
-declare uint %hash_rtx()
+declare i32 @hash_rtx()

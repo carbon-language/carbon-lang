@@ -1,34 +1,31 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2
+	%struct.foo = type opaque
 
-%struct.foo = type opaque
+define fastcc i32 @test(%struct.foo* %v, %struct.foo* %vi) {
+	br i1 false, label %ilog2.exit, label %cond_true.i
 
-implementation
+cond_true.i:		; preds = %0
+	ret i32 0
 
-fastcc int %test(%struct.foo* %v, %struct.foo* %vi) {
-	br bool false, label %ilog2.exit, label %cond_true.i
-
-cond_true.i:		; preds = %entry
-	ret int 0
-
-ilog2.exit:		; preds = %entry
-	%tmp24.i = load int* null		; <int> [#uses=1]
-	%tmp13.i12.i = tail call double %ldexp( double 0.000000e+00, int 0 )		; <double> [#uses=1]
-	%tmp13.i13.i = cast double %tmp13.i12.i to float		; <float> [#uses=1]
-	%tmp11.s = load int* null		; <int> [#uses=1]
-	%tmp11.i = cast int %tmp11.s to uint		; <uint> [#uses=1]
-	%n.i = cast int %tmp24.i to uint		; <uint> [#uses=1]
-	%tmp13.i7 = mul uint %tmp11.i, %n.i		; <uint> [#uses=1]
-	%tmp.i8 = tail call sbyte* %calloc( uint %tmp13.i7, uint 4 )		; <sbyte*> [#uses=0]
-	br bool false, label %bb224.preheader.i, label %bb.i
+ilog2.exit:		; preds = %0
+	%tmp24.i = load i32* null		; <i32> [#uses=1]
+	%tmp13.i12.i = tail call double @ldexp( double 0.000000e+00, i32 0 )		; <double> [#uses=1]
+	%tmp13.i13.i = fptrunc double %tmp13.i12.i to float		; <float> [#uses=1]
+	%tmp11.s = load i32* null		; <i32> [#uses=1]
+	%tmp11.i = bitcast i32 %tmp11.s to i32		; <i32> [#uses=1]
+	%n.i = bitcast i32 %tmp24.i to i32		; <i32> [#uses=1]
+	%tmp13.i7 = mul i32 %tmp11.i, %n.i		; <i32> [#uses=1]
+	%tmp.i8 = tail call i8* @calloc( i32 %tmp13.i7, i32 4 )		; <i8*> [#uses=0]
+	br i1 false, label %bb224.preheader.i, label %bb.i
 
 bb.i:		; preds = %ilog2.exit
-	ret int 0
+	ret i32 0
 
 bb224.preheader.i:		; preds = %ilog2.exit
-	%tmp165.i = cast float %tmp13.i13.i to double		; <double> [#uses=0]
-	ret int 0
+	%tmp165.i = fpext float %tmp13.i13.i to double		; <double> [#uses=0]
+	ret i32 0
 }
 
-declare sbyte* %calloc(uint, uint)
+declare i8* @calloc(i32, i32)
 
-declare double %ldexp(double, int)
+declare double @ldexp(double, i32)

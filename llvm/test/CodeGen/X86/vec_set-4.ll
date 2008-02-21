@@ -1,24 +1,24 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | grep pinsrw | count 2
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep pinsrw | count 2
 
-<2 x long> %test(short %a) {
+define <2 x i64> @test(i16 %a) {
 entry:
-	%tmp10 = insertelement <8 x short> zeroinitializer, short %a, uint 3		; <<8 x short>> [#uses=1]
-	%tmp12 = insertelement <8 x short> %tmp10, short 0, uint 4		; <<8 x short>> [#uses=1]
-	%tmp14 = insertelement <8 x short> %tmp12, short 0, uint 5		; <<8 x short>> [#uses=1]
-	%tmp16 = insertelement <8 x short> %tmp14, short 0, uint 6		; <<8 x short>> [#uses=1]
-	%tmp18 = insertelement <8 x short> %tmp16, short 0, uint 7		; <<8 x short>> [#uses=1]
-	%tmp19 = cast <8 x short> %tmp18 to <2 x long>		; <<2 x long>> [#uses=1]
-	ret <2 x long> %tmp19
+	%tmp10 = insertelement <8 x i16> zeroinitializer, i16 %a, i32 3		; <<8 x i16>> [#uses=1]
+	%tmp12 = insertelement <8 x i16> %tmp10, i16 0, i32 4		; <<8 x i16>> [#uses=1]
+	%tmp14 = insertelement <8 x i16> %tmp12, i16 0, i32 5		; <<8 x i16>> [#uses=1]
+	%tmp16 = insertelement <8 x i16> %tmp14, i16 0, i32 6		; <<8 x i16>> [#uses=1]
+	%tmp18 = insertelement <8 x i16> %tmp16, i16 0, i32 7		; <<8 x i16>> [#uses=1]
+	%tmp19 = bitcast <8 x i16> %tmp18 to <2 x i64>		; <<2 x i64>> [#uses=1]
+	ret <2 x i64> %tmp19
 }
 
-<2 x long> %test2(sbyte %a) {
+define <2 x i64> @test2(i8 %a) {
 entry:
-	%tmp24 = insertelement <16 x sbyte> zeroinitializer, sbyte %a, uint 10
-	%tmp26 = insertelement <16 x sbyte> %tmp24, sbyte 0, uint 11
-	%tmp28 = insertelement <16 x sbyte> %tmp26, sbyte 0, uint 12
-	%tmp30 = insertelement <16 x sbyte> %tmp28, sbyte 0, uint 13
-	%tmp32 = insertelement <16 x sbyte> %tmp30, sbyte 0, uint 14
-	%tmp34 = insertelement <16 x sbyte> %tmp32, sbyte 0, uint 15
-	%tmp35 = cast <16 x sbyte> %tmp34 to <2 x long>
-	ret <2 x long> %tmp35
+	%tmp24 = insertelement <16 x i8> zeroinitializer, i8 %a, i32 10		; <<16 x i8>> [#uses=1]
+	%tmp26 = insertelement <16 x i8> %tmp24, i8 0, i32 11		; <<16 x i8>> [#uses=1]
+	%tmp28 = insertelement <16 x i8> %tmp26, i8 0, i32 12		; <<16 x i8>> [#uses=1]
+	%tmp30 = insertelement <16 x i8> %tmp28, i8 0, i32 13		; <<16 x i8>> [#uses=1]
+	%tmp32 = insertelement <16 x i8> %tmp30, i8 0, i32 14		; <<16 x i8>> [#uses=1]
+	%tmp34 = insertelement <16 x i8> %tmp32, i8 0, i32 15		; <<16 x i8>> [#uses=1]
+	%tmp35 = bitcast <16 x i8> %tmp34 to <2 x i64>		; <<2 x i64>> [#uses=1]
+	ret <2 x i64> %tmp35
 }

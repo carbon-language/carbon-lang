@@ -1,19 +1,18 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -x86-asm-syntax=intel | grep movzx | count 1
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -x86-asm-syntax=intel | grep movsx | count 1
+; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=intel | grep movzx | count 1
+; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=intel | grep movsx | count 1
 
-%G1 = internal global ubyte 0		; <ubyte*> [#uses=1]
-%G2 = internal global sbyte 0		; <sbyte*> [#uses=1]
+@G1 = internal global i8 0              ; <i8*> [#uses=1]
+@G2 = internal global i8 0              ; <i8*> [#uses=1]
 
-implementation   ; Functions:
-
-short %test1() {  ;; one zext
-	%tmp.0 = load ubyte* %G1		; <ubyte> [#uses=1]
-	%tmp.3 = cast ubyte %tmp.0 to short		; <short> [#uses=1]
-	ret short %tmp.3
+define i16 @test1() {
+        %tmp.0 = load i8* @G1           ; <i8> [#uses=1]
+        %tmp.3 = zext i8 %tmp.0 to i16          ; <i16> [#uses=1]
+        ret i16 %tmp.3
 }
 
-short %test2() {  ;; one sext
-	%tmp.0 = load sbyte* %G2		; <sbyte> [#uses=1]
-	%tmp.3 = cast sbyte %tmp.0 to short		; <short> [#uses=1]
-	ret short %tmp.3
+define i16 @test2() {
+        %tmp.0 = load i8* @G2           ; <i8> [#uses=1]
+        %tmp.3 = sext i8 %tmp.0 to i16          ; <i16> [#uses=1]
+        ret i16 %tmp.3
 }
+

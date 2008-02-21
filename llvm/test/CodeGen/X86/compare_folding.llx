@@ -1,10 +1,11 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mcpu=yonah | \
+; RUN: llvm-as < %s | llc -march=x86 -mcpu=yonah | \
 ; RUN:   grep movsd | count 1
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mcpu=yonah | \
+; RUN: llvm-as < %s | llc -march=x86 -mcpu=yonah | \
 ; RUN:   grep ucomisd
-declare bool %llvm.isunordered.f64(double,double)
+declare i1 @llvm.isunordered.f64(double, double)
 
-bool %test1(double %X, double %Y) {  ;; Returns isunordered(X,Y)
-	%COM = call bool %llvm.isunordered.f64(double %X, double %Y)
-	ret bool %COM
+define i1 @test1(double %X, double %Y) {
+        %COM = fcmp uno double %X, %Y           ; <i1> [#uses=1]
+        ret i1 %COM
 }
+

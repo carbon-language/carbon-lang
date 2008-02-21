@@ -1,13 +1,15 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -x86-asm-syntax=intel | \
+; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=intel | \
 ; RUN:   grep {shld.*CL}
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -x86-asm-syntax=intel | \
+; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=intel | \
 ; RUN:   not grep {mov CL, BL}
 
 ; PR687
 
-ulong %foo(ulong %x, long* %X) {
-	%tmp.1 = load long* %X		; <long> [#uses=1]
-	%tmp.3 = cast long %tmp.1 to ubyte		; <ubyte> [#uses=1]
-	%tmp.4 = shl ulong %x, ubyte %tmp.3		; <ulong> [#uses=1]
-	ret ulong %tmp.4
+define i64 @foo(i64 %x, i64* %X) {
+        %tmp.1 = load i64* %X           ; <i64> [#uses=1]
+        %tmp.3 = trunc i64 %tmp.1 to i8         ; <i8> [#uses=1]
+        %shift.upgrd.1 = zext i8 %tmp.3 to i64          ; <i64> [#uses=1]
+        %tmp.4 = shl i64 %x, %shift.upgrd.1             ; <i64> [#uses=1]
+        ret i64 %tmp.4
 }
+

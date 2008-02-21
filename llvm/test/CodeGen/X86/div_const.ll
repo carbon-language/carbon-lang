@@ -1,7 +1,7 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep 365384439
+; RUN: llvm-as < %s | llc -march=x86 | grep 365384439
 
-uint %f9188_mul365384439_shift27(uint %A) {
-        %tmp1 = div uint %A, 1577682821         ; <uint> [#uses=1]
-        ret uint %tmp1
+define i32 @f9188_mul365384439_shift27(i32 %A) {
+        %tmp1 = udiv i32 %A, 1577682821         ; <i32> [#uses=1]
+        ret i32 %tmp1
 }
 

@@ -2,24 +2,24 @@
 ; insertion of register-register copies.
 
 ; Make sure there are only 3 mov's for each testcase
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -x86-asm-syntax=intel | \
+; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=intel | \
 ; RUN:   grep {\\\<mov\\\>} | count 6
 
 
 target triple = "i686-pc-linux-gnu"
+@G = external global i32                ; <i32*> [#uses=2]
 
-%G = external global int
+declare void @ext(i32)
 
-declare void %ext(int)
-
-int %add_test(int %X, int %Y) {
-	%Z = add int %X, %Y      ;; Last use of Y, but not of X.
-	store int %Z, int* %G
-	ret int %X
+define i32 @add_test(i32 %X, i32 %Y) {
+        %Z = add i32 %X, %Y             ; <i32> [#uses=1]
+        store i32 %Z, i32* @G
+        ret i32 %X
 }
 
-int %xor_test(int %X, int %Y) {
-	%Z = xor int %X, %Y      ;; Last use of Y, but not of X.
-	store int %Z, int* %G
-	ret int %X
+define i32 @xor_test(i32 %X, i32 %Y) {
+        %Z = xor i32 %X, %Y             ; <i32> [#uses=1]
+        store i32 %Z, i32* @G
+        ret i32 %X
 }
+

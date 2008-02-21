@@ -1,9 +1,10 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep movl | count 1
+; RUN: llvm-as < %s | llc -march=x86 | grep movl | count 1
 
-%dst = global int 0
-%ptr = global int* null
+@dst = global i32 0             ; <i32*> [#uses=1]
+@ptr = global i32* null         ; <i32**> [#uses=1]
 
-void %test() {
-	store int* %dst, int** %ptr
-	ret void
+define void @test() {
+        store i32* @dst, i32** @ptr
+        ret void
 }
+

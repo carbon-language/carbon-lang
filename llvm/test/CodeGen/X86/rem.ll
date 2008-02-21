@@ -1,22 +1,22 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | not grep div
+; RUN: llvm-as < %s | llc -march=x86 | not grep div
 
-int %test1(int %X) {
-        %tmp1 = rem int %X, 255
-        ret int %tmp1
+define i32 @test1(i32 %X) {
+        %tmp1 = srem i32 %X, 255                ; <i32> [#uses=1]
+        ret i32 %tmp1
 }
 
-int %test2(int %X) {
-        %tmp1 = rem int %X, 256 
-        ret int %tmp1
+define i32 @test2(i32 %X) {
+        %tmp1 = srem i32 %X, 256                ; <i32> [#uses=1]
+        ret i32 %tmp1
 }
 
-uint %test3(uint %X) {
-        %tmp1 = rem uint %X, 255
-        ret uint %tmp1
+define i32 @test3(i32 %X) {
+        %tmp1 = urem i32 %X, 255                ; <i32> [#uses=1]
+        ret i32 %tmp1
 }
 
-uint %test4(uint %X) {
-        %tmp1 = rem uint %X, 256  ; just an and
-        ret uint %tmp1
+define i32 @test4(i32 %X) {
+        %tmp1 = urem i32 %X, 256                ; <i32> [#uses=1]
+        ret i32 %tmp1
 }
 

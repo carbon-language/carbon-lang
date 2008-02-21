@@ -1,13 +1,14 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep and | count 1
+; RUN: llvm-as < %s | llc -march=x86 | grep and | count 1
 
 ; The dag combiner should fold together (x&127)|(y&16711680) -> (x|y)&c1
 ; in this case.
-uint %test6(uint %x, ushort %y) {
-        %tmp1 = cast ushort %y to uint
-        %tmp2 = and uint %tmp1, 127             ; <uint> [#uses=1]
-        %tmp4 = shl uint %x, ubyte 16           ; <uint> [#uses=1]
-        %tmp5 = and uint %tmp4, 16711680                ; <uint> [#uses=1]
-        %tmp6 = or uint %tmp2, %tmp5            ; <uint> [#uses=1]
-        ret uint %tmp6
+
+define i32 @test6(i32 %x, i16 %y) {
+        %tmp1 = zext i16 %y to i32              ; <i32> [#uses=1]
+        %tmp2 = and i32 %tmp1, 127              ; <i32> [#uses=1]
+        %tmp4 = shl i32 %x, 16          ; <i32> [#uses=1]
+        %tmp5 = and i32 %tmp4, 16711680         ; <i32> [#uses=1]
+        %tmp6 = or i32 %tmp2, %tmp5             ; <i32> [#uses=1]
+        ret i32 %tmp6
 }
 

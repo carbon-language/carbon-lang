@@ -1,8 +1,10 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep lea
+; RUN: llvm-as < %s | llc -march=x86 | grep lea
 
-declare int %foo()
-int %test() {
-	%tmp.0 = tail call int %foo( )		; <int> [#uses=1]
-	%tmp.1 = mul int %tmp.0, 9		; <int> [#uses=1]
-	ret int %tmp.1
+declare i32 @foo()
+
+define i32 @test() {
+        %tmp.0 = tail call i32 @foo( )          ; <i32> [#uses=1]
+        %tmp.1 = mul i32 %tmp.0, 9              ; <i32> [#uses=1]
+        ret i32 %tmp.1
 }
+

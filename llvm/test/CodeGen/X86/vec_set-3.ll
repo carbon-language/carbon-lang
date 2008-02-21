@@ -1,17 +1,18 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 -o %t -f
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -o %t -f
 ; RUN: grep shufps %t | count 1
 ; RUN: grep pshufd %t | count 1
 
-<4 x float> %test(float %a) {
-	%tmp = insertelement <4 x float> zeroinitializer, float %a, uint 1
-	%tmp5 = insertelement <4 x float> %tmp, float 0.000000e+00, uint 2
-	%tmp6 = insertelement <4 x float> %tmp5, float 0.000000e+00, uint 3
-	ret <4 x float> %tmp6
+define <4 x float> @test(float %a) {
+        %tmp = insertelement <4 x float> zeroinitializer, float %a, i32 1               ; <<4 x float>> [#uses=1]
+        %tmp5 = insertelement <4 x float> %tmp, float 0.000000e+00, i32 2               ; <<4 x float>> [#uses=1]
+        %tmp6 = insertelement <4 x float> %tmp5, float 0.000000e+00, i32 3              ; <<4 x float>> [#uses=1]
+        ret <4 x float> %tmp6
 }
 
-<2 x long> %test2(int %a) {
-	%tmp7 = insertelement <4 x int> zeroinitializer, int %a, uint 2
-	%tmp9 = insertelement <4 x int> %tmp7, int 0, uint 3
-	%tmp10 = cast <4 x int> %tmp9 to <2 x long>
-	ret <2 x long> %tmp10
+define <2 x i64> @test2(i32 %a) {
+        %tmp7 = insertelement <4 x i32> zeroinitializer, i32 %a, i32 2          ; <<4 x i32>> [#uses=1]
+        %tmp9 = insertelement <4 x i32> %tmp7, i32 0, i32 3             ; <<4 x i32>> [#uses=1]
+        %tmp10 = bitcast <4 x i32> %tmp9 to <2 x i64>           ; <<2 x i64>> [#uses=1]
+        ret <2 x i64> %tmp10
 }
+

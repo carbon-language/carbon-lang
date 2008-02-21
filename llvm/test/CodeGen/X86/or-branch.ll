@@ -1,19 +1,19 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | not grep set
+; RUN: llvm-as < %s | llc -march=x86 | not grep set
 
-void %foo(int %X, int %Y, int %Z) {
+define void @foo(i32 %X, i32 %Y, i32 %Z) {
 entry:
-	%tmp = tail call int (...)* %bar( )		; <int> [#uses=0]
-	%tmp = seteq int %X, 0		; <bool> [#uses=1]
-	%tmp3 = setlt int %Y, 5		; <bool> [#uses=1]
-	%tmp4 = or bool %tmp3, %tmp		; <bool> [#uses=1]
-	br bool %tmp4, label %cond_true, label %UnifiedReturnBlock
+	%tmp = tail call i32 (...)* @bar( )		; <i32> [#uses=0]
+	%tmp.upgrd.1 = icmp eq i32 %X, 0		; <i1> [#uses=1]
+	%tmp3 = icmp slt i32 %Y, 5		; <i1> [#uses=1]
+	%tmp4 = or i1 %tmp3, %tmp.upgrd.1		; <i1> [#uses=1]
+	br i1 %tmp4, label %cond_true, label %UnifiedReturnBlock
 
 cond_true:		; preds = %entry
-	%tmp5 = tail call int (...)* %bar( )		; <int> [#uses=0]
+	%tmp5 = tail call i32 (...)* @bar( )		; <i32> [#uses=0]
 	ret void
 
 UnifiedReturnBlock:		; preds = %entry
 	ret void
 }
 
-declare int %bar(...)
+declare i32 @bar(...)

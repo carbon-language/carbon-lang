@@ -1,3 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86
-%a = extern_weak global int
-%b = global int* %a
+; RUN: llvm-as < %s | llc -march=x86
+@a = extern_weak global i32             ; <i32*> [#uses=1]
+@b = global i32* @a             ; <i32**> [#uses=0]
+

@@ -1,11 +1,13 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -mtriple=i686-apple-darwin | grep weak_reference | count 2
+; RUN: llvm-as < %s | llc -mtriple=i686-apple-darwin | grep weak_reference | count 2
 
-%Y = global int (sbyte*)* %X
-declare extern_weak int %X(sbyte*)
+@Y = global i32 (i8*)* @X               ; <i32 (i8*)**> [#uses=0]
 
-void %bar() {
-	tail call void (...)* %foo( )
-	ret void
+declare extern_weak i32 @X(i8*)
+
+define void @bar() {
+        tail call void (...)* @foo( )
+        ret void
 }
 
-declare extern_weak void %foo(...)
+declare extern_weak void @foo(...)
+

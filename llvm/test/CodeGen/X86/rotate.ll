@@ -1,92 +1,100 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -x86-asm-syntax=intel | \
+; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=intel | \
 ; RUN:   grep {ro\[rl\]} | count 12
 
-uint %rotl32(uint %A, ubyte %Amt) {
-	%B = shl uint %A, ubyte %Amt
-	%Amt2 = sub ubyte 32, %Amt
-	%C = shr uint %A, ubyte %Amt2
-	%D = or uint %B, %C
-	ret uint %D
+define i32 @rotl32(i32 %A, i8 %Amt) {
+	%shift.upgrd.1 = zext i8 %Amt to i32		; <i32> [#uses=1]
+	%B = shl i32 %A, %shift.upgrd.1		; <i32> [#uses=1]
+	%Amt2 = sub i8 32, %Amt		; <i8> [#uses=1]
+	%shift.upgrd.2 = zext i8 %Amt2 to i32		; <i32> [#uses=1]
+	%C = lshr i32 %A, %shift.upgrd.2		; <i32> [#uses=1]
+	%D = or i32 %B, %C		; <i32> [#uses=1]
+	ret i32 %D
 }
 
-uint %rotr32(uint %A, ubyte %Amt) {
-	%B = shr uint %A, ubyte %Amt
-	%Amt2 = sub ubyte 32, %Amt
-	%C = shl uint %A, ubyte %Amt2
-	%D = or uint %B, %C
-	ret uint %D
+define i32 @rotr32(i32 %A, i8 %Amt) {
+	%shift.upgrd.3 = zext i8 %Amt to i32		; <i32> [#uses=1]
+	%B = lshr i32 %A, %shift.upgrd.3		; <i32> [#uses=1]
+	%Amt2 = sub i8 32, %Amt		; <i8> [#uses=1]
+	%shift.upgrd.4 = zext i8 %Amt2 to i32		; <i32> [#uses=1]
+	%C = shl i32 %A, %shift.upgrd.4		; <i32> [#uses=1]
+	%D = or i32 %B, %C		; <i32> [#uses=1]
+	ret i32 %D
 }
 
-uint %rotli32(uint %A) {
-	%B = shl uint %A, ubyte 5
-	%C = shr uint %A, ubyte 27
-	%D = or uint %B, %C
-	ret uint %D
+define i32 @rotli32(i32 %A) {
+	%B = shl i32 %A, 5		; <i32> [#uses=1]
+	%C = lshr i32 %A, 27		; <i32> [#uses=1]
+	%D = or i32 %B, %C		; <i32> [#uses=1]
+	ret i32 %D
 }
 
-uint %rotri32(uint %A) {
-	%B = shr uint %A, ubyte 5
-	%C = shl uint %A, ubyte 27
-	%D = or uint %B, %C
-	ret uint %D
+define i32 @rotri32(i32 %A) {
+	%B = lshr i32 %A, 5		; <i32> [#uses=1]
+	%C = shl i32 %A, 27		; <i32> [#uses=1]
+	%D = or i32 %B, %C		; <i32> [#uses=1]
+	ret i32 %D
 }
 
-ushort %rotl16(ushort %A, ubyte %Amt) {
-	%B = shl ushort %A, ubyte %Amt
-	%Amt2 = sub ubyte 16, %Amt
-	%C = shr ushort %A, ubyte %Amt2
-	%D = or ushort %B, %C
-	ret ushort %D
+define i16 @rotl16(i16 %A, i8 %Amt) {
+	%shift.upgrd.5 = zext i8 %Amt to i16		; <i16> [#uses=1]
+	%B = shl i16 %A, %shift.upgrd.5		; <i16> [#uses=1]
+	%Amt2 = sub i8 16, %Amt		; <i8> [#uses=1]
+	%shift.upgrd.6 = zext i8 %Amt2 to i16		; <i16> [#uses=1]
+	%C = lshr i16 %A, %shift.upgrd.6		; <i16> [#uses=1]
+	%D = or i16 %B, %C		; <i16> [#uses=1]
+	ret i16 %D
 }
 
-ushort %rotr16(ushort %A, ubyte %Amt) {
-	%B = shr ushort %A, ubyte %Amt
-	%Amt2 = sub ubyte 16, %Amt
-	%C = shl ushort %A, ubyte %Amt2
-	%D = or ushort %B, %C
-	ret ushort %D
+define i16 @rotr16(i16 %A, i8 %Amt) {
+	%shift.upgrd.7 = zext i8 %Amt to i16		; <i16> [#uses=1]
+	%B = lshr i16 %A, %shift.upgrd.7		; <i16> [#uses=1]
+	%Amt2 = sub i8 16, %Amt		; <i8> [#uses=1]
+	%shift.upgrd.8 = zext i8 %Amt2 to i16		; <i16> [#uses=1]
+	%C = shl i16 %A, %shift.upgrd.8		; <i16> [#uses=1]
+	%D = or i16 %B, %C		; <i16> [#uses=1]
+	ret i16 %D
 }
 
-ushort %rotli16(ushort %A) {
-	%B = shl ushort %A, ubyte 5
-	%C = shr ushort %A, ubyte 11
-	%D = or ushort %B, %C
-	ret ushort %D
+define i16 @rotli16(i16 %A) {
+	%B = shl i16 %A, 5		; <i16> [#uses=1]
+	%C = lshr i16 %A, 11		; <i16> [#uses=1]
+	%D = or i16 %B, %C		; <i16> [#uses=1]
+	ret i16 %D
 }
 
-ushort %rotri16(ushort %A) {
-	%B = shr ushort %A, ubyte 5
-	%C = shl ushort %A, ubyte 11
-	%D = or ushort %B, %C
-	ret ushort %D
+define i16 @rotri16(i16 %A) {
+	%B = lshr i16 %A, 5		; <i16> [#uses=1]
+	%C = shl i16 %A, 11		; <i16> [#uses=1]
+	%D = or i16 %B, %C		; <i16> [#uses=1]
+	ret i16 %D
 }
 
-ubyte %rotl8(ubyte %A, ubyte %Amt) {
-	%B = shl ubyte %A, ubyte %Amt
-	%Amt2 = sub ubyte 8, %Amt
-	%C = shr ubyte %A, ubyte %Amt2
-	%D = or ubyte %B, %C
-	ret ubyte %D
+define i8 @rotl8(i8 %A, i8 %Amt) {
+	%B = shl i8 %A, %Amt		; <i8> [#uses=1]
+	%Amt2 = sub i8 8, %Amt		; <i8> [#uses=1]
+	%C = lshr i8 %A, %Amt2		; <i8> [#uses=1]
+	%D = or i8 %B, %C		; <i8> [#uses=1]
+	ret i8 %D
 }
 
-ubyte %rotr8(ubyte %A, ubyte %Amt) {
-	%B = shr ubyte %A, ubyte %Amt
-	%Amt2 = sub ubyte 8, %Amt
-	%C = shl ubyte %A, ubyte %Amt2
-	%D = or ubyte %B, %C
-	ret ubyte %D
+define i8 @rotr8(i8 %A, i8 %Amt) {
+	%B = lshr i8 %A, %Amt		; <i8> [#uses=1]
+	%Amt2 = sub i8 8, %Amt		; <i8> [#uses=1]
+	%C = shl i8 %A, %Amt2		; <i8> [#uses=1]
+	%D = or i8 %B, %C		; <i8> [#uses=1]
+	ret i8 %D
 }
 
-ubyte %rotli8(ubyte %A) {
-	%B = shl ubyte %A, ubyte 5
-	%C = shr ubyte %A, ubyte 3
-	%D = or ubyte %B, %C
-	ret ubyte %D
+define i8 @rotli8(i8 %A) {
+	%B = shl i8 %A, 5		; <i8> [#uses=1]
+	%C = lshr i8 %A, 3		; <i8> [#uses=1]
+	%D = or i8 %B, %C		; <i8> [#uses=1]
+	ret i8 %D
 }
 
-ubyte %rotri8(ubyte %A) {
-	%B = shr ubyte %A, ubyte 5
-	%C = shl ubyte %A, ubyte 3
-	%D = or ubyte %B, %C
-	ret ubyte %D
+define i8 @rotri8(i8 %A) {
+	%B = lshr i8 %A, 5		; <i8> [#uses=1]
+	%C = shl i8 %A, 3		; <i8> [#uses=1]
+	%D = or i8 %B, %C		; <i8> [#uses=1]
+	ret i8 %D
 }

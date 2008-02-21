@@ -1,12 +1,13 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | not grep set
+; RUN: llvm-as < %s | llc -march=x86 | not grep set
 
-declare bool %llvm.isunordered.f32(float, float)
+declare i1 @llvm.isunordered.f32(float, float)
 
-float %cmp(float %A, float %B, float %C, float %D) {
+define float @cmp(float %A, float %B, float %C, float %D) {
 entry:
-	%tmp.1 = call bool %llvm.isunordered.f32(float %A, float %B)
-	%tmp.2 = setge float %A, %B
-	%tmp.3 = or bool %tmp.1, %tmp.2
-	%tmp.4 = select bool %tmp.3, float %C, float %D
-	ret float %tmp.4
+        %tmp.1 = fcmp uno float %A, %B          ; <i1> [#uses=1]
+        %tmp.2 = fcmp oge float %A, %B          ; <i1> [#uses=1]
+        %tmp.3 = or i1 %tmp.1, %tmp.2           ; <i1> [#uses=1]
+        %tmp.4 = select i1 %tmp.3, float %C, float %D           ; <float> [#uses=1]
+        ret float %tmp.4
 }
+

@@ -1,16 +1,17 @@
-; RUN: llvm-upgrade < %s | llvm-as | \
+; RUN: llvm-as < %s | \
 ; RUN:   llc -march=x86 -mcpu=yonah | not grep movss
-; RUN: llvm-upgrade < %s | llvm-as | \
+; RUN: llvm-as < %s | \
 ; RUN:   llc -march=x86 -mcpu=yonah | not grep xmm
 
-double %test1(double *%P) {
-	%X = load double* %P
-	ret double %X
+define double @test1(double* %P) {
+        %X = load double* %P            ; <double> [#uses=1]
+        ret double %X
 }
 
-double %test2() {
-	ret double 1234.56
+define double @test2() {
+        ret double 1.234560e+03
 }
+
 
 ; FIXME: Todo
 ;double %test3(bool %B) {

@@ -1,24 +1,27 @@
 ; bswap should be constant folded when it is passed a constant argument
 
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | \
+; RUN: llvm-as < %s | llc -march=x86 | \
 ; RUN:   grep bswapl | count 3
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep rolw | count 1
+; RUN: llvm-as < %s | llc -march=x86 | grep rolw | count 1
 
-declare ushort %llvm.bswap.i16(ushort)
-declare uint %llvm.bswap.i32(uint)
-declare ulong %llvm.bswap.i64(ulong)
+declare i16 @llvm.bswap.i16(i16)
 
-ushort %W(ushort %A) {
-	%Z = call ushort %llvm.bswap.i16(ushort %A)
-	ret ushort %Z
+declare i32 @llvm.bswap.i32(i32)
+
+declare i64 @llvm.bswap.i64(i64)
+
+define i16 @W(i16 %A) {
+        %Z = call i16 @llvm.bswap.i16( i16 %A )         ; <i16> [#uses=1]
+        ret i16 %Z
 }
 
-uint %X(uint %A) {
-	%Z = call uint %llvm.bswap.i32(uint %A)
-	ret uint %Z
+define i32 @X(i32 %A) {
+        %Z = call i32 @llvm.bswap.i32( i32 %A )         ; <i32> [#uses=1]
+        ret i32 %Z
 }
 
-ulong %Y(ulong %A) {
-	%Z = call ulong %llvm.bswap.i64(ulong %A)
-	ret ulong %Z
+define i64 @Y(i64 %A) {
+        %Z = call i64 @llvm.bswap.i64( i64 %A )         ; <i64> [#uses=1]
+        ret i64 %Z
 }
+

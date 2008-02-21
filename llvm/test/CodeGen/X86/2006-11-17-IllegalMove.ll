@@ -1,38 +1,39 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86-64 | \
+; RUN: llvm-as < %s | llc -march=x86-64 | \
 ; RUN:   grep movb | count 2
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86-64 | \
+; RUN: llvm-as < %s | llc -march=x86-64 | \
 ; RUN:   grep movzbw
 
-void %handle_vector_size_attribute() {
+
+define void @handle_vector_size_attribute() {
 entry:
-	%tmp69 = load uint* null		; <uint> [#uses=1]
-	switch uint %tmp69, label %bb84 [
-		 uint 2, label %bb77
-		 uint 1, label %bb77
+	%tmp69 = load i32* null		; <i32> [#uses=1]
+	switch i32 %tmp69, label %bb84 [
+		 i32 2, label %bb77
+		 i32 1, label %bb77
 	]
 
 bb77:		; preds = %entry, %entry
-	%tmp99 = udiv ulong 0, 0		; <ulong> [#uses=1]
-	%tmp = load ubyte* null		; <ubyte> [#uses=1]
-	%tmp114 = seteq ulong 0, 0		; <bool> [#uses=1]
-	br bool %tmp114, label %cond_true115, label %cond_next136
+	%tmp99 = udiv i64 0, 0		; <i64> [#uses=1]
+	%tmp = load i8* null		; <i8> [#uses=1]
+	%tmp114 = icmp eq i64 0, 0		; <i1> [#uses=1]
+	br i1 %tmp114, label %cond_true115, label %cond_next136
 
 bb84:		; preds = %entry
 	ret void
 
 cond_true115:		; preds = %bb77
-	%tmp118 = load ubyte* null		; <ubyte> [#uses=1]
-	br bool false, label %cond_next129, label %cond_true120
+	%tmp118 = load i8* null		; <i8> [#uses=1]
+	br i1 false, label %cond_next129, label %cond_true120
 
 cond_true120:		; preds = %cond_true115
-	%tmp127 = udiv ubyte %tmp, %tmp118		; <ubyte> [#uses=1]
-	%tmp127 = cast ubyte %tmp127 to ulong		; <ulong> [#uses=1]
+	%tmp127 = udiv i8 %tmp, %tmp118		; <i8> [#uses=1]
+	%tmp127.upgrd.1 = zext i8 %tmp127 to i64		; <i64> [#uses=1]
 	br label %cond_next129
 
 cond_next129:		; preds = %cond_true120, %cond_true115
-	%iftmp.30.0 = phi ulong [ %tmp127, %cond_true120 ], [ 0, %cond_true115 ]		; <ulong> [#uses=1]
-	%tmp132 = seteq ulong %iftmp.30.0, %tmp99		; <bool> [#uses=1]
-	br bool %tmp132, label %cond_false148, label %cond_next136
+	%iftmp.30.0 = phi i64 [ %tmp127.upgrd.1, %cond_true120 ], [ 0, %cond_true115 ]		; <i64> [#uses=1]
+	%tmp132 = icmp eq i64 %iftmp.30.0, %tmp99		; <i1> [#uses=1]
+	br i1 %tmp132, label %cond_false148, label %cond_next136
 
 cond_next136:		; preds = %cond_next129, %bb77
 	ret void

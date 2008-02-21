@@ -1,29 +1,29 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -mtriple=i686-apple-darwin -relocation-model=pic | grep '\$pb' | grep mov
+; RUN: llvm-as < %s | llc -mtriple=i686-apple-darwin -relocation-model=pic | grep '\$pb' | grep mov
 ;
 ; Make sure the PIC label flags2-"L1$pb" is not moved up to the preheader.
 
-%flags2 = internal global [8193 x sbyte] zeroinitializer, align 32
+@flags2 = internal global [8193 x i8] zeroinitializer, align 32		; <[8193 x i8]*> [#uses=1]
 
-void %test(int %k, int %i) {
+define void @test(i32 %k, i32 %i) {
 entry:
-	%i = bitcast int %i to uint
-	%k_addr.012 = shl int %i, ubyte 1
-	%tmp14 = setgt int %k_addr.012, 8192
-	br bool %tmp14, label %return, label %bb
+	%k_addr.012 = shl i32 %i, 1		; <i32> [#uses=1]
+	%tmp14 = icmp sgt i32 %k_addr.012, 8192		; <i1> [#uses=1]
+	br i1 %tmp14, label %return, label %bb
 
-bb:
-	%indvar = phi uint [ 0, %entry ], [ %indvar.next, %bb ]
-	%tmp. = shl uint %i, ubyte 1
-	%tmp.15 = mul uint %indvar, %i
-	%tmp.16 = add uint %tmp.15, %tmp.
-	%k_addr.0.0 = bitcast uint %tmp.16 to int
-	%tmp = getelementptr [8193 x sbyte]* %flags2, int 0, uint %tmp.16
-	store sbyte 0, sbyte* %tmp
-	%k_addr.0 = add int %k_addr.0.0, %i
-	%tmp = setgt int %k_addr.0, 8192
-	%indvar.next = add uint %indvar, 1
-	br bool %tmp, label %return, label %bb
+bb:		; preds = %bb, %entry
+	%indvar = phi i32 [ 0, %entry ], [ %indvar.next, %bb ]		; <i32> [#uses=2]
+	%tmp. = shl i32 %i, 1		; <i32> [#uses=1]
+	%tmp.15 = mul i32 %indvar, %i		; <i32> [#uses=1]
+	%tmp.16 = add i32 %tmp.15, %tmp.		; <i32> [#uses=2]
+	%k_addr.0.0 = bitcast i32 %tmp.16 to i32		; <i32> [#uses=1]
+	%gep.upgrd.1 = zext i32 %tmp.16 to i64		; <i64> [#uses=1]
+	%tmp = getelementptr [8193 x i8]* @flags2, i32 0, i64 %gep.upgrd.1		; <i8*> [#uses=1]
+	store i8 0, i8* %tmp
+	%k_addr.0 = add i32 %k_addr.0.0, %i		; <i32> [#uses=1]
+	%tmp.upgrd.2 = icmp sgt i32 %k_addr.0, 8192		; <i1> [#uses=1]
+	%indvar.next = add i32 %indvar, 1		; <i32> [#uses=1]
+	br i1 %tmp.upgrd.2, label %return, label %bb
 
-return:
+return:		; preds = %bb, %entry
 	ret void
 }

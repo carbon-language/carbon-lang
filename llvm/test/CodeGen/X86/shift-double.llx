@@ -1,31 +1,41 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -x86-asm-syntax=intel | \
+; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=intel | \
 ; RUN:   grep {sh\[lr\]d} | count 5
 
-long %test1(long %X, ubyte %C) {
-	%Y = shl long %X, ubyte %C
-	ret long %Y
-}
-long %test2(long %X, ubyte %C) {
-	%Y = shr long %X, ubyte %C
-	ret long %Y
-}
-ulong %test3(ulong %X, ubyte %C) {
-	%Y = shr ulong %X, ubyte %C
-	ret ulong %Y
+define i64 @test1(i64 %X, i8 %C) {
+        %shift.upgrd.1 = zext i8 %C to i64              ; <i64> [#uses=1]
+        %Y = shl i64 %X, %shift.upgrd.1         ; <i64> [#uses=1]
+        ret i64 %Y
 }
 
-uint %test4(uint %A, uint %B, ubyte %C) {
-	%X = shl uint %A, ubyte %C
-	%Cv = sub ubyte 32, %C
-	%Y = shr uint %B, ubyte %Cv
-	%Z = or uint %Y, %X
-	ret uint %Z
+define i64 @test2(i64 %X, i8 %C) {
+        %shift.upgrd.2 = zext i8 %C to i64              ; <i64> [#uses=1]
+        %Y = ashr i64 %X, %shift.upgrd.2                ; <i64> [#uses=1]
+        ret i64 %Y
 }
 
-ushort %test5(ushort %A, ushort %B, ubyte %C) {
-	%X = shl ushort %A, ubyte %C
-	%Cv = sub ubyte 16, %C
-	%Y = shr ushort %B, ubyte %Cv
-	%Z = or ushort %Y, %X
-	ret ushort %Z
+define i64 @test3(i64 %X, i8 %C) {
+        %shift.upgrd.3 = zext i8 %C to i64              ; <i64> [#uses=1]
+        %Y = lshr i64 %X, %shift.upgrd.3                ; <i64> [#uses=1]
+        ret i64 %Y
 }
+
+define i32 @test4(i32 %A, i32 %B, i8 %C) {
+        %shift.upgrd.4 = zext i8 %C to i32              ; <i32> [#uses=1]
+        %X = shl i32 %A, %shift.upgrd.4         ; <i32> [#uses=1]
+        %Cv = sub i8 32, %C             ; <i8> [#uses=1]
+        %shift.upgrd.5 = zext i8 %Cv to i32             ; <i32> [#uses=1]
+        %Y = lshr i32 %B, %shift.upgrd.5                ; <i32> [#uses=1]
+        %Z = or i32 %Y, %X              ; <i32> [#uses=1]
+        ret i32 %Z
+}
+
+define i16 @test5(i16 %A, i16 %B, i8 %C) {
+        %shift.upgrd.6 = zext i8 %C to i16              ; <i16> [#uses=1]
+        %X = shl i16 %A, %shift.upgrd.6         ; <i16> [#uses=1]
+        %Cv = sub i8 16, %C             ; <i8> [#uses=1]
+        %shift.upgrd.7 = zext i8 %Cv to i16             ; <i16> [#uses=1]
+        %Y = lshr i16 %B, %shift.upgrd.7                ; <i16> [#uses=1]
+        %Z = or i16 %Y, %X              ; <i16> [#uses=1]
+        ret i16 %Z
+}
+

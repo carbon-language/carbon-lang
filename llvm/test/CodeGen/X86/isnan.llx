@@ -1,7 +1,9 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | not grep call
-declare bool %llvm.isunordered.f64(double)
+; RUN: llvm-as < %s | llc -march=x86 | not grep call
 
-bool %test_isnan(double %X) {
-	%R = call bool %llvm.isunordered.f64(double %X, double %X)
-	ret bool %R
+declare i1 @llvm.isunordered.f64(double)
+
+define i1 @test_isnan(double %X) {
+        %R = fcmp uno double %X, %X             ; <i1> [#uses=1]
+        ret i1 %R
 }
+

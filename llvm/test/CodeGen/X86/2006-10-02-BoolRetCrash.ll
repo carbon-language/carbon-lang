@@ -1,6 +1,7 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc 
+; RUN: llvm-as < %s | llc 
 ; PR933
 
-fastcc bool %test() {
-	ret bool true
+define fastcc i1 @test() {
+        ret i1 true
 }
+

@@ -1,35 +1,36 @@
 ; PR1022, PR1023
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | \
+; RUN: llvm-as < %s | llc -march=x86 | \
 ; RUN:   grep 3721182122 | count 2
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | \
+; RUN: llvm-as < %s | llc -march=x86 | \
 ; RUN:   grep -E {movl	_?bytes2} | count 1
 
-%fmt = constant [4 x sbyte] c"%x\0A\00"
-%bytes = constant [4 x sbyte] c"\AA\BB\CC\DD"
-%bytes2 = global [4 x sbyte] c"\AA\BB\CC\DD"
+@fmt = constant [4 x i8] c"%x\0A\00"            ; <[4 x i8]*> [#uses=2]
+@bytes = constant [4 x i8] c"\AA\BB\CC\DD"              ; <[4 x i8]*> [#uses=1]
+@bytes2 = global [4 x i8] c"\AA\BB\CC\DD"               ; <[4 x i8]*> [#uses=1]
 
-
-int %test1() {
-        %y = alloca uint
-        %c = cast uint* %y to sbyte*
-        %z = getelementptr [4 x sbyte]* %bytes, int 0, int 0
-        call void %llvm.memcpy.i32( sbyte* %c, sbyte* %z, uint 4, uint 1 )
-        %r = load uint* %y
-        %t = cast [4 x sbyte]* %fmt to sbyte*
-        %tmp = call int (sbyte*, ...)* %printf( sbyte* %t, uint %r )
-        ret int 0
+define i32 @test1() {
+        %y = alloca i32         ; <i32*> [#uses=2]
+        %c = bitcast i32* %y to i8*             ; <i8*> [#uses=1]
+        %z = getelementptr [4 x i8]* @bytes, i32 0, i32 0               ; <i8*> [#uses=1]
+        call void @llvm.memcpy.i32( i8* %c, i8* %z, i32 4, i32 1 )
+        %r = load i32* %y               ; <i32> [#uses=1]
+        %t = bitcast [4 x i8]* @fmt to i8*              ; <i8*> [#uses=1]
+        %tmp = call i32 (i8*, ...)* @printf( i8* %t, i32 %r )           ; <i32> [#uses=0]
+        ret i32 0
 }
 
-void %test2() {
-        %y = alloca uint
-        %c = cast uint* %y to sbyte*
-        %z = getelementptr [4 x sbyte]* %bytes2, int 0, int 0
-        call void %llvm.memcpy.i32( sbyte* %c, sbyte* %z, uint 4, uint 1 )
-        %r = load uint* %y
-        %t = cast [4 x sbyte]* %fmt to sbyte*
-        %tmp = call int (sbyte*, ...)* %printf( sbyte* %t, uint %r )
+define void @test2() {
+        %y = alloca i32         ; <i32*> [#uses=2]
+        %c = bitcast i32* %y to i8*             ; <i8*> [#uses=1]
+        %z = getelementptr [4 x i8]* @bytes2, i32 0, i32 0              ; <i8*> [#uses=1]
+        call void @llvm.memcpy.i32( i8* %c, i8* %z, i32 4, i32 1 )
+        %r = load i32* %y               ; <i32> [#uses=1]
+        %t = bitcast [4 x i8]* @fmt to i8*              ; <i8*> [#uses=1]
+        %tmp = call i32 (i8*, ...)* @printf( i8* %t, i32 %r )           ; <i32> [#uses=0]
         ret void
 }
 
-declare void %llvm.memcpy.i32(sbyte*, sbyte*, uint, uint)
-declare int %printf(sbyte*, ...)
+declare void @llvm.memcpy.i32(i8*, i8*, i32, i32)
+
+declare i32 @printf(i8*, ...)
+

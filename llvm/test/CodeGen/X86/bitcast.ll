@@ -1,23 +1,24 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86-64
+; RUN: llvm-as < %s | llc -march=x86
+; RUN: llvm-as < %s | llc -march=x86-64
 ; PR1033
 
-long %test1(double %t) {
-  %u = bitcast double %t to long
-  ret long %u
+define i64 @test1(double %t) {
+        %u = bitcast double %t to i64           ; <i64> [#uses=1]
+        ret i64 %u
 }
 
-double %test2(long %t) {
-  %u = bitcast long %t to double
-  ret double %u
+define double @test2(i64 %t) {
+        %u = bitcast i64 %t to double           ; <double> [#uses=1]
+        ret double %u
 }
 
-int %test3(float %t) {
-  %u = bitcast float %t to int
-  ret int %u
+define i32 @test3(float %t) {
+        %u = bitcast float %t to i32            ; <i32> [#uses=1]
+        ret i32 %u
 }
 
-float %test4(int %t) {
-  %u = bitcast int %t to float
-  ret float %u
+define float @test4(i32 %t) {
+        %u = bitcast i32 %t to float            ; <float> [#uses=1]
+        ret float %u
 }
+

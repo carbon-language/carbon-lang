@@ -1,15 +1,16 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | grep xorps | count 2
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep xorps | count 2
 
-void %foo(<4 x float> *%P) {
-	%T = load <4 x float> * %P
-	%S = add <4 x float> zeroinitializer, %T
-	store <4 x float> %S, <4 x float>* %P
-	ret void
+define void @foo(<4 x float>* %P) {
+        %T = load <4 x float>* %P               ; <<4 x float>> [#uses=1]
+        %S = add <4 x float> zeroinitializer, %T                ; <<4 x float>> [#uses=1]
+        store <4 x float> %S, <4 x float>* %P
+        ret void
 }
 
-void %bar(<4 x int> *%P) {
-	%T = load <4 x int> * %P
-	%S = add <4 x int> zeroinitializer, %T
-	store <4 x int> %S, <4 x int>* %P
-	ret void
+define void @bar(<4 x i32>* %P) {
+        %T = load <4 x i32>* %P         ; <<4 x i32>> [#uses=1]
+        %S = add <4 x i32> zeroinitializer, %T          ; <<4 x i32>> [#uses=1]
+        store <4 x i32> %S, <4 x i32>* %P
+        ret void
 }
+

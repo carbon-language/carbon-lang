@@ -1,9 +1,10 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | not grep leal
+; RUN: llvm-as < %s | llc -march=x86 | not grep leal
 
-%x = external global int
+@x = external global i32                ; <i32*> [#uses=1]
 
-int %test() {
-	%tmp.0 = load int* %x
-	%tmp.1 = shl int %tmp.0, ubyte 1
-	ret int %tmp.1
+define i32 @test() {
+        %tmp.0 = load i32* @x           ; <i32> [#uses=1]
+        %tmp.1 = shl i32 %tmp.0, 1              ; <i32> [#uses=1]
+        ret i32 %tmp.1
 }
+
