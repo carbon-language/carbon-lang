@@ -65,6 +65,31 @@ public:
   }
 
 };
+
+
+class SolarisTargetInfo : public TargetInfoImpl {
+public:
+  SolarisTargetInfo(const std::string& triple) : TargetInfoImpl(triple) {}
+  
+  virtual void getTargetDefines(std::vector<char> &Defs) const {
+// FIXME: we need a real target configuration system.  For now, only define
+// __SUN__ if the host has it.
+#ifdef __SUN__
+    Define(Defs, "__SUN__");
+    Define(Defs, "__SOLARIS__");
+#endif
+    
+    if (1) {// -fobjc-gc controls this.
+      Define(Defs, "__weak", "");
+      Define(Defs, "__strong", "");
+    } else {
+      Define(Defs, "__weak", "__attribute__((objc_gc(weak)))");
+      Define(Defs, "__strong", "__attribute__((objc_gc(strong)))");
+      Define(Defs, "__OBJC_GC__");
+    }
+  }
+
+};
 } // end anonymous namespace.
 
 
@@ -633,6 +658,46 @@ public:
 } // end anonymous namespace.
 
 namespace {
+class SolarisSparcV8TargetInfo : public SolarisTargetInfo {
+public:
+  SolarisSparcV8TargetInfo(const std::string& triple) : SolarisTargetInfo(triple) {}
+  
+  virtual void getTargetDefines(std::vector<char> &Defines) const {
+    SolarisTargetInfo::getTargetDefines(Defines);
+//    getSparcDefines(Defines, false);
+    Define(Defines, "__sparc");
+    Define(Defines, "__sparcv8");
+  }
+  virtual void getTargetBuiltins(const Builtin::Info *&Records,
+                                 unsigned &NumRecords) const {
+    PPC::getBuiltins(Records, NumRecords);
+  }
+  virtual const char *getVAListDeclaration() const {
+    return getPPCVAListDeclaration();
+  }
+  virtual const char *getTargetPrefix() const {
+    return PPC::getTargetPrefix();
+  }
+  virtual void getGCCRegNames(const char * const *&Names, 
+                              unsigned &NumNames) const {
+    PPC::getGCCRegNames(Names, NumNames);
+  }
+  virtual void getGCCRegAliases(const GCCRegAlias *&Aliases, 
+                                unsigned &NumAliases) const {
+    PPC::getGCCRegAliases(Aliases, NumAliases);
+  }
+  virtual bool validateAsmConstraint(char c,
+                                     TargetInfo::ConstraintInfo &info) const {
+    return PPC::validateAsmConstraint(c, info);
+  }
+  virtual const char *getClobbers() const {
+    return PPC::getClobbers();
+  }
+};
+
+} // end anonymous namespace.
+
+namespace {
 class LinuxTargetInfo : public DarwinTargetInfo {
 public:
   LinuxTargetInfo(const std::string& triple) : DarwinTargetInfo(triple) {
@@ -690,6 +755,8 @@ static TargetInfoImpl *CreateTarget(const std::string& T) {
     return new DarwinPPCTargetInfo(T);
   else if (T.find("ppc64-") == 0 || T.find("powerpc64-") == 0)
     return new DarwinPPC64TargetInfo(T);
+  else if (T.find("sparc-") == 0)
+      return new SolarisSparcV8TargetInfo(T); // ugly hack
   else if (T.find("x86_64-") == 0)
     return new DarwinX86_64TargetInfo(T);
   else if (IsX86(T))
