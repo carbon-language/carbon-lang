@@ -1886,7 +1886,7 @@ SCEVHandle ScalarEvolutionsImpl::ComputeIterationCount(const Loop *L) {
   
   ICmpInst *ExitCond = dyn_cast<ICmpInst>(ExitBr->getCondition());
 
-  // If its not an integer comparison then compute it the hard way. 
+  // If it's not an integer comparison then compute it the hard way. 
   // Note that ICmpInst deals with pointer comparisons too so we must check
   // the type of the operand.
   if (ExitCond == 0 || isa<PointerType>(ExitCond->getOperand(0)->getType()))
@@ -2182,8 +2182,6 @@ static PHINode *getConstantEvolvingPHI(Value *V, const Loop *L) {
 /// reason, return null.
 static Constant *EvaluateExpression(Value *V, Constant *PHIVal) {
   if (isa<PHINode>(V)) return PHIVal;
-  if (GlobalValue *GV = dyn_cast<GlobalValue>(V))
-    return GV;
   if (Constant *C = dyn_cast<Constant>(V)) return C;
   Instruction *I = cast<Instruction>(V);
 
