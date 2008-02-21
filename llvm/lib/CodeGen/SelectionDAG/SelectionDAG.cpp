@@ -2428,37 +2428,38 @@ SDOperand SelectionDAG::getMemset(SDOperand Chain, SDOperand Dest,
 }
 
 SDOperand SelectionDAG::getAtomic(unsigned Opcode, SDOperand Chain, 
-                                  SDOperand Ptr, SDOperand A2, 
-                                  SDOperand A3, MVT::ValueType VT) {
+                                  SDOperand Ptr, SDOperand Cmp, 
+                                  SDOperand Swp, MVT::ValueType VT) {
   assert(Opcode == ISD::ATOMIC_LCS && "Invalid Atomic Op");
-  SDVTList VTs = getVTList(A2.getValueType(), MVT::Other);
+  assert(Cmp.getValueType() == Swp.getValueType() && "Invalid Atomic Op Types");
+  SDVTList VTs = getVTList(Cmp.getValueType(), MVT::Other);
   FoldingSetNodeID ID;
-  SDOperand Ops[] = {Chain, Ptr, A2, A3};
+  SDOperand Ops[] = {Chain, Ptr, Cmp, Swp};
   AddNodeIDNode(ID, Opcode, VTs, Ops, 4);
   ID.AddInteger((unsigned int)VT);
   void* IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-  SDNode* N = new AtomicSDNode(Opcode, VTs, Chain, Ptr, A2, A3, VT);
+  SDNode* N = new AtomicSDNode(Opcode, VTs, Chain, Ptr, Cmp, Swp, VT);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }
 
 SDOperand SelectionDAG::getAtomic(unsigned Opcode, SDOperand Chain, 
-                                  SDOperand Ptr, SDOperand A2, 
+                                  SDOperand Ptr, SDOperand Val, 
                                   MVT::ValueType VT) {
   assert((Opcode == ISD::ATOMIC_LAS || Opcode == ISD::ATOMIC_SWAP)
          && "Invalid Atomic Op");
-  SDVTList VTs = getVTList(A2.getValueType(), MVT::Other);
+  SDVTList VTs = getVTList(Val.getValueType(), MVT::Other);
   FoldingSetNodeID ID;
-  SDOperand Ops[] = {Chain, Ptr, A2};
+  SDOperand Ops[] = {Chain, Ptr, Val};
   AddNodeIDNode(ID, Opcode, VTs, Ops, 3);
   ID.AddInteger((unsigned int)VT);
   void* IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-  SDNode* N = new AtomicSDNode(Opcode, VTs, Chain, Ptr, A2, VT);
+  SDNode* N = new AtomicSDNode(Opcode, VTs, Chain, Ptr, Val, VT);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDOperand(N, 0);

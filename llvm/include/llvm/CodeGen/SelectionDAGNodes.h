@@ -1193,26 +1193,27 @@ class AtomicSDNode : public SDNode {
   SDOperand Ops[4];
   MVT::ValueType OrigVT;
 public:
-  AtomicSDNode(unsigned Opc, SDVTList VTL, SDOperand Chain, SDOperand X, 
-               SDOperand Y, SDOperand Z, MVT::ValueType VT)
+  AtomicSDNode(unsigned Opc, SDVTList VTL, SDOperand Chain, SDOperand Ptr, 
+               SDOperand Cmp, SDOperand Swp, MVT::ValueType VT)
     : SDNode(Opc, VTL) {
     Ops[0] = Chain;
-    Ops[1] = X;
-    Ops[2] = Y;
-    Ops[3] = Z;
+    Ops[1] = Ptr;
+    Ops[2] = Swp;
+    Ops[3] = Cmp;
     InitOperands(Ops, 4);
     OrigVT=VT;
   }
-  AtomicSDNode(unsigned Opc, SDVTList VTL, SDOperand Chain, SDOperand X, 
-               SDOperand Y, MVT::ValueType VT)
+  AtomicSDNode(unsigned Opc, SDVTList VTL, SDOperand Chain, SDOperand Ptr, 
+               SDOperand Val, MVT::ValueType VT)
     : SDNode(Opc, VTL) {
     Ops[0] = Chain;
-    Ops[1] = X;
-    Ops[2] = Y;
+    Ops[1] = Ptr;
+    Ops[2] = Val;
     InitOperands(Ops, 3);
     OrigVT=VT;
   }
   MVT::ValueType getVT() const { return OrigVT; }
+  bool isCompareAndSwap() const { return getOpcode() == ISD::ATOMIC_LCS; }
 };
 
 class StringSDNode : public SDNode {
