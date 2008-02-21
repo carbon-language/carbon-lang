@@ -34,7 +34,7 @@ static inline const Type *checkType(const Type *Ty) {
 Value::Value(const Type *ty, unsigned scid)
   : SubclassID(scid), SubclassData(0), Ty(checkType(ty)),
     UseList(0), Name(0) {
-  if (isa<CallInst>(this))
+  if (isa<CallInst>(this) || isa<InvokeInst>(this))
     assert((Ty->isFirstClassType() || Ty == Type::VoidTy ||
             isa<OpaqueType>(ty) || Ty->getTypeID() == Type::StructTyID) &&
            "invalid CallInst  type!");

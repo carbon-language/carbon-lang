@@ -1072,7 +1072,8 @@ void Verifier::visitInstruction(Instruction &I) {
   // Check that the return value of the instruction is either void or a legal
   // value type.
   Assert1(I.getType() == Type::VoidTy || I.getType()->isFirstClassType()
-          || (isa<CallInst>(I) && I.getType()->getTypeID() == Type::StructTyID),
+          || ((isa<CallInst>(I) || isa<InvokeInst>(I))
+              && I.getType()->getTypeID() == Type::StructTyID),
           "Instruction returns a non-scalar type!", &I);
 
   // Check that all uses of the instruction, if they are instructions
@@ -1096,7 +1097,7 @@ void Verifier::visitInstruction(Instruction &I) {
       if (isa<ReturnInst>(I) || isa<GetResultInst>(I))
         Assert1(I.getOperand(i)->getType()->getTypeID() == Type::StructTyID,
                 "Invalid ReturnInst operands!", &I);
-      else if (isa<CallInst>(I)) {
+      else if (isa<CallInst>(I) || isa<InvokeInst>(I)) {
         if (const PointerType *PT = dyn_cast<PointerType>
             (I.getOperand(i)->getType())) {
           const Type *ETy = PT->getElementType();

@@ -10,3 +10,13 @@ define i8 @f2(i32 %p) {
    %e = add i8 %d, 1
    ret i8 %e
 }
+
+define i32 @f3(i32 %p) {
+   %c = invoke {i32, i8} @foo(i32 %p)
+         to label %L unwind label %L2
+   L: 
+   %d = getresult {i32, i8} %c, 0
+   ret i32 %d
+   L2:
+   ret i32 0
+}
