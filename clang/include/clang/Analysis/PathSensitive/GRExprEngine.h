@@ -358,11 +358,7 @@ public:
   RVal EvalComplement(RVal X) {
     return X.isValid() ? TF->EvalComplement(ValMgr, cast<NonLVal>(X)) : X;
   }
-  
-  RVal EvalBinOp(BinaryOperator::Opcode Op, LVal L, RVal R) {    
-    return R.isValid() ? TF->EvalBinOp(ValMgr, Op, L, cast<NonLVal>(R)) : R;
-  }
-  
+
   RVal EvalBinOp(BinaryOperator::Opcode Op, NonLVal L, RVal R) {
     return R.isValid() ? TF->EvalBinOp(ValMgr, Op, L, cast<NonLVal>(R)) : R;
   }
