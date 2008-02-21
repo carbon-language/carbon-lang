@@ -260,7 +260,14 @@ public:
   }
   void SetAttributes(AttributeList *AL) { AttrList = AL; }
   AttributeList *getAttributes() const { return AttrList; }
-  void clearAttributes() { AttrList = 0; }
+  
+  /// TakeAttributes - Return the current attribute list and remove them from
+  /// the DeclSpec so that it doesn't own them.
+  AttributeList *TakeAttributes() {
+    AttributeList *AL = AttrList;
+    AttrList = 0;
+    return AL;
+  }
   
   llvm::SmallVector<Action::DeclTy *, 8> *getProtocolQualifiers() const {
     return ProtocolQualifiers;
@@ -268,7 +275,7 @@ public:
   void setProtocolQualifiers(llvm::SmallVector<Action::DeclTy *, 8> *protos) {
     ProtocolQualifiers = protos;
   }
-  unsigned NumProtocolQualifiers() const {
+  unsigned getNumProtocolQualifiers() const {
     return ProtocolQualifiers ?  ProtocolQualifiers->size() : 0;
   }
   /// Finish - This does final analysis of the declspec, issuing diagnostics for
@@ -362,13 +369,19 @@ struct DeclaratorChunk {
   struct PointerTypeInfo {
     /// The type qualifiers: const/volatile/restrict.
     unsigned TypeQuals : 3;
-    void destroy() {}
+    AttributeList *AttrList;
+    void destroy() {
+      delete AttrList;
+    }
   };
 
   struct ReferenceTypeInfo {
     /// The type qualifier: restrict. [GNU] C++ extension
     bool HasRestrict;
-    void destroy() {}
+    AttributeList *AttrList;
+    void destroy() {
+      delete AttrList;
+    }
   };
 
   struct ArrayTypeInfo {
@@ -441,21 +454,25 @@ struct DeclaratorChunk {
   
   /// getPointer - Return a DeclaratorChunk for a pointer.
   ///
-  static DeclaratorChunk getPointer(unsigned TypeQuals, SourceLocation Loc) {
+  static DeclaratorChunk getPointer(unsigned TypeQuals, SourceLocation Loc,
+                                    AttributeList *AL) {
     DeclaratorChunk I;
     I.Kind          = Pointer;
     I.Loc           = Loc;
     I.Ptr.TypeQuals = TypeQuals;
+    I.Ptr.AttrList  = AL;
     return I;
   }
   
   /// getReference - Return a DeclaratorChunk for a reference.
   ///
-  static DeclaratorChunk getReference(unsigned TypeQuals, SourceLocation Loc) {
+  static DeclaratorChunk getReference(unsigned TypeQuals, SourceLocation Loc,
+                                      AttributeList *AL) {
     DeclaratorChunk I;
     I.Kind            = Reference;
     I.Loc             = Loc;
     I.Ref.HasRestrict = (TypeQuals & DeclSpec::TQ_restrict) != 0;
+    I.Ref.AttrList  = AL;
     return I;
   }
   

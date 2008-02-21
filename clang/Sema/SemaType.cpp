@@ -100,7 +100,7 @@ QualType Sema::ConvertDeclSpecToType(DeclSpec &DS) {
       Action::DeclTy **PPDecl = &(*DS.getProtocolQualifiers())[0];
       Result = Context.getObjCQualifiedInterfaceType(ObjCIntDecl,
                                    reinterpret_cast<ObjCProtocolDecl**>(PPDecl),
-                                                    DS.NumProtocolQualifiers());
+                                                 DS.getNumProtocolQualifiers());
       break;
     }
     else if (TypedefDecl *typeDecl = dyn_cast<TypedefDecl>(D)) {
@@ -110,7 +110,7 @@ QualType Sema::ConvertDeclSpecToType(DeclSpec &DS) {
         Action::DeclTy **PPDecl = &(*DS.getProtocolQualifiers())[0];
         Result = Context.getObjCQualifiedIdType(typeDecl->getUnderlyingType(),
                                  reinterpret_cast<ObjCProtocolDecl**>(PPDecl),
-                                            DS.NumProtocolQualifiers());
+                                            DS.getNumProtocolQualifiers());
         break;
       }
     }
@@ -164,7 +164,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
   // Walk the DeclTypeInfo, building the recursive type as we go.  DeclTypeInfos
   // are ordered from the identifier out, which is opposite of what we want :).
   for (unsigned i = 0, e = D.getNumTypeObjects(); i != e; ++i) {
-    const DeclaratorChunk &DeclType = D.getTypeObject(e-i-1);
+    DeclaratorChunk &DeclType = D.getTypeObject(e-i-1);
     switch (DeclType.Kind) {
     default: assert(0 && "Unknown decltype!");
     case DeclaratorChunk::Pointer:
@@ -178,6 +178,11 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
 
       // Apply the pointer typequals to the pointer object.
       T = Context.getPointerType(T).getQualifiedType(DeclType.Ptr.TypeQuals);
+        
+      // See if there are any attributes on the pointer that apply to it.
+      if (AttributeList *AL = DeclType.Ptr.AttrList)
+        DeclType.Ptr.AttrList = ProcessTypeAttributes(T, AL);
+        
       break;
     case DeclaratorChunk::Reference:
       if (const ReferenceType *RT = T->getAsReferenceType()) {
@@ -190,6 +195,10 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
       }
 
       T = Context.getReferenceType(T);
+        
+      // See if there are any attributes on the pointer that apply to it.
+      if (AttributeList *AL = DeclType.Ref.AttrList)
+        DeclType.Ref.AttrList = ProcessTypeAttributes(T, AL);
       break;
     case DeclaratorChunk::Array: {
       const DeclaratorChunk::ArrayTypeInfo &ATI = DeclType.Arr;

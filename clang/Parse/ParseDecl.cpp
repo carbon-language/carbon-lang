@@ -1064,14 +1064,14 @@ void Parser::ParseDeclaratorInternal(Declarator &D) {
   tok::TokenKind Kind = Tok.getKind();
 
   // Not a pointer or C++ reference.
-  if (Kind != tok::star && !(Kind == tok::amp && getLang().CPlusPlus))
+  if (Kind != tok::star && (Kind != tok::amp || !getLang().CPlusPlus))
     return ParseDirectDeclarator(D);
   
   // Otherwise, '*' -> pointer or '&' -> reference.
   SourceLocation Loc = ConsumeToken();  // Eat the * or &.
 
   if (Kind == tok::star) {
-    // Is a pointer
+    // Is a pointer.
     DeclSpec DS;
     
     ParseTypeQualifierListOpt(DS);
@@ -1080,7 +1080,8 @@ void Parser::ParseDeclaratorInternal(Declarator &D) {
     ParseDeclaratorInternal(D);
 
     // Remember that we parsed a pointer type, and remember the type-quals.
-    D.AddTypeInfo(DeclaratorChunk::getPointer(DS.getTypeQualifiers(), Loc));
+    D.AddTypeInfo(DeclaratorChunk::getPointer(DS.getTypeQualifiers(), Loc,
+                                              DS.TakeAttributes()));
   } else {
     // Is a reference
     DeclSpec DS;
@@ -1108,7 +1109,8 @@ void Parser::ParseDeclaratorInternal(Declarator &D) {
     ParseDeclaratorInternal(D);
 
     // Remember that we parsed a reference type. It doesn't have type-quals.
-    D.AddTypeInfo(DeclaratorChunk::getReference(DS.getTypeQualifiers(), Loc));
+    D.AddTypeInfo(DeclaratorChunk::getReference(DS.getTypeQualifiers(), Loc,
+                                                DS.TakeAttributes()));
   }
 }
 
@@ -1385,11 +1387,8 @@ void Parser::ParseParenDeclarator(Declarator &D) {
         
       ParamInfo.push_back(DeclaratorChunk::ParamInfo(ParmII, 
         ParmDecl.getIdentifierLoc(), ParamTy.Val, ParmDecl.getInvalidType(),
-        ParmDecl.getDeclSpec().getAttributes()));
+        ParmDecl.getDeclSpec().TakeAttributes()));
 
-      // Ownership of DeclSpec has been handed off to ParamInfo.
-      DS.clearAttributes();
-      
       // If the next token is a comma, consume it and keep reading arguments.
       if (Tok.isNot(tok::comma)) break;
       
