@@ -19,47 +19,46 @@
 using namespace clang;
 
 namespace clang {
-  unsigned RunGRSimpleVals(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx,
-                           Diagnostic& Diag, bool Visualize) {
+  
+unsigned RunGRSimpleVals(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx,
+                         Diagnostic& Diag, bool Visualize) {
+  
+  if (Diag.hasErrorOccurred())
+    return 0;
+  
+  GRCoreEngine<GRExprEngine> Engine(cfg, FD, Ctx);
+  GRExprEngine* CheckerState = &Engine.getCheckerState();
+  GRSimpleVals GRSV;
+  CheckerState->setTransferFunctions(GRSV);
+  
+  // Execute the worklist algorithm.
+  Engine.ExecuteWorkList(10000);
+  
+  // Look for explicit-Null dereferences and warn about them.
+  for (GRExprEngine::null_iterator I=CheckerState->null_begin(),
+       E=CheckerState->null_end(); I!=E; ++I) {
     
-    if (Diag.hasErrorOccurred())
-      return 0;
+    const PostStmt& L = cast<PostStmt>((*I)->getLocation());
+    Expr* Exp = cast<Expr>(L.getStmt());
     
-    GRCoreEngine<GRExprEngine> Engine(cfg, FD, Ctx);
-    GRExprEngine* CheckerState = &Engine.getCheckerState();
-    GRSimpleVals GRSV;
-    CheckerState->setTransferFunctions(GRSV);
-    
-    // Execute the worklist algorithm.
-    Engine.ExecuteWorkList(10000);
-    
-    // Look for explicit-Null dereferences and warn about them.
-    for (GRExprEngine::null_iterator I=CheckerState->null_begin(),
-         E=CheckerState->null_end(); I!=E; ++I) {
-      
-      const PostStmt& L = cast<PostStmt>((*I)->getLocation());
-      Expr* Exp = cast<Expr>(L.getStmt());
-      
-      Diag.Report(FullSourceLoc(Exp->getExprLoc(), Ctx.getSourceManager()),
-                  diag::chkr_null_deref_after_check);
-    }
-        
-#ifndef NDEBUG
-    if (Visualize) CheckerState->ViewGraph();
-#endif
-    
-    return Engine.getGraph().size();
+    Diag.Report(FullSourceLoc(Exp->getExprLoc(), Ctx.getSourceManager()),
+                diag::chkr_null_deref_after_check);
   }
+      
+#ifndef NDEBUG
+  if (Visualize) CheckerState->ViewGraph();
+#endif
+  
+  return Engine.getGraph().size();
+}
+  
 } // end clang namespace
 
 //===----------------------------------------------------------------------===//
 // Transfer function for Casts.
 //===----------------------------------------------------------------------===//
 
-RValue GRSimpleVals::EvalCast(ValueManager& ValMgr, NonLValue X,
-                              Expr* CastExpr) {
-  
-  assert (!isa<UnknownVal>(X) && !isa<UninitializedVal>(X));
+RVal GRSimpleVals::EvalCast(ValueManager& ValMgr, NonLVal X, Expr* CastExpr) {
   
   if (!isa<nonlval::ConcreteInt>(X))
     return UnknownVal();
@@ -77,10 +76,8 @@ RValue GRSimpleVals::EvalCast(ValueManager& ValMgr, NonLValue X,
 
 // Casts.
 
-RValue GRSimpleVals::EvalCast(ValueManager& ValMgr, LValue X, Expr* CastExpr) {
+RVal GRSimpleVals::EvalCast(ValueManager& ValMgr, LVal X, Expr* CastExpr) {
   
-  assert (!isa<UnknownVal>(X) && !isa<UninitializedVal>(X));
-
   if (CastExpr->getType()->isPointerType())
     return X;
   
@@ -99,86 +96,65 @@ RValue GRSimpleVals::EvalCast(ValueManager& ValMgr, LValue X, Expr* CastExpr) {
 
 // Unary operators.
 
-NonLValue GRSimpleVals::EvalMinus(ValueManager& ValMgr, UnaryOperator* U,
-                                  NonLValue X) {
-  
-  assert (!isa<UnknownVal>(X) && !isa<UninitializedVal>(X));
+RVal GRSimpleVals::EvalMinus(ValueManager& ValMgr, UnaryOperator* U, NonLVal X){
   
   switch (X.getSubKind()) {
+      
     case nonlval::ConcreteIntKind:
       return cast<nonlval::ConcreteInt>(X).EvalMinus(ValMgr, U);
+      
     default:
-      return cast<NonLValue>(UnknownVal());
+      return UnknownVal();
   }
 }
 
-NonLValue GRSimpleVals::EvalPlus(ValueManager& ValMgr, UnaryOperator* U,
-                                 NonLValue X) {
-  
-  assert (!isa<UnknownVal>(X) && !isa<UninitializedVal>(X));
-  
+RVal GRSimpleVals::EvalComplement(ValueManager& ValMgr, NonLVal X) {
+
   switch (X.getSubKind()) {
-    case nonlval::ConcreteIntKind:
-      return cast<nonlval::ConcreteInt>(X).EvalPlus(ValMgr, U);
-    default:
-      return cast<NonLValue>(UnknownVal());
-  }
-}
-
-
-NonLValue GRSimpleVals::EvalComplement(ValueManager& ValMgr, NonLValue X) {
-
-  assert (!isa<UnknownVal>(X) && !isa<UninitializedVal>(X));
-  
-  switch (X.getSubKind()) {
+      
     case nonlval::ConcreteIntKind:
       return cast<nonlval::ConcreteInt>(X).EvalComplement(ValMgr);
+      
     default:
-      return cast<NonLValue>(UnknownVal());
+      return UnknownVal();
   }
 }
 
 // Binary operators.
 
-NonLValue GRSimpleVals::EvalBinaryOp(ValueManager& ValMgr,
-                                     BinaryOperator::Opcode Op,
-                                     NonLValue LHS, NonLValue RHS)  {
-  
-  assert (!isa<UnknownVal>(LHS) && !isa<UninitializedVal>(LHS));
-  assert (!isa<UnknownVal>(RHS) && !isa<UninitializedVal>(RHS));
-  
-  while(1) {
+RVal GRSimpleVals::EvalBinOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
+                             NonLVal L, NonLVal R)  {  
+  while (1) {
     
-    switch (LHS.getSubKind()) {
+    switch (L.getSubKind()) {
       default:
-        return cast<NonLValue>(UnknownVal());
+        return cast<NonLVal>(UnknownVal());
         
       case nonlval::ConcreteIntKind:
         
-        if (isa<nonlval::ConcreteInt>(RHS)) {        
-          const nonlval::ConcreteInt& LHS_CI = cast<nonlval::ConcreteInt>(LHS);
-          const nonlval::ConcreteInt& RHS_CI = cast<nonlval::ConcreteInt>(RHS);
-          return LHS_CI.EvalBinaryOp(ValMgr, Op, RHS_CI);
+        if (isa<nonlval::ConcreteInt>(R)) {          
+          const nonlval::ConcreteInt& L_CI = cast<nonlval::ConcreteInt>(L);
+          const nonlval::ConcreteInt& R_CI = cast<nonlval::ConcreteInt>(R);          
+          return L_CI.EvalBinOp(ValMgr, Op, R_CI);          
         }
-        else if(isa<UnknownVal>(RHS))
-          return cast<NonLValue>(UnknownVal());
         else {
-          NonLValue tmp = RHS;
-          RHS = LHS;
-          LHS = tmp;
+          NonLVal tmp = R;
+          R = L;
+          L = tmp;
           continue;
         }
         
       case nonlval::SymbolValKind: {
-        if (isa<nonlval::ConcreteInt>(RHS)) {
+        
+        if (isa<nonlval::ConcreteInt>(R)) {
           const SymIntConstraint& C =
-            ValMgr.getConstraint(cast<nonlval::SymbolVal>(LHS).getSymbol(), Op,
-                                 cast<nonlval::ConcreteInt>(RHS).getValue());
+            ValMgr.getConstraint(cast<nonlval::SymbolVal>(L).getSymbol(), Op,
+                                 cast<nonlval::ConcreteInt>(R).getValue());
           
           return nonlval::SymIntConstraintVal(C);
         }
         else
-          return cast<NonLValue>(UnknownVal());
+          return UnknownVal();
       }
     }
   }
@@ -187,150 +163,140 @@ NonLValue GRSimpleVals::EvalBinaryOp(ValueManager& ValMgr,
 
 // Binary Operators (except assignments and comma).
 
-RValue GRSimpleVals::EvalBinaryOp(ValueManager& ValMgr,
-                                  BinaryOperator::Opcode Op,
-                                  LValue LHS, LValue RHS) {
-  
-  assert (!isa<UnknownVal>(LHS) && !isa<UninitializedVal>(LHS));
-  assert (!isa<UnknownVal>(RHS) && !isa<UninitializedVal>(RHS));
+RVal GRSimpleVals::EvalBinOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
+                             LVal L, LVal R) {
   
   switch (Op) {
+
     default:
       return UnknownVal();
       
     case BinaryOperator::EQ:
-      return EvalEQ(ValMgr, LHS, RHS);
+      return EvalEQ(ValMgr, L, R);
       
     case BinaryOperator::NE:
-      return EvalNE(ValMgr, LHS, RHS);      
+      return EvalNE(ValMgr, L, R);      
   }
 }
 
 // Pointer arithmetic.
 
-LValue GRSimpleVals::EvalBinaryOp(ValueManager& ValMgr,
-                                  BinaryOperator::Opcode Op,
-                                  LValue LHS, NonLValue RHS) {
-  
-  assert (!isa<UnknownVal>(LHS) && !isa<UninitializedVal>(LHS));
-  assert (!isa<UnknownVal>(RHS) && !isa<UninitializedVal>(RHS));
-  
-  return cast<LValue>(UnknownVal());
+RVal GRSimpleVals::EvalBinOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
+                             LVal L, NonLVal R) {  
+  return UnknownVal();
 }
 
-// Equality operators for LValues.
+// Equality operators for LVals.
 
+RVal GRSimpleVals::EvalEQ(ValueManager& ValMgr, LVal L, LVal R) {
+  
+  switch (L.getSubKind()) {
 
-NonLValue GRSimpleVals::EvalEQ(ValueManager& ValMgr, LValue LHS, LValue RHS) {
-  
-  assert (!isa<UnknownVal>(LHS) && !isa<UninitializedVal>(LHS));
-  assert (!isa<UnknownVal>(RHS) && !isa<UninitializedVal>(RHS));
-  
-  switch (LHS.getSubKind()) {
     default:
-      assert(false && "EQ not implemented for this LValue.");
-      return cast<NonLValue>(UnknownVal());
+      assert(false && "EQ not implemented for this LVal.");
+      return UnknownVal();
       
     case lval::ConcreteIntKind:
-      if (isa<lval::ConcreteInt>(RHS)) {
-        bool b = cast<lval::ConcreteInt>(LHS).getValue() ==
-                 cast<lval::ConcreteInt>(RHS).getValue();
+
+      if (isa<lval::ConcreteInt>(R)) {
+        bool b = cast<lval::ConcreteInt>(L).getValue() ==
+                 cast<lval::ConcreteInt>(R).getValue();
         
-        return NonLValue::GetIntTruthValue(ValMgr, b);
+        return NonLVal::MakeIntTruthVal(ValMgr, b);
       }
-      else if (isa<lval::SymbolVal>(RHS)) {
+      else if (isa<lval::SymbolVal>(R)) {
         
         const SymIntConstraint& C =
-          ValMgr.getConstraint(cast<lval::SymbolVal>(RHS).getSymbol(),
+          ValMgr.getConstraint(cast<lval::SymbolVal>(R).getSymbol(),
                                BinaryOperator::EQ,
-                               cast<lval::ConcreteInt>(LHS).getValue());
+                               cast<lval::ConcreteInt>(L).getValue());
         
         return nonlval::SymIntConstraintVal(C);
       }
       
       break;
       
-      case lval::SymbolValKind: {
-        if (isa<lval::ConcreteInt>(RHS)) {          
-          const SymIntConstraint& C =
-            ValMgr.getConstraint(cast<lval::SymbolVal>(LHS).getSymbol(),
-                                 BinaryOperator::EQ,
-                                 cast<lval::ConcreteInt>(RHS).getValue());
-          
-          return nonlval::SymIntConstraintVal(C);
-        }
+    case lval::SymbolValKind: {
+
+      if (isa<lval::ConcreteInt>(R)) {          
+        const SymIntConstraint& C =
+          ValMgr.getConstraint(cast<lval::SymbolVal>(L).getSymbol(),
+                               BinaryOperator::EQ,
+                               cast<lval::ConcreteInt>(R).getValue());
         
-        // FIXME: Implement unification
-        return cast<NonLValue>(UnknownVal());
-          //assert (!isa<lval::SymbolVal>(RHS) && "FIXME: Implement unification.");
-        
-        break;
+        return nonlval::SymIntConstraintVal(C);
       }
       
-      case lval::DeclValKind:
+      // FIXME: Implement unification
+      return cast<NonLVal>(UnknownVal());
+        //assert (!isa<lval::SymbolVal>(R) && "FIXME: Implement unification.");
       
-        if (isa<lval::DeclVal>(RHS)) {        
-          bool b = cast<lval::DeclVal>(LHS) == cast<lval::DeclVal>(RHS);
-          return NonLValue::GetIntTruthValue(ValMgr, b);
-        }
+      break;
+    }
       
-        break;
+    case lval::DeclValKind:
+    
+      if (isa<lval::DeclVal>(R)) {        
+        bool b = cast<lval::DeclVal>(L) == cast<lval::DeclVal>(R);
+        return NonLVal::MakeIntTruthVal(ValMgr, b);
+      }
+    
+      break;
   }
   
-  return NonLValue::GetIntTruthValue(ValMgr, false);
+  return NonLVal::MakeIntTruthVal(ValMgr, false);
 }
 
-NonLValue GRSimpleVals::EvalNE(ValueManager& ValMgr, LValue LHS, LValue RHS) {
+RVal GRSimpleVals::EvalNE(ValueManager& ValMgr, LVal L, LVal R) {
   
-  assert (!isa<UnknownVal>(LHS) && !isa<UninitializedVal>(LHS));
-  assert (!isa<UnknownVal>(RHS) && !isa<UninitializedVal>(RHS));
+  switch (L.getSubKind()) {
 
-  switch (LHS.getSubKind()) {
     default:
-      assert(false && "NE not implemented for this LValue.");
-      return cast<NonLValue>(UnknownVal());
+      assert(false && "NE not implemented for this LVal.");
+      return UnknownVal();
       
     case lval::ConcreteIntKind:
-      if (isa<lval::ConcreteInt>(RHS)) {
-        bool b = cast<lval::ConcreteInt>(LHS).getValue() !=
-                 cast<lval::ConcreteInt>(RHS).getValue();
+      
+      if (isa<lval::ConcreteInt>(R)) {
+        bool b = cast<lval::ConcreteInt>(L).getValue() !=
+                 cast<lval::ConcreteInt>(R).getValue();
         
-        return NonLValue::GetIntTruthValue(ValMgr, b);
+        return NonLVal::MakeIntTruthVal(ValMgr, b);
       }
-      else if (isa<lval::SymbolVal>(RHS)) {        
+      else if (isa<lval::SymbolVal>(R)) {        
         const SymIntConstraint& C =
-          ValMgr.getConstraint(cast<lval::SymbolVal>(RHS).getSymbol(),
+          ValMgr.getConstraint(cast<lval::SymbolVal>(R).getSymbol(),
                                BinaryOperator::NE,
-                               cast<lval::ConcreteInt>(LHS).getValue());
+                               cast<lval::ConcreteInt>(L).getValue());
         
         return nonlval::SymIntConstraintVal(C);
       }
       
       break;
       
-      case lval::SymbolValKind: {
-        if (isa<lval::ConcreteInt>(RHS)) {          
-          const SymIntConstraint& C =
-            ValMgr.getConstraint(cast<lval::SymbolVal>(LHS).getSymbol(),
-                                 BinaryOperator::NE,
-                                 cast<lval::ConcreteInt>(RHS).getValue());
-          
-          return nonlval::SymIntConstraintVal(C);
-        }
+    case lval::SymbolValKind: {
+      if (isa<lval::ConcreteInt>(R)) {          
+        const SymIntConstraint& C =
+          ValMgr.getConstraint(cast<lval::SymbolVal>(L).getSymbol(),
+                               BinaryOperator::NE,
+                               cast<lval::ConcreteInt>(R).getValue());
         
-        assert (!isa<lval::SymbolVal>(RHS) && "FIXME: Implement sym !=.");
-        
-        break;
+        return nonlval::SymIntConstraintVal(C);
       }
       
-      case lval::DeclValKind:
-        if (isa<lval::DeclVal>(RHS)) {        
-          bool b = cast<lval::DeclVal>(LHS) == cast<lval::DeclVal>(RHS);
-          return NonLValue::GetIntTruthValue(ValMgr, b);
-        }
+      assert (!isa<lval::SymbolVal>(R) && "FIXME: Implement sym !=.");
       
       break;
+    }
+      
+    case lval::DeclValKind:
+      if (isa<lval::DeclVal>(R)) {        
+        bool b = cast<lval::DeclVal>(L) == cast<lval::DeclVal>(R);
+        return NonLVal::MakeIntTruthVal(ValMgr, b);
+      }
+    
+    break;
   }
   
-  return NonLValue::GetIntTruthValue(ValMgr, true);
+  return NonLVal::MakeIntTruthVal(ValMgr, true);
 }

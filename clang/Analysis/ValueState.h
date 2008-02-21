@@ -39,16 +39,16 @@
 namespace clang {
 
 //===----------------------------------------------------------------------===//
-// ValueState - An ImmutableMap type Stmt*/Decl*/Symbols to RValues.
+// ValueState - An ImmutableMap type Stmt*/Decl*/Symbols to RVals.
 //===----------------------------------------------------------------------===//
 
 namespace vstate {
   typedef llvm::ImmutableSet<llvm::APSInt*> IntSetTy;
   
-  typedef llvm::ImmutableMap<Expr*,RValue>                 ExprBindingsTy;
-  typedef llvm::ImmutableMap<VarDecl*,RValue>              VarBindingsTy;  
-  typedef llvm::ImmutableMap<SymbolID,IntSetTy>            ConstantNotEqTy;
-  typedef llvm::ImmutableMap<SymbolID,const llvm::APSInt*> ConstantEqTy;
+  typedef llvm::ImmutableMap<Expr*,RVal>                   ExprBindingsTy;
+  typedef llvm::ImmutableMap<VarDecl*,RVal>                VarBindingsTy;  
+  typedef llvm::ImmutableMap<SymbolID,IntSetTy>            ConstNotEqTy;
+  typedef llvm::ImmutableMap<SymbolID,const llvm::APSInt*> ConstEqTy;
 }
 
 /// ValueStateImpl - This class encapsulates the actual data values for
@@ -63,19 +63,17 @@ public:
   vstate::ExprBindingsTy     SubExprBindings;
   vstate::ExprBindingsTy     BlockExprBindings;  
   vstate::VarBindingsTy      VarBindings;
-  vstate::ConstantNotEqTy    ConstantNotEq;
-  vstate::ConstantEqTy       ConstantEq;
+  vstate::ConstNotEqTy    ConstNotEq;
+  vstate::ConstEqTy       ConstEq;
   
   /// This ctor is used when creating the first ValueStateImpl object.
-  ValueStateImpl(vstate::ExprBindingsTy EB,
-                 vstate::VarBindingsTy VB,
-                 vstate::ConstantNotEqTy CNE,
-                 vstate::ConstantEqTy CE)
+  ValueStateImpl(vstate::ExprBindingsTy  EB,  vstate::VarBindingsTy VB,
+                 vstate::ConstNotEqTy CNE, vstate::ConstEqTy  CE)
     : SubExprBindings(EB), 
       BlockExprBindings(EB),
       VarBindings(VB),
-      ConstantNotEq(CNE),
-      ConstantEq(CE) {}
+      ConstNotEq(CNE),
+      ConstEq(CE) {}
   
   /// Copy ctor - We must explicitly define this or else the "Next" ptr
   ///  in FoldingSetNode will also get copied.
@@ -84,10 +82,8 @@ public:
       SubExprBindings(RHS.SubExprBindings),
       BlockExprBindings(RHS.BlockExprBindings),
       VarBindings(RHS.VarBindings),
-      ConstantNotEq(RHS.ConstantNotEq),
-      ConstantEq(RHS.ConstantEq) {} 
-  
-
+      ConstNotEq(RHS.ConstNotEq),
+      ConstEq(RHS.ConstEq) {} 
   
   /// Profile - Profile the contents of a ValueStateImpl object for use
   ///  in a FoldingSet.
@@ -95,8 +91,8 @@ public:
     V.SubExprBindings.Profile(ID);
     V.BlockExprBindings.Profile(ID);
     V.VarBindings.Profile(ID);
-    V.ConstantNotEq.Profile(ID);
-    V.ConstantEq.Profile(ID);
+    V.ConstNotEq.Profile(ID);
+    V.ConstEq.Profile(ID);
   }
 
   /// Profile - Used to profile the contents of this object for inclusion
@@ -129,8 +125,8 @@ public:
   typedef vstate::IntSetTy                 IntSetTy;
   typedef vstate::ExprBindingsTy           ExprBindingsTy;
   typedef vstate::VarBindingsTy            VarBindingsTy;
-  typedef vstate::ConstantNotEqTy          ConstantNotEqTy;
-  typedef vstate::ConstantEqTy             ConstantEqTy;
+  typedef vstate::ConstNotEqTy          ConstNotEqTy;
+  typedef vstate::ConstEqTy             ConstEqTy;
 
   typedef llvm::SmallVector<ValueState,5>  BufferTy;
 
@@ -153,13 +149,13 @@ public:
   beb_iterator beb_begin() const { return Data->BlockExprBindings.begin(); }
   beb_iterator beb_end() const { return Data->BlockExprBindings.end(); }
   
-  typedef ConstantNotEqTy::iterator cne_iterator;
-  cne_iterator cne_begin() const { return Data->ConstantNotEq.begin(); }
-  cne_iterator cne_end() const { return Data->ConstantNotEq.end(); }
+  typedef ConstNotEqTy::iterator cne_iterator;
+  cne_iterator cne_begin() const { return Data->ConstNotEq.begin(); }
+  cne_iterator cne_end() const { return Data->ConstNotEq.end(); }
   
-  typedef ConstantEqTy::iterator ce_iterator;
-  ce_iterator ce_begin() const { return Data->ConstantEq.begin(); }
-  ce_iterator ce_end() const { return Data->ConstantEq.end(); }
+  typedef ConstEqTy::iterator ce_iterator;
+  ce_iterator ce_begin() const { return Data->ConstEq.begin(); }
+  ce_iterator ce_end() const { return Data->ConstEq.end(); }
   
   // Profiling and equality testing.
   
@@ -177,7 +173,7 @@ public:
   
   void printDOT(std::ostream& Out) const;
   void print(std::ostream& Out) const;
-  void print() const { print(*llvm::cerr); }
+  void printStdErr() const { print(*llvm::cerr); }
   
 };  
   
@@ -188,25 +184,24 @@ template<> struct GRTrait<ValueState> {
   static inline ValueState toState(void* P) {    
     return ValueState(static_cast<ValueStateImpl*>(P));
   }
-};
-    
+};    
   
 class ValueStateManager {
 public:
   typedef ValueState StateTy;
 
 private:
-  ValueState::IntSetTy::Factory           ISetFactory;
-  ValueState::ExprBindingsTy::Factory     EXFactory;
-  ValueState::VarBindingsTy::Factory      VBFactory;
-  ValueState::ConstantNotEqTy::Factory    CNEFactory;
-  ValueState::ConstantEqTy::Factory       CEFactory;
+  ValueState::IntSetTy::Factory        ISetFactory;
+  ValueState::ExprBindingsTy::Factory  EXFactory;
+  ValueState::VarBindingsTy::Factory   VBFactory;
+  ValueState::ConstNotEqTy::Factory    CNEFactory;
+  ValueState::ConstEqTy::Factory       CEFactory;
   
   /// StateSet - FoldingSet containing all the states created for analyzing
   ///  a particular function.  This is used to unique states.
   llvm::FoldingSet<ValueStateImpl> StateSet;
 
-  /// ValueMgr - Object that manages the data for all created RValues.
+  /// ValueMgr - Object that manages the data for all created RVals.
   ValueManager ValMgr;
 
   /// SymMgr - Object that manages the symbol information.
@@ -233,7 +228,7 @@ private:
     return Remove(V.VarBindings, D);
   }
                   
-  ValueState BindVar(ValueState St, VarDecl* D, const RValue& V);
+  ValueState BindVar(ValueState St, VarDecl* D, RVal V);
   ValueState UnbindVar(ValueState St, VarDecl* D);  
   
 public:  
@@ -243,7 +238,8 @@ public:
       VBFactory(alloc),
       CNEFactory(alloc),
       CEFactory(alloc),
-      ValMgr(Ctx, alloc), Alloc(alloc) {}
+      ValMgr(Ctx, alloc),
+      Alloc(alloc) {}
   
   ValueState getInitialState();
         
@@ -258,14 +254,13 @@ public:
     NewSt.SubExprBindings = EXFactory.GetEmptyMap();
     return getPersistentState(NewSt);    
   }
-    
   
-  ValueState SetValue(ValueState St, Expr* S, bool isBlkExpr, const RValue& V);
-  ValueState SetValue(ValueState St, const LValue& LV, const RValue& V);
+  ValueState SetRVal(ValueState St, Expr* E, bool isBlkExpr, RVal V);
+  ValueState SetRVal(ValueState St, LVal LV, RVal V);
 
-  RValue GetValue(ValueState St, Expr* S, bool* hasVal = NULL);
-  RValue GetValue(ValueState St, const LValue& LV, QualType* T = NULL);    
-  LValue GetLValue(ValueState St, Expr* S);
+  RVal GetRVal(ValueState St, Expr* E, bool* hasVal = NULL);
+  RVal GetRVal(ValueState St, const LVal& LV, QualType T = QualType());
+  RVal GetLVal(ValueState St, Expr* E);
   
   ValueState getPersistentState(const ValueStateImpl& Impl);
   

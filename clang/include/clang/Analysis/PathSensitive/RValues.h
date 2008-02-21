@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This files defines RValue, LValue, and NonLValue, classes that represent
+//  This files defines RVal, LVal, and NonLVal, classes that represent
 //  abstract r-values for use with path-sensitive value tracking.
 //
 //===----------------------------------------------------------------------===//
@@ -19,57 +19,64 @@
 #include "llvm/Support/Casting.h"
   
 //==------------------------------------------------------------------------==//
-//  Base RValue types.
+//  Base RVal types.
 //==------------------------------------------------------------------------==// 
 
 namespace clang {
   
-class RValue {
+class RVal {
 public:
-  enum BaseKind { LValueKind=0x0,
-                  NonLValueKind=0x1,
-                  UninitializedKind=0x2,
-                  UnknownKind=0x3 };
-  
-  enum { BaseBits = 2, 
-         BaseMask = 0x3 };
+  enum BaseKind { UninitializedKind, UnknownKind, LValKind, NonLValKind };
+  enum { BaseBits = 2, BaseMask = 0x3 };
   
 protected:
   void* Data;
   unsigned Kind;
   
 protected:
-  RValue(const void* d, bool isLValue, unsigned ValKind)
+  RVal(const void* d, bool isLVal, unsigned ValKind)
   : Data(const_cast<void*>(d)),
-    Kind((isLValue ? LValueKind : NonLValueKind) | (ValKind << BaseBits)) {}
+    Kind((isLVal ? LValKind : NonLValKind) | (ValKind << BaseBits)) {}
   
-  explicit RValue(BaseKind k)
+  explicit RVal(BaseKind k)
     : Data(0), Kind(k) {}
   
 public:
-  ~RValue() {};
+  ~RVal() {};
   
-  /// BufferTy - A temporary buffer to hold a set of RValues.
-  typedef llvm::SmallVector<RValue,5> BufferTy;
+  /// BufferTy - A temporary buffer to hold a set of RVals.
+  typedef llvm::SmallVector<RVal,5> BufferTy;
   
-  unsigned getRawKind() const { return Kind; }
-  BaseKind getBaseKind() const { return (BaseKind) (Kind & BaseMask); }
-  unsigned getSubKind() const { return (Kind & ~BaseMask) >> BaseBits; }
+  inline unsigned getRawKind() const { return Kind; }
+  inline BaseKind getBaseKind() const { return (BaseKind) (Kind & BaseMask); }
+  inline unsigned getSubKind() const { return (Kind & ~BaseMask) >> BaseBits; }
   
-  void Profile(llvm::FoldingSetNodeID& ID) const {
+  inline void Profile(llvm::FoldingSetNodeID& ID) const {
     ID.AddInteger((unsigned) getRawKind());
     ID.AddPointer(reinterpret_cast<void*>(Data));
   }
   
-  bool operator==(const RValue& RHS) const {
-    return getRawKind() == RHS.getRawKind() && Data == RHS.Data;
+  inline bool operator==(const RVal& R) const {
+    return getRawKind() == R.getRawKind() && Data == R.Data;
   }
   
-  static RValue GetSymbolValue(SymbolManager& SymMgr, ParmVarDecl *D);
+  static RVal GetSymbolValue(SymbolManager& SymMgr, ParmVarDecl *D);
   
+  inline bool isUnknown() const {
+    return getRawKind() == UnknownKind;
+  }
+
+  inline bool isUninit() const {
+    return getRawKind() == UninitializedKind;
+  }
+
+  inline bool isUnknownOrUninit() const {
+    return getRawKind() <= UnknownKind;
+  }
   
-  inline bool isKnown() const { return getRawKind() != UnknownKind; }
-  inline bool isUnknown() const { return getRawKind() == UnknownKind; }
+  inline bool isValid() const {
+    return getRawKind() > UnknownKind;
+  }
   
   void print(std::ostream& OS) const;
   void printStdErr() const;
@@ -79,247 +86,269 @@ public:
   symbol_iterator symbol_end() const;  
   
   // Implement isa<T> support.
-  static inline bool classof(const RValue*) { return true; }
+  static inline bool classof(const RVal*) { return true; }
 };
 
-class UnknownVal : public RValue {
+class UnknownVal : public RVal {
 public:
-  UnknownVal() : RValue(UnknownKind) {}
+  UnknownVal() : RVal(UnknownKind) {}
   
-  static inline bool classof(const RValue* V) {
+  static inline bool classof(const RVal* V) {
     return V->getBaseKind() == UnknownKind;
   }  
 };
 
-class UninitializedVal : public RValue {
+class UninitializedVal : public RVal {
 public:
-  UninitializedVal() : RValue(UninitializedKind) {}
+  UninitializedVal() : RVal(UninitializedKind) {}
   
-  static inline bool classof(const RValue* V) {
+  static inline bool classof(const RVal* V) {
     return V->getBaseKind() == UninitializedKind;
   }  
 };
 
-class NonLValue : public RValue {
+class NonLVal : public RVal {
 protected:
-  NonLValue(unsigned SubKind, const void* d) : RValue(d, false, SubKind) {}
+  NonLVal(unsigned SubKind, const void* d) : RVal(d, false, SubKind) {}
   
 public:
   void print(std::ostream& Out) const;
   
-  // Utility methods to create NonLValues.
-  static NonLValue GetValue(ValueManager& ValMgr, uint64_t X, QualType T,
-                            SourceLocation Loc = SourceLocation());
+  // Utility methods to create NonLVals.
+  static NonLVal MakeVal(ValueManager& ValMgr, uint64_t X, QualType T,
+                         SourceLocation Loc = SourceLocation());
   
-  static NonLValue GetValue(ValueManager& ValMgr, IntegerLiteral* I);
+  static NonLVal MakeVal(ValueManager& ValMgr, IntegerLiteral* I);
   
-  static NonLValue GetIntTruthValue(ValueManager& ValMgr, bool b);
+  static NonLVal MakeIntTruthVal(ValueManager& ValMgr, bool b);
     
   // Implement isa<T> support.
-  static inline bool classof(const RValue* V) {
-    return V->getBaseKind() >= NonLValueKind;
+  static inline bool classof(const RVal* V) {
+    return V->getBaseKind() == NonLValKind;
   }
 };
 
-class LValue : public RValue {
+class LVal : public RVal {
 protected:
-  LValue(unsigned SubKind, const void* D) : RValue(const_cast<void*>(D), 
-                                                   true, SubKind) {}
-
+  LVal(unsigned SubKind, const void* D)
+    : RVal(const_cast<void*>(D), true, SubKind) {}
+  
   // Equality operators.
-  NonLValue EQ(ValueManager& ValMgr, const LValue& RHS) const;
-  NonLValue NE(ValueManager& ValMgr, const LValue& RHS) const;
+  NonLVal EQ(ValueManager& ValMgr, const LVal& R) const;
+  NonLVal NE(ValueManager& ValMgr, const LVal& R) const;
   
 public:
   void print(std::ostream& Out) const;
     
-  static LValue GetValue(AddrLabelExpr* E);
+  static LVal MakeVal(AddrLabelExpr* E);
   
   // Implement isa<T> support.
-  static inline bool classof(const RValue* V) {
-    return V->getBaseKind() != NonLValueKind;
+  static inline bool classof(const RVal* V) {
+    return V->getBaseKind() == LValKind;
   }
 };
   
 //==------------------------------------------------------------------------==//
-//  Subclasses of NonLValue.
+//  Subclasses of NonLVal.
 //==------------------------------------------------------------------------==// 
 
 namespace nonlval {
   
-  enum Kind { ConcreteIntKind,
-              SymbolValKind,
-              SymIntConstraintValKind,
-              NumKind };
+enum Kind { ConcreteIntKind, SymbolValKind, SymIntConstraintValKind };
 
-  class SymbolVal : public NonLValue {
-  public:
-    SymbolVal(unsigned SymID)
-    : NonLValue(SymbolValKind,
-                reinterpret_cast<void*>((uintptr_t) SymID)) {}
-    
-    SymbolID getSymbol() const {
-      return (SymbolID) reinterpret_cast<uintptr_t>(Data);
-    }
-    
-    static inline bool classof(const RValue* V) {
-      return V->getBaseKind() == NonLValueKind && 
-             V->getSubKind() == SymbolValKind;
-    }
-  };
+class SymbolVal : public NonLVal {
+public:
+  SymbolVal(unsigned SymID)
+    : NonLVal(SymbolValKind, reinterpret_cast<void*>((uintptr_t) SymID)) {}
   
-  class SymIntConstraintVal : public NonLValue {    
-  public:
-    SymIntConstraintVal(const SymIntConstraint& C)
-    : NonLValue(SymIntConstraintValKind, reinterpret_cast<const void*>(&C)) {}
+  SymbolID getSymbol() const {
+    return (SymbolID) reinterpret_cast<uintptr_t>(Data);
+  }
+  
+  static inline bool classof(const RVal* V) {
+    return V->getBaseKind() == NonLValKind && 
+           V->getSubKind() == SymbolValKind;
+  }
+  
+  static inline bool classof(const NonLVal* V) {
+    return V->getSubKind() == SymbolValKind;
+  }
+};
 
-    const SymIntConstraint& getConstraint() const {
-      return *reinterpret_cast<SymIntConstraint*>(Data);
-    }
-    
-    static inline bool classof(const RValue* V) {
-      return V->getBaseKind() == NonLValueKind &&
-             V->getSubKind() == SymIntConstraintValKind;
-    }    
-  };
+class SymIntConstraintVal : public NonLVal {    
+public:
+  SymIntConstraintVal(const SymIntConstraint& C)
+    : NonLVal(SymIntConstraintValKind, reinterpret_cast<const void*>(&C)) {}
 
-  class ConcreteInt : public NonLValue {
-  public:
-    ConcreteInt(const llvm::APSInt& V) : NonLValue(ConcreteIntKind, &V) {}
-    
-    const llvm::APSInt& getValue() const {
-      return *static_cast<llvm::APSInt*>(Data);
-    }
-    
-    // Transfer functions for binary/unary operations on ConcreteInts.
-    ConcreteInt EvalBinaryOp(ValueManager& ValMgr,
-                             BinaryOperator::Opcode Op,
-                             const ConcreteInt& RHS) const;
-    
-    ConcreteInt EvalComplement(ValueManager& ValMgr) const;
-    ConcreteInt EvalMinus(ValueManager& ValMgr, UnaryOperator* U) const;
-    ConcreteInt EvalPlus(ValueManager& ValMgr, UnaryOperator* U) const;
-    
-    // Implement isa<T> support.
-    static inline bool classof(const RValue* V) {
-      return V->getBaseKind() == NonLValueKind &&
-             V->getSubKind() == ConcreteIntKind;
-    }
-  };
+  const SymIntConstraint& getConstraint() const {
+    return *reinterpret_cast<SymIntConstraint*>(Data);
+  }
+  
+  static inline bool classof(const RVal* V) {
+    return V->getBaseKind() == NonLValKind &&
+           V->getSubKind() == SymIntConstraintValKind;
+  }
+  
+  static inline bool classof(const NonLVal* V) {
+    return V->getSubKind() == SymIntConstraintValKind;
+  }
+};
+
+class ConcreteInt : public NonLVal {
+public:
+  ConcreteInt(const llvm::APSInt& V) : NonLVal(ConcreteIntKind, &V) {}
+  
+  const llvm::APSInt& getValue() const {
+    return *static_cast<llvm::APSInt*>(Data);
+  }
+  
+  // Transfer functions for binary/unary operations on ConcreteInts.
+  ConcreteInt EvalBinOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
+                        const ConcreteInt& R) const;
+  
+  ConcreteInt EvalComplement(ValueManager& ValMgr) const;
+  
+  ConcreteInt EvalMinus(ValueManager& ValMgr, UnaryOperator* U) const;
+  
+  // Implement isa<T> support.
+  static inline bool classof(const RVal* V) {
+    return V->getBaseKind() == NonLValKind &&
+           V->getSubKind() == ConcreteIntKind;
+  }
+  
+  static inline bool classof(const NonLVal* V) {
+    return V->getSubKind() == ConcreteIntKind;
+  }
+};
   
 } // end namespace clang::nonlval
 
 //==------------------------------------------------------------------------==//
-//  Subclasses of LValue.
+//  Subclasses of LVal.
 //==------------------------------------------------------------------------==// 
 
 namespace lval {
   
-  enum Kind { SymbolValKind,
-              GotoLabelKind,
-              DeclValKind,
-              FuncValKind,
-              ConcreteIntKind,
-              NumKind };
-  
-  class SymbolVal : public LValue {
-  public:
-    SymbolVal(unsigned SymID)
-    : LValue(SymbolValKind, reinterpret_cast<void*>((uintptr_t) SymID)) {}
-    
-    SymbolID getSymbol() const {
-      return (SymbolID) reinterpret_cast<uintptr_t>(Data);
-    }
-    
-    static inline bool classof(const RValue* V) {
-      return V->getBaseKind() == LValueKind &&
-             V->getSubKind() == SymbolValKind;
-    }
-  };
-  
-  class GotoLabel : public LValue {
-  public:
-    GotoLabel(LabelStmt* Label) : LValue(GotoLabelKind, Label) {}
-    
-    LabelStmt* getLabel() const {
-      return static_cast<LabelStmt*>(Data);
-    }
-    
-    static inline bool classof(const RValue* V) {
-      return V->getBaseKind() == LValueKind &&
-             V->getSubKind() == GotoLabelKind;
-    }    
-  };
-    
-  
-  class DeclVal : public LValue {
-  public:
-    DeclVal(const VarDecl* vd) : LValue(DeclValKind, vd) {}
-    
-    VarDecl* getDecl() const {
-      return static_cast<VarDecl*>(Data);
-    }
-    
-    inline bool operator==(const DeclVal& R) const {
-      return getDecl() == R.getDecl();
-    }
-    
-    inline bool operator!=(const DeclVal& R) const {
-      return getDecl() != R.getDecl();
-    }
-    
-    // Implement isa<T> support.
-    static inline bool classof(const RValue* V) {
-      return V->getBaseKind() == LValueKind &&
-             V->getSubKind() == DeclValKind;
-    }    
-  };
-  
-  class FuncVal : public LValue {
-  public:
-    FuncVal(const FunctionDecl* fd) : LValue(FuncValKind, fd) {}
-    
-    FunctionDecl* getDecl() const {
-      return static_cast<FunctionDecl*>(Data);
-    }
-    
-    inline bool operator==(const FuncVal& R) const {
-      return getDecl() == R.getDecl();
-    }
-    
-    inline bool operator!=(const FuncVal& R) const {
-      return getDecl() != R.getDecl();
-    }
-    
-    // Implement isa<T> support.
-    static inline bool classof(const RValue* V) {
-      return V->getBaseKind() == LValueKind &&
-             V->getSubKind() == FuncValKind;
-    }    
-  };
+enum Kind { SymbolValKind, GotoLabelKind, DeclValKind, FuncValKind,
+            ConcreteIntKind };
 
-  class ConcreteInt : public LValue {
-  public:
-    ConcreteInt(const llvm::APSInt& V) : LValue(ConcreteIntKind, &V) {}
-    
-    const llvm::APSInt& getValue() const {
-      return *static_cast<llvm::APSInt*>(Data);
-    }
-    
+class SymbolVal : public LVal {
+public:
+  SymbolVal(unsigned SymID)
+  : LVal(SymbolValKind, reinterpret_cast<void*>((uintptr_t) SymID)) {}
+  
+  SymbolID getSymbol() const {
+    return (SymbolID) reinterpret_cast<uintptr_t>(Data);
+  }
+  
+  static inline bool classof(const RVal* V) {
+    return V->getBaseKind() == LValKind &&
+           V->getSubKind() == SymbolValKind;
+  }
+  
+  static inline bool classof(const LVal* V) {
+    return V->getSubKind() == SymbolValKind;
+  }
+};
 
-    // Transfer functions for binary/unary operations on ConcreteInts.
-    ConcreteInt EvalBinaryOp(ValueManager& ValMgr,
-                             BinaryOperator::Opcode Op,
-                             const ConcreteInt& RHS) const;
-        
-    // Implement isa<T> support.
-    static inline bool classof(const RValue* V) {
-      return V->getBaseKind() == LValueKind &&
-             V->getSubKind() == ConcreteIntKind;
-    }
-  };  
+class GotoLabel : public LVal {
+public:
+  GotoLabel(LabelStmt* Label) : LVal(GotoLabelKind, Label) {}
+  
+  LabelStmt* getLabel() const {
+    return static_cast<LabelStmt*>(Data);
+  }
+  
+  static inline bool classof(const RVal* V) {
+    return V->getBaseKind() == LValKind &&
+           V->getSubKind() == GotoLabelKind;
+  }
+  
+  static inline bool classof(const LVal* V) {
+    return V->getSubKind() == GotoLabelKind;
+  } 
+};
+  
+
+class DeclVal : public LVal {
+public:
+  DeclVal(const VarDecl* vd) : LVal(DeclValKind, vd) {}
+  
+  VarDecl* getDecl() const {
+    return static_cast<VarDecl*>(Data);
+  }
+  
+  inline bool operator==(const DeclVal& R) const {
+    return getDecl() == R.getDecl();
+  }
+  
+  inline bool operator!=(const DeclVal& R) const {
+    return getDecl() != R.getDecl();
+  }
+  
+  // Implement isa<T> support.
+  static inline bool classof(const RVal* V) {
+    return V->getBaseKind() == LValKind &&
+           V->getSubKind() == DeclValKind;
+  }
+  
+  static inline bool classof(const LVal* V) {
+    return V->getSubKind() == DeclValKind;
+  }    
+};
+
+class FuncVal : public LVal {
+public:
+  FuncVal(const FunctionDecl* fd) : LVal(FuncValKind, fd) {}
+  
+  FunctionDecl* getDecl() const {
+    return static_cast<FunctionDecl*>(Data);
+  }
+  
+  inline bool operator==(const FuncVal& R) const {
+    return getDecl() == R.getDecl();
+  }
+  
+  inline bool operator!=(const FuncVal& R) const {
+    return getDecl() != R.getDecl();
+  }
+  
+  // Implement isa<T> support.
+  static inline bool classof(const RVal* V) {
+    return V->getBaseKind() == LValKind &&
+           V->getSubKind() == FuncValKind;
+  }
+  
+  static inline bool classof(const LVal* V) {
+    return V->getSubKind() == FuncValKind;
+  }
+};
+
+class ConcreteInt : public LVal {
+public:
+  ConcreteInt(const llvm::APSInt& V) : LVal(ConcreteIntKind, &V) {}
+  
+  const llvm::APSInt& getValue() const {
+    return *static_cast<llvm::APSInt*>(Data);
+  }
+
+  // Transfer functions for binary/unary operations on ConcreteInts.
+  ConcreteInt EvalBinOp(ValueManager& ValMgr,
+                           BinaryOperator::Opcode Op,
+                           const ConcreteInt& R) const;
+      
+  // Implement isa<T> support.
+  static inline bool classof(const RVal* V) {
+    return V->getBaseKind() == LValKind &&
+           V->getSubKind() == ConcreteIntKind;
+  }
+  
+  static inline bool classof(const LVal* V) {
+    return V->getSubKind() == ConcreteIntKind;
+  }
+};
+  
 } // end clang::lval namespace
-
 } // end clang namespace  
 
 #endif

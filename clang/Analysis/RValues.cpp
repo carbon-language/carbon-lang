@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This files defines RValue, LValue, and NonLValue, classes that represent
+//  This files defines RVal, LVal, and NonLVal, classes that represent
 //  abstract r-values for use with path-sensitive value tracking.
 //
 //===----------------------------------------------------------------------===//
@@ -24,44 +24,39 @@ using llvm::APSInt;
 // Symbol Iteration.
 //===----------------------------------------------------------------------===//
 
-RValue::symbol_iterator RValue::symbol_begin() const {
-  if (isa<LValue>(this)) {
-    if (isa<lval::SymbolVal>(this))
-      return (symbol_iterator) (&Data);
-  }
-  else {
-    if (isa<nonlval::SymbolVal>(this))
-      return (symbol_iterator) (&Data);
-    else if (isa<nonlval::SymIntConstraintVal>(this)) {
-      const SymIntConstraint& C =
-        cast<nonlval::SymIntConstraintVal>(this)->getConstraint();
-      return (symbol_iterator) &C.getSymbol();
-    }
+RVal::symbol_iterator RVal::symbol_begin() const {
+  if (isa<lval::SymbolVal>(this))
+    return (symbol_iterator) (&Data);
+  else if (isa<nonlval::SymbolVal>(this))
+    return (symbol_iterator) (&Data);
+  else if (isa<nonlval::SymIntConstraintVal>(this)) {
+    const SymIntConstraint& C =
+      cast<nonlval::SymIntConstraintVal>(this)->getConstraint();
+    
+    return (symbol_iterator) &C.getSymbol();
   }
   
   return NULL;
 }
 
-RValue::symbol_iterator RValue::symbol_end() const {
+RVal::symbol_iterator RVal::symbol_end() const {
   symbol_iterator X = symbol_begin();
   return X ? X+1 : NULL;
 }
 
 //===----------------------------------------------------------------------===//
-// Transfer function dispatch for Non-LValues.
+// Transfer function dispatch for Non-LVals.
 //===----------------------------------------------------------------------===//
 
 nonlval::ConcreteInt
-nonlval::ConcreteInt::EvalBinaryOp(ValueManager& ValMgr,
-                                   BinaryOperator::Opcode Op,
-                                   const nonlval::ConcreteInt& RHS) const {
-
-  return ValMgr.EvaluateAPSInt(Op, getValue(), RHS.getValue());
+nonlval::ConcreteInt::EvalBinOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
+                                const nonlval::ConcreteInt& R) const {
+  
+  return ValMgr.EvaluateAPSInt(Op, getValue(), R.getValue());
 }
 
 
   // Bitwise-Complement.
-
 
 nonlval::ConcreteInt
 nonlval::ConcreteInt::EvalComplement(ValueManager& ValMgr) const {
@@ -77,47 +72,40 @@ nonlval::ConcreteInt::EvalMinus(ValueManager& ValMgr, UnaryOperator* U) const {
   return ValMgr.getValue(-getValue()); 
 }
 
-nonlval::ConcreteInt
-nonlval::ConcreteInt::EvalPlus(ValueManager& ValMgr, UnaryOperator* U) const {
-  assert (U->getType() == U->getSubExpr()->getType());  
-  assert (U->getType()->isIntegerType());  
-  return ValMgr.getValue(getValue()); 
-}
-
 //===----------------------------------------------------------------------===//
-// Transfer function dispatch for LValues.
+// Transfer function dispatch for LVals.
 //===----------------------------------------------------------------------===//
 
 lval::ConcreteInt
-lval::ConcreteInt::EvalBinaryOp(ValueManager& ValMgr,
-                                BinaryOperator::Opcode Op,
-                                const lval::ConcreteInt& RHS) const {
+lval::ConcreteInt::EvalBinOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
+                             const lval::ConcreteInt& R) const {
   
   assert (Op == BinaryOperator::Add || Op == BinaryOperator::Sub ||
           (Op >= BinaryOperator::LT && Op <= BinaryOperator::NE));
   
-  return ValMgr.EvaluateAPSInt(Op, getValue(), RHS.getValue());
+  return ValMgr.EvaluateAPSInt(Op, getValue(), R.getValue());
 }
 
-NonLValue LValue::EQ(ValueManager& ValMgr, const LValue& RHS) const {
+NonLVal LVal::EQ(ValueManager& ValMgr, const LVal& R) const {
+  
   switch (getSubKind()) {
     default:
-      assert(false && "EQ not implemented for this LValue.");
-      return cast<NonLValue>(UnknownVal());
+      assert(false && "EQ not implemented for this LVal.");
+      break;
       
     case lval::ConcreteIntKind:
-      if (isa<lval::ConcreteInt>(RHS)) {
+      if (isa<lval::ConcreteInt>(R)) {
         bool b = cast<lval::ConcreteInt>(this)->getValue() ==
-        cast<lval::ConcreteInt>(RHS).getValue();
+                 cast<lval::ConcreteInt>(R).getValue();
         
-        return NonLValue::GetIntTruthValue(ValMgr, b);
+        return NonLVal::MakeIntTruthVal(ValMgr, b);
       }
-      else if (isa<lval::SymbolVal>(RHS)) {
+      else if (isa<lval::SymbolVal>(R)) {
         
         const SymIntConstraint& C =
-        ValMgr.getConstraint(cast<lval::SymbolVal>(RHS).getSymbol(),
-                             BinaryOperator::EQ,
-                             cast<lval::ConcreteInt>(this)->getValue());
+          ValMgr.getConstraint(cast<lval::SymbolVal>(R).getSymbol(),
+                               BinaryOperator::EQ,
+                               cast<lval::ConcreteInt>(this)->getValue());
         
         return nonlval::SymIntConstraintVal(C);        
       }
@@ -125,50 +113,50 @@ NonLValue LValue::EQ(ValueManager& ValMgr, const LValue& RHS) const {
       break;
       
       case lval::SymbolValKind: {
-        if (isa<lval::ConcreteInt>(RHS)) {
+        if (isa<lval::ConcreteInt>(R)) {
           
           const SymIntConstraint& C =
-          ValMgr.getConstraint(cast<lval::SymbolVal>(this)->getSymbol(),
-                               BinaryOperator::EQ,
-                               cast<lval::ConcreteInt>(RHS).getValue());
+            ValMgr.getConstraint(cast<lval::SymbolVal>(this)->getSymbol(),
+                                 BinaryOperator::EQ,
+                                 cast<lval::ConcreteInt>(R).getValue());
           
           return nonlval::SymIntConstraintVal(C);
         }
         
-        assert (!isa<lval::SymbolVal>(RHS) && "FIXME: Implement unification.");
+        assert (!isa<lval::SymbolVal>(R) && "FIXME: Implement unification.");
         
         break;
       }
       
       case lval::DeclValKind:
-      if (isa<lval::DeclVal>(RHS)) {        
-        bool b = cast<lval::DeclVal>(*this) == cast<lval::DeclVal>(RHS);
-        return NonLValue::GetIntTruthValue(ValMgr, b);
+      if (isa<lval::DeclVal>(R)) {        
+        bool b = cast<lval::DeclVal>(*this) == cast<lval::DeclVal>(R);
+        return NonLVal::MakeIntTruthVal(ValMgr, b);
       }
       
       break;
   }
   
-  return NonLValue::GetIntTruthValue(ValMgr, false);
+  return NonLVal::MakeIntTruthVal(ValMgr, false);
 }
 
-NonLValue LValue::NE(ValueManager& ValMgr, const LValue& RHS) const {
+NonLVal LVal::NE(ValueManager& ValMgr, const LVal& R) const {
   switch (getSubKind()) {
     default:
-      assert(false && "NE not implemented for this LValue.");
-      return cast<NonLValue>(UnknownVal());
+      assert(false && "NE not implemented for this LVal.");
+      break;
       
     case lval::ConcreteIntKind:
-      if (isa<lval::ConcreteInt>(RHS)) {
+      if (isa<lval::ConcreteInt>(R)) {
         bool b = cast<lval::ConcreteInt>(this)->getValue() !=
-        cast<lval::ConcreteInt>(RHS).getValue();
+                 cast<lval::ConcreteInt>(R).getValue();
         
-        return NonLValue::GetIntTruthValue(ValMgr, b);
+        return NonLVal::MakeIntTruthVal(ValMgr, b);
       }
-      else if (isa<lval::SymbolVal>(RHS)) {
+      else if (isa<lval::SymbolVal>(R)) {
         
         const SymIntConstraint& C =
-        ValMgr.getConstraint(cast<lval::SymbolVal>(RHS).getSymbol(),
+        ValMgr.getConstraint(cast<lval::SymbolVal>(R).getSymbol(),
                              BinaryOperator::NE,
                              cast<lval::ConcreteInt>(this)->getValue());
         
@@ -178,55 +166,56 @@ NonLValue LValue::NE(ValueManager& ValMgr, const LValue& RHS) const {
       break;
       
       case lval::SymbolValKind: {
-        if (isa<lval::ConcreteInt>(RHS)) {
+        if (isa<lval::ConcreteInt>(R)) {
           
           const SymIntConstraint& C =
           ValMgr.getConstraint(cast<lval::SymbolVal>(this)->getSymbol(),
                                BinaryOperator::NE,
-                               cast<lval::ConcreteInt>(RHS).getValue());
+                               cast<lval::ConcreteInt>(R).getValue());
           
           return nonlval::SymIntConstraintVal(C);
         }
         
-        assert (!isa<lval::SymbolVal>(RHS) && "FIXME: Implement sym !=.");
+        assert (!isa<lval::SymbolVal>(R) && "FIXME: Implement sym !=.");
         
         break;
       }
       
       case lval::DeclValKind:
-      if (isa<lval::DeclVal>(RHS)) {        
-        bool b = cast<lval::DeclVal>(*this) == cast<lval::DeclVal>(RHS);
-        return NonLValue::GetIntTruthValue(ValMgr, b);
-      }
+        if (isa<lval::DeclVal>(R)) {        
+          bool b = cast<lval::DeclVal>(*this) == cast<lval::DeclVal>(R);
+          return NonLVal::MakeIntTruthVal(ValMgr, b);
+        }
       
-      break;
+        break;
   }
   
-  return NonLValue::GetIntTruthValue(ValMgr, true);
+  return NonLVal::MakeIntTruthVal(ValMgr, true);
 }
 
-
-
 //===----------------------------------------------------------------------===//
-// Utility methods for constructing Non-LValues.
+// Utility methods for constructing Non-LVals.
 //===----------------------------------------------------------------------===//
 
-NonLValue NonLValue::GetValue(ValueManager& ValMgr, uint64_t X, QualType T,
-                              SourceLocation Loc) {
-  
+NonLVal NonLVal::MakeVal(ValueManager& ValMgr, uint64_t X, QualType T,
+                             SourceLocation Loc) {  
+
   return nonlval::ConcreteInt(ValMgr.getValue(X, T, Loc));
 }
 
-NonLValue NonLValue::GetValue(ValueManager& ValMgr, IntegerLiteral* I) {
+NonLVal NonLVal::MakeVal(ValueManager& ValMgr, IntegerLiteral* I) {
+
   return nonlval::ConcreteInt(ValMgr.getValue(APSInt(I->getValue(),
-                                   I->getType()->isUnsignedIntegerType())));
+                              I->getType()->isUnsignedIntegerType())));
 }
 
-NonLValue NonLValue::GetIntTruthValue(ValueManager& ValMgr, bool b) {
+NonLVal NonLVal::MakeIntTruthVal(ValueManager& ValMgr, bool b) {
+
   return nonlval::ConcreteInt(ValMgr.getTruthValue(b));
 }
 
-RValue RValue::GetSymbolValue(SymbolManager& SymMgr, ParmVarDecl* D) {
+RVal RVal::GetSymbolValue(SymbolManager& SymMgr, ParmVarDecl* D) {
+
   QualType T = D->getType();
   
   if (T->isPointerType() || T->isReferenceType())
@@ -236,68 +225,66 @@ RValue RValue::GetSymbolValue(SymbolManager& SymMgr, ParmVarDecl* D) {
 }
 
 //===----------------------------------------------------------------------===//
-// Utility methods for constructing LValues.
+// Utility methods for constructing LVals.
 //===----------------------------------------------------------------------===//
 
-LValue LValue::GetValue(AddrLabelExpr* E) {
-  return lval::GotoLabel(E->getLabel());
-}
+LVal LVal::MakeVal(AddrLabelExpr* E) { return lval::GotoLabel(E->getLabel()); }
 
 //===----------------------------------------------------------------------===//
 // Pretty-Printing.
 //===----------------------------------------------------------------------===//
 
-void RValue::printStdErr() const {
-  print(*llvm::cerr.stream());
-}
+void RVal::printStdErr() const { print(*llvm::cerr.stream()); }
 
-void RValue::print(std::ostream& Out) const {
+void RVal::print(std::ostream& Out) const {
+
   switch (getBaseKind()) {
+      
     case UnknownKind:
-      Out << "Invalid";
-      break;
+      Out << "Invalid"; break;
       
-    case NonLValueKind:
-      cast<NonLValue>(this)->print(Out);
-      break;
+    case NonLValKind:
+      cast<NonLVal>(this)->print(Out); break;
       
-    case LValueKind:
-      cast<LValue>(this)->print(Out);
-      break;
+    case LValKind:
+      cast<LVal>(this)->print(Out); break;
       
     case UninitializedKind:
-      Out << "Uninitialized";
-      break;
+      Out << "Uninitialized"; break;
       
     default:
-      assert (false && "Invalid RValue.");
+      assert (false && "Invalid RVal.");
   }
 }
 
 static void printOpcode(std::ostream& Out, BinaryOperator::Opcode Op) {
-  switch (Op) {
-    case BinaryOperator::Mul: Out << "*"; break;
-    case BinaryOperator::Div: Out << "/"; break;
-    case BinaryOperator::Rem: Out << "%" ; break;
-    case BinaryOperator::Add: Out << "+" ; break;
-    case BinaryOperator::Sub: Out << "-" ; break;
+  
+  switch (Op) {      
+    case BinaryOperator::Mul: Out << '*'  ; break;
+    case BinaryOperator::Div: Out << '/'  ; break;
+    case BinaryOperator::Rem: Out << '%'  ; break;
+    case BinaryOperator::Add: Out << '+'  ; break;
+    case BinaryOperator::Sub: Out << '-'  ; break;
     case BinaryOperator::Shl: Out << "<<" ; break;
     case BinaryOperator::Shr: Out << ">>" ; break;
-    case BinaryOperator::LT: Out << "<" ; break;
-    case BinaryOperator::GT: Out << ">" ; break;
-    case BinaryOperator::LE: Out << "<=" ; break;
-    case BinaryOperator::GE: Out << ">=" ; break;    
-    case BinaryOperator::EQ: Out << "=="; break;
-    case BinaryOperator::NE: Out << "!="; break;
-    case BinaryOperator::And: Out << "&" ; break;
-    case BinaryOperator::Xor: Out << "^" ; break;
-    case BinaryOperator::Or: Out << "|" ; break;      
+    case BinaryOperator::LT:  Out << "<"  ; break;
+    case BinaryOperator::GT:  Out << '>'  ; break;
+    case BinaryOperator::LE:  Out << "<=" ; break;
+    case BinaryOperator::GE:  Out << ">=" ; break;    
+    case BinaryOperator::EQ:  Out << "==" ; break;
+    case BinaryOperator::NE:  Out << "!=" ; break;
+    case BinaryOperator::And: Out << '&'  ; break;
+    case BinaryOperator::Xor: Out << '^'  ; break;
+    case BinaryOperator::Or:  Out << '|'  ; break;
+      
     default: assert(false && "Not yet implemented.");
   }        
 }
 
-void NonLValue::print(std::ostream& Out) const {
+void NonLVal::print(std::ostream& Out) const {
+
   switch (getSubKind()) {  
+
     case nonlval::ConcreteIntKind:
       Out << cast<nonlval::ConcreteInt>(this)->getValue().toString();
 
@@ -325,17 +312,18 @@ void NonLValue::print(std::ostream& Out) const {
     }  
       
     default:
-      assert (false && "Pretty-printed not implemented for this NonLValue.");
+      assert (false && "Pretty-printed not implemented for this NonLVal.");
       break;
   }
 }
 
-
-void LValue::print(std::ostream& Out) const {
+void LVal::print(std::ostream& Out) const {
+  
   switch (getSubKind()) {        
+
     case lval::ConcreteIntKind:
       Out << cast<lval::ConcreteInt>(this)->getValue().toString() 
-          << " (LValue)";
+          << " (LVal)";
       break;
       
     case lval::SymbolValKind:
@@ -358,8 +346,7 @@ void LValue::print(std::ostream& Out) const {
       break;
       
     default:
-      assert (false && "Pretty-printed not implemented for this LValue.");
+      assert (false && "Pretty-printing not implemented for this LVal.");
       break;
   }
 }
-

@@ -24,7 +24,7 @@ using llvm::cast;
 using llvm::APSInt;
 
 GRExprEngine::StateTy
-GRExprEngine::SetValue(StateTy St, Expr* S, const RValue& V) {
+GRExprEngine::SetRVal(StateTy St, Expr* Ex, const RVal& V) {
 
   if (!StateCleaned) {
     St = RemoveDeadBindings(CurrentStmt, St);
@@ -33,44 +33,41 @@ GRExprEngine::SetValue(StateTy St, Expr* S, const RValue& V) {
 
   bool isBlkExpr = false;
     
-  if (S == CurrentStmt) {
-    isBlkExpr = getCFG().isBlkExpr(S);
+  if (Ex == CurrentStmt) {
+    isBlkExpr = getCFG().isBlkExpr(Ex);
     
     if (!isBlkExpr)
       return St;
   }
 
-  return StateMgr.SetValue(St, S, isBlkExpr, V);
+  return StateMgr.SetRVal(St, Ex, isBlkExpr, V);
 }
 
 const GRExprEngine::StateTy::BufferTy&
-GRExprEngine::SetValue(StateTy St, Expr* S, const RValue::BufferTy& RB,
+GRExprEngine::SetRVal(StateTy St, Expr* Ex, const RVal::BufferTy& RB,
                       StateTy::BufferTy& RetBuf) {
   
   assert (RetBuf.empty());
   
-  for (RValue::BufferTy::const_iterator I=RB.begin(), E=RB.end(); I!=E; ++I)
-    RetBuf.push_back(SetValue(St, S, *I));
+  for (RVal::BufferTy::const_iterator I = RB.begin(), E = RB.end(); I!=E; ++I)
+    RetBuf.push_back(SetRVal(St, Ex, *I));
                      
   return RetBuf;
 }
 
 GRExprEngine::StateTy
-GRExprEngine::SetValue(StateTy St, const LValue& LV, const RValue& V) {
-  
-  if (LV.isUnknown())
-    return St;
+GRExprEngine::SetRVal(StateTy St, const LVal& LV, const RVal& RV) {
   
   if (!StateCleaned) {
     St = RemoveDeadBindings(CurrentStmt, St);
     StateCleaned = true;
   }
   
-  return StateMgr.SetValue(St, LV, V);
+  return StateMgr.SetRVal(St, LV, RV);
 }
 
 void GRExprEngine::ProcessBranch(Expr* Condition, Stmt* Term,
-                                BranchNodeBuilder& builder) {
+                                 BranchNodeBuilder& builder) {
 
   // Remove old bindings for subexpressions.
   StateTy PrevState = StateMgr.RemoveSubExprBindings(builder.getState());
@@ -90,18 +87,18 @@ void GRExprEngine::ProcessBranch(Expr* Condition, Stmt* Term,
     return;
   }
   
-  RValue V = GetValue(PrevState, Condition);
+  RVal V = GetRVal(PrevState, Condition);
   
   switch (V.getBaseKind()) {
     default:
       break;
 
-    case RValue::UnknownKind:
+    case RVal::UnknownKind:
       builder.generateNode(PrevState, true);
       builder.generateNode(PrevState, false);
       return;
       
-    case RValue::UninitializedKind: {      
+    case RVal::UninitializedKind: {      
       NodeTy* N = builder.generateNode(PrevState, true);
 
       if (N) {
@@ -162,7 +159,7 @@ void GRExprEngine::ProcessBranch(Expr* Condition, Stmt* Term,
 void GRExprEngine::ProcessIndirectGoto(IndirectGotoNodeBuilder& builder) {
 
   StateTy St = builder.getState();  
-  LValue V = cast<LValue>(GetValue(St, builder.getTarget()));
+  RVal V = GetRVal(St, builder.getTarget());
   
   // Three possibilities:
   //
@@ -196,7 +193,7 @@ void GRExprEngine::ProcessIndirectGoto(IndirectGotoNodeBuilder& builder) {
   
   // This is really a catch-all.  We don't support symbolics yet.
   
-  assert (isa<UnknownVal>(V));
+  assert (V.isUnknown());
   
   for (iterator I=builder.begin(), E=builder.end(); I != E; ++I)
     builder.generateNode(I, St);
@@ -210,9 +207,9 @@ void GRExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
   
   StateTy St = builder.getState();  
   Expr* CondE = builder.getCondition();
-  NonLValue CondV = cast<NonLValue>(GetValue(St, CondE));
+  RVal  CondV = GetRVal(St, CondE);
 
-  if (isa<UninitializedVal>(CondV)) {
+  if (CondV.isUninit()) {
     NodeTy* N = builder.generateDefaultCaseNode(St, true);
     UninitBranches.insert(N);
     return;
@@ -229,7 +226,7 @@ void GRExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
   APSInt V1(bits, false);
   APSInt V2 = V1;
   
-  for (iterator I=builder.begin(), E=builder.end(); I!=E; ++I) {
+  for (iterator I = builder.begin(), EI = builder.end(); I != EI; ++I) {
 
     CaseStmt* Case = cast<CaseStmt>(I.getCase());
     
@@ -254,12 +251,12 @@ void GRExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
     
     // FIXME: Eventually we should replace the logic below with a range
     //  comparison, rather than concretize the values within the range.
-    //  This should be easy once we have "ranges" for NonLValues.
+    //  This should be easy once we have "ranges" for NonLVals.
         
     do {      
       nonlval::ConcreteInt CaseVal(ValMgr.getValue(V1));
       
-      NonLValue Res = EvalBinaryOp(BinaryOperator::EQ, CondV, CaseVal);
+      RVal Res = EvalBinOp(BinaryOperator::EQ, CondV, CaseVal);
       
       // Now "assume" that the case matches.
       bool isFeasible = false;
@@ -297,22 +294,22 @@ void GRExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
 
 
 void GRExprEngine::VisitLogicalExpr(BinaryOperator* B, NodeTy* Pred,
-                                   NodeSet& Dst) {
+                                    NodeSet& Dst) {
 
   bool hasR2;
   StateTy PrevState = Pred->getState();
 
-  RValue R1 = GetValue(PrevState, B->getLHS());
-  RValue R2 = GetValue(PrevState, B->getRHS(), hasR2);
+  RVal R1 = GetRVal(PrevState, B->getLHS());
+  RVal R2 = GetRVal(PrevState, B->getRHS(), hasR2);
   
   if (hasR2) {
-    if (isa<UninitializedVal>(R2) || isa<UnknownVal>(R2)) {
-      Nodify(Dst, B, Pred, SetValue(PrevState, B, R2));
+    if (R2.isUnknownOrUninit()) {
+      Nodify(Dst, B, Pred, SetRVal(PrevState, B, R2));
       return;
     }
   }
-  else if (isa<UninitializedVal>(R1) || isa<UnknownVal>(R1)) {
-    Nodify(Dst, B, Pred, SetValue(PrevState, B, R1));
+  else if (R1.isUnknownOrUninit()) {
+    Nodify(Dst, B, Pred, SetRVal(PrevState, B, R1));
     return;
   }
 
@@ -321,7 +318,7 @@ void GRExprEngine::VisitLogicalExpr(BinaryOperator* B, NodeTy* Pred,
     // hasR2 == 'false' means that LHS evaluated to 'false' and that
     // we short-circuited, leading to a value of '0' for the '&&' expression.
     if (hasR2 == false) { 
-      Nodify(Dst, B, Pred, SetValue(PrevState, B, GetRValueConstant(0U, B)));
+      Nodify(Dst, B, Pred, SetRVal(PrevState, B, MakeConstantVal(0U, B)));
       return;
     }
   }
@@ -330,7 +327,7 @@ void GRExprEngine::VisitLogicalExpr(BinaryOperator* B, NodeTy* Pred,
     // hasR2 == 'false' means that the LHS evaluate to 'true' and that
     //  we short-circuited, leading to a value of '1' for the '||' expression.
     if (hasR2 == false) {
-      Nodify(Dst, B, Pred, SetValue(PrevState, B, GetRValueConstant(1U, B)));
+      Nodify(Dst, B, Pred, SetRVal(PrevState, B, MakeConstantVal(1U, B)));
       return;      
     }
   }
@@ -342,19 +339,19 @@ void GRExprEngine::VisitLogicalExpr(BinaryOperator* B, NodeTy* Pred,
   StateTy St = Assume(PrevState, R2, true, isFeasible);
   
   if (isFeasible)
-    Nodify(Dst, B, Pred, SetValue(PrevState, B, GetRValueConstant(1U, B)));
+    Nodify(Dst, B, Pred, SetRVal(PrevState, B, MakeConstantVal(1U, B)));
 
   St = Assume(PrevState, R2, false, isFeasible);
   
   if (isFeasible)
-    Nodify(Dst, B, Pred, SetValue(PrevState, B, GetRValueConstant(0U, B)));  
+    Nodify(Dst, B, Pred, SetRVal(PrevState, B, MakeConstantVal(0U, B)));  
 }
 
 
 
 void GRExprEngine::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
-  Builder = &builder;
 
+  Builder = &builder;
   StmtEntryNode = builder.getLastNode();
   CurrentStmt = S;
   NodeSet Dst;
@@ -364,10 +361,13 @@ void GRExprEngine::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
 
   // If no nodes were generated, generate a new node that has all the
   // dead mappings removed.
+  
   if (Dst.size() == 1 && *Dst.begin() == StmtEntryNode) {
     StateTy St = RemoveDeadBindings(S, StmtEntryNode->getState());
     builder.generateNode(S, St, StmtEntryNode);
   }
+  
+  // For safety, NULL out these variables.
   
   CurrentStmt = NULL;
   StmtEntryNode = NULL;
@@ -383,6 +383,7 @@ GRExprEngine::Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred, StateTy St) {
   
   NodeTy* N = Builder->generateNode(S, St, Pred);
   Dst.Add(N);
+  
   return N;
 }
 
@@ -394,6 +395,7 @@ void GRExprEngine::Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred,
 }
 
 void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* D, NodeTy* Pred, NodeSet& Dst){
+
   if (D != CurrentStmt) {
     Dst.Add(Pred); // No-op. Simply propagate the current state unchanged.
     return;
@@ -402,77 +404,85 @@ void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* D, NodeTy* Pred, NodeSet& Dst){
   // If we are here, we are loading the value of the decl and binding
   // it to the block-level expression.
   
-  StateTy St = Pred->getState();
-  
-  Nodify(Dst, D, Pred, SetValue(St, D, GetValue(St, D)));
+  StateTy St = Pred->getState();  
+  Nodify(Dst, D, Pred, SetRVal(St, D, GetRVal(St, D)));
 }
 
 void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
-                             CallExpr::arg_iterator I, CallExpr::arg_iterator E,
+                             CallExpr::arg_iterator AI,
+                             CallExpr::arg_iterator AE,
                              NodeSet& Dst) {
   
-  if (I != E) {
-    NodeSet DstTmp;  
-    Visit(*I, Pred, DstTmp);
-    ++I;
+  // Process the arguments.
+  
+  if (AI != AE) {
     
-    for (NodeSet::iterator DI=DstTmp.begin(), DE=DstTmp.end(); DI!=DE; ++DI)
-      VisitCall(CE, *DI, I, E, Dst);
+    NodeSet DstTmp;  
+    Visit(*AI, Pred, DstTmp);
+    ++AI;
+    
+    for (NodeSet::iterator DI=DstTmp.begin(), DE=DstTmp.end(); DI != DE; ++DI)
+      VisitCall(CE, *DI, AI, AE, Dst);
     
     return;
   }
 
   // If we reach here we have processed all of the arguments.  Evaluate
   // the callee expression.
-  NodeSet DstTmp;
+  NodeSet DstTmp;  
   Visit(CE->getCallee(), Pred, DstTmp);
   
   // Finally, evaluate the function call.
-  for (NodeSet::iterator DI=DstTmp.begin(), DE=DstTmp.end(); DI!=DE; ++DI) {
+  for (NodeSet::iterator DI = DstTmp.begin(), DE = DstTmp.end(); DI!=DE; ++DI) {
+
     StateTy St = (*DI)->getState();    
-    LValue L = GetLValue(St, CE->getCallee());
+    RVal L = GetLVal(St, CE->getCallee());
 
     // Check for uninitialized control-flow.
-    if (isa<UninitializedVal>(L)) {
+
+    if (L.isUninit()) {
+      
       NodeTy* N = Builder->generateNode(CE, St, *DI);
       N->markAsSink();
       UninitBranches.insert(N);
       continue;
     }
     
-    // Note: EvalCall must handle the case where the callee is "UnknownVal."
-    Nodify(Dst, CE, *DI, EvalCall(CE, (*DI)->getState()));
+    // FIXME: EvalCall must handle the case where the callee is Unknown.
+    assert (!L.isUnknown());    
+
+    Nodify(Dst, CE, *DI, EvalCall(CE, cast<LVal>(L), (*DI)->getState()));
   }
 }
 
-void GRExprEngine::VisitCast(Expr* CastE, Expr* E, NodeTy* Pred, NodeSet& Dst) {
+void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
   
   NodeSet S1;
-  Visit(E, Pred, S1);
+  Visit(Ex, Pred, S1);
 
   QualType T = CastE->getType();
   
   // Check for redundant casts or casting to "void"
   if (T->isVoidType() ||
-      E->getType() == T || 
-      (T->isPointerType() && E->getType()->isFunctionType())) {
+      Ex->getType() == T || 
+      (T->isPointerType() && Ex->getType()->isFunctionType())) {
     
-    for (NodeSet::iterator I1=S1.begin(), E1=S1.end(); I1 != E1; ++I1)
+    for (NodeSet::iterator I1 = S1.begin(), E1 = S1.end(); I1 != E1; ++I1)
       Dst.Add(*I1);
 
     return;
   }
   
-  for (NodeSet::iterator I1=S1.begin(), E1=S1.end(); I1 != E1; ++I1) {
+  for (NodeSet::iterator I1 = S1.begin(), E1 = S1.end(); I1 != E1; ++I1) {
     NodeTy* N = *I1;
     StateTy St = N->getState();
-    const RValue& V = GetValue(St, E);
-    Nodify(Dst, CastE, N, SetValue(St, CastE, EvalCast(ValMgr, V, CastE)));
+    RVal V = GetRVal(St, Ex);
+    Nodify(Dst, CastE, N, SetRVal(St, CastE, EvalCast(ValMgr, V, CastE)));
   }
 }
 
 void GRExprEngine::VisitDeclStmt(DeclStmt* DS, GRExprEngine::NodeTy* Pred,
-                                GRExprEngine::NodeSet& Dst) {
+                                 GRExprEngine::NodeSet& Dst) {
   
   StateTy St = Pred->getState();
   
@@ -483,72 +493,80 @@ void GRExprEngine::VisitDeclStmt(DeclStmt* DS, GRExprEngine::NodeTy* Pred,
       if (VD->getType()->isArrayType())
         continue;
       
-      const Expr* E = VD->getInit();      
-      St = SetValue(St, lval::DeclVal(VD),
-                    E ? GetValue(St, E) : UninitializedVal());
+      const Expr* Ex = VD->getInit(); 
+      
+      St = SetRVal(St, lval::DeclVal(VD),
+                   Ex ? GetRVal(St, Ex) : UninitializedVal());
     }
 
   Nodify(Dst, DS, Pred, St);
   
-  if (Dst.empty())
-    Dst.Add(Pred);  
+  if (Dst.empty()) { Dst.Add(Pred); }
 }
 
 
-void GRExprEngine::VisitGuardedExpr(Expr* S, Expr* LHS, Expr* RHS,
+void GRExprEngine::VisitGuardedExpr(Expr* Ex, Expr* L, Expr* R,
                                    NodeTy* Pred, NodeSet& Dst) {
   
   StateTy St = Pred->getState();
   
-  RValue R = GetValue(St, LHS);
-  if (isa<UnknownVal>(R)) R = GetValue(St, RHS);
+  RVal V = GetRVal(St, L);
+  if (isa<UnknownVal>(V)) V = GetRVal(St, R);
   
-  Nodify(Dst, S, Pred, SetValue(St, S, R));
+  Nodify(Dst, Ex, Pred, SetRVal(St, Ex, V));
 }
 
 /// VisitSizeOfAlignOfTypeExpr - Transfer function for sizeof(type).
-void GRExprEngine::VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr* S,
-                                             NodeTy* Pred,
-                                             NodeSet& Dst) {
+void GRExprEngine::VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr* Ex,
+                                              NodeTy* Pred,
+                                              NodeSet& Dst) {
+  
+  assert (Ex->isSizeOf() && "AlignOf(Expr) not yet implemented.");
   
   // 6.5.3.4 sizeof: "The result type is an integer."
   
-  QualType T = S->getArgumentType();
+  QualType T = Ex->getArgumentType();
   
+  // FIXME: Implement alignof
+  // FIXME: Add support for sizeof(void)
   // FIXME: Add support for VLAs.
+
   if (!T.getTypePtr()->isConstantSizeType())
     return;
   
-  SourceLocation L = S->getExprLoc();
-  uint64_t size = getContext().getTypeSize(T, L) / 8;
+  SourceLocation Loc = Ex->getExprLoc();
+  uint64_t size = getContext().getTypeSize(T, Loc) / 8;
   
-  Nodify(Dst, S, Pred,
-         SetValue(Pred->getState(), S,
-                  NonLValue::GetValue(ValMgr, size, S->getType(), L)));
+  Nodify(Dst, Ex, Pred,
+         SetRVal(Pred->getState(), Ex,
+                  NonLVal::MakeVal(ValMgr, size, Ex->getType(), Loc)));
   
 }
 
 void GRExprEngine::VisitDeref(UnaryOperator* U, NodeTy* Pred, NodeSet& Dst) {
 
-  Expr* E = U->getSubExpr()->IgnoreParens();
+  Expr* Ex = U->getSubExpr()->IgnoreParens();
     
   NodeSet DstTmp;
   
-  if (!isa<DeclRefExpr>(E))
+  if (!isa<DeclRefExpr>(Ex))
     DstTmp.Add(Pred);
   else
-    Visit(E, Pred, DstTmp);
+    Visit(Ex, Pred, DstTmp);
   
-  for (NodeSet::iterator I=DstTmp.begin(), DE=DstTmp.end(); I != DE; ++I) {
+  for (NodeSet::iterator I = DstTmp.begin(), DE = DstTmp.end(); I != DE; ++I) {
 
     NodeTy* N = *I;
     StateTy St = N->getState();
     
     // FIXME: Bifurcate when dereferencing a symbolic with no constraints?
     
-    LValue L = cast<LValue>(GetValue(St, E));
+    RVal V = GetRVal(St, Ex);
     
-    if (isa<UninitializedVal>(L)) {
+    // Check for dereferences of uninitialized values.
+    
+    if (V.isUninit()) {
+      
       NodeTy* Succ = Builder->generateNode(U, St, N);
       
       if (Succ) {
@@ -559,7 +577,9 @@ void GRExprEngine::VisitDeref(UnaryOperator* U, NodeTy* Pred, NodeSet& Dst) {
       continue;
     }
     
-    if (L.isUnknown()) {
+    // Check for dereferences of unknown values.  Treat as No-Ops.
+    
+    if (V.isUnknown()) {
       Dst.Add(N);
       continue;
     }
@@ -570,48 +590,56 @@ void GRExprEngine::VisitDeref(UnaryOperator* U, NodeTy* Pred, NodeSet& Dst) {
     // 
     // We add these assumptions.
     
+    LVal LV = cast<LVal>(V);    
     bool isFeasibleNotNull;
     
     // "Assume" that the pointer is Not-NULL.
-    StateTy StNotNull = Assume(St, L, true, isFeasibleNotNull);
+    
+    StateTy StNotNull = Assume(St, LV, true, isFeasibleNotNull);
     
     if (isFeasibleNotNull) {
-      QualType T = U->getType();
       
       // FIXME: Currently symbolic analysis "generates" new symbols
       //  for the contents of values.  We need a better approach.
       
-      Nodify(Dst, U, N, SetValue(StNotNull, U, GetValue(StNotNull, L, &T)));
+      Nodify(Dst, U, N, SetRVal(StNotNull, U,
+                                GetRVal(StNotNull, LV, U->getType())));
     }
     
     bool isFeasibleNull;
     
-    // "Assume" that the pointer is NULL.
-    StateTy StNull = Assume(St, L, false, isFeasibleNull);
+    // Now "assume" that the pointer is NULL.
+    
+    StateTy StNull = Assume(St, LV, false, isFeasibleNull);
     
     if (isFeasibleNull) {
+      
       // We don't use "Nodify" here because the node will be a sink
       // and we have no intention of processing it later.
+
       NodeTy* NullNode = Builder->generateNode(U, StNull, N);
       
       if (NullNode) {
+
         NullNode->markAsSink();
         
-        if (isFeasibleNotNull)
-          ImplicitNullDeref.insert(NullNode);
-        else
-          ExplicitNullDeref.insert(NullNode);
+        if (isFeasibleNotNull) ImplicitNullDeref.insert(NullNode);
+        else ExplicitNullDeref.insert(NullNode);
       }
     }    
   }
 }
 
-void GRExprEngine::VisitUnaryOperator(UnaryOperator* U,
-                                      NodeTy* Pred, NodeSet& Dst) {
+void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
+                                      NodeSet& Dst) {
   
   NodeSet S1;
   
   assert (U->getOpcode() != UnaryOperator::Deref);
+  assert (U->getOpcode() != UnaryOperator::SizeOf);
+  assert (U->getOpcode() != UnaryOperator::AlignOf);
+  
+  bool use_GetLVal = false;
   
   switch (U->getOpcode()) {
     case UnaryOperator::PostInc:
@@ -619,14 +647,9 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U,
     case UnaryOperator::PreInc:
     case UnaryOperator::PreDec:
     case UnaryOperator::AddrOf:
-      // Evalue subexpression as an LValue.
-      VisitLValue(U->getSubExpr(), Pred, S1);
-      break;
-      
-    case UnaryOperator::SizeOf:
-    case UnaryOperator::AlignOf:
-      // Do not evaluate subexpression.
-      S1.Add(Pred);
+      // Evalue subexpression as an LVal.
+      use_GetLVal = true;
+      VisitLVal(U->getSubExpr(), Pred, S1);
       break;
       
     default:
@@ -634,29 +657,53 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U,
       break;
   }
 
-  for (NodeSet::iterator I1=S1.begin(), E1=S1.end(); I1 != E1; ++I1) {
+  for (NodeSet::iterator I1 = S1.begin(), E1 = S1.end(); I1 != E1; ++I1) {
 
     NodeTy* N1 = *I1;
     StateTy St = N1->getState();
+        
+    RVal SubV = use_GetLVal ? GetLVal(St, U->getSubExpr()) : 
+                              GetRVal(St, U->getSubExpr());
+    
+    if (SubV.isUnknown()) {
+      Dst.Add(N1);
+      continue;
+    }
+
+    if (SubV.isUninit()) {
+      Nodify(Dst, U, N1, SetRVal(St, U, SubV));
+      continue;
+    }
     
     if (U->isIncrementDecrementOp()) {
       
       // Handle ++ and -- (both pre- and post-increment).
       
-      const LValue& L1 = GetLValue(St, U->getSubExpr());
-      QualType T = U->getType();
-      RValue R1 = GetValue(St, L1, &T);
+      LVal SubLV = cast<LVal>(SubV); 
+      RVal V  = GetRVal(St, SubLV, U->getType());
+      
+      // An LVal should never bind to UnknownVal.      
+      assert (!V.isUnknown());
+
+      // Propagate uninitialized values.      
+      if (V.isUninit()) {
+        Nodify(Dst, U, N1, SetRVal(St, U, V));
+        continue;
+      }
+      
+      // Handle all NonLVals.
       
       BinaryOperator::Opcode Op = U->isIncrementOp() ? BinaryOperator::Add
                                                      : BinaryOperator::Sub;
       
-      RValue Result = EvalBinaryOp(Op, R1, GetRValueConstant(1U, U));
+      RVal Result = EvalBinOp(Op, cast<NonLVal>(V), MakeConstantVal(1U, U));
       
       if (U->isPostfix())
-        Nodify(Dst, U, N1, SetValue(SetValue(St, U, R1), L1, Result));
+        St = SetRVal(SetRVal(St, U, V), SubLV, Result);
       else
-        Nodify(Dst, U, N1, SetValue(SetValue(St, U, Result), L1, Result));
+        St = SetRVal(SetRVal(St, U, Result), SubLV, Result);
         
+      Nodify(Dst, U, N1, St);
       continue;
     }    
     
@@ -664,104 +711,90 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U,
     
     switch (U->getOpcode()) {
 
-      case UnaryOperator::Minus: {
-        const NonLValue& R1 = cast<NonLValue>(GetValue(St, U->getSubExpr()));
-        Nodify(Dst, U, N1, SetValue(St, U, EvalMinus(ValMgr, U, R1)));
+      case UnaryOperator::Minus:
+        St = SetRVal(St, U, EvalMinus(U, cast<NonLVal>(SubV)));
         break;
-      }
         
-      case UnaryOperator::Plus: {
-        const NonLValue& R1 = cast<NonLValue>(GetValue(St, U->getSubExpr()));
-        Nodify(Dst, U, N1, SetValue(St, U, EvalPlus(ValMgr, U, R1)));
+      case UnaryOperator::Not:
+        St = SetRVal(St, U, EvalComplement(cast<NonLVal>(SubV)));
         break;
-      }
         
-      case UnaryOperator::Not: {
-        const NonLValue& R1 = cast<NonLValue>(GetValue(St, U->getSubExpr()));
-        Nodify(Dst, U, N1, SetValue(St, U, EvalComplement(ValMgr, R1)));
-        break;
-      }
+      case UnaryOperator::LNot:   
         
-      case UnaryOperator::LNot: {
         // C99 6.5.3.3: "The expression !E is equivalent to (0==E)."
         //
         //  Note: technically we do "E == 0", but this is the same in the
         //    transfer functions as "0 == E".
-        
-        RValue V1 = GetValue(St, U->getSubExpr());
-        
-        if (isa<LValue>(V1)) {
-          const LValue& L1 = cast<LValue>(V1);
-          lval::ConcreteInt V2(ValMgr.getZeroWithPtrWidth());
-          Nodify(Dst, U, N1,
-                 SetValue(St, U, EvalBinaryOp(BinaryOperator::EQ,
-                                              L1, V2)));
+
+        if (isa<LVal>(SubV)) {
+          lval::ConcreteInt V(ValMgr.getZeroWithPtrWidth());
+          RVal Result = EvalBinOp(BinaryOperator::EQ, cast<LVal>(SubV), V);
+          St = SetRVal(St, U, Result);
         }
         else {
-          const NonLValue& R1 = cast<NonLValue>(V1);
-          nonlval::ConcreteInt V2(ValMgr.getZeroWithPtrWidth());
-          Nodify(Dst, U, N1,
-                 SetValue(St, U, EvalBinaryOp(BinaryOperator::EQ,
-                                              R1, V2)));
+          nonlval::ConcreteInt V(ValMgr.getZeroWithPtrWidth());
+          RVal Result = EvalBinOp(BinaryOperator::EQ, cast<NonLVal>(SubV), V);
+          St = SetRVal(St, U, Result);
         }
         
         break;
-      }
-      
-      case UnaryOperator::SizeOf: {
-        // 6.5.3.4 sizeof: "The result type is an integer."
-        
-        QualType T = U->getSubExpr()->getType();
-        
-        // FIXME: Add support for VLAs.
-        if (!T.getTypePtr()->isConstantSizeType())
-          return;
-        
-        SourceLocation L = U->getExprLoc();
-        uint64_t size = getContext().getTypeSize(T, L) / 8;
-                
-        Nodify(Dst, U, N1,
-               SetValue(St, U, NonLValue::GetValue(ValMgr, size,
-                                                   U->getType(), L)));
-        
-        break;
-      }
         
       case UnaryOperator::AddrOf: {
-        const LValue& L1 = GetLValue(St, U->getSubExpr());
-        Nodify(Dst, U, N1, SetValue(St, U, L1));
+        assert (isa<LVal>(SubV));
+        St = SetRVal(St, U, SubV);
         break;
       }
                 
       default: ;
         assert (false && "Not implemented.");
-    }    
+    } 
+    
+    Nodify(Dst, U, N1, St);
   }
 }
 
-void GRExprEngine::VisitLValue(Expr* E, NodeTy* Pred, NodeSet& Dst) {
+void GRExprEngine::VisitSizeOfExpr(UnaryOperator* U, NodeTy* Pred,
+                                   NodeSet& Dst) {
   
-  E = E->IgnoreParens();
+  QualType T = U->getSubExpr()->getType();
   
-  if (isa<DeclRefExpr>(E)) {
+  // FIXME: Add support for VLAs.
+  if (!T.getTypePtr()->isConstantSizeType())
+    return;
+  
+  SourceLocation Loc = U->getExprLoc();
+  uint64_t size = getContext().getTypeSize(T, Loc) / 8;                
+  StateTy St = Pred->getState();
+  St = SetRVal(St, U, NonLVal::MakeVal(ValMgr, size, U->getType(), Loc));
+
+  Nodify(Dst, U, Pred, St);
+}
+
+void GRExprEngine::VisitLVal(Expr* Ex, NodeTy* Pred, NodeSet& Dst) {
+  
+  assert (Ex != CurrentStmt && !getCFG().isBlkExpr(Ex));
+  
+  Ex = Ex->IgnoreParens();
+  
+  if (isa<DeclRefExpr>(Ex)) {
     Dst.Add(Pred);
     return;
   }
   
-  if (UnaryOperator* U = dyn_cast<UnaryOperator>(E)) {
+  if (UnaryOperator* U = dyn_cast<UnaryOperator>(Ex)) {
     if (U->getOpcode() == UnaryOperator::Deref) {
-      E = U->getSubExpr()->IgnoreParens();
+      Ex = U->getSubExpr()->IgnoreParens();
       
-      if (isa<DeclRefExpr>(E))
+      if (isa<DeclRefExpr>(Ex))
         Dst.Add(Pred);
       else
-        Visit(E, Pred, Dst);
+        Visit(Ex, Pred, Dst);
       
       return;
     }
   }
   
-  Visit(E, Pred, Dst);
+  Visit(Ex, Pred, Dst);
 }
 
 void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
@@ -770,119 +803,152 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
   NodeSet S1;
   
   if (B->isAssignmentOp())
-    VisitLValue(B->getLHS(), Pred, S1);
+    VisitLVal(B->getLHS(), Pred, S1);
   else
     Visit(B->getLHS(), Pred, S1);
 
   for (NodeSet::iterator I1=S1.begin(), E1=S1.end(); I1 != E1; ++I1) {
+
     NodeTy* N1 = *I1;
     
     // When getting the value for the LHS, check if we are in an assignment.
-    // In such cases, we want to (initially) treat the LHS as an LValue,
-    // so we use GetLValue instead of GetValue so that DeclRefExpr's are
-    // evaluated to LValueDecl's instead of to an NonLValue.
-    const RValue& V1 = 
-      B->isAssignmentOp() ? GetLValue(N1->getState(), B->getLHS())
-                          : GetValue(N1->getState(), B->getLHS());
+    // In such cases, we want to (initially) treat the LHS as an LVal,
+    // so we use GetLVal instead of GetRVal so that DeclRefExpr's are
+    // evaluated to LValDecl's instead of to an NonLVal.
+
+    RVal LeftV = B->isAssignmentOp() ? GetLVal(N1->getState(), B->getLHS())
+                                     : GetRVal(N1->getState(), B->getLHS());
     
-    NodeSet S2;
+    // Visit the RHS...
+    
+    NodeSet S2;    
     Visit(B->getRHS(), N1, S2);
+    
+    // Process the binary operator.
   
-    for (NodeSet::iterator I2=S2.begin(), E2=S2.end(); I2 != E2; ++I2) {
+    for (NodeSet::iterator I2 = S2.begin(), E2 = S2.end(); I2 != E2; ++I2) {
 
       NodeTy* N2 = *I2;
-      StateTy St = N2->getState();
-      const RValue& V2 = GetValue(St, B->getRHS());
+      StateTy St = N2->getState();      
+      RVal RightV = GetRVal(St, B->getRHS());
 
       BinaryOperator::Opcode Op = B->getOpcode();
       
       if (Op <= BinaryOperator::Or) {
         
-        if (isa<UnknownVal>(V1) || isa<UninitializedVal>(V1)) {
-          Nodify(Dst, B, N2, SetValue(St, B, V1));
+        // Process non-assignements except commas or short-circuited
+        // logical expressions (LAnd and LOr).
+        
+        RVal Result = EvalBinOp(Op, LeftV, RightV);
+        
+        if (Result.isUnknown()) {
+          Dst.Add(N2);
           continue;
         }
         
-        Nodify(Dst, B, N2, SetValue(St, B, EvalBinaryOp(Op, V1, V2)));
+        Nodify(Dst, B, N2, SetRVal(St, B, Result));
         continue;
-      
       }
-      
-      switch (Op) {
+        
+      // Process assignments.
+    
+      switch (Op) {        
+          
         case BinaryOperator::Assign: {
-          const LValue& L1 = cast<LValue>(V1);
+          
+          // Simple assignments.
 
-          if (isa<UninitializedVal>(L1))
+          if (LeftV.isUninit()) {
             HandleUninitializedStore(B, N2);
-          else          
-            Nodify(Dst, B, N2, SetValue(SetValue(St, B, V2), L1, V2));
+            continue;
+          }
+          
+          if (LeftV.isUnknown()) {
+            St = SetRVal(St, B, RightV);
+            break;
+          }
 
+          St = SetRVal(SetRVal(St, B, RightV), cast<LVal>(LeftV), RightV);
           break;
         }
 
-        default: { // Compound assignment operators.
+          // Compound assignment operators.
           
-          assert (B->isCompoundAssignmentOp());
-                          
-          const LValue& L1 = cast<LValue>(V1);
+        default: { 
           
-          if (isa<UninitializedVal>(L1)) {
+          assert (B->isCompoundAssignmentOp());                                    
+          
+          if (LeftV.isUninit()) {
             HandleUninitializedStore(B, N2);
+            continue;
+          }
+          
+          if (LeftV.isUnknown()) {
+            
+            // While we do not know the location to store RightV,
+            // the entire expression does evaluate to RightV.
+            
+            if (RightV.isUnknown()) {
+              Dst.Add(N2);
+              continue;
+            }
+            
+            St = SetRVal(St, B, RightV);
             break;
           }
           
-          if (isa<UninitializedVal>(V2)) {
-            Nodify(Dst, B, N2, SetValue(SetValue(St, B, V2), L1, V2));
+          // At this pointer we know that the LHS evaluates to an LVal
+          // that is neither "Unknown" or "Unintialized."
+          
+          LVal LeftLV = cast<LVal>(LeftV);
+          
+          // Propagate uninitialized values (right-side).
+          
+          if (RightV.isUninit()) {
+            St = SetRVal(SetRVal(St, B, RightV), LeftLV, RightV);
             break;
           }
           
-          RValue Result = cast<NonLValue>(UnknownVal());
+          // Fetch the value of the LHS (the value of the variable, etc.).
+          
+          RVal V = GetRVal(N1->getState(), LeftLV, B->getLHS()->getType());
+          
+          // Propagate uninitialized value (left-side).
+          
+          if (V.isUninit()) {
+            St = SetRVal(St, B, V);
+            break;
+          }
+          
+          // Propagate unknown values.
+          
+          assert (!V.isUnknown() &&
+                  "An LVal should never bind to UnknownVal");
+          
+          if (RightV.isUnknown()) {
+            St = SetRVal(SetRVal(St, LeftLV, RightV), B, RightV);
+            break;
+          }
+            
+          // Neither the LHS or the RHS have Unknown/Uninit values.  Process
+          // the operation and store the result.
           
           if (Op >= BinaryOperator::AndAssign)
             ((int&) Op) -= (BinaryOperator::AndAssign - BinaryOperator::And);
           else
             ((int&) Op) -= BinaryOperator::MulAssign;          
           
-          if (B->getType()->isPointerType()) { // Perform pointer arithmetic.
-            const NonLValue& R2 = cast<NonLValue>(V2);
-            Result = EvalBinaryOp(Op, L1, R2);
-          }
-          else if (isa<LValue>(V2)) {
-            const LValue& L2 = cast<LValue>(V2);
-            
-            if (B->getRHS()->getType()->isPointerType()) {
-              // LValue comparison.
-              Result = EvalBinaryOp(Op, L1, L2);
-            }
-            else {
-              QualType T1 = B->getLHS()->getType();
-              QualType T2 = B->getRHS()->getType();
-              
-              // An operation between two variables of a non-lvalue type.
-              Result =
-                EvalBinaryOp(Op,
-                            cast<NonLValue>(GetValue(N1->getState(), L1, &T1)),
-                            cast<NonLValue>(GetValue(N2->getState(), L2, &T2)));
-            }
-          }
-          else { // Any other operation between two Non-LValues.
-            QualType T = B->getLHS()->getType();
-            const NonLValue& R1 = cast<NonLValue>(GetValue(N1->getState(),
-                                                           L1, &T));
-            const NonLValue& R2 = cast<NonLValue>(V2);
-            Result = EvalBinaryOp(Op, R1, R2);
-          }
-          
-          Nodify(Dst, B, N2, SetValue(SetValue(St, B, Result), L1, Result));
-          break;
+          RVal Result = EvalBinOp(Op, V, RightV);
+          St = SetRVal(SetRVal(St, B, Result), LeftLV, Result);
         }
       }
+    
+      Nodify(Dst, B, N2, St);
     }
   }
 }
 
-void GRExprEngine::HandleUninitializedStore(Stmt* S, NodeTy* Pred) {
-  
+void GRExprEngine::HandleUninitializedStore(Stmt* S, NodeTy* Pred) {  
   NodeTy* N = Builder->generateNode(S, Pred->getState(), Pred);
   N->markAsSink();
   UninitStores.insert(N);
@@ -917,7 +983,7 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
       }
       else if (B->getOpcode() == BinaryOperator::Comma) {
         StateTy St = Pred->getState();
-        Nodify(Dst, B, Pred, SetValue(St, B, GetValue(St, B->getRHS())));
+        Nodify(Dst, B, Pred, SetRVal(St, B, GetRVal(St, B->getRHS())));
         break;
       }
       
@@ -944,11 +1010,14 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
     case Stmt::CharacterLiteralClass: {
       CharacterLiteral* C = cast<CharacterLiteral>(S);
       StateTy St = Pred->getState();
-      NonLValue X = NonLValue::GetValue(ValMgr, C->getValue(), C->getType(),
+      NonLVal X = NonLVal::MakeVal(ValMgr, C->getValue(), C->getType(),
                                         C->getLoc());
-      Nodify(Dst, C, Pred, SetValue(St, C, X));
+      Nodify(Dst, C, Pred, SetRVal(St, C, X));
       break;      
     }
+      
+      // FIXME: ChooseExpr is really a constant.  We need to fix
+      //        the CFG do not model them as explicit control-flow.
       
     case Stmt::ChooseExprClass: { // __builtin_choose_expr
       ChooseExpr* C = cast<ChooseExpr>(S);
@@ -981,8 +1050,8 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
     case Stmt::IntegerLiteralClass: {      
       StateTy St = Pred->getState();
       IntegerLiteral* I = cast<IntegerLiteral>(S);
-      NonLValue X = NonLValue::GetValue(ValMgr, I);
-      Nodify(Dst, I, Pred, SetValue(St, I, X));
+      NonLVal X = NonLVal::MakeVal(ValMgr, I);
+      Nodify(Dst, I, Pred, SetRVal(St, I, X));
       break;      
     }
       
@@ -1005,9 +1074,13 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
       
       StateTy St = Pred->getState();
       Expr* LastExpr = cast<Expr>(*SE->getSubStmt()->body_rbegin());
-      Nodify(Dst, SE, Pred, SetValue(St, SE, GetValue(St, LastExpr)));
+      Nodify(Dst, SE, Pred, SetRVal(St, SE, GetRVal(St, LastExpr)));
       break;      
     }
+      
+      // FIXME: We may wish to always bind state to ReturnStmts so
+      //  that users can quickly query what was the state at the
+      //  exit points of a function.
       
     case Stmt::ReturnStmtClass: {
       if (Expr* R = cast<ReturnStmt>(S)->getRetValue())
@@ -1021,10 +1094,12 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
     case Stmt::UnaryOperatorClass: {
       UnaryOperator* U = cast<UnaryOperator>(S);
       
-      if (U->getOpcode() == UnaryOperator::Deref)
-        VisitDeref(U, Pred, Dst);
-      else
-        VisitUnaryOperator(U, Pred, Dst);
+      switch (U->getOpcode()) {
+        case UnaryOperator::Deref: VisitDeref(U, Pred, Dst); break;
+        case UnaryOperator::Plus:  Visit(U->getSubExpr(), Pred, Dst); break;
+        case UnaryOperator::SizeOf: VisitSizeOfExpr(U, Pred, Dst); break;
+        default: VisitUnaryOperator(U, Pred, Dst); break;
+      }
       
       break;
     }
@@ -1035,20 +1110,12 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
 // "Assume" logic.
 //===----------------------------------------------------------------------===//
 
-GRExprEngine::StateTy GRExprEngine::Assume(StateTy St, LValue Cond,
+GRExprEngine::StateTy GRExprEngine::Assume(StateTy St, LVal Cond,
                                            bool Assumption, 
-                                           bool& isFeasible) {    
-  
-  assert (!isa<UninitializedVal>(Cond));
-
-  if (isa<UnknownVal>(Cond)) {
-    isFeasible = true;
-    return St;  
-  }
-  
+                                           bool& isFeasible) {
   switch (Cond.getSubKind()) {
     default:
-      assert (false && "'Assume' not implemented for this LValue.");
+      assert (false && "'Assume' not implemented for this LVal.");
       return St;
       
     case lval::SymbolValKind:
@@ -1072,20 +1139,12 @@ GRExprEngine::StateTy GRExprEngine::Assume(StateTy St, LValue Cond,
   }
 }
 
-GRExprEngine::StateTy GRExprEngine::Assume(StateTy St, NonLValue Cond,
+GRExprEngine::StateTy GRExprEngine::Assume(StateTy St, NonLVal Cond,
                                          bool Assumption, 
-                                         bool& isFeasible) {
-  
-  assert (!isa<UninitializedVal>(Cond));
-  
-  if (isa<UnknownVal>(Cond)) {
-    isFeasible = true;
-    return St;  
-  }
-  
+                                         bool& isFeasible) {  
   switch (Cond.getSubKind()) {
     default:
-      assert (false && "'Assume' not implemented for this NonLValue.");
+      assert (false && "'Assume' not implemented for this NonLVal.");
       return St;
       
       
@@ -1259,26 +1318,26 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
   }
     
   static void PrintEQ(std::ostream& Out, GRExprEngine::StateTy St) {
-    ValueState::ConstantEqTy CE = St.getImpl()->ConstantEq;
+    ValueState::ConstEqTy CE = St.getImpl()->ConstEq;
     
     if (CE.isEmpty())
       return;
     
     Out << "\\l\\|'==' constraints:";
 
-    for (ValueState::ConstantEqTy::iterator I=CE.begin(), E=CE.end(); I!=E;++I)
+    for (ValueState::ConstEqTy::iterator I=CE.begin(), E=CE.end(); I!=E;++I)
       Out << "\\l $" << I.getKey() << " : " << I.getData()->toString();
   }
     
   static void PrintNE(std::ostream& Out, GRExprEngine::StateTy St) {
-    ValueState::ConstantNotEqTy NE = St.getImpl()->ConstantNotEq;
+    ValueState::ConstNotEqTy NE = St.getImpl()->ConstNotEq;
     
     if (NE.isEmpty())
       return;
     
     Out << "\\l\\|'!=' constraints:";
     
-    for (ValueState::ConstantNotEqTy::iterator I=NE.begin(), EI=NE.end();
+    for (ValueState::ConstNotEqTy::iterator I=NE.begin(), EI=NE.end();
          I != EI; ++I){
       
       Out << "\\l $" << I.getKey() << " : ";
@@ -1340,7 +1399,7 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
           Out << "\\|Dereference of uninitialied value.\\l";
         }
         else if (GraphPrintCheckerState->isUninitStore(N)) {
-          Out << "\\|Store to Uninitialized LValue.";
+          Out << "\\|Store to Uninitialized LVal.";
         }
         
         break;

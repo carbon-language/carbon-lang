@@ -28,40 +28,35 @@ public:
   
   // Casts.
   
-  virtual RValue EvalCast(ValueManager& ValMgr, NonLValue V, Expr* CastExpr);
-  virtual RValue EvalCast(ValueManager& ValMgr, LValue V, Expr* CastExpr);
+  virtual RVal EvalCast(ValueManager& ValMgr, NonLVal V, Expr* CastExpr);
+  virtual RVal EvalCast(ValueManager& ValMgr, LVal V, Expr* CastExpr);
   
   // Unary Operators.
   
-  virtual NonLValue EvalMinus(ValueManager& ValMgr, UnaryOperator* U,
-                              NonLValue X);
-  
-  virtual NonLValue EvalPlus(ValueManager& ValMgr, UnaryOperator* U,
-                             NonLValue X);
-  
-  virtual NonLValue EvalComplement(ValueManager& ValMgr, NonLValue X);
+  virtual RVal EvalMinus(ValueManager& ValMgr, UnaryOperator* U, NonLVal X);
+
+  virtual RVal EvalComplement(ValueManager& ValMgr, NonLVal X);
   
   // Binary Operators.
   
-  virtual NonLValue EvalBinaryOp(ValueManager& ValMgr,
-                                 BinaryOperator::Opcode Op,
-                                 NonLValue LHS, NonLValue RHS);
+  virtual RVal EvalBinOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
+                         NonLVal L, NonLVal R);
   
-  virtual RValue EvalBinaryOp(ValueManager& ValMgr,
-                              BinaryOperator::Opcode Op,
-                              LValue LHS, LValue RHS);
+  virtual RVal EvalBinOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
+                         LVal L, LVal R);
   
   // Pointer arithmetic.
   
-  virtual LValue EvalBinaryOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
-                              LValue LHS, NonLValue RHS);  
+  virtual RVal EvalBinOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
+                         LVal L, NonLVal R);  
   
 protected:
-  // Equality operators for LValues.
-  NonLValue EvalEQ(ValueManager& ValMgr, LValue LHS, LValue RHS);
-  NonLValue EvalNE(ValueManager& ValMgr, LValue LHS, LValue RHS);
-};
   
+  // Equality operators for LVals.
+  
+  RVal EvalEQ(ValueManager& ValMgr, LVal L, LVal R);
+  RVal EvalNE(ValueManager& ValMgr, LVal L, LVal R);
+};
   
 } // end clang namespace
 

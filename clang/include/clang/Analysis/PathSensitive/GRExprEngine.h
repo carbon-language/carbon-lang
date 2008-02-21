@@ -45,37 +45,38 @@ namespace clang {
 class GRExprEngine {
   
 public:
-  typedef ValueStateManager::StateTy StateTy;
+  typedef ValueStateManager::StateTy  StateTy;
   typedef ExplodedGraph<GRExprEngine> GraphTy;
-  typedef GraphTy::NodeTy NodeTy;
+  typedef GraphTy::NodeTy             NodeTy;
   
   // Builders.
-  typedef GRStmtNodeBuilder<GRExprEngine> StmtNodeBuilder;
-  typedef GRBranchNodeBuilder<GRExprEngine> BranchNodeBuilder;
-  typedef GRIndirectGotoNodeBuilder<GRExprEngine> IndirectGotoNodeBuilder;
-  typedef GRSwitchNodeBuilder<GRExprEngine> SwitchNodeBuilder;
+  typedef GRStmtNodeBuilder<GRExprEngine>          StmtNodeBuilder;
+  typedef GRBranchNodeBuilder<GRExprEngine>        BranchNodeBuilder;
+  typedef GRIndirectGotoNodeBuilder<GRExprEngine>  IndirectGotoNodeBuilder;
+  typedef GRSwitchNodeBuilder<GRExprEngine>        SwitchNodeBuilder;
   
   class NodeSet {
     typedef llvm::SmallVector<NodeTy*,3> ImplTy;
     ImplTy Impl;
+    
   public:
-    
-    NodeSet() {}
+
     NodeSet(NodeTy* N) { assert (N && !N->isSink()); Impl.push_back(N); }
+    NodeSet() {}
     
-    void Add(NodeTy* N) { if (N && !N->isSink()) Impl.push_back(N); }
+    inline void Add(NodeTy* N) { if (N && !N->isSink()) Impl.push_back(N); }
     
     typedef ImplTy::iterator       iterator;
     typedef ImplTy::const_iterator const_iterator;
     
-    unsigned size() const { return Impl.size(); }
-    bool empty() const { return Impl.empty(); }
+    inline unsigned size() const { return Impl.size();  }
+    inline bool empty()    const { return Impl.empty(); }
     
-    iterator begin() { return Impl.begin(); }
-    iterator end()   { return Impl.end(); }
+    inline iterator begin() { return Impl.begin(); }
+    inline iterator end()   { return Impl.end();   }
     
-    const_iterator begin() const { return Impl.begin(); }
-    const_iterator end() const { return Impl.end(); }
+    inline const_iterator begin() const { return Impl.begin(); }
+    inline const_iterator end()   const { return Impl.end();   }
   };
   
 protected:
@@ -93,11 +94,11 @@ protected:
   /// StateMgr - Object that manages the data for all created states.
   ValueStateManager StateMgr;
   
-  /// ValueMgr - Object that manages the data for all created RValues.
+  /// ValueMgr - Object that manages the data for all created RVals.
   ValueManager& ValMgr;
   
   /// TF - Object that represents a bundle of transfer functions
-  ///  for manipulating and creating RValues.
+  ///  for manipulating and creating RVals.
   GRTransferFuncs* TF;
   
   /// SymMgr - Object that manages the symbol information.
@@ -165,9 +166,11 @@ public:
     // Iterate the parameters.
     FunctionDecl& F = G.getFunctionDecl();
     
-    for (FunctionDecl::param_iterator I=F.param_begin(), E=F.param_end(); 
-         I!=E; ++I)
-      St = SetValue(St, lval::DeclVal(*I), RValue::GetSymbolValue(SymMgr, *I));
+    for (FunctionDecl::param_iterator I = F.param_begin(), E = F.param_end(); 
+                                                           I != E; ++I) {      
+      St = SetRVal(St, lval::DeclVal(*I),
+                   RVal::GetSymbolValue(SymMgr, *I));
+    }
     
     return St;
   }
@@ -220,58 +223,63 @@ public:
     return StateMgr.RemoveDeadBindings(St, S, Liveness);
   }
   
-  StateTy SetValue(StateTy St, Expr* S, const RValue& V);
+  StateTy SetRVal(StateTy St, Expr* Ex, const RVal& V);
   
-  StateTy SetValue(StateTy St, const Expr* S, const RValue& V) {
-    return SetValue(St, const_cast<Expr*>(S), V);
+  StateTy SetRVal(StateTy St, const Expr* Ex, const RVal& V) {
+    return SetRVal(St, const_cast<Expr*>(Ex), V);
   }
   
-  /// SetValue - This version of SetValue is used to batch process a set
-  ///  of different possible RValues and return a set of different states.
-  const StateTy::BufferTy& SetValue(StateTy St, Expr* S,
-                                    const RValue::BufferTy& V,
-                                    StateTy::BufferTy& RetBuf);
+  /// SetRVal - This version of SetRVal is used to batch process a set
+  ///  of different possible RVals and return a set of different states.
+  const StateTy::BufferTy& SetRVal(StateTy St, Expr* Ex,
+                                   const RVal::BufferTy& V,
+                                   StateTy::BufferTy& RetBuf);
   
-  StateTy SetValue(StateTy St, const LValue& LV, const RValue& V);
+  StateTy SetRVal(StateTy St, const LVal& LV, const RVal& V);
   
-  inline RValue GetValue(const StateTy& St, Expr* S) {
-    return StateMgr.GetValue(St, S);
+  RVal GetRVal(const StateTy& St, Expr* Ex) {
+    return StateMgr.GetRVal(St, Ex);
   }
   
-  inline RValue GetValue(const StateTy& St, Expr* S, bool& hasVal) {
-    return StateMgr.GetValue(St, S, &hasVal);
+  RVal GetRVal(const StateTy& St, Expr* Ex, bool& hasVal) {
+    return StateMgr.GetRVal(St, Ex, &hasVal);
   }
   
-  inline RValue GetValue(const StateTy& St, const Expr* S) {
-    return GetValue(St, const_cast<Expr*>(S));
+  RVal GetRVal(const StateTy& St, const Expr* Ex) {
+    return GetRVal(St, const_cast<Expr*>(Ex));
   }
   
-  inline RValue GetValue(const StateTy& St, const LValue& LV,
-                         QualType* T = NULL) {
+  RVal GetRVal(const StateTy& St, const LVal& LV,
+                      QualType T = QualType()) {
     
-    return StateMgr.GetValue(St, LV, T);
+    return StateMgr.GetRVal(St, LV, T);
   }
   
-  inline LValue GetLValue(const StateTy& St, Expr* S) {
-    return StateMgr.GetLValue(St, S);
+  RVal GetLVal(const StateTy& St, Expr* Ex) {
+    return StateMgr.GetLVal(St, Ex);
   }
   
-  inline NonLValue GetRValueConstant(uint64_t X, Expr* E) {
-    return NonLValue::GetValue(ValMgr, X, E->getType(), E->getLocStart());
+  inline NonLVal MakeConstantVal(uint64_t X, Expr* Ex) {
+    return NonLVal::MakeVal(ValMgr, X, Ex->getType(), Ex->getLocStart());
   }
   
   /// Assume - Create new state by assuming that a given expression
   ///  is true or false.
-  inline StateTy Assume(StateTy St, RValue Cond, bool Assumption, 
-                        bool& isFeasible) {
-    if (isa<LValue>(Cond))
-      return Assume(St, cast<LValue>(Cond), Assumption, isFeasible);
+  StateTy Assume(StateTy St, RVal Cond, bool Assumption, bool& isFeasible) {
+    
+    if (Cond.isUnknown()) {
+      isFeasible = true;
+      return St;
+    }
+    
+    if (isa<LVal>(Cond))
+      return Assume(St, cast<LVal>(Cond), Assumption, isFeasible);
     else
-      return Assume(St, cast<NonLValue>(Cond), Assumption, isFeasible);
+      return Assume(St, cast<NonLVal>(Cond), Assumption, isFeasible);
   }
   
-  StateTy Assume(StateTy St, LValue Cond, bool Assumption, bool& isFeasible);
-  StateTy Assume(StateTy St, NonLValue Cond, bool Assumption, bool& isFeasible);
+  StateTy Assume(StateTy St, LVal Cond, bool Assumption, bool& isFeasible);
+  StateTy Assume(StateTy St, NonLVal Cond, bool Assumption, bool& isFeasible);
   
   StateTy AssumeSymNE(StateTy St, SymbolID sym, const llvm::APSInt& V,
                       bool& isFeasible);
@@ -289,7 +297,7 @@ public:
   void Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred, const StateTy::BufferTy& SB);
   
   /// HandleUninitializedStore - Create the necessary sink node to represent
-  ///  a store to an "uninitialized" LValue.
+  ///  a store to an "uninitialized" LVal.
   void HandleUninitializedStore(Stmt* S, NodeTy* Pred);
   
   /// Visit - Transfer function logic for all statements.  Dispatches to
@@ -299,15 +307,15 @@ public:
   /// VisitBinaryOperator - Transfer function logic for binary operators.
   void VisitBinaryOperator(BinaryOperator* B, NodeTy* Pred, NodeSet& Dst);
   
-  void VisitLValue(Expr* E, NodeTy* Pred, NodeSet& Dst);
+  void VisitLVal(Expr* Ex, NodeTy* Pred, NodeSet& Dst);
   
   /// VisitCall - Transfer function for function calls.
   void VisitCall(CallExpr* CE, NodeTy* Pred,
-                 CallExpr::arg_iterator I, CallExpr::arg_iterator E,
+                 CallExpr::arg_iterator AI, CallExpr::arg_iterator AE,
                  NodeSet& Dst);
   
   /// VisitCast - Transfer function logic for all casts (implicit and explicit).
-  void VisitCast(Expr* CastE, Expr* E, NodeTy* Pred, NodeSet& Dst);  
+  void VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst);  
   
   /// VisitDeclRefExpr - Transfer function logic for DeclRefExprs.
   void VisitDeclRefExpr(DeclRefExpr* DR, NodeTy* Pred, NodeSet& Dst); 
@@ -316,101 +324,62 @@ public:
   void VisitDeclStmt(DeclStmt* DS, NodeTy* Pred, NodeSet& Dst); 
   
   /// VisitGuardedExpr - Transfer function logic for ?, __builtin_choose
-  void VisitGuardedExpr(Expr* S, Expr* LHS, Expr* RHS,
-                        NodeTy* Pred, NodeSet& Dst);
+  void VisitGuardedExpr(Expr* Ex, Expr* L, Expr* R, NodeTy* Pred, NodeSet& Dst);
   
   /// VisitLogicalExpr - Transfer function logic for '&&', '||'
   void VisitLogicalExpr(BinaryOperator* B, NodeTy* Pred, NodeSet& Dst);
   
   /// VisitSizeOfAlignOfTypeExpr - Transfer function for sizeof(type).
-  void VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr* S, NodeTy* Pred,
+  void VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr* Ex, NodeTy* Pred,
                                   NodeSet& Dst);
+  
+  // VisitSizeOfExpr - Transfer function for sizeof(expr).
+  void VisitSizeOfExpr(UnaryOperator* U, NodeTy* Pred, NodeSet& Dst);
   
   /// VisitUnaryOperator - Transfer function logic for unary operators.
   void VisitUnaryOperator(UnaryOperator* B, NodeTy* Pred, NodeSet& Dst);
   
   void VisitDeref(UnaryOperator* B, NodeTy* Pred, NodeSet& Dst);
   
-  
-  inline RValue EvalCast(ValueManager& ValMgr, RValue X, Expr* CastExpr) {
-    if (isa<UnknownVal>(X) || isa<UninitializedVal>(X))
-      return X;    
-    
-    return TF->EvalCast(ValMgr, X, CastExpr);
+  RVal EvalCast(ValueManager& ValMgr, RVal X, Expr* CastExpr) {
+    return X.isValid() ? TF->EvalCast(ValMgr, X, CastExpr) : X;
   }
   
-  inline NonLValue EvalMinus(ValueManager& ValMgr, UnaryOperator* U,
-                             NonLValue X) {
-    if (isa<UnknownVal>(X) || isa<UninitializedVal>(X))
-      return X;    
-    
-    return TF->EvalMinus(ValMgr, U, X);    
+  RVal EvalMinus(UnaryOperator* U, RVal X) {
+    return X.isValid() ? TF->EvalMinus(ValMgr, U, cast<NonLVal>(X)) : X;
   }
   
-  inline NonLValue EvalPlus(ValueManager& ValMgr, UnaryOperator* U,
-                             NonLValue X) {
-    if (isa<UnknownVal>(X) || isa<UninitializedVal>(X))
-      return X;    
-    
-    return TF->EvalPlus(ValMgr, U, X);    
+  RVal EvalComplement(RVal X) {
+    return X.isValid() ? TF->EvalComplement(ValMgr, cast<NonLVal>(X)) : X;
   }
   
-  inline NonLValue EvalComplement(ValueManager& ValMgr, NonLValue X) {
-    if (isa<UnknownVal>(X) || isa<UninitializedVal>(X))
-      return X;    
-
-    return TF->EvalComplement(ValMgr, X);
+  RVal EvalBinOp(BinaryOperator::Opcode Op, LVal L, RVal R) {    
+    return R.isValid() ? TF->EvalBinOp(ValMgr, Op, L, cast<NonLVal>(R)) : R;
   }
   
-  inline NonLValue EvalBinaryOp(BinaryOperator::Opcode Op,
-                                NonLValue LHS, NonLValue RHS) {
-    
-    if (isa<UninitializedVal>(LHS) || isa<UninitializedVal>(RHS))
-      return cast<NonLValue>(UninitializedVal());
-    
-    if (isa<UnknownVal>(LHS) || isa<UnknownVal>(RHS))
-      return cast<NonLValue>(UnknownVal());
-    
-    return TF->EvalBinaryOp(ValMgr, Op, LHS, RHS);
-  }    
+  RVal EvalBinOp(BinaryOperator::Opcode Op, NonLVal L, RVal R) {
+    return R.isValid() ? TF->EvalBinOp(ValMgr, Op, L, cast<NonLVal>(R)) : R;
+  }
   
-  inline RValue EvalBinaryOp(BinaryOperator::Opcode Op,
-                             LValue LHS, LValue RHS) {
+  RVal EvalBinOp(BinaryOperator::Opcode Op, RVal L, RVal R) {
     
-    if (isa<UninitializedVal>(LHS) || isa<UninitializedVal>(RHS))
+    if (L.isUninit() || R.isUninit())
       return UninitializedVal();
     
-    if (isa<UnknownVal>(LHS) || isa<UnknownVal>(RHS))
+    if (L.isUnknown() || R.isUnknown())
       return UnknownVal();
+        
+    if (isa<LVal>(L)) {
+      if (isa<LVal>(R))
+        return TF->EvalBinOp(ValMgr, Op, cast<LVal>(L), cast<LVal>(R));
+      else
+        return TF->EvalBinOp(ValMgr, Op, cast<LVal>(L), cast<NonLVal>(R));
+    }
     
-    return TF->EvalBinaryOp(ValMgr, Op, LHS, RHS);
+    return TF->EvalBinOp(ValMgr, Op, cast<NonLVal>(L), cast<NonLVal>(R));
   }
   
-  inline RValue EvalBinaryOp(BinaryOperator::Opcode Op,
-                             LValue LHS, NonLValue RHS) {
-    
-    if (isa<UninitializedVal>(LHS) || isa<UninitializedVal>(RHS))
-      return UninitializedVal();
-    
-    if (isa<UnknownVal>(LHS) || isa<UnknownVal>(RHS))
-      return UnknownVal();
-    
-    return TF->EvalBinaryOp(ValMgr, Op, LHS, RHS);
-  }
-  
-  inline RValue EvalBinaryOp(BinaryOperator::Opcode Op,
-                             RValue LHS, RValue RHS) {
-    
-    if (isa<UninitializedVal>(LHS) || isa<UninitializedVal>(RHS))
-      return UninitializedVal();
-    
-    if (isa<UnknownVal>(LHS) || isa<UnknownVal>(RHS))
-      return UnknownVal();
-    
-    return TF->EvalBinaryOp(ValMgr, Op, LHS, RHS);
-  }
-  
-  StateTy EvalCall(CallExpr* CE, StateTy St) {
+  StateTy EvalCall(CallExpr* CE, LVal L, StateTy St) {
     return St;     
   }
 };

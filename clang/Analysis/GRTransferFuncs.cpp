@@ -20,21 +20,21 @@ using namespace clang;
 // Transfer function for Casts.
 //===----------------------------------------------------------------------===//
 
-RValue GRTransferFuncs::EvalCast(ValueManager& ValMgr, RValue X,
-                                 Expr* CastExpr) {
+RVal GRTransferFuncs::EvalCast(ValueManager& ValMgr, RVal X, Expr* CastExpr) {
   
   switch (X.getBaseKind()) {
+      
     default:
-      assert(false && "Invalid RValue."); break;
+      assert(false && "Invalid RVal."); break;
 
-    case RValue::LValueKind: 
-      return EvalCast(ValMgr, cast<LValue>(X), CastExpr);
+    case RVal::LValKind: 
+      return EvalCast(ValMgr, cast<LVal>(X), CastExpr);
 
-    case RValue::NonLValueKind:
-      return EvalCast(ValMgr, cast<NonLValue>(X), CastExpr);
+    case RVal::NonLValKind:
+      return EvalCast(ValMgr, cast<NonLVal>(X), CastExpr);
     
-    case RValue::UninitializedKind:
-    case RValue::UnknownKind: break;
+    case RVal::UninitializedKind:
+    case RVal::UnknownKind: break;
   }
   
   return X;

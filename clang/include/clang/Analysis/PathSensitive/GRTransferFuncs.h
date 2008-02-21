@@ -26,47 +26,28 @@ public:
   
   // Casts.
   
-  RValue EvalCast(ValueManager& ValMgr, RValue V, Expr* CastExpr);
-  virtual RValue EvalCast(ValueManager& ValMgr, NonLValue V, Expr* CastExpr) =0;
-  virtual RValue EvalCast(ValueManager& ValMgr, LValue V, Expr* CastExpr) = 0;
+  RVal EvalCast(ValueManager& ValMgr, RVal V, Expr* CastExpr);
+  virtual RVal EvalCast(ValueManager& ValMgr, NonLVal V, Expr* CastExpr) =0;
+  virtual RVal EvalCast(ValueManager& ValMgr, LVal V, Expr* CastExpr) = 0;
 
   // Unary Operators.
   
-  virtual NonLValue EvalMinus(ValueManager& ValMgr, UnaryOperator* U,
-                              NonLValue X) = 0;
+  virtual RVal EvalMinus(ValueManager& ValMgr, UnaryOperator* U, NonLVal X) = 0;
 
-  virtual NonLValue EvalPlus(ValueManager& ValMgr, UnaryOperator* U,
-                             NonLValue X) = 0;
-  
-  virtual NonLValue EvalComplement(ValueManager& ValMgr, NonLValue X) = 0;
+  virtual RVal EvalComplement(ValueManager& ValMgr, NonLVal X) = 0;
 
   // Binary Operators.
   
-  virtual NonLValue EvalBinaryOp(ValueManager& ValMgr,
-                                 BinaryOperator::Opcode Op,
-                                 NonLValue LHS, NonLValue RHS) = 0;
+  virtual RVal EvalBinOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
+                         NonLVal L, NonLVal R) = 0;
   
-  virtual RValue EvalBinaryOp(ValueManager& ValMgr,
-                              BinaryOperator::Opcode Op,
-                              LValue LHS, LValue RHS) = 0;
+  virtual RVal EvalBinOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
+                         LVal L, LVal R) = 0;
   
   // Pointer arithmetic.
   
-  virtual LValue EvalBinaryOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
-                              LValue LHS, NonLValue RHS) = 0;
-  
-  inline RValue EvalBinaryOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
-                             const RValue& L, const RValue& R) {
-    
-    if (isa<LValue>(L)) {
-      if (isa<LValue>(R))
-        return EvalBinaryOp(ValMgr, Op, cast<LValue>(L), cast<LValue>(R));
-      else
-        return EvalBinaryOp(ValMgr, Op, cast<LValue>(L), cast<NonLValue>(R));
-    }
-    else
-      return EvalBinaryOp(ValMgr, Op, cast<NonLValue>(L), cast<NonLValue>(R));
-  }
+  virtual RVal EvalBinOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
+                         LVal L, NonLVal R) = 0;
 };
   
 } // end clang namespace

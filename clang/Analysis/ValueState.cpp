@@ -17,18 +17,16 @@
 using namespace clang;
 
 bool ValueState::isNotEqual(SymbolID sym, const llvm::APSInt& V) const {
-  // First, retrieve the NE-set associated with the given symbol.
-  ConstantNotEqTy::TreeTy* T = Data->ConstantNotEq.SlimFind(sym);
-  
-  if (!T)
-    return false;
-  
-  // Second, see if V is present in the NE-set.
-  return T->getValue().second.contains(&V);
+
+  // Retrieve the NE-set associated with the given symbol.
+  ConstNotEqTy::TreeTy* T = Data->ConstNotEq.SlimFind(sym);
+
+  // See if V is present in the NE-set.
+  return T ? T->getValue().second.contains(&V) : false;
 }
 
 const llvm::APSInt* ValueState::getSymVal(SymbolID sym) const {
-  ConstantEqTy::TreeTy* T = Data->ConstantEq.SlimFind(sym);
+  ConstEqTy::TreeTy* T = Data->ConstEq.SlimFind(sym);
   return T ? T->getValue().second : NULL;  
 }
 
@@ -53,21 +51,23 @@ ValueStateManager::RemoveDeadBindings(ValueState St, Stmt* Loc,
   NewSt.SubExprBindings = EXFactory.GetEmptyMap();
   
   // Iterate over the block-expr bindings.
-  for (ValueState::beb_iterator I=St.beb_begin(), E=St.beb_end(); I!=E ; ++I) {
-    
+
+  for (ValueState::beb_iterator I = St.beb_begin(), E = St.beb_end();
+                                                    I!=E ; ++I) {    
     Expr* BlkExpr = I.getKey();
     
     if (Liveness.isLive(Loc, BlkExpr)) {
-      RValue X = I.getData();
+      RVal X = I.getData();
       
       if (isa<lval::DeclVal>(X)) {
         lval::DeclVal LV = cast<lval::DeclVal>(X);
         WList.push_back(LV.getDecl());
       }
       
-      for (RValue::symbol_iterator SI=X.symbol_begin(), SE=X.symbol_end();
-                                   SI != SE; ++SI)
-        MarkedSymbols.insert(*SI);      
+      for (RVal::symbol_iterator SI = X.symbol_begin(), SE = X.symbol_end(); 
+                                                        SI != SE; ++SI) {        
+        MarkedSymbols.insert(*SI);
+      }
     }
     else
       NewSt.BlockExprBindings = Remove(NewSt, BlkExpr);
@@ -76,12 +76,15 @@ ValueStateManager::RemoveDeadBindings(ValueState St, Stmt* Loc,
   }
 
   // Iterate over the variable bindings.
+
   for (ValueState::vb_iterator I = St.vb_begin(), E = St.vb_end(); I!=E ; ++I)
     if (Liveness.isLive(Loc, I.getKey()))
       WList.push_back(I.getKey());
 
-  
+  // Perform the mark-and-sweep.
+
   while (!WList.empty()) {
+    
     ValueDecl* V = WList.back();
     WList.pop_back();
     
@@ -91,12 +94,13 @@ ValueStateManager::RemoveDeadBindings(ValueState St, Stmt* Loc,
     Marked.insert(V);
     
     if (V->getType()->isPointerType()) {
-      const LValue& LV =
-        cast<LValue>(GetValue(St, lval::DeclVal(cast<VarDecl>(V))));      
+      const LVal& LV =
+        cast<LVal>(GetRVal(St, lval::DeclVal(cast<VarDecl>(V))));      
       
-      for (RValue::symbol_iterator SI=LV.symbol_begin(), SE=LV.symbol_end();
-           SI != SE; ++SI)
-        MarkedSymbols.insert(*SI); 
+      for (RVal::symbol_iterator SI = LV.symbol_begin(), SE = LV.symbol_end();
+                                                         SI != SE; ++SI) {
+        MarkedSymbols.insert(*SI);
+      }
       
       if (!isa<lval::DeclVal>(LV))
         continue;
@@ -114,18 +118,18 @@ ValueStateManager::RemoveDeadBindings(ValueState St, Stmt* Loc,
   // Remove dead symbols.
   for (ValueState::ce_iterator I = St.ce_begin(), E=St.ce_end(); I!=E; ++I)
     if (!MarkedSymbols.count(I.getKey()))
-      NewSt.ConstantEq = CEFactory.Remove(NewSt.ConstantEq, I.getKey());
+      NewSt.ConstEq = CEFactory.Remove(NewSt.ConstEq, I.getKey());
   
   for (ValueState::cne_iterator I = St.cne_begin(), E=St.cne_end(); I!=E; ++I)
     if (!MarkedSymbols.count(I.getKey()))
-      NewSt.ConstantNotEq = CNEFactory.Remove(NewSt.ConstantNotEq, I.getKey());
+      NewSt.ConstNotEq = CNEFactory.Remove(NewSt.ConstNotEq, I.getKey());
   
   return getPersistentState(NewSt);
 }
 
 
-RValue ValueStateManager::GetValue(ValueState St, const LValue& LV,
-                                   QualType* T) {
+RVal ValueStateManager::GetRVal(ValueState St, const LVal& LV, QualType T) {
+  
   if (isa<UnknownVal>(LV))
     return UnknownVal();
   
@@ -134,27 +138,25 @@ RValue ValueStateManager::GetValue(ValueState St, const LValue& LV,
   switch (LV.getSubKind()) {
     case lval::DeclValKind: {
       ValueState::VarBindingsTy::TreeTy* T =
-      // FIXME: We should make lval::DeclVal only contain VarDecl
-        St->VarBindings.SlimFind(
-              cast<VarDecl>(cast<lval::DeclVal>(LV).getDecl()));
+        St->VarBindings.SlimFind(cast<lval::DeclVal>(LV).getDecl());
       
       return T ? T->getValue().second : UnknownVal();
     }
      
-      // FIXME: We should bind how far a "ContentsOf" will go...
+      // FIXME: We should limit how far a "ContentsOf" will go...
       
     case lval::SymbolValKind: {
       const lval::SymbolVal& SV = cast<lval::SymbolVal>(LV);
-      assert (T);
+      assert (T.getTypePtr());
       
-      if (T->getTypePtr()->isPointerType())
+      if (T.getTypePtr()->isPointerType())
         return lval::SymbolVal(SymMgr.getContentsOfSymbol(SV.getSymbol()));
       else
         return nonlval::SymbolVal(SymMgr.getContentsOfSymbol(SV.getSymbol()));
     }
       
     default:
-      assert (false && "Invalid LValue.");
+      assert (false && "Invalid LVal.");
       break;
   }
   
@@ -163,18 +165,17 @@ RValue ValueStateManager::GetValue(ValueState St, const LValue& LV,
 
 ValueState
 ValueStateManager::AddNE(ValueState St, SymbolID sym, const llvm::APSInt& V) {
+
   // First, retrieve the NE-set associated with the given symbol.
-  ValueState::ConstantNotEqTy::TreeTy* T = St->ConstantNotEq.SlimFind(sym);    
-  
+  ValueState::ConstNotEqTy::TreeTy* T = St->ConstNotEq.SlimFind(sym);  
   ValueState::IntSetTy S = T ? T->getValue().second : ISetFactory.GetEmptySet();
   
-  // Now add V to the NE set.  
+  // Now add V to the NE set.
   S = ISetFactory.Add(S, &V);
   
   // Create a new state with the old binding replaced.
   ValueStateImpl NewSt = *St;
-  NewSt.ConstantNotEq = CNEFactory.Add(NewSt.ConstantNotEq,
-                                              sym, S);
+  NewSt.ConstNotEq = CNEFactory.Add(NewSt.ConstNotEq, sym, S);
     
   // Get the persistent copy.
   return getPersistentState(NewSt);
@@ -182,43 +183,49 @@ ValueStateManager::AddNE(ValueState St, SymbolID sym, const llvm::APSInt& V) {
 
 ValueState
 ValueStateManager::AddEQ(ValueState St, SymbolID sym, const llvm::APSInt& V) {
+
   // Create a new state with the old binding replaced.
   ValueStateImpl NewSt = *St;
-  NewSt.ConstantEq = CEFactory.Add(NewSt.ConstantEq, sym, &V);
+  NewSt.ConstEq = CEFactory.Add(NewSt.ConstEq, sym, &V);
   
   // Get the persistent copy.
   return getPersistentState(NewSt);
 }
 
-RValue ValueStateManager::GetValue(ValueState St, Expr* E, bool* hasVal) {
+RVal ValueStateManager::GetRVal(ValueState St, Expr* E, bool* hasVal) {
+
   for (;;) {
+    
     switch (E->getStmtClass()) {
 
-      case Stmt::AddrLabelExprClass:
-        return LValue::GetValue(cast<AddrLabelExpr>(E));
+      case Stmt::AddrLabelExprClass:        
+        return LVal::MakeVal(cast<AddrLabelExpr>(E));
         
         // ParenExprs are no-ops.
         
-      case Stmt::ParenExprClass:
+      case Stmt::ParenExprClass:        
         E = cast<ParenExpr>(E)->getSubExpr();
         continue;
         
-        // DeclRefExprs can either evaluate to an LValue or a Non-LValue
+        // DeclRefExprs can either evaluate to an LVal or a Non-LVal
         // (assuming an implicit "load") depending on the context.  In this
         // context we assume that we are retrieving the value contained
         // within the referenced variables.
         
       case Stmt::DeclRefExprClass: {
+        
         ValueDecl* D = cast<DeclRefExpr>(E)->getDecl();
         
-        if (VarDecl* VD = dyn_cast<VarDecl>(D))
-          return GetValue(St, lval::DeclVal(VD));
+        if (VarDecl* VD = dyn_cast<VarDecl>(D)) {          
+          return GetRVal(St, lval::DeclVal(VD));          
+        }
         else if (EnumConstantDecl* ED = dyn_cast<EnumConstantDecl>(D)) {
+          
           // FIXME: Do we need to cache a copy of this enum, since it
           // already has persistent storage?  We do this because we
           // are comparing states using pointer equality.  Perhaps there is
           // a better way, since APInts are fairly lightweight.
-          return nonlval::ConcreteInt(ValMgr.getValue(ED->getInitVal()));
+          return nonlval::ConcreteInt(ValMgr.getValue(ED->getInitVal()));          
         }
         else if (FunctionDecl* FD = dyn_cast<FunctionDecl>(D))
           return lval::FuncVal(FD);
@@ -228,28 +235,13 @@ RValue ValueStateManager::GetValue(ValueState St, Expr* E, bool* hasVal) {
         
         return UnknownVal();
       }
-          
-        
-        // Integer literals evaluate to an RValue.  Simply retrieve the
-        // RValue for the literal.
-#if 0        
-      case Stmt::IntegerLiteralClass:
-        return NonLValue::GetValue(ValMgr, cast<IntegerLiteral>(E));
-        
-      case Stmt::CharacterLiteralClass: {
-        CharacterLiteral* C = cast<CharacterLiteral>(E);
-        
-        return NonLValue::GetValue(ValMgr, C->getValue(), C->getType(),
-                                   C->getLoc());
-      }
-#endif        
 
         // Casts where the source and target type are the same
         // are no-ops.  We blast through these to get the descendant
         // subexpression that has a value.
         
-        
       case Stmt::ImplicitCastExprClass: {
+
         ImplicitCastExpr* C = cast<ImplicitCastExpr>(E);
         QualType CT = C->getType();
         
@@ -262,6 +254,7 @@ RValue ValueStateManager::GetValue(ValueState St, Expr* E, bool* hasVal) {
           E = C->getSubExpr();
           continue;
         }
+        
         break;
       }
         
@@ -277,10 +270,23 @@ RValue ValueStateManager::GetValue(ValueState St, Expr* E, bool* hasVal) {
           E = C->getSubExpr();
           continue;
         }
+        
         break;
       }
         
-        // Handle all other Stmt* using a lookup.
+      case Stmt::UnaryOperatorClass: {
+        
+        UnaryOperator* U = cast<UnaryOperator>(E);
+        
+        if (U->getOpcode() == UnaryOperator::Plus) {
+          E = U->getSubExpr();
+          continue;
+        }
+        
+        break;
+      }
+          
+        // Handle all other Expr* using a lookup.
         
       default:
         break;
@@ -308,7 +314,7 @@ RValue ValueStateManager::GetValue(ValueState St, Expr* E, bool* hasVal) {
   }
 }
 
-LValue ValueStateManager::GetLValue(ValueState St, Expr* E) {
+RVal ValueStateManager::GetLVal(ValueState St, Expr* E) {
   
   E = E->IgnoreParens();
 
@@ -327,18 +333,17 @@ LValue ValueStateManager::GetLValue(ValueState St, Expr* E) {
         
       if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(E)) {
         lval::DeclVal X(cast<VarDecl>(DR->getDecl()));
-        return cast<LValue>(GetValue(St, X));
+        return GetRVal(St, X);
       }
       else
-        return cast<LValue>(GetValue(St, E));
+        return GetRVal(St, E);
     }
         
-  return cast<LValue>(GetValue(St, E));
+  return GetRVal(St, E);
 }
 
 ValueState 
-ValueStateManager::SetValue(ValueState St, Expr* E, bool isBlkExpr,
-                            const RValue& V) {
+ValueStateManager::SetRVal(ValueState St, Expr* E, bool isBlkExpr, RVal V) {
   
   assert (E);
 
@@ -347,36 +352,33 @@ ValueStateManager::SetValue(ValueState St, Expr* E, bool isBlkExpr,
   
   ValueStateImpl NewSt = *St;
   
-  if (isBlkExpr)
+  if (isBlkExpr) {
     NewSt.BlockExprBindings = EXFactory.Add(NewSt.BlockExprBindings, E, V);
-  else
+  }
+  else {
     NewSt.SubExprBindings = EXFactory.Add(NewSt.SubExprBindings, E, V);
+  }
 
   return getPersistentState(NewSt);
 }
 
 ValueState
-ValueStateManager::SetValue(ValueState St, const LValue& LV, const RValue& V) {
+ValueStateManager::SetRVal(ValueState St, LVal LV, RVal V) {
   
-  if (isa<UnknownVal>(LV))
-    return St;
-  
-  assert (!isa<UninitializedVal>(LV));
-    
   switch (LV.getSubKind()) {
+      
     case lval::DeclValKind:        
-      return V.isKnown()   // FIXME: Have DeclVal only contain VarDecl
-        ? BindVar(St, cast<VarDecl>(cast<lval::DeclVal>(LV).getDecl()), V)
-        : UnbindVar(St, cast<VarDecl>(cast<lval::DeclVal>(LV).getDecl()));
+      return V.isUnknown()
+             ? UnbindVar(St, cast<lval::DeclVal>(LV).getDecl())
+             : BindVar(St, cast<lval::DeclVal>(LV).getDecl(), V);
       
     default:
-      assert ("SetValue for given LValue type not yet implemented.");
+      assert ("SetRVal for given LVal type not yet implemented.");
       return St;
   }
 }
 
-ValueState
-ValueStateManager::BindVar(ValueState St, VarDecl* D, const RValue& V) {
+ValueState ValueStateManager::BindVar(ValueState St, VarDecl* D, RVal V) {
   
   // Create a new state with the old binding removed.
   ValueStateImpl NewSt = *St;
@@ -386,8 +388,7 @@ ValueStateManager::BindVar(ValueState St, VarDecl* D, const RValue& V) {
   return getPersistentState(NewSt);
 }
 
-ValueState
-ValueStateManager::UnbindVar(ValueState St, VarDecl* D) {
+ValueState ValueStateManager::UnbindVar(ValueState St, VarDecl* D) {
   
   // Create a new state with the old binding removed.
   ValueStateImpl NewSt = *St;
@@ -397,8 +398,7 @@ ValueStateManager::UnbindVar(ValueState St, VarDecl* D) {
   return getPersistentState(NewSt);
 }
 
-ValueState
-ValueStateManager::getInitialState() {
+ValueState ValueStateManager::getInitialState() {
 
   // Create a state with empty variable bindings.
   ValueStateImpl StateImpl(EXFactory.GetEmptyMap(),
@@ -409,8 +409,7 @@ ValueStateManager::getInitialState() {
   return getPersistentState(StateImpl);
 }
 
-ValueState
-ValueStateManager::getPersistentState(const ValueStateImpl &State) {
+ValueState ValueStateManager::getPersistentState(const ValueStateImpl &State) {
   
   llvm::FoldingSetNodeID ID;
   State.Profile(ID);  
@@ -426,17 +425,16 @@ ValueStateManager::getPersistentState(const ValueStateImpl &State) {
 }
 
 void ValueState::printDOT(std::ostream& Out) const {
+
   // Print Variable Bindings
   Out << "Variables:\\l";
   
   bool isFirst = true;
   
-  for (vb_iterator I=vb_begin(), E=vb_end(); I!=E; ++I) {        
+  for (vb_iterator I = vb_begin(), E = vb_end(); I != E; ++I) {        
     
-    if (isFirst)
-      isFirst = false;
-    else
-      Out << "\\l";
+    if (isFirst) isFirst = false;
+    else Out << "\\l";
     
     Out << ' ' << I.getKey()->getName() << " : ";
     I.getData().print(Out);
@@ -446,14 +444,13 @@ void ValueState::printDOT(std::ostream& Out) const {
   
   isFirst = true;
   
-  for (seb_iterator I=seb_begin(), E=seb_end(); I != E;++I) {        
+  for (seb_iterator I = seb_begin(), E = seb_end(); I != E; ++I) {        
     
     if (isFirst) {
       Out << "\\l\\lSub-Expressions:\\l";
       isFirst = false;
     }
-    else
-      Out << "\\l";
+    else { Out << "\\l"; }
     
     Out << " (" << (void*) I.getKey() << ") ";
     I.getKey()->printPretty(Out);
@@ -465,14 +462,13 @@ void ValueState::printDOT(std::ostream& Out) const {
   
   isFirst = true;
   
-  for (beb_iterator I=beb_begin(), E=beb_end(); I != E; ++I) {      
+  for (beb_iterator I = beb_begin(), E = beb_end(); I != E; ++I) {      
 
     if (isFirst) {
       Out << "\\l\\lBlock-level Expressions:\\l";
       isFirst = false;
     }
-    else
-      Out << "\\l";
+    else { Out << "\\l"; }
     
     Out << " (" << (void*) I.getKey() << ") ";
     I.getKey()->printPretty(Out);
@@ -482,29 +478,31 @@ void ValueState::printDOT(std::ostream& Out) const {
   
   // Print equality constraints.
   
-  if (!Data->ConstantEq.isEmpty()) {
+  if (!Data->ConstEq.isEmpty()) {
   
     Out << "\\l\\|'==' constraints:";
   
-    for (ConstantEqTy::iterator I=Data->ConstantEq.begin(),
-                                E=Data->ConstantEq.end(); I!=E;++I)
-      Out << "\\l $" << I.getKey() << " : " << I.getData()->toString();
+    for (ConstEqTy::iterator I = Data->ConstEq.begin(),
+                             E = Data->ConstEq.end();   I!=E; ++I) {
+      
+      Out << "\\l $" << I.getKey()
+          << " : "   << I.getData()->toString();
+    }
   }
-  
 
   // Print != constraints.
     
-  if (!Data->ConstantNotEq.isEmpty()) {
+  if (!Data->ConstNotEq.isEmpty()) {
   
     Out << "\\l\\|'!=' constraints:";
   
-    for (ConstantNotEqTy::iterator I=Data->ConstantNotEq.begin(),
-                                   EI=Data->ConstantNotEq.end(); I != EI; ++I) {
+    for (ConstNotEqTy::iterator I  = Data->ConstNotEq.begin(),
+                                EI = Data->ConstNotEq.end();   I != EI; ++I) {
     
       Out << "\\l $" << I.getKey() << " : ";
       isFirst = true;
     
-      IntSetTy::iterator J=I.getData().begin(), EJ=I.getData().end();      
+      IntSetTy::iterator J = I.getData().begin(), EJ = I.getData().end();      
       
       for ( ; J != EJ; ++J) {        
         if (isFirst) isFirst = false;
