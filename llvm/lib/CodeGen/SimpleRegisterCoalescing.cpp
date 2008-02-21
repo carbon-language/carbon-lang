@@ -57,6 +57,10 @@ namespace {
   CommuteDef("coalescer-commute-instrs",
              cl::init(false), cl::Hidden);
 
+  static cl::opt<int>
+  CommuteLimit("commute-limit",
+               cl::init(-1), cl::Hidden);
+
   RegisterPass<SimpleRegisterCoalescing> 
   X("simple-register-coalescing", "Simple Register Coalescing");
 
@@ -287,6 +291,9 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
   // Make sure there are no other definitions of IntB that would reach the
   // uses which the new definition can reach.
   if (HasOtherReachingDefs(IntA, IntB, AValNo, BValNo))
+    return false;
+
+  if (CommuteLimit >= 0 && numCommutes >= CommuteLimit)
     return false;
 
   // At this point we have decided that it is legal to do this
