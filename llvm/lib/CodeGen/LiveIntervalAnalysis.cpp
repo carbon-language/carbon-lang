@@ -958,6 +958,23 @@ static const VNInfo *findDefinedVNInfo(const LiveInterval &li, unsigned DefIdx) 
   return VNI;
 }
 
+/// RewriteInfo - Keep track of machine instrs that will be rewritten
+/// during spilling.
+struct RewriteInfo {
+  unsigned Index;
+  MachineInstr *MI;
+  bool HasUse;
+  bool HasDef;
+  RewriteInfo(unsigned i, MachineInstr *mi, bool u, bool d)
+    : Index(i), MI(mi), HasUse(u), HasDef(d) {}
+};
+
+struct RewriteInfoCompare {
+  bool operator()(const RewriteInfo &LHS, const RewriteInfo &RHS) const {
+    return LHS.Index < RHS.Index;
+  }
+};
+
 void LiveIntervals::
 rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
                     LiveInterval::Ranges::const_iterator &I,
@@ -976,20 +993,45 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
                     std::vector<LiveInterval*> &NewLIs) {
   bool AllCanFold = true;
   unsigned NewVReg = 0;
-  unsigned index = getBaseIndex(I->start);
+  unsigned start = getBaseIndex(I->start);
   unsigned end = getBaseIndex(I->end-1) + InstrSlots::NUM;
-  for (; index != end; index += InstrSlots::NUM) {
-    // skip deleted instructions
-    while (index != end && !getInstructionFromIndex(index))
-      index += InstrSlots::NUM;
-    if (index == end) break;
 
-    MachineInstr *MI = getInstructionFromIndex(index);
+  // First collect all the def / use in this live range that will be rewritten.
+  // Make sure they are sorted according instruction index.
+  std::vector<RewriteInfo> RewriteMIs;
+  for (MachineRegisterInfo::reg_iterator ri = RegInfo.reg_begin(li.reg),
+         re = RegInfo.reg_end(); ri != re; ) {
+    MachineInstr *MI = &(*ri);
+    MachineOperand &O = ri.getOperand();
+    ++ri;
+    unsigned index = getInstructionIndex(MI);
+    if (index < start || index >= end)
+      continue;
+    RewriteMIs.push_back(RewriteInfo(index, MI, O.isUse(), O.isDef()));
+  }
+  std::sort(RewriteMIs.begin(), RewriteMIs.end(), RewriteInfoCompare());
+
+  // Now rewrite the defs and uses.
+  for (unsigned i = 0, e = RewriteMIs.size(); i != e; ) {
+    RewriteInfo &rwi = RewriteMIs[i];
+    ++i;
+    unsigned index = rwi.Index;
+    bool MIHasUse = rwi.HasUse;
+    bool MIHasDef = rwi.HasDef;
+    MachineInstr *MI = rwi.MI;
+    // If MI def and/or use the same register multiple times, then there
+    // are multiple entries.
+    while (i != e && RewriteMIs[i].MI == MI) {
+      assert(RewriteMIs[i].Index == index);
+      MIHasUse |= RewriteMIs[i].HasUse;
+      MIHasDef |= RewriteMIs[i].HasDef;
+      ++i;
+    }
     MachineBasicBlock *MBB = MI->getParent();
+    unsigned MBBId = MBB->getNumber();
     unsigned ThisVReg = 0;
     if (TrySplit) {
-      std::map<unsigned,unsigned>::const_iterator NVI =
-        MBBVRegsMap.find(MBB->getNumber());
+      std::map<unsigned,unsigned>::const_iterator NVI = MBBVRegsMap.find(MBBId);
       if (NVI != MBBVRegsMap.end()) {
         ThisVReg = NVI->second;
         // One common case:
@@ -1000,18 +1042,6 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
         //     = use
         // It's better to start a new interval to avoid artifically
         // extend the new interval.
-        // FIXME: Too slow? Can we fix it after rewriteInstructionsForSpills?
-        bool MIHasUse = false;
-        bool MIHasDef = false;
-        for (unsigned i = 0; i != MI->getNumOperands(); ++i) {
-          MachineOperand& mop = MI->getOperand(i);
-          if (!mop.isRegister() || mop.getReg() != li.reg)
-            continue;
-          if (mop.isUse())
-            MIHasUse = true;
-          else
-            MIHasDef = true;
-        }
         if (MIHasDef && !MIHasUse) {
           MBBVRegsMap.erase(MBB->getNumber());
           ThisVReg = 0;
@@ -1052,7 +1082,6 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
     }
 
     // Keep track of the last def and first use in each MBB.
-    unsigned MBBId = MBB->getNumber();
     if (HasDef) {
       if (MI != ReMatOrigDefMI || !CanDelete) {
         bool HasKill = false;
