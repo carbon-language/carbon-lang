@@ -3735,9 +3735,19 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
     SawEarlyClobber |= OpInfo.isEarlyClobber;
     
     // If we see a clobber of a register, it is an early clobber.
-    if (OpInfo.Type == InlineAsm::isClobber &&
-        OpInfo.ConstraintType == TargetLowering::C_Register)
-      SawEarlyClobber = true;
+    if (!SawEarlyClobber &&
+        OpInfo.Type == InlineAsm::isClobber &&
+        OpInfo.ConstraintType == TargetLowering::C_Register) {
+      // Note that we want to ignore things that we don't trick here, like
+      // dirflag, fpsr, flags, etc.
+      std::pair<unsigned, const TargetRegisterClass*> PhysReg = 
+        TLI.getRegForInlineAsmConstraint(OpInfo.ConstraintCode,
+                                         OpInfo.ConstraintVT);
+      if (PhysReg.first || PhysReg.second) {
+        // This is a register we know of.
+        SawEarlyClobber = true;
+      }
+    }
     
     // If this is a memory input, and if the operand is not indirect, do what we
     // need to to provide an address for the memory input.
