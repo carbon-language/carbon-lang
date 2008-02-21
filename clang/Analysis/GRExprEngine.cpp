@@ -696,12 +696,12 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
         continue;
       }
       
-      // Handle all NonLVals.
+      // Handle all other values.
       
       BinaryOperator::Opcode Op = U->isIncrementOp() ? BinaryOperator::Add
                                                      : BinaryOperator::Sub;
       
-      RVal Result = EvalBinOp(Op, cast<NonLVal>(V), MakeConstantVal(1U, U));
+      RVal Result = EvalBinOp(Op, V, MakeConstantVal(1U, U));
       
       if (U->isPostfix())
         St = SetRVal(SetRVal(St, U, V), SubLV, Result);
