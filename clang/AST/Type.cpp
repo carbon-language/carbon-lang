@@ -760,9 +760,9 @@ void QualType::getAsStringInternal(std::string &S) const {
   }
   
   // Print qualifiers as appropriate.
-  if (unsigned TQ = getCVRQualifiers()) {
+  if (unsigned Tq = getCVRQualifiers()) {
     std::string TQS;
-    AppendTypeQualList(TQS, TQ);
+    AppendTypeQualList(TQS, Tq);
     if (!S.empty())
       S = TQS + ' ' + S;
     else
