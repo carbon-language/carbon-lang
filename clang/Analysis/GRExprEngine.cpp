@@ -528,18 +528,22 @@ void GRExprEngine::VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr* Ex,
   QualType T = Ex->getArgumentType();
   
   // FIXME: Implement alignof
-  // FIXME: Add support for sizeof(void)
-  // FIXME: Add support for VLAs.
 
+  // FIXME: Add support for VLAs.
   if (!T.getTypePtr()->isConstantSizeType())
     return;
   
-  SourceLocation Loc = Ex->getExprLoc();
-  uint64_t size = getContext().getTypeSize(T, Loc) / 8;
+  
+  uint64_t size = 1;  // Handle sizeof(void)
+  
+  if (T != getContext().VoidTy) {
+    SourceLocation Loc = Ex->getExprLoc();
+    size = getContext().getTypeSize(T, Loc) / 8;
+  }
   
   Nodify(Dst, Ex, Pred,
          SetRVal(Pred->getState(), Ex,
-                  NonLVal::MakeVal(ValMgr, size, Ex->getType(), Loc)));
+                  NonLVal::MakeVal(ValMgr, size, Ex->getType())));
   
 }
 
