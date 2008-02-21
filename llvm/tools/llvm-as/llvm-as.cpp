@@ -40,6 +40,9 @@ static cl::opt<bool>
 Force("f", cl::desc("Overwrite output files"));
 
 static cl::opt<bool>
+DisableOutput("disable-output", cl::desc("Disable output"), cl::init(false));
+
+static cl::opt<bool>
 DumpAsm("d", cl::desc("Print assembly as parsed"), cl::Hidden);
 
 static cl::opt<bool>
@@ -125,8 +128,9 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    if (Force || !CheckBitcodeOutputToConsole(Out,true))
-      WriteBitcodeToFile(M.get(), *Out);
+    if (!DisableOutput)
+      if (Force || !CheckBitcodeOutputToConsole(Out,true))
+        WriteBitcodeToFile(M.get(), *Out);
   } catch (const std::string& msg) {
     cerr << argv[0] << ": " << msg << "\n";
     exitCode = 1;
