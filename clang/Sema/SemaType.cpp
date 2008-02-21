@@ -153,8 +153,20 @@ QualType Sema::ConvertDeclSpecToType(DeclSpec &DS) {
   llvm::SmallVector<AttributeList *, 8> LeftOverAttrs;
   AttributeList *AL = DS.getAttributes();
   while (AL) {
+    // Unlink this attribute from the chain, so we can process it independently.
     AttributeList *ThisAttr = AL;
     AL = AL->getNext();
+    ThisAttr->setNext(0);
+    
+    // If this is an attribute we can handle, do so now, otherwise, add it to
+    // the LeftOverAttrs list for rechaining.
+    switch (ThisAttr->getKind()) {
+    default: break;
+    case AttributeList::AT_address_space:
+      Result = HandleAddressSpaceTypeAttribute(Result, ThisAttr);
+      delete ThisAttr;  // Consume the attribute.
+      continue;
+    }
     
     LeftOverAttrs.push_back(ThisAttr);
   }
@@ -171,6 +183,37 @@ QualType Sema::ConvertDeclSpecToType(DeclSpec &DS) {
   //DS.setAttributes(List);
   return Result;
 }
+
+/// HandleAddressSpaceTypeAttribute - Process an address_space attribute on the
+/// specified type.
+QualType Sema::HandleAddressSpaceTypeAttribute(QualType Type, 
+                                               AttributeList *Attr) {
+  // If this type is already address space qualified, reject it.
+  // Clause 6.7.3 - Type qualifiers: "No type shall be qualified by qualifiers
+  // for two or more different address spaces."
+  if (Type.getAddressSpace()) {
+    Diag(Attr->getLoc(), diag::err_attribute_address_multiple_qualifiers);
+    return Type;
+  }
+  
+  // Check the attribute arguments.
+  if (Attr->getNumArgs() != 1) {
+    Diag(Attr->getLoc(), diag::err_attribute_wrong_number_arguments,
+         std::string("1"));
+    return Type;
+  }
+  Expr *ASArgExpr = static_cast<Expr *>(Attr->getArg(0));
+  llvm::APSInt addrSpace(32);
+  if (!ASArgExpr->isIntegerConstantExpr(addrSpace, Context)) {
+    Diag(Attr->getLoc(), diag::err_attribute_address_space_not_int,
+         ASArgExpr->getSourceRange());
+    return Type;
+  }
+
+  unsigned ASIdx = static_cast<unsigned>(addrSpace.getZExtValue()); 
+  return Context.getASQualType(Type, ASIdx);
+}
+
 
 /// GetTypeForDeclarator - Convert the type for the specified declarator to Type
 /// instances.

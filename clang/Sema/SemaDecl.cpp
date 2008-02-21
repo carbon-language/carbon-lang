@@ -1735,48 +1735,47 @@ Sema::DeclTy* Sema::ActOnLinkageSpec(SourceLocation Loc,
   return new LinkageSpecDecl(Loc, Language, dcl);
 }
 
-void Sema::HandleDeclAttribute(Decl *New, AttributeList *rawAttr) {
+void Sema::HandleDeclAttribute(Decl *New, AttributeList *Attr) {
   
-  switch (rawAttr->getKind()) {
+  switch (Attr->getKind()) {
   case AttributeList::AT_vector_size:
     if (ValueDecl *vDecl = dyn_cast<ValueDecl>(New)) {
-      QualType newType = HandleVectorTypeAttribute(vDecl->getType(), rawAttr);
+      QualType newType = HandleVectorTypeAttribute(vDecl->getType(), Attr);
       if (!newType.isNull()) // install the new vector type into the decl
         vDecl->setType(newType);
     } 
     if (TypedefDecl *tDecl = dyn_cast<TypedefDecl>(New)) {
       QualType newType = HandleVectorTypeAttribute(tDecl->getUnderlyingType(), 
-                                                   rawAttr);
+                                                   Attr);
       if (!newType.isNull()) // install the new vector type into the decl
         tDecl->setUnderlyingType(newType);
     }
     break;
   case AttributeList::AT_ocu_vector_type:
     if (TypedefDecl *tDecl = dyn_cast<TypedefDecl>(New))
-      HandleOCUVectorTypeAttribute(tDecl, rawAttr);
+      HandleOCUVectorTypeAttribute(tDecl, Attr);
     else
-      Diag(rawAttr->getLoc(), 
+      Diag(Attr->getLoc(), 
            diag::err_typecheck_ocu_vector_not_typedef);
     break;
   case AttributeList::AT_address_space:
     if (TypedefDecl *tDecl = dyn_cast<TypedefDecl>(New)) {
       QualType newType = HandleAddressSpaceTypeAttribute(
                                                   tDecl->getUnderlyingType(), 
-                                                  rawAttr);
-      if (!newType.isNull()) // install the new addr spaced type into the decl
-        tDecl->setUnderlyingType(newType);
+                                                  Attr);
+      tDecl->setUnderlyingType(newType);
     } else if (ValueDecl *vDecl = dyn_cast<ValueDecl>(New)) {
       QualType newType = HandleAddressSpaceTypeAttribute(vDecl->getType(), 
-                                                         rawAttr);
-      if (!newType.isNull()) // install the new addr spaced type into the decl
-        vDecl->setType(newType);
+                                                         Attr);
+      // install the new addr spaced type into the decl
+      vDecl->setType(newType);
     }
     break;
   case AttributeList::AT_aligned:
-    HandleAlignedAttribute(New, rawAttr);
+    HandleAlignedAttribute(New, Attr);
     break;
   case AttributeList::AT_packed:
-    HandlePackedAttribute(New, rawAttr);
+    HandlePackedAttribute(New, Attr);
     break;
   default:
     // FIXME: add other attributes...
@@ -1794,33 +1793,6 @@ void Sema::HandleDeclAttributes(Decl *New, AttributeList *declspec_prefix,
     HandleDeclAttribute(New, declarator_postfix);
     declarator_postfix = declarator_postfix->getNext();
   }
-}
-
-QualType Sema::HandleAddressSpaceTypeAttribute(QualType curType, 
-                                               AttributeList *rawAttr) {
-  // check the attribute arguments.
-  if (rawAttr->getNumArgs() != 1) {
-    Diag(rawAttr->getLoc(), diag::err_attribute_wrong_number_arguments,
-         std::string("1"));
-    return QualType();
-  }
-  Expr *addrSpaceExpr = static_cast<Expr *>(rawAttr->getArg(0));
-  llvm::APSInt addrSpace(32);
-  if (!addrSpaceExpr->isIntegerConstantExpr(addrSpace, Context)) {
-    Diag(rawAttr->getLoc(), diag::err_attribute_address_space_not_int,
-         addrSpaceExpr->getSourceRange());
-    return QualType();
-  }
-  unsigned addressSpace = static_cast<unsigned>(addrSpace.getZExtValue()); 
-  
-  // Zero is the default memory space, so no qualification is needed
-  if (addressSpace == 0)
-    return curType;
-  
-  // TODO: Should we convert contained types of address space 
-  // qualified types here or or where they directly participate in conversions
-  // (i.e. elsewhere)
-  return Context.getASQualType(curType, addressSpace);
 }
 
 void Sema::HandleOCUVectorTypeAttribute(TypedefDecl *tDecl, 
