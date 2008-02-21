@@ -367,6 +367,10 @@ public:
     return R.isValid() ? TF->EvalBinOp(ValMgr, Op, L, cast<NonLVal>(R)) : R;
   }
   
+  RVal EvalBinOp(BinaryOperator::Opcode Op, NonLVal L, NonLVal R) {
+    return R.isValid() ? TF->EvalBinOp(ValMgr, Op, L, R) : R;
+  }
+  
   RVal EvalBinOp(BinaryOperator::Opcode Op, RVal L, RVal R) {
     
     if (L.isUninit() || R.isUninit())

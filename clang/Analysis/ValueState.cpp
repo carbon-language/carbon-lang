@@ -94,8 +94,15 @@ ValueStateManager::RemoveDeadBindings(ValueState St, Stmt* Loc,
     Marked.insert(V);
     
     if (V->getType()->isPointerType()) {
-      const LVal& LV =
-        cast<LVal>(GetRVal(St, lval::DeclVal(cast<VarDecl>(V))));      
+      
+      RVal X = GetRVal(St, lval::DeclVal(cast<VarDecl>(V)));
+      
+      assert (!X.isUnknown());
+      
+      if (X.isUninit())
+        continue;
+      
+      LVal LV = cast<LVal>(X);
       
       for (RVal::symbol_iterator SI = LV.symbol_begin(), SE = LV.symbol_end();
                                                          SI != SE; ++SI) {
