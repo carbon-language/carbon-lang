@@ -438,6 +438,9 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
         Offset += FFI->getObjectSize(SFI);
 
       unsigned Align = FFI->getObjectAlignment(SFI);
+      // If the alignment of this object is greater than that of the
+      // stack, then increase the stack alignment to match.
+      MaxAlign = std::max(MaxAlign, Align);
       // Adjust to alignment boundary
       Offset = (Offset+Align-1)/Align*Align;
 
