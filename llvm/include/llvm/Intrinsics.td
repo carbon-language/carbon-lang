@@ -64,7 +64,7 @@ class LLVMPointerType<LLVMType elty>
 class LLVMMatchType<int num>
   : LLVMType<OtherVT>{
   int Number = num;
-} 
+}
 
 def llvm_void_ty       : LLVMType<isVoid>;
 def llvm_anyint_ty     : LLVMType<iAny>;
@@ -266,6 +266,17 @@ def int_init_trampoline : Intrinsic<[llvm_ptr_ty, llvm_ptr_ty, llvm_ptr_ty,
 //
 def int_memory_barrier : Intrinsic<[llvm_void_ty, llvm_i1_ty, llvm_i1_ty, 
                                        llvm_i1_ty, llvm_i1_ty, llvm_i1_ty], []>;
+
+def int_atomic_lcs : Intrinsic<[llvm_anyint_ty, LLVMPointerType<LLVMMatchType<0>>,
+                                 LLVMMatchType<0>, LLVMMatchType<0>],
+                               [IntrWriteArgMem]>, GCCBuiltin<"__sync_val_compare_and_swap">;
+def int_atomic_las : Intrinsic<[llvm_anyint_ty, LLVMPointerType<LLVMMatchType<0>>,
+                                 LLVMMatchType<0>],
+                               [IntrWriteArgMem]>, GCCBuiltin<"__sync_fetch_and_add">;
+def int_atomic_swap : Intrinsic<[llvm_anyint_ty, LLVMPointerType<LLVMMatchType<0>>,
+                                 LLVMMatchType<0>],
+                               [IntrWriteArgMem]>, GCCBuiltin<"__sync_lock_test_and_set">;
+
 
 //===-------------------------- Other Intrinsics --------------------------===//
 //

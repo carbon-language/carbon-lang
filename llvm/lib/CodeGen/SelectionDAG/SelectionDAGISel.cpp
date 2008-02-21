@@ -221,7 +221,7 @@ static bool isSelector(Instruction *I) {
 
 /// isUsedOutsideOfDefiningBlock - Return true if this instruction is used by
 /// PHI nodes or outside of the basic block that defines it, or used by a 
-/// switch instruction, which may expand to multiple basic blocks.
+/// switch or atomic instruction, which may expand to multiple basic blocks.
 static bool isUsedOutsideOfDefiningBlock(Instruction *I) {
   if (isa<PHINode>(I)) return true;
   BasicBlock *BB = I->getParent();
@@ -3059,6 +3059,38 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     DAG.setRoot(DAG.getNode(ISD::MEMBARRIER, MVT::Other, &Ops[0], 6));
     return 0;
   }
+  case Intrinsic::atomic_lcs: {
+    SDOperand Root = getRoot();   
+    SDOperand O3 = getValue(I.getOperand(3));
+    SDOperand L = DAG.getAtomic(ISD::ATOMIC_LCS, Root, 
+                                getValue(I.getOperand(1)), 
+                                getValue(I.getOperand(2)),
+                                O3, O3.getValueType());
+    setValue(&I, L);
+    DAG.setRoot(L.getValue(1));
+    return 0;
+  }
+  case Intrinsic::atomic_las: {
+    SDOperand Root = getRoot();   
+    SDOperand O2 = getValue(I.getOperand(2));
+    SDOperand L = DAG.getAtomic(ISD::ATOMIC_LAS, Root, 
+                                getValue(I.getOperand(1)), 
+                                O2, O2.getValueType());
+    setValue(&I, L);
+    DAG.setRoot(L.getValue(1));
+    return 0;
+  }
+  case Intrinsic::atomic_swap: {
+    SDOperand Root = getRoot();   
+    SDOperand O2 = getValue(I.getOperand(2));
+    SDOperand L = DAG.getAtomic(ISD::ATOMIC_SWAP, Root, 
+                                getValue(I.getOperand(1)), 
+                                O2, O2.getValueType());
+    setValue(&I, L);
+    DAG.setRoot(L.getValue(1));
+    return 0;
+  }
+
   }
 }
 

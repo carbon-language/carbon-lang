@@ -2427,6 +2427,43 @@ SDOperand SelectionDAG::getMemset(SDOperand Chain, SDOperand Dest,
   return getNode(ISD::MEMSET, MVT::Other, Ops, 6);
 }
 
+SDOperand SelectionDAG::getAtomic(unsigned Opcode, SDOperand Chain, 
+                                  SDOperand Ptr, SDOperand A2, 
+                                  SDOperand A3, MVT::ValueType VT) {
+  assert(Opcode == ISD::ATOMIC_LCS && "Invalid Atomic Op");
+  SDVTList VTs = getVTList(A2.getValueType(), MVT::Other);
+  FoldingSetNodeID ID;
+  SDOperand Ops[] = {Chain, Ptr, A2, A3};
+  AddNodeIDNode(ID, Opcode, VTs, Ops, 4);
+  ID.AddInteger((unsigned int)VT);
+  void* IP = 0;
+  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
+    return SDOperand(E, 0);
+  SDNode* N = new AtomicSDNode(Opcode, VTs, Chain, Ptr, A2, A3, VT);
+  CSEMap.InsertNode(N, IP);
+  AllNodes.push_back(N);
+  return SDOperand(N, 0);
+}
+
+SDOperand SelectionDAG::getAtomic(unsigned Opcode, SDOperand Chain, 
+                                  SDOperand Ptr, SDOperand A2, 
+                                  MVT::ValueType VT) {
+  assert((Opcode == ISD::ATOMIC_LAS || Opcode == ISD::ATOMIC_SWAP)
+         && "Invalid Atomic Op");
+  SDVTList VTs = getVTList(A2.getValueType(), MVT::Other);
+  FoldingSetNodeID ID;
+  SDOperand Ops[] = {Chain, Ptr, A2};
+  AddNodeIDNode(ID, Opcode, VTs, Ops, 3);
+  ID.AddInteger((unsigned int)VT);
+  void* IP = 0;
+  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
+    return SDOperand(E, 0);
+  SDNode* N = new AtomicSDNode(Opcode, VTs, Chain, Ptr, A2, VT);
+  CSEMap.InsertNode(N, IP);
+  AllNodes.push_back(N);
+  return SDOperand(N, 0);
+}
+
 SDOperand SelectionDAG::getLoad(MVT::ValueType VT,
                                 SDOperand Chain, SDOperand Ptr,
                                 const Value *SV, int SVOffset,
@@ -3593,6 +3630,7 @@ void CondCodeSDNode::ANCHOR() {}
 void VTSDNode::ANCHOR() {}
 void LoadSDNode::ANCHOR() {}
 void StoreSDNode::ANCHOR() {}
+void AtomicSDNode::ANCHOR() {}
 
 HandleSDNode::~HandleSDNode() {
   SDVTList VTs = { 0, 0 };
@@ -3821,6 +3859,9 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
     }
    
   case ISD::MEMBARRIER:    return "MemBarrier";
+  case ISD::ATOMIC_LCS:    return "AtomicLCS";
+  case ISD::ATOMIC_LAS:    return "AtomicLAS";
+  case ISD::ATOMIC_SWAP:    return "AtomicSWAP";
   case ISD::PCMARKER:      return "PCMarker";
   case ISD::READCYCLECOUNTER: return "ReadCycleCounter";
   case ISD::SRCVALUE:      return "SrcValue";

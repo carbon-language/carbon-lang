@@ -629,3 +629,96 @@ getRegClassForInlineAsmConstraint(const std::string &Constraint,
   
   return std::vector<unsigned>();
 }
+//===----------------------------------------------------------------------===//
+//  Other Lowering Code
+//===----------------------------------------------------------------------===//
+
+MachineBasicBlock *
+AlphaTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
+                                                 MachineBasicBlock *BB) {
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  assert((MI->getOpcode() == Alpha::CAS32 ||
+          MI->getOpcode() == Alpha::CAS64 ||
+          MI->getOpcode() == Alpha::LAS32 ||
+          MI->getOpcode() == Alpha::LAS64 ||
+          MI->getOpcode() == Alpha::SWAP32 ||
+          MI->getOpcode() == Alpha::SWAP64) &&
+         "Unexpected instr type to insert");
+
+  bool is32 = MI->getOpcode() == Alpha::CAS32 || 
+    MI->getOpcode() == Alpha::LAS32 ||
+    MI->getOpcode() == Alpha::SWAP32;
+  
+  //Load locked store conditional for atomic ops take on the same form
+  //start:
+  //ll
+  //do stuff (maybe branch to exit)
+  //sc
+  //test sc and maybe branck to start
+  //exit:
+  const BasicBlock *LLVM_BB = BB->getBasicBlock();
+  ilist<MachineBasicBlock>::iterator It = BB;
+  ++It;
+  
+  MachineBasicBlock *thisMBB = BB;
+  MachineBasicBlock *llscMBB = new MachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
+
+  for(MachineBasicBlock::succ_iterator i = thisMBB->succ_begin(), 
+        e = thisMBB->succ_end(); i != e; ++i)
+    sinkMBB->addSuccessor(*i);
+  while(!thisMBB->succ_empty())
+    thisMBB->removeSuccessor(thisMBB->succ_begin());
+
+  MachineFunction *F = BB->getParent();
+  F->getBasicBlockList().insert(It, llscMBB);
+  F->getBasicBlockList().insert(It, sinkMBB);
+
+  BuildMI(thisMBB, TII->get(Alpha::BR)).addMBB(llscMBB);
+  
+  unsigned reg_res = MI->getOperand(0).getReg(),
+    reg_ptr = MI->getOperand(1).getReg(),
+    reg_v2 = MI->getOperand(2).getReg(),
+    reg_store = F->getRegInfo().createVirtualRegister(&Alpha::GPRCRegClass);
+
+  BuildMI(llscMBB, TII->get(is32 ? Alpha::LDL_L : Alpha::LDQ_L), 
+          reg_res).addImm(0).addReg(reg_ptr);
+  switch (MI->getOpcode()) {
+  case Alpha::CAS32:
+  case Alpha::CAS64: {
+    unsigned reg_cmp 
+      = F->getRegInfo().createVirtualRegister(&Alpha::GPRCRegClass);
+    BuildMI(llscMBB, TII->get(Alpha::CMPEQ), reg_cmp)
+      .addReg(reg_v2).addReg(reg_res);
+    BuildMI(llscMBB, TII->get(Alpha::BEQ))
+      .addImm(0).addReg(reg_cmp).addMBB(sinkMBB);
+    BuildMI(llscMBB, TII->get(Alpha::BISr), reg_store)
+      .addReg(Alpha::R31).addReg(MI->getOperand(3).getReg());
+    break;
+  }
+  case Alpha::LAS32:
+  case Alpha::LAS64: {
+    BuildMI(llscMBB, TII->get(is32 ? Alpha::ADDLr : Alpha::ADDQr), reg_store)
+      .addReg(reg_res).addReg(reg_v2);
+    break;
+  }
+  case Alpha::SWAP32:
+  case Alpha::SWAP64: {
+    BuildMI(llscMBB, TII->get(Alpha::BISr), reg_store)
+      .addReg(reg_v2).addReg(reg_v2);
+    break;
+  }
+  }
+  BuildMI(llscMBB, TII->get(is32 ? Alpha::STL_C : Alpha::STQ_C), reg_store)
+    .addReg(reg_store).addImm(0).addReg(reg_ptr);
+  BuildMI(llscMBB, TII->get(Alpha::BEQ))
+    .addImm(0).addReg(reg_store).addMBB(llscMBB);
+  BuildMI(llscMBB, TII->get(Alpha::BR)).addMBB(sinkMBB);
+
+  thisMBB->addSuccessor(llscMBB);
+  llscMBB->addSuccessor(llscMBB);
+  llscMBB->addSuccessor(sinkMBB);
+  delete MI;   // The pseudo instruction is gone now.
+
+  return sinkMBB;
+}

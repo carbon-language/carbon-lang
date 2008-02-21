@@ -2536,6 +2536,15 @@ def EH_RETURN   : I<0xC3, RawFrm, (outs), (ins GR32:$addr),
 }
 
 //===----------------------------------------------------------------------===//
+// Atomic support
+//
+let Defs = [EAX] in
+def LCMPXCHGL : I<0, Pseudo, (outs GR32:$dst), 
+                  (ins GR32:$ptr, GR32:$cmp, GR32:$swap),
+                  "movl $cmp, %eax ; lock cmpxchgl $swap,($ptr) ; movl %eax, $dst",
+                  [(set GR32:$dst, (atomic_lcs_32 GR32:$ptr, GR32:$cmp, GR32:$swap))]>;
+
+//===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
 //===----------------------------------------------------------------------===//
 
@@ -2682,7 +2691,6 @@ def : Pat<(or (shl GR16:$src1, CL:$amt),
 def : Pat<(store (or (shl (loadi16 addr:$dst), CL:$amt),
                      (srl GR16:$src2, (sub 16, CL:$amt))), addr:$dst),
           (SHLD16mrCL addr:$dst, GR16:$src2)>;
-
 
 //===----------------------------------------------------------------------===//
 // Floating Point Stack Support

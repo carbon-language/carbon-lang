@@ -167,6 +167,23 @@ def MEMLABEL : PseudoInstAlpha<(outs), (ins s64imm:$i, s64imm:$j, s64imm:$k, s64
          "LSMARKER$$$i$$$j$$$k$$$m:", [], s_pseudo>;
 
 
+let usesCustomDAGSchedInserter = 1 in {   // Expanded by the scheduler.
+def CAS32 : PseudoInstAlpha<(outs GPRC:$dst), (ins GPRC:$ptr, GPRC:$cmp, GPRC:$swp), "",
+        [(set GPRC:$dst, (atomic_lcs_32 GPRC:$ptr, GPRC:$cmp, GPRC:$swp))], s_pseudo>;
+def CAS64 : PseudoInstAlpha<(outs GPRC:$dst), (ins GPRC:$ptr, GPRC:$cmp, GPRC:$swp), "",
+        [(set GPRC:$dst, (atomic_lcs_64 GPRC:$ptr, GPRC:$cmp, GPRC:$swp))], s_pseudo>;
+
+def LAS32 : PseudoInstAlpha<(outs GPRC:$dst), (ins GPRC:$ptr, GPRC:$swp), "",
+        [(set GPRC:$dst, (atomic_las_32 GPRC:$ptr, GPRC:$swp))], s_pseudo>;
+def LAS64 :PseudoInstAlpha<(outs GPRC:$dst), (ins GPRC:$ptr, GPRC:$swp), "",
+        [(set GPRC:$dst, (atomic_las_64 GPRC:$ptr, GPRC:$swp))], s_pseudo>;
+
+def SWAP32 : PseudoInstAlpha<(outs GPRC:$dst), (ins GPRC:$ptr, GPRC:$swp), "",
+        [(set GPRC:$dst, (atomic_swap_32 GPRC:$ptr, GPRC:$swp))], s_pseudo>;
+def SWAP64 :PseudoInstAlpha<(outs GPRC:$dst), (ins GPRC:$ptr, GPRC:$swp), "",
+        [(set GPRC:$dst, (atomic_swap_64 GPRC:$ptr, GPRC:$swp))], s_pseudo>;
+}
+
 //***********************
 //Real instructions
 //***********************
@@ -568,6 +585,18 @@ def LDQl : MForm<0x29, 1, "ldq $RA,$DISP($RB)\t\t!literal",
 def : Pat<(Alpha_rellit texternalsym:$ext, GPRC:$RB),
           (LDQl texternalsym:$ext, GPRC:$RB)>;
 
+let OutOperandList = (outs GPRC:$RR),
+    InOperandList = (ins GPRC:$RA, s64imm:$DISP, GPRC:$RB),
+    Constraints = "$RA = $RR",
+    DisableEncoding = "$RR" in {
+def STQ_C : MForm<0x2F, 0, "stq_l $RA,$DISP($RB)", [], s_ist>;
+def STL_C : MForm<0x2E, 0, "stl_l $RA,$DISP($RB)", [], s_ist>;
+}
+let OutOperandList = (ops GPRC:$RA), InOperandList = (ops s64imm:$DISP, GPRC:$RB) in {
+def LDQ_L : MForm<0x2B, 1, "ldq_l $RA,$DISP($RB)", [], s_ild>;
+def LDL_L : MForm<0x2A, 1, "ldl_l $RA,$DISP($RB)", [], s_ild>;
+}
+
 def RPCC : MfcForm<0x18, 0xC000, "rpcc $RA", s_rpcc>; //Read process cycle counter
 def MB  : MfcPForm<0x18, 0x4000, "mb",  s_imisc>; //memory barrier
 def WMB : MfcPForm<0x18, 0x4400, "wmb", s_imisc>; //write memory barrier
@@ -965,7 +994,6 @@ def : Pat<(brcond (setune F8RC:$RA, immFPZ), bb:$DISP),
 //S_floating : IEEE Single
 //T_floating : IEEE Double
 
-
 //Unused instructions
 //Mnemonic Format Opcode Description
 //CALL_PAL Pcd 00 Trap to PALcode
@@ -973,12 +1001,8 @@ def : Pat<(brcond (setune F8RC:$RA, immFPZ), bb:$DISP),
 //EXCB Mfc 18.0400 Exception barrier
 //FETCH Mfc 18.8000 Prefetch data
 //FETCH_M Mfc 18.A000 Prefetch data, modify intent
-//LDL_L Mem 2A Load sign-extended longword locked
-//LDQ_L Mem 2B Load quadword locked
 //LDQ_U Mem 0B Load unaligned quadword
 //MB Mfc 18.4000 Memory barrier
-//STL_C Mem 2E Store longword conditional
-//STQ_C Mem 2F Store quadword conditional
 //STQ_U Mem 0F Store unaligned quadword
 //TRAPB Mfc 18.0000 Trap barrier
 //WH64 Mfc 18.F800 Write hint  64 bytes

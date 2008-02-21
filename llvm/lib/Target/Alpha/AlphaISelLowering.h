@@ -88,6 +88,9 @@ namespace llvm {
                                         MVT::ValueType VT) const;
 
     bool hasITOF() { return useITOF; }
+
+    MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
+                                                   MachineBasicBlock *BB);
   };
 }
 

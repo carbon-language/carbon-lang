@@ -1153,6 +1153,31 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     break;
   }
 
+  case ISD::ATOMIC_LCS:
+  case ISD::ATOMIC_LAS:
+  case ISD::ATOMIC_SWAP: {
+    assert(((Node->getNumOperands() == 4 && Node->getOpcode() == ISD::ATOMIC_LCS) ||
+            (Node->getNumOperands() == 3 && Node->getOpcode() == ISD::ATOMIC_LAS) ||
+            (Node->getNumOperands() == 3 && Node->getOpcode() == ISD::ATOMIC_SWAP)) &&
+           "Invalid MemBarrier node!");
+    int num = Node->getOpcode() == ISD::ATOMIC_LCS ? 4 : 3;
+    MVT::ValueType VT = Node->getValueType(0);
+    switch (TLI.getOperationAction(ISD::ATOMIC_LCS, VT)) {
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Legal: {
+      SDOperand Ops[4];
+      for (int x = 0; x < num; ++x)
+        Ops[x] = LegalizeOp(Node->getOperand(x));
+      Result = DAG.UpdateNodeOperands(Result, &Ops[0], num);
+      AddLegalizedOperand(SDOperand(Node, 0), Result.getValue(0));
+      AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
+      return Result.getValue(Op.ResNo);
+      break;
+    }
+    }
+    break;
+  }
+
   case ISD::Constant: {
     ConstantSDNode *CN = cast<ConstantSDNode>(Node);
     unsigned opAction =
@@ -4228,6 +4253,27 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     break;
   }
     
+  case ISD::ATOMIC_LCS: {
+    Tmp2 = PromoteOp(Node->getOperand(2));
+    Tmp3 = PromoteOp(Node->getOperand(3));
+    Result = DAG.getAtomic(Node->getOpcode(), Node->getOperand(0), 
+                           Node->getOperand(1), Tmp2, Tmp3,
+                           cast<AtomicSDNode>(Node)->getVT());
+    // Remember that we legalized the chain.
+    AddLegalizedOperand(Op.getValue(1), LegalizeOp(Result.getValue(1)));
+    break;
+  }
+  case ISD::ATOMIC_LAS:
+  case ISD::ATOMIC_SWAP: {
+    Tmp2 = PromoteOp(Node->getOperand(2));
+    Result = DAG.getAtomic(Node->getOpcode(), Node->getOperand(0), 
+                           Node->getOperand(1), Tmp2,
+                           cast<AtomicSDNode>(Node)->getVT());
+    // Remember that we legalized the chain.
+    AddLegalizedOperand(Op.getValue(1), LegalizeOp(Result.getValue(1)));
+    break;
+  }
+
   case ISD::AND:
   case ISD::OR:
   case ISD::XOR:

@@ -189,6 +189,12 @@ def STDMemBarrier : SDTypeProfile<0, 5, [
   SDTCisSameAs<0,1>,  SDTCisSameAs<0,2>,  SDTCisSameAs<0,3>, SDTCisSameAs<0,4>,
   SDTCisInt<0>
 ]>;
+def STDAtomic3 : SDTypeProfile<1, 3, [
+  SDTCisSameAs<0,2>,  SDTCisSameAs<0,3>, SDTCisInt<0>, SDTCisPtrTy<1>
+]>;
+def STDAtomic2 : SDTypeProfile<1, 2, [
+  SDTCisSameAs<0,2>, SDTCisInt<0>, SDTCisPtrTy<1>
+]>;
 
 class SDCallSeqStart<list<SDTypeConstraint> constraints> :
         SDTypeProfile<0, 1, constraints>;
@@ -336,6 +342,13 @@ def trap       : SDNode<"ISD::TRAP"       , SDTNone,
                         [SDNPHasChain, SDNPSideEffect]>;
 def membarrier : SDNode<"ISD::MEMBARRIER"       , STDMemBarrier,
                         [SDNPHasChain, SDNPSideEffect]>;
+// Do not use atomic_* directly, use atomic_*_size (see below)
+def atomic_lcs : SDNode<"ISD::ATOMIC_LCS", STDAtomic3,
+                        [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
+def atomic_las : SDNode<"ISD::ATOMIC_LAS", STDAtomic2,
+                        [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
+def atomic_swap : SDNode<"ISD::ATOMIC_SWAP", STDAtomic2,
+                        [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
 
 // Do not use ld, st directly. Use load, extload, sextload, zextload, store,
 // and truncst (see below).
@@ -721,6 +734,84 @@ def post_truncstf32 : PatFrag<(ops node:$val, node:$base, node:$offset),
   }
   return false;
 }]>;
+
+//Atomic patterns
+def atomic_lcs_8 : PatFrag<(ops node:$ptr, node:$cmp, node:$swp),
+                    (atomic_lcs node:$ptr, node:$cmp, node:$swp), [{
+  if (AtomicSDNode* V = dyn_cast<AtomicSDNode>(N))
+        return V->getVT() == MVT::i8;
+  return false;
+}]>;
+def atomic_lcs_16 : PatFrag<(ops node:$ptr, node:$cmp, node:$swp), 
+                    (atomic_lcs node:$ptr, node:$cmp, node:$swp), [{
+  if (AtomicSDNode* V = dyn_cast<AtomicSDNode>(N))
+        return V->getVT() == MVT::i16;
+  return false;
+}]>;
+def atomic_lcs_32 : PatFrag<(ops node:$ptr, node:$cmp, node:$swp), 
+                    (atomic_lcs node:$ptr, node:$cmp, node:$swp), [{
+  if (AtomicSDNode* V = dyn_cast<AtomicSDNode>(N))
+        return V->getVT() == MVT::i32;
+  return false;
+}]>;
+def atomic_lcs_64 : PatFrag<(ops node:$ptr, node:$cmp, node:$swp), 
+                    (atomic_lcs node:$ptr, node:$cmp, node:$swp), [{
+  if (AtomicSDNode* V = dyn_cast<AtomicSDNode>(N))
+        return V->getVT() == MVT::i64;
+  return false;
+}]>;
+
+def atomic_las_8 : PatFrag<(ops node:$ptr, node:$inc),
+                    (atomic_las node:$ptr, node:$inc), [{
+  if (AtomicSDNode* V = dyn_cast<AtomicSDNode>(N))
+        return V->getVT() == MVT::i8;
+  return false;
+}]>;
+def atomic_las_16 : PatFrag<(ops node:$ptr, node:$inc), 
+                    (atomic_las node:$ptr, node:$inc), [{
+  if (AtomicSDNode* V = dyn_cast<AtomicSDNode>(N))
+        return V->getVT() == MVT::i16;
+  return false;
+}]>;
+def atomic_las_32 : PatFrag<(ops node:$ptr, node:$inc), 
+                    (atomic_las node:$ptr, node:$inc), [{
+  if (AtomicSDNode* V = dyn_cast<AtomicSDNode>(N))
+        return V->getVT() == MVT::i32;
+  return false;
+}]>;
+def atomic_las_64 : PatFrag<(ops node:$ptr, node:$inc), 
+                    (atomic_las node:$ptr, node:$inc), [{
+  if (AtomicSDNode* V = dyn_cast<AtomicSDNode>(N))
+        return V->getVT() == MVT::i64;
+  return false;
+}]>;
+
+def atomic_swap_8 : PatFrag<(ops node:$ptr, node:$inc),
+                    (atomic_swap node:$ptr, node:$inc), [{
+  if (AtomicSDNode* V = dyn_cast<AtomicSDNode>(N))
+        return V->getVT() == MVT::i8;
+  return false;
+}]>;
+def atomic_swap_16 : PatFrag<(ops node:$ptr, node:$inc), 
+                    (atomic_swap node:$ptr, node:$inc), [{
+  if (AtomicSDNode* V = dyn_cast<AtomicSDNode>(N))
+        return V->getVT() == MVT::i16;
+  return false;
+}]>;
+def atomic_swap_32 : PatFrag<(ops node:$ptr, node:$inc), 
+                    (atomic_swap node:$ptr, node:$inc), [{
+  if (AtomicSDNode* V = dyn_cast<AtomicSDNode>(N))
+        return V->getVT() == MVT::i32;
+  return false;
+}]>;
+def atomic_swap_64 : PatFrag<(ops node:$ptr, node:$inc), 
+                    (atomic_swap node:$ptr, node:$inc), [{
+  if (AtomicSDNode* V = dyn_cast<AtomicSDNode>(N))
+        return V->getVT() == MVT::i64;
+  return false;
+}]>;
+
+
 
 // setcc convenience fragments.
 def setoeq : PatFrag<(ops node:$lhs, node:$rhs),

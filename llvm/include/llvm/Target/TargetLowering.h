@@ -1252,7 +1252,7 @@ private:
   /// TargetDAGCombineArray - Targets can specify ISD nodes that they would
   /// like PerformDAGCombine callbacks for by calling setTargetDAGCombine(),
   /// which sets a bit in this array.
-  unsigned char TargetDAGCombineArray[156/(sizeof(unsigned char)*8)];
+  unsigned char TargetDAGCombineArray[160/(sizeof(unsigned char)*8)];
   
   /// PromoteToType - For operations that must be promoted to a specific type,
   /// this holds the destination type.  This map should be sparse, so don't hold

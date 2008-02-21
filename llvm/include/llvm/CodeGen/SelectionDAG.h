@@ -356,6 +356,16 @@ public:
   SDOperand getVAArg(MVT::ValueType VT, SDOperand Chain, SDOperand Ptr,
                      SDOperand SV);
 
+  /// getAtomic - Gets a node for an atomic op, produces result and chain, takes
+  // 3 operands
+  SDOperand getAtomic(unsigned Opcode, SDOperand Chain, SDOperand Ptr, 
+                      SDOperand A2, SDOperand A3, MVT::ValueType VT);
+
+  /// getAtomic - Gets a node for an atomic op, produces result and chain, takes
+  // 2 operands
+  SDOperand getAtomic(unsigned Opcode, SDOperand Chain, SDOperand Ptr, 
+                      SDOperand A2, MVT::ValueType VT);
+
   /// getLoad - Loads are not normal binary operators: their result type is not
   /// determined by their operands, and they produce a value AND a token chain.
   ///

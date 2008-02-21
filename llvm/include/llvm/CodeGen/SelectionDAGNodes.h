@@ -441,7 +441,7 @@ namespace ISD {
     // is added / subtracted from the base pointer to form the address (for
     // indexed memory ops).
     LOAD, STORE,
-    
+
     // DYNAMIC_STACKALLOC - Allocate some number of bytes on the stack aligned
     // to a specified boundary.  This node always has two return values: a new
     // stack pointer value and a chain. The first operand is the token chain,
@@ -591,11 +591,29 @@ namespace ISD {
 
     // OUTCHAIN = MEMBARRIER(INCHAIN, load-load, load-store, store-load, 
     //                       store-store, device)
-    // This corresponds to the atomic.barrier intrinsic.
+    // This corresponds to the memory.barrier intrinsic.
     // it takes an input chain, 4 operands to specify the type of barrier, an
     // operand specifying if the barrier applies to device and uncached memory
     // and produces an output chain.
     MEMBARRIER,
+
+    // Val, OUTCHAIN = ATOMIC_LCS(INCHAIN, ptr, cmp, swap)
+    // this corresponds to the atomic.lcs intrinsic.
+    // cmp is compared to *ptr, and if equal, swap is stored in *ptr.
+    // the return is always the original value in *ptr
+    ATOMIC_LCS,
+
+    // Val, OUTCHAIN = ATOMIC_LAS(INCHAIN, ptr, amt)
+    // this corresponds to the atomic.las intrinsic.
+    // *ptr + amt is stored to *ptr atomically.
+    // the return is always the original value in *ptr
+    ATOMIC_LAS,
+
+    // Val, OUTCHAIN = ATOMIC_SWAP(INCHAIN, ptr, amt)
+    // this corresponds to the atomic.swap intrinsic.
+    // amt is stored to *ptr atomically.
+    // the return is always the original value in *ptr
+    ATOMIC_SWAP,
 
     // BUILTIN_OP_END - This must be the last enum value in this list.
     BUILTIN_OP_END
@@ -1168,6 +1186,33 @@ public:
   }
   ~HandleSDNode();  
   SDOperand getValue() const { return Op; }
+};
+
+class AtomicSDNode : public SDNode {
+  virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
+  SDOperand Ops[4];
+  MVT::ValueType OrigVT;
+public:
+  AtomicSDNode(unsigned Opc, SDVTList VTL, SDOperand Chain, SDOperand X, 
+               SDOperand Y, SDOperand Z, MVT::ValueType VT)
+    : SDNode(Opc, VTL) {
+    Ops[0] = Chain;
+    Ops[1] = X;
+    Ops[2] = Y;
+    Ops[3] = Z;
+    InitOperands(Ops, 4);
+    OrigVT=VT;
+  }
+  AtomicSDNode(unsigned Opc, SDVTList VTL, SDOperand Chain, SDOperand X, 
+               SDOperand Y, MVT::ValueType VT)
+    : SDNode(Opc, VTL) {
+    Ops[0] = Chain;
+    Ops[1] = X;
+    Ops[2] = Y;
+    InitOperands(Ops, 3);
+    OrigVT=VT;
+  }
+  MVT::ValueType getVT() const { return OrigVT; }
 };
 
 class StringSDNode : public SDNode {
