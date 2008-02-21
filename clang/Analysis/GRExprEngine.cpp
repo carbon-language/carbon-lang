@@ -448,10 +448,20 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
       continue;
     }
     
-    // FIXME: EvalCall must handle the case where the callee is Unknown.
-    assert (!L.isUnknown());    
+    if (L.isUnknown()) {
+      // Invalidate all arguments passed in by reference (LVals).
+      for (CallExpr::arg_iterator I = CE->arg_begin(), E = CE->arg_end();
+                                                       I != E; ++I) {
+        RVal V = GetRVal(St, *I);
 
-    Nodify(Dst, CE, *DI, EvalCall(CE, cast<LVal>(L), (*DI)->getState()));
+        if (isa<LVal>(V))
+          St = SetRVal(St, cast<LVal>(V), UnknownVal());
+      }
+    }
+    else
+      St = EvalCall(CE, cast<LVal>(L), (*DI)->getState());
+    
+    Nodify(Dst, CE, *DI, St);
   }
 }
 
