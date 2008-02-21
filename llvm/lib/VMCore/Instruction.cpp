@@ -138,6 +138,7 @@ const char *Instruction::getOpcodeName(unsigned OpCode) {
   case ExtractElement: return "extractelement";
   case InsertElement:  return "insertelement";
   case ShuffleVector:  return "shufflevector";
+  case GetResult:      return "getresult";
 
   default: return "<Invalid operator> ";
   }
