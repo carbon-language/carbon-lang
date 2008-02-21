@@ -246,7 +246,7 @@ void LiveVariables::HandlePhysRegUse(unsigned Reg, MachineInstr *MI) {
   // Now reset the use information for the sub-registers.
   for (const unsigned *SubRegs = RegInfo->getSubRegisters(Reg);
        unsigned SubReg = *SubRegs; ++SubRegs) {
-    // FIXME: Should we do: "PhysRegPartUse[SubReg] = NULL;" here?
+    PhysRegPartUse[SubReg] = NULL;
     PhysRegInfo[SubReg] = MI;
     PhysRegUsed[SubReg] = true;
   }
