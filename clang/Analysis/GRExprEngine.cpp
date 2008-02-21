@@ -946,7 +946,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           
           // Perform promotions.
           V = EvalCast(V, CTy);
-          RightV = EvalCast(V, CTy);
+          RightV = EvalCast(RightV, CTy);
           
           // Evaluate operands and promote to result type.
           RVal Result = EvalCast(EvalBinOp(Op, V, RightV), B->getType());
