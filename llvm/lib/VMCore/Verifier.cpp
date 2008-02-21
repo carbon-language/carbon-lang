@@ -1071,7 +1071,8 @@ void Verifier::visitInstruction(Instruction &I) {
 
   // Check that the return value of the instruction is either void or a legal
   // value type.
-  Assert1(I.getType() == Type::VoidTy || I.getType()->isFirstClassType(),
+  Assert1(I.getType() == Type::VoidTy || I.getType()->isFirstClassType()
+          || (isa<CallInst>(I) && I.getType()->getTypeID() == Type::StructTyID),
           "Instruction returns a non-scalar type!", &I);
 
   // Check that all uses of the instruction, if they are instructions
@@ -1091,11 +1092,24 @@ void Verifier::visitInstruction(Instruction &I) {
 
     // Check to make sure that only first-class-values are operands to
     // instructions.
-    Assert1(I.getOperand(i)->getType()->isFirstClassType() 
-            || (isa<ReturnInst>(I) 
-                && I.getOperand(i)->getType()->getTypeID() == Type::StructTyID),
-            "Instruction operands must be first-class values!", &I);
-  
+    if (!I.getOperand(i)->getType()->isFirstClassType()) {
+      if (isa<ReturnInst>(I) || isa<GetResultInst>(I))
+        Assert1(I.getOperand(i)->getType()->getTypeID() == Type::StructTyID,
+                "Invalid ReturnInst operands!", &I);
+      else if (isa<CallInst>(I)) {
+        if (const PointerType *PT = dyn_cast<PointerType>
+            (I.getOperand(i)->getType())) {
+          const Type *ETy = PT->getElementType();
+          Assert1(ETy->getTypeID() == Type::StructTyID,
+                  "Invalid CallInst operands!", &I);
+        }
+        else
+          Assert1(0, "Invalid CallInst operands!", &I);
+      }
+      else
+        Assert1(0, "Instruction operands must be first-class values!", &I);
+    }
+    
     if (Function *F = dyn_cast<Function>(I.getOperand(i))) {
       // Check to make sure that the "address of" an intrinsic function is never
       // taken.

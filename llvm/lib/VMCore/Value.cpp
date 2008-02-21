@@ -14,6 +14,7 @@
 #include "llvm/Constant.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/InstrTypes.h"
+#include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/Support/Debug.h"
@@ -33,7 +34,11 @@ static inline const Type *checkType(const Type *Ty) {
 Value::Value(const Type *ty, unsigned scid)
   : SubclassID(scid), SubclassData(0), Ty(checkType(ty)),
     UseList(0), Name(0) {
-  if (!isa<Constant>(this) && !isa<BasicBlock>(this))
+  if (isa<CallInst>(this))
+    assert((Ty->isFirstClassType() || Ty == Type::VoidTy ||
+            isa<OpaqueType>(ty) || Ty->getTypeID() == Type::StructTyID) &&
+           "invalid CallInst  type!");
+  else if (!isa<Constant>(this) && !isa<BasicBlock>(this))
     assert((Ty->isFirstClassType() || Ty == Type::VoidTy ||
            isa<OpaqueType>(ty)) &&
            "Cannot create non-first-class values except for constants!");
