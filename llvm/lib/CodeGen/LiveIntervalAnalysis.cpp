@@ -83,6 +83,7 @@ void LiveIntervals::releaseMemory() {
 ///
 bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
   mf_ = &fn;
+  mri_ = &mf_->getRegInfo();
   tm_ = &fn.getTarget();
   tri_ = tm_->getRegisterInfo();
   tii_ = tm_->getInstrInfo();
@@ -598,6 +599,38 @@ unsigned LiveIntervals::getVNInfoSourceReg(const VNInfo *VNI) const {
 // Register allocator hooks.
 //
 
+/// getReMatImplicitUse - If the remat definition MI has one (for now, we only
+/// allow one) virtual register operand, then its uses are implicitly using
+/// the register. Returns the virtual register.
+unsigned LiveIntervals::getReMatImplicitUse(const LiveInterval &li,
+                                            MachineInstr *MI) const {
+  unsigned RegOp = 0;
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = MI->getOperand(i);
+    if (!MO.isRegister() || !MO.isUse())
+      continue;
+    unsigned Reg = MO.getReg();
+    if (Reg == 0 || Reg == li.reg)
+      continue;
+    // FIXME: For now, only remat MI with at most one register operand.
+    assert(!RegOp &&
+           "Can't rematerialize instruction with multiple register operand!");
+    RegOp = MO.getReg();
+    break;
+  }
+  return RegOp;
+}
+
+/// isValNoAvailableAt - Return true if the val# of the specified interval
+/// which reaches the given instruction also reaches the specified use index.
+bool LiveIntervals::isValNoAvailableAt(const LiveInterval &li, MachineInstr *MI,
+                                       unsigned UseIdx) const {
+  unsigned Index = getInstructionIndex(MI);  
+  VNInfo *ValNo = li.FindLiveRangeContaining(Index)->valno;
+  LiveInterval::const_iterator UI = li.FindLiveRangeContaining(UseIdx);
+  return UI != li.end() && UI->valno == ValNo;
+}
+
 /// isReMaterializable - Returns true if the definition MI of the specified
 /// val# of the specified interval is re-materializable.
 bool LiveIntervals::isReMaterializable(const LiveInterval &li,
@@ -608,8 +641,25 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li,
 
   isLoad = false;
   const TargetInstrDesc &TID = MI->getDesc();
-  if (TID.isImplicitDef() || tii_->isTriviallyReMaterializable(MI)) {
+  if (TID.isImplicitDef())
+    return true;
+  if (tii_->isTriviallyReMaterializable(MI)) {
     isLoad = TID.isSimpleLoad();
+
+    unsigned ImpUse = getReMatImplicitUse(li, MI);
+    if (ImpUse) {
+      const LiveInterval &ImpLi = getInterval(ImpUse);
+      for (MachineRegisterInfo::use_iterator ri = mri_->use_begin(li.reg),
+             re = mri_->use_end(); ri != re; ++ri) {
+        MachineInstr *UseMI = &*ri;
+        unsigned UseIdx = getInstructionIndex(UseMI);
+        if (li.FindLiveRangeContaining(UseIdx)->valno != ValNo)
+          continue;
+        if (!canFoldMemoryOperand(UseMI, li.reg) &&
+            !isValNoAvailableAt(ImpLi, MI, UseIdx))
+          return false;
+      }
+    }
     return true;
   }
 
@@ -654,7 +704,8 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li, bool &isLoad) {
       return false;
     MachineInstr *ReMatDefMI = getInstructionFromIndex(DefIdx);
     bool DefIsLoad = false;
-    if (!ReMatDefMI || !isReMaterializable(li, VNI, ReMatDefMI, DefIsLoad))
+    if (!ReMatDefMI ||
+        !isReMaterializable(li, VNI, ReMatDefMI, DefIsLoad))
       return false;
     isLoad |= DefIsLoad;
   }
@@ -684,14 +735,16 @@ bool LiveIntervals::tryFoldMemoryOperand(MachineInstr* &MI,
   SmallVector<unsigned, 2> FoldOps;
   for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
     unsigned OpIdx = Ops[i];
+    MachineOperand &MO = MI->getOperand(OpIdx);
     // FIXME: fold subreg use.
-    if (MI->getOperand(OpIdx).getSubReg())
+    if (MO.getSubReg())
       return false;
-    if (MI->getOperand(OpIdx).isDef())
+    if (MO.isDef())
       MRInfo |= (unsigned)VirtRegMap::isMod;
     else {
       // Filter out two-address use operand(s).
-      if (TID.getOperandConstraint(OpIdx, TOI::TIED_TO) != -1) {
+      if (!MO.isImplicit() &&
+          TID.getOperandConstraint(OpIdx, TOI::TIED_TO) != -1) {
         MRInfo = VirtRegMap::isModRef;
         continue;
       }
@@ -740,6 +793,23 @@ bool LiveIntervals::canFoldMemoryOperand(MachineInstr *MI,
   return tii_->canFoldMemoryOperand(MI, FoldOps);
 }
 
+bool LiveIntervals::canFoldMemoryOperand(MachineInstr *MI, unsigned Reg) const {
+  SmallVector<unsigned, 2> FoldOps;
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    MachineOperand& mop = MI->getOperand(i);
+    if (!mop.isRegister())
+      continue;
+    unsigned UseReg = mop.getReg();
+    if (UseReg != Reg) 
+      continue;
+    // FIXME: fold subreg use.
+    if (mop.getSubReg())
+      return false;
+    FoldOps.push_back(i);
+  }
+  return tii_->canFoldMemoryOperand(MI, FoldOps);
+}
+
 bool LiveIntervals::intervalIsInOneMBB(const LiveInterval &li) const {
   SmallPtrSet<MachineBasicBlock*, 4> MBBs;
   for (LiveInterval::Ranges::const_iterator
@@ -757,19 +827,43 @@ bool LiveIntervals::intervalIsInOneMBB(const LiveInterval &li) const {
   return true;
 }
 
+/// rewriteImplicitOps - Rewrite implicit use operands of MI (i.e. uses of
+/// interval on to-be re-materialized operands of MI) with new register.
+void LiveIntervals::rewriteImplicitOps(const LiveInterval &li,
+                                       MachineInstr *MI, unsigned NewVReg,
+                                       VirtRegMap &vrm) {
+  // There is an implicit use. That means one of the other operand is
+  // being remat'ed and the remat'ed instruction has li.reg as an
+  // use operand. Make sure we rewrite that as well.
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = MI->getOperand(i);
+    if (!MO.isRegister())
+      continue;
+    unsigned Reg = MO.getReg();
+    if (Reg == 0 || TargetRegisterInfo::isPhysicalRegister(Reg))
+      continue;
+    if (!vrm.isReMaterialized(Reg))
+      continue;
+    MachineInstr *ReMatMI = vrm.getReMaterializedMI(Reg);
+    int OpIdx = ReMatMI->findRegisterUseOperandIdx(li.reg);
+    if (OpIdx != -1)
+      ReMatMI->getOperand(OpIdx).setReg(NewVReg);
+  }
+}
+
 /// rewriteInstructionForSpills, rewriteInstructionsForSpills - Helper functions
 /// for addIntervalsForSpills to rewrite uses / defs for the given live range.
 bool LiveIntervals::
-rewriteInstructionForSpills(const LiveInterval &li, bool TrySplit,
-                 unsigned id, unsigned index, unsigned end,  MachineInstr *MI,
+rewriteInstructionForSpills(const LiveInterval &li, const VNInfo *VNI,
+                 bool TrySplit, unsigned index, unsigned end,  MachineInstr *MI,
                  MachineInstr *ReMatOrigDefMI, MachineInstr *ReMatDefMI,
                  unsigned Slot, int LdSlot,
                  bool isLoad, bool isLoadSS, bool DefIsReMat, bool CanDelete,
-                 VirtRegMap &vrm, MachineRegisterInfo &RegInfo,
+                 VirtRegMap &vrm,
                  const TargetRegisterClass* rc,
                  SmallVector<int, 4> &ReMatIds,
-                 unsigned &NewVReg, bool &HasDef, bool &HasUse,
                  const MachineLoopInfo *loopInfo,
+                 unsigned &NewVReg, bool &HasDef, bool &HasUse,
                  std::map<unsigned,unsigned> &MBBVRegsMap,
                  std::vector<LiveInterval*> &NewLIs) {
   bool CanFold = false;
@@ -794,6 +888,14 @@ rewriteInstructionForSpills(const LiveInterval &li, bool TrySplit,
       if (MI == ReMatOrigDefMI && CanDelete) {
         DOUT << "\t\t\t\tErasing re-materlizable def: ";
         DOUT << MI << '\n';
+        unsigned ImpUse = getReMatImplicitUse(li, MI);
+        if (ImpUse) {
+          // To be deleted MI has a virtual register operand, update the
+          // spill weight of the register interval.
+          unsigned loopDepth = loopInfo->getLoopDepth(MI->getParent());
+          LiveInterval &ImpLi = getInterval(ImpUse);
+          ImpLi.weight -= getSpillWeight(false, true, loopDepth);
+        }
         RemoveMachineInstrFromMaps(MI);
         vrm.RemoveMachineInstrFromMaps(MI);
         MI->eraseFromParent();
@@ -862,24 +964,40 @@ rewriteInstructionForSpills(const LiveInterval &li, bool TrySplit,
     // Create a new virtual register for the spill interval.
     bool CreatedNewVReg = false;
     if (NewVReg == 0) {
-      NewVReg = RegInfo.createVirtualRegister(rc);
+      NewVReg = mri_->createVirtualRegister(rc);
       vrm.grow();
       CreatedNewVReg = true;
     }
     mop.setReg(NewVReg);
+    if (mop.isImplicit())
+      rewriteImplicitOps(li, MI, NewVReg, vrm);
 
     // Reuse NewVReg for other reads.
-    for (unsigned j = 0, e = Ops.size(); j != e; ++j)
-      MI->getOperand(Ops[j]).setReg(NewVReg);
+    for (unsigned j = 0, e = Ops.size(); j != e; ++j) {
+      MachineOperand &mopj = MI->getOperand(Ops[j]);
+      mopj.setReg(NewVReg);
+      if (mopj.isImplicit())
+        rewriteImplicitOps(li, MI, NewVReg, vrm);
+    }
             
     if (CreatedNewVReg) {
       if (DefIsReMat) {
+        unsigned ImpUse = getReMatImplicitUse(li, ReMatDefMI);
+        if (ImpUse) {
+          // Re-matting an instruction with virtual register use. Add the
+          // register as an implicit use on the use MI and update the register
+          // interval's spill weight.
+          unsigned loopDepth = loopInfo->getLoopDepth(MI->getParent());
+          LiveInterval &ImpLi = getInterval(ImpUse);
+          ImpLi.weight += getSpillWeight(false, true, loopDepth);
+          MI->addOperand(MachineOperand::CreateReg(ImpUse, false, true));
+        }
         vrm.setVirtIsReMaterialized(NewVReg, ReMatDefMI/*, CanDelete*/);
-        if (ReMatIds[id] == VirtRegMap::MAX_STACK_SLOT) {
+        if (ReMatIds[VNI->id] == VirtRegMap::MAX_STACK_SLOT) {
           // Each valnum may have its own remat id.
-          ReMatIds[id] = vrm.assignVirtReMatId(NewVReg);
+          ReMatIds[VNI->id] = vrm.assignVirtReMatId(NewVReg);
         } else {
-          vrm.assignVirtReMatId(NewVReg, ReMatIds[id]);
+          vrm.assignVirtReMatId(NewVReg, ReMatIds[VNI->id]);
         }
         if (!CanDelete || (HasUse && HasDef)) {
           // If this is a two-addr instruction then its use operands are
@@ -981,7 +1099,7 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
                     MachineInstr *ReMatOrigDefMI, MachineInstr *ReMatDefMI,
                     unsigned Slot, int LdSlot,
                     bool isLoad, bool isLoadSS, bool DefIsReMat, bool CanDelete,
-                    VirtRegMap &vrm, MachineRegisterInfo &RegInfo,
+                    VirtRegMap &vrm,
                     const TargetRegisterClass* rc,
                     SmallVector<int, 4> &ReMatIds,
                     const MachineLoopInfo *loopInfo,
@@ -999,8 +1117,8 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
   // First collect all the def / use in this live range that will be rewritten.
   // Make sure they are sorted according instruction index.
   std::vector<RewriteInfo> RewriteMIs;
-  for (MachineRegisterInfo::reg_iterator ri = RegInfo.reg_begin(li.reg),
-         re = RegInfo.reg_end(); ri != re; ) {
+  for (MachineRegisterInfo::reg_iterator ri = mri_->reg_begin(li.reg),
+         re = mri_->reg_end(); ri != re; ) {
     MachineInstr *MI = &(*ri);
     MachineOperand &O = ri.getOperand();
     ++ri;
@@ -1063,11 +1181,11 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
 
     bool HasDef = false;
     bool HasUse = false;
-    bool CanFold = rewriteInstructionForSpills(li, TrySplit, I->valno->id,
+    bool CanFold = rewriteInstructionForSpills(li, I->valno, TrySplit,
                                 index, end, MI, ReMatOrigDefMI, ReMatDefMI,
                                 Slot, LdSlot, isLoad, isLoadSS, DefIsReMat,
-                                CanDelete, vrm, RegInfo, rc, ReMatIds, NewVReg,
-                                HasDef, HasUse, loopInfo, MBBVRegsMap, NewLIs);
+                                CanDelete, vrm, rc, ReMatIds, loopInfo, NewVReg,
+                                HasDef, HasUse, MBBVRegsMap, NewLIs);
     if (!HasDef && !HasUse)
       continue;
 
@@ -1211,8 +1329,7 @@ addIntervalsForSpills(const LiveInterval &li,
   std::map<unsigned, std::vector<SRInfo> > RestoreIdxes;
   std::map<unsigned,unsigned> MBBVRegsMap;
   std::vector<LiveInterval*> NewLIs;
-  MachineRegisterInfo &RegInfo = mf_->getRegInfo();
-  const TargetRegisterClass* rc = RegInfo.getRegClass(li.reg);
+  const TargetRegisterClass* rc = mri_->getRegClass(li.reg);
 
   unsigned NumValNums = li.getNumValNums();
   SmallVector<MachineInstr*, 4> ReMatDefs;
@@ -1257,13 +1374,13 @@ addIntervalsForSpills(const LiveInterval &li,
         // Note ReMatOrigDefMI has already been deleted.
         rewriteInstructionsForSpills(li, false, I, NULL, ReMatDefMI,
                              Slot, LdSlot, isLoad, isLoadSS, DefIsReMat,
-                             false, vrm, RegInfo, rc, ReMatIds, loopInfo,
+                             false, vrm, rc, ReMatIds, loopInfo,
                              SpillMBBs, SpillIdxes, RestoreMBBs, RestoreIdxes,
                              MBBVRegsMap, NewLIs);
       } else {
         rewriteInstructionsForSpills(li, false, I, NULL, 0,
                              Slot, 0, false, false, false,
-                             false, vrm, RegInfo, rc, ReMatIds, loopInfo,
+                             false, vrm, rc, ReMatIds, loopInfo,
                              SpillMBBs, SpillIdxes, RestoreMBBs, RestoreIdxes,
                              MBBVRegsMap, NewLIs);
       }
@@ -1331,7 +1448,7 @@ addIntervalsForSpills(const LiveInterval &li,
       (DefIsReMat && ReMatDefMI->getDesc().isSimpleLoad());
     rewriteInstructionsForSpills(li, TrySplit, I, ReMatOrigDefMI, ReMatDefMI,
                                Slot, LdSlot, isLoad, isLoadSS, DefIsReMat,
-                               CanDelete, vrm, RegInfo, rc, ReMatIds, loopInfo,
+                               CanDelete, vrm, rc, ReMatIds, loopInfo,
                                SpillMBBs, SpillIdxes, RestoreMBBs, RestoreIdxes,
                                MBBVRegsMap, NewLIs);
   }
@@ -1446,6 +1563,16 @@ addIntervalsForSpills(const LiveInterval &li,
           if (isLoadSS || ReMatDefMI->getDesc().isSimpleLoad())
             Folded = tryFoldMemoryOperand(MI, vrm, ReMatDefMI, index,
                                           Ops, isLoadSS, LdSlot, VReg);
+          unsigned ImpUse = getReMatImplicitUse(li, ReMatDefMI);
+          if (ImpUse) {
+            // Re-matting an instruction with virtual register use. Add the
+            // register as an implicit use on the use MI and update the register
+            // interval's spill weight.
+            unsigned loopDepth = loopInfo->getLoopDepth(MI->getParent());
+            LiveInterval &ImpLi = getInterval(ImpUse);
+            ImpLi.weight += getSpillWeight(false, true, loopDepth);
+            MI->addOperand(MachineOperand::CreateReg(ImpUse, false, true));
+          }
         }
       }
       // If folding is not possible / failed, then tell the spiller to issue a
@@ -1471,8 +1598,8 @@ addIntervalsForSpills(const LiveInterval &li,
         MachineInstr *LastUse = getInstructionFromIndex(LastUseIdx);
         int UseIdx = LastUse->findRegisterUseOperandIdx(LI->reg);
         assert(UseIdx != -1);
-        if (LastUse->getDesc().getOperandConstraint(UseIdx, TOI::TIED_TO) ==
-            -1) {
+        if (LastUse->getOperand(UseIdx).isImplicit() ||
+            LastUse->getDesc().getOperandConstraint(UseIdx,TOI::TIED_TO) == -1){
           LastUse->getOperand(UseIdx).setIsKill();
           vrm.addKillPoint(LI->reg, LastUseIdx);
         }

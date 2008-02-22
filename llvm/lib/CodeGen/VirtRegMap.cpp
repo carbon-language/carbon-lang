@@ -574,6 +574,32 @@ static void UpdateKills(MachineInstr &MI, BitVector &RegKills,
   }
 }
 
+/// ReMaterialize - Re-materialize definition for Reg targetting DestReg.
+///
+static void ReMaterialize(MachineBasicBlock &MBB,
+                          MachineBasicBlock::iterator &MII,
+                          unsigned DestReg, unsigned Reg,
+                          const TargetRegisterInfo *TRI,
+                          VirtRegMap &VRM) {
+  TRI->reMaterialize(MBB, MII, DestReg, VRM.getReMaterializedMI(Reg));
+  MachineInstr *NewMI = prior(MII);
+  for (unsigned i = 0, e = NewMI->getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = NewMI->getOperand(i);
+    if (!MO.isRegister() || MO.getReg() == 0)
+      continue;
+    unsigned VirtReg = MO.getReg();
+    if (TargetRegisterInfo::isPhysicalRegister(VirtReg))
+      continue;
+    assert(MO.isUse());
+    unsigned SubIdx = MO.getSubReg();
+    unsigned Phys = VRM.getPhys(VirtReg);
+    assert(Phys);
+    unsigned RReg = SubIdx ? TRI->getSubReg(Phys, SubIdx) : Phys;
+    MO.setReg(RReg);
+  }
+  ++NumReMats;
+}
+
 
 // ReusedOp - For each reused operand, we keep track of a bit of information, in
 // case we need to rollback upon processing a new operand.  See comments below.
@@ -693,12 +719,11 @@ namespace {
                                                   MI, Spills, MaybeDeadStores,
                                               Rejected, RegKills, KillOps, VRM);
             
+            MachineBasicBlock::iterator MII = MI;
             if (NewOp.StackSlotOrReMat > VirtRegMap::MAX_STACK_SLOT) {
-              TRI->reMaterialize(*MBB, MI, NewPhysReg,
-                                 VRM.getReMaterializedMI(NewOp.VirtReg));
-              ++NumReMats;
+              ReMaterialize(*MBB, MII, NewPhysReg, NewOp.VirtReg, TRI, VRM);
             } else {
-              TII->loadRegFromStackSlot(*MBB, MI, NewPhysReg,
+              TII->loadRegFromStackSlot(*MBB, MII, NewPhysReg,
                                         NewOp.StackSlotOrReMat, AliasRC);
               // Any stores to this stack slot are not dead anymore.
               MaybeDeadStores[NewOp.StackSlotOrReMat] = NULL;            
@@ -710,7 +735,6 @@ namespace {
             MI->getOperand(NewOp.Operand).setReg(NewPhysReg);
             
             Spills.addAvailable(NewOp.StackSlotOrReMat, MI, NewPhysReg);
-            MachineBasicBlock::iterator MII = MI;
             --MII;
             UpdateKills(*MII, RegKills, KillOps);
             DOUT << '\t' << *MII;
@@ -973,15 +997,13 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
     if (VRM.isRestorePt(&MI)) {
       std::vector<unsigned> &RestoreRegs = VRM.getRestorePtRestores(&MI);
       for (unsigned i = 0, e = RestoreRegs.size(); i != e; ++i) {
-        unsigned VirtReg = RestoreRegs[i];
+        unsigned VirtReg = RestoreRegs[e-i-1];  // Reverse order.
         if (!VRM.getPreSplitReg(VirtReg))
           continue; // Split interval spilled again.
         unsigned Phys = VRM.getPhys(VirtReg);
         RegInfo->setPhysRegUsed(Phys);
         if (VRM.isReMaterialized(VirtReg)) {
-          TRI->reMaterialize(MBB, &MI, Phys,
-                             VRM.getReMaterializedMI(VirtReg));
-          ++NumReMats;
+          ReMaterialize(MBB, MII, Phys, VirtReg, TRI, VRM);
         } else {
           const TargetRegisterClass* RC = RegInfo->getRegClass(VirtReg);
           TII->loadRegFromStackSlot(MBB, &MI, Phys, VRM.getStackSlot(VirtReg),
@@ -1219,8 +1241,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
       RegInfo->setPhysRegUsed(PhysReg);
       ReusedOperands.markClobbered(PhysReg);
       if (DoReMat) {
-        TRI->reMaterialize(MBB, &MI, PhysReg, VRM.getReMaterializedMI(VirtReg));
-        ++NumReMats;
+        ReMaterialize(MBB, MII, PhysReg, VirtReg, TRI, VRM);
       } else {
         const TargetRegisterClass* RC = RegInfo->getRegClass(VirtReg);
         TII->loadRegFromStackSlot(MBB, &MI, PhysReg, SSorRMId, RC);

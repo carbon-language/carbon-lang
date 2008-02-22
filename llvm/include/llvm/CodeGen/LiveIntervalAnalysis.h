@@ -56,6 +56,7 @@ namespace llvm {
 
   class LiveIntervals : public MachineFunctionPass {
     MachineFunction* mf_;
+    MachineRegisterInfo* mri_;
     const TargetMachine* tm_;
     const TargetRegisterInfo* tri_;
     const TargetInstrInfo* tii_;
@@ -317,6 +318,18 @@ namespace llvm {
                               unsigned MIIdx,
                               LiveInterval &interval, bool isAlias = false);
 
+    /// getReMatImplicitUse - If the remat definition MI has one (for now, we
+    /// only allow one) virtual register operand, then its uses are implicitly
+    /// using the register. Returns the virtual register.
+    unsigned getReMatImplicitUse(const LiveInterval &li,
+                                 MachineInstr *MI) const;
+
+    /// isValNoAvailableAt - Return true if the val# of the specified interval
+    /// which reaches the given instruction also reaches the specified use
+    /// index.
+    bool isValNoAvailableAt(const LiveInterval &li, MachineInstr *MI,
+                            unsigned UseIdx) const;
+
     /// isReMaterializable - Returns true if the definition MI of the specified
     /// val# of the specified interval is re-materializable. Also returns true
     /// by reference if the def is a load.
@@ -332,10 +345,11 @@ namespace llvm {
                               SmallVector<unsigned, 2> &Ops,
                               bool isSS, int Slot, unsigned Reg);
 
-    /// canFoldMemoryOperand - Returns true if the specified load / store
+    /// canFoldMemoryOperand - Return true if the specified load / store
     /// folding is possible.
     bool canFoldMemoryOperand(MachineInstr *MI,
                               SmallVector<unsigned, 2> &Ops) const;
+    bool canFoldMemoryOperand(MachineInstr *MI, unsigned Reg) const;
 
     /// anyKillInMBBAfterIdx - Returns true if there is a kill of the specified
     /// VNInfo that's after the specified index but is within the basic block.
@@ -361,26 +375,28 @@ namespace llvm {
                           BitVector &RestoreMBBs,
                           std::map<unsigned,std::vector<SRInfo> >&RestoreIdxes);
 
+    /// rewriteImplicitOps - Rewrite implicit use operands of MI (i.e. uses of
+    /// interval on to-be re-materialized operands of MI) with new register.
+    void rewriteImplicitOps(const LiveInterval &li,
+                           MachineInstr *MI, unsigned NewVReg, VirtRegMap &vrm);
+
     /// rewriteInstructionForSpills, rewriteInstructionsForSpills - Helper
     /// functions for addIntervalsForSpills to rewrite uses / defs for the given
     /// live range.
-    bool rewriteInstructionForSpills(const LiveInterval &li, bool TrySplit,
-        unsigned id, unsigned index, unsigned end, MachineInstr *MI,
+    bool rewriteInstructionForSpills(const LiveInterval &li, const VNInfo *VNI,
+        bool TrySplit, unsigned index, unsigned end, MachineInstr *MI,
         MachineInstr *OrigDefMI, MachineInstr *DefMI, unsigned Slot, int LdSlot,
         bool isLoad, bool isLoadSS, bool DefIsReMat, bool CanDelete,
-        VirtRegMap &vrm, MachineRegisterInfo &RegMap, 
-                                     const TargetRegisterClass* rc,
-        SmallVector<int, 4> &ReMatIds,
+        VirtRegMap &vrm, const TargetRegisterClass* rc,
+        SmallVector<int, 4> &ReMatIds, const MachineLoopInfo *loopInfo,
         unsigned &NewVReg, bool &HasDef, bool &HasUse,
-        const MachineLoopInfo *loopInfo,
         std::map<unsigned,unsigned> &MBBVRegsMap,
         std::vector<LiveInterval*> &NewLIs);
     void rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
         LiveInterval::Ranges::const_iterator &I,
         MachineInstr *OrigDefMI, MachineInstr *DefMI, unsigned Slot, int LdSlot,
         bool isLoad, bool isLoadSS, bool DefIsReMat, bool CanDelete,
-        VirtRegMap &vrm, MachineRegisterInfo &RegMap,
-                                      const TargetRegisterClass* rc,
+        VirtRegMap &vrm, const TargetRegisterClass* rc,
         SmallVector<int, 4> &ReMatIds, const MachineLoopInfo *loopInfo,
         BitVector &SpillMBBs,
         std::map<unsigned,std::vector<SRInfo> > &SpillIdxes,
