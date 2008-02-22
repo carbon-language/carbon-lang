@@ -173,7 +173,7 @@ void TransferFuncs::VisitDeclStmt(DeclStmt* DS) {
 //===----------------------------------------------------------------------===//      
 
 namespace {
-typedef DeclBitVector_Types::Union Merge;
+typedef ExprDeclBitVector_Types::Union Merge;
 typedef DataflowSolver<LiveVariables,TransferFuncs,Merge> Solver;
 } // end anonymous namespace
 
