@@ -99,6 +99,7 @@ namespace {
       (void) llvm::createSimplifyLibCallsPass();
       (void) llvm::createSingleLoopExtractorPass();
       (void) llvm::createStripSymbolsPass();
+      (void) llvm::createStripDeadPrototypesPass();
       (void) llvm::createTailCallEliminationPass();
       (void) llvm::createTailDuplicationPass();
       (void) llvm::createUnifyFunctionExitNodesPass();
