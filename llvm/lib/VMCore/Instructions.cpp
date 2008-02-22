@@ -61,6 +61,13 @@ bool CallSite::paramHasAttr(uint16_t i, ParameterAttributes attr) const {
   else
     return cast<InvokeInst>(I)->paramHasAttr(i, attr);
 }
+uint16_t CallSite::getParamAlignment(uint16_t i) const {
+  if (CallInst *CI = dyn_cast<CallInst>(I))
+    return CI->getParamAlignment(i);
+  else
+    return cast<InvokeInst>(I)->getParamAlignment(i);
+}
+
 bool CallSite::doesNotAccessMemory() const {
   if (CallInst *CI = dyn_cast<CallInst>(I))
     return CI->doesNotAccessMemory();
@@ -384,6 +391,14 @@ bool CallInst::paramHasAttr(uint16_t i, ParameterAttributes attr) const {
   return false;
 }
 
+uint16_t CallInst::getParamAlignment(uint16_t i) const {
+  if (ParamAttrs && ParamAttrs->getParamAlignment(i))
+    return ParamAttrs->getParamAlignment(i);
+  if (const Function *F = getCalledFunction())
+    return F->getParamAlignment(i);
+  return 0;
+}
+
 /// @brief Determine if the call does not access memory.
 bool CallInst::doesNotAccessMemory() const {
   return paramHasAttr(0, ParamAttr::ReadNone);
@@ -508,6 +523,13 @@ bool InvokeInst::paramHasAttr(uint16_t i, ParameterAttributes attr) const {
   return false;
 }
 
+uint16_t InvokeInst::getParamAlignment(uint16_t i) const {
+  if (ParamAttrs && ParamAttrs->getParamAlignment(i))
+    return ParamAttrs->getParamAlignment(i);
+  if (const Function *F = getCalledFunction())
+    return F->getParamAlignment(i);
+  return 0;
+}
 
 /// @brief Determine if the call does not access memory.
 bool InvokeInst::doesNotAccessMemory() const {

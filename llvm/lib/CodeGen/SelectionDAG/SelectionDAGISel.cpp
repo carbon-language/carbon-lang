@@ -3118,6 +3118,7 @@ void SelectionDAGLowering::LowerCallTo(CallSite CS, SDOperand Callee,
     Entry.isSRet  = CS.paramHasAttr(attrInd, ParamAttr::StructRet);
     Entry.isNest  = CS.paramHasAttr(attrInd, ParamAttr::Nest);
     Entry.isByVal = CS.paramHasAttr(attrInd, ParamAttr::ByVal);
+    Entry.Alignment = CS.getParamAlignment(attrInd);
     Args.push_back(Entry);
   }
 
@@ -4146,6 +4147,10 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       const Type *ElementTy = Ty->getElementType();
       unsigned FrameAlign = Log2_32(getByValTypeAlignment(ElementTy));
       unsigned FrameSize  = getTargetData()->getABITypeSize(ElementTy);
+      // For ByVal, alignment should be passed from FE.  BE will guess if
+      // this info is not there but there are cases it cannot get right.
+      if (F.getParamAlignment(j))
+        FrameAlign = Log2_32(F.getParamAlignment(j));
       Flags |= (FrameAlign << ISD::ParamFlags::ByValAlignOffs);
       Flags |= (FrameSize  << ISD::ParamFlags::ByValSizeOffs);
     }
@@ -4255,6 +4260,10 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
       const Type *ElementTy = Ty->getElementType();
       unsigned FrameAlign = Log2_32(getByValTypeAlignment(ElementTy));
       unsigned FrameSize  = getTargetData()->getABITypeSize(ElementTy);
+      // For ByVal, alignment should come from FE.  BE will guess if this
+      // info is not there but there are cases it cannot get right.
+      if (Args[i].Alignment)
+        FrameAlign = Log2_32(Args[i].Alignment);
       Flags |= (FrameAlign << ISD::ParamFlags::ByValAlignOffs);
       Flags |= (FrameSize  << ISD::ParamFlags::ByValSizeOffs);
     }

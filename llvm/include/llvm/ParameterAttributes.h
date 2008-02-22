@@ -69,6 +69,12 @@ const Attributes MutuallyIncompatible[3] = {
 /// @brief Which attributes cannot be applied to a type.
 Attributes typeIncompatible (const Type *Ty);
 
+/// This turns an int alignment (a power of 2, normally) into the
+/// form used internally in ParameterAttributes.
+ParamAttr::Attributes inline constructAlignmentFromInt(uint32_t i) {
+  return (i << 16);
+}
+
 } // end namespace ParamAttr
 
 /// @brief A more friendly way to reference the attributes.
@@ -175,6 +181,13 @@ class ParamAttrsList : public FoldingSetNode {
     /// @brief Determine if a ParameterAttributes is set
     bool paramHasAttr(uint16_t i, ParameterAttributes attr) const {
       return getParamAttrs(i) & attr;
+    }
+  
+    /// This extracts the alignment for the \p ith function parameter.
+    /// @returns 0 if unknown, else the alignment in bytes
+    /// @brief Extract the Alignment
+    uint16_t getParamAlignment(uint16_t i) const {
+      return (getParamAttrs(i) & ParamAttr::Alignment) >> 16;
     }
 
     /// This returns whether the given attribute is set for at least one

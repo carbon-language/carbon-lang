@@ -143,6 +143,11 @@ bool Function::paramHasAttr(uint16_t i, ParameterAttributes attr) const {
   return ParamAttrs && ParamAttrs->paramHasAttr(i, attr);
 }
 
+/// @brief Extract the alignment for a call or parameter (0=unknown).
+uint16_t Function::getParamAlignment(uint16_t i) const {
+  return ParamAttrs ? ParamAttrs->getParamAlignment(i) : 0;
+}
+
 /// @brief Determine if the function cannot return.
 bool Function::doesNotReturn() const {
   return paramHasAttr(0, ParamAttr::NoReturn);

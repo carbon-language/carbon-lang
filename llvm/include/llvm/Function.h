@@ -166,6 +166,9 @@ public:
   /// @brief Determine whether the function has the given attribute.
   bool paramHasAttr(uint16_t i, ParameterAttributes attr) const;
   
+  /// @brief Extract the alignment for a call or parameter (0=unknown).
+  uint16_t getParamAlignment(uint16_t i) const;
+
   /// @brief Determine if the function cannot return.
   bool doesNotReturn() const;
 
