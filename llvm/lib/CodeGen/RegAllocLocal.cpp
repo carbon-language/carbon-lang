@@ -368,7 +368,7 @@ bool RALocal::isPhysRegAvailable(unsigned PhysReg) const {
   // not free!
   for (const unsigned *AliasSet = TRI->getAliasSet(PhysReg);
        *AliasSet; ++AliasSet)
-    if (PhysRegsUsed[*AliasSet] != -1) // Aliased register in use?
+    if (PhysRegsUsed[*AliasSet] >= 0) // Aliased register in use?
       return false;                    // Can't use this reg then.
   return true;
 }
