@@ -1353,7 +1353,7 @@ protected:
   }
 public:
     
-    int getIndex() const { return JTI; }
+  int getIndex() const { return JTI; }
   
   static bool classof(const JumpTableSDNode *) { return true; }
   static bool classof(const SDNode *N) {
@@ -1615,28 +1615,16 @@ public:
                const Value *SV, int SVO, unsigned Align, bool Vol)
     : SDNode(NodeTy, VTs),
       AddrMode(AM), MemoryVT(VT),
-      SrcValue(SV), SVOffset(SVO), Alignment(Align), IsVolatile(Vol)
-  {
+      SrcValue(SV), SVOffset(SVO), Alignment(Align), IsVolatile(Vol) {
     for (unsigned i = 0; i != NumOperands; ++i)
       Ops[i] = Operands[i];
     InitOperands(Ops, NumOperands);
     assert(Align != 0 && "Loads and stores should have non-zero aligment");
-    assert((getOffset().getOpcode() == ISD::UNDEF || isIndexed()) &&
-           "Only indexed loads and stores have a non-undef offset operand");
   }
 
-  const SDOperand getChain() const {
-    return getOperand(0);
-  }
-  const SDOperand getBasePtr() const {
+  const SDOperand &getChain() const { return getOperand(0); }
+  const SDOperand &getBasePtr() const {
     return getOperand(getOpcode() == ISD::LOAD ? 1 : 2);
-  }
-  const SDOperand getOffset() const {
-    return getOperand(getOpcode() == ISD::LOAD ? 2 : 3);
-  }
-  const SDOperand getValue() const {
-    assert(getOpcode() == ISD::STORE);
-    return getOperand(1);
   }
 
   const Value *getSrcValue() const { return SrcValue; }
@@ -1679,10 +1667,15 @@ protected:
              const Value *SV, int O=0, unsigned Align=0, bool Vol=false)
     : LSBaseSDNode(ISD::LOAD, ChainPtrOff, 3,
                    VTs, AM, LVT, SV, O, Align, Vol),
-      ExtType(ETy) { }
+      ExtType(ETy) {
+    assert((getOffset().getOpcode() == ISD::UNDEF || isIndexed()) &&
+           "Only indexed loads and stores have a non-undef offset operand");
+  }
 public:
 
   ISD::LoadExtType getExtensionType() const { return ExtType; }
+  const SDOperand &getBasePtr() const { return getOperand(1); }
+  const SDOperand &getOffset() const { return getOperand(2); }
   
   static bool classof(const LoadSDNode *) { return true; }
   static bool classof(const SDNode *N) {
@@ -1704,10 +1697,16 @@ protected:
               const Value *SV, int O=0, unsigned Align=0, bool Vol=false)
     : LSBaseSDNode(ISD::STORE, ChainValuePtrOff, 4,
                    VTs, AM, SVT, SV, O, Align, Vol),
-      IsTruncStore(isTrunc) { }
+      IsTruncStore(isTrunc) {
+    assert((getOffset().getOpcode() == ISD::UNDEF || isIndexed()) &&
+           "Only indexed loads and stores have a non-undef offset operand");
+  }
 public:
 
   bool isTruncatingStore() const { return IsTruncStore; }
+  const SDOperand &getValue() const { return getOperand(1); }
+  const SDOperand &getBasePtr() const { return getOperand(2); }
+  const SDOperand &getOffset() const { return getOperand(3); }
   
   static bool classof(const StoreSDNode *) { return true; }
   static bool classof(const SDNode *N) {
