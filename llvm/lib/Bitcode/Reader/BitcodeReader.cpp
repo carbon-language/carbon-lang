@@ -1325,6 +1325,16 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
         I = new ICmpInst((ICmpInst::Predicate)Record[OpNum], LHS, RHS);
       break;
     }
+    case bitc::FUNC_CODE_INST_GETRESULT: { // GETRESULT: [ty, val, n]
+      if (Record.size() != 2)
+        return Error("Invalid GETRESULT record");
+      unsigned OpNum = 0;
+      Value *Op;
+      getValueTypePair(Record, OpNum, NextValueNo, Op);
+      unsigned Index = Record[1];
+      I = new GetResultInst(Op, Index);
+      break;
+    }
     
     case bitc::FUNC_CODE_INST_RET: // RET: [opty,opval<optional>]
       if (Record.empty()) {
