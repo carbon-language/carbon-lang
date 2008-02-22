@@ -728,6 +728,8 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
         MF->getRegInfo().setPhysRegUsed(DestPhysReg);
         markVirtRegModified(DestVirtReg);
         getVirtRegLastUse(DestVirtReg) = std::make_pair((MachineInstr*)0, 0);
+        DOUT << "  Assigning " << TRI->getName(DestPhysReg)
+             << " to %reg" << DestVirtReg << "\n";
         MI->getOperand(i).setReg(DestPhysReg);  // Assign the output register
       }
     }
