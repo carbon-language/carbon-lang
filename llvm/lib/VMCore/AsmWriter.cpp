@@ -1291,6 +1291,19 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
       writeOperand(I.getOperand(op  ), false); Out << ',';
       writeOperand(I.getOperand(op+1), false); Out << " ]";
     }
+  } else if (isa<GetResultInst>(I)) {
+    const StructType *STy = cast<StructType>(I.getOperand(0)->getType());
+    unsigned NumElems = STy->getNumElements();
+    Out << " {";
+    for (unsigned i = 0; i < NumElems; ++i) {
+      if (i)
+        Out << ",";
+      Out << " ";
+      printType(STy->getElementType(i));
+    }
+    Out << " }";
+    writeOperand(I.getOperand(0), false);
+    Out << ", " << cast<GetResultInst>(I).getIndex();
   } else if (isa<ReturnInst>(I)) {
     if (!Operand)
       Out << " void";
