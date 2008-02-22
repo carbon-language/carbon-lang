@@ -18,6 +18,7 @@
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/Support/DataTypes.h"
 #include <cassert>
+#include <functional>
 
 namespace llvm {
   

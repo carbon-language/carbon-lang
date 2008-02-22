@@ -2,7 +2,8 @@
  * config.h */
 
 #define PACKAGE_NAME "LLVM (win32 vc8.0)" 
-#define PACKAGE_VERSION 2.1
+#define PACKAGE_VERSION 2.2
+#define LLVM_HOSTTRIPLE "i686-pc-win32"
 #define HAVE_WINDOWS_H 1 
 #define HAVE_LIMITS_H 1 
 #define HAVE_SYS_STAT_H 1 
