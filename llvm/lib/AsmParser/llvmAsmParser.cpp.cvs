@@ -378,7 +378,7 @@
 
 
 /* Copy the first part of user declarations.  */
-#line 14 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 14 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
 
 #include "ParserInternals.h"
 #include "llvm/CallingConv.h"
@@ -1337,7 +1337,7 @@ Module *llvm::RunVMAsmParser(llvm::MemoryBuffer *MB) {
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 952 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 952 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
 {
   llvm::Module                           *ModuleVal;
   llvm::Function                         *FunctionVal;
@@ -1838,28 +1838,28 @@ static const yytype_uint16 yyrline[] =
     1183,  1184,  1185,  1189,  1190,  1191,  1192,  1196,  1197,  1198,
     1202,  1203,  1204,  1205,  1206,  1210,  1211,  1212,  1215,  1216,
     1217,  1218,  1219,  1220,  1221,  1228,  1229,  1230,  1231,  1232,
-    1233,  1234,  1235,  1236,  1237,  1240,  1241,  1246,  1247,  1248,
-    1249,  1250,  1251,  1254,  1255,  1260,  1261,  1268,  1269,  1275,
-    1276,  1285,  1293,  1294,  1299,  1300,  1301,  1306,  1319,  1319,
-    1319,  1319,  1319,  1319,  1319,  1322,  1326,  1330,  1337,  1342,
-    1350,  1380,  1405,  1410,  1420,  1430,  1434,  1444,  1451,  1460,
-    1467,  1472,  1477,  1484,  1485,  1492,  1499,  1507,  1513,  1525,
-    1553,  1569,  1596,  1624,  1650,  1670,  1696,  1716,  1728,  1735,
-    1801,  1811,  1821,  1827,  1837,  1843,  1853,  1858,  1863,  1876,
-    1888,  1910,  1918,  1924,  1935,  1940,  1945,  1951,  1957,  1966,
-    1970,  1978,  1978,  1981,  1981,  1984,  1996,  2017,  2022,  2030,
-    2031,  2035,  2035,  2039,  2039,  2042,  2045,  2069,  2081,  2080,
-    2092,  2091,  2101,  2100,  2111,  2151,  2154,  2160,  2170,  2174,
-    2179,  2181,  2186,  2191,  2200,  2210,  2221,  2225,  2234,  2243,
-    2248,  2382,  2382,  2384,  2393,  2393,  2395,  2400,  2412,  2416,
-    2421,  2425,  2429,  2433,  2437,  2441,  2445,  2449,  2453,  2478,
-    2482,  2492,  2496,  2500,  2505,  2512,  2512,  2518,  2527,  2532,
-    2537,  2541,  2550,  2559,  2568,  2572,  2580,  2606,  2610,  2615,
-    2625,  2644,  2653,  2744,  2748,  2755,  2766,  2779,  2789,  2800,
-    2810,  2821,  2829,  2839,  2846,  2849,  2850,  2857,  2861,  2866,
-    2882,  2899,  2913,  2927,  2939,  2947,  2954,  2960,  2966,  2972,
-    2987,  3085,  3090,  3094,  3101,  3108,  3116,  3123,  3131,  3139,
-    3153,  3170,  3178
+    1233,  1234,  1235,  1236,  1237,  1241,  1242,  1247,  1248,  1249,
+    1250,  1251,  1252,  1255,  1256,  1261,  1262,  1269,  1270,  1276,
+    1277,  1286,  1294,  1295,  1300,  1301,  1302,  1307,  1320,  1320,
+    1320,  1320,  1320,  1320,  1320,  1323,  1327,  1331,  1338,  1343,
+    1351,  1381,  1406,  1411,  1421,  1431,  1435,  1445,  1452,  1461,
+    1468,  1473,  1478,  1485,  1486,  1493,  1500,  1508,  1514,  1526,
+    1554,  1570,  1597,  1625,  1651,  1671,  1697,  1717,  1729,  1736,
+    1802,  1812,  1822,  1828,  1838,  1844,  1854,  1859,  1864,  1877,
+    1889,  1911,  1919,  1925,  1936,  1941,  1946,  1952,  1958,  1967,
+    1971,  1979,  1979,  1982,  1982,  1985,  1997,  2018,  2023,  2031,
+    2032,  2036,  2036,  2040,  2040,  2043,  2046,  2070,  2082,  2081,
+    2093,  2092,  2102,  2101,  2112,  2152,  2155,  2161,  2171,  2175,
+    2180,  2182,  2187,  2192,  2201,  2211,  2222,  2226,  2235,  2244,
+    2249,  2383,  2383,  2385,  2394,  2394,  2396,  2401,  2413,  2417,
+    2422,  2426,  2430,  2434,  2438,  2442,  2446,  2450,  2454,  2479,
+    2483,  2493,  2497,  2501,  2506,  2513,  2513,  2519,  2528,  2533,
+    2538,  2542,  2551,  2560,  2569,  2573,  2581,  2607,  2611,  2616,
+    2626,  2645,  2654,  2745,  2749,  2756,  2767,  2780,  2790,  2801,
+    2811,  2822,  2830,  2840,  2847,  2850,  2851,  2858,  2862,  2867,
+    2883,  2900,  2914,  2928,  2940,  2948,  2955,  2961,  2967,  2973,
+    2988,  3086,  3091,  3095,  3102,  3109,  3117,  3124,  3132,  3140,
+    3154,  3171,  3179
 };
 #endif
 
@@ -3473,152 +3473,152 @@ yyreduce:
   switch (yyn)
     {
         case 29:
-#line 1120 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1120 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.IPredicate) = ICmpInst::ICMP_EQ; ;}
     break;
 
   case 30:
-#line 1120 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1120 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.IPredicate) = ICmpInst::ICMP_NE; ;}
     break;
 
   case 31:
-#line 1121 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1121 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.IPredicate) = ICmpInst::ICMP_SLT; ;}
     break;
 
   case 32:
-#line 1121 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1121 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.IPredicate) = ICmpInst::ICMP_SGT; ;}
     break;
 
   case 33:
-#line 1122 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1122 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.IPredicate) = ICmpInst::ICMP_SLE; ;}
     break;
 
   case 34:
-#line 1122 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1122 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.IPredicate) = ICmpInst::ICMP_SGE; ;}
     break;
 
   case 35:
-#line 1123 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1123 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.IPredicate) = ICmpInst::ICMP_ULT; ;}
     break;
 
   case 36:
-#line 1123 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1123 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.IPredicate) = ICmpInst::ICMP_UGT; ;}
     break;
 
   case 37:
-#line 1124 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1124 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.IPredicate) = ICmpInst::ICMP_ULE; ;}
     break;
 
   case 38:
-#line 1124 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1124 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.IPredicate) = ICmpInst::ICMP_UGE; ;}
     break;
 
   case 39:
-#line 1128 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1128 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.FPredicate) = FCmpInst::FCMP_OEQ; ;}
     break;
 
   case 40:
-#line 1128 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1128 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.FPredicate) = FCmpInst::FCMP_ONE; ;}
     break;
 
   case 41:
-#line 1129 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1129 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.FPredicate) = FCmpInst::FCMP_OLT; ;}
     break;
 
   case 42:
-#line 1129 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1129 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.FPredicate) = FCmpInst::FCMP_OGT; ;}
     break;
 
   case 43:
-#line 1130 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1130 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.FPredicate) = FCmpInst::FCMP_OLE; ;}
     break;
 
   case 44:
-#line 1130 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1130 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.FPredicate) = FCmpInst::FCMP_OGE; ;}
     break;
 
   case 45:
-#line 1131 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1131 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.FPredicate) = FCmpInst::FCMP_ORD; ;}
     break;
 
   case 46:
-#line 1131 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1131 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.FPredicate) = FCmpInst::FCMP_UNO; ;}
     break;
 
   case 47:
-#line 1132 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1132 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.FPredicate) = FCmpInst::FCMP_UEQ; ;}
     break;
 
   case 48:
-#line 1132 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1132 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.FPredicate) = FCmpInst::FCMP_UNE; ;}
     break;
 
   case 49:
-#line 1133 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1133 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.FPredicate) = FCmpInst::FCMP_ULT; ;}
     break;
 
   case 50:
-#line 1133 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1133 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.FPredicate) = FCmpInst::FCMP_UGT; ;}
     break;
 
   case 51:
-#line 1134 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1134 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.FPredicate) = FCmpInst::FCMP_ULE; ;}
     break;
 
   case 52:
-#line 1134 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1134 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.FPredicate) = FCmpInst::FCMP_UGE; ;}
     break;
 
   case 53:
-#line 1135 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1135 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.FPredicate) = FCmpInst::FCMP_TRUE; ;}
     break;
 
   case 54:
-#line 1136 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1136 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.FPredicate) = FCmpInst::FCMP_FALSE; ;}
     break;
 
   case 65:
-#line 1145 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1145 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.StrVal) = 0; ;}
     break;
 
   case 66:
-#line 1147 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1147 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.UIntVal)=(yyvsp[(3) - (4)].UInt64Val); ;}
     break;
 
   case 67:
-#line 1148 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1148 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.UIntVal)=0; ;}
     break;
 
   case 68:
-#line 1152 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1152 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.StrVal) = (yyvsp[(1) - (2)].StrVal);
     CHECK_FOR_ERROR
@@ -3626,7 +3626,7 @@ yyreduce:
     break;
 
   case 69:
-#line 1156 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1156 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.StrVal) = 0;
     CHECK_FOR_ERROR
@@ -3634,7 +3634,7 @@ yyreduce:
     break;
 
   case 73:
-#line 1164 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1164 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.StrVal) = 0;
     CHECK_FOR_ERROR
@@ -3642,7 +3642,7 @@ yyreduce:
     break;
 
   case 74:
-#line 1169 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1169 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.StrVal) = (yyvsp[(1) - (2)].StrVal);
     CHECK_FOR_ERROR
@@ -3650,152 +3650,152 @@ yyreduce:
     break;
 
   case 75:
-#line 1175 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1175 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.Linkage) = GlobalValue::InternalLinkage; ;}
     break;
 
   case 76:
-#line 1176 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1176 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.Linkage) = GlobalValue::WeakLinkage; ;}
     break;
 
   case 77:
-#line 1177 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1177 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.Linkage) = GlobalValue::LinkOnceLinkage; ;}
     break;
 
   case 78:
-#line 1178 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1178 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.Linkage) = GlobalValue::AppendingLinkage; ;}
     break;
 
   case 79:
-#line 1179 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1179 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.Linkage) = GlobalValue::DLLExportLinkage; ;}
     break;
 
   case 80:
-#line 1183 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1183 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.Linkage) = GlobalValue::DLLImportLinkage; ;}
     break;
 
   case 81:
-#line 1184 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1184 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.Linkage) = GlobalValue::ExternalWeakLinkage; ;}
     break;
 
   case 82:
-#line 1185 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1185 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.Linkage) = GlobalValue::ExternalLinkage; ;}
     break;
 
   case 83:
-#line 1189 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1189 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.Visibility) = GlobalValue::DefaultVisibility;   ;}
     break;
 
   case 84:
-#line 1190 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1190 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.Visibility) = GlobalValue::DefaultVisibility;   ;}
     break;
 
   case 85:
-#line 1191 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1191 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.Visibility) = GlobalValue::HiddenVisibility;    ;}
     break;
 
   case 86:
-#line 1192 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1192 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.Visibility) = GlobalValue::ProtectedVisibility; ;}
     break;
 
   case 87:
-#line 1196 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1196 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.Linkage) = GlobalValue::ExternalLinkage; ;}
     break;
 
   case 88:
-#line 1197 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1197 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.Linkage) = GlobalValue::DLLImportLinkage; ;}
     break;
 
   case 89:
-#line 1198 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1198 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.Linkage) = GlobalValue::ExternalWeakLinkage; ;}
     break;
 
   case 90:
-#line 1202 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1202 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.Linkage) = GlobalValue::ExternalLinkage; ;}
     break;
 
   case 91:
-#line 1203 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1203 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.Linkage) = GlobalValue::InternalLinkage; ;}
     break;
 
   case 92:
-#line 1204 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1204 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.Linkage) = GlobalValue::LinkOnceLinkage; ;}
     break;
 
   case 93:
-#line 1205 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1205 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.Linkage) = GlobalValue::WeakLinkage; ;}
     break;
 
   case 94:
-#line 1206 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1206 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.Linkage) = GlobalValue::DLLExportLinkage; ;}
     break;
 
   case 95:
-#line 1210 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1210 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.Linkage) = GlobalValue::ExternalLinkage; ;}
     break;
 
   case 96:
-#line 1211 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1211 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.Linkage) = GlobalValue::WeakLinkage; ;}
     break;
 
   case 97:
-#line 1212 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1212 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.Linkage) = GlobalValue::InternalLinkage; ;}
     break;
 
   case 98:
-#line 1215 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1215 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.UIntVal) = CallingConv::C; ;}
     break;
 
   case 99:
-#line 1216 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1216 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.UIntVal) = CallingConv::C; ;}
     break;
 
   case 100:
-#line 1217 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1217 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.UIntVal) = CallingConv::Fast; ;}
     break;
 
   case 101:
-#line 1218 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1218 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.UIntVal) = CallingConv::Cold; ;}
     break;
 
   case 102:
-#line 1219 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1219 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.UIntVal) = CallingConv::X86_StdCall; ;}
     break;
 
   case 103:
-#line 1220 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1220 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.UIntVal) = CallingConv::X86_FastCall; ;}
     break;
 
   case 104:
-#line 1221 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1221 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
                    if ((unsigned)(yyvsp[(2) - (2)].UInt64Val) != (yyvsp[(2) - (2)].UInt64Val))
                      GEN_ERROR("Calling conv too large");
@@ -3805,128 +3805,129 @@ yyreduce:
     break;
 
   case 105:
-#line 1228 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1228 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.ParamAttrs) = ParamAttr::ZExt;      ;}
     break;
 
   case 106:
-#line 1229 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1229 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.ParamAttrs) = ParamAttr::ZExt;      ;}
     break;
 
   case 107:
-#line 1230 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1230 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.ParamAttrs) = ParamAttr::SExt;      ;}
     break;
 
   case 108:
-#line 1231 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1231 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.ParamAttrs) = ParamAttr::SExt;      ;}
     break;
 
   case 109:
-#line 1232 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1232 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.ParamAttrs) = ParamAttr::InReg;     ;}
     break;
 
   case 110:
-#line 1233 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1233 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.ParamAttrs) = ParamAttr::StructRet; ;}
     break;
 
   case 111:
-#line 1234 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1234 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.ParamAttrs) = ParamAttr::NoAlias;   ;}
     break;
 
   case 112:
-#line 1235 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1235 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.ParamAttrs) = ParamAttr::ByVal;     ;}
     break;
 
   case 113:
-#line 1236 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1236 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.ParamAttrs) = ParamAttr::Nest;      ;}
     break;
 
   case 114:
-#line 1237 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
-    { (yyval.ParamAttrs) = (yyvsp[(2) - (2)].UInt64Val) << 16;    ;}
+#line 1237 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
+    { (yyval.ParamAttrs) = 
+                          ParamAttr::constructAlignmentFromInt((yyvsp[(2) - (2)].UInt64Val));    ;}
     break;
 
   case 115:
-#line 1240 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1241 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.ParamAttrs) = ParamAttr::None; ;}
     break;
 
   case 116:
-#line 1241 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1242 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
                 (yyval.ParamAttrs) = (yyvsp[(1) - (2)].ParamAttrs) | (yyvsp[(2) - (2)].ParamAttrs);
               ;}
     break;
 
   case 117:
-#line 1246 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1247 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.ParamAttrs) = ParamAttr::NoReturn; ;}
     break;
 
   case 118:
-#line 1247 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1248 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.ParamAttrs) = ParamAttr::NoUnwind; ;}
     break;
 
   case 119:
-#line 1248 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1249 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.ParamAttrs) = ParamAttr::ZExt;     ;}
     break;
 
   case 120:
-#line 1249 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1250 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.ParamAttrs) = ParamAttr::SExt;     ;}
     break;
 
   case 121:
-#line 1250 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1251 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.ParamAttrs) = ParamAttr::ReadNone; ;}
     break;
 
   case 122:
-#line 1251 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1252 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.ParamAttrs) = ParamAttr::ReadOnly; ;}
     break;
 
   case 123:
-#line 1254 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1255 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.ParamAttrs) = ParamAttr::None; ;}
     break;
 
   case 124:
-#line 1255 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1256 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
                 (yyval.ParamAttrs) = (yyvsp[(1) - (2)].ParamAttrs) | (yyvsp[(2) - (2)].ParamAttrs);
               ;}
     break;
 
   case 125:
-#line 1260 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1261 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.StrVal) = 0; ;}
     break;
 
   case 126:
-#line 1261 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1262 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
                 (yyval.StrVal) = (yyvsp[(2) - (2)].StrVal);
               ;}
     break;
 
   case 127:
-#line 1268 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1269 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.UIntVal) = 0; ;}
     break;
 
   case 128:
-#line 1269 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1270 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
   (yyval.UIntVal) = (yyvsp[(2) - (2)].UInt64Val);
   if ((yyval.UIntVal) != 0 && !isPowerOf2_32((yyval.UIntVal)))
@@ -3936,12 +3937,12 @@ yyreduce:
     break;
 
   case 129:
-#line 1275 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1276 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.UIntVal) = 0; ;}
     break;
 
   case 130:
-#line 1276 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1277 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
   (yyval.UIntVal) = (yyvsp[(3) - (3)].UInt64Val);
   if ((yyval.UIntVal) != 0 && !isPowerOf2_32((yyval.UIntVal)))
@@ -3951,7 +3952,7 @@ yyreduce:
     break;
 
   case 131:
-#line 1285 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1286 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
   for (unsigned i = 0, e = (yyvsp[(2) - (2)].StrVal)->length(); i != e; ++i)
     if ((*(yyvsp[(2) - (2)].StrVal))[i] == '"' || (*(yyvsp[(2) - (2)].StrVal))[i] == '\\')
@@ -3962,27 +3963,27 @@ yyreduce:
     break;
 
   case 132:
-#line 1293 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1294 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.StrVal) = 0; ;}
     break;
 
   case 133:
-#line 1294 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1295 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.StrVal) = (yyvsp[(1) - (1)].StrVal); ;}
     break;
 
   case 134:
-#line 1299 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1300 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {;}
     break;
 
   case 135:
-#line 1300 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1301 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {;}
     break;
 
   case 136:
-#line 1301 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1302 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     CurGV->setSection(*(yyvsp[(1) - (1)].StrVal));
     delete (yyvsp[(1) - (1)].StrVal);
@@ -3991,7 +3992,7 @@ yyreduce:
     break;
 
   case 137:
-#line 1306 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1307 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if ((yyvsp[(2) - (2)].UInt64Val) != 0 && !isPowerOf2_32((yyvsp[(2) - (2)].UInt64Val)))
       GEN_ERROR("Alignment must be a power of two");
@@ -4001,7 +4002,7 @@ yyreduce:
     break;
 
   case 145:
-#line 1322 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1323 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.TypeVal) = new PATypeHolder(OpaqueType::get());
     CHECK_FOR_ERROR
@@ -4009,7 +4010,7 @@ yyreduce:
     break;
 
   case 146:
-#line 1326 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1327 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.TypeVal) = new PATypeHolder((yyvsp[(1) - (1)].PrimType));
     CHECK_FOR_ERROR
@@ -4017,7 +4018,7 @@ yyreduce:
     break;
 
   case 147:
-#line 1330 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1331 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {                             // Pointer type?
     if (*(yyvsp[(1) - (3)].TypeVal) == Type::LabelTy)
       GEN_ERROR("Cannot form a pointer to a basic block");
@@ -4028,7 +4029,7 @@ yyreduce:
     break;
 
   case 148:
-#line 1337 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1338 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {            // Named types are also simple types...
     const Type* tmp = getTypeVal((yyvsp[(1) - (1)].ValIDVal));
     CHECK_FOR_ERROR
@@ -4037,7 +4038,7 @@ yyreduce:
     break;
 
   case 149:
-#line 1342 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1343 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {                   // Type UpReference
     if ((yyvsp[(2) - (2)].UInt64Val) > (uint64_t)~0U) GEN_ERROR("Value out of range");
     OpaqueType *OT = OpaqueType::get();        // Use temporary placeholder
@@ -4049,7 +4050,7 @@ yyreduce:
     break;
 
   case 150:
-#line 1350 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1351 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     // Allow but ignore attributes on function types; this permits auto-upgrade.
     // FIXME: remove in LLVM 3.0.
@@ -4083,7 +4084,7 @@ yyreduce:
     break;
 
   case 151:
-#line 1380 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1381 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     // Allow but ignore attributes on function types; this permits auto-upgrade.
     // FIXME: remove in LLVM 3.0.
@@ -4111,7 +4112,7 @@ yyreduce:
     break;
 
   case 152:
-#line 1405 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1406 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {          // Sized array type?
     (yyval.TypeVal) = new PATypeHolder(HandleUpRefs(ArrayType::get(*(yyvsp[(4) - (5)].TypeVal), (unsigned)(yyvsp[(2) - (5)].UInt64Val))));
     delete (yyvsp[(4) - (5)].TypeVal);
@@ -4120,7 +4121,7 @@ yyreduce:
     break;
 
   case 153:
-#line 1410 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1411 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {          // Vector type?
      const llvm::Type* ElemTy = (yyvsp[(4) - (5)].TypeVal)->get();
      if ((unsigned)(yyvsp[(2) - (5)].UInt64Val) != (yyvsp[(2) - (5)].UInt64Val))
@@ -4134,7 +4135,7 @@ yyreduce:
     break;
 
   case 154:
-#line 1420 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1421 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {                        // Structure type?
     std::vector<const Type*> Elements;
     for (std::list<llvm::PATypeHolder>::iterator I = (yyvsp[(2) - (3)].TypeList)->begin(),
@@ -4148,7 +4149,7 @@ yyreduce:
     break;
 
   case 155:
-#line 1430 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1431 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {                                  // Empty structure type?
     (yyval.TypeVal) = new PATypeHolder(StructType::get(std::vector<const Type*>()));
     CHECK_FOR_ERROR
@@ -4156,7 +4157,7 @@ yyreduce:
     break;
 
   case 156:
-#line 1434 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1435 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     std::vector<const Type*> Elements;
     for (std::list<llvm::PATypeHolder>::iterator I = (yyvsp[(3) - (5)].TypeList)->begin(),
@@ -4170,7 +4171,7 @@ yyreduce:
     break;
 
   case 157:
-#line 1444 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1445 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {                         // Empty structure type?
     (yyval.TypeVal) = new PATypeHolder(StructType::get(std::vector<const Type*>(), true));
     CHECK_FOR_ERROR
@@ -4178,7 +4179,7 @@ yyreduce:
     break;
 
   case 158:
-#line 1451 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1452 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     // Allow but ignore attributes on function types; this permits auto-upgrade.
     // FIXME: remove in LLVM 3.0.
@@ -4188,7 +4189,7 @@ yyreduce:
     break;
 
   case 159:
-#line 1460 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1461 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(1) - (1)].TypeVal))->getDescription());
@@ -4199,14 +4200,14 @@ yyreduce:
     break;
 
   case 160:
-#line 1467 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1468 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.TypeVal) = new PATypeHolder(Type::VoidTy);
   ;}
     break;
 
   case 161:
-#line 1472 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1473 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.TypeWithAttrsList) = new TypeWithAttrsList();
     (yyval.TypeWithAttrsList)->push_back((yyvsp[(1) - (1)].TypeWithAttrs));
@@ -4215,7 +4216,7 @@ yyreduce:
     break;
 
   case 162:
-#line 1477 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1478 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     ((yyval.TypeWithAttrsList)=(yyvsp[(1) - (3)].TypeWithAttrsList))->push_back((yyvsp[(3) - (3)].TypeWithAttrs));
     CHECK_FOR_ERROR
@@ -4223,7 +4224,7 @@ yyreduce:
     break;
 
   case 164:
-#line 1485 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1486 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.TypeWithAttrsList)=(yyvsp[(1) - (3)].TypeWithAttrsList);
     TypeWithAttrs TWA; TWA.Attrs = ParamAttr::None;
@@ -4234,7 +4235,7 @@ yyreduce:
     break;
 
   case 165:
-#line 1492 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1493 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.TypeWithAttrsList) = new TypeWithAttrsList;
     TypeWithAttrs TWA; TWA.Attrs = ParamAttr::None;
@@ -4245,7 +4246,7 @@ yyreduce:
     break;
 
   case 166:
-#line 1499 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1500 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.TypeWithAttrsList) = new TypeWithAttrsList();
     CHECK_FOR_ERROR
@@ -4253,7 +4254,7 @@ yyreduce:
     break;
 
   case 167:
-#line 1507 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1508 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.TypeList) = new std::list<PATypeHolder>();
     (yyval.TypeList)->push_back(*(yyvsp[(1) - (1)].TypeVal)); 
@@ -4263,7 +4264,7 @@ yyreduce:
     break;
 
   case 168:
-#line 1513 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1514 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     ((yyval.TypeList)=(yyvsp[(1) - (3)].TypeList))->push_back(*(yyvsp[(3) - (3)].TypeVal)); 
     delete (yyvsp[(3) - (3)].TypeVal);
@@ -4272,7 +4273,7 @@ yyreduce:
     break;
 
   case 169:
-#line 1525 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1526 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { // Nonempty unsized arr
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(1) - (4)].TypeVal))->getDescription());
@@ -4304,7 +4305,7 @@ yyreduce:
     break;
 
   case 170:
-#line 1553 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1554 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(1) - (3)].TypeVal))->getDescription());
@@ -4324,7 +4325,7 @@ yyreduce:
     break;
 
   case 171:
-#line 1569 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1570 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(1) - (3)].TypeVal))->getDescription());
@@ -4355,7 +4356,7 @@ yyreduce:
     break;
 
   case 172:
-#line 1596 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1597 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { // Nonempty unsized arr
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(1) - (4)].TypeVal))->getDescription());
@@ -4387,7 +4388,7 @@ yyreduce:
     break;
 
   case 173:
-#line 1624 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1625 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     const StructType *STy = dyn_cast<StructType>((yyvsp[(1) - (4)].TypeVal)->get());
     if (STy == 0)
@@ -4417,7 +4418,7 @@ yyreduce:
     break;
 
   case 174:
-#line 1650 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1651 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(1) - (3)].TypeVal))->getDescription());
@@ -4441,7 +4442,7 @@ yyreduce:
     break;
 
   case 175:
-#line 1670 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1671 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     const StructType *STy = dyn_cast<StructType>((yyvsp[(1) - (6)].TypeVal)->get());
     if (STy == 0)
@@ -4471,7 +4472,7 @@ yyreduce:
     break;
 
   case 176:
-#line 1696 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1697 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(1) - (5)].TypeVal))->getDescription());
@@ -4495,7 +4496,7 @@ yyreduce:
     break;
 
   case 177:
-#line 1716 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1717 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(1) - (2)].TypeVal))->getDescription());
@@ -4511,7 +4512,7 @@ yyreduce:
     break;
 
   case 178:
-#line 1728 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1729 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(1) - (2)].TypeVal))->getDescription());
@@ -4522,7 +4523,7 @@ yyreduce:
     break;
 
   case 179:
-#line 1735 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1736 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(1) - (2)].TypeVal))->getDescription());
@@ -4592,7 +4593,7 @@ yyreduce:
     break;
 
   case 180:
-#line 1801 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1802 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(1) - (2)].TypeVal))->getDescription());
@@ -4606,7 +4607,7 @@ yyreduce:
     break;
 
   case 181:
-#line 1811 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1812 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(1) - (2)].TypeVal))->getDescription());
@@ -4620,7 +4621,7 @@ yyreduce:
     break;
 
   case 182:
-#line 1821 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1822 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {      // integral constants
     if (!ConstantInt::isValueValidForType((yyvsp[(1) - (2)].PrimType), (yyvsp[(2) - (2)].SInt64Val)))
       GEN_ERROR("Constant value doesn't fit in type");
@@ -4630,7 +4631,7 @@ yyreduce:
     break;
 
   case 183:
-#line 1827 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1828 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {      // arbitrary precision integer constants
     uint32_t BitWidth = cast<IntegerType>((yyvsp[(1) - (2)].PrimType))->getBitWidth();
     if ((yyvsp[(2) - (2)].APIntVal)->getBitWidth() > BitWidth) {
@@ -4644,7 +4645,7 @@ yyreduce:
     break;
 
   case 184:
-#line 1837 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1838 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {      // integral constants
     if (!ConstantInt::isValueValidForType((yyvsp[(1) - (2)].PrimType), (yyvsp[(2) - (2)].UInt64Val)))
       GEN_ERROR("Constant value doesn't fit in type");
@@ -4654,7 +4655,7 @@ yyreduce:
     break;
 
   case 185:
-#line 1843 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1844 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {      // arbitrary precision integer constants
     uint32_t BitWidth = cast<IntegerType>((yyvsp[(1) - (2)].PrimType))->getBitWidth();
     if ((yyvsp[(2) - (2)].APIntVal)->getBitWidth() > BitWidth) {
@@ -4668,7 +4669,7 @@ yyreduce:
     break;
 
   case 186:
-#line 1853 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1854 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {                      // Boolean constants
     assert(cast<IntegerType>((yyvsp[(1) - (2)].PrimType))->getBitWidth() == 1 && "Not Bool?");
     (yyval.ConstVal) = ConstantInt::getTrue();
@@ -4677,7 +4678,7 @@ yyreduce:
     break;
 
   case 187:
-#line 1858 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1859 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {                     // Boolean constants
     assert(cast<IntegerType>((yyvsp[(1) - (2)].PrimType))->getBitWidth() == 1 && "Not Bool?");
     (yyval.ConstVal) = ConstantInt::getFalse();
@@ -4686,7 +4687,7 @@ yyreduce:
     break;
 
   case 188:
-#line 1863 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1864 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {                   // Floating point constants
     if (!ConstantFP::isValueValidForType((yyvsp[(1) - (2)].PrimType), *(yyvsp[(2) - (2)].FPVal)))
       GEN_ERROR("Floating point constant invalid for type");
@@ -4701,7 +4702,7 @@ yyreduce:
     break;
 
   case 189:
-#line 1876 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1877 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(5) - (6)].TypeVal))->getDescription());
@@ -4717,7 +4718,7 @@ yyreduce:
     break;
 
   case 190:
-#line 1888 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1889 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!isa<PointerType>((yyvsp[(3) - (5)].ConstVal)->getType()))
       GEN_ERROR("GetElementPtr requires a pointer operand");
@@ -4743,7 +4744,7 @@ yyreduce:
     break;
 
   case 191:
-#line 1910 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1911 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if ((yyvsp[(3) - (8)].ConstVal)->getType() != Type::Int1Ty)
       GEN_ERROR("Select condition must be of boolean type");
@@ -4755,7 +4756,7 @@ yyreduce:
     break;
 
   case 192:
-#line 1918 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1919 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if ((yyvsp[(3) - (6)].ConstVal)->getType() != (yyvsp[(5) - (6)].ConstVal)->getType())
       GEN_ERROR("Binary operator types must match");
@@ -4765,7 +4766,7 @@ yyreduce:
     break;
 
   case 193:
-#line 1924 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1925 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if ((yyvsp[(3) - (6)].ConstVal)->getType() != (yyvsp[(5) - (6)].ConstVal)->getType())
       GEN_ERROR("Logical operator types must match");
@@ -4780,7 +4781,7 @@ yyreduce:
     break;
 
   case 194:
-#line 1935 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1936 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if ((yyvsp[(4) - (7)].ConstVal)->getType() != (yyvsp[(6) - (7)].ConstVal)->getType())
       GEN_ERROR("icmp operand types must match");
@@ -4789,7 +4790,7 @@ yyreduce:
     break;
 
   case 195:
-#line 1940 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1941 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if ((yyvsp[(4) - (7)].ConstVal)->getType() != (yyvsp[(6) - (7)].ConstVal)->getType())
       GEN_ERROR("fcmp operand types must match");
@@ -4798,7 +4799,7 @@ yyreduce:
     break;
 
   case 196:
-#line 1945 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1946 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!ExtractElementInst::isValidOperands((yyvsp[(3) - (6)].ConstVal), (yyvsp[(5) - (6)].ConstVal)))
       GEN_ERROR("Invalid extractelement operands");
@@ -4808,7 +4809,7 @@ yyreduce:
     break;
 
   case 197:
-#line 1951 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1952 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!InsertElementInst::isValidOperands((yyvsp[(3) - (8)].ConstVal), (yyvsp[(5) - (8)].ConstVal), (yyvsp[(7) - (8)].ConstVal)))
       GEN_ERROR("Invalid insertelement operands");
@@ -4818,7 +4819,7 @@ yyreduce:
     break;
 
   case 198:
-#line 1957 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1958 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!ShuffleVectorInst::isValidOperands((yyvsp[(3) - (8)].ConstVal), (yyvsp[(5) - (8)].ConstVal), (yyvsp[(7) - (8)].ConstVal)))
       GEN_ERROR("Invalid shufflevector operands");
@@ -4828,7 +4829,7 @@ yyreduce:
     break;
 
   case 199:
-#line 1966 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1967 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     ((yyval.ConstVector) = (yyvsp[(1) - (3)].ConstVector))->push_back((yyvsp[(3) - (3)].ConstVal));
     CHECK_FOR_ERROR
@@ -4836,7 +4837,7 @@ yyreduce:
     break;
 
   case 200:
-#line 1970 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1971 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ConstVector) = new std::vector<Constant*>();
     (yyval.ConstVector)->push_back((yyvsp[(1) - (1)].ConstVal));
@@ -4845,27 +4846,27 @@ yyreduce:
     break;
 
   case 201:
-#line 1978 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1979 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.BoolVal) = false; ;}
     break;
 
   case 202:
-#line 1978 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1979 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.BoolVal) = true; ;}
     break;
 
   case 203:
-#line 1981 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1982 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.BoolVal) = true; ;}
     break;
 
   case 204:
-#line 1981 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1982 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.BoolVal) = false; ;}
     break;
 
   case 205:
-#line 1984 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1985 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     const Type* VTy = (yyvsp[(1) - (2)].TypeVal)->get();
     Value *V = getVal(VTy, (yyvsp[(2) - (2)].ValIDVal));
@@ -4881,7 +4882,7 @@ yyreduce:
     break;
 
   case 206:
-#line 1996 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1997 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     Constant *Val = (yyvsp[(3) - (6)].ConstVal);
     const Type *DestTy = (yyvsp[(5) - (6)].TypeVal)->get();
@@ -4897,7 +4898,7 @@ yyreduce:
     break;
 
   case 207:
-#line 2017 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2018 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ModuleVal) = ParserResult = CurModule.CurrentModule;
     CurModule.ModuleDone();
@@ -4906,7 +4907,7 @@ yyreduce:
     break;
 
   case 208:
-#line 2022 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2023 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ModuleVal) = ParserResult = CurModule.CurrentModule;
     CurModule.ModuleDone();
@@ -4915,12 +4916,12 @@ yyreduce:
     break;
 
   case 211:
-#line 2035 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2036 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { CurFun.isDeclare = false; ;}
     break;
 
   case 212:
-#line 2035 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2036 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     CurFun.FunctionDone();
     CHECK_FOR_ERROR
@@ -4928,26 +4929,26 @@ yyreduce:
     break;
 
   case 213:
-#line 2039 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2040 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { CurFun.isDeclare = true; ;}
     break;
 
   case 214:
-#line 2039 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2040 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     CHECK_FOR_ERROR
   ;}
     break;
 
   case 215:
-#line 2042 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2043 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     CHECK_FOR_ERROR
   ;}
     break;
 
   case 216:
-#line 2045 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2046 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(3) - (3)].TypeVal))->getDescription());
@@ -4975,7 +4976,7 @@ yyreduce:
     break;
 
   case 217:
-#line 2069 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2070 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     ResolveTypeTo((yyvsp[(1) - (3)].StrVal), (yyvsp[(3) - (3)].PrimType));
 
@@ -4990,7 +4991,7 @@ yyreduce:
     break;
 
   case 218:
-#line 2081 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2082 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { 
     /* "Externally Visible" Linkage */
     if ((yyvsp[(5) - (6)].ConstVal) == 0) 
@@ -5002,14 +5003,14 @@ yyreduce:
     break;
 
   case 219:
-#line 2088 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2089 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     CurGV = 0;
   ;}
     break;
 
   case 220:
-#line 2092 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2093 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if ((yyvsp[(6) - (7)].ConstVal) == 0) 
       GEN_ERROR("Global value initializer is not a constant");
@@ -5019,14 +5020,14 @@ yyreduce:
     break;
 
   case 221:
-#line 2097 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2098 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     CurGV = 0;
   ;}
     break;
 
   case 222:
-#line 2101 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2102 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(6) - (7)].TypeVal))->getDescription());
@@ -5037,7 +5038,7 @@ yyreduce:
     break;
 
   case 223:
-#line 2107 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2108 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     CurGV = 0;
     CHECK_FOR_ERROR
@@ -5045,7 +5046,7 @@ yyreduce:
     break;
 
   case 224:
-#line 2111 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2112 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     std::string Name;
     if ((yyvsp[(1) - (5)].StrVal)) {
@@ -5089,21 +5090,21 @@ yyreduce:
     break;
 
   case 225:
-#line 2151 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2152 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { 
     CHECK_FOR_ERROR
   ;}
     break;
 
   case 226:
-#line 2154 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2155 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     CHECK_FOR_ERROR
   ;}
     break;
 
   case 227:
-#line 2160 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2161 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
   const std::string &AsmSoFar = CurModule.CurrentModule->getModuleInlineAsm();
   if (AsmSoFar.empty())
@@ -5116,7 +5117,7 @@ yyreduce:
     break;
 
   case 228:
-#line 2170 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2171 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     CurModule.CurrentModule->setTargetTriple(*(yyvsp[(3) - (3)].StrVal));
     delete (yyvsp[(3) - (3)].StrVal);
@@ -5124,7 +5125,7 @@ yyreduce:
     break;
 
   case 229:
-#line 2174 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2175 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     CurModule.CurrentModule->setDataLayout(*(yyvsp[(3) - (3)].StrVal));
     delete (yyvsp[(3) - (3)].StrVal);
@@ -5132,7 +5133,7 @@ yyreduce:
     break;
 
   case 231:
-#line 2181 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2182 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
           CurModule.CurrentModule->addLibrary(*(yyvsp[(3) - (3)].StrVal));
           delete (yyvsp[(3) - (3)].StrVal);
@@ -5141,7 +5142,7 @@ yyreduce:
     break;
 
   case 232:
-#line 2186 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2187 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
           CurModule.CurrentModule->addLibrary(*(yyvsp[(1) - (1)].StrVal));
           delete (yyvsp[(1) - (1)].StrVal);
@@ -5150,14 +5151,14 @@ yyreduce:
     break;
 
   case 233:
-#line 2191 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2192 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
           CHECK_FOR_ERROR
         ;}
     break;
 
   case 234:
-#line 2200 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2201 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(3) - (5)].TypeVal))->getDescription());
@@ -5171,7 +5172,7 @@ yyreduce:
     break;
 
   case 235:
-#line 2210 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2211 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(1) - (3)].TypeVal))->getDescription());
@@ -5185,7 +5186,7 @@ yyreduce:
     break;
 
   case 236:
-#line 2221 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2222 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ArgList) = (yyvsp[(1) - (1)].ArgList);
     CHECK_FOR_ERROR
@@ -5193,7 +5194,7 @@ yyreduce:
     break;
 
   case 237:
-#line 2225 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2226 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ArgList) = (yyvsp[(1) - (3)].ArgList);
     struct ArgListEntry E;
@@ -5206,7 +5207,7 @@ yyreduce:
     break;
 
   case 238:
-#line 2234 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2235 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ArgList) = new ArgListType;
     struct ArgListEntry E;
@@ -5219,7 +5220,7 @@ yyreduce:
     break;
 
   case 239:
-#line 2243 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2244 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ArgList) = 0;
     CHECK_FOR_ERROR
@@ -5227,7 +5228,7 @@ yyreduce:
     break;
 
   case 240:
-#line 2249 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2250 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
   std::string FunctionName(*(yyvsp[(3) - (10)].StrVal));
   delete (yyvsp[(3) - (10)].StrVal);  // Free strdup'd memory!
@@ -5363,7 +5364,7 @@ yyreduce:
     break;
 
   case 243:
-#line 2384 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2385 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
   (yyval.FunctionVal) = CurFun.CurrentFunction;
 
@@ -5375,7 +5376,7 @@ yyreduce:
     break;
 
   case 246:
-#line 2395 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2396 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
   (yyval.FunctionVal) = (yyvsp[(1) - (2)].FunctionVal);
   CHECK_FOR_ERROR
@@ -5383,7 +5384,7 @@ yyreduce:
     break;
 
   case 247:
-#line 2400 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2401 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     CurFun.CurrentFunction->setLinkage((yyvsp[(1) - (3)].Linkage));
     CurFun.CurrentFunction->setVisibility((yyvsp[(2) - (3)].Visibility));
@@ -5394,7 +5395,7 @@ yyreduce:
     break;
 
   case 248:
-#line 2412 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2413 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.BoolVal) = false;
     CHECK_FOR_ERROR
@@ -5402,7 +5403,7 @@ yyreduce:
     break;
 
   case 249:
-#line 2416 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2417 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.BoolVal) = true;
     CHECK_FOR_ERROR
@@ -5410,7 +5411,7 @@ yyreduce:
     break;
 
   case 250:
-#line 2421 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2422 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {    // A reference to a direct constant
     (yyval.ValIDVal) = ValID::create((yyvsp[(1) - (1)].SInt64Val));
     CHECK_FOR_ERROR
@@ -5418,7 +5419,7 @@ yyreduce:
     break;
 
   case 251:
-#line 2425 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2426 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ValIDVal) = ValID::create((yyvsp[(1) - (1)].UInt64Val));
     CHECK_FOR_ERROR
@@ -5426,7 +5427,7 @@ yyreduce:
     break;
 
   case 252:
-#line 2429 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2430 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {                     // Perhaps it's an FP constant?
     (yyval.ValIDVal) = ValID::create((yyvsp[(1) - (1)].FPVal));
     CHECK_FOR_ERROR
@@ -5434,7 +5435,7 @@ yyreduce:
     break;
 
   case 253:
-#line 2433 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2434 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ValIDVal) = ValID::create(ConstantInt::getTrue());
     CHECK_FOR_ERROR
@@ -5442,7 +5443,7 @@ yyreduce:
     break;
 
   case 254:
-#line 2437 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2438 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ValIDVal) = ValID::create(ConstantInt::getFalse());
     CHECK_FOR_ERROR
@@ -5450,7 +5451,7 @@ yyreduce:
     break;
 
   case 255:
-#line 2441 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2442 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ValIDVal) = ValID::createNull();
     CHECK_FOR_ERROR
@@ -5458,7 +5459,7 @@ yyreduce:
     break;
 
   case 256:
-#line 2445 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2446 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ValIDVal) = ValID::createUndef();
     CHECK_FOR_ERROR
@@ -5466,7 +5467,7 @@ yyreduce:
     break;
 
   case 257:
-#line 2449 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2450 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {     // A vector zero constant.
     (yyval.ValIDVal) = ValID::createZeroInit();
     CHECK_FOR_ERROR
@@ -5474,7 +5475,7 @@ yyreduce:
     break;
 
   case 258:
-#line 2453 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2454 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { // Nonempty unsized packed vector
     const Type *ETy = (*(yyvsp[(2) - (3)].ConstVector))[0]->getType();
     int NumElements = (yyvsp[(2) - (3)].ConstVector)->size(); 
@@ -5503,7 +5504,7 @@ yyreduce:
     break;
 
   case 259:
-#line 2478 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2479 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ValIDVal) = ValID::create((yyvsp[(1) - (1)].ConstVal));
     CHECK_FOR_ERROR
@@ -5511,7 +5512,7 @@ yyreduce:
     break;
 
   case 260:
-#line 2482 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2483 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ValIDVal) = ValID::createInlineAsm(*(yyvsp[(3) - (5)].StrVal), *(yyvsp[(5) - (5)].StrVal), (yyvsp[(2) - (5)].BoolVal));
     delete (yyvsp[(3) - (5)].StrVal);
@@ -5521,7 +5522,7 @@ yyreduce:
     break;
 
   case 261:
-#line 2492 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2493 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {  // Is it an integer reference...?
     (yyval.ValIDVal) = ValID::createLocalID((yyvsp[(1) - (1)].UIntVal));
     CHECK_FOR_ERROR
@@ -5529,7 +5530,7 @@ yyreduce:
     break;
 
   case 262:
-#line 2496 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2497 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ValIDVal) = ValID::createGlobalID((yyvsp[(1) - (1)].UIntVal));
     CHECK_FOR_ERROR
@@ -5537,7 +5538,7 @@ yyreduce:
     break;
 
   case 263:
-#line 2500 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2501 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {                   // Is it a named reference...?
     (yyval.ValIDVal) = ValID::createLocalName(*(yyvsp[(1) - (1)].StrVal));
     delete (yyvsp[(1) - (1)].StrVal);
@@ -5546,7 +5547,7 @@ yyreduce:
     break;
 
   case 264:
-#line 2505 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2506 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {                   // Is it a named reference...?
     (yyval.ValIDVal) = ValID::createGlobalName(*(yyvsp[(1) - (1)].StrVal));
     delete (yyvsp[(1) - (1)].StrVal);
@@ -5555,7 +5556,7 @@ yyreduce:
     break;
 
   case 267:
-#line 2518 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2519 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(1) - (2)].TypeVal))->getDescription());
@@ -5566,7 +5567,7 @@ yyreduce:
     break;
 
   case 268:
-#line 2527 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2528 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ValueList) = new std::vector<Value *>();
     (yyval.ValueList)->push_back((yyvsp[(1) - (1)].ValueVal)); 
@@ -5575,7 +5576,7 @@ yyreduce:
     break;
 
   case 269:
-#line 2532 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2533 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     ((yyval.ValueList)=(yyvsp[(1) - (3)].ValueList))->push_back((yyvsp[(3) - (3)].ConstVal)); 
     CHECK_FOR_ERROR
@@ -5583,7 +5584,7 @@ yyreduce:
     break;
 
   case 270:
-#line 2537 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2538 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.FunctionVal) = (yyvsp[(1) - (2)].FunctionVal);
     CHECK_FOR_ERROR
@@ -5591,7 +5592,7 @@ yyreduce:
     break;
 
   case 271:
-#line 2541 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2542 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { // Do not allow functions with 0 basic blocks   
     (yyval.FunctionVal) = (yyvsp[(1) - (2)].FunctionVal);
     CHECK_FOR_ERROR
@@ -5599,7 +5600,7 @@ yyreduce:
     break;
 
   case 272:
-#line 2550 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2551 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     setValueName((yyvsp[(3) - (3)].TermInstVal), (yyvsp[(2) - (3)].StrVal));
     CHECK_FOR_ERROR
@@ -5611,7 +5612,7 @@ yyreduce:
     break;
 
   case 273:
-#line 2559 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2560 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (CastInst *CI1 = dyn_cast<CastInst>((yyvsp[(2) - (2)].InstVal)))
       if (CastInst *CI2 = dyn_cast<CastInst>(CI1->getOperand(0)))
@@ -5624,7 +5625,7 @@ yyreduce:
     break;
 
   case 274:
-#line 2568 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2569 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {          // Empty space between instruction lists
     (yyval.BasicBlockVal) = defineBBVal(ValID::createLocalID(CurFun.NextValNum));
     CHECK_FOR_ERROR
@@ -5632,7 +5633,7 @@ yyreduce:
     break;
 
   case 275:
-#line 2572 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2573 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {             // Labelled (named) basic block
     (yyval.BasicBlockVal) = defineBBVal(ValID::createLocalName(*(yyvsp[(1) - (1)].StrVal)));
     delete (yyvsp[(1) - (1)].StrVal);
@@ -5642,7 +5643,7 @@ yyreduce:
     break;
 
   case 276:
-#line 2580 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2581 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { // Return with a result...
     if((yyvsp[(2) - (2)].ValueList)->size() == 1) 
       (yyval.TermInstVal) = new ReturnInst((yyvsp[(2) - (2)].ValueList)->back());
@@ -5672,7 +5673,7 @@ yyreduce:
     break;
 
   case 277:
-#line 2606 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2607 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {                                    // Return with no result...
     (yyval.TermInstVal) = new ReturnInst();
     CHECK_FOR_ERROR
@@ -5680,7 +5681,7 @@ yyreduce:
     break;
 
   case 278:
-#line 2610 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2611 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {                           // Unconditional Branch...
     BasicBlock* tmpBB = getBBVal((yyvsp[(3) - (3)].ValIDVal));
     CHECK_FOR_ERROR
@@ -5689,7 +5690,7 @@ yyreduce:
     break;
 
   case 279:
-#line 2615 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2616 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {  
     assert(cast<IntegerType>((yyvsp[(2) - (9)].PrimType))->getBitWidth() == 1 && "Not Bool?");
     BasicBlock* tmpBBA = getBBVal((yyvsp[(6) - (9)].ValIDVal));
@@ -5703,7 +5704,7 @@ yyreduce:
     break;
 
   case 280:
-#line 2625 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2626 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     Value* tmpVal = getVal((yyvsp[(2) - (9)].PrimType), (yyvsp[(3) - (9)].ValIDVal));
     CHECK_FOR_ERROR
@@ -5726,7 +5727,7 @@ yyreduce:
     break;
 
   case 281:
-#line 2644 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2645 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     Value* tmpVal = getVal((yyvsp[(2) - (8)].PrimType), (yyvsp[(3) - (8)].ValIDVal));
     CHECK_FOR_ERROR
@@ -5739,7 +5740,7 @@ yyreduce:
     break;
 
   case 282:
-#line 2654 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2655 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
 
     // Handle the short syntax
@@ -5833,7 +5834,7 @@ yyreduce:
     break;
 
   case 283:
-#line 2744 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2745 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.TermInstVal) = new UnwindInst();
     CHECK_FOR_ERROR
@@ -5841,7 +5842,7 @@ yyreduce:
     break;
 
   case 284:
-#line 2748 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2749 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.TermInstVal) = new UnreachableInst();
     CHECK_FOR_ERROR
@@ -5849,7 +5850,7 @@ yyreduce:
     break;
 
   case 285:
-#line 2755 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2756 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.JumpTable) = (yyvsp[(1) - (6)].JumpTable);
     Constant *V = cast<Constant>(getExistingVal((yyvsp[(2) - (6)].PrimType), (yyvsp[(3) - (6)].ValIDVal)));
@@ -5864,7 +5865,7 @@ yyreduce:
     break;
 
   case 286:
-#line 2766 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2767 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.JumpTable) = new std::vector<std::pair<Constant*, BasicBlock*> >();
     Constant *V = cast<Constant>(getExistingVal((yyvsp[(1) - (5)].PrimType), (yyvsp[(2) - (5)].ValIDVal)));
@@ -5880,7 +5881,7 @@ yyreduce:
     break;
 
   case 287:
-#line 2779 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2780 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     // Is this definition named?? if so, assign the name...
     setValueName((yyvsp[(2) - (2)].InstVal), (yyvsp[(1) - (2)].StrVal));
@@ -5892,7 +5893,7 @@ yyreduce:
     break;
 
   case 288:
-#line 2789 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2790 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {    // Used for PHI nodes
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(1) - (6)].TypeVal))->getDescription());
@@ -5907,7 +5908,7 @@ yyreduce:
     break;
 
   case 289:
-#line 2800 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2801 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.PHIList) = (yyvsp[(1) - (7)].PHIList);
     Value* tmpVal = getVal((yyvsp[(1) - (7)].PHIList)->front().first->getType(), (yyvsp[(4) - (7)].ValIDVal));
@@ -5919,7 +5920,7 @@ yyreduce:
     break;
 
   case 290:
-#line 2810 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2811 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     // FIXME: Remove trailing OptParamAttrs in LLVM 3.0, it was a mistake in 2.0
     if (!UpRefs.empty())
@@ -5934,7 +5935,7 @@ yyreduce:
     break;
 
   case 291:
-#line 2821 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2822 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     // FIXME: Remove trailing OptParamAttrs in LLVM 3.0, it was a mistake in 2.0
     // Labels are only valid in ASMs
@@ -5946,7 +5947,7 @@ yyreduce:
     break;
 
   case 292:
-#line 2829 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2830 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     // FIXME: Remove trailing OptParamAttrs in LLVM 3.0, it was a mistake in 2.0
     if (!UpRefs.empty())
@@ -5960,7 +5961,7 @@ yyreduce:
     break;
 
   case 293:
-#line 2839 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2840 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     // FIXME: Remove trailing OptParamAttrs in LLVM 3.0, it was a mistake in 2.0
     (yyval.ParamList) = (yyvsp[(1) - (6)].ParamList);
@@ -5971,17 +5972,17 @@ yyreduce:
     break;
 
   case 294:
-#line 2846 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2847 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.ParamList) = new ParamList(); ;}
     break;
 
   case 295:
-#line 2849 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2850 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     { (yyval.ValueList) = new std::vector<Value*>(); ;}
     break;
 
   case 296:
-#line 2850 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2851 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.ValueList) = (yyvsp[(1) - (3)].ValueList);
     (yyval.ValueList)->push_back((yyvsp[(3) - (3)].ValueVal));
@@ -5990,7 +5991,7 @@ yyreduce:
     break;
 
   case 297:
-#line 2857 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2858 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.BoolVal) = true;
     CHECK_FOR_ERROR
@@ -5998,7 +5999,7 @@ yyreduce:
     break;
 
   case 298:
-#line 2861 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2862 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.BoolVal) = false;
     CHECK_FOR_ERROR
@@ -6006,7 +6007,7 @@ yyreduce:
     break;
 
   case 299:
-#line 2866 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2867 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(2) - (5)].TypeVal))->getDescription());
@@ -6026,7 +6027,7 @@ yyreduce:
     break;
 
   case 300:
-#line 2882 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2883 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(2) - (5)].TypeVal))->getDescription());
@@ -6047,7 +6048,7 @@ yyreduce:
     break;
 
   case 301:
-#line 2899 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2900 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(3) - (6)].TypeVal))->getDescription());
@@ -6065,7 +6066,7 @@ yyreduce:
     break;
 
   case 302:
-#line 2913 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2914 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(3) - (6)].TypeVal))->getDescription());
@@ -6083,7 +6084,7 @@ yyreduce:
     break;
 
   case 303:
-#line 2927 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2928 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(4) - (4)].TypeVal))->getDescription());
@@ -6099,7 +6100,7 @@ yyreduce:
     break;
 
   case 304:
-#line 2939 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2940 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if ((yyvsp[(2) - (6)].ValueVal)->getType() != Type::Int1Ty)
       GEN_ERROR("select condition must be boolean");
@@ -6111,7 +6112,7 @@ yyreduce:
     break;
 
   case 305:
-#line 2947 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2948 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(4) - (4)].TypeVal))->getDescription());
@@ -6122,7 +6123,7 @@ yyreduce:
     break;
 
   case 306:
-#line 2954 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2955 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!ExtractElementInst::isValidOperands((yyvsp[(2) - (4)].ValueVal), (yyvsp[(4) - (4)].ValueVal)))
       GEN_ERROR("Invalid extractelement operands");
@@ -6132,7 +6133,7 @@ yyreduce:
     break;
 
   case 307:
-#line 2960 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2961 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!InsertElementInst::isValidOperands((yyvsp[(2) - (6)].ValueVal), (yyvsp[(4) - (6)].ValueVal), (yyvsp[(6) - (6)].ValueVal)))
       GEN_ERROR("Invalid insertelement operands");
@@ -6142,7 +6143,7 @@ yyreduce:
     break;
 
   case 308:
-#line 2966 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2967 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!ShuffleVectorInst::isValidOperands((yyvsp[(2) - (6)].ValueVal), (yyvsp[(4) - (6)].ValueVal), (yyvsp[(6) - (6)].ValueVal)))
       GEN_ERROR("Invalid shufflevector operands");
@@ -6152,7 +6153,7 @@ yyreduce:
     break;
 
   case 309:
-#line 2972 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2973 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     const Type *Ty = (yyvsp[(2) - (2)].PHIList)->front().first->getType();
     if (!Ty->isFirstClassType())
@@ -6171,7 +6172,7 @@ yyreduce:
     break;
 
   case 310:
-#line 2988 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2989 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
 
     // Handle the short syntax
@@ -6272,7 +6273,7 @@ yyreduce:
     break;
 
   case 311:
-#line 3085 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3086 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.InstVal) = (yyvsp[(1) - (1)].InstVal);
     CHECK_FOR_ERROR
@@ -6280,7 +6281,7 @@ yyreduce:
     break;
 
   case 312:
-#line 3090 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3091 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.BoolVal) = true;
     CHECK_FOR_ERROR
@@ -6288,7 +6289,7 @@ yyreduce:
     break;
 
   case 313:
-#line 3094 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3095 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.BoolVal) = false;
     CHECK_FOR_ERROR
@@ -6296,7 +6297,7 @@ yyreduce:
     break;
 
   case 314:
-#line 3101 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3102 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(2) - (3)].TypeVal))->getDescription());
@@ -6307,7 +6308,7 @@ yyreduce:
     break;
 
   case 315:
-#line 3108 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3109 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(2) - (6)].TypeVal))->getDescription());
@@ -6319,7 +6320,7 @@ yyreduce:
     break;
 
   case 316:
-#line 3116 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3117 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(2) - (3)].TypeVal))->getDescription());
@@ -6330,7 +6331,7 @@ yyreduce:
     break;
 
   case 317:
-#line 3123 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3124 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(2) - (6)].TypeVal))->getDescription());
@@ -6342,7 +6343,7 @@ yyreduce:
     break;
 
   case 318:
-#line 3131 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3132 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!isa<PointerType>((yyvsp[(2) - (2)].ValueVal)->getType()))
       GEN_ERROR("Trying to free nonpointer type " + 
@@ -6353,7 +6354,7 @@ yyreduce:
     break;
 
   case 319:
-#line 3139 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3140 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(3) - (5)].TypeVal))->getDescription());
@@ -6371,7 +6372,7 @@ yyreduce:
     break;
 
   case 320:
-#line 3153 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3154 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(5) - (7)].TypeVal))->getDescription());
@@ -6392,7 +6393,7 @@ yyreduce:
     break;
 
   case 321:
-#line 3170 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3171 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
   ValID TmpVID = ValID::createLocalName(*(yyvsp[(3) - (5)].StrVal));
   Value *TmpVal = getVal((yyvsp[(2) - (5)].TypeVal)->get(), TmpVID);
@@ -6404,7 +6405,7 @@ yyreduce:
     break;
 
   case 322:
-#line 3178 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3179 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(2) - (4)].TypeVal))->getDescription());
@@ -6424,7 +6425,7 @@ yyreduce:
 
 
 /* Line 1267 of yacc.c.  */
-#line 6428 "llvmAsmParser.tab.c"
+#line 6429 "llvmAsmParser.tab.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -6638,7 +6639,7 @@ yyreturn:
 }
 
 
-#line 3195 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 3196 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
 
 
 // common code from the two 'RunVMAsmParser' functions
