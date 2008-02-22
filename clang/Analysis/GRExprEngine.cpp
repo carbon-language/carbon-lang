@@ -747,7 +747,8 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
           St = SetRVal(St, U, Result);
         }
         else {
-          nonlval::ConcreteInt V(ValMgr.getZeroWithPtrWidth());
+          Expr* Ex = U->getSubExpr();
+          nonlval::ConcreteInt V(ValMgr.getValue(0, Ex->getType()));
           RVal Result = EvalBinOp(BinaryOperator::EQ, cast<NonLVal>(SubV), V);
           St = SetRVal(St, U, Result);
         }
