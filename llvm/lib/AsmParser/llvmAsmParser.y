@@ -3168,9 +3168,8 @@ MemoryInst : MALLOC Types OptCAlign {
     $$ = new StoreInst($3, tmpVal, $1, $7);
     delete $5;
   }
-| GETRESULT Types LocalName ',' EUINT64VAL  {
-  ValID TmpVID = ValID::createLocalName(*$3);
-  Value *TmpVal = getVal($2->get(), TmpVID);
+| GETRESULT Types SymbolicValueRef ',' EUINT64VAL  {
+  Value *TmpVal = getVal($2->get(), $3);
   if (!GetResultInst::isValidOperands(TmpVal, $5))
       GEN_ERROR("Invalid getresult operands");
     $$ = new GetResultInst(TmpVal, $5);
