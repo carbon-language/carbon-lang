@@ -203,16 +203,16 @@ def CC_X86_32_Common : CallingConv<[
   // Long doubles get slots whose size depends on the subtarget.
   CCIfType<[f80], CCAssignToStack<0, 4>>,
 
-  // The first 4 vector arguments are passed in XMM registers.
+  // The first 4 SSE vector arguments are passed in XMM registers.
   CCIfNotVarArg<CCIfType<[v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
                 CCAssignToReg<[XMM0, XMM1, XMM2, XMM3]>>>,
 
-  // Other vectors get 16-byte stack slots that are 16-byte aligned.
+  // Other SSE vectors get 16-byte stack slots that are 16-byte aligned.
   CCIfType<[v16i8, v8i16, v4i32, v2i64, v4f32, v2f64], CCAssignToStack<16, 16>>,
 
-  // __m64 vectors get 8-byte stack slots that are 8-byte aligned. They are
+  // __m64 vectors get 8-byte stack slots that are 4-byte aligned. They are
   // passed in the parameter area.
-  CCIfType<[v8i8, v4i16, v2i32, v1i64], CCAssignToStack<8, 8>>
+  CCIfType<[v8i8, v4i16, v2i32, v1i64], CCAssignToStack<8, 4>>
 ]>;
 
 def CC_X86_32_C : CallingConv<[
