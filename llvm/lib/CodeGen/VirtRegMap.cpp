@@ -1040,7 +1040,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
     /// ReusedOperands - Keep track of operand reuse in case we need to undo
     /// reuse.
     ReuseInfo ReusedOperands(MI, TRI);
-    // Process all of the spilled uses and all non spilled reg references.
+    SmallVector<unsigned, 4> VirtUseOps;
     for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
       MachineOperand &MO = MI.getOperand(i);
       if (!MO.isRegister() || MO.getReg() == 0)
@@ -1053,9 +1053,21 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         RegInfo->setPhysRegUsed(VirtReg);
         continue;
       }
-      
+
+      // We want to process implicit virtual register uses first.
+      if (MO.isImplicit())
+        VirtUseOps.insert(VirtUseOps.begin(), i);
+      else
+        VirtUseOps.push_back(i);
+    }
+
+    // Process all of the spilled uses and all non spilled reg references.
+    for (unsigned j = 0, e = VirtUseOps.size(); j != e; ++j) {
+      unsigned i = VirtUseOps[j];
+      MachineOperand &MO = MI.getOperand(i);
+      unsigned VirtReg = MO.getReg();
       assert(TargetRegisterInfo::isVirtualRegister(VirtReg) &&
-             "Not a virtual or a physical register?");
+             "Not a virtual register?");
 
       unsigned SubIdx = MO.getSubReg();
       if (VRM.isAssignedReg(VirtReg)) {
