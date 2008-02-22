@@ -293,7 +293,7 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
   if (HasOtherReachingDefs(IntA, IntB, AValNo, BValNo))
     return false;
 
-  if (CommuteLimit >= 0 && numCommutes >= CommuteLimit)
+  if (CommuteLimit >= 0 && numCommutes >= (unsigned)CommuteLimit)
     return false;
 
   // At this point we have decided that it is legal to do this
