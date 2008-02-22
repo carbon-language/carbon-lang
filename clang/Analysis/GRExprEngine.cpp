@@ -1155,6 +1155,8 @@ GRExprEngine::StateTy GRExprEngine::Assume(StateTy St, LVal Cond,
       
       
     case lval::DeclValKind:
+    case lval::FuncValKind:
+    case lval::GotoLabelKind:
       isFeasible = Assumption;
       return St;
 

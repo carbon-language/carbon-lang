@@ -60,6 +60,11 @@ public:
     return getRawKind() == R.getRawKind() && Data == R.Data;
   }
   
+  
+  inline bool operator!=(const RVal& R) const {
+    return !(*this == R);
+  }
+  
   static RVal GetSymbolValue(SymbolManager& SymMgr, ParmVarDecl *D);
   
   inline bool isUnknown() const {

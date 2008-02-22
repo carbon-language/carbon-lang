@@ -233,13 +233,9 @@ RVal GRSimpleVals::EvalEQ(ValueManager& ValMgr, LVal L, LVal R) {
     }
       
     case lval::DeclValKind:
-    
-      if (isa<lval::DeclVal>(R)) {        
-        bool b = cast<lval::DeclVal>(L) == cast<lval::DeclVal>(R);
-        return NonLVal::MakeIntTruthVal(ValMgr, b);
-      }
-    
-      break;
+    case lval::FuncValKind:
+    case lval::GotoLabelKind:
+      return NonLVal::MakeIntTruthVal(ValMgr, L == R);
   }
   
   return NonLVal::MakeIntTruthVal(ValMgr, false);
@@ -288,12 +284,9 @@ RVal GRSimpleVals::EvalNE(ValueManager& ValMgr, LVal L, LVal R) {
     }
       
     case lval::DeclValKind:
-      if (isa<lval::DeclVal>(R)) {        
-        bool b = cast<lval::DeclVal>(L) == cast<lval::DeclVal>(R);
-        return NonLVal::MakeIntTruthVal(ValMgr, b);
-      }
-    
-    break;
+    case lval::FuncValKind:
+    case lval::GotoLabelKind:
+      return NonLVal::MakeIntTruthVal(ValMgr, L != R);
   }
   
   return NonLVal::MakeIntTruthVal(ValMgr, true);
