@@ -760,7 +760,7 @@ ExpandShiftWithKnownAmountBit(SDNode *N, SDOperand &Lo, SDOperand &Hi) {
   APInt KnownZero, KnownOne;
   DAG.ComputeMaskedBits(N->getOperand(1), HighBitMask, KnownZero, KnownOne);
   
-  // If we don't know anything about the high bit, exit.
+  // If we don't know anything about the high bits, exit.
   if (((KnownZero|KnownOne) & HighBitMask) == 0)
     return false;
 
@@ -768,8 +768,8 @@ ExpandShiftWithKnownAmountBit(SDNode *N, SDOperand &Lo, SDOperand &Hi) {
   SDOperand InL, InH;
   GetExpandedOp(N->getOperand(0), InL, InH);
 
-  // If we know that the high bit of the shift amount is one, then we can do
-  // this as a couple of simple shifts.
+  // If we know that any of the high bits of the shift amount are one, then we
+  // can do this as a couple of simple shifts.
   if (KnownOne.intersects(HighBitMask)) {
     // Mask out the high bit, which we know is set.
     Amt = DAG.getNode(ISD::AND, ShTy, Amt,
@@ -793,27 +793,29 @@ ExpandShiftWithKnownAmountBit(SDNode *N, SDOperand &Lo, SDOperand &Hi) {
     }
   }
   
-  // If we know that the high bit of the shift amount is zero, then we can do
-  // this as a couple of simple shifts.
-  assert(KnownZero.intersects(HighBitMask) && "Bad mask computation above");
-
-  // Compute 32-amt.
-  SDOperand Amt2 = DAG.getNode(ISD::SUB, ShTy,
-                               DAG.getConstant(NVTBits, ShTy),
-                               Amt);
-  unsigned Op1, Op2;
-  switch (N->getOpcode()) {
-  default: assert(0 && "Unknown shift");
-  case ISD::SHL:  Op1 = ISD::SHL; Op2 = ISD::SRL; break;
-  case ISD::SRL:
-  case ISD::SRA:  Op1 = ISD::SRL; Op2 = ISD::SHL; break;
-  }
+  // If we know that all of the high bits of the shift amount are zero, then we
+  // can do this as a couple of simple shifts.
+  if ((KnownZero & HighBitMask) == HighBitMask) {
+    // Compute 32-amt.
+    SDOperand Amt2 = DAG.getNode(ISD::SUB, ShTy,
+                                 DAG.getConstant(NVTBits, ShTy),
+                                 Amt);
+    unsigned Op1, Op2;
+    switch (N->getOpcode()) {
+    default: assert(0 && "Unknown shift");
+    case ISD::SHL:  Op1 = ISD::SHL; Op2 = ISD::SRL; break;
+    case ISD::SRL:
+    case ISD::SRA:  Op1 = ISD::SRL; Op2 = ISD::SHL; break;
+    }
     
-  Lo = DAG.getNode(N->getOpcode(), NVT, InL, Amt);
-  Hi = DAG.getNode(ISD::OR, NVT,
-                   DAG.getNode(Op1, NVT, InH, Amt),
-                   DAG.getNode(Op2, NVT, InL, Amt2));
-  return true;
+    Lo = DAG.getNode(N->getOpcode(), NVT, InL, Amt);
+    Hi = DAG.getNode(ISD::OR, NVT,
+                     DAG.getNode(Op1, NVT, InH, Amt),
+                     DAG.getNode(Op2, NVT, InL, Amt2));
+    return true;
+  }
+
+  return false;
 }
 
 

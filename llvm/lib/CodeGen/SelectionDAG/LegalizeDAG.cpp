@@ -5147,8 +5147,8 @@ bool SelectionDAGLegalize::ExpandShift(unsigned Opc, SDOperand Op,SDOperand Amt,
   APInt KnownZero, KnownOne;
   DAG.ComputeMaskedBits(Amt, Mask, KnownZero, KnownOne);
   
-  // If we know that the high bit of the shift amount is one, then we can do
-  // this as a couple of simple shifts.
+  // If we know that if any of the high bits of the shift amount are one, then
+  // we can do this as a couple of simple shifts.
   if (KnownOne.intersects(Mask)) {
     // Mask out the high bit, which we know is set.
     Amt = DAG.getNode(ISD::AND, Amt.getValueType(), Amt,
@@ -5174,9 +5174,9 @@ bool SelectionDAGLegalize::ExpandShift(unsigned Opc, SDOperand Op,SDOperand Amt,
     }
   }
   
-  // If we know that the high bit of the shift amount is zero, then we can do
-  // this as a couple of simple shifts.
-  if (KnownZero.intersects(Mask)) {
+  // If we know that the high bits of the shift amount are all zero, then we can
+  // do this as a couple of simple shifts.
+  if ((KnownZero & Mask) == Mask) {
     // Compute 32-amt.
     SDOperand Amt2 = DAG.getNode(ISD::SUB, Amt.getValueType(),
                                  DAG.getConstant(NVTBits, Amt.getValueType()),
