@@ -1,4 +1,4 @@
-//===-- ParameterAttributes.cpp - Implement ParameterAttrs ----------------===//
+//===-- ParameterAttributes.cpp - Implement ParamAttrsList ----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ParameterAttributes.h"
+#include "llvm/ParamAttrsList.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Support/ManagedStatic.h"
 #include <sstream>

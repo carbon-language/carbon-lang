@@ -20,7 +20,7 @@
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/ParameterAttributes.h"
+#include "llvm/ParamAttrsList.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/Instruction.h"
 #include "llvm/Instructions.h"

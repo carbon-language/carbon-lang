@@ -16,8 +16,8 @@
 #include "llvm/Function.h"
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
-#include "llvm/ParameterAttributes.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/ParamAttrsList.h"
 #include <cstring>
 using namespace llvm;
 

@@ -39,7 +39,7 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/ParameterAttributes.h"
+#include "llvm/ParamAttrsList.h"
 using namespace llvm;
 
 X86TargetLowering::X86TargetLowering(TargetMachine &TM)

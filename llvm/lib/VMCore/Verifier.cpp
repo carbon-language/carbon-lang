@@ -46,7 +46,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
-#include "llvm/ParameterAttributes.h"
+#include "llvm/ParamAttrsList.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/IntrinsicInst.h"

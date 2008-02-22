@@ -25,6 +25,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/ParamAttrsList.h"
 #include <algorithm>
 #include <list>
 #include <map>

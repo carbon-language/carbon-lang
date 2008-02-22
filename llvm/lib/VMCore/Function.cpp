@@ -14,7 +14,7 @@
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/IntrinsicInst.h"
-#include "llvm/ParameterAttributes.h"
+#include "llvm/ParamAttrsList.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/StringPool.h"

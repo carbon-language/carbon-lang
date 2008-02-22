@@ -380,14 +380,14 @@
 
 
 /* Copy the first part of user declarations.  */
-#line 14 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 14 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
 
 #include "UpgradeInternals.h"
 #include "llvm/CallingConv.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
-#include "llvm/ParameterAttributes.h"
+#include "llvm/ParamAttrsList.h"
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/ADT/STLExtras.h"
@@ -2068,7 +2068,7 @@ using namespace llvm;
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 1681 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1681 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
 {
   llvm::Module                           *ModuleVal;
   llvm::Function                         *FunctionVal;
@@ -4114,7 +4114,7 @@ yyreduce:
   switch (yyn)
     {
         case 3:
-#line 1822 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1822 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     if ((yyvsp[(1) - (1)].UIntVal) > (uint32_t)INT32_MAX)     // Outside of my range!
       error("Value too large for type");
@@ -4123,7 +4123,7 @@ yyreduce:
     break;
 
   case 5:
-#line 1831 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1831 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     if ((yyvsp[(1) - (1)].UInt64Val) > (uint64_t)INT64_MAX)     // Outside of my range!
       error("Value too large for type");
@@ -4132,226 +4132,226 @@ yyreduce:
     break;
 
   case 26:
-#line 1853 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1853 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.IPred) = ICmpInst::ICMP_EQ; ;}
     break;
 
   case 27:
-#line 1853 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1853 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.IPred) = ICmpInst::ICMP_NE; ;}
     break;
 
   case 28:
-#line 1854 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1854 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.IPred) = ICmpInst::ICMP_SLT; ;}
     break;
 
   case 29:
-#line 1854 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1854 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.IPred) = ICmpInst::ICMP_SGT; ;}
     break;
 
   case 30:
-#line 1855 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1855 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.IPred) = ICmpInst::ICMP_SLE; ;}
     break;
 
   case 31:
-#line 1855 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1855 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.IPred) = ICmpInst::ICMP_SGE; ;}
     break;
 
   case 32:
-#line 1856 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1856 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.IPred) = ICmpInst::ICMP_ULT; ;}
     break;
 
   case 33:
-#line 1856 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1856 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.IPred) = ICmpInst::ICMP_UGT; ;}
     break;
 
   case 34:
-#line 1857 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1857 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.IPred) = ICmpInst::ICMP_ULE; ;}
     break;
 
   case 35:
-#line 1857 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1857 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.IPred) = ICmpInst::ICMP_UGE; ;}
     break;
 
   case 36:
-#line 1861 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1861 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.FPred) = FCmpInst::FCMP_OEQ; ;}
     break;
 
   case 37:
-#line 1861 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1861 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.FPred) = FCmpInst::FCMP_ONE; ;}
     break;
 
   case 38:
-#line 1862 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1862 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.FPred) = FCmpInst::FCMP_OLT; ;}
     break;
 
   case 39:
-#line 1862 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1862 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.FPred) = FCmpInst::FCMP_OGT; ;}
     break;
 
   case 40:
-#line 1863 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1863 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.FPred) = FCmpInst::FCMP_OLE; ;}
     break;
 
   case 41:
-#line 1863 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1863 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.FPred) = FCmpInst::FCMP_OGE; ;}
     break;
 
   case 42:
-#line 1864 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1864 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.FPred) = FCmpInst::FCMP_ORD; ;}
     break;
 
   case 43:
-#line 1864 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1864 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.FPred) = FCmpInst::FCMP_UNO; ;}
     break;
 
   case 44:
-#line 1865 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1865 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.FPred) = FCmpInst::FCMP_UEQ; ;}
     break;
 
   case 45:
-#line 1865 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1865 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.FPred) = FCmpInst::FCMP_UNE; ;}
     break;
 
   case 46:
-#line 1866 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1866 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.FPred) = FCmpInst::FCMP_ULT; ;}
     break;
 
   case 47:
-#line 1866 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1866 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.FPred) = FCmpInst::FCMP_UGT; ;}
     break;
 
   case 48:
-#line 1867 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1867 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.FPred) = FCmpInst::FCMP_ULE; ;}
     break;
 
   case 49:
-#line 1867 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1867 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.FPred) = FCmpInst::FCMP_UGE; ;}
     break;
 
   case 50:
-#line 1868 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1868 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.FPred) = FCmpInst::FCMP_TRUE; ;}
     break;
 
   case 51:
-#line 1869 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1869 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.FPred) = FCmpInst::FCMP_FALSE; ;}
     break;
 
   case 81:
-#line 1900 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1900 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.StrVal) = (yyvsp[(1) - (2)].StrVal);
   ;}
     break;
 
   case 82:
-#line 1903 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1903 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.StrVal) = 0;
   ;}
     break;
 
   case 83:
-#line 1908 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1908 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.Linkage) = GlobalValue::InternalLinkage; ;}
     break;
 
   case 84:
-#line 1909 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1909 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.Linkage) = GlobalValue::LinkOnceLinkage; ;}
     break;
 
   case 85:
-#line 1910 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1910 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.Linkage) = GlobalValue::WeakLinkage; ;}
     break;
 
   case 86:
-#line 1911 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1911 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.Linkage) = GlobalValue::AppendingLinkage; ;}
     break;
 
   case 87:
-#line 1912 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1912 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.Linkage) = GlobalValue::DLLImportLinkage; ;}
     break;
 
   case 88:
-#line 1913 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1913 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.Linkage) = GlobalValue::DLLExportLinkage; ;}
     break;
 
   case 89:
-#line 1914 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1914 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.Linkage) = GlobalValue::ExternalWeakLinkage; ;}
     break;
 
   case 90:
-#line 1915 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1915 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.Linkage) = GlobalValue::ExternalLinkage; ;}
     break;
 
   case 91:
-#line 1919 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1919 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.UIntVal) = lastCallingConv = OldCallingConv::C; ;}
     break;
 
   case 92:
-#line 1920 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1920 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.UIntVal) = lastCallingConv = OldCallingConv::C; ;}
     break;
 
   case 93:
-#line 1921 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1921 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.UIntVal) = lastCallingConv = OldCallingConv::CSRet; ;}
     break;
 
   case 94:
-#line 1922 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1922 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.UIntVal) = lastCallingConv = OldCallingConv::Fast; ;}
     break;
 
   case 95:
-#line 1923 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1923 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.UIntVal) = lastCallingConv = OldCallingConv::Cold; ;}
     break;
 
   case 96:
-#line 1924 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1924 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.UIntVal) = lastCallingConv = OldCallingConv::X86_StdCall; ;}
     break;
 
   case 97:
-#line 1925 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1925 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.UIntVal) = lastCallingConv = OldCallingConv::X86_FastCall; ;}
     break;
 
   case 98:
-#line 1926 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1926 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     if ((unsigned)(yyvsp[(2) - (2)].UInt64Val) != (yyvsp[(2) - (2)].UInt64Val))
       error("Calling conv too large");
@@ -4360,12 +4360,12 @@ yyreduce:
     break;
 
   case 99:
-#line 1936 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1936 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.UIntVal) = 0; ;}
     break;
 
   case 100:
-#line 1937 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1937 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.UIntVal) = (yyvsp[(2) - (2)].UInt64Val);
     if ((yyval.UIntVal) != 0 && !isPowerOf2_32((yyval.UIntVal)))
@@ -4374,12 +4374,12 @@ yyreduce:
     break;
 
   case 101:
-#line 1945 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1945 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.UIntVal) = 0; ;}
     break;
 
   case 102:
-#line 1946 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1946 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.UIntVal) = (yyvsp[(3) - (3)].UInt64Val);
     if ((yyval.UIntVal) != 0 && !isPowerOf2_32((yyval.UIntVal)))
@@ -4388,7 +4388,7 @@ yyreduce:
     break;
 
   case 103:
-#line 1954 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1954 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     for (unsigned i = 0, e = strlen((yyvsp[(2) - (2)].StrVal)); i != e; ++i)
       if ((yyvsp[(2) - (2)].StrVal)[i] == '"' || (yyvsp[(2) - (2)].StrVal)[i] == '\\')
@@ -4398,27 +4398,27 @@ yyreduce:
     break;
 
   case 104:
-#line 1963 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1963 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.StrVal) = 0; ;}
     break;
 
   case 105:
-#line 1964 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1964 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.StrVal) = (yyvsp[(1) - (1)].StrVal); ;}
     break;
 
   case 106:
-#line 1971 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1971 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {;}
     break;
 
   case 107:
-#line 1972 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1972 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {;}
     break;
 
   case 108:
-#line 1976 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1976 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     CurGV->setSection((yyvsp[(1) - (1)].StrVal));
     free((yyvsp[(1) - (1)].StrVal));
@@ -4426,7 +4426,7 @@ yyreduce:
     break;
 
   case 109:
-#line 1980 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1980 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     if ((yyvsp[(2) - (2)].UInt64Val) != 0 && !isPowerOf2_32((yyvsp[(2) - (2)].UInt64Val)))
       error("Alignment must be a power of two");
@@ -4436,7 +4436,7 @@ yyreduce:
     break;
 
   case 111:
-#line 1997 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 1997 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { 
     (yyval.TypeVal).PAT = new PATypeHolder((yyvsp[(1) - (1)].PrimType).T); 
     (yyval.TypeVal).S.makeSignless();
@@ -4444,7 +4444,7 @@ yyreduce:
     break;
 
   case 113:
-#line 2005 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2005 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { 
     (yyval.TypeVal).PAT = new PATypeHolder((yyvsp[(1) - (1)].PrimType).T); 
     (yyval.TypeVal).S.makeSignless();
@@ -4452,7 +4452,7 @@ yyreduce:
     break;
 
   case 114:
-#line 2012 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2012 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     if (!UpRefs.empty())
       error("Invalid upreference in type: " + (*(yyvsp[(1) - (1)].TypeVal).PAT)->getDescription());
@@ -4461,7 +4461,7 @@ yyreduce:
     break;
 
   case 127:
-#line 2026 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2026 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { 
     (yyval.TypeVal).PAT = new PATypeHolder((yyvsp[(1) - (1)].PrimType).T);
     (yyval.TypeVal).S.copy((yyvsp[(1) - (1)].PrimType).S);
@@ -4469,7 +4469,7 @@ yyreduce:
     break;
 
   case 128:
-#line 2030 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2030 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.TypeVal).PAT = new PATypeHolder(OpaqueType::get());
     (yyval.TypeVal).S.makeSignless();
@@ -4477,7 +4477,7 @@ yyreduce:
     break;
 
   case 129:
-#line 2034 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2034 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {            // Named types are also simple types...
     (yyval.TypeVal).S.copy(getTypeSign((yyvsp[(1) - (1)].ValIDVal)));
     const Type* tmp = getType((yyvsp[(1) - (1)].ValIDVal));
@@ -4486,7 +4486,7 @@ yyreduce:
     break;
 
   case 130:
-#line 2039 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2039 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {                   // Type UpReference
     if ((yyvsp[(2) - (2)].UInt64Val) > (uint64_t)~0U) 
       error("Value out of range");
@@ -4499,7 +4499,7 @@ yyreduce:
     break;
 
   case 131:
-#line 2048 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2048 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {           // Function derived type?
     (yyval.TypeVal).S.makeComposite((yyvsp[(1) - (4)].TypeVal).S);
     std::vector<const Type*> Params;
@@ -4530,7 +4530,7 @@ yyreduce:
     break;
 
   case 132:
-#line 2075 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2075 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {          // Sized array type?
     (yyval.TypeVal).S.makeComposite((yyvsp[(4) - (5)].TypeVal).S);
     (yyval.TypeVal).PAT = new PATypeHolder(HandleUpRefs(ArrayType::get((yyvsp[(4) - (5)].TypeVal).PAT->get(), 
@@ -4540,7 +4540,7 @@ yyreduce:
     break;
 
   case 133:
-#line 2081 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2081 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {          // Vector type?
     const llvm::Type* ElemTy = (yyvsp[(4) - (5)].TypeVal).PAT->get();
     if ((unsigned)(yyvsp[(2) - (5)].UInt64Val) != (yyvsp[(2) - (5)].UInt64Val))
@@ -4557,7 +4557,7 @@ yyreduce:
     break;
 
   case 134:
-#line 2094 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2094 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {                        // Structure type?
     std::vector<const Type*> Elements;
     (yyval.TypeVal).S.makeComposite();
@@ -4572,7 +4572,7 @@ yyreduce:
     break;
 
   case 135:
-#line 2105 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2105 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {                                  // Empty structure type?
     (yyval.TypeVal).PAT = new PATypeHolder(StructType::get(std::vector<const Type*>()));
     (yyval.TypeVal).S.makeComposite();
@@ -4580,7 +4580,7 @@ yyreduce:
     break;
 
   case 136:
-#line 2109 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2109 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {                // Packed Structure type?
     (yyval.TypeVal).S.makeComposite();
     std::vector<const Type*> Elements;
@@ -4597,7 +4597,7 @@ yyreduce:
     break;
 
   case 137:
-#line 2122 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2122 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {                          // Empty packed structure type?
     (yyval.TypeVal).PAT = new PATypeHolder(StructType::get(std::vector<const Type*>(),true));
     (yyval.TypeVal).S.makeComposite();
@@ -4605,7 +4605,7 @@ yyreduce:
     break;
 
   case 138:
-#line 2126 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2126 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {                             // Pointer type?
     if ((yyvsp[(1) - (2)].TypeVal).PAT->get() == Type::LabelTy)
       error("Cannot form a pointer to a basic block");
@@ -4618,7 +4618,7 @@ yyreduce:
     break;
 
   case 139:
-#line 2141 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2141 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.TypeList) = new std::list<PATypeInfo>();
     (yyval.TypeList)->push_back((yyvsp[(1) - (1)].TypeVal)); 
@@ -4626,14 +4626,14 @@ yyreduce:
     break;
 
   case 140:
-#line 2145 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2145 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     ((yyval.TypeList)=(yyvsp[(1) - (3)].TypeList))->push_back((yyvsp[(3) - (3)].TypeVal));
   ;}
     break;
 
   case 142:
-#line 2153 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2153 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     PATypeInfo VoidTI;
     VoidTI.PAT = new PATypeHolder(Type::VoidTy);
@@ -4643,7 +4643,7 @@ yyreduce:
     break;
 
   case 143:
-#line 2159 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2159 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.TypeList) = new std::list<PATypeInfo>();
     PATypeInfo VoidTI;
@@ -4654,14 +4654,14 @@ yyreduce:
     break;
 
   case 144:
-#line 2166 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2166 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.TypeList) = new std::list<PATypeInfo>();
   ;}
     break;
 
   case 145:
-#line 2178 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2178 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { // Nonempty unsized arr
     const ArrayType *ATy = dyn_cast<ArrayType>((yyvsp[(1) - (4)].TypeVal).PAT->get());
     if (ATy == 0)
@@ -4695,7 +4695,7 @@ yyreduce:
     break;
 
   case 146:
-#line 2208 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2208 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     const ArrayType *ATy = dyn_cast<ArrayType>((yyvsp[(1) - (3)].TypeVal).PAT->get());
     if (ATy == 0)
@@ -4712,7 +4712,7 @@ yyreduce:
     break;
 
   case 147:
-#line 2221 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2221 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     const ArrayType *ATy = dyn_cast<ArrayType>((yyvsp[(1) - (3)].TypeVal).PAT->get());
     if (ATy == 0)
@@ -4739,7 +4739,7 @@ yyreduce:
     break;
 
   case 148:
-#line 2244 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2244 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { // Nonempty unsized arr
     const VectorType *PTy = dyn_cast<VectorType>((yyvsp[(1) - (4)].TypeVal).PAT->get());
     if (PTy == 0)
@@ -4771,7 +4771,7 @@ yyreduce:
     break;
 
   case 149:
-#line 2272 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2272 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     const StructType *STy = dyn_cast<StructType>((yyvsp[(1) - (4)].TypeVal).PAT->get());
     if (STy == 0)
@@ -4797,7 +4797,7 @@ yyreduce:
     break;
 
   case 150:
-#line 2294 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2294 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     const StructType *STy = dyn_cast<StructType>((yyvsp[(1) - (3)].TypeVal).PAT->get());
     if (STy == 0)
@@ -4812,7 +4812,7 @@ yyreduce:
     break;
 
   case 151:
-#line 2305 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2305 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     const StructType *STy = dyn_cast<StructType>((yyvsp[(1) - (6)].TypeVal).PAT->get());
     if (STy == 0)
@@ -4838,7 +4838,7 @@ yyreduce:
     break;
 
   case 152:
-#line 2327 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2327 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     const StructType *STy = dyn_cast<StructType>((yyvsp[(1) - (5)].TypeVal).PAT->get());
     if (STy == 0)
@@ -4853,7 +4853,7 @@ yyreduce:
     break;
 
   case 153:
-#line 2338 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2338 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     const PointerType *PTy = dyn_cast<PointerType>((yyvsp[(1) - (2)].TypeVal).PAT->get());
     if (PTy == 0)
@@ -4866,7 +4866,7 @@ yyreduce:
     break;
 
   case 154:
-#line 2347 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2347 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.ConstVal).C = UndefValue::get((yyvsp[(1) - (2)].TypeVal).PAT->get());
     (yyval.ConstVal).S.copy((yyvsp[(1) - (2)].TypeVal).S);
@@ -4875,7 +4875,7 @@ yyreduce:
     break;
 
   case 155:
-#line 2352 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2352 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     const PointerType *Ty = dyn_cast<PointerType>((yyvsp[(1) - (2)].TypeVal).PAT->get());
     if (Ty == 0)
@@ -4938,7 +4938,7 @@ yyreduce:
     break;
 
   case 156:
-#line 2411 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2411 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     if ((yyvsp[(1) - (2)].TypeVal).PAT->get() != (yyvsp[(2) - (2)].ConstVal).C->getType())
       error("Mismatched types for constant expression");
@@ -4949,7 +4949,7 @@ yyreduce:
     break;
 
   case 157:
-#line 2418 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2418 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type *Ty = (yyvsp[(1) - (2)].TypeVal).PAT->get();
     if (isa<FunctionType>(Ty) || Ty == Type::LabelTy || isa<OpaqueType>(Ty))
@@ -4961,7 +4961,7 @@ yyreduce:
     break;
 
   case 158:
-#line 2426 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2426 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {      // integral constants
     const Type *Ty = (yyvsp[(1) - (2)].PrimType).T;
     if (!ConstantInt::isValueValidForType(Ty, (yyvsp[(2) - (2)].SInt64Val)))
@@ -4972,7 +4972,7 @@ yyreduce:
     break;
 
   case 159:
-#line 2433 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2433 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {            // integral constants
     const Type *Ty = (yyvsp[(1) - (2)].PrimType).T;
     if (!ConstantInt::isValueValidForType(Ty, (yyvsp[(2) - (2)].UInt64Val)))
@@ -4983,7 +4983,7 @@ yyreduce:
     break;
 
   case 160:
-#line 2440 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2440 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {                      // Boolean constants
     (yyval.ConstVal).C = ConstantInt::get(Type::Int1Ty, true);
     (yyval.ConstVal).S.makeUnsigned();
@@ -4991,7 +4991,7 @@ yyreduce:
     break;
 
   case 161:
-#line 2444 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2444 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {                     // Boolean constants
     (yyval.ConstVal).C = ConstantInt::get(Type::Int1Ty, false);
     (yyval.ConstVal).S.makeUnsigned();
@@ -4999,7 +4999,7 @@ yyreduce:
     break;
 
   case 162:
-#line 2448 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2448 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {                   // Float & Double constants
     if (!ConstantFP::isValueValidForType((yyvsp[(1) - (2)].PrimType).T, *(yyvsp[(2) - (2)].FPVal)))
       error("Floating point constant invalid for type");
@@ -5014,7 +5014,7 @@ yyreduce:
     break;
 
   case 163:
-#line 2462 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2462 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type* SrcTy = (yyvsp[(3) - (6)].ConstVal).C->getType();
     const Type* DstTy = (yyvsp[(5) - (6)].TypeVal).PAT->get();
@@ -5033,7 +5033,7 @@ yyreduce:
     break;
 
   case 164:
-#line 2477 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2477 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type *Ty = (yyvsp[(3) - (5)].ConstVal).C->getType();
     if (!isa<PointerType>(Ty))
@@ -5049,7 +5049,7 @@ yyreduce:
     break;
 
   case 165:
-#line 2489 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2489 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     if (!(yyvsp[(3) - (8)].ConstVal).C->getType()->isInteger() ||
         cast<IntegerType>((yyvsp[(3) - (8)].ConstVal).C->getType())->getBitWidth() != 1)
@@ -5062,7 +5062,7 @@ yyreduce:
     break;
 
   case 166:
-#line 2498 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2498 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type *Ty = (yyvsp[(3) - (6)].ConstVal).C->getType();
     if (Ty != (yyvsp[(5) - (6)].ConstVal).C->getType())
@@ -5094,7 +5094,7 @@ yyreduce:
     break;
 
   case 167:
-#line 2526 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2526 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type* Ty = (yyvsp[(3) - (6)].ConstVal).C->getType();
     if (Ty != (yyvsp[(5) - (6)].ConstVal).C->getType())
@@ -5111,7 +5111,7 @@ yyreduce:
     break;
 
   case 168:
-#line 2539 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2539 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type* Ty = (yyvsp[(3) - (6)].ConstVal).C->getType();
     if (Ty != (yyvsp[(5) - (6)].ConstVal).C->getType())
@@ -5124,7 +5124,7 @@ yyreduce:
     break;
 
   case 169:
-#line 2548 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2548 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     if ((yyvsp[(4) - (7)].ConstVal).C->getType() != (yyvsp[(6) - (7)].ConstVal).C->getType()) 
       error("icmp operand types must match");
@@ -5134,7 +5134,7 @@ yyreduce:
     break;
 
   case 170:
-#line 2554 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2554 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     if ((yyvsp[(4) - (7)].ConstVal).C->getType() != (yyvsp[(6) - (7)].ConstVal).C->getType()) 
       error("fcmp operand types must match");
@@ -5144,7 +5144,7 @@ yyreduce:
     break;
 
   case 171:
-#line 2560 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2560 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     if (!(yyvsp[(5) - (6)].ConstVal).C->getType()->isInteger() ||
         cast<IntegerType>((yyvsp[(5) - (6)].ConstVal).C->getType())->getBitWidth() != 8)
@@ -5159,7 +5159,7 @@ yyreduce:
     break;
 
   case 172:
-#line 2571 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2571 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     if (!ExtractElementInst::isValidOperands((yyvsp[(3) - (6)].ConstVal).C, (yyvsp[(5) - (6)].ConstVal).C))
       error("Invalid extractelement operands");
@@ -5169,7 +5169,7 @@ yyreduce:
     break;
 
   case 173:
-#line 2577 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2577 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     if (!InsertElementInst::isValidOperands((yyvsp[(3) - (8)].ConstVal).C, (yyvsp[(5) - (8)].ConstVal).C, (yyvsp[(7) - (8)].ConstVal).C))
       error("Invalid insertelement operands");
@@ -5179,7 +5179,7 @@ yyreduce:
     break;
 
   case 174:
-#line 2583 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2583 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     if (!ShuffleVectorInst::isValidOperands((yyvsp[(3) - (8)].ConstVal).C, (yyvsp[(5) - (8)].ConstVal).C, (yyvsp[(7) - (8)].ConstVal).C))
       error("Invalid shufflevector operands");
@@ -5189,12 +5189,12 @@ yyreduce:
     break;
 
   case 175:
-#line 2594 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2594 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { ((yyval.ConstVector) = (yyvsp[(1) - (3)].ConstVector))->push_back((yyvsp[(3) - (3)].ConstVal)); ;}
     break;
 
   case 176:
-#line 2595 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2595 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.ConstVector) = new std::vector<ConstInfo>();
     (yyval.ConstVector)->push_back((yyvsp[(1) - (1)].ConstVal));
@@ -5202,17 +5202,17 @@ yyreduce:
     break;
 
   case 177:
-#line 2604 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2604 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.BoolVal) = false; ;}
     break;
 
   case 178:
-#line 2605 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2605 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.BoolVal) = true; ;}
     break;
 
   case 179:
-#line 2617 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2617 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.ModuleVal) = ParserResult = (yyvsp[(1) - (1)].ModuleVal);
     CurModule.ModuleDone();
@@ -5220,27 +5220,27 @@ yyreduce:
     break;
 
   case 180:
-#line 2626 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2626 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.ModuleVal) = (yyvsp[(1) - (2)].ModuleVal); CurFun.FunctionDone(); ;}
     break;
 
   case 181:
-#line 2627 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2627 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.ModuleVal) = (yyvsp[(1) - (2)].ModuleVal); ;}
     break;
 
   case 182:
-#line 2628 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2628 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.ModuleVal) = (yyvsp[(1) - (4)].ModuleVal); ;}
     break;
 
   case 183:
-#line 2629 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2629 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.ModuleVal) = (yyvsp[(1) - (2)].ModuleVal); ;}
     break;
 
   case 184:
-#line 2630 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2630 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.ModuleVal) = CurModule.CurrentModule;
     // Emit an error if there are any unresolved types left.
@@ -5256,7 +5256,7 @@ yyreduce:
     break;
 
   case 185:
-#line 2646 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2646 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     // Eagerly resolve types.  This is not an optimization, this is a
     // requirement that is due to the fact that we could have this:
@@ -5280,19 +5280,19 @@ yyreduce:
     break;
 
   case 186:
-#line 2666 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2666 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {       // Function prototypes can be in const pool
   ;}
     break;
 
   case 187:
-#line 2668 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2668 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {  // Asm blocks can be in the const pool
   ;}
     break;
 
   case 188:
-#line 2670 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2670 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     if ((yyvsp[(5) - (5)].ConstVal).C == 0) 
       error("Global value initializer is not a constant");
@@ -5301,14 +5301,14 @@ yyreduce:
     break;
 
   case 189:
-#line 2674 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2674 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     CurGV = 0;
   ;}
     break;
 
   case 190:
-#line 2677 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2677 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type *Ty = (yyvsp[(5) - (5)].TypeVal).PAT->get();
     CurGV = ParseGlobalVariable((yyvsp[(2) - (5)].StrVal), GlobalValue::ExternalLinkage, (yyvsp[(4) - (5)].BoolVal), Ty, 0,
@@ -5318,14 +5318,14 @@ yyreduce:
     break;
 
   case 191:
-#line 2682 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2682 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     CurGV = 0;
   ;}
     break;
 
   case 192:
-#line 2685 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2685 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type *Ty = (yyvsp[(5) - (5)].TypeVal).PAT->get();
     CurGV = ParseGlobalVariable((yyvsp[(2) - (5)].StrVal), GlobalValue::DLLImportLinkage, (yyvsp[(4) - (5)].BoolVal), Ty, 0,
@@ -5335,14 +5335,14 @@ yyreduce:
     break;
 
   case 193:
-#line 2690 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2690 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     CurGV = 0;
   ;}
     break;
 
   case 194:
-#line 2693 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2693 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type *Ty = (yyvsp[(5) - (5)].TypeVal).PAT->get();
     CurGV = 
@@ -5353,32 +5353,32 @@ yyreduce:
     break;
 
   case 195:
-#line 2699 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2699 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     CurGV = 0;
   ;}
     break;
 
   case 196:
-#line 2702 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2702 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { 
   ;}
     break;
 
   case 197:
-#line 2704 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2704 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
   ;}
     break;
 
   case 198:
-#line 2706 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2706 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { 
   ;}
     break;
 
   case 199:
-#line 2711 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2711 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     const std::string &AsmSoFar = CurModule.CurrentModule->getModuleInlineAsm();
     char *EndStr = UnEscapeLexed((yyvsp[(1) - (1)].StrVal), true);
@@ -5393,24 +5393,24 @@ yyreduce:
     break;
 
   case 200:
-#line 2725 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2725 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.Endianness) = Module::BigEndian; ;}
     break;
 
   case 201:
-#line 2726 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2726 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.Endianness) = Module::LittleEndian; ;}
     break;
 
   case 202:
-#line 2730 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2730 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     CurModule.setEndianness((yyvsp[(3) - (3)].Endianness));
   ;}
     break;
 
   case 203:
-#line 2733 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2733 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     if ((yyvsp[(3) - (3)].UInt64Val) == 32)
       CurModule.setPointerSize(Module::Pointer32);
@@ -5422,7 +5422,7 @@ yyreduce:
     break;
 
   case 204:
-#line 2741 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2741 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     CurModule.CurrentModule->setTargetTriple((yyvsp[(3) - (3)].StrVal));
     free((yyvsp[(3) - (3)].StrVal));
@@ -5430,7 +5430,7 @@ yyreduce:
     break;
 
   case 205:
-#line 2745 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2745 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     CurModule.CurrentModule->setDataLayout((yyvsp[(3) - (3)].StrVal));
     free((yyvsp[(3) - (3)].StrVal));
@@ -5438,7 +5438,7 @@ yyreduce:
     break;
 
   case 207:
-#line 2756 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2756 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
       CurModule.CurrentModule->addLibrary((yyvsp[(3) - (3)].StrVal));
       free((yyvsp[(3) - (3)].StrVal));
@@ -5446,7 +5446,7 @@ yyreduce:
     break;
 
   case 208:
-#line 2760 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2760 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     CurModule.CurrentModule->addLibrary((yyvsp[(1) - (1)].StrVal));
     free((yyvsp[(1) - (1)].StrVal));
@@ -5454,17 +5454,17 @@ yyreduce:
     break;
 
   case 209:
-#line 2764 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2764 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { ;}
     break;
 
   case 213:
-#line 2777 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2777 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.StrVal) = 0; ;}
     break;
 
   case 214:
-#line 2781 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2781 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     if ((yyvsp[(1) - (2)].TypeVal).PAT->get() == Type::VoidTy)
       error("void typed arguments are invalid");
@@ -5473,7 +5473,7 @@ yyreduce:
     break;
 
   case 215:
-#line 2789 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2789 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.ArgList) = (yyvsp[(1) - (3)].ArgList);
     (yyval.ArgList)->push_back(*(yyvsp[(3) - (3)].ArgVal));
@@ -5482,7 +5482,7 @@ yyreduce:
     break;
 
   case 216:
-#line 2794 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2794 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.ArgList) = new std::vector<std::pair<PATypeInfo,char*> >();
     (yyval.ArgList)->push_back(*(yyvsp[(1) - (1)].ArgVal));
@@ -5491,12 +5491,12 @@ yyreduce:
     break;
 
   case 217:
-#line 2802 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2802 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.ArgList) = (yyvsp[(1) - (1)].ArgList); ;}
     break;
 
   case 218:
-#line 2803 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2803 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.ArgList) = (yyvsp[(1) - (3)].ArgList);
     PATypeInfo VoidTI;
@@ -5507,7 +5507,7 @@ yyreduce:
     break;
 
   case 219:
-#line 2810 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2810 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.ArgList) = new std::vector<std::pair<PATypeInfo,char*> >();
     PATypeInfo VoidTI;
@@ -5518,12 +5518,12 @@ yyreduce:
     break;
 
   case 220:
-#line 2817 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2817 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.ArgList) = 0; ;}
     break;
 
   case 221:
-#line 2821 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 2821 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     UnEscapeLexed((yyvsp[(3) - (8)].StrVal));
     std::string FunctionName((yyvsp[(3) - (8)].StrVal));
@@ -5712,12 +5712,12 @@ yyreduce:
     break;
 
   case 224:
-#line 3013 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3013 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { CurFun.Linkage = (yyvsp[(1) - (1)].Linkage); ;}
     break;
 
   case 225:
-#line 3013 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3013 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.FunctionVal) = CurFun.CurrentFunction;
 
@@ -5728,39 +5728,39 @@ yyreduce:
     break;
 
   case 228:
-#line 3027 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3027 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.FunctionVal) = (yyvsp[(1) - (2)].FunctionVal);
   ;}
     break;
 
   case 229:
-#line 3032 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3032 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.Linkage) = GlobalValue::ExternalLinkage; ;}
     break;
 
   case 230:
-#line 3033 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3033 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.Linkage) = GlobalValue::DLLImportLinkage; ;}
     break;
 
   case 231:
-#line 3034 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3034 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.Linkage) = GlobalValue::ExternalWeakLinkage; ;}
     break;
 
   case 232:
-#line 3038 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3038 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { CurFun.isDeclare = true; ;}
     break;
 
   case 233:
-#line 3039 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3039 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { CurFun.Linkage = (yyvsp[(3) - (3)].Linkage); ;}
     break;
 
   case 234:
-#line 3039 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3039 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.FunctionVal) = CurFun.CurrentFunction;
     CurFun.FunctionDone();
@@ -5769,32 +5769,32 @@ yyreduce:
     break;
 
   case 235:
-#line 3051 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3051 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.BoolVal) = false; ;}
     break;
 
   case 236:
-#line 3052 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3052 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.BoolVal) = true; ;}
     break;
 
   case 237:
-#line 3057 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3057 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.ValIDVal) = ValID::create((yyvsp[(1) - (1)].SInt64Val)); ;}
     break;
 
   case 238:
-#line 3058 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3058 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.ValIDVal) = ValID::create((yyvsp[(1) - (1)].UInt64Val)); ;}
     break;
 
   case 239:
-#line 3059 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3059 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.ValIDVal) = ValID::create((yyvsp[(1) - (1)].FPVal)); ;}
     break;
 
   case 240:
-#line 3060 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3060 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { 
     (yyval.ValIDVal) = ValID::create(ConstantInt::get(Type::Int1Ty, true));
     (yyval.ValIDVal).S.makeUnsigned();
@@ -5802,7 +5802,7 @@ yyreduce:
     break;
 
   case 241:
-#line 3064 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3064 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { 
     (yyval.ValIDVal) = ValID::create(ConstantInt::get(Type::Int1Ty, false)); 
     (yyval.ValIDVal).S.makeUnsigned();
@@ -5810,22 +5810,22 @@ yyreduce:
     break;
 
   case 242:
-#line 3068 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3068 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.ValIDVal) = ValID::createNull(); ;}
     break;
 
   case 243:
-#line 3069 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3069 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.ValIDVal) = ValID::createUndef(); ;}
     break;
 
   case 244:
-#line 3070 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3070 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.ValIDVal) = ValID::createZeroInit(); ;}
     break;
 
   case 245:
-#line 3071 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3071 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { // Nonempty unsized packed vector
     const Type *ETy = (*(yyvsp[(2) - (3)].ConstVector))[0].C->getType();
     int NumElements = (yyvsp[(2) - (3)].ConstVector)->size(); 
@@ -5850,7 +5850,7 @@ yyreduce:
     break;
 
   case 246:
-#line 3092 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3092 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.ValIDVal) = ValID::create((yyvsp[(1) - (1)].ConstVal).C);
     (yyval.ValIDVal).S.copy((yyvsp[(1) - (1)].ConstVal).S);
@@ -5858,7 +5858,7 @@ yyreduce:
     break;
 
   case 247:
-#line 3096 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3096 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     char *End = UnEscapeLexed((yyvsp[(3) - (5)].StrVal), true);
     std::string AsmStr = std::string((yyvsp[(3) - (5)].StrVal), End);
@@ -5871,17 +5871,17 @@ yyreduce:
     break;
 
   case 248:
-#line 3111 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3111 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {  (yyval.ValIDVal) = ValID::create((yyvsp[(1) - (1)].SIntVal)); (yyval.ValIDVal).S.makeSignless(); ;}
     break;
 
   case 249:
-#line 3112 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3112 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {  (yyval.ValIDVal) = ValID::create((yyvsp[(1) - (1)].StrVal)); (yyval.ValIDVal).S.makeSignless(); ;}
     break;
 
   case 252:
-#line 3125 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3125 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { 
     const Type *Ty = (yyvsp[(1) - (2)].TypeVal).PAT->get();
     (yyvsp[(2) - (2)].ValIDVal).S.copy((yyvsp[(1) - (2)].TypeVal).S);
@@ -5892,21 +5892,21 @@ yyreduce:
     break;
 
   case 253:
-#line 3135 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3135 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.FunctionVal) = (yyvsp[(1) - (2)].FunctionVal);
   ;}
     break;
 
   case 254:
-#line 3138 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3138 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { // Do not allow functions with 0 basic blocks   
     (yyval.FunctionVal) = (yyvsp[(1) - (2)].FunctionVal);
   ;}
     break;
 
   case 255:
-#line 3147 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3147 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     ValueInfo VI; VI.V = (yyvsp[(3) - (3)].TermInstVal).TI; VI.S.copy((yyvsp[(3) - (3)].TermInstVal).S);
     setValueName(VI, (yyvsp[(2) - (3)].StrVal));
@@ -5918,7 +5918,7 @@ yyreduce:
     break;
 
   case 256:
-#line 3158 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3158 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     if ((yyvsp[(2) - (2)].InstVal).I)
       (yyvsp[(1) - (2)].BasicBlockVal)->getInstList().push_back((yyvsp[(2) - (2)].InstVal).I);
@@ -5927,7 +5927,7 @@ yyreduce:
     break;
 
   case 257:
-#line 3163 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3163 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.BasicBlockVal) = CurBB = getBBVal(ValID::create((int)CurFun.NextBBNum++),true);
     // Make sure to move the basic block to the correct location in the
@@ -5940,7 +5940,7 @@ yyreduce:
     break;
 
   case 258:
-#line 3172 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3172 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.BasicBlockVal) = CurBB = getBBVal(ValID::create((yyvsp[(1) - (1)].StrVal)), true);
     // Make sure to move the basic block to the correct location in the
@@ -5953,7 +5953,7 @@ yyreduce:
     break;
 
   case 261:
-#line 3186 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3186 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {              // Return with a result...
     (yyval.TermInstVal).TI = new ReturnInst((yyvsp[(2) - (2)].ValueVal).V);
     (yyval.TermInstVal).S.makeSignless();
@@ -5961,7 +5961,7 @@ yyreduce:
     break;
 
   case 262:
-#line 3190 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3190 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {                                       // Return with no result...
     (yyval.TermInstVal).TI = new ReturnInst();
     (yyval.TermInstVal).S.makeSignless();
@@ -5969,7 +5969,7 @@ yyreduce:
     break;
 
   case 263:
-#line 3194 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3194 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {                         // Unconditional Branch...
     BasicBlock* tmpBB = getBBVal((yyvsp[(3) - (3)].ValIDVal));
     (yyval.TermInstVal).TI = new BranchInst(tmpBB);
@@ -5978,7 +5978,7 @@ yyreduce:
     break;
 
   case 264:
-#line 3199 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3199 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {  
     (yyvsp[(6) - (9)].ValIDVal).S.makeSignless();
     (yyvsp[(9) - (9)].ValIDVal).S.makeSignless();
@@ -5992,7 +5992,7 @@ yyreduce:
     break;
 
   case 265:
-#line 3209 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3209 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyvsp[(3) - (9)].ValIDVal).S.copy((yyvsp[(2) - (9)].PrimType).S);
     Value* tmpVal = getVal((yyvsp[(2) - (9)].PrimType).T, (yyvsp[(3) - (9)].ValIDVal));
@@ -6014,7 +6014,7 @@ yyreduce:
     break;
 
   case 266:
-#line 3227 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3227 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyvsp[(3) - (8)].ValIDVal).S.copy((yyvsp[(2) - (8)].PrimType).S);
     Value* tmpVal = getVal((yyvsp[(2) - (8)].PrimType).T, (yyvsp[(3) - (8)].ValIDVal));
@@ -6027,7 +6027,7 @@ yyreduce:
     break;
 
   case 267:
-#line 3237 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3237 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     const PointerType *PFTy;
     const FunctionType *Ty;
@@ -6103,7 +6103,7 @@ yyreduce:
     break;
 
   case 268:
-#line 3309 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3309 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.TermInstVal).TI = new UnwindInst();
     (yyval.TermInstVal).S.makeSignless();
@@ -6111,7 +6111,7 @@ yyreduce:
     break;
 
   case 269:
-#line 3313 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3313 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.TermInstVal).TI = new UnreachableInst();
     (yyval.TermInstVal).S.makeSignless();
@@ -6119,7 +6119,7 @@ yyreduce:
     break;
 
   case 270:
-#line 3320 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3320 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.JumpTable) = (yyvsp[(1) - (6)].JumpTable);
     (yyvsp[(3) - (6)].ValIDVal).S.copy((yyvsp[(2) - (6)].PrimType).S);
@@ -6135,7 +6135,7 @@ yyreduce:
     break;
 
   case 271:
-#line 3332 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3332 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.JumpTable) = new std::vector<std::pair<Constant*, BasicBlock*> >();
     (yyvsp[(2) - (5)].ValIDVal).S.copy((yyvsp[(1) - (5)].PrimType).S);
@@ -6151,7 +6151,7 @@ yyreduce:
     break;
 
   case 272:
-#line 3347 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3347 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     bool omit = false;
     if ((yyvsp[(1) - (2)].StrVal))
@@ -6184,7 +6184,7 @@ yyreduce:
     break;
 
   case 273:
-#line 3377 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3377 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {    // Used for PHI nodes
     (yyval.PHIList).P = new std::list<std::pair<Value*, BasicBlock*> >();
     (yyval.PHIList).S.copy((yyvsp[(1) - (6)].TypeVal).S);
@@ -6198,7 +6198,7 @@ yyreduce:
     break;
 
   case 274:
-#line 3387 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3387 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.PHIList) = (yyvsp[(1) - (7)].PHIList);
     (yyvsp[(4) - (7)].ValIDVal).S.copy((yyvsp[(1) - (7)].PHIList).S);
@@ -6210,7 +6210,7 @@ yyreduce:
     break;
 
   case 275:
-#line 3397 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3397 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {    // Used for call statements, and memory insts...
     (yyval.ValueList) = new std::vector<ValueInfo>();
     (yyval.ValueList)->push_back((yyvsp[(1) - (1)].ValueVal));
@@ -6218,7 +6218,7 @@ yyreduce:
     break;
 
   case 276:
-#line 3401 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3401 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.ValueList) = (yyvsp[(1) - (3)].ValueList);
     (yyvsp[(1) - (3)].ValueList)->push_back((yyvsp[(3) - (3)].ValueVal));
@@ -6226,26 +6226,26 @@ yyreduce:
     break;
 
   case 278:
-#line 3409 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3409 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.ValueList) = 0; ;}
     break;
 
   case 279:
-#line 3413 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3413 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.BoolVal) = true;
   ;}
     break;
 
   case 280:
-#line 3416 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3416 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.BoolVal) = false;
   ;}
     break;
 
   case 281:
-#line 3422 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3422 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyvsp[(3) - (5)].ValIDVal).S.copy((yyvsp[(2) - (5)].TypeVal).S);
     (yyvsp[(5) - (5)].ValIDVal).S.copy((yyvsp[(2) - (5)].TypeVal).S);
@@ -6268,7 +6268,7 @@ yyreduce:
     break;
 
   case 282:
-#line 3441 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3441 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyvsp[(3) - (5)].ValIDVal).S.copy((yyvsp[(2) - (5)].TypeVal).S);
     (yyvsp[(5) - (5)].ValIDVal).S.copy((yyvsp[(2) - (5)].TypeVal).S);
@@ -6290,7 +6290,7 @@ yyreduce:
     break;
 
   case 283:
-#line 3459 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3459 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyvsp[(3) - (5)].ValIDVal).S.copy((yyvsp[(2) - (5)].TypeVal).S);
     (yyvsp[(5) - (5)].ValIDVal).S.copy((yyvsp[(2) - (5)].TypeVal).S);
@@ -6310,7 +6310,7 @@ yyreduce:
     break;
 
   case 284:
-#line 3475 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3475 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyvsp[(4) - (6)].ValIDVal).S.copy((yyvsp[(3) - (6)].TypeVal).S);
     (yyvsp[(6) - (6)].ValIDVal).S.copy((yyvsp[(3) - (6)].TypeVal).S);
@@ -6328,7 +6328,7 @@ yyreduce:
     break;
 
   case 285:
-#line 3489 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3489 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyvsp[(4) - (6)].ValIDVal).S.copy((yyvsp[(3) - (6)].TypeVal).S);
     (yyvsp[(6) - (6)].ValIDVal).S.copy((yyvsp[(3) - (6)].TypeVal).S);
@@ -6346,7 +6346,7 @@ yyreduce:
     break;
 
   case 286:
-#line 3503 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3503 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     warning("Use of obsolete 'not' instruction: Replacing with 'xor");
     const Type *Ty = (yyvsp[(2) - (2)].ValueVal).V->getType();
@@ -6361,7 +6361,7 @@ yyreduce:
     break;
 
   case 287:
-#line 3514 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3514 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     if (!(yyvsp[(4) - (4)].ValueVal).V->getType()->isInteger() ||
         cast<IntegerType>((yyvsp[(4) - (4)].ValueVal).V->getType())->getBitWidth() != 8)
@@ -6383,7 +6383,7 @@ yyreduce:
     break;
 
   case 288:
-#line 3532 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3532 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type *DstTy = (yyvsp[(4) - (4)].TypeVal).PAT->get();
     if (!DstTy->isFirstClassType())
@@ -6396,7 +6396,7 @@ yyreduce:
     break;
 
   case 289:
-#line 3541 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3541 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     if (!(yyvsp[(2) - (6)].ValueVal).V->getType()->isInteger() ||
         cast<IntegerType>((yyvsp[(2) - (6)].ValueVal).V->getType())->getBitWidth() != 1)
@@ -6409,7 +6409,7 @@ yyreduce:
     break;
 
   case 290:
-#line 3550 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3550 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type *Ty = (yyvsp[(4) - (4)].TypeVal).PAT->get();
     NewVarArgs = true;
@@ -6420,7 +6420,7 @@ yyreduce:
     break;
 
   case 291:
-#line 3557 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3557 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type* ArgTy = (yyvsp[(2) - (4)].ValueVal).V->getType();
     const Type* DstTy = (yyvsp[(4) - (4)].TypeVal).PAT->get();
@@ -6445,7 +6445,7 @@ yyreduce:
     break;
 
   case 292:
-#line 3578 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3578 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type* ArgTy = (yyvsp[(2) - (4)].ValueVal).V->getType();
     const Type* DstTy = (yyvsp[(4) - (4)].TypeVal).PAT->get();
@@ -6473,7 +6473,7 @@ yyreduce:
     break;
 
   case 293:
-#line 3602 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3602 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     if (!ExtractElementInst::isValidOperands((yyvsp[(2) - (4)].ValueVal).V, (yyvsp[(4) - (4)].ValueVal).V))
       error("Invalid extractelement operands");
@@ -6483,7 +6483,7 @@ yyreduce:
     break;
 
   case 294:
-#line 3608 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3608 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     if (!InsertElementInst::isValidOperands((yyvsp[(2) - (6)].ValueVal).V, (yyvsp[(4) - (6)].ValueVal).V, (yyvsp[(6) - (6)].ValueVal).V))
       error("Invalid insertelement operands");
@@ -6493,7 +6493,7 @@ yyreduce:
     break;
 
   case 295:
-#line 3614 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3614 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     if (!ShuffleVectorInst::isValidOperands((yyvsp[(2) - (6)].ValueVal).V, (yyvsp[(4) - (6)].ValueVal).V, (yyvsp[(6) - (6)].ValueVal).V))
       error("Invalid shufflevector operands");
@@ -6503,7 +6503,7 @@ yyreduce:
     break;
 
   case 296:
-#line 3620 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3620 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type *Ty = (yyvsp[(2) - (2)].PHIList).P->front().first->getType();
     if (!Ty->isFirstClassType())
@@ -6523,7 +6523,7 @@ yyreduce:
     break;
 
   case 297:
-#line 3636 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3636 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     // Handle the short call syntax
     const PointerType *PFTy;
@@ -6619,34 +6619,34 @@ yyreduce:
     break;
 
   case 298:
-#line 3728 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3728 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.InstVal) = (yyvsp[(1) - (1)].InstVal);
   ;}
     break;
 
   case 299:
-#line 3736 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3736 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.ValueList) = (yyvsp[(2) - (2)].ValueList); ;}
     break;
 
   case 300:
-#line 3737 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3737 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.ValueList) = new std::vector<ValueInfo>(); ;}
     break;
 
   case 301:
-#line 3741 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3741 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.BoolVal) = true; ;}
     break;
 
   case 302:
-#line 3742 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3742 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.BoolVal) = false; ;}
     break;
 
   case 303:
-#line 3746 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3746 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type *Ty = (yyvsp[(2) - (3)].TypeVal).PAT->get();
     (yyval.InstVal).S.makeComposite((yyvsp[(2) - (3)].TypeVal).S);
@@ -6656,7 +6656,7 @@ yyreduce:
     break;
 
   case 304:
-#line 3752 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3752 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type *Ty = (yyvsp[(2) - (6)].TypeVal).PAT->get();
     (yyvsp[(5) - (6)].ValIDVal).S.makeUnsigned();
@@ -6667,7 +6667,7 @@ yyreduce:
     break;
 
   case 305:
-#line 3759 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3759 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type *Ty = (yyvsp[(2) - (3)].TypeVal).PAT->get();
     (yyval.InstVal).S.makeComposite((yyvsp[(2) - (3)].TypeVal).S);
@@ -6677,7 +6677,7 @@ yyreduce:
     break;
 
   case 306:
-#line 3765 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3765 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type *Ty = (yyvsp[(2) - (6)].TypeVal).PAT->get();
     (yyvsp[(5) - (6)].ValIDVal).S.makeUnsigned();
@@ -6688,7 +6688,7 @@ yyreduce:
     break;
 
   case 307:
-#line 3772 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3772 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type *PTy = (yyvsp[(2) - (2)].ValueVal).V->getType();
     if (!isa<PointerType>(PTy))
@@ -6699,7 +6699,7 @@ yyreduce:
     break;
 
   case 308:
-#line 3779 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3779 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type* Ty = (yyvsp[(3) - (4)].TypeVal).PAT->get();
     (yyvsp[(4) - (4)].ValIDVal).S.copy((yyvsp[(3) - (4)].TypeVal).S);
@@ -6716,7 +6716,7 @@ yyreduce:
     break;
 
   case 309:
-#line 3792 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3792 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyvsp[(6) - (6)].ValIDVal).S.copy((yyvsp[(5) - (6)].TypeVal).S);
     const PointerType *PTy = dyn_cast<PointerType>((yyvsp[(5) - (6)].TypeVal).PAT->get());
@@ -6740,7 +6740,7 @@ yyreduce:
     break;
 
   case 310:
-#line 3812 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3812 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyvsp[(3) - (4)].ValIDVal).S.copy((yyvsp[(2) - (4)].TypeVal).S);
     const Type* Ty = (yyvsp[(2) - (4)].TypeVal).PAT->get();
@@ -6975,7 +6975,7 @@ yyreturn:
 }
 
 
-#line 3830 "/Users/sabre/llvm/tools/llvm-upgrade/UpgradeParser.y"
+#line 3830 "/Volumes/MacOS9/gcc/llvm/tools/llvm-upgrade/UpgradeParser.y"
 
 
 int yyerror(const char *ErrorMsg) {

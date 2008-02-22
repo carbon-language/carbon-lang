@@ -18,7 +18,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
-#include "llvm/ParameterAttributes.h"
+#include "llvm/ParamAttrsList.h"
 #include "llvm/Pass.h"
 #include "llvm/PassManager.h"
 #include "llvm/TypeSymbolTable.h"

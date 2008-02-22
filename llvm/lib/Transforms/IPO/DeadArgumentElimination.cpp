@@ -26,7 +26,7 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
-#include "llvm/ParameterAttributes.h"
+#include "llvm/ParamAttrsList.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"

@@ -18,7 +18,7 @@
 #include "llvm/InlineAsm.h"
 #include "llvm/Instruction.h"
 #include "llvm/Instructions.h"
-#include "llvm/ParameterAttributes.h"
+#include "llvm/ParamAttrsList.h"
 #include "llvm/Module.h"
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/ADT/StringExtras.h"
@@ -1748,7 +1748,7 @@ void CppWriter::printProgram(
   Out << "#include <llvm/BasicBlock.h>\n";
   Out << "#include <llvm/Instructions.h>\n";
   Out << "#include <llvm/InlineAsm.h>\n";
-  Out << "#include <llvm/ParameterAttributes.h>\n";
+  Out << "#include <llvm/ParamAttrsList.h>\n";
   Out << "#include <llvm/Support/MathExtras.h>\n";
   Out << "#include <llvm/Pass.h>\n";
   Out << "#include <llvm/PassManager.h>\n";

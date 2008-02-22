@@ -17,7 +17,7 @@
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
-#include "llvm/ParameterAttributes.h"
+#include "llvm/ParamAttrsList.h"
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/ADT/STLExtras.h"

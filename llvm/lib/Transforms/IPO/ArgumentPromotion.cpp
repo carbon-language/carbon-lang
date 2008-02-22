@@ -35,7 +35,7 @@
 #include "llvm/Module.h"
 #include "llvm/CallGraphSCCPass.h"
 #include "llvm/Instructions.h"
-#include "llvm/ParameterAttributes.h"
+#include "llvm/ParamAttrsList.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Target/TargetData.h"

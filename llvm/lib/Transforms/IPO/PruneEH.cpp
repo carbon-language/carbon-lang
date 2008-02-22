@@ -25,7 +25,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
-#include "llvm/ParameterAttributes.h"
+#include "llvm/ParamAttrsList.h"
 #include <set>
 #include <algorithm>
 using namespace llvm;

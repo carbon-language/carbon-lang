@@ -17,7 +17,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
-#include "llvm/ParameterAttributes.h"
+#include "llvm/ParamAttrsList.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/MathExtras.h"

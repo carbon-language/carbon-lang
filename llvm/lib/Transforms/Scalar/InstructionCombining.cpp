@@ -39,7 +39,7 @@
 #include "llvm/Pass.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/GlobalVariable.h"
-#include "llvm/ParameterAttributes.h"
+#include "llvm/ParamAttrsList.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
