@@ -59,6 +59,9 @@
   <li><a href="#felangs">Source Languages</a>
   <ol>
     <li><a href="#langs">What source languages are supported?</a></li>
+    <li><a href="#langirgen">I'd like to write an LLVM compiler for my language.
+      How should I interface with the LLVM middle-end optimizers and back-end 
+      code generators?</a></div>
     <li><a href="#langhlsupp">What support is there for higher level source
       language constructs for building a compiler?</a></li>
     <li><a href="GetElementPtr.html">I don't understand the GetElementPtr
@@ -413,6 +416,57 @@ using <tt>llvm-gcc</tt> instead.</p>
   <p>The PyPy developers are working on integrating LLVM into the PyPy backend
   so that PyPy language can translate to LLVM.</p>
 </div>
+
+<div class="question"><p><a name="langirgen">
+  I'd like to write an LLVM compiler for my language. How should I interface 
+  with the LLVM middle-end optimizers and back-end code generators?
+</a></p></div>
+<div class="answer">
+  <p>Your compiler front-end will communicate with LLVM by creating a module in
+     the LLVM intermediate representation (IR) format. There are 3 major ways to
+     tackle generating LLVM IR from a front-end:</p>
+  <ul>
+    <li>
+      <strong>Call into the LLVM libraries code using your language's FFI 
+              (foreign function interface).</strong>
+      <ul>
+        <li><em>for:</em> best tracks changes to the LLVM IR, .ll syntax, 
+            and .bc format</li>
+        <li><em>for:</em> enables running LLVM optimization passes without a 
+            emit/parse overhead</li>
+        <li><em>for:</em> adapts well to a JIT context</li>
+        <li><em>against:</em> lots of ugly glue code to write</li>
+      </ul>
+    </li>
+    <li>
+      <strong>Emit LLVM assembly from your compiler's native language.</strong>
+      <ul>
+        <li><em>for:</em> very straightforward to get started</li>
+        <li><em>against:</em> the .ll parser is slower than the bitcode reader 
+            when interfacing to the middle end</li>
+        <li><em>against:</em> you'll have to re-engineer the LLVM IR object 
+            model and asm writer in your language</li>
+        <li><em>against:</em> it may be harder to track changes to the IR</li>
+      </ul>
+    </li>
+    <li>
+      <strong>Emit LLVM bitcode from your compiler's native language.</strong>
+      <ul>
+        <li><em>for:</em> can use the more-efficient bitcode reader when 
+            interfacing to the middle end</li>
+        <li><em>against:</em> you'll have to re-engineer the LLVM IR object 
+            model and bitcode writer in your language</li>
+        <li><em>against:</em> it may be harder to track changes to the IR</li>
+      </ul>
+    </li>
+  </ul>
+  <p>If you go with the first option, the C bindings in include/llvm-c should
+     help a lot, since most languages have strong support for interfacing with 
+     C. The most common hurdle with calling C from managed code is interfacing
+     with the garbage collector. The C interface was designed to require very 
+     little memory management, and so is straightforward in this regard.</p>
+</div>
+
 <div class="question"><p><a name="langhlsupp">
   What support is there for a higher level source language constructs for 
   building a compiler?</a></p>
