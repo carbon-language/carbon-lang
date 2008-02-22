@@ -37,6 +37,10 @@ namespace {
                     cl::desc("Print instructions that the allocator wants to"
                              " fuse, but the X86 backend currently can't"),
                     cl::Hidden);
+  cl::opt<bool>
+  ReMatPICLoad("remat-pic-load",
+               cl::desc("Allow rematerializing pic load"),
+               cl::init(false), cl::Hidden);
 }
 
 X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
@@ -735,10 +739,26 @@ bool X86InstrInfo::isReallyTriviallyReMaterializable(MachineInstr *MI) const {
     // Loads from constant pools are trivially rematerializable.
     if (MI->getOperand(1).isReg() && MI->getOperand(2).isImm() &&
         MI->getOperand(3).isReg() && MI->getOperand(4).isCPI() &&
-        MI->getOperand(1).getReg() == 0 &&
         MI->getOperand(2).getImm() == 1 &&
-        MI->getOperand(3).getReg() == 0)
-      return true;
+        MI->getOperand(3).getReg() == 0) {
+      unsigned BaseReg = MI->getOperand(1).getReg();
+      if (BaseReg == 0)
+        return true;
+      if (!ReMatPICLoad)
+        return false;
+      // Allow re-materialization of PIC load.
+      MachineRegisterInfo &MRI = MI->getParent()->getParent()->getRegInfo();
+      bool isPICBase = false;
+      for (MachineRegisterInfo::def_iterator I = MRI.def_begin(BaseReg),
+             E = MRI.def_end(); I != E; ++I) {
+        MachineInstr *DefMI = I.getOperand().getParent();
+        if (DefMI->getOpcode() != X86::MOVPC32r)
+          return false;
+        assert(!isPICBase && "More than one PIC base?");
+        isPICBase = true;
+      }
+      return isPICBase;
+    }
       
     // If this is a load from a fixed argument slot, we know the value is
     // invariant across the whole function, because we don't redefine argument
