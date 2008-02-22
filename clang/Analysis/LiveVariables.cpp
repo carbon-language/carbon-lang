@@ -119,12 +119,13 @@ void TransferFuncs::VisitUnaryOperator(UnaryOperator* U) {
     // Walk through the subexpressions, blasting through ParenExprs
     // until we either find a DeclRefExpr or some non-DeclRefExpr
     // expression.
-    if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(E->IgnoreParens())) {
-      // Treat the --/++/& operator as a kill.
-      LiveState(DR->getDecl(),AD) = Dead;
-      if (AD.Observer) { AD.Observer->ObserverKill(DR); }
-      return VisitDeclRefExpr(DR);
-    }
+    if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(E->IgnoreParens())) 
+      if (VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl())) {        
+        // Treat the --/++/& operator as a kill.
+        LiveState(VD, AD) = Dead;
+        if (AD.Observer) { AD.Observer->ObserverKill(DR); }
+        return VisitDeclRefExpr(DR);
+      }
 
     // Fall-through.
   
