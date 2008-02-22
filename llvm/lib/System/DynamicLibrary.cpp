@@ -118,6 +118,7 @@ void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
 #ifdef __CYGWIN__
   {
     EXPLICIT_SYMBOL(_alloca);
+    EXPLICIT_SYMBOL(__main);
   }
 #endif
 

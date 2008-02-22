@@ -44,10 +44,17 @@ static std::vector<HMODULE> OpenedHandles;
 #endif
 
 extern "C" {
+#if !defined(_MSC_VER) || _MSC_VER < 1500
   static BOOL CALLBACK ELM_Callback(PSTR  ModuleName,
                                     ModuleBaseType ModuleBase,
                                     ULONG ModuleSize,
                                     PVOID UserContext)
+#else
+  static BOOL CALLBACK ELM_Callback(PCSTR  ModuleName,
+                                    ModuleBaseType ModuleBase,
+                                    ULONG ModuleSize,
+                                    PVOID UserContext)
+#endif
   {
     // Ignore VC++ runtimes prior to 7.1.  Somehow some of them get loaded
     // into the process.
@@ -93,23 +100,6 @@ DynamicLibrary::~DynamicLibrary() {
     }
   }
 }
-
-// Stack probing routines are in the support library (e.g. libgcc), but we don't
-// have dynamic linking on windows. Provide a hook.
-#if defined(__MINGW32__) || defined (_MSC_VER)
-  #define EXPLICIT_SYMBOL(SYM)                    \
-    if (!strcmp(symbolName, #SYM)) return (void*)&SYM
-  #define EXPLICIT_SYMBOL2(SYMFROM, SYMTO)        \
-    if (!strcmp(symbolName, #SYMFROM)) return (void*)&SYMTO
-  #define EXPLICIT_SYMBOL_DEF(SYM)                \
-    extern "C" { extern void *SYM; }
-
-  #if defined(__MINGW32__)
-    EXPLICIT_SYMBOL_DEF(_alloca);
-  #elif defined(_MSC_VER)
-    EXPLICIT_SYMBOL_DEF(_alloca_probe);
-  #endif
-#endif
  
 bool DynamicLibrary::LoadLibraryPermanently(const char *filename,
                                             std::string *ErrMsg) {
@@ -131,6 +121,24 @@ bool DynamicLibrary::LoadLibraryPermanently(const char *filename,
   return false;
 }
 
+// Stack probing routines are in the support library (e.g. libgcc), but we don't
+// have dynamic linking on windows. Provide a hook.
+#if defined(__MINGW32__) || defined (_MSC_VER)
+  #define EXPLICIT_SYMBOL(SYM)                    \
+    if (!strcmp(symbolName, #SYM)) return (void*)&SYM
+  #define EXPLICIT_SYMBOL2(SYMFROM, SYMTO)        \
+    if (!strcmp(symbolName, #SYMFROM)) return (void*)&SYMTO
+  #define EXPLICIT_SYMBOL_DEF(SYM)                \
+    extern "C" { extern void *SYM; }
+
+  #if defined(__MINGW32__)
+    EXPLICIT_SYMBOL_DEF(_alloca);
+    EXPLICIT_SYMBOL_DEF(__main);
+  #elif defined(_MSC_VER)
+    EXPLICIT_SYMBOL_DEF(_alloca_probe);
+  #endif
+#endif
+
 void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
   // First check symbols added via AddSymbol().
   std::map<std::string, void *>::iterator I = g_symbols.find(symbolName);
@@ -148,6 +156,8 @@ void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
 #if defined(__MINGW32__)
   {
     EXPLICIT_SYMBOL(_alloca);
+    EXPLICIT_SYMBOL(__main);
+
     EXPLICIT_SYMBOL2(alloca, _alloca);
 #undef EXPLICIT_SYMBOL
 #undef EXPLICIT_SYMBOL2
