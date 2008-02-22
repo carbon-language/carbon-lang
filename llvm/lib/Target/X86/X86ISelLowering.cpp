@@ -5897,7 +5897,31 @@ static SDOperand PerformSTORECombine(StoreSDNode *St, SelectionDAG &DAG,
                           St->isVolatile(), St->getAlignment());
     }
     
-    // TODO: 2 32-bit copies.
+    // Otherwise, lower to two 32-bit copies.
+    SDOperand LoAddr = Ld->getBasePtr();
+    SDOperand HiAddr = DAG.getNode(ISD::ADD, MVT::i32, LoAddr,
+                                   DAG.getConstant(MVT::i32, 4));
+    
+    SDOperand LoLd = DAG.getLoad(MVT::i32, Ld->getChain(), LoAddr,
+                                 Ld->getSrcValue(), Ld->getSrcValueOffset(),
+                                 Ld->isVolatile(), Ld->getAlignment());
+    SDOperand HiLd = DAG.getLoad(MVT::i32, Ld->getChain(), HiAddr,
+                                 Ld->getSrcValue(), Ld->getSrcValueOffset()+4,
+                                 Ld->isVolatile(), 
+                                 MinAlign(Ld->getAlignment(), 4));
+    
+    LoAddr = St->getBasePtr();
+    HiAddr = DAG.getNode(ISD::ADD, MVT::i32, LoAddr,
+                         DAG.getConstant(MVT::i32, 4));
+    
+    SDOperand LoSt = DAG.getStore(LoLd.getValue(1), LoLd, LoAddr,
+                        St->getSrcValue(), St->getSrcValueOffset(),
+                        St->isVolatile(), St->getAlignment());
+    SDOperand HiSt = DAG.getStore(HiLd.getValue(1), HiLd, HiAddr,
+                                  St->getSrcValue(), St->getSrcValueOffset()+4,
+                                  St->isVolatile(), 
+                                  MinAlign(St->getAlignment(), 4));
+    return DAG.getNode(ISD::TokenFactor, MVT::Other, LoSt, HiSt);
   }
   return SDOperand();
 }
