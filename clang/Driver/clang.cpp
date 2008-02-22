@@ -982,7 +982,7 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
                              AnalyzeSpecificFunction);
       
     case AnalysisLiveVariables:
-      return CreateLiveVarAnalyzer();
+      return CreateLiveVarAnalyzer(AnalyzeSpecificFunction);
       
     case WarnDeadStores:    
       return CreateDeadStoreChecker(Diag);

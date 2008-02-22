@@ -36,7 +36,7 @@ ASTConsumer *CreateASTViewer();
 
 ASTConsumer *CreateCFGDumper(bool ViewGraphs, const std::string& FName);
 
-ASTConsumer *CreateLiveVarAnalyzer();
+ASTConsumer *CreateLiveVarAnalyzer(const std::string& fname);
 
 ASTConsumer *CreateDeadStoreChecker(Diagnostic &Diags);
 

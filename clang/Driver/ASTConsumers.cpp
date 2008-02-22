@@ -516,6 +516,8 @@ namespace {
   class LivenessVisitor : public CFGVisitor {
     SourceManager *SM;
   public:
+    LivenessVisitor(const std::string& fname) : CFGVisitor(fname) {}
+    
     virtual void Initialize(ASTContext &Context) {
       SM = &Context.getSourceManager();
     }
@@ -528,8 +530,8 @@ namespace {
   };
 } // end anonymous namespace
   
-ASTConsumer *clang::CreateLiveVarAnalyzer() {
-  return new LivenessVisitor();
+ASTConsumer *clang::CreateLiveVarAnalyzer(const std::string& fname) {
+  return new LivenessVisitor(fname);
 }
 
 //===----------------------------------------------------------------------===//
