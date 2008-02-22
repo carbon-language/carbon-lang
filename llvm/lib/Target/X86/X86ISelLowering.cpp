@@ -704,6 +704,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   // We have target-specific dag combine patterns for the following nodes:
   setTargetDAGCombine(ISD::VECTOR_SHUFFLE);
   setTargetDAGCombine(ISD::SELECT);
+  setTargetDAGCombine(ISD::STORE);
 
   computeRegisterProperties();
 
@@ -5872,6 +5873,35 @@ static SDOperand PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
   return SDOperand();
 }
 
+/// PerformSTORECombine - Do target-specific dag combines on STORE nodes.
+static SDOperand PerformSTORECombine(StoreSDNode *St, SelectionDAG &DAG,
+                                     const X86Subtarget *Subtarget) {
+  // Turn load->store of MMX types into GPR load/stores.  This avoids clobbering
+  // the FP state in cases where an emms may be missing.
+  if (MVT::isVector(St->getValue().getValueType()) && 
+      MVT::getSizeInBits(St->getValue().getValueType()) == 64 &&
+      // Must be a store of a load.
+      isa<LoadSDNode>(St->getChain()) &&
+      St->getChain().Val == St->getValue().Val && 
+      St->getValue().hasOneUse() && St->getChain().hasOneUse() &&
+      !St->isVolatile() && !cast<LoadSDNode>(St->getChain())->isVolatile()) {
+    LoadSDNode *Ld = cast<LoadSDNode>(St->getChain());
+    
+    // If we are a 64-bit capable x86, lower to a single movq load/store pair.
+    if (Subtarget->is64Bit()) {
+      SDOperand NewLd = DAG.getLoad(MVT::i64, Ld->getChain(), Ld->getBasePtr(),
+                                    Ld->getSrcValue(), Ld->getSrcValueOffset(),
+                                    Ld->isVolatile(), Ld->getAlignment());
+      return DAG.getStore(NewLd.getValue(1), NewLd, St->getBasePtr(),
+                          St->getSrcValue(), St->getSrcValueOffset(),
+                          St->isVolatile(), St->getAlignment());
+    }
+    
+    // TODO: 2 32-bit copies.
+  }
+  return SDOperand();
+}
+
 /// PerformFORCombine - Do target-specific dag combines on X86ISD::FOR and
 /// X86ISD::FXOR nodes.
 static SDOperand PerformFORCombine(SDNode *N, SelectionDAG &DAG) {
@@ -5908,6 +5938,8 @@ SDOperand X86TargetLowering::PerformDAGCombine(SDNode *N,
   default: break;
   case ISD::VECTOR_SHUFFLE: return PerformShuffleCombine(N, DAG, Subtarget);
   case ISD::SELECT:         return PerformSELECTCombine(N, DAG, Subtarget);
+  case ISD::STORE:          
+      return PerformSTORECombine(cast<StoreSDNode>(N), DAG, Subtarget);
   case X86ISD::FXOR:
   case X86ISD::FOR:         return PerformFORCombine(N, DAG);
   case X86ISD::FAND:        return PerformFANDCombine(N, DAG);
