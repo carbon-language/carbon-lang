@@ -933,7 +933,7 @@ public:
 /// of arguments the function takes).
 class PrototypeAST {
   std::string Name;
-  std::vector&lt; Args;
+  std::vector&lt;std::string&gt; Args;
 public:
   PrototypeAST(const std::string &amp;name, const std::vector&lt;std::string&gt; &amp;args)
     : Name(name), Args(args) {}
@@ -1132,7 +1132,7 @@ static FunctionAST *ParseDefinition() {
 static FunctionAST *ParseTopLevelExpr() {
   if (ExprAST *E = ParseExpression()) {
     // Make an anonymous proto.
-    PrototypeAST *Proto = new PrototypeAST("", std::vector&lt;());
+    PrototypeAST *Proto = new PrototypeAST("", std::vector&lt;std::string&gt;());
     return new FunctionAST(Proto, E);
   }
   return 0;
