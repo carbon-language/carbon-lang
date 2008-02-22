@@ -2428,7 +2428,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
 
     ConstantInt *C2;   // X*C1 - X*C2 -> X * (C1-C2)
     if (X == dyn_castFoldableMul(Op1, C2))
-      return BinaryOperator::createMul(Op1, Subtract(C1, C2));
+      return BinaryOperator::createMul(X, Subtract(C1, C2));
   }
   return 0;
 }
