@@ -978,7 +978,8 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
       
     case ParseCFGDump:
     case ParseCFGView:
-      return CreateCFGDumper(ProgAction == ParseCFGView);
+      return CreateCFGDumper(ProgAction == ParseCFGView,
+                             AnalyzeSpecificFunction);
       
     case AnalysisLiveVariables:
       return CreateLiveVarAnalyzer();

@@ -34,7 +34,7 @@ ASTConsumer *CreateASTDumper();
 
 ASTConsumer *CreateASTViewer();
 
-ASTConsumer *CreateCFGDumper(bool ViewGraphs = false);
+ASTConsumer *CreateCFGDumper(bool ViewGraphs, const std::string& FName);
 
 ASTConsumer *CreateLiveVarAnalyzer();
 

@@ -453,7 +453,11 @@ ASTConsumer *clang::CreateASTViewer() { return new ASTViewer(); }
 namespace {
 
 class CFGVisitor : public ASTConsumer {
+  std::string FName;
 public:
+  CFGVisitor(const std::string& fname) : FName(fname) {}
+  CFGVisitor() : FName("") {}
+  
   // CFG Visitor interface to be implemented by subclass.
   virtual void VisitCFG(CFG& C, FunctionDecl& FD) = 0;
   virtual bool printFuncDeclStart() { return true; }
@@ -465,7 +469,11 @@ public:
 
 void CFGVisitor::HandleTopLevelDecl(Decl *D) {
   FunctionDecl *FD = dyn_cast<FunctionDecl>(D);
+
   if (!FD || !FD->getBody())
+    return;
+  
+  if (FName.size() > 0 && FName != FD->getIdentifier()->getName())
     return;
       
   if (printFuncDeclStart()) {
@@ -485,7 +493,8 @@ namespace {
   class CFGDumper : public CFGVisitor {
     const bool UseGraphviz;
   public:
-    CFGDumper(bool use_graphviz) : UseGraphviz(use_graphviz) {}
+    CFGDumper(bool use_graphviz, const std::string& fname) 
+     : CFGVisitor(fname), UseGraphviz(use_graphviz) {}
     
     virtual void VisitCFG(CFG& C, FunctionDecl&) {
       if (UseGraphviz)
@@ -496,8 +505,8 @@ namespace {
   }; 
 } // end anonymous namespace 
   
-ASTConsumer *clang::CreateCFGDumper(bool ViewGraphs) {
-  return new CFGDumper(ViewGraphs);
+ASTConsumer *clang::CreateCFGDumper(bool ViewGraphs, const std::string& FName) {
+  return new CFGDumper(ViewGraphs, FName);
 }
 
 //===----------------------------------------------------------------------===//
@@ -582,10 +591,10 @@ namespace {
     Diagnostic &Diags;
     ASTContext* Ctx;
     bool Visualize;
-    std::string FName;
   public:
-    GRSimpleValsVisitor(Diagnostic &diags, const std::string& fname, bool visualize)
-      : Diags(diags), Visualize(visualize), FName(fname) {}
+    GRSimpleValsVisitor(Diagnostic &diags, const std::string& fname,
+                        bool visualize)
+      : CFGVisitor(fname), Diags(diags), Visualize(visualize) {}
     
     virtual void Initialize(ASTContext &Context) { Ctx = &Context; }    
     virtual void VisitCFG(CFG& C, FunctionDecl&);
@@ -601,8 +610,6 @@ ASTConsumer* clang::CreateGRSimpleVals(Diagnostic &Diags,
 }
 
 void GRSimpleValsVisitor::VisitCFG(CFG& C, FunctionDecl& FD) {
-  if (FName.size() > 0 && FName != FD.getIdentifier()->getName())
-    return;
   
   SourceLocation Loc = FD.getLocation();
   
