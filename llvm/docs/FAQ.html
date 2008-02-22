@@ -59,9 +59,9 @@
   <li><a href="#felangs">Source Languages</a>
   <ol>
     <li><a href="#langs">What source languages are supported?</a></li>
-    <li><a href="#langirgen">I'd like to write an LLVM compiler for my language.
-      How should I interface with the LLVM middle-end optimizers and back-end 
-      code generators?</a></div>
+    <li><a href="#langirgen">I'd like to write a self-hosting LLVM compiler. How
+      should I interface with the LLVM middle-end optimizers and back-end code 
+      generators?</a></div>
     <li><a href="#langhlsupp">What support is there for higher level source
       language constructs for building a compiler?</a></li>
     <li><a href="GetElementPtr.html">I don't understand the GetElementPtr
@@ -418,13 +418,14 @@ using <tt>llvm-gcc</tt> instead.</p>
 </div>
 
 <div class="question"><p><a name="langirgen">
-  I'd like to write an LLVM compiler for my language. How should I interface 
-  with the LLVM middle-end optimizers and back-end code generators?
+  I'd like to write a self-hosting LLVM compiler. How should I interface with 
+  the LLVM middle-end optimizers and back-end code generators?
 </a></p></div>
 <div class="answer">
   <p>Your compiler front-end will communicate with LLVM by creating a module in
-     the LLVM intermediate representation (IR) format. There are 3 major ways to
-     tackle generating LLVM IR from a front-end:</p>
+     the LLVM intermediate representation (IR) format. Assuming you want to 
+     write your language's compiler in the language itself (rather than C++), 
+     there are 3 major ways to tackle generating LLVM IR from a front-end:</p>
   <ul>
     <li>
       <strong>Call into the LLVM libraries code using your language's FFI 
