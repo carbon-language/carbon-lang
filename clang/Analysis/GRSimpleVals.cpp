@@ -225,11 +225,12 @@ RVal GRSimpleVals::EvalEQ(ValueManager& ValMgr, LVal L, LVal R) {
         return nonlval::SymIntConstraintVal(C);
       }
       
-      // FIXME: Implement unification
-      return UnknownVal();
-        //assert (!isa<lval::SymbolVal>(R) && "FIXME: Implement unification.");
-      
-      break;
+      // FIXME: Implement == for lval Symbols.  This is mainly useful
+      //  in iterator loops when traversing a buffer, e.g. while(z != zTerm).
+      //  Since this is not useful for many checkers we'll punt on this for 
+      //  now.
+       
+      return UnknownVal();      
     }
       
     case lval::DeclValKind:
@@ -278,7 +279,12 @@ RVal GRSimpleVals::EvalNE(ValueManager& ValMgr, LVal L, LVal R) {
         return nonlval::SymIntConstraintVal(C);
       }
       
-      assert (!isa<lval::SymbolVal>(R) && "FIXME: Implement sym !=.");
+      // FIXME: Implement != for lval Symbols.  This is mainly useful
+      //  in iterator loops when traversing a buffer, e.g. while(z != zTerm).
+      //  Since this is not useful for many checkers we'll punt on this for 
+      //  now.
+      
+      return UnknownVal();
       
       break;
     }
