@@ -324,7 +324,7 @@ char* Deserializer::ReadCStr(char* cstr, unsigned MaxLen, bool isNullTerm) {
     cstr[i] = (char) ReadInt();
   
   if (isNullTerm)
-    cstr[len+1] = '\0';
+    cstr[len] = '\0';
   
   return cstr;
 }
