@@ -1462,7 +1462,7 @@ ResultTypes
   : Types {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$1)->getDescription());
-    if (!(*$1)->isFirstClassType() && (*$1)->getTypeID() != Type::StructTyID)
+    if (!(*$1)->isFirstClassType() && !isa<StructType>($1->get()))
       GEN_ERROR("LLVM functions cannot return aggregate types");
     $$ = $1;
   }
