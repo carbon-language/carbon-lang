@@ -4194,7 +4194,7 @@ yyreduce:
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[(1) - (1)].TypeVal))->getDescription());
-    if (!(*(yyvsp[(1) - (1)].TypeVal))->isFirstClassType() && (*(yyvsp[(1) - (1)].TypeVal))->getTypeID() != Type::StructTyID)
+    if (!(*(yyvsp[(1) - (1)].TypeVal))->isFirstClassType() && !isa<StructType>((yyvsp[(1) - (1)].TypeVal)->get()))
       GEN_ERROR("LLVM functions cannot return aggregate types");
     (yyval.TypeVal) = (yyvsp[(1) - (1)].TypeVal);
   ;}
