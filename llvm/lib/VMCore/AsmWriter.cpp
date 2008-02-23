@@ -1291,7 +1291,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
       writeOperand(I.getOperand(op  ), false); Out << ',';
       writeOperand(I.getOperand(op+1), false); Out << " ]";
     }
-  } else if (isa<GetResultInst>(I)) {
+  } else if (const GetResultInst *GRI = dyn_cast<GetResultInst>(&I)) {
     const StructType *STy = cast<StructType>(I.getOperand(0)->getType());
     unsigned NumElems = STy->getNumElements();
     Out << " {";
@@ -1303,7 +1303,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     }
     Out << " }";
     writeOperand(I.getOperand(0), false);
-    Out << ", " << cast<GetResultInst>(I).getIndex();
+    Out << ", " << GRI->getIndex();
   } else if (isa<ReturnInst>(I) && !Operand) {
     Out << " void";
   } else if (const CallInst *CI = dyn_cast<CallInst>(&I)) {
