@@ -269,11 +269,8 @@ AsmStmt* AsmStmt::CreateImpl(Deserializer& D) {
   for (unsigned i = 0; i < size; ++i) {
     std::vector<char> data;
     D.ReadCStr(data, false);
-    
-    if (data.size() == 0)
-      Stmt->Names.push_back(std::string());
-    else
-      Stmt->Names.push_back(std::string(&data[0], data.size()));
+
+    Stmt->Names.push_back(std::string(data.begin(), data.end()));
   }    
 
   Stmt->Constraints.reserve(size);
