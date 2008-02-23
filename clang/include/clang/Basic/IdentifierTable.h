@@ -36,7 +36,9 @@ namespace clang {
 /// variable or function name).  The preprocessor keeps this information in a
 /// set, and all tok::identifier tokens have a pointer to one of these.  
 class IdentifierInfo {
-  tok::TokenKind TokenID      : 8; // Front-end token ID or tok::identifier.
+  // Note: DON'T make TokenID a 'tok::TokenKind'; MSVC will treat it as a
+  //       signed char and TokenKinds > 127 won't be handled correctly.
+  unsigned TokenID            : 8; // Front-end token ID or tok::identifier. 
   unsigned BuiltinID          : 9; // ID if this is a builtin (__builtin_inf).
   tok::ObjCKeywordKind ObjCID : 5; // ID for objc @ keyword like @'protocol'.
   bool HasMacro               : 1; // True if there is a #define for this.
@@ -79,7 +81,7 @@ public:
   /// get/setTokenID - If this is a source-language token (e.g. 'for'), this API
   /// can be used to cause the lexer to map identifiers to source-language
   /// tokens.
-  tok::TokenKind getTokenID() const { return TokenID; }
+  tok::TokenKind getTokenID() const { return (tok::TokenKind)TokenID; }
   void setTokenID(tok::TokenKind ID) { TokenID = ID; }
   
   /// getPPKeywordID - Return the preprocessor keyword ID for this identifier.

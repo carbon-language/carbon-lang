@@ -36,7 +36,9 @@ class Token {
 
   /// Kind - The actual flavor of token this is.
   ///
-  tok::TokenKind Kind : 8;
+  unsigned Kind : 8;  // DON'T make Kind a 'tok::TokenKind'; 
+                      // MSVC will treat it as a signed char and
+                      // TokenKinds > 127 won't be handled correctly.
   
   /// Flags - Bits we track about this token, members of the TokenFlags enum.
   unsigned Flags : 8;
@@ -50,13 +52,13 @@ public:
     NeedsCleaning = 0x08   // Contained an escaped newline or trigraph.
   };
 
-  tok::TokenKind getKind() const { return Kind; }
+  tok::TokenKind getKind() const { return (tok::TokenKind)Kind; }
   void setKind(tok::TokenKind K) { Kind = K; }
   
   /// is/isNot - Predicates to check if this token is a specific kind, as in
   /// "if (Tok.is(tok::l_brace)) {...}".
-  bool is(tok::TokenKind K) const { return Kind == K; }
-  bool isNot(tok::TokenKind K) const { return Kind != K; }
+  bool is(tok::TokenKind K) const { return Kind == (unsigned) K; }
+  bool isNot(tok::TokenKind K) const { return Kind != (unsigned) K; }
 
   /// getLocation - Return a source location identifier for the specified
   /// offset in the current file.
@@ -66,7 +68,9 @@ public:
   void setLocation(SourceLocation L) { Loc = L; }
   void setLength(unsigned Len) { Length = Len; }
   
-  const char *getName() const { return tok::getTokenName(Kind); }
+  const char *getName() const {
+    return tok::getTokenName( (tok::TokenKind) Kind);
+  }
   
   /// startToken - Reset all flags to cleared.
   ///
@@ -113,7 +117,9 @@ public:
   
   /// isExpandDisabled - Return true if this identifier token should never
   /// be expanded in the future, due to C99 6.10.3.4p2.
-  bool isExpandDisabled() const { return (Flags & DisableExpand) ? true : false; }
+  bool isExpandDisabled() const {
+    return (Flags & DisableExpand) ? true : false;
+  }
   
   /// isObjCAtKeyword - Return true if we have an ObjC keyword identifier. 
   bool isObjCAtKeyword(tok::ObjCKeywordKind objcKey) const;
