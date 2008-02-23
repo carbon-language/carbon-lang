@@ -389,7 +389,7 @@ namespace llvm {
         bool isLoad, bool isLoadSS, bool DefIsReMat, bool CanDelete,
         VirtRegMap &vrm, const TargetRegisterClass* rc,
         SmallVector<int, 4> &ReMatIds, const MachineLoopInfo *loopInfo,
-        unsigned &NewVReg, bool &HasDef, bool &HasUse,
+        unsigned &NewVReg, unsigned ImpUse, bool &HasDef, bool &HasUse,
         std::map<unsigned,unsigned> &MBBVRegsMap,
         std::vector<LiveInterval*> &NewLIs);
     void rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
