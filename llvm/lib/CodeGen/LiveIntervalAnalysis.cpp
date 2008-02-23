@@ -680,8 +680,7 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li,
         unsigned UseIdx = getInstructionIndex(UseMI);
         if (li.FindLiveRangeContaining(UseIdx)->valno != ValNo)
           continue;
-        if (!canFoldMemoryOperand(UseMI, li.reg) &&
-            !isValNoAvailableAt(ImpLi, MI, UseIdx))
+        if (!isValNoAvailableAt(ImpLi, MI, UseIdx))
           return false;
       }
     }
