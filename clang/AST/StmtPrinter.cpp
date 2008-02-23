@@ -536,7 +536,7 @@ void StmtPrinter::VisitCharacterLiteral(CharacterLiteral *Node) {
     OS << "'\\v'";
     break;
   default:
-    if (isprint(value) && value < 256) {
+    if (value < 256 && isprint(value)) {
       OS << "'" << (char)value << "'";
     } else if (value < 256) {
       OS << "'\\x" << std::hex << value << std::dec << "'";
