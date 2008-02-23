@@ -2531,7 +2531,7 @@ ReturnedVal : ResolvedVal {
     $$->push_back($1); 
     CHECK_FOR_ERROR
   }
-  | ReturnedVal ',' ConstVal {
+  | ReturnedVal ',' ResolvedVal {
     ($$=$1)->push_back($3); 
     CHECK_FOR_ERROR
   };
@@ -2580,28 +2580,7 @@ InstructionList : InstructionList Inst {
 
 BBTerminatorInst : 
   RET ReturnedVal  { // Return with a result...
-    if($2->size() == 1) 
-      $$ = new ReturnInst($2->back());
-    else {
-
-      std::vector<const Type*> Elements;
-      std::vector<Constant*> Vals;
-      for (std::vector<Value *>::iterator I = $2->begin(),
-             E = $2->end(); I != E; ++I) {
-        Value *V = *I;
-        Constant *C = cast<Constant>(V);
-        Elements.push_back(V->getType());
-        Vals.push_back(C);
-      }
-
-      const StructType *STy = StructType::get(Elements);
-      PATypeHolder *PTy = 
-        new PATypeHolder(HandleUpRefs(StructType::get(Elements)));
-
-      Constant *CS = ConstantStruct::get(STy, Vals); // *$2);
-      $$ = new ReturnInst(CS);
-      delete PTy;
-    }
+    $$ = new ReturnInst(*$2);
     delete $2;
     CHECK_FOR_ERROR
   }
@@ -3174,6 +3153,7 @@ MemoryInst : MALLOC Types OptCAlign {
   if (!GetResultInst::isValidOperands(TmpVal, $5))
       GEN_ERROR("Invalid getresult operands");
     $$ = new GetResultInst(TmpVal, $5);
+    delete $2;
     CHECK_FOR_ERROR
   }
   | GETELEMENTPTR Types ValueRef IndexList {
