@@ -40,7 +40,7 @@ namespace {
   cl::opt<bool>
   ReMatPICLoad("remat-pic-load",
                cl::desc("Allow rematerializing pic load"),
-               cl::init(false), cl::Hidden);
+               cl::init(true), cl::Hidden);
 }
 
 X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
