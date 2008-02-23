@@ -643,6 +643,31 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li,
   const TargetInstrDesc &TID = MI->getDesc();
   if (TID.isImplicitDef())
     return true;
+
+  int FrameIdx = 0;
+  if (tii_->isLoadFromStackSlot(MI, FrameIdx) &&
+      mf_->getFrameInfo()->isImmutableObjectIndex(FrameIdx)) {
+    // This is a load from fixed stack slot. It can be rematerialized unless
+    // it's re-defined by a two-address instruction.
+    isLoad = true;
+    for (LiveInterval::const_vni_iterator i = li.vni_begin(), e = li.vni_end();
+         i != e; ++i) {
+      const VNInfo *VNI = *i;
+      if (VNI == ValNo)
+        continue;
+      unsigned DefIdx = VNI->def;
+      if (DefIdx == ~1U)
+        continue; // Dead val#.
+      MachineInstr *DefMI = (DefIdx == ~0u)
+        ? NULL : getInstructionFromIndex(DefIdx);
+      if (DefMI && DefMI->isRegReDefinedByTwoAddr(li.reg)) {
+        isLoad = false;
+        return false;
+      }
+    }
+    return true;
+  }
+
   if (tii_->isTriviallyReMaterializable(MI)) {
     isLoad = TID.isSimpleLoad();
 
@@ -663,30 +688,7 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li,
     return true;
   }
 
-  int FrameIdx = 0;
-  if (!tii_->isLoadFromStackSlot(MI, FrameIdx) ||
-      !mf_->getFrameInfo()->isImmutableObjectIndex(FrameIdx))
-    return false;
-
-  // This is a load from fixed stack slot. It can be rematerialized unless it's
-  // re-defined by a two-address instruction.
-  isLoad = true;
-  for (LiveInterval::const_vni_iterator i = li.vni_begin(), e = li.vni_end();
-       i != e; ++i) {
-    const VNInfo *VNI = *i;
-    if (VNI == ValNo)
-      continue;
-    unsigned DefIdx = VNI->def;
-    if (DefIdx == ~1U)
-      continue; // Dead val#.
-    MachineInstr *DefMI = (DefIdx == ~0u)
-      ? NULL : getInstructionFromIndex(DefIdx);
-    if (DefMI && DefMI->isRegReDefinedByTwoAddr(li.reg)) {
-      isLoad = false;
-      return false;
-    }
-  }
-  return true;
+  return false;
 }
 
 /// isReMaterializable - Returns true if every definition of MI of every
