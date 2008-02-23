@@ -127,7 +127,7 @@ static void GetOptionInfo(std::vector<Option*> &PositionalOpts,
     // Remember information about positional options.
     if (O->getFormattingFlag() == cl::Positional)
       PositionalOpts.push_back(O);
-    else if (O->getMiscFlags() && cl::Sink) // Remember sink options
+    else if (O->getMiscFlags() & cl::Sink) // Remember sink options
       SinkOpts.push_back(O);
     else if (O->getNumOccurrencesFlag() == cl::ConsumeAfter) {
       if (CAOpt)
