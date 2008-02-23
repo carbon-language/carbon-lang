@@ -573,32 +573,73 @@ bool InvokeInst::isStructReturn() const {
 
 ReturnInst::ReturnInst(const ReturnInst &RI)
   : TerminatorInst(Type::VoidTy, Instruction::Ret,
-                   &RetVal, RI.getNumOperands()) {
-  if (RI.getNumOperands())
-    RetVal.init(RI.RetVal, this);
+                   OperandList, RI.getNumOperands()) {
+  unsigned N = RI.getNumOperands();
+  Use *OL = OperandList = new Use[N];
+  for (unsigned i = 0; i < N; ++i)
+    OL[i].init(RI.getOperand(i), this);
 }
 
 ReturnInst::ReturnInst(Value *retVal, Instruction *InsertBefore)
-  : TerminatorInst(Type::VoidTy, Instruction::Ret, &RetVal, 0, InsertBefore) {
+  : TerminatorInst(Type::VoidTy, Instruction::Ret, OperandList, 0, InsertBefore) {
   init(retVal);
 }
 ReturnInst::ReturnInst(Value *retVal, BasicBlock *InsertAtEnd)
-  : TerminatorInst(Type::VoidTy, Instruction::Ret, &RetVal, 0, InsertAtEnd) {
+  : TerminatorInst(Type::VoidTy, Instruction::Ret, OperandList, 0, InsertAtEnd) {
   init(retVal);
 }
 ReturnInst::ReturnInst(BasicBlock *InsertAtEnd)
-  : TerminatorInst(Type::VoidTy, Instruction::Ret, &RetVal, 0, InsertAtEnd) {
+  : TerminatorInst(Type::VoidTy, Instruction::Ret, OperandList, 0, InsertAtEnd) {
 }
 
-
+ReturnInst::ReturnInst(std::vector<Value *> &retVals, Instruction *InsertBefore)
+  : TerminatorInst(Type::VoidTy, Instruction::Ret, OperandList, retVals.size(), InsertBefore) {
+  init(retVals);
+}
+ReturnInst::ReturnInst(std::vector<Value *> &retVals, BasicBlock *InsertAtEnd)
+  : TerminatorInst(Type::VoidTy, Instruction::Ret, OperandList, retVals.size(), InsertAtEnd) {
+  init(retVals);
+}
+ReturnInst::ReturnInst(std::vector<Value *> &retVals)
+  : TerminatorInst(Type::VoidTy, Instruction::Ret, OperandList, retVals.size()) {
+  init(retVals);
+}
 
 void ReturnInst::init(Value *retVal) {
   if (retVal && retVal->getType() != Type::VoidTy) {
     assert(!isa<BasicBlock>(retVal) &&
            "Cannot return basic block.  Probably using the incorrect ctor");
     NumOperands = 1;
-    RetVal.init(retVal, this);
+    Use *OL = OperandList = new Use[1];
+    OL[0].init(retVal, this);
   }
+}
+
+void ReturnInst::init(std::vector<Value *> &retVals) {
+  if (retVals.empty())
+    return;
+
+  NumOperands = retVals.size();
+  if (NumOperands == 1) {
+    Value *V = retVals[0];
+    if (V->getType() == Type::VoidTy)
+      return;
+  }
+
+  Use *OL = OperandList = new Use[NumOperands];
+  for (unsigned i = 0; i < NumOperands; ++i) {
+    Value *V = retVals[i];
+    assert(!isa<BasicBlock>(V) &&
+           "Cannot return basic block.  Probably using the incorrect ctor");
+    OL[i].init(V, this);
+  }
+}
+
+Value *ReturnInst::getReturnValue(unsigned n) const {
+  if (NumOperands)
+    return OperandList[n];
+  else
+    return 0;
 }
 
 unsigned ReturnInst::getNumSuccessorsV() const {
@@ -617,6 +658,10 @@ BasicBlock *ReturnInst::getSuccessorV(unsigned idx) const {
   return 0;
 }
 
+ReturnInst::~ReturnInst() {
+  if (NumOperands)
+    delete [] OperandList;
+}
 
 //===----------------------------------------------------------------------===//
 //                        UnwindInst Implementation
@@ -2758,7 +2803,6 @@ bool GetResultInst::isValidOperands(const Value *Aggregate, unsigned Index) {
   }
   return false;
 }
-
 
 // Define these methods here so vtables don't get emitted into every translation
 // unit that uses these classes.

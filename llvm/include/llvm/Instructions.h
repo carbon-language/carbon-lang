@@ -1379,9 +1379,9 @@ public:
 /// does not continue in this function any longer.
 ///
 class ReturnInst : public TerminatorInst {
-  Use RetVal;  // Return Value: null if 'void'.
   ReturnInst(const ReturnInst &RI);
   void init(Value *RetVal);
+  void init(std::vector<Value *> &RetVals);
 
 public:
   // ReturnInst constructors:
@@ -1397,21 +1397,15 @@ public:
   // if it was passed NULL.
   explicit ReturnInst(Value *retVal = 0, Instruction *InsertBefore = 0);
   ReturnInst(Value *retVal, BasicBlock *InsertAtEnd);
+  ReturnInst(std::vector<Value *> &retVals);
+  ReturnInst(std::vector<Value *> &retVals, Instruction *InsertBefore);
+  ReturnInst(std::vector<Value *> &retVals, BasicBlock *InsertAtEnd);
   explicit ReturnInst(BasicBlock *InsertAtEnd);
+  virtual ~ReturnInst();
 
   virtual ReturnInst *clone() const;
 
-  // Transparently provide more efficient getOperand methods.
-  Value *getOperand(unsigned i) const {
-    assert(i < getNumOperands() && "getOperand() out of range!");
-    return RetVal;
-  }
-  void setOperand(unsigned i, Value *Val) {
-    assert(i < getNumOperands() && "setOperand() out of range!");
-    RetVal = Val;
-  }
-
-  Value *getReturnValue() const { return RetVal; }
+  Value *getReturnValue(unsigned n = 0) const;
 
   unsigned getNumSuccessors() const { return 0; }
 

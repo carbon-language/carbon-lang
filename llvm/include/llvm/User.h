@@ -29,8 +29,9 @@ protected:
   /// OperandList - This is a pointer to the array of Users for this operand.
   /// For nodes of fixed arity (e.g. a binary operator) this array will live
   /// embedded into the derived class.  For nodes of variable arity
-  /// (e.g. ConstantArrays, CallInst, PHINodes, etc), this memory will be
-  /// dynamically allocated and should be destroyed by the classes virtual dtor.
+  /// (e.g. ConstantArrays, CallInst, PHINodes, ReturnInst etc), this memory 
+  /// will be dynamically allocated and should be destroyed by the classes 
+  /// virtual dtor.
   Use *OperandList;
 
   /// NumOperands - The number of values used by this User.

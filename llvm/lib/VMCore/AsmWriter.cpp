@@ -1304,23 +1304,8 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     Out << " }";
     writeOperand(I.getOperand(0), false);
     Out << ", " << cast<GetResultInst>(I).getIndex();
-  } else if (isa<ReturnInst>(I)) {
-    if (!Operand)
-      Out << " void";
-    else {
-      if (I.getOperand(0)->getType()->isFirstClassType())
-        writeOperand(I.getOperand(0), true);
-      else {
-        Constant *ROp = cast<Constant>(I.getOperand(0));
-        const StructType *STy = cast<StructType>(ROp->getType());
-        unsigned NumElems = STy->getNumElements();
-        for (unsigned i = 0; i < NumElems; ++i) {
-          if (i)
-            Out << ",";
-          writeOperand(ROp->getOperand(i), true);
-        }
-      }
-    }
+  } else if (isa<ReturnInst>(I) && !Operand) {
+    Out << " void";
   } else if (const CallInst *CI = dyn_cast<CallInst>(&I)) {
     // Print the calling convention being used.
     switch (CI->getCallingConv()) {
