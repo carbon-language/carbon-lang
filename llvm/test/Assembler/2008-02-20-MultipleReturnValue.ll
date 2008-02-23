@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s -disable-output
+; RUN: llvm-as < %s | opt -verify | llvm-dis | llvm-as -disable-output
 
 define {i32, i8} @foo(i32 %p) {
   ret i32 1, i8 2
