@@ -760,18 +760,6 @@ bool X86InstrInfo::isReallyTriviallyReMaterializable(MachineInstr *MI) const {
       return isPICBase;
     }
       
-    // If this is a load from a fixed argument slot, we know the value is
-    // invariant across the whole function, because we don't redefine argument
-    // values.
-#if 0
-    // FIXME: This is disabled due to a remat bug. rdar://5671644
-    if (MI->getOperand(1).isFI()) {
-      const MachineFrameInfo &MFI=*MI->getParent()->getParent()->getFrameInfo();
-      int Idx = MI->getOperand(1).getIndex();
-      return MFI.isFixedObjectIndex(Idx) && MFI.isImmutableObjectIndex(Idx);
-    }
-#endif
-      
     return false;
   }
   // All other instructions marked M_REMATERIALIZABLE are always trivially
