@@ -50,12 +50,15 @@ namespace llvm {
       MPYU,                     ///< Multiply Unsigned
       MPYH,                     ///< Multiply High
       MPYHH,                    ///< Multiply High-High
+      SHLQUAD_L_BITS,           ///< Rotate quad left, by bits
+      SHLQUAD_L_BYTES,          ///< Rotate quad left, by bytes
       VEC_SHL,                  ///< Vector shift left
       VEC_SRL,                  ///< Vector shift right (logical)
       VEC_SRA,                  ///< Vector shift right (arithmetic)
       VEC_ROTL,                 ///< Vector rotate left
       VEC_ROTR,                 ///< Vector rotate right
-      ROTBYTES_RIGHT_Z,         ///< Vector rotate right, by bytes, zero fill
+      ROTQUAD_RZ_BYTES,         ///< Rotate quad right, by bytes, zero fill
+      ROTQUAD_RZ_BITS,          ///< Rotate quad right, by bits, zero fill
       ROTBYTES_RIGHT_S,         ///< Vector rotate right, by bytes, sign fill
       ROTBYTES_LEFT,            ///< Rotate bytes (loads -> ROTQBYI)
       ROTBYTES_LEFT_CHAINED,    ///< Rotate bytes (loads -> ROTQBYI), with chain

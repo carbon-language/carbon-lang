@@ -210,20 +210,20 @@ def CellSDKshli:
       (SHLIv4i32 VECREG:$rA, uimm7:$val)>;
 
 def CellSDKshlqbi:
-  Pat<(int_spu_si_shlqbi VECREG:$rA, VECREG:$rB),
-      (SHLQBIvec VECREG:$rA, VECREG:$rB)>;
+  Pat<(int_spu_si_shlqbi VECREG:$rA, R32C:$rB),
+      (SHLQBIv16i8 VECREG:$rA, R32C:$rB)>;
 
 def CellSDKshlqii:
   Pat<(int_spu_si_shlqbii VECREG:$rA, uimm7:$val),
-      (SHLQBIIvec VECREG:$rA, uimm7:$val)>;
+      (SHLQBIIv16i8 VECREG:$rA, uimm7:$val)>;
 
 def CellSDKshlqby:
-  Pat<(int_spu_si_shlqby VECREG:$rA, VECREG:$rB),
-      (SHLQBYvec VECREG:$rA, VECREG:$rB)>;
+  Pat<(int_spu_si_shlqby VECREG:$rA, R32C:$rB),
+      (SHLQBYv16i8 VECREG:$rA, R32C:$rB)>;
 
 def CellSDKshlqbyi:
   Pat<(int_spu_si_shlqbyi VECREG:$rA, uimm7:$val),
-      (SHLQBYIvec VECREG:$rA, uimm7:$val)>;
+      (SHLQBYIv16i8 VECREG:$rA, uimm7:$val)>;
           
 //===----------------------------------------------------------------------===//
 // Branch/compare intrinsics:

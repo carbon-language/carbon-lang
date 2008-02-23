@@ -49,14 +49,13 @@ SPUInstrInfo::isMoveInstr(const MachineInstr& MI,
     break;
   case SPU::ORIv4i32:
   case SPU::ORIr32:
-  case SPU::ORIr64:
   case SPU::ORHIv8i16:
   case SPU::ORHIr16:
-  case SPU::ORHI1To2:
+  case SPU::ORHIi8i16:
   case SPU::ORBIv16i8:
   case SPU::ORBIr8:
-  case SPU::ORI2To4:
-  case SPU::ORI1To4:
+  case SPU::ORIi16i32:
+  case SPU::ORIi8i32:
   case SPU::AHIvec:
   case SPU::AHIr16:
   case SPU::AIvec:
@@ -103,7 +102,6 @@ SPUInstrInfo::isMoveInstr(const MachineInstr& MI,
   case SPU::ORr64:
   case SPU::ORf32:
   case SPU::ORf64:
-  case SPU::ORgprc:
     assert(MI.getNumOperands() == 3 &&
            MI.getOperand(0).isRegister() &&
            MI.getOperand(1).isRegister() &&
@@ -203,14 +201,15 @@ void SPUInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
     BuildMI(MBB, MI, get(SPU::ORf32), DestReg).addReg(SrcReg)
       .addReg(SrcReg);
   } else if (DestRC == SPU::R64CRegisterClass) {
-    BuildMI(MBB, MI, get(SPU::ORIr64), DestReg).addReg(SrcReg).addImm(0);
+    BuildMI(MBB, MI, get(SPU::ORr64), DestReg).addReg(SrcReg)
+      .addReg(SrcReg);
   } else if (DestRC == SPU::R64FPRegisterClass) {
     BuildMI(MBB, MI, get(SPU::ORf64), DestReg).addReg(SrcReg)
       .addReg(SrcReg);
-  } else if (DestRC == SPU::GPRCRegisterClass) {
+  } /* else if (DestRC == SPU::GPRCRegisterClass) {
     BuildMI(MBB, MI, get(SPU::ORgprc), DestReg).addReg(SrcReg)
       .addReg(SrcReg);
-  } else if (DestRC == SPU::VECREGRegisterClass) {
+  } */ else if (DestRC == SPU::VECREGRegisterClass) {
     BuildMI(MBB, MI, get(SPU::ORv4i32), DestReg).addReg(SrcReg)
       .addReg(SrcReg);
   } else {

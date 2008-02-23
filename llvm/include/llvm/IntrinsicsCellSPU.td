@@ -20,6 +20,9 @@
 def cell_i7_ty: LLVMType<i8>;
 def cell_i8_ty: LLVMType<i8>;
 
+// Keep this here until it's actually supported:
+def llvm_i128_ty : LLVMType<i128>;
+
 class v16i8_u7imm<string builtin_suffix> :
   GCCBuiltin<!strconcat("__builtin_si_", builtin_suffix)>,
   Intrinsic<[llvm_v16i8_ty, llvm_v16i8_ty, cell_i7_ty],
@@ -158,9 +161,17 @@ let TargetPrefix = "spu" in {
               [IntrNoMem]>;
 
   def int_spu_si_shli:          v4i32_u7imm<"shli">;
-  def int_spu_si_shlqbi:        v16i8_rr<"shlqbi">;
+
+  def int_spu_si_shlqbi:
+    GCCBuiltin<!strconcat("__builtin_si_", "shlqbi")>,
+    Intrinsic<[llvm_v8i16_ty, llvm_v8i16_ty, llvm_i32_ty],
+              [IntrNoMem]>;
+
   def int_spu_si_shlqbii:       v16i8_u7imm<"shlqbii">;
-  def int_spu_si_shlqby:        v16i8_rr<"shlqby">;
+  def int_spu_si_shlqby:
+    GCCBuiltin<!strconcat("__builtin_si_", "shlqby")>,
+    Intrinsic<[llvm_v8i16_ty, llvm_v8i16_ty, llvm_i32_ty],
+              [IntrNoMem]>;
   def int_spu_si_shlqbyi:       v16i8_u7imm<"shlqbyi">;
   
   def int_spu_si_ceq:           v4i32_rr<"ceq">;

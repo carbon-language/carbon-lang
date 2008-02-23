@@ -374,53 +374,45 @@ def ILHUf32:
 
 // ILHUhi: Used for loading high portion of an address. Note the symbolHi
 // printer used for the operand.
-def ILHUhi : RI16Form<0b010000010, (outs R32C:$rT), (ins symbolHi:$val),
+def ILHUhi:
+  RI16Form<0b010000010, (outs R32C:$rT), (ins symbolHi:$val),
     "ilhu\t$rT, $val", ImmLoad,
     [(set R32C:$rT, hi16:$val)]>;
 
 // Immediate load address (can also be used to load 18-bit unsigned constants,
 // see the zext 16->32 pattern)
-def ILAr64:
-  RI18Form<0b1000010, (outs R64C:$rT), (ins u18imm_i64:$val),
-    "ila\t$rT, $val", LoadNOP,
-    [(set R64C:$rT, imm18:$val)]>;
+class ILAInst<dag OOL, dag IOL, list<dag> pattern>:
+  RI18Form<0b1000010, OOL, IOL, "ila\t$rT, $val",
+           LoadNOP, pattern>;
 
-// TODO: ILAv2i64
+multiclass ImmLoadAddress
+{
+  def v2i64: ILAInst<(outs VECREG:$rT), (ins u18imm:$val),
+                     [(set (v2i64 VECREG:$rT), v2i64Uns18Imm:$val)]>;
 
-def ILAv2i64:
-  RI18Form<0b1000010, (outs VECREG:$rT), (ins u18imm:$val),
-    "ila\t$rT, $val", LoadNOP,
-    [(set (v2i64 VECREG:$rT), v2i64Uns18Imm:$val)]>;
+  def v4i32: ILAInst<(outs VECREG:$rT), (ins u18imm:$val),
+                      [(set (v4i32 VECREG:$rT), v4i32Uns18Imm:$val)]>;
 
-def ILAv4i32:
-  RI18Form<0b1000010, (outs VECREG:$rT), (ins u18imm:$val),
-    "ila\t$rT, $val", LoadNOP,
-    [(set (v4i32 VECREG:$rT), v4i32Uns18Imm:$val)]>;
+  def r64: ILAInst<(outs R64C:$rT), (ins u18imm_i64:$val),
+                   [(set R64C:$rT, imm18:$val)]>;
 
-def ILAr32:
-  RI18Form<0b1000010, (outs R32C:$rT), (ins u18imm:$val),
-    "ila\t$rT, $val", LoadNOP,
-    [(set R32C:$rT, imm18:$val)]>;
+  def r32: ILAInst<(outs R32C:$rT), (ins u18imm:$val),
+                   [(set R32C:$rT, imm18:$val)]>;
 
-def ILAf32:
-  RI18Form<0b1000010, (outs R32FP:$rT), (ins f18imm:$val),
-    "ila\t$rT, $val", LoadNOP,
-    [(set R32FP:$rT, fpimm18:$val)]>;
+  def f32: ILAInst<(outs R32FP:$rT), (ins f18imm:$val),
+                   [(set R32FP:$rT, fpimm18:$val)]>;
 
-def ILAf64:
-  RI18Form<0b1000010, (outs R64FP:$rT), (ins f18imm_f64:$val),
-    "ila\t$rT, $val", LoadNOP,
-    [(set R64FP:$rT, fpimm18:$val)]>;
+  def f64: ILAInst<(outs R64FP:$rT), (ins f18imm_f64:$val),
+                   [(set R64FP:$rT, fpimm18:$val)]>;
 
-def ILAlo:
-    RI18Form<0b1000010, (outs R32C:$rT), (ins symbolLo:$val),
-    "ila\t$rT, $val", ImmLoad,
-    [(set R32C:$rT, imm18:$val)]>;
+  def lo: ILAInst<(outs R32C:$rT), (ins symbolLo:$val),
+                  [(set R32C:$rT, imm18:$val)]>;
 
-def ILAlsa:
-    RI18Form<0b1000010, (outs R32C:$rT), (ins symbolLSA:$val),
-    "ila\t$rT, $val", ImmLoad,
-    [/* no pattern */]>;
+  def lsa: ILAInst<(outs R32C:$rT), (ins symbolLSA:$val),
+                   [/* no pattern */]>;
+}
+
+defm ILA : ImmLoadAddress;
 
 // Immediate OR, Halfword Lower: The "other" part of loading large constants
 // into 32-bit registers. See the anonymous pattern Pat<(i32 imm:$imm), ...>
@@ -465,7 +457,7 @@ class FSMBIVec<ValueType vectype>
              [(set (vectype VECREG:$rT), (SPUfsmbi immU16:$val))]>
 { }
 
-multiclass FSMBIs
+multiclass FormSelectMaskBytesImm
 {
   def v16i8: FSMBIVec<v16i8>;
   def v8i16: FSMBIVec<v8i16>;
@@ -473,7 +465,27 @@ multiclass FSMBIs
   def v2i64: FSMBIVec<v2i64>;
 }
 
-defm FSMBI : FSMBIs;
+defm FSMBI : FormSelectMaskBytesImm;
+
+// fsmb: Form select mask for bytes. N.B. Input operand, $rA, is 16-bits
+def FSMB:
+    RRForm_1<0b01101101100, (outs VECREG:$rT), (ins R16C:$rA),
+      "fsmb\t$rT, $rA", SelectOp,
+      []>;
+
+// fsmh: Form select mask for halfwords. N.B., Input operand, $rA, is
+// only 8-bits wide (even though it's input as 16-bits here)
+def FSMH:
+    RRForm_1<0b10101101100, (outs VECREG:$rT), (ins R16C:$rA),
+      "fsmh\t$rT, $rA", SelectOp,
+      []>;
+
+// fsm: Form select mask for words. Like the other fsm* instructions,
+// only the lower 4 bits of $rA are significant.
+def FSM:
+    RRForm_1<0b00101101100, (outs VECREG:$rT), (ins R16C:$rA),
+      "fsm\t$rT, $rA", SelectOp,
+      []>;
 
 //===----------------------------------------------------------------------===//
 // Integer and Logical Operations:
@@ -487,8 +499,6 @@ def AHv8i16:
 def : Pat<(add (v8i16 VECREG:$rA), (v8i16 VECREG:$rB)),
           (AHv8i16 VECREG:$rA, VECREG:$rB)>;
 
-//  [(set (v8i16 VECREG:$rT), (add (v8i16 VECREG:$rA), (v8i16 VECREG:$rB)))]>;
-
 def AHr16:
   RRForm<0b00010011000, (outs R16C:$rT), (ins R16C:$rA, R16C:$rB),
     "ah\t$rT, $rA, $rB", IntegerOp,
@@ -500,20 +510,23 @@ def AHIvec:
       [(set (v8i16 VECREG:$rT), (add (v8i16 VECREG:$rA),
                                      v8i16SExt10Imm:$val))]>;
 
-def AHIr16 : RI10Form<0b10111000, (outs R16C:$rT), (ins R16C:$rA, s10imm:$val),
-  "ahi\t$rT, $rA, $val", IntegerOp,
-  [(set R16C:$rT, (add R16C:$rA, v8i16SExt10Imm:$val))]>;
+def AHIr16:
+  RI10Form<0b10111000, (outs R16C:$rT), (ins R16C:$rA, s10imm:$val),
+    "ahi\t$rT, $rA, $val", IntegerOp,
+    [(set R16C:$rT, (add R16C:$rA, v8i16SExt10Imm:$val))]>;
 
-def Avec : RRForm<0b00000011000, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-  "a\t$rT, $rA, $rB", IntegerOp,
-  [(set (v4i32 VECREG:$rT), (add (v4i32 VECREG:$rA), (v4i32 VECREG:$rB)))]>;
+def Avec:
+  RRForm<0b00000011000, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
+    "a\t$rT, $rA, $rB", IntegerOp,
+    [(set (v4i32 VECREG:$rT), (add (v4i32 VECREG:$rA), (v4i32 VECREG:$rB)))]>;
 
 def : Pat<(add (v16i8 VECREG:$rA), (v16i8 VECREG:$rB)),
           (Avec VECREG:$rA, VECREG:$rB)>;
 
-def Ar32 : RRForm<0b00000011000, (outs R32C:$rT), (ins R32C:$rA, R32C:$rB),
-  "a\t$rT, $rA, $rB", IntegerOp,
-  [(set R32C:$rT, (add R32C:$rA, R32C:$rB))]>;
+def Ar32:
+  RRForm<0b00000011000, (outs R32C:$rT), (ins R32C:$rA, R32C:$rB),
+    "a\t$rT, $rA, $rB", IntegerOp,
+    [(set R32C:$rT, (add R32C:$rA, R32C:$rB))]>;
 
 def Ar8:
     RRForm<0b00000011000, (outs R8C:$rT), (ins R8C:$rA, R8C:$rB),
@@ -802,26 +815,6 @@ def CNTBv4i32 :
       "cntb\t$rT, $rA", IntegerOp,
       [(set (v4i32 VECREG:$rT), (SPUcntb_v4i32 (v4i32 VECREG:$rA)))]>;
 
-// fsmb: Form select mask for bytes. N.B. Input operand, $rA, is 16-bits
-def FSMB:
-    RRForm_1<0b01101101100, (outs VECREG:$rT), (ins R16C:$rA),
-      "fsmb\t$rT, $rA", SelectOp,
-      []>;
-
-// fsmh: Form select mask for halfwords. N.B., Input operand, $rA, is
-// only 8-bits wide (even though it's input as 16-bits here)
-def FSMH:
-    RRForm_1<0b10101101100, (outs VECREG:$rT), (ins R16C:$rA),
-      "fsmh\t$rT, $rA", SelectOp,
-      []>;
-
-// fsm: Form select mask for words. Like the other fsm* instructions,
-// only the lower 4 bits of $rA are significant.
-def FSM:
-    RRForm_1<0b00101101100, (outs VECREG:$rT), (ins R16C:$rA),
-      "fsm\t$rT, $rA", SelectOp,
-      []>;
-
 // gbb: Gather all low order bits from each byte in $rA into a single 16-bit
 // quantity stored into $rT
 def GBB:
@@ -923,281 +916,257 @@ def : Pat<(sext R32C:$inp),
           (XSWDr32 R32C:$inp)>;
 
 // AND operations
-def ANDv16i8:
-    RRForm<0b10000011000, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-      "and\t$rT, $rA, $rB", IntegerOp,
-      [(set (v16i8 VECREG:$rT), (and (v16i8 VECREG:$rA),
-                                     (v16i8 VECREG:$rB)))]>;
 
-def ANDv8i16:
-    RRForm<0b10000011000, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-      "and\t$rT, $rA, $rB", IntegerOp,
-      [(set (v8i16 VECREG:$rT), (and (v8i16 VECREG:$rA),
-                                     (v8i16 VECREG:$rB)))]>;
+class ANDInst<dag OOL, dag IOL, list<dag> pattern> :
+    RRForm<0b10000011000, OOL, IOL, "and\t$rT, $rA, $rB",
+           IntegerOp, pattern>;
 
-def ANDv4i32:
-    RRForm<0b10000011000, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-      "and\t$rT, $rA, $rB", IntegerOp,
-      [(set (v4i32 VECREG:$rT), (and (v4i32 VECREG:$rA),
-                                     (v4i32 VECREG:$rB)))]>;
+class ANDVecInst<ValueType vectype>:
+    ANDInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
+             [(set (vectype VECREG:$rT), (and (vectype VECREG:$rA),
+                                              (vectype VECREG:$rB)))]>;
 
-def ANDr32:
-    RRForm<0b10000011000, (outs R32C:$rT), (ins R32C:$rA, R32C:$rB),
-      "and\t$rT, $rA, $rB", IntegerOp,
-      [(set R32C:$rT, (and R32C:$rA, R32C:$rB))]>;
+multiclass BitwiseAnd
+{
+  def v16i8: ANDVecInst<v16i8>;
+  def v8i16: ANDVecInst<v8i16>;
+  def v4i32: ANDVecInst<v4i32>;
+  def v2i64: ANDVecInst<v2i64>;
 
-//===---------------------------------------------
-// Special instructions to perform the fabs instruction
-def ANDfabs32:
-    RRForm<0b10000011000, (outs R32FP:$rT), (ins R32FP:$rA, R32C:$rB),
-      "and\t$rT, $rA, $rB", IntegerOp,
-      [/* Intentionally does not match a pattern */]>;
+  def r64: ANDInst<(outs R64C:$rT), (ins R64C:$rA, R64C:$rB),
+                   [(set R64C:$rT, (and R64C:$rA, R64C:$rB))]>;
 
-def ANDfabs64:
-    RRForm<0b10000011000, (outs R64FP:$rT), (ins R64FP:$rA, VECREG:$rB),
-      "and\t$rT, $rA, $rB", IntegerOp,
-      [/* Intentionally does not match a pattern */]>;
+  def r32: ANDInst<(outs R32C:$rT), (ins R32C:$rA, R32C:$rB),
+                   [(set R32C:$rT, (and R32C:$rA, R32C:$rB))]>;
 
-// Could use ANDv4i32, but won't for clarity
-def ANDfabsvec:
-    RRForm<0b10000011000, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-      "and\t$rT, $rA, $rB", IntegerOp,
-      [/* Intentionally does not match a pattern */]>;
+  def r16: ANDInst<(outs R16C:$rT), (ins R16C:$rA, R16C:$rB),
+                   [(set R16C:$rT, (and R16C:$rA, R16C:$rB))]>;
 
-//===---------------------------------------------
+  def r8: ANDInst<(outs R8C:$rT), (ins R8C:$rA, R8C:$rB),
+                  [(set R8C:$rT, (and R8C:$rA, R8C:$rB))]>;
 
-def ANDr16:
-    RRForm<0b10000011000, (outs R16C:$rT), (ins R16C:$rA, R16C:$rB),
-      "and\t$rT, $rA, $rB", IntegerOp,
-      [(set R16C:$rT, (and R16C:$rA, R16C:$rB))]>;
+  //===---------------------------------------------
+  // Special instructions to perform the fabs instruction
+  def fabs32: ANDInst<(outs R32FP:$rT), (ins R32FP:$rA, R32C:$rB),
+                      [/* Intentionally does not match a pattern */]>;
 
-def ANDr8:
-    RRForm<0b10000011000, (outs R8C:$rT), (ins R8C:$rA, R8C:$rB),
-      "and\t$rT, $rA, $rB", IntegerOp,
-      [(set R8C:$rT, (and R8C:$rA, R8C:$rB))]>;
+  def fabs64: ANDInst<(outs R64FP:$rT), (ins R64FP:$rA, VECREG:$rB),
+                      [/* Intentionally does not match a pattern */]>;
 
-// Hacked form of AND to zero-extend 16-bit quantities to 32-bit
-// quantities -- see 16->32 zext pattern.
-//
-// This pattern is somewhat artificial, since it might match some
-// compiler generated pattern but it is unlikely to do so.
-def AND2To4:
-    RRForm<0b10000011000, (outs R32C:$rT), (ins R16C:$rA, R32C:$rB),
-      "and\t$rT, $rA, $rB", IntegerOp,
-      [(set R32C:$rT, (and (zext R16C:$rA), R32C:$rB))]>;
+  // Could use v4i32, but won't for clarity
+  def fabsvec: ANDInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
+                       [/* Intentionally does not match a pattern */]>;
+
+  //===---------------------------------------------
+
+  // Hacked form of AND to zero-extend 16-bit quantities to 32-bit
+  // quantities -- see 16->32 zext pattern.
+  //
+  // This pattern is somewhat artificial, since it might match some
+  // compiler generated pattern but it is unlikely to do so.
+
+  def i16i32: ANDInst<(outs R32C:$rT), (ins R16C:$rA, R32C:$rB),
+                      [(set R32C:$rT, (and (zext R16C:$rA), R32C:$rB))]>;
+}
+
+defm AND : BitwiseAnd;
 
 // N.B.: vnot_conv is one of those special target selection pattern fragments,
 // in which we expect there to be a bit_convert on the constant. Bear in mind
 // that llvm translates "not <reg>" to "xor <reg>, -1" (or in this case, a
 // constant -1 vector.)
-def ANDCv16i8:
-    RRForm<0b10000011010, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-      "andc\t$rT, $rA, $rB", IntegerOp,
-      [(set (v16i8 VECREG:$rT), (and (v16i8 VECREG:$rA),
-                                     (vnot (v16i8 VECREG:$rB))))]>;
 
-def ANDCv8i16:
-    RRForm<0b10000011010, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-      "andc\t$rT, $rA, $rB", IntegerOp,
-      [(set (v8i16 VECREG:$rT), (and (v8i16 VECREG:$rA),
-                                     (vnot (v8i16 VECREG:$rB))))]>;
+class ANDCInst<dag OOL, dag IOL, list<dag> pattern>:
+    RRForm<0b10000011010, OOL, IOL, "andc\t$rT, $rA, $rB",
+           IntegerOp, pattern>;
 
-def ANDCv4i32:
-    RRForm<0b10000011010, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-      "andc\t$rT, $rA, $rB", IntegerOp,
-      [(set (v4i32 VECREG:$rT), (and (v4i32 VECREG:$rA),
-                                     (vnot (v4i32 VECREG:$rB))))]>;
+class ANDCVecInst<ValueType vectype>:
+    ANDCInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
+             [(set (vectype VECREG:$rT), (and (vectype VECREG:$rA),
+                                              (vnot (vectype VECREG:$rB))))]>;
 
-def ANDCr32:
-    RRForm<0b10000011010, (outs R32C:$rT), (ins R32C:$rA, R32C:$rB),
-      "andc\t$rT, $rA, $rB", IntegerOp,
-      [(set R32C:$rT, (and R32C:$rA, (not R32C:$rB)))]>;
+class ANDCRegInst<RegisterClass rclass>:
+    ANDCInst<(outs rclass:$rT), (ins rclass:$rA, rclass:$rB),
+             [(set rclass:$rT, (and rclass:$rA, (not rclass:$rB)))]>;
 
-def ANDCr16:
-    RRForm<0b10000011010, (outs R16C:$rT), (ins R16C:$rA, R16C:$rB),
-      "andc\t$rT, $rA, $rB", IntegerOp,
-      [(set R16C:$rT, (and R16C:$rA, (not R16C:$rB)))]>;
+multiclass AndComplement
+{
+  def v16i8: ANDCVecInst<v16i8>;
+  def v8i16: ANDCVecInst<v8i16>;
+  def v4i32: ANDCVecInst<v4i32>;
+  def v2i64: ANDCVecInst<v2i64>;
 
-def ANDCr8:
-    RRForm<0b10000011010, (outs R8C:$rT), (ins R8C:$rA, R8C:$rB),
-      "andc\t$rT, $rA, $rB", IntegerOp,
-      [(set R8C:$rT, (and R8C:$rA, (not R8C:$rB)))]>;
+  def r128: ANDCRegInst<GPRC>;
+  def r64:  ANDCRegInst<R64C>;
+  def r32:  ANDCRegInst<R32C>;
+  def r16:  ANDCRegInst<R16C>;
+  def r8:   ANDCRegInst<R8C>;
+}
 
-def ANDBIv16i8:
-    RI10Form<0b01101000, (outs VECREG:$rT), (ins VECREG:$rA, u10imm:$val),
-      "andbi\t$rT, $rA, $val", IntegerOp,
-      [(set (v16i8 VECREG:$rT),
-            (and (v16i8 VECREG:$rA), (v16i8 v16i8U8Imm:$val)))]>;
+defm ANDC : AndComplement;
 
-def ANDBIr8:
-    RI10Form<0b01101000, (outs R8C:$rT), (ins R8C:$rA, u10imm_i8:$val),
-      "andbi\t$rT, $rA, $val", IntegerOp,
-      [(set R8C:$rT, (and R8C:$rA, immU8:$val))]>;
+class ANDBIInst<dag OOL, dag IOL, list<dag> pattern>:
+    RI10Form<0b01101000, OOL, IOL, "andbi\t$rT, $rA, $val",
+             IntegerOp, pattern>;
 
-def ANDHIv8i16:
-    RI10Form<0b10101000, (outs VECREG:$rT), (ins VECREG:$rA, s10imm:$val),
-      "andhi\t$rT, $rA, $val", IntegerOp,
-      [(set (v8i16 VECREG:$rT),
-            (and (v8i16 VECREG:$rA), v8i16SExt10Imm:$val))]>;
+multiclass AndByteImm
+{
+  def v16i8: ANDBIInst<(outs VECREG:$rT), (ins VECREG:$rA, u10imm:$val),
+                       [(set (v16i8 VECREG:$rT),
+                             (and (v16i8 VECREG:$rA),
+                                  (v16i8 v16i8U8Imm:$val)))]>;
 
-def ANDHIr16:
-    RI10Form<0b10101000, (outs R16C:$rT), (ins R16C:$rA, s10imm:$val),
-      "andhi\t$rT, $rA, $val", IntegerOp,
-      [(set R16C:$rT, (and R16C:$rA, i16ImmUns10:$val))]>;
+  def r8: ANDBIInst<(outs R8C:$rT), (ins R8C:$rA, u10imm_i8:$val),
+                    [(set R8C:$rT, (and R8C:$rA, immU8:$val))]>;
+}
 
-def ANDHI1To2:
-    RI10Form<0b10101000, (outs R16C:$rT), (ins R8C:$rA, s10imm:$val),
-      "andhi\t$rT, $rA, $val", IntegerOp,
-      [(set R16C:$rT, (and (zext R8C:$rA), i16ImmSExt10:$val))]>;
+defm ANDBI : AndByteImm;
 
-def ANDIv4i32:
-    RI10Form<0b00101000, (outs VECREG:$rT), (ins VECREG:$rA, s10imm:$val),
-      "andi\t$rT, $rA, $val", IntegerOp,
-      [(set (v4i32 VECREG:$rT),
-            (and (v4i32 VECREG:$rA), v4i32SExt10Imm:$val))]>;
+class ANDHIInst<dag OOL, dag IOL, list<dag> pattern> :
+    RI10Form<0b10101000, OOL, IOL, "andhi\t$rT, $rA, $val",
+             IntegerOp, pattern>;
 
-def ANDIr32:
-    RI10Form<0b10101000, (outs R32C:$rT), (ins R32C:$rA, s10imm_i32:$val),
-      "andi\t$rT, $rA, $val", IntegerOp,
-      [(set R32C:$rT, (and R32C:$rA, i32ImmSExt10:$val))]>;
+multiclass AndHalfwordImm
+{
+  def v8i16: ANDHIInst<(outs VECREG:$rT), (ins VECREG:$rA, s10imm:$val),
+                       [(set (v8i16 VECREG:$rT),
+                             (and (v8i16 VECREG:$rA), v8i16SExt10Imm:$val))]>;
 
-// Hacked form of ANDI to zero-extend i8 quantities to i32. See the zext 8->32
-// pattern below.
-def ANDI1To4:
-    RI10Form<0b10101000, (outs R32C:$rT), (ins R8C:$rA, s10imm_i32:$val),
-      "andi\t$rT, $rA, $val", IntegerOp,
-      [(set R32C:$rT, (and (zext R8C:$rA), i32ImmSExt10:$val))]>;
+  def r16: ANDHIInst<(outs R16C:$rT), (ins R16C:$rA, u10imm:$val),
+                     [(set R16C:$rT, (and R16C:$rA, i16ImmUns10:$val))]>;
 
-// Hacked form of ANDI to zero-extend i16 quantities to i32. See the
-// zext 16->32 pattern below.
-//
-// Note that this pattern is somewhat artificial, since it might match
-// something the compiler generates but is unlikely to occur in practice.
-def ANDI2To4:
-    RI10Form<0b10101000, (outs R32C:$rT), (ins R16C:$rA, s10imm_i32:$val),
-      "andi\t$rT, $rA, $val", IntegerOp,
-      [(set R32C:$rT, (and (zext R16C:$rA), i32ImmSExt10:$val))]>;
+  // Zero-extend i8 to i16:
+  def i8i16: ANDHIInst<(outs R16C:$rT), (ins R8C:$rA, u10imm:$val),
+                      [(set R16C:$rT, (and (zext R8C:$rA), i16ImmUns10:$val))]>;
+}
 
+defm ANDHI : AndHalfwordImm;
+
+class ANDIInst<dag OOL, dag IOL, list<dag> pattern> :
+    RI10Form<0b00101000, OOL, IOL, "andi\t$rT, $rA, $val",
+             IntegerOp, pattern>;
+
+multiclass AndWordImm
+{
+  def v4i32: ANDIInst<(outs VECREG:$rT), (ins VECREG:$rA, s10imm:$val),
+                      [(set (v4i32 VECREG:$rT),
+                            (and (v4i32 VECREG:$rA), v4i32SExt10Imm:$val))]>;
+
+  def r32: ANDIInst<(outs R32C:$rT), (ins R32C:$rA, s10imm_i32:$val),
+                    [(set R32C:$rT, (and R32C:$rA, i32ImmSExt10:$val))]>;
+
+  // Hacked form of ANDI to zero-extend i8 quantities to i32. See the zext 8->32
+  // pattern below.
+  def i8i32: ANDIInst<(outs R32C:$rT), (ins R8C:$rA, s10imm_i32:$val),
+                      [(set R32C:$rT,
+                            (and (zext R8C:$rA), i32ImmSExt10:$val))]>;
+
+  // Hacked form of ANDI to zero-extend i16 quantities to i32. See the
+  // zext 16->32 pattern below.
+  //
+  // Note that this pattern is somewhat artificial, since it might match
+  // something the compiler generates but is unlikely to occur in practice.
+  def i16i32: ANDIInst<(outs R32C:$rT), (ins R16C:$rA, s10imm_i32:$val),
+                       [(set R32C:$rT,
+                             (and (zext R16C:$rA), i32ImmSExt10:$val))]>;
+}
+
+defm ANDI : AndWordImm;
+
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
 // Bitwise OR group:
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+
 // Bitwise "or" (N.B.: These are also register-register copy instructions...)
-def ORv16i8:
-    RRForm<0b10000010000, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-      "or\t$rT, $rA, $rB", IntegerOp,
-      [(set (v16i8 VECREG:$rT), (or (v16i8 VECREG:$rA), (v16i8 VECREG:$rB)))]>;
+class ORInst<dag OOL, dag IOL, list<dag> pattern>:
+    RRForm<0b10000010000, OOL, IOL, "or\t$rT, $rA, $rB",
+           IntegerOp, pattern>;
 
-def ORv8i16:
-    RRForm<0b10000010000, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-      "or\t$rT, $rA, $rB", IntegerOp,
-      [(set (v8i16 VECREG:$rT), (or (v8i16 VECREG:$rA), (v8i16 VECREG:$rB)))]>;
+class ORVecInst<ValueType vectype>:
+    ORInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
+           [(set (vectype VECREG:$rT), (or (vectype VECREG:$rA),
+                                           (vectype VECREG:$rB)))]>;
 
-def ORv4i32:
-    RRForm<0b10000010000, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-      "or\t$rT, $rA, $rB", IntegerOp,
-      [(set (v4i32 VECREG:$rT), (or (v4i32 VECREG:$rA), (v4i32 VECREG:$rB)))]>;
+class ORRegInst<RegisterClass rclass>:
+    ORInst<(outs rclass:$rT), (ins rclass:$rA, rclass:$rB),
+           [(set rclass:$rT, (or rclass:$rA, rclass:$rB))]>;
 
-def ORv4f32:
-    RRForm<0b10000010000, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-      "or\t$rT, $rA, $rB", IntegerOp,
-      [(set (v4f32 VECREG:$rT),
-            (v4f32 (bitconvert (or (v4i32 VECREG:$rA), (v4i32 VECREG:$rB)))))]>;
+class ORPromoteScalar<RegisterClass rclass>:
+    ORInst<(outs VECREG:$rT), (ins rclass:$rA, rclass:$rB),
+           [/* no pattern */]>;
 
-def ORv2f64:
-    RRForm<0b10000010000, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-      "or\t$rT, $rA, $rB", IntegerOp,
-      [(set (v2f64 VECREG:$rT), 
-            (v2f64 (bitconvert (or (v2i64 VECREG:$rA), (v2i64 VECREG:$rB)))))]>;
+class ORExtractElt<RegisterClass rclass>:
+    ORInst<(outs rclass:$rT), (ins VECREG:$rA, VECREG:$rB),
+           [/* no pattern */]>;
 
-def ORgprc:
-    RRForm<0b10000010000, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
-      "or\t$rT, $rA, $rB", IntegerOp,
-      [(set GPRC:$rT, (or GPRC:$rA, GPRC:$rB))]>;
+multiclass BitwiseOr
+{
+  def v16i8: ORVecInst<v16i8>;
+  def v8i16: ORVecInst<v8i16>;
+  def v4i32: ORVecInst<v4i32>;
+  def v2i64: ORVecInst<v2i64>;
 
-def ORr64:
-    RRForm<0b10000010000, (outs R64C:$rT), (ins R64C:$rA, R64C:$rB),
-      "or\t$rT, $rA, $rB", IntegerOp,
-      [(set R64C:$rT, (or R64C:$rA, R64C:$rB))]>;
+  def v4f32: ORInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
+                    [(set (v4f32 VECREG:$rT),
+                          (v4f32 (bitconvert (or (v4i32 VECREG:$rA),
+                                                 (v4i32 VECREG:$rB)))))]>;
 
-def ORr32:
-    RRForm<0b10000010000, (outs R32C:$rT), (ins R32C:$rA, R32C:$rB),
-      "or\t$rT, $rA, $rB", IntegerOp,
-      [(set R32C:$rT, (or R32C:$rA, R32C:$rB))]>;
+  def v2f64: ORInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
+                    [(set (v2f64 VECREG:$rT), 
+                          (v2f64 (bitconvert (or (v2i64 VECREG:$rA),
+                                                 (v2i64 VECREG:$rB)))))]>;
 
-def ORr16:
-    RRForm<0b10000010000, (outs R16C:$rT), (ins R16C:$rA, R16C:$rB),
-      "or\t$rT, $rA, $rB", IntegerOp,
-      [(set R16C:$rT, (or R16C:$rA, R16C:$rB))]>;
+  def r64: ORRegInst<R64C>;
+  def r32: ORRegInst<R32C>;
+  def r16: ORRegInst<R16C>;
+  def r8:  ORRegInst<R8C>;
 
-def ORr8:
-    RRForm<0b10000010000, (outs R8C:$rT), (ins R8C:$rA, R8C:$rB),
-      "or\t$rT, $rA, $rB", IntegerOp,
-      [(set R8C:$rT, (or R8C:$rA, R8C:$rB))]>;
+  // OR instructions used to copy f32 and f64 registers.
+  def f32: ORInst<(outs R32FP:$rT), (ins R32FP:$rA, R32FP:$rB),
+                  [/* no pattern */]>;
 
-// OR instruction forms that are used to copy f32 and f64 registers.
-// They do not match patterns.
-def ORf32:
-    RRForm<0b10000010000, (outs R32FP:$rT), (ins R32FP:$rA, R32FP:$rB),
-      "or\t$rT, $rA, $rB", IntegerOp,
-      [/* no pattern */]>;
+  def f64: ORInst<(outs R64FP:$rT), (ins R64FP:$rA, R64FP:$rB),
+                  [/* no pattern */]>;
 
-def ORf64:
-    RRForm<0b10000010000, (outs R64FP:$rT), (ins R64FP:$rA, R64FP:$rB),
-      "or\t$rT, $rA, $rB", IntegerOp,
-      [/* no pattern */]>;
+  // scalar->vector promotion:
+  def v16i8_i8:  ORPromoteScalar<R8C>;
+  def v8i16_i16: ORPromoteScalar<R16C>;
+  def v4i32_i32: ORPromoteScalar<R32C>;
+  def v2i64_i64: ORPromoteScalar<R64C>;
+  def v4f32_f32: ORPromoteScalar<R32FP>;
+  def v2f64_f64: ORPromoteScalar<R64FP>;
 
-// ORv*_*: Used in scalar->vector promotions:
-def ORv16i8_i8:
-    RRForm<0b10000010000, (outs VECREG:$rT), (ins R8C:$rA, R8C:$rB),
-      "or\t$rT, $rA, $rB", IntegerOp,
-      [/* no pattern */]>;
+  // extract element 0:
+  def i8_v16i8:  ORExtractElt<R8C>;
+  def i16_v8i16: ORExtractElt<R16C>;
+  def i32_v4i32: ORExtractElt<R32C>;
+  def i64_v2i64: ORExtractElt<R64C>;
+  def f32_v4f32: ORExtractElt<R32FP>;
+  def f64_v2f64: ORExtractElt<R64FP>;
+}
 
+defm OR : BitwiseOr;
+
+// scalar->vector promotion patterns:
 def : Pat<(v16i8 (SPUpromote_scalar R8C:$rA)),
           (ORv16i8_i8 R8C:$rA, R8C:$rA)>;
-
-def ORv8i16_i16:
-    RRForm<0b10000010000, (outs VECREG:$rT), (ins R16C:$rA, R16C:$rB),
-      "or\t$rT, $rA, $rB", IntegerOp,
-      [/* no pattern */]>;
 
 def : Pat<(v8i16 (SPUpromote_scalar R16C:$rA)),
           (ORv8i16_i16 R16C:$rA, R16C:$rA)>;
 
-def ORv4i32_i32:
-    RRForm<0b10000010000, (outs VECREG:$rT), (ins R32C:$rA, R32C:$rB),
-      "or\t$rT, $rA, $rB", IntegerOp,
-      [/* no pattern */]>;
-
 def : Pat<(v4i32 (SPUpromote_scalar R32C:$rA)),
           (ORv4i32_i32 R32C:$rA, R32C:$rA)>;
-
-def ORv2i64_i64:
-    RRForm<0b10000010000, (outs VECREG:$rT), (ins R64C:$rA, R64C:$rB),
-      "or\t$rT, $rA, $rB", IntegerOp,
-      [/* no pattern */]>;
 
 def : Pat<(v2i64 (SPUpromote_scalar R64C:$rA)),
           (ORv2i64_i64 R64C:$rA, R64C:$rA)>;
 
-def ORv4f32_f32:
-    RRForm<0b10000010000, (outs VECREG:$rT), (ins R32FP:$rA, R32FP:$rB),
-      "or\t$rT, $rA, $rB", IntegerOp,
-      [/* no pattern */]>;
-
 def : Pat<(v4f32 (SPUpromote_scalar R32FP:$rA)),
           (ORv4f32_f32 R32FP:$rA, R32FP:$rA)>;
-
-def ORv2f64_f64:
-    RRForm<0b10000010000, (outs VECREG:$rT), (ins R64FP:$rA, R64FP:$rB),
-      "or\t$rT, $rA, $rB", IntegerOp,
-      [/* no pattern */]>;
 
 def : Pat<(v2f64 (SPUpromote_scalar R64FP:$rA)),
           (ORv2f64_f64 R64FP:$rA, R64FP:$rA)>;
 
 // ORi*_v*: Used to extract vector element 0 (the preferred slot)
-def ORi8_v16i8:
-    RRForm<0b10000010000, (outs R8C:$rT), (ins VECREG:$rA, VECREG:$rB),
-      "or\t$rT, $rA, $rB", IntegerOp,
-      [/* no pattern */]>;
 
 def : Pat<(SPUextract_elt0 (v16i8 VECREG:$rA)),
           (ORi8_v16i8 VECREG:$rA, VECREG:$rA)>;
@@ -1205,21 +1174,11 @@ def : Pat<(SPUextract_elt0 (v16i8 VECREG:$rA)),
 def : Pat<(SPUextract_elt0_chained (v16i8 VECREG:$rA)),
           (ORi8_v16i8 VECREG:$rA, VECREG:$rA)>;
 
-def ORi16_v8i16:
-    RRForm<0b10000010000, (outs R16C:$rT), (ins VECREG:$rA, VECREG:$rB),
-      "or\t$rT, $rA, $rB", IntegerOp,
-      [/* no pattern */]>;
-
 def : Pat<(SPUextract_elt0 (v8i16 VECREG:$rA)),
           (ORi16_v8i16 VECREG:$rA, VECREG:$rA)>;
 
 def : Pat<(SPUextract_elt0_chained (v8i16 VECREG:$rA)),
           (ORi16_v8i16 VECREG:$rA, VECREG:$rA)>;
-
-def ORi32_v4i32:
-    RRForm<0b10000010000, (outs R32C:$rT), (ins VECREG:$rA, VECREG:$rB),
-      "or\t$rT, $rA, $rB", IntegerOp,
-      [/* no pattern */]>;
 
 def : Pat<(SPUextract_elt0 (v4i32 VECREG:$rA)),
           (ORi32_v4i32 VECREG:$rA, VECREG:$rA)>;
@@ -1227,21 +1186,11 @@ def : Pat<(SPUextract_elt0 (v4i32 VECREG:$rA)),
 def : Pat<(SPUextract_elt0_chained (v4i32 VECREG:$rA)),
           (ORi32_v4i32 VECREG:$rA, VECREG:$rA)>;
 
-def ORi64_v2i64:
-    RRForm<0b10000010000, (outs R64C:$rT), (ins VECREG:$rA, VECREG:$rB),
-      "or\t$rT, $rA, $rB", IntegerOp,
-      [/* no pattern */]>;
-
 def : Pat<(SPUextract_elt0 (v2i64 VECREG:$rA)),
           (ORi64_v2i64 VECREG:$rA, VECREG:$rA)>;
 
 def : Pat<(SPUextract_elt0_chained (v2i64 VECREG:$rA)),
           (ORi64_v2i64 VECREG:$rA, VECREG:$rA)>;
-
-def ORf32_v4f32:
-    RRForm<0b10000010000, (outs R32FP:$rT), (ins VECREG:$rA, VECREG:$rB),
-      "or\t$rT, $rA, $rB", IntegerOp,
-      [/* no pattern */]>;
 
 def : Pat<(SPUextract_elt0 (v4f32 VECREG:$rA)),
           (ORf32_v4f32 VECREG:$rA, VECREG:$rA)>;
@@ -1249,113 +1198,120 @@ def : Pat<(SPUextract_elt0 (v4f32 VECREG:$rA)),
 def : Pat<(SPUextract_elt0_chained (v4f32 VECREG:$rA)),
           (ORf32_v4f32 VECREG:$rA, VECREG:$rA)>;
 
-def ORf64_v2f64:
-    RRForm<0b10000010000, (outs R64FP:$rT), (ins VECREG:$rA, VECREG:$rB),
-      "or\t$rT, $rA, $rB", IntegerOp,
-      [/* no pattern */]>;
-
 def : Pat<(SPUextract_elt0 (v2f64 VECREG:$rA)),
           (ORf64_v2f64 VECREG:$rA, VECREG:$rA)>;
 
 def : Pat<(SPUextract_elt0_chained (v2f64 VECREG:$rA)),
           (ORf64_v2f64 VECREG:$rA, VECREG:$rA)>;
 
-// ORC: Bitwise "or" with complement (match before ORvec, ORr32)
-def ORCv16i8:
-    RRForm<0b10010010000, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-      "orc\t$rT, $rA, $rB", IntegerOp,
-      [(set (v16i8 VECREG:$rT), (or (v16i8 VECREG:$rA),
-                                    (vnot (v16i8 VECREG:$rB))))]>;
+// ORC: Bitwise "or" with complement (c = a | ~b)
 
-def ORCv8i16:
-    RRForm<0b10010010000, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-      "orc\t$rT, $rA, $rB", IntegerOp,
-      [(set (v8i16 VECREG:$rT), (or (v8i16 VECREG:$rA),
-                                    (vnot (v8i16 VECREG:$rB))))]>;
+class ORCInst<dag OOL, dag IOL, list<dag> pattern>:
+    RRForm<0b10010010000, OOL, IOL, "orc\t$rT, $rA, $rB",
+           IntegerOp, pattern>;
 
-def ORCv4i32:
-    RRForm<0b10010010000, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-      "orc\t$rT, $rA, $rB", IntegerOp,
-      [(set (v4i32 VECREG:$rT), (or (v4i32 VECREG:$rA),
-                                    (vnot (v4i32 VECREG:$rB))))]>;
+class ORCVecInst<ValueType vectype>:
+    ORCInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
+            [(set (vectype VECREG:$rT), (or (vectype VECREG:$rA),
+                                            (vnot (vectype VECREG:$rB))))]>;
 
-def ORCr32:
-  RRForm<0b10010010000, (outs R32C:$rT), (ins R32C:$rA, R32C:$rB),
-    "orc\t$rT, $rA, $rB", IntegerOp,
-    [(set R32C:$rT, (or R32C:$rA, (not R32C:$rB)))]>;
+class ORCRegInst<RegisterClass rclass>:
+  ORCInst<(outs rclass:$rT), (ins rclass:$rA, rclass:$rB),
+          [(set rclass:$rT, (or rclass:$rA, (not rclass:$rB)))]>;
 
-def ORCr16:
-  RRForm<0b10010010000, (outs R16C:$rT), (ins R16C:$rA, R16C:$rB),
-    "orc\t$rT, $rA, $rB", IntegerOp,
-    [(set R16C:$rT, (or R16C:$rA, (not R16C:$rB)))]>;
+multiclass BitwiseOrComplement
+{
+  def v16i8: ORCVecInst<v16i8>;
+  def v8i16: ORCVecInst<v8i16>;
+  def v4i32: ORCVecInst<v4i32>;
+  def v2i64: ORCVecInst<v2i64>;
 
-def ORCr8:
-  RRForm<0b10010010000, (outs R8C:$rT), (ins R8C:$rA, R8C:$rB),
-    "orc\t$rT, $rA, $rB", IntegerOp,
-    [(set R8C:$rT, (or R8C:$rA, (not R8C:$rB)))]>;
+  def r64:   ORCRegInst<R64C>;
+  def r32:   ORCRegInst<R32C>;
+  def r16:   ORCRegInst<R16C>;
+  def r8:    ORCRegInst<R8C>;
+}
+
+defm ORC : BitwiseOrComplement;
 
 // OR byte immediate
-def ORBIv16i8:
-    RI10Form<0b01100000, (outs VECREG:$rT), (ins VECREG:$rA, u10imm:$val),
-       "orbi\t$rT, $rA, $val", IntegerOp,
-       [(set (v16i8 VECREG:$rT),
-             (or (v16i8 VECREG:$rA), (v16i8 v16i8U8Imm:$val)))]>;
+class ORBIInst<dag OOL, dag IOL, list<dag> pattern>:
+    RI10Form<0b01100000, OOL, IOL, "orbi\t$rT, $rA, $val",
+             IntegerOp, pattern>;
 
-def ORBIr8:
-    RI10Form<0b01100000, (outs R8C:$rT), (ins R8C:$rA, u10imm_i8:$val),
-       "orbi\t$rT, $rA, $val", IntegerOp,
-       [(set R8C:$rT, (or R8C:$rA, immU8:$val))]>;
+class ORBIVecInst<ValueType vectype, PatLeaf immpred>:
+    ORBIInst<(outs VECREG:$rT), (ins VECREG:$rA, u10imm:$val),
+             [(set (v16i8 VECREG:$rT), (or (vectype VECREG:$rA),
+                                           (vectype immpred:$val)))]>;
+
+multiclass BitwiseOrByteImm
+{
+  def v16i8: ORBIVecInst<v16i8, v16i8U8Imm>;
+
+  def r8: ORBIInst<(outs R8C:$rT), (ins R8C:$rA, u10imm_i8:$val),
+                   [(set R8C:$rT, (or R8C:$rA, immU8:$val))]>;
+}
+
+defm ORBI : BitwiseOrByteImm;
 
 // OR halfword immediate
-def ORHIv8i16:
-    RI10Form<0b10100000, (outs VECREG:$rT), (ins VECREG:$rA, u10imm:$val),
-      "orhi\t$rT, $rA, $val", IntegerOp,
-      [(set (v8i16 VECREG:$rT), (or (v8i16 VECREG:$rA),
-                                    v8i16Uns10Imm:$val))]>;
+class ORHIInst<dag OOL, dag IOL, list<dag> pattern>:
+    RI10Form<0b10100000, OOL, IOL, "orhi\t$rT, $rA, $val",
+             IntegerOp, pattern>;
 
-def ORHIr16:
-    RI10Form<0b10100000, (outs R16C:$rT), (ins R16C:$rA, u10imm:$val),
-      "orhi\t$rT, $rA, $val", IntegerOp,
-      [(set R16C:$rT, (or R16C:$rA, i16ImmUns10:$val))]>;
+class ORHIVecInst<ValueType vectype, PatLeaf immpred>:
+    ORHIInst<(outs VECREG:$rT), (ins VECREG:$rA, u10imm:$val),
+              [(set (vectype VECREG:$rT), (or (vectype VECREG:$rA),
+                                              immpred:$val))]>;
 
-// Hacked form of ORHI used to promote 8-bit registers to 16-bit
-def ORHI1To2:
-    RI10Form<0b10100000, (outs R16C:$rT), (ins R8C:$rA, s10imm:$val),
-      "orhi\t$rT, $rA, $val", IntegerOp,
-      [(set R16C:$rT, (or (anyext R8C:$rA), i16ImmSExt10:$val))]>;
+multiclass BitwiseOrHalfwordImm
+{
+  def v8i16: ORHIVecInst<v8i16, v8i16Uns10Imm>;
+
+  def r16: ORHIInst<(outs R16C:$rT), (ins R16C:$rA, u10imm:$val),
+                    [(set R16C:$rT, (or R16C:$rA, i16ImmUns10:$val))]>;
+
+  // Specialized ORHI form used to promote 8-bit registers to 16-bit
+  def i8i16: ORHIInst<(outs R16C:$rT), (ins R8C:$rA, s10imm:$val),
+                      [(set R16C:$rT, (or (anyext R8C:$rA),
+                                          i16ImmSExt10:$val))]>;
+}
+
+defm ORHI : BitwiseOrHalfwordImm;
+
+class ORIInst<dag OOL, dag IOL, list<dag> pattern>:
+    RI10Form<0b00100000, OOL, IOL, "ori\t$rT, $rA, $val",
+             IntegerOp, pattern>;
+
+class ORIVecInst<ValueType vectype, PatLeaf immpred>:
+    ORIInst<(outs VECREG:$rT), (ins VECREG:$rA, u10imm:$val),
+            [(set (vectype VECREG:$rT), (or (vectype VECREG:$rA),
+                                            immpred:$val))]>;
 
 // Bitwise "or" with immediate
-def ORIv4i32:
-    RI10Form<0b00100000, (outs VECREG:$rT), (ins VECREG:$rA, u10imm:$val),
-      "ori\t$rT, $rA, $val", IntegerOp,
-      [(set (v4i32 VECREG:$rT), (or (v4i32 VECREG:$rA),
-                                     v4i32Uns10Imm:$val))]>;
+multiclass BitwiseOrImm
+{
+  def v4i32: ORIVecInst<v4i32, v4i32Uns10Imm>;
 
-def ORIr32:
-    RI10Form<0b00100000, (outs R32C:$rT), (ins R32C:$rA, u10imm_i32:$val),
-      "ori\t$rT, $rA, $val", IntegerOp,
-      [(set R32C:$rT, (or R32C:$rA, i32ImmUns10:$val))]>;
+  def r32: ORIInst<(outs R32C:$rT), (ins R32C:$rA, u10imm_i32:$val),
+                   [(set R32C:$rT, (or R32C:$rA, i32ImmUns10:$val))]>;
 
-def ORIr64:
-    RI10Form_1<0b00100000, (outs R64C:$rT), (ins R64C:$rA, s10imm_i32:$val),
-      "ori\t$rT, $rA, $val", IntegerOp,
-      [/* no pattern */]>;
+  // i16i32: hacked version of the ori instruction to extend 16-bit quantities
+  // to 32-bit quantities. used exclusively to match "anyext" conversions (vide
+  // infra "anyext 16->32" pattern.)
+  def i16i32: ORIInst<(outs R32C:$rT), (ins R16C:$rA, s10imm_i32:$val),
+                      [(set R32C:$rT, (or (anyext R16C:$rA),
+                                          i32ImmSExt10:$val))]>;
 
-// ORI2To4: hacked version of the ori instruction to extend 16-bit quantities
-// to 32-bit quantities. used exclusively to match "anyext" conversions (vide
-// infra "anyext 16->32" pattern.)
-def ORI2To4:
-    RI10Form<0b00100000, (outs R32C:$rT), (ins R16C:$rA, s10imm_i32:$val),
-      "ori\t$rT, $rA, $val", IntegerOp,
-      [(set R32C:$rT, (or (anyext R16C:$rA), i32ImmSExt10:$val))]>;
+  // i8i32: Hacked version of the ORI instruction to extend 16-bit quantities
+  // to 32-bit quantities. Used exclusively to match "anyext" conversions (vide
+  // infra "anyext 16->32" pattern.)
+  def i8i32: ORIInst<(outs R32C:$rT), (ins R8C:$rA, s10imm_i32:$val),
+                     [(set R32C:$rT, (or (anyext R8C:$rA),
+                                         i32ImmSExt10:$val))]>;
+}
 
-// ORI1To4: Hacked version of the ORI instruction to extend 16-bit quantities
-// to 32-bit quantities. Used exclusively to match "anyext" conversions (vide
-// infra "anyext 16->32" pattern.)
-def ORI1To4:
-    RI10Form<0b00100000, (outs R32C:$rT), (ins R8C:$rA, s10imm_i32:$val),
-      "ori\t$rT, $rA, $val", IntegerOp,
-      [(set R32C:$rT, (or (anyext R8C:$rA), i32ImmSExt10:$val))]>;
+defm ORI : BitwiseOrImm;
 
 // ORX: "or" across the vector: or's $rA's word slots leaving the result in
 // $rT[0], slots 1-3 are zeroed.
@@ -1423,18 +1379,25 @@ def XORr8:
       "xor\t$rT, $rA, $rB", IntegerOp,
       [(set R8C:$rT, (xor R8C:$rA, R8C:$rB))]>;
 
-def XORBIv16i8:
-    RI10Form<0b01100000, (outs VECREG:$rT), (ins VECREG:$rA, u10imm:$val),
-       "xorbi\t$rT, $rA, $val", IntegerOp,
-       [(set (v16i8 VECREG:$rT), (xor (v16i8 VECREG:$rA), v16i8U8Imm:$val))]>;
+class XORBIInst<dag OOL, dag IOL, list<dag> pattern>:
+    RI10Form<0b01100000, OOL, IOL, "xorbi\t$rT, $rA, $val",
+             IntegerOp, pattern>;
 
-def XORBIr8:
-    RI10Form<0b01100000, (outs R8C:$rT), (ins R8C:$rA, u10imm_i8:$val),
-       "xorbi\t$rT, $rA, $val", IntegerOp,
-       [(set R8C:$rT, (xor R8C:$rA, immU8:$val))]>;
+multiclass XorByteImm
+{
+  def v16i8:
+    XORBIInst<(outs VECREG:$rT), (ins VECREG:$rA, u10imm:$val),
+              [(set (v16i8 VECREG:$rT), (xor (v16i8 VECREG:$rA), v16i8U8Imm:$val))]>;
+
+  def r8:
+    XORBIInst<(outs R8C:$rT), (ins R8C:$rA, u10imm_i8:$val),
+              [(set R8C:$rT, (xor R8C:$rA, immU8:$val))]>;
+}
+
+defm XORBI : XorByteImm;
 
 def XORHIv8i16:
-    RI10Form<0b10100000, (outs VECREG:$rT), (ins VECREG:$rA, s10imm:$val),
+    RI10Form<0b10100000, (outs VECREG:$rT), (ins VECREG:$rA, u10imm:$val),
       "xorhi\t$rT, $rA, $val", IntegerOp,
       [(set (v8i16 VECREG:$rT), (xor (v8i16 VECREG:$rA),
                                       v8i16SExt10Imm:$val))]>;
@@ -1445,7 +1408,7 @@ def XORHIr16:
       [(set R16C:$rT, (xor R16C:$rA, i16ImmSExt10:$val))]>;
 
 def XORIv4i32:
-    RI10Form<0b00100000, (outs VECREG:$rT), (ins VECREG:$rA, s10imm:$val),
+    RI10Form<0b00100000, (outs VECREG:$rT), (ins VECREG:$rA, u10imm:$val),
       "xori\t$rT, $rA, $val", IntegerOp,
       [(set (v4i32 VECREG:$rT), (xor (v4i32 VECREG:$rA),
                                      v4i32SExt10Imm:$val))]>;
@@ -1630,7 +1593,7 @@ def SELBv16i8:
     RRRForm<0b1000, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB, VECREG:$rC),
       "selb\t$rT, $rA, $rB, $rC", IntegerOp,
       [(set (v16i8 VECREG:$rT),
-            (SPUselb_v16i8 (v16i8 VECREG:$rA), (v16i8 VECREG:$rB),
+            (SPUselb (v16i8 VECREG:$rA), (v16i8 VECREG:$rB),
                            (v16i8 VECREG:$rC)))]>;
 
 def : Pat<(or (and (v16i8 VECREG:$rA), (v16i8 VECREG:$rC)),
@@ -1701,7 +1664,7 @@ def SELBv8i16:
     RRRForm<0b1000, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB, VECREG:$rC),
       "selb\t$rT, $rA, $rB, $rC", IntegerOp,
       [(set (v8i16 VECREG:$rT),
-            (SPUselb_v8i16 (v8i16 VECREG:$rA), (v8i16 VECREG:$rB),
+            (SPUselb (v8i16 VECREG:$rA), (v8i16 VECREG:$rB),
                                                (v8i16 VECREG:$rC)))]>;
 
 def : Pat<(or (and (v8i16 VECREG:$rA), (v8i16 VECREG:$rC)),
@@ -1772,7 +1735,7 @@ def SELBv4i32:
     RRRForm<0b1000, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB, VECREG:$rC),
       "selb\t$rT, $rA, $rB, $rC", IntegerOp,
       [(set (v4i32 VECREG:$rT),
-            (SPUselb_v4i32 (v4i32 VECREG:$rA), (v4i32 VECREG:$rB),
+            (SPUselb (v4i32 VECREG:$rA), (v4i32 VECREG:$rB),
                                                (v4i32 VECREG:$rC)))]>;
 
 def : Pat<(or (and (v4i32 VECREG:$rA), (v4i32 VECREG:$rC)),
@@ -1954,43 +1917,60 @@ def : Pat<(or (and (not R8C:$rC), R8C:$rA),
 //===----------------------------------------------------------------------===//
 // Vector shuffle...
 //===----------------------------------------------------------------------===//
-
-def SHUFB:
-    RRRForm<0b1000, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB, VECREG:$rC),
-      "shufb\t$rT, $rA, $rB, $rC", IntegerOp,
-      [/* no pattern */]>;
-
 // SPUshuffle is generated in LowerVECTOR_SHUFFLE and gets replaced with SHUFB.
 // See the SPUshuffle SDNode operand above, which sets up the DAG pattern
 // matcher to emit something when the LowerVECTOR_SHUFFLE generates a node with
 // the SPUISD::SHUFB opcode.
-def : Pat<(SPUshuffle (v16i8 VECREG:$rA), (v16i8 VECREG:$rB), VECREG:$rC),
-          (SHUFB VECREG:$rA, VECREG:$rB, VECREG:$rC)>;
+//===----------------------------------------------------------------------===//
 
-def : Pat<(SPUshuffle (v8i16 VECREG:$rA), (v8i16 VECREG:$rB), VECREG:$rC),
-          (SHUFB VECREG:$rA, VECREG:$rB, VECREG:$rC)>;
+class SHUFBInst<dag OOL, dag IOL, list<dag> pattern>:
+    RRRForm<0b1000, OOL, IOL, "shufb\t$rT, $rA, $rB, $rC",
+            IntegerOp, pattern>;
 
-def : Pat<(SPUshuffle (v4i32 VECREG:$rA), (v4i32 VECREG:$rB), VECREG:$rC),
-          (SHUFB VECREG:$rA, VECREG:$rB, VECREG:$rC)>;
+class SHUFBVecInst<ValueType vectype>:
+    SHUFBInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB, VECREG:$rC),
+              [(set (vectype VECREG:$rT), (SPUshuffle (vectype VECREG:$rA),
+                                                      (vectype VECREG:$rB),
+                                                      (vectype VECREG:$rC)))]>;
 
-def : Pat<(SPUshuffle (v4f32 VECREG:$rA), (v4f32 VECREG:$rB), VECREG:$rC),
-          (SHUFB VECREG:$rA, VECREG:$rB, VECREG:$rC)>;
+// It's this pattern that's probably the most useful, since SPUISelLowering
+// methods create a v16i8 vector for $rC:
+class SHUFBVecPat1<ValueType vectype, SPUInstr inst>:
+    Pat<(SPUshuffle (vectype VECREG:$rA), (vectype VECREG:$rB),
+                    (v16i8 VECREG:$rC)),
+         (inst VECREG:$rA, VECREG:$rB, VECREG:$rC)>;
 
-def : Pat<(SPUshuffle (v2i64 VECREG:$rA), (v2i64 VECREG:$rB), VECREG:$rC),
-          (SHUFB VECREG:$rA, VECREG:$rB, VECREG:$rC)>;
+multiclass ShuffleBytes
+{
+  def v16i8 : SHUFBVecInst<v16i8>;
+  def v8i16 : SHUFBVecInst<v8i16>;
+  def v4i32 : SHUFBVecInst<v4i32>;
+  def v2i64 : SHUFBVecInst<v2i64>;
 
-def : Pat<(SPUshuffle (v2f64 VECREG:$rA), (v2f64 VECREG:$rB), VECREG:$rC),
-          (SHUFB VECREG:$rA, VECREG:$rB, VECREG:$rC)>;
+  def v4f32 : SHUFBVecInst<v4f32>;
+  def v2f64 : SHUFBVecInst<v2f64>;
+}
+
+defm SHUFB : ShuffleBytes;
+
+def : SHUFBVecPat1<v8i16, SHUFBv16i8>;
+def : SHUFBVecPat1<v4i32, SHUFBv16i8>;
+def : SHUFBVecPat1<v2i64, SHUFBv16i8>;
+def : SHUFBVecPat1<v4f32, SHUFBv16i8>;
+def : SHUFBVecPat1<v2f64, SHUFBv16i8>;
 
 //===----------------------------------------------------------------------===//
 // Shift and rotate group:
 //===----------------------------------------------------------------------===//
 
-def SHLHv8i16:
-    RRForm<0b11111010000, (outs VECREG:$rT), (ins VECREG:$rA, R16C:$rB),
-      "shlh\t$rT, $rA, $rB", RotateShift,
-      [(set (v8i16 VECREG:$rT),
-            (SPUvec_shl_v8i16 (v8i16 VECREG:$rA), R16C:$rB))]>;
+class SHLHInst<dag OOL, dag IOL, list<dag> pattern>:
+    RRForm<0b11111010000, OOL, IOL, "shlh\t$rT, $rA, $rB",
+           RotateShift, pattern>;
+
+class SHLHVecInst<ValueType vectype>:
+    SHLHInst<(outs VECREG:$rT), (ins VECREG:$rA, R16C:$rB),
+             [(set (vectype VECREG:$rT),
+                   (SPUvec_shl (vectype VECREG:$rA), R16C:$rB))]>;
 
 // $rB gets promoted to 32-bit register type when confronted with
 // this llvm assembly code:
@@ -1999,178 +1979,271 @@ def SHLHv8i16:
 //      %A = shl i16 %arg1, %arg2
 //      ret i16 %A
 // }
-//
-// However, we will generate this code when lowering 8-bit shifts and rotates.
 
-def SHLHr16:
-    RRForm<0b11111010000, (outs R16C:$rT), (ins R16C:$rA, R16C:$rB),
-      "shlh\t$rT, $rA, $rB", RotateShift,
-      [(set R16C:$rT, (shl R16C:$rA, R16C:$rB))]>;
+multiclass ShiftLeftHalfword
+{
+  def v8i16: SHLHVecInst<v8i16>;
+  def r16:   SHLHInst<(outs R16C:$rT), (ins R16C:$rA, R16C:$rB),
+                      [(set R16C:$rT, (shl R16C:$rA, R16C:$rB))]>;
+  def r16_r32: SHLHInst<(outs R16C:$rT), (ins R16C:$rA, R32C:$rB),
+                        [(set R16C:$rT, (shl R16C:$rA, R32C:$rB))]>;
+}
 
-def SHLHr16_r32:
-    RRForm<0b11111010000, (outs R16C:$rT), (ins R16C:$rA, R32C:$rB),
-      "shlh\t$rT, $rA, $rB", RotateShift,
-      [(set R16C:$rT, (shl R16C:$rA, R32C:$rB))]>;
+defm SHLH : ShiftLeftHalfword;
 
-def SHLHIv8i16:
-    RI7Form<0b11111010000, (outs VECREG:$rT), (ins VECREG:$rA, u7imm_i8:$val),
-      "shlhi\t$rT, $rA, $val", RotateShift,
-      [(set (v8i16 VECREG:$rT),
-            (SPUvec_shl_v8i16 (v8i16 VECREG:$rA), (i8 uimm7:$val)))]>;
+//===----------------------------------------------------------------------===//
 
-def : Pat<(SPUvec_shl_v8i16 (v8i16 VECREG:$rA), (i16 uimm7:$val)),
-          (SHLHIv8i16 VECREG:$rA, imm:$val)>;
+class SHLHIInst<dag OOL, dag IOL, list<dag> pattern>:
+    RI7Form<0b11111010000, OOL, IOL, "shlhi\t$rT, $rA, $val",
+            RotateShift, pattern>;
 
-def : Pat<(SPUvec_shl_v8i16 (v8i16 VECREG:$rA), (i32 uimm7:$val)),
-          (SHLHIv8i16 VECREG:$rA, imm:$val)>;
+class SHLHIVecInst<ValueType vectype>:
+    SHLHIInst<(outs VECREG:$rT), (ins VECREG:$rA, u7imm:$val),
+              [(set (vectype VECREG:$rT),
+                    (SPUvec_shl (vectype VECREG:$rA), (i16 uimm7:$val)))]>;
 
-def SHLHIr16:
-    RI7Form<0b11111010000, (outs R16C:$rT), (ins R16C:$rA, u7imm_i32:$val),
-      "shlhi\t$rT, $rA, $val", RotateShift,
-      [(set R16C:$rT, (shl R16C:$rA, (i32 uimm7:$val)))]>;
- 
-def : Pat<(shl R16C:$rA, (i8 uimm7:$val)),
+multiclass ShiftLeftHalfwordImm
+{
+  def v8i16: SHLHIVecInst<v8i16>;
+  def r16: SHLHIInst<(outs R16C:$rT), (ins R16C:$rA, u7imm:$val),
+                     [(set R16C:$rT, (shl R16C:$rA, (i16 uimm7:$val)))]>;
+}
+
+defm SHLHI : ShiftLeftHalfwordImm;
+
+def : Pat<(SPUvec_shl (v8i16 VECREG:$rA), (i32 uimm7:$val)),
+          (SHLHIv8i16 VECREG:$rA, uimm7:$val)>;
+
+def : Pat<(shl R16C:$rA, (i32 uimm7:$val)),
           (SHLHIr16 R16C:$rA, uimm7:$val)>;
 
-def : Pat<(shl R16C:$rA, (i16 uimm7:$val)),
-          (SHLHIr16 R16C:$rA, uimm7:$val)>;
+//===----------------------------------------------------------------------===//
 
-def SHLv4i32:
-    RRForm<0b11111010000, (outs VECREG:$rT), (ins VECREG:$rA, R16C:$rB),
-      "shl\t$rT, $rA, $rB", RotateShift,
-      [(set (v4i32 VECREG:$rT),
-            (SPUvec_shl_v4i32 (v4i32 VECREG:$rA), R16C:$rB))]>;
+class SHLInst<dag OOL, dag IOL, list<dag> pattern>:
+    RRForm<0b11111010000, OOL, IOL, "shl\t$rT, $rA, $rB",
+           RotateShift, pattern>;
 
-def SHLr32:
-    RRForm<0b11111010000, (outs R32C:$rT), (ins R32C:$rA, R32C:$rB),
-      "shl\t$rT, $rA, $rB", RotateShift,
-      [(set R32C:$rT, (shl R32C:$rA, R32C:$rB))]>;
+multiclass ShiftLeftWord
+{
+  def v4i32:
+      SHLInst<(outs VECREG:$rT), (ins VECREG:$rA, R16C:$rB),
+              [(set (v4i32 VECREG:$rT),
+                    (SPUvec_shl (v4i32 VECREG:$rA), R16C:$rB))]>;
+  def r32:
+      SHLInst<(outs R32C:$rT), (ins R32C:$rA, R32C:$rB),
+              [(set R32C:$rT, (shl R32C:$rA, R32C:$rB))]>;
+}
 
-def SHLIv4i32:
-    RI7Form<0b11111010000, (outs VECREG:$rT), (ins VECREG:$rA, u7imm_i8:$val),
-      "shli\t$rT, $rA, $val", RotateShift,
-      [(set (v4i32 VECREG:$rT),
-            (SPUvec_shl_v4i32 (v4i32 VECREG:$rA), (i8 uimm7:$val)))]>;
+defm SHL: ShiftLeftWord;
 
-def: Pat<(SPUvec_shl_v4i32 (v4i32 VECREG:$rA), (i16 uimm7:$val)),
-         (SHLIv4i32 VECREG:$rA, uimm7:$val)>;
+//===----------------------------------------------------------------------===//
 
-def: Pat<(SPUvec_shl_v4i32 (v4i32 VECREG:$rA), (i32 uimm7:$val)),
-         (SHLIv4i32 VECREG:$rA, uimm7:$val)>;
+class SHLIInst<dag OOL, dag IOL, list<dag> pattern>:
+    RI7Form<0b11111010000, OOL, IOL, "shli\t$rT, $rA, $val",
+            RotateShift, pattern>;
 
-def SHLIr32:
-    RI7Form<0b11111010000, (outs R32C:$rT), (ins R32C:$rA, u7imm_i32:$val),
-      "shli\t$rT, $rA, $val", RotateShift,
-      [(set R32C:$rT, (shl R32C:$rA, (i32 uimm7:$val)))]>;
+multiclass ShiftLeftWordImm
+{
+  def v4i32:
+    SHLIInst<(outs VECREG:$rT), (ins VECREG:$rA, u7imm_i32:$val),
+             [(set (v4i32 VECREG:$rT),
+                   (SPUvec_shl (v4i32 VECREG:$rA), (i32 uimm7:$val)))]>;
 
-def : Pat<(shl R32C:$rA, (i16 uimm7:$val)),
-          (SHLIr32 R32C:$rA, uimm7:$val)>;
+  def r32:
+    SHLIInst<(outs R32C:$rT), (ins R32C:$rA, u7imm_i32:$val),
+             [(set R32C:$rT, (shl R32C:$rA, (i32 uimm7:$val)))]>;
+}
 
-def : Pat<(shl R32C:$rA, (i8 uimm7:$val)),
-          (SHLIr32 R32C:$rA, uimm7:$val)>;
+defm SHLI : ShiftLeftWordImm;
 
+//===----------------------------------------------------------------------===//
 // SHLQBI vec form: Note that this will shift the entire vector (the 128-bit
 // register) to the left. Vector form is here to ensure type correctness.
-def SHLQBIvec:
-    RRForm<0b11011011100, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-      "shlqbi\t$rT, $rA, $rB", RotateShift,
-      [/* intrinsic */]>;
+//
+// The shift count is in the lowest 3 bits (29-31) of $rB, so only a bit shift
+// of 7 bits is actually possible.
+//
+// Note also that SHLQBI/SHLQBII are used in conjunction with SHLQBY/SHLQBYI
+// to shift i64 and i128. SHLQBI is the residual left over after shifting by
+// bytes with SHLQBY.
 
-// See note above on SHLQBI.
-def SHLQBIIvec:
-    RI7Form<0b11011111100, (outs VECREG:$rT), (ins VECREG:$rA, u7imm:$val),
-      "shlqbii\t$rT, $rA, $val", RotateShift,
-      [/* intrinsic */]>;
+class SHLQBIInst<dag OOL, dag IOL, list<dag> pattern>:
+    RRForm<0b11011011100, OOL, IOL, "shlqbi\t$rT, $rA, $rB",
+           RotateShift, pattern>;
+
+class SHLQBIVecInst<ValueType vectype>:
+    SHLQBIInst<(outs VECREG:$rT), (ins VECREG:$rA, R32C:$rB),
+               [(set (vectype VECREG:$rT),
+                     (SPUshlquad_l_bits (vectype VECREG:$rA), R32C:$rB))]>;
+
+multiclass ShiftLeftQuadByBits
+{
+  def v16i8: SHLQBIVecInst<v16i8>;
+  def v8i16: SHLQBIVecInst<v8i16>;
+  def v4i32: SHLQBIVecInst<v4i32>;
+  def v2i64: SHLQBIVecInst<v2i64>;
+}
+
+defm SHLQBI : ShiftLeftQuadByBits;
+
+// See note above on SHLQBI. In this case, the predicate actually does then
+// enforcement, whereas with SHLQBI, we have to "take it on faith."
+class SHLQBIIInst<dag OOL, dag IOL, list<dag> pattern>:
+    RI7Form<0b11011111100, OOL, IOL, "shlqbii\t$rT, $rA, $val",
+            RotateShift, pattern>;
+
+class SHLQBIIVecInst<ValueType vectype>:
+    SHLQBIIInst<(outs VECREG:$rT), (ins VECREG:$rA, u7imm_i32:$val),
+                [(set (vectype VECREG:$rT),
+                      (SPUshlquad_l_bits (vectype VECREG:$rA), (i32 bitshift:$val)))]>;
+
+multiclass ShiftLeftQuadByBitsImm
+{
+  def v16i8 : SHLQBIIVecInst<v16i8>;
+  def v8i16 : SHLQBIIVecInst<v8i16>;
+  def v4i32 : SHLQBIIVecInst<v4i32>;
+  def v2i64 : SHLQBIIVecInst<v2i64>;
+}
+
+defm SHLQBII : ShiftLeftQuadByBitsImm;
 
 // SHLQBY, SHLQBYI vector forms: Shift the entire vector to the left by bytes,
-// not by bits.
-def SHLQBYvec:
-    RI7Form<0b11111011100, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-      "shlqbyi\t$rT, $rA, $rB", RotateShift,
-      [/* intrinsic */]>;
+// not by bits. See notes above on SHLQBI.
 
-def SHLQBYIvec:
-    RI7Form<0b11111111100, (outs VECREG:$rT), (ins VECREG:$rA, u7imm:$val),
-      "shlqbyi\t$rT, $rA, $val", RotateShift,
-      [/* intrinsic */]>;
+class SHLQBYInst<dag OOL, dag IOL, list<dag> pattern>:
+    RI7Form<0b11111011100, OOL, IOL, "shlqbyi\t$rT, $rA, $rB",
+            RotateShift, pattern>;
 
-// ROTH v8i16 form:
-def ROTHv8i16:
-    RRForm<0b00111010000, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-      "roth\t$rT, $rA, $rB", RotateShift,
-      [(set (v8i16 VECREG:$rT),
-            (SPUvec_rotl_v8i16 VECREG:$rA, VECREG:$rB))]>;
+class SHLQBYVecInst<ValueType vectype>:
+    SHLQBYInst<(outs VECREG:$rT), (ins VECREG:$rA, R32C:$rB),
+               [(set (vectype VECREG:$rT),
+                     (SPUshlquad_l_bytes (vectype VECREG:$rA), R32C:$rB))]>;
 
-def ROTHr16:
-    RRForm<0b00111010000, (outs R16C:$rT), (ins R16C:$rA, R16C:$rB),
-      "roth\t$rT, $rA, $rB", RotateShift,
-      [(set R16C:$rT, (rotl R16C:$rA, R16C:$rB))]>;
+multiclass ShiftLeftQuadBytes
+{
+  def v16i8: SHLQBYVecInst<v16i8>;
+  def v8i16: SHLQBYVecInst<v8i16>;
+  def v4i32: SHLQBYVecInst<v4i32>;
+  def v2i64: SHLQBYVecInst<v2i64>;
+  def r128: SHLQBYInst<(outs GPRC:$rT), (ins GPRC:$rA, R32C:$rB),
+                       [(set GPRC:$rT, (SPUshlquad_l_bytes GPRC:$rA, R32C:$rB))]>;
+}
 
-def ROTHr16_r32:
-    RRForm<0b00111010000, (outs R16C:$rT), (ins R16C:$rA, R32C:$rB),
-      "roth\t$rT, $rA, $rB", RotateShift,
-      [(set R16C:$rT, (rotl R16C:$rA, R32C:$rB))]>;
+defm SHLQBY: ShiftLeftQuadBytes;
 
-// The rotate amount is in the same bits whether we've got an 8-bit, 16-bit or
-// 32-bit register
-def ROTHr16_r8:
-    RRForm<0b00111010000, (outs R16C:$rT), (ins R16C:$rA, R8C:$rB),
-      "roth\t$rT, $rA, $rB", RotateShift,
-      [(set R16C:$rT, (rotl R16C:$rA, (i32 (zext R8C:$rB))))]>;
+class SHLQBYIInst<dag OOL, dag IOL, list<dag> pattern>:
+    RI7Form<0b11111111100, OOL, IOL, "shlqbyi\t$rT, $rA, $val",
+            RotateShift, pattern>;
 
-def : Pat<(rotl R16C:$rA, (i32 (sext R8C:$rB))),
-          (ROTHr16_r8 R16C:$rA, R8C:$rB)>;
+class SHLQBYIVecInst<ValueType vectype>:
+    SHLQBYIInst<(outs VECREG:$rT), (ins VECREG:$rA, u7imm_i32:$val),
+                [(set (vectype VECREG:$rT),
+                      (SPUshlquad_l_bytes (vectype VECREG:$rA), (i32 uimm7:$val)))]>;
 
-def : Pat<(rotl R16C:$rA, (i32 (zext R8C:$rB))),
-          (ROTHr16_r8 R16C:$rA, R8C:$rB)>;
+multiclass ShiftLeftQuadBytesImm
+{
+  def v16i8: SHLQBYIVecInst<v16i8>;
+  def v8i16: SHLQBYIVecInst<v8i16>;
+  def v4i32: SHLQBYIVecInst<v4i32>;
+  def v2i64: SHLQBYIVecInst<v2i64>;
+  def r128:  SHLQBYIInst<(outs GPRC:$rT), (ins GPRC:$rA, u7imm_i32:$val),
+                         [(set GPRC:$rT,
+                               (SPUshlquad_l_bytes GPRC:$rA, (i32 uimm7:$val)))]>;
+}
 
-def : Pat<(rotl R16C:$rA, (i32 (anyext R8C:$rB))),
-          (ROTHr16_r8 R16C:$rA, R8C:$rB)>;
+defm SHLQBYI : ShiftLeftQuadBytesImm;
 
-def ROTHIv8i16:
-    RI7Form<0b00111110000, (outs VECREG:$rT), (ins VECREG:$rA, u7imm_i8:$val),
-      "rothi\t$rT, $rA, $val", RotateShift,
-      [(set (v8i16 VECREG:$rT),
-            (SPUvec_rotl_v8i16 VECREG:$rA, (i8 uimm7:$val)))]>;
+// Special form for truncating i64 to i32:
+def SHLQBYItrunc64:  SHLQBYIInst<(outs R32C:$rT), (ins R64C:$rA, u7imm_i32:$val),
+                                 [/* no pattern, see below */]>;
 
-def : Pat<(SPUvec_rotl_v8i16 VECREG:$rA, (i16 uimm7:$val)),
-          (ROTHIv8i16 VECREG:$rA, imm:$val)>;
+def : Pat<(trunc R64C:$rSrc),
+          (SHLQBYItrunc64 R64C:$rSrc, 4)>;
 
-def : Pat<(SPUvec_rotl_v8i16 VECREG:$rA, (i32 uimm7:$val)),
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+// Rotate halfword:
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+class ROTHInst<dag OOL, dag IOL, list<dag> pattern>:
+    RRForm<0b00111010000, OOL, IOL, "roth\t$rT, $rA, $rB",
+           RotateShift, pattern>;
+
+class ROTHVecInst<ValueType vectype>:
+    ROTHInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
+             [(set (vectype VECREG:$rT),
+                   (SPUvec_rotl VECREG:$rA, VECREG:$rB))]>;
+
+class ROTHRegInst<RegisterClass rclass>:
+    ROTHInst<(outs rclass:$rT), (ins rclass:$rA, rclass:$rB),
+             [(set rclass:$rT, (rotl rclass:$rA, rclass:$rB))]>;
+
+multiclass RotateLeftHalfword
+{
+  def v8i16: ROTHVecInst<v8i16>;
+  def r16: ROTHRegInst<R16C>;
+}
+
+defm ROTH: RotateLeftHalfword;
+
+def ROTHr16_r32: ROTHInst<(outs R16C:$rT), (ins R16C:$rA, R32C:$rB),
+                          [(set R16C:$rT, (rotl R16C:$rA, R32C:$rB))]>;
+
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+// Rotate halfword, immediate:
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+class ROTHIInst<dag OOL, dag IOL, list<dag> pattern>:
+    RI7Form<0b00111110000, OOL, IOL, "rothi\t$rT, $rA, $val",
+            RotateShift, pattern>;
+
+class ROTHIVecInst<ValueType vectype>:
+    ROTHIInst<(outs VECREG:$rT), (ins VECREG:$rA, u7imm:$val),
+              [(set (vectype VECREG:$rT),
+                    (SPUvec_rotl VECREG:$rA, (i16 uimm7:$val)))]>;
+
+multiclass RotateLeftHalfwordImm
+{
+  def v8i16: ROTHIVecInst<v8i16>;
+  def r16: ROTHIInst<(outs R16C:$rT), (ins R16C:$rA, u7imm:$val),
+                     [(set R16C:$rT, (rotl R16C:$rA, (i16 uimm7:$val)))]>;
+  def r16_r32: ROTHIInst<(outs R16C:$rT), (ins R16C:$rA, u7imm_i32:$val),
+                         [(set R16C:$rT, (rotl R16C:$rA, (i32 uimm7:$val)))]>;
+}
+
+defm ROTHI: RotateLeftHalfwordImm;
+
+def : Pat<(SPUvec_rotl VECREG:$rA, (i32 uimm7:$val)),
           (ROTHIv8i16 VECREG:$rA, imm:$val)>;
     
-def ROTHIr16:
-    RI7Form<0b00111110000, (outs R16C:$rT), (ins R16C:$rA, u7imm:$val),
-      "rothi\t$rT, $rA, $val", RotateShift,
-      [(set R16C:$rT, (rotl R16C:$rA, (i16 uimm7:$val)))]>;
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+// Rotate word:
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
 
-def ROTHIr16_i32:
-    RI7Form<0b00111110000, (outs R16C:$rT), (ins R16C:$rA, u7imm_i32:$val),
-      "rothi\t$rT, $rA, $val", RotateShift,
-      [(set R16C:$rT, (rotl R16C:$rA, (i32 uimm7:$val)))]>;
+class ROTInst<dag OOL, dag IOL, list<dag> pattern>:
+    RRForm<0b00011010000, OOL, IOL, "rot\t$rT, $rA, $rB",
+           RotateShift, pattern>;
 
-def ROTHIr16_i8:
-    RI7Form<0b00111110000, (outs R16C:$rT), (ins R16C:$rA, u7imm_i8:$val),
-      "rothi\t$rT, $rA, $val", RotateShift,
-      [(set R16C:$rT, (rotl R16C:$rA, (i8 uimm7:$val)))]>;
+class ROTVecInst<ValueType vectype>:
+    ROTInst<(outs VECREG:$rT), (ins VECREG:$rA, R32C:$rB),
+            [(set (vectype VECREG:$rT),
+                  (SPUvec_rotl (vectype VECREG:$rA), R32C:$rB))]>;
 
-def ROTv4i32:
-    RRForm<0b00011010000, (outs VECREG:$rT), (ins VECREG:$rA, R32C:$rB),
-      "rot\t$rT, $rA, $rB", RotateShift,
-      [(set (v4i32 VECREG:$rT),
-            (SPUvec_rotl_v4i32 (v4i32 VECREG:$rA), R32C:$rB))]>;
+class ROTRegInst<RegisterClass rclass>:
+    ROTInst<(outs rclass:$rT), (ins rclass:$rA, R32C:$rB),
+            [(set rclass:$rT,
+                  (rotl rclass:$rA, R32C:$rB))]>;
 
-def ROTr32:
-    RRForm<0b00011010000, (outs R32C:$rT), (ins R32C:$rA, R32C:$rB),
-      "rot\t$rT, $rA, $rB", RotateShift,
-      [(set R32C:$rT, (rotl R32C:$rA, R32C:$rB))]>;
+multiclass RotateLeftWord
+{
+  def v4i32: ROTVecInst<v4i32>;
+  def r32:   ROTRegInst<R32C>;
+}
+
+defm ROT: RotateLeftWord;
 
 // The rotate amount is in the same bits whether we've got an 8-bit, 16-bit or
 // 32-bit register
 def ROTr32_r16_anyext:
-    RRForm<0b00011010000, (outs R32C:$rT), (ins R32C:$rA, R16C:$rB),
-      "rot\t$rT, $rA, $rB", RotateShift,
-      [(set R32C:$rT, (rotl R32C:$rA, (i32 (anyext R16C:$rB))))]>;
+    ROTInst<(outs R32C:$rT), (ins R32C:$rA, R16C:$rB),
+            [(set R32C:$rT, (rotl R32C:$rA, (i32 (anyext R16C:$rB))))]>;
 
 def : Pat<(rotl R32C:$rA, (i32 (zext R16C:$rB))),
           (ROTr32_r16_anyext R32C:$rA, R16C:$rB)>;
@@ -2179,9 +2252,8 @@ def : Pat<(rotl R32C:$rA, (i32 (sext R16C:$rB))),
           (ROTr32_r16_anyext R32C:$rA, R16C:$rB)>;
 
 def ROTr32_r8_anyext:
-    RRForm<0b00011010000, (outs R32C:$rT), (ins R32C:$rA, R8C:$rB),
-      "rot\t$rT, $rA, $rB", RotateShift,
-      [(set R32C:$rT, (rotl R32C:$rA, (i32 (anyext R8C:$rB))))]>;
+    ROTInst<(outs R32C:$rT), (ins R32C:$rA, R8C:$rB),
+            [(set R32C:$rT, (rotl R32C:$rA, (i32 (anyext R8C:$rB))))]>;
 
 def : Pat<(rotl R32C:$rA, (i32 (zext R8C:$rB))),
           (ROTr32_r8_anyext R32C:$rA, R8C:$rB)>;
@@ -2189,53 +2261,99 @@ def : Pat<(rotl R32C:$rA, (i32 (zext R8C:$rB))),
 def : Pat<(rotl R32C:$rA, (i32 (sext R8C:$rB))),
           (ROTr32_r8_anyext R32C:$rA, R8C:$rB)>;
 
-def ROTIv4i32:
-    RI7Form<0b00011110000, (outs VECREG:$rT), (ins VECREG:$rA, u7imm_i32:$val),
-      "roti\t$rT, $rA, $val", RotateShift,
-      [(set (v4i32 VECREG:$rT),
-            (SPUvec_rotl_v4i32 (v4i32 VECREG:$rA), (i32 uimm7:$val)))]>;
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+// Rotate word, immediate
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
 
-def : Pat<(SPUvec_rotl_v4i32 (v4i32 VECREG:$rA), (i16 uimm7:$val)),
-          (ROTIv4i32 VECREG:$rA, imm:$val)>;
+class ROTIInst<dag OOL, dag IOL, list<dag> pattern>:
+    RI7Form<0b00011110000, OOL, IOL, "roti\t$rT, $rA, $val",
+            RotateShift, pattern>;
 
-def : Pat<(SPUvec_rotl_v4i32 (v4i32 VECREG:$rA), (i8 uimm7:$val)),
-           (ROTIv4i32 VECREG:$rA, imm:$val)>;
+class ROTIVecInst<ValueType vectype, Operand optype, ValueType inttype, PatLeaf pred>:
+    ROTIInst<(outs VECREG:$rT), (ins VECREG:$rA, optype:$val),
+             [(set (vectype VECREG:$rT),
+                   (SPUvec_rotl (vectype VECREG:$rA), (inttype pred:$val)))]>;
 
-def ROTIr32:
-    RI7Form<0b00011110000, (outs R32C:$rT), (ins R32C:$rA, u7imm_i32:$val),
-      "roti\t$rT, $rA, $val", RotateShift,
-      [(set R32C:$rT, (rotl R32C:$rA, (i32 uimm7:$val)))]>;
+class ROTIRegInst<RegisterClass rclass, Operand optype, ValueType inttype, PatLeaf pred>:
+    ROTIInst<(outs rclass:$rT), (ins rclass:$rA, optype:$val),
+             [(set rclass:$rT, (rotl rclass:$rA, (inttype pred:$val)))]>;
 
-def ROTIr32_i16:
-    RI7Form<0b00111110000, (outs R32C:$rT), (ins R32C:$rA, u7imm:$val),
-      "roti\t$rT, $rA, $val", RotateShift,
-      [(set R32C:$rT, (rotl R32C:$rA, (i16 uimm7:$val)))]>;
+multiclass RotateLeftWordImm
+{
+  def v4i32: ROTIVecInst<v4i32, u7imm_i32, i32, uimm7>;
+  def v4i32_i16: ROTIVecInst<v4i32, u7imm, i16, uimm7>;
+  def v4i32_i8:  ROTIVecInst<v4i32, u7imm_i8, i8, uimm7>;
 
-def ROTIr32_i8:
-    RI7Form<0b00111110000, (outs R32C:$rT), (ins R32C:$rA, u7imm_i8:$val),
-      "roti\t$rT, $rA, $val", RotateShift,
-      [(set R32C:$rT, (rotl R32C:$rA, (i8 uimm7:$val)))]>;
+  def r32:       ROTIRegInst<R32C, u7imm_i32, i32, uimm7>;
+  def r32_i16:   ROTIRegInst<R32C, u7imm, i16, uimm7>;
+  def r32_i8:    ROTIRegInst<R32C, u7imm_i8, i8, uimm7>;
+}
 
-// ROTQBY* vector forms: This rotates the entire vector, but vector registers
-// are used here for type checking (instances where ROTQBI is used actually
-// use vector registers)
-def ROTQBYvec:
-    RRForm<0b00111011100, (outs VECREG:$rT), (ins VECREG:$rA, R32C:$rB),
-      "rotqby\t$rT, $rA, $rB", RotateShift,
-      [(set (v16i8 VECREG:$rT), (SPUrotbytes_left (v16i8 VECREG:$rA), R32C:$rB))]>;
+defm ROTI : RotateLeftWordImm;
+
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+// Rotate quad by byte (count)
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+
+class ROTQBYInst<dag OOL, dag IOL, list<dag> pattern>:
+    RRForm<0b00111011100, OOL, IOL, "rotqby\t$rT, $rA, $rB",
+           RotateShift, pattern>;
+
+class ROTQBYVecInst<ValueType vectype>:
+    ROTQBYInst<(outs VECREG:$rT), (ins VECREG:$rA, R32C:$rB),
+               [(set (vectype VECREG:$rT),
+                     (SPUrotbytes_left (vectype VECREG:$rA), R32C:$rB))]>;
+
+multiclass RotateQuadLeftByBytes
+{
+  def v16i8: ROTQBYVecInst<v16i8>;
+  def v8i16: ROTQBYVecInst<v8i16>;
+  def v4i32: ROTQBYVecInst<v4i32>;
+  def v2i64: ROTQBYVecInst<v2i64>;
+}
+
+defm ROTQBY: RotateQuadLeftByBytes;
 
 def : Pat<(SPUrotbytes_left_chained (v16i8 VECREG:$rA), R32C:$rB),
-          (ROTQBYvec VECREG:$rA, R32C:$rB)>;
+          (ROTQBYv16i8 VECREG:$rA, R32C:$rB)>;
+def : Pat<(SPUrotbytes_left_chained (v8i16 VECREG:$rA), R32C:$rB),
+          (ROTQBYv8i16 VECREG:$rA, R32C:$rB)>;
+def : Pat<(SPUrotbytes_left_chained (v4i32 VECREG:$rA), R32C:$rB),
+          (ROTQBYv4i32 VECREG:$rA, R32C:$rB)>;
+def : Pat<(SPUrotbytes_left_chained (v2i64 VECREG:$rA), R32C:$rB),
+          (ROTQBYv2i64 VECREG:$rA, R32C:$rB)>;
 
-// See ROTQBY note above.
-def ROTQBYIvec:
-    RI7Form<0b00111111100, (outs VECREG:$rT), (ins VECREG:$rA, u7imm:$val),
-      "rotqbyi\t$rT, $rA, $val", RotateShift,
-      [(set (v16i8 VECREG:$rT),
-            (SPUrotbytes_left (v16i8 VECREG:$rA), (i16 uimm7:$val)))]>;
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+// Rotate quad by byte (count), immediate
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+
+class ROTQBYIInst<dag OOL, dag IOL, list<dag> pattern>:
+    RI7Form<0b00111111100, OOL, IOL, "rotqbyi\t$rT, $rA, $val",
+            RotateShift, pattern>;
+
+class ROTQBYIVecInst<ValueType vectype>:
+    ROTQBYIInst<(outs VECREG:$rT), (ins VECREG:$rA, u7imm:$val),
+                [(set (vectype VECREG:$rT),
+                      (SPUrotbytes_left (vectype VECREG:$rA), (i16 uimm7:$val)))]>;
+
+multiclass RotateQuadByBytesImm
+{
+  def v16i8: ROTQBYIVecInst<v16i8>;
+  def v8i16: ROTQBYIVecInst<v8i16>;
+  def v4i32: ROTQBYIVecInst<v4i32>;
+  def v2i64: ROTQBYIVecInst<v2i64>;
+}
+
+defm ROTQBYI: RotateQuadByBytesImm;
 
 def : Pat<(SPUrotbytes_left_chained (v16i8 VECREG:$rA), (i16 uimm7:$val)),
-          (ROTQBYIvec VECREG:$rA, uimm7:$val)>;
+          (ROTQBYIv16i8 VECREG:$rA, uimm7:$val)>;
+def : Pat<(SPUrotbytes_left_chained (v8i16 VECREG:$rA), (i16 uimm7:$val)),
+          (ROTQBYIv8i16 VECREG:$rA, uimm7:$val)>;
+def : Pat<(SPUrotbytes_left_chained (v4i32 VECREG:$rA), (i16 uimm7:$val)),
+          (ROTQBYIv4i32 VECREG:$rA, uimm7:$val)>;
+def : Pat<(SPUrotbytes_left_chained (v2i64 VECREG:$rA), (i16 uimm7:$val)),
+          (ROTQBYIv2i64 VECREG:$rA, uimm7:$val)>;
 
 // See ROTQBY note above.
 def ROTQBYBIvec:
@@ -2243,49 +2361,99 @@ def ROTQBYBIvec:
       "rotqbybi\t$rT, $rA, $val", RotateShift,
       [/* intrinsic */]>;
 
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
 // See ROTQBY note above.
 //
 // Assume that the user of this instruction knows to shift the rotate count
 // into bit 29
-def ROTQBIvec:
-    RRForm<0b00011011100, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-      "rotqbi\t$rT, $rA, $rB", RotateShift,
-      [/* insert intrinsic here */]>;
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
 
-// See ROTQBY note above.
-def ROTQBIIvec:
-    RI7Form<0b00011111100, (outs VECREG:$rT), (ins VECREG:$rA, u7imm_i32:$val),
-      "rotqbii\t$rT, $rA, $val", RotateShift,
-      [/* insert intrinsic here */]>;
+class ROTQBIInst<dag OOL, dag IOL, list<dag> pattern>:
+    RRForm<0b00011011100, OOL, IOL, "rotqbi\t$rT, $rA, $rB",
+           RotateShift, pattern>;
 
+class ROTQBIVecInst<ValueType vectype>:
+    ROTQBIInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
+               [/* no pattern yet */]>;
+
+class ROTQBIRegInst<RegisterClass rclass>:
+    ROTQBIInst<(outs rclass:$rT), (ins rclass:$rA, rclass:$rB),
+               [/* no pattern yet */]>;
+
+multiclass RotateQuadByBitCount
+{
+  def v16i8: ROTQBIVecInst<v16i8>;
+  def v8i16: ROTQBIVecInst<v8i16>;
+  def v4i32: ROTQBIVecInst<v4i32>;
+  def v2i64: ROTQBIVecInst<v2i64>;
+
+  def r128:  ROTQBIRegInst<GPRC>;
+  def r64:   ROTQBIRegInst<R64C>;
+}
+
+defm ROTQBI: RotateQuadByBitCount;
+    
+class ROTQBIIInst<dag OOL, dag IOL, list<dag> pattern>:
+    RI7Form<0b00011111100, OOL, IOL, "rotqbii\t$rT, $rA, $val",
+            RotateShift, pattern>;
+
+class ROTQBIIVecInst<ValueType vectype, Operand optype, ValueType inttype,
+                     PatLeaf pred>:
+    ROTQBIIInst<(outs VECREG:$rT), (ins VECREG:$rA, optype:$val),
+                [/* no pattern yet */]>;
+
+class ROTQBIIRegInst<RegisterClass rclass, Operand optype, ValueType inttype,
+                     PatLeaf pred>:
+    ROTQBIIInst<(outs rclass:$rT), (ins rclass:$rA, optype:$val),
+                [/* no pattern yet */]>;
+
+multiclass RotateQuadByBitCountImm
+{
+  def v16i8: ROTQBIIVecInst<v16i8, u7imm_i32, i32, uimm7>;
+  def v8i16: ROTQBIIVecInst<v8i16, u7imm_i32, i32, uimm7>;
+  def v4i32: ROTQBIIVecInst<v4i32, u7imm_i32, i32, uimm7>;
+  def v2i64: ROTQBIIVecInst<v2i64, u7imm_i32, i32, uimm7>;
+
+  def r128:  ROTQBIIRegInst<GPRC, u7imm_i32, i32, uimm7>;
+  def r64:   ROTQBIIRegInst<R64C, u7imm_i32, i32, uimm7>;
+}
+
+defm ROTQBII : RotateQuadByBitCountImm;
+
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
 // ROTHM v8i16 form:
 // NOTE(1): No vector rotate is generated by the C/C++ frontend (today),
 //          so this only matches a synthetically generated/lowered code
 //          fragment.
 // NOTE(2): $rB must be negated before the right rotate!
-def ROTHMv8i16:
-    RRForm<0b10111010000, (outs VECREG:$rT), (ins VECREG:$rA, R32C:$rB),
-      "rothm\t$rT, $rA, $rB", RotateShift,
-      [/* see patterns below - $rB must be negated */]>;
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
 
-def : Pat<(SPUvec_srl_v8i16 (v8i16 VECREG:$rA), R32C:$rB),
+class ROTHMInst<dag OOL, dag IOL, list<dag> pattern>:
+    RRForm<0b10111010000, OOL, IOL, "rothm\t$rT, $rA, $rB",
+           RotateShift, pattern>;
+
+def ROTHMv8i16:
+    ROTHMInst<(outs VECREG:$rT), (ins VECREG:$rA, R32C:$rB),
+              [/* see patterns below - $rB must be negated */]>;
+
+def : Pat<(SPUvec_srl (v8i16 VECREG:$rA), R32C:$rB),
           (ROTHMv8i16 VECREG:$rA, (SFIr32 R32C:$rB, 0))>;
 
-def : Pat<(SPUvec_srl_v8i16 (v8i16 VECREG:$rA), R16C:$rB),
+def : Pat<(SPUvec_srl (v8i16 VECREG:$rA), R16C:$rB),
           (ROTHMv8i16 VECREG:$rA,
                       (SFIr32 (XSHWr16 R16C:$rB), 0))>;
 
-def : Pat<(SPUvec_srl_v8i16 (v8i16 VECREG:$rA), R8C:$rB),
+def : Pat<(SPUvec_srl (v8i16 VECREG:$rA), R8C:$rB),
           (ROTHMv8i16 VECREG:$rA,
                       (SFIr32 (XSHWr16 (XSBHr8 R8C:$rB) ), 0))>;
 
 // ROTHM r16 form: Rotate 16-bit quantity to right, zero fill at the left
 // Note: This instruction doesn't match a pattern because rB must be negated
 // for the instruction to work. Thus, the pattern below the instruction!
+
 def ROTHMr16:
-    RRForm<0b10111010000, (outs R16C:$rT), (ins R16C:$rA, R32C:$rB),
-      "rothm\t$rT, $rA, $rB", RotateShift,
-      [/* see patterns below - $rB must be negated! */]>;
+    ROTHMInst<(outs R16C:$rT), (ins R16C:$rA, R32C:$rB),
+              [/* see patterns below - $rB must be negated! */]>;
 
 def : Pat<(srl R16C:$rA, R32C:$rB),
           (ROTHMr16 R16C:$rA, (SFIr32 R32C:$rB, 0))>;
@@ -2301,22 +2469,30 @@ def : Pat<(srl R16C:$rA, R8C:$rB),
 // ROTHMI v8i16 form: See the comment for ROTHM v8i16. The difference here is
 // that the immediate can be complemented, so that the user doesn't have to
 // worry about it.
-def ROTHMIv8i16:
-    RI7Form<0b10111110000, (outs VECREG:$rT), (ins VECREG:$rA, rothNeg7imm:$val),
-      "rothmi\t$rT, $rA, $val", RotateShift,
-      [(set (v8i16 VECREG:$rT),
-            (SPUvec_srl_v8i16 (v8i16 VECREG:$rA), (i32 imm:$val)))]>;
 
-def: Pat<(SPUvec_srl_v8i16 (v8i16 VECREG:$rA), (i16 imm:$val)),
+class ROTHMIInst<dag OOL, dag IOL, list<dag> pattern>:
+    RI7Form<0b10111110000, OOL, IOL, "rothmi\t$rT, $rA, $val",
+            RotateShift, pattern>;
+
+def ROTHMIv8i16:
+    ROTHMIInst<(outs VECREG:$rT), (ins VECREG:$rA, rothNeg7imm:$val),
+               [/* no pattern */]>;
+
+def : Pat<(SPUvec_srl (v8i16 VECREG:$rA), (i32 imm:$val)),
+          (ROTHMIv8i16 VECREG:$rA, imm:$val)>;
+
+def: Pat<(SPUvec_srl (v8i16 VECREG:$rA), (i16 imm:$val)),
          (ROTHMIv8i16 VECREG:$rA, imm:$val)>;
  
-def: Pat<(SPUvec_srl_v8i16 (v8i16 VECREG:$rA), (i8 imm:$val)),
+def: Pat<(SPUvec_srl (v8i16 VECREG:$rA), (i8 imm:$val)),
          (ROTHMIv8i16 VECREG:$rA, imm:$val)>;
 
 def ROTHMIr16:
-    RI7Form<0b10111110000, (outs R16C:$rT), (ins R16C:$rA, rothNeg7imm:$val),
-      "rothmi\t$rT, $rA, $val", RotateShift,
-      [(set R16C:$rT, (srl R16C:$rA, (i32 uimm7:$val)))]>;
+    ROTHMIInst<(outs R16C:$rT), (ins R16C:$rA, rothNeg7imm:$val),
+               [/* no pattern */]>;
+
+def: Pat<(srl R16C:$rA, (i32 uimm7:$val)),
+         (ROTHMIr16 R16C:$rA, uimm7:$val)>;
 
 def: Pat<(srl R16C:$rA, (i16 uimm7:$val)),
          (ROTHMIr16 R16C:$rA, uimm7:$val)>;
@@ -2325,26 +2501,28 @@ def: Pat<(srl R16C:$rA, (i8 uimm7:$val)),
          (ROTHMIr16 R16C:$rA, uimm7:$val)>;
 
 // ROTM v4i32 form: See the ROTHM v8i16 comments.
-def ROTMv4i32:
-    RRForm<0b10011010000, (outs VECREG:$rT), (ins VECREG:$rA, R32C:$rB),
-      "rotm\t$rT, $rA, $rB", RotateShift,
-      [/* see patterns below - $rB must be negated */]>;
+class ROTMInst<dag OOL, dag IOL, list<dag> pattern>:
+    RRForm<0b10011010000, OOL, IOL, "rotm\t$rT, $rA, $rB",
+           RotateShift, pattern>;
 
-def : Pat<(SPUvec_srl_v4i32 VECREG:$rA, R32C:$rB),
+def ROTMv4i32:
+    ROTMInst<(outs VECREG:$rT), (ins VECREG:$rA, R32C:$rB),
+             [/* see patterns below - $rB must be negated */]>;
+
+def : Pat<(SPUvec_srl VECREG:$rA, R32C:$rB),
           (ROTMv4i32 VECREG:$rA, (SFIr32 R32C:$rB, 0))>;
 
-def : Pat<(SPUvec_srl_v4i32 VECREG:$rA, R16C:$rB),
+def : Pat<(SPUvec_srl VECREG:$rA, R16C:$rB),
           (ROTMv4i32 VECREG:$rA,
                      (SFIr32 (XSHWr16 R16C:$rB), 0))>;
 
-def : Pat<(SPUvec_srl_v4i32 VECREG:$rA, /* R8C */ R16C:$rB),
+def : Pat<(SPUvec_srl VECREG:$rA, R8C:$rB),
           (ROTMv4i32 VECREG:$rA,
-                     (SFIr32 (XSHWr16 /* (XSBHr8 R8C */ R16C:$rB) /*)*/, 0))>;
+                     (SFIr32 (XSHWr16 (XSBHr8 R8C:$rB)), 0))>;
 
 def ROTMr32:
-    RRForm<0b10011010000, (outs R32C:$rT), (ins R32C:$rA, R32C:$rB),
-      "rotm\t$rT, $rA, $rB", RotateShift,
-      [/* see patterns below - $rB must be negated */]>;
+    ROTMInst<(outs R32C:$rT), (ins R32C:$rA, R32C:$rB),
+             [/* see patterns below - $rB must be negated */]>;
 
 def : Pat<(srl R32C:$rA, R32C:$rB),
           (ROTMr32 R32C:$rA, (SFIr32 R32C:$rB, 0))>;
@@ -2362,12 +2540,12 @@ def ROTMIv4i32:
     RI7Form<0b10011110000, (outs VECREG:$rT), (ins VECREG:$rA, rotNeg7imm:$val),
       "rotmi\t$rT, $rA, $val", RotateShift,
       [(set (v4i32 VECREG:$rT),
-            (SPUvec_srl_v4i32 VECREG:$rA, (i32 uimm7:$val)))]>;
+            (SPUvec_srl VECREG:$rA, (i32 uimm7:$val)))]>;
 
-def : Pat<(SPUvec_srl_v4i32 VECREG:$rA, (i16 uimm7:$val)),
+def : Pat<(SPUvec_srl VECREG:$rA, (i16 uimm7:$val)),
           (ROTMIv4i32 VECREG:$rA, uimm7:$val)>;
  
-def : Pat<(SPUvec_srl_v4i32 VECREG:$rA, (i8 uimm7:$val)),
+def : Pat<(SPUvec_srl VECREG:$rA, (i8 uimm7:$val)),
           (ROTMIv4i32 VECREG:$rA, uimm7:$val)>;
 
 // ROTMI r32 form: know how to complement the immediate value.
@@ -2382,52 +2560,194 @@ def : Pat<(srl R32C:$rA, (i16 imm:$val)),
 def : Pat<(srl R32C:$rA, (i8 imm:$val)),
           (ROTMIr32 R32C:$rA, uimm7:$val)>;
 
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
 // ROTQMBYvec: This is a vector form merely so that when used in an
 // instruction pattern, type checking will succeed. This instruction assumes
-// that the user knew to complement $rB.
-def ROTQMBYvec:
-    RRForm<0b10111011100, (outs VECREG:$rT), (ins VECREG:$rA, R32C:$rB),
-      "rotqmby\t$rT, $rA, $rB", RotateShift,
-      [(set (v16i8 VECREG:$rT),
-            (SPUrotbytes_right_zfill (v16i8 VECREG:$rA), R32C:$rB))]>;
+// that the user knew to negate $rB.
+//
+// Using the SPUrotquad_rz_bytes target-specific DAG node, the patterns
+// ensure that $rB is negated.
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
 
-def ROTQMBYIvec:
-    RI7Form<0b10111111100, (outs VECREG:$rT), (ins VECREG:$rA, rotNeg7imm:$val),
-      "rotqmbyi\t$rT, $rA, $val", RotateShift,
-      [(set (v16i8 VECREG:$rT),
-            (SPUrotbytes_right_zfill (v16i8 VECREG:$rA), (i32 uimm7:$val)))]>;
+class ROTQMBYInst<dag OOL, dag IOL, list<dag> pattern>:
+    RRForm<0b10111011100, OOL, IOL, "rotqmby\t$rT, $rA, $rB",
+           RotateShift, pattern>;
 
-def : Pat<(SPUrotbytes_right_zfill VECREG:$rA, (i16 uimm7:$val)),
-          (ROTQMBYIvec VECREG:$rA, uimm7:$val)>;
+class ROTQMBYVecInst<ValueType vectype>:
+    ROTQMBYInst<(outs VECREG:$rT), (ins VECREG:$rA, R32C:$rB),
+                [/* no pattern, $rB must be negated */]>;
 
-def ROTQMBYBIvec:
-    RRForm<0b10110011100, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-      "rotqmbybi\t$rT, $rA, $rB", RotateShift,
-      [/* intrinsic */]>;
+class ROTQMBYRegInst<RegisterClass rclass>:
+    ROTQMBYInst<(outs rclass:$rT), (ins rclass:$rA, R32C:$rB),
+                [(set rclass:$rT,
+                      (SPUrotquad_rz_bytes rclass:$rA, R32C:$rB))]>;
 
-def ROTQMBIvec:
-    RRForm<0b10011011100, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-      "rotqmbi\t$rT, $rA, $rB", RotateShift,
-      [/* intrinsic */]>;
+multiclass RotateQuadBytes
+{
+  def v16i8: ROTQMBYVecInst<v16i8>;
+  def v8i16: ROTQMBYVecInst<v8i16>;
+  def v4i32: ROTQMBYVecInst<v4i32>;
+  def v2i64: ROTQMBYVecInst<v2i64>;
 
-def ROTQMBIIvec:
-    RI7Form<0b10011111100, (outs VECREG:$rT), (ins VECREG:$rA, rotNeg7imm:$val),
-      "rotqmbii\t$rT, $rA, $val", RotateShift,
-      [/* intrinsic */]>;
+  def r128: ROTQMBYRegInst<GPRC>;
+  def r64:  ROTQMBYRegInst<R64C>;
+}
+
+defm ROTQMBY : RotateQuadBytes;
+
+def : Pat<(SPUrotquad_rz_bytes (v16i8 VECREG:$rA), R32C:$rB),
+          (ROTQMBYv16i8 VECREG:$rA, (SFIr32 R32C:$rB, 0))>;
+def : Pat<(SPUrotquad_rz_bytes (v8i16 VECREG:$rA), R32C:$rB),
+          (ROTQMBYv8i16 VECREG:$rA, (SFIr32 R32C:$rB, 0))>;
+def : Pat<(SPUrotquad_rz_bytes (v4i32 VECREG:$rA), R32C:$rB),
+          (ROTQMBYv4i32 VECREG:$rA, (SFIr32 R32C:$rB, 0))>;
+def : Pat<(SPUrotquad_rz_bytes (v2i64 VECREG:$rA), R32C:$rB),
+          (ROTQMBYv2i64 VECREG:$rA, (SFIr32 R32C:$rB, 0))>;
+def : Pat<(SPUrotquad_rz_bytes GPRC:$rA, R32C:$rB),
+          (ROTQMBYr128 GPRC:$rA, (SFIr32 R32C:$rB, 0))>;
+def : Pat<(SPUrotquad_rz_bytes R64C:$rA, R32C:$rB),
+          (ROTQMBYr64 R64C:$rA, (SFIr32 R32C:$rB, 0))>;
+
+class ROTQMBYIInst<dag OOL, dag IOL, list<dag> pattern>:
+    RI7Form<0b10111111100, OOL, IOL, "rotqmbyi\t$rT, $rA, $val",
+            RotateShift, pattern>;
+
+class ROTQMBYIVecInst<ValueType vectype>:
+    ROTQMBYIInst<(outs VECREG:$rT), (ins VECREG:$rA, rotNeg7imm:$val),
+                 [(set (vectype VECREG:$rT),
+                       (SPUrotquad_rz_bytes (vectype VECREG:$rA), (i32 uimm7:$val)))]>;
+
+class ROTQMBYIRegInst<RegisterClass rclass, Operand optype, ValueType inttype, PatLeaf pred>:
+    ROTQMBYIInst<(outs rclass:$rT), (ins rclass:$rA, optype:$val),
+                 [(set rclass:$rT,
+                       (SPUrotquad_rz_bytes rclass:$rA, (inttype pred:$val)))]>;
+
+multiclass RotateQuadBytesImm
+{
+  def v16i8: ROTQMBYIVecInst<v16i8>;
+  def v8i16: ROTQMBYIVecInst<v8i16>;
+  def v4i32: ROTQMBYIVecInst<v4i32>;
+  def v2i64: ROTQMBYIVecInst<v2i64>;
+
+  def r128:  ROTQMBYIRegInst<GPRC, rotNeg7imm, i32, uimm7>;
+  def r64:   ROTQMBYIRegInst<R64C, rotNeg7imm, i32, uimm7>;
+}
+
+defm ROTQMBYI : RotateQuadBytesImm;
+
+
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+// Rotate right and mask by bit count
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+
+class ROTQMBYBIInst<dag OOL, dag IOL, list<dag> pattern>:
+    RRForm<0b10110011100, OOL, IOL, "rotqmbybi\t$rT, $rA, $rB",
+           RotateShift, pattern>;
+
+class ROTQMBYBIVecInst<ValueType vectype>:
+    ROTQMBYBIInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
+                  [/* no pattern, intrinsic? */]>;
+
+multiclass RotateMaskQuadByBitCount
+{
+  def v16i8: ROTQMBYBIVecInst<v16i8>;
+  def v8i16: ROTQMBYBIVecInst<v8i16>;
+  def v4i32: ROTQMBYBIVecInst<v4i32>;
+  def v2i64: ROTQMBYBIVecInst<v2i64>;
+}
+
+defm ROTQMBYBI: RotateMaskQuadByBitCount;
+
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+// Rotate quad and mask by bits
+// Note that the rotate amount has to be negated
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+
+class ROTQMBIInst<dag OOL, dag IOL, list<dag> pattern>:
+    RRForm<0b10011011100, OOL, IOL, "rotqmbi\t$rT, $rA, $rB",
+           RotateShift, pattern>;
+
+class ROTQMBIVecInst<ValueType vectype>:
+    ROTQMBIInst<(outs VECREG:$rT), (ins VECREG:$rA, R32C:$rB),
+                [/* no pattern */]>;
+
+class ROTQMBIRegInst<RegisterClass rclass>:
+    ROTQMBIInst<(outs rclass:$rT), (ins rclass:$rA, R32C:$rB),
+                [/* no pattern */]>;
+
+multiclass RotateMaskQuadByBits
+{
+  def v16i8: ROTQMBIVecInst<v16i8>;
+  def v8i16: ROTQMBIVecInst<v8i16>;
+  def v4i32: ROTQMBIVecInst<v4i32>;
+  def v2i64: ROTQMBIVecInst<v2i64>;
+
+  def r128:  ROTQMBIRegInst<GPRC>;
+  def r64:   ROTQMBIRegInst<R64C>;
+}
+
+defm ROTQMBI: RotateMaskQuadByBits;
+
+def : Pat<(SPUrotquad_rz_bits (v16i8 VECREG:$rA), R32C:$rB),
+          (ROTQMBIv16i8 VECREG:$rA, (SFIr32 R32C:$rB, 0))>;
+def : Pat<(SPUrotquad_rz_bits (v8i16 VECREG:$rA), R32C:$rB),
+          (ROTQMBIv8i16 VECREG:$rA, (SFIr32 R32C:$rB, 0))>;
+def : Pat<(SPUrotquad_rz_bits (v4i32 VECREG:$rA), R32C:$rB),
+          (ROTQMBIv4i32 VECREG:$rA, (SFIr32 R32C:$rB, 0))>;
+def : Pat<(SPUrotquad_rz_bits (v2i64 VECREG:$rA), R32C:$rB),
+          (ROTQMBIv2i64 VECREG:$rA, (SFIr32 R32C:$rB, 0))>;
+def : Pat<(SPUrotquad_rz_bits GPRC:$rA, R32C:$rB),
+          (ROTQMBIr128 GPRC:$rA, (SFIr32 R32C:$rB, 0))>;
+def : Pat<(SPUrotquad_rz_bits R64C:$rA, R32C:$rB),
+          (ROTQMBIr64 R64C:$rA, (SFIr32 R32C:$rB, 0))>;
+
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+// Rotate quad and mask by bits, immediate
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+
+class ROTQMBIIInst<dag OOL, dag IOL, list<dag> pattern>:
+    RI7Form<0b10011111100, OOL, IOL, "rotqmbii\t$rT, $rA, $val",
+            RotateShift, pattern>;
+
+class ROTQMBIIVecInst<ValueType vectype>:
+   ROTQMBIIInst<(outs VECREG:$rT), (ins VECREG:$rA, rotNeg7imm:$val),
+                 [(set (vectype VECREG:$rT),
+                       (SPUrotquad_rz_bits (vectype VECREG:$rA), (i32 uimm7:$val)))]>;
+
+class ROTQMBIIRegInst<RegisterClass rclass>:
+   ROTQMBIIInst<(outs rclass:$rT), (ins rclass:$rA, rotNeg7imm:$val),
+                 [(set rclass:$rT,
+                       (SPUrotquad_rz_bits rclass:$rA, (i32 uimm7:$val)))]>;
+
+multiclass RotateMaskQuadByBitsImm
+{
+  def v16i8: ROTQMBIIVecInst<v16i8>;
+  def v8i16: ROTQMBIIVecInst<v8i16>;
+  def v4i32: ROTQMBIIVecInst<v4i32>;
+  def v2i64: ROTQMBIIVecInst<v2i64>;
+
+  def r128:  ROTQMBIIRegInst<GPRC>;
+  def r64:   ROTQMBIIRegInst<R64C>;
+}
+
+defm ROTQMBII: RotateMaskQuadByBitsImm;
+
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
 
 def ROTMAHv8i16:
     RRForm<0b01111010000, (outs VECREG:$rT), (ins VECREG:$rA, R32C:$rB),
       "rotmah\t$rT, $rA, $rB", RotateShift,
       [/* see patterns below - $rB must be negated */]>;
 
-def : Pat<(SPUvec_sra_v8i16 VECREG:$rA, R32C:$rB),
+def : Pat<(SPUvec_sra VECREG:$rA, R32C:$rB),
           (ROTMAHv8i16 VECREG:$rA, (SFIr32 R32C:$rB, 0))>;
 
-def : Pat<(SPUvec_sra_v8i16 VECREG:$rA, R16C:$rB),
+def : Pat<(SPUvec_sra VECREG:$rA, R16C:$rB),
           (ROTMAHv8i16 VECREG:$rA,
                        (SFIr32 (XSHWr16 R16C:$rB), 0))>;
 
-def : Pat<(SPUvec_sra_v8i16 VECREG:$rA, R8C:$rB),
+def : Pat<(SPUvec_sra VECREG:$rA, R8C:$rB),
           (ROTMAHv8i16 VECREG:$rA,
                        (SFIr32 (XSHWr16 (XSBHr8 R8C:$rB)), 0))>;
 
@@ -2451,12 +2771,12 @@ def ROTMAHIv8i16:
     RRForm<0b01111110000, (outs VECREG:$rT), (ins VECREG:$rA, rothNeg7imm:$val),
       "rotmahi\t$rT, $rA, $val", RotateShift,
       [(set (v8i16 VECREG:$rT),
-            (SPUvec_sra_v8i16 (v8i16 VECREG:$rA), (i32 uimm7:$val)))]>;
+            (SPUvec_sra (v8i16 VECREG:$rA), (i32 uimm7:$val)))]>;
 
-def : Pat<(SPUvec_sra_v8i16 (v8i16 VECREG:$rA), (i16 uimm7:$val)),
+def : Pat<(SPUvec_sra (v8i16 VECREG:$rA), (i16 uimm7:$val)),
           (ROTMAHIv8i16 (v8i16 VECREG:$rA), (i32 uimm7:$val))>;
 
-def : Pat<(SPUvec_sra_v8i16 (v8i16 VECREG:$rA), (i8 uimm7:$val)),
+def : Pat<(SPUvec_sra (v8i16 VECREG:$rA), (i8 uimm7:$val)),
           (ROTMAHIv8i16 (v8i16 VECREG:$rA), (i32 uimm7:$val))>;
 
 def ROTMAHIr16:
@@ -2475,14 +2795,14 @@ def ROTMAv4i32:
       "rotma\t$rT, $rA, $rB", RotateShift,
       [/* see patterns below - $rB must be negated */]>;
 
-def : Pat<(SPUvec_sra_v4i32 VECREG:$rA, R32C:$rB),
+def : Pat<(SPUvec_sra VECREG:$rA, R32C:$rB),
           (ROTMAv4i32 (v4i32 VECREG:$rA), (SFIr32 R32C:$rB, 0))>;
 
-def : Pat<(SPUvec_sra_v4i32 VECREG:$rA, R16C:$rB),
+def : Pat<(SPUvec_sra VECREG:$rA, R16C:$rB),
           (ROTMAv4i32 (v4i32 VECREG:$rA),
                       (SFIr32 (XSHWr16 R16C:$rB), 0))>;
 
-def : Pat<(SPUvec_sra_v4i32 VECREG:$rA, R8C:$rB),
+def : Pat<(SPUvec_sra VECREG:$rA, R8C:$rB),
           (ROTMAv4i32 (v4i32 VECREG:$rA),
                       (SFIr32 (XSHWr16 (XSBHr8 R8C:$rB)), 0))>;
 
@@ -2506,9 +2826,9 @@ def ROTMAIv4i32:
     RRForm<0b01011110000, (outs VECREG:$rT), (ins VECREG:$rA, rotNeg7imm:$val),
       "rotmai\t$rT, $rA, $val", RotateShift,
       [(set (v4i32 VECREG:$rT),
-            (SPUvec_sra_v4i32 VECREG:$rA, (i32 uimm7:$val)))]>;
+            (SPUvec_sra VECREG:$rA, (i32 uimm7:$val)))]>;
 
-def : Pat<(SPUvec_sra_v4i32 VECREG:$rA, (i16 uimm7:$val)),
+def : Pat<(SPUvec_sra VECREG:$rA, (i16 uimm7:$val)),
           (ROTMAIv4i32 VECREG:$rA, uimm7:$val)>;
 
 def ROTMAIr32:
@@ -2561,66 +2881,366 @@ let isTerminator = 1, isBarrier = 1 in {
       [/* no pattern to match */]>;
 }
 
+//------------------------------------------------------------------------
 // Comparison operators:
-def CEQBr8:
-  RRForm<0b00001011110, (outs R8C:$rT), (ins R8C:$rA, R8C:$rB),
-    "ceqb\t$rT, $rA, $rB", ByteOp,
-    [/* no pattern to match */]>;
+//------------------------------------------------------------------------
 
-def CEQBv16i8:
-  RRForm<0b00001011110, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-    "ceqb\t$rT, $rA, $rB", ByteOp,
-    [/* no pattern to match: intrinsic */]>;
+class CEQBInst<dag OOL, dag IOL, list<dag> pattern> :
+  RRForm<0b00001011110, OOL, IOL, "ceqb\t$rT, $rA, $rB",
+         ByteOp, pattern>;
 
-def CEQBIr8:
-  RI10Form<0b01111110, (outs R8C:$rT), (ins R8C:$rA, s7imm_i8:$val),
-    "ceqbi\t$rT, $rA, $val", ByteOp,
-    [/* no pattern to match: intrinsic */]>;
+multiclass CmpEqualByte
+{
+  def v16i8 :
+    CEQBInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
+      [(set (v16i8 VECREG:$rT), (seteq (v8i16 VECREG:$rA),
+                                       (v8i16 VECREG:$rB)))]>;
 
-def CEQBIv16i8:
-  RI10Form<0b01111110, (outs VECREG:$rT), (ins VECREG:$rA, s7imm_i8:$val),
-    "ceqbi\t$rT, $rA, $val", ByteOp,
-    [/* no pattern to match: intrinsic */]>;
+  def r8 :
+    CEQBInst<(outs R8C:$rT), (ins R8C:$rA, R8C:$rB),
+             [(set R8C:$rT, (seteq R8C:$rA, R8C:$rB))]>;
+}
 
-def CEQHr16:
-  RRForm<0b00010011110, (outs R16C:$rT), (ins R16C:$rA, R16C:$rB),
-    "ceqh\t$rT, $rA, $rB", ByteOp,
-    [/* no pattern to match */]>;
+class CEQBIInst<dag OOL, dag IOL, list<dag> pattern> :
+  RI10Form<0b01111110, OOL, IOL, "ceqbi\t$rT, $rA, $val",
+           ByteOp, pattern>;
 
-def CEQHv8i16:
-  RRForm<0b00010011110, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-    "ceqh\t$rT, $rA, $rB", ByteOp,
-    [/* no pattern to match: intrinsic */]>;
+multiclass CmpEqualByteImm
+{
+  def v16i8 :
+    CEQBIInst<(outs VECREG:$rT), (ins VECREG:$rA, s10imm_i8:$val),
+              [(set (v16i8 VECREG:$rT), (seteq (v16i8 VECREG:$rA),
+                                               v16i8SExt8Imm:$val))]>;
+  def r8:
+    CEQBIInst<(outs R8C:$rT), (ins R8C:$rA, s10imm_i8:$val),
+             [(set R8C:$rT, (seteq R8C:$rA, immSExt8:$val))]>;
+}
 
-def CEQHIr16:
-  RI10Form<0b10111110, (outs R16C:$rT), (ins R16C:$rA, s10imm:$val),
-    "ceqhi\t$rT, $rA, $val", ByteOp,
-    [/* no pattern to match: intrinsic */]>;
+class CEQHInst<dag OOL, dag IOL, list<dag> pattern> :
+  RRForm<0b00010011110, OOL, IOL, "ceqh\t$rT, $rA, $rB",
+         ByteOp, pattern>;
 
-def CEQHIv8i16:
-  RI10Form<0b10111110, (outs VECREG:$rT), (ins VECREG:$rA, s10imm:$val),
-    "ceqhi\t$rT, $rA, $val", ByteOp,
-    [/* no pattern to match: intrinsic */]>;
+multiclass CmpEqualHalfword
+{
+  def v8i16 : CEQHInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
+                       [(set (v8i16 VECREG:$rT), (seteq (v8i16 VECREG:$rA),
+                                                        (v8i16 VECREG:$rB)))]>;
 
-def CEQr32:
-  RRForm<0b00000011110, (outs R32C:$rT), (ins R32C:$rA, R32C:$rB),
-    "ceq\t$rT, $rA, $rB", ByteOp,
-    [(set R32C:$rT, (seteq R32C:$rA, R32C:$rB))]>;
+  def r16 : CEQHInst<(outs R16C:$rT), (ins R16C:$rA, R16C:$rB),
+                     [(set R16C:$rT, (seteq R16C:$rA, R16C:$rB))]>;
+}
 
-def CEQv4i32:
-  RRForm<0b00000011110, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
-    "ceq\t$rT, $rA, $rB", ByteOp,
-    [(set (v4i32 VECREG:$rT), (seteq (v4i32 VECREG:$rA), (v4i32 VECREG:$rB)))]>;
+class CEQHIInst<dag OOL, dag IOL, list<dag> pattern> :
+  RI10Form<0b10111110, OOL, IOL, "ceqhi\t$rT, $rA, $val",
+           ByteOp, pattern>;
 
-def CEQIr32:
-  RI10Form<0b00111110, (outs R32C:$rT), (ins R32C:$rA, s10imm_i32:$val),
-    "ceqi\t$rT, $rA, $val", ByteOp,
-    [(set R32C:$rT, (seteq R32C:$rA, i32ImmSExt10:$val))]>;
+multiclass CmpEqualHalfwordImm
+{
+  def v8i16 : CEQHIInst<(outs VECREG:$rT), (ins VECREG:$rA, s10imm:$val),
+                        [(set (v8i16 VECREG:$rT),
+                              (seteq (v8i16 VECREG:$rA),
+                                     (v8i16 v8i16SExt10Imm:$val)))]>;
+  def r16 : CEQHIInst<(outs R16C:$rT), (ins R16C:$rA, s10imm:$val),
+                      [(set R16C:$rT, (seteq R16C:$rA, i16ImmSExt10:$val))]>;
+}
 
-def CEQIv4i32:
-  RI10Form<0b00111110, (outs VECREG:$rT), (ins VECREG:$rA, s10imm:$val),
-    "ceqi\t$rT, $rA, $val", ByteOp,
-    [/* no pattern to match: intrinsic */]>;
+class CEQInst<dag OOL, dag IOL, list<dag> pattern> :
+  RRForm<0b00000011110, OOL, IOL, "ceq\t$rT, $rA, $rB",
+         ByteOp, pattern>;
+
+multiclass CmpEqualWord
+{
+  def v4i32 : CEQInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
+                      [(set (v4i32 VECREG:$rT),
+                            (seteq (v4i32 VECREG:$rA), (v4i32 VECREG:$rB)))]>;
+
+  def r32 : CEQInst<(outs R32C:$rT), (ins R32C:$rA, R32C:$rB),
+                    [(set R32C:$rT, (seteq R32C:$rA, R32C:$rB))]>;
+}
+
+class CEQIInst<dag OOL, dag IOL, list<dag> pattern> :
+  RI10Form<0b00111110, OOL, IOL, "ceqi\t$rT, $rA, $val",
+           ByteOp, pattern>;
+
+multiclass CmpEqualWordImm
+{
+  def v4i32 : CEQIInst<(outs VECREG:$rT), (ins VECREG:$rA, s10imm:$val),
+                       [(set (v4i32 VECREG:$rT),
+                             (seteq (v4i32 VECREG:$rA),
+                                    (v4i32 v4i32SExt16Imm:$val)))]>;
+
+  def r32: CEQIInst<(outs R32C:$rT), (ins R32C:$rA, s10imm_i32:$val),
+                    [(set R32C:$rT, (seteq R32C:$rA, i32ImmSExt10:$val))]>;
+}
+
+class CGTBInst<dag OOL, dag IOL, list<dag> pattern> :
+  RRForm<0b00001010010, OOL, IOL, "cgtb\t$rT, $rA, $rB",
+         ByteOp, pattern>;
+
+multiclass CmpGtrByte
+{
+  def v16i8 :
+    CGTBInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
+      [(set (v16i8 VECREG:$rT), (setgt (v8i16 VECREG:$rA),
+                                       (v8i16 VECREG:$rB)))]>;
+
+  def r8 :
+    CGTBInst<(outs R8C:$rT), (ins R8C:$rA, R8C:$rB),
+             [(set R8C:$rT, (setgt R8C:$rA, R8C:$rB))]>;
+}
+
+class CGTBIInst<dag OOL, dag IOL, list<dag> pattern> :
+  RI10Form<0b01110010, OOL, IOL, "cgtbi\t$rT, $rA, $val",
+           ByteOp, pattern>;
+
+multiclass CmpGtrByteImm
+{
+  def v16i8 :
+    CGTBIInst<(outs VECREG:$rT), (ins VECREG:$rA, s10imm_i8:$val),
+              [(set (v16i8 VECREG:$rT), (setgt (v16i8 VECREG:$rA),
+                                               v16i8SExt8Imm:$val))]>;
+  def r8:
+    CGTBIInst<(outs R8C:$rT), (ins R8C:$rA, s10imm_i8:$val),
+             [(set R8C:$rT, (setgt R8C:$rA, immSExt8:$val))]>;
+}
+
+class CGTHInst<dag OOL, dag IOL, list<dag> pattern> :
+  RRForm<0b00010010010, OOL, IOL, "cgth\t$rT, $rA, $rB",
+         ByteOp, pattern>;
+
+multiclass CmpGtrHalfword
+{
+  def v8i16 : CGTHInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
+                       [(set (v8i16 VECREG:$rT), (setgt (v8i16 VECREG:$rA),
+                                                        (v8i16 VECREG:$rB)))]>;
+
+  def r16 : CGTHInst<(outs R16C:$rT), (ins R16C:$rA, R16C:$rB),
+                     [(set R16C:$rT, (setgt R16C:$rA, R16C:$rB))]>;
+}
+
+class CGTHIInst<dag OOL, dag IOL, list<dag> pattern> :
+  RI10Form<0b10110010, OOL, IOL, "cgthi\t$rT, $rA, $val",
+           ByteOp, pattern>;
+
+multiclass CmpGtrHalfwordImm
+{
+  def v8i16 : CGTHIInst<(outs VECREG:$rT), (ins VECREG:$rA, s10imm:$val),
+                        [(set (v8i16 VECREG:$rT),
+                              (setgt (v8i16 VECREG:$rA),
+                                     (v8i16 v8i16SExt10Imm:$val)))]>;
+  def r16 : CGTHIInst<(outs R16C:$rT), (ins R16C:$rA, s10imm:$val),
+                      [(set R16C:$rT, (setgt R16C:$rA, i16ImmSExt10:$val))]>;
+}
+
+class CGTInst<dag OOL, dag IOL, list<dag> pattern> :
+  RRForm<0b00000010010, OOL, IOL, "cgt\t$rT, $rA, $rB",
+         ByteOp, pattern>;
+
+multiclass CmpGtrWord
+{
+  def v4i32 : CGTInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
+                      [(set (v4i32 VECREG:$rT),
+                            (setgt (v4i32 VECREG:$rA), (v4i32 VECREG:$rB)))]>;
+
+  def r32 : CGTInst<(outs R32C:$rT), (ins R32C:$rA, R32C:$rB),
+                    [(set R32C:$rT, (setgt R32C:$rA, R32C:$rB))]>;
+}
+
+class CGTIInst<dag OOL, dag IOL, list<dag> pattern> :
+  RI10Form<0b00110010, OOL, IOL, "cgti\t$rT, $rA, $val",
+           ByteOp, pattern>;
+
+multiclass CmpGtrWordImm
+{
+  def v4i32 : CGTIInst<(outs VECREG:$rT), (ins VECREG:$rA, s10imm:$val),
+                       [(set (v4i32 VECREG:$rT),
+                             (setgt (v4i32 VECREG:$rA),
+                                    (v4i32 v4i32SExt16Imm:$val)))]>;
+
+  def r32: CGTIInst<(outs R32C:$rT), (ins R32C:$rA, s10imm_i32:$val),
+                    [(set R32C:$rT, (setgt R32C:$rA, i32ImmSExt10:$val))]>;
+}
+
+class CLGTBInst<dag OOL, dag IOL, list<dag> pattern> :
+  RRForm<0b00001011010, OOL, IOL, "cgtb\t$rT, $rA, $rB",
+         ByteOp, pattern>;
+
+multiclass CmpLGtrByte
+{
+  def v16i8 :
+    CLGTBInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
+      [(set (v16i8 VECREG:$rT), (setugt (v8i16 VECREG:$rA),
+                                       (v8i16 VECREG:$rB)))]>;
+
+  def r8 :
+    CLGTBInst<(outs R8C:$rT), (ins R8C:$rA, R8C:$rB),
+             [(set R8C:$rT, (setugt R8C:$rA, R8C:$rB))]>;
+}
+
+class CLGTBIInst<dag OOL, dag IOL, list<dag> pattern> :
+  RI10Form<0b01111010, OOL, IOL, "cgtbi\t$rT, $rA, $val",
+           ByteOp, pattern>;
+
+multiclass CmpLGtrByteImm
+{
+  def v16i8 :
+    CLGTBIInst<(outs VECREG:$rT), (ins VECREG:$rA, s10imm_i8:$val),
+              [(set (v16i8 VECREG:$rT), (setugt (v16i8 VECREG:$rA),
+                                               v16i8SExt8Imm:$val))]>;
+  def r8:
+    CLGTBIInst<(outs R8C:$rT), (ins R8C:$rA, s10imm_i8:$val),
+             [(set R8C:$rT, (setugt R8C:$rA, immSExt8:$val))]>;
+}
+
+class CLGTHInst<dag OOL, dag IOL, list<dag> pattern> :
+  RRForm<0b00010011010, OOL, IOL, "cgth\t$rT, $rA, $rB",
+         ByteOp, pattern>;
+
+multiclass CmpLGtrHalfword
+{
+  def v8i16 : CLGTHInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
+                       [(set (v8i16 VECREG:$rT), (setugt (v8i16 VECREG:$rA),
+                                                        (v8i16 VECREG:$rB)))]>;
+
+  def r16 : CLGTHInst<(outs R16C:$rT), (ins R16C:$rA, R16C:$rB),
+                     [(set R16C:$rT, (setugt R16C:$rA, R16C:$rB))]>;
+}
+
+class CLGTHIInst<dag OOL, dag IOL, list<dag> pattern> :
+  RI10Form<0b10111010, OOL, IOL, "cgthi\t$rT, $rA, $val",
+           ByteOp, pattern>;
+
+multiclass CmpLGtrHalfwordImm
+{
+  def v8i16 : CLGTHIInst<(outs VECREG:$rT), (ins VECREG:$rA, s10imm:$val),
+                         [(set (v8i16 VECREG:$rT),
+                               (setugt (v8i16 VECREG:$rA),
+                                       (v8i16 v8i16SExt10Imm:$val)))]>;
+  def r16 : CLGTHIInst<(outs R16C:$rT), (ins R16C:$rA, s10imm:$val),
+                       [(set R16C:$rT, (setugt R16C:$rA, i16ImmSExt10:$val))]>;
+}
+
+class CLGTInst<dag OOL, dag IOL, list<dag> pattern> :
+  RRForm<0b00000011010, OOL, IOL, "cgt\t$rT, $rA, $rB",
+         ByteOp, pattern>;
+
+multiclass CmpLGtrWord
+{
+  def v4i32 : CLGTInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
+                      [(set (v4i32 VECREG:$rT),
+                            (setugt (v4i32 VECREG:$rA), (v4i32 VECREG:$rB)))]>;
+
+  def r32 : CLGTInst<(outs R32C:$rT), (ins R32C:$rA, R32C:$rB),
+                     [(set R32C:$rT, (setugt R32C:$rA, R32C:$rB))]>;
+}
+
+class CLGTIInst<dag OOL, dag IOL, list<dag> pattern> :
+  RI10Form<0b00111010, OOL, IOL, "cgti\t$rT, $rA, $val",
+           ByteOp, pattern>;
+
+multiclass CmpLGtrWordImm
+{
+  def v4i32 : CLGTIInst<(outs VECREG:$rT), (ins VECREG:$rA, s10imm:$val),
+                       [(set (v4i32 VECREG:$rT),
+                             (setugt (v4i32 VECREG:$rA),
+                                    (v4i32 v4i32SExt16Imm:$val)))]>;
+
+  def r32: CLGTIInst<(outs R32C:$rT), (ins R32C:$rA, s10imm_i32:$val),
+                    [(set R32C:$rT, (setugt R32C:$rA, i32ImmSExt10:$val))]>;
+}
+
+defm CEQB   : CmpEqualByte;
+defm CEQBI  : CmpEqualByteImm;
+defm CEQH   : CmpEqualHalfword;
+defm CEQHI  : CmpEqualHalfwordImm;
+defm CEQ    : CmpEqualWord;
+defm CEQI   : CmpEqualWordImm;
+defm CGTB   : CmpGtrByte;
+defm CGTBI  : CmpGtrByteImm;
+defm CGTH   : CmpGtrHalfword;
+defm CGTHI  : CmpGtrHalfwordImm;
+defm CGT    : CmpGtrWord;
+defm CGTI   : CmpGtrWordImm;
+defm CLGTB  : CmpLGtrByte;
+defm CLGTBI : CmpLGtrByteImm;
+defm CLGTH  : CmpLGtrHalfword;
+defm CLGTHI : CmpLGtrHalfwordImm;
+defm CLGT   : CmpLGtrWord;
+defm CLGTI  : CmpLGtrWordImm;
+
+// For SETCC primitives not supported above (setlt, setle, setge, etc.)
+// define a pattern to generate the right code, as a binary operator
+// (in a manner of speaking.)
+
+class SETCCNegCond<PatFrag cond, RegisterClass rclass, dag pattern>:
+    Pat<(cond rclass:$rA, rclass:$rB), pattern>;
+
+class SETCCBinOpReg<PatFrag cond, RegisterClass rclass,
+                    SPUInstr binop, SPUInstr cmpOp1, SPUInstr cmpOp2>:
+    Pat<(cond rclass:$rA, rclass:$rB),
+        (binop (cmpOp1 rclass:$rA, rclass:$rB),
+               (cmpOp2 rclass:$rA, rclass:$rB))>;
+
+class SETCCBinOpImm<PatFrag cond, RegisterClass rclass, PatLeaf immpred,
+                    ValueType immtype,
+                    SPUInstr binop, SPUInstr cmpOp1, SPUInstr cmpOp2>:
+    Pat<(cond rclass:$rA, (immtype immpred:$imm)),
+        (binop (cmpOp1 rclass:$rA, (immtype immpred:$imm)),
+               (cmpOp2 rclass:$rA, (immtype immpred:$imm)))>;
+
+def CGTEQBr8:  SETCCBinOpReg<setge, R8C, ORr8, CGTBr8, CEQBr8>;
+def CGTEQBIr8: SETCCBinOpImm<setge, R8C, immSExt8, i8, ORr8, CGTBIr8, CEQBIr8>;
+def CLTBr8:    SETCCBinOpReg<setlt, R8C, NORr8, CGTBr8, CEQBr8>;
+def CLTBIr8:   SETCCBinOpImm<setlt, R8C, immSExt8, i8, NORr8, CGTBIr8, CEQBIr8>;
+def CLTEQr8:   Pat<(setle R8C:$rA, R8C:$rB),
+                   (XORBIr8 (CGTBIr8 R8C:$rA, R8C:$rB), 0xff)>;
+def CLTEQIr8:  Pat<(setle R8C:$rA, immU8:$imm),
+                   (XORBIr8 (CGTBIr8 R8C:$rA, immU8:$imm), 0xff)>;
+
+def CGTEQHr16: SETCCBinOpReg<setge, R16C, ORr16, CGTHr16, CEQHr16>;
+def CGTEQHIr16: SETCCBinOpImm<setge, R16C, i16ImmUns10, i16,
+                              ORr16, CGTHIr16, CEQHIr16>;
+def CLTEQr16:   Pat<(setle R16C:$rA, R16C:$rB),
+                    (XORHIr16 (CGTHIr16 R16C:$rA, R16C:$rB), 0xffff)>;
+def CLTEQIr16:  Pat<(setle R16C:$rA, i16ImmUns10:$imm),
+                    (XORHIr16 (CGTHIr16 R16C:$rA, i16ImmSExt10:$imm), 0xffff)>;
+
+
+def CGTEQHr32: SETCCBinOpReg<setge, R32C, ORr32, CGTr32, CEQr32>;
+def CGTEQHIr32: SETCCBinOpImm<setge, R32C, i32ImmUns10, i32,
+                              ORr32, CGTIr32, CEQIr32>;
+def CLTEQr32:   Pat<(setle R32C:$rA, R32C:$rB),
+                    (XORIr32 (CGTIr32 R32C:$rA, R32C:$rB), 0xffffffff)>;
+def CLTEQIr32:  Pat<(setle R32C:$rA, i32ImmUns10:$imm),
+                    (XORIr32 (CGTIr32 R32C:$rA, i32ImmSExt10:$imm), 0xffffffff)>;
+
+def CLGTEQBr8:  SETCCBinOpReg<setuge, R8C, ORr8, CLGTBr8, CEQBr8>;
+def CLGTEQBIr8: SETCCBinOpImm<setuge, R8C, immSExt8, i8, ORr8, CLGTBIr8, CEQBIr8>;
+def CLLTBr8:    SETCCBinOpReg<setult, R8C, NORr8, CLGTBr8, CEQBr8>;
+def CLLTBIr8:   SETCCBinOpImm<setult, R8C, immSExt8, i8, NORr8, CLGTBIr8, CEQBIr8>;
+def CLLTEQr8:   Pat<(setule R8C:$rA, R8C:$rB),
+                     (XORBIr8 (CLGTBIr8 R8C:$rA, R8C:$rB), 0xff)>;
+def CLLTEQIr8:  Pat<(setule R8C:$rA, immU8:$imm),
+                     (XORBIr8 (CLGTBIr8 R8C:$rA, immU8:$imm), 0xff)>;
+
+def CLGTEQHr16: SETCCBinOpReg<setuge, R16C, ORr16, CLGTHr16, CEQHr16>;
+def CLGTEQHIr16: SETCCBinOpImm<setuge, R16C, i16ImmUns10, i16,
+                              ORr16, CLGTHIr16, CEQHIr16>;
+def CLLTEQr16:   Pat<(setule R16C:$rA, R16C:$rB),
+                      (XORHIr16 (CLGTHIr16 R16C:$rA, R16C:$rB), 0xffff)>;
+def CLLTEQIr16:  Pat<(setule R16C:$rA, i16ImmUns10:$imm),
+                    (XORHIr16 (CLGTHIr16 R16C:$rA, i16ImmSExt10:$imm), 0xffff)>;
+
+
+def CLGTEQHr32: SETCCBinOpReg<setuge, R32C, ORr32, CLGTr32, CEQr32>;
+def CLGTEQHIr32: SETCCBinOpImm<setuge, R32C, i32ImmUns10, i32,
+                              ORr32, CLGTIr32, CEQIr32>;
+def CLLTEQr32:   Pat<(setule R32C:$rA, R32C:$rB),
+                    (XORIr32 (CLGTIr32 R32C:$rA, R32C:$rB), 0xffffffff)>;
+def CLLTEQIr32:  Pat<(setule R32C:$rA, i32ImmUns10:$imm),
+                    (XORIr32 (CLGTIr32 R32C:$rA, i32ImmSExt10:$imm), 0xffffffff)>;
+
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
 
 let isCall = 1,
   // All calls clobber the non-callee-saved registers:
@@ -2720,23 +3340,121 @@ let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, isBarrier = 1 in {
 
 def : Pat<(brcond (i16 (seteq R16C:$rA, 0)), bb:$dest), 
           (BRHZ R16C:$rA, bb:$dest)>;
-def : Pat<(brcond (i32 (seteq R32C:$rA, 0)), bb:$dest), 
-          (BRZ R32C:$rA, bb:$dest)>;
-
 def : Pat<(brcond (i16 (setne R16C:$rA, 0)), bb:$dest), 
           (BRHNZ R16C:$rA, bb:$dest)>;
+
+def : Pat<(brcond (i32 (seteq R32C:$rA, 0)), bb:$dest), 
+          (BRZ R32C:$rA, bb:$dest)>;
 def : Pat<(brcond (i32 (setne R32C:$rA, 0)), bb:$dest), 
           (BRNZ R32C:$rA, bb:$dest)>;
 
-def : Pat<(brcond (i16 (setne R16C:$rA, i16ImmSExt10:$val)), bb:$dest),
-          (BRHNZ (CEQHIr16 R16C:$rA, i16ImmSExt10:$val), bb:$dest)>;
-def : Pat<(brcond (i32 (setne R32C:$rA, i32ImmSExt10:$val)), bb:$dest),
-          (BRNZ (CEQIr32 R32C:$rA, i32ImmSExt10:$val), bb:$dest)>;
+multiclass BranchCondEQ<PatFrag cond, SPUInstr brinst16, SPUInstr brinst32>
+{
+  def r16imm: Pat<(brcond (i16 (cond R16C:$rA, i16ImmSExt10:$val)), bb:$dest),
+                  (brinst16 (CEQHIr16 R16C:$rA, i16ImmSExt10:$val), bb:$dest)>;
 
-def : Pat<(brcond (i16 (setne R16C:$rA, R16C:$rB)), bb:$dest),
-          (BRHNZ (CEQHr16 R16C:$rA, R16:$rB), bb:$dest)>;
-def : Pat<(brcond (i32 (setne R32C:$rA, R32C:$rB)), bb:$dest),
-          (BRNZ (CEQr32 R32C:$rA, R32C:$rB), bb:$dest)>;
+  def r16 : Pat<(brcond (i16 (cond R16C:$rA, R16C:$rB)), bb:$dest),
+                (brinst16 (CEQHr16 R16C:$rA, R16:$rB), bb:$dest)>;
+
+  def r32imm : Pat<(brcond (i32 (cond R32C:$rA, i32ImmSExt10:$val)), bb:$dest),
+                   (brinst32 (CEQIr32 R32C:$rA, i32ImmSExt10:$val), bb:$dest)>;
+
+  def r32 : Pat<(brcond (i32 (cond R32C:$rA, R32C:$rB)), bb:$dest),
+                (brinst32 (CEQr32 R32C:$rA, R32C:$rB), bb:$dest)>;
+}
+
+defm BRCONDeq : BranchCondEQ<seteq, BRHZ, BRZ>;
+defm BRCONDne : BranchCondEQ<setne, BRHNZ, BRNZ>;
+
+multiclass BranchCondLGT<PatFrag cond, SPUInstr brinst16, SPUInstr brinst32>
+{
+  def r16imm : Pat<(brcond (i16 (cond R16C:$rA, i16ImmSExt10:$val)), bb:$dest),
+                   (brinst16 (CLGTHIr16 R16C:$rA, i16ImmSExt10:$val), bb:$dest)>;
+
+  def r16 : Pat<(brcond (i16 (cond R16C:$rA, R16C:$rB)), bb:$dest),
+                (brinst16 (CLGTHr16 R16C:$rA, R16:$rB), bb:$dest)>;
+
+  def r32imm : Pat<(brcond (i32 (cond R32C:$rA, i32ImmSExt10:$val)), bb:$dest),
+                   (brinst32 (CLGTIr32 R32C:$rA, i32ImmSExt10:$val), bb:$dest)>;
+
+  def r32 : Pat<(brcond (i32 (cond R32C:$rA, R32C:$rB)), bb:$dest),
+                (brinst32 (CLGTr32 R32C:$rA, R32C:$rB), bb:$dest)>;
+}
+
+defm BRCONDugt : BranchCondLGT<setugt, BRHNZ, BRNZ>;
+defm BRCONDule : BranchCondLGT<setule, BRHZ, BRZ>;
+
+multiclass BranchCondLGTEQ<PatFrag cond, SPUInstr orinst16, SPUInstr brinst16,
+                           SPUInstr orinst32, SPUInstr brinst32>
+{
+  def r16imm: Pat<(brcond (i16 (cond R16C:$rA, i16ImmSExt10:$val)), bb:$dest),
+                  (brinst16 (orinst16 (CLGTHIr16 R16C:$rA, i16ImmSExt10:$val),
+                                      (CEQHIr16 R16C:$rA, i16ImmSExt10:$val)),
+                            bb:$dest)>;
+
+  def r16: Pat<(brcond (i16 (cond R16C:$rA, R16C:$rB)), bb:$dest),
+               (brinst16 (orinst16 (CLGTHr16 R16C:$rA, R16:$rB),
+                                   (CEQHr16 R16C:$rA, R16:$rB)),
+                         bb:$dest)>;
+
+  def r32imm : Pat<(brcond (i32 (cond R32C:$rA, i32ImmSExt10:$val)), bb:$dest),
+                   (brinst32 (orinst32 (CLGTIr32 R32C:$rA, i32ImmSExt10:$val),
+                                       (CEQIr32 R32C:$rA, i32ImmSExt10:$val)),
+                             bb:$dest)>;
+
+  def r32 : Pat<(brcond (i32 (cond R32C:$rA, R32C:$rB)), bb:$dest),
+                (brinst32 (orinst32 (CLGTr32 R32C:$rA, R32C:$rB),
+                                    (CEQr32 R32C:$rA, R32C:$rB)),
+                          bb:$dest)>;
+}
+
+defm BRCONDuge : BranchCondLGTEQ<setuge, ORr16, BRHNZ, ORr32, BRNZ>;
+defm BRCONDult : BranchCondLGTEQ<setult, ORr16, BRHZ, ORr32, BRZ>;
+
+multiclass BranchCondGT<PatFrag cond, SPUInstr brinst16, SPUInstr brinst32>
+{
+  def r16imm : Pat<(brcond (i16 (cond R16C:$rA, i16ImmSExt10:$val)), bb:$dest),
+                   (brinst16 (CGTHIr16 R16C:$rA, i16ImmSExt10:$val), bb:$dest)>;
+
+  def r16 : Pat<(brcond (i16 (cond R16C:$rA, R16C:$rB)), bb:$dest),
+                (brinst16 (CGTHr16 R16C:$rA, R16:$rB), bb:$dest)>;
+
+  def r32imm : Pat<(brcond (i32 (cond R32C:$rA, i32ImmSExt10:$val)), bb:$dest),
+                   (brinst32 (CGTIr32 R32C:$rA, i32ImmSExt10:$val), bb:$dest)>;
+
+  def r32 : Pat<(brcond (i32 (cond R32C:$rA, R32C:$rB)), bb:$dest),
+                (brinst32 (CGTr32 R32C:$rA, R32C:$rB), bb:$dest)>;
+}
+
+defm BRCONDgt : BranchCondGT<setgt, BRHNZ, BRNZ>;
+defm BRCONDle : BranchCondGT<setle, BRHZ, BRZ>;
+
+multiclass BranchCondGTEQ<PatFrag cond, SPUInstr orinst16, SPUInstr brinst16,
+                          SPUInstr orinst32, SPUInstr brinst32>
+{
+  def r16imm: Pat<(brcond (i16 (cond R16C:$rA, i16ImmSExt10:$val)), bb:$dest),
+                  (brinst16 (orinst16 (CGTHIr16 R16C:$rA, i16ImmSExt10:$val),
+                                      (CEQHIr16 R16C:$rA, i16ImmSExt10:$val)),
+                            bb:$dest)>;
+
+  def r16: Pat<(brcond (i16 (cond R16C:$rA, R16C:$rB)), bb:$dest),
+               (brinst16 (orinst16 (CGTHr16 R16C:$rA, R16:$rB),
+                                   (CEQHr16 R16C:$rA, R16:$rB)),
+                         bb:$dest)>;
+
+  def r32imm : Pat<(brcond (i32 (cond R32C:$rA, i32ImmSExt10:$val)), bb:$dest),
+                   (brinst32 (orinst32 (CGTIr32 R32C:$rA, i32ImmSExt10:$val),
+                                       (CEQIr32 R32C:$rA, i32ImmSExt10:$val)),
+                             bb:$dest)>;
+
+  def r32 : Pat<(brcond (i32 (cond R32C:$rA, R32C:$rB)), bb:$dest),
+                (brinst32 (orinst32 (CGTr32 R32C:$rA, R32C:$rB),
+                                    (CEQr32 R32C:$rA, R32C:$rB)),
+                          bb:$dest)>;
+}
+
+defm BRCONDge : BranchCondGTEQ<setge, ORr16, BRHNZ, ORr32, BRNZ>;
+defm BRCONDlt : BranchCondGTEQ<setlt, ORr16, BRHZ, ORr32, BRZ>;
 
 let isTerminator = 1, isBarrier = 1 in {
   let isReturn = 1 in {
@@ -3165,7 +3883,7 @@ def : Pat<(fabs (v2f64 VECREG:$rA)),
 // in the odd pipeline)
 //===----------------------------------------------------------------------===//
 
-def ENOP : I<(outs), (ins), "enop", ExecNOP> {
+def ENOP : SPUInstr<(outs), (ins), "enop", ExecNOP> {
   let Pattern = [];
 
   let Inst{0-10} = 0b10000000010;
@@ -3174,7 +3892,7 @@ def ENOP : I<(outs), (ins), "enop", ExecNOP> {
   let Inst{25-31} = 0;
 }
 
-def LNOP : I<(outs), (ins), "lnop", LoadNOP> {
+def LNOP : SPUInstr<(outs), (ins), "lnop", LoadNOP> {
   let Pattern = [];
 
   let Inst{0-10} = 0b10000000000;
@@ -3276,7 +3994,7 @@ def : Pat<(SPUextract_i8_sext VECREG:$rSrc),
 
 // zext 8->16: Zero extend bytes to halfwords
 def : Pat<(i16 (zext R8C:$rSrc)),
-          (ANDHI1To2 R8C:$rSrc, 0xff)>;
+          (ANDHIi8i16 R8C:$rSrc, 0xff)>;
 
 // zext 8->32 from preferred slot in load/store
 def : Pat<(SPUextract_i8_zext VECREG:$rSrc),
@@ -3285,33 +4003,32 @@ def : Pat<(SPUextract_i8_zext VECREG:$rSrc),
 
 // zext 8->32: Zero extend bytes to words
 def : Pat<(i32 (zext R8C:$rSrc)),
-          (ANDI1To4 R8C:$rSrc, 0xff)>;
+          (ANDIi8i32 R8C:$rSrc, 0xff)>;
 
 // anyext 8->16: Extend 8->16 bits, irrespective of sign
 def : Pat<(i16 (anyext R8C:$rSrc)),
-          (ORHI1To2 R8C:$rSrc, 0)>;
+          (ORHIi8i16 R8C:$rSrc, 0)>;
 
 // anyext 8->32: Extend 8->32 bits, irrespective of sign
 def : Pat<(i32 (anyext R8C:$rSrc)),
-          (ORI1To4 R8C:$rSrc, 0)>;
+          (ORIi8i32 R8C:$rSrc, 0)>;
 
-// zext 16->32: Zero extend halfwords to words (note that we have to juggle the
-// 0xffff constant since it will not fit into an immediate.)
+// zext 16->32: Zero extend halfwords to words
 def : Pat<(i32 (zext R16C:$rSrc)),
-          (AND2To4 R16C:$rSrc, (ILAr32 0xffff))>;
+          (ANDi16i32 R16C:$rSrc, (ILAr32 0xffff))>;
 
 def : Pat<(i32 (zext (and R16C:$rSrc, 0xf))),
-          (ANDI2To4 R16C:$rSrc, 0xf)>;
+          (ANDIi16i32 R16C:$rSrc, 0xf)>;
 
 def : Pat<(i32 (zext (and R16C:$rSrc, 0xff))),
-          (ANDI2To4 R16C:$rSrc, 0xff)>;
+          (ANDIi16i32 R16C:$rSrc, 0xff)>;
 
 def : Pat<(i32 (zext (and R16C:$rSrc, 0xfff))),
-          (ANDI2To4 R16C:$rSrc, 0xfff)>;
+          (ANDIi16i32 R16C:$rSrc, 0xfff)>;
 
 // anyext 16->32: Extend 16->32 bits, irrespective of sign
 def : Pat<(i32 (anyext R16C:$rSrc)),
-          (ORI2To4 R16C:$rSrc, 0)>;
+          (ORIi16i32 R16C:$rSrc, 0)>;
 
 //===----------------------------------------------------------------------===//
 // Address generation: SPU, like PPC, has to split addresses into high and

@@ -14,7 +14,7 @@
 
 // This was kiped from the PPC instruction formats (seemed like a good idea...)
 
-class I<dag OOL, dag IOL, string asmstr, InstrItinClass itin>
+class SPUInstr<dag OOL, dag IOL, string asmstr, InstrItinClass itin>
         : Instruction {
   field bits<32> Inst;
 
@@ -28,7 +28,7 @@ class I<dag OOL, dag IOL, string asmstr, InstrItinClass itin>
 // RR Format
 class RRForm<bits<11> opcode, dag OOL, dag IOL, string asmstr, 
               InstrItinClass itin, list<dag> pattern>
-         : I<OOL, IOL, asmstr, itin> {
+         : SPUInstr<OOL, IOL, asmstr, itin> {
   bits<7> RA;
   bits<7> RB;
   bits<7> RT;
@@ -70,7 +70,7 @@ let RT = 0 in {
 // RRR Format
 class RRRForm<bits<4> opcode, dag OOL, dag IOL, string asmstr,
               InstrItinClass itin, list<dag> pattern>
-        : I<OOL, IOL, asmstr, itin>
+        : SPUInstr<OOL, IOL, asmstr, itin>
 {
   bits<7> RA;
   bits<7> RB;
@@ -89,7 +89,7 @@ class RRRForm<bits<4> opcode, dag OOL, dag IOL, string asmstr,
 // RI7 Format
 class RI7Form<bits<11> opcode, dag OOL, dag IOL, string asmstr,
               InstrItinClass itin, list<dag> pattern>
-        : I<OOL, IOL, asmstr, itin>
+        : SPUInstr<OOL, IOL, asmstr, itin>
 {
   bits<7> i7;
   bits<7> RA;
@@ -106,7 +106,7 @@ class RI7Form<bits<11> opcode, dag OOL, dag IOL, string asmstr,
 // CVTIntFp Format
 class CVTIntFPForm<bits<10> opcode, dag OOL, dag IOL, string asmstr,
                    InstrItinClass itin, list<dag> pattern>
-        : I<OOL, IOL, asmstr, itin>
+        : SPUInstr<OOL, IOL, asmstr, itin>
 {
   bits<7> RA;
   bits<7> RT;
@@ -149,7 +149,7 @@ let RA = 0 in {
 
 // Branch indirect external data forms:
 class BISLEDForm<bits<2> DE_flag, string asmstr, list<dag> pattern>
-         : I<(outs), (ins indcalltarget:$func), asmstr, BranchResolv>
+         : SPUInstr<(outs), (ins indcalltarget:$func), asmstr, BranchResolv>
 {
   bits<7> Rcalldest;
 
@@ -166,7 +166,7 @@ class BISLEDForm<bits<2> DE_flag, string asmstr, list<dag> pattern>
 // RI10 Format
 class RI10Form<bits<8> opcode, dag OOL, dag IOL, string asmstr,
               InstrItinClass itin, list<dag> pattern>
-        : I<OOL, IOL, asmstr, itin>
+        : SPUInstr<OOL, IOL, asmstr, itin>
 {
   bits<10> i10;
   bits<7> RA;
@@ -182,43 +182,27 @@ class RI10Form<bits<8> opcode, dag OOL, dag IOL, string asmstr,
 
 // RI10 Format, where the constant is zero (or effectively ignored by the
 // SPU)
-class RI10Form_1<bits<8> opcode, dag OOL, dag IOL, string asmstr,
-                 InstrItinClass itin, list<dag> pattern>
-        : I<OOL, IOL, asmstr, itin>
-{
-  bits<7> RA;
-  bits<7> RT;
-
-  let Pattern = pattern;
-
-  let Inst{0-7} = opcode;
-  let Inst{8-17} = 0;
-  let Inst{18-24} = RA;
-  let Inst{25-31} = RT;
+let i10 = 0 in {
+  class RI10Form_1<bits<8> opcode, dag OOL, dag IOL, string asmstr,
+                   InstrItinClass itin, list<dag> pattern>
+          : RI10Form<opcode, OOL, IOL, asmstr, itin, pattern>
+  { }
 }
 
 // RI10 Format, where RT is ignored.
 // This format is used primarily by the Halt If ... Immediate set of
 // instructions
-class RI10Form_2<bits<8> opcode, dag OOL, dag IOL, string asmstr,
-                 InstrItinClass itin, list<dag> pattern>
-        : I<OOL, IOL, asmstr, itin>
-{
-  bits<10> i10;
-  bits<7> RA;
-
-  let Pattern = pattern;
-
-  let Inst{0-7} = opcode;
-  let Inst{8-17} = i10;
-  let Inst{18-24} = RA;
-  let Inst{25-31} = 0;
+let RT = 0 in {
+  class RI10Form_2<bits<8> opcode, dag OOL, dag IOL, string asmstr,
+                   InstrItinClass itin, list<dag> pattern>
+        : RI10Form<opcode, OOL, IOL, asmstr, itin, pattern>
+  { }
 }
 
 // RI16 Format
 class RI16Form<bits<9> opcode, dag OOL, dag IOL, string asmstr,
               InstrItinClass itin, list<dag> pattern>
-        : I<OOL, IOL, asmstr, itin>
+        : SPUInstr<OOL, IOL, asmstr, itin>
 {
   bits<16> i16;
   bits<7> RT;
@@ -254,7 +238,7 @@ let RT = 0 in {
 // RI18 Format
 class RI18Form<bits<7> opcode, dag OOL, dag IOL, string asmstr,
               InstrItinClass itin, list<dag> pattern>
-        : I<OOL, IOL, asmstr, itin>
+        : SPUInstr<OOL, IOL, asmstr, itin>
 {
   bits<18> i18;
   bits<7> RT;
@@ -306,7 +290,7 @@ class RR_Int_v4i32<bits<11> opcode, string opc, InstrItinClass itin,
 //===----------------------------------------------------------------------===//
 
 class Pseudo<dag OOL, dag IOL, string asmstr, list<dag> pattern>
-    : I<OOL, IOL, asmstr, NoItinerary> {
+    : SPUInstr<OOL, IOL, asmstr, NoItinerary> {
   let Pattern = pattern;
   let Inst{31-0} = 0;
 }

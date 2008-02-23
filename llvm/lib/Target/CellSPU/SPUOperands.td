@@ -63,7 +63,7 @@ def HI16_vec : SDNodeXForm<scalar_to_vector, [{
 // simm7 predicate - True if the immediate fits in an 7-bit signed
 // field.
 def simm7: PatLeaf<(imm), [{
-  int sextVal = ((((int) N->getValue()) << 25) >> 25);
+  int sextVal = int(N->getSignExtended());
   return (sextVal >= -64 && sextVal <= 63);
 }]>;
 
@@ -161,6 +161,13 @@ def hi16 : PatLeaf<(imm), [{
 
   return false;
 }], HI16>;
+
+def bitshift : PatLeaf<(imm), [{
+  // bitshift predicate - returns true if 0 < imm <= 7 for SHLQBII
+  // (shift left quadword by bits immediate)
+  int64_t Val = N->getValue();
+  return (Val > 0 && Val <= 7);
+}]>;
 
 //===----------------------------------------------------------------------===//
 // Floating point operands:
@@ -444,6 +451,10 @@ def u7imm_i32: Operand<i32> {
 
 // Halfword, signed 10-bit constant
 def s10imm : Operand<i16> {
+  let PrintMethod = "printS10ImmOperand";
+}
+
+def s10imm_i8: Operand<i8> {
   let PrintMethod = "printS10ImmOperand";
 }
 

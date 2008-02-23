@@ -32,7 +32,7 @@ def SPUcall       : SDNode<"SPUISD::CALL", SDT_SPUCall,
 
 // Operand type constraints for vector shuffle/permute operations
 def SDT_SPUshuffle   : SDTypeProfile<1, 3, [
-  SDTCisVT<3, v16i8>, SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>
+  SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>
 ]>;
 
 // Unary, binary v16i8 operator type constraints:
@@ -62,27 +62,12 @@ def SPUfsmbi_type: SDTypeProfile<1, 1, [
   SDTCisVT<1, i32>]>;
 
 // SELB type constraints:
-def SPUselb_type_v16i8: SDTypeProfile<1, 3, [
-  SDTCisVT<0, v16i8>, SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>,
-  SDTCisSameAs<0, 3> ]>;
-
-def SPUselb_type_v8i16: SDTypeProfile<1, 3, [
-  SDTCisVT<0, v8i16>, SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>,
-  SDTCisSameAs<0, 3> ]>;
-
-def SPUselb_type_v4i32: SDTypeProfile<1, 3, [
-  SDTCisVT<0, v4i32>, SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>,
-  SDTCisSameAs<0, 3> ]>;
+def SPUselb_type: SDTypeProfile<1, 3, [
+  SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>, SDTCisSameAs<0, 3> ]>;
 
 // SPU Vector shift pseudo-instruction type constraints
-def SPUvecshift_type_v16i8: SDTypeProfile<1, 2, [
-  SDTCisVT<0, v16i8>, SDTCisSameAs<0, 1>, SDTCisInt<2>]>;
-
-def SPUvecshift_type_v8i16: SDTypeProfile<1, 2, [
-  SDTCisVT<0, v8i16>, SDTCisSameAs<0, 1>, SDTCisInt<2>]>;
-
-def SPUvecshift_type_v4i32: SDTypeProfile<1, 2, [
-  SDTCisVT<0, v4i32>, SDTCisSameAs<0, 1>, SDTCisInt<2>]>;
+def SPUvecshift_type: SDTypeProfile<1, 2, [
+  SDTCisSameAs<0, 1>, SDTCisInt<2>]>;
 
 //===----------------------------------------------------------------------===//
 // Synthetic/pseudo-instructions
@@ -116,41 +101,37 @@ def SPUmpyh_i32: SDNode<"SPUISD::MPYH", SDTIntBinOp, []>;
 // Used to compute intermediate products for 16-bit multiplies
 def SPUmpyhh_v8i16: SDNode<"SPUISD::MPYHH", SPUv8i16_binop, []>;
 
+// Shift left quadword by bits and bytes
+def SPUshlquad_l_bits: SDNode<"SPUISD::SHLQUAD_L_BITS", SPUvecshift_type, []>;
+def SPUshlquad_l_bytes: SDNode<"SPUISD::SHLQUAD_L_BYTES", SPUvecshift_type, []>;
+
 // Vector shifts (ISD::SHL,SRL,SRA are for _integers_ only):
-def SPUvec_shl_v8i16: SDNode<"SPUISD::VEC_SHL", SPUvecshift_type_v8i16, []>;
-def SPUvec_srl_v8i16: SDNode<"SPUISD::VEC_SRL", SPUvecshift_type_v8i16, []>;
-def SPUvec_sra_v8i16: SDNode<"SPUISD::VEC_SRA", SPUvecshift_type_v8i16, []>;
+def SPUvec_shl: SDNode<"SPUISD::VEC_SHL", SPUvecshift_type, []>;
+def SPUvec_srl: SDNode<"SPUISD::VEC_SRL", SPUvecshift_type, []>;
+def SPUvec_sra: SDNode<"SPUISD::VEC_SRA", SPUvecshift_type, []>;
 
-def SPUvec_shl_v4i32: SDNode<"SPUISD::VEC_SHL", SPUvecshift_type_v4i32, []>;
-def SPUvec_srl_v4i32: SDNode<"SPUISD::VEC_SRL", SPUvecshift_type_v4i32, []>;
-def SPUvec_sra_v4i32: SDNode<"SPUISD::VEC_SRA", SPUvecshift_type_v4i32, []>;
+def SPUvec_rotl: SDNode<"SPUISD::VEC_ROTL", SPUvecshift_type, []>;
+def SPUvec_rotr: SDNode<"SPUISD::VEC_ROTR", SPUvecshift_type, []>;
 
-def SPUvec_rotl_v8i16: SDNode<"SPUISD::VEC_ROTL", SPUvecshift_type_v8i16, []>;
-def SPUvec_rotl_v4i32: SDNode<"SPUISD::VEC_ROTL", SPUvecshift_type_v4i32, []>;
+def SPUrotquad_rz_bytes: SDNode<"SPUISD::ROTQUAD_RZ_BYTES",
+                                    SPUvecshift_type, []>;
+def SPUrotquad_rz_bits: SDNode<"SPUISD::ROTQUAD_RZ_BITS",
+                                    SPUvecshift_type, []>;
 
-def SPUvec_rotr_v8i16: SDNode<"SPUISD::VEC_ROTR", SPUvecshift_type_v8i16, []>;
-def SPUvec_rotr_v4i32: SDNode<"SPUISD::VEC_ROTR", SPUvecshift_type_v4i32, []>;
-
-def SPUrotbytes_right_zfill: SDNode<"SPUISD::ROTBYTES_RIGHT_Z",
-                                    SPUvecshift_type_v16i8, []>;
 def SPUrotbytes_right_sfill: SDNode<"SPUISD::ROTBYTES_RIGHT_S",
-                                    SPUvecshift_type_v16i8, []>;
+                                    SPUvecshift_type, []>;
+
 def SPUrotbytes_left: SDNode<"SPUISD::ROTBYTES_LEFT",
-                             SPUvecshift_type_v16i8, []>;
+                             SPUvecshift_type, []>;
 
 def SPUrotbytes_left_chained : SDNode<"SPUISD::ROTBYTES_LEFT_CHAINED",
-                                      SPUvecshift_type_v16i8, [SDNPHasChain]>;
+                                      SPUvecshift_type, [SDNPHasChain]>;
 
 // SPU form select mask for bytes, immediate
 def SPUfsmbi: SDNode<"SPUISD::FSMBI", SPUfsmbi_type, []>;
 
 // SPU select bits instruction
-def SPUselb_v16i8: SDNode<"SPUISD::SELB", SPUselb_type_v16i8, []>;
-def SPUselb_v8i16: SDNode<"SPUISD::SELB", SPUselb_type_v8i16, []>;
-def SPUselb_v4i32: SDNode<"SPUISD::SELB", SPUselb_type_v4i32, []>;
-
-// SPU single precision floating point constant load
-def SPUFPconstant: SDNode<"SPUISD::SFPConstant", SDTFPUnaryOp, []>;
+def SPUselb: SDNode<"SPUISD::SELB", SPUselb_type, []>;
 
 // SPU floating point interpolate
 def SPUinterpolate : SDNode<"SPUISD::FPInterp", SDTFPBinOp, []>;
@@ -158,8 +139,8 @@ def SPUinterpolate : SDNode<"SPUISD::FPInterp", SDTFPBinOp, []>;
 // SPU floating point reciprocal estimate (used for fdiv)
 def SPUreciprocalEst: SDNode<"SPUISD::FPRecipEst", SDTFPUnaryOp, []>;
 
-def SDT_vec_promote   : SDTypeProfile<1, 1, []>;
-def SPUpromote_scalar: SDNode<"SPUISD::PROMOTE_SCALAR", SDT_vec_promote, []>;
+def SDTpromote_scalar: SDTypeProfile<1, 1, []>;
+def SPUpromote_scalar: SDNode<"SPUISD::PROMOTE_SCALAR", SDTpromote_scalar, []>;
 
 def SPU_vec_demote   : SDTypeProfile<1, 1, []>;
 def SPUextract_elt0: SDNode<"SPUISD::EXTRACT_ELT0", SPU_vec_demote, []>;

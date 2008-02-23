@@ -166,24 +166,25 @@ namespace {
   struct valtype_map_s {
     MVT::ValueType VT;
     unsigned ldresult_ins;      /// LDRESULT instruction (0 = undefined)
+    bool ldresult_imm;          /// LDRESULT instruction requires immediate?
     int prefslot_byte;          /// Byte offset of the "preferred" slot
   };
 
   const valtype_map_s valtype_map[] = {
-    { MVT::i1,    0,            3 },
-    { MVT::i8,    SPU::ORBIr8,  3 },
-    { MVT::i16,   SPU::ORHIr16, 2 },
-    { MVT::i32,   SPU::ORIr32,  0 },
-    { MVT::i64,   SPU::ORIr64,  0 },
-    { MVT::f32,   0,            0 },
-    { MVT::f64,   0,            0 },
+    { MVT::i1,    0,            false, 3 },
+    { MVT::i8,    SPU::ORBIr8,  true,  3 },
+    { MVT::i16,   SPU::ORHIr16, true,  2 },
+    { MVT::i32,   SPU::ORIr32,  true,  0 },
+    { MVT::i64,   SPU::ORr64,   false, 0 },
+    { MVT::f32,   SPU::ORf32,   false, 0 },
+    { MVT::f64,   SPU::ORf64,   false, 0 },
     // vector types... (sigh!)
-    { MVT::v16i8, 0,            0 },
-    { MVT::v8i16, 0,            0 },
-    { MVT::v4i32, 0,            0 },
-    { MVT::v2i64, 0,            0 },
-    { MVT::v4f32, 0,            0 },
-    { MVT::v2f64, 0,            0 }
+    { MVT::v16i8, 0,            false, 0 },
+    { MVT::v8i16, 0,            false, 0 },
+    { MVT::v4i32, 0,            false, 0 },
+    { MVT::v2i64, 0,            false, 0 },
+    { MVT::v4f32, 0,            false, 0 },
+    { MVT::v2f64, 0,            false, 0 }
   };
 
   const size_t n_valtype_map = sizeof(valtype_map) / sizeof(valtype_map[0]);
@@ -603,7 +604,7 @@ SPUDAGToDAGISel::Select(SDOperand Op) {
         // to i8, then i8 to i16 in logical/branching operations.
         DEBUG(cerr << "CellSPU: Coalescing (zero_extend:i16 (and:i8 "
                       "<arg>, <const>))\n");
-        NewOpc = SPU::ANDHI1To2;
+        NewOpc = SPU::ANDHIi8i16;
         Ops[0] = Op1.getOperand(0);
         Ops[1] = Op1.getOperand(1);
         n_ops = 2;
@@ -615,24 +616,23 @@ SPUDAGToDAGISel::Select(SDOperand Op) {
     SDOperand Arg = N->getOperand(0);
     SDOperand Chain = N->getOperand(1);
     SDNode *Result;
+    const valtype_map_s *vtm = getValueTypeMapEntry(VT);
+
+    if (vtm->ldresult_ins == 0) {
+      cerr << "LDRESULT for unsupported type: "
+           << MVT::getValueTypeString(VT)
+           << "\n";
+      abort();
+    }
 
     AddToISelQueue(Arg);
-    if (!MVT::isFloatingPoint(VT)) {
+    Opc = vtm->ldresult_ins;
+    if (vtm->ldresult_imm) {
       SDOperand Zero = CurDAG->getTargetConstant(0, VT);
-      const valtype_map_s *vtm = getValueTypeMapEntry(VT);
-
-      if (vtm->ldresult_ins == 0) {
-        cerr << "LDRESULT for unsupported type: "
-             << MVT::getValueTypeString(VT)
-             << "\n";
-        abort();
-      } else
-        Opc = vtm->ldresult_ins;
 
       AddToISelQueue(Zero);
       Result = CurDAG->getTargetNode(Opc, VT, MVT::Other, Arg, Zero, Chain);
     } else {
-      Opc = (VT == MVT::f32 ? SPU::ORf32 : SPU::ORf64);
       Result = CurDAG->getTargetNode(Opc, MVT::Other, Arg, Arg, Chain);
     }
 
