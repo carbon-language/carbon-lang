@@ -863,7 +863,7 @@ rewriteInstructionForSpills(const LiveInterval &li, const VNInfo *VNI,
                  const TargetRegisterClass* rc,
                  SmallVector<int, 4> &ReMatIds,
                  const MachineLoopInfo *loopInfo,
-                 unsigned &NewVReg, bool &HasDef, bool &HasUse,
+                 unsigned &NewVReg, unsigned ImpUse, bool &HasDef, bool &HasUse,
                  std::map<unsigned,unsigned> &MBBVRegsMap,
                  std::vector<LiveInterval*> &NewLIs) {
   bool CanFold = false;
@@ -894,7 +894,8 @@ rewriteInstructionForSpills(const LiveInterval &li, const VNInfo *VNI,
           // spill weight of the register interval.
           unsigned loopDepth = loopInfo->getLoopDepth(MI->getParent());
           LiveInterval &ImpLi = getInterval(ImpUse);
-          ImpLi.weight -= getSpillWeight(false, true, loopDepth);
+          ImpLi.weight -=
+            getSpillWeight(false, true, loopDepth) / ImpLi.getSize();
         }
         RemoveMachineInstrFromMaps(MI);
         vrm.RemoveMachineInstrFromMaps(MI);
@@ -982,16 +983,6 @@ rewriteInstructionForSpills(const LiveInterval &li, const VNInfo *VNI,
             
     if (CreatedNewVReg) {
       if (DefIsReMat) {
-        unsigned ImpUse = getReMatImplicitUse(li, ReMatDefMI);
-        if (ImpUse) {
-          // Re-matting an instruction with virtual register use. Add the
-          // register as an implicit use on the use MI and update the register
-          // interval's spill weight.
-          unsigned loopDepth = loopInfo->getLoopDepth(MI->getParent());
-          LiveInterval &ImpLi = getInterval(ImpUse);
-          ImpLi.weight += getSpillWeight(false, true, loopDepth);
-          MI->addOperand(MachineOperand::CreateReg(ImpUse, false, true));
-        }
         vrm.setVirtIsReMaterialized(NewVReg, ReMatDefMI/*, CanDelete*/);
         if (ReMatIds[VNI->id] == VirtRegMap::MAX_STACK_SLOT) {
           // Each valnum may have its own remat id.
@@ -1015,6 +1006,11 @@ rewriteInstructionForSpills(const LiveInterval &li, const VNInfo *VNI,
       assert(Slot != VirtRegMap::NO_STACK_SLOT);
       vrm.assignVirt2StackSlot(NewVReg, Slot);
     }
+
+    // Re-matting an instruction with virtual register use. Add the
+    // register as an implicit use on the use MI.
+    if (DefIsReMat && ImpUse)
+      MI->addOperand(MachineOperand::CreateReg(ImpUse, false, true));
 
     // create a new register interval for this spill / remat.
     LiveInterval &nI = getOrCreateInterval(NewVReg);
@@ -1129,6 +1125,7 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
   }
   std::sort(RewriteMIs.begin(), RewriteMIs.end(), RewriteInfoCompare());
 
+  unsigned ImpUse = DefIsReMat ? getReMatImplicitUse(li, ReMatDefMI) : 0;
   // Now rewrite the defs and uses.
   for (unsigned i = 0, e = RewriteMIs.size(); i != e; ) {
     RewriteInfo &rwi = RewriteMIs[i];
@@ -1139,13 +1136,26 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
     MachineInstr *MI = rwi.MI;
     // If MI def and/or use the same register multiple times, then there
     // are multiple entries.
+    unsigned NumUses = MIHasUse;
     while (i != e && RewriteMIs[i].MI == MI) {
       assert(RewriteMIs[i].Index == index);
-      MIHasUse |= RewriteMIs[i].HasUse;
+      bool isUse = RewriteMIs[i].HasUse;
+      if (isUse) ++NumUses;
+      MIHasUse |= isUse;
       MIHasDef |= RewriteMIs[i].HasDef;
       ++i;
     }
     MachineBasicBlock *MBB = MI->getParent();
+
+    if (ImpUse && MI != ReMatDefMI) {
+      // Re-matting an instruction with virtual register use. Update the
+      // register interval's spill weight.
+      unsigned loopDepth = loopInfo->getLoopDepth(MI->getParent());
+      LiveInterval &ImpLi = getInterval(ImpUse);
+      ImpLi.weight +=
+        getSpillWeight(false, true, loopDepth) * NumUses / ImpLi.getSize();
+    }
+
     unsigned MBBId = MBB->getNumber();
     unsigned ThisVReg = 0;
     if (TrySplit) {
@@ -1185,7 +1195,7 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
                                 index, end, MI, ReMatOrigDefMI, ReMatDefMI,
                                 Slot, LdSlot, isLoad, isLoadSS, DefIsReMat,
                                 CanDelete, vrm, rc, ReMatIds, loopInfo, NewVReg,
-                                HasDef, HasUse, MBBVRegsMap, NewLIs);
+                                ImpUse, HasDef, HasUse, MBBVRegsMap, NewLIs);
     if (!HasDef && !HasUse)
       continue;
 
@@ -1570,7 +1580,9 @@ addIntervalsForSpills(const LiveInterval &li,
             // interval's spill weight.
             unsigned loopDepth = loopInfo->getLoopDepth(MI->getParent());
             LiveInterval &ImpLi = getInterval(ImpUse);
-            ImpLi.weight += getSpillWeight(false, true, loopDepth);
+            ImpLi.weight +=
+              getSpillWeight(false, true, loopDepth) / ImpLi.getSize();
+
             MI->addOperand(MachineOperand::CreateReg(ImpUse, false, true));
           }
         }
