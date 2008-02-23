@@ -646,27 +646,9 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li,
 
   int FrameIdx = 0;
   if (tii_->isLoadFromStackSlot(MI, FrameIdx) &&
-      mf_->getFrameInfo()->isImmutableObjectIndex(FrameIdx)) {
-    // This is a load from fixed stack slot. It can be rematerialized unless
-    // it's re-defined by a two-address instruction.
-    isLoad = true;
-    for (LiveInterval::const_vni_iterator i = li.vni_begin(), e = li.vni_end();
-         i != e; ++i) {
-      const VNInfo *VNI = *i;
-      if (VNI == ValNo)
-        continue;
-      unsigned DefIdx = VNI->def;
-      if (DefIdx == ~1U)
-        continue; // Dead val#.
-      MachineInstr *DefMI = (DefIdx == ~0u)
-        ? NULL : getInstructionFromIndex(DefIdx);
-      if (DefMI && DefMI->isRegReDefinedByTwoAddr(li.reg)) {
-        isLoad = false;
-        return false;
-      }
-    }
+      mf_->getFrameInfo()->isImmutableObjectIndex(FrameIdx))
+    // This is a load from fixed stack slot. It can be rematerialized.
     return true;
-  }
 
   if (tii_->isTriviallyReMaterializable(MI)) {
     isLoad = TID.isSimpleLoad();
@@ -753,6 +735,10 @@ bool LiveIntervals::tryFoldMemoryOperand(MachineInstr* &MI,
     }
     FoldOps.push_back(OpIdx);
   }
+
+  // Can't fold a load from fixed stack slot into a two address instruction.
+  if (isSS && DefMI && (MRInfo & VirtRegMap::isMod))
+    return false;
 
   MachineInstr *fmi = isSS ? tii_->foldMemoryOperand(*mf_, MI, FoldOps, Slot)
                            : tii_->foldMemoryOperand(*mf_, MI, FoldOps, DefMI);
