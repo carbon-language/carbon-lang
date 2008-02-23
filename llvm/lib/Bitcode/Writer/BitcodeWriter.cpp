@@ -747,23 +747,15 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
   case Instruction::GetResult:
     Code = bitc::FUNC_CODE_INST_GETRESULT;
     PushValueAndType(I.getOperand(0), InstID, Vals, VE);
-    Vals.push_back(cast<GetResultInst>(I).getIndex());
+    Vals.push_back(Log2_32(cast<GetResultInst>(I).getIndex())+1);
     break;
 
-  case Instruction::Ret: 
-    {
-      Code = bitc::FUNC_CODE_INST_RET;
-      unsigned NumOperands = I.getNumOperands();
-      if (NumOperands == 0)
-        AbbrevToUse = FUNCTION_INST_RET_VOID_ABBREV;
-      else if (NumOperands == 1) {
-        if (!PushValueAndType(I.getOperand(0), InstID, Vals, VE))
-          AbbrevToUse = FUNCTION_INST_RET_VAL_ABBREV;
-      } else {
-        for (unsigned i = 0, e = NumOperands; i != e; ++i)
-          PushValueAndType(I.getOperand(i), InstID, Vals, VE);
-      }
-    }
+  case Instruction::Ret:
+    Code = bitc::FUNC_CODE_INST_RET;
+    if (!I.getNumOperands())
+      AbbrevToUse = FUNCTION_INST_RET_VOID_ABBREV;
+    else if (!PushValueAndType(I.getOperand(0), InstID, Vals, VE))
+      AbbrevToUse = FUNCTION_INST_RET_VAL_ABBREV;
     break;
   case Instruction::Br:
     Code = bitc::FUNC_CODE_INST_BR;
