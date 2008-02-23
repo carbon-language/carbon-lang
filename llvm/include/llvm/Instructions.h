@@ -58,12 +58,12 @@ public:
   /// getArraySize - Get the number of element allocated, for a simple
   /// allocation of a single element, this will return a constant 1 value.
   ///
-  inline const Value *getArraySize() const { return getOperand(0); }
-  inline Value *getArraySize() { return getOperand(0); }
+  const Value *getArraySize() const { return getOperand(0); }
+  Value *getArraySize() { return getOperand(0); }
 
   /// getType - Overload to return most specific pointer type
   ///
-  inline const PointerType *getType() const {
+  const PointerType *getType() const {
     return reinterpret_cast<const PointerType*>(Instruction::getType());
   }
 
@@ -484,7 +484,7 @@ public:
   virtual GetElementPtrInst *clone() const;
 
   // getType - Overload to return most specific pointer type...
-  inline const PointerType *getType() const {
+  const PointerType *getType() const {
     return reinterpret_cast<const PointerType*>(Instruction::getType());
   }
 
@@ -520,11 +520,11 @@ public:
     return 0U;                      // get index for modifying correct operand
   }
 
-  inline unsigned getNumIndices() const {  // Note: always non-negative
+  unsigned getNumIndices() const {  // Note: always non-negative
     return getNumOperands() - 1;
   }
 
-  inline bool hasIndices() const {
+  bool hasIndices() const {
     return getNumOperands() > 1;
   }
   
@@ -972,8 +972,8 @@ public:
 
   /// getCalledValue - Get a pointer to the function that is invoked by this 
   /// instruction
-  inline const Value *getCalledValue() const { return getOperand(0); }
-  inline       Value *getCalledValue()       { return getOperand(0); }
+  const Value *getCalledValue() const { return getOperand(0); }
+        Value *getCalledValue()       { return getOperand(0); }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const CallInst *) { return true; }
@@ -1164,7 +1164,7 @@ public:
 
   /// getType - Overload to return most specific vector type.
   ///
-  inline const VectorType *getType() const {
+  const VectorType *getType() const {
     return reinterpret_cast<const VectorType*>(Instruction::getType());
   }
 
@@ -1214,7 +1214,7 @@ public:
 
   /// getType - Overload to return most specific vector type.
   ///
-  inline const VectorType *getType() const {
+  const VectorType *getType() const {
     return reinterpret_cast<const VectorType*>(Instruction::getType());
   }
 
@@ -1464,10 +1464,10 @@ public:
 
   virtual BranchInst *clone() const;
 
-  inline bool isUnconditional() const { return getNumOperands() == 1; }
-  inline bool isConditional()   const { return getNumOperands() == 3; }
+  bool isUnconditional() const { return getNumOperands() == 1; }
+  bool isConditional()   const { return getNumOperands() == 3; }
 
-  inline Value *getCondition() const {
+  Value *getCondition() const {
     assert(isConditional() && "Cannot get condition of an uncond branch!");
     return getOperand(2);
   }
@@ -1549,10 +1549,10 @@ public:
 
 
   // Accessor Methods for Switch stmt
-  inline Value *getCondition() const { return getOperand(0); }
+  Value *getCondition() const { return getOperand(0); }
   void setCondition(Value *V) { setOperand(0, V); }
 
-  inline BasicBlock *getDefaultDest() const {
+  BasicBlock *getDefaultDest() const {
     return cast<BasicBlock>(getOperand(1));
   }
 
@@ -1625,7 +1625,7 @@ public:
 
   // getSuccessorValue - Return the value associated with the specified
   // successor.
-  inline ConstantInt *getSuccessorValue(unsigned idx) const {
+  ConstantInt *getSuccessorValue(unsigned idx) const {
     assert(idx < getNumSuccessors() && "Successor # out of range!");
     return reinterpret_cast<ConstantInt*>(getOperand(idx*2));
   }
@@ -1762,7 +1762,7 @@ public:
   }
 
   // getCalledValue - Get a pointer to a function that is invoked by this inst.
-  inline Value *getCalledValue() const { return getOperand(0); }
+  Value *getCalledValue() const { return getOperand(0); }
 
   // get*Dest - Return the destination basic blocks...
   BasicBlock *getNormalDest() const {
@@ -1779,7 +1779,7 @@ public:
     setOperand(2, reinterpret_cast<Value*>(B));
   }
 
-  inline BasicBlock *getSuccessor(unsigned i) const {
+  BasicBlock *getSuccessor(unsigned i) const {
     assert(i < 2 && "Successor # out of range for invoke!");
     return i == 0 ? getNormalDest() : getUnwindDest();
   }
@@ -2367,19 +2367,15 @@ public:
   
   virtual GetResultInst *clone() const;
   
-  inline Value *getAggregateValue() {
+  Value *getAggregateValue() {
     return getOperand(0);
   }
 
-  inline const Value *getAggregateValue() const {
+  const Value *getAggregateValue() const {
     return getOperand(0);
   }
 
-  inline unsigned getIndex() {
-    return Idx;
-  }
-
-  inline const unsigned getIndex() const {
+  unsigned getIndex() const {
     return Idx;
   }
 
