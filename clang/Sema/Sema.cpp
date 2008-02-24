@@ -57,9 +57,20 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   ObjCInterfaceDecl *IDecl = it->getDecl();
   IDecl->getIdentifier()->setFETokenInfo(IDecl);
   TUScope->AddDecl(IDecl);
-  t = cast<TypedefType>(Context.getObjCSelType().getTypePtr());
-  t->getDecl()->getIdentifier()->setFETokenInfo(t->getDecl());
-  TUScope->AddDecl(t->getDecl());
+  
+  // Synthesize "typedef struct objc_selector *SEL;"
+  RecordDecl *SelTag = new RecordDecl(Decl::Struct, SourceLocation(), 
+                                      &Context.Idents.get("objc_selector"), 0);
+  SelTag->getIdentifier()->setFETokenInfo(SelTag);
+  TUScope->AddDecl(SelTag);
+  
+  QualType SelT = Context.getPointerType(Context.getTagDeclType(SelTag));
+  TypedefDecl *SelTypedef = new TypedefDecl(SourceLocation(),
+                                            &Context.Idents.get("SEL"),
+                                            SelT, 0);
+  SelTypedef->getIdentifier()->setFETokenInfo(SelTypedef);
+  TUScope->AddDecl(SelTypedef);
+  Context.setObjCSelType(SelTypedef);
 }
 
 Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer)
@@ -81,6 +92,8 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer)
   KnownFunctionIDs[id_vsprintf]  = &IT.get("vsprintf");
   KnownFunctionIDs[id_vprintf]   = &IT.get("vprintf");
 
+  // FIXME: Move this initialization up to Sema::ActOnTranslationUnitScope()
+  // and make sure the decls get inserted into TUScope!
   if (PP.getLangOptions().ObjC1) {
     // Synthesize "typedef struct objc_class *Class;"
     RecordDecl *ClassTag = new RecordDecl(Decl::Struct, SourceLocation(), 
@@ -107,16 +120,6 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer)
                                              &Context.Idents.get("id"),
                                              ObjT, 0);
     Context.setObjCIdType(IdTypedef);
-    
-    // Synthesize "typedef struct objc_selector *SEL;"
-    RecordDecl *SelTag = new RecordDecl(Decl::Struct, SourceLocation(), 
-                                          &IT.get("objc_selector"), 0);
-    QualType SelT = Context.getPointerType(Context.getTagDeclType(SelTag));
-    TypedefDecl *SelTypedef = new TypedefDecl(SourceLocation(),
-                                              &Context.Idents.get("SEL"),
-                                              SelT, 0);
-    Context.setObjCSelType(SelTypedef);
-    
   }
   TUScope = 0;
 }
