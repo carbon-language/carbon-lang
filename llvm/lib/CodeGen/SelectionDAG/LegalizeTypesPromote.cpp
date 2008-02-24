@@ -49,6 +49,7 @@ void DAGTypeLegalizer::PromoteResult(SDNode *N, unsigned ResNo) {
   case ISD::FP_TO_UINT:  Result = PromoteResult_FP_TO_XINT(N); break;
   case ISD::SETCC:    Result = PromoteResult_SETCC(N); break;
   case ISD::LOAD:     Result = PromoteResult_LOAD(cast<LoadSDNode>(N)); break;
+  case ISD::BUILD_PAIR:  Result = PromoteResult_BUILD_PAIR(N); break;
 
   case ISD::AND:
   case ISD::OR:
@@ -200,6 +201,19 @@ SDOperand DAGTypeLegalizer::PromoteResult_LOAD(LoadSDNode *N) {
   return Res;
 }
 
+SDOperand DAGTypeLegalizer::PromoteResult_BUILD_PAIR(SDNode *N) {
+  // The pair element type may be legal, or may not promote to the same type as
+  // the result, for example i16 = BUILD_PAIR (i8, i8) when i8 is legal but i16
+  // is not.  Handle all cases.
+  MVT::ValueType LVT = N->getOperand(0).getValueType();
+  MVT::ValueType NVT = TLI.getTypeToTransformTo(N->getValueType(0));
+  SDOperand Lo = DAG.getNode(ISD::ZERO_EXTEND, NVT, N->getOperand(0));
+  SDOperand Hi = DAG.getNode(ISD::ANY_EXTEND, NVT, N->getOperand(1));
+  Hi = DAG.getNode(ISD::SHL, NVT, Hi, DAG.getConstant(MVT::getSizeInBits(LVT),
+                                                      TLI.getShiftAmountTy()));
+  return DAG.getNode(ISD::OR, NVT, Lo, Hi);
+}
+
 SDOperand DAGTypeLegalizer::PromoteResult_SimpleIntBinOp(SDNode *N) {
   // The input may have strange things in the top bits of the registers, but
   // these operations don't care.  They may have weird bits going out, but
@@ -329,7 +343,8 @@ bool DAGTypeLegalizer::PromoteOperand(SDNode *N, unsigned OpNo) {
   case ISD::FP_ROUND:    Res = PromoteOperand_FP_ROUND(N); break;
   case ISD::SINT_TO_FP:
   case ISD::UINT_TO_FP:  Res = PromoteOperand_INT_TO_FP(N); break;
-    
+  case ISD::BUILD_PAIR:  Res = PromoteOperand_BUILD_PAIR(N); break;
+
   case ISD::SELECT:      Res = PromoteOperand_SELECT(N, OpNo); break;
   case ISD::BRCOND:      Res = PromoteOperand_BRCOND(N, OpNo); break;
   case ISD::BR_CC:       Res = PromoteOperand_BR_CC(N, OpNo); break;
@@ -340,6 +355,8 @@ bool DAGTypeLegalizer::PromoteOperand(SDNode *N, unsigned OpNo) {
   case ISD::MEMSET:
   case ISD::MEMCPY:
   case ISD::MEMMOVE:     Res = HandleMemIntrinsic(N); break;
+
+  case ISD::BUILD_VECTOR: Res = PromoteOperand_BUILD_VECTOR(N); break;
 
   case ISD::RET:         Res = PromoteOperand_RET(N, OpNo); break;
   }
@@ -407,6 +424,20 @@ SDOperand DAGTypeLegalizer::PromoteOperand_INT_TO_FP(SDNode *N) {
                      In, DAG.getValueType(OpVT));
   
   return DAG.UpdateNodeOperands(SDOperand(N, 0), In);
+}
+
+SDOperand DAGTypeLegalizer::PromoteOperand_BUILD_PAIR(SDNode *N) {
+  // Since the result type is legal, the operands must promote to it.
+  MVT::ValueType OVT = N->getOperand(0).getValueType();
+  SDOperand Lo = GetPromotedOp(N->getOperand(0));
+  SDOperand Hi = GetPromotedOp(N->getOperand(1));
+  assert(Lo.getValueType() == N->getValueType(0) && "Operand over promoted?");
+
+  Lo = DAG.getZeroExtendInReg(Lo, OVT);
+  Hi = DAG.getNode(ISD::SHL, N->getValueType(0), Hi,
+                   DAG.getConstant(MVT::getSizeInBits(OVT),
+                                   TLI.getShiftAmountTy()));
+  return DAG.getNode(ISD::OR, N->getValueType(0), Lo, Hi);
 }
 
 SDOperand DAGTypeLegalizer::PromoteOperand_SELECT(SDNode *N, unsigned OpNo) {
@@ -525,6 +556,40 @@ SDOperand DAGTypeLegalizer::PromoteOperand_STORE(StoreSDNode *N, unsigned OpNo){
   return DAG.getTruncStore(Ch, Val, Ptr, N->getSrcValue(),
                            SVOffset, N->getMemoryVT(),
                            isVolatile, Alignment);
+}
+
+SDOperand DAGTypeLegalizer::PromoteOperand_BUILD_VECTOR(SDNode *N) {
+  // The vector type is legal but the element type is not.  This implies
+  // that the vector is a power-of-two in length and that the element
+  // type does not have a strange size (eg: it is not i1).
+  MVT::ValueType VecVT = N->getValueType(0);
+  unsigned NumElts = MVT::getVectorNumElements(VecVT);
+  assert(!(NumElts & 1) && "Legal vector of one illegal element?");
+
+  // Build a vector of half the length out of elements of twice the bitwidth.
+  // For example <4 x i16> -> <2 x i32>.
+  MVT::ValueType OldVT = N->getOperand(0).getValueType();
+  MVT::ValueType NewVT = MVT::getIntegerType(2 * MVT::getSizeInBits(OldVT));
+  assert(!MVT::isExtendedVT(OldVT) && !MVT::isExtendedVT(NewVT));
+
+  std::vector<SDOperand> NewElts;
+  NewElts.reserve(NumElts/2);
+
+  for (unsigned i = 0; i < NumElts; i += 2) {
+    // Combine two successive elements into one promoted element.
+    SDOperand Lo = N->getOperand(i);
+    SDOperand Hi = N->getOperand(i+1);
+    if (TLI.isBigEndian())
+      std::swap(Lo, Hi);
+    NewElts.push_back(DAG.getNode(ISD::BUILD_PAIR, NewVT, Lo, Hi));
+  }
+
+  SDOperand NewVec = DAG.getNode(ISD::BUILD_VECTOR,
+                                 MVT::getVectorType(NewVT, NewElts.size()),
+                                 &NewElts[0], NewElts.size());
+
+  // Convert the new vector to the old vector type.
+  return DAG.getNode(ISD::BIT_CONVERT, VecVT, NewVec);
 }
 
 SDOperand DAGTypeLegalizer::PromoteOperand_RET(SDNode *N, unsigned OpNo) {

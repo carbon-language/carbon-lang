@@ -159,6 +159,7 @@ private:
     
   // Result Promotion.
   void PromoteResult(SDNode *N, unsigned ResNo);
+  SDOperand PromoteResult_BUILD_PAIR(SDNode *N);
   SDOperand PromoteResult_Constant(SDNode *N);
   SDOperand PromoteResult_CTLZ(SDNode *N);
   SDOperand PromoteResult_CTPOP(SDNode *N);
@@ -182,8 +183,10 @@ private:
   // Operand Promotion.
   bool PromoteOperand(SDNode *N, unsigned OperandNo);
   SDOperand PromoteOperand_ANY_EXTEND(SDNode *N);
+  SDOperand PromoteOperand_BUILD_PAIR(SDNode *N);
   SDOperand PromoteOperand_BR_CC(SDNode *N, unsigned OpNo);
   SDOperand PromoteOperand_BRCOND(SDNode *N, unsigned OpNo);
+  SDOperand PromoteOperand_BUILD_VECTOR(SDNode *N);
   SDOperand PromoteOperand_FP_EXTEND(SDNode *N);
   SDOperand PromoteOperand_FP_ROUND(SDNode *N);
   SDOperand PromoteOperand_INT_TO_FP(SDNode *N);
@@ -240,6 +243,7 @@ private:
   bool ExpandOperand(SDNode *N, unsigned OperandNo);
   SDOperand ExpandOperand_BIT_CONVERT(SDNode *N);
   SDOperand ExpandOperand_BR_CC(SDNode *N);
+  SDOperand ExpandOperand_BUILD_VECTOR(SDNode *N);
   SDOperand ExpandOperand_EXTRACT_ELEMENT(SDNode *N);
   SDOperand ExpandOperand_SETCC(SDNode *N);
   SDOperand ExpandOperand_SINT_TO_FP(SDOperand Source, MVT::ValueType DestTy);

@@ -865,6 +865,8 @@ bool DAGTypeLegalizer::ExpandOperand(SDNode *N, unsigned OpNo) {
     case ISD::MEMSET:
     case ISD::MEMCPY:
     case ISD::MEMMOVE:     Res = HandleMemIntrinsic(N); break;
+
+    case ISD::BUILD_VECTOR: Res = ExpandOperand_BUILD_VECTOR(N); break;
     }
   }
   
@@ -1224,3 +1226,34 @@ SDOperand DAGTypeLegalizer::ExpandOperand_STORE(StoreSDNode *N, unsigned OpNo) {
   }
 }
 
+SDOperand DAGTypeLegalizer::ExpandOperand_BUILD_VECTOR(SDNode *N) {
+  // The vector type is legal but the element type needs expansion.
+  MVT::ValueType VecVT = N->getValueType(0);
+  unsigned NumElts = MVT::getVectorNumElements(VecVT);
+  MVT::ValueType OldVT = N->getOperand(0).getValueType();
+  MVT::ValueType NewVT = TLI.getTypeToTransformTo(OldVT);
+
+  assert(MVT::getSizeInBits(OldVT) == 2 * MVT::getSizeInBits(NewVT) &&
+         "Do not know how to expand this operand!");
+
+  // Build a vector of twice the length out of the expanded elements.
+  // For example <2 x i64> -> <4 x i32>.
+  std::vector<SDOperand> NewElts;
+  NewElts.reserve(NumElts*2);
+
+  for (unsigned i = 0; i < NumElts; ++i) {
+    SDOperand Lo, Hi;
+    GetExpandedOp(N->getOperand(i), Lo, Hi);
+    if (TLI.isBigEndian())
+      std::swap(Lo, Hi);
+    NewElts.push_back(Lo);
+    NewElts.push_back(Hi);
+  }
+
+  SDOperand NewVec = DAG.getNode(ISD::BUILD_VECTOR,
+                                 MVT::getVectorType(NewVT, NewElts.size()),
+                                 &NewElts[0], NewElts.size());
+
+  // Convert the new vector to the old vector type.
+  return DAG.getNode(ISD::BIT_CONVERT, VecVT, NewVec);
+}
