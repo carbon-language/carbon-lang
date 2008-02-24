@@ -24,7 +24,7 @@ struct LangOptions {
   unsigned Trigraphs         : 1;  // Trigraphs in source files.
   unsigned BCPLComment       : 1;  // BCPL-style // comments.
   unsigned DollarIdents      : 1;  // '$' allowed in identifiers.
-  unsigned Digraphs          : 1;  // When added to C?  C99?
+  unsigned Digraphs          : 1;  // C++ and C99
   unsigned HexFloats         : 1;  // C99 Hexadecimal float constants.
   unsigned C99               : 1;  // C99 Support
   unsigned Microsoft         : 1;  // Microsoft extensions.
