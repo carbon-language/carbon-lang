@@ -1529,7 +1529,7 @@ LexNextToken:
     } else if (Features.Digraphs && Char == ':') {
       Result.setKind(tok::l_square); // '<:' -> '['
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
-    } else if (Features.Digraphs && Char == '>') {
+    } else if (Features.Digraphs && Char == '%') {
       Result.setKind(tok::l_brace); // '<%' -> '{'
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
     } else {
