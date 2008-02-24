@@ -408,7 +408,9 @@ public:
     : VarDecl(ParmVar, L, Id, T, S, PrevDecl), 
     objcDeclQualifier(OBJC_TQ_None) {}
   
-  ObjCDeclQualifier getObjCDeclQualifier() const { return objcDeclQualifier; }
+  ObjCDeclQualifier getObjCDeclQualifier() const {
+    return ObjCDeclQualifier(objcDeclQualifier);
+  }
   void setObjCDeclQualifier(ObjCDeclQualifier QTVal) 
   { objcDeclQualifier = QTVal; }
     
@@ -417,9 +419,10 @@ public:
   static bool classof(const ParmVarDecl *D) { return true; }
   
 private:
+  // NOTE: VC++ treats enums as signed, avoid using the ObjCDeclQualifier enum
   /// FIXME: Also can be paced into the bitfields in Decl.
   /// in, inout, etc.
-  ObjCDeclQualifier objcDeclQualifier : 6;
+  unsigned objcDeclQualifier : 6;
   
 protected:
   /// EmitImpl - Serialize this ParmVarDecl. Called by Decl::Emit.
@@ -474,7 +477,7 @@ public:
   QualType getResultType() const { 
     return cast<FunctionType>(getType())->getResultType();
   }
-  StorageClass getStorageClass() const { return SClass; }
+  StorageClass getStorageClass() const { return StorageClass(SClass); }
   bool isInline() const { return IsInline; }
     
   // Implement isa/cast/dyncast/etc.
@@ -494,7 +497,8 @@ private:
   /// function.
   ScopedDecl *DeclChain;
 
-  StorageClass SClass : 2;
+  // NOTE: VC++ treats enums as signed, avoid using the StorageClass enum
+  unsigned SClass : 2;
   bool IsInline : 1;
 
 protected:

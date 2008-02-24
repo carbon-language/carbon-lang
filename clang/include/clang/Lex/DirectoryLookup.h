@@ -48,9 +48,10 @@ private:
     const HeaderMap *Map;
   } u;
   
+  // NOTE: VC++ treats enums as signed, avoid using the DirType enum
   /// DirCharacteristic - The type of directory this is, one of the DirType enum
   /// values.
-  DirType DirCharacteristic : 2;
+  unsigned DirCharacteristic : 2;
   
   /// UserSupplied - True if this is a user-supplied directory.
   ///
@@ -110,7 +111,7 @@ public:
   
   /// DirCharacteristic - The type of directory this is, one of the DirType enum
   /// values.
-  DirType getDirCharacteristic() const { return DirCharacteristic; }
+  DirType getDirCharacteristic() const { return DirType(DirCharacteristic); }
   
   /// isUserSupplied - True if this is a user-supplied directory.
   ///

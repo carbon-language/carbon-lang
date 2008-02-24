@@ -40,7 +40,8 @@ class IdentifierInfo {
   //       signed char and TokenKinds > 127 won't be handled correctly.
   unsigned TokenID            : 8; // Front-end token ID or tok::identifier. 
   unsigned BuiltinID          : 9; // ID if this is a builtin (__builtin_inf).
-  tok::ObjCKeywordKind ObjCID : 5; // ID for objc @ keyword like @'protocol'.
+  // NOTE: VC++ treats enums as signed, avoid using tok::ObjCKeywordKind enum
+  unsigned ObjCID             : 5; // ID for objc @ keyword like @'protocol'.
   bool HasMacro               : 1; // True if there is a #define for this.
   bool IsExtension            : 1; // True if identifier is a lang extension.
   bool IsPoisoned             : 1; // True if identifier is poisoned.
@@ -91,7 +92,9 @@ public:
   /// getObjCKeywordID - Return the Objective-C keyword ID for the this
   /// identifier.  For example, 'class' will return tok::objc_class if ObjC is
   /// enabled.
-  tok::ObjCKeywordKind getObjCKeywordID() const { return ObjCID; }
+  tok::ObjCKeywordKind getObjCKeywordID() const {
+    return tok::ObjCKeywordKind(ObjCID);
+  }
   void setObjCKeywordID(tok::ObjCKeywordKind ID) { ObjCID = ID; }
   
   /// getBuiltinID - Return a value indicating whether this is a builtin

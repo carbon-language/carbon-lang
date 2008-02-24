@@ -330,7 +330,7 @@ public:
     { objcDeclQualifier = (ObjCDeclQualifier) (objcDeclQualifier | DQVal); }
   
   const ObjCPropertyAttributeKind getPropertyAttributes() const 
-    { return PropertyAttributes; }
+    { return ObjCPropertyAttributeKind(PropertyAttributes); }
   void setPropertyAttributes(ObjCPropertyAttributeKind PRVal) { 
     PropertyAttributes = 
       (ObjCPropertyAttributeKind) (PropertyAttributes | PRVal);
@@ -349,7 +349,8 @@ private:
   // (space saving is negligible).
   ObjCDeclQualifier objcDeclQualifier : 6;
   
-  ObjCPropertyAttributeKind PropertyAttributes : 8;
+  // NOTE: VC++ treats enums as signed, avoid using ObjCPropertyAttributeKind
+  unsigned PropertyAttributes : 8;
   IdentifierInfo *GetterName;    // getter name of NULL if no getter
   IdentifierInfo *SetterName;    // setter name of NULL if no setter
 };

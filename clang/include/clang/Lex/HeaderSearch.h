@@ -45,10 +45,11 @@ class HeaderSearch {
     /// isImport - True if this is a #import'd or #pragma once file.
     bool isImport : 1;
     
+    // NOTE: VC++ treats enums as signed, avoid using DirectoryLookup::DirType
     /// DirInfo - Keep track of whether this is a system header, and if so,
     /// whether it is C++ clean or not.  This can be set by the include paths or
     /// by #pragma gcc system_header.
-    DirectoryLookup::DirType DirInfo : 2;
+    unsigned DirInfo : 2;
     
     /// NumIncludes - This is the number of times the file has been included
     /// already.
@@ -155,7 +156,7 @@ public:
   /// getFileDirFlavor - Return whether the specified file is a normal header,
   /// a system header, or a C++ friendly system header.
   DirectoryLookup::DirType getFileDirFlavor(const FileEntry *File) {
-    return getFileInfo(File).DirInfo;
+    return DirectoryLookup::DirType(getFileInfo(File).DirInfo);
   }
     
   /// MarkFileIncludeOnce - Mark the specified file as a "once only" file, e.g.

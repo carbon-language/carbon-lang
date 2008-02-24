@@ -58,11 +58,13 @@ private:
   bool IsInstance : 1;
   bool IsVariadic : 1;
   
+  // NOTE: VC++ treats enums as signed, avoid using ImplementationControl enum
   /// @required/@optional
-  ImplementationControl DeclImplementation : 2;
+  unsigned DeclImplementation : 2;
   
+  // NOTE: VC++ treats enums as signed, avoid using the ObjCDeclQualifier enum
   /// in, inout, etc.
-  ObjCDeclQualifier objcDeclQualifier : 6;
+  unsigned objcDeclQualifier : 6;
   
   // Context this method is declared in.
   NamedDecl *MethodContext;
@@ -104,7 +106,9 @@ public:
     MethodAttrs(M), EndLoc(endLoc), Body(0), SelfDecl(0) {}
   virtual ~ObjCMethodDecl();
   
-  ObjCDeclQualifier getObjCDeclQualifier() const { return objcDeclQualifier; }
+  ObjCDeclQualifier getObjCDeclQualifier() const {
+    return ObjCDeclQualifier(objcDeclQualifier);
+  }
   void setObjCDeclQualifier(ObjCDeclQualifier QV) { objcDeclQualifier = QV; }
   
   // Location information, modeled after the Stmt API.
@@ -149,7 +153,7 @@ public:
     DeclImplementation = ic; 
   }
   ImplementationControl getImplementationControl() const { 
-    return DeclImplementation; 
+    return ImplementationControl(DeclImplementation); 
   }
   Stmt *const getBody() const { return Body; }
   void setBody(Stmt *B) { Body = B; }
@@ -365,13 +369,14 @@ public:
     None, Private, Protected, Public, Package
   };
   void setAccessControl(AccessControl ac) { DeclAccess = ac; }
-  AccessControl getAccessControl() const { return DeclAccess; }
+  AccessControl getAccessControl() const { return AccessControl(DeclAccess); }
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == ObjCIvar; }
   static bool classof(const ObjCIvarDecl *D) { return true; }
 private:
-  AccessControl DeclAccess : 3;
+  // NOTE: VC++ treats enums as signed, avoid using the AccessControl enum
+  unsigned DeclAccess : 3;
 };
 
 
@@ -873,8 +878,9 @@ private:
   // FIXME: Property is not an ivar.
   ObjCIvarDecl **PropertyDecls;
   int NumPropertyDecls;
-  
-  PropertyAttributeKind PropertyAttributes : 8;
+
+  // NOTE: VC++ treats enums as signed, avoid using PropertyAttributeKind enum
+  unsigned PropertyAttributes : 8;
   
   IdentifierInfo *GetterName;    // getter name of NULL if no getter
   IdentifierInfo *SetterName;    // setter name of NULL if no setter
@@ -892,7 +898,7 @@ public:
   void setNumPropertyDecls(int num) { NumPropertyDecls = num; }
   
   const PropertyAttributeKind getPropertyAttributes() const 
-    { return PropertyAttributes; }
+    { return PropertyAttributeKind(PropertyAttributes); }
   void setPropertyAttributes(PropertyAttributeKind PRVal) { 
     PropertyAttributes = 
     (PropertyAttributeKind) (PropertyAttributes | PRVal);

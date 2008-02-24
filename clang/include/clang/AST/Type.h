@@ -552,8 +552,9 @@ private:
   /// ElementType - The element type of the array.
   QualType ElementType;
   
+  // NOTE: VC++ treats enums as signed, avoid using the ArraySizeModifier enum
   /// NOTE: These fields are packed into the bitfields space in the Type class.
-  ArraySizeModifier SizeModifier : 2;
+  unsigned SizeModifier : 2;
   
   /// IndexTypeQuals - Capture qualifiers in declarations like:
   /// 'int X[static restrict 4]'. For function parameters only.
@@ -566,7 +567,9 @@ protected:
   friend class ASTContext;  // ASTContext creates these.
 public:
   QualType getElementType() const { return ElementType; }
-  ArraySizeModifier getSizeModifier() const { return SizeModifier; }
+  ArraySizeModifier getSizeModifier() const {
+    return ArraySizeModifier(SizeModifier);
+  }
   unsigned getIndexTypeQualifier() const { return IndexTypeQuals; }
   
   QualType getBaseType() const {
