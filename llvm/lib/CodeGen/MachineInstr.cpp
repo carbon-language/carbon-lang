@@ -174,7 +174,7 @@ void MachineOperand::print(std::ostream &OS, const TargetMachine *TM) const {
               TM = &MF->getTarget();
       
       if (TM)
-        OS << "%" << TM->getRegisterInfo()->get(getReg()).Name;
+        OS << "%" << TM->getRegisterInfo()->get(getReg()).PrintableName;
       else
         OS << "%mreg" << getReg();
     }
@@ -190,9 +190,9 @@ void MachineOperand::print(std::ostream &OS, const TargetMachine *TM) const {
         NeedComma = true;
       }
       if (isKill() || isDead()) {
-        if (NeedComma)    OS << ",";
-        if (isKill()) OS << "kill";
-        if (isDead()) OS << "dead";
+        if (NeedComma) OS << ",";
+        if (isKill())  OS << "kill";
+        if (isDead())  OS << "dead";
       }
       OS << ">";
     }

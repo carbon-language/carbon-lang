@@ -49,6 +49,7 @@ class Type;
 ///
 struct TargetRegisterDesc {
   const char     *Name;         // Assembly language name for the register
+  const char     *PrintableName;// Printable name for the reg (for debugging)
   const unsigned *AliasSet;     // Register Alias Set, described above
   const unsigned *SubRegs;      // Sub-register set, described above
   const unsigned *ImmSubRegs;   // Immediate sub-register set, described above
@@ -379,6 +380,12 @@ public:
   /// physical register.
   const char *getName(unsigned RegNo) const {
     return get(RegNo).Name;
+  }
+
+  /// getPrintableName - Return the human-readable symbolic target specific name
+  /// for the specified physical register.
+  const char *getPrintableName(unsigned RegNo) const {
+    return get(RegNo).PrintableName;
   }
 
   /// getNumRegs - Return the number of registers this target has (useful for

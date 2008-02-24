@@ -512,7 +512,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   }
 
   OS<<"\n  const TargetRegisterDesc RegisterDescriptors[] = { // Descriptors\n";
-  OS << "    { \"NOREG\",\t0,\t0,\t0,\t0 },\n";
+  OS << "    { \"NOREG\",\t\"NOREG\",\t0,\t0,\t0,\t0 },\n";
 
   // Now that register alias and sub-registers sets have been emitted, emit the
   // register descriptors now.
@@ -524,6 +524,16 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
       OS << Reg.TheDef->getValueAsString("Name");
     else
       OS << Reg.getName();
+    OS << "\",\t\"";
+    if (!Reg.TheDef->getValueAsString("PrintableName").empty()) {
+      OS << Reg.TheDef->getValueAsString("PrintableName");
+    } else {
+      // Default to "name".
+      if (!Reg.TheDef->getValueAsString("Name").empty())
+        OS << Reg.TheDef->getValueAsString("Name");
+      else
+        OS << Reg.getName();
+    }
     OS << "\",\t";
     if (RegisterAliases.count(Reg.TheDef))
       OS << Reg.getName() << "_AliasSet,\t";

@@ -26,6 +26,7 @@ class RegisterClass; // Forward def
 class Register<string n> {
   string Namespace = "";
   string Name = n;
+  string PrintableName = n;
 
   // SpillSize - If this value is set to a non-zero value, it is the size in
   // bits of the spill slot required to hold this register.  If this value is
