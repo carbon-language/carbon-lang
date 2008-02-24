@@ -48,6 +48,8 @@ class FileEntry {
   friend class FileManager;
 public:
   FileEntry(dev_t device, ino_t inode) : Name(0), Device(device), Inode(inode){}
+  // Add a default constructor for use with llvm::StringMap
+  FileEntry() : Name(0), Device(0), Inode(0) {}
   
   const char *getName() const { return Name; }
   off_t getSize() const { return Size; }
@@ -72,11 +74,15 @@ public:
 /// names (e.g. symlinked) will be treated as a single file.
 ///
 class FileManager {
-  /// UniqueDirs/UniqueFiles - Cache from ID's to existing directories/files.
+
+  class UniqueDirContainer;
+  class UniqueFileContainer;
+
+  /// UniqueDirs/UniqueFiles - Cache for existing directories/files.
   ///
-  std::map<std::pair<dev_t, ino_t>, DirectoryEntry> UniqueDirs;  
-  std::set<FileEntry> UniqueFiles;
-  
+  UniqueDirContainer &UniqueDirs;
+  UniqueFileContainer &UniqueFiles;
+
   /// DirEntries/FileEntries - This is a cache of directory/file entries we have
   /// looked up.  The actual Entry is owned by UniqueFiles/UniqueDirs above.
   ///
@@ -91,10 +97,8 @@ class FileManager {
   unsigned NumDirLookups, NumFileLookups;
   unsigned NumDirCacheMisses, NumFileCacheMisses;
 public:
-  FileManager() : DirEntries(64), FileEntries(64), NextFileUID(0) {
-    NumDirLookups = NumFileLookups = 0;
-    NumDirCacheMisses = NumFileCacheMisses = 0;
-  }
+  FileManager();
+  ~FileManager();
 
   /// getDirectory - Lookup, cache, and verify the specified directory.  This
   /// returns null if the directory doesn't exist.

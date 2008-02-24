@@ -22,6 +22,7 @@
 #include "llvm/Bitcode/Serialize.h"
 #include "llvm/Bitcode/Deserialize.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/Config/config.h"
 using namespace clang;
 
 // FIXME: Enhance libsystem to support inode and other fields.
@@ -34,6 +35,107 @@ using namespace clang;
 /// NON_EXISTENT_DIR - A special value distinct from null that is used to
 /// represent a dir name that doesn't exist on the disk.
 #define NON_EXISTENT_DIR reinterpret_cast<DirectoryEntry*>((intptr_t)-1)
+
+#ifdef LLVM_ON_WIN32
+
+#define IS_DIR_SEPARATOR_CHAR(x) ((x) == '/' || (x) == '\\')
+
+namespace {
+  static std::string GetFullPath(const char *relPath)
+  {
+    char *absPathStrPtr = _fullpath(NULL, relPath, 0);
+    assert(absPathStrPtr && "_fullpath() returned NULL!");
+
+    std::string absPath(absPathStrPtr);
+
+    free(absPathStrPtr);
+    return absPath;
+  }
+}
+
+class FileManager::UniqueDirContainer {
+  /// UniqueDirs - Cache from full path to existing directories/files.
+  ///
+  llvm::StringMap<DirectoryEntry> UniqueDirs;  
+
+public:
+  DirectoryEntry &getDirectory(const char *Name, struct stat &StatBuf) {
+    std::string FullPath(GetFullPath(Name));
+    return UniqueDirs.GetOrCreateValue(
+                              FullPath.c_str(),
+                              FullPath.c_str() + FullPath.size()
+                                                                ).getValue();
+  }
+  
+  size_t size() { return UniqueDirs.size(); }
+};
+
+class FileManager::UniqueFileContainer {
+  /// UniqueFiles - Cache from full path to existing directories/files.
+  ///
+  llvm::StringMap<FileEntry> UniqueFiles;
+
+public:
+  FileEntry &getFile(const char *Name, struct stat &StatBuf) {
+    std::string FullPath(GetFullPath(Name));
+    return UniqueFiles.GetOrCreateValue(
+                               FullPath.c_str(),
+                               FullPath.c_str() + FullPath.size()
+                                                                 ).getValue();
+  }
+
+  size_t size() { return UniqueFiles.size(); }
+};
+
+#else
+
+#define IS_DIR_SEPARATOR_CHAR(x) ((x) == '/')
+
+class FileManager::UniqueDirContainer {
+  /// UniqueDirs - Cache from ID's to existing directories/files.
+  ///
+  std::map<std::pair<dev_t, ino_t>, DirectoryEntry> UniqueDirs;  
+
+public:
+  DirectoryEntry &getDirectory(const char *Name, struct stat &StatBuf) {
+    return UniqueDirs[std::make_pair(StatBuf.st_dev, StatBuf.st_ino)];
+  }
+
+  size_t size() { return UniqueDirs.size(); }
+};
+
+class FileManager::UniqueFileContainer {
+  /// UniqueFiles - Cache from ID's to existing directories/files.
+  ///
+  std::set<FileEntry> UniqueFiles;
+
+public:
+  FileEntry &getFile(const char *Name, struct stat &StatBuf) {
+    return
+      const_cast<FileEntry&>(
+                    *UniqueFiles.insert(FileEntry(StatBuf.st_dev,
+                                                  StatBuf.st_ino)).first);
+  }
+
+  size_t size() { return UniqueFiles.size(); }
+};
+
+#endif
+
+
+FileManager::FileManager() : UniqueDirs(*new UniqueDirContainer),
+                             UniqueFiles(*new UniqueFileContainer),
+                             DirEntries(64), FileEntries(64), NextFileUID(0)
+{
+  NumDirLookups = NumFileLookups = 0;
+  NumDirCacheMisses = NumFileCacheMisses = 0;
+}
+
+FileManager::~FileManager() {
+  delete &UniqueDirs;
+  delete &UniqueFiles;
+}
+
 
 /// getDirectory - Lookup, cache, and verify the specified directory.  This
 /// returns null if the directory doesn't exist.
@@ -63,11 +165,10 @@ const DirectoryEntry *FileManager::getDirectory(const char *NameStart,
   if (stat(InterndDirName, &StatBuf) ||   // Error stat'ing.
       !S_ISDIR(StatBuf.st_mode))          // Not a directory?
     return 0;
-  
+
   // It exists.  See if we have already opened a directory with the same inode.
   // This occurs when one dir is symlinked to another, for example.    
-  DirectoryEntry &UDE = 
-    UniqueDirs[std::make_pair(StatBuf.st_dev, StatBuf.st_ino)];
+  DirectoryEntry &UDE = UniqueDirs.getDirectory(InterndDirName, StatBuf);
   
   NamedDirEnt.setValue(&UDE);
   if (UDE.getName()) // Already have an entry with this inode, return it.
@@ -108,7 +209,7 @@ const FileEntry *FileManager::getFile(const char *NameStart,
   // strip off everything after it.
   // FIXME: this logic should be in sys::Path.
   const char *SlashPos = NameEnd-1;
-  while (SlashPos >= NameStart && SlashPos[0] != '/')
+  while (SlashPos >= NameStart && !IS_DIR_SEPARATOR_CHAR(SlashPos[0]))
     --SlashPos;
   
   const DirectoryEntry *DirInfo;
@@ -144,10 +245,7 @@ const FileEntry *FileManager::getFile(const char *NameStart,
   
   // It exists.  See if we have already opened a file with the same inode.
   // This occurs when one dir is symlinked to another, for example.
-  FileEntry &UFE = 
-   const_cast<FileEntry&>(*UniqueFiles.insert(FileEntry(StatBuf.st_dev,
-                                                        StatBuf.st_ino)).first);
-
+  FileEntry &UFE = UniqueFiles.getFile(InterndFileName, StatBuf);
   
   NamedFileEnt.setValue(&UFE);
   if (UFE.getName())  // Already have an entry with this inode, return it.
