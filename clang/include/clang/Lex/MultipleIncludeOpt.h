@@ -93,11 +93,11 @@ public:
     TheMacro = M;
   }
 
-  /// FoundTopLevelElse - This is invoked when an #else/#elif directive is found
-  /// in the top level conditional in the file.
-  void FoundTopLevelElse() {
-    /// If a #else directive is found at the top level, there is a chunk of the
-    /// file not guarded by the controlling macro.
+  /// EnterTopLevelConditional - This is invoked when a top level conditional
+  /// (except #ifndef) is found.
+  void EnterTopLevelConditional() {
+    /// If a conditional directive (except #ifndef) is found at the top level,
+    /// there is a chunk of the file not guarded by the controlling macro.
     Invalidate();
   }
   

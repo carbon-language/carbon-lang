@@ -2422,14 +2422,16 @@ void Preprocessor::HandleIfdefDirective(Token &Result, bool isIfndef,
   
   // Check to see if this is the last token on the #if[n]def line.
   CheckEndOfDirective(isIfndef ? "#ifndef" : "#ifdef");
-  
-  // If the start of a top-level #ifdef, inform MIOpt.
-  if (!ReadAnyTokensBeforeDirective &&
-      CurLexer->getConditionalStackDepth() == 0) {
-    assert(isIfndef && "#ifdef shouldn't reach here");
-    CurLexer->MIOpt.EnterTopLevelIFNDEF(MacroNameTok.getIdentifierInfo());
+
+  if (CurLexer->getConditionalStackDepth() == 0) {
+    // If the start of a top-level #ifdef, inform MIOpt.
+    if (!ReadAnyTokensBeforeDirective) {
+      assert(isIfndef && "#ifdef shouldn't reach here");
+      CurLexer->MIOpt.EnterTopLevelIFNDEF(MacroNameTok.getIdentifierInfo());
+    } else
+      CurLexer->MIOpt.EnterTopLevelConditional();
   }
-  
+
   IdentifierInfo *MII = MacroNameTok.getIdentifierInfo();
   MacroInfo *MI = getMacroInfo(MII);
 
@@ -2482,9 +2484,12 @@ void Preprocessor::HandleIfDirective(Token &IfToken,
   if (ConditionalTrue) {
     // If this condition is equivalent to #ifndef X, and if this is the first
     // directive seen, handle it for the multiple-include optimization.
-    if (!ReadAnyTokensBeforeDirective &&
-        CurLexer->getConditionalStackDepth() == 0 && IfNDefMacro)
-      CurLexer->MIOpt.EnterTopLevelIFNDEF(IfNDefMacro);
+    if (CurLexer->getConditionalStackDepth() == 0) {
+      if (!ReadAnyTokensBeforeDirective && IfNDefMacro)
+        CurLexer->MIOpt.EnterTopLevelIFNDEF(IfNDefMacro);
+      else
+        CurLexer->MIOpt.EnterTopLevelConditional();
+    }
     
     // Yes, remember that we are inside a conditional, then lex the next token.
     CurLexer->pushConditionalLevel(IfToken.getLocation(), /*wasskip*/false,
@@ -2512,7 +2517,7 @@ void Preprocessor::HandleEndifDirective(Token &EndifToken) {
   
   // If this the end of a top-level #endif, inform MIOpt.
   if (CurLexer->getConditionalStackDepth() == 0)
-    CurLexer->MIOpt.ExitTopLevelConditional();
+    CurLexer->MIOpt.EnterTopLevelConditional();
   
   assert(!CondInfo.WasSkipping && !CurLexer->LexingRawMode &&
          "This code should only be reachable in the non-skipping case!");
@@ -2531,7 +2536,7 @@ void Preprocessor::HandleElseDirective(Token &Result) {
   
   // If this is a top-level #else, inform the MIOpt.
   if (CurLexer->getConditionalStackDepth() == 0)
-    CurLexer->MIOpt.FoundTopLevelElse();
+    CurLexer->MIOpt.EnterTopLevelConditional();
 
   // If this is a #else with a #else before it, report the error.
   if (CI.FoundElse) Diag(Result, diag::pp_err_else_after_else);
@@ -2556,7 +2561,7 @@ void Preprocessor::HandleElifDirective(Token &ElifToken) {
   
   // If this is a top-level #elif, inform the MIOpt.
   if (CurLexer->getConditionalStackDepth() == 0)
-    CurLexer->MIOpt.FoundTopLevelElse();
+    CurLexer->MIOpt.EnterTopLevelConditional();
   
   // If this is a #elif with a #else before it, report the error.
   if (CI.FoundElse) Diag(ElifToken, diag::pp_err_elif_after_else);
