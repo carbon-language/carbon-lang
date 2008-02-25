@@ -15,6 +15,7 @@
 #ifndef LLVM_PARAMETER_ATTRIBUTES_H
 #define LLVM_PARAMETER_ATTRIBUTES_H
 
+#include "llvm/Support/DataTypes.h"
 #include <cassert>
 
 namespace llvm {
