@@ -1638,6 +1638,9 @@ public:
   const SDOperand &getBasePtr() const {
     return getOperand(getOpcode() == ISD::LOAD ? 1 : 2);
   }
+  const SDOperand &getOffset() const {
+    return getOperand(getOpcode() == ISD::LOAD ? 2 : 3);
+  }
 
   const Value *getSrcValue() const { return SrcValue; }
   int getSrcValueOffset() const { return SVOffset; }
