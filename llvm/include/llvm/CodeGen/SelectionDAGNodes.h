@@ -831,6 +831,12 @@ public:
   ///
   inline MVT::ValueType getValueType() const;
 
+  /// getValueSizeInBits - Returns MVT::getSizeInBits(getValueType()).
+  ///
+  unsigned getValueSizeInBits() const {
+    return MVT::getSizeInBits(getValueType());
+  }
+
   // Forwarding methods - These forward to the corresponding methods in SDNode.
   inline unsigned getOpcode() const;
   inline unsigned getNumOperands() const;
@@ -1009,6 +1015,12 @@ public:
   MVT::ValueType getValueType(unsigned ResNo) const {
     assert(ResNo < NumValues && "Illegal result number!");
     return ValueList[ResNo];
+  }
+
+  /// getValueSizeInBits - Returns MVT::getSizeInBits(getValueType(ResNo)).
+  ///
+  unsigned getValueSizeInBits(unsigned ResNo) const {
+    return MVT::getSizeInBits(getValueType(ResNo));
   }
 
   typedef const MVT::ValueType* value_iterator;
