@@ -5885,6 +5885,7 @@ static SDOperand PerformSTORECombine(StoreSDNode *St, SelectionDAG &DAG,
       isa<LoadSDNode>(St->getValue()) &&
       !cast<LoadSDNode>(St->getValue())->isVolatile() &&
       St->getChain().hasOneUse() && !St->isVolatile()) {
+    SDNode* LdVal = St->getValue().Val;
     LoadSDNode *Ld = 0;
     int TokenFactorIndex = -1;
     SmallVector<SDOperand, 8> Ops;
@@ -5892,14 +5893,12 @@ static SDOperand PerformSTORECombine(StoreSDNode *St, SelectionDAG &DAG,
     // Must be a store of a load.  We currently handle two cases:  the load
     // is a direct child, and it's under an intervening TokenFactor.  It is
     // possible to dig deeper under nested TokenFactors.
-    if (ChainVal == St->getValue().Val)
+    if (ChainVal == LdVal)
       Ld = cast<LoadSDNode>(St->getChain());
     else if (St->getValue().hasOneUse() &&
              ChainVal->getOpcode() == ISD::TokenFactor) {
       for (unsigned i=0, e = ChainVal->getNumOperands(); i != e; ++i) {
-        if (ChainVal->getOperand(i).Val == St->getValue().Val) {
-          if (TokenFactorIndex != -1)
-            return SDOperand();
+        if (ChainVal->getOperand(i).Val == LdVal) {
           TokenFactorIndex = i;
           Ld = cast<LoadSDNode>(St->getValue());
         } else
