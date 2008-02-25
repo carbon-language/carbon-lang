@@ -1099,6 +1099,13 @@ bool GVN::performReturnSlotOptzn(MemCpyInst* cpy, CallInst* C,
       !CS.paramHasAttr(1, ParamAttr::NoAlias | ParamAttr::StructRet))
     return false;
   
+  // Since we're changing the parameter to the callsite, we need to make sure
+  // that what would be the new parameter dominates the callsite.
+  DominatorTree& DT = getAnalysis<DominatorTree>();
+  if (Instruction* cpyDestInst = dyn_cast<Instruction>(cpyDest))
+    if (!DT.dominates(cpyDestInst, C))
+      return false;
+  
   // Check that something sneaky is not happening involving casting
   // return slot types around.
   if (CS.getArgument(0)->getType() != cpyDest->getType())
