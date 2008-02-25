@@ -300,35 +300,35 @@ public:
   Expr *getInit() { return Init; }
   void setInit(Expr *I) { Init = I; }
   
-  // hasAutoStorage - Returns true if either the implicit or explicit
-  //  storage class of a variable is "auto."  In particular, variables
-  //  declared within a function that lack a storage keyword are
-  //  implicitly "auto", but are represented internally with a storage
-  //  class of None.
+  /// hasAutoStorage - Returns true if either the implicit or explicit
+  ///  storage class of a variable is "auto."  In particular, variables
+  ///  declared within a function that lack a storage keyword are
+  ///  implicitly "auto", but are represented internally with a storage
+  ///  class of None.
   bool hasAutoStorage() const {
     return getStorageClass() == Auto ||
           (getStorageClass() == None && getKind() != FileVar);
   }
 
-  // hasStaticStorage - Returns true if either the implicit or
-  //  explicit storage class of a variable is "static."  In
-  //  particular, variables declared within a file (outside of a
-  //  function) that lack a storage keyword are implicitly "static,"
-  //  but are represented internally with a storage class of "None".
+  /// hasStaticStorage - Returns true if either the implicit or
+  ///  explicit storage class of a variable is "static."  In
+  ///  particular, variables declared within a file (outside of a
+  ///  function) that lack a storage keyword are implicitly "static,"
+  ///  but are represented internally with a storage class of "None".
   bool hasStaticStorage() const {
     if (getStorageClass() == Static) return true;
     return getKind() == FileVar;
   }
       
-  // hasLocalStorage - Returns true if a variable with function scope
-  //  is a non-static local variable.
+  /// hasLocalStorage - Returns true if a variable with function scope
+  ///  is a non-static local variable.
   bool hasLocalStorage() const {
     return hasAutoStorage() || getStorageClass() == Register;
   }
 
-  // hasGlobalStorage - Returns true for all variables that do not
-  //  have local storage.  This includs all global variables as well
-  //  as static variables declared within a function.
+  /// hasGlobalStorage - Returns true for all variables that do not
+  ///  have local storage.  This includs all global variables as well
+  ///  as static variables declared within a function.
   bool hasGlobalStorage() const { return !hasAutoStorage(); }
   
   // Implement isa/cast/dyncast/etc.
