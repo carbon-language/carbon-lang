@@ -1632,6 +1632,8 @@ public:
       Ops[i] = Operands[i];
     InitOperands(Ops, NumOperands);
     assert(Align != 0 && "Loads and stores should have non-zero aligment");
+    assert((getOffset().getOpcode() == ISD::UNDEF || isIndexed()) &&
+           "Only indexed loads and stores have a non-undef offset operand");
   }
 
   const SDOperand &getChain() const { return getOperand(0); }
@@ -1682,10 +1684,7 @@ protected:
              const Value *SV, int O=0, unsigned Align=0, bool Vol=false)
     : LSBaseSDNode(ISD::LOAD, ChainPtrOff, 3,
                    VTs, AM, LVT, SV, O, Align, Vol),
-      ExtType(ETy) {
-    assert((getOffset().getOpcode() == ISD::UNDEF || isIndexed()) &&
-           "Only indexed loads and stores have a non-undef offset operand");
-  }
+      ExtType(ETy) {}
 public:
 
   ISD::LoadExtType getExtensionType() const { return ExtType; }
@@ -1712,10 +1711,7 @@ protected:
               const Value *SV, int O=0, unsigned Align=0, bool Vol=false)
     : LSBaseSDNode(ISD::STORE, ChainValuePtrOff, 4,
                    VTs, AM, SVT, SV, O, Align, Vol),
-      IsTruncStore(isTrunc) {
-    assert((getOffset().getOpcode() == ISD::UNDEF || isIndexed()) &&
-           "Only indexed loads and stores have a non-undef offset operand");
-  }
+      IsTruncStore(isTrunc) {}
 public:
 
   bool isTruncatingStore() const { return IsTruncStore; }
