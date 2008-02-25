@@ -156,13 +156,13 @@ void TransferFuncs::VisitAssign(BinaryOperator* B) {
 void TransferFuncs::VisitDeclStmt(DeclStmt* DS) {
   // Declarations effectively "kill" a variable since they cannot
   // possibly be live before they are declared.
-  for (ScopedDecl* D = DS->getDecl(); D != NULL; D = D->getNextDeclarator()) {
-    LiveState(D,AD) = Dead;
-
-    if (VarDecl* VD = dyn_cast<VarDecl>(D))
+  for (ScopedDecl* D = DS->getDecl(); D != NULL; D = D->getNextDeclarator())
+    if (VarDecl* VD = dyn_cast<VarDecl>(D)) {
+      LiveState(D,AD) = Dead;
+      
       if (Expr* Init = VD->getInit())
         Visit(Init);
-  }
+    }
 }
   
 } // end anonymous namespace
