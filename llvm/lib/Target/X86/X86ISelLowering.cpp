@@ -5878,50 +5878,86 @@ static SDOperand PerformSTORECombine(StoreSDNode *St, SelectionDAG &DAG,
                                      const X86Subtarget *Subtarget) {
   // Turn load->store of MMX types into GPR load/stores.  This avoids clobbering
   // the FP state in cases where an emms may be missing.
+  // A preferable solution to the general problem is to figure out the right
+  // places to insert EMMS.  This qualifies as a quick hack.
   if (MVT::isVector(St->getValue().getValueType()) && 
       MVT::getSizeInBits(St->getValue().getValueType()) == 64 &&
-      // Must be a store of a load.
-      isa<LoadSDNode>(St->getChain()) &&
-      St->getChain().Val == St->getValue().Val && 
-      St->getValue().hasOneUse() && St->getChain().hasOneUse() &&
-      !St->isVolatile() && !cast<LoadSDNode>(St->getChain())->isVolatile()) {
-    LoadSDNode *Ld = cast<LoadSDNode>(St->getChain());
-    
-    // If we are a 64-bit capable x86, lower to a single movq load/store pair.
-    if (Subtarget->is64Bit()) {
-      SDOperand NewLd = DAG.getLoad(MVT::i64, Ld->getChain(), Ld->getBasePtr(),
-                                    Ld->getSrcValue(), Ld->getSrcValueOffset(),
-                                    Ld->isVolatile(), Ld->getAlignment());
-      return DAG.getStore(NewLd.getValue(1), NewLd, St->getBasePtr(),
+      isa<LoadSDNode>(St->getValue()) &&
+      !cast<LoadSDNode>(St->getValue())->isVolatile() &&
+      St->getChain().hasOneUse() && !St->isVolatile()) {
+    LoadSDNode *Ld = 0;
+    int TokenFactorIndex = -1;
+    SmallVector<SDOperand, 8> Ops;
+    SDNode* ChainVal = St->getChain().Val;
+    // Must be a store of a load.  We currently handle two cases:  the load
+    // is a direct child, and it's under an intervening TokenFactor.  It is
+    // possible to dig deeper under nested TokenFactors.
+    if (ChainVal == St->getValue().Val)
+      Ld = cast<LoadSDNode>(St->getChain());
+    else if (St->getValue().hasOneUse() &&
+             ChainVal->getOpcode() == ISD::TokenFactor) {
+      for (unsigned i=0, e = ChainVal->getNumOperands(); i != e; ++i) {
+        if (ChainVal->getOperand(i).Val == St->getValue().Val) {
+          if (TokenFactorIndex != -1)
+            return SDOperand();
+          TokenFactorIndex = i;
+          Ld = cast<LoadSDNode>(St->getValue());
+        } else
+          Ops.push_back(ChainVal->getOperand(i));
+      }
+    }
+    if (Ld) {
+      // If we are a 64-bit capable x86, lower to a single movq load/store pair.
+      if (Subtarget->is64Bit()) {
+        SDOperand NewLd = DAG.getLoad(MVT::i64, Ld->getChain(), 
+                                      Ld->getBasePtr(), Ld->getSrcValue(), 
+                                      Ld->getSrcValueOffset(), Ld->isVolatile(),
+                                      Ld->getAlignment());
+        SDOperand NewChain = NewLd.getValue(1);
+        if (TokenFactorIndex != -1) {
+          Ops.push_back(NewLd);
+          NewChain = DAG.getNode(ISD::TokenFactor, MVT::Other, &Ops[0], 
+                                 Ops.size());
+        }
+        return DAG.getStore(NewChain, NewLd, St->getBasePtr(),
+                            St->getSrcValue(), St->getSrcValueOffset(),
+                            St->isVolatile(), St->getAlignment());
+      }
+
+      // Otherwise, lower to two 32-bit copies.
+      SDOperand LoAddr = Ld->getBasePtr();
+      SDOperand HiAddr = DAG.getNode(ISD::ADD, MVT::i32, LoAddr,
+                                     DAG.getConstant(MVT::i32, 4));
+
+      SDOperand LoLd = DAG.getLoad(MVT::i32, Ld->getChain(), LoAddr,
+                                   Ld->getSrcValue(), Ld->getSrcValueOffset(),
+                                   Ld->isVolatile(), Ld->getAlignment());
+      SDOperand HiLd = DAG.getLoad(MVT::i32, Ld->getChain(), HiAddr,
+                                   Ld->getSrcValue(), Ld->getSrcValueOffset()+4,
+                                   Ld->isVolatile(), 
+                                   MinAlign(Ld->getAlignment(), 4));
+
+      SDOperand NewChain = LoLd.getValue(1);
+      if (TokenFactorIndex != -1) {
+        Ops.push_back(LoLd);
+        Ops.push_back(HiLd);
+        NewChain = DAG.getNode(ISD::TokenFactor, MVT::Other, &Ops[0], 
+                               Ops.size());
+      }
+
+      LoAddr = St->getBasePtr();
+      HiAddr = DAG.getNode(ISD::ADD, MVT::i32, LoAddr,
+                           DAG.getConstant(MVT::i32, 4));
+
+      SDOperand LoSt = DAG.getStore(NewChain, LoLd, LoAddr,
                           St->getSrcValue(), St->getSrcValueOffset(),
                           St->isVolatile(), St->getAlignment());
+      SDOperand HiSt = DAG.getStore(NewChain, HiLd, HiAddr,
+                                    St->getSrcValue(), St->getSrcValueOffset()+4,
+                                    St->isVolatile(), 
+                                    MinAlign(St->getAlignment(), 4));
+      return DAG.getNode(ISD::TokenFactor, MVT::Other, LoSt, HiSt);
     }
-    
-    // Otherwise, lower to two 32-bit copies.
-    SDOperand LoAddr = Ld->getBasePtr();
-    SDOperand HiAddr = DAG.getNode(ISD::ADD, MVT::i32, LoAddr,
-                                   DAG.getConstant(MVT::i32, 4));
-    
-    SDOperand LoLd = DAG.getLoad(MVT::i32, Ld->getChain(), LoAddr,
-                                 Ld->getSrcValue(), Ld->getSrcValueOffset(),
-                                 Ld->isVolatile(), Ld->getAlignment());
-    SDOperand HiLd = DAG.getLoad(MVT::i32, Ld->getChain(), HiAddr,
-                                 Ld->getSrcValue(), Ld->getSrcValueOffset()+4,
-                                 Ld->isVolatile(), 
-                                 MinAlign(Ld->getAlignment(), 4));
-    
-    LoAddr = St->getBasePtr();
-    HiAddr = DAG.getNode(ISD::ADD, MVT::i32, LoAddr,
-                         DAG.getConstant(MVT::i32, 4));
-    
-    SDOperand LoSt = DAG.getStore(LoLd.getValue(1), LoLd, LoAddr,
-                        St->getSrcValue(), St->getSrcValueOffset(),
-                        St->isVolatile(), St->getAlignment());
-    SDOperand HiSt = DAG.getStore(HiLd.getValue(1), HiLd, HiAddr,
-                                  St->getSrcValue(), St->getSrcValueOffset()+4,
-                                  St->isVolatile(), 
-                                  MinAlign(St->getAlignment(), 4));
-    return DAG.getNode(ISD::TokenFactor, MVT::Other, LoSt, HiSt);
   }
   return SDOperand();
 }
