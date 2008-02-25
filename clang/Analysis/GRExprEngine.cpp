@@ -846,11 +846,15 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
 
       NodeTy* N2 = *I2;
       StateTy St = N2->getState();      
-      RVal RightV = GetRVal(St, B->getRHS());
+      Expr* RHS = B->getRHS();
+      RVal RightV = GetRVal(St, RHS);
 
       BinaryOperator::Opcode Op = B->getOpcode();
       
-      if (Op == BinaryOperator::Div) { // Check for divide-by-zero.
+      if ((Op == BinaryOperator::Div || Op == BinaryOperator::Rem)
+          && RHS->getType()->isIntegerType()) {
+        
+        // Check for divide/remaindner-by-zero.
         
         // First, "assume" that the denominator is 0.
         
@@ -992,7 +996,10 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           
           // Evaluate operands and promote to result type.
 
-          if (Op == BinaryOperator::Div) { // Check for divide-by-zero.
+          if ((Op == BinaryOperator::Div || Op == BinaryOperator::Rem)
+              && RHS->getType()->isIntegerType()) {
+            
+             // Check for divide/remainder-by-zero.
                         
             // First, "assume" that the denominator is 0.
             
