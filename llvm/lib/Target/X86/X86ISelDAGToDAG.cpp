@@ -1221,6 +1221,9 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
 
     case ISD::SMUL_LOHI:
     case ISD::UMUL_LOHI: {
+      assert(!N.getValue(1).use_empty() &&
+             "A MUL_LOHI with an unused high result should fold to a MUL!");
+
       SDOperand N0 = Node->getOperand(0);
       SDOperand N1 = Node->getOperand(1);
 
