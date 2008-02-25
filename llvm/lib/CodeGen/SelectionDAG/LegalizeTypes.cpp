@@ -173,18 +173,36 @@ NodeDone:
 #ifndef NDEBUG
   for (SelectionDAG::allnodes_iterator I = DAG.allnodes_begin(),
        E = DAG.allnodes_end(); I != E; ++I) {
-    if (I->getNodeId() == Processed)
-      continue;
-    cerr << "Unprocessed node: ";
-    I->dump(&DAG); cerr << "\n";
+    bool Failed = false;
 
-    if (I->getNodeId() == NewNode)
-      cerr << "New node not 'noticed'?\n";
-    else if (I->getNodeId() > 0)
-      cerr << "Operand not processed?\n";
-    else if (I->getNodeId() == ReadyToProcess)
-      cerr << "Not added to worklist?\n";
-    abort();
+    // Check that all result types are legal.
+    for (unsigned i = 0, NumVals = I->getNumValues(); i < NumVals; ++i)
+      if (!isTypeLegal(I->getValueType(i))) {
+        cerr << "Result type " << i << " illegal!\n";
+        Failed = true;
+      }
+
+    // Check that all operand types are legal.
+    for (unsigned i = 0, NumOps = I->getNumOperands(); i < NumOps; ++i)
+      if (!isTypeLegal(I->getOperand(i).getValueType())) {
+        cerr << "Operand type " << i << " illegal!\n";
+        Failed = true;
+      }
+
+    if (I->getNodeId() != Processed) {
+       if (I->getNodeId() == NewNode)
+         cerr << "New node not 'noticed'?\n";
+       else if (I->getNodeId() > 0)
+         cerr << "Operand not processed?\n";
+       else if (I->getNodeId() == ReadyToProcess)
+         cerr << "Not added to worklist?\n";
+       Failed = true;
+    }
+
+    if (Failed) {
+      I->dump(&DAG); cerr << "\n";
+      abort();
+    }
   }
 #endif
 }
