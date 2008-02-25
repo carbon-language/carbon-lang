@@ -369,7 +369,6 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK) {
     // FALL THROUGH.
   case lang_gnu99:
   case lang_c99:
-    Options.Digraphs = 1;
     Options.C99 = 1;
     Options.HexFloats = 1;
     // FALL THROUGH.
@@ -377,6 +376,8 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK) {
     Options.BCPLComment = 1;  // Only for C99/C++.
     // FALL THROUGH.
   case lang_c94:
+    Options.Digraphs = 1;     // C94, C99, C++.
+    // FALL THROUGH.
   case lang_c89:
     break;
   }
