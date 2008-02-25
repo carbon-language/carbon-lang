@@ -728,7 +728,7 @@ $(warning Modules require llvm-gcc but no llvm-gcc is available ****)
 else
 
 Module     := $(LibDir)/$(MODULE_NAME).bc
-LinkModule := $(LLVMLD) -L$(CFERuntimeLibDir)
+LinkModule := $(LLVMLD) -L$(CFERuntimeLibDir) -r
 
 
 ifdef EXPORTED_SYMBOL_FILE
