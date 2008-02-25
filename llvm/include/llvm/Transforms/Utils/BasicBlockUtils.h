@@ -61,9 +61,11 @@ bool isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum,
                     bool AllowIdenticalEdges = false);
 
 /// SplitCriticalEdge - If this edge is a critical edge, insert a new node to
-/// split the critical edge.  This will update DominatorTree, and DominatorFrontier 
-/// information if it is available, thus calling this pass will not invalidate 
-/// either of them. This returns true if the edge was split, false otherwise.  
+/// split the critical edge.  This will update DominatorTree and
+/// DominatorFrontier information if it is available, thus calling this pass
+/// will not invalidate either of them. This returns true if the edge was split,
+/// false otherwise.  
+///
 /// If MergeIdenticalEdges is true (the default), *all* edges from TI to the 
 /// specified successor will be merged into the same critical edge block.  
 /// This is most commonly interesting with switch instructions, which may 

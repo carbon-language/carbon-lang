@@ -10,17 +10,16 @@
 // This file contains classes used to represent the parameter attributes
 // associated with functions and their calls.
 //
-// The implementation of ParamAttrsList is in lib/VMCore/ParameterAttributes.cpp.
+// The implementation of ParamAttrsList is in VMCore/ParameterAttributes.cpp.
 //
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_PARAM_ATTRS_LIST_H
 #define LLVM_PARAM_ATTRS_LIST_H
 
+#include "llvm/ParameterAttributes.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/FoldingSet.h"
-#include "llvm/ParameterAttributes.h"
-#include <cassert>
 
 namespace llvm {
 
