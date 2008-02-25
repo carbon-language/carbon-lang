@@ -429,14 +429,16 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
 
   // If we reach here we have processed all of the arguments.  Evaluate
   // the callee expression.
-  NodeSet DstTmp;  
-  Visit(CE->getCallee(), Pred, DstTmp);
+  NodeSet DstTmp;    
+  Expr* Callee = CE->getCallee()->IgnoreParenCasts();
+  
+  VisitLVal(Callee, Pred, DstTmp);
   
   // Finally, evaluate the function call.
   for (NodeSet::iterator DI = DstTmp.begin(), DE = DstTmp.end(); DI!=DE; ++DI) {
 
     StateTy St = (*DI)->getState();    
-    RVal L = GetLVal(St, CE->getCallee());
+    RVal L = GetLVal(St, Callee);
 
     // Check for uninitialized control-flow.
 
