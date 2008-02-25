@@ -15,6 +15,7 @@
 #define LLVM_ADT_OWNING_PTR_H
 
 #include <cassert>
+#include <cstddef>
 
 namespace llvm {
 
