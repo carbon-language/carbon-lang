@@ -357,9 +357,10 @@ inline void PATypeHandle::removeUser() {
     Ty->removeAbstractTypeUser(User);
 }
 
-// Define inline methods for PATypeHolder...
+// Define inline methods for PATypeHolder.
 
 inline void PATypeHolder::addRef() {
+  assert(Ty && "Type Holder has a null type!");
   if (Ty->isAbstract())
     Ty->addRef();
 }
