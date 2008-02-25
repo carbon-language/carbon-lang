@@ -228,22 +228,12 @@ const FileEntry *HeaderSearch::LookupFile(const char *FilenameStart,
     if (const FileEntry *FE = FileMgr.getFile(TmpDir.begin(), TmpDir.end())) {
       // Leave CurDir unset.
       // This file is a system header or C++ unfriendly if the old file is.
-      
-      // Note: Don't use:
       //
-      //  getFileInfo(FE).DirInfo = getFileInfo(CurFileEnt).DirInfo;
-      //
-      // MSVC, behind the scenes, does this:
-      //
-      //  PerFileInfo &pf1 = getFileInfo(CurFileEnt);
-      //  PerFileInfo &pf2 = getFileInfo(FE);
-      //  pf2.DirInfo = pf1.DirInfo
-      //
-      // The problem is that if there's a resize() of the FileInfo vector during
-      // the getFileInfo(FE) call, pf1 will point to invalid data.  To fix
-      // this problem, make the assignment through a temporary.
-      unsigned int tmp = getFileInfo(CurFileEnt).DirInfo;
-      getFileInfo(FE).DirInfo = tmp;
+      // Note that the temporary 'DirInfo' is required here, as either call to
+      // getFileInfo could resize the vector and we don't want to rely on order
+      // of evaluation.
+      unsigned DirInfo = getFileInfo(CurFileEnt).DirInfo;
+      getFileInfo(FE).DirInfo = DirInfo;
       return FE;
     }
   }
@@ -372,22 +362,12 @@ LookupSubframeworkHeader(const char *FilenameStart,
   }
   
   // This file is a system header or C++ unfriendly if the old file is.
-
-  // Note: Don't use:
   //
-  //  getFileInfo(FE).DirInfo = getFileInfo(ContextFileEnt).DirInfo;
-  //
-  // MSVC, behind the scenes, does this:
-  //
-  //  PerFileInfo &pf1 = getFileInfo(ContextFileEnt);
-  //  PerFileInfo &pf2 = getFileInfo(FE);
-  //  pf2.DirInfo = pf1.DirInfo
-  //
-  // The problem is that if there's a resize() of the FileInfo vector during
-  // the getFileInfo(FE) call, pf1 will point to invalid data.  The solution
-  // is to make the assignment through a temporary.
-  unsigned int tmp = getFileInfo(ContextFileEnt).DirInfo;
-  getFileInfo(FE).DirInfo = tmp;
+  // Note that the temporary 'DirInfo' is required here, as either call to
+  // getFileInfo could resize the vector and we don't want to rely on order
+  // of evaluation.
+  unsigned DirInfo = getFileInfo(ContextFileEnt).DirInfo;
+  getFileInfo(FE).DirInfo = DirInfo;
   return FE;
 }
 
