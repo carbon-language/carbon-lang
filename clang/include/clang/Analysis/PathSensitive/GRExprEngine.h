@@ -114,18 +114,30 @@ protected:
   ///  taking a branch based on an uninitialized value.
   typedef llvm::SmallPtrSet<NodeTy*,5> UninitBranchesTy;
   UninitBranchesTy UninitBranches;
+
+  typedef llvm::SmallPtrSet<NodeTy*,5> UninitStoresTy;
+  typedef llvm::SmallPtrSet<NodeTy*,5> BadDerefTy;
+  typedef llvm::SmallPtrSet<NodeTy*,5> DivZerosTy;
   
   /// UninitStores - Sinks in the ExplodedGraph that result from
   ///  making a store to an uninitialized lvalue.
-  typedef llvm::SmallPtrSet<NodeTy*,5> UninitStoresTy;
   UninitStoresTy UninitStores;
   
   /// ImplicitNullDeref - Nodes in the ExplodedGraph that result from
-  ///  taking a dereference on a symbolic pointer that may be NULL.
-  typedef llvm::SmallPtrSet<NodeTy*,5> BadDerefTy;
+  ///  taking a dereference on a symbolic pointer that MAY be NULL.
   BadDerefTy ImplicitNullDeref;
+    
+  /// ExplicitNullDeref - Nodes in the ExplodedGraph that result from
+  ///  taking a dereference on a symbolic pointer that MUST be NULL.
   BadDerefTy ExplicitNullDeref;
+  
+  /// UnitDeref - Nodes in the ExplodedGraph that result from
+  ///  taking a dereference on an uninitialized value.
   BadDerefTy UninitDeref;
+
+  /// DivZeroes - Nodes in the ExplodedGraph that result from evaluating
+  ///  a divide-by-zero.
+  DivZerosTy DivZeroes;
   
   bool StateCleaned;
   

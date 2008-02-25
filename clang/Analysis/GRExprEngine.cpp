@@ -850,6 +850,33 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
 
       BinaryOperator::Opcode Op = B->getOpcode();
       
+      if (Op == BinaryOperator::Div) { // Check for divide-by-zero.
+        
+        // First, "assume" that the denominator is 0.
+        
+        bool isFeasible = false;
+        StateTy ZeroSt = Assume(St, RightV, false, isFeasible);
+        
+        if (isFeasible) {
+          NodeTy* DivZeroNode = Builder->generateNode(B, ZeroSt, N2);
+          
+          if (DivZeroNode) {
+            DivZeroNode->markAsSink();
+            DivZeroes.insert(DivZeroNode);
+          }
+        }
+        
+        // Second, "assume" that the denominator cannot be 0.
+        
+        isFeasible = false;
+        St = Assume(St, RightV, true, isFeasible);
+        
+        if (!isFeasible)
+          continue;
+        
+        // Fall-through.  The logic below processes the divide.
+      }
+      
       if (Op <= BinaryOperator::Or) {
         
         // Process non-assignements except commas or short-circuited
@@ -964,8 +991,35 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           RightV = EvalCast(RightV, CTy);
           
           // Evaluate operands and promote to result type.
+
+          if (Op == BinaryOperator::Div) { // Check for divide-by-zero.
+                        
+            // First, "assume" that the denominator is 0.
+            
+            bool isFeasible = false;
+            StateTy ZeroSt = Assume(St, RightV, false, isFeasible);
+            
+            if (isFeasible) {
+              NodeTy* DivZeroNode = Builder->generateNode(B, ZeroSt, N2);
+              
+              if (DivZeroNode) {
+                DivZeroNode->markAsSink();
+                DivZeroes.insert(DivZeroNode);
+              }
+            }
+            
+            // Second, "assume" that the denominator cannot be 0.
+            
+            isFeasible = false;
+            St = Assume(St, RightV, true, isFeasible);
+            
+            if (!isFeasible)
+              continue;
+            
+            // Fall-through.  The logic below processes the divide.
+          }
+
           RVal Result = EvalCast(EvalBinOp(Op, V, RightV), B->getType());
-          
           St = SetRVal(SetRVal(St, B, Result), LeftLV, Result);
         }
       }
