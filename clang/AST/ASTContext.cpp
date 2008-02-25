@@ -726,7 +726,7 @@ QualType ASTContext::getFunctionTypeNoProto(QualType ResultTy) {
   
   FunctionTypeNoProto *New = new FunctionTypeNoProto(ResultTy, Canonical);
   Types.push_back(New);
-  FunctionTypeProtos.InsertNode(New, InsertPos);
+  FunctionTypeNoProtos.InsertNode(New, InsertPos);
   return QualType(New, 0);
 }
 
