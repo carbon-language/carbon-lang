@@ -1187,8 +1187,10 @@ TargetLowering::SimplifySetCC(MVT::ValueType VT, SDOperand N0, SDOperand N1,
             cast<ConstantSDNode>(N0.getOperand(1))->getValue() == 1) {
           // If this is (X^1) == 0/1, swap the RHS and eliminate the xor.  We
           // can only do this if the top bits are known zero.
+          unsigned BitWidth = N0.getValueSizeInBits();
           if (DAG.MaskedValueIsZero(N0,
-                                    MVT::getIntVTBitMask(N0.getValueType())-1)){
+                                    APInt::getHighBitsSet(BitWidth,
+                                                          BitWidth-1))) {
             // Okay, get the un-inverted input value.
             SDOperand Val;
             if (N0.getOpcode() == ISD::XOR)
@@ -1374,18 +1376,24 @@ TargetLowering::SimplifySetCC(MVT::ValueType VT, SDOperand N0, SDOperand N1,
           if (N0.getOpcode() == ISD::XOR)
             // If we know that all of the inverted bits are zero, don't bother
             // performing the inversion.
-            if (DAG.MaskedValueIsZero(N0.getOperand(0), ~LHSR->getValue()))
-              return DAG.getSetCC(VT, N0.getOperand(0),
-                              DAG.getConstant(LHSR->getValue()^RHSC->getValue(),
-                                              N0.getValueType()), Cond);
+            if (DAG.MaskedValueIsZero(N0.getOperand(0), ~LHSR->getAPIntValue()))
+              return
+                DAG.getSetCC(VT, N0.getOperand(0),
+                             DAG.getConstant(LHSR->getAPIntValue() ^
+                                               RHSC->getAPIntValue(),
+                                             N0.getValueType()),
+                             Cond);
         }
         
         // Turn (C1-X) == C2 --> X == C1-C2
         if (ConstantSDNode *SUBC = dyn_cast<ConstantSDNode>(N0.getOperand(0))) {
           if (N0.getOpcode() == ISD::SUB && N0.Val->hasOneUse()) {
-            return DAG.getSetCC(VT, N0.getOperand(1),
-                             DAG.getConstant(SUBC->getValue()-RHSC->getValue(),
-                                             N0.getValueType()), Cond);
+            return
+              DAG.getSetCC(VT, N0.getOperand(1),
+                           DAG.getConstant(SUBC->getAPIntValue() -
+                                             RHSC->getAPIntValue(),
+                                           N0.getValueType()),
+                           Cond);
           }
         }          
       }

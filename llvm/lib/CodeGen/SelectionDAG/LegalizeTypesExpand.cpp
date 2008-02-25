@@ -507,14 +507,15 @@ void DAGTypeLegalizer::ExpandResult_MUL(SDNode *N,
     SDOperand LL, LH, RL, RH;
     GetExpandedOp(N->getOperand(0), LL, LH);
     GetExpandedOp(N->getOperand(1), RL, RH);
+    unsigned OuterBitSize = MVT::getSizeInBits(VT);
     unsigned BitSize = MVT::getSizeInBits(NVT);
     unsigned LHSSB = DAG.ComputeNumSignBits(N->getOperand(0));
     unsigned RHSSB = DAG.ComputeNumSignBits(N->getOperand(1));
     
-    // FIXME: generalize this to handle other bit sizes
-    if (LHSSB == 32 && RHSSB == 32 &&
-        DAG.MaskedValueIsZero(N->getOperand(0), 0xFFFFFFFF00000000ULL) &&
-        DAG.MaskedValueIsZero(N->getOperand(1), 0xFFFFFFFF00000000ULL)) {
+    if (DAG.MaskedValueIsZero(N->getOperand(0),
+                              APInt::getHighBitsSet(OuterBitSize, LHSSB)) &&
+        DAG.MaskedValueIsZero(N->getOperand(1),
+                              APInt::getHighBitsSet(OuterBitSize, RHSSB))) {
       // The inputs are both zero-extended.
       if (HasUMUL_LOHI) {
         // We can emit a umul_lohi.

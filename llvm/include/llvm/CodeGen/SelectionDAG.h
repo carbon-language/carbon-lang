@@ -555,10 +555,14 @@ public:
   SDOperand FoldSetCC(MVT::ValueType VT, SDOperand N1,
                       SDOperand N2, ISD::CondCode Cond);
   
+  /// SignBitIsZero - Return true if the sign bit of Op is known to be zero.  We
+  /// use this predicate to simplify operations downstream.
+  bool SignBitIsZero(SDOperand Op, unsigned Depth = 0) const;
+
   /// MaskedValueIsZero - Return true if 'Op & Mask' is known to be zero.  We
   /// use this predicate to simplify operations downstream.  Op and Mask are
   /// known to be the same type.
-  bool MaskedValueIsZero(SDOperand Op, uint64_t Mask, unsigned Depth = 0)
+  bool MaskedValueIsZero(SDOperand Op, const APInt &Mask, unsigned Depth = 0)
     const;
   
   /// ComputeMaskedBits - Determine which of the bits specified in Mask are

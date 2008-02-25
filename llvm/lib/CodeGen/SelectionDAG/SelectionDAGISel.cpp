@@ -5211,20 +5211,20 @@ HazardRecognizer *SelectionDAGISel::CreateTargetHazardRecognizer() {
 /// specified in the .td file (e.g. 255).
 bool SelectionDAGISel::CheckAndMask(SDOperand LHS, ConstantSDNode *RHS, 
                                     int64_t DesiredMaskS) const {
-  uint64_t ActualMask = RHS->getValue();
-  uint64_t DesiredMask =DesiredMaskS & MVT::getIntVTBitMask(LHS.getValueType());
+  const APInt &ActualMask = RHS->getAPIntValue();
+  const APInt &DesiredMask = APInt(LHS.getValueSizeInBits(), DesiredMaskS);
   
   // If the actual mask exactly matches, success!
   if (ActualMask == DesiredMask)
     return true;
   
   // If the actual AND mask is allowing unallowed bits, this doesn't match.
-  if (ActualMask & ~DesiredMask)
+  if (ActualMask.intersects(~DesiredMask))
     return false;
   
   // Otherwise, the DAG Combiner may have proven that the value coming in is
   // either already zero or is not demanded.  Check for known zero input bits.
-  uint64_t NeededMask = DesiredMask & ~ActualMask;
+  APInt NeededMask = DesiredMask & ~ActualMask;
   if (CurDAG->MaskedValueIsZero(LHS, NeededMask))
     return true;
   
@@ -5239,23 +5239,23 @@ bool SelectionDAGISel::CheckAndMask(SDOperand LHS, ConstantSDNode *RHS,
 /// actual value in the DAG on the RHS of an OR, and DesiredMaskS is the value
 /// specified in the .td file (e.g. 255).
 bool SelectionDAGISel::CheckOrMask(SDOperand LHS, ConstantSDNode *RHS, 
-                                    int64_t DesiredMaskS) const {
-  uint64_t ActualMask = RHS->getValue();
-  uint64_t DesiredMask =DesiredMaskS & MVT::getIntVTBitMask(LHS.getValueType());
+                                   int64_t DesiredMaskS) const {
+  const APInt &ActualMask = RHS->getAPIntValue();
+  const APInt &DesiredMask = APInt(LHS.getValueSizeInBits(), DesiredMaskS);
   
   // If the actual mask exactly matches, success!
   if (ActualMask == DesiredMask)
     return true;
   
   // If the actual AND mask is allowing unallowed bits, this doesn't match.
-  if (ActualMask & ~DesiredMask)
+  if (ActualMask.intersects(~DesiredMask))
     return false;
   
   // Otherwise, the DAG Combiner may have proven that the value coming in is
   // either already zero or is not demanded.  Check for known zero input bits.
-  uint64_t NeededMask = DesiredMask & ~ActualMask;
+  APInt NeededMask = DesiredMask & ~ActualMask;
   
-  uint64_t KnownZero, KnownOne;
+  APInt KnownZero, KnownOne;
   CurDAG->ComputeMaskedBits(LHS, NeededMask, KnownZero, KnownOne);
   
   // If all the missing bits in the or are already known to be set, match!

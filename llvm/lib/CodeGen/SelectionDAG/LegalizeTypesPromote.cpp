@@ -446,8 +446,9 @@ SDOperand DAGTypeLegalizer::PromoteOperand_SELECT(SDNode *N, unsigned OpNo) {
 
   // The top bits of the promoted condition are not necessarily zero, ensure
   // that the value is properly zero extended.
+  unsigned BitWidth = Cond.getValueSizeInBits();
   if (!DAG.MaskedValueIsZero(Cond, 
-                             MVT::getIntVTBitMask(Cond.getValueType())^1)) {
+                             APInt::getHighBitsSet(BitWidth, BitWidth-1))) {
     Cond = DAG.getZeroExtendInReg(Cond, MVT::i1);
     MarkNewNodes(Cond.Val); 
   }
@@ -463,8 +464,9 @@ SDOperand DAGTypeLegalizer::PromoteOperand_BRCOND(SDNode *N, unsigned OpNo) {
   
   // The top bits of the promoted condition are not necessarily zero, ensure
   // that the value is properly zero extended.
+  unsigned BitWidth = Cond.getValueSizeInBits();
   if (!DAG.MaskedValueIsZero(Cond, 
-                             MVT::getIntVTBitMask(Cond.getValueType())^1)) {
+                             APInt::getHighBitsSet(BitWidth, BitWidth-1))) {
     Cond = DAG.getZeroExtendInReg(Cond, MVT::i1);
     MarkNewNodes(Cond.Val); 
   }

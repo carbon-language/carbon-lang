@@ -1779,15 +1779,17 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     case Legal:
       Tmp2 = LegalizeOp(Node->getOperand(1)); // Legalize the condition.
       break;
-    case Promote:
+    case Promote: {
       Tmp2 = PromoteOp(Node->getOperand(1));  // Promote the condition.
       
       // The top bits of the promoted condition are not necessarily zero, ensure
       // that the value is properly zero extended.
+      unsigned BitWidth = Tmp2.getValueSizeInBits();
       if (!DAG.MaskedValueIsZero(Tmp2, 
-                                 MVT::getIntVTBitMask(Tmp2.getValueType())^1))
+                                 APInt::getHighBitsSet(BitWidth, BitWidth-1)))
         Tmp2 = DAG.getZeroExtendInReg(Tmp2, MVT::i1);
       break;
+    }
     }
 
     // Basic block destination (Op#2) is always legal.
@@ -2642,13 +2644,15 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     case Legal:
       Tmp1 = LegalizeOp(Node->getOperand(0)); // Legalize the condition.
       break;
-    case Promote:
+    case Promote: {
       Tmp1 = PromoteOp(Node->getOperand(0));  // Promote the condition.
       // Make sure the condition is either zero or one.
+      unsigned BitWidth = Tmp1.getValueSizeInBits();
       if (!DAG.MaskedValueIsZero(Tmp1,
-                                 MVT::getIntVTBitMask(Tmp1.getValueType())^1))
+                                 APInt::getHighBitsSet(BitWidth, BitWidth-1)))
         Tmp1 = DAG.getZeroExtendInReg(Tmp1, MVT::i1);
       break;
+    }
     }
     Tmp2 = LegalizeOp(Node->getOperand(1));   // TrueVal
     Tmp3 = LegalizeOp(Node->getOperand(2));   // FalseVal
@@ -6338,13 +6342,14 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       SDOperand LL, LH, RL, RH;
       ExpandOp(Node->getOperand(0), LL, LH);
       ExpandOp(Node->getOperand(1), RL, RH);
-      unsigned BitSize = MVT::getSizeInBits(RH.getValueType());
+      unsigned OuterBitSize = Op.getValueSizeInBits();
+      unsigned InnerBitSize = RH.getValueSizeInBits();
       unsigned LHSSB = DAG.ComputeNumSignBits(Op.getOperand(0));
       unsigned RHSSB = DAG.ComputeNumSignBits(Op.getOperand(1));
-      // FIXME: generalize this to handle other bit sizes
-      if (LHSSB == 32 && RHSSB == 32 &&
-          DAG.MaskedValueIsZero(Op.getOperand(0), 0xFFFFFFFF00000000ULL) &&
-          DAG.MaskedValueIsZero(Op.getOperand(1), 0xFFFFFFFF00000000ULL)) {
+      if (DAG.MaskedValueIsZero(Op.getOperand(0),
+                                APInt::getHighBitsSet(OuterBitSize, LHSSB)) &&
+          DAG.MaskedValueIsZero(Op.getOperand(1),
+                                APInt::getHighBitsSet(OuterBitSize, RHSSB))) {
         // The inputs are both zero-extended.
         if (HasUMUL_LOHI) {
           // We can emit a umul_lohi.
@@ -6359,7 +6364,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
           break;
         }
       }
-      if (LHSSB > BitSize && RHSSB > BitSize) {
+      if (LHSSB > InnerBitSize && RHSSB > InnerBitSize) {
         // The input values are both sign-extended.
         if (HasSMUL_LOHI) {
           // We can emit a smul_lohi.

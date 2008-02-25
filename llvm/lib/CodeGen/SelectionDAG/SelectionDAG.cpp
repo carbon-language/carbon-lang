@@ -1133,16 +1133,19 @@ SDOperand SelectionDAG::FoldSetCC(MVT::ValueType VT, SDOperand N1,
   return SDOperand();
 }
 
+/// SignBitIsZero - Return true if the sign bit of Op is known to be zero.  We
+/// use this predicate to simplify operations downstream.
+bool SelectionDAG::SignBitIsZero(SDOperand Op, unsigned Depth) const {
+  unsigned BitWidth = Op.getValueSizeInBits();
+  return MaskedValueIsZero(Op, APInt::getSignBit(BitWidth), Depth);
+}
+
 /// MaskedValueIsZero - Return true if 'V & Mask' is known to be zero.  We use
 /// this predicate to simplify operations downstream.  Mask is known to be zero
 /// for bits that V cannot have.
-bool SelectionDAG::MaskedValueIsZero(SDOperand Op, uint64_t Mask, 
+bool SelectionDAG::MaskedValueIsZero(SDOperand Op, const APInt &Mask, 
                                      unsigned Depth) const {
-  // The masks are not wide enough to represent this type!  Should use APInt.
-  if (Op.getValueType() == MVT::i128)
-    return false;
-  
-  uint64_t KnownZero, KnownOne;
+  APInt KnownZero, KnownOne;
   ComputeMaskedBits(Op, Mask, KnownZero, KnownOne, Depth);
   assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
   return (KnownZero & Mask) == Mask;

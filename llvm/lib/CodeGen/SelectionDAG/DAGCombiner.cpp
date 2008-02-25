@@ -218,7 +218,7 @@ namespace {
     SDNode *MatchRotate(SDOperand LHS, SDOperand RHS);
     SDOperand ReduceLoadWidth(SDNode *N);
     
-    SDOperand GetDemandedBits(SDOperand V, uint64_t Mask);
+    SDOperand GetDemandedBits(SDOperand V, const APInt &Mask);
     
     /// GatherAllAliases - Walk up chain skipping non-aliasing memory nodes,
     /// looking for aliasing nodes and adding them to the Aliases vector.
@@ -1226,9 +1226,7 @@ SDOperand DAGCombiner::visitSDIV(SDNode *N) {
   // If we know the sign bits of both operands are zero, strength reduce to a
   // udiv instead.  Handles (X&15) /s 4 -> X&15 >> 2
   if (!MVT::isVector(VT)) {
-    uint64_t SignBit = MVT::getIntVTSignBit(VT);
-    if (DAG.MaskedValueIsZero(N1, SignBit) &&
-        DAG.MaskedValueIsZero(N0, SignBit))
+    if (DAG.SignBitIsZero(N1) && DAG.SignBitIsZero(N0))
       return DAG.getNode(ISD::UDIV, N1.getValueType(), N0, N1);
   }
   // fold (sdiv X, pow2) -> simple ops after legalize
@@ -1344,9 +1342,7 @@ SDOperand DAGCombiner::visitSREM(SDNode *N) {
   // If we know the sign bits of both operands are zero, strength reduce to a
   // urem instead.  Handles (X & 0x0FFFFFFF) %s 16 -> X&15
   if (!MVT::isVector(VT)) {
-    uint64_t SignBit = MVT::getIntVTSignBit(VT);
-    if (DAG.MaskedValueIsZero(N1, SignBit) &&
-        DAG.MaskedValueIsZero(N0, SignBit))
+    if (DAG.SignBitIsZero(N1) && DAG.SignBitIsZero(N0))
       return DAG.getNode(ISD::UREM, VT, N0, N1);
   }
   
@@ -1588,6 +1584,7 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
   ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
   MVT::ValueType VT = N1.getValueType();
+  unsigned BitWidth = MVT::getSizeInBits(VT);
   
   // fold vector ops
   if (MVT::isVector(VT)) {
@@ -1608,7 +1605,8 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
   if (N1C && N1C->isAllOnesValue())
     return N0;
   // if (and x, c) is known to be zero, return 0
-  if (N1C && DAG.MaskedValueIsZero(SDOperand(N, 0), MVT::getIntVTBitMask(VT)))
+  if (N1C && DAG.MaskedValueIsZero(SDOperand(N, 0),
+                                   APInt::getAllOnesValue(BitWidth)))
     return DAG.getConstant(0, VT);
   // reassociate and
   SDOperand RAND = ReassociateOps(ISD::AND, N0, N1);
@@ -1621,11 +1619,12 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
         return N1;
   // fold (and (any_ext V), c) -> (zero_ext V) if 'and' only clears top bits.
   if (N1C && N0.getOpcode() == ISD::ANY_EXTEND) {
-    unsigned InMask = MVT::getIntVTBitMask(N0.getOperand(0).getValueType());
-    if (DAG.MaskedValueIsZero(N0.getOperand(0),
-                              ~N1C->getValue() & InMask)) {
+    SDOperand N0Op0 = N0.getOperand(0);
+    APInt Mask = ~N1C->getAPIntValue();
+    Mask.trunc(N0Op0.getValueSizeInBits());
+    if (DAG.MaskedValueIsZero(N0Op0, Mask)) {
       SDOperand Zext = DAG.getNode(ISD::ZERO_EXTEND, N0.getValueType(),
-                                   N0.getOperand(0));
+                                   N0Op0);
       
       // Replace uses of the AND with uses of the Zero extend node.
       CombineTo(N, Zext);
@@ -1693,7 +1692,9 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
     MVT::ValueType EVT = LN0->getMemoryVT();
     // If we zero all the possible extended bits, then we can turn this into
     // a zextload if we are running before legalize or the operation is legal.
-    if (DAG.MaskedValueIsZero(N1, ~0ULL << MVT::getSizeInBits(EVT)) &&
+    unsigned BitWidth = N1.getValueSizeInBits();
+    if (DAG.MaskedValueIsZero(N1, APInt::getHighBitsSet(BitWidth,
+                                     BitWidth - MVT::getSizeInBits(EVT))) &&
         (!AfterLegalize || TLI.isLoadXLegal(ISD::ZEXTLOAD, EVT))) {
       SDOperand ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, VT, LN0->getChain(),
                                          LN0->getBasePtr(), LN0->getSrcValue(),
@@ -1712,7 +1713,9 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
     MVT::ValueType EVT = LN0->getMemoryVT();
     // If we zero all the possible extended bits, then we can turn this into
     // a zextload if we are running before legalize or the operation is legal.
-    if (DAG.MaskedValueIsZero(N1, ~0ULL << MVT::getSizeInBits(EVT)) &&
+    unsigned BitWidth = N1.getValueSizeInBits();
+    if (DAG.MaskedValueIsZero(N1, APInt::getHighBitsSet(BitWidth,
+                                     BitWidth - MVT::getSizeInBits(EVT))) &&
         (!AfterLegalize || TLI.isLoadXLegal(ISD::ZEXTLOAD, EVT))) {
       SDOperand ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, VT, LN0->getChain(),
                                          LN0->getBasePtr(), LN0->getSrcValue(),
@@ -1780,7 +1783,6 @@ SDOperand DAGCombiner::visitOR(SDNode *N) {
   ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
   MVT::ValueType VT = N1.getValueType();
-  unsigned OpSizeInBits = MVT::getSizeInBits(VT);
   
   // fold vector ops
   if (MVT::isVector(VT)) {
@@ -1804,8 +1806,7 @@ SDOperand DAGCombiner::visitOR(SDNode *N) {
   if (N1C && N1C->isAllOnesValue())
     return N1;
   // fold (or x, c) -> c iff (x & ~c) == 0
-  if (N1C && 
-      DAG.MaskedValueIsZero(N0,~N1C->getValue() & (~0ULL>>(64-OpSizeInBits))))
+  if (N1C && DAG.MaskedValueIsZero(N0, ~N1C->getAPIntValue()))
     return N1;
   // reassociate or
   SDOperand ROR = ReassociateOps(ISD::OR, N0, N1);
@@ -1871,8 +1872,10 @@ SDOperand DAGCombiner::visitOR(SDNode *N) {
       (N0.Val->hasOneUse() || N1.Val->hasOneUse())) {
     // We can only do this xform if we know that bits from X that are set in C2
     // but not in C1 are already zero.  Likewise for Y.
-    uint64_t LHSMask = cast<ConstantSDNode>(N0.getOperand(1))->getValue();
-    uint64_t RHSMask = cast<ConstantSDNode>(N1.getOperand(1))->getValue();
+    const APInt &LHSMask =
+      cast<ConstantSDNode>(N0.getOperand(1))->getAPIntValue();
+    const APInt &RHSMask =
+      cast<ConstantSDNode>(N1.getOperand(1))->getAPIntValue();
     
     if (DAG.MaskedValueIsZero(N0.getOperand(0), RHSMask&~LHSMask) &&
         DAG.MaskedValueIsZero(N1.getOperand(0), LHSMask&~RHSMask)) {
@@ -2271,7 +2274,8 @@ SDOperand DAGCombiner::visitSHL(SDNode *N) {
   if (N1C && N1C->isNullValue())
     return N0;
   // if (shl x, c) is known to be zero, return 0
-  if (DAG.MaskedValueIsZero(SDOperand(N, 0), MVT::getIntVTBitMask(VT)))
+  if (DAG.MaskedValueIsZero(SDOperand(N, 0),
+                            APInt::getAllOnesValue(MVT::getSizeInBits(VT))))
     return DAG.getConstant(0, VT);
   if (N1C && SimplifyDemandedBits(SDOperand(N, 0)))
     return SDOperand(N, 0);
@@ -2363,7 +2367,7 @@ SDOperand DAGCombiner::visitSRA(SDNode *N) {
   
   
   // If the sign bit is known to be zero, switch this to a SRL.
-  if (DAG.MaskedValueIsZero(N0, MVT::getIntVTSignBit(VT)))
+  if (DAG.SignBitIsZero(N0))
     return DAG.getNode(ISD::SRL, VT, N0, N1);
 
   return N1C ? visitShiftByConstant(N, N1C->getValue()) : SDOperand();
@@ -2390,7 +2394,8 @@ SDOperand DAGCombiner::visitSRL(SDNode *N) {
   if (N1C && N1C->isNullValue())
     return N0;
   // if (srl x, c) is known to be zero, return 0
-  if (N1C && DAG.MaskedValueIsZero(SDOperand(N, 0), ~0ULL >> (64-OpSizeInBits)))
+  if (N1C && DAG.MaskedValueIsZero(SDOperand(N, 0),
+                                   APInt::getAllOnesValue(OpSizeInBits)))
     return DAG.getConstant(0, VT);
   
   // fold (srl (srl x, c1), c2) -> 0 or (srl x, c1+c2)
@@ -3026,7 +3031,7 @@ SDOperand DAGCombiner::visitANY_EXTEND(SDNode *N) {
 /// GetDemandedBits - See if the specified operand can be simplified with the
 /// knowledge that only the bits specified by Mask are used.  If so, return the
 /// simpler operand, otherwise return a null SDOperand.
-SDOperand DAGCombiner::GetDemandedBits(SDOperand V, uint64_t Mask) {
+SDOperand DAGCombiner::GetDemandedBits(SDOperand V, const APInt &Mask) {
   switch (V.getOpcode()) {
   default: break;
   case ISD::OR:
@@ -3044,8 +3049,8 @@ SDOperand DAGCombiner::GetDemandedBits(SDOperand V, uint64_t Mask) {
     if (ConstantSDNode *RHSC = dyn_cast<ConstantSDNode>(V.getOperand(1))) {
       // See if we can recursively simplify the LHS.
       unsigned Amt = RHSC->getValue();
-      Mask = (Mask << Amt) & MVT::getIntVTBitMask(V.getValueType());
-      SDOperand SimplifyLHS = GetDemandedBits(V.getOperand(0), Mask);
+      APInt NewMask = Mask << Amt;
+      SDOperand SimplifyLHS = GetDemandedBits(V.getOperand(0), NewMask);
       if (SimplifyLHS.Val) {
         return DAG.getNode(ISD::SRL, V.getValueType(), 
                            SimplifyLHS, V.getOperand(1));
@@ -3147,6 +3152,7 @@ SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
   SDOperand N1 = N->getOperand(1);
   MVT::ValueType VT = N->getValueType(0);
   MVT::ValueType EVT = cast<VTSDNode>(N1)->getVT();
+  unsigned VTBits = MVT::getSizeInBits(VT);
   unsigned EVTBits = MVT::getSizeInBits(EVT);
   
   // fold (sext_in_reg c1) -> c1
@@ -3164,7 +3170,7 @@ SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
   }
 
   // fold (sext_in_reg x) -> (zext_in_reg x) if the sign bit is known zero.
-  if (DAG.MaskedValueIsZero(N0, 1ULL << (EVTBits-1)))
+  if (DAG.MaskedValueIsZero(N0, APInt::getBitsSet(VTBits, EVTBits-1, EVTBits)))
     return DAG.getZeroExtendInReg(N0, EVT);
   
   // fold operands of sext_in_reg based on knowledge that the top bits are not
@@ -3256,7 +3262,9 @@ SDOperand DAGCombiner::visitTRUNCATE(SDNode *N) {
   // See if we can simplify the input to this truncate through knowledge that
   // only the low bits are being used.  For example "trunc (or (shl x, 8), y)"
   // -> trunc y
-  SDOperand Shorter = GetDemandedBits(N0, MVT::getIntVTBitMask(VT));
+  SDOperand Shorter =
+    GetDemandedBits(N0, APInt::getLowBitsSet(N0.getValueSizeInBits(),
+                                             MVT::getSizeInBits(VT)));
   if (Shorter.Val)
     return DAG.getNode(ISD::TRUNCATE, VT, Shorter);
 
@@ -4468,7 +4476,9 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
     // only the low bits are being used.  For example:
     // "truncstore (or (shl x, 8), y), i8"  -> "truncstore y, i8"
     SDOperand Shorter = 
-      GetDemandedBits(Value, MVT::getIntVTBitMask(ST->getMemoryVT()));
+      GetDemandedBits(Value,
+                 APInt::getLowBitsSet(Value.getValueSizeInBits(),
+                                      MVT::getSizeInBits(ST->getMemoryVT())));
     AddToWorkList(Value.Val);
     if (Shorter.Val)
       return DAG.getTruncStore(Chain, Shorter, Ptr, ST->getSrcValue(),
