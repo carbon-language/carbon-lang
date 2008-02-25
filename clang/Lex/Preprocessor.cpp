@@ -2517,7 +2517,7 @@ void Preprocessor::HandleEndifDirective(Token &EndifToken) {
   
   // If this the end of a top-level #endif, inform MIOpt.
   if (CurLexer->getConditionalStackDepth() == 0)
-    CurLexer->MIOpt.EnterTopLevelConditional();
+    CurLexer->MIOpt.ExitTopLevelConditional();
   
   assert(!CondInfo.WasSkipping && !CurLexer->LexingRawMode &&
          "This code should only be reachable in the non-skipping case!");
