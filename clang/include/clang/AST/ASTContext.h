@@ -224,7 +224,7 @@ public:
 
   // Return the ObjC type encoding for a given type.
   void getObjCEncodingForType(QualType t, std::string &S, 
-			      llvm::SmallVector<const RecordType *, 8> &RT) const;
+                              llvm::SmallVector<const RecordType *, 8> &RT) const;
   
   // Put the string version of type qualifiers into S.
   void getObjCEncodingForTypeQualifier(Decl::ObjCDeclQualifier QT, 

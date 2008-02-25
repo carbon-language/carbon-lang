@@ -382,7 +382,7 @@ Sema::DeclTy *Sema::ActOnStartClassImplementation(
     // Legacy case of @implementation with no corresponding @interface.
     // Build, chain & install the interface decl into the identifier.
     IDecl = new ObjCInterfaceDecl(AtClassImplLoc, 0, ClassName, 
-				  false, true);
+                                  false, true);
     IDecl->setNext(ClassName->getFETokenInfo<ScopedDecl>());
     ClassName->setFETokenInfo(IDecl);
     IDecl->setSuperClass(SDecl);

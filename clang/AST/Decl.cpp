@@ -95,79 +95,79 @@ bool Decl::CollectingStats(bool enable) {
 void Decl::PrintStats() {
   fprintf(stderr, "*** Decl Stats:\n");
   fprintf(stderr, "  %d decls total.\n", 
-	  int(nFuncs+nBlockVars+nFileVars+nParmVars+nFieldDecls+nSUC+
-	      nEnumDecls+nEnumConst+nTypedef+nInterfaceDecls+nClassDecls+
-	      nMethodDecls+nProtocolDecls+nCategoryDecls+nIvarDecls));
+          int(nFuncs+nBlockVars+nFileVars+nParmVars+nFieldDecls+nSUC+
+              nEnumDecls+nEnumConst+nTypedef+nInterfaceDecls+nClassDecls+
+              nMethodDecls+nProtocolDecls+nCategoryDecls+nIvarDecls));
   fprintf(stderr, "    %d function decls, %d each (%d bytes)\n", 
-	  nFuncs, (int)sizeof(FunctionDecl), int(nFuncs*sizeof(FunctionDecl)));
+          nFuncs, (int)sizeof(FunctionDecl), int(nFuncs*sizeof(FunctionDecl)));
   fprintf(stderr, "    %d block variable decls, %d each (%d bytes)\n", 
-	  nBlockVars, (int)sizeof(BlockVarDecl), 
-	  int(nBlockVars*sizeof(BlockVarDecl)));
+          nBlockVars, (int)sizeof(BlockVarDecl), 
+          int(nBlockVars*sizeof(BlockVarDecl)));
   fprintf(stderr, "    %d file variable decls, %d each (%d bytes)\n", 
-	  nFileVars, (int)sizeof(FileVarDecl), 
-	  int(nFileVars*sizeof(FileVarDecl)));
+          nFileVars, (int)sizeof(FileVarDecl), 
+          int(nFileVars*sizeof(FileVarDecl)));
   fprintf(stderr, "    %d parameter variable decls, %d each (%d bytes)\n", 
-	  nParmVars, (int)sizeof(ParmVarDecl),
-	  int(nParmVars*sizeof(ParmVarDecl)));
+          nParmVars, (int)sizeof(ParmVarDecl),
+          int(nParmVars*sizeof(ParmVarDecl)));
   fprintf(stderr, "    %d field decls, %d each (%d bytes)\n", 
-	  nFieldDecls, (int)sizeof(FieldDecl),
-	  int(nFieldDecls*sizeof(FieldDecl)));
+          nFieldDecls, (int)sizeof(FieldDecl),
+          int(nFieldDecls*sizeof(FieldDecl)));
   fprintf(stderr, "    %d struct/union/class decls, %d each (%d bytes)\n", 
-	  nSUC, (int)sizeof(RecordDecl),
-	  int(nSUC*sizeof(RecordDecl)));
+          nSUC, (int)sizeof(RecordDecl),
+          int(nSUC*sizeof(RecordDecl)));
   fprintf(stderr, "    %d enum decls, %d each (%d bytes)\n", 
-	  nEnumDecls, (int)sizeof(EnumDecl), 
-	  int(nEnumDecls*sizeof(EnumDecl)));
+          nEnumDecls, (int)sizeof(EnumDecl), 
+          int(nEnumDecls*sizeof(EnumDecl)));
   fprintf(stderr, "    %d enum constant decls, %d each (%d bytes)\n", 
-	  nEnumConst, (int)sizeof(EnumConstantDecl),
-	  int(nEnumConst*sizeof(EnumConstantDecl)));
+          nEnumConst, (int)sizeof(EnumConstantDecl),
+          int(nEnumConst*sizeof(EnumConstantDecl)));
   fprintf(stderr, "    %d typedef decls, %d each (%d bytes)\n", 
-	  nTypedef, (int)sizeof(TypedefDecl),int(nTypedef*sizeof(TypedefDecl)));
+          nTypedef, (int)sizeof(TypedefDecl),int(nTypedef*sizeof(TypedefDecl)));
   // Objective-C decls...
   fprintf(stderr, "    %d interface decls, %d each (%d bytes)\n", 
-	  nInterfaceDecls, (int)sizeof(ObjCInterfaceDecl),
-	  int(nInterfaceDecls*sizeof(ObjCInterfaceDecl)));
+          nInterfaceDecls, (int)sizeof(ObjCInterfaceDecl),
+          int(nInterfaceDecls*sizeof(ObjCInterfaceDecl)));
   fprintf(stderr, "    %d instance variable decls, %d each (%d bytes)\n", 
-	  nIvarDecls, (int)sizeof(ObjCIvarDecl),
-	  int(nIvarDecls*sizeof(ObjCIvarDecl)));
+          nIvarDecls, (int)sizeof(ObjCIvarDecl),
+          int(nIvarDecls*sizeof(ObjCIvarDecl)));
   fprintf(stderr, "    %d class decls, %d each (%d bytes)\n", 
-	  nClassDecls, (int)sizeof(ObjCClassDecl),
-	  int(nClassDecls*sizeof(ObjCClassDecl)));
+          nClassDecls, (int)sizeof(ObjCClassDecl),
+          int(nClassDecls*sizeof(ObjCClassDecl)));
   fprintf(stderr, "    %d method decls, %d each (%d bytes)\n", 
-	  nMethodDecls, (int)sizeof(ObjCMethodDecl),
-	  int(nMethodDecls*sizeof(ObjCMethodDecl)));
+          nMethodDecls, (int)sizeof(ObjCMethodDecl),
+          int(nMethodDecls*sizeof(ObjCMethodDecl)));
   fprintf(stderr, "    %d protocol decls, %d each (%d bytes)\n", 
-	  nProtocolDecls, (int)sizeof(ObjCProtocolDecl),
-	  int(nProtocolDecls*sizeof(ObjCProtocolDecl)));
+          nProtocolDecls, (int)sizeof(ObjCProtocolDecl),
+          int(nProtocolDecls*sizeof(ObjCProtocolDecl)));
   fprintf(stderr, "    %d forward protocol decls, %d each (%d bytes)\n", 
-	  nForwardProtocolDecls, (int)sizeof(ObjCForwardProtocolDecl),
-	  int(nForwardProtocolDecls*sizeof(ObjCForwardProtocolDecl)));
+          nForwardProtocolDecls, (int)sizeof(ObjCForwardProtocolDecl),
+          int(nForwardProtocolDecls*sizeof(ObjCForwardProtocolDecl)));
   fprintf(stderr, "    %d category decls, %d each (%d bytes)\n", 
-	  nCategoryDecls, (int)sizeof(ObjCCategoryDecl),
-	  int(nCategoryDecls*sizeof(ObjCCategoryDecl)));
+          nCategoryDecls, (int)sizeof(ObjCCategoryDecl),
+          int(nCategoryDecls*sizeof(ObjCCategoryDecl)));
 
   fprintf(stderr, "    %d class implementation decls, %d each (%d bytes)\n", 
-	  nObjCImplementationDecls, (int)sizeof(ObjCImplementationDecl),
-	  int(nObjCImplementationDecls*sizeof(ObjCImplementationDecl)));
+          nObjCImplementationDecls, (int)sizeof(ObjCImplementationDecl),
+          int(nObjCImplementationDecls*sizeof(ObjCImplementationDecl)));
 
   fprintf(stderr, "    %d class implementation decls, %d each (%d bytes)\n", 
-	  nObjCCategoryImpl, (int)sizeof(ObjCCategoryImplDecl),
-	  int(nObjCCategoryImpl*sizeof(ObjCCategoryImplDecl)));
+          nObjCCategoryImpl, (int)sizeof(ObjCCategoryImplDecl),
+          int(nObjCCategoryImpl*sizeof(ObjCCategoryImplDecl)));
 
   fprintf(stderr, "    %d compatibility alias decls, %d each (%d bytes)\n", 
-	  nObjCCompatibleAlias, (int)sizeof(ObjCCompatibleAliasDecl),
-	  int(nObjCCompatibleAlias*sizeof(ObjCCompatibleAliasDecl)));
+          nObjCCompatibleAlias, (int)sizeof(ObjCCompatibleAliasDecl),
+          int(nObjCCompatibleAlias*sizeof(ObjCCompatibleAliasDecl)));
   
   fprintf(stderr, "    %d property decls, %d each (%d bytes)\n", 
-	  nObjCPropertyDecl, (int)sizeof(ObjCPropertyDecl),
-	  int(nObjCPropertyDecl*sizeof(ObjCPropertyDecl)));
+          nObjCPropertyDecl, (int)sizeof(ObjCPropertyDecl),
+          int(nObjCPropertyDecl*sizeof(ObjCPropertyDecl)));
   
   fprintf(stderr, "Total bytes = %d\n", 
-	  int(nFuncs*sizeof(FunctionDecl)+nBlockVars*sizeof(BlockVarDecl)+
-	      nFileVars*sizeof(FileVarDecl)+nParmVars*sizeof(ParmVarDecl)+
-	      nFieldDecls*sizeof(FieldDecl)+nSUC*sizeof(RecordDecl)+
-	      nEnumDecls*sizeof(EnumDecl)+nEnumConst*sizeof(EnumConstantDecl)+
-	      nTypedef*sizeof(TypedefDecl)+
+          int(nFuncs*sizeof(FunctionDecl)+nBlockVars*sizeof(BlockVarDecl)+
+              nFileVars*sizeof(FileVarDecl)+nParmVars*sizeof(ParmVarDecl)+
+              nFieldDecls*sizeof(FieldDecl)+nSUC*sizeof(RecordDecl)+
+              nEnumDecls*sizeof(EnumDecl)+nEnumConst*sizeof(EnumConstantDecl)+
+              nTypedef*sizeof(TypedefDecl)+
               nInterfaceDecls*sizeof(ObjCInterfaceDecl)+
               nIvarDecls*sizeof(ObjCIvarDecl)+
               nClassDecls*sizeof(ObjCClassDecl)+

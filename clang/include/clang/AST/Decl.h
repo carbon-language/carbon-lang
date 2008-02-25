@@ -71,7 +71,7 @@ public:
          ObjCMethod,
          ObjCClass,
          ObjCForwardProtocol,
- 	 LinkageSpec,
+         LinkageSpec,
    FileScopeAsm,
   
     // For each non-leaf class, we now define a mapping to the first/last member
@@ -678,7 +678,7 @@ public:
   EnumDecl(SourceLocation L, IdentifierInfo *Id, ScopedDecl *PrevDecl)
     : TagDecl(Enum, L, Id, PrevDecl) {
     ElementList = 0;
-	IntegerType = QualType();
+        IntegerType = QualType();
   }
   
   /// defineElements - When created, EnumDecl correspond to a forward declared
@@ -804,7 +804,7 @@ public:
   /// ensure a stable abi for this, we choose the DW_LANG_ encodings
   /// from the dwarf standard.
   enum LanguageIDs { lang_c = /* DW_LANG_C */ 0x0002,
-		     lang_cxx = /* DW_LANG_C_plus_plus */ 0x0004 };
+                     lang_cxx = /* DW_LANG_C_plus_plus */ 0x0004 };
 private:
   /// Language - The language for this linkage specification.
   LanguageIDs Language;

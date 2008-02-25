@@ -70,7 +70,7 @@ void DeclPrinter:: PrintDecl(Decl *D) {
   } else if (ObjCProtocolDecl *PID = dyn_cast<ObjCProtocolDecl>(D)) {
     PrintObjCProtocolDecl(PID);
   } else if (ObjCForwardProtocolDecl *OFPD = 
-	     dyn_cast<ObjCForwardProtocolDecl>(D)) {
+             dyn_cast<ObjCForwardProtocolDecl>(D)) {
     Out << "@protocol ";
     for (unsigned i = 0, e = OFPD->getNumForwardDecls(); i != e; ++i) {
       const ObjCProtocolDecl *D = OFPD->getForwardProtocolDecl(i);
@@ -79,16 +79,16 @@ void DeclPrinter:: PrintDecl(Decl *D) {
     }
     Out << ";\n";
   } else if (ObjCImplementationDecl *OID = 
-	     dyn_cast<ObjCImplementationDecl>(D)) {
+             dyn_cast<ObjCImplementationDecl>(D)) {
     PrintObjCImplementationDecl(OID);
   } else if (ObjCCategoryImplDecl *OID = 
-	     dyn_cast<ObjCCategoryImplDecl>(D)) {
+             dyn_cast<ObjCCategoryImplDecl>(D)) {
     PrintObjCCategoryImplDecl(OID);
   } else if (ObjCCategoryDecl *OID = 
-	     dyn_cast<ObjCCategoryDecl>(D)) {
+             dyn_cast<ObjCCategoryDecl>(D)) {
     PrintObjCCategoryDecl(OID);
   } else if (ObjCCompatibleAliasDecl *OID = 
-	     dyn_cast<ObjCCompatibleAliasDecl>(D)) {
+             dyn_cast<ObjCCompatibleAliasDecl>(D)) {
     PrintObjCCompatibleAliasDecl(OID);
   } else if (isa<ObjCClassDecl>(D)) {
     Out << "@class [printing todo]\n";

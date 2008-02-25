@@ -160,8 +160,8 @@ public:
   }
 
   virtual DeclTy *ActOnLinkageSpec(SourceLocation Loc, SourceLocation LBrace,
-				   SourceLocation RBrace, const char *Lang,
-				   unsigned StrSize, DeclTy *D) {
+                                   SourceLocation RBrace, const char *Lang,
+                                   unsigned StrSize, DeclTy *D) {
     return 0;
   }
   

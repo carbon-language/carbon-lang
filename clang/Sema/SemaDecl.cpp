@@ -1715,11 +1715,11 @@ Sema::DeclTy *Sema::ActOnFileScopeAsmDecl(SourceLocation Loc,
 }
 
 Sema::DeclTy* Sema::ActOnLinkageSpec(SourceLocation Loc,
-				     SourceLocation LBrace,
-				     SourceLocation RBrace,
-				     const char *Lang,
-				     unsigned StrSize,
-				     DeclTy *D) {
+                                     SourceLocation LBrace,
+                                     SourceLocation RBrace,
+                                     const char *Lang,
+                                     unsigned StrSize,
+                                     DeclTy *D) {
   LinkageSpecDecl::LanguageIDs Language;
   Decl *dcl = static_cast<Decl *>(D);
   if (strncmp(Lang, "\"C\"", StrSize) == 0)
