@@ -348,8 +348,8 @@ namespace llvm {
     /// canFoldMemoryOperand - Return true if the specified load / store
     /// folding is possible.
     bool canFoldMemoryOperand(MachineInstr *MI,
-                              SmallVector<unsigned, 2> &Ops) const;
-    bool canFoldMemoryOperand(MachineInstr *MI, unsigned Reg) const;
+                              SmallVector<unsigned, 2> &Ops,
+                              bool ReMatLoadSS) const;
 
     /// anyKillInMBBAfterIdx - Returns true if there is a kill of the specified
     /// VNInfo that's after the specified index but is within the basic block.

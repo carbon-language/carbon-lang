@@ -647,6 +647,9 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li,
   int FrameIdx = 0;
   if (tii_->isLoadFromStackSlot(MI, FrameIdx) &&
       mf_->getFrameInfo()->isImmutableObjectIndex(FrameIdx))
+    // FIXME: Let target specific isReallyTriviallyReMaterializable determines
+    // this but remember this is not safe to fold into a two-address
+    // instruction.
     // This is a load from fixed stack slot. It can be rematerialized.
     return true;
 
@@ -695,33 +698,22 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li, bool &isLoad) {
   return true;
 }
 
-/// tryFoldMemoryOperand - Attempts to fold either a spill / restore from
-/// slot / to reg or any rematerialized load into ith operand of specified
-/// MI. If it is successul, MI is updated with the newly created MI and
-/// returns true.
-bool LiveIntervals::tryFoldMemoryOperand(MachineInstr* &MI,
-                                         VirtRegMap &vrm, MachineInstr *DefMI,
-                                         unsigned InstrIdx,
-                                         SmallVector<unsigned, 2> &Ops,
-                                         bool isSS, int Slot, unsigned Reg) {
-  unsigned MRInfo = 0;
+/// FilterFoldedOps - Filter out two-address use operands. Return
+/// true if it finds any issue with the operands that ought to prevent
+/// folding.
+static bool FilterFoldedOps(MachineInstr *MI,
+                            SmallVector<unsigned, 2> &Ops,
+                            unsigned &MRInfo,
+                            SmallVector<unsigned, 2> &FoldOps) {
   const TargetInstrDesc &TID = MI->getDesc();
-  // If it is an implicit def instruction, just delete it.
-  if (TID.isImplicitDef()) {
-    RemoveMachineInstrFromMaps(MI);
-    vrm.RemoveMachineInstrFromMaps(MI);
-    MI->eraseFromParent();
-    ++numFolds;
-    return true;
-  }
 
-  SmallVector<unsigned, 2> FoldOps;
+  MRInfo = 0;
   for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
     unsigned OpIdx = Ops[i];
     MachineOperand &MO = MI->getOperand(OpIdx);
     // FIXME: fold subreg use.
     if (MO.getSubReg())
-      return false;
+      return true;
     if (MO.isDef())
       MRInfo |= (unsigned)VirtRegMap::isMod;
     else {
@@ -735,6 +727,35 @@ bool LiveIntervals::tryFoldMemoryOperand(MachineInstr* &MI,
     }
     FoldOps.push_back(OpIdx);
   }
+  return false;
+}
+                           
+
+/// tryFoldMemoryOperand - Attempts to fold either a spill / restore from
+/// slot / to reg or any rematerialized load into ith operand of specified
+/// MI. If it is successul, MI is updated with the newly created MI and
+/// returns true.
+bool LiveIntervals::tryFoldMemoryOperand(MachineInstr* &MI,
+                                         VirtRegMap &vrm, MachineInstr *DefMI,
+                                         unsigned InstrIdx,
+                                         SmallVector<unsigned, 2> &Ops,
+                                         bool isSS, int Slot, unsigned Reg) {
+  const TargetInstrDesc &TID = MI->getDesc();
+  // If it is an implicit def instruction, just delete it.
+  if (TID.isImplicitDef()) {
+    RemoveMachineInstrFromMaps(MI);
+    vrm.RemoveMachineInstrFromMaps(MI);
+    MI->eraseFromParent();
+    ++numFolds;
+    return true;
+  }
+
+  // Filter the list of operand indexes that are to be folded. Abort if
+  // any operand will prevent folding.
+  unsigned MRInfo = 0;
+  SmallVector<unsigned, 2> FoldOps;
+  if (FilterFoldedOps(MI, Ops, MRInfo, FoldOps))
+    return false;
 
   // Can't fold a load from fixed stack slot into a two address instruction.
   if (isSS && DefMI && (MRInfo & VirtRegMap::isMod))
@@ -767,33 +788,19 @@ bool LiveIntervals::tryFoldMemoryOperand(MachineInstr* &MI,
 /// canFoldMemoryOperand - Returns true if the specified load / store
 /// folding is possible.
 bool LiveIntervals::canFoldMemoryOperand(MachineInstr *MI,
-                                         SmallVector<unsigned, 2> &Ops) const {
+                                         SmallVector<unsigned, 2> &Ops,
+                                         bool ReMatLoadSS) const {
+  // Filter the list of operand indexes that are to be folded. Abort if
+  // any operand will prevent folding.
+  unsigned MRInfo = 0;
   SmallVector<unsigned, 2> FoldOps;
-  for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
-    unsigned OpIdx = Ops[i];
-    // FIXME: fold subreg use.
-    if (MI->getOperand(OpIdx).getSubReg())
-      return false;
-    FoldOps.push_back(OpIdx);
-  }
+  if (FilterFoldedOps(MI, Ops, MRInfo, FoldOps))
+    return false;
 
-  return tii_->canFoldMemoryOperand(MI, FoldOps);
-}
+  // Can't fold a load from fixed stack slot into a two address instruction.
+  if (ReMatLoadSS && (MRInfo & VirtRegMap::isMod))
+    return false;
 
-bool LiveIntervals::canFoldMemoryOperand(MachineInstr *MI, unsigned Reg) const {
-  SmallVector<unsigned, 2> FoldOps;
-  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-    MachineOperand& mop = MI->getOperand(i);
-    if (!mop.isRegister())
-      continue;
-    unsigned UseReg = mop.getReg();
-    if (UseReg != Reg) 
-      continue;
-    // FIXME: fold subreg use.
-    if (mop.getSubReg())
-      return false;
-    FoldOps.push_back(i);
-  }
   return tii_->canFoldMemoryOperand(MI, FoldOps);
 }
 
@@ -944,7 +951,7 @@ rewriteInstructionForSpills(const LiveInterval &li, const VNInfo *VNI,
           goto RestartInstruction;
         }
       } else {
-        CanFold = canFoldMemoryOperand(MI, Ops);
+        CanFold = canFoldMemoryOperand(MI, Ops, DefIsReMat && isLoadSS);
       }
     } else
       CanFold = false;
