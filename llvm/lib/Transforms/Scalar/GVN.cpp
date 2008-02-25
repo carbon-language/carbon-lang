@@ -752,6 +752,8 @@ namespace {
     bool iterateOnFunction(Function &F);
     Value* CollapsePhi(PHINode* p);
     bool isSafeReplacement(PHINode* p, Instruction* inst);
+    bool valueHasOnlyOneUseAfter(Value* val, MemCpyInst* use,
+                                 Instruction* cutoff);
   };
   
   char GVN::ID = 0;
@@ -1055,22 +1057,32 @@ bool GVN::processLoad(LoadInst* L,
   return deletedLoad;
 }
 
-/// isReturnSlotOptznProfitable - Determine if performing a return slot 
-/// fusion with the slot dest is profitable
-static bool isReturnSlotOptznProfitable(Value* dest, MemCpyInst* cpy) {
-  // We currently consider it profitable if dest is otherwise dead.
-  SmallVector<User*, 8> useList(dest->use_begin(), dest->use_end());
+/// valueHasOnlyOneUse - Returns true if a value has only one use after the
+/// cutoff that is in the current same block and is the same as the use
+/// parameter.
+bool GVN::valueHasOnlyOneUseAfter(Value* val, MemCpyInst* use,
+                                  Instruction* cutoff) {
+  DominatorTree& DT = getAnalysis<DominatorTree>();
+  
+  SmallVector<User*, 8> useList(val->use_begin(), val->use_end());
   while (!useList.empty()) {
     User* UI = useList.back();
+    
     
     if (isa<GetElementPtrInst>(UI) || isa<BitCastInst>(UI)) {
       useList.pop_back();
       for (User::use_iterator I = UI->use_begin(), E = UI->use_end();
            I != E; ++I)
         useList.push_back(*I);
-    } else if (UI == cpy)
+    } else if (UI == use) {
       useList.pop_back();
-    else
+    } else if (Instruction* inst = dyn_cast<Instruction>(UI)) {
+      if (inst->getParent() == use->getParent() &&
+          (inst == cutoff || !DT.dominates(cutoff, inst))) {
+        useList.pop_back();
+      } else
+        return false;
+    } else
       return false;
   }
   
@@ -1123,8 +1135,14 @@ bool GVN::performReturnSlotOptzn(MemCpyInst* cpy, CallInst* C,
   if (TD.getTypeStoreSize(PT->getElementType()) != cpyLength->getZExtValue())
     return false;
   
+  // For safety, we must ensure that the output parameter of the call only has
+  // a single use, the memcpy.  Otherwise this can introduce an invalid
+  // transformation.
+  if (!valueHasOnlyOneUseAfter(CS.getArgument(0), cpy, C))
+    return false;
+  
   // We only perform the transformation if it will be profitable. 
-  if (!isReturnSlotOptznProfitable(cpyDest, cpy))
+  if (!valueHasOnlyOneUseAfter(cpyDest, cpy, C))
     return false;
   
   // In addition to knowing that the call does not access the return slot
