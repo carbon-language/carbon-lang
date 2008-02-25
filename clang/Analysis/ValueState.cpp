@@ -95,11 +95,9 @@ ValueStateManager::RemoveDeadBindings(ValueState St, Stmt* Loc,
     
     if (V->getType()->isPointerType()) {
       
-      RVal X = GetRVal(St, lval::DeclVal(cast<VarDecl>(V)));
+      RVal X = GetRVal(St, lval::DeclVal(cast<VarDecl>(V)));      
       
-      assert (!X.isUnknown());
-      
-      if (X.isUninit())
+      if (X.isUnknownOrUninit())
         continue;
       
       LVal LV = cast<LVal>(X);
