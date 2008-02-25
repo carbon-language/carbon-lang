@@ -6543,13 +6543,13 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     bool isSigned = Node->getOpcode() == ISD::SINT_TO_FP;
     MVT::ValueType SrcVT = Node->getOperand(0).getValueType();
     if (VT == MVT::ppcf128 && SrcVT != MVT::i64) {
-      static uint64_t zero = 0;
+      static const uint64_t zero = 0;
       if (isSigned) {
         Hi = LegalizeOp(DAG.getNode(ISD::SINT_TO_FP, MVT::f64, 
                                     Node->getOperand(0)));
         Lo = DAG.getConstantFP(APFloat(APInt(64, 1, &zero)), MVT::f64);
       } else {
-        static uint64_t TwoE32[] = { 0x41f0000000000000LL, 0 };
+        static const uint64_t TwoE32[] = { 0x41f0000000000000LL, 0 };
         Hi = LegalizeOp(DAG.getNode(ISD::SINT_TO_FP, MVT::f64, 
                                     Node->getOperand(0)));
         Lo = DAG.getConstantFP(APFloat(APInt(64, 1, &zero)), MVT::f64);
@@ -6569,7 +6569,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     }
     if (VT == MVT::ppcf128 && SrcVT == MVT::i64 && !isSigned) {
       // si64->ppcf128 done by libcall, below
-      static uint64_t TwoE64[] = { 0x43f0000000000000LL, 0 };
+      static const uint64_t TwoE64[] = { 0x43f0000000000000LL, 0 };
       ExpandOp(DAG.getNode(ISD::SINT_TO_FP, MVT::ppcf128, Node->getOperand(0)),
                Lo, Hi);
       Hi = DAG.getNode(ISD::BUILD_PAIR, VT, Lo, Hi);
