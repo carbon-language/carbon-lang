@@ -4181,7 +4181,8 @@ void SDNode::dump(const SelectionDAG *G) const {
   } else if (const RegisterSDNode *R = dyn_cast<RegisterSDNode>(this)) {
     if (G && R->getReg() &&
         TargetRegisterInfo::isPhysicalRegister(R->getReg())) {
-      cerr << " " <<G->getTarget().getRegisterInfo()->getName(R->getReg());
+      cerr << " "
+           << G->getTarget().getRegisterInfo()->getPrintableName(R->getReg());
     } else {
       cerr << " #" << R->getReg();
     }

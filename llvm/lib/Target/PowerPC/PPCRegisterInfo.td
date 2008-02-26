@@ -22,7 +22,7 @@ class GPR<bits<5> num, string n> : PPCReg<n> {
 }
 
 // GP8 - One of the 32 64-bit general-purpose registers
-class GP8<GPR SubReg, string n> : PPCReg<SubReg.Name> {
+class GP8<GPR SubReg, string n> : PPCReg<SubReg.AsmName> {
   field bits<5> Num = SubReg.Num;
   let SubRegs = [SubReg];
   let PrintableName = n;

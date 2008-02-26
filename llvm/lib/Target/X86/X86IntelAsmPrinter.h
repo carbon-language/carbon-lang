@@ -43,7 +43,7 @@ struct VISIBILITY_HIDDEN X86IntelAsmPrinter : public X86SharedAsmPrinter {
     if (MO.isRegister()) {
       assert(TargetRegisterInfo::isPhysicalRegister(MO.getReg()) &&
              "Not physreg??");
-      O << TM.getRegisterInfo()->get(MO.getReg()).Name;
+      O << TM.getRegisterInfo()->get(MO.getReg()).AsmName;
     } else {
       printOp(MO, Modifier);
     }

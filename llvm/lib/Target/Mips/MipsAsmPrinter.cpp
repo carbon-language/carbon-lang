@@ -169,9 +169,9 @@ emitFrameDirective(MachineFunction &MF)
   unsigned stackSize = MF.getFrameInfo()->getStackSize();
 
 
-  O << "\t.frame\t" << "$" << LowercaseString(RI.get(stackReg).Name) 
+  O << "\t.frame\t" << "$" << LowercaseString(RI.get(stackReg).AsmName)
                     << "," << stackSize << ","
-                    << "$" << LowercaseString(RI.get(returnReg).Name) 
+                    << "$" << LowercaseString(RI.get(returnReg).AsmName)
                     << "\n";
 }
 
@@ -365,7 +365,7 @@ printOperand(const MachineInstr *MI, int opNum)
   {
     case MachineOperand::MO_Register:
       if (TargetRegisterInfo::isPhysicalRegister(MO.getReg()))
-        O << "$" << LowercaseString (RI.get(MO.getReg()).Name);
+        O << "$" << LowercaseString (RI.get(MO.getReg()).AsmName);
       else
         O << "$" << MO.getReg();
       break;

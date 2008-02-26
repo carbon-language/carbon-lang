@@ -251,7 +251,7 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
         const TargetRegisterInfo *TRI = TM->getRegisterInfo();
         for (const unsigned *ImpUses = I.getDesc().getImplicitUses();
              *ImpUses; ++ImpUses)
-          DOUT << "      -> " << TRI->getName(*ImpUses) << "\n";
+          DOUT << "      -> " << TRI->getPrintableName(*ImpUses) << "\n";
       }
 
       if (I.getDesc().getImplicitDefs()) {
@@ -260,7 +260,7 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
         const TargetRegisterInfo *TRI = TM->getRegisterInfo();
         for (const unsigned *ImpDefs = I.getDesc().getImplicitDefs();
              *ImpDefs; ++ImpDefs)
-          DOUT << "      -> " << TRI->getName(*ImpDefs) << "\n";
+          DOUT << "      -> " << TRI->getPrintableName(*ImpDefs) << "\n";
       }
 
         //if (TII->hasUnmodelledSideEffects(&I))

@@ -520,8 +520,8 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
     const CodeGenRegister &Reg = Registers[i];
     OS << "    { \"";
-    if (!Reg.TheDef->getValueAsString("Name").empty())
-      OS << Reg.TheDef->getValueAsString("Name");
+    if (!Reg.TheDef->getValueAsString("AsmName").empty())
+      OS << Reg.TheDef->getValueAsString("AsmName");
     else
       OS << Reg.getName();
     OS << "\",\t\"";

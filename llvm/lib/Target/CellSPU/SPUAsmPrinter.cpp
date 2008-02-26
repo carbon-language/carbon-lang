@@ -75,14 +75,14 @@ namespace {
       unsigned RegNo = MO.getReg();
       assert(TargetRegisterInfo::isPhysicalRegister(RegNo) &&
              "Not physreg??");
-      O << TM.getRegisterInfo()->get(RegNo).Name;
+      O << TM.getRegisterInfo()->get(RegNo).AsmName;
     }
 
     void printOperand(const MachineInstr *MI, unsigned OpNo) {
       const MachineOperand &MO = MI->getOperand(OpNo);
       if (MO.isRegister()) {
         assert(TargetRegisterInfo::isPhysicalRegister(MO.getReg())&&"Not physreg??");
-        O << TM.getRegisterInfo()->get(MO.getReg()).Name;
+        O << TM.getRegisterInfo()->get(MO.getReg()).AsmName;
       } else if (MO.isImmediate()) {
         O << MO.getImm();
       } else {
@@ -149,7 +149,7 @@ namespace {
       // the value contained in the register.  For this reason, the darwin
       // assembler requires that we print r0 as 0 (no r) when used as the base.
       const MachineOperand &MO = MI->getOperand(OpNo);
-      O << TM.getRegisterInfo()->get(MO.getReg()).Name;
+      O << TM.getRegisterInfo()->get(MO.getReg()).AsmName;
       O << ", ";
       printOperand(MI, OpNo+1);
     }

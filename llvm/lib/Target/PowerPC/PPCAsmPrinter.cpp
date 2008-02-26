@@ -113,7 +113,7 @@ namespace {
         return;
       }
       
-      const char *RegName = TM.getRegisterInfo()->get(RegNo).Name;
+      const char *RegName = TM.getRegisterInfo()->get(RegNo).AsmName;
       // Linux assembler (Others?) does not take register mnemonics.
       // FIXME - What about special registers used in mfspr/mtspr?
       if (!Subtarget.isDarwin()) RegName = stripRegisterPrefix(RegName);

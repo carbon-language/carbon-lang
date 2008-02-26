@@ -48,7 +48,7 @@ class Type;
 /// register, e.g. RAX, EAX, are super-registers of AX.
 ///
 struct TargetRegisterDesc {
-  const char     *Name;         // Assembly language name for the register
+  const char     *AsmName;      // Assembly language name for the register
   const char     *PrintableName;// Printable name for the reg (for debugging)
   const unsigned *AliasSet;     // Register Alias Set, described above
   const unsigned *SubRegs;      // Sub-register set, described above
@@ -376,10 +376,10 @@ public:
     return get(RegNo).SuperRegs;
   }
 
-  /// getName - Return the symbolic target specific name for the specified
-  /// physical register.
-  const char *getName(unsigned RegNo) const {
-    return get(RegNo).Name;
+  /// getAsmName - Return the symbolic target specific name for the
+  /// specified physical register.
+  const char *getAsmName(unsigned RegNo) const {
+    return get(RegNo).AsmName;
   }
 
   /// getPrintableName - Return the human-readable symbolic target specific name

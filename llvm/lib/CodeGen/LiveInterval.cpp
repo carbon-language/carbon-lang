@@ -665,7 +665,7 @@ void LiveRange::dump() const {
 void LiveInterval::print(std::ostream &OS,
                          const TargetRegisterInfo *TRI) const {
   if (TRI && TargetRegisterInfo::isPhysicalRegister(reg))
-    OS << TRI->getName(reg);
+    OS << TRI->getPrintableName(reg);
   else
     OS << "%reg" << reg;
 

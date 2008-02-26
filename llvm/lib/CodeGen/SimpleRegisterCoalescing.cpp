@@ -1537,7 +1537,7 @@ void SimpleRegisterCoalescing::unsetRegisterKills(unsigned Start, unsigned End,
 
 void SimpleRegisterCoalescing::printRegName(unsigned reg) const {
   if (TargetRegisterInfo::isPhysicalRegister(reg))
-    cerr << tri_->getName(reg);
+    cerr << tri_->getPrintableName(reg);
   else
     cerr << "%reg" << reg;
 }

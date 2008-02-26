@@ -146,7 +146,7 @@ void SparcAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
   switch (MO.getType()) {
   case MachineOperand::MO_Register:
     if (TargetRegisterInfo::isPhysicalRegister(MO.getReg()))
-      O << "%" << LowercaseString (RI.get(MO.getReg()).Name);
+      O << "%" << LowercaseString (RI.get(MO.getReg()).AsmName);
     else
       O << "%reg" << MO.getReg();
     break;

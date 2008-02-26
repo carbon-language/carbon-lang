@@ -334,6 +334,6 @@ int AlphaRegisterInfo::getDwarfRegNum(unsigned RegNum, bool isEH) const {
 
 std::string AlphaRegisterInfo::getPrettyName(unsigned reg)
 {
-  std::string s(RegisterDescriptors[reg].Name);
+  std::string s(RegisterDescriptors[reg].PrintableName);
   return s;
 }

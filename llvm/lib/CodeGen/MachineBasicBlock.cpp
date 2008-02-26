@@ -146,7 +146,7 @@ static inline void OutputReg(std::ostream &os, unsigned RegNo,
                              const TargetRegisterInfo *TRI = 0) {
   if (!RegNo || TargetRegisterInfo::isPhysicalRegister(RegNo)) {
     if (TRI)
-      os << " %" << TRI->get(RegNo).Name;
+      os << " %" << TRI->get(RegNo).PrintableName;
     else
       os << " %mreg(" << RegNo << ")";
   } else

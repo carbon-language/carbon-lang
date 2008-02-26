@@ -141,8 +141,8 @@ void VirtRegMap::print(std::ostream &OS) const {
   for (unsigned i = TargetRegisterInfo::FirstVirtualRegister,
          e = MF.getRegInfo().getLastVirtReg(); i <= e; ++i) {
     if (Virt2PhysMap[i] != (unsigned)VirtRegMap::NO_PHYS_REG)
-      OS << "[reg" << i << " -> " << TRI->getName(Virt2PhysMap[i]) << "]\n";
-
+      OS << "[reg" << i << " -> " << TRI->getPrintableName(Virt2PhysMap[i])
+         << "]\n";
   }
 
   for (unsigned i = TargetRegisterInfo::FirstVirtualRegister,
@@ -351,7 +351,7 @@ public:
       DOUT << "Remembering RM#" << SlotOrReMat-VirtRegMap::MAX_STACK_SLOT-1;
     else
       DOUT << "Remembering SS#" << SlotOrReMat;
-    DOUT << " in physreg " << TRI->getName(Reg) << "\n";
+    DOUT << " in physreg " << TRI->getPrintableName(Reg) << "\n";
   }
 
   /// canClobberPhysReg - Return true if the spiller is allowed to change the 
@@ -392,7 +392,7 @@ void AvailableSpills::disallowClobberPhysRegOnly(unsigned PhysReg) {
     assert((SpillSlotsOrReMatsAvailable[SlotOrReMat] >> 1) == PhysReg &&
            "Bidirectional map mismatch!");
     SpillSlotsOrReMatsAvailable[SlotOrReMat] &= ~1;
-    DOUT << "PhysReg " << TRI->getName(PhysReg)
+    DOUT << "PhysReg " << TRI->getPrintableName(PhysReg)
          << " copied, it is available for use but can no longer be modified\n";
   }
 }
@@ -417,7 +417,7 @@ void AvailableSpills::ClobberPhysRegOnly(unsigned PhysReg) {
     assert((SpillSlotsOrReMatsAvailable[SlotOrReMat] >> 1) == PhysReg &&
            "Bidirectional map mismatch!");
     SpillSlotsOrReMatsAvailable.erase(SlotOrReMat);
-    DOUT << "PhysReg " << TRI->getName(PhysReg)
+    DOUT << "PhysReg " << TRI->getPrintableName(PhysReg)
          << " clobbered, invalidating ";
     if (SlotOrReMat > VirtRegMap::MAX_STACK_SLOT)
       DOUT << "RM#" << SlotOrReMat-VirtRegMap::MAX_STACK_SLOT-1 << "\n";
@@ -1135,9 +1135,9 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
           else
             DOUT << "Reusing SS#" << ReuseSlot;
           DOUT << " from physreg "
-               << TRI->getName(PhysReg) << " for vreg"
+               << TRI->getPrintableName(PhysReg) << " for vreg"
                << VirtReg <<" instead of reloading into physreg "
-               << TRI->getName(VRM.getPhys(VirtReg)) << "\n";
+               << TRI->getPrintableName(VRM.getPhys(VirtReg)) << "\n";
           unsigned RReg = SubIdx ? TRI->getSubReg(PhysReg, SubIdx) : PhysReg;
           MI.getOperand(i).setReg(RReg);
 
@@ -1208,8 +1208,8 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
             DOUT << "Reusing RM#" << ReuseSlot-VirtRegMap::MAX_STACK_SLOT-1;
           else
             DOUT << "Reusing SS#" << ReuseSlot;
-          DOUT << " from physreg " << TRI->getName(PhysReg) << " for vreg"
-               << VirtReg
+          DOUT << " from physreg " << TRI->getPrintableName(PhysReg)
+	       << " for vreg" << VirtReg
                << " instead of reloading into same physreg.\n";
           unsigned RReg = SubIdx ? TRI->getSubReg(PhysReg, SubIdx) : PhysReg;
           MI.getOperand(i).setReg(RReg);

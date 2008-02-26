@@ -56,7 +56,7 @@ namespace {
         assert(TargetRegisterInfo::isPhysicalRegister(MO.getReg()) &&
                "Not physref??");
         //XXX Bug Workaround: See note in Printer::doInitialization about %.
-        O << TM.getRegisterInfo()->get(MO.getReg()).Name;
+        O << TM.getRegisterInfo()->get(MO.getReg()).AsmName;
       } else {
         printOp(MO);
       }
@@ -168,7 +168,7 @@ void IA64AsmPrinter::printOp(const MachineOperand &MO,
   const TargetRegisterInfo &RI = *TM.getRegisterInfo();
   switch (MO.getType()) {
   case MachineOperand::MO_Register:
-    O << RI.get(MO.getReg()).Name;
+    O << RI.get(MO.getReg()).AsmName;
     return;
 
   case MachineOperand::MO_Immediate:

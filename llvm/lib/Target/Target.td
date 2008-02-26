@@ -25,7 +25,7 @@ class RegisterClass; // Forward def
 // in the target machine.  String n will become the "name" of the register.
 class Register<string n> {
   string Namespace = "";
-  string Name = n;
+  string AsmName = n;
   string PrintableName = n;
 
   // SpillSize - If this value is set to a non-zero value, it is the size in
