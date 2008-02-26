@@ -731,9 +731,9 @@ public:
       std::string Val = VariableMap[VarName];
       bool ModifiedVal = false;
       if (Val.empty()) {
-	cerr << "Variable '" << VarName << " referenced but not defined "
-	     << "and not caught earlier!\n";
-	abort();
+        cerr << "Variable '" << VarName << " referenced but not defined "
+             << "and not caught earlier!\n";
+        abort();
       }
       if (Val[0] == 'T' && Val[1] == 'm' && Val[2] == 'p') {
         // Already selected this operand, just return the tmpval.
@@ -1183,10 +1183,10 @@ public:
         } else if (InputHasChain && !NodeHasChain) {
           // One of the inner node produces a chain.
           if (NodeHasOutFlag)
-	    emitCode("ReplaceUses(SDOperand(N.Val, " + utostr(NumPatResults+1) +
-		     "), SDOperand(ResNode, N.ResNo-1));");
-	  emitCode("ReplaceUses(SDOperand(N.Val, " + utostr(NumPatResults) +
-		   "), " + ChainName + ");");
+            emitCode("ReplaceUses(SDOperand(N.Val, " + utostr(NumPatResults+1) +
+                     "), SDOperand(ResNode, N.ResNo-1));");
+          emitCode("ReplaceUses(SDOperand(N.Val, " + utostr(NumPatResults) +
+                   "), " + ChainName + ");");
         }
 
         emitCode("return ResNode;");
