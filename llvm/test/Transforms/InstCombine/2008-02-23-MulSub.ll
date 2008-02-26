@@ -1,6 +1,6 @@
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep mul
 
-define i26 @mul_283(i26 %a) nounwind  {
+define i26 @test(i26 %a) nounwind  {
 entry:
 	%_add = mul i26 %a, 2885		; <i26> [#uses=1]
 	%_shl2 = mul i26 %a, 2884		; <i26> [#uses=1]
