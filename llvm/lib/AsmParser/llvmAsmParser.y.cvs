@@ -2581,8 +2581,8 @@ InstructionList : InstructionList Inst {
 BBTerminatorInst : 
   RET ReturnedVal  { // Return with a result...
     ValueList &VL = *$2;
-    if (!VL.empty())
-      $$ = new ReturnInst(&VL[0], VL.size());
+    assert(!VL.empty() && "Invalid ret operands!");
+    $$ = new ReturnInst(&VL[0], VL.size());
     delete $2;
     CHECK_FOR_ERROR
   }
