@@ -1379,6 +1379,7 @@ public:
 /// does not continue in this function any longer.
 ///
 class ReturnInst : public TerminatorInst {
+  Use RetVal;
   ReturnInst(const ReturnInst &RI);
   void init(Value *RetVal);
   void init(const std::vector<Value *> &RetVals);
@@ -1404,6 +1405,23 @@ public:
   virtual ~ReturnInst();
 
   virtual ReturnInst *clone() const;
+
+  // Transparently provide more efficient getOperand methods.
+  Value *getOperand(unsigned i) const {
+    assert(i < getNumOperands() && "getOperand() out of range!");
+    if (getNumOperands() == 0 || getNumOperands() == 1)
+      return RetVal;
+    
+    return OperandList[i];
+  }
+
+  void setOperand(unsigned i, Value *Val) {
+    assert(i < getNumOperands() && "setOperand() out of range!");
+    if (i == 0) 
+      RetVal = Val;
+    else
+      OperandList[i] = Val;
+  }
 
   Value *getReturnValue(unsigned n = 0) const;
 

@@ -573,35 +573,43 @@ bool InvokeInst::isStructReturn() const {
 
 ReturnInst::ReturnInst(const ReturnInst &RI)
   : TerminatorInst(Type::VoidTy, Instruction::Ret,
-                   OperandList, RI.getNumOperands()) {
+                   &RetVal, RI.getNumOperands()) {
   unsigned N = RI.getNumOperands();
-  Use *OL = OperandList = new Use[N];
-  for (unsigned i = 0; i < N; ++i)
-    OL[i].init(RI.getOperand(i), this);
+  if (N == 1) 
+    RetVal.init(RI.RetVal, this);
+  else if (N) {
+    Use *OL = OperandList = new Use[N];
+    for (unsigned i = 0; i < N; ++i)
+      OL[i].init(RI.getOperand(i), this);
+  }
 }
 
 ReturnInst::ReturnInst(Value *retVal, Instruction *InsertBefore)
-  : TerminatorInst(Type::VoidTy, Instruction::Ret, OperandList, 0, InsertBefore) {
+  : TerminatorInst(Type::VoidTy, Instruction::Ret, &RetVal, 0, InsertBefore) {
   init(retVal);
 }
 ReturnInst::ReturnInst(Value *retVal, BasicBlock *InsertAtEnd)
-  : TerminatorInst(Type::VoidTy, Instruction::Ret, OperandList, 0, InsertAtEnd) {
+  : TerminatorInst(Type::VoidTy, Instruction::Ret, &RetVal, 0, InsertAtEnd) {
   init(retVal);
 }
 ReturnInst::ReturnInst(BasicBlock *InsertAtEnd)
-  : TerminatorInst(Type::VoidTy, Instruction::Ret, OperandList, 0, InsertAtEnd) {
+  : TerminatorInst(Type::VoidTy, Instruction::Ret, &RetVal, 0, InsertAtEnd) {
 }
 
-ReturnInst::ReturnInst(const std::vector<Value *> &retVals, Instruction *InsertBefore)
-  : TerminatorInst(Type::VoidTy, Instruction::Ret, OperandList, retVals.size(), InsertBefore) {
+ReturnInst::ReturnInst(const std::vector<Value *> &retVals, 
+                       Instruction *InsertBefore)
+  : TerminatorInst(Type::VoidTy, Instruction::Ret, &RetVal, retVals.size(), 
+                   InsertBefore) {
   init(retVals);
 }
-ReturnInst::ReturnInst(const std::vector<Value *> &retVals, BasicBlock *InsertAtEnd)
-  : TerminatorInst(Type::VoidTy, Instruction::Ret, OperandList, retVals.size(), InsertAtEnd) {
+ReturnInst::ReturnInst(const std::vector<Value *> &retVals, 
+                       BasicBlock *InsertAtEnd)
+  : TerminatorInst(Type::VoidTy, Instruction::Ret, &RetVal, retVals.size(), 
+                   InsertAtEnd) {
   init(retVals);
 }
 ReturnInst::ReturnInst(const std::vector<Value *> &retVals)
-  : TerminatorInst(Type::VoidTy, Instruction::Ret, OperandList, retVals.size()) {
+  : TerminatorInst(Type::VoidTy, Instruction::Ret, &RetVal, retVals.size()) {
   init(retVals);
 }
 
@@ -610,8 +618,7 @@ void ReturnInst::init(Value *retVal) {
     assert(!isa<BasicBlock>(retVal) &&
            "Cannot return basic block.  Probably using the incorrect ctor");
     NumOperands = 1;
-    Use *OL = OperandList = new Use[1];
-    OL[0].init(retVal, this);
+    RetVal.init(retVal, this);
   }
 }
 
@@ -624,9 +631,12 @@ void ReturnInst::init(const std::vector<Value *> &retVals) {
     Value *V = retVals[0];
     if (V->getType() == Type::VoidTy)
       return;
+    RetVal.init(V, this);
+    return;
   }
 
   Use *OL = OperandList = new Use[NumOperands];
+  RetVal.init(retVals[0], this);
   for (unsigned i = 0; i < NumOperands; ++i) {
     Value *V = retVals[i];
     assert(!isa<BasicBlock>(V) &&
@@ -636,18 +646,22 @@ void ReturnInst::init(const std::vector<Value *> &retVals) {
 }
 
 Value *ReturnInst::getReturnValue(unsigned n) const {
-  if (NumOperands)
-    return OperandList[n];
-  else
+  if (getNumOperands() == 0)
     return 0;
+
+  assert (n < getNumOperands() && "getReturnValue out of range!");
+  if (getNumOperands() == 1)
+    return RetVal;
+  else 
+    return OperandList[n];
 }
 
 unsigned ReturnInst::getNumSuccessorsV() const {
   return getNumSuccessors();
 }
 
-// Out-of-line ReturnInst method, put here so the C++ compiler can choose to
-// emit the vtable for the class in this translation unit.
+/// Out-of-line ReturnInst method, put here so the C++ compiler can choose to
+/// emit the vtable for the class in this translation unit.
 void ReturnInst::setSuccessorV(unsigned idx, BasicBlock *NewSucc) {
   assert(0 && "ReturnInst has no successors!");
 }
@@ -659,7 +673,7 @@ BasicBlock *ReturnInst::getSuccessorV(unsigned idx) const {
 }
 
 ReturnInst::~ReturnInst() {
-  if (NumOperands)
+  if (NumOperands > 1)
     delete [] OperandList;
 }
 
