@@ -1170,7 +1170,7 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
       
     default:
       // Cases we intentionally have "default" handle:
-      //   AddrLabelExpr
+      //   AddrLabelExpr, IntegerLiteral, CharacterLiteral
       
       Dst.Add(Pred); // No-op. Simply propagate the current state unchanged.
       break;
@@ -1203,20 +1203,7 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
       VisitCast(C, C->getSubExpr(), Pred, Dst);
       break;
     }
-      
-      // While explicitly creating a node+state for visiting a CharacterLiteral
-      // seems wasteful, it also solves a bunch of problems when handling
-      // the ?, &&, and ||.
-      
-    case Stmt::CharacterLiteralClass: {
-      CharacterLiteral* C = cast<CharacterLiteral>(S);
-      StateTy St = Pred->getState();
-      NonLVal X = NonLVal::MakeVal(ValMgr, C->getValue(), C->getType(),
-                                        C->getLoc());
-      Nodify(Dst, C, Pred, SetRVal(St, C, X));
-      break;      
-    }
-      
+
       // FIXME: ChooseExpr is really a constant.  We need to fix
       //        the CFG do not model them as explicit control-flow.
       
@@ -1243,18 +1230,6 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
     case Stmt::DeclStmtClass:
       VisitDeclStmt(cast<DeclStmt>(S), Pred, Dst);
       break;
-      
-      // While explicitly creating a node+state for visiting an IntegerLiteral
-      // seems wasteful, it also solves a bunch of problems when handling
-      // the ?, &&, and ||.
-      
-    case Stmt::IntegerLiteralClass: {      
-      StateTy St = Pred->getState();
-      IntegerLiteral* I = cast<IntegerLiteral>(S);
-      NonLVal X = NonLVal::MakeVal(ValMgr, I);
-      Nodify(Dst, I, Pred, SetRVal(St, I, X));
-      break;      
-    }
       
     case Stmt::ImplicitCastExprClass: {
       ImplicitCastExpr* C = cast<ImplicitCastExpr>(S);

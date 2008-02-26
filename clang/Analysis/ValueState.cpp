@@ -264,6 +264,16 @@ RVal ValueStateManager::GetRVal(ValueState St, Expr* E) {
         
         return UnknownVal();
       }
+        
+      case Stmt::CharacterLiteralClass: {
+        CharacterLiteral* C = cast<CharacterLiteral>(E);
+        return NonLVal::MakeVal(ValMgr, C->getValue(), C->getType(),
+                                C->getLoc());
+      }
+        
+      case Stmt::IntegerLiteralClass: {
+        return NonLVal::MakeVal(ValMgr, cast<IntegerLiteral>(E));
+      }
 
         // Casts where the source and target type are the same
         // are no-ops.  We blast through these to get the descendant
@@ -332,9 +342,23 @@ RVal ValueStateManager::GetRVal(ValueState St, Expr* E) {
 RVal ValueStateManager::GetBlkExprRVal(ValueState St, Expr* E) {
   
   assert (!isa<ParenExpr>(E));
-
-  ValueState::ExprBindingsTy::TreeTy* T = St->BlockExprBindings.SlimFind(E);    
-  return T ? T->getValue().second : UnknownVal();
+  
+  switch (E->getStmtClass()) {
+    case Stmt::CharacterLiteralClass: {
+      CharacterLiteral* C = cast<CharacterLiteral>(E);
+      return NonLVal::MakeVal(ValMgr, C->getValue(), C->getType(),
+                              C->getLoc());
+    }
+      
+    case Stmt::IntegerLiteralClass: {
+      return NonLVal::MakeVal(ValMgr, cast<IntegerLiteral>(E));
+    }
+      
+    default: {
+      ValueState::ExprBindingsTy::TreeTy* T = St->BlockExprBindings.SlimFind(E);    
+      return T ? T->getValue().second : UnknownVal();
+    }
+  }
 }
 
 RVal ValueStateManager::GetLVal(ValueState St, Expr* E) {
