@@ -457,8 +457,14 @@ SimpleRegisterCoalescing::UpdateRegDefsUses(unsigned SrcReg, unsigned DstReg,
       O.setSubReg(0);
     } else {
       unsigned OldSubIdx = O.getSubReg();
-      assert((!SubIdx || !OldSubIdx) && "Conflicting sub-register index!");
-      if (SubIdx)
+      // Sub-register indexes goes from small to large. e.g.
+      // RAX: 0 -> AL, 1 -> AH, 2 -> AX, 3 -> EAX
+      // EAX: 0 -> AL, 1 -> AH, 2 -> AX
+      // So RAX's sub-register 2 is AX, RAX's sub-regsiter 3 is EAX, whose
+      // sub-register 2 is also AX.
+      if (SubIdx && OldSubIdx && SubIdx != OldSubIdx)
+        assert(OldSubIdx < SubIdx && "Conflicting sub-register index!");
+      else if (SubIdx)
         O.setSubReg(SubIdx);
       O.setReg(DstReg);
     }
