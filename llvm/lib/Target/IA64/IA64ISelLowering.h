@@ -41,13 +41,11 @@ namespace llvm {
     int VarArgsFrameIndex;            // FrameIndex for start of varargs area.
     //int ReturnAddrIndex;              // FrameIndex for return slot.
     unsigned GP, SP, RP; // FIXME - clean this mess up
-	  
   public:
     explicit IA64TargetLowering(TargetMachine &TM);
 
     unsigned VirtGPR; // this is public so it can be accessed in the selector
                       // for ISD::RET. add an accessor instead? FIXME
-	    
     const char *getTargetNodeName(unsigned Opcode) const;
       
     /// LowerArguments - This hook must be implemented to indicate how we should

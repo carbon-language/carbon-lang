@@ -271,8 +271,8 @@ void Emitter::emitDisplacementField(const MachineOperand *RelocOp,
   if (RelocOp->isGlobalAddress()) {
     // In 64-bit static small code model, we could potentially emit absolute.
     // But it's probably not beneficial.
-    //  89 05 00 00 00 00    	mov    %eax,0(%rip)  # PC-relative
-    //	89 04 25 00 00 00 00 	mov    %eax,0x0      # Absolute
+    //  89 05 00 00 00 00     mov    %eax,0(%rip)  # PC-relative
+    //  89 04 25 00 00 00 00  mov    %eax,0x0      # Absolute
     unsigned rt = Is64BitMode ? X86::reloc_pcrel_word
       : (IsPIC ? X86::reloc_picrel_word : X86::reloc_absolute_word);
     bool NeedStub = isa<Function>(RelocOp->getGlobal());
