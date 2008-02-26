@@ -411,7 +411,7 @@ static SDOperand GetNegatedExpression(SDOperand Op, SelectionDAG &DAG,
     assert(!HonorSignDependentRoundingFPMath());
     
     // -(X*Y) -> -X * Y
-    if (isNegatibleForFree(Op.getOperand(0), Depth+1))
+    if (isNegatibleForFree(Op.getOperand(0), AfterLegalize, Depth+1))
       return DAG.getNode(Op.getOpcode(), Op.getValueType(),
                          GetNegatedExpression(Op.getOperand(0), DAG, 
                                               AfterLegalize, Depth+1),
