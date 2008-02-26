@@ -375,6 +375,9 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* S, bool AlwaysAddStmt = false) {
       
       break;
     }
+      
+    case Stmt::ParenExprClass:
+      return WalkAST(cast<ParenExpr>(S)->getSubExpr(), AlwaysAddStmt);
     
     default:
       break;
