@@ -19,6 +19,27 @@
 using namespace clang;
 
 namespace clang {
+
+template <typename ITERATOR>
+static void EmitWarning(Diagnostic& Diag, SourceManager& SrcMgr,
+                        ITERATOR I, ITERATOR E, const char* msg) {
+ 
+  bool isFirst;
+  unsigned ErrorDiag;
+  
+  for (; I != E; ++I) {
+  
+    if (isFirst) {
+      isFirst = false;    
+      ErrorDiag = Diag.getCustomDiagID(Diagnostic::Warning, msg);
+    }
+  
+    const PostStmt& L = cast<PostStmt>((*I)->getLocation());
+    Expr* Exp = cast<Expr>(L.getStmt());
+  
+    Diag.Report(FullSourceLoc(Exp->getExprLoc(), SrcMgr), ErrorDiag);
+  }
+}
   
 unsigned RunGRSimpleVals(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx,
                          Diagnostic& Diag, bool Visualize) {
@@ -32,18 +53,29 @@ unsigned RunGRSimpleVals(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx,
   CheckerState->setTransferFunctions(GRSV);
   
   // Execute the worklist algorithm.
-  Engine.ExecuteWorkList(10000);
+  Engine.ExecuteWorkList(20000);
   
-  // Look for explicit-Null dereferences and warn about them.
-  for (GRExprEngine::null_iterator I=CheckerState->null_begin(),
-       E=CheckerState->null_end(); I!=E; ++I) {
-    
-    const PostStmt& L = cast<PostStmt>((*I)->getLocation());
-    Expr* Exp = cast<Expr>(L.getStmt());
-    
-    Diag.Report(FullSourceLoc(Exp->getExprLoc(), Ctx.getSourceManager()),
-                diag::chkr_null_deref_after_check);
-  }
+  SourceManager& SrcMgr = Ctx.getSourceManager();  
+
+  EmitWarning(Diag, SrcMgr,
+              CheckerState->null_derefs_begin(),
+              CheckerState->null_derefs_end(),
+              "NULL pointer is dereferenced after it is checked for NULL.");
+  
+  EmitWarning(Diag, SrcMgr,
+              CheckerState->uninit_derefs_begin(),
+              CheckerState->uninit_derefs_end(),
+              "Dereference of uninitialized value.");
+  
+  EmitWarning(Diag, SrcMgr,
+              CheckerState->uninit_derefs_begin(),
+              CheckerState->uninit_derefs_end(),
+              "Dereference of uninitialized value.");
+  
+  EmitWarning(Diag, SrcMgr,
+              CheckerState->bad_divides_begin(),
+              CheckerState->bad_divides_end(),
+              "Division by zero/uninitialized value.");
       
 #ifndef NDEBUG
   if (Visualize) CheckerState->ViewGraph();

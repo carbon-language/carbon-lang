@@ -117,7 +117,7 @@ protected:
 
   typedef llvm::SmallPtrSet<NodeTy*,5> UninitStoresTy;
   typedef llvm::SmallPtrSet<NodeTy*,5> BadDerefTy;
-  typedef llvm::SmallPtrSet<NodeTy*,5> DivZerosTy;
+  typedef llvm::SmallPtrSet<NodeTy*,5> BadDividesTy;
   
   /// UninitStores - Sinks in the ExplodedGraph that result from
   ///  making a store to an uninitialized lvalue.
@@ -137,7 +137,7 @@ protected:
 
   /// BadDivides - Nodes in the ExplodedGraph that result from evaluating
   ///  a divide-by-zero or divide-by-uninitialized.
-  DivZerosTy BadDivides;
+  BadDividesTy BadDivides;
   
   bool StateCleaned;
   
@@ -198,9 +198,17 @@ public:
     return N->isSink() && BadDivides.count(const_cast<NodeTy*>(N)) != 0; 
   }
   
-  typedef BadDerefTy::iterator null_iterator;
-  null_iterator null_begin() { return ExplicitNullDeref.begin(); }
-  null_iterator null_end() { return ExplicitNullDeref.end(); }
+  typedef BadDerefTy::iterator null_deref_iterator;
+  null_deref_iterator null_derefs_begin() { return ExplicitNullDeref.begin(); }
+  null_deref_iterator null_derefs_end() { return ExplicitNullDeref.end(); }
+  
+  typedef BadDerefTy::iterator uninit_deref_iterator;
+  uninit_deref_iterator uninit_derefs_begin() { return UninitDeref.begin(); }
+  uninit_deref_iterator uninit_derefs_end() { return UninitDeref.end(); }
+  
+  typedef BadDividesTy::iterator bad_divide_iterator;
+  bad_divide_iterator bad_divides_begin() { return BadDivides.begin(); }
+  bad_divide_iterator bad_divides_end() { return BadDivides.end(); }
   
   /// ProcessStmt - Called by GRCoreEngine. Used to generate new successor
   ///  nodes by processing the 'effects' of a block-level statement.

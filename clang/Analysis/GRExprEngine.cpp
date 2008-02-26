@@ -1545,7 +1545,8 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
         GraphPrintCheckerState->isExplicitNullDeref(N) ||
         GraphPrintCheckerState->isUninitDeref(N) ||
         GraphPrintCheckerState->isUninitStore(N) ||
-        GraphPrintCheckerState->isUninitControlFlow(N))
+        GraphPrintCheckerState->isUninitControlFlow(N) ||
+        GraphPrintCheckerState->isBadDivide(N))
       return "color=\"red\",style=\"filled\"";
     
     return "";
@@ -1585,6 +1586,9 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
         }
         else if (GraphPrintCheckerState->isUninitStore(N)) {
           Out << "\\|Store to Uninitialized LVal.";
+        }
+        else if (GraphPrintCheckerState->isBadDivide(N)) {
+          Out << "\\|Divide-by zero or uninitialized value.";
         }
         
         break;

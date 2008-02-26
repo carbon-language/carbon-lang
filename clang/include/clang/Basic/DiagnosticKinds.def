@@ -966,11 +966,4 @@ DIAG(ext_return_missing_expr, EXTENSION,
 DIAG(ext_return_has_expr, EXTENSION,
      "void function '%0' should not return a value")
 
-//===----------------------------------------------------------------------===//
-// Static Analysis Warnings (Bug-Finding)
-//===----------------------------------------------------------------------===//
-
-DIAG(chkr_null_deref_after_check, ERROR,
-    "NULL pointer is dereferenced after it is checked for NULL.")
-
 #undef DIAG
