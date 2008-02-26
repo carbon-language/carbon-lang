@@ -1188,8 +1188,8 @@ bool GVN::processMemCpy(MemCpyInst* M, MemCpyInst* MDep,
   if (!C1 || !C2)
     return false;
   
-  uint64_t CpySize = C1->getValue().getZExtValue();
-  uint64_t DepSize = C2->getValue().getZExtValue();
+  uint64_t DepSize = C1->getValue().getZExtValue();
+  uint64_t CpySize = C2->getValue().getZExtValue();
   
   if (DepSize < CpySize)
     return false;
