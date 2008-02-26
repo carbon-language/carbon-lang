@@ -148,8 +148,8 @@ void GRExprEngine::ProcessBranch(Expr* Condition, Stmt* Term,
       break;
 
     case RVal::UnknownKind:
-      builder.generateNode(PrevState, true);
-      builder.generateNode(PrevState, false);
+      builder.generateNode(MarkBranch(PrevState, Term, true), true);
+      builder.generateNode(MarkBranch(PrevState, Term, false), false);
       return;
       
     case RVal::UninitializedKind: {      
@@ -367,6 +367,13 @@ void GRExprEngine::VisitLogicalExpr(BinaryOperator* B, NodeTy* Pred,
   if (Ex == B->getRHS()) {
     
     X = GetBlkExprRVal(St, Ex);
+    
+    // Handle uninitialized values.
+    
+    if (X.isUninit()) {
+      Nodify(Dst, B, Pred, SetBlkExprRVal(St, B, X));
+      return;
+    }
     
     // We took the RHS.  Because the value of the '&&' or '||' expression must
     // evaluate to 0 or 1, we must assume the value of the RHS evaluates to 0

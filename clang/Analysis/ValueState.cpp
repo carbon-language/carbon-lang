@@ -336,12 +336,16 @@ RVal ValueStateManager::GetRVal(ValueState St, Expr* E) {
   
   ValueState::ExprBindingsTy::TreeTy* T = St->SubExprBindings.SlimFind(E);
   
-  return T ? T->getValue().second : GetBlkExprRVal(St, E);
+  if (T)
+    return T->getValue().second;
+  
+  T = St->BlockExprBindings.SlimFind(E);
+  return T ? T->getValue().second : UnknownVal();
 }
 
 RVal ValueStateManager::GetBlkExprRVal(ValueState St, Expr* E) {
   
-  assert (!isa<ParenExpr>(E));
+  E = E->IgnoreParens();
   
   switch (E->getStmtClass()) {
     case Stmt::CharacterLiteralClass: {
