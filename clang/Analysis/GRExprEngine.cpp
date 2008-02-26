@@ -505,6 +505,8 @@ void GRExprEngine::VisitDeclStmt(DeclStmt* DS, GRExprEngine::NodeTy* Pred,
       if (VD->getType()->isArrayType())
         continue;
       
+      // FIXME: static variables have an initializer, but the second
+      //  time a function is called those values may not be current.
       const Expr* Ex = VD->getInit(); 
       
       St = SetRVal(St, lval::DeclVal(VD),
