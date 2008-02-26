@@ -839,7 +839,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
 /// getFreePhysReg - return a free physical register for this virtual register
 /// interval if we have one, otherwise return 0.
 unsigned RALinScan::getFreePhysReg(LiveInterval *cur) {
-  std::vector<unsigned> inactiveCounts(tri_->getNumRegs(), 0);
+  SmallVector<unsigned, 256> inactiveCounts;
   unsigned MaxInactiveCount = 0;
   
   const TargetRegisterClass *RC = reginfo_->getRegClass(cur->reg);
@@ -856,6 +856,8 @@ unsigned RALinScan::getFreePhysReg(LiveInterval *cur) {
     const TargetRegisterClass *RegRC = reginfo_->getRegClass(reg);
     if (RelatedRegClasses.getLeaderValue(RegRC) == RCLeader) {
       reg = vrm_->getPhys(reg);
+      if (inactiveCounts.size() <= reg)
+        inactiveCounts.resize(reg+1);
       ++inactiveCounts[reg];
       MaxInactiveCount = std::max(MaxInactiveCount, inactiveCounts[reg]);
     }
@@ -882,10 +884,13 @@ unsigned RALinScan::getFreePhysReg(LiveInterval *cur) {
   for (; I != E; ++I)
     if (prt_->isRegAvail(*I)) {
       FreeReg = *I;
-      FreeRegInactiveCount = inactiveCounts[FreeReg];
+      if (FreeReg < inactiveCounts.size())
+        FreeRegInactiveCount = inactiveCounts[FreeReg];
+      else
+        FreeRegInactiveCount = 0;
       break;
     }
-  
+
   // If there are no free regs, or if this reg has the max inactive count,
   // return this register.
   if (FreeReg == 0 || FreeRegInactiveCount == MaxInactiveCount) return FreeReg;
@@ -896,7 +901,8 @@ unsigned RALinScan::getFreePhysReg(LiveInterval *cur) {
   // reevaluated now.
   for (; I != E; ++I) {
     unsigned Reg = *I;
-    if (prt_->isRegAvail(Reg) && FreeRegInactiveCount < inactiveCounts[Reg]) {
+    if (prt_->isRegAvail(Reg) && Reg < inactiveCounts.size() &&
+        FreeRegInactiveCount < inactiveCounts[Reg]) {
       FreeReg = Reg;
       FreeRegInactiveCount = inactiveCounts[Reg];
       if (FreeRegInactiveCount == MaxInactiveCount)
