@@ -174,7 +174,7 @@ void MachineOperand::print(std::ostream &OS, const TargetMachine *TM) const {
               TM = &MF->getTarget();
       
       if (TM)
-        OS << "%" << TM->getRegisterInfo()->get(getReg()).PrintableName;
+        OS << "%" << TM->getRegisterInfo()->get(getReg()).Name;
       else
         OS << "%mreg" << getReg();
     }

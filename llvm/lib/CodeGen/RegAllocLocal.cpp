@@ -286,7 +286,7 @@ void RALocal::spillVirtReg(MachineBasicBlock &MBB,
   assert(VirtReg && "Spilling a physical register is illegal!"
          " Must not have appropriate kill for the register or use exists beyond"
          " the intended one.");
-  DOUT << "  Spilling register " << TRI->getPrintableName(PhysReg)
+  DOUT << "  Spilling register " << TRI->getName(PhysReg)
        << " containing %reg" << VirtReg;
   
   const TargetInstrInfo* TII = MBB.getParent()->getTarget().getInstrInfo();
@@ -502,7 +502,7 @@ MachineInstr *RALocal::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
   markVirtRegModified(VirtReg, false);   // Note that this reg was just reloaded
 
   DOUT << "  Reloading %reg" << VirtReg << " into "
-       << TRI->getPrintableName(PhysReg) << "\n";
+       << TRI->getName(PhysReg) << "\n";
 
   // Add move instruction(s)
   const TargetInstrInfo* TII = MBB.getParent()->getTarget().getInstrInfo();
@@ -575,7 +575,7 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
           DOUT << "  Regs have values: ";
           for (unsigned i = 0; i != TRI->getNumRegs(); ++i)
             if (PhysRegsUsed[i] != -1 && PhysRegsUsed[i] != -2)
-               DOUT << "[" << TRI->getPrintableName(i)
+               DOUT << "[" << TRI->getName(i)
                     << ",%reg" << PhysRegsUsed[i] << "] ";
           DOUT << "\n");
 
@@ -637,14 +637,14 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
       }
 
       if (PhysReg) {
-        DOUT << "  Last use of " << TRI->getPrintableName(PhysReg)
+        DOUT << "  Last use of " << TRI->getName(PhysReg)
              << "[%reg" << VirtReg <<"], removing it from live set\n";
         removePhysReg(PhysReg);
         for (const unsigned *AliasSet = TRI->getSubRegisters(PhysReg);
              *AliasSet; ++AliasSet) {
           if (PhysRegsUsed[*AliasSet] != -2) {
             DOUT  << "  Last use of "
-                  << TRI->getPrintableName(*AliasSet)
+                  << TRI->getName(*AliasSet)
                   << "[%reg" << VirtReg <<"], removing it from live set\n";
             removePhysReg(*AliasSet);
           }
@@ -728,7 +728,7 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
         MF->getRegInfo().setPhysRegUsed(DestPhysReg);
         markVirtRegModified(DestVirtReg);
         getVirtRegLastUse(DestVirtReg) = std::make_pair((MachineInstr*)0, 0);
-        DOUT << "  Assigning " << TRI->getPrintableName(DestPhysReg)
+        DOUT << "  Assigning " << TRI->getName(DestPhysReg)
              << " to %reg" << DestVirtReg << "\n";
         MI->getOperand(i).setReg(DestPhysReg);  // Assign the output register
       }
@@ -751,14 +751,14 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
       }
 
       if (PhysReg) {
-        DOUT  << "  Register " << TRI->getPrintableName(PhysReg)
+        DOUT  << "  Register " << TRI->getName(PhysReg)
               << " [%reg" << VirtReg
               << "] is never used, removing it frame live list\n";
         removePhysReg(PhysReg);
         for (const unsigned *AliasSet = TRI->getAliasSet(PhysReg);
              *AliasSet; ++AliasSet) {
           if (PhysRegsUsed[*AliasSet] != -2) {
-            DOUT  << "  Register " << TRI->getPrintableName(*AliasSet)
+            DOUT  << "  Register " << TRI->getName(*AliasSet)
                   << " [%reg" << *AliasSet
                   << "] is never used, removing it frame live list\n";
             removePhysReg(*AliasSet);

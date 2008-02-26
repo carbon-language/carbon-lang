@@ -25,7 +25,7 @@ class GPR<bits<5> num, string n> : PPCReg<n> {
 class GP8<GPR SubReg, string n> : PPCReg<SubReg.AsmName> {
   field bits<5> Num = SubReg.Num;
   let SubRegs = [SubReg];
-  let PrintableName = n;
+  let Name = n;
 }
 
 // SPR - One of the 32-bit special-purpose registers

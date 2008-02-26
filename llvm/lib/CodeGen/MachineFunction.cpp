@@ -214,7 +214,7 @@ void MachineFunction::print(std::ostream &OS) const {
     for (MachineRegisterInfo::livein_iterator
          I = RegInfo->livein_begin(), E = RegInfo->livein_end(); I != E; ++I) {
       if (TRI)
-        OS << " " << TRI->getPrintableName(I->first);
+        OS << " " << TRI->getName(I->first);
       else
         OS << " Reg #" << I->first;
       
@@ -228,7 +228,7 @@ void MachineFunction::print(std::ostream &OS) const {
     for (MachineRegisterInfo::liveout_iterator
          I = RegInfo->liveout_begin(), E = RegInfo->liveout_end(); I != E; ++I)
       if (TRI)
-        OS << " " << TRI->getPrintableName(*I);
+        OS << " " << TRI->getName(*I);
       else
         OS << " Reg #" << *I;
     OS << "\n";

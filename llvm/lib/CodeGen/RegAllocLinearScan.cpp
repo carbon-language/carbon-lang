@@ -164,7 +164,7 @@ namespace {
         if (TargetRegisterInfo::isVirtualRegister(reg)) {
           reg = vrm_->getPhys(reg);
         }
-        DOUT << tri_->getPrintableName(reg) << '\n';
+        DOUT << tri_->getName(reg) << '\n';
       }
     }
   };
@@ -239,7 +239,7 @@ unsigned RALinScan::attemptTrivialCoalescing(LiveInterval &cur, unsigned Reg) {
 
   // Try to coalesce.
   if (!li_->conflictsWithPhysRegDef(cur, *vrm_, SrcReg)) {
-    DOUT << "Coalescing: " << cur << " -> " << tri_->getPrintableName(SrcReg)
+    DOUT << "Coalescing: " << cur << " -> " << tri_->getName(SrcReg)
          << '\n';
     vrm_->clearVirt(cur.reg);
     vrm_->assignVirt2Phys(cur.reg, SrcReg);
@@ -628,7 +628,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
   // the free physical register and add this interval to the active
   // list.
   if (physReg) {
-    DOUT <<  tri_->getPrintableName(physReg) << '\n';
+    DOUT <<  tri_->getName(physReg) << '\n';
     vrm_->assignVirt2Phys(cur->reg, physReg);
     prt_->addRegUse(physReg);
     active_.push_back(std::make_pair(cur, cur->begin()));
@@ -690,7 +690,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
   }
   
   DOUT << "\t\tregister with min weight: "
-       << tri_->getPrintableName(minReg) << " (" << minWeight << ")\n";
+       << tri_->getName(minReg) << " (" << minWeight << ")\n";
 
   // if the current has the minimum weight, we need to spill it and
   // add any added intervals back to unhandled, and restart
@@ -869,11 +869,11 @@ unsigned RALinScan::getFreePhysReg(LiveInterval *cur) {
   if (cur->preference) {
     if (prt_->isRegAvail(cur->preference)) {
       DOUT << "\t\tassigned the preferred register: "
-           << tri_->getPrintableName(cur->preference) << "\n";
+           << tri_->getName(cur->preference) << "\n";
       return cur->preference;
     } else
       DOUT << "\t\tunable to assign the preferred register: "
-           << tri_->getPrintableName(cur->preference) << "\n";
+           << tri_->getName(cur->preference) << "\n";
   }
 
   // Scan for the first available register.
