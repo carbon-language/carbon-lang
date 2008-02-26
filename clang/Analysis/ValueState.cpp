@@ -246,15 +246,8 @@ RVal ValueStateManager::GetRVal(ValueState St, Expr* E) {
           // already has persistent storage?  We do this because we
           // are comparing states using pointer equality.  Perhaps there is
           // a better way, since APInts are fairly lightweight.
-          llvm::APSInt X = ED->getInitVal();
-          
-          // FIXME: This is a hack.  The APSInt inside the EnumConstantDecl
-          //  might not match the signedness of the DeclRefExpr.  We hack
-          //  a workaround here.  Should be fixed elsewhere.
-          if (E->getType()->isUnsignedIntegerType() != X.isUnsigned())
-            X.setIsUnsigned(!X.isUnsigned());
-          
-          return nonlval::ConcreteInt(ValMgr.getValue(X));          
+
+          return nonlval::ConcreteInt(ValMgr.getValue(ED->getInitVal()));          
         }
         else if (FunctionDecl* FD = dyn_cast<FunctionDecl>(D))
           return lval::FuncVal(FD);
