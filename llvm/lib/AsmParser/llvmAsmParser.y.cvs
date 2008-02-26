@@ -2580,7 +2580,9 @@ InstructionList : InstructionList Inst {
 
 BBTerminatorInst : 
   RET ReturnedVal  { // Return with a result...
-    $$ = new ReturnInst(*$2);
+    ValueList &VL = *$2;
+    if (!VL.empty())
+      $$ = new ReturnInst(&VL[0], VL.size());
     delete $2;
     CHECK_FOR_ERROR
   }
