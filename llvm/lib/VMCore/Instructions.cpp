@@ -592,15 +592,15 @@ ReturnInst::ReturnInst(BasicBlock *InsertAtEnd)
   : TerminatorInst(Type::VoidTy, Instruction::Ret, OperandList, 0, InsertAtEnd) {
 }
 
-ReturnInst::ReturnInst(std::vector<Value *> &retVals, Instruction *InsertBefore)
+ReturnInst::ReturnInst(const std::vector<Value *> &retVals, Instruction *InsertBefore)
   : TerminatorInst(Type::VoidTy, Instruction::Ret, OperandList, retVals.size(), InsertBefore) {
   init(retVals);
 }
-ReturnInst::ReturnInst(std::vector<Value *> &retVals, BasicBlock *InsertAtEnd)
+ReturnInst::ReturnInst(const std::vector<Value *> &retVals, BasicBlock *InsertAtEnd)
   : TerminatorInst(Type::VoidTy, Instruction::Ret, OperandList, retVals.size(), InsertAtEnd) {
   init(retVals);
 }
-ReturnInst::ReturnInst(std::vector<Value *> &retVals)
+ReturnInst::ReturnInst(const std::vector<Value *> &retVals)
   : TerminatorInst(Type::VoidTy, Instruction::Ret, OperandList, retVals.size()) {
   init(retVals);
 }
@@ -615,7 +615,7 @@ void ReturnInst::init(Value *retVal) {
   }
 }
 
-void ReturnInst::init(std::vector<Value *> &retVals) {
+void ReturnInst::init(const std::vector<Value *> &retVals) {
   if (retVals.empty())
     return;
 

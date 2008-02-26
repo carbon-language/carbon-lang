@@ -1381,7 +1381,7 @@ public:
 class ReturnInst : public TerminatorInst {
   ReturnInst(const ReturnInst &RI);
   void init(Value *RetVal);
-  void init(std::vector<Value *> &RetVals);
+  void init(const std::vector<Value *> &RetVals);
 
 public:
   // ReturnInst constructors:
@@ -1397,9 +1397,9 @@ public:
   // if it was passed NULL.
   explicit ReturnInst(Value *retVal = 0, Instruction *InsertBefore = 0);
   ReturnInst(Value *retVal, BasicBlock *InsertAtEnd);
-  ReturnInst(std::vector<Value *> &retVals);
-  ReturnInst(std::vector<Value *> &retVals, Instruction *InsertBefore);
-  ReturnInst(std::vector<Value *> &retVals, BasicBlock *InsertAtEnd);
+  ReturnInst(const std::vector<Value *> &retVals);
+  ReturnInst(const std::vector<Value *> &retVals, Instruction *InsertBefore);
+  ReturnInst(const std::vector<Value *> &retVals, BasicBlock *InsertAtEnd);
   explicit ReturnInst(BasicBlock *InsertAtEnd);
   virtual ~ReturnInst();
 
