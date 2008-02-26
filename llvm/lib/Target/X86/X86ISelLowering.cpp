@@ -1083,6 +1083,24 @@ static bool IsPossiblyOverwrittenArgumentOfTailCall(SDOperand Op,
   return false;
 }
 
+/// CallRequiresGOTInRegister - Check whether the call requires the GOT pointer
+/// in a register before calling.
+bool X86TargetLowering::CallRequiresGOTPtrInReg(bool Is64Bit, bool IsTailCall) {
+  return !IsTailCall && !Is64Bit &&
+    getTargetMachine().getRelocationModel() == Reloc::PIC_ &&
+    Subtarget->isPICStyleGOT();
+}
+
+
+/// CallRequiresFnAddressInReg - Check whether the call requires the function
+/// address to be loaded in a register.
+bool 
+X86TargetLowering::CallRequiresFnAddressInReg(bool Is64Bit, bool IsTailCall) {
+  return !Is64Bit && IsTailCall &&  
+    getTargetMachine().getRelocationModel() == Reloc::PIC_ &&
+    Subtarget->isPICStyleGOT();
+}
+
 /// CopyTailCallClobberedArgumentsToVRegs - Create virtual registers for all
 /// arguments to force loading and guarantee that arguments sourcing from
 /// incomming parameters are not overwriting each other.
@@ -1552,22 +1570,19 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
 
   // ELF / PIC requires GOT in the EBX register before function calls via PLT
   // GOT pointer.  
+  if (CallRequiresGOTPtrInReg(Is64Bit, IsTailCall)) {
+    Chain = DAG.getCopyToReg(Chain, X86::EBX,
+                             DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()),
+                             InFlag);
+    InFlag = Chain.getValue(1);
+  }
   // If we are tail calling and generating PIC/GOT style code load the address
   // of the callee into ecx. The value in ecx is used as target of the tail
   // jump. This is done to circumvent the ebx/callee-saved problem for tail
   // calls on PIC/GOT architectures. Normally we would just put the address of
   // GOT into ebx and then call target@PLT. But for tail callss ebx would be
   // restored (since ebx is callee saved) before jumping to the target@PLT.
-  if (!IsTailCall && !Is64Bit &&
-      getTargetMachine().getRelocationModel() == Reloc::PIC_ &&
-      Subtarget->isPICStyleGOT()) {
-    Chain = DAG.getCopyToReg(Chain, X86::EBX,
-                             DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()),
-                             InFlag);
-    InFlag = Chain.getValue(1);
-  } else if (!Is64Bit && IsTailCall &&  
-             getTargetMachine().getRelocationModel() == Reloc::PIC_ &&
-             Subtarget->isPICStyleGOT() ) {
+  if (CallRequiresFnAddressInReg(Is64Bit, IsTailCall)) {
     // Note: The actual moving to ecx is done further down.
     GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee);
     if (G &&  !G->getGlobal()->hasHiddenVisibility() &&

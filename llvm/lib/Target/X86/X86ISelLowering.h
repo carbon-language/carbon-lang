@@ -491,6 +491,8 @@ namespace llvm {
 
     // Call lowering helpers.
     bool IsCalleePop(SDOperand Op);
+    bool CallRequiresGOTPtrInReg(bool Is64Bit, bool IsTailCall);
+    bool CallRequiresFnAddressInReg(bool Is64Bit, bool IsTailCall);
     CCAssignFn *CCAssignFnForNode(SDOperand Op) const;
     NameDecorationStyle NameDecorationForFORMAL_ARGUMENTS(SDOperand Op);
     unsigned GetAlignedArgumentStackSize(unsigned StackSize, SelectionDAG &DAG);
