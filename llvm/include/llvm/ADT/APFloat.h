@@ -113,11 +113,11 @@ namespace llvm {
   /* When bits of a floating point number are truncated, this enum is
      used to indicate what fraction of the LSB those bits represented.
      It essentially combines the roles of guard and sticky bits.  */
-  enum lostFraction {		// Example of truncated bits:
-    lfExactlyZero,		// 000000
-    lfLessThanHalf,		// 0xxxxx  x's not all zero
-    lfExactlyHalf,		// 100000
-    lfMoreThanHalf		// 1xxxxx  x's not all zero
+  enum lostFraction {           // Example of truncated bits:
+    lfExactlyZero,              // 000000
+    lfLessThanHalf,             // 0xxxxx  x's not all zero
+    lfExactlyHalf,              // 100000
+    lfMoreThanHalf              // 1xxxxx  x's not all zero
   };
 
   class APFloat {
@@ -207,7 +207,7 @@ namespace llvm {
     /* Conversions.  */
     opStatus convert(const fltSemantics &, roundingMode);
     opStatus convertToInteger(integerPart *, unsigned int, bool,
-			      roundingMode) const;
+                              roundingMode) const;
     opStatus convertFromSignExtendedInteger(const integerPart *, unsigned int,
                                             bool, roundingMode);
     opStatus convertFromZeroExtendedInteger(const integerPart *, unsigned int,

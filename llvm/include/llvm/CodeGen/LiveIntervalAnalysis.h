@@ -172,15 +172,15 @@ namespace llvm {
     /// MBB return a pointer the MBB
     MachineBasicBlock* getMBBFromIndex(unsigned index) const {
       std::vector<IdxMBBPair>::const_iterator I =
-	    std::lower_bound(Idx2MBBMap.begin(), Idx2MBBMap.end(), index);
+        std::lower_bound(Idx2MBBMap.begin(), Idx2MBBMap.end(), index);
       // Take the pair containing the index
       std::vector<IdxMBBPair>::const_iterator J =
-	  ((I != Idx2MBBMap.end() && I->first > index) ||
-	   (I == Idx2MBBMap.end() && Idx2MBBMap.size()>0)) ? (I-1): I;
+        ((I != Idx2MBBMap.end() && I->first > index) ||
+         (I == Idx2MBBMap.end() && Idx2MBBMap.size()>0)) ? (I-1): I;
 
       assert(J != Idx2MBBMap.end() && J->first < index+1 &&
-	     index <= getMBBEndIdx(J->second) &&
-	     "index does not correspond to an MBB");
+             index <= getMBBEndIdx(J->second) &&
+             "index does not correspond to an MBB");
       return J->second;
     }
 

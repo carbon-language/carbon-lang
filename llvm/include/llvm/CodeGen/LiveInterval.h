@@ -335,7 +335,7 @@ namespace llvm {
     /// the intervals are not joinable, this aborts.
     void join(LiveInterval &Other, const int *ValNoAssignments,
               const int *RHSValNoAssignments,
-	      SmallVector<VNInfo*, 16> &NewVNInfo);
+              SmallVector<VNInfo*, 16> &NewVNInfo);
 
     /// removeRange - Remove the specified range from this interval.  Note that
     /// the range must already be in this interval in its entirety.

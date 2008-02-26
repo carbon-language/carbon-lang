@@ -1130,12 +1130,12 @@ public:
   /// DST += RHS + CARRY where CARRY is zero or one.  Returns the
   /// carry flag.
   static integerPart tcAdd(integerPart *, const integerPart *,
-			   integerPart carry, unsigned);
+                           integerPart carry, unsigned);
 
   /// DST -= RHS + CARRY where CARRY is zero or one.  Returns the
   /// carry flag.
   static integerPart tcSubtract(integerPart *, const integerPart *,
-				integerPart carry, unsigned);
+                                integerPart carry, unsigned);
 
   ///  DST += SRC * MULTIPLIER + PART   if add is true
   ///  DST  = SRC * MULTIPLIER + PART   if add is false
@@ -1149,23 +1149,23 @@ public:
   ///  parts were zero return zero, otherwise overflow occurred and
   ///  return one.
   static int tcMultiplyPart(integerPart *dst, const integerPart *src,
-			    integerPart multiplier, integerPart carry,
-			    unsigned int srcParts, unsigned int dstParts,
-			    bool add);
+                            integerPart multiplier, integerPart carry,
+                            unsigned int srcParts, unsigned int dstParts,
+                            bool add);
 
   /// DST = LHS * RHS, where DST has the same width as the operands
   /// and is filled with the least significant parts of the result.
   /// Returns one if overflow occurred, otherwise zero.  DST must be
   /// disjoint from both operands.
   static int tcMultiply(integerPart *, const integerPart *,
-			const integerPart *, unsigned);
+                        const integerPart *, unsigned);
 
   /// DST = LHS * RHS, where DST has width the sum of the widths of
   /// the operands.  No overflow occurs.  DST must be disjoint from
   /// both operands. Returns the number of parts required to hold the
   /// result.
   static unsigned int tcFullMultiply(integerPart *, const integerPart *,
-				     const integerPart *, unsigned, unsigned);
+                                     const integerPart *, unsigned, unsigned);
 
   /// If RHS is zero LHS and REMAINDER are left unchanged, return one.
   /// Otherwise set LHS to LHS / RHS with the fractional part
@@ -1178,18 +1178,18 @@ public:
   ///  and are destroyed.  LHS, REMAINDER and SCRATCH must be
   ///  distinct.
   static int tcDivide(integerPart *lhs, const integerPart *rhs,
-		      integerPart *remainder, integerPart *scratch,
-		      unsigned int parts);
+                      integerPart *remainder, integerPart *scratch,
+                      unsigned int parts);
 
   /// Shift a bignum left COUNT bits.  Shifted in bits are zero.
   /// There are no restrictions on COUNT.
   static void tcShiftLeft(integerPart *, unsigned int parts,
-			  unsigned int count);
+                          unsigned int count);
 
   /// Shift a bignum right COUNT bits.  Shifted in bits are zero.
   /// There are no restrictions on COUNT.
   static void tcShiftRight(integerPart *, unsigned int parts,
-			   unsigned int count);
+                           unsigned int count);
 
   /// The obvious AND, OR and XOR and complement operations.
   static void tcAnd(integerPart *, const integerPart *, unsigned int);
@@ -1199,14 +1199,14 @@ public:
   
   /// Comparison (unsigned) of two bignums.
   static int tcCompare(const integerPart *, const integerPart *,
-		       unsigned int);
+                       unsigned int);
 
   /// Increment a bignum in-place.  Return the carry flag.
   static integerPart tcIncrement(integerPart *, unsigned int);
 
   /// Set the least significant BITS and clear the rest.
   static void tcSetLeastSignificantBits(integerPart *, unsigned int,
-					unsigned int bits);
+                                        unsigned int bits);
 
   /// @brief debug method
   void dump() const;
