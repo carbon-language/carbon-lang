@@ -50,6 +50,13 @@ public:
   virtual RVal EvalBinOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
                          LVal L, NonLVal R);  
   
+  // Calls.
+  
+  virtual ValueStateImpl* EvalCall(ValueStateManager& StateMgr,
+                                   ValueManager& ValMgr,
+                                   CallExpr* CE, LVal L,
+                                   ValueStateImpl* StImpl);
+  
 protected:
   
   // Equality operators for LVals.

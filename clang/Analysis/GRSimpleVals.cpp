@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "GRSimpleVals.h"
+#include "ValueState.h"
 #include "clang/Basic/Diagnostic.h"
 
 using namespace clang;
@@ -328,4 +329,28 @@ RVal GRSimpleVals::EvalNE(ValueManager& ValMgr, LVal L, LVal R) {
   }
   
   return NonLVal::MakeIntTruthVal(ValMgr, true);
+}
+
+//===----------------------------------------------------------------------===//
+// Transfer function for Function Calls.
+//===----------------------------------------------------------------------===//
+
+ValueStateImpl*
+GRSimpleVals::EvalCall(ValueStateManager& StateMgr, ValueManager& ValMgr,
+                           CallExpr* CE, LVal L, ValueStateImpl* StImpl) {
+  
+  ValueState St(StImpl);
+  
+  // Invalidate all arguments passed in by reference (LVals).
+
+  for (CallExpr::arg_iterator I = CE->arg_begin(), E = CE->arg_end();
+        I != E; ++I) {
+
+    RVal V = StateMgr.GetRVal(St, *I);
+    
+    if (isa<LVal>(V))
+      St = StateMgr.SetRVal(St, cast<LVal>(V), UnknownVal());
+  }
+  
+  return St.getImpl();
 }

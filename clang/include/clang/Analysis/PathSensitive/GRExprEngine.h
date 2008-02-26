@@ -410,7 +410,7 @@ protected:
   }
   
   StateTy EvalCall(CallExpr* CE, LVal L, StateTy St) {
-    return St;     
+    return StateTy(TF->EvalCall(StateMgr, ValMgr, CE, L, St.getImpl()));
   }
   
   StateTy MarkBranch(StateTy St, Stmt* Terminator, bool branchTaken);

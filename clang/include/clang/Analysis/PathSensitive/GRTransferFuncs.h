@@ -19,6 +19,9 @@
 
 namespace clang {
   
+  class ValueStateImpl;
+  class ValueStateManager;
+  
 class GRTransferFuncs {
 public:
   GRTransferFuncs() {}
@@ -47,6 +50,13 @@ public:
   
   virtual RVal EvalBinOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
                          LVal L, NonLVal R) = 0;
+  
+  // Calls.
+  
+  virtual ValueStateImpl* EvalCall(ValueStateManager& StateMgr,
+                                   ValueManager& ValMgr,
+                                   CallExpr* CE, LVal L,
+                                   ValueStateImpl* StImpl) = 0;
 };
   
 } // end clang namespace
