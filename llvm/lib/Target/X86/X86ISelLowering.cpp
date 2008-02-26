@@ -1057,25 +1057,54 @@ X86TargetLowering::NameDecorationForFORMAL_ARGUMENTS(SDOperand Op) {
   return None;
 }
 
-
 // IsPossiblyOverwrittenArgumentOfTailCall - Check if the operand could possibly
 // be overwritten when lowering the outgoing arguments in a tail call. Currently
 // the implementation of this call is very conservative and assumes all
 // arguments sourcing from FORMAL_ARGUMENTS or a CopyFromReg with virtual
 // registers would be overwritten by direct lowering.  
-// Possible improvement:
-// Check FORMAL_ARGUMENTS corresponding MERGE_VALUES for CopyFromReg nodes
-// indicating inreg passed arguments which also need not be lowered to a safe
-// stack slot.
-static bool IsPossiblyOverwrittenArgumentOfTailCall(SDOperand Op) {
+static bool IsPossiblyOverwrittenArgumentOfTailCall(SDOperand Op, 
+                                                    MachineFrameInfo * MFI) {
   RegisterSDNode * OpReg = NULL;
+  FrameIndexSDNode * FrameIdxNode = NULL;
+  int FrameIdx = 0;
   if (Op.getOpcode() == ISD::FORMAL_ARGUMENTS ||
       (Op.getOpcode()== ISD::CopyFromReg &&
-       (OpReg = cast<RegisterSDNode>(Op.getOperand(1))) &&
-       OpReg->getReg() >= TargetRegisterInfo::FirstVirtualRegister))
+       (OpReg = dyn_cast<RegisterSDNode>(Op.getOperand(1))) &&
+       (OpReg->getReg() >= TargetRegisterInfo::FirstVirtualRegister)) ||
+      (Op.getOpcode() == ISD::LOAD &&
+       (FrameIdxNode = dyn_cast<FrameIndexSDNode>(Op.getOperand(1))) &&
+       (MFI->isFixedObjectIndex((FrameIdx = FrameIdxNode->getIndex()))) &&
+       (MFI->getObjectOffset(FrameIdx) >= 0)))
     return true;
   return false;
 }
+
+// CopyTailCallClobberedArgumentsToVRegs - Create virtual registers for all
+// arguments to force loading and guarantee that arguments sourcing from
+// incomming parameters are not overwriting each other.
+static SDOperand 
+CopyTailCallClobberedArgumentsToVRegs(SDOperand Chain,
+     SmallVector<std::pair<unsigned, SDOperand>, 8> &TailCallClobberedVRegs,
+                                      SelectionDAG &DAG,
+                                      MachineFunction &MF,
+                                      const TargetLowering * TL) {
+      
+  SDOperand InFlag;
+  for (unsigned i = 0, e = TailCallClobberedVRegs.size(); i != e; i++) {
+    SDOperand Arg = TailCallClobberedVRegs[i].second;
+    unsigned Idx = TailCallClobberedVRegs[i].first;
+    unsigned VReg = 
+      MF.getRegInfo().
+      createVirtualRegister(TL->getRegClassFor(Arg.getValueType()));
+    Chain = DAG.getCopyToReg(Chain, VReg, Arg, InFlag);
+    InFlag = Chain.getValue(1);
+    Arg = DAG.getCopyFromReg(Chain, VReg, Arg.getValueType(), InFlag);
+    TailCallClobberedVRegs[i] = std::make_pair(Idx, Arg);
+    Chain = Arg.getValue(1);
+    InFlag = Arg.getValue(2);
+  }
+  return Chain;
+} 
 
 // CreateCopyOfByValArgument - Make a copy of an aggregate at address specified
 // by "Src" to address "Dst" with size and alignment information specified by
@@ -1097,15 +1126,20 @@ CreateCopyOfByValArgument(SDOperand Src, SDOperand Dst, SDOperand Chain,
 SDOperand X86TargetLowering::LowerMemArgument(SDOperand Op, SelectionDAG &DAG,
                                               const CCValAssign &VA,
                                               MachineFrameInfo *MFI,
+                                              unsigned CC,
                                               SDOperand Root, unsigned i) {
   // Create the nodes corresponding to a load from this parameter slot.
   unsigned Flags = cast<ConstantSDNode>(Op.getOperand(3 + i))->getValue();
+  bool AlwaysUseMutable = (CC==CallingConv::Fast) && PerformTailCallOpt;
   bool isByVal = Flags & ISD::ParamFlags::ByVal;
+  bool isImmutable = !AlwaysUseMutable && !isByVal;
 
-  // FIXME: For now, all byval parameter objects are marked mutable. This
-  // can be changed with more analysis.
+  // FIXME: For now, all byval parameter objects are marked mutable. This can be
+  // changed with more analysis.  
+  // In case of tail call optimization mark all arguments mutable. Since they
+  // could be overwritten by lowering of arguments in case of a tail call.
   int FI = MFI->CreateFixedObject(MVT::getSizeInBits(VA.getValVT())/8,
-                                  VA.getLocMemOffset(), !isByVal);
+                                  VA.getLocMemOffset(), isImmutable);
   SDOperand FIN = DAG.getFrameIndex(FI, getPointerTy());
   if (isByVal)
     return FIN;
@@ -1195,7 +1229,7 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG) {
       ArgValues.push_back(ArgValue);
     } else {
       assert(VA.isMemLoc());
-      ArgValues.push_back(LowerMemArgument(Op, DAG, VA, MFI, Root, i));
+      ArgValues.push_back(LowerMemArgument(Op, DAG, VA, MFI, CC, Root, i));
     }
   }
 
@@ -1381,6 +1415,7 @@ void X86TargetLowering::X86_64AnalyzeSRetCallOperands(SDNode *TheCall,
 
 SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   MachineFunction &MF = DAG.getMachineFunction();
+  MachineFrameInfo * MFI = MF.getFrameInfo();
   SDOperand Chain     = Op.getOperand(0);
   unsigned CC         = cast<ConstantSDNode>(Op.getOperand(1))->getValue();
   bool isVarArg       = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
@@ -1442,7 +1477,7 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
 
   Chain = DAG.getCALLSEQ_START(Chain, DAG.getIntPtrConstant(NumBytes));
 
-  SDOperand RetAddrFrIdx, NewRetAddrFrIdx;
+  SDOperand RetAddrFrIdx;
   if (IsTailCall) {
     // Adjust the Return address stack slot.
     if (FPDiff) {
@@ -1451,23 +1486,18 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
       // Load the "old" Return address.
       RetAddrFrIdx = 
         DAG.getLoad(VT, Chain,RetAddrFrIdx, NULL, 0);
-      // Calculate the new stack slot for the return address.
-      int SlotSize = Is64Bit ? 8 : 4;
-      int NewReturnAddrFI = 
-        MF.getFrameInfo()->CreateFixedObject(SlotSize, FPDiff-SlotSize);
-      NewRetAddrFrIdx = DAG.getFrameIndex(NewReturnAddrFI, VT);
       Chain = SDOperand(RetAddrFrIdx.Val, 1);
     }
   }
 
   SmallVector<std::pair<unsigned, SDOperand>, 8> RegsToPass;
+  SmallVector<std::pair<unsigned, SDOperand>, 8> TailCallClobberedVRegs;
   SmallVector<SDOperand, 8> MemOpChains;
 
   SDOperand StackPtr;
 
   // Walk the register/memloc assignments, inserting copies/loads.  For tail
-  // calls, lower arguments which could otherwise be possibly overwritten to the
-  // stack slot where they would go on normal function calls.
+  // calls, remember all arguments for later special lowering.
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     CCValAssign &VA = ArgLocs[i];
     SDOperand Arg = Op.getOperand(5+2*VA.getValNo());
@@ -1490,13 +1520,15 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     if (VA.isRegLoc()) {
       RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
     } else {
-      if (!IsTailCall || IsPossiblyOverwrittenArgumentOfTailCall(Arg)) {
+      if (!IsTailCall) {
         assert(VA.isMemLoc());
         if (StackPtr.Val == 0)
           StackPtr = DAG.getCopyFromReg(Chain, X86StackPtr, getPointerTy());
         
         MemOpChains.push_back(LowerMemOpCallTo(Op, DAG, StackPtr, VA, Chain,
                                                Arg));
+      } else if (IsPossiblyOverwrittenArgumentOfTailCall(Arg, MFI)) {
+        TailCallClobberedVRegs.push_back(std::make_pair(i,Arg));
       }
     }
   }
@@ -1513,9 +1545,6 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
                              InFlag);
     InFlag = Chain.getValue(1);
   }
-
-  if (IsTailCall)
-    InFlag = SDOperand(); // ??? Isn't this nuking the preceding loop's output?
 
   // ELF / PIC requires GOT in the EBX register before function calls via PLT
   // GOT pointer.
@@ -1551,11 +1580,18 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     InFlag = Chain.getValue(1);
   }
 
+
   // For tail calls lower the arguments to the 'real' stack slot.
   if (IsTailCall) {
     SmallVector<SDOperand, 8> MemOpChains2;
     SDOperand FIN;
     int FI = 0;
+    // Do not flag preceeding copytoreg stuff together with the following stuff.
+    InFlag = SDOperand();
+    
+    Chain = CopyTailCallClobberedArgumentsToVRegs(Chain, TailCallClobberedVRegs,
+                                                  DAG, MF, this);
+ 
     for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
       CCValAssign &VA = ArgLocs[i];
       if (!VA.isRegLoc()) {
@@ -1568,28 +1604,26 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
         uint32_t OpSize = (MVT::getSizeInBits(VA.getLocVT())+7)/8;
         FI = MF.getFrameInfo()->CreateFixedObject(OpSize, Offset);
         FIN = DAG.getFrameIndex(FI, MVT::i32);
-        SDOperand Source = Arg;
-        if (IsPossiblyOverwrittenArgumentOfTailCall(Arg)) {
-          // Copy from stack slots to stack slot of a tail called function. This
-          // needs to be done because if we would lower the arguments directly
-          // to their real stack slot we might end up overwriting each other.
-          // Get source stack slot.
-          Source = DAG.getIntPtrConstant(VA.getLocMemOffset());
-          if (StackPtr.Val == 0)
-            StackPtr = DAG.getCopyFromReg(Chain, X86StackPtr, getPointerTy());
-          Source = DAG.getNode(ISD::ADD, getPointerTy(), StackPtr, Source);
-          if ((Flags & ISD::ParamFlags::ByVal)==0) 
-            Source = DAG.getLoad(VA.getValVT(), Chain, Source, NULL, 0);
-        } 
 
+        // Find virtual register for this argument.
+        bool Found=false;
+        for (unsigned idx=0, e= TailCallClobberedVRegs.size(); idx < e; idx++)
+          if (TailCallClobberedVRegs[idx].first==i) {
+            Arg = TailCallClobberedVRegs[idx].second;
+            Found=true;
+            break;
+          }
+        assert(IsPossiblyOverwrittenArgumentOfTailCall(Arg, MFI)==false || 
+          (Found==true && "No corresponding Argument was found"));
+        
         if (Flags & ISD::ParamFlags::ByVal) {
           // Copy relative to framepointer.
-          MemOpChains2.push_back(CreateCopyOfByValArgument(Source, FIN, Chain,
+          MemOpChains2.push_back(CreateCopyOfByValArgument(Arg, FIN, Chain,
                                                            Flags, DAG));
         } else {
           // Store relative to framepointer.
           MemOpChains2.push_back(
-            DAG.getStore(Chain, Source, FIN,
+            DAG.getStore(Chain, Arg, FIN,
                          PseudoSourceValue::getFixedStack(), FI));
         }            
       }
@@ -1600,8 +1634,16 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
                           &MemOpChains2[0], MemOpChains2.size());
 
     // Store the return address to the appropriate stack slot.
-    if (FPDiff)
-      Chain = DAG.getStore(Chain,RetAddrFrIdx, NewRetAddrFrIdx, NULL, 0);
+    if (FPDiff) {
+      // Calculate the new stack slot for the return address.
+      int SlotSize = Is64Bit ? 8 : 4;
+      int NewReturnAddrFI = 
+        MF.getFrameInfo()->CreateFixedObject(SlotSize, FPDiff-SlotSize);
+      MVT::ValueType VT = Is64Bit ? MVT::i64 : MVT::i32;
+      SDOperand NewRetAddrFrIdx = DAG.getFrameIndex(NewReturnAddrFI, VT);
+      Chain = DAG.getStore(Chain, RetAddrFrIdx, NewRetAddrFrIdx, 
+                           PseudoSourceValue::getFixedStack(), NewReturnAddrFI);
+    }
   }
 
   // If the callee is a GlobalAddress node (quite common, every direct call is)
