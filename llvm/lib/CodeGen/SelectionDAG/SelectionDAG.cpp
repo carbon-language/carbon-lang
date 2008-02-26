@@ -1241,19 +1241,29 @@ void SelectionDAG::ComputeMaskedBits(SDOperand Op, const APInt &Mask,
   case ISD::SHL:
     // (shl X, C1) & C2 == 0   iff   (X & C2 >>u C1) == 0
     if (ConstantSDNode *SA = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
-      ComputeMaskedBits(Op.getOperand(0), Mask.lshr(SA->getValue()),
+      unsigned ShAmt = SA->getValue();
+
+      // If the shift count is an invalid immediate, don't do anything.
+      if (ShAmt >= BitWidth)
+        return;
+
+      ComputeMaskedBits(Op.getOperand(0), Mask.lshr(ShAmt),
                         KnownZero, KnownOne, Depth+1);
       assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
-      KnownZero <<= SA->getValue();
-      KnownOne  <<= SA->getValue();
+      KnownZero <<= ShAmt;
+      KnownOne  <<= ShAmt;
       // low bits known zero.
-      KnownZero |= APInt::getLowBitsSet(BitWidth, SA->getValue());
+      KnownZero |= APInt::getLowBitsSet(BitWidth, ShAmt);
     }
     return;
   case ISD::SRL:
     // (ushr X, C1) & C2 == 0   iff  (-1 >> C1) & C2 == 0
     if (ConstantSDNode *SA = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
       unsigned ShAmt = SA->getValue();
+
+      // If the shift count is an invalid immediate, don't do anything.
+      if (ShAmt >= BitWidth)
+        return;
 
       ComputeMaskedBits(Op.getOperand(0), (Mask << ShAmt),
                         KnownZero, KnownOne, Depth+1);
@@ -1268,6 +1278,10 @@ void SelectionDAG::ComputeMaskedBits(SDOperand Op, const APInt &Mask,
   case ISD::SRA:
     if (ConstantSDNode *SA = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
       unsigned ShAmt = SA->getValue();
+
+      // If the shift count is an invalid immediate, don't do anything.
+      if (ShAmt >= BitWidth)
+        return;
 
       APInt InDemandedMask = (Mask << ShAmt);
       // If any of the demanded bits are produced by the sign extension, we also
