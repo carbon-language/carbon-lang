@@ -754,7 +754,6 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     {
       Code = bitc::FUNC_CODE_INST_RET;
       unsigned NumOperands = I.getNumOperands();
-      //      printf ("dpatel write %d\n", NumOperands);
       if (NumOperands == 0)
         AbbrevToUse = FUNCTION_INST_RET_VOID_ABBREV;
       else if (NumOperands == 1) {
