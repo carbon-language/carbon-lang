@@ -447,17 +447,13 @@ CFGBlock* CFGBuilder::VisitNullStmt(NullStmt* Statement) {
 }
 
 CFGBlock* CFGBuilder::VisitCompoundStmt(CompoundStmt* C) {
-  //   The value returned from this function is the last created CFGBlock
-  //   that represents the "entry" point for the translated AST node.
-  CFGBlock* LastBlock = 0;
-  
-  for (CompoundStmt::reverse_body_iterator I = C->body_rbegin(),
-       E = C->body_rend(); I != E; ++I )
-    // Add the statement to the current block.
-    if (!(LastBlock=Visit(*I)))
-      return NULL;
 
-  return LastBlock;
+  for (CompoundStmt::reverse_body_iterator I=C->body_rbegin(), E=C->body_rend();
+                                                               I != E; ++I ) {
+    Visit(*I);
+  }
+
+  return Block;
 }
 
 CFGBlock* CFGBuilder::VisitIfStmt(IfStmt* I) {
