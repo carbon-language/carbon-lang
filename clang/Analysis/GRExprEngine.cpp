@@ -952,40 +952,43 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
 
         // Check if the denominator is uninitialized.
         
-        if (RightV.isUninit()) {
-          NodeTy* DivUninit = Builder->generateNode(B, St, N2);
+        if (!RightV.isUnknown()) {
+        
+          if (RightV.isUninit()) {
+            NodeTy* DivUninit = Builder->generateNode(B, St, N2);
+            
+            if (DivUninit) {
+              DivUninit->markAsSink();
+              BadDivides.insert(DivUninit);
+            }
+            
+            continue;
+          }
+            
+          // Check for divide/remainder-by-zero.
+          //
+          // First, "assume" that the denominator is 0 or uninitialized.
           
-          if (DivUninit) {
-            DivUninit->markAsSink();
-            BadDivides.insert(DivUninit);
+          bool isFeasible = false;
+          StateTy ZeroSt =  Assume(St, RightV, false, isFeasible);
+          
+          if (isFeasible) {
+            NodeTy* DivZeroNode = Builder->generateNode(B, ZeroSt, N2);
+            
+            if (DivZeroNode) {
+              DivZeroNode->markAsSink();
+              BadDivides.insert(DivZeroNode);
+            }
           }
           
-          continue;
-        }
+          // Second, "assume" that the denominator cannot be 0.
           
-        // Check for divide/remainder-by-zero.
-        //
-        // First, "assume" that the denominator is 0 or uninitialized.
-        
-        bool isFeasible = false;
-        StateTy ZeroSt =  Assume(St, RightV, false,isFeasible);
-        
-        if (isFeasible) {
-          NodeTy* DivZeroNode = Builder->generateNode(B, ZeroSt, N2);
+          isFeasible = false;
+          St = Assume(St, RightV, true, isFeasible);
           
-          if (DivZeroNode) {
-            DivZeroNode->markAsSink();
-            BadDivides.insert(DivZeroNode);
-          }
+          if (!isFeasible)
+            continue;
         }
-        
-        // Second, "assume" that the denominator cannot be 0.
-        
-        isFeasible = false;
-        St = Assume(St, RightV, true, isFeasible);
-        
-        if (!isFeasible)
-          continue;
         
         // Fall-through.  The logic below processes the divide.
       }
@@ -1032,7 +1035,14 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           
         default: { 
           
-          assert (B->isCompoundAssignmentOp());                                    
+          assert (B->isCompoundAssignmentOp());
+          
+          if (Op >= BinaryOperator::AndAssign)
+            ((int&) Op) -= (BinaryOperator::AndAssign - BinaryOperator::And);
+          else
+            ((int&) Op) -= BinaryOperator::MulAssign;  
+          
+          // Check if the LHS is uninitialized.
           
           if (LeftV.isUninit()) {
             HandleUninitializedStore(B, N2);
@@ -1058,18 +1068,13 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           
           LVal LeftLV = cast<LVal>(LeftV);
           
-          // Propagate uninitialized values (right-side).
-          
-          if (RightV.isUninit()) {
-            St = SetRVal(SetRVal(St, B, RightV), LeftLV, RightV);
-            break;
-          }
-          
           // Fetch the value of the LHS (the value of the variable, etc.).
           
           RVal V = GetRVal(N1->getState(), LeftLV, B->getLHS()->getType());
           
-          // Propagate uninitialized value (left-side).
+          // Propagate uninitialized value (left-side).  We
+          // propogate uninitialized values for the RHS below when
+          // we also check for divide-by-zero.
           
           if (V.isUninit()) {
             St = SetRVal(St, B, V);
@@ -1088,13 +1093,10 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
             break;
           }
             
-          // Neither the LHS or the RHS have Unknown/Uninit values.  Process
-          // the operation and store the result.
-          
-          if (Op >= BinaryOperator::AndAssign)
-            ((int&) Op) -= (BinaryOperator::AndAssign - BinaryOperator::And);
-          else
-            ((int&) Op) -= BinaryOperator::MulAssign;          
+          // At this point:
+          //
+          //  The LHS is not Uninit/Unknown.
+          //  The RHS is not Unknown.
           
           // Get the computation type.
           QualType CTy = cast<CompoundAssignOperator>(B)->getComputationType();
@@ -1120,7 +1122,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
               
               continue;
             }
-            
+
             // First, "assume" that the denominator is 0.
             
             bool isFeasible = false;
@@ -1144,6 +1146,16 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
               continue;
             
             // Fall-through.  The logic below processes the divide.
+          }
+          else {
+            
+            // Propagate uninitialized values (right-side).
+            
+            if (RightV.isUninit()) {
+              St = SetRVal(SetRVal(St, B, RightV), LeftLV, RightV);
+              break;
+            }
+            
           }
 
           RVal Result = EvalCast(EvalBinOp(Op, V, RightV), B->getType());
