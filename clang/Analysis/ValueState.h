@@ -60,11 +60,11 @@ private:
   void operator=(const ValueStateImpl& R) const;
 
 public:
-  vstate::ExprBindingsTy     SubExprBindings;
-  vstate::ExprBindingsTy     BlockExprBindings;  
-  vstate::VarBindingsTy      VarBindings;
-  vstate::ConstNotEqTy    ConstNotEq;
-  vstate::ConstEqTy       ConstEq;
+  vstate::ExprBindingsTy   SubExprBindings;
+  vstate::ExprBindingsTy   BlockExprBindings;  
+  vstate::VarBindingsTy    VarBindings;
+  vstate::ConstNotEqTy     ConstNotEq;
+  vstate::ConstEqTy        ConstEq;
   
   /// This ctor is used when creating the first ValueStateImpl object.
   ValueStateImpl(vstate::ExprBindingsTy  EB,  vstate::VarBindingsTy VB,
@@ -258,9 +258,11 @@ public:
   ValueState SetRVal(ValueState St, Expr* E, bool isBlkExpr, RVal V);
   ValueState SetRVal(ValueState St, LVal LV, RVal V);
 
-  RVal GetRVal(ValueState St, Expr* E, bool* hasVal = NULL);
-  RVal GetRVal(ValueState St, const LVal& LV, QualType T = QualType());
+  RVal GetRVal(ValueState St, Expr* E);
+  RVal GetRVal(ValueState St, const LVal& LV, QualType T = QualType());    
   RVal GetLVal(ValueState St, Expr* E);
+  
+  RVal GetBlkExprRVal(ValueState St, Expr* Ex);
   
   ValueState getPersistentState(const ValueStateImpl& Impl);
   

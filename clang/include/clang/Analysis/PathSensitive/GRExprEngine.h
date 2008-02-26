@@ -216,7 +216,9 @@ public:
   
   /// ProcessSwitch - Called by GRCoreEngine.  Used to generate successor
   ///  nodes by processing the 'effects' of a switch statement.
-  void ProcessSwitch(SwitchNodeBuilder& builder);  
+  void ProcessSwitch(SwitchNodeBuilder& builder);
+  
+protected:
   
   /// RemoveDeadBindings - Return a new state that is the same as 'St' except
   ///  that all subexpression mappings are removed and that any
@@ -231,6 +233,10 @@ public:
   StateTy SetRVal(StateTy St, const Expr* Ex, const RVal& V) {
     return SetRVal(St, const_cast<Expr*>(Ex), V);
   }
+ 
+  StateTy SetBlkExprRVal(StateTy St, Expr* Ex, const RVal& V) {
+    return StateMgr.SetRVal(St, Ex, true, V);
+  }
   
   /// SetRVal - This version of SetRVal is used to batch process a set
   ///  of different possible RVals and return a set of different states.
@@ -243,18 +249,16 @@ public:
   RVal GetRVal(const StateTy& St, Expr* Ex) {
     return StateMgr.GetRVal(St, Ex);
   }
-  
-  RVal GetRVal(const StateTy& St, Expr* Ex, bool& hasVal) {
-    return StateMgr.GetRVal(St, Ex, &hasVal);
-  }
-  
+    
   RVal GetRVal(const StateTy& St, const Expr* Ex) {
     return GetRVal(St, const_cast<Expr*>(Ex));
   }
   
-  RVal GetRVal(const StateTy& St, const LVal& LV,
-                      QualType T = QualType()) {
+  RVal GetBlkExprRVal(const StateTy& St, Expr* Ex) {
+    return StateMgr.GetBlkExprRVal(St, Ex);
+  }  
     
+  RVal GetRVal(const StateTy& St, const LVal& LV, QualType T = QualType()) {    
     return StateMgr.GetRVal(St, LV, T);
   }
   
@@ -400,5 +404,7 @@ public:
   StateTy EvalCall(CallExpr* CE, LVal L, StateTy St) {
     return St;     
   }
+  
+  StateTy MarkBranch(StateTy St, Stmt* Terminator, bool branchTaken);
 };
 } // end clang namespace

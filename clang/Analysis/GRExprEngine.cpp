@@ -66,6 +66,60 @@ GRExprEngine::SetRVal(StateTy St, const LVal& LV, const RVal& RV) {
   return StateMgr.SetRVal(St, LV, RV);
 }
 
+GRExprEngine::StateTy
+GRExprEngine::MarkBranch(StateTy St, Stmt* Terminator, bool branchTaken) {
+  
+  switch (Terminator->getStmtClass()) {
+    default:
+      return St;
+      
+    case Stmt::BinaryOperatorClass: { // '&&' and '||'
+      
+      BinaryOperator* B = cast<BinaryOperator>(Terminator);
+      BinaryOperator::Opcode Op = B->getOpcode();
+      
+      assert (Op == BinaryOperator::LAnd || Op == BinaryOperator::LOr);
+      
+      // For &&, if we take the true branch, then the value of the whole
+      // expression is that of the RHS expression.
+      //
+      // For ||, if we take the false branch, then the value of the whole
+      // expression is that of the RHS expression.
+      
+      Expr* Ex = (Op == BinaryOperator::LAnd && branchTaken) ||
+                 (Op == BinaryOperator::LOr && !branchTaken)  
+               ? B->getRHS() : B->getLHS();
+        
+      return SetBlkExprRVal(St, B, UninitializedVal(Ex));
+    }
+      
+    case Stmt::ConditionalOperatorClass: { // ?:
+      
+      ConditionalOperator* C = cast<ConditionalOperator>(Terminator);
+      
+      // For ?, if branchTaken == true then the value is either the LHS or
+      // the condition itself. (GNU extension).
+      
+      Expr* Ex;      
+      
+      if (branchTaken)
+        Ex = C->getLHS() ? C->getLHS() : C->getCond();        
+      else
+        Ex = C->getRHS();
+      
+      return SetBlkExprRVal(St, C, UninitializedVal(Ex));
+    }
+      
+    case Stmt::ChooseExprClass: { // ?:
+      
+      ChooseExpr* C = cast<ChooseExpr>(Terminator);
+      
+      Expr* Ex = branchTaken ? C->getLHS() : C->getRHS();      
+      return SetBlkExprRVal(St, C, UninitializedVal(Ex));
+    }
+  }
+}
+
 void GRExprEngine::ProcessBranch(Expr* Condition, Stmt* Term,
                                  BranchNodeBuilder& builder) {
 
@@ -126,7 +180,7 @@ void GRExprEngine::ProcessBranch(Expr* Condition, Stmt* Term,
     StateTy St = Assume(PrevState, V, true, isFeasible);
 
     if (isFeasible)
-      builder.generateNode(St, true);
+      builder.generateNode(MarkBranch(St, Term, true), true);
     else
       builder.markInfeasible(true);
   }
@@ -146,7 +200,7 @@ void GRExprEngine::ProcessBranch(Expr* Condition, Stmt* Term,
     StateTy St = Assume(PrevState, V, false, isFeasible);
     
     if (isFeasible)
-      builder.generateNode(St, false);
+      builder.generateNode(MarkBranch(St, Term, false), false);
     else
       builder.markInfeasible(false);
   }
@@ -295,59 +349,54 @@ void GRExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
 
 void GRExprEngine::VisitLogicalExpr(BinaryOperator* B, NodeTy* Pred,
                                     NodeSet& Dst) {
-
-  bool hasR2;
-  StateTy PrevState = Pred->getState();
-
-  RVal R1 = GetRVal(PrevState, B->getLHS());
-  RVal R2 = GetRVal(PrevState, B->getRHS(), hasR2);
   
-  if (hasR2) {
-    if (R2.isUnknownOrUninit()) {
-      Nodify(Dst, B, Pred, SetRVal(PrevState, B, R2));
-      return;
-    }
-  }
-  else if (R1.isUnknownOrUninit()) {
-    Nodify(Dst, B, Pred, SetRVal(PrevState, B, R1));
-    return;
-  }
-
-  // R1 is an expression that can evaluate to either 'true' or 'false'.
-  if (B->getOpcode() == BinaryOperator::LAnd) {
-    // hasR2 == 'false' means that LHS evaluated to 'false' and that
-    // we short-circuited, leading to a value of '0' for the '&&' expression.
-    if (hasR2 == false) { 
-      Nodify(Dst, B, Pred, SetRVal(PrevState, B, MakeConstantVal(0U, B)));
-      return;
-    }
+  assert (B->getOpcode() == BinaryOperator::LAnd ||
+          B->getOpcode() == BinaryOperator::LOr);
+  
+  assert (B == CurrentStmt && getCFG().isBlkExpr(B));
+  
+  StateTy St = Pred->getState();
+  RVal X = GetBlkExprRVal(St, B);
+  
+  assert (X.isUninit());
+  
+  Expr* Ex = (Expr*) cast<UninitializedVal>(X).getData();
+  
+  assert (Ex);
+  
+  if (Ex == B->getRHS()) {
+    
+    X = GetBlkExprRVal(St, Ex);
+    
+    // We took the RHS.  Because the value of the '&&' or '||' expression must
+    // evaluate to 0 or 1, we must assume the value of the RHS evaluates to 0
+    // or 1.  Alternatively, we could take a lazy approach, and calculate this
+    // value later when necessary.  We don't have the machinery in place for
+    // this right now, and since most logical expressions are used for branches,
+    // the payoff is not likely to be large.  Instead, we do eager evaluation.
+        
+    bool isFeasible = false;
+    StateTy NewState = Assume(St, X, true, isFeasible);
+    
+    if (isFeasible)
+      Nodify(Dst, B, Pred, SetBlkExprRVal(NewState, B, MakeConstantVal(1U, B)));
+      
+    isFeasible = false;
+    NewState = Assume(St, X, false, isFeasible);
+    
+    if (isFeasible)
+      Nodify(Dst, B, Pred, SetBlkExprRVal(NewState, B, MakeConstantVal(0U, B)));
   }
   else {
-    assert (B->getOpcode() == BinaryOperator::LOr);
-    // hasR2 == 'false' means that the LHS evaluate to 'true' and that
-    //  we short-circuited, leading to a value of '1' for the '||' expression.
-    if (hasR2 == false) {
-      Nodify(Dst, B, Pred, SetRVal(PrevState, B, MakeConstantVal(1U, B)));
-      return;      
-    }
+    // We took the LHS expression.  Depending on whether we are '&&' or
+    // '||' we know what the value of the expression is via properties of
+    // the short-circuiting.
+    
+    X = MakeConstantVal( B->getOpcode() == BinaryOperator::LAnd ? 0U : 1U, B);
+    Nodify(Dst, B, Pred, SetBlkExprRVal(St, B, X));
   }
-    
-  // If we reach here we did not short-circuit.  Assume R2 == true and
-  // R2 == false.
-    
-  bool isFeasible;
-  StateTy St = Assume(PrevState, R2, true, isFeasible);
-  
-  if (isFeasible)
-    Nodify(Dst, B, Pred, SetRVal(PrevState, B, MakeConstantVal(1U, B)));
-
-  St = Assume(PrevState, R2, false, isFeasible);
-  
-  if (isFeasible)
-    Nodify(Dst, B, Pred, SetRVal(PrevState, B, MakeConstantVal(0U, B)));  
 }
-
-
+ 
 
 void GRExprEngine::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
 
@@ -538,12 +587,19 @@ void GRExprEngine::VisitDeclStmt(DeclStmt* DS, GRExprEngine::NodeTy* Pred,
 void GRExprEngine::VisitGuardedExpr(Expr* Ex, Expr* L, Expr* R,
                                    NodeTy* Pred, NodeSet& Dst) {
   
+  assert (Ex == CurrentStmt && getCFG().isBlkExpr(Ex));
+
   StateTy St = Pred->getState();
+  RVal X = GetBlkExprRVal(St, Ex);
   
-  RVal V = GetRVal(St, L);
-  if (isa<UnknownVal>(V)) V = GetRVal(St, R);
+  assert (X.isUninit());
   
-  Nodify(Dst, Ex, Pred, SetRVal(St, Ex, V));
+  Expr* SE = (Expr*) cast<UninitializedVal>(X).getData();
+  
+  assert (SE);
+    
+  X = GetBlkExprRVal(St, SE);
+  Nodify(Dst, Ex, Pred, SetBlkExprRVal(St, Ex, X));
 }
 
 /// VisitSizeOfAlignOfTypeExpr - Transfer function for sizeof(type).

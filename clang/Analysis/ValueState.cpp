@@ -69,10 +69,14 @@ ValueStateManager::RemoveDeadBindings(ValueState St, Stmt* Loc,
         MarkedSymbols.insert(*SI);
       }
     }
-    else
+    else {
+      RVal X = I.getData();
+      
+      if (X.isUninit() && cast<UninitializedVal>(X).getData())
+        continue;
+      
       NewSt.BlockExprBindings = Remove(NewSt, BlkExpr);
-    
-    continue;
+    }
   }
 
   // Iterate over the variable bindings.
@@ -209,7 +213,7 @@ ValueStateManager::AddEQ(ValueState St, SymbolID sym, const llvm::APSInt& V) {
   return getPersistentState(NewSt);
 }
 
-RVal ValueStateManager::GetRVal(ValueState St, Expr* E, bool* hasVal) {
+RVal ValueStateManager::GetRVal(ValueState St, Expr* E) {
 
   for (;;) {
     
@@ -322,21 +326,15 @@ RVal ValueStateManager::GetRVal(ValueState St, Expr* E, bool* hasVal) {
   
   ValueState::ExprBindingsTy::TreeTy* T = St->SubExprBindings.SlimFind(E);
   
-  if (T) {
-    if (hasVal) *hasVal = true;
-    return T->getValue().second;
-  }
+  return T ? T->getValue().second : GetBlkExprRVal(St, E);
+}
+
+RVal ValueStateManager::GetBlkExprRVal(ValueState St, Expr* E) {
   
-  T = St->BlockExprBindings.SlimFind(E);  
-  
-  if (T) {
-    if (hasVal) *hasVal = true;
-    return T->getValue().second;
-  }
-  else {
-    if (hasVal) *hasVal = false;
-    return UnknownVal();
-  }
+  assert (!isa<ParenExpr>(E));
+
+  ValueState::ExprBindingsTy::TreeTy* T = St->BlockExprBindings.SlimFind(E);    
+  return T ? T->getValue().second : UnknownVal();
 }
 
 RVal ValueStateManager::GetLVal(ValueState St, Expr* E) {

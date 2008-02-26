@@ -38,8 +38,8 @@ protected:
   : Data(const_cast<void*>(d)),
     Kind((isLVal ? LValKind : NonLValKind) | (ValKind << BaseBits)) {}
   
-  explicit RVal(BaseKind k)
-    : Data(0), Kind(k) {}
+  explicit RVal(BaseKind k, void* D = NULL)
+    : Data(D), Kind(k) {}
   
 public:
   ~RVal() {};
@@ -106,10 +106,13 @@ public:
 class UninitializedVal : public RVal {
 public:
   UninitializedVal() : RVal(UninitializedKind) {}
+  UninitializedVal(void* D) : RVal(UninitializedKind, D) {}
   
   static inline bool classof(const RVal* V) {
     return V->getBaseKind() == UninitializedKind;
-  }  
+  }
+  
+  void* getData() const { return Data; }  
 };
 
 class NonLVal : public RVal {
