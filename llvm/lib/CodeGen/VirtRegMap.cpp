@@ -779,7 +779,7 @@ namespace {
 ///     xorl  %edi, %eax
 ///     movl  %eax, -32(%ebp)
 ///     movl  -36(%ebp), %eax
-///	orl   %eax, -32(%ebp)
+///     orl   %eax, -32(%ebp)
 /// ==>
 ///     xorl  %edi, %eax
 ///     orl   -36(%ebp), %eax

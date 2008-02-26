@@ -2347,15 +2347,15 @@ void Andersens::SolveConstraints() {
         unsigned DestVar = *bi;
         unsigned Rep = FindNode(DestVar);
 
-	// If we ended up with this node as our destination, or we've already
-	// got an edge for the representative, delete the current edge.
-	if (Rep == CurrNodeIndex ||
-	    (Rep != DestVar && NewEdges.test(Rep))) {
-	    ToErase.set(DestVar);
-	    continue;
-	}
+        // If we ended up with this node as our destination, or we've already
+        // got an edge for the representative, delete the current edge.
+        if (Rep == CurrNodeIndex ||
+            (Rep != DestVar && NewEdges.test(Rep))) {
+          ToErase.set(DestVar);
+          continue;
+        }
         
-	std::pair<unsigned,unsigned> edge(CurrNodeIndex,Rep);
+        std::pair<unsigned,unsigned> edge(CurrNodeIndex,Rep);
         
         // This is where we do lazy cycle detection.
         // If this is a cycle candidate (equal points-to sets and this
