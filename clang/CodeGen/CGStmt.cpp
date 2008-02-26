@@ -569,7 +569,7 @@ static inline std::string ConvertAsmString(const char *Start,
         }
         
         Result += '$' + llvm::utostr(n);
-        Start = End;
+        Start = End - 1;
       } else if (isalpha(EscapedChar)) {
         char *End;
         
@@ -583,7 +583,7 @@ static inline std::string ConvertAsmString(const char *Start,
         }
         
         Result += "${" + llvm::utostr(n) + ':' + EscapedChar + '}';
-        Start = End;
+        Start = End - 1;
       } else {
         assert(0 && "Unhandled asm escaped character!");
       }
