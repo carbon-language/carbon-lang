@@ -184,7 +184,7 @@ bool BugDriver::run() {
   if (ReferenceOutputFile.empty()) {
     std::cout << "Generating reference output from raw program: ";
     if(!createReferenceFile(Program)){
-    	return debugCodeGeneratorCrash();
+      return debugCodeGeneratorCrash();
     }
     CreatedOutput = true;
   }

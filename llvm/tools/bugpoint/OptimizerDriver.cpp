@@ -157,7 +157,7 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
   // setup the child process' arguments
   const char** args = (const char**)
     alloca(sizeof(const char*) * 
-	   (Passes.size()+13+2*PluginLoader::getNumPlugins()+NumExtraArgs));
+           (Passes.size()+13+2*PluginLoader::getNumPlugins()+NumExtraArgs));
   int n = 0;
   sys::Path tool = sys::Program::FindProgramByName(ToolName);
   if (UseValgrind) {

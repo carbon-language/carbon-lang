@@ -259,43 +259,43 @@ private:
     if (programName[0] == '%' && programName.length() >2) {
       switch(programName[1]){
       case 'b':
-	if (programName.substr(0,8) == "%bindir%") {
-	  std::string tmp(LLVM_BINDIR);
-	  tmp.append(programName.substr(8));
-	  pat->program.set(tmp);
-	}
-	break;
+        if (programName.substr(0,8) == "%bindir%") {
+          std::string tmp(LLVM_BINDIR);
+          tmp.append(programName.substr(8));
+          pat->program.set(tmp);
+        }
+        break;
       case 'l':
-	if (programName.substr(0,12) == "%llvmgccdir%"){
-	  std::string tmp(LLVMGCCDIR);
-	  tmp.append(programName.substr(12));
-	  pat->program.set(tmp);
-	}else if (programName.substr(0,13) == "%llvmgccarch%"){
-	  std::string tmp(LLVMGCCARCH);
-	  tmp.append(programName.substr(13));
-	  pat->program.set(tmp);
-	}else if (programName.substr(0,9) == "%llvmgcc%"){
-	  std::string tmp(LLVMGCC);
-	  tmp.append(programName.substr(9));
-	  pat->program.set(tmp);
-	}else if (programName.substr(0,9) == "%llvmgxx%"){
-	  std::string tmp(LLVMGXX);
-	  tmp.append(programName.substr(9));
-	  pat->program.set(tmp);
-	}else if (programName.substr(0,9) == "%llvmcc1%"){
-	  std::string tmp(LLVMCC1);
-	  tmp.append(programName.substr(9));
-	  pat->program.set(tmp);
-	}else if (programName.substr(0,13) == "%llvmcc1plus%"){
-	  std::string tmp(LLVMCC1PLUS);
-	  tmp.append(programName.substr(13));
-	  pat->program.set(tmp);
-	}else if (programName.substr(0,8) == "%libdir%") {
-	  std::string tmp(LLVM_LIBDIR);
-	  tmp.append(programName.substr(8));
-	  pat->program.set(tmp);
-	}
-	  break;
+        if (programName.substr(0,12) == "%llvmgccdir%"){
+          std::string tmp(LLVMGCCDIR);
+          tmp.append(programName.substr(12));
+          pat->program.set(tmp);
+        }else if (programName.substr(0,13) == "%llvmgccarch%"){
+          std::string tmp(LLVMGCCARCH);
+          tmp.append(programName.substr(13));
+          pat->program.set(tmp);
+        }else if (programName.substr(0,9) == "%llvmgcc%"){
+          std::string tmp(LLVMGCC);
+          tmp.append(programName.substr(9));
+          pat->program.set(tmp);
+        }else if (programName.substr(0,9) == "%llvmgxx%"){
+          std::string tmp(LLVMGXX);
+          tmp.append(programName.substr(9));
+          pat->program.set(tmp);
+        }else if (programName.substr(0,9) == "%llvmcc1%"){
+          std::string tmp(LLVMCC1);
+          tmp.append(programName.substr(9));
+          pat->program.set(tmp);
+        }else if (programName.substr(0,13) == "%llvmcc1plus%"){
+          std::string tmp(LLVMCC1PLUS);
+          tmp.append(programName.substr(13));
+          pat->program.set(tmp);
+        }else if (programName.substr(0,8) == "%libdir%") {
+          std::string tmp(LLVM_LIBDIR);
+          tmp.append(programName.substr(8));
+          pat->program.set(tmp);
+        }
+        break;
       }
     }
     action->program = pat->program;

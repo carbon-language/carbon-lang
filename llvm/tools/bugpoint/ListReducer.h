@@ -80,18 +80,17 @@ Backjump:
         std::cerr << "\n\n*** Reduction Interrupted, cleaning up...\n\n";
         return true;
       }
-          	
+
       // If the loop doesn't make satisfying progress, try shuffling.
       // The purpose of shuffling is to avoid the heavy tails of the
       // distribution (improving the speed of convergence).
       if (ShufflingEnabled && 
-      	NumOfIterationsWithoutProgress > MaxIterations) {
-      		
-      	std::vector<ElTy> ShuffledList(TheList);
-      	std::random_shuffle(ShuffledList.begin(), ShuffledList.end());
-      	std::cerr << "\n\n*** Testing shuffled set...\n\n";
-      	// Check that random shuffle doesn't loose the bug
-      	if (doTest(ShuffledList, empty) == KeepPrefix) {
+          NumOfIterationsWithoutProgress > MaxIterations) {
+        std::vector<ElTy> ShuffledList(TheList);
+        std::random_shuffle(ShuffledList.begin(), ShuffledList.end());
+        std::cerr << "\n\n*** Testing shuffled set...\n\n";
+        // Check that random shuffle doesn't loose the bug
+        if (doTest(ShuffledList, empty) == KeepPrefix) {
           // If the bug is still here, use the shuffled list.
           TheList.swap(ShuffledList);
           MidTop = TheList.size();
@@ -99,11 +98,11 @@ Backjump:
           // probability of inifinite looping without making progress.
           MaxIterations += 2;
           std::cerr << "\n\n*** Shuffling does not hide the bug...\n\n";
-      	} else {
+        } else {
           ShufflingEnabled = false; // Disable shuffling further on
           std::cerr << "\n\n*** Shuffling hides the bug...\n\n";
-      	}
-      	NumOfIterationsWithoutProgress = 0;
+        }
+        NumOfIterationsWithoutProgress = 0;
       }
       
       unsigned Mid = MidTop / 2;
