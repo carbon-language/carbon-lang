@@ -182,11 +182,10 @@ bool DAGTypeLegalizer::ScalarizeOperand(SDNode *N, unsigned OpNo) {
     // Mark N as new and remark N and its operands.  This allows us to correctly
     // revisit N if it needs another step of promotion and allows us to visit
     // any new operands to N.
-    N->setNodeId(NewNode);
-    MarkNewNodes(N);
+    ReanalyzeNode(N);
     return true;
   }
-  
+
   assert(Res.getValueType() == N->getValueType(0) && N->getNumValues() == 1 &&
          "Invalid operand expansion");
   

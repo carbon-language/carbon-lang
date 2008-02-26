@@ -207,9 +207,10 @@ NodeDone:
 #endif
 }
 
-/// MarkNewNodes - The specified node is the root of a subtree of potentially
-/// new nodes.  Add the correct NodeId to mark it.
-void DAGTypeLegalizer::MarkNewNodes(SDNode *N) {
+/// AnalyzeNewNode - The specified node is the root of a subtree of potentially
+/// new nodes.  Correct any processed operands (this may change the node) and
+/// calculate the NodeId.
+void DAGTypeLegalizer::AnalyzeNewNode(SDNode *&N) {
   // If this was an existing node that is already done, we're done.
   if (N->getNodeId() != NewNode)
     return;
@@ -221,15 +222,39 @@ void DAGTypeLegalizer::MarkNewNodes(SDNode *N) {
   //
   // As we walk the operands, keep track of the number of nodes that are
   // processed.  If non-zero, this will become the new nodeid of this node.
+  // Already processed operands may need to be remapped to the node that
+  // replaced them, which can result in our node changing.  Since remapping
+  // is rare, the code tries to minimize overhead in the non-remapping case.
+
+  SmallVector<SDOperand, 8> NewOps;
   unsigned NumProcessed = 0;
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
-    int OpId = N->getOperand(i).Val->getNodeId();
-    if (OpId == NewNode)
-      MarkNewNodes(N->getOperand(i).Val);
-    else if (OpId == Processed)
+    SDOperand OrigOp = N->getOperand(i);
+    SDOperand Op = OrigOp;
+
+    if (Op.Val->getNodeId() == Processed)
+      RemapNode(Op);
+
+    if (Op.Val->getNodeId() == NewNode)
+      AnalyzeNewNode(Op.Val);
+    else if (Op.Val->getNodeId() == Processed)
       ++NumProcessed;
+
+    if (!NewOps.empty()) {
+      // Some previous operand changed.  Add this one to the list.
+      NewOps.push_back(Op);
+    } else if (Op != OrigOp) {
+      // This is the first operand to change - add all operands so far.
+      for (unsigned j = 0; j < i; ++j)
+        NewOps.push_back(N->getOperand(j));
+      NewOps.push_back(Op);
+    }
   }
-  
+
+  // Some operands changed - update the node.
+  if (!NewOps.empty())
+    N = DAG.UpdateNodeOperands(SDOperand(N, 0), &NewOps[0], NewOps.size()).Val;
+
   N->setNodeId(N->getNumOperands()-NumProcessed);
   if (N->getNodeId() == ReadyToProcess)
     Worklist.push_back(N);
@@ -258,7 +283,7 @@ namespace {
       assert(N->getNodeId() != DAGTypeLegalizer::Processed &&
              N->getNodeId() != DAGTypeLegalizer::ReadyToProcess &&
              "RAUW updated processed node!");
-      DTL.ReanalyzeNodeFlags(N);
+      DTL.ReanalyzeNode(N);
     }
   };
 }
@@ -269,11 +294,10 @@ namespace {
 /// of From to use To instead.
 void DAGTypeLegalizer::ReplaceValueWith(SDOperand From, SDOperand To) {
   if (From == To) return;
-  
+
   // If expansion produced new nodes, make sure they are properly marked.
-  if (To.Val->getNodeId() == NewNode)
-    MarkNewNodes(To.Val);
-  
+  AnalyzeNewNode(To.Val);
+
   // Anything that used the old node should now use the new one.  Note that this
   // can potentially cause recursive merging.
   NodeUpdateListener NUL(*this);
@@ -288,13 +312,13 @@ void DAGTypeLegalizer::ReplaceValueWith(SDOperand From, SDOperand To) {
 /// node's results.  The from and to node must define identical result types.
 void DAGTypeLegalizer::ReplaceNodeWith(SDNode *From, SDNode *To) {
   if (From == To) return;
+
+  // If expansion produced new nodes, make sure they are properly marked.
+  AnalyzeNewNode(To);
+
   assert(From->getNumValues() == To->getNumValues() &&
          "Node results don't match");
-  
-  // If expansion produced new nodes, make sure they are properly marked.
-  if (To->getNodeId() == NewNode)
-    MarkNewNodes(To);
-  
+
   // Anything that used the old node should now use the new one.  Note that this
   // can potentially cause recursive merging.
   NodeUpdateListener NUL(*this);
@@ -323,8 +347,7 @@ void DAGTypeLegalizer::RemapNode(SDOperand &N) {
 }
 
 void DAGTypeLegalizer::SetPromotedOp(SDOperand Op, SDOperand Result) {
-  if (Result.Val->getNodeId() == NewNode) 
-    MarkNewNodes(Result.Val);
+  AnalyzeNewNode(Result.Val);
 
   SDOperand &OpEntry = PromotedNodes[Op];
   assert(OpEntry.Val == 0 && "Node is already promoted!");
@@ -332,9 +355,8 @@ void DAGTypeLegalizer::SetPromotedOp(SDOperand Op, SDOperand Result) {
 }
 
 void DAGTypeLegalizer::SetScalarizedOp(SDOperand Op, SDOperand Result) {
-  if (Result.Val->getNodeId() == NewNode) 
-    MarkNewNodes(Result.Val);
-  
+  AnalyzeNewNode(Result.Val);
+
   SDOperand &OpEntry = ScalarizedNodes[Op];
   assert(OpEntry.Val == 0 && "Node is already scalarized!");
   OpEntry = Result;
@@ -352,17 +374,15 @@ void DAGTypeLegalizer::GetExpandedOp(SDOperand Op, SDOperand &Lo,
 }
 
 void DAGTypeLegalizer::SetExpandedOp(SDOperand Op, SDOperand Lo, SDOperand Hi) {
+  // Lo/Hi may have been newly allocated, if so, add nodeid's as relevant.
+  AnalyzeNewNode(Lo.Val);
+  AnalyzeNewNode(Hi.Val);
+
   // Remember that this is the result of the node.
   std::pair<SDOperand, SDOperand> &Entry = ExpandedNodes[Op];
   assert(Entry.first.Val == 0 && "Node already expanded");
   Entry.first = Lo;
   Entry.second = Hi;
-  
-  // Lo/Hi may have been newly allocated, if so, add nodeid's as relevant.
-  if (Lo.Val->getNodeId() == NewNode) 
-    MarkNewNodes(Lo.Val);
-  if (Hi.Val->getNodeId() == NewNode) 
-    MarkNewNodes(Hi.Val);
 }
 
 void DAGTypeLegalizer::GetSplitOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi) {
@@ -375,17 +395,15 @@ void DAGTypeLegalizer::GetSplitOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi) {
 }
 
 void DAGTypeLegalizer::SetSplitOp(SDOperand Op, SDOperand Lo, SDOperand Hi) {
+  // Lo/Hi may have been newly allocated, if so, add nodeid's as relevant.
+  AnalyzeNewNode(Lo.Val);
+  AnalyzeNewNode(Hi.Val);
+
   // Remember that this is the result of the node.
   std::pair<SDOperand, SDOperand> &Entry = SplitNodes[Op];
   assert(Entry.first.Val == 0 && "Node already split");
   Entry.first = Lo;
   Entry.second = Hi;
-  
-  // Lo/Hi may have been newly allocated, if so, add nodeid's as relevant.
-  if (Lo.Val->getNodeId() == NewNode) 
-    MarkNewNodes(Lo.Val);
-  if (Hi.Val->getNodeId() == NewNode) 
-    MarkNewNodes(Hi.Val);
 }
 
 

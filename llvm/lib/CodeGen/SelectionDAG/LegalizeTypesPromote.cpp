@@ -368,11 +368,10 @@ bool DAGTypeLegalizer::PromoteOperand(SDNode *N, unsigned OpNo) {
     // Mark N as new and remark N and its operands.  This allows us to correctly
     // revisit N if it needs another step of promotion and allows us to visit
     // any new operands to N.
-    N->setNodeId(NewNode);
-    MarkNewNodes(N);
+    ReanalyzeNode(N);
     return true;
   }
-  
+
   assert(Res.getValueType() == N->getValueType(0) && N->getNumValues() == 1 &&
          "Invalid operand expansion");
   
@@ -448,10 +447,8 @@ SDOperand DAGTypeLegalizer::PromoteOperand_SELECT(SDNode *N, unsigned OpNo) {
   // that the value is properly zero extended.
   unsigned BitWidth = Cond.getValueSizeInBits();
   if (!DAG.MaskedValueIsZero(Cond, 
-                             APInt::getHighBitsSet(BitWidth, BitWidth-1))) {
+                             APInt::getHighBitsSet(BitWidth, BitWidth-1)))
     Cond = DAG.getZeroExtendInReg(Cond, MVT::i1);
-    MarkNewNodes(Cond.Val); 
-  }
 
   // The chain (Op#0) and basic block destination (Op#2) are always legal types.
   return DAG.UpdateNodeOperands(SDOperand(N, 0), Cond, N->getOperand(1),
@@ -466,11 +463,9 @@ SDOperand DAGTypeLegalizer::PromoteOperand_BRCOND(SDNode *N, unsigned OpNo) {
   // that the value is properly zero extended.
   unsigned BitWidth = Cond.getValueSizeInBits();
   if (!DAG.MaskedValueIsZero(Cond, 
-                             APInt::getHighBitsSet(BitWidth, BitWidth-1))) {
+                             APInt::getHighBitsSet(BitWidth, BitWidth-1)))
     Cond = DAG.getZeroExtendInReg(Cond, MVT::i1);
-    MarkNewNodes(Cond.Val); 
-  }
-  
+
   // The chain (Op#0) and basic block destination (Op#2) are always legal types.
   return DAG.UpdateNodeOperands(SDOperand(N, 0), N->getOperand(0), Cond,
                                 N->getOperand(2));

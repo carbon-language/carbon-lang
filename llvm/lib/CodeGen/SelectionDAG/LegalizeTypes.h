@@ -117,16 +117,16 @@ public:
   
   void run();
   
-  /// ReanalyzeNodeFlags - Recompute the NodeID flags for the specified node,
-  /// adding it to the worklist if ready.
-  void ReanalyzeNodeFlags(SDNode *N) {
+  /// ReanalyzeNode - Recompute the NodeID and correct processed operands
+  /// for the specified node, adding it to the worklist if ready.
+  void ReanalyzeNode(SDNode *N) {
     N->setNodeId(NewNode);
-    MarkNewNodes(N);
+    AnalyzeNewNode(N);
   }
-  
+
 private:
-  void MarkNewNodes(SDNode *N);
-  
+  void AnalyzeNewNode(SDNode *&N);
+
   void ReplaceValueWith(SDOperand From, SDOperand To);
   void ReplaceNodeWith(SDNode *From, SDNode *To);
 
