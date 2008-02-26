@@ -11,18 +11,18 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetSubtarget.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/CallingConv.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Target/TargetAsmInfo.h"
-#include "llvm/CallingConv.h"
 using namespace llvm;
 
 /// InitLibcallNames - Set default libcall names.

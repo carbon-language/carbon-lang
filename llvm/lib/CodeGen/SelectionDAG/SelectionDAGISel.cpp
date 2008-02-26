@@ -87,7 +87,7 @@ namespace {
                           createDefaultScheduler);
 } // namespace
 
-namespace { struct AsmOperandInfo; }
+namespace { struct SDISelAsmOperandInfo; }
 
 namespace {
   /// RegsForValue - This struct represents the physical registers that a
@@ -492,7 +492,7 @@ public:
     N = NewN;
   }
   
-  void GetRegistersForValue(AsmOperandInfo &OpInfo, bool HasEarlyClobber,
+  void GetRegistersForValue(SDISelAsmOperandInfo &OpInfo, bool HasEarlyClobber,
                             std::set<unsigned> &OutputRegs, 
                             std::set<unsigned> &InputRegs);
 
@@ -3347,34 +3347,19 @@ isAllocatableRegister(unsigned Reg, MachineFunction &MF,
 namespace {
 /// AsmOperandInfo - This contains information for each constraint that we are
 /// lowering.
-struct AsmOperandInfo : public InlineAsm::ConstraintInfo {
-  /// ConstraintCode - This contains the actual string for the code, like "m".
-  std::string ConstraintCode;
-
-  /// ConstraintType - Information about the constraint code, e.g. Register,
-  /// RegisterClass, Memory, Other, Unknown.
-  TargetLowering::ConstraintType ConstraintType;
-  
-  /// CallOperand/CallOperandval - If this is the result output operand or a
-  /// clobber, this is null, otherwise it is the incoming operand to the
-  /// CallInst.  This gets modified as the asm is processed.
+struct SDISelAsmOperandInfo : public TargetLowering::AsmOperandInfo {
+  /// CallOperand - If this is the result output operand or a clobber
+  /// this is null, otherwise it is the incoming operand to the CallInst.
+  /// This gets modified as the asm is processed.
   SDOperand CallOperand;
-  Value *CallOperandVal;
-  
-  /// ConstraintVT - The ValueType for the operand value.
-  MVT::ValueType ConstraintVT;
-  
+
   /// AssignedRegs - If this is a register or register class operand, this
   /// contains the set of register corresponding to the operand.
   RegsForValue AssignedRegs;
   
-  AsmOperandInfo(const InlineAsm::ConstraintInfo &info)
-    : InlineAsm::ConstraintInfo(info), 
-      ConstraintType(TargetLowering::C_Unknown),
-      CallOperand(0,0), CallOperandVal(0), ConstraintVT(MVT::Other) {
+  SDISelAsmOperandInfo(const InlineAsm::ConstraintInfo &info)
+    : TargetLowering::AsmOperandInfo(info), CallOperand(0,0) {
   }
-  
-  void ComputeConstraintToUse(const TargetLowering &TLI);
   
   /// MarkAllocatedRegs - Once AssignedRegs is set, mark the assigned registers
   /// busy in OutputRegs/InputRegs.
@@ -3406,67 +3391,6 @@ private:
 };
 } // end anon namespace.
 
-/// getConstraintGenerality - Return an integer indicating how general CT is.
-static unsigned getConstraintGenerality(TargetLowering::ConstraintType CT) {
-  switch (CT) {
-    default: assert(0 && "Unknown constraint type!");
-    case TargetLowering::C_Other:
-    case TargetLowering::C_Unknown:
-      return 0;
-    case TargetLowering::C_Register:
-      return 1;
-    case TargetLowering::C_RegisterClass:
-      return 2;
-    case TargetLowering::C_Memory:
-      return 3;
-  }
-}
-
-void AsmOperandInfo::ComputeConstraintToUse(const TargetLowering &TLI) {
-  assert(!Codes.empty() && "Must have at least one constraint");
-  
-  std::string *Current = &Codes[0];
-  TargetLowering::ConstraintType CurType = TLI.getConstraintType(*Current);
-  if (Codes.size() == 1) {   // Single-letter constraints ('r') are very common.
-    ConstraintCode = *Current;
-    ConstraintType = CurType;
-  } else {
-    unsigned CurGenerality = getConstraintGenerality(CurType);
-
-    // If we have multiple constraints, try to pick the most general one ahead
-    // of time.  This isn't a wonderful solution, but handles common cases.
-    for (unsigned j = 1, e = Codes.size(); j != e; ++j) {
-      TargetLowering::ConstraintType ThisType = TLI.getConstraintType(Codes[j]);
-      unsigned ThisGenerality = getConstraintGenerality(ThisType);
-      if (ThisGenerality > CurGenerality) {
-        // This constraint letter is more general than the previous one,
-        // use it.
-        CurType = ThisType;
-        Current = &Codes[j];
-        CurGenerality = ThisGenerality;
-      }
-    }
-
-    ConstraintCode = *Current;
-    ConstraintType = CurType;
-  }
-
-  if (ConstraintCode == "X") {
-    if (isa<BasicBlock>(CallOperandVal) || isa<ConstantInt>(CallOperandVal))
-      return;
-    // This matches anything.  Labels and constants we handle elsewhere 
-    // ('X' is the only thing that matches labels).  Otherwise, try to 
-    // resolve it to something we know about by looking at the actual 
-    // operand type.
-    std::string s = "";
-    TLI.lowerXConstraint(ConstraintVT, s);
-    if (s!="") {
-      ConstraintCode = s;
-      ConstraintType = TLI.getConstraintType(ConstraintCode);
-    }
-  }
-}
-
 
 /// GetRegistersForValue - Assign registers (virtual or physical) for the
 /// specified operand.  We prefer to assign virtual registers, to allow the
@@ -3480,7 +3404,7 @@ void AsmOperandInfo::ComputeConstraintToUse(const TargetLowering &TLI) {
 ///   Input and OutputRegs are the set of already allocated physical registers.
 ///
 void SelectionDAGLowering::
-GetRegistersForValue(AsmOperandInfo &OpInfo, bool HasEarlyClobber,
+GetRegistersForValue(SDISelAsmOperandInfo &OpInfo, bool HasEarlyClobber,
                      std::set<unsigned> &OutputRegs, 
                      std::set<unsigned> &InputRegs) {
   // Compute whether this value requires an input register, an output register,
@@ -3648,7 +3572,7 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
   InlineAsm *IA = cast<InlineAsm>(CS.getCalledValue());
 
   /// ConstraintOperands - Information about all of the constraints.
-  std::vector<AsmOperandInfo> ConstraintOperands;
+  std::vector<SDISelAsmOperandInfo> ConstraintOperands;
   
   SDOperand Chain = getRoot();
   SDOperand Flag;
@@ -3667,8 +3591,8 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
   
   unsigned ArgNo = 0;   // ArgNo - The argument of the CallInst.
   for (unsigned i = 0, e = ConstraintInfos.size(); i != e; ++i) {
-    ConstraintOperands.push_back(AsmOperandInfo(ConstraintInfos[i]));
-    AsmOperandInfo &OpInfo = ConstraintOperands.back();
+    ConstraintOperands.push_back(SDISelAsmOperandInfo(ConstraintInfos[i]));
+    SDISelAsmOperandInfo &OpInfo = ConstraintOperands.back();
     
     MVT::ValueType OpVT = MVT::Other;
 
@@ -3798,7 +3722,7 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
   // Second pass - Loop over all of the operands, assigning virtual or physregs
   // to registerclass operands.
   for (unsigned i = 0, e = ConstraintOperands.size(); i != e; ++i) {
-    AsmOperandInfo &OpInfo = ConstraintOperands[i];
+    SDISelAsmOperandInfo &OpInfo = ConstraintOperands[i];
     
     // C_Register operands have already been allocated, Other/Memory don't need
     // to be.
@@ -3821,7 +3745,7 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
   std::vector<std::pair<RegsForValue, Value*> > IndirectStoresToEmit;
   
   for (unsigned i = 0, e = ConstraintOperands.size(); i != e; ++i) {
-    AsmOperandInfo &OpInfo = ConstraintOperands[i];
+    SDISelAsmOperandInfo &OpInfo = ConstraintOperands[i];
 
     switch (OpInfo.Type) {
     case InlineAsm::isOutput: {

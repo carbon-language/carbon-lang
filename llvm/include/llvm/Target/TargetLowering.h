@@ -22,6 +22,8 @@
 #ifndef LLVM_TARGET_TARGETLOWERING_H
 #define LLVM_TARGET_TARGETLOWERING_H
 
+#include "llvm/Constants.h"
+#include "llvm/InlineAsm.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/CodeGen/RuntimeLibcalls.h"
 #include "llvm/ADT/APFloat.h"
@@ -992,10 +994,97 @@ public:
     C_Unknown              // Unsupported constraint.
   };
   
+  /// AsmOperandInfo - This contains information for each constraint that we are
+  /// lowering.
+  struct AsmOperandInfo : public InlineAsm::ConstraintInfo {
+    /// ConstraintCode - This contains the actual string for the code, like "m".
+    std::string ConstraintCode;
+
+    /// ConstraintType - Information about the constraint code, e.g. Register,
+    /// RegisterClass, Memory, Other, Unknown.
+    TargetLowering::ConstraintType ConstraintType;
+  
+    /// CallOperandval - If this is the result output operand or a
+    /// clobber, this is null, otherwise it is the incoming operand to the
+    /// CallInst.  This gets modified as the asm is processed.
+    Value *CallOperandVal;
+  
+    /// ConstraintVT - The ValueType for the operand value.
+    MVT::ValueType ConstraintVT;
+  
+    AsmOperandInfo(const InlineAsm::ConstraintInfo &info)
+      : InlineAsm::ConstraintInfo(info), 
+        ConstraintType(TargetLowering::C_Unknown),
+        CallOperandVal(0), ConstraintVT(MVT::Other) {
+    }
+  
+    /// getConstraintGenerality - Return an integer indicating how general CT is.
+    unsigned getConstraintGenerality(TargetLowering::ConstraintType CT) {
+      switch (CT) {
+      default: assert(0 && "Unknown constraint type!");
+      case TargetLowering::C_Other:
+      case TargetLowering::C_Unknown:
+        return 0;
+      case TargetLowering::C_Register:
+        return 1;
+      case TargetLowering::C_RegisterClass:
+        return 2;
+      case TargetLowering::C_Memory:
+        return 3;
+      }
+    }
+
+    /// ComputeConstraintToUse - Determines the constraint code and constraint
+    /// type to use.
+    void ComputeConstraintToUse(const TargetLowering &TLI) {
+      assert(!Codes.empty() && "Must have at least one constraint");
+  
+      std::string *Current = &Codes[0];
+      TargetLowering::ConstraintType CurType = TLI.getConstraintType(*Current);
+      if (Codes.size() == 1) {   // Single-letter constraints ('r') are very common.
+        ConstraintCode = *Current;
+        ConstraintType = CurType;
+      } else {
+        unsigned CurGenerality = getConstraintGenerality(CurType);
+
+        // If we have multiple constraints, try to pick the most general one ahead
+        // of time.  This isn't a wonderful solution, but handles common cases.
+        for (unsigned j = 1, e = Codes.size(); j != e; ++j) {
+          TargetLowering::ConstraintType ThisType = TLI.getConstraintType(Codes[j]);
+          unsigned ThisGenerality = getConstraintGenerality(ThisType);
+          if (ThisGenerality > CurGenerality) {
+            // This constraint letter is more general than the previous one,
+            // use it.
+            CurType = ThisType;
+            Current = &Codes[j];
+            CurGenerality = ThisGenerality;
+          }
+        }
+
+        ConstraintCode = *Current;
+        ConstraintType = CurType;
+      }
+
+      if (ConstraintCode == "X" && CallOperandVal) {
+        if (isa<BasicBlock>(CallOperandVal) || isa<ConstantInt>(CallOperandVal))
+          return;
+        // This matches anything.  Labels and constants we handle elsewhere 
+        // ('X' is the only thing that matches labels).  Otherwise, try to 
+        // resolve it to something we know about by looking at the actual 
+        // operand type.
+        std::string s = "";
+        TLI.lowerXConstraint(ConstraintVT, s);
+        if (s!="") {
+          ConstraintCode = s;
+          ConstraintType = TLI.getConstraintType(ConstraintCode);
+        }
+      }
+    }
+  };
+
   /// getConstraintType - Given a constraint, return the type of constraint it
   /// is for this target.
   virtual ConstraintType getConstraintType(const std::string &Constraint) const;
-  
   
   /// getRegClassForInlineAsmConstraint - Given a constraint letter (e.g. "r"),
   /// return a list of registers that can be used to satisfy the constraint.
