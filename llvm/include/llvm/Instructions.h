@@ -1397,9 +1397,6 @@ public:
   // if it was passed NULL.
   explicit ReturnInst(Value *retVal = 0, Instruction *InsertBefore = 0);
   ReturnInst(Value *retVal, BasicBlock *InsertAtEnd);
-  ReturnInst(const std::vector<Value *> &retVals);
-  ReturnInst(const std::vector<Value *> &retVals, Instruction *InsertBefore);
-  ReturnInst(const std::vector<Value *> &retVals, BasicBlock *InsertAtEnd);
   ReturnInst(Value * const* retVals, unsigned N);
   ReturnInst(Value * const* retVals, unsigned N, Instruction *InsertBefore);
   ReturnInst(Value * const* retVals, unsigned N, BasicBlock *InsertAtEnd);

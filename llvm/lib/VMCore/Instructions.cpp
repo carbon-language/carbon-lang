@@ -598,26 +598,6 @@ ReturnInst::ReturnInst(BasicBlock *InsertAtEnd)
   : TerminatorInst(Type::VoidTy, Instruction::Ret, &RetVal, 0, InsertAtEnd) {
 }
 
-ReturnInst::ReturnInst(const std::vector<Value *> &retVals, 
-                       Instruction *InsertBefore)
-  : TerminatorInst(Type::VoidTy, Instruction::Ret, &RetVal, retVals.size(), 
-                   InsertBefore) {
-  if (!retVals.empty())
-    init(&retVals[0], retVals.size());
-}
-ReturnInst::ReturnInst(const std::vector<Value *> &retVals, 
-                       BasicBlock *InsertAtEnd)
-  : TerminatorInst(Type::VoidTy, Instruction::Ret, &RetVal, retVals.size(), 
-                   InsertAtEnd) {
-  if (!retVals.empty())
-    init(&retVals[0], retVals.size());
-}
-ReturnInst::ReturnInst(const std::vector<Value *> &retVals)
-  : TerminatorInst(Type::VoidTy, Instruction::Ret, &RetVal, retVals.size()) {
-  if (!retVals.empty())
-    init(&retVals[0], retVals.size());
-}
-
 ReturnInst::ReturnInst(Value * const* retVals, unsigned N,
                        Instruction *InsertBefore)
   : TerminatorInst(Type::VoidTy, Instruction::Ret, &RetVal, N, InsertBefore) {
