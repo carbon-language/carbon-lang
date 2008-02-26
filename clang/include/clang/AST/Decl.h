@@ -329,7 +329,7 @@ public:
   /// hasGlobalStorage - Returns true for all variables that do not
   ///  have local storage.  This includs all global variables as well
   ///  as static variables declared within a function.
-  bool hasGlobalStorage() const { return !hasAutoStorage(); }
+  bool hasGlobalStorage() const { return !hasLocalStorage(); }
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
