@@ -585,13 +585,13 @@ void Verifier::visitReturnInst(ReturnInst &RI) {
     Assert2(F->getReturnType() == RI.getOperand(0)->getType(),
             "Function return type does not match operand "
             "type of return inst!", &RI, F->getReturnType());
-  else {
-    const StructType *STy = cast<StructType>(F->getReturnType());
+  else if (const StructType *STy = dyn_cast<StructType>(F->getReturnType())) {
     for (unsigned i = 0; i < N; i++)
       Assert2(STy->getElementType(i) == RI.getOperand(i)->getType(),
-            "Function return type does not match operand "
-            "type of return inst!", &RI, F->getReturnType());
-  }
+              "Function return type does not match operand "
+              "type of return inst!", &RI, F->getReturnType());
+  } else
+    Assert1(0, "Invalid return type!", &RI);
 
   // Check to make sure that the return value has necessary properties for
   // terminators...
