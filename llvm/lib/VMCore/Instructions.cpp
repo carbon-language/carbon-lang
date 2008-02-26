@@ -586,11 +586,13 @@ ReturnInst::ReturnInst(const ReturnInst &RI)
 
 ReturnInst::ReturnInst(Value *retVal, Instruction *InsertBefore)
   : TerminatorInst(Type::VoidTy, Instruction::Ret, &RetVal, 0, InsertBefore) {
-  init(retVal);
+  if (retVal)
+    init(&retVal, 1);
 }
 ReturnInst::ReturnInst(Value *retVal, BasicBlock *InsertAtEnd)
   : TerminatorInst(Type::VoidTy, Instruction::Ret, &RetVal, 0, InsertAtEnd) {
-  init(retVal);
+  if (retVal)
+    init(&retVal, 1);
 }
 ReturnInst::ReturnInst(BasicBlock *InsertAtEnd)
   : TerminatorInst(Type::VoidTy, Instruction::Ret, &RetVal, 0, InsertAtEnd) {
@@ -600,48 +602,41 @@ ReturnInst::ReturnInst(const std::vector<Value *> &retVals,
                        Instruction *InsertBefore)
   : TerminatorInst(Type::VoidTy, Instruction::Ret, &RetVal, retVals.size(), 
                    InsertBefore) {
-  init(retVals);
+  if (!retVals.empty())
+    init(&retVals[0], retVals.size());
 }
 ReturnInst::ReturnInst(const std::vector<Value *> &retVals, 
                        BasicBlock *InsertAtEnd)
   : TerminatorInst(Type::VoidTy, Instruction::Ret, &RetVal, retVals.size(), 
                    InsertAtEnd) {
-  init(retVals);
+  if (!retVals.empty())
+    init(&retVals[0], retVals.size());
 }
 ReturnInst::ReturnInst(const std::vector<Value *> &retVals)
   : TerminatorInst(Type::VoidTy, Instruction::Ret, &RetVal, retVals.size()) {
-  init(retVals);
+  if (!retVals.empty())
+    init(&retVals[0], retVals.size());
 }
 
-void ReturnInst::init(Value *retVal) {
-  if (retVal && retVal->getType() != Type::VoidTy) {
-    assert(!isa<BasicBlock>(retVal) &&
-           "Cannot return basic block.  Probably using the incorrect ctor");
-    NumOperands = 1;
-    RetVal.init(retVal, this);
-  }
-}
+void ReturnInst::init(const Value * const* retVals, unsigned N) {
 
-void ReturnInst::init(const std::vector<Value *> &retVals) {
-  if (retVals.empty())
-    return;
+  assert (N > 0 && "Invalid operands numbers in ReturnInst init");
 
-  NumOperands = retVals.size();
+  NumOperands = N;
   if (NumOperands == 1) {
-    Value *V = retVals[0];
+    const Value *V = *retVals;
     if (V->getType() == Type::VoidTy)
       return;
-    RetVal.init(V, this);
+    RetVal.init(const_cast<Value*>(V), this);
     return;
   }
 
   Use *OL = OperandList = new Use[NumOperands];
-  RetVal.init(retVals[0], this);
   for (unsigned i = 0; i < NumOperands; ++i) {
-    Value *V = retVals[i];
+    const Value *V = *retVals++;
     assert(!isa<BasicBlock>(V) &&
            "Cannot return basic block.  Probably using the incorrect ctor");
-    OL[i].init(V, this);
+    OL[i].init(const_cast<Value *>(V), this);
   }
 }
 
