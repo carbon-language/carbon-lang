@@ -582,7 +582,7 @@ void GRExprEngine::VisitDeref(UnaryOperator* U, NodeTy* Pred, NodeSet& Dst) {
     
   NodeSet DstTmp;
   
-  if (!isa<DeclRefExpr>(Ex))
+  if (isa<DeclRefExpr>(Ex))
     DstTmp.Add(Pred);
   else
     Visit(Ex, Pred, DstTmp);
