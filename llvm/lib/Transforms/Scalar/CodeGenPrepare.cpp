@@ -991,7 +991,7 @@ bool CodeGenPrepare::OptimizeExtUses(Instruction *I) {
     return false;
 
   // Only do this xform if truncating is free.
-  if (!TLI->isTruncateFree(I->getType(), Src->getType()))
+  if (TLI && !TLI->isTruncateFree(I->getType(), Src->getType()))
     return false;
 
   // Only safe to perform the optimization if the source is also defined in
