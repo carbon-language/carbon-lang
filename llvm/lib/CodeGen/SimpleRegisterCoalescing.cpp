@@ -55,7 +55,7 @@ namespace {
 
   static cl::opt<bool>
   CommuteDef("coalescer-commute-instrs",
-             cl::init(false), cl::Hidden);
+             cl::init(true), cl::Hidden);
 
   static cl::opt<int>
   CommuteLimit("commute-limit",

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i686-apple-darwin -mattr=+sse2 -coalescer-commute-instrs | grep mov | count 6
+; RUN: llvm-as < %s | llc -mtriple=i686-apple-darwin -mattr=+sse2 | grep mov | count 6
 
 	%struct.quad_struct = type { i32, i32, %struct.quad_struct*, %struct.quad_struct*, %struct.quad_struct*, %struct.quad_struct*, %struct.quad_struct* }
 
