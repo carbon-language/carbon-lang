@@ -66,6 +66,7 @@ check-one: site.exp $(TCLSH)
 	  echo "proc fail  { msg } { puts \"FAIL: \$$msg\" }" ; \
 	  echo "proc xfail { msg } { puts \"XFAIL: \$$msg\" }" ; \
 	  echo "proc xpass { msg } { puts \"XPASS: \$$msg\" }" ; \
+	  echo "proc verbose args { }" ; \
 	  echo "source $(LLVM_SRC_ROOT)/test/lib/llvm.exp" ; \
 	  echo "RunLLVMTests $(TESTPATH)" ) | \
 	( ulimit -t 600 ; ulimit -d 512000 ; \
