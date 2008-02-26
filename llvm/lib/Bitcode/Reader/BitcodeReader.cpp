@@ -1337,17 +1337,24 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
     }
     
     case bitc::FUNC_CODE_INST_RET: // RET: [opty,opval<optional>]
-      if (Record.empty()) {
-        I = new ReturnInst();
-        break;
-      } else {
-        unsigned OpNum = 0;
-        Value *Op;
-        if (getValueTypePair(Record, OpNum, NextValueNo, Op) ||
-            OpNum != Record.size())
-          return Error("Invalid RET record");
-        I = new ReturnInst(Op);
-        break;
+      {
+        unsigned Size = Record.size();
+        if (Size == 0) {
+          I = new ReturnInst();
+          break;
+        } else {
+          unsigned OpNum = 0;
+          std::vector<Value *> Vs;
+          do {
+            Value *Op = NULL;
+            if (getValueTypePair(Record, OpNum, NextValueNo, Op))
+              return Error("Invalid RET record");
+            Vs.push_back(Op);
+          } while(OpNum != Record.size());
+
+          I = new ReturnInst(Vs);
+          break;
+        }
       }
     case bitc::FUNC_CODE_INST_BR: { // BR: [bb#, bb#, opval] or [bb#]
       if (Record.size() != 1 && Record.size() != 3)
