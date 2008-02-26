@@ -1547,9 +1547,13 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   }
 
   // ELF / PIC requires GOT in the EBX register before function calls via PLT
-  // GOT pointer.
-  // Does not work with tail call since ebx is not restored correctly by
-  // tailcaller. TODO: at least for x86 - verify for x86-64
+  // GOT pointer.  
+  // If we are tail calling and generating PIC/GOT style code load the address
+  // of the callee into ecx. The value in ecx is used as target of the tail
+  // jump. This is done to circumvent the ebx/callee-saved problem for tail
+  // calls on PIC/GOT architectures. Normally we would just put the address of
+  // GOT into ebx and then call target@PLT. But for tail callss ebx would be
+  // restored (since ebx is callee saved) before jumping to the target@PLT.
   if (!IsTailCall && !Is64Bit &&
       getTargetMachine().getRelocationModel() == Reloc::PIC_ &&
       Subtarget->isPICStyleGOT()) {
@@ -1557,6 +1561,16 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
                              DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()),
                              InFlag);
     InFlag = Chain.getValue(1);
+  } else if (!Is64Bit && IsTailCall &&  
+             getTargetMachine().getRelocationModel() == Reloc::PIC_ &&
+             Subtarget->isPICStyleGOT() ) {
+    // Note: The actual moving to ecx is done further down.
+    GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee);
+    if (G &&  !G->getGlobal()->hasHiddenVisibility() &&
+        !G->getGlobal()->hasProtectedVisibility())
+      Callee =  LowerGlobalAddress(Callee, DAG);
+    else if (isa<ExternalSymbolSDNode>(Callee))
+      Callee = LowerExternalSymbol(Callee,DAG);
   }
 
   if (Is64Bit && isVarArg) {
@@ -1661,12 +1675,10 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
         getTargetMachine().getCodeModel() != CodeModel::Large)
       Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy());
   } else if (IsTailCall) {
-    assert(Callee.getOpcode() == ISD::LOAD && 
-           "Function destination must be loaded into virtual register");
     unsigned Opc = Is64Bit ? X86::R9 : X86::ECX;
 
     Chain = DAG.getCopyToReg(Chain, 
-                             DAG.getRegister(Opc, getPointerTy()) , 
+                             DAG.getRegister(Opc, getPointerTy()), 
                              Callee,InFlag);
     Callee = DAG.getRegister(Opc, getPointerTy());
     // Add register as live out.
@@ -1773,9 +1785,8 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
 //  provided:
 //                * tailcallopt is enabled
 //                * caller/callee are fastcc
-//                * elf/pic is disabled OR
-//                * elf/pic enabled + callee is in module + callee has
-//                  visibility protected or hidden
+//  On X86_64 architecture with GOT-style position independent code only local
+//  (within module) calls are supported at the moment.
 //  To keep the stack aligned according to platform abi the function
 //  GetAlignedArgumentStackSize ensures that argument delta is always multiples
 //  of stack alignment. (Dynamic linkers need this - darwin's dyld for example)
@@ -1844,12 +1855,13 @@ bool X86TargetLowering::IsEligibleForTailCallOptimization(SDOperand Call,
     unsigned CalleeCC = cast<ConstantSDNode>(Call.getOperand(1))->getValue();
     if (CalleeCC == CallingConv::Fast && CallerCC == CalleeCC) {
       SDOperand Callee = Call.getOperand(4);
-      // On elf/pic %ebx needs to be livein.
+      // On x86/32Bit PIC/GOT  tail calls are supported.
       if (getTargetMachine().getRelocationModel() != Reloc::PIC_ ||
-          !Subtarget->isPICStyleGOT())
+          !Subtarget->isPICStyleGOT()|| !Subtarget->is64Bit())
         return true;
 
-      // Can only do local tail calls with PIC.
+      // Can only do local tail calls (in same module, hidden or protected) on
+      // x86_64 PIC/GOT at the moment.
       if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
         return G->getGlobal()->hasHiddenVisibility()
             || G->getGlobal()->hasProtectedVisibility();
