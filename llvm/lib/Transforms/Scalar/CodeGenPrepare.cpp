@@ -970,7 +970,8 @@ bool CodeGenPrepare::OptimizeInlineAsmInst(Instruction *I, CallSite CS,
     // Compute the constraint code and ConstraintType to use.
     OpInfo.ComputeConstraintToUse(*TLI);
 
-    if (OpInfo.ConstraintType == TargetLowering::C_Memory) {
+    if (OpInfo.ConstraintType == TargetLowering::C_Memory &&
+        OpInfo.isIndirect) {
       Value *OpVal = OpInfo.CallOperandVal;
       MadeChange |= OptimizeLoadStoreInst(I, OpVal, OpVal->getType(),
                                           SunkAddrs);
