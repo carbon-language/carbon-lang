@@ -335,6 +335,9 @@ public:
 
   /// getCGRecordLayout - Return record layout info.
   const CGRecordLayout *getCGRecordLayout(CodeGenTypes &CGT, QualType RTy);
+
+  /// GetAddrOfStaticLocalVar - Return the address of a static local variable.
+  llvm::Constant *GetAddrOfStaticLocalVar(const BlockVarDecl *BVD);
   //===--------------------------------------------------------------------===//
   //                            Declaration Emission
   //===--------------------------------------------------------------------===//

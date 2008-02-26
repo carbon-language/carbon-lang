@@ -41,6 +41,8 @@ namespace clang {
     
 namespace CodeGen {
 
+  class CodeGenFunction;
+
 /// CodeGenModule - This class organizes the cross-module state that is used
 /// while generating LLVM code.
 class CodeGenModule {
@@ -95,7 +97,7 @@ public:
   void EmitGlobalVarDeclarator(const FileVarDecl *D);
   void UpdateCompletedType(const TagDecl *D);
   llvm::Constant *EmitGlobalInit(const Expr *E);
-  llvm::Constant *EmitConstantExpr(const Expr *E);
+  llvm::Constant *EmitConstantExpr(const Expr *E, CodeGenFunction *CGF = 0);
     
   /// WarnUnsupported - Print out a warning that codegen doesn't support the
   /// specified stmt yet.

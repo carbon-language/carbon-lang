@@ -40,6 +40,10 @@ llvm::BasicBlock *CodeGenFunction::getBasicBlockForLabel(const LabelStmt *S) {
   return BB = new llvm::BasicBlock(S->getName());
 }
 
+llvm::Constant *
+CodeGenFunction::GetAddrOfStaticLocalVar(const BlockVarDecl *BVD) {
+  return cast<llvm::Constant>(LocalDeclMap[BVD]);
+}
 
 const llvm::Type *CodeGenFunction::ConvertType(QualType T) {
   return CGM.getTypes().ConvertType(T);

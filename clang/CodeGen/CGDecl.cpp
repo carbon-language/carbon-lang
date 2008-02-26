@@ -77,7 +77,7 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const BlockVarDecl &D) {
   if (D.getInit() == 0) {
     Init = llvm::Constant::getNullValue(LTy);
   } else {
-    Init = CGM.EmitGlobalInit(D.getInit());
+    Init = CGM.EmitConstantExpr(D.getInit(), this);
   }
 
   assert(Init && "Unable to create initialiser for static decl");

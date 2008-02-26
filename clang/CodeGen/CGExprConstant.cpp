@@ -25,9 +25,10 @@ namespace  {
 class VISIBILITY_HIDDEN ConstExprEmitter : 
   public StmtVisitor<ConstExprEmitter, llvm::Constant*> {
   CodeGenModule &CGM;
+  CodeGenFunction *CGF;
 public:
-  ConstExprEmitter(CodeGenModule &cgm)
-    : CGM(cgm) {
+  ConstExprEmitter(CodeGenModule &cgm, CodeGenFunction *cgf)
+    : CGM(cgm), CGF(cgf) {
   }
     
   //===--------------------------------------------------------------------===//
@@ -534,8 +535,10 @@ public:
         return CGM.GetAddrOfFunctionDecl(FD, false);
       if (const FileVarDecl* VD = dyn_cast<FileVarDecl>(Decl))
         return CGM.GetAddrOfGlobalVar(VD, false);
-      // We can end up here with static block-scope variables (and others?)
-      // FIXME: How do we implement block-scope variables?!
+      if (const BlockVarDecl* BVD = dyn_cast<BlockVarDecl>(Decl)) {
+        assert(CGF && "Can't access static local vars without CGF");
+        return CGF->GetAddrOfStaticLocalVar(BVD);
+      }
       break;
     }
     case Expr::MemberExprClass: {
@@ -604,7 +607,8 @@ public:
 }  // end anonymous namespace.
 
 
-llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E)
+llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
+                                                CodeGenFunction *CGF)
 {
   QualType type = E->getType().getCanonicalType();
   
@@ -616,5 +620,5 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E)
     } 
   }
   
-  return ConstExprEmitter(*this).Visit(const_cast<Expr*>(E));
+  return ConstExprEmitter(*this, CGF).Visit(const_cast<Expr*>(E));
 }
