@@ -1,4 +1,4 @@
-; RUN: llvm-as | llc -march=ppc32
+; RUN: llvm-as < %s | llc -march=ppc32
 
 define i32 @foo() {
 entry:
