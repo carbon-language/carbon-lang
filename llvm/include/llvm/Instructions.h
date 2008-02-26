@@ -1381,7 +1381,7 @@ public:
 class ReturnInst : public TerminatorInst {
   Use RetVal;
   ReturnInst(const ReturnInst &RI);
-  void init(const Value * const* retVals, unsigned N);
+  void init(Value * const* retVals, unsigned N);
 
 public:
   // ReturnInst constructors:

@@ -618,25 +618,25 @@ ReturnInst::ReturnInst(const std::vector<Value *> &retVals)
     init(&retVals[0], retVals.size());
 }
 
-void ReturnInst::init(const Value * const* retVals, unsigned N) {
+void ReturnInst::init(Value * const* retVals, unsigned N) {
 
   assert (N > 0 && "Invalid operands numbers in ReturnInst init");
 
   NumOperands = N;
   if (NumOperands == 1) {
-    const Value *V = *retVals;
+    Value *V = *retVals;
     if (V->getType() == Type::VoidTy)
       return;
-    RetVal.init(const_cast<Value*>(V), this);
+    RetVal.init(V, this);
     return;
   }
 
   Use *OL = OperandList = new Use[NumOperands];
   for (unsigned i = 0; i < NumOperands; ++i) {
-    const Value *V = *retVals++;
+    Value *V = *retVals++;
     assert(!isa<BasicBlock>(V) &&
            "Cannot return basic block.  Probably using the incorrect ctor");
-    OL[i].init(const_cast<Value *>(V), this);
+    OL[i].init(V, this);
   }
 }
 
