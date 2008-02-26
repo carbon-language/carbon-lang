@@ -49,7 +49,7 @@ public:
 
 class SymbolData {
 public:
-  enum Kind { UninitKind, ParmKind, ContentsOfKind };
+  enum Kind { UninitKind, ParmKind, GlobalKind, ContentsOfKind };
   
 private:
   uintptr_t Data;
@@ -93,6 +93,18 @@ public:
   // Implement isa<T> support.
   static inline bool classof(const SymbolData* D) {
     return D->getKind() == ParmKind;
+  }
+};
+  
+class SymbolDataGlobalVar : public SymbolData {
+public:
+  SymbolDataGlobalVar(VarDecl* VD) : SymbolData(VD, GlobalKind) {}
+  
+  VarDecl* getDecl() const { return (VarDecl*) getPtr(); }
+  
+  // Implement isa<T> support.
+  static inline bool classof(const SymbolData* D) {
+    return D->getKind() == GlobalKind;
   }
 };
 
@@ -157,7 +169,7 @@ public:
   SymbolManager();
   ~SymbolManager();
   
-  SymbolID getSymbol(ParmVarDecl* D);
+  SymbolID getSymbol(VarDecl* D);
   SymbolID getContentsOfSymbol(SymbolID sym);
   
   inline const SymbolData& getSymbolData(SymbolID ID) const {

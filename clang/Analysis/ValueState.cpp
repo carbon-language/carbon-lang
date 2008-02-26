@@ -78,8 +78,16 @@ ValueStateManager::RemoveDeadBindings(ValueState St, Stmt* Loc,
   // Iterate over the variable bindings.
 
   for (ValueState::vb_iterator I = St.vb_begin(), E = St.vb_end(); I!=E ; ++I)
-    if (Liveness.isLive(Loc, I.getKey()))
+    if (Liveness.isLive(Loc, I.getKey())) {
       WList.push_back(I.getKey());
+      
+      RVal X = I.getData();
+      
+      for (RVal::symbol_iterator SI = X.symbol_begin(), SE = X.symbol_end(); 
+           SI != SE; ++SI) {        
+        MarkedSymbols.insert(*SI);
+      }
+    }
 
   // Perform the mark-and-sweep.
 

@@ -65,7 +65,7 @@ public:
     return !(*this == R);
   }
   
-  static RVal GetSymbolValue(SymbolManager& SymMgr, ParmVarDecl *D);
+  static RVal GetSymbolValue(SymbolManager& SymMgr, VarDecl *D);
   
   inline bool isUnknown() const {
     return getRawKind() == UnknownKind;

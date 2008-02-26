@@ -214,7 +214,7 @@ NonLVal NonLVal::MakeIntTruthVal(ValueManager& ValMgr, bool b) {
   return nonlval::ConcreteInt(ValMgr.getTruthValue(b));
 }
 
-RVal RVal::GetSymbolValue(SymbolManager& SymMgr, ParmVarDecl* D) {
+RVal RVal::GetSymbolValue(SymbolManager& SymMgr, VarDecl* D) {
 
   QualType T = D->getType();
   

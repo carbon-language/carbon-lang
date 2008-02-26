@@ -396,6 +396,22 @@ void GRExprEngine::Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred,
 
 void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* D, NodeTy* Pred, NodeSet& Dst){
 
+  if (VarDecl* VD = dyn_cast<VarDecl>(D->getDecl()))
+    if (VD->hasGlobalStorage() || isa<ParmVarDecl>(VD)) {
+
+      StateTy StOld = Pred->getState();
+      StateTy St = Symbolicate(StOld, VD);
+
+      if (!(St == StOld)) {
+        if (D != CurrentStmt)
+          Nodify(Dst, D, Pred, St);
+        else
+          Nodify(Dst, D, Pred, SetRVal(St, D, GetRVal(St, D)));
+        
+        return;
+      }
+    }
+  
   if (D != CurrentStmt) {
     Dst.Add(Pred); // No-op. Simply propagate the current state unchanged.
     return;
@@ -796,7 +812,20 @@ void GRExprEngine::VisitLVal(Expr* Ex, NodeTy* Pred, NodeSet& Dst) {
   
   Ex = Ex->IgnoreParens();
   
-  if (isa<DeclRefExpr>(Ex)) {
+  if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(Ex)) {
+    
+    if (VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl()))
+      if (VD->hasGlobalStorage() || isa<ParmVarDecl>(VD)) {
+        
+        StateTy StOld = Pred->getState();
+        StateTy St = Symbolicate(StOld, VD);
+        
+        if (!(St == StOld)) {
+          Nodify(Dst, Ex, Pred, St);
+          return;
+        }
+      }
+    
     Dst.Add(Pred);
     return;
   }
@@ -857,20 +886,33 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
       
       if ((Op == BinaryOperator::Div || Op == BinaryOperator::Rem)
           && RHS->getType()->isIntegerType()) {
+
+        // Check if the denominator is uninitialized.
         
-        // Check for divide/remaindner-by-zero.
-        
-        // First, "assume" that the denominator is 0.
+        if (RightV.isUninit()) {
+          NodeTy* DivUninit = Builder->generateNode(B, St, N2);
+          
+          if (DivUninit) {
+            DivUninit->markAsSink();
+            BadDivides.insert(DivUninit);
+          }
+          
+          continue;
+        }
+          
+        // Check for divide/remainder-by-zero.
+        //
+        // First, "assume" that the denominator is 0 or uninitialized.
         
         bool isFeasible = false;
-        StateTy ZeroSt = Assume(St, RightV, false, isFeasible);
+        StateTy ZeroSt =  Assume(St, RightV, false,isFeasible);
         
         if (isFeasible) {
           NodeTy* DivZeroNode = Builder->generateNode(B, ZeroSt, N2);
           
           if (DivZeroNode) {
             DivZeroNode->markAsSink();
-            DivZeroes.insert(DivZeroNode);
+            BadDivides.insert(DivZeroNode);
           }
         }
         
@@ -1003,8 +1045,19 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           if ((Op == BinaryOperator::Div || Op == BinaryOperator::Rem)
               && RHS->getType()->isIntegerType()) {
             
-             // Check for divide/remainder-by-zero.
-                        
+            // Check if the denominator is uninitialized.
+                
+            if (RightV.isUninit()) {
+              NodeTy* DivUninit = Builder->generateNode(B, St, N2);
+              
+              if (DivUninit) {
+                DivUninit->markAsSink();
+                BadDivides.insert(DivUninit);
+              }
+              
+              continue;
+            }
+            
             // First, "assume" that the denominator is 0.
             
             bool isFeasible = false;
@@ -1015,7 +1068,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
               
               if (DivZeroNode) {
                 DivZeroNode->markAsSink();
-                DivZeroes.insert(DivZeroNode);
+                BadDivides.insert(DivZeroNode);
               }
             }
             

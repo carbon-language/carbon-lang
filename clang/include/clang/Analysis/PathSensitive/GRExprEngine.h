@@ -135,9 +135,9 @@ protected:
   ///  taking a dereference on an uninitialized value.
   BadDerefTy UninitDeref;
 
-  /// DivZeroes - Nodes in the ExplodedGraph that result from evaluating
-  ///  a divide-by-zero.
-  DivZerosTy DivZeroes;
+  /// BadDivides - Nodes in the ExplodedGraph that result from evaluating
+  ///  a divide-by-zero or divide-by-uninitialized.
+  DivZerosTy BadDivides;
   
   bool StateCleaned;
   
@@ -172,20 +172,7 @@ public:
   
   /// getInitialState - Return the initial state used for the root vertex
   ///  in the ExplodedGraph.
-  StateTy getInitialState() {
-    StateTy St = StateMgr.getInitialState();
-    
-    // Iterate the parameters.
-    FunctionDecl& F = G.getFunctionDecl();
-    
-    for (FunctionDecl::param_iterator I = F.param_begin(), E = F.param_end(); 
-                                                           I != E; ++I) {      
-      St = SetRVal(St, lval::DeclVal(*I),
-                   RVal::GetSymbolValue(SymMgr, *I));
-    }
-    
-    return St;
-  }
+  StateTy getInitialState() { return StateMgr.getInitialState(); }
   
   bool isUninitControlFlow(const NodeTy* N) const {
     return N->isSink() && UninitBranches.count(const_cast<NodeTy*>(N)) != 0;
@@ -205,6 +192,10 @@ public:
   
   bool isUninitDeref(const NodeTy* N) const {
     return N->isSink() && UninitDeref.count(const_cast<NodeTy*>(N)) != 0;
+  }
+  
+  bool isBadDivide(const NodeTy* N) const {
+    return N->isSink() && BadDivides.count(const_cast<NodeTy*>(N)) != 0; 
   }
   
   typedef BadDerefTy::iterator null_iterator;
@@ -269,6 +260,15 @@ public:
   
   RVal GetLVal(const StateTy& St, Expr* Ex) {
     return StateMgr.GetLVal(St, Ex);
+  }
+  
+  StateTy Symbolicate(StateTy St, VarDecl* VD) {
+    lval::DeclVal X(VD);
+    
+    if (GetRVal(St, X).isUnknown()) {
+      return SetRVal(St, lval::DeclVal(VD), RVal::GetSymbolValue(SymMgr, VD));
+    }
+    else return St;
   }
   
   inline NonLVal MakeConstantVal(uint64_t X, Expr* Ex) {

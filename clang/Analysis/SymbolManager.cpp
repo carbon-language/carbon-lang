@@ -16,17 +16,24 @@
 
 using namespace clang;
 
-SymbolID SymbolManager::getSymbol(ParmVarDecl* D) {
+SymbolID SymbolManager::getSymbol(VarDecl* D) {
+
+  assert (isa<ParmVarDecl>(D) || D->hasGlobalStorage());
+  
   SymbolID& X = DataToSymbol[getKey(D)];
   
   if (!X.isInitialized()) {
     X = SymbolToData.size();
-    SymbolToData.push_back(SymbolDataParmVar(D));
+    
+    if (ParmVarDecl* VD = dyn_cast<ParmVarDecl>(D))
+      SymbolToData.push_back(SymbolDataParmVar(VD));
+    else
+      SymbolToData.push_back(SymbolDataGlobalVar(D));
   }
   
   return X;
-}
-
+}  
+ 
 SymbolID SymbolManager::getContentsOfSymbol(SymbolID sym) {
   SymbolID& X = DataToSymbol[getKey(sym)];
   
@@ -45,6 +52,9 @@ QualType SymbolData::getType(const SymbolManager& SymMgr) const {
       
     case ParmKind:
       return cast<SymbolDataParmVar>(this)->getDecl()->getType();
+
+    case GlobalKind:
+      return cast<SymbolDataGlobalVar>(this)->getDecl()->getType();
       
     case ContentsOfKind: {
       SymbolID x = cast<SymbolDataContentsOf>(this)->getSymbol();
