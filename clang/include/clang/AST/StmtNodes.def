@@ -90,6 +90,7 @@ STMT(58, ChooseExpr           , Expr)
 // C++ Expressions.
 STMT(60, CXXCastExpr          , Expr)
 STMT(61, CXXBoolLiteralExpr   , Expr)
+STMT(62, CXXThrowExpr         , Expr)
 
 // Obj-C Expressions.
 STMT(70, ObjCStringLiteral    , Expr)

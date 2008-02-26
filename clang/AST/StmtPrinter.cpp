@@ -780,6 +780,15 @@ void StmtPrinter::VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *Node) {
   OS << (Node->getValue() ? "true" : "false");
 }
 
+void StmtPrinter::VisitCXXThrowExpr(CXXThrowExpr *Node) {
+  if (Node->getSubExpr() == 0)
+    OS << "throw";
+  else {
+    OS << "throw ";
+    PrintExpr(Node->getSubExpr());
+  }
+}
+
 // Obj-C 
 
 void StmtPrinter::VisitObjCStringLiteral(ObjCStringLiteral *Node) {

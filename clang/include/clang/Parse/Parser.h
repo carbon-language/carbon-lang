@@ -354,6 +354,10 @@ private:
   ExprResult ParseCXXCasts();
 
   //===--------------------------------------------------------------------===//
+  // C++ 15: C++ Throw Expression
+  ExprResult ParseThrowExpression();
+
+  //===--------------------------------------------------------------------===//
   // C++ 2.13.5: C++ Boolean Literals
   ExprResult ParseCXXBoolLiteral();
 

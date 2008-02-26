@@ -43,3 +43,9 @@ Sema::ActOnCXXBoolLiteral(SourceLocation OpLoc, tok::TokenKind Kind) {
          "Unknown C++ Boolean value!");
   return new CXXBoolLiteralExpr(Kind == tok::kw_true, Context.BoolTy, OpLoc);
 }
+
+/// ActOnCXXThrow - Parse throw expressions.
+Action::ExprResult
+Sema::ActOnCXXThrow(SourceLocation OpLoc, ExprTy *E) {
+  return new CXXThrowExpr((Expr*)E, Context.VoidTy, OpLoc);
+}

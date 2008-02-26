@@ -519,6 +519,12 @@ public:
                                          tok::TokenKind Kind) {
     return 0;
   }
+
+  /// ActOnCXXThrow - Parse throw expressions.
+  virtual ExprResult ActOnCXXThrow(SourceLocation OpLoc,
+                                   ExprTy *Op = 0) {
+    return 0;
+  }
   //===----------------------- Obj-C Declarations -------------------------===//
   
   // ActOnStartClassInterface - this action is called immdiately after parsing

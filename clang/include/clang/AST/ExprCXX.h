@@ -95,6 +95,38 @@ namespace clang {
     virtual child_iterator child_end();
   };
 
+  ///  CXXThrowExpr - [C++ 15] C++ Throw Expression.  This handles
+  ///  'throw' and 'throw' assignment-expression.  When
+  ///  assignment-expression isn't present, Op will be null.
+  ///
+  class CXXThrowExpr : public Expr {
+    Expr *Op;
+    SourceLocation ThrowLoc;
+  public:
+    // Ty is the void type which is used as the result type of the
+    // exepression.  The l is the location of the throw keyword.  expr
+    // can by null, if the optional expression to throw isn't present.
+    CXXThrowExpr(Expr *expr, QualType Ty, SourceLocation l) :
+      Expr(CXXThrowExprClass, Ty), Op(expr), ThrowLoc(l) {}
+    const Expr *getSubExpr() const { return Op; }
+    Expr *getSubExpr() { return Op; }
+
+    virtual SourceRange getSourceRange() const {
+      if (getSubExpr() == 0)
+        return SourceRange(ThrowLoc, ThrowLoc);
+      return SourceRange(ThrowLoc, getSubExpr()->getSourceRange().getEnd());
+    }
+
+    static bool classof(const Stmt *T) {
+      return T->getStmtClass() == CXXThrowExprClass;
+    }
+    static bool classof(const CXXThrowExpr *) { return true; }
+
+    // Iterators
+    virtual child_iterator child_begin();
+    virtual child_iterator child_end();
+  };
+
 }  // end namespace clang
 
 #endif

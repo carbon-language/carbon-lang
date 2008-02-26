@@ -76,3 +76,24 @@ Parser::ExprResult Parser::ParseCXXBoolLiteral() {
   tok::TokenKind Kind = Tok.getKind();
   return Actions.ActOnCXXBoolLiteral(ConsumeToken(), Kind);
 }
+
+/// ParseThrowExpression - This handles the C++ throw expression.
+///
+///       throw-expression: [C++ 15]
+///         'throw' assignment-expression[opt]
+Parser::ExprResult Parser::ParseThrowExpression() {
+  assert(Tok.is(tok::kw_throw) && "Not throw!");
+
+  ExprResult Expr;
+
+  SourceLocation ThrowLoc = ConsumeToken();           // Eat the throw token.
+  // FIXME: Anything that isn't an assignment-expression should bail out now.
+  if (Tok.is(tok::semi) || Tok.is(tok::r_paren) || Tok.is(tok::colon) ||
+      Tok.is(tok::comma))
+    return Actions.ActOnCXXThrow(ThrowLoc);
+
+  Expr = ParseAssignmentExpression();
+  if (!Expr.isInvalid)
+    Expr = Actions.ActOnCXXThrow(ThrowLoc, Expr.Val);
+  return Expr;
+}

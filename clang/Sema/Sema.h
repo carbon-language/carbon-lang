@@ -510,6 +510,10 @@ public:
   virtual ExprResult ActOnCXXBoolLiteral(SourceLocation OpLoc,
                                          tok::TokenKind Kind);
   
+  //// ActOnCXXThrow -  Parse throw expressions.
+  virtual ExprResult ActOnCXXThrow(SourceLocation OpLoc,
+                                   ExprTy *expr);
+
   // ParseObjCStringLiteral - Parse Objective-C string literals.
   virtual ExprResult ParseObjCStringLiteral(SourceLocation *AtLocs, 
                                             ExprTy **Strings,

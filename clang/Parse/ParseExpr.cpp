@@ -157,6 +157,7 @@ static prec::Level getBinOpPrecedence(tok::TokenKind Kind) {
 ///       assignment-expression: [C99 6.5.16]
 ///         conditional-expression
 ///         unary-expression assignment-operator assignment-expression
+/// [C++]   throw-expression [C++ 15]
 ///
 ///       assignment-operator: one of
 ///         = *= /= %= += -= <<= >>= &= ^= |=
@@ -166,6 +167,9 @@ static prec::Level getBinOpPrecedence(tok::TokenKind Kind) {
 ///         expression ',' assignment-expression
 ///
 Parser::ExprResult Parser::ParseExpression() {
+  if (Tok.is(tok::kw_throw))
+    return ParseThrowExpression();
+
   ExprResult LHS = ParseCastExpression(false);
   if (LHS.isInvalid) return LHS;
   
@@ -187,6 +191,9 @@ Parser::ExprResult Parser::ParseExpressionWithLeadingAt(SourceLocation AtLoc) {
 /// ParseAssignmentExpression - Parse an expr that doesn't include commas.
 ///
 Parser::ExprResult Parser::ParseAssignmentExpression() {
+  if (Tok.is(tok::kw_throw))
+    return ParseThrowExpression();
+
   ExprResult LHS = ParseCastExpression(false);
   if (LHS.isInvalid) return LHS;
   
