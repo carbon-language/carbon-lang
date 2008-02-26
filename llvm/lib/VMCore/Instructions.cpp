@@ -618,6 +618,24 @@ ReturnInst::ReturnInst(const std::vector<Value *> &retVals)
     init(&retVals[0], retVals.size());
 }
 
+ReturnInst::ReturnInst(Value * const* retVals, unsigned N,
+                       Instruction *InsertBefore)
+  : TerminatorInst(Type::VoidTy, Instruction::Ret, &RetVal, N, InsertBefore) {
+  if (N != 0)
+    init(retVals, N);
+}
+ReturnInst::ReturnInst(Value * const* retVals, unsigned N,
+                       BasicBlock *InsertAtEnd)
+  : TerminatorInst(Type::VoidTy, Instruction::Ret, &RetVal, N, InsertAtEnd) {
+  if (N != 0)
+    init(retVals, N);
+}
+ReturnInst::ReturnInst(Value * const* retVals, unsigned N)
+  : TerminatorInst(Type::VoidTy, Instruction::Ret, &RetVal, N) {
+  if (N != 0)
+    init(retVals, N);
+}
+
 void ReturnInst::init(Value * const* retVals, unsigned N) {
 
   assert (N > 0 && "Invalid operands numbers in ReturnInst init");

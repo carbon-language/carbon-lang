@@ -1400,6 +1400,9 @@ public:
   ReturnInst(const std::vector<Value *> &retVals);
   ReturnInst(const std::vector<Value *> &retVals, Instruction *InsertBefore);
   ReturnInst(const std::vector<Value *> &retVals, BasicBlock *InsertAtEnd);
+  ReturnInst(Value * const* retVals, unsigned N);
+  ReturnInst(Value * const* retVals, unsigned N, Instruction *InsertBefore);
+  ReturnInst(Value * const* retVals, unsigned N, BasicBlock *InsertAtEnd);
   explicit ReturnInst(BasicBlock *InsertAtEnd);
   virtual ~ReturnInst();
 

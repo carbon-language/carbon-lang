@@ -21,6 +21,7 @@
 #include "llvm/ParamAttrsList.h"
 #include "llvm/AutoUpgrade.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/MemoryBuffer.h"
 using namespace llvm;
@@ -1344,7 +1345,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
           break;
         } else {
           unsigned OpNum = 0;
-          std::vector<Value *> Vs;
+          SmallVector<Value *,4> Vs;
           do {
             Value *Op = NULL;
             if (getValueTypePair(Record, OpNum, NextValueNo, Op))
@@ -1352,7 +1353,8 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
             Vs.push_back(Op);
           } while(OpNum != Record.size());
 
-          I = new ReturnInst(Vs);
+          // SmallVector Vs has at least one element.
+          I = new ReturnInst(&Vs[0], Vs.size());
           break;
         }
       }
