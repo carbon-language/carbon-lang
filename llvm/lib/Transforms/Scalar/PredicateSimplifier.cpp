@@ -717,7 +717,7 @@ namespace {
 
           if (edge.LV == J->LV)
             return; // This update adds nothing new.
-	}
+        }
 
         if (I != B) {
           // We also have to tighten any edge beneath our update.
@@ -729,7 +729,7 @@ namespace {
             }
             if (K == B) break;
           }
-	}
+        }
 
         // Insert new edge at Subtree if it isn't already there.
         if (I == E || I->To != n || Subtree != I->Subtree)

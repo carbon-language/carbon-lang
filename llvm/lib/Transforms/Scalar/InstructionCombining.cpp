@@ -2163,10 +2163,10 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
         match(RHS, m_Mul(m_Value(Y), m_Value(Z)))) {
       if (W != Y) {
         if (W == Z) {
-	  std::swap(Y, Z);
+          std::swap(Y, Z);
         } else if (Y == X) {
-	  std::swap(W, X);
-	} else if (X == Z) {
+          std::swap(W, X);
+        } else if (X == Z) {
           std::swap(Y, Z);
           std::swap(W, X);
         }
@@ -9484,7 +9484,7 @@ Instruction *InstCombiner::visitFreeInst(FreeInst &FI) {
 
 /// InstCombineLoadCast - Fold 'load (cast P)' -> cast (load P)' when possible.
 static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI,
-					const TargetData *TD) {
+                                        const TargetData *TD) {
   User *CI = cast<User>(LI.getOperand(0));
   Value *CastOp = CI->getOperand(0);
 
@@ -9498,24 +9498,24 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI,
       unsigned numBits = Ty->getPrimitiveSizeInBits();
       // Replace LI with immediate integer store.
       if ((numBits >> 3) == len + 1) {
-	APInt StrVal(numBits, 0);
-	APInt SingleChar(numBits, 0);
-	if (TD->isLittleEndian()) {
-	  for (signed i = len-1; i >= 0; i--) {
-	    SingleChar = (uint64_t) Str[i];
-	    StrVal = (StrVal << 8) | SingleChar;
-	  }
-	} else {
-	  for (unsigned i = 0; i < len; i++) {
-	    SingleChar = (uint64_t) Str[i];
-		StrVal = (StrVal << 8) | SingleChar;
-	  }
-	  // Append NULL at the end.
-	  SingleChar = 0;
-	  StrVal = (StrVal << 8) | SingleChar;
-	}
-	Value *NL = ConstantInt::get(StrVal);
-	return IC.ReplaceInstUsesWith(LI, NL);
+        APInt StrVal(numBits, 0);
+        APInt SingleChar(numBits, 0);
+        if (TD->isLittleEndian()) {
+          for (signed i = len-1; i >= 0; i--) {
+            SingleChar = (uint64_t) Str[i];
+            StrVal = (StrVal << 8) | SingleChar;
+          }
+        } else {
+          for (unsigned i = 0; i < len; i++) {
+            SingleChar = (uint64_t) Str[i];
+            StrVal = (StrVal << 8) | SingleChar;
+          }
+          // Append NULL at the end.
+          SingleChar = 0;
+          StrVal = (StrVal << 8) | SingleChar;
+        }
+        Value *NL = ConstantInt::get(StrVal);
+        return IC.ReplaceInstUsesWith(LI, NL);
       }
     }
   }
