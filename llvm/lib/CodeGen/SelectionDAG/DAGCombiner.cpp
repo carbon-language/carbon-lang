@@ -306,7 +306,8 @@ CombineTo(SDNode *N, SDOperand Res0, SDOperand Res1) {
 /// isNegatibleForFree - Return 1 if we can compute the negated form of the
 /// specified expression for the same cost as the expression itself, or 2 if we
 /// can compute the negated form more cheaply than the expression itself.
-static char isNegatibleForFree(SDOperand Op, unsigned Depth = 0) {
+static char isNegatibleForFree(SDOperand Op, bool AfterLegalize,
+                               unsigned Depth = 0) {
   // No compile time optimizations on this type.
   if (Op.getValueType() == MVT::ppcf128)
     return 0;
@@ -323,16 +324,18 @@ static char isNegatibleForFree(SDOperand Op, unsigned Depth = 0) {
   switch (Op.getOpcode()) {
   default: return false;
   case ISD::ConstantFP:
-    return 1;
+    // Don't invert constant FP values after legalize.  The negated constant
+    // isn't necessarily legal.
+    return AfterLegalize ? 0 : 1;
   case ISD::FADD:
     // FIXME: determine better conditions for this xform.
     if (!UnsafeFPMath) return 0;
     
     // -(A+B) -> -A - B
-    if (char V = isNegatibleForFree(Op.getOperand(0), Depth+1))
+    if (char V = isNegatibleForFree(Op.getOperand(0), AfterLegalize, Depth+1))
       return V;
     // -(A+B) -> -B - A
-    return isNegatibleForFree(Op.getOperand(1), Depth+1);
+    return isNegatibleForFree(Op.getOperand(1), AfterLegalize, Depth+1);
   case ISD::FSUB:
     // We can't turn -(A-B) into B-A when we honor signed zeros. 
     if (!UnsafeFPMath) return 0;
@@ -345,22 +348,22 @@ static char isNegatibleForFree(SDOperand Op, unsigned Depth = 0) {
     if (HonorSignDependentRoundingFPMath()) return 0;
     
     // -(X*Y) -> (-X * Y) or (X*-Y)
-    if (char V = isNegatibleForFree(Op.getOperand(0), Depth+1))
+    if (char V = isNegatibleForFree(Op.getOperand(0), AfterLegalize, Depth+1))
       return V;
       
-    return isNegatibleForFree(Op.getOperand(1), Depth+1);
+    return isNegatibleForFree(Op.getOperand(1), AfterLegalize, Depth+1);
     
   case ISD::FP_EXTEND:
   case ISD::FP_ROUND:
   case ISD::FSIN:
-    return isNegatibleForFree(Op.getOperand(0), Depth+1);
+    return isNegatibleForFree(Op.getOperand(0), AfterLegalize, Depth+1);
   }
 }
 
 /// GetNegatedExpression - If isNegatibleForFree returns true, this function
 /// returns the newly negated expression.
 static SDOperand GetNegatedExpression(SDOperand Op, SelectionDAG &DAG,
-                                      unsigned Depth = 0) {
+                                      bool AfterLegalize, unsigned Depth = 0) {
   // fneg is removable even if it has multiple uses.
   if (Op.getOpcode() == ISD::FNEG) return Op.getOperand(0);
   
@@ -380,13 +383,15 @@ static SDOperand GetNegatedExpression(SDOperand Op, SelectionDAG &DAG,
     assert(UnsafeFPMath);
     
     // -(A+B) -> -A - B
-    if (isNegatibleForFree(Op.getOperand(0), Depth+1))
+    if (isNegatibleForFree(Op.getOperand(0), AfterLegalize, Depth+1))
       return DAG.getNode(ISD::FSUB, Op.getValueType(),
-                         GetNegatedExpression(Op.getOperand(0), DAG, Depth+1),
+                         GetNegatedExpression(Op.getOperand(0), DAG, 
+                                              AfterLegalize, Depth+1),
                          Op.getOperand(1));
     // -(A+B) -> -B - A
     return DAG.getNode(ISD::FSUB, Op.getValueType(),
-                       GetNegatedExpression(Op.getOperand(1), DAG, Depth+1),
+                       GetNegatedExpression(Op.getOperand(1), DAG, 
+                                            AfterLegalize, Depth+1),
                        Op.getOperand(0));
   case ISD::FSUB:
     // We can't turn -(A-B) into B-A when we honor signed zeros. 
@@ -408,21 +413,25 @@ static SDOperand GetNegatedExpression(SDOperand Op, SelectionDAG &DAG,
     // -(X*Y) -> -X * Y
     if (isNegatibleForFree(Op.getOperand(0), Depth+1))
       return DAG.getNode(Op.getOpcode(), Op.getValueType(),
-                         GetNegatedExpression(Op.getOperand(0), DAG, Depth+1),
+                         GetNegatedExpression(Op.getOperand(0), DAG, 
+                                              AfterLegalize, Depth+1),
                          Op.getOperand(1));
       
     // -(X*Y) -> X * -Y
     return DAG.getNode(Op.getOpcode(), Op.getValueType(),
                        Op.getOperand(0),
-                       GetNegatedExpression(Op.getOperand(1), DAG, Depth+1));
+                       GetNegatedExpression(Op.getOperand(1), DAG,
+                                            AfterLegalize, Depth+1));
     
   case ISD::FP_EXTEND:
   case ISD::FSIN:
     return DAG.getNode(Op.getOpcode(), Op.getValueType(),
-                       GetNegatedExpression(Op.getOperand(0), DAG, Depth+1));
+                       GetNegatedExpression(Op.getOperand(0), DAG, 
+                                            AfterLegalize, Depth+1));
   case ISD::FP_ROUND:
       return DAG.getNode(ISD::FP_ROUND, Op.getValueType(),
-                         GetNegatedExpression(Op.getOperand(0), DAG, Depth+1),
+                         GetNegatedExpression(Op.getOperand(0), DAG, 
+                                              AfterLegalize, Depth+1),
                          Op.getOperand(1));
   }
 }
@@ -3518,11 +3527,13 @@ SDOperand DAGCombiner::visitFADD(SDNode *N) {
   if (N0CFP && !N1CFP)
     return DAG.getNode(ISD::FADD, VT, N1, N0);
   // fold (A + (-B)) -> A-B
-  if (isNegatibleForFree(N1) == 2)
-    return DAG.getNode(ISD::FSUB, VT, N0, GetNegatedExpression(N1, DAG));
+  if (isNegatibleForFree(N1, AfterLegalize) == 2)
+    return DAG.getNode(ISD::FSUB, VT, N0, 
+                       GetNegatedExpression(N1, DAG, AfterLegalize));
   // fold ((-A) + B) -> B-A
-  if (isNegatibleForFree(N0) == 2)
-    return DAG.getNode(ISD::FSUB, VT, N1, GetNegatedExpression(N0, DAG));
+  if (isNegatibleForFree(N0, AfterLegalize) == 2)
+    return DAG.getNode(ISD::FSUB, VT, N1, 
+                       GetNegatedExpression(N0, DAG, AfterLegalize));
   
   // If allowed, fold (fadd (fadd x, c1), c2) -> (fadd x, (fadd c1, c2))
   if (UnsafeFPMath && N1CFP && N0.getOpcode() == ISD::FADD &&
@@ -3551,13 +3562,14 @@ SDOperand DAGCombiner::visitFSUB(SDNode *N) {
     return DAG.getNode(ISD::FSUB, VT, N0, N1);
   // fold (0-B) -> -B
   if (UnsafeFPMath && N0CFP && N0CFP->getValueAPF().isZero()) {
-    if (isNegatibleForFree(N1))
-      return GetNegatedExpression(N1, DAG);
+    if (isNegatibleForFree(N1, AfterLegalize))
+      return GetNegatedExpression(N1, DAG, AfterLegalize);
     return DAG.getNode(ISD::FNEG, VT, N1);
   }
   // fold (A-(-B)) -> A+B
-  if (isNegatibleForFree(N1))
-    return DAG.getNode(ISD::FADD, VT, N0, GetNegatedExpression(N1, DAG));
+  if (isNegatibleForFree(N1, AfterLegalize))
+    return DAG.getNode(ISD::FADD, VT, N0,
+                       GetNegatedExpression(N1, DAG, AfterLegalize));
   
   return SDOperand();
 }
@@ -3589,13 +3601,14 @@ SDOperand DAGCombiner::visitFMUL(SDNode *N) {
     return DAG.getNode(ISD::FNEG, VT, N0);
   
   // -X * -Y -> X*Y
-  if (char LHSNeg = isNegatibleForFree(N0)) {
-    if (char RHSNeg = isNegatibleForFree(N1)) {
+  if (char LHSNeg = isNegatibleForFree(N0, AfterLegalize)) {
+    if (char RHSNeg = isNegatibleForFree(N1, AfterLegalize)) {
       // Both can be negated for free, check to see if at least one is cheaper
       // negated.
       if (LHSNeg == 2 || RHSNeg == 2)
-        return DAG.getNode(ISD::FMUL, VT, GetNegatedExpression(N0, DAG),
-                           GetNegatedExpression(N1, DAG));
+        return DAG.getNode(ISD::FMUL, VT, 
+                           GetNegatedExpression(N0, DAG, AfterLegalize),
+                           GetNegatedExpression(N1, DAG, AfterLegalize));
     }
   }
   
@@ -3627,13 +3640,14 @@ SDOperand DAGCombiner::visitFDIV(SDNode *N) {
   
   
   // -X / -Y -> X*Y
-  if (char LHSNeg = isNegatibleForFree(N0)) {
-    if (char RHSNeg = isNegatibleForFree(N1)) {
+  if (char LHSNeg = isNegatibleForFree(N0, AfterLegalize)) {
+    if (char RHSNeg = isNegatibleForFree(N1, AfterLegalize)) {
       // Both can be negated for free, check to see if at least one is cheaper
       // negated.
       if (LHSNeg == 2 || RHSNeg == 2)
-        return DAG.getNode(ISD::FDIV, VT, GetNegatedExpression(N0, DAG),
-                           GetNegatedExpression(N1, DAG));
+        return DAG.getNode(ISD::FDIV, VT, 
+                           GetNegatedExpression(N0, DAG, AfterLegalize),
+                           GetNegatedExpression(N1, DAG, AfterLegalize));
     }
   }
   
@@ -3837,8 +3851,8 @@ SDOperand DAGCombiner::visitFP_EXTEND(SDNode *N) {
 SDOperand DAGCombiner::visitFNEG(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
 
-  if (isNegatibleForFree(N0))
-    return GetNegatedExpression(N0, DAG);
+  if (isNegatibleForFree(N0, AfterLegalize))
+    return GetNegatedExpression(N0, DAG, AfterLegalize);
 
   // Transform fneg(bitconvert(x)) -> bitconvert(x^sign) to avoid loading
   // constant pool values.
