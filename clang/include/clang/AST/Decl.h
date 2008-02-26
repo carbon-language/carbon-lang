@@ -563,7 +563,7 @@ public:
   const llvm::APSInt &getInitVal() const { return Val; }
 
   void setInitExpr(Expr *E) { Init = E; }
-  void setInitVal(llvm::APSInt &V) { Val = V; }
+  void setInitVal(const llvm::APSInt &V) { Val = V; }
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == EnumConstant; }
