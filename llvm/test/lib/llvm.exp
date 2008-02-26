@@ -102,6 +102,7 @@ proc RunLLVMTests { test_source_files } {
     #set timeout 40
     
     set filename [file tail $test]
+    verbose "ABOUT TO RUN: $filename" 2
     set outcome PASS
     set tmpFile "$filename.tmp"
     

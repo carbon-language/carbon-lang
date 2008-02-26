@@ -22,10 +22,14 @@ include Makefile.tests
 # DejaGNU testing support
 #===------------------------------------------------------------------------===#
 
+ifdef VERBOSE
+RUNTESTFLAGS := $(VERBOSE)
+endif
+
 ifdef TESTSUITE
 CLEANED_TESTSUITE := $(patsubst %/,%,$(TESTSUITE))
 CLEANED_TESTSUITE := $(patsubst test/%,%,$(CLEANED_TESTSUITE))
-RUNTESTFLAGS := --tool $(CLEANED_TESTSUITE)
+RUNTESTFLAGS += --tool $(CLEANED_TESTSUITE)
 endif
 
 IGNORE_TESTS :=
