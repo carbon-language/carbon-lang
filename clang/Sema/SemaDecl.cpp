@@ -1498,7 +1498,7 @@ Sema::DeclTy *Sema::ActOnEnumConstant(Scope *S, DeclTy *theEnumDecl,
       else
         Diag(IdLoc, diag::err_redefinition, Id->getName());
       Diag(PrevDecl->getLocation(), diag::err_previous_definition);
-      // FIXME: Don't leak memory: delete Val;
+      delete Val;
       return 0;
     }
   }
@@ -1514,7 +1514,7 @@ Sema::DeclTy *Sema::ActOnEnumConstant(Scope *S, DeclTy *theEnumDecl,
     if (!Val->isIntegerConstantExpr(EnumVal, Context, &ExpLoc)) {
       Diag(ExpLoc, diag::err_enum_value_not_integer_constant_expr, 
            Id->getName());
-      // FIXME: Don't leak memory: delete Val;
+      delete Val;
       Val = 0;  // Just forget about it.
     } else {
       EltTy = Val->getType();
@@ -1577,9 +1577,9 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
     if (!ECD) continue;  // Already issued a diagnostic.
     
     // If the enum value doesn't fit in an int, emit an extension warning.
-    assert(ECD->getInitVal().getBitWidth() >= IntWidth &&
-           "Should have promoted value to int");
     const llvm::APSInt &InitVal = ECD->getInitVal();
+    assert(InitVal.getBitWidth() >= IntWidth &&
+           "Should have promoted value to int");
     if (InitVal.getBitWidth() > IntWidth) {
       llvm::APSInt V(InitVal);
       V.trunc(IntWidth);
@@ -1590,7 +1590,7 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
     }
     
     // Keep track of the size of positive and negative values.
-    if (InitVal.isUnsigned() || !InitVal.isNegative())
+    if (InitVal.isUnsigned() || InitVal.isNonNegative())
       NumPositiveBits = std::max(NumPositiveBits,
                                  (unsigned)InitVal.getActiveBits());
     else
@@ -1664,8 +1664,13 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
     // enumerator value fits in an int, type it as an int, otherwise type it the
     // same as the enumerator decl itself.  This means that in "enum { X = 1U }"
     // that X has type 'int', not 'unsigned'.
-    if (ECD->getType() == Context.IntTy)
+    if (ECD->getType() == Context.IntTy) {
+      // Make sure the init value is signed.
+      llvm::APSInt IV = ECD->getInitVal();
+      IV.setIsSigned(true);
+      ECD->setInitVal(IV);
       continue;  // Already int type.
+    }
 
     // Determine whether the value fits into an int.
     llvm::APSInt InitVal = ECD->getInitVal();
