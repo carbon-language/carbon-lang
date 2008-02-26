@@ -987,7 +987,8 @@ static unsigned AddLiveIn(MachineFunction &MF, unsigned PReg,
   return VReg;
 }
 
-// Determines whether a CALL node uses struct return semantics.
+/// CallIsStructReturn - Determines whether a CALL node uses struct return
+/// semantics.
 static bool CallIsStructReturn(SDOperand Op) {
   unsigned NumOps = (Op.getNumOperands() - 5) / 2;
   if (!NumOps)
@@ -997,7 +998,8 @@ static bool CallIsStructReturn(SDOperand Op) {
   return Flags->getValue() & ISD::ParamFlags::StructReturn;
 }
 
-// Determines whether a FORMAL_ARGUMENTS node uses struct return semantics.
+/// ArgsAreStructReturn - Determines whether a FORMAL_ARGUMENTS node uses struct
+/// return semantics.
 static bool ArgsAreStructReturn(SDOperand Op) {
   unsigned NumArgs = Op.Val->getNumValues() - 1;
   if (!NumArgs)
@@ -1007,8 +1009,9 @@ static bool ArgsAreStructReturn(SDOperand Op) {
   return Flags->getValue() & ISD::ParamFlags::StructReturn;
 }
 
-// Determines whether a CALL or FORMAL_ARGUMENTS node requires the callee to pop
-// its own arguments. Callee pop is necessary to support tail calls.
+/// IsCalleePop - Determines whether a CALL or FORMAL_ARGUMENTS node requires the
+/// callee to pop its own arguments. Callee pop is necessary to support tail
+/// calls.
 bool X86TargetLowering::IsCalleePop(SDOperand Op) {
   bool IsVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
   if (IsVarArg)
@@ -1026,7 +1029,8 @@ bool X86TargetLowering::IsCalleePop(SDOperand Op) {
   }
 }
 
-// Selects the correct CCAssignFn for a CALL or FORMAL_ARGUMENTS node.
+/// CCAssignFnForNode - Selects the correct CCAssignFn for a CALL or
+/// FORMAL_ARGUMENTS node.
 CCAssignFn *X86TargetLowering::CCAssignFnForNode(SDOperand Op) const {
   unsigned CC = cast<ConstantSDNode>(Op.getOperand(1))->getValue();
   
@@ -1045,8 +1049,8 @@ CCAssignFn *X86TargetLowering::CCAssignFnForNode(SDOperand Op) const {
     return CC_X86_32_C;
 }
 
-// Selects the appropriate decoration to apply to a MachineFunction containing a
-// given FORMAL_ARGUMENTS node.
+/// NameDecorationForFORMAL_ARGUMENTS - Selects the appropriate decoration to
+/// apply to a MachineFunction containing a given FORMAL_ARGUMENTS node.
 NameDecorationStyle
 X86TargetLowering::NameDecorationForFORMAL_ARGUMENTS(SDOperand Op) {
   unsigned CC = cast<ConstantSDNode>(Op.getOperand(1))->getValue();
@@ -1057,11 +1061,11 @@ X86TargetLowering::NameDecorationForFORMAL_ARGUMENTS(SDOperand Op) {
   return None;
 }
 
-// IsPossiblyOverwrittenArgumentOfTailCall - Check if the operand could possibly
-// be overwritten when lowering the outgoing arguments in a tail call. Currently
-// the implementation of this call is very conservative and assumes all
-// arguments sourcing from FORMAL_ARGUMENTS or a CopyFromReg with virtual
-// registers would be overwritten by direct lowering.  
+/// IsPossiblyOverwrittenArgumentOfTailCall - Check if the operand could
+/// possibly be overwritten when lowering the outgoing arguments in a tail
+/// call. Currently the implementation of this call is very conservative and
+/// assumes all arguments sourcing from FORMAL_ARGUMENTS or a CopyFromReg with
+/// virtual registers would be overwritten by direct lowering.
 static bool IsPossiblyOverwrittenArgumentOfTailCall(SDOperand Op, 
                                                     MachineFrameInfo * MFI) {
   RegisterSDNode * OpReg = NULL;
@@ -1079,9 +1083,9 @@ static bool IsPossiblyOverwrittenArgumentOfTailCall(SDOperand Op,
   return false;
 }
 
-// CopyTailCallClobberedArgumentsToVRegs - Create virtual registers for all
-// arguments to force loading and guarantee that arguments sourcing from
-// incomming parameters are not overwriting each other.
+/// CopyTailCallClobberedArgumentsToVRegs - Create virtual registers for all
+/// arguments to force loading and guarantee that arguments sourcing from
+/// incomming parameters are not overwriting each other.
 static SDOperand 
 CopyTailCallClobberedArgumentsToVRegs(SDOperand Chain,
      SmallVector<std::pair<unsigned, SDOperand>, 8> &TailCallClobberedVRegs,
@@ -1106,10 +1110,10 @@ CopyTailCallClobberedArgumentsToVRegs(SDOperand Chain,
   return Chain;
 } 
 
-// CreateCopyOfByValArgument - Make a copy of an aggregate at address specified
-// by "Src" to address "Dst" with size and alignment information specified by
-// the specific parameter attribute. The copy will be passed as a byval function
-// parameter.
+/// CreateCopyOfByValArgument - Make a copy of an aggregate at address specified
+/// by "Src" to address "Dst" with size and alignment information specified by
+/// the specific parameter attribute. The copy will be passed as a byval function
+/// parameter.
 static SDOperand 
 CreateCopyOfByValArgument(SDOperand Src, SDOperand Dst, SDOperand Chain,
                           unsigned Flags, SelectionDAG &DAG) {
