@@ -18,6 +18,7 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
+#include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/Target/TargetAsmInfo.h"
@@ -28,6 +29,7 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
+#include "llvm/Support/CallSite.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
@@ -57,6 +59,8 @@ namespace {
     bool OptimizeBlock(BasicBlock &BB);
     bool OptimizeLoadStoreInst(Instruction *I, Value *Addr,
                                const Type *AccessTy,
+                               DenseMap<Value*,Value*> &SunkAddrs);
+    bool OptimizeInlineAsmInst(Instruction *I, CallSite CS,
                                DenseMap<Value*,Value*> &SunkAddrs);
     bool OptimizeExtUses(Instruction *I);
   };
@@ -928,6 +932,54 @@ bool CodeGenPrepare::OptimizeLoadStoreInst(Instruction *LdStInst, Value *Addr,
   return true;
 }
 
+/// OptimizeInlineAsmInst - If there are any memory operands, use
+/// OptimizeLoadStoreInt to sink their address computing into the block when
+/// possible / profitable.
+bool CodeGenPrepare::OptimizeInlineAsmInst(Instruction *I, CallSite CS,
+                                           DenseMap<Value*,Value*> &SunkAddrs) {
+  bool MadeChange = false;
+  InlineAsm *IA = cast<InlineAsm>(CS.getCalledValue());
+
+  // Do a prepass over the constraints, canonicalizing them, and building up the
+  // ConstraintOperands list.
+  std::vector<InlineAsm::ConstraintInfo>
+    ConstraintInfos = IA->ParseConstraints();
+
+  /// ConstraintOperands - Information about all of the constraints.
+  std::vector<TargetLowering::AsmOperandInfo> ConstraintOperands;
+  unsigned ArgNo = 0;   // ArgNo - The argument of the CallInst.
+  for (unsigned i = 0, e = ConstraintInfos.size(); i != e; ++i) {
+    ConstraintOperands.
+      push_back(TargetLowering::AsmOperandInfo(ConstraintInfos[i]));
+    TargetLowering::AsmOperandInfo &OpInfo = ConstraintOperands.back();
+
+    // Compute the value type for each operand.
+    switch (OpInfo.Type) {
+    case InlineAsm::isOutput:
+      if (OpInfo.isIndirect)
+        OpInfo.CallOperandVal = CS.getArgument(ArgNo++);
+      break;
+    case InlineAsm::isInput:
+      OpInfo.CallOperandVal = CS.getArgument(ArgNo++);
+      break;
+    case InlineAsm::isClobber:
+      // Nothing to do.
+      break;
+    }
+
+    // Compute the constraint code and ConstraintType to use.
+    OpInfo.ComputeConstraintToUse(*TLI);
+
+    if (OpInfo.ConstraintType == TargetLowering::C_Memory) {
+      Value *OpVal = OpInfo.CallOperandVal;
+      MadeChange |= OptimizeLoadStoreInst(I, OpVal, OpVal->getType(),
+                                          SunkAddrs);
+    }
+  }
+
+  return MadeChange;
+}
+
 bool CodeGenPrepare::OptimizeExtUses(Instruction *I) {
   BasicBlock *DefBB = I->getParent();
 
@@ -1076,6 +1128,9 @@ bool CodeGenPrepare::OptimizeBlock(BasicBlock &BB) {
             TLI->getTargetMachine().getTargetAsmInfo()) {
           if (TAI->ExpandInlineAsm(CI))
             BBI = BB.begin();
+          else
+            // Sink address computing for memory operands into the block.
+            MadeChange |= OptimizeInlineAsmInst(I, &(*CI), SunkAddrs);
         }
     }
   }
