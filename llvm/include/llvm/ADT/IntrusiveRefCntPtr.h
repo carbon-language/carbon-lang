@@ -22,34 +22,13 @@
 #define LLVM_ADT_INTRUSIVE_REF_CNT_PTR
 
 #include <cassert>
-#include <cstddef>
 
 #include "llvm/Support/Casting.h"
 
-// Forward declarations
-
 namespace llvm {
-  template <class T>
-  class RefCountedBase;
 
   template <class T>
-  class RefCountedBaseVPTR;
-}
-
-template <class T>
-void IntrusivePtrAddRef(llvm::RefCountedBase<T>*);
-
-template <class T>
-void IntrusivePtrRelease(llvm::RefCountedBase<T>*);
-
-template <class T>
-void IntrusivePtrAddRef(llvm::RefCountedBaseVPTR<T>*);
-
-template <class T>
-void IntrusivePtrRelease(llvm::RefCountedBaseVPTR<T>*);
-
-
-namespace llvm {
+  class IntrusiveRefCntPtr;
 
 //===----------------------------------------------------------------------===//
 /// RefCountedBase - A generic base class for objects that wish to
@@ -74,16 +53,16 @@ namespace llvm {
       if (--ref_cnt == 0) delete static_cast<Derived*>(this);
     }
 
-    friend void IntrusivePtrAddRef<Derived>(RefCountedBase<Derived>*);
-    friend void IntrusivePtrRelease<Derived>(RefCountedBase<Derived>*);
+    friend class IntrusiveRefCntPtr<Derived>;
   };
 
 //===----------------------------------------------------------------------===//
 /// RefCountedBaseVPTR - A class that has the same function as
 ///  RefCountedBase, but with a virtual destructor. Should be used
-///  instead of RefCountedBase for classes that have virtual
-///  destructors. Classes that inherit from RefCountedBaseVPTR can't
-///  be allocated on stack.
+///  instead of RefCountedBase for classes that already have virtual
+///  methods to enforce dynamic allocation via 'new'. Classes that
+///  inherit from RefCountedBaseVPTR can't be allocated on stack -
+///  attempting to do this will produce a compile error.
 //===----------------------------------------------------------------------===//
   template <class Derived>
   class RefCountedBaseVPTR {
@@ -99,32 +78,8 @@ namespace llvm {
       if (--ref_cnt == 0) delete this;
     }
 
-    friend void IntrusivePtrAddRef<Derived>(RefCountedBaseVPTR<Derived>*);
-    friend void IntrusivePtrRelease<Derived>(RefCountedBaseVPTR<Derived>*);
+    friend class IntrusiveRefCntPtr<Derived>;
   };
-
-}
-
-//===----------------------------------------------------------------------===//
-/// IntrusivePtrAddRef - A utility function used by IntrusiveRefCntPtr
-///  to increment the reference count of an RefCountedBase-derived object.
-//===----------------------------------------------------------------------===//
-template <class T>
-void IntrusivePtrAddRef(llvm::RefCountedBase<T>* O) {
-  O->Retain();
-}
-
-//===----------------------------------------------------------------------===//
-/// IntrusivePtrRelease - The complement of IntrusivePtrAddRef;
-///  decrements the reference count of a RefCounted object.
-//===----------------------------------------------------------------------===//
-template <class T>
-void IntrusivePtrRelease(llvm::RefCountedBase<T>* O) {
-  O->Release();
-}
-
-
-namespace llvm {
 
 //===----------------------------------------------------------------------===//
 /// IntrusiveRefCntPtr - A template class that implements a "smart pointer"
@@ -136,6 +91,12 @@ namespace llvm {
 ///  incremented and upon destruction of the smart pointer the
 ///  reference count is decremented.  This class also safely handles
 ///  wrapping NULL pointers.
+///
+/// Reference counting is implemented via calls to
+///  Obj->Retain()/Obj->Release(). Release() is required to destroy
+///  the object when the reference count reaches zero. Inheriting from
+///  RefCountedBase/RefCountedBaseVPTR takes care of this
+///  automatically.
 //===----------------------------------------------------------------------===//
   template <typename T>
   class IntrusiveRefCntPtr {
@@ -144,7 +105,7 @@ namespace llvm {
   public:
     typedef T element_type;
 
-    explicit IntrusiveRefCntPtr() : Obj(NULL) {}
+    explicit IntrusiveRefCntPtr() : Obj(0) {}
 
     explicit IntrusiveRefCntPtr(T* obj) : Obj(obj) {
       retain();
@@ -181,7 +142,7 @@ namespace llvm {
 
     typedef T * IntrusiveRefCntPtr::*unspecified_bool_type;
     operator unspecified_bool_type() const {
-      return Obj == NULL ? NULL : &IntrusiveRefCntPtr::getPtr;
+      return Obj == 0 ? 0 : &IntrusiveRefCntPtr::getPtr;
     }
 
     void swap(IntrusiveRefCntPtr& other) {
@@ -191,8 +152,8 @@ namespace llvm {
     }
 
   private:
-    void retain() { if (Obj) IntrusivePtrAddRef(Obj); }
-    void release() { if (Obj) IntrusivePtrRelease(Obj); }
+    void retain() { if (Obj) Obj->Retain(); }
+    void release() { if (Obj) Obj->Release(); }
 
     void replace(T* S) {
       this_type(S).swap(this);
