@@ -698,8 +698,6 @@ static void AddPath(const std::string &Path, IncludeDirGroup Group,
     // handle things like C:\ right, nor win32 \\network\device\blah.
     if (isysroot.size() != 1 || isysroot[0] != '/') // Add isysroot if present.
       MappedPath.append(isysroot.begin(), isysroot.end());
-    if (Path[0] != '/')  // If in the system group, add a /.
-      MappedPath.push_back('/');
   }
   
   MappedPath.append(Path.begin(), Path.end());
