@@ -640,17 +640,6 @@ void ReturnInst::init(const Value * const* retVals, unsigned N) {
   }
 }
 
-Value *ReturnInst::getReturnValue(unsigned n) const {
-  if (getNumOperands() == 0)
-    return 0;
-
-  assert (n < getNumOperands() && "getReturnValue out of range!");
-  if (getNumOperands() == 1)
-    return RetVal;
-  else 
-    return OperandList[n];
-}
-
 unsigned ReturnInst::getNumSuccessorsV() const {
   return getNumSuccessors();
 }

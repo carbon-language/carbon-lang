@@ -1405,24 +1405,11 @@ public:
 
   virtual ReturnInst *clone() const;
 
-  // Transparently provide more efficient getOperand methods.
-  Value *getOperand(unsigned i) const {
-    assert(i < getNumOperands() && "getOperand() out of range!");
-    if (getNumOperands() == 0 || getNumOperands() == 1)
+  Value *getReturnValue(unsigned n = 0) const {
+    if (n == 0)
       return RetVal;
-    
-    return OperandList[i];
+    return getOperand(n);
   }
-
-  void setOperand(unsigned i, Value *Val) {
-    assert(i < getNumOperands() && "setOperand() out of range!");
-    if (i == 0) 
-      RetVal = Val;
-    else
-      OperandList[i] = Val;
-  }
-
-  Value *getReturnValue(unsigned n = 0) const;
 
   unsigned getNumSuccessors() const { return 0; }
 
