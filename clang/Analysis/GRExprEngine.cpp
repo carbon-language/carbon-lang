@@ -40,7 +40,7 @@ GRExprEngine::SetRVal(StateTy St, Expr* Ex, const RVal& V) {
       return St;
   }
 
-  return StateMgr.SetRVal(St, Ex, isBlkExpr, V);
+  return StateMgr.SetRVal(St, Ex, V, isBlkExpr, false);
 }
 
 const GRExprEngine::StateTy::BufferTy&
@@ -606,7 +606,9 @@ void GRExprEngine::VisitGuardedExpr(Expr* Ex, Expr* L, Expr* R,
   assert (SE);
     
   X = GetBlkExprRVal(St, SE);
-  Nodify(Dst, Ex, Pred, SetBlkExprRVal(St, Ex, X));
+  
+  // Make sure that we invalidate the previous binding.
+  Nodify(Dst, Ex, Pred, StateMgr.SetRVal(St, Ex, X, true, true));
 }
 
 /// VisitSizeOfAlignOfTypeExpr - Transfer function for sizeof(type).

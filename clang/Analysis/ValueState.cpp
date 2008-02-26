@@ -387,12 +387,27 @@ RVal ValueStateManager::GetLVal(ValueState St, Expr* E) {
 }
 
 ValueState 
-ValueStateManager::SetRVal(ValueState St, Expr* E, bool isBlkExpr, RVal V) {
+ValueStateManager::SetRVal(ValueState St, Expr* E, RVal V,
+                           bool isBlkExpr, bool Invalidate) {
   
   assert (E);
 
-  if (V.isUnknown())
+  if (V.isUnknown()) {
+    
+    if (Invalidate) {
+      
+      ValueStateImpl NewSt = *St;
+      
+      if (isBlkExpr)
+        NewSt.BlockExprBindings = EXFactory.Remove(NewSt.BlockExprBindings, E);
+      else
+        NewSt.SubExprBindings = EXFactory.Remove(NewSt.SubExprBindings, E);
+      
+      return getPersistentState(NewSt);
+    }
+  
     return St;
+  }
   
   ValueStateImpl NewSt = *St;
   
@@ -406,8 +421,8 @@ ValueStateManager::SetRVal(ValueState St, Expr* E, bool isBlkExpr, RVal V) {
   return getPersistentState(NewSt);
 }
 
-ValueState
-ValueStateManager::SetRVal(ValueState St, LVal LV, RVal V) {
+
+ValueState ValueStateManager::SetRVal(ValueState St, LVal LV, RVal V) {
   
   switch (LV.getSubKind()) {
       

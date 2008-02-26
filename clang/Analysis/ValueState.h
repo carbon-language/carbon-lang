@@ -255,7 +255,9 @@ public:
     return getPersistentState(NewSt);    
   }
   
-  ValueState SetRVal(ValueState St, Expr* E, bool isBlkExpr, RVal V);
+  ValueState SetRVal(ValueState St, Expr* E, RVal V,
+                     bool isBlkExpr, bool Invalidate);
+  
   ValueState SetRVal(ValueState St, LVal LV, RVal V);
 
   RVal GetRVal(ValueState St, Expr* E);

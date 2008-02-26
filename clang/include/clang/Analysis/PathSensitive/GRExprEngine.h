@@ -243,7 +243,7 @@ protected:
   }
  
   StateTy SetBlkExprRVal(StateTy St, Expr* Ex, const RVal& V) {
-    return StateMgr.SetRVal(St, Ex, true, V);
+    return StateMgr.SetRVal(St, Ex, V, true, false);
   }
   
   /// SetRVal - This version of SetRVal is used to batch process a set
