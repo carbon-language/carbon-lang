@@ -493,6 +493,28 @@ namespace X86 {
     }
   }
 
+  static std::string convertConstraint(const char Constraint) {
+    switch (Constraint) {
+    case 'a': return std::string("{ax}");
+    case 'b': return std::string("{bx}");
+    case 'c': return std::string("{cx}");
+    case 'd': return std::string("{dx}");
+    case 'S': return std::string("{si}");
+    case 'D': return std::string("{di}");
+    case 't': // top of floating point stack.
+      return std::string("{st}");
+    case 'u': // second from top of floating point stack.
+      return std::string("{st(1)}"); // second from top of floating point stack.
+    case 'A': // edx:eax.
+    case 'q': // a, b, c, d registers or any integer register in 64-bit.
+    case 'Z': // 32-bit integer constant for used with zero-extending x86_64
+              // instructions.
+      assert(false && "Unimplemented inline asm constraint");
+    default:
+      return std::string(1, Constraint);
+    }
+  }
+
   const char *getClobbers() {
     return "~{dirflag},~{fpsr},~{flags}";
   }
@@ -614,6 +636,11 @@ public:
                                      TargetInfo::ConstraintInfo &info) const {
     return X86::validateAsmConstraint(c, info);
   }
+
+  virtual std::string convertConstraint(const char Constraint) const {
+    return X86::convertConstraint(Constraint);
+  }
+
   virtual const char *getClobbers() const {
     return X86::getClobbers();
   }  
@@ -650,7 +677,10 @@ public:
   virtual bool validateAsmConstraint(char c,
                                      TargetInfo::ConstraintInfo &info) const {
     return X86::validateAsmConstraint(c, info);
-  }  
+  }
+  virtual std::string convertConstraint(const char Constraint) const {
+    return X86::convertConstraint(Constraint);
+  }
   virtual const char *getClobbers() const {
     return X86::getClobbers();
   }    
@@ -731,6 +761,9 @@ public:
   virtual bool validateAsmConstraint(char c,
                                      TargetInfo::ConstraintInfo &info) const {
     return X86::validateAsmConstraint(c, info);
+  }
+  virtual std::string convertConstraint(const char Constraint) const {
+    return X86::convertConstraint(Constraint);
   }
   virtual const char *getClobbers() const {
     return X86::getClobbers();

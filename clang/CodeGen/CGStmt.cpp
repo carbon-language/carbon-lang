@@ -594,14 +594,14 @@ static inline std::string ConvertAsmString(const char *Start,
   return Result;
 }
 
-static std::string SimplifyConstraint(const char* Constraint)
-{
+static std::string SimplifyConstraint(const char* Constraint,
+                                      TargetInfo &Target) {
   std::string Result;
   
   while (*Constraint) {
     switch (*Constraint) {
     default:
-      Result += *Constraint;
+      Result += Target.convertConstraint(*Constraint);
       break;
     // Ignore these
     case '*':
@@ -648,7 +648,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
     assert(result && "Failed to parse output constraint");
     
     // Simplify the output constraint.
-    OutputConstraint = SimplifyConstraint(OutputConstraint.c_str() + 1);
+    OutputConstraint = SimplifyConstraint(OutputConstraint.c_str() + 1, Target);
     
     LValue Dest = EmitLValue(S.getOutputExpr(i));
     const llvm::Type *DestValueType = 
@@ -713,7 +713,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
       Constraints += ',';
     
     // Simplify the input constraint.
-    InputConstraint = SimplifyConstraint(InputConstraint.c_str());
+    InputConstraint = SimplifyConstraint(InputConstraint.c_str(), Target);
 
     llvm::Value *Arg;
     

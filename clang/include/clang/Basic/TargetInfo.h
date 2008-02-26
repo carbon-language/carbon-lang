@@ -227,6 +227,8 @@ public:
   bool validateOutputConstraint(const char *Name, ConstraintInfo &Info) const;
   bool validateInputConstraint (const char *Name, unsigned NumOutputs,
                                 ConstraintInfo &info) const;
+
+  std::string convertConstraint(const char Constraint) const;
   
   // Returns a string of target-specific clobbers, in LLVM format.
   const char *getClobbers() const;
@@ -346,6 +348,10 @@ public:
   
   virtual bool validateAsmConstraint(char c, 
                                      TargetInfo::ConstraintInfo &info) const= 0;
+
+  virtual std::string convertConstraint(const char Constraint) const {
+    return std::string(1, Constraint);
+  }
   
   virtual const char *getClobbers() const = 0;
 private:

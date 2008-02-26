@@ -454,6 +454,10 @@ bool TargetInfo::validateInputConstraint(const char *Name,
   return true;
 }
 
+std::string TargetInfo::convertConstraint(const char Constraint) const {
+  return PrimaryTarget->convertConstraint(Constraint);
+}
+
 const char *TargetInfo::getClobbers() const
 {
   return PrimaryTarget->getClobbers();
