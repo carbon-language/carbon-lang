@@ -1554,30 +1554,6 @@ abs:
 //===---------------------------------------------------------------------===//
 
 Consider:
-
-#include <inttypes.h>
-uint64_t a;
-uint16_t b;
-uint64_t mul(void) {
-  return a * b;
-}
-
-Currently, we generate the following:
-
-mul:
-        movzwl  b, %ecx
-        movl    %ecx, %eax
-        mull    a
-        imull   a+4, %ecx
-        addl    %edx, %ecx
-        movl    %ecx, %edx
-        ret
-
-llvm should be able to commute the addl so that the movl isn't necessary.
-
-//===---------------------------------------------------------------------===//
-
-Consider:
 int test(unsigned long a, unsigned long b) { return -(a < b); }
 
 We currently compile this to:
