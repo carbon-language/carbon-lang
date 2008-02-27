@@ -14,7 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "GRSimpleVals.h"
-#include "ValueState.h"
+#include "clang/Analysis/PathSensitive/ValueState.h"
 #include "clang/Basic/Diagnostic.h"
 
 using namespace clang;

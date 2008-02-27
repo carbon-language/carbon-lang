@@ -25,8 +25,6 @@ namespace llvm {
 }
 
 namespace clang {
-  class ASTContext;
-  
   
 class ValueManager {
   typedef llvm::FoldingSet<llvm::FoldingSetNodeWrapper<llvm::APSInt> >
@@ -55,15 +53,13 @@ public:
                                SourceLocation Loc = SourceLocation());
 
   inline const llvm::APSInt& getZeroWithPtrWidth() {
-    return getValue( 0,
-                    Ctx.getTypeSize(Ctx.VoidPtrTy, SourceLocation()),
-                    true );
+    return getValue(0, Ctx.getTypeSize(Ctx.VoidPtrTy, SourceLocation()), true);
   }
 
   inline const llvm::APSInt& getTruthValue(bool b) {
-    return getValue( b ? 1 : 0,
+    return getValue(b ? 1 : 0,
                     Ctx.getTypeSize(Ctx.IntTy, SourceLocation()),
-                    false );
+                    false);
   }
 
   const SymIntConstraint& getConstraint(SymbolID sym, BinaryOperator::Opcode Op,

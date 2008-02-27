@@ -21,7 +21,6 @@
 #include "clang/Analysis/PathSensitive/GRBlockCounter.h"
 #include "llvm/ADT/OwningPtr.h"
 
-
 namespace clang {
   
 class GRStmtNodeBuilderImpl;

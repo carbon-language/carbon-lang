@@ -14,9 +14,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
-#include "clang/Analysis/PathSensitive/GRTransferFuncs.h"
-
 #include "llvm/Support/Streams.h"
+
+#ifndef NDEBUG
+#include "llvm/Support/GraphWriter.h"
+#include <sstream>
+#endif
 
 using namespace clang;
 using llvm::dyn_cast;
