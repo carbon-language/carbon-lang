@@ -63,6 +63,8 @@ inline bool lastIsSlash(const std::string& path) {
 namespace llvm {
 using namespace sys;
 
+extern const char sys::PathSeparator = ':';
+
 bool 
 Path::isValid() const {
   // Check some obvious things
@@ -181,25 +183,6 @@ Path::GetTemporaryDirectory(std::string* ErrMsg ) {
   assert(result.isValid() && "mkstemp didn't create a valid pathname!");
   return result;
 #endif
-}
-
-static void getPathList(const char*path, std::vector<sys::Path>& Paths) {
-  const char* at = path;
-  const char* delim = strchr(at, ':');
-  Path tmpPath;
-  while( delim != 0 ) {
-    std::string tmp(at, size_t(delim-at));
-    if (tmpPath.set(tmp))
-      if (tmpPath.canRead())
-        Paths.push_back(tmpPath);
-    at = delim + 1;
-    delim = strchr(at, ':');
-  }
-  if (*at != 0)
-    if (tmpPath.set(std::string(at)))
-      if (tmpPath.canRead())
-        Paths.push_back(tmpPath);
-
 }
 
 void 

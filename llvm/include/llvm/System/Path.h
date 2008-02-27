@@ -662,6 +662,10 @@ namespace sys {
   /// @returns true if an error occurs, false otherwise
   /// @brief Copy one file to another.
   bool CopyFile(const Path& Dest, const Path& Src, std::string* ErrMsg);
+
+  /// This is the OS-specific path separator: a colon on Unix or a semicolon
+  /// on Windows.
+  extern const char PathSeparator;
 }
 
 std::ostream& operator<<(std::ostream& strm, const sys::Path& aPath);
