@@ -679,6 +679,7 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
     // There is no loop initialization.   We are thus basically a while 
     // loop.  NULL out Block to force lazy block construction.
     Block = NULL;
+    Succ = EntryConditionBlock;
     return EntryConditionBlock;
   }
 }
@@ -758,6 +759,7 @@ CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
   Block = NULL;
   
   // Return the condition block, which is the dominating block for the loop.
+  Succ = EntryConditionBlock;
   return EntryConditionBlock;
 }
 
@@ -790,10 +792,8 @@ CFGBlock* CFGBuilder::VisitDoStmt(DoStmt* D) {
     if (Block) FinishBlock(EntryConditionBlock);
   }
   
-  // The condition block is the implicit successor for the loop body as
-  // well as any code above the loop.
+  // The condition block is the implicit successor for the loop body.
   Succ = EntryConditionBlock;
-
 
   // Process the loop body.
   CFGBlock* BodyBlock = NULL;
@@ -836,6 +836,7 @@ CFGBlock* CFGBuilder::VisitDoStmt(DoStmt* D) {
   Block = NULL;
   
   // Return the loop body, which is the dominating block for the loop.
+  Succ = BodyBlock;
   return BodyBlock;
 }
 
