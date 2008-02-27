@@ -26,6 +26,30 @@ using llvm::dyn_cast;
 using llvm::cast;
 using llvm::APSInt;
 
+GRExprEngine::StateTy GRExprEngine::getInitialState() {
+
+  // The LiveVariables information already has a compilation of all VarDecls
+  // used in the function.  Iterate through this set, and "symbolicate"
+  // any VarDecl whose value originally comes from outside the function.
+  
+  typedef LiveVariables::AnalysisDataTy LVDataTy;
+  LVDataTy& D = Liveness.getAnalysisData();
+  
+  ValueStateImpl StateImpl = *StateMgr.getInitialState().getImpl();
+  
+  for (LVDataTy::decl_iterator I=D.begin_decl(), E=D.end_decl(); I != E; ++I) {
+    
+    VarDecl* VD = cast<VarDecl>(const_cast<ScopedDecl*>(I->first));
+    
+    if (VD->hasGlobalStorage() || isa<ParmVarDecl>(VD)) {
+      RVal X = RVal::GetSymbolValue(SymMgr, VD);
+      StateMgr.BindVar(StateImpl, VD, X);
+    }
+  }
+  
+  return StateMgr.getPersistentState(StateImpl);
+}      
+      
 GRExprEngine::StateTy
 GRExprEngine::SetRVal(StateTy St, Expr* Ex, const RVal& V) {
 
@@ -455,22 +479,6 @@ void GRExprEngine::Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred,
 
 void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* D, NodeTy* Pred, NodeSet& Dst){
 
-  if (VarDecl* VD = dyn_cast<VarDecl>(D->getDecl()))
-    if (VD->hasGlobalStorage() || isa<ParmVarDecl>(VD)) {
-
-      StateTy StOld = Pred->getState();
-      StateTy St = Symbolicate(StOld, VD);
-
-      if (!(St == StOld)) {
-        if (D != CurrentStmt)
-          Nodify(Dst, D, Pred, St);
-        else
-          Nodify(Dst, D, Pred, SetRVal(St, D, GetRVal(St, D)));
-        
-        return;
-      }
-    }
-  
   if (D != CurrentStmt) {
     Dst.Add(Pred); // No-op. Simply propagate the current state unchanged.
     return;
@@ -884,20 +892,7 @@ void GRExprEngine::VisitLVal(Expr* Ex, NodeTy* Pred, NodeSet& Dst) {
   
   Ex = Ex->IgnoreParens();
   
-  if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(Ex)) {
-    
-    if (VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl()))
-      if (VD->hasGlobalStorage() || isa<ParmVarDecl>(VD)) {
-        
-        StateTy StOld = Pred->getState();
-        StateTy St = Symbolicate(StOld, VD);
-        
-        if (!(St == StOld)) {
-          Nodify(Dst, Ex, Pred, St);
-          return;
-        }
-      }
-    
+  if (isa<DeclRefExpr>(Ex)) {
     Dst.Add(Pred);
     return;
   }

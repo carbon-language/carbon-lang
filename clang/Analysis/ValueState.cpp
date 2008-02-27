@@ -437,10 +437,14 @@ ValueState ValueStateManager::SetRVal(ValueState St, LVal LV, RVal V) {
   }
 }
 
+void ValueStateManager::BindVar(ValueStateImpl& StImpl, VarDecl* D, RVal V) {
+  StImpl.VarBindings = VBFactory.Add(StImpl.VarBindings, D, V);
+}
+
 ValueState ValueStateManager::BindVar(ValueState St, VarDecl* D, RVal V) {
   
   // Create a new state with the old binding removed.
-  ValueStateImpl NewSt = *St;
+  ValueStateImpl NewSt = *St;  
   NewSt.VarBindings = VBFactory.Add(NewSt.VarBindings, D, V);
   
   // Get the persistent copy.

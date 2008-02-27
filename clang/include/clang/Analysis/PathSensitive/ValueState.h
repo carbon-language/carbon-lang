@@ -266,6 +266,7 @@ public:
   
   RVal GetBlkExprRVal(ValueState St, Expr* Ex);
   
+  void BindVar(ValueStateImpl& StImpl, VarDecl* D, RVal V);
   ValueState getPersistentState(const ValueStateImpl& Impl);
   
   ValueState AddEQ(ValueState St, SymbolID sym, const llvm::APSInt& V);

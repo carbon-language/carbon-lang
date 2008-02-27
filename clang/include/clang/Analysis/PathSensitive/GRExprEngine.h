@@ -150,7 +150,7 @@ public:
   
   /// getInitialState - Return the initial state used for the root vertex
   ///  in the ExplodedGraph.
-  StateTy getInitialState() { return StateMgr.getInitialState(); }
+  StateTy getInitialState();
   
   bool isUninitControlFlow(const NodeTy* N) const {
     return N->isSink() && UninitBranches.count(const_cast<NodeTy*>(N)) != 0;
@@ -250,15 +250,6 @@ protected:
   
   RVal GetLVal(const StateTy& St, Expr* Ex) {
     return StateMgr.GetLVal(St, Ex);
-  }
-  
-  StateTy Symbolicate(StateTy St, VarDecl* VD) {
-    lval::DeclVal X(VD);
-    
-    if (GetRVal(St, X).isUnknown()) {
-      return SetRVal(St, lval::DeclVal(VD), RVal::GetSymbolValue(SymMgr, VD));
-    }
-    else return St;
   }
   
   inline NonLVal MakeConstantVal(uint64_t X, Expr* Ex) {
