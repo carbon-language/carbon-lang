@@ -234,3 +234,30 @@ down by 8 and truncate it. It's not pretty but it works. We need some register
 allocation magic to make the hack go away (e.g. putting additional constraints
 on the result of the movb).
 
+//===---------------------------------------------------------------------===//
+
+This function:
+double a(double b) {return (unsigned)b;} 
+compiles to this code:
+
+_a:
+	subq	$8, %rsp
+	cvttsd2siq	%xmm0, %rax
+	movl	$4294967295, %ecx
+	andq	%rcx, %rax
+	cvtsi2sdq	%rax, %xmm0
+	addq	$8, %rsp
+	ret
+
+note the dead rsp adjustments.  Also, there is surely a better/shorter way 
+to clear the top 32-bits of a 64-bit register than movl+andq.  Testcase here:
+
+unsigned long long c(unsigned long long a) {return a&4294967295; }
+
+_c:
+	movl	$4294967295, %ecx
+	movq	%rdi, %rax
+	andq	%rcx, %rax
+	ret
+
+//===---------------------------------------------------------------------===//
