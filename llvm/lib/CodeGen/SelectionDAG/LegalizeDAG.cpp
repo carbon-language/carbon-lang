@@ -569,22 +569,32 @@ SDOperand ExpandUnalignedStore(StoreSDNode *ST, SelectionDAG &DAG,
   MVT::ValueType VT = Val.getValueType();
   int Alignment = ST->getAlignment();
   int SVOffset = ST->getSrcValueOffset();
-  if (MVT::isFloatingPoint(ST->getMemoryVT())) {
+  if (MVT::isFloatingPoint(ST->getMemoryVT()) || 
+      MVT::isVector(ST->getMemoryVT())) {
     // Expand to a bitconvert of the value to the integer type of the 
     // same size, then a (misaligned) int store.
     MVT::ValueType intVT;
-    if (VT==MVT::f64)
+    if (VT == MVT::v8i16 || VT == MVT::v4i32 ||
+        VT == MVT::v2i64 || VT == MVT::v2f64 ||
+        VT == MVT::v4f32 || VT == MVT::v16i8 ||
+        VT == MVT::ppcf128)
+      intVT = MVT::i128;
+    else if (VT==MVT::f64 ||
+        VT == MVT::v8i8 || VT == MVT::v4i16 ||
+        VT == MVT::v2i32 || VT == MVT::v1i64 ||
+        VT == MVT::v2f32)
       intVT = MVT::i64;
     else if (VT==MVT::f32)
       intVT = MVT::i32;
     else
-      assert(0 && "Unaligned load of unsupported floating point type");
+      assert(0 && "Unaligned load of unsupported type");
 
     SDOperand Result = DAG.getNode(ISD::BIT_CONVERT, intVT, Val);
     return DAG.getStore(Chain, Result, Ptr, ST->getSrcValue(),
                         SVOffset, ST->isVolatile(), Alignment);
   }
   assert(MVT::isInteger(ST->getMemoryVT()) &&
+         !MVT::isVector(ST->getMemoryVT()) &&
          "Unaligned store of unknown type.");
   // Get the half-size VT
   MVT::ValueType NewStoredVT = ST->getMemoryVT() - 1;
@@ -620,43 +630,44 @@ SDOperand ExpandUnalignedLoad(LoadSDNode *LD, SelectionDAG &DAG,
   SDOperand Ptr = LD->getBasePtr();
   MVT::ValueType VT = LD->getValueType(0);
   MVT::ValueType LoadedVT = LD->getMemoryVT();
-  if (MVT::isFloatingPoint(VT) && !MVT::isVector(VT)) {
+  if (MVT::isFloatingPoint(VT) || MVT::isVector(VT)) {
     // Expand to a (misaligned) integer load of the same size,
-    // then bitconvert to floating point.
+    // then bitconvert to floating point or vector.
     MVT::ValueType intVT;
-    if (LoadedVT == MVT::f64)
+    if (LoadedVT == MVT::v8i16 || LoadedVT == MVT::v4i32 ||
+        LoadedVT == MVT::v2i64 || LoadedVT == MVT::v2f64 ||
+        LoadedVT == MVT::v4f32 || LoadedVT == MVT::v16i8 ||
+        LoadedVT == MVT::ppcf128)
+      intVT = MVT::i128;
+    else if (LoadedVT == MVT::f64 || 
+             LoadedVT == MVT::v8i8 || LoadedVT == MVT::v4i16 ||
+             LoadedVT == MVT::v2i32 || LoadedVT == MVT::v1i64 ||
+             LoadedVT == MVT::v2f32)
       intVT = MVT::i64;
     else if (LoadedVT == MVT::f32)
       intVT = MVT::i32;
     else
-      assert(0 && "Unaligned load of unsupported floating point type");
+      assert(0 && "Unaligned load of unsupported type");
 
     SDOperand newLoad = DAG.getLoad(intVT, Chain, Ptr, LD->getSrcValue(),
                                     SVOffset, LD->isVolatile(), 
                                     LD->getAlignment());
     SDOperand Result = DAG.getNode(ISD::BIT_CONVERT, LoadedVT, newLoad);
-    if (LoadedVT != VT)
+    if (MVT::isFloatingPoint(VT) && LoadedVT != VT)
       Result = DAG.getNode(ISD::FP_EXTEND, VT, Result);
 
     SDOperand Ops[] = { Result, Chain };
     return DAG.getNode(ISD::MERGE_VALUES, DAG.getVTList(VT, MVT::Other), 
                        Ops, 2);
   }
-  assert((MVT::isInteger(LoadedVT) || MVT::isVector(LoadedVT)) &&
+  assert(MVT::isInteger(LoadedVT) && !MVT::isVector(LoadedVT) &&
          "Unaligned load of unsupported type.");
 
-  // Compute the new VT that is half the size of the old one.  We either have an
-  // integer MVT or we have a vector MVT.
+  // Compute the new VT that is half the size of the old one.  This is an
+  // integer MVT.
   unsigned NumBits = MVT::getSizeInBits(LoadedVT);
   MVT::ValueType NewLoadedVT;
-  if (!MVT::isVector(LoadedVT)) {
-    NewLoadedVT = MVT::getIntegerType(NumBits/2);
-  } else {
-    // FIXME: This is not right for <1 x anything> it is also not right for
-    // non-power-of-two vectors.
-    NewLoadedVT = MVT::getVectorType(MVT::getVectorElementType(LoadedVT),
-                                     MVT::getVectorNumElements(LoadedVT)/2);
-  }
+  NewLoadedVT = MVT::getIntegerType(NumBits/2);
   NumBits >>= 1;
   
   unsigned Alignment = LD->getAlignment();
