@@ -1312,6 +1312,8 @@ public:
   /// addIncoming - Add an incoming value to the end of the PHI list
   ///
   void addIncoming(Value *V, BasicBlock *BB) {
+    assert(V && "PHI node got a null value!");
+    assert(BB && "PHI node got a null basic block!");
     assert(getType() == V->getType() &&
            "All operands to PHI node must be the same type as the PHI node!");
     unsigned OpNo = NumOperands;
