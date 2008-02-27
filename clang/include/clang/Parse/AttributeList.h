@@ -48,7 +48,8 @@ public:
     AT_address_space,
     AT_aligned,
     AT_packed,
-    AT_annotate
+    AT_annotate,
+    AT_noreturn
   };
   
   IdentifierInfo *getName() const { return AttrName; }

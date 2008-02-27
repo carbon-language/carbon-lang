@@ -25,7 +25,8 @@ public:
   enum Kind {
     Aligned,
     Packed,
-    Annotate
+    Annotate,
+    NoReturn
   };
     
 private:
@@ -94,6 +95,16 @@ public:
     return A->getKind() == Annotate;
   }
   static bool classof(const AnnotateAttr *A) { return true; }
+};
+  
+class NoReturnAttr : public Attr {
+public:
+  NoReturnAttr() : Attr(NoReturn) {}
+  
+  // Implement isa/cast/dyncast/etc.
+  
+  static bool classof(const Attr *A) { return A->getKind() == NoReturn; }  
+  static bool classof(const NoReturnAttr *A) { return true; }
 };
 
 }  // end namespace clang

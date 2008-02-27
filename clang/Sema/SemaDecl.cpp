@@ -1785,6 +1785,9 @@ void Sema::HandleDeclAttribute(Decl *New, AttributeList *Attr) {
   case AttributeList::AT_annotate:
     HandleAnnotateAttribute(New, Attr);
     break;
+  case AttributeList::AT_noreturn:
+    HandleNoReturnAttribute(New, Attr);
+    break;
   default:
     // FIXME: add other attributes...
     break;
@@ -1925,6 +1928,17 @@ void Sema::HandlePackedAttribute(Decl *d, AttributeList *rawAttr) {
   } else
     Diag(rawAttr->getLoc(), diag::warn_attribute_ignored,
          rawAttr->getName()->getName());
+}
+
+void Sema::HandleNoReturnAttribute(Decl *d, AttributeList *rawAttr) {
+  // check the attribute arguments.
+  if (rawAttr->getNumArgs() != 0) {
+    Diag(rawAttr->getLoc(), diag::err_attribute_wrong_number_arguments,
+         std::string("0"));
+    return;
+  }
+  
+  d->addAttr(new NoReturnAttr());
 }
 
 void Sema::HandleAnnotateAttribute(Decl *d, AttributeList *rawAttr) {
