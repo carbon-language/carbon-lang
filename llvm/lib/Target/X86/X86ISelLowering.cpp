@@ -4148,12 +4148,17 @@ SDOperand X86TargetLowering::LowerShift(SDOperand Op, SelectionDAG &DAG) {
 }
 
 SDOperand X86TargetLowering::LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
-  assert(Op.getOperand(0).getValueType() <= MVT::i64 &&
-         Op.getOperand(0).getValueType() >= MVT::i16 &&
-         "Unknown SINT_TO_FP to lower!");
-
-  SDOperand Result;
   MVT::ValueType SrcVT = Op.getOperand(0).getValueType();
+  assert(SrcVT <= MVT::i64 && SrcVT >= MVT::i16 &&
+         "Unknown SINT_TO_FP to lower!");
+  
+  // These are really Legal; caller falls through into that case.
+  if (SrcVT == MVT::i32 && isScalarFPTypeInSSEReg(Op.getValueType()))
+    return SDOperand();
+  if (SrcVT == MVT::i64 && Op.getValueType() != MVT::f80 && 
+      Subtarget->is64Bit())
+    return SDOperand();
+  
   unsigned Size = MVT::getSizeInBits(SrcVT)/8;
   MachineFunction &MF = DAG.getMachineFunction();
   int SSFI = MF.getFrameInfo()->CreateStackObject(Size, Size);
@@ -4162,13 +4167,6 @@ SDOperand X86TargetLowering::LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
                                  StackSlot,
                                  PseudoSourceValue::getFixedStack(),
                                  SSFI);
-
-  // These are really Legal; caller falls through into that case.
-  if (SrcVT == MVT::i32 && isScalarFPTypeInSSEReg(Op.getValueType()))
-    return Result;
-  if (SrcVT == MVT::i64 && Op.getValueType() != MVT::f80 && 
-      Subtarget->is64Bit())
-    return Result;
 
   // Build the FILD
   SDVTList Tys;
@@ -4181,8 +4179,8 @@ SDOperand X86TargetLowering::LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
   Ops.push_back(Chain);
   Ops.push_back(StackSlot);
   Ops.push_back(DAG.getValueType(SrcVT));
-  Result = DAG.getNode(useSSE ? X86ISD::FILD_FLAG :X86ISD::FILD,
-                       Tys, &Ops[0], Ops.size());
+  SDOperand Result = DAG.getNode(useSSE ? X86ISD::FILD_FLAG : X86ISD::FILD,
+                                 Tys, &Ops[0], Ops.size());
 
   if (useSSE) {
     Chain = Result.getValue(1);

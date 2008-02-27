@@ -236,18 +236,3 @@ on the result of the movb).
 
 //===---------------------------------------------------------------------===//
 
-This function:
-double a(double b) {return (unsigned)b;} 
-compiles to this code:
-
-_a:
-	subq	$8, %rsp
-	cvttsd2siq	%xmm0, %rax
-	movl	%eax, %eax
-	cvtsi2sdq	%rax, %xmm0
-	addq	$8, %rsp
-	ret
-
-note the dead rsp adjustments.
-
-//===---------------------------------------------------------------------===//
