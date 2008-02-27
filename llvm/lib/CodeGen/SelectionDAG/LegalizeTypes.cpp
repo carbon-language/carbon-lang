@@ -68,25 +68,26 @@ void DAGTypeLegalizer::run() {
     unsigned NumResults = N->getNumValues();
     do {
       MVT::ValueType ResultVT = N->getValueType(i);
-      LegalizeAction Action = getTypeAction(ResultVT);
-      if (Action == Promote) {
+      switch (getTypeAction(ResultVT)) {
+      default:
+        assert(false && "Unknown action!");
+      case Legal:
+        break;
+      case Promote:
         PromoteResult(N, i);
         goto NodeDone;
-      } else if (Action == Expand) {
-        // Expand can mean 1) split integer in half 2) scalarize single-element
-        // vector 3) split vector in half.
-        if (!MVT::isVector(ResultVT))
-          ExpandResult(N, i);
-        else if (MVT::getVectorNumElements(ResultVT) == 1)
-          ScalarizeResult(N, i);     // Scalarize the single-element vector.
-        else
-          SplitResult(N, i);         // Split the vector in half.
+      case Expand:
+        ExpandResult(N, i);
         goto NodeDone;
-      } else {
-        assert(Action == Legal && "Unknown action!");
+      case Scalarize:
+        ScalarizeResult(N, i);
+        goto NodeDone;
+      case Split:
+        SplitResult(N, i);
+        goto NodeDone;
       }
     } while (++i < NumResults);
-    
+
     // Scan the operand list for the node, handling any nodes with operands that
     // are illegal.
     {
@@ -94,25 +95,25 @@ void DAGTypeLegalizer::run() {
     bool NeedsRevisit = false;
     for (i = 0; i != NumOperands; ++i) {
       MVT::ValueType OpVT = N->getOperand(i).getValueType();
-      LegalizeAction Action = getTypeAction(OpVT);
-      if (Action == Promote) {
+      switch (getTypeAction(OpVT)) {
+      default:
+        assert(false && "Unknown action!");
+      case Legal:
+        continue;
+      case Promote:
         NeedsRevisit = PromoteOperand(N, i);
         break;
-      } else if (Action == Expand) {
-        // Expand can mean 1) split integer in half 2) scalarize single-element
-        // vector 3) split vector in half.
-        if (!MVT::isVector(OpVT)) {
-          NeedsRevisit = ExpandOperand(N, i);
-        } else if (MVT::getVectorNumElements(OpVT) == 1) {
-          // Scalarize the single-element vector.
-          NeedsRevisit = ScalarizeOperand(N, i);
-        } else {
-          NeedsRevisit = SplitOperand(N, i); // Split the vector in half.
-        }
+      case Expand:
+        NeedsRevisit = ExpandOperand(N, i);
         break;
-      } else {
-        assert(Action == Legal && "Unknown action!");
+      case Scalarize:
+        NeedsRevisit = ScalarizeOperand(N, i);
+        break;
+      case Split:
+        NeedsRevisit = SplitOperand(N, i);
+        break;
       }
+      break;
     }
 
     // If the node needs revisiting, don't add all users to the worklist etc.
@@ -432,7 +433,7 @@ SDOperand DAGTypeLegalizer::HandleMemIntrinsic(SDNode *N) {
   case Legal: break;
   case Promote: Op2 = GetPromotedOp(Op2); break;
   }
-  
+
   // The length could have any action required.
   SDOperand Length = N->getOperand(3);
   switch (getTypeAction(Length.getValueType())) {
@@ -444,21 +445,21 @@ SDOperand DAGTypeLegalizer::HandleMemIntrinsic(SDNode *N) {
     GetExpandedOp(Length, Length, Dummy);
     break;
   }
-  
+
   SDOperand Align = N->getOperand(4);
   switch (getTypeAction(Align.getValueType())) {
   default: assert(0 && "Unknown action for memop operand");
   case Legal: break;
   case Promote: Align = GetPromotedZExtOp(Align); break;
   }
-  
+
   SDOperand AlwaysInline = N->getOperand(5);
   switch (getTypeAction(AlwaysInline.getValueType())) {
   default: assert(0 && "Unknown action for memop operand");
   case Legal: break;
   case Promote: AlwaysInline = GetPromotedZExtOp(AlwaysInline); break;
   }
-  
+
   SDOperand Ops[] = { Chain, Ptr, Op2, Length, Align, AlwaysInline };
   return DAG.UpdateNodeOperands(SDOperand(N, 0), Ops, 6);
 }

@@ -176,6 +176,9 @@ bool DAGTypeLegalizer::ScalarizeOperand(SDNode *N, unsigned OpNo) {
       assert(0 && "Do not know how to scalarize this operator's operand!");
       abort();
       
+    case ISD::BIT_CONVERT:
+      Res = ScalarizeOp_BIT_CONVERT(N); break;
+
     case ISD::EXTRACT_VECTOR_ELT:
       Res = ScalarizeOp_EXTRACT_VECTOR_ELT(N); break;
 
@@ -202,6 +205,13 @@ bool DAGTypeLegalizer::ScalarizeOperand(SDNode *N, unsigned OpNo) {
   
   ReplaceValueWith(SDOperand(N, 0), Res);
   return false;
+}
+
+/// ScalarizeOp_BIT_CONVERT - If the value to convert is a vector that needs
+/// to be scalarized, it must be <1 x ty>.  Convert the element instead.
+SDOperand DAGTypeLegalizer::ScalarizeOp_BIT_CONVERT(SDNode *N) {
+  SDOperand Elt = GetScalarizedOp(N->getOperand(0));
+  return DAG.getNode(ISD::BIT_CONVERT, N->getValueType(0), Elt);
 }
 
 /// ScalarizeOp_EXTRACT_VECTOR_ELT - If the input is a vector that needs to be

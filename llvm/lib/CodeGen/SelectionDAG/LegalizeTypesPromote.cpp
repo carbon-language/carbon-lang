@@ -50,6 +50,7 @@ void DAGTypeLegalizer::PromoteResult(SDNode *N, unsigned ResNo) {
   case ISD::SETCC:    Result = PromoteResult_SETCC(N); break;
   case ISD::LOAD:     Result = PromoteResult_LOAD(cast<LoadSDNode>(N)); break;
   case ISD::BUILD_PAIR:  Result = PromoteResult_BUILD_PAIR(N); break;
+  case ISD::BIT_CONVERT: Result = PromoteResult_BIT_CONVERT(N); break;
 
   case ISD::AND:
   case ISD::OR:
@@ -74,8 +75,12 @@ void DAGTypeLegalizer::PromoteResult(SDNode *N, unsigned ResNo) {
   case ISD::CTLZ:     Result = PromoteResult_CTLZ(N); break;
   case ISD::CTPOP:    Result = PromoteResult_CTPOP(N); break;
   case ISD::CTTZ:     Result = PromoteResult_CTTZ(N); break;
+
+  case ISD::EXTRACT_VECTOR_ELT:
+    Result = PromoteResult_EXTRACT_VECTOR_ELT(N);
+    break;
   }      
-  
+
   // If Result is null, the sub-method took care of registering the result.
   if (Result.Val)
     SetPromotedOp(SDOperand(N, ResNo), Result);
@@ -214,6 +219,65 @@ SDOperand DAGTypeLegalizer::PromoteResult_BUILD_PAIR(SDNode *N) {
   return DAG.getNode(ISD::OR, NVT, Lo, Hi);
 }
 
+SDOperand DAGTypeLegalizer::PromoteResult_BIT_CONVERT(SDNode *N) {
+  SDOperand InOp = N->getOperand(0);
+  MVT::ValueType InVT = InOp.getValueType();
+  MVT::ValueType NInVT = TLI.getTypeToTransformTo(InVT);
+  MVT::ValueType OutVT = TLI.getTypeToTransformTo(N->getValueType(0));
+
+  switch (getTypeAction(InVT)) {
+  default:
+    assert(false && "Unknown type action!");
+    break;
+  case Legal:
+    break;
+  case Promote:
+    if (MVT::getSizeInBits(OutVT) == MVT::getSizeInBits(NInVT))
+      // The input promotes to the same size.  Convert the promoted value.
+      return DAG.getNode(ISD::BIT_CONVERT, OutVT, GetPromotedOp(InOp));
+    break;
+  case Expand:
+    break;
+  case Scalarize:
+    // Convert the element to an integer and promote it by hand.
+    InOp = DAG.getNode(ISD::BIT_CONVERT,
+                       MVT::getIntegerType(MVT::getSizeInBits(InVT)),
+                       GetScalarizedOp(InOp));
+    InOp = DAG.getNode(ISD::ANY_EXTEND,
+                       MVT::getIntegerType(MVT::getSizeInBits(OutVT)), InOp);
+    return DAG.getNode(ISD::BIT_CONVERT, OutVT, InOp);
+  case Split:
+    // For example, i32 = BIT_CONVERT v2i16 on alpha.  Convert the split
+    // pieces of the input into integers and reassemble in the final type.
+    SDOperand Lo, Hi;
+    GetSplitOp(N->getOperand(0), Lo, Hi);
+
+    unsigned LoBits = MVT::getSizeInBits(Lo.getValueType());
+    Lo = DAG.getNode(ISD::BIT_CONVERT, MVT::getIntegerType(LoBits), Lo);
+
+    unsigned HiBits = MVT::getSizeInBits(Hi.getValueType());
+    Hi = DAG.getNode(ISD::BIT_CONVERT, MVT::getIntegerType(HiBits), Hi);
+
+    if (TLI.isBigEndian())
+      std::swap(Lo, Hi);
+
+    MVT::ValueType TargetTy = MVT::getIntegerType(MVT::getSizeInBits(OutVT));
+    Hi = DAG.getNode(ISD::ANY_EXTEND, TargetTy, Hi);
+    Hi = DAG.getNode(ISD::SHL, TargetTy, Hi,
+                     DAG.getConstant(MVT::getSizeInBits(Lo.getValueType()),
+                                     TLI.getShiftAmountTy()));
+    Lo = DAG.getNode(ISD::ZERO_EXTEND, TargetTy, Lo);
+
+    return DAG.getNode(ISD::BIT_CONVERT, OutVT,
+                       DAG.getNode(ISD::OR, TargetTy, Lo, Hi));
+  }
+
+  // Otherwise, lower the bit-convert to a store/load from the stack, then
+  // promote the load.
+  SDOperand Op = CreateStackStoreLoad(InOp, N->getValueType(0));
+  return PromoteResult_LOAD(cast<LoadSDNode>(Op.Val));
+}
+
 SDOperand DAGTypeLegalizer::PromoteResult_SimpleIntBinOp(SDNode *N) {
   // The input may have strange things in the top bits of the registers, but
   // these operations don't care.  They may have weird bits going out, but
@@ -313,6 +377,51 @@ SDOperand DAGTypeLegalizer::PromoteResult_CTTZ(SDNode *N) {
                    // FIXME: Do this using an APINT constant.
                    DAG.getConstant(1UL << MVT::getSizeInBits(OVT), NVT));
   return DAG.getNode(ISD::CTTZ, NVT, Op);
+}
+
+SDOperand DAGTypeLegalizer::PromoteResult_EXTRACT_VECTOR_ELT(SDNode *N) {
+  MVT::ValueType OldVT = N->getValueType(0);
+  SDOperand OldVec = N->getOperand(0);
+  unsigned OldElts = MVT::getVectorNumElements(OldVec.getValueType());
+
+  if (OldElts == 1) {
+    assert(!isTypeLegal(OldVec.getValueType()) &&
+           "Legal one-element vector of a type needing promotion!");
+    // It is tempting to follow GetScalarizedOp by a call to GetPromotedOp,
+    // but this would be wrong because the scalarized value may not yet have
+    // been processed.
+    return DAG.getNode(ISD::ANY_EXTEND, TLI.getTypeToTransformTo(OldVT),
+                       GetScalarizedOp(OldVec));
+  }
+
+  // Convert to a vector half as long with an element type of twice the width,
+  // for example <4 x i16> -> <2 x i32>.
+  assert(!(OldElts & 1) && "Odd length vectors not supported!");
+  MVT::ValueType NewVT = MVT::getIntegerType(2 * MVT::getSizeInBits(OldVT));
+  assert(!MVT::isExtendedVT(OldVT) && !MVT::isExtendedVT(NewVT));
+
+  SDOperand NewVec = DAG.getNode(ISD::BIT_CONVERT,
+                                 MVT::getVectorType(NewVT, OldElts / 2),
+                                 OldVec);
+
+  // Extract the element at OldIdx / 2 from the new vector.
+  SDOperand OldIdx = N->getOperand(1);
+  SDOperand NewIdx = DAG.getNode(ISD::SRL, OldIdx.getValueType(), OldIdx,
+                                 DAG.getConstant(1, TLI.getShiftAmountTy()));
+  SDOperand Elt = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, NewVT, NewVec, NewIdx);
+
+  // Select the appropriate half of the element: Lo if OldIdx was even,
+  // Hi if it was odd.
+  SDOperand Lo = Elt;
+  SDOperand Hi = DAG.getNode(ISD::SRL, NewVT, Elt,
+                             DAG.getConstant(MVT::getSizeInBits(OldVT),
+                                             TLI.getShiftAmountTy()));
+  if (TLI.isBigEndian())
+    std::swap(Lo, Hi);
+
+  SDOperand Odd = DAG.getNode(ISD::AND, OldIdx.getValueType(), OldIdx,
+                              DAG.getConstant(1, TLI.getShiftAmountTy()));
+  return DAG.getNode(ISD::SELECT, NewVT, Odd, Hi, Lo);
 }
 
 //===----------------------------------------------------------------------===//

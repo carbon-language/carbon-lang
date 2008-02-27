@@ -61,27 +61,46 @@ private:
   enum LegalizeAction {
     Legal,      // The target natively supports this type.
     Promote,    // This type should be executed in a larger type.
-    Expand      // This type should be split into two types of half the size.
+    Expand,     // This type should be split into two types of half the size.
+    Scalarize,  // Replace this one-element vector type with its element type.
+    Split       // This vector type should be split into smaller vectors.
   };
-  
+
   /// ValueTypeActions - This is a bitvector that contains two bits for each
   /// simple value type, where the two bits correspond to the LegalizeAction
-  /// enum.  This can be queried with "getTypeAction(VT)".
+  /// enum from TargetLowering.  This can be queried with "getTypeAction(VT)".
   TargetLowering::ValueTypeActionImpl ValueTypeActions;
   
   /// getTypeAction - Return how we should legalize values of this type, either
-  /// it is already legal or we need to expand it into multiple registers of
-  /// smaller integer type, or we need to promote it to a larger type.
+  /// it is already legal, or we need to promote it to a larger integer type, or
+  /// we need to expand it into multiple registers of a smaller integer type, or
+  /// we need to scalarize a one-element vector type into the element type, or
+  /// we need to split a vector type into smaller vector types.
   LegalizeAction getTypeAction(MVT::ValueType VT) const {
-    return (LegalizeAction)ValueTypeActions.getTypeAction(VT);
+    switch (ValueTypeActions.getTypeAction(VT)) {
+    default:
+      assert(false && "Unknown legalize action!");
+    case TargetLowering::Legal:
+      return Legal;
+    case TargetLowering::Promote:
+      return Promote;
+    case TargetLowering::Expand:
+      // Expand can mean 1) split integer in half 2) scalarize single-element
+      // vector 3) split vector in two.
+      if (!MVT::isVector(VT))
+        return Expand;
+      else if (MVT::getVectorNumElements(VT) == 1)
+        return Scalarize;
+      else
+        return Split;
+    }
   }
-  
+
   /// isTypeLegal - Return true if this type is legal on this target.
-  ///
   bool isTypeLegal(MVT::ValueType VT) const {
-    return getTypeAction(VT) == Legal;
+    return ValueTypeActions.getTypeAction(VT) == TargetLowering::Legal;
   }
-  
+
   /// PromotedNodes - For nodes that are below legal width, this map indicates
   /// what promoted value to use.
   DenseMap<SDOperand, SDOperand> PromotedNodes;
@@ -159,11 +178,13 @@ private:
     
   // Result Promotion.
   void PromoteResult(SDNode *N, unsigned ResNo);
+  SDOperand PromoteResult_BIT_CONVERT(SDNode *N);
   SDOperand PromoteResult_BUILD_PAIR(SDNode *N);
   SDOperand PromoteResult_Constant(SDNode *N);
   SDOperand PromoteResult_CTLZ(SDNode *N);
   SDOperand PromoteResult_CTPOP(SDNode *N);
   SDOperand PromoteResult_CTTZ(SDNode *N);
+  SDOperand PromoteResult_EXTRACT_VECTOR_ELT(SDNode *N);
   SDOperand PromoteResult_FP_ROUND(SDNode *N);
   SDOperand PromoteResult_FP_TO_XINT(SDNode *N);
   SDOperand PromoteResult_INT_EXTEND(SDNode *N);
@@ -219,6 +240,7 @@ private:
   void ExpandResult_CTLZ       (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_CTPOP      (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_CTTZ       (SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandResult_EXTRACT_VECTOR_ELT(SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_LOAD       (LoadSDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_MERGE_VALUES(SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_SIGN_EXTEND(SDNode *N, SDOperand &Lo, SDOperand &Hi);
@@ -283,6 +305,7 @@ private:
 
   // Operand Vector Scalarization: <1 x ty> -> ty.
   bool ScalarizeOperand(SDNode *N, unsigned OpNo);
+  SDOperand ScalarizeOp_BIT_CONVERT(SDNode *N);
   SDOperand ScalarizeOp_EXTRACT_VECTOR_ELT(SDNode *N);
   SDOperand ScalarizeOp_STORE(StoreSDNode *N, unsigned OpNo);
 
@@ -313,7 +336,9 @@ private:
   // Operand Vector Scalarization: <128 x ty> -> 2 x <64 x ty>.
   bool SplitOperand(SDNode *N, unsigned OpNo);
 
+  SDOperand SplitOp_BIT_CONVERT(SDNode *N);
   SDOperand SplitOp_EXTRACT_SUBVECTOR(SDNode *N);
+  SDOperand SplitOp_EXTRACT_VECTOR_ELT(SDNode *N);
   SDOperand SplitOp_RET(SDNode *N, unsigned OpNo);
   SDOperand SplitOp_STORE(StoreSDNode *N, unsigned OpNo);
   SDOperand SplitOp_VECTOR_SHUFFLE(SDNode *N, unsigned OpNo);

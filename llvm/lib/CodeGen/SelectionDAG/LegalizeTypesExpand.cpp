@@ -86,6 +86,10 @@ void DAGTypeLegalizer::ExpandResult(SDNode *N, unsigned ResNo) {
   case ISD::CTLZ:        ExpandResult_CTLZ(N, Lo, Hi); break;
   case ISD::CTPOP:       ExpandResult_CTPOP(N, Lo, Hi); break;
   case ISD::CTTZ:        ExpandResult_CTTZ(N, Lo, Hi); break;
+
+  case ISD::EXTRACT_VECTOR_ELT:
+    ExpandResult_EXTRACT_VECTOR_ELT(N, Lo, Hi);
+    break;
   }
 
   // If Lo/Hi is null, the sub-method took care of registering results etc.
@@ -147,7 +151,7 @@ void DAGTypeLegalizer::ExpandResult_ANY_EXTEND(SDNode *N,
     // For example, extension of an i48 to an i64.  The operand type necessarily
     // promotes to the result type, so will end up being expanded too.
     assert(getTypeAction(Op.getValueType()) == Promote &&
-           "Don't know how to expand this result!");
+           "Only know how to promote this result!");
     SDOperand Res = GetPromotedOp(Op);
     assert(Res.getValueType() == N->getValueType(0) &&
            "Operand over promoted?");
@@ -168,7 +172,7 @@ void DAGTypeLegalizer::ExpandResult_ZERO_EXTEND(SDNode *N,
     // For example, extension of an i48 to an i64.  The operand type necessarily
     // promotes to the result type, so will end up being expanded too.
     assert(getTypeAction(Op.getValueType()) == Promote &&
-           "Don't know how to expand this result!");
+           "Only know how to promote this result!");
     SDOperand Res = GetPromotedOp(Op);
     assert(Res.getValueType() == N->getValueType(0) &&
            "Operand over promoted?");
@@ -195,7 +199,7 @@ void DAGTypeLegalizer::ExpandResult_SIGN_EXTEND(SDNode *N,
     // For example, extension of an i48 to an i64.  The operand type necessarily
     // promotes to the result type, so will end up being expanded too.
     assert(getTypeAction(Op.getValueType()) == Promote &&
-           "Don't know how to expand this result!");
+           "Only know how to promote this result!");
     SDOperand Res = GetPromotedOp(Op);
     assert(Res.getValueType() == N->getValueType(0) &&
            "Operand over promoted?");
@@ -239,6 +243,8 @@ void DAGTypeLegalizer::ExpandResult_TRUNCATE(SDNode *N,
 void DAGTypeLegalizer::ExpandResult_BIT_CONVERT(SDNode *N,
                                                 SDOperand &Lo, SDOperand &Hi) {
   // Lower the bit-convert to a store/load from the stack, then expand the load.
+  // TODO: If the operand also needs expansion then this could be turned into
+  // conversion of the expanded pieces.  But there needs to be a testcase first!
   SDOperand Op = CreateStackStoreLoad(N->getOperand(0), N->getValueType(0));
   ExpandResult_LOAD(cast<LoadSDNode>(Op.Val), Lo, Hi);
 }
@@ -666,6 +672,41 @@ void DAGTypeLegalizer::ExpandResult_CTTZ(SDNode *N,
   Hi = DAG.getConstant(0, NVT);
 }
 
+void DAGTypeLegalizer::ExpandResult_EXTRACT_VECTOR_ELT(SDNode *N,
+                                                       SDOperand &Lo,
+                                                       SDOperand &Hi) {
+  SDOperand OldVec = N->getOperand(0);
+  unsigned OldElts = MVT::getVectorNumElements(OldVec.getValueType());
+
+  // Convert to a vector of the expanded element type, for example
+  // <2 x i64> -> <4 x i32>.
+  MVT::ValueType OldVT = N->getValueType(0);
+  MVT::ValueType NewVT = TLI.getTypeToTransformTo(OldVT);
+  assert(MVT::getSizeInBits(OldVT) == 2 * MVT::getSizeInBits(NewVT) &&
+         "Do not know how to handle this expansion!");
+
+  SDOperand NewVec = DAG.getNode(ISD::BIT_CONVERT,
+                                 MVT::getVectorType(NewVT, 2 * OldElts),
+                                 OldVec);
+
+  // Extract the elements at 2 * Idx and 2 * Idx + 1 from the new vector.
+  SDOperand Idx = N->getOperand(1);
+
+  // Make sure the type of Idx is big enough to hold the new values.
+  if (MVT::getSizeInBits(Idx.getValueType()) < 32)
+    Idx = DAG.getNode(ISD::ZERO_EXTEND, MVT::i32, Idx);
+
+  Idx = DAG.getNode(ISD::ADD, Idx.getValueType(), Idx, Idx);
+  Lo = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, NewVT, NewVec, Idx);
+
+  Idx = DAG.getNode(ISD::ADD, Idx.getValueType(), Idx,
+                    DAG.getConstant(1, Idx.getValueType()));
+  Hi = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, NewVT, NewVec, Idx);
+
+  if (TLI.isBigEndian())
+    std::swap(Lo, Hi);
+}
+
 /// ExpandShiftByConstant - N is a shift by a value that needs to be expanded,
 /// and the shift amount is a constant 'Amt'.  Expand the operation.
 void DAGTypeLegalizer::ExpandShiftByConstant(SDNode *N, unsigned Amt, 
@@ -898,6 +939,28 @@ SDOperand DAGTypeLegalizer::ExpandOperand_TRUNCATE(SDNode *N) {
 }
 
 SDOperand DAGTypeLegalizer::ExpandOperand_BIT_CONVERT(SDNode *N) {
+  if (MVT::isVector(N->getValueType(0))) {
+    // An illegal integer type is being converted to a legal vector type.
+    // Make a two element vector out of the expanded parts and convert that
+    // instead, but only if the new vector type is legal (otherwise there
+    // is no point, and it might create expansion loops).  For example, on
+    // x86 this turns v1i64 = BIT_CONVERT i64 into v1i64 = BIT_CONVERT v2i32.
+    MVT::ValueType OVT = N->getOperand(0).getValueType();
+    MVT::ValueType NVT = MVT::getVectorType(TLI.getTypeToTransformTo(OVT), 2);
+
+    if (isTypeLegal(NVT)) {
+      SDOperand Parts[2];
+      GetExpandedOp(N->getOperand(0), Parts[0], Parts[1]);
+
+      if (TLI.isBigEndian())
+        std::swap(Parts[0], Parts[1]);
+
+      SDOperand Vec = DAG.getNode(ISD::BUILD_VECTOR, NVT, Parts, 2);
+      return DAG.getNode(ISD::BIT_CONVERT, N->getValueType(0), Vec);
+    }
+  }
+
+  // Otherwise, store to a temporary and load out again as the new type.
   return CreateStackStoreLoad(N->getOperand(0), N->getValueType(0));
 }
 

@@ -172,7 +172,6 @@ void DAGTypeLegalizer::SplitRes_INSERT_VECTOR_ELT(SDNode *N, SDOperand &Lo,
   else
     Hi = DAG.getNode(ISD::INSERT_VECTOR_ELT, Hi.getValueType(), Hi, ScalarOp,
                      DAG.getConstant(Index - LoNumElts, TLI.getPointerTy()));
-  
 }
 
 void DAGTypeLegalizer::SplitRes_VECTOR_SHUFFLE(SDNode *N, 
@@ -253,22 +252,50 @@ void DAGTypeLegalizer::SplitRes_BIT_CONVERT(SDNode *N,
                                             SDOperand &Lo, SDOperand &Hi) {
   // We know the result is a vector.  The input may be either a vector or a
   // scalar value.
-  SDOperand InOp = N->getOperand(0);
-  if (MVT::isVector(InOp.getValueType()) &&
-      MVT::getVectorNumElements(InOp.getValueType()) != 1) {
-    // If this is a vector, split the vector and convert each of the pieces now.
-    GetSplitOp(InOp, Lo, Hi);
-    
-    MVT::ValueType LoVT, HiVT;
-    GetSplitDestVTs(N->getValueType(0), LoVT, HiVT);
+  MVT::ValueType LoVT, HiVT;
+  GetSplitDestVTs(N->getValueType(0), LoVT, HiVT);
 
+  SDOperand InOp = N->getOperand(0);
+  MVT::ValueType InVT = InOp.getValueType();
+  MVT::ValueType NewInVT = TLI.getTypeToTransformTo(InVT);
+
+  switch (getTypeAction(InVT)) {
+  default:
+    assert(false && "Unknown type action!");
+  case Legal:
+    break;
+  case Promote:
+    break;
+  case Scalarize:
+    // While it is tempting to extract the scalarized operand, check whether it
+    // needs expansion, and if so process it in the Expand case below, there is
+    // no guarantee that the scalarized operand has been processed yet.  If it
+    // hasn't then the call to GetExpandedOp will abort.  So just give up.
+    break;
+  case Expand:
+    // A scalar to vector conversion, where the scalar needs expansion.
+    // Check that the vector is being split in two.
+    if (MVT::getSizeInBits(NewInVT) == MVT::getSizeInBits(LoVT)) {
+      // Convert each expanded piece of the scalar now.
+      GetExpandedOp(InOp, Lo, Hi);
+      if (TLI.isBigEndian())
+        std::swap(Lo, Hi);
+      Lo = DAG.getNode(ISD::BIT_CONVERT, LoVT, Lo);
+      Hi = DAG.getNode(ISD::BIT_CONVERT, HiVT, Hi);
+      return;
+    }
+    break;
+  case Split:
+    // If the input is a vector that needs to be split, convert each split
+    // piece of the input now.
+    GetSplitOp(InOp, Lo, Hi);
     Lo = DAG.getNode(ISD::BIT_CONVERT, LoVT, Lo);
     Hi = DAG.getNode(ISD::BIT_CONVERT, HiVT, Hi);
     return;
   }
-  
+
   // Lower the bit-convert to a store/load from the stack, then split the load.
-  SDOperand Op = CreateStackStoreLoad(N->getOperand(0), N->getValueType(0));
+  SDOperand Op = CreateStackStoreLoad(InOp, N->getValueType(0));
   SplitRes_LOAD(cast<LoadSDNode>(Op.Val), Lo, Hi);
 }
 
@@ -340,8 +367,11 @@ bool DAGTypeLegalizer::SplitOperand(SDNode *N, unsigned OpNo) {
     case ISD::STORE: Res = SplitOp_STORE(cast<StoreSDNode>(N), OpNo); break;
     case ISD::RET:   Res = SplitOp_RET(N, OpNo); break;
 
-    case ISD::EXTRACT_SUBVECTOR: Res = SplitOp_EXTRACT_SUBVECTOR(N); break;
-    case ISD::VECTOR_SHUFFLE:    Res = SplitOp_VECTOR_SHUFFLE(N, OpNo); break;
+    case ISD::BIT_CONVERT: Res = SplitOp_BIT_CONVERT(N); break;
+
+    case ISD::EXTRACT_VECTOR_ELT: Res = SplitOp_EXTRACT_VECTOR_ELT(N); break;
+    case ISD::EXTRACT_SUBVECTOR:  Res = SplitOp_EXTRACT_SUBVECTOR(N); break;
+    case ISD::VECTOR_SHUFFLE:     Res = SplitOp_VECTOR_SHUFFLE(N, OpNo); break;
     }
   }
   
@@ -400,6 +430,72 @@ SDOperand DAGTypeLegalizer::SplitOp_RET(SDNode *N, unsigned OpNo) {
   SDOperand Sign = N->getOperand(2);  // Signness
   
   return DAG.getNode(ISD::RET, MVT::Other, Chain, Lo, Sign, Hi, Sign);
+}
+
+SDOperand DAGTypeLegalizer::SplitOp_BIT_CONVERT(SDNode *N) {
+  // For example, i64 = BIT_CONVERT v4i16 on alpha.  Typically the vector will
+  // end up being split all the way down to individual components.  Convert the
+  // split pieces into integers and reassemble.
+  SDOperand Lo, Hi;
+  GetSplitOp(N->getOperand(0), Lo, Hi);
+
+  unsigned LoBits = MVT::getSizeInBits(Lo.getValueType());
+  Lo = DAG.getNode(ISD::BIT_CONVERT, MVT::getIntegerType(LoBits), Lo);
+
+  unsigned HiBits = MVT::getSizeInBits(Hi.getValueType());
+  Hi = DAG.getNode(ISD::BIT_CONVERT, MVT::getIntegerType(HiBits), Hi);
+
+  if (TLI.isBigEndian())
+    std::swap(Lo, Hi);
+
+  assert(LoBits == HiBits && "Do not know how to assemble odd sized vectors!");
+
+  return DAG.getNode(ISD::BIT_CONVERT, N->getValueType(0),
+                     DAG.getNode(ISD::BUILD_PAIR,
+                                 MVT::getIntegerType(LoBits+HiBits), Lo, Hi));
+}
+
+SDOperand DAGTypeLegalizer::SplitOp_EXTRACT_VECTOR_ELT(SDNode *N) {
+  SDOperand Vec = N->getOperand(0);
+  SDOperand Idx = N->getOperand(1);
+  MVT::ValueType VecVT = Vec.getValueType();
+
+  if (isa<ConstantSDNode>(Idx)) {
+    uint64_t IdxVal = cast<ConstantSDNode>(Idx)->getValue();
+    assert(IdxVal < MVT::getVectorNumElements(VecVT) &&
+           "Invalid vector index!");
+
+    SDOperand Lo, Hi;
+    GetSplitOp(Vec, Lo, Hi);
+
+    uint64_t LoElts = MVT::getVectorNumElements(Lo.getValueType());
+
+    if (IdxVal < LoElts)
+      return DAG.UpdateNodeOperands(SDOperand(N, 0), Lo, Idx);
+    else
+      return DAG.UpdateNodeOperands(SDOperand(N, 0), Hi,
+                                    DAG.getConstant(IdxVal - LoElts,
+                                                    Idx.getValueType()));
+  }
+
+  // Store the vector to the stack and load back the required element.
+  SDOperand StackPtr = DAG.CreateStackTemporary(VecVT);
+  SDOperand Store = DAG.getStore(DAG.getEntryNode(), Vec, StackPtr, NULL, 0);
+
+  // Add the offset to the index.
+  MVT::ValueType EltVT = MVT::getVectorElementType(VecVT);
+  unsigned EltSize = MVT::getSizeInBits(EltVT)/8; // FIXME: should be ABI size.
+  Idx = DAG.getNode(ISD::MUL, Idx.getValueType(), Idx,
+                    DAG.getConstant(EltSize, Idx.getValueType()));
+
+  if (MVT::getSizeInBits(Idx.getValueType()) >
+      MVT::getSizeInBits(TLI.getPointerTy()))
+    Idx = DAG.getNode(ISD::TRUNCATE, TLI.getPointerTy(), Idx);
+  else
+    Idx = DAG.getNode(ISD::ZERO_EXTEND, TLI.getPointerTy(), Idx);
+
+  StackPtr = DAG.getNode(ISD::ADD, Idx.getValueType(), Idx, StackPtr);
+  return DAG.getLoad(EltVT, Store, StackPtr, NULL, 0);
 }
 
 SDOperand DAGTypeLegalizer::SplitOp_EXTRACT_SUBVECTOR(SDNode *N) {
