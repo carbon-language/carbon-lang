@@ -18,6 +18,7 @@
 #include "llvm/Linker.h"
 #include "llvm/ADT/StringMap.h"
 
+#include <string>
 
 
 //
@@ -34,8 +35,9 @@ public:
     bool                setDebugInfo(lto_debug_model, std::string& errMsg);
     bool                setCodePICModel(lto_codegen_model, std::string& errMsg);
     void                addMustPreserveSymbol(const char* sym);
-    bool                writeMergedModules(const char* path, std::string& errMsg);
-    void*               compile(size_t* length, std::string& errMsg);
+    bool                writeMergedModules(const char* path, 
+                                                           std::string& errMsg);
+    const void*         compile(size_t* length, std::string& errMsg);
     
 private:
     bool                generateAssemblyCode(std::ostream& out, 
@@ -53,6 +55,7 @@ private:
     bool                        _scopeRestrictionsDone;
     lto_codegen_model           _codeModel;
     StringSet                   _mustPreserveSymbols;
+    llvm::MemoryBuffer*         _nativeObjectFile;
 };
 
 #endif // LTO_CODE_GENERATOR_H

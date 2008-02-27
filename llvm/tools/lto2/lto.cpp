@@ -33,7 +33,7 @@ extern const char* lto_get_version()
 }
 
 //
-// returns the last error string or NULL if last operation was sucessful
+// returns the last error string or NULL if last operation was successful
 //
 const char* lto_get_error_message()
 {
@@ -224,13 +224,14 @@ bool lto_codegen_write_merged_modules(lto_code_gen_t cg, const char* path)
 
 
 //
-// generates code for all added modules into one object file
-// On sucess returns a pointer to a generated mach-o buffer and
-// length set to the buffer size.  Client must free() the buffer
-// when done.
-// On failure, returns NULL (check lto_get_error_message() for details)
+// Generates code for all added modules into one native object file.
+// On sucess returns a pointer to a generated mach-o/ELF buffer and
+// length set to the buffer size.  The buffer is owned by the 
+// lto_code_gen_t and will be freed when lto_codegen_dispose()
+// is called, or lto_codegen_compile() is called again.
+// On failure, returns NULL (check lto_get_error_message() for details).
 //
-extern void*
+extern const void*
 lto_codegen_compile(lto_code_gen_t cg, size_t* length)
 {
     return cg->compile(length, sLastErrorString);

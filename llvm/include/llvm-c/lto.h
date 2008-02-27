@@ -218,11 +218,12 @@ lto_codegen_write_merged_modules(lto_code_gen_t cg, const char* path);
 /**
  * Generates code for all added modules into one native object file.
  * On sucess returns a pointer to a generated mach-o/ELF buffer and
- * length set to the buffer size.  Client owns the buffer and should
- * free() it when done.
+ * length set to the buffer size.  The buffer is owned by the 
+ * lto_code_gen_t and will be freed when lto_codegen_dispose()
+ * is called, or lto_codegen_compile() is called again.
  * On failure, returns NULL (check lto_get_error_message() for details).
  */
-extern void*
+extern const void*
 lto_codegen_compile(lto_code_gen_t cg, size_t* length);
 
 

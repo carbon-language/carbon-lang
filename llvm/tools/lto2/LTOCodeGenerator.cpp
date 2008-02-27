@@ -12,6 +12,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "LTOModule.h"
+#include "LTOCodeGenerator.h"
+
+
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Linker.h"
@@ -19,18 +23,15 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/Support/CommandLine.h"
-#include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/System/Program.h"
 #include "llvm/System/Signals.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/Verifier.h"
+#include "llvm/Analysis/LoadValueNumbering.h"
 #include "llvm/CodeGen/FileWriters.h"
-#include "llvm/Target/SubtargetFeature.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
@@ -38,12 +39,8 @@
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Analysis/LoadValueNumbering.h"
-#include "llvm/Support/MathExtras.h"
 #include "llvm/Config/config.h"
 
-#include "LTOModule.h"
-#include "LTOCodeGenerator.h"
 
 #include <fstream>
 #include <unistd.h>
@@ -68,14 +65,16 @@ const char* LTOCodeGenerator::getVersionString()
 LTOCodeGenerator::LTOCodeGenerator() 
     : _linker("LinkTimeOptimizer", "ld-temp.o"), _target(NULL),
       _emitDwarfDebugInfo(false), _scopeRestrictionsDone(false),
-      _codeModel(LTO_CODEGEN_PIC_MODEL_DYNAMIC)
+      _codeModel(LTO_CODEGEN_PIC_MODEL_DYNAMIC),
+      _nativeObjectFile(NULL)
 {
 
 }
 
 LTOCodeGenerator::~LTOCodeGenerator()
 {
-    // FIXME
+    delete _target;
+    delete _nativeObjectFile;
 }
 
 
@@ -151,9 +150,9 @@ bool LTOCodeGenerator::writeMergedModules(const char* path, std::string& errMsg)
 }
 
 
-void* LTOCodeGenerator::compile(size_t* length, std::string& errMsg)
+const void* LTOCodeGenerator::compile(size_t* length, std::string& errMsg)
 {
-    // make unqiue temp .s file to put generated assembly code
+    // make unique temp .s file to put generated assembly code
     sys::Path uniqueAsmPath("lto-llvm.s");
     if ( uniqueAsmPath.createTemporaryFileOnDisk(true, &errMsg) )
         return NULL;
@@ -169,7 +168,7 @@ void* LTOCodeGenerator::compile(size_t* length, std::string& errMsg)
         return NULL;
     }
     
-    // make unqiue temp .o file to put generated object file
+    // make unique temp .o file to put generated object file
     sys::PathWithStatus uniqueObjPath("lto-llvm.o");
     if ( uniqueObjPath.createTemporaryFileOnDisk(true, &errMsg) ) {
         if ( uniqueAsmPath.exists() )
@@ -179,46 +178,27 @@ void* LTOCodeGenerator::compile(size_t* length, std::string& errMsg)
     sys::RemoveFileOnSignal(uniqueObjPath);
 
     // assemble the assembly code
-    void* buffer = NULL;
+    const std::string& uniqueObjStr = uniqueObjPath.toString();
     bool asmResult = this->assemble(uniqueAsmPath.toString(), 
-                                            uniqueObjPath.toString(), errMsg);
+                                                        uniqueObjStr, errMsg);
     if ( !asmResult ) {
+        // remove old buffer if compile() called twice
+        delete _nativeObjectFile;
+        
         // read .o file into memory buffer
-        const sys::FileStatus* objStatus;
-        objStatus = uniqueObjPath.getFileStatus(false, &errMsg);
-        if ( objStatus != NULL ) {
-            *length = objStatus->getSize();
-            // use malloc() because caller will own this buffer and free() it 
-            buffer = ::malloc(*length);
-            if ( buffer != NULL ) {
-                int fd = ::open(uniqueObjPath.c_str(), O_RDONLY, 0);
-                if ( fd != -1 ) {
-                    // read object file contents into buffer
-                    if ( ::read(fd, buffer, *length) != (ssize_t)*length ) {
-                        errMsg = "error reading object file";
-                        free(buffer);
-                        buffer = NULL;
-                    }
-                    close(fd);
-                }
-                else {
-                    errMsg = "error opening object file";
-                    free(buffer);
-                    buffer = NULL;
-                }
-            }
-            else {
-                errMsg = "error mallocing space for object file";
-            }
-        }
-        else {
-            errMsg = "error stat'ing object file";
-        }
+        _nativeObjectFile = MemoryBuffer::getFile(&uniqueObjStr[0], 
+                                                uniqueObjStr.size(), &errMsg);
     }
-    // clean up temp files
+
+    // remove temp files
     uniqueAsmPath.eraseFromDisk();
     uniqueObjPath.eraseFromDisk();
-    return buffer;
+
+    // return buffer, unless error
+    if ( _nativeObjectFile == NULL )
+        return NULL;
+    *length = _nativeObjectFile->getBufferSize();
+    return _nativeObjectFile->getBufferStart();
 }
 
 

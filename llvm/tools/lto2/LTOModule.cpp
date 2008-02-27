@@ -12,33 +12,21 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "LTOModule.h"
+
 #include "llvm/Module.h"
-#include "llvm/PassManager.h"
-#include "llvm/Linker.h"
-#include "llvm/Constants.h"
-#include "llvm/DerivedTypes.h"
 #include "llvm/ModuleProvider.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/Support/CommandLine.h"
-#include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/System/Program.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/System/Path.h"
-#include "llvm/System/Signals.h"
-#include "llvm/Target/SubtargetFeature.h"
-#include "llvm/Target/TargetOptions.h"
-#include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Target/TargetAsmInfo.h"
-#include "llvm/Transforms/IPO.h"
-#include "llvm/Transforms/Scalar.h"
-#include "llvm/Analysis/LoadValueNumbering.h"
-#include "llvm/Support/MathExtras.h"
 
-#include "LTOModule.h"
 
 #include <fstream>
 
@@ -58,51 +46,35 @@ bool LTOModule::isBitcodeFile(const char* path)
 bool LTOModule::isBitcodeFileForTarget(const void* mem, 
                                     size_t length, const char* triplePrefix) 
 {
-    bool result = false;
-    MemoryBuffer* buffer;
-    buffer = MemoryBuffer::getMemBuffer((char*)mem, (char*)mem+length);
-    if ( buffer != NULL ) {
-        ModuleProvider* mp = getBitcodeModuleProvider(buffer);
-        if ( mp != NULL ) {
-            std::string actualTarget = mp->getModule()->getTargetTriple();
-            if  ( strncmp(actualTarget.c_str(), triplePrefix, 
-                                    strlen(triplePrefix)) == 0) {
-                result = true;
-            }
-            //  mp destructor will delete buffer
-            delete mp;
-        }
-        else {
-            // if getBitcodeModuleProvider failed, we need to delete buffer
-            delete buffer;
-        }
-    }
-    return result;
+    MemoryBuffer* buffer = MemoryBuffer::getMemBuffer((char*)mem, 
+                                                            (char*)mem+length);
+    if ( buffer == NULL )
+        return false;
+    return isTargetMatch(buffer, triplePrefix);
 }
+
 
 bool LTOModule::isBitcodeFileForTarget(const char* path,
                                                 const char* triplePrefix) 
 {
-    bool result = false;
-    MemoryBuffer* buffer;
-    buffer = MemoryBuffer::getFile(path, strlen(path));
-    if ( buffer != NULL ) {
-        ModuleProvider* mp = getBitcodeModuleProvider(buffer);
-        if ( mp != NULL ) {
-            std::string actualTarget = mp->getModule()->getTargetTriple();
-            if  ( strncmp(actualTarget.c_str(), triplePrefix, 
-                                    strlen(triplePrefix)) == 0) {
-                result = true;
-            }
-            //  mp destructor will delete buffer
-            delete mp;
-        }
-        else {
-            // if getBitcodeModuleProvider failed, we need to delete buffer
-            delete buffer;
-        }
+    MemoryBuffer* buffer = MemoryBuffer::getFile(path, strlen(path));
+    if ( buffer == NULL )
+        return false;
+    return isTargetMatch(buffer, triplePrefix);
+}
+
+// takes ownership of buffer
+bool LTOModule::isTargetMatch(MemoryBuffer* buffer, const char* triplePrefix)
+{
+    OwningPtr<ModuleProvider> mp(getBitcodeModuleProvider(buffer));
+    // on success, mp owns buffer and both are deleted at end of this method
+    if ( !mp ) {
+        delete buffer;
+        return false;
     }
-    return result;
+    std::string actualTarget = mp->getModule()->getTargetTriple();
+    return ( strncmp(actualTarget.c_str(), triplePrefix, 
+                    strlen(triplePrefix)) == 0);
 }
 
 
@@ -111,52 +83,40 @@ LTOModule::LTOModule(Module* m, TargetMachine* t)
 {
 }
 
-LTOModule::~LTOModule()
-{
-    delete _module;
-    if ( _target != NULL )
-        delete _target;
-}
-
-
 LTOModule* LTOModule::makeLTOModule(const char* path, std::string& errMsg)
 {
-    MemoryBuffer* buffer = MemoryBuffer::getFile(path, strlen(path));
-    if ( buffer != NULL ) {
-        Module* m = ParseBitcodeFile(buffer, &errMsg);
-        delete buffer;
-        if ( m != NULL ) {
-            const TargetMachineRegistry::entry* march = 
-              TargetMachineRegistry::getClosestStaticTargetForModule(*m, errMsg);
-            if ( march != NULL ) {
-                std::string features;
-                TargetMachine*    target = march->CtorFn(*m, features);
-                return new LTOModule(m, target);
-            }
-        }
-    }
-    return NULL;
+    OwningPtr<MemoryBuffer> buffer(MemoryBuffer::getFile(
+                                                path, strlen(path), &errMsg));
+    if ( !buffer )
+        return NULL;
+    return makeLTOModule(buffer.get(), errMsg);
 }
 
 LTOModule* LTOModule::makeLTOModule(const void* mem, size_t length, 
                                                         std::string& errMsg)
 {
-    MemoryBuffer* buffer;
-    buffer = MemoryBuffer::getMemBuffer((char*)mem, (char*)mem+length);
-    if ( buffer != NULL ) {
-        Module* m = ParseBitcodeFile(buffer, &errMsg);
-        delete buffer;
-        if ( m != NULL ) {
-            const TargetMachineRegistry::entry* march = 
-             TargetMachineRegistry::getClosestStaticTargetForModule(*m, errMsg);
-            if ( march != NULL ) {
-                std::string features;
-                TargetMachine*    target = march->CtorFn(*m, features);
-                return new LTOModule(m, target);
-            }
-        }
-    }
-    return NULL;
+    OwningPtr<MemoryBuffer> buffer(MemoryBuffer::getMemBuffer((char*)mem, 
+                                                            (char*)mem+length));
+    if ( !buffer )
+        return NULL;
+    return makeLTOModule(buffer.get(), errMsg);
+}
+
+LTOModule* LTOModule::makeLTOModule(MemoryBuffer* buffer, std::string& errMsg)
+{
+    // parse bitcode buffer
+    OwningPtr<Module> m(ParseBitcodeFile(buffer, &errMsg));
+    if ( !m )
+        return NULL;
+    // find machine architecture for this module
+    const TargetMachineRegistry::entry* march = 
+            TargetMachineRegistry::getClosestStaticTargetForModule(*m, errMsg);
+    if ( march == NULL ) 
+        return NULL;
+    // construct LTModule, hand over ownership of module and target
+    std::string     features;
+    TargetMachine*  target = march->CtorFn(*m, features);
+    return new LTOModule(m.take(), target);
 }
 
 
@@ -165,14 +125,44 @@ const char* LTOModule::getTargetTriple()
     return _module->getTargetTriple().c_str();
 }
 
+void LTOModule::addDefinedFunctionSymbol(Function* f, Mangler &mangler)
+{
+    // add to list of defined symbols
+    addDefinedSymbol(f, mangler, true); 
+
+    // add external symbols referenced by this function.
+    for (Function::iterator b = f->begin(); b != f->end(); ++b) {
+        for (BasicBlock::iterator i = b->begin(); i != b->end(); ++i) {
+            for (unsigned count = 0, total = i->getNumOperands(); 
+                                        count != total; ++count) {
+                findExternalRefs(i->getOperand(count), mangler);
+            }
+        }
+    }
+}
+
+void LTOModule::addDefinedDataSymbol(GlobalValue* v, Mangler &mangler)
+{    
+    // add to list of defined symbols
+    addDefinedSymbol(v, mangler, false); 
+
+    // add external symbols referenced by this data.
+    for (unsigned count = 0, total = v->getNumOperands();\
+                                                count != total; ++count) {
+        findExternalRefs(v->getOperand(count), mangler);
+    }
+}
+
+
 void LTOModule::addDefinedSymbol(GlobalValue* def, Mangler &mangler, 
                                 bool isFunction)
 {    
+    // string is owned by _defines
     const char* symbolName = ::strdup(mangler.getValueName(def).c_str());
     
     // set alignment part log2() can have rounding errors
     uint32_t align = def->getAlignment();
-    uint32_t attr = align ? __builtin_ctz(def->getAlignment()) : 0;
+    uint32_t attr = align ? CountTrailingZeros_32(def->getAlignment()) : 0;
     
     // set permissions part
     if ( isFunction )
@@ -220,8 +210,9 @@ void LTOModule::addDefinedSymbol(GlobalValue* def, Mangler &mangler,
 }
 
 
-void LTOModule::addUndefinedSymbol(const char* name)
-{    
+void LTOModule::addPotentialUndefinedSymbol(GlobalValue* decl, Mangler &mangler)
+{   
+   const char* name = mangler.getValueName(decl).c_str();
     // ignore all llvm.* symbols
     if ( strncmp(name, "llvm.", 5) != 0 ) {
         _undefines[name] = 1;
@@ -235,7 +226,7 @@ void LTOModule::findExternalRefs(Value* value, Mangler &mangler) {
 
     if (GlobalValue* gv = dyn_cast<GlobalValue>(value)) {
         if ( !gv->hasExternalLinkage() )
-            addUndefinedSymbol(mangler.getValueName(gv).c_str());
+            addPotentialUndefinedSymbol(gv, mangler);
     }
 
     // GlobalValue, even with InternalLinkage type, may have operands with 
@@ -247,8 +238,7 @@ void LTOModule::findExternalRefs(Value* value, Mangler &mangler) {
     }
 }
 
-
-uint32_t LTOModule::getSymbolCount()
+void LTOModule::lazyParseSymbols()
 {
     if ( !_symbolsParsed ) {
         _symbolsParsed = true;
@@ -258,38 +248,19 @@ uint32_t LTOModule::getSymbolCount()
 
         // add functions
         for (Module::iterator f = _module->begin(); f != _module->end(); ++f) {
-            if ( f->isDeclaration() ) {
-                addUndefinedSymbol(mangler.getValueName(f).c_str());
-            }
-            else {
-                addDefinedSymbol(f, mangler, true);
-                // add external symbols referenced by this function.
-                for (Function::iterator b = f->begin(); b != f->end(); ++b) {
-                    for (BasicBlock::iterator i = b->begin(); 
-                                                        i != b->end(); ++i) {
-                        for (unsigned count = 0, total = i->getNumOperands(); 
-                                                    count != total; ++count) {
-                            findExternalRefs(i->getOperand(count), mangler);
-                        }
-                    }
-                }
-            }
+            if ( f->isDeclaration() ) 
+                addPotentialUndefinedSymbol(f, mangler);
+            else 
+                addDefinedFunctionSymbol(f, mangler);
         }
         
         // add data 
         for (Module::global_iterator v = _module->global_begin(), 
                                     e = _module->global_end(); v !=  e; ++v) {
-            if ( v->isDeclaration() ) {
-                addUndefinedSymbol(mangler.getValueName(v).c_str());
-            }
-            else {
-                addDefinedSymbol(v, mangler, false);
-                // add external symbols referenced by this data
-                for (unsigned count = 0, total = v->getNumOperands(); 
-                                                count != total; ++count) {
-                    findExternalRefs(v->getOperand(count), mangler);
-                }
-            }
+            if ( v->isDeclaration() ) 
+                addPotentialUndefinedSymbol(v, mangler);
+            else 
+                addDefinedDataSymbol(v, mangler);
         }
 
         // make symbols for all undefines
@@ -297,22 +268,28 @@ uint32_t LTOModule::getSymbolCount()
                                                 it != _undefines.end(); ++it) {
             // if this symbol also has a definition, then don't make an undefine
             // because it is a tentative definition
-            if ( _defines.find(it->getKeyData(), it->getKeyData()+it->getKeyLength()) == _defines.end() ) {
+            if ( _defines.count(it->getKeyData(), it->getKeyData()+
+                                                  it->getKeyLength()) == 0 ) {
                 NameAndAttributes info;
                 info.name = it->getKeyData();
                 info.attributes = LTO_SYMBOL_DEFINITION_UNDEFINED;
                 _symbols.push_back(info);
             }
         }
-        
-    }
-    
+    }    
+}
+
+
+uint32_t LTOModule::getSymbolCount()
+{
+    lazyParseSymbols();
     return _symbols.size();
 }
 
 
 lto_symbol_attributes LTOModule::getSymbolAttributes(uint32_t index)
 {
+    lazyParseSymbols();
     if ( index < _symbols.size() )
         return _symbols[index].attributes;
     else
@@ -321,6 +298,7 @@ lto_symbol_attributes LTOModule::getSymbolAttributes(uint32_t index)
 
 const char* LTOModule::getSymbolName(uint32_t index)
 {
+    lazyParseSymbols();
     if ( index < _symbols.size() )
         return _symbols[index].name;
     else
