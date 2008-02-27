@@ -887,8 +887,11 @@ void GRExprEngine::VisitSizeOfExpr(UnaryOperator* U, NodeTy* Pred,
 }
 
 void GRExprEngine::VisitLVal(Expr* Ex, NodeTy* Pred, NodeSet& Dst) {
-  
-  assert (Ex != CurrentStmt && !getCFG().isBlkExpr(Ex));
+
+  if (Ex != CurrentStmt && getCFG().isBlkExpr(Ex)) {
+    Dst.Add(Pred);
+    return;
+  }
   
   Ex = Ex->IgnoreParens();
   
