@@ -142,7 +142,10 @@ CFG* CFGBuilder::buildCFG(Stmt* Statement) {
   Block = NULL;  // the EXIT block is empty.  Create all other blocks lazily.
   
   // Visit the statements and create the CFG.
-  if (CFGBlock* B = Visit(Statement)) {
+  CFGBlock* B = Visit(Statement);
+  if (!B) B = Succ;
+  
+  if (B) {
     // Finalize the last constructed block.  This usually involves
     // reversing the order of the statements in the block.
     if (Block) FinishBlock(B);
