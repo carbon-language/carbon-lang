@@ -508,7 +508,10 @@ public:
   ///
   virtual void print(std::ostream &o, const Module* ) const {
     o << "=============================--------------------------------\n";
-    o << "Inorder Dominator Tree: ";
+    if (this->isPostDominator())
+      o << "Inorder PostDominator Tree: ";
+    else
+      o << "Inorder Dominator Tree: ";
     if (this->DFSInfoValid)
       o << "DFSNumbers invalid: " << SlowQueries << " slow queries.";
     o << "\n";

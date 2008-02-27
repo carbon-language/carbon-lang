@@ -54,6 +54,10 @@ struct PostDominatorTree : public FunctionPass {
   inline bool properlyDominates(BasicBlock* A, BasicBlock* B) const {
     return DT->properlyDominates(A, B);
   }
+
+  virtual void print(std::ostream &OS, const Module* M= 0) const {
+    DT->print(OS, M);
+  }
 };
 
 
