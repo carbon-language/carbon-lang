@@ -1140,8 +1140,11 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     case TargetLowering::Legal: {
       SDOperand Ops[6];
       Ops[0] = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
-      for (int x = 1; x < 6; ++x)
-        Ops[x] = PromoteOp(Node->getOperand(x));
+      for (int x = 1; x < 6; ++x) {
+        Ops[x] = Node->getOperand(x);
+        if (!isTypeLegal(Ops[x].getValueType()))
+          Ops[x] = PromoteOp(Ops[x]);
+      }
       Result = DAG.UpdateNodeOperands(Result, &Ops[0], 6);
       break;
     }

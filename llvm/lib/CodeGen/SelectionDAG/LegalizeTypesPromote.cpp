@@ -359,6 +359,8 @@ bool DAGTypeLegalizer::PromoteOperand(SDNode *N, unsigned OpNo) {
   case ISD::BUILD_VECTOR: Res = PromoteOperand_BUILD_VECTOR(N); break;
 
   case ISD::RET:         Res = PromoteOperand_RET(N, OpNo); break;
+
+  case ISD::MEMBARRIER:  Res = PromoteOperand_MEMBARRIER(N); break;
   }
 
   // If the result is null, the sub-method took care of registering results etc.
@@ -611,4 +613,15 @@ SDOperand DAGTypeLegalizer::PromoteOperand_RET(SDNode *N, unsigned OpNo) {
 
   return DAG.UpdateNodeOperands(SDOperand (N, 0),
                                 &NewValues[0], NewValues.size());
+}
+
+SDOperand DAGTypeLegalizer::PromoteOperand_MEMBARRIER(SDNode *N) {
+  SDOperand NewOps[6];
+  NewOps[0] = N->getOperand(0);
+  for (unsigned i = 1; i < array_lengthof(NewOps); ++i) {
+    SDOperand Flag = GetPromotedOp(N->getOperand(i));
+    NewOps[i] = DAG.getZeroExtendInReg(Flag, MVT::i1);
+  }
+  return DAG.UpdateNodeOperands(SDOperand (N, 0), NewOps,
+                                array_lengthof(NewOps));
 }

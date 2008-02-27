@@ -190,6 +190,7 @@ private:
   SDOperand PromoteOperand_FP_EXTEND(SDNode *N);
   SDOperand PromoteOperand_FP_ROUND(SDNode *N);
   SDOperand PromoteOperand_INT_TO_FP(SDNode *N);
+  SDOperand PromoteOperand_MEMBARRIER(SDNode *N);
   SDOperand PromoteOperand_RET(SDNode *N, unsigned OpNo);
   SDOperand PromoteOperand_SELECT(SDNode *N, unsigned OpNo);
   SDOperand PromoteOperand_SETCC(SDNode *N, unsigned OpNo);
