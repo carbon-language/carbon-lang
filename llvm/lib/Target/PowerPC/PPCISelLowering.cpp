@@ -741,16 +741,18 @@ bool PPCTargetLowering::SelectAddressRegReg(SDOperand N, SDOperand &Base,
     APInt LHSKnownZero, LHSKnownOne;
     APInt RHSKnownZero, RHSKnownOne;
     DAG.ComputeMaskedBits(N.getOperand(0),
-                          APInt::getAllOnesValue(32),
+                          APInt::getAllOnesValue(N.getOperand(0)
+                            .getValueSizeInBits()),
                           LHSKnownZero, LHSKnownOne);
     
     if (LHSKnownZero.getBoolValue()) {
       DAG.ComputeMaskedBits(N.getOperand(1),
-                            APInt::getAllOnesValue(32),
+                            APInt::getAllOnesValue(N.getOperand(1)
+                              .getValueSizeInBits()),
                             RHSKnownZero, RHSKnownOne);
       // If all of the bits are known zero on the LHS or RHS, the add won't
       // carry.
-      if ((LHSKnownZero | RHSKnownZero) == ~0U) {
+      if (~(LHSKnownZero | RHSKnownZero) == 0) {
         Base = N.getOperand(0);
         Index = N.getOperand(1);
         return true;
