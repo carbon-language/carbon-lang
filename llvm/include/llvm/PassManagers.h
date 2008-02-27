@@ -204,10 +204,6 @@ public:
 
   virtual ~PMDataManager();
 
-  /// Return true IFF pass P's required analysis set does not required new
-  /// manager.
-  bool manageablePass(Pass *P);
-
   /// Augment AvailableAnalysis by adding analysis made available by pass P.
   void recordAvailableAnalysis(Pass *P);
 

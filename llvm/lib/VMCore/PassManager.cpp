@@ -547,20 +547,6 @@ PMTopLevelManager::~PMTopLevelManager() {
 //===----------------------------------------------------------------------===//
 // PMDataManager implementation
 
-/// Return true IFF pass P's required analysis set does not required new
-/// manager.
-bool PMDataManager::manageablePass(Pass *P) {
-
-  // TODO 
-  // If this pass is not preserving information that is required by a
-  // pass maintained by higher level pass manager then do not insert
-  // this pass into current manager. Use new manager. For example,
-  // For example, If FunctionPass F is not preserving ModulePass Info M1
-  // that is used by another ModulePass M2 then do not insert F in
-  // current function pass manager.
-  return true;
-}
-
 /// Augement AvailableAnalysis by adding analysis made available by pass P.
 void PMDataManager::recordAvailableAnalysis(Pass *P) {
                                                 
