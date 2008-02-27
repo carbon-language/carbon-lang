@@ -490,7 +490,10 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
   if (AI != AE) {
     
     NodeSet DstTmp;  
+    
     Visit(*AI, Pred, DstTmp);
+    if (DstTmp.empty()) DstTmp.Add(Pred);
+    
     ++AI;
     
     for (NodeSet::iterator DI=DstTmp.begin(), DE=DstTmp.end(); DI != DE; ++DI)
