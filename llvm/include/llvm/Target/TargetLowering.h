@@ -610,7 +610,7 @@ public:
     /// specified instruction is a constant integer.  If so, check to see if
     /// there are any bits set in the constant that are not demanded.  If so,
     /// shrink the constant and return true.
-    bool ShrinkDemandedConstant(SDOperand Op, uint64_t Demanded);
+    bool ShrinkDemandedConstant(SDOperand Op, const APInt &Demanded);
   };
                                                 
   /// SimplifyDemandedBits - Look at Op.  At this point, we know that only the
@@ -621,8 +621,8 @@ public:
   /// KnownZero bits for the expression (used to simplify the caller).  
   /// The KnownZero/One bits may only be accurate for those bits in the 
   /// DemandedMask.
-  bool SimplifyDemandedBits(SDOperand Op, uint64_t DemandedMask, 
-                            uint64_t &KnownZero, uint64_t &KnownOne,
+  bool SimplifyDemandedBits(SDOperand Op, const APInt &DemandedMask, 
+                            APInt &KnownZero, APInt &KnownOne,
                             TargetLoweringOpt &TLO, unsigned Depth = 0) const;
   
   /// computeMaskedBitsForTargetNode - Determine which of the bits specified in

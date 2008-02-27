@@ -118,7 +118,12 @@ namespace {
     /// SimplifyDemandedBits - Check the specified integer node value to see if
     /// it can be simplified or if things it uses can be simplified by bit
     /// propagation.  If so, return true.
-    bool SimplifyDemandedBits(SDOperand Op, uint64_t Demanded = ~0ULL);
+    bool SimplifyDemandedBits(SDOperand Op) {
+      APInt Demanded = APInt::getAllOnesValue(Op.getValueSizeInBits());
+      return SimplifyDemandedBits(Op, Demanded);
+    }
+
+    bool SimplifyDemandedBits(SDOperand Op, const APInt &Demanded);
 
     bool CombineToPreIndexedLoadStore(SDNode *N);
     bool CombineToPostIndexedLoadStore(SDNode *N);
@@ -534,10 +539,9 @@ SDOperand DAGCombiner::CombineTo(SDNode *N, const SDOperand *To, unsigned NumTo,
 /// SimplifyDemandedBits - Check the specified integer node value to see if
 /// it can be simplified or if things it uses can be simplified by bit
 /// propagation.  If so, return true.
-bool DAGCombiner::SimplifyDemandedBits(SDOperand Op, uint64_t Demanded) {
+bool DAGCombiner::SimplifyDemandedBits(SDOperand Op, const APInt &Demanded) {
   TargetLowering::TargetLoweringOpt TLO(DAG, AfterLegalize);
-  uint64_t KnownZero, KnownOne;
-  Demanded &= MVT::getIntVTBitMask(Op.getValueType());
+  APInt KnownZero, KnownOne;
   if (!TLI.SimplifyDemandedBits(Op, Demanded, KnownZero, KnownOne, TLO))
     return false;
   
@@ -4501,7 +4505,10 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
     
     // Otherwise, see if we can simplify the operation with
     // SimplifyDemandedBits, which only works if the value has a single use.
-    if (SimplifyDemandedBits(Value, MVT::getIntVTBitMask(ST->getMemoryVT())))
+    if (SimplifyDemandedBits(Value,
+                             APInt::getLowBitsSet(
+                               Value.getValueSizeInBits(),
+                               MVT::getSizeInBits(ST->getMemoryVT()))))
       return SDOperand(N, 0);
   }
   
