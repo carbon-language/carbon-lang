@@ -74,7 +74,7 @@ bool Linker::LinkInLibrary(const std::string& Lib, bool& is_native) {
   // Determine where this library lives.
   sys::Path Pathname = FindLib(Lib);
   if (Pathname.isEmpty())
-    return warning("Cannot find library '" + Lib + "'");
+    return error("Cannot find library '" + Lib + "'");
 
   // If its an archive, try to link it in
   std::string Magic;
