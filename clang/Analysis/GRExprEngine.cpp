@@ -508,6 +508,7 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
   Expr* Callee = CE->getCallee()->IgnoreParenCasts();
   
   VisitLVal(Callee, Pred, DstTmp);
+  if (DstTmp.empty()) DstTmp.Add(Pred);
   
   // Finally, evaluate the function call.
   for (NodeSet::iterator DI = DstTmp.begin(), DE = DstTmp.end(); DI!=DE; ++DI) {
