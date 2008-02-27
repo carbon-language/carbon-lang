@@ -283,7 +283,8 @@ namespace ISD {
     BUILD_VECTOR,
     
     /// INSERT_VECTOR_ELT(VECTOR, VAL, IDX) - Returns VECTOR with the element
-    /// at IDX replaced with VAL.
+    /// at IDX replaced with VAL.  If the type of VAL is larger than the vector
+    /// element type then VAL is truncated before replacement.
     INSERT_VECTOR_ELT,
 
     /// EXTRACT_VECTOR_ELT(VECTOR, IDX) - Returns a single element from VECTOR

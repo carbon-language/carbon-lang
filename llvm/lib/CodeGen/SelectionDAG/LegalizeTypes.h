@@ -190,6 +190,7 @@ private:
   SDOperand PromoteOperand_FP_EXTEND(SDNode *N);
   SDOperand PromoteOperand_FP_ROUND(SDNode *N);
   SDOperand PromoteOperand_INT_TO_FP(SDNode *N);
+  SDOperand PromoteOperand_INSERT_VECTOR_ELT(SDNode *N, unsigned OpNo);
   SDOperand PromoteOperand_MEMBARRIER(SDNode *N);
   SDOperand PromoteOperand_RET(SDNode *N, unsigned OpNo);
   SDOperand PromoteOperand_SELECT(SDNode *N, unsigned OpNo);
@@ -269,15 +270,17 @@ private:
     
   // Result Vector Scalarization: <1 x ty> -> ty.
   void ScalarizeResult(SDNode *N, unsigned OpNo);
-  SDOperand ScalarizeRes_UNDEF(SDNode *N);
-  SDOperand ScalarizeRes_LOAD(LoadSDNode *N);
   SDOperand ScalarizeRes_BinOp(SDNode *N);
   SDOperand ScalarizeRes_UnaryOp(SDNode *N);
-  SDOperand ScalarizeRes_FPOWI(SDNode *N);
-  SDOperand ScalarizeRes_VECTOR_SHUFFLE(SDNode *N);
+
   SDOperand ScalarizeRes_BIT_CONVERT(SDNode *N);
+  SDOperand ScalarizeRes_FPOWI(SDNode *N);
+  SDOperand ScalarizeRes_INSERT_VECTOR_ELT(SDNode *N);
+  SDOperand ScalarizeRes_LOAD(LoadSDNode *N);
   SDOperand ScalarizeRes_SELECT(SDNode *N);
-  
+  SDOperand ScalarizeRes_UNDEF(SDNode *N);
+  SDOperand ScalarizeRes_VECTOR_SHUFFLE(SDNode *N);
+
   // Operand Vector Scalarization: <1 x ty> -> ty.
   bool ScalarizeOperand(SDNode *N, unsigned OpNo);
   SDOperand ScalarizeOp_EXTRACT_VECTOR_ELT(SDNode *N);

@@ -357,6 +357,9 @@ bool DAGTypeLegalizer::PromoteOperand(SDNode *N, unsigned OpNo) {
   case ISD::MEMMOVE:     Res = HandleMemIntrinsic(N); break;
 
   case ISD::BUILD_VECTOR: Res = PromoteOperand_BUILD_VECTOR(N); break;
+  case ISD::INSERT_VECTOR_ELT:
+    Res = PromoteOperand_INSERT_VECTOR_ELT(N, OpNo);
+    break;
 
   case ISD::RET:         Res = PromoteOperand_RET(N, OpNo); break;
 
@@ -589,6 +592,30 @@ SDOperand DAGTypeLegalizer::PromoteOperand_BUILD_VECTOR(SDNode *N) {
 
   // Convert the new vector to the old vector type.
   return DAG.getNode(ISD::BIT_CONVERT, VecVT, NewVec);
+}
+
+SDOperand DAGTypeLegalizer::PromoteOperand_INSERT_VECTOR_ELT(SDNode *N,
+                                                             unsigned OpNo) {
+  if (OpNo == 1) {
+    // Promote the inserted value.  This is valid because the type does not
+    // have to match the vector element type.
+
+    // Check that any extra bits introduced will be truncated away.
+    assert(MVT::getSizeInBits(N->getOperand(1).getValueType()) >=
+           MVT::getSizeInBits(MVT::getVectorElementType(N->getValueType(0))) &&
+           "Type of inserted value narrower than vector element type!");
+    return DAG.UpdateNodeOperands(SDOperand(N, 0), N->getOperand(0),
+                                  GetPromotedOp(N->getOperand(1)),
+                                  N->getOperand(2));
+  }
+
+  assert(OpNo == 2 && "Different operand and result vector types?");
+
+  // Promote the index.
+  SDOperand Idx = N->getOperand(2);
+  Idx = DAG.getZeroExtendInReg(GetPromotedOp(Idx), Idx.getValueType());
+  return DAG.UpdateNodeOperands(SDOperand(N, 0), N->getOperand(0),
+                                N->getOperand(1), Idx);
 }
 
 SDOperand DAGTypeLegalizer::PromoteOperand_RET(SDNode *N, unsigned OpNo) {

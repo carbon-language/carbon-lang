@@ -77,7 +77,7 @@ void DAGTypeLegalizer::ScalarizeResult(SDNode *N, unsigned ResNo) {
   case ISD::FCOS:              R = ScalarizeRes_UnaryOp(N); break;
   case ISD::FPOWI:             R = ScalarizeRes_FPOWI(N); break;
   case ISD::BUILD_VECTOR:      R = N->getOperand(0); break;
-  case ISD::INSERT_VECTOR_ELT: R = N->getOperand(1); break;
+  case ISD::INSERT_VECTOR_ELT: R = ScalarizeRes_INSERT_VECTOR_ELT(N); break;
   case ISD::VECTOR_SHUFFLE:    R = ScalarizeRes_VECTOR_SHUFFLE(N); break;
   case ISD::BIT_CONVERT:       R = ScalarizeRes_BIT_CONVERT(N); break;
   case ISD::SELECT:            R = ScalarizeRes_SELECT(N); break;
@@ -118,6 +118,17 @@ SDOperand DAGTypeLegalizer::ScalarizeRes_UnaryOp(SDNode *N) {
 SDOperand DAGTypeLegalizer::ScalarizeRes_FPOWI(SDNode *N) {
   SDOperand Op = GetScalarizedOp(N->getOperand(0));
   return DAG.getNode(ISD::FPOWI, Op.getValueType(), Op, N->getOperand(1));
+}
+
+SDOperand DAGTypeLegalizer::ScalarizeRes_INSERT_VECTOR_ELT(SDNode *N) {
+  // The value to insert may have a wider type than the vector element type,
+  // so be sure to truncate it to the element type if necessary.
+  SDOperand Op = N->getOperand(1);
+  MVT::ValueType EltVT = MVT::getVectorElementType(N->getValueType(0));
+  if (MVT::getSizeInBits(Op.getValueType()) > MVT::getSizeInBits(EltVT))
+    Op = DAG.getNode(ISD::TRUNCATE, EltVT, Op);
+  assert(Op.getValueType() == EltVT && "Invalid type for inserted value!");
+  return Op;
 }
 
 SDOperand DAGTypeLegalizer::ScalarizeRes_VECTOR_SHUFFLE(SDNode *N) {
