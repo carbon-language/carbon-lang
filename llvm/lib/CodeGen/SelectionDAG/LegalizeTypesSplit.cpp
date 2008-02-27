@@ -341,6 +341,7 @@ bool DAGTypeLegalizer::SplitOperand(SDNode *N, unsigned OpNo) {
     case ISD::RET:   Res = SplitOp_RET(N, OpNo); break;
 
     case ISD::EXTRACT_SUBVECTOR: Res = SplitOp_EXTRACT_SUBVECTOR(N); break;
+    case ISD::VECTOR_SHUFFLE:    Res = SplitOp_VECTOR_SHUFFLE(N, OpNo); break;
     }
   }
   
@@ -420,4 +421,58 @@ SDOperand DAGTypeLegalizer::SplitOp_EXTRACT_SUBVECTOR(SDNode *N) {
     return DAG.getNode(ISD::EXTRACT_SUBVECTOR, SubVT, Hi,
                        DAG.getConstant(IdxVal - LoElts, Idx.getValueType()));
   }
+}
+
+SDOperand DAGTypeLegalizer::SplitOp_VECTOR_SHUFFLE(SDNode *N, unsigned OpNo) {
+  assert(OpNo == 2 && "Shuffle source type differs from result type?");
+  SDOperand Mask = N->getOperand(2);
+  unsigned MaskLength = MVT::getVectorNumElements(Mask.getValueType());
+  unsigned LargestMaskEntryPlusOne = 2 * MaskLength;
+  unsigned MinimumBitWidth = Log2_32_Ceil(LargestMaskEntryPlusOne);
+
+  // Look for a legal vector type to place the mask values in.
+  // Note that there may not be *any* legal vector-of-integer
+  // type for which the element type is legal!
+  for (MVT::SimpleValueType EltVT = MVT::FIRST_INTEGER_VALUETYPE;
+       EltVT <= MVT::LAST_INTEGER_VALUETYPE;
+       // Integer values types are consecutively numbered.  Exploit this.
+       EltVT = MVT::SimpleValueType(EltVT + 1)) {
+
+    // Is the element type big enough to hold the values?
+    if (MVT::getSizeInBits(EltVT) < MinimumBitWidth)
+      // Nope.
+      continue;
+
+    // Is the vector type legal?
+    MVT::ValueType VecVT = MVT::getVectorType(EltVT, MaskLength);
+    if (!isTypeLegal(VecVT))
+      // Nope.
+      continue;
+
+    // If the element type is not legal, find a larger legal type to use for
+    // the BUILD_VECTOR operands.  This is an ugly hack, but seems to work!
+    for (MVT::SimpleValueType OpVT = EltVT; OpVT <= MVT::LAST_INTEGER_VALUETYPE;
+         // Integer values types are consecutively numbered.  Exploit this.
+         OpVT = MVT::SimpleValueType(OpVT + 1)) {
+      if (!isTypeLegal(OpVT))
+        continue;
+
+      // Success!  Rebuild the vector using the legal types.
+      SmallVector<SDOperand, 16> Ops(MaskLength);
+      for (unsigned i = 0; i < MaskLength; ++i) {
+        uint64_t Idx =
+          cast<ConstantSDNode>(Mask.getOperand(i))->getValue();
+        Ops[i] = DAG.getConstant(Idx, OpVT);
+      }
+      return DAG.UpdateNodeOperands(SDOperand(N,0),
+                                    N->getOperand(0), N->getOperand(1),
+                                    DAG.getNode(ISD::BUILD_VECTOR,
+                                                VecVT, &Ops[0], Ops.size()));
+    }
+
+    // Continuing is pointless - failure is certain.
+    break;
+  }
+  assert(false && "Failed to find an appropriate mask type!");
+  return SDOperand(N, 0);
 }

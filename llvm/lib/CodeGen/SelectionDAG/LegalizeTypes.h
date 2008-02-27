@@ -316,6 +316,7 @@ private:
   SDOperand SplitOp_EXTRACT_SUBVECTOR(SDNode *N);
   SDOperand SplitOp_RET(SDNode *N, unsigned OpNo);
   SDOperand SplitOp_STORE(StoreSDNode *N, unsigned OpNo);
+  SDOperand SplitOp_VECTOR_SHUFFLE(SDNode *N, unsigned OpNo);
 };
 
 } // end namespace llvm.
