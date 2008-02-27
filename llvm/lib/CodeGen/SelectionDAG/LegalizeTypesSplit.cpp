@@ -547,6 +547,8 @@ SDOperand DAGTypeLegalizer::SplitOp_VECTOR_SHUFFLE(SDNode *N, unsigned OpNo) {
 
     // If the element type is not legal, find a larger legal type to use for
     // the BUILD_VECTOR operands.  This is an ugly hack, but seems to work!
+    // FIXME: The real solution is to change VECTOR_SHUFFLE into a variadic
+    // node where the shuffle mask is a list of integer operands, #2 .. #2+n.
     for (MVT::SimpleValueType OpVT = EltVT; OpVT <= MVT::LAST_INTEGER_VALUETYPE;
          // Integer values types are consecutively numbered.  Exploit this.
          OpVT = MVT::SimpleValueType(OpVT + 1)) {
