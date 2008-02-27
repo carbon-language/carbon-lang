@@ -16,6 +16,7 @@
 #include "GRSimpleVals.h"
 #include "clang/Analysis/PathSensitive/ValueState.h"
 #include "clang/Basic/Diagnostic.h"
+#include <sstream>
 
 using namespace clang;
 
@@ -25,6 +26,10 @@ template <typename ITERATOR>
 static void EmitWarning(Diagnostic& Diag, SourceManager& SrcMgr,
                         ITERATOR I, ITERATOR E, const char* msg) {
  
+  std::ostringstream Out;
+  Out << "[CHECKER] " << msg;
+  msg = Out.str().c_str();
+  
   bool isFirst;
   unsigned ErrorDiag;
   
