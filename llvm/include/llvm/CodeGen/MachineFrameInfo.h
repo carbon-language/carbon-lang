@@ -216,6 +216,8 @@ public:
   int64_t getObjectOffset(int ObjectIdx) const {
     assert(unsigned(ObjectIdx+NumFixedObjects) < Objects.size() &&
            "Invalid Object Idx!");
+    assert(!isDeadObjectIndex(ObjectIdx) &&
+           "Getting frame offset for a dead object?");
     return Objects[ObjectIdx+NumFixedObjects].SPOffset;
   }
 
@@ -225,6 +227,8 @@ public:
   void setObjectOffset(int ObjectIdx, int64_t SPOffset) {
     assert(unsigned(ObjectIdx+NumFixedObjects) < Objects.size() &&
            "Invalid Object Idx!");
+    assert(!isDeadObjectIndex(ObjectIdx) &&
+           "Setting frame offset for a dead object?");
     Objects[ObjectIdx+NumFixedObjects].SPOffset = SPOffset;
   }
 

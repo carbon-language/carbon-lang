@@ -914,6 +914,7 @@ bool LocalSpiller::PrepForUnfoldOpti(MachineBasicBlock &MBB,
       Ops.push_back(Idx);
       MachineInstr *FoldedMI = TII->foldMemoryOperand(MF, NewMI, Ops, SS);
       if (FoldedMI) {
+        VRM.addSpillSlotUse(SS, FoldedMI);
         if (!VRM.hasPhys(UnfoldVR))
           VRM.assignVirt2Phys(UnfoldVR, UnfoldPR);
         VRM.virtFolded(VirtReg, FoldedMI, VirtRegMap::isRef);
@@ -1414,6 +1415,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
             MBB.insert(MII, NewMIs[0]);
             NewStore = NewMIs[1];
             MBB.insert(MII, NewStore);
+            VRM.addSpillSlotUse(SS, NewStore);
             VRM.RemoveMachineInstrFromMaps(&MI);
             MBB.erase(&MI);
             Erased = true;
