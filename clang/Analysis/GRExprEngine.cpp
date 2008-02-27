@@ -592,12 +592,24 @@ void GRExprEngine::VisitDeclStmt(DeclStmt* DS, GRExprEngine::NodeTy* Pred,
       if (VD->getType()->isArrayType())
         continue;
       
-      // FIXME: static variables have an initializer, but the second
-      //  time a function is called those values may not be current.
-      const Expr* Ex = VD->getInit(); 
+      const Expr* Ex = VD->getInit();
       
-      St = SetRVal(St, lval::DeclVal(VD),
-                   Ex ? GetRVal(St, Ex) : UninitializedVal());
+      if (!VD->hasGlobalStorage() || VD->getStorageClass() == VarDecl::Static) {
+        
+        // In this context, Static => Local variable.
+        
+        assert (!VD->getStorageClass() == VarDecl::Static ||
+                !isa<FileVarDecl>(VD));
+        
+        // If there is no initializer, set the value of the
+        // variable to "Uninitialized".
+        //
+        // FIXME: static variables may have an initializer, but the second
+        //  time a function is called those values may not be current.
+        
+        St = SetRVal(St, lval::DeclVal(VD),
+                     Ex ? GetRVal(St, Ex) : UninitializedVal());
+      }
     }
 
   Nodify(Dst, DS, Pred, St);
