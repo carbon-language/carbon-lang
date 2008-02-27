@@ -61,6 +61,13 @@ def i64immSExt8  : PatLeaf<(i64 imm), [{
   return (int64_t)N->getValue() == (int8_t)N->getValue();
 }]>;
 
+def i64immFFFFFFFF  : PatLeaf<(i64 imm), [{
+  // i64immFFFFFFFF - True if this is a specific constant we can't write in
+  // tblgen files.
+  return N->getValue() == 0x00000000FFFFFFFFULL;
+}]>;
+
+
 def sextloadi64i8  : PatFrag<(ops node:$ptr), (i64 (sextloadi8 node:$ptr))>;
 def sextloadi64i16 : PatFrag<(ops node:$ptr), (i64 (sextloadi16 node:$ptr))>;
 def sextloadi64i32 : PatFrag<(ops node:$ptr), (i64 (sextloadi32 node:$ptr))>;
@@ -1090,6 +1097,12 @@ def PsMOVZX64rr32: I<0x89, MRMDestReg, (outs GR64:$dst), (ins GR32:$src),
 def PsMOVZX64rm32: I<0x8B, MRMSrcMem, (outs GR64:$dst), (ins i32mem:$src),
                      "mov{l}\t{$src, ${dst:subreg32}|${dst:subreg32}, $src}",
                      [(set GR64:$dst, (zextloadi64i32 addr:$src))]>;
+
+/// PsAND64rrFFFFFFFF - r = r & (2^32-1)
+def PsAND64rrFFFFFFFF
+  : I<0x89, MRMDestReg, (outs GR64:$dst), (ins GR64:$src),
+  "mov{l}\t{${src:subreg32}, ${dst:subreg32}|${dst:subreg32}, ${src:subreg32}}",
+      [(set GR64:$dst, (and GR64:$src, i64immFFFFFFFF))]>;
 
 
 // Alias instructions that map movr0 to xor. Use xorl instead of xorq; it's

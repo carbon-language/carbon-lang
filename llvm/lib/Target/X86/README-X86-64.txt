@@ -249,15 +249,6 @@ _a:
 	addq	$8, %rsp
 	ret
 
-note the dead rsp adjustments.  Also, there is surely a better/shorter way 
-to clear the top 32-bits of a 64-bit register than movl+andq.  Testcase here:
-
-unsigned long long c(unsigned long long a) {return a&4294967295; }
-
-_c:
-	movl	$4294967295, %ecx
-	movq	%rdi, %rax
-	andq	%rcx, %rax
-	ret
+note the dead rsp adjustments.
 
 //===---------------------------------------------------------------------===//
