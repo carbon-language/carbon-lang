@@ -30,7 +30,7 @@ static void EmitWarning(Diagnostic& Diag, SourceManager& SrcMgr,
   Out << "[CHECKER] " << msg;
   msg = Out.str().c_str();
   
-  bool isFirst;
+  bool isFirst = true;
   unsigned ErrorDiag;
   
   for (; I != E; ++I) {
