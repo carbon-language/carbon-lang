@@ -23,7 +23,7 @@ def IA64getfd : SDNode<"IA64ISD::GETFD", SDTFPToIntOp, []>;
 
 def SDT_IA64RetFlag : SDTypeProfile<0, 0, []>;
 def retflag         : SDNode<"IA64ISD::RET_FLAG", SDT_IA64RetFlag,
-	                   [SDNPHasChain, SDNPOptInFlag]>;
+                           [SDNPHasChain, SDNPOptInFlag]>;
 
 //===---------
 // Instruction types
@@ -115,36 +115,36 @@ def imm64  : PatLeaf<(i64 imm)>;
 
 def ADD  : AForm_DAG<0x03, 0x0b, (outs GR:$dst), (ins GR:$src1, GR:$src2),
            "add $dst = $src1, $src2",
-	   [(set GR:$dst, (add GR:$src1, GR:$src2))]>, isA;
+           [(set GR:$dst, (add GR:$src1, GR:$src2))]>, isA;
 
 def ADD1 : AForm_DAG<0x03, 0x0b, (outs GR:$dst), (ins GR:$src1, GR:$src2),
            "add $dst = $src1, $src2, 1",
-	   [(set GR:$dst, (add (add GR:$src1, GR:$src2), 1))]>, isA;
+           [(set GR:$dst, (add (add GR:$src1, GR:$src2), 1))]>, isA;
 
 def ADDS : AForm_DAG<0x03, 0x0b, (outs GR:$dst), (ins GR:$src1, s14imm:$imm),
            "adds $dst = $imm, $src1",
-	   [(set GR:$dst, (add GR:$src1, immSExt14:$imm))]>, isA;
+           [(set GR:$dst, (add GR:$src1, immSExt14:$imm))]>, isA;
  
 def MOVL : AForm_DAG<0x03, 0x0b, (outs GR:$dst), (ins s64imm:$imm),
            "movl $dst = $imm",
-	   [(set GR:$dst, imm64:$imm)]>, isLX;
+           [(set GR:$dst, imm64:$imm)]>, isLX;
 
 def ADDL_GA : AForm_DAG<0x03, 0x0b, (outs GR:$dst), (ins GR:$src1, globaladdress:$imm),
            "addl $dst = $imm, $src1",
-	   []>, isA;
+           []>, isA;
 
 // hmm 
 def ADDL_EA : AForm_DAG<0x03, 0x0b, (outs GR:$dst), (ins GR:$src1, calltarget:$imm),
            "addl $dst = $imm, $src1",
-	   []>, isA;
+           []>, isA;
  
 def SUB  : AForm_DAG<0x03, 0x0b, (outs GR:$dst), (ins GR:$src1, GR:$src2),
            "sub $dst = $src1, $src2",
-	   [(set GR:$dst, (sub GR:$src1, GR:$src2))]>, isA;
+           [(set GR:$dst, (sub GR:$src1, GR:$src2))]>, isA;
 
 def SUB1 : AForm_DAG<0x03, 0x0b, (outs GR:$dst), (ins GR:$src1, GR:$src2),
            "sub $dst = $src1, $src2, 1",
-	   [(set GR:$dst, (add (sub GR: $src1, GR:$src2), -1))]>, isA;
+           [(set GR:$dst, (add (sub GR: $src1, GR:$src2), -1))]>, isA;
 
 let isTwoAddress = 1 in {
 def TPCADDIMM22 : AForm<0x03, 0x0b,
@@ -182,33 +182,33 @@ def ZXT4 : AForm_DAG<0x03, 0x0b, (outs GR:$dst), (ins GR:$src), "zxt4 $dst = $sr
 // fixme: shrs vs shru?
 def MIX1L : AForm_DAG<0x03, 0x0b, (outs GR:$dst), (ins GR:$src1, GR:$src2),
           "mix1.l $dst = $src1, $src2",
-	  [(set GR:$dst, (or (and GR:$src1, isMIX1Lable),
-	                     (and (srl GR:$src2, (i64 8)), isMIX1Lable)))]>, isI;
+          [(set GR:$dst, (or (and GR:$src1, isMIX1Lable),
+                          (and (srl GR:$src2, (i64 8)), isMIX1Lable)))]>, isI;
 
 def MIX2L : AForm_DAG<0x03, 0x0b, (outs GR:$dst), (ins GR:$src1, GR:$src2),
           "mix2.l $dst = $src1, $src2",
-	  [(set GR:$dst, (or (and GR:$src1, isMIX2Lable),
-	                     (and (srl GR:$src2, (i64 16)), isMIX2Lable)))]>, isI;
+          [(set GR:$dst, (or (and GR:$src1, isMIX2Lable),
+                          (and (srl GR:$src2, (i64 16)), isMIX2Lable)))]>, isI;
 
 def MIX4L : AForm_DAG<0x03, 0x0b, (outs GR:$dst), (ins GR:$src1, GR:$src2),
           "mix4.l $dst = $src1, $src2",
-	  [(set GR:$dst, (or (and GR:$src1, isMIX4Lable),
-	                     (and (srl GR:$src2, (i64 32)), isMIX4Lable)))]>, isI;
+          [(set GR:$dst, (or (and GR:$src1, isMIX4Lable),
+                          (and (srl GR:$src2, (i64 32)), isMIX4Lable)))]>, isI;
 
 def MIX1R : AForm_DAG<0x03, 0x0b, (outs GR:$dst), (ins GR:$src1, GR:$src2),
           "mix1.r $dst = $src1, $src2",
-	  [(set GR:$dst, (or (and (shl GR:$src1, (i64 8)), isMIX1Rable),
-	                     (and GR:$src2, isMIX1Rable)))]>, isI;
+          [(set GR:$dst, (or (and (shl GR:$src1, (i64 8)), isMIX1Rable),
+                          (and GR:$src2, isMIX1Rable)))]>, isI;
 
 def MIX2R : AForm_DAG<0x03, 0x0b, (outs GR:$dst), (ins GR:$src1, GR:$src2),
           "mix2.r $dst = $src1, $src2",
-	  [(set GR:$dst, (or (and (shl GR:$src1, (i64 16)), isMIX2Rable),
-	                     (and GR:$src2, isMIX2Rable)))]>, isI;
+          [(set GR:$dst, (or (and (shl GR:$src1, (i64 16)), isMIX2Rable),
+                          (and GR:$src2, isMIX2Rable)))]>, isI;
 
 def MIX4R : AForm_DAG<0x03, 0x0b, (outs GR:$dst), (ins GR:$src1, GR:$src2),
           "mix4.r $dst = $src1, $src2",
-	  [(set GR:$dst, (or (and (shl GR:$src1, (i64 32)), isMIX4Rable),
-	                     (and GR:$src2, isMIX4Rable)))]>, isI;
+          [(set GR:$dst, (or (and (shl GR:$src1, (i64 32)), isMIX4Rable),
+                          (and GR:$src2, isMIX4Rable)))]>, isI;
 
 def GETFSIGD : AForm_DAG<0x03, 0x0b, (outs GR:$dst), (ins FP:$src),
   "getf.sig $dst = $src",
@@ -244,14 +244,14 @@ def : Pat<(mulhu GR:$src1, GR:$src2),
 
 def AND   : AForm_DAG<0x03, 0x0b, (outs GR:$dst), (ins GR:$src1, GR:$src2),
           "and $dst = $src1, $src2",
-	  [(set GR:$dst, (and GR:$src1, GR:$src2))]>, isA;
+          [(set GR:$dst, (and GR:$src1, GR:$src2))]>, isA;
 def ANDCM : AForm_DAG<0x03, 0x0b, (outs GR:$dst), (ins GR:$src1, GR:$src2),
           "andcm $dst = $src1, $src2",
-	  [(set GR:$dst, (and GR:$src1, (not GR:$src2)))]>, isA;
+          [(set GR:$dst, (and GR:$src1, (not GR:$src2)))]>, isA;
 // TODO: and/andcm/or/xor/add/sub/shift immediate forms
 def OR    : AForm_DAG<0x03, 0x0b, (outs GR:$dst), (ins GR:$src1, GR:$src2),
           "or $dst = $src1, $src2",
-	  [(set GR:$dst, (or GR:$src1, GR:$src2))]>, isA;
+          [(set GR:$dst, (or GR:$src1, GR:$src2))]>, isA;
 
 def pOR   : AForm<0x03, 0x0b, (outs GR:$dst), (ins GR:$src1, GR:$src2, PR:$qp),
           "($qp) or $dst = $src1, $src2">, isA;
@@ -260,34 +260,34 @@ def pOR   : AForm<0x03, 0x0b, (outs GR:$dst), (ins GR:$src1, GR:$src2, PR:$qp),
 // of the compare!
 def CMPEQ : AForm_DAG<0x03, 0x0b, (outs PR:$dst), (ins GR:$src1, GR:$src2),
           "cmp.eq $dst, p0 = $src1, $src2",
-	  [(set PR:$dst, (seteq GR:$src1, GR:$src2))]>, isA;
+          [(set PR:$dst, (seteq GR:$src1, GR:$src2))]>, isA;
 def CMPGT : AForm_DAG<0x03, 0x0b, (outs PR:$dst), (ins GR:$src1, GR:$src2),
           "cmp.gt $dst, p0 = $src1, $src2",
-	  [(set PR:$dst, (setgt GR:$src1, GR:$src2))]>, isA;
+          [(set PR:$dst, (setgt GR:$src1, GR:$src2))]>, isA;
 def CMPGE : AForm_DAG<0x03, 0x0b, (outs PR:$dst), (ins GR:$src1, GR:$src2),
           "cmp.ge $dst, p0 = $src1, $src2",
-	  [(set PR:$dst, (setge GR:$src1, GR:$src2))]>, isA;
+          [(set PR:$dst, (setge GR:$src1, GR:$src2))]>, isA;
 def CMPLT : AForm_DAG<0x03, 0x0b, (outs PR:$dst), (ins GR:$src1, GR:$src2),
           "cmp.lt $dst, p0 = $src1, $src2",
-	  [(set PR:$dst, (setlt GR:$src1, GR:$src2))]>, isA;
+          [(set PR:$dst, (setlt GR:$src1, GR:$src2))]>, isA;
 def CMPLE : AForm_DAG<0x03, 0x0b, (outs PR:$dst), (ins GR:$src1, GR:$src2),
           "cmp.le $dst, p0 = $src1, $src2",
-	  [(set PR:$dst, (setle GR:$src1, GR:$src2))]>, isA;
+          [(set PR:$dst, (setle GR:$src1, GR:$src2))]>, isA;
 def CMPNE : AForm_DAG<0x03, 0x0b, (outs PR:$dst), (ins GR:$src1, GR:$src2),
           "cmp.ne $dst, p0 = $src1, $src2",
-	  [(set PR:$dst, (setne GR:$src1, GR:$src2))]>, isA;
+          [(set PR:$dst, (setne GR:$src1, GR:$src2))]>, isA;
 def CMPLTU: AForm_DAG<0x03, 0x0b, (outs PR:$dst), (ins GR:$src1, GR:$src2),
           "cmp.ltu $dst, p0 = $src1, $src2",
-	  [(set PR:$dst, (setult GR:$src1, GR:$src2))]>, isA;
+          [(set PR:$dst, (setult GR:$src1, GR:$src2))]>, isA;
 def CMPGTU: AForm_DAG<0x03, 0x0b, (outs PR:$dst), (ins GR:$src1, GR:$src2),
           "cmp.gtu $dst, p0 = $src1, $src2",
-	  [(set PR:$dst, (setugt GR:$src1, GR:$src2))]>, isA;
+          [(set PR:$dst, (setugt GR:$src1, GR:$src2))]>, isA;
 def CMPLEU: AForm_DAG<0x03, 0x0b, (outs PR:$dst), (ins GR:$src1, GR:$src2),
           "cmp.leu $dst, p0 = $src1, $src2",
-	  [(set PR:$dst, (setule GR:$src1, GR:$src2))]>, isA;
+          [(set PR:$dst, (setule GR:$src1, GR:$src2))]>, isA;
 def CMPGEU: AForm_DAG<0x03, 0x0b, (outs PR:$dst), (ins GR:$src1, GR:$src2),
           "cmp.geu $dst, p0 = $src1, $src2",
-	  [(set PR:$dst, (setuge GR:$src1, GR:$src2))]>, isA;
+          [(set PR:$dst, (setuge GR:$src1, GR:$src2))]>, isA;
 
 // and we do the whole thing again for FP compares!
 def FCMPEQ : AForm_DAG<0x03, 0x0b, (outs PR:$dst), (ins FP:$src1, FP:$src2),
@@ -295,38 +295,38 @@ def FCMPEQ : AForm_DAG<0x03, 0x0b, (outs PR:$dst), (ins FP:$src1, FP:$src2),
           [(set PR:$dst, (seteq FP:$src1, FP:$src2))]>, isF;
 def FCMPGT : AForm_DAG<0x03, 0x0b, (outs PR:$dst), (ins FP:$src1, FP:$src2),
           "fcmp.gt $dst, p0 = $src1, $src2",
-	  [(set PR:$dst, (setgt FP:$src1, FP:$src2))]>, isF;
+          [(set PR:$dst, (setgt FP:$src1, FP:$src2))]>, isF;
 def FCMPGE : AForm_DAG<0x03, 0x0b, (outs PR:$dst), (ins FP:$src1, FP:$src2),
           "fcmp.ge $dst, p0 = $src1, $src2",
-	  [(set PR:$dst, (setge FP:$src1, FP:$src2))]>, isF;
+          [(set PR:$dst, (setge FP:$src1, FP:$src2))]>, isF;
 def FCMPLT : AForm_DAG<0x03, 0x0b, (outs PR:$dst), (ins FP:$src1, FP:$src2),
           "fcmp.lt $dst, p0 = $src1, $src2",
-	  [(set PR:$dst, (setlt FP:$src1, FP:$src2))]>, isF;
+          [(set PR:$dst, (setlt FP:$src1, FP:$src2))]>, isF;
 def FCMPLE : AForm_DAG<0x03, 0x0b, (outs PR:$dst), (ins FP:$src1, FP:$src2),
           "fcmp.le $dst, p0 = $src1, $src2",
-	  [(set PR:$dst, (setle FP:$src1, FP:$src2))]>, isF;
+          [(set PR:$dst, (setle FP:$src1, FP:$src2))]>, isF;
 def FCMPNE : AForm_DAG<0x03, 0x0b, (outs PR:$dst), (ins FP:$src1, FP:$src2),
           "fcmp.neq $dst, p0 = $src1, $src2",
-	  [(set PR:$dst, (setne FP:$src1, FP:$src2))]>, isF;
+          [(set PR:$dst, (setne FP:$src1, FP:$src2))]>, isF;
 def FCMPLTU: AForm_DAG<0x03, 0x0b, (outs PR:$dst), (ins FP:$src1, FP:$src2),
           "fcmp.lt $dst, p0 = $src1, $src2",
-	  [(set PR:$dst, (setult FP:$src1, FP:$src2))]>, isF;
+          [(set PR:$dst, (setult FP:$src1, FP:$src2))]>, isF;
 def FCMPGTU: AForm_DAG<0x03, 0x0b, (outs PR:$dst), (ins FP:$src1, FP:$src2),
           "fcmp.gt $dst, p0 = $src1, $src2",
-	  [(set PR:$dst, (setugt FP:$src1, FP:$src2))]>, isF;
+          [(set PR:$dst, (setugt FP:$src1, FP:$src2))]>, isF;
 def FCMPLEU: AForm_DAG<0x03, 0x0b, (outs PR:$dst), (ins FP:$src1, FP:$src2),
           "fcmp.le $dst, p0 = $src1, $src2",
-	  [(set PR:$dst, (setule FP:$src1, FP:$src2))]>, isF;
+          [(set PR:$dst, (setule FP:$src1, FP:$src2))]>, isF;
 def FCMPGEU: AForm_DAG<0x03, 0x0b, (outs PR:$dst), (ins FP:$src1, FP:$src2),
           "fcmp.ge $dst, p0 = $src1, $src2",
-	  [(set PR:$dst, (setuge FP:$src1, FP:$src2))]>, isF;
+          [(set PR:$dst, (setuge FP:$src1, FP:$src2))]>, isF;
 
 def PCMPEQUNCR0R0 : AForm<0x03, 0x0b, (outs PR:$dst), (ins PR:$qp),
     "($qp) cmp.eq.unc $dst, p0 = r0, r0">, isA;
 
 def : Pat<(trunc GR:$src),  // truncate i64 to i1
           (CMPNE GR:$src, r0)>; // $src!=0? If so, PR:$dst=true
-	  
+
 let isTwoAddress=1 in {
   def TPCMPEQR0R0 : AForm<0x03, 0x0b, (outs PR:$dst), (ins PR:$bogus, PR:$qp),
     "($qp) cmp.eq $dst, p0 = r0, r0">, isA;
@@ -355,7 +355,7 @@ def bOR   : Pat<(or PR:$src1, PR:$src2),
 
 def bAND  : Pat<(and PR:$src1, PR:$src2),
           ( TPCMPNER0R0 (PCMPEQUNCR0R0 PR:$src1),
-	    (TPCMPNER0R0 (CMPEQ r0, r0), PR:$src2) )>;
+            (TPCMPNER0R0 (CMPEQ r0, r0), PR:$src2) )>;
 
 /* one possible routine for XOR on predicates is:
 
@@ -391,12 +391,12 @@ def bAND  : Pat<(and PR:$src1, PR:$src2),
   
 def bXOR  : Pat<(xor PR:$src1, PR:$src2),
           (TPCMPIMM8NE (PCMPEQUNCR0R0 PR:$src2), 1,
-	               (TPCADDS (ADDS r0, 0), 1, PR:$src2),
-                        PR:$src1)>;
+                        (TPCADDS (ADDS r0, 0), 1, PR:$src2),
+                         PR:$src1)>;
 
 def XOR   : AForm_DAG<0x03, 0x0b, (outs GR:$dst), (ins GR:$src1, GR:$src2),
           "xor $dst = $src1, $src2",
-	  [(set GR:$dst, (xor GR:$src1, GR:$src2))]>, isA;
+          [(set GR:$dst, (xor GR:$src1, GR:$src2))]>, isA;
 
 def SHLADD: AForm_DAG<0x03, 0x0b, (outs GR:$dst), (ins GR:$src1,s64imm:$imm,GR:$src2),
           "shladd $dst = $src1, $imm, $src2",
@@ -404,15 +404,15 @@ def SHLADD: AForm_DAG<0x03, 0x0b, (outs GR:$dst), (ins GR:$src1,s64imm:$imm,GR:$
 
 def SHL   : AForm_DAG<0x03, 0x0b, (outs GR:$dst), (ins GR:$src1, GR:$src2),
           "shl $dst = $src1, $src2",
-	  [(set GR:$dst, (shl GR:$src1, GR:$src2))]>, isI;
+          [(set GR:$dst, (shl GR:$src1, GR:$src2))]>, isI;
 
 def SHRU  : AForm_DAG<0x03, 0x0b, (outs GR:$dst), (ins GR:$src1, GR:$src2),
           "shr.u $dst = $src1, $src2",
-	  [(set GR:$dst, (srl GR:$src1, GR:$src2))]>, isI;
+          [(set GR:$dst, (srl GR:$src1, GR:$src2))]>, isI;
 
 def SHRS  : AForm_DAG<0x03, 0x0b, (outs GR:$dst), (ins GR:$src1, GR:$src2),
           "shr $dst = $src1, $src2",
-	  [(set GR:$dst, (sra GR:$src1, GR:$src2))]>, isI;
+          [(set GR:$dst, (sra GR:$src1, GR:$src2))]>, isI;
 
 def MOV : AForm<0x03, 0x0b, (outs GR:$dst), (ins GR:$src), "mov $dst = $src">, isA;
 def FMOV : AForm<0x03, 0x0b, (outs FP:$dst), (ins FP:$src),

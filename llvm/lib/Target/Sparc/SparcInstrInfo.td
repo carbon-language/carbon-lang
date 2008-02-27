@@ -125,11 +125,11 @@ def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_SPCallSeqEnd,
 
 def SDT_SPCall    : SDTypeProfile<0, 1, [SDTCisVT<0, i32>]>;
 def call          : SDNode<"SPISD::CALL", SDT_SPCall,
-	                   [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
+                           [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 
 def SDT_SPRetFlag : SDTypeProfile<0, 0, []>;
 def retflag       : SDNode<"SPISD::RET_FLAG", SDT_SPRetFlag,
-	                   [SDNPHasChain, SDNPOptInFlag]>;
+                           [SDNPHasChain, SDNPOptInFlag]>;
 
 //===----------------------------------------------------------------------===//
 // SPARC Flag Conditions

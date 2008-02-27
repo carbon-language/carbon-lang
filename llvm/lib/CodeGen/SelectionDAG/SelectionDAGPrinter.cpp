@@ -134,7 +134,7 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
     if (G && R->getReg() != 0 &&
         TargetRegisterInfo::isPhysicalRegister(R->getReg())) {
       Op = Op + " " +
-	G->getTarget().getRegisterInfo()->getName(R->getReg());
+        G->getTarget().getRegisterInfo()->getName(R->getReg());
     } else {
       Op += " #" + utostr(R->getReg());
     }

@@ -86,18 +86,18 @@ class v4i32_u16imm<string builtin_suffix> :
 class v4f32_rr<string builtin_suffix> :
   GCCBuiltin<!strconcat("__builtin_si_", builtin_suffix)>,
   Intrinsic<[llvm_v4f32_ty, llvm_v4f32_ty, llvm_v4f32_ty],
-	        [IntrNoMem]>;
+            [IntrNoMem]>;
 
 class v4f32_rrr<string builtin_suffix> :
   GCCBuiltin<!strconcat("__builtin_si_", builtin_suffix)>,
   Intrinsic<[llvm_v4f32_ty, llvm_v4f32_ty, llvm_v4f32_ty, llvm_v4f32_ty],
-	        [IntrNoMem]>;
+            [IntrNoMem]>;
 
 class v2f64_rr<string builtin_suffix> :
   GCCBuiltin<!strconcat("__builtin_si_", builtin_suffix)>,
   Intrinsic<[llvm_v2f64_ty, llvm_v2f64_ty, llvm_v2f64_ty],
-	        [IntrNoMem]>;
-			
+            [IntrNoMem]>;
+
 // All Cell SPU intrinsics start with "llvm.spu.".
 let TargetPrefix = "spu" in {
   def int_spu_si_fsmbi  : v8i16_u16imm<"fsmbi">;
@@ -213,31 +213,30 @@ let TargetPrefix = "spu" in {
   def int_spu_si_nor:           v4i32_rr<"nor">;
   def int_spu_si_nand:          v4i32_rr<"nand">;
   
-  def int_spu_si_fa:			v4f32_rr<"fa">;
-  def int_spu_si_fs:			v4f32_rr<"fs">;
-  def int_spu_si_fm:			v4f32_rr<"fm">;
+  def int_spu_si_fa:            v4f32_rr<"fa">;
+  def int_spu_si_fs:            v4f32_rr<"fs">;
+  def int_spu_si_fm:            v4f32_rr<"fm">;
   
-  def int_spu_si_fceq:			v4f32_rr<"fceq">;
-  def int_spu_si_fcmeq:			v4f32_rr<"fcmeq">;
-  def int_spu_si_fcgt:			v4f32_rr<"fcgt">;
-  def int_spu_si_fcmgt:			v4f32_rr<"fcmgt">;
+  def int_spu_si_fceq:          v4f32_rr<"fceq">;
+  def int_spu_si_fcmeq:         v4f32_rr<"fcmeq">;
+  def int_spu_si_fcgt:          v4f32_rr<"fcgt">;
+  def int_spu_si_fcmgt:         v4f32_rr<"fcmgt">;
   
-  def int_spu_si_fma:			v4f32_rrr<"fma">;
-  def int_spu_si_fnms:			v4f32_rrr<"fnms">;
-  def int_spu_si_fms:			v4f32_rrr<"fms">;
+  def int_spu_si_fma:           v4f32_rrr<"fma">;
+  def int_spu_si_fnms:          v4f32_rrr<"fnms">;
+  def int_spu_si_fms:           v4f32_rrr<"fms">;
 
-  def int_spu_si_dfa:			v2f64_rr<"dfa">;
-  def int_spu_si_dfs:			v2f64_rr<"dfs">;
-  def int_spu_si_dfm:			v2f64_rr<"dfm">;
+  def int_spu_si_dfa:           v2f64_rr<"dfa">;
+  def int_spu_si_dfs:           v2f64_rr<"dfs">;
+  def int_spu_si_dfm:           v2f64_rr<"dfm">;
   
-//def int_spu_si_dfceq:			v2f64_rr<"dfceq">;
-//def int_spu_si_dfcmeq:		v2f64_rr<"dfcmeq">;
-//def int_spu_si_dfcgt:			v2f64_rr<"dfcgt">;
-//def int_spu_si_dfcmgt:		v2f64_rr<"dfcmgt">;
+//def int_spu_si_dfceq:         v2f64_rr<"dfceq">;
+//def int_spu_si_dfcmeq:        v2f64_rr<"dfcmeq">;
+//def int_spu_si_dfcgt:         v2f64_rr<"dfcgt">;
+//def int_spu_si_dfcmgt:        v2f64_rr<"dfcmgt">;
   
-  def int_spu_si_dfnma:			v2f64_rr<"dfnma">;
-  def int_spu_si_dfma:			v2f64_rr<"dfma">;
-  def int_spu_si_dfnms:			v2f64_rr<"dfnms">;
-  def int_spu_si_dfms:			v2f64_rr<"dfms">;
-  
+  def int_spu_si_dfnma:         v2f64_rr<"dfnma">;
+  def int_spu_si_dfma:          v2f64_rr<"dfma">;
+  def int_spu_si_dfnms:         v2f64_rr<"dfnms">;
+  def int_spu_si_dfms:          v2f64_rr<"dfms">;
 }

@@ -419,7 +419,7 @@ def GR : RegisterClass<"IA64", [i64], 64,
         r104, r105, r106, r107, r108, r109, r110, r111,
         r112, r113, r114, r115, r116, r117, r118, r119,
         r120, r121, r122, r123, r124, r125, r126, r127,
-	r0, r1, r2, r5, r12, r13, r22, rp]> // the last 16 are special (look down)
+        r0, r1, r2, r5, r12, r13, r22, rp]> // last 16 are special (look down)
   {
     let MethodProtos = [{
     iterator allocation_order_begin(const MachineFunction &MF) const;
@@ -428,19 +428,18 @@ def GR : RegisterClass<"IA64", [i64], 64,
   let MethodBodies = [{
     GRClass::iterator
     GRClass::allocation_order_begin(const MachineFunction &MF) const {
-	// hide the 8 out? registers appropriately:
-	return begin()+(8-(MF.getInfo<IA64FunctionInfo>()->outRegsUsed));
+        // hide the 8 out? registers appropriately:
+        return begin()+(8-(MF.getInfo<IA64FunctionInfo>()->outRegsUsed));
       }
 
       GRClass::iterator
       GRClass::allocation_order_end(const MachineFunction &MF) const {
-	int numReservedRegs=8; // the 8 special registers r0,r1,r2,r5,r12,r13 etc
+        int numReservedRegs=8;// the 8 special registers r0,r1,r2,r5,r12,r13 etc
 
-	// we also can't allocate registers for use as locals if they're
-	// already required as 'out' registers
-	numReservedRegs+=MF.getInfo<IA64FunctionInfo>()->outRegsUsed;
-	
-	return end()-numReservedRegs; // hide registers appropriately
+        // we also can't allocate registers for use as locals if they're already
+        // required as 'out' registers
+        numReservedRegs+=MF.getInfo<IA64FunctionInfo>()->outRegsUsed;
+        return end()-numReservedRegs; // hide registers appropriately
       }
   }];
 }
@@ -450,20 +449,20 @@ def GR : RegisterClass<"IA64", [i64], 64,
 
 def FP : RegisterClass<"IA64", [f64], 64, 
        [F6, F7, 
-	F8, F9, F10, F11, F12, F13, F14, F15, 
-	F32, F33, F34, F35, F36, F37, F38, F39, 
-	F40, F41, F42, F43, F44, F45, F46, F47, 
-	F48, F49, F50, F51, F52, F53, F54, F55, 
-	F56, F57, F58, F59, F60, F61, F62, F63, 
-	F64, F65, F66, F67, F68, F69, F70, F71, 
-	F72, F73, F74, F75, F76, F77, F78, F79, 
-	F80, F81, F82, F83, F84, F85, F86, F87, 
-	F88, F89, F90, F91, F92, F93, F94, F95, 
-	F96, F97, F98, F99, F100, F101, F102, F103, 
-	F104, F105, F106, F107, F108, F109, F110, F111, 
-	F112, F113, F114, F115, F116, F117, F118, F119, 
-	F120, F121, F122, F123, F124, F125, F126, F127,
-	F0, F1]> // these last two are hidden
+        F8, F9, F10, F11, F12, F13, F14, F15, 
+        F32, F33, F34, F35, F36, F37, F38, F39, 
+        F40, F41, F42, F43, F44, F45, F46, F47, 
+        F48, F49, F50, F51, F52, F53, F54, F55, 
+        F56, F57, F58, F59, F60, F61, F62, F63, 
+        F64, F65, F66, F67, F68, F69, F70, F71, 
+        F72, F73, F74, F75, F76, F77, F78, F79, 
+        F80, F81, F82, F83, F84, F85, F86, F87, 
+        F88, F89, F90, F91, F92, F93, F94, F95, 
+        F96, F97, F98, F99, F100, F101, F102, F103, 
+        F104, F105, F106, F107, F108, F109, F110, F111, 
+        F112, F113, F114, F115, F116, F117, F118, F119, 
+        F120, F121, F122, F123, F124, F125, F126, F127,
+        F0, F1]> // these last two are hidden
   {
 // the 128s here are to make stf.spill/ldf.fill happy,
 // when storing full (82-bit) FP regs to stack slots
@@ -478,13 +477,13 @@ def FP : RegisterClass<"IA64", [f64], 64,
   let MethodBodies = [{
     FPClass::iterator
     FPClass::allocation_order_begin(const MachineFunction &MF) const {
-	return begin(); // we don't hide any FP regs from the start
-      }
+      return begin(); // we don't hide any FP regs from the start
+    }
 
-      FPClass::iterator
-      FPClass::allocation_order_end(const MachineFunction &MF) const {
-	return end()-2; // we hide regs F0, F1 from the end 
-      }
+    FPClass::iterator
+    FPClass::allocation_order_end(const MachineFunction &MF) const {
+      return end()-2; // we hide regs F0, F1 from the end 
+    }
   }];
 }
 

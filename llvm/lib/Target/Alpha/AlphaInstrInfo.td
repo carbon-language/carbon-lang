@@ -27,7 +27,7 @@ def Alpha_gprelhi : SDNode<"AlphaISD::GPRelHi",   SDTIntBinOp, []>;
 def Alpha_rellit  : SDNode<"AlphaISD::RelLit",    SDTIntBinOp, [SDNPMayLoad]>;
 
 def retflag       : SDNode<"AlphaISD::RET_FLAG", SDTNone,
-	                   [SDNPHasChain, SDNPOptInFlag]>;
+                           [SDNPHasChain, SDNPOptInFlag]>;
 
 // These are target-independent nodes, but have target-specific formats.
 def SDT_AlphaCallSeqStart : SDCallSeqStart<[ SDTCisVT<0, i64> ]>;
@@ -35,7 +35,7 @@ def SDT_AlphaCallSeqEnd   : SDCallSeqEnd<[ SDTCisVT<0, i64>,
                                            SDTCisVT<1, i64> ]>;
 
 def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_AlphaCallSeqStart,
-    		           [SDNPHasChain, SDNPOutFlag]>;
+                           [SDNPHasChain, SDNPOutFlag]>;
 def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_AlphaCallSeqEnd,
                            [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 
@@ -450,21 +450,21 @@ def LDWUr : MForm<0x0C, 1, "ldwu $RA,$DISP($RB)\t\t!gprellow",
 
 let OutOperandList = (ops), InOperandList = (ops GPRC:$RA, s64imm:$DISP, GPRC:$RB) in {
 def STB   : MForm<0x0E, 0, "stb $RA,$DISP($RB)",
-		 [(truncstorei8 GPRC:$RA, (add GPRC:$RB, immSExt16:$DISP))], s_ist>;
+                 [(truncstorei8 GPRC:$RA, (add GPRC:$RB, immSExt16:$DISP))], s_ist>;
 def STBr  : MForm<0x0E, 0, "stb $RA,$DISP($RB)\t\t!gprellow",
-		 [(truncstorei8 GPRC:$RA, (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB))], s_ist>;
+                 [(truncstorei8 GPRC:$RA, (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB))], s_ist>;
 def STW   : MForm<0x0D, 0, "stw $RA,$DISP($RB)",
-		 [(truncstorei16 GPRC:$RA, (add GPRC:$RB, immSExt16:$DISP))], s_ist>;
+                 [(truncstorei16 GPRC:$RA, (add GPRC:$RB, immSExt16:$DISP))], s_ist>;
 def STWr  : MForm<0x0D, 0, "stw $RA,$DISP($RB)\t\t!gprellow",
-		 [(truncstorei16 GPRC:$RA, (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB))], s_ist>;
+                 [(truncstorei16 GPRC:$RA, (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB))], s_ist>;
 def STL   : MForm<0x2C, 0, "stl $RA,$DISP($RB)",
-		 [(truncstorei32 GPRC:$RA, (add GPRC:$RB, immSExt16:$DISP))], s_ist>;
+                 [(truncstorei32 GPRC:$RA, (add GPRC:$RB, immSExt16:$DISP))], s_ist>;
 def STLr  : MForm<0x2C, 0, "stl $RA,$DISP($RB)\t\t!gprellow",
-		 [(truncstorei32 GPRC:$RA, (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB))], s_ist>;
+                 [(truncstorei32 GPRC:$RA, (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB))], s_ist>;
 def STQ   : MForm<0x2D, 0, "stq $RA,$DISP($RB)",
-		 [(store GPRC:$RA, (add GPRC:$RB, immSExt16:$DISP))], s_ist>;
+                 [(store GPRC:$RA, (add GPRC:$RB, immSExt16:$DISP))], s_ist>;
 def STQr  : MForm<0x2D, 0, "stq $RA,$DISP($RB)\t\t!gprellow",
-		 [(store GPRC:$RA, (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB))], s_ist>;
+                 [(store GPRC:$RA, (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB))], s_ist>;
 }
 
 //Load address
@@ -481,27 +481,27 @@ def LDAHr : MForm<0x09, 0, "ldah $RA,$DISP($RB)\t\t!gprelhigh",
 
 let OutOperandList = (ops), InOperandList = (ops F4RC:$RA, s64imm:$DISP, GPRC:$RB) in {
 def STS  : MForm<0x26, 0, "sts $RA,$DISP($RB)",
-		[(store F4RC:$RA, (add GPRC:$RB, immSExt16:$DISP))], s_fst>;
+                [(store F4RC:$RA, (add GPRC:$RB, immSExt16:$DISP))], s_fst>;
 def STSr : MForm<0x26, 0, "sts $RA,$DISP($RB)\t\t!gprellow",
-		[(store F4RC:$RA, (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB))], s_fst>;
+                [(store F4RC:$RA, (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB))], s_fst>;
 }
 let OutOperandList = (ops F4RC:$RA), InOperandList = (ops s64imm:$DISP, GPRC:$RB) in {
 def LDS  : MForm<0x22, 1, "lds $RA,$DISP($RB)",
-		[(set F4RC:$RA, (load (add GPRC:$RB, immSExt16:$DISP)))], s_fld>;
+                [(set F4RC:$RA, (load (add GPRC:$RB, immSExt16:$DISP)))], s_fld>;
 def LDSr : MForm<0x22, 1, "lds $RA,$DISP($RB)\t\t!gprellow",
-		[(set F4RC:$RA, (load (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB)))], s_fld>;
+                [(set F4RC:$RA, (load (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB)))], s_fld>;
 }
 let OutOperandList = (ops), InOperandList = (ops F8RC:$RA, s64imm:$DISP, GPRC:$RB) in {
 def STT  : MForm<0x27, 0, "stt $RA,$DISP($RB)",
-		[(store F8RC:$RA, (add GPRC:$RB, immSExt16:$DISP))], s_fst>;
+                 [(store F8RC:$RA, (add GPRC:$RB, immSExt16:$DISP))], s_fst>;
 def STTr : MForm<0x27, 0, "stt $RA,$DISP($RB)\t\t!gprellow",
-		[(store F8RC:$RA, (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB))], s_fst>;
+                 [(store F8RC:$RA, (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB))], s_fst>;
 }
 let OutOperandList = (ops F8RC:$RA), InOperandList = (ops s64imm:$DISP, GPRC:$RB) in {
 def LDT  : MForm<0x23, 1, "ldt $RA,$DISP($RB)",
-		[(set F8RC:$RA, (load (add GPRC:$RB, immSExt16:$DISP)))], s_fld>;
+                [(set F8RC:$RA, (load (add GPRC:$RB, immSExt16:$DISP)))], s_fld>;
 def LDTr : MForm<0x23, 1, "ldt $RA,$DISP($RB)\t\t!gprellow",
-		[(set F8RC:$RA, (load (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB)))], s_fld>;
+                [(set F8RC:$RA, (load (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB)))], s_fld>;
 }
 
 

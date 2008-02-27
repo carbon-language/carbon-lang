@@ -1262,7 +1262,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
           else
             DOUT << "Reusing SS#" << ReuseSlot;
           DOUT << " from physreg " << TRI->getName(PhysReg)
-	       << " for vreg" << VirtReg
+               << " for vreg" << VirtReg
                << " instead of reloading into same physreg.\n";
           unsigned RReg = SubIdx ? TRI->getSubReg(PhysReg, SubIdx) : PhysReg;
           MI.getOperand(i).setReg(RReg);
