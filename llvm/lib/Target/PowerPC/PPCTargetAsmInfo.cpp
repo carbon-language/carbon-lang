@@ -14,7 +14,10 @@
 #include "PPCTargetAsmInfo.h"
 #include "PPCTargetMachine.h"
 #include "llvm/Function.h"
+#include "llvm/Support/Dwarf.h"
+
 using namespace llvm;
+using namespace llvm::dwarf;
 
 PPCTargetAsmInfo::PPCTargetAsmInfo(const PPCTargetMachine &TM) {
   bool isPPC64 = TM.getSubtargetImpl()->isPPC64();
@@ -27,7 +30,6 @@ PPCTargetAsmInfo::PPCTargetAsmInfo(const PPCTargetMachine &TM) {
   InlineAsmStart = "# InlineAsm Start";
   InlineAsmEnd = "# InlineAsm End";
   AssemblerDialect = TM.getSubtargetImpl()->getAsmFlavor();
-  
 }
 
 DarwinTargetAsmInfo::DarwinTargetAsmInfo(const PPCTargetMachine &TM)
@@ -86,6 +88,21 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const PPCTargetMachine &TM)
   }
 }
 
+/// PreferredEHDataFormat - This hook allows the target to select data
+/// format used for encoding pointers in exception handling data. Reason is
+/// 0 for data, 1 for code labels, 2 for function pointers. Global is true
+/// if the symbol can be relocated.
+unsigned DarwinTargetAsmInfo::PreferredEHDataFormat(unsigned Reason,
+                                                    bool Global) const {
+  if (Reason == 2 && Global)
+    return (DW_EH_PE_pcrel | DW_EH_PE_indirect | DW_EH_PE_sdata4);
+  else if (Reason == 1 || !Global)
+    return DW_EH_PE_pcrel;
+  else
+    return DW_EH_PE_absptr;
+}
+
+
 LinuxTargetAsmInfo::LinuxTargetAsmInfo(const PPCTargetMachine &TM)
 : PPCTargetAsmInfo(TM)
 {
@@ -131,4 +148,14 @@ LinuxTargetAsmInfo::LinuxTargetAsmInfo(const PPCTargetMachine &TM)
   AbsoluteEHSectionOffsets = false;
   DwarfEHFrameSection = "\t.section\t.eh_frame,\"aw\",@progbits";
   DwarfExceptionSection = "\t.section\t.gcc_except_table,\"a\",@progbits";
+}
+
+/// PreferredEHDataFormat - This hook allows the target to select data
+/// format used for encoding pointers in exception handling data. Reason is
+/// 0 for data, 1 for code labels, 2 for function pointers. Global is true
+/// if the symbol can be relocated.
+unsigned LinuxTargetAsmInfo::PreferredEHDataFormat(unsigned Reason,
+                                                   bool Global) const {
+  // We really need to write something here.
+  return TargetAsmInfo::PreferredEHDataFormat(Reason, Global);
 }
