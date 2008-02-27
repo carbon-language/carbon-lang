@@ -5739,6 +5739,12 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
 #endif
     assert(0 && "Do not know how to expand this operator!");
     abort();
+  case ISD::EXTRACT_ELEMENT:
+    ExpandOp(Node->getOperand(0), Lo, Hi);
+    if (cast<ConstantSDNode>(Node->getOperand(1))->getValue())
+      return ExpandOp(Hi, Lo, Hi);
+    else
+      return ExpandOp(Lo, Lo, Hi);
   case ISD::EXTRACT_VECTOR_ELT:
     assert(VT==MVT::i64 && "Do not know how to expand this operator!");
     // ExpandEXTRACT_VECTOR_ELT tolerates invalid result types.
