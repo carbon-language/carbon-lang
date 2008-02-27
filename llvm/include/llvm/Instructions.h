@@ -1392,6 +1392,9 @@ public:
   // ReturnInst(Value* X, Inst *I) - 'ret X'    instruction, insert before I
   // ReturnInst(    null, BB *B)   - 'ret void' instruction, insert @ end of BB
   // ReturnInst(Value* X, BB *B)   - 'ret X'    instruction, insert @ end of BB
+  // ReturnInst(Value* X, N)          - 'ret X,X+1...X+N-1' instruction
+  // ReturnInst(Value* X, N, Inst *)  - 'ret X,X+1...X+N-1', insert before I
+  // ReturnInst(Value* X, N, BB *)    - 'ret X,X+1...X+N-1', insert @ end of BB
   //
   // NOTE: If the Value* passed is of type void then the constructor behaves as
   // if it was passed NULL.

@@ -617,7 +617,6 @@ ReturnInst::ReturnInst(Value * const* retVals, unsigned N)
 }
 
 void ReturnInst::init(Value * const* retVals, unsigned N) {
-
   assert (N > 0 && "Invalid operands numbers in ReturnInst init");
 
   NumOperands = N;
