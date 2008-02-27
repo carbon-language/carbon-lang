@@ -764,6 +764,9 @@ bool LiveIntervals::tryFoldMemoryOperand(MachineInstr* &MI,
   MachineInstr *fmi = isSS ? tii_->foldMemoryOperand(*mf_, MI, FoldOps, Slot)
                            : tii_->foldMemoryOperand(*mf_, MI, FoldOps, DefMI);
   if (fmi) {
+    // Remember this instruction uses the spill slot.
+    if (isSS) vrm.addSpillSlotUse(Slot, fmi);
+
     // Attempt to fold the memory reference into the instruction. If
     // we can do this, we don't need to insert spill code.
     if (lv_)

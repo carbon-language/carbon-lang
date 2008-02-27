@@ -42,6 +42,7 @@ STATISTIC(NumLoads , "Number of loads added");
 STATISTIC(NumReused, "Number of values reused");
 STATISTIC(NumDSE   , "Number of dead stores elided");
 STATISTIC(NumDCE   , "Number of copies elided");
+STATISTIC(NumDSS   , "Number of dead spill slots removed");
 
 namespace {
   enum SpillerName { simple, local };
@@ -64,7 +65,9 @@ VirtRegMap::VirtRegMap(MachineFunction &mf)
   : TII(*mf.getTarget().getInstrInfo()), MF(mf), 
     Virt2PhysMap(NO_PHYS_REG), Virt2StackSlotMap(NO_STACK_SLOT),
     Virt2ReMatIdMap(NO_STACK_SLOT), Virt2SplitMap(0),
-    Virt2SplitKillMap(0), ReMatMap(NULL), ReMatId(MAX_STACK_SLOT+1) {
+    Virt2SplitKillMap(0), ReMatMap(NULL), ReMatId(MAX_STACK_SLOT+1),
+    LowSpillSlot(NO_STACK_SLOT), HighSpillSlot(NO_STACK_SLOT) {
+  SpillSlotToUsesMap.resize(8);
   grow();
 }
 
@@ -83,21 +86,28 @@ int VirtRegMap::assignVirt2StackSlot(unsigned virtReg) {
   assert(Virt2StackSlotMap[virtReg] == NO_STACK_SLOT &&
          "attempt to assign stack slot to already spilled register");
   const TargetRegisterClass* RC = MF.getRegInfo().getRegClass(virtReg);
-  int frameIndex = MF.getFrameInfo()->CreateStackObject(RC->getSize(),
-                                                        RC->getAlignment());
-  Virt2StackSlotMap[virtReg] = frameIndex;
+  int SS = MF.getFrameInfo()->CreateStackObject(RC->getSize(),
+                                                RC->getAlignment());
+  if (LowSpillSlot == NO_STACK_SLOT)
+    LowSpillSlot = SS;
+  if (HighSpillSlot == NO_STACK_SLOT || SS > HighSpillSlot)
+    HighSpillSlot = SS;
+  unsigned Idx = SS-LowSpillSlot;
+  while (Idx >= SpillSlotToUsesMap.size())
+    SpillSlotToUsesMap.resize(SpillSlotToUsesMap.size()*2);
+  Virt2StackSlotMap[virtReg] = SS;
   ++NumSpills;
-  return frameIndex;
+  return SS;
 }
 
-void VirtRegMap::assignVirt2StackSlot(unsigned virtReg, int frameIndex) {
+void VirtRegMap::assignVirt2StackSlot(unsigned virtReg, int SS) {
   assert(TargetRegisterInfo::isVirtualRegister(virtReg));
   assert(Virt2StackSlotMap[virtReg] == NO_STACK_SLOT &&
          "attempt to assign stack slot to already spilled register");
-  assert((frameIndex >= 0 ||
-          (frameIndex >= MF.getFrameInfo()->getObjectIndexBegin())) &&
+  assert((SS >= 0 ||
+          (SS >= MF.getFrameInfo()->getObjectIndexBegin())) &&
          "illegal fixed frame index");
-  Virt2StackSlotMap[virtReg] = frameIndex;
+  Virt2StackSlotMap[virtReg] = SS;
 }
 
 int VirtRegMap::assignVirtReMatId(unsigned virtReg) {
@@ -113,6 +123,13 @@ void VirtRegMap::assignVirtReMatId(unsigned virtReg, int id) {
   assert(Virt2ReMatIdMap[virtReg] == NO_STACK_SLOT &&
          "attempt to assign re-mat id to already spilled register");
   Virt2ReMatIdMap[virtReg] = id;
+}
+
+void VirtRegMap::addSpillSlotUse(int FI, MachineInstr *MI) {
+  if (!MF.getFrameInfo()->isFixedObjectIndex(FI)) {
+    assert(FI >= 0 && "Spill slot index should not be negative!");
+    SpillSlotToUsesMap[FI-LowSpillSlot].insert(MI);
+  }
 }
 
 void VirtRegMap::virtFolded(unsigned VirtReg, MachineInstr *OldMI,
@@ -132,6 +149,21 @@ void VirtRegMap::virtFolded(unsigned VirtReg, MachineInstr *OldMI,
 void VirtRegMap::virtFolded(unsigned VirtReg, MachineInstr *MI, ModRef MRInfo) {
   MI2VirtMapTy::iterator IP = MI2VirtMap.lower_bound(MI);
   MI2VirtMap.insert(IP, std::make_pair(MI, std::make_pair(VirtReg, MRInfo)));
+}
+
+void VirtRegMap::RemoveMachineInstrFromMaps(MachineInstr *MI) {
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = MI->getOperand(i);
+    if (!MO.isFrameIndex())
+      continue;
+    int FI = MO.getIndex();
+    if (MF.getFrameInfo()->isFixedObjectIndex(FI))
+      continue;
+    SpillSlotToUsesMap[FI-LowSpillSlot].erase(MI);
+  }
+  MI2VirtMap.erase(MI);
+  SpillPt2VirtMap.erase(MI);
+  RestorePt2VirtMap.erase(MI);
 }
 
 void VirtRegMap::print(std::ostream &OS) const {
@@ -204,14 +236,18 @@ bool SimpleSpiller::runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM) {
                   std::find(LoadedRegs.begin(), LoadedRegs.end(), VirtReg)
                   == LoadedRegs.end()) {
                 TII.loadRegFromStackSlot(MBB, &MI, PhysReg, StackSlot, RC);
+                MachineInstr *LoadMI = prior(MII);
+                VRM.addSpillSlotUse(StackSlot, LoadMI);
                 LoadedRegs.push_back(VirtReg);
                 ++NumLoads;
-                DOUT << '\t' << *prior(MII);
+                DOUT << '\t' << *LoadMI;
               }
 
               if (MO.isDef()) {
                 TII.storeRegToStackSlot(MBB, next(MII), PhysReg, true,
                                         StackSlot, RC);
+                MachineInstr *StoreMI = next(MII);
+                VRM.addSpillSlotUse(StackSlot, StoreMI);
                 ++NumStores;
               }
             }
@@ -259,6 +295,16 @@ namespace {
       for (MachineFunction::iterator MBB = MF.begin(), E = MF.end();
            MBB != E; ++MBB)
         RewriteMBB(*MBB, VRM);
+
+      // Mark unused spill slots.
+      MachineFrameInfo *MFI = MF.getFrameInfo();
+      int SS = VRM.getLowSpillSlot();
+      if (SS != VirtRegMap::NO_STACK_SLOT)
+        for (int e = VRM.getHighSpillSlot(); SS <= e; ++SS)
+          if (!VRM.isSpillSlotUsed(SS)) {
+            MFI->RemoveStackObject(SS);
+            ++NumDSS;
+          }
 
       DOUT << "**** Post Machine Instrs ****\n";
       DEBUG(MF.dump());
@@ -725,6 +771,8 @@ namespace {
             } else {
               TII->loadRegFromStackSlot(*MBB, MII, NewPhysReg,
                                         NewOp.StackSlotOrReMat, AliasRC);
+              MachineInstr *LoadMI = prior(MII);
+              VRM.addSpillSlotUse(NewOp.StackSlotOrReMat, LoadMI);
               // Any stores to this stack slot are not dead anymore.
               MaybeDeadStores[NewOp.StackSlotOrReMat] = NULL;            
               ++NumLoads;
@@ -906,7 +954,9 @@ void LocalSpiller::SpillRegToStackSlot(MachineBasicBlock &MBB,
                                   std::vector<MachineOperand*> &KillOps,
                                   VirtRegMap &VRM) {
   TII->storeRegToStackSlot(MBB, next(MII), PhysReg, true, StackSlot, RC);
-  DOUT << "Store:\t" << *next(MII);
+  MachineInstr *StoreMI = next(MII);
+  VRM.addSpillSlotUse(StackSlot, StoreMI);
+  DOUT << "Store:\t" << *StoreMI;
 
   // If there is a dead store to this stack slot, nuke it now.
   if (LastStore) {
@@ -918,8 +968,8 @@ void LocalSpiller::SpillRegToStackSlot(MachineBasicBlock &MBB,
     bool CheckDef = PrevMII != MBB.begin();
     if (CheckDef)
       --PrevMII;
-    MBB.erase(LastStore);
     VRM.RemoveMachineInstrFromMaps(LastStore);
+    MBB.erase(LastStore);
     if (CheckDef) {
       // Look at defs of killed registers on the store. Mark the defs
       // as dead since the store has been deleted and they aren't
@@ -931,8 +981,8 @@ void LocalSpiller::SpillRegToStackSlot(MachineBasicBlock &MBB,
           if (ReMatDefs.count(DeadDef) && !HasOtherDef) {
             // FIXME: This assumes a remat def does not have side
             // effects.
-            MBB.erase(DeadDef);
             VRM.RemoveMachineInstrFromMaps(DeadDef);
+            MBB.erase(DeadDef);
             ++NumDRM;
           }
         }
@@ -1006,8 +1056,10 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
           ReMaterialize(MBB, MII, Phys, VirtReg, TRI, VRM);
         } else {
           const TargetRegisterClass* RC = RegInfo->getRegClass(VirtReg);
-          TII->loadRegFromStackSlot(MBB, &MI, Phys, VRM.getStackSlot(VirtReg),
-                                    RC);
+          int SS = VRM.getStackSlot(VirtReg);
+          TII->loadRegFromStackSlot(MBB, &MI, Phys, SS, RC);
+          MachineInstr *LoadMI = prior(MII);
+          VRM.addSpillSlotUse(SS, LoadMI);
           ++NumLoads;
         }
         // This invalidates Phys.
@@ -1031,6 +1083,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         int StackSlot = VRM.getStackSlot(VirtReg);
         TII->storeRegToStackSlot(MBB, next(MII), Phys, isKill, StackSlot, RC);
         MachineInstr *StoreMI = next(MII);
+        VRM.addSpillSlotUse(StackSlot, StoreMI);
         DOUT << "Store:\t" << StoreMI;
         VRM.virtFolded(VirtReg, StoreMI, VirtRegMap::isMod);
       }
@@ -1257,6 +1310,8 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
       } else {
         const TargetRegisterClass* RC = RegInfo->getRegClass(VirtReg);
         TII->loadRegFromStackSlot(MBB, &MI, PhysReg, SSorRMId, RC);
+        MachineInstr *LoadMI = prior(MII);
+        VRM.addSpillSlotUse(SSorRMId, LoadMI);
         ++NumLoads;
       }
       // This invalidates PhysReg.
@@ -1431,9 +1486,9 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         if (TII->isMoveInstr(MI, Src, Dst) && Src == Dst) {
           ++NumDCE;
           DOUT << "Removing now-noop copy: " << MI;
+          VRM.RemoveMachineInstrFromMaps(&MI);
           MBB.erase(&MI);
           Erased = true;
-          VRM.RemoveMachineInstrFromMaps(&MI);
           Spills.disallowClobberPhysReg(VirtReg);
           goto ProcessNextInst;
         }
@@ -1507,9 +1562,9 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
           if (TII->isMoveInstr(MI, Src, Dst) && Src == Dst) {
             ++NumDCE;
             DOUT << "Removing now-noop copy: " << MI;
+            VRM.RemoveMachineInstrFromMaps(&MI);
             MBB.erase(&MI);
             Erased = true;
-            VRM.RemoveMachineInstrFromMaps(&MI);
             UpdateKills(*LastStore, RegKills, KillOps);
             goto ProcessNextInst;
           }

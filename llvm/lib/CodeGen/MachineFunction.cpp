@@ -350,6 +350,10 @@ void MachineFrameInfo::print(const MachineFunction &MF, std::ostream &OS) const{
   for (unsigned i = 0, e = Objects.size(); i != e; ++i) {
     const StackObject &SO = Objects[i];
     OS << "  <fi #" << (int)(i-NumFixedObjects) << ">: ";
+    if (SO.Size == ~0ULL) {
+      OS << "dead\n";
+      continue;
+    }
     if (SO.Size == 0)
       OS << "variable sized";
     else

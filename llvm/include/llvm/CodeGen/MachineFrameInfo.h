@@ -80,7 +80,8 @@ class MachineFrameInfo {
 
   // StackObject - Represent a single object allocated on the stack.
   struct StackObject {
-    // The size of this object on the stack. 0 means a variable sized object
+    // The size of this object on the stack. 0 means a variable sized object,
+    // ~0ULL means a dead object.
     uint64_t Size;
 
     // Alignment - The required alignment of this stack slot.
@@ -292,6 +293,14 @@ public:
     return Objects[ObjectIdx+NumFixedObjects].isImmutable;
   }
 
+  /// isDeadObjectIndex - Returns true if the specified index corresponds to
+  /// a dead object.
+  bool isDeadObjectIndex(int ObjectIdx) const {
+    assert(unsigned(ObjectIdx+NumFixedObjects) < Objects.size() &&
+           "Invalid Object Idx!");
+    return Objects[ObjectIdx+NumFixedObjects].Size == ~0ULL;
+  }
+
   /// CreateStackObject - Create a new statically sized stack object, returning
   /// a postive identifier to represent it.
   ///
@@ -302,6 +311,17 @@ public:
     assert(Size != 0 && "Cannot allocate zero size stack objects!");
     Objects.push_back(StackObject(Size, Alignment, -1));
     return Objects.size()-NumFixedObjects-1;
+  }
+
+  /// RemoveStackObject - Remove or mark dead a statically sized stack object.
+  ///
+  void RemoveStackObject(int ObjectIdx) {
+    if (ObjectIdx == (int)(Objects.size()-NumFixedObjects-1))
+      // Last object, simply pop it off the list.
+      Objects.pop_back();
+    else
+      // Mark it dead.
+      Objects[ObjectIdx+NumFixedObjects].Size = ~0ULL;
   }
 
   /// CreateVariableSizedObject - Notify the MachineFrameInfo object that a

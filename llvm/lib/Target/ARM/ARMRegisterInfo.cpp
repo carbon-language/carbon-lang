@@ -870,6 +870,8 @@ static unsigned estimateStackSize(MachineFunction &MF, MachineFrameInfo *MFI) {
     if (FixedOff > Offset) Offset = FixedOff;
   }
   for (unsigned i = 0, e = FFI->getObjectIndexEnd(); i != e; ++i) {
+    if (FFI->isDeadObjectIndex(i))
+      continue;
     Offset += FFI->getObjectSize(i);
     unsigned Align = FFI->getObjectAlignment(i);
     // Adjust to alignment boundary

@@ -20,6 +20,7 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/IndexedMap.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/Streams.h"
 #include <map>
 
@@ -97,6 +98,12 @@ namespace llvm {
     /// the highest id used so far. Note, this starts at (1<<18) to avoid
     /// conflicts with stack slot numbers.
     int ReMatId;
+
+    /// LowSpillSlot, HighSpillSlot - Lowest and highest spill slot indexes.
+    int LowSpillSlot, HighSpillSlot;
+
+    /// SpillSlotToUsesMap - Records uses for each register spill slot.
+    SmallVector<SmallPtrSet<MachineInstr*, 4>, 8> SpillSlotToUsesMap;
 
     VirtRegMap(const VirtRegMap&);     // DO NOT IMPLEMENT
     void operator=(const VirtRegMap&); // DO NOT IMPLEMENT
@@ -299,6 +306,25 @@ namespace llvm {
       RestorePt2VirtMap.erase(I);
     }
 
+    /// @brief Return lowest spill slot index.
+    int getLowSpillSlot() const {
+      return LowSpillSlot;
+    }
+
+    /// @brief Return highest spill slot index.
+    int getHighSpillSlot() const {
+      return HighSpillSlot;
+    }
+
+    /// @brief Records a spill slot use.
+    void addSpillSlotUse(int FrameIndex, MachineInstr *MI);
+
+    /// @brief Returns true if spill slot has been used.
+    bool isSpillSlotUsed(int FrameIndex) const {
+      assert(FrameIndex >= 0 && "Spill slot index should not be negative!");
+      return !SpillSlotToUsesMap[FrameIndex-LowSpillSlot].empty();
+    }
+
     /// @brief Updates information about the specified virtual register's value
     /// folded into newMI machine instruction.
     void virtFolded(unsigned VirtReg, MachineInstr *OldMI, MachineInstr *NewMI,
@@ -317,11 +343,7 @@ namespace llvm {
     
     /// RemoveMachineInstrFromMaps - MI is being erased, remove it from the
     /// the folded instruction map and spill point map.
-    void RemoveMachineInstrFromMaps(MachineInstr *MI) {
-      MI2VirtMap.erase(MI);
-      SpillPt2VirtMap.erase(MI);
-      RestorePt2VirtMap.erase(MI);
-    }
+    void RemoveMachineInstrFromMaps(MachineInstr *MI);
 
     void print(std::ostream &OS) const;
     void print(std::ostream *OS) const { if (OS) print(*OS); }
