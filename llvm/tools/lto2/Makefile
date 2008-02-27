@@ -36,7 +36,7 @@ ifeq ($(OS),Darwin)
     # extra options to override libtool defaults 
     LLVMLibsOptions    := $(LLVMLibsOptions)  \
 				-no-undefined  -avoid-version \
-                -Wl,-exported_symbols_list -Wl,lto.exports \
+                -Wl,-exported_symbols_list -Wl,$(PROJ_SRC_DIR)/lto.exports \
                 -Wl,-dead_strip \
                 -Wl,-install_name \
 				-Wl,"@executable_path/../lib/lib$(LIBRARYNAME)$(SHLIBEXT)" \
