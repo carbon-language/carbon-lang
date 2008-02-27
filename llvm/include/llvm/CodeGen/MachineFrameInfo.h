@@ -305,9 +305,6 @@ public:
   /// a postive identifier to represent it.
   ///
   int CreateStackObject(uint64_t Size, unsigned Alignment) {
-    // Keep track of the maximum alignment.
-    if (MaxAlignment < Alignment) MaxAlignment = Alignment;
-    
     assert(Size != 0 && "Cannot allocate zero size stack objects!");
     Objects.push_back(StackObject(Size, Alignment, -1));
     return Objects.size()-NumFixedObjects-1;
@@ -331,7 +328,6 @@ public:
   ///
   int CreateVariableSizedObject() {
     HasVarSizedObjects = true;
-    if (MaxAlignment < 1) MaxAlignment = 1;
     Objects.push_back(StackObject(0, 1, -1));
     return Objects.size()-NumFixedObjects-1;
   }
