@@ -505,11 +505,6 @@ namespace X86 {
       return std::string("{st}");
     case 'u': // second from top of floating point stack.
       return std::string("{st(1)}"); // second from top of floating point stack.
-    case 'A': // edx:eax.
-    case 'q': // a, b, c, d registers or any integer register in 64-bit.
-    case 'Z': // 32-bit integer constant for used with zero-extending x86_64
-              // instructions.
-      assert(false && "Unimplemented inline asm constraint");
     default:
       return std::string(1, Constraint);
     }
