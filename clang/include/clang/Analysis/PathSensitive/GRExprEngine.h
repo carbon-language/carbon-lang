@@ -87,19 +87,24 @@ protected:
   
   /// CurrentStmt - The current block-level statement.
   Stmt* CurrentStmt;
+
+  typedef llvm::SmallPtrSet<NodeTy*,2> UninitBranchesTy;  
+  typedef llvm::SmallPtrSet<NodeTy*,2> UninitStoresTy;
+  typedef llvm::SmallPtrSet<NodeTy*,2> BadDerefTy;
+  typedef llvm::SmallPtrSet<NodeTy*,2> BadDividesTy;
+  typedef llvm::SmallPtrSet<NodeTy*,2> NoReturnCallsTy;  
   
   /// UninitBranches - Nodes in the ExplodedGraph that result from
   ///  taking a branch based on an uninitialized value.
-  typedef llvm::SmallPtrSet<NodeTy*,5> UninitBranchesTy;
   UninitBranchesTy UninitBranches;
-
-  typedef llvm::SmallPtrSet<NodeTy*,5> UninitStoresTy;
-  typedef llvm::SmallPtrSet<NodeTy*,5> BadDerefTy;
-  typedef llvm::SmallPtrSet<NodeTy*,5> BadDividesTy;
   
   /// UninitStores - Sinks in the ExplodedGraph that result from
   ///  making a store to an uninitialized lvalue.
   UninitStoresTy UninitStores;
+  
+  /// NoReturnCalls - Sinks in the ExplodedGraph that result from
+  //  calling a function with the attribute "noreturn".
+  NoReturnCallsTy NoReturnCalls;
   
   /// ImplicitNullDeref - Nodes in the ExplodedGraph that result from
   ///  taking a dereference on a symbolic pointer that MAY be NULL.
@@ -176,6 +181,10 @@ public:
     return N->isSink() && BadDivides.count(const_cast<NodeTy*>(N)) != 0; 
   }
   
+  bool isNoReturnCall(const NodeTy* N) const {
+    return N->isSink() && NoReturnCalls.count(const_cast<NodeTy*>(N)) != 0;
+  }
+
   typedef BadDerefTy::iterator null_deref_iterator;
   null_deref_iterator null_derefs_begin() { return ExplicitNullDeref.begin(); }
   null_deref_iterator null_derefs_end() { return ExplicitNullDeref.end(); }

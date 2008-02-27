@@ -550,6 +550,21 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
     else
       St = EvalCall(CE, cast<LVal>(L), (*DI)->getState());
     
+    // Check for the "noreturn" attribute.
+    
+    if (isa<lval::FuncVal>(L))
+      if (cast<lval::FuncVal>(L).getDecl()->getAttr<NoReturnAttr>()) {
+        
+        NodeTy* N = Builder->generateNode(CE, St, *DI);
+          
+        if (N) {
+          N->markAsSink();
+          NoReturnCalls.insert(N);
+        }
+        
+        continue;
+      }
+    
     Nodify(Dst, CE, *DI, St);
   }
 }
