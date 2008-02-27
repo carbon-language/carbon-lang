@@ -25,7 +25,10 @@ namespace llvm {
     explicit X86TargetAsmInfo(const X86TargetMachine &TM);
     
     virtual bool ExpandInlineAsm(CallInst *CI) const;
+    virtual unsigned PreferredEHDataFormat(unsigned Reason,  bool Global) const;
+
   private:
+    const X86TargetMachine* X86TM;
     bool LowerToBSwap(CallInst *CI) const;
   };
 } // namespace llvm

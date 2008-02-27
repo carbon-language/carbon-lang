@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/Support/Dwarf.h"
 #include <cctype>
 #include <cstring>
 
@@ -132,5 +133,10 @@ unsigned TargetAsmInfo::getInlineAsmLength(const char *Str) const {
   }
 
   return Length;
+}
+
+unsigned TargetAsmInfo::PreferredEHDataFormat(unsigned Reason,
+                                              bool Global) const {
+  return dwarf::DW_EH_PE_absptr;
 }
 

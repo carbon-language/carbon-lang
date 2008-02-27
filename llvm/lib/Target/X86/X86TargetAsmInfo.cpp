@@ -20,7 +20,10 @@
 #include "llvm/Intrinsics.h"
 #include "llvm/Module.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/Dwarf.h"
+
 using namespace llvm;
+using namespace llvm::dwarf;
 
 static const char* x86_asm_table[] = {"{si}", "S",
                                       "{di}", "D",
@@ -35,7 +38,8 @@ static const char* x86_asm_table[] = {"{si}", "S",
 
 X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
   const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
-  
+  X86TM = &TM;
+
   // FIXME - Should be simplified.
 
   AsmTransCBE = x86_asm_table;
@@ -303,3 +307,63 @@ bool X86TargetAsmInfo::ExpandInlineAsm(CallInst *CI) const {
   }
   return false;
 }
+
+/// PreferredEHDataFormat - This hook allows the target to select data
+/// format used for encoding pointers in exception handling data. Reason is
+/// 0 for data, 1 for code labels, 2 for function pointers. Global is true
+/// if the symbol can be relocated.
+unsigned X86TargetAsmInfo::PreferredEHDataFormat(unsigned Reason,
+                                                 bool Global) const {
+  const X86Subtarget *Subtarget = &X86TM->getSubtarget<X86Subtarget>();
+
+  switch (Subtarget->TargetType) {
+  case X86Subtarget::isDarwin:
+   if (Reason == 2 && Global)
+     return (DW_EH_PE_pcrel | DW_EH_PE_indirect | DW_EH_PE_sdata4);
+   else if (Reason == 1 || !Global)
+     return DW_EH_PE_pcrel;
+   else
+     return DW_EH_PE_absptr;
+
+  case X86Subtarget::isELF:
+  case X86Subtarget::isCygwin:
+  case X86Subtarget::isMingw: {
+    CodeModel::Model CM = X86TM->getCodeModel();
+
+    if (X86TM->getRelocationModel() == Reloc::PIC_) {
+      unsigned Format = 0;
+
+      if (!Subtarget->is64Bit())
+        // 32 bit targets always encode pointers as 4 bytes
+        Format = DW_EH_PE_sdata4;
+      else {
+        // 64 bit targets encode pointers in 4 bytes iff:
+        // - code model is small OR
+        // - code model is medium and we're emitting externally visible symbols or
+        //   any code symbols
+        if (CM == CodeModel::Small ||
+            (CM == CodeModel::Medium && (Global || Reason)))
+          Format = DW_EH_PE_sdata4;
+        else
+          Format = DW_EH_PE_sdata8;
+      }
+
+      if (Global)
+        Format |= DW_EH_PE_indirect;
+
+      return (Format | DW_EH_PE_pcrel);
+    } else {
+      if (Subtarget->is64Bit() &&
+          (CM == CodeModel::Small ||
+           (CM == CodeModel::Medium && Reason)))
+        return DW_EH_PE_udata4;
+      else
+        return DW_EH_PE_absptr;
+    }
+  }
+
+  default:
+   return TargetAsmInfo::PreferredEHDataFormat(Reason, Global);
+  }
+}
+
