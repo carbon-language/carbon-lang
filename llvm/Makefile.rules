@@ -175,7 +175,7 @@ $(PROJ_OBJ_DIR)/Makefile% : $(PROJ_SRC_DIR)/Makefile%
 	     $(MKDIR) $(@D) ; \
 	     $(CP) -f $< $@ ;; \
 	esac
-         
+
 endif
 
 #------------------------------------------------------------------------
@@ -701,7 +701,7 @@ ifdef LINK_COMPONENTS
 $(LLVM_CONFIG):
 	@echo "*** llvm-config doesn't exist - rebuilding it."
 	@$(MAKE) -C $(PROJ_OBJ_ROOT)/tools/llvm-config
-        
+
 $(ToolDir)/$(strip $(TOOLNAME))$(EXEEXT): $(LLVM_CONFIG)
 
 ProjLibsOptions += $(shell $(LLVM_CONFIG) --libs     $(LINK_COMPONENTS))
@@ -1086,7 +1086,7 @@ ifndef DISABLE_AUTO_DEPENDENCIES
 
 DEPEND_OPTIONS = -MMD -MP -MF "$(ObjDir)/$*.d.tmp" \
          -MT "$(ObjDir)/$*.lo" -MT "$(ObjDir)/$*.o" -MT "$(ObjDir)/$*.d"
-         
+
 # If the build succeeded, move the dependency file over.  If it failed, put an
 # empty file there.
 DEPEND_MOVEFILE = then $(MV) -f "$(ObjDir)/$*.d.tmp" "$(ObjDir)/$*.d"; \
@@ -1342,8 +1342,8 @@ $(PROJ_SRC_DIR)/%.cpp: $(PROJ_SRC_DIR)/%.l
 	$(SED) 's/void \*yy_flex_realloc/inline void *yy_flex_realloc/' | \
 	$(SED) 's/#define YY_BUF_SIZE 16384/#define YY_BUF_SIZE (16384*64)/' \
 	  > $(PROJ_SRC_DIR)/$*.cpp
-    
-# IFF the .l file has changed since it was last checked into CVS, copy the .l
+
+# IFF the .l file has changed since it was last checked into SVN, copy the .l
 # file to .l.cvs and the generated .cpp file to .cpp.cvs.  We use this mechanism
 # so that people without flex can build LLVM by copying the .cvs files to the 
 # source location and building them.
@@ -1385,7 +1385,7 @@ $(PROJ_SRC_DIR)/%.cpp $(PROJ_SRC_DIR)/%.h : $(PROJ_SRC_DIR)/%.y
 	$(Verb) $(MV) -f $*.tab.c $(PROJ_SRC_DIR)/$*.cpp
 	$(Verb) $(MV) -f $*.tab.h $(PROJ_SRC_DIR)/$*.h
 
-# IFF the .y file has changed since it was last checked into CVS, copy the .y
+# IFF the .y file has changed since it was last checked into SVN, copy the .y
 # file to .y.cvs and the generated .cpp/.h file to .cpp.cvs/.h.cvs.  We use this
 # mechanism so that people without flex can build LLVM by copying the .cvs files
 # to the source location and building them.
