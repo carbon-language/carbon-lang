@@ -732,8 +732,10 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     FunctionDecl *NewFD = new FunctionDecl(D.getIdentifierLoc(), II, R, SC,
                                            D.getDeclSpec().isInlineSpecified(),
                                            LastDeclarator);
-    // FIXME: Handle attributes: should delete anything left.
-    D.getDeclSpec().SetAttributes(0);
+    // Handle attributes.
+
+    HandleDeclAttributes(NewFD, D.getDeclSpec().getAttributes(),
+                         D.getAttributes());
     
     // Merge the decl with the existing one if appropriate. Since C functions
     // are in a flat namespace, make sure we consider decls in outer scopes.
