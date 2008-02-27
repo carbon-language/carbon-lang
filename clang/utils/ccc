@@ -35,7 +35,7 @@ def compile(args):
     run(command + args)
 
 def link(args):
-    command = 'llvm-ld -native'.split()
+    command = 'llvm-ld -native -disable-internalize'.split()
     run(command + args)
 
 def extension(path):
