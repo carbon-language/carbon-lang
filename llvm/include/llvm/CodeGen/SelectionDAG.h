@@ -573,12 +573,6 @@ public:
   void ComputeMaskedBits(SDOperand Op, const APInt &Mask, APInt &KnownZero,
                          APInt &KnownOne, unsigned Depth = 0) const;
 
-  /// ComputeMaskedBits - This is a wrapper around the APInt-using
-  /// form of ComputeMaskedBits for use by clients that haven't been converted
-  /// to APInt yet.
-  void ComputeMaskedBits(SDOperand Op, uint64_t Mask, uint64_t &KnownZero,
-                         uint64_t &KnownOne, unsigned Depth = 0) const;
-    
   /// ComputeNumSignBits - Return the number of times the sign bit of the
   /// register is replicated into the other bits.  We know that at least 1 bit
   /// is always equal to the sign bit (itself), but other cases can give us

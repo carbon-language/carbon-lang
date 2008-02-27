@@ -1507,25 +1507,6 @@ void SelectionDAG::ComputeMaskedBits(SDOperand Op, const APInt &Mask,
   }
 }
 
-/// ComputeMaskedBits - This is a wrapper around the APInt-using
-/// form of ComputeMaskedBits for use by clients that haven't been converted
-/// to APInt yet.
-void SelectionDAG::ComputeMaskedBits(SDOperand Op, uint64_t Mask, 
-                                     uint64_t &KnownZero, uint64_t &KnownOne,
-                                     unsigned Depth) const {
-  // The masks are not wide enough to represent this type!  Should use APInt.
-  if (Op.getValueType() == MVT::i128)
-    return;
-  
-  unsigned NumBits = MVT::getSizeInBits(Op.getValueType());
-  APInt APIntMask(NumBits, Mask);
-  APInt APIntKnownZero(NumBits, 0);
-  APInt APIntKnownOne(NumBits, 0);
-  ComputeMaskedBits(Op, APIntMask, APIntKnownZero, APIntKnownOne, Depth);
-  KnownZero = APIntKnownZero.getZExtValue();
-  KnownOne = APIntKnownOne.getZExtValue();
-}
-
 /// ComputeNumSignBits - Return the number of times the sign bit of the
 /// register is replicated into the other bits.  We know that at least 1 bit
 /// is always equal to the sign bit (itself), but other cases can give us
@@ -1637,18 +1618,18 @@ unsigned SelectionDAG::ComputeNumSignBits(SDOperand Op, unsigned Depth) const{
     // Special case decrementing a value (ADD X, -1):
     if (ConstantSDNode *CRHS = dyn_cast<ConstantSDNode>(Op.getOperand(0)))
       if (CRHS->isAllOnesValue()) {
-        uint64_t KnownZero, KnownOne;
-        uint64_t Mask = MVT::getIntVTBitMask(VT);
+        APInt KnownZero, KnownOne;
+        APInt Mask = APInt::getAllOnesValue(VTBits);
         ComputeMaskedBits(Op.getOperand(0), Mask, KnownZero, KnownOne, Depth+1);
         
         // If the input is known to be 0 or 1, the output is 0/-1, which is all
         // sign bits set.
-        if ((KnownZero|1) == Mask)
+        if ((KnownZero | APInt(VTBits, 1)) == Mask)
           return VTBits;
         
         // If we are subtracting one from a positive number, there is no carry
         // out of the result.
-        if (KnownZero & MVT::getIntVTSignBit(VT))
+        if (KnownZero.isNegative())
           return Tmp;
       }
       
@@ -1664,17 +1645,17 @@ unsigned SelectionDAG::ComputeNumSignBits(SDOperand Op, unsigned Depth) const{
     // Handle NEG.
     if (ConstantSDNode *CLHS = dyn_cast<ConstantSDNode>(Op.getOperand(0)))
       if (CLHS->getValue() == 0) {
-        uint64_t KnownZero, KnownOne;
-        uint64_t Mask = MVT::getIntVTBitMask(VT);
+        APInt KnownZero, KnownOne;
+        APInt Mask = APInt::getAllOnesValue(VTBits);
         ComputeMaskedBits(Op.getOperand(1), Mask, KnownZero, KnownOne, Depth+1);
         // If the input is known to be 0 or 1, the output is 0/-1, which is all
         // sign bits set.
-        if ((KnownZero|1) == Mask)
+        if ((KnownZero | APInt(VTBits, 1)) == Mask)
           return VTBits;
         
         // If the input is known to be positive (the sign bit is known clear),
         // the output of the NEG has the same number of sign bits as the input.
-        if (KnownZero & MVT::getIntVTSignBit(VT))
+        if (KnownZero.isNegative())
           return Tmp2;
         
         // Otherwise, we treat this like a SUB.
@@ -1718,14 +1699,13 @@ unsigned SelectionDAG::ComputeNumSignBits(SDOperand Op, unsigned Depth) const{
   
   // Finally, if we can prove that the top bits of the result are 0's or 1's,
   // use this information.
-  uint64_t KnownZero, KnownOne;
-  uint64_t Mask = MVT::getIntVTBitMask(VT);
+  APInt KnownZero, KnownOne;
+  APInt Mask = APInt::getAllOnesValue(VTBits);
   ComputeMaskedBits(Op, Mask, KnownZero, KnownOne, Depth);
   
-  uint64_t SignBit = MVT::getIntVTSignBit(VT);
-  if (KnownZero & SignBit) {        // SignBit is 0
+  if (KnownZero.isNegative()) {        // sign bit is 0
     Mask = KnownZero;
-  } else if (KnownOne & SignBit) {  // SignBit is 1;
+  } else if (KnownOne.isNegative()) {  // sign bit is 1;
     Mask = KnownOne;
   } else {
     // Nothing known.
@@ -1734,11 +1714,11 @@ unsigned SelectionDAG::ComputeNumSignBits(SDOperand Op, unsigned Depth) const{
   
   // Okay, we know that the sign bit in Mask is set.  Use CLZ to determine
   // the number of identical bits in the top of the input value.
-  Mask ^= ~0ULL;
-  Mask <<= 64-VTBits;
+  Mask = ~Mask;
+  Mask <<= Mask.getBitWidth()-VTBits;
   // Return # leading zeros.  We use 'min' here in case Val was zero before
   // shifting.  We don't want to return '64' as for an i32 "0".
-  return std::min(VTBits, CountLeadingZeros_64(Mask));
+  return std::min(VTBits, Mask.countLeadingZeros());
 }
 
 

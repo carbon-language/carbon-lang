@@ -738,12 +738,16 @@ bool PPCTargetLowering::SelectAddressRegReg(SDOperand N, SDOperand &Base,
     // If this is an or of disjoint bitfields, we can codegen this as an add
     // (for better address arithmetic) if the LHS and RHS of the OR are provably
     // disjoint.
-    uint64_t LHSKnownZero, LHSKnownOne;
-    uint64_t RHSKnownZero, RHSKnownOne;
-    DAG.ComputeMaskedBits(N.getOperand(0), ~0U, LHSKnownZero, LHSKnownOne);
+    APInt LHSKnownZero, LHSKnownOne;
+    APInt RHSKnownZero, RHSKnownOne;
+    DAG.ComputeMaskedBits(N.getOperand(0),
+                          APInt::getAllOnesValue(32),
+                          LHSKnownZero, LHSKnownOne);
     
-    if (LHSKnownZero) {
-      DAG.ComputeMaskedBits(N.getOperand(1), ~0U, RHSKnownZero, RHSKnownOne);
+    if (LHSKnownZero.getBoolValue()) {
+      DAG.ComputeMaskedBits(N.getOperand(1),
+                            APInt::getAllOnesValue(32),
+                            RHSKnownZero, RHSKnownOne);
       // If all of the bits are known zero on the LHS or RHS, the add won't
       // carry.
       if ((LHSKnownZero | RHSKnownZero) == ~0U) {
@@ -793,9 +797,11 @@ bool PPCTargetLowering::SelectAddressRegImm(SDOperand N, SDOperand &Disp,
       // If this is an or of disjoint bitfields, we can codegen this as an add
       // (for better address arithmetic) if the LHS and RHS of the OR are
       // provably disjoint.
-      uint64_t LHSKnownZero, LHSKnownOne;
-      DAG.ComputeMaskedBits(N.getOperand(0), ~0U, LHSKnownZero, LHSKnownOne);
-      if ((LHSKnownZero|~(unsigned)imm) == ~0U) {
+      APInt LHSKnownZero, LHSKnownOne;
+      DAG.ComputeMaskedBits(N.getOperand(0),
+                            APInt::getAllOnesValue(32),
+                            LHSKnownZero, LHSKnownOne);
+      if ((LHSKnownZero.getZExtValue()|~(uint64_t)imm) == ~0ULL) {
         // If all of the bits are known zero on the LHS or RHS, the add won't
         // carry.
         Base = N.getOperand(0);
@@ -901,9 +907,11 @@ bool PPCTargetLowering::SelectAddressRegImmShift(SDOperand N, SDOperand &Disp,
       // If this is an or of disjoint bitfields, we can codegen this as an add
       // (for better address arithmetic) if the LHS and RHS of the OR are
       // provably disjoint.
-      uint64_t LHSKnownZero, LHSKnownOne;
-      DAG.ComputeMaskedBits(N.getOperand(0), ~0U, LHSKnownZero, LHSKnownOne);
-      if ((LHSKnownZero|~(unsigned)imm) == ~0U) {
+      APInt LHSKnownZero, LHSKnownOne;
+      DAG.ComputeMaskedBits(N.getOperand(0),
+                            APInt::getAllOnesValue(32),
+                            LHSKnownZero, LHSKnownOne);
+      if ((LHSKnownZero.getZExtValue()|~(uint64_t)imm) == ~0ULL) {
         // If all of the bits are known zero on the LHS or RHS, the add won't
         // carry.
         Base = N.getOperand(0);
