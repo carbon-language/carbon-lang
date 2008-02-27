@@ -656,7 +656,7 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
     CFGBlock* BodyBlock = Visit(F->getBody());      
 
     if (!BodyBlock)
-      BodyBlock = ExitConditionBlock; // can happen for "for (...;...; ) ;"
+      BodyBlock = EntryConditionBlock; // can happen for "for (...;...; ) ;"
     else if (Block)
       FinishBlock(BodyBlock);
     
@@ -710,6 +710,7 @@ CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
   if (Stmt* C = W->getCond()) {
     Block = ExitConditionBlock;
     EntryConditionBlock = addStmt(C);
+    assert (Block == EntryConditionBlock);
     if (Block) FinishBlock(EntryConditionBlock);
   }
   
@@ -739,7 +740,7 @@ CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
     CFGBlock* BodyBlock = Visit(W->getBody());
     
     if (!BodyBlock)
-      BodyBlock = ExitConditionBlock; // can happen for "while(...) ;"
+      BodyBlock = EntryConditionBlock; // can happen for "while(...) ;"
     else if (Block)
       FinishBlock(BodyBlock);
     
@@ -817,7 +818,7 @@ CFGBlock* CFGBuilder::VisitDoStmt(DoStmt* D) {
     BodyBlock = Visit(D->getBody());
     
     if (!BodyBlock)
-      BodyBlock = ExitConditionBlock; // can happen for "do ; while(...)"
+      BodyBlock = EntryConditionBlock; // can happen for "do ; while(...)"
     else if (Block)
       FinishBlock(BodyBlock);
         
