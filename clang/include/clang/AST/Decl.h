@@ -292,38 +292,24 @@ protected:
 class VarDecl : public ValueDecl {
 public:
   enum StorageClass {
-    None, Extern, Static, Auto, Register, PrivateExtern
+    None, Auto, Register, Extern, Static, PrivateExtern
   };
   StorageClass getStorageClass() const { return (StorageClass)SClass; }
 
   const Expr *getInit() const { return Init; }
   Expr *getInit() { return Init; }
   void setInit(Expr *I) { Init = I; }
-  
-  /// hasAutoStorage - Returns true if either the implicit or explicit
-  ///  storage class of a variable is "auto."  In particular, variables
-  ///  declared within a function that lack a storage keyword are
-  ///  implicitly "auto", but are represented internally with a storage
-  ///  class of None.
-  bool hasAutoStorage() const {
-    return getStorageClass() == Auto ||
-          (getStorageClass() == None && getKind() != FileVar);
-  }
-
-  /// hasStaticStorage - Returns true if either the implicit or
-  ///  explicit storage class of a variable is "static."  In
-  ///  particular, variables declared within a file (outside of a
-  ///  function) that lack a storage keyword are implicitly "static,"
-  ///  but are represented internally with a storage class of "None".
-  bool hasStaticStorage() const {
-    if (getStorageClass() == Static) return true;
-    return getKind() == FileVar;
-  }
       
   /// hasLocalStorage - Returns true if a variable with function scope
   ///  is a non-static local variable.
   bool hasLocalStorage() const {
-    return hasAutoStorage() || getStorageClass() == Register;
+    if (getStorageClass() == None)
+      return getKind() != FileVar;
+    
+    // Return true for:  Auto, Register.
+    // Return false for: Extern, Static, PrivateExtern.
+    
+    return getStorageClass() <= Register;
   }
 
   /// hasGlobalStorage - Returns true for all variables that do not

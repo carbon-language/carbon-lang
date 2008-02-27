@@ -106,10 +106,10 @@ public:
   /// isConstantExpr - Return true if this expression is a valid constant expr.
   bool isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const;
   
-  /// hasStaticStorage - Return true if this expression has static storage
+  /// hasGlobalStorage - Return true if this expression has static storage
   /// duration.  This means that the address of this expression is a link-time
   /// constant.
-  bool hasStaticStorage() const;  
+  bool hasGlobalStorage() const;  
   
   /// IgnoreParens - Ignore parentheses.  If this Expr is a ParenExpr, return
   ///  its subexpression.  If that subexpression is also a ParenExpr, 

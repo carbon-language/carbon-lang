@@ -436,31 +436,31 @@ Expr::isModifiableLvalueResult Expr::isModifiableLvalue() const {
   return MLV_Valid;    
 }
 
-/// hasStaticStorage - Return true if this expression has static storage
+/// hasGlobalStorage - Return true if this expression has static storage
 /// duration.  This means that the address of this expression is a link-time
 /// constant.
-bool Expr::hasStaticStorage() const {
+bool Expr::hasGlobalStorage() const {
   switch (getStmtClass()) {
   default:
     return false;
   case ParenExprClass:
-    return cast<ParenExpr>(this)->getSubExpr()->hasStaticStorage();
+    return cast<ParenExpr>(this)->getSubExpr()->hasGlobalStorage();
   case ImplicitCastExprClass:
-    return cast<ImplicitCastExpr>(this)->getSubExpr()->hasStaticStorage();
+    return cast<ImplicitCastExpr>(this)->getSubExpr()->hasGlobalStorage();
   case CompoundLiteralExprClass:
     return cast<CompoundLiteralExpr>(this)->isFileScope();
   case DeclRefExprClass: {
     const Decl *D = cast<DeclRefExpr>(this)->getDecl();
     if (const VarDecl *VD = dyn_cast<VarDecl>(D))
-      return VD->hasStaticStorage();
+      return VD->hasGlobalStorage();
     return false;
   }
   case MemberExprClass: {
     const MemberExpr *M = cast<MemberExpr>(this);
-    return !M->isArrow() && M->getBase()->hasStaticStorage();
+    return !M->isArrow() && M->getBase()->hasGlobalStorage();
   }
   case ArraySubscriptExprClass:
-    return cast<ArraySubscriptExpr>(this)->getBase()->hasStaticStorage();
+    return cast<ArraySubscriptExpr>(this)->getBase()->hasGlobalStorage();
   case PreDefinedExprClass:
     return true;
   }
@@ -539,7 +539,7 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
     
     // C99 6.6p9
     if (Exp->getOpcode() == UnaryOperator::AddrOf) {
-      if (!Exp->getSubExpr()->hasStaticStorage()) {
+      if (!Exp->getSubExpr()->hasGlobalStorage()) {
         if (Loc) *Loc = getLocStart();
         return false;
       }
