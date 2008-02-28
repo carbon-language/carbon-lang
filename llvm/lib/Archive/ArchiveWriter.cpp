@@ -348,7 +348,7 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress,
 {
   // Make sure they haven't opened up the file, not loaded it,
   // but are now trying to write it which would wipe out the file.
-  if (members.empty() && mapfile->size() > 8) {
+  if (members.empty() && mapfile && mapfile->size() > 8) {
     if (ErrMsg)
       *ErrMsg = "Can't write an archive not opened for writing";
     return true;

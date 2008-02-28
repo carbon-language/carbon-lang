@@ -717,6 +717,7 @@ int main(int argc, char **argv) {
       if (!Create)
         std::cerr << argv[0] << ": creating " << ArchivePath.toString() << "\n";
       TheArchive = Archive::CreateEmpty(ArchivePath);
+      TheArchive->writeToDisk();
     } else {
       std::string Error;
       TheArchive = Archive::OpenAndLoad(ArchivePath, &Error);
