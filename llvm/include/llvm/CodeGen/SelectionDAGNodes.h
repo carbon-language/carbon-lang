@@ -301,16 +301,16 @@ namespace ISD {
     /// vector value) starting with the (potentially variable) element number
     /// IDX, which must be a multiple of the result vector length.
     EXTRACT_SUBVECTOR,
-    
+
     /// VECTOR_SHUFFLE(VEC1, VEC2, SHUFFLEVEC) - Returns a vector, of the same
     /// type as VEC1/VEC2.  SHUFFLEVEC is a BUILD_VECTOR of constant int values
-    /// (regardless of whether its datatype is legal or not) that indicate
-    /// which value each result element will get.  The elements of VEC1/VEC2 are
-    /// enumerated in order.  This is quite similar to the Altivec 'vperm'
-    /// instruction, except that the indices must be constants and are in terms
-    /// of the element size of VEC1/VEC2, not in terms of bytes.
+    /// (maybe of an illegal datatype) or undef that indicate which value each
+    /// result element will get.  The elements of VEC1/VEC2 are enumerated in
+    /// order.  This is quite similar to the Altivec 'vperm' instruction, except
+    /// that the indices must be constants and are in terms of the element size
+    /// of VEC1/VEC2, not in terms of bytes.
     VECTOR_SHUFFLE,
-    
+
     /// SCALAR_TO_VECTOR(VAL) - This represents the operation of loading a
     /// scalar value into element 0 of the resultant vector type.  The top
     /// elements 1 to N-1 of the N-element vector are undefined.
