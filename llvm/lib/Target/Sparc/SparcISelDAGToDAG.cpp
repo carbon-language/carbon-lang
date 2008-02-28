@@ -242,11 +242,15 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::STACKRESTORE      , MVT::Other, Expand);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32  , Custom);
 
+  // No debug info support yet.
+  setOperationAction(ISD::LOCATION, MVT::Other, Expand);
+  setOperationAction(ISD::LABEL, MVT::Other, Expand);
+  setOperationAction(ISD::DECLARE, MVT::Other, Expand);
+    
   setStackPointerRegisterToSaveRestore(SP::O6);
 
-  if (TM.getSubtarget<SparcSubtarget>().isV9()) {
+  if (TM.getSubtarget<SparcSubtarget>().isV9())
     setOperationAction(ISD::CTPOP, MVT::i32, Legal);
-  }
   
   computeRegisterProperties();
 }
