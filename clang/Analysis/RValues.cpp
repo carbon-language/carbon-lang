@@ -249,8 +249,8 @@ void RVal::print(std::ostream& Out) const {
     case LValKind:
       cast<LVal>(this)->print(Out); break;
       
-    case UninitializedKind:
-      Out << "Uninitialized"; break;
+    case UndefinedKind:
+      Out << "Undefined"; break;
       
     default:
       assert (false && "Invalid RVal.");

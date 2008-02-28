@@ -69,19 +69,19 @@ unsigned RunGRSimpleVals(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx,
               "NULL pointer is dereferenced after it is checked for NULL.");
   
   EmitWarning(Diag, SrcMgr,
-              CheckerState->uninit_derefs_begin(),
-              CheckerState->uninit_derefs_end(),
-              "Dereference of uninitialized value.");
+              CheckerState->undef_derefs_begin(),
+              CheckerState->undef_derefs_end(),
+              "Dereference of undefined value.");
   
   EmitWarning(Diag, SrcMgr,
-              CheckerState->uninit_derefs_begin(),
-              CheckerState->uninit_derefs_end(),
-              "Dereference of uninitialized value.");
+              CheckerState->undef_derefs_begin(),
+              CheckerState->undef_derefs_end(),
+              "Dereference of undefined value.");
   
   EmitWarning(Diag, SrcMgr,
               CheckerState->bad_divides_begin(),
               CheckerState->bad_divides_end(),
-              "Division by zero/uninitialized value.");
+              "Division by zero/undefined value.");
       
 #ifndef NDEBUG
   if (Visualize) CheckerState->ViewGraph();

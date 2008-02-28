@@ -49,7 +49,7 @@ public:
 
 class SymbolData {
 public:
-  enum Kind { UninitKind, ParmKind, GlobalKind, ContentsOfKind };
+  enum Kind { UndefKind, ParmKind, GlobalKind, ContentsOfKind };
   
 private:
   uintptr_t Data;
@@ -60,17 +60,17 @@ protected:
   SymbolData(void* D, Kind k) : Data(reinterpret_cast<uintptr_t>(D)), K(k) {}
   
   void* getPtr() const { 
-    assert (K != UninitKind);
+    assert (K != UndefKind);
     return reinterpret_cast<void*>(Data);
   }
   
   uintptr_t getInt() const {
-    assert (K != UninitKind);
+    assert (K != UndefKind);
     return Data;
   }
   
 public:
-  SymbolData() : Data(0), K(UninitKind) {}
+  SymbolData() : Data(0), K(UndefKind) {}
   
   Kind  getKind() const { return K; }  
   

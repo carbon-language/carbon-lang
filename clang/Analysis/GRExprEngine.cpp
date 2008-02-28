@@ -117,7 +117,7 @@ GRExprEngine::MarkBranch(StateTy St, Stmt* Terminator, bool branchTaken) {
                  (Op == BinaryOperator::LOr && !branchTaken)  
                ? B->getRHS() : B->getLHS();
         
-      return SetBlkExprRVal(St, B, UninitializedVal(Ex));
+      return SetBlkExprRVal(St, B, UndefinedVal(Ex));
     }
       
     case Stmt::ConditionalOperatorClass: { // ?:
@@ -134,7 +134,7 @@ GRExprEngine::MarkBranch(StateTy St, Stmt* Terminator, bool branchTaken) {
       else
         Ex = C->getRHS();
       
-      return SetBlkExprRVal(St, C, UninitializedVal(Ex));
+      return SetBlkExprRVal(St, C, UndefinedVal(Ex));
     }
       
     case Stmt::ChooseExprClass: { // ?:
@@ -142,7 +142,7 @@ GRExprEngine::MarkBranch(StateTy St, Stmt* Terminator, bool branchTaken) {
       ChooseExpr* C = cast<ChooseExpr>(Terminator);
       
       Expr* Ex = branchTaken ? C->getLHS() : C->getRHS();      
-      return SetBlkExprRVal(St, C, UninitializedVal(Ex));
+      return SetBlkExprRVal(St, C, UndefinedVal(Ex));
     }
   }
 }
@@ -179,12 +179,12 @@ void GRExprEngine::ProcessBranch(Expr* Condition, Stmt* Term,
       builder.generateNode(MarkBranch(PrevState, Term, false), false);
       return;
       
-    case RVal::UninitializedKind: {      
+    case RVal::UndefinedKind: {      
       NodeTy* N = builder.generateNode(PrevState, true);
 
       if (N) {
         N->markAsSink();
-        UninitBranches.insert(N);
+        UndefBranches.insert(N);
       }
       
       builder.markInfeasible(false);
@@ -245,7 +245,7 @@ void GRExprEngine::ProcessIndirectGoto(IndirectGotoNodeBuilder& builder) {
   // Three possibilities:
   //
   //   (1) We know the computed label.
-  //   (2) The label is NULL (or some other constant), or Uninitialized.
+  //   (2) The label is NULL (or some other constant), or Undefined.
   //   (3) We have no clue about the label.  Dispatch to all targets.
   //
   
@@ -265,10 +265,10 @@ void GRExprEngine::ProcessIndirectGoto(IndirectGotoNodeBuilder& builder) {
     return;
   }
 
-  if (isa<lval::ConcreteInt>(V) || isa<UninitializedVal>(V)) {
+  if (isa<lval::ConcreteInt>(V) || isa<UndefinedVal>(V)) {
     // Dispatch to the first target and mark it as a sink.
     NodeTy* N = builder.generateNode(builder.begin(), St, true);
-    UninitBranches.insert(N);
+    UndefBranches.insert(N);
     return;
   }
   
@@ -290,9 +290,9 @@ void GRExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
   Expr* CondE = builder.getCondition();
   RVal  CondV = GetRVal(St, CondE);
 
-  if (CondV.isUninit()) {
+  if (CondV.isUndef()) {
     NodeTy* N = builder.generateDefaultCaseNode(St, true);
-    UninitBranches.insert(N);
+    UndefBranches.insert(N);
     return;
   }
   
@@ -385,9 +385,9 @@ void GRExprEngine::VisitLogicalExpr(BinaryOperator* B, NodeTy* Pred,
   StateTy St = Pred->getState();
   RVal X = GetBlkExprRVal(St, B);
   
-  assert (X.isUninit());
+  assert (X.isUndef());
   
-  Expr* Ex = (Expr*) cast<UninitializedVal>(X).getData();
+  Expr* Ex = (Expr*) cast<UndefinedVal>(X).getData();
   
   assert (Ex);
   
@@ -395,9 +395,9 @@ void GRExprEngine::VisitLogicalExpr(BinaryOperator* B, NodeTy* Pred,
     
     X = GetBlkExprRVal(St, Ex);
     
-    // Handle uninitialized values.
+    // Handle undefined values.
     
-    if (X.isUninit()) {
+    if (X.isUndef()) {
       Nodify(Dst, B, Pred, SetBlkExprRVal(St, B, X));
       return;
     }
@@ -527,13 +527,13 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
     StateTy St = (*DI)->getState();    
     RVal L = GetLVal(St, Callee);
 
-    // Check for uninitialized control-flow.
+    // Check for undefined control-flow.
 
-    if (L.isUninit()) {
+    if (L.isUndef()) {
       
       NodeTy* N = Builder->generateNode(CE, St, *DI);
       N->markAsSink();
-      UninitBranches.insert(N);
+      UndefBranches.insert(N);
       continue;
     }
     
@@ -617,13 +617,13 @@ void GRExprEngine::VisitDeclStmt(DeclStmt* DS, GRExprEngine::NodeTy* Pred,
                 !isa<FileVarDecl>(VD));
         
         // If there is no initializer, set the value of the
-        // variable to "Uninitialized".
+        // variable to "Undefined".
         //
         // FIXME: static variables may have an initializer, but the second
         //  time a function is called those values may not be current.
         
         St = SetRVal(St, lval::DeclVal(VD),
-                     Ex ? GetRVal(St, Ex) : UninitializedVal());
+                     Ex ? GetRVal(St, Ex) : UndefinedVal());
       }
     }
 
@@ -641,9 +641,9 @@ void GRExprEngine::VisitGuardedExpr(Expr* Ex, Expr* L, Expr* R,
   StateTy St = Pred->getState();
   RVal X = GetBlkExprRVal(St, Ex);
   
-  assert (X.isUninit());
+  assert (X.isUndef());
   
-  Expr* SE = (Expr*) cast<UninitializedVal>(X).getData();
+  Expr* SE = (Expr*) cast<UndefinedVal>(X).getData();
   
   assert (SE);
     
@@ -703,15 +703,15 @@ void GRExprEngine::VisitDeref(UnaryOperator* U, NodeTy* Pred, NodeSet& Dst) {
     
     RVal V = GetRVal(St, Ex);
     
-    // Check for dereferences of uninitialized values.
+    // Check for dereferences of undefined values.
     
-    if (V.isUninit()) {
+    if (V.isUndef()) {
       
       NodeTy* Succ = Builder->generateNode(U, St, N);
       
       if (Succ) {
         Succ->markAsSink();
-        UninitDeref.insert(Succ);
+        UndefDeref.insert(Succ);
       }
       
       continue;
@@ -810,7 +810,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
       continue;
     }
 
-    if (SubV.isUninit()) {
+    if (SubV.isUndef()) {
       Nodify(Dst, U, N1, SetRVal(St, U, SubV));
       continue;
     }
@@ -827,8 +827,8 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
         continue;
       }
 
-      // Propagate uninitialized values.      
-      if (V.isUninit()) {
+      // Propagate undefined values.      
+      if (V.isUndef()) {
         Nodify(Dst, U, N1, SetRVal(St, U, V));
         continue;
       }
@@ -984,16 +984,16 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
       if ((Op == BinaryOperator::Div || Op == BinaryOperator::Rem)
           && RHS->getType()->isIntegerType()) {
 
-        // Check if the denominator is uninitialized.
+        // Check if the denominator is undefined.
         
         if (!RightV.isUnknown()) {
         
-          if (RightV.isUninit()) {
-            NodeTy* DivUninit = Builder->generateNode(B, St, N2);
+          if (RightV.isUndef()) {
+            NodeTy* DivUndef = Builder->generateNode(B, St, N2);
             
-            if (DivUninit) {
-              DivUninit->markAsSink();
-              BadDivides.insert(DivUninit);
+            if (DivUndef) {
+              DivUndef->markAsSink();
+              BadDivides.insert(DivUndef);
             }
             
             continue;
@@ -1001,7 +1001,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
             
           // Check for divide/remainder-by-zero.
           //
-          // First, "assume" that the denominator is 0 or uninitialized.
+          // First, "assume" that the denominator is 0 or undefined.
           
           bool isFeasible = false;
           StateTy ZeroSt =  Assume(St, RightV, false, isFeasible);
@@ -1051,8 +1051,8 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           
           // Simple assignments.
 
-          if (LeftV.isUninit()) {
-            HandleUninitializedStore(B, N2);
+          if (LeftV.isUndef()) {
+            HandleUndefinedStore(B, N2);
             continue;
           }
           
@@ -1076,10 +1076,10 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           else
             ((int&) Op) -= BinaryOperator::MulAssign;  
           
-          // Check if the LHS is uninitialized.
+          // Check if the LHS is undefined.
           
-          if (LeftV.isUninit()) {
-            HandleUninitializedStore(B, N2);
+          if (LeftV.isUndef()) {
+            HandleUndefinedStore(B, N2);
             continue;
           }
           
@@ -1106,11 +1106,11 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           
           RVal V = GetRVal(N1->getState(), LeftLV, B->getLHS()->getType());
           
-          // Propagate uninitialized value (left-side).  We
-          // propogate uninitialized values for the RHS below when
+          // Propagate undefined value (left-side).  We
+          // propogate undefined values for the RHS below when
           // we also check for divide-by-zero.
           
-          if (V.isUninit()) {
+          if (V.isUndef()) {
             St = SetRVal(St, B, V);
             break;
           }
@@ -1129,7 +1129,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
             
           // At this point:
           //
-          //  The LHS is not Uninit/Unknown.
+          //  The LHS is not Undef/Unknown.
           //  The RHS is not Unknown.
           
           // Get the computation type.
@@ -1144,14 +1144,14 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           if ((Op == BinaryOperator::Div || Op == BinaryOperator::Rem)
               && RHS->getType()->isIntegerType()) {
             
-            // Check if the denominator is uninitialized.
+            // Check if the denominator is undefined.
                 
-            if (RightV.isUninit()) {
-              NodeTy* DivUninit = Builder->generateNode(B, St, N2);
+            if (RightV.isUndef()) {
+              NodeTy* DivUndef = Builder->generateNode(B, St, N2);
               
-              if (DivUninit) {
-                DivUninit->markAsSink();
-                BadDivides.insert(DivUninit);
+              if (DivUndef) {
+                DivUndef->markAsSink();
+                BadDivides.insert(DivUndef);
               }
               
               continue;
@@ -1183,9 +1183,9 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           }
           else {
             
-            // Propagate uninitialized values (right-side).
+            // Propagate undefined values (right-side).
             
-            if (RightV.isUninit()) {
+            if (RightV.isUndef()) {
               St = SetRVal(SetRVal(St, B, RightV), LeftLV, RightV);
               break;
             }
@@ -1202,10 +1202,10 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
   }
 }
 
-void GRExprEngine::HandleUninitializedStore(Stmt* S, NodeTy* Pred) {  
+void GRExprEngine::HandleUndefinedStore(Stmt* S, NodeTy* Pred) {  
   NodeTy* N = Builder->generateNode(S, Pred->getState(), Pred);
   N->markAsSink();
-  UninitStores.insert(N);
+  UndefStores.insert(N);
 }
 
 void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
@@ -1589,9 +1589,9 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
     
     if (GraphPrintCheckerState->isImplicitNullDeref(N) ||
         GraphPrintCheckerState->isExplicitNullDeref(N) ||
-        GraphPrintCheckerState->isUninitDeref(N) ||
-        GraphPrintCheckerState->isUninitStore(N) ||
-        GraphPrintCheckerState->isUninitControlFlow(N) ||
+        GraphPrintCheckerState->isUndefDeref(N) ||
+        GraphPrintCheckerState->isUndefStore(N) ||
+        GraphPrintCheckerState->isUndefControlFlow(N) ||
         GraphPrintCheckerState->isBadDivide(N))
       return "color=\"red\",style=\"filled\"";
     
@@ -1627,14 +1627,14 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
         else if (GraphPrintCheckerState->isExplicitNullDeref(N)) {
           Out << "\\|Explicit-Null Dereference.\\l";
         }
-        else if (GraphPrintCheckerState->isUninitDeref(N)) {
-          Out << "\\|Dereference of uninitialied value.\\l";
+        else if (GraphPrintCheckerState->isUndefDeref(N)) {
+          Out << "\\|Dereference of undefialied value.\\l";
         }
-        else if (GraphPrintCheckerState->isUninitStore(N)) {
-          Out << "\\|Store to Uninitialized LVal.";
+        else if (GraphPrintCheckerState->isUndefStore(N)) {
+          Out << "\\|Store to Undefined LVal.";
         }
         else if (GraphPrintCheckerState->isBadDivide(N)) {
-          Out << "\\|Divide-by zero or uninitialized value.";
+          Out << "\\|Divide-by zero or undefined value.";
         }
         
         break;
@@ -1686,8 +1686,8 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
           Out << "\\l";
         }
         
-        if (GraphPrintCheckerState->isUninitControlFlow(N)) {
-          Out << "\\|Control-flow based on\\lUninitialized value.\\l";
+        if (GraphPrintCheckerState->isUndefControlFlow(N)) {
+          Out << "\\|Control-flow based on\\lUndefined value.\\l";
         }
       }
     }

@@ -26,7 +26,7 @@ namespace clang {
   
 class RVal {
 public:
-  enum BaseKind { UninitializedKind, UnknownKind, LValKind, NonLValKind };
+  enum BaseKind { UndefinedKind, UnknownKind, LValKind, NonLValKind };
   enum { BaseBits = 2, BaseMask = 0x3 };
   
 protected:
@@ -71,11 +71,11 @@ public:
     return getRawKind() == UnknownKind;
   }
 
-  inline bool isUninit() const {
-    return getRawKind() == UninitializedKind;
+  inline bool isUndef() const {
+    return getRawKind() == UndefinedKind;
   }
 
-  inline bool isUnknownOrUninit() const {
+  inline bool isUnknownOrUndef() const {
     return getRawKind() <= UnknownKind;
   }
   
@@ -103,13 +103,13 @@ public:
   }  
 };
 
-class UninitializedVal : public RVal {
+class UndefinedVal : public RVal {
 public:
-  UninitializedVal() : RVal(UninitializedKind) {}
-  UninitializedVal(void* D) : RVal(UninitializedKind, D) {}
+  UndefinedVal() : RVal(UndefinedKind) {}
+  UndefinedVal(void* D) : RVal(UndefinedKind, D) {}
   
   static inline bool classof(const RVal* V) {
-    return V->getBaseKind() == UninitializedKind;
+    return V->getBaseKind() == UndefinedKind;
   }
   
   void* getData() const { return Data; }  

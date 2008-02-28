@@ -72,7 +72,7 @@ ValueStateManager::RemoveDeadBindings(ValueState St, Stmt* Loc,
     else {
       RVal X = I.getData();
       
-      if (X.isUninit() && cast<UninitializedVal>(X).getData())
+      if (X.isUndef() && cast<UndefinedVal>(X).getData())
         continue;
       
       NewSt.BlockExprBindings = Remove(NewSt, BlkExpr);
@@ -109,7 +109,7 @@ ValueStateManager::RemoveDeadBindings(ValueState St, Stmt* Loc,
       
       RVal X = GetRVal(St, lval::DeclVal(cast<VarDecl>(V)));      
       
-      if (X.isUnknownOrUninit())
+      if (X.isUnknownOrUndef())
         continue;
       
       LVal LV = cast<LVal>(X);
@@ -150,7 +150,7 @@ RVal ValueStateManager::GetRVal(ValueState St, const LVal& LV, QualType T) {
   if (isa<UnknownVal>(LV))
     return UnknownVal();
   
-  assert (!isa<UninitializedVal>(LV));
+  assert (!isa<UndefinedVal>(LV));
   
   switch (LV.getSubKind()) {
     case lval::DeclValKind: {

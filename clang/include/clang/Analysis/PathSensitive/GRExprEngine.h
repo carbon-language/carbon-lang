@@ -88,19 +88,19 @@ protected:
   /// CurrentStmt - The current block-level statement.
   Stmt* CurrentStmt;
 
-  typedef llvm::SmallPtrSet<NodeTy*,2> UninitBranchesTy;  
-  typedef llvm::SmallPtrSet<NodeTy*,2> UninitStoresTy;
+  typedef llvm::SmallPtrSet<NodeTy*,2> UndefBranchesTy;  
+  typedef llvm::SmallPtrSet<NodeTy*,2> UndefStoresTy;
   typedef llvm::SmallPtrSet<NodeTy*,2> BadDerefTy;
   typedef llvm::SmallPtrSet<NodeTy*,2> BadDividesTy;
   typedef llvm::SmallPtrSet<NodeTy*,2> NoReturnCallsTy;  
   
-  /// UninitBranches - Nodes in the ExplodedGraph that result from
-  ///  taking a branch based on an uninitialized value.
-  UninitBranchesTy UninitBranches;
+  /// UndefBranches - Nodes in the ExplodedGraph that result from
+  ///  taking a branch based on an undefined value.
+  UndefBranchesTy UndefBranches;
   
-  /// UninitStores - Sinks in the ExplodedGraph that result from
-  ///  making a store to an uninitialized lvalue.
-  UninitStoresTy UninitStores;
+  /// UndefStores - Sinks in the ExplodedGraph that result from
+  ///  making a store to an undefined lvalue.
+  UndefStoresTy UndefStores;
   
   /// NoReturnCalls - Sinks in the ExplodedGraph that result from
   //  calling a function with the attribute "noreturn".
@@ -115,11 +115,11 @@ protected:
   BadDerefTy ExplicitNullDeref;
   
   /// UnitDeref - Nodes in the ExplodedGraph that result from
-  ///  taking a dereference on an uninitialized value.
-  BadDerefTy UninitDeref;
+  ///  taking a dereference on an undefined value.
+  BadDerefTy UndefDeref;
 
   /// BadDivides - Nodes in the ExplodedGraph that result from evaluating
-  ///  a divide-by-zero or divide-by-uninitialized.
+  ///  a divide-by-zero or divide-by-undefined.
   BadDividesTy BadDivides;
   
   bool StateCleaned;
@@ -157,12 +157,12 @@ public:
   ///  in the ExplodedGraph.
   StateTy getInitialState();
   
-  bool isUninitControlFlow(const NodeTy* N) const {
-    return N->isSink() && UninitBranches.count(const_cast<NodeTy*>(N)) != 0;
+  bool isUndefControlFlow(const NodeTy* N) const {
+    return N->isSink() && UndefBranches.count(const_cast<NodeTy*>(N)) != 0;
   }
   
-  bool isUninitStore(const NodeTy* N) const {
-    return N->isSink() && UninitStores.count(const_cast<NodeTy*>(N)) != 0;
+  bool isUndefStore(const NodeTy* N) const {
+    return N->isSink() && UndefStores.count(const_cast<NodeTy*>(N)) != 0;
   }
   
   bool isImplicitNullDeref(const NodeTy* N) const {
@@ -173,8 +173,8 @@ public:
     return N->isSink() && ExplicitNullDeref.count(const_cast<NodeTy*>(N)) != 0;
   }
   
-  bool isUninitDeref(const NodeTy* N) const {
-    return N->isSink() && UninitDeref.count(const_cast<NodeTy*>(N)) != 0;
+  bool isUndefDeref(const NodeTy* N) const {
+    return N->isSink() && UndefDeref.count(const_cast<NodeTy*>(N)) != 0;
   }
   
   bool isBadDivide(const NodeTy* N) const {
@@ -189,9 +189,9 @@ public:
   null_deref_iterator null_derefs_begin() { return ExplicitNullDeref.begin(); }
   null_deref_iterator null_derefs_end() { return ExplicitNullDeref.end(); }
   
-  typedef BadDerefTy::iterator uninit_deref_iterator;
-  uninit_deref_iterator uninit_derefs_begin() { return UninitDeref.begin(); }
-  uninit_deref_iterator uninit_derefs_end() { return UninitDeref.end(); }
+  typedef BadDerefTy::iterator undef_deref_iterator;
+  undef_deref_iterator undef_derefs_begin() { return UndefDeref.begin(); }
+  undef_deref_iterator undef_derefs_end() { return UndefDeref.end(); }
   
   typedef BadDividesTy::iterator bad_divide_iterator;
   bad_divide_iterator bad_divides_begin() { return BadDivides.begin(); }
@@ -298,9 +298,9 @@ protected:
   ///  The states are not guaranteed to be unique.
   void Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred, const StateTy::BufferTy& SB);
   
-  /// HandleUninitializedStore - Create the necessary sink node to represent
-  ///  a store to an "uninitialized" LVal.
-  void HandleUninitializedStore(Stmt* S, NodeTy* Pred);
+  /// HandleUndefinedStore - Create the necessary sink node to represent
+  ///  a store to an "undefined" LVal.
+  void HandleUndefinedStore(Stmt* S, NodeTy* Pred);
   
   /// Visit - Transfer function logic for all statements.  Dispatches to
   ///  other functions that handle specific kinds of statements.
@@ -344,7 +344,7 @@ protected:
   void VisitDeref(UnaryOperator* B, NodeTy* Pred, NodeSet& Dst);
   
   RVal EvalCast(RVal X, QualType CastT) {
-    if (X.isUnknownOrUninit())
+    if (X.isUnknownOrUndef())
       return X;
     
     if (isa<LVal>(X))
@@ -371,8 +371,8 @@ protected:
   
   RVal EvalBinOp(BinaryOperator::Opcode Op, RVal L, RVal R) {
     
-    if (L.isUninit() || R.isUninit())
-      return UninitializedVal();
+    if (L.isUndef() || R.isUndef())
+      return UndefinedVal();
     
     if (L.isUnknown() || R.isUnknown())
       return UnknownVal();
