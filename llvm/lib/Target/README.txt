@@ -628,3 +628,47 @@ to know that it doesn't modify G either.  This is very tricky.
 
 We should add an FRINT node to the DAG to model targets that have legal
 implementations of ceil/floor/rint.
+
+//===---------------------------------------------------------------------===//
+
+Consider:
+
+int test() {
+  long long input[8] = {1,1,1,1,1,1,1,1};
+  foo(input);
+}
+
+We currently compile this into a memcpy from a global array since the 
+initializer is fairly large and not memset'able.  This is good, but the memcpy
+gets lowered to load/stores in the code generator.  This is also ok, except
+that the codegen lowering for memcpy doesn't handle the case when the source
+is a constant global.  This gives us atrocious code like this:
+
+	call	"L1$pb"
+"L1$pb":
+	popl	%eax
+	movl	_C.0.1444-"L1$pb"+32(%eax), %ecx
+	movl	%ecx, 40(%esp)
+	movl	_C.0.1444-"L1$pb"+20(%eax), %ecx
+	movl	%ecx, 28(%esp)
+	movl	_C.0.1444-"L1$pb"+36(%eax), %ecx
+	movl	%ecx, 44(%esp)
+	movl	_C.0.1444-"L1$pb"+44(%eax), %ecx
+	movl	%ecx, 52(%esp)
+	movl	_C.0.1444-"L1$pb"+40(%eax), %ecx
+	movl	%ecx, 48(%esp)
+	movl	_C.0.1444-"L1$pb"+12(%eax), %ecx
+	movl	%ecx, 20(%esp)
+	movl	_C.0.1444-"L1$pb"+4(%eax), %ecx
+...
+
+instead of:
+	movl	$1, 16(%esp)
+	movl	$0, 20(%esp)
+	movl	$1, 24(%esp)
+	movl	$0, 28(%esp)
+	movl	$1, 32(%esp)
+	movl	$0, 36(%esp)
+	...
+
+//===---------------------------------------------------------------------===//
