@@ -1,6 +1,5 @@
 ; RUN: llvm-as < %s | llc -march=x86 -mcpu=yonah | grep {testl.*%e.x.*%e.x}
 ; rdar://5752025
-; XFAIL: *
 
 ; We don't want to fold the and into the test, because the and clobbers its
 ; input forcing a copy.  We want:

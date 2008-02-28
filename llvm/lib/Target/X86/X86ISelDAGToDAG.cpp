@@ -48,7 +48,7 @@ namespace {
   static cl::opt<bool>
   AlwaysFoldAndInTest("always-fold-and-in-test",
                 cl::desc("Always fold and operation in test"),
-                cl::init(true), cl::Hidden);
+                cl::init(false), cl::Hidden);
 }
 
 //===----------------------------------------------------------------------===//
