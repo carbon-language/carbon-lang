@@ -19,7 +19,7 @@
 
 namespace clang {
   
-  class ValueStateImpl;
+  class ValueState;
   class ValueStateManager;
   
 class GRTransferFuncs {
@@ -53,10 +53,9 @@ public:
   
   // Calls.
   
-  virtual ValueStateImpl* EvalCall(ValueStateManager& StateMgr,
-                                   ValueManager& ValMgr,
-                                   CallExpr* CE, LVal L,
-                                   ValueStateImpl* StImpl) = 0;
+  virtual ValueState* EvalCall(ValueStateManager& StateMgr,
+                               ValueManager& ValMgr, CallExpr* CE, LVal L,
+                               ValueState* St) = 0;
 };
   
 } // end clang namespace

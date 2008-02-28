@@ -52,10 +52,10 @@ public:
   
   // Calls.
   
-  virtual ValueStateImpl* EvalCall(ValueStateManager& StateMgr,
-                                   ValueManager& ValMgr,
-                                   CallExpr* CE, LVal L,
-                                   ValueStateImpl* StImpl);
+  virtual ValueState* EvalCall(ValueStateManager& StateMgr,
+                               ValueManager& ValMgr,
+                               CallExpr* CE, LVal L,
+                               ValueState* St);
   
 protected:
   

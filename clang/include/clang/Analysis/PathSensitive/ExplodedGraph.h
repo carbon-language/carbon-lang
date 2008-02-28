@@ -163,7 +163,7 @@ public:
   
   // Profiling (for FoldingSet).
   inline void Profile(llvm::FoldingSetNodeID& ID) const {
-    StateTy::Profile(ID, getState());
+    GRTrait<StateTy>::Profile(ID, getState());
   }
   
   // Iterators over successor and predecessor vertices.
@@ -317,7 +317,7 @@ public:
     llvm::FoldingSetNodeID profile;    
     void* InsertPos = 0;
     
-    StateTy::Profile(profile, State);
+    GRTrait<StateTy>::Profile(profile, State);
     NodeTy* V = VSet->FindNodeOrInsertPos(profile, InsertPos);
 
     if (!V) {

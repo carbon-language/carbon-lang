@@ -340,11 +340,9 @@ RVal GRSimpleVals::EvalNE(ValueManager& ValMgr, LVal L, LVal R) {
 // Transfer function for Function Calls.
 //===----------------------------------------------------------------------===//
 
-ValueStateImpl*
+ValueState*
 GRSimpleVals::EvalCall(ValueStateManager& StateMgr, ValueManager& ValMgr,
-                           CallExpr* CE, LVal L, ValueStateImpl* StImpl) {
-  
-  ValueState St(StImpl);
+                       CallExpr* CE, LVal L, ValueState* St) {
   
   // Invalidate all arguments passed in by reference (LVals).
 
@@ -357,5 +355,5 @@ GRSimpleVals::EvalCall(ValueStateManager& StateMgr, ValueManager& ValMgr,
       St = StateMgr.SetRVal(St, cast<LVal>(V), UnknownVal());
   }
   
-  return St.getImpl();
+  return St;
 }

@@ -1,4 +1,4 @@
-//= ValueState.cpp - Path-Sens. "State" for tracking valuues -----*- C++ -*--=//
+//= ValueState*cpp - Path-Sens. "State" for tracking valuues -----*- C++ -*--=//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This files defines SymbolID, ExprBindKey, and ValueState.
+//  This files defines SymbolID, ExprBindKey, and ValueState*
 //
 //===----------------------------------------------------------------------===//
 
@@ -19,19 +19,19 @@ using namespace clang;
 bool ValueState::isNotEqual(SymbolID sym, const llvm::APSInt& V) const {
 
   // Retrieve the NE-set associated with the given symbol.
-  ConstNotEqTy::TreeTy* T = Data->ConstNotEq.SlimFind(sym);
+  ConstNotEqTy::TreeTy* T = ConstNotEq.SlimFind(sym);
 
   // See if V is present in the NE-set.
   return T ? T->getValue().second.contains(&V) : false;
 }
 
 const llvm::APSInt* ValueState::getSymVal(SymbolID sym) const {
-  ConstEqTy::TreeTy* T = Data->ConstEq.SlimFind(sym);
+  ConstEqTy::TreeTy* T = ConstEq.SlimFind(sym);
   return T ? T->getValue().second : NULL;  
 }
 
-ValueState
-ValueStateManager::RemoveDeadBindings(ValueState St, Stmt* Loc,
+ValueState*
+ValueStateManager::RemoveDeadBindings(ValueState* St, Stmt* Loc,
                                       const LiveVariables& Liveness) {  
   
   // This code essentially performs a "mark-and-sweep" of the VariableBindings.
@@ -45,14 +45,14 @@ ValueStateManager::RemoveDeadBindings(ValueState St, Stmt* Loc,
   llvm::SmallPtrSet<ValueDecl*, 10> Marked;  
   llvm::SmallSet<SymbolID, 20> MarkedSymbols;
   
-  ValueStateImpl NewSt = *St;
+  ValueState NewSt = *St;
   
   // Drop bindings for subexpressions.
   NewSt.SubExprBindings = EXFactory.GetEmptyMap();
   
   // Iterate over the block-expr bindings.
 
-  for (ValueState::beb_iterator I = St.beb_begin(), E = St.beb_end();
+  for (ValueState::beb_iterator I = St->beb_begin(), E = St->beb_end();
                                                     I!=E ; ++I) {    
     Expr* BlkExpr = I.getKey();
     
@@ -81,7 +81,7 @@ ValueStateManager::RemoveDeadBindings(ValueState St, Stmt* Loc,
 
   // Iterate over the variable bindings.
 
-  for (ValueState::vb_iterator I = St.vb_begin(), E = St.vb_end(); I!=E ; ++I)
+  for (ValueState::vb_iterator I = St->vb_begin(), E = St->vb_end(); I!=E ; ++I)
     if (Liveness.isLive(Loc, I.getKey())) {
       WList.push_back(I.getKey());
       
@@ -128,16 +128,16 @@ ValueStateManager::RemoveDeadBindings(ValueState St, Stmt* Loc,
   }
   
   // Remove dead variable bindings.
-  for (ValueState::vb_iterator I = St.vb_begin(), E = St.vb_end(); I!=E ; ++I)
+  for (ValueState::vb_iterator I = St->vb_begin(), E = St->vb_end(); I!=E ; ++I)
     if (!Marked.count(I.getKey()))
       NewSt.VarBindings = Remove(NewSt, I.getKey());
   
   // Remove dead symbols.
-  for (ValueState::ce_iterator I = St.ce_begin(), E=St.ce_end(); I!=E; ++I)
+  for (ValueState::ce_iterator I = St->ce_begin(), E=St->ce_end(); I!=E; ++I)
     if (!MarkedSymbols.count(I.getKey()))
       NewSt.ConstEq = CEFactory.Remove(NewSt.ConstEq, I.getKey());
   
-  for (ValueState::cne_iterator I = St.cne_begin(), E=St.cne_end(); I!=E; ++I)
+  for (ValueState::cne_iterator I = St->cne_begin(), E=St->cne_end(); I!=E; ++I)
     if (!MarkedSymbols.count(I.getKey()))
       NewSt.ConstNotEq = CNEFactory.Remove(NewSt.ConstNotEq, I.getKey());
   
@@ -145,7 +145,7 @@ ValueStateManager::RemoveDeadBindings(ValueState St, Stmt* Loc,
 }
 
 
-RVal ValueStateManager::GetRVal(ValueState St, const LVal& LV, QualType T) {
+RVal ValueStateManager::GetRVal(ValueState* St, LVal LV, QualType T) {
   
   if (isa<UnknownVal>(LV))
     return UnknownVal();
@@ -184,8 +184,7 @@ RVal ValueStateManager::GetRVal(ValueState St, const LVal& LV, QualType T) {
   return UnknownVal();
 }
 
-ValueState
-ValueStateManager::AddNE(ValueState St, SymbolID sym, const llvm::APSInt& V) {
+ValueState* ValueStateManager::AddNE(ValueState* St, SymbolID sym, const llvm::APSInt& V) {
 
   // First, retrieve the NE-set associated with the given symbol.
   ValueState::ConstNotEqTy::TreeTy* T = St->ConstNotEq.SlimFind(sym);  
@@ -195,25 +194,24 @@ ValueStateManager::AddNE(ValueState St, SymbolID sym, const llvm::APSInt& V) {
   S = ISetFactory.Add(S, &V);
   
   // Create a new state with the old binding replaced.
-  ValueStateImpl NewSt = *St;
+  ValueState NewSt = *St;
   NewSt.ConstNotEq = CNEFactory.Add(NewSt.ConstNotEq, sym, S);
     
   // Get the persistent copy.
   return getPersistentState(NewSt);
 }
 
-ValueState
-ValueStateManager::AddEQ(ValueState St, SymbolID sym, const llvm::APSInt& V) {
+ValueState* ValueStateManager::AddEQ(ValueState* St, SymbolID sym, const llvm::APSInt& V) {
 
   // Create a new state with the old binding replaced.
-  ValueStateImpl NewSt = *St;
+  ValueState NewSt = *St;
   NewSt.ConstEq = CEFactory.Add(NewSt.ConstEq, sym, &V);
   
   // Get the persistent copy.
   return getPersistentState(NewSt);
 }
 
-RVal ValueStateManager::GetRVal(ValueState St, Expr* E) {
+RVal ValueStateManager::GetRVal(ValueState* St, Expr* E) {
 
   for (;;) {
     
@@ -336,7 +334,7 @@ RVal ValueStateManager::GetRVal(ValueState St, Expr* E) {
   return T ? T->getValue().second : UnknownVal();
 }
 
-RVal ValueStateManager::GetBlkExprRVal(ValueState St, Expr* E) {
+RVal ValueStateManager::GetBlkExprRVal(ValueState* St, Expr* E) {
   
   E = E->IgnoreParens();
   
@@ -358,7 +356,7 @@ RVal ValueStateManager::GetBlkExprRVal(ValueState St, Expr* E) {
   }
 }
 
-RVal ValueStateManager::GetLVal(ValueState St, Expr* E) {
+RVal ValueStateManager::GetLVal(ValueState* St, Expr* E) {
   
   E = E->IgnoreParens();
 
@@ -386,8 +384,8 @@ RVal ValueStateManager::GetLVal(ValueState St, Expr* E) {
   return GetRVal(St, E);
 }
 
-ValueState 
-ValueStateManager::SetRVal(ValueState St, Expr* E, RVal V,
+ValueState*
+ValueStateManager::SetRVal(ValueState* St, Expr* E, RVal V,
                            bool isBlkExpr, bool Invalidate) {
   
   assert (E);
@@ -396,7 +394,7 @@ ValueStateManager::SetRVal(ValueState St, Expr* E, RVal V,
     
     if (Invalidate) {
       
-      ValueStateImpl NewSt = *St;
+      ValueState NewSt = *St;
       
       if (isBlkExpr)
         NewSt.BlockExprBindings = EXFactory.Remove(NewSt.BlockExprBindings, E);
@@ -409,7 +407,7 @@ ValueStateManager::SetRVal(ValueState St, Expr* E, RVal V,
     return St;
   }
   
-  ValueStateImpl NewSt = *St;
+  ValueState NewSt = *St;
   
   if (isBlkExpr) {
     NewSt.BlockExprBindings = EXFactory.Add(NewSt.BlockExprBindings, E, V);
@@ -422,7 +420,7 @@ ValueStateManager::SetRVal(ValueState St, Expr* E, RVal V,
 }
 
 
-ValueState ValueStateManager::SetRVal(ValueState St, LVal LV, RVal V) {
+ValueState* ValueStateManager::SetRVal(ValueState* St, LVal LV, RVal V) {
   
   switch (LV.getSubKind()) {
       
@@ -437,34 +435,34 @@ ValueState ValueStateManager::SetRVal(ValueState St, LVal LV, RVal V) {
   }
 }
 
-void ValueStateManager::BindVar(ValueStateImpl& StImpl, VarDecl* D, RVal V) {
+void ValueStateManager::BindVar(ValueState& StImpl, VarDecl* D, RVal V) {
   StImpl.VarBindings = VBFactory.Add(StImpl.VarBindings, D, V);
 }
 
-ValueState ValueStateManager::BindVar(ValueState St, VarDecl* D, RVal V) {
+ValueState* ValueStateManager::BindVar(ValueState* St, VarDecl* D, RVal V) {
   
   // Create a new state with the old binding removed.
-  ValueStateImpl NewSt = *St;  
+  ValueState NewSt = *St;  
   NewSt.VarBindings = VBFactory.Add(NewSt.VarBindings, D, V);
   
   // Get the persistent copy.
   return getPersistentState(NewSt);
 }
 
-ValueState ValueStateManager::UnbindVar(ValueState St, VarDecl* D) {
+ValueState* ValueStateManager::UnbindVar(ValueState* St, VarDecl* D) {
   
   // Create a new state with the old binding removed.
-  ValueStateImpl NewSt = *St;
+  ValueState NewSt = *St;
   NewSt.VarBindings = VBFactory.Remove(NewSt.VarBindings, D);
   
   // Get the persistent copy.
   return getPersistentState(NewSt);
 }
 
-ValueState ValueStateManager::getInitialState() {
+ValueState* ValueStateManager::getInitialState() {
 
   // Create a state with empty variable bindings.
-  ValueStateImpl StateImpl(EXFactory.GetEmptyMap(),
+  ValueState StateImpl(EXFactory.GetEmptyMap(),
                            VBFactory.GetEmptyMap(),
                            CNEFactory.GetEmptyMap(),
                            CEFactory.GetEmptyMap());
@@ -472,17 +470,17 @@ ValueState ValueStateManager::getInitialState() {
   return getPersistentState(StateImpl);
 }
 
-ValueState ValueStateManager::getPersistentState(const ValueStateImpl &State) {
+ValueState* ValueStateManager::getPersistentState(ValueState& State) {
   
   llvm::FoldingSetNodeID ID;
   State.Profile(ID);  
   void* InsertPos;
   
-  if (ValueStateImpl* I = StateSet.FindNodeOrInsertPos(ID, InsertPos))
+  if (ValueState* I = StateSet.FindNodeOrInsertPos(ID, InsertPos))
     return I;
   
-  ValueStateImpl* I = (ValueStateImpl*) Alloc.Allocate<ValueStateImpl>();
-  new (I) ValueStateImpl(State);  
+  ValueState* I = (ValueState*) Alloc.Allocate<ValueState>();
+  new (I) ValueState(State);  
   StateSet.InsertNode(I, InsertPos);
   return I;
 }
@@ -541,12 +539,12 @@ void ValueState::printDOT(std::ostream& Out) const {
   
   // Print equality constraints.
   
-  if (!Data->ConstEq.isEmpty()) {
+  if (!ConstEq.isEmpty()) {
   
     Out << "\\l\\|'==' constraints:";
   
-    for (ConstEqTy::iterator I = Data->ConstEq.begin(),
-                             E = Data->ConstEq.end();   I!=E; ++I) {
+    for (ConstEqTy::iterator I = ConstEq.begin(),
+                             E = ConstEq.end();   I!=E; ++I) {
       
       Out << "\\l $" << I.getKey()
           << " : "   << I.getData()->toString();
@@ -555,12 +553,12 @@ void ValueState::printDOT(std::ostream& Out) const {
 
   // Print != constraints.
     
-  if (!Data->ConstNotEq.isEmpty()) {
+  if (!ConstNotEq.isEmpty()) {
   
     Out << "\\l\\|'!=' constraints:";
   
-    for (ConstNotEqTy::iterator I  = Data->ConstNotEq.begin(),
-                                EI = Data->ConstNotEq.end();   I != EI; ++I) {
+    for (ConstNotEqTy::iterator I  = ConstNotEq.begin(),
+                                EI = ConstNotEq.end();   I != EI; ++I) {
     
       Out << "\\l $" << I.getKey() << " : ";
       isFirst = true;

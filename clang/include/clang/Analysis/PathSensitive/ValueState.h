@@ -1,4 +1,4 @@
-//== ValueState.h - Path-Sens. "State" for tracking valuues -----*- C++ -*--==//
+//== ValueState*h - Path-Sens. "State" for tracking valuues -----*- C++ -*--==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This files defines SymbolID, ExprBindKey, and ValueState.
+//  This files defines SymbolID, ExprBindKey, and ValueState*
 //
 //===----------------------------------------------------------------------===//
 
@@ -39,36 +39,42 @@
 namespace clang {
 
 //===----------------------------------------------------------------------===//
-// ValueState - An ImmutableMap type Stmt*/Decl*/Symbols to RVals.
+// ValueState- An ImmutableMap type Stmt*/Decl*/Symbols to RVals.
 //===----------------------------------------------------------------------===//
 
-namespace vstate {
-  typedef llvm::ImmutableSet<llvm::APSInt*> IntSetTy;
+/// ValueState - This class encapsulates the actual data values for
+///  for a "state" in our symbolic value tracking.  It is intended to be
+///  used as a functional object; that is once it is created and made
+///  "persistent" in a FoldingSet its values will never change.
+class ValueState : public llvm::FoldingSetNode {
+public:
   
+  // Typedefs.
+  
+  typedef llvm::ImmutableSet<llvm::APSInt*>                IntSetTy;
   typedef llvm::ImmutableMap<Expr*,RVal>                   ExprBindingsTy;
   typedef llvm::ImmutableMap<VarDecl*,RVal>                VarBindingsTy;  
   typedef llvm::ImmutableMap<SymbolID,IntSetTy>            ConstNotEqTy;
   typedef llvm::ImmutableMap<SymbolID,const llvm::APSInt*> ConstEqTy;
-}
 
-/// ValueStateImpl - This class encapsulates the actual data values for
-///  for a "state" in our symbolic value tracking.  It is intended to be
-///  used as a functional object; that is once it is created and made
-///  "persistent" in a FoldingSet its values will never change.
-class ValueStateImpl : public llvm::FoldingSetNode {
 private:
-  void operator=(const ValueStateImpl& R) const;
+
+  void operator=(const ValueState& R) const;
+  
+  // FIXME: Make these private.
 
 public:
-  vstate::ExprBindingsTy   SubExprBindings;
-  vstate::ExprBindingsTy   BlockExprBindings;  
-  vstate::VarBindingsTy    VarBindings;
-  vstate::ConstNotEqTy     ConstNotEq;
-  vstate::ConstEqTy        ConstEq;
+  ExprBindingsTy   SubExprBindings;
+  ExprBindingsTy   BlockExprBindings;  
+  VarBindingsTy    VarBindings;
+  ConstNotEqTy     ConstNotEq;
+  ConstEqTy        ConstEq;
   
-  /// This ctor is used when creating the first ValueStateImpl object.
-  ValueStateImpl(vstate::ExprBindingsTy  EB,  vstate::VarBindingsTy VB,
-                 vstate::ConstNotEqTy CNE, vstate::ConstEqTy  CE)
+public:
+  
+  /// This ctor is used when creating the first ValueState object.
+  ValueState(ExprBindingsTy  EB,  VarBindingsTy VB,
+                 ConstNotEqTy CNE, ConstEqTy  CE)
     : SubExprBindings(EB), 
       BlockExprBindings(EB),
       VarBindings(VB),
@@ -77,7 +83,7 @@ public:
   
   /// Copy ctor - We must explicitly define this or else the "Next" ptr
   ///  in FoldingSetNode will also get copied.
-  ValueStateImpl(const ValueStateImpl& RHS)
+  ValueState(const ValueState& RHS)
     : llvm::FoldingSetNode(),
       SubExprBindings(RHS.SubExprBindings),
       BlockExprBindings(RHS.BlockExprBindings),
@@ -85,111 +91,63 @@ public:
       ConstNotEq(RHS.ConstNotEq),
       ConstEq(RHS.ConstEq) {} 
   
-  /// Profile - Profile the contents of a ValueStateImpl object for use
+  /// Profile - Profile the contents of a ValueState object for use
   ///  in a FoldingSet.
-  static void Profile(llvm::FoldingSetNodeID& ID, const ValueStateImpl& V) {
-    V.SubExprBindings.Profile(ID);
-    V.BlockExprBindings.Profile(ID);
-    V.VarBindings.Profile(ID);
-    V.ConstNotEq.Profile(ID);
-    V.ConstEq.Profile(ID);
+  static void Profile(llvm::FoldingSetNodeID& ID, ValueState* V) {
+    V->SubExprBindings.Profile(ID);
+    V->BlockExprBindings.Profile(ID);
+    V->VarBindings.Profile(ID);
+    V->ConstNotEq.Profile(ID);
+    V->ConstEq.Profile(ID);
   }
 
   /// Profile - Used to profile the contents of this object for inclusion
   ///  in a FoldingSet.
-  void Profile(llvm::FoldingSetNodeID& ID) const {
-    Profile(ID, *this);
+  void Profile(llvm::FoldingSetNodeID& ID) {
+    Profile(ID, this);
   }
   
-};
-  
-/// ValueState - This class represents a "state" in our symbolic value
-///  tracking. It is really just a "smart pointer", wrapping a pointer
-///  to ValueStateImpl object.  Making this class a smart pointer means that its
-///  size is always the size of a pointer, which allows easy conversion to
-///  void* when being handled by GRCoreEngine.  It also forces us to unique states;
-///  consequently, a ValueStateImpl* with a specific address will always refer
-///  to the unique state with those values.
-class ValueState {
-  ValueStateImpl* Data;
-public:
-  ValueState(ValueStateImpl* D) : Data(D) {}
-  ValueState() : Data(0) {}
-  
-  // Accessors.  
-  ValueStateImpl* getImpl() const { return Data; }
-  ValueStateImpl& operator*() { return *Data; }
-  ValueStateImpl* operator->() { return Data; }
-
-  // Typedefs.
-  typedef vstate::IntSetTy                 IntSetTy;
-  typedef vstate::ExprBindingsTy           ExprBindingsTy;
-  typedef vstate::VarBindingsTy            VarBindingsTy;
-  typedef vstate::ConstNotEqTy          ConstNotEqTy;
-  typedef vstate::ConstEqTy             ConstEqTy;
-
-  typedef llvm::SmallVector<ValueState,5>  BufferTy;
-
   // Queries.
   
   bool isNotEqual(SymbolID sym, const llvm::APSInt& V) const;
   const llvm::APSInt* getSymVal(SymbolID sym) const;
-  
+
   // Iterators.
 
   typedef VarBindingsTy::iterator vb_iterator;
-  vb_iterator vb_begin() const { return Data->VarBindings.begin(); }
-  vb_iterator vb_end() const { return Data->VarBindings.end(); }
+  vb_iterator vb_begin() const { return VarBindings.begin(); }
+  vb_iterator vb_end() const { return VarBindings.end(); }
     
   typedef ExprBindingsTy::iterator seb_iterator;
-  seb_iterator seb_begin() const { return Data->SubExprBindings.begin(); }
-  seb_iterator seb_end() const { return Data->SubExprBindings.end(); }
+  seb_iterator seb_begin() const { return SubExprBindings.begin(); }
+  seb_iterator seb_end() const { return SubExprBindings.end(); }
   
   typedef ExprBindingsTy::iterator beb_iterator;
-  beb_iterator beb_begin() const { return Data->BlockExprBindings.begin(); }
-  beb_iterator beb_end() const { return Data->BlockExprBindings.end(); }
+  beb_iterator beb_begin() const { return BlockExprBindings.begin(); }
+  beb_iterator beb_end() const { return BlockExprBindings.end(); }
   
   typedef ConstNotEqTy::iterator cne_iterator;
-  cne_iterator cne_begin() const { return Data->ConstNotEq.begin(); }
-  cne_iterator cne_end() const { return Data->ConstNotEq.end(); }
+  cne_iterator cne_begin() const { return ConstNotEq.begin(); }
+  cne_iterator cne_end() const { return ConstNotEq.end(); }
   
   typedef ConstEqTy::iterator ce_iterator;
-  ce_iterator ce_begin() const { return Data->ConstEq.begin(); }
-  ce_iterator ce_end() const { return Data->ConstEq.end(); }
-  
-  // Profiling and equality testing.
-  
-  bool operator==(const ValueState& RHS) const {
-    return Data == RHS.Data;
-  }
-  
-  static void Profile(llvm::FoldingSetNodeID& ID, const ValueState& V) {
-    ID.AddPointer(V.getImpl());
-  }
-  
-  void Profile(llvm::FoldingSetNodeID& ID) const {
-    Profile(ID, *this);
-  }
+  ce_iterator ce_begin() const { return ConstEq.begin(); }
+  ce_iterator ce_end() const { return ConstEq.end(); }
   
   void printDOT(std::ostream& Out) const;
   void print(std::ostream& Out) const;
-  void printStdErr() const { print(*llvm::cerr); }
-  
+  void printStdErr() const { print(*llvm::cerr); }  
 };  
   
-template<> struct GRTrait<ValueState> {
-  static inline void* toPtr(ValueState St) {
-    return reinterpret_cast<void*>(St.getImpl());
-  }  
-  static inline ValueState toState(void* P) {    
-    return ValueState(static_cast<ValueStateImpl*>(P));
+template<> struct GRTrait<ValueState*> {
+  static inline void* toPtr(ValueState* St)  { return (void*) St; }
+  static inline ValueState* toState(void* P) { return (ValueState*) P; }
+  static inline void Profile(llvm::FoldingSetNodeID& profile, ValueState* St) {
+    ValueState::Profile(profile, St);
   }
 };    
   
 class ValueStateManager {
-public:
-  typedef ValueState StateTy;
-
 private:
   ValueState::IntSetTy::Factory        ISetFactory;
   ValueState::ExprBindingsTy::Factory  EXFactory;
@@ -199,7 +157,7 @@ private:
   
   /// StateSet - FoldingSet containing all the states created for analyzing
   ///  a particular function.  This is used to unique states.
-  llvm::FoldingSet<ValueStateImpl> StateSet;
+  llvm::FoldingSet<ValueState> StateSet;
 
   /// ValueMgr - Object that manages the data for all created RVals.
   ValueManager ValMgr;
@@ -220,16 +178,16 @@ private:
     return VBFactory.Remove(B, V);
   }
 
-  inline ValueState::ExprBindingsTy Remove(const ValueStateImpl& V, Expr* E) {
+  inline ValueState::ExprBindingsTy Remove(const ValueState& V, Expr* E) {
     return Remove(V.BlockExprBindings, E);
   }
   
-  inline ValueState::VarBindingsTy Remove(const ValueStateImpl& V, VarDecl* D) {
+  inline ValueState::VarBindingsTy Remove(const ValueState& V, VarDecl* D) {
     return Remove(V.VarBindings, D);
   }
                   
-  ValueState BindVar(ValueState St, VarDecl* D, RVal V);
-  ValueState UnbindVar(ValueState St, VarDecl* D);  
+  ValueState* BindVar(ValueState* St, VarDecl* D, RVal V);
+  ValueState* UnbindVar(ValueState* St, VarDecl* D);  
   
 public:  
   ValueStateManager(ASTContext& Ctx, llvm::BumpPtrAllocator& alloc) 
@@ -241,36 +199,36 @@ public:
       ValMgr(Ctx, alloc),
       Alloc(alloc) {}
   
-  ValueState getInitialState();
+  ValueState* getInitialState();
         
   ValueManager& getValueManager() { return ValMgr; }
   SymbolManager& getSymbolManager() { return SymMgr; }
   
-  ValueState RemoveDeadBindings(ValueState St, Stmt* Loc, 
-                                const LiveVariables& Liveness);
+  ValueState* RemoveDeadBindings(ValueState* St, Stmt* Loc, 
+                                 const LiveVariables& Liveness);
   
-  ValueState RemoveSubExprBindings(ValueState St) {
-    ValueStateImpl NewSt = *St;
+  ValueState* RemoveSubExprBindings(ValueState* St) {
+    ValueState NewSt = *St;
     NewSt.SubExprBindings = EXFactory.GetEmptyMap();
     return getPersistentState(NewSt);    
   }
   
-  ValueState SetRVal(ValueState St, Expr* E, RVal V,
-                     bool isBlkExpr, bool Invalidate);
+  ValueState* SetRVal(ValueState* St, Expr* E, RVal V, bool isBlkExpr,
+                      bool Invalidate);
   
-  ValueState SetRVal(ValueState St, LVal LV, RVal V);
+  ValueState* SetRVal(ValueState* St, LVal LV, RVal V);
 
-  RVal GetRVal(ValueState St, Expr* E);
-  RVal GetRVal(ValueState St, const LVal& LV, QualType T = QualType());    
-  RVal GetLVal(ValueState St, Expr* E);
+  RVal GetRVal(ValueState* St, Expr* E);
+  RVal GetRVal(ValueState* St, LVal LV, QualType T = QualType());    
+  RVal GetLVal(ValueState* St, Expr* E);
   
-  RVal GetBlkExprRVal(ValueState St, Expr* Ex);
+  RVal GetBlkExprRVal(ValueState* St, Expr* Ex);
   
-  void BindVar(ValueStateImpl& StImpl, VarDecl* D, RVal V);
-  ValueState getPersistentState(const ValueStateImpl& Impl);
+  void BindVar(ValueState& StImpl, VarDecl* D, RVal V);
+  ValueState* getPersistentState(ValueState& Impl);
   
-  ValueState AddEQ(ValueState St, SymbolID sym, const llvm::APSInt& V);
-  ValueState AddNE(ValueState St, SymbolID sym, const llvm::APSInt& V);
+  ValueState* AddEQ(ValueState* St, SymbolID sym, const llvm::APSInt& V);
+  ValueState* AddNE(ValueState* St, SymbolID sym, const llvm::APSInt& V);
 };
   
 } // end clang namespace

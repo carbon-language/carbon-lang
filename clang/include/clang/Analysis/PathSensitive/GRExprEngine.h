@@ -13,9 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ValueState.h"
-
 #include "clang/Analysis/PathSensitive/GRCoreEngine.h"
+#include "clang/Analysis/PathSensitive/ValueState.h"
 #include "clang/Analysis/PathSensitive/GRTransferFuncs.h"
 
 namespace clang {
@@ -23,7 +22,7 @@ namespace clang {
 class GRExprEngine {
   
 public:
-  typedef ValueStateManager::StateTy  StateTy;
+  typedef ValueState*                 StateTy;
   typedef ExplodedGraph<GRExprEngine> GraphTy;
   typedef GraphTy::NodeTy             NodeTy;
   
@@ -155,7 +154,7 @@ public:
   
   /// getInitialState - Return the initial state used for the root vertex
   ///  in the ExplodedGraph.
-  StateTy getInitialState();
+  ValueState* getInitialState();
   
   bool isUndefControlFlow(const NodeTy* N) const {
     return N->isSink() && UndefBranches.count(const_cast<NodeTy*>(N)) != 0;
@@ -219,45 +218,47 @@ protected:
   ///  that all subexpression mappings are removed and that any
   ///  block-level expressions that are not live at 'S' also have their
   ///  mappings removed.
-  inline StateTy RemoveDeadBindings(Stmt* S, StateTy St) {
+  inline ValueState* RemoveDeadBindings(Stmt* S, ValueState* St) {
     return StateMgr.RemoveDeadBindings(St, S, Liveness);
   }
   
-  StateTy SetRVal(StateTy St, Expr* Ex, const RVal& V);
+  ValueState* SetRVal(ValueState* St, Expr* Ex, RVal V);
   
-  StateTy SetRVal(StateTy St, const Expr* Ex, const RVal& V) {
+  ValueState* SetRVal(ValueState* St, const Expr* Ex, RVal V) {
     return SetRVal(St, const_cast<Expr*>(Ex), V);
   }
  
-  StateTy SetBlkExprRVal(StateTy St, Expr* Ex, const RVal& V) {
+  ValueState* SetBlkExprRVal(ValueState* St, Expr* Ex, RVal V) {
     return StateMgr.SetRVal(St, Ex, V, true, false);
   }
   
+#if 0
   /// SetRVal - This version of SetRVal is used to batch process a set
   ///  of different possible RVals and return a set of different states.
-  const StateTy::BufferTy& SetRVal(StateTy St, Expr* Ex,
-                                   const RVal::BufferTy& V,
-                                   StateTy::BufferTy& RetBuf);
+  const ValueState*::BufferTy& SetRVal(ValueState* St, Expr* Ex,
+                                       const RVal::BufferTy& V,
+                                       ValueState*::BufferTy& RetBuf);
+#endif
   
-  StateTy SetRVal(StateTy St, const LVal& LV, const RVal& V);
+  ValueState* SetRVal(ValueState* St, LVal LV, RVal V);
   
-  RVal GetRVal(const StateTy& St, Expr* Ex) {
+  RVal GetRVal(ValueState* St, Expr* Ex) {
     return StateMgr.GetRVal(St, Ex);
   }
     
-  RVal GetRVal(const StateTy& St, const Expr* Ex) {
+  RVal GetRVal(ValueState* St, const Expr* Ex) {
     return GetRVal(St, const_cast<Expr*>(Ex));
   }
   
-  RVal GetBlkExprRVal(const StateTy& St, Expr* Ex) {
+  RVal GetBlkExprRVal(ValueState* St, Expr* Ex) {
     return StateMgr.GetBlkExprRVal(St, Ex);
   }  
     
-  RVal GetRVal(const StateTy& St, const LVal& LV, QualType T = QualType()) {    
+  RVal GetRVal(ValueState* St, LVal LV, QualType T = QualType()) {    
     return StateMgr.GetRVal(St, LV, T);
   }
   
-  RVal GetLVal(const StateTy& St, Expr* Ex) {
+  RVal GetLVal(ValueState* St, Expr* Ex) {
     return StateMgr.GetLVal(St, Ex);
   }
   
@@ -267,7 +268,8 @@ protected:
   
   /// Assume - Create new state by assuming that a given expression
   ///  is true or false.
-  StateTy Assume(StateTy St, RVal Cond, bool Assumption, bool& isFeasible) {
+  ValueState* Assume(ValueState* St, RVal Cond, bool Assumption,
+                     bool& isFeasible) {
     
     if (Cond.isUnknown()) {
       isFeasible = true;
@@ -280,23 +282,29 @@ protected:
       return Assume(St, cast<NonLVal>(Cond), Assumption, isFeasible);
   }
   
-  StateTy Assume(StateTy St, LVal Cond, bool Assumption, bool& isFeasible);
-  StateTy Assume(StateTy St, NonLVal Cond, bool Assumption, bool& isFeasible);
+  ValueState* Assume(ValueState* St, LVal Cond, bool Assumption,
+                     bool& isFeasible);
   
-  StateTy AssumeSymNE(StateTy St, SymbolID sym, const llvm::APSInt& V,
-                      bool& isFeasible);
+  ValueState* Assume(ValueState* St, NonLVal Cond, bool Assumption,
+                     bool& isFeasible);
   
-  StateTy AssumeSymEQ(StateTy St, SymbolID sym, const llvm::APSInt& V,
-                      bool& isFeasible);
+  ValueState* AssumeSymNE(ValueState* St, SymbolID sym, const llvm::APSInt& V,
+                          bool& isFeasible);
   
-  StateTy AssumeSymInt(StateTy St, bool Assumption, const SymIntConstraint& C,
-                       bool& isFeasible);
+  ValueState* AssumeSymEQ(ValueState* St, SymbolID sym, const llvm::APSInt& V,
+                          bool& isFeasible);
   
-  NodeTy* Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred, StateTy St);
+  ValueState* AssumeSymInt(ValueState* St, bool Assumption,
+                           const SymIntConstraint& C, bool& isFeasible);
   
+  NodeTy* Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred, ValueState* St);
+  
+#if 0
   /// Nodify - This version of Nodify is used to batch process a set of states.
   ///  The states are not guaranteed to be unique.
-  void Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred, const StateTy::BufferTy& SB);
+  void Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred,
+              const ValueState*::BufferTy& SB);
+#endif
   
   /// HandleUndefinedStore - Create the necessary sink node to represent
   ///  a store to an "undefined" LVal.
@@ -387,10 +395,10 @@ protected:
     return TF->EvalBinOp(ValMgr, Op, cast<NonLVal>(L), cast<NonLVal>(R));
   }
   
-  StateTy EvalCall(CallExpr* CE, LVal L, StateTy St) {
-    return StateTy(TF->EvalCall(StateMgr, ValMgr, CE, L, St.getImpl()));
+  ValueState* EvalCall(CallExpr* CE, LVal L, ValueState* St) {
+    return TF->EvalCall(StateMgr, ValMgr, CE, L, St);
   }
   
-  StateTy MarkBranch(StateTy St, Stmt* Terminator, bool branchTaken);
+  ValueState* MarkBranch(ValueState* St, Stmt* Terminator, bool branchTaken);
 };
 } // end clang namespace
