@@ -25,7 +25,7 @@ involved</a> with the clang community.</p>
 <h2>A word of warning</h2>
 
 <p>While this work aims to provide a fully functional C/C++/ObjC front-end, it
-is <em>still very early work</em> and is under heavy development. In particular,
+is <em>still early work</em> and is under heavy development. In particular,
 there is no real C++ support yet (this is obviously a big project), and C/ObjC
 support is still missing some features. Some of the more notable missing pieces
 of C support are:</p>
@@ -116,6 +116,9 @@ is:</p>
         just like <tt>llvm-config</tt></li>
     <li>then just build llvm normally as above and clang will build at
         the same time</li>
+    <li><em>Note:</em> you can update your toplevel project and all (possibly unrelated)
+        projects inside it with <tt><b>make update</b></tt>. This will run
+	<tt>svn update</tt> on all subdirectories related to subversion.</li>
   </ul>
 
 <h3>Examples of using clang</h3>
