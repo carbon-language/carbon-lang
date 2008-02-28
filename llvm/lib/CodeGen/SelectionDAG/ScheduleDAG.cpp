@@ -24,9 +24,12 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetLowering.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
 using namespace llvm;
+
+STATISTIC(NumCommutes,   "Number of instructions commuted");
 
 ScheduleDAG::ScheduleDAG(SelectionDAG &dag, MachineBasicBlock *bb,
                          const TargetMachine &tm)
@@ -733,6 +736,7 @@ void ScheduleDAG::EmitNode(SDNode *Node, unsigned InstanceNo,
           delete MI;
           MI = NewMI;
         }
+        ++NumCommutes;
       }
     }
 
