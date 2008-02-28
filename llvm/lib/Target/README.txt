@@ -631,6 +631,25 @@ implementations of ceil/floor/rint.
 
 //===---------------------------------------------------------------------===//
 
+This GCC bug: http://gcc.gnu.org/bugzilla/show_bug.cgi?id=34043
+contains a testcase that compiles down to:
+
+	%struct.XMM128 = type { <4 x float> }
+..
+	%src = alloca %struct.XMM128
+..
+	%tmp6263 = bitcast %struct.XMM128* %src to <2 x i64>*
+	%tmp65 = getelementptr %struct.XMM128* %src, i32 0, i32 0
+	store <2 x i64> %tmp5899, <2 x i64>* %tmp6263, align 16
+	%tmp66 = load <4 x float>* %tmp65, align 16		
+	%tmp71 = add <4 x float> %tmp66, %tmp66		
+
+If the mid-level optimizer turned the bitcast of pointer + store of tmp5899
+into a bitcast of the vector value and a store to the pointer, then the 
+store->load could be easily removed.
+
+//===---------------------------------------------------------------------===//
+
 Consider:
 
 int test() {
