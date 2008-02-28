@@ -92,6 +92,8 @@ protected:
   typedef llvm::SmallPtrSet<NodeTy*,2> BadDerefTy;
   typedef llvm::SmallPtrSet<NodeTy*,2> BadDividesTy;
   typedef llvm::SmallPtrSet<NodeTy*,2> NoReturnCallsTy;  
+  typedef llvm::SmallPtrSet<NodeTy*,2> UndefResultsTy;  
+
   
   /// UndefBranches - Nodes in the ExplodedGraph that result from
   ///  taking a branch based on an undefined value.
@@ -120,6 +122,10 @@ protected:
   /// BadDivides - Nodes in the ExplodedGraph that result from evaluating
   ///  a divide-by-zero or divide-by-undefined.
   BadDividesTy BadDivides;
+  
+  /// UndefResults - Nodes in the ExplodedGraph where the operands are defined
+  ///  by the result is not.  Excludes divide-by-zero errors.
+  UndefResultsTy UndefResults;
   
   bool StateCleaned;
   
@@ -183,7 +189,11 @@ public:
   bool isNoReturnCall(const NodeTy* N) const {
     return N->isSink() && NoReturnCalls.count(const_cast<NodeTy*>(N)) != 0;
   }
-
+  
+  bool isUndefResult(const NodeTy* N) const {
+    return N->isSink() && UndefResults.count(const_cast<NodeTy*>(N)) != 0;
+  }
+  
   typedef BadDerefTy::iterator null_deref_iterator;
   null_deref_iterator null_derefs_begin() { return ExplicitNullDeref.begin(); }
   null_deref_iterator null_derefs_end() { return ExplicitNullDeref.end(); }
@@ -195,6 +205,10 @@ public:
   typedef BadDividesTy::iterator bad_divide_iterator;
   bad_divide_iterator bad_divides_begin() { return BadDivides.begin(); }
   bad_divide_iterator bad_divides_end() { return BadDivides.end(); }
+  
+  typedef UndefResultsTy::iterator undef_result_iterator;
+  undef_result_iterator undef_results_begin() { return UndefResults.begin(); }
+  undef_result_iterator undef_results_end() { return UndefResults.end(); }
   
   /// ProcessStmt - Called by GRCoreEngine. Used to generate new successor
   ///  nodes by processing the 'effects' of a block-level statement.

@@ -65,7 +65,7 @@ public:
   const SymIntConstraint& getConstraint(SymbolID sym, BinaryOperator::Opcode Op,
                                         const llvm::APSInt& V);
 
-  const llvm::APSInt& EvaluateAPSInt(BinaryOperator::Opcode Op,
+  const llvm::APSInt* EvaluateAPSInt(BinaryOperator::Opcode Op,
                                      const llvm::APSInt& V1,
                                      const llvm::APSInt& V2);
 };

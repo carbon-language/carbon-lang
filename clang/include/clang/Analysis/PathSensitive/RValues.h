@@ -211,8 +211,8 @@ public:
   }
   
   // Transfer functions for binary/unary operations on ConcreteInts.
-  ConcreteInt EvalBinOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
-                        const ConcreteInt& R) const;
+  RVal EvalBinOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
+                 const ConcreteInt& R) const;
   
   ConcreteInt EvalComplement(ValueManager& ValMgr) const;
   
@@ -341,9 +341,8 @@ public:
   }
 
   // Transfer functions for binary/unary operations on ConcreteInts.
-  ConcreteInt EvalBinOp(ValueManager& ValMgr,
-                           BinaryOperator::Opcode Op,
-                           const ConcreteInt& R) const;
+  RVal EvalBinOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
+                 const ConcreteInt& R) const;
       
   // Implement isa<T> support.
   static inline bool classof(const RVal* V) {

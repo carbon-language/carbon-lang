@@ -48,11 +48,16 @@ RVal::symbol_iterator RVal::symbol_end() const {
 // Transfer function dispatch for Non-LVals.
 //===----------------------------------------------------------------------===//
 
-nonlval::ConcreteInt
+RVal
 nonlval::ConcreteInt::EvalBinOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
                                 const nonlval::ConcreteInt& R) const {
   
-  return ValMgr.EvaluateAPSInt(Op, getValue(), R.getValue());
+  const llvm::APSInt* X = ValMgr.EvaluateAPSInt(Op, getValue(), R.getValue());
+  
+  if (X)
+    return nonlval::ConcreteInt(*X);
+  else
+    return UndefinedVal();
 }
 
 
@@ -76,14 +81,19 @@ nonlval::ConcreteInt::EvalMinus(ValueManager& ValMgr, UnaryOperator* U) const {
 // Transfer function dispatch for LVals.
 //===----------------------------------------------------------------------===//
 
-lval::ConcreteInt
+RVal
 lval::ConcreteInt::EvalBinOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
                              const lval::ConcreteInt& R) const {
   
   assert (Op == BinaryOperator::Add || Op == BinaryOperator::Sub ||
           (Op >= BinaryOperator::LT && Op <= BinaryOperator::NE));
   
-  return ValMgr.EvaluateAPSInt(Op, getValue(), R.getValue());
+  const llvm::APSInt* X = ValMgr.EvaluateAPSInt(Op, getValue(), R.getValue());
+  
+  if (X)
+    return lval::ConcreteInt(*X);
+  else
+    return UndefinedVal();
 }
 
 NonLVal LVal::EQ(ValueManager& ValMgr, const LVal& R) const {

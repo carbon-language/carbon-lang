@@ -82,6 +82,11 @@ unsigned RunGRSimpleVals(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx,
               CheckerState->bad_divides_begin(),
               CheckerState->bad_divides_end(),
               "Division by zero/undefined value.");
+  
+  EmitWarning(Diag, SrcMgr,
+              CheckerState->undef_results_begin(),
+              CheckerState->undef_results_end(),
+              "Result of operation is undefined.");
       
 #ifndef NDEBUG
   if (Visualize) CheckerState->ViewGraph();

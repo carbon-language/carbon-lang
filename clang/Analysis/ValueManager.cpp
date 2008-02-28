@@ -76,7 +76,7 @@ ValueManager::getConstraint(SymbolID sym, BinaryOperator::Opcode Op,
   return *C;
 }
 
-const llvm::APSInt&
+const llvm::APSInt*
 ValueManager::EvaluateAPSInt(BinaryOperator::Opcode Op,
                              const llvm::APSInt& V1, const llvm::APSInt& V2) {
   
@@ -85,53 +85,83 @@ ValueManager::EvaluateAPSInt(BinaryOperator::Opcode Op,
       assert (false && "Invalid Opcode.");
       
     case BinaryOperator::Mul:
-      return getValue( V1 * V2 );
+      return &getValue( V1 * V2 );
       
     case BinaryOperator::Div:
-      return getValue( V1 / V2 );
+      return &getValue( V1 / V2 );
       
     case BinaryOperator::Rem:
-      return getValue( V1 % V2 );
+      return &getValue( V1 % V2 );
       
     case BinaryOperator::Add:
-      return getValue( V1 + V2 );
+      return &getValue( V1 + V2 );
       
     case BinaryOperator::Sub:
-      return getValue( V1 - V2 );
+      return &getValue( V1 - V2 );
       
-    case BinaryOperator::Shl:
-      return getValue( V1.operator<<( (unsigned) V2.getZExtValue() ));
+    case BinaryOperator::Shl: {
+
+      // FIXME: This logic should probably go higher up, where we can
+      // test these conditions symbolically.
       
-    case BinaryOperator::Shr:
-      return getValue( V1.operator>>( (unsigned) V2.getZExtValue() ));
+      // FIXME: Expand these checks to include all undefined behavior.
+      
+      if (V2.isSigned() && V2.isNegative())
+        return NULL;
+      
+      uint64_t Amt = V2.getZExtValue();
+      
+      if (Amt > V1.getBitWidth())
+        return NULL;
+      
+      return &getValue( V1.operator<<( (unsigned) Amt ));
+    }
+      
+    case BinaryOperator::Shr: {
+      
+      // FIXME: This logic should probably go higher up, where we can
+      // test these conditions symbolically.
+      
+      // FIXME: Expand these checks to include all undefined behavior.
+      
+      if (V2.isSigned() && V2.isNegative())
+        return NULL;
+      
+      uint64_t Amt = V2.getZExtValue();
+      
+      if (Amt > V1.getBitWidth())
+        return NULL;
+      
+      return &getValue( V1.operator>>( (unsigned) Amt ));
+    }
       
     case BinaryOperator::LT:
-      return getTruthValue( V1 < V2 );
+      return &getTruthValue( V1 < V2 );
       
     case BinaryOperator::GT:
-      return getTruthValue( V1 > V2 );
+      return &getTruthValue( V1 > V2 );
       
     case BinaryOperator::LE:
-      return getTruthValue( V1 <= V2 );
+      return &getTruthValue( V1 <= V2 );
       
     case BinaryOperator::GE:
-      return getTruthValue( V1 >= V2 );
+      return &getTruthValue( V1 >= V2 );
       
     case BinaryOperator::EQ:
-      return getTruthValue( V1 == V2 );
+      return &getTruthValue( V1 == V2 );
       
     case BinaryOperator::NE:
-      return getTruthValue( V1 != V2 );
+      return &getTruthValue( V1 != V2 );
       
       // Note: LAnd, LOr, Comma are handled specially by higher-level logic.
       
     case BinaryOperator::And:
-      return getValue( V1 & V2 );
+      return &getValue( V1 & V2 );
       
     case BinaryOperator::Or:
-      return getValue( V1 | V2 );
+      return &getValue( V1 | V2 );
       
     case BinaryOperator::Xor:
-      return getValue( V1 ^ V2 );
+      return &getValue( V1 ^ V2 );
   }
 }

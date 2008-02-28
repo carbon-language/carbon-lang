@@ -1008,14 +1008,11 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           bool isFeasible = false;
           ValueState* ZeroSt =  Assume(St, RightV, false, isFeasible);
           
-          if (isFeasible) {
-            NodeTy* DivZeroNode = Builder->generateNode(B, ZeroSt, N2);
-            
-            if (DivZeroNode) {
+          if (isFeasible)
+            if (NodeTy* DivZeroNode = Builder->generateNode(B, ZeroSt, N2)) {
               DivZeroNode->markAsSink();
               BadDivides.insert(DivZeroNode);
             }
-          }
           
           // Second, "assume" that the denominator cannot be 0.
           
@@ -1029,6 +1026,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
         // Fall-through.  The logic below processes the divide.
       }
       
+      
       if (Op <= BinaryOperator::Or) {
         
         // Process non-assignements except commas or short-circuited
@@ -1038,6 +1036,18 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
         
         if (Result.isUnknown()) {
           Dst.Add(N2);
+          continue;
+        }
+        
+        if (Result.isUndef() && !LeftV.isUndef() && !RightV.isUndef()) {
+          
+          // The operands were not undefined, but the result is undefined.
+          
+          if (NodeTy* UndefNode = Builder->generateNode(B, St, N2)) {
+            UndefNode->markAsSink();            
+            UndefResults.insert(UndefNode);
+          }
+          
           continue;
         }
         
@@ -1195,6 +1205,19 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           }
 
           RVal Result = EvalCast(EvalBinOp(Op, V, RightV), B->getType());
+          
+          if (Result.isUndef()) {
+            
+            // The operands were not undefined, but the result is undefined.
+            
+            if (NodeTy* UndefNode = Builder->generateNode(B, St, N2)) {
+              UndefNode->markAsSink();            
+              UndefResults.insert(UndefNode);
+            }
+            
+            continue;
+          }
+          
           St = SetRVal(SetRVal(St, B, Result), LeftLV, Result);
         }
       }
@@ -1591,8 +1614,12 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
         GraphPrintCheckerState->isUndefDeref(N) ||
         GraphPrintCheckerState->isUndefStore(N) ||
         GraphPrintCheckerState->isUndefControlFlow(N) ||
-        GraphPrintCheckerState->isBadDivide(N))
+        GraphPrintCheckerState->isBadDivide(N) ||
+        GraphPrintCheckerState->isUndefResult(N))
       return "color=\"red\",style=\"filled\"";
+    
+    if (GraphPrintCheckerState->isNoReturnCall(N))
+      return "color=\"blue\",style=\"filled\"";
     
     return "";
   }
@@ -1635,6 +1662,11 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
         else if (GraphPrintCheckerState->isBadDivide(N)) {
           Out << "\\|Divide-by zero or undefined value.";
         }
+        else if (GraphPrintCheckerState->isUndefResult(N)) {
+          Out << "\\|Result of operation is undefined.";
+        }
+        else if (GraphPrintCheckerState->isNoReturnCall(N))
+          Out << "\\|Call to function marked \"noreturn\".";
         
         break;
       }
