@@ -7,6 +7,7 @@ To-do
 * We can fold small constant offsets into the %hi/%lo references to constant
   pool addresses as well.
 * When in V9 mode, register allocate %icc[0-3].
+* Add support for isel'ing UMUL_LOHI instead of marking it as Expand.
 * Emit the 'Branch on Integer Register with Prediction' instructions.  It's
   not clear how to write a pattern for this though:
 

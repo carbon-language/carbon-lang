@@ -218,6 +218,9 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SRA_PARTS, MVT::i32, Expand);
   setOperationAction(ISD::SRL_PARTS, MVT::i32, Expand);
 
+  // FIXME: Sparc provides these multiplies, but we don't have them yet.
+  setOperationAction(ISD::UMUL_LOHI, MVT::i32, Expand);
+    
   // We don't have line number support yet.
   setOperationAction(ISD::LOCATION, MVT::Other, Expand);
   setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
