@@ -32,12 +32,26 @@ static void EmitWarning(Diagnostic& Diag, SourceManager& SrcMgr,
   
   bool isFirst = true;
   unsigned ErrorDiag;
+  llvm::SmallPtrSet<void*,10> CachedErrors;
+  
   
   for (; I != E; ++I) {
   
     if (isFirst) {
       isFirst = false;    
       ErrorDiag = Diag.getCustomDiagID(Diagnostic::Warning, msg);
+    }
+    else {
+      
+      // HACK: Cache the location of the error.  Don't emit the same
+      // warning for the same error type that occurs at the same program
+      // location but along a different path.
+      void* p = (*I)->getLocation().getRawData();
+
+      if (CachedErrors.count(p))
+        continue;
+      
+      CachedErrors.insert(p);
     }
   
     const PostStmt& L = cast<PostStmt>((*I)->getLocation());
