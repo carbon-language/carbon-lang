@@ -164,13 +164,6 @@ bool X86TargetMachine::addPostRegAlloc(FunctionPassManager &PM, bool Fast) {
   return true;  // -print-machineinstr should print after this.
 }
 
-bool X86TargetMachine::addPreEmitPass(FunctionPassManager &PM, bool Fast) {
-  if (Fast) return false;
-
-  PM.add(createLoopAlignerPass());
-  return true;
-}
-
 bool X86TargetMachine::addAssemblyEmitter(FunctionPassManager &PM, bool Fast, 
                                           std::ostream &Out) {
   PM.add(createX86CodePrinterPass(Out, *this));
