@@ -1111,6 +1111,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Tmp3 = LegalizeOp(Node->getOperand(2));  // Legalize the variable.
       Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Tmp3);
       break;
+    case TargetLowering::Expand:
+      Result = LegalizeOp(Node->getOperand(0));
+      break;
     }
     break;    
     
