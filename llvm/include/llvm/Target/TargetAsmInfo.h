@@ -164,6 +164,10 @@ namespace llvm {
     /// boundary.
     bool AlignmentIsInBytes;              // Defaults to true
 
+    /// TextAlignFillValue - If non-zero, this is used to fill the executable
+    /// space created as the result of a alignment directive.
+    unsigned TextAlignFillValue;
+
     //===--- Section Switching Directives ---------------------------------===//
     
     /// SwitchToSectionDirective - This is the directive used when we want to
@@ -502,6 +506,9 @@ namespace llvm {
     }
     bool getAlignmentIsInBytes() const {
       return AlignmentIsInBytes;
+    }
+    unsigned getTextAlignFillValue() const {
+      return TextAlignFillValue;
     }
     const char *getSwitchToSectionDirective() const {
       return SwitchToSectionDirective;

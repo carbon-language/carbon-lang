@@ -39,7 +39,8 @@ AsmVerbose("asm-verbose", cl::Hidden, cl::desc("Add comments to directives."));
 char AsmPrinter::ID = 0;
 AsmPrinter::AsmPrinter(std::ostream &o, TargetMachine &tm,
                        const TargetAsmInfo *T)
-  : MachineFunctionPass((intptr_t)&ID), FunctionNumber(0), O(o), TM(tm), TAI(T)
+  : MachineFunctionPass((intptr_t)&ID), FunctionNumber(0), O(o), TM(tm), TAI(T),
+    IsInTextSection(false)
 {}
 
 std::string AsmPrinter::getSectionForFunction(const Function &F) const {
@@ -69,6 +70,8 @@ void AsmPrinter::SwitchToTextSection(const char *NewSection,
 
   if (!CurrentSection.empty())
     O << CurrentSection << TAI->getTextSectionStartSuffix() << '\n';
+
+  IsInTextSection = true;
 }
 
 /// SwitchToDataSection - Switch to the specified data section of the executable
@@ -93,6 +96,8 @@ void AsmPrinter::SwitchToDataSection(const char *NewSection,
   
   if (!CurrentSection.empty())
     O << CurrentSection << TAI->getDataSectionStartSuffix() << '\n';
+
+  IsInTextSection = false;
 }
 
 
@@ -344,7 +349,7 @@ void AsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
       O << TAI->getPrivateGlobalPrefix() << getFunctionNumber()
         << '_' << uid << "_set_" << MBB->getNumber();
     } else {
-      printBasicBlockLabel(MBB, false, false);
+      printBasicBlockLabel(MBB, false, false, false);
       // If the arch uses custom Jump Table directives, don't calc relative to
       // JT
       if (!HadJTEntryDirective) 
@@ -352,7 +357,7 @@ void AsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
           << getFunctionNumber() << '_' << uid;
     }
   } else {
-    printBasicBlockLabel(MBB, false, false);
+    printBasicBlockLabel(MBB, false, false, false);
   }
 }
 
@@ -679,8 +684,7 @@ void AsmPrinter::EmitFile(unsigned Number, const std::string &Name) const {
 //     Align = std::max(Align, ForcedAlignBits);
 //
 void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalValue *GV,
-                               unsigned ForcedAlignBits, bool UseFillExpr,
-                               unsigned FillValue) const {
+                               unsigned ForcedAlignBits) const {
   if (GV && GV->getAlignment())
     NumBits = Log2_32(GV->getAlignment());
   NumBits = std::max(NumBits, ForcedAlignBits);
@@ -688,6 +692,9 @@ void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalValue *GV,
   if (NumBits == 0) return;   // No need to emit alignment.
   if (TAI->getAlignmentIsInBytes()) NumBits = 1 << NumBits;
   O << TAI->getAlignDirective() << NumBits;
+
+  unsigned FillValue = TAI->getTextAlignFillValue();
+  bool UseFillExpr = IsInTextSection && FillValue;
   if (UseFillExpr) O << ",0x" << std::hex << FillValue << std::dec;
   O << "\n";
 }
@@ -1252,7 +1259,7 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
 
           if (Modifier[0]=='l')  // labels are target independent
             printBasicBlockLabel(MI->getOperand(OpNo).getMBB(), 
-                                 false, false);
+                                 false, false, false);
           else {
             AsmPrinter *AP = const_cast<AsmPrinter*>(this);
             if ((OpFlags & 7) == 4 /*ADDR MODE*/) {
@@ -1318,8 +1325,15 @@ bool AsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
 /// printBasicBlockLabel - This method prints the label for the specified
 /// MachineBasicBlock
 void AsmPrinter::printBasicBlockLabel(const MachineBasicBlock *MBB,
+                                      bool printAlign, 
                                       bool printColon,
                                       bool printComment) const {
+  if (printAlign) {
+    unsigned Align = MBB->getAlignment();
+    if (Align)
+      EmitAlignment(Log2_32(Align));
+  }
+
   O << TAI->getPrivateGlobalPrefix() << "BB" << getFunctionNumber() << "_"
     << MBB->getNumber();
   if (printColon)
@@ -1338,7 +1352,7 @@ void AsmPrinter::printPICJumpTableSetLabel(unsigned uid,
   
   O << TAI->getSetDirective() << ' ' << TAI->getPrivateGlobalPrefix()
     << getFunctionNumber() << '_' << uid << "_set_" << MBB->getNumber() << ',';
-  printBasicBlockLabel(MBB, false, false);
+  printBasicBlockLabel(MBB, false, false, false);
   O << '-' << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() 
     << '_' << uid << '\n';
 }
@@ -1351,7 +1365,7 @@ void AsmPrinter::printPICJumpTableSetLabel(unsigned uid, unsigned uid2,
   O << TAI->getSetDirective() << ' ' << TAI->getPrivateGlobalPrefix()
     << getFunctionNumber() << '_' << uid << '_' << uid2
     << "_set_" << MBB->getNumber() << ',';
-  printBasicBlockLabel(MBB, false, false);
+  printBasicBlockLabel(MBB, false, false, false);
   O << '-' << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() 
     << '_' << uid << '_' << uid2 << '\n';
 }

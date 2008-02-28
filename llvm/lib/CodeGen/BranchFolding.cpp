@@ -44,7 +44,7 @@ namespace {
             cl::desc("Max number of predecessors to consider tail merging"),
             cl::init(100), cl::Hidden);
 
-  struct BranchFolder : public MachineFunctionPass {
+  struct VISIBILITY_HIDDEN BranchFolder : public MachineFunctionPass {
     static char ID;
     explicit BranchFolder(bool defaultEnableTailMerge) : 
         MachineFunctionPass((intptr_t)&ID) {

@@ -714,6 +714,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   maxStoresPerMemcpy = 16; // For %llvm.memcpy -> sequence of stores
   maxStoresPerMemmove = 16; // For %llvm.memmove -> sequence of stores
   allowUnalignedMemoryAccesses = true; // x86 supports it!
+  setPrefLoopAlignment(16);
 }
 
 /// getMaxByValAlign - Helper for getByValTypeAlignment to determine

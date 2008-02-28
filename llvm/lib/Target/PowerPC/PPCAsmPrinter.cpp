@@ -604,7 +604,7 @@ bool LinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
        I != E; ++I) {
     // Print a label for the basic block.
     if (I != MF.begin()) {
-      printBasicBlockLabel(I, true);
+      printBasicBlockLabel(I, true, true);
       O << '\n';
     }
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
@@ -838,7 +838,7 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
        I != E; ++I) {
     // Print a label for the basic block.
     if (I != MF.begin()) {
-      printBasicBlockLabel(I, true);
+      printBasicBlockLabel(I, true, true);
       O << '\n';
     }
     for (MachineBasicBlock::const_iterator II = I->begin(), IE = I->end();

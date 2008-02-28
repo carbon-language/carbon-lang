@@ -166,6 +166,7 @@ void MachineBasicBlock::print(std::ostream &OS) const {
   if (LBB) OS << LBB->getName() << ": ";
   OS << (const void*)this
      << ", LLVM BB @" << (const void*) LBB << ", ID#" << getNumber();
+  if (Alignment) OS << ", Alignment " << Alignment;
   if (isLandingPad()) OS << ", EH LANDING PAD";
   OS << ":\n";
 

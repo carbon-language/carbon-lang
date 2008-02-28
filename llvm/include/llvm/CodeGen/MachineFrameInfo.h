@@ -204,7 +204,7 @@ public:
   }
 
   /// getObjectAlignment - Return the alignment of the specified stack object...
-  int getObjectAlignment(int ObjectIdx) const {
+  unsigned getObjectAlignment(int ObjectIdx) const {
     assert(unsigned(ObjectIdx+NumFixedObjects) < Objects.size() &&
            "Invalid Object Idx!");
     return Objects[ObjectIdx+NumFixedObjects].Alignment;

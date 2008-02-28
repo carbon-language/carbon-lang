@@ -47,6 +47,7 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
   switch (Subtarget->TargetType) {
   case X86Subtarget::isDarwin:
     AlignmentIsInBytes = false;
+    TextAlignFillValue = 0x90;
     GlobalPrefix = "_";
     if (!Subtarget->is64Bit())
       Data64bitsDirective = 0;       // we can't emit a 64-bit unit

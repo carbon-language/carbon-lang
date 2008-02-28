@@ -129,6 +129,10 @@ namespace llvm {
   /// IfConverter Pass - This pass performs machine code if conversion.
   FunctionPass *createIfConverterPass();
 
+  /// LoopAligner Pass - This pass aligns loop headers to target specific
+  /// alignment boundary.
+  FunctionPass *createLoopAlignerPass();
+
   /// DebugLabelFoldingPass - This pass prunes out redundant debug labels.  This
   /// allows a debug emitter to determine if the range of two labels is empty,
   /// by seeing if the labels map to the same reduced label.

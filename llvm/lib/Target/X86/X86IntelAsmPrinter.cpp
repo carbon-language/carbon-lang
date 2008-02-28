@@ -78,7 +78,7 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
        I != E; ++I) {
     // Print a label for the basic block if there are any predecessors.
     if (!I->pred_empty()) {
-      printBasicBlockLabel(I, true);
+      printBasicBlockLabel(I, true, true);
       O << '\n';
     }
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
@@ -242,7 +242,7 @@ void X86IntelAsmPrinter::printPICJumpTableSetLabel(unsigned uid,
   
   O << TAI->getSetDirective() << ' ' << TAI->getPrivateGlobalPrefix()
     << getFunctionNumber() << '_' << uid << "_set_" << MBB->getNumber() << ',';
-  printBasicBlockLabel(MBB, false, false);
+  printBasicBlockLabel(MBB, false, false, false);
   O << '-' << "\"L" << getFunctionNumber() << "$pb\"'\n";
 }
 

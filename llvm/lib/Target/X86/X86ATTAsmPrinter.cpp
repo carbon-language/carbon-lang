@@ -101,36 +101,25 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   switch (F->getLinkage()) {
   default: assert(0 && "Unknown linkage type!");
   case Function::InternalLinkage:  // Symbols default to internal.
-    if (Subtarget->isTargetDarwin())
-      // FIXME: This should be parameterized somewhere.
-      EmitAlignment(4, F, 0, true, 0x90);
-    else
-      EmitAlignment(4, F);
+    EmitAlignment(4, F);
     break;
   case Function::DLLExportLinkage:
     DLLExportedFns.insert(Mang->makeNameProper(F->getName(), ""));
     //FALLS THROUGH
   case Function::ExternalLinkage:
-    if (Subtarget->isTargetDarwin())
-      // FIXME: This should be parameterized somewhere.
-      EmitAlignment(4, F, 0, true, 0x90);
-    else
-      EmitAlignment(4, F);
+    EmitAlignment(4, F);
     O << "\t.globl\t" << CurrentFnName << "\n";    
     break;
   case Function::LinkOnceLinkage:
   case Function::WeakLinkage:
+    EmitAlignment(4, F);
     if (Subtarget->isTargetDarwin()) {
-      // FIXME: This should be parameterized somewhere.
-      EmitAlignment(4, F, 0, true, 0x90);
       O << "\t.globl\t" << CurrentFnName << "\n";
       O << TAI->getWeakDefDirective() << CurrentFnName << "\n";
     } else if (Subtarget->isTargetCygMing()) {
-      EmitAlignment(4, F);
       O << "\t.globl\t" << CurrentFnName << "\n";
       O << "\t.linkonce discard\n";
     } else {
-      EmitAlignment(4, F);
       O << "\t.weak\t" << CurrentFnName << "\n";
     }
     break;
@@ -180,7 +169,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
        I != E; ++I) {
     // Print a label for the basic block.
     if (!I->pred_empty()) {
-      printBasicBlockLabel(I, true);
+      printBasicBlockLabel(I, true, true);
       O << '\n';
     }
     for (MachineBasicBlock::const_iterator II = I->begin(), IE = I->end();
@@ -515,7 +504,7 @@ void X86ATTAsmPrinter::printPICJumpTableSetLabel(unsigned uid,
     
   O << TAI->getSetDirective() << ' ' << TAI->getPrivateGlobalPrefix()
     << getFunctionNumber() << '_' << uid << "_set_" << MBB->getNumber() << ',';
-  printBasicBlockLabel(MBB, false, false);
+  printBasicBlockLabel(MBB, false, false, false);
   if (Subtarget->isPICStyleRIPRel())
     O << '-' << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() 
       << '_' << uid << '\n';
@@ -543,12 +532,12 @@ void X86ATTAsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
       O << TAI->getPrivateGlobalPrefix() << getFunctionNumber()
         << '_' << uid << "_set_" << MBB->getNumber();
     } else if (Subtarget->isPICStyleGOT()) {
-      printBasicBlockLabel(MBB, false, false);
+      printBasicBlockLabel(MBB, false, false, false);
       O << "@GOTOFF";
     } else
       assert(0 && "Don't know how to print MBB label for this PIC mode");
   } else
-    printBasicBlockLabel(MBB, false, false);
+    printBasicBlockLabel(MBB, false, false, false);
 }
 
 bool X86ATTAsmPrinter::printAsmMRegister(const MachineOperand &MO,

@@ -297,7 +297,7 @@ runOnMachineFunction(MachineFunction &MF)
 
     // Print a label for the basic block.
     if (I != MF.begin()) {
-      printBasicBlockLabel(I, true);
+      printBasicBlockLabel(I, true, true);
       O << '\n';
     }
 

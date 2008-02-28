@@ -75,6 +75,10 @@ class MachineBasicBlock {
   /// LiveIns - Keep track of the physical registers that are livein of
   /// the basicblock.
   std::vector<unsigned> LiveIns;
+
+  /// Alignment - Alignment of the basic block. Zero if the basic block does
+  /// not need to be aligned.
+  unsigned Alignment;
   
   /// IsLandingPad - Indicate that this basic block is entered via an
   /// exception handler.
@@ -82,7 +86,8 @@ class MachineBasicBlock {
 
 public:
   explicit MachineBasicBlock(const BasicBlock *bb = 0)
-    : Prev(0), Next(0), BB(bb), Number(-1), xParent(0), IsLandingPad(false) {
+    : Prev(0), Next(0), BB(bb), Number(-1), xParent(0),
+      Alignment(0), IsLandingPad(false) {
     Insts.parent = this;
   }
 
@@ -180,6 +185,14 @@ public:
   livein_iterator       livein_end()         { return LiveIns.end(); }
   const_livein_iterator livein_end()   const { return LiveIns.end(); }
   bool            livein_empty() const { return LiveIns.empty(); }
+
+  /// getAlignment - Return alignment of the basic block.
+  ///
+  unsigned getAlignment() const { return Alignment; }
+
+  /// setAlignment - Set alignment of the basic block.
+  ///
+  void setAlignment(unsigned Align) { Alignment = Align; }
 
   /// isLandingPad - Returns true if the block is a landing pad. That is
   /// this basic block is entered via an exception handler.

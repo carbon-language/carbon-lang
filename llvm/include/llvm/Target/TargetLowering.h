@@ -548,17 +548,23 @@ public:
 
   /// getIfCvtBlockLimit - returns the target specific if-conversion block size
   /// limit. Any block whose size is greater should not be predicated.
-  virtual unsigned getIfCvtBlockSizeLimit() const {
+  unsigned getIfCvtBlockSizeLimit() const {
     return IfCvtBlockSizeLimit;
   }
 
   /// getIfCvtDupBlockLimit - returns the target specific size limit for a
   /// block to be considered for duplication. Any block whose size is greater
   /// should not be duplicated to facilitate its predication.
-  virtual unsigned getIfCvtDupBlockSizeLimit() const {
+  unsigned getIfCvtDupBlockSizeLimit() const {
     return IfCvtDupBlockSizeLimit;
   }
 
+  /// getPrefLoopAlignment - return the preferred loop alignment.
+  ///
+  unsigned getPrefLoopAlignment() const {
+    return PrefLoopAlignment;
+  }
+  
   /// getPreIndexedAddressParts - returns true by value, base pointer and
   /// offset pointer and addressing mode by reference if the node's address
   /// can be legally represented as pre-indexed load / store address.
@@ -583,7 +589,7 @@ public:
   /// jumptable.
   virtual SDOperand getPICJumpTableRelocBase(SDOperand Table,
                                              SelectionDAG &DAG) const;
-  
+
   //===--------------------------------------------------------------------===//
   // TargetLowering Optimization Methods
   //
@@ -889,6 +895,12 @@ protected:
   /// if-conversion; default is 2.
   void setIfCvtDupBlockSizeLimit(unsigned Limit) {
     IfCvtDupBlockSizeLimit = Limit;
+  }
+
+  /// setPrefLoopAlignment - Set the target's preferred loop alignment. Default
+  /// alignment is zero, it means the target does not care about loop alignment.
+  void setPrefLoopAlignment(unsigned Align) {
+    PrefLoopAlignment = Align;
   }
   
 public:
@@ -1275,6 +1287,10 @@ private:
   /// IfCvtDupBlockSizeLimit - The maximum allowed size for a block to be
   /// duplicated during if-conversion.
   unsigned IfCvtDupBlockSizeLimit;
+
+  /// PrefLoopAlignment - The perferred loop alignment.
+  ///
+  unsigned PrefLoopAlignment;
 
   /// StackPointerRegisterToSaveRestore - If set to a physical register, this
   /// specifies the register that llvm.savestack/llvm.restorestack should save

@@ -248,7 +248,7 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
        I != E; ++I) {
     // Print a label for the basic block.
     if (I != MF.begin()) {
-      printBasicBlockLabel(I, true);
+      printBasicBlockLabel(I, true, true);
       O << '\n';
     }
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
@@ -710,13 +710,13 @@ void ARMAsmPrinter::printJTBlockOperand(const MachineInstr *MI, int OpNo) {
         << '_' << JTI << '_' << MO2.getImm()
         << "_set_" << MBB->getNumber();
     else if (TM.getRelocationModel() == Reloc::PIC_) {
-      printBasicBlockLabel(MBB, false, false);
+      printBasicBlockLabel(MBB, false, false, false);
       // If the arch uses custom Jump Table directives, don't calc relative to JT
       if (!TAI->getJumpTableDirective()) 
         O << '-' << TAI->getPrivateGlobalPrefix() << "JTI"
           << getFunctionNumber() << '_' << JTI << '_' << MO2.getImm();
     } else
-      printBasicBlockLabel(MBB, false, false);
+      printBasicBlockLabel(MBB, false, false, false);
     if (i != e-1)
       O << '\n';
   }

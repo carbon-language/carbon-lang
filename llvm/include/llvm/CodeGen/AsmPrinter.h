@@ -78,6 +78,10 @@ namespace llvm {
     /// CurrentSection - The current section we are emitting to.  This is
     /// controlled and used by the SwitchSection method.
     std::string CurrentSection;
+
+    /// IsInTextSection - True if the current section we are emitting to is a
+    /// text section.
+    bool IsInTextSection;
   
   protected:
     AsmPrinter(std::ostream &o, TargetMachine &TM, const TargetAsmInfo *T);
@@ -269,9 +273,7 @@ namespace llvm {
     /// an explicit alignment requested, it will unconditionally override the
     /// alignment request.  However, if ForcedAlignBits is specified, this value
     /// has final say: the ultimate alignment will be the max of ForcedAlignBits
-    /// and the alignment computed with NumBits and the global. If UseFillExpr
-    /// is true, it also emits an optional second value FillValue which the
-    /// assembler uses to fill gaps to match alignment.
+    /// and the alignment computed with NumBits and the global
     ///
     /// The algorithm is:
     ///     Align = NumBits;
@@ -279,8 +281,7 @@ namespace llvm {
     ///     Align = std::max(Align, ForcedAlignBits);
     ///
     void EmitAlignment(unsigned NumBits, const GlobalValue *GV = 0,
-                       unsigned ForcedAlignBits = 0, bool UseFillExpr = false,
-                       unsigned FillValue = 0) const;
+                       unsigned ForcedAlignBits = 0) const;
 
     /// printLabel - This method prints a local label used by debug and
     /// exception handling tables.
@@ -317,6 +318,7 @@ namespace llvm {
     /// printBasicBlockLabel - This method prints the label for the specified
     /// MachineBasicBlock
     virtual void printBasicBlockLabel(const MachineBasicBlock *MBB,
+                                      bool printAlign = false,
                                       bool printColon = false,
                                       bool printComment = true) const;
                                       

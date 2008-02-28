@@ -206,6 +206,8 @@ TargetLowering::TargetLowering(TargetMachine &tm)
   JumpBufSize = 0;
   JumpBufAlignment = 0;
   IfCvtBlockSizeLimit = 2;
+  IfCvtDupBlockSizeLimit = 0;
+  PrefLoopAlignment = 0;
 
   InitLibcallNames(LibcallRoutineNames);
   InitCmpLibcallCCs(CmpLibcallCCs);
