@@ -142,15 +142,16 @@ build-for-llvm-top:
 	fi
 	$(Verb) $(MAKE) tools-only
 
-
-
 SVN = svn
+SVN-UPDATE-OPTIONS =
 AWK = awk
-SUB-SVN-DIRS = $(AWK) '/\?      / {print $$2}' | xargs $(SVN) info 2>/dev/null | grep "Path: " | $(AWK) '{print $$2}'
+SUB-SVN-DIRS = $(AWK) '/?      / {print $$2}'   \
+		| xargs $(SVN) info 2>/dev/null \
+		| $(AWK) '/Path: / {print $$2}'
 
 update:
-	$(SVN) update
-	@ $(SVN) status | $(SUB-SVN-DIRS) | xargs $(SVN) update
+	$(SVN) $(SVN-UPDATE-OPTIONS) update
+	@ $(SVN) status | $(SUB-SVN-DIRS) | xargs $(SVN) $(SVN-UPDATE-OPTIONS) update
 
 happiness: update all check
 
