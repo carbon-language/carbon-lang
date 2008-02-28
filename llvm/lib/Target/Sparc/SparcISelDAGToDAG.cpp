@@ -140,9 +140,10 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
 
   // Turn FP extload into load/fextend
   setLoadXAction(ISD::EXTLOAD, MVT::f32, Expand);
-
   // Sparc doesn't have i1 sign extending load
   setLoadXAction(ISD::SEXTLOAD, MVT::i1, Promote);
+  // Turn FP truncstore into trunc + store.
+  setTruncStoreAction(MVT::f64, MVT::f32, Expand);
 
   // Custom legalize GlobalAddress nodes into LO/HI parts.
   setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
