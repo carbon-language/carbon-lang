@@ -142,7 +142,19 @@ build-for-llvm-top:
 	fi
 	$(Verb) $(MAKE) tools-only
 
-.PHONY: srpm rpm
+
+
+SVN = svn
+AWK = awk
+SUB-SVN-DIRS = $(AWK) '/\?      / {print $$2}' | xargs $(SVN) info 2>/dev/null | grep "Path: " | $(AWK) '{print $$2}'
+
+update:
+	$(SVN) update
+	@ $(SVN) status | $(SUB-SVN-DIRS) | xargs $(SVN) update
+
+happiness: update all check
+
+.PHONY: srpm rpm update happiness
 
 # declare all targets at this level to be serial:
 
