@@ -31,6 +31,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Streams.h"
 #include <set>
+#include <sstream>
 using namespace llvm;
 
 namespace {
@@ -80,12 +81,18 @@ namespace {
 
 FunctionPass *llvm::createAAEvalPass() { return new AAEval(); }
 
-static inline void PrintResults(const char *Msg, bool P, Value *V1, Value *V2,
-                                Module *M) {
+static void PrintResults(const char *Msg, bool P, const Value *V1, const Value *V2,
+                         const Module *M) {
   if (P) {
-    cerr << "  " << Msg << ":\t";
-    WriteAsOperand(*cerr.stream(), V1, true, M) << ", ";
-    WriteAsOperand(*cerr.stream(), V2, true, M) << "\n";
+    std::stringstream s1, s2;
+    WriteAsOperand(s1, V1, true, M);
+    WriteAsOperand(s2, V2, true, M);
+    std::string o1(s1.str()), o2(s2.str());
+    if (o2 < o1)
+        std::swap(o1, o2);
+    cerr << "  " << Msg << ":\t"
+         << o1 << ", "
+         << o2 << "\n";
   }
 }
 
