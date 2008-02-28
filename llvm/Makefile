@@ -113,7 +113,8 @@ all::
 ifeq ($(BuildMode),Debug)
 	$(Echo) '*****' Note: Debug build can be 10 times slower than an
 	$(Echo) '*****' optimized build. Use 'make ENABLE_OPTIMIZED=1' to
-	$(Echo) '*****' make an optimized build.
+	$(Echo) '*****' make an optimized build. Alternatively you can
+	$(Echo) '*****' configure with --enable-optimized.
 endif
 
 check-llvm2cpp:
@@ -142,4 +143,8 @@ build-for-llvm-top:
 	$(Verb) $(MAKE) tools-only
 
 .PHONY: srpm rpm
+
+# declare all targets at this level to be serial:
+
+.NOTPARALLEL:
 
