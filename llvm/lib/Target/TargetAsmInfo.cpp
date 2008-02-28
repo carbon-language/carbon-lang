@@ -54,6 +54,7 @@ TargetAsmInfo::TargetAsmInfo() :
   Data64bitsDirective("\t.quad\t"),
   AlignDirective("\t.align\t"),
   AlignmentIsInBytes(true),
+  TextAlignFillValue(0),
   SwitchToSectionDirective("\t.section\t"),
   TextSectionStartSuffix(""),
   DataSectionStartSuffix(""),
