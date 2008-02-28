@@ -145,9 +145,9 @@ build-for-llvm-top:
 SVN = svn
 SVN-UPDATE-OPTIONS =
 AWK = awk
-SUB-SVN-DIRS = $(AWK) '/?      / {print $$2}'   \
-		| xargs $(SVN) info 2>/dev/null \
-		| $(AWK) '/Path: / {print $$2}'
+SUB-SVN-DIRS = $(AWK) '/\?\ \ \ \ \ \ / {print $$2}'   \
+		| LANG=C xargs $(SVN) info 2>/dev/null \
+		| $(AWK) '/Path:\ / {print $$2}'
 
 update:
 	$(SVN) $(SVN-UPDATE-OPTIONS) update
