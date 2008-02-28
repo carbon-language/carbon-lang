@@ -1156,9 +1156,11 @@ std::string CWriter::GetValueName(const Value *Operand) {
       char ch = *I;
 
       if (!((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
-            (ch >= '0' && ch <= '9') || ch == '_'))
-        VarName += '_';
-      else
+            (ch >= '0' && ch <= '9') || ch == '_')) {
+        char buffer[5];
+        sprintf(buffer, "_%x_", ch);
+        VarName += buffer;
+      } else
         VarName += ch;
     }
 
