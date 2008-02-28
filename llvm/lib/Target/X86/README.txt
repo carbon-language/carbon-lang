@@ -194,9 +194,9 @@ when we can spare a register. It reduces code size.
 Evaluate what the best way to codegen sdiv X, (2^C) is.  For X/8, we currently
 get this:
 
-int %test1(int %X) {
-        %Y = div int %X, 8
-        ret int %Y
+define i32 @test1(i32 %X) {
+    %Y = sdiv i32 %X, 8
+    ret i32 %Y
 }
 
 _test1:
@@ -1602,5 +1602,88 @@ can optimize this specific case even more to:
 	xorl	%ecx, %ecx
         cmpl    %eax, 4(%esp)
         sbbl    %ecx, %ecx
+
+//===---------------------------------------------------------------------===//
+
+Take the following code (from 
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=16541):
+
+extern unsigned char first_one[65536];
+int FirstOnet(unsigned long long arg1)
+{
+  if (arg1 >> 48)
+    return (first_one[arg1 >> 48]);
+  return 0;
+}
+
+
+The following code is currently generated:
+FirstOnet:
+        movl    8(%esp), %eax
+        cmpl    $65536, %eax
+        movl    4(%esp), %ecx
+        jb      .LBB1_2 # UnifiedReturnBlock
+.LBB1_1:        # ifthen
+        shrl    $16, %eax
+        movzbl  first_one(%eax), %eax
+        ret
+.LBB1_2:        # UnifiedReturnBlock
+        xorl    %eax, %eax
+        ret
+
+There are a few possible improvements here:
+1. We should be able to eliminate the dead load into %ecx
+2. We could change the "movl 8(%esp), %eax" into
+   "movzwl 10(%esp), %eax"; this lets us change the cmpl
+   into a testl, which is shorter, and eliminate the shift.
+
+We could also in theory eliminate the branch by using a conditional
+for the address of the load, but that seems unlikely to be worthwhile
+in general.
+
+//===---------------------------------------------------------------------===//
+
+Take the following code:
+
+#include <xmmintrin.h>
+__m128i doload64(short x) {return _mm_set_epi16(x,x,x,x,x,x,x,x);}
+
+LLVM currently generates the following on x86:
+doload64:
+        movzwl  4(%esp), %eax
+        movd    %eax, %xmm0
+        punpcklwd       %xmm0, %xmm0
+        pshufd  $0, %xmm0, %xmm0
+        ret
+
+gcc's generated code:
+doload64:
+        movd    4(%esp), %xmm0
+        punpcklwd       %xmm0, %xmm0
+        pshufd  $0, %xmm0, %xmm0
+        ret
+
+LLVM should be able to generate the same thing as gcc.
+
+//===---------------------------------------------------------------------===//
+
+Take the following code:
+#include <xmmintrin.h>
+__m128i doload64(short x) {return _mm_set_epi16(0,0,0,0,0,0,0,1);}
+
+On x86, LLVM generates the following:
+doload64:
+        subl    $28, %esp
+        movl    $0, 4(%esp)
+        movl    $1, (%esp)
+        movq    (%esp), %xmm0
+        addl    $28, %esp
+        ret
+
+LLVM should instead generate something more like the following:
+doload64:
+        movl    $1, %eax
+        movd    %eax, %xmm0
+        ret
 
 //===---------------------------------------------------------------------===//
