@@ -1687,3 +1687,41 @@ doload64:
         ret
 
 //===---------------------------------------------------------------------===//
+
+We compile this function:
+
+define i32 @foo(i32 %a, i32 %b, i32 %c, i8 zeroext  %d) nounwind  {
+entry:
+	%tmp2 = icmp eq i8 %d, 0		; <i1> [#uses=1]
+	br i1 %tmp2, label %bb7, label %bb
+
+bb:		; preds = %entry
+	%tmp6 = add i32 %b, %a		; <i32> [#uses=1]
+	ret i32 %tmp6
+
+bb7:		; preds = %entry
+	%tmp10 = sub i32 %a, %c		; <i32> [#uses=1]
+	ret i32 %tmp10
+}
+
+to:
+
+_foo:
+	cmpb	$0, 16(%esp)
+	movl	12(%esp), %ecx
+	movl	8(%esp), %eax
+	movl	4(%esp), %edx
+	je	LBB1_2	# bb7
+LBB1_1:	# bb
+	addl	%edx, %eax
+	ret
+LBB1_2:	# bb7
+	movl	%edx, %eax
+	subl	%ecx, %eax
+	ret
+
+The coallescer could coallesce "edx" with "eax" to avoid the movl in LBB1_2
+if it commuted the addl in LBB1_1.
+
+//===---------------------------------------------------------------------===//
+
