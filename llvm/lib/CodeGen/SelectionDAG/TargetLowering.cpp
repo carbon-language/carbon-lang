@@ -424,9 +424,10 @@ unsigned TargetLowering::getVectorTypeBreakdown(MVT::ValueType VT,
 }
 
 /// getByValTypeAlignment - Return the desired alignment for ByVal aggregate
-/// function arguments in the caller parameter area.
+/// function arguments in the caller parameter area.  This is the actual
+/// alignment, not its logarithm.
 unsigned TargetLowering::getByValTypeAlignment(const Type *Ty) const {
-  return Log2_32(TD->getCallFrameTypeAlignment(Ty));
+  return TD->getCallFrameTypeAlignment(Ty);
 }
 
 SDOperand TargetLowering::getPICJumpTableRelocBase(SDOperand Table,

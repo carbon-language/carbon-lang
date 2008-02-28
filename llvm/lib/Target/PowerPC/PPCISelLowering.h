@@ -268,6 +268,11 @@ namespace llvm {
       getRegForInlineAsmConstraint(const std::string &Constraint,
                                    MVT::ValueType VT) const;
 
+    /// getByValTypeAlignment - Return the desired alignment for ByVal aggregate
+    /// function arguments in the caller parameter area.  This is the actual
+    /// alignment, not its logarithm.
+    unsigned getByValTypeAlignment(const Type *Ty) const;
+
     /// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
     /// vector.  If it is invalid, don't add anything to Ops.
     virtual void LowerAsmOperandForConstraint(SDOperand Op,

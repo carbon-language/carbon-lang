@@ -420,7 +420,8 @@ public:
   }
 
   /// getByValTypeAlignment - Return the desired alignment for ByVal aggregate
-  /// function arguments in the caller parameter area.
+  /// function arguments in the caller parameter area.  This is the actual
+  /// alignment, not its logarithm.
   virtual unsigned getByValTypeAlignment(const Type *Ty) const;
   
   /// getRegisterType - Return the type of registers that this ValueType will

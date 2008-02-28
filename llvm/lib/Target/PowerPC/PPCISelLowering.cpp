@@ -351,6 +351,17 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   computeRegisterProperties();
 }
 
+/// getByValTypeAlignment - Return the desired alignment for ByVal aggregate
+/// function arguments in the caller parameter area.
+unsigned PPCTargetLowering::getByValTypeAlignment(const Type *Ty) const {
+  TargetMachine &TM = getTargetMachine();
+  // Darwin passes everything on 4 byte boundary.
+  if (TM.getSubtarget<PPCSubtarget>().isDarwin())
+    return 4;
+  // FIXME Elf TBD
+  return 4;
+}
+
 const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
   default: return 0;
