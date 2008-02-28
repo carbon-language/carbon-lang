@@ -587,7 +587,7 @@ SDOperand ExpandUnalignedStore(StoreSDNode *ST, SelectionDAG &DAG,
     else if (VT==MVT::f32)
       intVT = MVT::i32;
     else
-      assert(0 && "Unaligned load of unsupported type");
+      assert(0 && "Unaligned store of unsupported type");
 
     SDOperand Result = DAG.getNode(ISD::BIT_CONVERT, intVT, Val);
     return DAG.getStore(Chain, Result, Ptr, ST->getSrcValue(),
