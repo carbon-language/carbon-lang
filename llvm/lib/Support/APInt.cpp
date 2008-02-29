@@ -1085,6 +1085,12 @@ APInt &APInt::sextOrTrunc(uint32_t width) {
 
 /// Arithmetic right-shift this APInt by shiftAmt.
 /// @brief Arithmetic right-shift function.
+APInt APInt::ashr(const APInt &shiftAmt) const {
+  return ashr(shiftAmt.getLimitedValue(BitWidth));
+}
+
+/// Arithmetic right-shift this APInt by shiftAmt.
+/// @brief Arithmetic right-shift function.
 APInt APInt::ashr(uint32_t shiftAmt) const {
   assert(shiftAmt <= BitWidth && "Invalid shift amount");
   // Handle a degenerate case
@@ -1168,6 +1174,12 @@ APInt APInt::ashr(uint32_t shiftAmt) const {
 
 /// Logical right-shift this APInt by shiftAmt.
 /// @brief Logical right-shift function.
+APInt APInt::lshr(const APInt &shiftAmt) const {
+  return ashr(shiftAmt.getLimitedValue(BitWidth));
+}
+
+/// Logical right-shift this APInt by shiftAmt.
+/// @brief Logical right-shift function.
 APInt APInt::lshr(uint32_t shiftAmt) const {
   if (isSingleWord()) {
     if (shiftAmt == BitWidth)
@@ -1230,6 +1242,13 @@ APInt APInt::lshr(uint32_t shiftAmt) const {
 
 /// Left-shift this APInt by shiftAmt.
 /// @brief Left-shift function.
+APInt APInt::shl(const APInt &shiftAmt) const {
+  // It's undefined behavior in C to shift by BitWidth or greater, but
+  return shl(shiftAmt.getLimitedValue(BitWidth));
+}
+
+/// Left-shift this APInt by shiftAmt.
+/// @brief Left-shift function.
 APInt APInt::shl(uint32_t shiftAmt) const {
   assert(shiftAmt <= BitWidth && "Invalid shift amount");
   if (isSingleWord()) {
@@ -1287,6 +1306,10 @@ APInt APInt::shl(uint32_t shiftAmt) const {
   return APInt(val, BitWidth).clearUnusedBits();
 }
 
+APInt APInt::rotl(const APInt &rotateAmt) const {
+  return rotl(rotateAmt.getLimitedValue(BitWidth));
+}
+
 APInt APInt::rotl(uint32_t rotateAmt) const {
   if (rotateAmt == 0)
     return *this;
@@ -1296,6 +1319,10 @@ APInt APInt::rotl(uint32_t rotateAmt) const {
   hi.shl(rotateAmt);
   lo.lshr(BitWidth - rotateAmt);
   return hi | lo;
+}
+
+APInt APInt::rotr(const APInt &rotateAmt) const {
+  return rotr(rotateAmt.getLimitedValue(BitWidth));
 }
 
 APInt APInt::rotr(uint32_t rotateAmt) const {

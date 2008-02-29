@@ -584,6 +584,10 @@ public:
     return shl(Bits);
   }
 
+  APInt operator<<(const APInt &Bits) const {
+    return shl(Bits);
+  }
+
   /// Arithmetic right-shift this APInt by shiftAmt.
   /// @brief Arithmetic right-shift function.
   APInt ashr(uint32_t shiftAmt) const;
@@ -601,6 +605,24 @@ public:
 
   /// @brief Rotate right by rotateAmt.
   APInt rotr(uint32_t rotateAmt) const;
+
+  /// Arithmetic right-shift this APInt by shiftAmt.
+  /// @brief Arithmetic right-shift function.
+  APInt ashr(const APInt &shiftAmt) const;
+
+  /// Logical right-shift this APInt by shiftAmt.
+  /// @brief Logical right-shift function.
+  APInt lshr(const APInt &shiftAmt) const;
+
+  /// Left-shift this APInt by shiftAmt.
+  /// @brief Left-shift function.
+  APInt shl(const APInt &shiftAmt) const;
+
+  /// @brief Rotate left by rotateAmt.
+  APInt rotl(const APInt &rotateAmt) const;
+
+  /// @brief Rotate right by rotateAmt.
+  APInt rotr(const APInt &rotateAmt) const;
 
   /// Perform an unsigned divide operation on this APInt by RHS. Both this and
   /// RHS are treated as unsigned quantities for purposes of this division.
