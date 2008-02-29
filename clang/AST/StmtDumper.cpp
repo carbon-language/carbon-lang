@@ -133,6 +133,7 @@ namespace  {
 
     // ObjC
     void VisitObjCEncodeExpr(ObjCEncodeExpr *Node);
+    void VisitObjCMessageExpr(ObjCMessageExpr* Node);
     void VisitObjCSelectorExpr(ObjCSelectorExpr *Node);
     void VisitObjCProtocolExpr(ObjCProtocolExpr *Node);
   };
@@ -413,6 +414,11 @@ void StmtDumper::VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *Node) {
 //===----------------------------------------------------------------------===//
 // Obj-C Expressions
 //===----------------------------------------------------------------------===//
+
+void StmtDumper::VisitObjCMessageExpr(ObjCMessageExpr* Node) {
+  DumpExpr(Node);
+  fprintf(F, " selector=%s", Node->getSelector().getName().c_str());
+}
 
 void StmtDumper::VisitObjCEncodeExpr(ObjCEncodeExpr *Node) {
   DumpExpr(Node);
