@@ -208,6 +208,8 @@ namespace llvm {
     opStatus convert(const fltSemantics &, roundingMode);
     opStatus convertToInteger(integerPart *, unsigned int, bool,
                               roundingMode) const;
+    opStatus convertFromAPInt(const APInt &,
+                              bool, roundingMode);
     opStatus convertFromSignExtendedInteger(const integerPart *, unsigned int,
                                             bool, roundingMode);
     opStatus convertFromZeroExtendedInteger(const integerPart *, unsigned int,

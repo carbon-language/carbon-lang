@@ -1913,6 +1913,23 @@ APFloat::convertFromUnsignedParts(const integerPart *src,
   return normalize(rounding_mode, lost_fraction);
 }
 
+APFloat::opStatus
+APFloat::convertFromAPInt(const APInt &Val,
+                          bool isSigned,
+                          roundingMode rounding_mode)
+{
+  unsigned int partCount = Val.getNumWords();
+  APInt api = Val;
+
+  sign = false;
+  if (isSigned && api.isNegative()) {
+    sign = true;
+    api = -api;
+  }
+
+  return convertFromUnsignedParts(api.getRawData(), partCount, rounding_mode);
+}
+
 /* Convert a two's complement integer SRC to a floating point number,
    rounding according to ROUNDING_MODE.  ISSIGNED is true if the
    integer is signed, in which case it must be sign-extended.  */
