@@ -480,8 +480,9 @@ MachineInstr *RALocal::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
   // If the virtual register is already available, just update the instruction
   // and return.
   if (unsigned PR = getVirt2PhysRegMapSlot(VirtReg)) {
-    MarkPhysRegRecentlyUsed(PR);          // Already have this value available!
+    MarkPhysRegRecentlyUsed(PR);       // Already have this value available!
     MI->getOperand(OpNum).setReg(PR);  // Assign the input register
+    getVirtRegLastUse(VirtReg) = std::make_pair(MI, OpNum);
     return MI;
   }
 
