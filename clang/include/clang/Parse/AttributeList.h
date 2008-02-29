@@ -49,7 +49,8 @@ public:
     AT_aligned,
     AT_packed,
     AT_annotate,
-    AT_noreturn
+    AT_noreturn,
+    AT_deprecated
   };
   
   IdentifierInfo *getName() const { return AttrName; }

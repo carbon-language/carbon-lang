@@ -100,6 +100,10 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
     }
   }
   if (ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
+    // check if referencing an identifier with __attribute__((deprecated)).
+    if (VD->getAttr<DeprecatedAttr>())
+      Diag(Loc, diag::warn_deprecated, VD->getName());
+
     // Only create DeclRefExpr's for valid Decl's.
     if (VD->isInvalidDecl())
       return true;

@@ -255,6 +255,8 @@ FunctionDecl *Sema::MergeFunctionDecl(FunctionDecl *New, ScopedDecl *OldD) {
     Diag(OldD->getLocation(), diag::err_previous_definition);
     return New;
   }
+
+  // FIXME: propagate old Attrs to the New decl
   
   QualType OldQType = Old->getCanonicalType();
   QualType NewQType = New->getCanonicalType();
@@ -1778,6 +1780,9 @@ void Sema::HandleDeclAttribute(Decl *New, AttributeList *Attr) {
       vDecl->setType(newType);
     }
     break;
+  case AttributeList::AT_deprecated:
+    New->addAttr(new DeprecatedAttr());
+    break;
   case AttributeList::AT_aligned:
     HandleAlignedAttribute(New, Attr);
     break;
@@ -1791,7 +1796,11 @@ void Sema::HandleDeclAttribute(Decl *New, AttributeList *Attr) {
     HandleNoReturnAttribute(New, Attr);
     break;
   default:
-    // FIXME: add other attributes...
+#if 0
+    // TODO: when we have the full set of attributes, warn about unknown ones.
+    Diag(Attr->getLoc(), diag::warn_attribute_ignored,
+         Attr->getName()->getName());
+#endif
     break;
   }
 }

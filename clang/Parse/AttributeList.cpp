@@ -61,7 +61,10 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     if (!memcmp(Str, "annotate", 8)) return AT_annotate;
     if (!memcmp(Str, "noreturn", 8)) return AT_noreturn;
     break;
-  case 11:   
+  case 10:
+    if (!memcmp(Str, "deprecated", 10)) return AT_deprecated;
+    break;
+  case 11:
     if (!memcmp(Str, "vector_size", 11)) return AT_vector_size;
     break;
   case 13:

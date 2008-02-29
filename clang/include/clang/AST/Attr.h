@@ -26,7 +26,8 @@ public:
     Aligned,
     Packed,
     Annotate,
-    NoReturn
+    NoReturn,
+    Deprecated
   };
     
 private:
@@ -105,6 +106,16 @@ public:
   
   static bool classof(const Attr *A) { return A->getKind() == NoReturn; }  
   static bool classof(const NoReturnAttr *A) { return true; }
+};
+
+class DeprecatedAttr : public Attr {
+public:
+  DeprecatedAttr() : Attr(Deprecated) {}
+
+  // Implement isa/cast/dyncast/etc.
+
+  static bool classof(const Attr *A) { return A->getKind() == Deprecated; }
+  static bool classof(const DeprecatedAttr *A) { return true; }
 };
 
 }  // end namespace clang
