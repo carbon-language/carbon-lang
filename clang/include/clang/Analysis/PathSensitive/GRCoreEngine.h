@@ -86,11 +86,14 @@ protected:
                     ExplodedNodeImpl* Pred);  
   
   virtual void* ProcessEOP(CFGBlock* Blk, void* State) = 0;  
+  
+  virtual bool ProcessBlockEntrance(CFGBlock* Blk, void* State,
+                                    GRBlockCounter BC) = 0;
 
-  virtual void  ProcessStmt(Stmt* S, GRStmtNodeBuilderImpl& Builder) = 0;
+  virtual void ProcessStmt(Stmt* S, GRStmtNodeBuilderImpl& Builder) = 0;
 
-  virtual void  ProcessBranch(Expr* Condition, Stmt* Terminator,
-                              GRBranchNodeBuilderImpl& Builder) = 0;
+  virtual void ProcessBranch(Expr* Condition, Stmt* Terminator,
+                             GRBranchNodeBuilderImpl& Builder) = 0;
 
   virtual void ProcessIndirectGoto(GRIndirectGotoNodeBuilderImpl& Builder) = 0;
   
@@ -433,6 +436,12 @@ protected:
   virtual void ProcessStmt(Stmt* S, GRStmtNodeBuilderImpl& BuilderImpl) {
     GRStmtNodeBuilder<CHECKER> Builder(BuilderImpl);
     Checker->ProcessStmt(S, Builder);
+  }
+  
+  virtual bool ProcessBlockEntrance(CFGBlock* Blk, void* State,
+                                    GRBlockCounter BC) {    
+    return Checker->ProcessBlockEntrance(Blk,
+                                         GRTrait<StateTy>::toState(State), BC);
   }
 
   virtual void ProcessBranch(Expr* Condition, Stmt* Terminator,

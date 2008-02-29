@@ -136,11 +136,11 @@ void GRCoreEngineImpl::HandleBlockEdge(const BlockEdge& L, ExplodedNodeImpl* Pre
     // This path is done. Don't enqueue any more nodes.
     return;
   }
+
+  // FIXME: Should we allow ProcessBlockEntrance to also manipulate state?
   
-  // FIXME: we will dispatch to a function that
-  //  manipulates the state at the entrance to a block.
-  
-  GenerateNode(BlockEntrance(Blk), Pred->State, Pred);
+  if (ProcessBlockEntrance(Blk, Pred->State, WList->getBlockCounter()))
+    GenerateNode(BlockEntrance(Blk), Pred->State, Pred);
 }
 
 void GRCoreEngineImpl::HandleBlockEntrance(const BlockEntrance& L,

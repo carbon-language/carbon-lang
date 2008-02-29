@@ -211,8 +211,13 @@ public:
   undef_result_iterator undef_results_end() { return UndefResults.end(); }
   
   /// ProcessStmt - Called by GRCoreEngine. Used to generate new successor
-  ///  nodes by processing the 'effects' of a block-level statement.
+  ///  nodes by processing the 'effects' of a block-level statement.  
   void ProcessStmt(Stmt* S, StmtNodeBuilder& builder);    
+  
+  /// ProcessBlockEntrance - Called by GRCoreEngine when start processing
+  ///  a CFGBlock.  This method returns true if the analysis should continue
+  ///  exploring the given path, and false otherwise.
+  bool ProcessBlockEntrance(CFGBlock* B, ValueState* St, GRBlockCounter BC);
   
   /// ProcessBranch - Called by GRCoreEngine.  Used to generate successor
   ///  nodes by processing the 'effects' of a branch condition.

@@ -147,6 +147,12 @@ ValueState* GRExprEngine::MarkBranch(ValueState* St, Stmt* Terminator,
   }
 }
 
+bool GRExprEngine::ProcessBlockEntrance(CFGBlock* B, ValueState*,
+                                        GRBlockCounter BC) {
+  
+  return BC.getNumVisited(B->getBlockID()) < 3;
+}
+
 void GRExprEngine::ProcessBranch(Expr* Condition, Stmt* Term,
                                  BranchNodeBuilder& builder) {
 
@@ -156,15 +162,6 @@ void GRExprEngine::ProcessBranch(Expr* Condition, Stmt* Term,
   // Check for NULL conditions; e.g. "for(;;)"
   if (!Condition) { 
     builder.markInfeasible(false);
-    
-    // Get the current block counter.
-    GRBlockCounter BC = builder.getBlockCounter();
-    unsigned BlockID = builder.getTargetBlock(true)->getBlockID();
-    unsigned NumVisited = BC.getNumVisited(BlockID);
-        
-    if (NumVisited < 1) builder.generateNode(PrevState, true);
-    else builder.markInfeasible(true);
-
     return;
   }
   
@@ -191,46 +188,25 @@ void GRExprEngine::ProcessBranch(Expr* Condition, Stmt* Term,
       return;
     }      
   }
-  
-  // Get the current block counter.
-  GRBlockCounter BC = builder.getBlockCounter();
-  unsigned BlockID = builder.getTargetBlock(true)->getBlockID();
-  unsigned NumVisited = BC.getNumVisited(BlockID);
-  
-  if (isa<nonlval::ConcreteInt>(V) || 
-      BC.getNumVisited(builder.getTargetBlock(true)->getBlockID()) < 1) {
     
-    // Process the true branch.
 
-    bool isFeasible = true;
-    
-    ValueState* St = Assume(PrevState, V, true, isFeasible);
+  // Process the true branch.
 
-    if (isFeasible)
-      builder.generateNode(MarkBranch(St, Term, true), true);
-    else
-      builder.markInfeasible(true);
-  }
+  bool isFeasible = true;  
+  ValueState* St = Assume(PrevState, V, true, isFeasible);
+
+  if (isFeasible)
+    builder.generateNode(MarkBranch(St, Term, true), true);
   else
     builder.markInfeasible(true);
+      
+  // Process the false branch.  
   
-  BlockID = builder.getTargetBlock(false)->getBlockID();
-  NumVisited = BC.getNumVisited(BlockID);
+  isFeasible = false;
+  St = Assume(PrevState, V, false, isFeasible);
   
-  if (isa<nonlval::ConcreteInt>(V) || 
-      BC.getNumVisited(builder.getTargetBlock(false)->getBlockID()) < 1) {
-    
-    // Process the false branch.  
-    
-    bool isFeasible = false;
-    
-    ValueState* St = Assume(PrevState, V, false, isFeasible);
-    
-    if (isFeasible)
-      builder.generateNode(MarkBranch(St, Term, false), false);
-    else
-      builder.markInfeasible(false);
-  }
+  if (isFeasible)
+    builder.generateNode(MarkBranch(St, Term, false), false);
   else
     builder.markInfeasible(false);
 }
