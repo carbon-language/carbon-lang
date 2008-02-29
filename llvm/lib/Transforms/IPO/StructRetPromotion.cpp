@@ -7,25 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This pass promotes "by reference" arguments to be "by value" arguments.  In
-// practice, this means looking for internal functions that have pointer
-// arguments.  If it can prove, through the use of alias analysis, that an
-// argument is *only* loaded, then it can pass the value into the function
-// instead of the address of the value.  This can cause recursive simplification
-// of code and lead to the elimination of allocas (especially in C++ template
-// code like the STL).
-//
-// This pass also handles aggregate arguments that are passed into a function,
-// scalarizing them if the elements of the aggregate are only loaded.  Note that
-// it refuses to scalarize aggregates which would require passing in more than
-// three operands to the function, because passing thousands of operands for a
-// large array or structure is unprofitable!
-//
-// Note that this transformation could also be done for arguments that are only
-// stored to (returning the value instead), but does not currently.  This case
-// would be best handled when and if LLVM begins supporting multiple return
-// values from functions.
-//
+// TODO : Describe this pass.
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "sretpromotion"
