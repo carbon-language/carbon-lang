@@ -402,8 +402,21 @@ CFGBlock* CFGBuilder::WalkAST_VisitDeclSubExprs(StmtIterator& I) {
   Stmt* S = *I;
   ++I;
   WalkAST_VisitDeclSubExprs(I);
+    
+  // Optimization: Don't create separate block-level statements for literals.
   
-  Block = addStmt(S);
+  switch (S->getStmtClass()) {
+    case Stmt::IntegerLiteralClass:
+    case Stmt::CharacterLiteralClass:
+    case Stmt::StringLiteralClass:
+      break;
+      
+      // All other cases.
+      
+    default:
+      Block = addStmt(S);
+  }
+  
   return Block;
 }
 
