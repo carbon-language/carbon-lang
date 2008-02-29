@@ -199,14 +199,14 @@ def MMX_MOVNTQmr  : MMXI<0xE7, MRMDestMem, (outs), (ins i64mem:$dst, VR64:$src),
 
 let AddedComplexity = 15 in
 // movd to MMX register zero-extends
-def MMX_MOVZDI2PDIrr : MMX2I<0x6E, MRMSrcReg, (outs VR64:$dst), (ins GR32:$src),
+def MMX_MOVZDI2PDIrr : MMXI<0x6E, MRMSrcReg, (outs VR64:$dst), (ins GR32:$src),
                              "movd\t{$src, $dst|$dst, $src}",
                              [(set VR64:$dst,
                                (v2i32 (vector_shuffle immAllZerosV,
                                        (v2i32 (scalar_to_vector GR32:$src)),
                                        MMX_MOVL_shuffle_mask)))]>;
 let AddedComplexity = 20 in
-def MMX_MOVZDI2PDIrm : MMX2I<0x6E, MRMSrcMem, (outs VR64:$dst), (ins i32mem:$src),
+def MMX_MOVZDI2PDIrm : MMXI<0x6E, MRMSrcMem, (outs VR64:$dst), (ins i32mem:$src),
                              "movd\t{$src, $dst|$dst, $src}",
                              [(set VR64:$dst,
                                (v2i32 (vector_shuffle immAllZerosV,
