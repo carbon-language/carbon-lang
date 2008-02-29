@@ -53,7 +53,7 @@ RC_ProjectSourceVersion = 9999
 endif
 
 ifndef RC_ProjectSourceSubversion
-RC_ProjectSourceSubversion = 01
+RC_ProjectSourceSubversion = 0
 endif
 
 # NOTE : Always put version numbers at the end because they are optional.
