@@ -1718,19 +1718,29 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
            op->getSourceRange());
       return QualType();
     }
-  } else if (dcl) {
+  } else if (MemberExpr *MemExpr = dyn_cast<MemberExpr>(op)) { // C99 6.5.3.2p1
+    if (MemExpr->getMemberDecl()->isBitField()) {
+      Diag(OpLoc, diag::err_typecheck_address_of, 
+           std::string("bit-field"), op->getSourceRange());
+      return QualType();
+    }
+  // Check for Apple extension for accessing vector components.
+  } else if (isa<ArraySubscriptExpr>(op) &&
+           cast<ArraySubscriptExpr>(op)->getBase()->getType()->isVectorType()) {
+    Diag(OpLoc, diag::err_typecheck_address_of, 
+         std::string("vector"), op->getSourceRange());
+    return QualType();
+  } else if (dcl) { // C99 6.5.3.2p1
     // We have an lvalue with a decl. Make sure the decl is not declared 
     // with the register storage-class specifier.
     if (const VarDecl *vd = dyn_cast<VarDecl>(dcl)) {
       if (vd->getStorageClass() == VarDecl::Register) {
-        Diag(OpLoc, diag::err_typecheck_address_of_register, 
-             op->getSourceRange());
+        Diag(OpLoc, diag::err_typecheck_address_of, 
+             std::string("register variable"), op->getSourceRange());
         return QualType();
       }
     } else 
       assert(0 && "Unknown/unexpected decl type");
-    
-    // FIXME: add check for bitfields!
   }
   // If the operand has type "type", the result has type "pointer to type".
   return Context.getPointerType(op->getType());
