@@ -43,17 +43,18 @@ void Sema::ObjCActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
   PI.IdentLoc = SourceLocation(); // synthesized vars have a null location.
   PI.InvalidType = false;
   PI.AttrList = 0;
+  PI.TypeInfo = Context.getObjCIdType().getAsOpaquePtr();
+
   if (MDecl->isInstance()) {
-    ObjCInterfaceDecl *OID = MDecl->getClassInterface();
-    // There may be no interface context due to error in declaration of the 
-    // interface (which has been reported). Recover gracefully
-    if (OID) {
+    if (ObjCInterfaceDecl *OID = MDecl->getClassInterface()) {
+      // There may be no interface context due to error in declaration of the 
+      // interface (which has been reported). Recover gracefully
       QualType selfTy = Context.getObjCInterfaceType(OID);
       selfTy = Context.getPointerType(selfTy);
       PI.TypeInfo = selfTy.getAsOpaquePtr();
     }
-  } else
-    PI.TypeInfo = Context.getObjCIdType().getAsOpaquePtr();
+  }
+
   CurMethodDecl->setSelfDecl(ActOnParamDeclarator(PI, FnBodyScope));
   
   PI.Ident = &Context.Idents.get("_cmd");
