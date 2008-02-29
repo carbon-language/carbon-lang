@@ -125,6 +125,7 @@ ModulePass *createDeadArgHackingPass();
 /// be passed by value.
 ///
 Pass *createArgumentPromotionPass();
+Pass *createStructRetPromotionPass();
 
 //===----------------------------------------------------------------------===//
 /// createIPConstantPropagationPass - This pass propagates constants from call
