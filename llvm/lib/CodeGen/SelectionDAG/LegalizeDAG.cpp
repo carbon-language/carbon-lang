@@ -3754,12 +3754,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           SDOperand True, False;
           MVT::ValueType VT =  Node->getOperand(0).getValueType();
           MVT::ValueType NVT = Node->getValueType(0);
-          unsigned ShiftAmt = MVT::getSizeInBits(NVT)-1;
           const uint64_t zero[] = {0, 0};
           APFloat apf = APFloat(APInt(MVT::getSizeInBits(VT), 2, zero));
-          uint64_t x = 1ULL << ShiftAmt;
-          (void)apf.convertFromZeroExtendedInteger
-            (&x, MVT::getSizeInBits(NVT), false, APFloat::rmNearestTiesToEven);
+          APInt x = APInt::getSignBit(MVT::getSizeInBits(NVT));
+          (void)apf.convertFromAPInt(x, false, APFloat::rmNearestTiesToEven);
           Tmp2 = DAG.getConstantFP(apf, VT);
           Tmp3 = DAG.getSetCC(TLI.getSetCCResultTy(),
                             Node->getOperand(0), Tmp2, ISD::SETLT);
@@ -3768,7 +3766,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                               DAG.getNode(ISD::FSUB, VT, Node->getOperand(0),
                                           Tmp2));
           False = DAG.getNode(ISD::XOR, NVT, False, 
-                              DAG.getConstant(1ULL << ShiftAmt, NVT));
+                              DAG.getConstant(x, NVT));
           Result = DAG.getNode(ISD::SELECT, NVT, Tmp3, True, False);
           break;
         } else {
