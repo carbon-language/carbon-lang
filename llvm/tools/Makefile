@@ -21,9 +21,12 @@ PARALLEL_DIRS := llvm-config  \
 
 include $(LEVEL)/Makefile.config
 
-# Disable liblto on Windows until compatability is determined.
-ifneq ($(OS), MingW)
-PARALLEL_DIRS += lto
+# Disable liblto as it is going away
+#PARALLEL_DIRS += lto
+
+# only build new lto project on Darwin for now
+ifeq ($(OS),Darwin)
+PARALLEL_DIRS += lto2
 endif
 
 include $(LEVEL)/Makefile.common
