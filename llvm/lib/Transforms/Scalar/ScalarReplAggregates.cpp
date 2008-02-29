@@ -1154,70 +1154,81 @@ Value *SROA::ConvertUsesOfLoadToScalar(LoadInst *LI, AllocaInst *NewAI,
     // We win, no conversion needed.
     return NV;
   } 
+
+  // If the result type of the 'union' is a pointer, then this must be ptr->ptr
+  // cast.  Anything else would result in NV being an integer.
+  if (isa<PointerType>(NV->getType())) {
+    assert(isa<PointerType>(LI->getType()));
+    return new BitCastInst(NV, LI->getType(), LI->getName(), LI);
+  }
   
-  if (const VectorType *PTy = dyn_cast<VectorType>(NV->getType())) {
+  if (const VectorType *VTy = dyn_cast<VectorType>(NV->getType())) {
     // If the result alloca is a vector type, this is either an element
     // access or a bitcast to another vector type.
-    if (isa<VectorType>(LI->getType())) {
-      NV = new BitCastInst(NV, LI->getType(), LI->getName(), LI);
-    } else {
-      // Must be an element access.
-      const TargetData &TD = getAnalysis<TargetData>();
-      unsigned Elt = Offset/TD.getABITypeSizeInBits(PTy->getElementType());
-      NV = new ExtractElementInst(NV, ConstantInt::get(Type::Int32Ty, Elt),
-                                  "tmp", LI);
+    if (isa<VectorType>(LI->getType()))
+      return new BitCastInst(NV, LI->getType(), LI->getName(), LI);
+
+    // Otherwise it must be an element access.
+    const TargetData &TD = getAnalysis<TargetData>();
+    unsigned Elt = 0;
+    if (Offset) {
+      unsigned EltSize = TD.getABITypeSizeInBits(VTy->getElementType());
+      Elt = Offset/EltSize;
+      Offset -= EltSize*Elt;
     }
-  } else if (isa<PointerType>(NV->getType())) {
-    assert(isa<PointerType>(LI->getType()));
-    // Must be ptr->ptr cast.  Anything else would result in NV being
-    // an integer.
+    NV = new ExtractElementInst(NV, ConstantInt::get(Type::Int32Ty, Elt),
+                                "tmp", LI);
+    
+    // If we're done, return this element.
+    if (NV->getType() == LI->getType() && Offset == 0)
+      return NV;
+  }
+  
+  const IntegerType *NTy = cast<IntegerType>(NV->getType());
+  
+  // If this is a big-endian system and the load is narrower than the
+  // full alloca type, we need to do a shift to get the right bits.
+  int ShAmt = 0;
+  const TargetData &TD = getAnalysis<TargetData>();
+  if (TD.isBigEndian()) {
+    // On big-endian machines, the lowest bit is stored at the bit offset
+    // from the pointer given by getTypeStoreSizeInBits.  This matters for
+    // integers with a bitwidth that is not a multiple of 8.
+    ShAmt = TD.getTypeStoreSizeInBits(NTy) -
+    TD.getTypeStoreSizeInBits(LI->getType()) - Offset;
+  } else {
+    ShAmt = Offset;
+  }
+  
+  // Note: we support negative bitwidths (with shl) which are not defined.
+  // We do this to support (f.e.) loads off the end of a structure where
+  // only some bits are used.
+  if (ShAmt > 0 && (unsigned)ShAmt < NTy->getBitWidth())
+    NV = BinaryOperator::createLShr(NV, 
+                                    ConstantInt::get(NV->getType(),ShAmt),
+                                    LI->getName(), LI);
+  else if (ShAmt < 0 && (unsigned)-ShAmt < NTy->getBitWidth())
+    NV = BinaryOperator::createShl(NV, 
+                                   ConstantInt::get(NV->getType(),-ShAmt),
+                                   LI->getName(), LI);
+  
+  // Finally, unconditionally truncate the integer to the right width.
+  unsigned LIBitWidth = TD.getTypeSizeInBits(LI->getType());
+  if (LIBitWidth < NTy->getBitWidth())
+    NV = new TruncInst(NV, IntegerType::get(LIBitWidth),
+                       LI->getName(), LI);
+  
+  // If the result is an integer, this is a trunc or bitcast.
+  if (isa<IntegerType>(LI->getType())) {
+    // Should be done.
+  } else if (LI->getType()->isFloatingPoint()) {
+    // Just do a bitcast, we know the sizes match up.
     NV = new BitCastInst(NV, LI->getType(), LI->getName(), LI);
   } else {
-    const IntegerType *NTy = cast<IntegerType>(NV->getType());
-    
-    // If this is a big-endian system and the load is narrower than the
-    // full alloca type, we need to do a shift to get the right bits.
-    int ShAmt = 0;
-    const TargetData &TD = getAnalysis<TargetData>();
-    if (TD.isBigEndian()) {
-      // On big-endian machines, the lowest bit is stored at the bit offset
-      // from the pointer given by getTypeStoreSizeInBits.  This matters for
-      // integers with a bitwidth that is not a multiple of 8.
-      ShAmt = TD.getTypeStoreSizeInBits(NTy) -
-      TD.getTypeStoreSizeInBits(LI->getType()) - Offset;
-    } else {
-      ShAmt = Offset;
-    }
-    
-    // Note: we support negative bitwidths (with shl) which are not defined.
-    // We do this to support (f.e.) loads off the end of a structure where
-    // only some bits are used.
-    if (ShAmt > 0 && (unsigned)ShAmt < NTy->getBitWidth())
-      NV = BinaryOperator::createLShr(NV, 
-                                      ConstantInt::get(NV->getType(),ShAmt),
-                                      LI->getName(), LI);
-    else if (ShAmt < 0 && (unsigned)-ShAmt < NTy->getBitWidth())
-      NV = BinaryOperator::createShl(NV, 
-                                     ConstantInt::get(NV->getType(),-ShAmt),
-                                     LI->getName(), LI);
-    
-    // Finally, unconditionally truncate the integer to the right width.
-    unsigned LIBitWidth = TD.getTypeSizeInBits(LI->getType());
-    if (LIBitWidth < NTy->getBitWidth())
-      NV = new TruncInst(NV, IntegerType::get(LIBitWidth),
-                         LI->getName(), LI);
-    
-    // If the result is an integer, this is a trunc or bitcast.
-    if (isa<IntegerType>(LI->getType())) {
-      assert(NV->getType() == LI->getType() && "Truncate wasn't enough?");
-    } else if (LI->getType()->isFloatingPoint()) {
-      // Just do a bitcast, we know the sizes match up.
-      NV = new BitCastInst(NV, LI->getType(), LI->getName(), LI);
-    } else {
-      // Otherwise must be a pointer.
-      NV = new IntToPtrInst(NV, LI->getType(), LI->getName(), LI);
-    }
+    // Otherwise must be a pointer.
+    NV = new IntToPtrInst(NV, LI->getType(), LI->getName(), LI);
   }
+  assert(NV->getType() == LI->getType() && "Didn't convert right?");
   return NV;
 }
 
