@@ -190,10 +190,6 @@ namespace llvm {
     bool RemoveCopyByCommutingDef(LiveInterval &IntA, LiveInterval &IntB,
                                   MachineInstr *CopyMI);
 
-    /// RemoveUnnecessaryKills - Remove kill markers that are no longer accurate
-    /// due to live range lengthening as the result of coalescing.
-    void RemoveUnnecessaryKills(unsigned Reg, LiveInterval &LI);
-
     /// isBackEdgeCopy - Returns true if CopyMI is a back edge copy.
     ///
     bool isBackEdgeCopy(MachineInstr *CopyMI, unsigned DstReg);
@@ -213,10 +209,6 @@ namespace llvm {
     /// findDefOperand - Returns the MachineOperand that is a def of the specific
     /// register. It returns NULL if the def is not found.
     MachineOperand *findDefOperand(MachineInstr *MI, unsigned Reg) const;
-
-    /// unsetRegisterKills - Unset IsKill property of all uses of specific register
-    /// between cycles Start and End.
-    void unsetRegisterKills(unsigned Start, unsigned End, unsigned Reg);
 
     void printRegName(unsigned reg) const;
   };

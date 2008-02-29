@@ -385,26 +385,6 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
   return true;
 }
 
-/// RemoveUnnecessaryKills - Remove kill markers that are no longer accurate
-/// due to live range lengthening as the result of coalescing.
-void SimpleRegisterCoalescing::RemoveUnnecessaryKills(unsigned Reg,
-                                                      LiveInterval &LI) {
-  for (MachineRegisterInfo::use_iterator UI = mri_->use_begin(Reg),
-         UE = mri_->use_end(); UI != UE; ++UI) {
-    MachineOperand &UseMO = UI.getOperand();
-    if (UseMO.isKill()) {
-      MachineInstr *UseMI = UseMO.getParent();
-      unsigned UseIdx = li_->getUseIndex(li_->getInstructionIndex(UseMI));
-      if (JoinedCopies.count(UseMI))
-        continue;
-      LiveInterval::const_iterator UI = LI.FindLiveRangeContaining(UseIdx);
-      assert(UI != LI.end());
-      if (!LI.isKill(UI->valno, UseIdx+1))
-        UseMO.setIsKill(false);
-    }
-  }
-}
-
 /// isBackEdgeCopy - Returns true if CopyMI is a back edge copy.
 ///
 bool SimpleRegisterCoalescing::isBackEdgeCopy(MachineInstr *CopyMI,
@@ -734,13 +714,6 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
   // we have to update any aliased register's live ranges to indicate that they
   // have clobbered values for this range.
   if (TargetRegisterInfo::isPhysicalRegister(DstReg)) {
-    // Unset unnecessary kills.
-    if (!ResDstInt->containsOneValue()) {
-      for (LiveInterval::Ranges::const_iterator I = ResSrcInt->begin(),
-             E = ResSrcInt->end(); I != E; ++I)
-        unsetRegisterKills(I->start, I->end, DstReg);
-    }
-
     // If this is a extract_subreg where dst is a physical register, e.g.
     // cl = EXTRACT_SUBREG reg1024, 1
     // then create and update the actual physical register allocated to RHS.
@@ -809,12 +782,6 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
 
   // Remember to delete the copy instruction.
   JoinedCopies.insert(CopyMI);
-
-  // Some live range has been lengthened due to colaescing, eliminate the
-  // unnecessary kills.
-  RemoveUnnecessaryKills(SrcReg, *ResDstInt);
-  if (TargetRegisterInfo::isVirtualRegister(DstReg))
-    RemoveUnnecessaryKills(DstReg, *ResDstInt);
 
   // SrcReg is guarateed to be the register whose live interval that is
   // being merged.
@@ -1496,6 +1463,7 @@ SimpleRegisterCoalescing::lastRegisterUse(unsigned Start, unsigned End,
 
 /// findDefOperand - Returns the MachineOperand that is a def of the specific
 /// register. It returns NULL if the def is not found.
+/// FIXME: Move to MachineInstr.
 MachineOperand *SimpleRegisterCoalescing::findDefOperand(MachineInstr *MI,
                                                          unsigned Reg) const {
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
@@ -1507,34 +1475,8 @@ MachineOperand *SimpleRegisterCoalescing::findDefOperand(MachineInstr *MI,
   return NULL;
 }
 
-/// unsetRegisterKills - Unset IsKill property of all uses of specific register
-/// between cycles Start and End.
-void SimpleRegisterCoalescing::unsetRegisterKills(unsigned Start, unsigned End,
-                                                  unsigned Reg) {
-  int e = (End-1) / InstrSlots::NUM * InstrSlots::NUM;
-  int s = Start;
-  while (e >= s) {
-    // Skip deleted instructions
-    MachineInstr *MI = li_->getInstructionFromIndex(e);
-    while ((e - InstrSlots::NUM) >= s && !MI) {
-      e -= InstrSlots::NUM;
-      MI = li_->getInstructionFromIndex(e);
-    }
-    if (e < s || MI == NULL)
-      return;
-
-    for (unsigned i = 0, NumOps = MI->getNumOperands(); i != NumOps; ++i) {
-      MachineOperand &MO = MI->getOperand(i);
-      if (MO.isRegister() && MO.isKill() && MO.getReg() &&
-          tri_->regsOverlap(MO.getReg(), Reg)) {
-        MO.setIsKill(false);
-      }
-    }
-
-    e -= InstrSlots::NUM;
-  }
-}
-
+/// RemoveUnnecessaryKills - Remove kill markers that are no longer accurate
+/// due to live range lengthening as the result of coalescing.
 void SimpleRegisterCoalescing::printRegName(unsigned reg) const {
   if (TargetRegisterInfo::isPhysicalRegister(reg))
     cerr << tri_->getName(reg);
