@@ -356,6 +356,8 @@ DIAG(err_function_declared_typedef, ERROR,
      "function definition declared 'typedef'")
 DIAG(err_expected_fn_body, ERROR,
      "expected function body after function declarator")
+DIAG(err_expected_method_body, ERROR,
+     "expected method body")
 DIAG(err_expected_after_declarator, ERROR,
      "expected '=', ',', ';', 'asm', or '__attribute__' after declarator")
 DIAG(err_expected_statement, ERROR,
@@ -484,6 +486,8 @@ DIAG(err_toomany_element_decls, ERROR,
      "Only one element declaration is allowed")
 DIAG(warn_expected_implementation, WARNING,
      "@end must appear in an @implementation context")
+DIAG(error_missing_method_context, ERROR,
+     "missing context for method declaration")
 DIAG(error_bad_receiver_type, ERROR,
      "bad receiver type '%0'")
 

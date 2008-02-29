@@ -807,6 +807,12 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
     ObjCDeclSpec *ArgQT, TypeTy **ArgTypes, IdentifierInfo **ArgNames,
     AttributeList *AttrList, tok::ObjCKeywordKind MethodDeclKind,
     bool isVariadic) {
+
+  // Make sure we can establish a context for the method.
+  if (!ClassDecl) {
+    Diag(MethodLoc, diag::error_missing_method_context);
+    return 0;
+  }
   llvm::SmallVector<ParmVarDecl*, 16> Params;
   
   for (unsigned i = 0; i < Sel.getNumArgs(); i++) {

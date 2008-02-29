@@ -1240,7 +1240,7 @@ Parser::DeclTy *Parser::ParseObjCMethodDefinition() {
 
   // We should have an opening brace now.
   if (Tok.isNot(tok::l_brace)) {
-    Diag(Tok, diag::err_expected_fn_body);
+    Diag(Tok, diag::err_expected_method_body);
     
     // Skip over garbage, until we get to '{'.  Don't eat the '{'.
     SkipUntil(tok::l_brace, true, true);
