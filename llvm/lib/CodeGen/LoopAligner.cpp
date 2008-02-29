@@ -24,8 +24,6 @@ using namespace llvm;
 
 namespace {
   class LoopAligner : public MachineFunctionPass {
-    const TargetLowering *TLI;
-
   public:
     static char ID;
     LoopAligner() : MachineFunctionPass((intptr_t)&ID) {}
@@ -51,7 +49,11 @@ bool LoopAligner::runOnMachineFunction(MachineFunction &MF) {
   if (MLI->begin() == MLI->end())
     return false;  // No loops.
 
-  unsigned Align = MF.getTarget().getTargetLowering()->getPrefLoopAlignment();
+  const TargetLowering *TLI = MF.getTarget().getTargetLowering();
+  if (!TLI)
+    return false;
+
+  unsigned Align = TLI->getPrefLoopAlignment();
   if (!Align)
     return false;  // Don't care about loop alignment.
 
