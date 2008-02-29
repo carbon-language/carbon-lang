@@ -92,6 +92,8 @@ fi
 # don't want to make the builders hit swap by firing off too many gcc's at the
 # same time.
 make $OPTIMIZE_OPTS UNIVERSAL=1 UNIVERSAL_ARCH="$TARGETS" \
+    LLVM_SUBMIT_VERSION=$LLVM_SUBMIT_VERSION \
+    LLVM_SUBMIT_SUBVERSION=$LLVM_SUBMIT_SUBVERSION \
     CXXFLAGS="-DLLVM_VERSION_INFO='\" Apple Build #$LLVM_VERSION\"'"
 
 if ! test $? == 0 ; then
@@ -164,9 +166,10 @@ LTO_HOME=$DEST_DIR/$DEVELOPER_DIR/usr
 fi
 
 mkdir -p $LTO_HOME/lib
-mv lib/LLVMlto* $LTO_HOME/lib/.
-mkdir -p $LTO_HOME/include/llvm
-mv $DEST_DIR/usr/local/include/llvm/LinkTimeOptimizer.h $LTO_HOME/include/llvm/.
+mv lib/libLTO.dylib $LTO_HOME/lib/libLTO.dylib
+rm -f lib/libLTO.a lib/libLTO.la
+
+
 
 ################################################################################
 # Create SYM_DIR with information required for debugging.
