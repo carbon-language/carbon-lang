@@ -170,8 +170,6 @@ static Constant *FoldBitCast(Constant *V, const Type *DestTy) {
 
 Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
                                             const Type *DestTy) {
-  const Type *SrcTy = V->getType();
-
   if (isa<UndefValue>(V)) {
     // zext(undef) = 0, because the top bits will be zero.
     // sext(undef) = 0, because the top bits will all be the same.
@@ -257,12 +255,11 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
       APInt api = CI->getValue();
       const uint64_t zero[] = {0, 0};
-      uint32_t BitWidth = cast<IntegerType>(SrcTy)->getBitWidth();
       APFloat apf = APFloat(APInt(DestTy->getPrimitiveSizeInBits(),
                                   2, zero));
-      (void)apf.convertFromZeroExtendedInteger(api.getRawData(), BitWidth, 
-                                   opc==Instruction::SIToFP,
-                                   APFloat::rmNearestTiesToEven);
+      (void)apf.convertFromAPInt(api, 
+                                 opc==Instruction::SIToFP,
+                                 APFloat::rmNearestTiesToEven);
       return ConstantFP::get(DestTy, apf);
     }
     if (const ConstantVector *CV = dyn_cast<ConstantVector>(V)) {
