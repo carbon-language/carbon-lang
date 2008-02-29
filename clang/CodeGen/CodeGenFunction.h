@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CODEGEN_CODEGENFUNCTION_H
-#define CODEGEN_CODEGENFUNCTION_H
+#ifndef CLANG_CODEGEN_CODEGENFUNCTION_H
+#define CLANG_CODEGEN_CODEGENFUNCTION_H
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"

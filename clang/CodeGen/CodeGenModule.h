@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CODEGEN_CODEGENMODULE_H
-#define CODEGEN_CODEGENMODULE_H
+#ifndef CLANG_CODEGEN_CODEGENMODULE_H
+#define CLANG_CODEGEN_CODEGENMODULE_H
 
 #include "CodeGenTypes.h"
 #include "llvm/ADT/DenseMap.h"
