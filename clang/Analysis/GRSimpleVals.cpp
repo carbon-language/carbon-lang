@@ -101,6 +101,11 @@ unsigned RunGRSimpleVals(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx,
               CheckerState->undef_results_begin(),
               CheckerState->undef_results_end(),
               "Result of operation is undefined.");
+  
+  EmitWarning(Diag, SrcMgr,
+              CheckerState->bad_calls_begin(),
+              CheckerState->bad_calls_end(),
+              "Call using a NULL or undefined function pointer value.");
       
 #ifndef NDEBUG
   if (Visualize) CheckerState->ViewGraph();

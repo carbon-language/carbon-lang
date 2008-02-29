@@ -507,11 +507,10 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
 
     // Check for undefined control-flow.
 
-    if (L.isUndef()) {
-      
+    if (L.isUndef() || isa<lval::ConcreteInt>(L)) {      
       NodeTy* N = Builder->generateNode(CE, St, *DI);
       N->markAsSink();
-      UndefBranches.insert(N);
+      BadCalls.insert(N);
       continue;
     }
     
@@ -1591,7 +1590,8 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
         GraphPrintCheckerState->isUndefStore(N) ||
         GraphPrintCheckerState->isUndefControlFlow(N) ||
         GraphPrintCheckerState->isBadDivide(N) ||
-        GraphPrintCheckerState->isUndefResult(N))
+        GraphPrintCheckerState->isUndefResult(N) ||
+        GraphPrintCheckerState->isBadCall(N))
       return "color=\"red\",style=\"filled\"";
     
     if (GraphPrintCheckerState->isNoReturnCall(N))
@@ -1623,26 +1623,22 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
         
         L.getStmt()->printPretty(Out);
         
-        if (GraphPrintCheckerState->isImplicitNullDeref(N)) {
+        if (GraphPrintCheckerState->isImplicitNullDeref(N))
           Out << "\\|Implicit-Null Dereference.\\l";
-        }
-        else if (GraphPrintCheckerState->isExplicitNullDeref(N)) {
+        else if (GraphPrintCheckerState->isExplicitNullDeref(N))
           Out << "\\|Explicit-Null Dereference.\\l";
-        }
-        else if (GraphPrintCheckerState->isUndefDeref(N)) {
+        else if (GraphPrintCheckerState->isUndefDeref(N))
           Out << "\\|Dereference of undefialied value.\\l";
-        }
-        else if (GraphPrintCheckerState->isUndefStore(N)) {
+        else if (GraphPrintCheckerState->isUndefStore(N))
           Out << "\\|Store to Undefined LVal.";
-        }
-        else if (GraphPrintCheckerState->isBadDivide(N)) {
+        else if (GraphPrintCheckerState->isBadDivide(N))
           Out << "\\|Divide-by zero or undefined value.";
-        }
-        else if (GraphPrintCheckerState->isUndefResult(N)) {
+        else if (GraphPrintCheckerState->isUndefResult(N))
           Out << "\\|Result of operation is undefined.";
-        }
         else if (GraphPrintCheckerState->isNoReturnCall(N))
           Out << "\\|Call to function marked \"noreturn\".";
+        else if (GraphPrintCheckerState->isBadCall(N))
+          Out << "\\|Call to NULL/Undefined.";
         
         break;
       }
