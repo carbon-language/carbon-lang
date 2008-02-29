@@ -996,7 +996,7 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
                                       Ops.size());
     } else {
       // Canonicalize all constant ints to be unsigned.
-      return N = DAG.getConstant(cast<ConstantInt>(C)->getZExtValue(),VT);
+      return N = DAG.getConstant(cast<ConstantInt>(C)->getValue(),VT);
     }
   }
       
