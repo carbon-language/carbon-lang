@@ -481,12 +481,27 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
     NodeSet DstTmp;  
     
     Visit(*AI, Pred, DstTmp);
+    
     if (DstTmp.empty()) DstTmp.Add(Pred);
     
+    Expr* CurrentArg = *AI;
     ++AI;
     
-    for (NodeSet::iterator DI=DstTmp.begin(), DE=DstTmp.end(); DI != DE; ++DI)
+    for (NodeSet::iterator DI=DstTmp.begin(), DE=DstTmp.end(); DI != DE; ++DI) {
+      if (GetRVal((*DI)->getState(), CurrentArg).isUndef()) {
+
+        NodeTy* N = Builder->generateNode(CE, (*DI)->getState(), *DI);
+
+        if (N) {
+          N->markAsSink();
+          UndefArgs.insert(N);
+        }
+        
+        continue;        
+      }
+
       VisitCall(CE, *DI, AI, AE, Dst);
+    }
     
     return;
   }
@@ -509,8 +524,10 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
 
     if (L.isUndef() || isa<lval::ConcreteInt>(L)) {      
       NodeTy* N = Builder->generateNode(CE, St, *DI);
-      N->markAsSink();
-      BadCalls.insert(N);
+      if (N) {
+        N->markAsSink();
+        BadCalls.insert(N);
+      }
       continue;
     }
     
@@ -1591,7 +1608,8 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
         GraphPrintCheckerState->isUndefControlFlow(N) ||
         GraphPrintCheckerState->isBadDivide(N) ||
         GraphPrintCheckerState->isUndefResult(N) ||
-        GraphPrintCheckerState->isBadCall(N))
+        GraphPrintCheckerState->isBadCall(N) ||
+        GraphPrintCheckerState->isUndefArg(N))
       return "color=\"red\",style=\"filled\"";
     
     if (GraphPrintCheckerState->isNoReturnCall(N))
@@ -1639,6 +1657,8 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
           Out << "\\|Call to function marked \"noreturn\".";
         else if (GraphPrintCheckerState->isBadCall(N))
           Out << "\\|Call to NULL/Undefined.";
+        else if (GraphPrintCheckerState->isUndefArg(N))
+          Out << "\\|Argument in call is undefined";
         
         break;
       }

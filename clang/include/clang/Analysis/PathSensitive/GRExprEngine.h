@@ -91,6 +91,7 @@ protected:
   typedef llvm::SmallPtrSet<NodeTy*,2> UndefStoresTy;
   typedef llvm::SmallPtrSet<NodeTy*,2> BadDerefTy;
   typedef llvm::SmallPtrSet<NodeTy*,2> BadCallsTy;
+  typedef llvm::SmallPtrSet<NodeTy*,2> UndefArgsTy;
   typedef llvm::SmallPtrSet<NodeTy*,2> BadDividesTy;
   typedef llvm::SmallPtrSet<NodeTy*,2> NoReturnCallsTy;  
   typedef llvm::SmallPtrSet<NodeTy*,2> UndefResultsTy;  
@@ -131,6 +132,10 @@ protected:
   /// BadCalls - Nodes in the ExplodedGraph resulting from calls to function
   ///  pointers that are NULL (or other constants) or Undefined.
   BadCallsTy BadCalls;
+  
+  /// UndefArg - Nodes in the ExplodedGraph resulting from calls to functions
+  ///   where a pass-by-value argument has an undefined value.
+  UndefArgsTy UndefArgs;
   
   bool StateCleaned;
   
@@ -203,6 +208,10 @@ public:
     return N->isSink() && BadCalls.count(const_cast<NodeTy*>(N)) != 0;
   }
   
+  bool isUndefArg(const NodeTy* N) const {
+    return N->isSink() && UndefArgs.count(const_cast<NodeTy*>(N)) != 0;
+  }
+  
   typedef BadDerefTy::iterator null_deref_iterator;
   null_deref_iterator null_derefs_begin() { return ExplicitNullDeref.begin(); }
   null_deref_iterator null_derefs_end() { return ExplicitNullDeref.end(); }
@@ -222,6 +231,10 @@ public:
   typedef BadCallsTy::iterator bad_calls_iterator;
   bad_calls_iterator bad_calls_begin() { return BadCalls.begin(); }
   bad_calls_iterator bad_calls_end() { return BadCalls.end(); }  
+  
+  typedef UndefArgsTy::iterator undef_arg_iterator;
+  undef_arg_iterator undef_arg_begin() { return UndefArgs.begin(); }
+  undef_arg_iterator undef_arg_end() { return UndefArgs.end(); }  
   
   /// ProcessStmt - Called by GRCoreEngine. Used to generate new successor
   ///  nodes by processing the 'effects' of a block-level statement.  

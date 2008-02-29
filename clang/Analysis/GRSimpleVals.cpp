@@ -106,6 +106,11 @@ unsigned RunGRSimpleVals(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx,
               CheckerState->bad_calls_begin(),
               CheckerState->bad_calls_end(),
               "Call using a NULL or undefined function pointer value.");
+  
+  EmitWarning(Diag, SrcMgr,
+              CheckerState->undef_arg_begin(),
+              CheckerState->undef_arg_end(),
+      "Pass-by-value argument in function or message expression is undefined.");
       
 #ifndef NDEBUG
   if (Visualize) CheckerState->ViewGraph();
