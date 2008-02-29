@@ -4287,7 +4287,8 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   if (FCmpInst *LHS = dyn_cast<FCmpInst>(I.getOperand(0))) {
     if (FCmpInst *RHS = dyn_cast<FCmpInst>(I.getOperand(1))) {
       if (LHS->getPredicate() == FCmpInst::FCMP_UNO &&
-          RHS->getPredicate() == FCmpInst::FCMP_UNO)
+          RHS->getPredicate() == FCmpInst::FCMP_UNO && 
+          LHS->getOperand(0)->getType() == RHS->getOperand(0)->getType())
         if (ConstantFP *LHSC = dyn_cast<ConstantFP>(LHS->getOperand(1)))
           if (ConstantFP *RHSC = dyn_cast<ConstantFP>(RHS->getOperand(1))) {
             // If either of the constants are nans, then the whole thing returns
