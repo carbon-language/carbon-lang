@@ -113,17 +113,9 @@ bool ISD::isBuildVectorAllOnes(const SDNode *N) {
     if (!cast<ConstantSDNode>(NotZero)->isAllOnesValue())
       return false;
   } else if (isa<ConstantFPSDNode>(NotZero)) {
-    MVT::ValueType VT = NotZero.getValueType();
-    if (VT== MVT::f64) {
-      if (((cast<ConstantFPSDNode>(NotZero)->getValueAPF().
-                  convertToAPInt().getZExtValue())) != (uint64_t)-1)
-        return false;
-    } else {
-      if ((uint32_t)cast<ConstantFPSDNode>(NotZero)->
-                      getValueAPF().convertToAPInt().getZExtValue() != 
-          (uint32_t)-1)
-        return false;
-    }
+    if (!cast<ConstantFPSDNode>(NotZero)->getValueAPF().
+                convertToAPInt().isAllOnesValue())
+      return false;
   } else
     return false;
   
@@ -712,7 +704,8 @@ SelectionDAG::~SelectionDAG() {
 
 SDOperand SelectionDAG::getZeroExtendInReg(SDOperand Op, MVT::ValueType VT) {
   if (Op.getValueType() == VT) return Op;
-  int64_t Imm = ~0ULL >> (64-MVT::getSizeInBits(VT));
+  APInt Imm = APInt::getLowBitsSet(Op.getValueSizeInBits(),
+                                   MVT::getSizeInBits(VT));
   return getNode(ISD::AND, Op.getValueType(), Op,
                  getConstant(Imm, Op.getValueType()));
 }
@@ -1050,28 +1043,22 @@ SDOperand SelectionDAG::FoldSetCC(MVT::ValueType VT, SDOperand N1,
   }
   
   if (ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2.Val)) {
-    uint64_t C2 = N2C->getValue();
+    const APInt &C2 = N2C->getAPIntValue();
     if (ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.Val)) {
-      uint64_t C1 = N1C->getValue();
-      
-      // Sign extend the operands if required
-      if (ISD::isSignedIntSetCC(Cond)) {
-        C1 = N1C->getSignExtended();
-        C2 = N2C->getSignExtended();
-      }
+      const APInt &C1 = N1C->getAPIntValue();
       
       switch (Cond) {
       default: assert(0 && "Unknown integer setcc!");
       case ISD::SETEQ:  return getConstant(C1 == C2, VT);
       case ISD::SETNE:  return getConstant(C1 != C2, VT);
-      case ISD::SETULT: return getConstant(C1 <  C2, VT);
-      case ISD::SETUGT: return getConstant(C1 >  C2, VT);
-      case ISD::SETULE: return getConstant(C1 <= C2, VT);
-      case ISD::SETUGE: return getConstant(C1 >= C2, VT);
-      case ISD::SETLT:  return getConstant((int64_t)C1 <  (int64_t)C2, VT);
-      case ISD::SETGT:  return getConstant((int64_t)C1 >  (int64_t)C2, VT);
-      case ISD::SETLE:  return getConstant((int64_t)C1 <= (int64_t)C2, VT);
-      case ISD::SETGE:  return getConstant((int64_t)C1 >= (int64_t)C2, VT);
+      case ISD::SETULT: return getConstant(C1.ult(C2), VT);
+      case ISD::SETUGT: return getConstant(C1.ugt(C2), VT);
+      case ISD::SETULE: return getConstant(C1.ule(C2), VT);
+      case ISD::SETUGE: return getConstant(C1.uge(C2), VT);
+      case ISD::SETLT:  return getConstant(C1.slt(C2), VT);
+      case ISD::SETGT:  return getConstant(C1.sgt(C2), VT);
+      case ISD::SETLE:  return getConstant(C1.sle(C2), VT);
+      case ISD::SETGE:  return getConstant(C1.sge(C2), VT);
       }
     }
   }
@@ -1749,88 +1736,42 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT) {
 
 SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
                                 SDOperand Operand) {
-  unsigned Tmp1;
   // Constant fold unary operations with an integer constant operand.
   if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Operand.Val)) {
-    uint64_t Val = C->getValue();
+    const APInt &Val = C->getAPIntValue();
+    unsigned BitWidth = MVT::getSizeInBits(VT);
     switch (Opcode) {
     default: break;
-    case ISD::SIGN_EXTEND: return getConstant(C->getSignExtended(), VT);
+    case ISD::SIGN_EXTEND: return getConstant(APInt(Val).sextOrTrunc(BitWidth), VT);
     case ISD::ANY_EXTEND:
-    case ISD::ZERO_EXTEND: return getConstant(Val, VT);
-    case ISD::TRUNCATE:    return getConstant(Val, VT);
+    case ISD::ZERO_EXTEND:
+    case ISD::TRUNCATE:    return getConstant(APInt(Val).zextOrTrunc(BitWidth), VT);
     case ISD::UINT_TO_FP:
     case ISD::SINT_TO_FP: {
       const uint64_t zero[] = {0, 0};
       // No compile time operations on this type.
       if (VT==MVT::ppcf128)
         break;
-      APFloat apf = APFloat(APInt(MVT::getSizeInBits(VT), 2, zero));
-      (void)apf.convertFromZeroExtendedInteger(&Val, 
-                               MVT::getSizeInBits(Operand.getValueType()), 
-                               Opcode==ISD::SINT_TO_FP,
-                               APFloat::rmNearestTiesToEven);
+      APFloat apf = APFloat(APInt(BitWidth, 2, zero));
+      (void)apf.convertFromAPInt(Val, 
+                                 Opcode==ISD::SINT_TO_FP,
+                                 APFloat::rmNearestTiesToEven);
       return getConstantFP(apf, VT);
     }
     case ISD::BIT_CONVERT:
       if (VT == MVT::f32 && C->getValueType(0) == MVT::i32)
-        return getConstantFP(BitsToFloat(Val), VT);
+        return getConstantFP(Val.bitsToFloat(), VT);
       else if (VT == MVT::f64 && C->getValueType(0) == MVT::i64)
-        return getConstantFP(BitsToDouble(Val), VT);
+        return getConstantFP(Val.bitsToDouble(), VT);
       break;
     case ISD::BSWAP:
-      switch(VT) {
-      default: assert(0 && "Invalid bswap!"); break;
-      case MVT::i16: return getConstant(ByteSwap_16((unsigned short)Val), VT);
-      case MVT::i32: return getConstant(ByteSwap_32((unsigned)Val), VT);
-      case MVT::i64: return getConstant(ByteSwap_64(Val), VT);
-      }
-      break;
+      return getConstant(Val.byteSwap(), VT);
     case ISD::CTPOP:
-      switch(VT) {
-      default: assert(0 && "Invalid ctpop!"); break;
-      case MVT::i1: return getConstant(Val != 0, VT);
-      case MVT::i8: 
-        Tmp1 = (unsigned)Val & 0xFF;
-        return getConstant(CountPopulation_32(Tmp1), VT);
-      case MVT::i16:
-        Tmp1 = (unsigned)Val & 0xFFFF;
-        return getConstant(CountPopulation_32(Tmp1), VT);
-      case MVT::i32:
-        return getConstant(CountPopulation_32((unsigned)Val), VT);
-      case MVT::i64:
-        return getConstant(CountPopulation_64(Val), VT);
-      }
+      return getConstant(Val.countPopulation(), VT);
     case ISD::CTLZ:
-      switch(VT) {
-      default: assert(0 && "Invalid ctlz!"); break;
-      case MVT::i1: return getConstant(Val == 0, VT);
-      case MVT::i8: 
-        Tmp1 = (unsigned)Val & 0xFF;
-        return getConstant(CountLeadingZeros_32(Tmp1)-24, VT);
-      case MVT::i16:
-        Tmp1 = (unsigned)Val & 0xFFFF;
-        return getConstant(CountLeadingZeros_32(Tmp1)-16, VT);
-      case MVT::i32:
-        return getConstant(CountLeadingZeros_32((unsigned)Val), VT);
-      case MVT::i64:
-        return getConstant(CountLeadingZeros_64(Val), VT);
-      }
+      return getConstant(Val.countLeadingZeros(), VT);
     case ISD::CTTZ:
-      switch(VT) {
-      default: assert(0 && "Invalid cttz!"); break;
-      case MVT::i1: return getConstant(Val == 0, VT);
-      case MVT::i8: 
-        Tmp1 = (unsigned)Val | 0x100;
-        return getConstant(CountTrailingZeros_32(Tmp1), VT);
-      case MVT::i16:
-        Tmp1 = (unsigned)Val | 0x10000;
-        return getConstant(CountTrailingZeros_32(Tmp1), VT);
-      case MVT::i32:
-        return getConstant(CountTrailingZeros_32((unsigned)Val), VT);
-      case MVT::i64:
-        return getConstant(CountTrailingZeros_64(Val), VT);
-      }
+      return getConstant(Val.countTrailingZeros(), VT);
     }
   }
 
@@ -2090,10 +2031,10 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     if (EVT == VT) return N1;  // Not actually extending
 
     if (N1C) {
-      int64_t Val = N1C->getValue();
+      APInt Val = N1C->getAPIntValue();
       unsigned FromBits = MVT::getSizeInBits(cast<VTSDNode>(N2)->getVT());
-      Val <<= 64-FromBits;
-      Val >>= 64-FromBits;
+      Val <<= Val.getBitWidth()-FromBits;
+      Val = Val.lshr(Val.getBitWidth()-FromBits);
       return getConstant(Val, VT);
     }
     break;
@@ -2150,37 +2091,31 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 
   if (N1C) {
     if (N2C) {
-      uint64_t C1 = N1C->getValue(), C2 = N2C->getValue();
+      APInt C1 = N1C->getAPIntValue(), C2 = N2C->getAPIntValue();
       switch (Opcode) {
       case ISD::ADD: return getConstant(C1 + C2, VT);
       case ISD::SUB: return getConstant(C1 - C2, VT);
       case ISD::MUL: return getConstant(C1 * C2, VT);
       case ISD::UDIV:
-        if (C2) return getConstant(C1 / C2, VT);
+        if (C2.getBoolValue()) return getConstant(C1.udiv(C2), VT);
         break;
       case ISD::UREM :
-        if (C2) return getConstant(C1 % C2, VT);
+        if (C2.getBoolValue()) return getConstant(C1.urem(C2), VT);
         break;
       case ISD::SDIV :
-        if (C2) return getConstant(N1C->getSignExtended() /
-                                   N2C->getSignExtended(), VT);
+        if (C2.getBoolValue()) return getConstant(C1.sdiv(C2), VT);
         break;
       case ISD::SREM :
-        if (C2) return getConstant(N1C->getSignExtended() %
-                                   N2C->getSignExtended(), VT);
+        if (C2.getBoolValue()) return getConstant(C1.srem(C2), VT);
         break;
       case ISD::AND  : return getConstant(C1 & C2, VT);
       case ISD::OR   : return getConstant(C1 | C2, VT);
       case ISD::XOR  : return getConstant(C1 ^ C2, VT);
       case ISD::SHL  : return getConstant(C1 << C2, VT);
-      case ISD::SRL  : return getConstant(C1 >> C2, VT);
-      case ISD::SRA  : return getConstant(N1C->getSignExtended() >>(int)C2, VT);
-      case ISD::ROTL : 
-        return getConstant((C1 << C2) | (C1 >> (MVT::getSizeInBits(VT) - C2)),
-                           VT);
-      case ISD::ROTR : 
-        return getConstant((C1 >> C2) | (C1 << (MVT::getSizeInBits(VT) - C2)), 
-                           VT);
+      case ISD::SRL  : return getConstant(C1.lshr(C2), VT);
+      case ISD::SRA  : return getConstant(C1.ashr(C2), VT);
+      case ISD::ROTL : return getConstant(C1.rotl(C2), VT);
+      case ISD::ROTR : return getConstant(C1.rotr(C2), VT);
       default: break;
       }
     } else {      // Cannonicalize constant to RHS if commutative
