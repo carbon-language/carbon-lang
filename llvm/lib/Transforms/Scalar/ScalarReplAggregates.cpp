@@ -118,6 +118,10 @@ namespace {
     const Type *CanConvertToScalar(Value *V, bool &IsNotTrivial);
     void ConvertToScalar(AllocationInst *AI, const Type *Ty);
     void ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset);
+    Value *ConvertUsesOfLoadToScalar(LoadInst *LI, AllocaInst *NewAI, 
+                                     unsigned Offset);
+    Value *ConvertUsesOfStoreToScalar(StoreInst *SI, AllocaInst *NewAI, 
+                                      unsigned Offset);
     static Instruction *isOnlyCopiedFromConstantGlobal(AllocationInst *AI);
   };
 
@@ -1071,163 +1075,17 @@ void SROA::ConvertToScalar(AllocationInst *AI, const Type *ActualTy) {
 /// Offset is an offset from the original alloca, in bits that need to be
 /// shifted to the right.  By the end of this, there should be no uses of Ptr.
 void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
-  const TargetData &TD = getAnalysis<TargetData>();
   while (!Ptr->use_empty()) {
     Instruction *User = cast<Instruction>(Ptr->use_back());
     
     if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
-      // The load is a bit extract from NewAI shifted right by Offset bits.
-      Value *NV = new LoadInst(NewAI, LI->getName(), LI);
-      if (NV->getType() == LI->getType() && Offset == 0) {
-        // We win, no conversion needed.
-      } else if (const VectorType *PTy = dyn_cast<VectorType>(NV->getType())) {
-        // If the result alloca is a vector type, this is either an element
-        // access or a bitcast to another vector type.
-        if (isa<VectorType>(LI->getType())) {
-          NV = new BitCastInst(NV, LI->getType(), LI->getName(), LI);
-        } else {
-          // Must be an element access.
-          unsigned Elt = Offset/TD.getABITypeSizeInBits(PTy->getElementType());
-          NV = new ExtractElementInst(
-                         NV, ConstantInt::get(Type::Int32Ty, Elt), "tmp", LI);
-        }
-      } else if (isa<PointerType>(NV->getType())) {
-        assert(isa<PointerType>(LI->getType()));
-        // Must be ptr->ptr cast.  Anything else would result in NV being
-        // an integer.
-        NV = new BitCastInst(NV, LI->getType(), LI->getName(), LI);
-      } else {
-        const IntegerType *NTy = cast<IntegerType>(NV->getType());
-
-        // If this is a big-endian system and the load is narrower than the
-        // full alloca type, we need to do a shift to get the right bits.
-        int ShAmt = 0;
-        if (TD.isBigEndian()) {
-          // On big-endian machines, the lowest bit is stored at the bit offset
-          // from the pointer given by getTypeStoreSizeInBits.  This matters for
-          // integers with a bitwidth that is not a multiple of 8.
-          ShAmt = TD.getTypeStoreSizeInBits(NTy) -
-            TD.getTypeStoreSizeInBits(LI->getType()) - Offset;
-        } else {
-          ShAmt = Offset;
-        }
-
-        // Note: we support negative bitwidths (with shl) which are not defined.
-        // We do this to support (f.e.) loads off the end of a structure where
-        // only some bits are used.
-        if (ShAmt > 0 && (unsigned)ShAmt < NTy->getBitWidth())
-          NV = BinaryOperator::createLShr(NV, 
-                                          ConstantInt::get(NV->getType(),ShAmt),
-                                          LI->getName(), LI);
-        else if (ShAmt < 0 && (unsigned)-ShAmt < NTy->getBitWidth())
-          NV = BinaryOperator::createShl(NV, 
-                                         ConstantInt::get(NV->getType(),-ShAmt),
-                                         LI->getName(), LI);
-        
-        // Finally, unconditionally truncate the integer to the right width.
-        unsigned LIBitWidth = TD.getTypeSizeInBits(LI->getType());
-        if (LIBitWidth < NTy->getBitWidth())
-          NV = new TruncInst(NV, IntegerType::get(LIBitWidth),
-                             LI->getName(), LI);
-        
-        // If the result is an integer, this is a trunc or bitcast.
-        if (isa<IntegerType>(LI->getType())) {
-          assert(NV->getType() == LI->getType() && "Truncate wasn't enough?");
-        } else if (LI->getType()->isFloatingPoint()) {
-          // Just do a bitcast, we know the sizes match up.
-          NV = new BitCastInst(NV, LI->getType(), LI->getName(), LI);
-        } else {
-          // Otherwise must be a pointer.
-          NV = new IntToPtrInst(NV, LI->getType(), LI->getName(), LI);
-        }
-      }
+      Value *NV = ConvertUsesOfLoadToScalar(LI, NewAI, Offset);
       LI->replaceAllUsesWith(NV);
       LI->eraseFromParent();
     } else if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
       assert(SI->getOperand(0) != Ptr && "Consistency error!");
 
-      // Convert the stored type to the actual type, shift it left to insert
-      // then 'or' into place.
-      Value *SV = SI->getOperand(0);
-      const Type *AllocaType = NewAI->getType()->getElementType();
-      if (SV->getType() == AllocaType && Offset == 0) {
-        // All is well.
-      } else if (const VectorType *PTy = dyn_cast<VectorType>(AllocaType)) {
-        Value *Old = new LoadInst(NewAI, NewAI->getName()+".in", SI);
-
-        // If the result alloca is a vector type, this is either an element
-        // access or a bitcast to another vector type.
-        if (isa<VectorType>(SV->getType())) {
-          SV = new BitCastInst(SV, AllocaType, SV->getName(), SI);
-        } else {
-          // Must be an element insertion.
-          unsigned Elt = Offset/TD.getABITypeSizeInBits(PTy->getElementType());
-          SV = new InsertElementInst(Old, SV,
-                                     ConstantInt::get(Type::Int32Ty, Elt),
-                                     "tmp", SI);
-        }
-      } else if (isa<PointerType>(AllocaType)) {
-        // If the alloca type is a pointer, then all the elements must be
-        // pointers.
-        if (SV->getType() != AllocaType)
-          SV = new BitCastInst(SV, AllocaType, SV->getName(), SI);
-      } else {
-        Value *Old = new LoadInst(NewAI, NewAI->getName()+".in", SI);
-
-        // If SV is a float, convert it to the appropriate integer type.
-        // If it is a pointer, do the same, and also handle ptr->ptr casts
-        // here.
-        unsigned SrcWidth = TD.getTypeSizeInBits(SV->getType());
-        unsigned DestWidth = TD.getTypeSizeInBits(AllocaType);
-        unsigned SrcStoreWidth = TD.getTypeStoreSizeInBits(SV->getType());
-        unsigned DestStoreWidth = TD.getTypeStoreSizeInBits(AllocaType);
-        if (SV->getType()->isFloatingPoint())
-          SV = new BitCastInst(SV, IntegerType::get(SrcWidth),
-                               SV->getName(), SI);
-        else if (isa<PointerType>(SV->getType()))
-          SV = new PtrToIntInst(SV, TD.getIntPtrType(), SV->getName(), SI);
-                 
-        // Always zero extend the value if needed.
-        if (SV->getType() != AllocaType)
-          SV = new ZExtInst(SV, AllocaType, SV->getName(), SI);
-
-        // If this is a big-endian system and the store is narrower than the
-        // full alloca type, we need to do a shift to get the right bits.
-        int ShAmt = 0;
-        if (TD.isBigEndian()) {
-          // On big-endian machines, the lowest bit is stored at the bit offset
-          // from the pointer given by getTypeStoreSizeInBits.  This matters for
-          // integers with a bitwidth that is not a multiple of 8.
-          ShAmt = DestStoreWidth - SrcStoreWidth - Offset;
-        } else {
-          ShAmt = Offset;
-        }
-
-        // Note: we support negative bitwidths (with shr) which are not defined.
-        // We do this to support (f.e.) stores off the end of a structure where
-        // only some bits in the structure are set.
-        APInt Mask(APInt::getLowBitsSet(DestWidth, SrcWidth));
-        if (ShAmt > 0 && (unsigned)ShAmt < DestWidth) {
-          SV = BinaryOperator::createShl(SV, 
-                                         ConstantInt::get(SV->getType(), ShAmt),
-                                         SV->getName(), SI);
-          Mask <<= ShAmt;
-        } else if (ShAmt < 0 && (unsigned)-ShAmt < DestWidth) {
-          SV = BinaryOperator::createLShr(SV,
-                                         ConstantInt::get(SV->getType(),-ShAmt),
-                                          SV->getName(), SI);
-          Mask = Mask.lshr(ShAmt);
-        }
-        
-        // Mask out the bits we are about to insert from the old value, and or
-        // in the new bits.
-        if (SrcWidth != DestWidth) {
-          assert(DestWidth > SrcWidth);
-          Old = BinaryOperator::createAnd(Old, ConstantInt::get(~Mask),
-                                          Old->getName()+".mask", SI);
-          SV = BinaryOperator::createOr(Old, SV, SV->getName()+".ins", SI);
-        }
-      }
+      Value *SV = ConvertUsesOfStoreToScalar(SI, NewAI, Offset);
       new StoreInst(SV, NewAI, SI);
       SI->eraseFromParent();
       
@@ -1278,6 +1136,190 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
     }
   }
 }
+
+/// ConvertUsesOfLoadToScalar - Convert all of the users the specified load to
+/// use the new alloca directly, returning the value that should replace the
+/// load.  This happens when we are converting an "integer union" to a
+/// single integer scalar, or when we are converting a "vector union" to a
+/// vector with insert/extractelement instructions.
+///
+/// Offset is an offset from the original alloca, in bits that need to be
+/// shifted to the right.  By the end of this, there should be no uses of Ptr.
+Value *SROA::ConvertUsesOfLoadToScalar(LoadInst *LI, AllocaInst *NewAI, 
+                                       unsigned Offset) {
+  // The load is a bit extract from NewAI shifted right by Offset bits.
+  Value *NV = new LoadInst(NewAI, LI->getName(), LI);
+  
+  if (NV->getType() == LI->getType() && Offset == 0) {
+    // We win, no conversion needed.
+    return NV;
+  } 
+  
+  if (const VectorType *PTy = dyn_cast<VectorType>(NV->getType())) {
+    // If the result alloca is a vector type, this is either an element
+    // access or a bitcast to another vector type.
+    if (isa<VectorType>(LI->getType())) {
+      NV = new BitCastInst(NV, LI->getType(), LI->getName(), LI);
+    } else {
+      // Must be an element access.
+      const TargetData &TD = getAnalysis<TargetData>();
+      unsigned Elt = Offset/TD.getABITypeSizeInBits(PTy->getElementType());
+      NV = new ExtractElementInst(NV, ConstantInt::get(Type::Int32Ty, Elt),
+                                  "tmp", LI);
+    }
+  } else if (isa<PointerType>(NV->getType())) {
+    assert(isa<PointerType>(LI->getType()));
+    // Must be ptr->ptr cast.  Anything else would result in NV being
+    // an integer.
+    NV = new BitCastInst(NV, LI->getType(), LI->getName(), LI);
+  } else {
+    const IntegerType *NTy = cast<IntegerType>(NV->getType());
+    
+    // If this is a big-endian system and the load is narrower than the
+    // full alloca type, we need to do a shift to get the right bits.
+    int ShAmt = 0;
+    const TargetData &TD = getAnalysis<TargetData>();
+    if (TD.isBigEndian()) {
+      // On big-endian machines, the lowest bit is stored at the bit offset
+      // from the pointer given by getTypeStoreSizeInBits.  This matters for
+      // integers with a bitwidth that is not a multiple of 8.
+      ShAmt = TD.getTypeStoreSizeInBits(NTy) -
+      TD.getTypeStoreSizeInBits(LI->getType()) - Offset;
+    } else {
+      ShAmt = Offset;
+    }
+    
+    // Note: we support negative bitwidths (with shl) which are not defined.
+    // We do this to support (f.e.) loads off the end of a structure where
+    // only some bits are used.
+    if (ShAmt > 0 && (unsigned)ShAmt < NTy->getBitWidth())
+      NV = BinaryOperator::createLShr(NV, 
+                                      ConstantInt::get(NV->getType(),ShAmt),
+                                      LI->getName(), LI);
+    else if (ShAmt < 0 && (unsigned)-ShAmt < NTy->getBitWidth())
+      NV = BinaryOperator::createShl(NV, 
+                                     ConstantInt::get(NV->getType(),-ShAmt),
+                                     LI->getName(), LI);
+    
+    // Finally, unconditionally truncate the integer to the right width.
+    unsigned LIBitWidth = TD.getTypeSizeInBits(LI->getType());
+    if (LIBitWidth < NTy->getBitWidth())
+      NV = new TruncInst(NV, IntegerType::get(LIBitWidth),
+                         LI->getName(), LI);
+    
+    // If the result is an integer, this is a trunc or bitcast.
+    if (isa<IntegerType>(LI->getType())) {
+      assert(NV->getType() == LI->getType() && "Truncate wasn't enough?");
+    } else if (LI->getType()->isFloatingPoint()) {
+      // Just do a bitcast, we know the sizes match up.
+      NV = new BitCastInst(NV, LI->getType(), LI->getName(), LI);
+    } else {
+      // Otherwise must be a pointer.
+      NV = new IntToPtrInst(NV, LI->getType(), LI->getName(), LI);
+    }
+  }
+  return NV;
+}
+
+
+/// ConvertUsesOfStoreToScalar - Convert the specified store to a load+store
+/// pair of the new alloca directly, returning the value that should be stored
+/// to the alloca.  This happens when we are converting an "integer union" to a
+/// single integer scalar, or when we are converting a "vector union" to a
+/// vector with insert/extractelement instructions.
+///
+/// Offset is an offset from the original alloca, in bits that need to be
+/// shifted to the right.  By the end of this, there should be no uses of Ptr.
+Value *SROA::ConvertUsesOfStoreToScalar(StoreInst *SI, AllocaInst *NewAI, 
+                                        unsigned Offset) {
+  
+  // Convert the stored type to the actual type, shift it left to insert
+  // then 'or' into place.
+  Value *SV = SI->getOperand(0);
+  const Type *AllocaType = NewAI->getType()->getElementType();
+  if (SV->getType() == AllocaType && Offset == 0) {
+    // All is well.
+  } else if (const VectorType *PTy = dyn_cast<VectorType>(AllocaType)) {
+    Value *Old = new LoadInst(NewAI, NewAI->getName()+".in", SI);
+    
+    // If the result alloca is a vector type, this is either an element
+    // access or a bitcast to another vector type.
+    if (isa<VectorType>(SV->getType())) {
+      SV = new BitCastInst(SV, AllocaType, SV->getName(), SI);
+    } else {
+      // Must be an element insertion.
+      const TargetData &TD = getAnalysis<TargetData>();
+      unsigned Elt = Offset/TD.getABITypeSizeInBits(PTy->getElementType());
+      SV = new InsertElementInst(Old, SV,
+                                 ConstantInt::get(Type::Int32Ty, Elt),
+                                 "tmp", SI);
+    }
+  } else if (isa<PointerType>(AllocaType)) {
+    // If the alloca type is a pointer, then all the elements must be
+    // pointers.
+    if (SV->getType() != AllocaType)
+      SV = new BitCastInst(SV, AllocaType, SV->getName(), SI);
+  } else {
+    Value *Old = new LoadInst(NewAI, NewAI->getName()+".in", SI);
+    
+    // If SV is a float, convert it to the appropriate integer type.
+    // If it is a pointer, do the same, and also handle ptr->ptr casts
+    // here.
+    const TargetData &TD = getAnalysis<TargetData>();
+    unsigned SrcWidth = TD.getTypeSizeInBits(SV->getType());
+    unsigned DestWidth = TD.getTypeSizeInBits(AllocaType);
+    unsigned SrcStoreWidth = TD.getTypeStoreSizeInBits(SV->getType());
+    unsigned DestStoreWidth = TD.getTypeStoreSizeInBits(AllocaType);
+    if (SV->getType()->isFloatingPoint())
+      SV = new BitCastInst(SV, IntegerType::get(SrcWidth),
+                           SV->getName(), SI);
+    else if (isa<PointerType>(SV->getType()))
+      SV = new PtrToIntInst(SV, TD.getIntPtrType(), SV->getName(), SI);
+    
+    // Always zero extend the value if needed.
+    if (SV->getType() != AllocaType)
+      SV = new ZExtInst(SV, AllocaType, SV->getName(), SI);
+    
+    // If this is a big-endian system and the store is narrower than the
+    // full alloca type, we need to do a shift to get the right bits.
+    int ShAmt = 0;
+    if (TD.isBigEndian()) {
+      // On big-endian machines, the lowest bit is stored at the bit offset
+      // from the pointer given by getTypeStoreSizeInBits.  This matters for
+      // integers with a bitwidth that is not a multiple of 8.
+      ShAmt = DestStoreWidth - SrcStoreWidth - Offset;
+    } else {
+      ShAmt = Offset;
+    }
+    
+    // Note: we support negative bitwidths (with shr) which are not defined.
+    // We do this to support (f.e.) stores off the end of a structure where
+    // only some bits in the structure are set.
+    APInt Mask(APInt::getLowBitsSet(DestWidth, SrcWidth));
+    if (ShAmt > 0 && (unsigned)ShAmt < DestWidth) {
+      SV = BinaryOperator::createShl(SV, 
+                                     ConstantInt::get(SV->getType(), ShAmt),
+                                     SV->getName(), SI);
+      Mask <<= ShAmt;
+    } else if (ShAmt < 0 && (unsigned)-ShAmt < DestWidth) {
+      SV = BinaryOperator::createLShr(SV,
+                                      ConstantInt::get(SV->getType(),-ShAmt),
+                                      SV->getName(), SI);
+      Mask = Mask.lshr(ShAmt);
+    }
+    
+    // Mask out the bits we are about to insert from the old value, and or
+    // in the new bits.
+    if (SrcWidth != DestWidth) {
+      assert(DestWidth > SrcWidth);
+      Old = BinaryOperator::createAnd(Old, ConstantInt::get(~Mask),
+                                      Old->getName()+".mask", SI);
+      SV = BinaryOperator::createOr(Old, SV, SV->getName()+".ins", SI);
+    }
+  }
+  return SV;
+}
+
 
 
 /// PointsToConstantGlobal - Return true if V (possibly indirectly) points to
