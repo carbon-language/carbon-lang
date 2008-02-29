@@ -424,9 +424,9 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       else if (CE->getType() == Type::X86_FP80Ty) {
         const uint64_t zero[] = {0, 0};
         APFloat apf = APFloat(APInt(80, 2, zero));
-        (void)apf.convertFromZeroExtendedInteger(GV.IntVal.getRawData(), 
-                               GV.IntVal.getBitWidth(), false,
-                               APFloat::rmNearestTiesToEven);
+        (void)apf.convertFromAPInt(GV.IntVal, 
+                                   false,
+                                   APFloat::rmNearestTiesToEven);
         GV.IntVal = apf.convertToAPInt();
       }
       return GV;
@@ -440,9 +440,9 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       else if (CE->getType() == Type::X86_FP80Ty) {
         const uint64_t zero[] = { 0, 0};
         APFloat apf = APFloat(APInt(80, 2, zero));
-        (void)apf.convertFromZeroExtendedInteger(GV.IntVal.getRawData(), 
-                               GV.IntVal.getBitWidth(), true,
-                               APFloat::rmNearestTiesToEven);
+        (void)apf.convertFromAPInt(GV.IntVal, 
+                                   true,
+                                   APFloat::rmNearestTiesToEven);
         GV.IntVal = apf.convertToAPInt();
       }
       return GV;
