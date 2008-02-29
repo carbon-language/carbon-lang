@@ -684,7 +684,8 @@ void AsmPrinter::EmitFile(unsigned Number, const std::string &Name) const {
 //     Align = std::max(Align, ForcedAlignBits);
 //
 void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalValue *GV,
-                               unsigned ForcedAlignBits) const {
+                               unsigned ForcedAlignBits,
+                               bool UseFillExpr) const {
   if (GV && GV->getAlignment())
     NumBits = Log2_32(GV->getAlignment());
   NumBits = std::max(NumBits, ForcedAlignBits);
@@ -694,7 +695,7 @@ void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalValue *GV,
   O << TAI->getAlignDirective() << NumBits;
 
   unsigned FillValue = TAI->getTextAlignFillValue();
-  bool UseFillExpr = IsInTextSection && FillValue;
+  UseFillExpr &= IsInTextSection && FillValue;
   if (UseFillExpr) O << ",0x" << std::hex << FillValue << std::dec;
   O << "\n";
 }

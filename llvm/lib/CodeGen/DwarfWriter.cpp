@@ -2379,7 +2379,7 @@ private:
 
     EmitFrameMoves(NULL, 0, Moves, false);
 
-    Asm->EmitAlignment(2);
+    Asm->EmitAlignment(2, 0, 0, false);
     EmitLabel("debug_frame_common_end", 0);
     
     Asm->EOL();
@@ -2412,7 +2412,7 @@ private:
     
     EmitFrameMoves("func_begin", DebugFrameInfo.Number, DebugFrameInfo.Moves, false);
     
-    Asm->EmitAlignment(2);
+    Asm->EmitAlignment(2, 0, 0, false);
     EmitLabel("debug_frame_end", DebugFrameInfo.Number);
 
     Asm->EOL();
@@ -2865,7 +2865,7 @@ private:
     RI->getInitialFrameState(Moves);
     EmitFrameMoves(NULL, 0, Moves, true);
 
-    Asm->EmitAlignment(2);
+    Asm->EmitAlignment(2, 0, 0, false);
     EmitLabel("eh_frame_common_end", Index);
     
     Asm->EOL();
@@ -2951,7 +2951,7 @@ private:
       // frame.
       EmitFrameMoves("eh_func_begin", EHFrameInfo.Number, EHFrameInfo.Moves, true);
       
-      Asm->EmitAlignment(2);
+      Asm->EmitAlignment(2, 0, 0, false);
       EmitLabel("eh_frame_end", EHFrameInfo.Number);
     
       // If the function is marked used, this table should be also.  We cannot 
@@ -3270,7 +3270,7 @@ private:
     // Begin the exception table.
     Asm->SwitchToDataSection(TAI->getDwarfExceptionSection());
     O << "GCC_except_table" << SubprogramCount << ":\n";
-    Asm->EmitAlignment(2);
+    Asm->EmitAlignment(2, 0, 0, false);
     for (unsigned i = 0; i != SizeAlign; ++i) {
       Asm->EmitInt8(0);
       Asm->EOL("Padding");
@@ -3362,7 +3362,7 @@ private:
       Asm->EOL("Filter TypeInfo index");
     }
 
-    Asm->EmitAlignment(2);
+    Asm->EmitAlignment(2, 0, 0, false);
   }
 
 public:
