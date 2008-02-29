@@ -313,15 +313,15 @@ bool X86TargetAsmInfo::ExpandInlineAsm(CallInst *CI) const {
 /// format used for encoding pointers in exception handling data. Reason is
 /// 0 for data, 1 for code labels, 2 for function pointers. Global is true
 /// if the symbol can be relocated.
-unsigned X86TargetAsmInfo::PreferredEHDataFormat(unsigned Reason,
+unsigned X86TargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
                                                  bool Global) const {
   const X86Subtarget *Subtarget = &X86TM->getSubtarget<X86Subtarget>();
 
   switch (Subtarget->TargetType) {
   case X86Subtarget::isDarwin:
-   if (Reason == 2 && Global)
+   if (Reason == DwarfEncoding::Functions && Global)
      return (DW_EH_PE_pcrel | DW_EH_PE_indirect | DW_EH_PE_sdata4);
-   else if (Reason == 1 || !Global)
+   else if (Reason == DwarfEncoding::CodeLabels || !Global)
      return DW_EH_PE_pcrel;
    else
      return DW_EH_PE_absptr;
@@ -343,7 +343,8 @@ unsigned X86TargetAsmInfo::PreferredEHDataFormat(unsigned Reason,
         // - code model is medium and we're emitting externally visible symbols or
         //   any code symbols
         if (CM == CodeModel::Small ||
-            (CM == CodeModel::Medium && (Global || Reason)))
+            (CM == CodeModel::Medium && (Global ||
+                                         Reason != DwarfEncoding::Data)))
           Format = DW_EH_PE_sdata4;
         else
           Format = DW_EH_PE_sdata8;
@@ -356,7 +357,7 @@ unsigned X86TargetAsmInfo::PreferredEHDataFormat(unsigned Reason,
     } else {
       if (Subtarget->is64Bit() &&
           (CM == CodeModel::Small ||
-           (CM == CodeModel::Medium && Reason)))
+           (CM == CodeModel::Medium && Reason != DwarfEncoding::Data)))
         return DW_EH_PE_udata4;
       else
         return DW_EH_PE_absptr;

@@ -20,6 +20,15 @@
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
+  // DWARF encoding query type
+  namespace DwarfEncoding {
+    enum Target {
+      Data       = 0,
+      CodeLabels = 1,
+      Functions  = 2
+    };
+  }
+
   class TargetMachine;
   class CallInst;
 
@@ -401,7 +410,8 @@ namespace llvm {
     /// format used for encoding pointers in exception handling data. Reason is
     /// 0 for data, 1 for code labels, 2 for function pointers. Global is true
     /// if the symbol can be relocated.
-    virtual unsigned PreferredEHDataFormat(unsigned Reason, bool Global) const;
+    virtual unsigned PreferredEHDataFormat(DwarfEncoding::Target Reason,
+                                           bool Global) const;
     
     // Accessors.
     //
