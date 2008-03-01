@@ -447,3 +447,4 @@ protected:
   ValueState* MarkBranch(ValueState* St, Stmt* Terminator, bool branchTaken);
 };
 } // end clang namespace
+
