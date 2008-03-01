@@ -157,8 +157,10 @@ Sema::ExprResult Sema::ActOnCharacterConstant(const Token &Tok) {
                             Tok.getLocation(), PP);
   if (Literal.hadError())
     return ExprResult(true);
-  return new CharacterLiteral(Literal.getValue(), Context.IntTy, 
-                              Tok.getLocation());
+
+  QualType type = getLangOptions().CPlusPlus ? Context.CharTy : Context.IntTy;
+
+  return new CharacterLiteral(Literal.getValue(), type, Tok.getLocation());
 }
 
 Action::ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
