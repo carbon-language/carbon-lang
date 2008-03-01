@@ -1,15 +1,15 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep 34
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep 34
 
-int %test(int %X) {
-	; Do not fold into shr X, 34, as this uses undefined behavior!
-	%Y = shr int %X, ubyte 17
-	%Z = shr int %Y, ubyte 17
-	ret int %Z
+define i32 @test(i32 %X) {
+        ; Do not fold into shr X, 34, as this uses undefined behavior!
+        %Y = ashr i32 %X, 17            ; <i32> [#uses=1]
+        %Z = ashr i32 %Y, 17            ; <i32> [#uses=1]
+        ret i32 %Z
 }
 
-int %test2(int %X) {
-	; Do not fold into shl X, 34, as this uses undefined behavior!
-	%Y = shl int %X, ubyte 17
-	%Z = shl int %Y, ubyte 17
-	ret int %Z
+define i32 @test2(i32 %X) {
+        ; Do not fold into shl X, 34, as this uses undefined behavior!
+        %Y = shl i32 %X, 17             ; <i32> [#uses=1]
+        %Z = shl i32 %Y, 17             ; <i32> [#uses=1]
+        ret i32 %Z
 }

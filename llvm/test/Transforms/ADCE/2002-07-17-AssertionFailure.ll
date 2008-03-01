@@ -3,11 +3,11 @@
 ; block in this function, it would work fine, but that would be the part we 
 ; have to fix now, wouldn't it....
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -adce
+; RUN: llvm-as < %s | opt -adce
 
-void %foo(sbyte* %reg5481) {
-        %cast611 = cast sbyte* %reg5481 to sbyte**              ; <sbyte**> [#uses=1]
-        %reg162 = load sbyte** %cast611         ; <sbyte*> [#uses=0]
-	cast sbyte*%reg162 to int
-	ret void
+define void @foo(i8* %reg5481) {
+        %cast611 = bitcast i8* %reg5481 to i8**         ; <i8**> [#uses=1]
+        %reg162 = load i8** %cast611            ; <i8*> [#uses=1]
+        ptrtoint i8* %reg162 to i32             ; <i32>:1 [#uses=0]
+        ret void
 }

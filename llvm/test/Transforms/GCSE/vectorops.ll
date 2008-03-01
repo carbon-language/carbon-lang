@@ -1,26 +1,24 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -gcse -instcombine | \
+; RUN: llvm-as < %s | opt -gcse -instcombine | \
 ; RUN:   llvm-dis | not grep sub
 
-uint %test_extractelement(<4 x uint> %V) {
-        %R = extractelement <4 x uint> %V, uint 1
-        %R2 = extractelement <4 x uint> %V, uint 1
-	%V = sub uint %R, %R2
-        ret uint %V
+define i32 @test_extractelement(<4 x i32> %V) {
+        %R = extractelement <4 x i32> %V, i32 1         ; <i32> [#uses=1]
+        %R2 = extractelement <4 x i32> %V, i32 1                ; <i32> [#uses=1]
+        %V.upgrd.1 = sub i32 %R, %R2            ; <i32> [#uses=1]
+        ret i32 %V.upgrd.1
 }
 
-<4 x uint> %test_insertelement(<4 x uint> %V) {
-        %R = insertelement <4 x uint> %V, uint 0, uint 0
-        %R2 = insertelement <4 x uint> %V, uint 0, uint 0
-	%x = sub <4 x uint> %R, %R2
-        ret <4 x uint> %x
+define <4 x i32> @test_insertelement(<4 x i32> %V) {
+        %R = insertelement <4 x i32> %V, i32 0, i32 0           ; <<4 x i32>> [#uses=1]
+        %R2 = insertelement <4 x i32> %V, i32 0, i32 0          ; <<4 x i32>> [#uses=1]
+        %x = sub <4 x i32> %R, %R2              ; <<4 x i32>> [#uses=1]
+        ret <4 x i32> %x
 }
 
-<4 x uint> %test_shufflevector(<4 x uint> %V) {
-        %R = shufflevector <4 x uint> %V, <4 x uint> %V, 
-                  <4 x uint> < uint 1, uint undef, uint 7, uint 2>
-        %R2 = shufflevector <4 x uint> %V, <4 x uint> %V, 
-                   <4 x uint> < uint 1, uint undef, uint 7, uint 2>
-	%x = sub <4 x uint> %R, %R2
-        ret <4 x uint> %x
+define <4 x i32> @test_shufflevector(<4 x i32> %V) {
+        %R = shufflevector <4 x i32> %V, <4 x i32> %V, <4 x i32> < i32 1, i32 undef, i32 7, i32 2 >             ; <<4 x i32>> [#uses=1]
+        %R2 = shufflevector <4 x i32> %V, <4 x i32> %V, <4 x i32> < i32 1, i32 undef, i32 7, i32 2 >            ; <<4 x i32>> [#uses=1]
+        %x = sub <4 x i32> %R, %R2              ; <<4 x i32>> [#uses=1]
+        ret <4 x i32> %x
 }
 

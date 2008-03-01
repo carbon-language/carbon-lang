@@ -1,158 +1,171 @@
 ; This test makes sure that these instructions are properly eliminated.
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
 ; RUN:    grep -v xor | not grep {or }
 ; END.
 
-implementation
-
-int %test1(int %A) {
-	%B = or int %A, 0
-	ret int %B
+define i32 @test1(i32 %A) {
+        %B = or i32 %A, 0               ; <i32> [#uses=1]
+        ret i32 %B
 }
 
-int %test2(int %A) {
-	%B = or int %A, -1
-	ret int %B
+define i32 @test2(i32 %A) {
+        %B = or i32 %A, -1              ; <i32> [#uses=1]
+        ret i32 %B
 }
 
-ubyte %test2a(ubyte %A) {
-	%B = or ubyte %A, 255
-	ret ubyte %B
+define i8 @test2a(i8 %A) {
+        %B = or i8 %A, -1               ; <i8> [#uses=1]
+        ret i8 %B
 }
 
-bool %test3(bool %A) {
-	%B = or bool %A, false
-	ret bool %B
+define i1 @test3(i1 %A) {
+        %B = or i1 %A, false            ; <i1> [#uses=1]
+        ret i1 %B
 }
 
-bool %test4(bool %A) {
-	%B = or bool %A, true
-	ret bool %B
+define i1 @test4(i1 %A) {
+        %B = or i1 %A, true             ; <i1> [#uses=1]
+        ret i1 %B
 }
 
-bool %test5(bool %A) {
-	%B = or bool %A, %A
-	ret bool %B
+define i1 @test5(i1 %A) {
+        %B = or i1 %A, %A               ; <i1> [#uses=1]
+        ret i1 %B
 }
 
-int %test6(int %A) {
-	%B = or int %A, %A
-	ret int %B
+define i32 @test6(i32 %A) {
+        %B = or i32 %A, %A              ; <i32> [#uses=1]
+        ret i32 %B
 }
 
-int %test7(int %A) {    ; A | ~A == -1
-        %NotA = xor int -1, %A
-        %B = or int %A, %NotA
-        ret int %B
+; A | ~A == -1
+define i32 @test7(i32 %A) {
+        %NotA = xor i32 -1, %A          ; <i32> [#uses=1]
+        %B = or i32 %A, %NotA           ; <i32> [#uses=1]
+        ret i32 %B
 }
 
-ubyte %test8(ubyte %A) {
-	%B = or ubyte %A, 254
-	%C = or ubyte %B, 1
-	ret ubyte %C
+define i8 @test8(i8 %A) {
+        %B = or i8 %A, -2               ; <i8> [#uses=1]
+        %C = or i8 %B, 1                ; <i8> [#uses=1]
+        ret i8 %C
 }
 
-ubyte %test9(ubyte %A, ubyte %B) {  ; Test that (A|c1)|(B|c2) == (A|B)|(c1|c2)
-	%C = or ubyte %A, 1
-	%D = or ubyte %B, 254
-	%E = or ubyte %C, %D
-	ret ubyte %E
+; Test that (A|c1)|(B|c2) == (A|B)|(c1|c2)
+define i8 @test9(i8 %A, i8 %B) {
+        %C = or i8 %A, 1                ; <i8> [#uses=1]
+        %D = or i8 %B, -2               ; <i8> [#uses=1]
+        %E = or i8 %C, %D               ; <i8> [#uses=1]
+        ret i8 %E
 }
 
-ubyte %test10(ubyte %A) {
-	%B = or ubyte %A, 1
-	%C = and ubyte %B, 254
-	%D = or ubyte %C, 254  ; (X & C1) | C2 --> (X | C2) & (C1|C2)
-	ret ubyte %D
+define i8 @test10(i8 %A) {
+        %B = or i8 %A, 1                ; <i8> [#uses=1]
+        %C = and i8 %B, -2              ; <i8> [#uses=1]
+        ; (X & C1) | C2 --> (X | C2) & (C1|C2)
+        %D = or i8 %C, -2               ; <i8> [#uses=1]
+        ret i8 %D
 }
 
-ubyte %test11(ubyte %A) {
-	%B = or ubyte %A, 254
-	%C = xor ubyte %B, 13
-	%D = or ubyte %C, 1    ; (X ^ C1) | C2 --> (X | C2) ^ (C1&~C2)
-	%E = xor ubyte %D, 12
-	ret ubyte %E
+define i8 @test11(i8 %A) {
+        %B = or i8 %A, -2               ; <i8> [#uses=1]
+        %C = xor i8 %B, 13              ; <i8> [#uses=1]
+        ; (X ^ C1) | C2 --> (X | C2) ^ (C1&~C2)
+        %D = or i8 %C, 1                ; <i8> [#uses=1]
+        %E = xor i8 %D, 12              ; <i8> [#uses=1]
+        ret i8 %E
 }
 
-uint %test12(uint %A) {
-	%B = or uint %A, 4     ; Should be eliminated
-	%C = and uint %B, 8
-	ret uint %C
+define i32 @test12(i32 %A) {
+        ; Should be eliminated
+        %B = or i32 %A, 4               ; <i32> [#uses=1]
+        %C = and i32 %B, 8              ; <i32> [#uses=1]
+        ret i32 %C
 }
 
-uint %test13(uint %A) {
-	%B = or uint %A, 12
-	%C = and uint %B, 8    ; Always equal to 8
-	ret uint %C 
+define i32 @test13(i32 %A) {
+        %B = or i32 %A, 12              ; <i32> [#uses=1]
+        ; Always equal to 8
+        %C = and i32 %B, 8              ; <i32> [#uses=1]
+        ret i32 %C
 }
 
-bool %test14(uint %A, uint %B) {
-	%C1 = setlt uint %A, %B
-	%C2 = setgt uint %A, %B
-	%D = or bool %C1, %C2      ; (A < B) | (A > B) === A != B
-	ret bool %D
+define i1 @test14(i32 %A, i32 %B) {
+        %C1 = icmp ult i32 %A, %B               ; <i1> [#uses=1]
+        %C2 = icmp ugt i32 %A, %B               ; <i1> [#uses=1]
+        ; (A < B) | (A > B) === A != B
+        %D = or i1 %C1, %C2             ; <i1> [#uses=1]
+        ret i1 %D
 }
 
-bool %test15(uint %A, uint %B) {
-        %C1 = setlt uint %A, %B
-        %C2 = seteq uint %A, %B
-        %D = or bool %C1, %C2      ; (A < B) | (A == B) === A <= B
-        ret bool %D
+define i1 @test15(i32 %A, i32 %B) {
+        %C1 = icmp ult i32 %A, %B               ; <i1> [#uses=1]
+        %C2 = icmp eq i32 %A, %B                ; <i1> [#uses=1]
+        ; (A < B) | (A == B) === A <= B
+        %D = or i1 %C1, %C2             ; <i1> [#uses=1]
+        ret i1 %D
 }
 
-int %test16(int %A) {
-	%B = and int %A, 1
-	%C = and int %A, -2       ; -2 = ~1
-	%D = or int %B, %C        ; %D = and int %B, -1 == %B
-	ret int %D
+define i32 @test16(i32 %A) {
+        %B = and i32 %A, 1              ; <i32> [#uses=1]
+        ; -2 = ~1
+        %C = and i32 %A, -2             ; <i32> [#uses=1]
+        ; %D = and int %B, -1 == %B
+        %D = or i32 %B, %C              ; <i32> [#uses=1]
+        ret i32 %D
 }
 
-int %test17(int %A) {
-	%B = and int %A, 1
-	%C = and int %A, 4
-	%D = or int %B, %C        ; %D = and int %B, 5
-	ret int %D
+define i32 @test17(i32 %A) {
+        %B = and i32 %A, 1              ; <i32> [#uses=1]
+        %C = and i32 %A, 4              ; <i32> [#uses=1]
+        ; %D = and int %B, 5
+        %D = or i32 %B, %C              ; <i32> [#uses=1]
+        ret i32 %D
 }
 
-bool %test18(int %A) {
-        %B = setge int %A, 100
-        %C = setlt int %A, 50
-        %D = or bool %B, %C   ;; (A-50) >u 50
-        ret bool %D
+define i1 @test18(i32 %A) {
+        %B = icmp sge i32 %A, 100               ; <i1> [#uses=1]
+        %C = icmp slt i32 %A, 50                ; <i1> [#uses=1]
+        ;; (A-50) >u 50
+        %D = or i1 %B, %C               ; <i1> [#uses=1]
+        ret i1 %D
 }
 
-bool %test19(int %A) {
-        %B = seteq int %A, 50
-        %C = seteq int %A, 51
-        %D = or bool %B, %C   ;; (A-50) < 2
-        ret bool %D
+define i1 @test19(i32 %A) {
+        %B = icmp eq i32 %A, 50         ; <i1> [#uses=1]
+        %C = icmp eq i32 %A, 51         ; <i1> [#uses=1]
+        ;; (A-50) < 2
+        %D = or i1 %B, %C               ; <i1> [#uses=1]
+        ret i1 %D
 }
 
-int %test20(int %x) {
-	%y = and int %x, 123
-	%z = or int %y, %x
-	ret int %z
+define i32 @test20(i32 %x) {
+        %y = and i32 %x, 123            ; <i32> [#uses=1]
+        %z = or i32 %y, %x              ; <i32> [#uses=1]
+        ret i32 %z
 }
 
-uint %test21(uint %tmp.1) {
-        %tmp.1.mask1 = add uint %tmp.1, 2
-        %tmp.3 = and uint %tmp.1.mask1, 4294967294
-        %tmp.5 = and uint %tmp.1, 1
-        %tmp.6 = or uint %tmp.5, %tmp.3   ;; add tmp.1, 2
-	ret uint %tmp.6
+define i32 @test21(i32 %tmp.1) {
+        %tmp.1.mask1 = add i32 %tmp.1, 2                ; <i32> [#uses=1]
+        %tmp.3 = and i32 %tmp.1.mask1, -2               ; <i32> [#uses=1]
+        %tmp.5 = and i32 %tmp.1, 1              ; <i32> [#uses=1]
+        ;; add tmp.1, 2
+        %tmp.6 = or i32 %tmp.5, %tmp.3          ; <i32> [#uses=1]
+        ret i32 %tmp.6
 }
 
-int %test22(int %B) {
-        %ELIM41 = and int %B, 1         ; <int> [#uses=1]
-        %ELIM7 = and int %B, -2         ; <int> [#uses=1]
-        %ELIM5 = or int %ELIM41, %ELIM7         ; <int> [#uses=1]
-	ret int %ELIM5
+define i32 @test22(i32 %B) {
+        %ELIM41 = and i32 %B, 1         ; <i32> [#uses=1]
+        %ELIM7 = and i32 %B, -2         ; <i32> [#uses=1]
+        %ELIM5 = or i32 %ELIM41, %ELIM7         ; <i32> [#uses=1]
+        ret i32 %ELIM5
 }
 
-ushort %test23(ushort %A) {
-        %B = shr ushort %A, ubyte 1
-        %C = or ushort %B, 32768       ;; fold or into xor
-        %D = xor ushort %C, 8193
-        ret ushort %D
+define i16 @test23(i16 %A) {
+        %B = lshr i16 %A, 1             ; <i16> [#uses=1]
+        ;; fold or into xor
+        %C = or i16 %B, -32768          ; <i16> [#uses=1]
+        %D = xor i16 %C, 8193           ; <i16> [#uses=1]
+        ret i16 %D
 }

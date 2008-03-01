@@ -1,7 +1,9 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -disable-output
+; RUN: llvm-as < %s | opt -instcombine -disable-output
 ; PR585
-bool %test() {
-	%tmp.26 = div int 0, -2147483648		; <int> [#uses=1]
-	%tmp.27 = seteq int %tmp.26, 0		; <bool> [#uses=1]
-	ret bool %tmp.27
+
+define i1 @test() {
+        %tmp.26 = sdiv i32 0, -2147483648               ; <i32> [#uses=1]
+        %tmp.27 = icmp eq i32 %tmp.26, 0                ; <i1> [#uses=1]
+        ret i1 %tmp.27
 }
+

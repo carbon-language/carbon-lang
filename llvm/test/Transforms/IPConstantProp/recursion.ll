@@ -1,14 +1,12 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -ipconstprop -deadargelim | llvm-dis | not grep %X
-
-implementation
-
-internal int %foo(int %X) {
-        %Y = call int %foo( int %X )
-        %Z = add int %Y, 1
-        ret int %Z
+; RUN: llvm-as < %s | opt -ipconstprop -deadargelim | llvm-dis | not grep %X
+define internal i32 @foo(i32 %X) {
+        %Y = call i32 @foo( i32 %X )            ; <i32> [#uses=1]
+        %Z = add i32 %Y, 1              ; <i32> [#uses=1]
+        ret i32 %Z
 }
 
-void %bar() {
-        call int %foo( int 17 )         ; <int>:0 [#uses=0]
+define void @bar() {
+        call i32 @foo( i32 17 )         ; <i32>:1 [#uses=0]
         ret void
 }
+

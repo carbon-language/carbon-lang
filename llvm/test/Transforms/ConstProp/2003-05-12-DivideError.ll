@@ -1,15 +1,15 @@
 ; Make sure that the constant propagator doesn't cause a sigfpe
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -constprop
+; RUN: llvm-as < %s | opt -constprop
 ;
 
-int "test"() {
-        %R = div int -2147483648, -1
-        ret int %R
+define i32 @test() {
+        %R = sdiv i32 -2147483648, -1           ; <i32> [#uses=1]
+        ret i32 %R
 }
 
-int "test2"() {
-        %R = rem int -2147483648, -1
-        ret int %R
+define i32 @test2() {
+        %R = srem i32 -2147483648, -1           ; <i32> [#uses=1]
+        ret i32 %R
 }
 

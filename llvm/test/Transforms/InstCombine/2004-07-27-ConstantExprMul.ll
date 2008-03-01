@@ -1,8 +1,9 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -disable-output
+; RUN: llvm-as < %s | opt -instcombine -disable-output
 
-%p = weak global int 0
+@p = weak global i32 0          ; <i32*> [#uses=1]
 
-int %test(int %x) {
-	%y = mul int %x, cast (int* %p to int)
-	ret int %y
+define i32 @test(i32 %x) {
+        %y = mul i32 %x, ptrtoint (i32* @p to i32)              ; <i32> [#uses=1]
+        ret i32 %y
 }
+

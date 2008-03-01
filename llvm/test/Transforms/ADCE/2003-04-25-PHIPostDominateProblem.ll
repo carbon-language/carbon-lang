@@ -2,36 +2,34 @@
 ; entries for it's postdominator.  But I think this can only happen when the 
 ; PHI node is dead, so we just avoid patching up dead PHI nodes.
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -adce
+; RUN: llvm-as < %s | opt -adce
 
-target endian = little
-target pointersize = 32
+target datalayout = "e-p:32:32"
 
-implementation   ; Functions:
+define void @dead_test8() {
+entry:
+        br label %loopentry
 
-void %dead_test8() {
-entry:		; No predecessors!
-	br label %loopentry
+loopentry:              ; preds = %endif, %entry
+        %k.1 = phi i32 [ %k.0, %endif ], [ 0, %entry ]          ; <i32> [#uses=1]
+        br i1 false, label %no_exit, label %return
 
-loopentry:		; preds = %entry, %endif
-	%k.1 = phi int [ %k.0, %endif ], [ 0, %entry ]		; <int> [#uses=1]
-	br bool false, label %no_exit, label %return
+no_exit:                ; preds = %loopentry
+        br i1 false, label %then, label %else
 
-no_exit:		; preds = %loopentry
-	br bool false, label %then, label %else
+then:           ; preds = %no_exit
+        br label %endif
 
-then:		; preds = %no_exit
-	br label %endif
+else:           ; preds = %no_exit
+        %dec = add i32 %k.1, -1         ; <i32> [#uses=1]
+        br label %endif
 
-else:		; preds = %no_exit
-	%dec = add int %k.1, -1		; <int> [#uses=1]
-	br label %endif
+endif:          ; preds = %else, %then
+        %k.0 = phi i32 [ %dec, %else ], [ 0, %then ]            ; <i32> [#uses=1]
+        store i32 2, i32* null
+        br label %loopentry
 
-endif:		; preds = %else, %then
-	%k.0 = phi int [ %dec, %else ], [ 0, %then ]		; <int> [#uses=1]
-	store int 2, int* null
-	br label %loopentry
-
-return:		; preds = %loopentry
-	ret void
+return:         ; preds = %loopentry
+        ret void
 }
+

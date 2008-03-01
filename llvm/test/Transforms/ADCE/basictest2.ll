@@ -1,102 +1,97 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -adce -simplifycfg | llvm-dis	
+; RUN: llvm-as < %s | opt -adce -simplifycfg | llvm-dis
+	%FILE = type { i32, i8*, i8*, i8, i8, i32, i32, i32 }
+	%spec_fd_t = type { i32, i32, i32, i8* }
+@__iob = external global [20 x %FILE]		; <[20 x %FILE]*> [#uses=1]
+@dbglvl = global i32 4		; <i32*> [#uses=3]
+@spec_fd = external global [3 x %spec_fd_t]		; <[3 x %spec_fd_t]*> [#uses=4]
+@.LC9 = internal global [34 x i8] c"spec_read: fd=%d, > MAX_SPEC_FD!\0A\00"		; <[34 x i8]*> [#uses=1]
+@.LC10 = internal global [4 x i8] c"EOF\00"		; <[4 x i8]*> [#uses=1]
+@.LC11 = internal global [4 x i8] c"%d\0A\00"		; <[4 x i8]*> [#uses=1]
+@.LC12 = internal global [17 x i8] c"spec_getc: %d = \00"		; <[17 x i8]*> [#uses=1]
 
-%FILE = type { int, ubyte*, ubyte*, ubyte, ubyte, uint, uint, uint }
-	%spec_fd_t = type { int, int, int, ubyte* }
-%__iob = uninitialized global [20 x %FILE]		; <[20 x %FILE]*> [#uses=1]
-%dbglvl = global int 4		; <int*> [#uses=3]
-%spec_fd = uninitialized global [3 x %spec_fd_t]		; <[3 x %spec_fd_t]*> [#uses=4]
-%.LC9 = internal global [34 x sbyte] c"spec_read: fd=%d, > MAX_SPEC_FD!\0A\00"		; <[34 x sbyte]*> [#uses=1]
-%.LC10 = internal global [4 x sbyte] c"EOF\00"		; <[4 x sbyte]*> [#uses=1]
-%.LC11 = internal global [4 x sbyte] c"%d\0A\00"		; <[4 x sbyte]*> [#uses=1]
-%.LC12 = internal global [17 x sbyte] c"spec_getc: %d = \00"		; <[17 x sbyte]*> [#uses=1]
+declare i32 @fprintf(%FILE*, i8*, ...)
 
-implementation   ; Functions:
+declare void @exit(i32)
 
-declare int "fprintf"(%FILE*, sbyte*, ...)
+declare i32 @remove(i8*)
 
-declare void "exit"(int)
+declare i32 @fputc(i32, %FILE*)
 
-declare int "remove"(sbyte*)
+declare i32 @fwrite(i8*, i32, i32, %FILE*)
 
-declare int "fputc"(int, %FILE*)
+declare void @perror(i8*)
 
-declare uint "fwrite"(sbyte*, uint, uint, %FILE*)
+define i32 @spec_getc(i32 %fd) {
+	%reg109 = load i32* @dbglvl		; <i32> [#uses=1]
+	%cond266 = icmp sle i32 %reg109, 4		; <i1> [#uses=1]
+	br i1 %cond266, label %bb3, label %bb2
 
-declare void "perror"(sbyte*)
-
-int "spec_getc"(int %fd) {
-; <label>:0					;[#uses=0]
-	%reg109 = load int* %dbglvl		; <int> [#uses=1]
-	%cond266 = setle int %reg109, 4		; <bool> [#uses=1]
-	br bool %cond266, label %bb3, label %bb2
-
-bb2:					;[#uses=1]
-	%cast273 = getelementptr [17 x sbyte]* %.LC12, long 0, long 0		; <sbyte*> [#uses=0]
+bb2:		; preds = %0
+	%cast273 = getelementptr [17 x i8]* @.LC12, i64 0, i64 0		; <i8*> [#uses=0]
 	br label %bb3
 
-bb3:					;[#uses=2]
-	%cond267 = setle int %fd, 3		; <bool> [#uses=1]
-;	br bool %cond267, label %bb5, label %bb4
+bb3:		; preds = %bb2, %0
+	%cond267 = icmp sle i32 %fd, 3		; <i1> [#uses=0]
 	br label %bb5
 
-bb4:					;[#uses=2]
-	%reg111 = getelementptr [20 x %FILE]* %__iob, long 0, long 1, uint 3		; <ubyte*> [#uses=1]
-	%cast274 = getelementptr [34 x sbyte]* %.LC9, long 0, long 0		; <sbyte*> [#uses=0]
-	%cast282 = cast ubyte* %reg111 to %FILE*		; <%FILE*> [#uses=0]
-	call void %exit( int 1 )
+bb4:		; No predecessors!
+	%reg111 = getelementptr [20 x %FILE]* @__iob, i64 0, i64 1, i32 3		; <i8*> [#uses=1]
+	%cast274 = getelementptr [34 x i8]* @.LC9, i64 0, i64 0		; <i8*> [#uses=0]
+	%cast282 = bitcast i8* %reg111 to %FILE*		; <%FILE*> [#uses=0]
+	call void @exit( i32 1 )
 	br label %UnifiedExitNode
 
-bb5:					;[#uses=1]
-	%reg107-idxcast1 = cast int %fd to long		; <long> [#uses=2]
-	%reg107-idxcast2 = cast int %fd to long		; <long> [#uses=1]
-	%reg1311 = getelementptr [3 x %spec_fd_t]* %spec_fd, long 0, long %reg107-idxcast2		; <%spec_fd_t*> [#uses=1]
-	%idx1 = getelementptr [3 x %spec_fd_t]* %spec_fd, long 0, long %reg107-idxcast1, uint 2		; <int> [#uses=3]
-	%reg1321 = load int* %idx1
-	%idx2 = getelementptr %spec_fd_t* %reg1311, long 0, uint 1		; <int> [#uses=1]
-	%reg1331 = load int* %idx2
-	%cond270 = setlt int %reg1321, %reg1331		; <bool> [#uses=1]
-	br bool %cond270, label %bb9, label %bb6
+bb5:		; preds = %bb3
+	%reg107-idxcast1 = sext i32 %fd to i64		; <i64> [#uses=2]
+	%reg107-idxcast2 = sext i32 %fd to i64		; <i64> [#uses=1]
+	%reg1311 = getelementptr [3 x %spec_fd_t]* @spec_fd, i64 0, i64 %reg107-idxcast2		; <%spec_fd_t*> [#uses=1]
+	%idx1 = getelementptr [3 x %spec_fd_t]* @spec_fd, i64 0, i64 %reg107-idxcast1, i32 2		; <i32*> [#uses=1]
+	%reg1321 = load i32* %idx1		; <i32> [#uses=3]
+	%idx2 = getelementptr %spec_fd_t* %reg1311, i64 0, i32 1		; <i32*> [#uses=1]
+	%reg1331 = load i32* %idx2		; <i32> [#uses=1]
+	%cond270 = icmp slt i32 %reg1321, %reg1331		; <i1> [#uses=1]
+	br i1 %cond270, label %bb9, label %bb6
 
-bb6:					;[#uses=1]
-	%reg134 = load int* %dbglvl		; <int> [#uses=1]
-	%cond271 = setle int %reg134, 4		; <bool> [#uses=1]
-	br bool %cond271, label %bb8, label %bb7
+bb6:		; preds = %bb5
+	%reg134 = load i32* @dbglvl		; <i32> [#uses=1]
+	%cond271 = icmp sle i32 %reg134, 4		; <i1> [#uses=1]
+	br i1 %cond271, label %bb8, label %bb7
 
-bb7:					;[#uses=1]
-	%cast277 = getelementptr [4 x sbyte]* %.LC10, long 0, long 0		; <sbyte*> [#uses=0]
+bb7:		; preds = %bb6
+	%cast277 = getelementptr [4 x i8]* @.LC10, i64 0, i64 0		; <i8*> [#uses=0]
 	br label %bb8
 
-bb8:					;[#uses=3]
+bb8:		; preds = %bb7, %bb6
 	br label %UnifiedExitNode
 
-bb9:					;[#uses=1]
-	%reg107-idxcast3 = cast int %fd to long		; <uint> [#uses=1]
-	%idx3 = getelementptr [3 x %spec_fd_t]* %spec_fd, long 0, long %reg107-idxcast3, uint 3		; <ubyte*> [#uses=1]
-	%reg1601 = load ubyte** %idx3
-	%reg132-idxcast1 = cast int %reg1321 to long		; <long> [#uses=1]
-	%idx4 = getelementptr ubyte* %reg1601, long %reg132-idxcast1		; <ubyte> [#uses=2]
-	%reg1621 = load ubyte* %idx4
-	%cast108 = cast ubyte %reg1621 to long		; <long> [#uses=0]
-	%reg157 = add int %reg1321, 1		; <int> [#uses=1]
-	%idx5 = getelementptr [3 x %spec_fd_t]* %spec_fd, long 0, long %reg107-idxcast1, uint 2
-	store int %reg157, int* %idx5
-	%reg163 = load int* %dbglvl		; <int> [#uses=1]
-	%cond272 = setle int %reg163, 4		; <bool> [#uses=1]
-	br bool %cond272, label %bb11, label %bb10
+bb9:		; preds = %bb5
+	%reg107-idxcast3 = sext i32 %fd to i64		; <i64> [#uses=1]
+	%idx3 = getelementptr [3 x %spec_fd_t]* @spec_fd, i64 0, i64 %reg107-idxcast3, i32 3		; <i8**> [#uses=1]
+	%reg1601 = load i8** %idx3		; <i8*> [#uses=1]
+	%reg132-idxcast1 = sext i32 %reg1321 to i64		; <i64> [#uses=1]
+	%idx4 = getelementptr i8* %reg1601, i64 %reg132-idxcast1		; <i8*> [#uses=1]
+	%reg1621 = load i8* %idx4		; <i8> [#uses=2]
+	%cast108 = zext i8 %reg1621 to i64		; <i64> [#uses=0]
+	%reg157 = add i32 %reg1321, 1		; <i32> [#uses=1]
+	%idx5 = getelementptr [3 x %spec_fd_t]* @spec_fd, i64 0, i64 %reg107-idxcast1, i32 2		; <i32*> [#uses=1]
+	store i32 %reg157, i32* %idx5
+	%reg163 = load i32* @dbglvl		; <i32> [#uses=1]
+	%cond272 = icmp sle i32 %reg163, 4		; <i1> [#uses=1]
+	br i1 %cond272, label %bb11, label %bb10
 
-bb10:					;[#uses=1]
-	%cast279 = getelementptr [4 x sbyte]* %.LC11, long 0, long 0		; <sbyte*> [#uses=0]
+bb10:		; preds = %bb9
+	%cast279 = getelementptr [4 x i8]* @.LC11, i64 0, i64 0		; <i8*> [#uses=0]
 	br label %bb11
 
-bb11:					;[#uses=3]
-	%cast291 = cast ubyte %reg1621 to int		; <int> [#uses=1]
+bb11:		; preds = %bb10, %bb9
+	%cast291 = zext i8 %reg1621 to i32		; <i32> [#uses=1]
 	br label %UnifiedExitNode
 
-UnifiedExitNode:					;[#uses=3]
-	%UnifiedRetVal = phi int [ 42, %bb4 ], [ -1, %bb8 ], [ %cast291, %bb11 ]		; <int> [#uses=1]
-	ret int %UnifiedRetVal
+UnifiedExitNode:		; preds = %bb11, %bb8, %bb4
+	%UnifiedRetVal = phi i32 [ 42, %bb4 ], [ -1, %bb8 ], [ %cast291, %bb11 ]		; <i32> [#uses=1]
+	ret i32 %UnifiedRetVal
 }
 
-declare int "puts"(sbyte*)
+declare i32 @puts(i8*)
 
-declare int "printf"(sbyte*, ...)
+declare i32 @printf(i8*, ...)

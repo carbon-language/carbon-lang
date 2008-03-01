@@ -1,27 +1,26 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -extract-blocks -disable-output
+; RUN: llvm-as < %s | opt -extract-blocks -disable-output
 
-implementation
-
-void %test1() {
+define void @test1() {
 no_exit.0.i:
-        br bool false, label %yylex.entry, label %yylex.entry
+        br i1 false, label %yylex.entry, label %yylex.entry
 
-yylex.entry:
-	%tmp.1027 = phi int  [ 0, %no_exit.0.i ], [ 0, %no_exit.0.i ]
-	ret void
+yylex.entry:            ; preds = %no_exit.0.i, %no_exit.0.i
+        %tmp.1027 = phi i32 [ 0, %no_exit.0.i ], [ 0, %no_exit.0.i ]            ; <i32> [#uses=0]
+        ret void
 }
 
-void %test2() {
+define void @test2() {
 no_exit.0.i:
-        switch uint 0, label %yylex.entry [
-            uint 0, label %yylex.entry
-            uint 1, label %foo
+        switch i32 0, label %yylex.entry [
+                 i32 0, label %yylex.entry
+                 i32 1, label %foo
         ]
 
-yylex.entry:
-        %tmp.1027 = phi int  [ 0, %no_exit.0.i ], [ 0, %no_exit.0.i ]
+yylex.entry:            ; preds = %no_exit.0.i, %no_exit.0.i
+        %tmp.1027 = phi i32 [ 0, %no_exit.0.i ], [ 0, %no_exit.0.i ]            ; <i32> [#uses=0]
         ret void
-foo:
+
+foo:            ; preds = %no_exit.0.i
         ret void
 }
 

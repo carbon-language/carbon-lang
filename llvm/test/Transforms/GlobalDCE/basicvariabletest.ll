@@ -1,5 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -globaldce | llvm-dis | not grep global
+; RUN: llvm-as < %s | opt -globaldce | llvm-dis | not grep global
 
-%X = uninitialized global int
-%Y = internal global int 7
+@X = external global i32
+@Y = internal global i32 7
 

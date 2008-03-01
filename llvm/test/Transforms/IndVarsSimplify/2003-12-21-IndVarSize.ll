@@ -1,12 +1,15 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -indvars | llvm-dis | grep indvar | not grep uint
+; RUN: llvm-as < %s | opt -indvars | llvm-dis | grep indvar | not grep uint
 
-%G = global long 0
+@G = global i64 0               ; <i64*> [#uses=1]
 
-void %test() {
-	br label %Loop
-Loop:
-	%X = phi long [1, %0], [%X.next, %Loop]
-	%X.next = add long %X, 1
-	store long %X, long* %G
-	br label %Loop
+define void @test() {
+; <label>:0
+        br label %Loop
+
+Loop:           ; preds = %Loop, %0
+        %X = phi i64 [ 1, %0 ], [ %X.next, %Loop ]              ; <i64> [#uses=2]
+        %X.next = add i64 %X, 1         ; <i64> [#uses=1]
+        store i64 %X, i64* @G
+        br label %Loop
 }
+

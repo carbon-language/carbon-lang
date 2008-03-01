@@ -1,20 +1,19 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -inline | llvm-dis | grep {ret i32 1}
+; RUN: llvm-as < %s | opt -inline | llvm-dis | grep {ret i32 1}
 ; ModuleID = 'short.opt.bc'
 
-implementation   ; Functions:
-
-int %testBool(bool %X) {
-	%tmp = zext bool %X to int		; <int> [#uses=1]
-	ret int %tmp
+define i32 @testBool(i1 %X) {
+        %tmp = zext i1 %X to i32                ; <i32> [#uses=1]
+        ret i32 %tmp
 }
 
-int %testByte(sbyte %X) {
-	%tmp = setne sbyte %X, 0		; <bool> [#uses=1]
-	%tmp.i = zext bool %tmp to int		; <int> [#uses=1]
-	ret int %tmp.i
+define i32 @testByte(i8 %X) {
+        %tmp = icmp ne i8 %X, 0         ; <i1> [#uses=1]
+        %tmp.i = zext i1 %tmp to i32            ; <i32> [#uses=1]
+        ret i32 %tmp.i
 }
 
-int %main() {
-        %rslt = call int %testByte( sbyte 123)
-	ret int %rslt
+define i32 @main() {
+        %rslt = call i32 @testByte( i8 123 )            ; <i32> [#uses=1]
+        ret i32 %rslt
 }
+

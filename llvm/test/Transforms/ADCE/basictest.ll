@@ -1,14 +1,19 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -adce -simplifycfg | llvm-dis
+; RUN: llvm-as < %s | opt -adce -simplifycfg | llvm-dis
 
-int "Test"(int %A, int %B) {
+define i32 @Test(i32 %A, i32 %B) {
 BB1:
-	br label %BB4
-BB2:
-	br label %BB3
-BB3:
-	%ret = phi int [%X, %BB4], [%B, %BB2]
-	ret int %ret
-BB4:
-	%X = phi int [%A, %BB1]
-	br label %BB3
+        br label %BB4
+
+BB2:            ; No predecessors!
+        br label %BB3
+
+BB3:            ; preds = %BB4, %BB2
+        %ret = phi i32 [ %X, %BB4 ], [ %B, %BB2 ]               ; <i32> [#uses=1]
+        ret i32 %ret
+
+BB4:            ; preds = %BB1
+        %X = phi i32 [ %A, %BB1 ]               ; <i32> [#uses=1]
+        br label %BB3
 }
+
+

@@ -1,14 +1,13 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -constmerge > /dev/null
+; RUN: llvm-as < %s | opt -constmerge > /dev/null
 
-%foo = internal constant {int} {int 7} 
-%bar = internal constant {int} {int 7} 
+@foo.upgrd.1 = internal constant { i32 } { i32 7 }              ; <{ i32 }*> [#uses=1]
+@bar = internal constant { i32 } { i32 7 }              ; <{ i32 }*> [#uses=1]
 
-implementation
+declare i32 @test(i32*)
 
-declare int %test(int*)
-
-void %foo() {
-	call int %test(int* getelementptr ( {int} * %foo, long 0, uint 0))
-	call int %test(int* getelementptr ( {int} * %bar, long 0, uint 0))
-	ret void
+define void @foo() {
+        call i32 @test( i32* getelementptr ({ i32 }* @foo.upgrd.1, i64 0, i32 0) )              ; <i32>:1 [#uses=0]
+        call i32 @test( i32* getelementptr ({ i32 }* @bar, i64 0, i32 0) )              ; <i32>:2 [#uses=0]
+        ret void
 }
+

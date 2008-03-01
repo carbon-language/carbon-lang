@@ -1,7 +1,8 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | grep 4294967295
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep 4294967295
 
-ulong %test(ulong %Val) {
-        %tmp.3 = cast ulong %Val to uint              ; <uint> [#uses=1]
-        %tmp.8 = cast uint %tmp.3 to ulong              ; <ulong> [#uses=1]
-	ret ulong %tmp.8
+define i64 @test(i64 %Val) {
+        %tmp.3 = trunc i64 %Val to i32          ; <i32> [#uses=1]
+        %tmp.8 = zext i32 %tmp.3 to i64         ; <i64> [#uses=1]
+        ret i64 %tmp.8
 }
+

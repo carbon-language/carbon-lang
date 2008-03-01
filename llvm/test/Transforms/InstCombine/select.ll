@@ -1,190 +1,204 @@
 ; This test makes sure that these instructions are properly eliminated.
 ; PR1822
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep select
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep select
 
-implementation
-
-int %test1(int %A, int %B) {
-	%C = select bool false, int %A, int %B
-	ret int %C
+define i32 @test1(i32 %A, i32 %B) {
+        %C = select i1 false, i32 %A, i32 %B            ; <i32> [#uses=1]
+        ret i32 %C
 }
 
-int %test2(int %A, int %B) {
-	%C = select bool true, int %A, int %B
-	ret int %C
+define i32 @test2(i32 %A, i32 %B) {
+        %C = select i1 true, i32 %A, i32 %B             ; <i32> [#uses=1]
+        ret i32 %C
 }
 
-int %test3(bool %C, int %I) {
-	%V = select bool %C, int %I, int %I         ; V = I
-	ret int %V
+
+define i32 @test3(i1 %C, i32 %I) {
+        ; V = I
+        %V = select i1 %C, i32 %I, i32 %I               ; <i32> [#uses=1]
+        ret i32 %V
 }
 
-bool %test4(bool %C) {
-	%V = select bool %C, bool true, bool false  ; V = C
-	ret bool %V
+define i1 @test4(i1 %C) {
+        ; V = C
+        %V = select i1 %C, i1 true, i1 false            ; <i1> [#uses=1]
+        ret i1 %V
 }
 
-bool %test5(bool %C) {
-	%V = select bool %C, bool false, bool true  ; V = !C
-	ret bool %V
+define i1 @test5(i1 %C) {
+        ; V = !C
+        %V = select i1 %C, i1 false, i1 true            ; <i1> [#uses=1]
+        ret i1 %V
 }
 
-int %test6(bool %C) {
-	%V = select bool %C, int 1, int 0         ; V = cast C to int
-	ret int %V
+define i32 @test6(i1 %C) { 
+        ; V = cast C to int
+        %V = select i1 %C, i32 1, i32 0         ; <i32> [#uses=1]
+        ret i32 %V
 }
 
-bool %test7(bool %C, bool %X) {
-        %R = select bool %C, bool true, bool %X    ; R = or C, X
-        ret bool %R
+define i1 @test7(i1 %C, i1 %X) {
+        ; R = or C, X       
+        %R = select i1 %C, i1 true, i1 %X               ; <i1> [#uses=1]
+        ret i1 %R
 }
 
-bool %test8(bool %C, bool %X) {
-        %R = select bool %C, bool %X, bool false   ; R = and C, X
-        ret bool %R
+define i1 @test8(i1 %C, i1 %X) {
+        ; R = and C, X
+        %R = select i1 %C, i1 %X, i1 false              ; <i1> [#uses=1]
+        ret i1 %R
 }
 
-bool %test9(bool %C, bool %X) {
-        %R = select bool %C, bool false, bool %X    ; R = and !C, X
-        ret bool %R
+define i1 @test9(i1 %C, i1 %X) {
+        ; R = and !C, X
+        %R = select i1 %C, i1 false, i1 %X              ; <i1> [#uses=1]
+        ret i1 %R
 }
 
-bool %test10(bool %C, bool %X) {
-        %R = select bool %C, bool %X, bool true   ; R = or !C, X
-        ret bool %R
+define i1 @test10(i1 %C, i1 %X) {
+        ; R = or !C, X
+        %R = select i1 %C, i1 %X, i1 true               ; <i1> [#uses=1]
+        ret i1 %R
 }
 
-int %test11(int %a) {
-        %C = seteq int %a, 0
-        %R = select bool %C, int 0, int 1
-        ret int %R
+define i32 @test11(i32 %a) {
+        %C = icmp eq i32 %a, 0          ; <i1> [#uses=1]
+        %R = select i1 %C, i32 0, i32 1         ; <i32> [#uses=1]
+        ret i32 %R
 }
 
-int %test12(bool %cond, int %a) {
-	%b = or int %a, 1
-	%c = select bool %cond, int %b, int %a
-	ret int %c
+define i32 @test12(i1 %cond, i32 %a) {
+        %b = or i32 %a, 1               ; <i32> [#uses=1]
+        %c = select i1 %cond, i32 %b, i32 %a            ; <i32> [#uses=1]
+        ret i32 %c
 }
 
-int %test12a(bool %cond, int %a) {
-	%b = shr int %a, ubyte 1
-	%c = select bool %cond, int %b, int %a
-	ret int %c
+define i32 @test12a(i1 %cond, i32 %a) {
+        %b = ashr i32 %a, 1             ; <i32> [#uses=1]
+        %c = select i1 %cond, i32 %b, i32 %a            ; <i32> [#uses=1]
+        ret i32 %c
 }
 
-int %test12b(bool %cond, int %a) {
-	%b = shr int %a, ubyte 1
-	%c = select bool %cond, int %a, int %b
-	ret int %c
+define i32 @test12b(i1 %cond, i32 %a) {
+        %b = ashr i32 %a, 1             ; <i32> [#uses=1]
+        %c = select i1 %cond, i32 %a, i32 %b            ; <i32> [#uses=1]
+        ret i32 %c
 }
 
-int %test13(int %a, int %b) {
-	%C = seteq int %a, %b
-	%V = select bool %C, int %a, int %b
-	ret int %V
+define i32 @test13(i32 %a, i32 %b) {
+        %C = icmp eq i32 %a, %b         ; <i1> [#uses=1]
+        %V = select i1 %C, i32 %a, i32 %b               ; <i32> [#uses=1]
+        ret i32 %V
 }
 
-int %test13a(int %a, int %b) {
-	%C = setne int %a, %b
-	%V = select bool %C, int %a, int %b
-	ret int %V
+define i32 @test13a(i32 %a, i32 %b) {
+        %C = icmp ne i32 %a, %b         ; <i1> [#uses=1]
+        %V = select i1 %C, i32 %a, i32 %b               ; <i32> [#uses=1]
+        ret i32 %V
 }
 
-int %test13b(int %a, int %b) {
-	%C = seteq int %a, %b
-	%V = select bool %C, int %b, int %a
-	ret int %V
+define i32 @test13b(i32 %a, i32 %b) {
+        %C = icmp eq i32 %a, %b         ; <i1> [#uses=1]
+        %V = select i1 %C, i32 %b, i32 %a               ; <i32> [#uses=1]
+        ret i32 %V
 }
 
-bool %test14a(bool %C, int %X) {
-	%V = select bool %C, int %X, int 0
-	%R = setlt int %V, 1                  ; (X < 1) | !C
-	ret bool %R
+define i1 @test14a(i1 %C, i32 %X) {
+        %V = select i1 %C, i32 %X, i32 0                ; <i32> [#uses=1]
+        ; (X < 1) | !C
+        %R = icmp slt i32 %V, 1         ; <i1> [#uses=1]
+        ret i1 %R
 }
 
-bool %test14b(bool %C, int %X) {
-	%V = select bool %C, int 0, int %X
-	%R = setlt int %V, 1                  ; (X < 1) | C
-	ret bool %R
+define i1 @test14b(i1 %C, i32 %X) {
+        %V = select i1 %C, i32 0, i32 %X                ; <i32> [#uses=1]
+        ; (X < 1) | C
+        %R = icmp slt i32 %V, 1         ; <i1> [#uses=1]
+        ret i1 %R
 }
 
-int %test15a(int %X) {       ;; Code sequence for (X & 16) ? 16 : 0
-        %t1 = and int %X, 16
-        %t2 = seteq int %t1, 0
-        %t3 = select bool %t2, int 0, int 16 ;; X & 16
-        ret int %t3
+;; Code sequence for (X & 16) ? 16 : 0
+define i32 @test15a(i32 %X) {
+        %t1 = and i32 %X, 16            ; <i32> [#uses=1]
+        %t2 = icmp eq i32 %t1, 0                ; <i1> [#uses=1]
+        %t3 = select i1 %t2, i32 0, i32 16              ; <i32> [#uses=1]
+        ret i32 %t3
 }
 
-int %test15b(int %X) {       ;; Code sequence for (X & 32) ? 0 : 24
-        %t1 = and int %X, 32
-        %t2 = seteq int %t1, 0
-        %t3 = select bool %t2, int 32, int 0 ;; ~X & 32
-        ret int %t3
+;; Code sequence for (X & 32) ? 0 : 24
+define i32 @test15b(i32 %X) {
+        %t1 = and i32 %X, 32            ; <i32> [#uses=1]
+        %t2 = icmp eq i32 %t1, 0                ; <i1> [#uses=1]
+        %t3 = select i1 %t2, i32 32, i32 0              ; <i32> [#uses=1]
+        ret i32 %t3
 }
 
-int %test15c(int %X) {       ;; Alternate code sequence for (X & 16) ? 16 : 0
-        %t1 = and int %X, 16
-        %t2 = seteq int %t1, 16
-        %t3 = select bool %t2, int 16, int 0 ;; X & 16
-        ret int %t3
+;; Alternate code sequence for (X & 16) ? 16 : 0
+define i32 @test15c(i32 %X) {
+        %t1 = and i32 %X, 16            ; <i32> [#uses=1]
+        %t2 = icmp eq i32 %t1, 16               ; <i1> [#uses=1]
+        %t3 = select i1 %t2, i32 16, i32 0              ; <i32> [#uses=1]
+        ret i32 %t3
 }
 
-int %test15d(int %X) {       ;; Alternate code sequence for (X & 16) ? 16 : 0
-        %t1 = and int %X, 16
-        %t2 = setne int %t1, 0
-        %t3 = select bool %t2, int 16, int 0 ;; X & 16
-        ret int %t3
+;; Alternate code sequence for (X & 16) ? 16 : 0
+define i32 @test15d(i32 %X) {
+        %t1 = and i32 %X, 16            ; <i32> [#uses=1]
+        %t2 = icmp ne i32 %t1, 0                ; <i1> [#uses=1]
+        %t3 = select i1 %t2, i32 16, i32 0              ; <i32> [#uses=1]
+        ret i32 %t3
 }
 
-int %test16(bool %C, int* %P) {
-	%P2 = select bool %C, int* %P, int* null
-	%V = load int* %P2
-	ret int %V
+define i32 @test16(i1 %C, i32* %P) {
+        %P2 = select i1 %C, i32* %P, i32* null          ; <i32*> [#uses=1]
+        %V = load i32* %P2              ; <i32> [#uses=1]
+        ret i32 %V
 }
 
-bool %test17(int* %X, bool %C) {
-	%R = select bool %C, int* %X, int* null
-	%RV = seteq int* %R, null
-	ret bool %RV
+define i1 @test17(i32* %X, i1 %C) {
+        %R = select i1 %C, i32* %X, i32* null           ; <i32*> [#uses=1]
+        %RV = icmp eq i32* %R, null             ; <i1> [#uses=1]
+        ret i1 %RV
 }
 
-int %test18(int %X, int %Y, bool %C) {
-	%R = select bool %C, int %X, int 0
-	%V = div int %Y, %R   ; div Y,X
-	ret int %V
+define i32 @test18(i32 %X, i32 %Y, i1 %C) {
+        %R = select i1 %C, i32 %X, i32 0                ; <i32> [#uses=1]
+        %V = sdiv i32 %Y, %R            ; <i32> [#uses=1]
+        ret i32 %V
 }
 
-int %test19(uint %x) {
-        %tmp = setgt uint %x, 2147483647
-        %retval = select bool %tmp, int -1, int 0
-        ret int %retval
+define i32 @test19(i32 %x) {
+        %tmp = icmp ugt i32 %x, 2147483647              ; <i1> [#uses=1]
+        %retval = select i1 %tmp, i32 -1, i32 0         ; <i32> [#uses=1]
+        ret i32 %retval
 }
 
-int %test20(int %x) {
-        %tmp = setlt int %x, 0
-        %retval = select bool %tmp, int -1, int 0
-        ret int %retval
+define i32 @test20(i32 %x) {
+        %tmp = icmp slt i32 %x, 0               ; <i1> [#uses=1]
+        %retval = select i1 %tmp, i32 -1, i32 0         ; <i32> [#uses=1]
+        ret i32 %retval
 }
 
-long %test21(int %x) {
-        %tmp = setlt int %x, 0
-        %retval = select bool %tmp, long -1, long 0
-        ret long %retval
+define i64 @test21(i32 %x) {
+        %tmp = icmp slt i32 %x, 0               ; <i1> [#uses=1]
+        %retval = select i1 %tmp, i64 -1, i64 0         ; <i64> [#uses=1]
+        ret i64 %retval
 }
 
-short %test22(int %x) {
-        %tmp = setlt int %x, 0
-        %retval = select bool %tmp, short -1, short 0
-        ret short %retval
+define i16 @test22(i32 %x) {
+        %tmp = icmp slt i32 %x, 0               ; <i1> [#uses=1]
+        %retval = select i1 %tmp, i16 -1, i16 0         ; <i16> [#uses=1]
+        ret i16 %retval
 }
 
-bool %test23(bool %a, bool %b) {
-	%c = select bool %a, bool %b, bool %a
-	ret bool %c
+define i1 @test23(i1 %a, i1 %b) {
+        %c = select i1 %a, i1 %b, i1 %a         ; <i1> [#uses=1]
+        ret i1 %c
 }
 
-bool %test24(bool %a, bool %b) {
-	%c = select bool %a, bool %a, bool %b
-	ret bool %c
+define i1 @test24(i1 %a, i1 %b) {
+        %c = select i1 %a, i1 %a, i1 %b         ; <i1> [#uses=1]
+        ret i1 %c
 }
+

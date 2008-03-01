@@ -1,16 +1,17 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -indvars  | llvm-dis | %prcontext Loop: 1 | grep %indvar
+; RUN: llvm-as < %s | opt -indvars  | llvm-dis | %prcontext Loop: 1 | grep %indvar
 
 ; The indvar simplification code should ensure that the first PHI in the block 
 ; is the canonical one!
 
-int %test() {
-	br label %Loop
-Loop:
-	%NonIndvar = phi int [200, %0], [%NonIndvarNext, %Loop]
-	%Canonical = phi int [0, %0], [%CanonicalNext, %Loop]
+define i32 @test() {
+; <label>:0
+        br label %Loop
 
-	%NonIndvarNext = div int %NonIndvar, 2
-	%CanonicalNext = add int %Canonical, 1
-	br label %Loop
+Loop:           ; preds = %Loop, %0
+        %NonIndvar = phi i32 [ 200, %0 ], [ %NonIndvarNext, %Loop ]             ; <i32> [#uses=1]
+        %Canonical = phi i32 [ 0, %0 ], [ %CanonicalNext, %Loop ]               ; <i32> [#uses=1]
+        %NonIndvarNext = sdiv i32 %NonIndvar, 2         ; <i32> [#uses=1]
+        %CanonicalNext = add i32 %Canonical, 1          ; <i32> [#uses=1]
+        br label %Loop
 }
 

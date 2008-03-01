@@ -1,5 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -adce -disable-output
+; RUN: llvm-as < %s | opt -adce -disable-output
 
-void %test() {
+define void @test() {
 	unreachable
 }

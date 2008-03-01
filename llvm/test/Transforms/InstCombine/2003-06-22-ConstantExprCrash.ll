@@ -1,12 +1,13 @@
 ; This is a bug in the VMcode library, not instcombine, it's just convenient 
 ; to expose it here.
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -disable-output
+; RUN: llvm-as < %s | opt -instcombine -disable-output
 
-%A = global int 1
-%B = global int 2
+@A = global i32 1               ; <i32*> [#uses=1]
+@B = global i32 2               ; <i32*> [#uses=1]
 
-bool %test() {
-	%C = setlt int* getelementptr (int* %A, long 1), getelementptr (int* %B, long 2)    ; Will get promoted to constantexpr
-	ret bool %C
+define i1 @test() {
+        %C = icmp ult i32* getelementptr (i32* @A, i64 1), getelementptr (i32* @B, i64 2) ; <i1> [#uses=1]
+        ret i1 %C
 }
+

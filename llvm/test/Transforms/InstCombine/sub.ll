@@ -1,139 +1,136 @@
 ; This test makes sure that these instructions are properly eliminated.
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
 ; RUN:   grep -v {sub i32 %Cok, %Bok} | not grep sub
 
-implementation
-
-int %test1(int %A) {
-	%B = sub int %A, %A    ; ISA constant 0
-	ret int %B
+define i32 @test1(i32 %A) {
+	%B = sub i32 %A, %A		; <i32> [#uses=1]
+	ret i32 %B
 }
 
-int %test2(int %A) {
-	%B = sub int %A, 0
-	ret int %B
+define i32 @test2(i32 %A) {
+	%B = sub i32 %A, 0		; <i32> [#uses=1]
+	ret i32 %B
 }
 
-int %test3(int %A) {
-	%B = sub int 0, %A       ; B = -A
-	%C = sub int 0, %B       ; C = -B = A
-	ret int %C
+define i32 @test3(i32 %A) {
+	%B = sub i32 0, %A		; <i32> [#uses=1]
+	%C = sub i32 0, %B		; <i32> [#uses=1]
+	ret i32 %C
 }
 
-int %test4(int %A, int %x) {
-	%B = sub int 0, %A
-	%C = sub int %x, %B
-	ret int %C
+define i32 @test4(i32 %A, i32 %x) {
+	%B = sub i32 0, %A		; <i32> [#uses=1]
+	%C = sub i32 %x, %B		; <i32> [#uses=1]
+	ret i32 %C
 }
 
-int %test5(int %A, int %Bok, int %Cok) {
-	%D = sub int %Bok, %Cok
-	%E = sub int %A, %D
-	ret int %E
+define i32 @test5(i32 %A, i32 %Bok, i32 %Cok) {
+	%D = sub i32 %Bok, %Cok		; <i32> [#uses=1]
+	%E = sub i32 %A, %D		; <i32> [#uses=1]
+	ret i32 %E
 }
 
-int %test6(int %A, int %B) {
-	%C = and int %A, %B   ; A - (A & B) => A & ~B
-	%D = sub int %A, %C
-	ret int %D
+define i32 @test6(i32 %A, i32 %B) {
+	%C = and i32 %A, %B		; <i32> [#uses=1]
+	%D = sub i32 %A, %C		; <i32> [#uses=1]
+	ret i32 %D
 }
 
-int %test7(int %A) {
-	%B = sub int -1, %A   ; B = ~A
-	ret int %B
+define i32 @test7(i32 %A) {
+	%B = sub i32 -1, %A		; <i32> [#uses=1]
+	ret i32 %B
 }
 
-int %test8(int %A) {
-        %B = mul int 9, %A
-        %C = sub int %B, %A      ; C = 9*A-A == A*8 == A << 3
-        ret int %C
+define i32 @test8(i32 %A) {
+	%B = mul i32 9, %A		; <i32> [#uses=1]
+	%C = sub i32 %B, %A		; <i32> [#uses=1]
+	ret i32 %C
 }
 
-int %test9(int %A) {
-        %B = mul int 3, %A
-        %C = sub int %A, %B      ; C = A-3*A == A*-2
-        ret int %C
+define i32 @test9(i32 %A) {
+	%B = mul i32 3, %A		; <i32> [#uses=1]
+	%C = sub i32 %A, %B		; <i32> [#uses=1]
+	ret i32 %C
 }
 
-int %test10(int %A, int %B) {    ; -A*-B == A*B
-	%C = sub int 0, %A
-	%D = sub int 0, %B
-	%E = mul int %C, %D
-	ret int %E
+define i32 @test10(i32 %A, i32 %B) {
+	%C = sub i32 0, %A		; <i32> [#uses=1]
+	%D = sub i32 0, %B		; <i32> [#uses=1]
+	%E = mul i32 %C, %D		; <i32> [#uses=1]
+	ret i32 %E
 }
 
-int %test10(int %A) {    ; -A *c1 == A * -c1
-	%C = sub int 0, %A
-	%E = mul int %C, 7
-	ret int %E
+define i32 @test10.upgrd.1(i32 %A) {
+	%C = sub i32 0, %A		; <i32> [#uses=1]
+	%E = mul i32 %C, 7		; <i32> [#uses=1]
+	ret i32 %E
 }
 
-bool %test11(ubyte %A, ubyte %B) {
-        %C = sub ubyte %A, %B
-        %cD = setne ubyte %C, 0    ; == setne A, B
-        ret bool %cD
+define i1 @test11(i8 %A, i8 %B) {
+	%C = sub i8 %A, %B		; <i8> [#uses=1]
+	%cD = icmp ne i8 %C, 0		; <i1> [#uses=1]
+	ret i1 %cD
 }
 
-int %test12(int %A) {
-	%B = shr int %A, ubyte 31
-	%C = sub int 0, %B         ; == ushr A, 31
-	ret int %C 
+define i32 @test12(i32 %A) {
+	%B = ashr i32 %A, 31		; <i32> [#uses=1]
+	%C = sub i32 0, %B		; <i32> [#uses=1]
+	ret i32 %C
 }
 
-uint %test13(uint %A) {
-	%B = shr uint %A, ubyte 31
-	%C = sub uint 0, %B        ; == sar A, 31
-	ret uint %C
+define i32 @test13(i32 %A) {
+	%B = lshr i32 %A, 31		; <i32> [#uses=1]
+	%C = sub i32 0, %B		; <i32> [#uses=1]
+	ret i32 %C
 }
 
-int %test14(uint %A) {
-        %B = shr uint %A, ubyte 31
-        %C = cast uint %B to int
-        %D = sub int 0, %C
-        ret int %D
+define i32 @test14(i32 %A) {
+	%B = lshr i32 %A, 31		; <i32> [#uses=1]
+	%C = bitcast i32 %B to i32		; <i32> [#uses=1]
+	%D = sub i32 0, %C		; <i32> [#uses=1]
+	ret i32 %D
 }
 
-int %test15(int %A, int %B) {
-	%C = sub int 0, %A
-	%D = rem int %B, %C   ;; X % -Y === X % Y
-	ret int %D
+define i32 @test15(i32 %A, i32 %B) {
+	%C = sub i32 0, %A		; <i32> [#uses=1]
+	%D = srem i32 %B, %C		; <i32> [#uses=1]
+	ret i32 %D
 }
 
-int %test16(int %A) {
-	%X = div int %A, 1123
-	%Y = sub int 0, %X
-	ret int %Y
+define i32 @test16(i32 %A) {
+	%X = sdiv i32 %A, 1123		; <i32> [#uses=1]
+	%Y = sub i32 0, %X		; <i32> [#uses=1]
+	ret i32 %Y
 }
 
-int %test17(int %A) {
-	%B = sub int 0, %A
-	%C = div int %B, 1234
-	ret int %C
+define i32 @test17(i32 %A) {
+	%B = sub i32 0, %A		; <i32> [#uses=1]
+	%C = sdiv i32 %B, 1234		; <i32> [#uses=1]
+	ret i32 %C
 }
 
-long %test18(long %Y) {
-        %tmp.4 = shl long %Y, ubyte 2
-        %tmp.12 = shl long %Y, ubyte 2
-        %tmp.8 = sub long %tmp.4, %tmp.12 ;; 0
-        ret long %tmp.8
+define i64 @test18(i64 %Y) {
+	%tmp.4 = shl i64 %Y, 2		; <i64> [#uses=1]
+	%tmp.12 = shl i64 %Y, 2		; <i64> [#uses=1]
+	%tmp.8 = sub i64 %tmp.4, %tmp.12		; <i64> [#uses=1]
+	ret i64 %tmp.8
 }
 
-int %test19(int %X, int %Y) {
-	%Z = sub int %X, %Y
-	%Q = add int %Z, %Y
-	ret int %Q
+define i32 @test19(i32 %X, i32 %Y) {
+	%Z = sub i32 %X, %Y		; <i32> [#uses=1]
+	%Q = add i32 %Z, %Y		; <i32> [#uses=1]
+	ret i32 %Q
 }
 
-bool %test20(int %g, int %h) {
-        %tmp.2 = sub int %g, %h
-        %tmp.4 = setne int %tmp.2, %g
-        ret bool %tmp.4
+define i1 @test20(i32 %g, i32 %h) {
+	%tmp.2 = sub i32 %g, %h		; <i32> [#uses=1]
+	%tmp.4 = icmp ne i32 %tmp.2, %g		; <i1> [#uses=1]
+	ret i1 %tmp.4
 }
 
-bool %test21(int %g, int %h) {
-        %tmp.2 = sub int %g, %h
-        %tmp.4 = setne int %tmp.2, %g
-        ret bool %tmp.4
+define i1 @test21(i32 %g, i32 %h) {
+	%tmp.2 = sub i32 %g, %h		; <i32> [#uses=1]
+	%tmp.4 = icmp ne i32 %tmp.2, %g		; <i1> [#uses=1]
+	ret i1 %tmp.4
 }
-

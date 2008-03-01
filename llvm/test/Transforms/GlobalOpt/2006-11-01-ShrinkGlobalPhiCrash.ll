@@ -1,33 +1,33 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -globalopt -disable-output
-	%struct._list = type { int*, %struct._list* }
-	%struct._play = type { int, int*, %struct._list*, %struct._play* }
-%nrow = internal global int 0		; <int*> [#uses=2]
+; RUN: llvm-as < %s | opt -globalopt -disable-output
 
-implementation   ; Functions:
+        %struct._list = type { i32*, %struct._list* }
+        %struct._play = type { i32, i32*, %struct._list*, %struct._play* }
+@nrow = internal global i32 0           ; <i32*> [#uses=2]
 
-void %make_play() {
+define void @make_play() {
 entry:
-	br label %cond_true16.i
+        br label %cond_true16.i
 
-cond_true16.i:		; preds = %cond_true16.i, %entry
-	%low.0.in.i.0 = phi int* [ %nrow, %entry ], [ null, %cond_true16.i ]		; <int*> [#uses=1]
-	%low.0.i = load int* %low.0.in.i.0		; <int> [#uses=0]
-	br label %cond_true16.i
+cond_true16.i:          ; preds = %cond_true16.i, %entry
+        %low.0.in.i.0 = phi i32* [ @nrow, %entry ], [ null, %cond_true16.i ]            ; <i32*> [#uses=1]
+        %low.0.i = load i32* %low.0.in.i.0              ; <i32> [#uses=0]
+        br label %cond_true16.i
 }
 
-void %make_wanted() {
+define void @make_wanted() {
 entry:
-	unreachable
+        unreachable
 }
 
-void %get_good_move() {
+define void @get_good_move() {
 entry:
-	ret void
+        ret void
 }
 
-void %main() {
+define void @main() {
 entry:
-	store int 8, int* %nrow
-	tail call void %make_play( )
-	ret void
+        store i32 8, i32* @nrow
+        tail call void @make_play( )
+        ret void
 }
+

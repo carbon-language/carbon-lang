@@ -1,8 +1,10 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -disable-output
+; RUN: llvm-as < %s | opt -instcombine -disable-output
 
-int %test() {
-	ret int 0
-Loop:
-	%X = add int %X, 1
-	br label %Loop
+define i32 @test() {
+        ret i32 0
+
+Loop:           ; preds = %Loop
+        %X = add i32 %X, 1              ; <i32> [#uses=1]
+        br label %Loop
 }
+

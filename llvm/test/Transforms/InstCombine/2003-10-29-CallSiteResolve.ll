@@ -1,13 +1,15 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -disable-output
+; RUN: llvm-as < %s | opt -instcombine -disable-output
 
-declare int* %bar()
+declare i32* @bar()
 
-float* %foo() {
-	%tmp.11 = invoke float* cast (int* ()* %bar to float* ()*)()
-			to label %invoke_cont except label %X
+define float* @foo() {
+        %tmp.11 = invoke float* bitcast (i32* ()* @bar to float* ()*)( )
+                        to label %invoke_cont unwind label %X           ; <float*> [#uses=1]
 
-invoke_cont:
-	ret float *%tmp.11
-X:
-	ret float *null
+invoke_cont:            ; preds = %0
+        ret float* %tmp.11
+
+X:              ; preds = %0
+        ret float* null
 }
+

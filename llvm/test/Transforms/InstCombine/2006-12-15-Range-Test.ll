@@ -1,36 +1,30 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
 ; RUN:   grep icmp | count 1
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
 ; RUN:   grep {icmp ugt} | count 1
-; END.
 
-; ModuleID = 'bugpoint-tooptimize.bc'
 target datalayout = "e-p:32:32"
-target endian = little
-target pointersize = 32
 target triple = "i686-pc-linux-gnu"
-%r = external global [17 x int]         ; <[17 x int]*> [#uses=1]
+@r = external global [17 x i32]         ; <[17 x i32]*> [#uses=1]
 
-implementation   ; Functions:
-
-bool %print_pgm_cond_true(int %tmp12.reload, int* %tmp16.out) {
+define i1 @print_pgm_cond_true(i32 %tmp12.reload, i32* %tmp16.out) {
 newFuncRoot:
         br label %cond_true
 
 bb27.exitStub:          ; preds = %cond_true
-        store int %tmp16, int* %tmp16.out
-        ret bool true
+        store i32 %tmp16, i32* %tmp16.out
+        ret i1 true
 
 cond_next23.exitStub:           ; preds = %cond_true
-        store int %tmp16, int* %tmp16.out
-        ret bool false
+        store i32 %tmp16, i32* %tmp16.out
+        ret i1 false
 
 cond_true:              ; preds = %newFuncRoot
-        %tmp15 = getelementptr [17 x int]* %r, int 0, int %tmp12.reload         ; <int*> [#uses=1]
-        %tmp16 = load int* %tmp15               ; <int> [#uses=4]
-        %tmp18 = icmp slt int %tmp16, -31               ; <bool> [#uses=1]
-        %tmp21 = icmp sgt int %tmp16, 31                ; <bool> [#uses=1]
-        %bothcond = or bool %tmp18, %tmp21              ; <bool> [#uses=1]
-        br bool %bothcond, label %bb27.exitStub, label %cond_next23.exitStub
+        %tmp15 = getelementptr [17 x i32]* @r, i32 0, i32 %tmp12.reload         ; <i32*> [#uses=1]
+        %tmp16 = load i32* %tmp15               ; <i32> [#uses=4]
+        %tmp18 = icmp slt i32 %tmp16, -31               ; <i1> [#uses=1]
+        %tmp21 = icmp sgt i32 %tmp16, 31                ; <i1> [#uses=1]
+        %bothcond = or i1 %tmp18, %tmp21                ; <i1> [#uses=1]
+        br i1 %bothcond, label %bb27.exitStub, label %cond_next23.exitStub
 }
 

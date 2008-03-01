@@ -1,20 +1,20 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -indvars | llvm-dis | \
+; RUN: llvm-as < %s | opt -indvars | llvm-dis | \
 ; RUN:   grep {ret i32 152}
 
-int %main() {
+define i32 @main() {
 entry:
-	br label %no_exit
+        br label %no_exit
 
-no_exit:		; preds = %no_exit, %entry
-	%i.1.0 = phi int [ 0, %entry ], [ %inc, %no_exit ]		; <int> [#uses=2]
-	%tmp.4 = setgt int %i.1.0, 50		; <bool> [#uses=1]
-	%tmp.7 = select bool %tmp.4, int 100, int 0		; <int> [#uses=1]
-	%i.0 = add int %i.1.0, 1		; <int> [#uses=1]
-	%inc = add int %i.0, %tmp.7		; <int> [#uses=3]
-	%tmp.1 = setlt int %inc, 100		; <bool> [#uses=1]
-	br bool %tmp.1, label %no_exit, label %loopexit
+no_exit:                ; preds = %no_exit, %entry
+        %i.1.0 = phi i32 [ 0, %entry ], [ %inc, %no_exit ]              ; <i32> [#uses=2]
+        %tmp.4 = icmp sgt i32 %i.1.0, 50                ; <i1> [#uses=1]
+        %tmp.7 = select i1 %tmp.4, i32 100, i32 0               ; <i32> [#uses=1]
+        %i.0 = add i32 %i.1.0, 1                ; <i32> [#uses=1]
+        %inc = add i32 %i.0, %tmp.7             ; <i32> [#uses=3]
+        %tmp.1 = icmp slt i32 %inc, 100         ; <i1> [#uses=1]
+        br i1 %tmp.1, label %no_exit, label %loopexit
 
-loopexit:		; preds = %no_exit
-	ret int %inc
+loopexit:               ; preds = %no_exit
+        ret i32 %inc
 }
 

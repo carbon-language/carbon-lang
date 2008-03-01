@@ -1,16 +1,17 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
 ; RUN:   grep -v {store.*,.*null} | not grep store
 
-void %test1(int* %P) {
-	store int undef, int* %P
-	store int 123, int* undef
-	store int 124, int* null
-	ret void
+define void @test1(i32* %P) {
+        store i32 undef, i32* %P
+        store i32 123, i32* undef
+        store i32 124, i32* null
+        ret void
 }
 
-void %test2(int* %P) {
-	%X = load int* %P
-	%Y = add int %X, 0
-	store int %Y, int* %P
-	ret void
+define void @test2(i32* %P) {
+        %X = load i32* %P               ; <i32> [#uses=1]
+        %Y = add i32 %X, 0              ; <i32> [#uses=1]
+        store i32 %Y, i32* %P
+        ret void
 }
+

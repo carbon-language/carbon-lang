@@ -1,9 +1,11 @@
-; RUN: llvm-upgrade %s -o - | llvm-as | opt -instcombine | llvm-dis | \
+; RUN: llvm-as %s -o - | opt -instcombine | llvm-dis | \
 ; RUN:    grep and
-ulong %foo(ulong %tmp, ulong %tmp2) {
-  %tmp = cast ulong %tmp to uint
-  %tmp2 = cast ulong %tmp2 to uint
-  %tmp3 = and uint %tmp, %tmp2
-  %tmp4 = cast uint %tmp3 to ulong
-  ret ulong %tmp4
+
+define i64 @foo(i64 %tmp, i64 %tmp2) {
+        %tmp.upgrd.1 = trunc i64 %tmp to i32            ; <i32> [#uses=1]
+        %tmp2.upgrd.2 = trunc i64 %tmp2 to i32          ; <i32> [#uses=1]
+        %tmp3 = and i32 %tmp.upgrd.1, %tmp2.upgrd.2             ; <i32> [#uses=1]
+        %tmp4 = zext i32 %tmp3 to i64           ; <i64> [#uses=1]
+        ret i64 %tmp4
 }
+

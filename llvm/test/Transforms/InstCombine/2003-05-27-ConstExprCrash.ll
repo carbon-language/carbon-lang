@@ -1,8 +1,10 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -disable-output
+; RUN: llvm-as < %s | opt -instcombine -disable-output
 
-%X = global int 5
-long %test() {
-        %C = add long 1, 2
-	%V = add long cast(int* %X to long), %C
-	ret long %V
+@X = global i32 5               ; <i32*> [#uses=1]
+
+define i64 @test() {
+        %C = add i64 1, 2               ; <i64> [#uses=1]
+        %V = add i64 ptrtoint (i32* @X to i64), %C              ; <i64> [#uses=1]
+        ret i64 %V
 }
+

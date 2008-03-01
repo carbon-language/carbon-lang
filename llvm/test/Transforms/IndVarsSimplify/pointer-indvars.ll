@@ -1,14 +1,15 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -indvars | llvm-dis | grep indvar
+; RUN: llvm-as < %s | opt -indvars | llvm-dis | grep indvar
+@G = global i32* null           ; <i32**> [#uses=1]
+@Array = external global [40 x i32]             ; <[40 x i32]*> [#uses=1]
 
-%G = global int* null
+define void @test() {
+; <label>:0
+        br label %Loop
 
-%Array = external global [40 x int]
-
-void %test() {
-	br label %Loop
-Loop:
-	%X = phi int* [getelementptr ([40 x int]* %Array, long 0, long 0), %0], [%X.next, %Loop]
-	%X.next = getelementptr int* %X, long 1
-	store int* %X, int** %G
-	br label %Loop
+Loop:           ; preds = %Loop, %0
+        %X = phi i32* [ getelementptr ([40 x i32]* @Array, i64 0, i64 0), %0 ], [ %X.next, %Loop ]              ; <i32*> [#uses=2]
+        %X.next = getelementptr i32* %X, i64 1          ; <i32*> [#uses=1]
+        store i32* %X, i32** @G
+        br label %Loop
 }
+

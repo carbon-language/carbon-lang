@@ -1,24 +1,23 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -inline -disable-output
-implementation   
+; RUN: llvm-as < %s | opt -inline -disable-output
 
-int %main() {
+define i32 @main() {
 entry:
-	invoke void %__main( )
-			to label %else except label %RethrowExcept
+        invoke void @__main( )
+                        to label %else unwind label %RethrowExcept
 
-else:
-	%i.2 = phi int [ 36, %entry ], [ %i.2, %LJDecisionBB ]
-	br label %LJDecisionBB
+else:           ; preds = %LJDecisionBB, %entry
+        %i.2 = phi i32 [ 36, %entry ], [ %i.2, %LJDecisionBB ]          ; <i32> [#uses=1]
+        br label %LJDecisionBB
 
-LJDecisionBB:
-	br label %else
+LJDecisionBB:           ; preds = %else
+        br label %else
 
-RethrowExcept:
-	ret int 0
+RethrowExcept:          ; preds = %entry
+        ret i32 0
 }
 
-void %__main() {
-	ret void
+define void @__main() {
+        ret void
 }
 
 

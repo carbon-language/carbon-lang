@@ -1,9 +1,10 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -constprop | llvm-dis | \
+; RUN: llvm-as < %s | opt -constprop | llvm-dis | \
 ; RUN:   grep {i32 -1}
-; RUN: llvm-upgrade < %s | llvm-as | opt -constprop | llvm-dis | \
+; RUN: llvm-as < %s | opt -constprop | llvm-dis | \
 ; RUN:   not grep zeroinitializer
 
-< 4 x uint> %test() {
-  %tmp40 = bitcast <2 x long> bitcast (<4 x int> < int 0, int 0, int -1, int 0 > to <2 x long>) to <4 x uint>
-  ret <4 x uint> %tmp40
+define <4 x i32> @test() {
+        %tmp40 = bitcast <2 x i64> bitcast (<4 x i32> < i32 0, i32 0, i32 -1, i32 0 > to <2 x i64>) to <4 x i32>; <<4 x i32>> [#uses=1]
+        ret <4 x i32> %tmp40
 }
+

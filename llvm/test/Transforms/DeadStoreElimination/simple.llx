@@ -1,8 +1,9 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -dse | llvm-dis | not grep DEAD
+; RUN: llvm-as < %s | opt -dse | llvm-dis | not grep DEAD
 
-void %test(int* %Q, int* %P) {
-	%DEAD = load int* %Q
-	store int %DEAD, int* %P
-	store int 0, int* %P
-	ret void
+define void @test(i32* %Q, i32* %P) {
+        %DEAD = load i32* %Q            ; <i32> [#uses=1]
+        store i32 %DEAD, i32* %P
+        store i32 0, i32* %P
+        ret void
 }
+

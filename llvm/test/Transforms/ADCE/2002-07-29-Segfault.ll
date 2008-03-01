@@ -1,9 +1,9 @@
-; RUN:  llvm-upgrade < %s | llvm-as | opt -adce
+; RUN:  llvm-as < %s | opt -adce
 
-void "test"()
-begin
-	br label %BB3
+define void @test() {
+        br label %BB3
 
-BB3:
-	br label %BB3
-end
+BB3:            ; preds = %BB3, %0
+        br label %BB3
+}
+

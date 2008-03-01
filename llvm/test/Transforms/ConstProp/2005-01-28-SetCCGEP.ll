@@ -1,13 +1,10 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -constprop | llvm-dis | \
-; RUN:    not grep {ret bool false}
+; RUN: llvm-as < %s | opt -constprop | llvm-dis | \
+; RUN:    not grep {ret i1 false}
 
-%b = external global [2 x {  }] 
+@b = external global [2 x {  }]         ; <[2 x {  }]*> [#uses=2]
 
-implementation
-
-bool %f() {
-	; tmp.2 -> true, not false.
-	%tmp.2 = seteq {  }* getelementptr ([2 x {  }]* %b, int 0, int 0), 
-                             getelementptr ([2 x {  }]* %b, int 0, int 1)
-	ret bool %tmp.2
+define i1 @f() {
+        %tmp.2 = icmp eq {  }* getelementptr ([2 x {  }]* @b, i32 0, i32 0), getelementptr ([2 x {  }]* @b, i32 0, i32 1)                ; <i1> [#uses=1]
+        ret i1 %tmp.2
 }
+

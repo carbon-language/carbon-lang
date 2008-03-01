@@ -1,23 +1,23 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -globalopt -instcombine | \
+; RUN: llvm-as < %s | opt -globalopt -instcombine | \
 ; RUN:    llvm-dis | grep {ret i1 true}
 
 ;; check that global opt turns integers that only hold 0 or 1 into bools.
 
-%G = internal global int 0    ;; This only holds 0 or 1.
+@G = internal global i32 0              ; <i32*> [#uses=3]
 
-implementation
-
-void %set1() {
-	store int 0, int* %G
-	ret void
-}
-void %set2() {
-	store int 1, int* %G
-	ret void
+define void @set1() {
+        store i32 0, i32* @G
+        ret void
 }
 
-bool %get() {
-	%A = load int* %G
-	%C = setlt int %A, 2  ;; always true
-	ret bool %C
+define void @set2() {
+        store i32 1, i32* @G
+        ret void
 }
+
+define i1 @get() {
+        %A = load i32* @G               ; <i32> [#uses=1]
+        %C = icmp slt i32 %A, 2         ; <i1> [#uses=1]
+        ret i1 %C
+}
+

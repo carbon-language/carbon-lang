@@ -1,57 +1,46 @@
 ; Various test cases to ensure basic functionality is working for GCSE
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -gcse
+; RUN: llvm-as < %s | opt -gcse
 
-implementation
-
-void "testinsts"(int %i, int %j, int* %p)
-begin
-	%A = cast int %i to uint
-	%B = cast int %i to uint
-	
-	%C = shl int %i, ubyte 1
-	%D = shl int %i, ubyte 1
-
-	%E = getelementptr int* %p, long 12
-	%F = getelementptr int* %p, long 12
-	%G = getelementptr int* %p, long 13
-	ret void
-end
-
+define void @testinsts(i32 %i, i32 %j, i32* %p) {
+        %A = bitcast i32 %i to i32              ; <i32> [#uses=0]
+        %B = bitcast i32 %i to i32              ; <i32> [#uses=0]
+        %C = shl i32 %i, 1              ; <i32> [#uses=0]
+        %D = shl i32 %i, 1              ; <i32> [#uses=0]
+        %E = getelementptr i32* %p, i64 12              ; <i32*> [#uses=0]
+        %F = getelementptr i32* %p, i64 12              ; <i32*> [#uses=0]
+        %G = getelementptr i32* %p, i64 13              ; <i32*> [#uses=0]
+        ret void
+}
 
 ; Test different combinations of domination properties...
-void "sameBBtest"(int %i, int %j)
-begin
-	%A = add int %i, %j
-	%B = add int %i, %j
+define void @sameBBtest(i32 %i, i32 %j) {
+        %A = add i32 %i, %j             ; <i32> [#uses=1]
+        %B = add i32 %i, %j             ; <i32> [#uses=1]
+        %C = xor i32 %A, -1             ; <i32> [#uses=0]
+        %D = xor i32 %B, -1             ; <i32> [#uses=0]
+        %E = xor i32 %j, -1             ; <i32> [#uses=0]
+        ret void
+}
 
-	%C = xor int %A, -1
-	%D = xor int %B, -1
-	%E = xor int %j, -1
+define i32 @dominates(i32 %i, i32 %j) {
+        %A = add i32 %i, %j             ; <i32> [#uses=0]
+        br label %BB2
 
-	ret void
-end
+BB2:            ; preds = %0
+        %B = add i32 %i, %j             ; <i32> [#uses=1]
+        ret i32 %B
+}
 
-int "dominates"(int %i, int %j)
-begin
-	%A = add int %i, %j
-	br label %BB2
+define i32 @hascommondominator(i32 %i, i32 %j) {
+        br i1 true, label %BB1, label %BB2
 
-BB2:
-	%B = add int %i, %j
-	ret int %B
-end
+BB1:            ; preds = %0
+        %A = add i32 %i, %j             ; <i32> [#uses=1]
+        ret i32 %A
 
-int "hascommondominator"(int %i, int %j)
-begin
-	br bool true, label %BB1, label %BB2
-
-BB1:
-	%A = add int %i, %j
-	ret int %A
-
-BB2:
-	%B = add int %i, %j
-	ret int %B
-end
+BB2:            ; preds = %0
+        %B = add i32 %i, %j             ; <i32> [#uses=1]
+        ret i32 %B
+}
 

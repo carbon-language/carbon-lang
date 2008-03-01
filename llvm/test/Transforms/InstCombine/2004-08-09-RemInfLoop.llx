@@ -1,8 +1,9 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine
+; RUN: llvm-as < %s | opt -instcombine
 
 ; This testcase should not send the instcombiner into an infinite loop!
 
-int %test(int %X) {
-	%Y = rem int %X, 0
-	ret int %Y
+define i32 @test(i32 %X) {
+        %Y = srem i32 %X, 0             ; <i32> [#uses=1]
+        ret i32 %Y
 }
+

@@ -1,17 +1,16 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -argpromotion -instcombine | llvm-dis | not grep load
+; RUN: llvm-as < %s | opt -argpromotion -instcombine | llvm-dis | not grep load
 
-%G1 = constant int 0
-%G2 = constant int* %G1
+@G1 = constant i32 0            ; <i32*> [#uses=1]
+@G2 = constant i32* @G1         ; <i32**> [#uses=1]
 
-implementation
-
-internal int %test(int **%X) {
-	%Y = load int** %X
-	%X = load int* %Y
-	ret int %X
+define internal i32 @test(i32** %X) {
+        %Y = load i32** %X              ; <i32*> [#uses=1]
+        %X.upgrd.1 = load i32* %Y               ; <i32> [#uses=1]
+        ret i32 %X.upgrd.1
 }
 
-int %caller(int** %P) {
-	%X = call int %test(int** %G2)
-	ret int %X
+define i32 @caller(i32** %P) {
+        %X = call i32 @test( i32** @G2 )                ; <i32> [#uses=1]
+        ret i32 %X
 }
+

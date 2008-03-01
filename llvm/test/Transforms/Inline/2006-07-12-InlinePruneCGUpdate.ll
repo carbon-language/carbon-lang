@@ -1,13 +1,10 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -inline -prune-eh -disable-output
+; RUN: llvm-as < %s | opt -inline -prune-eh -disable-output
 ; PR827
+@_ZTV8CRjii = internal global [1 x i32 (...)*] [ i32 (...)* @_ZN8CRjii12NlFeeEPN5Jr7sE ]		; <[1 x i32 (...)*]*> [#uses=0]
 
-%_ZTV8CRjii = internal global [1 x int (...)*] [ int (...)* %_ZN8CRjii12NlFeeEPN5Jr7sE ]		; <[1 x int (...)*]*> [#uses=0]
-
-implementation   ; Functions:
-
-internal int %_ZN8CRjii12NlFeeEPN5Jr7sE(...) {
+define internal i32 @_ZN8CRjii12NlFeeEPN5Jr7sE(...) {
 entry:
-	br bool false, label %cond_true, label %cond_false179
+	br i1 false, label %cond_true, label %cond_false179
 
 cond_true:		; preds = %entry
 	br label %bb9
@@ -16,7 +13,7 @@ bb:		; preds = %cond_true14
 	br label %bb9
 
 bb9:		; preds = %bb, %cond_true
-	br bool false, label %cond_true14, label %cond_false
+	br i1 false, label %cond_true14, label %cond_false
 
 cond_true14:		; preds = %bb9
 	br label %bb
@@ -34,7 +31,7 @@ bb17:		; preds = %cond_true29
 	br label %bb24
 
 bb24:		; preds = %bb17, %bb15
-	br bool false, label %cond_true29, label %cond_false30
+	br i1 false, label %cond_true29, label %cond_false30
 
 cond_true29:		; preds = %bb24
 	br label %bb17
@@ -52,7 +49,7 @@ bb34:		; preds = %cond_true46
 	br label %bb41
 
 bb41:		; preds = %bb34, %bb32
-	br bool false, label %cond_true46, label %cond_false47
+	br i1 false, label %cond_true46, label %cond_false47
 
 cond_true46:		; preds = %bb41
 	br label %bb34
@@ -70,7 +67,7 @@ bb51:		; preds = %cond_true63
 	br label %bb58
 
 bb58:		; preds = %bb51, %bb49
-	br bool false, label %cond_true63, label %cond_false64
+	br i1 false, label %cond_true63, label %cond_false64
 
 cond_true63:		; preds = %bb58
 	br label %bb51
@@ -88,7 +85,7 @@ bb68:		; preds = %cond_true81
 	br label %bb76
 
 bb76:		; preds = %bb68, %bb66
-	br bool false, label %cond_true81, label %cond_false82
+	br i1 false, label %cond_true81, label %cond_false82
 
 cond_true81:		; preds = %bb76
 	br label %bb68
@@ -106,7 +103,7 @@ bb86:		; preds = %cond_true99
 	br label %bb94
 
 bb94:		; preds = %bb86, %bb84
-	br bool false, label %cond_true99, label %cond_false100
+	br i1 false, label %cond_true99, label %cond_false100
 
 cond_true99:		; preds = %bb94
 	br label %bb86
@@ -124,7 +121,7 @@ bb104:		; preds = %cond_true117
 	br label %bb112
 
 bb112:		; preds = %bb104, %bb102
-	br bool false, label %cond_true117, label %cond_false118
+	br i1 false, label %cond_true117, label %cond_false118
 
 cond_true117:		; preds = %bb112
 	br label %bb104
@@ -142,7 +139,7 @@ bb122:		; preds = %cond_true135
 	br label %bb130
 
 bb130:		; preds = %bb122, %bb120
-	br bool false, label %cond_true135, label %cond_false136
+	br i1 false, label %cond_true135, label %cond_false136
 
 cond_true135:		; preds = %bb130
 	br label %bb122
@@ -157,11 +154,11 @@ bb138:		; preds = %cond_next137, %cond_false136
 	br label %bb148
 
 bb140:		; preds = %cond_true153
-	call fastcc void %_Zjrf1( )
+	call fastcc void @_Zjrf1( )
 	br label %bb148
 
 bb148:		; preds = %bb140, %bb138
-	br bool false, label %cond_true153, label %cond_false154
+	br i1 false, label %cond_true153, label %cond_false154
 
 cond_true153:		; preds = %bb148
 	br label %bb140
@@ -179,7 +176,7 @@ bb158:		; preds = %cond_true171
 	br label %bb166
 
 bb166:		; preds = %bb158, %bb156
-	br bool false, label %cond_true171, label %cond_false172
+	br i1 false, label %cond_true171, label %cond_false172
 
 cond_true171:		; preds = %bb166
 	br label %bb158
@@ -206,10 +203,10 @@ cond_next180:		; preds = %cond_false179, %finally
 	br label %return
 
 return:		; preds = %cond_next180
-	ret int 0
+	ret i32 0
 }
 
-internal fastcc void %_Zjrf2() {
+define internal fastcc void @_Zjrf2() {
 entry:
 	br label %bb3
 
@@ -217,9 +214,9 @@ bb:		; preds = %cond_true
 	br label %bb3
 
 bb3:		; preds = %bb, %entry
-	%tmp5 = load ubyte** null		; <ubyte*> [#uses=1]
-	%tmp = setne ubyte* null, %tmp5		; <bool> [#uses=1]
-	br bool %tmp, label %cond_true, label %cond_false
+	%tmp5 = load i8** null		; <i8*> [#uses=1]
+	%tmp = icmp ne i8* null, %tmp5		; <i1> [#uses=1]
+	br i1 %tmp, label %cond_true, label %cond_false
 
 cond_true:		; preds = %bb3
 	br label %bb
@@ -237,16 +234,16 @@ return:		; preds = %bb6
 	ret void
 }
 
-internal fastcc void %_Zjrf3() {
+define internal fastcc void @_Zjrf3() {
 entry:
-	call fastcc void %_Zjrf2( )
+	call fastcc void @_Zjrf2( )
 	br label %return
 
 return:		; preds = %entry
 	ret void
 }
 
-internal fastcc void %_Zjrf4() {
+define internal fastcc void @_Zjrf4() {
 entry:
 	br label %bb6
 
@@ -254,7 +251,7 @@ bb:		; preds = %cond_true
 	br label %bb6
 
 bb6:		; preds = %bb, %entry
-	br bool false, label %cond_true, label %cond_false
+	br i1 false, label %cond_true, label %cond_false
 
 cond_true:		; preds = %bb6
 	br label %bb
@@ -266,10 +263,10 @@ cond_next:		; No predecessors!
 	br label %bb8
 
 bb8:		; preds = %cond_next, %cond_false
-	br bool false, label %cond_true9, label %cond_false12
+	br i1 false, label %cond_true9, label %cond_false12
 
 cond_true9:		; preds = %bb8
-	call fastcc void %_Zjrf3( )
+	call fastcc void @_Zjrf3( )
 	br label %cond_next13
 
 cond_false12:		; preds = %bb8
@@ -282,25 +279,25 @@ return:		; preds = %cond_next13
 	ret void
 }
 
-internal fastcc void %_Zjrf5() {
+define internal fastcc void @_Zjrf5() {
 entry:
-	call fastcc void %_Zjrf4( )
+	call fastcc void @_Zjrf4( )
 	br label %return
 
 return:		; preds = %entry
 	ret void
 }
 
-internal fastcc void %_Zjrf6() {
+define internal fastcc void @_Zjrf6() {
 entry:
-	call fastcc void %_Zjrf5( )
+	call fastcc void @_Zjrf5( )
 	br label %return
 
 return:		; preds = %entry
 	ret void
 }
 
-internal fastcc void %_Zjrf7() {
+define internal fastcc void @_Zjrf7() {
 entry:
 	br label %cleanup
 
@@ -308,7 +305,7 @@ cleanup:		; preds = %entry
 	br label %finally
 
 finally:		; preds = %cleanup
-	call fastcc void %_Zjrf6( )
+	call fastcc void @_Zjrf6( )
 	br label %cleanup9
 
 cleanup9:		; preds = %finally
@@ -330,7 +327,7 @@ return:		; preds = %finally23
 	ret void
 }
 
-internal fastcc void %_Zjrf11() {
+define internal fastcc void @_Zjrf11() {
 entry:
 	br label %bb7
 
@@ -338,7 +335,7 @@ bb:		; preds = %cond_true
 	br label %bb7
 
 bb7:		; preds = %bb, %entry
-	br bool false, label %cond_true, label %cond_false
+	br i1 false, label %cond_true, label %cond_false
 
 cond_true:		; preds = %bb7
 	br label %bb
@@ -352,10 +349,10 @@ cond_next:		; No predecessors!
 bb9:		; preds = %cond_next, %cond_false
 	br label %return
 		; No predecessors!
-	br bool false, label %cond_true12, label %cond_false15
+	br i1 false, label %cond_true12, label %cond_false15
 
 cond_true12:		; preds = %0
-	call fastcc void %_Zjrf3( )
+	call fastcc void @_Zjrf3( )
 	br label %cond_next16
 
 cond_false15:		; preds = %0
@@ -368,30 +365,30 @@ return:		; preds = %cond_next16, %bb9
 	ret void
 }
 
-internal fastcc void %_Zjrf9() {
+define internal fastcc void @_Zjrf9() {
 entry:
-	call fastcc void %_Zjrf11( )
+	call fastcc void @_Zjrf11( )
 	br label %return
 
 return:		; preds = %entry
 	ret void
 }
 
-internal fastcc void %_Zjrf10() {
+define internal fastcc void @_Zjrf10() {
 entry:
-	call fastcc void %_Zjrf9( )
+	call fastcc void @_Zjrf9( )
 	br label %return
 
 return:		; preds = %entry
 	ret void
 }
 
-internal fastcc void %_Zjrf8() {
+define internal fastcc void @_Zjrf8() {
 entry:
-	br bool false, label %cond_true, label %cond_false201
+	br i1 false, label %cond_true, label %cond_false201
 
 cond_true:		; preds = %entry
-	br bool false, label %cond_true36, label %cond_false
+	br i1 false, label %cond_true36, label %cond_false
 
 cond_true36:		; preds = %cond_true
 	br label %cleanup
@@ -403,7 +400,7 @@ finally:		; preds = %cleanup
 	br label %cond_next189
 
 cond_false:		; preds = %cond_true
-	br bool false, label %cond_true99, label %cond_false137
+	br i1 false, label %cond_true99, label %cond_false137
 
 cond_true99:		; preds = %cond_false
 	br label %cleanup136
@@ -415,7 +412,7 @@ finally135:		; preds = %cleanup136
 	br label %cond_next
 
 cond_false137:		; preds = %cond_false
-	call fastcc void %_Zjrf10( )
+	call fastcc void @_Zjrf10( )
 	br label %cleanup188
 
 cleanup188:		; preds = %cond_false137
@@ -440,7 +437,7 @@ return:		; preds = %cond_next202
 	ret void
 }
 
-internal fastcc void %_Zjrf1() {
+define internal fastcc void @_Zjrf1() {
 entry:
 	br label %bb492
 
@@ -457,7 +454,7 @@ cleanup11:		; preds = %finally
 	br label %finally10
 
 finally10:		; preds = %cleanup11
-	br bool false, label %cond_true, label %cond_false286
+	br i1 false, label %cond_true, label %cond_false286
 
 cond_true:		; preds = %finally10
 	br label %cleanup26
@@ -472,7 +469,7 @@ bb27:		; preds = %cond_true37
 	br label %bb30
 
 bb30:		; preds = %bb27, %finally25
-	br bool false, label %cond_true37, label %cond_false
+	br i1 false, label %cond_true37, label %cond_false
 
 cond_true37:		; preds = %bb30
 	br label %bb27
@@ -490,7 +487,7 @@ bb40:		; preds = %cond_true156
 	br label %bb139
 
 bb41:		; preds = %cond_true142
-	call fastcc void %_Zjrf7( )
+	call fastcc void @_Zjrf7( )
 	br label %bb105
 
 bb44:		; preds = %cond_true112
@@ -500,7 +497,7 @@ bb66:		; preds = %cond_true80
 	br label %bb74
 
 bb74:		; preds = %bb66, %bb44
-	br bool false, label %cond_true80, label %cond_false81
+	br i1 false, label %cond_true80, label %cond_false81
 
 cond_true80:		; preds = %bb74
 	br label %bb66
@@ -527,7 +524,7 @@ finally98:		; preds = %cleanup99
 	br label %bb105
 
 bb105:		; preds = %finally98, %bb41
-	br bool false, label %cond_true112, label %cond_false113
+	br i1 false, label %cond_true112, label %cond_false113
 
 cond_true112:		; preds = %bb105
 	br label %bb44
@@ -539,17 +536,17 @@ cond_next114:		; No predecessors!
 	br label %bb115
 
 bb115:		; preds = %cond_next114, %cond_false113
-	br bool false, label %cond_true119, label %cond_false123
+	br i1 false, label %cond_true119, label %cond_false123
 
 cond_true119:		; preds = %bb115
-	call fastcc void %_Zjrf8( )
+	call fastcc void @_Zjrf8( )
 	br label %cond_next124
 
 cond_false123:		; preds = %bb115
 	br label %cond_next124
 
 cond_next124:		; preds = %cond_false123, %cond_true119
-	br bool false, label %cond_true131, label %cond_false132
+	br i1 false, label %cond_true131, label %cond_false132
 
 cond_true131:		; preds = %cond_next124
 	br label %cleanup135
@@ -570,7 +567,7 @@ finally134:		; preds = %cleanup136
 	br label %bb139
 
 bb139:		; preds = %finally134, %bb40
-	br bool false, label %cond_true142, label %cond_false143
+	br i1 false, label %cond_true142, label %cond_false143
 
 cond_true142:		; preds = %bb139
 	br label %bb41
@@ -585,7 +582,7 @@ bb145:		; preds = %cond_next144, %cond_false143
 	br label %bb148
 
 bb148:		; preds = %bb145, %bb38
-	br bool false, label %cond_true156, label %cond_false157
+	br i1 false, label %cond_true156, label %cond_false157
 
 cond_true156:		; preds = %bb148
 	br label %bb40
@@ -603,7 +600,7 @@ done:		; preds = %bb159, %cleanup135
 	br label %bb214
 
 bb185:		; preds = %cond_true218
-	br bool false, label %cond_true193, label %cond_false206
+	br i1 false, label %cond_true193, label %cond_false206
 
 cond_true193:		; preds = %bb185
 	br label %cond_next211
@@ -615,7 +612,7 @@ cond_next211:		; preds = %cond_false206, %cond_true193
 	br label %bb214
 
 bb214:		; preds = %cond_next211, %done
-	br bool false, label %cond_true218, label %cond_false219
+	br i1 false, label %cond_true218, label %cond_false219
 
 cond_true218:		; preds = %bb214
 	br label %bb185
@@ -627,7 +624,7 @@ cond_next220:		; No predecessors!
 	br label %bb221
 
 bb221:		; preds = %cond_next220, %cond_false219
-	br bool false, label %cond_true236, label %cond_false245
+	br i1 false, label %cond_true236, label %cond_false245
 
 cond_true236:		; preds = %bb221
 	br label %cond_next249
@@ -636,7 +633,7 @@ cond_false245:		; preds = %bb221
 	br label %cond_next249
 
 cond_next249:		; preds = %cond_false245, %cond_true236
-	br bool false, label %cond_true272, label %cond_false277
+	br i1 false, label %cond_true272, label %cond_false277
 
 cond_true272:		; preds = %cond_next249
 	br label %cond_next278
@@ -657,7 +654,7 @@ cond_false286:		; preds = %finally10
 	br label %cond_next287
 
 cond_next287:		; preds = %cond_false286, %finally284
-	br bool false, label %cond_true317, label %cond_false319
+	br i1 false, label %cond_true317, label %cond_false319
 
 cond_true317:		; preds = %cond_next287
 	br label %cond_next321
@@ -672,7 +669,7 @@ bb335:		; preds = %cond_true355
 	br label %bb348
 
 bb348:		; preds = %bb335, %cond_next321
-	br bool false, label %cond_true355, label %cond_false356
+	br i1 false, label %cond_true355, label %cond_false356
 
 cond_true355:		; preds = %bb348
 	br label %bb335
@@ -684,7 +681,7 @@ cond_next357:		; No predecessors!
 	br label %bb358
 
 bb358:		; preds = %cond_next357, %cond_false356
-	br bool false, label %cond_true363, label %cond_false364
+	br i1 false, label %cond_true363, label %cond_false364
 
 cond_true363:		; preds = %bb358
 	br label %bb388
@@ -693,7 +690,7 @@ cond_false364:		; preds = %bb358
 	br label %cond_next365
 
 cond_next365:		; preds = %cond_false364
-	br bool false, label %cond_true370, label %cond_false371
+	br i1 false, label %cond_true370, label %cond_false371
 
 cond_true370:		; preds = %cond_next365
 	br label %bb388
@@ -702,7 +699,7 @@ cond_false371:		; preds = %cond_next365
 	br label %cond_next372
 
 cond_next372:		; preds = %cond_false371
-	br bool false, label %cond_true385, label %cond_false386
+	br i1 false, label %cond_true385, label %cond_false386
 
 cond_true385:		; preds = %cond_next372
 	br label %bb388
@@ -717,13 +714,13 @@ bb388:		; preds = %cond_true385, %cond_true370, %cond_true363
 	br label %bb389
 
 bb389:		; preds = %bb388, %cond_next387
-	br bool false, label %cond_true392, label %cond_false443
+	br i1 false, label %cond_true392, label %cond_false443
 
 cond_true392:		; preds = %bb389
 	br label %bb419
 
 bb402:		; preds = %cond_true425
-	br bool false, label %cond_true406, label %cond_false412
+	br i1 false, label %cond_true406, label %cond_false412
 
 cond_true406:		; preds = %bb402
 	br label %cond_next416
@@ -735,7 +732,7 @@ cond_next416:		; preds = %cond_false412, %cond_true406
 	br label %bb419
 
 bb419:		; preds = %cond_next416, %cond_true392
-	br bool false, label %cond_true425, label %cond_false426
+	br i1 false, label %cond_true425, label %cond_false426
 
 cond_true425:		; preds = %bb419
 	br label %bb402
@@ -756,7 +753,7 @@ bb450:		; preds = %cond_true466
 	br label %bb460
 
 bb460:		; preds = %bb450, %cond_false443
-	br bool false, label %cond_true466, label %cond_false467
+	br i1 false, label %cond_true466, label %cond_false467
 
 cond_true466:		; preds = %bb460
 	br label %bb450
@@ -792,7 +789,7 @@ finally488:		; preds = %cleanup489
 	br label %bb492
 
 bb492:		; preds = %finally488, %entry
-	br bool false, label %cond_true499, label %cond_false500
+	br i1 false, label %cond_true499, label %cond_false500
 
 cond_true499:		; preds = %bb492
 	br label %bb
@@ -810,7 +807,7 @@ return:		; preds = %bb502
 	ret void
 }
 
-internal fastcc void %_ZSt26__unguarded_insertion_sortIN9__gnu_cxx17__normal_iteratorIPSsSt6vectorISsSaISsEEEEEvT_S7_() {
+define internal fastcc void @_ZSt26__unguarded_insertion_sortIN9__gnu_cxx17__normal_iteratorIPSsSt6vectorISsSaISsEEEEEvT_S7_() {
 entry:
 	br label %bb12
 
@@ -824,7 +821,7 @@ finally:		; preds = %cleanup
 	br label %bb12
 
 bb12:		; preds = %finally, %entry
-	br bool false, label %cond_true, label %cond_false
+	br i1 false, label %cond_true, label %cond_false
 
 cond_true:		; preds = %bb12
 	br label %bb

@@ -1,16 +1,15 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -inline | llvm-dis | not grep tail
+; RUN: llvm-as < %s | opt -inline | llvm-dis | not grep tail
 
-implementation
+declare void @bar(i32*)
 
-declare void %bar(int*)
-
-internal void %foo(int* %P) {  ;; to be inlined
-  tail call void %bar(int* %P)
-  ret void
+define internal void @foo(i32* %P) {
+        tail call void @bar( i32* %P )
+        ret void
 }
 
-void %caller() {
-	%A = alloca int
-	call void %foo(int* %A)   ;; not a tail call
-	ret void
+define void @caller() {
+        %A = alloca i32         ; <i32*> [#uses=1]
+        call void @foo( i32* %A )
+        ret void
 }
+

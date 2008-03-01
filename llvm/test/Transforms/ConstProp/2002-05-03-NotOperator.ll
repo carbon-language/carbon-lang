@@ -4,15 +4,16 @@
 
 ; Fix #2: The unary not instruction now no longer exists. Change to xor.
 
-; RUN: llvm-upgrade < $test | llvm-as | opt -constprop | llvm-dis | \
-; RUN:   not grep {int 0}
+; RUN: llvm-as < $test | opt -constprop | llvm-dis | \
+; RUN:   not grep {i32 0}
 
-int "test1"() {
-	%R = xor int 123, -1
-	ret int %R
+define i32 @test1() {
+        %R = xor i32 123, -1            ; <i32> [#uses=1]
+        ret i32 %R
 }
 
-int "test2"() {
-	%R = xor int -123, -1
-	ret int %R
+define i32 @test2() {
+        %R = xor i32 -123, -1           ; <i32> [#uses=1]
+        ret i32 %R
 }
+

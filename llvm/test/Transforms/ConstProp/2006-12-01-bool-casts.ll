@@ -1,15 +1,15 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -constprop | llvm-dis | \
+; RUN: llvm-as < %s | opt -constprop | llvm-dis | \
 ; RUN:    grep {ret i32 -1}
-; RUN: llvm-upgrade < %s | llvm-as | opt -constprop | llvm-dis | \
+; RUN: llvm-as < %s | opt -constprop | llvm-dis | \
 ; RUN:    grep {ret i32 1}
 
-int %test1() {
-  %A = sext bool true to int
-  ret int %A
+define i32 @test1() {
+        %A = sext i1 true to i32                ; <i32> [#uses=1]
+        ret i32 %A
 }
 
-uint %test2() {
-  %A = zext bool true to uint
-  ret uint %A
+define i32 @test2() {
+        %A = zext i1 true to i32                ; <i32> [#uses=1]
+        ret i32 %A
 }
 

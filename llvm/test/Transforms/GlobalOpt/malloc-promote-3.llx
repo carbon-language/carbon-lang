@@ -1,26 +1,26 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -globalopt | llvm-dis | not grep malloc
+; RUN: llvm-as < %s | opt -globalopt | llvm-dis | not grep malloc
 
-%G = internal global int* null
+@G = internal global i32* null          ; <i32**> [#uses=4]
 
-void %init() {
-	%P = malloc int, uint 100
-	store int* %P, int** %G
-
-	%GV = load int** %G
-	%GVe = getelementptr int* %GV, int 40
-	store int 20, int* %GVe
-	ret void
+define void @init() {
+        %P = malloc i32, i32 100                ; <i32*> [#uses=1]
+        store i32* %P, i32** @G
+        %GV = load i32** @G             ; <i32*> [#uses=1]
+        %GVe = getelementptr i32* %GV, i32 40           ; <i32*> [#uses=1]
+        store i32 20, i32* %GVe
+        ret void
 }
 
-int %get() {
-	%GV = load int** %G
-	%GVe = getelementptr int* %GV, int 40
-	%V = load int* %GVe
-	ret int %V
+define i32 @get() {
+        %GV = load i32** @G             ; <i32*> [#uses=1]
+        %GVe = getelementptr i32* %GV, i32 40           ; <i32*> [#uses=1]
+        %V = load i32* %GVe             ; <i32> [#uses=1]
+        ret i32 %V
 }
 
-bool %check() {    ;; Return true if init has been called
-	%GV = load int** %G
-	%V = seteq int* %GV, null
-	ret bool %V
+define i1 @check() {
+        %GV = load i32** @G             ; <i32*> [#uses=1]
+        %V = icmp eq i32* %GV, null             ; <i1> [#uses=1]
+        ret i1 %V
 }
+

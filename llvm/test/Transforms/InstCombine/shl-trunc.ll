@@ -1,7 +1,9 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | grep shl
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep shl
 
-bool %test(int %X, ubyte %A) {
-	%B = lshr int %X, ubyte %A
-	%D = trunc int %B to bool
-	ret bool %D
+define i1 @test(i32 %X, i8 %A) {
+        %shift.upgrd.1 = zext i8 %A to i32              ; <i32> [#uses=1]
+        %B = lshr i32 %X, %shift.upgrd.1                ; <i32> [#uses=1]
+        %D = trunc i32 %B to i1         ; <i1> [#uses=1]
+        ret i1 %D
 }
+

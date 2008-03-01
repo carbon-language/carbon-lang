@@ -2,18 +2,19 @@
 ; node in the exception destination, and the inlined function contains an 
 ; unwind instruction.
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -inline -disable-output
+; RUN: llvm-as < %s | opt -inline -disable-output
 
-implementation
-
-linkonce void %foo() {
-  unwind
+define linkonce void @foo() {
+        unwind
 }
 
-int %test() {
+define i32 @test() {
 BB1:
-	invoke void %foo() to label %Cont except label %Cont
-Cont:
-	%A = phi int [ 0, %BB1], [0, %BB1]
-	ret int %A
+        invoke void @foo( )
+                        to label %Cont unwind label %Cont
+
+Cont:           ; preds = %BB1, %BB1
+        %A = phi i32 [ 0, %BB1 ], [ 0, %BB1 ]           ; <i32> [#uses=1]
+        ret i32 %A
 }
+

@@ -1,152 +1,170 @@
 ; This test makes sure that these instructions are properly eliminated.
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep icmp
-; END.
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep icmp
+	
+@X = external global i32                ; <i32*> [#uses=2]
 
-%X = uninitialized global int
-
-bool %test1(int %A) {
-	%B = seteq int %A, %A
-	%C = seteq int* %X, null   ; Never true
-	%D = and bool %B, %C
-	ret bool %D
+define i1 @test1(i32 %A) {
+        %B = icmp eq i32 %A, %A         ; <i1> [#uses=1]
+        ; Never true
+        %C = icmp eq i32* @X, null              ; <i1> [#uses=1]
+        %D = and i1 %B, %C              ; <i1> [#uses=1]
+        ret i1 %D
 }
 
-bool %test2(int %A) {
-	%B = setne int %A, %A
-	%C = setne int* %X, null   ; Never false
-	%D = or bool %B, %C
-	ret bool %D
+define i1 @test2(i32 %A) {
+        %B = icmp ne i32 %A, %A         ; <i1> [#uses=1]
+        ; Never false
+        %C = icmp ne i32* @X, null              ; <i1> [#uses=1]
+        %D = or i1 %B, %C               ; <i1> [#uses=1]
+        ret i1 %D
 }
 
-bool %test3(int %A) {
-	%B = setlt int %A, %A
-	ret bool %B
+define i1 @test3(i32 %A) {
+        %B = icmp slt i32 %A, %A                ; <i1> [#uses=1]
+        ret i1 %B
 }
 
-bool %test4(int %A) {
-	%B = setgt int %A, %A
-	ret bool %B
+
+define i1 @test4(i32 %A) {
+        %B = icmp sgt i32 %A, %A                ; <i1> [#uses=1]
+        ret i1 %B
 }
 
-bool %test5(int %A) {
-	%B = setle int %A, %A
-	ret bool %B
+define i1 @test5(i32 %A) {
+        %B = icmp sle i32 %A, %A                ; <i1> [#uses=1]
+        ret i1 %B
 }
 
-bool %test6(int %A) {
-	%B = setge int %A, %A
-	ret bool %B
+define i1 @test6(i32 %A) {
+        %B = icmp sge i32 %A, %A                ; <i1> [#uses=1]
+        ret i1 %B
 }
 
-bool %test7(uint %A) {
-	%B = setge uint %A, 0  ; true
-	ret bool %B
+define i1 @test7(i32 %A) {
+        ; true
+        %B = icmp uge i32 %A, 0         ; <i1> [#uses=1]
+        ret i1 %B
 }
 
-bool %test8(uint %A) {
-	%B = setlt uint %A, 0  ; false
-	ret bool %B
+define i1 @test8(i32 %A) {
+        ; false
+        %B = icmp ult i32 %A, 0         ; <i1> [#uses=1]
+        ret i1 %B
 }
 
 ;; test operations on boolean values these should all be eliminated$a
-bool %test9(bool %A) {
-	%B = setlt bool %A, false ; false
-	ret bool %B
-}
-bool %test10(bool %A) {
-	%B = setgt bool %A, true  ; false
-	ret bool %B
-}
-bool %test11(bool %A) {
-	%B = setle bool %A, true ; true
-	ret bool %B
-}
-bool %test12(bool %A) {
-	%B = setge bool %A, false  ; true
-	ret bool %B
-}
-bool %test13(bool %A, bool %B) {
-	%C = setge bool %A, %B       ; A | ~B
-	ret bool %C
-}
-bool %test14(bool %A, bool %B) {
-	%C = seteq bool %A, %B  ; ~(A ^ B)
-	ret bool %C
+define i1 @test9(i1 %A) {
+        ; false
+        %B = icmp ult i1 %A, false              ; <i1> [#uses=1]
+        ret i1 %B
 }
 
-bool %test16(uint %A) {
-	%B = and uint %A, 5
-	%C = seteq uint %B, 8    ; Is never true
-	ret bool %C
+define i1 @test10(i1 %A) {
+        ; false
+        %B = icmp ugt i1 %A, true               ; <i1> [#uses=1]
+        ret i1 %B
 }
 
-bool %test17(ubyte %A) {
-	%B = or ubyte %A, 1
-	%C = seteq ubyte %B, 2   ; Always false
-	ret bool %C
+define i1 @test11(i1 %A) {
+        ; true
+        %B = icmp ule i1 %A, true               ; <i1> [#uses=1]
+        ret i1 %B
 }
 
-bool %test18(bool %C, int %a) {
+define i1 @test12(i1 %A) {
+        ; true
+        %B = icmp uge i1 %A, false              ; <i1> [#uses=1]
+        ret i1 %B
+}
+
+define i1 @test13(i1 %A, i1 %B) {
+        ; A | ~B
+        %C = icmp uge i1 %A, %B         ; <i1> [#uses=1]
+        ret i1 %C
+}
+
+define i1 @test14(i1 %A, i1 %B) {
+        ; ~(A ^ B)
+        %C = icmp eq i1 %A, %B          ; <i1> [#uses=1]
+        ret i1 %C
+}
+
+define i1 @test16(i32 %A) {
+        %B = and i32 %A, 5              ; <i32> [#uses=1]
+        ; Is never true
+        %C = icmp eq i32 %B, 8          ; <i1> [#uses=1]
+        ret i1 %C
+}
+
+define i1 @test17(i8 %A) {
+        %B = or i8 %A, 1                ; <i8> [#uses=1]
+        ; Always false
+        %C = icmp eq i8 %B, 2           ; <i1> [#uses=1]
+        ret i1 %C
+}
+
+define i1 @test18(i1 %C, i32 %a) {
 entry:
-        br bool %C, label %endif, label %else
+        br i1 %C, label %endif, label %else
 
-else:
+else:           ; preds = %entry
         br label %endif
 
-endif:
-        %b.0 = phi int [ 0, %entry ], [ 1, %else ]
-        %tmp.4 = setlt int %b.0, 123
-        ret bool %tmp.4
+endif:          ; preds = %else, %entry
+        %b.0 = phi i32 [ 0, %entry ], [ 1, %else ]              ; <i32> [#uses=1]
+        %tmp.4 = icmp slt i32 %b.0, 123         ; <i1> [#uses=1]
+        ret i1 %tmp.4
 }
 
-bool %test19(bool %A, bool %B) {
-	%a = cast bool %A to int
-	%b = cast bool %B to int
-	%C = seteq int %a, %b
-	ret bool %C
+define i1 @test19(i1 %A, i1 %B) {
+        %a = zext i1 %A to i32          ; <i32> [#uses=1]
+        %b = zext i1 %B to i32          ; <i32> [#uses=1]
+        %C = icmp eq i32 %a, %b         ; <i1> [#uses=1]
+        ret i1 %C
 }
 
-uint %test20(uint %A) {
-        %B = and uint %A, 1
-        %C = setne uint %B, 0
-        %D = cast bool %C to uint
-        ret uint %D
+define i32 @test20(i32 %A) {
+        %B = and i32 %A, 1              ; <i32> [#uses=1]
+        %C = icmp ne i32 %B, 0          ; <i1> [#uses=1]
+        %D = zext i1 %C to i32          ; <i32> [#uses=1]
+        ret i32 %D
 }
 
-int %test21(int %a) {
-        %tmp.6 = and int %a, 4
-        %not.tmp.7 = setne int %tmp.6, 0
-        %retval = cast bool %not.tmp.7 to int
-        ret int %retval
+define i32 @test21(i32 %a) {
+        %tmp.6 = and i32 %a, 4          ; <i32> [#uses=1]
+        %not.tmp.7 = icmp ne i32 %tmp.6, 0              ; <i1> [#uses=1]
+        %retval = zext i1 %not.tmp.7 to i32             ; <i32> [#uses=1]
+        ret i32 %retval
 }
 
-bool %test22(uint %A, int %X) {
-        %B = and uint %A, 100663295
-        %C = setlt uint %B, 268435456
-	%Y = and int %X, 7
-	%Z = setgt int %Y, -1
-	%R = or bool %C, %Z
-	ret bool %R
+define i1 @test22(i32 %A, i32 %X) {
+        %B = and i32 %A, 100663295              ; <i32> [#uses=1]
+        %C = icmp ult i32 %B, 268435456         ; <i1> [#uses=1]
+        %Y = and i32 %X, 7              ; <i32> [#uses=1]
+        %Z = icmp sgt i32 %Y, -1                ; <i1> [#uses=1]
+        %R = or i1 %C, %Z               ; <i1> [#uses=1]
+        ret i1 %R
 }
 
-int %test23(int %a) {
-        %tmp.1 = and int %a, 1
-        %tmp.2 = seteq int %tmp.1, 0
-        %tmp.3 = cast bool %tmp.2 to int  ;; xor tmp1, 1
-        ret int %tmp.3
+define i32 @test23(i32 %a) {
+        %tmp.1 = and i32 %a, 1          ; <i32> [#uses=1]
+        %tmp.2 = icmp eq i32 %tmp.1, 0          ; <i1> [#uses=1]
+        %tmp.3 = zext i1 %tmp.2 to i32          ; <i32> [#uses=1]
+        ret i32 %tmp.3
 }
 
-int %test24(uint %a) {
-        %tmp1 = and uint %a, 4
-	%tmp.1 = shr uint %tmp1, ubyte 2
-        %tmp.2 = seteq uint %tmp.1, 0
-        %tmp.3 = cast bool %tmp.2 to int  ;; xor tmp1, 1
-        ret int %tmp.3
+define i32 @test24(i32 %a) {
+        %tmp1 = and i32 %a, 4           ; <i32> [#uses=1]
+        %tmp.1 = lshr i32 %tmp1, 2              ; <i32> [#uses=1]
+        %tmp.2 = icmp eq i32 %tmp.1, 0          ; <i1> [#uses=1]
+        %tmp.3 = zext i1 %tmp.2 to i32          ; <i32> [#uses=1]
+        ret i32 %tmp.3
 }
 
-bool %test25(uint %A) {
-	%B = and uint %A, 2
-	%C = setgt uint %B, 2
-	ret bool %C
+define i1 @test25(i32 %A) {
+        %B = and i32 %A, 2              ; <i32> [#uses=1]
+        %C = icmp ugt i32 %B, 2         ; <i1> [#uses=1]
+        ret i1 %C
 }
+

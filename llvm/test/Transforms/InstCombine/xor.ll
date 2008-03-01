@@ -1,198 +1,192 @@
 ; This test makes sure that these instructions are properly eliminated.
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
 ; RUN:    not grep {xor }
-; END.
+@G1 = global i32 0		; <i32*> [#uses=1]
+@G2 = global i32 0		; <i32*> [#uses=1]
 
-%G1 = global uint 0
-%G2 = global uint 0
-
-implementation
-
-bool %test0(bool %A) {
-	%B = xor bool %A, false
-	ret bool %B
+define i1 @test0(i1 %A) {
+	%B = xor i1 %A, false		; <i1> [#uses=1]
+	ret i1 %B
 }
 
-int %test1(int %A) {
-	%B = xor int %A, 0
-	ret int %B
+define i32 @test1(i32 %A) {
+	%B = xor i32 %A, 0		; <i32> [#uses=1]
+	ret i32 %B
 }
 
-bool %test2(bool %A) {
-	%B = xor bool %A, %A
-	ret bool %B
+define i1 @test2(i1 %A) {
+	%B = xor i1 %A, %A		; <i1> [#uses=1]
+	ret i1 %B
 }
 
-int %test3(int %A) {
-	%B = xor int %A, %A
-	ret int %B
+define i32 @test3(i32 %A) {
+	%B = xor i32 %A, %A		; <i32> [#uses=1]
+	ret i32 %B
 }
 
-int %test4(int %A) {    ; A ^ ~A == -1
-        %NotA = xor int -1, %A
-        %B = xor int %A, %NotA
-        ret int %B
+define i32 @test4(i32 %A) {
+	%NotA = xor i32 -1, %A		; <i32> [#uses=1]
+	%B = xor i32 %A, %NotA		; <i32> [#uses=1]
+	ret i32 %B
 }
 
-uint %test5(uint %A) { ; (A|B)^B == A & (~B)
-	%t1 = or uint %A, 123
-	%r  = xor uint %t1, 123
-	ret uint %r
+define i32 @test5(i32 %A) {
+	%t1 = or i32 %A, 123		; <i32> [#uses=1]
+	%r = xor i32 %t1, 123		; <i32> [#uses=1]
+	ret i32 %r
 }
 
-ubyte %test6(ubyte %A) {
-	%B = xor ubyte %A, 17
-	%C = xor ubyte %B, 17
-	ret ubyte %C
+define i8 @test6(i8 %A) {
+	%B = xor i8 %A, 17		; <i8> [#uses=1]
+	%C = xor i8 %B, 17		; <i8> [#uses=1]
+	ret i8 %C
 }
 
-; (A & C1)^(B & C2) -> (A & C1)|(B & C2) iff C1&C2 == 0
-int %test7(int %A, int %B) {
-
-        %A1 = and int %A, 7
-        %B1 = and int %B, 128
-        %C1 = xor int %A1, %B1
-        ret int %C1
+define i32 @test7(i32 %A, i32 %B) {
+	%A1 = and i32 %A, 7		; <i32> [#uses=1]
+	%B1 = and i32 %B, 128		; <i32> [#uses=1]
+	%C1 = xor i32 %A1, %B1		; <i32> [#uses=1]
+	ret i32 %C1
 }
 
-ubyte %test8(bool %c) {
-	%d = xor bool %c, true    ; invert the condition
-	br bool %d, label %True, label %False
-True:
-	ret ubyte 1
-False:
-	ret ubyte 3
+define i8 @test8(i1 %c) {
+	%d = xor i1 %c, true		; <i1> [#uses=1]
+	br i1 %d, label %True, label %False
+
+True:		; preds = %0
+	ret i8 1
+
+False:		; preds = %0
+	ret i8 3
 }
 
-bool %test9(ubyte %A) {
-	%B = xor ubyte %A, 123      ; xor can be eliminated
-	%C = seteq ubyte %B, 34
-	ret bool %C
+define i1 @test9(i8 %A) {
+	%B = xor i8 %A, 123		; <i8> [#uses=1]
+	%C = icmp eq i8 %B, 34		; <i1> [#uses=1]
+	ret i1 %C
 }
 
-ubyte %test10(ubyte %A) {
-	%B = and ubyte %A, 3
-	%C = xor ubyte %B, 4        ; transform into an OR
-	ret ubyte %C
+define i8 @test10(i8 %A) {
+	%B = and i8 %A, 3		; <i8> [#uses=1]
+	%C = xor i8 %B, 4		; <i8> [#uses=1]
+	ret i8 %C
 }
 
-ubyte %test11(ubyte %A) {
-	%B = or ubyte %A, 12
-	%C = xor ubyte %B, 4        ; transform into an AND
-	ret ubyte %C
+define i8 @test11(i8 %A) {
+	%B = or i8 %A, 12		; <i8> [#uses=1]
+	%C = xor i8 %B, 4		; <i8> [#uses=1]
+	ret i8 %C
 }
 
-bool %test12(ubyte %A) {
-	%B = xor ubyte %A, 4
-	%c = setne ubyte %B, 0
-	ret bool %c
+define i1 @test12(i8 %A) {
+	%B = xor i8 %A, 4		; <i8> [#uses=1]
+	%c = icmp ne i8 %B, 0		; <i1> [#uses=1]
+	ret i1 %c
 }
 
-bool %test13(ubyte %A, ubyte %B) {
-	%C = setlt ubyte %A, %B
-	%D = setgt ubyte %A, %B
-	%E = xor bool %C, %D        ; E = setne %A, %B
-	ret bool %E
+define i1 @test13(i8 %A, i8 %B) {
+	%C = icmp ult i8 %A, %B		; <i1> [#uses=1]
+	%D = icmp ugt i8 %A, %B		; <i1> [#uses=1]
+	%E = xor i1 %C, %D		; <i1> [#uses=1]
+	ret i1 %E
 }
 
-bool %test14(ubyte %A, ubyte %B) {
-	%C = seteq ubyte %A, %B
-	%D = setne ubyte %B, %A
-	%E = xor bool %C, %D        ; E = true
-	ret bool %E
+define i1 @test14(i8 %A, i8 %B) {
+	%C = icmp eq i8 %A, %B		; <i1> [#uses=1]
+	%D = icmp ne i8 %B, %A		; <i1> [#uses=1]
+	%E = xor i1 %C, %D		; <i1> [#uses=1]
+	ret i1 %E
 }
 
-uint %test15(uint %A) {             ; ~(X-1) == -X
-	%B = add uint %A, 4294967295
-	%C = xor uint %B, 4294967295
-	ret uint %C
+define i32 @test15(i32 %A) {
+	%B = add i32 %A, -1		; <i32> [#uses=1]
+	%C = xor i32 %B, -1		; <i32> [#uses=1]
+	ret i32 %C
 }
 
-uint %test16(uint %A) {             ; ~(X+c) == (-c-1)-X
-	%B = add uint %A, 123       ; A generalization of the previous case
-	%C = xor uint %B, 4294967295
-	ret uint %C
+define i32 @test16(i32 %A) {
+	%B = add i32 %A, 123		; <i32> [#uses=1]
+	%C = xor i32 %B, -1		; <i32> [#uses=1]
+	ret i32 %C
 }
 
-uint %test17(uint %A) {             ; ~(c-X) == X-(c-1) == X+(-c+1)
-	%B = sub uint 123, %A
-	%C = xor uint %B, 4294967295
-	ret uint %C
+define i32 @test17(i32 %A) {
+	%B = sub i32 123, %A		; <i32> [#uses=1]
+	%C = xor i32 %B, -1		; <i32> [#uses=1]
+	ret i32 %C
 }
 
-uint %test18(uint %A) {             ; C - ~X == X + (1+C)
-	%B = xor uint %A, 4294967295; -~X == 0 - ~X == X+1
-	%C = sub uint 123, %B
-	ret uint %C
+define i32 @test18(i32 %A) {
+	%B = xor i32 %A, -1		; <i32> [#uses=1]
+	%C = sub i32 123, %B		; <i32> [#uses=1]
+	ret i32 %C
 }
 
-uint %test19(uint %A, uint %B) {
-	%C = xor uint %A, %B
-	%D = xor uint %C, %A  ; A terms cancel, D = B
-	ret uint %D
+define i32 @test19(i32 %A, i32 %B) {
+	%C = xor i32 %A, %B		; <i32> [#uses=1]
+	%D = xor i32 %C, %A		; <i32> [#uses=1]
+	ret i32 %D
 }
 
-void %test20(uint %A, uint %B) {  ; The "swap idiom"
-        %tmp.2 = xor uint %B, %A
-        %tmp.5 = xor uint %tmp.2, %B
-        %tmp.8 = xor uint %tmp.5, %tmp.2
-        store uint %tmp.8, uint* %G1   ; tmp.8 = B
-        store uint %tmp.5, uint* %G2   ; tmp.5 = A
-        ret void
+define void @test20(i32 %A, i32 %B) {
+	%tmp.2 = xor i32 %B, %A		; <i32> [#uses=2]
+	%tmp.5 = xor i32 %tmp.2, %B		; <i32> [#uses=2]
+	%tmp.8 = xor i32 %tmp.5, %tmp.2		; <i32> [#uses=1]
+	store i32 %tmp.8, i32* @G1
+	store i32 %tmp.5, i32* @G2
+	ret void
 }
 
-int %test21(bool %C, int %A, int %B) {
-	%C2 = xor bool %C, true
-	%D = select bool %C2, int %A, int %B
-	ret int %D
+define i32 @test21(i1 %C, i32 %A, i32 %B) {
+	%C2 = xor i1 %C, true		; <i1> [#uses=1]
+	%D = select i1 %C2, i32 %A, i32 %B		; <i32> [#uses=1]
+	ret i32 %D
 }
 
-int %test22(bool %X) {
-        %Y = xor bool %X, true
-        %Z = cast bool %Y to int
-        %Q = xor int %Z, 1
-        ret int %Q
+define i32 @test22(i1 %X) {
+	%Y = xor i1 %X, true		; <i1> [#uses=1]
+	%Z = zext i1 %Y to i32		; <i32> [#uses=1]
+	%Q = xor i32 %Z, 1		; <i32> [#uses=1]
+	ret i32 %Q
 }
 
-bool %test23(int %a, int %b) {
-        %tmp.2 = xor int %b, %a
-        %tmp.4 = seteq int %tmp.2, %a
-        ret bool %tmp.4
+define i1 @test23(i32 %a, i32 %b) {
+	%tmp.2 = xor i32 %b, %a		; <i32> [#uses=1]
+	%tmp.4 = icmp eq i32 %tmp.2, %a		; <i1> [#uses=1]
+	ret i1 %tmp.4
 }
 
-bool %test24(int %c, int %d) {
-        %tmp.2 = xor int %d, %c
-        %tmp.4 = setne int %tmp.2, %c
-        ret bool %tmp.4
+define i1 @test24(i32 %c, i32 %d) {
+	%tmp.2 = xor i32 %d, %c		; <i32> [#uses=1]
+	%tmp.4 = icmp ne i32 %tmp.2, %c		; <i1> [#uses=1]
+	ret i1 %tmp.4
 }
 
-int %test25(int %g, int %h) {
-	%h2 = xor int %h, -1
-        %tmp2 = and int %h2, %g
-        %tmp4 = xor int %tmp2, %g  ; (h2&g)^g -> ~h2 & g -> h & g
-        ret int %tmp4
+define i32 @test25(i32 %g, i32 %h) {
+	%h2 = xor i32 %h, -1		; <i32> [#uses=1]
+	%tmp2 = and i32 %h2, %g		; <i32> [#uses=1]
+	%tmp4 = xor i32 %tmp2, %g		; <i32> [#uses=1]
+	ret i32 %tmp4
 }
 
-int %test26(int %a, int %b) {
-	%b2 = xor int %b, -1
-        %tmp2 = xor int %a, %b2
-        %tmp4 = and int %tmp2, %a  ; (a^b2)&a -> ~b2 & a -> b & a
-        ret int %tmp4
+define i32 @test26(i32 %a, i32 %b) {
+	%b2 = xor i32 %b, -1		; <i32> [#uses=1]
+	%tmp2 = xor i32 %a, %b2		; <i32> [#uses=1]
+	%tmp4 = and i32 %tmp2, %a		; <i32> [#uses=1]
+	ret i32 %tmp4
 }
 
-
-int %test27(int %b, int %c, int %d) {
-        %tmp2 = xor int %d, %b
-        %tmp5 = xor int %d, %c
-        %tmp = icmp eq int %tmp2, %tmp5
-        %tmp6 = zext bool %tmp to int
-        ret int %tmp6
+define i32 @test27(i32 %b, i32 %c, i32 %d) {
+	%tmp2 = xor i32 %d, %b		; <i32> [#uses=1]
+	%tmp5 = xor i32 %d, %c		; <i32> [#uses=1]
+	%tmp = icmp eq i32 %tmp2, %tmp5		; <i1> [#uses=1]
+	%tmp6 = zext i1 %tmp to i32		; <i32> [#uses=1]
+	ret i32 %tmp6
 }
 
-int %test28(int %indvar) {
-        %tmp7 = add int %indvar, -2147483647
-        %tmp214 = xor int %tmp7, -2147483648
-        ret int %tmp214
+define i32 @test28(i32 %indvar) {
+	%tmp7 = add i32 %indvar, -2147483647		; <i32> [#uses=1]
+	%tmp214 = xor i32 %tmp7, -2147483648		; <i32> [#uses=1]
+	ret i32 %tmp214
 }
-

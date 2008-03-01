@@ -1,21 +1,21 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -argpromotion | llvm-dis | \
+; RUN: llvm-as < %s | opt -argpromotion | llvm-dis | \
 ; RUN:   grep {load i32\\* %A}
 
-implementation
+define internal i32 @callee(i1 %C, i32* %P) {
+        br i1 %C, label %T, label %F
 
-internal int %callee(bool %C, int* %P) {
-	br bool %C, label %T, label %F
-T:
-	ret int 17
-F:
-	%X = load int* %P
-	ret int %X
+T:              ; preds = %0
+        ret i32 17
+
+F:              ; preds = %0
+        %X = load i32* %P               ; <i32> [#uses=1]
+        ret i32 %X
 }
 
-int %foo() {
-	%A = alloca int
-	store int 17, int* %A
-	%X = call int %callee(bool false, int* %A)
-	ret int %X
+define i32 @foo() {
+        %A = alloca i32         ; <i32*> [#uses=2]
+        store i32 17, i32* %A
+        %X = call i32 @callee( i1 false, i32* %A )              ; <i32> [#uses=1]
+        ret i32 %X
 }
 

@@ -1,26 +1,28 @@
 ; Test that PHI nodes and select instructions do not necessarily make stuff
 ; non-constant.
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -globalopt | llvm-dis | not grep global
+; RUN: llvm-as < %s | opt -globalopt | llvm-dis | not grep global
 
-%X = internal global int 4
-%Y = internal global int 5
+@X = internal global i32 4              ; <i32*> [#uses=2]
+@Y = internal global i32 5              ; <i32*> [#uses=2]
 
-int %test1(bool %C) {
-	%P = select bool %C, int* %X, int* %Y
-	%V = load int* %P
-	ret int %V
+define i32 @test1(i1 %C) {
+        %P = select i1 %C, i32* @X, i32* @Y             ; <i32*> [#uses=1]
+        %V = load i32* %P               ; <i32> [#uses=1]
+        ret i32 %V
 }
 
+define i32 @test2(i1 %C) {
+; <label>:0
+        br i1 %C, label %T, label %Cont
 
-int %test2(bool %C) {
-	br bool %C, label %T, label %Cont
-T:
-	br label %Cont
-Cont:
-	%P = phi int* [%X, %0], [%Y, %T]
-	%V = load int* %P
-	ret int %V
+T:              ; preds = %0
+        br label %Cont
+
+Cont:           ; preds = %T, %0
+        %P = phi i32* [ @X, %0 ], [ @Y, %T ]            ; <i32*> [#uses=1]
+        %V = load i32* %P               ; <i32> [#uses=1]
+        ret i32 %V
 }
 
 

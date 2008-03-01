@@ -1,8 +1,9 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -adce -disable-output
+; RUN: llvm-as < %s | opt -adce -disable-output
 
-int %main() {
-	br label %loop
+define i32 @main() {
+        br label %loop
 
-loop:
-	br label %loop
+loop:           ; preds = %loop, %0
+        br label %loop
 }
+

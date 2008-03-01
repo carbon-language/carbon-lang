@@ -1,78 +1,101 @@
 ; This test makes sure that these instructions are properly eliminated.
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep phi
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep phi
 ; END.
 
-implementation
-
-int %test1(int %A, bool %b) {
-BB0:    br bool %b, label %BB1, label %BB2
-BB1:
-        %B = phi int [%A, %BB0]     ; Combine away one argument PHI nodes
-        ret int %B
-BB2:
-        ret int %A
-}
-
-int %test2(int %A, bool %b) {
-BB0:    br bool %b, label %BB1, label %BB2
-BB1:
-	br label %BB2
-BB2:
-        %B = phi int [%A, %BB0], [%A, %BB1]     ; Combine away PHI nodes with same values
-        ret int %B
-}
-
-int %test3(int %A, bool %b) {
-BB0: br label %Loop
-
-Loop:
-	%B = phi int [%A, %BB0], [%B, %Loop]    ; PHI has same value always.
-	br bool %b, label %Loop, label %Exit
-Exit:
-	ret int %B
-}
-
-int %test4(bool %b) {
-BB0:  ret int 7                                 ; Loop is unreachable
-
-Loop:
-        %B = phi int [%B, %L2], [%B, %Loop]     ; PHI has same value always.
-        br bool %b, label %L2, label %Loop
-L2:
-	br label %Loop
-}
-
-int %test5(int %A, bool %b) {
-BB0: br label %Loop
-
-Loop:
-        %B = phi int [%A, %BB0], [undef, %Loop]    ; PHI has same value always.
-        br bool %b, label %Loop, label %Exit
-Exit:
-        ret int %B
-}
-
-uint %test6(int %A, bool %b) {
+define i32 @test1(i32 %A, i1 %b) {
 BB0:
-        %X = cast int %A to uint
-        br bool %b, label %BB1, label %BB2
-BB1:
-        %Y = cast int %A to uint
+        br i1 %b, label %BB1, label %BB2
+
+BB1:            ; preds = %BB0
+        ; Combine away one argument PHI nodes
+        %B = phi i32 [ %A, %BB0 ]               ; <i32> [#uses=1]
+        ret i32 %B
+
+BB2:            ; preds = %BB0
+        ret i32 %A
+}
+
+define i32 @test2(i32 %A, i1 %b) {
+BB0:
+        br i1 %b, label %BB1, label %BB2
+
+BB1:            ; preds = %BB0
         br label %BB2
-BB2:
-        %B = phi uint [%X, %BB0], [%Y, %BB1] ;; Suck casts into phi
-        ret uint %B
+
+BB2:            ; preds = %BB1, %BB0
+        ; Combine away PHI nodes with same values
+        %B = phi i32 [ %A, %BB0 ], [ %A, %BB1 ]         ; <i32> [#uses=1]
+        ret i32 %B
 }
 
-int %test7(int %A, bool %b) {
-BB0: br label %Loop
+define i32 @test3(i32 %A, i1 %b) {
+BB0:
+        br label %Loop
 
-Loop:
-        %B = phi int [%A, %BB0], [%C, %Loop]    ; PHI is dead.
-	%C = add int %B, 123
-        br bool %b, label %Loop, label %Exit
-Exit:
-        ret int 0
+Loop:           ; preds = %Loop, %BB0
+        ; PHI has same value always.
+        %B = phi i32 [ %A, %BB0 ], [ %B, %Loop ]                ; <i32> [#uses=2]
+        br i1 %b, label %Loop, label %Exit
+
+Exit:           ; preds = %Loop
+        ret i32 %B
 }
+
+define i32 @test4(i1 %b) {
+BB0:
+        ; Loop is unreachable
+        ret i32 7
+
+Loop:           ; preds = %L2, %Loop
+        ; PHI has same value always.
+        %B = phi i32 [ %B, %L2 ], [ %B, %Loop ]         ; <i32> [#uses=2]
+        br i1 %b, label %L2, label %Loop
+
+L2:             ; preds = %Loop
+        br label %Loop
+}
+
+define i32 @test5(i32 %A, i1 %b) {
+BB0:
+        br label %Loop
+
+Loop:           ; preds = %Loop, %BB0
+        ; PHI has same value always.
+        %B = phi i32 [ %A, %BB0 ], [ undef, %Loop ]             ; <i32> [#uses=1]
+        br i1 %b, label %Loop, label %Exit
+
+Exit:           ; preds = %Loop
+        ret i32 %B
+}
+
+define i32 @test6(i32 %A, i1 %b) {
+BB0:
+        %X = bitcast i32 %A to i32              ; <i32> [#uses=1]
+        br i1 %b, label %BB1, label %BB2
+
+BB1:            ; preds = %BB0
+        %Y = bitcast i32 %A to i32              ; <i32> [#uses=1]
+        br label %BB2
+
+BB2:            ; preds = %BB1, %BB0
+        ;; Suck casts into phi
+        %B = phi i32 [ %X, %BB0 ], [ %Y, %BB1 ]         ; <i32> [#uses=1]
+        ret i32 %B
+}
+
+define i32 @test7(i32 %A, i1 %b) {
+BB0:
+        br label %Loop
+
+Loop:           ; preds = %Loop, %BB0
+        ; PHI is dead.
+        %B = phi i32 [ %A, %BB0 ], [ %C, %Loop ]                ; <i32> [#uses=1]
+        %C = add i32 %B, 123            ; <i32> [#uses=1]
+        br i1 %b, label %Loop, label %Exit
+
+Exit:           ; preds = %Loop
+        ret i32 0
+}
+
 

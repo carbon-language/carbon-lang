@@ -2,13 +2,15 @@
 ; because it things that the constant value is a not expression... and 
 ; constantly inverts the branch back and forth.
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -disable-output
+; RUN: llvm-as < %s | opt -instcombine -disable-output
 
-ubyte %test19(bool %c) {
-        br bool true, label %True, label %False
-True:
-        ret ubyte 1
-False:
-        ret ubyte 3
+define i8 @test19(i1 %c) {
+        br i1 true, label %True, label %False
+
+True:           ; preds = %0
+        ret i8 1
+
+False:          ; preds = %0
+        ret i8 3
 }
 

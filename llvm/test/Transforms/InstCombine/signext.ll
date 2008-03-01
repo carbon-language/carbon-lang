@@ -1,44 +1,44 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
 ; RUN:    not grep {(and\|xor\|add\|shl\|shr)}
-; END.
 
-int %test1(int %x) {
-        %tmp.1 = and int %x, 65535              ; <int> [#uses=1]
-        %tmp.2 = xor int %tmp.1, -32768         ; <int> [#uses=1]
-        %tmp.3 = add int %tmp.2, 32768          ; <int> [#uses=1]
-        ret int %tmp.3
+define i32 @test1(i32 %x) {
+        %tmp.1 = and i32 %x, 65535              ; <i32> [#uses=1]
+        %tmp.2 = xor i32 %tmp.1, -32768         ; <i32> [#uses=1]
+        %tmp.3 = add i32 %tmp.2, 32768          ; <i32> [#uses=1]
+        ret i32 %tmp.3
 }
 
-int %test2(int %x) {
-        %tmp.1 = and int %x, 65535              ; <int> [#uses=1]
-        %tmp.2 = xor int %tmp.1, 32768          ; <int> [#uses=1]
-        %tmp.3 = add int %tmp.2, -32768         ; <int> [#uses=1]
-        ret int %tmp.3
+define i32 @test2(i32 %x) {
+        %tmp.1 = and i32 %x, 65535              ; <i32> [#uses=1]
+        %tmp.2 = xor i32 %tmp.1, 32768          ; <i32> [#uses=1]
+        %tmp.3 = add i32 %tmp.2, -32768         ; <i32> [#uses=1]
+        ret i32 %tmp.3
 }
 
-int %test3(ushort %P) {
-        %tmp.1 = cast ushort %P to int          ; <int> [#uses=1]
-        %tmp.4 = xor int %tmp.1, 32768          ; <int> [#uses=1]
-        %tmp.5 = add int %tmp.4, -32768         ; <int> [#uses=1]
-        ret int %tmp.5
+define i32 @test3(i16 %P) {
+        %tmp.1 = zext i16 %P to i32             ; <i32> [#uses=1]
+        %tmp.4 = xor i32 %tmp.1, 32768          ; <i32> [#uses=1]
+        %tmp.5 = add i32 %tmp.4, -32768         ; <i32> [#uses=1]
+        ret i32 %tmp.5
 }
 
-uint %test4(ushort %P) {
-        %tmp.1 = cast ushort %P to uint         ; <uint> [#uses=1]
-        %tmp.4 = xor uint %tmp.1, 32768         ; <uint> [#uses=1]
-        %tmp.5 = add uint %tmp.4, 4294934528            ; <uint> [#uses=1]
-        ret uint %tmp.5
+define i32 @test4(i16 %P) {
+        %tmp.1 = zext i16 %P to i32             ; <i32> [#uses=1]
+        %tmp.4 = xor i32 %tmp.1, 32768          ; <i32> [#uses=1]
+        %tmp.5 = add i32 %tmp.4, -32768         ; <i32> [#uses=1]
+        ret i32 %tmp.5
 }
 
-int %test5(int %x) {
-	%tmp.1 = and int %x, 254
-	%tmp.2 = xor int %tmp.1, 128
-	%tmp.3 = add int %tmp.2, -128
-	ret int %tmp.3
+define i32 @test5(i32 %x) {
+        %tmp.1 = and i32 %x, 254                ; <i32> [#uses=1]
+        %tmp.2 = xor i32 %tmp.1, 128            ; <i32> [#uses=1]
+        %tmp.3 = add i32 %tmp.2, -128           ; <i32> [#uses=1]
+        ret i32 %tmp.3
 }
 
-int %test6(int %x) {
-        %tmp.2 = shl int %x, ubyte 16           ; <int> [#uses=1]
-        %tmp.4 = shr int %tmp.2, ubyte 16               ; <int> [#uses=1]
-        ret int %tmp.4
+define i32 @test6(i32 %x) {
+        %tmp.2 = shl i32 %x, 16         ; <i32> [#uses=1]
+        %tmp.4 = ashr i32 %tmp.2, 16            ; <i32> [#uses=1]
+        ret i32 %tmp.4
 }
+

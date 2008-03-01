@@ -1,13 +1,11 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -globaldce
+; RUN: llvm-as < %s | opt -globaldce
 
-%foo = internal global int 7         ;; Should die when function %foo is killed
+;; Should die when function %foo is killed
+@foo.upgrd.1 = internal global i32 7            ; <i32*> [#uses=3]
+@bar = internal global [2 x { i32*, i32 }] [ { i32*, i32 } { i32* @foo.upgrd.1, i32 7 }, { i32*, i32 } { i32* @foo.upgrd.1, i32 1 } ]            ; <[2 x { i32*, i32 }]*> [#uses=0]
 
-%bar = internal global [2x { int *, int }] [  { int *, int } { int* %foo, int 7}, {int*, int} { int* %foo, int 1 }]
-
-implementation
-
-internal int %foo() {               ;; dies when %b dies.
-	%ret = load int* %foo
-	ret int %ret
+define internal i32 @foo() {
+        %ret = load i32* @foo.upgrd.1           ; <i32> [#uses=1]
+        ret i32 %ret
 }
 

@@ -1,20 +1,19 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -adce -disable-output
+; RUN: llvm-as < %s | opt -adce -disable-output
 
-implementation   ; Functions:
+define void @test() {
+        br i1 false, label %then, label %endif
 
-void %test() {
-	br bool false, label %then, label %endif
+then:           ; preds = %0
+        invoke void null( i8* null )
+                        to label %invoke_cont unwind label %invoke_catch
 
-then:
-	invoke void null( sbyte* null )
-			to label %invoke_cont except label %invoke_catch
+invoke_catch:           ; preds = %then
+        unwind
 
-invoke_catch:
-	unwind
+invoke_cont:            ; preds = %then
+        ret void
 
-invoke_cont:
-	ret void
-
-endif:
-	ret void
+endif:          ; preds = %0
+        ret void
 }
+

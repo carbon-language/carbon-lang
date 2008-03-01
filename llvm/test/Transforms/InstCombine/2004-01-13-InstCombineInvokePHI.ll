@@ -5,20 +5,24 @@
 ; invoke instruction, we really cannot perform this transformation at all at
 ; least without splitting the critical edge.
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -disable-output
+; RUN: llvm-as < %s | opt -instcombine -disable-output
 
-declare sbyte* %test()
+declare i8* @test()
 
-int %foo() {
+define i32 @foo() {
 entry:
-  br bool true, label %cont, label %call
-call:
-  %P = invoke int*()* cast (sbyte*()* %test to int*()*)()
-       to label %cont except label %N
-cont:
-  %P2 = phi int* [%P, %call], [null, %entry]
-  %V = load int* %P2
-  ret int %V
-N:
-  ret int 0
+        br i1 true, label %cont, label %call
+
+call:           ; preds = %entry
+        %P = invoke i32* bitcast (i8* ()* @test to i32* ()*)( )
+                        to label %cont unwind label %N          ; <i32*> [#uses=1]
+
+cont:           ; preds = %call, %entry
+        %P2 = phi i32* [ %P, %call ], [ null, %entry ]          ; <i32*> [#uses=1]
+        %V = load i32* %P2              ; <i32> [#uses=1]
+        ret i32 %V
+
+N:              ; preds = %call
+        ret i32 0
 }
+

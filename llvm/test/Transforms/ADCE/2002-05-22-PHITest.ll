@@ -1,13 +1,16 @@
 ; It is illegal to remove BB1 because it will mess up the PHI node!
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -adce | llvm-dis | grep BB1
+; RUN: llvm-as < %s | opt -adce | llvm-dis | grep BB1
 
+define i32 @test(i1 %C, i32 %A, i32 %B) {
+; <label>:0
+        br i1 %C, label %BB1, label %BB2
 
-int "test"(bool %C, int %A, int %B) {
-	br bool %C, label %BB1, label %BB2
-BB1:
-	br label %BB2
-BB2:
-	%R = phi int [%A, %0], [%B, %BB1]
-	ret int %R
+BB1:            ; preds = %0
+        br label %BB2
+
+BB2:            ; preds = %BB1, %0
+        %R = phi i32 [ %A, %0 ], [ %B, %BB1 ]           ; <i32> [#uses=1]
+        ret i32 %R
 }
+

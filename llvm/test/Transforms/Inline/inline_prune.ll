@@ -1,40 +1,45 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -inline | llvm-dis | \
+; RUN: llvm-as < %s | opt -inline | llvm-dis | \
 ; RUN:    not grep {callee\[12\](}
-; RUN: llvm-upgrade < %s | llvm-as | opt -inline | llvm-dis | not grep mul
+; RUN: llvm-as < %s | opt -inline | llvm-dis | not grep mul
 
-implementation
+define internal i32 @callee1(i32 %A, i32 %B) {
+        %cond = icmp eq i32 %A, 123             ; <i1> [#uses=1]
+        br i1 %cond, label %T, label %F
 
-internal int %callee1(int %A, int %B) {
-	%cond = seteq int %A, 123
-	br bool %cond, label %T, label %F
-T:
-	%C = mul int %B, %B
-	ret int %C
-F:
-	ret int 0
+T:              ; preds = %0
+        %C = mul i32 %B, %B             ; <i32> [#uses=1]
+        ret i32 %C
+
+F:              ; preds = %0
+        ret i32 0
 }
 
-internal int %callee2(int %A, int %B) {
-	switch int %A, label %T [
-          int 10, label %F
-          int 1234, label %G
+define internal i32 @callee2(i32 %A, i32 %B) {
+        switch i32 %A, label %T [
+                 i32 10, label %F
+                 i32 1234, label %G
         ]
-	%cond = seteq int %A, 123
-	br bool %cond, label %T, label %F
-T:
-	%C = mul int %B, %B
-	ret int %C
-F:
-	ret int 0
-G:
-	%D = mul int %B, %B
-	%E = mul int %D, %B
-	ret int %E
+                ; No predecessors!
+        %cond = icmp eq i32 %A, 123             ; <i1> [#uses=1]
+        br i1 %cond, label %T, label %F
+
+T:              ; preds = %1, %0
+        %C = mul i32 %B, %B             ; <i32> [#uses=1]
+        ret i32 %C
+
+F:              ; preds = %1, %0
+        ret i32 0
+
+G:              ; preds = %0
+        %D = mul i32 %B, %B             ; <i32> [#uses=1]
+        %E = mul i32 %D, %B             ; <i32> [#uses=1]
+        ret i32 %E
 }
 
-int %test(int %A) {
-	%X = call int %callee1(int 10, int %A)
-	%Y = call int %callee2(int 10, int %A)
-	%Z = add int %X, %Y
-	ret int %Z
+define i32 @test(i32 %A) {
+        %X = call i32 @callee1( i32 10, i32 %A )                ; <i32> [#uses=1]
+        %Y = call i32 @callee2( i32 10, i32 %A )                ; <i32> [#uses=1]
+        %Z = add i32 %X, %Y             ; <i32> [#uses=1]
+        ret i32 %Z
 }
+

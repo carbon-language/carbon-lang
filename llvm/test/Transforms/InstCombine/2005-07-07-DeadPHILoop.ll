@@ -1,13 +1,14 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -disable-output
+; RUN: llvm-as < %s | opt -instcombine -disable-output
 
 ; This example caused instcombine to spin into an infinite loop.
 
-void %test(int *%P) {
-	ret void
-Dead:
-	%X = phi int [%Y, %Dead]
-	%Y = div int %X, 10
-	store int %Y, int* %P
-	br label %Dead
+define void @test(i32* %P) {
+        ret void
+
+Dead:           ; preds = %Dead
+        %X = phi i32 [ %Y, %Dead ]              ; <i32> [#uses=1]
+        %Y = sdiv i32 %X, 10            ; <i32> [#uses=2]
+        store i32 %Y, i32* %P
+        br label %Dead
 }
 

@@ -1,14 +1,15 @@
 ; Make sure that the constant propogator doesn't divide by zero!
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -constprop
+; RUN: llvm-as < %s | opt -constprop
 ;
 
-int "test"() {
-	%R = div int 12, 0
-	ret int %R
+define i32 @test() {
+        %R = sdiv i32 12, 0             ; <i32> [#uses=1]
+        ret i32 %R
 }
 
-int "test2"() {
-	%R = rem int 12, 0
-	ret int %R
+define i32 @test2() {
+        %R = srem i32 12, 0             ; <i32> [#uses=1]
+        ret i32 %R
 }
+

@@ -1,13 +1,13 @@
 ; The cast in this testcase is not eliminable on a 32-bit target!
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | grep inttoptr
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep inttoptr
 
-target endian = little
-target pointersize = 32
+target datalayout = "e-p:32:32"
 
-declare void %foo(...)
+declare void @foo(...)
 
-void %test(long %X) {
-	%Y = cast long %X to int*
-	call void (...)* %foo(int* %Y)
-	ret void
+define void @test(i64 %X) {
+        %Y = inttoptr i64 %X to i32*            ; <i32*> [#uses=1]
+        call void (...)* @foo( i32* %Y )
+        ret void
 }
+

@@ -1,12 +1,11 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -globaldce
+; RUN: llvm-as < %s | opt -globaldce
 ;
-implementation
-
-internal void %func() {  ; Not dead, can be reachable via X
-  ret void
+define internal void @func() {
+        ret void
 }
 
-void %main() {
-	%X = cast void()* %func to int*
-	ret void
+define void @main() {
+        %X = bitcast void ()* @func to i32*             ; <i32*> [#uses=0]
+        ret void
 }
+

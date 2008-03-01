@@ -1,15 +1,16 @@
 ; This test ensures that inlining an "empty" function does not destroy the CFG
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -inline | llvm-dis | not grep br
+; RUN: llvm-as < %s | opt -inline | llvm-dis | not grep br
 
-int %func(int %i) {
-	ret int %i
+define i32 @func(i32 %i) {
+        ret i32 %i
 }
 
-declare void %bar()
+declare void @bar()
 
-int %main(int %argc) {
+define i32 @main(i32 %argc) {
 Entry:
-	%X = call int %func(int 7)
-	ret int %X
+        %X = call i32 @func( i32 7 )            ; <i32> [#uses=1]
+        ret i32 %X
 }
+

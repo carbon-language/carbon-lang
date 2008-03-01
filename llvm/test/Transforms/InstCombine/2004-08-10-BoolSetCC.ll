@@ -1,7 +1,8 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
 ; RUN:    grep {ret i1 false}
-bool %test(bool %V) {
-	%Y = setlt bool %V, false
-	ret bool %Y
+
+define i1 @test(i1 %V) {
+        %Y = icmp ult i1 %V, false              ; <i1> [#uses=1]
+        ret i1 %Y
 }
 

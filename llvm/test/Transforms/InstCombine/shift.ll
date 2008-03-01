@@ -1,189 +1,208 @@
 ; This test makes sure that these instructions are properly eliminated.
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep sh
-; END.
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep sh
 
-implementation
-
-int %test1(int %A) {
-	%B = shl int %A, ubyte 0
-	ret int %B
+define i32 @test1(i32 %A) {
+        %B = shl i32 %A, 0              ; <i32> [#uses=1]
+        ret i32 %B
 }
 
-int %test2(ubyte %A) {
-	%B = shl int 0, ubyte %A
-	ret int %B
+define i32 @test2(i8 %A) {
+        %shift.upgrd.1 = zext i8 %A to i32              ; <i32> [#uses=1]
+        %B = shl i32 0, %shift.upgrd.1          ; <i32> [#uses=1]
+        ret i32 %B
 }
 
-int %test3(int %A) {
-	%B = shr int %A, ubyte 0
-	ret int %B
+define i32 @test3(i32 %A) {
+        %B = ashr i32 %A, 0             ; <i32> [#uses=1]
+        ret i32 %B
 }
 
-int %test4(ubyte %A) {
-	%B = shr int 0, ubyte %A
-	ret int %B
+define i32 @test4(i8 %A) {
+        %shift.upgrd.2 = zext i8 %A to i32              ; <i32> [#uses=1]
+        %B = ashr i32 0, %shift.upgrd.2         ; <i32> [#uses=1]
+        ret i32 %B
 }
 
-uint %test5(uint %A) {
-	%B = shr uint %A, ubyte 32  ;; shift all bits out
-	ret uint %B
+
+define i32 @test5(i32 %A) {
+        %B = lshr i32 %A, 32  ;; shift all bits out 
+        ret i32 %B
 }
 
-uint %test5a(uint %A) {
-	%B = shl uint %A, ubyte 32  ;; shift all bits out
-	ret uint %B
+define i32 @test5a(i32 %A) {
+        %B = shl i32 %A, 32     ;; shift all bits out 
+        ret i32 %B
 }
 
-uint %test6(uint %A) {
-	%B = shl uint %A, ubyte 1   ;; convert to an mul instruction
-	%C = mul uint %B, 3
-	ret uint %C
+define i32 @test6(i32 %A) {
+        %B = shl i32 %A, 1      ;; convert to an mul instruction 
+        %C = mul i32 %B, 3             
+        ret i32 %C
 }
 
-int %test7(ubyte %A) {
-	%B = shr int -1, ubyte %A   ;; Always equal to -1
-	ret int %B
+define i32 @test7(i8 %A) {
+        %shift.upgrd.3 = zext i8 %A to i32 
+        %B = ashr i32 -1, %shift.upgrd.3  ;; Always equal to -1
+        ret i32 %B
 }
 
-ubyte %test8(ubyte %A) {              ;; (A << 5) << 3 === A << 8 == 0
-	%B = shl ubyte %A, ubyte 5
-	%C = shl ubyte %B, ubyte 3
-	ret ubyte %C
+;; (A << 5) << 3 === A << 8 == 0
+define i8 @test8(i8 %A) {
+        %B = shl i8 %A, 5               ; <i8> [#uses=1]
+        %C = shl i8 %B, 3               ; <i8> [#uses=1]
+        ret i8 %C
 }
 
-ubyte %test9(ubyte %A) {              ;; (A << 7) >> 7 === A & 1
-	%B = shl ubyte %A, ubyte 7
-	%C = shr ubyte %B, ubyte 7
-	ret ubyte %C
+;; (A << 7) >> 7 === A & 1
+define i8 @test9(i8 %A) {
+        %B = shl i8 %A, 7               ; <i8> [#uses=1]
+        %C = lshr i8 %B, 7              ; <i8> [#uses=1]
+        ret i8 %C
 }
 
-ubyte %test10(ubyte %A) {              ;; (A >> 7) << 7 === A & 128
-	%B = shr ubyte %A, ubyte 7
-	%C = shl ubyte %B, ubyte 7
-	ret ubyte %C
+;; (A >> 7) << 7 === A & 128
+define i8 @test10(i8 %A) {
+        %B = lshr i8 %A, 7              ; <i8> [#uses=1]
+        %C = shl i8 %B, 7               ; <i8> [#uses=1]
+        ret i8 %C
 }
 
-ubyte %test11(ubyte %A) {              ;; (A >> 3) << 4 === (A & 0x1F) << 1
-	%a = mul ubyte %A, 3
-	%B = shr ubyte %a, ubyte 3
-	%C = shl ubyte %B, ubyte 4
-	ret ubyte %C
+;; (A >> 3) << 4 === (A & 0x1F) << 1
+define i8 @test11(i8 %A) {
+        %a = mul i8 %A, 3               ; <i8> [#uses=1]
+        %B = lshr i8 %a, 3              ; <i8> [#uses=1]
+        %C = shl i8 %B, 4               ; <i8> [#uses=1]
+        ret i8 %C
 }
 
-int %test12(int %A) {
-        %B = shr int %A, ubyte 8    ;; (A >> 8) << 8 === A & -256
-        %C = shl int %B, ubyte 8
-        ret int %C
+;; (A >> 8) << 8 === A & -256
+define i32 @test12(i32 %A) {
+        %B = ashr i32 %A, 8             ; <i32> [#uses=1]
+        %C = shl i32 %B, 8              ; <i32> [#uses=1]
+        ret i32 %C
 }
 
-sbyte %test13(sbyte %A) {           ;; (A >> 3) << 4 === (A & -8) * 2
-	%a = mul sbyte %A, 3
-	%B = shr sbyte %a, ubyte 3
-	%C = shl sbyte %B, ubyte 4
-	ret sbyte %C
+;; (A >> 3) << 4 === (A & -8) * 2
+define i8 @test13(i8 %A) {
+        %a = mul i8 %A, 3               ; <i8> [#uses=1]
+        %B = ashr i8 %a, 3              ; <i8> [#uses=1]
+        %C = shl i8 %B, 4               ; <i8> [#uses=1]
+        ret i8 %C
 }
 
-uint %test14(uint %A) {
-	%B = shr uint %A, ubyte 4
-	%C = or uint %B, 1234
-	%D = shl uint %C, ubyte 4   ;; D = ((B | 1234) << 4) === ((B << 4)|(1234 << 4)
-	ret uint %D
-}
-uint %test14a(uint %A) {
-	%B = shl uint %A, ubyte 4
-	%C = and uint %B, 1234
-	%D = shr uint %C, ubyte 4   ;; D = ((B | 1234) << 4) === ((B << 4)|(1234 << 4)
-	ret uint %D
+;; D = ((B | 1234) << 4) === ((B << 4)|(1234 << 4)
+define i32 @test14(i32 %A) {
+        %B = lshr i32 %A, 4             ; <i32> [#uses=1]
+        %C = or i32 %B, 1234            ; <i32> [#uses=1]
+        %D = shl i32 %C, 4              ; <i32> [#uses=1]
+        ret i32 %D
 }
 
-int %test15(bool %C) {
-        %A = select bool %C, int 3, int 1
-        %V = shl int %A, ubyte 2
-        ret int %V
+;; D = ((B | 1234) << 4) === ((B << 4)|(1234 << 4)
+define i32 @test14a(i32 %A) {
+        %B = shl i32 %A, 4              ; <i32> [#uses=1]
+        %C = and i32 %B, 1234           ; <i32> [#uses=1]
+        %D = lshr i32 %C, 4             ; <i32> [#uses=1]
+        ret i32 %D
 }
 
-int %test15a(bool %C) {
-        %A = select bool %C, ubyte 3, ubyte 1
-        %V = shl int 64, ubyte %A
-        ret int %V
+define i32 @test15(i1 %C) {
+        %A = select i1 %C, i32 3, i32 1         ; <i32> [#uses=1]
+        %V = shl i32 %A, 2              ; <i32> [#uses=1]
+        ret i32 %V
 }
 
-bool %test16(int %X) {
-        %tmp.3 = shr int %X, ubyte 4
-        %tmp.6 = and int %tmp.3, 1
-        %tmp.7 = setne int %tmp.6, 0  ;; X & 16 != 0
-        ret bool %tmp.7
+define i32 @test15a(i1 %C) {
+        %A = select i1 %C, i8 3, i8 1           ; <i8> [#uses=1]
+        %shift.upgrd.4 = zext i8 %A to i32              ; <i32> [#uses=1]
+        %V = shl i32 64, %shift.upgrd.4         ; <i32> [#uses=1]
+        ret i32 %V
 }
 
-bool %test17(uint %A) {
-	%B = shr uint %A, ubyte 3
-	%C = seteq uint %B, 1234
-	ret bool %C
+define i1 @test16(i32 %X) {
+        %tmp.3 = ashr i32 %X, 4         ; <i32> [#uses=1]
+        %tmp.6 = and i32 %tmp.3, 1              ; <i32> [#uses=1]
+        %tmp.7 = icmp ne i32 %tmp.6, 0          ; <i1> [#uses=1]
+        ret i1 %tmp.7
 }
 
-bool %test18(ubyte %A) {
-	%B = shr ubyte %A, ubyte 7
-	%C = seteq ubyte %B, 123    ;; false
-	ret bool %C
+define i1 @test17(i32 %A) {
+        %B = lshr i32 %A, 3             ; <i32> [#uses=1]
+        %C = icmp eq i32 %B, 1234               ; <i1> [#uses=1]
+        ret i1 %C
 }
 
-bool %test19(int %A) {
-	%B = shr int %A, ubyte 2
-	%C = seteq int %B, 0        ;; (X & -4) == 0
-	ret bool %C
+
+define i1 @test18(i8 %A) {
+        %B = lshr i8 %A, 7              ; <i8> [#uses=1]
+        ;; false
+        %C = icmp eq i8 %B, 123         ; <i1> [#uses=1]
+        ret i1 %C
 }
 
-bool %test19a(int %A) {
-	%B = shr int %A, ubyte 2
-	%C = seteq int %B, -1        ;; (X & -4) == -4
-	ret bool %C
+define i1 @test19(i32 %A) {
+        %B = ashr i32 %A, 2             ; <i32> [#uses=1]
+        ;; (X & -4) == 0
+        %C = icmp eq i32 %B, 0          ; <i1> [#uses=1]
+        ret i1 %C
 }
 
-bool %test20(sbyte %A) {
-	%B = shr sbyte %A, ubyte 7
-	%C = seteq sbyte %B, 123    ;; false
-	ret bool %C
+
+define i1 @test19a(i32 %A) {
+        %B = ashr i32 %A, 2             ; <i32> [#uses=1]
+        ;; (X & -4) == -4
+        %C = icmp eq i32 %B, -1         ; <i1> [#uses=1]
+        ret i1 %C
 }
 
-bool %test21(ubyte %A) {
-	%B = shl ubyte %A, ubyte 4
-	%C = seteq ubyte %B, 128
-	ret bool %C
+define i1 @test20(i8 %A) {
+        %B = ashr i8 %A, 7              ; <i8> [#uses=1]
+        ;; false
+        %C = icmp eq i8 %B, 123         ; <i1> [#uses=1]
+        ret i1 %C
 }
 
-bool %test22(ubyte %A) {
-	%B = shl ubyte %A, ubyte 4
-	%C = seteq ubyte %B, 0
-	ret bool %C
+define i1 @test21(i8 %A) {
+        %B = shl i8 %A, 4               ; <i8> [#uses=1]
+        %C = icmp eq i8 %B, -128                ; <i1> [#uses=1]
+        ret i1 %C
 }
 
-sbyte %test23(int %A) {
-	%B = shl int %A, ubyte 24  ;; casts not needed
-	%C = shr int %B, ubyte 24
-	%D = cast int %C to sbyte
-	ret sbyte %D
+define i1 @test22(i8 %A) {
+        %B = shl i8 %A, 4               ; <i8> [#uses=1]
+        %C = icmp eq i8 %B, 0           ; <i1> [#uses=1]
+        ret i1 %C
 }
 
-sbyte %test24(sbyte %X) {
-        %Y = and sbyte %X, -5 ; ~4
-        %Z = shl sbyte %Y, ubyte 5
-        %Q = shr sbyte %Z, ubyte 5
-        ret sbyte %Q
+define i8 @test23(i32 %A) {
+        ;; casts not needed
+        %B = shl i32 %A, 24             ; <i32> [#uses=1]
+        %C = ashr i32 %B, 24            ; <i32> [#uses=1]
+        %D = trunc i32 %C to i8         ; <i8> [#uses=1]
+        ret i8 %D
 }
 
-uint %test25(uint %tmp.2, uint %AA) {
-	%x = shr uint %AA, ubyte 17
-        %tmp.3 = shr uint %tmp.2, ubyte 17              ; <uint> [#uses=1]
-        %tmp.5 = add uint %tmp.3, %x            ; <uint> [#uses=1]
-        %tmp.6 = shl uint %tmp.5, ubyte 17              ; <uint> [#uses=1]
-	ret uint %tmp.6
+define i8 @test24(i8 %X) {
+        %Y = and i8 %X, -5              ; <i8> [#uses=1]
+        %Z = shl i8 %Y, 5               ; <i8> [#uses=1]
+        %Q = ashr i8 %Z, 5              ; <i8> [#uses=1]
+        ret i8 %Q
 }
 
-int %test26(uint %A) { ;; handle casts between shifts.
-	%B = shr uint %A, ubyte 1
-	%C = cast uint %B to int
-        %D = shl int %C, ubyte 1
-	ret int %D
+define i32 @test25(i32 %tmp.2, i32 %AA) {
+        %x = lshr i32 %AA, 17           ; <i32> [#uses=1]
+        %tmp.3 = lshr i32 %tmp.2, 17            ; <i32> [#uses=1]
+        %tmp.5 = add i32 %tmp.3, %x             ; <i32> [#uses=1]
+        %tmp.6 = shl i32 %tmp.5, 17             ; <i32> [#uses=1]
+        ret i32 %tmp.6
+}
+
+;; handle casts between shifts.
+define i32 @test26(i32 %A) {
+        %B = lshr i32 %A, 1             ; <i32> [#uses=1]
+        %C = bitcast i32 %B to i32              ; <i32> [#uses=1]
+        %D = shl i32 %C, 1              ; <i32> [#uses=1]
+        ret i32 %D
 }
  

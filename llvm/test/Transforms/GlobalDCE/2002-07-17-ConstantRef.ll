@@ -1,12 +1,13 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -globaldce
+; RUN: llvm-as < %s | opt -globaldce
 ;
-%X = global void() * %func
-implementation
 
-internal void %func() {  ; Not dead, can be reachable via X
-  ret void
+@X = global void ()* @func              ; <void ()**> [#uses=0]
+
+; Not dead, can be reachable via X
+define internal void @func() {
+        ret void
 }
 
-void %main() {
-	ret void
+define void @main() {
+        ret void
 }

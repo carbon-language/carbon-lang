@@ -1,136 +1,132 @@
 ; This test case tests the InstructionCombining optimization that
 ; reduces things like:
-;   %Y = cast sbyte %X to uint
-;   %C = setlt uint %Y, 1024
+;   %Y = sext i8 %X to i32 
+;   %C = icmp ult i32 %Y, 1024
 ; to
-;   %C = bool true
+;   %C = i1 true
 ; It includes test cases for different constant values, signedness of the
 ; cast operands, and types of setCC operators. In all cases, the cast should
 ; be eliminated. In many cases the setCC is also eliminated based on the
 ; constant value and the range of the casted value.
 ;
-; RUN: llvm-upgrade %s -o - | llvm-as | opt -instcombine | llvm-dis | \
+; RUN: llvm-as < %s -o - | opt -instcombine | llvm-dis | \
 ; RUN:    notcast .*int
-; END.
 
-implementation   ; Functions:
-
-bool %lt_signed_to_large_unsigned(sbyte %SB) {
-  %Y = cast sbyte %SB to uint		; <uint> [#uses=1]
-  %C = setlt uint %Y, 1024		; <bool> [#uses=1]
-  ret bool %C
+define i1 @lt_signed_to_large_unsigned(i8 %SB) {
+        %Y = sext i8 %SB to i32         ; <i32> [#uses=1]
+        %C = icmp ult i32 %Y, 1024              ; <i1> [#uses=1]
+        ret i1 %C
 }
 
-bool %lt_signed_to_large_signed(sbyte %SB) {
-  %Y = cast sbyte %SB to int
-  %C = setlt int %Y, 1024
-  ret bool %C
+define i1 @lt_signed_to_large_signed(i8 %SB) {
+        %Y = sext i8 %SB to i32         ; <i32> [#uses=1]
+        %C = icmp slt i32 %Y, 1024              ; <i1> [#uses=1]
+        ret i1 %C
 }
 
-bool %lt_signed_to_large_negative(sbyte %SB) {
-  %Y = cast sbyte %SB to int
-  %C = setlt int %Y, -1024
-  ret bool %C
+define i1 @lt_signed_to_large_negative(i8 %SB) {
+        %Y = sext i8 %SB to i32         ; <i32> [#uses=1]
+        %C = icmp slt i32 %Y, -1024             ; <i1> [#uses=1]
+        ret i1 %C
 }
 
-bool %lt_signed_to_small_signed(sbyte %SB) {
-  %Y = cast sbyte %SB to int
-  %C = setlt int %Y, 17
-  ret bool %C
+define i1 @lt_signed_to_small_signed(i8 %SB) {
+        %Y = sext i8 %SB to i32         ; <i32> [#uses=1]
+        %C = icmp slt i32 %Y, 17                ; <i1> [#uses=1]
+        ret i1 %C
+}
+define i1 @lt_signed_to_small_negative(i8 %SB) {
+        %Y = sext i8 %SB to i32         ; <i32> [#uses=1]
+        %C = icmp slt i32 %Y, -17               ; <i1> [#uses=1]
+        ret i1 %C
 }
 
-bool %lt_signed_to_small_negative(sbyte %SB) {
-  %Y = cast sbyte %SB to int
-  %C = setlt int %Y, -17
-  ret bool %C
+define i1 @lt_unsigned_to_large_unsigned(i8 %SB) {
+        %Y = zext i8 %SB to i32         ; <i32> [#uses=1]
+        %C = icmp ult i32 %Y, 1024              ; <i1> [#uses=1]
+        ret i1 %C
 }
 
-bool %lt_unsigned_to_large_unsigned(ubyte %SB) {
-  %Y = cast ubyte %SB to uint		; <uint> [#uses=1]
-  %C = setlt uint %Y, 1024		; <bool> [#uses=1]
-  ret bool %C
+define i1 @lt_unsigned_to_large_signed(i8 %SB) {
+        %Y = zext i8 %SB to i32         ; <i32> [#uses=1]
+        %C = icmp slt i32 %Y, 1024              ; <i1> [#uses=1]
+        ret i1 %C
 }
 
-bool %lt_unsigned_to_large_signed(ubyte %SB) {
-  %Y = cast ubyte %SB to int
-  %C = setlt int %Y, 1024
-  ret bool %C
+define i1 @lt_unsigned_to_large_negative(i8 %SB) {
+        %Y = zext i8 %SB to i32         ; <i32> [#uses=1]
+        %C = icmp slt i32 %Y, -1024             ; <i1> [#uses=1]
+        ret i1 %C
 }
 
-bool %lt_unsigned_to_large_negative(ubyte %SB) {
-  %Y = cast ubyte %SB to int
-  %C = setlt int %Y, -1024
-  ret bool %C
+define i1 @lt_unsigned_to_small_unsigned(i8 %SB) {
+        %Y = zext i8 %SB to i32         ; <i32> [#uses=1]
+        %C = icmp ult i32 %Y, 17                ; <i1> [#uses=1]
+        ret i1 %C
 }
 
-bool %lt_unsigned_to_small_unsigned(ubyte %SB) {
-  %Y = cast ubyte %SB to uint		; <uint> [#uses=1]
-  %C = setlt uint %Y, 17		; <bool> [#uses=1]
-  ret bool %C
+define i1 @lt_unsigned_to_small_negative(i8 %SB) {
+        %Y = zext i8 %SB to i32         ; <i32> [#uses=1]
+        %C = icmp slt i32 %Y, -17               ; <i1> [#uses=1]
+        ret i1 %C
 }
 
-bool %lt_unsigned_to_small_negative(ubyte %SB) {
-  %Y = cast ubyte %SB to int
-  %C = setlt int %Y, -17
-  ret bool %C
+define i1 @gt_signed_to_large_unsigned(i8 %SB) {
+        %Y = sext i8 %SB to i32         ; <i32> [#uses=1]
+        %C = icmp ugt i32 %Y, 1024              ; <i1> [#uses=1]
+        ret i1 %C
 }
 
-bool %gt_signed_to_large_unsigned(sbyte %SB) {
-  %Y = cast sbyte %SB to uint		; <uint> [#uses=1]
-  %C = setgt uint %Y, 1024		; <bool> [#uses=1]
-  ret bool %C
+define i1 @gt_signed_to_large_signed(i8 %SB) {
+        %Y = sext i8 %SB to i32         ; <i32> [#uses=1]
+        %C = icmp sgt i32 %Y, 1024              ; <i1> [#uses=1]
+        ret i1 %C
 }
 
-bool %gt_signed_to_large_signed(sbyte %SB) {
-  %Y = cast sbyte %SB to int
-  %C = setgt int %Y, 1024
-  ret bool %C
+define i1 @gt_signed_to_large_negative(i8 %SB) {
+        %Y = sext i8 %SB to i32         ; <i32> [#uses=1]
+        %C = icmp sgt i32 %Y, -1024             ; <i1> [#uses=1]
+        ret i1 %C
+}
+define i1 @gt_signed_to_small_signed(i8 %SB) {
+        %Y = sext i8 %SB to i32         ; <i32> [#uses=1]
+        %C = icmp sgt i32 %Y, 17                ; <i1> [#uses=1]
+        ret i1 %C
 }
 
-bool %gt_signed_to_large_negative(sbyte %SB) {
-  %Y = cast sbyte %SB to int
-  %C = setgt int %Y, -1024
-  ret bool %C
+define i1 @gt_signed_to_small_negative(i8 %SB) {
+        %Y = sext i8 %SB to i32         ; <i32> [#uses=1]
+        %C = icmp sgt i32 %Y, -17               ; <i1> [#uses=1]
+        ret i1 %C
 }
 
-bool %gt_signed_to_small_signed(sbyte %SB) {
-  %Y = cast sbyte %SB to int
-  %C = setgt int %Y, 17
-  ret bool %C
+define i1 @gt_unsigned_to_large_unsigned(i8 %SB) {
+        %Y = zext i8 %SB to i32         ; <i32> [#uses=1]
+        %C = icmp ugt i32 %Y, 1024              ; <i1> [#uses=1]
+        ret i1 %C
 }
 
-bool %gt_signed_to_small_negative(sbyte %SB) {
-  %Y = cast sbyte %SB to int
-  %C = setgt int %Y, -17
-  ret bool %C
+define i1 @gt_unsigned_to_large_signed(i8 %SB) {
+        %Y = zext i8 %SB to i32         ; <i32> [#uses=1]
+        %C = icmp sgt i32 %Y, 1024              ; <i1> [#uses=1]
+        ret i1 %C
 }
 
-bool %gt_unsigned_to_large_unsigned(ubyte %SB) {
-  %Y = cast ubyte %SB to uint		; <uint> [#uses=1]
-  %C = setgt uint %Y, 1024		; <bool> [#uses=1]
-  ret bool %C
+define i1 @gt_unsigned_to_large_negative(i8 %SB) {
+        %Y = zext i8 %SB to i32         ; <i32> [#uses=1]
+        %C = icmp sgt i32 %Y, -1024             ; <i1> [#uses=1]
+        ret i1 %C
 }
 
-bool %gt_unsigned_to_large_signed(ubyte %SB) {
-  %Y = cast ubyte %SB to int
-  %C = setgt int %Y, 1024
-  ret bool %C
+define i1 @gt_unsigned_to_small_unsigned(i8 %SB) {
+        %Y = zext i8 %SB to i32         ; <i32> [#uses=1]
+        %C = icmp ugt i32 %Y, 17                ; <i1> [#uses=1]
+        ret i1 %C
 }
 
-bool %gt_unsigned_to_large_negative(ubyte %SB) {
-  %Y = cast ubyte %SB to int
-  %C = setgt int %Y, -1024
-  ret bool %C
+define i1 @gt_unsigned_to_small_negative(i8 %SB) {
+        %Y = zext i8 %SB to i32         ; <i32> [#uses=1]
+        %C = icmp sgt i32 %Y, -17               ; <i1> [#uses=1]
+        ret i1 %C
 }
 
-bool %gt_unsigned_to_small_unsigned(ubyte %SB) {
-  %Y = cast ubyte %SB to uint		; <uint> [#uses=1]
-  %C = setgt uint %Y, 17		; <bool> [#uses=1]
-  ret bool %C
-}
-
-bool %gt_unsigned_to_small_negative(ubyte %SB) {
-  %Y = cast ubyte %SB to int
-  %C = setgt int %Y, -17
-  ret bool %C
-}

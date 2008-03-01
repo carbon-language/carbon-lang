@@ -1,11 +1,12 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -inline -disable-output -print
+; RUN: llvm-as < %s | opt -inline -disable-output -print
 
-int %func(int %i) {
-	ret int %i
+define i32 @func(i32 %i) {
+        ret i32 %i
 }
 
-int %main(int %argc) {
-	%X = call int %func(int 7)
-	%Y = add int %X, %argc
-	ret int %Y
+define i32 @main(i32 %argc) {
+        %X = call i32 @func( i32 7 )            ; <i32> [#uses=1]
+        %Y = add i32 %X, %argc          ; <i32> [#uses=1]
+        ret i32 %Y
 }
+

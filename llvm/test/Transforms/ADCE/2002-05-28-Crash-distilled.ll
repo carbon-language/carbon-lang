@@ -1,17 +1,17 @@
 ; This testcase is a distilled form of: 2002-05-28-Crash.ll
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -adce 
+; RUN: llvm-as < %s | opt -adce 
 
-float "test"(int %i) {
-	%F = cast int %i to float    ; This BB is not dead
-	%I = cast int %i to uint     ; future dead inst
-	br label %Loop
+define float @test(i32 %i) {
+        %F = sitofp i32 %i to float             ; <float> [#uses=1]
+        %I = bitcast i32 %i to i32              ; <i32> [#uses=1]
+        br label %Loop
 
-Loop:                                ; This block is dead
-	%B = cast uint %I to bool
-	br bool %B, label %Out, label %Loop
+Loop:           ; preds = %Loop, %0
+        %B = icmp ne i32 %I, 0          ; <i1> [#uses=1]
+        br i1 %B, label %Out, label %Loop
 
-Out:
-	ret float %F
+Out:            ; preds = %Loop
+        ret float %F
 }
 

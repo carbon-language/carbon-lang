@@ -11,46 +11,44 @@
 ;  return !s;
 ;}
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -adce
+; RUN: llvm-as < %s | opt -adce
 
-implementation   ; Functions:
+define i32 @rx_bitset_empty(i32 %size, i32* %set) {
+bb1:
+        %reg110 = load i32* %set                ; <i32> [#uses=2]
+        store i32 1, i32* %set
+        %cast112 = sext i32 %size to i64                ; <i64> [#uses=1]
+        %reg113 = add i64 %cast112, 31          ; <i64> [#uses=1]
+        %reg114 = lshr i64 %reg113, 5           ; <i64> [#uses=2]
+        %cast109 = trunc i64 %reg114 to i32             ; <i32> [#uses=1]
+        %reg129 = add i32 %cast109, -1          ; <i32> [#uses=1]
+        %reg114-idxcast = trunc i64 %reg114 to i32              ; <i32> [#uses=1]
+        %reg114-idxcast-offset = add i32 %reg114-idxcast, 1073741823            ; <i32> [#uses=1]
+        %reg114-idxcast-offset.upgrd.1 = zext i32 %reg114-idxcast-offset to i64         ; <i64> [#uses=1]
+        %reg124 = getelementptr i32* %set, i64 %reg114-idxcast-offset.upgrd.1           ; <i32*> [#uses=1]
+        %reg125 = load i32* %reg124             ; <i32> [#uses=1]
+        %cond232 = icmp ne i32 %reg125, 0               ; <i1> [#uses=1]
+        br i1 %cond232, label %bb3, label %bb2
 
-int %rx_bitset_empty(int %size, uint* %set) {
-bb1:					;[#uses=2]
-	%reg110 = load uint* %set		; <uint> [#uses=2]
-	store uint 1, uint* %set
-	%cast112 = cast int %size to ulong		; <ulong> [#uses=1]
-	%reg113 = add ulong %cast112, 31		; <ulong> [#uses=1]
-	%reg114 = shr ulong %reg113, ubyte 5		; <ulong> [#uses=2]
-	%cast109 = cast ulong %reg114 to int		; <int> [#uses=1]
-	%reg129 = add int %cast109, -1		; <int> [#uses=1]
-	%reg114-idxcast = cast ulong %reg114 to uint		; <uint> [#uses=1]
-	%reg114-idxcast-offset = add uint %reg114-idxcast, 1073741823		; <uint> [#uses=1]
-	%reg114-idxcast-offset = cast uint %reg114-idxcast-offset to long
-	%reg124 = getelementptr uint* %set, long %reg114-idxcast-offset		; <uint*> [#uses=1]
-	%reg125 = load uint* %reg124		; <uint> [#uses=1]
-	%cond232 = setne uint %reg125, 0		; <bool> [#uses=1]
-	br bool %cond232, label %bb3, label %bb2
+bb2:            ; preds = %bb2, %bb1
+        %cann-indvar = phi i32 [ 0, %bb1 ], [ %add1-indvar, %bb2 ]              ; <i32> [#uses=2]
+        %reg130-scale = mul i32 %cann-indvar, -1                ; <i32> [#uses=1]
+        %reg130 = add i32 %reg130-scale, %reg129                ; <i32> [#uses=1]
+        %add1-indvar = add i32 %cann-indvar, 1          ; <i32> [#uses=1]
+        %reg130-idxcast = bitcast i32 %reg130 to i32            ; <i32> [#uses=1]
+        %reg130-idxcast-offset = add i32 %reg130-idxcast, 1073741823            ; <i32> [#uses=1]
+        %reg130-idxcast-offset.upgrd.2 = zext i32 %reg130-idxcast-offset to i64         ; <i64> [#uses=1]
+        %reg118 = getelementptr i32* %set, i64 %reg130-idxcast-offset.upgrd.2           ; <i32*> [#uses=1]
+        %reg119 = load i32* %reg118             ; <i32> [#uses=1]
+        %cond233 = icmp eq i32 %reg119, 0               ; <i1> [#uses=1]
+        br i1 %cond233, label %bb2, label %bb3
 
-bb2:					;[#uses=3]
-	%cann-indvar = phi int [ 0, %bb1 ], [ %add1-indvar, %bb2 ]		; <int> [#uses=2]
-	%reg130-scale = mul int %cann-indvar, -1		; <int> [#uses=1]
-	%reg130 = add int %reg130-scale, %reg129		; <int> [#uses=1]
-	%add1-indvar = add int %cann-indvar, 1		; <int> [#uses=1]
-	%reg130-idxcast = cast int %reg130 to uint		; <uint> [#uses=1]
-	%reg130-idxcast-offset = add uint %reg130-idxcast, 1073741823		; <uint> [#uses=1]
-	%reg130-idxcast-offset = cast uint %reg130-idxcast-offset to long
-	%reg118 = getelementptr uint* %set, long %reg130-idxcast-offset		; <uint*> [#uses=1]
-	%reg119 = load uint* %reg118		; <uint> [#uses=1]
-	%cond233 = seteq uint %reg119, 0		; <bool> [#uses=1]
-	br bool %cond233, label %bb2, label %bb3
-
-bb3:					;[#uses=2]
-	store uint %reg110, uint* %set
-	%cast126 = cast uint %reg110 to ulong		; <ulong> [#uses=1]
-	%reg127 = add ulong %cast126, 18446744073709551615		; <ulong> [#uses=1]
-	%reg128 = shr ulong %reg127, ubyte 63		; <ulong> [#uses=1]
-	%cast120 = cast ulong %reg128 to int		; <int> [#uses=1]
-	ret int %cast120
-
+bb3:            ; preds = %bb2, %bb1
+        store i32 %reg110, i32* %set
+        %cast126 = zext i32 %reg110 to i64              ; <i64> [#uses=1]
+        %reg127 = add i64 %cast126, -1          ; <i64> [#uses=1]
+        %reg128 = lshr i64 %reg127, 63          ; <i64> [#uses=1]
+        %cast120 = trunc i64 %reg128 to i32             ; <i32> [#uses=1]
+        ret i32 %cast120
 }
+

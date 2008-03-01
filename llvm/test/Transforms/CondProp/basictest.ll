@@ -1,19 +1,27 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -condprop | llvm-dis | \
+; RUN: llvm-as < %s | opt -condprop | llvm-dis | \
 ; RUN:    not grep {br label}
 
-int %test(bool %C) {
-	br bool %C, label %T1, label %F1
-T1:
-	br label %Cont
-F1:
-	br label %Cont
-Cont:
-	%C2 = phi bool [false, %F1], [true, %T1]
-	br bool %C2, label %T2, label %F2
-T2:
-	call void %bar()
-	ret int 17
-F2:
-	ret int 1
+
+define i32 @test(i1 %C) {
+        br i1 %C, label %T1, label %F1
+
+T1:             ; preds = %0
+        br label %Cont
+
+F1:             ; preds = %0
+        br label %Cont
+
+Cont:           ; preds = %F1, %T1
+        %C2 = phi i1 [ false, %F1 ], [ true, %T1 ]              ; <i1> [#uses=1]
+        br i1 %C2, label %T2, label %F2
+
+T2:             ; preds = %Cont
+        call void @bar( )
+        ret i32 17
+
+F2:             ; preds = %Cont
+        ret i32 1
 }
-declare void %bar()
+
+declare void @bar()
+

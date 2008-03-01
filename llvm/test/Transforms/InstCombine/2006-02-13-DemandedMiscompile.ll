@@ -1,9 +1,10 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
 ; RUN:   not grep undef
 
-int %test(sbyte %A) {
-	%B = cast sbyte %A to int
-	%C = shr int %B, ubyte 8
-	ret int %C
+define i32 @test(i8 %A) {
+        %B = sext i8 %A to i32          ; <i32> [#uses=1]
+        %C = ashr i32 %B, 8             ; <i32> [#uses=1]
+        ret i32 %C
 }
+
 

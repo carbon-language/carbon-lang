@@ -1,31 +1,25 @@
 ; For PR1065. This causes an assertion in instcombine if a select with two cmp
 ; operands is encountered.
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -disable-output
-; END.
+; RUN: llvm-as < %s | opt -instcombine -disable-output
 
-; ModuleID = 'PR1065.bc'
 target datalayout = "e-p:32:32"
-target endian = little
-target pointersize = 32
 target triple = "i686-pc-linux-gnu"
-	%struct.internal_state = type { int }
-	%struct.mng_data = type { uint, sbyte*, uint, uint, uint, uint, uint, uint, uint, uint, uint, ubyte, uint, uint, uint, sbyte, uint, uint, uint, uint, ushort, ushort, ushort, sbyte, sbyte, double, double, double, sbyte, sbyte, sbyte, sbyte, uint, uint, uint, uint, int, sbyte, int, int, sbyte*, sbyte* (uint)*, void (sbyte*, uint)*, void (sbyte*, sbyte*, uint)*, sbyte (%struct.mng_data*)*, sbyte (%struct.mng_data*)*, sbyte (%struct.mng_data*, sbyte*, uint, uint*)*, sbyte (%struct.mng_data*, sbyte*, uint, uint*)*, sbyte (%struct.mng_data*, int, sbyte, int, uint, int, int, sbyte*)*, sbyte (%struct.mng_data*, int, int, sbyte*)*, sbyte (%struct.mng_data*, uint, uint)*, sbyte (%struct.mng_data*, ubyte, sbyte*, sbyte*, sbyte*, sbyte*)*, sbyte (%struct.mng_data*)*, sbyte (%struct.mng_data*, sbyte*)*, sbyte (%struct.mng_data*, sbyte*)*, sbyte (%struct.mng_data*, uint, uint)*, sbyte (%struct.mng_data*, int, uint, sbyte*)*, sbyte (%struct.mng_data*, ubyte, ubyte, uint, uint)*, sbyte* (%struct.mng_data*, uint)*, sbyte* (%struct.mng_data*, uint)*, sbyte* (%struct.mng_data*, uint)*, sbyte (%struct.mng_data*, uint, uint, uint, uint)*, uint (%struct.mng_data*)*, sbyte (%struct.mng_data*, uint)*, sbyte (%struct.mng_data*, uint)*, sbyte (%struct.mng_data*, uint, uint, uint, uint, uint, uint, uint, uint)*, sbyte (%struct.mng_data*, ubyte)*, sbyte (%struct.mng_data*, uint, sbyte*)*, sbyte (%struct.mng_data*, uint, sbyte, sbyte*)*, sbyte, int, uint, sbyte*, sbyte*, sbyte, sbyte, sbyte, sbyte, sbyte, sbyte, sbyte, sbyte, sbyte, sbyte, sbyte, sbyte, sbyte, sbyte, sbyte, sbyte, sbyte, sbyte, sbyte, sbyte, sbyte, sbyte, sbyte, sbyte, sbyte, uint, uint, ubyte, ubyte, ubyte, ubyte, ubyte, uint, sbyte, sbyte, sbyte, uint, ubyte*, uint, ubyte*, uint, sbyte, ubyte, sbyte, uint, ubyte*, ubyte*, uint, uint, ubyte*, ubyte*, %struct.mng_pushdata*, %struct.mng_pushdata*, %struct.mng_pushdata*, %struct.mng_pushdata*, sbyte, sbyte, int, uint, ubyte*, sbyte, sbyte, uint, uint, uint, uint, uint, uint, sbyte, sbyte, sbyte, sbyte, int, int, sbyte*, uint, uint, uint, sbyte, sbyte, uint, uint, uint, uint, sbyte, sbyte, ubyte, sbyte, sbyte, sbyte, sbyte, sbyte, sbyte, uint, sbyte*, sbyte*, sbyte*, uint, sbyte*, sbyte*, sbyte*, sbyte*, sbyte*, %struct.mng_savedata*, uint, uint, uint, uint, sbyte, int, int, int, int, int, int, int, int, int, int, int, int, uint, uint, uint, uint, ubyte*, ubyte*, ubyte*, sbyte, sbyte, int, int, int, int, int, int, int, int, int, sbyte*, sbyte*, sbyte*, sbyte*, sbyte*, sbyte*, [256 x ubyte], double, void ()*, void ()*, void ()*, void ()*, void ()*, void ()*, void ()*, void ()*, void ()*, void ()*, void ()*, void ()*, ushort, sbyte, ubyte, sbyte, ubyte, sbyte, int, int, sbyte, int, int, int, int, ushort, ushort, ushort, ubyte, ushort, ubyte, int, int, uint, uint, ubyte, uint, uint, sbyte, int, int, int, int, ubyte, uint, uint, sbyte, int, int, int, int, uint, sbyte, uint, ubyte, ushort, ushort, ushort, short, uint, [256 x %struct.mng_palette8e], uint, [256 x ubyte], uint, uint, uint, uint, uint, uint, uint, uint, uint, ubyte, uint, sbyte*, ushort, ushort, ushort, sbyte*, ubyte, ubyte, uint, uint, uint, uint, sbyte, void ()*, void ()*, void ()*, void ()*, void ()*, void ()*, sbyte*, ubyte, ubyte, ubyte, uint, sbyte*, sbyte*, ushort, ushort, ushort, ushort, int, int, sbyte*, %struct.z_stream, int, int, int, int, int, uint, sbyte, sbyte, [256 x uint], sbyte }
-	%struct.mng_palette8e = type { ubyte, ubyte, ubyte }
-	%struct.mng_pushdata = type { sbyte*, sbyte*, uint, sbyte, ubyte*, uint }
-	%struct.mng_savedata = type { sbyte, sbyte, sbyte, sbyte, sbyte, sbyte, sbyte, ushort, ushort, ushort, ubyte, ushort, ubyte, ubyte, uint, uint, sbyte, int, int, int, int, uint, [256 x %struct.mng_palette8e], uint, [256 x ubyte], uint, uint, uint, uint, uint, uint, uint, uint, uint, ubyte, uint, sbyte*, ushort, ushort, ushort }
-	%struct.z_stream = type { ubyte*, uint, uint, ubyte*, uint, uint, sbyte*, %struct.internal_state*, sbyte* (sbyte*, uint, uint)*, void (sbyte*, sbyte*)*, sbyte*, int, uint, uint }
+	%struct.internal_state = type { i32 }
+	%struct.mng_data = type { i32, i8*, i32, i32, i32, i32, i32, i32, i32, i32, i32, i8, i32, i32, i32, i8, i32, i32, i32, i32, i16, i16, i16, i8, i8, double, double, double, i8, i8, i8, i8, i32, i32, i32, i32, i32, i8, i32, i32, i8*, i8* (i32)*, void (i8*, i32)*, void (i8*, i8*, i32)*, i8 (%struct.mng_data*)*, i8 (%struct.mng_data*)*, i8 (%struct.mng_data*, i8*, i32, i32*)*, i8 (%struct.mng_data*, i8*, i32, i32*)*, i8 (%struct.mng_data*, i32, i8, i32, i32, i32, i32, i8*)*, i8 (%struct.mng_data*, i32, i32, i8*)*, i8 (%struct.mng_data*, i32, i32)*, i8 (%struct.mng_data*, i8, i8*, i8*, i8*, i8*)*, i8 (%struct.mng_data*)*, i8 (%struct.mng_data*, i8*)*, i8 (%struct.mng_data*, i8*)*, i8 (%struct.mng_data*, i32, i32)*, i8 (%struct.mng_data*, i32, i32, i8*)*, i8 (%struct.mng_data*, i8, i8, i32, i32)*, i8* (%struct.mng_data*, i32)*, i8* (%struct.mng_data*, i32)*, i8* (%struct.mng_data*, i32)*, i8 (%struct.mng_data*, i32, i32, i32, i32)*, i32 (%struct.mng_data*)*, i8 (%struct.mng_data*, i32)*, i8 (%struct.mng_data*, i32)*, i8 (%struct.mng_data*, i32, i32, i32, i32, i32, i32, i32, i32)*, i8 (%struct.mng_data*, i8)*, i8 (%struct.mng_data*, i32, i8*)*, i8 (%struct.mng_data*, i32, i8, i8*)*, i8, i32, i32, i8*, i8*, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i32, i32, i8, i8, i8, i8, i8, i32, i8, i8, i8, i32, i8*, i32, i8*, i32, i8, i8, i8, i32, i8*, i8*, i32, i32, i8*, i8*, %struct.mng_pushdata*, %struct.mng_pushdata*, %struct.mng_pushdata*, %struct.mng_pushdata*, i8, i8, i32, i32, i8*, i8, i8, i32, i32, i32, i32, i32, i32, i8, i8, i8, i8, i32, i32, i8*, i32, i32, i32, i8, i8, i32, i32, i32, i32, i8, i8, i8, i8, i8, i8, i8, i8, i8, i32, i8*, i8*, i8*, i32, i8*, i8*, i8*, i8*, i8*, %struct.mng_savedata*, i32, i32, i32, i32, i8, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i8*, i8*, i8*, i8, i8, i32, i32, i32, i32, i32, i32, i32, i32, i32, i8*, i8*, i8*, i8*, i8*, i8*, [256 x i8], double, void ()*, void ()*, void ()*, void ()*, void ()*, void ()*, void ()*, void ()*, void ()*, void ()*, void ()*, void ()*, i16, i8, i8, i8, i8, i8, i32, i32, i8, i32, i32, i32, i32, i16, i16, i16, i8, i16, i8, i32, i32, i32, i32, i8, i32, i32, i8, i32, i32, i32, i32, i8, i32, i32, i8, i32, i32, i32, i32, i32, i8, i32, i8, i16, i16, i16, i16, i32, [256 x %struct.mng_palette8e], i32, [256 x i8], i32, i32, i32, i32, i32, i32, i32, i32, i32, i8, i32, i8*, i16, i16, i16, i8*, i8, i8, i32, i32, i32, i32, i8, void ()*, void ()*, void ()*, void ()*, void ()*, void ()*, i8*, i8, i8, i8, i32, i8*, i8*, i16, i16, i16, i16, i32, i32, i8*, %struct.z_stream, i32, i32, i32, i32, i32, i32, i8, i8, [256 x i32], i8 }
+	%struct.mng_palette8e = type { i8, i8, i8 }
+	%struct.mng_pushdata = type { i8*, i8*, i32, i8, i8*, i32 }
+	%struct.mng_savedata = type { i8, i8, i8, i8, i8, i8, i8, i16, i16, i16, i8, i16, i8, i8, i32, i32, i8, i32, i32, i32, i32, i32, [256 x %struct.mng_palette8e], i32, [256 x i8], i32, i32, i32, i32, i32, i32, i32, i32, i32, i8, i32, i8*, i16, i16, i16 }
+	%struct.z_stream = type { i8*, i32, i32, i8*, i32, i32, i8*, %struct.internal_state*, i8* (i8*, i32, i32)*, void (i8*, i8*)*, i8*, i32, i32, i32 }
 
-implementation   ; Functions:
-
-void %mng_write_basi() {
+define void @mng_write_basi() {
 entry:
-	%tmp = load ubyte* null		; <ubyte> [#uses=1]
-	%tmp = icmp ugt ubyte %tmp, 8		; <bool> [#uses=1]
-	%tmp = load ushort* null		; <ushort> [#uses=2]
-	%tmp3 = icmp eq ushort %tmp, 255		; <bool> [#uses=1]
-	%tmp7 = icmp eq ushort %tmp, -1		; <bool> [#uses=1]
-	%bOpaque.0.in = select bool %tmp, bool %tmp7, bool %tmp3		; <bool> [#uses=1]
-	br bool %bOpaque.0.in, label %cond_next90, label %bb95
+	%tmp = load i8* null		; <i8> [#uses=1]
+	%tmp.upgrd.1 = icmp ugt i8 %tmp, 8		; <i1> [#uses=1]
+	%tmp.upgrd.2 = load i16* null		; <i16> [#uses=2]
+	%tmp3 = icmp eq i16 %tmp.upgrd.2, 255		; <i1> [#uses=1]
+	%tmp7 = icmp eq i16 %tmp.upgrd.2, -1		; <i1> [#uses=1]
+	%bOpaque.0.in = select i1 %tmp.upgrd.1, i1 %tmp7, i1 %tmp3		; <i1> [#uses=1]
+	br i1 %bOpaque.0.in, label %cond_next90, label %bb95
 
 cond_next90:		; preds = %entry
 	ret void

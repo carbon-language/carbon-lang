@@ -1,17 +1,18 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -adce -simplifycfg | llvm-dis | grep call
-declare void %exit(int)
+; RUN: llvm-as < %s | opt -adce -simplifycfg | llvm-dis | grep call
+declare void @exit(i32)
 
-int %main(int %argc) {
-  %C = seteq int %argc, 1
-  br bool %C, label %Cond, label %Done
+define i32 @main(i32 %argc) {
+        %C = icmp eq i32 %argc, 1               ; <i1> [#uses=2]
+        br i1 %C, label %Cond, label %Done
 
-Cond:
-  br bool %C, label %Loop, label %Done
+Cond:           ; preds = %0
+        br i1 %C, label %Loop, label %Done
 
-Loop:
-  call void %exit(int 0)
-  br label %Loop
+Loop:           ; preds = %Loop, %Cond
+        call void @exit( i32 0 )
+        br label %Loop
 
-Done:
-	ret int 1
+Done:           ; preds = %Cond, %0
+        ret i32 1
 }
+

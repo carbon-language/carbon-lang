@@ -1,20 +1,21 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -inline -disable-output
+; RUN: llvm-as < %s | opt -inline -disable-output
 
-declare int %External()
+declare i32 @External()
 
-implementation
-
-internal int %Callee() {
-  %I = call int %External()
-  %J = add int %I, %I
-  ret int %J
+define internal i32 @Callee() {
+        %I = call i32 @External( )              ; <i32> [#uses=2]
+        %J = add i32 %I, %I             ; <i32> [#uses=1]
+        ret i32 %J
 }
 
-int %Caller() {
-	%V = invoke int %Callee() to label %Ok except label %Bad
-Ok:
-  ret int %V
-Bad:
-  ret int 0
+define i32 @Caller() {
+        %V = invoke i32 @Callee( )
+                        to label %Ok unwind label %Bad          ; <i32> [#uses=1]
+
+Ok:             ; preds = %0
+        ret i32 %V
+
+Bad:            ; preds = %0
+        ret i32 0
 }
 

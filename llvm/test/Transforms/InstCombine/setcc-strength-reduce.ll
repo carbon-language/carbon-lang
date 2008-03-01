@@ -2,31 +2,36 @@
 ; working.  Basically this boils down to converting setlt,gt,le,ge instructions
 ; into equivalent setne,eq instructions.
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
 ; RUN:    grep -v {icmp eq} | grep -v {icmp ne} | not grep icmp
-; END.
 
-bool %test1(uint %A) {
-	%B = setge uint %A, 1   ; setne %A, 0
-	ret bool %B
+
+define i1 @test1(i32 %A) {
+        ; setne %A, 0
+        %B = icmp uge i32 %A, 1         ; <i1> [#uses=1]
+        ret i1 %B
 }
 
-bool %test2(uint %A) {
-	%B = setgt uint %A, 0   ; setne %A, 0
-	ret bool %B
+define i1 @test2(i32 %A) {
+       ; setne %A, 0
+        %B = icmp ugt i32 %A, 0         ; <i1> [#uses=1]
+        ret i1 %B
 }
 
-bool %test3(sbyte %A) {
-	%B = setge sbyte %A, -127   ; setne %A, -128
-	ret bool %B
+define i1 @test3(i8 %A) {
+        ; setne %A, -128
+        %B = icmp sge i8 %A, -127               ; <i1> [#uses=1]
+        ret i1 %B
 }
 
-bool %test4(sbyte %A) {
-	%B = setle sbyte %A, 126  ; setne %A, 127
-	ret bool %B
+define i1 @test4(i8 %A) {
+        ; setne %A, 127 
+        %B = icmp sle i8 %A, 126                ; <i1> [#uses=1]
+        ret i1 %B
 }
 
-bool %test5(sbyte %A) {
-	%B = setlt sbyte %A, 127 ; setne %A, 127
-	ret bool %B
+define i1 @test5(i8 %A) {
+        ; setne %A, 127
+        %B = icmp slt i8 %A, 127                ; <i1> [#uses=1]
+        ret i1 %B
 }

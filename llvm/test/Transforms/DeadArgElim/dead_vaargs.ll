@@ -1,12 +1,12 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -deadargelim | llvm-dis | not grep 47 
-; RUN: llvm-upgrade < %s | llvm-as | opt -deadargelim | llvm-dis | not grep 1.0
+; RUN: llvm-as < %s | opt -deadargelim | llvm-dis | not grep 47 
+; RUN: llvm-as < %s | opt -deadargelim | llvm-dis | not grep 1.0
 
-int %bar(int %A) {
-        %tmp4 = tail call int (int, ...)* %foo( int %A, int %A, int %A, int %A, ulong 47, double 1.000000e+00 )
-        ret int %tmp4
+define i32 @bar(i32 %A) {
+        %tmp4 = tail call i32 (i32, ...)* @foo( i32 %A, i32 %A, i32 %A, i32 %A, i64 47, double 1.000000e+00 )   ; <i32> [#uses=1]
+        ret i32 %tmp4
 }
 
-internal int %foo(int %X, ...) {
-        ret int %X
+define internal i32 @foo(i32 %X, ...) {
+        ret i32 %X
 }
 

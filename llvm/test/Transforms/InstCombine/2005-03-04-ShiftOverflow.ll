@@ -1,9 +1,9 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
-; RUN:   not grep {ret bool false}
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
+; RUN:   not grep {ret i1 false}
 
-bool %test(ulong %tmp.169) {
-	%tmp.1710 = shr ulong %tmp.169, ubyte 1
-	%tmp.1912 = setgt ulong %tmp.1710, 0
-	ret bool %tmp.1912
+define i1 @test(i64 %tmp.169) {
+        %tmp.1710 = lshr i64 %tmp.169, 1                ; <i64> [#uses=1]
+        %tmp.1912 = icmp ugt i64 %tmp.1710, 0           ; <i1> [#uses=1]
+        ret i1 %tmp.1912
 }
 

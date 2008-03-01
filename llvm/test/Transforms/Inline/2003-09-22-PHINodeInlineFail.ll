@@ -1,17 +1,16 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -inline -disable-output
-implementation
+; RUN: llvm-as < %s | opt -inline -disable-output
 
-int %main() {
+define i32 @main() {
 entry:
-	invoke void %__main( )
-			to label %LongJmpBlkPre except label %LongJmpBlkPre
+        invoke void @__main( )
+                        to label %LongJmpBlkPre unwind label %LongJmpBlkPre
 
-LongJmpBlkPre:
-	%i.3 = phi uint [ 0, %entry ], [ 0, %entry]
-	ret int 0
+LongJmpBlkPre:          ; preds = %entry, %entry
+        %i.3 = phi i32 [ 0, %entry ], [ 0, %entry ]             ; <i32> [#uses=0]
+        ret i32 0
 }
 
-void %__main() {
-	ret void
+define void @__main() {
+        ret void
 }
 

@@ -1,17 +1,18 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
 ; RUN:    grep {%bothcond =}
-bool %Doit_bb(int %i.0) {
-bb:             ; preds = %newFuncRoot
-        %tmp = setgt int %i.0, 0             ; <bool> [#uses=1]
-        %tmp.not = xor bool %tmp, true          ; <bool> [#uses=1]
-        %tmp2 = setgt int %i.0, 8            ; <bool> [#uses=1]
-        %bothcond = or bool %tmp.not, %tmp2             ; <bool> [#uses=1]
-        br bool %bothcond, label %exitTrue, label %exitFalse
 
-exitTrue:             ; preds = %bb
-        ret bool true
+define i1 @Doit_bb(i32 %i.0) {
+bb:
+        %tmp = icmp sgt i32 %i.0, 0             ; <i1> [#uses=1]
+        %tmp.not = xor i1 %tmp, true            ; <i1> [#uses=1]
+        %tmp2 = icmp sgt i32 %i.0, 8            ; <i1> [#uses=1]
+        %bothcond = or i1 %tmp.not, %tmp2               ; <i1> [#uses=1]
+        br i1 %bothcond, label %exitTrue, label %exitFalse
 
-exitFalse:            ; preds = %bb
-        ret bool false
+exitTrue:               ; preds = %bb
+        ret i1 true
 
+exitFalse:              ; preds = %bb
+        ret i1 false
 }
+

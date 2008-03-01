@@ -1,23 +1,21 @@
 ; both globals are write only, delete them.
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -globalopt | llvm-dis | \
+; RUN: llvm-as < %s | opt -globalopt | llvm-dis | \
 ; RUN:   not grep internal
 
-%G0 = internal global [58 x sbyte] c"asdlfkajsdlfkajsd;lfkajds;lfkjasd;flkajsd;lkfja;sdlkfjasd\00"
+@G0 = internal global [58 x i8] c"asdlfkajsdlfkajsd;lfkajds;lfkjasd;flkajsd;lkfja;sdlkfjasd\00"         ; <[58 x i8]*> [#uses=1]
+@G1 = internal global [4 x i32] [ i32 1, i32 2, i32 3, i32 4 ]          ; <[4 x i32]*> [#uses=1]
 
-%G1 = internal global [4 x int] [ int 1, int 2, int 3, int 4]
+declare void @llvm.memcpy.i32(i8*, i8*, i32, i32)
 
-implementation   ; Functions:
+declare void @llvm.memset.i32(i8*, i8, i32, i32)
 
-declare void %llvm.memcpy.i32(sbyte*, sbyte*, uint, uint)
-declare void %llvm.memset.i32(sbyte*, ubyte, uint, uint)
-
-void %foo() {
-        %Blah = alloca [58 x sbyte]             ; <[58 x sbyte]*> [#uses=2]
-        %tmp3 = cast [58 x sbyte]* %Blah to sbyte*
-	call void %llvm.memcpy.i32( sbyte* cast ([4 x int]* %G1 to sbyte*), sbyte* %tmp3, uint 16, uint 1)
- 	call void %llvm.memset.i32( sbyte* getelementptr ([58 x sbyte]* %G0, int 0, int 0), ubyte 17, uint 58, uint 1)
-	ret void
+define void @foo() {
+        %Blah = alloca [58 x i8]                ; <[58 x i8]*> [#uses=1]
+        %tmp3 = bitcast [58 x i8]* %Blah to i8*         ; <i8*> [#uses=1]
+        call void @llvm.memcpy.i32( i8* bitcast ([4 x i32]* @G1 to i8*), i8* %tmp3, i32 16, i32 1 )
+        call void @llvm.memset.i32( i8* getelementptr ([58 x i8]* @G0, i32 0, i32 0), i8 17, i32 58, i32 1 )
+        ret void
 }
 
 

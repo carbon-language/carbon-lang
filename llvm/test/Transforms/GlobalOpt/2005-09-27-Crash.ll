@@ -1,28 +1,27 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -globalopt -disable-output
-	%RPyString = type { int, %arraytype.Char }
-	%arraytype.Char = type { int, [0 x sbyte] }
-	%arraytype.Signed = type { int, [0 x int] }
-	%functiontype.1 = type %RPyString* (int)
-	%structtype.test = type { int, %arraytype.Signed }
-%structinstance.test = internal global { int, { int, [2 x int] } } { int 41, { int, [2 x int] } { int 2, [2 x int] [ int 100, int 101 ] } }		; <{ int, { int, [2 x int] } }*> [#uses=1]
+; RUN: llvm-as < %s | opt -globalopt -disable-output
+        %RPyString = type { i32, %arraytype.Char }
+        %arraytype.Char = type { i32, [0 x i8] }
+        %arraytype.Signed = type { i32, [0 x i32] }
+        %functiontype.1 = type %RPyString* (i32)
+        %structtype.test = type { i32, %arraytype.Signed }
+@structinstance.test = internal global { i32, { i32, [2 x i32] } } { i32 41, { i32, [2 x i32] } { i32 2, [2 x i32] [ i32 100, i32 101 ] } }              ; <{ i32, { i32, [2 x i32] } }*> [#uses=1]
 
-implementation   ; Functions:
-
-fastcc void %pypy_array_constant() {
+define fastcc void @pypy_array_constant() {
 block0:
-	%tmp.9 = getelementptr %structtype.test* cast ({ int, { int, [2 x int] } }* %structinstance.test to %structtype.test*), int 0, uint 0		; <int*> [#uses=0]
-	ret void
+        %tmp.9 = getelementptr %structtype.test* bitcast ({ i32, { i32, [2 x i32] } }* @structinstance.test to %structtype.test*), i32 0, i32 0          ; <i32*> [#uses=0]
+        ret void
 }
 
-fastcc void %new.varsizestruct.rpy_string() {
-	unreachable
+define fastcc void @new.varsizestruct.rpy_string() {
+        unreachable
 }
 
-void %__entrypoint__pypy_array_constant() {
-	call fastcc void %pypy_array_constant( )
-	ret void
+define void @__entrypoint__pypy_array_constant() {
+        call fastcc void @pypy_array_constant( )
+        ret void
 }
 
-void %__entrypoint__raised_LLVMException() {
-	ret void
+define void @__entrypoint__raised_LLVMException() {
+        ret void
 }
+

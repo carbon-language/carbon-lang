@@ -1,10 +1,11 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep add
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep add
 
-int %test(int %A) {
-  %A.neg = sub int 0, %A
-  %.neg = sub int 0, 1
-  %X = add int %.neg, 1
-  %Y.neg.ra = add int %A, %X
-  %r = add int %A.neg, %Y.neg.ra
-  ret int %r
+define i32 @test(i32 %A) {
+        %A.neg = sub i32 0, %A          ; <i32> [#uses=1]
+        %.neg = sub i32 0, 1            ; <i32> [#uses=1]
+        %X = add i32 %.neg, 1           ; <i32> [#uses=1]
+        %Y.neg.ra = add i32 %A, %X              ; <i32> [#uses=1]
+        %r = add i32 %A.neg, %Y.neg.ra          ; <i32> [#uses=1]
+        ret i32 %r
 }
+

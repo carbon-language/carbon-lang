@@ -1,6 +1,7 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine
+; RUN: llvm-as < %s | opt -instcombine
 
-int %test(int %X) {
-	%Y = rem int %X, undef
-	ret int %Y
+define i32 @test(i32 %X) {
+        %Y = srem i32 %X, undef         ; <i32> [#uses=1]
+        ret i32 %Y
 }
+

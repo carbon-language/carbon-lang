@@ -1,13 +1,13 @@
 ; This testcase caused the combiner to go into an infinite loop, moving the 
 ; cast back and forth, changing the seteq to operate on int vs uint and back.
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -disable-output
+; RUN: llvm-as < %s | opt -instcombine -disable-output
 
-bool %test(uint %A, int %B) {
-        %C = sub uint 0, %A
-        %Cc = cast uint %C to int
-        %D = sub int 0, %B
-        %E = seteq int %Cc, %D
-        ret bool %E
+define i1 @test(i32 %A, i32 %B) {
+        %C = sub i32 0, %A              ; <i32> [#uses=1]
+        %Cc = bitcast i32 %C to i32             ; <i32> [#uses=1]
+        %D = sub i32 0, %B              ; <i32> [#uses=1]
+        %E = icmp eq i32 %Cc, %D                ; <i1> [#uses=1]
+        ret i1 %E
 }
 

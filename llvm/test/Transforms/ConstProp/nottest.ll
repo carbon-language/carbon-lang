@@ -1,19 +1,19 @@
 ; Ensure constant propogation of 'not' instructions is working correctly.
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -constprop -die | llvm-dis | not grep xor
+; RUN: llvm-as < %s | opt -constprop -die | llvm-dis | not grep xor
 
-int "test1"() {
-	%R = xor int 4, -1
-	ret int %R
+define i32 @test1() {
+        %R = xor i32 4, -1              ; <i32> [#uses=1]
+        ret i32 %R
 }
 
-int "test2"() {
-	%R = xor int -23, -1
-	ret int %R
+define i32 @test2() {
+        %R = xor i32 -23, -1            ; <i32> [#uses=1]
+        ret i32 %R
 }
 
-bool "test3"() {
-	%R = xor bool true, true
-	ret bool %R
+define i1 @test3() {
+        %R = xor i1 true, true          ; <i1> [#uses=1]
+        ret i1 %R
 }
 

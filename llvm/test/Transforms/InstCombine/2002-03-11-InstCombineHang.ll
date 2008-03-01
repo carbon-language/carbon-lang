@@ -1,11 +1,9 @@
 ; This testcase causes instcombine to hang.
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine
+; RUN: llvm-as < %s | opt -instcombine
 
-implementation
+define void @test(i32 %X) {
+        %reg117 = add i32 %X, 0         ; <i32> [#uses=0]
+        ret void
+}
 
-void "test"(int %X)
-begin
-	%reg117 = add int %X, 0
-	ret void
-end

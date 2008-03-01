@@ -1,8 +1,9 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -disable-output
+; RUN: llvm-as < %s | opt -instcombine -disable-output
 ; PR577
 
-bool %test() {
-	%tmp.3 = shl int 0, ubyte 41		; <int> [#uses=1]
-	%tmp.4 = setne int %tmp.3, 0		; <bool> [#uses=1]
-	ret bool %tmp.4
+define i1 @test() {
+        %tmp.3 = shl i32 0, 41          ; <i32> [#uses=1]
+        %tmp.4 = icmp ne i32 %tmp.3, 0          ; <i1> [#uses=1]
+        ret i1 %tmp.4
 }
+

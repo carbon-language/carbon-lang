@@ -1,44 +1,40 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | grep select
-; END.
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep select
 
 target datalayout = "e-p:32:32"
-target endian = little
-target pointersize = 32
 target triple = "i686-pc-linux-gnu"
-	%struct.point = type { int, int }
+        %struct.point = type { i32, i32 }
 
-implementation   ; Functions:
-
-int %visible(int %direction, long %p1.0, long %p2.0, long %p3.0) {
+define i32 @visible(i32 %direction, i64 %p1.0, i64 %p2.0, i64 %p3.0) {
 entry:
-	%p1_addr = alloca %struct.point		; <%struct.point*> [#uses=2]
-	%p2_addr = alloca %struct.point		; <%struct.point*> [#uses=2]
-	%p3_addr = alloca %struct.point		; <%struct.point*> [#uses=2]
-	%tmp = bitcast %struct.point* %p1_addr to { long }*		; <{ long }*> [#uses=1]
-	%tmp = getelementptr { long }* %tmp, int 0, uint 0		; <long*> [#uses=1]
-	store long %p1.0, long* %tmp
-	%tmp1 = bitcast %struct.point* %p2_addr to { long }*		; <{ long }*> [#uses=1]
-	%tmp2 = getelementptr { long }* %tmp1, int 0, uint 0		; <long*> [#uses=1]
-	store long %p2.0, long* %tmp2
-	%tmp3 = bitcast %struct.point* %p3_addr to { long }*		; <{ long }*> [#uses=1]
-	%tmp4 = getelementptr { long }* %tmp3, int 0, uint 0		; <long*> [#uses=1]
-	store long %p3.0, long* %tmp4
-	%tmp = seteq int %direction, 0		; <bool> [#uses=1]
-	%tmp5 = bitcast %struct.point* %p1_addr to { long }*		; <{ long }*> [#uses=1]
-	%tmp6 = getelementptr { long }* %tmp5, int 0, uint 0		; <long*> [#uses=1]
-	%tmp = load long* %tmp6		; <long> [#uses=1]
-	%tmp7 = bitcast %struct.point* %p2_addr to { long }*		; <{ long }*> [#uses=1]
-	%tmp8 = getelementptr { long }* %tmp7, int 0, uint 0		; <long*> [#uses=1]
-	%tmp9 = load long* %tmp8		; <long> [#uses=1]
-	%tmp10 = bitcast %struct.point* %p3_addr to { long }*		; <{ long }*> [#uses=1]
-	%tmp11 = getelementptr { long }* %tmp10, int 0, uint 0		; <long*> [#uses=1]
-	%tmp12 = load long* %tmp11		; <long> [#uses=1]
-	%tmp13 = call int %determinant( long %tmp, long %tmp9, long %tmp12 )		; <int> [#uses=2]
-	%tmp14 = setlt int %tmp13, 0		; <bool> [#uses=1]
-	%tmp26 = setgt int %tmp13, 0		; <bool> [#uses=1]
-	%retval.0.in = select bool %tmp, bool %tmp14, bool %tmp26		; <bool> [#uses=1]
-	%retval.0 = zext bool %retval.0.in to int		; <int> [#uses=1]
-	ret int %retval.0
+        %p1_addr = alloca %struct.point         ; <%struct.point*> [#uses=2]
+        %p2_addr = alloca %struct.point         ; <%struct.point*> [#uses=2]
+        %p3_addr = alloca %struct.point         ; <%struct.point*> [#uses=2]
+        %tmp = bitcast %struct.point* %p1_addr to { i64 }*              ; <{ i64 }*> [#uses=1]
+        %tmp.upgrd.1 = getelementptr { i64 }* %tmp, i32 0, i32 0                ; <i64*> [#uses=1]
+        store i64 %p1.0, i64* %tmp.upgrd.1
+        %tmp1 = bitcast %struct.point* %p2_addr to { i64 }*             ; <{ i64 }*> [#uses=1]
+        %tmp2 = getelementptr { i64 }* %tmp1, i32 0, i32 0              ; <i64*> [#uses=1]
+        store i64 %p2.0, i64* %tmp2
+        %tmp3 = bitcast %struct.point* %p3_addr to { i64 }*             ; <{ i64 }*> [#uses=1]
+        %tmp4 = getelementptr { i64 }* %tmp3, i32 0, i32 0              ; <i64*> [#uses=1]
+        store i64 %p3.0, i64* %tmp4
+        %tmp.upgrd.2 = icmp eq i32 %direction, 0                ; <i1> [#uses=1]
+        %tmp5 = bitcast %struct.point* %p1_addr to { i64 }*             ; <{ i64 }*> [#uses=1]
+        %tmp6 = getelementptr { i64 }* %tmp5, i32 0, i32 0              ; <i64*> [#uses=1]
+        %tmp.upgrd.3 = load i64* %tmp6          ; <i64> [#uses=1]
+        %tmp7 = bitcast %struct.point* %p2_addr to { i64 }*             ; <{ i64 }*> [#uses=1]
+        %tmp8 = getelementptr { i64 }* %tmp7, i32 0, i32 0              ; <i64*> [#uses=1]
+        %tmp9 = load i64* %tmp8         ; <i64> [#uses=1]
+        %tmp10 = bitcast %struct.point* %p3_addr to { i64 }*            ; <{ i64 }*> [#uses=1]
+        %tmp11 = getelementptr { i64 }* %tmp10, i32 0, i32 0            ; <i64*> [#uses=1]
+        %tmp12 = load i64* %tmp11               ; <i64> [#uses=1]
+        %tmp13 = call i32 @determinant( i64 %tmp.upgrd.3, i64 %tmp9, i64 %tmp12 )         ; <i32> [#uses=2]
+        %tmp14 = icmp slt i32 %tmp13, 0         ; <i1> [#uses=1]
+        %tmp26 = icmp sgt i32 %tmp13, 0         ; <i1> [#uses=1]
+        %retval.0.in = select i1 %tmp.upgrd.2, i1 %tmp14, i1 %tmp26             ; <i1> [#uses=1]
+        %retval.0 = zext i1 %retval.0.in to i32         ; <i32> [#uses=1]
+        ret i32 %retval.0
 }
 
-declare int %determinant(long, long, long)
+declare i32 @determinant(i64, i64, i64)
+

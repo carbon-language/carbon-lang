@@ -1,16 +1,17 @@
 ; Make sure that functions are removed successfully if they are referred to by
 ; a global that is dead.  Make sure any globals they refer to die as well.
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -globaldce | llvm-dis | not grep foo
+; RUN: llvm-as < %s | opt -globaldce | llvm-dis | not grep foo
 
-%b = internal global int ()* %foo   ;; Unused, kills %foo
+;; Unused, kills %foo
+@b = internal global i32 ()* @foo               ; <i32 ()**> [#uses=0]
 
-%foo = internal global int 7         ;; Should die when function %foo is killed
+;; Should die when function %foo is killed
+@foo.upgrd.1 = internal global i32 7            ; <i32*> [#uses=1]
 
-implementation
-
-internal int %foo() {               ;; dies when %b dies.
-	%ret = load int* %foo
-	ret int %ret
+ ;; dies when %b dies.
+define internal i32 @foo() {
+        %ret = load i32* @foo.upgrd.1           ; <i32> [#uses=1]
+        ret i32 %ret
 }
 

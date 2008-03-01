@@ -1,12 +1,15 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -block-placement -disable-output -print
+; RUN: llvm-as < %s | opt -block-placement -disable-output -print
 
-int %test() {
+define i32 @test() {
+        br i1 true, label %X, label %Y
 
-	br bool true, label %X, label %Y
-A:
-	ret int 0
-X:
-	br label %A
-Y:
-	br label %A
+A:              ; preds = %Y, %X
+        ret i32 0
+
+X:              ; preds = %0
+        br label %A
+
+Y:              ; preds = %0
+        br label %A
 }
+

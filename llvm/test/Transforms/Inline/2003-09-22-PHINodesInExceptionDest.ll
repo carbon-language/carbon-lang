@@ -1,26 +1,25 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -inline -disable-output
+; RUN: llvm-as < %s | opt -inline -disable-output
 
-implementation
-
-int %main() {
+define i32 @main() {
 entry:
-	invoke void %__main( )
-			to label %Call2Invoke except label %LongJmpBlkPre
+        invoke void @__main( )
+                        to label %Call2Invoke unwind label %LongJmpBlkPre
 
-Call2Invoke:
-	br label %LongJmpBlkPre
+Call2Invoke:            ; preds = %entry
+        br label %LongJmpBlkPre
 
-LongJmpBlkPre:
-	%i.3 = phi uint [ 0, %entry ], [ 0, %Call2Invoke ]		; <uint> [#uses=0]
-	ret int 0
+LongJmpBlkPre:          ; preds = %Call2Invoke, %entry
+        %i.3 = phi i32 [ 0, %entry ], [ 0, %Call2Invoke ]               ; <i32> [#uses=0]
+        ret i32 0
 }
 
-void %__main() {
-	call void %__llvm_getGlobalCtors( )
-	call void %__llvm_getGlobalDtors( )
-	ret void
+define void @__main() {
+        call void @__llvm_getGlobalCtors( )
+        call void @__llvm_getGlobalDtors( )
+        ret void
 }
 
-declare void %__llvm_getGlobalCtors()
+declare void @__llvm_getGlobalCtors()
 
-declare void %__llvm_getGlobalDtors()
+declare void @__llvm_getGlobalDtors()
+

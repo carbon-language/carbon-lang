@@ -1,9 +1,10 @@
 ; Tests to make sure elimination of casts is working correctly
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
 ; RUN:   notcast {} {%c1.*}
 
-long %test_sext_zext(short %A) {
-    %c1 = zext short %A to uint
-    %c2 = sext uint %c1 to long
-    ret long %c2
+define i64 @test_sext_zext(i16 %A) {
+        %c1 = zext i16 %A to i32                ; <i32> [#uses=1]
+        %c2 = sext i32 %c1 to i64               ; <i64> [#uses=1]
+        ret i64 %c2
 }
+

@@ -1,23 +1,24 @@
 ; Ensure constant propagation of remainder instructions is working correctly.
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -constprop -die | llvm-dis | not grep rem
+; RUN: llvm-as < %s | opt -constprop -die | llvm-dis | not grep rem
 
-int %test1() {
-	%R = rem int 4, 3
-	ret int %R
+define i32 @test1() {
+        %R = srem i32 4, 3              ; <i32> [#uses=1]
+        ret i32 %R
 }
 
-int %test2() {
-	%R = rem int 123, -23
-	ret int %R
+define i32 @test2() {
+        %R = srem i32 123, -23          ; <i32> [#uses=1]
+        ret i32 %R
 }
 
-float %test3() {
-	%R = rem float 0x4028E66660000000, 0x405ECDA1C0000000
-	ret float %R
+define float @test3() {
+        %R = frem float 0x4028E66660000000, 0x405ECDA1C0000000          ; <float> [#uses=1]
+        ret float %R
 }
 
-double %test4() {
-	%R = rem double 0x4073833BEE07AFF8, 0x4028AAABB2A0D19C
-	ret double %R
+define double @test4() {
+        %R = frem double 0x4073833BEE07AFF8, 0x4028AAABB2A0D19C         ; <double> [#uses=1]
+        ret double %R
 }
+
