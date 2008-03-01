@@ -31,7 +31,7 @@ STATISTIC(NumInlined, "Number of functions inlined");
 STATISTIC(NumDeleted, "Number of functions deleted because all callers found");
 
 namespace {
-  cl::opt<unsigned>             // FIXME: 200 is VERY conservative
+  cl::opt<int>             // FIXME: 200 is VERY conservative
   InlineLimit("inline-threshold", cl::Hidden, cl::init(200),
         cl::desc("Control the amount of inlining to perform (default = 200)"));
 }
