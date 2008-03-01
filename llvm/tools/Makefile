@@ -26,7 +26,7 @@ include $(LEVEL)/Makefile.config
 
 # only build new lto project on Darwin for now
 ifeq ($(OS),Darwin)
-PARALLEL_DIRS += lto2
+#PARALLEL_DIRS += lto2
 endif
 
 include $(LEVEL)/Makefile.common
