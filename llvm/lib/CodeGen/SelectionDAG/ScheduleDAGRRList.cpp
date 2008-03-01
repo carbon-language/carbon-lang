@@ -1126,7 +1126,7 @@ namespace {
     }
 
   private:
-    bool canClobber(SUnit *SU, SUnit *Op);
+    bool canClobber(const SUnit *SU, const SUnit *Op);
     void AddPseudoTwoAddrDeps();
     void CalculateSethiUllmanNumbers();
     unsigned CalcNodeSethiUllmanNumber(const SUnit *SU);
@@ -1236,58 +1236,55 @@ bool bu_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
 
   unsigned LPriority = SPQ->getNodePriority(left);
   unsigned RPriority = SPQ->getNodePriority(right);
-  if (LPriority > RPriority)
-    return true;
-  else if (LPriority == RPriority) {
-    // Try schedule def + use closer when Sethi-Ullman numbers are the same.
-    // e.g.
-    // t1 = op t2, c1
-    // t3 = op t4, c2
-    //
-    // and the following instructions are both ready.
-    // t2 = op c3
-    // t4 = op c4
-    //
-    // Then schedule t2 = op first.
-    // i.e.
-    // t4 = op c4
-    // t2 = op c3
-    // t1 = op t2, c1
-    // t3 = op t4, c2
-    //
-    // This creates more short live intervals.
-    unsigned LDist = closestSucc(left);
-    unsigned RDist = closestSucc(right);
-    if (LDist < RDist)
-      return true;
-    else if (LDist == RDist) {
-      // Intuitively, it's good to push down instructions whose results are
-      // liveout so their long live ranges won't conflict with other values
-      // which are needed inside the BB. Further prioritize liveout instructions
-      // by the number of operands which are calculated within the BB.
-      unsigned LScratch = calcMaxScratches(left);
-      unsigned RScratch = calcMaxScratches(right);
-      if (LScratch > RScratch)
-        return true;
-      else if (LScratch == RScratch) {
-        if (left->Height > right->Height)
-          return true;
-        else if (left->Height == right->Height) {
-          if (left->Depth < right->Depth)
-            return true;
-          else if (left->Depth == right->Depth) {
-            if (left->CycleBound > right->CycleBound) 
-              return true;
-          }
-        }
-      }
-    }
-  }
+  if (LPriority != RPriority)
+    return LPriority > RPriority;
+
+  // Try schedule def + use closer when Sethi-Ullman numbers are the same.
+  // e.g.
+  // t1 = op t2, c1
+  // t3 = op t4, c2
+  //
+  // and the following instructions are both ready.
+  // t2 = op c3
+  // t4 = op c4
+  //
+  // Then schedule t2 = op first.
+  // i.e.
+  // t4 = op c4
+  // t2 = op c3
+  // t1 = op t2, c1
+  // t3 = op t4, c2
+  //
+  // This creates more short live intervals.
+  unsigned LDist = closestSucc(left);
+  unsigned RDist = closestSucc(right);
+  if (LDist != RDist)
+    return LDist < RDist;
+
+  // Intuitively, it's good to push down instructions whose results are
+  // liveout so their long live ranges won't conflict with other values
+  // which are needed inside the BB. Further prioritize liveout instructions
+  // by the number of operands which are calculated within the BB.
+  unsigned LScratch = calcMaxScratches(left);
+  unsigned RScratch = calcMaxScratches(right);
+  if (LScratch != RScratch)
+    return LScratch > RScratch;
+
+  if (left->Height != right->Height)
+    return left->Height > right->Height;
+  
+  if (left->Depth != right->Depth)
+    return left->Depth < right->Depth;
+
+  if (left->CycleBound != right->CycleBound)
+    return left->CycleBound > right->CycleBound;
+
+  // FIXME: No strict ordering.
   return false;
 }
 
-template<class SF>
-bool BURegReductionPriorityQueue<SF>::canClobber(SUnit *SU, SUnit *Op) {
+template<class SF> bool
+BURegReductionPriorityQueue<SF>::canClobber(const SUnit *SU, const SUnit *Op) {
   if (SU->isTwoAddress) {
     unsigned Opc = SU->Node->getTargetOpcode();
     const TargetInstrDesc &TID = TII->get(Opc);
@@ -1487,20 +1484,6 @@ bool td_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
   else if (left->NumSuccs != 0 && right->NumSuccs == 0)
     return true;
 
-  // Special tie breaker: if two nodes share a operand, the one that use it
-  // as a def&use operand is preferred.
-  if (LIsTarget && RIsTarget) {
-    if (left->isTwoAddress && !right->isTwoAddress) {
-      SDNode *DUNode = left->Node->getOperand(0).Val;
-      if (DUNode->isOperand(right->Node))
-        RBonus += 2;
-    }
-    if (!left->isTwoAddress && right->isTwoAddress) {
-      SDNode *DUNode = right->Node->getOperand(0).Val;
-      if (DUNode->isOperand(left->Node))
-        LBonus += 2;
-    }
-  }
   if (LIsFloater)
     LBonus -= 2;
   if (RIsFloater)
@@ -1510,21 +1493,19 @@ bool td_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
   if (right->NumSuccs == 1)
     RBonus += 2;
 
-  if (LPriority+LBonus < RPriority+RBonus)
-    return true;
-  else if (LPriority == RPriority) {
-    if (left->Depth < right->Depth)
-      return true;
-    else if (left->Depth == right->Depth) {
-      if (left->NumSuccsLeft > right->NumSuccsLeft)
-        return true;
-      else if (left->NumSuccsLeft == right->NumSuccsLeft) {
-        if (left->CycleBound > right->CycleBound) 
-          return true;
-      }
-    }
-  }
+  if (LPriority+LBonus != RPriority+RBonus)
+    return LPriority+LBonus < RPriority+RBonus;
 
+  if (left->Depth != right->Depth)
+    return left->Depth < right->Depth;
+
+  if (left->NumSuccsLeft != right->NumSuccsLeft)
+    return left->NumSuccsLeft > right->NumSuccsLeft;
+
+  if (left->CycleBound != right->CycleBound)
+    return left->CycleBound > right->CycleBound;
+
+  // FIXME: No strict ordering.
   return false;
 }
 
