@@ -1,14 +1,11 @@
-; RUN: llvm-upgrade < %s | llvm-as | llvm-dis > %t1.ll
+; RUN: llvm-as < %s | llvm-dis > %t1.ll
 ; RUN: llvm-as %t1.ll -o - | llvm-dis > %t2.ll
 ; RUN: diff %t1.ll %t2.ll
 
-%x = type int
+%x = type i32
 
-implementation
-
-int "foo"(int %in) 
-begin
-label: 
-  ret int 2
-end
+define i32 @foo(i32 %in) {
+label:
+        ret i32 2
+}
 

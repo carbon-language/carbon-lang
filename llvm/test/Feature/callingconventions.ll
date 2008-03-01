@@ -1,47 +1,50 @@
-; RUN: llvm-upgrade < %s | llvm-as | llvm-dis > %t1.ll
+; RUN: llvm-as < %s | llvm-dis > %t1.ll
 ; RUN: llvm-as %t1.ll -o - | llvm-dis > %t2.ll
 ; RUN: diff %t1.ll %t2.ll
 
-fastcc void %foo() {
-  ret void
+define fastcc void @foo() {
+        ret void
 }
 
-coldcc void %bar() {
-  call fastcc void %foo()
-  ret void
+define coldcc void @bar() {
+        call fastcc void @foo( )
+        ret void
 }
 
-csretcc void %structret({sbyte}* %P) {
-  call csretcc void %structret({sbyte}* %P)
-  ret void
+define void @structret({ i8 }* sret  %P) {
+        call void @structret( { i8 }* sret  %P )
+        ret void
 }
 
-
-cc0 void %foo2() {
-  ret void
+define void @foo2() {
+        ret void
 }
 
-coldcc void %bar2() {
-  call fastcc void %foo()
-  ret void
+define coldcc void @bar2() {
+        call fastcc void @foo( )
+        ret void
 }
 
-cc42 void %bar3() {
-  invoke fastcc void %foo() to label %Ok unwind label %U
-Ok:
-  ret void
-U:
-  unwind
+define cc42 void @bar3() {
+        invoke fastcc void @foo( )
+                        to label %Ok unwind label %U
+
+Ok:             ; preds = %0
+        ret void
+
+U:              ; preds = %0
+        unwind
 }
 
+define void @bar4() {
+        call cc42 void @bar( )
+        invoke cc42 void @bar3( )
+                        to label %Ok unwind label %U
 
-void %bar4() {
-  call cc42 void %bar()
-  invoke cc42 void %bar3() to label %Ok unwind label %U
-Ok:
-  ret void
-U:
-  unwind
+Ok:             ; preds = %0
+        ret void
+
+U:              ; preds = %0
+        unwind
 }
-
 

@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llvm-dis > %t1.ll
+; RUN: llvm-as < %s | llvm-dis > %t1.ll
 ; RUN: llvm-as %t1.ll -o - | llvm-dis > %t2.ll
 ; RUN: diff %t1.ll %t2.ll
 
@@ -6,10 +6,10 @@
 ; and recursive types.  Oh my.
 ; 
 
-%SQ1 = type { int }
+%SQ1 = type { i32 }
 %ITy = type opaque
 %SQ2 = type { %ITy }
-%ITy = type int
+%ITy = type i32
 
 
 %CCC = type { \2* }
@@ -23,10 +23,10 @@ type %BBB
 
 ; Test simple opaque type resolution...
 %intty = type opaque
-%intty = type int
+%intty = type i32
 
 ; Perform a simple forward reference...
-%ty1 = type { %ty2, int }
+%ty1 = type { %ty2, i32 }
 %ty2 = type float
 
 ; Do a recursive type...
@@ -54,8 +54,4 @@ type %BBB
 %P1 = type \1 *
 %Y1 = type { { \3 * }, \2 * }
 %Z1 = type { { \3 * }, [12x\3] *, { { { \5 * } } } }
-
-implementation
-
-
 

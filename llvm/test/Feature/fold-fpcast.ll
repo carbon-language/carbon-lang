@@ -1,18 +1,18 @@
-; RUN: llvm-upgrade < %s | llvm-as | llvm-dis | not grep bitcast
+; RUN: llvm-as < %s | llvm-dis | not grep bitcast
 
-int %test1() {
-   ret int bitcast(float 0x400D9999A0000000 to int)
+define i32 @test1() {
+   ret i32 bitcast(float 0x400D9999A0000000 to i32)
 }
 
-float %test2() {
-  ret float bitcast(int 17 to float)
+define float @test2() {
+  ret float bitcast(i32 17 to float)
 }
 
-long %test3() {
-  ret long bitcast (double 0x400921FB4D12D84A to long)
+define i64 @test3() {
+  ret i64 bitcast (double 0x400921FB4D12D84A to i64)
 }
 
-double %test4() {
-  ret double bitcast (long 42 to double)
+define double @test4() {
+  ret double bitcast (i64 42 to double)
 }
 

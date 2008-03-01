@@ -1,33 +1,29 @@
-; RUN: llvm-upgrade < %s | llvm-as | llvm-dis > %t1.ll
+; RUN: llvm-as < %s | llvm-dis > %t1.ll
 ; RUN: llvm-as %t1.ll -o - | llvm-dis > %t2.ll
 ; RUN: diff %t1.ll %t2.ll
 
-%somestr = constant [11x sbyte] c"hello world"
-%array   = constant [2 x int] [ int 12, int 52 ]
-           constant { int, int } { int 4, int 3 }
+@somestr = constant [11 x i8] c"hello world"            ; <[11 x i8]*> [#uses=1]
+@array = constant [2 x i32] [ i32 12, i32 52 ]          ; <[2 x i32]*> [#uses=1]
+constant { i32, i32 } { i32 4, i32 3 }          ; <{ i32, i32 }*>:0 [#uses=0]
 
-implementation
- 
-[2 x int]* %testfunction(int %i0, int %j0)
-begin
-	ret [2x int]* %array
-end
-
-sbyte* %otherfunc(int, double)
-begin
-	%somestr = getelementptr [11x sbyte]* %somestr, long 0, long 0
-	ret sbyte* %somestr
-end
-
-sbyte* %yetanotherfunc(int, double)
-begin
-	ret sbyte* null            ; Test null
-end
-
-uint %negativeUnsigned() {
-        ret uint -1
+define [2 x i32]* @testfunction(i32 %i0, i32 %j0) {
+        ret [2 x i32]* @array
 }
 
-int %largeSigned() {
-       ret int 3900000000
+define i8* @otherfunc(i32, double) {
+        %somestr = getelementptr [11 x i8]* @somestr, i64 0, i64 0              ; <i8*> [#uses=1]
+        ret i8* %somestr
 }
+
+define i8* @yetanotherfunc(i32, double) {
+        ret i8* null
+}
+
+define i32 @negativeUnsigned() {
+        ret i32 -1
+}
+
+define i32 @largeSigned() {
+        ret i32 -394967296
+}
+

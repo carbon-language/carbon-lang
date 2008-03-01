@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llvm-dis > %t1.ll
+; RUN: llvm-as < %s | llvm-dis > %t1.ll
 ; RUN: llvm-as %t1.ll -o - | llvm-dis > %t2.ll
 ; RUN: diff %t1.ll %t2.ll
 
@@ -10,24 +10,22 @@
 ;
 
 
-%t3 = global int * %t1           ;; Forward reference
-%t1 = global int 4
-%t4 = global int ** %t3		 ;; reference to reference
+@t3 = global i32* @t1           ;; Forward reference
+@t1 = global i32 4
+@t4 = global i32** @t3		 ;; reference to reference
 
-%t2 = global int * %t1
+@t2 = global i32* @t1
 
-global float * %0                ;; Forward numeric reference
-global float * %0                ;; Duplicate forward numeric reference
+global float * @2                ;; Forward numeric reference
+global float * @2                ;; Duplicate forward numeric reference
 global float 0.0
-global float * %0                ;; Numeric reference
+global float * @2                ;; Numeric reference
 
 
-%fptr = global void() * %f       ;; Forward ref method defn
-declare void "f"()               ;; External method
+@fptr = global void() * @f       ;; Forward ref method defn
+declare void @f()               ;; External method
 
-%sptr1   = global [11x sbyte]* %somestr		;; Forward ref to a constant
-%somestr = constant [11x sbyte] c"hello world"
-%sptr2   = global [11x sbyte]* %somestr
-
-implementation
+@sptr1   = global [11x i8]* @somestr		;; Forward ref to a constant
+@somestr = constant [11x i8] c"hello world"
+@sptr2   = global [11x i8]* @somestr
 

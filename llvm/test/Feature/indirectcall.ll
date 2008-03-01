@@ -1,54 +1,49 @@
-; RUN: llvm-upgrade < %s | llvm-as | llvm-dis > %t1.ll
+; RUN: llvm-as < %s | llvm-dis > %t1.ll
 ; RUN: llvm-as %t1.ll -o - | llvm-dis > %t2.ll
 ; RUN: diff %t1.ll %t2.ll
 
-implementation
+declare i32 @atoi(i8*)
 
-declare int "atoi"(sbyte *)
+define i64 @fib(i64 %n) {
+        icmp ult i64 %n, 2              ; <i1>:1 [#uses=1]
+        br i1 %1, label %BaseCase, label %RecurseCase
 
-ulong "fib"(ulong %n)
-begin
-  setlt ulong %n, 2       ; {bool}:0
-  br bool %0, label %BaseCase, label %RecurseCase
+BaseCase:               ; preds = %0
+        ret i64 1
 
-BaseCase:
-  ret ulong 1
+RecurseCase:            ; preds = %0
+        %n2 = sub i64 %n, 2             ; <i64> [#uses=1]
+        %n1 = sub i64 %n, 1             ; <i64> [#uses=1]
+        %f2 = call i64 @fib( i64 %n2 )          ; <i64> [#uses=1]
+        %f1 = call i64 @fib( i64 %n1 )          ; <i64> [#uses=1]
+        %result = add i64 %f2, %f1              ; <i64> [#uses=1]
+        ret i64 %result
+}
 
-RecurseCase:
-  %n2 = sub ulong %n, 2
-  %n1 = sub ulong %n, 1
-  %f2 = call ulong(ulong) * %fib(ulong %n2)
-  %f1 = call ulong(ulong) * %fib(ulong %n1)
-  %result = add ulong %f2, %f1
-  ret ulong %result
-end
+define i64 @realmain(i32 %argc, i8** %argv) {
+; <label>:0
+        icmp eq i32 %argc, 2            ; <i1>:1 [#uses=1]
+        br i1 %1, label %HasArg, label %Continue
 
-ulong "realmain"(int %argc, sbyte ** %argv)
-begin
-  seteq int %argc, 2      ; {bool}:0
-  br bool %0, label %HasArg, label %Continue
-HasArg:
-  ; %n1 = atoi(argv[1])
-  %n1 = add int 1, 1
-  br label %Continue
+HasArg:         ; preds = %0
+        %n1 = add i32 1, 1              ; <i32> [#uses=1]
+        br label %Continue
 
-Continue:
-  %n = phi int [%n1, %HasArg], [1, %0]
-  %N = cast int %n to ulong
-  %F = call ulong(ulong) *%fib(ulong %N)
-  ret ulong %F
-end
+Continue:               ; preds = %HasArg, %0
+        %n = phi i32 [ %n1, %HasArg ], [ 1, %0 ]                ; <i32> [#uses=1]
+        %N = sext i32 %n to i64         ; <i64> [#uses=1]
+        %F = call i64 @fib( i64 %N )            ; <i64> [#uses=1]
+        ret i64 %F
+}
 
-ulong "trampoline"(ulong %n, ulong(ulong)* %fibfunc)
-begin
-  %F = call ulong(ulong) *%fibfunc(ulong %n)
-  ret ulong %F
-end
+define i64 @trampoline(i64 %n, i64 (i64)* %fibfunc) {
+        %F = call i64 %fibfunc( i64 %n )                ; <i64> [#uses=1]
+        ret i64 %F
+}
 
-int "main"()
-begin
-  %Result = call ulong %trampoline(ulong 10, ulong(ulong) *%fib)
-  %Result = cast ulong %Result to int
-  ret int %Result
-end
+define i32 @main() {
+        %Result = call i64 @trampoline( i64 10, i64 (i64)* @fib )               ; <i64> [#uses=1]
+        %Result.upgrd.1 = trunc i64 %Result to i32              ; <i32> [#uses=1]
+        ret i32 %Result.upgrd.1
+}
 

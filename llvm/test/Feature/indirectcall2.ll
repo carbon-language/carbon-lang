@@ -1,25 +1,22 @@
-; RUN: llvm-upgrade < %s | llvm-as | llvm-dis > %t1.ll
+; RUN: llvm-as < %s | llvm-dis > %t1.ll
 ; RUN: llvm-as %t1.ll -o - | llvm-dis > %t2.ll
 ; RUN: diff %t1.ll %t2.ll
 
-implementation
+define i64 @test(i64 %X) {
+        ret i64 %X
+}
 
-ulong "test"(ulong %X)
-begin
-	ret ulong %X
-end
+define i64 @fib(i64 %n) {
+; <label>:0
+        %T = icmp ult i64 %n, 2         ; <i1> [#uses=1]
+        br i1 %T, label %BaseCase, label %RecurseCase
 
-ulong "fib"(ulong %n)
-begin
-  %T = setlt ulong %n, 2       ; {bool}:0
-  br bool %T, label %BaseCase, label %RecurseCase
+RecurseCase:            ; preds = %0
+        %result = call i64 @test( i64 %n )              ; <i64> [#uses=0]
+        br label %BaseCase
 
-RecurseCase:
-  %result = call ulong %test(ulong %n)
-  br label %BaseCase
-
-BaseCase:
-  %X = phi ulong [1, %0], [2, %RecurseCase]
-  ret ulong %X
-end
+BaseCase:               ; preds = %RecurseCase, %0
+        %X = phi i64 [ 1, %0 ], [ 2, %RecurseCase ]             ; <i64> [#uses=1]
+        ret i64 %X
+}
 

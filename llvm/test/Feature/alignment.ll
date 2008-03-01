@@ -1,20 +1,21 @@
-; RUN: llvm-upgrade < %s | llvm-as | llvm-dis > %t1.ll
+; RUN: llvm-as < %s | llvm-dis > %t1.ll
 ; RUN: llvm-as %t1.ll -o - | llvm-dis > %t2.ll
 ; RUN: diff %t1.ll %t2.ll
 
-%X = global int 4, align 16
+@X = global i32 4, align 16             ; <i32*> [#uses=0]
 
-int *%test() align 32 {
-	%X = alloca int, align 4
-	%Y = alloca int, uint 42, align 16
-	%Z = alloca int, align 0
-	ret int *%X
+define i32* @test() align 32 {
+        %X = alloca i32, align 4                ; <i32*> [#uses=1]
+        %Y = alloca i32, i32 42, align 16               ; <i32*> [#uses=0]
+        %Z = alloca i32         ; <i32*> [#uses=0]
+        ret i32* %X
 }
 
-int *%test2() {
-	%X = malloc int, align 4
-	%Y = malloc int, uint 42, align 16
-	%Z = malloc int, align 0
-	%T = malloc int, align 256
-	ret int *%X
+define i32* @test2() {
+        %X = malloc i32, align 4                ; <i32*> [#uses=1]
+        %Y = malloc i32, i32 42, align 16               ; <i32*> [#uses=0]
+        %Z = malloc i32         ; <i32*> [#uses=0]
+        %T = malloc i32, align 256              ; <i32*> [#uses=0]
+        ret i32* %X
 }
+
