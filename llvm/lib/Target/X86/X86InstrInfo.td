@@ -2548,6 +2548,7 @@ def EH_RETURN   : I<0xC3, RawFrm, (outs), (ins GR32:$addr),
 
 //FIXME: Please check the format Pseudo is certainly wrong, but the opcode and
 //       prefixes should be correct
+
 let Defs = [EAX, EFLAGS], Uses = [EAX] in {
 def CMPXCHG32 : I<0xB1, Pseudo, (outs), (ins i32mem:$ptr, GR32:$swap),
                "cmpxchgl $swap,$ptr", []>, TB;

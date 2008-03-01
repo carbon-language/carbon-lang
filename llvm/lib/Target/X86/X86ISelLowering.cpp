@@ -5358,10 +5358,10 @@ SDOperand X86TargetLowering::LowerCAS(SDOperand Op, SelectionDAG &DAG) {
   case MVT::i32: Reg = X86::EAX; size = 4; break;
   };
   SDOperand cpIn = DAG.getCopyToReg(Op.getOperand(0), Reg,
-                                    Op.getOperand(2), SDOperand());
+                                    Op.getOperand(3), SDOperand());
   SDOperand Ops[] = { cpIn.getValue(0),
                        Op.getOperand(1),
-                       Op.getOperand(3),
+                       Op.getOperand(2),
                        DAG.getTargetConstant(size, MVT::i8),
                        cpIn.getValue(1) };
   SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
