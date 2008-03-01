@@ -53,7 +53,7 @@ Value::~Value() {
   // a <badref>
   //
   if (!use_empty()) {
-    DOUT << "While deleting: " << *Ty << " %" << Name << "\n";
+    DOUT << "While deleting: " << *Ty << " %" << getNameStr() << "\n";
     for (use_iterator I = use_begin(), E = use_end(); I != E; ++I)
       DOUT << "Use still stuck around after Def is destroyed:"
            << **I << "\n";
