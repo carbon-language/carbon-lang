@@ -779,6 +779,30 @@ static void RemoveDuplicates(std::vector<DirectoryLookup> &SearchList) {
   }
 }
 
+// AddEnvVarPaths - Add a list of paths from an environment variable to a
+// header search list.
+//
+static void AddEnvVarPaths(const char *Name, HeaderSearch &Headers) {
+  const char* at = getenv(Name);
+  if (!at)
+    return;
+
+  const char* delim = strchr(at, llvm::sys::PathSeparator);
+  while (delim != 0) {
+    if (delim-at == 0)
+      AddPath(".", Angled, false, true, false, Headers);
+    else
+      AddPath(std::string(at, std::string::size_type(delim-at)), Angled, false,
+            true, false, Headers);
+    at = delim + 1;
+    delim = strchr(at, llvm::sys::PathSeparator);
+  }
+  if (*at == 0)
+    AddPath(".", Angled, false, true, false, Headers);
+  else
+    AddPath(at, Angled, false, true, false, Headers);
+}
+
 /// InitializeIncludePaths - Process the -I options and set them in the
 /// HeaderSearch object.
 static void InitializeIncludePaths(HeaderSearch &Headers, FileManager &FM,
@@ -842,10 +866,17 @@ static void InitializeIncludePaths(HeaderSearch &Headers, FileManager &FM,
       }
     }
   }
-  
-  // FIXME: Add contents of the CPATH, C_INCLUDE_PATH, CPLUS_INCLUDE_PATH,
-  // OBJC_INCLUDE_PATH, OBJCPLUS_INCLUDE_PATH environment variables.
-  
+
+  AddEnvVarPaths("CPATH", Headers);
+  if (Lang.CPlusPlus && Lang.ObjC1)
+    AddEnvVarPaths("OBJCPLUS_INCLUDE_PATH", Headers);
+  else if (Lang.CPlusPlus)
+    AddEnvVarPaths("CPLUS_INCLUDE_PATH", Headers);
+  else if (Lang.ObjC1)
+    AddEnvVarPaths("OBJC_INCLUDE_PATH", Headers);
+  else
+    AddEnvVarPaths("C_INCLUDE_PATH", Headers);
+
   // FIXME: temporary hack: hard-coded paths.
   // FIXME: get these from the target?
   if (!nostdinc) {
