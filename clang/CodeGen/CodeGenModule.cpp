@@ -31,7 +31,14 @@ CodeGenModule::CodeGenModule(ASTContext &C, const LangOptions &LO,
                              llvm::Module &M, const llvm::TargetData &TD,
                              Diagnostic &diags)
   : Context(C), Features(LO), TheModule(M), TheTargetData(TD), Diags(diags),
-    Types(C, M, TD), MemCpyFn(0), MemSetFn(0), CFConstantStringClassRef(0) {}
+    Types(C, M, TD), MemCpyFn(0), MemSetFn(0), CFConstantStringClassRef(0) {
+  //TODO: Make this selectable at runtime
+  Runtime = CreateObjCRuntime(M);
+}
+
+CodeGenModule::~CodeGenModule() {
+  delete Runtime;
+}
 
 /// WarnUnsupported - Print out a warning that codegen doesn't support the
 /// specified stmt yet.

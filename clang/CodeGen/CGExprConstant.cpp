@@ -200,6 +200,9 @@ public:
     
     // Make sure we have an array at this point
     assert(0 && "Unable to handle InitListExpr");
+    // Get rid of control reaches end of void function warning.
+    // Not reached.
+    return 0;
   }
 
   llvm::Constant *VisitImplicitCastExpr(ImplicitCastExpr *ICExpr) {

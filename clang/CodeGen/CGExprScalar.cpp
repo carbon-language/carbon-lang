@@ -41,9 +41,14 @@ class VISIBILITY_HIDDEN ScalarExprEmitter
   : public StmtVisitor<ScalarExprEmitter, Value*> {
   CodeGenFunction &CGF;
   llvm::LLVMFoldingBuilder &Builder;
+  CGObjCRuntime *Runtime;
+
+
 public:
 
-  ScalarExprEmitter(CodeGenFunction &cgf) : CGF(cgf), Builder(CGF.Builder) {
+  ScalarExprEmitter(CodeGenFunction &cgf) : CGF(cgf), 
+    Builder(CGF.Builder), 
+    Runtime(CGF.CGM.getObjCRuntime()) {
   }
 
   
@@ -120,6 +125,7 @@ public:
       return llvm::ConstantInt::get(EC->getInitVal());
     return EmitLoadOfLValue(E);
   }
+  Value *VisitObjCMessageExpr(ObjCMessageExpr *E);
   Value *VisitArraySubscriptExpr(ArraySubscriptExpr *E);
   Value *VisitMemberExpr(Expr *E)           { return EmitLoadOfLValue(E); }
   Value *VisitOCUVectorElementExpr(Expr *E) { return EmitLoadOfLValue(E); }
@@ -441,6 +447,47 @@ Value *ScalarExprEmitter::VisitExpr(Expr *E) {
   if (E->getType()->isVoidType())
     return 0;
   return llvm::UndefValue::get(CGF.ConvertType(E->getType()));
+}
+
+Value *ScalarExprEmitter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
+  // Only the lookup mechanism and first two arguments of the method
+  // implementation vary between runtimes.  We can get the receiver and
+  // arguments in generic code.
+  
+  // Find the receiver
+  llvm::Value * Receiver = CGF.EmitScalarExpr(E->getReceiver());
+
+  // Process the arguments
+  unsigned int ArgC = E->getNumArgs();
+  llvm::SmallVector<llvm::Value*, 16> Args;
+  for(unsigned i=0 ; i<ArgC ; i++) {
+    Expr *ArgExpr = E->getArg(i);
+    QualType ArgTy = ArgExpr->getType();
+    if (!CGF.hasAggregateLLVMType(ArgTy)) {
+      // Scalar argument is passed by-value.
+      Args.push_back(CGF.EmitScalarExpr(ArgExpr));
+    } else if (ArgTy->isComplexType()) {
+      // Make a temporary alloca to pass the argument.
+      llvm::Value *DestMem = CGF.CreateTempAlloca(ConvertType(ArgTy));
+      CGF.EmitComplexExprIntoAddr(ArgExpr, DestMem, false);
+      Args.push_back(DestMem);
+    } else {
+      llvm::Value *DestMem = CGF.CreateTempAlloca(ConvertType(ArgTy));
+      CGF.EmitAggExpr(ArgExpr, DestMem, false);
+      Args.push_back(DestMem);
+    }
+  }
+
+  // Get the selector string
+  std::string SelStr = E->getSelector().getName();
+  llvm::Constant *Selector = CGF.CGM.GetAddrOfConstantString(SelStr);
+  ConvertType(E->getType());
+  return Runtime->generateMessageSend(Builder,
+      ConvertType(E->getType()),
+      Receiver,
+      Selector,
+      &Args[0],
+      Args.size());
 }
 
 Value *ScalarExprEmitter::VisitArraySubscriptExpr(ArraySubscriptExpr *E) {

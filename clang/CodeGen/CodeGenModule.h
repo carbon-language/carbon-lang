@@ -15,6 +15,7 @@
 #define CLANG_CODEGEN_CODEGENMODULE_H
 
 #include "CodeGenTypes.h"
+#include "CGObjCRuntime.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
 
@@ -52,6 +53,7 @@ class CodeGenModule {
   const llvm::TargetData &TheTargetData;
   Diagnostic &Diags;
   CodeGenTypes Types;
+  CGObjCRuntime *Runtime;
 
   llvm::Function *MemCpyFn;
   llvm::Function *MemSetFn;
@@ -65,7 +67,9 @@ class CodeGenModule {
 public:
   CodeGenModule(ASTContext &C, const LangOptions &Features, llvm::Module &M, 
                 const llvm::TargetData &TD, Diagnostic &Diags);
+  ~CodeGenModule();
   
+  CGObjCRuntime *getObjCRuntime() { return Runtime; }
   ASTContext &getContext() const { return Context; }
   const LangOptions &getLangOptions() const { return Features; }
   llvm::Module &getModule() const { return TheModule; }
