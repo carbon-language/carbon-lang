@@ -1165,23 +1165,24 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     assert(((Node->getNumOperands() == 4 && Node->getOpcode() == ISD::ATOMIC_LCS) ||
             (Node->getNumOperands() == 3 && Node->getOpcode() == ISD::ATOMIC_LAS) ||
             (Node->getNumOperands() == 3 && Node->getOpcode() == ISD::ATOMIC_SWAP)) &&
-           "Invalid MemBarrier node!");
+           "Invalid Atomic node!");
     int num = Node->getOpcode() == ISD::ATOMIC_LCS ? 4 : 3;
-    MVT::ValueType VT = Node->getValueType(0);
-    switch (TLI.getOperationAction(ISD::ATOMIC_LCS, VT)) {
+    SDOperand Ops[4];
+    for (int x = 0; x < num; ++x)
+      Ops[x] = LegalizeOp(Node->getOperand(x));
+    Result = DAG.UpdateNodeOperands(Result, &Ops[0], num);
+    
+    switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
     default: assert(0 && "This action is not supported yet!");
-    case TargetLowering::Legal: {
-      SDOperand Ops[4];
-      for (int x = 0; x < num; ++x)
-        Ops[x] = LegalizeOp(Node->getOperand(x));
-      Result = DAG.UpdateNodeOperands(Result, &Ops[0], num);
-      AddLegalizedOperand(SDOperand(Node, 0), Result.getValue(0));
-      AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
-      return Result.getValue(Op.ResNo);
+    case TargetLowering::Custom:
+      Result = TLI.LowerOperation(Result, DAG);
+      break;
+    case TargetLowering::Legal:
       break;
     }
-    }
-    break;
+    AddLegalizedOperand(SDOperand(Node, 0), Result.getValue(0));
+    AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
+    return Result.getValue(Op.ResNo);
   }
 
   case ISD::Constant: {

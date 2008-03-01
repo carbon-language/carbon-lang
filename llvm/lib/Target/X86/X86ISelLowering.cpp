@@ -283,6 +283,9 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   if (!Subtarget->hasSSE2())
     setOperationAction(ISD::MEMBARRIER    , MVT::Other, Expand);
 
+  setOperationAction(ISD::ATOMIC_LCS     , MVT::i8, Custom);
+  setOperationAction(ISD::ATOMIC_LCS     , MVT::i16, Custom);
+  setOperationAction(ISD::ATOMIC_LCS     , MVT::i32, Custom);
 
   // Use the default ISD::LOCATION, ISD::DECLARE expansion.
   setOperationAction(ISD::LOCATION, MVT::Other, Expand);
@@ -5345,11 +5348,35 @@ SDOperand X86TargetLowering::LowerCTTZ(SDOperand Op, SelectionDAG &DAG) {
   return Op;
 }
 
+SDOperand X86TargetLowering::LowerCAS(SDOperand Op, SelectionDAG &DAG) {
+  MVT::ValueType T = cast<AtomicSDNode>(Op.Val)->getVT();
+  unsigned Reg;
+  unsigned size;
+  switch(T) {
+  case MVT::i8:  Reg = X86::AL;  size = 1; break;
+  case MVT::i16: Reg = X86::AX;  size = 2; break;
+  case MVT::i32: Reg = X86::EAX; size = 4; break;
+  };
+  SDOperand cpIn = DAG.getCopyToReg(Op.getOperand(0), Reg,
+                                    Op.getOperand(2), SDOperand());
+  SDOperand Ops[] = { cpIn.getValue(0),
+                       Op.getOperand(1),
+                       Op.getOperand(3),
+                       DAG.getTargetConstant(size, MVT::i8),
+                       cpIn.getValue(1) };
+  SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
+  SDOperand Result = DAG.getNode(X86ISD::LCMPXCHG_DAG, Tys, Ops, 5);
+  SDOperand cpOut = 
+    DAG.getCopyFromReg(Result.getValue(0), Reg, T, Result.getValue(1));
+  return cpOut;
+}
+
 /// LowerOperation - Provide custom lowering hooks for some operations.
 ///
 SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
   default: assert(0 && "Should not custom lower this!");
+  case ISD::ATOMIC_LCS:         return LowerCAS(Op,DAG);
   case ISD::BUILD_VECTOR:       return LowerBUILD_VECTOR(Op, DAG);
   case ISD::VECTOR_SHUFFLE:     return LowerVECTOR_SHUFFLE(Op, DAG);
   case ISD::EXTRACT_VECTOR_ELT: return LowerEXTRACT_VECTOR_ELT(Op, DAG);
@@ -5454,6 +5481,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::EH_RETURN:          return "X86ISD::EH_RETURN";
   case X86ISD::TC_RETURN:          return "X86ISD::TC_RETURN";
   case X86ISD::FNSTCW16m:          return "X86ISD::FNSTCW16m";
+  case X86ISD::LCMPXCHG_DAG:       return "x86ISD::LCMPXCHG_DAG";
   }
 }
 

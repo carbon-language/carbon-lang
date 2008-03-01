@@ -208,6 +208,9 @@ namespace llvm {
       //   operand #3 optional in flag
       TC_RETURN,
 
+      // compare and swap
+      LCMPXCHG_DAG,
+
       // Store FP control world into i16 memory
       FNSTCW16m
     };
@@ -540,6 +543,7 @@ namespace llvm {
     SDOperand LowerFLT_ROUNDS_(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerCTLZ(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerCTTZ(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerCAS(SDOperand Op, SelectionDAG &DAG);
     SDNode *ExpandFP_TO_SINT(SDNode *N, SelectionDAG &DAG);
     SDNode *ExpandREADCYCLECOUNTER(SDNode *N, SelectionDAG &DAG);
   };
