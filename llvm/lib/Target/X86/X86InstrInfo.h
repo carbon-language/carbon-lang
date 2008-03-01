@@ -216,7 +216,11 @@ namespace X86II {
     // SpecialFP - Special instruction forms.  Dispatch by opcode explicitly.
     SpecialFP  = 7 << FPTypeShift,
 
-    // Bits 19 -> 23 are unused
+    // Lock prefix
+    LOCKShift = 19,
+    LOCK = 1 << LOCKShift,
+
+    // Bits 20 -> 23 are unused
     OpcodeShift   = 24,
     OpcodeMask    = 0xFF << OpcodeShift
   };

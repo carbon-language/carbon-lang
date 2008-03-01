@@ -115,6 +115,7 @@ def X86InstrInfo : InstrInfo {
                        "hasREX_WPrefix",
                        "ImmTypeBits",
                        "FPFormBits",
+                       "hasLockPrefix",
                        "Opcode"];
   let TSFlagsShifts = [0,
                        6,
@@ -123,6 +124,7 @@ def X86InstrInfo : InstrInfo {
                        12,
                        13,
                        16,
+                       19,
                        24];
 }
 

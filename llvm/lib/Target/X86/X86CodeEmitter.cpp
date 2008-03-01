@@ -540,6 +540,9 @@ void Emitter::emitInstruction(const MachineInstr &MI,
                               const TargetInstrDesc *Desc) {
   unsigned Opcode = Desc->Opcode;
 
+  // Emit the lock opcode prefix as needed.
+  if (Desc->TSFlags & X86II::LOCK) MCE.emitByte(0xF0);
+
   // Emit the repeat opcode prefix as needed.
   if ((Desc->TSFlags & X86II::Op0Mask) == X86II::REP) MCE.emitByte(0xF3);
 

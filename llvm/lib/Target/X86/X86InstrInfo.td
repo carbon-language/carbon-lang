@@ -2538,11 +2538,82 @@ def EH_RETURN   : I<0xC3, RawFrm, (outs), (ins GR32:$addr),
 //===----------------------------------------------------------------------===//
 // Atomic support
 //
-let Defs = [EAX] in
-def LCMPXCHGL : I<0, Pseudo, (outs GR32:$dst), 
-                  (ins GR32:$ptr, GR32:$cmp, GR32:$swap),
-                  "movl $cmp, %eax ; lock cmpxchgl $swap,($ptr) ; movl %eax, $dst",
-                  [(set GR32:$dst, (atomic_lcs_32 GR32:$ptr, GR32:$cmp, GR32:$swap))]>;
+
+//FIXME: Please check the format
+
+let Defs = [EAX], Uses = [EAX] in {
+def CMPXCHG32 : I<0xB1, Pseudo, (outs), (ins GR32:$ptr, GR32:$swap),
+               "cmpxchgl $swap,($ptr)", []>, TB;
+def LCMPXCHG32 : I<0xB1, Pseudo, (outs), (ins GR32:$ptr, GR32:$swap),
+               "lock cmpxchgl $swap,($ptr)", []>, TB, LOCK;
+}
+let Defs = [AX], Uses = [AX] in {
+def CMPXCHG16 : I<0xB1, Pseudo, (outs), (ins GR32:$ptr, GR16:$swap),
+               "cmpxchgw $swap,($ptr)", []>, TB, OpSize;
+def LCMPXCHG16 : I<0xB1, Pseudo, (outs), (ins GR32:$ptr, GR16:$swap),
+               "cmpxchgw $swap,($ptr)", []>, TB, OpSize, LOCK;
+}
+let Defs = [AL], Uses = [AL] in {
+def CMPXCHG8 : I<0xB0, Pseudo, (outs), (ins GR32:$ptr, GR8:$swap),
+               "cmpxchgb $swap,($ptr)", []>, TB;
+def LCMPXCHG8 : I<0xB0, Pseudo, (outs), (ins GR32:$ptr, GR8:$swap),
+               "cmpxchgb $swap,($ptr)", []>, TB, LOCK;
+}
+
+let Constraints = "$val = $dst" in {
+def LXADD32 : I<0xC1, Pseudo, (outs GR32:$dst), (ins i32mem:$ptr, GR32:$val),
+               "lock xadd $val, $ptr", 
+               [(set GR32:$dst, (atomic_las_32 addr:$ptr, GR32:$val))]>,
+                TB, LOCK;
+def LXADD16 : I<0xC1, Pseudo, (outs GR16:$dst), (ins i16mem:$ptr, GR16:$val),
+               "lock xadd $val, $ptr", 
+               [(set GR16:$dst, (atomic_las_16 addr:$ptr, GR16:$val))]>,
+                TB, OpSize, LOCK;
+def LXADD8  : I<0xC0, Pseudo, (outs GR8:$dst), (ins i8mem:$ptr, GR8:$val),
+               "lock xadd $val, $ptr", 
+               [(set GR8:$dst, (atomic_las_8 addr:$ptr, GR8:$val))]>,
+                TB, LOCK;
+def XADD32 : I<0xC1, Pseudo, (outs GR32:$dst), (ins i32mem:$ptr, GR32:$val),
+               "lock xadd $val, $ptr", []>, TB;
+def XADD16 : I<0xC1, Pseudo, (outs GR16:$dst), (ins i16mem:$ptr, GR16:$val),
+               "lock xadd $val, $ptr", []>, TB, OpSize;
+def XADD8  : I<0xC0, Pseudo, (outs GR8:$dst), (ins i8mem:$ptr, GR8:$val),
+               "lock xadd $val, $ptr", []>, TB;
+
+def LXCHG32 : I<0x87, Pseudo, (outs GR32:$dst), (ins i32mem:$ptr, GR32:$val),
+               "lock xchg $val, $ptr", 
+               [(set GR32:$dst, (atomic_swap_32 addr:$ptr, GR32:$val))]>, LOCK;
+def LXCHG16 : I<0x87, Pseudo, (outs GR16:$dst), (ins i16mem:$ptr, GR16:$val),
+               "lock xchg $val, $ptr", 
+               [(set GR16:$dst, (atomic_swap_16 addr:$ptr, GR16:$val))]>, 
+                OpSize, LOCK;
+def LXCHG8  : I<0x86, Pseudo, (outs GR8:$dst), (ins i8mem:$ptr, GR8:$val),
+               "lock xchg $val, $ptr", 
+               [(set GR8:$dst, (atomic_swap_8 addr:$ptr, GR8:$val))]>, LOCK;
+def XCHG32 : I<0x87, Pseudo, (outs GR32:$dst), (ins i32mem:$ptr, GR32:$val),
+               "lock xchg $val, $ptr", []>;
+def XCHG16 : I<0x87, Pseudo, (outs GR16:$dst), (ins i16mem:$ptr, GR16:$val),
+               "lock xchg $val, $ptr", []>, OpSize;
+def XCHG8  : I<0x86, Pseudo, (outs GR8:$dst), (ins i8mem:$ptr, GR8:$val),
+               "lock xchg $val, $ptr", []>;
+}
+
+//FIXME: these are a hack until the patterns using the LCMPXCHG written
+let Defs = [EAX], Uses = [EAX] in
+def PLCMPXCHG32 : I<0, Pseudo, (outs GR32:$dst), 
+                  (ins i32mem:$ptr, GR32:$cmp, GR32:$swap),
+                  "movl $cmp, %eax \n lock \n cmpxchgl $swap,$ptr \n movl %eax, $dst",
+                  [(set GR32:$dst, (atomic_lcs_32 addr:$ptr, GR32:$cmp, GR32:$swap))]>;
+let Defs = [AX] in
+def PLCMPXCHG16 : I<0, Pseudo, (outs GR16:$dst), 
+                  (ins i16mem:$ptr, GR16:$cmp, GR16:$swap),
+                  "movw $cmp, %ax \n lock \n cmpxchgw $swap,$ptr \n movw %ax, $dst",
+                  [(set GR16:$dst, (atomic_lcs_16 addr:$ptr, GR16:$cmp, GR16:$swap))]>;
+let Defs = [AL] in
+def PLCMPXCHG8 : I<0, Pseudo, (outs GR8:$dst), 
+                  (ins i8mem:$ptr, GR8:$cmp, GR8:$swap),
+                  "movb $cmp, %al \n lock cmpxchgb $swap,$ptr \n movb %al, $dst",
+                  [(set GR8:$dst, (atomic_lcs_8 addr:$ptr, GR8:$cmp, GR8:$swap))]>;
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns

@@ -62,6 +62,7 @@ def SpecialFP  : FPFormat<7>;
 class OpSize { bit hasOpSizePrefix = 1; }
 class AdSize { bit hasAdSizePrefix = 1; }
 class REX_W  { bit hasREX_WPrefix = 1; }
+class LOCK   { bit hasLockPrefix = 1; }
 class TB     { bits<4> Prefix = 1; }
 class REP    { bits<4> Prefix = 2; }
 class D8     { bits<4> Prefix = 3; }
@@ -102,6 +103,7 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
   bit hasREX_WPrefix  = 0;  // Does this inst requires the REX.W prefix?
   FPFormat FPForm;          // What flavor of FP instruction is this?
   bits<3> FPFormBits = 0;
+  bit hasLockPrefix = 0;  // Does this inst have a 0xF0 prefix?
 }
 
 class I<bits<8> o, Format f, dag outs, dag ins, string asm, list<dag> pattern>
