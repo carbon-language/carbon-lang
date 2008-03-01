@@ -1041,9 +1041,12 @@ void Verifier::visitStoreInst(StoreInst &SI) {
 }
 
 void Verifier::visitAllocationInst(AllocationInst &AI) {
-  const PointerType *Ptr = AI.getType();
-  Assert(Ptr->getAddressSpace() == 0, 
-    "Allocation instruction pointer not in the generic address space!");
+  const PointerType *PTy = AI.getType();
+  Assert1(PTy->getAddressSpace() == 0, 
+          "Allocation instruction pointer not in the generic address space!",
+          &AI);
+  Assert1(PTy->getElementType()->isSized(), "Cannot allocate unsized type",
+          &AI);
   visitInstruction(AI);
 }
 
