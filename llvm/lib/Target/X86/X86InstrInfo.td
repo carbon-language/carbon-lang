@@ -2583,11 +2583,11 @@ def LXADD8  : I<0xC0, Pseudo, (outs GR8:$dst), (ins i8mem:$ptr, GR8:$val),
                [(set GR8:$dst, (atomic_las_8 addr:$ptr, GR8:$val))]>,
                 TB, LOCK;
 def XADD32 : I<0xC1, Pseudo, (outs GR32:$dst), (ins i32mem:$ptr, GR32:$val),
-               "lock xadd $val, $ptr", []>, TB;
+               "xadd $val, $ptr", []>, TB;
 def XADD16 : I<0xC1, Pseudo, (outs GR16:$dst), (ins i16mem:$ptr, GR16:$val),
-               "lock xadd $val, $ptr", []>, TB, OpSize;
+               "xadd $val, $ptr", []>, TB, OpSize;
 def XADD8  : I<0xC0, Pseudo, (outs GR8:$dst), (ins i8mem:$ptr, GR8:$val),
-               "lock xadd $val, $ptr", []>, TB;
+               "xadd $val, $ptr", []>, TB;
 
 def LXCHG32 : I<0x87, Pseudo, (outs GR32:$dst), (ins i32mem:$ptr, GR32:$val),
                "lock xchg $val, $ptr", 
@@ -2600,11 +2600,11 @@ def LXCHG8  : I<0x86, Pseudo, (outs GR8:$dst), (ins i8mem:$ptr, GR8:$val),
                "lock xchg $val, $ptr", 
                [(set GR8:$dst, (atomic_swap_8 addr:$ptr, GR8:$val))]>, LOCK;
 def XCHG32 : I<0x87, Pseudo, (outs GR32:$dst), (ins i32mem:$ptr, GR32:$val),
-               "lock xchg $val, $ptr", []>;
+               "xchg $val, $ptr", []>;
 def XCHG16 : I<0x87, Pseudo, (outs GR16:$dst), (ins i16mem:$ptr, GR16:$val),
-               "lock xchg $val, $ptr", []>, OpSize;
+               "xchg $val, $ptr", []>, OpSize;
 def XCHG8  : I<0x86, Pseudo, (outs GR8:$dst), (ins i8mem:$ptr, GR8:$val),
-               "lock xchg $val, $ptr", []>;
+               "xchg $val, $ptr", []>;
 }
 
 //===----------------------------------------------------------------------===//
