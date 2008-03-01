@@ -574,15 +574,9 @@ SDOperand ExpandUnalignedStore(StoreSDNode *ST, SelectionDAG &DAG,
     // Expand to a bitconvert of the value to the integer type of the 
     // same size, then a (misaligned) int store.
     MVT::ValueType intVT;
-    if (VT == MVT::v8i16 || VT == MVT::v4i32 ||
-        VT == MVT::v2i64 || VT == MVT::v2f64 ||
-        VT == MVT::v4f32 || VT == MVT::v16i8 ||
-        VT == MVT::ppcf128)
+    if (MVT::is128BitVector(VT) || VT == MVT::ppcf128 || VT == MVT::f128)
       intVT = MVT::i128;
-    else if (VT==MVT::f64 ||
-        VT == MVT::v8i8 || VT == MVT::v4i16 ||
-        VT == MVT::v2i32 || VT == MVT::v1i64 ||
-        VT == MVT::v2f32)
+    else if (MVT::is64BitVector(VT) || VT==MVT::f64)
       intVT = MVT::i64;
     else if (VT==MVT::f32)
       intVT = MVT::i32;
@@ -634,15 +628,10 @@ SDOperand ExpandUnalignedLoad(LoadSDNode *LD, SelectionDAG &DAG,
     // Expand to a (misaligned) integer load of the same size,
     // then bitconvert to floating point or vector.
     MVT::ValueType intVT;
-    if (LoadedVT == MVT::v8i16 || LoadedVT == MVT::v4i32 ||
-        LoadedVT == MVT::v2i64 || LoadedVT == MVT::v2f64 ||
-        LoadedVT == MVT::v4f32 || LoadedVT == MVT::v16i8 ||
-        LoadedVT == MVT::ppcf128)
+    if (MVT::is128BitVector(LoadedVT) || 
+         LoadedVT == MVT::ppcf128 || LoadedVT == MVT::f128)
       intVT = MVT::i128;
-    else if (LoadedVT == MVT::f64 || 
-             LoadedVT == MVT::v8i8 || LoadedVT == MVT::v4i16 ||
-             LoadedVT == MVT::v2i32 || LoadedVT == MVT::v1i64 ||
-             LoadedVT == MVT::v2f32)
+    else if (MVT::is64BitVector(LoadedVT) || LoadedVT == MVT::f64)
       intVT = MVT::i64;
     else if (LoadedVT == MVT::f32)
       intVT = MVT::i32;

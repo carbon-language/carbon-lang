@@ -250,6 +250,19 @@ namespace MVT {  // MVT = Machine Value Types
     return (getSizeInBits(VT) + 7)/8*8;
   }
 
+  /// MVT::is64BitVector - Return true if this is a 64-bit vector type.
+  static inline bool is64BitVector(ValueType VT) {
+    return (VT==v8i8 || VT==v4i16 || VT==v2i32 || VT==v1i64 || VT==v2f32 ||
+            (isExtendedVT(VT) && isVector(VT) && getSizeInBits(VT)==64));
+  }
+
+  /// MVT::is128BitVector - Return true if this is a 128-bit vector type.
+  static inline bool is128BitVector(ValueType VT) {
+    return (VT==v16i8 || VT==v8i16 || VT==v4i32 || VT==v2i64 || 
+            VT==v4f32 || VT==v2f64 ||
+            (isExtendedVT(VT) && isVector(VT) && getSizeInBits(VT)==128));
+  }
+
   /// MVT::getIntegerType - Returns the ValueType that represents an integer
   /// with the given number of bits.
   ///
