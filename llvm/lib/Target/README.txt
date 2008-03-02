@@ -691,3 +691,17 @@ instead of:
 	...
 
 //===---------------------------------------------------------------------===//
+
+http://llvm.org/PR717:
+
+The following code should compile into "ret int undef". Instead, LLVM
+produces "ret int 0":
+
+int f() {
+  int x = 4;
+  int y;
+  if (x == 3) y = 0;
+  return y;
+}
+
+//===---------------------------------------------------------------------===//
