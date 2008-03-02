@@ -154,29 +154,6 @@ more than one use.  Itanium will want this too.
 
 ===-------------------------------------------------------------------------===
 
-Compile this:
-
-int %f1(int %a, int %b) {
-        %tmp.1 = and int %a, 15         ; <int> [#uses=1]
-        %tmp.3 = and int %b, 240                ; <int> [#uses=1]
-        %tmp.4 = or int %tmp.3, %tmp.1          ; <int> [#uses=1]
-        ret int %tmp.4
-}
-
-without a copy.  We make this currently:
-
-_f1:
-        rlwinm r2, r4, 0, 24, 27
-        rlwimi r2, r3, 0, 28, 31
-        or r3, r2, r2
-        blr
-
-The two-addr pass or RA needs to learn when it is profitable to commute an
-instruction to avoid a copy AFTER the 2-addr instruction.  The 2-addr pass
-currently only commutes to avoid inserting a copy BEFORE the two addr instr.
-
-===-------------------------------------------------------------------------===
-
 Compile offsets from allocas:
 
 int *%test() {

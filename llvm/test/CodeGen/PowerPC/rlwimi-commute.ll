@@ -24,3 +24,11 @@ define void @test2(i32* %A, i32* %B, i32* %D, i32* %E) {
 	store i32 %B.upgrd.4, i32* %E
 	ret void
 }
+
+define i32 @test3(i32 %a, i32 %b) {
+	%tmp.1 = and i32 %a, 15		; <i32> [#uses=1]
+	%tmp.3 = and i32 %b, 240		; <i32> [#uses=1]
+	%tmp.4 = or i32 %tmp.3, %tmp.1		; <i32> [#uses=1]
+	ret i32 %tmp.4
+}
+
