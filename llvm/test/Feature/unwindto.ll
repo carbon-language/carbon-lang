@@ -13,6 +13,8 @@ target:
 }
 
 define i1 @test2(i8 %i, i8 %j) {
+entry:
+	br label %0
 unwind_to %1
 	%tmp = sub i8 %i, %j		; <i8> [#uses=1]
 	%b = icmp eq i8 %tmp, 0		; <i1> [#uses=1]
@@ -22,6 +24,8 @@ unwind_to %1
 }
 
 define i1 @test3(i8 %i, i8 %j) {
+entry:
+	br label %0
 unwind_to %1
 	%tmp = sub i8 %i, %j		; <i8> [#uses=1]
 	%b = icmp eq i8 %tmp, 0		; <i1> [#uses=1]
@@ -43,6 +47,8 @@ define void @test5() {
 }
 
 define void @test6() {
+entry:
+	br label %unwind
 unwind: unwind_to %unwind
   unwind
 }
