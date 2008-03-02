@@ -981,7 +981,7 @@ void CWriter::printConstant(Constant *CPV) {
   }
 
   case Type::ArrayTyID:
-    if (ConstantArray *CA = cast<ConstantArray>(CPV)) {
+    if (ConstantArray *CA = dyn_cast<ConstantArray>(CPV)) {
       printConstantArray(CA);
     } else {
       assert(isa<ConstantAggregateZero>(CPV) || isa<UndefValue>(CPV));
@@ -1005,7 +1005,7 @@ void CWriter::printConstant(Constant *CPV) {
     Out << "(";
     printType(Out, CPV->getType());
     Out << ")";
-    if (ConstantVector *CV = cast<ConstantVector>(CPV)) {
+    if (ConstantVector *CV = dyn_cast<ConstantVector>(CPV)) {
       printConstantVector(CV);
     } else {
       assert(isa<ConstantAggregateZero>(CPV) || isa<UndefValue>(CPV));
