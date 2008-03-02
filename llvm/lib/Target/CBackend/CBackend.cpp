@@ -913,7 +913,12 @@ void CWriter::printConstant(Constant *CPV) {
   } else if (isa<UndefValue>(CPV) && CPV->getType()->isFirstClassType()) {
     Out << "((";
     printType(Out, CPV->getType()); // sign doesn't matter
-    Out << ")/*UNDEF*/0)";
+    Out << ")/*UNDEF*/";
+    if (!isa<VectorType>(CPV->getType())) {
+      Out << "0)";
+    } else {
+      Out << "{})";
+    }
     return;
   }
 
