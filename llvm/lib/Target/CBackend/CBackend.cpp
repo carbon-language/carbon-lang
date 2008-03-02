@@ -3065,9 +3065,9 @@ void CWriter::visitInsertElementInst(InsertElementInst &I) {
   Out << "((";
   printType(Out, PointerType::getUnqual(EltTy));
   Out << ")(&" << GetValueName(&I) << "))[";
-  writeOperand(I.getOperand(1));
-  Out << "] = (";
   writeOperand(I.getOperand(2));
+  Out << "] = (";
+  writeOperand(I.getOperand(1));
   Out << ")";
 }
 
