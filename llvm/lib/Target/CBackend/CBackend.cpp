@@ -191,8 +191,10 @@ namespace {
         // Don't inline a load across a store or other bad things!
         return false;
 
-      // Must not be used in inline asm
-      if (I.hasOneUse() && isInlineAsm(*I.use_back())) return false;
+      // Must not be used in inline asm or extractelement.
+      if (I.hasOneUse() && 
+          (isInlineAsm(*I.use_back()) || isa<ExtractElementInst>(I)))
+        return false;
 
       // Only inline instruction it if it's use is in the same BB as the inst.
       return I.getParent() == cast<Instruction>(I.use_back())->getParent();
@@ -253,6 +255,7 @@ namespace {
     void visitVAArgInst (VAArgInst &I);
     
     void visitInsertElementInst(InsertElementInst &I);
+    void visitExtractElementInst(ExtractElementInst &I);
 
     void visitInstruction(Instruction &I) {
       cerr << "C Writer does not know about " << I;
@@ -3036,6 +3039,18 @@ void CWriter::visitInsertElementInst(InsertElementInst &I) {
   writeOperand(I.getOperand(2));
   Out << ")";
 }
+
+void CWriter::visitExtractElementInst(ExtractElementInst &I) {
+  // We know that our operand is not inlined.
+  Out << "((";
+  const Type *EltTy = 
+    cast<VectorType>(I.getOperand(0)->getType())->getElementType();
+  printType(Out, PointerType::getUnqual(EltTy));
+  Out << ")(&" << GetValueName(I.getOperand(0)) << "))[";
+  writeOperand(I.getOperand(1));
+  Out << "]";
+}
+
 
 
 //===----------------------------------------------------------------------===//
