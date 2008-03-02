@@ -2507,7 +2507,11 @@ void CWriter::lowerIntrinsics(Function &F) {
           case Intrinsic::prefetch:
           case Intrinsic::dbg_stoppoint:
           case Intrinsic::powi:
-            // We directly implement these intrinsics
+          case Intrinsic::x86_sse_cmp_ss:
+          case Intrinsic::x86_sse_cmp_ps:
+          case Intrinsic::x86_sse2_cmp_sd:
+          case Intrinsic::x86_sse2_cmp_pd:
+              // We directly implement these intrinsics
             break;
           default:
             // If this is an intrinsic that directly corresponds to a GCC
@@ -2768,6 +2772,40 @@ bool CWriter::visitBuiltinCall(CallInst &I, Intrinsic::ID ID,
         << SPI.getFileName() << "\"\n";
     return true;
   }
+  case Intrinsic::x86_sse_cmp_ss:
+  case Intrinsic::x86_sse_cmp_ps:
+  case Intrinsic::x86_sse2_cmp_sd:
+  case Intrinsic::x86_sse2_cmp_pd:
+    Out << '(';
+    printType(Out, I.getType());
+    Out << ')';  
+    // Multiple GCC builtins multiplex onto this intrinsic.
+    switch (cast<ConstantInt>(I.getOperand(3))->getZExtValue()) {
+    default: assert(0 && "Invalid llvm.x86.sse.cmp!");
+    case 0: Out << "__builtin_ia32_cmpeq"; break;
+    case 1: Out << "__builtin_ia32_cmplt"; break;
+    case 2: Out << "__builtin_ia32_cmple"; break;
+    case 3: Out << "__builtin_ia32_cmpunord"; break;
+    case 4: Out << "__builtin_ia32_cmpneq"; break;
+    case 5: Out << "__builtin_ia32_cmpnlt"; break;
+    case 6: Out << "__builtin_ia32_cmpnle"; break;
+    case 7: Out << "__builtin_ia32_cmpord"; break;
+    }
+    if (ID == Intrinsic::x86_sse_cmp_ps || ID == Intrinsic::x86_sse2_cmp_pd)
+      Out << 'p';
+    else
+      Out << 's';
+    if (ID == Intrinsic::x86_sse_cmp_ss || ID == Intrinsic::x86_sse_cmp_ps)
+      Out << 's';
+    else
+      Out << 'd';
+      
+    Out << "(";
+    writeOperand(I.getOperand(1));
+    Out << ", ";
+    writeOperand(I.getOperand(2));
+    Out << ")";
+    return true;
   }
 }
 
