@@ -191,10 +191,13 @@ namespace {
         // Don't inline a load across a store or other bad things!
         return false;
 
-      // Must not be used in inline asm or extractelement.
-      if (I.hasOneUse() && 
-          (isInlineAsm(*I.use_back()) || isa<ExtractElementInst>(I)))
-        return false;
+      // Must not be used in inline asm, extractelement, or shufflevector.
+      if (I.hasOneUse()) {
+        const Instruction &User = cast<Instruction>(*I.use_back());
+        if (isInlineAsm(User) || isa<ExtractElementInst>(User) ||
+            isa<ShuffleVectorInst>(User))
+          return false;
+      }
 
       // Only inline instruction it if it's use is in the same BB as the inst.
       return I.getParent() == cast<Instruction>(I.use_back())->getParent();
@@ -256,6 +259,7 @@ namespace {
     
     void visitInsertElementInst(InsertElementInst &I);
     void visitExtractElementInst(ExtractElementInst &I);
+    void visitShuffleVectorInst(ShuffleVectorInst &SVI);
 
     void visitInstruction(Instruction &I) {
       cerr << "C Writer does not know about " << I;
@@ -3051,6 +3055,36 @@ void CWriter::visitExtractElementInst(ExtractElementInst &I) {
   Out << "]";
 }
 
+void CWriter::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
+  Out << "(";
+  printType(Out, SVI.getType());
+  Out << "){ ";
+  const VectorType *VT = SVI.getType();
+  unsigned NumElts = VT->getNumElements();
+  const Type *EltTy = VT->getElementType();
+
+  for (unsigned i = 0; i != NumElts; ++i) {
+    if (i) Out << ", ";
+    int SrcVal = SVI.getMaskValue(i);
+    if ((unsigned)SrcVal >= NumElts*2) {
+      Out << " 0/*undef*/ ";
+    } else {
+      Value *Op = SVI.getOperand((unsigned)SrcVal >= NumElts);
+      if (isa<Instruction>(Op)) {
+        // Do an extractelement of this value from the appropriate input.
+        Out << "((";
+        printType(Out, PointerType::getUnqual(EltTy));
+        Out << ")(&" << GetValueName(Op)
+            << "))[" << (SrcVal & NumElts-1) << "]";
+      } else if (isa<ConstantAggregateZero>(Op) || isa<UndefValue>(Op)) {
+        Out << "0";
+      } else {
+        printConstant(cast<ConstantVector>(Op)->getOperand(SrcVal & NumElts-1));
+      }
+    }
+  }
+  Out << "}";
+}
 
 
 //===----------------------------------------------------------------------===//
