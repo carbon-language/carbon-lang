@@ -518,10 +518,9 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
   }
 
   case Type::VectorTyID: {
-    const VectorType *PTy = cast<VectorType>(Ty);
-    unsigned NumElements = PTy->getNumElements();
-    if (NumElements == 0) NumElements = 1;
-    return printType(Out, PTy->getElementType(), false,
+    const VectorType *VTy = cast<VectorType>(Ty);
+    unsigned NumElements = VTy->getNumElements();
+    return printType(Out, VTy->getElementType(), false,
                      NameSoFar + "[" + utostr(NumElements) + "]");
   }
 
@@ -972,8 +971,8 @@ void CWriter::printConstant(Constant *CPV) {
   }
 
   case Type::ArrayTyID:
-    if (const ConstantArray *CA = cast<ConstantArray>(CPV)) {
-      printConstantVector(CA);
+    if (ConstantArray *CA = cast<ConstantArray>(CPV)) {
+      printConstantArray(CA);
     } else {
       assert(isa<ConstantAggregateZero>(CPV) || isa<UndefValue>(CPV));
       const ArrayType *AT = cast<ArrayType>(CPV->getType());
@@ -992,7 +991,7 @@ void CWriter::printConstant(Constant *CPV) {
     break;
 
   case Type::VectorTyID:
-    if (const ConstantVector *CV = cast<ConstantVector>(CPV)) {
+    if (ConstantVector *CV = cast<ConstantVector>(CPV)) {
       printConstantVector(CV);
     } else {
       assert(isa<ConstantAggregateZero>(CPV) || isa<UndefValue>(CPV));
@@ -1000,7 +999,7 @@ void CWriter::printConstant(Constant *CPV) {
       Out << "{ ";
       Constant *CZ = Constant::getNullValue(VT->getElementType());
       printConstant(CZ);
-      for (unsigned i = 1, e = AT->getNumElements(); i != e; ++i) {
+      for (unsigned i = 1, e = VT->getNumElements(); i != e; ++i) {
         Out << ", ";
         printConstant(CZ);
       }
