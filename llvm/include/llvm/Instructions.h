@@ -1219,7 +1219,11 @@ public:
   }
 
   /// Transparently provide more efficient getOperand methods.
-  Value *getOperand(unsigned i) const {
+  const Value *getOperand(unsigned i) const {
+    assert(i < 3 && "getOperand() out of range!");
+    return Ops[i];
+  }
+  Value *getOperand(unsigned i) {
     assert(i < 3 && "getOperand() out of range!");
     return Ops[i];
   }
