@@ -714,3 +714,42 @@ GCC compiles this into:
 which is more efficient and can use mfocr.  See PR642 for some more context.
 
 //===---------------------------------------------------------------------===//
+
+void foo(float *data, float d) {
+   long i;
+   for (i = 0; i < 8000; i++)
+      data[i] = d;
+}
+void foo2(float *data, float d) {
+   long i;
+   data--;
+   for (i = 0; i < 8000; i++) {
+      data[1] = d;
+      data++;
+   }
+}
+
+These compile to:
+
+_foo:
+	li r2, 0
+LBB1_1:	; bb
+	addi r4, r2, 4
+	stfsx f1, r3, r2
+	cmplwi cr0, r4, 32000
+	mr r2, r4
+	bne cr0, LBB1_1	; bb
+	blr 
+_foo2:
+	li r2, 0
+LBB2_1:	; bb
+	addi r4, r2, 4
+	stfsx f1, r3, r2
+	cmplwi cr0, r4, 32000
+	mr r2, r4
+	bne cr0, LBB2_1	; bb
+	blr 
+
+The 'mr' could be eliminated to folding the add into the cmp better.
+
+//===---------------------------------------------------------------------===//
