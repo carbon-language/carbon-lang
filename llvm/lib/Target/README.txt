@@ -705,3 +705,26 @@ int f() {
 }
 
 //===---------------------------------------------------------------------===//
+
+The loop unroller should partially unroll loops (instead of peeling them)
+when code growth isn't too bad and when an unroll count allows simplification
+of some code within the loop.  One trivial example is:
+
+#include <stdio.h>
+int main() {
+    int nRet = 17;
+    int nLoop;
+    for ( nLoop = 0; nLoop < 1000; nLoop++ ) {
+        if ( nLoop & 1 )
+            nRet += 2;
+        else
+            nRet -= 1;
+    }
+    return nRet;
+}
+
+Unrolling by 2 would eliminate the '&1' in both copies, leading to a net
+reduction in code size.  The resultant code would then also be suitable for
+exit value computation.
+
+//===---------------------------------------------------------------------===//
