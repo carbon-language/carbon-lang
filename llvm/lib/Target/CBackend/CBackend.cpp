@@ -187,7 +187,7 @@ namespace {
       // emit it inline where it would go.
       if (I.getType() == Type::VoidTy || !I.hasOneUse() ||
           isa<TerminatorInst>(I) || isa<CallInst>(I) || isa<PHINode>(I) ||
-          isa<LoadInst>(I) || isa<VAArgInst>(I))
+          isa<LoadInst>(I) || isa<VAArgInst>(I) || isa<InsertElementInst>(I))
         // Don't inline a load across a store or other bad things!
         return false;
 
@@ -251,6 +251,8 @@ namespace {
     void visitStoreInst (StoreInst  &I);
     void visitGetElementPtrInst(GetElementPtrInst &I);
     void visitVAArgInst (VAArgInst &I);
+    
+    void visitInsertElementInst(InsertElementInst &I);
 
     void visitInstruction(Instruction &I) {
       cerr << "C Writer does not know about " << I;
@@ -3021,6 +3023,20 @@ void CWriter::visitVAArgInst(VAArgInst &I) {
   printType(Out, I.getType());
   Out << ");\n ";
 }
+
+void CWriter::visitInsertElementInst(InsertElementInst &I) {
+  const Type *EltTy = I.getType()->getElementType();
+  writeOperand(I.getOperand(0));
+  Out << ";\n  ";
+  Out << "((";
+  printType(Out, PointerType::getUnqual(EltTy));
+  Out << ")(&" << GetValueName(&I) << "))[";
+  writeOperand(I.getOperand(1));
+  Out << "] = (";
+  writeOperand(I.getOperand(2));
+  Out << ")";
+}
+
 
 //===----------------------------------------------------------------------===//
 //                       External Interface declaration
