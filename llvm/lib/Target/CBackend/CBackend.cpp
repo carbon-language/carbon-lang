@@ -87,7 +87,7 @@ namespace {
     std::map<const Type *, std::string> TypeNames;
     std::map<const ConstantFP *, unsigned> FPConstantMap;
     std::set<Function*> intrinsicPrototypesAlreadyGenerated;
-    std::set<const Value*> ByValParams;
+    std::set<const Argument*> ByValParams;
 
   public:
     static char ID;
@@ -122,8 +122,8 @@ namespace {
       delete Mang;
       FPConstantMap.clear();
       TypeNames.clear();
-      intrinsicPrototypesAlreadyGenerated.clear();
       ByValParams.clear();
+      intrinsicPrototypesAlreadyGenerated.clear();
       return false;
     }
 
@@ -139,6 +139,20 @@ namespace {
     void printStructReturnPointerFunctionType(std::ostream &Out,
                                               const ParamAttrsList *PAL,
                                               const PointerType *Ty);
+
+    /// writeOperandDeref - Print the result of dereferencing the specified
+    /// operand with '*'.  This is equivalent to printing '*' then using
+    /// writeOperand, but avoids excess syntax in some cases.
+    void writeOperandDeref(Value *Operand) {
+      if (isAddressExposed(Operand)) {
+        // Already something with an address exposed.
+        writeOperandInternal(Operand);
+      } else {
+        Out << "*(";
+        writeOperand(Operand);
+        Out << ")";
+      }
+    }
     
     void writeOperand(Value *Operand);
     void writeOperandRaw(Value *Operand);
@@ -170,8 +184,17 @@ namespace {
     void printConstantWithCast(Constant *CPV, unsigned Opcode);
     bool printConstExprCast(const ConstantExpr *CE);
     void printConstantArray(ConstantArray *CPA);
-    void printConstantVector(ConstantVector *CP);
+    void printConstantVector(ConstantVector *CV);
 
+    /// isAddressExposed - Return true if the specified value's name needs to
+    /// have its address taken in order to get a C value of the correct type.
+    /// This happens for global variables, byval parameters, and direct allocas.
+    bool isAddressExposed(const Value *V) const {
+      if (const Argument *A = dyn_cast<Argument>(V))
+        return ByValParams.count(A);
+      return isa<GlobalVariable>(V) || isDirectAlloca(V);
+    }
+    
     // isInlinableInst - Attempt to inline instructions into their uses to build
     // trees as much as possible.  To do this, we have to consistently decide
     // what is acceptable to inline, so that variable declarations don't get
@@ -275,8 +298,8 @@ namespace {
                                     BasicBlock *Successor, unsigned Indent);
     void printBranchToBlock(BasicBlock *CurBlock, BasicBlock *SuccBlock,
                             unsigned Indent);
-    void printIndexingExpression(Value *Ptr, gep_type_iterator I,
-                                 gep_type_iterator E);
+    void printGEPExpression(Value *Ptr, gep_type_iterator I,
+                            gep_type_iterator E);
 
     std::string GetValueName(const Value *Operand);
   };
@@ -772,10 +795,10 @@ void CWriter::printConstant(Constant *CPV) {
       return;
 
     case Instruction::GetElementPtr:
-      Out << "(&(";
-      printIndexingExpression(CE->getOperand(0), gep_type_begin(CPV),
-                              gep_type_end(CPV));
-      Out << "))";
+      Out << "(";
+      printGEPExpression(CE->getOperand(0), gep_type_begin(CPV),
+                         gep_type_end(CPV));
+      Out << ")";
       return;
     case Instruction::Select:
       Out << '(';
@@ -1214,12 +1237,13 @@ void CWriter::writeOperandRaw(Value *Operand) {
 }
 
 void CWriter::writeOperand(Value *Operand) {
-  if (isa<GlobalVariable>(Operand) || isDirectAlloca(Operand))
+  bool isAddressImplicit = isAddressExposed(Operand);
+  if (isAddressImplicit)
     Out << "(&";  // Global variables are referenced as their addresses by llvm
 
   writeOperandInternal(Operand);
 
-  if (isa<GlobalVariable>(Operand) || isDirectAlloca(Operand))
+  if (isAddressImplicit)
     Out << ')';
 }
 
@@ -1920,10 +1944,8 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
           ArgName = "";
         const Type *ArgTy = I->getType();
         if (PAL && PAL->paramHasAttr(Idx, ParamAttr::ByVal)) {
-          assert(isa<PointerType>(ArgTy));
           ArgTy = cast<PointerType>(ArgTy)->getElementType();
-          const Value *Arg = &(*I);
-          ByValParams.insert(Arg);
+          ByValParams.insert(I);
         }
         printType(FunctionInnards, ArgTy,
             /*isSigned=*/PAL && PAL->paramHasAttr(Idx, ParamAttr::SExt),
@@ -2430,13 +2452,6 @@ void CWriter::visitCastInst(CastInst &I) {
       // Make sure we really get a sext from bool by subtracing the bool from 0
       Out << "0-";
     }
-    // If it's a byval parameter being casted, then takes its address.
-    bool isByVal = ByValParams.count(I.getOperand(0));
-    if (isByVal) {
-      assert(I.getOpcode() == Instruction::BitCast &&
-             "ByVal aggregate parameter must ptr type");
-      Out << '&';
-    }
     writeOperand(I.getOperand(0));
     if (DstTy == Type::Int1Ty && 
         (I.getOpcode() == Instruction::Trunc ||
@@ -2666,10 +2681,7 @@ void CWriter::visitCallInst(CallInst &I) {
   bool hasByVal = I.hasByValArgument();
   bool isStructRet = I.isStructReturn();
   if (isStructRet) {
-    bool isByVal = ByValParams.count(I.getOperand(1));
-    if (!isByVal) Out << "*(";
-    writeOperand(I.getOperand(1));
-    if (!isByVal) Out << ")";
+    writeOperandDeref(I.getOperand(1));
     Out << " = ";
   }
   
@@ -2737,16 +2749,10 @@ void CWriter::visitCallInst(CallInst &I) {
       Out << ')';
     }
     // Check if the argument is expected to be passed by value.
-    bool isOutByVal = PAL && PAL->paramHasAttr(ArgNo+1, ParamAttr::ByVal);
-    // Check if this argument itself is passed in by reference. 
-    bool isInByVal = ByValParams.count(*AI);
-    if (isOutByVal && !isInByVal)
-      Out << "*(";
-    else if (!isOutByVal && isInByVal)
-      Out << "&(";
-    writeOperand(*AI);
-    if (isOutByVal ^ isInByVal)
-      Out << ")";
+    if (I.paramHasAttr(ArgNo+1, ParamAttr::ByVal))
+      writeOperandDeref(*AI);
+    else
+      writeOperand(*AI);
     PrintedArg = true;
   }
   Out << ')';
@@ -2858,7 +2864,7 @@ void CWriter::visitInlineAsm(CallInst &CI) {
   
   Out << "__asm__ volatile (\"" << asmstr << "\"\n";
   Out << "        :";
-  for (std::vector<std::pair<std::string, Value*> >::iterator I = Output.begin(),
+  for (std::vector<std::pair<std::string, Value*> >::iterator I =Output.begin(),
          E = Output.end(); I != E; ++I) {
     Out << "\"" << I->first << "\"(";
     writeOperandRaw(I->second);
@@ -2901,61 +2907,85 @@ void CWriter::visitFreeInst(FreeInst &I) {
   assert(0 && "lowerallocations pass didn't work!");
 }
 
-void CWriter::printIndexingExpression(Value *Ptr, gep_type_iterator I,
-                                      gep_type_iterator E) {
-  bool HasImplicitAddress = false;
-  // If accessing a global value with no indexing, avoid *(&GV) syndrome
-  if (isa<GlobalValue>(Ptr)) {
-    HasImplicitAddress = true;
-  } else if (isDirectAlloca(Ptr)) {
-    HasImplicitAddress = true;
-  }
-
+void CWriter::printGEPExpression(Value *Ptr, gep_type_iterator I,
+                                 gep_type_iterator E) {
+  
+  // If there are no indices, just print out the pointer.
   if (I == E) {
-    if (!HasImplicitAddress)
-      Out << '*';  // Implicit zero first argument: '*x' is equivalent to 'x[0]'
-
-    writeOperandInternal(Ptr);
+    writeOperand(Ptr);
     return;
   }
-
-  const Constant *CI = dyn_cast<Constant>(I.getOperand());
-  if (HasImplicitAddress && (!CI || !CI->isNullValue()))
-    Out << "(&";
-
-  writeOperandInternal(Ptr);
-
-  if (HasImplicitAddress && (!CI || !CI->isNullValue())) {
-    Out << ')';
-    HasImplicitAddress = false;  // HIA is only true if we haven't addressed yet
+    
+  // Find out if the last index is into a vector.  If so, we have to print this
+  // specially.  Since vectors can't have elements of indexable type, only the
+  // last index could possibly be of a vector element.
+  const VectorType *LastIndexIsVector = 0;
+  {
+    for (gep_type_iterator TmpI = I; TmpI != E; ++TmpI)
+      LastIndexIsVector = dyn_cast<VectorType>(*TmpI);
   }
+  
+  Out << "(";
+  
+  // If the last index is into a vector, we can't print it as &a[i][j] because
+  // we can't index into a vector with j in GCC.  Instead, emit this as
+  // (((float*)&a[i])+j)
+  if (LastIndexIsVector) {
+    Out << "((";
+    printType(Out, PointerType::getUnqual(LastIndexIsVector->getElementType()));
+    Out << ")(";
+  }
+  
+  Out << '&';
 
-  assert((!HasImplicitAddress || (CI && CI->isNullValue())) &&
-         "Can only have implicit address with direct accessing");
+  // If the first index is 0 (very typical) we can do a number of
+  // simplifications to clean up the code.
+  Value *FirstOp = I.getOperand();
+  if (!isa<Constant>(FirstOp) || !cast<Constant>(FirstOp)->isNullValue()) {
+    // First index isn't simple, print it the hard way.
+    writeOperand(Ptr);
+  } else {
+    ++I;  // Skip the zero index.
 
-  if (HasImplicitAddress) {
-    ++I;
-  } else if (CI && CI->isNullValue()) {
-    gep_type_iterator TmpI = I; ++TmpI;
-
-    // Print out the -> operator if possible...
-    if (TmpI != E && isa<StructType>(*TmpI)) {
-      // Check if it's actually an aggregate parameter passed by value.
-      bool isByVal = ByValParams.count(Ptr);
-      Out << ((HasImplicitAddress || isByVal) ? "." : "->");
-      Out << "field" << cast<ConstantInt>(TmpI.getOperand())->getZExtValue();
-      I = ++TmpI;
+    // Okay, emit the first operand. If Ptr is something that is already address
+    // exposed, like a global, avoid emitting (&foo)[0], just emit foo instead.
+    if (isAddressExposed(Ptr)) {
+      writeOperandInternal(Ptr);
+    } else if (I != E && isa<StructType>(*I)) {
+      // If we didn't already emit the first operand, see if we can print it as
+      // P->f instead of "P[0].f"
+      writeOperand(Ptr);
+      Out << "->field" << cast<ConstantInt>(I.getOperand())->getZExtValue();
+      ++I;  // eat the struct index as well.
+    } else {
+      // Instead of emitting P[0][1], emit (*P)[1], which is more idiomatic.
+      Out << "(*";
+      writeOperand(Ptr);
+      Out << ")";
     }
   }
 
-  for (; I != E; ++I)
+  for (; I != E; ++I) {
     if (isa<StructType>(*I)) {
       Out << ".field" << cast<ConstantInt>(I.getOperand())->getZExtValue();
-    } else {
+    } else if (!isa<VectorType>(*I)) {
       Out << '[';
       writeOperandWithCast(I.getOperand(), Instruction::GetElementPtr);
       Out << ']';
+    } else {
+      // If the last index is into a vector, then print it out as "+j)".  This
+      // works with the 'LastIndexIsVector' code above.
+      if (isa<Constant>(I.getOperand()) &&
+          cast<Constant>(I.getOperand())->isNullValue()) {
+        Out << "))";  // avoid "+0".
+      } else {
+        Out << ")+(";
+        writeOperandWithCast(I.getOperand(), Instruction::GetElementPtr);
+        Out << "))";
+      }
     }
+  }
+  Out << ")";
 }
 
 void CWriter::writeMemoryAccess(Value *Operand, const Type *OperandType,
@@ -2989,14 +3019,12 @@ void CWriter::writeMemoryAccess(Value *Operand, const Type *OperandType,
 }
 
 void CWriter::visitLoadInst(LoadInst &I) {
-
   writeMemoryAccess(I.getOperand(0), I.getType(), I.isVolatile(),
                     I.getAlignment());
 
 }
 
 void CWriter::visitStoreInst(StoreInst &I) {
-
   writeMemoryAccess(I.getPointerOperand(), I.getOperand(0)->getType(),
                     I.isVolatile(), I.getAlignment());
   Out << " = ";
@@ -3018,9 +3046,8 @@ void CWriter::visitStoreInst(StoreInst &I) {
 }
 
 void CWriter::visitGetElementPtrInst(GetElementPtrInst &I) {
-  Out << '&';
-  printIndexingExpression(I.getPointerOperand(), gep_type_begin(I),
-                          gep_type_end(I));
+  printGEPExpression(I.getPointerOperand(), gep_type_begin(I),
+                     gep_type_end(I));
 }
 
 void CWriter::visitVAArgInst(VAArgInst &I) {
