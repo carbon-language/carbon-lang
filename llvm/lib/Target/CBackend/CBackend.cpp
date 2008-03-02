@@ -429,8 +429,8 @@ CWriter::printSimpleType(std::ostream &Out, const Type *Ty, bool isSigned,
   case Type::VectorTyID: {
     const VectorType *VTy = cast<VectorType>(Ty);
     return printType(Out, VTy->getElementType(), false,
-                     NameSoFar + " __attribute__((vector_size(" +
-                     utostr(TD->getABITypeSize(VTy)) + " ))) ");
+                     " __attribute__((vector_size(" +
+                     utostr(TD->getABITypeSize(VTy)) + " ))) " + NameSoFar);
   }
     
   default:
