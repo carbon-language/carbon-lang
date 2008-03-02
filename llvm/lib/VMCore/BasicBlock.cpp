@@ -70,8 +70,8 @@ template class SymbolTableListTraits<Instruction, BasicBlock>;
 
 
 BasicBlock::BasicBlock(const std::string &Name, Function *NewParent,
-                       BasicBlock *InsertBefore)
-  : Value(Type::LabelTy, Value::BasicBlockVal), Parent(0) {
+                       BasicBlock *InsertBefore, BasicBlock *Dest)
+  : User(Type::LabelTy, Value::BasicBlockVal, &unwindDest, 0), Parent(0) {
 
   // Make sure that we get added to a function
   LeakDetector::addGarbageObject(this);
@@ -85,6 +85,8 @@ BasicBlock::BasicBlock(const std::string &Name, Function *NewParent,
   }
   
   setName(Name);
+  unwindDest.init(NULL, this);
+  setUnwindDest(Dest);
 }
 
 
@@ -111,6 +113,19 @@ void BasicBlock::removeFromParent() {
 
 void BasicBlock::eraseFromParent() {
   getParent()->getBasicBlockList().erase(this);
+}
+
+const BasicBlock *BasicBlock::getUnwindDest() const {
+  return cast_or_null<const BasicBlock>(unwindDest.get());
+}
+
+BasicBlock *BasicBlock::getUnwindDest() {
+  return cast_or_null<BasicBlock>(unwindDest.get());
+}
+
+void BasicBlock::setUnwindDest(BasicBlock *dest) {
+  NumOperands = unwindDest ? 1 : 0;
+  unwindDest.set(dest);
 }
 
 /// moveBefore - Unlink this basic block from its current function and
@@ -151,6 +166,7 @@ Instruction* BasicBlock::getFirstNonPHI()
 }
 
 void BasicBlock::dropAllReferences() {
+  setUnwindDest(NULL);
   for(iterator I = begin(), E = end(); I != E; ++I)
     I->dropAllReferences();
 }
@@ -176,6 +192,9 @@ void BasicBlock::removePredecessor(BasicBlock *Pred,
   assert((hasNUsesOrMore(16)||// Reduce cost of this assertion for complex CFGs.
           find(pred_begin(this), pred_end(this), Pred) != pred_end(this)) &&
          "removePredecessor: BB is not a predecessor!");
+
+  if (Pred == getUnwindDest())
+    setUnwindDest(NULL);
 
   if (InstList.empty()) return;
   PHINode *APN = dyn_cast<PHINode>(&front());

@@ -49,13 +49,14 @@ template<> struct ilist_traits<Instruction>
 /// modifying a program. However, the verifier will ensure that basic blocks
 /// are "well formed".
 /// @brief LLVM Basic Block Representation
-class BasicBlock : public Value {       // Basic blocks are data objects also
+class BasicBlock : public User {       // Basic blocks are data objects also
 public:
   typedef iplist<Instruction> InstListType;
 private :
   InstListType InstList;
   BasicBlock *Prev, *Next; // Next and Prev links for our intrusive linked list
   Function *Parent;
+  Use unwindDest;
 
   void setParent(Function *parent);
   void setNext(BasicBlock *N) { Next = N; }
@@ -75,8 +76,19 @@ public:
   /// InsertBefore is null), or before the specified basic block.
   ///
   explicit BasicBlock(const std::string &Name = "", Function *Parent = 0,
-                      BasicBlock *InsertBefore = 0);
+                      BasicBlock *InsertBefore = 0, BasicBlock *unwindDest = 0);
   ~BasicBlock();
+
+  /// getUnwindDest - Returns the BasicBlock that flow will enter if an unwind
+  /// instruction occurs in this block. May be null, in which case unwinding
+  /// is undefined in this block.
+  const BasicBlock *getUnwindDest() const;
+  BasicBlock *getUnwindDest();
+
+  /// setUnwindDest - Set which BasicBlock flow will enter if an unwind is
+  /// executed within this block. It may be set to null if unwinding is not
+  /// permitted in this block.
+  void setUnwindDest(BasicBlock *unwindDest);
 
   /// getParent - Return the enclosing method, or null if none
   ///

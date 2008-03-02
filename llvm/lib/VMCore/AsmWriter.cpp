@@ -1130,7 +1130,7 @@ void AssemblyWriter::printFunction(const Function *F) {
   if (F->isDeclaration()) {
     Out << "\n";
   } else {
-    Out << " {";
+    Out << " {\n";
 
     // Output all of its basic blocks... for the function
     for (Function::const_iterator I = F->begin(), E = F->end(); I != E; ++I)
@@ -1162,10 +1162,19 @@ void AssemblyWriter::printArgument(const Argument *Arg,
 /// printBasicBlock - This member is called for each basic block in a method.
 ///
 void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
-  if (BB->hasName()) {              // Print out the label if it exists...
-    Out << "\n" << getLLVMName(BB->getName(), LabelPrefix) << ':';
-  } else if (!BB->use_empty()) {      // Don't print block # of no uses...
-    Out << "\n; <label>:";
+  if (BB->hasName())              // Print out the label if it exists...
+    Out << getLLVMName(BB->getName(), LabelPrefix) << ':';
+
+  if (const BasicBlock* unwindDest = BB->getUnwindDest()) {
+    if (BB->hasName())
+      Out << ' ';
+
+    Out << "unwind_to";
+    writeOperand(unwindDest, false);
+  }
+
+  if (!BB->hasName() && !BB->use_empty()) { // Don't print block # of no uses...
+    Out << "; <label>:";
     int Slot = Machine.getLocalSlot(BB);
     if (Slot != -1)
       Out << Slot;
@@ -1194,7 +1203,9 @@ void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
     }
   }
 
-  Out << "\n";
+  if (BB->hasName() || !BB->use_empty() || BB->getUnwindDest() ||
+      BB != &BB->getParent()->getEntryBlock())
+    Out << "\n";
 
   if (AnnotationWriter) AnnotationWriter->emitBasicBlockStartAnnot(BB, Out);
 
