@@ -133,8 +133,8 @@ namespace {
                             bool IgnoreName = false,
                             const ParamAttrsList *PAL = 0);
     std::ostream &printSimpleType(std::ostream &Out, const Type *Ty, 
-                                     bool isSigned, 
-                                     const std::string &NameSoFar = "");
+                                  bool isSigned, 
+                                  const std::string &NameSoFar = "");
 
     void printStructReturnPointerFunctionType(std::ostream &Out,
                                               const ParamAttrsList *PAL,
@@ -888,7 +888,11 @@ void CWriter::printConstant(Constant *CPV) {
   if (ConstantInt *CI = dyn_cast<ConstantInt>(CPV)) {
     const Type* Ty = CI->getType();
     if (Ty == Type::Int1Ty)
-      Out << (CI->getZExtValue() ? '1' : '0') ;
+      Out << (CI->getZExtValue() ? '1' : '0');
+    else if (Ty == Type::Int32Ty)
+      Out << CI->getZExtValue() << 'u';
+    else if (Ty->getPrimitiveSizeInBits() > 32)
+      Out << CI->getZExtValue() << "ull";
     else {
       Out << "((";
       printSimpleType(Out, Ty, false) << ')';
@@ -896,9 +900,7 @@ void CWriter::printConstant(Constant *CPV) {
         Out << CI->getZExtValue() << 'u';
       else
         Out << CI->getSExtValue();
-      if (Ty->getPrimitiveSizeInBits() > 32)
-        Out << "ll";
-      Out << ')';
+       Out << ')';
     }
     return;
   } 
@@ -970,7 +972,10 @@ void CWriter::printConstant(Constant *CPV) {
   }
 
   case Type::ArrayTyID:
-    if (isa<ConstantAggregateZero>(CPV) || isa<UndefValue>(CPV)) {
+    if (const ConstantArray *CA = cast<ConstantArray>(CPV)) {
+      printConstantVector(CA);
+    } else {
+      assert(isa<ConstantAggregateZero>(CPV) || isa<UndefValue>(CPV));
       const ArrayType *AT = cast<ArrayType>(CPV->getType());
       Out << '{';
       if (AT->getNumElements()) {
@@ -983,27 +988,23 @@ void CWriter::printConstant(Constant *CPV) {
         }
       }
       Out << " }";
-    } else {
-      printConstantArray(cast<ConstantArray>(CPV));
     }
     break;
 
   case Type::VectorTyID:
-    if (isa<ConstantAggregateZero>(CPV) || isa<UndefValue>(CPV)) {
-      const VectorType *AT = cast<VectorType>(CPV->getType());
-      Out << '{';
-      if (AT->getNumElements()) {
-        Out << ' ';
-        Constant *CZ = Constant::getNullValue(AT->getElementType());
+    if (const ConstantVector *CV = cast<ConstantVector>(CPV)) {
+      printConstantVector(CV);
+    } else {
+      assert(isa<ConstantAggregateZero>(CPV) || isa<UndefValue>(CPV));
+      const VectorType *VT = cast<VectorType>(CPV->getType());
+      Out << "{ ";
+      Constant *CZ = Constant::getNullValue(VT->getElementType());
+      printConstant(CZ);
+      for (unsigned i = 1, e = AT->getNumElements(); i != e; ++i) {
+        Out << ", ";
         printConstant(CZ);
-        for (unsigned i = 1, e = AT->getNumElements(); i != e; ++i) {
-          Out << ", ";
-          printConstant(CZ);
-        }
       }
       Out << " }";
-    } else {
-      printConstantVector(cast<ConstantVector>(CPV));
     }
     break;
 
