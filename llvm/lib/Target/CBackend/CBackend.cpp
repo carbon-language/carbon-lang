@@ -519,9 +519,9 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
 
   case Type::VectorTyID: {
     const VectorType *VTy = cast<VectorType>(Ty);
-    unsigned NumElements = VTy->getNumElements();
     return printType(Out, VTy->getElementType(), false,
-                     NameSoFar + "[" + utostr(NumElements) + "]");
+                     NameSoFar + " __attribute__((vector_size(" +
+                     utostr(TD->getABITypeSize(VTy)) + " ))) ");
   }
 
   case Type::OpaqueTyID: {
@@ -991,6 +991,10 @@ void CWriter::printConstant(Constant *CPV) {
     break;
 
   case Type::VectorTyID:
+    // Use C99 compound expression literal initializer syntax.
+    Out << "(";
+    printType(Out, CPV->getType());
+    Out << ")";
     if (ConstantVector *CV = cast<ConstantVector>(CPV)) {
       printConstantVector(CV);
     } else {
