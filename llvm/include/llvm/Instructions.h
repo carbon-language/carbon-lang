@@ -1228,6 +1228,11 @@ public:
     Ops[i] = Val;
   }
   unsigned getNumOperands() const { return 3; }
+  
+  /// getMaskValue - Return the index from the shuffle mask for the specified
+  /// output result.  This is either -1 if the element is undef or a number less
+  /// than 2*numelements.
+  int getMaskValue(unsigned i) const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ShuffleVectorInst *) { return true; }

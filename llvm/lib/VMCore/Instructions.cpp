@@ -1350,14 +1350,32 @@ ShuffleVectorInst::ShuffleVectorInst(Value *V1, Value *V2, Value *Mask,
 
 bool ShuffleVectorInst::isValidOperands(const Value *V1, const Value *V2, 
                                         const Value *Mask) {
-  if (!isa<VectorType>(V1->getType())) return false;
-  if (V1->getType() != V2->getType()) return false;
-  if (!isa<VectorType>(Mask->getType()) ||
-         cast<VectorType>(Mask->getType())->getElementType() != Type::Int32Ty ||
-         cast<VectorType>(Mask->getType())->getNumElements() !=
-         cast<VectorType>(V1->getType())->getNumElements())
+  if (!isa<VectorType>(V1->getType()) || 
+      V1->getType() != V2->getType()) 
+    return false;
+  
+  const VectorType *MaskTy = dyn_cast<VectorType>(Mask->getType());
+  if (!isa<Constant>(Mask) || MaskTy == 0 ||
+      MaskTy->getElementType() != Type::Int32Ty ||
+      MaskTy->getNumElements() != 
+      cast<VectorType>(V1->getType())->getNumElements())
     return false;
   return true;
+}
+
+/// getMaskValue - Return the index from the shuffle mask for the specified
+/// output result.  This is either -1 if the element is undef or a number less
+/// than 2*numelements.
+int ShuffleVectorInst::getMaskValue(unsigned i) const {
+  const Constant *Mask = cast<Constant>(getOperand(2));
+  if (isa<UndefValue>(Mask)) return -1;
+  if (isa<ConstantAggregateZero>(Mask)) return 0;
+  const ConstantVector *MaskCV = cast<ConstantVector>(Mask);
+  assert(i < MaskCV->getNumOperands() && "Index out of range");
+
+  if (isa<UndefValue>(MaskCV->getOperand(i)))
+    return -1;
+  return cast<ConstantInt>(MaskCV->getOperand(i))->getZExtValue();
 }
 
 
