@@ -271,6 +271,7 @@ namespace {
     void visitSelectInst(SelectInst &I);
     void visitCallInst (CallInst &I);
     void visitInlineAsm(CallInst &I);
+    bool visitBuiltinCall(CallInst &I, Intrinsic::ID ID, bool &WroteCallee);
 
     void visitMallocInst(MallocInst &I);
     void visitAllocaInst(AllocaInst &I);
@@ -2554,7 +2555,6 @@ void CWriter::lowerIntrinsics(Function &F) {
   }
 }
 
-
 void CWriter::visitCallInst(CallInst &I) {
   //check if we have inline asm
   if (isInlineAsm(I)) {
@@ -2566,114 +2566,9 @@ void CWriter::visitCallInst(CallInst &I) {
 
   // Handle intrinsic function calls first...
   if (Function *F = I.getCalledFunction())
-    if (Intrinsic::ID ID = (Intrinsic::ID)F->getIntrinsicID()) {
-      switch (ID) {
-      default: {
-        // If this is an intrinsic that directly corresponds to a GCC
-        // builtin, we emit it here.
-        const char *BuiltinName = "";
-#define GET_GCC_BUILTIN_NAME
-#include "llvm/Intrinsics.gen"
-#undef GET_GCC_BUILTIN_NAME
-        assert(BuiltinName[0] && "Unknown LLVM intrinsic!");
-
-        Out << BuiltinName;
-        WroteCallee = true;
-        break;
-      }
-      case Intrinsic::memory_barrier:
-        Out << "0; __sync_syncronize()";
+    if (Intrinsic::ID ID = (Intrinsic::ID)F->getIntrinsicID())
+      if (visitBuiltinCall(I, ID, WroteCallee))
         return;
-      case Intrinsic::vastart:
-        Out << "0; ";
-
-        Out << "va_start(*(va_list*)";
-        writeOperand(I.getOperand(1));
-        Out << ", ";
-        // Output the last argument to the enclosing function...
-        if (I.getParent()->getParent()->arg_empty()) {
-          cerr << "The C backend does not currently support zero "
-               << "argument varargs functions, such as '"
-               << I.getParent()->getParent()->getName() << "'!\n";
-          abort();
-        }
-        writeOperand(--I.getParent()->getParent()->arg_end());
-        Out << ')';
-        return;
-      case Intrinsic::vaend:
-        if (!isa<ConstantPointerNull>(I.getOperand(1))) {
-          Out << "0; va_end(*(va_list*)";
-          writeOperand(I.getOperand(1));
-          Out << ')';
-        } else {
-          Out << "va_end(*(va_list*)0)";
-        }
-        return;
-      case Intrinsic::vacopy:
-        Out << "0; ";
-        Out << "va_copy(*(va_list*)";
-        writeOperand(I.getOperand(1));
-        Out << ", *(va_list*)";
-        writeOperand(I.getOperand(2));
-        Out << ')';
-        return;
-      case Intrinsic::returnaddress:
-        Out << "__builtin_return_address(";
-        writeOperand(I.getOperand(1));
-        Out << ')';
-        return;
-      case Intrinsic::frameaddress:
-        Out << "__builtin_frame_address(";
-        writeOperand(I.getOperand(1));
-        Out << ')';
-        return;
-      case Intrinsic::powi:
-        Out << "__builtin_powi(";
-        writeOperand(I.getOperand(1));
-        Out << ", ";
-        writeOperand(I.getOperand(2));
-        Out << ')';
-        return;
-      case Intrinsic::setjmp:
-        Out << "setjmp(*(jmp_buf*)";
-        writeOperand(I.getOperand(1));
-        Out << ')';
-        return;
-      case Intrinsic::longjmp:
-        Out << "longjmp(*(jmp_buf*)";
-        writeOperand(I.getOperand(1));
-        Out << ", ";
-        writeOperand(I.getOperand(2));
-        Out << ')';
-        return;
-      case Intrinsic::prefetch:
-        Out << "LLVM_PREFETCH((const void *)";
-        writeOperand(I.getOperand(1));
-        Out << ", ";
-        writeOperand(I.getOperand(2));
-        Out << ", ";
-        writeOperand(I.getOperand(3));
-        Out << ")";
-        return;
-      case Intrinsic::stacksave:
-        // Emit this as: Val = 0; *((void**)&Val) = __builtin_stack_save()
-        // to work around GCC bugs (see PR1809).
-        Out << "0; *((void**)&" << GetValueName(&I)
-            << ") = __builtin_stack_save()";
-        return;
-      case Intrinsic::dbg_stoppoint: {
-        // If we use writeOperand directly we get a "u" suffix which is rejected
-        // by gcc.
-        DbgStopPointInst &SPI = cast<DbgStopPointInst>(I);
-
-        Out << "\n#line "
-            << SPI.getLine()
-            << " \"" << SPI.getDirectory()
-            << SPI.getFileName() << "\"\n";
-        return;
-      }
-      }
-    }
 
   Value *Callee = I.getCalledValue();
 
@@ -2763,6 +2658,118 @@ void CWriter::visitCallInst(CallInst &I) {
   Out << ')';
 }
 
+/// visitBuiltinCall - Handle the call to the specified builtin.  Returns true
+/// if the entire call is handled, return false it it wasn't handled, and
+/// optionally set 'WroteCallee' if the callee has already been printed out.
+bool CWriter::visitBuiltinCall(CallInst &I, Intrinsic::ID ID,
+                               bool &WroteCallee) {
+  switch (ID) {
+  default: {
+    // If this is an intrinsic that directly corresponds to a GCC
+    // builtin, we emit it here.
+    const char *BuiltinName = "";
+    Function *F = I.getCalledFunction();
+#define GET_GCC_BUILTIN_NAME
+#include "llvm/Intrinsics.gen"
+#undef GET_GCC_BUILTIN_NAME
+    assert(BuiltinName[0] && "Unknown LLVM intrinsic!");
+    
+    Out << BuiltinName;
+    WroteCallee = true;
+    return false;
+  }
+  case Intrinsic::memory_barrier:
+    Out << "__sync_syncronize()";
+    return true;
+  case Intrinsic::vastart:
+    Out << "0; ";
+      
+    Out << "va_start(*(va_list*)";
+    writeOperand(I.getOperand(1));
+    Out << ", ";
+    // Output the last argument to the enclosing function.
+    if (I.getParent()->getParent()->arg_empty()) {
+      cerr << "The C backend does not currently support zero "
+           << "argument varargs functions, such as '"
+           << I.getParent()->getParent()->getName() << "'!\n";
+      abort();
+    }
+    writeOperand(--I.getParent()->getParent()->arg_end());
+    Out << ')';
+    return true;
+  case Intrinsic::vaend:
+    if (!isa<ConstantPointerNull>(I.getOperand(1))) {
+      Out << "0; va_end(*(va_list*)";
+      writeOperand(I.getOperand(1));
+      Out << ')';
+    } else {
+      Out << "va_end(*(va_list*)0)";
+    }
+    return true;
+  case Intrinsic::vacopy:
+    Out << "0; ";
+    Out << "va_copy(*(va_list*)";
+    writeOperand(I.getOperand(1));
+    Out << ", *(va_list*)";
+    writeOperand(I.getOperand(2));
+    Out << ')';
+    return true;
+  case Intrinsic::returnaddress:
+    Out << "__builtin_return_address(";
+    writeOperand(I.getOperand(1));
+    Out << ')';
+    return true;
+  case Intrinsic::frameaddress:
+    Out << "__builtin_frame_address(";
+    writeOperand(I.getOperand(1));
+    Out << ')';
+    return true;
+  case Intrinsic::powi:
+    Out << "__builtin_powi(";
+    writeOperand(I.getOperand(1));
+    Out << ", ";
+    writeOperand(I.getOperand(2));
+    Out << ')';
+    return true;
+  case Intrinsic::setjmp:
+    Out << "setjmp(*(jmp_buf*)";
+    writeOperand(I.getOperand(1));
+    Out << ')';
+    return true;
+  case Intrinsic::longjmp:
+    Out << "longjmp(*(jmp_buf*)";
+    writeOperand(I.getOperand(1));
+    Out << ", ";
+    writeOperand(I.getOperand(2));
+    Out << ')';
+    return true;
+  case Intrinsic::prefetch:
+    Out << "LLVM_PREFETCH((const void *)";
+    writeOperand(I.getOperand(1));
+    Out << ", ";
+    writeOperand(I.getOperand(2));
+    Out << ", ";
+    writeOperand(I.getOperand(3));
+    Out << ")";
+    return true;
+  case Intrinsic::stacksave:
+    // Emit this as: Val = 0; *((void**)&Val) = __builtin_stack_save()
+    // to work around GCC bugs (see PR1809).
+    Out << "0; *((void**)&" << GetValueName(&I)
+        << ") = __builtin_stack_save()";
+    return true;
+  case Intrinsic::dbg_stoppoint: {
+    // If we use writeOperand directly we get a "u" suffix which is rejected
+    // by gcc.
+    DbgStopPointInst &SPI = cast<DbgStopPointInst>(I);
+    Out << "\n#line "
+        << SPI.getLine()
+        << " \"" << SPI.getDirectory()
+        << SPI.getFileName() << "\"\n";
+    return true;
+  }
+  }
+}
 
 //This converts the llvm constraint string to something gcc is expecting.
 //TODO: work out platform independent constraints and factor those out
