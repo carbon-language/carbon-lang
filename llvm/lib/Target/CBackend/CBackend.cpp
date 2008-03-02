@@ -398,7 +398,7 @@ void CWriter::printStructReturnPointerFunctionType(std::ostream &Out,
 
 std::ostream &
 CWriter::printSimpleType(std::ostream &Out, const Type *Ty, bool isSigned,
-                            const std::string &NameSoFar) {
+                         const std::string &NameSoFar) {
   assert((Ty->isPrimitiveType() || Ty->isInteger() || isa<VectorType>(Ty)) && 
          "Invalid type for printSimpleType");
   switch (Ty->getTypeID()) {
@@ -428,7 +428,7 @@ CWriter::printSimpleType(std::ostream &Out, const Type *Ty, bool isSigned,
       
   case Type::VectorTyID: {
     const VectorType *VTy = cast<VectorType>(Ty);
-    return printType(Out, VTy->getElementType(), false,
+    return printSimpleType(Out, VTy->getElementType(), isSigned,
                      " __attribute__((vector_size(" +
                      utostr(TD->getABITypeSize(VTy)) + " ))) " + NameSoFar);
   }
