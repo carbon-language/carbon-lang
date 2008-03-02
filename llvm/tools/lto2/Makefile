@@ -32,16 +32,22 @@ ifeq ($(OS),Darwin)
     # set dylib internal version number to llvmCore submission number
     ifdef LLVM_SUBMIT_VERSION
         LLVMLibsOptions := $(LLVMLibsOptions) -Wl,-current_version \
-						-Wl,$(LLVM_SUBMIT_VERSION).$(LLVM_SUBMIT_SUBVERSION) \
+                        -Wl,$(LLVM_SUBMIT_VERSION).$(LLVM_SUBMIT_SUBVERSION) \
                         -Wl,-compatibility_version -Wl,1
     endif
     # extra options to override libtool defaults 
     LLVMLibsOptions    := $(LLVMLibsOptions)  \
-				-no-undefined  -avoid-version \
-                -Wl,-exported_symbols_list -Wl,$(PROJ_SRC_DIR)/lto.exports \
-                -Wl,-dead_strip \
-                -Wl,-install_name \
-				-Wl,"@executable_path/../lib/lib$(LIBRARYNAME)$(SHLIBEXT)" \
-                -Wl,-seg1addr -Wl,0xE0000000 
+                         -no-undefined  -avoid-version \
+                         -Wl,-exported_symbols_list -Wl,$(PROJ_SRC_DIR)/lto.exports \
+                         -Wl,-dead_strip \
+                         -Wl,-seg1addr -Wl,0xE0000000 
 
+    # Mac OS X 10.4 and earlier tools do not allow a second -install_name on command line
+    DARWIN_VERS := $(shell echo $(TARGET_TRIPLE) | sed 's/.*darwin\([0-9]*\).*/\1/')
+    ifneq ($(DARWIN_VERS),8)
+       LLVMLibsOptions    := $(LLVMLibsOptions)  \
+                            -Wl,-install_name \
+                            -Wl,"@executable_path/../lib/lib$(LIBRARYNAME)$(SHLIBEXT)"
+    endif
+      
 endif
