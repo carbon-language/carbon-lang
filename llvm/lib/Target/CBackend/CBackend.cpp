@@ -399,7 +399,7 @@ void CWriter::printStructReturnPointerFunctionType(std::ostream &Out,
 std::ostream &
 CWriter::printSimpleType(std::ostream &Out, const Type *Ty, bool isSigned,
                             const std::string &NameSoFar) {
-  assert((Ty->isPrimitiveType() || Ty->isInteger()) && 
+  assert((Ty->isPrimitiveType() || Ty->isInteger() || isa<VectorType>(Ty)) && 
          "Invalid type for printSimpleType");
   switch (Ty->getTypeID()) {
   case Type::VoidTyID:   return Out << "void " << NameSoFar;
@@ -425,7 +425,15 @@ CWriter::printSimpleType(std::ostream &Out, const Type *Ty, bool isSigned,
   case Type::X86_FP80TyID:
   case Type::PPC_FP128TyID:
   case Type::FP128TyID:  return Out << "long double " << NameSoFar;
-  default :
+      
+  case Type::VectorTyID: {
+    const VectorType *VTy = cast<VectorType>(Ty);
+    return printType(Out, VTy->getElementType(), false,
+                     NameSoFar + " __attribute__((vector_size(" +
+                     utostr(TD->getABITypeSize(VTy)) + " ))) ");
+  }
+    
+  default:
     cerr << "Unknown primitive type: " << *Ty << "\n";
     abort();
   }
@@ -437,7 +445,7 @@ CWriter::printSimpleType(std::ostream &Out, const Type *Ty, bool isSigned,
 std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
                                  bool isSigned, const std::string &NameSoFar,
                                  bool IgnoreName, const ParamAttrsList* PAL) {
-  if (Ty->isPrimitiveType() || Ty->isInteger()) {
+  if (Ty->isPrimitiveType() || Ty->isInteger() || isa<VectorType>(Ty)) {
     printSimpleType(Out, Ty, isSigned, NameSoFar);
     return Out;
   }
@@ -515,13 +523,6 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
     if (NumElements == 0) NumElements = 1;
     return printType(Out, ATy->getElementType(), false,
                      NameSoFar + "[" + utostr(NumElements) + "]");
-  }
-
-  case Type::VectorTyID: {
-    const VectorType *VTy = cast<VectorType>(Ty);
-    return printType(Out, VTy->getElementType(), false,
-                     NameSoFar + " __attribute__((vector_size(" +
-                     utostr(TD->getABITypeSize(VTy)) + " ))) ");
   }
 
   case Type::OpaqueTyID: {
