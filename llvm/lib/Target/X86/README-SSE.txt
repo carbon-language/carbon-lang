@@ -131,32 +131,6 @@ feasible.
 
 //===---------------------------------------------------------------------===//
 
-Teach the coalescer to commute 2-addr instructions, allowing us to eliminate
-the reg-reg copy in this example:
-
-float foo(int *x, float *y, unsigned c) {
-  float res = 0.0;
-  unsigned i;
-  for (i = 0; i < c; i++) {
-    float xx = (float)x[i];
-    xx = xx * y[i];
-    xx += res;
-    res = xx;
-  }
-  return res;
-}
-
-LBB_foo_3:      # no_exit
-        cvtsi2ss %XMM0, DWORD PTR [%EDX + 4*%ESI]
-        mulss %XMM0, DWORD PTR [%EAX + 4*%ESI]
-        addss %XMM0, %XMM1
-        inc %ESI
-        cmp %ESI, %ECX
-****    movaps %XMM1, %XMM0
-        jb LBB_foo_3    # no_exit
-
-//===---------------------------------------------------------------------===//
-
 Codegen:
   if (copysign(1.0, x) == copysign(1.0, y))
 into:
