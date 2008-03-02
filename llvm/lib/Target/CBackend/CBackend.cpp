@@ -2511,6 +2511,7 @@ void CWriter::lowerIntrinsics(Function &F) {
           case Intrinsic::x86_sse_cmp_ps:
           case Intrinsic::x86_sse2_cmp_sd:
           case Intrinsic::x86_sse2_cmp_pd:
+          case Intrinsic::ppc_altivec_lvsl:
               // We directly implement these intrinsics
             break;
           default:
@@ -2804,6 +2805,14 @@ bool CWriter::visitBuiltinCall(CallInst &I, Intrinsic::ID ID,
     writeOperand(I.getOperand(1));
     Out << ", ";
     writeOperand(I.getOperand(2));
+    Out << ")";
+    return true;
+  case Intrinsic::ppc_altivec_lvsl:
+    Out << '(';
+    printType(Out, I.getType());
+    Out << ')';  
+    Out << "__builtin_altivec_lvsl(0, (void*)";
+    writeOperand(I.getOperand(1));
     Out << ")";
     return true;
   }
