@@ -455,9 +455,6 @@ void Verifier::visitFunction(Function &F) {
           isa<StructType>(F.getReturnType()),
           "Functions cannot return aggregate values!", &F);
 
-  Assert1(!F.isStructReturn() || FT->getReturnType() == Type::VoidTy,
-          "Invalid struct-return function!", &F);
-
   const ParamAttrsList *Attrs = F.getParamAttrs();
 
   Assert1(!Attrs ||

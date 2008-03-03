@@ -170,7 +170,8 @@ bool Function::onlyReadsMemory() const {
 
 /// @brief Determine if the function returns a structure.
 bool Function::isStructReturn() const {
-  return paramHasAttr(1, ParamAttr::StructRet);
+  return paramHasAttr(1, ParamAttr::StructRet) 
+    || isa<StructType>(getReturnType());
 }
 
 //===----------------------------------------------------------------------===//
