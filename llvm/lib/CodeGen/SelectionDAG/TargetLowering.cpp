@@ -1070,7 +1070,7 @@ TargetLowering::SimplifySetCC(MVT::ValueType VT, SDOperand N0, SDOperand N1,
   }
 
   if (ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.Val)) {
-    uint64_t C1 = N1C->getValue();
+    const APInt &C1 = N1C->getAPIntValue();
     if (isa<ConstantSDNode>(N0.Val)) {
       return DAG.FoldSetCC(VT, N0, N1, Cond);
     } else {
@@ -1104,8 +1104,8 @@ TargetLowering::SimplifySetCC(MVT::ValueType VT, SDOperand N0, SDOperand N1,
 
         // If the comparison constant has bits in the upper part, the
         // zero-extended value could never match.
-        if (C1 & (~0ULL << InSize)) {
-          unsigned VSize = MVT::getSizeInBits(N0.getValueType());
+        if (C1.intersects(APInt::getHighBitsSet(C1.getBitWidth(),
+                                                C1.getBitWidth() - InSize))) {
           switch (Cond) {
           case ISD::SETUGT:
           case ISD::SETUGE:
@@ -1116,11 +1116,11 @@ TargetLowering::SimplifySetCC(MVT::ValueType VT, SDOperand N0, SDOperand N1,
           case ISD::SETGT:
           case ISD::SETGE:
             // True if the sign bit of C1 is set.
-            return DAG.getConstant((C1 & (1ULL << (VSize-1))) != 0, VT);
+            return DAG.getConstant(C1.isNegative(), VT);
           case ISD::SETLT:
           case ISD::SETLE:
             // True if the sign bit of C1 isn't set.
-            return DAG.getConstant((C1 & (1ULL << (VSize-1))) == 0, VT);
+            return DAG.getConstant(C1.isNonNegative(), VT);
           default:
             break;
           }
@@ -1135,7 +1135,8 @@ TargetLowering::SimplifySetCC(MVT::ValueType VT, SDOperand N0, SDOperand N1,
         case ISD::SETULT:
         case ISD::SETULE:
           return DAG.getSetCC(VT, N0.getOperand(0),
-                          DAG.getConstant(C1, N0.getOperand(0).getValueType()),
+                          DAG.getConstant(APInt(C1).trunc(InSize),
+                                          N0.getOperand(0).getValueType()),
                           Cond);
         default:
           break;   // todo, be more careful with signed comparisons
@@ -1150,8 +1151,8 @@ TargetLowering::SimplifySetCC(MVT::ValueType VT, SDOperand N0, SDOperand N1,
         // If the extended part has any inconsistent bits, it cannot ever
         // compare equal.  In other words, they have to be all ones or all
         // zeros.
-        uint64_t ExtBits =
-          (~0ULL >> (64-ExtSrcTyBits)) & (~0ULL << (ExtDstTyBits-1));
+        APInt ExtBits =
+          APInt::getHighBitsSet(ExtDstTyBits, ExtDstTyBits - ExtSrcTyBits);
         if ((C1 & ExtBits) != 0 && (C1 & ExtBits) != ExtBits)
           return DAG.getConstant(Cond == ISD::SETNE, VT);
         
@@ -1168,10 +1169,12 @@ TargetLowering::SimplifySetCC(MVT::ValueType VT, SDOperand N0, SDOperand N1,
           DCI.AddToWorklist(ZextOp.Val);
         // Otherwise, make this a use of a zext.
         return DAG.getSetCC(VT, ZextOp, 
-                            DAG.getConstant(C1 & (~0ULL>>(64-ExtSrcTyBits)), 
+                            DAG.getConstant(C1 & APInt::getLowBitsSet(
+                                                               ExtDstTyBits,
+                                                               ExtSrcTyBits), 
                                             ExtDstTy),
                             Cond);
-      } else if ((N1C->getValue() == 0 || N1C->getValue() == 1) &&
+      } else if ((N1C->isNullValue() || N1C->getAPIntValue() == 1) &&
                  (Cond == ISD::SETEQ || Cond == ISD::SETNE)) {
         
         // SETCC (SETCC), [0|1], [EQ|NE]  -> SETCC
@@ -1233,15 +1236,15 @@ TargetLowering::SimplifySetCC(MVT::ValueType VT, SDOperand N0, SDOperand N1,
       // Canonicalize GE/LE comparisons to use GT/LT comparisons.
       if (Cond == ISD::SETGE || Cond == ISD::SETUGE) {
         if (C1 == MinVal) return DAG.getConstant(1, VT);   // X >= MIN --> true
-        --C1;                                          // X >= C0 --> X > (C0-1)
-        return DAG.getSetCC(VT, N0, DAG.getConstant(C1, N1.getValueType()),
+        // X >= C0 --> X > (C0-1)
+        return DAG.getSetCC(VT, N0, DAG.getConstant(C1-1, N1.getValueType()),
                         (Cond == ISD::SETGE) ? ISD::SETGT : ISD::SETUGT);
       }
 
       if (Cond == ISD::SETLE || Cond == ISD::SETULE) {
         if (C1 == MaxVal) return DAG.getConstant(1, VT);   // X <= MAX --> true
-        ++C1;                                          // X <= C0 --> X < (C0+1)
-        return DAG.getSetCC(VT, N0, DAG.getConstant(C1, N1.getValueType()),
+        // X <= C0 --> X < (C0+1)
+        return DAG.getSetCC(VT, N0, DAG.getConstant(C1+1, N1.getValueType()),
                         (Cond == ISD::SETLE) ? ISD::SETLT : ISD::SETULT);
       }
 
@@ -1296,9 +1299,9 @@ TargetLowering::SimplifySetCC(MVT::ValueType VT, SDOperand N0, SDOperand N1,
           } else if (Cond == ISD::SETEQ && C1 == AndRHS->getValue()) {
             // (X & 8) == 8  -->  (X & 8) >> 3
             // Perform the xform if C1 is a single bit.
-            if (isPowerOf2_64(C1)) {
+            if (C1.isPowerOf2()) {
               return DAG.getNode(ISD::SRL, VT, N0,
-                          DAG.getConstant(Log2_64(C1), getShiftAmountTy()));
+                          DAG.getConstant(C1.logBase2(), getShiftAmountTy()));
             }
           }
         }
