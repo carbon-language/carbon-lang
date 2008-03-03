@@ -1161,7 +1161,7 @@ TargetLowering::SimplifySetCC(MVT::ValueType VT, SDOperand N0, SDOperand N1,
         if (Op0Ty == ExtSrcTy) {
           ZextOp = N0.getOperand(0);
         } else {
-          int64_t Imm = ~0ULL >> (64-ExtSrcTyBits);
+          APInt Imm = APInt::getLowBitsSet(ExtDstTyBits, ExtSrcTyBits);
           ZextOp = DAG.getNode(ISD::AND, Op0Ty, N0.getOperand(0),
                                DAG.getConstant(Imm, Op0Ty));
         }
@@ -1220,17 +1220,14 @@ TargetLowering::SimplifySetCC(MVT::ValueType VT, SDOperand N0, SDOperand N1,
         }
       }
       
-      uint64_t MinVal, MaxVal;
+      APInt MinVal, MaxVal;
       unsigned OperandBitSize = MVT::getSizeInBits(N1C->getValueType(0));
       if (ISD::isSignedIntSetCC(Cond)) {
-        MinVal = 1ULL << (OperandBitSize-1);
-        if (OperandBitSize != 1)   // Avoid X >> 64, which is undefined.
-          MaxVal = ~0ULL >> (65-OperandBitSize);
-        else
-          MaxVal = 0;
+        MinVal = APInt::getSignedMinValue(OperandBitSize);
+        MaxVal = APInt::getSignedMaxValue(OperandBitSize);
       } else {
-        MinVal = 0;
-        MaxVal = ~0ULL >> (64-OperandBitSize);
+        MinVal = APInt::getMinValue(OperandBitSize);
+        MaxVal = APInt::getMaxValue(OperandBitSize);
       }
 
       // Canonicalize GE/LE comparisons to use GT/LT comparisons.
