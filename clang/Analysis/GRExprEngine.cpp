@@ -508,11 +508,14 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
 
   // If we reach here we have processed all of the arguments.  Evaluate
   // the callee expression.
+  
   NodeSet DstTmp;    
   Expr* Callee = CE->getCallee()->IgnoreParenCasts();
-  
+
   VisitLVal(Callee, Pred, DstTmp);
-  if (DstTmp.empty()) DstTmp.Add(Pred);
+  
+  if (DstTmp.empty())
+    DstTmp.Add(Pred);
   
   // Finally, evaluate the function call.
   for (NodeSet::iterator DI = DstTmp.begin(), DE = DstTmp.end(); DI!=DE; ++DI) {
@@ -520,8 +523,11 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
     ValueState* St = (*DI)->getState();    
     RVal L = GetLVal(St, Callee);
 
-    // Check for undefined control-flow.
-
+    // FIXME: Add support for symbolic function calls (calls involving
+    //  function pointer values that are symbolic).
+    
+    // Check for undefined control-flow or calls to NULL.
+    
     if (L.isUndef() || isa<lval::ConcreteInt>(L)) {      
       NodeTy* N = Builder->generateNode(CE, St, *DI);
       if (N) {
@@ -529,7 +535,9 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
         BadCalls.insert(N);
       }
       continue;
-    }
+    }  
+    
+    // Check for an "unknown" callee.
     
     if (L.isUnknown()) {
       // Invalidate all arguments passed in by reference (LVals).
@@ -539,7 +547,7 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
 
         if (isa<LVal>(V))
           St = SetRVal(St, cast<LVal>(V), UnknownVal());
-      }
+      }      
     }
     else
       St = EvalCall(CE, cast<LVal>(L), (*DI)->getState());
