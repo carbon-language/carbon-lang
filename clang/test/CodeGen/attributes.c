@@ -21,6 +21,6 @@ int t5 __attribute__((weak)) = 2;
 int t6 __attribute__((visibility(protected)));
 
 // RUN: clang -emit-llvm < %s | grep 't7.*noreturn'
-// RUN: clang -emit-llvm < %s | grep 't7.*nothrow'
+// RUN: clang -emit-llvm < %s | grep 't7.*nounwind'
 void t7() __attribute__((noreturn, nothrow));
 void t7() {}
