@@ -102,13 +102,13 @@ void X86SharedAsmPrinter::decorateName(std::string &Name,
   case StdCall:
     // "Pure" variadic functions do not receive @0 suffix.
     if (!FT->isVarArg() || (FT->getNumParams() == 0) ||
-        (FT->getNumParams() == 1 && F->isStructReturn()))
+        (FT->getNumParams() == 1 && F->hasStructRetAttr()))
       Name += '@' + utostr_32(Info->getBytesToPopOnReturn());
     break;
   case FastCall:
     // "Pure" variadic functions do not receive @0 suffix.
     if (!FT->isVarArg() || (FT->getNumParams() == 0) ||
-        (FT->getNumParams() == 1 && F->isStructReturn()))
+        (FT->getNumParams() == 1 && F->hasStructRetAttr()))
       Name += '@' + utostr_32(Info->getBytesToPopOnReturn());
 
     if (Name[0] == '_') {

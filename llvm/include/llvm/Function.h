@@ -181,8 +181,9 @@ public:
   /// @brief Determine if the function does not access or only reads memory.
   bool onlyReadsMemory() const;
 
-  /// @brief Determine if the function returns a structure.
-  bool isStructReturn() const;
+  /// @brief Determine if the function returns a structure through first 
+  /// pointer argument.
+  bool hasStructRetAttr() const;
 
   /// deleteBody - This method deletes the body of the function, and converts
   /// the linkage to external.

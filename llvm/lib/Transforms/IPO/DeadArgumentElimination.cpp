@@ -255,7 +255,7 @@ DAE::Liveness DAE::getArgumentLiveness(const Argument &A) {
   const Function *F = A.getParent();
   
   // If this is the return value of a struct function, it's not really dead.
-  if (F->isStructReturn() && &*(F->arg_begin()) == &A)
+  if (F->hasStructRetAttr() && &*(F->arg_begin()) == &A)
     return Live;
   
   if (A.use_empty())  // First check, directly dead?

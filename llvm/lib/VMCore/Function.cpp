@@ -168,10 +168,10 @@ bool Function::onlyReadsMemory() const {
   return doesNotAccessMemory() || paramHasAttr(0, ParamAttr::ReadOnly);
 }
 
-/// @brief Determine if the function returns a structure.
-bool Function::isStructReturn() const {
-  return paramHasAttr(1, ParamAttr::StructRet) 
-    || isa<StructType>(getReturnType());
+/// @brief Determine if the function returns a structure through first 
+/// pointer argument.
+bool Function::hasStructRetAttr() const {
+  return paramHasAttr(1, ParamAttr::StructRet);
 }
 
 //===----------------------------------------------------------------------===//

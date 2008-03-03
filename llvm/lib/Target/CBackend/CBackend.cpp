@@ -1904,7 +1904,7 @@ void CWriter::printContainedStructs(const Type *Ty,
 
 void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
   /// isStructReturn - Should this function actually return a struct by-value?
-  bool isStructReturn = F->isStructReturn();
+  bool isStructReturn = F->hasStructRetAttr();
   
   if (F->hasInternalLinkage()) Out << "static ";
   if (F->hasDLLImportLinkage()) Out << "__declspec(dllimport) ";
@@ -2024,7 +2024,7 @@ static inline bool isFPIntBitCast(const Instruction &I) {
 
 void CWriter::printFunction(Function &F) {
   /// isStructReturn - Should this function actually return a struct by-value?
-  bool isStructReturn = F.isStructReturn();
+  bool isStructReturn = F.hasStructRetAttr();
 
   printFunctionSignature(&F, false);
   Out << " {\n";
@@ -2148,7 +2148,7 @@ void CWriter::printBasicBlock(BasicBlock *BB) {
 //
 void CWriter::visitReturnInst(ReturnInst &I) {
   // If this is a struct return function, return the temporary struct.
-  bool isStructReturn = I.getParent()->getParent()->isStructReturn();
+  bool isStructReturn = I.getParent()->getParent()->hasStructRetAttr();
 
   if (isStructReturn) {
     Out << "  return StructReturn;\n";
@@ -2584,7 +2584,7 @@ void CWriter::visitCallInst(CallInst &I) {
   // parameter instead of passing it to the call.
   const ParamAttrsList *PAL = I.getParamAttrs();
   bool hasByVal = I.hasByValArgument();
-  bool isStructRet = I.isStructReturn();
+  bool isStructRet = I.hasStructRetAttr();
   if (isStructRet) {
     writeOperandDeref(I.getOperand(1));
     Out << " = ";

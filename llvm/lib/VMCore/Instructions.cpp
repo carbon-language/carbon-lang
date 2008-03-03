@@ -419,8 +419,9 @@ bool CallInst::doesNotThrow() const {
   return paramHasAttr(0, ParamAttr::NoUnwind);
 }
 
-/// @brief Determine if the call returns a structure.
-bool CallInst::isStructReturn() const {
+/// @brief Determine if the call returns a structure through first 
+/// pointer argument.
+bool CallInst::hasStructRetAttr() const {
   // Be friendly and also check the callee.
   return paramHasAttr(1, ParamAttr::StructRet);
 }
@@ -560,8 +561,9 @@ void InvokeInst::setDoesNotThrow(bool doesNotThrow) {
   setParamAttrs(PAL);
 }
 
-/// @brief Determine if the call returns a structure.
-bool InvokeInst::isStructReturn() const {
+/// @brief Determine if the invoke returns a structure through first 
+/// pointer argument.
+bool InvokeInst::hasStructRetAttr() const {
   // Be friendly and also check the callee.
   return paramHasAttr(1, ParamAttr::StructRet);
 }

@@ -75,7 +75,7 @@ bool SRETPromotion::PromoteReturn(CallGraphNode *CGN) {
     return false;
 
   // Make sure that function returns struct.
-  if (F->arg_size() == 0 || !F->isStructReturn() || F->doesNotReturn())
+  if (F->arg_size() == 0 || !F->hasStructRetAttr() || F->doesNotReturn())
     return false;
 
   assert (F->getReturnType() == Type::VoidTy && "Invalid function return type");

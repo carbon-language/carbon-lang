@@ -957,8 +957,9 @@ public:
   bool doesNotThrow() const;
   void setDoesNotThrow(bool doesNotThrow = true);
 
-  /// @brief Determine if the call returns a structure.
-  bool isStructReturn() const;
+  /// @brief Determine if the call returns a structure through first 
+  /// pointer argument.
+  bool hasStructRetAttr() const;
 
   /// @brief Determine if any call argument is an aggregate passed by value.
   bool hasByValArgument() const;
@@ -1769,8 +1770,9 @@ public:
   bool doesNotThrow() const;
   void setDoesNotThrow(bool doesNotThrow = true);
 
-  /// @brief Determine if the call returns a structure.
-  bool isStructReturn() const;
+  /// @brief Determine if the call returns a structure through first 
+  /// pointer argument.
+  bool hasStructRetAttr() const;
 
   /// getCalledFunction - Return the function called, or null if this is an
   /// indirect function invocation.
