@@ -17,6 +17,7 @@
 #include "llvm/Module.h"
 #include "llvm/CallGraphSCCPass.h"
 #include "llvm/Instructions.h"
+#include "llvm/ParamAttrsList.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"
@@ -181,21 +182,34 @@ bool SRETPromotion::isSafeToUpdateAllCallers(Function *F) {
 Function *SRETPromotion::cloneFunctionBody(Function *F, 
                                            const StructType *STy) {
 
-  // FIXME : Do not drop param attributes on the floor.
   const FunctionType *FTy = F->getFunctionType();
   std::vector<const Type*> Params;
+
+  // ParamAttrs - Keep track of the parameter attributes for the arguments.
+  ParamAttrsVector ParamAttrsVec;
+  const ParamAttrsList *PAL = F->getParamAttrs();
+
+  // Add any return attributes.
+  if (ParameterAttributes attrs = PAL ? PAL->getParamAttrs(0) : ParamAttr::None)
+    ParamAttrsVec.push_back(ParamAttrsWithIndex::get(0, attrs));
 
   // Skip first argument.
   Function::arg_iterator I = F->arg_begin(), E = F->arg_end();
   ++I;
+  unsigned ParamIndex = 1; // 0th parameter attribute is reserved for return type.
   while (I != E) {
     Params.push_back(I->getType());
+    if (ParameterAttributes attrs = PAL ? PAL->getParamAttrs(ParamIndex) : 
+        ParamAttr::None)
+      ParamAttrsVec.push_back(ParamAttrsWithIndex::get(Params.size(), attrs));
     ++I;
+    ++ParamIndex;
   }
 
   FunctionType *NFTy = FunctionType::get(STy, Params, FTy->isVarArg());
   Function *NF = new Function(NFTy, F->getLinkage(), F->getName());
   NF->setCallingConv(F->getCallingConv());
+  NF->setParamAttrs(ParamAttrsList::get(ParamAttrsVec));
   F->getParent()->getFunctionList().insert(F, NF);
   NF->getBasicBlockList().splice(NF->begin(), F->getBasicBlockList());
 
@@ -217,20 +231,32 @@ Function *SRETPromotion::cloneFunctionBody(Function *F,
 /// updateCallSites - Update all sites that call F to use NF.
 void SRETPromotion::updateCallSites(Function *F, Function *NF) {
 
-  // FIXME : Handle parameter attributes
   SmallVector<Value*, 16> Args;
+
+  // ParamAttrs - Keep track of the parameter attributes for the arguments.
+  ParamAttrsVector ParamAttrsVec;
 
   for (Value::use_iterator FUI = F->use_begin(), FUE = F->use_end(); FUI != FUE;) {
     CallSite CS = CallSite::get(*FUI);
     ++FUI;
     Instruction *Call = CS.getInstruction();
 
+    const ParamAttrsList *PAL = F->getParamAttrs();
+    // Add any return attributes.
+    if (ParameterAttributes attrs = PAL ? PAL->getParamAttrs(0) : ParamAttr::None)
+      ParamAttrsVec.push_back(ParamAttrsWithIndex::get(0, attrs));
+
     // Copy arguments, however skip first one.
     CallSite::arg_iterator AI = CS.arg_begin(), AE = CS.arg_end();
     Value *FirstCArg = *AI;
     ++AI;
+    unsigned ParamIndex = 1; // 0th parameter attribute is reserved for return type.
     while (AI != AE) {
       Args.push_back(*AI); 
+      if (ParameterAttributes Attrs = PAL ? PAL->getParamAttrs(ParamIndex) :
+          ParamAttr::None)
+        ParamAttrsVec.push_back(ParamAttrsWithIndex::get(Args.size(), Attrs));
+      ++ParamIndex;
       ++AI;
     }
 
@@ -240,13 +266,16 @@ void SRETPromotion::updateCallSites(Function *F, Function *NF) {
       New = new InvokeInst(NF, II->getNormalDest(), II->getUnwindDest(),
                            Args.begin(), Args.end(), "", Call);
       cast<InvokeInst>(New)->setCallingConv(CS.getCallingConv());
+      cast<InvokeInst>(New)->setParamAttrs(ParamAttrsList::get(ParamAttrsVec));
     } else {
       New = new CallInst(NF, Args.begin(), Args.end(), "", Call);
       cast<CallInst>(New)->setCallingConv(CS.getCallingConv());
+      cast<CallInst>(New)->setParamAttrs(ParamAttrsList::get(ParamAttrsVec));
       if (cast<CallInst>(Call)->isTailCall())
         cast<CallInst>(New)->setTailCall();
     }
     Args.clear();
+    ParamAttrsVec.clear();
     New->takeName(Call);
 
     // Update all users of sret parameter to extract value using getresult.
