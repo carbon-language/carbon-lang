@@ -35,6 +35,9 @@ private:
   /// only valid after the initial scan of the function by PEI.
   bool UsesLR;
 
+  /// SpillsCR - Indicates whether CR is spilled in the current function.
+  bool SpillsCR;
+
   /// LRStoreRequired - The bool indicates whether there is some explicit use of
   /// the LR/LR8 stack slot that is not obvious from scanning the code.  This
   /// requires that the code generator produce a store of LR to the stack on
@@ -42,7 +45,10 @@ private:
   bool LRStoreRequired;
 public:
   PPCFunctionInfo(MachineFunction &MF) 
-    : FramePointerSaveIndex(0), ReturnAddrSaveIndex(0), LRStoreRequired(false){}
+    : FramePointerSaveIndex(0),
+      ReturnAddrSaveIndex(0),
+      SpillsCR(false),
+      LRStoreRequired(false) {}
 
   int getFramePointerSaveIndex() const { return FramePointerSaveIndex; }
   void setFramePointerSaveIndex(int Idx) { FramePointerSaveIndex = Idx; }
@@ -57,9 +63,11 @@ public:
   void setUsesLR(bool U) { UsesLR = U; }
   bool usesLR() const    { return UsesLR; }
 
+  void setSpillsCR()       { SpillsCR = true; }
+  bool isCRSpilled() const { return SpillsCR; }
+
   void setLRStoreRequired() { LRStoreRequired = true; }
   bool isLRStoreRequired() const { return LRStoreRequired; }
-  
 };
 
 } // end of namespace llvm

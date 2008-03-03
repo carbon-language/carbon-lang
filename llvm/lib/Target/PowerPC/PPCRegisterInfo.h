@@ -51,13 +51,20 @@ public:
   /// time).
   bool targetHandlesStackFrameRounding() const { return true; }
 
+  /// requiresRegisterScavenging - We require a register scavenger.
+  /// FIXME (64-bit): Should be inlined.
+  bool requiresRegisterScavenging(const MachineFunction &MF) const;
+
   bool hasFP(const MachineFunction &MF) const;
 
   void eliminateCallFramePseudoInstr(MachineFunction &MF,
                                      MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator I) const;
 
-  void lowerDynamicAlloc(MachineBasicBlock::iterator II) const;
+  void lowerDynamicAlloc(MachineBasicBlock::iterator II,
+                         int SPAdj, RegScavenger *RS) const;
+  void lowerCRSpilling(MachineBasicBlock::iterator II, unsigned FrameIndex,
+                       int SPAdj, RegScavenger *RS) const;
   void eliminateFrameIndex(MachineBasicBlock::iterator II,
                            int SPAdj, RegScavenger *RS = NULL) const;
 

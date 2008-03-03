@@ -13,6 +13,7 @@
 
 #include "PPCInstrInfo.h"
 #include "PPCInstrBuilder.h"
+#include "PPCMachineFunctionInfo.h"
 #include "PPCPredicates.h"
 #include "PPCGenInstrInfo.inc"
 #include "PPCTargetMachine.h"
@@ -316,10 +317,11 @@ void PPCInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
   }
 }
 
-static void StoreRegToStackSlot(const TargetInstrInfo &TII,
+static bool StoreRegToStackSlot(const TargetInstrInfo &TII,
                                 unsigned SrcReg, bool isKill, int FrameIdx,
                                 const TargetRegisterClass *RC,
-                                SmallVectorImpl<MachineInstr*> &NewMIs) {
+                                SmallVectorImpl<MachineInstr*> &NewMIs,
+                                bool isPPC64/*FIXME (64-bit): Remove.*/) {
   if (RC == PPC::GPRCRegisterClass) {
     if (SrcReg != PPC::LR) {
       NewMIs.push_back(addFrameReference(BuildMI(TII.get(PPC::STW))
@@ -351,22 +353,30 @@ static void StoreRegToStackSlot(const TargetInstrInfo &TII,
     NewMIs.push_back(addFrameReference(BuildMI(TII.get(PPC::STFS))
                                 .addReg(SrcReg, false, false, isKill), FrameIdx));
   } else if (RC == PPC::CRRCRegisterClass) {
-    // FIXME: We use R0 here, because it isn't available for RA.
-    // We need to store the CR in the low 4-bits of the saved value.  First,
-    // issue a MFCR to save all of the CRBits.
-    NewMIs.push_back(BuildMI(TII.get(PPC::MFCR), PPC::R0));
+    if (!isPPC64) {             // FIXME (64-bit): Enable
+      NewMIs.push_back(addFrameReference(BuildMI(TII.get(PPC::SPILL_CR))
+                                         .addReg(SrcReg, false, false, isKill),
+					 FrameIdx));
+      return true;
+    } else {
+      // FIXME: We use R0 here, because it isn't available for RA.  We need to
+      // store the CR in the low 4-bits of the saved value.  First, issue a MFCR
+      // to save all of the CRBits.
+      NewMIs.push_back(BuildMI(TII.get(PPC::MFCR), PPC::R0));
     
-    // If the saved register wasn't CR0, shift the bits left so that they are in
-    // CR0's slot.
-    if (SrcReg != PPC::CR0) {
-      unsigned ShiftBits = PPCRegisterInfo::getRegisterNumbering(SrcReg)*4;
-      // rlwinm r0, r0, ShiftBits, 0, 31.
-      NewMIs.push_back(BuildMI(TII.get(PPC::RLWINM), PPC::R0)
-                       .addReg(PPC::R0).addImm(ShiftBits).addImm(0).addImm(31));
+      // If the saved register wasn't CR0, shift the bits left so that they are
+      // in CR0's slot.
+      if (SrcReg != PPC::CR0) {
+        unsigned ShiftBits = PPCRegisterInfo::getRegisterNumbering(SrcReg)*4;
+        // rlwinm r0, r0, ShiftBits, 0, 31.
+        NewMIs.push_back(BuildMI(TII.get(PPC::RLWINM), PPC::R0)
+                         .addReg(PPC::R0).addImm(ShiftBits).addImm(0).addImm(31));
+      }
+    
+      NewMIs.push_back(addFrameReference(BuildMI(TII.get(PPC::STW))
+                                         .addReg(PPC::R0, false, false, isKill),
+                                         FrameIdx));
     }
-    
-    NewMIs.push_back(addFrameReference(BuildMI(TII.get(PPC::STW))
-                               .addReg(PPC::R0, false, false, isKill), FrameIdx));
   } else if (RC == PPC::VRRCRegisterClass) {
     // We don't have indexed addressing for vector loads.  Emit:
     // R0 = ADDI FI#
@@ -381,26 +391,39 @@ static void StoreRegToStackSlot(const TargetInstrInfo &TII,
     assert(0 && "Unknown regclass!");
     abort();
   }
+
+  return false;
 }
 
 void
 PPCInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
-                                     MachineBasicBlock::iterator MI,
-                                     unsigned SrcReg, bool isKill, int FrameIdx,
-                                     const TargetRegisterClass *RC) const {
+                                  MachineBasicBlock::iterator MI,
+                                  unsigned SrcReg, bool isKill, int FrameIdx,
+                                  const TargetRegisterClass *RC) const {
   SmallVector<MachineInstr*, 4> NewMIs;
-  StoreRegToStackSlot(*this, SrcReg, isKill, FrameIdx, RC, NewMIs);
+
+  if (StoreRegToStackSlot(*this, SrcReg, isKill, FrameIdx, RC, NewMIs,
+                 TM.getSubtargetImpl()->isPPC64()/*FIXME (64-bit): Remove.*/)) {
+    PPCFunctionInfo *FuncInfo = MBB.getParent()->getInfo<PPCFunctionInfo>();
+    FuncInfo->setSpillsCR();
+  }
+
   for (unsigned i = 0, e = NewMIs.size(); i != e; ++i)
     MBB.insert(MI, NewMIs[i]);
 }
 
 void PPCInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
-                                     bool isKill,
-                                     SmallVectorImpl<MachineOperand> &Addr,
-                                     const TargetRegisterClass *RC,
-                                 SmallVectorImpl<MachineInstr*> &NewMIs) const {
+                                  bool isKill,
+                                  SmallVectorImpl<MachineOperand> &Addr,
+                                  const TargetRegisterClass *RC,
+                                  SmallVectorImpl<MachineInstr*> &NewMIs) const{
   if (Addr[0].isFrameIndex()) {
-    StoreRegToStackSlot(*this, SrcReg, isKill, Addr[0].getIndex(), RC, NewMIs);
+    if (StoreRegToStackSlot(*this, SrcReg, isKill, Addr[0].getIndex(), RC, NewMIs,
+                 TM.getSubtargetImpl()->isPPC64()/*FIXME (64-bit): Remove.*/)) {
+      PPCFunctionInfo *FuncInfo = MF.getInfo<PPCFunctionInfo>();
+      FuncInfo->setSpillsCR();
+    }
+
     return;
   }
 
@@ -495,9 +518,9 @@ static void LoadRegFromStackSlot(const TargetInstrInfo &TII,
 
 void
 PPCInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
-                                      MachineBasicBlock::iterator MI,
-                                      unsigned DestReg, int FrameIdx,
-                                      const TargetRegisterClass *RC) const {
+                                   MachineBasicBlock::iterator MI,
+                                   unsigned DestReg, int FrameIdx,
+                                   const TargetRegisterClass *RC) const {
   SmallVector<MachineInstr*, 4> NewMIs;
   LoadRegFromStackSlot(*this, DestReg, FrameIdx, RC, NewMIs);
   for (unsigned i = 0, e = NewMIs.size(); i != e; ++i)
@@ -505,9 +528,9 @@ PPCInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
 }
 
 void PPCInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
-                                      SmallVectorImpl<MachineOperand> &Addr,
-                                      const TargetRegisterClass *RC,
-                                  SmallVectorImpl<MachineInstr*> &NewMIs) const{
+                                   SmallVectorImpl<MachineOperand> &Addr,
+                                   const TargetRegisterClass *RC,
+                                   SmallVectorImpl<MachineInstr*> &NewMIs)const{
   if (Addr[0].isFrameIndex()) {
     LoadRegFromStackSlot(*this, DestReg, Addr[0].getIndex(), RC, NewMIs);
     return;

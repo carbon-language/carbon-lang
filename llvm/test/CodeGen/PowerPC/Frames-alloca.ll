@@ -1,7 +1,7 @@
 ; RUN: llvm-as < %s | llc -march=ppc32 -mtriple=powerpc-apple-darwin8 | \
 ; RUN:   grep {stw r31, 20(r1)}
 ; RUN: llvm-as < %s | llc -march=ppc32 -mtriple=powerpc-apple-darwin8 | \
-; RUN:   grep {stwu r1, -64(r1)}
+; RUN:   grep {stwu r1, -80(r1)}
 ; RUN: llvm-as < %s | llc -march=ppc32 -mtriple=powerpc-apple-darwin8 | \
 ; RUN:   grep {lwz r1, 0(r1)}
 ; RUN: llvm-as < %s | llc -march=ppc32 -mtriple=powerpc-apple-darwin8 | \
@@ -9,7 +9,7 @@
 ; RUN: llvm-as < %s | llc -march=ppc32 -mtriple=powerpc-apple-darwin8 -disable-fp-elim | \
 ; RUN:   grep {stw r31, 20(r1)}
 ; RUN: llvm-as < %s | llc -march=ppc32 -mtriple=powerpc-apple-darwin8 -disable-fp-elim | \
-; RUN:   grep {stwu r1, -64(r1)}
+; RUN:   grep {stwu r1, -80(r1)}
 ; RUN: llvm-as < %s | llc -march=ppc32 -mtriple=powerpc-apple-darwin8 -disable-fp-elim | \
 ; RUN:   grep {lwz r1, 0(r1)}
 ; RUN: llvm-as < %s | llc -march=ppc32 -mtriple=powerpc-apple-darwin8 -disable-fp-elim | \

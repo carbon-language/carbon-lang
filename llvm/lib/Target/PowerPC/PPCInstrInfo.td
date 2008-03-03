@@ -371,6 +371,11 @@ let usesCustomDAGSchedInserter = 1,    // Expanded by the scheduler.
                               []>;
 }
 
+// SPILL_CR - Indicate that we're dumping the CR register, so we'll need to
+// scavenge a register for it.
+def SPILL_CR : Pseudo<(outs), (ins GPRC:$cond, memri:$F),
+                     "${:comment} SPILL_CR $cond $F", []>;
+
 let isTerminator = 1, isBarrier = 1, PPC970_Unit = 7 in {
   let isReturn = 1 in
     def BLR : XLForm_2_br<19, 16, 0, (outs), (ins pred:$p),
@@ -379,8 +384,6 @@ let isTerminator = 1, isBarrier = 1, PPC970_Unit = 7 in {
   let isBranch = 1, isIndirectBranch = 1 in
     def BCTR : XLForm_2_ext<19, 528, 20, 0, 0, (outs), (ins), "bctr", BrB, []>;
 }
-
-
 
 let Defs = [LR] in
   def MovePCtoLR : Pseudo<(outs), (ins piclabel:$label), "bl $label", []>,

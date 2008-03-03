@@ -96,9 +96,9 @@ public:
 
   /// setUsed / setUnused - Mark the state of one or a number of registers.
   ///
-  void setUsed(unsigned Reg)     { RegsAvailable.reset(Reg); }
+  void setUsed(unsigned Reg);
   void setUsed(BitVector Regs)   { RegsAvailable &= ~Regs; }
-  void setUnused(unsigned Reg)   { RegsAvailable.set(Reg); }
+  void setUnused(unsigned Reg);
   void setUnused(BitVector Regs) { RegsAvailable |= Regs; }
 
   /// FindUnusedReg - Find a unused register of the specified register class
