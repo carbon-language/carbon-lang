@@ -680,37 +680,40 @@ bool MachineInstr::addRegisterKilled(unsigned IncomingReg,
                                      bool AddIfNotFound) {
   // Go through the machine instruction's operands to eliminate any potentially
   // illegal conditions. I.e., a super- and sub-register both marked "kill".
- Restart:
-  for (unsigned i = 0, e = getNumOperands(); i < e; ++i) {
+  for (unsigned i = 0, e = getNumOperands(); i < e;) {
     MachineOperand &MO = getOperand(i);
-
     if (MO.isRegister() && MO.isUse()) {
       unsigned Reg = MO.getReg();
 
       if (!Reg || IncomingReg == Reg ||
           !TargetRegisterInfo::isPhysicalRegister(Reg) ||
-          !TargetRegisterInfo::isPhysicalRegister(IncomingReg))
+          !TargetRegisterInfo::isPhysicalRegister(IncomingReg)) {
+	++i;
         continue;
+      }
 
-      if (RegInfo->isSubRegister(IncomingReg, Reg)) {
-        if (MO.isKill()) {
-          if (MO.isImplicit()) {
-            // Remove this implicit use that marks the sub-register "kill". Let
-            // the super-register take care of this information.
-            RemoveOperand(i);
-            goto Restart;       // Instruction was modified, redo checking.
-          } else {
-            // The super-register is going to take care of this kill
-            // information.
-            MO.setIsKill(false);
-          }
-        }
-      } else if (RegInfo->isSuperRegister(IncomingReg, Reg) && MO.isKill()) {
+      if (RegInfo->isSuperRegister(IncomingReg, Reg) && MO.isKill())
         // The kill information is already handled by a super-register. Don't
         // add this sub-register as a kill.
         return true;
+
+      if (RegInfo->isSubRegister(IncomingReg, Reg) && MO.isKill()) {
+	if (MO.isImplicit()) {
+	  // Remove this implicit use that marks the sub-register
+	  // "kill". Let the super-register take care of this
+	  // information.
+	  RemoveOperand(i);
+	  e = getNumOperands();
+	  continue;
+	} else {
+	  // The super-register is going to take care of this kill
+	  // information.
+	  MO.setIsKill(false);
+        }
       }
     }
+
+    ++i;
   }
 
   // If the register already exists, then make sure it or its super-register is
@@ -725,13 +728,14 @@ bool MachineInstr::addRegisterKilled(unsigned IncomingReg,
       if (Reg == IncomingReg) {
         MO.setIsKill();
         return true;
-      } else if (TargetRegisterInfo::isPhysicalRegister(Reg) &&
-                 TargetRegisterInfo::isPhysicalRegister(IncomingReg) &&
-                 RegInfo->isSuperRegister(IncomingReg, Reg) &&
-                 MO.isKill()) {
+      }
+
+      if (TargetRegisterInfo::isPhysicalRegister(Reg) &&
+	  TargetRegisterInfo::isPhysicalRegister(IncomingReg) &&
+	  RegInfo->isSuperRegister(IncomingReg, Reg) &&
+	  MO.isKill())
         // A super-register kill already exists.
         return true;
-      }
     }
   }
 
