@@ -518,7 +518,7 @@ static Value *getVal(const Type *Ty, const ValID &ID) {
 
 /// defineBBVal - This is a definition of a new basic block with the specified
 /// identifier which must be the same as CurFun.NextValNum, if its numeric.
-static BasicBlock *defineBBVal(const ValID &ID) {
+static BasicBlock *defineBBVal(const ValID &ID, BasicBlock *unwindDest) {
   assert(inFunctionScope() && "Can't get basic block at global scope!");
 
   BasicBlock *BB = 0;
@@ -548,21 +548,19 @@ static BasicBlock *defineBBVal(const ValID &ID) {
       assert(ID.Num == CurFun.NextValNum && "Invalid new block number");
       InsertValue(BB);
     }
-
-    ID.destroy();
-    return BB;
-  } 
-  
-  // We haven't seen this BB before and its first mention is a definition. 
-  // Just create it and return it.
-  std::string Name (ID.Type == ValID::LocalName ? ID.getName() : "");
-  BB = new BasicBlock(Name, CurFun.CurrentFunction);
-  if (ID.Type == ValID::LocalID) {
-    assert(ID.Num == CurFun.NextValNum && "Invalid new block number");
-    InsertValue(BB);
+  } else { 
+    // We haven't seen this BB before and its first mention is a definition. 
+    // Just create it and return it.
+    std::string Name (ID.Type == ValID::LocalName ? ID.getName() : "");
+    BB = new BasicBlock(Name, CurFun.CurrentFunction);
+    if (ID.Type == ValID::LocalID) {
+      assert(ID.Num == CurFun.NextValNum && "Invalid new block number");
+      InsertValue(BB);
+    }
   }
 
-  ID.destroy(); // Free strdup'd memory
+  ID.destroy();
+  BB->setUnwindDest(unwindDest);
   return BB;
 }
 
@@ -1066,7 +1064,7 @@ Module *llvm::RunVMAsmParser(llvm::MemoryBuffer *MB) {
 %token OPAQUE EXTERNAL TARGET TRIPLE ALIGN ADDRSPACE
 %token DEPLIBS CALL TAIL ASM_TOK MODULE SIDEEFFECT
 %token CC_TOK CCC_TOK FASTCC_TOK COLDCC_TOK X86_STDCALLCC_TOK X86_FASTCALLCC_TOK
-%token DATALAYOUT
+%token DATALAYOUT UNWIND_TO
 %type <UIntVal> OptCallingConv
 %type <ParamAttrs> OptParamAttrs ParamAttr 
 %type <ParamAttrs> OptFuncAttrs  FuncAttr
@@ -2568,14 +2566,22 @@ InstructionList : InstructionList Inst {
     CHECK_FOR_ERROR
   }
   | /* empty */ {          // Empty space between instruction lists
-    $$ = defineBBVal(ValID::createLocalID(CurFun.NextValNum));
+    $$ = defineBBVal(ValID::createLocalID(CurFun.NextValNum), 0);
+    CHECK_FOR_ERROR
+  }
+  | UNWIND_TO ValueRef {   // Only the unwind to block
+    $$ = defineBBVal(ValID::createLocalID(CurFun.NextValNum), getBBVal($2));
     CHECK_FOR_ERROR
   }
   | LABELSTR {             // Labelled (named) basic block
-    $$ = defineBBVal(ValID::createLocalName(*$1));
+    $$ = defineBBVal(ValID::createLocalName(*$1), 0);
     delete $1;
     CHECK_FOR_ERROR
-
+  }
+  | LABELSTR UNWIND_TO ValueRef {
+    $$ = defineBBVal(ValID::createLocalName(*$1), getBBVal($3));
+    delete $1;
+    CHECK_FOR_ERROR
   };
 
 BBTerminatorInst : 
