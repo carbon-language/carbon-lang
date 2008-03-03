@@ -1984,15 +1984,15 @@ SDNode *DAGCombiner::MatchRotate(SDOperand LHS, SDOperand RHS) {
     
     // If there is an AND of either shifted operand, apply it to the result.
     if (LHSMask.Val || RHSMask.Val) {
-      uint64_t Mask = MVT::getIntVTBitMask(VT);
+      APInt Mask = APInt::getAllOnesValue(OpSizeInBits);
       
       if (LHSMask.Val) {
-        uint64_t RHSBits = (1ULL << LShVal)-1;
-        Mask &= cast<ConstantSDNode>(LHSMask)->getValue() | RHSBits;
+        APInt RHSBits = APInt::getLowBitsSet(OpSizeInBits, LShVal);
+        Mask &= cast<ConstantSDNode>(LHSMask)->getAPIntValue() | RHSBits;
       }
       if (RHSMask.Val) {
-        uint64_t LHSBits = ~((1ULL << (OpSizeInBits-RShVal))-1);
-        Mask &= cast<ConstantSDNode>(RHSMask)->getValue() | LHSBits;
+        APInt LHSBits = APInt::getHighBitsSet(OpSizeInBits, RShVal);
+        Mask &= cast<ConstantSDNode>(RHSMask)->getAPIntValue() | LHSBits;
       }
         
       Rot = DAG.getNode(ISD::AND, VT, Rot, DAG.getConstant(Mask, VT));
@@ -2248,8 +2248,8 @@ SDOperand DAGCombiner::visitShiftByConstant(SDNode *N, unsigned Amt) {
   // the constant which would cause it to be modified for this
   // operation.
   if (N->getOpcode() == ISD::SRA) {
-    uint64_t BinOpRHSSign = BinOpCst->getValue() >> (MVT::getSizeInBits(VT)-1);
-    if ((bool)BinOpRHSSign != HighBitSet)
+    bool BinOpRHSSignSet = BinOpCst->getAPIntValue().isNegative();
+    if (BinOpRHSSignSet != HighBitSet)
       return SDOperand();
   }
   
@@ -2872,7 +2872,8 @@ SDOperand DAGCombiner::visitZERO_EXTEND(SDNode *N) {
     } else if (X.getValueType() > VT) {
       X = DAG.getNode(ISD::TRUNCATE, VT, X);
     }
-    uint64_t Mask = cast<ConstantSDNode>(N0.getOperand(1))->getValue();
+    APInt Mask = cast<ConstantSDNode>(N0.getOperand(1))->getAPIntValue();
+    Mask.zext(MVT::getSizeInBits(VT));
     return DAG.getNode(ISD::AND, VT, X, DAG.getConstant(Mask, VT));
   }
   
@@ -2988,7 +2989,8 @@ SDOperand DAGCombiner::visitANY_EXTEND(SDNode *N) {
     } else if (X.getValueType() > VT) {
       X = DAG.getNode(ISD::TRUNCATE, VT, X);
     }
-    uint64_t Mask = cast<ConstantSDNode>(N0.getOperand(1))->getValue();
+    APInt Mask = cast<ConstantSDNode>(N0.getOperand(1))->getAPIntValue();
+    Mask.zext(MVT::getSizeInBits(VT));
     return DAG.getNode(ISD::AND, VT, X, DAG.getConstant(Mask, VT));
   }
   
@@ -3350,7 +3352,7 @@ SDOperand DAGCombiner::visitBIT_CONVERT(SDNode *N) {
     SDOperand NewConv = DAG.getNode(ISD::BIT_CONVERT, VT, N0.getOperand(0));
     AddToWorkList(NewConv.Val);
     
-    uint64_t SignBit = MVT::getIntVTSignBit(VT);
+    APInt SignBit = APInt::getSignBit(MVT::getSizeInBits(VT));
     if (N0.getOpcode() == ISD::FNEG)
       return DAG.getNode(ISD::XOR, VT, NewConv, DAG.getConstant(SignBit, VT));
     assert(N0.getOpcode() == ISD::FABS);
@@ -3383,7 +3385,7 @@ SDOperand DAGCombiner::visitBIT_CONVERT(SDNode *N) {
       AddToWorkList(X.Val);
     }
     
-    uint64_t SignBit = MVT::getIntVTSignBit(VT);
+    APInt SignBit = APInt::getSignBit(MVT::getSizeInBits(VT));
     X = DAG.getNode(ISD::AND, VT, X, DAG.getConstant(SignBit, VT));
     AddToWorkList(X.Val);
 
@@ -3457,7 +3459,7 @@ ConstantFoldBIT_CONVERTofBUILD_VECTOR(SDNode *BV, MVT::ValueType DstEltVT) {
     for (unsigned i = 0, e = BV->getNumOperands(); i != e;
          i += NumInputsPerOutput) {
       bool isLE = TLI.isLittleEndian();
-      uint64_t NewBits = 0;
+      APInt NewBits = APInt(DstBitSize, 0);
       bool EltIsUndef = true;
       for (unsigned j = 0; j != NumInputsPerOutput; ++j) {
         // Shift the previously computed bits over.
@@ -3466,7 +3468,8 @@ ConstantFoldBIT_CONVERTofBUILD_VECTOR(SDNode *BV, MVT::ValueType DstEltVT) {
         if (Op.getOpcode() == ISD::UNDEF) continue;
         EltIsUndef = false;
         
-        NewBits |= cast<ConstantSDNode>(Op)->getValue();
+        NewBits |=
+          APInt(cast<ConstantSDNode>(Op)->getAPIntValue()).zext(DstBitSize);
       }
       
       if (EltIsUndef)
@@ -3492,14 +3495,14 @@ ConstantFoldBIT_CONVERTofBUILD_VECTOR(SDNode *BV, MVT::ValueType DstEltVT) {
         Ops.push_back(DAG.getNode(ISD::UNDEF, DstEltVT));
       continue;
     }
-    uint64_t OpVal = cast<ConstantSDNode>(BV->getOperand(i))->getValue();
+    APInt OpVal = cast<ConstantSDNode>(BV->getOperand(i))->getAPIntValue();
     for (unsigned j = 0; j != NumOutputsPerInput; ++j) {
-      unsigned ThisVal = OpVal & ((1ULL << DstBitSize)-1);
+      APInt ThisVal = APInt(OpVal).trunc(DstBitSize);
       Ops.push_back(DAG.getConstant(ThisVal, DstEltVT));
-      if (isS2V && i == 0 && j == 0 && ThisVal == OpVal)
+      if (isS2V && i == 0 && j == 0 && APInt(ThisVal).zext(SrcBitSize) == OpVal)
         // Simply turn this into a SCALAR_TO_VECTOR of the new type.
         return DAG.getNode(ISD::SCALAR_TO_VECTOR, VT, Ops[0]);
-      OpVal >>= DstBitSize;
+      OpVal = OpVal.lshr(DstBitSize);
     }
 
     // For big endian targets, swap the order of the pieces of each element.
