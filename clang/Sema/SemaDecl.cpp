@@ -1998,6 +1998,14 @@ void Sema::HandleNoReturnAttribute(Decl *d, AttributeList *rawAttr) {
     return;
   }
   
+  FunctionDecl *Fn = dyn_cast<FunctionDecl>(d);
+  
+  if (!Fn) {
+    Diag(rawAttr->getLoc(), diag::warn_attribute_wrong_decl_type,
+         "noreturn", "function");
+    return;
+  }
+  
   d->addAttr(new NoReturnAttr());
 }
 
