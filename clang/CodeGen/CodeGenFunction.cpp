@@ -82,18 +82,17 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
   // FIXME: else handle -fvisibility
 
 
-  llvm::ParamAttrsVector ParamAttrsVec;
-
+  unsigned FuncAttrs = 0;
   if (FD->getAttr<NoThrowAttr>())
-    ParamAttrsVec.push_back(
-     llvm::ParamAttrsWithIndex::get(ParamAttrsVec.size(), llvm::ParamAttr::NoUnwind));
+    FuncAttrs |= llvm::ParamAttr::NoUnwind;
   if (FD->getAttr<NoReturnAttr>())
-    ParamAttrsVec.push_back(
-     llvm::ParamAttrsWithIndex::get(ParamAttrsVec.size(), llvm::ParamAttr::NoReturn));
-
-  if (!ParamAttrsVec.empty())
+    FuncAttrs |= llvm::ParamAttr::NoReturn;
+  
+  if (FuncAttrs) {
+    llvm::ParamAttrsVector ParamAttrsVec;
+    ParamAttrsVec.push_back(llvm::ParamAttrsWithIndex::get(0, FuncAttrs));
     CurFn->setParamAttrs(llvm::ParamAttrsList::get(ParamAttrsVec));
-
+  }
 
   llvm::BasicBlock *EntryBB = new llvm::BasicBlock("entry", CurFn);
   
