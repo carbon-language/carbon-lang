@@ -5760,9 +5760,10 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     Hi = DAG.getNode(ISD::UNDEF, NVT);
     break;
   case ISD::Constant: {
-    uint64_t Cst = cast<ConstantSDNode>(Node)->getValue();
-    Lo = DAG.getConstant(Cst, NVT);
-    Hi = DAG.getConstant(Cst >> MVT::getSizeInBits(NVT), NVT);
+    unsigned NVTBits = MVT::getSizeInBits(NVT);
+    const APInt &Cst = cast<ConstantSDNode>(Node)->getAPIntValue();
+    Lo = DAG.getConstant(APInt(Cst).trunc(NVTBits), NVT);
+    Hi = DAG.getConstant(Cst.lshr(NVTBits).trunc(NVTBits), NVT);
     break;
   }
   case ISD::ConstantFP: {
