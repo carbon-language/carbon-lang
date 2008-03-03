@@ -1518,17 +1518,13 @@ unsigned SelectionDAG::ComputeNumSignBits(SDOperand Op, unsigned Depth) const{
     return VTBits-Tmp;
     
   case ISD::Constant: {
-    uint64_t Val = cast<ConstantSDNode>(Op)->getValue();
-    // If negative, invert the bits, then look at it.
-    if (Val & MVT::getIntVTSignBit(VT))
-      Val = ~Val;
+    const APInt &Val = cast<ConstantSDNode>(Op)->getAPIntValue();
+    // If negative, return # leading ones.
+    if (Val.isNegative())
+      return Val.countLeadingOnes();
     
-    // Shift the bits so they are the leading bits in the int64_t.
-    Val <<= 64-VTBits;
-    
-    // Return # leading zeros.  We use 'min' here in case Val was zero before
-    // shifting.  We don't want to return '64' as for an i32 "0".
-    return std::min(VTBits, CountLeadingZeros_64(Val));
+    // Return # leading zeros.
+    return Val.countLeadingZeros();
   }
     
   case ISD::SIGN_EXTEND:
