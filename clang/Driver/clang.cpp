@@ -43,6 +43,7 @@
 #include "llvm/System/Signals.h"
 #include "llvm/Config/config.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/System/Path.h"
 #include <memory>
 #include <fstream>
 using namespace clang;
@@ -805,8 +806,8 @@ static void AddEnvVarPaths(const char *Name, HeaderSearch &Headers) {
 
 /// InitializeIncludePaths - Process the -I options and set them in the
 /// HeaderSearch object.
-static void InitializeIncludePaths(HeaderSearch &Headers, FileManager &FM,
-                                   const LangOptions &Lang) {
+static void InitializeIncludePaths(const char *Argv0, HeaderSearch &Headers,
+                                   FileManager &FM, const LangOptions &Lang) {
   // Handle -F... options.
   for (unsigned i = 0, e = F_dirs.size(); i != e; ++i)
     AddPath(F_dirs[i], Angled, false, true, true, Headers);
@@ -877,6 +878,16 @@ static void InitializeIncludePaths(HeaderSearch &Headers, FileManager &FM,
   else
     AddEnvVarPaths("C_INCLUDE_PATH", Headers);
 
+  // Add the clang headers, which are relative to the clang driver.
+  llvm::sys::Path MainExecutablePath = 
+     llvm::sys::Path::GetMainExecutable(Argv0, (void*)InitializeIncludePaths);
+  if (!MainExecutablePath.isEmpty()) {
+    MainExecutablePath.eraseComponent();  // Remove /clang from foo/bin/clang
+    MainExecutablePath.eraseComponent();  // Remove /bin   from foo/bin
+    MainExecutablePath.appendComponent("Headers"); // Get foo/Headers
+    AddPath(MainExecutablePath.c_str(), System, false, false, false, Headers);
+  }
+  
   // FIXME: temporary hack: hard-coded paths.
   // FIXME: get these from the target?
   if (!nostdinc) {
@@ -1230,7 +1241,7 @@ static bool isSerializedFile(const std::string& InFile) {
 
 
 int main(int argc, char **argv) {
-  llvm::cl::ParseCommandLineOptions(argc, argv, " llvm cfe\n");
+  llvm::cl::ParseCommandLineOptions(argc, argv, " llvm clang cfe\n");
   llvm::sys::PrintStackTraceOnErrorSignal();
   
   // If no input was specified, read from stdin.
@@ -1290,7 +1301,7 @@ int main(int argc, char **argv) {
       // Process the -I options and set them in the HeaderInfo.
       HeaderSearch HeaderInfo(FileMgr);
       DiagClient->setHeaderSearch(HeaderInfo);
-      InitializeIncludePaths(HeaderInfo, FileMgr, LangInfo);
+      InitializeIncludePaths(argv[0], HeaderInfo, FileMgr, LangInfo);
       
       // Get information about the targets being compiled for.  Note that this
       // pointer and the TargetInfoImpl objects are never deleted by this toy
