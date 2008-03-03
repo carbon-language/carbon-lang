@@ -25,6 +25,24 @@
 #include "llvm/ADT/STLExtras.h"
 using namespace llvm;
 
+/// setUsed - Set the register and its sub-registers as being used.
+void RegScavenger::setUsed(unsigned Reg) {
+  RegsAvailable.reset(Reg);
+
+  for (const unsigned *SubRegs = RegInfo->getSubRegisters(Reg);
+       unsigned SubReg = *SubRegs; ++SubRegs)
+    RegsAvailable.reset(SubReg);
+}
+
+/// setUnused - Set the register and its sub-registers as being unused.
+void RegScavenger::setUnused(unsigned Reg) {
+  RegsAvailable.set(Reg);
+
+  for (const unsigned *SubRegs = RegInfo->getSubRegisters(Reg);
+       unsigned SubReg = *SubRegs; ++SubRegs)
+    RegsAvailable.set(SubReg);
+}
+
 void RegScavenger::enterBasicBlock(MachineBasicBlock *mbb) {
   const MachineFunction &MF = *mbb->getParent();
   const TargetMachine &TM = MF.getTarget();
@@ -105,9 +123,10 @@ void RegScavenger::forward() {
     const MachineOperand &MO = MI->getOperand(i);
     if (!MO.isRegister() || !MO.isUse())
       continue;
+
     unsigned Reg = MO.getReg();
-    if (Reg == 0)
-      continue;
+    if (Reg == 0) continue;
+
     if (!isUsed(Reg)) {
       // Register has been scavenged. Restore it!
       if (Reg != ScavengedReg)
@@ -115,9 +134,16 @@ void RegScavenger::forward() {
       else
         restoreScavengedReg();
     }
-    if (MO.isKill() && !isReserved(Reg))
+
+    if (MO.isKill() && !isReserved(Reg)) {
       ChangedRegs.set(Reg);
+
+      for (const unsigned *SubRegs = RegInfo->getSubRegisters(Reg);
+           unsigned SubReg = *SubRegs; ++SubRegs)
+        ChangedRegs.set(SubReg);
+    }
   }
+
   // Change states of all registers after all the uses are processed to guard
   // against multiple uses.
   setUnused(ChangedRegs);
@@ -125,19 +151,24 @@ void RegScavenger::forward() {
   // Process defs.
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
+
     if (!MO.isRegister() || !MO.isDef())
       continue;
+
     unsigned Reg = MO.getReg();
+
     // If it's dead upon def, then it is now free.
     if (MO.isDead()) {
       setUnused(Reg);
       continue;
     }
+
     // Skip two-address destination operand.
     if (TID.findTiedToSrcOperand(i) != -1) {
       assert(isUsed(Reg) && "Using an undefined register!");
       continue;
     }
+
     assert((isUnused(Reg) || isReserved(Reg)) &&
            "Re-defining a live register!");
     setUsed(Reg);
@@ -177,6 +208,11 @@ void RegScavenger::backward() {
       continue;
     assert(isUnused(Reg) || isReserved(Reg));
     ChangedRegs.set(Reg);
+
+    // Set the sub-registers as "used".
+    for (const unsigned *SubRegs = RegInfo->getSubRegisters(Reg);
+         unsigned SubReg = *SubRegs; ++SubRegs)
+      ChangedRegs.set(SubReg);
   }
   setUsed(ChangedRegs);
 }
