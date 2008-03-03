@@ -13,7 +13,7 @@ int a() {
   f(); // expected-warning {{'f' is deprecated}}
 
   // test if attributes propagate to functions
-  g(); // todo-warning {{'g' is deprecated}}
+  g(); // expected-warning {{'g' is deprecated}}
 
   return var; // expected-warning {{'var' is deprecated}}
 }
@@ -21,5 +21,5 @@ int a() {
 // test if attributes propagate to variables
 extern int var;
 int w() {
-	return var; // todo-warning {{'var' is deprecated}}
+	return var; // expected-warning {{'var' is deprecated}}
 }
