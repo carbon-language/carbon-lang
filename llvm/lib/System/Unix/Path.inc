@@ -47,6 +47,10 @@
 # endif
 #endif
 
+#if HAVE_DLFCN_H
+#include <dlfcn.h>
+#endif
+
 // Put in a hack for Cygwin which falsely reports that the mkdtemp function
 // is available when it is not.
 #ifdef __CYGWIN__
@@ -243,6 +247,20 @@ Path::GetCurrentDirectory() {
   
   return Path(pathname);
 }
+
+/// GetMainExecutable - Return the path to the main executable, given the
+/// value of argv[0] from program startup.
+Path Path::GetMainExecutable(const char *argv0, void *MainAddr) {
+  // Use dladdr to get executable path if available.
+#ifdef HAVE_DLFCN_H
+  Dl_info DLInfo;
+  int err = dladdr(MainAddr, &DLInfo);
+  if (err != 0)
+    return Path(std::string(DLInfo.dli_fname));
+#endif
+  return Path();
+}
+
 
 std::string
 Path::getBasename() const {

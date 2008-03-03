@@ -161,6 +161,10 @@ namespace sys {
       /// @returns The dynamic link library suffix for the current platform.
       /// @brief Return the dynamic link library suffix.
       static std::string GetDLLSuffix();
+    
+      /// GetMainExecutable - Return the path to the main executable, given the
+      /// value of argv[0] from program startup and the address of main itself.
+      static Path GetMainExecutable(const char *argv0, void *MainAddr);
 
       /// This is one of the very few ways in which a path can be constructed
       /// with a syntactically invalid name. The only *legal* invalid name is an

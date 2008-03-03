@@ -214,6 +214,12 @@ Path::GetCurrentDirectory() {
   return Path(pathname);  
 }
 
+/// GetMainExecutable - Return the path to the main executable, given the
+/// value of argv[0] from program startup.
+Path Path::GetMainExecutable(const char *argv0, void *MainAddr) {
+  return Path();
+}
+
 
 // FIXME: the above set of functions don't map to Windows very well.
 
