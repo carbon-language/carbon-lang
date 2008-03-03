@@ -880,7 +880,8 @@ static void InitializeIncludePaths(const char *Argv0, HeaderSearch &Headers,
 
   // Add the clang headers, which are relative to the clang driver.
   llvm::sys::Path MainExecutablePath = 
-     llvm::sys::Path::GetMainExecutable(Argv0, (void*)InitializeIncludePaths);
+     llvm::sys::Path::GetMainExecutable(Argv0,
+                                    (void*)(intptr_t)InitializeIncludePaths);
   if (!MainExecutablePath.isEmpty()) {
     MainExecutablePath.eraseComponent();  // Remove /clang from foo/bin/clang
     MainExecutablePath.eraseComponent();  // Remove /bin   from foo/bin
