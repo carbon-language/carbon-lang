@@ -18,6 +18,7 @@
 #include "clang/AST/CFG.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/FoldingSet.h"
 #include <cassert>
 
 namespace clang {
@@ -45,7 +46,12 @@ public:
   
   static bool classof(const ProgramPoint*) { return true; }
   bool operator==(const ProgramPoint & RHS) const { return Data == RHS.Data; }
-  bool operator!=(const ProgramPoint& RHS) const { return Data != RHS.Data; }  
+  bool operator!=(const ProgramPoint& RHS) const { return Data != RHS.Data; }
+  
+  void Profile(llvm::FoldingSetNodeID& ID) const {
+    ID.AddInteger(getKind());
+    ID.AddPointer(getRawPtr());
+  }    
 };
                
 class BlockEntrance : public ProgramPoint {

@@ -203,10 +203,6 @@ protected:
   friend class GRSwitchNodeBuilderImpl;
   
   // Type definitions.
-  typedef llvm::DenseMap<ProgramPoint, 
-                         llvm::FoldingSet<clang::ExplodedNodeImpl>*> 
-          EdgeNodeSetMap;
-  
   typedef llvm::SmallVector<ExplodedNodeImpl*,2>    RootsTy;
   typedef llvm::SmallVector<ExplodedNodeImpl*,10>   EndNodesTy;
     
@@ -219,9 +215,6 @@ protected:
   /// EndNodes - The nodes in the simulation graph which have been
   ///  specially marked as the endpoint of an abstract simulation path.
   EndNodesTy EndNodes;
-    
-  /// Nodes - A mapping from edges to nodes.
-  EdgeNodeSetMap Nodes;
   
   /// Allocator - BumpPtrAllocator to create nodes.
   llvm::BumpPtrAllocator Allocator;
@@ -261,7 +254,7 @@ protected:
     : cfg(c), FD(f), Ctx(ctx), NumNodes(0) {}
 
 public:
-  virtual ~ExplodedGraphImpl();
+  virtual ~ExplodedGraphImpl() {}
 
   unsigned num_roots() const { return Roots.size(); }
   unsigned num_eops() const { return EndNodes.size(); }
@@ -280,11 +273,15 @@ class ExplodedGraph : public ExplodedGraphImpl {
 public:
   typedef CHECKER                     CheckerTy;
   typedef typename CHECKER::StateTy   StateTy;
-  typedef ExplodedNode<StateTy>       NodeTy;
+  typedef ExplodedNode<StateTy>       NodeTy;  
+  typedef llvm::FoldingSet<NodeTy>    AllNodesTy;
   
 protected:  
   llvm::OwningPtr<CheckerTy> CheckerState;
 
+  /// Nodes - The nodes in the graph.
+  AllNodesTy Nodes;
+  
 protected:
   virtual ExplodedNodeImpl*
   getNodeImpl(const ProgramPoint& L, void* State, bool* IsNew) {
@@ -306,19 +303,13 @@ public:
   ///  the node was freshly created.
   NodeTy* getNode(const ProgramPoint& L, StateTy State, bool* IsNew = NULL) {
     
-    // Retrieve the node set associated with Loc.
-    llvm::FoldingSet<NodeTy>*& VSet =
-       reinterpret_cast<llvm::FoldingSet<NodeTy>*&>(Nodes[L]);
-    
-    // Create the FoldingSet for the nodes if it does not exist yet.
-    if (!VSet) VSet = new llvm::FoldingSet<NodeTy>();
-    
     // Profile 'State' to determine if we already have an existing node.
     llvm::FoldingSetNodeID profile;    
     void* InsertPos = 0;
     
     GRTrait<StateTy>::Profile(profile, State);
-    NodeTy* V = VSet->FindNodeOrInsertPos(profile, InsertPos);
+    profile.Add(L);
+    NodeTy* V = Nodes.FindNodeOrInsertPos(profile, InsertPos);
 
     if (!V) {
       // Allocate a new node.
@@ -326,7 +317,7 @@ public:
       new (V) NodeTy(L, State);
       
       // Insert the node into the node set and return it.
-      VSet->InsertNode(V, InsertPos);
+      Nodes.InsertNode(V, InsertPos);
       
       ++NumNodes;
       
