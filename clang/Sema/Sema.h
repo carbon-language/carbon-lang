@@ -273,6 +273,13 @@ private:
   void HandlePackedAttribute(Decl *d, AttributeList *rawAttr);
   void HandleAnnotateAttribute(Decl *d, AttributeList *rawAttr);
   void HandleNoReturnAttribute(Decl *d, AttributeList *rawAttr);
+  void HandleDeprecatedAttribute(Decl *d, AttributeList *rawAttr);
+  void HandleWeakAttribute(Decl *d, AttributeList *rawAttr);
+  void HandleDLLImportAttribute(Decl *d, AttributeList *rawAttr);
+  void HandleDLLExportAttribute(Decl *d, AttributeList *rawAttr);
+  void HandleVisibilityAttribute(Decl *d, AttributeList *rawAttr);
+  void HandleNothrowAttribute(Decl *d, AttributeList *rawAttr);
+  void HandleFormatAttribute(Decl *d, AttributeList *rawAttr);
   
   void WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
                            bool &IncompleteImpl);

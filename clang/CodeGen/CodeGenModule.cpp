@@ -242,25 +242,38 @@ void CodeGenModule::EmitGlobalVar(const FileVarDecl *D) {
   assert(GV->getType()->getElementType() == Init->getType() &&
          "Initializer codegen type mismatch!");
   GV->setInitializer(Init);
+
+  if (const VisibilityAttr *attr = D->getAttr<VisibilityAttr>())
+    GV->setVisibility(attr->getVisibility());
+  // FIXME: else handle -fvisibility
   
   // Set the llvm linkage type as appropriate.
-  // FIXME: This isn't right.  This should handle common linkage and other
-  // stuff.
-  switch (D->getStorageClass()) {
-  case VarDecl::Auto:
-  case VarDecl::Register:
-    assert(0 && "Can't have auto or register globals");
-  case VarDecl::None:
-    if (!D->getInit())
-      GV->setLinkage(llvm::GlobalVariable::WeakLinkage);
-    break;
-  case VarDecl::Extern:
-  case VarDecl::PrivateExtern:
-    // todo: common
-    break;
-  case VarDecl::Static:
-    GV->setLinkage(llvm::GlobalVariable::InternalLinkage);
-    break;
+  if (D->getAttr<DLLImportAttr>())
+    GV->setLinkage(llvm::Function::DLLImportLinkage);
+  else if (D->getAttr<DLLExportAttr>())
+    GV->setLinkage(llvm::Function::DLLExportLinkage);
+  else if (D->getAttr<WeakAttr>()) {
+    GV->setLinkage(llvm::GlobalVariable::WeakLinkage);
+
+  } else {
+    // FIXME: This isn't right.  This should handle common linkage and other
+    // stuff.
+    switch (D->getStorageClass()) {
+    case VarDecl::Auto:
+    case VarDecl::Register:
+      assert(0 && "Can't have auto or register globals");
+    case VarDecl::None:
+      if (!D->getInit())
+        GV->setLinkage(llvm::GlobalVariable::WeakLinkage);
+      break;
+    case VarDecl::Extern:
+    case VarDecl::PrivateExtern:
+      // todo: common
+      break;
+    case VarDecl::Static:
+      GV->setLinkage(llvm::GlobalVariable::InternalLinkage);
+      break;
+    }
   }
 }
 

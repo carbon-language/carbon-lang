@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_AST_ATTR_H
 #define LLVM_CLANG_AST_ATTR_H
 
+#include "llvm/GlobalValue.h"
 #include <cassert>
 #include <string>
 
@@ -27,7 +28,13 @@ public:
     Packed,
     Annotate,
     NoReturn,
-    Deprecated
+    Deprecated,
+    Weak,
+    DLLImport,
+    DLLExport,
+    NoThrow,
+    Format,
+    Visibility
   };
     
 private:
@@ -116,6 +123,77 @@ public:
 
   static bool classof(const Attr *A) { return A->getKind() == Deprecated; }
   static bool classof(const DeprecatedAttr *A) { return true; }
+};
+
+class WeakAttr : public Attr {
+public:
+  WeakAttr() : Attr(Weak) {}
+
+  // Implement isa/cast/dyncast/etc.
+
+  static bool classof(const Attr *A) { return A->getKind() == Weak; }
+  static bool classof(const WeakAttr *A) { return true; }
+};
+
+class NoThrowAttr : public Attr {
+public:
+  NoThrowAttr() : Attr(NoThrow) {}
+
+  // Implement isa/cast/dyncast/etc.
+
+  static bool classof(const Attr *A) { return A->getKind() == NoThrow; }
+  static bool classof(const NoThrowAttr *A) { return true; }
+};
+
+class FormatAttr : public Attr {
+  std::string Type;
+  int formatIdx, firstArg;
+public:
+  FormatAttr(const std::string &type, int idx, int first) : Attr(Format),
+             Type(type), formatIdx(idx), firstArg(first) {}
+
+  const std::string& getType() const { return Type; }
+  int getFormatIdx() const { return formatIdx; }
+  int getFirstArg() const { return firstArg; }
+
+  // Implement isa/cast/dyncast/etc.
+
+  static bool classof(const Attr *A) { return A->getKind() == Format; }
+  static bool classof(const FormatAttr *A) { return true; }
+};
+
+class VisibilityAttr : public Attr {
+  llvm::GlobalValue::VisibilityTypes VisibilityType;
+public:
+  VisibilityAttr(llvm::GlobalValue::VisibilityTypes v) : Attr(Visibility),
+                 VisibilityType(v) {}
+
+  llvm::GlobalValue::VisibilityTypes getVisibility() const { return VisibilityType; }
+
+  // Implement isa/cast/dyncast/etc.
+
+  static bool classof(const Attr *A) { return A->getKind() == Visibility; }
+  static bool classof(const VisibilityAttr *A) { return true; }
+};
+
+class DLLImportAttr : public Attr {
+public:
+  DLLImportAttr() : Attr(DLLImport) {}
+
+  // Implement isa/cast/dyncast/etc.
+
+  static bool classof(const Attr *A) { return A->getKind() == DLLImport; }
+  static bool classof(const DLLImportAttr *A) { return true; }
+};
+
+class DLLExportAttr : public Attr {
+public:
+  DLLExportAttr() : Attr(DLLExport) {}
+
+  // Implement isa/cast/dyncast/etc.
+
+  static bool classof(const Attr *A) { return A->getKind() == DLLExport; }
+  static bool classof(const DLLExportAttr *A) { return true; }
 };
 
 }  // end namespace clang

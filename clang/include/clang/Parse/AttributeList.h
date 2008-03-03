@@ -50,7 +50,19 @@ public:
     AT_packed,
     AT_annotate,
     AT_noreturn,
-    AT_deprecated
+    AT_deprecated,
+    AT_unused,
+    AT_format,
+    AT_nonnull,
+    AT_malloc,
+    AT_pure,
+    AT_weak,
+    AT_dllimport,
+    AT_dllexport,
+    AT_visibility,
+    AT_nothrow,
+    AT_noinline,
+    AT_warn_unused_result
   };
   
   IdentifierInfo *getName() const { return AttrName; }

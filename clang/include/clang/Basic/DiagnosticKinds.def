@@ -567,6 +567,14 @@ DIAG(err_attribute_invalid_vector_type, ERROR,
      "invalid vector type '%0'")
 DIAG(err_attribute_argument_not_int, ERROR,
      "'%0' attribute requires integer constant")
+DIAG(err_attribute_argument_n_not_int, ERROR,
+     "'%0' attribute requires parameter %1 to be an integer constant")
+DIAG(err_attribute_argument_n_not_string, ERROR,
+     "'%0' attribute requires parameter %1 to be a string")
+DIAG(err_attribute_argument_out_of_bounds, ERROR,
+     "'%0' attribute parameter %1 is out of bounds")
+DIAG(err_format_strftime_third_parameter, ERROR,
+     "strftime format attribute requires 3rd parameter to be 0")
 DIAG(err_attribute_invalid_size, ERROR,
      "vector size not an integral multiple of component size")
 DIAG(err_attribute_zero_size, ERROR,
@@ -589,8 +597,12 @@ DIAG(err_attribute_annotate_no_string, ERROR,
      "argument to annotate attribute was not a string literal")
 DIAG(warn_attribute_ignored, WARNING,
   "'%0' attribute ignored")
+DIAG(warn_attribute_wrong_decl_type, WARNING,
+  "'%0' attribute only applies to %1 types")
 DIAG(warn_attribute_ignored_for_field_of_type, WARNING,
   "'%0' attribute ignored for field of type '%1'")
+DIAG(warn_attribute_type_not_supported, WARNING,
+  "'%0' attribute argument not supported: '%1'")
 
 // Function Parameter Semantic Analysis.
 DIAG(err_param_with_void_type, ERROR,

@@ -51,18 +51,33 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
   }
 
   switch (Len) {
-  case 6: 
+  case 4:
+    if (!memcmp(Str, "weak", 4)) return AT_weak;
+    if (!memcmp(Str, "pure", 4)) return AT_pure;
+    break;
+  case 6:
     if (!memcmp(Str, "packed", 6)) return AT_packed;
+    if (!memcmp(Str, "malloc", 6)) return AT_malloc;
+    if (!memcmp(Str, "format", 6)) return AT_format;
+    if (!memcmp(Str, "unused", 6)) return AT_unused;
     break;
   case 7:
     if (!memcmp(Str, "aligned", 7)) return AT_aligned;
+    if (!memcmp(Str, "nothrow", 7)) return AT_nothrow;
+    if (!memcmp(Str, "nonnull", 7)) return AT_nonnull;
     break;
   case 8:
     if (!memcmp(Str, "annotate", 8)) return AT_annotate;
     if (!memcmp(Str, "noreturn", 8)) return AT_noreturn;
+    if (!memcmp(Str, "noinline", 8)) return AT_noinline;
+    break;
+  case 9:
+    if (!memcmp(Str, "dllimport", 9)) return AT_dllimport;
+    if (!memcmp(Str, "dllexport", 9)) return AT_dllexport;
     break;
   case 10:
     if (!memcmp(Str, "deprecated", 10)) return AT_deprecated;
+    if (!memcmp(Str, "visibility", 10)) return AT_visibility;
     break;
   case 11:
     if (!memcmp(Str, "vector_size", 11)) return AT_vector_size;
@@ -73,6 +88,9 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
   case 15:
     if (!memcmp(Str, "ocu_vector_type", 15)) return AT_ocu_vector_type;
     break;
-  }      
+  case 18:
+    if (!memcmp(Str, "warn_unused_result", 18)) return AT_warn_unused_result;
+    break;
+  }
   return UnknownAttribute;
 }

@@ -18,6 +18,7 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
+#include "llvm/ParamAttrsList.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Support/CFG.h"
 using namespace clang;
@@ -67,11 +68,33 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
   
   // TODO: Set up linkage and many other things.  Note, this is a simple 
   // approximation of what we really want.
-  if (FD->getStorageClass() == FunctionDecl::Static)
-    CurFn->setLinkage(llvm::Function::InternalLinkage);
-  else if (FD->isInline())
+  if (FD->getAttr<DLLImportAttr>())
+    CurFn->setLinkage(llvm::Function::DLLImportLinkage);
+  else if (FD->getAttr<DLLExportAttr>())
+    CurFn->setLinkage(llvm::Function::DLLExportLinkage);
+  else if (FD->getAttr<WeakAttr>() || FD->isInline())
     CurFn->setLinkage(llvm::Function::WeakLinkage);
-  
+  else if (FD->getStorageClass() == FunctionDecl::Static)
+    CurFn->setLinkage(llvm::Function::InternalLinkage);
+
+  if (const VisibilityAttr *attr = FD->getAttr<VisibilityAttr>())
+    CurFn->setVisibility(attr->getVisibility());
+  // FIXME: else handle -fvisibility
+
+
+  llvm::ParamAttrsVector ParamAttrsVec;
+
+  if (FD->getAttr<NoThrowAttr>())
+    ParamAttrsVec.push_back(
+     llvm::ParamAttrsWithIndex::get(ParamAttrsVec.size(), llvm::ParamAttr::NoUnwind));
+  if (FD->getAttr<NoReturnAttr>())
+    ParamAttrsVec.push_back(
+     llvm::ParamAttrsWithIndex::get(ParamAttrsVec.size(), llvm::ParamAttr::NoReturn));
+
+  if (!ParamAttrsVec.empty())
+    CurFn->setParamAttrs(llvm::ParamAttrsList::get(ParamAttrsVec));
+
+
   llvm::BasicBlock *EntryBB = new llvm::BasicBlock("entry", CurFn);
   
   // Create a marker to make it easy to insert allocas into the entryblock

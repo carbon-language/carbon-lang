@@ -242,6 +242,33 @@ TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, ScopedDecl *OldD) {
   return New;
 }
 
+/// DeclhasAttr - returns true if decl Declaration already has the target attribute.
+static bool DeclHasAttr(const Decl *decl, const Attr *target) {
+  for (const Attr *attr = decl->getAttrs(); attr; attr = attr->getNext())
+    if (attr->getKind() == target->getKind())
+      return true;
+
+  return false;
+}
+
+/// MergeAttributes - append attributes from the Old decl to the New one.
+static void MergeAttributes(Decl *New, Decl *Old) {
+  Attr *attr = const_cast<Attr*>(Old->getAttrs()), *tmp;
+
+// FIXME: fix this code to cleanup the Old attrs correctly
+  while (attr) {
+     tmp = attr;
+     attr = attr->getNext();
+
+    if (!DeclHasAttr(New, tmp)) {
+       New->addAttr(tmp);
+    } else {
+       tmp->setNext(0);
+       delete(tmp);
+    }
+  }
+}
+
 /// MergeFunctionDecl - We just parsed a function 'New' which has the same name
 /// and scope as a previous declaration 'Old'.  Figure out how to resolve this
 /// situation, merging decls or emitting diagnostics as appropriate.
@@ -256,7 +283,8 @@ FunctionDecl *Sema::MergeFunctionDecl(FunctionDecl *New, ScopedDecl *OldD) {
     return New;
   }
 
-  // FIXME: propagate old Attrs to the New decl
+  MergeAttributes(New, Old);
+
   
   QualType OldQType = Old->getCanonicalType();
   QualType NewQType = New->getCanonicalType();
@@ -326,6 +354,9 @@ VarDecl *Sema::MergeVarDecl(VarDecl *New, ScopedDecl *OldD) {
     Diag(OldD->getLocation(), diag::err_previous_definition);
     return New;
   }
+
+  MergeAttributes(New, Old);
+
   // Verify the types match.
   if (Old->getCanonicalType() != New->getCanonicalType() && 
       !areEquivalentArrayTypes(New->getCanonicalType(), Old->getCanonicalType())) {
@@ -1781,7 +1812,22 @@ void Sema::HandleDeclAttribute(Decl *New, AttributeList *Attr) {
     }
     break;
   case AttributeList::AT_deprecated:
-    New->addAttr(new DeprecatedAttr());
+    HandleDeprecatedAttribute(New, Attr);
+    break;
+  case AttributeList::AT_visibility:
+    HandleVisibilityAttribute(New, Attr);
+    break;
+  case AttributeList::AT_weak:
+    HandleWeakAttribute(New, Attr);
+    break;
+  case AttributeList::AT_dllimport:
+    HandleDLLImportAttribute(New, Attr);
+    break;
+  case AttributeList::AT_dllexport:
+    HandleDLLExportAttribute(New, Attr);
+    break;
+  case AttributeList::AT_nothrow:
+    HandleNothrowAttribute(New, Attr);
     break;
   case AttributeList::AT_aligned:
     HandleAlignedAttribute(New, Attr);
@@ -1794,6 +1840,9 @@ void Sema::HandleDeclAttribute(Decl *New, AttributeList *Attr) {
     break;
   case AttributeList::AT_noreturn:
     HandleNoReturnAttribute(New, Attr);
+    break;
+  case AttributeList::AT_format:
+    HandleFormatAttribute(New, Attr);
     break;
   default:
 #if 0
@@ -1950,6 +1999,177 @@ void Sema::HandleNoReturnAttribute(Decl *d, AttributeList *rawAttr) {
   }
   
   d->addAttr(new NoReturnAttr());
+}
+
+void Sema::HandleDeprecatedAttribute(Decl *d, AttributeList *rawAttr) {
+  // check the attribute arguments.
+  if (rawAttr->getNumArgs() != 0) {
+    Diag(rawAttr->getLoc(), diag::err_attribute_wrong_number_arguments,
+         std::string("0"));
+    return;
+  }
+
+  d->addAttr(new DeprecatedAttr());
+}
+
+void Sema::HandleVisibilityAttribute(Decl *d, AttributeList *rawAttr) {
+  // check the attribute arguments.
+  if (rawAttr->getNumArgs() != 0) {
+    Diag(rawAttr->getLoc(), diag::err_attribute_wrong_number_arguments,
+         std::string("1"));
+    return;
+  }
+
+  if (!rawAttr->getParameterName()) {
+    Diag(rawAttr->getLoc(), diag::err_attribute_argument_n_not_string,
+           "visibility", std::string("1"));
+    return;
+  }
+
+  const char *typeStr = rawAttr->getParameterName()->getName();
+  llvm::GlobalValue::VisibilityTypes type;
+
+  if (!memcmp(typeStr, "default", 7))
+    type = llvm::GlobalValue::DefaultVisibility;
+  else if (!memcmp(typeStr, "hidden", 6))
+    type = llvm::GlobalValue::HiddenVisibility;
+  else if (!memcmp(typeStr, "internal", 8))
+    type = llvm::GlobalValue::HiddenVisibility; // FIXME
+  else if (!memcmp(typeStr, "protected", 9))
+    type = llvm::GlobalValue::ProtectedVisibility;
+  else {
+    Diag(rawAttr->getLoc(), diag::warn_attribute_type_not_supported,
+           "visibility", typeStr);
+    return;
+  }
+
+  d->addAttr(new VisibilityAttr(type));
+}
+
+void Sema::HandleWeakAttribute(Decl *d, AttributeList *rawAttr) {
+  // check the attribute arguments.
+  if (rawAttr->getNumArgs() != 0) {
+    Diag(rawAttr->getLoc(), diag::err_attribute_wrong_number_arguments,
+         std::string("0"));
+    return;
+  }
+
+  d->addAttr(new WeakAttr());
+}
+
+void Sema::HandleDLLImportAttribute(Decl *d, AttributeList *rawAttr) {
+  // check the attribute arguments.
+  if (rawAttr->getNumArgs() != 0) {
+    Diag(rawAttr->getLoc(), diag::err_attribute_wrong_number_arguments,
+         std::string("0"));
+    return;
+  }
+
+  d->addAttr(new DLLImportAttr());
+}
+
+void Sema::HandleDLLExportAttribute(Decl *d, AttributeList *rawAttr) {
+  // check the attribute arguments.
+  if (rawAttr->getNumArgs() != 0) {
+    Diag(rawAttr->getLoc(), diag::err_attribute_wrong_number_arguments,
+         std::string("0"));
+    return;
+  }
+
+  d->addAttr(new DLLExportAttr());
+}
+
+void Sema::HandleNothrowAttribute(Decl *d, AttributeList *rawAttr) {
+  // check the attribute arguments.
+  if (rawAttr->getNumArgs() != 0) {
+    Diag(rawAttr->getLoc(), diag::err_attribute_wrong_number_arguments,
+         std::string("0"));
+    return;
+  }
+
+  d->addAttr(new NoThrowAttr());
+}
+
+void Sema::HandleFormatAttribute(Decl *d, AttributeList *rawAttr) {
+
+  if (!rawAttr->getParameterName()) {
+    Diag(rawAttr->getLoc(), diag::err_attribute_argument_n_not_string,
+           "format", std::string("1"));
+    return;
+  }
+
+  if (rawAttr->getNumArgs() != 2) {
+    Diag(rawAttr->getLoc(), diag::err_attribute_wrong_number_arguments,
+         std::string("3"));
+    return;
+  }
+
+  FunctionDecl *Fn = dyn_cast<FunctionDecl>(d);
+  if (!Fn) {
+    Diag(rawAttr->getLoc(), diag::warn_attribute_wrong_decl_type,
+           "format", "function");
+    return;
+  }
+
+  // FIXME: in C++ the implicit 'this' function parameter also counts.
+  // the index must start in 1 and the limit is numargs+1
+  unsigned NumArgs = Fn->getNumParams()+1; // +1 for ...
+
+  const char *Format = rawAttr->getParameterName()->getName();
+  unsigned FormatLen = rawAttr->getParameterName()->getLength();
+
+  // Normalize the argument, __foo__ becomes foo.
+  if (FormatLen > 4 && Format[0] == '_' && Format[1] == '_' &&
+      Format[FormatLen - 2] == '_' && Format[FormatLen - 1] == '_') {
+    Format += 2;
+    FormatLen -= 4;
+  }
+
+  if (!((FormatLen == 5 && !memcmp(Format, "scanf", 5))
+     || (FormatLen == 6 && !memcmp(Format, "printf", 6))
+     || (FormatLen == 7 && !memcmp(Format, "strfmon", 7))
+     || (FormatLen == 8 && !memcmp(Format, "strftime", 8)))) {
+    Diag(rawAttr->getLoc(), diag::warn_attribute_type_not_supported,
+           "format", rawAttr->getParameterName()->getName());
+    return;
+  }
+
+  Expr *IdxExpr = static_cast<Expr *>(rawAttr->getArg(0));
+  llvm::APSInt Idx(32);
+  if (!IdxExpr->isIntegerConstantExpr(Idx, Context)) {
+    Diag(rawAttr->getLoc(), diag::err_attribute_argument_n_not_int,
+           "format", std::string("2"), IdxExpr->getSourceRange());
+    return;
+  }
+
+  if (Idx.getZExtValue() < 1 || Idx.getZExtValue() > NumArgs) {
+    Diag(rawAttr->getLoc(), diag::err_attribute_argument_out_of_bounds,
+           "format", std::string("2"), IdxExpr->getSourceRange());
+    return;
+  }
+
+  Expr *FirstArgExpr = static_cast<Expr *>(rawAttr->getArg(1));
+  llvm::APSInt FirstArg(32);
+  if (!FirstArgExpr->isIntegerConstantExpr(FirstArg, Context)) {
+    Diag(rawAttr->getLoc(), diag::err_attribute_argument_n_not_int,
+           "format", std::string("3"), FirstArgExpr->getSourceRange());
+    return;
+  }
+
+  if (FormatLen == 8 && !memcmp(Format, "strftime", 8)) {
+    if (FirstArg.getZExtValue() != 0) {
+      Diag(rawAttr->getLoc(), diag::err_format_strftime_third_parameter,
+             FirstArgExpr->getSourceRange());
+      return;
+    }
+  } else if (FirstArg.getZExtValue() > NumArgs) {
+    Diag(rawAttr->getLoc(), diag::err_attribute_argument_out_of_bounds,
+           "format", std::string("3"), FirstArgExpr->getSourceRange());
+    return;
+  }
+
+  d->addAttr(new FormatAttr(std::string(Format, FormatLen),
+                            Idx.getZExtValue(), FirstArg.getZExtValue()));
 }
 
 void Sema::HandleAnnotateAttribute(Decl *d, AttributeList *rawAttr) {
