@@ -320,7 +320,10 @@ protected:
   ValueState* AssumeSymInt(ValueState* St, bool Assumption,
                            const SymIntConstraint& C, bool& isFeasible);
   
-  NodeTy* Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred, ValueState* St);
+  NodeTy* Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred, ValueState* St) {
+    assert (Builder && "GRStmtNodeBuilder not present.");
+    return Builder->Nodify(Dst, S, Pred, St);
+  }
   
 #if 0
   /// Nodify - This version of Nodify is used to batch process a set of states.

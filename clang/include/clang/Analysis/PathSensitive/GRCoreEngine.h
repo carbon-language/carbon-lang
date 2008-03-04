@@ -184,7 +184,22 @@ public:
   NodeTy* generateNode(Stmt* S, StateTy State) {
     void *state = GRTrait<StateTy>::toPtr(State);
     return static_cast<NodeTy*>(NB.generateNodeImpl(S, state));    
-  }  
+  }
+  
+  NodeTy* Nodify(ExplodedNodeSet<NodeTy> Dst, Stmt* S,
+                 NodeTy* Pred, StateTy St) {
+    
+    // If the state hasn't changed, don't generate a new node.
+    if (St == Pred->getState()) {
+      Dst.Add(Pred);
+      return NULL;
+    }
+    
+    NodeTy* N = generateNode(S, St, Pred);
+    Dst.Add(N);
+    return N;
+  }
+  
 };
   
 class GRBranchNodeBuilderImpl {

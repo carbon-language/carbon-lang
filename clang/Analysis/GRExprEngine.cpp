@@ -433,30 +433,6 @@ void GRExprEngine::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
   Builder = NULL;
 }
 
-GRExprEngine::NodeTy*
-GRExprEngine::Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred, ValueState* St) {
- 
-  // If the state hasn't changed, don't generate a new node.
-  if (St == Pred->getState()) {
-    Dst.Add(Pred);
-    return NULL;
-  }
-  
-  NodeTy* N = Builder->generateNode(S, St, Pred);
-  Dst.Add(N);
-  
-  return N;
-}
-
-#if 0
-void GRExprEngine::Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred,
-                         const ValueState::BufferTy& SB) {
-  
-  for (ValueState::BufferTy::const_iterator I=SB.begin(), E=SB.end(); I!=E; ++I)
-    Nodify(Dst, S, Pred, *I);
-}
-#endif
-
 void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* D, NodeTy* Pred, NodeSet& Dst){
 
   if (D != CurrentStmt) {
