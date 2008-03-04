@@ -198,11 +198,20 @@ static void getSymbols(Module*M, std::vector<std::string>& symbols) {
       if (!GI->getName().empty())
         symbols.push_back(GI->getName());
   
-  // Loop over functions.
+  // Loop over functions
   for (Module::iterator FI = M->begin(), FE = M->end(); FI != FE; ++FI)
     if (!FI->isDeclaration() && !FI->hasInternalLinkage())
       if (!FI->getName().empty())
         symbols.push_back(FI->getName());
+
+  // Loop over aliases
+  for (Module::alias_iterator AI = M->alias_begin(), AE = M->alias_end();
+       AI != AE; ++AI) {
+    const GlobalValue *Aliased = AI->getAliasedGlobal();
+    if (!Aliased->isDeclaration())
+      if (AI->hasName())
+        symbols.push_back(AI->getName());
+  }
 }
 
 // Get just the externally visible defined symbols from the bitcode
