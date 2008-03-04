@@ -1417,7 +1417,8 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     const Type *TheType = Operand->getType();
 
     // Select, Store and ShuffleVector always print all types.
-    if (isa<SelectInst>(I) || isa<StoreInst>(I) || isa<ShuffleVectorInst>(I)) {
+    if (isa<SelectInst>(I) || isa<StoreInst>(I) || isa<ShuffleVectorInst>(I)
+        || isa<ReturnInst>(I)) {
       PrintAllTypes = true;
     } else {
       for (unsigned i = 1, E = I.getNumOperands(); i != E; ++i) {
