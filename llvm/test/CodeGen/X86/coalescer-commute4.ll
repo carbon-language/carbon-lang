@@ -1,7 +1,7 @@
 ; RUN: llvm-as < %s | llc -mtriple=i686-apple-darwin -mattr=+sse2 | not grep movaps
 ; PR1501
 
-efine float @foo(i32* %x, float* %y, i32 %c) nounwind  {
+define float @foo(i32* %x, float* %y, i32 %c) nounwind  {
 entry:
 	%tmp2132 = icmp eq i32 %c, 0		; <i1> [#uses=2]
 	br i1 %tmp2132, label %bb23, label %bb.preheader
