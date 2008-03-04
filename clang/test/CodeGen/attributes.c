@@ -11,14 +11,14 @@ void t3() __attribute__((weak));
 void t3() {}
 
 // RUN: clang -emit-llvm < %s | grep 'hidden.*t4'
-void t4() __attribute__((visibility(hidden)));
+void t4() __attribute__((visibility("hidden")));
 void t4() {}
 
 // RUN: clang -emit-llvm < %s | grep 't5.*weak'
 int t5 __attribute__((weak)) = 2;
 
 // RUN: clang -emit-llvm < %s | grep 't6.*protected'
-int t6 __attribute__((visibility(protected)));
+int t6 __attribute__((visibility("protected")));
 
 // RUN: clang -emit-llvm < %s | grep 't7.*noreturn'
 // RUN: clang -emit-llvm < %s | grep 't7.*nounwind'

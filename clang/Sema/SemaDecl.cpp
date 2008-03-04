@@ -2022,32 +2022,37 @@ void Sema::HandleDeprecatedAttribute(Decl *d, AttributeList *rawAttr) {
 
 void Sema::HandleVisibilityAttribute(Decl *d, AttributeList *rawAttr) {
   // check the attribute arguments.
-  if (rawAttr->getNumArgs() != 0) {
+  if (rawAttr->getNumArgs() != 1) {
     Diag(rawAttr->getLoc(), diag::err_attribute_wrong_number_arguments,
          std::string("1"));
     return;
   }
 
-  if (!rawAttr->getParameterName()) {
+  Expr *Arg = static_cast<Expr*>(rawAttr->getArg(0));
+  Arg = Arg->IgnoreParenCasts();
+  StringLiteral *Str = dyn_cast<StringLiteral>(Arg);
+  
+  if (Str == 0 || Str->isWide()) {
     Diag(rawAttr->getLoc(), diag::err_attribute_argument_n_not_string,
-           "visibility", std::string("1"));
+         "visibility", std::string("1"));
     return;
   }
 
-  const char *typeStr = rawAttr->getParameterName()->getName();
+  const char *TypeStr = Str->getStrData();
+  unsigned TypeLen = Str->getByteLength();
   llvm::GlobalValue::VisibilityTypes type;
 
-  if (!memcmp(typeStr, "default", 7))
+  if (TypeLen == 7 && !memcmp(TypeStr, "default", 7))
     type = llvm::GlobalValue::DefaultVisibility;
-  else if (!memcmp(typeStr, "hidden", 6))
+  else if (TypeLen == 6 && !memcmp(TypeStr, "hidden", 6))
     type = llvm::GlobalValue::HiddenVisibility;
-  else if (!memcmp(typeStr, "internal", 8))
+  else if (TypeLen == 8 && !memcmp(TypeStr, "internal", 8))
     type = llvm::GlobalValue::HiddenVisibility; // FIXME
-  else if (!memcmp(typeStr, "protected", 9))
+  else if (TypeLen == 9 && !memcmp(TypeStr, "protected", 9))
     type = llvm::GlobalValue::ProtectedVisibility;
   else {
     Diag(rawAttr->getLoc(), diag::warn_attribute_type_not_supported,
-           "visibility", typeStr);
+           "visibility", TypeStr);
     return;
   }
 
