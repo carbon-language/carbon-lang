@@ -295,6 +295,44 @@ namespace llvm {
 
     SDOperand LowerRETURNADDR(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerFRAMEADDR(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerConstantPool(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerGlobalTLSAddress(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerJumpTable(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerSETCC(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerVASTART(SDOperand Op, SelectionDAG &DAG,
+                           int VarArgsFrameIndex, int VarArgsStackOffset,
+                           unsigned VarArgsNumGPR, unsigned VarArgsNumFPR,
+                           const PPCSubtarget &Subtarget);
+    SDOperand LowerVAARG(SDOperand Op, SelectionDAG &DAG, int VarArgsFrameIndex,
+                         int VarArgsStackOffset, unsigned VarArgsNumGPR,
+                         unsigned VarArgsNumFPR, const PPCSubtarget &Subtarget);
+    SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
+                                    int &VarArgsFrameIndex, 
+                                    int &VarArgsStackOffset,
+                                    unsigned &VarArgsNumGPR,
+                                    unsigned &VarArgsNumFPR,
+                                    const PPCSubtarget &Subtarget);
+    SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG,
+                        const PPCSubtarget &Subtarget);
+    SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG, TargetMachine &TM);
+    SDOperand LowerSTACKRESTORE(SDOperand Op, SelectionDAG &DAG,
+                                const PPCSubtarget &Subtarget);
+    SDOperand LowerDYNAMIC_STACKALLOC(SDOperand Op, SelectionDAG &DAG,
+                                      const PPCSubtarget &Subtarget);
+    SDOperand LowerSELECT_CC(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerFP_TO_SINT(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerFP_ROUND_INREG(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerFLT_ROUNDS_(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerSHL_PARTS(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerSRL_PARTS(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerSRA_PARTS(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerINTRINSIC_WO_CHAIN(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerSCALAR_TO_VECTOR(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerMUL(SDOperand Op, SelectionDAG &DAG);
   };
 }
 

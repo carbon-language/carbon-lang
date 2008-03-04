@@ -1026,7 +1026,8 @@ bool PPCTargetLowering::getPreIndexedAddressParts(SDNode *N, SDOperand &Base,
 //  LowerOperation implementation
 //===----------------------------------------------------------------------===//
 
-static SDOperand LowerConstantPool(SDOperand Op, SelectionDAG &DAG) {
+SDOperand PPCTargetLowering::LowerConstantPool(SDOperand Op, 
+                                             SelectionDAG &DAG) {
   MVT::ValueType PtrVT = Op.getValueType();
   ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(Op);
   Constant *C = CP->getConstVal();
@@ -1057,7 +1058,7 @@ static SDOperand LowerConstantPool(SDOperand Op, SelectionDAG &DAG) {
   return Lo;
 }
 
-static SDOperand LowerJumpTable(SDOperand Op, SelectionDAG &DAG) {
+SDOperand PPCTargetLowering::LowerJumpTable(SDOperand Op, SelectionDAG &DAG) {
   MVT::ValueType PtrVT = Op.getValueType();
   JumpTableSDNode *JT = cast<JumpTableSDNode>(Op);
   SDOperand JTI = DAG.getTargetJumpTable(JT->getIndex(), PtrVT);
@@ -1087,11 +1088,13 @@ static SDOperand LowerJumpTable(SDOperand Op, SelectionDAG &DAG) {
   return Lo;
 }
 
-static SDOperand LowerGlobalTLSAddress(SDOperand Op, SelectionDAG &DAG) {
+SDOperand PPCTargetLowering::LowerGlobalTLSAddress(SDOperand Op, 
+                                                   SelectionDAG &DAG) {
   assert(0 && "TLS not implemented for PPC.");
 }
 
-static SDOperand LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG) {
+SDOperand PPCTargetLowering::LowerGlobalAddress(SDOperand Op, 
+                                                SelectionDAG &DAG) {
   MVT::ValueType PtrVT = Op.getValueType();
   GlobalAddressSDNode *GSDN = cast<GlobalAddressSDNode>(Op);
   GlobalValue *GV = GSDN->getGlobal();
@@ -1131,7 +1134,7 @@ static SDOperand LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG) {
   return DAG.getLoad(PtrVT, DAG.getEntryNode(), Lo, NULL, 0);
 }
 
-static SDOperand LowerSETCC(SDOperand Op, SelectionDAG &DAG) {
+SDOperand PPCTargetLowering::LowerSETCC(SDOperand Op, SelectionDAG &DAG) {
   ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(2))->get();
   
   // If we're comparing for equality to zero, expose the fact that this is
@@ -1173,7 +1176,7 @@ static SDOperand LowerSETCC(SDOperand Op, SelectionDAG &DAG) {
   return SDOperand();
 }
 
-static SDOperand LowerVAARG(SDOperand Op, SelectionDAG &DAG,
+SDOperand PPCTargetLowering::LowerVAARG(SDOperand Op, SelectionDAG &DAG,
                               int VarArgsFrameIndex,
                               int VarArgsStackOffset,
                               unsigned VarArgsNumGPR,
@@ -1183,7 +1186,7 @@ static SDOperand LowerVAARG(SDOperand Op, SelectionDAG &DAG,
   assert(0 && "VAARG in ELF32 ABI not implemented yet!");
 }
 
-static SDOperand LowerVASTART(SDOperand Op, SelectionDAG &DAG,
+SDOperand PPCTargetLowering::LowerVASTART(SDOperand Op, SelectionDAG &DAG,
                               int VarArgsFrameIndex,
                               int VarArgsStackOffset,
                               unsigned VarArgsNumGPR,
@@ -1289,7 +1292,8 @@ static const unsigned *GetFPR(const PPCSubtarget &Subtarget) {
   return FPR;
 }
 
-static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
+SDOperand PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op, 
+                                       SelectionDAG &DAG,
                                        int &VarArgsFrameIndex,
                                        int &VarArgsStackOffset,
                                        unsigned &VarArgsNumGPR,
@@ -1566,9 +1570,25 @@ static SDNode *isBLACompatibleAddress(SDOperand Op, SelectionDAG &DAG) {
                          DAG.getTargetLoweringInfo().getPointerTy()).Val;
 }
 
+/// CreateCopyOfByValArgument - Make a copy of an aggregate at address specified
+/// by "Src" to address "Dst" of size "Size".  Alignment information is 
+/// specified by the specific parameter attribute. The copy will be passed as
+/// a byval function parameter.
+/// Sometimes what we are copying is the end of a larger object, the part that
+/// does not fit in registers.
+static SDOperand 
+CreateCopyOfByValArgument(SDOperand Src, SDOperand Dst, SDOperand Chain,
+                           unsigned Flags, SelectionDAG &DAG, unsigned Size) {
+  unsigned Align = 1 <<
+    ((Flags & ISD::ParamFlags::ByValAlign) >> ISD::ParamFlags::ByValAlignOffs);
+  SDOperand AlignNode    = DAG.getConstant(Align, MVT::i32);
+  SDOperand SizeNode     = DAG.getConstant(Size, MVT::i32);
+  SDOperand AlwaysInline = DAG.getConstant(1, MVT::i32);
+  return DAG.getMemcpy(Chain, Dst, Src, SizeNode, AlignNode, AlwaysInline);
+}
 
-static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG,
-                           const PPCSubtarget &Subtarget) {
+SDOperand PPCTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG,
+                                       const PPCSubtarget &Subtarget) {
   SDOperand Chain  = Op.getOperand(0);
   bool isVarArg    = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
   SDOperand Callee = Op.getOperand(4);
@@ -1592,7 +1612,11 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG,
   
   // Add up all the space actually used.
   for (unsigned i = 0; i != NumOps; ++i) {
+    unsigned Flags = cast<ConstantSDNode>(Op.getOperand(5+2*i+1))->getValue();
     unsigned ArgSize =MVT::getSizeInBits(Op.getOperand(5+2*i).getValueType())/8;
+    if (Flags & ISD::ParamFlags::ByVal)
+      ArgSize = (Flags & ISD::ParamFlags::ByValSize) >> 
+                ISD::ParamFlags::ByValSizeOffs;
     ArgSize = std::max(ArgSize, PtrByteSize);
     NumBytes += ArgSize;
   }
@@ -1678,7 +1702,30 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG,
 
       Arg = DAG.getNode(ExtOp, MVT::i64, Arg);
     }
-    
+
+    // FIXME Elf untested, what are alignment rules?
+    if (Flags & ISD::ParamFlags::ByVal) {
+      unsigned Size = (Flags & ISD::ParamFlags::ByValSize) >>
+                      ISD::ParamFlags::ByValSizeOffs;
+      if (isELF32_ABI && Expand) GPR_idx += (GPR_idx % 2);
+      for (unsigned j=0; j<Size; j+=PtrByteSize) {
+        SDOperand Const = DAG.getConstant(j, PtrOff.getValueType());
+        SDOperand AddArg = DAG.getNode(ISD::ADD, PtrVT, Arg, Const);
+        if (GPR_idx != NumGPRs) {
+          SDOperand Load = DAG.getLoad(PtrVT, Chain, AddArg, NULL, 0);
+          RegsToPass.push_back(std::make_pair(GPR[GPR_idx++], Load));
+          if (isMachoABI)
+            ArgOffset += PtrByteSize;
+        } else {
+          SDOperand AddPtr = DAG.getNode(ISD::ADD, PtrVT, PtrOff, Const);
+          MemOpChains.push_back(CreateCopyOfByValArgument(AddArg, AddPtr,
+                                Chain, Flags, DAG, Size - j));
+          ArgOffset += ((Size - j + 3)/4)*4;
+        }
+      }
+      continue;
+    }
+
     switch (Arg.getValueType()) {
     default: assert(0 && "Unexpected ValueType for argument!");
     case MVT::i32:
@@ -1923,7 +1970,8 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG,
   return Res.getValue(Op.ResNo);
 }
 
-static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG, TargetMachine &TM) {
+SDOperand PPCTargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG, 
+                                      TargetMachine &TM) {
   SmallVector<CCValAssign, 16> RVLocs;
   unsigned CC = DAG.getMachineFunction().getFunction()->getCallingConv();
   bool isVarArg = DAG.getMachineFunction().getFunction()->isVarArg();
@@ -1954,7 +2002,7 @@ static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG, TargetMachine &TM) {
     return DAG.getNode(PPCISD::RET_FLAG, MVT::Other, Chain);
 }
 
-static SDOperand LowerSTACKRESTORE(SDOperand Op, SelectionDAG &DAG,
+SDOperand PPCTargetLowering::LowerSTACKRESTORE(SDOperand Op, SelectionDAG &DAG,
                                    const PPCSubtarget &Subtarget) {
   // When we pop the dynamic allocation we need to restore the SP link.
   
@@ -1980,7 +2028,8 @@ static SDOperand LowerSTACKRESTORE(SDOperand Op, SelectionDAG &DAG,
   return DAG.getStore(Chain, LoadLinkSP, StackPtr, NULL, 0);
 }
 
-static SDOperand LowerDYNAMIC_STACKALLOC(SDOperand Op, SelectionDAG &DAG,
+SDOperand PPCTargetLowering::LowerDYNAMIC_STACKALLOC(SDOperand Op, 
+                                         SelectionDAG &DAG,
                                          const PPCSubtarget &Subtarget) {
   MachineFunction &MF = DAG.getMachineFunction();
   bool IsPPC64 = Subtarget.isPPC64();
@@ -2022,7 +2071,7 @@ static SDOperand LowerDYNAMIC_STACKALLOC(SDOperand Op, SelectionDAG &DAG,
 
 /// LowerSELECT_CC - Lower floating point select_cc's into fsel instruction when
 /// possible.
-static SDOperand LowerSELECT_CC(SDOperand Op, SelectionDAG &DAG) {
+SDOperand PPCTargetLowering::LowerSELECT_CC(SDOperand Op, SelectionDAG &DAG) {
   // Not FP? Not a fsel.
   if (!MVT::isFloatingPoint(Op.getOperand(0).getValueType()) ||
       !MVT::isFloatingPoint(Op.getOperand(2).getValueType()))
@@ -2102,7 +2151,7 @@ static SDOperand LowerSELECT_CC(SDOperand Op, SelectionDAG &DAG) {
 }
 
 // FIXME: Split this code up when LegalizeDAGTypes lands.
-static SDOperand LowerFP_TO_SINT(SDOperand Op, SelectionDAG &DAG) {
+SDOperand PPCTargetLowering::LowerFP_TO_SINT(SDOperand Op, SelectionDAG &DAG) {
   assert(MVT::isFloatingPoint(Op.getOperand(0).getValueType()));
   SDOperand Src = Op.getOperand(0);
   if (Src.getValueType() == MVT::f32)
@@ -2133,7 +2182,8 @@ static SDOperand LowerFP_TO_SINT(SDOperand Op, SelectionDAG &DAG) {
   return DAG.getLoad(Op.getValueType(), Chain, FIPtr, NULL, 0);
 }
 
-static SDOperand LowerFP_ROUND_INREG(SDOperand Op, SelectionDAG &DAG) {
+SDOperand PPCTargetLowering::LowerFP_ROUND_INREG(SDOperand Op, 
+                                                 SelectionDAG &DAG) {
   assert(Op.getValueType() == MVT::ppcf128);
   SDNode *Node = Op.Val;
   assert(Node->getOperand(0).getValueType() == MVT::ppcf128);
@@ -2191,7 +2241,7 @@ static SDOperand LowerFP_ROUND_INREG(SDOperand Op, SelectionDAG &DAG) {
   return DAG.getNode(ISD::BUILD_PAIR, Lo.getValueType(), FPreg, FPreg);
 }
 
-static SDOperand LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
+SDOperand PPCTargetLowering::LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
   if (Op.getOperand(0).getValueType() == MVT::i64) {
     SDOperand Bits = DAG.getNode(ISD::BIT_CONVERT, MVT::f64, Op.getOperand(0));
     SDOperand FP = DAG.getNode(PPCISD::FCFID, MVT::f64, Bits);
@@ -2230,7 +2280,7 @@ static SDOperand LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
   return FP;
 }
 
-static SDOperand LowerFLT_ROUNDS_(SDOperand Op, SelectionDAG &DAG) {
+SDOperand PPCTargetLowering::LowerFLT_ROUNDS_(SDOperand Op, SelectionDAG &DAG) {
   /*
    The rounding mode is in bits 30:31 of FPSR, and has the following
    settings:
@@ -2291,7 +2341,7 @@ static SDOperand LowerFLT_ROUNDS_(SDOperand Op, SelectionDAG &DAG) {
                       ISD::TRUNCATE : ISD::ZERO_EXTEND), VT, RetVal);
 }
 
-static SDOperand LowerSHL_PARTS(SDOperand Op, SelectionDAG &DAG) {
+SDOperand PPCTargetLowering::LowerSHL_PARTS(SDOperand Op, SelectionDAG &DAG) {
   assert(Op.getNumOperands() == 3 && Op.getValueType() == MVT::i32 &&
          Op.getOperand(1).getValueType() == MVT::i32 && "Unexpected SHL!");
   
@@ -2316,7 +2366,7 @@ static SDOperand LowerSHL_PARTS(SDOperand Op, SelectionDAG &DAG) {
                      OutOps, 2);
 }
 
-static SDOperand LowerSRL_PARTS(SDOperand Op, SelectionDAG &DAG) {
+SDOperand PPCTargetLowering::LowerSRL_PARTS(SDOperand Op, SelectionDAG &DAG) {
   assert(Op.getNumOperands() == 3 && Op.getValueType() == MVT::i32 &&
          Op.getOperand(1).getValueType() == MVT::i32 && "Unexpected SRL!");
   
@@ -2341,7 +2391,7 @@ static SDOperand LowerSRL_PARTS(SDOperand Op, SelectionDAG &DAG) {
                      OutOps, 2);
 }
 
-static SDOperand LowerSRA_PARTS(SDOperand Op, SelectionDAG &DAG) {
+SDOperand PPCTargetLowering::LowerSRA_PARTS(SDOperand Op, SelectionDAG &DAG) {
   assert(Op.getNumOperands() == 3 && Op.getValueType() == MVT::i32 &&
          Op.getOperand(1).getValueType() == MVT::i32 && "Unexpected SRA!");
   
@@ -2533,7 +2583,8 @@ static SDOperand BuildVSLDOI(SDOperand LHS, SDOperand RHS, unsigned Amt,
 // selects to a single instruction, return Op.  Otherwise, if we can codegen
 // this case more efficiently than a constant pool load, lower it to the
 // sequence of ops that should be used.
-static SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
+SDOperand PPCTargetLowering::LowerBUILD_VECTOR(SDOperand Op, 
+                                               SelectionDAG &DAG) {
   // If this is a vector of constants or undefs, get the bits.  A bit in
   // UndefBits is set if the corresponding element of the vector is an 
   // ISD::UNDEF value.  For undefs, the corresponding VectorBits values are
@@ -2775,7 +2826,8 @@ static SDOperand GeneratePerfectShuffle(unsigned PFEntry, SDOperand LHS,
 /// is a shuffle we can handle in a single instruction, return it.  Otherwise,
 /// return the code it can be lowered into.  Worst case, it can always be
 /// lowered into a vperm.
-static SDOperand LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
+SDOperand PPCTargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, 
+                                                 SelectionDAG &DAG) {
   SDOperand V1 = Op.getOperand(0);
   SDOperand V2 = Op.getOperand(1);
   SDOperand PermMask = Op.getOperand(2);
@@ -2939,7 +2991,8 @@ static bool getAltivecCompareInfo(SDOperand Intrin, int &CompareOpc,
 
 /// LowerINTRINSIC_WO_CHAIN - If this is an intrinsic that we want to custom
 /// lower, do it, otherwise return null.
-static SDOperand LowerINTRINSIC_WO_CHAIN(SDOperand Op, SelectionDAG &DAG) {
+SDOperand PPCTargetLowering::LowerINTRINSIC_WO_CHAIN(SDOperand Op, 
+                                                     SelectionDAG &DAG) {
   // If this is a lowered altivec predicate compare, CompareOpc is set to the
   // opcode number of the comparison.
   int CompareOpc;
@@ -3005,7 +3058,8 @@ static SDOperand LowerINTRINSIC_WO_CHAIN(SDOperand Op, SelectionDAG &DAG) {
   return Flags;
 }
 
-static SDOperand LowerSCALAR_TO_VECTOR(SDOperand Op, SelectionDAG &DAG) {
+SDOperand PPCTargetLowering::LowerSCALAR_TO_VECTOR(SDOperand Op, 
+                                                   SelectionDAG &DAG) {
   // Create a stack slot that is 16-byte aligned.
   MachineFrameInfo *FrameInfo = DAG.getMachineFunction().getFrameInfo();
   int FrameIdx = FrameInfo->CreateStackObject(16, 16);
@@ -3019,7 +3073,7 @@ static SDOperand LowerSCALAR_TO_VECTOR(SDOperand Op, SelectionDAG &DAG) {
   return DAG.getLoad(Op.getValueType(), Store, FIdx, NULL, 0);
 }
 
-static SDOperand LowerMUL(SDOperand Op, SelectionDAG &DAG) {
+SDOperand PPCTargetLowering::LowerMUL(SDOperand Op, SelectionDAG &DAG) {
   if (Op.getValueType() == MVT::v4i32) {
     SDOperand LHS = Op.getOperand(0), RHS = Op.getOperand(1);
     
