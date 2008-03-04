@@ -486,16 +486,22 @@ ValueState* ValueStateManager::getPersistentState(ValueState& State) {
 }
 
 void ValueState::printDOT(std::ostream& Out) const {
+  print(Out, "\\l", "\\|");
+}
+
+void ValueState::print(std::ostream& Out,
+                       const char* nl,
+                       const char* sep) const {
 
   // Print Variable Bindings
-  Out << "Variables:\\l";
+  Out << "Variables:" << nl;
   
   bool isFirst = true;
   
   for (vb_iterator I = vb_begin(), E = vb_end(); I != E; ++I) {        
     
     if (isFirst) isFirst = false;
-    else Out << "\\l";
+    else Out << nl;
     
     Out << ' ' << I.getKey()->getName() << " : ";
     I.getData().print(Out);
@@ -508,10 +514,10 @@ void ValueState::printDOT(std::ostream& Out) const {
   for (seb_iterator I = seb_begin(), E = seb_end(); I != E; ++I) {        
     
     if (isFirst) {
-      Out << "\\l\\lSub-Expressions:\\l";
+      Out << nl << nl << "Sub-Expressions:" << nl;
       isFirst = false;
     }
-    else { Out << "\\l"; }
+    else { Out << nl; }
     
     Out << " (" << (void*) I.getKey() << ") ";
     I.getKey()->printPretty(Out);
@@ -526,10 +532,10 @@ void ValueState::printDOT(std::ostream& Out) const {
   for (beb_iterator I = beb_begin(), E = beb_end(); I != E; ++I) {      
 
     if (isFirst) {
-      Out << "\\l\\lBlock-level Expressions:\\l";
+      Out << nl << nl << "Block-level Expressions:" << nl;
       isFirst = false;
     }
-    else { Out << "\\l"; }
+    else { Out << nl; }
     
     Out << " (" << (void*) I.getKey() << ") ";
     I.getKey()->printPretty(Out);
@@ -541,12 +547,12 @@ void ValueState::printDOT(std::ostream& Out) const {
   
   if (!ConstEq.isEmpty()) {
   
-    Out << "\\l\\|'==' constraints:";
+    Out << nl << sep << "'==' constraints:";
   
     for (ConstEqTy::iterator I = ConstEq.begin(),
                              E = ConstEq.end();   I!=E; ++I) {
       
-      Out << "\\l $" << I.getKey()
+      Out << nl << " $" << I.getKey()
           << " : "   << I.getData()->toString();
     }
   }
@@ -555,12 +561,12 @@ void ValueState::printDOT(std::ostream& Out) const {
     
   if (!ConstNotEq.isEmpty()) {
   
-    Out << "\\l\\|'!=' constraints:";
+    Out << nl << sep << "'!=' constraints:";
   
     for (ConstNotEqTy::iterator I  = ConstNotEq.begin(),
                                 EI = ConstNotEq.end();   I != EI; ++I) {
     
-      Out << "\\l $" << I.getKey() << " : ";
+      Out << nl << " $" << I.getKey() << " : ";
       isFirst = true;
     
       IntSetTy::iterator J = I.getData().begin(), EJ = I.getData().end();      

@@ -133,10 +133,13 @@ public:
   typedef ConstEqTy::iterator ce_iterator;
   ce_iterator ce_begin() const { return ConstEq.begin(); }
   ce_iterator ce_end() const { return ConstEq.end(); }
+
+  void print(std::ostream& Out,
+             const char* nl = "\n",
+             const char* sep = "") const;
   
-  void printDOT(std::ostream& Out) const;
-  void print(std::ostream& Out) const;
   void printStdErr() const { print(*llvm::cerr); }  
+  void printDOT(std::ostream& Out) const;
 };  
   
 template<> struct GRTrait<ValueState*> {
