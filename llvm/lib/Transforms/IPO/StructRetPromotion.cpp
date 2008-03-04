@@ -302,7 +302,9 @@ void SRETPromotion::updateCallSites(Function *F, Function *NF) {
       if (C2 && (C2 == Call))
         continue;
       else if (GetElementPtrInst *UGEP = dyn_cast<GetElementPtrInst>(U2)) {
-        Value *GR = new GetResultInst(New, 5, "xxx", UGEP);
+        ConstantInt *Idx = dyn_cast<ConstantInt>(UGEP->getOperand(2));
+        assert (Idx && "Unexpected getelementptr index!");
+        Value *GR = new GetResultInst(New, Idx->getZExtValue(), "gr", UGEP);
         for (Value::use_iterator GI = UGEP->use_begin(),
                GE = UGEP->use_end(); GI != GE; ++GI) {
           if (LoadInst *L = dyn_cast<LoadInst>(*GI)) {
