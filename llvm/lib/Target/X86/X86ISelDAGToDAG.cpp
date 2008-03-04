@@ -44,13 +44,6 @@ using namespace llvm;
 STATISTIC(NumFPKill   , "Number of FP_REG_KILL instructions added");
 STATISTIC(NumLoadMoved, "Number of loads moved below TokenFactor");
 
-namespace {
-  static cl::opt<bool>
-  AlwaysFoldAndInTest("always-fold-and-in-test",
-                cl::desc("Always fold and operation in test"),
-                cl::init(false), cl::Hidden);
-}
-
 //===----------------------------------------------------------------------===//
 //                      Pattern Matcher Implementation
 //===----------------------------------------------------------------------===//
@@ -433,7 +426,7 @@ void X86DAGToDAGISel::PreprocessForRMW(SelectionDAG &DAG) {
           RModW = true;
           std::swap(N10, N11);
         }
-        RModW = RModW && N10.Val->isOperand(Chain.Val) && N10.hasOneUse() &&
+        RModW = RModW && N10.Val->isOperandOf(Chain.Val) && N10.hasOneUse() &&
           (N10.getOperand(1) == N2) &&
           (N10.Val->getValueType(0) == N1.getValueType());
         if (RModW)
@@ -452,7 +445,7 @@ void X86DAGToDAGISel::PreprocessForRMW(SelectionDAG &DAG) {
       case X86ISD::SHRD: {
         SDOperand N10 = N1.getOperand(0);
         if (ISD::isNON_EXTLoad(N10.Val))
-          RModW = N10.Val->isOperand(Chain.Val) && N10.hasOneUse() &&
+          RModW = N10.Val->isOperandOf(Chain.Val) && N10.hasOneUse() &&
             (N10.getOperand(1) == N2) &&
             (N10.Val->getValueType(0) == N1.getValueType());
         if (RModW)
