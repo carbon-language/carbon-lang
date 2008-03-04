@@ -481,26 +481,11 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
   if (AI != AE) {
     
     NodeSet DstTmp;      
-    Visit(*AI, Pred, DstTmp);  
-    
-    Expr* CurrentArg = *AI;
+    Visit(*AI, Pred, DstTmp);    
     ++AI;
     
-    for (NodeSet::iterator DI=DstTmp.begin(), DE=DstTmp.end(); DI != DE; ++DI) {
-      if (GetRVal((*DI)->getState(), CurrentArg).isUndef()) {
-
-        NodeTy* N = Builder->generateNode(CE, (*DI)->getState(), *DI);
-
-        if (N) {
-          N->markAsSink();
-          UndefArgs[N] = CurrentArg;
-        }
-        
-        continue;        
-      }
-
+    for (NodeSet::iterator DI=DstTmp.begin(), DE=DstTmp.end(); DI != DE; ++DI)
       VisitCall(CE, *DI, AI, AE, Dst);
-    }
     
     return;
   }
@@ -529,16 +514,30 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
     
     if (L.isUndef() || isa<lval::ConcreteInt>(L)) {      
       NodeTy* N = Builder->generateNode(CE, St, *DI);
+      
       if (N) {
         N->markAsSink();
         BadCalls.insert(N);
       }
+      
       continue;
     }  
     
-    // Check for an "unknown" callee.
+    bool invalidateArgs = false;
     
     if (L.isUnknown()) {
+      // Check for an "unknown" callee.      
+      invalidateArgs = true;
+    }
+    else if (isa<lval::FuncVal>(L)) {
+      
+      IdentifierInfo* Info = cast<lval::FuncVal>(L).getDecl()->getIdentifier();
+      
+      if (Info->getBuiltinID())
+        invalidateArgs = true;
+    }
+        
+    if (invalidateArgs) {
       // Invalidate all arguments passed in by reference (LVals).
       for (CallExpr::arg_iterator I = CE->arg_begin(), E = CE->arg_end();
                                                        I != E; ++I) {
@@ -548,8 +547,34 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
           St = SetRVal(St, cast<LVal>(V), UnknownVal());
       }      
     }
-    else
+    else {
+
+      // Check any arguments passed-by-value against being undefined.
+
+      bool badArg = false;
+      
+      for (CallExpr::arg_iterator I = CE->arg_begin(), E = CE->arg_end();
+           I != E; ++I) {
+
+        if (GetRVal((*DI)->getState(), *I).isUndef()) {        
+          NodeTy* N = Builder->generateNode(CE, (*DI)->getState(), *DI);
+        
+          if (N) {
+            N->markAsSink();
+            UndefArgs[N] = *I;
+          }
+          
+          badArg = true;
+          break;
+        }
+      }
+        
+      if (badArg)
+        continue;        
+      
+      // Dispatch to the plug-in transfer function.      
       St = EvalCall(CE, cast<LVal>(L), (*DI)->getState());
+    }
     
     // Check for the "noreturn" attribute.
     
