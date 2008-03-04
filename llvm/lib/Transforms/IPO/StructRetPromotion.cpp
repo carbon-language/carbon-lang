@@ -94,6 +94,7 @@ bool SRETPromotion::PromoteReturn(CallGraphNode *CGN) {
     return false;
   }
 
+  NumSRET++;
   // [1] Replace use of sret parameter 
   AllocaInst *TheAlloca = new AllocaInst (STy, NULL, "mrv", 
                                           F->getEntryBlock().begin());
