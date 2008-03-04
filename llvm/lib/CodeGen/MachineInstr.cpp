@@ -703,7 +703,7 @@ bool MachineInstr::addRegisterKilled(unsigned IncomingReg,
 	  // "kill". Let the super-register take care of this
 	  // information.
 	  RemoveOperand(i);
-	  e = getNumOperands();
+	  --e;
 	  continue;
 	} else {
 	  // The super-register is going to take care of this kill
