@@ -33,15 +33,15 @@ public:
   typedef GRSwitchNodeBuilder<GRExprEngine>        SwitchNodeBuilder;
   
   class NodeSet {
-    typedef llvm::SmallVector<NodeTy*,3> ImplTy;
+    typedef llvm::SmallPtrSet<NodeTy*,10> ImplTy;
     ImplTy Impl;
     
   public:
 
-    NodeSet(NodeTy* N) { assert (N && !N->isSink()); Impl.push_back(N); }
+    NodeSet(NodeTy* N) { assert (N && !N->isSink()); Impl.insert(N); }
     NodeSet() {}
     
-    inline void Add(NodeTy* N) { if (N && !N->isSink()) Impl.push_back(N); }
+    inline void Add(NodeTy* N) { if (N && !N->isSink()) Impl.insert(N); }
     
     typedef ImplTy::iterator       iterator;
     typedef ImplTy::const_iterator const_iterator;

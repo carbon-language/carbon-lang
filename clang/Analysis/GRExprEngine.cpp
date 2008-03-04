@@ -437,8 +437,10 @@ GRExprEngine::NodeTy*
 GRExprEngine::Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred, ValueState* St) {
  
   // If the state hasn't changed, don't generate a new node.
-  if (St == Pred->getState())
+  if (St == Pred->getState()) {
+    Dst.Add(Pred);
     return NULL;
+  }
   
   NodeTy* N = Builder->generateNode(S, St, Pred);
   Dst.Add(N);
@@ -478,11 +480,8 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
   
   if (AI != AE) {
     
-    NodeSet DstTmp;  
-    
-    Visit(*AI, Pred, DstTmp);
-    
-    if (DstTmp.empty()) DstTmp.Add(Pred);
+    NodeSet DstTmp;      
+    Visit(*AI, Pred, DstTmp);  
     
     Expr* CurrentArg = *AI;
     ++AI;
