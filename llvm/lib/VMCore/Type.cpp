@@ -460,30 +460,6 @@ FunctionType::FunctionType(const Type *Result,
   setAbstract(isAbstract);
 }
 
-FunctionType::FunctionType(const Type *Result,
-                           const SmallVectorImpl<const Type *> &Params,
-                           bool IsVarArgs)
-  : DerivedType(FunctionTyID), isVarArgs(IsVarArgs) {
-  ContainedTys = reinterpret_cast<PATypeHandle*>(this+1);
-  NumContainedTys = Params.size() + 1; // + 1 for result type
-  assert((Result->isFirstClassType() || Result == Type::VoidTy ||
-          Result->getTypeID() == Type::StructTyID ||
-          isa<OpaqueType>(Result)) &&
-         "LLVM functions cannot return aggregates");
-  bool isAbstract = Result->isAbstract();
-  new (&ContainedTys[0]) PATypeHandle(Result, this);
-
-  for (unsigned i = 0; i != Params.size(); ++i) {
-    assert((Params[i]->isFirstClassType() || isa<OpaqueType>(Params[i])) &&
-           "Function arguments must be value types!");
-    new (&ContainedTys[i+1]) PATypeHandle(Params[i],this);
-    isAbstract |= Params[i]->isAbstract();
-  }
-
-  // Calculate whether or not this type is abstract
-  setAbstract(isAbstract);
-}
-
 StructType::StructType(const std::vector<const Type*> &Types, bool isPacked)
   : CompositeType(StructTyID) {
   ContainedTys = reinterpret_cast<PATypeHandle*>(this + 1);
@@ -1079,12 +1055,6 @@ public:
       ArgTypes.push_back(args[i]);
   }
 
-  FunctionValType(const Type *ret, const SmallVectorImpl<const Type*> &args,
-                  bool isVA) : RetTy(ret), isVarArg(isVA) {
-    for (unsigned i = 0; i < args.size(); ++i)
-      ArgTypes.push_back(args[i]);
-  }
-
   static FunctionValType get(const FunctionType *FT);
 
   static unsigned hashTypeStructure(const FunctionType *FT) {
@@ -1120,27 +1090,6 @@ FunctionValType FunctionValType::get(const FunctionType *FT) {
 // FunctionType::get - The factory function for the FunctionType class...
 FunctionType *FunctionType::get(const Type *ReturnType,
                                 const std::vector<const Type*> &Params,
-                                bool isVarArg) {
-  FunctionValType VT(ReturnType, Params, isVarArg);
-  FunctionType *FT = FunctionTypes->get(VT);
-  if (FT) { 
-    return FT;
-  }
-
-  FT = (FunctionType*) new char[sizeof(FunctionType) + 
-                                sizeof(PATypeHandle)*(Params.size()+1)];
-  new (FT) FunctionType(ReturnType, Params, isVarArg);
-  FunctionTypes->add(VT, FT);
-
-#ifdef DEBUG_MERGE_TYPES
-  DOUT << "Derived new type: " << FT << "\n";
-#endif
-  return FT;
-}
-
-// FunctionType::get - The factory function for the FunctionType class...
-FunctionType *FunctionType::get(const Type *ReturnType,
-                                const SmallVectorImpl<const Type*> &Params,
                                 bool isVarArg) {
   FunctionValType VT(ReturnType, Params, isVarArg);
   FunctionType *FT = FunctionTypes->get(VT);

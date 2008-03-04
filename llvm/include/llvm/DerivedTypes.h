@@ -19,7 +19,6 @@
 #define LLVM_DERIVED_TYPES_H
 
 #include "llvm/Type.h"
-#include "llvm/ADT/SmallVector.h"
 
 namespace llvm {
 
@@ -145,8 +144,6 @@ class FunctionType : public DerivedType {
   const FunctionType &operator=(const FunctionType &);  // Do not implement
   FunctionType(const Type *Result, const std::vector<const Type*> &Params,
                bool IsVarArgs);
-  FunctionType(const Type *Result, const SmallVectorImpl<const Type*> &Params,
-               bool IsVarArgs);
 
 public:
   /// FunctionType::get - This static method is the primary way of constructing
@@ -155,12 +152,6 @@ public:
   static FunctionType *get(
     const Type *Result, ///< The result type
     const std::vector<const Type*> &Params, ///< The types of the parameters
-    bool isVarArg  ///< Whether this is a variable argument length function
-  );
-
-  static FunctionType *get(
-    const Type *Result, ///< The result type
-    const SmallVectorImpl<const Type*> &Params, ///< The types of the parameters
     bool isVarArg  ///< Whether this is a variable argument length function
   );
 
