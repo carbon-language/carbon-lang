@@ -48,6 +48,7 @@ namespace {
     bool isSafeToUpdateAllCallers(Function *F);
     Function *cloneFunctionBody(Function *F, const StructType *STy);
     void updateCallSites(Function *F, Function *NF);
+    bool nestedStructType(const StructType *STy);
   };
 
   char SRETPromotion::ID = 0;
@@ -87,6 +88,9 @@ bool SRETPromotion::PromoteReturn(CallGraphNode *CGN) {
   const llvm::StructType *STy = 
     dyn_cast<StructType>(FArgType->getElementType());
   assert (STy && "Invalid sret parameter element type");
+
+  if (nestedStructType(STy))
+    return false;
 
   // Check if it is ok to perform this promotion.
   if (isSafeToUpdateAllCallers(F) == false) {
@@ -318,4 +322,16 @@ void SRETPromotion::updateCallSites(Function *F, Function *NF) {
     }
     Call->eraseFromParent();
   }
+}
+
+/// nestedStructType - Return true if STy includes any
+/// other aggregate types
+bool SRETPromotion::nestedStructType(const StructType *STy) {
+  unsigned Num = STy->getNumElements();
+  for (unsigned i = 0; i < Num; i++) {
+    const Type *Ty = STy->getElementType(i);
+    if (!Ty->isFirstClassType() && Ty != Type::VoidTy)
+      return true;
+  }
+  return false;
 }
