@@ -56,6 +56,7 @@ GetAllUndefinedSymbols(Module *M, std::set<std::string> &UndefinedSymbols) {
         DefinedSymbols.insert(I->getName());
       }      
     }
+
   for (Module::global_iterator I = M->global_begin(), E = M->global_end();
        I != E; ++I)
     if (I->hasName()) {
@@ -66,6 +67,16 @@ GetAllUndefinedSymbols(Module *M, std::set<std::string> &UndefinedSymbols) {
                && "Found dllimported non-external symbol!");
         DefinedSymbols.insert(I->getName());
       }      
+    }
+
+  for (Module::alias_iterator I = M->alias_begin(), E = M->alias_end();
+       I != E; ++I)
+    if (I->hasName()) {
+      const GlobalValue *Aliased = I->getAliasedGlobal();
+      if (Aliased->isDeclaration())
+        UndefinedSymbols.insert(I->getName());
+      else
+        DefinedSymbols.insert(I->getName());
     }
 
   // Prune out any defined symbols from the undefined symbols set...
@@ -88,7 +99,6 @@ GetAllUndefinedSymbols(Module *M, std::set<std::string> &UndefinedSymbols) {
 ///  FALSE - No errors.
 bool
 Linker::LinkInArchive(const sys::Path &Filename, bool &is_native) {
-
   // Make sure this is an archive file we're dealing with
   if (!Filename.isArchive())
     return error("File '" + Filename.toString() + "' is not an archive.");
