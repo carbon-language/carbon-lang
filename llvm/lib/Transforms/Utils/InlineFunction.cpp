@@ -446,9 +446,8 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
       ReturnInst *R = Returns[0];
       if (R->getNumOperands() > 1) {
         // Multiple return values.
-        for (Value::use_iterator RUI = TheCall->use_begin(),
-               RUE = TheCall->use_end(); RUI != RUE; ) {
-          GetResultInst *GR = cast<GetResultInst>(RUI++);
+        while (!TheCall->use_empty()) {
+          GetResultInst *GR = cast<GetResultInst>(TheCall->use_back());
           Value *RV = R->getOperand(GR->getIndex());
           GR->replaceAllUsesWith(RV);
           GR->eraseFromParent();
