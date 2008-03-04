@@ -488,34 +488,37 @@ static SDOperand ExpandConstantFP(ConstantFPSDNode *CFP, bool UseCP,
   // the constant pool as a float, even if it's is statically typed as a
   // double.
   MVT::ValueType VT = CFP->getValueType(0);
-  bool isDouble = VT == MVT::f64;
   ConstantFP *LLVMC = ConstantFP::get(MVT::getTypeForValueType(VT),
                                       CFP->getValueAPF());
   if (!UseCP) {
     if (VT!=MVT::f64 && VT!=MVT::f32)
       assert(0 && "Invalid type expansion");
     return DAG.getConstant(LLVMC->getValueAPF().convertToAPInt().getZExtValue(),
-                           isDouble ? MVT::i64 : MVT::i32);
+                           (VT == MVT::f64) ? MVT::i64 : MVT::i32);
   }
 
-  if (isDouble && CFP->isValueValidForType(MVT::f32, CFP->getValueAPF()) &&
-      // Only do this if the target has a native EXTLOAD instruction from f32.
-      // Do not try to be clever about long doubles (so far)
-      TLI.isLoadXLegal(ISD::EXTLOAD, MVT::f32)) {
-    LLVMC = cast<ConstantFP>(ConstantExpr::getFPTrunc(LLVMC,Type::FloatTy));
-    VT = MVT::f32;
-    Extend = true;
+  MVT::ValueType OrigVT = VT;
+  MVT::ValueType SVT = VT;
+  while (SVT != MVT::f32) {
+    SVT = (unsigned)SVT - 1;
+    if (CFP->isValueValidForType(SVT, CFP->getValueAPF()) &&
+        // Only do this if the target has a native EXTLOAD instruction from
+        // smaller type.
+        TLI.isLoadXLegal(ISD::EXTLOAD, SVT)) {
+      const Type *SType = MVT::getTypeForValueType(SVT);
+      LLVMC = cast<ConstantFP>(ConstantExpr::getFPTrunc(LLVMC, SType));
+      VT = SVT;
+      Extend = true;
+    }
   }
 
   SDOperand CPIdx = DAG.getConstantPool(LLVMC, TLI.getPointerTy());
-  if (Extend) {
-    return DAG.getExtLoad(ISD::EXTLOAD, MVT::f64, DAG.getEntryNode(),
+  if (Extend)
+    return DAG.getExtLoad(ISD::EXTLOAD, OrigVT, DAG.getEntryNode(),
                           CPIdx, PseudoSourceValue::getConstantPool(),
-                          0, MVT::f32);
-  } else {
-    return DAG.getLoad(VT, DAG.getEntryNode(), CPIdx,
-                       PseudoSourceValue::getConstantPool(), 0);
-  }
+                          0, VT);
+  return DAG.getLoad(OrigVT, DAG.getEntryNode(), CPIdx,
+                     PseudoSourceValue::getConstantPool(), 0);
 }
 
 
