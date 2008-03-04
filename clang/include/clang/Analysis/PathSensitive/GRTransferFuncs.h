@@ -16,6 +16,7 @@
 #define LLVM_CLANG_ANALYSIS_GRTF
 
 #include "clang/Analysis/PathSensitive/RValues.h"
+#include "clang/Analysis/PathSensitive/GRCoreEngine.h"
 
 namespace clang {
   

@@ -27,7 +27,7 @@ public:
   typedef GraphTy::NodeTy             NodeTy;
   
   // Builders.
-  typedef GRStmtNodeBuilder<GRExprEngine>          StmtNodeBuilder;
+  typedef GRStmtNodeBuilder<StateTy>               StmtNodeBuilder;
   typedef GRBranchNodeBuilder<GRExprEngine>        BranchNodeBuilder;
   typedef GRIndirectGotoNodeBuilder<GRExprEngine>  IndirectGotoNodeBuilder;
   typedef GRSwitchNodeBuilder<GRExprEngine>        SwitchNodeBuilder;
@@ -324,13 +324,6 @@ protected:
     assert (Builder && "GRStmtNodeBuilder not present.");
     return Builder->Nodify(Dst, S, Pred, St);
   }
-  
-#if 0
-  /// Nodify - This version of Nodify is used to batch process a set of states.
-  ///  The states are not guaranteed to be unique.
-  void Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred,
-              const ValueState*::BufferTy& SB);
-#endif
   
   /// HandleUndefinedStore - Create the necessary sink node to represent
   ///  a store to an "undefined" LVal.

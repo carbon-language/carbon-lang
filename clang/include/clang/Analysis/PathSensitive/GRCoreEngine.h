@@ -136,8 +136,6 @@ public:
   
   ~GRStmtNodeBuilderImpl();
   
-  const ExplodedGraphImpl& getGraph() const { return *Eng.G; }
-  
   inline ExplodedNodeImpl* getLastNode() {
     return LastNode ? (LastNode->isSink() ? NULL : LastNode) : NULL;
   }
@@ -156,22 +154,16 @@ public:
   CFGBlock* getBlock() const { return &B; }
 };
 
-template<typename CHECKER>
+template<typename STATE>
 class GRStmtNodeBuilder  {
-  typedef CHECKER                                CheckerTy; 
-  typedef typename CheckerTy::StateTy            StateTy;
-  typedef ExplodedGraph<CheckerTy>               GraphTy;
-  typedef typename GraphTy::NodeTy               NodeTy;
+  typedef STATE                   StateTy;
+  typedef ExplodedNode<StateTy>   NodeTy;
   
   GRStmtNodeBuilderImpl& NB;
   
 public:
   GRStmtNodeBuilder(GRStmtNodeBuilderImpl& nb) : NB(nb) {}
-  
-  const GraphTy& getGraph() const {
-    return static_cast<const GraphTy&>(NB.getGraph());
-  }
-  
+    
   NodeTy* getLastNode() const {
     return static_cast<NodeTy*>(NB.getLastNode());
   }
@@ -449,7 +441,7 @@ protected:
   }
   
   virtual void ProcessStmt(Stmt* S, GRStmtNodeBuilderImpl& BuilderImpl) {
-    GRStmtNodeBuilder<CHECKER> Builder(BuilderImpl);
+    GRStmtNodeBuilder<StateTy> Builder(BuilderImpl);
     Checker->ProcessStmt(S, Builder);
   }
   
