@@ -291,6 +291,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::ATOMIC_LCS     , MVT::i8, Custom);
   setOperationAction(ISD::ATOMIC_LCS     , MVT::i16, Custom);
   setOperationAction(ISD::ATOMIC_LCS     , MVT::i32, Custom);
+  setOperationAction(ISD::ATOMIC_LCS     , MVT::i64, Custom);
 
   // Use the default ISD::LOCATION, ISD::DECLARE expansion.
   setOperationAction(ISD::LOCATION, MVT::Other, Expand);
@@ -5356,12 +5357,13 @@ SDOperand X86TargetLowering::LowerCTTZ(SDOperand Op, SelectionDAG &DAG) {
 
 SDOperand X86TargetLowering::LowerCAS(SDOperand Op, SelectionDAG &DAG) {
   MVT::ValueType T = cast<AtomicSDNode>(Op.Val)->getVT();
-  unsigned Reg;
-  unsigned size;
+  unsigned Reg = 0;
+  unsigned size = 0;
   switch(T) {
   case MVT::i8:  Reg = X86::AL;  size = 1; break;
   case MVT::i16: Reg = X86::AX;  size = 2; break;
   case MVT::i32: Reg = X86::EAX; size = 4; break;
+  case MVT::i64: Reg = X86::RAX; size = 8; break;
   };
   SDOperand cpIn = DAG.getCopyToReg(Op.getOperand(0), Reg,
                                     Op.getOperand(3), SDOperand());
