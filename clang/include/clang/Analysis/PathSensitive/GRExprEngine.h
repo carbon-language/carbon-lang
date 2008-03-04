@@ -31,31 +31,8 @@ public:
   typedef GRBranchNodeBuilder<GRExprEngine>        BranchNodeBuilder;
   typedef GRIndirectGotoNodeBuilder<GRExprEngine>  IndirectGotoNodeBuilder;
   typedef GRSwitchNodeBuilder<GRExprEngine>        SwitchNodeBuilder;
-  
-  class NodeSet {
-    typedef llvm::SmallPtrSet<NodeTy*,10> ImplTy;
-    ImplTy Impl;
+  typedef ExplodedNodeSet<NodeTy>                  NodeSet;
     
-  public:
-
-    NodeSet(NodeTy* N) { assert (N && !N->isSink()); Impl.insert(N); }
-    NodeSet() {}
-    
-    inline void Add(NodeTy* N) { if (N && !N->isSink()) Impl.insert(N); }
-    
-    typedef ImplTy::iterator       iterator;
-    typedef ImplTy::const_iterator const_iterator;
-    
-    inline unsigned size() const { return Impl.size();  }
-    inline bool empty()    const { return Impl.empty(); }
-    
-    inline iterator begin() { return Impl.begin(); }
-    inline iterator end()   { return Impl.end();   }
-    
-    inline const_iterator begin() const { return Impl.begin(); }
-    inline const_iterator end()   const { return Impl.end();   }
-  };
-  
 protected:
   /// G - the simulation graph.
   GraphTy& G;

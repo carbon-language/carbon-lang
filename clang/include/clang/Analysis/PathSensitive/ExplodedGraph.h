@@ -18,7 +18,7 @@
 #include "clang/Analysis/ProgramPoint.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/FoldingSet.h"
-#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/GraphTraits.h"
@@ -375,6 +375,38 @@ public:
     return const_cast<ExplodedGraph>(this)->eop_end();
   }
 };
+  
+  
+template <typename NodeTy>
+class ExplodedNodeSet {
+  
+  typedef llvm::SmallPtrSet<NodeTy*,5> ImplTy;
+  ImplTy Impl;
+  
+public:
+  ExplodedNodeSet(NodeTy* N) {
+    assert (N && !static_cast<ExplodedNodeImpl*>(N)->isSink());
+    Impl.insert(N);
+  }
+  
+  ExplodedNodeSet() {}
+  
+  inline void Add(NodeTy* N) {
+    if (N && !static_cast<ExplodedNodeImpl*>(N)->isSink()) Impl.insert(N);
+  }
+  
+  typedef typename ImplTy::iterator       iterator;
+  typedef typename ImplTy::const_iterator const_iterator;
+
+  inline unsigned size() const { return Impl.size();  }
+  inline bool empty()    const { return Impl.empty(); }
+  
+  inline iterator begin() { return Impl.begin(); }
+  inline iterator end()   { return Impl.end();   }
+  
+  inline const_iterator begin() const { return Impl.begin(); }
+  inline const_iterator end()   const { return Impl.end();   }
+};  
   
 } // end clang namespace
 
