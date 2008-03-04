@@ -598,9 +598,12 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
 void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
   
   NodeSet S1;
-  Visit(Ex, Pred, S1);
-
   QualType T = CastE->getType();
+  
+  if (T->isReferenceType())
+    VisitLVal(Ex, Pred, S1);
+  else
+    Visit(Ex, Pred, S1);
   
   // Check for redundant casts or casting to "void"
   if (T->isVoidType() ||
@@ -616,7 +619,9 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
   for (NodeSet::iterator I1 = S1.begin(), E1 = S1.end(); I1 != E1; ++I1) {
     NodeTy* N = *I1;
     ValueState* St = N->getState();
-    RVal V = GetRVal(St, Ex);
+    
+    RVal V = T->isReferenceType() ? GetLVal(St, Ex) : GetRVal(St, Ex);
+    
     Nodify(Dst, CastE, N, SetRVal(St, CastE, EvalCast(V, CastE->getType())));
   }
 }

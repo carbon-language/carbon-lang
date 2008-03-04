@@ -172,7 +172,7 @@ RVal GRSimpleVals::EvalCast(ValueManager& ValMgr, NonLVal X, QualType T) {
 
 RVal GRSimpleVals::EvalCast(ValueManager& ValMgr, LVal X, QualType T) {
   
-  if (T->isPointerType())
+  if (T->isPointerType() || T->isReferenceType())
     return X;
   
   assert (T->isIntegerType());
