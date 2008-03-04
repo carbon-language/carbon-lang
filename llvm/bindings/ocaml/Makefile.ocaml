@@ -98,7 +98,7 @@ $(ObjDir)/%.ml: $(PROJ_SRC_DIR)/%.ml $(ObjDir)/.dir
 
 $(ObjDir)/$(LIBRARYNAME).ocamldep: $(OcamlSources) $(OcamlHeaders) \
                                    $(OcamlDir)/.dir $(ObjDir)/.dir
-	$(Verb) $(OCAMLDEP) $(OCAMLCFLAGS) $(OcamlSources) $(OcamlHeader) > $@
+	$(Verb) $(OCAMLDEP) $(OCAMLCFLAGS) $(OcamlSources) $(OcamlHeaders) > $@
 
 $(ObjectsCMI): $(UsedOcamlInterfaces:%=$(OcamlDir)/%.cmi)
 
