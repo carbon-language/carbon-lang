@@ -24,9 +24,12 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Compiler.h"
 using namespace llvm;
 
+STATISTIC(NumRejectedSRETUses , "Number of sret rejected due to unexpected uses");
+STATISTIC(NumSRET , "Number of sret promoted");
 namespace {
   /// SRETPromotion - This pass removes sret parameter and updates
   /// function to use multiple return value.
@@ -87,15 +90,18 @@ bool SRETPromotion::PromoteReturn(CallGraphNode *CGN) {
   assert (STy && "Invalid sret parameter element type");
 
   // Check if it is ok to perform this promotion.
-  if (isSafeToUpdateAllCallers(F) == false)
+  if (isSafeToUpdateAllCallers(F) == false) {
+    NumRejectedSRETUses++;
     return false;
+  }
 
   // [1] Replace use of sret parameter 
-  AllocaInst *TheAlloca = new AllocaInst (STy, NULL, "mrv", F->getEntryBlock().begin());
+  AllocaInst *TheAlloca = new AllocaInst (STy, NULL, "mrv", 
+                                          F->getEntryBlock().begin());
   Value *NFirstArg = F->arg_begin();
   NFirstArg->replaceAllUsesWith(TheAlloca);
 
-  // Find and replace ret instructions
+  // [2] Find and replace ret instructions
   SmallVector<Value *,4> RetVals;
   for (Function::iterator FI = F->begin(), FE = F->end();  FI != FE; ++FI) 
     for(BasicBlock::iterator BI = FI->begin(), BE = FI->end(); BI != BE; ) {
@@ -119,10 +125,10 @@ bool SRETPromotion::PromoteReturn(CallGraphNode *CGN) {
       }
     }
 
-  // Create the new function body and insert it into the module.
+  // [3] Create the new function body and insert it into the module.
   Function *NF = cloneFunctionBody(F, STy);
 
-  // Update all call sites to use new function
+  // [4] Update all call sites to use new function
   updateCallSites(F, NF);
 
   F->eraseFromParent();
