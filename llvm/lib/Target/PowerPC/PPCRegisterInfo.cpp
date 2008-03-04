@@ -42,10 +42,16 @@
 #include <cstdlib>
 using namespace llvm;
 
+// FIXME (64-bit): Eventually enable by default.
+cl::opt<bool> EnablePPCRS("enable-ppc-regscavenger",
+			  cl::init(false),
+			  cl::desc("enable PPC register scavenger"),
+			  cl::Hidden);
+
 // FIXME (64-bit): Should be inlined.
 bool
 PPCRegisterInfo::requiresRegisterScavenging(const MachineFunction &) const {
-  return !Subtarget.isPPC64();
+  return EnablePPCRS;
 }
 
 /// getRegisterNumbering - Given the enum value for some register, e.g.
@@ -310,7 +316,8 @@ BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
     Reserved.set(PPC::R13);
     Reserved.set(PPC::R31);
 
-    Reserved.set(PPC::R0);      // FIXME (64-bit): Remove
+    if (!EnablePPCRS)
+      Reserved.set(PPC::R0);    // FIXME (64-bit): Remove
 
     Reserved.set(PPC::X0);
     Reserved.set(PPC::X1);
@@ -414,7 +421,7 @@ void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II,
 
   // FIXME (64-bit): Use "findScratchRegister"
   unsigned Reg;
-  if (!LP64)
+  if (EnablePPCRS)
     Reg = findScratchRegister(II, RS, RC, SPAdj);
   else
     Reg = PPC::R0;
@@ -424,10 +431,15 @@ void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II,
       .addReg(PPC::R31)
       .addImm(FrameSize);
   } else if (LP64) {
-    Reg = PPC::X0;              // FIXME (64-bit): Remove.
-    BuildMI(MBB, II, TII.get(PPC::LD), Reg)
-      .addImm(0)
-      .addReg(PPC::X1);
+    if (!EnablePPCRS)
+    if (EnablePPCRS) // FIXME (64-bit): Use "true" version.
+      BuildMI(MBB, II, TII.get(PPC::LD), Reg)
+	.addImm(0)
+	.addReg(PPC::X1);
+    else
+      BuildMI(MBB, II, TII.get(PPC::LD), PPC::X0)
+	.addImm(0)
+	.addReg(PPC::X1);
   } else {
     BuildMI(MBB, II, TII.get(PPC::LWZ), Reg)
       .addImm(0)
@@ -437,17 +449,16 @@ void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II,
   // Grow the stack and update the stack pointer link, then determine the
   // address of new allocated space.
   if (LP64) {
-#if 0                           // FIXME (64-bit): Enable
-    BuildMI(MBB, II, TII.get(PPC::STDUX))
-      .addReg(Reg, false, false, true)
-      .addReg(PPC::X1)
-      .addReg(MI.getOperand(1).getReg());
-#else
-    BuildMI(MBB, II, TII.get(PPC::STDUX))
-      .addReg(PPC::X0, false, false, true)
-      .addReg(PPC::X1)
-      .addReg(MI.getOperand(1).getReg());
-#endif
+    if (EnablePPCRS) // FIXME (64-bit): Use "true" version.
+      BuildMI(MBB, II, TII.get(PPC::STDUX))
+	.addReg(Reg, false, false, true)
+	.addReg(PPC::X1)
+	.addReg(MI.getOperand(1).getReg());
+    else
+      BuildMI(MBB, II, TII.get(PPC::STDUX))
+	.addReg(PPC::X0, false, false, true)
+	.addReg(PPC::X1)
+	.addReg(MI.getOperand(1).getReg());
 
     if (!MI.getOperand(1).isKill())
       BuildMI(MBB, II, TII.get(PPC::ADDI8), MI.getOperand(0).getReg())
@@ -573,11 +584,11 @@ void PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   }
 
   // Special case for pseudo-op SPILL_CR.
-  if (!Subtarget.isPPC64())     // FIXME (64-bit): Remove.
-  if (OpC == PPC::SPILL_CR) {
-    lowerCRSpilling(II, FrameIndex, SPAdj, RS);
-    return;
-  }
+  if (EnablePPCRS)  // FIXME (64-bit): Enable by default
+    if (OpC == PPC::SPILL_CR) {
+      lowerCRSpilling(II, FrameIndex, SPAdj, RS);
+      return;
+    }
 
   // Replace the FrameIndex with base register with GPR1 (SP) or GPR31 (FP).
   MI.getOperand(FIOperandNo).ChangeToRegister(hasFP(MF) ? PPC::R31 : PPC::R1,
@@ -627,7 +638,7 @@ void PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
   // FIXME (64-bit): Use "findScratchRegister".
   unsigned SReg;
-  if (!Subtarget.isPPC64())
+  if (EnablePPCRS)
     SReg = findScratchRegister(II, RS, &PPC::GPRCRegClass, SPAdj);
   else
     SReg = PPC::R0;
@@ -879,14 +890,14 @@ PPCRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   // FIXME: doesn't detect whether or not we need to spill vXX, which requires
   //        r0 for now.
 
-  if (!IsPPC64)                 // FIXME (64-bit): Enable.
-  if (needsFP(MF) || spillsCR(MF)) {
-    const TargetRegisterClass *GPRC = &PPC::GPRCRegClass;
-    const TargetRegisterClass *G8RC = &PPC::G8RCRegClass;
-    const TargetRegisterClass *RC = IsPPC64 ? G8RC : GPRC;
-    RS->setScavengingFrameIndex(MFI->CreateStackObject(RC->getSize(),
-                                                       RC->getAlignment()));
-  }
+  if (EnablePPCRS)  // FIXME (64-bit): Enable.
+    if (needsFP(MF) || spillsCR(MF)) {
+      const TargetRegisterClass *GPRC = &PPC::GPRCRegClass;
+      const TargetRegisterClass *G8RC = &PPC::G8RCRegClass;
+      const TargetRegisterClass *RC = IsPPC64 ? G8RC : GPRC;
+      RS->setScavengingFrameIndex(MFI->CreateStackObject(RC->getSize(),
+							 RC->getAlignment()));
+    }
 }
 
 void

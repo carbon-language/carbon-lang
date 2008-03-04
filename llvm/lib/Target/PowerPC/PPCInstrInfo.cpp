@@ -19,7 +19,10 @@
 #include "PPCTargetMachine.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/Support/CommandLine.h"
 using namespace llvm;
+
+extern cl::opt<bool> EnablePPCRS;  // FIXME (64-bit): See PPCRegisterInfo.cpp.
 
 PPCInstrInfo::PPCInstrInfo(PPCTargetMachine &tm)
   : TargetInstrInfoImpl(PPCInsts, array_lengthof(PPCInsts)), TM(tm),
@@ -320,8 +323,7 @@ void PPCInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
 static bool StoreRegToStackSlot(const TargetInstrInfo &TII,
                                 unsigned SrcReg, bool isKill, int FrameIdx,
                                 const TargetRegisterClass *RC,
-                                SmallVectorImpl<MachineInstr*> &NewMIs,
-                                bool isPPC64/*FIXME (64-bit): Remove.*/) {
+                                SmallVectorImpl<MachineInstr*> &NewMIs) {
   if (RC == PPC::GPRCRegisterClass) {
     if (SrcReg != PPC::LR) {
       NewMIs.push_back(addFrameReference(BuildMI(TII.get(PPC::STW))
@@ -353,7 +355,7 @@ static bool StoreRegToStackSlot(const TargetInstrInfo &TII,
     NewMIs.push_back(addFrameReference(BuildMI(TII.get(PPC::STFS))
                                 .addReg(SrcReg, false, false, isKill), FrameIdx));
   } else if (RC == PPC::CRRCRegisterClass) {
-    if (!isPPC64) {             // FIXME (64-bit): Enable
+    if (EnablePPCRS) {  // FIXME (64-bit): Enable
       NewMIs.push_back(addFrameReference(BuildMI(TII.get(PPC::SPILL_CR))
                                          .addReg(SrcReg, false, false, isKill),
 					 FrameIdx));
@@ -402,8 +404,7 @@ PPCInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                   const TargetRegisterClass *RC) const {
   SmallVector<MachineInstr*, 4> NewMIs;
 
-  if (StoreRegToStackSlot(*this, SrcReg, isKill, FrameIdx, RC, NewMIs,
-                 TM.getSubtargetImpl()->isPPC64()/*FIXME (64-bit): Remove.*/)) {
+  if (StoreRegToStackSlot(*this, SrcReg, isKill, FrameIdx, RC, NewMIs)) {
     PPCFunctionInfo *FuncInfo = MBB.getParent()->getInfo<PPCFunctionInfo>();
     FuncInfo->setSpillsCR();
   }
@@ -418,8 +419,8 @@ void PPCInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
                                   const TargetRegisterClass *RC,
                                   SmallVectorImpl<MachineInstr*> &NewMIs) const{
   if (Addr[0].isFrameIndex()) {
-    if (StoreRegToStackSlot(*this, SrcReg, isKill, Addr[0].getIndex(), RC, NewMIs,
-                 TM.getSubtargetImpl()->isPPC64()/*FIXME (64-bit): Remove.*/)) {
+    if (StoreRegToStackSlot(*this, SrcReg, isKill, Addr[0].getIndex(),
+                            RC, NewMIs)) {
       PPCFunctionInfo *FuncInfo = MF.getInfo<PPCFunctionInfo>();
       FuncInfo->setSpillsCR();
     }
