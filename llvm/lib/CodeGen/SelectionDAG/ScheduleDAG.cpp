@@ -232,39 +232,111 @@ void ScheduleDAG::ComputeLatency(SUnit *SU) {
   }
 }
 
+/// CalculateDepths - compute depths using algorithms for the longest
+/// paths in the DAG
 void ScheduleDAG::CalculateDepths() {
-  std::vector<std::pair<SUnit*, unsigned> > WorkList;
-  for (unsigned i = 0, e = SUnits.size(); i != e; ++i)
-    if (SUnits[i].Preds.empty())
-      WorkList.push_back(std::make_pair(&SUnits[i], 0U));
+  unsigned DAGSize = SUnits.size();
+  std::vector<unsigned> InDegree(DAGSize);
+  std::vector<SUnit*> WorkList;
+  WorkList.reserve(DAGSize);
 
+  // Initialize the data structures
+  for (unsigned i = 0, e = DAGSize; i != e; ++i) {
+    SUnit *SU = &SUnits[i];
+    int NodeNum = SU->NodeNum;
+    unsigned Degree = SU->Preds.size();
+    InDegree[NodeNum] = Degree;
+    SU->Depth = 0;
+
+    // Is it a node without dependencies?
+    if (Degree == 0) {
+        assert(SU->Preds.empty() && "SUnit should have no predecessors");
+        // Collect leaf nodes
+        WorkList.push_back(SU);
+    }
+  }
+
+  // Process nodes in the topological order
   while (!WorkList.empty()) {
-    SUnit *SU = WorkList.back().first;
-    unsigned Depth = WorkList.back().second;
+    SUnit *SU = WorkList.back();
     WorkList.pop_back();
-    if (SU->Depth == 0 || Depth > SU->Depth) {
-      SU->Depth = Depth;
-      for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
-           I != E; ++I)
-        WorkList.push_back(std::make_pair(I->Dep, Depth+1));
+    unsigned &SUDepth  = SU->Depth;
+
+    // Use dynamic programming:
+    // When current node is being processed, all of its dependencies
+    // are already processed.
+    // So, just iterate over all predecessors and take the longest path
+    for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
+         I != E; ++I) {
+      unsigned PredDepth = I->Dep->Depth;
+      if (PredDepth+1 > SUDepth) {
+          SUDepth = PredDepth + 1;
+      }
+    }
+
+    // Update InDegrees of all nodes depending on current SUnit
+    for (SUnit::const_succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
+         I != E; ++I) {
+      SUnit *SU = I->Dep;
+      if (!--InDegree[SU->NodeNum])
+        // If all dependencies of the node are processed already,
+        // then the longest path for the node can be computed now
+        WorkList.push_back(SU);
     }
   }
 }
 
+/// CalculateHeights - compute heights using algorithms for the longest
+/// paths in the DAG
 void ScheduleDAG::CalculateHeights() {
-  std::vector<std::pair<SUnit*, unsigned> > WorkList;
-  SUnit *Root = SUnitMap[DAG.getRoot().Val].front();
-  WorkList.push_back(std::make_pair(Root, 0U));
+  unsigned DAGSize = SUnits.size();
+  std::vector<unsigned> InDegree(DAGSize);
+  std::vector<SUnit*> WorkList;
+  WorkList.reserve(DAGSize);
 
+  // Initialize the data structures
+  for (unsigned i = 0, e = DAGSize; i != e; ++i) {
+    SUnit *SU = &SUnits[i];
+    int NodeNum = SU->NodeNum;
+    unsigned Degree = SU->Succs.size();
+    InDegree[NodeNum] = Degree;
+    SU->Height = 0;
+
+    // Is it a node without dependencies?
+    if (Degree == 0) {
+        assert(SU->Succs.empty() && "Something wrong");
+        assert(WorkList.empty() && "Should be empty");
+        // Collect leaf nodes
+        WorkList.push_back(SU);
+    }
+  }
+
+  // Process nodes in the topological order
   while (!WorkList.empty()) {
-    SUnit *SU = WorkList.back().first;
-    unsigned Height = WorkList.back().second;
+    SUnit *SU = WorkList.back();
     WorkList.pop_back();
-    if (SU->Height == 0 || Height > SU->Height) {
-      SU->Height = Height;
-      for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
-           I != E; ++I)
-        WorkList.push_back(std::make_pair(I->Dep, Height+1));
+    unsigned &SUHeight  = SU->Height;
+
+    // Use dynamic programming:
+    // When current node is being processed, all of its dependencies
+    // are already processed.
+    // So, just iterate over all successors and take the longest path
+    for (SUnit::const_succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
+         I != E; ++I) {
+      unsigned SuccHeight = I->Dep->Height;
+      if (SuccHeight+1 > SUHeight) {
+          SUHeight = SuccHeight + 1;
+      }
+    }
+
+    // Update InDegrees of all nodes depending on current SUnit
+    for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
+         I != E; ++I) {
+      SUnit *SU = I->Dep;
+      if (!--InDegree[SU->NodeNum])
+        // If all dependencies of the node are processed already,
+        // then the longest path for the node can be computed now
+        WorkList.push_back(SU);
     }
   }
 }
