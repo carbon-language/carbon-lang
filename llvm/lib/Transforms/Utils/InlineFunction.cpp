@@ -442,9 +442,21 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
 
     // If the return instruction returned a value, replace uses of the call with
     // uses of the returned value.
-    if (!TheCall->use_empty())
-      TheCall->replaceAllUsesWith(Returns[0]->getReturnValue());
-
+    if (!TheCall->use_empty()) {
+      ReturnInst *R = Returns[0];
+      if (R->getNumOperands() > 1) {
+        // Multiple return values.
+        for (Value::use_iterator RUI = TheCall->use_begin(),
+               RUE = TheCall->use_end(); RUI != RUE; ) {
+          GetResultInst *GR = dyn_cast<GetResultInst>(RUI++);
+          assert (GR && "Invalid Call instruction use!");
+          Value *RV = R->getOperand(GR->getIndex());
+          GR->replaceAllUsesWith(RV);
+          GR->eraseFromParent();
+        }
+      } else
+        TheCall->replaceAllUsesWith(R->getReturnValue());
+    }
     // Since we are now done with the Call/Invoke, we can delete it.
     TheCall->getParent()->getInstList().erase(TheCall);
 
