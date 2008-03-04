@@ -431,7 +431,6 @@ void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II,
       .addReg(PPC::R31)
       .addImm(FrameSize);
   } else if (LP64) {
-    if (!EnablePPCRS)
     if (EnablePPCRS) // FIXME (64-bit): Use "true" version.
       BuildMI(MBB, II, TII.get(PPC::LD), Reg)
 	.addImm(0)
@@ -513,15 +512,15 @@ void PPCRegisterInfo::lowerCRSpilling(MachineBasicBlock::iterator II,
   const TargetRegisterClass *RC = Subtarget.isPPC64() ? G8RC : GPRC;
   unsigned Reg = findScratchRegister(II, RS, RC, SPAdj);
 
-  // We need to store the CR in the low 4-bits of the saved value.  First, issue
-  // an MFCR to save all of the CRBits.
+  // We need to store the CR in the low 4-bits of the saved value. First, issue
+  // an MFCR to save all of the CRBits. Add an implicit kill of the CR.
   if (!MI.getOperand(0).isKill())
     BuildMI(MBB, II, TII.get(PPC::MFCR), Reg);
   else
     // Implicitly kill the CR register.
     BuildMI(MBB, II, TII.get(PPC::MFCR), Reg)
       .addReg(MI.getOperand(0).getReg(), false, true, true);
-
+    
   // If the saved register wasn't CR0, shift the bits left so that they are in
   // CR0's slot.
   unsigned SrcReg = MI.getOperand(0).getReg();
