@@ -3674,9 +3674,9 @@ bool SDNode::hasAnyUseOfValue(unsigned Value) const {
 }
 
 
-/// isOnlyUse - Return true if this node is the only use of N.
+/// isOnlyUseOf - Return true if this node is the only use of N.
 ///
-bool SDNode::isOnlyUse(SDNode *N) const {
+bool SDNode::isOnlyUseOf(SDNode *N) const {
   bool Seen = false;
   for (SDNode::use_iterator I = N->use_begin(), E = N->use_end(); I != E; ++I) {
     SDNode *User = *I;
@@ -3691,14 +3691,14 @@ bool SDNode::isOnlyUse(SDNode *N) const {
 
 /// isOperand - Return true if this node is an operand of N.
 ///
-bool SDOperand::isOperand(SDNode *N) const {
+bool SDOperand::isOperandOf(SDNode *N) const {
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
     if (*this == N->getOperand(i))
       return true;
   return false;
 }
 
-bool SDNode::isOperand(SDNode *N) const {
+bool SDNode::isOperandOf(SDNode *N) const {
   for (unsigned i = 0, e = N->NumOperands; i != e; ++i)
     if (this == N->OperandList[i].Val)
       return true;
@@ -3751,11 +3751,11 @@ static void findPredecessor(SDNode *N, const SDNode *P, bool &found,
   }
 }
 
-/// isPredecessor - Return true if this node is a predecessor of N. This node
+/// isPredecessorOf - Return true if this node is a predecessor of N. This node
 /// is either an operand of N or it can be reached by recursively traversing
 /// up the operands.
 /// NOTE: this is an expensive method. Use it carefully.
-bool SDNode::isPredecessor(SDNode *N) const {
+bool SDNode::isPredecessorOf(SDNode *N) const {
   SmallPtrSet<SDNode *, 32> Visited;
   bool found = false;
   findPredecessor(N, this, found, Visited);

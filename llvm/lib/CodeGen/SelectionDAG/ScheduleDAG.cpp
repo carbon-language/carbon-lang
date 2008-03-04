@@ -128,7 +128,7 @@ void ScheduleDAG::BuildSchedUnits() {
       bool HasFlagUse = false;
       for (SDNode::use_iterator UI = N->use_begin(), E = N->use_end(); 
            UI != E; ++UI)
-        if (FlagVal.isOperand(*UI)) {
+        if (FlagVal.isOperandOf(*UI)) {
           HasFlagUse = true;
           NodeSUnit->FlaggedNodes.push_back(N);
           SUnitMap[N].push_back(NodeSUnit);

@@ -472,7 +472,7 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
          I != E; ++I) {
       if (I->isCtrl)
         ChainPred = I->Dep;
-      else if (I->Dep->Node && I->Dep->Node->isOperand(LoadNode))
+      else if (I->Dep->Node && I->Dep->Node->isOperandOf(LoadNode))
         LoadPreds.push_back(SDep(I->Dep, I->Reg, I->Cost, false, false));
       else
         NodePreds.push_back(SDep(I->Dep, I->Reg, I->Cost, false, false));

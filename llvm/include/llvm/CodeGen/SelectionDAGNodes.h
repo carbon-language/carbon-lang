@@ -825,8 +825,8 @@ public:
     return SDOperand(Val, R);
   }
 
-  // isOperand - Return true if this node is an operand of N.
-  bool isOperand(SDNode *N) const;
+  // isOperandOf - Return true if this node is an operand of N.
+  bool isOperandOf(SDNode *N) const;
 
   /// getValueType - Return the ValueType of the referenced return value.
   ///
@@ -969,19 +969,19 @@ public:
   /// value. This method ignores uses of other values defined by this operation.
   bool hasAnyUseOfValue(unsigned Value) const;
 
-  /// isOnlyUse - Return true if this node is the only use of N.
+  /// isOnlyUseOf - Return true if this node is the only use of N.
   ///
-  bool isOnlyUse(SDNode *N) const;
+  bool isOnlyUseOf(SDNode *N) const;
 
-  /// isOperand - Return true if this node is an operand of N.
+  /// isOperandOf - Return true if this node is an operand of N.
   ///
-  bool isOperand(SDNode *N) const;
+  bool isOperandOf(SDNode *N) const;
 
-  /// isPredecessor - Return true if this node is a predecessor of N. This node
-  /// is either an operand of N or it can be reached by recursively traversing
-  /// up the operands.
+  /// isPredecessorOf - Return true if this node is a predecessor of N. This
+  /// node is either an operand of N or it can be reached by recursively
+  /// traversing up the operands.
   /// NOTE: this is an expensive method. Use it carefully.
-  bool isPredecessor(SDNode *N) const;
+  bool isPredecessorOf(SDNode *N) const;
 
   /// getNumOperands - Return the number of values used by this operation.
   ///

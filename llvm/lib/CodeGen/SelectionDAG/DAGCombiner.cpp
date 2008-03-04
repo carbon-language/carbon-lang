@@ -4030,7 +4030,7 @@ bool DAGCombiner::CombineToPreIndexedLoadStore(SDNode *N) {
   // Check #2.
   if (!isLoad) {
     SDOperand Val = cast<StoreSDNode>(N)->getValue();
-    if (Val == BasePtr || BasePtr.Val->isPredecessor(Val.Val))
+    if (Val == BasePtr || BasePtr.Val->isPredecessorOf(Val.Val))
       return false;
   }
 
@@ -4041,7 +4041,7 @@ bool DAGCombiner::CombineToPreIndexedLoadStore(SDNode *N) {
     SDNode *Use = *I;
     if (Use == N)
       continue;
-    if (Use->isPredecessor(N))
+    if (Use->isPredecessorOf(N))
       return false;
 
     if (!((Use->getOpcode() == ISD::LOAD &&
@@ -4179,7 +4179,7 @@ bool DAGCombiner::CombineToPostIndexedLoadStore(SDNode *N) {
         continue;
 
       // Check for #2
-      if (!Op->isPredecessor(N) && !N->isPredecessor(Op)) {
+      if (!Op->isPredecessorOf(N) && !N->isPredecessorOf(Op)) {
         SDOperand Result = isLoad
           ? DAG.getIndexedLoad(SDOperand(N,0), BasePtr, Offset, AM)
           : DAG.getIndexedStore(SDOperand(N,0), BasePtr, Offset, AM);
@@ -5008,8 +5008,8 @@ bool DAGCombiner::SimplifySelectOps(SDNode *TheSelect, SDOperand LHS,
         if (TheSelect->getOpcode() == ISD::SELECT) {
           // Check that the condition doesn't reach either load.  If so, folding
           // this will induce a cycle into the DAG.
-          if (!LLD->isPredecessor(TheSelect->getOperand(0).Val) &&
-              !RLD->isPredecessor(TheSelect->getOperand(0).Val)) {
+          if (!LLD->isPredecessorOf(TheSelect->getOperand(0).Val) &&
+              !RLD->isPredecessorOf(TheSelect->getOperand(0).Val)) {
             Addr = DAG.getNode(ISD::SELECT, LLD->getBasePtr().getValueType(),
                                TheSelect->getOperand(0), LLD->getBasePtr(),
                                RLD->getBasePtr());
@@ -5017,10 +5017,10 @@ bool DAGCombiner::SimplifySelectOps(SDNode *TheSelect, SDOperand LHS,
         } else {
           // Check that the condition doesn't reach either load.  If so, folding
           // this will induce a cycle into the DAG.
-          if (!LLD->isPredecessor(TheSelect->getOperand(0).Val) &&
-              !RLD->isPredecessor(TheSelect->getOperand(0).Val) &&
-              !LLD->isPredecessor(TheSelect->getOperand(1).Val) &&
-              !RLD->isPredecessor(TheSelect->getOperand(1).Val)) {
+          if (!LLD->isPredecessorOf(TheSelect->getOperand(0).Val) &&
+              !RLD->isPredecessorOf(TheSelect->getOperand(0).Val) &&
+              !LLD->isPredecessorOf(TheSelect->getOperand(1).Val) &&
+              !RLD->isPredecessorOf(TheSelect->getOperand(1).Val)) {
             Addr = DAG.getNode(ISD::SELECT_CC, LLD->getBasePtr().getValueType(),
                              TheSelect->getOperand(0),
                              TheSelect->getOperand(1), 
