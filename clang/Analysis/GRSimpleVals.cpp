@@ -23,6 +23,38 @@ using namespace clang;
 namespace clang {
 
 template <typename ITERATOR>
+static inline const PostStmt& GetLocation(ITERATOR I) {
+  return cast<PostStmt>((*I)->getLocation());
+}
+  
+template <>
+static inline const PostStmt& GetLocation(GRExprEngine::undef_arg_iterator I) {
+  return cast<PostStmt>(I->first->getLocation());
+}
+
+template <typename ITERATOR>
+static void EmitDiag(Diagnostic& Diag, SourceManager& SrcMgr,
+                     unsigned ErrorDiag, ITERATOR I) {  
+  
+  Expr* Exp = cast<Expr>(GetLocation(I).getStmt());
+  cast<Expr>(GetLocation(I).getStmt());  
+  Diag.Report(FullSourceLoc(Exp->getExprLoc(), SrcMgr), ErrorDiag);    
+}
+
+
+template <>
+static void EmitDiag(Diagnostic& Diag, SourceManager& SrcMgr,
+                     unsigned ErrorDiag, GRExprEngine::undef_arg_iterator I) {
+
+  Expr* E1 = cast<Expr>(GetLocation(I).getStmt());
+  Expr* E2 = cast<Expr>(I->second);
+  
+  SourceLocation Loc = E1->getExprLoc();
+  SourceRange R = E2->getSourceRange();
+  Diag.Report(FullSourceLoc(Loc, SrcMgr), ErrorDiag, 0, 0, &R, 1);
+}
+
+template <typename ITERATOR>
 static void EmitWarning(Diagnostic& Diag, SourceManager& SrcMgr,
                         ITERATOR I, ITERATOR E, const char* msg) {
  
@@ -32,8 +64,7 @@ static void EmitWarning(Diagnostic& Diag, SourceManager& SrcMgr,
   
   bool isFirst = true;
   unsigned ErrorDiag;
-  llvm::SmallPtrSet<void*,10> CachedErrors;
-  
+  llvm::SmallPtrSet<void*,10> CachedErrors;  
   
   for (; I != E; ++I) {
   
@@ -46,18 +77,15 @@ static void EmitWarning(Diagnostic& Diag, SourceManager& SrcMgr,
       // HACK: Cache the location of the error.  Don't emit the same
       // warning for the same error type that occurs at the same program
       // location but along a different path.
-      void* p = (*I)->getLocation().getRawData();
+      void* p = GetLocation(I).getRawData();
 
       if (CachedErrors.count(p))
         continue;
       
       CachedErrors.insert(p);
     }
-  
-    const PostStmt& L = cast<PostStmt>((*I)->getLocation());
-    Expr* Exp = cast<Expr>(L.getStmt());
-  
-    Diag.Report(FullSourceLoc(Exp->getExprLoc(), SrcMgr), ErrorDiag);
+    
+    EmitDiag(Diag, SrcMgr, ErrorDiag, I);  
   }
 }
   

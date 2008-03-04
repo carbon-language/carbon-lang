@@ -91,7 +91,7 @@ protected:
   typedef llvm::SmallPtrSet<NodeTy*,2> UndefStoresTy;
   typedef llvm::SmallPtrSet<NodeTy*,2> BadDerefTy;
   typedef llvm::SmallPtrSet<NodeTy*,2> BadCallsTy;
-  typedef llvm::SmallPtrSet<NodeTy*,2> UndefArgsTy;
+  typedef llvm::DenseMap<NodeTy*, Expr*> UndefArgsTy;
   typedef llvm::SmallPtrSet<NodeTy*,2> BadDividesTy;
   typedef llvm::SmallPtrSet<NodeTy*,2> NoReturnCallsTy;  
   typedef llvm::SmallPtrSet<NodeTy*,2> UndefResultsTy;  
@@ -209,7 +209,8 @@ public:
   }
   
   bool isUndefArg(const NodeTy* N) const {
-    return N->isSink() && UndefArgs.count(const_cast<NodeTy*>(N)) != 0;
+    return N->isSink() &&
+           UndefArgs.find(const_cast<NodeTy*>(N)) != UndefArgs.end();
   }
   
   typedef BadDerefTy::iterator null_deref_iterator;

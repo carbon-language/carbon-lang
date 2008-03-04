@@ -494,7 +494,7 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
 
         if (N) {
           N->markAsSink();
-          UndefArgs.insert(N);
+          UndefArgs[N] = CurrentArg;
         }
         
         continue;        
