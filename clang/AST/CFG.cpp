@@ -120,7 +120,6 @@ private:
   CFGBlock* WalkAST_VisitChildren(Stmt* S);
   CFGBlock* WalkAST_VisitDeclSubExprs(StmtIterator& I);
   CFGBlock* WalkAST_VisitStmtExpr(StmtExpr* S);
-  CFGBlock* WalkAST_VisitCallExpr(CallExpr* C);
   void FinishBlock(CFGBlock* B);
   
 };
@@ -318,9 +317,6 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* S, bool AlwaysAddStmt = false) {
       return Block;
     }
     
-    case Stmt::CallExprClass:
-      return WalkAST_VisitCallExpr(cast<CallExpr>(S));
-      
     case Stmt::StmtExprClass:
       return WalkAST_VisitStmtExpr(cast<StmtExpr>(S));
 
@@ -436,14 +432,6 @@ CFGBlock* CFGBuilder::WalkAST_VisitChildren(Stmt* S) {
 CFGBlock* CFGBuilder::WalkAST_VisitStmtExpr(StmtExpr* S) {
   Block->appendStmt(S);
   return VisitCompoundStmt(S->getSubStmt());  
-}
-
-/// WalkAST_VisitCallExpr - Utility method to handle function calls that
-///  are nested in expressions.  The idea is that each function call should
-///  appear as a distinct statement in the CFGBlock.
-CFGBlock* CFGBuilder::WalkAST_VisitCallExpr(CallExpr* C) {
-  Block->appendStmt(C);
-  return WalkAST_VisitChildren(C);
 }
 
 /// VisitStmt - Handle statements with no branching control flow.
