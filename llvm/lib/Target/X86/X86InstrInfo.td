@@ -2553,20 +2553,23 @@ let Defs = [EAX, EFLAGS], Uses = [EAX] in {
 def CMPXCHG32 : I<0xB1, Pseudo, (outs), (ins i32mem:$ptr, GR32:$swap),
                "cmpxchgl $swap,$ptr", []>, TB;
 def LCMPXCHG32 : I<0xB1, Pseudo, (outs), (ins i32mem:$ptr, GR32:$swap),
-               "lock cmpxchgl $swap,$ptr", [(X86cas addr:$ptr, GR32:$swap, 4)]>, TB, LOCK;
+               "lock cmpxchgl $swap,$ptr",
+               [(X86cas addr:$ptr, GR32:$swap, 4)]>, TB, LOCK;
 }
 
 let Defs = [AX, EFLAGS], Uses = [AX] in {
 def CMPXCHG16 : I<0xB1, Pseudo, (outs), (ins i16mem:$ptr, GR16:$swap),
                "cmpxchgw $swap,($ptr)", []>, TB, OpSize;
 def LCMPXCHG16 : I<0xB1, Pseudo, (outs), (ins i16mem:$ptr, GR16:$swap),
-               "lock cmpxchgw $swap,$ptr", [(X86cas addr:$ptr, GR16:$swap, 2)]>, TB, OpSize, LOCK;
+               "lock cmpxchgw $swap,$ptr",
+               [(X86cas addr:$ptr, GR16:$swap, 2)]>, TB, OpSize, LOCK;
 }
 let Defs = [AL, EFLAGS], Uses = [AL] in {
 def CMPXCHG8 : I<0xB0, Pseudo, (outs), (ins i8mem:$ptr, GR8:$swap),
                "cmpxchgb $swap,($ptr)", []>, TB;
 def LCMPXCHG8 : I<0xB0, Pseudo, (outs), (ins i8mem:$ptr, GR8:$swap),
-               "lock cmpxchgb $swap,$ptr", [(X86cas addr:$ptr, GR8:$swap, 1)]>, TB, LOCK;
+               "lock cmpxchgb $swap,$ptr",
+               [(X86cas addr:$ptr, GR8:$swap, 1)]>, TB, LOCK;
 }
 
 let Constraints = "$val = $dst", Defs = [EFLAGS] in {
