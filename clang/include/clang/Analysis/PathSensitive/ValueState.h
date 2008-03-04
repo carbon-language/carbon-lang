@@ -145,8 +145,10 @@ public:
 template<> struct GRTrait<ValueState*> {
   static inline void* toPtr(ValueState* St)  { return (void*) St; }
   static inline ValueState* toState(void* P) { return (ValueState*) P; }
-  static inline void Profile(llvm::FoldingSetNodeID& profile, ValueState* St) {
-    ValueState::Profile(profile, St);
+  static inline void Profile(llvm::FoldingSetNodeID& profile, ValueState* St) {    
+    // At this point states have already been uniqued.  Just
+    // add the pointer.
+    profile.AddPointer(St);
   }
 };    
   
