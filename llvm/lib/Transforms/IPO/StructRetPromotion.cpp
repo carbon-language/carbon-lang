@@ -205,9 +205,14 @@ Function *SRETPromotion::cloneFunctionBody(Function *F,
   unsigned ParamIndex = 1; // 0th parameter attribute is reserved for return type.
   while (I != E) {
     Params.push_back(I->getType());
-    if (ParameterAttributes attrs = PAL ? PAL->getParamAttrs(ParamIndex) : 
-        ParamAttr::None)
-      ParamAttrsVec.push_back(ParamAttrsWithIndex::get(Params.size(), attrs));
+    ParameterAttributes Attrs;
+    if (PAL) {
+      Attrs = PAL->getParamAttrs(ParamIndex);
+      if (ParamIndex == 1) // Skip sret attribute
+        Attrs = Attrs ^ ParamAttr::StructRet;
+    }
+    if (Attrs != ParamAttr::None)
+      ParamAttrsVec.push_back(ParamAttrsWithIndex::get(ParamIndex, Attrs));
     ++I;
     ++ParamIndex;
   }
@@ -240,7 +245,7 @@ void SRETPromotion::updateCallSites(Function *F, Function *NF) {
   SmallVector<Value*, 16> Args;
 
   // ParamAttrs - Keep track of the parameter attributes for the arguments.
-  ParamAttrsVector ParamAttrsVec;
+  ParamAttrsVector ArgAttrsVec;
 
   for (Value::use_iterator FUI = F->use_begin(), FUE = F->use_end(); FUI != FUE;) {
     CallSite CS = CallSite::get(*FUI);
@@ -250,7 +255,7 @@ void SRETPromotion::updateCallSites(Function *F, Function *NF) {
     const ParamAttrsList *PAL = F->getParamAttrs();
     // Add any return attributes.
     if (ParameterAttributes attrs = PAL ? PAL->getParamAttrs(0) : ParamAttr::None)
-      ParamAttrsVec.push_back(ParamAttrsWithIndex::get(0, attrs));
+      ArgAttrsVec.push_back(ParamAttrsWithIndex::get(0, attrs));
 
     // Copy arguments, however skip first one.
     CallSite::arg_iterator AI = CS.arg_begin(), AE = CS.arg_end();
@@ -259,9 +264,14 @@ void SRETPromotion::updateCallSites(Function *F, Function *NF) {
     unsigned ParamIndex = 1; // 0th parameter attribute is reserved for return type.
     while (AI != AE) {
       Args.push_back(*AI); 
-      if (ParameterAttributes Attrs = PAL ? PAL->getParamAttrs(ParamIndex) :
-          ParamAttr::None)
-        ParamAttrsVec.push_back(ParamAttrsWithIndex::get(Args.size(), Attrs));
+      ParameterAttributes Attrs;
+      if (PAL) {
+        Attrs = PAL->getParamAttrs(ParamIndex);
+        if (ParamIndex == 1) // Skip sret attribute
+          Attrs = Attrs ^ ParamAttr::StructRet;
+      }
+      if (Attrs != ParamAttr::None)
+        ArgAttrsVec.push_back(ParamAttrsWithIndex::get(Args.size(), Attrs));
       ++ParamIndex;
       ++AI;
     }
@@ -272,16 +282,16 @@ void SRETPromotion::updateCallSites(Function *F, Function *NF) {
       New = new InvokeInst(NF, II->getNormalDest(), II->getUnwindDest(),
                            Args.begin(), Args.end(), "", Call);
       cast<InvokeInst>(New)->setCallingConv(CS.getCallingConv());
-      cast<InvokeInst>(New)->setParamAttrs(ParamAttrsList::get(ParamAttrsVec));
+      cast<InvokeInst>(New)->setParamAttrs(ParamAttrsList::get(ArgAttrsVec));
     } else {
       New = new CallInst(NF, Args.begin(), Args.end(), "", Call);
       cast<CallInst>(New)->setCallingConv(CS.getCallingConv());
-      cast<CallInst>(New)->setParamAttrs(ParamAttrsList::get(ParamAttrsVec));
+      cast<CallInst>(New)->setParamAttrs(ParamAttrsList::get(ArgAttrsVec));
       if (cast<CallInst>(Call)->isTailCall())
         cast<CallInst>(New)->setTailCall();
     }
     Args.clear();
-    ParamAttrsVec.clear();
+    ArgAttrsVec.clear();
     New->takeName(Call);
 
     // Update all users of sret parameter to extract value using getresult.
