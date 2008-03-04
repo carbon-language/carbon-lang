@@ -623,8 +623,34 @@ void GRExprEngine::VisitDeclStmt(DeclStmt* DS, GRExprEngine::NodeTy* Pred,
         // FIXME: static variables may have an initializer, but the second
         //  time a function is called those values may not be current.
         
-        St = SetRVal(St, lval::DeclVal(VD),
-                     Ex ? GetRVal(St, Ex) : UndefinedVal());
+        if ( VD->getStorageClass() == VarDecl::Static) {
+
+          QualType T = VD->getType();
+          
+          // C99: 6.7.8 Initialization
+          //  If an object that has static storage duration is not initialized
+          //  explicitly, then: 
+          //   —if it has pointer type, it is initialized to a null pointer; 
+          //   —if it has arithmetic type, it is initialized to (positive or 
+          //     unsigned) zero; 
+          
+          if (T->isPointerType()) {
+            
+            St = SetRVal(St, lval::DeclVal(VD),
+                         lval::ConcreteInt(ValMgr.getValue(0, T)));
+          }
+          else if (T->isIntegerType()) {
+            
+            St = SetRVal(St, lval::DeclVal(VD),
+                         nonlval::ConcreteInt(ValMgr.getValue(0, T)));
+          }
+          
+          // FIXME: Handle structs.  Now we treat their values as unknown.
+        }
+        else
+          St = SetRVal(St, lval::DeclVal(VD),
+                       Ex ? GetRVal(St, Ex) : UndefinedVal());
+          
       }
     }
 
