@@ -826,3 +826,10 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string* TriplesStart,
   
   return TI;
 }
+
+TargetInfo::~TargetInfo() {
+  delete PrimaryTarget;
+  for (unsigned i = 0; i < SecondaryTargets.size(); ++i)
+    delete SecondaryTargets[i];
+}
+

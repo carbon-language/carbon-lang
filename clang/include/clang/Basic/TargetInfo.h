@@ -38,9 +38,6 @@ namespace Builtin { struct Info; }
 /// target, it will warn the first time the size of the 'long' datatype is
 /// queried.
 ///
-/// Note that TargetInfo does not take ownership of the various targets or the 
-/// diagnostic info, but does expect them to be alive for as long as it is.
-///
 class TargetInfo {
   /// Primary - This tracks the primary target in the target set.
   ///
@@ -75,6 +72,11 @@ class TargetInfo {
     WCharWidth = 0;
   }
 
+  /// AddSecondaryTarget - Add a secondary target to the target set.
+  void AddSecondaryTarget(const TargetInfoImpl *Secondary) {
+    SecondaryTargets.push_back(Secondary);
+  }
+
 public:  
   /// CreateTargetInfo - Create a TargetInfo object from a group of
   ///  target triples.  The first target triple is considered the primary
@@ -82,6 +84,8 @@ public:
   static TargetInfo* CreateTargetInfo(const std::string* TriplesBeg,
                                       const std::string* TripledEnd,
                                       Diagnostic* Diags = NULL);
+
+  ~TargetInfo();
 
   //==----------------------------------------------------------------==/
   //                       Accessors.
@@ -97,11 +101,6 @@ public:
   /// secondary targets so far.
   bool isPortable() const {
     return !NonPortable;
-  }
-  
-  /// AddSecondaryTarget - Add a secondary target to the target set.
-  void AddSecondaryTarget(const TargetInfoImpl *Secondary) {
-    SecondaryTargets.push_back(Secondary);
   }
   
   ///===---- Target property query methods --------------------------------===//
