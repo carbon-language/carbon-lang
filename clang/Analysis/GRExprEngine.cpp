@@ -69,20 +69,6 @@ ValueState* GRExprEngine::SetRVal(ValueState* St, Expr* Ex, RVal V) {
   return StateMgr.SetRVal(St, Ex, V, isBlkExpr, false);
 }
 
-#if 0
-const ValueState::BufferTy&
-GRExprEngine::SetRVal(ValueState* St, Expr* Ex, const RVal::BufferTy& RB,
-                      ValueState::BufferTy& RetBuf) {
-  
-  assert (RetBuf.empty());
-  
-  for (RVal::BufferTy::const_iterator I = RB.begin(), E = RB.end(); I!=E; ++I)
-    RetBuf.push_back(SetRVal(St, Ex, *I));
-                     
-  return RetBuf;
-}
-#endif
-
 ValueState* GRExprEngine::SetRVal(ValueState* St, LVal LV, RVal RV) {
   
   if (!StateCleaned) {

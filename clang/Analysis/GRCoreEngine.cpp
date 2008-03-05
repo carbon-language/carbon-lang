@@ -113,7 +113,8 @@ bool GRCoreEngineImpl::ExecuteWorkList(unsigned Steps) {
   return WList->hasWork();
 }
 
-void GRCoreEngineImpl::HandleBlockEdge(const BlockEdge& L, ExplodedNodeImpl* Pred) {
+void GRCoreEngineImpl::HandleBlockEdge(const BlockEdge& L,
+                                       ExplodedNodeImpl* Pred) {
   
   CFGBlock* Blk = L.getDst();
   
@@ -144,7 +145,7 @@ void GRCoreEngineImpl::HandleBlockEdge(const BlockEdge& L, ExplodedNodeImpl* Pre
 }
 
 void GRCoreEngineImpl::HandleBlockEntrance(const BlockEntrance& L,
-                                       ExplodedNodeImpl* Pred) {
+                                           ExplodedNodeImpl* Pred) {
   
   // Increment the block counter.
   GRBlockCounter Counter = WList->getBlockCounter();
