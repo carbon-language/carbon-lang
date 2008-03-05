@@ -44,6 +44,17 @@ static SDVTList makeVTList(const MVT::ValueType *VTs, unsigned NumVTs) {
   return Res;
 }
 
+static const fltSemantics *MVTToAPFloatSemantics(MVT::ValueType VT) {
+  switch (VT) {
+  default: assert(0 && "Unknown FP format");
+  case MVT::f32:     return &APFloat::IEEEsingle;
+  case MVT::f64:     return &APFloat::IEEEdouble;
+  case MVT::f80:     return &APFloat::x87DoubleExtended;
+  case MVT::f128:    return &APFloat::IEEEquad;
+  case MVT::ppcf128: return &APFloat::PPCDoubleDouble;
+  }
+}
+
 SelectionDAG::DAGUpdateListener::~DAGUpdateListener() {}
 
 //===----------------------------------------------------------------------===//
@@ -60,28 +71,20 @@ bool ConstantFPSDNode::isExactlyValue(const APFloat& V) const {
 
 bool ConstantFPSDNode::isValueValidForType(MVT::ValueType VT, 
                                            const APFloat& Val) {
+  assert(MVT::isFloatingPoint(VT) && "Can only convert between FP types");
+  
+  // Anything can be extended to ppc long double.
+  if (VT == MVT::ppcf128)
+    return true;
+  
+  // PPC long double cannot be shrunk to anything though.
+  if (&Val.getSemantics() == &APFloat::PPCDoubleDouble)
+    return false;
+  
   // convert modifies in place, so make a copy.
   APFloat Val2 = APFloat(Val);
-  switch (VT) {
-  default:
-    return false;         // These can't be represented as floating point!
-
-  // FIXME rounding mode needs to be more flexible
-  case MVT::f32:
-    return &Val2.getSemantics() == &APFloat::IEEEsingle ||
-           Val2.convert(APFloat::IEEEsingle, APFloat::rmNearestTiesToEven) == 
-              APFloat::opOK;
-  case MVT::f64:
-    return &Val2.getSemantics() == &APFloat::IEEEsingle || 
-           &Val2.getSemantics() == &APFloat::IEEEdouble ||
-           Val2.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven) == 
-             APFloat::opOK;
-  // TODO: Figure out how to test if we can use a shorter type instead!
-  case MVT::f80:
-  case MVT::f128:
-  case MVT::ppcf128:
-    return true;
-  }
+  return Val2.convert(*MVTToAPFloatSemantics(VT),
+                      APFloat::rmNearestTiesToEven) == APFloat::opOK;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1786,12 +1789,8 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       case ISD::FP_EXTEND:
         // This can return overflow, underflow, or inexact; we don't care.
         // FIXME need to be more flexible about rounding mode.
-        (void) V.convert(VT==MVT::f32 ? APFloat::IEEEsingle : 
-                         VT==MVT::f64 ? APFloat::IEEEdouble :
-                         VT==MVT::f80 ? APFloat::x87DoubleExtended :
-                         VT==MVT::f128 ? APFloat::IEEEquad :
-                         APFloat::Bogus,
-                         APFloat::rmNearestTiesToEven);
+        (void)V.convert(*MVTToAPFloatSemantics(VT),
+                        APFloat::rmNearestTiesToEven);
         return getConstantFP(V, VT);
       case ISD::FP_TO_SINT:
       case ISD::FP_TO_UINT: {
