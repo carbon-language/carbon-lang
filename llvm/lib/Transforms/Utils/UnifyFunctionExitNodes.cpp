@@ -20,6 +20,7 @@
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Type.h"
+#include "llvm/ADT/SmallVector.h"
 using namespace llvm;
 
 char UnifyFunctionExitNodes::ID = 0;
@@ -50,11 +51,6 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
   // Loop over all of the blocks in a function, tracking all of the blocks that
   // return.
   //
-
-  // PHINode can not handle aggregates returned by multiple value ret
-  // instructions. TODO: Handle each return value independently.
-  if (isa<StructType>(F.getReturnType()))
-    return false;
   std::vector<BasicBlock*> ReturningBlocks;
   std::vector<BasicBlock*> UnwindingBlocks;
   std::vector<BasicBlock*> UnreachableBlocks;
@@ -110,18 +106,30 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
   }
 
   // Otherwise, we need to insert a new basic block into the function, add a PHI
-  // node (if the function returns a value), and convert all of the return
+  // nodes (if the function returns values), and convert all of the return
   // instructions into unconditional branches.
   //
   BasicBlock *NewRetBlock = new BasicBlock("UnifiedReturnBlock", &F);
 
-  PHINode *PN = 0;
-  if (F.getReturnType() != Type::VoidTy) {
-    // If the function doesn't return void... add a PHI node to the block...
-    PN = new PHINode(F.getReturnType(), "UnifiedRetVal");
-    NewRetBlock->getInstList().push_back(PN);
+  SmallVector<Value *, 4> Phis;
+  unsigned NumRetVals = ReturningBlocks[0]->getTerminator()->getNumOperands();
+  if (NumRetVals == 0)
+    new ReturnInst(NULL, NewRetBlock);
+  else if (const StructType *STy = dyn_cast<StructType>(F.getReturnType())) {
+    for (unsigned i = 0; i < NumRetVals; ++i) {
+      PHINode *PN = new PHINode(STy->getElementType(i), "UnifiedRetVal");
+      NewRetBlock->getInstList().push_back(PN);
+      Phis.push_back(PN);
+    }
+    new ReturnInst(&Phis[0], NumRetVals);
   }
-  new ReturnInst(PN, NewRetBlock);
+  else {
+    // If the function doesn't return void... add a PHI node to the block...
+    PHINode *PN = new PHINode(F.getReturnType(), "UnifiedRetVal");
+    NewRetBlock->getInstList().push_back(PN);
+    Phis.push_back(PN);
+    new ReturnInst(PN, NewRetBlock);
+  }
 
   // Loop over all of the blocks, replacing the return instruction with an
   // unconditional branch.
@@ -132,7 +140,11 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
 
     // Add an incoming element to the PHI node for every return instruction that
     // is merging into this new block...
-    if (PN) PN->addIncoming(BB->getTerminator()->getOperand(0), BB);
+    if (!Phis.empty()) {
+      for (unsigned i = 0; i < NumRetVals; ++i) 
+        cast<PHINode>(Phis[i])->addIncoming(BB->getTerminator()->getOperand(i), 
+                                            BB);
+    }
 
     BB->getInstList().pop_back();  // Remove the return insn
     new BranchInst(NewRetBlock, BB);
