@@ -610,11 +610,15 @@ void Emitter::emitInstruction(const MachineInstr &MI,
     switch (Opcode) {
     default: 
       assert(0 && "psuedo instructions should be removed before code emission");
+      break;
     case TargetInstrInfo::INLINEASM:
       assert(0 && "JIT does not support inline asm!\n");
+      break;
     case TargetInstrInfo::LABEL:
       MCE.emitLabel(MI.getOperand(0).getImm());
       break;
+    case TargetInstrInfo::DECLARE:
+    case X86::DWARF_LOC:
     case X86::IMPLICIT_DEF_GR8:
     case X86::IMPLICIT_DEF_GR16:
     case X86::IMPLICIT_DEF_GR32:
