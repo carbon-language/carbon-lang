@@ -114,15 +114,6 @@ protected:
   }
   
 public:
-  // This method is only defined so that we can cast a
-  // void* to FoldingSet<ExplodedNodeImpl> so that we can iterate
-  // over the vertices of EdgeNodeSetMap in ExplodeGraphImpl.
-  // The actual profiling of vertices will be done in the derived
-  // class, ExplodedNode<>.  Nodes will NEVER be INSERTED into the
-  // FoldingSet using this Profile method (since it doesn't do anything).
-  inline void Profile(llvm::FoldingSetNodeID& ID) const {
-    assert (false && "Needs to be implemented in derived class.");
-  }
   
   /// getLocation - Returns the edge associated with the given node.
   const ProgramPoint& getLocation() const { return Location; }
@@ -139,11 +130,8 @@ public:
 
 template <typename StateTy>
 struct GRTrait {
-  static inline void* toPtr(StateTy S) {
-    return reinterpret_cast<void*>(S);
-  }  
-  static inline StateTy toState(void* P) {
-    return reinterpret_cast<StateTy>(P);
+  static inline void Profile(llvm::FoldingSetNodeID& ID, const StateTy* St) {
+    St->Profile(ID);
   }
 };
 
@@ -153,19 +141,19 @@ class ExplodedNode : public ExplodedNodeImpl {
 public:
   /// Construct a ExplodedNodeImpl with the given node ID, program edge,
   ///  and state.
-  explicit ExplodedNode(const ProgramPoint& loc, StateTy state)
-  : ExplodedNodeImpl(loc, GRTrait<StateTy>::toPtr(state)) {}
+  explicit ExplodedNode(const ProgramPoint& loc, StateTy* St)
+    : ExplodedNodeImpl(loc, St) {}
   
   /// getState - Returns the state associated with the node.  
-  inline StateTy getState() const {
-    return GRTrait<StateTy>::toState(State);
+  inline StateTy* getState() const {
+    return static_cast<StateTy*>(State);
   }
   
   // Profiling (for FoldingSet).
   
   static inline void Profile(llvm::FoldingSetNodeID& ID,
                              const ProgramPoint& Loc,
-                             StateTy state) {
+                             StateTy* state) {
     ID.Add(Loc);
     GRTrait<StateTy>::Profile(ID, state);
   }
@@ -293,7 +281,7 @@ protected:
 protected:
   virtual ExplodedNodeImpl*
   getNodeImpl(const ProgramPoint& L, void* State, bool* IsNew) {
-    return getNode(L, GRTrait<StateTy>::toState(State), IsNew);
+    return getNode(L, static_cast<StateTy*>(State), IsNew);
   }
     
 public:
@@ -309,7 +297,7 @@ public:
   ///  where the 'Location' is a ProgramPoint in the CFG.  If no node for
   ///  this pair exists, it is created.  IsNew is set to true if
   ///  the node was freshly created.
-  NodeTy* getNode(const ProgramPoint& L, StateTy State, bool* IsNew = NULL) {
+  NodeTy* getNode(const ProgramPoint& L, StateTy* State, bool* IsNew = NULL) {
     
     // Profile 'State' to determine if we already have an existing node.
     llvm::FoldingSetNodeID profile;    

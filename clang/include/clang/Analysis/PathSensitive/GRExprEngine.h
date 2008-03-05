@@ -22,7 +22,7 @@ namespace clang {
 class GRExprEngine {
   
 public:
-  typedef ValueState*                 StateTy;
+  typedef ValueState                  StateTy;
   typedef ExplodedGraph<GRExprEngine> GraphTy;
   typedef GraphTy::NodeTy             NodeTy;
   

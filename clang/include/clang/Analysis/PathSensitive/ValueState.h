@@ -93,7 +93,7 @@ public:
   
   /// Profile - Profile the contents of a ValueState object for use
   ///  in a FoldingSet.
-  static void Profile(llvm::FoldingSetNodeID& ID, ValueState* V) {
+  static void Profile(llvm::FoldingSetNodeID& ID, const ValueState* V) {
     V->SubExprBindings.Profile(ID);
     V->BlockExprBindings.Profile(ID);
     V->VarBindings.Profile(ID);
@@ -103,7 +103,7 @@ public:
 
   /// Profile - Used to profile the contents of this object for inclusion
   ///  in a FoldingSet.
-  void Profile(llvm::FoldingSetNodeID& ID) {
+  void Profile(llvm::FoldingSetNodeID& ID) const {
     Profile(ID, this);
   }
   

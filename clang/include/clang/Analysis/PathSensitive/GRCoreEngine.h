@@ -168,18 +168,16 @@ public:
     return static_cast<NodeTy*>(NB.getLastNode());
   }
   
-  NodeTy* generateNode(Stmt* S, StateTy State, NodeTy* Pred) {
-    void *state = GRTrait<StateTy>::toPtr(State);        
-    return static_cast<NodeTy*>(NB.generateNodeImpl(S, state, Pred));
+  NodeTy* generateNode(Stmt* S, StateTy* St, NodeTy* Pred) {
+    return static_cast<NodeTy*>(NB.generateNodeImpl(S, St, Pred));
   }
   
-  NodeTy* generateNode(Stmt* S, StateTy State) {
-    void *state = GRTrait<StateTy>::toPtr(State);
-    return static_cast<NodeTy*>(NB.generateNodeImpl(S, state));    
+  NodeTy* generateNode(Stmt* S, StateTy* St) {
+    return static_cast<NodeTy*>(NB.generateNodeImpl(S, St));    
   }
   
-  NodeTy* Nodify(ExplodedNodeSet<NodeTy> Dst, Stmt* S,
-                 NodeTy* Pred, StateTy St) {
+  NodeTy* Nodify(ExplodedNodeSet<NodeTy>& Dst, Stmt* S,
+                 NodeTy* Pred, StateTy* St) {
     
     // If the state hasn't changed, don't generate a new node.
     if (St == Pred->getState()) {
@@ -251,13 +249,12 @@ public:
     return static_cast<NodeTy*>(NB.getPredecessor());
   }
   
-  StateTy getState() const {
+  StateTy* getState() const {
     return getPredecessor()->getState();
   }
 
-  inline NodeTy* generateNode(StateTy State, bool branch) {
-    void *state = GRTrait<StateTy>::toPtr(State);        
-    return static_cast<NodeTy*>(NB.generateNodeImpl(state, branch));
+  inline NodeTy* generateNode(StateTy* St, bool branch) {
+    return static_cast<NodeTy*>(NB.generateNodeImpl(St, branch));
   }
   
   GRBlockCounter getBlockCounter() const {
@@ -334,13 +331,12 @@ public:
   
   inline Expr* getTarget() const { return NB.getTarget(); }
   
-  inline NodeTy* generateNode(const iterator& I, StateTy St, bool isSink=false){    
-    void *state = GRTrait<StateTy>::toPtr(St);        
-    return static_cast<NodeTy*>(NB.generateNodeImpl(I, state, isSink));
+  inline NodeTy* generateNode(const iterator& I, StateTy* St, bool isSink=false){    
+    return static_cast<NodeTy*>(NB.generateNodeImpl(I, St, isSink));
   }
   
-  inline StateTy getState() const {
-    return GRTrait<StateTy>::toState(NB.getState());
+  inline StateTy* getState() const {
+    return static_cast<StateTy*>(NB.getState());
   }    
 };
   
@@ -402,18 +398,16 @@ public:
   
   inline Expr* getCondition() const { return NB.getCondition(); }
   
-  inline NodeTy* generateCaseStmtNode(const iterator& I, StateTy St) {
-    void *state = GRTrait<StateTy>::toPtr(St);        
-    return static_cast<NodeTy*>(NB.generateCaseStmtNodeImpl(I, state));
+  inline NodeTy* generateCaseStmtNode(const iterator& I, StateTy* St) {
+    return static_cast<NodeTy*>(NB.generateCaseStmtNodeImpl(I, St));
   }
   
-  inline NodeTy* generateDefaultCaseNode(StateTy St, bool isSink = false) {    
-    void *state = GRTrait<StateTy>::toPtr(St);        
-    return static_cast<NodeTy*>(NB.generateDefaultCaseNodeImpl(state, isSink));
+  inline NodeTy* generateDefaultCaseNode(StateTy* St, bool isSink = false) {    
+    return static_cast<NodeTy*>(NB.generateDefaultCaseNodeImpl(St, isSink));
   }
   
-  inline StateTy getState() const {
-    return GRTrait<StateTy>::toState(NB.getState());
+  inline StateTy* getState() const {
+    return static_cast<StateTy*>(NB.getState());
   }    
 };
 
@@ -432,7 +426,7 @@ protected:
   CheckerTy* Checker;  
   
   virtual void* getInitialState() {
-    return GRTrait<StateTy>::toPtr(getCheckerState().getInitialState());
+    return getCheckerState().getInitialState();
   }
   
   virtual void* ProcessEOP(CFGBlock* Blk, void* State) {
@@ -448,7 +442,7 @@ protected:
   virtual bool ProcessBlockEntrance(CFGBlock* Blk, void* State,
                                     GRBlockCounter BC) {    
     return Checker->ProcessBlockEntrance(Blk,
-                                         GRTrait<StateTy>::toState(State), BC);
+                                         static_cast<StateTy*>(State), BC);
   }
 
   virtual void ProcessBranch(Expr* Condition, Stmt* Terminator,
