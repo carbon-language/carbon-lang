@@ -517,8 +517,21 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
       
       IdentifierInfo* Info = cast<lval::FuncVal>(L).getDecl()->getIdentifier();
       
-      if (Info->getBuiltinID())
-        invalidateArgs = true;
+      if (unsigned id = Info->getBuiltinID()) {
+        switch (id) {
+          case Builtin::BI__builtin_expect: {
+            // For __builtin_expect, just return the value of the subexpression.
+            assert (CE->arg_begin() != CE->arg_end());            
+            RVal X = GetRVal(St, *(CE->arg_begin()));
+            Nodify(Dst, CE, *DI, SetRVal(St, CE, X));
+            continue;            
+          }
+            
+          default:
+            invalidateArgs = true;
+            break;
+        }
+      }
     }
         
     if (invalidateArgs) {
