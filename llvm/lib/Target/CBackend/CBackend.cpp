@@ -2684,7 +2684,7 @@ bool CWriter::visitBuiltinCall(CallInst &I, Intrinsic::ID ID,
     return false;
   }
   case Intrinsic::memory_barrier:
-    Out << "__sync_syncronize()";
+    Out << "__sync_synchronize()";
     return true;
   case Intrinsic::vastart:
     Out << "0; ";
