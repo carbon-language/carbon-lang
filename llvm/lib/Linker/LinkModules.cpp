@@ -568,22 +568,25 @@ static bool LinkGlobals(Module *Dest, Module *Src,
 // LinkAlias - Loop through the alias in the src module and link them into the
 // dest module.
 static bool LinkAlias(Module *Dest, const Module *Src, std::string *Err) {
+  // FIXME: Desptie of the name, this function currently does not 'link' stuff,
+  // but only copies aliases from one Module to another.
+
   // Loop over all alias in the src module
   for (Module::const_alias_iterator I = Src->alias_begin(),
          E = Src->alias_end(); I != E; ++I) {
     const GlobalAlias *GA = I;
 
-    GlobalValue *NewAliased = NULL;
-    const GlobalValue *Aliased = GA->getAliasedGlobal();
-    if (isa<GlobalVariable>(*Aliased))
-      NewAliased = Dest->getGlobalVariable(Aliased->getName());
-    else if (isa<Function>(*Aliased))
-      NewAliased = Dest->getFunction(Aliased->getName());
-    // FIXME: we should handle the bitcast alias.
-    assert(NewAliased && "Can't find the aliased GV.");
+    GlobalValue *NewAliasee = NULL;
+    const GlobalValue *Aliasee = GA->getAliasedGlobal();
+    if (isa<GlobalVariable>(Aliasee))
+      NewAliasee = Dest->getGlobalVariable(Aliasee->getName());
+    else if (isa<Function>(Aliasee))
+      NewAliasee = Dest->getFunction(Aliasee->getName());
+    // FIXME: we should handle the bitcasted aliasee.
+    assert(NewAliasee && "Can't find the aliased GV.");
 
     GlobalAlias *NewGA = new GlobalAlias(GA->getType(), GA->getLinkage(),
-                                         GA->getName(), NewAliased, Dest);
+                                         GA->getName(), NewAliasee, Dest);
     CopyGVAttributes(NewGA, GA);
   }
   return false;
