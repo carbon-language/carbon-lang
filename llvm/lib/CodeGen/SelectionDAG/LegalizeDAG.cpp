@@ -504,7 +504,8 @@ static SDOperand ExpandConstantFP(ConstantFPSDNode *CFP, bool UseCP,
     if (CFP->isValueValidForType(SVT, CFP->getValueAPF()) &&
         // Only do this if the target has a native EXTLOAD instruction from
         // smaller type.
-        TLI.isLoadXLegal(ISD::EXTLOAD, SVT)) {
+        TLI.isLoadXLegal(ISD::EXTLOAD, SVT) &&
+        TLI.ShouldShrinkFPConstant(VT)) {
       const Type *SType = MVT::getTypeForValueType(SVT);
       LLVMC = cast<ConstantFP>(ConstantExpr::getFPTrunc(LLVMC, SType));
       VT = SVT;

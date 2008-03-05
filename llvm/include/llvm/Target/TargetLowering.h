@@ -467,6 +467,11 @@ public:
     assert(0 && "Unsupported extended type!");
   }
 
+  /// ShouldShrinkFPConstant - If true, then instruction selection should
+  /// seek to shrink the FP constant of the specified type to a smaller type
+  /// in order to save space and / or reduce runtime.
+  virtual bool ShouldShrinkFPConstant(MVT::ValueType VT) const { return true; }
+
   /// hasTargetDAGCombine - If true, the target has custom DAG combine
   /// transformations that it can perform for the specified node.
   bool hasTargetDAGCombine(ISD::NodeType NT) const {

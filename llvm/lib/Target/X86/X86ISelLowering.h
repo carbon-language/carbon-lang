@@ -434,6 +434,16 @@ namespace llvm {
     virtual bool isVectorClearMaskLegal(std::vector<SDOperand> &BVOps,
                                         MVT::ValueType EVT,
                                         SelectionDAG &DAG) const;
+
+    /// ShouldShrinkFPConstant - If true, then instruction selection should
+    /// seek to shrink the FP constant of the specified type to a smaller type
+    /// in order to save space and / or reduce runtime.
+    virtual bool ShouldShrinkFPConstant(MVT::ValueType VT) const {
+      // Don't shrink FP constpool if SSE2 is available since cvtss2sd is more
+      // expensive than a straight movsd. On the other hand, it's important to
+      // shrink long double fp constant since fldt is very slow.
+      return !X86ScalarSSEf64 || VT == MVT::f80;
+    }
     
     /// IsEligibleForTailCallOptimization - Check whether the call is eligible
     /// for tail call optimization. Target which want to do tail call
