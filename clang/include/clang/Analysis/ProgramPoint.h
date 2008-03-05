@@ -25,13 +25,8 @@ namespace clang {
     
 class ProgramPoint {
 public:
-  enum Kind { LayeredNodeKind  =  0x0,
-              BlockEntranceKind = 0x1,
-              PostStmtKind      = 0x2,
-              BlockExitKind     = 0x3,
-              BlockEdgeSrcKind  = 0x5, // Skip 0x4.
-              BlockEdgeDstKind  = 0x6,
-              BlockEdgeAuxKind  = 0x7 }; 
+  enum Kind { BlockEntranceKind=0, PostStmtKind=1, BlockExitKind=2,
+              BlockEdgeSrcKind=3, BlockEdgeDstKind=4, BlockEdgeAuxKind=5 }; 
 protected:
   uintptr_t Data;
 
@@ -45,16 +40,8 @@ protected:
   ProgramPoint() : Data(0) {}
   
 public:    
-  
-  unsigned getKind() const { 
-    unsigned x = Data & 0x7;
-    return x & 0x3 ? x : 0;  // Use only lower 2 bits for 0x0.
-  }  
-  
-  void* getRawPtr() const {
-    return (void*) (getKind() ? Data & ~0x7 : Data & ~0x3);
-  }
-
+  unsigned getKind() const { return Data & 0x7; }  
+  void* getRawPtr() const { return reinterpret_cast<void*>(Data & ~0x7); }
   void* getRawData() const { return reinterpret_cast<void*>(Data); }
   
   static bool classof(const ProgramPoint*) { return true; }
@@ -65,27 +52,6 @@ public:
     ID.AddInteger(getKind());
     ID.AddPointer(getRawPtr());
   }    
-};
-  
-class ExplodedNodeImpl;
-template <typename StateTy> class ExplodedNode;
-  
-class LayeredNode : public ProgramPoint {
-public:
-  LayeredNode(ExplodedNodeImpl* N) : ProgramPoint(N, LayeredNodeKind) {
-    assert (reinterpret_cast<uintptr_t>(N) & 0x3 == 0 &&
-            "Address of ExplodedNode must have 4-byte alignment.");
-  }
-  
-  ExplodedNodeImpl* getNodeImpl() const {
-    return (ExplodedNodeImpl*) getRawPtr();
-  }
-
-  template <typename StateTy>
-  ExplodedNode<StateTy>* getNode() const {
-    return (ExplodedNode<StateTy>*) getRawPtr();
-  }
-
 };
                
 class BlockEntrance : public ProgramPoint {

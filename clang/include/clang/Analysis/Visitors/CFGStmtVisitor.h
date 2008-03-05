@@ -65,7 +65,7 @@ public:
     NullifyStmt cleanup(CurrentBlkStmt);
     
     switch (S->getStmtClass()) {
-      DISPATCH_CASE(CallExpr)
+
       DISPATCH_CASE(StmtExpr)
       DISPATCH_CASE(ConditionalOperator)
 
@@ -87,7 +87,6 @@ public:
     }
   }
 
-  DEFAULT_BLOCKSTMT_VISIT(CallExpr)
   DEFAULT_BLOCKSTMT_VISIT(StmtExpr)
   DEFAULT_BLOCKSTMT_VISIT(ConditionalOperator)
   
