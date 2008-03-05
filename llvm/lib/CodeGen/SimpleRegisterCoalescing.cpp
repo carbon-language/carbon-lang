@@ -451,6 +451,30 @@ SimpleRegisterCoalescing::UpdateRegDefsUses(unsigned SrcReg, unsigned DstReg,
   }
 }
 
+/// ShortenDeadCopyLiveRange - Shorten a live range as it's artificially
+/// extended by a dead copy. Mark the last use (if any) of the val# as kill
+/// as ends the live range there. If there isn't another use, then this
+/// live range is dead.
+void SimpleRegisterCoalescing::ShortenDeadCopyLiveRange(LiveInterval &li,
+                                                        MachineInstr *CopyMI) {
+  unsigned CopyIdx = li_->getInstructionIndex(CopyMI);
+  LiveInterval::iterator MLR =
+    li.FindLiveRangeContaining(li_->getDefIndex(CopyIdx));
+  unsigned RemoveStart = MLR->start;
+  unsigned RemoveEnd = MLR->end;
+  unsigned LastUseIdx;
+  MachineOperand *LastUse = lastRegisterUse(RemoveStart, CopyIdx, li.reg,
+                                            LastUseIdx);
+  if (LastUse) {
+    // Shorten the liveinterval to the end of last use.
+    LastUse->setIsKill();
+    RemoveStart = li_->getDefIndex(LastUseIdx);
+  }
+  li.removeRange(RemoveStart, RemoveEnd, true);
+  if (li.empty())
+    li_->removeInterval(li.reg);
+}
+
 /// JoinCopy - Attempt to join intervals corresponding to SrcReg/DstReg,
 /// which are the src/dst of the copy instruction CopyMI.  This returns true
 /// if the copy was successfully coalesced away. If it is not currently
@@ -599,23 +623,22 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
       SrcInt.FindLiveRangeContaining(li_->getUseIndex(CopyIdx));
     RemoveStart = SrcStart = SrcLR->start;
     RemoveEnd   = SrcEnd   = SrcLR->end;
-    // The instruction which defines the src is only truly dead if there are
-    // no intermediate uses and there isn't a use beyond the copy.
-    // FIXME: find the last use, mark is kill and shorten the live range.
     if (SrcEnd > li_->getDefIndex(CopyIdx)) {
+      // If there are other uses of SrcReg beyond the copy, there is nothing to do.
       isDead = false;
     } else {
       unsigned LastUseIdx;
       MachineOperand *LastUse =
         lastRegisterUse(SrcStart, CopyIdx, SrcReg, LastUseIdx);
       if (LastUse) {
-        // Shorten the liveinterval to the end of last use.
+        // There are uses before the copy, just shorten the live range to the end
+        // of last use.
         LastUse->setIsKill();
         isDead = false;
         isShorten = true;
         RemoveStart = li_->getDefIndex(LastUseIdx);
-        RemoveEnd = SrcEnd;
       } else {
+        // This live range is truly dead. Remove it.
         MachineInstr *SrcMI = li_->getInstructionFromIndex(SrcStart);
         if (SrcMI && SrcMI->modifiesRegister(SrcReg, tri_))
           // A dead def should have a single cycle interval.
@@ -1531,16 +1554,10 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
       if (tii_->isMoveInstr(*mii, srcReg, dstReg) && srcReg == dstReg) {
         // remove from def list
         LiveInterval &RegInt = li_->getOrCreateInterval(srcReg);
-        MachineOperand *MO = mii->findRegisterDefOperand(dstReg, false);
         // If def of this move instruction is dead, remove its live range from
         // the dstination register's live interval.
-        if (MO->isDead()) {
-          unsigned MoveIdx = li_->getDefIndex(li_->getInstructionIndex(mii));
-          LiveInterval::iterator MLR = RegInt.FindLiveRangeContaining(MoveIdx);
-          RegInt.removeRange(MLR->start, MoveIdx+1, true);
-          if (RegInt.empty())
-            li_->removeInterval(srcReg);
-        }
+        if (mii->registerDefIsDead(dstReg))
+          ShortenDeadCopyLiveRange(RegInt, mii);
         li_->RemoveMachineInstrFromMaps(mii);
         mii = mbbi->erase(mii);
         ++numPeep;
