@@ -69,6 +69,7 @@ public:
   VarBindingsTy    VarBindings;
   ConstNotEqTy     ConstNotEq;
   ConstEqTy        ConstEq;
+  void*            CheckerState;
   
 public:
   
@@ -79,7 +80,8 @@ public:
       BlockExprBindings(EB),
       VarBindings(VB),
       ConstNotEq(CNE),
-      ConstEq(CE) {}
+      ConstEq(CE),
+      CheckerState(NULL) {}
   
   /// Copy ctor - We must explicitly define this or else the "Next" ptr
   ///  in FoldingSetNode will also get copied.
@@ -89,7 +91,8 @@ public:
       BlockExprBindings(RHS.BlockExprBindings),
       VarBindings(RHS.VarBindings),
       ConstNotEq(RHS.ConstNotEq),
-      ConstEq(RHS.ConstEq) {} 
+      ConstEq(RHS.ConstEq),
+      CheckerState(RHS.CheckerState) {} 
   
   /// Profile - Profile the contents of a ValueState object for use
   ///  in a FoldingSet.
@@ -99,6 +102,7 @@ public:
     V->VarBindings.Profile(ID);
     V->ConstNotEq.Profile(ID);
     V->ConstEq.Profile(ID);
+    ID.AddPointer(V->CheckerState);
   }
 
   /// Profile - Used to profile the contents of this object for inclusion
