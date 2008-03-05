@@ -567,7 +567,9 @@ static bool LinkGlobals(Module *Dest, Module *Src,
 
 // LinkAlias - Loop through the alias in the src module and link them into the
 // dest module.
-static bool LinkAlias(Module *Dest, const Module *Src, std::string *Err) {
+static bool LinkAlias(Module *Dest, const Module *Src,
+                      std::map<const Value*, Value*> &ValueMap,
+                      std::string *Err) {
   // FIXME: Desptie of the name, this function currently does not 'link' stuff,
   // but only copies aliases from one Module to another.
 
@@ -588,6 +590,8 @@ static bool LinkAlias(Module *Dest, const Module *Src, std::string *Err) {
     GlobalAlias *NewGA = new GlobalAlias(GA->getType(), GA->getLinkage(),
                                          GA->getName(), NewAliasee, Dest);
     CopyGVAttributes(NewGA, GA);
+
+    ValueMap.insert(std::make_pair(GA, NewGA));
   }
   return false;
 }
@@ -1033,6 +1037,11 @@ Linker::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
   if (LinkFunctionProtos(Dest, Src, ValueMap, ErrorMsg))
     return true;
 
+  // If there were any alias, link them now. We really need to do this now,
+  // because all of the aliases that may be referenced need to be available in
+  // ValueMap
+  if (LinkAlias(Dest, Src, ValueMap, ErrorMsg)) return true;
+
   // Update the initializers in the Dest module now that all globals that may
   // be referenced are in Dest.
   if (LinkGlobalInits(Dest, Src, ValueMap, ErrorMsg)) return true;
@@ -1044,9 +1053,6 @@ Linker::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
 
   // If there were any appending global variables, link them together now.
   if (LinkAppendingVars(Dest, AppendingVars, ErrorMsg)) return true;
-
-  // If there were any alias, link them now.
-  if (LinkAlias(Dest, Src, ErrorMsg)) return true;
 
   // If the source library's module id is in the dependent library list of the
   // destination library, remove it since that module is now linked in.
