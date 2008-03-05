@@ -86,8 +86,7 @@ void TransferFuncs::Visit(Stmt *S) {
     AD.Observer->ObserveStmt(S,AD,LiveState);
   
   if (S == getCurrentBlkStmt()) {
-    assert (!isa<Expr>(S) || getCFG().isBlkExpr(S));
-    if (isa<Expr>(S)) LiveState(S,AD) = Dead;
+    if (getCFG().isBlkExpr(S)) LiveState(S,AD) = Dead;
     StmtVisitor<TransferFuncs,void>::Visit(S);
   }
   else if (!getCFG().isBlkExpr(S))
