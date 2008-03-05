@@ -5275,12 +5275,12 @@ SDOperand SelectionDAGLegalize::ExpandLibCall(const char *Name, SDNode *Node,
 ///
 SDOperand SelectionDAGLegalize::
 ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
-  assert(getTypeAction(Source.getValueType()) == Expand &&
+  MVT::ValueType SourceVT = Source.getValueType();
+  assert(getTypeAction(SourceVT) == Expand &&
          "This is not an expansion!");
-  assert(Source.getValueType() == MVT::i64 && "Only handle expand from i64!");
 
   if (!isSigned) {
-    assert(Source.getValueType() == MVT::i64 &&
+    assert(SourceVT == MVT::i64 &&
            "This only works for 64-bit -> FP");
     // The 64-bit value loaded will be incorrectly if the 'sign bit' of the
     // incoming integer is set.  To handle this, we dynamically test to see if
@@ -5291,7 +5291,7 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
     // If this is unsigned, and not supported, first perform the conversion to
     // signed, then adjust the result if the sign bit is set.
     SDOperand SignedConv = ExpandIntToFP(true, DestTy,
-                   DAG.getNode(ISD::BUILD_PAIR, Source.getValueType(), Lo, Hi));
+                   DAG.getNode(ISD::BUILD_PAIR, SourceVT, Lo, Hi));
 
     SDOperand SignSet = DAG.getSetCC(TLI.getSetCCResultTy(), Hi,
                                      DAG.getConstant(0, Hi.getValueType()),
@@ -5301,7 +5301,8 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
                                       SignSet, Four, Zero);
     uint64_t FF = 0x5f800000ULL;
     if (TLI.isLittleEndian()) FF <<= 32;
-    static Constant *FudgeFactor = ConstantInt::get(Type::Int64Ty, FF);
+    static Constant *FudgeFactor =
+      ConstantInt::get(IntegerType::get(Source.getValueSizeInBits()), FF);
 
     SDOperand CPIdx = DAG.getConstantPool(FudgeFactor, TLI.getPointerTy());
     CPIdx = DAG.getNode(ISD::ADD, TLI.getPointerTy(), CPIdx, CstOffset);
@@ -5323,8 +5324,8 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
       // Destination type needs to be expanded as well. The FADD now we are
       // constructing will be expanded into a libcall.
       if (MVT::getSizeInBits(SCVT) != MVT::getSizeInBits(DestTy)) {
-        assert(SCVT == MVT::i32 && DestTy == MVT::f64);
-        SignedConv = DAG.getNode(ISD::BUILD_PAIR, MVT::i64,
+        assert(MVT::getSizeInBits(SCVT) * 2 == MVT::getSizeInBits(DestTy));
+        SignedConv = DAG.getNode(ISD::BUILD_PAIR, DestTy,
                                  SignedConv, SignedConv.getValue(1));
       }
       SignedConv = DAG.getNode(ISD::BIT_CONVERT, DestTy, SignedConv);
@@ -5333,7 +5334,7 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
   }
 
   // Check to see if the target has a custom way to lower this.  If so, use it.
-  switch (TLI.getOperationAction(ISD::SINT_TO_FP, Source.getValueType())) {
+  switch (TLI.getOperationAction(ISD::SINT_TO_FP, SourceVT)) {
   default: assert(0 && "This action not implemented for this operation!");
   case TargetLowering::Legal:
   case TargetLowering::Expand:
@@ -5351,14 +5352,29 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
   // the source in case it is shared (this pass of legalize must traverse it).
   SDOperand SrcLo, SrcHi;
   ExpandOp(Source, SrcLo, SrcHi);
-  Source = DAG.getNode(ISD::BUILD_PAIR, Source.getValueType(), SrcLo, SrcHi);
+  Source = DAG.getNode(ISD::BUILD_PAIR, SourceVT, SrcLo, SrcHi);
 
   RTLIB::Libcall LC;
-  if (DestTy == MVT::f32)
-    LC = RTLIB::SINTTOFP_I64_F32;
-  else {
-    assert(DestTy == MVT::f64 && "Unknown fp value type!");
-    LC = RTLIB::SINTTOFP_I64_F64;
+  if (SourceVT == MVT::i64) {
+    if (DestTy == MVT::f32)
+      LC = RTLIB::SINTTOFP_I64_F32;
+    else {
+      assert(DestTy == MVT::f64 && "Unknown fp value type!");
+      LC = RTLIB::SINTTOFP_I64_F64;
+    }
+  } else if (SourceVT == MVT::i128) {
+    if (DestTy == MVT::f32)
+      LC = RTLIB::SINTTOFP_I128_F32;
+    else if (DestTy == MVT::f64)
+      LC = RTLIB::SINTTOFP_I128_F64;
+    else if (DestTy == MVT::f80)
+      LC = RTLIB::SINTTOFP_I128_F80;
+    else {
+      assert(DestTy == MVT::ppcf128 && "Unknown fp value type!");
+      LC = RTLIB::SINTTOFP_I128_PPCF128;
+    }
+  } else {
+    assert(0 && "Unknown int value type");
   }
   
   assert(TLI.getLibcallName(LC) && "Don't know how to expand this SINT_TO_FP!");

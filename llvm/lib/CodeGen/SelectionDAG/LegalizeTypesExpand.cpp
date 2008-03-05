@@ -967,10 +967,10 @@ SDOperand DAGTypeLegalizer::ExpandOperand_BIT_CONVERT(SDNode *N) {
 SDOperand DAGTypeLegalizer::ExpandOperand_SINT_TO_FP(SDOperand Source, 
                                                      MVT::ValueType DestTy) {
   // We know the destination is legal, but that the input needs to be expanded.
-  assert(Source.getValueType() == MVT::i64 && "Only handle expand from i64!");
+  MVT::ValueType SourceVT = Source.getValueType();
   
   // Check to see if the target has a custom way to lower this.  If so, use it.
-  switch (TLI.getOperationAction(ISD::SINT_TO_FP, Source.getValueType())) {
+  switch (TLI.getOperationAction(ISD::SINT_TO_FP, SourceVT)) {
   default: assert(0 && "This action not implemented for this operation!");
   case TargetLowering::Legal:
   case TargetLowering::Expand:
@@ -983,11 +983,26 @@ SDOperand DAGTypeLegalizer::ExpandOperand_SINT_TO_FP(SDOperand Source,
   }
   
   RTLIB::Libcall LC;
-  if (DestTy == MVT::f32)
-    LC = RTLIB::SINTTOFP_I64_F32;
-  else {
-    assert(DestTy == MVT::f64 && "Unknown fp value type!");
-    LC = RTLIB::SINTTOFP_I64_F64;
+  if (SourceVT == MVT::i64) {
+    if (DestTy == MVT::f32)
+      LC = RTLIB::SINTTOFP_I64_F32;
+    else {
+      assert(DestTy == MVT::f64 && "Unknown fp value type!");
+      LC = RTLIB::SINTTOFP_I64_F64;
+    }
+  } else if (SourceVT == MVT::i128) {
+    if (DestTy == MVT::f32)
+      LC = RTLIB::SINTTOFP_I128_F32;
+    else if (DestTy == MVT::f64)
+      LC = RTLIB::SINTTOFP_I128_F64;
+    else if (DestTy == MVT::f80)
+      LC = RTLIB::SINTTOFP_I128_F80;
+    else {
+      assert(DestTy == MVT::ppcf128 && "Unknown fp value type!");
+      LC = RTLIB::SINTTOFP_I128_PPCF128;
+    }
+  } else {
+    assert(0 && "Unknown int value type!");
   }
   
   assert(0 && "FIXME: no libcalls yet!");
