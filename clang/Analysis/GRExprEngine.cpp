@@ -21,6 +21,18 @@
 #include <sstream>
 #endif
 
+// SaveAndRestore - A utility class that uses RIIA to save and restore
+//  the value of a variable.
+template<typename T>
+struct VISIBILITY_HIDDEN SaveAndRestore {
+  SaveAndRestore(T& x) : X(x), old_value(x) {}
+  ~SaveAndRestore() { X = old_value; }
+  T get() { return old_value; }
+  
+  T& X;
+  T old_value;
+};
+
 using namespace clang;
 using llvm::dyn_cast;
 using llvm::cast;
@@ -482,7 +494,27 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
       }
       
       continue;
-    }  
+    }
+    
+    // Check for the "noreturn" attribute.
+    
+    SaveAndRestore<bool> OldSink(Builder->BuildSinks);
+    
+    if (isa<lval::FuncVal>(L))
+      if (cast<lval::FuncVal>(L).getDecl()->getAttr<NoReturnAttr>()) {
+        for (NodeSet::iterator I=Dst.begin(), E=Dst.end(); I != E; ++I ) {
+          
+          NodeTy* N = *I;
+          
+          if (!N->isSink())
+            N->markAsSink();
+        }
+        
+        Builder->BuildSinks = true;
+      }
+    
+    // Evaluate the call.
+    
     
     bool invalidateArgs = false;
     
@@ -506,7 +538,9 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
 
         if (isa<LVal>(V))
           St = SetRVal(St, cast<LVal>(V), UnknownVal());
-      }      
+      }
+      
+      Nodify(Dst, CE, *DI, St);
     }
     else {
 
@@ -542,23 +576,6 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
       if (Dst.size() == size)
         Nodify(Dst, CE, *DI, St);
     }
-    
-    // Check for the "noreturn" attribute.
-    
-    if (isa<lval::FuncVal>(L))
-      if (cast<lval::FuncVal>(L).getDecl()->getAttr<NoReturnAttr>()) {
-        
-        NodeTy* N = Builder->generateNode(CE, St, *DI);
-          
-        if (N) {
-          N->markAsSink();
-          NoReturnCalls.insert(N);
-        }
-        
-        continue;
-      }
-    
-    Nodify(Dst, CE, *DI, St);
   }
 }
 

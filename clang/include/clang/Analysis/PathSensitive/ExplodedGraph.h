@@ -389,6 +389,8 @@ public:
 
   inline unsigned size() const { return Impl.size();  }
   inline bool empty()    const { return Impl.empty(); }
+
+  inline void clear() { Impl.clear(); }
   
   inline iterator begin() { return Impl.begin(); }
   inline iterator end()   { return Impl.end();   }

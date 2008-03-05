@@ -162,7 +162,7 @@ class GRStmtNodeBuilder  {
   GRStmtNodeBuilderImpl& NB;
   
 public:
-  GRStmtNodeBuilder(GRStmtNodeBuilderImpl& nb) : NB(nb) {}
+  GRStmtNodeBuilder(GRStmtNodeBuilderImpl& nb) : NB(nb), BuildSinks(false) {}
     
   NodeTy* getLastNode() const {
     return static_cast<NodeTy*>(NB.getLastNode());
@@ -186,10 +186,16 @@ public:
     }
     
     NodeTy* N = generateNode(S, St, Pred);
-    Dst.Add(N);
+    
+    if (N && BuildSinks)
+      N->markAsSink();
+    else
+      Dst.Add(N);
+    
     return N;
   }
   
+  bool BuildSinks;  
 };
   
 class GRBranchNodeBuilderImpl {
