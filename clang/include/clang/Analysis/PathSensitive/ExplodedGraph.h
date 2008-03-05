@@ -51,7 +51,7 @@ protected:
     uintptr_t P;
     
     unsigned getKind() const {
-      return P & Mask;
+      return P & 0x1;
     }
     
     void* getPtr() const {

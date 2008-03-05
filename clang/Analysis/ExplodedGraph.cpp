@@ -23,18 +23,28 @@ static inline std::vector<ExplodedNodeImpl*>& getVector(void* P) {
 }
 
 void ExplodedNodeImpl::NodeGroup::addNode(ExplodedNodeImpl* N) {
+  
+  assert ((reinterpret_cast<uintptr_t>(N) & Mask) == 0x0);
+  
   if (getKind() == Size1) {
     if (ExplodedNodeImpl* NOld = getNode()) {
       std::vector<ExplodedNodeImpl*>* V = new std::vector<ExplodedNodeImpl*>();
+      assert ((reinterpret_cast<uintptr_t>(V) & Mask) == 0x0);
       V->push_back(NOld);
       V->push_back(N);
       P = reinterpret_cast<uintptr_t>(V) | SizeOther;
+      assert (getPtr() == (void*) V);
+      assert (getKind() == SizeOther);
     }
-    else
+    else {
       P = reinterpret_cast<uintptr_t>(N);
+      assert (getKind() == Size1);
+    }
   }
-  else
+  else {
+    assert (getKind() == SizeOther);
     getVector(getPtr()).push_back(N);
+  }
 }
 
 bool ExplodedNodeImpl::NodeGroup::empty() const {
@@ -62,7 +72,7 @@ ExplodedNodeImpl** ExplodedNodeImpl::NodeGroup::end() const {
   if (getKind() == Size1)
     return (ExplodedNodeImpl**) (P ? &P+1 : &P);
   else
-    return const_cast<ExplodedNodeImpl**>(&*(getVector(getPtr()).rbegin())+1);
+    return const_cast<ExplodedNodeImpl**>(&*(getVector(getPtr()).end()));
 }
 
 ExplodedNodeImpl::NodeGroup::~NodeGroup() {
