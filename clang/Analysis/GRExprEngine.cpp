@@ -549,7 +549,13 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
         continue;        
       
       // Dispatch to the plug-in transfer function.      
-      St = EvalCall(CE, cast<LVal>(L), (*DI)->getState());
+      
+      unsigned size = Dst.size();
+      
+      EvalCall(Dst, CE, cast<LVal>(L), *DI);
+      
+      if (Dst.size() == size)
+        Nodify(Dst, CE, *DI, St);
     }
     
     // Check for the "noreturn" attribute.

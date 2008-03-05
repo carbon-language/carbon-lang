@@ -365,9 +365,10 @@ public:
 };
   
   
-template <typename NodeTy>
+template <typename StateTy>
 class ExplodedNodeSet {
   
+  typedef ExplodedNode<StateTy>        NodeTy;
   typedef llvm::SmallPtrSet<NodeTy*,5> ImplTy;
   ImplTy Impl;
   

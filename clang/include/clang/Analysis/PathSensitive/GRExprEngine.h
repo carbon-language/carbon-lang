@@ -31,7 +31,7 @@ public:
   typedef GRBranchNodeBuilder<GRExprEngine>        BranchNodeBuilder;
   typedef GRIndirectGotoNodeBuilder<GRExprEngine>  IndirectGotoNodeBuilder;
   typedef GRSwitchNodeBuilder<GRExprEngine>        SwitchNodeBuilder;
-  typedef ExplodedNodeSet<NodeTy>                  NodeSet;
+  typedef ExplodedNodeSet<StateTy>                 NodeSet;
     
 protected:
   /// G - the simulation graph.
@@ -414,8 +414,9 @@ protected:
     return TF->EvalBinOp(ValMgr, Op, cast<NonLVal>(L), cast<NonLVal>(R));
   }
   
-  ValueState* EvalCall(CallExpr* CE, LVal L, ValueState* St) {
-    return TF->EvalCall(StateMgr, ValMgr, CE, L, St);
+  void EvalCall(NodeSet& Dst, CallExpr* CE, LVal L, NodeTy* Pred) {
+    assert (Builder && "GRStmtNodeBuilder must be defined.");    
+    return TF->EvalCall(Dst, StateMgr, *Builder, ValMgr, CE, L, Pred);
   }
   
   ValueState* MarkBranch(ValueState* St, Stmt* Terminator, bool branchTaken);

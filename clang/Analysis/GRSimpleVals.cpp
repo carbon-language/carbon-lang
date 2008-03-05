@@ -397,9 +397,14 @@ RVal GRSimpleVals::EvalNE(ValueManager& ValMgr, LVal L, LVal R) {
 // Transfer function for Function Calls.
 //===----------------------------------------------------------------------===//
 
-ValueState*
-GRSimpleVals::EvalCall(ValueStateManager& StateMgr, ValueManager& ValMgr,
-                       CallExpr* CE, LVal L, ValueState* St) {
+void GRSimpleVals::EvalCall(ExplodedNodeSet<ValueState>& Dst,
+                            ValueStateManager& StateMgr,
+                            GRStmtNodeBuilder<ValueState>& Builder,
+                            ValueManager& ValMgr,
+                            CallExpr* CE, LVal L,
+                            ExplodedNode<ValueState>* Pred) {
+  
+  ValueState* St = Pred->getState();
   
   // Invalidate all arguments passed in by reference (LVals).
 
@@ -411,6 +416,6 @@ GRSimpleVals::EvalCall(ValueStateManager& StateMgr, ValueManager& ValMgr,
     if (isa<LVal>(V))
       St = StateMgr.SetRVal(St, cast<LVal>(V), UnknownVal());
   }
-  
-  return St;
+    
+  Builder.Nodify(Dst, CE, Pred, St);
 }

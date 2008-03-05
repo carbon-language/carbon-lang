@@ -54,9 +54,11 @@ public:
   
   // Calls.
   
-  virtual ValueState* EvalCall(ValueStateManager& StateMgr,
-                               ValueManager& ValMgr, CallExpr* CE, LVal L,
-                               ValueState* St) = 0;
+  virtual void EvalCall(ExplodedNodeSet<ValueState>& Dst,
+                        ValueStateManager& StateMgr,
+                        GRStmtNodeBuilder<ValueState>& Builder,
+                        ValueManager& ValMgr, CallExpr* CE, LVal L,
+                        ExplodedNode<ValueState>* Pred) = 0;
 };
   
 } // end clang namespace

@@ -52,10 +52,12 @@ public:
   
   // Calls.
   
-  virtual ValueState* EvalCall(ValueStateManager& StateMgr,
-                               ValueManager& ValMgr,
-                               CallExpr* CE, LVal L,
-                               ValueState* St);
+  virtual void EvalCall(ExplodedNodeSet<ValueState>& Dst,
+                        ValueStateManager& StateMgr,
+                        GRStmtNodeBuilder<ValueState>& Builder,
+                        ValueManager& ValMgr,
+                        CallExpr* CE, LVal L,
+                        ExplodedNode<ValueState>* Pred);
   
 protected:
   

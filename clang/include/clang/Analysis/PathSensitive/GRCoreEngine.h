@@ -176,7 +176,7 @@ public:
     return static_cast<NodeTy*>(NB.generateNodeImpl(S, St));    
   }
   
-  NodeTy* Nodify(ExplodedNodeSet<NodeTy>& Dst, Stmt* S,
+  NodeTy* Nodify(ExplodedNodeSet<StateTy>& Dst, Stmt* S,
                  NodeTy* Pred, StateTy* St) {
     
     // If the state hasn't changed, don't generate a new node.
