@@ -1046,6 +1046,16 @@ static bool LinkAppendingVars(Module *M,
   return false;
 }
 
+static bool ResolveAliases(Module *Dest) {
+  for (Module::alias_iterator I = Dest->alias_begin(), E = Dest->alias_end();
+       I != E; ++I) {
+    GlobalValue* GV = const_cast<GlobalValue*>(I->getAliasedGlobal());
+    if (!GV->isDeclaration())
+      I->replaceAllUsesWith(GV);
+  }
+
+  return false;
+}
 
 // LinkModules - This function links two modules together, with the resulting
 // left module modified to be the composite of the two input modules.  If an
