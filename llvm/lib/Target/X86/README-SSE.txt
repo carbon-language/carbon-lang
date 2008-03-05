@@ -748,3 +748,33 @@ Note: this is not a code quality issue; the custom lowered code happens to be
 right, but we shouldn't have to custom lower anything.  This is probably related
 to <2 x i64> ops being so bad.
 
+//===---------------------------------------------------------------------===//
+
+'select' on vectors and scalars could be a whole lot better.  We currently 
+lower them to conditional branches.  On x86-64 for example, we compile this:
+
+double test(double a, double b, double c, double d) { return a<b ? c : d; }
+
+to:
+
+_test:
+	ucomisd	%xmm0, %xmm1
+	ja	LBB1_2	# entry
+LBB1_1:	# entry
+	movapd	%xmm3, %xmm2
+LBB1_2:	# entry
+	movapd	%xmm2, %xmm0
+	ret
+
+instead of:
+
+_test:
+	cmpltsd	%xmm1, %xmm0
+	andpd	%xmm0, %xmm2
+	andnpd	%xmm3, %xmm0
+	orpd	%xmm2, %xmm0
+	ret
+
+For unpredictable branches, the later is much more efficient.  This should
+just be a matter of having scalar sse map to SELECT_CC and custom expanding
+or iseling it.
