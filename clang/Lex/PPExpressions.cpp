@@ -195,25 +195,17 @@ static bool EvaluateValue(llvm::APSInt &Result, Token &PeekTok,
 
     // Character literals are always int or wchar_t, expand to intmax_t.
     TargetInfo &TI = PP.getTargetInfo();
-    unsigned NumBits;
-    if (Literal.isWide())
-      NumBits = TI.getWCharWidth(PP.getFullLoc(PeekTok.getLocation()));
-    else
-      NumBits = TI.getCharWidth(PP.getFullLoc(PeekTok.getLocation()));
+    unsigned NumBits = TI.getCharWidth(Literal.isWide());
     
     // Set the width.
     llvm::APSInt Val(NumBits);
     // Set the value.
     Val = Literal.getValue();
     // Set the signedness.
-    Val.setIsUnsigned(!TI.isCharSigned(PP.getFullLoc(PeekTok.getLocation())));
+    Val.setIsUnsigned(!TI.isCharSigned());
     
     if (Result.getBitWidth() > Val.getBitWidth()) {
-      if (Val.isSigned())
-        Result = Val.sext(Result.getBitWidth());
-      else
-        Result = Val.zext(Result.getBitWidth());
-      Result.setIsUnsigned(Val.isUnsigned());
+      Result = Val.extend(Result.getBitWidth());
     } else {
       assert(Result.getBitWidth() == Val.getBitWidth() &&
              "intmax_t smaller than char/wchar_t?");
@@ -603,8 +595,7 @@ EvaluateDirectiveExpression(IdentifierInfo *&IfNDefMacro) {
   Lex(Tok);
   
   // C99 6.10.1p3 - All expressions are evaluated as intmax_t or uintmax_t.
-  unsigned BitWidth = 
-    getTargetInfo().getIntMaxTWidth(getFullLoc(Tok.getLocation()));
+  unsigned BitWidth = getTargetInfo().getIntMaxTWidth();
     
   llvm::APSInt ResVal(BitWidth);
   DefinedTracker DT;

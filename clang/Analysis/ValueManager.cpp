@@ -48,10 +48,9 @@ const llvm::APSInt& ValueManager::getValue(uint64_t X, unsigned BitWidth,
   return getValue(V);
 }
 
-const llvm::APSInt& ValueManager::getValue(uint64_t X, QualType T,
-                                           SourceLocation Loc) {
+const llvm::APSInt& ValueManager::getValue(uint64_t X, QualType T) {
   
-  unsigned bits = Ctx.getTypeSize(T, Loc);
+  unsigned bits = Ctx.getTypeSize(T);
   llvm::APSInt V(bits, T->isUnsignedIntegerType());
   V = X;
   return getValue(V);

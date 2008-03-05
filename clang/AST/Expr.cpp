@@ -510,8 +510,7 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
   case CallExprClass: {
     const CallExpr *CE = cast<CallExpr>(this);
     llvm::APSInt Result(32);
-    Result.zextOrTrunc(
-      static_cast<uint32_t>(Ctx.getTypeSize(getType(), CE->getLocStart())));
+    Result.zextOrTrunc(static_cast<uint32_t>(Ctx.getTypeSize(getType())));
     if (CE->isBuiltinClassifyType(Result))
       return true;
     if (CE->isBuiltinConstantExpr())
@@ -673,23 +672,20 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     break;
   case CharacterLiteralClass: {
     const CharacterLiteral *CL = cast<CharacterLiteral>(this);
-    Result.zextOrTrunc(
-      static_cast<uint32_t>(Ctx.getTypeSize(getType(), CL->getLoc())));
+    Result.zextOrTrunc(static_cast<uint32_t>(Ctx.getTypeSize(getType())));
     Result = CL->getValue();
     Result.setIsUnsigned(!getType()->isSignedIntegerType());
     break;
   }
   case TypesCompatibleExprClass: {
     const TypesCompatibleExpr *TCE = cast<TypesCompatibleExpr>(this);
-    Result.zextOrTrunc(
-      static_cast<uint32_t>(Ctx.getTypeSize(getType(), TCE->getLocStart())));
+    Result.zextOrTrunc(static_cast<uint32_t>(Ctx.getTypeSize(getType())));
     Result = Ctx.typesAreCompatible(TCE->getArgType1(), TCE->getArgType2());
     break;
   }
   case CallExprClass: {
     const CallExpr *CE = cast<CallExpr>(this);
-    Result.zextOrTrunc(
-      static_cast<uint32_t>(Ctx.getTypeSize(getType(), CE->getLocStart())));
+    Result.zextOrTrunc(static_cast<uint32_t>(Ctx.getTypeSize(getType())));
     if (CE->isBuiltinClassifyType(Result))
       break;
     if (Loc) *Loc = getLocStart();
@@ -723,9 +719,7 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     case UnaryOperator::SizeOf:
     case UnaryOperator::AlignOf:
       // Return the result in the right width.
-      Result.zextOrTrunc(
-                         static_cast<uint32_t>(Ctx.getTypeSize(getType(),
-                                                       Exp->getOperatorLoc())));
+      Result.zextOrTrunc(static_cast<uint32_t>(Ctx.getTypeSize(getType())));
         
       // sizeof(void) and __alignof__(void) = 1 as a gcc extension.
       if (Exp->getSubExpr()->getType()->isVoidType()) {
@@ -744,22 +738,16 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
         // GCC extension: sizeof(function) = 1.
         Result = Exp->getOpcode() == UnaryOperator::AlignOf ? 4 : 1;
       } else {
-        unsigned CharSize = 
-          Ctx.Target.getCharWidth(Ctx.getFullLoc(Exp->getOperatorLoc()));
-        
+        unsigned CharSize = Ctx.Target.getCharWidth();
         if (Exp->getOpcode() == UnaryOperator::AlignOf)
-          Result = Ctx.getTypeAlign(Exp->getSubExpr()->getType(),
-                                    Exp->getOperatorLoc()) / CharSize;
+          Result = Ctx.getTypeAlign(Exp->getSubExpr()->getType()) / CharSize;
         else
-          Result = Ctx.getTypeSize(Exp->getSubExpr()->getType(),
-                                   Exp->getOperatorLoc()) / CharSize;
+          Result = Ctx.getTypeSize(Exp->getSubExpr()->getType()) / CharSize;
       }
       break;
     case UnaryOperator::LNot: {
       bool Val = Result == 0;
-      Result.zextOrTrunc(
-        static_cast<uint32_t>(Ctx.getTypeSize(getType(),
-                                              Exp->getOperatorLoc())));
+      Result.zextOrTrunc(static_cast<uint32_t>(Ctx.getTypeSize(getType())));
       Result = Val;
       break;
     }
@@ -780,8 +768,7 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     const SizeOfAlignOfTypeExpr *Exp = cast<SizeOfAlignOfTypeExpr>(this);
     
     // Return the result in the right width.
-    Result.zextOrTrunc(
-      static_cast<uint32_t>(Ctx.getTypeSize(getType(), Exp->getOperatorLoc())));
+    Result.zextOrTrunc(static_cast<uint32_t>(Ctx.getTypeSize(getType())));
     
     // sizeof(void) and __alignof__(void) = 1 as a gcc extension.
     if (Exp->getArgumentType()->isVoidType()) {
@@ -800,17 +787,12 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
       // GCC extension: sizeof(function) = 1.
       Result = Exp->isSizeOf() ? 1 : 4;
     } else { 
-      unsigned CharSize =
-        Ctx.Target.getCharWidth(Ctx.getFullLoc(Exp->getOperatorLoc()));
-      
+      unsigned CharSize = Ctx.Target.getCharWidth();
       if (Exp->isSizeOf())
-        Result = Ctx.getTypeSize(Exp->getArgumentType(),
-                                 Exp->getOperatorLoc()) / CharSize;
+        Result = Ctx.getTypeSize(Exp->getArgumentType()) / CharSize;
       else
-        Result = Ctx.getTypeAlign(Exp->getArgumentType(), 
-                                  Exp->getOperatorLoc()) / CharSize;
+        Result = Ctx.getTypeAlign(Exp->getArgumentType()) / CharSize;
     }
-
     break;
   }
   case BinaryOperatorClass: {
@@ -927,8 +909,7 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
       return false;
     }
 
-    uint32_t DestWidth = 
-      static_cast<uint32_t>(Ctx.getTypeSize(getType(), CastLoc));
+    uint32_t DestWidth = static_cast<uint32_t>(Ctx.getTypeSize(getType()));
     
     // Handle simple integer->integer casts.
     if (SubExpr->getType()->isIntegerType()) {
@@ -1140,7 +1121,7 @@ static int64_t evaluateOffsetOf(ASTContext& C, const Expr *E)
     QualType Ty = ME->getBase()->getType();
     
     RecordDecl *RD = Ty->getAsRecordType()->getDecl();
-    const ASTRecordLayout &RL = C.getASTRecordLayout(RD, SourceLocation());
+    const ASTRecordLayout &RL = C.getASTRecordLayout(RD);
     FieldDecl *FD = ME->getMemberDecl();
     
     // FIXME: This is linear time.
@@ -1157,7 +1138,7 @@ static int64_t evaluateOffsetOf(ASTContext& C, const Expr *E)
     bool ICE = ASE->getIdx()->isIntegerConstantExpr(Idx, C);
     assert(ICE && "Array index is not a constant integer!");
     
-    int64_t size = C.getTypeSize(ASE->getType(), SourceLocation());
+    int64_t size = C.getTypeSize(ASE->getType());
     size *= Idx.getSExtValue();
     
     return size + evaluateOffsetOf(C, Base);
@@ -1172,9 +1153,7 @@ int64_t UnaryOperator::evaluateOffsetOf(ASTContext& C) const
 {
   assert(Opc == OffsetOf && "Unary operator not offsetof!");
   
-  unsigned CharSize = 
-    C.Target.getCharWidth(C.getFullLoc(getOperatorLoc()));
-  
+  unsigned CharSize = C.Target.getCharWidth();
   return ::evaluateOffsetOf(C, Val) / CharSize;
 }
 

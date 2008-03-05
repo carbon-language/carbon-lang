@@ -722,50 +722,6 @@ public:
 
 } // end anonymous namespace.
 
-namespace {
-class LinuxTargetInfo : public DarwinTargetInfo {
-public:
-  LinuxTargetInfo(const std::string& triple) : DarwinTargetInfo(triple) {
-    // Note: I have no idea if this is right, just for testing.
-    WCharWidth = 16;
-    WCharAlign = 16;
-  }
-  
-  virtual void getTargetDefines(std::vector<char> &Defines) const {
-    // TODO: linux-specific stuff.
-    getX86Defines(Defines, false);
-  }
-  virtual void getTargetBuiltins(const Builtin::Info *&Records,
-                                 unsigned &NumRecords) const {
-    X86::getBuiltins(Records, NumRecords);
-  }
-  virtual const char *getVAListDeclaration() const {
-    return getI386VAListDeclaration();
-  }
-  virtual const char *getTargetPrefix() const {
-    return X86::getTargetPrefix();
-  }  
-  virtual void getGCCRegNames(const char * const *&Names, 
-                                   unsigned &NumNames) const {
-    X86::getGCCRegNames(Names, NumNames);
-  }  
-  virtual void getGCCRegAliases(const GCCRegAlias *&Aliases, 
-                                unsigned &NumAliases) const {
-    X86::getGCCRegAliases(Aliases, NumAliases);
-  }
-  virtual bool validateAsmConstraint(char c,
-                                     TargetInfo::ConstraintInfo &info) const {
-    return X86::validateAsmConstraint(c, info);
-  }
-  virtual std::string convertConstraint(const char Constraint) const {
-    return X86::convertConstraint(Constraint);
-  }
-  virtual const char *getClobbers() const {
-    return X86::getClobbers();
-  }  
-};
-} // end anonymous namespace.
-
 
 //===----------------------------------------------------------------------===//
 // Driver code
@@ -793,9 +749,6 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
   
   if (IsX86(T))
     return new TargetInfo(new DarwinI386TargetInfo(T));
-  
-  if (T.find("bogusW16W16-") == 0) // For testing portability.
-    return new TargetInfo(new LinuxTargetInfo(T));
   
   return NULL;
 }

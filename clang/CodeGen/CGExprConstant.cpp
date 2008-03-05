@@ -37,7 +37,8 @@ public:
     
   llvm::Constant *VisitStmt(Stmt *S) {
     CGM.WarnUnsupported(S, "constant expression");
-    return llvm::UndefValue::get(CGM.getTypes().ConvertType(cast<Expr>(S)->getType()));
+    QualType T = cast<Expr>(S)->getType();
+    return llvm::UndefValue::get(CGM.getTypes().ConvertType(T));
   }
   
   llvm::Constant *VisitParenExpr(ParenExpr *PE) { 
@@ -314,8 +315,8 @@ public:
     
     assert(E->getType()->isIntegerType() && "Result type must be an integer!");
     
-    uint32_t ResultWidth = static_cast<uint32_t>(
-      CGM.getContext().getTypeSize(E->getType(), SourceLocation()));
+    uint32_t ResultWidth =
+      static_cast<uint32_t>(CGM.getContext().getTypeSize(E->getType()));
     return llvm::ConstantInt::get(llvm::APInt(ResultWidth, Val));    
   }
   
@@ -504,15 +505,15 @@ public:
   llvm::Constant *EmitSizeAlignOf(QualType TypeToSize, 
                                   QualType RetType, bool isSizeOf) {
     std::pair<uint64_t, unsigned> Info =
-    CGM.getContext().getTypeInfo(TypeToSize, SourceLocation());
+      CGM.getContext().getTypeInfo(TypeToSize);
     
     uint64_t Val = isSizeOf ? Info.first : Info.second;
     Val /= 8;  // Return size in bytes, not bits.
     
     assert(RetType->isIntegerType() && "Result type must be an integer!");
     
-    uint32_t ResultWidth = static_cast<uint32_t>(
-      CGM.getContext().getTypeSize(RetType, SourceLocation()));
+    uint32_t ResultWidth = 
+      static_cast<uint32_t>(CGM.getContext().getTypeSize(RetType));
     return llvm::ConstantInt::get(llvm::APInt(ResultWidth, Val));
   }
 
@@ -616,8 +617,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
   QualType type = E->getType().getCanonicalType();
   
   if (type->isIntegerType()) {
-    llvm::APSInt
-    Value(static_cast<uint32_t>(Context.getTypeSize(type, SourceLocation())));
+    llvm::APSInt Value(static_cast<uint32_t>(Context.getTypeSize(type)));
     if (E->isIntegerConstantExpr(Value, Context)) {
       return llvm::ConstantInt::get(Value);
     } 

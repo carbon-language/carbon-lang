@@ -261,24 +261,24 @@ public:
   
   /// getTypeInfo - Get the size and alignment of the specified complete type in
   /// bits.
-  std::pair<uint64_t, unsigned> getTypeInfo(QualType T, SourceLocation L);
+  std::pair<uint64_t, unsigned> getTypeInfo(QualType T);
   
   /// getTypeSize - Return the size of the specified type, in bits.  This method
   /// does not work on incomplete types.
-  uint64_t getTypeSize(QualType T, SourceLocation L) {
-    return getTypeInfo(T, L).first;
+  uint64_t getTypeSize(QualType T) {
+    return getTypeInfo(T).first;
   }
   
   /// getTypeAlign - Return the alignment of the specified type, in bits.  This
   /// method does not work on incomplete types.
-  unsigned getTypeAlign(QualType T, SourceLocation L) {
-    return getTypeInfo(T, L).second;
+  unsigned getTypeAlign(QualType T) {
+    return getTypeInfo(T).second;
   }
   
   /// getASTRecordLayout - Get or compute information about the layout of the
   /// specified record (struct/union/class), which indicates its size and field
   /// position information.
-  const ASTRecordLayout &getASTRecordLayout(const RecordDecl *D, SourceLocation L);
+  const ASTRecordLayout &getASTRecordLayout(const RecordDecl *D);
   
   //===--------------------------------------------------------------------===//
   //                            Type Operators

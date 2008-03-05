@@ -258,8 +258,7 @@ RVal ValueStateManager::GetRVal(ValueState* St, Expr* E) {
         
       case Stmt::CharacterLiteralClass: {
         CharacterLiteral* C = cast<CharacterLiteral>(E);
-        return NonLVal::MakeVal(ValMgr, C->getValue(), C->getType(),
-                                C->getLoc());
+        return NonLVal::MakeVal(ValMgr, C->getValue(), C->getType());
       }
         
       case Stmt::IntegerLiteralClass: {
@@ -271,7 +270,6 @@ RVal ValueStateManager::GetRVal(ValueState* St, Expr* E) {
         // subexpression that has a value.
         
       case Stmt::ImplicitCastExprClass: {
-
         ImplicitCastExpr* C = cast<ImplicitCastExpr>(E);
         QualType CT = C->getType();
         
@@ -341,8 +339,7 @@ RVal ValueStateManager::GetBlkExprRVal(ValueState* St, Expr* E) {
   switch (E->getStmtClass()) {
     case Stmt::CharacterLiteralClass: {
       CharacterLiteral* C = cast<CharacterLiteral>(E);
-      return NonLVal::MakeVal(ValMgr, C->getValue(), C->getType(),
-                              C->getLoc());
+      return NonLVal::MakeVal(ValMgr, C->getValue(), C->getType());
     }
       
     case Stmt::IntegerLiteralClass: {

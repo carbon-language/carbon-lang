@@ -286,7 +286,7 @@ protected:
   }
   
   inline NonLVal MakeConstantVal(uint64_t X, Expr* Ex) {
-    return NonLVal::MakeVal(ValMgr, X, Ex->getType(), Ex->getLocStart());
+    return NonLVal::MakeVal(ValMgr, X, Ex->getType());
   }
   
   /// Assume - Create new state by assuming that a given expression

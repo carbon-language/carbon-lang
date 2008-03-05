@@ -656,16 +656,14 @@ Value *ScalarExprEmitter::EmitSizeAlignOf(QualType TypeToSize,
                                           QualType RetType,bool isSizeOf){
   assert(RetType->isIntegerType() && "Result type must be an integer!");
   uint32_t ResultWidth = 
-    static_cast<uint32_t>(CGF.getContext().getTypeSize(RetType, 
-                                                       SourceLocation()));
+    static_cast<uint32_t>(CGF.getContext().getTypeSize(RetType));
 
   // sizeof(void) and __alignof__(void) = 1 as a gcc extension.
   if (TypeToSize->isVoidType())
     return llvm::ConstantInt::get(llvm::APInt(ResultWidth, 1));
   
   /// FIXME: This doesn't handle VLAs yet!
-  std::pair<uint64_t, unsigned> Info =
-    CGF.getContext().getTypeInfo(TypeToSize, SourceLocation());
+  std::pair<uint64_t, unsigned> Info = CGF.getContext().getTypeInfo(TypeToSize);
   
   uint64_t Val = isSizeOf ? Info.first : Info.second;
   Val /= 8;  // Return size in bytes, not bits.
@@ -696,8 +694,8 @@ Value *ScalarExprEmitter::VisitUnaryOffsetOf(const UnaryOperator *E)
   
   assert(E->getType()->isIntegerType() && "Result type must be an integer!");
   
-  uint32_t ResultWidth = static_cast<uint32_t>(
-    CGF.getContext().getTypeSize(E->getType(), SourceLocation()));
+  uint32_t ResultWidth =
+    static_cast<uint32_t>(CGF.getContext().getTypeSize(E->getType()));
   return llvm::ConstantInt::get(llvm::APInt(ResultWidth, Val));
 }
 
@@ -852,8 +850,7 @@ Value *ScalarExprEmitter::VisitBinSub(const BinaryOperator *E) {
   
   const QualType LHSType = E->getLHS()->getType().getCanonicalType();
   const QualType LHSElementType = cast<PointerType>(LHSType)->getPointeeType();
-  uint64_t ElementSize = CGF.getContext().getTypeSize(LHSElementType,
-                                                      SourceLocation()) / 8;
+  uint64_t ElementSize = CGF.getContext().getTypeSize(LHSElementType) / 8;
   
   const llvm::Type *ResultType = ConvertType(E->getType());
   LHS = Builder.CreatePtrToInt(LHS, ResultType, "sub.ptr.lhs.cast");

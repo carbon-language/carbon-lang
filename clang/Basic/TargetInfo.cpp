@@ -28,22 +28,19 @@ void TargetInfoImpl::ANCHOR() {} // out-of-line virtual method for class.
 // TargetInfoImpl.
 
 void TargetInfo::getFloatInfo(uint64_t &Size, unsigned &Align,
-                              const llvm::fltSemantics *&Format,
-                              FullSourceLoc Loc) {
+                              const llvm::fltSemantics *&Format) {
   Align = 32;  // FIXME: implement correctly.
   Size = 32;
   Format = &llvm::APFloat::IEEEsingle;
 }
 void TargetInfo::getDoubleInfo(uint64_t &Size, unsigned &Align,
-                               const llvm::fltSemantics *&Format,
-                               FullSourceLoc Loc) {
+                               const llvm::fltSemantics *&Format) {
   Size = 64; // FIXME: implement correctly.
   Align = 32;
   Format = &llvm::APFloat::IEEEdouble;
 }
 void TargetInfo::getLongDoubleInfo(uint64_t &Size, unsigned &Align,
-                                   const llvm::fltSemantics *&Format,
-                                   FullSourceLoc Loc) {
+                                   const llvm::fltSemantics *&Format) {
   Size = Align = 64;  // FIXME: implement correctly.
   Format = &llvm::APFloat::IEEEdouble;
   //Size = 80; Align = 32;  // FIXME: implement correctly.
@@ -74,7 +71,7 @@ void TargetInfo::getTargetDefines(std::vector<char> &Buffer) {
 /// ComputeWCharWidth - Determine the width of the wchar_t type for the primary
 /// target, diagnosing whether this is non-portable across the secondary
 /// targets.
-void TargetInfo::ComputeWCharInfo(FullSourceLoc Loc) {
+void TargetInfo::ComputeWCharInfo() {
   Target->getWCharInfo(WCharWidth, WCharAlign);
 }
 

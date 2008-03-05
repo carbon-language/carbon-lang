@@ -49,17 +49,14 @@ public:
 
   const llvm::APSInt& getValue(const llvm::APSInt& X);
   const llvm::APSInt& getValue(uint64_t X, unsigned BitWidth, bool isUnsigned);
-  const llvm::APSInt& getValue(uint64_t X, QualType T,
-                               SourceLocation Loc = SourceLocation());
+  const llvm::APSInt& getValue(uint64_t X, QualType T);
 
   inline const llvm::APSInt& getZeroWithPtrWidth() {
-    return getValue(0, Ctx.getTypeSize(Ctx.VoidPtrTy, SourceLocation()), true);
+    return getValue(0, Ctx.getTypeSize(Ctx.VoidPtrTy), true);
   }
 
   inline const llvm::APSInt& getTruthValue(bool b) {
-    return getValue(b ? 1 : 0,
-                    Ctx.getTypeSize(Ctx.IntTy, SourceLocation()),
-                    false);
+    return getValue(b ? 1 : 0, Ctx.getTypeSize(Ctx.IntTy), false);
   }
 
   const SymIntConstraint& getConstraint(SymbolID sym, BinaryOperator::Opcode Op,

@@ -14,7 +14,6 @@
 #ifndef LLVM_CLANG_BASIC_TARGETINFO_H
 #define LLVM_CLANG_BASIC_TARGETINFO_H
 
-#include "clang/Basic/SourceLocation.h"
 #include "llvm/Support/DataTypes.h"
 #include <vector>
 #include <string>
@@ -66,79 +65,77 @@ public:
   /// isCharSigned - Return true if 'char' is 'signed char' or false if it is
   /// treated as 'unsigned char'.  This is implementation defined according to
   /// C99 6.2.5p15.  In our implementation, this is target-specific.
-  bool isCharSigned(FullSourceLoc Loc) {
+  bool isCharSigned() {
     // FIXME: implement correctly.
     return true;
   }
   
   /// getPointerWidth - Return the width of pointers on this target, we
   /// currently assume one pointer type.
-  void getPointerInfo(uint64_t &Size, unsigned &Align, FullSourceLoc Loc) {
+  void getPointerInfo(uint64_t &Size, unsigned &Align) {
     Size = 32;  // FIXME: implement correctly.
     Align = 32;
   }
   
   /// getBoolInfo - Return the size of '_Bool' and C++ 'bool' for this target,
   /// in bits.  
-  void getBoolInfo(uint64_t &Size, unsigned &Align, FullSourceLoc Loc) {
+  void getBoolInfo(uint64_t &Size, unsigned &Align) {
     Size = Align = 8;    // FIXME: implement correctly: wrong for ppc32.
   }
   
   /// getCharInfo - Return the size of 'char', 'signed char' and
   /// 'unsigned char' for this target, in bits.  
-  void getCharInfo(uint64_t &Size, unsigned &Align, FullSourceLoc Loc) {
+  void getCharInfo(uint64_t &Size, unsigned &Align) {
     Size = Align = 8; // FIXME: implement correctly.
   }
   
   /// getShortInfo - Return the size of 'signed short' and 'unsigned short' for
   /// this target, in bits.  
-  void getShortInfo(uint64_t &Size, unsigned &Align, FullSourceLoc Loc) {
+  void getShortInfo(uint64_t &Size, unsigned &Align) {
     Size = Align = 16; // FIXME: implement correctly.
   }
   
   /// getIntInfo - Return the size of 'signed int' and 'unsigned int' for this
   /// target, in bits.  
-  void getIntInfo(uint64_t &Size, unsigned &Align, FullSourceLoc Loc) {
+  void getIntInfo(uint64_t &Size, unsigned &Align) {
     Size = Align = 32; // FIXME: implement correctly.
   }
   
   /// getLongInfo - Return the size of 'signed long' and 'unsigned long' for
   /// this target, in bits.  
-  void getLongInfo(uint64_t &Size, unsigned &Align, FullSourceLoc Loc) {
+  void getLongInfo(uint64_t &Size, unsigned &Align) {
     Size = Align = 32;  // FIXME: implement correctly: wrong for ppc64/x86-64
   }
 
   /// getLongLongInfo - Return the size of 'signed long long' and
   /// 'unsigned long long' for this target, in bits.  
-  void getLongLongInfo(uint64_t &Size, unsigned &Align, 
-                            FullSourceLoc Loc) {
+  void getLongLongInfo(uint64_t &Size, unsigned &Align) {
     Size = Align = 64; // FIXME: implement correctly.
   }
   
   /// getFloatInfo - Characterize 'float' for this target.  
   void getFloatInfo(uint64_t &Size, unsigned &Align,
-                    const llvm::fltSemantics *&Format, FullSourceLoc Loc);
+                    const llvm::fltSemantics *&Format);
 
   /// getDoubleInfo - Characterize 'double' for this target.
   void getDoubleInfo(uint64_t &Size, unsigned &Align,
-                     const llvm::fltSemantics *&Format,  FullSourceLoc Loc);
+                     const llvm::fltSemantics *&Format);
 
   /// getLongDoubleInfo - Characterize 'long double' for this target.
   void getLongDoubleInfo(uint64_t &Size, unsigned &Align,
-                         const llvm::fltSemantics *&Format, FullSourceLoc Loc);
+                         const llvm::fltSemantics *&Format);
   
   /// getWCharInfo - Return the size of wchar_t in bits.
   ///
-  void getWCharInfo(uint64_t &Size, unsigned &Align,
-                    FullSourceLoc Loc) {
-    if (!WCharWidth) ComputeWCharInfo(Loc);
+  void getWCharInfo(uint64_t &Size, unsigned &Align) {
+    if (!WCharWidth) ComputeWCharInfo();
     Size = WCharWidth;
     Align = WCharAlign;
   }
   
   /// getIntMaxTWidth - Return the size of intmax_t and uintmax_t for this
   /// target, in bits.  
-  unsigned getIntMaxTWidth(FullSourceLoc Loc) {
+  unsigned getIntMaxTWidth() {
     // FIXME: implement correctly.
     return 64;
   }
@@ -183,39 +180,42 @@ public:
   
   ///===---- Some helper methods ------------------------------------------===//
 
-  unsigned getBoolWidth(FullSourceLoc Loc) {
+  unsigned getBoolWidth() {
     uint64_t Size; unsigned Align;
-    getBoolInfo(Size, Align, Loc);
+    getBoolInfo(Size, Align);
     return static_cast<unsigned>(Size);
   }
   
-  unsigned getCharWidth(FullSourceLoc Loc) {
+  unsigned getCharWidth(bool isWide = false) {
     uint64_t Size; unsigned Align;
-    getCharInfo(Size, Align, Loc);
+    if (isWide)
+      getWCharInfo(Size, Align);
+    else
+      getCharInfo(Size, Align);
     return static_cast<unsigned>(Size);
   }
   
-  unsigned getWCharWidth(FullSourceLoc Loc) {
+  unsigned getWCharWidth() {
     uint64_t Size; unsigned Align;
-    getWCharInfo(Size, Align, Loc);
+    getWCharInfo(Size, Align);
     return static_cast<unsigned>(Size);
   }
   
-  unsigned getIntWidth(FullSourceLoc Loc) {
+  unsigned getIntWidth() {
     uint64_t Size; unsigned Align;
-    getIntInfo(Size, Align, Loc);
+    getIntInfo(Size, Align);
     return static_cast<unsigned>(Size);
   }
   
-  unsigned getLongWidth(FullSourceLoc Loc) {
+  unsigned getLongWidth() {
     uint64_t Size; unsigned Align;
-    getLongInfo(Size, Align, Loc);
+    getLongInfo(Size, Align);
     return static_cast<unsigned>(Size);
   }
 
-  unsigned getLongLongWidth(FullSourceLoc Loc) {
+  unsigned getLongLongWidth() {
     uint64_t Size; unsigned Align;
-    getLongLongInfo(Size, Align, Loc);
+    getLongLongInfo(Size, Align);
     return static_cast<unsigned>(Size);
   }
 
@@ -233,7 +233,7 @@ public:
 32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128";
   }
 private:
-  void ComputeWCharInfo(FullSourceLoc Loc);
+  void ComputeWCharInfo();
 };
 
 

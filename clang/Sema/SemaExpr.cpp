@@ -169,8 +169,7 @@ Action::ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
   if (Tok.getLength() == 1) {
     const char *t = PP.getSourceManager().getCharacterData(Tok.getLocation());
     
-    unsigned IntSize = static_cast<unsigned>(
-      Context.getTypeSize(Context.IntTy, Tok.getLocation()));
+    unsigned IntSize =static_cast<unsigned>(Context.getTypeSize(Context.IntTy));
     return ExprResult(new IntegerLiteral(llvm::APInt(IntSize, *t-'0'),
                                          Context.IntTy, 
                                          Tok.getLocation()));
@@ -195,17 +194,13 @@ Action::ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
 
     if (Literal.isFloat) {
       Ty = Context.FloatTy;
-      Context.Target.getFloatInfo(Size, Align, Format,
-                                  Context.getFullLoc(Tok.getLocation()));
-      
+      Context.Target.getFloatInfo(Size, Align, Format);
     } else if (Literal.isLong) {
       Ty = Context.LongDoubleTy;
-      Context.Target.getLongDoubleInfo(Size, Align, Format,
-                                       Context.getFullLoc(Tok.getLocation()));
+      Context.Target.getLongDoubleInfo(Size, Align, Format);
     } else {
       Ty = Context.DoubleTy;
-      Context.Target.getDoubleInfo(Size, Align, Format,
-                                   Context.getFullLoc(Tok.getLocation()));
+      Context.Target.getDoubleInfo(Size, Align, Format);
     }
     
     // isExact will be set by GetFloatValue().
@@ -225,15 +220,14 @@ Action::ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
       Diag(Tok.getLocation(), diag::ext_longlong);
 
     // Get the value in the widest-possible width.
-    llvm::APInt ResultVal(Context.Target.getIntMaxTWidth(
-                            Context.getFullLoc(Tok.getLocation())), 0);
+    llvm::APInt ResultVal(Context.Target.getIntMaxTWidth(), 0);
    
     if (Literal.GetIntegerValue(ResultVal)) {
       // If this value didn't fit into uintmax_t, warn and force to ull.
       Diag(Tok.getLocation(), diag::warn_integer_too_large);
       t = Context.UnsignedLongLongTy;
-      assert(Context.getTypeSize(t, Tok.getLocation()) == 
-             ResultVal.getBitWidth() && "long long is not intmax_t?");
+      assert(Context.getTypeSize(t) == ResultVal.getBitWidth() &&
+             "long long is not intmax_t?");
     } else {
       // If this value fits into a ULL, try to figure out what else it fits into
       // according to the rules of C99 6.4.4.1p5.
@@ -245,8 +239,8 @@ Action::ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
       // Check from smallest to largest, picking the smallest type we can.
       if (!Literal.isLong && !Literal.isLongLong) {
         // Are int/unsigned possibilities?
-        unsigned IntSize = static_cast<unsigned>(
-          Context.getTypeSize(Context.IntTy,Tok.getLocation()));
+        unsigned IntSize = 
+          static_cast<unsigned>(Context.getTypeSize(Context.IntTy));
         // Does it fit in a unsigned int?
         if (ResultVal.isIntN(IntSize)) {
           // Does it fit in a signed int?
@@ -262,8 +256,8 @@ Action::ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
       
       // Are long/unsigned long possibilities?
       if (t.isNull() && !Literal.isLongLong) {
-        unsigned LongSize = static_cast<unsigned>(
-          Context.getTypeSize(Context.LongTy, Tok.getLocation()));
+        unsigned LongSize =
+          static_cast<unsigned>(Context.getTypeSize(Context.LongTy));
      
         // Does it fit in a unsigned long?
         if (ResultVal.isIntN(LongSize)) {
@@ -279,8 +273,8 @@ Action::ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
       
       // Finally, check long long if needed.
       if (t.isNull()) {
-        unsigned LongLongSize = static_cast<unsigned>(
-          Context.getTypeSize(Context.LongLongTy, Tok.getLocation()));
+        unsigned LongLongSize =
+          static_cast<unsigned>(Context.getTypeSize(Context.LongLongTy));
         
         // Does it fit in a unsigned long long?
         if (ResultVal.isIntN(LongLongSize)) {
@@ -718,8 +712,7 @@ bool Sema::CheckVectorCast(SourceRange R, QualType VectorTy, QualType Ty) {
   assert(VectorTy->isVectorType() && "Not a vector type!");
   
   if (Ty->isVectorType() || Ty->isIntegerType()) {
-    if (Context.getTypeSize(VectorTy, SourceLocation()) !=
-        Context.getTypeSize(Ty, SourceLocation()))
+    if (Context.getTypeSize(VectorTy) != Context.getTypeSize(Ty))
       return Diag(R.getBegin(),
                   Ty->isVectorType() ? 
                   diag::err_invalid_conversion_between_vectors :
@@ -1210,8 +1203,7 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
         lhsType->isVectorType() && rhsType->isVectorType()) {
       if ((lhsType->isIntegerType() && rhsType->isIntegerType()) ||
           (lhsType->isRealFloatingType() && rhsType->isRealFloatingType())) {
-        if (Context.getTypeSize(lhsType, SourceLocation()) == 
-            Context.getTypeSize(rhsType, SourceLocation()))
+        if (Context.getTypeSize(lhsType) == Context.getTypeSize(rhsType))
           return Compatible;
       }
     }

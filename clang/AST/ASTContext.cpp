@@ -133,7 +133,7 @@ void ASTContext::InitBuiltinTypes() {
   // C99 6.2.5p2.
   InitBuiltinType(BoolTy,              BuiltinType::Bool);
   // C99 6.2.5p3.
-  if (Target.isCharSigned(FullSourceLoc()))
+  if (Target.isCharSigned())
     InitBuiltinType(CharTy,            BuiltinType::Char_S);
   else
     InitBuiltinType(CharTy,            BuiltinType::Char_U);
@@ -180,7 +180,7 @@ void ASTContext::InitBuiltinTypes() {
 /// getTypeSize - Return the size of the specified type, in bits.  This method
 /// does not work on incomplete types.
 std::pair<uint64_t, unsigned>
-ASTContext::getTypeInfo(QualType T, SourceLocation L) {
+ASTContext::getTypeInfo(QualType T) {
   T = T.getCanonicalType();
   uint64_t Size;
   unsigned Align;
@@ -195,8 +195,7 @@ ASTContext::getTypeInfo(QualType T, SourceLocation L) {
   case Type::ConstantArray: {
     ConstantArrayType *CAT = cast<ConstantArrayType>(T);
     
-    std::pair<uint64_t, unsigned> EltInfo = 
-      getTypeInfo(CAT->getElementType(), L);
+    std::pair<uint64_t, unsigned> EltInfo = getTypeInfo(CAT->getElementType());
     Size = EltInfo.first*CAT->getSize().getZExtValue();
     Align = EltInfo.second;
     break;
@@ -204,7 +203,7 @@ ASTContext::getTypeInfo(QualType T, SourceLocation L) {
   case Type::OCUVector:
   case Type::Vector: {
     std::pair<uint64_t, unsigned> EltInfo = 
-      getTypeInfo(cast<VectorType>(T)->getElementType(), L);
+      getTypeInfo(cast<VectorType>(T)->getElementType());
     Size = EltInfo.first*cast<VectorType>(T)->getNumElements();
     // FIXME: Vector alignment is not the alignment of its elements.
     Align = EltInfo.second;
@@ -220,62 +219,62 @@ ASTContext::getTypeInfo(QualType T, SourceLocation L) {
     case BuiltinType::Void:
       assert(0 && "Incomplete types have no size!");
     case BuiltinType::Bool:
-      Target.getBoolInfo(Size, Align, getFullLoc(L));
+      Target.getBoolInfo(Size, Align);
       break;
     case BuiltinType::Char_S:
     case BuiltinType::Char_U:
     case BuiltinType::UChar:
     case BuiltinType::SChar:
-      Target.getCharInfo(Size, Align, getFullLoc(L));
+      Target.getCharInfo(Size, Align);
       break;
     case BuiltinType::UShort:
     case BuiltinType::Short:
-      Target.getShortInfo(Size, Align, getFullLoc(L));
+      Target.getShortInfo(Size, Align);
       break;
     case BuiltinType::UInt:
     case BuiltinType::Int:
-      Target.getIntInfo(Size, Align, getFullLoc(L));
+      Target.getIntInfo(Size, Align);
       break;
     case BuiltinType::ULong:
     case BuiltinType::Long:
-      Target.getLongInfo(Size, Align, getFullLoc(L));
+      Target.getLongInfo(Size, Align);
       break;
     case BuiltinType::ULongLong:
     case BuiltinType::LongLong:
-      Target.getLongLongInfo(Size, Align, getFullLoc(L));
+      Target.getLongLongInfo(Size, Align);
       break;
     case BuiltinType::Float:
-      Target.getFloatInfo(Size, Align, F, getFullLoc(L));
+      Target.getFloatInfo(Size, Align, F);
       break;
     case BuiltinType::Double:
-      Target.getDoubleInfo(Size, Align, F, getFullLoc(L));
+      Target.getDoubleInfo(Size, Align, F);
       break;
     case BuiltinType::LongDouble:
-      Target.getLongDoubleInfo(Size, Align, F, getFullLoc(L));
+      Target.getLongDoubleInfo(Size, Align, F);
       break;
     }
     break;
   }
   case Type::ASQual:
-    return getTypeInfo(QualType(cast<ASQualType>(T)->getBaseType(), 0), L);
+    // FIXME: Pointers into different addr spaces could have different sizes and
+    // alignment requirements: getPointerInfo should take an AddrSpace.
+    return getTypeInfo(QualType(cast<ASQualType>(T)->getBaseType(), 0));
   case Type::ObjCQualifiedId:
-    Target.getPointerInfo(Size, Align, getFullLoc(L));
-    break;
   case Type::Pointer:
-    Target.getPointerInfo(Size, Align, getFullLoc(L));
+    Target.getPointerInfo(Size, Align);
     break;
   case Type::Reference:
     // "When applied to a reference or a reference type, the result is the size
     // of the referenced type." C++98 5.3.3p2: expr.sizeof.
     // FIXME: This is wrong for struct layout: a reference in a struct has
     // pointer size.
-    return getTypeInfo(cast<ReferenceType>(T)->getReferenceeType(), L);
+    return getTypeInfo(cast<ReferenceType>(T)->getReferenceeType());
     
   case Type::Complex: {
     // Complex types have the same alignment as their elements, but twice the
     // size.
     std::pair<uint64_t, unsigned> EltInfo = 
-      getTypeInfo(cast<ComplexType>(T)->getElementType(), L);
+      getTypeInfo(cast<ComplexType>(T)->getElementType());
     Size = EltInfo.first*2;
     Align = EltInfo.second;
     break;
@@ -283,11 +282,11 @@ ASTContext::getTypeInfo(QualType T, SourceLocation L) {
   case Type::Tagged:
     TagType *TT = cast<TagType>(T);
     if (RecordType *RT = dyn_cast<RecordType>(TT)) {
-      const ASTRecordLayout &Layout = getASTRecordLayout(RT->getDecl(), L);
+      const ASTRecordLayout &Layout = getASTRecordLayout(RT->getDecl());
       Size = Layout.getSize();
       Align = Layout.getAlignment();
     } else if (EnumDecl *ED = dyn_cast<EnumDecl>(TT->getDecl())) {
-      return getTypeInfo(ED->getIntegerType(), L);
+      return getTypeInfo(ED->getIntegerType());
     } else {
       assert(0 && "Unimplemented type sizes!");
     }
@@ -301,8 +300,7 @@ ASTContext::getTypeInfo(QualType T, SourceLocation L) {
 /// getASTRecordLayout - Get or compute information about the layout of the
 /// specified record (struct/union/class), which indicates its size and field
 /// position information.
-const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D,
-                                                      SourceLocation L) {
+const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
   assert(D->isDefinition() && "Cannot get layout of forward declarations!");
   
   // Look up this layout, if already laid out, return what we have.
@@ -339,7 +337,7 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D,
         assert (BitWidthIsICE  && "Invalid BitField size expression");
         FieldSize = I.getZExtValue();
 
-        std::pair<uint64_t, unsigned> TypeInfo = getTypeInfo(FD->getType(), L);
+        std::pair<uint64_t, unsigned> TypeInfo = getTypeInfo(FD->getType());
         uint64_t TypeSize = TypeInfo.first;
         
         if (const AlignedAttr *AA = FD->getAttr<AlignedAttr>())
@@ -372,11 +370,11 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D,
             FieldAlign = 8;
           else {
             const ArrayType* ATy = FD->getType()->getAsArrayType();
-            FieldAlign = getTypeAlign(ATy->getElementType(), L);
+            FieldAlign = getTypeAlign(ATy->getElementType());
           }
           FieldSize = 0;
         } else {
-          std::pair<uint64_t, unsigned> FieldInfo = getTypeInfo(FD->getType(), L);
+          std::pair<uint64_t, unsigned> FieldInfo = getTypeInfo(FD->getType());
           FieldSize = FieldInfo.first;
         
           if (const AlignedAttr *AA = FD->getAttr<AlignedAttr>())
@@ -408,7 +406,7 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D,
     // Union layout just puts each member at the start of the record.
     for (unsigned i = 0, e = D->getNumMembers(); i != e; ++i) {
       const FieldDecl *FD = D->getMember(i);
-      std::pair<uint64_t, unsigned> FieldInfo = getTypeInfo(FD->getType(), L);
+      std::pair<uint64_t, unsigned> FieldInfo = getTypeInfo(FD->getType());
       uint64_t FieldSize = FieldInfo.first;
       unsigned FieldAlign = FieldInfo.second;
       
@@ -1073,16 +1071,15 @@ static bool isTypeTypedefedAsBOOL(QualType T) {
 /// getObjCEncodingTypeSize returns size of type for objective-c encoding
 /// purpose.
 int ASTContext::getObjCEncodingTypeSize(QualType type) {
-  SourceLocation Loc;
-  uint64_t sz = getTypeSize(type, Loc);
+  uint64_t sz = getTypeSize(type);
   
   // Make all integer and enum types at least as large as an int
   if (sz > 0 && type->isIntegralType())
-    sz = std::max(sz, getTypeSize(IntTy, Loc));
+    sz = std::max(sz, getTypeSize(IntTy));
   // Treat arrays as pointers, since that's how they're passed in.
   else if (type->isArrayType())
-    sz = getTypeSize(VoidPtrTy, Loc);
-  return sz / getTypeSize(CharTy, Loc);
+    sz = getTypeSize(VoidPtrTy);
+  return sz / getTypeSize(CharTy);
 }
 
 /// getObjCEncodingForMethodDecl - Return the encoded type for this method
@@ -1098,7 +1095,7 @@ void ASTContext::getObjCEncodingForMethodDecl(ObjCMethodDecl *Decl,
   // Start with computing size of a pointer in number of bytes.
   // FIXME: There might(should) be a better way of doing this computation!
   SourceLocation Loc;
-  int PtrSize = getTypeSize(VoidPtrTy, Loc) / getTypeSize(CharTy, Loc);
+  int PtrSize = getTypeSize(VoidPtrTy) / getTypeSize(CharTy);
   // The first two arguments (self and _cmd) are pointers; account for
   // their size.
   int ParmOffset = 2 * PtrSize;

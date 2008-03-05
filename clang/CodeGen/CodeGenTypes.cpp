@@ -118,8 +118,7 @@ const llvm::Type *CodeGenTypes::ConvertTypeForMem(QualType T) {
     return R;
     
   // Otherwise, return an integer of the target-specified size.
-  unsigned BoolWidth = (unsigned)Context.getTypeSize(T, SourceLocation());
-  return llvm::IntegerType::get(BoolWidth);
+  return llvm::IntegerType::get((unsigned)Context.getTypeSize(T));
   
 }
 
@@ -179,7 +178,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     case BuiltinType::LongLong:
     case BuiltinType::ULongLong:
       return llvm::IntegerType::get(
-        static_cast<unsigned>(Context.getTypeSize(T, SourceLocation())));
+        static_cast<unsigned>(Context.getTypeSize(T)));
       
     case BuiltinType::Float:      return llvm::Type::FloatTy;
     case BuiltinType::Double:     return llvm::Type::DoubleTy;
@@ -356,7 +355,7 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
     for (unsigned i = 0, e = RD->getNumMembers(); i != e; ++i)
       RO.addField(RD->getMember(i));
     
-    RO.layoutStructFields(Context.getASTRecordLayout(RD, SourceLocation()));
+    RO.layoutStructFields(Context.getASTRecordLayout(RD));
     
     // Get llvm::StructType.
     CGRecordLayouts[TD] = new CGRecordLayout(RO.getLLVMType(), 
@@ -514,7 +513,7 @@ void RecordOrganizer::layoutUnionFields() {
  
   unsigned PrimaryEltNo = 0;
   std::pair<uint64_t, unsigned> PrimaryElt =
-    CGT.getContext().getTypeInfo(FieldDecls[0]->getType(), SourceLocation());
+    CGT.getContext().getTypeInfo(FieldDecls[0]->getType());
   CGT.addFieldInfo(FieldDecls[0], 0);
 
   unsigned Size = FieldDecls.size();
@@ -522,7 +521,7 @@ void RecordOrganizer::layoutUnionFields() {
     const FieldDecl *FD = FieldDecls[i];
     assert (!FD->isBitField() && "Bit fields are not yet supported");
     std::pair<uint64_t, unsigned> EltInfo = 
-      CGT.getContext().getTypeInfo(FD->getType(), SourceLocation());
+      CGT.getContext().getTypeInfo(FD->getType());
 
     // Use largest element, breaking ties with the hightest aligned member.
     if (EltInfo.first > PrimaryElt.first ||

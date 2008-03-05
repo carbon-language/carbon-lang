@@ -1561,8 +1561,7 @@ Sema::DeclTy *Sema::ActOnEnumConstant(Scope *S, DeclTy *theEnumDecl,
     } else {
       // First value, set to zero.
       EltTy = Context.IntTy;
-      EnumVal.zextOrTrunc(
-        static_cast<uint32_t>(Context.getTypeSize(EltTy, IdLoc)));
+      EnumVal.zextOrTrunc(static_cast<uint32_t>(Context.getTypeSize(EltTy)));
     }
   }
   
@@ -1584,9 +1583,7 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
   // TODO: If the result value doesn't fit in an int, it must be a long or long
   // long value.  ISO C does not support this, but GCC does as an extension,
   // emit a warning.
-  unsigned IntWidth =
-    Context.Target.getIntWidth(Context.getFullLoc(Enum->getLocation()));
-  
+  unsigned IntWidth = Context.Target.getIntWidth();
   
   // Verify that all the values are okay, compute the size of the values, and
   // reverse the list.
@@ -1643,14 +1640,12 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
       BestType = Context.IntTy;
       BestWidth = IntWidth;
     } else {
-      BestWidth = 
-        Context.Target.getLongWidth(Context.getFullLoc(Enum->getLocation()));
+      BestWidth = Context.Target.getLongWidth();
       
       if (NumNegativeBits <= BestWidth && NumPositiveBits < BestWidth)
         BestType = Context.LongTy;
       else {
-        BestWidth = Context.Target.getLongLongWidth(
-                       Context.getFullLoc(Enum->getLocation()));
+        BestWidth = Context.Target.getLongLongWidth();
         
         if (NumNegativeBits > BestWidth || NumPositiveBits >= BestWidth)
           Diag(Enum->getLocation(), diag::warn_enum_too_large);
@@ -1664,14 +1659,10 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
       BestType = Context.UnsignedIntTy;
       BestWidth = IntWidth;
     } else if (NumPositiveBits <=
-               (BestWidth = Context.Target.getLongWidth(
-                              Context.getFullLoc(Enum->getLocation()))))
-
+               (BestWidth = Context.Target.getLongWidth())) {
       BestType = Context.UnsignedLongTy;
-    else {
-      BestWidth =
-       Context.Target.getLongLongWidth(Context.getFullLoc(Enum->getLocation()));
-      
+    } else {
+      BestWidth = Context.Target.getLongLongWidth();
       assert(NumPositiveBits <= BestWidth &&
              "How could an initializer get larger than ULL?");
       BestType = Context.UnsignedLongLongTy;
@@ -1936,8 +1927,7 @@ QualType Sema::HandleVectorTypeAttribute(QualType curType,
          curType.getCanonicalType().getAsString());
     return QualType();
   }
-  unsigned typeSize = static_cast<unsigned>(
-    Context.getTypeSize(curType, rawAttr->getLoc()));
+  unsigned typeSize = static_cast<unsigned>(Context.getTypeSize(curType));
   // vecSize is specified in bytes - convert to bits.
   unsigned vectorSize = static_cast<unsigned>(vecSize.getZExtValue() * 8); 
   
@@ -1970,7 +1960,7 @@ void Sema::HandlePackedAttribute(Decl *d, AttributeList *rawAttr) {
   else if (FieldDecl *FD = dyn_cast<FieldDecl>(d)) {
     // If the alignment is less than or equal to 8 bits, the packed attribute
     // has no effect.
-    if (Context.getTypeAlign(FD->getType(), SourceLocation()) <= 8)
+    if (Context.getTypeAlign(FD->getType()) <= 8)
       Diag(rawAttr->getLoc(), 
            diag::warn_attribute_ignored_for_field_of_type,
            rawAttr->getName()->getName(), FD->getType().getAsString());

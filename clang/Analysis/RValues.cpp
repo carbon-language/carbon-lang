@@ -207,10 +207,8 @@ NonLVal LVal::NE(ValueManager& ValMgr, const LVal& R) const {
 // Utility methods for constructing Non-LVals.
 //===----------------------------------------------------------------------===//
 
-NonLVal NonLVal::MakeVal(ValueManager& ValMgr, uint64_t X, QualType T,
-                             SourceLocation Loc) {  
-
-  return nonlval::ConcreteInt(ValMgr.getValue(X, T, Loc));
+NonLVal NonLVal::MakeVal(ValueManager& ValMgr, uint64_t X, QualType T) {  
+  return nonlval::ConcreteInt(ValMgr.getValue(X, T));
 }
 
 NonLVal NonLVal::MakeVal(ValueManager& ValMgr, IntegerLiteral* I) {
@@ -220,7 +218,6 @@ NonLVal NonLVal::MakeVal(ValueManager& ValMgr, IntegerLiteral* I) {
 }
 
 NonLVal NonLVal::MakeIntTruthVal(ValueManager& ValMgr, bool b) {
-
   return nonlval::ConcreteInt(ValMgr.getTruthValue(b));
 }
 

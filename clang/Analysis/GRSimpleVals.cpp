@@ -160,7 +160,7 @@ RVal GRSimpleVals::EvalCast(ValueManager& ValMgr, NonLVal X, QualType T) {
   
   llvm::APSInt V = cast<nonlval::ConcreteInt>(X).getValue();
   V.setIsUnsigned(T->isUnsignedIntegerType() || T->isPointerType());
-  V.extOrTrunc(ValMgr.getContext().getTypeSize(T, SourceLocation()));
+  V.extOrTrunc(ValMgr.getContext().getTypeSize(T));
   
   if (T->isPointerType())
     return lval::ConcreteInt(ValMgr.getValue(V));
@@ -182,7 +182,7 @@ RVal GRSimpleVals::EvalCast(ValueManager& ValMgr, LVal X, QualType T) {
   
   llvm::APSInt V = cast<lval::ConcreteInt>(X).getValue();
   V.setIsUnsigned(T->isUnsignedIntegerType() || T->isPointerType());
-  V.extOrTrunc(ValMgr.getContext().getTypeSize(T, SourceLocation()));
+  V.extOrTrunc(ValMgr.getContext().getTypeSize(T));
 
   return nonlval::ConcreteInt(ValMgr.getValue(V));
 }

@@ -231,7 +231,7 @@ void CodeGenModule::EmitGlobalVar(const FileVarDecl *D) {
     Init = llvm::Constant::getNullValue(GV->getType()->getElementType());
   } else if (D->getType()->isIntegerType()) {
     llvm::APSInt Value(static_cast<uint32_t>(
-      getContext().getTypeSize(D->getInit()->getType(), SourceLocation())));
+      getContext().getTypeSize(D->getInit()->getType())));
     if (D->getInit()->isIntegerConstantExpr(Value, Context))
       Init = llvm::ConstantInt::get(Value);
   }
@@ -340,7 +340,7 @@ llvm::Function *CodeGenModule::getMemCpyFn() {
   if (MemCpyFn) return MemCpyFn;
   llvm::Intrinsic::ID IID;
   uint64_t Size; unsigned Align;
-  Context.Target.getPointerInfo(Size, Align, FullSourceLoc());
+  Context.Target.getPointerInfo(Size, Align);
   switch (Size) {
   default: assert(0 && "Unknown ptr width");
   case 32: IID = llvm::Intrinsic::memcpy_i32; break;
@@ -353,7 +353,7 @@ llvm::Function *CodeGenModule::getMemSetFn() {
   if (MemSetFn) return MemSetFn;
   llvm::Intrinsic::ID IID;
   uint64_t Size; unsigned Align;
-  Context.Target.getPointerInfo(Size, Align, FullSourceLoc());
+  Context.Target.getPointerInfo(Size, Align);
   switch (Size) {
   default: assert(0 && "Unknown ptr width");
   case 32: IID = llvm::Intrinsic::memset_i32; break;

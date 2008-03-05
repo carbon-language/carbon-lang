@@ -123,8 +123,7 @@ public:
   void print(std::ostream& Out) const;
   
   // Utility methods to create NonLVals.
-  static NonLVal MakeVal(ValueManager& ValMgr, uint64_t X, QualType T,
-                         SourceLocation Loc = SourceLocation());
+  static NonLVal MakeVal(ValueManager& ValMgr, uint64_t X, QualType T);
   
   static NonLVal MakeVal(ValueManager& ValMgr, IntegerLiteral* I);
   

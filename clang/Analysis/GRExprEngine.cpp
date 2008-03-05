@@ -277,8 +277,7 @@ void GRExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
   // While most of this can be assumed (such as the signedness), having it
   // just computed makes sure everything makes the same assumptions end-to-end.
   
-  unsigned bits = getContext().getTypeSize(CondE->getType(),
-                                           CondE->getExprLoc());
+  unsigned bits = getContext().getTypeSize(CondE->getType());
 
   APSInt V1(bits, false);
   APSInt V2 = V1;
@@ -716,10 +715,8 @@ void GRExprEngine::VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr* Ex,
   
   uint64_t size = 1;  // Handle sizeof(void)
   
-  if (T != getContext().VoidTy) {
-    SourceLocation Loc = Ex->getExprLoc();
-    size = getContext().getTypeSize(T, Loc) / 8;
-  }
+  if (T != getContext().VoidTy)
+    size = getContext().getTypeSize(T) / 8;
   
   Nodify(Dst, Ex, Pred,
          SetRVal(Pred->getState(), Ex,
@@ -949,10 +946,9 @@ void GRExprEngine::VisitSizeOfExpr(UnaryOperator* U, NodeTy* Pred,
   if (!T.getTypePtr()->isConstantSizeType())
     return;
   
-  SourceLocation Loc = U->getExprLoc();
-  uint64_t size = getContext().getTypeSize(T, Loc) / 8;                
+  uint64_t size = getContext().getTypeSize(T) / 8;                
   ValueState* St = Pred->getState();
-  St = SetRVal(St, U, NonLVal::MakeVal(ValMgr, size, U->getType(), Loc));
+  St = SetRVal(St, U, NonLVal::MakeVal(ValMgr, size, U->getType()));
 
   Nodify(Dst, U, Pred, St);
 }

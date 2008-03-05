@@ -2037,9 +2037,8 @@ Stmt *RewriteTest::SynthMessageExpr(ObjCMessageExpr *Exp) {
     // FIXME: Value of 8 is base on ppc32/x86 ABI for the most common cases.
     // For X86 it is more complicated and some kind of target specific routine
     // is needed to decide what to do.
-    unsigned IntSize = static_cast<unsigned>(
-      Context->getTypeSize(Context->IntTy, SourceLocation()));
-
+    unsigned IntSize = 
+      static_cast<unsigned>(Context->getTypeSize(Context->IntTy));
     IntegerLiteral *limit = new IntegerLiteral(llvm::APInt(IntSize, 8), 
                                                Context->IntTy,
                                                SourceLocation());

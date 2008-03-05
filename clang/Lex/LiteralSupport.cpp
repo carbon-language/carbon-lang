@@ -93,9 +93,7 @@ static unsigned ProcessCharEscape(const char *&ThisTokBuf,
     }
 
     // See if any bits will be truncated when evaluated as a character.
-    unsigned CharWidth = IsWide 
-                       ? PP.getTargetInfo().getWCharWidth(PP.getFullLoc(Loc))
-                       : PP.getTargetInfo().getCharWidth(PP.getFullLoc(Loc));
+    unsigned CharWidth = PP.getTargetInfo().getCharWidth(IsWide);
                        
     if (CharWidth != 32 && (ResultChar >> CharWidth) != 0) {
       Overflow = true;
@@ -124,9 +122,7 @@ static unsigned ProcessCharEscape(const char *&ThisTokBuf,
              ThisTokBuf[0] >= '0' && ThisTokBuf[0] <= '7');
     
     // Check for overflow.  Reject '\777', but not L'\777'.
-    unsigned CharWidth = IsWide
-                       ? PP.getTargetInfo().getWCharWidth(PP.getFullLoc(Loc))
-                       : PP.getTargetInfo().getCharWidth(PP.getFullLoc(Loc));
+    unsigned CharWidth = PP.getTargetInfo().getCharWidth(IsWide);
                        
     if (CharWidth != 32 && (ResultChar >> CharWidth) != 0) {
       PP.Diag(Loc, diag::warn_octal_escape_too_large);
@@ -457,13 +453,13 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
 
   // FIXME: This assumes that 'int' is 32-bits in overflow calculation, and the
   // size of "value".
-  assert(PP.getTargetInfo().getIntWidth(PP.getFullLoc(Loc)) == 32 &&
+  assert(PP.getTargetInfo().getIntWidth() == 32 &&
          "Assumes sizeof(int) == 4 for now");
   // FIXME: This assumes that wchar_t is 32-bits for now.
-  assert(PP.getTargetInfo().getWCharWidth(PP.getFullLoc(Loc)) == 32 && 
+  assert(PP.getTargetInfo().getWCharWidth() == 32 && 
          "Assumes sizeof(wchar_t) == 4 for now");
   // FIXME: This extensively assumes that 'char' is 8-bits.
-  assert(PP.getTargetInfo().getCharWidth(PP.getFullLoc(Loc)) == 8 &&
+  assert(PP.getTargetInfo().getCharWidth() == 8 &&
          "Assumes char is 8 bits");
   
   bool isFirstChar = true;
@@ -509,7 +505,7 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
   // character constants are not sign extended in the this implementation:
   // '\xFF\xFF' = 65536 and '\x0\xFF' = 255, which matches GCC.
   if (!IsWide && !isMultiChar && (Value & 128) &&
-      PP.getTargetInfo().isCharSigned(PP.getFullLoc(Loc)))
+      PP.getTargetInfo().isCharSigned())
     Value = (signed char)Value;
 }
 
@@ -587,9 +583,7 @@ StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
   // query the target.  As such, wchar_tByteWidth is only valid if AnyWide=true.
   wchar_tByteWidth = ~0U;
   if (AnyWide) {
-    wchar_tByteWidth = 
-      Target.getWCharWidth(PP.getFullLoc(StringToks[0].getLocation()));
-      
+    wchar_tByteWidth = Target.getWCharWidth();
     assert((wchar_tByteWidth & 7) == 0 && "Assumes wchar_t is byte multiple!");
     wchar_tByteWidth /= 8;
   }

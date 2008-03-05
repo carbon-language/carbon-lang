@@ -103,8 +103,7 @@ void AggExprEmitter::EmitAggregateClear(llvm::Value *DestPtr, QualType Ty) {
     DestPtr = Builder.CreateBitCast(DestPtr, BP, "tmp");
 
   // Get size and alignment info for this aggregate.
-  std::pair<uint64_t, unsigned> TypeInfo =
-    CGF.getContext().getTypeInfo(Ty, SourceLocation());
+  std::pair<uint64_t, unsigned> TypeInfo = CGF.getContext().getTypeInfo(Ty);
 
   // FIXME: Handle variable sized types.
   const llvm::Type *IntPtr = llvm::IntegerType::get(CGF.LLVMPointerWidth);
@@ -132,8 +131,7 @@ void AggExprEmitter::EmitAggregateCopy(llvm::Value *DestPtr,
     SrcPtr = Builder.CreateBitCast(SrcPtr, BP, "tmp");
   
   // Get size and alignment info for this aggregate.
-  std::pair<uint64_t, unsigned> TypeInfo =
-    CGF.getContext().getTypeInfo(Ty, SourceLocation());
+  std::pair<uint64_t, unsigned> TypeInfo = CGF.getContext().getTypeInfo(Ty);
   
   // FIXME: Handle variable sized types.
   const llvm::Type *IntPtr = llvm::IntegerType::get(CGF.LLVMPointerWidth);
