@@ -1,5 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as -f -o %s.bc 
-; RUN: llvm-link -f -o %s.linked %s.bc
+; RUN: llvm-upgrade < %s | llvm-as -f -o %t1.bc
+; RUN: llvm-link -f -o %t2.bc %t1.bc
 
 target endian = big
 target pointersize = 32
