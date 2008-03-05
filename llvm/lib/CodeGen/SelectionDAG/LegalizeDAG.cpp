@@ -5281,9 +5281,7 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
          "This is not an expansion!");
 
   if (!isSigned) {
-    assert(SourceVT == MVT::i64 &&
-           "This only works for 64-bit -> FP");
-    // The 64-bit value loaded will be incorrectly if the 'sign bit' of the
+    // The integer value loaded will be incorrectly if the 'sign bit' of the
     // incoming integer is set.  To handle this, we dynamically test to see if
     // it is set, and, if so, add a fudge factor.
     SDOperand Lo, Hi;
@@ -5302,8 +5300,7 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
                                       SignSet, Four, Zero);
     uint64_t FF = 0x5f800000ULL;
     if (TLI.isLittleEndian()) FF <<= 32;
-    static Constant *FudgeFactor =
-      ConstantInt::get(IntegerType::get(Source.getValueSizeInBits()), FF);
+    static Constant *FudgeFactor = ConstantInt::get(Type::Int64Ty, FF);
 
     SDOperand CPIdx = DAG.getConstantPool(FudgeFactor, TLI.getPointerTy());
     CPIdx = DAG.getNode(ISD::ADD, TLI.getPointerTy(), CPIdx, CstOffset);

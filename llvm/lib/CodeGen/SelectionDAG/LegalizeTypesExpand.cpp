@@ -1020,7 +1020,6 @@ SDOperand DAGTypeLegalizer::ExpandOperand_UINT_TO_FP(SDOperand Source,
   // We know the destination is legal, but that the input needs to be expanded.
   assert(getTypeAction(Source.getValueType()) == Expand &&
          "This is not an expansion!");
-  assert(Source.getValueType() == MVT::i64 && "Only handle expand from i64!");
   
   // If this is unsigned, and not supported, first perform the conversion to
   // signed, then adjust the result if the sign bit is set.
