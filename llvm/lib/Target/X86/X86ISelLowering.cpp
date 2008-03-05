@@ -5355,7 +5355,7 @@ SDOperand X86TargetLowering::LowerCTTZ(SDOperand Op, SelectionDAG &DAG) {
   return Op;
 }
 
-SDOperand X86TargetLowering::LowerCAS(SDOperand Op, SelectionDAG &DAG) {
+SDOperand X86TargetLowering::LowerLCS(SDOperand Op, SelectionDAG &DAG) {
   MVT::ValueType T = cast<AtomicSDNode>(Op.Val)->getVT();
   unsigned Reg = 0;
   unsigned size = 0;
@@ -5363,15 +5363,20 @@ SDOperand X86TargetLowering::LowerCAS(SDOperand Op, SelectionDAG &DAG) {
   case MVT::i8:  Reg = X86::AL;  size = 1; break;
   case MVT::i16: Reg = X86::AX;  size = 2; break;
   case MVT::i32: Reg = X86::EAX; size = 4; break;
-  case MVT::i64: Reg = X86::RAX; size = 8; break;
+  case MVT::i64: 
+    if (Subtarget->is64Bit()) {
+      Reg = X86::RAX; size = 8;
+    } else //Should go away when LowerType stuff lands
+      return SDOperand(ExpandATOMIC_LCS(Op.Val, DAG), 0);
+    break;
   };
   SDOperand cpIn = DAG.getCopyToReg(Op.getOperand(0), Reg,
                                     Op.getOperand(3), SDOperand());
   SDOperand Ops[] = { cpIn.getValue(0),
-                       Op.getOperand(1),
-                       Op.getOperand(2),
-                       DAG.getTargetConstant(size, MVT::i8),
-                       cpIn.getValue(1) };
+                      Op.getOperand(1),
+                      Op.getOperand(2),
+                      DAG.getTargetConstant(size, MVT::i8),
+                      cpIn.getValue(1) };
   SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
   SDOperand Result = DAG.getNode(X86ISD::LCMPXCHG_DAG, Tys, Ops, 5);
   SDOperand cpOut = 
@@ -5379,12 +5384,48 @@ SDOperand X86TargetLowering::LowerCAS(SDOperand Op, SelectionDAG &DAG) {
   return cpOut;
 }
 
+SDNode* X86TargetLowering::ExpandATOMIC_LCS(SDNode* Op, SelectionDAG &DAG) {
+  MVT::ValueType T = cast<AtomicSDNode>(Op)->getVT();
+  assert (T == MVT::i64 && "Only know how to expand i64 CAS");
+  SDOperand cpInL, cpInH;
+  cpInL = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op->getOperand(3),
+                      DAG.getConstant(0, MVT::i32));
+  cpInH = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op->getOperand(3),
+                      DAG.getConstant(1, MVT::i32));
+  cpInL = DAG.getCopyToReg(Op->getOperand(0), X86::EAX,
+                           cpInL, SDOperand());
+  cpInH = DAG.getCopyToReg(cpInL.getValue(0), X86::EDX,
+                           cpInH, cpInL.getValue(1));
+  SDOperand swapInL, swapInH;
+  swapInL = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op->getOperand(2),
+                        DAG.getConstant(0, MVT::i32));
+  swapInH = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op->getOperand(2),
+                        DAG.getConstant(1, MVT::i32));
+  swapInL = DAG.getCopyToReg(cpInH.getValue(0), X86::EBX,
+                             swapInL, cpInH.getValue(1));
+  swapInH = DAG.getCopyToReg(swapInL.getValue(0), X86::ECX,
+                             swapInH, swapInL.getValue(1));
+  SDOperand Ops[] = { swapInH.getValue(0),
+                      Op->getOperand(1),
+                      swapInH.getValue(1)};
+  SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
+  SDOperand Result = DAG.getNode(X86ISD::LCMPXCHG8_DAG, Tys, Ops, 3);
+  SDOperand cpOutL = DAG.getCopyFromReg(Result.getValue(0), X86::EAX, MVT::i32, 
+                                        Result.getValue(1));
+  SDOperand cpOutH = DAG.getCopyFromReg(cpOutL.getValue(1), X86::EDX, MVT::i32, 
+                                        cpOutL.getValue(2));
+  SDOperand OpsF[] = { cpOutL.getValue(0), cpOutH.getValue(0)};
+  SDOperand ResultVal = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, OpsF, 2);
+  Tys = DAG.getVTList(MVT::i64, MVT::Other);
+  return DAG.getNode(ISD::MERGE_VALUES, Tys, ResultVal, cpOutH.getValue(1)).Val;
+}
+
 /// LowerOperation - Provide custom lowering hooks for some operations.
 ///
 SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
   default: assert(0 && "Should not custom lower this!");
-  case ISD::ATOMIC_LCS:         return LowerCAS(Op,DAG);
+  case ISD::ATOMIC_LCS:         return LowerLCS(Op,DAG);
   case ISD::BUILD_VECTOR:       return LowerBUILD_VECTOR(Op, DAG);
   case ISD::VECTOR_SHUFFLE:     return LowerVECTOR_SHUFFLE(Op, DAG);
   case ISD::EXTRACT_VECTOR_ELT: return LowerEXTRACT_VECTOR_ELT(Op, DAG);
@@ -5437,6 +5478,7 @@ SDNode *X86TargetLowering::ExpandOperationResult(SDNode *N, SelectionDAG &DAG) {
   default: assert(0 && "Should not custom lower this!");
   case ISD::FP_TO_SINT:         return ExpandFP_TO_SINT(N, DAG);
   case ISD::READCYCLECOUNTER:   return ExpandREADCYCLECOUNTER(N, DAG);
+  case ISD::ATOMIC_LCS:         return ExpandATOMIC_LCS(N, DAG);
   }
 }
 
@@ -5490,6 +5532,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::TC_RETURN:          return "X86ISD::TC_RETURN";
   case X86ISD::FNSTCW16m:          return "X86ISD::FNSTCW16m";
   case X86ISD::LCMPXCHG_DAG:       return "x86ISD::LCMPXCHG_DAG";
+  case X86ISD::LCMPXCHG8_DAG:      return "x86ISD::LCMPXCHG8_DAG";
   }
 }
 

@@ -6095,6 +6095,17 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     break;
   }
 
+  case ISD::ATOMIC_LCS: {
+    SDOperand Tmp = TLI.LowerOperation(Op, DAG);
+    assert(Tmp.Val && "Node must be custom expanded!");
+    ExpandOp(Tmp.getValue(0), Lo, Hi);
+    AddLegalizedOperand(SDOperand(Node, 1), // Remember we legalized the chain.
+                        LegalizeOp(Tmp.getValue(1)));
+    break;
+  }
+
+
+
     // These operators cannot be expanded directly, emit them as calls to
     // library functions.
   case ISD::FP_TO_SINT: {

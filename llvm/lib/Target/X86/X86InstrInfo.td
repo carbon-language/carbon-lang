@@ -37,6 +37,7 @@ def SDTX86SetCC   : SDTypeProfile<1, 2,
 
 def SDTX86cas : SDTypeProfile<0, 3, [SDTCisPtrTy<0>, SDTCisInt<1>, 
                                      SDTCisVT<2, i8>]>;
+def SDTX86cas8 : SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>;
 
 def SDTX86Ret     : SDTypeProfile<0, 1, [SDTCisVT<0, i16>]>;
 
@@ -73,6 +74,9 @@ def X86brcond  : SDNode<"X86ISD::BRCOND",   SDTX86BrCond,
 def X86setcc   : SDNode<"X86ISD::SETCC",    SDTX86SetCC>;
 
 def X86cas : SDNode<"X86ISD::LCMPXCHG_DAG", SDTX86cas,
+                        [SDNPHasChain, SDNPInFlag, SDNPOutFlag, SDNPMayStore,
+                         SDNPMayLoad]>;
+def X86cas8 : SDNode<"X86ISD::LCMPXCHG8_DAG", SDTX86cas8,
                         [SDNPHasChain, SDNPInFlag, SDNPOutFlag, SDNPMayStore,
                          SDNPMayLoad]>;
 
@@ -2555,6 +2559,13 @@ def CMPXCHG32 : I<0xB1, Pseudo, (outs), (ins i32mem:$ptr, GR32:$swap),
 def LCMPXCHG32 : I<0xB1, Pseudo, (outs), (ins i32mem:$ptr, GR32:$swap),
                "lock cmpxchgl $swap,$ptr",
                [(X86cas addr:$ptr, GR32:$swap, 4)]>, TB, LOCK;
+}
+let Defs = [EAX, EBX, ECX, EDX, EFLAGS], Uses = [EAX, EBX, ECX, EDX] in {
+def CMPXCHG8B : I<0xC7, Pseudo, (outs), (ins i32mem:$ptr),
+               "cmpxchg8b $ptr", []>, TB;
+def LCMPXCHG8B : I<0xC7, Pseudo, (outs), (ins i32mem:$ptr),
+               "lock cmpxchg8b $ptr",
+               [(X86cas8 addr:$ptr)]>, TB, LOCK;
 }
 
 let Defs = [AX, EFLAGS], Uses = [AX] in {
