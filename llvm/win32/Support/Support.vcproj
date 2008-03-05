@@ -4,6 +4,7 @@
 	Version="8.00"
 	Name="support"
 	ProjectGUID="{28AA9146-3482-4F41-9CC6-407B1D258508}"
+	RootNamespace="support"
 	Keyword="Win32Proj"
 	>
 	<Platforms>
@@ -318,6 +319,10 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\Support\APInt.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\Support\APSInt.cpp"
 				>
 			</File>
 			<File
