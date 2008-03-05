@@ -1159,6 +1159,9 @@ Linker::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
   // If there were any appending global variables, link them together now.
   if (LinkAppendingVars(Dest, AppendingVars, ErrorMsg)) return true;
 
+  // Resolve all uses of aliases with aliasees
+  if (ResolveAliases(Dest)) return true;
+
   // If the source library's module id is in the dependent library list of the
   // destination library, remove it since that module is now linked in.
   sys::Path modId;
