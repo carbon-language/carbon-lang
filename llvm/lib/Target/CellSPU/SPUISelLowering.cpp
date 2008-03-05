@@ -243,14 +243,22 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
 
   setOperationAction(ISD::CTLZ , MVT::i32,   Legal);
   
-  // SPU does not have select or setcc
+  // SPU has a version of select
   setOperationAction(ISD::SELECT, MVT::i1,   Expand);
   setOperationAction(ISD::SELECT, MVT::i8,   Expand);
-  setOperationAction(ISD::SELECT, MVT::i16,  Expand);
-  setOperationAction(ISD::SELECT, MVT::i32,  Expand);
+  setOperationAction(ISD::SELECT, MVT::i16,  Legal);
+  setOperationAction(ISD::SELECT, MVT::i32,  Legal);
   setOperationAction(ISD::SELECT, MVT::i64,  Expand);
   setOperationAction(ISD::SELECT, MVT::f32,  Expand);
   setOperationAction(ISD::SELECT, MVT::f64,  Expand);
+
+  setOperationAction(ISD::SETCC, MVT::i1,   Expand);
+  setOperationAction(ISD::SETCC, MVT::i8,   Expand);
+  setOperationAction(ISD::SETCC, MVT::i16,  Legal);
+  setOperationAction(ISD::SETCC, MVT::i32,  Legal);
+  setOperationAction(ISD::SETCC, MVT::i64,  Expand);
+  setOperationAction(ISD::SETCC, MVT::f32,  Expand);
+  setOperationAction(ISD::SETCC, MVT::f64,  Expand);
 
   // Zero extension and sign extension for i64 have to be
   // custom legalized
@@ -838,7 +846,6 @@ LowerConstant(SDOperand Op, SelectionDAG &DAG) {
     SDOperand T = DAG.getConstant(CN->getValue(), MVT::i64);
     return DAG.getNode(SPUISD::EXTRACT_ELT0, VT,
                        DAG.getNode(ISD::BUILD_VECTOR, MVT::v2i64, T, T));
-
   } else {
     cerr << "LowerConstant: unhandled constant type "
          << MVT::getValueTypeString(VT)
@@ -981,6 +988,7 @@ LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG, int &VarArgsFrameIndex)
       break;
     case MVT::v2f64:
     case MVT::v4f32:
+    case MVT::v2i64:
     case MVT::v4i32:
     case MVT::v8i16:
     case MVT::v16i8:
@@ -1359,24 +1367,9 @@ SDOperand SPU::get_vec_u18imm(SDNode *N, SelectionDAG &DAG,
 SDOperand SPU::get_vec_i16imm(SDNode *N, SelectionDAG &DAG,
                               MVT::ValueType ValueType) {
   if (ConstantSDNode *CN = getVecImm(N)) {
-    if (ValueType == MVT::i32) {
-      int Value = (int) CN->getValue();
-      int SExtValue = ((Value & 0xffff) << 16) >> 16;
-
-      if (Value == SExtValue)
-        return DAG.getConstant(Value, ValueType);
-    } else if (ValueType == MVT::i16) {
-      short Value = (short) CN->getValue();
-      int SExtValue = ((int) Value << 16) >> 16;
-
-      if (Value == (short) SExtValue)
-        return DAG.getConstant(Value, ValueType);
-    } else if (ValueType == MVT::i64) {
-      int64_t Value = CN->getValue();
-      int64_t SExtValue = ((Value & 0xffff) << (64 - 16)) >> (64 - 16);
-
-      if (Value == SExtValue)
-        return DAG.getConstant(Value, ValueType);
+    int64_t Value = CN->getSignExtended();
+    if (Value >= -(1 << 15) && Value <= ((1 << 15) - 1)) {
+      return DAG.getConstant(Value, ValueType);
     }
   }
 
@@ -1389,9 +1382,8 @@ SDOperand SPU::get_vec_i16imm(SDNode *N, SelectionDAG &DAG,
 SDOperand SPU::get_vec_i10imm(SDNode *N, SelectionDAG &DAG,
                               MVT::ValueType ValueType) {
   if (ConstantSDNode *CN = getVecImm(N)) {
-    int Value = (int) CN->getValue();
-    if ((ValueType == MVT::i32 && isS10Constant(Value))
-        || (ValueType == MVT::i16 && isS10Constant((short) Value)))
+    int64_t Value = CN->getSignExtended();
+    if (isS10Constant(Value))
       return DAG.getConstant(Value, ValueType);
   }
 
@@ -1634,7 +1626,14 @@ static SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
     uint32_t upper = uint32_t(val >> 32);
     uint32_t lower = uint32_t(val);
 
-    if (val != 0) {
+    if (val == 0) {
+      SDOperand Zero = DAG.getTargetConstant(0, MVT::i64);
+      return DAG.getNode(ISD::BUILD_VECTOR, VT, Zero, Zero);
+    } else if (val == 0xffffffffffffffffULL) {
+      // For -1, this and has a chance of matching immAllOnesV.
+      SDOperand NegOne = DAG.getTargetConstant(-1, MVT::i64);
+      return DAG.getNode(ISD::BUILD_VECTOR, VT, NegOne, NegOne);
+    } else {
       SDOperand LO32;
       SDOperand HI32;
       SmallVector<SDOperand, 16> ShufBytes;
@@ -1708,12 +1707,6 @@ static SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
       return DAG.getNode(SPUISD::SHUFB, VT, HI32, LO32,
                          DAG.getNode(ISD::BUILD_VECTOR, MVT::v16i8,
                                      &ShufBytes[0], ShufBytes.size()));
-    } else {
-      // For zero, this can be lowered efficiently via v4i32 BUILD_VECTOR
-      SDOperand Zero = DAG.getConstant(0, MVT::i32);
-      return DAG.getNode(ISD::BIT_CONVERT, VT,
-                         DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32,
-                                     Zero, Zero, Zero, Zero));
     }
   }
   }

@@ -141,7 +141,7 @@ def imm18  : PatLeaf<(imm), [{
 }]>;
 
 def lo16 : PatLeaf<(imm), [{
-  // hi16 predicate - returns true if the immediate has all zeros in the
+  // lo16 predicate - returns true if the immediate has all zeros in the
   // low order bits and is a 32-bit constant:
   if (N->getValueType(0) == MVT::i32) {
     uint32_t val = N->getValue();
@@ -155,8 +155,11 @@ def hi16 : PatLeaf<(imm), [{
   // hi16 predicate - returns true if the immediate has all zeros in the
   // low order bits and is a 32-bit constant:
   if (N->getValueType(0) == MVT::i32) {
-    uint32_t val = N->getValue();
+    uint32_t val = uint32_t(N->getValue());
     return ((val & 0xffff0000) == val);
+  } else if (N->getValueType(0) == MVT::i64) {
+    uint64_t val = N->getValue();
+    return ((val & 0xffff0000ULL) == val);
   }
 
   return false;
@@ -501,6 +504,10 @@ def s16imm_f32: Operand<f32> {
 
 def s16imm_f64: Operand<f64> {
   let PrintMethod = "printS16ImmOperand";
+}
+
+def u16imm_i64 : Operand<i64> {
+  let PrintMethod = "printU16ImmOperand";
 }
 
 def u16imm : Operand<i32> {
