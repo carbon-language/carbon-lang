@@ -214,10 +214,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\Driver\Targets.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\Driver\TextDiagnosticBuffer.cpp"
 				>
 			</File>

@@ -173,11 +173,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\CodeGen\CGExprConstant.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\CodeGen\CGExprScalar.cpp"
 				>
 			</File>
 			<File
 				RelativePath="..\..\CodeGen\CGObjC.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\CodeGen\CGObjCGNU.cpp"
 				>
 			</File>
 			<File

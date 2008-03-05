@@ -153,7 +153,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\..\Sema\ASTStreamer.cpp"
+				RelativePath="..\..\Sema\ParseAST.cpp"
 				>
 			</File>
 			<File
@@ -169,11 +169,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Sema\SemaDeclObjC.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Sema\SemaExpr.cpp"
 				>
 			</File>
 			<File
 				RelativePath="..\..\Sema\SemaExprCXX.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Sema\SemaExprObjC.cpp"
 				>
 			</File>
 			<File

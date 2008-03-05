@@ -166,6 +166,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Basic\LangOptions.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Basic\SourceLocation.cpp"
 				>
 			</File>
@@ -175,6 +179,10 @@
 			</File>
 			<File
 				RelativePath="..\..\Basic\TargetInfo.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Basic\Targets.cpp"
 				>
 			</File>
 			<File

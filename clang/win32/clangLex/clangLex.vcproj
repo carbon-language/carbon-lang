@@ -153,6 +153,10 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath="..\..\Lex\HeaderMap.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Lex\HeaderSearch.cpp"
 				>
 			</File>

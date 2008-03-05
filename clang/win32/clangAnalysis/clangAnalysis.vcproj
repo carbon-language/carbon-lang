@@ -157,11 +157,51 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Analysis\ExplodedGraph.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Analysis\GRBlockCounter.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Analysis\GRCoreEngine.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Analysis\GRExprEngine.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Analysis\GRSimpleVals.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Analysis\LiveVariables.cpp"
 				>
 			</File>
 			<File
+				RelativePath="..\..\Analysis\ProgramPoint.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Analysis\RValues.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Analysis\SymbolManager.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Analysis\UninitializedValues.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Analysis\ValueManager.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Analysis\ValueState.cpp"
 				>
 			</File>
 		</Filter>
