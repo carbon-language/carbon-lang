@@ -466,7 +466,7 @@ static llvm::cl::opt<std::string>
 TargetTriple("triple",
   llvm::cl::desc("Specify target triple (e.g. i686-apple-darwin9)."));
 
-static llvm::cl::list<std::string>
+static llvm::cl::opt<std::string>
 Archs("arch",
   llvm::cl::desc("Specify target architecture (e.g. i686)."));
 
@@ -518,9 +518,9 @@ static void CreateTargetTriples(std::vector<std::string>& triples) {
   // host-triple with no archs or using a specified target triple.
   if (!TargetTriple.getValue().empty() || Archs.empty())
     tp.addTriple(Triple);
-           
-  for (unsigned i = 0, e = Archs.size(); i !=e; ++i)
-    tp.addTriple(Archs[i] + "-" + suffix);
+  
+  if (!Archs.empty())
+    tp.addTriple(Archs + "-" + suffix);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1307,14 +1307,9 @@ int main(int argc, char **argv) {
       // Get information about the targets being compiled for.  Note that this
       // pointer and the TargetInfoImpl objects are never deleted by this toy
       // driver.
-      TargetInfo *Target;
-      
-      // Create triples, and create the TargetInfo.
       std::vector<std::string> triples;
       CreateTargetTriples(triples);
-      Target = TargetInfo::CreateTargetInfo(&triples[0],
-                                            &triples[0]+triples.size(),
-                                            &Diags);
+      TargetInfo *Target = TargetInfo::CreateTargetInfo(triples[0]);
         
       if (Target == 0) {
         fprintf(stderr, "Sorry, I don't know what target this is: %s\n",

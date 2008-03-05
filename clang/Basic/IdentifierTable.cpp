@@ -32,9 +32,7 @@ IdentifierInfo::IdentifierInfo() {
   HasMacro = false;
   IsExtension = false;
   IsPoisoned = false;
-  IsOtherTargetMacro = false;
   IsCPPOperatorKeyword = false;
-  IsNonPortableBuiltin = false;
   FETokenInfo = 0;
 }
 
@@ -203,8 +201,6 @@ tok::PPKeywordKind IdentifierInfo::getPPKeywordID() const {
 
   CASE( 8, 'u', 'a', unassert);
   CASE(12, 'i', 'c', include_next);
-  CASE(13, 'd', 'f', define_target);
-  CASE(19, 'd', 'f', define_other_target);
 #undef CASE
 #undef HASH
   }
@@ -406,9 +402,7 @@ void IdentifierInfo::Emit(llvm::Serializer& S) const {
   S.EmitBool(hasMacroDefinition());
   S.EmitBool(isExtensionToken());
   S.EmitBool(isPoisoned());
-  S.EmitBool(isOtherTargetMacro());
   S.EmitBool(isCPlusPlusOperatorKeyword());
-  S.EmitBool(isNonPortableBuiltin());
   // FIXME: FETokenInfo
 }
 
@@ -419,9 +413,7 @@ void IdentifierInfo::Read(llvm::Deserializer& D) {
   setHasMacroDefinition(D.ReadBool());
   setIsExtensionToken(D.ReadBool());
   setIsPoisoned(D.ReadBool());
-  setIsOtherTargetMacro(D.ReadBool());
   setIsCPlusPlusOperatorKeyword(D.ReadBool());
-  setNonPortableBuiltin(D.ReadBool());
   // FIXME: FETokenInfo
 }
 

@@ -135,15 +135,6 @@ ScopedDecl *Sema::LookupScopedDecl(IdentifierInfo *II, unsigned NSI,
   // corresponds to a compiler builtin, create the decl object for the builtin
   // now, injecting it into translation unit scope, and return it.
   if (NS == Decl::IDNS_Ordinary) {
-    // If this is a builtin on some other target, or if this builtin varies
-    // across targets (e.g. in type), emit a diagnostic and mark the translation
-    // unit non-portable for using it.
-    if (II->isNonPortableBuiltin()) {
-      // Only emit this diagnostic once for this builtin.
-      II->setNonPortableBuiltin(false);
-      Context.Target.DiagnoseNonPortability(Context.getFullLoc(IdLoc),
-                                            diag::port_target_builtin_use);
-    }
     // If this is a builtin on this (or all) targets, create the decl.
     if (unsigned BuiltinID = II->getBuiltinID())
       return LazilyCreateBuiltin(II, BuiltinID, S);

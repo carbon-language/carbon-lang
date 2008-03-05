@@ -808,13 +808,6 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
     return false;
   }
   
-  // If this is the first use of a target-specific macro, warn about it.
-  if (MI->isTargetSpecific()) {
-    MI->setIsTargetSpecific(false);  // Don't warn on second use.
-    getTargetInfo().DiagnoseNonPortability(getFullLoc(Identifier.getLocation()),
-                                           diag::port_target_macro_use);
-  }
-  
   /// Args - If this is a function-like macro expansion, this contains,
   /// for each macro argument, the list of tokens that were provided to the
   /// invocation.
@@ -1242,14 +1235,6 @@ void Preprocessor::HandleIdentifier(Token &Identifier) {
         Identifier.setFlag(Token::DisableExpand);
       }
     }
-  } else if (II.isOtherTargetMacro() && !DisableMacroExpansion) {
-    // If this identifier is a macro on some other target, emit a diagnostic.
-    // This diagnosic is only emitted when macro expansion is enabled, because
-    // the macro would not have been expanded for the other target either.
-    II.setIsOtherTargetMacro(false);  // Don't warn on second use.
-    getTargetInfo().DiagnoseNonPortability(getFullLoc(Identifier.getLocation()),
-                                           diag::port_target_macro_use);
-    
   }
 
   // C++ 2.11p2: If this is an alternative representation of a C++ operator,
@@ -1775,7 +1760,7 @@ TryAgain:
 
     // C99 6.10.3 - Macro Replacement.
     case tok::pp_define:
-      return HandleDefineDirective(Result, false);
+      return HandleDefineDirective(Result);
     case tok::pp_undef:
       return HandleUndefDirective(Result);
 
@@ -1812,12 +1797,6 @@ TryAgain:
     case tok::pp_unassert:
       //isExtension = true;  // FIXME: implement #unassert
       break;
-      
-    // clang extensions.
-    case tok::pp_define_target:
-      return HandleDefineDirective(Result, true);
-    case tok::pp_define_other_target:
-      return HandleDefineOtherTargetDirective(Result);
     }
     break;
   }
@@ -2176,11 +2155,8 @@ bool Preprocessor::ReadMacroDefinitionArgList(MacroInfo *MI) {
 }
 
 /// HandleDefineDirective - Implements #define.  This consumes the entire macro
-/// line then lets the caller lex the next real token.  If 'isTargetSpecific' is
-/// true, then this is a "#define_target", otherwise this is a "#define".
-///
-void Preprocessor::HandleDefineDirective(Token &DefineTok,
-                                         bool isTargetSpecific) {
+/// line then lets the caller lex the next real token.
+void Preprocessor::HandleDefineDirective(Token &DefineTok) {
   ++NumDefined;
 
   Token MacroNameTok;
@@ -2196,11 +2172,6 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok,
   
   // Create the new macro.
   MacroInfo *MI = new MacroInfo(MacroNameTok.getLocation());
-  if (isTargetSpecific) MI->setIsTargetSpecific();
-  
-  // If the identifier is an 'other target' macro, clear this bit.
-  MacroNameTok.getIdentifierInfo()->setIsOtherTargetMacro(false);
-
   
   Token Tok;
   LexUnexpandedToken(Tok);
@@ -2337,30 +2308,6 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok,
   setMacroInfo(MacroNameTok.getIdentifierInfo(), MI);
 }
 
-/// HandleDefineOtherTargetDirective - Implements #define_other_target.
-void Preprocessor::HandleDefineOtherTargetDirective(Token &Tok) {
-  Token MacroNameTok;
-  ReadMacroName(MacroNameTok, 1);
-  
-  // Error reading macro name?  If so, diagnostic already issued.
-  if (MacroNameTok.is(tok::eom))
-    return;
-
-  // Check to see if this is the last token on the #undef line.
-  CheckEndOfDirective("#define_other_target");
-
-  // If there is already a macro defined by this name, turn it into a
-  // target-specific define.
-  if (MacroInfo *MI = getMacroInfo(MacroNameTok.getIdentifierInfo())) {
-    MI->setIsTargetSpecific(true);
-    return;
-  }
-
-  // Mark the identifier as being a macro on some other target.
-  MacroNameTok.getIdentifierInfo()->setIsOtherTargetMacro();
-}
-
-
 /// HandleUndefDirective - Implements #undef.
 ///
 void Preprocessor::HandleUndefDirective(Token &UndefTok) {
@@ -2378,9 +2325,6 @@ void Preprocessor::HandleUndefDirective(Token &UndefTok) {
   
   // Okay, we finally have a valid identifier to undef.
   MacroInfo *MI = getMacroInfo(MacroNameTok.getIdentifierInfo());
-  
-  // #undef untaints an identifier if it were marked by define_other_target.
-  MacroNameTok.getIdentifierInfo()->setIsOtherTargetMacro(false);
   
   // If the macro is not defined, this is a noop undef, just return.
   if (MI == 0) return;
@@ -2436,26 +2380,8 @@ void Preprocessor::HandleIfdefDirective(Token &Result, bool isIfndef,
   MacroInfo *MI = getMacroInfo(MII);
 
   // If there is a macro, process it.
-  if (MI) {
-    // Mark it used.
+  if (MI)  // Mark it used.
     MI->setIsUsed(true);
-
-    // If this is the first use of a target-specific macro, warn about it.
-    if (MI->isTargetSpecific()) {
-      MI->setIsTargetSpecific(false);  // Don't warn on second use.
-      getTargetInfo().DiagnoseNonPortability(
-        getFullLoc(MacroNameTok.getLocation()),
-        diag::port_target_macro_use);
-    }
-  } else {
-    // Use of a target-specific macro for some other target?  If so, warn.
-    if (MII->isOtherTargetMacro()) {
-      MII->setIsOtherTargetMacro(false);  // Don't warn on second use.
-      getTargetInfo().DiagnoseNonPortability(
-        getFullLoc(MacroNameTok.getLocation()),
-        diag::port_target_macro_use);
-    }
-  }
   
   // Should we include the stuff contained by this directive?
   if (!MI == isIfndef) {

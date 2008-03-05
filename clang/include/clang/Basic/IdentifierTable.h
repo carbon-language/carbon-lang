@@ -45,10 +45,8 @@ class IdentifierInfo {
   bool HasMacro               : 1; // True if there is a #define for this.
   bool IsExtension            : 1; // True if identifier is a lang extension.
   bool IsPoisoned             : 1; // True if identifier is poisoned.
-  bool IsOtherTargetMacro     : 1; // True if ident is macro on another target.
   bool IsCPPOperatorKeyword   : 1; // True if ident is a C++ operator keyword.
-  bool IsNonPortableBuiltin   : 1; // True if builtin varies across targets.
-  // 4 bits left in 32-bit word.
+  // 6 bits left in 32-bit word.
   void *FETokenInfo;               // Managed by the language front-end.
   IdentifierInfo(const IdentifierInfo&);  // NONCOPYABLE.
   void operator=(const IdentifierInfo&);  // NONASSIGNABLE.
@@ -106,13 +104,6 @@ public:
     assert(BuiltinID == ID && "ID too large for field!");
   }
   
-  /// isNonPortableBuiltin - Return true if this identifier corresponds to a
-  /// builtin on some other target, but isn't one on this target, or if it is on
-  /// the target but not on another, or if it is on both but it differs somehow
-  /// in behavior.
-  bool isNonPortableBuiltin() const { return IsNonPortableBuiltin; }
-  void setNonPortableBuiltin(bool Val) { IsNonPortableBuiltin = Val; }
-  
   /// get/setExtension - Initialize information about whether or not this
   /// language token is an extension.  This controls extension warnings, and is
   /// only valid if a custom token ID is set.
@@ -126,11 +117,6 @@ public:
   /// isPoisoned - Return true if this token has been poisoned.
   bool isPoisoned() const { return IsPoisoned; }
   
-  /// setIsOtherTargetMacro/isOtherTargetMacro control whether this identifier
-  /// is seen as being a macro on some other target.
-  void setIsOtherTargetMacro(bool Val = true) { IsOtherTargetMacro = Val; }
-  bool isOtherTargetMacro() const { return IsOtherTargetMacro; }
-
   /// isCPlusPlusOperatorKeyword/setIsCPlusPlusOperatorKeyword controls whether
   /// this identifier is a C++ alternate representation of an operator.
   void setIsCPlusPlusOperatorKeyword(bool Val = true)

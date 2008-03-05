@@ -108,23 +108,6 @@ static bool EvaluateValue(llvm::APSInt &Result, Token &PeekTok,
     if (Result != 0 && ValueLive) {
       MacroInfo *Macro = PP.getMacroInfo(II);
       Macro->setIsUsed(true);
-      
-      // If this is the first use of a target-specific macro, warn about it.
-      if (Macro->isTargetSpecific()) {
-        // Don't warn on second use.
-        Macro->setIsTargetSpecific(false);
-        PP.getTargetInfo().DiagnoseNonPortability(
-          PP.getFullLoc(PeekTok.getLocation()),
-          diag::port_target_macro_use);
-      }
-    } else if (ValueLive) {
-      // Use of a target-specific macro for some other target?  If so, warn.
-      if (II->isOtherTargetMacro()) {
-        II->setIsOtherTargetMacro(false);  // Don't warn on second use.
-        PP.getTargetInfo().DiagnoseNonPortability(
-          PP.getFullLoc(PeekTok.getLocation()),
-          diag::port_target_macro_use);
-      }
     }
 
     // Consume identifier.

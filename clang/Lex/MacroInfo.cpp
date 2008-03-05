@@ -20,7 +20,6 @@ MacroInfo::MacroInfo(SourceLocation DefLoc) : Location(DefLoc) {
   IsC99Varargs = false;
   IsGNUVarargs = false;
   IsBuiltinMacro = false;
-  IsTargetSpecific = false;
   IsDisabled = false;
   IsUsed = true;
   
@@ -31,8 +30,6 @@ MacroInfo::MacroInfo(SourceLocation DefLoc) : Location(DefLoc) {
 /// isIdenticalTo - Return true if the specified macro definition is equal to
 /// this macro in spelling, arguments, and whitespace.  This is used to emit
 /// duplicate definition warnings.  This implements the rules in C99 6.10.3.
-///
-/// Note that this intentionally does not check isTargetSpecific for matching.
 ///
 bool MacroInfo::isIdenticalTo(const MacroInfo &Other, Preprocessor &PP) const {
   // Check # tokens in replacement, number of args, and various flags all match.

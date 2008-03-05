@@ -40,17 +40,12 @@ void Builtin::Context::InitializeBuiltins(IdentifierTable &Table,
   for (unsigned i = Builtin::NotBuiltin+1; i != Builtin::FirstTSBuiltin; ++i)
     Table.get(BuiltinInfo[i].Name).setBuiltinID(i);
   
-  // Step #2: handle target builtins.
-  std::vector<const char *> NonPortableBuiltins;
-  Target.getTargetBuiltins(TSRecords, NumTSRecords, NonPortableBuiltins);
+  // Step #2: Get target builtins.
+  Target.getTargetBuiltins(TSRecords, NumTSRecords);
 
-  // Step #2a: Register target-specific builtins.
+  // Step #3: Register target-specific builtins.
   for (unsigned i = 0, e = NumTSRecords; i != e; ++i)
     Table.get(TSRecords[i].Name).setBuiltinID(i+Builtin::FirstTSBuiltin);
-  
-  // Step #2b: Mark non-portable builtins as such.
-  for (unsigned i = 0, e = NonPortableBuiltins.size(); i != e; ++i)
-    Table.get(NonPortableBuiltins[i]).setNonPortableBuiltin(true);
 }
 
 /// DecodeTypeFromStr - This decodes one type descriptor from Str, advancing the

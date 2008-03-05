@@ -59,9 +59,6 @@ class MacroInfo {
   /// it has not yet been redefined or undefined.
   bool IsBuiltinMacro : 1;
   
-  /// IsTargetSpecific - True if this is a target-specific macro defined with
-  /// #define_target.
-  bool IsTargetSpecific : 1;
 private:
   //===--------------------------------------------------------------------===//
   // State that changes as the macro is used.
@@ -96,13 +93,6 @@ public:
   void setIsBuiltinMacro(bool Val = true) {
     IsBuiltinMacro = Val;
   }
-  
-  /// setIsTargetSpecific - Set or clear the IsTargetSpecific flag.
-  ///
-  void setIsTargetSpecific(bool Val = true) {
-    IsTargetSpecific = Val;
-  }
-  bool isTargetSpecific() const { return IsTargetSpecific; }
   
   /// setIsUsed - Set the value of the IsUsed flag.
   ///

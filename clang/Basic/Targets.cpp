@@ -776,54 +776,27 @@ static inline bool IsX86(const std::string& TT) {
           TT[4] == '-' && TT[1] - '3' < 6);
 }
 
-/// CreateTarget - Create the TargetInfoImpl object for the specified target
-/// enum value.
-static TargetInfoImpl *CreateTarget(const std::string& T) {
+/// CreateTargetInfo - Return the target info object for the specified target
+/// triple.
+TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
   if (T.find("ppc-") == 0 || T.find("powerpc-") == 0)
-    return new DarwinPPCTargetInfo(T);
-  else if (T.find("ppc64-") == 0 || T.find("powerpc64-") == 0)
-    return new DarwinPPC64TargetInfo(T);
-  else if (T.find("sparc-") == 0)
-      return new SolarisSparcV8TargetInfo(T); // ugly hack
-  else if (T.find("x86_64-") == 0)
-    return new DarwinX86_64TargetInfo(T);
-  else if (IsX86(T))
-    return new DarwinI386TargetInfo(T);
-  else if (T.find("bogusW16W16-") == 0) // For testing portability.
-    return new LinuxTargetInfo(T);
-  else
-    return NULL;
-}
-
-/// CreateTargetInfo - Return the set of target info objects as specified by
-/// the -arch command line option.
-TargetInfo* TargetInfo::CreateTargetInfo(const std::string* TriplesStart,
-                                         const std::string* TriplesEnd,
-                                         Diagnostic *Diags) {
-
-  // Create the primary target and target info.
-  TargetInfoImpl* PrimaryTarget = CreateTarget(*TriplesStart);
-
-  if (!PrimaryTarget)
-    return NULL;
+    return new TargetInfo(new DarwinPPCTargetInfo(T));
   
-  TargetInfo *TI = new TargetInfo(PrimaryTarget, Diags);
+  if (T.find("ppc64-") == 0 || T.find("powerpc64-") == 0)
+    return new TargetInfo(new DarwinPPC64TargetInfo(T));
   
-  // Add all secondary targets.
-  for (const std::string* I=TriplesStart+1; I != TriplesEnd; ++I) {
-    TargetInfoImpl* SecondaryTarget = CreateTarget(*I);
-
-    if (!SecondaryTarget) {
-      fprintf (stderr,
-               "Warning: secondary target '%s' unrecognized.\n", 
-               I->c_str());
-
-      continue;
-    }
-
-    TI->AddSecondaryTarget(SecondaryTarget);
-  }
+  if (T.find("sparc-") == 0)
+    return new TargetInfo(new SolarisSparcV8TargetInfo(T)); // ugly hack
   
-  return TI;
+  if (T.find("x86_64-") == 0)
+    return new TargetInfo(new DarwinX86_64TargetInfo(T));
+  
+  if (IsX86(T))
+    return new TargetInfo(new DarwinI386TargetInfo(T));
+  
+  if (T.find("bogusW16W16-") == 0) // For testing portability.
+    return new TargetInfo(new LinuxTargetInfo(T));
+  
+  return NULL;
 }
 

@@ -480,9 +480,8 @@ private:
   void HandleImportDirective(Token &Tok);
   
   // Macro handling.
-  void HandleDefineDirective(Token &Tok, bool isTargetSpecific);
+  void HandleDefineDirective(Token &Tok);
   void HandleUndefDirective(Token &Tok);
-  void HandleDefineOtherTargetDirective(Token &Tok);
   // HandleAssertDirective(Token &Tok);
   // HandleUnassertDirective(Token &Tok);
   

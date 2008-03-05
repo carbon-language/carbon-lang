@@ -191,9 +191,7 @@ TranslationUnit* TranslationUnit::Create(llvm::Deserializer& Dezr,
   { // Read the TargetInfo.
     llvm::SerializedPtrID PtrID = Dezr.ReadPtrID();
     char* triple = Dezr.ReadCStr(NULL,0,true);
-    std::string Triple(triple);
-    Dezr.RegisterPtr(PtrID,TargetInfo::CreateTargetInfo(&Triple,
-                                                        &Triple+1));
+    Dezr.RegisterPtr(PtrID,TargetInfo::CreateTargetInfo(std::string(triple)));
     delete [] triple;
   }
   

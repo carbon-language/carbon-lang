@@ -79,11 +79,6 @@ PPKEYWORD(sccs)
 PPKEYWORD(assert)
 PPKEYWORD(unassert)
 
-// clang extensions.
-PPKEYWORD(define_target)
-PPKEYWORD(define_other_target)
-
-
 //===----------------------------------------------------------------------===//
 // Language keywords.
 //===----------------------------------------------------------------------===//

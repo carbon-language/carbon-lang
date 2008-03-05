@@ -29,33 +29,13 @@ class SourceManager;
   
 namespace Builtin { struct Info; }
   
-/// TargetInfo - This class exposes information about the current target set.
-/// A target set consists of a primary target and zero or more secondary targets
-/// which are each represented by a TargetInfoImpl object.  TargetInfo responds
-/// to various queries as though it were the primary target, but keeps track of,
-/// and warns about, the first query made of it that are contradictary among the
-/// targets it tracks.  For example, if it contains a "PPC32" and "PPC64"
-/// target, it will warn the first time the size of the 'long' datatype is
-/// queried.
+/// TargetInfo - This class exposes information about the current target.
 ///
 class TargetInfo {
   /// Primary - This tracks the primary target in the target set.
   ///
-  const TargetInfoImpl *PrimaryTarget;
+  const TargetInfoImpl *Target;
   
-  /// SecondaryTargets - This tracks the set of secondary targets.
-  ///
-  std::vector<const TargetInfoImpl*> SecondaryTargets;
-  
-  /// Diag - If non-null, this object is used to report the first use of
-  /// non-portable functionality in the translation unit.
-  /// 
-  Diagnostic *Diag;
-
-  /// NonPortable - This instance variable keeps track of whether or not the
-  /// current translation unit is portable across the set of targets tracked.
-  bool NonPortable;
-
   /// These are all caches for target values.
   unsigned WCharWidth, WCharAlign;
 
@@ -63,52 +43,21 @@ class TargetInfo {
   //                  TargetInfo Construction.
   //==----------------------------------------------------------------==/  
   
-  TargetInfo(const TargetInfoImpl *Primary, Diagnostic *D = 0) {
-    PrimaryTarget = Primary;
-    Diag = D;
-    NonPortable = false;
+  TargetInfo(const TargetInfoImpl *TII) {
+    Target = TII;
     
     // Initialize Cache values to uncomputed.
     WCharWidth = 0;
   }
 
-  /// AddSecondaryTarget - Add a secondary target to the target set.
-  void AddSecondaryTarget(const TargetInfoImpl *Secondary) {
-    SecondaryTargets.push_back(Secondary);
-  }
-
 public:  
-  /// CreateTargetInfo - Create a TargetInfo object from a group of
-  ///  target triples.  The first target triple is considered the primary
-  ///  target.
-  static TargetInfo* CreateTargetInfo(const std::string* TriplesBeg,
-                                      const std::string* TripledEnd,
-                                      Diagnostic* Diags = NULL);
+  /// CreateTargetInfo - Return the target info object for the specified target
+  /// triple.
+  static TargetInfo* CreateTargetInfo(const std::string &Triple);
 
   ~TargetInfo();
 
-  //==----------------------------------------------------------------==/
-  //                       Accessors.
-  //==----------------------------------------------------------------==/  
-  
-  /// isNonPortable - Return true if the current translation unit has used a
-  /// target property that is non-portable across the secondary targets.
-  bool isNonPortable() const {
-    return NonPortable;
-  }
-  
-  /// isPortable - Return true if this translation unit is portable across the
-  /// secondary targets so far.
-  bool isPortable() const {
-    return !NonPortable;
-  }
-  
   ///===---- Target property query methods --------------------------------===//
-
-  /// DiagnoseNonPortability - Emit a diagnostic indicating that the current
-  /// translation unit is non-portable due to a construct at the specified
-  /// location.  DiagKind indicates what went wrong.
-  void DiagnoseNonPortability(FullSourceLoc Loc, unsigned DiagKind);
 
   /// getTargetDefines - Appends the target-specific #define values for this
   /// target set to the specified buffer.
@@ -197,8 +146,8 @@ public:
   /// getTargetBuiltins - Return information about target-specific builtins for
   /// the current primary target, and info about which builtins are non-portable
   /// across the current set of primary and secondary targets.
-  void getTargetBuiltins(const Builtin::Info *&Records, unsigned &NumRecords,
-                         std::vector<const char *> &NonPortableBuiltins) const;
+  void getTargetBuiltins(const Builtin::Info *&Records, 
+                         unsigned &NumRecords) const;
 
   /// getVAListDeclaration - Return the declaration to use for
   /// __builtin_va_list, which is target-specific.
