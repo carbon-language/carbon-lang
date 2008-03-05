@@ -1,4 +1,4 @@
-// RUN: %llvmgcc %s -S -emit-llvm -o /dev/null 
+// RUN: %llvmgcc %s -S -emit-llvm -o - | grep llvm.atomic
 
 int* foo(int** a, int* b, int* c) {
 return __sync_val_compare_and_swap (a, b, c);
