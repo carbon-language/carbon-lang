@@ -50,6 +50,11 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
   // Loop over all of the blocks in a function, tracking all of the blocks that
   // return.
   //
+
+  // PHINode can not handle aggregates returned by multiple value ret
+  // instructions. TODO: Handle each return value independently.
+  if (isa<StructType>(F.getReturnType()))
+    return false;
   std::vector<BasicBlock*> ReturningBlocks;
   std::vector<BasicBlock*> UnwindingBlocks;
   std::vector<BasicBlock*> UnreachableBlocks;
