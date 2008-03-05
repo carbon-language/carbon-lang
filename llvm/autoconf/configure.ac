@@ -580,18 +580,18 @@ dnl Checks for documentation and testing tools that we can do without. If these
 dnl are not found then they are set to "true" which always succeeds but does
 dnl nothing. This just lets the build output show that we could have done
 dnl something if the tool was available.
-AC_PATH_PROG(BZIP2,[bzip2],[echo "Skipped: bzip2 not found"])
-AC_PATH_PROG(DOXYGEN,[doxygen],[echo "Skipped: doxygen not found"])
-AC_PATH_PROG(GROFF,[groff],[echo "Skipped: groff not found"])
-AC_PATH_PROG(GZIP,[gzip],[echo "Skipped: gzip not found"])
-AC_PATH_PROG(POD2HTML,[pod2html],[echo "Skipped: pod2html not found"])
-AC_PATH_PROG(POD2MAN,[pod2man],[echo "Skipped: pod2man not found"])
-AC_PATH_PROG(RUNTEST,[runtest],[echo "Skipped: runtest not found"])
+AC_PATH_PROG(BZIP2, [bzip2])
+AC_PATH_PROG(DOXYGEN, [doxygen])
+AC_PATH_PROG(GROFF, [groff])
+AC_PATH_PROG(GZIP, [gzip])
+AC_PATH_PROG(POD2HTML, [pod2html])
+AC_PATH_PROG(POD2MAN, [pod2man])
+AC_PATH_PROG(RUNTEST, [runtest])
 DJ_AC_PATH_TCLSH
-AC_PATH_PROG(ZIP,[zip],[echo "Skipped: zip not found"])
-AC_PATH_PROG(OCAMLC,[ocamlc],[echo "Skipped: ocamlc not found"])
-AC_PATH_PROG(OCAMLOPT,[ocamlopt],[echo "Skipped: ocamlopt not found"])
-AC_PATH_PROG(OCAMLDEP,[ocamldep],[echo "Skipped: ocamldep not found"])
+AC_PATH_PROG(ZIP, [zip])
+AC_PATH_PROG(OCAMLC, [ocamlc])
+AC_PATH_PROG(OCAMLOPT, [ocamlopt])
+AC_PATH_PROG(OCAMLDEP, [ocamldep])
 
 dnl Determine if the linker supports the -R option.
 AC_LINK_USE_R
