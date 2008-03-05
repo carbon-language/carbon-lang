@@ -303,6 +303,16 @@
 		DE39857A0CB8ADCB00223765 /* ASTConsumers.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ASTConsumers.cpp; path = Driver/ASTConsumers.cpp; sourceTree = "<group>"; };
 		DE3986EF0CB8D4B300223765 /* IdentifierTable.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = IdentifierTable.h; sourceTree = "<group>"; };
 		DE3986F30CB8D50C00223765 /* IdentifierTable.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = IdentifierTable.cpp; sourceTree = "<group>"; };
+		DE41211A0D7F1BBE0080F80A /* ValueManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ValueManager.h; path = clang/Analysis/PathSensitive/ValueManager.h; sourceTree = "<group>"; };
+		DE41211B0D7F1BBE0080F80A /* RValues.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RValues.h; path = clang/Analysis/PathSensitive/RValues.h; sourceTree = "<group>"; };
+		DE41211C0D7F1BBE0080F80A /* ValueState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ValueState.h; path = clang/Analysis/PathSensitive/ValueState.h; sourceTree = "<group>"; };
+		DE41211D0D7F1BBE0080F80A /* GRWorkList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GRWorkList.h; path = clang/Analysis/PathSensitive/GRWorkList.h; sourceTree = "<group>"; };
+		DE41211E0D7F1BBE0080F80A /* SymbolManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SymbolManager.h; path = clang/Analysis/PathSensitive/SymbolManager.h; sourceTree = "<group>"; };
+		DE41211F0D7F1BBE0080F80A /* GRBlockCounter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GRBlockCounter.h; path = clang/Analysis/PathSensitive/GRBlockCounter.h; sourceTree = "<group>"; };
+		DE4121200D7F1BBE0080F80A /* ExplodedGraph.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ExplodedGraph.h; path = clang/Analysis/PathSensitive/ExplodedGraph.h; sourceTree = "<group>"; };
+		DE4121210D7F1BBE0080F80A /* GRExprEngine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GRExprEngine.h; path = clang/Analysis/PathSensitive/GRExprEngine.h; sourceTree = "<group>"; };
+		DE4121220D7F1BBE0080F80A /* GRTransferFuncs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GRTransferFuncs.h; path = clang/Analysis/PathSensitive/GRTransferFuncs.h; sourceTree = "<group>"; };
+		DE4121230D7F1BBE0080F80A /* GRCoreEngine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GRCoreEngine.h; path = clang/Analysis/PathSensitive/GRCoreEngine.h; sourceTree = "<group>"; };
 		DE4264FB0C113592005A861D /* CGDecl.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = CGDecl.cpp; path = CodeGen/CGDecl.cpp; sourceTree = "<group>"; };
 		DE46BF270AE0A82D00CC047C /* TargetInfo.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = TargetInfo.h; sourceTree = "<group>"; };
 		DE4772F90C10EAE5002239E8 /* CGStmt.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = CGStmt.cpp; path = CodeGen/CGStmt.cpp; sourceTree = "<group>"; };
@@ -461,6 +471,7 @@
 				355CF6820C90A8B600A08AA3 /* LocalCheckers.h */,
 				35F9B1540D1C6AFC00DDFDAE /* Analyses */,
 				35D1DDCF0CA9C6BE0096E967 /* FlowSensitive */,
+				DE4121130D7F1B980080F80A /* PathSensitive */,
 				35F9B1520D1C6ACB00DDFDAE /* Support */,
 				352C19DB0CA321AC0045DB98 /* Visitors */,
 			);
@@ -541,6 +552,23 @@
 				DE34600A0AFDCCBF00DBC861 /* ParseStmt.cpp */,
 			);
 			name = Parse;
+			sourceTree = "<group>";
+		};
+		DE4121130D7F1B980080F80A /* PathSensitive */ = {
+			isa = PBXGroup;
+			children = (
+				DE41211A0D7F1BBE0080F80A /* ValueManager.h */,
+				DE41211B0D7F1BBE0080F80A /* RValues.h */,
+				DE41211C0D7F1BBE0080F80A /* ValueState.h */,
+				DE41211D0D7F1BBE0080F80A /* GRWorkList.h */,
+				DE41211E0D7F1BBE0080F80A /* SymbolManager.h */,
+				DE41211F0D7F1BBE0080F80A /* GRBlockCounter.h */,
+				DE4121200D7F1BBE0080F80A /* ExplodedGraph.h */,
+				DE4121210D7F1BBE0080F80A /* GRExprEngine.h */,
+				DE4121220D7F1BBE0080F80A /* GRTransferFuncs.h */,
+				DE4121230D7F1BBE0080F80A /* GRCoreEngine.h */,
+			);
+			name = PathSensitive;
 			sourceTree = "<group>";
 		};
 		DE67E7070C020EAB00F66BC5 /* Sema */ = {
