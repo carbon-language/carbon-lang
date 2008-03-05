@@ -501,17 +501,8 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
     SaveAndRestore<bool> OldSink(Builder->BuildSinks);
     
     if (isa<lval::FuncVal>(L))
-      if (cast<lval::FuncVal>(L).getDecl()->getAttr<NoReturnAttr>()) {
-        for (NodeSet::iterator I=Dst.begin(), E=Dst.end(); I != E; ++I ) {
-          
-          NodeTy* N = *I;
-          
-          if (!N->isSink())
-            N->markAsSink();
-        }
-        
+      if (cast<lval::FuncVal>(L).getDecl()->getAttr<NoReturnAttr>())
         Builder->BuildSinks = true;
-      }
     
     // Evaluate the call.
     
@@ -573,7 +564,7 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
       
       EvalCall(Dst, CE, cast<LVal>(L), *DI);
       
-      if (Dst.size() == size)
+      if (!Builder->BuildSinks && Dst.size() == size)
         Nodify(Dst, CE, *DI, St);
     }
   }

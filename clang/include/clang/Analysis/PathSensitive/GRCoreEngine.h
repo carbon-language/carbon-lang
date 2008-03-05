@@ -177,20 +177,23 @@ public:
   }
   
   NodeTy* Nodify(ExplodedNodeSet<StateTy>& Dst, Stmt* S,
-                 NodeTy* Pred, StateTy* St) {
+                 NodeTy* Pred, StateTy* St) {    
+    
     
     // If the state hasn't changed, don't generate a new node.
-    if (St == Pred->getState()) {
+    if (!BuildSinks && St == Pred->getState()) {
       Dst.Add(Pred);
       return NULL;
     }
     
     NodeTy* N = generateNode(S, St, Pred);
     
-    if (N && BuildSinks)
-      N->markAsSink();
-    else
-      Dst.Add(N);
+    if (N) {      
+      if (BuildSinks)
+        N->markAsSink();
+      else
+        Dst.Add(N);
+    }
     
     return N;
   }
