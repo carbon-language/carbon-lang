@@ -39,33 +39,33 @@ define <16 x i8> @or_v16i8_2(<16 x i8> %arg1, <16 x i8> %arg2) {
 }
 
 define i32 @or_i32_1(i32 %arg1, i32 %arg2) {
-	%A = or i32 %arg2, %arg1
-	ret i32 %A
+        %A = or i32 %arg2, %arg1
+        ret i32 %A
 }
 
 define i32 @or_i32_2(i32 %arg1, i32 %arg2) {
-	%A = or i32 %arg1, %arg2
-	ret i32 %A
+        %A = or i32 %arg1, %arg2
+        ret i32 %A
 }
 
 define i16 @or_i16_1(i16 %arg1, i16 %arg2) {
-	%A = or i16 %arg2, %arg1
-	ret i16 %A
+        %A = or i16 %arg2, %arg1
+        ret i16 %A
 }
 
 define i16 @or_i16_2(i16 %arg1, i16 %arg2) {
-	%A = or i16 %arg1, %arg2
-	ret i16 %A
+        %A = or i16 %arg1, %arg2
+        ret i16 %A
 }
 
 define i8 @or_i8_1(i8 %arg1, i8 %arg2) {
-	%A = or i8 %arg2, %arg1
-	ret i8 %A
+        %A = or i8 %arg2, %arg1
+        ret i8 %A
 }
 
 define i8 @or_i8_2(i8 %arg1, i8 %arg2) {
-	%A = or i8 %arg1, %arg2
-	ret i8 %A
+        %A = or i8 %arg1, %arg2
+        ret i8 %A
 }
 
 ; ORC instruction generation:
@@ -126,57 +126,57 @@ define <16 x i8> @orc_v16i8_3(<16 x i8> %arg1, <16 x i8> %arg2) {
 }
 
 define i32 @orc_i32_1(i32 %arg1, i32 %arg2) {
-	%A = xor i32 %arg2, -1
-	%B = or i32 %A, %arg1
-	ret i32 %B
+        %A = xor i32 %arg2, -1
+        %B = or i32 %A, %arg1
+        ret i32 %B
 }
 
 define i32 @orc_i32_2(i32 %arg1, i32 %arg2) {
-	%A = xor i32 %arg1, -1
-	%B = or i32 %A, %arg2
-	ret i32 %B
+        %A = xor i32 %arg1, -1
+        %B = or i32 %A, %arg2
+        ret i32 %B
 }
 
 define i32 @orc_i32_3(i32 %arg1, i32 %arg2) {
-	%A = xor i32 %arg2, -1
-	%B = or i32 %arg1, %A
-	ret i32 %B
+        %A = xor i32 %arg2, -1
+        %B = or i32 %arg1, %A
+        ret i32 %B
 }
 
 define i16 @orc_i16_1(i16 %arg1, i16 %arg2) {
-	%A = xor i16 %arg2, -1
-	%B = or i16 %A, %arg1
-	ret i16 %B
+        %A = xor i16 %arg2, -1
+        %B = or i16 %A, %arg1
+        ret i16 %B
 }
 
 define i16 @orc_i16_2(i16 %arg1, i16 %arg2) {
-	%A = xor i16 %arg1, -1
-	%B = or i16 %A, %arg2
-	ret i16 %B
+        %A = xor i16 %arg1, -1
+        %B = or i16 %A, %arg2
+        ret i16 %B
 }
 
 define i16 @orc_i16_3(i16 %arg1, i16 %arg2) {
-	%A = xor i16 %arg2, -1
-	%B = or i16 %arg1, %A
-	ret i16 %B
+        %A = xor i16 %arg2, -1
+        %B = or i16 %arg1, %A
+        ret i16 %B
 }
 
 define i8 @orc_i8_1(i8 %arg1, i8 %arg2) {
-	%A = xor i8 %arg2, -1
-	%B = or i8 %A, %arg1
-	ret i8 %B
+        %A = xor i8 %arg2, -1
+        %B = or i8 %A, %arg1
+        ret i8 %B
 }
 
 define i8 @orc_i8_2(i8 %arg1, i8 %arg2) {
-	%A = xor i8 %arg1, -1
-	%B = or i8 %A, %arg2
-	ret i8 %B
+        %A = xor i8 %arg1, -1
+        %B = or i8 %A, %arg2
+        ret i8 %B
 }
 
 define i8 @orc_i8_3(i8 %arg1, i8 %arg2) {
-	%A = xor i8 %arg2, -1
-	%B = or i8 %arg1, %A
-	ret i8 %B
+        %A = xor i8 %arg2, -1
+        %B = or i8 %arg1, %A
+        ret i8 %B
 }
 
 ; ORI instruction generation (i32 data type):

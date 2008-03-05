@@ -25,9 +25,9 @@ declare <4 x i32> @llvm.spu.si.nand(<4 x i32>, <4 x i32>)
 declare <4 x i32> @llvm.spu.si.nor(<4 x i32>, <4 x i32>)
 
 define <4 x i32> @andtest(<4 x i32> %A, <4 x i32> %B) {
-	call <4 x i32> @llvm.spu.si.and(<4 x i32> %A, <4 x i32> %B)
-	%Y = bitcast <4 x i32> %1 to <4 x i32>
-	ret <4 x i32> %Y
+        call <4 x i32> @llvm.spu.si.and(<4 x i32> %A, <4 x i32> %B)
+        %Y = bitcast <4 x i32> %1 to <4 x i32>
+        ret <4 x i32> %Y
 }
 
 define <4 x i32> @andctest(<4 x i32> %A, <4 x i32> %B) {
@@ -37,13 +37,13 @@ define <4 x i32> @andctest(<4 x i32> %A, <4 x i32> %B) {
 }
 
 define <4 x i32> @anditest(<4 x i32> %A) {
-	call <4 x i32> @llvm.spu.si.andi(<4 x i32> %A, i16 65)
-	%Y = bitcast <4 x i32> %1 to <4 x i32>
-	ret <4 x i32> %Y
+        call <4 x i32> @llvm.spu.si.andi(<4 x i32> %A, i16 65)
+        %Y = bitcast <4 x i32> %1 to <4 x i32>
+        ret <4 x i32> %Y
 }
 
 define <8 x i16> @andhitest(<8 x i16> %A) {
-	call <8 x i16> @llvm.spu.si.andhi(<8 x i16> %A, i16 65)
-	%Y = bitcast <8 x i16> %1 to <8 x i16>
-	ret <8 x i16> %Y
+        call <8 x i16> @llvm.spu.si.andhi(<8 x i16> %A, i16 65)
+        %Y = bitcast <8 x i16> %1 to <8 x i16>
+        ret <8 x i16> %Y
 }

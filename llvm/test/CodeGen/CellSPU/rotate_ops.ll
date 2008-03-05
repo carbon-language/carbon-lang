@@ -115,45 +115,45 @@ define i16 @rotr16_2(i16 %arg1, i16 %arg) {
 }
 
 define i16 @rotli16(i16 %A) {
-	%B = shl i16 %A, 5		; <i16> [#uses=1]
-	%C = lshr i16 %A, 11		; <i16> [#uses=1]
-	%D = or i16 %B, %C		; <i16> [#uses=1]
-	ret i16 %D
+        %B = shl i16 %A, 5              ; <i16> [#uses=1]
+        %C = lshr i16 %A, 11            ; <i16> [#uses=1]
+        %D = or i16 %B, %C              ; <i16> [#uses=1]
+        ret i16 %D
 }
 
 define i16 @rotri16(i16 %A) {
-	%B = lshr i16 %A, 5		; <i16> [#uses=1]
-	%C = shl i16 %A, 11		; <i16> [#uses=1]
-	%D = or i16 %B, %C		; <i16> [#uses=1]
-	ret i16 %D
+        %B = lshr i16 %A, 5             ; <i16> [#uses=1]
+        %C = shl i16 %A, 11             ; <i16> [#uses=1]
+        %D = or i16 %B, %C              ; <i16> [#uses=1]
+        ret i16 %D
 }
 
 define i8 @rotl8(i8 %A, i8 %Amt) {
-	%B = shl i8 %A, %Amt		; <i8> [#uses=1]
-	%Amt2 = sub i8 8, %Amt		; <i8> [#uses=1]
-	%C = lshr i8 %A, %Amt2		; <i8> [#uses=1]
-	%D = or i8 %B, %C		; <i8> [#uses=1]
-	ret i8 %D
+        %B = shl i8 %A, %Amt            ; <i8> [#uses=1]
+        %Amt2 = sub i8 8, %Amt          ; <i8> [#uses=1]
+        %C = lshr i8 %A, %Amt2          ; <i8> [#uses=1]
+        %D = or i8 %B, %C               ; <i8> [#uses=1]
+        ret i8 %D
 }
 
 define i8 @rotr8(i8 %A, i8 %Amt) {
-	%B = lshr i8 %A, %Amt		; <i8> [#uses=1]
-	%Amt2 = sub i8 8, %Amt		; <i8> [#uses=1]
-	%C = shl i8 %A, %Amt2		; <i8> [#uses=1]
-	%D = or i8 %B, %C		; <i8> [#uses=1]
-	ret i8 %D
+        %B = lshr i8 %A, %Amt           ; <i8> [#uses=1]
+        %Amt2 = sub i8 8, %Amt          ; <i8> [#uses=1]
+        %C = shl i8 %A, %Amt2           ; <i8> [#uses=1]
+        %D = or i8 %B, %C               ; <i8> [#uses=1]
+        ret i8 %D
 }
 
 define i8 @rotli8(i8 %A) {
-	%B = shl i8 %A, 5		; <i8> [#uses=1]
-	%C = lshr i8 %A, 3		; <i8> [#uses=1]
-	%D = or i8 %B, %C		; <i8> [#uses=1]
-	ret i8 %D
+        %B = shl i8 %A, 5               ; <i8> [#uses=1]
+        %C = lshr i8 %A, 3              ; <i8> [#uses=1]
+        %D = or i8 %B, %C               ; <i8> [#uses=1]
+        ret i8 %D
 }
 
 define i8 @rotri8(i8 %A) {
-	%B = lshr i8 %A, 5		; <i8> [#uses=1]
-	%C = shl i8 %A, 3		; <i8> [#uses=1]
-	%D = or i8 %B, %C		; <i8> [#uses=1]
-	ret i8 %D
+        %B = lshr i8 %A, 5              ; <i8> [#uses=1]
+        %C = shl i8 %A, 3               ; <i8> [#uses=1]
+        %D = or i8 %B, %C               ; <i8> [#uses=1]
+        ret i8 %D
 }

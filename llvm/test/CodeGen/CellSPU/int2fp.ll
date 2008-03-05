@@ -11,31 +11,31 @@ target datalayout = "E-p:32:32:128-f64:64:128-f32:32:128-i64:32:128-i32:32:128-i
 target triple = "spu"
 
 define float @sitofp_i32(i32 %arg1) {
-	%A = sitofp i32 %arg1 to float		; <float> [#uses=1]
-	ret float %A
+        %A = sitofp i32 %arg1 to float          ; <float> [#uses=1]
+        ret float %A
 }
 
 define float @uitofp_u32(i32 %arg1) {
-	%A = uitofp i32 %arg1 to float		; <float> [#uses=1]
-	ret float %A
+        %A = uitofp i32 %arg1 to float          ; <float> [#uses=1]
+        ret float %A
 }
 
 define float @sitofp_i16(i16 %arg1) {
-	%A = sitofp i16 %arg1 to float		; <float> [#uses=1]
-	ret float %A
+        %A = sitofp i16 %arg1 to float          ; <float> [#uses=1]
+        ret float %A
 }
 
 define float @uitofp_i16(i16 %arg1) {
-	%A = uitofp i16 %arg1 to float		; <float> [#uses=1]
-	ret float %A
+        %A = uitofp i16 %arg1 to float          ; <float> [#uses=1]
+        ret float %A
 }
 
 define float @sitofp_i8(i8 %arg1) {
-	%A = sitofp i8 %arg1 to float		; <float> [#uses=1]
-	ret float %A
+        %A = sitofp i8 %arg1 to float           ; <float> [#uses=1]
+        ret float %A
 }
 
 define float @uitofp_i8(i8 %arg1) {
-	%A = uitofp i8 %arg1 to float		; <float> [#uses=1]
-	ret float %A
+        %A = uitofp i8 %arg1 to float           ; <float> [#uses=1]
+        ret float %A
 }

@@ -11,20 +11,20 @@ declare i32 @llvm.ctpop.i16(i16)
 declare i32 @llvm.ctpop.i32(i32)
 
 define i32 @test_i8(i8 %X) {
-	call i32 @llvm.ctpop.i8(i8 %X)
-	%Y = bitcast i32 %1 to i32
-	ret i32 %Y
+        call i32 @llvm.ctpop.i8(i8 %X)
+        %Y = bitcast i32 %1 to i32
+        ret i32 %Y
 }
 
 define i32 @test_i16(i16 %X) {
         call i32 @llvm.ctpop.i16(i16 %X)
-	%Y = bitcast i32 %1 to i32
+        %Y = bitcast i32 %1 to i32
         ret i32 %Y
 }
 
 define i32 @test_i32(i32 %X) {
         call i32 @llvm.ctpop.i32(i32 %X)
-	%Y = bitcast i32 %1 to i32
+        %Y = bitcast i32 %1 to i32
         ret i32 %Y
 }
 

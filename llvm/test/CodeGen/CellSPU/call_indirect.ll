@@ -23,27 +23,27 @@ target triple = "spu-unknown-elf"
 
 define void @dispatcher(i32 %i_arg, float %f_arg) {
 entry:
-	%tmp2 = load void (i32, float)** getelementptr ([6 x void (i32, float)*]* @dispatch_tab, i32 0, i32 0), align 16
-	tail call void %tmp2( i32 %i_arg, float %f_arg )
-	%tmp2.1 = load void (i32, float)** getelementptr ([6 x void (i32, float)*]* @dispatch_tab, i32 0, i32 1), align 4
-	tail call void %tmp2.1( i32 %i_arg, float %f_arg )
-	%tmp2.2 = load void (i32, float)** getelementptr ([6 x void (i32, float)*]* @dispatch_tab, i32 0, i32 2), align 4
-	tail call void %tmp2.2( i32 %i_arg, float %f_arg )
-	%tmp2.3 = load void (i32, float)** getelementptr ([6 x void (i32, float)*]* @dispatch_tab, i32 0, i32 3), align 4
-	tail call void %tmp2.3( i32 %i_arg, float %f_arg )
-	%tmp2.4 = load void (i32, float)** getelementptr ([6 x void (i32, float)*]* @dispatch_tab, i32 0, i32 4), align 4
-	tail call void %tmp2.4( i32 %i_arg, float %f_arg )
-	%tmp2.5 = load void (i32, float)** getelementptr ([6 x void (i32, float)*]* @dispatch_tab, i32 0, i32 5), align 4
-	tail call void %tmp2.5( i32 %i_arg, float %f_arg )
-	ret void
+        %tmp2 = load void (i32, float)** getelementptr ([6 x void (i32, float)*]* @dispatch_tab, i32 0, i32 0), align 16
+        tail call void %tmp2( i32 %i_arg, float %f_arg )
+        %tmp2.1 = load void (i32, float)** getelementptr ([6 x void (i32, float)*]* @dispatch_tab, i32 0, i32 1), align 4
+        tail call void %tmp2.1( i32 %i_arg, float %f_arg )
+        %tmp2.2 = load void (i32, float)** getelementptr ([6 x void (i32, float)*]* @dispatch_tab, i32 0, i32 2), align 4
+        tail call void %tmp2.2( i32 %i_arg, float %f_arg )
+        %tmp2.3 = load void (i32, float)** getelementptr ([6 x void (i32, float)*]* @dispatch_tab, i32 0, i32 3), align 4
+        tail call void %tmp2.3( i32 %i_arg, float %f_arg )
+        %tmp2.4 = load void (i32, float)** getelementptr ([6 x void (i32, float)*]* @dispatch_tab, i32 0, i32 4), align 4
+        tail call void %tmp2.4( i32 %i_arg, float %f_arg )
+        %tmp2.5 = load void (i32, float)** getelementptr ([6 x void (i32, float)*]* @dispatch_tab, i32 0, i32 5), align 4
+        tail call void %tmp2.5( i32 %i_arg, float %f_arg )
+        ret void
 }
 
 @ptr_list = internal global [1 x void ()*] [ void ()* inttoptr (i64 4294967295 to void ()*) ], align 4
 @ptr.a = internal global void ()** getelementptr ([1 x void ()*]* @ptr_list, i32 0, i32 1), align 16
 
 define void @double_indirect_call() {
-	%a = load void ()*** @ptr.a, align 16
-	%b = load void ()** %a, align 4
-	tail call void %b()
-	ret void
+        %a = load void ()*** @ptr.a, align 16
+        %b = load void ()** %a, align 4
+        tail call void %b()
+        ret void
 }

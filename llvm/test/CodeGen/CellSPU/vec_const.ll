@@ -26,30 +26,30 @@ target triple = "spu-unknown-elf"
 
 ; IL <reg>, 2
 define <4 x i32> @v4i32_constvec() {
-	ret <4 x i32> < i32 2, i32 2, i32 2, i32 2 >
+        ret <4 x i32> < i32 2, i32 2, i32 2, i32 2 >
 }
 
 ; Spill to constant pool
 define <4 x i32> @v4i32_constpool() {
-	ret <4 x i32> < i32 2, i32 1, i32 1, i32 2 >
+        ret <4 x i32> < i32 2, i32 1, i32 1, i32 2 >
 }
 
 ; Max negative range for IL
 define <4 x i32> @v4i32_constvec_2() {
-	ret <4 x i32> < i32 -32768, i32 -32768, i32 -32768, i32 -32768 >
+        ret <4 x i32> < i32 -32768, i32 -32768, i32 -32768, i32 -32768 >
 }
 
 ; ILHU <reg>, 73 (0x49)
 ; 4784128 = 0x490000
 define <4 x i32> @v4i32_constvec_3() {
-	ret <4 x i32> < i32 4784128, i32 4784128,
+        ret <4 x i32> < i32 4784128, i32 4784128,
                         i32 4784128, i32 4784128 >
 }
 
 ; ILHU <reg>, 61 (0x3d)
 ; IOHL <reg>, 15395 (0x3c23)
 define <4 x i32> @v4i32_constvec_4() {
-	ret <4 x i32> < i32 4013091, i32 4013091,
+        ret <4 x i32> < i32 4013091, i32 4013091,
                         i32 4013091, i32 4013091 >
 }
 
@@ -58,25 +58,25 @@ define <4 x i32> @v4i32_constvec_4() {
 ; Tests for whether we expand the size of the bit pattern properly, because
 ; this could be interpreted as an i8 pattern (0x50)
 define <4 x i32> @v4i32_constvec_5() {
-	ret <4 x i32> < i32 1347440720, i32 1347440720,
+        ret <4 x i32> < i32 1347440720, i32 1347440720,
                         i32 1347440720, i32 1347440720 >
 }
 
 ; ILH
 define <8 x i16> @v8i16_constvec_1() {
-	ret <8 x i16> < i16 32767, i16 32767, i16 32767, i16 32767,
+        ret <8 x i16> < i16 32767, i16 32767, i16 32767, i16 32767,
                         i16 32767, i16 32767, i16 32767, i16 32767 >
 }
 
 ; ILH
 define <8 x i16> @v8i16_constvec_2() {
-	ret <8 x i16> < i16 511, i16 511, i16 511, i16 511, i16 511,
+        ret <8 x i16> < i16 511, i16 511, i16 511, i16 511, i16 511,
                         i16 511, i16 511, i16 511 >
 }
 
 ; ILH
 define <8 x i16> @v8i16_constvec_3() {
-	ret <8 x i16> < i16 -512, i16 -512, i16 -512, i16 -512, i16 -512,
+        ret <8 x i16> < i16 -512, i16 -512, i16 -512, i16 -512, i16 -512,
                         i16 -512, i16 -512, i16 -512 >
 }
 
@@ -84,7 +84,7 @@ define <8 x i16> @v8i16_constvec_3() {
 ; Tests whether we expand the size of the bit pattern properly, because
 ; this could be interpreted as an i8 pattern (0x60)
 define <8 x i16> @v8i16_constvec_4() {
-	ret <8 x i16> < i16 24672, i16 24672, i16 24672, i16 24672, i16 24672,
+        ret <8 x i16> < i16 24672, i16 24672, i16 24672, i16 24672, i16 24672,
                         i16 24672, i16 24672, i16 24672 >
 }
 
@@ -93,7 +93,7 @@ define <8 x i16> @v8i16_constvec_4() {
 ; this is an i8 pattern but has to be expanded out to i16 to load it
 ; properly into the vector register.
 define <16 x i8> @v16i8_constvec_1() {
-	ret <16 x i8> < i8 96, i8 96, i8 96, i8 96, i8 96, i8 96, i8 96, i8 96,
+        ret <16 x i8> < i8 96, i8 96, i8 96, i8 96, i8 96, i8 96, i8 96, i8 96,
                         i8 96, i8 96, i8 96, i8 96, i8 96, i8 96, i8 96, i8 96 >
 }
 
@@ -101,16 +101,16 @@ define <4 x float> @v4f32_constvec_1() {
 entry:
         ret <4 x float> < float 0x4005BF0A80000000,
                           float 0x4005BF0A80000000,
-			  float 0x4005BF0A80000000,
-			  float 0x4005BF0A80000000 >
+                          float 0x4005BF0A80000000,
+                          float 0x4005BF0A80000000 >
 }
 
 define <4 x float> @v4f32_constvec_2() {
 entry:
         ret <4 x float> < float 0.000000e+00,
                           float 0.000000e+00,
-			  float 0.000000e+00,
-			  float 0.000000e+00 >
+                          float 0.000000e+00,
+                          float 0.000000e+00 >
 }
 
 
@@ -118,8 +118,8 @@ define <4 x float> @v4f32_constvec_3() {
 entry:
         ret <4 x float> < float 0x4005BF0A80000000,
                           float 0x3810000000000000,
-			  float 0x47EFFFFFE0000000,
-			  float 0x400921FB60000000 >
+                          float 0x47EFFFFFE0000000,
+                          float 0x400921FB60000000 >
 }
 
 ;  1311768467750121234 => 0x 12345678 abcdef12
@@ -129,13 +129,13 @@ entry:
 ;  LO32_lo: 61202
 define <2 x i64> @i64_constvec_1() {
 entry:
-	ret <2 x i64> < i64 1311768467750121234,
-			i64 1311768467750121234 >
+        ret <2 x i64> < i64 1311768467750121234,
+                        i64 1311768467750121234 >
 }
 
 define <2 x i64> @i64_constvec_2() {
 entry:
-	ret <2 x i64> < i64 1, i64 1311768467750121234 >
+        ret <2 x i64> < i64 1, i64 1311768467750121234 >
 }
 
 define <2 x double> @f64_constvec_1() {
@@ -150,5 +150,5 @@ entry:
 define <2 x double> @f64_constvec_2() {
 entry:
  ret <2 x double> < double 0x400921fb54442d18,
-		    double 0x400921fb54442d18 >
+                    double 0x400921fb54442d18 >
 }

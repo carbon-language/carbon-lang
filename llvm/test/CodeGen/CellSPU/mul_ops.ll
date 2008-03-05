@@ -54,36 +54,36 @@ entry:
 
 define i32 @mul_i32_1(i32 %arg1, i32 %arg2) {
 entry:
-	%A = mul i32 %arg2, %arg1
-	ret i32 %A
+        %A = mul i32 %arg2, %arg1
+        ret i32 %A
 }
 
 define i32 @mul_i32_2(i32 %arg1, i32 %arg2) {
 entry:
-	%A = mul i32 %arg1, %arg2
-	ret i32 %A
+        %A = mul i32 %arg1, %arg2
+        ret i32 %A
 }
 
 define i16 @mul_i16_1(i16 %arg1, i16 %arg2) {
 entry:
-	%A = mul i16 %arg2, %arg1
-	ret i16 %A
+        %A = mul i16 %arg2, %arg1
+        ret i16 %A
 }
 
 define i16 @mul_i16_2(i16 %arg1, i16 %arg2) {
 entry:
-	%A = mul i16 %arg1, %arg2
-	ret i16 %A
+        %A = mul i16 %arg1, %arg2
+        ret i16 %A
 }
 
 define i8 @mul_i8_1(i8 %arg1, i8 %arg2) {
 entry:
-	%A = mul i8 %arg2, %arg1
-	ret i8 %A
+        %A = mul i8 %arg2, %arg1
+        ret i8 %A
 }
 
 define i8 @mul_i8_2(i8 %arg1, i8 %arg2) {
 entry:
-	%A = mul i8 %arg1, %arg2
-	ret i8 %A
+        %A = mul i8 %arg1, %arg2
+        ret i8 %A
 }

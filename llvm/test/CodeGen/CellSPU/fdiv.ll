@@ -10,11 +10,11 @@ target datalayout = "E-p:32:32:128-f64:64:128-f32:32:128-i64:32:128-i32:32:128-i
 target triple = "spu"
 
 define float @fdiv32(float %arg1, float %arg2) {
-	%A = fdiv float %arg1,  %arg2
-	ret float %A
+        %A = fdiv float %arg1,  %arg2
+        ret float %A
 }
 
 define <4 x float> @fdiv_v4f32(<4 x float> %arg1, <4 x float> %arg2) {
-	%A = fdiv <4 x float> %arg1,  %arg2
- 	ret <4 x float> %A
+        %A = fdiv <4 x float> %arg1,  %arg2
+        ret <4 x float> %A
 }

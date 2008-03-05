@@ -1,5 +1,6 @@
 ; RUN: llvm-as -o - %s | llc -march=cellspu > %t1.s
 ; RUN: grep lqa      %t1.s | count 13
+; RUN: grep il       %t1.s | count 21
 ; RUN: grep shufb    %t1.s | count 13
 ; RUN: grep    65520 %t1.s | count 1
 ; RUN: grep    43981 %t1.s | count 1
@@ -50,6 +51,10 @@ define i64 @i64_const_7() {
 
 define i64 @i64_const_8() {
   ret i64 0                             ;; IL
+}
+
+define i64 @i64_const_9() {
+  ret i64 -1                            ;; IL
 }
 
 ; 0x4005bf0a8b145769 ->
