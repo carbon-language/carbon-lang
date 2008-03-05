@@ -53,6 +53,12 @@ void TargetInfo::getLongDoubleInfo(uint64_t &Size, unsigned &Align,
 
 //===----------------------------------------------------------------------===//
 
+TargetInfo::~TargetInfo() {
+  delete PrimaryTarget;
+  for (unsigned i = 0; i < SecondaryTargets.size(); ++i)
+    delete SecondaryTargets[i];
+}
+
 const char* TargetInfo::getTargetTriple() const {
   return PrimaryTarget->getTargetTriple();
 }
