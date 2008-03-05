@@ -623,6 +623,7 @@ static bool LinkAlias(Module *Dest, const Module *Src,
     } else if (GlobalVariable *DGV = Dest->getGlobalVariable(SGA->getName())) {
       RecursiveResolveTypes(SGA->getType(), DGV->getType(),
                             &Dest->getTypeSymbolTable(), "");
+
       // The only allowed way is to link alias with external declaration.
       if (DGV->isDeclaration()) {
         NewGA = new GlobalAlias(SGA->getType(), SGA->getLinkage(),
@@ -649,7 +650,30 @@ static bool LinkAlias(Module *Dest, const Module *Src,
     } else if (Function *DF = Dest->getFunction(SGA->getName())) {
       RecursiveResolveTypes(SGA->getType(), DF->getType(),
                             &Dest->getTypeSymbolTable(), "");
-      assert(0 && "FIXME");
+
+      // The only allowed way is to link alias with external declaration.
+      if (DF->isDeclaration()) {
+        NewGA = new GlobalAlias(SGA->getType(), SGA->getLinkage(),
+                                SGA->getName(), DAliasee, Dest);
+        CopyGVAttributes(NewGA, SGA);
+
+        // Any uses of DF need to change to NewGA, with cast, if needed.
+        if (SGA->getType() != DF->getType())
+          DF->replaceAllUsesWith(ConstantExpr::getBitCast(NewGA,
+                                                          DF->getType()));
+        else
+          DF->replaceAllUsesWith(NewGA);
+
+        // DF will conflict with NewGA because they both had the same
+        // name. We must erase this now so ForceRenaming doesn't assert
+        // because DF might not have internal linkage.
+        DF->eraseFromParent();
+
+        // Proceed to 'common' steps
+      } else
+        return Error(Err, "Alias Collision on '" +
+                     ToStr(SGA->getType(), Src) +"':%"+SGA->getName()+
+                     " - symbol multiple defined");
     } else {
       // Nothing similar found, just copy alias into destination module.
 
