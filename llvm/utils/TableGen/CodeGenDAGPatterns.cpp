@@ -81,6 +81,53 @@ bool isExtFloatingPointInVTs(const std::vector<unsigned char> &EVTs) {
 } // end namespace MVT.
 } // end namespace llvm.
 
+
+/// Dependent variable map for CodeGenDAGPattern variant generation
+typedef std::map<std::string, int> DepVarMap;
+
+/// Const iterator shorthand for DepVarMap
+typedef DepVarMap::const_iterator DepVarMap_citer;
+
+namespace {
+void FindDepVarsOf(TreePatternNode *N, DepVarMap &DepMap) {
+  if (N->isLeaf()) {
+    if (dynamic_cast<DefInit*>(N->getLeafValue()) != NULL) {
+      DepMap[N->getName()]++;
+    }
+  } else {
+    for (size_t i = 0, e = N->getNumChildren(); i != e; ++i)
+      FindDepVarsOf(N->getChild(i), DepMap);
+  }
+}
+
+//! Find dependent variables within child patterns
+/*!
+ */
+void FindDepVars(TreePatternNode *N, MultipleUseVarSet &DepVars) {
+  DepVarMap depcounts;
+  FindDepVarsOf(N, depcounts);
+  for (DepVarMap_citer i = depcounts.begin(); i != depcounts.end(); ++i) {
+    if (i->second > 1) {            // std::pair<std::string, int>
+      DepVars.insert(i->first);
+    }
+  }
+}
+
+//! Dump the dependent variable set:
+void DumpDepVars(MultipleUseVarSet &DepVars) {
+  if (DepVars.empty()) {
+    DOUT << "<empty set>";
+  } else {
+    DOUT << "[ ";
+    for (MultipleUseVarSet::const_iterator i = DepVars.begin(), e = DepVars.end();
+         i != e; ++i) {
+      DOUT << (*i) << " ";
+    }
+    DOUT << "]";
+  }
+}
+}
+
 //===----------------------------------------------------------------------===//
 // SDTypeConstraint implementation
 //
@@ -497,11 +544,15 @@ void TreePatternNode::dump() const {
   print(*cerr.stream());
 }
 
-/// isIsomorphicTo - Return true if this node is recursively isomorphic to
-/// the specified node.  For this comparison, all of the state of the node
-/// is considered, except for the assigned name.  Nodes with differing names
-/// that are otherwise identical are considered isomorphic.
-bool TreePatternNode::isIsomorphicTo(const TreePatternNode *N) const {
+/// isIsomorphicTo - Return true if this node is recursively
+/// isomorphic to the specified node.  For this comparison, the node's
+/// entire state is considered. The assigned name is ignored, since
+/// nodes with differing names are considered isomorphic. However, if
+/// the assigned name is present in the dependent variable set, then
+/// the assigned name is considered significant and the node is
+/// isomorphic if the names match.
+bool TreePatternNode::isIsomorphicTo(const TreePatternNode *N,
+                                     const MultipleUseVarSet &DepVars) const {
   if (N == this) return true;
   if (N->isLeaf() != isLeaf() || getExtTypes() != N->getExtTypes() ||
       getPredicateFn() != N->getPredicateFn() ||
@@ -509,16 +560,20 @@ bool TreePatternNode::isIsomorphicTo(const TreePatternNode *N) const {
     return false;
 
   if (isLeaf()) {
-    if (DefInit *DI = dynamic_cast<DefInit*>(getLeafValue()))
-      if (DefInit *NDI = dynamic_cast<DefInit*>(N->getLeafValue()))
-        return DI->getDef() == NDI->getDef();
+    if (DefInit *DI = dynamic_cast<DefInit*>(getLeafValue())) {
+      if (DefInit *NDI = dynamic_cast<DefInit*>(N->getLeafValue())) {
+	return ((DI->getDef() == NDI->getDef())
+	        && (DepVars.find(getName()) == DepVars.end()
+		    || getName() == N->getName()));
+      }
+    }
     return getLeafValue() == N->getLeafValue();
   }
   
   if (N->getOperator() != getOperator() ||
       N->getNumChildren() != getNumChildren()) return false;
   for (unsigned i = 0, e = getNumChildren(); i != e; ++i)
-    if (!getChild(i)->isIsomorphicTo(N->getChild(i)))
+    if (!getChild(i)->isIsomorphicTo(N->getChild(i), DepVars))
       return false;
   return true;
 }
@@ -1840,7 +1895,8 @@ void CodeGenDAGPatterns::ParsePatterns() {
 static void CombineChildVariants(TreePatternNode *Orig, 
                const std::vector<std::vector<TreePatternNode*> > &ChildVariants,
                                  std::vector<TreePatternNode*> &OutVariants,
-                                 CodeGenDAGPatterns &CDP) {
+                                 CodeGenDAGPatterns &CDP,
+                                 const MultipleUseVarSet &DepVars) {
   // Make sure that each operand has at least one variant to choose from.
   for (unsigned i = 0, e = ChildVariants.size(); i != e; ++i)
     if (ChildVariants[i].empty())
@@ -1849,8 +1905,17 @@ static void CombineChildVariants(TreePatternNode *Orig,
   // The end result is an all-pairs construction of the resultant pattern.
   std::vector<unsigned> Idxs;
   Idxs.resize(ChildVariants.size());
-  bool NotDone = true;
-  while (NotDone) {
+  bool NotDone;
+  do {
+#ifndef NDEBUG
+    if (DebugFlag && !Idxs.empty()) {
+      cerr << Orig->getOperator()->getName() << ": Idxs = [ ";
+        for (unsigned i = 0; i < Idxs.size(); ++i) {
+          cerr << Idxs[i] << " ";
+      }
+      cerr << "]\n";
+    }
+#endif
     // Create the variant and add it to the output list.
     std::vector<TreePatternNode*> NewChildren;
     for (unsigned i = 0, e = ChildVariants.size(); i != e; ++i)
@@ -1863,7 +1928,7 @@ static void CombineChildVariants(TreePatternNode *Orig,
     R->setTransformFn(Orig->getTransformFn());
     R->setTypes(Orig->getExtTypes());
     
-    // If this pattern cannot every match, do not include it as a variant.
+    // If this pattern cannot match, do not include it as a variant.
     std::string ErrString;
     if (!R->canPatternMatch(ErrString, CDP)) {
       delete R;
@@ -1875,7 +1940,7 @@ static void CombineChildVariants(TreePatternNode *Orig,
       //   (and GPRC:$a, GPRC:$b) -> (and GPRC:$b, GPRC:$a)
       // which are the same pattern.  Ignore the dups.
       for (unsigned i = 0, e = OutVariants.size(); i != e; ++i)
-        if (R->isIsomorphicTo(OutVariants[i])) {
+        if (R->isIsomorphicTo(OutVariants[i], DepVars)) {
           AlreadyExists = true;
           break;
         }
@@ -1886,17 +1951,18 @@ static void CombineChildVariants(TreePatternNode *Orig,
         OutVariants.push_back(R);
     }
     
-    // Increment indices to the next permutation.
-    NotDone = false;
-    // Look for something we can increment without causing a wrap-around.
-    for (unsigned IdxsIdx = 0; IdxsIdx != Idxs.size(); ++IdxsIdx) {
-      if (++Idxs[IdxsIdx] < ChildVariants[IdxsIdx].size()) {
-        NotDone = true;   // Found something to increment.
+    // Increment indices to the next permutation by incrementing the
+    // indicies from last index backward, e.g., generate the sequence
+    // [0, 0], [0, 1], [1, 0], [1, 1].
+    int IdxsIdx;
+    for (IdxsIdx = Idxs.size() - 1; IdxsIdx >= 0; --IdxsIdx) {
+      if (++Idxs[IdxsIdx] == ChildVariants[IdxsIdx].size())
+        Idxs[IdxsIdx] = 0;
+      else
         break;
-      }
-      Idxs[IdxsIdx] = 0;
     }
-  }
+    NotDone = (IdxsIdx >= 0);
+  } while (NotDone);
 }
 
 /// CombineChildVariants - A helper function for binary operators.
@@ -1905,11 +1971,12 @@ static void CombineChildVariants(TreePatternNode *Orig,
                                  const std::vector<TreePatternNode*> &LHS,
                                  const std::vector<TreePatternNode*> &RHS,
                                  std::vector<TreePatternNode*> &OutVariants,
-                                 CodeGenDAGPatterns &CDP) {
+                                 CodeGenDAGPatterns &CDP,
+                                 const MultipleUseVarSet &DepVars) {
   std::vector<std::vector<TreePatternNode*> > ChildVariants;
   ChildVariants.push_back(LHS);
   ChildVariants.push_back(RHS);
-  CombineChildVariants(Orig, ChildVariants, OutVariants, CDP);
+  CombineChildVariants(Orig, ChildVariants, OutVariants, CDP, DepVars);
 }  
 
 
@@ -1941,7 +2008,8 @@ static void GatherChildrenOfAssociativeOpcode(TreePatternNode *N,
 ///
 static void GenerateVariantsOf(TreePatternNode *N,
                                std::vector<TreePatternNode*> &OutVariants,
-                               CodeGenDAGPatterns &CDP) {
+                               CodeGenDAGPatterns &CDP,
+                               const MultipleUseVarSet &DepVars) {
   // We cannot permute leaves.
   if (N->isLeaf()) {
     OutVariants.push_back(N);
@@ -1962,9 +2030,9 @@ static void GenerateVariantsOf(TreePatternNode *N,
     if (MaximalChildren.size() == 3) {
       // Find the variants of all of our maximal children.
       std::vector<TreePatternNode*> AVariants, BVariants, CVariants;
-      GenerateVariantsOf(MaximalChildren[0], AVariants, CDP);
-      GenerateVariantsOf(MaximalChildren[1], BVariants, CDP);
-      GenerateVariantsOf(MaximalChildren[2], CVariants, CDP);
+      GenerateVariantsOf(MaximalChildren[0], AVariants, CDP, DepVars);
+      GenerateVariantsOf(MaximalChildren[1], BVariants, CDP, DepVars);
+      GenerateVariantsOf(MaximalChildren[2], CVariants, CDP, DepVars);
       
       // There are only two ways we can permute the tree:
       //   (A op B) op C    and    A op (B op C)
@@ -1977,28 +2045,28 @@ static void GenerateVariantsOf(TreePatternNode *N,
       std::vector<TreePatternNode*> CAVariants;
       std::vector<TreePatternNode*> BCVariants;
       std::vector<TreePatternNode*> CBVariants;
-      CombineChildVariants(N, AVariants, BVariants, ABVariants, CDP);
-      CombineChildVariants(N, BVariants, AVariants, BAVariants, CDP);
-      CombineChildVariants(N, AVariants, CVariants, ACVariants, CDP);
-      CombineChildVariants(N, CVariants, AVariants, CAVariants, CDP);
-      CombineChildVariants(N, BVariants, CVariants, BCVariants, CDP);
-      CombineChildVariants(N, CVariants, BVariants, CBVariants, CDP);
+      CombineChildVariants(N, AVariants, BVariants, ABVariants, CDP, DepVars);
+      CombineChildVariants(N, BVariants, AVariants, BAVariants, CDP, DepVars);
+      CombineChildVariants(N, AVariants, CVariants, ACVariants, CDP, DepVars);
+      CombineChildVariants(N, CVariants, AVariants, CAVariants, CDP, DepVars);
+      CombineChildVariants(N, BVariants, CVariants, BCVariants, CDP, DepVars);
+      CombineChildVariants(N, CVariants, BVariants, CBVariants, CDP, DepVars);
 
       // Combine those into the result: (x op x) op x
-      CombineChildVariants(N, ABVariants, CVariants, OutVariants, CDP);
-      CombineChildVariants(N, BAVariants, CVariants, OutVariants, CDP);
-      CombineChildVariants(N, ACVariants, BVariants, OutVariants, CDP);
-      CombineChildVariants(N, CAVariants, BVariants, OutVariants, CDP);
-      CombineChildVariants(N, BCVariants, AVariants, OutVariants, CDP);
-      CombineChildVariants(N, CBVariants, AVariants, OutVariants, CDP);
+      CombineChildVariants(N, ABVariants, CVariants, OutVariants, CDP, DepVars);
+      CombineChildVariants(N, BAVariants, CVariants, OutVariants, CDP, DepVars);
+      CombineChildVariants(N, ACVariants, BVariants, OutVariants, CDP, DepVars);
+      CombineChildVariants(N, CAVariants, BVariants, OutVariants, CDP, DepVars);
+      CombineChildVariants(N, BCVariants, AVariants, OutVariants, CDP, DepVars);
+      CombineChildVariants(N, CBVariants, AVariants, OutVariants, CDP, DepVars);
 
       // Combine those into the result: x op (x op x)
-      CombineChildVariants(N, CVariants, ABVariants, OutVariants, CDP);
-      CombineChildVariants(N, CVariants, BAVariants, OutVariants, CDP);
-      CombineChildVariants(N, BVariants, ACVariants, OutVariants, CDP);
-      CombineChildVariants(N, BVariants, CAVariants, OutVariants, CDP);
-      CombineChildVariants(N, AVariants, BCVariants, OutVariants, CDP);
-      CombineChildVariants(N, AVariants, CBVariants, OutVariants, CDP);
+      CombineChildVariants(N, CVariants, ABVariants, OutVariants, CDP, DepVars);
+      CombineChildVariants(N, CVariants, BAVariants, OutVariants, CDP, DepVars);
+      CombineChildVariants(N, BVariants, ACVariants, OutVariants, CDP, DepVars);
+      CombineChildVariants(N, BVariants, CAVariants, OutVariants, CDP, DepVars);
+      CombineChildVariants(N, AVariants, BCVariants, OutVariants, CDP, DepVars);
+      CombineChildVariants(N, AVariants, CBVariants, OutVariants, CDP, DepVars);
       return;
     }
   }
@@ -2007,10 +2075,10 @@ static void GenerateVariantsOf(TreePatternNode *N,
   std::vector<std::vector<TreePatternNode*> > ChildVariants;
   ChildVariants.resize(N->getNumChildren());
   for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i)
-    GenerateVariantsOf(N->getChild(i), ChildVariants[i], CDP);
+    GenerateVariantsOf(N->getChild(i), ChildVariants[i], CDP, DepVars);
 
   // Build all permutations based on how the children were formed.
-  CombineChildVariants(N, ChildVariants, OutVariants, CDP);
+  CombineChildVariants(N, ChildVariants, OutVariants, CDP, DepVars);
 
   // If this node is commutative, consider the commuted order.
   if (NodeInfo.hasProperty(SDNPCommutative)) {
@@ -2030,7 +2098,7 @@ static void GenerateVariantsOf(TreePatternNode *N,
     // Consider the commuted order.
     if (NC == 2)
       CombineChildVariants(N, ChildVariants[1], ChildVariants[0],
-                           OutVariants, CDP);
+                           OutVariants, CDP, DepVars);
   }
 }
 
@@ -2050,8 +2118,13 @@ void CodeGenDAGPatterns::GenerateVariants() {
   // already been added.
   //
   for (unsigned i = 0, e = PatternsToMatch.size(); i != e; ++i) {
+    MultipleUseVarSet             DepVars;
     std::vector<TreePatternNode*> Variants;
-    GenerateVariantsOf(PatternsToMatch[i].getSrcPattern(), Variants, *this);
+    FindDepVars(PatternsToMatch[i].getSrcPattern(), DepVars);
+    DOUT << "Dependent/multiply used variables: ";
+    DEBUG(DumpDepVars(DepVars));
+    DOUT << "\n";
+    GenerateVariantsOf(PatternsToMatch[i].getSrcPattern(), Variants, *this, DepVars);
 
     assert(!Variants.empty() && "Must create at least original variant!");
     Variants.erase(Variants.begin());  // Remove the original pattern.
@@ -2074,7 +2147,7 @@ void CodeGenDAGPatterns::GenerateVariants() {
       bool AlreadyExists = false;
       for (unsigned p = 0, e = PatternsToMatch.size(); p != e; ++p) {
         // Check to see if this variant already exists.
-        if (Variant->isIsomorphicTo(PatternsToMatch[p].getSrcPattern())) {
+        if (Variant->isIsomorphicTo(PatternsToMatch[p].getSrcPattern(), DepVars)) {
           DOUT << "  *** ALREADY EXISTS, ignoring variant.\n";
           AlreadyExists = true;
           break;

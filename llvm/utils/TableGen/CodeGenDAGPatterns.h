@@ -15,6 +15,8 @@
 #ifndef CODEGEN_DAGPATTERNS_H
 #define CODEGEN_DAGPATTERNS_H
 
+#include <set>
+
 #include "TableGenBackend.h"
 #include "CodeGenTarget.h"
 #include "CodeGenIntrinsics.h"
@@ -47,6 +49,9 @@ namespace MVT {
   /// vector contains isFP or a FP value type.
   bool isExtFloatingPointInVTs(const std::vector<unsigned char> &EVTs);
 }
+
+/// Set type used to track multiply used variables in patterns
+typedef std::set<std::string> MultipleUseVarSet;
 
 /// SDTypeConstraint - This is a discriminated union of constraints,
 /// corresponding to the SDTypeConstraint tablegen class in Target.td.
@@ -231,7 +236,8 @@ public:   // Higher level manipulation routines.
   /// the specified node.  For this comparison, all of the state of the node
   /// is considered, except for the assigned name.  Nodes with differing names
   /// that are otherwise identical are considered isomorphic.
-  bool isIsomorphicTo(const TreePatternNode *N) const;
+  bool isIsomorphicTo(const TreePatternNode *N,
+                      const MultipleUseVarSet &DepVars) const;
   
   /// SubstituteFormalArguments - Replace the formal arguments in this tree
   /// with actual values specified by ArgMap.
