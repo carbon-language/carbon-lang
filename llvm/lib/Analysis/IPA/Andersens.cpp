@@ -31,10 +31,12 @@
 // address taking.
 //
 // The offline constraint graph optimization portion includes offline variable
-// substitution algorithms intended to computer pointer and location
+// substitution algorithms intended to compute pointer and location
 // equivalences.  Pointer equivalences are those pointers that will have the
 // same points-to sets, and location equivalences are those variables that
-// always appear together in points-to sets.
+// always appear together in points-to sets.  It also includes an offline
+// cycle detection algorithm that allows cycles to be collapsed sooner 
+// during solving.
 //
 // The inclusion constraint solving phase iteratively propagates the inclusion
 // constraints until a fixed point is reached.  This is an O(N^3) algorithm.
@@ -48,7 +50,7 @@
 // CallReturnPos. The arguments start at getNode(F) + CallArgPos.
 //
 // Future Improvements:
-//   Offline detection of online cycles.  Use of BDD's.
+//   Use of BDD's.
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "anders-aa"
@@ -418,6 +420,13 @@ namespace {
     // pointer equivalent but not location equivalent variables. -1 if we have
     // no representative node for this pointer equivalence class yet.
     std::vector<int> PENLEClass2Node;
+    // Union/Find for HCD
+    std::vector<unsigned> HCDSCCRep;
+    // HCD's offline-detected cycles; "Statically DeTected"
+    // -1 if not part of such a cycle, otherwise a representative node.
+    std::vector<int> SDT;
+    // Whether to use SDT (UniteNodes can use it during solving, but not before)
+    bool SDTActive;
 
   public:
     static char ID;
@@ -546,6 +555,8 @@ namespace {
     void RewriteConstraints();
     void HU();
     void HVN();
+    void HCD();
+    void Search(unsigned Node);
     void UnitePointerEquivalences();
     void SolveConstraints();
     bool QueryNode(unsigned Node);
@@ -1985,10 +1996,140 @@ void Andersens::PrintLabels() {
   }
 }
 
+/// The technique used here is described in "The Ant and the
+/// Grasshopper: Fast and Accurate Pointer Analysis for Millions of
+/// Lines of Code. In Programming Language Design and Implementation
+/// (PLDI), June 2007." It is known as the "HCD" (Hybrid Cycle
+/// Detection) algorithm. It is called a hybrid because it performs an
+/// offline analysis and uses its results during the solving (online)
+/// phase. This is just the offline portion; the results of this
+/// operation are stored in SDT and are later used in SolveContraints()
+/// and UniteNodes().
+void Andersens::HCD() {
+  DOUT << "Starting HCD.\n";
+  HCDSCCRep.resize(GraphNodes.size());
+
+  for (unsigned i = 0; i < GraphNodes.size(); ++i) {
+    GraphNodes[i].Edges = new SparseBitVector<>;
+    HCDSCCRep[i] = i;
+  }
+
+  for (unsigned i = 0, e = Constraints.size(); i != e; ++i) {
+    Constraint &C = Constraints[i];
+    assert (C.Src < GraphNodes.size() && C.Dest < GraphNodes.size());
+    if (C.Type == Constraint::AddressOf) {
+      continue;
+    } else if (C.Type == Constraint::Load) {
+      if( C.Offset == 0 )
+        GraphNodes[C.Dest].Edges->set(C.Src + FirstRefNode);
+    } else if (C.Type == Constraint::Store) {
+      if( C.Offset == 0 )
+        GraphNodes[C.Dest + FirstRefNode].Edges->set(C.Src);
+    } else {
+      GraphNodes[C.Dest].Edges->set(C.Src);
+    }
+  }
+
+  Node2DFS.insert(Node2DFS.begin(), GraphNodes.size(), 0);
+  Node2Deleted.insert(Node2Deleted.begin(), GraphNodes.size(), false);
+  Node2Visited.insert(Node2Visited.begin(), GraphNodes.size(), false);
+  SDT.insert(SDT.begin(), GraphNodes.size() / 2, -1);
+
+  DFSNumber = 0;
+  for (unsigned i = 0; i < GraphNodes.size(); ++i) {
+    unsigned Node = HCDSCCRep[i];
+    if (!Node2Deleted[Node])
+      Search(Node);
+  }
+
+  for (unsigned i = 0; i < GraphNodes.size(); ++i)
+    if (GraphNodes[i].Edges != NULL) {
+      delete GraphNodes[i].Edges;
+      GraphNodes[i].Edges = NULL;
+    }
+
+  while( !SCCStack.empty() )
+    SCCStack.pop();
+
+  Node2DFS.clear();
+  Node2Visited.clear();
+  Node2Deleted.clear();
+  HCDSCCRep.clear();
+  DOUT << "HCD complete.\n";
+}
+
+// Component of HCD: 
+// Use Nuutila's variant of Tarjan's algorithm to detect
+// Strongly-Connected Components (SCCs). For non-trivial SCCs
+// containing ref nodes, insert the appropriate information in SDT.
+void Andersens::Search(unsigned Node) {
+  unsigned MyDFS = DFSNumber++;
+
+  Node2Visited[Node] = true;
+  Node2DFS[Node] = MyDFS;
+
+  for (SparseBitVector<>::iterator Iter = GraphNodes[Node].Edges->begin(),
+                                   End  = GraphNodes[Node].Edges->end();
+       Iter != End;
+       ++Iter) {
+    unsigned J = HCDSCCRep[*Iter];
+    assert(GraphNodes[J].isRep() && "Debug check; must be representative");
+    if (!Node2Deleted[J]) {
+      if (!Node2Visited[J])
+        Search(J);
+      if (Node2DFS[Node] > Node2DFS[J])
+        Node2DFS[Node] = Node2DFS[J];
+    }
+  }
+
+  if( MyDFS != Node2DFS[Node] ) {
+    SCCStack.push(Node);
+    return;
+  }
+
+  // This node is the root of a SCC, so process it.
+  //
+  // If the SCC is "non-trivial" (not a singleton) and contains a reference 
+  // node, we place this SCC into SDT.  We unite the nodes in any case.
+  if (!SCCStack.empty() && Node2DFS[SCCStack.top()] >= MyDFS) {
+    SparseBitVector<> SCC;
+
+    SCC.set(Node);
+
+    bool Ref = (Node >= FirstRefNode);
+
+    Node2Deleted[Node] = true;
+
+    do {
+      unsigned P = SCCStack.top(); SCCStack.pop();
+      Ref |= (P >= FirstRefNode);
+      SCC.set(P);
+      HCDSCCRep[P] = Node;
+    } while (!SCCStack.empty() && Node2DFS[SCCStack.top()] >= MyDFS);
+
+    if (Ref) {
+      unsigned Rep = SCC.find_first();
+      assert(Rep < FirstRefNode && "The SCC didn't have a non-Ref node!");
+
+      SparseBitVector<>::iterator i = SCC.begin();
+
+      // Skip over the non-ref nodes
+      while( *i < FirstRefNode )
+        ++i;
+
+      while( i != SCC.end() )
+        SDT[ (*i++) - FirstRefNode ] = Rep;
+    }
+  }
+}
+
+
 /// Optimize the constraints by performing offline variable substitution and
 /// other optimizations.
 void Andersens::OptimizeConstraints() {
   DOUT << "Beginning constraint optimization\n";
+
+  SDTActive = false;
 
   // Function related nodes need to stay in the same relative position and can't
   // be location equivalent.
@@ -2051,12 +2192,25 @@ void Andersens::OptimizeConstraints() {
     if (FindNode(i) == i) {
       Node *N = &GraphNodes[i];
       delete N->PointsTo;
+      N->PointsTo = NULL;
       delete N->PredEdges;
+      N->PredEdges = NULL;
       delete N->ImplicitPredEdges;
+      N->ImplicitPredEdges = NULL;
       delete N->PointedToBy;
+      N->PointedToBy = NULL;
     }
   }
+
+  // perform Hybrid Cycle Detection (HCD)
+  HCD();
+  SDTActive = true;
+
+  // No longer any need for the upper half of GraphNodes (for ref nodes).
   GraphNodes.erase(GraphNodes.begin() + FirstRefNode, GraphNodes.end());
+
+  // HCD complete.
+
   DOUT << "Finished constraint optimization\n";
   FirstRefNode = 0;
   FirstAdrNode = 0;
@@ -2221,6 +2375,14 @@ void Andersens::SolveConstraints() {
     }
   }
   std::queue<unsigned int> TarjanWL;
+#if !FULL_UNIVERSAL
+  // "Rep and special variables" - in order for HCD to maintain conservative
+  // results when !FULL_UNIVERSAL, we need to treat the special variables in
+  // the same way that the !FULL_UNIVERSAL tweak does throughout the rest of
+  // the analysis - it's ok to add edges from the special nodes, but never
+  // *to* the special nodes.
+  std::vector<unsigned int> RSV;
+#endif
   while( !CurrWL->empty() ) {
     DOUT << "Starting iteration #" << ++NumIters << "\n";
 
@@ -2259,6 +2421,39 @@ void Andersens::SolveConstraints() {
         continue;
 
       *(CurrNode->OldPointsTo) |= CurrPointsTo;
+
+      // Check the offline-computed equivalencies from HCD.
+      bool SCC = false;
+      unsigned Rep;
+
+      if (SDT[CurrNodeIndex] >= 0) {
+        SCC = true;
+        Rep = FindNode(SDT[CurrNodeIndex]);
+
+#if !FULL_UNIVERSAL
+        RSV.clear();
+#endif
+        for (SparseBitVector<>::iterator bi = CurrPointsTo.begin();
+             bi != CurrPointsTo.end(); ++bi) {
+          unsigned Node = FindNode(*bi);
+#if !FULL_UNIVERSAL
+          if (Node < NumberSpecialNodes) {
+            RSV.push_back(Node);
+            continue;
+          }
+#endif
+          Rep = UniteNodes(Rep,Node);
+        }
+#if !FULL_UNIVERSAL
+        RSV.push_back(Rep);
+#endif
+
+        NextWL->insert(&GraphNodes[Rep]);
+
+        if ( ! CurrNode->isRep() )
+          continue;
+      }
+
       Seen.clear();
 
       /* Now process the constraints for this node.  */
@@ -2301,39 +2496,74 @@ void Andersens::SolveConstraints() {
           li++;
           continue;
         }
-        // TODO: hybrid cycle detection would go here, we should check
+
+        // See if we can use Hybrid Cycle Detection (that is, check
         // if it was a statically detected offline equivalence that
-        // involves pointers , and if so, remove the redundant constraints.
+        // involves pointers; if so, remove the redundant constraints).
+        if( SCC && K == 0 ) {
+#if FULL_UNIVERSAL
+          CurrMember = Rep;
 
-        const SparseBitVector<> &Solution = CurrPointsTo;
-
-        for (SparseBitVector<>::iterator bi = Solution.begin();
-             bi != Solution.end();
-             ++bi) {
-          CurrMember = *bi;
-
-          // Need to increment the member by K since that is where we are
-          // supposed to copy to/from.  Note that in positive weight cycles,
-          // which occur in address taking of fields, K can go past
-          // MaxK[CurrMember] elements, even though that is all it could point
-          // to.
-          if (K > 0 && K > MaxK[CurrMember])
-            continue;
-          else
-            CurrMember = FindNode(CurrMember + K);
-
-          // Add an edge to the graph, so we can just do regular bitmap ior next
-          // time.  It may also let us notice a cycle.
-#if !FULL_UNIVERSAL
-          if (*Dest < NumberSpecialNodes)
-            continue;
-#endif
           if (GraphNodes[*Src].Edges->test_and_set(*Dest))
             if (GraphNodes[*Dest].PointsTo |= *(GraphNodes[*Src].PointsTo))
               NextWL->insert(&GraphNodes[*Dest]);
+#else
+          for (unsigned i=0; i < RSV.size(); ++i) {
+            CurrMember = RSV[i];
 
+            if (*Dest < NumberSpecialNodes)
+              continue;
+            if (GraphNodes[*Src].Edges->test_and_set(*Dest))
+              if (GraphNodes[*Dest].PointsTo |= *(GraphNodes[*Src].PointsTo))
+                NextWL->insert(&GraphNodes[*Dest]);
+          }
+#endif
+          // since all future elements of the points-to set will be
+          // equivalent to the current ones, the complex constraints
+          // become redundant.
+          //
+          std::list<Constraint>::iterator lk = li; li++;
+#if !FULL_UNIVERSAL
+          // In this case, we can still erase the constraints when the
+          // elements of the points-to sets are referenced by *Dest,
+          // but not when they are referenced by *Src (i.e. for a Load
+          // constraint). This is because if another special variable is
+          // put into the points-to set later, we still need to add the
+          // new edge from that special variable.
+          if( lk->Type != Constraint::Load)
+#endif
+          GraphNodes[CurrNodeIndex].Constraints.erase(lk);
+        } else {
+          const SparseBitVector<> &Solution = CurrPointsTo;
+
+          for (SparseBitVector<>::iterator bi = Solution.begin();
+               bi != Solution.end();
+               ++bi) {
+            CurrMember = *bi;
+
+            // Need to increment the member by K since that is where we are
+            // supposed to copy to/from.  Note that in positive weight cycles,
+            // which occur in address taking of fields, K can go past
+            // MaxK[CurrMember] elements, even though that is all it could point
+            // to.
+            if (K > 0 && K > MaxK[CurrMember])
+              continue;
+            else
+              CurrMember = FindNode(CurrMember + K);
+
+            // Add an edge to the graph, so we can just do regular
+            // bitmap ior next time.  It may also let us notice a cycle.
+#if !FULL_UNIVERSAL
+            if (*Dest < NumberSpecialNodes)
+              continue;
+#endif
+            if (GraphNodes[*Src].Edges->test_and_set(*Dest))
+              if (GraphNodes[*Dest].PointsTo |= *(GraphNodes[*Src].PointsTo))
+                NextWL->insert(&GraphNodes[*Dest]);
+
+          }
+          li++;
         }
-        li++;
       }
       SparseBitVector<> NewEdges;
       SparseBitVector<> ToErase;
@@ -2351,8 +2581,8 @@ void Andersens::SolveConstraints() {
         // got an edge for the representative, delete the current edge.
         if (Rep == CurrNodeIndex ||
             (Rep != DestVar && NewEdges.test(Rep))) {
-          ToErase.set(DestVar);
-          continue;
+            ToErase.set(DestVar);
+            continue;
         }
         
         std::pair<unsigned,unsigned> edge(CurrNodeIndex,Rep);
@@ -2395,6 +2625,8 @@ void Andersens::SolveConstraints() {
     delete N->OldPointsTo;
     delete N->Edges;
   }
+  SDTActive = false;
+  SDT.clear();
 }
 
 //===----------------------------------------------------------------------===//
@@ -2461,7 +2693,15 @@ unsigned Andersens::UniteNodes(unsigned First, unsigned Second,
   DEBUG(PrintNode(SecondNode));
   DOUT << "\n";
 
-  // TODO: Handle SDT
+  if (SDTActive)
+    if (SDT[Second] >= 0)
+      if (SDT[First] < 0)
+        SDT[First] = SDT[Second];
+      else {
+        UniteNodes( FindNode(SDT[First]), FindNode(SDT[Second]) );
+        First = FindNode(First);
+      }
+
   return First;
 }
 
