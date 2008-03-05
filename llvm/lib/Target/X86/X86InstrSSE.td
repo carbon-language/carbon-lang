@@ -360,7 +360,7 @@ def Int_CVTTPS2PIrm: PSI<0x2C, MRMSrcMem, (outs VR64:$dst), (ins f64mem:$src),
                          "cvttps2pi\t{$src, $dst|$dst, $src}",
                          [(set VR64:$dst, (int_x86_sse_cvttps2pi 
                                            (load addr:$src)))]>;
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
   def Int_CVTPI2PSrr : PSI<0x2A, MRMSrcReg, 
                            (outs VR128:$dst), (ins VR128:$src1, VR64:$src2),
                         "cvtpi2ps\t{$src2, $dst|$dst, $src2}",
@@ -383,7 +383,7 @@ def Int_CVTTSS2SIrm : SSI<0x2C, MRMSrcMem, (outs GR32:$dst), (ins f32mem:$src),
                           [(set GR32:$dst,
                             (int_x86_sse_cvttss2si(load addr:$src)))]>;
 
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
   def Int_CVTSI2SSrr : SSI<0x2A, MRMSrcReg,
                            (outs VR128:$dst), (ins VR128:$src1, GR32:$src2),
                            "cvtsi2ss\t{$src2, $dst|$dst, $src2}",
@@ -397,7 +397,7 @@ let isTwoAddress = 1 in {
 }
 
 // Comparison instructions
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
 let neverHasSideEffects = 1 in
   def CMPSSrr : SSIi8<0xC2, MRMSrcReg, 
                     (outs FR32:$dst), (ins FR32:$src1, FR32:$src, SSECC:$cc),
@@ -419,7 +419,7 @@ def UCOMISSrm: PSI<0x2E, MRMSrcMem, (outs), (ins FR32:$src1, f32mem:$src2),
 } // Defs = [EFLAGS]
 
 // Aliases to match intrinsics which expect XMM operand(s).
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
   def Int_CMPSSrr : SSIi8<0xC2, MRMSrcReg, 
                         (outs VR128:$dst), (ins VR128:$src1, VR128:$src, SSECC:$cc),
                         "cmp${cc}ss\t{$src, $dst|$dst, $src}",
@@ -479,7 +479,7 @@ def FsMOVAPSrm : PSI<0x28, MRMSrcMem, (outs FR32:$dst), (ins f128mem:$src),
                      [(set FR32:$dst, (alignedloadfsf32 addr:$src))]>;
 
 // Alias bitwise logical operations using SSE logical ops on packed FP values.
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
 let isCommutable = 1 in {
   def FsANDPSrr : PSI<0x54, MRMSrcReg, (outs FR32:$dst), (ins FR32:$src1, FR32:$src2),
                       "andps\t{$src2, $dst|$dst, $src2}",
@@ -526,7 +526,7 @@ def FsANDNPSrm : PSI<0x55, MRMSrcMem,
 /// These three forms can each be reg+reg or reg+mem, so there are a total of
 /// six "instructions".
 ///
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
 multiclass basic_sse1_fp_binop_rm<bits<8> opc, string OpcodeStr,
                                   SDNode OpNode, Intrinsic F32Int,
                                   bit Commutable = 0> {
@@ -584,7 +584,7 @@ defm DIV : basic_sse1_fp_binop_rm<0x5E, "div", fdiv, int_x86_sse_div_ss>;
 ///
 /// This provides a total of eight "instructions".
 ///
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
 multiclass sse1_fp_binop_rm<bits<8> opc, string OpcodeStr,
                             SDNode OpNode,
                             Intrinsic F32Int,
@@ -683,7 +683,7 @@ def MOVUPSmr_Int : PSI<0x11, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
                        "movups\t{$src, $dst|$dst, $src}",
                        [(int_x86_sse_storeu_ps addr:$dst, VR128:$src)]>;
 
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
   let AddedComplexity = 20 in {
     def MOVLPSrm : PSI<0x12, MRMSrcMem,
                        (outs VR128:$dst), (ins VR128:$src1, f64mem:$src2),
@@ -700,7 +700,7 @@ let isTwoAddress = 1 in {
                          (bc_v4f32 (v2f64 (scalar_to_vector (loadf64 addr:$src2)))),
                                  MOVHP_shuffle_mask)))]>;
   } // AddedComplexity
-} // isTwoAddress
+} // Constraints = "$src1 = $dst"
 
 def MOVLPSmr : PSI<0x13, MRMDestMem, (outs), (ins f64mem:$dst, VR128:$src),
                    "movlps\t{$src, $dst|$dst, $src}",
@@ -717,7 +717,7 @@ def MOVHPSmr : PSI<0x17, MRMDestMem, (outs), (ins f64mem:$dst, VR128:$src),
                                          UNPCKH_shuffle_mask)), (iPTR 0))),
                      addr:$dst)]>;
 
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
 let AddedComplexity = 15 in {
 def MOVLHPSrr : PSI<0x16, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
                     "movlhps\t{$src2, $dst|$dst, $src2}",
@@ -731,7 +731,7 @@ def MOVHLPSrr : PSI<0x12, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src1, VR128:
                       (v4f32 (vector_shuffle VR128:$src1, VR128:$src2,
                               MOVHLPS_shuffle_mask)))]>;
 } // AddedComplexity
-} // isTwoAddress
+} // Constraints = "$src1 = $dst"
 
 
 
@@ -815,7 +815,7 @@ defm RCP   : sse1_fp_unop_rm<0x53, "rcp",   X86frcp,
                              int_x86_sse_rcp_ss, int_x86_sse_rcp_ps>;
 
 // Logical
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
   let isCommutable = 1 in {
     def ANDPSrr : PSI<0x54, MRMSrcReg,
                       (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
@@ -865,7 +865,7 @@ let isTwoAddress = 1 in {
                                (memopv2i64 addr:$src2))))]>;
 }
 
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
   def CMPPSrri : PSIi8<0xC2, MRMSrcReg, 
                       (outs VR128:$dst), (ins VR128:$src1, VR128:$src, SSECC:$cc),
                       "cmp${cc}ps\t{$src, $dst|$dst, $src}",
@@ -879,7 +879,7 @@ let isTwoAddress = 1 in {
 }
 
 // Shuffle and unpack instructions
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
   let isConvertibleToThreeAddress = 1 in // Convert to pshufd
     def SHUFPSrri : PSIi8<0xC6, MRMSrcReg, 
                           (outs VR128:$dst), (ins VR128:$src1,
@@ -929,7 +929,7 @@ let isTwoAddress = 1 in {
                                    VR128:$src1, (memopv4f32 addr:$src2),
                                    UNPCKL_shuffle_mask)))]>;
   } // AddedComplexity
-} // isTwoAddress
+} // Constraints = "$src1 = $dst"
 
 // Mask creation
 def MOVMSKPSrr : PSI<0x50, MRMSrcReg, (outs GR32:$dst), (ins VR128:$src),
@@ -993,7 +993,7 @@ def MOVPS2SSmr : SSI<0x11, MRMDestMem, (outs), (ins f32mem:$dst, VR128:$src),
 
 // Move to lower bits of a VR128, leaving upper bits alone.
 // Three operand (but two address) aliases.
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
 let neverHasSideEffects = 1 in
   def MOVLSS2PSrr : SSI<0x10, MRMSrcReg,
                         (outs VR128:$dst), (ins VR128:$src1, FR32:$src2),
@@ -1107,7 +1107,7 @@ def Int_CVTTSD2SIrm : SDI<0x2C, MRMSrcMem, (outs GR32:$dst), (ins f128mem:$src),
                                             (load addr:$src)))]>;
 
 // Comparison instructions
-let isTwoAddress = 1, neverHasSideEffects = 1 in {
+let Constraints = "$src1 = $dst", neverHasSideEffects = 1 in {
   def CMPSDrr : SDIi8<0xC2, MRMSrcReg, 
                     (outs FR64:$dst), (ins FR64:$src1, FR64:$src, SSECC:$cc),
                     "cmp${cc}sd\t{$src, $dst|$dst, $src}", []>;
@@ -1128,7 +1128,7 @@ def UCOMISDrm: PDI<0x2E, MRMSrcMem, (outs), (ins FR64:$src1, f64mem:$src2),
 }
 
 // Aliases to match intrinsics which expect XMM operand(s).
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
   def Int_CMPSDrr : SDIi8<0xC2, MRMSrcReg, 
                         (outs VR128:$dst), (ins VR128:$src1, VR128:$src, SSECC:$cc),
                         "cmp${cc}sd\t{$src, $dst|$dst, $src}",
@@ -1184,7 +1184,7 @@ def FsMOVAPDrm : PDI<0x28, MRMSrcMem, (outs FR64:$dst), (ins f128mem:$src),
                      [(set FR64:$dst, (alignedloadfsf64 addr:$src))]>;
 
 // Alias bitwise logical operations using SSE logical ops on packed FP values.
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
 let isCommutable = 1 in {
   def FsANDPDrr : PDI<0x54, MRMSrcReg, (outs FR64:$dst), (ins FR64:$src1, FR64:$src2),
                       "andpd\t{$src2, $dst|$dst, $src2}",
@@ -1231,7 +1231,7 @@ def FsANDNPDrm : PDI<0x55, MRMSrcMem,
 /// These three forms can each be reg+reg or reg+mem, so there are a total of
 /// six "instructions".
 ///
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
 multiclass basic_sse2_fp_binop_rm<bits<8> opc, string OpcodeStr,
                                   SDNode OpNode, Intrinsic F64Int,
                                   bit Commutable = 0> {
@@ -1289,7 +1289,7 @@ defm DIV : basic_sse2_fp_binop_rm<0x5E, "div", fdiv, int_x86_sse2_div_sd>;
 ///
 /// This provides a total of eight "instructions".
 ///
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
 multiclass sse2_fp_binop_rm<bits<8> opc, string OpcodeStr,
                             SDNode OpNode,
                             Intrinsic F64Int,
@@ -1387,7 +1387,7 @@ def MOVUPDmr_Int : PDI<0x11, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
                        "movupd\t{$src, $dst|$dst, $src}",
                        [(int_x86_sse2_storeu_pd addr:$dst, VR128:$src)]>;
 
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
   let AddedComplexity = 20 in {
     def MOVLPDrm : PDI<0x12, MRMSrcMem,
                        (outs VR128:$dst), (ins VR128:$src1, f64mem:$src2),
@@ -1404,7 +1404,7 @@ let isTwoAddress = 1 in {
                                  (scalar_to_vector (loadf64 addr:$src2)),
                                  MOVHP_shuffle_mask)))]>;
   } // AddedComplexity
-} // isTwoAddress
+} // Constraints = "$src1 = $dst"
 
 def MOVLPDmr : PDI<0x13, MRMDestMem, (outs), (ins f64mem:$dst, VR128:$src),
                    "movlpd\t{$src, $dst|$dst, $src}",
@@ -1500,7 +1500,7 @@ def Int_CVTPD2PSrm : PDI<0x5A, MRMSrcReg, (outs VR128:$dst), (ins f128mem:$src),
 
 // Match intrinsics which expect XMM operand(s).
 // Aliases for intrinsics
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
 def Int_CVTSI2SDrr: SDI<0x2A, MRMSrcReg,
                         (outs VR128:$dst), (ins VR128:$src1, GR32:$src2),
                         "cvtsi2sd\t{$src2, $dst|$dst, $src2}",
@@ -1610,7 +1610,7 @@ defm SQRT  : sse2_fp_unop_rm<0x51, "sqrt",  fsqrt,
 // There is no f64 version of the reciprocal approximation instructions.
 
 // Logical
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
   let isCommutable = 1 in {
     def ANDPDrr : PDI<0x54, MRMSrcReg,
                       (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
@@ -1664,7 +1664,7 @@ let isTwoAddress = 1 in {
                         (memopv2i64 addr:$src2)))]>;
 }
 
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
   def CMPPDrri : PDIi8<0xC2, MRMSrcReg, 
                       (outs VR128:$dst), (ins VR128:$src1, VR128:$src, SSECC:$cc),
                       "cmp${cc}pd\t{$src, $dst|$dst, $src}",
@@ -1678,7 +1678,7 @@ let isTwoAddress = 1 in {
 }
 
 // Shuffle and unpack instructions
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
   def SHUFPDrri : PDIi8<0xC6, MRMSrcReg, 
                         (outs VR128:$dst), (ins VR128:$src1, VR128:$src2, i8imm:$src3),
                         "shufpd\t{$src3, $src2, $dst|$dst, $src2, $src3}",
@@ -1725,7 +1725,7 @@ let isTwoAddress = 1 in {
                                    VR128:$src1, (memopv2f64 addr:$src2),
                                    UNPCKL_shuffle_mask)))]>;
   } // AddedComplexity
-} // isTwoAddress
+} // Constraints = "$src1 = $dst"
 
 
 //===----------------------------------------------------------------------===//
@@ -1811,7 +1811,7 @@ multiclass PDI_binop_rm_v2i64<bits<8> opc, string OpcodeStr, SDNode OpNode,
                [(set VR128:$dst, (OpNode VR128:$src1,(memopv2i64 addr:$src2)))]>;
 }
 
-} // isTwoAddress
+} // Constraints = "$src1 = $dst"
 
 // 128-bit Integer Arithmetic
 
@@ -1914,7 +1914,7 @@ def PSRADri : PDIi8<0x72, MRM4r, (outs VR128:$dst),
 // PSRAQ doesn't exist in SSE[1-3].
 
 // 128-bit logical shifts.
-let isTwoAddress = 1, neverHasSideEffects = 1 in {
+let Constraints = "$src1 = $dst", neverHasSideEffects = 1 in {
   def PSLLDQri : PDIi8<0x73, MRM7r,
                        (outs VR128:$dst), (ins VR128:$src1, i32i8imm:$src2),
                        "pslldq\t{$src2, $dst|$dst, $src2}", []>;
@@ -1938,7 +1938,7 @@ defm PAND : PDI_binop_rm_v2i64<0xDB, "pand", and, 1>;
 defm POR  : PDI_binop_rm_v2i64<0xEB, "por" , or , 1>;
 defm PXOR : PDI_binop_rm_v2i64<0xEF, "pxor", xor, 1>;
 
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
   def PANDNrr : PDI<0xDF, MRMSrcReg,
                     (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
                     "pandn\t{$src2, $dst|$dst, $src2}",
@@ -2015,7 +2015,7 @@ def PSHUFLWmi : Ii8<0x70, MRMSrcMem,
                 XD, Requires<[HasSSE2]>;
 
 
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
   def PUNPCKLBWrr : PDI<0x60, MRMSrcReg, 
                         (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
                         "punpcklbw\t{$src2, $dst|$dst, $src2}",
@@ -2129,7 +2129,7 @@ def PEXTRWri : PDIi8<0xC5, MRMSrcReg,
                     "pextrw\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                     [(set GR32:$dst, (X86pextrw (v8i16 VR128:$src1),
                                                 imm:$src2))]>;
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
   def PINSRWrri : PDIi8<0xC4, MRMSrcReg,
                        (outs VR128:$dst), (ins VR128:$src1,
                         GR32:$src2, i32i8imm:$src3),
@@ -2263,7 +2263,7 @@ def MOVSS2DImr  : PDI<0x7E, MRMDestMem, (outs), (ins i32mem:$dst, FR32:$src),
 
 // Move to lower bits of a VR128, leaving upper bits alone.
 // Three operand (but two address) aliases.
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
   let neverHasSideEffects = 1 in
   def MOVLSD2PDrr : SDI<0x10, MRMSrcReg,
                         (outs VR128:$dst), (ins VR128:$src1, FR64:$src2),
@@ -2386,7 +2386,7 @@ def MOVDDUPrm  : S3DI<0x12, MRMSrcMem, (outs VR128:$dst), (ins f64mem:$src),
                                 SSE_splat_lo_mask)))]>;
 
 // Arithmetic
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
   def ADDSUBPSrr : S3DI<0xD0, MRMSrcReg,
                         (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
                         "addsubps\t{$src2, $dst|$dst, $src2}",
@@ -2431,7 +2431,7 @@ class S3_Intrm<bits<8> o, string OpcodeStr, Intrinsic IntId>
         !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
         [(set VR128:$dst, (v2f64 (IntId VR128:$src1, (load addr:$src2))))]>;
 
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
   def HADDPSrr : S3D_Intrr<0x7C, "haddps", int_x86_sse3_hadd_ps>;
   def HADDPSrm : S3D_Intrm<0x7C, "haddps", int_x86_sse3_hadd_ps>;
   def HADDPDrr : S3_Intrr <0x7C, "haddpd", int_x86_sse3_hadd_pd>;
@@ -2567,7 +2567,7 @@ defm PABSD       : SS3I_unop_rm_int_32<0x1E, "pabsd",
                                        int_x86_ssse3_pabs_d_128>;
 
 /// SS3I_binop_rm_int_8 - Simple SSSE3 binary operator whose type is v*i8.
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
   multiclass SS3I_binop_rm_int_8<bits<8> opc, string OpcodeStr,
                                  Intrinsic IntId64, Intrinsic IntId128,
                                  bit Commutable = 0> {
@@ -2601,7 +2601,7 @@ let isTwoAddress = 1 in {
 }
 
 /// SS3I_binop_rm_int_16 - Simple SSSE3 binary operator whose type is v*i16.
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
   multiclass SS3I_binop_rm_int_16<bits<8> opc, string OpcodeStr,
                                   Intrinsic IntId64, Intrinsic IntId128,
                                   bit Commutable = 0> {
@@ -2635,7 +2635,7 @@ let isTwoAddress = 1 in {
 }
 
 /// SS3I_binop_rm_int_32 - Simple SSSE3 binary operator whose type is v*i32.
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
   multiclass SS3I_binop_rm_int_32<bits<8> opc, string OpcodeStr,
                                   Intrinsic IntId64, Intrinsic IntId128,
                                   bit Commutable = 0> {
@@ -2705,7 +2705,7 @@ defm PSIGND      : SS3I_binop_rm_int_32<0x09, "psignd",
                                         int_x86_ssse3_psign_d,
                                         int_x86_ssse3_psign_d_128>;
 
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
   def PALIGNR64rr  : SS3AI<0x0F, MRMSrcReg, (outs VR64:$dst),
                            (ins VR64:$src1, VR64:$src2, i16imm:$src3),
                            "palignr\t{$src3, $src2, $dst|$dst, $src2, $src3}",
@@ -3149,7 +3149,7 @@ defm PHMINPOSUW : SS41I_unop_rm_int_v16 <0x41, "phminposuw",
                                          int_x86_sse41_phminposuw>;
 
 /// SS41I_binop_rm_int - Simple SSE 4.1 binary operator
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
   multiclass SS41I_binop_rm_int<bits<8> opc, string OpcodeStr,
                                 Intrinsic IntId128, bit Commutable = 0> {
     def rr : SS48I<opc, MRMSrcReg, (outs VR128:$dst),
@@ -3193,7 +3193,7 @@ defm PMULDQ       : SS41I_binop_rm_int<0x28, "pmuldq",
 
 
 /// SS41I_binop_rm_int - Simple SSE 4.1 binary operator
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
   multiclass SS41I_binop_patint<bits<8> opc, string OpcodeStr, SDNode OpNode,
                                 Intrinsic IntId128, bit Commutable = 0> {
     def rr : SS48I<opc, MRMSrcReg, (outs VR128:$dst),
@@ -3228,7 +3228,7 @@ defm PMULLD       : SS41I_binop_patint<0x40, "pmulld", mul,
 
 
 /// SS41I_binop_rmi_int - SSE 4.1 binary operator with immediate
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
   multiclass SS41I_binop_rmi_int<bits<8> opc, string OpcodeStr,
                                  Intrinsic IntId128, bit Commutable = 0> {
     def rri : SS4AI<opc, MRMSrcReg, (outs VR128:$dst),
@@ -3266,7 +3266,7 @@ defm MPSADBW      : SS41I_binop_rmi_int<0x42, "mpsadbw",
 
 
 /// SS41I_binop_rmi_int - SSE 4.1 binary operator with immediate
-let Uses = [XMM0], isTwoAddress = 1 in {
+let Uses = [XMM0], Constraints = "$src1 = $dst" in {
   multiclass SS41I_ternary_int<bits<8> opc, string OpcodeStr, Intrinsic IntId> {
     def rr0 : SS48I<opc, MRMSrcReg, (outs VR128:$dst),
                     (ins VR128:$src1, VR128:$src2),
@@ -3412,7 +3412,7 @@ multiclass SS41I_extractf32<bits<8> opc, string OpcodeStr> {
 
 defm EXTRACTPS   : SS41I_extractf32<0x17, "extractps">;
 
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
   multiclass SS41I_insert8<bits<8> opc, string OpcodeStr> {
     def rr : SS4AI<opc, MRMSrcReg, (outs VR128:$dst),
                    (ins VR128:$src1, GR32:$src2, i32i8imm:$src3),
@@ -3432,7 +3432,7 @@ let isTwoAddress = 1 in {
 
 defm PINSRB      : SS41I_insert8<0x20, "pinsrb">;
 
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
   multiclass SS41I_insert32<bits<8> opc, string OpcodeStr> {
     def rr : SS4AI<opc, MRMSrcReg, (outs VR128:$dst),
                    (ins VR128:$src1, GR32:$src2, i32i8imm:$src3),
@@ -3453,7 +3453,7 @@ let isTwoAddress = 1 in {
 
 defm PINSRD      : SS41I_insert32<0x22, "pinsrd">;
 
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
   multiclass SS41I_insertf32<bits<8> opc, string OpcodeStr> {
     def rr : SS4AI<opc, MRMSrcReg, (outs VR128:$dst),
                    (ins VR128:$src1, FR32:$src2, i32i8imm:$src3),
