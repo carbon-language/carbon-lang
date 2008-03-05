@@ -486,7 +486,9 @@ static SDOperand ExpandConstantFP(ConstantFPSDNode *CFP, bool UseCP,
   // If a FP immediate is precise when represented as a float and if the
   // target can do an extending load from float to double, we put it into
   // the constant pool as a float, even if it's is statically typed as a
-  // double.
+  // double.  This shrinks FP constants and canonicalizes them for targets where
+  // an FP extending load is the same cost as a normal load (such as on the x87
+  // fp stack or PPC FP unit).
   MVT::ValueType VT = CFP->getValueType(0);
   ConstantFP *LLVMC = ConstantFP::get(MVT::getTypeForValueType(VT),
                                       CFP->getValueAPF());
@@ -505,7 +507,7 @@ static SDOperand ExpandConstantFP(ConstantFPSDNode *CFP, bool UseCP,
         // Only do this if the target has a native EXTLOAD instruction from
         // smaller type.
         TLI.isLoadXLegal(ISD::EXTLOAD, SVT) &&
-        TLI.ShouldShrinkFPConstant(VT)) {
+        TLI.ShouldShrinkFPConstant(OrigVT)) {
       const Type *SType = MVT::getTypeForValueType(SVT);
       LLVMC = cast<ConstantFP>(ConstantExpr::getFPTrunc(LLVMC, SType));
       VT = SVT;
