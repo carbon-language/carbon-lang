@@ -1266,6 +1266,13 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     // The only option for this is to custom lower it.
     Tmp3 = TLI.LowerOperation(Result.getValue(0), DAG);
     assert(Tmp3.Val && "Target didn't custom lower this node!");
+    // A call within a calling sequence must be legalized to something
+    // other than the normal CALLSEQ_END.  Violating this gets Legalize
+    // into an infinite loop.
+    assert ((!IsLegalizingCall ||
+             Node->getOpcode() != ISD::CALL ||
+             Tmp3.Val->getOpcode() != ISD::CALLSEQ_END) &&
+            "Nested CALLSEQ_START..CALLSEQ_END not supported.");
 
     // The number of incoming and outgoing values should match; unless the final
     // outgoing value is a flag.
