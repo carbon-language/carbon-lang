@@ -581,18 +581,19 @@ void Verifier::visitReturnInst(ReturnInst &RI) {
     Assert2(F->getReturnType() == Type::VoidTy,
             "Found return instr that returns void in Function of non-void "
             "return type!", &RI, F->getReturnType());
-  else if (N == 1)
-    Assert2(F->getReturnType() == RI.getOperand(0)->getType(),
-            "Function return type does not match operand "
-            "type of return inst!", &RI, F->getReturnType());
   else if (const StructType *STy = dyn_cast<StructType>(F->getReturnType())) {
     for (unsigned i = 0; i < N; i++)
       Assert2(STy->getElementType(i) == RI.getOperand(i)->getType(),
               "Function return type does not match operand "
               "type of return inst!", &RI, F->getReturnType());
-  } else
+  } 
+  else if (N == 1) 
+    Assert2(F->getReturnType() == RI.getOperand(0)->getType(),
+            "Function return type does not match operand "
+            "type of return inst!", &RI, F->getReturnType());
+  else
     Assert1(0, "Invalid return type!", &RI);
-
+  
   // Check to make sure that the return value has necessary properties for
   // terminators...
   visitTerminatorInst(RI);
