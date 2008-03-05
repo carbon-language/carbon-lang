@@ -862,8 +862,7 @@ bool LocalSpiller::PrepForUnfoldOpti(MachineBasicBlock &MBB,
     MachineInstr* DeadStore = MaybeDeadStores[FoldedSS];
     if (DeadStore && (MR & VirtRegMap::isModRef)) {
       unsigned PhysReg = Spills.getSpillSlotOrReMatPhysReg(FoldedSS);
-      if (!PhysReg ||
-          DeadStore->findRegisterUseOperandIdx(PhysReg, true) == -1)
+      if (!PhysReg || !DeadStore->readsRegister(PhysReg))
         continue;
       UnfoldPR = PhysReg;
       UnfoldedOpc = TII->getOpcodeAfterMemoryUnfold(MI.getOpcode(),
@@ -908,7 +907,7 @@ bool LocalSpiller::PrepForUnfoldOpti(MachineBasicBlock &MBB,
       assert(NewMIs.size() == 1);
       MachineInstr *NewMI = NewMIs.back();
       NewMIs.clear();
-      int Idx = NewMI->findRegisterUseOperandIdx(VirtReg);
+      int Idx = NewMI->findRegisterUseOperandIdx(VirtReg, false);
       assert(Idx != -1);
       SmallVector<unsigned, 2> Ops;
       Ops.push_back(Idx);
@@ -1410,7 +1409,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
           // the physreg.
           if (PhysReg &&
               !TII->isStoreToStackSlot(&MI, SS) && // Not profitable!
-              DeadStore->findRegisterUseOperandIdx(PhysReg, true) != -1 &&
+              DeadStore->killsRegister(PhysReg) &&
               TII->unfoldMemoryOperand(MF, &MI, PhysReg, false, true, NewMIs)) {
             MBB.insert(MII, NewMIs[0]);
             NewStore = NewMIs[1];

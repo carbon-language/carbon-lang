@@ -324,7 +324,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
 
       // If this redefinition is dead, we need to add a dummy unit live
       // range covering the def slot.
-      if (lv_->RegisterDefIsDead(mi, interval.reg))
+      if (mi->registerDefIsDead(interval.reg, tri_))
         interval.addRange(LiveRange(RedefIndex, RedefIndex+1, OldValNo));
 
       DOUT << " RESULT: ";
@@ -399,7 +399,7 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
   // If it is not used after definition, it is considered dead at
   // the instruction defining it. Hence its interval is:
   // [defSlot(def), defSlot(def)+1)
-  if (lv_->RegisterDefIsDead(mi, interval.reg)) {
+  if (mi->registerDefIsDead(interval.reg, tri_)) {
     DOUT << " dead";
     end = getDefIndex(start) + 1;
     goto exit;
@@ -410,11 +410,11 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
   // [defSlot(def), useSlot(kill)+1)
   while (++mi != MBB->end()) {
     baseIndex += InstrSlots::NUM;
-    if (lv_->KillsRegister(mi, interval.reg)) {
+    if (mi->killsRegister(interval.reg, tri_)) {
       DOUT << " killed";
       end = getUseIndex(baseIndex) + 1;
       goto exit;
-    } else if (lv_->ModifiesRegister(mi, interval.reg)) {
+    } else if (mi->modifiesRegister(interval.reg, tri_)) {
       // Another instruction redefines the register before it is ever read.
       // Then the register is essentially dead at the instruction that defines
       // it. Hence its interval is:
@@ -459,8 +459,9 @@ void LiveIntervals::handleRegisterDef(MachineBasicBlock *MBB,
     handlePhysicalRegisterDef(MBB, MI, MIIdx, getOrCreateInterval(reg), CopyMI);
     // Def of a register also defines its sub-registers.
     for (const unsigned* AS = tri_->getSubRegisters(reg); *AS; ++AS)
-      // Avoid processing some defs more than once.
-      if (!MI->findRegisterDefOperand(*AS))
+      // If MI also modifies the sub-register explicitly, avoid processing it
+      // more than once. Do not pass in TRI here so it checks for exact match.
+      if (!MI->modifiesRegister(*AS))
         handlePhysicalRegisterDef(MBB, MI, MIIdx, getOrCreateInterval(*AS), 0);
   }
 }
@@ -477,11 +478,11 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
   unsigned start = baseIndex;
   unsigned end = start;
   while (mi != MBB->end()) {
-    if (lv_->KillsRegister(mi, interval.reg)) {
+    if (mi->killsRegister(interval.reg, tri_)) {
       DOUT << " killed";
       end = getUseIndex(baseIndex) + 1;
       goto exit;
-    } else if (lv_->ModifiesRegister(mi, interval.reg)) {
+    } else if (mi->modifiesRegister(interval.reg, tri_)) {
       // Another instruction redefines the register before it is ever read.
       // Then the register is essentially dead at the instruction that defines
       // it. Hence its interval is:
@@ -842,9 +843,9 @@ void LiveIntervals::rewriteImplicitOps(const LiveInterval &li,
     if (!vrm.isReMaterialized(Reg))
       continue;
     MachineInstr *ReMatMI = vrm.getReMaterializedMI(Reg);
-    int OpIdx = ReMatMI->findRegisterUseOperandIdx(li.reg);
-    if (OpIdx != -1)
-      ReMatMI->getOperand(OpIdx).setReg(NewVReg);
+    MachineOperand *UseMO = ReMatMI->findRegisterUseOperand(li.reg);
+    if (UseMO)
+      UseMO->setReg(NewVReg);
   }
 }
 
@@ -1605,7 +1606,7 @@ addIntervalsForSpills(const LiveInterval &li,
         LiveRange *LR = &LI->ranges[LI->ranges.size()-1];
         unsigned LastUseIdx = getBaseIndex(LR->end);
         MachineInstr *LastUse = getInstructionFromIndex(LastUseIdx);
-        int UseIdx = LastUse->findRegisterUseOperandIdx(LI->reg);
+        int UseIdx = LastUse->findRegisterUseOperandIdx(LI->reg, false);
         assert(UseIdx != -1);
         if (LastUse->getOperand(UseIdx).isImplicit() ||
             LastUse->getDesc().getOperandConstraint(UseIdx,TOI::TIED_TO) == -1){

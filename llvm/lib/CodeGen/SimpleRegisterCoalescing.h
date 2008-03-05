@@ -206,10 +206,6 @@ namespace llvm {
     MachineOperand *lastRegisterUse(unsigned Start, unsigned End, unsigned Reg,
                                     unsigned &LastUseIdx) const;
 
-    /// findDefOperand - Returns the MachineOperand that is a def of the specific
-    /// register. It returns NULL if the def is not found.
-    MachineOperand *findDefOperand(MachineInstr *MI, unsigned Reg) const;
-
     void printRegName(unsigned reg) const;
   };
 

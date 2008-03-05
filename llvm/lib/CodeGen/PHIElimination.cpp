@@ -161,7 +161,7 @@ void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
     LV->removeVirtualRegistersKilled(MPhi);
 
     // If the result is dead, update LV.
-    if (LV->RegisterDefIsDead(MPhi, DestReg)) {
+    if (MPhi->registerDefIsDead(DestReg)) {
       LV->addVirtualRegisterDead(DestReg, PHICopy);
       LV->removeVirtualRegistersDead(MPhi);
     }

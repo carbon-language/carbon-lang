@@ -154,18 +154,6 @@ namespace {
 
 FunctionPass *llvm::createX86FloatingPointStackifierPass() { return new FPS(); }
 
-/// KillsRegister - Return true if the specified instruction kills (is the last
-/// use of) the specified register.  Note that this routine does not check for
-/// kills of subregisters.
-static bool KillsRegister(MachineInstr *MI, unsigned Reg) {
-  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-    MachineOperand &MO = MI->getOperand(i);
-    if (MO.isRegister() && MO.isKill() && MO.getReg() == Reg)
-      return true;
-  }
-  return false;
-}
-
 /// getFPReg - Return the X86::FPx register number for the specified operand.
 /// For example, this returns 3 for X86::FP3.
 static unsigned getFPReg(const MachineOperand &MO) {
@@ -610,7 +598,7 @@ void FPS::handleOneArgFP(MachineBasicBlock::iterator &I) {
 
   // Is this the last use of the source register?
   unsigned Reg = getFPReg(MI->getOperand(NumOps-1));
-  bool KillsSrc = KillsRegister(MI, X86::FP0+Reg);
+  bool KillsSrc = MI->killsRegister(X86::FP0+Reg);
 
   // FISTP64m is strange because there isn't a non-popping versions.
   // If we have one _and_ we don't want to pop the operand, duplicate the value
@@ -669,7 +657,7 @@ void FPS::handleOneArgFPRW(MachineBasicBlock::iterator &I) {
 
   // Is this the last use of the source register?
   unsigned Reg = getFPReg(MI->getOperand(1));
-  bool KillsSrc = KillsRegister(MI, X86::FP0+Reg);
+  bool KillsSrc = MI->killsRegister(X86::FP0+Reg);
 
   if (KillsSrc) {
     // If this is the last use of the source register, just make sure it's on
@@ -778,8 +766,8 @@ void FPS::handleTwoArgFP(MachineBasicBlock::iterator &I) {
   unsigned Dest = getFPReg(MI->getOperand(0));
   unsigned Op0 = getFPReg(MI->getOperand(NumOperands-2));
   unsigned Op1 = getFPReg(MI->getOperand(NumOperands-1));
-  bool KillsOp0 = KillsRegister(MI, X86::FP0+Op0);
-  bool KillsOp1 = KillsRegister(MI, X86::FP0+Op1);
+  bool KillsOp0 = MI->killsRegister(X86::FP0+Op0);
+  bool KillsOp1 = MI->killsRegister(X86::FP0+Op1);
 
   unsigned TOS = getStackEntry(0);
 
@@ -875,8 +863,8 @@ void FPS::handleCompareFP(MachineBasicBlock::iterator &I) {
   assert(NumOperands == 2 && "Illegal FUCOM* instruction!");
   unsigned Op0 = getFPReg(MI->getOperand(NumOperands-2));
   unsigned Op1 = getFPReg(MI->getOperand(NumOperands-1));
-  bool KillsOp0 = KillsRegister(MI, X86::FP0+Op0);
-  bool KillsOp1 = KillsRegister(MI, X86::FP0+Op1);
+  bool KillsOp0 = MI->killsRegister(X86::FP0+Op0);
+  bool KillsOp1 = MI->killsRegister(X86::FP0+Op1);
 
   // Make sure the first operand is on the top of stack, the other one can be
   // anywhere.
@@ -901,7 +889,7 @@ void FPS::handleCondMovFP(MachineBasicBlock::iterator &I) {
 
   unsigned Op0 = getFPReg(MI->getOperand(0));
   unsigned Op1 = getFPReg(MI->getOperand(2));
-  bool KillsOp1 = KillsRegister(MI, X86::FP0+Op1);
+  bool KillsOp1 = MI->killsRegister(X86::FP0+Op1);
 
   // The first operand *must* be on the top of the stack.
   moveToTop(Op0, I);
@@ -958,7 +946,7 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
     unsigned SrcReg = getFPReg(MI->getOperand(1));
     unsigned DestReg = getFPReg(MI->getOperand(0));
 
-    if (KillsRegister(MI, X86::FP0+SrcReg)) {
+    if (MI->killsRegister(X86::FP0+SrcReg)) {
       // If the input operand is killed, we can just change the owner of the
       // incoming stack slot into the result.
       unsigned Slot = getSlot(SrcReg);

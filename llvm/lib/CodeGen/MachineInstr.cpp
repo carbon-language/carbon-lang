@@ -532,25 +532,45 @@ bool MachineInstr::isDebugLabel() const {
 /// findRegisterUseOperandIdx() - Returns the MachineOperand that is a use of
 /// the specific register or -1 if it is not found. It further tightening
 /// the search criteria to a use that kills the register if isKill is true.
-int MachineInstr::findRegisterUseOperandIdx(unsigned Reg, bool isKill) const {
+int MachineInstr::findRegisterUseOperandIdx(unsigned Reg, bool isKill,
+                                          const TargetRegisterInfo *TRI) const {
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = getOperand(i);
-    if (MO.isRegister() && MO.isUse() && MO.getReg() == Reg)
+    if (!MO.isRegister() || !MO.isUse())
+      continue;
+    unsigned MOReg = MO.getReg();
+    if (!MOReg)
+      continue;
+    if (MOReg == Reg ||
+        (TRI &&
+         TargetRegisterInfo::isPhysicalRegister(MOReg) &&
+         TargetRegisterInfo::isPhysicalRegister(Reg) &&
+         TRI->isSubRegister(MOReg, Reg)))
       if (!isKill || MO.isKill())
         return i;
   }
   return -1;
 }
   
-/// findRegisterDefOperand() - Returns the MachineOperand that is a def of
-/// the specific register or NULL if it is not found.
-MachineOperand *MachineInstr::findRegisterDefOperand(unsigned Reg) {
+/// findRegisterDefOperandIdx() - Returns the operand index that is a def of
+/// the specific register or -1 if it is not found. It further tightening
+  /// the search criteria to a def that is dead the register if isDead is true.
+int MachineInstr::findRegisterDefOperandIdx(unsigned Reg, bool isDead,
+                                          const TargetRegisterInfo *TRI) const {
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
-    MachineOperand &MO = getOperand(i);
-    if (MO.isRegister() && MO.isDef() && MO.getReg() == Reg)
-      return &MO;
+    const MachineOperand &MO = getOperand(i);
+    if (!MO.isRegister() || !MO.isDef())
+      continue;
+    unsigned MOReg = MO.getReg();
+    if (MOReg == Reg ||
+        (TRI &&
+         TargetRegisterInfo::isPhysicalRegister(MOReg) &&
+         TargetRegisterInfo::isPhysicalRegister(Reg) &&
+         TRI->isSubRegister(MOReg, Reg)))
+      if (!isDead || MO.isDead())
+        return i;
   }
-  return NULL;
+  return -1;
 }
 
 /// findFirstPredOperandIdx() - Find the index of the first operand in the

@@ -138,14 +138,65 @@ public:
   ///
   bool isDebugLabel() const;
 
+  /// readsRegister - Return true if the MachineInstr reads the specified
+  /// register. If TargetRegisterInfo is passed, then it also checks if there
+  /// is a read of a super-register.
+  bool readsRegister(unsigned Reg, const TargetRegisterInfo *TRI = NULL) const {
+    return findRegisterUseOperandIdx(Reg, false, TRI) != -1;
+  }
+
+  /// killsRegister - Return true if the MachineInstr kills the specified
+  /// register. If TargetRegisterInfo is passed, then it also checks if there is
+  /// a kill of a super-register.
+  bool killsRegister(unsigned Reg, const TargetRegisterInfo *TRI = NULL) const {
+    return findRegisterUseOperandIdx(Reg, true, TRI) != -1;
+  }
+
+  /// modifiesRegister - Return true if the MachineInstr modifies the
+  /// specified register. If TargetRegisterInfo is passed, then it also checks
+  /// if there is a def of a super-register.
+  bool modifiesRegister(unsigned Reg,
+                        const TargetRegisterInfo *TRI = NULL) const {
+    return findRegisterDefOperandIdx(Reg, false, TRI) != -1;
+  }
+
+  /// registerDefIsDead - Returns true if the register is dead in this machine
+  /// instruction. If TargetRegisterInfo is passed, then it also checks
+  /// if there is a dead def of a super-register.
+  bool registerDefIsDead(unsigned Reg,
+                         const TargetRegisterInfo *TRI = NULL) const {
+    return findRegisterDefOperandIdx(Reg, true, TRI) != -1;
+  }
+
   /// findRegisterUseOperandIdx() - Returns the operand index that is a use of
   /// the specific register or -1 if it is not found. It further tightening
   /// the search criteria to a use that kills the register if isKill is true.
-  int findRegisterUseOperandIdx(unsigned Reg, bool isKill = false) const;
+  int findRegisterUseOperandIdx(unsigned Reg, bool isKill = false,
+                                const TargetRegisterInfo *TRI = NULL) const;
+
+  /// findRegisterUseOperand - Wrapper for findRegisterUseOperandIdx, it returns
+  /// a pointer to the MachineOperand rather than an index.
+  MachineOperand *findRegisterUseOperand(unsigned Reg,bool isKill = false,
+                                         const TargetRegisterInfo *TRI = NULL) {
+    int Idx = findRegisterUseOperandIdx(Reg, isKill, TRI);
+    return (Idx == -1) ? NULL : &getOperand(Idx);
+  }
   
-  /// findRegisterDefOperand() - Returns the MachineOperand that is a def of
-  /// the specific register or NULL if it is not found.
-  MachineOperand *findRegisterDefOperand(unsigned Reg);
+  /// findRegisterDefOperandIdx() - Returns the operand index that is a def of
+  /// the specific register or -1 if it is not found. It further tightening
+  /// the search criteria to a def that is dead the register if isDead is true.
+  /// If TargetRegisterInfo is passed, then it also checks if there is a def of
+  /// a super-register.
+  int findRegisterDefOperandIdx(unsigned Reg, bool isDead = false,
+                                const TargetRegisterInfo *TRI = NULL) const;
+
+  /// findRegisterDefOperand - Wrapper for findRegisterDefOperandIdx, it returns
+  /// a pointer to the MachineOperand rather than an index.
+  MachineOperand *findRegisterDefOperand(unsigned Reg,bool isDead = false,
+                                         const TargetRegisterInfo *TRI = NULL) {
+    int Idx = findRegisterDefOperandIdx(Reg, isDead, TRI);
+    return (Idx == -1) ? NULL : &getOperand(Idx);
+  }
 
   /// findFirstPredOperandIdx() - Find the index of the first operand in the
   /// operand list that is used to represent the predicate. It returns -1 if

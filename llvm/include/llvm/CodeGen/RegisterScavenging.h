@@ -127,7 +127,7 @@ public:
   }
 
 private:
-  const TargetRegisterInfo *RegInfo;
+  const TargetRegisterInfo *TRI;
   const TargetInstrInfo *TII;
 
   /// CalleeSavedrRegs - A bitvector of callee saved registers for the target.

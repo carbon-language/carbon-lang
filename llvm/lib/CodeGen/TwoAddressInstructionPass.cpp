@@ -139,7 +139,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
           // rearrange the code to make it so.  Making it the killing user will
           // allow us to coalesce A and B together, eliminating the copy we are
           // about to insert.
-          if (!LV.KillsRegister(mi, regB)) {
+          if (!mi->killsRegister(regB)) {
             // If this instruction is commutative, check to see if C dies.  If
             // so, swap the B and C operands.  This makes the live ranges of A
             // and C joinable.
@@ -148,7 +148,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
               assert(mi->getOperand(3-si).isRegister() &&
                      "Not a proper commutative instruction!");
               unsigned regC = mi->getOperand(3-si).getReg();
-              if (LV.KillsRegister(mi, regC)) {
+              if (mi->killsRegister(regC)) {
                 DOUT << "2addr: COMMUTING  : " << *mi;
                 MachineInstr *NewMI = TII.commuteInstruction(mi);
                 if (NewMI == 0) {

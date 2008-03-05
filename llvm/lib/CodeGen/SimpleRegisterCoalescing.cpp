@@ -307,7 +307,7 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
     MBB->insert(DefMI, NewMI);
     MBB->erase(DefMI);
   }
-  unsigned OpIdx = NewMI->findRegisterUseOperandIdx(IntA.reg);
+  unsigned OpIdx = NewMI->findRegisterUseOperandIdx(IntA.reg, false);
   NewMI->getOperand(OpIdx).setIsKill();
 
   // Update uses of IntA of the specific Val# with IntB.
@@ -588,7 +588,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
 
   // Check if it is necessary to propagate "isDead" property before intervals
   // are joined.
-  MachineOperand *mopd = CopyMI->findRegisterDefOperand(DstReg);
+  MachineOperand *mopd = CopyMI->findRegisterDefOperand(DstReg, false);
   bool isDead = mopd->isDead();
   bool isShorten = false;
   unsigned SrcStart = 0, RemoveStart = 0;
@@ -617,12 +617,9 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
         RemoveEnd = SrcEnd;
       } else {
         MachineInstr *SrcMI = li_->getInstructionFromIndex(SrcStart);
-        if (SrcMI) {
-          MachineOperand *mops = findDefOperand(SrcMI, SrcReg);
-          if (mops)
-            // A dead def should have a single cycle interval.
-            ++RemoveStart;
-        }
+        if (SrcMI && SrcMI->modifiesRegister(SrcReg, tri_))
+          // A dead def should have a single cycle interval.
+          ++RemoveStart;
       }
     }
   }
@@ -672,9 +669,9 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
       } else {
         MachineInstr *SrcMI = li_->getInstructionFromIndex(SrcStart);
         if (SrcMI) {
-          MachineOperand *mops = findDefOperand(SrcMI, SrcReg);
-          if (mops)
-            mops->setIsDead();
+          int DeadIdx = SrcMI->findRegisterDefOperandIdx(SrcReg, false, tri_);
+          if (DeadIdx != -1)
+            SrcMI->getOperand(DeadIdx).setIsDead();
         }
       }
     }
@@ -1461,20 +1458,6 @@ SimpleRegisterCoalescing::lastRegisterUse(unsigned Start, unsigned End,
 }
 
 
-/// findDefOperand - Returns the MachineOperand that is a def of the specific
-/// register. It returns NULL if the def is not found.
-/// FIXME: Move to MachineInstr.
-MachineOperand *SimpleRegisterCoalescing::findDefOperand(MachineInstr *MI,
-                                                         unsigned Reg) const {
-  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-    MachineOperand &MO = MI->getOperand(i);
-    if (MO.isRegister() && MO.isDef() &&
-        tri_->regsOverlap(MO.getReg(), Reg))
-      return &MO;
-  }
-  return NULL;
-}
-
 /// RemoveUnnecessaryKills - Remove kill markers that are no longer accurate
 /// due to live range lengthening as the result of coalescing.
 void SimpleRegisterCoalescing::printRegName(unsigned reg) const {
@@ -1548,7 +1531,7 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
       if (tii_->isMoveInstr(*mii, srcReg, dstReg) && srcReg == dstReg) {
         // remove from def list
         LiveInterval &RegInt = li_->getOrCreateInterval(srcReg);
-        MachineOperand *MO = mii->findRegisterDefOperand(dstReg);
+        MachineOperand *MO = mii->findRegisterDefOperand(dstReg, false);
         // If def of this move instruction is dead, remove its live range from
         // the dstination register's live interval.
         if (MO->isDead()) {

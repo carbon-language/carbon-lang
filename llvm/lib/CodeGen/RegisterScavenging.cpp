@@ -29,7 +29,7 @@ using namespace llvm;
 void RegScavenger::setUsed(unsigned Reg) {
   RegsAvailable.reset(Reg);
 
-  for (const unsigned *SubRegs = RegInfo->getSubRegisters(Reg);
+  for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
        unsigned SubReg = *SubRegs; ++SubRegs)
     RegsAvailable.reset(SubReg);
 }
@@ -38,7 +38,7 @@ void RegScavenger::setUsed(unsigned Reg) {
 void RegScavenger::setUnused(unsigned Reg) {
   RegsAvailable.set(Reg);
 
-  for (const unsigned *SubRegs = RegInfo->getSubRegisters(Reg);
+  for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
        unsigned SubReg = *SubRegs; ++SubRegs)
     RegsAvailable.set(SubReg);
 }
@@ -47,21 +47,21 @@ void RegScavenger::enterBasicBlock(MachineBasicBlock *mbb) {
   const MachineFunction &MF = *mbb->getParent();
   const TargetMachine &TM = MF.getTarget();
   TII = TM.getInstrInfo();
-  RegInfo = TM.getRegisterInfo();
+  TRI = TM.getRegisterInfo();
 
-  assert((NumPhysRegs == 0 || NumPhysRegs == RegInfo->getNumRegs()) &&
+  assert((NumPhysRegs == 0 || NumPhysRegs == TRI->getNumRegs()) &&
          "Target changed?");
 
   if (!MBB) {
-    NumPhysRegs = RegInfo->getNumRegs();
+    NumPhysRegs = TRI->getNumRegs();
     RegsAvailable.resize(NumPhysRegs);
 
     // Create reserved registers bitvector.
-    ReservedRegs = RegInfo->getReservedRegs(MF);
+    ReservedRegs = TRI->getReservedRegs(MF);
 
     // Create callee-saved registers bitvector.
     CalleeSavedRegs.resize(NumPhysRegs);
-    const unsigned *CSRegs = RegInfo->getCalleeSavedRegs();
+    const unsigned *CSRegs = TRI->getCalleeSavedRegs();
     if (CSRegs != NULL)
       for (unsigned i = 0; CSRegs[i]; ++i)
         CalleeSavedRegs.set(CSRegs[i]);
@@ -93,7 +93,7 @@ void RegScavenger::restoreScavengedReg() {
   TII->loadRegFromStackSlot(*MBB, MBBI, ScavengedReg,
                                 ScavengingFrameIndex, ScavengedRC);
   MachineBasicBlock::iterator II = prior(MBBI);
-  RegInfo->eliminateFrameIndex(II, 0, this);
+  TRI->eliminateFrameIndex(II, 0, this);
   setUsed(ScavengedReg);
   ScavengedReg = 0;
   ScavengedRC = NULL;
@@ -138,7 +138,7 @@ void RegScavenger::forward() {
     if (MO.isKill() && !isReserved(Reg)) {
       ChangedRegs.set(Reg);
 
-      for (const unsigned *SubRegs = RegInfo->getSubRegisters(Reg);
+      for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
            unsigned SubReg = *SubRegs; ++SubRegs)
         ChangedRegs.set(SubReg);
     }
@@ -210,7 +210,7 @@ void RegScavenger::backward() {
     ChangedRegs.set(Reg);
 
     // Set the sub-registers as "used".
-    for (const unsigned *SubRegs = RegInfo->getSubRegisters(Reg);
+    for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
          unsigned SubReg = *SubRegs; ++SubRegs)
       ChangedRegs.set(SubReg);
   }
@@ -267,12 +267,13 @@ unsigned RegScavenger::FindUnusedReg(const TargetRegisterClass *RegClass,
 /// calcDistanceToUse - Calculate the distance to the first use of the
 /// specified register.
 static unsigned calcDistanceToUse(MachineBasicBlock *MBB,
-                                  MachineBasicBlock::iterator I, unsigned Reg) {
+                                  MachineBasicBlock::iterator I, unsigned Reg,
+                                  const TargetRegisterInfo *TRI) {
   unsigned Dist = 0;
   I = next(I);
   while (I != MBB->end()) {
     Dist++;
-    if (I->findRegisterUseOperandIdx(Reg) != -1)
+    if (I->readsRegister(Reg, TRI))
         return Dist;
     I = next(I);    
   }
@@ -302,7 +303,7 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
   unsigned MaxDist = 0;
   int Reg = Candidates.find_first();
   while (Reg != -1) {
-    unsigned Dist = calcDistanceToUse(MBB, I, Reg);
+    unsigned Dist = calcDistanceToUse(MBB, I, Reg, TRI);
     if (Dist >= MaxDist) {
       MaxDist = Dist;
       SReg = Reg;
@@ -315,12 +316,12 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
     TII->loadRegFromStackSlot(*MBB, I, ScavengedReg,
                               ScavengingFrameIndex, ScavengedRC);
     MachineBasicBlock::iterator II = prior(I);
-    RegInfo->eliminateFrameIndex(II, SPAdj, this);
+    TRI->eliminateFrameIndex(II, SPAdj, this);
   }
 
   TII->storeRegToStackSlot(*MBB, I, SReg, true, ScavengingFrameIndex, RC);
   MachineBasicBlock::iterator II = prior(I);
-  RegInfo->eliminateFrameIndex(II, SPAdj, this);
+  TRI->eliminateFrameIndex(II, SPAdj, this);
   ScavengedReg = SReg;
   ScavengedRC = RC;
 

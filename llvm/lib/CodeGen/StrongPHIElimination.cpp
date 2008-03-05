@@ -351,10 +351,10 @@ static bool interferes(unsigned a, unsigned b, MachineBasicBlock* scan,
           break;
         }
       // Store KillInsts if they match up with the definition
-      } else if (LV.KillsRegister(curr, a)) {
+      } else if (curr->killsRegister(a)) {
         if (def == MRI->getVRegDef(a)) {
           kill = curr;
-        } else if (LV.KillsRegister(curr, b)) {
+        } else if (curr->killsRegister(b)) {
           if (def == MRI->getVRegDef(b)) {
             kill = curr;
           }
@@ -373,7 +373,7 @@ static bool interferes(unsigned a, unsigned b, MachineBasicBlock* scan,
           break;
         }
       // Save KillInsts of First
-      } else if (LV.KillsRegister(curr, a)) {
+      } else if (curr->killsRegister(a)) {
         kill = curr;
       }
     // Symmetric with the above
@@ -386,7 +386,7 @@ static bool interferes(unsigned a, unsigned b, MachineBasicBlock* scan,
           interference = false;
           break;
         }
-      } else if (LV.KillsRegister(curr, b)) {
+      } else if (curr->killsRegister(b)) {
         kill = curr;
       }
     }

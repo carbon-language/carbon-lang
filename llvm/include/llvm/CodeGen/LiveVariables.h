@@ -130,7 +130,7 @@ private:
 private:   // Intermediate data structures
   MachineFunction *MF;
 
-  const TargetRegisterInfo *RegInfo;
+  const TargetRegisterInfo *TRI;
 
   // PhysRegInfo - Keep track of which instruction was the last def/use of a
   // physical register. This is a purely local property, because all physical
@@ -175,18 +175,10 @@ public:
 
   virtual bool runOnMachineFunction(MachineFunction &MF);
 
-  /// KillsRegister - Return true if the specified instruction kills the
-  /// specified register.
-  bool KillsRegister(MachineInstr *MI, unsigned Reg) const;
-  
   /// RegisterDefIsDead - Return true if the specified instruction defines the
   /// specified register, but that definition is dead.
   bool RegisterDefIsDead(MachineInstr *MI, unsigned Reg) const;
 
-  /// ModifiesRegister - Return true if the specified instruction modifies the
-  /// specified register.
-  bool ModifiesRegister(MachineInstr *MI, unsigned Reg) const;
-  
   //===--------------------------------------------------------------------===//
   //  API to update live variable information
 
@@ -202,7 +194,7 @@ public:
   /// not found.
   void addVirtualRegisterKilled(unsigned IncomingReg, MachineInstr *MI,
                                 bool AddIfNotFound = false) {
-    if (MI->addRegisterKilled(IncomingReg, RegInfo, AddIfNotFound))
+    if (MI->addRegisterKilled(IncomingReg, TRI, AddIfNotFound))
       getVarInfo(IncomingReg).Kills.push_back(MI); 
   }
 
@@ -239,7 +231,7 @@ public:
   /// AddIfNotFound is true, add a implicit operand if it's not found.
   void addVirtualRegisterDead(unsigned IncomingReg, MachineInstr *MI,
                               bool AddIfNotFound = false) {
-    if (MI->addRegisterDead(IncomingReg, RegInfo, AddIfNotFound))
+    if (MI->addRegisterDead(IncomingReg, TRI, AddIfNotFound))
         getVarInfo(IncomingReg).Kills.push_back(MI);
   }
 

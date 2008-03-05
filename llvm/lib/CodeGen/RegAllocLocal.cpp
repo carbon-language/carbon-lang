@@ -306,8 +306,7 @@ void RALocal::spillVirtReg(MachineBasicBlock &MBB,
     // If the instruction reads the register that's spilled, (e.g. this can
     // happen if it is a move to a physical register), then the spill
     // instruction is not a kill.
-    bool isKill = !(I != MBB.end() &&
-                    I->findRegisterUseOperandIdx(PhysReg) != -1);
+    bool isKill = !(I != MBB.end() && I->readsRegister(PhysReg));
     TII->storeRegToStackSlot(MBB, I, PhysReg, isKill, FrameIndex, RC);
     ++NumStores;   // Update statistics
   }
