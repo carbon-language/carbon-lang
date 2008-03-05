@@ -1765,7 +1765,7 @@ def MOVDQUmr_Int :   I<0x7F, MRMDestMem, (outs), (ins i128mem:$dst, VR128:$src),
                        [(int_x86_sse2_storeu_dq addr:$dst, VR128:$src)]>,
                      XS, Requires<[HasSSE2]>;
 
-let isTwoAddress = 1 in {
+let Constraints = "$src1 = $dst" in {
 
 multiclass PDI_binop_rm_int<bits<8> opc, string OpcodeStr, Intrinsic IntId,
                             bit Commutable = 0> {
@@ -1866,6 +1866,7 @@ defm PSRAW : PDI_binop_rm_int<0xE1, "psraw", int_x86_sse2_psra_w>;
 defm PSRAD : PDI_binop_rm_int<0xE2, "psrad", int_x86_sse2_psra_d>;
 
 // Some immediate variants need to match a bit_convert.
+let Constraints = "$src1 = $dst" in {
 def PSLLWri : PDIi8<0x71, MRM6r, (outs VR128:$dst),
                                  (ins VR128:$src1, i32i8imm:$src2),
                     "psllw\t{$src2, $dst|$dst, $src2}",
@@ -1908,6 +1909,7 @@ def PSRADri : PDIi8<0x72, MRM4r, (outs VR128:$dst),
                     "psrad\t{$src2, $dst|$dst, $src2}",
                     [(set VR128:$dst, (int_x86_sse2_psra_d VR128:$src1,
                           (scalar_to_vector (i32 imm:$src2))))]>;
+}
 
 // PSRAQ doesn't exist in SSE[1-3].
 
