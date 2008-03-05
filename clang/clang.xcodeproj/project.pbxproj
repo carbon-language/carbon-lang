@@ -15,10 +15,8 @@
 		1A869AA80BA21ABA008DA07A /* LiteralSupport.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A869AA70BA21ABA008DA07A /* LiteralSupport.cpp */; };
 		1ABC36940C7A4BDC006DB0AB /* CGBuiltin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1ABC36930C7A4BDC006DB0AB /* CGBuiltin.cpp */; };
 		351318600CD14468006B66F7 /* DeclSerialization.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3513185F0CD14468006B66F7 /* DeclSerialization.cpp */; };
-		3513BD550C9F207900FA56C6 /* UninitializedValues.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3513BD540C9F207900FA56C6 /* UninitializedValues.cpp */; };
 		35260CA50C7F75C000D66CE9 /* ExprCXX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35260CA40C7F75C000D66CE9 /* ExprCXX.cpp */; };
 		352981090CC58344008B5E84 /* SerializationTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 352981080CC58344008B5E84 /* SerializationTest.cpp */; };
-		355CF6840C90A8D400A08AA3 /* DeadStores.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 355CF6830C90A8D400A08AA3 /* DeadStores.cpp */; };
 		356EF9B50C8F7DDF006650F5 /* LiveVariables.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 356EF9B40C8F7DDF006650F5 /* LiveVariables.cpp */; };
 		35707EFE0CD0F5CC000B2204 /* SourceLocation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35707EFD0CD0F5CC000B2204 /* SourceLocation.cpp */; };
 		3580CC0C0D072E5C00C5E4F4 /* LangOptions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3580CC0B0D072E5C00C5E4F4 /* LangOptions.cpp */; };
@@ -67,6 +65,19 @@
 		DE39857B0CB8ADCB00223765 /* ASTConsumers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE39857A0CB8ADCB00223765 /* ASTConsumers.cpp */; };
 		DE3986F00CB8D4B300223765 /* IdentifierTable.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE3986EF0CB8D4B300223765 /* IdentifierTable.h */; };
 		DE3986F40CB8D50C00223765 /* IdentifierTable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE3986F30CB8D50C00223765 /* IdentifierTable.cpp */; };
+		DE4121330D7F1C1C0080F80A /* ValueState.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE4121250D7F1C1C0080F80A /* ValueState.cpp */; };
+		DE4121340D7F1C1C0080F80A /* DeadStores.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE4121260D7F1C1C0080F80A /* DeadStores.cpp */; };
+		DE4121350D7F1C1C0080F80A /* SymbolManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE4121270D7F1C1C0080F80A /* SymbolManager.cpp */; };
+		DE4121360D7F1C1C0080F80A /* ExplodedGraph.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE4121280D7F1C1C0080F80A /* ExplodedGraph.cpp */; };
+		DE4121370D7F1C1C0080F80A /* UninitializedValues.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE4121290D7F1C1C0080F80A /* UninitializedValues.cpp */; };
+		DE4121380D7F1C1C0080F80A /* GRCoreEngine.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE41212A0D7F1C1C0080F80A /* GRCoreEngine.cpp */; };
+		DE4121390D7F1C1C0080F80A /* ValueManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE41212B0D7F1C1C0080F80A /* ValueManager.cpp */; };
+		DE41213A0D7F1C1C0080F80A /* LiveVariables.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE41212D0D7F1C1C0080F80A /* LiveVariables.cpp */; };
+		DE41213B0D7F1C1C0080F80A /* RValues.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE41212E0D7F1C1C0080F80A /* RValues.cpp */; };
+		DE41213C0D7F1C1C0080F80A /* GRSimpleVals.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE41212F0D7F1C1C0080F80A /* GRSimpleVals.cpp */; };
+		DE41213D0D7F1C1C0080F80A /* GRBlockCounter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE4121300D7F1C1C0080F80A /* GRBlockCounter.cpp */; };
+		DE41213E0D7F1C1C0080F80A /* GRExprEngine.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE4121310D7F1C1C0080F80A /* GRExprEngine.cpp */; };
+		DE41213F0D7F1C1C0080F80A /* ProgramPoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE4121320D7F1C1C0080F80A /* ProgramPoint.cpp */; };
 		DE4264FC0C113592005A861D /* CGDecl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE4264FB0C113592005A861D /* CGDecl.cpp */; };
 		DE46BF280AE0A82D00CC047C /* TargetInfo.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE46BF270AE0A82D00CC047C /* TargetInfo.h */; };
 		DE4772FA0C10EAE5002239E8 /* CGStmt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE4772F90C10EAE5002239E8 /* CGStmt.cpp */; };
@@ -233,7 +244,6 @@
 		1A869AA70BA21ABA008DA07A /* LiteralSupport.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = LiteralSupport.cpp; sourceTree = "<group>"; };
 		1ABC36930C7A4BDC006DB0AB /* CGBuiltin.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CGBuiltin.cpp; path = CodeGen/CGBuiltin.cpp; sourceTree = "<group>"; };
 		3513185F0CD14468006B66F7 /* DeclSerialization.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DeclSerialization.cpp; path = AST/DeclSerialization.cpp; sourceTree = "<group>"; };
-		3513BD540C9F207900FA56C6 /* UninitializedValues.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UninitializedValues.cpp; path = Analysis/UninitializedValues.cpp; sourceTree = "<group>"; };
 		35260CA40C7F75C000D66CE9 /* ExprCXX.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ExprCXX.cpp; path = AST/ExprCXX.cpp; sourceTree = "<group>"; };
 		352981080CC58344008B5E84 /* SerializationTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SerializationTest.cpp; path = Driver/SerializationTest.cpp; sourceTree = "<group>"; };
 		352C19DC0CA321C80045DB98 /* CFGRecStmtDeclVisitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CFGRecStmtDeclVisitor.h; path = clang/Analysis/Visitors/CFGRecStmtDeclVisitor.h; sourceTree = "<group>"; };
@@ -242,7 +252,6 @@
 		352C19DF0CA321C80045DB98 /* CFGVarDeclVisitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CFGVarDeclVisitor.h; path = clang/Analysis/Visitors/CFGVarDeclVisitor.h; sourceTree = "<group>"; };
 		3547129D0C88881300B3E1D5 /* PrettyPrinter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PrettyPrinter.h; path = clang/AST/PrettyPrinter.h; sourceTree = "<group>"; };
 		355CF6820C90A8B600A08AA3 /* LocalCheckers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LocalCheckers.h; path = clang/Analysis/LocalCheckers.h; sourceTree = "<group>"; };
-		355CF6830C90A8D400A08AA3 /* DeadStores.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DeadStores.cpp; path = Analysis/DeadStores.cpp; sourceTree = "<group>"; };
 		356EF9B40C8F7DDF006650F5 /* LiveVariables.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = LiveVariables.cpp; path = Analysis/LiveVariables.cpp; sourceTree = "<group>"; };
 		35707EFD0CD0F5CC000B2204 /* SourceLocation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SourceLocation.cpp; sourceTree = "<group>"; };
 		3580CC0B0D072E5C00C5E4F4 /* LangOptions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LangOptions.cpp; sourceTree = "<group>"; };
@@ -313,6 +322,20 @@
 		DE4121210D7F1BBE0080F80A /* GRExprEngine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GRExprEngine.h; path = clang/Analysis/PathSensitive/GRExprEngine.h; sourceTree = "<group>"; };
 		DE4121220D7F1BBE0080F80A /* GRTransferFuncs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GRTransferFuncs.h; path = clang/Analysis/PathSensitive/GRTransferFuncs.h; sourceTree = "<group>"; };
 		DE4121230D7F1BBE0080F80A /* GRCoreEngine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GRCoreEngine.h; path = clang/Analysis/PathSensitive/GRCoreEngine.h; sourceTree = "<group>"; };
+		DE4121250D7F1C1C0080F80A /* ValueState.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueState.cpp; path = Analysis/ValueState.cpp; sourceTree = "<group>"; };
+		DE4121260D7F1C1C0080F80A /* DeadStores.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DeadStores.cpp; path = Analysis/DeadStores.cpp; sourceTree = "<group>"; };
+		DE4121270D7F1C1C0080F80A /* SymbolManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SymbolManager.cpp; path = Analysis/SymbolManager.cpp; sourceTree = "<group>"; };
+		DE4121280D7F1C1C0080F80A /* ExplodedGraph.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ExplodedGraph.cpp; path = Analysis/ExplodedGraph.cpp; sourceTree = "<group>"; };
+		DE4121290D7F1C1C0080F80A /* UninitializedValues.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UninitializedValues.cpp; path = Analysis/UninitializedValues.cpp; sourceTree = "<group>"; };
+		DE41212A0D7F1C1C0080F80A /* GRCoreEngine.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GRCoreEngine.cpp; path = Analysis/GRCoreEngine.cpp; sourceTree = "<group>"; };
+		DE41212B0D7F1C1C0080F80A /* ValueManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueManager.cpp; path = Analysis/ValueManager.cpp; sourceTree = "<group>"; };
+		DE41212C0D7F1C1C0080F80A /* GRSimpleVals.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GRSimpleVals.h; path = Analysis/GRSimpleVals.h; sourceTree = "<group>"; };
+		DE41212D0D7F1C1C0080F80A /* LiveVariables.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = LiveVariables.cpp; path = Analysis/LiveVariables.cpp; sourceTree = "<group>"; };
+		DE41212E0D7F1C1C0080F80A /* RValues.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RValues.cpp; path = Analysis/RValues.cpp; sourceTree = "<group>"; };
+		DE41212F0D7F1C1C0080F80A /* GRSimpleVals.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GRSimpleVals.cpp; path = Analysis/GRSimpleVals.cpp; sourceTree = "<group>"; };
+		DE4121300D7F1C1C0080F80A /* GRBlockCounter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GRBlockCounter.cpp; path = Analysis/GRBlockCounter.cpp; sourceTree = "<group>"; };
+		DE4121310D7F1C1C0080F80A /* GRExprEngine.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GRExprEngine.cpp; path = Analysis/GRExprEngine.cpp; sourceTree = "<group>"; };
+		DE4121320D7F1C1C0080F80A /* ProgramPoint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ProgramPoint.cpp; path = Analysis/ProgramPoint.cpp; sourceTree = "<group>"; };
 		DE4264FB0C113592005A861D /* CGDecl.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = CGDecl.cpp; path = CodeGen/CGDecl.cpp; sourceTree = "<group>"; };
 		DE46BF270AE0A82D00CC047C /* TargetInfo.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = TargetInfo.h; sourceTree = "<group>"; };
 		DE4772F90C10EAE5002239E8 /* CGStmt.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = CGStmt.cpp; path = CodeGen/CGStmt.cpp; sourceTree = "<group>"; };
@@ -456,15 +479,6 @@
 			name = Visitors;
 			sourceTree = "<group>";
 		};
-		355CF6850C90A8D600A08AA3 /* LocalCheckers */ = {
-			isa = PBXGroup;
-			children = (
-				3513BD540C9F207900FA56C6 /* UninitializedValues.cpp */,
-				355CF6830C90A8D400A08AA3 /* DeadStores.cpp */,
-			);
-			name = LocalCheckers;
-			sourceTree = "<group>";
-		};
 		356EF9AF0C8F7DA4006650F5 /* Analysis */ = {
 			isa = PBXGroup;
 			children = (
@@ -482,7 +496,20 @@
 			isa = PBXGroup;
 			children = (
 				356EF9B40C8F7DDF006650F5 /* LiveVariables.cpp */,
-				355CF6850C90A8D600A08AA3 /* LocalCheckers */,
+				DE4121250D7F1C1C0080F80A /* ValueState.cpp */,
+				DE4121260D7F1C1C0080F80A /* DeadStores.cpp */,
+				DE4121270D7F1C1C0080F80A /* SymbolManager.cpp */,
+				DE4121280D7F1C1C0080F80A /* ExplodedGraph.cpp */,
+				DE4121290D7F1C1C0080F80A /* UninitializedValues.cpp */,
+				DE41212A0D7F1C1C0080F80A /* GRCoreEngine.cpp */,
+				DE41212B0D7F1C1C0080F80A /* ValueManager.cpp */,
+				DE41212C0D7F1C1C0080F80A /* GRSimpleVals.h */,
+				DE41212D0D7F1C1C0080F80A /* LiveVariables.cpp */,
+				DE41212E0D7F1C1C0080F80A /* RValues.cpp */,
+				DE41212F0D7F1C1C0080F80A /* GRSimpleVals.cpp */,
+				DE4121300D7F1C1C0080F80A /* GRBlockCounter.cpp */,
+				DE4121310D7F1C1C0080F80A /* GRExprEngine.cpp */,
+				DE4121320D7F1C1C0080F80A /* ProgramPoint.cpp */,
 			);
 			name = Analysis;
 			sourceTree = "<group>";
@@ -917,9 +944,7 @@
 				35260CA50C7F75C000D66CE9 /* ExprCXX.cpp in Sources */,
 				DE2255FC0C8004E600D370A5 /* ParseDeclCXX.cpp in Sources */,
 				356EF9B50C8F7DDF006650F5 /* LiveVariables.cpp in Sources */,
-				355CF6840C90A8D400A08AA3 /* DeadStores.cpp in Sources */,
 				DEF7D9F90C9C8B1D0001F598 /* Rewriter.cpp in Sources */,
-				3513BD550C9F207900FA56C6 /* UninitializedValues.cpp in Sources */,
 				35CFFE000CA1CBCB00E6F2BE /* StmtViz.cpp in Sources */,
 				DE39857B0CB8ADCB00223765 /* ASTConsumers.cpp in Sources */,
 				DE3986F40CB8D50C00223765 /* IdentifierTable.cpp in Sources */,
@@ -939,6 +964,19 @@
 				03F50AC60D416EAA00B9CF60 /* Targets.cpp in Sources */,
 				1A376A2D0D4AED9B002A1C52 /* CGExprConstant.cpp in Sources */,
 				DE38CD500D794D0100A273B6 /* CGObjCGNU.cpp in Sources */,
+				DE4121330D7F1C1C0080F80A /* ValueState.cpp in Sources */,
+				DE4121340D7F1C1C0080F80A /* DeadStores.cpp in Sources */,
+				DE4121350D7F1C1C0080F80A /* SymbolManager.cpp in Sources */,
+				DE4121360D7F1C1C0080F80A /* ExplodedGraph.cpp in Sources */,
+				DE4121370D7F1C1C0080F80A /* UninitializedValues.cpp in Sources */,
+				DE4121380D7F1C1C0080F80A /* GRCoreEngine.cpp in Sources */,
+				DE4121390D7F1C1C0080F80A /* ValueManager.cpp in Sources */,
+				DE41213A0D7F1C1C0080F80A /* LiveVariables.cpp in Sources */,
+				DE41213B0D7F1C1C0080F80A /* RValues.cpp in Sources */,
+				DE41213C0D7F1C1C0080F80A /* GRSimpleVals.cpp in Sources */,
+				DE41213D0D7F1C1C0080F80A /* GRBlockCounter.cpp in Sources */,
+				DE41213E0D7F1C1C0080F80A /* GRExprEngine.cpp in Sources */,
+				DE41213F0D7F1C1C0080F80A /* ProgramPoint.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
