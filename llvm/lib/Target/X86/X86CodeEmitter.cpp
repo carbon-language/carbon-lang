@@ -807,5 +807,10 @@ void Emitter::emitInstruction(const MachineInstr &MI,
     break;
   }
 
-  assert((Desc->isVariadic() || CurOp == NumOps) && "Unknown encoding!");
+  if (!Desc->isVariadic() && CurOp != NumOps) {
+    cerr << "Cannot encode: ";
+    MI.dump();
+    cerr << '\n';
+    abort();
+  }
 }
