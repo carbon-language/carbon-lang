@@ -8,9 +8,9 @@
 //===----------------------------------------------------------------------===//
 //
 // This file implements the machine register scavenger. It can provide
-// information such as unused register at any point in a machine basic block.
-// It also provides a mechanism to make registers availbale by evicting them
-// to spill slots.
+// information, such as unused registers, at any point in a machine basic block.
+// It also provides a mechanism to make registers available by evicting them to
+// spill slots.
 //
 //===----------------------------------------------------------------------===//
 
@@ -25,6 +25,28 @@
 #include "llvm/ADT/STLExtras.h"
 using namespace llvm;
 
+/// RedefinesSuperRegPart - Return true if the specified register is redefining
+/// part of a super-register.
+static bool RedefinesSuperRegPart(const MachineInstr *MI, unsigned SubReg,
+                                  const TargetRegisterInfo *TRI) {
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    const MachineOperand &MO = MI->getOperand(i);
+    if (!MO.isRegister() || !MO.isUse())
+      continue;
+    if (TRI->isSuperRegister(SubReg, MO.getReg()))
+      return true;
+  }
+
+  return false;
+}
+
+static bool RedefinesSuperRegPart(const MachineInstr *MI,
+                                  const MachineOperand &MO,
+                                  const TargetRegisterInfo *TRI) {
+  assert(MO.isRegister() && MO.isDef() && "Not a register def!");
+  return RedefinesSuperRegPart(MI, MO.getReg(), TRI);
+}
+
 /// setUsed - Set the register and its sub-registers as being used.
 void RegScavenger::setUsed(unsigned Reg) {
   RegsAvailable.reset(Reg);
@@ -35,12 +57,13 @@ void RegScavenger::setUsed(unsigned Reg) {
 }
 
 /// setUnused - Set the register and its sub-registers as being unused.
-void RegScavenger::setUnused(unsigned Reg) {
+void RegScavenger::setUnused(unsigned Reg, const MachineInstr *MI) {
   RegsAvailable.set(Reg);
 
   for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
        unsigned SubReg = *SubRegs; ++SubRegs)
-    RegsAvailable.set(SubReg);
+    if (!RedefinesSuperRegPart(MI, Reg, TRI))
+      RegsAvailable.set(SubReg);
 }
 
 void RegScavenger::enterBasicBlock(MachineBasicBlock *mbb) {
@@ -138,9 +161,12 @@ void RegScavenger::forward() {
     if (MO.isKill() && !isReserved(Reg)) {
       ChangedRegs.set(Reg);
 
+      // Mark sub-registers as changed if they aren't defined in the same
+      // instruction.
       for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
            unsigned SubReg = *SubRegs; ++SubRegs)
-        ChangedRegs.set(SubReg);
+        if (!RedefinesSuperRegPart(MI, Reg, TRI))
+          ChangedRegs.set(SubReg);
     }
   }
 
@@ -159,7 +185,7 @@ void RegScavenger::forward() {
 
     // If it's dead upon def, then it is now free.
     if (MO.isDead()) {
-      setUnused(Reg);
+      setUnused(Reg, MI);
       continue;
     }
 
@@ -168,6 +194,10 @@ void RegScavenger::forward() {
       assert(isUsed(Reg) && "Using an undefined register!");
       continue;
     }
+
+    // Skip is this is merely redefining part of a super-register.
+    if (RedefinesSuperRegPart(MI, MO, TRI))
+      continue;
 
     assert((isUnused(Reg) || isReserved(Reg)) &&
            "Re-defining a live register!");
@@ -194,7 +224,7 @@ void RegScavenger::backward() {
     unsigned Reg = MO.getReg();
     assert(isUsed(Reg));
     if (!isReserved(Reg))
-      setUnused(Reg);
+      setUnused(Reg, MI);
   }
 
   // Process uses.

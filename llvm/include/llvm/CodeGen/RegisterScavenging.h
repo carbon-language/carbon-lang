@@ -98,7 +98,7 @@ public:
   ///
   void setUsed(unsigned Reg);
   void setUsed(BitVector Regs)   { RegsAvailable &= ~Regs; }
-  void setUnused(unsigned Reg);
+  void setUnused(unsigned Reg, const MachineInstr *MI);
   void setUnused(BitVector Regs) { RegsAvailable |= Regs; }
 
   /// FindUnusedReg - Find a unused register of the specified register class
