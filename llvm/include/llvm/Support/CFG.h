@@ -34,14 +34,14 @@ public:
   typedef PredIterator<_Ptr,_USE_iterator> _Self;
   typedef typename super::pointer pointer;
 
-  inline void advancePastNonTerminators() {
-    // Loop to ignore non terminator uses (for example PHI nodes)...
-    while (!It.atEnd() && !isa<TerminatorInst>(*It))
+  inline void advancePastNonPreds() {
+    // Loop to ignore non predecessor uses (for example PHI nodes)...
+    while (!It.atEnd() && !isa<TerminatorInst>(*It) && !isa<BasicBlock>(*It))
       ++It;
   }
 
   inline PredIterator(_Ptr *bb) : It(bb->use_begin()) {
-    advancePastNonTerminators();
+    advancePastNonPreds();
   }
   inline PredIterator(_Ptr *bb, bool) : It(bb->use_end()) {}
 
@@ -50,13 +50,16 @@ public:
 
   inline pointer operator*() const {
     assert(!It.atEnd() && "pred_iterator out of range!");
-    return cast<TerminatorInst>(*It)->getParent();
+    if (isa<TerminatorInst>(*It))      // not dyn_cast due to const-correctness
+      return cast<TerminatorInst>(*It)->getParent();
+
+    return cast<_Ptr>(*It);
   }
   inline pointer *operator->() const { return &(operator*()); }
 
   inline _Self& operator++() {   // Preincrement
     assert(!It.atEnd() && "pred_iterator out of range!");
-    ++It; advancePastNonTerminators();
+    ++It; advancePastNonPreds();
     return *this;
   }
 
@@ -100,6 +103,8 @@ public:
   inline SuccIterator(Term_ T, bool)                       // end iterator
     : Term(T), idx(Term->getNumSuccessors()) {
     assert(T && "getTerminator returned null!");
+    if (Term->getParent()->getUnwindDest())
+      ++idx;
   }
 
   inline const _Self &operator=(const _Self &I) {
@@ -115,7 +120,12 @@ public:
   inline bool operator==(const _Self& x) const { return idx == x.idx; }
   inline bool operator!=(const _Self& x) const { return !operator==(x); }
 
-  inline pointer operator*() const { return Term->getSuccessor(idx); }
+  inline pointer operator*() const {
+    if (idx == Term->getNumSuccessors())
+      return Term->getParent()->getUnwindDest();
+
+    return Term->getSuccessor(idx);
+  }
   inline pointer operator->() const { return operator*(); }
 
   inline _Self& operator++() { ++idx; return *this; } // Preincrement
