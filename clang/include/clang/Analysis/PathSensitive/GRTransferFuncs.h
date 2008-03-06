@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This files defines GRTransferFuncs, which provides a base-class that
+//  This file defines GRTransferFuncs, which provides a base-class that
 //  defines an interface for transfer functions used by GRExprEngine.
 //
 //===----------------------------------------------------------------------===//

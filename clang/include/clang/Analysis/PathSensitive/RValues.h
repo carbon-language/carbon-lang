@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This files defines RVal, LVal, and NonLVal, classes that represent
+//  This file defines RVal, LVal, and NonLVal, classes that represent
 //  abstract r-values for use with path-sensitive value tracking.
 //
 //===----------------------------------------------------------------------===//

@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This files defines CFRefCount, which defines the transfer functions
+//  This file defines CFRefCount, which defines the transfer functions
 //  to implement the Core Foundation reference count checker.
 //
 //===----------------------------------------------------------------------===//

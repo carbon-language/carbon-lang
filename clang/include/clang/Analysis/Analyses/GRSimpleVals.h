@@ -9,7 +9,7 @@
 //
 //               Constant Propagation via Graph Reachability
 //
-//  This files defines the interface to use the 'GRSimpleVals' path-sensitive
+//  This file defines the interface to use the 'GRSimpleVals' path-sensitive
 //  constant-propagation analysis.
 //
 //===----------------------------------------------------------------------===//

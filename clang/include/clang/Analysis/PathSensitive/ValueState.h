@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This files defines SymbolID, ExprBindKey, and ValueState*
+//  This file defines SymbolID, ExprBindKey, and ValueState*
 //
 //===----------------------------------------------------------------------===//
 

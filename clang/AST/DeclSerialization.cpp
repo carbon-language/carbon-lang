@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This files defines methods that implement bitcode serialization for Decls.
+//  This file defines methods that implement bitcode serialization for Decls.
 //
 //===----------------------------------------------------------------------===//
 

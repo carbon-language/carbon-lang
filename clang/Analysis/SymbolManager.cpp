@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This files defines SymbolManager, a class that manages symbolic values
+//  This file defines SymbolManager, a class that manages symbolic values
 //  created for use by GRExprEngine and related classes.
 //
 //===----------------------------------------------------------------------===//

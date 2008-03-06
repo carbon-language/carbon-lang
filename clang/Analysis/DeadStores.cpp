@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This files defines a DeadStores, a flow-sensitive checker that looks for
+//  This file defines a DeadStores, a flow-sensitive checker that looks for
 //  stores to variables that are no longer live.
 //
 //===----------------------------------------------------------------------===//

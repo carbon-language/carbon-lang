@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This files defines the methods for CFRefCount, which implements
+//  This file defines the methods for CFRefCount, which implements
 //  a reference count checker for Core Foundation (Mac OS X).
 //
 //===----------------------------------------------------------------------===//

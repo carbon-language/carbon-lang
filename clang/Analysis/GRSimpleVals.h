@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This files defines GRSimpleVals, a sub-class of GRTransferFuncs that
+//  This file defines GRSimpleVals, a sub-class of GRTransferFuncs that
 //  provides transfer functions for performing simple value tracking with
 //  limited support for symbolics.
 //

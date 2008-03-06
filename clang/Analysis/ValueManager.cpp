@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This files defines ValueManager, a class that manages the lifetime of APSInt
+//  This file defines ValueManager, a class that manages the lifetime of APSInt
 //  objects and symbolic constraints used by GRExprEngine and related classes.
 //
 //===----------------------------------------------------------------------===//
