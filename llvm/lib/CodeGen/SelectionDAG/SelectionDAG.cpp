@@ -1741,10 +1741,12 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     unsigned BitWidth = MVT::getSizeInBits(VT);
     switch (Opcode) {
     default: break;
-    case ISD::SIGN_EXTEND: return getConstant(APInt(Val).sextOrTrunc(BitWidth), VT);
+    case ISD::SIGN_EXTEND:
+      return getConstant(APInt(Val).sextOrTrunc(BitWidth), VT);
     case ISD::ANY_EXTEND:
     case ISD::ZERO_EXTEND:
-    case ISD::TRUNCATE:    return getConstant(APInt(Val).zextOrTrunc(BitWidth), VT);
+    case ISD::TRUNCATE:
+      return getConstant(APInt(Val).zextOrTrunc(BitWidth), VT);
     case ISD::UINT_TO_FP:
     case ISD::SINT_TO_FP: {
       const uint64_t zero[] = {0, 0};
