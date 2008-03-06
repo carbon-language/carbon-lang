@@ -2029,7 +2029,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       APInt Val = N1C->getAPIntValue();
       unsigned FromBits = MVT::getSizeInBits(cast<VTSDNode>(N2)->getVT());
       Val <<= Val.getBitWidth()-FromBits;
-      Val = Val.lshr(Val.getBitWidth()-FromBits);
+      Val = Val.ashr(Val.getBitWidth()-FromBits);
       return getConstant(Val, VT);
     }
     break;
