@@ -1354,6 +1354,14 @@ SDOperand SPU::get_vec_u18imm(SDNode *N, SelectionDAG &DAG,
                               MVT::ValueType ValueType) {
   if (ConstantSDNode *CN = getVecImm(N)) {
     uint64_t Value = CN->getValue();
+    if (ValueType == MVT::i64) {
+      uint64_t UValue = CN->getValue();
+      uint32_t upper = uint32_t(UValue >> 32);
+      uint32_t lower = uint32_t(UValue);
+      if (upper != lower)
+        return SDOperand();
+      Value = Value >> 32;
+    }
     if (Value <= 0x3ffff)
       return DAG.getConstant(Value, ValueType);
   }
@@ -1368,6 +1376,14 @@ SDOperand SPU::get_vec_i16imm(SDNode *N, SelectionDAG &DAG,
                               MVT::ValueType ValueType) {
   if (ConstantSDNode *CN = getVecImm(N)) {
     int64_t Value = CN->getSignExtended();
+    if (ValueType == MVT::i64) {
+      uint64_t UValue = CN->getValue();
+      uint32_t upper = uint32_t(UValue >> 32);
+      uint32_t lower = uint32_t(UValue);
+      if (upper != lower)
+        return SDOperand();
+      Value = Value >> 32;
+    }
     if (Value >= -(1 << 15) && Value <= ((1 << 15) - 1)) {
       return DAG.getConstant(Value, ValueType);
     }
@@ -1383,6 +1399,14 @@ SDOperand SPU::get_vec_i10imm(SDNode *N, SelectionDAG &DAG,
                               MVT::ValueType ValueType) {
   if (ConstantSDNode *CN = getVecImm(N)) {
     int64_t Value = CN->getSignExtended();
+    if (ValueType == MVT::i64) {
+      uint64_t UValue = CN->getValue();
+      uint32_t upper = uint32_t(UValue >> 32);
+      uint32_t lower = uint32_t(UValue);
+      if (upper != lower)
+        return SDOperand();
+      Value = Value >> 32;
+    }
     if (isS10Constant(Value))
       return DAG.getConstant(Value, ValueType);
   }
@@ -1626,13 +1650,10 @@ static SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
     uint32_t upper = uint32_t(val >> 32);
     uint32_t lower = uint32_t(val);
 
-    if (val == 0) {
-      SDOperand Zero = DAG.getTargetConstant(0, MVT::i64);
-      return DAG.getNode(ISD::BUILD_VECTOR, VT, Zero, Zero);
-    } else if (val == 0xffffffffffffffffULL) {
-      // For -1, this and has a chance of matching immAllOnesV.
-      SDOperand NegOne = DAG.getTargetConstant(-1, MVT::i64);
-      return DAG.getNode(ISD::BUILD_VECTOR, VT, NegOne, NegOne);
+    if (upper == lower) {
+      // Magic constant that can be matched by IL, ILA, et. al.
+      SDOperand Val = DAG.getTargetConstant(val, MVT::i64);
+      return DAG.getNode(ISD::BUILD_VECTOR, VT, Val, Val);
     } else {
       SDOperand LO32;
       SDOperand HI32;
