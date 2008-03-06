@@ -39,7 +39,7 @@ GRBlockCounter::Factory::Factory(llvm::BumpPtrAllocator& Alloc) {
 }
 
 GRBlockCounter::Factory::~Factory() {
-  delete static_cast<CountMap*>(F);
+  delete static_cast<CountMap::Factory*>(F);
 }
 
 GRBlockCounter
