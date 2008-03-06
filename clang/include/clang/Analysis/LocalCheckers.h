@@ -27,7 +27,9 @@ void CheckDeadStores(CFG& cfg, FunctionDecl& FD, ASTContext &Ctx,
   
 void CheckUninitializedValues(CFG& cfg, ASTContext& Ctx, Diagnostic& Diags,
                               bool FullUninitTaint=false);
-
+  
+void CheckCFRefCount(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx,
+                     Diagnostic& Diag);
 
 } // end namespace clang
 

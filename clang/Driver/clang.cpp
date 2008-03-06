@@ -71,6 +71,7 @@ enum ProgActions {
   AnalysisLiveVariables,        // Print results of live-variable analysis.
   AnalysisGRSimpleVals,         // Perform graph-reachability constant prop.
   AnalysisGRSimpleValsView,     // Visualize results of path-sens. analysis.
+  CheckerCFRef,                 // Run the Core Foundation Ref. Count Checker.
   WarnDeadStores,               // Run DeadStores checker on parsed ASTs.
   WarnDeadStoresCheck,          // Check diagnostics for "DeadStores".
   WarnUninitVals,               // Run UnitializedVariables checker.
@@ -119,6 +120,8 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Perform path-sensitive constant propagation."),
              clEnumValN(AnalysisGRSimpleValsView, "grsimple-view",
                         "View results of path-sensitive constant propagation."),
+             clEnumValN(CheckerCFRef, "check-cfref",
+                        "Run the Core Foundation reference count checker."),
              clEnumValN(TestSerialization, "test-pickling",
                         "Run prototype serializtion code."),
              clEnumValN(EmitLLVM, "emit-llvm",
@@ -1037,6 +1040,9 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
       
     case AnalysisGRSimpleValsView:
       return CreateGRSimpleVals(Diag, AnalyzeSpecificFunction, true);
+      
+    case CheckerCFRef:
+      return CreateCFRefChecker(Diag, AnalyzeSpecificFunction);
       
     case TestSerialization:
       return CreateSerializationTest(Diag, FileMgr, LangOpts);

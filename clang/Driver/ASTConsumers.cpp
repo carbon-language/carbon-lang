@@ -636,6 +636,43 @@ void GRSimpleValsVisitor::VisitCFG(CFG& C, FunctionDecl& FD) {
   }    
 }
 
+
+//===----------------------------------------------------------------------===//
+// Core Foundation Reference Counting Checker
+
+namespace {
+  class CFRefCountCheckerVisitor : public CFGVisitor {
+    Diagnostic &Diags;
+    ASTContext* Ctx;
+    
+  public:
+    CFRefCountCheckerVisitor(Diagnostic &diags, const std::string& fname)
+      : CFGVisitor(fname), Diags(diags) {}
+    
+    virtual void Initialize(ASTContext &Context) { Ctx = &Context; }    
+    virtual void VisitCFG(CFG& C, FunctionDecl&);
+    virtual bool printFuncDeclStart() { return false; }
+  };
+} // end anonymous namespace
+
+
+ASTConsumer* clang::CreateCFRefChecker(Diagnostic &Diags,
+                                       const std::string& FunctionName) {
+  
+  return new CFRefCountCheckerVisitor(Diags, FunctionName);
+}
+
+void CFRefCountCheckerVisitor::VisitCFG(CFG& C, FunctionDecl& FD) {
+  
+  SourceLocation Loc = FD.getLocation();
+  
+  if (!Loc.isFileID() ||
+      Loc.getFileID() != Ctx->getSourceManager().getMainFileID())
+    return;
+     
+  CheckCFRefCount(C, FD, *Ctx, Diags);
+}
+
 //===----------------------------------------------------------------------===//
 // AST Serializer
 

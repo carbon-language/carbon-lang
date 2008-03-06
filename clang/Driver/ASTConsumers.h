@@ -45,6 +45,9 @@ ASTConsumer *CreateUnitValsChecker(Diagnostic &Diags);
 ASTConsumer *CreateGRSimpleVals(Diagnostic &Diags,
                                 const std::string& Function,
                                 bool Visualize = false);
+  
+ASTConsumer* CreateCFRefChecker(Diagnostic &Diags,
+                                const std::string& FunctionName); 
 
 ASTConsumer *CreateCodeRewriterTest(const std::string& InFile,
                                     Diagnostic &Diags);
