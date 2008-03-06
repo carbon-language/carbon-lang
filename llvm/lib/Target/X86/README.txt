@@ -1693,7 +1693,7 @@ LBB1_2:	# bb7
 	subl	%ecx, %eax
 	ret
 
-The coallescer could coallesce "edx" with "eax" to avoid the movl in LBB1_2
+The coalescer could coalesce "edx" with "eax" to avoid the movl in LBB1_2
 if it commuted the addl in LBB1_1.
 
 //===---------------------------------------------------------------------===//

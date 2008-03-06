@@ -522,7 +522,7 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
   }
 }
 
-/// processPHIUnion - Take a set of candidate registers to be coallesced when
+/// processPHIUnion - Take a set of candidate registers to be coalesced when
 /// decomposing the PHI instruction.  Use the DominanceForest to remove the ones
 /// that are known to interfere, and flag others that need to be checked for
 /// local interferences.
