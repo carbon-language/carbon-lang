@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This files defines constructor functions for instrumentation passes.
+// This file defines constructor functions for instrumentation passes.
 //
 //===----------------------------------------------------------------------===//
 

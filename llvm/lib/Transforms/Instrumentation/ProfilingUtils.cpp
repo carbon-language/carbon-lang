@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This files implements a few helper functions which are used by profile
+// This file implements a few helper functions which are used by profile
 // instrumentation code to instrument the code.  This allows the profiler pass
 // to worry about *what* to insert, and these functions take care of *how* to do
 // it.
