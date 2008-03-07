@@ -29,15 +29,20 @@ using namespace llvm;
 /// part of a super-register.
 static bool RedefinesSuperRegPart(const MachineInstr *MI, unsigned SubReg,
                                   const TargetRegisterInfo *TRI) {
+  bool SeenSuperUse = false;
+  bool SeenSuperDef = false;
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
-    if (!MO.isRegister() || !MO.isUse())
+    if (!MO.isRegister())
       continue;
     if (TRI->isSuperRegister(SubReg, MO.getReg()))
-      return true;
+      if (MO.isUse())
+        SeenSuperUse = true;
+      else if (MO.isImplicit())
+        SeenSuperDef = true;
   }
 
-  return false;
+  return SeenSuperDef && SeenSuperUse;
 }
 
 static bool RedefinesSuperRegPart(const MachineInstr *MI,
