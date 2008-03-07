@@ -516,8 +516,9 @@ static bool LinkGlobals(Module *Dest, Module *Src,
                            SGV->isConstant(), SGV->getLinkage(), /*init*/0,
                            "", Dest);
 
-      // Propagate alignment, section and visibility info.
+      // Set alignment allowing CopyGVAttributes merge it with alignment of SGV.
       NewDGV->setAlignment(DGV->getAlignment());
+      // Propagate alignment, section and visibility info.
       CopyGVAttributes(NewDGV, SGV);
 
       // Make sure to remember this mapping...
