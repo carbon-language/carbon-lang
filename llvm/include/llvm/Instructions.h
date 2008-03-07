@@ -1421,9 +1421,10 @@ public:
   virtual ReturnInst *clone() const;
 
   Value *getReturnValue(unsigned n = 0) const {
-    if (n == 0)
+    if (getNumOperands() > 1)
+      return getOperand(n);
+    else
       return RetVal;
-    return getOperand(n);
   }
 
   unsigned getNumSuccessors() const { return 0; }
