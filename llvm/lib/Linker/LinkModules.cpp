@@ -361,6 +361,9 @@ static void CopyGVAttributes(GlobalValue *DestGV, const GlobalValue *SrcGV) {
     DestF->setParamAttrs(SrcF->getParamAttrs());
     if (SrcF->hasCollector())
       DestF->setCollector(SrcF->getCollector());
+  } else if (const GlobalVariable *SrcVar = dyn_cast<GlobalVariable>(SrcGV)) {
+    GlobalVariable *DestVar = cast<GlobalVariable>(DestGV);
+    DestVar->setThreadLocal(SrcVar->isThreadLocal());
   }
 }
 
@@ -488,7 +491,7 @@ static bool LinkGlobals(Module *Dest, Module *Src,
       GlobalVariable *NewDGV =
         new GlobalVariable(SGV->getType()->getElementType(),
                            SGV->isConstant(), SGV->getLinkage(), /*init*/0,
-                           SGV->getName(), Dest, SGV->isThreadLocal());
+                           SGV->getName(), Dest);
       // Propagate alignment, visibility and section info.
       CopyGVAttributes(NewDGV, SGV);
 
@@ -511,9 +514,9 @@ static bool LinkGlobals(Module *Dest, Module *Src,
       GlobalVariable *NewDGV =
         new GlobalVariable(SGV->getType()->getElementType(),
                            SGV->isConstant(), SGV->getLinkage(), /*init*/0,
-                           "", Dest, SGV->isThreadLocal());
+                           "", Dest);
 
-      // Propagate alignment, section and visibility  info.
+      // Propagate alignment, section and visibility info.
       NewDGV->setAlignment(DGV->getAlignment());
       CopyGVAttributes(NewDGV, SGV);
 
@@ -523,17 +526,17 @@ static bool LinkGlobals(Module *Dest, Module *Src,
       // Keep track that this is an appending variable...
       AppendingVars.insert(std::make_pair(SGV->getName(), NewDGV));
     } else {
+      // Otherwise, perform the mapping as instructed by GetLinkageResult.
+
       // Propagate alignment, section, and visibility info.
       CopyGVAttributes(DGV, SGV);
 
-      // Otherwise, perform the mapping as instructed by GetLinkageResult.  If
-      // the types don't match, and if we are to link from the source, nuke DGV
-      // and create a new one of the appropriate type.
+      // If the types don't match, and if we are to link from the source, nuke
+      // DGV and create a new one of the appropriate type.
       if (SGV->getType() != DGV->getType() && LinkFromSrc) {
         GlobalVariable *NewDGV =
           new GlobalVariable(SGV->getType()->getElementType(),
                              DGV->isConstant(), DGV->getLinkage());
-        NewDGV->setThreadLocal(DGV->isThreadLocal());
         CopyGVAttributes(NewDGV, DGV);
         Dest->getGlobalList().insert(DGV, NewDGV);
         DGV->replaceAllUsesWith(
