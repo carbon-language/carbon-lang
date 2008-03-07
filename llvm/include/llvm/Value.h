@@ -163,7 +163,7 @@ public:
   /// to check for specific values.
   unsigned getNumUses() const;
 
-  /// addUse/killUse - These two methods should only be used by the Use class.
+  /// addUse - This method should only be used by the Use class.
   ///
   void addUse(Use &U) { U.addToList(&UseList); }
 
