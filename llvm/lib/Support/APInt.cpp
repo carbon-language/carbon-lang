@@ -1175,7 +1175,7 @@ APInt APInt::ashr(uint32_t shiftAmt) const {
 /// Logical right-shift this APInt by shiftAmt.
 /// @brief Logical right-shift function.
 APInt APInt::lshr(const APInt &shiftAmt) const {
-  return ashr(shiftAmt.getLimitedValue(BitWidth));
+  return lshr(shiftAmt.getLimitedValue(BitWidth));
 }
 
 /// Logical right-shift this APInt by shiftAmt.
