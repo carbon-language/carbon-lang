@@ -260,7 +260,7 @@ $(ObjDir)/%.cmx: $(ObjDir)/%.ml
 	$(Verb) $(Compile.CMX) $@ $<
 
 clean-cmxa::
-	$(Verb) $(RM) -f $(OutputCMXA) $(OutputCMXA:.cmxa=.o) $(OutputsCMX)
+	$(Verb) $(RM) -f $(OutputCMXA) $(OutputCMXA:.cmxa=.a) $(OutputsCMX)
 
 install-cmxa:: $(OutputCMXA) $(OutputsCMX)
 	$(Verb) $(MKDIR) $(PROJ_libocamldir)
