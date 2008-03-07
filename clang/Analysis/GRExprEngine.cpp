@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
+#include "clang/Basic/SourceManager.h"
 #include "llvm/Support/Streams.h"
 
 #ifndef NDEBUG
@@ -1563,6 +1564,7 @@ GRExprEngine::AssumeSymInt(ValueState* St, bool Assumption,
 
 #ifndef NDEBUG
 static GRExprEngine* GraphPrintCheckerState;
+static SourceManager* GraphPrintSourceManager;
 
 namespace llvm {
 template<>
@@ -1702,11 +1704,16 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
         break;
         
       case ProgramPoint::PostStmtKind: {
-        const PostStmt& L = cast<PostStmt>(Loc);
-        Out << L.getStmt()->getStmtClassName() << ':' 
-            << (void*) L.getStmt() << ' ';
+        const PostStmt& L = cast<PostStmt>(Loc);        
+        Stmt* S = L.getStmt();
+        SourceLocation SLoc = S->getLocStart();
+
+        Out << S->getStmtClassName() << ' ' << (void*) S << ' ';        
+        S->printPretty(Out);
         
-        L.getStmt()->printPretty(Out);
+        Out << "\\lline="
+          << GraphPrintSourceManager->getLineNumber(SLoc) << " col="
+          << GraphPrintSourceManager->getColumnNumber(SLoc) << "\\l";
         
         if (GraphPrintCheckerState->isImplicitNullDeref(N))
           Out << "\\|Implicit-Null Dereference.\\l";
@@ -1738,9 +1745,17 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
             << E.getDst()->getBlockID()  << ')';
         
         if (Stmt* T = E.getSrc()->getTerminator()) {
+          
+          SourceLocation SLoc = T->getLocStart();
+         
           Out << "\\|Terminator: ";
+          
           E.getSrc()->printTerminator(Out);
           
+          Out << "\\lline="
+            << GraphPrintSourceManager->getLineNumber(SLoc) << " col="
+            << GraphPrintSourceManager->getColumnNumber(SLoc);
+            
           if (isa<SwitchStmt>(T)) {
             Stmt* Label = E.getDst()->getLabel();
             
@@ -1798,7 +1813,9 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
 void GRExprEngine::ViewGraph() {
 #ifndef NDEBUG
   GraphPrintCheckerState = this;
+  GraphPrintSourceManager = &getContext().getSourceManager();
   llvm::ViewGraph(*G.roots_begin(), "GRExprEngine");
   GraphPrintCheckerState = NULL;
+  GraphPrintSourceManager = NULL;
 #endif
 }
