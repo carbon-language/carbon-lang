@@ -589,7 +589,8 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
                                                              ActualSize);
     BufferEnd = BufferBegin+ActualSize;
     unsigned char* FrameRegister = DE->EmitDwarfTable(F, *this, FnStart, FnEnd);
-    MemMgr->endExceptionTable(F.getFunction(), BufferBegin, CurBufferPtr, FrameRegister);
+    MemMgr->endExceptionTable(F.getFunction(), BufferBegin, CurBufferPtr,
+                              FrameRegister);
     BufferBegin = SavedBufferBegin;
     BufferEnd = SavedBufferEnd;
     CurBufferPtr = SavedCurBufferPtr;

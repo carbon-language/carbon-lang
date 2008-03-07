@@ -295,7 +295,8 @@ namespace {
     
     /// startExceptionTable - Use startFunctionBody to allocate memory for the 
     /// function's exception table.
-    unsigned char* startExceptionTable(const Function* F, uintptr_t &ActualSize) {
+    unsigned char* startExceptionTable(const Function* F, 
+                                       uintptr_t &ActualSize) {
       return startFunctionBody(F, ActualSize);
     }
 
