@@ -2084,6 +2084,8 @@ void Sema::HandleNothrowAttribute(Decl *d, AttributeList *rawAttr) {
   d->addAttr(new NoThrowAttr());
 }
 
+/// Handle __attribute__((format(type,idx,firstarg))) attributes
+/// based on http://gcc.gnu.org/onlinedocs/gcc/Function-Attributes.html
 void Sema::HandleFormatAttribute(Decl *d, AttributeList *rawAttr) {
 
   if (!rawAttr->getParameterName()) {
@@ -2105,9 +2107,16 @@ void Sema::HandleFormatAttribute(Decl *d, AttributeList *rawAttr) {
     return;
   }
 
+  const FunctionTypeProto *proto =
+      dyn_cast<FunctionTypeProto>(Fn->getType()->getAsFunctionType());
+  if (!proto)
+    return;
+
   // FIXME: in C++ the implicit 'this' function parameter also counts.
+  // this is needed in order to be compatible with GCC
   // the index must start in 1 and the limit is numargs+1
-  unsigned NumArgs = Fn->getNumParams()+1; // +1 for ...
+  unsigned NumArgs  = Fn->getNumParams();
+  unsigned FirstIdx = 1;
 
   const char *Format = rawAttr->getParameterName()->getName();
   unsigned FormatLen = rawAttr->getParameterName()->getLength();
@@ -2128,35 +2137,60 @@ void Sema::HandleFormatAttribute(Decl *d, AttributeList *rawAttr) {
     return;
   }
 
+  // checks for the 2nd argument
   Expr *IdxExpr = static_cast<Expr *>(rawAttr->getArg(0));
-  llvm::APSInt Idx(32);
+  llvm::APSInt Idx(Context.getTypeSize(IdxExpr->getType()));
   if (!IdxExpr->isIntegerConstantExpr(Idx, Context)) {
     Diag(rawAttr->getLoc(), diag::err_attribute_argument_n_not_int,
            "format", std::string("2"), IdxExpr->getSourceRange());
     return;
   }
 
-  if (Idx.getZExtValue() < 1 || Idx.getZExtValue() > NumArgs) {
+  if (Idx.getZExtValue() < FirstIdx || Idx.getZExtValue() > NumArgs) {
     Diag(rawAttr->getLoc(), diag::err_attribute_argument_out_of_bounds,
            "format", std::string("2"), IdxExpr->getSourceRange());
     return;
   }
 
+  // make sure the format string is really a string
+  QualType Ty = proto->getArgType(Idx.getZExtValue()-1);
+  if (!Ty->isPointerType() ||
+      !Ty->getAsPointerType()->getPointeeType()->isCharType()) {
+    Diag(rawAttr->getLoc(), diag::err_format_attribute_not_string,
+         IdxExpr->getSourceRange());
+    return;
+  }
+
+
+  // check the 3rd argument
   Expr *FirstArgExpr = static_cast<Expr *>(rawAttr->getArg(1));
-  llvm::APSInt FirstArg(32);
+  llvm::APSInt FirstArg(Context.getTypeSize(FirstArgExpr->getType()));
   if (!FirstArgExpr->isIntegerConstantExpr(FirstArg, Context)) {
     Diag(rawAttr->getLoc(), diag::err_attribute_argument_n_not_int,
            "format", std::string("3"), FirstArgExpr->getSourceRange());
     return;
   }
 
+  // check if the function is variadic if the 3rd argument non-zero
+  if (FirstArg != 0) {
+    if (proto->isVariadic()) {
+      ++NumArgs; // +1 for ...
+    } else {
+      Diag(d->getLocation(), diag::err_format_attribute_requires_variadic);
+      return;
+    }
+  }
+
+  // strftime requires FirstArg to be 0 because it doesn't read from any variable
+  // the input is just the current time + the format string
   if (FormatLen == 8 && !memcmp(Format, "strftime", 8)) {
-    if (FirstArg.getZExtValue() != 0) {
+    if (FirstArg != 0) {
       Diag(rawAttr->getLoc(), diag::err_format_strftime_third_parameter,
              FirstArgExpr->getSourceRange());
       return;
     }
-  } else if (FirstArg.getZExtValue() > NumArgs) {
+  // if 0 it disables parameter checking (to use with e.g. va_list)
+  } else if (FirstArg != 0 && FirstArg != NumArgs) {
     Diag(rawAttr->getLoc(), diag::err_attribute_argument_out_of_bounds,
            "format", std::string("3"), FirstArgExpr->getSourceRange());
     return;

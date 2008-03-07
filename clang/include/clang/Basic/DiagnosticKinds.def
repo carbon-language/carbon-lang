@@ -562,6 +562,10 @@ DIAG(err_attribute_argument_out_of_bounds, ERROR,
      "'%0' attribute parameter %1 is out of bounds")
 DIAG(err_format_strftime_third_parameter, ERROR,
      "strftime format attribute requires 3rd parameter to be 0")
+DIAG(err_format_attribute_requires_variadic, ERROR,
+     "format attribute requires variadic function")
+DIAG(err_format_attribute_not_string, ERROR,
+     "format argument not a string type")
 DIAG(err_attribute_invalid_size, ERROR,
      "vector size not an integral multiple of component size")
 DIAG(err_attribute_zero_size, ERROR,
