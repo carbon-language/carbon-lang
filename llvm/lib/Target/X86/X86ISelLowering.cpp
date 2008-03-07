@@ -215,7 +215,9 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8   , Legal);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1   , Expand);
   setOperationAction(ISD::FP_ROUND_INREG   , MVT::f32  , Expand);
+  setOperationAction(ISD::FREM             , MVT::f32  , Expand);
   setOperationAction(ISD::FREM             , MVT::f64  , Expand);
+  setOperationAction(ISD::FREM             , MVT::f80  , Expand);
   setOperationAction(ISD::FLT_ROUNDS_      , MVT::i32  , Custom);
   
   setOperationAction(ISD::CTPOP            , MVT::i8   , Expand);
@@ -358,10 +360,8 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     // We don't support sin/cos/fmod
     setOperationAction(ISD::FSIN , MVT::f64, Expand);
     setOperationAction(ISD::FCOS , MVT::f64, Expand);
-    setOperationAction(ISD::FREM , MVT::f64, Expand);
     setOperationAction(ISD::FSIN , MVT::f32, Expand);
     setOperationAction(ISD::FCOS , MVT::f32, Expand);
-    setOperationAction(ISD::FREM , MVT::f32, Expand);
 
     // Expand FP immediates into loads from the stack, except for the special
     // cases we handle.
@@ -398,7 +398,6 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     // We don't support sin/cos/fmod
     setOperationAction(ISD::FSIN , MVT::f32, Expand);
     setOperationAction(ISD::FCOS , MVT::f32, Expand);
-    setOperationAction(ISD::FREM , MVT::f32, Expand);
 
     // Special cases we handle for FP constants.
     addLegalFPImmediate(APFloat(+0.0f)); // xorps
