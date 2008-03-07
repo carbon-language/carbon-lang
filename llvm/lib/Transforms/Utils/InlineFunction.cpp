@@ -503,65 +503,74 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
   // Now that the function is correct, make it a little bit nicer.  In
   // particular, move the basic blocks inserted from the end of the function
   // into the space made by splitting the source basic block.
-  //
   Caller->getBasicBlockList().splice(AfterCallBB, Caller->getBasicBlockList(),
                                      FirstNewBlock, Caller->end());
 
   // Handle all of the return instructions that we just cloned in, and eliminate
   // any users of the original call/invoke instruction.
-  if (Returns.size() > 1) {
+  if (!Returns.empty()) {
     // The PHI node should go at the front of the new basic block to merge all
     // possible incoming values.
-    //
-    PHINode *PHI = 0;
+    SmallVector<PHINode *, 4> PHIs;
     if (!TheCall->use_empty()) {
-      PHI = new PHINode(CalledFunc->getReturnType(),
-                        TheCall->getName(), AfterCallBB->begin());
-
-      // Anything that used the result of the function call should now use the
-      // PHI node as their operand.
-      //
-      TheCall->replaceAllUsesWith(PHI);
+      const Type *RTy = CalledFunc->getReturnType();
+      if (const StructType *STy = dyn_cast<StructType>(RTy)) {
+        unsigned NumRetVals = STy->getNumElements();
+        // Create new phi nodes such that phi node number in the PHIs vector
+        // match corresponding return value operand number.
+        for (unsigned i = 0; i < NumRetVals; ++i) {
+          PHINode *PHI = new PHINode(STy->getElementType(i),
+                                     TheCall->getName(), AfterCallBB->begin());
+          PHIs.push_back(PHI);
+        }
+        // TheCall results are used by GetResult instructions. 
+        while (!TheCall->use_empty()) {
+          GetResultInst *GR = cast<GetResultInst>(TheCall->use_back());
+          GR->replaceAllUsesWith(PHIs[GR->getIndex()]);
+          GR->eraseFromParent();
+        }
+      } else {
+        PHINode *PHI = new PHINode(RTy, TheCall->getName(), AfterCallBB->begin());
+        PHIs.push_back(PHI);
+        // Anything that used the result of the function call should now use the
+        // PHI node as their operand.
+        TheCall->replaceAllUsesWith(PHI); 
+      } 
     }
 
-    // Loop over all of the return instructions, turning them into unconditional
-    // branches to the merge point now, and adding entries to the PHI node as
+    // Loop over all of the return instructions adding entries to the PHI node as
     // appropriate.
+    if (!PHIs.empty()) {
+      const Type *RTy = CalledFunc->getReturnType();
+      if (const StructType *STy = dyn_cast<StructType>(RTy)) {
+        unsigned NumRetVals = STy->getNumElements();
+        for (unsigned j = 0; j < NumRetVals; ++j) {
+          PHINode *PHI = PHIs[j];
+          // Each PHI node will receive one value from each return instruction.
+          for(unsigned i = 0, e = Returns.size(); i != e; ++i) {
+            ReturnInst *RI = Returns[i];
+            PHI->addIncoming(RI->getReturnValue(j /*PHI number matches operand number*/), 
+                             RI->getParent());
+          }
+        }
+      } else {
+        for (unsigned i = 0, e = Returns.size(); i != e; ++i) {
+          ReturnInst *RI = Returns[i];
+          assert(PHIs.size() == 1 && "Invalid number of PHI nodes");
+          assert(RI->getReturnValue() && "Ret should have value!");
+          assert(RI->getReturnValue()->getType() == PHIs[0]->getType() &&
+                 "Ret value not consistent in function!");
+          PHIs[0]->addIncoming(RI->getReturnValue(), RI->getParent());
+        }
+      }
+    }
+
+    // Add a branch to the merge points and remove retrun instructions.
     for (unsigned i = 0, e = Returns.size(); i != e; ++i) {
       ReturnInst *RI = Returns[i];
-
-      if (PHI) {
-        assert(RI->getReturnValue() && "Ret should have value!");
-        assert(RI->getReturnValue()->getType() == PHI->getType() &&
-               "Ret value not consistent in function!");
-        PHI->addIncoming(RI->getReturnValue(), RI->getParent());
-      }
-
-      // Add a branch to the merge point where the PHI node lives if it exists.
       new BranchInst(AfterCallBB, RI);
-
-      // Delete the return instruction now
       RI->getParent()->getInstList().erase(RI);
     }
-
-  } else if (!Returns.empty()) {
-    // Otherwise, if there is exactly one return value, just replace anything
-    // using the return value of the call with the computed value.
-    if (!TheCall->use_empty())
-      TheCall->replaceAllUsesWith(Returns[0]->getReturnValue());
-
-    // Splice the code from the return block into the block that it will return
-    // to, which contains the code that was after the call.
-    BasicBlock *ReturnBB = Returns[0]->getParent();
-    AfterCallBB->getInstList().splice(AfterCallBB->begin(),
-                                      ReturnBB->getInstList());
-
-    // Update PHI nodes that use the ReturnBB to use the AfterCallBB.
-    ReturnBB->replaceAllUsesWith(AfterCallBB);
-
-    // Delete the return instruction now and empty ReturnBB now.
-    Returns[0]->eraseFromParent();
-    ReturnBB->eraseFromParent();
   } else if (!TheCall->use_empty()) {
     // No returns, but something is using the return value of the call.  Just
     // nuke the result.
