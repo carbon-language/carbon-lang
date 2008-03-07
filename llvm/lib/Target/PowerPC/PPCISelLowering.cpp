@@ -1296,13 +1296,14 @@ static const unsigned *GetFPR(const PPCSubtarget &Subtarget) {
   return FPR;
 }
 
-SDOperand PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op, 
-                                       SelectionDAG &DAG,
-                                       int &VarArgsFrameIndex,
-                                       int &VarArgsStackOffset,
-                                       unsigned &VarArgsNumGPR,
-                                       unsigned &VarArgsNumFPR,
-                                       const PPCSubtarget &Subtarget) {
+SDOperand
+PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op, 
+                                         SelectionDAG &DAG,
+                                         int &VarArgsFrameIndex,
+                                         int &VarArgsStackOffset,
+                                         unsigned &VarArgsNumGPR,
+                                         unsigned &VarArgsNumFPR,
+                                         const PPCSubtarget &Subtarget) {
   // TODO: add description of PPC stack frame format, or at least some docs.
   //
   MachineFunction &MF = DAG.getMachineFunction();
@@ -1408,29 +1409,46 @@ SDOperand PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op,
     switch (ObjectVT) {
     default: assert(0 && "Unhandled argument type!");
     case MVT::i32:
-      // Double word align in ELF
-      if (Expand && isELF32_ABI) GPR_idx += (GPR_idx % 2);
-      if (GPR_idx != Num_GPR_Regs) {
-        unsigned VReg = RegInfo.createVirtualRegister(&PPC::GPRCRegClass);
-        RegInfo.addLiveIn(GPR[GPR_idx], VReg);
-        ArgVal = DAG.getCopyFromReg(Root, VReg, MVT::i32);
-        ++GPR_idx;
-      } else {
-        needsLoad = true;
-        ArgSize = PtrByteSize;
+      if (!isPPC64) {
+        // Double word align in ELF
+        if (Expand && isELF32_ABI) GPR_idx += (GPR_idx % 2);
+
+        if (GPR_idx != Num_GPR_Regs) {
+          unsigned VReg = RegInfo.createVirtualRegister(&PPC::GPRCRegClass);
+          RegInfo.addLiveIn(GPR[GPR_idx], VReg);
+          ArgVal = DAG.getCopyFromReg(Root, VReg, MVT::i32);
+          ++GPR_idx;
+        } else {
+          needsLoad = true;
+          ArgSize = PtrByteSize;
+        }
+        // Stack align in ELF
+        if (needsLoad && Expand && isELF32_ABI) 
+          ArgOffset += ((ArgOffset/4) % 2) * PtrByteSize;
+        // All int arguments reserve stack space in Macho ABI.
+        if (isMachoABI || needsLoad) ArgOffset += PtrByteSize;
+        break;
       }
-      // Stack align in ELF
-      if (needsLoad && Expand && isELF32_ABI) 
-        ArgOffset += ((ArgOffset/4) % 2) * PtrByteSize;
-      // All int arguments reserve stack space in Macho ABI.
-      if (isMachoABI || needsLoad) ArgOffset += PtrByteSize;
-      break;
-      
+      // FALLTHROUGH
     case MVT::i64:  // PPC64
       if (GPR_idx != Num_GPR_Regs) {
         unsigned VReg = RegInfo.createVirtualRegister(&PPC::G8RCRegClass);
         RegInfo.addLiveIn(GPR[GPR_idx], VReg);
         ArgVal = DAG.getCopyFromReg(Root, VReg, MVT::i64);
+
+        if (ObjectVT == MVT::i32) {
+          // PPC64 passes i8, i16, and i32 values in i64 registers. Promote
+          // value to MVT::i64 and then truncate to the correct register size.
+          if (Flags & ISD::ParamFlags::SExt)
+            ArgVal = DAG.getNode(ISD::AssertSext, MVT::i64, ArgVal,
+                                 DAG.getValueType(ObjectVT));
+          else if (Flags & ISD::ParamFlags::ZExt)
+            ArgVal = DAG.getNode(ISD::AssertZext, MVT::i64, ArgVal,
+                                 DAG.getValueType(ObjectVT));
+
+          ArgVal = DAG.getNode(ISD::TRUNCATE, MVT::i32, ArgVal);
+        }
+
         ++GPR_idx;
       } else {
         needsLoad = true;
@@ -1620,7 +1638,7 @@ static SDNode *isBLACompatibleAddress(SDOperand Op, SelectionDAG &DAG) {
 /// does not fit in registers.
 static SDOperand 
 CreateCopyOfByValArgument(SDOperand Src, SDOperand Dst, SDOperand Chain,
-                           unsigned Flags, SelectionDAG &DAG, unsigned Size) {
+                          unsigned Flags, SelectionDAG &DAG, unsigned Size) {
   unsigned Align = 1 <<
     ((Flags & ISD::ParamFlags::ByValAlign) >> ISD::ParamFlags::ByValAlignOffs);
   SDOperand AlignNode    = DAG.getConstant(Align, MVT::i32);
@@ -1742,7 +1760,6 @@ SDOperand PPCTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG,
     // On PPC64, promote integers to 64-bit values.
     if (isPPC64 && Arg.getValueType() == MVT::i32) {
       unsigned ExtOp = (Flags & 1) ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND;
-
       Arg = DAG.getNode(ExtOp, MVT::i64, Arg);
     }
 
