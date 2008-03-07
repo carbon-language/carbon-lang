@@ -289,13 +289,13 @@ def CMPLDI : DForm_6_ext<10, (outs CRRC:$dst), (ins G8RC:$src1, u16imm:$src2),
 
 def SLD  : XForm_6<31,  27, (outs G8RC:$rA), (ins G8RC:$rS, GPRC:$rB),
                    "sld $rA, $rS, $rB", IntRotateD,
-                   [(set G8RC:$rA, (shl G8RC:$rS, GPRC:$rB))]>, isPPC64;
+                   [(set G8RC:$rA, (PPCshl G8RC:$rS, GPRC:$rB))]>, isPPC64;
 def SRD  : XForm_6<31, 539, (outs G8RC:$rA), (ins G8RC:$rS, GPRC:$rB),
                    "srd $rA, $rS, $rB", IntRotateD,
-                   [(set G8RC:$rA, (srl G8RC:$rS, GPRC:$rB))]>, isPPC64;
+                   [(set G8RC:$rA, (PPCsrl G8RC:$rS, GPRC:$rB))]>, isPPC64;
 def SRAD : XForm_6<31, 794, (outs G8RC:$rA), (ins G8RC:$rS, GPRC:$rB),
                    "srad $rA, $rS, $rB", IntRotateD,
-                   [(set G8RC:$rA, (sra G8RC:$rS, GPRC:$rB))]>, isPPC64;
+                   [(set G8RC:$rA, (PPCsra G8RC:$rS, GPRC:$rB))]>, isPPC64;
                    
 def EXTSB8 : XForm_11<31, 954, (outs G8RC:$rA), (ins G8RC:$rS),
                       "extsb $rA, $rS", IntGeneral,
@@ -578,6 +578,16 @@ def : Pat<(extloadi32 iaddr:$src),
           (LWZ8 iaddr:$src)>;
 def : Pat<(extloadi32 xaddr:$src),
           (LWZX8 xaddr:$src)>;
+
+// Standard shifts.  These are represented separately from the real shifts above
+// so that we can distinguish between shifts that allow 6-bit and 7-bit shift
+// amounts.
+def : Pat<(sra G8RC:$rS, GPRC:$rB),
+          (SRAD G8RC:$rS, GPRC:$rB)>;
+def : Pat<(srl G8RC:$rS, GPRC:$rB),
+          (SRD G8RC:$rS, GPRC:$rB)>;
+def : Pat<(shl G8RC:$rS, GPRC:$rB),
+          (SLD G8RC:$rS, GPRC:$rB)>;
 
 // SHL/SRL
 def : Pat<(shl G8RC:$in, (i32 imm:$imm)),
