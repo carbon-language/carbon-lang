@@ -24,6 +24,7 @@ class ModulePass;
 class Pass;
 class Function;
 class BasicBlock;
+class GlobalValue;
 
 //===----------------------------------------------------------------------===//
 //
@@ -85,6 +86,14 @@ ModulePass *createGlobalDCEPass();
 ModulePass *createFunctionExtractionPass(Function *F, bool deleteFn = false,
                                          bool relinkCallees = false);
 
+//===----------------------------------------------------------------------===//
+/// createGVExtractionPass - If deleteFn is true, this pass deletes as
+/// the specified global values. Otherwise, it deletes as much of the module as
+/// possible, except for the global values specified.
+///
+ModulePass *createGVExtractionPass(std::vector<GlobalValue*>& GVs, bool 
+                                   deleteFn = false, 
+                                   bool relinkCallees = false);
 
 //===----------------------------------------------------------------------===//
 /// createFunctionInliningPass - Return a new pass object that uses a heuristic

@@ -39,16 +39,21 @@ static cl::opt<bool>
 Force("f", cl::desc("Overwrite output files"));
 
 static cl::opt<bool>
-DeleteFn("delete", cl::desc("Delete specified function from Module"));
+DeleteFn("delete", cl::desc("Delete specified Globals from Module"));
 
 static cl::opt<bool>
 Relink("relink",
        cl::desc("Turn external linkage for callees of function to delete"));
 
-// ExtractFunc - The function to extract from the module... defaults to main.
+// ExtractFunc - The function to extract from the module... 
 static cl::opt<std::string>
-ExtractFunc("func", cl::desc("Specify function to extract"), cl::init("main"),
+ExtractFunc("func", cl::desc("Specify function to extract"), cl::init(""),
             cl::value_desc("function"));
+
+// ExtractGlobal - The global to extract from the module...
+static cl::opt<std::string>
+ExtractGlobal("glob", cl::desc("Specify global to extract"), cl::init(""),
+              cl::value_desc("global"));
 
 int main(int argc, char **argv) {
   llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
@@ -72,10 +77,17 @@ int main(int argc, char **argv) {
   }
 
   // Figure out which function we should extract
-  Function *F = M.get()->getFunction(ExtractFunc);
-  if (F == 0) {
+  GlobalVariable *G = ExtractGlobal.size() ? 
+    M.get()->getNamedGlobal(ExtractGlobal) : 0;
+
+  // Figure out which function we should extract
+  Function *F = ExtractFunc.size() ? 
+    M.get()->getFunction(ExtractFunc) :
+    M.get()->getFunction("main");
+
+  if (F == 0 && G == 0) {
     cerr << argv[0] << ": program doesn't contain function named '"
-         << ExtractFunc << "'!\n";
+         << ExtractFunc << "' or a global named '" << ExtractGlobal << "'!\n";
     return 1;
   }
 
@@ -84,7 +96,11 @@ int main(int argc, char **argv) {
   PassManager Passes;
   Passes.add(new TargetData(M.get())); // Use correct TargetData
   // Either isolate the function or delete it from the Module
-  Passes.add(createFunctionExtractionPass(F, DeleteFn, Relink));
+  std::vector<GlobalValue*> GVs;
+  if (F) GVs.push_back(F);
+  if (G) GVs.push_back(G);
+
+  Passes.add(createGVExtractionPass(GVs, DeleteFn, Relink));
   if (!DeleteFn)
     Passes.add(createGlobalDCEPass());           // Delete unreachable globals
   Passes.add(createDeadTypeEliminationPass());   // Remove dead types...
