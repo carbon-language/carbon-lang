@@ -280,6 +280,8 @@ private:
   void HandleVisibilityAttribute(Decl *d, AttributeList *rawAttr);
   void HandleNothrowAttribute(Decl *d, AttributeList *rawAttr);
   void HandleFormatAttribute(Decl *d, AttributeList *rawAttr);
+  void HandleStdCallAttribute(Decl *d, AttributeList *rawAttr);
+  void HandleFastCallAttribute(Decl *d, AttributeList *rawAttr);
   
   void WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
                            bool &IncompleteImpl);
@@ -501,7 +503,7 @@ public:
                                        SourceLocation *CommaLocs,
                                        SourceLocation BuiltinLoc, 
                                        SourceLocation RParenLoc);
-  
+
   // __builtin_va_arg(expr, type)
   virtual ExprResult ActOnVAArg(SourceLocation BuiltinLoc,
                                 ExprTy *expr, TypeTy *type,

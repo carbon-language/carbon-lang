@@ -65,11 +65,13 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     if (!memcmp(Str, "aligned", 7)) return AT_aligned;
     if (!memcmp(Str, "nothrow", 7)) return AT_nothrow;
     if (!memcmp(Str, "nonnull", 7)) return AT_nonnull;
+    if (!memcmp(Str, "stdcall", 7)) return AT_stdcall;
     break;
   case 8:
     if (!memcmp(Str, "annotate", 8)) return AT_annotate;
     if (!memcmp(Str, "noreturn", 8)) return AT_noreturn;
     if (!memcmp(Str, "noinline", 8)) return AT_noinline;
+    if (!memcmp(Str, "fastcall", 8)) return AT_fastcall;
     break;
   case 9:
     if (!memcmp(Str, "dllimport", 9)) return AT_dllimport;

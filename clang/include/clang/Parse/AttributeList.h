@@ -60,6 +60,8 @@ public:
     AT_dllimport,
     AT_dllexport,
     AT_visibility,
+    AT_fastcall,
+    AT_stdcall,
     AT_nothrow,
     AT_noinline,
     AT_warn_unused_result

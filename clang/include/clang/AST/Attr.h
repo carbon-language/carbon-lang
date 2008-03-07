@@ -34,7 +34,9 @@ public:
     DLLExport,
     NoThrow,
     Format,
-    Visibility
+    Visibility,
+    FastCall,
+    StdCall
   };
     
 private:
@@ -194,6 +196,26 @@ public:
 
   static bool classof(const Attr *A) { return A->getKind() == DLLExport; }
   static bool classof(const DLLExportAttr *A) { return true; }
+};
+
+class FastCallAttr : public Attr {
+public:
+  FastCallAttr() : Attr(FastCall) {}
+
+  // Implement isa/cast/dyncast/etc.
+
+  static bool classof(const Attr *A) { return A->getKind() == FastCall; }
+  static bool classof(const FastCallAttr *A) { return true; }
+};
+
+class StdCallAttr : public Attr {
+public:
+  StdCallAttr() : Attr(StdCall) {}
+
+  // Implement isa/cast/dyncast/etc.
+
+  static bool classof(const Attr *A) { return A->getKind() == StdCall; }
+  static bool classof(const StdCallAttr *A) { return true; }
 };
 
 }  // end namespace clang

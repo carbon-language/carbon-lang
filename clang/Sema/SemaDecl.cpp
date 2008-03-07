@@ -1811,6 +1811,12 @@ void Sema::HandleDeclAttribute(Decl *New, AttributeList *Attr) {
   case AttributeList::AT_nothrow:
     HandleNothrowAttribute(New, Attr);
     break;
+  case AttributeList::AT_stdcall:
+    HandleStdCallAttribute(New, Attr);
+    break;
+  case AttributeList::AT_fastcall:
+    HandleFastCallAttribute(New, Attr);
+    break;
   case AttributeList::AT_aligned:
     HandleAlignedAttribute(New, Attr);
     break;
@@ -2071,6 +2077,28 @@ void Sema::HandleDLLExportAttribute(Decl *d, AttributeList *rawAttr) {
   }
 
   d->addAttr(new DLLExportAttr());
+}
+
+void Sema::HandleStdCallAttribute(Decl *d, AttributeList *rawAttr) {
+  // check the attribute arguments.
+  if (rawAttr->getNumArgs() != 0) {
+    Diag(rawAttr->getLoc(), diag::err_attribute_wrong_number_arguments,
+         std::string("0"));
+    return;
+  }
+
+  d->addAttr(new StdCallAttr());
+}
+
+void Sema::HandleFastCallAttribute(Decl *d, AttributeList *rawAttr) {
+  // check the attribute arguments.
+  if (rawAttr->getNumArgs() != 0) {
+    Diag(rawAttr->getLoc(), diag::err_attribute_wrong_number_arguments,
+         std::string("0"));
+    return;
+  }
+
+  d->addAttr(new FastCallAttr());
 }
 
 void Sema::HandleNothrowAttribute(Decl *d, AttributeList *rawAttr) {

@@ -15,6 +15,7 @@
 #include "CodeGenModule.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/AST/AST.h"
+#include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
@@ -75,6 +76,9 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
     CurFn->setLinkage(llvm::Function::WeakLinkage);
   else if (FD->getStorageClass() == FunctionDecl::Static)
     CurFn->setLinkage(llvm::Function::InternalLinkage);
+
+  if (FD->getAttr<FastCallAttr>())
+    CurFn->setCallingConv(llvm::CallingConv::Fast);
 
   if (const VisibilityAttr *attr = FD->getAttr<VisibilityAttr>())
     CurFn->setVisibility(attr->getVisibility());
