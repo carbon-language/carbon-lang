@@ -170,8 +170,7 @@ void RegScavenger::forward() {
       // instruction.
       for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
            unsigned SubReg = *SubRegs; ++SubRegs)
-        if (!RedefinesSuperRegPart(MI, Reg, TRI))
-          ChangedRegs.set(SubReg);
+        ChangedRegs.set(SubReg);
     }
   }
 
