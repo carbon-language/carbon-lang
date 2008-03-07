@@ -98,9 +98,15 @@ protected:
   ///  taking a dereference on an undefined value.
   BadDerefTy UndefDeref;
 
-  /// BadDivides - Nodes in the ExplodedGraph that result from evaluating
-  ///  a divide-by-zero or divide-by-undefined.
-  BadDividesTy BadDivides;
+  /// ImplicitBadDivides - Nodes in the ExplodedGraph that result from 
+  ///  evaluating a divide or modulo operation where the denominator
+  ///  MAY be zero.
+  BadDividesTy ImplicitBadDivides;
+  
+  /// ExplicitBadDivides - Nodes in the ExplodedGraph that result from 
+  ///  evaluating a divide or modulo operation where the denominator
+  ///  MUST be zero or undefined.
+  BadDividesTy ExplicitBadDivides;
   
   /// UndefResults - Nodes in the ExplodedGraph where the operands are defined
   ///  by the result is not.  Excludes divide-by-zero errors.
@@ -169,8 +175,12 @@ public:
     return N->isSink() && UndefDeref.count(const_cast<NodeTy*>(N)) != 0;
   }
   
-  bool isBadDivide(const NodeTy* N) const {
-    return N->isSink() && BadDivides.count(const_cast<NodeTy*>(N)) != 0; 
+  bool isImplicitBadDivide(const NodeTy* N) const {
+    return N->isSink() && ImplicitBadDivides.count(const_cast<NodeTy*>(N)) != 0; 
+  }
+  
+  bool isExplicitBadDivide(const NodeTy* N) const {
+    return N->isSink() && ExplicitBadDivides.count(const_cast<NodeTy*>(N)) != 0; 
   }
   
   bool isNoReturnCall(const NodeTy* N) const {
@@ -199,8 +209,22 @@ public:
   undef_deref_iterator undef_derefs_end() { return UndefDeref.end(); }
   
   typedef BadDividesTy::iterator bad_divide_iterator;
-  bad_divide_iterator bad_divides_begin() { return BadDivides.begin(); }
-  bad_divide_iterator bad_divides_end() { return BadDivides.end(); }
+
+  bad_divide_iterator explicit_bad_divides_begin() {
+    return ExplicitBadDivides.begin();
+  }
+  
+  bad_divide_iterator explicit_bad_divides_end() {
+    return ExplicitBadDivides.end();
+  }
+  
+  bad_divide_iterator implicit_bad_divides_begin() {
+    return ImplicitBadDivides.begin();
+  }
+  
+  bad_divide_iterator implicit_bad_divides_end() {
+    return ImplicitBadDivides.end();
+  }
   
   typedef UndefResultsTy::iterator undef_result_iterator;
   undef_result_iterator undef_results_begin() { return UndefResults.begin(); }

@@ -121,8 +121,8 @@ unsigned RunGRSimpleVals(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx,
               "Dereference of undefined value.");
   
   EmitWarning(Diag, SrcMgr,
-              CheckerState->bad_divides_begin(),
-              CheckerState->bad_divides_end(),
+              CheckerState->explicit_bad_divides_begin(),
+              CheckerState->explicit_bad_divides_end(),
               "Division by zero/undefined value.");
   
   EmitWarning(Diag, SrcMgr,

@@ -1040,7 +1040,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
             
             if (DivUndef) {
               DivUndef->markAsSink();
-              BadDivides.insert(DivUndef);
+              ExplicitBadDivides.insert(DivUndef);
             }
             
             continue;
@@ -1050,21 +1050,28 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           //
           // First, "assume" that the denominator is 0 or undefined.
           
-          bool isFeasible = false;
-          ValueState* ZeroSt =  Assume(St, RightV, false, isFeasible);
-          
-          if (isFeasible)
-            if (NodeTy* DivZeroNode = Builder->generateNode(B, ZeroSt, N2)) {
-              DivZeroNode->markAsSink();
-              BadDivides.insert(DivZeroNode);
-            }
+          bool isFeasibleZero = false;
+          ValueState* ZeroSt =  Assume(St, RightV, false, isFeasibleZero);
           
           // Second, "assume" that the denominator cannot be 0.
           
-          isFeasible = false;
-          St = Assume(St, RightV, true, isFeasible);
+          bool isFeasibleNotZero = false;
+          St = Assume(St, RightV, true, isFeasibleNotZero);
           
-          if (!isFeasible)
+          // Create the node for the divide-by-zero (if it occurred).
+          
+          if (isFeasibleZero)
+            if (NodeTy* DivZeroNode = Builder->generateNode(B, ZeroSt, N2)) {
+              DivZeroNode->markAsSink();
+              
+              if (isFeasibleNotZero)
+                ImplicitBadDivides.insert(DivZeroNode);
+              else
+                ExplicitBadDivides.insert(DivZeroNode);
+
+            }
+          
+          if (!isFeasibleNotZero)
             continue;
         }
         
@@ -1208,7 +1215,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
               
               if (DivUndef) {
                 DivUndef->markAsSink();
-                BadDivides.insert(DivUndef);
+                ExplicitBadDivides.insert(DivUndef);
               }
               
               continue;
@@ -1216,24 +1223,30 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
 
             // First, "assume" that the denominator is 0.
             
-            bool isFeasible = false;
-            ValueState* ZeroSt = Assume(St, RightV, false, isFeasible);
+            bool isFeasibleZero = false;
+            ValueState* ZeroSt = Assume(St, RightV, false, isFeasibleZero);
             
-            if (isFeasible) {
+            // Second, "assume" that the denominator cannot be 0.
+            
+            bool isFeasibleNotZero = false;
+            St = Assume(St, RightV, true, isFeasibleNotZero);
+            
+            // Create the node for the divide-by-zero error (if it occurred).
+            
+            if (isFeasibleZero) {
               NodeTy* DivZeroNode = Builder->generateNode(B, ZeroSt, N2);
               
               if (DivZeroNode) {
                 DivZeroNode->markAsSink();
-                BadDivides.insert(DivZeroNode);
+                
+                if (isFeasibleNotZero)
+                  ImplicitBadDivides.insert(DivZeroNode);
+                else
+                  ExplicitBadDivides.insert(DivZeroNode);
               }
             }
             
-            // Second, "assume" that the denominator cannot be 0.
-            
-            isFeasible = false;
-            St = Assume(St, RightV, true, isFeasible);
-            
-            if (!isFeasible)
+            if (!isFeasibleNotZero)
               continue;
             
             // Fall-through.  The logic below processes the divide.
@@ -1659,7 +1672,8 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
         GraphPrintCheckerState->isUndefDeref(N) ||
         GraphPrintCheckerState->isUndefStore(N) ||
         GraphPrintCheckerState->isUndefControlFlow(N) ||
-        GraphPrintCheckerState->isBadDivide(N) ||
+        GraphPrintCheckerState->isExplicitBadDivide(N) ||
+        GraphPrintCheckerState->isImplicitBadDivide(N) ||
         GraphPrintCheckerState->isUndefResult(N) ||
         GraphPrintCheckerState->isBadCall(N) ||
         GraphPrintCheckerState->isUndefArg(N))
@@ -1702,8 +1716,10 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
           Out << "\\|Dereference of undefialied value.\\l";
         else if (GraphPrintCheckerState->isUndefStore(N))
           Out << "\\|Store to Undefined LVal.";
-        else if (GraphPrintCheckerState->isBadDivide(N))
-          Out << "\\|Divide-by zero or undefined value.";
+        else if (GraphPrintCheckerState->isExplicitBadDivide(N))
+          Out << "\\|Explicit divide-by zero or undefined value.";
+        else if (GraphPrintCheckerState->isImplicitBadDivide(N))
+          Out << "\\|Implicit divide-by zero or undefined value.";
         else if (GraphPrintCheckerState->isUndefResult(N))
           Out << "\\|Result of operation is undefined.";
         else if (GraphPrintCheckerState->isNoReturnCall(N))
