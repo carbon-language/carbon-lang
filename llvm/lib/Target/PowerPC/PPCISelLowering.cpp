@@ -1347,6 +1347,8 @@ SDOperand PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op,
   // represented with two words (long long or double) must be copied to an
   // even GPR_idx value or to an even ArgOffset value.
 
+  SmallVector<SDOperand, 8> MemOps;
+
   for (unsigned ArgNo = 0, e = Op.Val->getNumValues()-1; ArgNo != e; ++ArgNo) {
     SDOperand ArgVal;
     bool needsLoad = false;
@@ -1355,12 +1357,50 @@ SDOperand PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op,
     unsigned ArgSize = ObjSize;
     unsigned Flags = cast<ConstantSDNode>(Op.getOperand(ArgNo+3))->getValue();
     unsigned AlignFlag = 1 << ISD::ParamFlags::OrigAlignmentOffs;
+    unsigned isByVal = Flags & ISD::ParamFlags::ByVal;
     // See if next argument requires stack alignment in ELF
     bool Expand = (ObjectVT == MVT::f64) || ((ArgNo + 1 < e) &&
       (cast<ConstantSDNode>(Op.getOperand(ArgNo+4))->getValue() & AlignFlag) &&
       (!(Flags & AlignFlag)));
 
     unsigned CurArgOffset = ArgOffset;
+
+    // FIXME alignment for ELF may not be right
+    // FIXME the codegen can be much improved in some cases.
+    // We do not have to keep everything in memory.
+    if (isByVal) {
+      // Double word align in ELF
+      if (Expand && isELF32_ABI) GPR_idx += (GPR_idx % 2);
+      // ObjSize is the true size, ArgSize rounded up to multiple of registers.
+      ObjSize = (Flags & ISD::ParamFlags::ByValSize) >>
+                      ISD::ParamFlags::ByValSizeOffs;
+      ArgSize = ((ObjSize + PtrByteSize - 1)/PtrByteSize) * PtrByteSize;
+      // The value of the object is its address.
+      int FI = MFI->CreateFixedObject(ObjSize, CurArgOffset);
+      SDOperand FIN = DAG.getFrameIndex(FI, PtrVT);
+      ArgValues.push_back(FIN);
+      for (unsigned j = 0; j < ArgSize; j += PtrByteSize) {
+        // Store whatever pieces of the object are in registers
+        // to memory.  ArgVal will be address of the beginning of
+        // the object.
+        if (GPR_idx != Num_GPR_Regs) {
+          unsigned VReg = RegInfo.createVirtualRegister(&PPC::GPRCRegClass);
+          RegInfo.addLiveIn(GPR[GPR_idx], VReg);
+          int FI = MFI->CreateFixedObject(PtrByteSize, ArgOffset);
+          SDOperand FIN = DAG.getFrameIndex(FI, PtrVT);
+          SDOperand Val = DAG.getCopyFromReg(Root, VReg, PtrVT);
+          SDOperand Store = DAG.getStore(Val.getValue(1), Val, FIN, NULL, 0);
+          MemOps.push_back(Store);
+          ++GPR_idx;
+          if (isMachoABI) ArgOffset += PtrByteSize;
+        } else {
+          ArgOffset += ArgSize - (ArgOffset-CurArgOffset);
+          break;
+        }
+      }
+      continue;
+    }
+
     switch (ObjectVT) {
     default: assert(0 && "Unhandled argument type!");
     case MVT::i32:
@@ -1453,7 +1493,7 @@ SDOperand PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op,
     
     ArgValues.push_back(ArgVal);
   }
-  
+
   // If the function takes variable number of arguments, make a frame index for
   // the start of the first vararg value... for expansion of llvm.va_start.
   bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
@@ -1480,8 +1520,6 @@ SDOperand PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op,
     VarArgsFrameIndex = MFI->CreateFixedObject(MVT::getSizeInBits(PtrVT)/8,
                                                depth);
     SDOperand FIN = DAG.getFrameIndex(VarArgsFrameIndex, PtrVT);
-    
-    SmallVector<SDOperand, 8> MemOps;
     
     // In ELF 32 ABI, the fixed integer arguments of a variadic function are
     // stored to the VarArgsFrameIndex on the stack.
@@ -1542,11 +1580,11 @@ SDOperand PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op,
         FIN = DAG.getNode(ISD::ADD, PtrOff.getValueType(), FIN, PtrOff);
       }
     }
-
-    if (!MemOps.empty())
-      Root = DAG.getNode(ISD::TokenFactor, MVT::Other,&MemOps[0],MemOps.size());
   }
   
+  if (!MemOps.empty())
+    Root = DAG.getNode(ISD::TokenFactor, MVT::Other,&MemOps[0],MemOps.size());
+
   ArgValues.push_back(Root);
  
   // Return the new list of results.
@@ -1705,10 +1743,37 @@ SDOperand PPCTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG,
     }
 
     // FIXME Elf untested, what are alignment rules?
+    // FIXME memcpy is used way more than necessary.  Correctness first.
     if (Flags & ISD::ParamFlags::ByVal) {
       unsigned Size = (Flags & ISD::ParamFlags::ByValSize) >>
                       ISD::ParamFlags::ByValSizeOffs;
       if (isELF32_ABI && Expand) GPR_idx += (GPR_idx % 2);
+      if (Size==1 || Size==2) {
+        // Very small objects are passed right-justified.
+        // Everything else is passed left-justified.
+        MVT::ValueType VT = (Size==1) ? MVT::i8 : MVT::i16;
+        if (GPR_idx != NumGPRs) {
+          SDOperand Load = DAG.getExtLoad(ISD::EXTLOAD, PtrVT, Chain, Arg, 
+                                          NULL, 0, VT);
+          MemOpChains.push_back(Load.getValue(1));
+          RegsToPass.push_back(std::make_pair(GPR[GPR_idx++], Load));
+          if (isMachoABI)
+            ArgOffset += PtrByteSize;
+        } else {
+          SDOperand Const = DAG.getConstant(4 - Size, PtrOff.getValueType());
+          SDOperand AddPtr = DAG.getNode(ISD::ADD, PtrVT, PtrOff, Const);
+          SDOperand MemcpyCall = CreateCopyOfByValArgument(Arg, AddPtr,
+                                CallSeqStart.Val->getOperand(0), 
+                                Flags, DAG, Size);
+          // This must go outside the CALLSEQ_START..END.
+          SDOperand NewCallSeqStart = DAG.getCALLSEQ_START(MemcpyCall,
+                               CallSeqStart.Val->getOperand(1));
+          DAG.ReplaceAllUsesWith(CallSeqStart.Val, NewCallSeqStart.Val);
+          Chain = CallSeqStart = NewCallSeqStart;
+          ArgOffset += PtrByteSize;
+        }
+        continue;
+      }
       for (unsigned j=0; j<Size; j+=PtrByteSize) {
         SDOperand Const = DAG.getConstant(j, PtrOff.getValueType());
         SDOperand AddArg = DAG.getNode(ISD::ADD, PtrVT, Arg, Const);
@@ -1727,8 +1792,9 @@ SDOperand PPCTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG,
           SDOperand NewCallSeqStart = DAG.getCALLSEQ_START(MemcpyCall,
                                CallSeqStart.Val->getOperand(1));
           DAG.ReplaceAllUsesWith(CallSeqStart.Val, NewCallSeqStart.Val);
-          CallSeqStart = NewCallSeqStart;
+          Chain = CallSeqStart = NewCallSeqStart;
           ArgOffset += ((Size - j + 3)/4)*4;
+          break;
         }
       }
       continue;
