@@ -153,24 +153,24 @@ unsigned RunGRSimpleVals(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx,
 // Transfer function for Casts.
 //===----------------------------------------------------------------------===//
 
-RVal GRSimpleVals::EvalCast(ValueManager& ValMgr, NonLVal X, QualType T) {
+RVal GRSimpleVals::EvalCast(BasicValueFactory& BasicVals, NonLVal X, QualType T) {
   
   if (!isa<nonlval::ConcreteInt>(X))
     return UnknownVal();
   
   llvm::APSInt V = cast<nonlval::ConcreteInt>(X).getValue();
   V.setIsUnsigned(T->isUnsignedIntegerType() || T->isPointerType());
-  V.extOrTrunc(ValMgr.getContext().getTypeSize(T));
+  V.extOrTrunc(BasicVals.getContext().getTypeSize(T));
   
   if (T->isPointerType())
-    return lval::ConcreteInt(ValMgr.getValue(V));
+    return lval::ConcreteInt(BasicVals.getValue(V));
   else
-    return nonlval::ConcreteInt(ValMgr.getValue(V));
+    return nonlval::ConcreteInt(BasicVals.getValue(V));
 }
 
 // Casts.
 
-RVal GRSimpleVals::EvalCast(ValueManager& ValMgr, LVal X, QualType T) {
+RVal GRSimpleVals::EvalCast(BasicValueFactory& BasicVals, LVal X, QualType T) {
   
   if (T->isPointerType() || T->isReferenceType())
     return X;
@@ -182,31 +182,31 @@ RVal GRSimpleVals::EvalCast(ValueManager& ValMgr, LVal X, QualType T) {
   
   llvm::APSInt V = cast<lval::ConcreteInt>(X).getValue();
   V.setIsUnsigned(T->isUnsignedIntegerType() || T->isPointerType());
-  V.extOrTrunc(ValMgr.getContext().getTypeSize(T));
+  V.extOrTrunc(BasicVals.getContext().getTypeSize(T));
 
-  return nonlval::ConcreteInt(ValMgr.getValue(V));
+  return nonlval::ConcreteInt(BasicVals.getValue(V));
 }
 
 // Unary operators.
 
-RVal GRSimpleVals::EvalMinus(ValueManager& ValMgr, UnaryOperator* U, NonLVal X){
+RVal GRSimpleVals::EvalMinus(BasicValueFactory& BasicVals, UnaryOperator* U, NonLVal X){
   
   switch (X.getSubKind()) {
       
     case nonlval::ConcreteIntKind:
-      return cast<nonlval::ConcreteInt>(X).EvalMinus(ValMgr, U);
+      return cast<nonlval::ConcreteInt>(X).EvalMinus(BasicVals, U);
       
     default:
       return UnknownVal();
   }
 }
 
-RVal GRSimpleVals::EvalComplement(ValueManager& ValMgr, NonLVal X) {
+RVal GRSimpleVals::EvalComplement(BasicValueFactory& BasicVals, NonLVal X) {
 
   switch (X.getSubKind()) {
       
     case nonlval::ConcreteIntKind:
-      return cast<nonlval::ConcreteInt>(X).EvalComplement(ValMgr);
+      return cast<nonlval::ConcreteInt>(X).EvalComplement(BasicVals);
       
     default:
       return UnknownVal();
@@ -215,7 +215,7 @@ RVal GRSimpleVals::EvalComplement(ValueManager& ValMgr, NonLVal X) {
 
 // Binary operators.
 
-RVal GRSimpleVals::EvalBinOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
+RVal GRSimpleVals::EvalBinOp(BasicValueFactory& BasicVals, BinaryOperator::Opcode Op,
                              NonLVal L, NonLVal R)  {  
   while (1) {
     
@@ -228,7 +228,7 @@ RVal GRSimpleVals::EvalBinOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
         if (isa<nonlval::ConcreteInt>(R)) {          
           const nonlval::ConcreteInt& L_CI = cast<nonlval::ConcreteInt>(L);
           const nonlval::ConcreteInt& R_CI = cast<nonlval::ConcreteInt>(R);          
-          return L_CI.EvalBinOp(ValMgr, Op, R_CI);          
+          return L_CI.EvalBinOp(BasicVals, Op, R_CI);          
         }
         else {
           NonLVal tmp = R;
@@ -241,7 +241,7 @@ RVal GRSimpleVals::EvalBinOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
         
         if (isa<nonlval::ConcreteInt>(R)) {
           const SymIntConstraint& C =
-            ValMgr.getConstraint(cast<nonlval::SymbolVal>(L).getSymbol(), Op,
+            BasicVals.getConstraint(cast<nonlval::SymbolVal>(L).getSymbol(), Op,
                                  cast<nonlval::ConcreteInt>(R).getValue());
           
           return nonlval::SymIntConstraintVal(C);
@@ -256,7 +256,7 @@ RVal GRSimpleVals::EvalBinOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
 
 // Binary Operators (except assignments and comma).
 
-RVal GRSimpleVals::EvalBinOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
+RVal GRSimpleVals::EvalBinOp(BasicValueFactory& BasicVals, BinaryOperator::Opcode Op,
                              LVal L, LVal R) {
   
   switch (Op) {
@@ -265,23 +265,23 @@ RVal GRSimpleVals::EvalBinOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
       return UnknownVal();
       
     case BinaryOperator::EQ:
-      return EvalEQ(ValMgr, L, R);
+      return EvalEQ(BasicVals, L, R);
       
     case BinaryOperator::NE:
-      return EvalNE(ValMgr, L, R);      
+      return EvalNE(BasicVals, L, R);      
   }
 }
 
 // Pointer arithmetic.
 
-RVal GRSimpleVals::EvalBinOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
+RVal GRSimpleVals::EvalBinOp(BasicValueFactory& BasicVals, BinaryOperator::Opcode Op,
                              LVal L, NonLVal R) {  
   return UnknownVal();
 }
 
 // Equality operators for LVals.
 
-RVal GRSimpleVals::EvalEQ(ValueManager& ValMgr, LVal L, LVal R) {
+RVal GRSimpleVals::EvalEQ(BasicValueFactory& BasicVals, LVal L, LVal R) {
   
   switch (L.getSubKind()) {
 
@@ -295,12 +295,12 @@ RVal GRSimpleVals::EvalEQ(ValueManager& ValMgr, LVal L, LVal R) {
         bool b = cast<lval::ConcreteInt>(L).getValue() ==
                  cast<lval::ConcreteInt>(R).getValue();
         
-        return NonLVal::MakeIntTruthVal(ValMgr, b);
+        return NonLVal::MakeIntTruthVal(BasicVals, b);
       }
       else if (isa<lval::SymbolVal>(R)) {
         
         const SymIntConstraint& C =
-          ValMgr.getConstraint(cast<lval::SymbolVal>(R).getSymbol(),
+          BasicVals.getConstraint(cast<lval::SymbolVal>(R).getSymbol(),
                                BinaryOperator::EQ,
                                cast<lval::ConcreteInt>(L).getValue());
         
@@ -313,7 +313,7 @@ RVal GRSimpleVals::EvalEQ(ValueManager& ValMgr, LVal L, LVal R) {
 
       if (isa<lval::ConcreteInt>(R)) {          
         const SymIntConstraint& C =
-          ValMgr.getConstraint(cast<lval::SymbolVal>(L).getSymbol(),
+          BasicVals.getConstraint(cast<lval::SymbolVal>(L).getSymbol(),
                                BinaryOperator::EQ,
                                cast<lval::ConcreteInt>(R).getValue());
         
@@ -331,13 +331,13 @@ RVal GRSimpleVals::EvalEQ(ValueManager& ValMgr, LVal L, LVal R) {
     case lval::DeclValKind:
     case lval::FuncValKind:
     case lval::GotoLabelKind:
-      return NonLVal::MakeIntTruthVal(ValMgr, L == R);
+      return NonLVal::MakeIntTruthVal(BasicVals, L == R);
   }
   
-  return NonLVal::MakeIntTruthVal(ValMgr, false);
+  return NonLVal::MakeIntTruthVal(BasicVals, false);
 }
 
-RVal GRSimpleVals::EvalNE(ValueManager& ValMgr, LVal L, LVal R) {
+RVal GRSimpleVals::EvalNE(BasicValueFactory& BasicVals, LVal L, LVal R) {
   
   switch (L.getSubKind()) {
 
@@ -351,11 +351,11 @@ RVal GRSimpleVals::EvalNE(ValueManager& ValMgr, LVal L, LVal R) {
         bool b = cast<lval::ConcreteInt>(L).getValue() !=
                  cast<lval::ConcreteInt>(R).getValue();
         
-        return NonLVal::MakeIntTruthVal(ValMgr, b);
+        return NonLVal::MakeIntTruthVal(BasicVals, b);
       }
       else if (isa<lval::SymbolVal>(R)) {        
         const SymIntConstraint& C =
-          ValMgr.getConstraint(cast<lval::SymbolVal>(R).getSymbol(),
+          BasicVals.getConstraint(cast<lval::SymbolVal>(R).getSymbol(),
                                BinaryOperator::NE,
                                cast<lval::ConcreteInt>(L).getValue());
         
@@ -367,7 +367,7 @@ RVal GRSimpleVals::EvalNE(ValueManager& ValMgr, LVal L, LVal R) {
     case lval::SymbolValKind: {
       if (isa<lval::ConcreteInt>(R)) {          
         const SymIntConstraint& C =
-          ValMgr.getConstraint(cast<lval::SymbolVal>(L).getSymbol(),
+          BasicVals.getConstraint(cast<lval::SymbolVal>(L).getSymbol(),
                                BinaryOperator::NE,
                                cast<lval::ConcreteInt>(R).getValue());
         
@@ -387,10 +387,10 @@ RVal GRSimpleVals::EvalNE(ValueManager& ValMgr, LVal L, LVal R) {
     case lval::DeclValKind:
     case lval::FuncValKind:
     case lval::GotoLabelKind:
-      return NonLVal::MakeIntTruthVal(ValMgr, L != R);
+      return NonLVal::MakeIntTruthVal(BasicVals, L != R);
   }
   
-  return NonLVal::MakeIntTruthVal(ValMgr, true);
+  return NonLVal::MakeIntTruthVal(BasicVals, true);
 }
 
 //===----------------------------------------------------------------------===//
@@ -400,7 +400,7 @@ RVal GRSimpleVals::EvalNE(ValueManager& ValMgr, LVal L, LVal R) {
 void GRSimpleVals::EvalCall(ExplodedNodeSet<ValueState>& Dst,
                             ValueStateManager& StateMgr,
                             GRStmtNodeBuilder<ValueState>& Builder,
-                            ValueManager& ValMgr,
+                            BasicValueFactory& BasicVals,
                             CallExpr* CE, LVal L,
                             ExplodedNode<ValueState>* Pred) {
   

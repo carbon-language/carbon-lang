@@ -49,10 +49,10 @@ RVal::symbol_iterator RVal::symbol_end() const {
 //===----------------------------------------------------------------------===//
 
 RVal
-nonlval::ConcreteInt::EvalBinOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
+nonlval::ConcreteInt::EvalBinOp(BasicValueFactory& BasicVals, BinaryOperator::Opcode Op,
                                 const nonlval::ConcreteInt& R) const {
   
-  const llvm::APSInt* X = ValMgr.EvaluateAPSInt(Op, getValue(), R.getValue());
+  const llvm::APSInt* X = BasicVals.EvaluateAPSInt(Op, getValue(), R.getValue());
   
   if (X)
     return nonlval::ConcreteInt(*X);
@@ -64,17 +64,17 @@ nonlval::ConcreteInt::EvalBinOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
   // Bitwise-Complement.
 
 nonlval::ConcreteInt
-nonlval::ConcreteInt::EvalComplement(ValueManager& ValMgr) const {
-  return ValMgr.getValue(~getValue()); 
+nonlval::ConcreteInt::EvalComplement(BasicValueFactory& BasicVals) const {
+  return BasicVals.getValue(~getValue()); 
 }
 
   // Unary Minus.
 
 nonlval::ConcreteInt
-nonlval::ConcreteInt::EvalMinus(ValueManager& ValMgr, UnaryOperator* U) const {
+nonlval::ConcreteInt::EvalMinus(BasicValueFactory& BasicVals, UnaryOperator* U) const {
   assert (U->getType() == U->getSubExpr()->getType());  
   assert (U->getType()->isIntegerType());  
-  return ValMgr.getValue(-getValue()); 
+  return BasicVals.getValue(-getValue()); 
 }
 
 //===----------------------------------------------------------------------===//
@@ -82,13 +82,13 @@ nonlval::ConcreteInt::EvalMinus(ValueManager& ValMgr, UnaryOperator* U) const {
 //===----------------------------------------------------------------------===//
 
 RVal
-lval::ConcreteInt::EvalBinOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
+lval::ConcreteInt::EvalBinOp(BasicValueFactory& BasicVals, BinaryOperator::Opcode Op,
                              const lval::ConcreteInt& R) const {
   
   assert (Op == BinaryOperator::Add || Op == BinaryOperator::Sub ||
           (Op >= BinaryOperator::LT && Op <= BinaryOperator::NE));
   
-  const llvm::APSInt* X = ValMgr.EvaluateAPSInt(Op, getValue(), R.getValue());
+  const llvm::APSInt* X = BasicVals.EvaluateAPSInt(Op, getValue(), R.getValue());
   
   if (X)
     return lval::ConcreteInt(*X);
@@ -96,7 +96,7 @@ lval::ConcreteInt::EvalBinOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
     return UndefinedVal();
 }
 
-NonLVal LVal::EQ(ValueManager& ValMgr, const LVal& R) const {
+NonLVal LVal::EQ(BasicValueFactory& BasicVals, const LVal& R) const {
   
   switch (getSubKind()) {
     default:
@@ -108,12 +108,12 @@ NonLVal LVal::EQ(ValueManager& ValMgr, const LVal& R) const {
         bool b = cast<lval::ConcreteInt>(this)->getValue() ==
                  cast<lval::ConcreteInt>(R).getValue();
         
-        return NonLVal::MakeIntTruthVal(ValMgr, b);
+        return NonLVal::MakeIntTruthVal(BasicVals, b);
       }
       else if (isa<lval::SymbolVal>(R)) {
         
         const SymIntConstraint& C =
-          ValMgr.getConstraint(cast<lval::SymbolVal>(R).getSymbol(),
+          BasicVals.getConstraint(cast<lval::SymbolVal>(R).getSymbol(),
                                BinaryOperator::EQ,
                                cast<lval::ConcreteInt>(this)->getValue());
         
@@ -126,7 +126,7 @@ NonLVal LVal::EQ(ValueManager& ValMgr, const LVal& R) const {
         if (isa<lval::ConcreteInt>(R)) {
           
           const SymIntConstraint& C =
-            ValMgr.getConstraint(cast<lval::SymbolVal>(this)->getSymbol(),
+            BasicVals.getConstraint(cast<lval::SymbolVal>(this)->getSymbol(),
                                  BinaryOperator::EQ,
                                  cast<lval::ConcreteInt>(R).getValue());
           
@@ -141,16 +141,16 @@ NonLVal LVal::EQ(ValueManager& ValMgr, const LVal& R) const {
       case lval::DeclValKind:
       if (isa<lval::DeclVal>(R)) {        
         bool b = cast<lval::DeclVal>(*this) == cast<lval::DeclVal>(R);
-        return NonLVal::MakeIntTruthVal(ValMgr, b);
+        return NonLVal::MakeIntTruthVal(BasicVals, b);
       }
       
       break;
   }
   
-  return NonLVal::MakeIntTruthVal(ValMgr, false);
+  return NonLVal::MakeIntTruthVal(BasicVals, false);
 }
 
-NonLVal LVal::NE(ValueManager& ValMgr, const LVal& R) const {
+NonLVal LVal::NE(BasicValueFactory& BasicVals, const LVal& R) const {
   switch (getSubKind()) {
     default:
       assert(false && "NE not implemented for this LVal.");
@@ -161,12 +161,12 @@ NonLVal LVal::NE(ValueManager& ValMgr, const LVal& R) const {
         bool b = cast<lval::ConcreteInt>(this)->getValue() !=
                  cast<lval::ConcreteInt>(R).getValue();
         
-        return NonLVal::MakeIntTruthVal(ValMgr, b);
+        return NonLVal::MakeIntTruthVal(BasicVals, b);
       }
       else if (isa<lval::SymbolVal>(R)) {
         
         const SymIntConstraint& C =
-        ValMgr.getConstraint(cast<lval::SymbolVal>(R).getSymbol(),
+        BasicVals.getConstraint(cast<lval::SymbolVal>(R).getSymbol(),
                              BinaryOperator::NE,
                              cast<lval::ConcreteInt>(this)->getValue());
         
@@ -179,7 +179,7 @@ NonLVal LVal::NE(ValueManager& ValMgr, const LVal& R) const {
         if (isa<lval::ConcreteInt>(R)) {
           
           const SymIntConstraint& C =
-          ValMgr.getConstraint(cast<lval::SymbolVal>(this)->getSymbol(),
+          BasicVals.getConstraint(cast<lval::SymbolVal>(this)->getSymbol(),
                                BinaryOperator::NE,
                                cast<lval::ConcreteInt>(R).getValue());
           
@@ -194,31 +194,31 @@ NonLVal LVal::NE(ValueManager& ValMgr, const LVal& R) const {
       case lval::DeclValKind:
         if (isa<lval::DeclVal>(R)) {        
           bool b = cast<lval::DeclVal>(*this) == cast<lval::DeclVal>(R);
-          return NonLVal::MakeIntTruthVal(ValMgr, b);
+          return NonLVal::MakeIntTruthVal(BasicVals, b);
         }
       
         break;
   }
   
-  return NonLVal::MakeIntTruthVal(ValMgr, true);
+  return NonLVal::MakeIntTruthVal(BasicVals, true);
 }
 
 //===----------------------------------------------------------------------===//
 // Utility methods for constructing Non-LVals.
 //===----------------------------------------------------------------------===//
 
-NonLVal NonLVal::MakeVal(ValueManager& ValMgr, uint64_t X, QualType T) {  
-  return nonlval::ConcreteInt(ValMgr.getValue(X, T));
+NonLVal NonLVal::MakeVal(BasicValueFactory& BasicVals, uint64_t X, QualType T) {  
+  return nonlval::ConcreteInt(BasicVals.getValue(X, T));
 }
 
-NonLVal NonLVal::MakeVal(ValueManager& ValMgr, IntegerLiteral* I) {
+NonLVal NonLVal::MakeVal(BasicValueFactory& BasicVals, IntegerLiteral* I) {
 
-  return nonlval::ConcreteInt(ValMgr.getValue(APSInt(I->getValue(),
+  return nonlval::ConcreteInt(BasicVals.getValue(APSInt(I->getValue(),
                               I->getType()->isUnsignedIntegerType())));
 }
 
-NonLVal NonLVal::MakeIntTruthVal(ValueManager& ValMgr, bool b) {
-  return nonlval::ConcreteInt(ValMgr.getTruthValue(b));
+NonLVal NonLVal::MakeIntTruthVal(BasicValueFactory& BasicVals, bool b) {
+  return nonlval::ConcreteInt(BasicVals.getTruthValue(b));
 }
 
 RVal RVal::GetSymbolValue(SymbolManager& SymMgr, VarDecl* D) {

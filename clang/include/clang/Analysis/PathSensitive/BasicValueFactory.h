@@ -1,4 +1,4 @@
-// ValueManager.h - Low-level value management for Value Tracking -*- C++ -*--==
+//=== BasicValueFactory.h - Basic values for Path Sens analysis --*- C++ -*---//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,13 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines ValueManager, a class that manages the lifetime of APSInt
-//  objects and symbolic constraints used by GRExprEngine and related classes.
+//  This file defines BasicValueFactory, a class that manages the lifetime
+//  of APSInt objects and symbolic constraints used by GRExprEngine 
+//  and related classes.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_ANALYSIS_VALUEMANAGER_H
-#define LLVM_CLANG_ANALYSIS_VALUEMANAGER_H
+#ifndef LLVM_CLANG_ANALYSIS_BASICVALUEFACTORY_H
+#define LLVM_CLANG_ANALYSIS_BASICVALUEFACTORY_H
 
 #include "clang/Analysis/PathSensitive/SymbolManager.h"
 #include "clang/AST/ASTContext.h"
@@ -26,7 +27,7 @@ namespace llvm {
 
 namespace clang {
   
-class ValueManager {
+class BasicValueFactory {
   typedef llvm::FoldingSet<llvm::FoldingSetNodeWrapper<llvm::APSInt> >
           APSIntSetTy;
 
@@ -40,10 +41,10 @@ class ValueManager {
   SymIntCSetTy  SymIntCSet;
 
 public:
-  ValueManager(ASTContext& ctx, llvm::BumpPtrAllocator& Alloc) 
+  BasicValueFactory(ASTContext& ctx, llvm::BumpPtrAllocator& Alloc) 
   : Ctx(ctx), BPAlloc(Alloc) {}
 
-  ~ValueManager();
+  ~BasicValueFactory();
 
   ASTContext& getContext() const { return Ctx; }  
 

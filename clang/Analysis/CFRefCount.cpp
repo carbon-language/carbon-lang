@@ -44,7 +44,7 @@ void CheckCFRefCount(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx,
 void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
                             ValueStateManager& StateMgr,
                             GRStmtNodeBuilder<ValueState>& Builder,
-                            ValueManager& ValMgr,
+                            BasicValueFactory& BasicVals,
                             CallExpr* CE, LVal L,
                             ExplodedNode<ValueState>* Pred) {
   

@@ -49,7 +49,7 @@ protected:
   ValueStateManager StateMgr;
   
   /// ValueMgr - Object that manages the data for all created RVals.
-  ValueManager& ValMgr;
+  BasicValueFactory& BasicVals;
   
   /// TF - Object that represents a bundle of transfer functions
   ///  for manipulating and creating RVals.
@@ -127,7 +127,7 @@ public:
   G(g), Liveness(G.getCFG(), G.getFunctionDecl()),
   Builder(NULL),
   StateMgr(G.getContext(), G.getAllocator()),
-  ValMgr(StateMgr.getValueManager()),
+  BasicVals(StateMgr.getBasicValueFactory()),
   TF(NULL), // FIXME.
   SymMgr(StateMgr.getSymbolManager()),
   StmtEntryNode(NULL), CurrentStmt(NULL) {
@@ -310,7 +310,7 @@ protected:
   }
   
   inline NonLVal MakeConstantVal(uint64_t X, Expr* Ex) {
-    return NonLVal::MakeVal(ValMgr, X, Ex->getType());
+    return NonLVal::MakeVal(BasicVals, X, Ex->getType());
   }
   
   /// Assume - Create new state by assuming that a given expression
@@ -399,25 +399,25 @@ protected:
       return X;
     
     if (isa<LVal>(X))
-      return TF->EvalCast(ValMgr, cast<LVal>(X), CastT);
+      return TF->EvalCast(BasicVals, cast<LVal>(X), CastT);
     else
-      return TF->EvalCast(ValMgr, cast<NonLVal>(X), CastT);
+      return TF->EvalCast(BasicVals, cast<NonLVal>(X), CastT);
   }
   
   RVal EvalMinus(UnaryOperator* U, RVal X) {
-    return X.isValid() ? TF->EvalMinus(ValMgr, U, cast<NonLVal>(X)) : X;
+    return X.isValid() ? TF->EvalMinus(BasicVals, U, cast<NonLVal>(X)) : X;
   }
   
   RVal EvalComplement(RVal X) {
-    return X.isValid() ? TF->EvalComplement(ValMgr, cast<NonLVal>(X)) : X;
+    return X.isValid() ? TF->EvalComplement(BasicVals, cast<NonLVal>(X)) : X;
   }
 
   RVal EvalBinOp(BinaryOperator::Opcode Op, NonLVal L, RVal R) {
-    return R.isValid() ? TF->EvalBinOp(ValMgr, Op, L, cast<NonLVal>(R)) : R;
+    return R.isValid() ? TF->EvalBinOp(BasicVals, Op, L, cast<NonLVal>(R)) : R;
   }
   
   RVal EvalBinOp(BinaryOperator::Opcode Op, NonLVal L, NonLVal R) {
-    return R.isValid() ? TF->EvalBinOp(ValMgr, Op, L, R) : R;
+    return R.isValid() ? TF->EvalBinOp(BasicVals, Op, L, R) : R;
   }
   
   RVal EvalBinOp(BinaryOperator::Opcode Op, RVal L, RVal R) {
@@ -430,17 +430,17 @@ protected:
         
     if (isa<LVal>(L)) {
       if (isa<LVal>(R))
-        return TF->EvalBinOp(ValMgr, Op, cast<LVal>(L), cast<LVal>(R));
+        return TF->EvalBinOp(BasicVals, Op, cast<LVal>(L), cast<LVal>(R));
       else
-        return TF->EvalBinOp(ValMgr, Op, cast<LVal>(L), cast<NonLVal>(R));
+        return TF->EvalBinOp(BasicVals, Op, cast<LVal>(L), cast<NonLVal>(R));
     }
     
-    return TF->EvalBinOp(ValMgr, Op, cast<NonLVal>(L), cast<NonLVal>(R));
+    return TF->EvalBinOp(BasicVals, Op, cast<NonLVal>(L), cast<NonLVal>(R));
   }
   
   void EvalCall(NodeSet& Dst, CallExpr* CE, LVal L, NodeTy* Pred) {
     assert (Builder && "GRStmtNodeBuilder must be defined.");    
-    return TF->EvalCall(Dst, StateMgr, *Builder, ValMgr, CE, L, Pred);
+    return TF->EvalCall(Dst, StateMgr, *Builder, BasicVals, CE, L, Pred);
   }
   
   ValueState* MarkBranch(ValueState* St, Stmt* Terminator, bool branchTaken);

@@ -169,7 +169,7 @@ private:
   llvm::FoldingSet<ValueState> StateSet;
 
   /// ValueMgr - Object that manages the data for all created RVals.
-  ValueManager ValMgr;
+  BasicValueFactory BasicVals;
 
   /// SymMgr - Object that manages the symbol information.
   SymbolManager SymMgr;
@@ -205,12 +205,12 @@ public:
       VBFactory(alloc),
       CNEFactory(alloc),
       CEFactory(alloc),
-      ValMgr(Ctx, alloc),
+      BasicVals(Ctx, alloc),
       Alloc(alloc) {}
   
   ValueState* getInitialState();
         
-  ValueManager& getValueManager() { return ValMgr; }
+  BasicValueFactory& getBasicValueFactory() { return BasicVals; }
   SymbolManager& getSymbolManager() { return SymMgr; }
   
   ValueState* RemoveDeadBindings(ValueState* St, Stmt* Loc, 

@@ -29,7 +29,7 @@ public:
   virtual void EvalCall(ExplodedNodeSet<ValueState>& Dst,
                         ValueStateManager& StateMgr,
                         GRStmtNodeBuilder<ValueState>& Builder,
-                        ValueManager& ValMgr,
+                        BasicValueFactory& BasicVals,
                         CallExpr* CE, LVal L,
                         ExplodedNode<ValueState>* Pred);  
 };

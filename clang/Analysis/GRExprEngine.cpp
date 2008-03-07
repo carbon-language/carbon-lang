@@ -308,7 +308,7 @@ void GRExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
     //  This should be easy once we have "ranges" for NonLVals.
         
     do {      
-      nonlval::ConcreteInt CaseVal(ValMgr.getValue(V1));
+      nonlval::ConcreteInt CaseVal(BasicVals.getValue(V1));
       
       RVal Res = EvalBinOp(BinaryOperator::EQ, CondV, CaseVal);
       
@@ -657,12 +657,12 @@ void GRExprEngine::VisitDeclStmt(DeclStmt* DS, GRExprEngine::NodeTy* Pred,
           if (T->isPointerType()) {
             
             St = SetRVal(St, lval::DeclVal(VD),
-                         lval::ConcreteInt(ValMgr.getValue(0, T)));
+                         lval::ConcreteInt(BasicVals.getValue(0, T)));
           }
           else if (T->isIntegerType()) {
             
             St = SetRVal(St, lval::DeclVal(VD),
-                         nonlval::ConcreteInt(ValMgr.getValue(0, T)));
+                         nonlval::ConcreteInt(BasicVals.getValue(0, T)));
           }
           
 
@@ -727,7 +727,7 @@ void GRExprEngine::VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr* Ex,
   
   Nodify(Dst, Ex, Pred,
          SetRVal(Pred->getState(), Ex,
-                  NonLVal::MakeVal(ValMgr, size, Ex->getType())));
+                  NonLVal::MakeVal(BasicVals, size, Ex->getType())));
   
 }
 
@@ -917,13 +917,13 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
         //    transfer functions as "0 == E".
 
         if (isa<LVal>(SubV)) {
-          lval::ConcreteInt V(ValMgr.getZeroWithPtrWidth());
+          lval::ConcreteInt V(BasicVals.getZeroWithPtrWidth());
           RVal Result = EvalBinOp(BinaryOperator::EQ, cast<LVal>(SubV), V);
           St = SetRVal(St, U, Result);
         }
         else {
           Expr* Ex = U->getSubExpr();
-          nonlval::ConcreteInt V(ValMgr.getValue(0, Ex->getType()));
+          nonlval::ConcreteInt V(BasicVals.getValue(0, Ex->getType()));
           RVal Result = EvalBinOp(BinaryOperator::EQ, cast<NonLVal>(SubV), V);
           St = SetRVal(St, U, Result);
         }
@@ -955,7 +955,7 @@ void GRExprEngine::VisitSizeOfExpr(UnaryOperator* U, NodeTy* Pred,
   
   uint64_t size = getContext().getTypeSize(T) / 8;                
   ValueState* St = Pred->getState();
-  St = SetRVal(St, U, NonLVal::MakeVal(ValMgr, size, U->getType()));
+  St = SetRVal(St, U, NonLVal::MakeVal(BasicVals, size, U->getType()));
 
   Nodify(Dst, U, Pred, St);
 }
@@ -1433,10 +1433,10 @@ ValueState* GRExprEngine::Assume(ValueState* St, LVal Cond,
     case lval::SymbolValKind:
       if (Assumption)
         return AssumeSymNE(St, cast<lval::SymbolVal>(Cond).getSymbol(),
-                           ValMgr.getZeroWithPtrWidth(), isFeasible);
+                           BasicVals.getZeroWithPtrWidth(), isFeasible);
       else
         return AssumeSymEQ(St, cast<lval::SymbolVal>(Cond).getSymbol(),
-                           ValMgr.getZeroWithPtrWidth(), isFeasible);
+                           BasicVals.getZeroWithPtrWidth(), isFeasible);
       
       
     case lval::DeclValKind:
@@ -1467,10 +1467,10 @@ ValueState* GRExprEngine::Assume(ValueState* St, NonLVal Cond,
       SymbolID sym = SV.getSymbol();
       
       if (Assumption)
-        return AssumeSymNE(St, sym, ValMgr.getValue(0, SymMgr.getType(sym)),
+        return AssumeSymNE(St, sym, BasicVals.getValue(0, SymMgr.getType(sym)),
                            isFeasible);
       else
-        return AssumeSymEQ(St, sym, ValMgr.getValue(0, SymMgr.getType(sym)),
+        return AssumeSymEQ(St, sym, BasicVals.getValue(0, SymMgr.getType(sym)),
                            isFeasible);
     }
       

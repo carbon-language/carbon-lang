@@ -1,4 +1,4 @@
-// ValueManager.h - Low-level value management for Value Tracking -*- C++ -*--==
+//=== BasicValueFactory.cpp - Basic values for Path Sens analysis --*- C++ -*-//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,16 +7,17 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines ValueManager, a class that manages the lifetime of APSInt
-//  objects and symbolic constraints used by GRExprEngine and related classes.
+//  This file defines BasicValueFactory, a class that manages the lifetime
+//  of APSInt objects and symbolic constraints used by GRExprEngine 
+//  and related classes.
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Analysis/PathSensitive/ValueManager.h"
+#include "clang/Analysis/PathSensitive/BasicValueFactory.h"
 
 using namespace clang;
 
-ValueManager::~ValueManager() {
+BasicValueFactory::~BasicValueFactory() {
   // Note that the dstor for the contents of APSIntSet will never be called,
   // so we iterate over the set and invoke the dstor for each APSInt.  This
   // frees an aux. memory allocated to represent very large constants.
@@ -24,7 +25,7 @@ ValueManager::~ValueManager() {
     I->getValue().~APSInt();
 }
 
-const llvm::APSInt& ValueManager::getValue(const llvm::APSInt& X) {
+const llvm::APSInt& BasicValueFactory::getValue(const llvm::APSInt& X) {
   llvm::FoldingSetNodeID ID;
   void* InsertPos;
   typedef llvm::FoldingSetNodeWrapper<llvm::APSInt> FoldNodeTy;
@@ -41,14 +42,14 @@ const llvm::APSInt& ValueManager::getValue(const llvm::APSInt& X) {
   return *P;
 }
 
-const llvm::APSInt& ValueManager::getValue(uint64_t X, unsigned BitWidth,
+const llvm::APSInt& BasicValueFactory::getValue(uint64_t X, unsigned BitWidth,
                                            bool isUnsigned) {
   llvm::APSInt V(BitWidth, isUnsigned);
   V = X;  
   return getValue(V);
 }
 
-const llvm::APSInt& ValueManager::getValue(uint64_t X, QualType T) {
+const llvm::APSInt& BasicValueFactory::getValue(uint64_t X, QualType T) {
   
   unsigned bits = Ctx.getTypeSize(T);
   llvm::APSInt V(bits, T->isUnsignedIntegerType());
@@ -57,7 +58,7 @@ const llvm::APSInt& ValueManager::getValue(uint64_t X, QualType T) {
 }
 
 const SymIntConstraint&
-ValueManager::getConstraint(SymbolID sym, BinaryOperator::Opcode Op,
+BasicValueFactory::getConstraint(SymbolID sym, BinaryOperator::Opcode Op,
                             const llvm::APSInt& V) {
   
   llvm::FoldingSetNodeID ID;
@@ -76,7 +77,7 @@ ValueManager::getConstraint(SymbolID sym, BinaryOperator::Opcode Op,
 }
 
 const llvm::APSInt*
-ValueManager::EvaluateAPSInt(BinaryOperator::Opcode Op,
+BasicValueFactory::EvaluateAPSInt(BinaryOperator::Opcode Op,
                              const llvm::APSInt& V1, const llvm::APSInt& V2) {
   
   switch (Op) {

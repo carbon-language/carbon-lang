@@ -15,7 +15,7 @@
 #ifndef LLVM_CLANG_ANALYSIS_RVALUE_H
 #define LLVM_CLANG_ANALYSIS_RVALUE_H
 
-#include "clang/Analysis/PathSensitive/ValueManager.h"
+#include "clang/Analysis/PathSensitive/BasicValueFactory.h"
 #include "llvm/Support/Casting.h"
   
 //==------------------------------------------------------------------------==//
@@ -123,11 +123,11 @@ public:
   void print(std::ostream& Out) const;
   
   // Utility methods to create NonLVals.
-  static NonLVal MakeVal(ValueManager& ValMgr, uint64_t X, QualType T);
+  static NonLVal MakeVal(BasicValueFactory& BasicVals, uint64_t X, QualType T);
   
-  static NonLVal MakeVal(ValueManager& ValMgr, IntegerLiteral* I);
+  static NonLVal MakeVal(BasicValueFactory& BasicVals, IntegerLiteral* I);
   
-  static NonLVal MakeIntTruthVal(ValueManager& ValMgr, bool b);
+  static NonLVal MakeIntTruthVal(BasicValueFactory& BasicVals, bool b);
     
   // Implement isa<T> support.
   static inline bool classof(const RVal* V) {
@@ -141,8 +141,8 @@ protected:
     : RVal(const_cast<void*>(D), true, SubKind) {}
   
   // Equality operators.
-  NonLVal EQ(ValueManager& ValMgr, const LVal& R) const;
-  NonLVal NE(ValueManager& ValMgr, const LVal& R) const;
+  NonLVal EQ(BasicValueFactory& BasicVals, const LVal& R) const;
+  NonLVal NE(BasicValueFactory& BasicVals, const LVal& R) const;
   
 public:
   void print(std::ostream& Out) const;
@@ -210,12 +210,12 @@ public:
   }
   
   // Transfer functions for binary/unary operations on ConcreteInts.
-  RVal EvalBinOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
+  RVal EvalBinOp(BasicValueFactory& BasicVals, BinaryOperator::Opcode Op,
                  const ConcreteInt& R) const;
   
-  ConcreteInt EvalComplement(ValueManager& ValMgr) const;
+  ConcreteInt EvalComplement(BasicValueFactory& BasicVals) const;
   
-  ConcreteInt EvalMinus(ValueManager& ValMgr, UnaryOperator* U) const;
+  ConcreteInt EvalMinus(BasicValueFactory& BasicVals, UnaryOperator* U) const;
   
   // Implement isa<T> support.
   static inline bool classof(const RVal* V) {
@@ -340,7 +340,7 @@ public:
   }
 
   // Transfer functions for binary/unary operations on ConcreteInts.
-  RVal EvalBinOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
+  RVal EvalBinOp(BasicValueFactory& BasicVals, BinaryOperator::Opcode Op,
                  const ConcreteInt& R) const;
       
   // Implement isa<T> support.

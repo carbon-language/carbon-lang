@@ -28,26 +28,26 @@ public:
   
   // Casts.
   
-  virtual RVal EvalCast(ValueManager& ValMgr, NonLVal V, QualType CastT);
-  virtual RVal EvalCast(ValueManager& ValMgr, LVal V, QualType CastT);
+  virtual RVal EvalCast(BasicValueFactory& BasicVals, NonLVal V, QualType CastT);
+  virtual RVal EvalCast(BasicValueFactory& BasicVals, LVal V, QualType CastT);
   
   // Unary Operators.
   
-  virtual RVal EvalMinus(ValueManager& ValMgr, UnaryOperator* U, NonLVal X);
+  virtual RVal EvalMinus(BasicValueFactory& BasicVals, UnaryOperator* U, NonLVal X);
 
-  virtual RVal EvalComplement(ValueManager& ValMgr, NonLVal X);
+  virtual RVal EvalComplement(BasicValueFactory& BasicVals, NonLVal X);
   
   // Binary Operators.
   
-  virtual RVal EvalBinOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
+  virtual RVal EvalBinOp(BasicValueFactory& BasicVals, BinaryOperator::Opcode Op,
                          NonLVal L, NonLVal R);
   
-  virtual RVal EvalBinOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
+  virtual RVal EvalBinOp(BasicValueFactory& BasicVals, BinaryOperator::Opcode Op,
                          LVal L, LVal R);
   
   // Pointer arithmetic.
   
-  virtual RVal EvalBinOp(ValueManager& ValMgr, BinaryOperator::Opcode Op,
+  virtual RVal EvalBinOp(BasicValueFactory& BasicVals, BinaryOperator::Opcode Op,
                          LVal L, NonLVal R);  
   
   // Calls.
@@ -55,7 +55,7 @@ public:
   virtual void EvalCall(ExplodedNodeSet<ValueState>& Dst,
                         ValueStateManager& StateMgr,
                         GRStmtNodeBuilder<ValueState>& Builder,
-                        ValueManager& ValMgr,
+                        BasicValueFactory& BasicVals,
                         CallExpr* CE, LVal L,
                         ExplodedNode<ValueState>* Pred);
   
@@ -63,8 +63,8 @@ protected:
   
   // Equality operators for LVals.
   
-  RVal EvalEQ(ValueManager& ValMgr, LVal L, LVal R);
-  RVal EvalNE(ValueManager& ValMgr, LVal L, LVal R);
+  RVal EvalEQ(BasicValueFactory& BasicVals, LVal L, LVal R);
+  RVal EvalNE(BasicValueFactory& BasicVals, LVal L, LVal R);
 };
   
 } // end clang namespace

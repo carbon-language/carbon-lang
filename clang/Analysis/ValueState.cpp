@@ -245,7 +245,7 @@ RVal ValueStateManager::GetRVal(ValueState* St, Expr* E) {
           // are comparing states using pointer equality.  Perhaps there is
           // a better way, since APInts are fairly lightweight.
 
-          return nonlval::ConcreteInt(ValMgr.getValue(ED->getInitVal()));          
+          return nonlval::ConcreteInt(BasicVals.getValue(ED->getInitVal()));          
         }
         else if (FunctionDecl* FD = dyn_cast<FunctionDecl>(D))
           return lval::FuncVal(FD);
@@ -258,11 +258,11 @@ RVal ValueStateManager::GetRVal(ValueState* St, Expr* E) {
         
       case Stmt::CharacterLiteralClass: {
         CharacterLiteral* C = cast<CharacterLiteral>(E);
-        return NonLVal::MakeVal(ValMgr, C->getValue(), C->getType());
+        return NonLVal::MakeVal(BasicVals, C->getValue(), C->getType());
       }
         
       case Stmt::IntegerLiteralClass: {
-        return NonLVal::MakeVal(ValMgr, cast<IntegerLiteral>(E));
+        return NonLVal::MakeVal(BasicVals, cast<IntegerLiteral>(E));
       }
 
         // Casts where the source and target type are the same
@@ -339,11 +339,11 @@ RVal ValueStateManager::GetBlkExprRVal(ValueState* St, Expr* E) {
   switch (E->getStmtClass()) {
     case Stmt::CharacterLiteralClass: {
       CharacterLiteral* C = cast<CharacterLiteral>(E);
-      return NonLVal::MakeVal(ValMgr, C->getValue(), C->getType());
+      return NonLVal::MakeVal(BasicVals, C->getValue(), C->getType());
     }
       
     case Stmt::IntegerLiteralClass: {
-      return NonLVal::MakeVal(ValMgr, cast<IntegerLiteral>(E));
+      return NonLVal::MakeVal(BasicVals, cast<IntegerLiteral>(E));
     }
       
     default: {
