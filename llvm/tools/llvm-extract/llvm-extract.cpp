@@ -81,9 +81,8 @@ int main(int argc, char **argv) {
     M.get()->getNamedGlobal(ExtractGlobal) : 0;
 
   // Figure out which function we should extract
-  Function *F = ExtractFunc.size() ? 
-    M.get()->getFunction(ExtractFunc) :
-    M.get()->getFunction("main");
+  if (!ExtractFunc.size()) ExtractFunc = "main";
+  Function *F = M.get()->getFunction(ExtractFunc);
 
   if (F == 0 && G == 0) {
     cerr << argv[0] << ": program doesn't contain function named '"
