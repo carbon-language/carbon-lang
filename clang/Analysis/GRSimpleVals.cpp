@@ -90,7 +90,7 @@ static void EmitWarning(Diagnostic& Diag, SourceManager& SrcMgr,
 }
   
 unsigned RunGRSimpleVals(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx,
-                         Diagnostic& Diag, bool Visualize) {
+                         Diagnostic& Diag, bool Visualize, bool TrimGraph) {
   
   if (Diag.hasErrorOccurred())
     return 0;
@@ -141,7 +141,7 @@ unsigned RunGRSimpleVals(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx,
       "Pass-by-value argument in function or message expression is undefined.");
       
 #ifndef NDEBUG
-  if (Visualize) CheckerState->ViewGraph();
+  if (Visualize) CheckerState->ViewGraph(TrimGraph);
 #endif
   
   return Engine.getGraph().size();

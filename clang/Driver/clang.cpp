@@ -461,6 +461,11 @@ static llvm::cl::opt<std::string>
 AnalyzeSpecificFunction("analyze-function",
                 llvm::cl::desc("Run analysis on specific function."));
 
+static llvm::cl::opt<bool>
+TrimGraph("trim-path-graph",
+      llvm::cl::desc("Only show error-related paths in the analysis graph."));
+
+
 //===----------------------------------------------------------------------===//
 // Target Triple Processing.
 //===----------------------------------------------------------------------===//
@@ -1039,7 +1044,7 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
       return CreateGRSimpleVals(Diag, AnalyzeSpecificFunction);
       
     case AnalysisGRSimpleValsView:
-      return CreateGRSimpleVals(Diag, AnalyzeSpecificFunction, true);
+      return CreateGRSimpleVals(Diag, AnalyzeSpecificFunction, true, TrimGraph);
       
     case CheckerCFRef:
       return CreateCFRefChecker(Diag, AnalyzeSpecificFunction);

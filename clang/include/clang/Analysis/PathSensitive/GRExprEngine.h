@@ -149,7 +149,7 @@ public:
   
   /// ViewGraph - Visualize the ExplodedGraph created by executing the
   ///  simulation.
-  void ViewGraph();
+  void ViewGraph(bool trim = false);
   
   /// getInitialState - Return the initial state used for the root vertex
   ///  in the ExplodedGraph.
@@ -392,7 +392,8 @@ protected:
   /// VisitUnaryOperator - Transfer function logic for unary operators.
   void VisitUnaryOperator(UnaryOperator* B, NodeTy* Pred, NodeSet& Dst);
   
-  void VisitDeref(UnaryOperator* B, NodeTy* Pred, NodeSet& Dst);
+  void VisitDeref(UnaryOperator* U, NodeTy* Pred, NodeSet& Dst,
+                  bool GetLVal = false);
   
   RVal EvalCast(RVal X, QualType CastT) {
     if (X.isUnknownOrUndef())

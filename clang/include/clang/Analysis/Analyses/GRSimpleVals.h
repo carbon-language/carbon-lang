@@ -25,7 +25,7 @@ namespace clang {
   ///  something more elaborate as the requirements on the interface become
   ///  clearer.  The value returned is the number of nodes in the ExplodedGraph.
   unsigned RunGRSimpleVals(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx,
-                           Diagnostic& Diag, bool Visualize);
+                           Diagnostic& Diag, bool Visualize, bool TrimGraph);
   
 } // end clang namespace
 

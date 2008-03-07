@@ -44,7 +44,7 @@ ASTConsumer *CreateUnitValsChecker(Diagnostic &Diags);
   
 ASTConsumer *CreateGRSimpleVals(Diagnostic &Diags,
                                 const std::string& Function,
-                                bool Visualize = false);
+                                bool Visualize = false, bool TrimGraph = false);
   
 ASTConsumer* CreateCFRefChecker(Diagnostic &Diags,
                                 const std::string& FunctionName); 

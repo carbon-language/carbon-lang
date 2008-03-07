@@ -732,7 +732,8 @@ void GRExprEngine::VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr* Ex,
   
 }
 
-void GRExprEngine::VisitDeref(UnaryOperator* U, NodeTy* Pred, NodeSet& Dst) {
+void GRExprEngine::VisitDeref(UnaryOperator* U, NodeTy* Pred,
+                              NodeSet& Dst, bool GetLVal) {
 
   Expr* Ex = U->getSubExpr()->IgnoreParens();
     
@@ -787,12 +788,16 @@ void GRExprEngine::VisitDeref(UnaryOperator* U, NodeTy* Pred, NodeSet& Dst) {
     ValueState* StNotNull = Assume(St, LV, true, isFeasibleNotNull);
     
     if (isFeasibleNotNull) {
+
+      if (GetLVal) Nodify(Dst, U, N, SetRVal(StNotNull, U, LV));
+      else {
+        
+        // FIXME: Currently symbolic analysis "generates" new symbols
+        //  for the contents of values.  We need a better approach.
       
-      // FIXME: Currently symbolic analysis "generates" new symbols
-      //  for the contents of values.  We need a better approach.
-      
-      Nodify(Dst, U, N, SetRVal(StNotNull, U,
-                                GetRVal(StNotNull, LV, U->getType())));
+        Nodify(Dst, U, N, SetRVal(StNotNull, U,
+                                  GetRVal(StNotNull, LV, U->getType())));
+      }
     }
     
     bool isFeasibleNull;
@@ -975,18 +980,11 @@ void GRExprEngine::VisitLVal(Expr* Ex, NodeTy* Pred, NodeSet& Dst) {
     return;
   }
   
-  if (UnaryOperator* U = dyn_cast<UnaryOperator>(Ex)) {
+  if (UnaryOperator* U = dyn_cast<UnaryOperator>(Ex))
     if (U->getOpcode() == UnaryOperator::Deref) {
-      Ex = U->getSubExpr()->IgnoreParens();
-      
-      if (isa<DeclRefExpr>(Ex))
-        Dst.Add(Pred);
-      else
-        Visit(Ex, Pred, Dst);
-      
+      VisitDeref(U, Pred, Dst, true);
       return;
     }
-  }
   
   Visit(Ex, Pred, Dst);
 }
@@ -1810,11 +1808,40 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
 } // end llvm namespace    
 #endif
 
-void GRExprEngine::ViewGraph() {
+#ifndef NDEBUG
+template <typename ITERATOR>
+static void AddSources(llvm::SmallVector<GRExprEngine::NodeTy*, 10>& Sources,
+                              ITERATOR I, ITERATOR E) {
+  
+  for ( ; I != E; ++I )
+    Sources.push_back(*I);
+}
+#endif
+
+void GRExprEngine::ViewGraph(bool trim) {
 #ifndef NDEBUG
   GraphPrintCheckerState = this;
   GraphPrintSourceManager = &getContext().getSourceManager();
-  llvm::ViewGraph(*G.roots_begin(), "GRExprEngine");
+  
+  if (trim) {
+    llvm::SmallVector<NodeTy*, 10> Sources;
+    AddSources(Sources, null_derefs_begin(), null_derefs_end());
+    AddSources(Sources, undef_derefs_begin(), undef_derefs_end());
+    
+    GRExprEngine::GraphTy* TrimmedG = G.Trim(&Sources[0],
+                                             &Sources[0]+Sources.size());
+    
+    if (!TrimmedG)
+      llvm::cerr << "warning: Trimmed ExplodedGraph is empty.\n";
+    else {
+      llvm::ViewGraph(*TrimmedG->roots_begin(), "TrimmedGRExprEngine");    
+      delete TrimmedG;
+    }
+  }
+  else
+    llvm::ViewGraph(*G.roots_begin(), "GRExprEngine");
+  
+  
   GraphPrintCheckerState = NULL;
   GraphPrintSourceManager = NULL;
 #endif

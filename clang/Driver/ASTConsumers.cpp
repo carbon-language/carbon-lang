@@ -593,10 +593,11 @@ namespace {
     Diagnostic &Diags;
     ASTContext* Ctx;
     bool Visualize;
+    bool TrimGraph;
   public:
     GRSimpleValsVisitor(Diagnostic &diags, const std::string& fname,
-                        bool visualize)
-      : CFGVisitor(fname), Diags(diags), Visualize(visualize) {}
+                        bool visualize, bool trim)
+      : CFGVisitor(fname), Diags(diags), Visualize(visualize), TrimGraph(trim){}
     
     virtual void Initialize(ASTContext &Context) { Ctx = &Context; }    
     virtual void VisitCFG(CFG& C, FunctionDecl&);
@@ -606,9 +607,9 @@ namespace {
 
 ASTConsumer* clang::CreateGRSimpleVals(Diagnostic &Diags,
                                        const std::string& FunctionName,
-                                       bool Visualize) {
+                                       bool Visualize, bool TrimGraph) {
   
-  return new GRSimpleValsVisitor(Diags, FunctionName, Visualize);
+  return new GRSimpleValsVisitor(Diags, FunctionName, Visualize, TrimGraph);
 }
 
 void GRSimpleValsVisitor::VisitCFG(CFG& C, FunctionDecl& FD) {
@@ -626,13 +627,13 @@ void GRSimpleValsVisitor::VisitCFG(CFG& C, FunctionDecl& FD) {
 
     llvm::Timer T("GRSimpleVals");
     T.startTimer();
-    unsigned size = RunGRSimpleVals(C, FD, *Ctx, Diags, Visualize);
+    unsigned size = RunGRSimpleVals(C, FD, *Ctx, Diags, false, false);
     T.stopTimer();    
     llvm::cerr << size << ' ' << T.getWallTime() << '\n';
   }
   else {  
     llvm::cerr << '\n';    
-    RunGRSimpleVals(C, FD, *Ctx, Diags, Visualize);
+    RunGRSimpleVals(C, FD, *Ctx, Diags, Visualize, TrimGraph);
   }    
 }
 

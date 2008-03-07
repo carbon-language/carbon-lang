@@ -55,6 +55,7 @@ protected:
     }
     
     void* getPtr() const {
+      assert (!getFlag());
       return reinterpret_cast<void*>(P & ~Mask);
     }
 
@@ -73,12 +74,13 @@ protected:
     
     unsigned size() const;
     
-    bool empty() const;
+    bool empty() const { return size() == 0; }
     
     void addNode(ExplodedNodeImpl* N);
     
     void setFlag() {
-      P |= AuxFlag;
+      assert (P == 0);
+      P = AuxFlag;
     }
     
     bool getFlag() const {
@@ -123,8 +125,8 @@ public:
   bool succ_empty() const { return Succs.empty(); }
   bool pred_empty() const { return Preds.size(); }
   
-  bool isSink() const { return Preds.getFlag(); }
-  void markAsSink() { Preds.setFlag(); }  
+  bool isSink() const { return Succs.getFlag(); }
+  void markAsSink() { Succs.setFlag(); }  
 };
 
 
@@ -232,6 +234,8 @@ protected:
   ///  is intended to be used only by GRCoreEngineImpl.
   virtual ExplodedNodeImpl* getNodeImpl(const ProgramPoint& L, void* State,
                                         bool* IsNew) = 0;
+  
+  virtual ExplodedGraphImpl* MakeEmptyGraph() const = 0;
 
   /// addRoot - Add an untyped node to the set of roots.
   ExplodedNodeImpl* addRoot(ExplodedNodeImpl* V) {
@@ -262,6 +266,10 @@ public:
   CFG& getCFG() { return cfg; }
   ASTContext& getContext() { return Ctx; }
   FunctionDecl& getFunctionDecl() { return FD; }
+  
+  ExplodedGraphImpl* Trim(ExplodedNodeImpl** NBeg,
+                          ExplodedNodeImpl** NEnd) const;
+  
 };
   
 template <typename CHECKER>
@@ -279,10 +287,15 @@ protected:
   AllNodesTy Nodes;
   
 protected:
-  virtual ExplodedNodeImpl*
-  getNodeImpl(const ProgramPoint& L, void* State, bool* IsNew) {
+  virtual ExplodedNodeImpl* getNodeImpl(const ProgramPoint& L,
+                                        void* State, bool* IsNew) {
+    
     return getNode(L, static_cast<StateTy*>(State), IsNew);
   }
+  
+  virtual ExplodedGraphImpl* MakeEmptyGraph() const {
+    return new ExplodedGraph(cfg, FD, Ctx);
+  }  
     
 public:
   ExplodedGraph(CFG& c, FunctionDecl& fd, ASTContext& ctx)
@@ -361,6 +374,22 @@ public:
   
   const_eop_iterator eop_end() const {
     return const_cast<ExplodedGraph>(this)->eop_end();
+  }
+  
+  // Utility.
+  
+  ExplodedGraph* Trim(NodeTy** NBeg, NodeTy** NEnd) const {
+    
+    if (NBeg == NEnd)
+      return NULL;
+    
+    assert (NBeg < NEnd);
+    
+    ExplodedNodeImpl** NBegImpl = (ExplodedNodeImpl**) NBeg;
+    ExplodedNodeImpl** NEndImpl = (ExplodedNodeImpl**) NEnd;
+    
+    return static_cast<ExplodedGraph*>(ExplodedGraphImpl::Trim(NBegImpl,
+                                                               NEndImpl));
   }
 };
   
