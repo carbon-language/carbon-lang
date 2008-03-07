@@ -1,4 +1,4 @@
-(*===-- tools/ml/llvm.ml - LLVM Ocaml Interface ---------------------------===*
+(*===-- llvm/llvm.ml - LLVM Ocaml Interface --------------------------------===*
  *
  *                     The LLVM Compiler Infrastructure
  *

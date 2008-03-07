@@ -53,15 +53,15 @@ extern "C" {
 typedef struct LLVMOpaqueModule *LLVMModuleRef;
 
 /**
- * Each value in the LLVM IR has a type, an instance of [lltype]. See the
- * llvm::Type class.
+ * Each value in the LLVM IR has a type, an LLVMTypeRef. See the llvm::Type
+ * class.
  */
 typedef struct LLVMOpaqueType *LLVMTypeRef;
 
 /**
- * When building recursive types using [refine_type], [lltype] values may become
- * invalid; use [lltypehandle] to resolve this problem. See the
- * llvm::AbstractTypeHolder] class. 
+ * When building recursive types using LLVMRefineType, LLVMTypeRef values may
+ * become invalid; use LLVMTypeHandleRef to resolve this problem. See the
+ * llvm::AbstractTypeHolder class.
  */
 typedef struct LLVMOpaqueTypeHandle *LLVMTypeHandleRef;
 
@@ -165,18 +165,21 @@ void LLVMDisposeMessage(char *Message);
 /*===-- Modules -----------------------------------------------------------===*/
 
 /* Create and destroy modules. */ 
+/** See llvm::Module::Module. */
 LLVMModuleRef LLVMModuleCreateWithName(const char *ModuleID);
+
+/** See llvm::Module::~Module. */
 void LLVMDisposeModule(LLVMModuleRef M);
 
-/* Data layout */
+/** Data layout. See Module::getDataLayout. */
 const char *LLVMGetDataLayout(LLVMModuleRef M);
 void LLVMSetDataLayout(LLVMModuleRef M, const char *Triple);
 
-/* Target triple */
+/** Target triple. See Module::getTargetTriple. */
 const char *LLVMGetTarget(LLVMModuleRef M);
 void LLVMSetTarget(LLVMModuleRef M, const char *Triple);
 
-/* Same as Module::addTypeName. */
+/** See Module::addTypeName. */
 int LLVMAddTypeName(LLVMModuleRef M, const char *Name, LLVMTypeRef Ty);
 void LLVMDeleteTypeName(LLVMModuleRef M, const char *Name);
 
@@ -198,7 +201,10 @@ void LLVMDeleteTypeName(LLVMModuleRef M, const char *Name);
  *     opaque type
  */
 
+/** See llvm::LLVMTypeKind::getTypeID. */
 LLVMTypeKind LLVMGetTypeKind(LLVMTypeRef Ty);
+
+/** See llvm::DerivedType::refineAbstractTypeTo. */
 void LLVMRefineAbstractType(LLVMTypeRef AbstractType, LLVMTypeRef ConcreteType);
 
 /* Operations on integer types */
