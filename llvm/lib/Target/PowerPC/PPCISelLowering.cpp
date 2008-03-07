@@ -233,6 +233,10 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
     addRegisterClass(MVT::i64, PPC::G8RCRegisterClass);
     // BUILD_PAIR can't be handled natively, and should be expanded to shl/or
     setOperationAction(ISD::BUILD_PAIR, MVT::i64, Expand);
+    // 64-bit PowerPC wants to expand i128 shifts itself.
+    setOperationAction(ISD::SHL_PARTS, MVT::i64, Custom);
+    setOperationAction(ISD::SRA_PARTS, MVT::i64, Custom);
+    setOperationAction(ISD::SRL_PARTS, MVT::i64, Custom);
   } else {
     // 32-bit PowerPC wants to expand i64 shifts itself.
     setOperationAction(ISD::SHL_PARTS, MVT::i32, Custom);
@@ -2416,77 +2420,89 @@ SDOperand PPCTargetLowering::LowerFLT_ROUNDS_(SDOperand Op, SelectionDAG &DAG) {
 }
 
 SDOperand PPCTargetLowering::LowerSHL_PARTS(SDOperand Op, SelectionDAG &DAG) {
-  assert(Op.getNumOperands() == 3 && Op.getValueType() == MVT::i32 &&
-         Op.getOperand(1).getValueType() == MVT::i32 && "Unexpected SHL!");
+  MVT::ValueType VT = Op.getValueType();
+  unsigned BitWidth = MVT::getSizeInBits(VT);
+  assert(Op.getNumOperands() == 3 &&
+         VT == Op.getOperand(1).getValueType() &&
+         "Unexpected SHL!");
   
   // Expand into a bunch of logical ops.  Note that these ops
   // depend on the PPC behavior for oversized shift amounts.
   SDOperand Lo = Op.getOperand(0);
   SDOperand Hi = Op.getOperand(1);
   SDOperand Amt = Op.getOperand(2);
+  MVT::ValueType AmtVT = Amt.getValueType();
   
-  SDOperand Tmp1 = DAG.getNode(ISD::SUB, MVT::i32,
-                               DAG.getConstant(32, MVT::i32), Amt);
-  SDOperand Tmp2 = DAG.getNode(PPCISD::SHL, MVT::i32, Hi, Amt);
-  SDOperand Tmp3 = DAG.getNode(PPCISD::SRL, MVT::i32, Lo, Tmp1);
-  SDOperand Tmp4 = DAG.getNode(ISD::OR , MVT::i32, Tmp2, Tmp3);
-  SDOperand Tmp5 = DAG.getNode(ISD::ADD, MVT::i32, Amt,
-                               DAG.getConstant(-32U, MVT::i32));
-  SDOperand Tmp6 = DAG.getNode(PPCISD::SHL, MVT::i32, Lo, Tmp5);
-  SDOperand OutHi = DAG.getNode(ISD::OR, MVT::i32, Tmp4, Tmp6);
-  SDOperand OutLo = DAG.getNode(PPCISD::SHL, MVT::i32, Lo, Amt);
+  SDOperand Tmp1 = DAG.getNode(ISD::SUB, AmtVT,
+                               DAG.getConstant(BitWidth, AmtVT), Amt);
+  SDOperand Tmp2 = DAG.getNode(PPCISD::SHL, VT, Hi, Amt);
+  SDOperand Tmp3 = DAG.getNode(PPCISD::SRL, VT, Lo, Tmp1);
+  SDOperand Tmp4 = DAG.getNode(ISD::OR , VT, Tmp2, Tmp3);
+  SDOperand Tmp5 = DAG.getNode(ISD::ADD, AmtVT, Amt,
+                               DAG.getConstant(-BitWidth, AmtVT));
+  SDOperand Tmp6 = DAG.getNode(PPCISD::SHL, VT, Lo, Tmp5);
+  SDOperand OutHi = DAG.getNode(ISD::OR, VT, Tmp4, Tmp6);
+  SDOperand OutLo = DAG.getNode(PPCISD::SHL, VT, Lo, Amt);
   SDOperand OutOps[] = { OutLo, OutHi };
-  return DAG.getNode(ISD::MERGE_VALUES, DAG.getVTList(MVT::i32, MVT::i32),
+  return DAG.getNode(ISD::MERGE_VALUES, DAG.getVTList(VT, VT),
                      OutOps, 2);
 }
 
 SDOperand PPCTargetLowering::LowerSRL_PARTS(SDOperand Op, SelectionDAG &DAG) {
-  assert(Op.getNumOperands() == 3 && Op.getValueType() == MVT::i32 &&
-         Op.getOperand(1).getValueType() == MVT::i32 && "Unexpected SRL!");
+  MVT::ValueType VT = Op.getValueType();
+  unsigned BitWidth = MVT::getSizeInBits(VT);
+  assert(Op.getNumOperands() == 3 &&
+         VT == Op.getOperand(1).getValueType() &&
+         "Unexpected SRL!");
   
-  // Otherwise, expand into a bunch of logical ops.  Note that these ops
+  // Expand into a bunch of logical ops.  Note that these ops
   // depend on the PPC behavior for oversized shift amounts.
   SDOperand Lo = Op.getOperand(0);
   SDOperand Hi = Op.getOperand(1);
   SDOperand Amt = Op.getOperand(2);
+  MVT::ValueType AmtVT = Amt.getValueType();
   
-  SDOperand Tmp1 = DAG.getNode(ISD::SUB, MVT::i32,
-                               DAG.getConstant(32, MVT::i32), Amt);
-  SDOperand Tmp2 = DAG.getNode(PPCISD::SRL, MVT::i32, Lo, Amt);
-  SDOperand Tmp3 = DAG.getNode(PPCISD::SHL, MVT::i32, Hi, Tmp1);
-  SDOperand Tmp4 = DAG.getNode(ISD::OR , MVT::i32, Tmp2, Tmp3);
-  SDOperand Tmp5 = DAG.getNode(ISD::ADD, MVT::i32, Amt,
-                               DAG.getConstant(-32U, MVT::i32));
-  SDOperand Tmp6 = DAG.getNode(PPCISD::SRL, MVT::i32, Hi, Tmp5);
-  SDOperand OutLo = DAG.getNode(ISD::OR, MVT::i32, Tmp4, Tmp6);
-  SDOperand OutHi = DAG.getNode(PPCISD::SRL, MVT::i32, Hi, Amt);
+  SDOperand Tmp1 = DAG.getNode(ISD::SUB, AmtVT,
+                               DAG.getConstant(BitWidth, AmtVT), Amt);
+  SDOperand Tmp2 = DAG.getNode(PPCISD::SRL, VT, Lo, Amt);
+  SDOperand Tmp3 = DAG.getNode(PPCISD::SHL, VT, Hi, Tmp1);
+  SDOperand Tmp4 = DAG.getNode(ISD::OR , VT, Tmp2, Tmp3);
+  SDOperand Tmp5 = DAG.getNode(ISD::ADD, AmtVT, Amt,
+                               DAG.getConstant(-BitWidth, AmtVT));
+  SDOperand Tmp6 = DAG.getNode(PPCISD::SRL, VT, Hi, Tmp5);
+  SDOperand OutLo = DAG.getNode(ISD::OR, VT, Tmp4, Tmp6);
+  SDOperand OutHi = DAG.getNode(PPCISD::SRL, VT, Hi, Amt);
   SDOperand OutOps[] = { OutLo, OutHi };
-  return DAG.getNode(ISD::MERGE_VALUES, DAG.getVTList(MVT::i32, MVT::i32),
+  return DAG.getNode(ISD::MERGE_VALUES, DAG.getVTList(VT, VT),
                      OutOps, 2);
 }
 
 SDOperand PPCTargetLowering::LowerSRA_PARTS(SDOperand Op, SelectionDAG &DAG) {
-  assert(Op.getNumOperands() == 3 && Op.getValueType() == MVT::i32 &&
-         Op.getOperand(1).getValueType() == MVT::i32 && "Unexpected SRA!");
+  MVT::ValueType VT = Op.getValueType();
+  unsigned BitWidth = MVT::getSizeInBits(VT);
+  assert(Op.getNumOperands() == 3 &&
+         VT == Op.getOperand(1).getValueType() &&
+         "Unexpected SRA!");
   
-  // Otherwise, expand into a bunch of logical ops, followed by a select_cc.
+  // Expand into a bunch of logical ops, followed by a select_cc.
   SDOperand Lo = Op.getOperand(0);
   SDOperand Hi = Op.getOperand(1);
   SDOperand Amt = Op.getOperand(2);
+  MVT::ValueType AmtVT = Amt.getValueType();
   
-  SDOperand Tmp1 = DAG.getNode(ISD::SUB, MVT::i32,
-                               DAG.getConstant(32, MVT::i32), Amt);
-  SDOperand Tmp2 = DAG.getNode(PPCISD::SRL, MVT::i32, Lo, Amt);
-  SDOperand Tmp3 = DAG.getNode(PPCISD::SHL, MVT::i32, Hi, Tmp1);
-  SDOperand Tmp4 = DAG.getNode(ISD::OR , MVT::i32, Tmp2, Tmp3);
-  SDOperand Tmp5 = DAG.getNode(ISD::ADD, MVT::i32, Amt,
-                               DAG.getConstant(-32U, MVT::i32));
-  SDOperand Tmp6 = DAG.getNode(PPCISD::SRA, MVT::i32, Hi, Tmp5);
-  SDOperand OutHi = DAG.getNode(PPCISD::SRA, MVT::i32, Hi, Amt);
-  SDOperand OutLo = DAG.getSelectCC(Tmp5, DAG.getConstant(0, MVT::i32),
+  SDOperand Tmp1 = DAG.getNode(ISD::SUB, AmtVT,
+                               DAG.getConstant(BitWidth, AmtVT), Amt);
+  SDOperand Tmp2 = DAG.getNode(PPCISD::SRL, VT, Lo, Amt);
+  SDOperand Tmp3 = DAG.getNode(PPCISD::SHL, VT, Hi, Tmp1);
+  SDOperand Tmp4 = DAG.getNode(ISD::OR , VT, Tmp2, Tmp3);
+  SDOperand Tmp5 = DAG.getNode(ISD::ADD, AmtVT, Amt,
+                               DAG.getConstant(-BitWidth, AmtVT));
+  SDOperand Tmp6 = DAG.getNode(PPCISD::SRA, VT, Hi, Tmp5);
+  SDOperand OutHi = DAG.getNode(PPCISD::SRA, VT, Hi, Amt);
+  SDOperand OutLo = DAG.getSelectCC(Tmp5, DAG.getConstant(0, AmtVT),
                                     Tmp4, Tmp6, ISD::SETLE);
   SDOperand OutOps[] = { OutLo, OutHi };
-  return DAG.getNode(ISD::MERGE_VALUES, DAG.getVTList(MVT::i32, MVT::i32),
+  return DAG.getNode(ISD::MERGE_VALUES, DAG.getVTList(VT, VT),
                      OutOps, 2);
 }
 
