@@ -15,32 +15,29 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/AST/Builtins.h"
 #include "llvm/ADT/APFloat.h"
-#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/STLExtras.h"
-#include <set>
 using namespace clang;
 
-void TargetInfoImpl::ANCHOR() {} // out-of-line virtual method for class.
-
+// Out of line virtual dtor for TargetInfo.
+TargetInfo::~TargetInfo() {}
 
 //===----------------------------------------------------------------------===//
-// FIXME: These are temporary hacks, they should revector into the
-// TargetInfoImpl.
+// FIXME: These are temporary hacks.
 
 void TargetInfo::getFloatInfo(uint64_t &Size, unsigned &Align,
-                              const llvm::fltSemantics *&Format) {
+                              const llvm::fltSemantics *&Format) const {
   Align = 32;  // FIXME: implement correctly.
   Size = 32;
   Format = &llvm::APFloat::IEEEsingle;
 }
 void TargetInfo::getDoubleInfo(uint64_t &Size, unsigned &Align,
-                               const llvm::fltSemantics *&Format) {
+                               const llvm::fltSemantics *&Format) const {
   Size = 64; // FIXME: implement correctly.
   Align = 32;
   Format = &llvm::APFloat::IEEEdouble;
 }
 void TargetInfo::getLongDoubleInfo(uint64_t &Size, unsigned &Align,
-                                   const llvm::fltSemantics *&Format) {
+                                   const llvm::fltSemantics *&Format) const {
   Size = Align = 64;  // FIXME: implement correctly.
   Format = &llvm::APFloat::IEEEdouble;
   //Size = 80; Align = 32;  // FIXME: implement correctly.
@@ -50,47 +47,6 @@ void TargetInfo::getLongDoubleInfo(uint64_t &Size, unsigned &Align,
 
 //===----------------------------------------------------------------------===//
 
-TargetInfo::TargetInfo(const TargetInfoImpl *TII) {
-  Target = TII;
-  
-  // Initialize Cache values to uncomputed.
-  TII->getWCharInfo(WCharWidth, WCharAlign);
-}
-
-
-TargetInfo::~TargetInfo() {
-  delete Target;
-}
-
-const char* TargetInfo::getTargetTriple() const {
-  return Target->getTargetTriple();
-}
-
-const char *TargetInfo::getTargetPrefix() const {
- return Target->getTargetPrefix();
-}
-
-/// getTargetDefines - Appends the target-specific #define values for this
-/// target set to the specified buffer.
-void TargetInfo::getTargetDefines(std::vector<char> &Buffer) {
-  Target->getTargetDefines(Buffer);
-}
-
-
-/// getTargetBuiltins - Return information about target-specific builtins for
-/// the current primary target, and info about which builtins are non-portable
-/// across the current set of primary and secondary targets.
-void TargetInfo::getTargetBuiltins(const Builtin::Info *&Records,
-                                   unsigned &NumRecords) const {
-  // Get info about what actual builtins we will expose.
-  Target->getTargetBuiltins(Records, NumRecords);
-}
-
-/// getVAListDeclaration - Return the declaration to use for
-/// __builtin_va_list, which is target-specific.
-const char *TargetInfo::getVAListDeclaration() const {
-  return Target->getVAListDeclaration();
-}
 
 static void removeGCCRegisterPrefix(const char *&Name) {
   if (Name[0] == '%' || Name[0] == '#')
@@ -112,7 +68,7 @@ bool TargetInfo::isValidGCCRegisterName(const char *Name) const {
       strcmp(Name, "cc") == 0)
     return true;
   
-  Target->getGCCRegNames(Names, NumNames);
+  getGCCRegNames(Names, NumNames);
   
   // If we have a number it maps to an entry in the register name array.
   if (isdigit(Name[0])) {
@@ -129,10 +85,10 @@ bool TargetInfo::isValidGCCRegisterName(const char *Name) const {
   }
   
   // Now check aliases.
-  const TargetInfoImpl::GCCRegAlias *Aliases;
+  const GCCRegAlias *Aliases;
   unsigned NumAliases;
   
-  Target->getGCCRegAliases(Aliases, NumAliases);
+  getGCCRegAliases(Aliases, NumAliases);
   for (unsigned i = 0; i < NumAliases; i++) {
     for (unsigned j = 0 ; j < llvm::array_lengthof(Aliases[i].Aliases); j++) {
       if (!Aliases[i].Aliases[j])
@@ -145,8 +101,7 @@ bool TargetInfo::isValidGCCRegisterName(const char *Name) const {
   return false;
 }
 
-const char *TargetInfo::getNormalizedGCCRegisterName(const char *Name) const
-{
+const char *TargetInfo::getNormalizedGCCRegisterName(const char *Name) const {
   assert(isValidGCCRegisterName(Name) && "Invalid register passed in");
   
   removeGCCRegisterPrefix(Name);
@@ -154,7 +109,7 @@ const char *TargetInfo::getNormalizedGCCRegisterName(const char *Name) const
   const char * const *Names;
   unsigned NumNames;
 
-  Target->getGCCRegNames(Names, NumNames);
+  getGCCRegNames(Names, NumNames);
 
   // First, check if we have a number.
   if (isdigit(Name[0])) {
@@ -168,10 +123,10 @@ const char *TargetInfo::getNormalizedGCCRegisterName(const char *Name) const
   }
   
   // Now check aliases.
-  const TargetInfoImpl::GCCRegAlias *Aliases;
+  const GCCRegAlias *Aliases;
   unsigned NumAliases;
   
-  Target->getGCCRegAliases(Aliases, NumAliases);
+  getGCCRegAliases(Aliases, NumAliases);
   for (unsigned i = 0; i < NumAliases; i++) {
     for (unsigned j = 0 ; j < llvm::array_lengthof(Aliases[i].Aliases); j++) {
       if (!Aliases[i].Aliases[j])
@@ -200,7 +155,7 @@ bool TargetInfo::validateOutputConstraint(const char *Name,
   while (*Name) {
     switch (*Name) {
     default:
-      if (!Target->validateAsmConstraint(*Name, info)) {
+      if (!validateAsmConstraint(*Name, info)) {
         // FIXME: This assert is in place temporarily 
         // so we can add more constraints as we hit it.
         // Eventually, an unknown constraint should just be treated as 'g'.
@@ -227,8 +182,7 @@ bool TargetInfo::validateOutputConstraint(const char *Name,
 
 bool TargetInfo::validateInputConstraint(const char *Name,
                                          unsigned NumOutputs,
-                                         ConstraintInfo &info) const
-{
+                                         ConstraintInfo &info) const {
   while (*Name) {
     switch (*Name) {
     default:
@@ -239,7 +193,7 @@ bool TargetInfo::validateInputConstraint(const char *Name,
         // Check if matching constraint is out of bounds.
         if (i >= NumOutputs)
           return false;
-      } else if (!Target->validateAsmConstraint(*Name, info)) {
+      } else if (!validateAsmConstraint(*Name, info)) {
         // FIXME: This assert is in place temporarily 
         // so we can add more constraints as we hit it.
         // Eventually, an unknown constraint should just be treated as 'g'.
@@ -267,13 +221,3 @@ bool TargetInfo::validateInputConstraint(const char *Name,
   
   return true;
 }
-
-std::string TargetInfo::convertConstraint(const char Constraint) const {
-  return Target->convertConstraint(Constraint);
-}
-
-const char *TargetInfo::getClobbers() const {
-  return Target->getClobbers();
-}
-
-

@@ -36,9 +36,9 @@ static void Define(std::vector<char> &Buf, const char *Macro,
 
 
 namespace {
-class DarwinTargetInfo : public TargetInfoImpl {
+class DarwinTargetInfo : public TargetInfo {
 public:
-  DarwinTargetInfo(const std::string& triple) : TargetInfoImpl(triple) {}
+  DarwinTargetInfo(const std::string& triple) : TargetInfo(triple) {}
   
   virtual void getTargetDefines(std::vector<char> &Defs) const {
 // FIXME: we need a real target configuration system.  For now, only define
@@ -67,9 +67,9 @@ public:
 };
 
 
-class SolarisTargetInfo : public TargetInfoImpl {
+class SolarisTargetInfo : public TargetInfo {
 public:
-  SolarisTargetInfo(const std::string& triple) : TargetInfoImpl(triple) {}
+  SolarisTargetInfo(const std::string& triple) : TargetInfo(triple) {}
   
   virtual void getTargetDefines(std::vector<char> &Defs) const {
 // FIXME: we need a real target configuration system.  For now, only define
@@ -362,7 +362,7 @@ namespace PPC {
     NumNames = llvm::array_lengthof(GCCRegNames);
   }
 
-  static const TargetInfoImpl::GCCRegAlias GCCRegAliases[] = {
+  static const TargetInfo::GCCRegAlias GCCRegAliases[] = {
     // While some of these aliases do map to different registers
     // they still share the same register name.
     { { "cc", "cr0", "fr0", "r0", "v0"}, "0" }, 
@@ -399,7 +399,7 @@ namespace PPC {
     { { "fr31", "r31", "v31"}, "31" }, 
   };
   
-  static void getGCCRegAliases(const TargetInfoImpl::GCCRegAlias *&Aliases, 
+  static void getGCCRegAliases(const TargetInfo::GCCRegAlias *&Aliases, 
                                unsigned &NumAliases) {
     Aliases = GCCRegAliases;
     NumAliases = llvm::array_lengthof(GCCRegAliases);
@@ -456,7 +456,7 @@ namespace X86 {
     NumNames = llvm::array_lengthof(GCCRegNames);
   }
   
-  static const TargetInfoImpl::GCCRegAlias GCCRegAliases[] = {
+  static const TargetInfo::GCCRegAlias GCCRegAliases[] = {
     { { "al", "ah", "eax", "rax" }, "ax" },
     { { "bl", "bh", "ebx", "rbx" }, "bx" },
     { { "cl", "ch", "ecx", "rcx" }, "cx" },
@@ -466,7 +466,7 @@ namespace X86 {
     { { "ebp", "rbp" }, "bp" },
   };
 
-  static void getGCCRegAliases(const TargetInfoImpl::GCCRegAlias *&Aliases, 
+  static void getGCCRegAliases(const TargetInfo::GCCRegAlias *&Aliases, 
                                unsigned &NumAliases) {
     Aliases = GCCRegAliases;
     NumAliases = llvm::array_lengthof(GCCRegAliases);
@@ -736,19 +736,19 @@ static inline bool IsX86(const std::string& TT) {
 /// triple.
 TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
   if (T.find("ppc-") == 0 || T.find("powerpc-") == 0)
-    return new TargetInfo(new DarwinPPCTargetInfo(T));
+    return new DarwinPPCTargetInfo(T);
   
   if (T.find("ppc64-") == 0 || T.find("powerpc64-") == 0)
-    return new TargetInfo(new DarwinPPC64TargetInfo(T));
+    return new DarwinPPC64TargetInfo(T);
   
   if (T.find("sparc-") == 0)
-    return new TargetInfo(new SolarisSparcV8TargetInfo(T)); // ugly hack
+    return new SolarisSparcV8TargetInfo(T); // ugly hack
   
   if (T.find("x86_64-") == 0)
-    return new TargetInfo(new DarwinX86_64TargetInfo(T));
+    return new DarwinX86_64TargetInfo(T);
   
   if (IsX86(T))
-    return new TargetInfo(new DarwinI386TargetInfo(T));
+    return new DarwinI386TargetInfo(T);
   
   return NULL;
 }
