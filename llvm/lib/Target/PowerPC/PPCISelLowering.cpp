@@ -1375,16 +1375,36 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op,
     // FIXME the codegen can be much improved in some cases.
     // We do not have to keep everything in memory.
     if (isByVal) {
-      // Double word align in ELF
-      if (Expand && isELF32_ABI) GPR_idx += (GPR_idx % 2);
       // ObjSize is the true size, ArgSize rounded up to multiple of registers.
       ObjSize = (Flags & ISD::ParamFlags::ByValSize) >>
                       ISD::ParamFlags::ByValSizeOffs;
       ArgSize = ((ObjSize + PtrByteSize - 1)/PtrByteSize) * PtrByteSize;
+      // Double word align in ELF
+      if (Expand && isELF32_ABI) GPR_idx += (GPR_idx % 2);
+      // Objects of size 1 and 2 are right justified, everything else is
+      // left justified.  This means the memory address is adjusted forwards.
+      if (ObjSize==1 || ObjSize==2) {
+        CurArgOffset = CurArgOffset + (4 - ObjSize);
+      }
       // The value of the object is its address.
       int FI = MFI->CreateFixedObject(ObjSize, CurArgOffset);
       SDOperand FIN = DAG.getFrameIndex(FI, PtrVT);
       ArgValues.push_back(FIN);
+      if (ObjSize==1 || ObjSize==2) {
+        if (GPR_idx != Num_GPR_Regs) {
+          unsigned VReg = RegInfo.createVirtualRegister(&PPC::GPRCRegClass);
+          RegInfo.addLiveIn(GPR[GPR_idx], VReg);
+          SDOperand Val = DAG.getCopyFromReg(Root, VReg, PtrVT);
+          SDOperand Store = DAG.getTruncStore(Val.getValue(1), Val, FIN, 
+                               NULL, 0, ObjSize==1 ? MVT::i8 : MVT::i16 );
+          MemOps.push_back(Store);
+          ++GPR_idx;
+          if (isMachoABI) ArgOffset += PtrByteSize;
+        } else {
+          ArgOffset += PtrByteSize;
+        }
+        continue;
+      }
       for (unsigned j = 0; j < ArgSize; j += PtrByteSize) {
         // Store whatever pieces of the object are in registers
         // to memory.  ArgVal will be address of the beginning of
@@ -1678,7 +1698,7 @@ SDOperand PPCTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG,
     if (Flags & ISD::ParamFlags::ByVal)
       ArgSize = (Flags & ISD::ParamFlags::ByValSize) >> 
                 ISD::ParamFlags::ByValSizeOffs;
-    ArgSize = std::max(ArgSize, PtrByteSize);
+    ArgSize = ((ArgSize + PtrByteSize - 1)/PtrByteSize) * PtrByteSize;
     NumBytes += ArgSize;
   }
 
