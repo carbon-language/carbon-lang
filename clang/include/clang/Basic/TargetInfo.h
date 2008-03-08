@@ -48,12 +48,8 @@ public:
 
   virtual ~TargetInfo();
 
-  ///===---- Target property query methods --------------------------------===//
+  ///===---- Target Data Type Query Methods -------------------------------===//
 
-  /// getTargetDefines - Appends the target-specific #define values for this
-  /// target set to the specified buffer.
-  virtual void getTargetDefines(std::vector<char> &DefineBuffer) const = 0;
-  
   /// isCharSigned - Return true if 'char' is 'signed char' or false if it is
   /// treated as 'unsigned char'.  This is implementation defined according to
   /// C99 6.2.5p15.  In our implementation, this is target-specific.
@@ -119,13 +115,18 @@ public:
     return LongDoubleFormat;
   }
   
-
   /// getIntMaxTWidth - Return the size of intmax_t and uintmax_t for this
   /// target, in bits.  
   unsigned getIntMaxTWidth() const {
     // FIXME: implement correctly.
     return 64;
   }
+  
+  ///===---- Other target property query methods --------------------------===//
+  
+  /// getTargetDefines - Appends the target-specific #define values for this
+  /// target set to the specified buffer.
+  virtual void getTargetDefines(std::vector<char> &DefineBuffer) const = 0;
   
   /// getTargetBuiltins - Return information about target-specific builtins for
   /// the current primary target, and info about which builtins are non-portable
