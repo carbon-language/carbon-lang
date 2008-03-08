@@ -3024,7 +3024,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
   unsigned NumZero  = 0;
   unsigned NumNonZero = 0;
   unsigned NonZeros = 0;
-  bool HasNonImms = false;
+  bool IsAllConstants = true;
   SmallSet<SDOperand, 8> Values;
   for (unsigned i = 0; i < NumElems; ++i) {
     SDOperand Elt = Op.getOperand(i);
@@ -3033,7 +3033,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
     Values.insert(Elt);
     if (Elt.getOpcode() != ISD::Constant &&
         Elt.getOpcode() != ISD::ConstantFP)
-      HasNonImms = true;
+      IsAllConstants = false;
     if (isZeroNode(Elt))
       NumZero++;
     else {
@@ -3055,15 +3055,19 @@ X86TargetLowering::LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
   if (NumNonZero == 1 && NumElems <= 4) {
     unsigned Idx = CountTrailingZeros_32(NonZeros);
     SDOperand Item = Op.getOperand(Idx);
-    Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, VT, Item);
-    if (Idx == 0)
+    if (Idx == 0) {
+      Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, VT, Item);
       // Turn it into a MOVL (i.e. movss, movsd, or movd) to a zero vector.
       return getShuffleVectorZeroOrUndef(Item, VT, NumElems, Idx,
                                          NumZero > 0, DAG);
-    else if (!HasNonImms) // Otherwise, it's better to do a constpool load.
+    }
+    
+    if (IsAllConstants) // Otherwise, it's better to do a constpool load.
       return SDOperand();
 
     if (EVTBits == 32) {
+      Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, VT, Item);
+      
       // Turn it into a shuffle of zero and zero-extended scalar to vector.
       Item = getShuffleVectorZeroOrUndef(Item, VT, NumElems, 0, NumZero > 0,
                                          DAG);
@@ -3081,7 +3085,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
 
   // A vector full of immediates; various special cases are already
   // handled, so this is best done with a single constant-pool load.
-  if (!HasNonImms)
+  if (IsAllConstants)
     return SDOperand();
 
   // Let legalizer expand 2-wide build_vectors.
