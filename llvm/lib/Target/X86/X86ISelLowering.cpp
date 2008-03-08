@@ -3055,7 +3055,15 @@ X86TargetLowering::LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
   if (NumNonZero == 1 && NumElems <= 4) {
     unsigned Idx = CountTrailingZeros_32(NonZeros);
     SDOperand Item = Op.getOperand(Idx);
-    if (Idx == 0) {
+    
+    // If we have a constant or non-constant insertion into the low element of
+    // a vector, we can do this with SCALAR_TO_VECTOR + shuffle of zero into
+    // the rest of the elements.  This will be matched as movd/movq/movss/movsd
+    // depending on what the source datatype is.  Because we can only get here
+    // when NumElems <= 4, this only needs to handle i32/f32/i64/f64.
+    if (Idx == 0 &&
+        // Don't do this for i64 values on x86-32.
+        (EVT != MVT::i64 || Subtarget->is64Bit())) {
       Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, VT, Item);
       // Turn it into a MOVL (i.e. movss, movsd, or movd) to a zero vector.
       return getShuffleVectorZeroOrUndef(Item, VT, NumElems, Idx,
@@ -3065,6 +3073,11 @@ X86TargetLowering::LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
     if (IsAllConstants) // Otherwise, it's better to do a constpool load.
       return SDOperand();
 
+    // Otherwise, if this is a vector with i32 or f32 elements, and the element
+    // is a non-constant being inserted into an element other than the low one,
+    // we can't use a constant pool load.  Instead, use SCALAR_TO_VECTOR (aka
+    // movd/movss) to move this into the low element, then shuffle it into
+    // place.
     if (EVTBits == 32) {
       Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, VT, Item);
       
