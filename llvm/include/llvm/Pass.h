@@ -102,12 +102,6 @@ public:
   ///
   const PassInfo *getPassInfo() const;
 
-  /// runPass - Run this pass, returning true if a modification was made to the
-  /// module argument.  This should be implemented by all concrete subclasses.
-  ///
-  virtual bool runPass(Module &M) { return false; }
-  virtual bool runPass(BasicBlock&) { return false; }
-
   /// print - Print out the internal state of the pass.  This is called by
   /// Analyze to print out the contents of an analysis.  Otherwise it is not
   /// necessary to implement this method.  Beware that the module pointer MAY be
@@ -229,9 +223,6 @@ public:
   /// runOnModule - Virtual method overriden by subclasses to process the module
   /// being operated on.
   virtual bool runOnModule(Module &M) = 0;
-
-  virtual bool runPass(Module &M) { return runOnModule(M); }
-  virtual bool runPass(BasicBlock&) { return false; }
 
   virtual void assignPassManager(PMStack &PMS, 
                                  PassManagerType T = PMT_ModulePassManager);
@@ -370,12 +361,6 @@ public:
   // each function.
   //
   bool runOnFunction(Function &F);
-
-  /// To run directly on the basic block, we initialize, runOnBasicBlock, then
-  /// finalize.
-  ///
-  virtual bool runPass(Module &M) { return false; }
-  virtual bool runPass(BasicBlock &BB);
 
   virtual void assignPassManager(PMStack &PMS, 
                                  PassManagerType T = PMT_BasicBlockPassManager);

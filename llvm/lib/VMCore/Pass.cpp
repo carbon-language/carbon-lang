@@ -112,20 +112,6 @@ bool BasicBlockPass::runOnFunction(Function &F) {
   return Changed | doFinalization(F);
 }
 
-// To run directly on the basic block, we initialize, runOnBasicBlock, then
-// finalize.
-//
-bool BasicBlockPass::runPass(BasicBlock &BB) {
-  Function &F = *BB.getParent();
-  Module &M = *F.getParent();
-  bool Changed = doInitialization(M);
-  Changed |= doInitialization(F);
-  Changed |= runOnBasicBlock(BB);
-  Changed |= doFinalization(F);
-  Changed |= doFinalization(M);
-  return Changed;
-}
-
 //===----------------------------------------------------------------------===//
 // Pass Registration mechanism
 //
