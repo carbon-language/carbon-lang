@@ -939,12 +939,15 @@ def MOVMSKPDrr : PSI<0x50, MRMSrcReg, (outs GR32:$dst), (ins VR128:$src),
                      "movmskpd\t{$src, $dst|$dst, $src}",
                      [(set GR32:$dst, (int_x86_sse2_movmsk_pd VR128:$src))]>;
 
-// Prefetching loads.
-// TODO: no intrinsics for these?
-def PREFETCHT0   : PSI<0x18, MRM1m, (outs), (ins i8mem:$src), "prefetcht0\t$src", []>;
-def PREFETCHT1   : PSI<0x18, MRM2m, (outs), (ins i8mem:$src), "prefetcht1\t$src", []>;
-def PREFETCHT2   : PSI<0x18, MRM3m, (outs), (ins i8mem:$src), "prefetcht2\t$src", []>;
-def PREFETCHNTA  : PSI<0x18, MRM0m, (outs), (ins i8mem:$src), "prefetchnta\t$src", []>;
+// Prefetch intrinsic.
+def PREFETCHT0   : PSI<0x18, MRM1m, (outs), (ins i8mem:$src),
+    "prefetcht0\t$src", [(prefetch addr:$src, imm, (i32 3))]>;
+def PREFETCHT1   : PSI<0x18, MRM2m, (outs), (ins i8mem:$src),
+    "prefetcht1\t$src", [(prefetch addr:$src, imm, (i32 2))]>;
+def PREFETCHT2   : PSI<0x18, MRM3m, (outs), (ins i8mem:$src),
+    "prefetcht2\t$src", [(prefetch addr:$src, imm, (i32 1))]>;
+def PREFETCHNTA  : PSI<0x18, MRM0m, (outs), (ins i8mem:$src),
+    "prefetchnta\t$src", [(prefetch addr:$src, imm, (i32 0))]>;
 
 // Non-temporal stores
 def MOVNTPSmr : PSI<0x2B, MRMDestMem, (outs), (ins i128mem:$dst, VR128:$src),

@@ -82,6 +82,7 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   setOperationAction(ISD::MEMSET, MVT::Other, Expand);
   setOperationAction(ISD::MEMCPY, MVT::Other, Expand);
   setOperationAction(ISD::MEMBARRIER, MVT::Other, Expand);
+  setOperationAction(ISD::PREFETCH, MVT::Other, Expand);
 
   // PowerPC has no SREM/UREM instructions
   setOperationAction(ISD::SREM, MVT::i32, Expand);

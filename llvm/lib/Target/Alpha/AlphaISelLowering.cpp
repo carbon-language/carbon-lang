@@ -117,6 +117,7 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   setOperationAction(ISD::STACKSAVE, MVT::Other, Expand); 
   setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64, Expand);
+  setOperationAction(ISD::PREFETCH, MVT::Other, Expand);
 
   // We want to legalize GlobalAddress and ConstantPool and
   // ExternalSymbols nodes into the appropriate instructions to

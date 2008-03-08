@@ -1142,6 +1142,24 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     break;
 
+  case ISD::PREFETCH:
+    assert(Node->getNumOperands() == 4 && "Invalid Prefetch node!");
+    switch (TLI.getOperationAction(ISD::PREFETCH, MVT::Other)) {
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Legal:
+      Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
+      Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the address.
+      Tmp3 = LegalizeOp(Node->getOperand(2));  // Legalize the rw specifier.
+      Tmp4 = LegalizeOp(Node->getOperand(3));  // Legalize locality specifier.
+      Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Tmp3, Tmp4);
+      break;
+    case TargetLowering::Expand:
+      // It's a noop.
+      Result = LegalizeOp(Node->getOperand(0));
+      break;
+    }
+    break;
+
   case ISD::MEMBARRIER: {
     assert(Node->getNumOperands() == 6 && "Invalid MemBarrier node!");
     switch (TLI.getOperationAction(ISD::MEMBARRIER, MVT::Other)) {

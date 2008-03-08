@@ -185,7 +185,11 @@ def SDTVecInsert : SDTypeProfile<1, 3, [  // vector insert
   SDTCisEltOfVec<2, 1>, SDTCisSameAs<0, 1>, SDTCisPtrTy<3>
 ]>;
 
-def STDMemBarrier : SDTypeProfile<0, 5, [
+def STDPrefetch : SDTypeProfile<0, 3, [  // prefetch
+  SDTCisPtrTy<0>, SDTCisSameAs<1, 2>, SDTCisInt<1>
+]>;
+
+def STDMemBarrier : SDTypeProfile<0, 5, [ // memory barier
   SDTCisSameAs<0,1>,  SDTCisSameAs<0,2>,  SDTCisSameAs<0,3>, SDTCisSameAs<0,4>,
   SDTCisInt<0>
 ]>;
@@ -340,15 +344,20 @@ def br         : SDNode<"ISD::BR"         , SDTBr,     [SDNPHasChain]>;
 def ret        : SDNode<"ISD::RET"        , SDTNone,   [SDNPHasChain]>;
 def trap       : SDNode<"ISD::TRAP"       , SDTNone,
                         [SDNPHasChain, SDNPSideEffect]>;
-def membarrier : SDNode<"ISD::MEMBARRIER"       , STDMemBarrier,
+
+def prefetch   : SDNode<"ISD::PREFETCH"   , STDPrefetch,
+                        [SDNPHasChain, SDNPMayLoad, SDNPMayStore]>;
+
+def membarrier : SDNode<"ISD::MEMBARRIER" , STDMemBarrier,
                         [SDNPHasChain, SDNPSideEffect]>;
+
 // Do not use atomic_* directly, use atomic_*_size (see below)
-def atomic_lcs : SDNode<"ISD::ATOMIC_LCS", STDAtomic3,
-                        [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
-def atomic_las : SDNode<"ISD::ATOMIC_LAS", STDAtomic2,
-                        [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
+def atomic_lcs  : SDNode<"ISD::ATOMIC_LCS" , STDAtomic3,
+                         [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
+def atomic_las  : SDNode<"ISD::ATOMIC_LAS" , STDAtomic2,
+                         [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
 def atomic_swap : SDNode<"ISD::ATOMIC_SWAP", STDAtomic2,
-                        [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
+                         [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
 
 // Do not use ld, st directly. Use load, extload, sextload, zextload, store,
 // and truncst (see below).

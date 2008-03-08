@@ -3788,6 +3788,7 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
       return "<<Unknown Target Node>>";
     }
    
+  case ISD::PREFETCH:      return "Prefetch";
   case ISD::MEMBARRIER:    return "MemBarrier";
   case ISD::ATOMIC_LCS:    return "AtomicLCS";
   case ISD::ATOMIC_LAS:    return "AtomicLAS";

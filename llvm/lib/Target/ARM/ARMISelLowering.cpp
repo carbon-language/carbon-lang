@@ -211,6 +211,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::STACKRESTORE,       MVT::Other, Expand);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32  , Expand);
   setOperationAction(ISD::MEMBARRIER        , MVT::Other, Expand);
+  setOperationAction(ISD::PREFETCH          , MVT::Other, Expand);
 
   if (!Subtarget->hasV6Ops()) {
     setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16, Expand);

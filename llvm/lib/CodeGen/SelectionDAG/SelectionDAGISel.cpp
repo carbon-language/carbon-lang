@@ -2996,10 +2996,6 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     DAG.setRoot(DAG.getNode(ISD::STACKRESTORE, MVT::Other, getRoot(), Tmp));
     return 0;
   }
-  case Intrinsic::prefetch:
-    // FIXME: Currently discarding prefetches.
-    return 0;
-  
   case Intrinsic::var_annotation:
     // Discard annotate attributes
     return 0;
@@ -3050,6 +3046,16 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     DAG.setRoot(DAG.getNode(ISD::TRAP, MVT::Other, getRoot()));
     return 0;
   }
+  case Intrinsic::prefetch: {
+    SDOperand Ops[4];
+    Ops[0] = getRoot();
+    Ops[1] = getValue(I.getOperand(1));
+    Ops[2] = getValue(I.getOperand(2));
+    Ops[3] = getValue(I.getOperand(3));
+    DAG.setRoot(DAG.getNode(ISD::PREFETCH, MVT::Other, &Ops[0], 4));
+    return 0;
+  }
+  
   case Intrinsic::memory_barrier: {
     SDOperand Ops[6];
     Ops[0] = getRoot();

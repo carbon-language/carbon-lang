@@ -321,6 +321,7 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   setOperationAction(ISD::STACKRESTORE      , MVT::Other, Expand);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32  , Expand);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64  , Expand);
+  setOperationAction(ISD::PREFETCH          , MVT::Other, Expand);
 
   // Cell SPU has instructions for converting between i64 and fp.
   setOperationAction(ISD::FP_TO_SINT, MVT::i64, Custom);

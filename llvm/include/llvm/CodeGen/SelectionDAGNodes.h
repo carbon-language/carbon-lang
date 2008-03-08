@@ -591,6 +591,11 @@ namespace ISD {
     // TRAP - Trapping instruction
     TRAP,
 
+    // PREFETCH - This corresponds to a prefetch intrinsic. It takes chains are
+    // their first operand. The other operands are the address to prefetch,
+    // read / write specifier, and locality specifier.
+    PREFETCH,
+
     // OUTCHAIN = MEMBARRIER(INCHAIN, load-load, load-store, store-load, 
     //                       store-store, device)
     // This corresponds to the memory.barrier intrinsic.
