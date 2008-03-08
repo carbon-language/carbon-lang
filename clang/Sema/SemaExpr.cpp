@@ -190,17 +190,16 @@ Action::ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
   if (Literal.isFloatingLiteral()) {
     QualType Ty;
     const llvm::fltSemantics *Format;
-    uint64_t Size; unsigned Align;
 
     if (Literal.isFloat) {
       Ty = Context.FloatTy;
-      Context.Target.getFloatInfo(Size, Align, Format);
-    } else if (Literal.isLong) {
-      Ty = Context.LongDoubleTy;
-      Context.Target.getLongDoubleInfo(Size, Align, Format);
-    } else {
+      Format = Context.Target.getFloatFormat();
+    } else if (!Literal.isLong) {
       Ty = Context.DoubleTy;
-      Context.Target.getDoubleInfo(Size, Align, Format);
+      Format = Context.Target.getDoubleFormat();
+    } else {
+      Ty = Context.LongDoubleTy;
+      Format = Context.Target.getLongDoubleFormat();
     }
     
     // isExact will be set by GetFloatValue().

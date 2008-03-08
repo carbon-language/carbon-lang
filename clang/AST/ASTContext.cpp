@@ -182,7 +182,7 @@ void ASTContext::InitBuiltinTypes() {
 std::pair<uint64_t, unsigned>
 ASTContext::getTypeInfo(QualType T) {
   T = T.getCanonicalType();
-  uint64_t Size;
+  uint64_t Width;
   unsigned Align;
   switch (T->getTypeClass()) {
   case Type::TypeName: assert(0 && "Not a canonical type!");
@@ -196,7 +196,7 @@ ASTContext::getTypeInfo(QualType T) {
     ConstantArrayType *CAT = cast<ConstantArrayType>(T);
     
     std::pair<uint64_t, unsigned> EltInfo = getTypeInfo(CAT->getElementType());
-    Size = EltInfo.first*CAT->getSize().getZExtValue();
+    Width = EltInfo.first*CAT->getSize().getZExtValue();
     Align = EltInfo.second;
     break;
   }
@@ -204,68 +204,75 @@ ASTContext::getTypeInfo(QualType T) {
   case Type::Vector: {
     std::pair<uint64_t, unsigned> EltInfo = 
       getTypeInfo(cast<VectorType>(T)->getElementType());
-    Size = EltInfo.first*cast<VectorType>(T)->getNumElements();
+    Width = EltInfo.first*cast<VectorType>(T)->getNumElements();
     // FIXME: Vector alignment is not the alignment of its elements.
     Align = EltInfo.second;
     break;
   }
 
-  case Type::Builtin: {
+  case Type::Builtin:
     // FIXME: need to use TargetInfo to derive the target specific sizes. This
     // implementation will suffice for play with vector support.
-    const llvm::fltSemantics *F;
     switch (cast<BuiltinType>(T)->getKind()) {
     default: assert(0 && "Unknown builtin type!");
     case BuiltinType::Void:
       assert(0 && "Incomplete types have no size!");
     case BuiltinType::Bool:
-      Target.getBoolInfo(Size, Align);
+      Width = Target.getBoolWidth();
+      Align = Target.getBoolAlign();
       break;
     case BuiltinType::Char_S:
     case BuiltinType::Char_U:
     case BuiltinType::UChar:
     case BuiltinType::SChar:
-      Target.getCharInfo(Size, Align);
+      Width = Target.getCharWidth();
+      Align = Target.getCharAlign();
       break;
     case BuiltinType::UShort:
     case BuiltinType::Short:
-      Target.getShortInfo(Size, Align);
+      Width = Target.getShortWidth();
+      Align = Target.getShortAlign();
       break;
     case BuiltinType::UInt:
     case BuiltinType::Int:
-      Target.getIntInfo(Size, Align);
+      Width = Target.getIntWidth();
+      Align = Target.getIntAlign();
       break;
     case BuiltinType::ULong:
     case BuiltinType::Long:
-      Target.getLongInfo(Size, Align);
+      Width = Target.getLongWidth();
+      Align = Target.getLongAlign();
       break;
     case BuiltinType::ULongLong:
     case BuiltinType::LongLong:
-      Target.getLongLongInfo(Size, Align);
+      Width = Target.getLongLongWidth();
+      Align = Target.getLongLongAlign();
       break;
     case BuiltinType::Float:
-      Target.getFloatInfo(Size, Align, F);
+      Width = Target.getFloatWidth();
+      Align = Target.getFloatAlign();
       break;
     case BuiltinType::Double:
-      Target.getDoubleInfo(Size, Align, F);
+        Width = Target.getDoubleWidth();
+        Align = Target.getDoubleAlign();
       break;
     case BuiltinType::LongDouble:
-      Target.getLongDoubleInfo(Size, Align, F);
+      Width = Target.getLongDoubleWidth();
+      Align = Target.getLongDoubleAlign();
       break;
     }
     break;
-  }
   case Type::ASQual:
     // FIXME: Pointers into different addr spaces could have different sizes and
     // alignment requirements: getPointerInfo should take an AddrSpace.
     return getTypeInfo(QualType(cast<ASQualType>(T)->getBaseType(), 0));
   case Type::ObjCQualifiedId:
-    Size  = Target.getPointerWidth(0);
+    Width  = Target.getPointerWidth(0);
     Align = Target.getPointerAlign(0);
     break;
   case Type::Pointer: {
     unsigned AS = cast<PointerType>(T)->getPointeeType().getAddressSpace();
-    Size  = Target.getPointerWidth(AS);
+    Width  = Target.getPointerWidth(AS);
     Align = Target.getPointerAlign(AS);
     break;
   }
@@ -281,7 +288,7 @@ ASTContext::getTypeInfo(QualType T) {
     // size.
     std::pair<uint64_t, unsigned> EltInfo = 
       getTypeInfo(cast<ComplexType>(T)->getElementType());
-    Size = EltInfo.first*2;
+    Width = EltInfo.first*2;
     Align = EltInfo.second;
     break;
   }
@@ -289,7 +296,7 @@ ASTContext::getTypeInfo(QualType T) {
     TagType *TT = cast<TagType>(T);
     if (RecordType *RT = dyn_cast<RecordType>(TT)) {
       const ASTRecordLayout &Layout = getASTRecordLayout(RT->getDecl());
-      Size = Layout.getSize();
+      Width = Layout.getSize();
       Align = Layout.getAlignment();
     } else if (EnumDecl *ED = dyn_cast<EnumDecl>(TT->getDecl())) {
       return getTypeInfo(ED->getIntegerType());
@@ -300,7 +307,7 @@ ASTContext::getTypeInfo(QualType T) {
   }
   
   assert(Align && (Align & (Align-1)) == 0 && "Alignment must be power of 2");
-  return std::make_pair(Size, Align);
+  return std::make_pair(Width, Align);
 }
 
 /// getASTRecordLayout - Get or compute information about the layout of the

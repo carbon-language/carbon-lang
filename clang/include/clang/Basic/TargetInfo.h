@@ -33,13 +33,13 @@ class TargetInfo {
   std::string Triple;
 protected:
   /// These are all caches for target values.
+  bool CharIsSigned;
   unsigned WCharWidth, WCharAlign;
 
-  //==----------------------------------------------------------------==/
-  //                  TargetInfo Construction.
-  //==----------------------------------------------------------------==/  
+  // TargetInfo Constructor.
   TargetInfo(const std::string &T) : Triple(T) {
-    // Set defaults.
+    // Set defaults.  These should be overridden by concrete targets as needed.
+    CharIsSigned = true;
     WCharWidth = WCharAlign = 32;
   }
   
@@ -59,66 +59,66 @@ public:
   /// isCharSigned - Return true if 'char' is 'signed char' or false if it is
   /// treated as 'unsigned char'.  This is implementation defined according to
   /// C99 6.2.5p15.  In our implementation, this is target-specific.
-  bool isCharSigned() const {
-    // FIXME: implement correctly.
-    return true;
-  }
+  bool isCharSigned() const { return CharIsSigned; }
   
   /// getPointerWidth - Return the width of pointers on this target, for the
   /// specified address space. FIXME: implement correctly.
   uint64_t getPointerWidth(unsigned AddrSpace) const { return 32; }
   uint64_t getPointerAlign(unsigned AddrSpace) const { return 32; }
   
-  /// getBoolInfo - Return the size of '_Bool' and C++ 'bool' for this target,
-  /// in bits.  
-  void getBoolInfo(uint64_t &Size, unsigned &Align) const {
-    Size = Align = 8;    // FIXME: implement correctly: wrong for ppc32.
+  /// getBoolWidth/Align - Return the size of '_Bool' and C++ 'bool' for this
+  /// target, in bits.
+  unsigned getBoolWidth(bool isWide = false) const { return 8; }  // FIXME
+  unsigned getBoolAlign(bool isWide = false) const { return 8; }  // FIXME
+  
+  unsigned getCharWidth(bool isWide = false) const {
+    return isWide ? getWCharWidth() : 8; // FIXME
+  }
+  unsigned getCharAlign(bool isWide = false) const {
+    return isWide ? getWCharAlign() : 8; // FIXME
   }
   
-  /// getCharInfo - Return the size of 'char', 'signed char' and
-  /// 'unsigned char' for this target, in bits.  
-  void getCharInfo(uint64_t &Size, unsigned &Align) const {
-    Size = Align = 8; // FIXME: implement correctly.
-  }
+  /// getShortWidth/Align - Return the size of 'signed short' and
+  /// 'unsigned short' for this target, in bits.  
+  unsigned getShortWidth() const { return 16; } // FIXME
+  unsigned getShortAlign() const { return 16; } // FIXME
   
-  /// getShortInfo - Return the size of 'signed short' and 'unsigned short' for
-  /// this target, in bits.  
-  void getShortInfo(uint64_t &Size, unsigned &Align) const {
-    Size = Align = 16; // FIXME: implement correctly.
-  }
+  /// getIntWidth/Align - Return the size of 'signed int' and 'unsigned int' for
+  /// this target, in bits.
+  unsigned getIntWidth() const { return 32; } // FIXME
+  unsigned getIntAlign() const { return 32; } // FIXME
   
-  /// getIntInfo - Return the size of 'signed int' and 'unsigned int' for this
-  /// target, in bits.  
-  void getIntInfo(uint64_t &Size, unsigned &Align) const {
-    Size = Align = 32; // FIXME: implement correctly.
-  }
+  /// getLongWidth/Align - Return the size of 'signed long' and 'unsigned long'
+  /// for this target, in bits.
+  unsigned getLongWidth() const { return 32; } // FIXME
+  unsigned getLongAlign() const { return 32; } // FIXME
   
-  /// getLongInfo - Return the size of 'signed long' and 'unsigned long' for
-  /// this target, in bits.  
-  void getLongInfo(uint64_t &Size, unsigned &Align) const {
-    Size = Align = 32;  // FIXME: implement correctly: wrong for ppc64/x86-64
-  }
-
-  /// getLongLongInfo - Return the size of 'signed long long' and
-  /// 'unsigned long long' for this target, in bits.  
-  void getLongLongInfo(uint64_t &Size, unsigned &Align) const {
-    Size = Align = 64; // FIXME: implement correctly.
-  }
+  /// getLongLongWidth/Align - Return the size of 'signed long long' and
+  /// 'unsigned long long' for this target, in bits.
+  unsigned getLongLongWidth() const { return 64; } // FIXME
+  unsigned getLongLongAlign() const { return 64; } // FIXME
   
-  /// getFloatInfo - Characterize 'float' for this target.  
-  void getFloatInfo(uint64_t &Size, unsigned &Align,
-                    const llvm::fltSemantics *&Format) const;
-
-  /// getDoubleInfo - Characterize 'double' for this target.
-  void getDoubleInfo(uint64_t &Size, unsigned &Align,
-                     const llvm::fltSemantics *&Format) const;
-
-  /// getLongDoubleInfo - Characterize 'long double' for this target.
-  void getLongDoubleInfo(uint64_t &Size, unsigned &Align,
-                         const llvm::fltSemantics *&Format) const;
-  
+  /// getWcharWidth/Align - Return the size of 'wchar_t' for this target, in
+  /// bits.
   unsigned getWCharWidth() const { return WCharWidth; }
   unsigned getWCharAlign() const { return WCharAlign; }
+
+  /// getFloatWidth/Align/Format - Return the size/align/format of 'float'.
+  unsigned getFloatWidth() const { return 32; } // FIXME
+  unsigned getFloatAlign() const { return 32; } // FIXME
+  const llvm::fltSemantics *getFloatFormat() const;
+
+  /// getDoubleWidth/Align/Format - Return the size/align/format of 'double'.
+  unsigned getDoubleWidth() const { return 64; } // FIXME
+  unsigned getDoubleAlign() const { return 32; } // FIXME
+  const llvm::fltSemantics *getDoubleFormat() const;
+
+  /// getLongDoubleWidth/Align/Format - Return the size/align/format of 'long
+  /// double'.
+  unsigned getLongDoubleWidth() const { return 64; } // FIXME
+  unsigned getLongDoubleAlign() const { return 64; } // FIXME
+  const llvm::fltSemantics *getLongDoubleFormat() const;
+  
 
   /// getIntMaxTWidth - Return the size of intmax_t and uintmax_t for this
   /// target, in bits.  
@@ -167,47 +167,13 @@ public:
   // Returns a string of target-specific clobbers, in LLVM format.
   virtual const char *getClobbers() const = 0;
   
-  ///===---- Some helper methods ------------------------------------------===//
-
-  unsigned getBoolWidth() const {
-    uint64_t Size; unsigned Align;
-    getBoolInfo(Size, Align);
-    return static_cast<unsigned>(Size);
-  }
-  
-  unsigned getCharWidth(bool isWide = false) const {
-    if (isWide)
-      return WCharWidth;
-    uint64_t Size; unsigned Align;
-    getCharInfo(Size, Align);
-    return static_cast<unsigned>(Size);
-  }
-  
-
-  unsigned getIntWidth() const {
-    uint64_t Size; unsigned Align;
-    getIntInfo(Size, Align);
-    return static_cast<unsigned>(Size);
-  }
-  
-  unsigned getLongWidth() const {
-    uint64_t Size; unsigned Align;
-    getLongInfo(Size, Align);
-    return static_cast<unsigned>(Size);
-  }
-
-  unsigned getLongLongWidth() const {
-    uint64_t Size; unsigned Align;
-    getLongLongInfo(Size, Align);
-    return static_cast<unsigned>(Size);
-  }
 
   /// getTargetPrefix - Return the target prefix used for identifying
   /// llvm intrinsics.
   virtual const char *getTargetPrefix() const = 0;
     
   /// getTargetTriple - Return the target triple of the primary target.
-  virtual const char *getTargetTriple() const {
+  const char *getTargetTriple() const {
     return Triple.c_str();
   }
   

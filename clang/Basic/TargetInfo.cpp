@@ -24,24 +24,16 @@ TargetInfo::~TargetInfo() {}
 //===----------------------------------------------------------------------===//
 // FIXME: These are temporary hacks.
 
-void TargetInfo::getFloatInfo(uint64_t &Size, unsigned &Align,
-                              const llvm::fltSemantics *&Format) const {
-  Align = 32;  // FIXME: implement correctly.
-  Size = 32;
-  Format = &llvm::APFloat::IEEEsingle;
+const llvm::fltSemantics *TargetInfo::getFloatFormat() const {
+  return &llvm::APFloat::IEEEsingle;
 }
-void TargetInfo::getDoubleInfo(uint64_t &Size, unsigned &Align,
-                               const llvm::fltSemantics *&Format) const {
-  Size = 64; // FIXME: implement correctly.
-  Align = 32;
-  Format = &llvm::APFloat::IEEEdouble;
+const llvm::fltSemantics *TargetInfo::getDoubleFormat() const {
+  return &llvm::APFloat::IEEEdouble;
 }
-void TargetInfo::getLongDoubleInfo(uint64_t &Size, unsigned &Align,
-                                   const llvm::fltSemantics *&Format) const {
-  Size = Align = 64;  // FIXME: implement correctly.
-  Format = &llvm::APFloat::IEEEdouble;
+const llvm::fltSemantics *TargetInfo::getLongDoubleFormat() const {
   //Size = 80; Align = 32;  // FIXME: implement correctly.
   //Format = &llvm::APFloat::x87DoubleExtended;
+  return &llvm::APFloat::IEEEdouble;
 }
 
 
