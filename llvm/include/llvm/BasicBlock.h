@@ -95,11 +95,6 @@ public:
   const Function *getParent() const { return Parent; }
         Function *getParent()       { return Parent; }
 
-  /// use_back - Specialize the methods defined in Value, as we know that an
-  /// BasicBlock can only be used by Instructions (specifically PHI and terms).
-  Instruction       *use_back()       { return cast<Instruction>(*use_begin());}
-  const Instruction *use_back() const { return cast<Instruction>(*use_begin());}
-  
   /// getTerminator() - If this is a well formed basic block, then this returns
   /// a pointer to the terminator instruction.  If it is not, then you get a
   /// null pointer back.
@@ -186,6 +181,9 @@ public:
   /// actually not used to update the Predecessor list, but is actually used to
   /// update the PHI nodes that reside in the block.  Note that this should be
   /// called while the predecessor still refers to this block.
+  ///
+  /// DontDeleteUselessPHIs will keep PHIs that have one value or the same 
+  /// value for all entries.
   ///
   void removePredecessor(BasicBlock *Pred, bool DontDeleteUselessPHIs = false);
 
