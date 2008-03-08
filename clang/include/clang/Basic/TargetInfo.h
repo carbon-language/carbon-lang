@@ -42,13 +42,8 @@ class TargetInfo {
   //                  TargetInfo Construction.
   //==----------------------------------------------------------------==/  
   
-  TargetInfo(const TargetInfoImpl *TII) {
-    Target = TII;
-    
-    // Initialize Cache values to uncomputed.
-    WCharWidth = 0;
-  }
-
+  TargetInfo(const TargetInfoImpl *TII);
+  
 public:  
   /// CreateTargetInfo - Return the target info object for the specified target
   /// triple.
@@ -128,7 +123,6 @@ public:
   /// getWCharInfo - Return the size of wchar_t in bits.
   ///
   void getWCharInfo(uint64_t &Size, unsigned &Align) {
-    if (!WCharWidth) ComputeWCharInfo();
     Size = WCharWidth;
     Align = WCharAlign;
   }
@@ -232,8 +226,6 @@ public:
     return "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:\
 32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128";
   }
-private:
-  void ComputeWCharInfo();
 };
 
 

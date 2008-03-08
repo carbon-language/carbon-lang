@@ -50,6 +50,14 @@ void TargetInfo::getLongDoubleInfo(uint64_t &Size, unsigned &Align,
 
 //===----------------------------------------------------------------------===//
 
+TargetInfo::TargetInfo(const TargetInfoImpl *TII) {
+  Target = TII;
+  
+  // Initialize Cache values to uncomputed.
+  TII->getWCharInfo(WCharWidth, WCharAlign);
+}
+
+
 TargetInfo::~TargetInfo() {
   delete Target;
 }
@@ -66,13 +74,6 @@ const char *TargetInfo::getTargetPrefix() const {
 /// target set to the specified buffer.
 void TargetInfo::getTargetDefines(std::vector<char> &Buffer) {
   Target->getTargetDefines(Buffer);
-}
-
-/// ComputeWCharWidth - Determine the width of the wchar_t type for the primary
-/// target, diagnosing whether this is non-portable across the secondary
-/// targets.
-void TargetInfo::ComputeWCharInfo() {
-  Target->getWCharInfo(WCharWidth, WCharAlign);
 }
 
 
