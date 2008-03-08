@@ -56,17 +56,19 @@ store tmp -> [xslot]
 time, not at spiller time).  *Note* however that this can only be done
 if Y is dead.  Here's a testcase:
 
-@.str_3 = external global [15 x i8]		; <[15 x i8]*> [#uses=0]
+@.str_3 = external global [15 x i8]
 declare void @printf(i32, ...)
 define void @main() {
 build_tree.exit:
 	br label %no_exit.i7
 
 no_exit.i7:		; preds = %no_exit.i7, %build_tree.exit
-	%tmp.0.1.0.i9 = phi double [ 0.000000e+00, %build_tree.exit ], [ %tmp.34.i18, %no_exit.i7 ]		; <double> [#uses=1]
-	%tmp.0.0.0.i10 = phi double [ 0.000000e+00, %build_tree.exit ], [ %tmp.28.i16, %no_exit.i7 ]		; <double> [#uses=1]
-	%tmp.28.i16 = add double %tmp.0.0.0.i10, 0.000000e+00		; <double> [#uses=1]
-	%tmp.34.i18 = add double %tmp.0.1.0.i9, 0.000000e+00		; <double> [#uses=2]
+	%tmp.0.1.0.i9 = phi double [ 0.000000e+00, %build_tree.exit ],
+                                   [ %tmp.34.i18, %no_exit.i7 ]
+	%tmp.0.0.0.i10 = phi double [ 0.000000e+00, %build_tree.exit ],
+                                    [ %tmp.28.i16, %no_exit.i7 ]
+	%tmp.28.i16 = add double %tmp.0.0.0.i10, 0.000000e+00
+	%tmp.34.i18 = add double %tmp.0.1.0.i9, 0.000000e+00
 	br i1 false, label %Compute_Tree.exit23, label %no_exit.i7
 
 Compute_Tree.exit23:		; preds = %no_exit.i7
@@ -658,9 +660,9 @@ eliminates a constant pool load.  For example, consider:
 
 define i64 @ccosf(float %z.0, float %z.1) nounwind readonly  {
 entry:
-	%tmp6 = sub float -0.000000e+00, %z.1		; <float> [#uses=1]
-	%tmp20 = tail call i64 @ccoshf( float %tmp6, float %z.0 ) nounwind readonly 		; <i64> [#uses=1]
-	ret i64 %tmp20
+ %tmp6 = sub float -0.000000e+00, %z.1		; <float> [#uses=1]
+ %tmp20 = tail call i64 @ccoshf( float %tmp6, float %z.0 ) nounwind readonly
+ ret i64 %tmp20
 }
 
 This currently compiles to:
@@ -752,3 +754,50 @@ _test:
 For unpredictable branches, the later is much more efficient.  This should
 just be a matter of having scalar sse map to SELECT_CC and custom expanding
 or iseling it.
+
+//===---------------------------------------------------------------------===//
+
+Take the following code:
+
+#include <xmmintrin.h>
+__m128i doload64(short x) {return _mm_set_epi16(x,x,x,x,x,x,x,x);}
+
+LLVM currently generates the following on x86:
+doload64:
+        movzwl  4(%esp), %eax
+        movd    %eax, %xmm0
+        punpcklwd       %xmm0, %xmm0
+        pshufd  $0, %xmm0, %xmm0
+        ret
+
+gcc's generated code:
+doload64:
+        movd    4(%esp), %xmm0
+        punpcklwd       %xmm0, %xmm0
+        pshufd  $0, %xmm0, %xmm0
+        ret
+
+LLVM should be able to generate the same thing as gcc.
+
+//===---------------------------------------------------------------------===//
+
+Take the following code:
+#include <xmmintrin.h>
+__m128i doload64(short x) {return _mm_set_epi16(0,0,0,0,0,0,0,1);}
+
+On x86, LLVM generates the following:
+doload64:
+        subl    $28, %esp
+        movl    $0, 4(%esp)
+        movl    $1, (%esp)
+        movq    (%esp), %xmm0
+        addl    $28, %esp
+        ret
+
+LLVM should instead generate something more like the following:
+doload64:
+        movl    $1, %eax
+        movd    %eax, %xmm0
+        ret
+
+//===---------------------------------------------------------------------===//

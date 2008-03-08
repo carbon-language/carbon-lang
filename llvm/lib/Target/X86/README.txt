@@ -1616,51 +1616,6 @@ in general.
 
 //===---------------------------------------------------------------------===//
 
-Take the following code:
-
-#include <xmmintrin.h>
-__m128i doload64(short x) {return _mm_set_epi16(x,x,x,x,x,x,x,x);}
-
-LLVM currently generates the following on x86:
-doload64:
-        movzwl  4(%esp), %eax
-        movd    %eax, %xmm0
-        punpcklwd       %xmm0, %xmm0
-        pshufd  $0, %xmm0, %xmm0
-        ret
-
-gcc's generated code:
-doload64:
-        movd    4(%esp), %xmm0
-        punpcklwd       %xmm0, %xmm0
-        pshufd  $0, %xmm0, %xmm0
-        ret
-
-LLVM should be able to generate the same thing as gcc.
-
-//===---------------------------------------------------------------------===//
-
-Take the following code:
-#include <xmmintrin.h>
-__m128i doload64(short x) {return _mm_set_epi16(0,0,0,0,0,0,0,1);}
-
-On x86, LLVM generates the following:
-doload64:
-        subl    $28, %esp
-        movl    $0, 4(%esp)
-        movl    $1, (%esp)
-        movq    (%esp), %xmm0
-        addl    $28, %esp
-        ret
-
-LLVM should instead generate something more like the following:
-doload64:
-        movl    $1, %eax
-        movd    %eax, %xmm0
-        ret
-
-//===---------------------------------------------------------------------===//
-
 We compile this function:
 
 define i32 @foo(i32 %a, i32 %b, i32 %c, i8 zeroext  %d) nounwind  {
