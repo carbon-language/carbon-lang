@@ -777,7 +777,8 @@ doload64:
         pshufd  $0, %xmm0, %xmm0
         ret
 
-LLVM should be able to generate the same thing as gcc.
+LLVM should be able to generate the same thing as gcc.  This looks like it is
+just a matter of matching (scalar_to_vector (load x)) to movd.
 
 //===---------------------------------------------------------------------===//
 
