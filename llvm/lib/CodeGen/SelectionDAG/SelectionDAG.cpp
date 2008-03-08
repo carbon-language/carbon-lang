@@ -1889,6 +1889,14 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     assert(MVT::isVector(VT) && !MVT::isVector(Operand.getValueType()) &&
            MVT::getVectorElementType(VT) == Operand.getValueType() &&
            "Illegal SCALAR_TO_VECTOR node!");
+    if (OpOpcode == ISD::UNDEF)
+      return getNode(ISD::UNDEF, VT);
+    // scalar_to_vector(extract_vector_elt V, 0) -> V, top bits are undefined.
+    if (OpOpcode == ISD::EXTRACT_VECTOR_ELT &&
+        isa<ConstantSDNode>(Operand.getOperand(1)) &&
+        Operand.getConstantOperandVal(1) == 0 &&
+        Operand.getOperand(0).getValueType() == VT)
+      return Operand.getOperand(0);
     break;
   case ISD::FNEG:
     if (OpOpcode == ISD::FSUB)   // -(X-Y) -> (Y-X)
@@ -2039,6 +2047,10 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   case ISD::EXTRACT_VECTOR_ELT:
     assert(N2C && "Bad EXTRACT_VECTOR_ELT!");
 
+    // EXTRACT_VECTOR_ELT of an UNDEF is an UNDEF.
+    if (N1.getOpcode() == ISD::UNDEF)
+      return getNode(ISD::UNDEF, VT);
+      
     // EXTRACT_VECTOR_ELT of CONCAT_VECTORS is often formed while lowering is
     // expanding copies of large vectors from registers.
     if (N1.getOpcode() == ISD::CONCAT_VECTORS &&
@@ -2054,7 +2066,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     // expanding large vector constants.
     if (N1.getOpcode() == ISD::BUILD_VECTOR)
       return N1.getOperand(N2C->getValue());
-
+      
     // EXTRACT_VECTOR_ELT of INSERT_VECTOR_ELT is often formed when vector
     // operations are lowered to scalars.
     if (N1.getOpcode() == ISD::INSERT_VECTOR_ELT)
