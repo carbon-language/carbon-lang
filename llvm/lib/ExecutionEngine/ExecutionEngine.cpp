@@ -317,6 +317,11 @@ ExecutionEngine *ExecutionEngine::create(ModuleProvider *MP,
                                          std::string *ErrorStr) {
   ExecutionEngine *EE = 0;
 
+  // Make sure we can resolve symbols in the program as well. The zero arg
+  // to the function tells DynamicLibrary to load the program, not a library.
+  if (sys::DynamicLibrary::LoadLibraryPermanently(0, ErrorStr))
+    return 0;
+
   // Unless the interpreter was explicitly selected, try making a JIT.
   if (!ForceInterpreter && JITCtor)
     EE = JITCtor(MP, ErrorStr);
@@ -324,15 +329,6 @@ ExecutionEngine *ExecutionEngine::create(ModuleProvider *MP,
   // If we can't make a JIT, make an interpreter instead.
   if (EE == 0 && InterpCtor)
     EE = InterpCtor(MP, ErrorStr);
-
-  if (EE) {
-    // Make sure we can resolve symbols in the program as well. The zero arg
-    // to the function tells DynamicLibrary to load the program, not a library.
-    if (sys::DynamicLibrary::LoadLibraryPermanently(0, ErrorStr)) {
-      delete EE;
-      return 0;
-    }
-  }
 
   return EE;
 }
