@@ -339,9 +339,7 @@ llvm::Function *CodeGenModule::getIntrinsic(unsigned IID,const llvm::Type **Tys,
 llvm::Function *CodeGenModule::getMemCpyFn() {
   if (MemCpyFn) return MemCpyFn;
   llvm::Intrinsic::ID IID;
-  uint64_t Size; unsigned Align;
-  Context.Target.getPointerInfo(Size, Align);
-  switch (Size) {
+  switch (Context.Target.getPointerWidth(0)) {
   default: assert(0 && "Unknown ptr width");
   case 32: IID = llvm::Intrinsic::memcpy_i32; break;
   case 64: IID = llvm::Intrinsic::memcpy_i64; break;
@@ -352,9 +350,7 @@ llvm::Function *CodeGenModule::getMemCpyFn() {
 llvm::Function *CodeGenModule::getMemSetFn() {
   if (MemSetFn) return MemSetFn;
   llvm::Intrinsic::ID IID;
-  uint64_t Size; unsigned Align;
-  Context.Target.getPointerInfo(Size, Align);
-  switch (Size) {
+  switch (Context.Target.getPointerWidth(0)) {
   default: assert(0 && "Unknown ptr width");
   case 32: IID = llvm::Intrinsic::memset_i32; break;
   case 64: IID = llvm::Intrinsic::memset_i64; break;

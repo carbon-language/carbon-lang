@@ -260,9 +260,15 @@ ASTContext::getTypeInfo(QualType T) {
     // alignment requirements: getPointerInfo should take an AddrSpace.
     return getTypeInfo(QualType(cast<ASQualType>(T)->getBaseType(), 0));
   case Type::ObjCQualifiedId:
-  case Type::Pointer:
-    Target.getPointerInfo(Size, Align);
+    Size  = Target.getPointerWidth(0);
+    Align = Target.getPointerAlign(0);
     break;
+  case Type::Pointer: {
+    unsigned AS = cast<PointerType>(T)->getPointeeType().getAddressSpace();
+    Size  = Target.getPointerWidth(AS);
+    Align = Target.getPointerAlign(AS);
+    break;
+  }
   case Type::Reference:
     // "When applied to a reference or a reference type, the result is the size
     // of the referenced type." C++98 5.3.3p2: expr.sizeof.

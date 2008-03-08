@@ -64,12 +64,10 @@ public:
     return true;
   }
   
-  /// getPointerWidth - Return the width of pointers on this target, we
-  /// currently assume one pointer type.
-  void getPointerInfo(uint64_t &Size, unsigned &Align) const {
-    Size = 32;  // FIXME: implement correctly.
-    Align = 32;
-  }
+  /// getPointerWidth - Return the width of pointers on this target, for the
+  /// specified address space. FIXME: implement correctly.
+  uint64_t getPointerWidth(unsigned AddrSpace) const { return 32; }
+  uint64_t getPointerAlign(unsigned AddrSpace) const { return 32; }
   
   /// getBoolInfo - Return the size of '_Bool' and C++ 'bool' for this target,
   /// in bits.  
@@ -119,13 +117,9 @@ public:
   void getLongDoubleInfo(uint64_t &Size, unsigned &Align,
                          const llvm::fltSemantics *&Format) const;
   
-  /// getWCharInfo - Return the size of wchar_t in bits.
-  ///
-  void getWCharInfo(uint64_t &Size, unsigned &Align) const {
-    Size = WCharWidth;
-    Align = WCharAlign;
-  }
-  
+  unsigned getWCharWidth() const { return WCharWidth; }
+  unsigned getWCharAlign() const { return WCharAlign; }
+
   /// getIntMaxTWidth - Return the size of intmax_t and uintmax_t for this
   /// target, in bits.  
   unsigned getIntMaxTWidth() const {
@@ -182,20 +176,14 @@ public:
   }
   
   unsigned getCharWidth(bool isWide = false) const {
-    uint64_t Size; unsigned Align;
     if (isWide)
-      getWCharInfo(Size, Align);
-    else
-      getCharInfo(Size, Align);
-    return static_cast<unsigned>(Size);
-  }
-  
-  unsigned getWCharWidth() const {
+      return WCharWidth;
     uint64_t Size; unsigned Align;
-    getWCharInfo(Size, Align);
+    getCharInfo(Size, Align);
     return static_cast<unsigned>(Size);
   }
   
+
   unsigned getIntWidth() const {
     uint64_t Size; unsigned Align;
     getIntInfo(Size, Align);
