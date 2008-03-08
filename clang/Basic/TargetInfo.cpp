@@ -18,24 +18,18 @@
 #include "llvm/ADT/STLExtras.h"
 using namespace clang;
 
+// TargetInfo Constructor.
+TargetInfo::TargetInfo(const std::string &T) : Triple(T) {
+  // Set defaults.  These should be overridden by concrete targets as needed.
+  CharIsSigned = true;
+  WCharWidth = WCharAlign = 32;
+  FloatFormat = &llvm::APFloat::IEEEsingle;
+  DoubleFormat = &llvm::APFloat::IEEEdouble;
+  LongDoubleFormat = &llvm::APFloat::IEEEdouble;
+}
+
 // Out of line virtual dtor for TargetInfo.
 TargetInfo::~TargetInfo() {}
-
-//===----------------------------------------------------------------------===//
-// FIXME: These are temporary hacks.
-
-const llvm::fltSemantics *TargetInfo::getFloatFormat() const {
-  return &llvm::APFloat::IEEEsingle;
-}
-const llvm::fltSemantics *TargetInfo::getDoubleFormat() const {
-  return &llvm::APFloat::IEEEdouble;
-}
-const llvm::fltSemantics *TargetInfo::getLongDoubleFormat() const {
-  //Size = 80; Align = 32;  // FIXME: implement correctly.
-  //Format = &llvm::APFloat::x87DoubleExtended;
-  return &llvm::APFloat::IEEEdouble;
-}
-
 
 //===----------------------------------------------------------------------===//
 

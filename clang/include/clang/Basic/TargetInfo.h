@@ -32,16 +32,14 @@ namespace Builtin { struct Info; }
 class TargetInfo {
   std::string Triple;
 protected:
-  /// These are all caches for target values.
+  // Target values set by the ctor of the actual target implementation.  Default
+  // values are specified by the TargetInfo constructor.
   bool CharIsSigned;
   unsigned WCharWidth, WCharAlign;
+  const llvm::fltSemantics *FloatFormat, *DoubleFormat, *LongDoubleFormat;
 
-  // TargetInfo Constructor.
-  TargetInfo(const std::string &T) : Triple(T) {
-    // Set defaults.  These should be overridden by concrete targets as needed.
-    CharIsSigned = true;
-    WCharWidth = WCharAlign = 32;
-  }
+  // TargetInfo Constructor.  Default initializes all fields.
+  TargetInfo(const std::string &T);
   
 public:  
   /// CreateTargetInfo - Return the target info object for the specified target
@@ -106,18 +104,20 @@ public:
   /// getFloatWidth/Align/Format - Return the size/align/format of 'float'.
   unsigned getFloatWidth() const { return 32; } // FIXME
   unsigned getFloatAlign() const { return 32; } // FIXME
-  const llvm::fltSemantics *getFloatFormat() const;
+  const llvm::fltSemantics *getFloatFormat() const { return FloatFormat; }
 
   /// getDoubleWidth/Align/Format - Return the size/align/format of 'double'.
   unsigned getDoubleWidth() const { return 64; } // FIXME
   unsigned getDoubleAlign() const { return 32; } // FIXME
-  const llvm::fltSemantics *getDoubleFormat() const;
+  const llvm::fltSemantics *getDoubleFormat() const { return DoubleFormat; }
 
   /// getLongDoubleWidth/Align/Format - Return the size/align/format of 'long
   /// double'.
   unsigned getLongDoubleWidth() const { return 64; } // FIXME
   unsigned getLongDoubleAlign() const { return 64; } // FIXME
-  const llvm::fltSemantics *getLongDoubleFormat() const;
+  const llvm::fltSemantics *getLongDoubleFormat() const {
+    return LongDoubleFormat;
+  }
   
 
   /// getIntMaxTWidth - Return the size of intmax_t and uintmax_t for this
