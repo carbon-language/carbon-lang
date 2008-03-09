@@ -120,7 +120,8 @@ protected:
   ///   where a pass-by-value argument has an undefined value.
   UndefArgsTy UndefArgs;
   
-  bool StateCleaned;
+  ValueState* RDBInState;
+  ValueState* RDBOutState;
   
 public:
   GRExprEngine(GraphTy& g) : 
@@ -265,7 +266,10 @@ protected:
   ///  that all subexpression mappings are removed and that any
   ///  block-level expressions that are not live at 'CurrentStmt' also have 
   ///  their mappings removed.
-  ValueState* RemoveDeadBindings(ValueState* St);
+  ValueState* RemoveDeadBindings(ValueState* St) {
+    assert (St);
+    return St == RDBInState ? RDBOutState : St;
+  }
   
   ValueState* SetRVal(ValueState* St, Expr* Ex, RVal V);
   

@@ -39,16 +39,6 @@ using llvm::dyn_cast;
 using llvm::cast;
 using llvm::APSInt;
 
-ValueState* GRExprEngine::RemoveDeadBindings(ValueState* St) {
-  
-  if (StateCleaned || !CurrentStmt)
-    return St;
-  
-  StateCleaned = true;
-  
-  return StateMgr.RemoveDeadBindings(St, CurrentStmt, Liveness);
-}
-
 
 ValueState* GRExprEngine::getInitialState() {
 
@@ -420,7 +410,13 @@ void GRExprEngine::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
   StmtEntryNode = builder.getLastNode();
   CurrentStmt = S;
   NodeSet Dst;
-  StateCleaned = false;
+  
+  // Create the cleaned state.
+
+  RDBInState = StmtEntryNode->getState();
+  RDBOutState = StateMgr.RemoveDeadBindings(RDBInState, CurrentStmt, Liveness);
+
+  // Visit the statement.
 
   Visit(S, StmtEntryNode, Dst);
 
@@ -428,10 +424,7 @@ void GRExprEngine::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
   // dead mappings removed.
   
   if (Dst.size() == 1 && *Dst.begin() == StmtEntryNode) {
-    ValueState* St =
-      StateCleaned ? StmtEntryNode->getState() : 
-                     RemoveDeadBindings(StmtEntryNode->getState());
-    
+    ValueState* St = RemoveDeadBindings(StmtEntryNode->getState());
     builder.generateNode(S, St, StmtEntryNode);
   }
   
@@ -440,6 +433,8 @@ void GRExprEngine::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
   CurrentStmt = NULL;
   StmtEntryNode = NULL;
   Builder = NULL;
+  RDBInState = NULL;
+  RDBOutState = NULL;
 }
 
 void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* D, NodeTy* Pred, NodeSet& Dst){
