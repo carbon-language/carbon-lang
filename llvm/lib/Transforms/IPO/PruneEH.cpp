@@ -185,8 +185,9 @@ bool PruneEH::SimplifyFunction(Function *F) {
 
         ++NumRemoved;
         MadeChange = true;
-      } else
+      } else {
         couldUnwind = true;
+      }
 
     for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; )
       if (CallInst *CI = dyn_cast<CallInst>(I++)) {
