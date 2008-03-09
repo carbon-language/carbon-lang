@@ -94,7 +94,7 @@ ValueState* GRExprEngine::SetRVal(ValueState* St, LVal LV, RVal RV) {
 
 ValueState* GRExprEngine::SetBlkExprRVal(ValueState* St, Expr* Ex, RVal V) {
   
-  if (!StateCleaned) {
+  if (CurrentStmt && !StateCleaned) {
     St = RemoveDeadBindings(CurrentStmt, St);
     StateCleaned = true;
   }
