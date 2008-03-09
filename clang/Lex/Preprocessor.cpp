@@ -620,7 +620,7 @@ void Preprocessor::EnterMacro(Token &Tok, MacroArgs *Args) {
   CurDirLookup = 0;
   
   if (NumCachedMacroExpanders == 0) {
-    CurMacroExpander = new MacroExpander(Tok, Args, *this);
+    CurMacroExpander = new TokenLexer(Tok, Args, *this);
   } else {
     CurMacroExpander = MacroExpanderCache[--NumCachedMacroExpanders];
     CurMacroExpander->Init(Tok, Args);
@@ -641,7 +641,7 @@ void Preprocessor::EnterTokenStream(const Token *Toks, unsigned NumToks) {
 
   // Create a macro expander to expand from the specified token stream.
   if (NumCachedMacroExpanders == 0) {
-    CurMacroExpander = new MacroExpander(Toks, NumToks, *this);
+    CurMacroExpander = new TokenLexer(Toks, NumToks, *this);
   } else {
     CurMacroExpander = MacroExpanderCache[--NumCachedMacroExpanders];
     CurMacroExpander->Init(Toks, NumToks);

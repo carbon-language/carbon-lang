@@ -1,4 +1,4 @@
-//===--- MacroExpander.h - Lex from a macro expansion -----------*- C++ -*-===//
+//===--- TokenLexer.h - Lex from a token buffer -----------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,12 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines the MacroExpander and MacroArgs interfaces.
+// This file defines the TokenLexer and MacroArgs interfaces.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_MACROEXPANDER_H
-#define LLVM_CLANG_MACROEXPANDER_H
+#ifndef LLVM_CLANG_TOKENLEXER_H
+#define LLVM_CLANG_TOKENLEXER_H
 
 #include "clang/Basic/SourceLocation.h"
 #include <vector>
@@ -98,17 +98,17 @@ public:
 };
 
   
-/// MacroExpander - This implements a lexer that returns token from a macro body
+/// TokenLexer - This implements a lexer that returns token from a macro body
 /// or token stream instead of lexing from a character buffer.
 ///
-class MacroExpander {
+class TokenLexer {
   /// Macro - The macro we are expanding from.  This is null if expanding a
   /// token stream.
   ///
   MacroInfo *Macro;
 
   /// ActualArgs - The actual arguments specified for a function-like macro, or
-  /// null.  The MacroExpander owns the pointed-to object.
+  /// null.  The TokenLexer owns the pointed-to object.
   MacroArgs *ActualArgs;
 
   /// PP - The current preprocessor object we are expanding for.
@@ -137,39 +137,39 @@ class MacroExpander {
   bool AtStartOfLine : 1;
   bool HasLeadingSpace : 1;
   
-  /// OwnsTokens - This is true if this MacroExpander allocated the Tokens
+  /// OwnsTokens - This is true if this TokenLexer allocated the Tokens
   /// array, and thus needs to free it when destroyed.  For simple object-like
   /// macros (for example) we just point into the token buffer of the macro
   /// definition, we don't make a copy of it.
   bool OwnsTokens : 1;
   
-  MacroExpander(const MacroExpander&);  // DO NOT IMPLEMENT
-  void operator=(const MacroExpander&); // DO NOT IMPLEMENT
+  TokenLexer(const TokenLexer&);  // DO NOT IMPLEMENT
+  void operator=(const TokenLexer&); // DO NOT IMPLEMENT
 public:
-  /// Create a macro expander for the specified macro with the specified actual
+  /// Create a TokenLexer for the specified macro with the specified actual
   /// arguments.  Note that this ctor takes ownership of the ActualArgs pointer.
-  MacroExpander(Token &Tok, MacroArgs *ActualArgs, Preprocessor &pp)
+  TokenLexer(Token &Tok, MacroArgs *ActualArgs, Preprocessor &pp)
     : Macro(0), ActualArgs(0), PP(pp), OwnsTokens(false) {
     Init(Tok, ActualArgs);
   }
   
-  /// Init - Initialize this macro expander to expand from the specified macro
+  /// Init - Initialize this TokenLexer to expand from the specified macro
   /// with the specified argument information.  Note that this ctor takes
   /// ownership of the ActualArgs pointer.
   void Init(Token &Tok, MacroArgs *ActualArgs);
   
-  /// Create a macro expander for the specified token stream.  This does not
+  /// Create a TokenLexer for the specified token stream.  This does not
   /// take ownership of the specified token vector.
-  MacroExpander(const Token *TokArray, unsigned NumToks, Preprocessor &pp)
+  TokenLexer(const Token *TokArray, unsigned NumToks, Preprocessor &pp)
     : Macro(0), ActualArgs(0), PP(pp), OwnsTokens(false) {
     Init(TokArray, NumToks);
   }
   
-  /// Init - Initialize this macro expander with the specified token stream.
+  /// Init - Initialize this TokenLexer with the specified token stream.
   /// This does not take ownership of the specified token vector.
   void Init(const Token *TokArray, unsigned NumToks);
   
-  ~MacroExpander() { destroy(); }
+  ~TokenLexer() { destroy(); }
   
   /// isNextTokenLParen - If the next token lexed will pop this macro off the
   /// expansion stack, return 2.  If the next unexpanded token is a '(', return

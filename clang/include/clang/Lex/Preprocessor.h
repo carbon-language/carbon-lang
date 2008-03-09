@@ -98,7 +98,7 @@ class Preprocessor {
 
   /// CurMacroExpander - This is the current macro we are expanding, if we are
   /// expanding a macro.  One of CurLexer and CurMacroExpander must be null.
-  MacroExpander *CurMacroExpander;
+  TokenLexer *CurMacroExpander;
   
   /// IncludeMacroStack - This keeps track of the stack of files currently
   /// #included, and macros currently being expanded from, not counting
@@ -106,9 +106,9 @@ class Preprocessor {
   struct IncludeStackInfo {
     Lexer *TheLexer;
     const DirectoryLookup *TheDirLookup;
-    MacroExpander *TheMacroExpander;
-    IncludeStackInfo(Lexer *L, const DirectoryLookup *D, MacroExpander *M)
-      : TheLexer(L), TheDirLookup(D), TheMacroExpander(M) {
+    TokenLexer *TheMacroExpander;
+    IncludeStackInfo(Lexer *L, const DirectoryLookup *D, TokenLexer *TL)
+      : TheLexer(L), TheDirLookup(D), TheMacroExpander(TL) {
     }
   };
   std::vector<IncludeStackInfo> IncludeMacroStack;
@@ -136,7 +136,7 @@ class Preprocessor {
   /// MacroExpanderCache - Cache macro expanders to reduce malloc traffic.
   enum { MacroExpanderCacheSize = 8 };
   unsigned NumCachedMacroExpanders;
-  MacroExpander *MacroExpanderCache[MacroExpanderCacheSize];
+  TokenLexer *MacroExpanderCache[MacroExpanderCacheSize];
 public:
   Preprocessor(Diagnostic &diags, const LangOptions &opts, TargetInfo &target,
                SourceManager &SM, HeaderSearch &Headers);

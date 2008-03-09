@@ -1,4 +1,4 @@
-//===--- MacroExpander.cpp - Lex from a macro expansion -------------------===//
+//===--- TokenLexer.cpp - Lex from a token stream -------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the MacroExpander interface.
+// This file implements the TokenLexer interface.
 //
 //===----------------------------------------------------------------------===//
 
@@ -115,7 +115,7 @@ MacroArgs::getPreExpArgument(unsigned Arg, Preprocessor &PP) {
   unsigned NumToks = getArgLength(AT)+1;  // Include the EOF.
   
   // Otherwise, we have to pre-expand this argument, populating Result.  To do
-  // this, we set up a fake MacroExpander to lex from the unexpanded argument
+  // this, we set up a fake TokenLexer to lex from the unexpanded argument
   // list.  With this installed, we lex expanded tokens until we hit the EOF
   // token at the end of the unexp list.
   PP.EnterTokenStream(AT, NumToks);
@@ -229,13 +229,13 @@ const Token &MacroArgs::getStringifiedArgument(unsigned ArgNo,
 }
 
 //===----------------------------------------------------------------------===//
-// MacroExpander Implementation
+// TokenLexer Implementation
 //===----------------------------------------------------------------------===//
 
-/// Create a macro expander for the specified macro with the specified actual
+/// Create a TokenLexer for the specified macro with the specified actual
 /// arguments.  Note that this ctor takes ownership of the ActualArgs pointer.
-void MacroExpander::Init(Token &Tok, MacroArgs *Actuals) {
-  // If the client is reusing a macro expander, make sure to free any memory
+void TokenLexer::Init(Token &Tok, MacroArgs *Actuals) {
+  // If the client is reusing a TokenLexer, make sure to free any memory
   // associated with it.
   destroy();
   
@@ -262,10 +262,10 @@ void MacroExpander::Init(Token &Tok, MacroArgs *Actuals) {
 
 
 
-/// Create a macro expander for the specified token stream.  This does not
+/// Create a TokenLexer for the specified token stream.  This does not
 /// take ownership of the specified token vector.
-void MacroExpander::Init(const Token *TokArray, unsigned NumToks) {
-  // If the client is reusing a macro expander, make sure to free any memory
+void TokenLexer::Init(const Token *TokArray, unsigned NumToks) {
+  // If the client is reusing a TokenLexer, make sure to free any memory
   // associated with it.
   destroy();
   
@@ -288,7 +288,7 @@ void MacroExpander::Init(const Token *TokArray, unsigned NumToks) {
 }
 
 
-void MacroExpander::destroy() {
+void TokenLexer::destroy() {
   // If this was a function-like macro that actually uses its arguments, delete
   // the expanded tokens.
   if (OwnsTokens) {
@@ -296,13 +296,13 @@ void MacroExpander::destroy() {
     Tokens = 0;
   }
   
-  // MacroExpander owns its formal arguments.
+  // TokenLexer owns its formal arguments.
   if (ActualArgs) ActualArgs->destroy();
 }
 
 /// Expand the arguments of a function-like macro so that we can quickly
 /// return preexpanded tokens from Tokens.
-void MacroExpander::ExpandFunctionArguments() {
+void TokenLexer::ExpandFunctionArguments() {
   llvm::SmallVector<Token, 128> ResultToks;
   
   // Loop through 'Tokens', expanding them into ResultToks.  Keep
@@ -481,7 +481,7 @@ void MacroExpander::ExpandFunctionArguments() {
 
 /// Lex - Lex and return a token from this macro stream.
 ///
-void MacroExpander::Lex(Token &Tok) {
+void TokenLexer::Lex(Token &Tok) {
   // Lexing off the end of the macro, pop this macro off the expansion stack.
   if (isAtEnd()) {
     // If this is a macro (not a token stream), mark the macro enabled now
@@ -543,7 +543,7 @@ void MacroExpander::Lex(Token &Tok) {
 /// operator.  Read the ## and RHS, and paste the LHS/RHS together.  If there
 /// are is another ## after it, chomp it iteratively.  Return the result as Tok.
 /// If this returns true, the caller should immediately return the token.
-bool MacroExpander::PasteTokens(Token &Tok) {
+bool TokenLexer::PasteTokens(Token &Tok) {
   llvm::SmallVector<char, 128> Buffer;
   do {
     // Consume the ## operator.
@@ -640,7 +640,8 @@ bool MacroExpander::PasteTokens(Token &Tok) {
       }
     }
     
-    // Turn ## into 'other' to avoid # ## # from looking like a paste operator.
+    // Turn ## into 'unknown' to avoid # ## # from looking like a paste
+    // operator.
     if (Result.is(tok::hashhash))
       Result.setKind(tok::unknown);
     // FIXME: Turn __VA_ARGS__ into "not a token"?
@@ -668,7 +669,7 @@ bool MacroExpander::PasteTokens(Token &Tok) {
 /// isNextTokenLParen - If the next token lexed will pop this macro off the
 /// expansion stack, return 2.  If the next unexpanded token is a '(', return
 /// 1, otherwise return 0.
-unsigned MacroExpander::isNextTokenLParen() const {
+unsigned TokenLexer::isNextTokenLParen() const {
   // Out of tokens?
   if (isAtEnd())
     return 2;
@@ -681,7 +682,7 @@ unsigned MacroExpander::isNextTokenLParen() const {
 /// macro, other active macros, and anything left on the current physical
 /// source line of the instantiated buffer.  Handle this by returning the
 /// first token on the next line.
-void MacroExpander::HandleMicrosoftCommentPaste(Token &Tok) {
+void TokenLexer::HandleMicrosoftCommentPaste(Token &Tok) {
   // We 'comment out' the rest of this macro by just ignoring the rest of the
   // tokens that have not been lexed yet, if any.
   
