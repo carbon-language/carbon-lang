@@ -1,5 +1,5 @@
 ; Make sure this testcase does not use mulq
-; RUN: llvm-as < %s | llvm-as | llc -march=alpha | \
+; RUN: llvm-as < %s | llc -march=alpha | \
 ; RUN:   not grep -i mul
 ; XFAIL: *
 
