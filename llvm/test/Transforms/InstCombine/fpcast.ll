@@ -1,14 +1,15 @@
 ; Test some floating point casting cases
-; RUN: llvm-upgrade %s -o - | llvm-as | opt -instcombine | llvm-dis | notcast
-; RUN: llvm-upgrade %s -o - | llvm-as | opt -instcombine | llvm-dis | \
+; RUN: llvm-as %s -o - | opt -instcombine | llvm-dis | notcast
+; RUN: llvm-as %s -o - | opt -instcombine | llvm-dis | \
 ; RUN:   egrep {ret i8 \(-1\)\|\(255\)}
 
-sbyte %test1() {
-    %x = fptoui float 255.0 to sbyte 
-    ret sbyte %x
+define i8 @test1() {
+        %x = fptoui float 2.550000e+02 to i8            ; <i8> [#uses=1]
+        ret i8 %x
 }
 
-ubyte %test2() {
-    %x = fptosi float -1.0 to ubyte
-    ret ubyte %x
+define i8 @test2() {
+        %x = fptosi float -1.000000e+00 to i8           ; <i8> [#uses=1]
+        ret i8 %x
 }
+

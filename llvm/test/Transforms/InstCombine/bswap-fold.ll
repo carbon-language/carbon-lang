@@ -1,28 +1,29 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
 ; RUN:   grep ret | count 3
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
 ; RUN:   not grep call.*bswap
 
-bool %test1(ushort %tmp2) {
-	%tmp10 = call ushort %llvm.bswap.i16( ushort %tmp2 )		
-	%tmp = seteq ushort %tmp10, 1		
-	ret bool %tmp
+define i1 @test1(i16 %tmp2) {
+        %tmp10 = call i16 @llvm.bswap.i16( i16 %tmp2 )          ; <i16> [#uses=1]
+        %tmp = icmp eq i16 %tmp10, 1            ; <i1> [#uses=1]
+        ret i1 %tmp
 }
 
-bool %test2(uint %tmp) {
-	%tmp34 = tail call uint %llvm.bswap.i32( uint %tmp )		
-	%tmp = seteq uint %tmp34, 1		
-	ret bool %tmp
+define i1 @test2(i32 %tmp) {
+        %tmp34 = tail call i32 @llvm.bswap.i32( i32 %tmp )              ; <i32> [#uses=1]
+        %tmp.upgrd.1 = icmp eq i32 %tmp34, 1            ; <i1> [#uses=1]
+        ret i1 %tmp.upgrd.1
 }
 
-declare uint %llvm.bswap.i32(uint)
+declare i32 @llvm.bswap.i32(i32)
 
-bool %test3(ulong %tmp) {
-	%tmp34 = tail call ulong %llvm.bswap.i64( ulong %tmp )		
-	%tmp = seteq ulong %tmp34, 1		
-	ret bool %tmp
+define i1 @test3(i64 %tmp) {
+        %tmp34 = tail call i64 @llvm.bswap.i64( i64 %tmp )              ; <i64> [#uses=1]
+        %tmp.upgrd.2 = icmp eq i64 %tmp34, 1            ; <i1> [#uses=1]
+        ret i1 %tmp.upgrd.2
 }
 
-declare ulong %llvm.bswap.i64(ulong)
+declare i64 @llvm.bswap.i64(i64)
 
-declare ushort %llvm.bswap.i16(ushort)
+declare i16 @llvm.bswap.i16(i16)
+

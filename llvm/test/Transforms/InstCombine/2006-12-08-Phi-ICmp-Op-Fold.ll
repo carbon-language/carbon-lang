@@ -1,5 +1,6 @@
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
 ; RUN:   grep {icmp sgt}
+; END.
 target datalayout = "e-p:32:32"
 target triple = "i686-pc-linux-gnu"
 	%struct.point = type { i32, i32 }

@@ -1,17 +1,17 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
 ; RUN:   %prcontext div 1 | grep then:
 
 ;; This tests that the div is hoisted into the then block.
-
-int %foo(bool %C, int %A, int %B) {
+define i32 @foo(i1 %C, i32 %A, i32 %B) {
 entry:
-	br bool %C, label %then, label %endif
+        br i1 %C, label %then, label %endif
 
-then:
-	br label %endif
+then:           ; preds = %entry
+        br label %endif
 
-endif:
-	%X = phi int [%A, %then], [15, %entry]
-	%Y = div int %X, 42
-	ret int %Y
+endif:          ; preds = %then, %entry
+        %X = phi i32 [ %A, %then ], [ 15, %entry ]              ; <i32> [#uses=1]
+        %Y = sdiv i32 %X, 42            ; <i32> [#uses=1]
+        ret i32 %Y
 }
+

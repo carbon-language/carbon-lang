@@ -1,4 +1,5 @@
 ; RUN: llvm-as < %s | opt -instcombine -disable-output
+; END.
 
 define void @test() {
 bb38.i:

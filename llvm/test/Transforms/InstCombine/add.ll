@@ -1,251 +1,270 @@
 ; This test makes sure that add instructions are properly eliminated.
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
 ; RUN:    grep -v OK | not grep add
-; END.
 
-implementation
-
-int %test1(int %A) {
-	%B = add int %A, 0
-	ret int %B
+define i32 @test1(i32 %A) {
+        %B = add i32 %A, 0              ; <i32> [#uses=1]
+        ret i32 %B
 }
 
-int %test2(int %A) {
-	%B = add int %A, 5
-	%C = add int %B, -5
-	ret int %C
+define i32 @test2(i32 %A) {
+        %B = add i32 %A, 5              ; <i32> [#uses=1]
+        %C = add i32 %B, -5             ; <i32> [#uses=1]
+        ret i32 %C
 }
 
-int %test3(int %A) {
-	%B = add int %A, 5
-	%C = sub int %B, 5   ;; This should get converted to an add
-	ret int %C
+define i32 @test3(i32 %A) {
+        %B = add i32 %A, 5              ; <i32> [#uses=1]
+        ;; This should get converted to an add
+        %C = sub i32 %B, 5              ; <i32> [#uses=1]
+        ret i32 %C
 }
 
-int %test4(int %A, int %B) {
-        %C = sub int 0, %A
-        %D = add int %B, %C      ; D = B + -A = B - A
-        ret int %D
+define i32 @test4(i32 %A, i32 %B) {
+        %C = sub i32 0, %A              ; <i32> [#uses=1]
+        ; D = B + -A = B - A
+        %D = add i32 %B, %C             ; <i32> [#uses=1]
+        ret i32 %D
 }
 
-int %test5(int %A, int %B) {
-        %C = sub int 0, %A
-        %D = add int %C, %B      ; D = -A + B = B - A
-        ret int %D
+define i32 @test5(i32 %A, i32 %B) {
+        %C = sub i32 0, %A              ; <i32> [#uses=1]
+        ; D = -A + B = B - A
+        %D = add i32 %C, %B             ; <i32> [#uses=1]
+        ret i32 %D
 }
 
-int %test6(int %A) {
-        %B = mul int 7, %A
-        %C = add int %B, %A      ; C = 7*A+A == 8*A == A << 3
-        ret int %C
+define i32 @test6(i32 %A) {
+        %B = mul i32 7, %A              ; <i32> [#uses=1]
+        ; C = 7*A+A == 8*A == A << 3
+        %C = add i32 %B, %A             ; <i32> [#uses=1]
+        ret i32 %C
 }
 
-int %test7(int %A) {
-        %B = mul int 7, %A
-        %C = add int %A, %B      ; C = A+7*A == 8*A == A << 3
-        ret int %C
+define i32 @test7(i32 %A) {
+        %B = mul i32 7, %A              ; <i32> [#uses=1]
+        ; C = A+7*A == 8*A == A << 3
+        %C = add i32 %A, %B             ; <i32> [#uses=1]
+        ret i32 %C
 }
 
 ; (A & C1)+(B & C2) -> (A & C1)|(B & C2) iff C1&C2 == 0
-int %test8(int %A, int %B) {     
-	%A1 = and int %A, 7
-	%B1 = and int %B, 128
-	%C = add int %A1, %B1
-	ret int %C
+define i32 @test8(i32 %A, i32 %B) {
+        %A1 = and i32 %A, 7             ; <i32> [#uses=1]
+        %B1 = and i32 %B, 128           ; <i32> [#uses=1]
+        %C = add i32 %A1, %B1           ; <i32> [#uses=1]
+        ret i32 %C
 }
 
-int %test9(int %A) {
-	%B = shl int %A, ubyte 4
-	%C = add int %B, %B      ; === shl int %A, 5
-	ret int %C
+define i32 @test9(i32 %A) {
+        %B = shl i32 %A, 4              ; <i32> [#uses=2]
+        ; === shl int %A, 5
+        %C = add i32 %B, %B             ; <i32> [#uses=1]
+        ret i32 %C
 }
 
-bool %test10(ubyte %A, ubyte %b) {
-        %B = add ubyte %A, %b
-        %c = setne ubyte %B, 0    ; === A != -b
-        ret bool %c
+define i1 @test10(i8 %A, i8 %b) {
+        %B = add i8 %A, %b              ; <i8> [#uses=1]
+        ; === A != -b
+        %c = icmp ne i8 %B, 0           ; <i1> [#uses=1]
+        ret i1 %c
 }
 
-bool %test11(ubyte %A) {
-        %B = add ubyte %A, 255
-        %c = setne ubyte %B, 0    ; === A != 1
-        ret bool %c
+define i1 @test11(i8 %A) {
+        %B = add i8 %A, -1              ; <i8> [#uses=1]
+        ; === A != 1
+        %c = icmp ne i8 %B, 0           ; <i1> [#uses=1]
+        ret i1 %c
 }
 
-int %test12(int %A, int %B) {
-	%C_OK = add int %B, %A       ; Should be transformed into shl A, 1
-	br label %X
-X:
-	%D = add int %C_OK, %A 
-	ret int %D
+define i32 @test12(i32 %A, i32 %B) {
+        ; Should be transformed into shl A, 1
+         %C_OK = add i32 %B, %A          ; <i32> [#uses=1]
+        br label %X
+
+X:              ; preds = %0
+        %D = add i32 %C_OK, %A          ; <i32> [#uses=1]
+        ret i32 %D
 }
 
-int %test13(int %A, int %B, int %C) {
-	%D_OK = add int %A, %B
-	%E_OK = add int %D_OK, %C
-	%F = add int %E_OK, %A        ;; shl A, 1
-	ret int %F
+define i32 @test13(i32 %A, i32 %B, i32 %C) {
+        %D_OK = add i32 %A, %B          ; <i32> [#uses=1]
+        %E_OK = add i32 %D_OK, %C               ; <i32> [#uses=1]
+        ;; shl A, 1
+        %F = add i32 %E_OK, %A          ; <i32> [#uses=1]
+        ret i32 %F
 }
 
-uint %test14(uint %offset, uint %difference) {
-        %tmp.2 = and uint %difference, 3
-        %tmp.3_OK = add uint %tmp.2, %offset
-        %tmp.5.mask = and uint %difference, 4294967292
-        %tmp.8 = add uint %tmp.3_OK, %tmp.5.mask ; == add %offset, %difference
-        ret uint %tmp.8
+define i32 @test14(i32 %offset, i32 %difference) {
+        %tmp.2 = and i32 %difference, 3         ; <i32> [#uses=1]
+        %tmp.3_OK = add i32 %tmp.2, %offset             ; <i32> [#uses=1]
+        %tmp.5.mask = and i32 %difference, -4           ; <i32> [#uses=1]
+        ; == add %offset, %difference
+        %tmp.8 = add i32 %tmp.3_OK, %tmp.5.mask         ; <i32> [#uses=1]
+        ret i32 %tmp.8
 }
 
-ubyte %test15(ubyte %A) {
-        %B = add ubyte %A, 192  ; Does not effect result
-        %C = and ubyte %B, 16   ; Only one bit set
-        ret ubyte %C
+define i8 @test15(i8 %A) {
+        ; Does not effect result
+        %B = add i8 %A, -64             ; <i8> [#uses=1]
+        ; Only one bit set
+        %C = and i8 %B, 16              ; <i8> [#uses=1]
+        ret i8 %C
 }
 
-ubyte %test16(ubyte %A) {
-        %B = add ubyte %A, 16   ; Turn this into a XOR
-        %C = and ubyte %B, 16   ; Only one bit set
-        ret ubyte %C
+define i8 @test16(i8 %A) {
+        ; Turn this into a XOR
+        %B = add i8 %A, 16              ; <i8> [#uses=1]
+        ; Only one bit set
+        %C = and i8 %B, 16              ; <i8> [#uses=1]
+        ret i8 %C
 }
 
-int %test17(int %A) {
-        %B = xor int %A, -1
-        %C = add int %B, 1      ; == sub int 0, %A
-        ret int %C
+define i32 @test17(i32 %A) {
+        %B = xor i32 %A, -1             ; <i32> [#uses=1]
+        ; == sub int 0, %A
+        %C = add i32 %B, 1              ; <i32> [#uses=1]
+        ret i32 %C
 }
 
-ubyte %test18(ubyte %A) {
-        %B = xor ubyte %A, 255
-        %C = add ubyte %B, 17      ; == sub ubyte 16, %A
-        ret ubyte %C
+define i8 @test18(i8 %A) {
+        %B = xor i8 %A, -1              ; <i8> [#uses=1]
+        ; == sub ubyte 16, %A
+        %C = add i8 %B, 17              ; <i8> [#uses=1]
+        ret i8 %C
 }
 
-int %test19(bool %C) {
-        %A = select bool %C, int 1000, int 10
-        %V = add int %A, 123
-        ret int %V
+define i32 @test19(i1 %C) {
+        %A = select i1 %C, i32 1000, i32 10             ; <i32> [#uses=1]
+        %V = add i32 %A, 123            ; <i32> [#uses=1]
+        ret i32 %V
 }
 
-int %test20(int %x) {
-        %tmp.2 = xor int %x, -2147483648
+define i32 @test20(i32 %x) {
+        %tmp.2 = xor i32 %x, -2147483648                ; <i32> [#uses=1]
         ;; Add of sign bit -> xor of sign bit.
-        %tmp.4 = add int %tmp.2, -2147483648
-        ret int %tmp.4
+        %tmp.4 = add i32 %tmp.2, -2147483648            ; <i32> [#uses=1]
+        ret i32 %tmp.4
 }
 
-bool %test21(uint %x) {
-	%t = add uint %x, 4
-	%y = seteq uint %t, 123
-	ret bool %y
+define i1 @test21(i32 %x) {
+        %t = add i32 %x, 4              ; <i32> [#uses=1]
+        %y = icmp eq i32 %t, 123                ; <i1> [#uses=1]
+        ret i1 %y
 }
 
-int %test22(uint %V) {
-	%V2 = add uint %V, 10
-	switch uint %V2, label %Default [
-		uint 20, label %Lab1
-		uint 30, label %Lab2
-	]
-Default:
-	ret int 123
-Lab1:
-	ret int 12312
-Lab2:
-	ret int 1231231
+define i32 @test22(i32 %V) {
+        %V2 = add i32 %V, 10            ; <i32> [#uses=1]
+        switch i32 %V2, label %Default [
+                 i32 20, label %Lab1
+                 i32 30, label %Lab2
+        ]
+
+Default:                ; preds = %0
+        ret i32 123
+
+Lab1:           ; preds = %0
+        ret i32 12312
+
+Lab2:           ; preds = %0
+        ret i32 1231231
 }
 
-int %test23(bool %C, int %a) {
+define i32 @test23(i1 %C, i32 %a) {
 entry:
-        br bool %C, label %endif, label %else
+        br i1 %C, label %endif, label %else
 
-else:
+else:           ; preds = %entry
         br label %endif
 
-endif:
-        %b.0 = phi int [ 0, %entry ], [ 1, %else ]
-        %tmp.4 = add int %b.0, 1
-        ret int %tmp.4
+endif:          ; preds = %else, %entry
+        %b.0 = phi i32 [ 0, %entry ], [ 1, %else ]              ; <i32> [#uses=1]
+        %tmp.4 = add i32 %b.0, 1                ; <i32> [#uses=1]
+        ret i32 %tmp.4
 }
 
-int %test24(int %A) {
-	%B = add int %A, 1
-	%C = shl int %B, ubyte 1
-	%D = sub int %C, 2
-	ret int %D             ;; A << 1
+define i32 @test24(i32 %A) {
+        %B = add i32 %A, 1              ; <i32> [#uses=1]
+        %C = shl i32 %B, 1              ; <i32> [#uses=1]
+        %D = sub i32 %C, 2              ; <i32> [#uses=1]
+        ret i32 %D
 }
 
-long %test25(long %Y) {
-        %tmp.4 = shl long %Y, ubyte 2
-        %tmp.12 = shl long %Y, ubyte 2
-        %tmp.8 = add long %tmp.4, %tmp.12 ;; Y << 3
-        ret long %tmp.8
+define i64 @test25(i64 %Y) {
+        %tmp.4 = shl i64 %Y, 2          ; <i64> [#uses=1]
+        %tmp.12 = shl i64 %Y, 2         ; <i64> [#uses=1]
+        %tmp.8 = add i64 %tmp.4, %tmp.12                ; <i64> [#uses=1]
+        ret i64 %tmp.8
 }
 
-int %test26(int %A, int %B) {
-	%C = add int %A, %B
-	%D = sub int %C, %B
-	ret int %D
+define i32 @test26(i32 %A, i32 %B) {
+        %C = add i32 %A, %B             ; <i32> [#uses=1]
+        %D = sub i32 %C, %B             ; <i32> [#uses=1]
+        ret i32 %D
 }
 
-int %test27(bool %C, int %X, int %Y) {
-        %A = add int %X, %Y
-        %B = add int %Y, 123
-        %C = select bool %C, int %A, int %B  ;; Fold add through select.
-        %D = sub int %C, %Y
-        ret int %D
+define i32 @test27(i1 %C, i32 %X, i32 %Y) {
+        %A = add i32 %X, %Y             ; <i32> [#uses=1]
+        %B = add i32 %Y, 123            ; <i32> [#uses=1]
+        ;; Fold add through select.
+        %C.upgrd.1 = select i1 %C, i32 %A, i32 %B               ; <i32> [#uses=1]
+        %D = sub i32 %C.upgrd.1, %Y             ; <i32> [#uses=1]
+        ret i32 %D
 }
 
-int %test28(int %X) {
-	%Y = add int %X, 1234
-	%Z = sub int 42, %Y
-	ret int %Z
+define i32 @test28(i32 %X) {
+        %Y = add i32 %X, 1234           ; <i32> [#uses=1]
+        %Z = sub i32 42, %Y             ; <i32> [#uses=1]
+        ret i32 %Z
 }
 
-uint %test29(uint %X, uint %x) {
-	%tmp.2 = sub uint %X, %x
-        %tmp.2.mask = and uint %tmp.2, 63               ; <uint> [#uses=1]
-        %tmp.6 = add uint %tmp.2.mask, %x               ; <uint> [#uses=1]
-        %tmp.7 = and uint %tmp.6, 63            ; <uint> [#uses=1]
-        %tmp.9 = and uint %tmp.2, 4294967232            ; <uint> [#uses=1]
-        %tmp.10 = or uint %tmp.7, %tmp.9                ; <uint> [#uses=1]
-	ret uint %tmp.10
+define i32 @test29(i32 %X, i32 %x) {
+        %tmp.2 = sub i32 %X, %x         ; <i32> [#uses=2]
+        %tmp.2.mask = and i32 %tmp.2, 63                ; <i32> [#uses=1]
+        %tmp.6 = add i32 %tmp.2.mask, %x                ; <i32> [#uses=1]
+        %tmp.7 = and i32 %tmp.6, 63             ; <i32> [#uses=1]
+        %tmp.9 = and i32 %tmp.2, -64            ; <i32> [#uses=1]
+        %tmp.10 = or i32 %tmp.7, %tmp.9         ; <i32> [#uses=1]
+        ret i32 %tmp.10
 }
 
-long %test30(long %x) {
-        %tmp.2 = xor long %x, -9223372036854775808
+define i64 @test30(i64 %x) {
+        %tmp.2 = xor i64 %x, -9223372036854775808               ; <i64> [#uses=1]
         ;; Add of sign bit -> xor of sign bit.
-        %tmp.4 = add long %tmp.2, -9223372036854775808
-        ret long %tmp.4
+        %tmp.4 = add i64 %tmp.2, -9223372036854775808           ; <i64> [#uses=1]
+        ret i64 %tmp.4
 }
 
-int %test31(int %A) {
-	%B = add int %A, 4
-	%C = mul int %B, 5
-	%D = sub int %C, 20
-	ret int %D
+define i32 @test31(i32 %A) {
+        %B = add i32 %A, 4              ; <i32> [#uses=1]
+        %C = mul i32 %B, 5              ; <i32> [#uses=1]
+        %D = sub i32 %C, 20             ; <i32> [#uses=1]
+        ret i32 %D
 }
 
-int %test32(int %A) {
-	%B = add int %A, 4
-	%C = shl int %B, ubyte 2
-	%D = sub int %C, 16
-	ret int %D
+define i32 @test32(i32 %A) {
+        %B = add i32 %A, 4              ; <i32> [#uses=1]
+        %C = shl i32 %B, 2              ; <i32> [#uses=1]
+        %D = sub i32 %C, 16             ; <i32> [#uses=1]
+        ret i32 %D
 }
 
-ubyte %test33(ubyte %A) {   ;; OR A, 1
-        %B = and ubyte %A, 254
-        %C = add ubyte %B, 1
-        ret ubyte %C
+define i8 @test33(i8 %A) {
+        %B = and i8 %A, -2              ; <i8> [#uses=1]
+        %C = add i8 %B, 1               ; <i8> [#uses=1]
+        ret i8 %C
 }
 
-ubyte %test34(ubyte %A) {
-        %B = add ubyte %A, 64   ;; dead
-        %C = and ubyte %B, 12
-        ret ubyte %C
+define i8 @test34(i8 %A) {
+        %B = add i8 %A, 64              ; <i8> [#uses=1]
+        %C = and i8 %B, 12              ; <i8> [#uses=1]
+        ret i8 %C
 }
 
-int %test35(int %a) {  ;; -> -1
-        %tmpnot = xor int %a, -1
-        %tmp2 = add int %tmpnot, %a
-        ret int %tmp2
+define i32 @test35(i32 %a) {
+        %tmpnot = xor i32 %a, -1                ; <i32> [#uses=1]
+        %tmp2 = add i32 %tmpnot, %a             ; <i32> [#uses=1]
+        ret i32 %tmp2
 }
 

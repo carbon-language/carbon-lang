@@ -1,16 +1,14 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
 ; RUN:   grep call | not grep bitcast
 
-target endian = little
-target pointersize = 32
+target datalayout = "e-p:32:32"
 target triple = "i686-pc-linux-gnu"
 
-implementation   ; Functions:
-
-int %main() {
+define i32 @main() {
 entry:
-	%tmp = call int cast (sbyte* (int*)* %ctime to int (int*)*)( int* null )
-	ret int %tmp
+        %tmp = call i32 bitcast (i8* (i32*)* @ctime to i32 (i32*)*)( i32* null )          ; <i32> [#uses=1]
+        ret i32 %tmp
 }
 
-declare sbyte* %ctime(int*)
+declare i8* @ctime(i32*)
+

@@ -11,7 +11,7 @@
 ;
 ; RUN: llvm-as < %s -o - | opt -instcombine | llvm-dis | \
 ; RUN:    notcast .*int
-
+; END.
 define i1 @lt_signed_to_large_unsigned(i8 %SB) {
         %Y = sext i8 %SB to i32         ; <i32> [#uses=1]
         %C = icmp ult i32 %Y, 1024              ; <i1> [#uses=1]

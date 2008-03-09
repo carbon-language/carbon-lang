@@ -1,20 +1,19 @@
 ; Tests to make sure elimination of casts is working correctly
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | notcast
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | notcast
 
-target pointersize = 32
+target datalayout = "p:32:32"
 
-implementation
-
-sbyte* %test1(sbyte* %t) {
-	%tmpc = cast sbyte* %t to uint
-	%tmpa = add uint %tmpc, 32
-	%tv = cast uint %tmpa to sbyte*
-	ret sbyte* %tv
+define i8* @test1(i8* %t) {
+        %tmpc = ptrtoint i8* %t to i32          ; <i32> [#uses=1]
+        %tmpa = add i32 %tmpc, 32               ; <i32> [#uses=1]
+        %tv = inttoptr i32 %tmpa to i8*         ; <i8*> [#uses=1]
+        ret i8* %tv
 }
 
-bool %test2(sbyte* %a, sbyte* %b) {
-%tmpa = cast sbyte* %a to uint
-%tmpb = cast sbyte* %b to uint
-%r = seteq uint %tmpa, %tmpb
-ret bool %r
+define i1 @test2(i8* %a, i8* %b) {
+        %tmpa = ptrtoint i8* %a to i32          ; <i32> [#uses=1]
+        %tmpb = ptrtoint i8* %b to i32          ; <i32> [#uses=1]
+        %r = icmp eq i32 %tmpa, %tmpb           ; <i1> [#uses=1]
+        ret i1 %r
 }
+

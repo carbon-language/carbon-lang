@@ -1,4 +1,5 @@
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep select
+; END.
 
 target datalayout = "e-p:32:32"
 target triple = "i686-pc-linux-gnu"

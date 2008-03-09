@@ -4,6 +4,7 @@
 ; RUN: llvm-as < %s | llc -march=alpha | grep gprel32
 ; RUN: llvm-as < %s | llc -march=alpha | grep ldl
 ; RUN: llvm-as < %s | llc -march=alpha | grep rodata
+; END.
 
 target datalayout = "e-p:64:64"
 target triple = "alphaev67-unknown-linux-gnu"

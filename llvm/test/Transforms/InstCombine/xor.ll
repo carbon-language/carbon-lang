@@ -2,6 +2,7 @@
 ;
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
 ; RUN:    not grep {xor }
+; END.
 @G1 = global i32 0		; <i32*> [#uses=1]
 @G2 = global i32 0		; <i32*> [#uses=1]
 

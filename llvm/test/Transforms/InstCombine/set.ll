@@ -1,6 +1,7 @@
 ; This test makes sure that these instructions are properly eliminated.
 ;
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep icmp
+; END.
 	
 @X = external global i32                ; <i32*> [#uses=2]
 

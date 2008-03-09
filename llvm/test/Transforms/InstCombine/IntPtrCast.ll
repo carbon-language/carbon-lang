@@ -1,9 +1,9 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | notcast
-target endian = little
-target pointersize = 32
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | notcast
+target datalayout = "e-p:32:32"
 
-int *%test(int *%P) {
-	%V = cast int* %P to int
-	%P2 = cast int %V to int*
-	ret int* %P2
+define i32* @test(i32* %P) {
+        %V = ptrtoint i32* %P to i32            ; <i32> [#uses=1]
+        %P2 = inttoptr i32 %V to i32*           ; <i32*> [#uses=1]
+        ret i32* %P2
 }
+

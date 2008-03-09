@@ -1,14 +1,15 @@
 ; Test folding of constantexpr geps into normal geps.
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -gcse -instcombine | \
+; RUN: llvm-as < %s | opt -instcombine -gcse -instcombine | \
 ; RUN:    llvm-dis | not grep getelementptr
 
-%Array = external global [40 x int]
+@Array = external global [40 x i32]             ; <[40 x i32]*> [#uses=2]
 
-int %test(long %X) {
-	%A = getelementptr int* getelementptr ([40 x int]* %Array, long 0, long 0), long %X
-	%B = getelementptr [40 x int]* %Array, long 0, long %X
-	%a = cast int* %A to int
-	%b = cast int* %B to int
-	%c = sub int %a, %b
-	ret int %c
+define i32 @test(i64 %X) {
+        %A = getelementptr i32* getelementptr ([40 x i32]* @Array, i64 0, i64 0), i64 %X  ; <i32*> [#uses=1]
+        %B = getelementptr [40 x i32]* @Array, i64 0, i64 %X            ; <i32*> [#uses=1]
+        %a = ptrtoint i32* %A to i32            ; <i32> [#uses=1]
+        %b = ptrtoint i32* %B to i32            ; <i32> [#uses=1]
+        %c = sub i32 %a, %b             ; <i32> [#uses=1]
+        ret i32 %c
 }
+

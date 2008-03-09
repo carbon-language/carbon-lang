@@ -1,28 +1,36 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
-; RUN:    not grep {setne\|setle\|setge}
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
+; RUN:    not grep {icmp ne\|icmp ule\|icmp uge}
 
-int %test1(uint %X, uint %Y) {
-	%C = setne uint %X, %Y
-	br bool %C, label %T, label %F
-T:
-	ret int 12
-F:
-	ret int 123
+define i32 @test1(i32 %X, i32 %Y) {
+        %C = icmp ne i32 %X, %Y         ; <i1> [#uses=1]
+        br i1 %C, label %T, label %F
+
+T:              ; preds = %0
+        ret i32 12
+
+F:              ; preds = %0
+        ret i32 123
 }
 
-int %test2(uint %X, uint %Y) {
-	%C = setle uint %X, %Y
-	br bool %C, label %T, label %F
-T:
-	ret int 12
-F:
-	ret int 123
+define i32 @test2(i32 %X, i32 %Y) {
+        %C = icmp ule i32 %X, %Y                ; <i1> [#uses=1]
+        br i1 %C, label %T, label %F
+
+T:              ; preds = %0
+        ret i32 12
+
+F:              ; preds = %0
+        ret i32 123
 }
-int %test3(uint %X, uint %Y) {
-	%C = setge uint %X, %Y
-	br bool %C, label %T, label %F
-T:
-	ret int 12
-F:
-	ret int 123
+
+define i32 @test3(i32 %X, i32 %Y) {
+        %C = icmp uge i32 %X, %Y                ; <i1> [#uses=1]
+        br i1 %C, label %T, label %F
+
+T:              ; preds = %0
+        ret i32 12
+
+F:              ; preds = %0
+        ret i32 123
 }
+

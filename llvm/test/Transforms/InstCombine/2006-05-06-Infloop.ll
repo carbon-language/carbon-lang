@@ -1,4 +1,5 @@
 ; RUN: llvm-as < %s | opt -instcombine -disable-output
+; END.
 	%struct.gs_matrix = type { float, i32, float, i32, float, i32, float, i32, float, i32, float, i32 }
 	%struct.gx_bitmap = type { i8*, i32, i32, i32 }
 	%struct.gx_device = type { i32, %struct.gx_device_procs*, i8*, i32, i32, float, float, i32, i16, i32, i32 }

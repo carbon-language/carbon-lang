@@ -1,62 +1,57 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
 ; RUN:    grep {call.*llvm.bswap} | count 5
-; END.
 
-uint %test1(uint %i) {
-        %tmp1 = shr uint %i, ubyte 24           ; <uint> [#uses=1]
-        %tmp3 = shr uint %i, ubyte 8            ; <uint> [#uses=1]
-        %tmp4 = and uint %tmp3, 65280           ; <uint> [#uses=1]
-        %tmp5 = or uint %tmp1, %tmp4            ; <uint> [#uses=1]
-        %tmp7 = shl uint %i, ubyte 8            ; <uint> [#uses=1]
-        %tmp8 = and uint %tmp7, 16711680                ; <uint> [#uses=1]
-        %tmp9 = or uint %tmp5, %tmp8            ; <uint> [#uses=1]
-        %tmp11 = shl uint %i, ubyte 24          ; <uint> [#uses=1]
-        %tmp12 = or uint %tmp9, %tmp11          ; <uint> [#uses=1]
-        ret uint %tmp12
+define i32 @test1(i32 %i) {
+	%tmp1 = lshr i32 %i, 24		; <i32> [#uses=1]
+	%tmp3 = lshr i32 %i, 8		; <i32> [#uses=1]
+	%tmp4 = and i32 %tmp3, 65280		; <i32> [#uses=1]
+	%tmp5 = or i32 %tmp1, %tmp4		; <i32> [#uses=1]
+	%tmp7 = shl i32 %i, 8		; <i32> [#uses=1]
+	%tmp8 = and i32 %tmp7, 16711680		; <i32> [#uses=1]
+	%tmp9 = or i32 %tmp5, %tmp8		; <i32> [#uses=1]
+	%tmp11 = shl i32 %i, 24		; <i32> [#uses=1]
+	%tmp12 = or i32 %tmp9, %tmp11		; <i32> [#uses=1]
+	ret i32 %tmp12
 }
 
-uint %test2(uint %arg) {
-        %tmp2 = shl uint %arg, ubyte 24         ; <uint> [#uses=1]
-        %tmp4 = shl uint %arg, ubyte 8          ; <uint> [#uses=1]
-        %tmp5 = and uint %tmp4, 16711680                ; <uint> [#uses=1]
-        %tmp6 = or uint %tmp2, %tmp5            ; <uint> [#uses=1]
-        %tmp8 = shr uint %arg, ubyte 8          ; <uint> [#uses=1]
-        %tmp9 = and uint %tmp8, 65280           ; <uint> [#uses=1]
-        %tmp10 = or uint %tmp6, %tmp9           ; <uint> [#uses=1]
-        %tmp12 = shr uint %arg, ubyte 24                ; <uint> [#uses=1]
-        %tmp14 = or uint %tmp10, %tmp12         ; <uint> [#uses=1]
-        ret uint %tmp14
+define i32 @test2(i32 %arg) {
+	%tmp2 = shl i32 %arg, 24		; <i32> [#uses=1]
+	%tmp4 = shl i32 %arg, 8		; <i32> [#uses=1]
+	%tmp5 = and i32 %tmp4, 16711680		; <i32> [#uses=1]
+	%tmp6 = or i32 %tmp2, %tmp5		; <i32> [#uses=1]
+	%tmp8 = lshr i32 %arg, 8		; <i32> [#uses=1]
+	%tmp9 = and i32 %tmp8, 65280		; <i32> [#uses=1]
+	%tmp10 = or i32 %tmp6, %tmp9		; <i32> [#uses=1]
+	%tmp12 = lshr i32 %arg, 24		; <i32> [#uses=1]
+	%tmp14 = or i32 %tmp10, %tmp12		; <i32> [#uses=1]
+	ret i32 %tmp14
 }
 
-ushort %test3(ushort %s) {
-        %tmp2 = shr ushort %s, ubyte 8
-        %tmp4 = shl ushort %s, ubyte 8
-        %tmp5 = or ushort %tmp2, %tmp4
-	ret ushort %tmp5
+define i16 @test3(i16 %s) {
+	%tmp2 = lshr i16 %s, 8		; <i16> [#uses=1]
+	%tmp4 = shl i16 %s, 8		; <i16> [#uses=1]
+	%tmp5 = or i16 %tmp2, %tmp4		; <i16> [#uses=1]
+	ret i16 %tmp5
 }
 
-ushort %test4(ushort %s) {
-        %tmp2 = shr ushort %s, ubyte 8
-        %tmp4 = shl ushort %s, ubyte 8
-        %tmp5 = or ushort %tmp4, %tmp2
-	ret ushort %tmp5
+define i16 @test4(i16 %s) {
+	%tmp2 = lshr i16 %s, 8		; <i16> [#uses=1]
+	%tmp4 = shl i16 %s, 8		; <i16> [#uses=1]
+	%tmp5 = or i16 %tmp4, %tmp2		; <i16> [#uses=1]
+	ret i16 %tmp5
 }
 
-; unsigned short test5(unsigned short a) {
-;       return ((a & 0xff00) >> 8 | (a & 0x00ff) << 8);
-;}
-ushort %test5(ushort %a) {
-        %tmp = zext ushort %a to int
-        %tmp1 = and int %tmp, 65280
-        %tmp2 = ashr int %tmp1, ubyte 8
-        %tmp2 = trunc int %tmp2 to short
-        %tmp4 = and int %tmp, 255
-        %tmp5 = shl int %tmp4, ubyte 8
-        %tmp5 = trunc int %tmp5 to short
-        %tmp = or short %tmp2, %tmp5
-        %tmp6 = bitcast short %tmp to ushort
-        %tmp6 = zext ushort %tmp6 to int
-        %retval = trunc int %tmp6 to ushort
-        ret ushort %retval
+define i16 @test5(i16 %a) {
+	%tmp = zext i16 %a to i32		; <i32> [#uses=2]
+	%tmp1 = and i32 %tmp, 65280		; <i32> [#uses=1]
+	%tmp2 = ashr i32 %tmp1, 8		; <i32> [#uses=1]
+	%tmp2.upgrd.1 = trunc i32 %tmp2 to i16		; <i16> [#uses=1]
+	%tmp4 = and i32 %tmp, 255		; <i32> [#uses=1]
+	%tmp5 = shl i32 %tmp4, 8		; <i32> [#uses=1]
+	%tmp5.upgrd.2 = trunc i32 %tmp5 to i16		; <i16> [#uses=1]
+	%tmp.upgrd.3 = or i16 %tmp2.upgrd.1, %tmp5.upgrd.2		; <i16> [#uses=1]
+	%tmp6 = bitcast i16 %tmp.upgrd.3 to i16		; <i16> [#uses=1]
+	%tmp6.upgrd.4 = zext i16 %tmp6 to i32		; <i32> [#uses=1]
+	%retval = trunc i32 %tmp6.upgrd.4 to i16		; <i16> [#uses=1]
+	ret i16 %retval
 }
-

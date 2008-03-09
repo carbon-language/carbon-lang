@@ -9,48 +9,53 @@
 ;
 ; Which corresponds to test1.
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
 ; RUN:   not grep {or }
-; END.
 
-int %test1(int %X, int %Y) {
-	%A = and int %X, 7
-	%B = and int %Y, 8
-	%C = or int %A, %B
-	%D = and int %C, 7  ;; This cannot include any bits from %Y!
-	ret int %D
+define i32 @test1(i32 %X, i32 %Y) {
+        %A = and i32 %X, 7              ; <i32> [#uses=1]
+        %B = and i32 %Y, 8              ; <i32> [#uses=1]
+        %C = or i32 %A, %B              ; <i32> [#uses=1]
+        ;; This cannot include any bits from %Y!
+        %D = and i32 %C, 7              ; <i32> [#uses=1]
+        ret i32 %D
 }
 
-int %test2(int %X, ubyte %Y) {
-	%B = cast ubyte %Y to int
-	%C = or int %X, %B
-	%D = and int %C, 65536  ;; This cannot include any bits from %Y!
-	ret int %D
+define i32 @test2(i32 %X, i8 %Y) {
+        %B = zext i8 %Y to i32          ; <i32> [#uses=1]
+        %C = or i32 %X, %B              ; <i32> [#uses=1]
+        ;; This cannot include any bits from %Y!
+        %D = and i32 %C, 65536          ; <i32> [#uses=1]
+        ret i32 %D
 }
 
-int %test3(int %X, int %Y) {
-	%B = shl int %Y, ubyte 1
-	%C = or int %X, %B
-	%D = and int %C, 1  ;; This cannot include any bits from %Y!
-	ret int %D
+define i32 @test3(i32 %X, i32 %Y) {
+        %B = shl i32 %Y, 1              ; <i32> [#uses=1]
+        %C = or i32 %X, %B              ; <i32> [#uses=1]
+        ;; This cannot include any bits from %Y!
+        %D = and i32 %C, 1              ; <i32> [#uses=1]
+        ret i32 %D
 }
 
-uint %test4(uint %X, uint %Y) {
-	%B = shr uint %Y, ubyte 31
-	%C = or uint %X, %B
-	%D = and uint %C, 2  ;; This cannot include any bits from %Y!
-	ret uint %D
+define i32 @test4(i32 %X, i32 %Y) {
+        %B = lshr i32 %Y, 31            ; <i32> [#uses=1]
+        %C = or i32 %X, %B              ; <i32> [#uses=1]
+        ;; This cannot include any bits from %Y!
+        %D = and i32 %C, 2              ; <i32> [#uses=1]
+        ret i32 %D
 }
 
-int %or_test1(int %X, int %Y) {
-	%A = and int %X, 1
-	%B = or int %A, 1     ;; This cannot include any bits from X!
-	ret int %B
+define i32 @or_test1(i32 %X, i32 %Y) {
+        %A = and i32 %X, 1              ; <i32> [#uses=1]
+        ;; This cannot include any bits from X!
+        %B = or i32 %A, 1               ; <i32> [#uses=1]
+        ret i32 %B
 }
 
-ubyte %or_test2(ubyte %X, ubyte %Y) {
-	%A = shl ubyte %X, ubyte 7
-	%B = or ubyte %A, 128     ;; This cannot include any bits from X!
-	ret ubyte %B
+define i8 @or_test2(i8 %X, i8 %Y) {
+        %A = shl i8 %X, 7               ; <i8> [#uses=1]
+        ;; This cannot include any bits from X!
+        %B = or i8 %A, -128             ; <i8> [#uses=1]
+        ret i8 %B
 }
 

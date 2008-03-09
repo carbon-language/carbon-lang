@@ -1,10 +1,9 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | grep trunc
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep trunc
 
-target endian = little
-target pointersize = 32
+target datalayout = "e-p:32:32"
 
-int* %test(int* %X, long %Idx) {
-	; Should insert a cast to int on this target
-	%R = getelementptr int* %X, long %Idx
-	ret int* %R
+define i32* @test(i32* %X, i64 %Idx) {
+        %R = getelementptr i32* %X, i64 %Idx            ; <i32*> [#uses=1]
+        ret i32* %R
 }
+

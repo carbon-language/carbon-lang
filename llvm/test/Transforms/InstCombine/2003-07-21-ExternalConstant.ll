@@ -11,7 +11,7 @@
 ;
 ; Extra code:
 ; RUN: llvm-as < %s | opt -instcombine
-;
+; END.
 
 target datalayout = "e-p:32:32"
 @silly = external constant i32          ; <i32*> [#uses=1]

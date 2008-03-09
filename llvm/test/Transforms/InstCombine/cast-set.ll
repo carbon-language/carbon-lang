@@ -1,49 +1,51 @@
 ; This tests for various complex cast elimination cases instcombine should
 ; handle.
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | notcast
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | notcast
 
-bool %test1(int %X) {
-	%A = cast int %X to uint
-	%c = setne uint %A, 12        ; Convert to setne int %X, 12
-	ret bool %c
+define i1 @test1(i32 %X) {
+        %A = bitcast i32 %X to i32              ; <i32> [#uses=1]
+        ; Convert to setne int %X, 12
+        %c = icmp ne i32 %A, 12         ; <i1> [#uses=1]
+        ret i1 %c
 }
 
-bool %test2(int %X, int %Y) {
-	%A = cast int %X to uint
-	%B = cast int %Y to uint
-	%c = setne uint %A, %B       ; Convert to setne int %X, %Y
-	ret bool %c
+define i1 @test2(i32 %X, i32 %Y) {
+        %A = bitcast i32 %X to i32              ; <i32> [#uses=1]
+        %B = bitcast i32 %Y to i32              ; <i32> [#uses=1]
+        ; Convert to setne int %X, %Y
+        %c = icmp ne i32 %A, %B         ; <i1> [#uses=1]
+        ret i1 %c
 }
 
-int %test4(int %A) {
-	%B = cast int %A to uint
-	%C = shl uint %B, ubyte 2
-	%D = cast uint %C to int
-	ret int %D
+define i32 @test4(i32 %A) {
+        %B = bitcast i32 %A to i32              ; <i32> [#uses=1]
+        %C = shl i32 %B, 2              ; <i32> [#uses=1]
+        %D = bitcast i32 %C to i32              ; <i32> [#uses=1]
+        ret i32 %D
 }
 
-short %test5(short %A) {
-	%B = cast short %A to uint
-	%C = and uint %B, 15
-	%D = cast uint %C to short
-	ret short %D
+define i16 @test5(i16 %A) {
+        %B = sext i16 %A to i32         ; <i32> [#uses=1]
+        %C = and i32 %B, 15             ; <i32> [#uses=1]
+        %D = trunc i32 %C to i16                ; <i16> [#uses=1]
+        ret i16 %D
 }
 
-bool %test6(bool %A) {
-	%B = cast bool %A to int
-	%C = setne int %B, 0
-	ret bool %C
+define i1 @test6(i1 %A) {
+        %B = zext i1 %A to i32          ; <i32> [#uses=1]
+        %C = icmp ne i32 %B, 0          ; <i1> [#uses=1]
+        ret i1 %C
 }
 
-bool %test6a(bool %A) {
-	%B = cast bool %A to int
-	%C = setne int %B, -1    ; Always true!
-	ret bool %C
+define i1 @test6a(i1 %A) {
+        %B = zext i1 %A to i32          ; <i32> [#uses=1]
+        %C = icmp ne i32 %B, -1         ; <i1> [#uses=1]
+        ret i1 %C
 }
 
-bool %test7(sbyte* %A) {
-	%B = cast sbyte* %A to int*
-	%C = seteq int* %B, null
-	ret bool %C
+define i1 @test7(i8* %A) {
+        %B = bitcast i8* %A to i32*             ; <i32*> [#uses=1]
+        %C = icmp eq i32* %B, null              ; <i1> [#uses=1]
+        ret i1 %C
 }

@@ -1,15 +1,15 @@
 ; This is the sequence of stuff that the Java front-end expands for a single 
 ; <= comparison.  Check to make sure we turn it into a <= (only)
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
 ; RUN:    grep -v {icmp sle} | not grep #uses
 
-bool %le(int %A, int %B) {
-        %c1 = setgt int %A, %B;
-        %tmp = select bool %c1, int 1, int 0;
-        %c2 = setlt int %A, %B;
-        %result = select bool %c2, int -1, int %tmp;
-        %c3 = setle int %result, 0;
-        ret bool %c3;
+define i1 @le(i32 %A, i32 %B) {
+        %c1 = icmp sgt i32 %A, %B               ; <i1> [#uses=1]
+        %tmp = select i1 %c1, i32 1, i32 0              ; <i32> [#uses=1]
+        %c2 = icmp slt i32 %A, %B               ; <i1> [#uses=1]
+        %result = select i1 %c2, i32 -1, i32 %tmp               ; <i32> [#uses=1]
+        %c3 = icmp sle i32 %result, 0           ; <i1> [#uses=1]
+        ret i1 %c3
 }
 

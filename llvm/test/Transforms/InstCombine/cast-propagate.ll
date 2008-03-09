@@ -1,10 +1,11 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -mem2reg | llvm-dis | \
+; RUN: llvm-as < %s | opt -instcombine -mem2reg | llvm-dis | \
 ; RUN:    not grep load
 
-int %test1(uint* %P) {
-	%A = alloca uint 
-	store uint 123, uint* %A
-	%Q = cast uint* %A to int*    ; Cast the result of the load not the source
-	%V = load int* %Q
-	ret int %V
+define i32 @test1(i32* %P) {
+        %A = alloca i32         ; <i32*> [#uses=2]
+        store i32 123, i32* %A
+        ; Cast the result of the load not the source
+        %Q = bitcast i32* %A to i32*            ; <i32*> [#uses=1]
+        %V = load i32* %Q               ; <i32> [#uses=1]
+        ret i32 %V
 }

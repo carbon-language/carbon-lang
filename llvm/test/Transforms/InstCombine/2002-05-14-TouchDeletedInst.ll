@@ -6,6 +6,8 @@
 ;
 ; RUN: llvm-as < %s | opt -instcombine
 ;
+; END.
+
 @.LC0 = internal global [21 x i8] c"hbMakeCodeLengths(1)\00"		; <[21 x i8]*> [#uses=1]
 @.LC1 = internal global [21 x i8] c"hbMakeCodeLengths(2)\00"		; <[21 x i8]*> [#uses=1]
 

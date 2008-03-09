@@ -4,7 +4,7 @@
 ;
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
 ; RUN:    grep -v {icmp eq} | grep -v {icmp ne} | not grep icmp
-
+; END.
 
 define i1 @test1(i32 %A) {
         ; setne %A, 0

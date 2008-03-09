@@ -1,23 +1,20 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -globaldce | llvm-dis | \
+; RUN: llvm-as < %s | opt -instcombine -globaldce | llvm-dis | \
 ; RUN:   not grep Array
 
 ; Pulling the cast out of the load allows us to eliminate the load, and then 
 ; the whole array.
 
-%unop = type {int }
-%op = type {float}
+        %op = type { float }
+        %unop = type { i32 }
+@Array = internal constant [1 x %op* (%op*)*] [ %op* (%op*)* @foo ]             ; <[1 x %op* (%op*)*]*> [#uses=1]
 
-%Array = internal constant [1 x %op* (%op*)*] [ %op* (%op*)* %foo ]
-
-implementation
-
-%op* %foo(%op* %X) {
-  ret %op* %X
+define %op* @foo(%op* %X) {
+        ret %op* %X
 }
 
-%unop* %caller(%op* %O) {
-   %tmp = load %unop* (%op*)** cast ([1 x %op* (%op*)*]* %Array to %unop* (%op*)**)
-   %tmp.2 = call %unop* (%op*)* %tmp(%op* %O)
-   ret %unop* %tmp.2
+define %unop* @caller(%op* %O) {
+        %tmp = load %unop* (%op*)** bitcast ([1 x %op* (%op*)*]* @Array to %unop* (%op*)**); <%unop* (%op*)*> [#uses=1]
+        %tmp.2 = call %unop* %tmp( %op* %O )            ; <%unop*> [#uses=1]
+        ret %unop* %tmp.2
 }
 

@@ -3,6 +3,7 @@
 ; been when a setcc is used with two casts.
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
 ; RUN:    not grep {br bool false}
+; END.
 
 define i32 @bug(i8 %inbuff) {
 entry:

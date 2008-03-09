@@ -1,5 +1,6 @@
 ; PR905
 ; RUN: llvm-as < %s | opt -instcombine -disable-output
+; END.
 	
 %RPYTHON_EXCEPTION = type { %RPYTHON_EXCEPTION_VTABLE* }
 %RPYTHON_EXCEPTION_VTABLE = type { %RPYTHON_EXCEPTION_VTABLE*, i32, i32, %RPyOpaque_RuntimeTypeInfo*, %arraytype_Char*, %functiontype_12* }
