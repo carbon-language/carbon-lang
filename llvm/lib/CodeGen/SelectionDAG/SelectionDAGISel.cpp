@@ -3266,8 +3266,7 @@ SDOperand RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
   }
   
   // Assemble the legal parts into the final value.
-  return getCopyFromParts(DAG, &Parts[0], NumParts, RegVT, ValueVT,
-                          ISD::DELETED_NODE);
+  return getCopyFromParts(DAG, &Parts[0], NumParts, RegVT, ValueVT);
 }
 
 /// getCopyToRegs - Emit a series of CopyToReg nodes that copies the
