@@ -263,11 +263,9 @@ protected:
   
   /// RemoveDeadBindings - Return a new state that is the same as 'St' except
   ///  that all subexpression mappings are removed and that any
-  ///  block-level expressions that are not live at 'S' also have their
-  ///  mappings removed.
-  inline ValueState* RemoveDeadBindings(Stmt* S, ValueState* St) {
-    return StateMgr.RemoveDeadBindings(St, S, Liveness);
-  }
+  ///  block-level expressions that are not live at 'CurrentStmt' also have 
+  ///  their mappings removed.
+  ValueState* RemoveDeadBindings(ValueState* St);
   
   ValueState* SetRVal(ValueState* St, Expr* Ex, RVal V);
   

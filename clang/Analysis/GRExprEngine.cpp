@@ -39,6 +39,17 @@ using llvm::dyn_cast;
 using llvm::cast;
 using llvm::APSInt;
 
+ValueState* GRExprEngine::RemoveDeadBindings(ValueState* St) {
+  
+  if (StateCleaned || !CurrentStmt)
+    return St;
+  
+  StateCleaned = true;
+  
+  return StateMgr.RemoveDeadBindings(St, CurrentStmt, Liveness);
+}
+
+
 ValueState* GRExprEngine::getInitialState() {
 
   // The LiveVariables information already has a compilation of all VarDecls
@@ -65,10 +76,7 @@ ValueState* GRExprEngine::getInitialState() {
       
 ValueState* GRExprEngine::SetRVal(ValueState* St, Expr* Ex, RVal V) {
 
-  if (!StateCleaned) {
-    St = RemoveDeadBindings(CurrentStmt, St);
-    StateCleaned = true;
-  }
+  St = RemoveDeadBindings(St);
 
   bool isBlkExpr = false;
     
@@ -83,22 +91,12 @@ ValueState* GRExprEngine::SetRVal(ValueState* St, Expr* Ex, RVal V) {
 }
 
 ValueState* GRExprEngine::SetRVal(ValueState* St, LVal LV, RVal RV) {
-  
-  if (!StateCleaned) {
-    St = RemoveDeadBindings(CurrentStmt, St);
-    StateCleaned = true;
-  }
-  
+  St = RemoveDeadBindings(St);  
   return StateMgr.SetRVal(St, LV, RV);
 }
 
 ValueState* GRExprEngine::SetBlkExprRVal(ValueState* St, Expr* Ex, RVal V) {
-  
-  if (CurrentStmt && !StateCleaned) {
-    St = RemoveDeadBindings(CurrentStmt, St);
-    StateCleaned = true;
-  }
-  
+  St = RemoveDeadBindings(St);  
   return StateMgr.SetRVal(St, Ex, V, true, false);
 }
 
@@ -432,7 +430,7 @@ void GRExprEngine::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
   if (Dst.size() == 1 && *Dst.begin() == StmtEntryNode) {
     ValueState* St =
       StateCleaned ? StmtEntryNode->getState() : 
-                     RemoveDeadBindings(S, StmtEntryNode->getState());
+                     RemoveDeadBindings(StmtEntryNode->getState());
     
     builder.generateNode(S, St, StmtEntryNode);
   }
