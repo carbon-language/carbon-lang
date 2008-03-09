@@ -160,6 +160,7 @@ BasicBlock *llvm::SplitBlock(BasicBlock *Old, Instruction *SplitPt, Pass *P) {
   while (isa<PHINode>(SplitIt))
     ++SplitIt;
   BasicBlock *New = Old->splitBasicBlock(SplitIt, Old->getName()+".split");
+  New->setUnwindDest(Old->getUnwindDest());
 
   // The new block lives in whichever loop the old one did.
   if (Loop *L = LI.getLoopFor(Old))

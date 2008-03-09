@@ -185,7 +185,11 @@ public:
   /// DontDeleteUselessPHIs will keep PHIs that have one value or the same 
   /// value for all entries.
   ///
-  void removePredecessor(BasicBlock *Pred, bool DontDeleteUselessPHIs = false);
+  /// OnlyDeleteOne will only remove one entry from a PHI, in case there were
+  /// duplicate entries for the Pred.
+  ///
+  void removePredecessor(BasicBlock *Pred, bool DontDeleteUselessPHIs = false,
+                         bool OnlyDeleteOne = false);
 
   /// splitBasicBlock - This splits a basic block into two at the specified
   /// instruction.  Note that all instructions BEFORE the specified iterator

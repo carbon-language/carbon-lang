@@ -188,13 +188,11 @@ BasicBlock *BasicBlock::getSinglePredecessor() {
 /// called while the predecessor still refers to this block.
 ///
 void BasicBlock::removePredecessor(BasicBlock *Pred,
-                                   bool DontDeleteUselessPHIs) {
+                                   bool DontDeleteUselessPHIs,
+                                   bool OnlyDeleteOne) {
   assert((hasNUsesOrMore(16)||// Reduce cost of this assertion for complex CFGs.
           find(pred_begin(this), pred_end(this), Pred) != pred_end(this)) &&
          "removePredecessor: BB is not a predecessor!");
-
-  if (Pred == getUnwindDest())
-    setUnwindDest(NULL);
 
   if (InstList.empty()) return;
   PHINode *APN = dyn_cast<PHINode>(&front());
@@ -226,7 +224,11 @@ void BasicBlock::removePredecessor(BasicBlock *Pred,
     // Yup, loop through and nuke the PHI nodes
     while (PHINode *PN = dyn_cast<PHINode>(&front())) {
       // Remove the predecessor first.
-      PN->removeIncomingValue(Pred, !DontDeleteUselessPHIs);
+      if (OnlyDeleteOne) {
+        int idx = PN->getBasicBlockIndex(Pred);
+        PN->removeIncomingValue(idx, !DontDeleteUselessPHIs);
+      } else
+        PN->removeIncomingValue(Pred, !DontDeleteUselessPHIs);
 
       // If the PHI _HAD_ two uses, replace PHI node with its now *single* value
       if (max_idx == 2) {
@@ -247,7 +249,12 @@ void BasicBlock::removePredecessor(BasicBlock *Pred,
     PHINode *PN;
     for (iterator II = begin(); (PN = dyn_cast<PHINode>(II)); ) {
       ++II;
-      PN->removeIncomingValue(Pred, false);
+      if (OnlyDeleteOne) {
+        int idx = PN->getBasicBlockIndex(Pred);
+        PN->removeIncomingValue(idx, false);
+      } else 
+        PN->removeIncomingValue(Pred, false);
+
       // If all incoming values to the Phi are the same, we can replace the Phi
       // with that value.
       Value* PNV = 0;
