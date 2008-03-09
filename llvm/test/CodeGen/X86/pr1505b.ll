@@ -23,20 +23,6 @@ target triple = "i686-apple-darwin8"
 @_ZSt4cout = external global %"struct.std::basic_ostream<char,std::char_traits<char> >"		; <%"struct.std::basic_ostream<char,std::char_traits<char> >"*> [#uses=2]
 @.str = internal constant [12 x i8] c"tan float: \00"		; <[12 x i8]*> [#uses=1]
 @.str1 = internal constant [13 x i8] c"tan double: \00"		; <[13 x i8]*> [#uses=1]
-@llvm.global_ctors = appending global [1 x { i32, void ()* }] [ { i32, void ()* } { i32 65535, void ()* @_GLOBAL__I_a } ]		; <[1 x { i32, void ()* }]*> [#uses=0]
-
-define internal void @_GLOBAL__I_a() section "__TEXT,__StaticInit,regular,pure_instructions" {
-entry:
-	tail call void @_ZNSt8ios_base4InitC1Ev( %"struct.std::ctype_base"* @_ZSt8__ioinit )
-	%tmp10.i = tail call i32 @__cxa_atexit( void (i8*)* @__tcf_0, i8* null, i8* bitcast (i8** @__dso_handle to i8*) )		; <i32> [#uses=0]
-	ret void
-}
-
-define internal void @__tcf_0(i8* %unnamed_arg) {
-entry:
-	tail call void @_ZNSt8ios_base4InitD1Ev( %"struct.std::ctype_base"* @_ZSt8__ioinit )
-	ret void
-}
 
 declare void @_ZNSt8ios_base4InitD1Ev(%"struct.std::ctype_base"*)
 
