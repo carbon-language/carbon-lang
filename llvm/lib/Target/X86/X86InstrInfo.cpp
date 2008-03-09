@@ -1400,10 +1400,10 @@ X86InstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
 }
 
 void X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
-                                   MachineBasicBlock::iterator MI,
-                                   unsigned DestReg, unsigned SrcReg,
-                                   const TargetRegisterClass *DestRC,
-                                   const TargetRegisterClass *SrcRC) const {
+                                MachineBasicBlock::iterator MI,
+                                unsigned DestReg, unsigned SrcReg,
+                                const TargetRegisterClass *DestRC,
+                                const TargetRegisterClass *SrcRC) const {
   if (DestRC == SrcRC) {
     unsigned Opc;
     if (DestRC == &X86::GR64RegClass) {
@@ -1464,6 +1464,24 @@ void X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
       return;
     }
   }
+  
+  // Moving ST(0) to/from a register turns into FpGET_ST0_32 etc.
+  if (SrcRC == &X86::RSTRegClass) {
+    // Copying from ST(0).  FIXME: handle ST(1) also
+    assert(SrcReg == X86::ST0 && "Can only copy from TOS right now");
+    unsigned Opc;
+    if (DestRC == &X86::RFP32RegClass)
+      Opc = X86::FpGET_ST0_32;
+    else if (DestRC == &X86::RFP64RegClass)
+      Opc = X86::FpGET_ST0_64;
+    else {
+      assert(DestRC == &X86::RFP80RegClass);
+      Opc = X86::FpGET_ST0_80;
+    }
+    BuildMI(MBB, MI, get(Opc), DestReg);
+    return;
+  }
+  
   cerr << "Not yet supported!";
   abort();
 }
