@@ -10,4 +10,20 @@ define double @test2() {
         ret double %tmp85
 }
 
+define void @test3(x86_fp80 %X) {
+        call void asm sideeffect "frob ", "{st(0)},~{dirflag},~{fpsr},~{flags}"( x86_fp80 %X)
+        ret void
+}
+
+define void @test4(double %X) {
+        call void asm sideeffect "frob ", "{st(0)},~{dirflag},~{fpsr},~{flags}"( double %X)
+        ret void
+}
+
+define void @test5(double %X) {
+        %Y = add double %X, 123.0
+        call void asm sideeffect "frob ", "{st(0)},~{dirflag},~{fpsr},~{flags}"( double %Y)
+        ret void
+}
+
 

@@ -1465,7 +1465,7 @@ void X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
     }
   }
   
-  // Moving ST(0) to/from a register turns into FpGET_ST0_32 etc.
+  // Moving from ST(0) turns into FpGET_ST0_32 etc.
   if (SrcRC == &X86::RSTRegClass) {
     // Copying from ST(0).  FIXME: handle ST(1) also
     assert(SrcReg == X86::ST0 && "Can only copy from TOS right now");
@@ -1479,6 +1479,23 @@ void X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
       Opc = X86::FpGET_ST0_80;
     }
     BuildMI(MBB, MI, get(Opc), DestReg);
+    return;
+  }
+
+  // Moving to ST(0) turns into FpSET_ST0_32 etc.
+  if (DestRC == &X86::RSTRegClass) {
+    // Copying to ST(0).  FIXME: handle ST(1) also
+    assert(DestReg == X86::ST0 && "Can only copy to TOS right now");
+    unsigned Opc;
+    if (SrcRC == &X86::RFP32RegClass)
+      Opc = X86::FpSET_ST0_32;
+    else if (SrcRC == &X86::RFP64RegClass)
+      Opc = X86::FpSET_ST0_64;
+    else {
+      assert(SrcRC == &X86::RFP80RegClass);
+      Opc = X86::FpSET_ST0_80;
+    }
+    BuildMI(MBB, MI, get(Opc)).addReg(SrcReg);
     return;
   }
   

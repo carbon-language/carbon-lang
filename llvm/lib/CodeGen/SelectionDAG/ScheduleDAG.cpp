@@ -844,23 +844,31 @@ void ScheduleDAG::EmitNode(SDNode *Node, unsigned InstanceNo,
     case ISD::SRCVALUE:
       break;
     case ISD::CopyToReg: {
-      unsigned InReg;
-      if (RegisterSDNode *R = dyn_cast<RegisterSDNode>(Node->getOperand(2)))
-        InReg = R->getReg();
+      unsigned SrcReg;
+      SDOperand SrcVal = Node->getOperand(2);
+      if (RegisterSDNode *R = dyn_cast<RegisterSDNode>(SrcVal))
+        SrcReg = R->getReg();
       else
-        InReg = getVR(Node->getOperand(2), VRBaseMap);
+        SrcReg = getVR(SrcVal, VRBaseMap);
+      
       unsigned DestReg = cast<RegisterSDNode>(Node->getOperand(1))->getReg();
-      if (InReg != DestReg)  {// Coalesced away the copy?
-        const TargetRegisterClass *TRC = 0;
-        // Get the target register class
-        if (TargetRegisterInfo::isVirtualRegister(InReg))
-          TRC = RegInfo.getRegClass(InReg);
-        else
-          TRC =
-            TRI->getPhysicalRegisterRegClass(Node->getOperand(2).getValueType(),
-                                            InReg);
-        TII->copyRegToReg(*BB, BB->end(), DestReg, InReg, TRC, TRC);
-      }
+      if (SrcReg == DestReg) // Coalesced away the copy? Ignore.
+        break;
+      
+      const TargetRegisterClass *SrcTRC = 0, *DstTRC = 0;
+      // Get the register classes of the src/dst.
+      if (TargetRegisterInfo::isVirtualRegister(SrcReg))
+        SrcTRC = RegInfo.getRegClass(SrcReg);
+      else
+        SrcTRC = TRI->getPhysicalRegisterRegClass(SrcVal.getValueType(),SrcReg);
+
+      if (TargetRegisterInfo::isVirtualRegister(DestReg))
+        DstTRC = RegInfo.getRegClass(DestReg);
+      else
+        DstTRC = TRI->getPhysicalRegisterRegClass(
+                                            Node->getOperand(1).getValueType(),
+                                                  DestReg);
+      TII->copyRegToReg(*BB, BB->end(), DestReg, SrcReg, DstTRC, SrcTRC);
       break;
     }
     case ISD::CopyFromReg: {
