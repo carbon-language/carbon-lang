@@ -88,7 +88,7 @@ class Preprocessor {
   PragmaNamespace *PragmaHandlers;
   
   /// CurLexer - This is the current top of the stack that we're lexing from if
-  /// not expanding a macro.  One of CurLexer and CurMacroExpander must be null.
+  /// not expanding a macro.  One of CurLexer and CurTokenLexer must be null.
   Lexer *CurLexer;
   
   /// CurLookup - The DirectoryLookup structure used to find the current
@@ -96,19 +96,19 @@ class Preprocessor {
   /// implement #include_next and find directory-specific properties.
   const DirectoryLookup *CurDirLookup;
 
-  /// CurMacroExpander - This is the current macro we are expanding, if we are
-  /// expanding a macro.  One of CurLexer and CurMacroExpander must be null.
-  TokenLexer *CurMacroExpander;
+  /// CurTokenLexer - This is the current macro we are expanding, if we are
+  /// expanding a macro.  One of CurLexer and CurTokenLexer must be null.
+  TokenLexer *CurTokenLexer;
   
   /// IncludeMacroStack - This keeps track of the stack of files currently
   /// #included, and macros currently being expanded from, not counting
-  /// CurLexer/CurMacroExpander.
+  /// CurLexer/CurTokenLexer.
   struct IncludeStackInfo {
     Lexer *TheLexer;
     const DirectoryLookup *TheDirLookup;
-    TokenLexer *TheMacroExpander;
+    TokenLexer *TheTokenLexer;
     IncludeStackInfo(Lexer *L, const DirectoryLookup *D, TokenLexer *TL)
-      : TheLexer(L), TheDirLookup(D), TheMacroExpander(TL) {
+      : TheLexer(L), TheDirLookup(D), TheTokenLexer(TL) {
     }
   };
   std::vector<IncludeStackInfo> IncludeMacroStack;
@@ -133,10 +133,10 @@ class Preprocessor {
   /// preprocessor should use from the command line etc.
   const char *Predefines;
   
-  /// MacroExpanderCache - Cache macro expanders to reduce malloc traffic.
-  enum { MacroExpanderCacheSize = 8 };
-  unsigned NumCachedMacroExpanders;
-  TokenLexer *MacroExpanderCache[MacroExpanderCacheSize];
+  /// TokenLexerCache - Cache macro expanders to reduce malloc traffic.
+  enum { TokenLexerCacheSize = 8 };
+  unsigned NumCachedTokenLexers;
+  TokenLexer *TokenLexerCache[TokenLexerCacheSize];
 public:
   Preprocessor(Diagnostic &diags, const LangOptions &opts, TargetInfo &target,
                SourceManager &SM, HeaderSearch &Headers);
@@ -247,7 +247,7 @@ public:
     if (CurLexer)
       CurLexer->Lex(Result);
     else
-      CurMacroExpander->Lex(Result);
+      CurTokenLexer->Lex(Result);
   }
   
   /// LexNonComment - Lex a token.  If it's a comment, keep lexing until we get

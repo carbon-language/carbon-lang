@@ -48,7 +48,7 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
                            HeaderSearch &Headers) 
   : Diags(diags), Features(opts), Target(target), FileMgr(Headers.getFileMgr()),
     SourceMgr(SM), HeaderInfo(Headers), Identifiers(opts),
-    CurLexer(0), CurDirLookup(0), CurMacroExpander(0), Callbacks(0) {
+    CurLexer(0), CurDirLookup(0), CurTokenLexer(0), Callbacks(0) {
   ScratchBuf = new ScratchBuffer(SourceMgr);
 
   // Clear stats.
@@ -67,7 +67,7 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
   // Macro expansion is enabled.
   DisableMacroExpansion = false;
   InMacroArgs = false;
-  NumCachedMacroExpanders = 0;
+  NumCachedTokenLexers = 0;
 
   // "Poison" __VA_ARGS__, which can only appear in the expansion of a macro.
   // This gets unpoisoned where it is allowed.
@@ -89,7 +89,7 @@ Preprocessor::~Preprocessor() {
   
   while (!IncludeMacroStack.empty()) {
     delete IncludeMacroStack.back().TheLexer;
-    delete IncludeMacroStack.back().TheMacroExpander;
+    delete IncludeMacroStack.back().TheTokenLexer;
     IncludeMacroStack.pop_back();
   }
 
@@ -103,8 +103,8 @@ Preprocessor::~Preprocessor() {
   }
   
   // Free any cached macro expanders.
-  for (unsigned i = 0, e = NumCachedMacroExpanders; i != e; ++i)
-    delete MacroExpanderCache[i];
+  for (unsigned i = 0, e = NumCachedTokenLexers; i != e; ++i)
+    delete TokenLexerCache[i];
   
   // Release pragma information.
   delete PragmaHandlers;
@@ -571,7 +571,7 @@ Lexer *Preprocessor::getCurrentFileLexer() const {
 /// on failure.
 void Preprocessor::EnterSourceFile(unsigned FileID,
                                    const DirectoryLookup *CurDir) {
-  assert(CurMacroExpander == 0 && "Cannot #include a file inside a macro!");
+  assert(CurTokenLexer == 0 && "Cannot #include a file inside a macro!");
   ++NumEnteredSourceFiles;
   
   if (MaxIncludeStackDepth < IncludeMacroStack.size())
@@ -587,13 +587,13 @@ void Preprocessor::EnterSourceFileWithLexer(Lexer *TheLexer,
                                             const DirectoryLookup *CurDir) {
     
   // Add the current lexer to the include stack.
-  if (CurLexer || CurMacroExpander)
+  if (CurLexer || CurTokenLexer)
     IncludeMacroStack.push_back(IncludeStackInfo(CurLexer, CurDirLookup,
-                                                 CurMacroExpander));
+                                                 CurTokenLexer));
   
   CurLexer = TheLexer;
   CurDirLookup = CurDir;
-  CurMacroExpander = 0;
+  CurTokenLexer = 0;
   
   // Notify the client, if desired, that we are in a new source file.
   if (Callbacks && !CurLexer->Is_PragmaLexer) {
@@ -615,15 +615,15 @@ void Preprocessor::EnterSourceFileWithLexer(Lexer *TheLexer,
 /// tokens from it instead of the current buffer.
 void Preprocessor::EnterMacro(Token &Tok, MacroArgs *Args) {
   IncludeMacroStack.push_back(IncludeStackInfo(CurLexer, CurDirLookup,
-                                               CurMacroExpander));
+                                               CurTokenLexer));
   CurLexer     = 0;
   CurDirLookup = 0;
   
-  if (NumCachedMacroExpanders == 0) {
-    CurMacroExpander = new TokenLexer(Tok, Args, *this);
+  if (NumCachedTokenLexers == 0) {
+    CurTokenLexer = new TokenLexer(Tok, Args, *this);
   } else {
-    CurMacroExpander = MacroExpanderCache[--NumCachedMacroExpanders];
-    CurMacroExpander->Init(Tok, Args);
+    CurTokenLexer = TokenLexerCache[--NumCachedTokenLexers];
+    CurTokenLexer->Init(Tok, Args);
   }
 }
 
@@ -635,16 +635,16 @@ void Preprocessor::EnterMacro(Token &Tok, MacroArgs *Args) {
 void Preprocessor::EnterTokenStream(const Token *Toks, unsigned NumToks) {
   // Save our current state.
   IncludeMacroStack.push_back(IncludeStackInfo(CurLexer, CurDirLookup,
-                                               CurMacroExpander));
+                                               CurTokenLexer));
   CurLexer     = 0;
   CurDirLookup = 0;
 
   // Create a macro expander to expand from the specified token stream.
-  if (NumCachedMacroExpanders == 0) {
-    CurMacroExpander = new TokenLexer(Toks, NumToks, *this);
+  if (NumCachedTokenLexers == 0) {
+    CurTokenLexer = new TokenLexer(Toks, NumToks, *this);
   } else {
-    CurMacroExpander = MacroExpanderCache[--NumCachedMacroExpanders];
-    CurMacroExpander->Init(Toks, NumToks);
+    CurTokenLexer = TokenLexerCache[--NumCachedTokenLexers];
+    CurTokenLexer->Init(Toks, NumToks);
   }
 }
 
@@ -654,18 +654,18 @@ void Preprocessor::EnterTokenStream(const Token *Toks, unsigned NumToks) {
 void Preprocessor::RemoveTopOfLexerStack() {
   assert(!IncludeMacroStack.empty() && "Ran out of stack entries to load");
   
-  if (CurMacroExpander) {
+  if (CurTokenLexer) {
     // Delete or cache the now-dead macro expander.
-    if (NumCachedMacroExpanders == MacroExpanderCacheSize)
-      delete CurMacroExpander;
+    if (NumCachedTokenLexers == TokenLexerCacheSize)
+      delete CurTokenLexer;
     else
-      MacroExpanderCache[NumCachedMacroExpanders++] = CurMacroExpander;
+      TokenLexerCache[NumCachedTokenLexers++] = CurTokenLexer;
   } else {
     delete CurLexer;
   }
-  CurLexer         = IncludeMacroStack.back().TheLexer;
-  CurDirLookup     = IncludeMacroStack.back().TheDirLookup;
-  CurMacroExpander = IncludeMacroStack.back().TheMacroExpander;
+  CurLexer      = IncludeMacroStack.back().TheLexer;
+  CurDirLookup  = IncludeMacroStack.back().TheDirLookup;
+  CurTokenLexer = IncludeMacroStack.back().TheTokenLexer;
   IncludeMacroStack.pop_back();
 }
 
@@ -757,7 +757,7 @@ bool Preprocessor::isNextPPTokenLParen() {
   if (CurLexer)
     Val = CurLexer->isNextPPTokenLParen();
   else
-    Val = CurMacroExpander->isNextTokenLParen();
+    Val = CurTokenLexer->isNextTokenLParen();
   
   if (Val == 2) {
     // We have run off the end.  If it's a source file we don't
@@ -770,7 +770,7 @@ bool Preprocessor::isNextPPTokenLParen() {
       if (Entry.TheLexer)
         Val = Entry.TheLexer->isNextPPTokenLParen();
       else
-        Val = Entry.TheMacroExpander->isNextTokenLParen();
+        Val = Entry.TheTokenLexer->isNextTokenLParen();
       
       if (Val != 2)
         break;
@@ -1258,7 +1258,7 @@ void Preprocessor::HandleIdentifier(Token &Identifier) {
 /// the current file.  This either returns the EOF token or pops a level off
 /// the include stack and keeps going.
 bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
-  assert(!CurMacroExpander &&
+  assert(!CurTokenLexer &&
          "Ending a file when currently in a macro!");
   
   // See if this file had a controlling macro.
@@ -1335,17 +1335,17 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
 /// HandleEndOfMacro - This callback is invoked when the lexer hits the end of
 /// the current macro expansion or token stream expansion.
 bool Preprocessor::HandleEndOfMacro(Token &Result) {
-  assert(CurMacroExpander && !CurLexer &&
+  assert(CurTokenLexer && !CurLexer &&
          "Ending a macro when currently in a #include file!");
 
   // Delete or cache the now-dead macro expander.
-  if (NumCachedMacroExpanders == MacroExpanderCacheSize)
-    delete CurMacroExpander;
+  if (NumCachedTokenLexers == TokenLexerCacheSize)
+    delete CurTokenLexer;
   else
-    MacroExpanderCache[NumCachedMacroExpanders++] = CurMacroExpander;
+    TokenLexerCache[NumCachedTokenLexers++] = CurTokenLexer;
 
   // Handle this like a #include file being popped off the stack.
-  CurMacroExpander = 0;
+  CurTokenLexer = 0;
   return HandleEndOfFile(Result, true);
 }
 
@@ -1353,7 +1353,7 @@ bool Preprocessor::HandleEndOfMacro(Token &Result) {
 /// comment (/##/) in microsoft mode, this method handles updating the current
 /// state, returning the token on the next source line.
 void Preprocessor::HandleMicrosoftCommentPaste(Token &Tok) {
-  assert(CurMacroExpander && !CurLexer &&
+  assert(CurTokenLexer && !CurLexer &&
          "Pasted comment can only be formed from macro");
   
   // We handle this by scanning for the closest real lexer, switching it to

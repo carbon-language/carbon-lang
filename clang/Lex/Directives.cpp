@@ -116,7 +116,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
                                                 bool FoundNonSkipPortion,
                                                 bool FoundElse) {
   ++NumSkipped;
-  assert(CurMacroExpander == 0 && CurLexer &&
+  assert(CurTokenLexer == 0 && CurLexer &&
          "Lexing a macro, not a file?");
 
   CurLexer->pushConditionalLevel(IfTokenLoc, /*isSkipping*/false,
