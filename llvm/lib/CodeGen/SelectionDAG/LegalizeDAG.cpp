@@ -4938,6 +4938,9 @@ SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
   unsigned NumElems = Node->getNumOperands();
   bool isOnlyLowElement = true;
   SDOperand SplatValue = Node->getOperand(0);
+  
+  // FIXME: it would be far nicer to change this into map<SDOperand,uint64_t>
+  // and use a bitmask instead of a list of elements.
   std::map<SDOperand, std::vector<unsigned> > Values;
   Values[SplatValue].push_back(0);
   bool isConstant = true;
@@ -5018,36 +5021,50 @@ SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
   // If there are only two unique elements, we may be able to turn this into a
   // vector shuffle.
   if (Values.size() == 2) {
+    // Get the two values in deterministic order.
+    SDOperand Val1 = Node->getOperand(1);
+    SDOperand Val2;
+    std::map<SDOperand, std::vector<unsigned> >::iterator MI = Values.begin();
+    if (MI->first != Val1)
+      Val2 = MI->first;
+    else
+      Val2 = (++MI)->first;
+    
+    // If Val1 is an undef, make sure end ends up as Val2, to ensure that our 
+    // vector shuffle has the undef vector on the RHS.
+    if (Val1.getOpcode() == ISD::UNDEF)
+      std::swap(Val1, Val2);
+    
     // Build the shuffle constant vector: e.g. <0, 4, 0, 4>
-    MVT::ValueType MaskVT = 
-      MVT::getIntVectorWithNumElements(NumElems);
+    MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(NumElems);
+    MVT::ValueType MaskEltVT = MVT::getVectorElementType(MaskVT);
     std::vector<SDOperand> MaskVec(NumElems);
-    unsigned i = 0;
-    for (std::map<SDOperand,std::vector<unsigned> >::iterator I=Values.begin(),
-           E = Values.end(); I != E; ++I) {
-      for (std::vector<unsigned>::iterator II = I->second.begin(),
-             EE = I->second.end(); II != EE; ++II)
-        MaskVec[*II] = DAG.getConstant(i, MVT::getVectorElementType(MaskVT));
-      i += NumElems;
-    }
+
+    // Set elements of the shuffle mask for Val1.
+    std::vector<unsigned> &Val1Elts = Values[Val1];
+    for (unsigned i = 0, e = Val1Elts.size(); i != e; ++i)
+      MaskVec[Val1Elts[i]] = DAG.getConstant(0, MaskEltVT);
+
+    // Set elements of the shuffle mask for Val2.
+    std::vector<unsigned> &Val2Elts = Values[Val2];
+    for (unsigned i = 0, e = Val2Elts.size(); i != e; ++i)
+      if (Val2.getOpcode() != ISD::UNDEF)
+        MaskVec[Val2Elts[i]] = DAG.getConstant(NumElems, MaskEltVT);
+      else
+        MaskVec[Val2Elts[i]] = DAG.getNode(ISD::UNDEF, MaskEltVT);
+    
     SDOperand ShuffleMask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
                                         &MaskVec[0], MaskVec.size());
 
-    // If the target supports VECTOR_SHUFFLE and this shuffle mask, use it.
+    // If the target supports SCALAR_TO_VECTOR and this shuffle mask, use it.
     if (TLI.isOperationLegal(ISD::SCALAR_TO_VECTOR, Node->getValueType(0)) &&
         isShuffleLegal(Node->getValueType(0), ShuffleMask)) {
-      SmallVector<SDOperand, 8> Ops;
-      for(std::map<SDOperand,std::vector<unsigned> >::iterator I=Values.begin(),
-            E = Values.end(); I != E; ++I) {
-        SDOperand Op = DAG.getNode(ISD::SCALAR_TO_VECTOR, Node->getValueType(0),
-                                   I->first);
-        Ops.push_back(Op);
-      }
-      Ops.push_back(ShuffleMask);
+      Val1 = DAG.getNode(ISD::SCALAR_TO_VECTOR, Node->getValueType(0), Val1);
+      Val2 = DAG.getNode(ISD::SCALAR_TO_VECTOR, Node->getValueType(0), Val2);
+      SDOperand Ops[] = { Val1, Val2, ShuffleMask };
 
       // Return shuffle(LoValVec, HiValVec, <0,1,0,1>)
-      return DAG.getNode(ISD::VECTOR_SHUFFLE, Node->getValueType(0), 
-                         &Ops[0], Ops.size());
+      return DAG.getNode(ISD::VECTOR_SHUFFLE, Node->getValueType(0), Ops, 3);
     }
   }
   
