@@ -115,14 +115,14 @@ class MacroExpander {
   ///
   Preprocessor &PP;
 
-  /// MacroTokens - This is the pointer to an array of tokens that the macro is
+  /// Tokens - This is the pointer to an array of tokens that the macro is
   /// defined to, with arguments expanded for function-like macros.  If this is
   /// a token stream, these are the tokens we are returning.
-  const Token *MacroTokens;
+  const Token *Tokens;
   
-  /// NumMacroTokens - This is the length of the MacroTokens array.
+  /// NumTokens - This is the length of the Tokens array.
   ///
-  unsigned NumMacroTokens;
+  unsigned NumTokens;
   
   /// CurToken - This is the next token that Lex will return.
   ///
@@ -137,9 +137,11 @@ class MacroExpander {
   bool AtStartOfLine : 1;
   bool HasLeadingSpace : 1;
   
-  /// OwnsMacroTokens - This is true if this macroexpander allocated the
-  /// MacroTokens array, and thus needs to free it when destroyed.
-  bool OwnsMacroTokens : 1;
+  /// OwnsTokens - This is true if this MacroExpander allocated the Tokens
+  /// array, and thus needs to free it when destroyed.  For simple object-like
+  /// macros (for example) we just point into the token buffer of the macro
+  /// definition, we don't make a copy of it.
+  bool OwnsTokens : 1;
   
   MacroExpander(const MacroExpander&);  // DO NOT IMPLEMENT
   void operator=(const MacroExpander&); // DO NOT IMPLEMENT
@@ -147,7 +149,7 @@ public:
   /// Create a macro expander for the specified macro with the specified actual
   /// arguments.  Note that this ctor takes ownership of the ActualArgs pointer.
   MacroExpander(Token &Tok, MacroArgs *ActualArgs, Preprocessor &pp)
-    : Macro(0), ActualArgs(0), PP(pp), OwnsMacroTokens(false) {
+    : Macro(0), ActualArgs(0), PP(pp), OwnsTokens(false) {
     Init(Tok, ActualArgs);
   }
   
@@ -159,7 +161,7 @@ public:
   /// Create a macro expander for the specified token stream.  This does not
   /// take ownership of the specified token vector.
   MacroExpander(const Token *TokArray, unsigned NumToks, Preprocessor &pp)
-    : Macro(0), ActualArgs(0), PP(pp), OwnsMacroTokens(false) {
+    : Macro(0), ActualArgs(0), PP(pp), OwnsTokens(false) {
     Init(TokArray, NumToks);
   }
   
@@ -183,7 +185,7 @@ private:
   /// isAtEnd - Return true if the next lex call will pop this macro off the
   /// include stack.
   bool isAtEnd() const {
-    return CurToken == NumMacroTokens;
+    return CurToken == NumTokens;
   }
   
   /// PasteTokens - Tok is the LHS of a ## operator, and CurToken is the ##
@@ -194,7 +196,7 @@ private:
   bool PasteTokens(Token &Tok);
   
   /// Expand the arguments of a function-like macro so that we can quickly
-  /// return preexpanded tokens from MacroTokens.
+  /// return preexpanded tokens from Tokens.
   void ExpandFunctionArguments();
   
   /// HandleMicrosoftCommentPaste - In microsoft compatibility mode, /##/ pastes

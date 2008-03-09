@@ -245,12 +245,12 @@ void MacroExpander::Init(Token &Tok, MacroArgs *Actuals) {
   InstantiateLoc = Tok.getLocation();
   AtStartOfLine = Tok.isAtStartOfLine();
   HasLeadingSpace = Tok.hasLeadingSpace();
-  MacroTokens = &*Macro->tokens_begin();
-  OwnsMacroTokens = false;
-  NumMacroTokens = Macro->tokens_end()-Macro->tokens_begin();
+  Tokens = &*Macro->tokens_begin();
+  OwnsTokens = false;
+  NumTokens = Macro->tokens_end()-Macro->tokens_begin();
 
   // If this is a function-like macro, expand the arguments and change
-  // MacroTokens to point to the expanded tokens.
+  // Tokens to point to the expanded tokens.
   if (Macro->isFunctionLike() && Macro->getNumArgs())
     ExpandFunctionArguments();
   
@@ -271,9 +271,9 @@ void MacroExpander::Init(const Token *TokArray, unsigned NumToks) {
   
   Macro = 0;
   ActualArgs = 0;
-  MacroTokens = TokArray;
-  OwnsMacroTokens = false;
-  NumMacroTokens = NumToks;
+  Tokens = TokArray;
+  OwnsTokens = false;
+  NumTokens = NumToks;
   CurToken = 0;
   InstantiateLoc = SourceLocation();
   AtStartOfLine = false;
@@ -291,9 +291,9 @@ void MacroExpander::Init(const Token *TokArray, unsigned NumToks) {
 void MacroExpander::destroy() {
   // If this was a function-like macro that actually uses its arguments, delete
   // the expanded tokens.
-  if (OwnsMacroTokens) {
-    delete [] MacroTokens;
-    MacroTokens = 0;
+  if (OwnsTokens) {
+    delete [] Tokens;
+    Tokens = 0;
   }
   
   // MacroExpander owns its formal arguments.
@@ -301,13 +301,13 @@ void MacroExpander::destroy() {
 }
 
 /// Expand the arguments of a function-like macro so that we can quickly
-/// return preexpanded tokens from MacroTokens.
+/// return preexpanded tokens from Tokens.
 void MacroExpander::ExpandFunctionArguments() {
   llvm::SmallVector<Token, 128> ResultToks;
   
-  // Loop through the MacroTokens tokens, expanding them into ResultToks.  Keep
+  // Loop through 'Tokens', expanding them into ResultToks.  Keep
   // track of whether we change anything.  If not, no need to keep them.  If so,
-  // we install the newly expanded sequence as MacroTokens.
+  // we install the newly expanded sequence as the new 'Tokens' list.
   bool MadeChange = false;
   
   // NextTokGetsSpace - When this is true, the next token appended to the
@@ -315,13 +315,13 @@ void MacroExpander::ExpandFunctionArguments() {
   // begin with or not.  This is used for placemarker support.
   bool NextTokGetsSpace = false;
   
-  for (unsigned i = 0, e = NumMacroTokens; i != e; ++i) {
+  for (unsigned i = 0, e = NumTokens; i != e; ++i) {
     // If we found the stringify operator, get the argument stringified.  The
     // preprocessor already verified that the following token is a macro name
     // when the #define was parsed.
-    const Token &CurTok = MacroTokens[i];
+    const Token &CurTok = Tokens[i];
     if (CurTok.is(tok::hash) || CurTok.is(tok::hashat)) {
-      int ArgNo = Macro->getArgumentNum(MacroTokens[i+1].getIdentifierInfo());
+      int ArgNo = Macro->getArgumentNum(Tokens[i+1].getIdentifierInfo());
       assert(ArgNo != -1 && "Token following # is not an argument?");
     
       Token Res;
@@ -367,7 +367,7 @@ void MacroExpander::ExpandFunctionArguments() {
     // (##) operator before or after the argument.
     bool PasteBefore = 
       !ResultToks.empty() && ResultToks.back().is(tok::hashhash);
-    bool PasteAfter = i+1 != e && MacroTokens[i+1].is(tok::hashhash);
+    bool PasteAfter = i+1 != e && Tokens[i+1].is(tok::hashhash);
     
     // If it is not the LHS/RHS of a ## operator, we must pre-expand the
     // argument and substitute the expanded tokens into the result.  This is
@@ -441,7 +441,7 @@ void MacroExpander::ExpandFunctionArguments() {
     if (PasteAfter) {
       // Discard the argument token and skip (don't copy to the expansion
       // buffer) the paste operator after it.
-      NextTokGetsSpace |= MacroTokens[i+1].hasLeadingSpace();
+      NextTokGetsSpace |= Tokens[i+1].hasLeadingSpace();
       ++i;
       continue;
     }
@@ -467,15 +467,15 @@ void MacroExpander::ExpandFunctionArguments() {
     continue;
   }
   
-  // If anything changed, install this as the new MacroTokens list.
+  // If anything changed, install this as the new Tokens list.
   if (MadeChange) {
     // This is deleted in the dtor.
-    NumMacroTokens = ResultToks.size();
+    NumTokens = ResultToks.size();
     Token *Res = new Token[ResultToks.size()];
-    if (NumMacroTokens)
-      memcpy(Res, &ResultToks[0], NumMacroTokens*sizeof(Token));
-    MacroTokens = Res;
-    OwnsMacroTokens = true;
+    if (NumTokens)
+      memcpy(Res, &ResultToks[0], NumTokens*sizeof(Token));
+    Tokens = Res;
+    OwnsTokens = true;
   }
 }
 
@@ -504,10 +504,10 @@ void MacroExpander::Lex(Token &Tok) {
   bool isFirstToken = CurToken == 0;
   
   // Get the next token to return.
-  Tok = MacroTokens[CurToken++];
+  Tok = Tokens[CurToken++];
   
   // If this token is followed by a token paste (##) operator, paste the tokens!
-  if (!isAtEnd() && MacroTokens[CurToken].is(tok::hashhash))
+  if (!isAtEnd() && Tokens[CurToken].is(tok::hashhash))
     if (PasteTokens(Tok)) {
       // When handling the microsoft /##/ extension, the final token is
       // returned by PasteTokens, not the pasted token.
@@ -547,12 +547,12 @@ bool MacroExpander::PasteTokens(Token &Tok) {
   llvm::SmallVector<char, 128> Buffer;
   do {
     // Consume the ## operator.
-    SourceLocation PasteOpLoc = MacroTokens[CurToken].getLocation();
+    SourceLocation PasteOpLoc = Tokens[CurToken].getLocation();
     ++CurToken;
     assert(!isAtEnd() && "No token on the RHS of a paste operator!");
   
     // Get the RHS token.
-    const Token &RHS = MacroTokens[CurToken];
+    const Token &RHS = Tokens[CurToken];
   
     bool isInvalid = false;
 
@@ -652,7 +652,7 @@ bool MacroExpander::PasteTokens(Token &Tok) {
     // Finally, replace LHS with the result, consume the RHS, and iterate.
     ++CurToken;
     Tok = Result;
-  } while (!isAtEnd() && MacroTokens[CurToken].is(tok::hashhash));
+  } while (!isAtEnd() && Tokens[CurToken].is(tok::hashhash));
   
   // Now that we got the result token, it will be subject to expansion.  Since
   // token pasting re-lexes the result token in raw mode, identifier information
@@ -672,7 +672,7 @@ unsigned MacroExpander::isNextTokenLParen() const {
   // Out of tokens?
   if (isAtEnd())
     return 2;
-  return MacroTokens[CurToken].is(tok::l_paren);
+  return Tokens[CurToken].is(tok::l_paren);
 }
 
 
