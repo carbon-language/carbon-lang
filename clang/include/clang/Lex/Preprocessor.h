@@ -360,10 +360,9 @@ public:
   /// client should call lex again.
   bool HandleEndOfFile(Token &Result, bool isEndOfMacro = false);
   
-  /// HandleEndOfMacro - This callback is invoked when the lexer hits the end of
-  /// the current macro line.  It returns true if Result is filled in with a
-  /// token, or false if Lex should be called again.
-  bool HandleEndOfMacro(Token &Result);
+  /// HandleEndOfTokenLexer - This callback is invoked when the current
+  /// TokenLexer hits the end of its token stream.
+  bool HandleEndOfTokenLexer(Token &Result);
   
   /// HandleDirective - This callback is invoked when the lexer sees a # token
   /// at the start of a line.  This consumes the directive, modifies the 

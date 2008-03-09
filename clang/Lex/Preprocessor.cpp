@@ -1333,9 +1333,9 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
   return true;
 }
 
-/// HandleEndOfMacro - This callback is invoked when the lexer hits the end of
-/// the current macro expansion or token stream expansion.
-bool Preprocessor::HandleEndOfMacro(Token &Result) {
+/// HandleEndOfTokenLexer - This callback is invoked when the current TokenLexer
+/// hits the end of its token stream.
+bool Preprocessor::HandleEndOfTokenLexer(Token &Result) {
   assert(CurTokenLexer && !CurLexer &&
          "Ending a macro when currently in a #include file!");
 
@@ -1382,7 +1382,7 @@ void Preprocessor::HandleMicrosoftCommentPaste(Token &Tok) {
   // Okay, we either found and switched over the lexer, or we didn't find a
   // lexer.  In either case, finish off the macro the comment came from, getting
   // the next token.
-  if (!HandleEndOfMacro(Tok)) Lex(Tok);
+  if (!HandleEndOfTokenLexer(Tok)) Lex(Tok);
   
   // Discarding comments as long as we don't have EOF or EOM.  This 'comments
   // out' the rest of the line, including any tokens that came from other macros

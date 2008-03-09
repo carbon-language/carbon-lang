@@ -281,11 +281,11 @@ void TokenLexer::Lex(Token &Tok) {
     // Pop this context off the preprocessors lexer stack and get the next
     // token.  This will delete "this" so remember the PP instance var.
     Preprocessor &PPCache = PP;
-    if (PP.HandleEndOfMacro(Tok))
+    if (PP.HandleEndOfTokenLexer(Tok))
       return;
 
-    // HandleEndOfMacro may not return a token.  If it doesn't, lex whatever is
-    // next.
+    // HandleEndOfTokenLexer may not return a token.  If it doesn't, lex
+    // whatever is next.
     return PPCache.Lex(Tok);
   }
   
