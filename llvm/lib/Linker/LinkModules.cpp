@@ -597,9 +597,9 @@ static bool LinkAlias(Module *Dest, const Module *Src,
 
     // Globals were already linked, thus we can just query ValueMap for variant
     // of SAliasee in Dest
-    std::map<const Value*,Value*>::const_iterator I = ValueMap.find(SAliasee);
-    assert(I != ValueMap.end() && "Aliasee not linked");
-    GlobalValue* DAliasee = cast<GlobalValue>(I->second);
+    std::map<const Value*,Value*>::const_iterator VMI = ValueMap.find(SAliasee);
+    assert(VMI != ValueMap.end() && "Aliasee not linked");
+    GlobalValue* DAliasee = cast<GlobalValue>(VMI->second);
 
     // Try to find something 'similar' to SGA in destination module.
     if (GlobalAlias *DGA = Dest->getNamedAlias(SGA->getName())) {
