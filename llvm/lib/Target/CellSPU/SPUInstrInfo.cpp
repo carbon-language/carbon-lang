@@ -186,10 +186,15 @@ void SPUInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
                                    const TargetRegisterClass *DestRC,
                                    const TargetRegisterClass *SrcRC) const
 {
-  if (DestRC != SrcRC) {
-    cerr << "SPUInstrInfo::copyRegToReg(): DestRC != SrcRC not supported!\n";
-    abort();
-  }
+  // We support cross register class moves for our aliases, such as R3 in any
+  // reg class to any other reg class containing R3.  This is required because
+  // we instruction select bitconvert i64 -> f64 as a noop for example, so our
+  // types have no specific meaning.
+  
+  //if (DestRC != SrcRC) {
+  //  cerr << "SPUInstrInfo::copyRegToReg(): DestRC != SrcRC not supported!\n";
+  //  abort();
+  //}
 
   if (DestRC == SPU::R8CRegisterClass) {
     BuildMI(MBB, MI, get(SPU::ORBIr8), DestReg).addReg(SrcReg).addImm(0);
