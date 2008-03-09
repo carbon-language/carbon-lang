@@ -73,7 +73,6 @@
 		DE4121360D7F1C1C0080F80A /* ExplodedGraph.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE4121280D7F1C1C0080F80A /* ExplodedGraph.cpp */; };
 		DE4121370D7F1C1C0080F80A /* UninitializedValues.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE4121290D7F1C1C0080F80A /* UninitializedValues.cpp */; };
 		DE4121380D7F1C1C0080F80A /* GRCoreEngine.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE41212A0D7F1C1C0080F80A /* GRCoreEngine.cpp */; };
-		DE41213A0D7F1C1C0080F80A /* LiveVariables.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE41212D0D7F1C1C0080F80A /* LiveVariables.cpp */; };
 		DE41213B0D7F1C1C0080F80A /* RValues.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE41212E0D7F1C1C0080F80A /* RValues.cpp */; };
 		DE41213C0D7F1C1C0080F80A /* GRSimpleVals.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE41212F0D7F1C1C0080F80A /* GRSimpleVals.cpp */; };
 		DE41213D0D7F1C1C0080F80A /* GRBlockCounter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE4121300D7F1C1C0080F80A /* GRBlockCounter.cpp */; };
@@ -978,7 +977,6 @@
 				DE4121360D7F1C1C0080F80A /* ExplodedGraph.cpp in Sources */,
 				DE4121370D7F1C1C0080F80A /* UninitializedValues.cpp in Sources */,
 				DE4121380D7F1C1C0080F80A /* GRCoreEngine.cpp in Sources */,
-				DE41213A0D7F1C1C0080F80A /* LiveVariables.cpp in Sources */,
 				DE41213B0D7F1C1C0080F80A /* RValues.cpp in Sources */,
 				DE41213C0D7F1C1C0080F80A /* GRSimpleVals.cpp in Sources */,
 				DE41213D0D7F1C1C0080F80A /* GRBlockCounter.cpp in Sources */,
@@ -1002,30 +1000,17 @@
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_CPP_EXCEPTIONS = NO;
 				GCC_ENABLE_CPP_RTTI = NO;
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_ENABLE_PASCAL_STRINGS = NO;
 				GCC_ENABLE_SYMBOL_SEPARATION = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_MODEL_TUNING = G5;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = "__STDC_LIMIT_MACROS=1";
 				GCC_STRICT_ALIASING = YES;
 				GCC_THREADSAFE_STATICS = NO;
 				GCC_USE_GCC3_PFE_SUPPORT = NO;
-				HEADER_SEARCH_PATHS = (
-					"$(PROJECT_DIR)/include",
-					"$(PROJECT_DIR)/../../include",
-					"$(HEADER_SEARCH_PATHS)",
-				);
 				INSTALL_PATH = "$(HOME)/bin";
-				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/../../Debug/lib";
-				OTHER_LDFLAGS = (
-					"-lLLVMSupport",
-					"-lLLVMSystem",
-				);
 				PRECOMPS_INCLUDE_HEADERS_FROM_BUILT_PRODUCTS_DIR = NO;
 				PRODUCT_NAME = clang;
-				ZERO_LINK = NO;
 			};
 			name = Debug;
 		};
@@ -1036,29 +1021,16 @@
 				GCC_CW_ASM_SYNTAX = NO;
 				GCC_ENABLE_CPP_EXCEPTIONS = NO;
 				GCC_ENABLE_CPP_RTTI = NO;
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_ENABLE_PASCAL_STRINGS = NO;
 				GCC_ENABLE_SYMBOL_SEPARATION = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_MODEL_TUNING = G5;
 				GCC_PREPROCESSOR_DEFINITIONS = "__STDC_LIMIT_MACROS=1";
 				GCC_STRICT_ALIASING = YES;
 				GCC_THREADSAFE_STATICS = NO;
 				GCC_USE_GCC3_PFE_SUPPORT = NO;
-				HEADER_SEARCH_PATHS = (
-					"~/llvm/tools/clang/include",
-					"~/llvm/include",
-					"$(HEADER_SEARCH_PATHS)",
-				);
 				INSTALL_PATH = "$(HOME)/bin";
-				LIBRARY_SEARCH_PATHS = "~/llvm/Debug/lib";
-				OTHER_LDFLAGS = (
-					"-lLLVMSupport",
-					"-lLLVMSystem",
-				);
 				PRECOMPS_INCLUDE_HEADERS_FROM_BUILT_PRODUCTS_DIR = NO;
 				PRODUCT_NAME = clang;
-				ZERO_LINK = NO;
 			};
 			name = Release;
 		};
@@ -1067,8 +1039,20 @@
 			buildSettings = {
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					../../include,
+					include,
+				);
+				LIBRARY_SEARCH_PATHS = ../../Debug/lib;
+				OTHER_LDFLAGS = (
+					"-lLLVMSupport",
+					"-lLLVMSystem",
+					"-lLLVMCore",
+					"-lLLVMBitReader",
+					"-lLLVMBitWriter",
+					"-lLLVMTarget",
+				);
 				PREBINDING = NO;
-				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
 			};
 			name = Debug;
 		};
@@ -1077,8 +1061,20 @@
 			buildSettings = {
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					../../include,
+					include,
+				);
+				LIBRARY_SEARCH_PATHS = ../../Release;
+				OTHER_LDFLAGS = (
+					"-lLLVMSupport",
+					"-lLLVMSystem",
+					"-lLLVMCore",
+					"-lLLVMBitReader",
+					"-lLLVMBitWriter",
+					"-lLLVMTarget",
+				);
 				PREBINDING = NO;
-				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
 			};
 			name = Release;
 		};
