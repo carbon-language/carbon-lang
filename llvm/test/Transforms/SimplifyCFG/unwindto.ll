@@ -33,3 +33,11 @@ bb4: unwind_to %cleanup
 cleanup:
   ret i32 1
 }
+
+define i32 @f3() {
+entry: unwind_to %cleanup
+  call void @g(i32 0)
+  ret i32 0
+cleanup:
+  unwind
+}

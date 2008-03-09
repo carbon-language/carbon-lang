@@ -1370,7 +1370,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
           new UnwindInst(Pred);            // Use unwind.
           Changed = true;
         }
-      } else if (InvokeInst *II = dyn_cast<InvokeInst>(Pred->getTerminator()))
+      } else if (InvokeInst *II = dyn_cast<InvokeInst>(Pred->getTerminator())) {
         if (II->getUnwindDest() == BB) {
           // Insert a new branch instruction before the invoke, because this
           // is now a fall through...
@@ -1388,6 +1388,9 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
           delete II;
           Changed = true;
         }
+      } else if (Pred->getUnwindDest() == BB) {
+        Pred->setUnwindDest(NULL);
+      }
 
       Preds.pop_back();
     }
