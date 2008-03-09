@@ -595,9 +595,11 @@ RValue CodeGenFunction::EmitCallExpr(llvm::Value *Callee, QualType FnType,
     }
   }
   
-  llvm::Value *V = Builder.CreateCall(Callee, &Args[0], &Args[0]+Args.size());
-  if (V->getType() != llvm::Type::VoidTy)
-    V->setName("call");
+  llvm::CallInst *CI = Builder.CreateCall(Callee,&Args[0],&Args[0]+Args.size());
+  if (const llvm::Function *F = dyn_cast<llvm::Function>(Callee))
+    CI->setCallingConv(F->getCallingConv());
+  if (CI->getType() != llvm::Type::VoidTy)
+    CI->setName("call");
   else if (ResultType->isComplexType())
     return RValue::getComplex(LoadComplexFromAddr(Args[0], false));
   else if (hasAggregateLLVMType(ResultType))
@@ -606,8 +608,8 @@ RValue CodeGenFunction::EmitCallExpr(llvm::Value *Callee, QualType FnType,
   else {
     // void return.
     assert(ResultType->isVoidType() && "Should only have a void expr here");
-    V = 0;
+    CI = 0;
   }
       
-  return RValue::get(V);
+  return RValue::get(CI);
 }

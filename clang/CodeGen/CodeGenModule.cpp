@@ -18,6 +18,7 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/TargetInfo.h"
+#include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
@@ -87,8 +88,13 @@ llvm::Constant *CodeGenModule::GetAddrOfFunctionDecl(const FunctionDecl *D,
   // If it doesn't already exist, just create and return an entry.
   if (F == 0) {
     // FIXME: param attributes for sext/zext etc.
-    return Entry = new llvm::Function(FTy, llvm::Function::ExternalLinkage,
-                                      D->getName(), &getModule());
+    F = new llvm::Function(FTy, llvm::Function::ExternalLinkage, D->getName(),
+                           &getModule());
+
+    // Set the appropriate calling convention for the Function.
+    if (D->getAttr<FastCallAttr>())
+      F->setCallingConv(llvm::CallingConv::Fast);
+    return Entry = F;
   }
   
   // If the pointer type matches, just return it.
