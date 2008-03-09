@@ -433,21 +433,25 @@ void ScheduleDAG::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
       break;
   }
 
-  const TargetRegisterClass *TRC = 0;
+  const TargetRegisterClass *SrcRC = 0, *DstRC = 0;
+  SrcRC = TRI->getPhysicalRegisterRegClass(Node->getValueType(ResNo), SrcReg);
+  
   // Figure out the register class to create for the destreg.
-  if (VRBase)
-    TRC = RegInfo.getRegClass(VRBase);
-  else
-    TRC = TRI->getPhysicalRegisterRegClass(Node->getValueType(ResNo), SrcReg);
+  if (VRBase) {
+    DstRC = RegInfo.getRegClass(VRBase);
+  } else {
+    DstRC = DAG.getTargetLoweringInfo()
+             .getRegClassFor(Node->getValueType(ResNo));
+  }
     
   // If all uses are reading from the src physical register and copying the
   // register is either impossible or very expensive, then don't create a copy.
-  if (MatchReg && TRC->getCopyCost() < 0) {
+  if (MatchReg && SrcRC->getCopyCost() < 0) {
     VRBase = SrcReg;
   } else {
     // Create the reg, emit the copy.
-    VRBase = RegInfo.createVirtualRegister(TRC);
-    TII->copyRegToReg(*BB, BB->end(), VRBase, SrcReg, TRC, TRC);
+    VRBase = RegInfo.createVirtualRegister(DstRC);
+    TII->copyRegToReg(*BB, BB->end(), VRBase, SrcReg, DstRC, SrcRC);
   }
 
   if (InstanceNo > 0)
@@ -594,14 +598,14 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
     unsigned VReg = getVR(Op, VRBaseMap);
     MI->addOperand(MachineOperand::CreateReg(VReg, false));
     
-    // Verify that it is right.
+    // Verify that it is right.  Note that the reg class of the physreg and the
+    // vreg don't necessarily need to match, but the target copy insertion has
+    // to be able to handle it.  This handles things like copies from ST(0) to
+    // an FP vreg on x86.
     assert(TargetRegisterInfo::isVirtualRegister(VReg) && "Not a vreg?");
     if (II) {
-      const TargetRegisterClass *RC =
-                            getInstrOperandRegClass(TRI, TII, *II, IIOpNum);
-      assert(RC && "Don't have operand info for this instruction!");
-      assert(RegInfo.getRegClass(VReg) == RC &&
-             "Register class of operand and regclass of use don't agree!");
+      assert(getInstrOperandRegClass(TRI, TII, *II, IIOpNum) &&
+             "Don't have operand info for this instruction!");
     }
   }
   
@@ -674,8 +678,7 @@ void ScheduleDAG::EmitSubregNode(SDNode *Node,
 
     if (VRBase) {
       // Grab the destination register
-      const TargetRegisterClass *DRC = 0;
-      DRC = RegInfo.getRegClass(VRBase);
+      const TargetRegisterClass *DRC = RegInfo.getRegClass(VRBase);
       assert(SRC && DRC && SRC == DRC && 
              "Source subregister and destination must have the same class");
     } else {
