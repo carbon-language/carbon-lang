@@ -206,8 +206,9 @@ bool PruneEH::SimplifyFunction(Function *F) {
           MadeChange = true;
           ++NumUnreach;
           break;
-        } else if (!CI->doesNotThrow())
+        } else if (!CI->doesNotThrow()) {
           couldUnwind = true;
+        }
       }
 
     // Strip 'unwindTo' off of BBs that have no calls/invokes without nounwind.
