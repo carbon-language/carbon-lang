@@ -89,14 +89,14 @@ namespace llvm {
       /// writes a RFP result and a chain.
       FP_GET_ST0,
 
-      /// FP_GET_ST0_ST1 - Same as FP_GET_RESULT except it copies two values
+      /// FP_GET_ST0_ST1 - Same as FP_GET_ST0 except it copies two values
       /// ST(0) and ST(1).
       FP_GET_ST0_ST1,
 
-      /// FP_SET_RESULT - This corresponds to FpSETRESULT pseudo instruction
+      /// FP_SET_ST0 - This corresponds to FpSET_ST0 pseudo instruction
       /// which copies the source operand to ST(0). It takes a chain+value and
       /// returns a chain and a flag.
-      FP_SET_RESULT,
+      FP_SET_ST0,
 
       /// CALL/TAILCALL - These operations represent an abstract X86 call
       /// instruction, which includes a bunch of information.  In particular the

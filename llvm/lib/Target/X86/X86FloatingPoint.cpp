@@ -928,9 +928,9 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
     pushReg(getFPReg(MI->getOperand(0)));
     pushReg(getFPReg(MI->getOperand(1)));
     break;
-  case X86::FpSETRESULT32:
-  case X86::FpSETRESULT64:
-  case X86::FpSETRESULT80:
+  case X86::FpSET_ST0_32:
+  case X86::FpSET_ST0_64:
+  case X86::FpSET_ST0_80:
     assert(StackTop == 1 && "Stack should have one element on it to return!");
     --StackTop;   // "Forget" we have something on the top of stack!
     break;

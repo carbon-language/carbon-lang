@@ -35,7 +35,7 @@ def SDTX86CwdStore  : SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>;
 
 def X86fpget_st0    : SDNode<"X86ISD::FP_GET_ST0", SDTX86FpGet,
                              [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
-def X86fpset        : SDNode<"X86ISD::FP_SET_RESULT", SDTX86FpSet,
+def X86fpset        : SDNode<"X86ISD::FP_SET_ST0", SDTX86FpSet,
                              [SDNPHasChain, SDNPOutFlag]>;
 def X86fld          : SDNode<"X86ISD::FLD", SDTX86Fld,
                              [SDNPHasChain, SDNPMayLoad]>;
@@ -150,14 +150,14 @@ def FpGET_ST0_ST1 : FpI_<(outs RFP80:$dst1, RFP80:$dst2), (ins), SpecialFP,
 
 
 let Defs = [ST0] in {
-def FpSETRESULT32 : FpI_<(outs), (ins RFP32:$src), SpecialFP,
-                      [(X86fpset RFP32:$src)]>;// ST(0) = FPR
+def FpSET_ST0_32 : FpI_<(outs), (ins RFP32:$src), SpecialFP,
+                        [(X86fpset RFP32:$src)]>;// ST(0) = FPR
 
-def FpSETRESULT64 : FpI_<(outs), (ins RFP64:$src), SpecialFP,
-                      [(X86fpset RFP64:$src)]>;// ST(0) = FPR
+def FpSET_ST0_64 : FpI_<(outs), (ins RFP64:$src), SpecialFP,
+                        [(X86fpset RFP64:$src)]>;// ST(0) = FPR
 
-def FpSETRESULT80 : FpI_<(outs), (ins RFP80:$src), SpecialFP,
-                      [(X86fpset RFP80:$src)]>;// ST(0) = FPR
+def FpSET_ST0_80 : FpI_<(outs), (ins RFP80:$src), SpecialFP,
+                        [(X86fpset RFP80:$src)]>;// ST(0) = FPR
 }
 
 // FpIf32, FpIf64 - Floating Point Psuedo Instruction template.

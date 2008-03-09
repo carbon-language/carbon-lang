@@ -869,7 +869,7 @@ SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
     
     SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
     SDOperand Ops[] = { Chain, Value };
-    Chain = DAG.getNode(X86ISD::FP_SET_RESULT, Tys, Ops, 2);
+    Chain = DAG.getNode(X86ISD::FP_SET_ST0, Tys, Ops, 2);
     Flag = Chain.getValue(1);
   }
   
@@ -5565,7 +5565,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::FST:                return "X86ISD::FST";
   case X86ISD::FP_GET_ST0:         return "X86ISD::FP_GET_ST0";
   case X86ISD::FP_GET_ST0_ST1:     return "X86ISD::FP_GET_ST0_ST1";
-  case X86ISD::FP_SET_RESULT:      return "X86ISD::FP_SET_RESULT";
+  case X86ISD::FP_SET_ST0:         return "X86ISD::FP_SET_ST0";
   case X86ISD::CALL:               return "X86ISD::CALL";
   case X86ISD::TAILCALL:           return "X86ISD::TAILCALL";
   case X86ISD::RDTSC_DAG:          return "X86ISD::RDTSC_DAG";
