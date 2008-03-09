@@ -1364,13 +1364,19 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
     SmallVector<BasicBlock*, 8> Preds(pred_begin(BB), pred_end(BB));
     while (!Preds.empty()) {
       BasicBlock *Pred = Preds.back();
+
+      if (Pred->getUnwindDest() == BB) {
+        Pred->setUnwindDest(NULL);
+        Changed = true;
+      }
+
       if (BranchInst *BI = dyn_cast<BranchInst>(Pred->getTerminator())) {
-        if (BI->isUnconditional()) {
+        if (BI->isUnconditional() && BI->getSuccessor(0) == BB) {
           Pred->getInstList().pop_back();  // nuke uncond branch
           new UnwindInst(Pred);            // Use unwind.
           Changed = true;
         }
-      } else if (InvokeInst *II = dyn_cast<InvokeInst>(Pred->getTerminator())) {
+      } else if (InvokeInst *II = dyn_cast<InvokeInst>(Pred->getTerminator()))
         if (II->getUnwindDest() == BB) {
           // Insert a new branch instruction before the invoke, because this
           // is now a fall through...
@@ -1388,9 +1394,6 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
           delete II;
           Changed = true;
         }
-      } else if (Pred->getUnwindDest() == BB) {
-        Pred->setUnwindDest(NULL);
-      }
 
       Preds.pop_back();
     }

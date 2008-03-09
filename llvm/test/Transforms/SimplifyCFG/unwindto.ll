@@ -41,3 +41,21 @@ entry: unwind_to %cleanup
 cleanup:
   unwind
 }
+
+define i32 @f4() {
+entry: unwind_to %cleanup
+  call void @g(i32 0)
+  br label %cleanup
+cleanup:
+  unwind
+}
+
+define i32 @f5() {
+entry: unwind_to %cleanup
+  call void @g(i32 0)
+  br label %other
+other:
+  ret i32 0
+cleanup:
+  unwind
+}
