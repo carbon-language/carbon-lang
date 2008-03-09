@@ -92,6 +92,16 @@ ValueState* GRExprEngine::SetRVal(ValueState* St, LVal LV, RVal RV) {
   return StateMgr.SetRVal(St, LV, RV);
 }
 
+ValueState* GRExprEngine::SetBlkExprRVal(ValueState* St, Expr* Ex, RVal V) {
+  
+  if (!StateCleaned) {
+    St = RemoveDeadBindings(CurrentStmt, St);
+    StateCleaned = true;
+  }
+  
+  return StateMgr.SetRVal(St, Ex, V, true, false);
+}
+
 ValueState* GRExprEngine::MarkBranch(ValueState* St, Stmt* Terminator,
                                      bool branchTaken) {
   
@@ -420,7 +430,10 @@ void GRExprEngine::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
   // dead mappings removed.
   
   if (Dst.size() == 1 && *Dst.begin() == StmtEntryNode) {
-    ValueState* St = RemoveDeadBindings(S, StmtEntryNode->getState());
+    ValueState* St =
+      StateCleaned ? StmtEntryNode->getState() : 
+                     RemoveDeadBindings(S, StmtEntryNode->getState());
+    
     builder.generateNode(S, St, StmtEntryNode);
   }
   
@@ -442,7 +455,9 @@ void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* D, NodeTy* Pred, NodeSet& Dst){
   // it to the block-level expression.
   
   ValueState* St = Pred->getState();  
-  Nodify(Dst, D, Pred, SetRVal(St, D, GetRVal(St, D)));
+  RVal X = RVal::MakeVal(BasicVals, D);
+  RVal Y = isa<lval::DeclVal>(X) ? GetRVal(St, cast<lval::DeclVal>(X)) : X;
+  Nodify(Dst, D, Pred, SetBlkExprRVal(St, D, Y));
 }
 
 void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
@@ -1709,9 +1724,11 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
         Out << S->getStmtClassName() << ' ' << (void*) S << ' ';        
         S->printPretty(Out);
         
-        Out << "\\lline="
-          << GraphPrintSourceManager->getLineNumber(SLoc) << " col="
-          << GraphPrintSourceManager->getColumnNumber(SLoc) << "\\l";
+        if (SLoc.isFileID()) {        
+          Out << "\\lline="
+            << GraphPrintSourceManager->getLineNumber(SLoc) << " col="
+            << GraphPrintSourceManager->getColumnNumber(SLoc) << "\\l";          
+        }
         
         if (GraphPrintCheckerState->isImplicitNullDeref(N))
           Out << "\\|Implicit-Null Dereference.\\l";
@@ -1750,9 +1767,11 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
           
           E.getSrc()->printTerminator(Out);
           
-          Out << "\\lline="
-            << GraphPrintSourceManager->getLineNumber(SLoc) << " col="
-            << GraphPrintSourceManager->getColumnNumber(SLoc);
+          if (SLoc.isFileID()) {
+            Out << "\\lline="
+              << GraphPrintSourceManager->getLineNumber(SLoc) << " col="
+              << GraphPrintSourceManager->getColumnNumber(SLoc);
+          }
             
           if (isa<SwitchStmt>(T)) {
             Stmt* Label = E.getDst()->getLabel();

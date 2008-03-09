@@ -275,17 +275,7 @@ protected:
     return SetRVal(St, const_cast<Expr*>(Ex), V);
   }
  
-  ValueState* SetBlkExprRVal(ValueState* St, Expr* Ex, RVal V) {
-    return StateMgr.SetRVal(St, Ex, V, true, false);
-  }
-  
-#if 0
-  /// SetRVal - This version of SetRVal is used to batch process a set
-  ///  of different possible RVals and return a set of different states.
-  const ValueState*::BufferTy& SetRVal(ValueState* St, Expr* Ex,
-                                       const RVal::BufferTy& V,
-                                       ValueState*::BufferTy& RetBuf);
-#endif
+  ValueState* SetBlkExprRVal(ValueState* St, Expr* Ex, RVal V);
   
   ValueState* SetRVal(ValueState* St, LVal LV, RVal V);
   

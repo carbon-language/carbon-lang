@@ -238,6 +238,36 @@ RVal RVal::GetSymbolValue(SymbolManager& SymMgr, VarDecl* D) {
 LVal LVal::MakeVal(AddrLabelExpr* E) { return lval::GotoLabel(E->getLabel()); }
 
 //===----------------------------------------------------------------------===//
+// Utility methods for constructing RVals (both NonLVals and LVals).
+//===----------------------------------------------------------------------===//
+
+RVal RVal::MakeVal(BasicValueFactory& BasicVals, DeclRefExpr* E) {
+  
+  ValueDecl* D = cast<DeclRefExpr>(E)->getDecl();
+  
+  if (VarDecl* VD = dyn_cast<VarDecl>(D)) {
+    return lval::DeclVal(VD);
+  }
+  else if (EnumConstantDecl* ED = dyn_cast<EnumConstantDecl>(D)) {
+    
+    // FIXME: Do we need to cache a copy of this enum, since it
+    // already has persistent storage?  We do this because we
+    // are comparing states using pointer equality.  Perhaps there is
+    // a better way, since APInts are fairly lightweight.
+    
+    return nonlval::ConcreteInt(BasicVals.getValue(ED->getInitVal()));          
+  }
+  else if (FunctionDecl* FD = dyn_cast<FunctionDecl>(D)) {
+    return lval::FuncVal(FD);
+  }
+  
+  assert (false &&
+          "ValueDecl support for this ValueDecl not implemented.");
+  
+  return UnknownVal();
+}
+
+//===----------------------------------------------------------------------===//
 // Pretty-Printing.
 //===----------------------------------------------------------------------===//
 

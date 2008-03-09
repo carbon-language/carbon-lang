@@ -232,28 +232,14 @@ RVal ValueStateManager::GetRVal(ValueState* St, Expr* E) {
         // within the referenced variables.
         
       case Stmt::DeclRefExprClass: {
-        
-        ValueDecl* D = cast<DeclRefExpr>(E)->getDecl();
-        
-        if (VarDecl* VD = dyn_cast<VarDecl>(D)) {          
-          return GetRVal(St, lval::DeclVal(VD));          
-        }
-        else if (EnumConstantDecl* ED = dyn_cast<EnumConstantDecl>(D)) {
-          
-          // FIXME: Do we need to cache a copy of this enum, since it
-          // already has persistent storage?  We do this because we
-          // are comparing states using pointer equality.  Perhaps there is
-          // a better way, since APInts are fairly lightweight.
 
-          return nonlval::ConcreteInt(BasicVals.getValue(ED->getInitVal()));          
-        }
-        else if (FunctionDecl* FD = dyn_cast<FunctionDecl>(D))
-          return lval::FuncVal(FD);
+        // Check if this expression is a block-level expression.  If so,
+        // return its value.
+        ValueState::ExprBindingsTy::TreeTy* T=St->BlockExprBindings.SlimFind(E);
+        if (T) return T->getValue().second;
         
-        assert (false &&
-                "ValueDecl support for this ValueDecl not implemented.");
-        
-        return UnknownVal();
+        RVal X = RVal::MakeVal(BasicVals, cast<DeclRefExpr>(E));
+        return isa<lval::DeclVal>(X) ? GetRVal(St, cast<lval::DeclVal>(X)) : X;
       }
         
       case Stmt::CharacterLiteralClass: {

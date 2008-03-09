@@ -90,6 +90,8 @@ public:
   symbol_iterator symbol_begin() const;
   symbol_iterator symbol_end() const;  
   
+  static RVal MakeVal(BasicValueFactory& BasicVals, DeclRefExpr* E);
+  
   // Implement isa<T> support.
   static inline bool classof(const RVal*) { return true; }
 };
