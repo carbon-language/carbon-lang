@@ -10796,11 +10796,15 @@ static void AddReachableCodeToWorklist(BasicBlock *BB,
 
     // Recursively visit successors.  If this is a branch or switch on a
     // constant, only visit the reachable successor.
+    if (BB->getUnwindDest())
+      Worklist.push_back(BB->getUnwindDest());
     TerminatorInst *TI = BB->getTerminator();
     if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
       if (BI->isConditional() && isa<ConstantInt>(BI->getCondition())) {
         bool CondVal = cast<ConstantInt>(BI->getCondition())->getZExtValue();
-        Worklist.push_back(BI->getSuccessor(!CondVal));
+        BasicBlock *ReachableBB = BI->getSuccessor(!CondVal);
+        if (ReachableBB != BB->getUnwindDest())
+          Worklist.push_back(ReachableBB);
         continue;
       }
     } else if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
@@ -10808,7 +10812,9 @@ static void AddReachableCodeToWorklist(BasicBlock *BB,
         // See if this is an explicit destination.
         for (unsigned i = 1, e = SI->getNumSuccessors(); i != e; ++i)
           if (SI->getCaseValue(i) == Cond) {
-            Worklist.push_back(SI->getSuccessor(i));
+            BasicBlock *ReachableBB = SI->getSuccessor(i);
+            if (ReachableBB != BB->getUnwindDest())
+              Worklist.push_back(ReachableBB);
             continue;
           }
         
