@@ -1082,6 +1082,10 @@ void SCCPSolver::visitCallSite(CallSite CS) {
     }
   }
   Instruction *I = CS.getInstruction();
+
+  if (!CS.doesNotThrow() && I->getParent()->getUnwindDest())
+    markEdgeExecutable(I->getParent(), I->getParent()->getUnwindDest());
+
   if (I->getType() == Type::VoidTy) return;
 
   LatticeVal &IV = ValueState[I];
