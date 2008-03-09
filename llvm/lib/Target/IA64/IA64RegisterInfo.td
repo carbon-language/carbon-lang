@@ -418,8 +418,9 @@ def GR : RegisterClass<"IA64", [i64], 64,
         r96, r97, r98, r99, r100, r101, r102, r103,
         r104, r105, r106, r107, r108, r109, r110, r111,
         r112, r113, r114, r115, r116, r117, r118, r119,
+        // last 17 are special (look down)
         r120, r121, r122, r123, r124, r125, r126, r127,
-        r0, r1, r2, r5, r12, r13, r22, rp]> // last 16 are special (look down)
+        r0, r1, r2, r5, r12, r13, r22, rp, AR_PFS]>
   {
     let MethodProtos = [{
     iterator allocation_order_begin(const MachineFunction &MF) const;
@@ -434,8 +435,9 @@ def GR : RegisterClass<"IA64", [i64], 64,
 
       GRClass::iterator
       GRClass::allocation_order_end(const MachineFunction &MF) const {
-        int numReservedRegs=8;// the 8 special registers r0,r1,r2,r5,r12,r13 etc
-
+        // the 9 special registers r0,r1,r2,r5,r12,r13 etc
+        int numReservedRegs=9;
+        
         // we also can't allocate registers for use as locals if they're already
         // required as 'out' registers
         numReservedRegs+=MF.getInfo<IA64FunctionInfo>()->outRegsUsed;
