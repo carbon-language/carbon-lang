@@ -105,6 +105,7 @@
 		DE85CDA30D8383B20070E26E /* MacroArgs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE85CDA20D8383B20070E26E /* MacroArgs.cpp */; };
 		DE85CDAC0D838C120070E26E /* PPMacroExpansion.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE85CDAB0D838C120070E26E /* PPMacroExpansion.cpp */; };
 		DE85CDB00D838C390070E26E /* PPDirectives.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE85CDAF0D838C390070E26E /* PPDirectives.cpp */; };
+		DE85CDB60D839BAE0070E26E /* PPLexerChange.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE85CDB50D839BAE0070E26E /* PPLexerChange.cpp */; };
 		DE928B130C05659200231DA4 /* ModuleBuilder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE928B120C05659200231DA4 /* ModuleBuilder.cpp */; };
 		DE928B200C0565B000231DA4 /* ModuleBuilder.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE928B1F0C0565B000231DA4 /* ModuleBuilder.h */; };
 		DE928B7D0C0A615100231DA4 /* CodeGenModule.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE928B7C0C0A615100231DA4 /* CodeGenModule.h */; };
@@ -370,6 +371,7 @@
 		DE85CDA20D8383B20070E26E /* MacroArgs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MacroArgs.cpp; sourceTree = "<group>"; };
 		DE85CDAB0D838C120070E26E /* PPMacroExpansion.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PPMacroExpansion.cpp; sourceTree = "<group>"; };
 		DE85CDAF0D838C390070E26E /* PPDirectives.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PPDirectives.cpp; sourceTree = "<group>"; };
+		DE85CDB50D839BAE0070E26E /* PPLexerChange.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PPLexerChange.cpp; sourceTree = "<group>"; };
 		DE928B120C05659200231DA4 /* ModuleBuilder.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ModuleBuilder.cpp; path = CodeGen/ModuleBuilder.cpp; sourceTree = "<group>"; };
 		DE928B1F0C0565B000231DA4 /* ModuleBuilder.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ModuleBuilder.h; path = clang/CodeGen/ModuleBuilder.h; sourceTree = "<group>"; };
 		DE928B7C0C0A615100231DA4 /* CodeGenModule.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = CodeGenModule.h; path = CodeGen/CodeGenModule.h; sourceTree = "<group>"; };
@@ -825,6 +827,7 @@
 				DED7D7A00A5242E6003AD0FB /* MacroInfo.cpp */,
 				DE85CDAF0D838C390070E26E /* PPDirectives.cpp */,
 				DED7D7A20A5242E6003AD0FB /* PPExpressions.cpp */,
+				DE85CDB50D839BAE0070E26E /* PPLexerChange.cpp */,
 				DE85CDAB0D838C120070E26E /* PPMacroExpansion.cpp */,
 				DED7D7A30A5242E6003AD0FB /* Pragma.cpp */,
 				DED7D7A40A5242E6003AD0FB /* Preprocessor.cpp */,
@@ -993,6 +996,7 @@
 				DE85CDA30D8383B20070E26E /* MacroArgs.cpp in Sources */,
 				DE85CDAC0D838C120070E26E /* PPMacroExpansion.cpp in Sources */,
 				DE85CDB00D838C390070E26E /* PPDirectives.cpp in Sources */,
+				DE85CDB60D839BAE0070E26E /* PPLexerChange.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
