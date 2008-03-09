@@ -1,4 +1,4 @@
-//===--- Directives.cpp - Directive Handling for Preprocessor -------------===//
+//===--- PPDirectives.cpp - Directive Handling for Preprocessor -----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
