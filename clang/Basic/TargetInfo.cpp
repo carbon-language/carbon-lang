@@ -190,6 +190,7 @@ bool TargetInfo::validateInputConstraint(const char *Name,
       break;
     case 'i': // immediate integer.
     case 'I':
+    case 'n': // immediate integer with a known value.
       break;
     case 'r': // general register.
       info = (ConstraintInfo)(info|CI_AllowsRegister);
