@@ -15,7 +15,7 @@
   <ul>
   <li><a href="#Token">The Token class</a></li>
   <li><a href="#Lexer">The Lexer class</a></li>
-  <li><a href="#MacroExpander">The MacroExpander class</a></li>
+  <li><a href="#TokenLexer">The TokenLexer class</a></li>
   <li><a href="#MultipleIncludeOpt">The MultipleIncludeOpt class</a></li>
   </ul>
 </li>
@@ -132,7 +132,7 @@ Preprocessor::Lex method, which returns the next <a href="#Token">Token</a> from
 the preprocessor stream.  There are two types of token providers that the
 preprocessor is capable of reading from: a buffer lexer (provided by the <a 
 href="#Lexer">Lexer</a> class) and a buffered token stream (provided by the <a
-href="#MacroExpander">MacroExpander</a> class).  
+href="#TokenLexer">TokenLexer</a> class).  
 
 
 <!-- ======================================================================= -->
@@ -263,10 +263,10 @@ code is vectorized on X86 and PowerPC hosts).</p>
 </ul>
 
 <!-- ======================================================================= -->
-<h3 id="MacroExpander">The MacroExpander class</h3>
+<h3 id="TokenLexer">The TokenLexer class</h3>
 <!-- ======================================================================= -->
 
-<p>The MacroExpander class is a token provider that returns tokens from a list
+<p>The TokenLexer class is a token provider that returns tokens from a list
 of tokens that came from somewhere else.  It typically used for two things: 1)
 returning tokens from a macro definition as it is being expanded 2) returning
 tokens from an arbitrary buffer of tokens.  The later use is used by _Pragma and
