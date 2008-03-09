@@ -18,7 +18,8 @@ OBJHEADERS := $(addprefix $(HeaderDir)/, $(HEADERS))
 
 
 $(OBJHEADERS): $(HeaderDir)/%.h: $(PROJ_SRC_DIR)/%.h $(HeaderDir)/.dir
-	cp $< $@
+	$(Verb) cp $< $@
+	@echo Copying $(notdir $<) to build dir
         
 printit:
 	echo $(OBJHEADERS)
