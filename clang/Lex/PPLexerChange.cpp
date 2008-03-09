@@ -29,7 +29,7 @@ PPCallbacks::~PPCallbacks() {
 //===----------------------------------------------------------------------===//
 
 /// isInPrimaryFile - Return true if we're in the top-level file, not in a
-/// #include.
+/// #include.  This looks through macro expansions and active _Pragma lexers.
 bool Preprocessor::isInPrimaryFile() const {
   if (CurLexer && !CurLexer->Is_PragmaLexer)
     return IncludeMacroStack.empty();
