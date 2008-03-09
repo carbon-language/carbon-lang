@@ -120,7 +120,6 @@ external define_type_name : string -> lltype -> llmodule -> bool
 external delete_type_name : string -> llmodule -> unit
                           = "llvm_delete_type_name"
 
-
 (*===-- Types -------------------------------------------------------------===*)
 
 external classify_type : lltype -> TypeKind.t = "llvm_classify_type"
