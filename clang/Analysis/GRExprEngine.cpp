@@ -1162,21 +1162,13 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           }
           
           if (LeftV.isUnknown()) {
-            
-            // While we do not know the location to store RightV,
-            // the entire expression does evaluate to RightV.
-            
-            if (RightV.isUnknown()) {
-              Dst.Add(N2);
-              continue;
-            }
-            
-            St = SetRVal(St, B, RightV);
-            break;
+            assert (isa<UnknownVal>(GetRVal(St, B)));
+            Dst.Add(N2);
+            continue;
           }
           
           // At this pointer we know that the LHS evaluates to an LVal
-          // that is neither "Unknown" or "Unintialized."
+          // that is neither "Unknown" or "Undefined."
           
           LVal LeftLV = cast<LVal>(LeftV);
           
@@ -1196,12 +1188,16 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           // Propagate unknown values.
           
           if (V.isUnknown()) {
+            // The value bound to LeftV is unknown.  Thus we just
+            // propagate the current node (as "B" is already bound to nothing).
+            assert (isa<UnknownVal>(GetRVal(St, B)));
             Dst.Add(N2);
             continue;
           }
           
           if (RightV.isUnknown()) {
-            St = SetRVal(SetRVal(St, LeftLV, RightV), B, RightV);
+            assert (isa<UnknownVal>(GetRVal(St, B)));
+            St = SetRVal(St, LeftLV, UnknownVal());
             break;
           }
             
