@@ -759,9 +759,12 @@ static SDOperand getCopyFromParts(SelectionDAG &DAG,
     }
   }
 
-  if (MVT::isFloatingPoint(PartVT) && MVT::isFloatingPoint(ValueVT))
-    return DAG.getNode(ISD::FP_ROUND, ValueVT, Val,
-                       DAG.getIntPtrConstant(TruncExact));
+  if (MVT::isFloatingPoint(PartVT) && MVT::isFloatingPoint(ValueVT)) {
+    if (ValueVT < Val.getValueType())
+      return DAG.getNode(ISD::FP_ROUND, ValueVT, Val,
+                         DAG.getIntPtrConstant(TruncExact));
+    return DAG.getNode(ISD::FP_EXTEND, ValueVT, Val);
+  }
 
   if (MVT::getSizeInBits(PartVT) == MVT::getSizeInBits(ValueVT))
     return DAG.getNode(ISD::BIT_CONVERT, ValueVT, Val);
