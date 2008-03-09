@@ -486,10 +486,15 @@ void X86DAGToDAGISel::PreprocessForFPConvert(SelectionDAG &DAG) {
     if (SrcIsSSE && DstIsSSE)
       continue;
 
-    // If this is an FPStack extension (but not a truncation), it is a noop.
-    if (!SrcIsSSE && !DstIsSSE && N->getOpcode() == ISD::FP_EXTEND)
-      continue;
-    
+    if (!SrcIsSSE && !DstIsSSE) {
+      // If this is an FPStack extension, it is a noop.
+      if (N->getOpcode() == ISD::FP_EXTEND)
+        continue;
+      // If this is a value-preserving FPStack truncation, it is a noop.
+      if (N->getConstantOperandVal(1))
+        continue;
+    }
+   
     // Here we could have an FP stack truncation or an FPStack <-> SSE convert.
     // FPStack has extload and truncstore.  SSE can fold direct loads into other
     // operations.  Based on this, decide what we want to do.
@@ -1150,7 +1155,7 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
     case X86ISD::GlobalBaseReg: 
       return getGlobalBaseReg();
 
-    case X86ISD::FP_GET_RESULT2: {
+    case X86ISD::FP_GET_ST0_ST1: {
       SDOperand Chain = N.getOperand(0);
       SDOperand InFlag = N.getOperand(1);
       AddToISelQueue(Chain);
@@ -1161,7 +1166,7 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
       Tys.push_back(MVT::Other);
       Tys.push_back(MVT::Flag);
       SDOperand Ops[] = { Chain, InFlag };
-      SDNode *ResNode = CurDAG->getTargetNode(X86::FpGETRESULT80x2, Tys,
+      SDNode *ResNode = CurDAG->getTargetNode(X86::FpGET_ST0_ST1, Tys,
                                               Ops, 2);
       Chain = SDOperand(ResNode, 2);
       InFlag = SDOperand(ResNode, 3);

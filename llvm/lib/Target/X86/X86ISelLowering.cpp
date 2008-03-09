@@ -917,9 +917,8 @@ LowerCallResult(SDOperand Chain, SDOperand InFlag, SDNode *TheCall,
     if (isScalarFPTypeInSSEReg(GetResultTy))
       GetResultTy = MVT::f80;
     SDVTList Tys = DAG.getVTList(GetResultTy, MVT::Other, MVT::Flag);
-    
     SDOperand GROps[] = { Chain, InFlag };
-    SDOperand RetVal = DAG.getNode(X86ISD::FP_GET_RESULT, Tys, GROps, 2);
+    SDOperand RetVal = DAG.getNode(X86ISD::FP_GET_ST0, Tys, GROps, 2);
     Chain  = RetVal.getValue(1);
     InFlag = RetVal.getValue(2);
 
@@ -969,7 +968,7 @@ LowerCallResultToTwoX87Regs(SDOperand Chain, SDOperand InFlag,
   const MVT::ValueType VTs[] = { MVT::f80, MVT::f80, MVT::Other, MVT::Flag };
   SDVTList Tys = DAG.getVTList(VTs, 4);
   SDOperand Ops[] = { Chain, InFlag };
-  SDOperand RetVal = DAG.getNode(X86ISD::FP_GET_RESULT2, Tys, Ops, 2);
+  SDOperand RetVal = DAG.getNode(X86ISD::FP_GET_ST0_ST1, Tys, Ops, 2);
   Chain = RetVal.getValue(2);
   SDOperand FIN = TheCall->getOperand(5);
   Chain = DAG.getStore(Chain, RetVal.getValue(1), FIN, NULL, 0);
@@ -5564,8 +5563,8 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::FP_TO_INT64_IN_MEM: return "X86ISD::FP_TO_INT64_IN_MEM";
   case X86ISD::FLD:                return "X86ISD::FLD";
   case X86ISD::FST:                return "X86ISD::FST";
-  case X86ISD::FP_GET_RESULT:      return "X86ISD::FP_GET_RESULT";
-  case X86ISD::FP_GET_RESULT2:     return "X86ISD::FP_GET_RESULT2";
+  case X86ISD::FP_GET_ST0:         return "X86ISD::FP_GET_ST0";
+  case X86ISD::FP_GET_ST0_ST1:     return "X86ISD::FP_GET_ST0_ST1";
   case X86ISD::FP_SET_RESULT:      return "X86ISD::FP_SET_RESULT";
   case X86ISD::CALL:               return "X86ISD::CALL";
   case X86ISD::TAILCALL:           return "X86ISD::TAILCALL";

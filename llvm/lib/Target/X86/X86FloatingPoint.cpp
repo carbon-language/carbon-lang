@@ -214,7 +214,7 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
 
     MachineInstr *PrevMI = 0;
     if (I != BB.begin())
-        PrevMI = prior(I);
+      PrevMI = prior(I);
 
     ++NumFP;  // Keep track of # of pseudo instrs
     DOUT << "\nFPInst:\t" << *MI;
@@ -917,13 +917,13 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
   MachineInstr *MI = I;
   switch (MI->getOpcode()) {
   default: assert(0 && "Unknown SpecialFP instruction!");
-  case X86::FpGETRESULT32:  // Appears immediately after a call returning FP type!
-  case X86::FpGETRESULT64:  // Appears immediately after a call returning FP type!
-  case X86::FpGETRESULT80:
+  case X86::FpGET_ST0_32:// Appears immediately after a call returning FP type!
+  case X86::FpGET_ST0_64:// Appears immediately after a call returning FP type!
+  case X86::FpGET_ST0_80:// Appears immediately after a call returning FP type!
     assert(StackTop == 0 && "Stack should be empty after a call!");
     pushReg(getFPReg(MI->getOperand(0)));
     break;
-  case X86::FpGETRESULT80x2:
+  case X86::FpGET_ST0_ST1:
     assert(StackTop == 0 && "Stack should be empty after a call!");
     pushReg(getFPReg(MI->getOperand(0)));
     pushReg(getFPReg(MI->getOperand(1)));

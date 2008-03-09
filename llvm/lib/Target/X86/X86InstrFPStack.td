@@ -18,7 +18,8 @@
 //===----------------------------------------------------------------------===//
 
 def SDTX86FpGet     : SDTypeProfile<1, 0, [SDTCisFP<0>]>;
-def SDTX86FpGet2    : SDTypeProfile<2, 0, [SDTCisFP<0>, SDTCisSameAs<0, 1>]>;
+def SDTX86FpGet2    : SDTypeProfile<2, 0, [SDTCisVT<0, f80>, 
+                                           SDTCisVT<1, f80>]>;
 def SDTX86FpSet     : SDTypeProfile<0, 1, [SDTCisFP<0>]>;
 def SDTX86Fld       : SDTypeProfile<1, 2, [SDTCisFP<0>,
                                            SDTCisPtrTy<1>, 
@@ -32,9 +33,7 @@ def SDTX86FpToIMem  : SDTypeProfile<0, 2, [SDTCisFP<0>, SDTCisPtrTy<1>]>;
 
 def SDTX86CwdStore  : SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>;
 
-def X86fpget        : SDNode<"X86ISD::FP_GET_RESULT", SDTX86FpGet,
-                             [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
-def X86fpget2       : SDNode<"X86ISD::FP_GET_RESULT2", SDTX86FpGet2,
+def X86fpget_st0    : SDNode<"X86ISD::FP_GET_ST0", SDTX86FpGet,
                              [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
 def X86fpset        : SDNode<"X86ISD::FP_SET_RESULT", SDTX86FpSet,
                              [SDNPHasChain, SDNPOutFlag]>;
@@ -139,17 +138,15 @@ let isTerminator = 1 in
 // encoding and asm printing info).
 
 // Pseudo Instructions for FP stack return values.
-def FpGETRESULT32 : FpI_<(outs RFP32:$dst), (ins), SpecialFP,
-                      [(set RFP32:$dst, X86fpget)]>;           // FPR = ST(0)
+def FpGET_ST0_32 : FpI_<(outs RFP32:$dst), (ins), SpecialFP,
+                        [(set RFP32:$dst, X86fpget_st0)]>;       // FPR = ST(0)
+def FpGET_ST0_64 : FpI_<(outs RFP64:$dst), (ins), SpecialFP,
+                        [(set RFP64:$dst, X86fpget_st0)]>;       // FPR = ST(0)
+def FpGET_ST0_80 : FpI_<(outs RFP80:$dst), (ins), SpecialFP,
+                        [(set RFP80:$dst, X86fpget_st0)]>;       // FPR = ST(0)
 
-def FpGETRESULT64 : FpI_<(outs RFP64:$dst), (ins), SpecialFP,
-                      [(set RFP64:$dst, X86fpget)]>;           // FPR = ST(0)
-
-def FpGETRESULT80 : FpI_<(outs RFP80:$dst), (ins), SpecialFP,
-                      [(set RFP80:$dst, X86fpget)]>;           // FPR = ST(0)
-
-def FpGETRESULT80x2 : FpI_<(outs RFP80:$dst1, RFP80:$dst2), (ins), SpecialFP,
-                      []>;                        // FPR = ST(0), FPR = ST(1)
+def FpGET_ST0_ST1 : FpI_<(outs RFP80:$dst1, RFP80:$dst2), (ins), SpecialFP,
+                         []>;                        // FPR = ST(0), FPR = ST(1)
 
 
 let Defs = [ST0] in {
@@ -174,15 +171,15 @@ class FpIf64<dag outs, dag ins, FPFormat fp, list<dag> pattern> :
 
 // Register copies.  Just copies, the shortening ones do not truncate.
 let neverHasSideEffects = 1 in {
-def MOV_Fp3232       : FpIf32<(outs RFP32:$dst), (ins RFP32:$src), SpecialFP, []>; 
-def MOV_Fp3264       : FpIf32<(outs RFP64:$dst), (ins RFP32:$src), SpecialFP, []>; 
-def MOV_Fp6432       : FpIf32<(outs RFP32:$dst), (ins RFP64:$src), SpecialFP, []>; 
-def MOV_Fp6464       : FpIf64<(outs RFP64:$dst), (ins RFP64:$src), SpecialFP, []>; 
-def MOV_Fp8032       : FpIf32<(outs RFP32:$dst), (ins RFP80:$src), SpecialFP, []>; 
-def MOV_Fp3280       : FpIf32<(outs RFP80:$dst), (ins RFP32:$src), SpecialFP, []>; 
-def MOV_Fp8064       : FpIf64<(outs RFP64:$dst), (ins RFP80:$src), SpecialFP, []>; 
-def MOV_Fp6480       : FpIf64<(outs RFP80:$dst), (ins RFP64:$src), SpecialFP, []>; 
-def MOV_Fp8080       : FpI_<(outs RFP80:$dst), (ins RFP80:$src), SpecialFP, []>; 
+  def MOV_Fp3232 : FpIf32<(outs RFP32:$dst), (ins RFP32:$src), SpecialFP, []>; 
+  def MOV_Fp3264 : FpIf32<(outs RFP64:$dst), (ins RFP32:$src), SpecialFP, []>; 
+  def MOV_Fp6432 : FpIf32<(outs RFP32:$dst), (ins RFP64:$src), SpecialFP, []>; 
+  def MOV_Fp6464 : FpIf64<(outs RFP64:$dst), (ins RFP64:$src), SpecialFP, []>; 
+  def MOV_Fp8032 : FpIf32<(outs RFP32:$dst), (ins RFP80:$src), SpecialFP, []>; 
+  def MOV_Fp3280 : FpIf32<(outs RFP80:$dst), (ins RFP32:$src), SpecialFP, []>; 
+  def MOV_Fp8064 : FpIf64<(outs RFP64:$dst), (ins RFP80:$src), SpecialFP, []>; 
+  def MOV_Fp6480 : FpIf64<(outs RFP80:$dst), (ins RFP64:$src), SpecialFP, []>; 
+  def MOV_Fp8080 : FpI_  <(outs RFP80:$dst), (ins RFP80:$src), SpecialFP, []>; 
 }
 
 // Factoring for arithmetic.
@@ -583,6 +580,21 @@ def : Pat<(f80 fpimmneg1), (CHS_Fp80 (LD_Fp180))>;
 // Used to conv. i64 to f64 since there isn't a SSE version.
 def : Pat<(X86fildflag addr:$src, i64), (ILD_Fp64m64 addr:$src)>;
 
-def : Pat<(f64 (fextend RFP32:$src)), (MOV_Fp3264 RFP32:$src)>, Requires<[FPStackf32]>;
-def : Pat<(f80 (fextend RFP32:$src)), (MOV_Fp3280 RFP32:$src)>, Requires<[FPStackf32]>;
-def : Pat<(f80 (fextend RFP64:$src)), (MOV_Fp6480 RFP64:$src)>, Requires<[FPStackf64]>;
+// FP extensions map onto simple pseudo-value conversions if they are to/from
+// the FP stack.
+def : Pat<(f64 (fextend RFP32:$src)), (MOV_Fp3264 RFP32:$src)>,
+          Requires<[FPStackf32]>;
+def : Pat<(f80 (fextend RFP32:$src)), (MOV_Fp3280 RFP32:$src)>,
+           Requires<[FPStackf32]>;
+def : Pat<(f80 (fextend RFP64:$src)), (MOV_Fp6480 RFP64:$src)>,
+           Requires<[FPStackf64]>;
+
+// FP truncations map onto simple pseudo-value conversions if they are to/from
+// the FP stack.  We have validated that only value-preserving truncations make
+// it through isel.
+def : Pat<(f32 (fround RFP64:$src)), (MOV_Fp6432 RFP64:$src)>,
+          Requires<[FPStackf32]>;
+def : Pat<(f32 (fround RFP80:$src)), (MOV_Fp8032 RFP80:$src)>,
+           Requires<[FPStackf32]>;
+def : Pat<(f64 (fround RFP80:$src)), (MOV_Fp8064 RFP80:$src)>,
+           Requires<[FPStackf64]>;
