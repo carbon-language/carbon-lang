@@ -782,23 +782,3 @@ just a matter of matching (scalar_to_vector (load x)) to movd.
 
 //===---------------------------------------------------------------------===//
 
-Take the following code:
-#include <xmmintrin.h>
-__m128i doload64(short x) {return _mm_set_epi16(0,0,0,0,0,0,0,1);}
-
-On x86, LLVM generates the following:
-doload64:
-        subl    $28, %esp
-        movl    $0, 4(%esp)
-        movl    $1, (%esp)
-        movq    (%esp), %xmm0
-        addl    $28, %esp
-        ret
-
-LLVM should instead generate something more like the following:
-doload64:
-        movl    $1, %eax
-        movd    %eax, %xmm0
-        ret
-
-//===---------------------------------------------------------------------===//

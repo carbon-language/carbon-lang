@@ -2888,6 +2888,21 @@ static SDOperand getUnpackhMask(unsigned NumElems, SelectionDAG &DAG) {
   return DAG.getNode(ISD::BUILD_VECTOR, MaskVT, &MaskVec[0], MaskVec.size());
 }
 
+/// getSwapEltZeroMask - Returns a vector_shuffle mask for a shuffle that swaps
+/// element #0 of a vector with the specified index, leaving the rest of the
+/// elements in place.
+static SDOperand getSwapEltZeroMask(unsigned NumElems, unsigned DestElt,
+                                   SelectionDAG &DAG) {
+  MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(NumElems);
+  MVT::ValueType BaseVT = MVT::getVectorElementType(MaskVT);
+  SmallVector<SDOperand, 8> MaskVec;
+  // Element #0 of the result gets the elt we are replacing.
+  MaskVec.push_back(DAG.getConstant(DestElt, BaseVT));
+  for (unsigned i = 1; i != NumElems; ++i)
+    MaskVec.push_back(DAG.getConstant(i == DestElt ? 0 : i, BaseVT));
+  return DAG.getNode(ISD::BUILD_VECTOR, MaskVT, &MaskVec[0], MaskVec.size());
+}
+
 /// PromoteSplat - Promote a splat of v8i16 or v16i8 to v4i32.
 ///
 static SDOperand PromoteSplat(SDOperand Op, SelectionDAG &DAG) {
@@ -2912,10 +2927,11 @@ static SDOperand PromoteSplat(SDOperand Op, SelectionDAG &DAG) {
 /// vector of zero or undef vector.  This produces a shuffle where the low
 /// element of V2 is swizzled into the zero/undef vector, landing at element
 /// Idx.  This produces a shuffle mask like 4,1,2,3 (idx=0) or  0,1,2,4 (idx=3).
-static SDOperand getShuffleVectorZeroOrUndef(SDOperand V2, MVT::ValueType VT,
-                                             unsigned NumElems, unsigned Idx,
+static SDOperand getShuffleVectorZeroOrUndef(SDOperand V2, unsigned Idx,
                                              bool isZero, SelectionDAG &DAG) {
+  MVT::ValueType VT = V2.getValueType();
   SDOperand V1 = isZero ? getZeroVector(VT, DAG) : DAG.getNode(ISD::UNDEF, VT);
+  unsigned NumElems = MVT::getVectorNumElements(V2.getValueType());
   MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(NumElems);
   MVT::ValueType EVT = MVT::getVectorElementType(MaskVT);
   SmallVector<SDOperand, 16> MaskVec;
@@ -3056,6 +3072,37 @@ X86TargetLowering::LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
     unsigned Idx = CountTrailingZeros_32(NonZeros);
     SDOperand Item = Op.getOperand(Idx);
     
+    // If this is an insertion of an i64 value on x86-32, and if the top bits of
+    // the value are obviously zero, truncate the value to i32 and do the
+    // insertion that way.  Only do this if the value is non-constant or if the
+    // value is a constant being inserted into element 0.  It is cheaper to do
+    // a constant pool load than it is to do a movd + shuffle.
+    if (EVT == MVT::i64 && !Subtarget->is64Bit() &&
+        (!IsAllConstants || Idx == 0)) {
+      if (DAG.MaskedValueIsZero(Item, APInt::getBitsSet(64, 32, 64))) {
+        // Handle MMX and SSE both.
+        MVT::ValueType VecVT = VT == MVT::v2i64 ? MVT::v4i32 : MVT::v2i32;
+        MVT::ValueType VecElts = VT == MVT::v2i64 ? 4 : 2;
+        
+        // Truncate the value (which may itself be a constant) to i32, and
+        // convert it to a vector with movd (S2V+shuffle to zero extend).
+        Item = DAG.getNode(ISD::TRUNCATE, MVT::i32, Item);
+        Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, VecVT, Item);
+        Item = getShuffleVectorZeroOrUndef(Item, 0, true, DAG);
+        
+        // Now we have our 32-bit value zero extended in the low element of
+        // a vector.  If Idx != 0, swizzle it into place.
+        if (Idx != 0) {
+          SDOperand Ops[] = { 
+            Item, DAG.getNode(ISD::UNDEF, Item.getValueType()),
+            getSwapEltZeroMask(VecElts, Idx, DAG)
+          };
+          Item = DAG.getNode(ISD::VECTOR_SHUFFLE, VecVT, Ops, 3);
+        }
+        return DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), Item);
+      }
+    }
+    
     // If we have a constant or non-constant insertion into the low element of
     // a vector, we can do this with SCALAR_TO_VECTOR + shuffle of zero into
     // the rest of the elements.  This will be matched as movd/movq/movss/movsd
@@ -3066,8 +3113,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
         (EVT != MVT::i64 || Subtarget->is64Bit())) {
       Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, VT, Item);
       // Turn it into a MOVL (i.e. movss, movsd, or movd) to a zero vector.
-      return getShuffleVectorZeroOrUndef(Item, VT, NumElems, Idx,
-                                         NumZero > 0, DAG);
+      return getShuffleVectorZeroOrUndef(Item, 0, NumZero > 0, DAG);
     }
     
     if (IsAllConstants) // Otherwise, it's better to do a constpool load.
@@ -3082,8 +3128,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
       Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, VT, Item);
       
       // Turn it into a shuffle of zero and zero-extended scalar to vector.
-      Item = getShuffleVectorZeroOrUndef(Item, VT, NumElems, 0, NumZero > 0,
-                                         DAG);
+      Item = getShuffleVectorZeroOrUndef(Item, 0, NumZero > 0, DAG);
       MVT::ValueType MaskVT  = MVT::getIntVectorWithNumElements(NumElems);
       MVT::ValueType MaskEVT = MVT::getVectorElementType(MaskVT);
       SmallVector<SDOperand, 8> MaskVec;
