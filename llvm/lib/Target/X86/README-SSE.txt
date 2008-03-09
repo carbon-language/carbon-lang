@@ -782,3 +782,40 @@ just a matter of matching (scalar_to_vector (load x)) to movd.
 
 //===---------------------------------------------------------------------===//
 
+These two functions should compile to identical code on x86-32:
+
+define <2 x i64> @test2(i64 %arg) {
+entry:
+	%A = and i64 %arg, 1234567
+	%B = insertelement <2 x i64> undef, i64 %A, i32 0
+	ret <2 x i64> %B
+}
+
+define <2 x i64> @test2(i64 %arg) {
+entry:
+        %A = and i64 %arg, 1234567
+        %B = insertelement <2 x i64> zeroinitializer, i64 %A, i32 0
+        ret <2 x i64> %B
+}
+
+The later compiles to:
+
+_test2:
+	movl	$1234567, %eax
+	andl	4(%esp), %eax
+	movd	%eax, %xmm0
+	ret
+
+the former compiles to:
+
+_test2:
+	subl	$28, %esp
+	movl	$1234567, %eax
+	andl	32(%esp), %eax
+	movl	%eax, (%esp)
+	movl	$0, 4(%esp)
+	movaps	(%esp), %xmm0
+	addl	$28, %esp
+	ret
+
+//===---------------------------------------------------------------------===//
