@@ -99,7 +99,8 @@ public:
 
   
 /// TokenLexer - This implements a lexer that returns token from a macro body
-/// or token stream instead of lexing from a character buffer.
+/// or token stream instead of lexing from a character buffer.  This is used for
+/// macro expansion and _Pragma handling, for example.
 ///
 class TokenLexer {
   /// Macro - The macro we are expanding from.  This is null if expanding a

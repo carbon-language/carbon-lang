@@ -49,7 +49,6 @@
 		DE344AB80AE5DF6D00DBC861 /* HeaderSearch.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE344AB70AE5DF6D00DBC861 /* HeaderSearch.h */; };
 		DE344B540AE5E46C00DBC861 /* HeaderSearch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE344B530AE5E46C00DBC861 /* HeaderSearch.cpp */; };
 		DE3450D70AEB543100DBC861 /* DirectoryLookup.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE3450D60AEB543100DBC861 /* DirectoryLookup.h */; };
-		DE3451580AEC176100DBC861 /* MacroExpander.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE3451570AEC176100DBC861 /* MacroExpander.cpp */; };
 		DE3452410AEF1A2D00DBC861 /* Stmt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE3452400AEF1A2D00DBC861 /* Stmt.cpp */; };
 		DE3452810AEF1B1800DBC861 /* Stmt.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE3452800AEF1B1800DBC861 /* Stmt.h */; };
 		DE345C1A0AFC658B00DBC861 /* StmtVisitor.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE345C190AFC658B00DBC861 /* StmtVisitor.h */; };
@@ -103,6 +102,7 @@
 		DE75ED290B044DC90020CF81 /* ASTContext.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE75ED280B044DC90020CF81 /* ASTContext.h */; };
 		DE75EDF10B06880E0020CF81 /* Type.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE75EDF00B06880E0020CF81 /* Type.cpp */; };
 		DE85CD4B0D8378320070E26E /* Directives.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE85CD4A0D8378320070E26E /* Directives.cpp */; };
+		DE85CD810D8380B10070E26E /* TokenLexer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE85CD800D8380B10070E26E /* TokenLexer.cpp */; };
 		DE928B130C05659200231DA4 /* ModuleBuilder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE928B120C05659200231DA4 /* ModuleBuilder.cpp */; };
 		DE928B200C0565B000231DA4 /* ModuleBuilder.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE928B1F0C0565B000231DA4 /* ModuleBuilder.h */; };
 		DE928B7D0C0A615100231DA4 /* CodeGenModule.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE928B7C0C0A615100231DA4 /* CodeGenModule.h */; };
@@ -132,7 +132,6 @@
 		DED7D7470A524295003AD0FB /* TokenKinds.def in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D7370A524295003AD0FB /* TokenKinds.def */; };
 		DED7D7480A524295003AD0FB /* TokenKinds.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D7380A524295003AD0FB /* TokenKinds.h */; };
 		DED7D74A0A524295003AD0FB /* Lexer.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D73B0A524295003AD0FB /* Lexer.h */; };
-		DED7D74C0A524295003AD0FB /* MacroExpander.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D73D0A524295003AD0FB /* MacroExpander.h */; };
 		DED7D74D0A524295003AD0FB /* MacroInfo.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D73E0A524295003AD0FB /* MacroInfo.h */; };
 		DED7D74E0A524295003AD0FB /* Pragma.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D73F0A524295003AD0FB /* Pragma.h */; };
 		DED7D74F0A524295003AD0FB /* Preprocessor.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D7400A524295003AD0FB /* Preprocessor.h */; };
@@ -178,7 +177,6 @@
 				DED7D7470A524295003AD0FB /* TokenKinds.def in CopyFiles */,
 				DED7D7480A524295003AD0FB /* TokenKinds.h in CopyFiles */,
 				DED7D74A0A524295003AD0FB /* Lexer.h in CopyFiles */,
-				DED7D74C0A524295003AD0FB /* MacroExpander.h in CopyFiles */,
 				DED7D74D0A524295003AD0FB /* MacroInfo.h in CopyFiles */,
 				DED7D74E0A524295003AD0FB /* Pragma.h in CopyFiles */,
 				DED7D74F0A524295003AD0FB /* Preprocessor.h in CopyFiles */,
@@ -298,7 +296,6 @@
 		DE344AB70AE5DF6D00DBC861 /* HeaderSearch.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = HeaderSearch.h; sourceTree = "<group>"; };
 		DE344B530AE5E46C00DBC861 /* HeaderSearch.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = HeaderSearch.cpp; sourceTree = "<group>"; };
 		DE3450D60AEB543100DBC861 /* DirectoryLookup.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = DirectoryLookup.h; sourceTree = "<group>"; };
-		DE3451570AEC176100DBC861 /* MacroExpander.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = MacroExpander.cpp; sourceTree = "<group>"; };
 		DE3452400AEF1A2D00DBC861 /* Stmt.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Stmt.cpp; path = AST/Stmt.cpp; sourceTree = "<group>"; };
 		DE3452800AEF1B1800DBC861 /* Stmt.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Stmt.h; path = clang/AST/Stmt.h; sourceTree = "<group>"; };
 		DE345C190AFC658B00DBC861 /* StmtVisitor.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = StmtVisitor.h; path = clang/AST/StmtVisitor.h; sourceTree = "<group>"; };
@@ -366,6 +363,8 @@
 		DE75ED280B044DC90020CF81 /* ASTContext.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ASTContext.h; path = clang/AST/ASTContext.h; sourceTree = "<group>"; };
 		DE75EDF00B06880E0020CF81 /* Type.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Type.cpp; path = AST/Type.cpp; sourceTree = "<group>"; };
 		DE85CD4A0D8378320070E26E /* Directives.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Directives.cpp; sourceTree = "<group>"; };
+		DE85CD800D8380B10070E26E /* TokenLexer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TokenLexer.cpp; sourceTree = "<group>"; };
+		DE85CD840D8380F20070E26E /* TokenLexer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TokenLexer.h; sourceTree = "<group>"; };
 		DE928B120C05659200231DA4 /* ModuleBuilder.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ModuleBuilder.cpp; path = CodeGen/ModuleBuilder.cpp; sourceTree = "<group>"; };
 		DE928B1F0C0565B000231DA4 /* ModuleBuilder.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ModuleBuilder.h; path = clang/CodeGen/ModuleBuilder.h; sourceTree = "<group>"; };
 		DE928B7C0C0A615100231DA4 /* CodeGenModule.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = CodeGenModule.h; path = CodeGen/CodeGenModule.h; sourceTree = "<group>"; };
@@ -395,7 +394,6 @@
 		DED7D7370A524295003AD0FB /* TokenKinds.def */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = TokenKinds.def; sourceTree = "<group>"; };
 		DED7D7380A524295003AD0FB /* TokenKinds.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = TokenKinds.h; sourceTree = "<group>"; };
 		DED7D73B0A524295003AD0FB /* Lexer.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = Lexer.h; sourceTree = "<group>"; };
-		DED7D73D0A524295003AD0FB /* MacroExpander.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MacroExpander.h; sourceTree = "<group>"; };
 		DED7D73E0A524295003AD0FB /* MacroInfo.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MacroInfo.h; sourceTree = "<group>"; };
 		DED7D73F0A524295003AD0FB /* Pragma.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = Pragma.h; sourceTree = "<group>"; };
 		DED7D7400A524295003AD0FB /* Preprocessor.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = Preprocessor.h; sourceTree = "<group>"; };
@@ -781,7 +779,6 @@
 				DE344AB70AE5DF6D00DBC861 /* HeaderSearch.h */,
 				DED7D73B0A524295003AD0FB /* Lexer.h */,
 				1A869A6E0BA2164C008DA07A /* LiteralSupport.h */,
-				DED7D73D0A524295003AD0FB /* MacroExpander.h */,
 				DED7D73E0A524295003AD0FB /* MacroInfo.h */,
 				DEAEE98A0A5A2B970045101B /* MultipleIncludeOpt.h */,
 				DE01DA480B12ADA300AC22CE /* PPCallbacks.h */,
@@ -789,6 +786,7 @@
 				DED7D7400A524295003AD0FB /* Preprocessor.h */,
 				DED7D9170A52518C003AD0FB /* ScratchBuffer.h */,
 				DE6954630C5121BD00A5826B /* Token.h */,
+				DE85CD840D8380F20070E26E /* TokenLexer.h */,
 			);
 			name = Lex;
 			path = clang/Lex;
@@ -818,12 +816,12 @@
 				DE344B530AE5E46C00DBC861 /* HeaderSearch.cpp */,
 				DED7D79E0A5242E6003AD0FB /* Lexer.cpp */,
 				1A869AA70BA21ABA008DA07A /* LiteralSupport.cpp */,
-				DE3451570AEC176100DBC861 /* MacroExpander.cpp */,
 				DED7D7A00A5242E6003AD0FB /* MacroInfo.cpp */,
 				DED7D7A20A5242E6003AD0FB /* PPExpressions.cpp */,
 				DED7D7A30A5242E6003AD0FB /* Pragma.cpp */,
 				DED7D7A40A5242E6003AD0FB /* Preprocessor.cpp */,
 				DED7D9E40A5257F6003AD0FB /* ScratchBuffer.cpp */,
+				DE85CD800D8380B10070E26E /* TokenLexer.cpp */,
 			);
 			path = Lex;
 			sourceTree = "<group>";
@@ -906,7 +904,6 @@
 				DED626C90AE0C065001E80A4 /* TargetInfo.cpp in Sources */,
 				DED62ABB0AE2EDF1001E80A4 /* Decl.cpp in Sources */,
 				DE344B540AE5E46C00DBC861 /* HeaderSearch.cpp in Sources */,
-				DE3451580AEC176100DBC861 /* MacroExpander.cpp in Sources */,
 				DE3452410AEF1A2D00DBC861 /* Stmt.cpp in Sources */,
 				DE3460000AFDCC1900DBC861 /* ParseObjc.cpp in Sources */,
 				DE3460050AFDCC6500DBC861 /* ParseInit.cpp in Sources */,
@@ -985,6 +982,7 @@
 				35D55B270D81D8C60092E734 /* BasicValueFactory.cpp in Sources */,
 				35D55B280D81D8C60092E734 /* CFRefCount.cpp in Sources */,
 				DE85CD4B0D8378320070E26E /* Directives.cpp in Sources */,
+				DE85CD810D8380B10070E26E /* TokenLexer.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
