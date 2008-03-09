@@ -28,54 +28,6 @@ PPCallbacks::~PPCallbacks() {
 // Source File Location Methods.
 //===----------------------------------------------------------------------===//
 
-/// LookupFile - Given a "foo" or <foo> reference, look up the indicated file,
-/// return null on failure.  isAngled indicates whether the file reference is
-/// for system #include's or not (i.e. using <> instead of "").
-const FileEntry *Preprocessor::LookupFile(const char *FilenameStart,
-                                          const char *FilenameEnd,
-                                          bool isAngled,
-                                          const DirectoryLookup *FromDir,
-                                          const DirectoryLookup *&CurDir) {
-  // If the header lookup mechanism may be relative to the current file, pass in
-  // info about where the current file is.
-  const FileEntry *CurFileEnt = 0;
-  if (!FromDir) {
-    SourceLocation FileLoc = getCurrentFileLexer()->getFileLoc();
-    CurFileEnt = SourceMgr.getFileEntryForLoc(FileLoc);
-  }
-  
-  // Do a standard file entry lookup.
-  CurDir = CurDirLookup;
-  const FileEntry *FE =
-    HeaderInfo.LookupFile(FilenameStart, FilenameEnd,
-                          isAngled, FromDir, CurDir, CurFileEnt);
-  if (FE) return FE;
-  
-  // Otherwise, see if this is a subframework header.  If so, this is relative
-  // to one of the headers on the #include stack.  Walk the list of the current
-  // headers on the #include stack and pass them to HeaderInfo.
-  if (CurLexer && !CurLexer->Is_PragmaLexer) {
-    if ((CurFileEnt = SourceMgr.getFileEntryForLoc(CurLexer->getFileLoc())))
-      if ((FE = HeaderInfo.LookupSubframeworkHeader(FilenameStart, FilenameEnd,
-                                                    CurFileEnt)))
-        return FE;
-  }
-  
-  for (unsigned i = 0, e = IncludeMacroStack.size(); i != e; ++i) {
-    IncludeStackInfo &ISEntry = IncludeMacroStack[e-i-1];
-    if (ISEntry.TheLexer && !ISEntry.TheLexer->Is_PragmaLexer) {
-      if ((CurFileEnt = 
-           SourceMgr.getFileEntryForLoc(ISEntry.TheLexer->getFileLoc())))
-        if ((FE = HeaderInfo.LookupSubframeworkHeader(FilenameStart,
-                                                      FilenameEnd, CurFileEnt)))
-          return FE;
-    }
-  }
-  
-  // Otherwise, we really couldn't find the file.
-  return 0;
-}
-
 /// isInPrimaryFile - Return true if we're in the top-level file, not in a
 /// #include.
 bool Preprocessor::isInPrimaryFile() const {
