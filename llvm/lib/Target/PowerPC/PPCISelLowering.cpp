@@ -1973,9 +1973,10 @@ SDOperand PPCTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG,
     Chain = DAG.getNode(PPCISD::MTCTR, NodeTys, MTCTROps, 2+(InFlag.Val!=0));
     InFlag = Chain.getValue(1);
     
-    // Copy the callee address into R12 on darwin.
+    // Copy the callee address into R12/X12 on darwin.
     if (isMachoABI) {
-      Chain = DAG.getCopyToReg(Chain, PPC::R12, Callee, InFlag);
+      unsigned Reg = Callee.getValueType() == MVT::i32 ? PPC::R12 : PPC::X12;
+      Chain = DAG.getCopyToReg(Chain, Reg, Callee, InFlag);
       InFlag = Chain.getValue(1);
     }
 
