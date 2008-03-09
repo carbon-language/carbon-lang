@@ -628,15 +628,13 @@ public:
 /// combined into the value they represent.  If the parts combine to a type
 /// larger then ValueVT then AssertOp can be used to specify whether the extra
 /// bits are known to be zero (ISD::AssertZext) or sign extended from ValueVT
-/// (ISD::AssertSext).  Likewise TruncExact is used for floating point types to
-/// indicate that the extra bits can be discarded without losing precision.
+/// (ISD::AssertSext).
 static SDOperand getCopyFromParts(SelectionDAG &DAG,
                                   const SDOperand *Parts,
                                   unsigned NumParts,
                                   MVT::ValueType PartVT,
                                   MVT::ValueType ValueVT,
-                                  ISD::NodeType AssertOp = ISD::DELETED_NODE,
-                                  bool TruncExact = false) {
+                                  ISD::NodeType AssertOp = ISD::DELETED_NODE) {
   assert(NumParts > 0 && "No parts to assemble!");
   TargetLowering &TLI = DAG.getTargetLoweringInfo();
   SDOperand Val = Parts[0];
@@ -761,8 +759,9 @@ static SDOperand getCopyFromParts(SelectionDAG &DAG,
 
   if (MVT::isFloatingPoint(PartVT) && MVT::isFloatingPoint(ValueVT)) {
     if (ValueVT < Val.getValueType())
+      // FP_ROUND's are always exact here.
       return DAG.getNode(ISD::FP_ROUND, ValueVT, Val,
-                         DAG.getIntPtrConstant(TruncExact));
+                         DAG.getIntPtrConstant(1));
     return DAG.getNode(ISD::FP_EXTEND, ValueVT, Val);
   }
 
@@ -3267,7 +3266,8 @@ SDOperand RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
   }
   
   // Assemble the legal parts into the final value.
-  return getCopyFromParts(DAG, &Parts[0], NumParts, RegVT, ValueVT);
+  return getCopyFromParts(DAG, &Parts[0], NumParts, RegVT, ValueVT,
+                          ISD::DELETED_NODE);
 }
 
 /// getCopyToRegs - Emit a series of CopyToReg nodes that copies the
@@ -4147,7 +4147,7 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       AssertOp = ISD::AssertZext;
 
     Ops.push_back(getCopyFromParts(DAG, &Parts[0], NumParts, PartVT, VT,
-                                   AssertOp, true));
+                                   AssertOp));
   }
   assert(i == NumArgRegs && "Argument register count mismatch!");
   return Ops;
@@ -4257,7 +4257,7 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
     for (unsigned i = 0; i != NumRegs; ++i)
       Results[i] = Res.getValue(i);
     Res = getCopyFromParts(DAG, &Results[0], NumRegs, RegisterVT, VT,
-                           AssertOp, true);
+                           AssertOp);
   }
 
   return std::make_pair(Res, Chain);
