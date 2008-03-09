@@ -3063,11 +3063,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
     return DAG.getNode(ISD::UNDEF, VT);
   }
 
-  // Splat is obviously ok. Let legalizer expand it to a shuffle.
-  if (Values.size() == 1)
-    return SDOperand();
-
-  // Special case for single non-zero element.
+  // Special case for single non-zero, non-undef, element.
   if (NumNonZero == 1 && NumElems <= 4) {
     unsigned Idx = CountTrailingZeros_32(NonZeros);
     SDOperand Item = Op.getOperand(Idx);
@@ -3141,6 +3137,10 @@ X86TargetLowering::LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
     }
   }
 
+  // Splat is obviously ok. Let legalizer expand it to a shuffle.
+  if (Values.size() == 1)
+    return SDOperand();
+  
   // A vector full of immediates; various special cases are already
   // handled, so this is best done with a single constant-pool load.
   if (IsAllConstants)
