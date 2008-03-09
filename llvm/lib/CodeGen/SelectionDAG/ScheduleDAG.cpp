@@ -935,7 +935,8 @@ void ScheduleDAG::EmitNoop() {
   TII->insertNoop(*BB, BB->end());
 }
 
-void ScheduleDAG::EmitCrossRCCopy(SUnit *SU, DenseMap<SUnit*, unsigned> &VRBaseMap) {
+void ScheduleDAG::EmitCrossRCCopy(SUnit *SU,
+                                  DenseMap<SUnit*, unsigned> &VRBaseMap) {
   for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I) {
     if (I->isCtrl) continue;  // ignore chain preds
