@@ -475,60 +475,30 @@ TargetTriple("triple",
   llvm::cl::desc("Specify target triple (e.g. i686-apple-darwin9)."));
 
 static llvm::cl::opt<std::string>
-Archs("arch",
-  llvm::cl::desc("Specify target architecture (e.g. i686)."));
+Arch("arch", llvm::cl::desc("Specify target architecture (e.g. i686)."));
 
-namespace {
-  class TripleProcessor {
-    llvm::StringMap<char> TriplesProcessed;
-    std::vector<std::string>& triples;
-  public:
-    TripleProcessor(std::vector<std::string>& t) :  triples(t) {}
-    
-    void addTriple(const std::string& t) {
-      if (TriplesProcessed.find(t.c_str(),t.c_str()+t.size()) ==
-          TriplesProcessed.end()) {
-        triples.push_back(t);
-        TriplesProcessed.GetOrCreateValue(t.c_str(),t.c_str()+t.size());
-      }
-    }
-  };
-}
-
-static void CreateTargetTriples(std::vector<std::string>& triples) {
+static std::string CreateTargetTriple() {
   // Initialize base triple.  If a -triple option has been specified, use
   // that triple.  Otherwise, default to the host triple.
   std::string Triple = TargetTriple;
   if (Triple.empty()) Triple = LLVM_HOSTTRIPLE;
   
+  // If -arch foo was specified, remove the architecture from the triple we have
+  // so far and replace it with the specified one.
+  if (Arch.empty())
+    return Triple;
+    
   // Decompose the base triple into "arch" and suffix.
-  std::string::size_type firstDash = Triple.find("-");
+  std::string::size_type FirstDashIdx = Triple.find("-");
   
-  if (firstDash == std::string::npos) {
+  if (FirstDashIdx == std::string::npos) {
     fprintf(stderr, 
             "Malformed target triple: \"%s\" ('-' could not be found).\n",
             Triple.c_str());
     exit(1);
   }
   
-  std::string suffix(Triple, firstDash+1);
-  
-  if (suffix.empty()) {
-    fprintf(stderr, "Malformed target triple: \"%s\" (no vendor or OS).\n",
-            Triple.c_str());
-    exit(1);
-  }
-
-  // Create triple cacher.
-  TripleProcessor tp(triples);
-
-  // Add the primary triple to our set of triples if we are using the
-  // host-triple with no archs or using a specified target triple.
-  if (!TargetTriple.getValue().empty() || Archs.empty())
-    tp.addTriple(Triple);
-  
-  if (!Archs.empty())
-    tp.addTriple(Archs + "-" + suffix);
+  return Arch + std::string(Triple.begin()+FirstDashIdx, Triple.end());
 }
 
 //===----------------------------------------------------------------------===//
@@ -1318,13 +1288,12 @@ int main(int argc, char **argv) {
       // Get information about the targets being compiled for.  Note that this
       // pointer and the TargetInfoImpl objects are never deleted by this toy
       // driver.
-      std::vector<std::string> triples;
-      CreateTargetTriples(triples);
-      TargetInfo *Target = TargetInfo::CreateTargetInfo(triples[0]);
+      std::string Triple = CreateTargetTriple();
+      TargetInfo *Target = TargetInfo::CreateTargetInfo(Triple);
         
       if (Target == 0) {
         fprintf(stderr, "Sorry, I don't know what target this is: %s\n",
-                triples[0].c_str());
+                Triple.c_str());
         fprintf(stderr, "Please use -triple or -arch.\n");
         exit(1);
       }
