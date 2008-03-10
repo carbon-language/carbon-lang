@@ -1064,7 +1064,7 @@ Module *llvm::RunVMAsmParser(llvm::MemoryBuffer *MB) {
 %token OPAQUE EXTERNAL TARGET TRIPLE ALIGN ADDRSPACE
 %token DEPLIBS CALL TAIL ASM_TOK MODULE SIDEEFFECT
 %token CC_TOK CCC_TOK FASTCC_TOK COLDCC_TOK X86_STDCALLCC_TOK X86_FASTCALLCC_TOK
-%token DATALAYOUT UNWIND_TO
+%token DATALAYOUT UNWINDS
 %type <UIntVal> OptCallingConv
 %type <ParamAttrs> OptParamAttrs ParamAttr 
 %type <ParamAttrs> OptFuncAttrs  FuncAttr
@@ -2569,8 +2569,8 @@ InstructionList : InstructionList Inst {
     $$ = defineBBVal(ValID::createLocalID(CurFun.NextValNum), 0);
     CHECK_FOR_ERROR
   }
-  | UNWIND_TO ValueRef {   // Only the unwind to block
-    $$ = defineBBVal(ValID::createLocalID(CurFun.NextValNum), getBBVal($2));
+  | UNWINDS TO ValueRef {   // Only the unwind to block
+    $$ = defineBBVal(ValID::createLocalID(CurFun.NextValNum), getBBVal($3));
     CHECK_FOR_ERROR
   }
   | LABELSTR {             // Labelled (named) basic block
@@ -2578,8 +2578,8 @@ InstructionList : InstructionList Inst {
     delete $1;
     CHECK_FOR_ERROR
   }
-  | LABELSTR UNWIND_TO ValueRef {
-    $$ = defineBBVal(ValID::createLocalName(*$1), getBBVal($3));
+  | LABELSTR UNWINDS TO ValueRef {
+    $$ = defineBBVal(ValID::createLocalName(*$1), getBBVal($4));
     delete $1;
     CHECK_FOR_ERROR
   };

@@ -104,7 +104,7 @@
      X86_STDCALLCC_TOK = 320,
      X86_FASTCALLCC_TOK = 321,
      DATALAYOUT = 322,
-     UNWIND_TO = 323,
+     UNWINDS = 323,
      RET = 324,
      BR = 325,
      SWITCH = 326,
@@ -256,7 +256,7 @@
 #define X86_STDCALLCC_TOK 320
 #define X86_FASTCALLCC_TOK 321
 #define DATALAYOUT 322
-#define UNWIND_TO 323
+#define UNWINDS 323
 #define RET 324
 #define BR 325
 #define SWITCH 326
@@ -346,7 +346,7 @@
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 951 "/Volumes/Nanpura/mrv/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 951 "/home/nicholas/llvm-commit/lib/AsmParser/llvmAsmParser.y"
 {
   llvm::Module                           *ModuleVal;
   llvm::Function                         *FunctionVal;
@@ -393,7 +393,7 @@ typedef union YYSTYPE
   llvm::ICmpInst::Predicate         IPredicate;
   llvm::FCmpInst::Predicate         FPredicate;
 }
-/* Line 1529 of yacc.c.  */
+/* Line 1489 of yacc.c.  */
 #line 398 "llvmAsmParser.tab.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
