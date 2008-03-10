@@ -1392,7 +1392,7 @@ def XORHIr16:
       [(set R16C:$rT, (xor R16C:$rA, i16ImmSExt10:$val))]>;
 
 def XORIv4i32:
-    RI10Form<0b00100000, (outs VECREG:$rT), (ins VECREG:$rA, u10imm:$val),
+    RI10Form<0b00100000, (outs VECREG:$rT), (ins VECREG:$rA, s10imm_i32:$val),
       "xori\t$rT, $rA, $val", IntegerOp,
       [(set (v4i32 VECREG:$rT), (xor (v4i32 VECREG:$rA),
                                      v4i32SExt10Imm:$val))]>;
@@ -1515,7 +1515,7 @@ def : SPUselbPat<v2i64, SELBv2i64>;
 
 class SelectConditional<RegisterClass rclass, SPUInstr inst>:
     Pat<(select rclass:$rCond, rclass:$rTrue, rclass:$rFalse),
-        (inst rclass:$rCond, rclass:$rFalse, rclass:$rTrue)>;
+        (inst rclass:$rFalse, rclass:$rTrue, rclass:$rCond)>;
 
 def : SelectConditional<R32C, SELBr32>;
 def : SelectConditional<R16C, SELBr16>;
@@ -2875,12 +2875,33 @@ defm CLGTHI : CmpLGtrHalfwordImm;
 defm CLGT   : CmpLGtrWord;
 defm CLGTI  : CmpLGtrWordImm;
 
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
 // For SETCC primitives not supported above (setlt, setle, setge, etc.)
 // define a pattern to generate the right code, as a binary operator
 // (in a manner of speaking.)
+//
+// N.B.: This only matches the setcc set of conditionals. Special pattern
+// matching is used for select conditionals.
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
 
-class SETCCNegCond<PatFrag cond, RegisterClass rclass, dag pattern>:
-    Pat<(cond rclass:$rA, rclass:$rB), pattern>;
+class SETCCNegCondReg<PatFrag cond, RegisterClass rclass, ValueType inttype,
+                      SPUInstr xorinst, SPUInstr cmpare>:
+  Pat<(cond rclass:$rA, rclass:$rB),
+      (xorinst (cmpare rclass:$rA, rclass:$rB), (inttype -1))>;
+
+class SETCCNegCondImm<PatFrag cond, RegisterClass rclass, ValueType inttype,
+                      PatLeaf immpred, SPUInstr xorinst, SPUInstr cmpare>:
+  Pat<(cond rclass:$rA, (inttype immpred:$imm)),
+      (xorinst (cmpare rclass:$rA, (inttype immpred:$imm)), (inttype -1))>;
+
+def : SETCCNegCondReg<setne, R8C, i8, XORBIr8, CEQBr8>;
+def : SETCCNegCondImm<setne, R8C, i8, immSExt8, XORBIr8, CEQBIr8>;
+
+def : SETCCNegCondReg<setne, R16C, i16, XORHIr16, CEQHr16>;
+def : SETCCNegCondImm<setne, R16C, i16, i16ImmSExt10, XORHIr16, CEQHIr16>;
+
+def : SETCCNegCondReg<setne, R32C, i32, XORIr32, CEQr32>;
+def : SETCCNegCondImm<setne, R32C, i32, i32ImmSExt10, XORIr32, CEQIr32>;
 
 class SETCCBinOpReg<PatFrag cond, RegisterClass rclass,
                     SPUInstr binop, SPUInstr cmpOp1, SPUInstr cmpOp2>:
@@ -2895,64 +2916,146 @@ class SETCCBinOpImm<PatFrag cond, RegisterClass rclass, PatLeaf immpred,
         (binop (cmpOp1 rclass:$rA, (immtype immpred:$imm)),
                (cmpOp2 rclass:$rA, (immtype immpred:$imm)))>;
 
-def CGTEQBr8:  SETCCBinOpReg<setge, R8C, ORr8, CGTBr8, CEQBr8>;
-def CGTEQBIr8: SETCCBinOpImm<setge, R8C, immSExt8, i8, ORr8, CGTBIr8, CEQBIr8>;
-def CLTBr8:    SETCCBinOpReg<setlt, R8C, NORr8, CGTBr8, CEQBr8>;
-def CLTBIr8:   SETCCBinOpImm<setlt, R8C, immSExt8, i8, NORr8, CGTBIr8, CEQBIr8>;
-def CLTEQr8:   Pat<(setle R8C:$rA, R8C:$rB),
-                   (XORBIr8 (CGTBr8 R8C:$rA, R8C:$rB), 0xff)>;
-def CLTEQIr8:  Pat<(setle R8C:$rA, immU8:$imm),
-                   (XORBIr8 (CGTBIr8 R8C:$rA, immU8:$imm), 0xff)>;
+def : SETCCBinOpReg<setge, R8C, ORr8, CGTBr8, CEQBr8>;
+def : SETCCBinOpImm<setge, R8C, immSExt8, i8, ORr8, CGTBIr8, CEQBIr8>;
+def : SETCCBinOpReg<setlt, R8C, NORr8, CGTBr8, CEQBr8>;
+def : SETCCBinOpImm<setlt, R8C, immSExt8, i8, NORr8, CGTBIr8, CEQBIr8>;
+def : Pat<(setle R8C:$rA, R8C:$rB),
+          (XORBIr8 (CGTBr8 R8C:$rA, R8C:$rB), 0xff)>;
+def :  Pat<(setle R8C:$rA, immU8:$imm),
+           (XORBIr8 (CGTBIr8 R8C:$rA, immU8:$imm), 0xff)>;
 
-def CGTEQHr16:  SETCCBinOpReg<setge, R16C, ORr16, CGTHr16, CEQHr16>;
-def CGTEQHIr16: SETCCBinOpImm<setge, R16C, i16ImmUns10, i16,
-                              ORr16, CGTHIr16, CEQHIr16>;
-def CLTHr16:    SETCCBinOpReg<setlt, R16C, NORr16, CGTHr16, CEQHr16>;
-def CLTHIr16:   SETCCBinOpImm<setlt, R16C, i16ImmSExt10, i16, NORr16, CGTHIr16, CEQHIr16>;
-def CLTEQr16:   Pat<(setle R16C:$rA, R16C:$rB),
-                    (XORHIr16 (CGTHr16 R16C:$rA, R16C:$rB), 0xffff)>;
-def CLTEQIr16:  Pat<(setle R16C:$rA, i16ImmSExt10:$imm),
-                    (XORHIr16 (CGTHIr16 R16C:$rA, i16ImmSExt10:$imm), 0xffff)>;
+def : SETCCBinOpReg<setge, R16C, ORr16, CGTHr16, CEQHr16>;
+def : SETCCBinOpImm<setge, R16C, i16ImmSExt10, i16,
+                    ORr16, CGTHIr16, CEQHIr16>;
+def : SETCCBinOpReg<setlt, R16C, NORr16, CGTHr16, CEQHr16>;
+def : SETCCBinOpImm<setlt, R16C, i16ImmSExt10, i16, NORr16, CGTHIr16, CEQHIr16>;
+def : Pat<(setle R16C:$rA, R16C:$rB),
+          (XORHIr16 (CGTHr16 R16C:$rA, R16C:$rB), 0xffff)>;
+def : Pat<(setle R16C:$rA, i16ImmSExt10:$imm),
+          (XORHIr16 (CGTHIr16 R16C:$rA, i16ImmSExt10:$imm), 0xffff)>;
 
-def CGTEQHr32:  SETCCBinOpReg<setge, R32C, ORr32, CGTr32, CEQr32>;
-def CGTEQHIr32: SETCCBinOpImm<setge, R32C, i32ImmSExt10, i32,
-                              ORr32, CGTIr32, CEQIr32>;
-def CLTr32:     SETCCBinOpReg<setlt, R32C, NORr32, CGTr32, CEQr32>;
-def CLTIr32:    SETCCBinOpImm<setlt, R32C, i32ImmSExt10, i32, NORr32, CGTIr32, CEQIr32>;
-def CLTEQr32:   Pat<(setle R32C:$rA, R32C:$rB),
-                    (XORIr32 (CGTr32 R32C:$rA, R32C:$rB), 0xffffffff)>;
-def CLTEQIr32:  Pat<(setle R32C:$rA, i32ImmSExt10:$imm),
-                    (XORIr32 (CGTIr32 R32C:$rA, i32ImmSExt10:$imm), 0xffffffff)>;
+def : SETCCBinOpReg<setge, R32C, ORr32, CGTr32, CEQr32>;
+def : SETCCBinOpImm<setge, R32C, i32ImmSExt10, i32,
+                    ORr32, CGTIr32, CEQIr32>;
+def : SETCCBinOpReg<setlt, R32C, NORr32, CGTr32, CEQr32>;
+def : SETCCBinOpImm<setlt, R32C, i32ImmSExt10, i32, NORr32, CGTIr32, CEQIr32>;
+def : Pat<(setle R32C:$rA, R32C:$rB),
+          (XORIr32 (CGTr32 R32C:$rA, R32C:$rB), 0xffffffff)>;
+def : Pat<(setle R32C:$rA, i32ImmSExt10:$imm),
+          (XORIr32 (CGTIr32 R32C:$rA, i32ImmSExt10:$imm), 0xffffffff)>;
 
-def CLGTEQBr8:  SETCCBinOpReg<setuge, R8C, ORr8, CLGTBr8, CEQBr8>;
-def CLGTEQBIr8: SETCCBinOpImm<setuge, R8C, immSExt8, i8, ORr8, CLGTBIr8, CEQBIr8>;
-def CLLTBr8:    SETCCBinOpReg<setult, R8C, NORr8, CLGTBr8, CEQBr8>;
-def CLLTBIr8:   SETCCBinOpImm<setult, R8C, immSExt8, i8, NORr8, CLGTBIr8, CEQBIr8>;
-def CLLTEQr8:   Pat<(setule R8C:$rA, R8C:$rB),
-                     (XORBIr8 (CLGTBr8 R8C:$rA, R8C:$rB), 0xff)>;
-def CLLTEQIr8:  Pat<(setule R8C:$rA, immU8:$imm),
-                     (XORBIr8 (CLGTBIr8 R8C:$rA, immU8:$imm), 0xff)>;
+def : SETCCBinOpReg<setuge, R8C, ORr8, CLGTBr8, CEQBr8>;
+def : SETCCBinOpImm<setuge, R8C, immSExt8, i8, ORr8, CLGTBIr8, CEQBIr8>;
+def : SETCCBinOpReg<setult, R8C, NORr8, CLGTBr8, CEQBr8>;
+def : SETCCBinOpImm<setult, R8C, immSExt8, i8, NORr8, CLGTBIr8, CEQBIr8>;
+def : Pat<(setule R8C:$rA, R8C:$rB),
+          (XORBIr8 (CLGTBr8 R8C:$rA, R8C:$rB), 0xff)>;
+def :  Pat<(setule R8C:$rA, immU8:$imm),
+           (XORBIr8 (CLGTBIr8 R8C:$rA, immU8:$imm), 0xff)>;
 
-def CLGTEQHr16:  SETCCBinOpReg<setuge, R16C, ORr16, CLGTHr16, CEQHr16>;
-def CLGTEQHIr16: SETCCBinOpImm<setuge, R16C, i16ImmUns10, i16,
-                               ORr16, CLGTHIr16, CEQHIr16>;
-def CLLTHr16:    SETCCBinOpReg<setult, R16C, NORr16, CLGTHr16, CEQHr16>;
-def CLLTHIr16:   SETCCBinOpImm<setult, R16C, immSExt8, i16, NORr16, CLGTHIr16, CEQHIr16>;
-def CLLTEQr16:   Pat<(setule R16C:$rA, R16C:$rB),
-                      (XORHIr16 (CLGTHr16 R16C:$rA, R16C:$rB), 0xffff)>;
-def CLLTEQIr16:  Pat<(setule R16C:$rA, i16ImmUns10:$imm),
-                      (XORHIr16 (CLGTHIr16 R16C:$rA, i16ImmSExt10:$imm), 0xffff)>;
+def : SETCCBinOpReg<setuge, R16C, ORr16, CLGTHr16, CEQHr16>;
+def : SETCCBinOpImm<setuge, R16C, i16ImmSExt10, i16,
+                    ORr16, CLGTHIr16, CEQHIr16>;
+def : SETCCBinOpReg<setult, R16C, NORr16, CLGTHr16, CEQHr16>;
+def : SETCCBinOpImm<setult, R16C, i16ImmSExt10, i16, NORr16,
+                    CLGTHIr16, CEQHIr16>;
+def : Pat<(setule R16C:$rA, R16C:$rB),
+          (XORHIr16 (CLGTHr16 R16C:$rA, R16C:$rB), 0xffff)>;
+def :  Pat<(setule R16C:$rA, i16ImmUns10:$imm),
+           (XORHIr16 (CLGTHIr16 R16C:$rA, i16ImmSExt10:$imm), 0xffff)>;
 
+def : SETCCBinOpReg<setuge, R32C, ORr32, CLGTr32, CEQr32>;
+def : SETCCBinOpImm<setuge, R32C, i32ImmUns10, i32,
+                    ORr32, CLGTIr32, CEQIr32>;
+def : SETCCBinOpReg<setult, R32C, NORr32, CLGTr32, CEQr32>;
+def : SETCCBinOpImm<setult, R32C, immSExt8, i32, NORr32, CLGTIr32, CEQIr32>;
+def : Pat<(setule R32C:$rA, R32C:$rB),
+          (XORIr32 (CLGTr32 R32C:$rA, R32C:$rB), 0xffffffff)>;
+def : Pat<(setule R32C:$rA, i32ImmSExt10:$imm),
+          (XORIr32 (CLGTIr32 R32C:$rA, i32ImmSExt10:$imm), 0xffffffff)>;
 
-def CLGTEQHr32:  SETCCBinOpReg<setuge, R32C, ORr32, CLGTr32, CEQr32>;
-def CLGTEQHIr32: SETCCBinOpImm<setuge, R32C, i32ImmUns10, i32,
-                               ORr32, CLGTIr32, CEQIr32>;
-def CLLTr32:     SETCCBinOpReg<setult, R32C, NORr32, CLGTr32, CEQr32>;
-def CLLTIr32:    SETCCBinOpImm<setult, R32C, immSExt8, i32, NORr32, CLGTIr32, CEQIr32>;
-def CLLTEQr32:   Pat<(setule R32C:$rA, R32C:$rB),
-                      (XORIr32 (CLGTr32 R32C:$rA, R32C:$rB), 0xffffffff)>;
-def CLLTEQIr32:  Pat<(setule R32C:$rA, i32ImmSExt10:$imm),
-                      (XORIr32 (CLGTIr32 R32C:$rA, i32ImmSExt10:$imm), 0xffffffff)>;
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+// select conditional patterns:
+//-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+
+class SELECTNegCondReg<PatFrag cond, RegisterClass rclass, ValueType inttype,
+                       SPUInstr selinstr, SPUInstr cmpare>:
+  Pat<(select (inttype (cond rclass:$rA, rclass:$rB)),
+              rclass:$rTrue, rclass:$rFalse),
+      (selinstr rclass:$rTrue, rclass:$rFalse,
+		(cmpare rclass:$rA, rclass:$rB))>;
+
+class SELECTNegCondImm<PatFrag cond, RegisterClass rclass, ValueType inttype,
+                       PatLeaf immpred, SPUInstr selinstr, SPUInstr cmpare>:
+  Pat<(select (inttype (cond rclass:$rA, immpred:$imm)),
+	      rclass:$rTrue, rclass:$rFalse),
+      (selinstr rclass:$rTrue, rclass:$rFalse,
+                (cmpare rclass:$rA, immpred:$imm))>;
+
+def : SELECTNegCondReg<setne, R8C, i8, SELBr8, CEQBr8>;
+def : SELECTNegCondImm<setne, R8C, i8, immSExt8, SELBr8, CEQBIr8>;
+def : SELECTNegCondReg<setle, R8C, i8, SELBr8, CGTBr8>;
+def : SELECTNegCondImm<setle, R8C, i8, immSExt8, SELBr8, CGTBr8>;
+def : SELECTNegCondReg<setule, R8C, i8, SELBr8, CLGTBr8>;
+def : SELECTNegCondImm<setule, R8C, i8, immU8, SELBr8, CLGTBIr8>;
+
+def : SELECTNegCondReg<setne, R16C, i16, SELBr16, CEQHr16>;
+def : SELECTNegCondImm<setne, R16C, i16, i16ImmSExt10, SELBr16, CEQHIr16>;
+def : SELECTNegCondReg<setle, R16C, i16, SELBr16, CGTHr16>;
+def : SELECTNegCondImm<setle, R16C, i16, i16ImmSExt10, SELBr16, CGTHIr16>;
+def : SELECTNegCondReg<setule, R16C, i16, SELBr16, CLGTHr16>;
+def : SELECTNegCondImm<setule, R16C, i16, i16ImmSExt10, SELBr16, CLGTHIr16>;
+
+def : SELECTNegCondReg<setne, R32C, i32, SELBr32, CEQr32>;
+def : SELECTNegCondImm<setne, R32C, i32, i32ImmSExt10, SELBr32, CEQIr32>;
+def : SELECTNegCondReg<setle, R32C, i32, SELBr32, CGTr32>;
+def : SELECTNegCondImm<setle, R32C, i32, i32ImmSExt10, SELBr32, CGTIr32>;
+def : SELECTNegCondReg<setule, R32C, i32, SELBr32, CLGTr32>;
+def : SELECTNegCondImm<setule, R32C, i32, i32ImmSExt10, SELBr32, CLGTIr32>;
+
+class SELECTBinOpReg<PatFrag cond, RegisterClass rclass, ValueType inttype,
+                     SPUInstr selinstr, SPUInstr binop, SPUInstr cmpOp1,
+                     SPUInstr cmpOp2>:
+  Pat<(select (inttype (cond rclass:$rA, rclass:$rB)),
+              rclass:$rFalse, rclass:$rTrue),
+      (selinstr rclass:$rTrue, rclass:$rFalse,
+                (binop (cmpOp1 rclass:$rA, rclass:$rB),
+                       (cmpOp2 rclass:$rA, rclass:$rB)))>;
+
+class SELECTBinOpImm<PatFrag cond, RegisterClass rclass, PatLeaf immpred,
+                     ValueType inttype,
+                     SPUInstr selinstr, SPUInstr binop, SPUInstr cmpOp1,
+                     SPUInstr cmpOp2>:
+    Pat<(select (inttype (cond rclass:$rA, (inttype immpred:$imm))),
+	        rclass:$rTrue, rclass:$rFalse),
+        (selinstr rclass:$rFalse, rclass:$rTrue,
+                  (binop (cmpOp1 rclass:$rA, (inttype immpred:$imm)),
+                         (cmpOp2 rclass:$rA, (inttype immpred:$imm))))>;
+
+def : SELECTBinOpReg<setge, R8C, i8, SELBr8, ORr8, CGTBr8, CEQBr8>;
+def : SELECTBinOpImm<setge, R8C, immSExt8, i8,
+                     SELBr8, ORr8, CGTBIr8, CEQBIr8>;
+
+def : SELECTBinOpReg<setge, R16C, i16, SELBr16, ORr16, CGTHr16, CEQHr16>;
+def : SELECTBinOpImm<setge, R16C, i16ImmSExt10, i16,
+                     SELBr16, ORr16, CGTHIr16, CEQHIr16>;
+
+def : SELECTBinOpReg<setge, R32C, i32, SELBr32, ORr32, CGTr32, CEQr32>;
+def : SELECTBinOpImm<setge, R32C, i32ImmSExt10, i32,
+                     SELBr32, ORr32, CGTIr32, CEQIr32>;
+
+def : SELECTBinOpReg<setuge, R8C, i8, SELBr8, ORr8, CLGTBr8, CEQBr8>;
+def : SELECTBinOpImm<setuge, R8C, immSExt8, i8,
+                     SELBr8, ORr8, CLGTBIr8, CEQBIr8>;
+
+def : SELECTBinOpReg<setuge, R16C, i16, SELBr16, ORr16, CLGTHr16, CEQHr16>;
+def : SELECTBinOpImm<setuge, R16C, i16ImmUns10, i16,
+                     SELBr16, ORr16, CLGTHIr16, CEQHIr16>;
+
+def : SELECTBinOpReg<setuge, R32C, i32, SELBr32, ORr32, CLGTr32, CEQr32>;
+def : SELECTBinOpImm<setuge, R32C, i32ImmUns10, i32,
+                     SELBr32, ORr32, CLGTIr32, CEQIr32>;
 
 //-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
 

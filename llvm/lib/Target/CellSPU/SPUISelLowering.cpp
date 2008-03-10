@@ -244,21 +244,21 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   setOperationAction(ISD::CTLZ , MVT::i32,   Legal);
   
   // SPU has a version of select
-  setOperationAction(ISD::SELECT, MVT::i1,   Expand);
-  setOperationAction(ISD::SELECT, MVT::i8,   Expand);
+  setOperationAction(ISD::SELECT, MVT::i1,   Promote);
+  setOperationAction(ISD::SELECT, MVT::i8,   Legal);
   setOperationAction(ISD::SELECT, MVT::i16,  Legal);
   setOperationAction(ISD::SELECT, MVT::i32,  Legal);
   setOperationAction(ISD::SELECT, MVT::i64,  Expand);
   setOperationAction(ISD::SELECT, MVT::f32,  Expand);
   setOperationAction(ISD::SELECT, MVT::f64,  Expand);
 
-  setOperationAction(ISD::SETCC, MVT::i1,   Expand);
-  setOperationAction(ISD::SETCC, MVT::i8,   Expand);
-  setOperationAction(ISD::SETCC, MVT::i16,  Legal);
-  setOperationAction(ISD::SETCC, MVT::i32,  Legal);
-  setOperationAction(ISD::SETCC, MVT::i64,  Expand);
-  setOperationAction(ISD::SETCC, MVT::f32,  Expand);
-  setOperationAction(ISD::SETCC, MVT::f64,  Expand);
+  setOperationAction(ISD::SETCC, MVT::i1,    Promote);
+  setOperationAction(ISD::SETCC, MVT::i8,    Legal);
+  setOperationAction(ISD::SETCC, MVT::i16,   Legal);
+  setOperationAction(ISD::SETCC, MVT::i32,   Legal);
+  setOperationAction(ISD::SETCC, MVT::i64,   Expand);
+  setOperationAction(ISD::SETCC, MVT::f32,   Expand);
+  setOperationAction(ISD::SETCC, MVT::f64,   Expand);
 
   // Zero extension and sign extension for i64 have to be
   // custom legalized
@@ -380,7 +380,6 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   setOperationAction(ISD::XOR, MVT::v16i8, Custom);
   setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v4f32, Custom);
 
-  setSetCCResultType(MVT::i32);
   setShiftAmountType(MVT::i32);
   setSetCCResultContents(ZeroOrOneSetCCResult);
   
@@ -447,6 +446,11 @@ SPUTargetLowering::getTargetNodeName(unsigned Opcode) const
   std::map<unsigned, const char *>::iterator i = node_names.find(Opcode);
 
   return ((i != node_names.end()) ? i->second : 0);
+}
+
+MVT::ValueType
+SPUTargetLowering::getSetCCResultType(const SDOperand &Op) const {
+  return Op.getValueType();
 }
 
 //===----------------------------------------------------------------------===//

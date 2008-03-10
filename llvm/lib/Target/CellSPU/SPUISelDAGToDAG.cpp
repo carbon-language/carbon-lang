@@ -41,14 +41,14 @@ namespace {
   bool
   isI64IntS10Immediate(ConstantSDNode *CN)
   {
-    return isS10Constant(CN->getValue());
+    return isS10Constant(CN->getSignExtended());
   }
 
   //! ConstantSDNode predicate for i32 sign-extended, 10-bit immediates
   bool
   isI32IntS10Immediate(ConstantSDNode *CN)
   {
-    return isS10Constant((int) CN->getValue());
+    return isS10Constant(CN->getSignExtended());
   }
 
 #if 0
