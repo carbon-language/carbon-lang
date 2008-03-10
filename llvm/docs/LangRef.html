@@ -144,6 +144,7 @@
           <li><a href="#i_select">'<tt>select</tt>' Instruction</a></li>
           <li><a href="#i_call">'<tt>call</tt>'  Instruction</a></li>
           <li><a href="#i_va_arg">'<tt>va_arg</tt>'  Instruction</a></li>
+          <li><a href="#i_getresult">'<tt>getresult</tt>'  Instruction</a></li>
         </ol>
       </li>
     </ol>
@@ -1226,16 +1227,16 @@ consists of a return type and a list of formal parameter types.
 Function types are usually used to build virtual function tables
 (which are structures of pointers to functions), for indirect function
 calls, and when defining a function.</p>
-<p>
-The return type of a function type cannot be an aggregate type.
-</p>
+
 <h5>Syntax:</h5>
-<pre>  &lt;returntype&gt; (&lt;parameter list&gt;)<br></pre>
+<pre>  &lt;returntype list&gt; (&lt;parameter list&gt;)<br></pre>
 <p>...where '<tt>&lt;parameter list&gt;</tt>' is a comma-separated list of type
 specifiers.  Optionally, the parameter list may include a type <tt>...</tt>,
 which indicates that the function takes a variable number of arguments.
 Variable argument functions can access their arguments with the <a
- href="#int_varargs">variable argument handling intrinsic</a> functions.</p>
+ href="#int_varargs">variable argument handling intrinsic</a> functions.
+'<tt>&lt;returntype list&gt;</tt>' is a comma-separated list of
+<a href="#t_firstclass">first class</a> type specifiers.</p>
 <h5>Examples:</h5>
 <table class="layout">
   <tr class="layout">
@@ -1788,6 +1789,7 @@ Instruction</a> </div>
 <h5>Syntax:</h5>
 <pre>  ret &lt;type&gt; &lt;value&gt;       <i>; Return a value from a non-void function</i>
   ret void                 <i>; Return from void function</i>
+  ret &lt;type&gt; &lt;value&gt;, &lt;type&gt; &lt;value&gt;  <i>; Return two values from a non-void function </i>
 </pre>
 <h5>Overview:</h5>
 <p>The '<tt>ret</tt>' instruction is used to return control flow (and a
@@ -1796,11 +1798,11 @@ value) from a function back to the caller.</p>
 returns a value and then causes control flow, and one that just causes
 control flow to occur.</p>
 <h5>Arguments:</h5>
-<p>The '<tt>ret</tt>' instruction may return any '<a
- href="#t_firstclass">first class</a>' type.  Notice that a function is
-not <a href="#wellformed">well formed</a> if there exists a '<tt>ret</tt>'
-instruction inside of the function that returns a value that does not
-match the return type of the function.</p>
+<p>The '<tt>ret</tt>' instruction may return one or multiple values. The
+type of each return value must be '<a href="#t_firstclass">first class</a>'
+ type.  Notice that a function is not <a href="#wellformed">well formed</a> 
+if there exists a '<tt>ret</tt>' instruction inside of the function that 
+returns values that does not match the return type of the function.</p>
 <h5>Semantics:</h5>
 <p>When the '<tt>ret</tt>' instruction is executed, control flow
 returns back to the calling function's context.  If the caller is a "<a
@@ -1809,10 +1811,13 @@ the instruction after the call.  If the caller was an "<a
  href="#i_invoke"><tt>invoke</tt></a>" instruction, execution continues
 at the beginning of the "normal" destination block.  If the instruction
 returns a value, that value shall set the call or invoke instruction's
-return value.</p>
+return value. If the instruction returns multiple values then these 
+value can only be accessed through '<a href="#i_getresult"><tt>getresult</tt>
+</a>' insctruction.</p>
 <h5>Example:</h5>
 <pre>  ret i32 5                       <i>; Return an integer value of 5</i>
   ret void                        <i>; Return from a void function</i>
+  ret i32 4, i8 2                 <i>; Return two values 4 and 2 </i> 
 </pre>
 </div>
 <!-- _______________________________________________________________________ -->
@@ -1922,7 +1927,9 @@ function, with the possibility of control flow transfer to either the
 "<tt><a href="#i_ret">ret</a></tt>" instruction, control flow will return to the
 "normal" label.  If the callee (or any indirect callees) returns with the "<a
 href="#i_unwind"><tt>unwind</tt></a>" instruction, control is interrupted and
-continued at the dynamically nearest "exception" label.</p>
+continued at the dynamically nearest "exception" label. If the callee function 
+returns multiple values then individual return values are accessed only through 
+'<tt><a href="#i_getresult">getresult</a></tt>' instruction.</p>
 
 <h5>Arguments:</h5>
 
@@ -3810,7 +3817,10 @@ transfer to a specified function, with its incoming arguments bound to
 the specified values. Upon a '<tt><a href="#i_ret">ret</a></tt>'
 instruction in the called function, control flow continues with the
 instruction after the function call, and the return value of the
-function is bound to the result argument.  This is a simpler case of
+function is bound to the result argument.  If the '<tt><a href="#i_ret">ret</a>
+</tt>' instruction returns multiple values then the return value of the
+function is only accessed through '<tt><a href="#i_getresult">getresult</a>
+</tt>' instruction. This is a simpler case of
 the <a href="#i_invoke">invoke</a> instruction.</p>
 
 <h5>Example:</h5>
@@ -3821,6 +3831,11 @@ the <a href="#i_invoke">invoke</a> instruction.</p>
   %X = tail call i32 @foo()
   %Y = tail call <a href="#callingconv">fastcc</a> i32 @foo()
   %Z = call void %foo(i8 97 signext)
+
+  %struct.A = type { i32, i8 }
+  %r = call %struct.A @foo()
+  %gr = getresult %struct.A %r, 0
+  %gr1 = getresult %struct.A %r, 1
 </pre>
 
 </div>
@@ -3870,6 +3885,48 @@ argument.</p>
 <h5>Example:</h5>
 
 <p>See the <a href="#int_varargs">variable argument processing</a> section.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="i_getresult">'<tt>getresult</tt>' Instruction</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<pre>
+  &lt;resultval&gt; = getresult &lt;type&gt; &lt;retval&gt;,  &lt;index&gt;
+</pre>
+<h5>Overview:</h5>
+
+<p> The '<tt>getresult</tt>' instruction is used to extract individual values
+from multiple values returned by '<tt><a href="#i_call">call</a></tt>' 
+or '<tt><a href="#i_invoke">invoke</a></tt>' instruction.
+
+<h5>Arguments:</h5>
+
+The '<tt>getresult</tt>' instruction takes return value as first argument. The 
+value must have <a href="#t_struct">structure type</a>. The second argument 
+is unsigned index value. 
+
+<h5>Semantics:</h5>
+
+The '<tt>getresult</tt>' instruction extracts element identified by
+'<tt>index</tt>' from the aggregate value.
+
+<h5>Example:</h5>
+
+<pre>
+  %struct.A = type { i32, i8 }
+
+  %r = call %struct.A @foo()
+  %gr = getresult %struct.A %r, 0
+  %gr1 = getresult %struct.A %r, 1 
+  add i32 %gr, 42
+  add i8 %gr1, 41
+</pre>
 
 </div>
 
