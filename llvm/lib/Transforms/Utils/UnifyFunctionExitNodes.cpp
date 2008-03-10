@@ -21,6 +21,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Type.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 
 char UnifyFunctionExitNodes::ID = 0;
@@ -116,9 +117,10 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
   if (NumRetVals == 0)
     new ReturnInst(NULL, NewRetBlock);
   else if (const StructType *STy = dyn_cast<StructType>(F.getReturnType())) {
+    Instruction *InsertPt = NewRetBlock->getFirstNonPHI();
     for (unsigned i = 0; i < NumRetVals; ++i) {
-      PHINode *PN = new PHINode(STy->getElementType(i), "UnifiedRetVal");
-      NewRetBlock->getInstList().push_back(PN);
+      PHINode *PN = new PHINode(STy->getElementType(i), "UnifiedRetVal." 
+                                + utostr(i), InsertPt);
       Phis.push_back(PN);
     }
     new ReturnInst(&Phis[0], NumRetVals);
