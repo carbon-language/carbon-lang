@@ -17,6 +17,7 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/ValueTypes.h"
+#include "llvm/CodeGen/SelectionDAGNodes.h"
 
 namespace llvm {
   class TargetRegisterInfo;
@@ -97,7 +98,7 @@ public:
 /// reflect the change.
 typedef bool CCAssignFn(unsigned ValNo, MVT::ValueType ValVT,
                         MVT::ValueType LocVT, CCValAssign::LocInfo LocInfo,
-                        unsigned ArgFlags, CCState &State);
+                        ISD::ParamFlags::ParamFlagsTy ArgFlags, CCState &State);
 
   
 /// CCState - This class holds information needed while lowering arguments and
@@ -196,7 +197,8 @@ public:
   // parameter attribute.
   void HandleByVal(unsigned ValNo, MVT::ValueType ValVT,
                    MVT::ValueType LocVT, CCValAssign::LocInfo LocInfo,
-                   int MinSize, int MinAlign, unsigned ArgFlags);
+                   int MinSize, int MinAlign, 
+                   ISD::ParamFlags::ParamFlagsTy ArgFlags);
 
 private:
   /// MarkAllocated - Mark a register and all of its aliases as allocated.

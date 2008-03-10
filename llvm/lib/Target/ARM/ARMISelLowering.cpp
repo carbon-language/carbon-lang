@@ -368,12 +368,13 @@ static void
 HowToPassArgument(MVT::ValueType ObjectVT, unsigned NumGPRs,
                   unsigned StackOffset, unsigned &NeededGPRs,
                   unsigned &NeededStackSize, unsigned &GPRPad,
-                  unsigned &StackPad, unsigned Flags) {
+                  unsigned &StackPad, ISD::ParamFlags::ParamFlagsTy Flags) {
   NeededStackSize = 0;
   NeededGPRs = 0;
   StackPad = 0;
   GPRPad = 0;
-  unsigned align = (Flags >> ISD::ParamFlags::OrigAlignmentOffs);
+  unsigned align = ((Flags & ISD::ParamFlags::OrigAlignment) 
+                        >> ISD::ParamFlags::OrigAlignmentOffs);
   GPRPad = NumGPRs % ((align + 3)/4);
   StackPad = StackOffset % align;
   unsigned firstGPR = NumGPRs + GPRPad;
@@ -422,7 +423,7 @@ SDOperand ARMTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     unsigned StackPad;
     unsigned GPRPad;
     MVT::ValueType ObjectVT = Op.getOperand(5+2*i).getValueType();
-    unsigned Flags = Op.getConstantOperandVal(5+2*i+1);
+    ISD::ParamFlags::ParamFlagsTy Flags = Op.getConstantOperandVal(5+2*i+1);
     HowToPassArgument(ObjectVT, NumGPRs, NumBytes, ObjGPRs, ObjSize,
                       GPRPad, StackPad, Flags);
     NumBytes += ObjSize + StackPad;
@@ -445,7 +446,7 @@ SDOperand ARMTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   std::vector<SDOperand> MemOpChains;
   for (unsigned i = 0; i != NumOps; ++i) {
     SDOperand Arg = Op.getOperand(5+2*i);
-    unsigned Flags = Op.getConstantOperandVal(5+2*i+1);
+    ISD::ParamFlags::ParamFlagsTy Flags = Op.getConstantOperandVal(5+2*i+1);
     MVT::ValueType ArgVT = Arg.getValueType();
 
     unsigned ObjSize;
@@ -924,7 +925,7 @@ static SDOperand LowerFORMAL_ARGUMENT(SDOperand Op, SelectionDAG &DAG,
   unsigned ObjGPRs;
   unsigned GPRPad;
   unsigned StackPad;
-  unsigned Flags = Op.getConstantOperandVal(ArgNo + 3);
+  ISD::ParamFlags::ParamFlagsTy Flags = Op.getConstantOperandVal(ArgNo + 3);
   HowToPassArgument(ObjectVT, NumGPRs, ArgOffset, ObjGPRs,
                     ObjSize, GPRPad, StackPad, Flags);
   NumGPRs += GPRPad;

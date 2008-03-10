@@ -1361,8 +1361,10 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op,
     MVT::ValueType ObjectVT = Op.getValue(ArgNo).getValueType();
     unsigned ObjSize = MVT::getSizeInBits(ObjectVT)/8;
     unsigned ArgSize = ObjSize;
-    unsigned Flags = cast<ConstantSDNode>(Op.getOperand(ArgNo+3))->getValue();
-    unsigned AlignFlag = 1 << ISD::ParamFlags::OrigAlignmentOffs;
+    ISD::ParamFlags::ParamFlagsTy Flags = 
+              cast<ConstantSDNode>(Op.getOperand(ArgNo+3))->getValue();
+    unsigned AlignFlag = ISD::ParamFlags::One 
+                                << ISD::ParamFlags::OrigAlignmentOffs;
     unsigned isByVal = Flags & ISD::ParamFlags::ByVal;
     // See if next argument requires stack alignment in ELF
     bool Expand = (ObjectVT == MVT::f64) || ((ArgNo + 1 < e) &&
@@ -1659,8 +1661,9 @@ static SDNode *isBLACompatibleAddress(SDOperand Op, SelectionDAG &DAG) {
 /// does not fit in registers.
 static SDOperand 
 CreateCopyOfByValArgument(SDOperand Src, SDOperand Dst, SDOperand Chain,
-                          unsigned Flags, SelectionDAG &DAG, unsigned Size) {
-  unsigned Align = 1 <<
+                          ISD::ParamFlags::ParamFlagsTy Flags, 
+                          SelectionDAG &DAG, unsigned Size) {
+  unsigned Align = ISD::ParamFlags::One <<
     ((Flags & ISD::ParamFlags::ByValAlign) >> ISD::ParamFlags::ByValAlignOffs);
   SDOperand AlignNode    = DAG.getConstant(Align, MVT::i32);
   SDOperand SizeNode     = DAG.getConstant(Size, MVT::i32);
@@ -1693,7 +1696,8 @@ SDOperand PPCTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG,
   
   // Add up all the space actually used.
   for (unsigned i = 0; i != NumOps; ++i) {
-    unsigned Flags = cast<ConstantSDNode>(Op.getOperand(5+2*i+1))->getValue();
+    ISD::ParamFlags::ParamFlagsTy Flags = 
+          cast<ConstantSDNode>(Op.getOperand(5+2*i+1))->getValue();
     unsigned ArgSize =MVT::getSizeInBits(Op.getOperand(5+2*i).getValueType())/8;
     if (Flags & ISD::ParamFlags::ByVal)
       ArgSize = (Flags & ISD::ParamFlags::ByValSize) >> 
@@ -1757,8 +1761,10 @@ SDOperand PPCTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG,
   for (unsigned i = 0; i != NumOps; ++i) {
     bool inMem = false;
     SDOperand Arg = Op.getOperand(5+2*i);
-    unsigned Flags = cast<ConstantSDNode>(Op.getOperand(5+2*i+1))->getValue();
-    unsigned AlignFlag = 1 << ISD::ParamFlags::OrigAlignmentOffs;
+    ISD::ParamFlags::ParamFlagsTy Flags = 
+            cast<ConstantSDNode>(Op.getOperand(5+2*i+1))->getValue();
+    unsigned AlignFlag = ISD::ParamFlags::One << 
+                         ISD::ParamFlags::OrigAlignmentOffs;
     // See if next argument requires stack alignment in ELF
     unsigned next = 5+2*(i+1)+1;
     bool Expand = (Arg.getValueType() == MVT::f64) || ((i + 1 < NumOps) &&

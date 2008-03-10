@@ -1145,8 +1145,9 @@ CopyTailCallClobberedArgumentsToVRegs(SDOperand Chain,
 /// parameter.
 static SDOperand 
 CreateCopyOfByValArgument(SDOperand Src, SDOperand Dst, SDOperand Chain,
-                          unsigned Flags, SelectionDAG &DAG) {
-  unsigned Align = 1 <<
+                          ISD::ParamFlags::ParamFlagsTy Flags, 
+                          SelectionDAG &DAG) {
+  unsigned Align = ISD::ParamFlags::One <<
     ((Flags & ISD::ParamFlags::ByValAlign) >> ISD::ParamFlags::ByValAlignOffs);
   unsigned Size = (Flags & ISD::ParamFlags::ByValSize) >>
     ISD::ParamFlags::ByValSizeOffs;
@@ -1162,7 +1163,8 @@ SDOperand X86TargetLowering::LowerMemArgument(SDOperand Op, SelectionDAG &DAG,
                                               unsigned CC,
                                               SDOperand Root, unsigned i) {
   // Create the nodes corresponding to a load from this parameter slot.
-  unsigned Flags = cast<ConstantSDNode>(Op.getOperand(3 + i))->getValue();
+  ISD::ParamFlags::ParamFlagsTy Flags = 
+                cast<ConstantSDNode>(Op.getOperand(3 + i))->getValue();
   bool AlwaysUseMutable = (CC==CallingConv::Fast) && PerformTailCallOpt;
   bool isByVal = Flags & ISD::ParamFlags::ByVal;
   bool isImmutable = !AlwaysUseMutable && !isByVal;
@@ -1380,7 +1382,8 @@ X86TargetLowering::LowerMemOpCallTo(SDOperand Op, SelectionDAG &DAG,
   SDOperand PtrOff = DAG.getIntPtrConstant(LocMemOffset);
   PtrOff = DAG.getNode(ISD::ADD, getPointerTy(), StackPtr, PtrOff);
   SDOperand FlagsOp = Op.getOperand(6+2*VA.getValNo());
-  unsigned Flags    = cast<ConstantSDNode>(FlagsOp)->getValue();
+  ISD::ParamFlags::ParamFlagsTy Flags = 
+            cast<ConstantSDNode>(FlagsOp)->getValue();
   if (Flags & ISD::ParamFlags::ByVal) {
     return CreateCopyOfByValArgument(Arg, PtrOff, Chain, Flags, DAG);
   }
@@ -1642,7 +1645,8 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
         assert(VA.isMemLoc());
         SDOperand Arg = Op.getOperand(5+2*VA.getValNo());
         SDOperand FlagsOp = Op.getOperand(6+2*VA.getValNo());
-        unsigned Flags    = cast<ConstantSDNode>(FlagsOp)->getValue();
+        ISD::ParamFlags::ParamFlagsTy Flags = 
+                  cast<ConstantSDNode>(FlagsOp)->getValue();
         // Create frame index.
         int32_t Offset = VA.getLocMemOffset()+FPDiff;
         uint32_t OpSize = (MVT::getSizeInBits(VA.getLocVT())+7)/8;

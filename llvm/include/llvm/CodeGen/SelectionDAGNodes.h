@@ -57,27 +57,29 @@ struct SDVTList {
 ///
 namespace ISD {
   namespace ParamFlags {    
-  enum Flags {
-    NoFlagSet         = 0,
-    ZExt              = 1<<0,  ///< Parameter should be zero extended
-    ZExtOffs          = 0,
-    SExt              = 1<<1,  ///< Parameter should be sign extended
-    SExtOffs          = 1,
-    InReg             = 1<<2,  ///< Parameter should be passed in register
-    InRegOffs         = 2,
-    StructReturn      = 1<<3,  ///< Hidden struct-return pointer
-    StructReturnOffs  = 3,
-    ByVal             = 1<<4,  ///< Struct passed by value
-    ByValOffs         = 4,
-    Nest              = 1<<5,  ///< Parameter is nested function static chain
-    NestOffs          = 5,
-    ByValAlign        = 0xF << 6, //< The alignment of the struct
-    ByValAlignOffs    = 6,
-    ByValSize         = 0x1ffff << 10, //< The size of the struct
-    ByValSizeOffs     = 10,
-    OrigAlignment     = 0x1F<<27,
-    OrigAlignmentOffs = 27
-  };
+    typedef unsigned long long ParamFlagsTy;
+
+    const ParamFlagsTy NoFlagSet         = 0ULL;
+    const ParamFlagsTy ZExt              = 1ULL<<0;  ///< Zero extended
+    const ParamFlagsTy ZExtOffs          = 0;
+    const ParamFlagsTy SExt              = 1ULL<<1;  ///< Sign extended
+    const ParamFlagsTy SExtOffs          = 1;
+    const ParamFlagsTy InReg             = 1ULL<<2;  ///< Passed in register
+    const ParamFlagsTy InRegOffs         = 2;
+    const ParamFlagsTy StructReturn      = 1ULL<<3;  ///< Hidden struct-ret ptr
+    const ParamFlagsTy StructReturnOffs  = 3;
+    const ParamFlagsTy ByVal             = 1ULL<<4;  ///< Struct passed by value
+    const ParamFlagsTy ByValOffs         = 4;
+    const ParamFlagsTy Nest              = 1ULL<<5;  ///< Nested fn static chain
+    const ParamFlagsTy NestOffs          = 5;
+    const ParamFlagsTy ByValAlign        = 0xFULL << 6; //< Struct alignment
+    const ParamFlagsTy ByValAlignOffs    = 6;
+    const ParamFlagsTy OrigAlignment     = 0x1FULL<<27;
+    const ParamFlagsTy OrigAlignmentOffs = 27;
+    const ParamFlagsTy ByValSize         = 0xffffffffULL << 32; //< Struct size 
+    const ParamFlagsTy ByValSizeOffs     = 32;
+
+    const ParamFlagsTy One               = 1LL; //< 1 of this type, for shifts
   }
 
   //===--------------------------------------------------------------------===//

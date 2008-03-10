@@ -30,7 +30,7 @@ void CallingConvEmitter::run(std::ostream &O) {
       << std::string(CCs[i]->getName().size()+13, ' ')
       << "MVT::ValueType LocVT, CCValAssign::LocInfo LocInfo,\n"
       << std::string(CCs[i]->getName().size()+13, ' ')
-      << "unsigned ArgFlags, CCState &State);\n";
+      << "ISD::ParamFlags::ParamFlagsTy ArgFlags, CCState &State);\n";
   }
   
   // Emit each calling convention description in full.
@@ -48,7 +48,7 @@ void CallingConvEmitter::EmitCallingConv(Record *CC, std::ostream &O) {
     << std::string(CC->getName().size()+13, ' ')
     << "MVT::ValueType LocVT, CCValAssign::LocInfo LocInfo,\n"
     << std::string(CC->getName().size()+13, ' ')
-    << "unsigned ArgFlags, CCState &State) {\n";
+    << "ISD::ParamFlags::ParamFlagsTy ArgFlags, CCState &State) {\n";
   // Emit all of the actions, in order.
   for (unsigned i = 0, e = CCActions->getSize(); i != e; ++i) {
     O << "\n";
