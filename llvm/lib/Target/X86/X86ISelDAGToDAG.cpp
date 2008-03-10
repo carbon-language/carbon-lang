@@ -550,7 +550,8 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
 
   DAG.RemoveDeadNodes();
 
-  // Emit machine code to BB. 
+  // Emit machine code to BB.  This can change 'BB' to the last block being 
+  // inserted into.
   ScheduleAndEmitDAG(DAG);
   
   // If we are emitting FP stack code, scan the basic block to determine if this
@@ -566,15 +567,27 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   // Scan all of the machine instructions in these MBBs, checking for FP
   // stores.  (RFP32 and RFP64 will not exist in SSE mode, but RFP80 might.)
   MachineFunction::iterator MBBI = FirstMBB;
-  do {
+  MachineFunction::iterator EndMBB = BB; ++EndMBB;
+  for (; MBBI != EndMBB; ++MBBI) {
+    MachineBasicBlock *MBB = MBBI;
+    
+    // If this block returns, ignore it.  We don't want to insert an FP_REG_KILL
+    // before the return.
+    if (!MBB->empty()) {
+      MachineBasicBlock::iterator EndI = MBB->end();
+      --EndI;
+      if (EndI->getDesc().isReturn())
+        continue;
+    }
+    
     bool ContainsFPCode = false;
-    for (MachineBasicBlock::iterator I = MBBI->begin(), E = MBBI->end();
+    for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
          !ContainsFPCode && I != E; ++I) {
       if (I->getNumOperands() != 0 && I->getOperand(0).isRegister()) {
         const TargetRegisterClass *clas;
         for (unsigned op = 0, e = I->getNumOperands(); op != e; ++op) {
           if (I->getOperand(op).isRegister() && I->getOperand(op).isDef() &&
-              TargetRegisterInfo::isVirtualRegister(I->getOperand(op).getReg()) &&
+            TargetRegisterInfo::isVirtualRegister(I->getOperand(op).getReg()) &&
               ((clas = RegInfo->getRegClass(I->getOperand(0).getReg())) == 
                  X86::RFP32RegisterClass ||
                clas == X86::RFP64RegisterClass ||
@@ -608,11 +621,11 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
     }
     // Finally, if we found any FP code, emit the FP_REG_KILL instruction.
     if (ContainsFPCode) {
-      BuildMI(*MBBI, MBBI->getFirstTerminator(),
+      BuildMI(*MBB, MBBI->getFirstTerminator(),
               TM.getInstrInfo()->get(X86::FP_REG_KILL));
       ++NumFPKill;
     }
-  } while (&*(MBBI++) != BB);
+  }
 }
 
 /// EmitSpecialCodeForMain - Emit any code that needs to be executed only in

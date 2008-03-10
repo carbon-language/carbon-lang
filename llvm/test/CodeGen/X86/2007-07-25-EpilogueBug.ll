@@ -1,5 +1,7 @@
+; Verify that the addl comes before any popl.
+
 ; RUN: llvm-as < %s | llc -mtriple=i686-pc-linux-gnu -mcpu=i386 | \
-; RUN:   %prcontext ret 1 | grep FP_REG_KILL
+; RUN:   %prcontext ret 1 | grep popl
 ; PR1573
 
 	%struct.c34006f__TsB = type { i8, i32, i32, %struct.c34006f__TsB___b___XVN }
