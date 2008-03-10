@@ -864,13 +864,17 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
       CDP.getTargetInfo().getInstruction(getOperator()->getName());
     // Apply the result type to the node
     if (NumResults == 0 || InstInfo.NumDefs == 0) {
-      MadeChange = UpdateNodeType(MVT::isVoid, TP);
+        MadeChange = UpdateNodeType(MVT::isVoid, TP);
     } else {
       Record *ResultNode = Inst.getResult(0);
       
       if (ResultNode->getName() == "ptr_rc") {
         std::vector<unsigned char> VT;
         VT.push_back(MVT::iPTR);
+        MadeChange = UpdateNodeType(VT, TP);
+      } else if (ResultNode->getName() == "unknown") {
+        std::vector<unsigned char> VT;
+        VT.push_back(MVT::isUnknown);
         MadeChange = UpdateNodeType(VT, TP);
       } else {
         assert(ResultNode->isSubClassOf("RegisterClass") &&
@@ -910,14 +914,16 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
         MadeChange |= Child->UpdateNodeType(VT, TP);
       } else if (OperandNode->getName() == "ptr_rc") {
         MadeChange |= Child->UpdateNodeType(MVT::iPTR, TP);
+      } else if (OperandNode->getName() == "unknown") {
+        MadeChange |= Child->UpdateNodeType(MVT::isUnknown, TP);
       } else {
         assert(0 && "Unknown operand type!");
         abort();
       }
       MadeChange |= Child->ApplyTypeConstraints(TP, NotRegisters);
     }
-    
-    if (ChildNo != getNumChildren())
+
+    if (ChildNo != getNumChildren() && !InstInfo.isVariadic)
       TP.error("Instruction '" + getOperator()->getName() +
                "' was provided too many operands!");
     
