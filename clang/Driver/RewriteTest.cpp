@@ -258,61 +258,61 @@ void RewriteTest::Initialize(ASTContext &context) {
   
   
   Rewrite.setSourceMgr(Context->getSourceManager());
+  
   // declaring objc_selector outside the parameter list removes a silly
   // scope related warning...
-  const char *s = "#pragma once\n"
-  "struct objc_selector; struct objc_class;\n"
-  "#ifndef OBJC_SUPER\n"
-  "struct objc_super { struct objc_object *o; "
-  "struct objc_object *superClass; };\n"
-  "#define OBJC_SUPER\n"
-  "#endif\n"
-  "#ifndef _REWRITER_typedef_Protocol\n"
-  "typedef struct objc_object Protocol;\n"
-  "#define _REWRITER_typedef_Protocol\n"
-  "#endif\n"
-  "extern struct objc_object *objc_msgSend"
-  "(struct objc_object *, struct objc_selector *, ...);\n"
-  "extern struct objc_object *objc_msgSendSuper"
-  "(struct objc_super *, struct objc_selector *, ...);\n"
-  "extern struct objc_object *objc_msgSend_stret"
-  "(struct objc_object *, struct objc_selector *, ...);\n"
-  "extern struct objc_object *objc_msgSendSuper_stret"
-  "(struct objc_super *, struct objc_selector *, ...);\n"
-  "extern struct objc_object *objc_msgSend_fpret"
-  "(struct objc_object *, struct objc_selector *, ...);\n"
-  "extern struct objc_object *objc_getClass"
-  "(const char *);\n"
-  "extern struct objc_object *objc_getMetaClass"
-  "(const char *);\n"
-  "extern void objc_exception_throw(struct objc_object *);\n"
-  "extern void objc_exception_try_enter(void *);\n"
-  "extern void objc_exception_try_exit(void *);\n"
-  "extern struct objc_object *objc_exception_extract(void *);\n"
-  "extern int objc_exception_match"
-  "(struct objc_class *, struct objc_object *, ...);\n"
-  "extern Protocol *objc_getProtocol(const char *);\n"
-  "#include <objc/objc.h>\n"
-  "#ifndef __FASTENUMERATIONSTATE\n"
-  "struct __objcFastEnumerationState {\n\t"
-  "unsigned long state;\n\t"
-  "id *itemsPtr;\n\t"
-  "unsigned long *mutationsPtr;\n\t"
-  "unsigned long extra[5];\n};\n"
-  "#define __FASTENUMERATIONSTATE\n"
-  "#endif\n";
-  if (LangOpts.Microsoft) {
-    std::string S = s;
+  std::string S = "#pragma once\n";
+  S += "struct objc_selector; struct objc_class;\n";
+  S += "#ifndef OBJC_SUPER\n";
+  S += "struct objc_super { struct objc_object *o; ";
+  S += "struct objc_object *superClass; };\n";
+  S += "#define OBJC_SUPER\n";
+  S += "#endif\n";
+  S += "#ifndef _REWRITER_typedef_Protocol\n";
+  S += "typedef struct objc_object Protocol;\n";
+  S += "#define _REWRITER_typedef_Protocol\n";
+  S += "#endif\n";
+  S += "extern struct objc_object *objc_msgSend";
+  S += "(struct objc_object *, struct objc_selector *, ...);\n";
+  S += "extern struct objc_object *objc_msgSendSuper";
+  S += "(struct objc_super *, struct objc_selector *, ...);\n";
+  S += "extern struct objc_object *objc_msgSend_stret";
+  S += "(struct objc_object *, struct objc_selector *, ...);\n";
+  S += "extern struct objc_object *objc_msgSendSuper_stret";
+  S += "(struct objc_super *, struct objc_selector *, ...);\n";
+  S += "extern struct objc_object *objc_msgSend_fpret";
+  S += "(struct objc_object *, struct objc_selector *, ...);\n";
+  S += "extern struct objc_object *objc_getClass";
+  S += "(const char *);\n";
+  S += "extern struct objc_object *objc_getMetaClass";
+  S += "(const char *);\n";
+  S += "extern void objc_exception_throw(struct objc_object *);\n";
+  S += "extern void objc_exception_try_enter(void *);\n";
+  S += "extern void objc_exception_try_exit(void *);\n";
+  S += "extern struct objc_object *objc_exception_extract(void *);\n";
+  S += "extern int objc_exception_match";
+  S += "(struct objc_class *, struct objc_object *, ...);\n";
+  S += "extern Protocol *objc_getProtocol(const char *);\n";
+  S += "#include <objc/objc.h>\n";
+  S += "#ifndef __FASTENUMERATIONSTATE\n";
+  S += "struct __objcFastEnumerationState {\n\t";
+  S += "unsigned long state;\n\t";
+  S += "id *itemsPtr;\n\t";
+  S += "unsigned long *mutationsPtr;\n\t";
+  S += "unsigned long extra[5];\n};\n";
+  S += "#define __FASTENUMERATIONSTATE\n";
+  S += "#endif\n";
+#if 0
+  if (LangOpts.Microsoft) 
     S += "#define __attribute__(X)\n";
-    s = S.c_str();
-  }
+#endif
   if (IsHeader) {
     // insert the whole string when rewriting a header file
-    InsertText(SourceLocation::getFileLoc(MainFileID, 0), s, strlen(s));
+    InsertText(SourceLocation::getFileLoc(MainFileID, 0), S.c_str(), S.size());
   }
   else {
     // Not rewriting header, exclude the #pragma once pragma
-    const char *p = s + strlen("#pragma once\n");
+    const char *p = S.c_str() + strlen("#pragma once\n");
     InsertText(SourceLocation::getFileLoc(MainFileID, 0), p, strlen(p));
   }
 }
@@ -647,7 +647,10 @@ void RewriteTest::RewriteObjCMethodDecl(ObjCMethodDecl *OMD,
     selfTy = Context->getPointerType(selfTy);
     if (ObjCSynthesizedStructs.count(OMD->getClassInterface()))
       ResultStr += "struct ";
-    ResultStr += selfTy.getAsString();
+    ResultStr += OMD->getClassInterface()->getName();
+    if (LangOpts.Microsoft)
+      ResultStr += "_IMPL";
+    ResultStr += " *";
   }
   else
     ResultStr += Context->getObjCIdType().getAsString();
@@ -726,12 +729,9 @@ void RewriteTest::RewriteInterfaceDecl(ObjCInterfaceDecl *ClassDecl) {
     ResultStr += "#define _REWRITER_typedef_";
     ResultStr += ClassDecl->getName();
     ResultStr += "\n";
-    ResultStr += "typedef struct ";
-    ResultStr += ClassDecl->getName();
-    ResultStr += " ";
+    ResultStr += "typedef struct objc_object ";
     ResultStr += ClassDecl->getName();
     ResultStr += ";\n#endif\n";
-    
     // Mark this typedef as having been generated.
     ObjCForwardDecls.insert(ClassDecl);
   }
@@ -2120,6 +2120,8 @@ void RewriteTest::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
   // SynthesizeObjCInternalStruct is ever called recursively.
   Result += "\nstruct ";
   Result += CDecl->getName();
+  if (LangOpts.Microsoft)
+    Result += "_IMPL";
   
   if (NumIvars > 0) {
     const char *cursor = strchr(startBuf, '{');
@@ -2131,6 +2133,8 @@ void RewriteTest::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
     if (RCDecl && ObjCSynthesizedStructs.count(RCDecl)) {
       Result = "\n    struct ";
       Result += RCDecl->getName();
+      if (LangOpts.Microsoft)
+        Result += "_IMPL";
       // Note: We don't name the field decl. This simplifies the "codegen" for
       // accessing a superclasses instance variables (and is similar to what gcc
       // does internally). The unnamed struct field feature is enabled with
@@ -2532,6 +2536,8 @@ void RewriteTest::SynthesizeIvarOffsetComputation(ObjCImplementationDecl *IDecl,
                                                   std::string &Result) {
   Result += "offsetof(struct ";
   Result += IDecl->getName();
+  if (LangOpts.Microsoft)
+    Result += "_IMPL";
   Result += ", ";
   Result += ivar->getName();
   Result += ")";
