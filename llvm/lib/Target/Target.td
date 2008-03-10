@@ -263,10 +263,6 @@ def variable_ops;
 /// flags. But currently we have but one flag.
 def ptr_rc;
 
-/// unknown definition - Mark this operand as being of unknown type, causing
-/// it to be resolved by inference in the context it is used.
-def unknown;
-
 /// Operand Types - These provide the built-in operand types that may be used
 /// by a target.  Targets can optionally provide their own operand types as
 /// needed, though this should not be needed for RISC targets.
@@ -355,15 +351,15 @@ def DECLARE : Instruction {
   let hasCtrlDep = 1;
 }
 def EXTRACT_SUBREG : Instruction {
-  let OutOperandList = (ops unknown:$dst);
-  let InOperandList = (ops unknown:$supersrc, i32imm:$subidx);
+  let OutOperandList = (ops variable_ops);
+  let InOperandList = (ops variable_ops);
   let AsmString = "";
   let Namespace = "TargetInstrInfo";
   let neverHasSideEffects = 1;
 }
 def INSERT_SUBREG : Instruction {
-  let OutOperandList = (ops unknown:$dst);
-  let InOperandList = (ops unknown:$supersrc, unknown:$subsrc, i32imm:$subidx);
+        let OutOperandList = (ops variable_ops);
+  let InOperandList = (ops variable_ops);
   let AsmString = "";
   let Namespace = "TargetInstrInfo";
   let neverHasSideEffects = 1;

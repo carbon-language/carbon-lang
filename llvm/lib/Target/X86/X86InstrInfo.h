@@ -46,14 +46,6 @@ namespace X86 {
     COND_INVALID
   };
   
-  // X86 specific implict values used for subregister inserts. 
-  // This can be used to model the fact that x86-64 by default
-  // inserts 32-bit values into 64-bit registers implicitly containing zeros.
-  enum ImplicitVal {
-    IMPL_VAL_UNDEF = 0,
-    IMPL_VAL_ZERO  = 1
-  };
-  
   // Turn condition code into conditional branch opcode.
   unsigned GetCondBranchFromCond(CondCode CC);
   

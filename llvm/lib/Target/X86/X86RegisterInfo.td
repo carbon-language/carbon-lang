@@ -176,10 +176,6 @@ let Namespace = "X86" in {
 // sub registers for each register.
 //
 
-def x86_subreg_8bit    : PatLeaf<(i32 1)>;
-def x86_subreg_16bit   : PatLeaf<(i32 2)>;
-def x86_subreg_32bit   : PatLeaf<(i32 3)>;
-
 def : SubRegSet<1, [AX, CX, DX, BX, SP,  BP,  SI,  DI,  
                     R8W, R9W, R10W, R11W, R12W, R13W, R14W, R15W],
                    [AL, CL, DL, BL, SPL, BPL, SIL, DIL, 
