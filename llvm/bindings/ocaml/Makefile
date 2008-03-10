@@ -9,6 +9,7 @@
 
 LEVEL := ../..
 DIRS = llvm bitreader bitwriter analysis executionengine
+ExtraMakefiles = $(PROJ_OBJ_DIR)/Makefile.ocaml
 
 ocamldoc:
 	$(Verb) for i in $(DIRS) ; do \

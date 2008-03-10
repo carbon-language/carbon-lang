@@ -159,7 +159,7 @@ endif
 #------------------------------------------------------------------------
 ifneq ($(PROJ_OBJ_DIR),$(PROJ_SRC_DIR))
 
-Makefile: $(PROJ_SRC_DIR)/Makefile
+Makefile: $(PROJ_SRC_DIR)/Makefile $(ExtraMakefiles)
 	$(Echo) "Updating Makefile"
 	$(Verb) $(MKDIR) $(@D)
 	$(Verb) $(CP) -f $< $@
@@ -171,7 +171,7 @@ $(PROJ_OBJ_DIR)/Makefile% : $(PROJ_SRC_DIR)/Makefile%
 	@case '$?' in \
           *Makefile.rules) ;; \
           *.in) ;; \
-          *) $(Echo) "Updating $(@F)" ; \
+          *) $(EchoCmd) "Updating $(@F)" ; \
 	     $(MKDIR) $(@D) ; \
 	     $(CP) -f $< $@ ;; \
 	esac
