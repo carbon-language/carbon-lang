@@ -23,7 +23,6 @@
 #include <algorithm>
 #include <cstdarg>
 #include <cstdlib>
-#include <map>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
