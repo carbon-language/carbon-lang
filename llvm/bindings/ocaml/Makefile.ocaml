@@ -38,10 +38,16 @@ endif
 
 # Tools
 OCAMLCFLAGS += -I $(OcamlDir) -I $(ObjDir)
+ifneq ($(ObjectsO),)
 OCAMLAFLAGS += $(patsubst %,-cclib %, \
                  $(filter-out -L$(LibDir),-l$(LIBRARYNAME) \
                                           $(shell $(LLVM_CONFIG) --ldflags)) \
                                           $(UsedLibs))
+else
+OCAMLAFLAGS += $(patsubst %,-cclib %, \
+                 $(filter-out -L$(LibDir),$(shell $(LLVM_CONFIG) --ldflags)) \
+                                          $(UsedLibs))
+endif
  
 # -g was introduced in 3.10.0.
 #ifneq ($(ENABLE_OPTIMIZED),1)
@@ -107,6 +113,7 @@ $(ObjectsCMI): $(UsedOcamlInterfaces:%=$(OcamlDir)/%.cmi)
 
 ##===- Build static library from C sources --------------------------------===##
 
+ifneq ($(ObjectsO),)
 all-local:: $(LibraryA)
 clean-local:: clean-a
 install-local:: install-a
@@ -130,6 +137,7 @@ install-a:: $(LibraryA)
 uninstall-a::
 	$(Echo) "Uninstalling $(DestA)"
 	-$(Verb) $(RM) -f $(DestA)
+endif
 
 
 ##===- Deposit dependent libraries adjacent to Ocaml libs -----------------===##
