@@ -285,6 +285,13 @@ uninstall-cmxa::
 
 endif
 
+##===- Generate documentation ---------------------------------------------===##
+
+$(ObjDir)/$(LIBRARYNAME).odoc: $(ObjectsCMI)
+	$(Echo) "Documenting $(notdir $@)"
+	$(Verb) $(OCAMLDOC) -I $(OcamlDir) -I $(ObjDir) -dump $@ $(OcamlHeaders)
+
+ocamldoc: $(ObjDir)/$(LIBRARYNAME).odoc
 
 ##===- Debugging gunk -----------------------------------------------------===##
 printvars:: printcamlvars

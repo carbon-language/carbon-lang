@@ -31,13 +31,16 @@ DOXYFILES  := doxygen.cfg.in doxygen.css doxygen.footer doxygen.header \
               doxygen.intro
 EXTRA_DIST := $(HTML) $(DOXYFILES) llvm.css CommandGuide img
 
-.PHONY: install-html install-doxygen doxygen
+.PHONY: install-html install-doxygen doxygen install-ocamldoc ocamldoc
 
+install_targets := install-html
 ifeq ($(ENABLE_DOXYGEN),1)
-install-local:: install-html install-doxygen
-else
-install-local:: install-html
+install_targets += install-doxygen
 endif
+ifneq (,$(filter ocaml,$(BINDINGS_TO_BUILD)))
+install_targets += install-ocamldoc
+endif
+install-local:: $(install_targets)
 
 install-html: $(PROJ_OBJ_DIR)/html.tar.gz
 	$(Echo) Installing HTML documentation
@@ -55,7 +58,6 @@ $(PROJ_OBJ_DIR)/html.tar.gz: $(HTML)
 	$(Verb) $(GZIP) $(PROJ_OBJ_DIR)/html.tar
 
 install-doxygen: doxygen
-	$(Echo) Installing doxygen documentation
 	$(Echo) Installing doxygen documentation
 	$(Verb) $(MKDIR) $(PROJ_docsdir)/html/doxygen
 	$(Verb) $(DataInstall) $(PROJ_OBJ_DIR)/doxygen.tar.gz $(PROJ_docsdir)
@@ -85,4 +87,31 @@ $(LLVM_SRC_ROOT)/docs/userloc.html:
 	$(Echo) Making User LOC Table
 	$(Verb) cd $(LLVM_SRC_ROOT) ; ./utils/userloc.pl -details -recurse \
 	  -html lib include tools runtime utils examples autoconf test > docs/userloc.html
-	  
+
+install-ocamldoc: ocamldoc
+	$(Echo) Installing ocamldoc documentation
+	$(Verb) $(MKDIR) $(PROJ_docsdir)/ocamldoc/html
+	$(Verb) $(DataInstall) $(PROJ_OBJ_DIR)/ocamldoc.tar.gz $(PROJ_docsdir)
+	$(Verb) cd $(PROJ_OBJ_DIR)/ocamldoc && \
+	  $(FIND) . -type f -exec \
+	    $(DataInstall) {} $(PROJ_docsdir)/ocamldoc/html \;
+
+ocamldoc: regen-ocamldoc $(PROJ_OBJ_DIR)/ocamldoc.tar.gz
+
+regen-ocamldoc:
+	$(Echo) Building ocamldoc documentation
+	$(Verb) if test -e $(PROJ_OBJ_DIR)/ocamldoc ; then \
+		$(RM) -rf $(PROJ_OBJ_DIR)/ocamldoc ; \
+	fi
+	$(Verb) $(MAKE) -C $(LEVEL)/bindings/ocaml ocamldoc
+	$(Verb) $(MKDIR) $(PROJ_OBJ_DIR)/ocamldoc/html
+	$(Verb) \
+		$(OCAMLDOC) -d $(PROJ_OBJ_DIR)/ocamldoc/html -sort -colorize-code -html \
+		`$(FIND) $(LEVEL)/bindings/ocaml -name "*.odoc" -exec echo -load '{}' ';'`
+
+$(PROJ_OBJ_DIR)/ocamldoc.tar.gz:
+	$(Echo) Packaging ocamldoc documentation
+	$(Verb) $(RM) -rf $@ $(PROJ_OBJ_DIR)/ocamldoc.tar
+	$(Verb) $(TAR) cf $(PROJ_OBJ_DIR)/ocamldoc.tar ocamldoc
+	$(Verb) $(GZIP) $(PROJ_OBJ_DIR)/ocamldoc.tar
+	$(Verb) $(CP) $(PROJ_OBJ_DIR)/ocamldoc.tar.gz $(PROJ_OBJ_DIR)/ocamldoc/html/
