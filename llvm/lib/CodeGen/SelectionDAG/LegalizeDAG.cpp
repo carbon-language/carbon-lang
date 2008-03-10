@@ -3826,40 +3826,78 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         }
         break;
       }
-      // Convert f32 / f64 to i32 / i64.
+      // Convert f32 / f64 to i32 / i64 / i128.
       RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
       switch (Node->getOpcode()) {
       case ISD::FP_TO_SINT: {
-        if (OVT == MVT::f32)
-          LC = (VT == MVT::i32)
-            ? RTLIB::FPTOSINT_F32_I32 : RTLIB::FPTOSINT_F32_I64;
-        else if (OVT == MVT::f64)
-          LC = (VT == MVT::i32)
-            ? RTLIB::FPTOSINT_F64_I32 : RTLIB::FPTOSINT_F64_I64;
-        else if (OVT == MVT::f80) {
-          assert(VT == MVT::i64);
-          LC = RTLIB::FPTOSINT_F80_I64;
-        }
-        else if (OVT == MVT::ppcf128) {
-          assert(VT == MVT::i64);
-          LC = RTLIB::FPTOSINT_PPCF128_I64;
+        if (VT == MVT::i32) {
+          if (OVT == MVT::f32)
+            LC = RTLIB::FPTOSINT_F32_I32;
+          else if (OVT == MVT::f64)
+            LC = RTLIB::FPTOSINT_F64_I32;
+          else
+            assert(0 && "Unexpected i32-to-fp conversion!");
+        } else if (VT == MVT::i64) {
+          if (OVT == MVT::f32)
+            LC = RTLIB::FPTOSINT_F32_I64;
+          else if (OVT == MVT::f64)
+            LC = RTLIB::FPTOSINT_F64_I64;
+          else if (OVT == MVT::f80)
+            LC = RTLIB::FPTOSINT_F80_I64;
+          else if (OVT == MVT::ppcf128)
+            LC = RTLIB::FPTOSINT_PPCF128_I64;
+          else
+            assert(0 && "Unexpected i64-to-fp conversion!");
+        } else if (VT == MVT::i128) {
+          if (OVT == MVT::f32)
+            LC = RTLIB::FPTOSINT_F32_I128;
+          else if (OVT == MVT::f64)
+            LC = RTLIB::FPTOSINT_F64_I128;
+          else if (OVT == MVT::f80)
+            LC = RTLIB::FPTOSINT_F80_I128;
+          else if (OVT == MVT::ppcf128)
+            LC = RTLIB::FPTOSINT_PPCF128_I128;
+          else
+            assert(0 && "Unexpected i128-to-fp conversion!");
+        } else {
+          assert(0 && "Unexpectd int-to-fp conversion!");
         }
         break;
       }
       case ISD::FP_TO_UINT: {
-        if (OVT == MVT::f32)
-          LC = (VT == MVT::i32)
-            ? RTLIB::FPTOUINT_F32_I32 : RTLIB::FPTOSINT_F32_I64;
-        else if (OVT == MVT::f64)
-          LC = (VT == MVT::i32)
-            ? RTLIB::FPTOUINT_F64_I32 : RTLIB::FPTOSINT_F64_I64;
-        else if (OVT == MVT::f80) {
-          LC = (VT == MVT::i32)
-            ? RTLIB::FPTOUINT_F80_I32 : RTLIB::FPTOUINT_F80_I64;
-        }
-        else if (OVT ==  MVT::ppcf128) {
-          assert(VT == MVT::i64);
-          LC = RTLIB::FPTOUINT_PPCF128_I64;
+        if (VT == MVT::i32) {
+          if (OVT == MVT::f32)
+            LC = RTLIB::FPTOUINT_F32_I32;
+          else if (OVT == MVT::f64)
+            LC = RTLIB::FPTOUINT_F64_I32;
+          else if (OVT == MVT::f80)
+            LC = RTLIB::FPTOUINT_F80_I32;
+          else
+            assert(0 && "Unexpected i32-to-fp conversion!");
+        } else if (VT == MVT::i64) {
+          if (OVT == MVT::f32)
+            LC = RTLIB::FPTOUINT_F32_I64;
+          else if (OVT == MVT::f64)
+            LC = RTLIB::FPTOUINT_F64_I64;
+          else if (OVT == MVT::f80)
+            LC = RTLIB::FPTOUINT_F80_I64;
+          else if (OVT == MVT::ppcf128)
+            LC = RTLIB::FPTOUINT_PPCF128_I64;
+          else
+            assert(0 && "Unexpected i64-to-fp conversion!");
+        } else if (VT == MVT::i128) {
+          if (OVT == MVT::f32)
+            LC = RTLIB::FPTOUINT_F32_I128;
+          else if (OVT == MVT::f64)
+            LC = RTLIB::FPTOUINT_F64_I128;
+          else if (OVT == MVT::f80)
+            LC = RTLIB::FPTOUINT_F80_I128;
+          else if (OVT == MVT::ppcf128)
+            LC = RTLIB::FPTOUINT_PPCF128_I128;
+          else
+            assert(0 && "Unexpected i128-to-fp conversion!");
+        } else {
+          assert(0 && "Unexpectd int-to-fp conversion!");
         }
         break;
       }
@@ -5428,9 +5466,12 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
   
   assert(TLI.getLibcallName(LC) && "Don't know how to expand this SINT_TO_FP!");
   Source = DAG.getNode(ISD::SINT_TO_FP, DestTy, Source);
-  SDOperand UnusedHiPart;
-  return ExpandLibCall(TLI.getLibcallName(LC), Source.Val, isSigned,
-                       UnusedHiPart);
+  SDOperand HiPart;
+  SDOperand Result = ExpandLibCall(TLI.getLibcallName(LC), Source.Val, isSigned,
+                                   HiPart);
+  if (Result.getValueType() != DestTy)
+    Result = DAG.getNode(ISD::BUILD_PAIR, DestTy, Result, HiPart);
+  return Result;
 }
 
 /// ExpandLegalINT_TO_FP - This function is responsible for legalizing a
@@ -6177,16 +6218,31 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     }
 
     RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
-    if (Node->getOperand(0).getValueType() == MVT::f32)
-      LC = RTLIB::FPTOSINT_F32_I64;
-    else if (Node->getOperand(0).getValueType() == MVT::f64)
-      LC = RTLIB::FPTOSINT_F64_I64;
-    else if (Node->getOperand(0).getValueType() == MVT::f80)
-      LC = RTLIB::FPTOSINT_F80_I64;
-    else if (Node->getOperand(0).getValueType() == MVT::ppcf128)
-      LC = RTLIB::FPTOSINT_PPCF128_I64;
-    Lo = ExpandLibCall(TLI.getLibcallName(LC), Node,
-                       false/*sign irrelevant*/, Hi);
+    if (VT == MVT::i64) {
+      if (Node->getOperand(0).getValueType() == MVT::f32)
+        LC = RTLIB::FPTOSINT_F32_I64;
+      else if (Node->getOperand(0).getValueType() == MVT::f64)
+        LC = RTLIB::FPTOSINT_F64_I64;
+      else if (Node->getOperand(0).getValueType() == MVT::f80)
+        LC = RTLIB::FPTOSINT_F80_I64;
+      else if (Node->getOperand(0).getValueType() == MVT::ppcf128)
+        LC = RTLIB::FPTOSINT_PPCF128_I64;
+      Lo = ExpandLibCall(TLI.getLibcallName(LC), Node,
+                         false/*sign irrelevant*/, Hi);
+    } else if (VT == MVT::i128) {
+      if (Node->getOperand(0).getValueType() == MVT::f32)
+        LC = RTLIB::FPTOSINT_F32_I128;
+      else if (Node->getOperand(0).getValueType() == MVT::f64)
+        LC = RTLIB::FPTOSINT_F64_I128;
+      else if (Node->getOperand(0).getValueType() == MVT::f80)
+        LC = RTLIB::FPTOSINT_F80_I128;
+      else if (Node->getOperand(0).getValueType() == MVT::ppcf128)
+        LC = RTLIB::FPTOSINT_PPCF128_I128;
+      Lo = ExpandLibCall(TLI.getLibcallName(LC), Node,
+                         false/*sign irrelevant*/, Hi);
+    } else {
+      assert(0 && "Unexpected uint-to-fp conversion!");
+    }
     break;
   }
 
@@ -6209,16 +6265,31 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     }
 
     RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
-    if (Node->getOperand(0).getValueType() == MVT::f32)
-      LC = RTLIB::FPTOUINT_F32_I64;
-    else if (Node->getOperand(0).getValueType() == MVT::f64)
-      LC = RTLIB::FPTOUINT_F64_I64;
-    else if (Node->getOperand(0).getValueType() == MVT::f80)
-      LC = RTLIB::FPTOUINT_F80_I64;
-    else if (Node->getOperand(0).getValueType() == MVT::ppcf128)
-      LC = RTLIB::FPTOUINT_PPCF128_I64;
-    Lo = ExpandLibCall(TLI.getLibcallName(LC), Node,
-                       false/*sign irrelevant*/, Hi);
+    if (VT == MVT::i64) {
+      if (Node->getOperand(0).getValueType() == MVT::f32)
+        LC = RTLIB::FPTOUINT_F32_I64;
+      else if (Node->getOperand(0).getValueType() == MVT::f64)
+        LC = RTLIB::FPTOUINT_F64_I64;
+      else if (Node->getOperand(0).getValueType() == MVT::f80)
+        LC = RTLIB::FPTOUINT_F80_I64;
+      else if (Node->getOperand(0).getValueType() == MVT::ppcf128)
+        LC = RTLIB::FPTOUINT_PPCF128_I64;
+      Lo = ExpandLibCall(TLI.getLibcallName(LC), Node,
+                         false/*sign irrelevant*/, Hi);
+    } else if (VT == MVT::i128) {
+      if (Node->getOperand(0).getValueType() == MVT::f32)
+        LC = RTLIB::FPTOUINT_F32_I128;
+      else if (Node->getOperand(0).getValueType() == MVT::f64)
+        LC = RTLIB::FPTOUINT_F64_I128;
+      else if (Node->getOperand(0).getValueType() == MVT::f80)
+        LC = RTLIB::FPTOUINT_F80_I128;
+      else if (Node->getOperand(0).getValueType() == MVT::ppcf128)
+        LC = RTLIB::FPTOUINT_PPCF128_I128;
+      Lo = ExpandLibCall(TLI.getLibcallName(LC), Node,
+                         false/*sign irrelevant*/, Hi);
+    } else {
+      assert(0 && "Unexpected uint-to-fp conversion!");
+    }
     break;
   }
 
@@ -6631,7 +6702,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   case ISD::UINT_TO_FP: {
     bool isSigned = Node->getOpcode() == ISD::SINT_TO_FP;
     MVT::ValueType SrcVT = Node->getOperand(0).getValueType();
-    if (VT == MVT::ppcf128 && SrcVT != MVT::i64) {
+    if (VT == MVT::ppcf128 && SrcVT == MVT::i32) {
       static const uint64_t zero = 0;
       if (isSigned) {
         Hi = LegalizeOp(DAG.getNode(ISD::SINT_TO_FP, MVT::f64, 
@@ -6674,26 +6745,6 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
                Lo, Hi);
       break;
     }
-    RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
-    if (Node->getOperand(0).getValueType() == MVT::i64) {
-      if (VT == MVT::f32)
-        LC = isSigned ? RTLIB::SINTTOFP_I64_F32 : RTLIB::UINTTOFP_I64_F32;
-      else if (VT == MVT::f64)
-        LC = isSigned ? RTLIB::SINTTOFP_I64_F64 : RTLIB::UINTTOFP_I64_F64;
-      else if (VT == MVT::f80) {
-        assert(isSigned);
-        LC = RTLIB::SINTTOFP_I64_F80;
-      }
-      else if (VT == MVT::ppcf128) {
-        assert(isSigned);
-        LC = RTLIB::SINTTOFP_I64_PPCF128;
-      }
-    } else {
-      if (VT == MVT::f32)
-        LC = isSigned ? RTLIB::SINTTOFP_I32_F32 : RTLIB::UINTTOFP_I32_F32;
-      else
-        LC = isSigned ? RTLIB::SINTTOFP_I32_F64 : RTLIB::UINTTOFP_I32_F64;
-    }
 
     // Promote the operand if needed.
     if (getTypeAction(SrcVT) == Promote) {
@@ -6705,15 +6756,9 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       Node = DAG.UpdateNodeOperands(Op, Tmp).Val;
     }
 
-    const char *LibCall = TLI.getLibcallName(LC);
-    if (LibCall)
-      Lo = ExpandLibCall(TLI.getLibcallName(LC), Node, isSigned, Hi);
-    else  {
-      Lo = ExpandIntToFP(Node->getOpcode() == ISD::SINT_TO_FP, VT,
-                         Node->getOperand(0));
-      if (getTypeAction(Lo.getValueType()) == Expand)
-        ExpandOp(Lo, Lo, Hi);
-    }
+    Lo = ExpandIntToFP(Node->getOpcode() == ISD::SINT_TO_FP, VT,
+                       Node->getOperand(0));
+    ExpandOp(Lo, Lo, Hi);
     break;
   }
   }
