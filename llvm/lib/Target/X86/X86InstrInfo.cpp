@@ -1499,7 +1499,7 @@ void X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
     return;
   }
   
-  cerr << "Not yet supported!";
+  assert(0 && "Not yet supported!");
   abort();
 }
 
