@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=powerpc-apple-darwin -enable-ppc-regscavenger
+; RUN: llvm-as < %s | llc -mtriple=powerpc-apple-darwin -enable-ppc32-regscavenger
 
 declare i8* @bar(i32)
 
