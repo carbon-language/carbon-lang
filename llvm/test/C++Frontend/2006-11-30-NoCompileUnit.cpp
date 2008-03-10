@@ -2,8 +2,8 @@
 // unit size issue with gdb.
 // RUN: %llvmgcc -S -O0 -g %s -o - | llvm-as | \
 // RUN:   llc --disable-fp-elim -o NoCompileUnit.s -f
-// RUN: as NoCompileUnit.s -o NoCompileUnit.o
-// RUN: g++ NoCompileUnit.o -o NoCompileUnit.exe
+// RUN: %compile_c NoCompileUnit.s -o NoCompileUnit.o
+// RUN: %compile_cxx NoCompileUnit.o -o NoCompileUnit.exe
 // RUN: echo {break main\nrun\np NoCompileUnit::pubname} > %t2
 // RUN: gdb -q -batch -n -x %t2 NoCompileUnit.exe | \
 // RUN:   tee NoCompileUnit.out | not grep {"low == high"}
