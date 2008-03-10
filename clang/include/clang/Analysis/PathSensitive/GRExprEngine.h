@@ -428,7 +428,17 @@ protected:
         return TF->EvalBinOp(BasicVals, Op, cast<LVal>(L), cast<NonLVal>(R));
     }
     
-    return TF->EvalBinOp(BasicVals, Op, cast<NonLVal>(L), cast<NonLVal>(R));
+    if (isa<LVal>(R)) {
+      // Support pointer arithmetic where the increment/decrement operand
+      // is on the left and the pointer on the right.
+      
+      assert (Op == BinaryOperator::Add || Op == BinaryOperator::Sub);
+
+      // Commute the operands.      
+      return TF->EvalBinOp(BasicVals, Op, cast<LVal>(R), cast<NonLVal>(L));
+    }
+    else
+      return TF->EvalBinOp(BasicVals, Op, cast<NonLVal>(L), cast<NonLVal>(R));
   }
   
   void EvalCall(NodeSet& Dst, CallExpr* CE, LVal L, NodeTy* Pred) {
