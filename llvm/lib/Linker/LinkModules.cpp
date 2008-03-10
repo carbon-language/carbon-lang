@@ -659,6 +659,11 @@ static bool LinkAlias(Module *Dest, const Module *Src,
 
       // The only allowed way is to link alias with external declaration.
       if (DGV->isDeclaration()) {
+        // But only if aliasee is global too...
+        if (!isa<GlobalVariable>(DAliasee))
+            return Error(Err, "Global-Alias Collision on '" + SGA->getName() +
+                         "': aliasee is not global variable");
+
         NewGA = new GlobalAlias(SGA->getType(), SGA->getLinkage(),
                                 SGA->getName(), DAliasee, Dest);
         CopyGVAttributes(NewGA, SGA);
@@ -685,6 +690,11 @@ static bool LinkAlias(Module *Dest, const Module *Src,
 
       // The only allowed way is to link alias with external declaration.
       if (DF->isDeclaration()) {
+        // But only if aliasee is function too...
+        if (!isa<Function>(DAliasee))
+            return Error(Err, "Function-Alias Collision on '" + SGA->getName() +
+                         "': aliasee is not function");
+
         NewGA = new GlobalAlias(SGA->getType(), SGA->getLinkage(),
                                 SGA->getName(), DAliasee, Dest);
         CopyGVAttributes(NewGA, SGA);
