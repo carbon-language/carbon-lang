@@ -1050,10 +1050,7 @@ class FunctionValType {
   bool isVarArg;
 public:
   FunctionValType(const Type *ret, const std::vector<const Type*> &args,
-                  bool isVA) : RetTy(ret), isVarArg(isVA) {
-    for (unsigned i = 0; i < args.size(); ++i)
-      ArgTypes.push_back(args[i]);
-  }
+                  bool isVA) : RetTy(ret), ArgTypes(args), isVarArg(isVA) {}
 
   static FunctionValType get(const FunctionType *FT);
 
