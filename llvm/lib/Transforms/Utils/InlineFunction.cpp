@@ -522,13 +522,14 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
 
   // Handle all of the return instructions that we just cloned in, and eliminate
   // any users of the original call/invoke instruction.
-  if (!Returns.empty()) {
+  const Type *RTy = CalledFunc->getReturnType();
+  const StructType *STy = dyn_cast<StructType>(RTy);
+  if (Returns.size() > 1 || STy) {
     // The PHI node should go at the front of the new basic block to merge all
     // possible incoming values.
     SmallVector<PHINode *, 4> PHIs;
     if (!TheCall->use_empty()) {
-      const Type *RTy = CalledFunc->getReturnType();
-      if (const StructType *STy = dyn_cast<StructType>(RTy)) {
+      if (STy) {
         unsigned NumRetVals = STy->getNumElements();
         // Create new phi nodes such that phi node number in the PHIs vector
         // match corresponding return value operand number.
@@ -557,10 +558,9 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
     // Loop over all of the return instructions adding entries to the PHI node as
     // appropriate.
     if (!PHIs.empty()) {
-      const Type *RTy = CalledFunc->getReturnType();
       // There is atleast one return value.
       unsigned NumRetVals = 1; 
-      if (const StructType *STy = dyn_cast<StructType>(RTy))
+      if (STy)
         NumRetVals = STy->getNumElements();
       for (unsigned j = 0; j < NumRetVals; ++j) {
         PHINode *PHI = PHIs[j];
@@ -579,8 +579,26 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
     for (unsigned i = 0, e = Returns.size(); i != e; ++i) {
       ReturnInst *RI = Returns[i];
       new BranchInst(AfterCallBB, RI);
-      RI->getParent()->getInstList().erase(RI);
+      RI->eraseFromParent();
     }
+  } else if (!Returns.empty()) {
+    // Otherwise, if there is exactly one return value, just replace anything
+    // using the return value of the call with the computed value.
+    if (!TheCall->use_empty())
+      TheCall->replaceAllUsesWith(Returns[0]->getReturnValue());
+    
+    // Splice the code from the return block into the block that it will return
+    // to, which contains the code that was after the call.
+    BasicBlock *ReturnBB = Returns[0]->getParent();
+    AfterCallBB->getInstList().splice(AfterCallBB->begin(),
+                                      ReturnBB->getInstList());
+    
+    // Update PHI nodes that use the ReturnBB to use the AfterCallBB.
+    ReturnBB->replaceAllUsesWith(AfterCallBB);
+    
+    // Delete the return instruction now and empty ReturnBB now.
+    Returns[0]->eraseFromParent();
+    ReturnBB->eraseFromParent();
   } else if (!TheCall->use_empty()) {
     // No returns, but something is using the return value of the call.  Just
     // nuke the result.
