@@ -42,6 +42,16 @@
 #include <cstdlib>
 using namespace llvm;
 
+// FIXME This disables some code that aligns the stack to a boundary
+// bigger than the default (16 bytes on Darwin) when there is a stack local
+// of greater alignment.  This does not currently work, because the delta
+// between old and new stack pointers is added to offsets that reference
+// incoming parameters after the prolog is generated, and the code that 
+// does that doesn't handle a variable delta.  You don't want to do that
+// anyway; a better approach is to reserve another register that retains
+// to the incoming stack pointer, and reference parameters relative to that.
+#define ALIGN_STACK 0
+
 // FIXME (64-bit): Eventually enable by default.
 cl::opt<bool> EnablePPC32RS("enable-ppc32-regscavenger",
                             cl::init(false),
@@ -858,10 +868,10 @@ void PPCRegisterInfo::determineFrameLayout(MachineFunction &MF) const {
   // If we are a leaf function, and use up to 224 bytes of stack space,
   // don't have a frame pointer, calls, or dynamic alloca then we do not need
   // to adjust the stack pointer (we fit in the Red Zone).
-  if (FrameSize <= 224 &&             // Fits in red zone.
-      !MFI->hasVarSizedObjects() &&   // No dynamic alloca.
-      !MFI->hasCalls() &&             // No calls.
-      MaxAlign <= TargetAlign) {      // No special alignment.
+  if (FrameSize <= 224 &&                          // Fits in red zone.
+      !MFI->hasVarSizedObjects() &&                // No dynamic alloca.
+      !MFI->hasCalls() &&                          // No calls.
+      (!ALIGN_STACK || MaxAlign <= TargetAlign)) { // No special alignment.
     // No need for frame
     MFI->setStackSize(0);
     return;
@@ -1028,7 +1038,7 @@ PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   // If there is a preferred stack alignment, align R1 now
   if (!IsPPC64) {
     // PPC32.
-    if (MaxAlign > TargetAlign) {
+    if (ALIGN_STACK && MaxAlign > TargetAlign) {
       assert(isPowerOf2_32(MaxAlign)&&isInt16(MaxAlign)&&"Invalid alignment!");
       assert(isInt16(NegFrameSize) && "Unhandled stack size and alignment!");
 
@@ -1061,7 +1071,7 @@ PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
         .addReg(PPC::R0);
     }
   } else {    // PPC64.
-    if (MaxAlign > TargetAlign) {
+    if (ALIGN_STACK && MaxAlign > TargetAlign) {
       assert(isPowerOf2_32(MaxAlign)&&isInt16(MaxAlign)&&"Invalid alignment!");
       assert(isInt16(NegFrameSize) && "Unhandled stack size and alignment!");
 
@@ -1182,7 +1192,7 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
     // The loaded (or persistent) stack pointer value is offset by the 'stwu'
     // on entry to the function.  Add this offset back now.
     if (!Subtarget.isPPC64()) {
-      if (isInt16(FrameSize) && TargetAlign >= MaxAlign &&
+      if (isInt16(FrameSize) && (!ALIGN_STACK || TargetAlign >= MaxAlign) &&
             !MFI->hasVarSizedObjects()) {
           BuildMI(MBB, MBBI, TII.get(PPC::ADDI), PPC::R1)
               .addReg(PPC::R1).addImm(FrameSize);
