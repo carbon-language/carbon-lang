@@ -342,7 +342,7 @@ external vector_size : lltype -> int = "llvm_vector_size"
 
 (** [opaque_type ()] creates a new opaque type distinct from any other.
     Opaque types are useful for building recursive types in combination with
-    {!refine_type} [opaque_ty ty].
+    {!refine_type}.
     See [llvm::OpaqueType::get]. *)
 external opaque_type : unit -> lltype = "llvm_opaque_type"
 
@@ -1275,7 +1275,7 @@ external build_fcmp : Fcmp.t -> llvalue -> llvalue -> string ->
 (** [build_phi incoming name b] creates a
     [%name = phi %incoming]
     instruction at the position specified by the instruction builder [b].
-    [incoming] is a list of [({!llvalue}, {!llbasicblock})] tuples.
+    [incoming] is a list of [(llvalue, llbasicblock)] tuples.
     See the method [llvm::LLVMBuilder::CreatePHI]. *)
 external build_phi : (llvalue * llbasicblock) list -> string -> llbuilder ->
                      llvalue = "llvm_build_phi"
