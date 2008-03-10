@@ -22,6 +22,7 @@
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CallSite.h"
 using namespace llvm;
 
@@ -531,9 +532,11 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
         unsigned NumRetVals = STy->getNumElements();
         // Create new phi nodes such that phi node number in the PHIs vector
         // match corresponding return value operand number.
+        Instruction *InsertPt = AfterCallBB->begin();
         for (unsigned i = 0; i < NumRetVals; ++i) {
           PHINode *PHI = new PHINode(STy->getElementType(i),
-                                     TheCall->getName(), AfterCallBB->begin());
+                                     TheCall->getName() + "." + utostr(i), 
+                                     InsertPt);
           PHIs.push_back(PHI);
         }
         // TheCall results are used by GetResult instructions. 
@@ -555,25 +558,19 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
     // appropriate.
     if (!PHIs.empty()) {
       const Type *RTy = CalledFunc->getReturnType();
-      if (const StructType *STy = dyn_cast<StructType>(RTy)) {
-        unsigned NumRetVals = STy->getNumElements();
-        for (unsigned j = 0; j < NumRetVals; ++j) {
-          PHINode *PHI = PHIs[j];
-          // Each PHI node will receive one value from each return instruction.
-          for(unsigned i = 0, e = Returns.size(); i != e; ++i) {
-            ReturnInst *RI = Returns[i];
-            PHI->addIncoming(RI->getReturnValue(j /*PHI number matches operand number*/), 
-                             RI->getParent());
-          }
-        }
-      } else {
-        for (unsigned i = 0, e = Returns.size(); i != e; ++i) {
+      // There is atleast one return value.
+      unsigned NumRetVals = 1; 
+      if (const StructType *STy = dyn_cast<StructType>(RTy))
+        NumRetVals = STy->getNumElements();
+      for (unsigned j = 0; j < NumRetVals; ++j) {
+        PHINode *PHI = PHIs[j];
+        // Each PHI node will receive one value from each return instruction.
+        for(unsigned i = 0, e = Returns.size(); i != e; ++i) {
           ReturnInst *RI = Returns[i];
-          assert(PHIs.size() == 1 && "Invalid number of PHI nodes");
-          assert(RI->getReturnValue() && "Ret should have value!");
-          assert(RI->getReturnValue()->getType() == PHIs[0]->getType() &&
+          assert(RI->getReturnValue(j)->getType() == PHI->getType() &&
                  "Ret value not consistent in function!");
-          PHIs[0]->addIncoming(RI->getReturnValue(), RI->getParent());
+          PHI->addIncoming(RI->getReturnValue(j /*PHI number matches operand number*/), 
+                           RI->getParent());
         }
       }
     }
