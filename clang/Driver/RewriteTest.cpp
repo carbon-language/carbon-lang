@@ -35,6 +35,7 @@ namespace {
   class RewriteTest : public ASTConsumer {
     Rewriter Rewrite;
     Diagnostic &Diags;
+    const LangOptions &LangOpts;
     unsigned RewriteFailedDiag;
     
     ASTContext *Context;
@@ -84,7 +85,8 @@ namespace {
     // Top Level Driver code.
     virtual void HandleTopLevelDecl(Decl *D);
     void HandleDeclInMainFile(Decl *D);
-    RewriteTest(bool isHeader, Diagnostic &D) : Diags(D) {
+    RewriteTest(bool isHeader, Diagnostic &D, const LangOptions &LOpts) : 
+      Diags(D), LangOpts(LOpts) {
       IsHeader = isHeader;
       RewriteFailedDiag = Diags.getCustomDiagID(Diagnostic::Warning, 
                "rewriting sub-expression within a macro (may not be correct)");
@@ -224,8 +226,9 @@ static bool IsHeaderFile(const std::string &Filename) {
 }    
 
 ASTConsumer *clang::CreateCodeRewriterTest(const std::string& InFile,
-                                           Diagnostic &Diags) {
-  return new RewriteTest(IsHeaderFile(InFile), Diags);
+                                           Diagnostic &Diags, 
+                                           const LangOptions &LOpts) {
+  return new RewriteTest(IsHeaderFile(InFile), Diags, LOpts);
 }
 
 void RewriteTest::Initialize(ASTContext &context) {
@@ -298,6 +301,11 @@ void RewriteTest::Initialize(ASTContext &context) {
   "unsigned long extra[5];\n};\n"
   "#define __FASTENUMERATIONSTATE\n"
   "#endif\n";
+  if (LangOpts.Microsoft) {
+    std::string S = s;
+    S += "#define __attribute__(X)\n";
+    s = S.c_str();
+  }
   if (IsHeader) {
     // insert the whole string when rewriting a header file
     InsertText(SourceLocation::getFileLoc(MainFileID, 0), s, strlen(s));
@@ -2852,6 +2860,13 @@ void RewriteTest::RewriteImplementations(std::string &Result) {
   Result += "\t" + utostr(OBJC_ABI_VERSION) + 
   ", sizeof(struct _objc_module), \"\", &_OBJC_SYMBOLS\n";
   Result += "};\n\n";
-  
+
+  if (LangOpts.Microsoft) {
+    Result += "#pragma section(\".objc_module_info$B\",long,read,write)\n";
+    Result += "#pragma data_seq(push, \".objc_module_info$B\")\n";
+    Result += "static struct _objc_module *_POINTER_OBJC_MODULES = ";
+    Result += "&_OBJC_MODULES;\n";
+    Result += "#pragma data_seg(pop)\n\n";
+  }
 }
 

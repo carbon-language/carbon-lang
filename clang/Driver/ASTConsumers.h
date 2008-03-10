@@ -50,7 +50,8 @@ ASTConsumer* CreateCFRefChecker(Diagnostic &Diags,
                                 const std::string& FunctionName); 
 
 ASTConsumer *CreateCodeRewriterTest(const std::string& InFile,
-                                    Diagnostic &Diags);
+                                    Diagnostic &Diags,
+                                    const LangOptions &LOpts);
 
 ASTConsumer *CreateSerializationTest(Diagnostic &Diags,
                                      FileManager& FMgr, 
