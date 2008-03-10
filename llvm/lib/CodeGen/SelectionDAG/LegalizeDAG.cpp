@@ -6436,10 +6436,9 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       unsigned InnerBitSize = RH.getValueSizeInBits();
       unsigned LHSSB = DAG.ComputeNumSignBits(Op.getOperand(0));
       unsigned RHSSB = DAG.ComputeNumSignBits(Op.getOperand(1));
-      if (DAG.MaskedValueIsZero(Op.getOperand(0),
-                                APInt::getHighBitsSet(OuterBitSize, LHSSB)) &&
-          DAG.MaskedValueIsZero(Op.getOperand(1),
-                                APInt::getHighBitsSet(OuterBitSize, RHSSB))) {
+      APInt HighMask = APInt::getHighBitsSet(OuterBitSize, InnerBitSize);
+      if (DAG.MaskedValueIsZero(Node->getOperand(0), HighMask) &&
+          DAG.MaskedValueIsZero(Node->getOperand(1), HighMask)) {
         // The inputs are both zero-extended.
         if (HasUMUL_LOHI) {
           // We can emit a umul_lohi.
