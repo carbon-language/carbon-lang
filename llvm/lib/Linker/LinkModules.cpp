@@ -384,7 +384,7 @@ static bool GetLinkageResult(GlobalValue *Dest, GlobalValue *Src,
     LinkFromSrc = true;
     LT = Src->getLinkage();
   } else if (Src->isDeclaration()) {
-    // If Src is external or if both Src & Drc are external..  Just link the
+    // If Src is external or if both Src & Dest are external..  Just link the
     // external globals, we aren't adding anything.
     if (Src->hasDLLImportLinkage()) {
       // If one of GVs has DLLImport linkage, result should be dllimport'ed.
