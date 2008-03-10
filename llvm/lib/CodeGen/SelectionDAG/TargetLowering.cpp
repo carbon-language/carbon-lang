@@ -191,7 +191,7 @@ TargetLowering::TargetLowering(TargetMachine &tm)
     
   IsLittleEndian = TD->isLittleEndian();
   UsesGlobalOffsetTable = false;
-  ShiftAmountTy = SetCCResultTy = PointerTy = getValueType(TD->getIntPtrType());
+  ShiftAmountTy = PointerTy = getValueType(TD->getIntPtrType());
   ShiftAmtHandling = Undefined;
   memset(RegClassForVT, 0,MVT::LAST_VALUETYPE*sizeof(TargetRegisterClass*));
   memset(TargetDAGCombineArray, 0, array_lengthof(TargetDAGCombineArray));
@@ -371,6 +371,13 @@ void TargetLowering::computeRegisterProperties() {
 const char *TargetLowering::getTargetNodeName(unsigned Opcode) const {
   return NULL;
 }
+
+
+MVT::ValueType
+TargetLowering::getSetCCResultType(const SDOperand &) const {
+  return getValueType(TD->getIntPtrType());
+}
+
 
 /// getVectorTypeBreakdown - Vector types are broken down into some number of
 /// legal first class types.  For example, MVT::v8f32 maps to 2 MVT::v4f32

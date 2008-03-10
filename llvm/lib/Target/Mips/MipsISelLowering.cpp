@@ -52,7 +52,6 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
 {
   // Mips does not have i1 type, so use i32 for
   // setcc operations results (slt, sgt, ...). 
-  setSetCCResultType(MVT::i32);
   setSetCCResultContents(ZeroOrOneSetCCResult);
 
   // JumpTable targets must use GOT when using PIC_
@@ -109,6 +108,12 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
 
   setStackPointerRegisterToSaveRestore(Mips::SP);
   computeRegisterProperties();
+}
+
+
+MVT::ValueType
+MipsTargetLowering::getSetCCResultType(const SDOperand &) const {
+  return MVT::i32;
 }
 
 

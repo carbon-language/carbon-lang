@@ -324,7 +324,6 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
     setOperationAction(ISD::BUILD_VECTOR, MVT::v4f32, Custom);
   }
   
-  setSetCCResultType(MVT::i32);
   setShiftAmountType(MVT::i32);
   setSetCCResultContents(ZeroOrOneSetCCResult);
   
@@ -406,6 +405,13 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PPCISD::MTFSF:         return "PPCISD::MTFSF";
   }
 }
+
+
+MVT::ValueType
+PPCTargetLowering::getSetCCResultType(const SDOperand &) const {
+  return MVT::i32;
+}
+
 
 //===----------------------------------------------------------------------===//
 // Node matching predicates, for use by the tblgen matching code.

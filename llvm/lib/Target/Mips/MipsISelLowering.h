@@ -62,6 +62,9 @@ namespace llvm {
     //  DAG node.
     virtual const char *getTargetNodeName(unsigned Opcode) const;
 
+    /// getSetCCResultType - get the ISD::SETCC result ValueType
+    MVT::ValueType getSetCCResultType(const SDOperand &) const;
+
   private:
     // Lower Operand helpers
     SDOperand LowerCCCArguments(SDOperand Op, SelectionDAG &DAG);

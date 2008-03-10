@@ -102,6 +102,9 @@ namespace llvm {
     /// getTargetNodeName() - This method returns the name of a target specific
     /// DAG node.
     virtual const char *getTargetNodeName(unsigned Opcode) const;
+
+    /// getSetCCResultType - Return the ValueType for ISD::SETCC
+    MVT::ValueType getSetCCResultType(const SDOperand &) const;
     
     /// LowerOperation - Provide custom lowering hooks for some operations.
     ///

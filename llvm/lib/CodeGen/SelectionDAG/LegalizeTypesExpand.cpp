@@ -632,7 +632,7 @@ void DAGTypeLegalizer::ExpandResult_CTLZ(SDNode *N,
   GetExpandedOp(N->getOperand(0), Lo, Hi);
   MVT::ValueType NVT = Lo.getValueType();
 
-  SDOperand HiNotZero = DAG.getSetCC(TLI.getSetCCResultTy(), Hi,
+  SDOperand HiNotZero = DAG.getSetCC(TLI.getSetCCResultType(Hi), Hi,
                                      DAG.getConstant(0, NVT), ISD::SETNE);
 
   SDOperand LoLZ = DAG.getNode(ISD::CTLZ, NVT, Lo);
@@ -660,7 +660,7 @@ void DAGTypeLegalizer::ExpandResult_CTTZ(SDNode *N,
   GetExpandedOp(N->getOperand(0), Lo, Hi);
   MVT::ValueType NVT = Lo.getValueType();
 
-  SDOperand LoNotZero = DAG.getSetCC(TLI.getSetCCResultTy(), Lo,
+  SDOperand LoNotZero = DAG.getSetCC(TLI.getSetCCResultType(Lo), Lo,
                                      DAG.getConstant(0, NVT), ISD::SETNE);
 
   SDOperand LoLZ = DAG.getNode(ISD::CTTZ, NVT, Lo);
@@ -1031,7 +1031,7 @@ SDOperand DAGTypeLegalizer::ExpandOperand_UINT_TO_FP(SDOperand Source,
   SDOperand Lo, Hi;
   GetExpandedOp(Source, Lo, Hi);
   
-  SDOperand SignSet = DAG.getSetCC(TLI.getSetCCResultTy(), Hi,
+  SDOperand SignSet = DAG.getSetCC(TLI.getSetCCResultType(Hi), Hi,
                                    DAG.getConstant(0, Hi.getValueType()),
                                    ISD::SETLT);
   SDOperand Zero = DAG.getIntPtrConstant(0), Four = DAG.getIntPtrConstant(4);
@@ -1113,11 +1113,11 @@ void DAGTypeLegalizer::ExpandSetCCOperands(SDOperand &NewLHS, SDOperand &NewRHS,
     //         FCMP crN, lo1, lo2
     // The following can be improved, but not that much.
     SDOperand Tmp1, Tmp2, Tmp3;
-    Tmp1 = DAG.getSetCC(TLI.getSetCCResultTy(), LHSHi, RHSHi, ISD::SETEQ);
-    Tmp2 = DAG.getSetCC(TLI.getSetCCResultTy(), LHSLo, RHSLo, CCCode);
+    Tmp1 = DAG.getSetCC(TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi, ISD::SETEQ);
+    Tmp2 = DAG.getSetCC(TLI.getSetCCResultType(LHSLo), LHSLo, RHSLo, CCCode);
     Tmp3 = DAG.getNode(ISD::AND, Tmp1.getValueType(), Tmp1, Tmp2);
-    Tmp1 = DAG.getSetCC(TLI.getSetCCResultTy(), LHSHi, RHSHi, ISD::SETNE);
-    Tmp2 = DAG.getSetCC(TLI.getSetCCResultTy(), LHSHi, RHSHi, CCCode);
+    Tmp1 = DAG.getSetCC(TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi, ISD::SETNE);
+    Tmp2 = DAG.getSetCC(TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi, CCCode);
     Tmp1 = DAG.getNode(ISD::AND, Tmp1.getValueType(), Tmp1, Tmp2);
     NewLHS = DAG.getNode(ISD::OR, Tmp1.getValueType(), Tmp1, Tmp3);
     NewRHS = SDOperand();   // LHS is the result, not a compare.
@@ -1174,14 +1174,14 @@ void DAGTypeLegalizer::ExpandSetCCOperands(SDOperand &NewLHS, SDOperand &NewRHS,
   // this identity: (B1 ? B2 : B3) --> (B1 & B2)|(!B1&B3)
   TargetLowering::DAGCombinerInfo DagCombineInfo(DAG, false, true, NULL);
   SDOperand Tmp1, Tmp2;
-  Tmp1 = TLI.SimplifySetCC(TLI.getSetCCResultTy(), LHSLo, RHSLo, LowCC,
+  Tmp1 = TLI.SimplifySetCC(TLI.getSetCCResultType(LHSLo), LHSLo, RHSLo, LowCC,
                            false, DagCombineInfo);
   if (!Tmp1.Val)
-    Tmp1 = DAG.getSetCC(TLI.getSetCCResultTy(), LHSLo, RHSLo, LowCC);
-  Tmp2 = TLI.SimplifySetCC(TLI.getSetCCResultTy(), LHSHi, RHSHi,
+    Tmp1 = DAG.getSetCC(TLI.getSetCCResultType(LHSLo), LHSLo, RHSLo, LowCC);
+  Tmp2 = TLI.SimplifySetCC(TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi,
                            CCCode, false, DagCombineInfo);
   if (!Tmp2.Val)
-    Tmp2 = DAG.getNode(ISD::SETCC, TLI.getSetCCResultTy(), LHSHi, RHSHi,
+    Tmp2 = DAG.getNode(ISD::SETCC, TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi,
                        DAG.getCondCode(CCCode));
   
   ConstantSDNode *Tmp1C = dyn_cast<ConstantSDNode>(Tmp1.Val);
@@ -1201,10 +1201,11 @@ void DAGTypeLegalizer::ExpandSetCCOperands(SDOperand &NewLHS, SDOperand &NewRHS,
     return;
   }
   
-  NewLHS = TLI.SimplifySetCC(TLI.getSetCCResultTy(), LHSHi, RHSHi,
+  NewLHS = TLI.SimplifySetCC(TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi,
                              ISD::SETEQ, false, DagCombineInfo);
   if (!NewLHS.Val)
-    NewLHS = DAG.getSetCC(TLI.getSetCCResultTy(), LHSHi, RHSHi, ISD::SETEQ);
+    NewLHS = DAG.getSetCC(TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi,
+			  ISD::SETEQ);
   NewLHS = DAG.getNode(ISD::SELECT, Tmp1.getValueType(),
                        NewLHS, Tmp1, Tmp2);
   NewRHS = SDOperand();

@@ -40,7 +40,6 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   // Set up the TargetLowering object.
   //I am having problems with shr n ubyte 1
   setShiftAmountType(MVT::i64);
-  setSetCCResultType(MVT::i64);
   setSetCCResultContents(ZeroOrOneSetCCResult);
   
   setUsesGlobalOffsetTable(true);
@@ -149,6 +148,11 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   setJumpBufAlignment(16);
 
   computeRegisterProperties();
+}
+
+MVT::ValueType
+AlphaTargetLowering::getSetCCResultType(const SDOperand &) const {
+  return MVT::i64;
 }
 
 const char *AlphaTargetLowering::getTargetNodeName(unsigned Opcode) const {

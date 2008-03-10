@@ -2605,7 +2605,7 @@ SDOperand DAGCombiner::visitSELECT_CC(SDNode *N) {
     return N2;
   
   // Determine if the condition we're dealing with is constant
-  SDOperand SCC = SimplifySetCC(TLI.getSetCCResultTy(), N0, N1, CC, false);
+  SDOperand SCC = SimplifySetCC(TLI.getSetCCResultType(N0), N0, N1, CC, false);
   if (SCC.Val) AddToWorkList(SCC.Val);
 
   if (ConstantSDNode *SCCC = dyn_cast_or_null<ConstantSDNode>(SCC.Val)) {
@@ -5077,7 +5077,7 @@ SDOperand DAGCombiner::SimplifySelectCC(SDOperand N0, SDOperand N1,
   ConstantSDNode *N3C = dyn_cast<ConstantSDNode>(N3.Val);
 
   // Determine if the condition we're dealing with is constant
-  SDOperand SCC = SimplifySetCC(TLI.getSetCCResultTy(), N0, N1, CC, false);
+  SDOperand SCC = SimplifySetCC(TLI.getSetCCResultType(N0), N0, N1, CC, false);
   if (SCC.Val) AddToWorkList(SCC.Val);
   ConstantSDNode *SCCC = dyn_cast_or_null<ConstantSDNode>(SCC.Val);
 
@@ -5157,7 +5157,7 @@ SDOperand DAGCombiner::SimplifySelectCC(SDOperand N0, SDOperand N1,
     SDOperand Temp, SCC;
     // cast from setcc result type to select result type
     if (AfterLegalize) {
-      SCC  = DAG.getSetCC(TLI.getSetCCResultTy(), N0, N1, CC);
+      SCC  = DAG.getSetCC(TLI.getSetCCResultType(N0), N0, N1, CC);
       if (N2.getValueType() < SCC.getValueType())
         Temp = DAG.getZeroExtendInReg(SCC, N2.getValueType());
       else
@@ -5182,8 +5182,8 @@ SDOperand DAGCombiner::SimplifySelectCC(SDOperand N0, SDOperand N1,
   // otherwise, go ahead with the folds.
   if (0 && N3C && N3C->isNullValue() && N2C && (N2C->getValue() == 1ULL)) {
     MVT::ValueType XType = N0.getValueType();
-    if (TLI.isOperationLegal(ISD::SETCC, TLI.getSetCCResultTy())) {
-      SDOperand Res = DAG.getSetCC(TLI.getSetCCResultTy(), N0, N1, CC);
+    if (TLI.isOperationLegal(ISD::SETCC, TLI.getSetCCResultType(N0))) {
+      SDOperand Res = DAG.getSetCC(TLI.getSetCCResultType(N0), N0, N1, CC);
       if (Res.getValueType() != VT)
         Res = DAG.getNode(ISD::ZERO_EXTEND, VT, Res);
       return Res;

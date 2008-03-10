@@ -3186,7 +3186,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         MVT::ValueType IVT = 
           Tmp2.getValueType() == MVT::f32 ? MVT::i32 : MVT::i64;
         SDOperand SignBit = DAG.getNode(ISD::BIT_CONVERT, IVT, Tmp2);
-        SignBit = DAG.getSetCC(TLI.getSetCCResultTy(),
+        SignBit = DAG.getSetCC(TLI.getSetCCResultType(SignBit),
                                SignBit, DAG.getConstant(0, IVT), ISD::SETLT);
         // Get the absolute value of the result.
         SDOperand AbsVal = DAG.getNode(ISD::FABS, Tmp1.getValueType(), Tmp1);
@@ -3522,7 +3522,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         break;
       case ISD::CTTZ:
         //if Tmp1 == sizeinbits(NVT) then Tmp1 = sizeinbits(Old VT)
-        Tmp2 = DAG.getSetCC(TLI.getSetCCResultTy(), Tmp1,
+        Tmp2 = DAG.getSetCC(TLI.getSetCCResultType(Tmp1), Tmp1,
                             DAG.getConstant(MVT::getSizeInBits(NVT), NVT),
                             ISD::SETEQ);
         Result = DAG.getNode(ISD::SELECT, NVT, Tmp2,
@@ -3574,7 +3574,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         // Expand Y = FABS(X) -> Y = (X >u 0.0) ? X : fneg(X).
         MVT::ValueType VT = Node->getValueType(0);
         Tmp2 = DAG.getConstantFP(0.0, VT);
-        Tmp2 = DAG.getSetCC(TLI.getSetCCResultTy(), Tmp1, Tmp2, ISD::SETUGT);
+        Tmp2 = DAG.getSetCC(TLI.getSetCCResultType(Tmp1), Tmp1, Tmp2,
+			    ISD::SETUGT);
         Tmp3 = DAG.getNode(ISD::FNEG, VT, Tmp1);
         Result = DAG.getNode(ISD::SELECT, VT, Tmp2, Tmp1, Tmp3);
         break;
@@ -3780,7 +3781,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           APInt x = APInt::getSignBit(MVT::getSizeInBits(NVT));
           (void)apf.convertFromAPInt(x, false, APFloat::rmNearestTiesToEven);
           Tmp2 = DAG.getConstantFP(apf, VT);
-          Tmp3 = DAG.getSetCC(TLI.getSetCCResultTy(),
+          Tmp3 = DAG.getSetCC(TLI.getSetCCResultType(Node->getOperand(0)),
                             Node->getOperand(0), Tmp2, ISD::SETLT);
           True = DAG.getNode(ISD::FP_TO_SINT, NVT, Node->getOperand(0));
           False = DAG.getNode(ISD::FP_TO_SINT, NVT,
@@ -4124,9 +4125,12 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     break;
 
   case ISD::SETCC:
-    assert(isTypeLegal(TLI.getSetCCResultTy()) && "SetCC type is not legal??");
-    Result = DAG.getNode(ISD::SETCC, TLI.getSetCCResultTy(),Node->getOperand(0),
-                         Node->getOperand(1), Node->getOperand(2));
+    assert(isTypeLegal(TLI.getSetCCResultType(Node->getOperand(0)))
+	   && "SetCC type is not legal??");
+    Result = DAG.getNode(ISD::SETCC,
+			 TLI.getSetCCResultType(Node->getOperand(0)),
+	                 Node->getOperand(0), Node->getOperand(1),
+			 Node->getOperand(2));
     break;
     
   case ISD::TRUNCATE:
@@ -4484,7 +4488,7 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
       break;
     case ISD::CTTZ:
       // if Tmp1 == sizeinbits(NVT) then Tmp1 = sizeinbits(Old VT)
-      Tmp2 = DAG.getSetCC(TLI.getSetCCResultTy(), Tmp1,
+      Tmp2 = DAG.getSetCC(TLI.getSetCCResultType(Tmp1), Tmp1,
                           DAG.getConstant(MVT::getSizeInBits(NVT), NVT),
                           ISD::SETEQ);
       Result = DAG.getNode(ISD::SELECT, NVT, Tmp2,
@@ -4748,11 +4752,12 @@ void SelectionDAGLegalize::LegalizeSetCCOperands(SDOperand &LHS,
       Tmp2 = DAG.getConstant(0, MVT::i32);
       CC = DAG.getCondCode(TLI.getCmpLibcallCC(LC1));
       if (LC2 != RTLIB::UNKNOWN_LIBCALL) {
-        Tmp1 = DAG.getNode(ISD::SETCC, TLI.getSetCCResultTy(), Tmp1, Tmp2, CC);
+        Tmp1 = DAG.getNode(ISD::SETCC, TLI.getSetCCResultType(Tmp1), Tmp1, Tmp2,
+			   CC);
         LHS = ExpandLibCall(TLI.getLibcallName(LC2),
                             DAG.getNode(ISD::MERGE_VALUES, VT, LHS, RHS).Val, 
                             false /*sign irrelevant*/, Dummy);
-        Tmp2 = DAG.getNode(ISD::SETCC, TLI.getSetCCResultTy(), LHS, Tmp2,
+        Tmp2 = DAG.getNode(ISD::SETCC, TLI.getSetCCResultType(LHS), LHS, Tmp2,
                            DAG.getCondCode(TLI.getCmpLibcallCC(LC2)));
         Tmp1 = DAG.getNode(ISD::OR, Tmp1.getValueType(), Tmp1, Tmp2);
         Tmp2 = SDOperand();
@@ -4773,11 +4778,11 @@ void SelectionDAGLegalize::LegalizeSetCCOperands(SDOperand &LHS,
       //         BNE crN, L:
       //         FCMP crN, lo1, lo2
       // The following can be improved, but not that much.
-      Tmp1 = DAG.getSetCC(TLI.getSetCCResultTy(), LHSHi, RHSHi, ISD::SETEQ);
-      Tmp2 = DAG.getSetCC(TLI.getSetCCResultTy(), LHSLo, RHSLo, CCCode);
+      Tmp1 = DAG.getSetCC(TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi, ISD::SETEQ);
+      Tmp2 = DAG.getSetCC(TLI.getSetCCResultType(LHSLo), LHSLo, RHSLo, CCCode);
       Tmp3 = DAG.getNode(ISD::AND, Tmp1.getValueType(), Tmp1, Tmp2);
-      Tmp1 = DAG.getSetCC(TLI.getSetCCResultTy(), LHSHi, RHSHi, ISD::SETNE);
-      Tmp2 = DAG.getSetCC(TLI.getSetCCResultTy(), LHSHi, RHSHi, CCCode);
+      Tmp1 = DAG.getSetCC(TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi, ISD::SETNE);
+      Tmp2 = DAG.getSetCC(TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi, CCCode);
       Tmp1 = DAG.getNode(ISD::AND, Tmp1.getValueType(), Tmp1, Tmp2);
       Tmp1 = DAG.getNode(ISD::OR, Tmp1.getValueType(), Tmp1, Tmp3);
       Tmp2 = SDOperand();
@@ -4835,14 +4840,15 @@ void SelectionDAGLegalize::LegalizeSetCCOperands(SDOperand &LHS,
       // NOTE: on targets without efficient SELECT of bools, we can always use
       // this identity: (B1 ? B2 : B3) --> (B1 & B2)|(!B1&B3)
       TargetLowering::DAGCombinerInfo DagCombineInfo(DAG, false, true, NULL);
-      Tmp1 = TLI.SimplifySetCC(TLI.getSetCCResultTy(), LHSLo, RHSLo, LowCC,
-                               false, DagCombineInfo);
+      Tmp1 = TLI.SimplifySetCC(TLI.getSetCCResultType(LHSLo), LHSLo, RHSLo,
+			       LowCC, false, DagCombineInfo);
       if (!Tmp1.Val)
-        Tmp1 = DAG.getSetCC(TLI.getSetCCResultTy(), LHSLo, RHSLo, LowCC);
-      Tmp2 = TLI.SimplifySetCC(TLI.getSetCCResultTy(), LHSHi, RHSHi,
+        Tmp1 = DAG.getSetCC(TLI.getSetCCResultType(LHSLo), LHSLo, RHSLo, LowCC);
+      Tmp2 = TLI.SimplifySetCC(TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi,
                                CCCode, false, DagCombineInfo);
       if (!Tmp2.Val)
-        Tmp2 = DAG.getNode(ISD::SETCC, TLI.getSetCCResultTy(), LHSHi, RHSHi,CC);
+        Tmp2 = DAG.getNode(ISD::SETCC, TLI.getSetCCResultType(LHSHi), LHSHi,
+			   RHSHi,CC);
       
       ConstantSDNode *Tmp1C = dyn_cast<ConstantSDNode>(Tmp1.Val);
       ConstantSDNode *Tmp2C = dyn_cast<ConstantSDNode>(Tmp2.Val);
@@ -4859,10 +4865,11 @@ void SelectionDAGLegalize::LegalizeSetCCOperands(SDOperand &LHS,
         Tmp1 = Tmp2;
         Tmp2 = SDOperand();
       } else {
-        Result = TLI.SimplifySetCC(TLI.getSetCCResultTy(), LHSHi, RHSHi,
+        Result = TLI.SimplifySetCC(TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi,
                                    ISD::SETEQ, false, DagCombineInfo);
         if (!Result.Val)
-          Result=DAG.getSetCC(TLI.getSetCCResultTy(), LHSHi, RHSHi, ISD::SETEQ);
+          Result=DAG.getSetCC(TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi,
+			      ISD::SETEQ);
         Result = LegalizeOp(DAG.getNode(ISD::SELECT, Tmp1.getValueType(),
                                         Result, Tmp1, Tmp2));
         Tmp1 = Result;
@@ -5336,7 +5343,7 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
     SDOperand SignedConv = ExpandIntToFP(true, DestTy,
                    DAG.getNode(ISD::BUILD_PAIR, SourceVT, Lo, Hi));
 
-    SDOperand SignSet = DAG.getSetCC(TLI.getSetCCResultTy(), Hi,
+    SDOperand SignSet = DAG.getSetCC(TLI.getSetCCResultType(Hi), Hi,
                                      DAG.getConstant(0, Hi.getValueType()),
                                      ISD::SETLT);
     SDOperand Zero = DAG.getIntPtrConstant(0), Four = DAG.getIntPtrConstant(4);
@@ -5489,7 +5496,7 @@ SDOperand SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
   assert(!isSigned && "Legalize cannot Expand SINT_TO_FP for i64 yet");
   SDOperand Tmp1 = DAG.getNode(ISD::SINT_TO_FP, DestVT, Op0);
 
-  SDOperand SignSet = DAG.getSetCC(TLI.getSetCCResultTy(), Op0,
+  SDOperand SignSet = DAG.getSetCC(TLI.getSetCCResultType(Op0), Op0,
                                    DAG.getConstant(0, Op0.getValueType()),
                                    ISD::SETLT);
   SDOperand Zero = DAG.getIntPtrConstant(0), Four = DAG.getIntPtrConstant(4);
@@ -5895,7 +5902,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     ExpandOp(Node->getOperand(0), Lo, Hi);
     SDOperand BitsC = DAG.getConstant(MVT::getSizeInBits(NVT), NVT);
     SDOperand HLZ = DAG.getNode(ISD::CTLZ, NVT, Hi);
-    SDOperand TopNotZero = DAG.getSetCC(TLI.getSetCCResultTy(), HLZ, BitsC,
+    SDOperand TopNotZero = DAG.getSetCC(TLI.getSetCCResultType(HLZ), HLZ, BitsC,
                                         ISD::SETNE);
     SDOperand LowPart = DAG.getNode(ISD::CTLZ, NVT, Lo);
     LowPart = DAG.getNode(ISD::ADD, NVT, LowPart, BitsC);
@@ -5910,7 +5917,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     ExpandOp(Node->getOperand(0), Lo, Hi);
     SDOperand BitsC = DAG.getConstant(MVT::getSizeInBits(NVT), NVT);
     SDOperand LTZ = DAG.getNode(ISD::CTTZ, NVT, Lo);
-    SDOperand BotNotZero = DAG.getSetCC(TLI.getSetCCResultTy(), LTZ, BitsC,
+    SDOperand BotNotZero = DAG.getSetCC(TLI.getSetCCResultType(LTZ), LTZ, BitsC,
                                         ISD::SETNE);
     SDOperand HiPart = DAG.getNode(ISD::CTTZ, NVT, Hi);
     HiPart = DAG.getNode(ISD::ADD, NVT, HiPart, BitsC);

@@ -57,7 +57,6 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
 
   // X86 is weird, it always uses i8 for shift amounts and setcc results.
   setShiftAmountType(MVT::i8);
-  setSetCCResultType(MVT::i8);
   setSetCCResultContents(ZeroOrOneSetCCResult);
   setSchedulingPreference(SchedulingForRegPressure);
   setShiftAmountFlavor(Mask);   // shl X, 32 == shl X, 0
@@ -727,6 +726,13 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   allowUnalignedMemoryAccesses = true; // x86 supports it!
   setPrefLoopAlignment(16);
 }
+
+
+MVT::ValueType
+X86TargetLowering::getSetCCResultType(const SDOperand &) const {
+  return MVT::i8;
+}
+
 
 /// getMaxByValAlign - Helper for getByValTypeAlignment to determine
 /// the desired ByVal argument alignment.

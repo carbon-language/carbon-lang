@@ -213,6 +213,9 @@ namespace llvm {
     /// DAG node.
     virtual const char *getTargetNodeName(unsigned Opcode) const;
 
+    /// getSetCCResultType - Return the ISD::SETCC ValueType
+    virtual MVT::ValueType getSetCCResultType(const SDOperand &) const;
+
     /// getPreIndexedAddressParts - returns true by value, base pointer and
     /// offset pointer and addressing mode by reference if the node's address
     /// can be legally represented as pre-indexed load / store address.

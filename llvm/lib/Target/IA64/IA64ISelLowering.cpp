@@ -57,7 +57,6 @@ IA64TargetLowering::IA64TargetLowering(TargetMachine &TM)
       // br.ret insn
       setOperationAction(ISD::RET, MVT::Other, Custom);
 
-      setSetCCResultType(MVT::i1);
       setShiftAmountType(MVT::i64);
 
       setOperationAction(ISD::FREM             , MVT::f32  , Expand);
@@ -137,6 +136,10 @@ const char *IA64TargetLowering::getTargetNodeName(unsigned Opcode) const {
   }
 }
   
+MVT::ValueType
+IA64TargetLowering::getSetCCResultType(const SDOperand &) const {
+  return MVT::i1;
+}
 
 std::vector<SDOperand>
 IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {

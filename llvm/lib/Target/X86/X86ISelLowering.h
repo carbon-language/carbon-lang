@@ -375,6 +375,9 @@ namespace llvm {
     /// DAG node.
     virtual const char *getTargetNodeName(unsigned Opcode) const;
 
+    /// getSetCCResultType - Return the ISD::SETCC ValueType
+    virtual MVT::ValueType getSetCCResultType(const SDOperand &) const;
+
     /// computeMaskedBitsForTargetNode - Determine which of the bits specified 
     /// in Mask are known to be either zero or one and return them in the 
     /// KnownZero/KnownOne bitsets.

@@ -109,9 +109,8 @@ public:
   /// srl/add/sra.
   bool isPow2DivCheap() const { return Pow2DivIsCheap; }
 
-  /// getSetCCResultTy - Return the ValueType of the result of setcc operations.
-  ///
-  MVT::ValueType getSetCCResultTy() const { return SetCCResultTy; }
+  /// getSetCCResultType - Return the ValueType of the result of setcc operations.
+  virtual MVT::ValueType getSetCCResultType(const SDOperand &) const;
 
   /// getSetCCResultContents - For targets without boolean registers, this flag
   /// returns information about the contents of the high-bits in the setcc
@@ -707,10 +706,6 @@ protected:
   /// amounts.  This type defaults to the pointer type.
   void setShiftAmountType(MVT::ValueType VT) { ShiftAmountTy = VT; }
 
-  /// setSetCCResultType - Describe the type that shoudl be used as the result
-  /// of a setcc operation.  This defaults to the pointer type.
-  void setSetCCResultType(MVT::ValueType VT) { SetCCResultTy = VT; }
-
   /// setSetCCResultContents - Specify how the target extends the result of a
   /// setcc operation in a register.
   void setSetCCResultContents(SetCCResultValue Ty) { SetCCResultContents = Ty; }
@@ -1259,10 +1254,6 @@ private:
   /// it.
   bool Pow2DivIsCheap;
   
-  /// SetCCResultTy - The type that SetCC operations use.  This defaults to the
-  /// PointerTy.
-  MVT::ValueType SetCCResultTy;
-
   /// SetCCResultContents - Information about the contents of the high-bits in
   /// the result of a setcc comparison operation.
   SetCCResultValue SetCCResultContents;
