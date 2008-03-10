@@ -68,6 +68,24 @@ Lexer *Preprocessor::getCurrentFileLexer() const {
 /// code paths if possible!
 ///
 Token Preprocessor::LookAhead(unsigned N) {
+  // FIXME: Optimize the case where multiple lookahead calls are used back to
+  // back.  Consider if the the parser contained (dynamically):
+  //    Lookahead(1); Lookahead(1); Lookahead(1)
+  // This would return the same token 3 times, but would end up making lots of
+  // token stream lexers to do it.  To handle this common case, see if the top
+  // of the lexer stack is a TokenStreamLexer with macro expansion disabled.  If
+  // so, see if it has 'N' tokens available in it.  If so, just return the
+  // token.
+  
+  // FIXME: Optimize the case when the parser does multiple nearby lookahead
+  // calls.  For example, consider:
+  //   Lookahead(0); Lookahead(1); Lookahead(2);
+  // The previous optimization won't apply, and there won't be any space left in
+  // the array that was previously new'd.  To handle this, always round up the
+  // size we new to a multiple of 16 tokens.  If the previous buffer has space
+  // left, we can just grow it.  This means we only have to do the new 1/16th as
+  // often.
+  
   Token *LookaheadTokens = new Token[N];
 
   // Read N+1 tokens into LookaheadTokens.  After this loop, Tok is the token
