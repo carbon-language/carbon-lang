@@ -474,7 +474,7 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
     }
 
     // Check to see if may have to link the global with the alias
-    if (SGV->hasName() && !SGV->hasInternalLinkage()) {
+    if (!DGV && SGV->hasName() && !SGV->hasInternalLinkage()) {
       DGV = Dest->getNamedAlias(SGV->getName());
       if (DGV && DGV->getType() != SGV->getType())
         // If types don't agree due to opaque types, try to resolve them.
