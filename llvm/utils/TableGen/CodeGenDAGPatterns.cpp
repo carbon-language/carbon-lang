@@ -864,7 +864,7 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
       CDP.getTargetInfo().getInstruction(getOperator()->getName());
     // Apply the result type to the node
     if (NumResults == 0 || InstInfo.NumDefs == 0) {
-        MadeChange = UpdateNodeType(MVT::isVoid, TP);
+      MadeChange = UpdateNodeType(MVT::isVoid, TP);
     } else {
       Record *ResultNode = Inst.getResult(0);
       
@@ -923,7 +923,7 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
       MadeChange |= Child->ApplyTypeConstraints(TP, NotRegisters);
     }
 
-    if (ChildNo != getNumChildren() && !InstInfo.isVariadic)
+    if (ChildNo != getNumChildren())
       TP.error("Instruction '" + getOperator()->getName() +
                "' was provided too many operands!");
     
