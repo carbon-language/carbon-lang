@@ -13,8 +13,8 @@
 
 #include "llvm/ParamAttrsList.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/ManagedStatic.h"
-#include <sstream>
 
 using namespace llvm;
 
@@ -70,10 +70,8 @@ ParamAttrsList::getParamAttrsText(ParameterAttributes Attrs) {
   if (Attrs & ParamAttr::ReadOnly)
     Result += "readonly ";
   if (Attrs & ParamAttr::Alignment) {
-    std::stringstream s;
-    s << ((Attrs & ParamAttr::Alignment) >> 16);
     Result += "align ";
-    Result += s.str();
+    Result += utostr((Attrs & ParamAttr::Alignment) >> 16);
     Result += " ";
   }
   return Result;
