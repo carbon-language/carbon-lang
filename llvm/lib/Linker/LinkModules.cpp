@@ -462,10 +462,20 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
   for (Module::const_global_iterator I = Src->global_begin(), E = Src->global_end();
        I != E; ++I) {
     const GlobalVariable *SGV = I;
-    GlobalVariable *DGV = 0;
-    // Check to see if may have to link the global.
+    GlobalValue *DGV = 0;
+
+    // Check to see if may have to link the global with the global
     if (SGV->hasName() && !SGV->hasInternalLinkage()) {
       DGV = Dest->getGlobalVariable(SGV->getName());
+      if (DGV && DGV->getType() != SGV->getType())
+        // If types don't agree due to opaque types, try to resolve them.
+        RecursiveResolveTypes(SGV->getType(), DGV->getType(), 
+                              &Dest->getTypeSymbolTable(), "");
+    }
+
+    // Check to see if may have to link the global with the alias
+    if (SGV->hasName() && !SGV->hasInternalLinkage()) {
+      DGV = Dest->getNamedAlias(SGV->getName());
       if (DGV && DGV->getType() != SGV->getType())
         // If types don't agree due to opaque types, try to resolve them.
         RecursiveResolveTypes(SGV->getType(), DGV->getType(), 
@@ -526,26 +536,37 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
 
       // Keep track that this is an appending variable...
       AppendingVars.insert(std::make_pair(SGV->getName(), NewDGV));
-    } else {
+    } else if (GlobalAlias *DGA = dyn_cast<GlobalAlias>(DGV)) {
+      // SGV is global, but DGV is alias. The only valid mapping is when SGV is
+      // external declaration, which is effectively a no-op. Also make sure
+      // linkage is correct.
+      if (SGV->isDeclaration() && !LinkFromSrc) {
+        // Make sure to remember this mapping...
+        ValueMap.insert(std::make_pair(SGV, DGA));
+      } else
+        return Error(Err, "Global-Alias Collision on '" +
+                     ToStr(SGV->getType(), Src) +"':%"+SGV->getName()+
+                     " - symbol multiple defined");
+    } else if (GlobalVariable *DGVar = dyn_cast<GlobalVariable>(DGV)) {
       // Otherwise, perform the mapping as instructed by GetLinkageResult.
       if (LinkFromSrc) {
         // Propagate alignment, section, and visibility info.
-        CopyGVAttributes(DGV, SGV);
+        CopyGVAttributes(DGVar, SGV);
 
         // If the types don't match, and if we are to link from the source, nuke
         // DGV and create a new one of the appropriate type.
-        if (SGV->getType() != DGV->getType()) {
+        if (SGV->getType() != DGVar->getType()) {
           GlobalVariable *NewDGV =
             new GlobalVariable(SGV->getType()->getElementType(),
-                               DGV->isConstant(), DGV->getLinkage(),
-                               /*init*/0, DGV->getName(), Dest);
-          CopyGVAttributes(NewDGV, DGV);
+                               DGVar->isConstant(), DGVar->getLinkage(),
+                               /*init*/0, DGVar->getName(), Dest);
+          CopyGVAttributes(NewDGV, DGVar);
           DGV->replaceAllUsesWith(ConstantExpr::getBitCast(NewDGV,
-                                                           DGV->getType()));
-          // DGV will conflict with NewDGV because they both had the same
+                                                           DGVar->getType()));
+          // DGVar will conflict with NewDGV because they both had the same
           // name. We must erase this now so ForceRenaming doesn't assert
           // because DGV might not have internal linkage.
-          DGV->eraseFromParent();
+          DGVar->eraseFromParent();
 
           // If the symbol table renamed the global, but it is an externally
           // visible symbol, DGV must be an existing global with internal
@@ -554,26 +575,26 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
               !NewDGV->hasInternalLinkage())
             ForceRenaming(NewDGV, SGV->getName());
 
-          DGV = NewDGV;
+          DGVar = NewDGV;
         }
 
         // Inherit const as appropriate
-        DGV->setConstant(SGV->isConstant());
+        DGVar->setConstant(SGV->isConstant());
 
         // Set initializer to zero, so we can link the stuff later
-        DGV->setInitializer(0);
+        DGVar->setInitializer(0);
       } else {
         // Special case for const propagation
-        if (DGV->isDeclaration() && SGV->isConstant() && !DGV->isConstant())
-          DGV->setConstant(true);
+        if (DGVar->isDeclaration() && SGV->isConstant() && !DGVar->isConstant())
+          DGVar->setConstant(true);
       }
 
       // Set calculated linkage
-      DGV->setLinkage(NewLinkage);
+      DGVar->setLinkage(NewLinkage);
 
       // Make sure to remember this mapping...
       ValueMap.insert(std::make_pair(SGV,
-                                     ConstantExpr::getBitCast(DGV,
+                                     ConstantExpr::getBitCast(DGVar,
                                                               SGV->getType())));
     }
   }
@@ -659,7 +680,7 @@ static bool LinkAlias(Module *Dest, const Module *Src,
 
         // Proceed to 'common' steps
       } else
-        return Error(Err, "Alias Collision on '" +
+        return Error(Err, "Global-Alias Collision on '" +
                      ToStr(SGA->getType(), Src) +"':%"+SGA->getName()+
                      " - symbol multiple defined");
     } else if (Function *DF = Dest->getFunction(SGA->getName())) {
@@ -686,7 +707,7 @@ static bool LinkAlias(Module *Dest, const Module *Src,
 
         // Proceed to 'common' steps
       } else
-        return Error(Err, "Alias Collision on '" +
+        return Error(Err, "Function-Alias Collision on '" +
                      ToStr(SGA->getType(), Src) +"':%"+SGA->getName()+
                      " - symbol multiple defined");
     } else {
