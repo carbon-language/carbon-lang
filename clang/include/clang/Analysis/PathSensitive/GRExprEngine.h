@@ -61,6 +61,10 @@ protected:
   /// StmtEntryNode - The immediate predecessor node.
   NodeTy* StmtEntryNode;
   
+  /// CleanedState - The state for StmtEntryNode "cleaned" of all dead
+  ///  variables and symbols (as determined by a liveness analysis).
+  ValueState* CleanedState;
+  
   /// CurrentStmt - The current block-level statement.
   Stmt* CurrentStmt;
 
@@ -120,18 +124,15 @@ protected:
   ///   where a pass-by-value argument has an undefined value.
   UndefArgsTy UndefArgs;
   
-  ValueState* RDBInState;
-  ValueState* RDBOutState;
-  
 public:
   GRExprEngine(GraphTy& g) : 
-  G(g), Liveness(G.getCFG(), G.getFunctionDecl()),
-  Builder(NULL),
-  StateMgr(G.getContext(), G.getAllocator()),
-  BasicVals(StateMgr.getBasicValueFactory()),
-  TF(NULL), // FIXME.
-  SymMgr(StateMgr.getSymbolManager()),
-  StmtEntryNode(NULL), CurrentStmt(NULL) {
+    G(g), Liveness(G.getCFG(), G.getFunctionDecl()),
+    Builder(NULL),
+    StateMgr(G.getContext(), G.getAllocator()),
+    BasicVals(StateMgr.getBasicValueFactory()),
+    TF(NULL), // FIXME.
+    SymMgr(StateMgr.getSymbolManager()),
+    StmtEntryNode(NULL), CleanedState(NULL), CurrentStmt(NULL) {
     
     // Compute liveness information.
     Liveness.runOnCFG(G.getCFG());
@@ -262,13 +263,8 @@ public:
   
 protected:
   
-  /// RemoveDeadBindings - Return a new state that is the same as 'St' except
-  ///  that all subexpression mappings are removed and that any
-  ///  block-level expressions that are not live at 'CurrentStmt' also have 
-  ///  their mappings removed.
-  ValueState* RemoveDeadBindings(ValueState* St) {
-    assert (St);
-    return St == RDBInState ? RDBOutState : St;
+  ValueState* GetState(NodeTy* N) {
+    return N == StmtEntryNode ? CleanedState : N->getState();
   }
   
   ValueState* SetRVal(ValueState* St, Expr* Ex, RVal V);
@@ -277,9 +273,13 @@ protected:
     return SetRVal(St, const_cast<Expr*>(Ex), V);
   }
  
-  ValueState* SetBlkExprRVal(ValueState* St, Expr* Ex, RVal V);
+  ValueState* SetBlkExprRVal(ValueState* St, Expr* Ex, RVal V) {
+    return StateMgr.SetRVal(St, Ex, V, true, false);
+  }
   
-  ValueState* SetRVal(ValueState* St, LVal LV, RVal V);
+  ValueState* SetRVal(ValueState* St, LVal LV, RVal V) {
+    return StateMgr.SetRVal(St, LV, V);
+  }
   
   RVal GetRVal(ValueState* St, Expr* Ex) {
     return StateMgr.GetRVal(St, Ex);

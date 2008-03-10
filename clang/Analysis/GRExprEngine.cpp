@@ -66,8 +66,6 @@ ValueState* GRExprEngine::getInitialState() {
       
 ValueState* GRExprEngine::SetRVal(ValueState* St, Expr* Ex, RVal V) {
 
-  St = RemoveDeadBindings(St);
-
   bool isBlkExpr = false;
     
   if (Ex == CurrentStmt) {
@@ -78,16 +76,6 @@ ValueState* GRExprEngine::SetRVal(ValueState* St, Expr* Ex, RVal V) {
   }
 
   return StateMgr.SetRVal(St, Ex, V, isBlkExpr, false);
-}
-
-ValueState* GRExprEngine::SetRVal(ValueState* St, LVal LV, RVal RV) {
-  St = RemoveDeadBindings(St);  
-  return StateMgr.SetRVal(St, LV, RV);
-}
-
-ValueState* GRExprEngine::SetBlkExprRVal(ValueState* St, Expr* Ex, RVal V) {
-  St = RemoveDeadBindings(St);  
-  return StateMgr.SetRVal(St, Ex, V, true, false);
 }
 
 ValueState* GRExprEngine::MarkBranch(ValueState* St, Stmt* Terminator,
@@ -354,7 +342,7 @@ void GRExprEngine::VisitLogicalExpr(BinaryOperator* B, NodeTy* Pred,
   
   assert (B == CurrentStmt && getCFG().isBlkExpr(B));
   
-  ValueState* St = Pred->getState();
+  ValueState* St = GetState(Pred);
   RVal X = GetBlkExprRVal(St, B);
   
   assert (X.isUndef());
@@ -413,8 +401,8 @@ void GRExprEngine::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
   
   // Create the cleaned state.
 
-  RDBInState = StmtEntryNode->getState();
-  RDBOutState = StateMgr.RemoveDeadBindings(RDBInState, CurrentStmt, Liveness);
+  CleanedState = StateMgr.RemoveDeadBindings(StmtEntryNode->getState(),
+                                             CurrentStmt, Liveness);
 
   // Visit the statement.
 
@@ -423,18 +411,15 @@ void GRExprEngine::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
   // If no nodes were generated, generate a new node that has all the
   // dead mappings removed.
   
-  if (Dst.size() == 1 && *Dst.begin() == StmtEntryNode) {
-    ValueState* St = RemoveDeadBindings(StmtEntryNode->getState());
-    builder.generateNode(S, St, StmtEntryNode);
-  }
+  if (Dst.size() == 1 && *Dst.begin() == StmtEntryNode)
+    builder.generateNode(S, GetState(StmtEntryNode), StmtEntryNode);
   
-  // For safety, NULL out these variables.
+  // NULL out these variables to cleanup.
   
   CurrentStmt = NULL;
   StmtEntryNode = NULL;
   Builder = NULL;
-  RDBInState = NULL;
-  RDBOutState = NULL;
+  CleanedState = NULL;
 }
 
 void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* D, NodeTy* Pred, NodeSet& Dst){
@@ -447,7 +432,7 @@ void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* D, NodeTy* Pred, NodeSet& Dst){
   // If we are here, we are loading the value of the decl and binding
   // it to the block-level expression.
   
-  ValueState* St = Pred->getState();  
+  ValueState* St = GetState(Pred);  
   RVal X = RVal::MakeVal(BasicVals, D);
   RVal Y = isa<lval::DeclVal>(X) ? GetRVal(St, cast<lval::DeclVal>(X)) : X;
   Nodify(Dst, D, Pred, SetBlkExprRVal(St, D, Y));
@@ -486,7 +471,7 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
   // Finally, evaluate the function call.
   for (NodeSet::iterator DI = DstTmp.begin(), DE = DstTmp.end(); DI!=DE; ++DI) {
 
-    ValueState* St = (*DI)->getState();    
+    ValueState* St = GetState(*DI);
     RVal L = GetLVal(St, Callee);
 
     // FIXME: Add support for symbolic function calls (calls involving
@@ -564,8 +549,8 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
       for (CallExpr::arg_iterator I = CE->arg_begin(), E = CE->arg_end();
            I != E; ++I) {
 
-        if (GetRVal((*DI)->getState(), *I).isUndef()) {        
-          NodeTy* N = Builder->generateNode(CE, (*DI)->getState(), *DI);
+        if (GetRVal(GetState(*DI), *I).isUndef()) {        
+          NodeTy* N = Builder->generateNode(CE, GetState(*DI), *DI);
         
           if (N) {
             N->markAsSink();
@@ -615,7 +600,7 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
   
   for (NodeSet::iterator I1 = S1.begin(), E1 = S1.end(); I1 != E1; ++I1) {
     NodeTy* N = *I1;
-    ValueState* St = N->getState();
+    ValueState* St = GetState(N);
     
     RVal V = T->isReferenceType() ? GetLVal(St, Ex) : GetRVal(St, Ex);
     
@@ -626,7 +611,7 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
 void GRExprEngine::VisitDeclStmt(DeclStmt* DS, GRExprEngine::NodeTy* Pred,
                                  GRExprEngine::NodeSet& Dst) {
   
-  ValueState* St = Pred->getState();
+  ValueState* St = GetState(Pred);
   
   for (const ScopedDecl* D = DS->getDecl(); D; D = D->getNextDeclarator())
     if (const VarDecl* VD = dyn_cast<VarDecl>(D)) {
@@ -697,7 +682,7 @@ void GRExprEngine::VisitGuardedExpr(Expr* Ex, Expr* L, Expr* R,
   
   assert (Ex == CurrentStmt && getCFG().isBlkExpr(Ex));
 
-  ValueState* St = Pred->getState();
+  ValueState* St = GetState(Pred);
   RVal X = GetBlkExprRVal(St, Ex);
   
   assert (X.isUndef());
@@ -735,7 +720,7 @@ void GRExprEngine::VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr* Ex,
     size = getContext().getTypeSize(T) / 8;
   
   Nodify(Dst, Ex, Pred,
-         SetRVal(Pred->getState(), Ex,
+         SetRVal(GetState(Pred), Ex,
                   NonLVal::MakeVal(BasicVals, size, Ex->getType())));
   
 }
@@ -755,7 +740,7 @@ void GRExprEngine::VisitDeref(UnaryOperator* U, NodeTy* Pred,
   for (NodeSet::iterator I = DstTmp.begin(), DE = DstTmp.end(); I != DE; ++I) {
 
     NodeTy* N = *I;
-    ValueState* St = N->getState();
+    ValueState* St = GetState(N);
     
     // FIXME: Bifurcate when dereferencing a symbolic with no constraints?
     
@@ -862,7 +847,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
   for (NodeSet::iterator I1 = S1.begin(), E1 = S1.end(); I1 != E1; ++I1) {
 
     NodeTy* N1 = *I1;
-    ValueState* St = N1->getState();
+    ValueState* St = GetState(N1);
         
     RVal SubV = use_GetLVal ? GetLVal(St, U->getSubExpr()) : 
                               GetRVal(St, U->getSubExpr());
@@ -968,7 +953,7 @@ void GRExprEngine::VisitSizeOfExpr(UnaryOperator* U, NodeTy* Pred,
     return;
   
   uint64_t size = getContext().getTypeSize(T) / 8;                
-  ValueState* St = Pred->getState();
+  ValueState* St = GetState(Pred);
   St = SetRVal(St, U, NonLVal::MakeVal(BasicVals, size, U->getType()));
 
   Nodify(Dst, U, Pred, St);
@@ -1016,8 +1001,8 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
     // so we use GetLVal instead of GetRVal so that DeclRefExpr's are
     // evaluated to LValDecl's instead of to an NonLVal.
 
-    RVal LeftV = B->isAssignmentOp() ? GetLVal(N1->getState(), B->getLHS())
-                                     : GetRVal(N1->getState(), B->getLHS());
+    RVal LeftV = B->isAssignmentOp() ? GetLVal(GetState(N1), B->getLHS())
+                                     : GetRVal(GetState(N1), B->getLHS());
     
     // Visit the RHS...
     
@@ -1029,7 +1014,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
     for (NodeSet::iterator I2 = S2.begin(), E2 = S2.end(); I2 != E2; ++I2) {
 
       NodeTy* N2 = *I2;
-      ValueState* St = N2->getState();      
+      ValueState* St = GetState(N2);
       Expr* RHS = B->getRHS();
       RVal RightV = GetRVal(St, RHS);
 
@@ -1167,7 +1152,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           
           // Fetch the value of the LHS (the value of the variable, etc.).
           
-          RVal V = GetRVal(N1->getState(), LeftLV, B->getLHS()->getType());
+          RVal V = GetRVal(GetState(N1), LeftLV, B->getLHS()->getType());
           
           // Propagate undefined value (left-side).  We
           // propogate undefined values for the RHS below when
@@ -1289,7 +1274,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
 }
 
 void GRExprEngine::HandleUndefinedStore(Stmt* S, NodeTy* Pred) {  
-  NodeTy* N = Builder->generateNode(S, Pred->getState(), Pred);
+  NodeTy* N = Builder->generateNode(S, GetState(Pred), Pred);
   N->markAsSink();
   UndefStores.insert(N);
 }
@@ -1322,7 +1307,7 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
         break;
       }
       else if (B->getOpcode() == BinaryOperator::Comma) {
-        ValueState* St = Pred->getState();
+        ValueState* St = GetState(Pred);
         Nodify(Dst, B, Pred, SetRVal(St, B, GetRVal(St, B->getRHS())));
         break;
       }
@@ -1387,7 +1372,7 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
     case Stmt::StmtExprClass: {
       StmtExpr* SE = cast<StmtExpr>(S);
       
-      ValueState* St = Pred->getState();
+      ValueState* St = GetState(Pred);
       Expr* LastExpr = cast<Expr>(*SE->getSubStmt()->body_rbegin());
       Nodify(Dst, SE, Pred, SetRVal(St, SE, GetRVal(St, LastExpr)));
       break;      
