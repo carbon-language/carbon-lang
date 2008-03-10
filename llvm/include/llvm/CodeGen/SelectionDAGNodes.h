@@ -57,7 +57,7 @@ struct SDVTList {
 ///
 namespace ISD {
   namespace ParamFlags {    
-    typedef unsigned long long ParamFlagsTy;
+    typedef uint64_t ParamFlagsTy;
 
     const ParamFlagsTy NoFlagSet         = 0ULL;
     const ParamFlagsTy ZExt              = 1ULL<<0;  ///< Zero extended
