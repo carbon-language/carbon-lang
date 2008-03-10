@@ -717,9 +717,8 @@ static bool LinkAlias(Module *Dest, const Module *Src,
 
     assert(NewGA && "No alias was created in destination module!");
 
-    // If the symbol table renamed the function, but it is an externally
-    // visible symbol, DGV must be an existing function with internal
-    // linkage. Rename it.
+    // If the symbol table renamed the alias, but it is an externally visible
+    // symbol, DGV must be an global value with internal linkage. Rename it.
     if (NewGA->getName() != SGA->getName() &&
         !NewGA->hasInternalLinkage())
       ForceRenaming(NewGA, SGA->getName());
