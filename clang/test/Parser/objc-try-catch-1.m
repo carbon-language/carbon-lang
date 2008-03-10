@@ -2,6 +2,9 @@
 
 void * proc();
 
+@interface NSConstantString
+@end
+
 @interface Frob
 @end
 
@@ -40,13 +43,13 @@ void * foo()
 void bar()
 {
   @try {}// expected-error {{@try statment without a @catch and @finally clause}}
-  @"s" {} //  expected-warning {{result unused}} expected-error {{expected ';'}}
+  @"s"; //  expected-warning {{result unused}}
 }
 
 void baz()
 {
   @try {}// expected-error {{@try statment without a @catch and @finally clause}}
-  @try {}// expected-error {{undeclared identifier}}
+  @try {}
   @finally {}
 }
 

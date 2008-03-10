@@ -1150,10 +1150,8 @@ Parser::StmtResult Parser::ParseObjCSynchronizedStmt(SourceLocation atLoc) {
 ///     parameter-declaration
 ///     '...' [OBJC2]
 ///
-Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc, 
-                                            bool &processAtKeyword) {
+Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
   bool catch_or_finally_seen = false;
-  processAtKeyword = false;
   
   ConsumeToken(); // consume try
   if (Tok.isNot(tok::l_brace)) {
@@ -1165,7 +1163,16 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc,
   StmtResult TryBody = ParseCompoundStatementBody();
   if (TryBody.isInvalid)
     TryBody = Actions.ActOnNullStmt(Tok.getLocation());
+  
   while (Tok.is(tok::at)) {
+    // At this point, we need to lookahead to determine if this @ is the start
+    // of an @catch or @finally.  We don't want to consume the @ token if this
+    // is an @try or @encode or something else.
+    Token AfterAt = GetLookAheadToken(1);
+    if (!AfterAt.isObjCAtKeyword(tok::objc_catch) &&
+        !AfterAt.isObjCAtKeyword(tok::objc_finally))
+      break;
+      
     SourceLocation AtCatchFinallyLoc = ConsumeToken();
     if (Tok.isObjCAtKeyword(tok::objc_catch)) {
       StmtTy *FirstPart = 0;
@@ -1203,7 +1210,8 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc,
         return true;
       }
       catch_or_finally_seen = true;
-    } else if (Tok.isObjCAtKeyword(tok::objc_finally)) {
+    } else {
+      assert(Tok.isObjCAtKeyword(tok::objc_finally) && "Lookahead confused?");
       ConsumeToken(); // consume finally
       
       StmtResult FinallyBody(true);
@@ -1216,9 +1224,6 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc,
       FinallyStmt = Actions.ActOnObjCAtFinallyStmt(AtCatchFinallyLoc, 
                                                    FinallyBody.Val);
       catch_or_finally_seen = true;
-      break;
-    } else {
-      processAtKeyword = true;
       break;
     }
   }
@@ -1274,18 +1279,7 @@ Parser::DeclTy *Parser::ParseObjCMethodDefinition() {
 
 Parser::StmtResult Parser::ParseObjCAtStatement(SourceLocation AtLoc) {
   if (Tok.isObjCAtKeyword(tok::objc_try)) {
-    bool parsedAtSign;
-    
-    StmtResult Res = ParseObjCTryStmt(AtLoc, parsedAtSign);
-    // FIXME: This hack results in a dropped AST node. To correctly implement 
-    // the hack, parseAtSign would need to bubble up to 
-    // ParseCompoundStatement(). This would involve adding an argument to this 
-    // routine and ParseStatementOrDeclaration(). Changing the parser in this
-    // fashion to solve such a conceptually simple problem is undesirable.
-    // Rework this clause once 2-token lookahead is implemented.
-    if (!Res.isInvalid && parsedAtSign)
-      return ParseObjCAtStatement(AtLoc);
-    return Res;
+    return ParseObjCTryStmt(AtLoc);
   } else if (Tok.isObjCAtKeyword(tok::objc_throw))
     return ParseObjCThrowStmt(AtLoc);
   else if (Tok.isObjCAtKeyword(tok::objc_synchronized))

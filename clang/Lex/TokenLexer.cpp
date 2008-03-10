@@ -36,6 +36,7 @@ void TokenLexer::Init(Token &Tok, MacroArgs *Actuals) {
   HasLeadingSpace = Tok.hasLeadingSpace();
   Tokens = &*Macro->tokens_begin();
   OwnsTokens = false;
+  DisableMacroExpansion = false;
   NumTokens = Macro->tokens_end()-Macro->tokens_begin();
 
   // If this is a function-like macro, expand the arguments and change
@@ -53,7 +54,8 @@ void TokenLexer::Init(Token &Tok, MacroArgs *Actuals) {
 
 /// Create a TokenLexer for the specified token stream.  This does not
 /// take ownership of the specified token vector.
-void TokenLexer::Init(const Token *TokArray, unsigned NumToks) {
+void TokenLexer::Init(const Token *TokArray, unsigned NumToks,
+                      bool disableMacroExpansion, bool ownsTokens) {
   // If the client is reusing a TokenLexer, make sure to free any memory
   // associated with it.
   destroy();
@@ -61,7 +63,8 @@ void TokenLexer::Init(const Token *TokArray, unsigned NumToks) {
   Macro = 0;
   ActualArgs = 0;
   Tokens = TokArray;
-  OwnsTokens = false;
+  OwnsTokens = ownsTokens;
+  DisableMacroExpansion = disableMacroExpansion;
   NumTokens = NumToks;
   CurToken = 0;
   InstantiateLoc = SourceLocation();
@@ -323,7 +326,7 @@ void TokenLexer::Lex(Token &Tok) {
   }
   
   // Handle recursive expansion!
-  if (Tok.getIdentifierInfo())
+  if (Tok.getIdentifierInfo() && !DisableMacroExpansion)
     return PP.HandleIdentifier(Tok);
 
   // Otherwise, return a normal token.

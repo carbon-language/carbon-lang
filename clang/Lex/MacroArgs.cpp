@@ -112,7 +112,8 @@ MacroArgs::getPreExpArgument(unsigned Arg, Preprocessor &PP) {
   // this, we set up a fake TokenLexer to lex from the unexpanded argument
   // list.  With this installed, we lex expanded tokens until we hit the EOF
   // token at the end of the unexp list.
-  PP.EnterTokenStream(AT, NumToks);
+  PP.EnterTokenStream(AT, NumToks, false /*disable expand*/, 
+                      false /*owns tokens*/);
 
   // Lex all of the macro-expanded tokens into Result.
   do {

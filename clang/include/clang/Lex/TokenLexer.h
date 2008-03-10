@@ -68,6 +68,10 @@ class TokenLexer {
   /// definition, we don't make a copy of it.
   bool OwnsTokens : 1;
   
+  /// DisableMacroExpansion - This is true when tokens lexed from the TokenLexer
+  /// should not be subject to further macro expansion.
+  bool DisableMacroExpansion : 1;
+  
   TokenLexer(const TokenLexer&);  // DO NOT IMPLEMENT
   void operator=(const TokenLexer&); // DO NOT IMPLEMENT
 public:
@@ -85,14 +89,19 @@ public:
   
   /// Create a TokenLexer for the specified token stream.  This does not
   /// take ownership of the specified token vector.
-  TokenLexer(const Token *TokArray, unsigned NumToks, Preprocessor &pp)
+  TokenLexer(const Token *TokArray, unsigned NumToks, bool DisableExpansion,
+             bool OwnsTokens, Preprocessor &pp)
     : Macro(0), ActualArgs(0), PP(pp), OwnsTokens(false) {
-    Init(TokArray, NumToks);
+    Init(TokArray, NumToks, DisableExpansion, OwnsTokens);
   }
   
   /// Init - Initialize this TokenLexer with the specified token stream.
   /// This does not take ownership of the specified token vector.
-  void Init(const Token *TokArray, unsigned NumToks);
+  ///
+  /// DisableExpansion is true when macro expansion of tokens lexed from this 
+  /// stream should be disabled.
+  void Init(const Token *TokArray, unsigned NumToks,
+            bool DisableMacroExpansion, bool OwnsTokens);
   
   ~TokenLexer() { destroy(); }
   

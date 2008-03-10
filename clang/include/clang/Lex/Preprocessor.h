@@ -230,11 +230,19 @@ public:
   void EnterMacro(Token &Identifier, MacroArgs *Args);
   
   /// EnterTokenStream - Add a "macro" context to the top of the include stack,
-  /// which will cause the lexer to start returning the specified tokens.  Note
-  /// that these tokens will be re-macro-expanded when/if expansion is enabled.
-  /// This method assumes that the specified stream of tokens has a permanent
-  /// owner somewhere, so they do not need to be copied.
-  void EnterTokenStream(const Token *Toks, unsigned NumToks);
+  /// which will cause the lexer to start returning the specified tokens.
+  ///
+  /// If DisableMacroExpansion is true, tokens lexed from the token stream will
+  /// not be subject to further macro expansion.  Otherwise, these tokens will
+  /// be re-macro-expanded when/if expansion is enabled.
+  ///
+  /// If OwnsTokens is false, this method assumes that the specified stream of
+  /// tokens has a permanent owner somewhere, so they do not need to be copied.
+  /// If it is true, it assumes the array of tokens is allocated with new[] and
+  /// must be freed.
+  ///
+  void EnterTokenStream(const Token *Toks, unsigned NumToks,
+                        bool DisableMacroExpansion, bool OwnsTokens);
   
   /// RemoveTopOfLexerStack - Pop the current lexer/macro exp off the top of the
   /// lexer stack.  This should only be used in situations where the current
@@ -271,6 +279,17 @@ public:
     // Reenable it.
     DisableMacroExpansion = OldVal;
   }
+  
+  /// LookAhead - This peeks ahead N tokens and returns that token without
+  /// consuming any tokens.  LookAhead(0) returns the next token that would be
+  /// returned by Lex(), LookAhead(1) returns the token after it, etc.  This
+  /// returns normal tokens after phase 5.  As such, it is equivalent to using
+  /// 'Lex', not 'LexUnexpandedToken'.
+  ///
+  /// NOTE: is a relatively expensive method, so it should not be used in common
+  /// code paths if possible!
+  ///
+  Token LookAhead(unsigned N);
   
   /// Diag - Forwarding function for diagnostics.  This emits a diagnostic at
   /// the specified Token's location, translating the token's start

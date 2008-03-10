@@ -189,6 +189,22 @@ private:
     return L;
   }
   
+  /// GetLookAheadToken - This peeks ahead N tokens and returns that token
+  /// without consuming any tokens.  LookAhead(0) returns 'Tok', LookAhead(1)
+  /// returns the token after Tok, etc.
+  ///
+  /// Note that this differs from the Preprocessor's LookAhead method, because
+  /// the Parser always has one token lexed that the preprocessor doesn't.
+  ///
+  /// NOTE: is a relatively expensive method, so it should not be used in common
+  /// code paths if possible!
+  ///
+  Token GetLookAheadToken(unsigned N) {
+    if (N == 0 || Tok.is(tok::eof)) return Tok;
+    return PP.LookAhead(N-1);
+  }
+  
+  
   /// MatchRHSPunctuation - For punctuation with a LHS and RHS (e.g. '['/']'),
   /// this helper function matches and consumes the specified RHS token if
   /// present.  If not present, it emits the specified diagnostic indicating
@@ -411,7 +427,7 @@ private:
   StmtResult ParseAsmStatement(bool &msAsm);
   StmtResult FuzzyParseMicrosoftAsmStatement();
   StmtResult ParseObjCAtStatement(SourceLocation atLoc);
-  StmtResult ParseObjCTryStmt(SourceLocation atLoc, bool &processAtKeyword);
+  StmtResult ParseObjCTryStmt(SourceLocation atLoc);
   StmtResult ParseObjCThrowStmt(SourceLocation atLoc);
   StmtResult ParseObjCSynchronizedStmt(SourceLocation atLoc);
   bool ParseAsmOperandsOpt(llvm::SmallVectorImpl<std::string> &Names,

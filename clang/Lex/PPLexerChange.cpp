@@ -25,7 +25,7 @@ PPCallbacks::~PPCallbacks() {
 
 
 //===----------------------------------------------------------------------===//
-// Source File Location Methods.
+// Miscellaneous Methods.
 //===----------------------------------------------------------------------===//
 
 /// isInPrimaryFile - Return true if we're in the top-level file, not in a
@@ -60,6 +60,54 @@ Lexer *Preprocessor::getCurrentFileLexer() const {
   return 0;
 }
 
+/// LookAhead - This peeks ahead N tokens and returns that token without
+/// consuming any tokens.  LookAhead(0) returns 'Tok', LookAhead(1) returns
+/// the token after Tok, etc.
+///
+/// NOTE: is a relatively expensive method, so it should not be used in common
+/// code paths if possible!
+///
+Token Preprocessor::LookAhead(unsigned N) {
+  Token *LookaheadTokens = new Token[N];
+
+  // Read N+1 tokens into LookaheadTokens.  After this loop, Tok is the token
+  // to return.
+  Token Tok;
+  unsigned NumTokens = 0;
+  for (; N != ~0U; --N, ++NumTokens) {
+    Lex(Tok);
+    LookaheadTokens[NumTokens] = Tok;
+    
+    // If we got to EOF, don't lex past it.  This will cause LookAhead to return
+    // the EOF token.
+    if (Tok.is(tok::eof))
+      break;
+  }
+
+  // Okay, at this point, we have the token we want to return in Tok.  However,
+  // we read it and a bunch of other stuff (in LookaheadTokens) that we must
+  // allow subsequent calls to 'Lex' to return.  To do this, we push a new token
+  // lexer onto the lexer stack with the tokens we read here.  This passes
+  // ownership of LookaheadTokens to EnterTokenStream.
+  //
+  // Note that we disable macro expansion of the tokens from this buffer, since
+  // any macros have already been expanded, and the internal preprocessor state
+  // may already read past new macros.  Consider something like LookAhead(1) on
+  //      X
+  //      #define X 14
+  //      Y
+  // The lookahead call should return 'Y', and the next Lex call should return
+  // 'X' even though X -> 14 has already been entered as a macro.
+  //
+  EnterTokenStream(LookaheadTokens, NumTokens, true /*DisableExpansion*/,
+                   true /*OwnsTokens*/);
+  return Tok;
+}
+
+
+//===----------------------------------------------------------------------===//
+// Methods for Entering and Callbacks for leaving various contexts
+//===----------------------------------------------------------------------===//
 
 /// EnterSourceFile - Add a source file to the top of the include stack and
 /// start lexing tokens from it instead of the current buffer.  Return true
@@ -123,11 +171,20 @@ void Preprocessor::EnterMacro(Token &Tok, MacroArgs *Args) {
 }
 
 /// EnterTokenStream - Add a "macro" context to the top of the include stack,
-/// which will cause the lexer to start returning the specified tokens.  Note
-/// that these tokens will be re-macro-expanded when/if expansion is enabled.
-/// This method assumes that the specified stream of tokens has a permanent
-/// owner somewhere, so they do not need to be copied.
-void Preprocessor::EnterTokenStream(const Token *Toks, unsigned NumToks) {
+/// which will cause the lexer to start returning the specified tokens.
+///
+/// If DisableMacroExpansion is true, tokens lexed from the token stream will
+/// not be subject to further macro expansion.  Otherwise, these tokens will
+/// be re-macro-expanded when/if expansion is enabled.
+///
+/// If OwnsTokens is false, this method assumes that the specified stream of
+/// tokens has a permanent owner somewhere, so they do not need to be copied.
+/// If it is true, it assumes the array of tokens is allocated with new[] and
+/// must be freed.
+///
+void Preprocessor::EnterTokenStream(const Token *Toks, unsigned NumToks,
+                                    bool DisableMacroExpansion,
+                                    bool OwnsTokens) {
   // Save our current state.
   IncludeMacroStack.push_back(IncludeStackInfo(CurLexer, CurDirLookup,
                                                CurTokenLexer));
@@ -136,10 +193,11 @@ void Preprocessor::EnterTokenStream(const Token *Toks, unsigned NumToks) {
 
   // Create a macro expander to expand from the specified token stream.
   if (NumCachedTokenLexers == 0) {
-    CurTokenLexer = new TokenLexer(Toks, NumToks, *this);
+    CurTokenLexer = new TokenLexer(Toks, NumToks, DisableMacroExpansion,
+                                   OwnsTokens, *this);
   } else {
     CurTokenLexer = TokenLexerCache[--NumCachedTokenLexers];
-    CurTokenLexer->Init(Toks, NumToks);
+    CurTokenLexer->Init(Toks, NumToks, DisableMacroExpansion, OwnsTokens);
   }
 }
 
