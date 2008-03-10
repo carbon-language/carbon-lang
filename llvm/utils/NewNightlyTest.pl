@@ -74,6 +74,7 @@ use Socket;
 #                   this option is not specified it defaults to
 #                   /nightlytest/NightlyTestAccept.php. This is basically 
 #                   everything after the www.yourserver.org.
+#  -nosubmit        Do not report the test results back to a submit server.
 #
 # CVSROOT is the CVS repository from which the tree will be checked out,
 #  specified either in the full :method:user@host:/dir syntax, or
@@ -126,6 +127,7 @@ $NORUNNINGTESTS=0;
 $MAKECMD="make";
 $SUBMITSERVER = "llvm.org";
 $SUBMITSCRIPT = "/nightlytest/NightlyTestAccept.php";
+$SUBMIT = 1;
 
 while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   shift;
@@ -164,6 +166,7 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
                              shift; next; }
   if (/^-submit-server/)   { $SUBMITSERVER = "$ARGV[0]"; shift; next; }
   if (/^-submit-script/)   { $SUBMITSCRIPT = "$ARGV[0]"; shift; next; }
+  if (/^-nosubmit$/)       { $SUBMIT = 0; next; }
   if (/^-nickname$/)       { $nickname = "$ARGV[0]"; shift; next; } 
   if (/^-gccpath/)         { $CONFIGUREARGS .= 
                              " CC=$ARGV[0]/gcc CXX=$ARGV[0]/g++"; 
@@ -1135,16 +1138,14 @@ my %hash_of_data = (
   'target_triple' => $targetTriple
 );
 
-$TESTING = 0;
-
-if ($TESTING) {
+if ($SUBMIT) {
+  my $response = SendData $SUBMITSERVER,$SUBMITSCRIPT,\%hash_of_data;
+  if( $VERBOSE) { print "============================\n$response"; }
+} else {
   print "============================\n";
   foreach $x(keys %hash_of_data){
       print "$x  => $hash_of_data{$x}\n";
   }
-} else {
-  my $response = SendData $SUBMITSERVER,$SUBMITSCRIPT,\%hash_of_data;
-  if( $VERBOSE) { print "============================\n$response"; }
 }
 
 ##############################################################
