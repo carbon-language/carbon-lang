@@ -1,17 +1,15 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -tailcallelim | llvm-dis | not grep call
+; RUN: llvm-as < %s | opt -tailcallelim | llvm-dis | not grep call
 
-int %factorial(int %x) {
+define i32 @factorial(i32 %x) {
 entry:
-        %tmp.1 = setgt int %x, 0
-        br bool %tmp.1, label %then, label %else
-
-then:
-        %tmp.6 = add int %x, -1
-        %tmp.4 = call int %factorial( int %tmp.6 )
-        %tmp.7 = mul int %tmp.4, %x
-        ret int %tmp.7
-
-else:
-        ret int 1
+	%tmp.1 = icmp sgt i32 %x, 0		; <i1> [#uses=1]
+	br i1 %tmp.1, label %then, label %else
+then:		; preds = %entry
+	%tmp.6 = add i32 %x, -1		; <i32> [#uses=1]
+	%tmp.4 = call i32 @factorial( i32 %tmp.6 )		; <i32> [#uses=1]
+	%tmp.7 = mul i32 %tmp.4, %x		; <i32> [#uses=1]
+	ret i32 %tmp.7
+else:		; preds = %entry
+	ret i32 1
 }
 

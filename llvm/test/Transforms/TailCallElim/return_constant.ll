@@ -1,19 +1,17 @@
 ; Though this case seems to be fairly unlikely to occur in the wild, someone
 ; plunked it into the demo script, so maybe they care about it.
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -tailcallelim | llvm-dis | not grep call
+; RUN: llvm-as < %s | opt -tailcallelim | llvm-dis | not grep call
 
-int %aaa(int %c) {
+define i32 @aaa(i32 %c) {
 entry:
-        %tmp.1 = seteq int %c, 0                ; <bool> [#uses=1]
-        br bool %tmp.1, label %return, label %else
-
-else:           ; preds = %entry
-        %tmp.5 = add int %c, -1         ; <int> [#uses=1]
-        %tmp.3 = call int %aaa( int %tmp.5 )            ; <int> [#uses=0]
-        ret int 0
-
-return:         ; preds = %entry
-        ret int 0
+	%tmp.1 = icmp eq i32 %c, 0		; <i1> [#uses=1]
+	br i1 %tmp.1, label %return, label %else
+else:		; preds = %entry
+	%tmp.5 = add i32 %c, -1		; <i32> [#uses=1]
+	%tmp.3 = call i32 @aaa( i32 %tmp.5 )		; <i32> [#uses=0]
+	ret i32 0
+return:		; preds = %entry
+	ret i32 0
 }
 

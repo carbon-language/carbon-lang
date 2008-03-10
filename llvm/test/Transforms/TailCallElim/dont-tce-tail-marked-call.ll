@@ -1,12 +1,13 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -tailcallelim | llvm-dis | \
+; RUN: llvm-as < %s | opt -tailcallelim | llvm-dis | \
 ; RUN:    grep {call i32 @foo}
 
-declare void %bar(int*)
-int %foo(uint %N) {
-  %A = alloca int, uint %N             ;; Should stay in entry block because of 'tail' marker
-  store int 17, int* %A
-  call void %bar(int* %A)
+declare void @bar(i32*)
 
-  %X = tail call int %foo(uint %N)  ;; Cannot -tailcallelim this without increasing stack usage!
-  ret int %X
+define i32 @foo(i32 %N) {
+	%A = alloca i32, i32 %N		; <i32*> [#uses=2]
+	store i32 17, i32* %A
+	call void @bar( i32* %A )
+	%X = tail call i32 @foo( i32 %N )		; <i32> [#uses=1]
+	ret i32 %X
 }
+

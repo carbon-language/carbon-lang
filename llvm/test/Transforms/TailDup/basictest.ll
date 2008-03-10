@@ -1,22 +1,20 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -tailduplicate -disable-output
+; RUN: llvm-as < %s | opt -tailduplicate -disable-output
 
-declare void %__main()
+declare void @__main()
 
-int %main() {
-entry:		; No predecessors!
-	call void %__main( )
+define i32 @main() {
+entry:
+	call void @__main( )
 	br label %loopentry
-
-loopentry:		; preds = %entry, %no_exit
-	%i.0 = phi int [ %inc, %no_exit ], [ 0, %entry ]		; <int> [#uses=2]
-	%tmp.1 = setle int %i.0, 99		; <bool> [#uses=1]
-	br bool %tmp.1, label %no_exit, label %return
-
+loopentry:		; preds = %no_exit, %entry
+	%i.0 = phi i32 [ %inc, %no_exit ], [ 0, %entry ]		; <i32> [#uses=3]
+	%tmp.1 = icmp sle i32 %i.0, 99		; <i1> [#uses=1]
+	br i1 %tmp.1, label %no_exit, label %return
 no_exit:		; preds = %loopentry
-	%tmp.51 = call int %main( )		; <int> [#uses=0]
-	%inc = add int %i.0, 1		; <int> [#uses=1]
+	%tmp.51 = call i32 @main( )		; <i32> [#uses=0]
+	%inc = add i32 %i.0, 1		; <i32> [#uses=1]
 	br label %loopentry
-
 return:		; preds = %loopentry
-	ret int %i.0
+	ret i32 %i.0
 }
+

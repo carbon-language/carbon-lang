@@ -1,12 +1,13 @@
-; RUN: llvm-upgrade < %s | llvm-as -f -o %t.bc
+; RUN: llvm-as < %s -f -o %t.bc
 ; RUN: lli %t.bc > /dev/null
 
 ; test unconditional branch
-int %main() {
+define i32 @main() {
 	br label %Test
-Test:
-	%X = seteq int 0, 4
-	br bool %X, label %Test, label %Label
-Label:
-	ret int 0
+Test:		; preds = %Test, %0
+	%X = icmp eq i32 0, 4		; <i1> [#uses=1]
+	br i1 %X, label %Test, label %Label
+Label:		; preds = %Test
+	ret i32 0
 }
+

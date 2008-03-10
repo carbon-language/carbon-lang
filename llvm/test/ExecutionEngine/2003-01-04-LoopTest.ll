@@ -1,25 +1,21 @@
-; RUN: llvm-upgrade < %s | llvm-as -o %t.bc -f
+; RUN: llvm-as < %s -o %t.bc -f
 ; RUN: lli %t.bc > /dev/null
 
-implementation
-
-int %main() {
-	call int %mylog(int 4)
-	ret int 0
+define i32 @main() {
+	call i32 @mylog( i32 4 )		; <i32>:1 [#uses=0]
+	ret i32 0
 }
 
-internal int %mylog(int %num) {
-bb0:            ; No predecessors!
+define internal i32 @mylog(i32 %num) {
+bb0:
 	br label %bb2
-
-bb2:
-        %reg112 = phi int [ 10, %bb2 ], [ 1, %bb0 ]
-        %cann-indvar = phi int [ %cann-indvar, %bb2 ], [0, %bb0]
-        %reg114 = add int %reg112, 1
-        %cond222 = setlt int %reg114, %num
-        br bool %cond222, label %bb2, label %bb3
-
-bb3:            ; preds = %bb2, %bb0
-	ret int %reg114
+bb2:		; preds = %bb2, %bb0
+	%reg112 = phi i32 [ 10, %bb2 ], [ 1, %bb0 ]		; <i32> [#uses=1]
+	%cann-indvar = phi i32 [ %cann-indvar, %bb2 ], [ 0, %bb0 ]		; <i32> [#uses=1]
+	%reg114 = add i32 %reg112, 1		; <i32> [#uses=2]
+	%cond222 = icmp slt i32 %reg114, %num		; <i1> [#uses=1]
+	br i1 %cond222, label %bb2, label %bb3
+bb3:		; preds = %bb2
+	ret i32 %reg114
 }
 

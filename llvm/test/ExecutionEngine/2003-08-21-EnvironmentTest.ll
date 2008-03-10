@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade %s | llvm-as -f -o %t.bc
+; RUN: llvm-as < %s -f -o %t.bc
 ; RUN: lli %t.bc > /dev/null
 
 ;
@@ -9,15 +9,14 @@
 ;	environment to the main() function.
 ;
 
-implementation
 
-declare uint %strlen(sbyte*)
+declare i32 @strlen(i8*)
 
-int %main(int %argc.1, sbyte** %argv.1, sbyte** %envp.1) {
-	%tmp.2 = load sbyte** %envp.1
-	%tmp.3 = call uint %strlen( sbyte* %tmp.2 )
-	%T = seteq uint %tmp.3, 0
-	%R = cast bool %T to int	
-	ret int %R
+define i32 @main(i32 %argc.1, i8** %argv.1, i8** %envp.1) {
+	%tmp.2 = load i8** %envp.1		; <i8*> [#uses=1]
+	%tmp.3 = call i32 @strlen( i8* %tmp.2 )		; <i32> [#uses=1]
+	%T = icmp eq i32 %tmp.3, 0		; <i1> [#uses=1]
+	%R = zext i1 %T to i32		; <i32> [#uses=1]
+	ret i32 %R
 }
 

@@ -1,22 +1,22 @@
 ; Test that the StrCatOptimizer works correctly
-; RUN: llvm-upgrade < %s | llvm-as | opt -constprop -simplify-libcalls | \
+; RUN: llvm-as < %s | opt -constprop -simplify-libcalls | \
 ; RUN:   llvm-dis | not grep {call.*llvm.memmove.i32}
 
-declare void %llvm.memmove.i32(sbyte*,sbyte*,uint,uint)
-%h = constant [2 x sbyte] c"h\00"
-%hel = constant [4 x sbyte] c"hel\00"
-%hello_u = constant [8 x sbyte] c"hello_u\00"
+@h = constant [2 x i8] c"h\00"		; <[2 x i8]*> [#uses=1]
+@hel = constant [4 x i8] c"hel\00"		; <[4 x i8]*> [#uses=1]
+@hello_u = constant [8 x i8] c"hello_u\00"		; <[8 x i8]*> [#uses=1]
 
-implementation   ; Functions:
+declare void @llvm.memmove.i32(i8*, i8*, i32, i32)
 
-int %main () {
-  %h_p = getelementptr [2 x sbyte]* %h, int 0, int 0
-  %hel_p = getelementptr [4 x sbyte]* %hel, int 0, int 0
-  %hello_u_p = getelementptr [8 x sbyte]* %hello_u, int 0, int 0
-  %target = alloca [1024 x sbyte]
-  %target_p = getelementptr [1024 x sbyte]* %target, int 0, int 0
-  call void %llvm.memmove.i32(sbyte* %target_p, sbyte* %h_p, uint 2, uint 2)
-  call void %llvm.memmove.i32(sbyte* %target_p, sbyte* %hel_p, uint 4, uint 4)
-  call void %llvm.memmove.i32(sbyte* %target_p, sbyte* %hello_u_p, uint 8, uint 8)
-  ret int 0
+define i32 @main() {
+	%h_p = getelementptr [2 x i8]* @h, i32 0, i32 0		; <i8*> [#uses=1]
+	%hel_p = getelementptr [4 x i8]* @hel, i32 0, i32 0		; <i8*> [#uses=1]
+	%hello_u_p = getelementptr [8 x i8]* @hello_u, i32 0, i32 0		; <i8*> [#uses=1]
+	%target = alloca [1024 x i8]		; <[1024 x i8]*> [#uses=1]
+	%target_p = getelementptr [1024 x i8]* %target, i32 0, i32 0		; <i8*> [#uses=3]
+	call void @llvm.memmove.i32( i8* %target_p, i8* %h_p, i32 2, i32 2 )
+	call void @llvm.memmove.i32( i8* %target_p, i8* %hel_p, i32 4, i32 4 )
+	call void @llvm.memmove.i32( i8* %target_p, i8* %hello_u_p, i32 8, i32 8 )
+	ret i32 0
 }
+

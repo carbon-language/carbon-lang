@@ -1,12 +1,13 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg
+; RUN: llvm-as < %s | opt -simplifycfg
 
-int %test(int %A, int %B, bool %cond) {
+define i32 @test(i32 %A, i32 %B, i1 %cond) {
 J:
-	%C = add int %A, 12
-	br bool %cond, label %L, label %L
-L:
-	%Q = phi int [%C, %J], [%C, %J]  ; PHI node is obviously redundant
-	%D = add int %C, %B
-	%E = add int %Q, %D
-	ret int %E
+	%C = add i32 %A, 12		; <i32> [#uses=3]
+	br i1 %cond, label %L, label %L
+L:		; preds = %J, %J
+	%Q = phi i32 [ %C, %J ], [ %C, %J ]		; <i32> [#uses=1]
+	%D = add i32 %C, %B		; <i32> [#uses=1]
+	%E = add i32 %Q, %D		; <i32> [#uses=1]
+	ret i32 %E
 }
+

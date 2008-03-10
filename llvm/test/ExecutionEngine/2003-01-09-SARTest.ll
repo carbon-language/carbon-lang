@@ -1,11 +1,12 @@
-; RUN: llvm-upgrade %s | llvm-as -f -o %t.bc
+; RUN: llvm-as < %s -f -o %t.bc
 ; RUN: lli %t.bc > /dev/null
 
 ; We were accidentally inverting the signedness of right shifts.  Whoops.
 
-int %main() {
-  %X = shr int -1, ubyte 16
-  %Y = shr int %X, ubyte 16
-  %Z = add int %Y, 1
-  ret int %Z
+define i32 @main() {
+	%X = ashr i32 -1, 16		; <i32> [#uses=1]
+	%Y = ashr i32 %X, 16		; <i32> [#uses=1]
+	%Z = add i32 %Y, 1		; <i32> [#uses=1]
+	ret i32 %Z
 }
+

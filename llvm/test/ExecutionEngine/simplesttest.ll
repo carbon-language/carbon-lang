@@ -1,10 +1,7 @@
-; RUN: llvm-upgrade < %s | llvm-as -f -o %t.bc
+; RUN: llvm-as < %s -f -o %t.bc
 ; RUN: lli %t.bc > /dev/null
 
-
-implementation
-
-int %main() {
-        ret int 0
+define i32 @main() {
+	ret i32 0
 }
 

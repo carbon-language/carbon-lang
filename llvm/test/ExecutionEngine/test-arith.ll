@@ -1,38 +1,35 @@
-; RUN: llvm-upgrade %s | llvm-as -f -o %t.bc
+; RUN: llvm-as %s -f -o %t.bc
 ; RUN: lli %t.bc > /dev/null
 
-int %main() {
-	%A = add sbyte 0, 12
-	%B = sub sbyte %A, 1
-	%C = mul sbyte %B, %B
-	%D = div sbyte %C, %C
-	%E = rem sbyte %D, %D
-	%F = div ubyte 5, 6
-	%G = rem ubyte 6, 5
-
-	%A = add short 0, 12
-	%B = sub short %A, 1
-	%C = mul short %B, %B
-	%D = div short %C, %C
-	%E = rem short %D, %D
-	%F = div ushort 5, 6
-	%G = rem uint 6, 5
-
-	%A = add int 0, 12
-	%B = sub int %A, 1
-	%C = mul int %B, %B
-	%D = div int %C, %C
-	%E = rem int %D, %D
-	%F = div uint 5, 6
-	%G1 = rem uint 6, 5
-
-	%A = add long 0, 12
-	%B = sub long %A, 1
-	%C = mul long %B, %B
-	%D = div long %C, %C
-	%E = rem long %D, %D
-	%F = div ulong 5, 6
-	%G = rem ulong 6, 5
-
-	ret int 0
+define i32 @main() {
+	%A = add i8 0, 12		; <i8> [#uses=1]
+	%B = sub i8 %A, 1		; <i8> [#uses=2]
+	%C = mul i8 %B, %B		; <i8> [#uses=2]
+	%D = sdiv i8 %C, %C		; <i8> [#uses=2]
+	%E = srem i8 %D, %D		; <i8> [#uses=0]
+	%F = udiv i8 5, 6		; <i8> [#uses=0]
+	%G = urem i8 6, 5		; <i8> [#uses=0]
+	%A.upgrd.1 = add i16 0, 12		; <i16> [#uses=1]
+	%B.upgrd.2 = sub i16 %A.upgrd.1, 1		; <i16> [#uses=2]
+	%C.upgrd.3 = mul i16 %B.upgrd.2, %B.upgrd.2		; <i16> [#uses=2]
+	%D.upgrd.4 = sdiv i16 %C.upgrd.3, %C.upgrd.3		; <i16> [#uses=2]
+	%E.upgrd.5 = srem i16 %D.upgrd.4, %D.upgrd.4		; <i16> [#uses=0]
+	%F.upgrd.6 = udiv i16 5, 6		; <i16> [#uses=0]
+	%G.upgrd.7 = urem i32 6, 5		; <i32> [#uses=0]
+	%A.upgrd.8 = add i32 0, 12		; <i32> [#uses=1]
+	%B.upgrd.9 = sub i32 %A.upgrd.8, 1		; <i32> [#uses=2]
+	%C.upgrd.10 = mul i32 %B.upgrd.9, %B.upgrd.9		; <i32> [#uses=2]
+	%D.upgrd.11 = sdiv i32 %C.upgrd.10, %C.upgrd.10		; <i32> [#uses=2]
+	%E.upgrd.12 = srem i32 %D.upgrd.11, %D.upgrd.11		; <i32> [#uses=0]
+	%F.upgrd.13 = udiv i32 5, 6		; <i32> [#uses=0]
+	%G1 = urem i32 6, 5		; <i32> [#uses=0]
+	%A.upgrd.14 = add i64 0, 12		; <i64> [#uses=1]
+	%B.upgrd.15 = sub i64 %A.upgrd.14, 1		; <i64> [#uses=2]
+	%C.upgrd.16 = mul i64 %B.upgrd.15, %B.upgrd.15		; <i64> [#uses=2]
+	%D.upgrd.17 = sdiv i64 %C.upgrd.16, %C.upgrd.16		; <i64> [#uses=2]
+	%E.upgrd.18 = srem i64 %D.upgrd.17, %D.upgrd.17		; <i64> [#uses=0]
+	%F.upgrd.19 = udiv i64 5, 6		; <i64> [#uses=0]
+	%G.upgrd.20 = urem i64 6, 5		; <i64> [#uses=0]
+	ret i32 0
 }
+

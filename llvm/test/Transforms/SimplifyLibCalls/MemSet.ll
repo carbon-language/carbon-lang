@@ -1,19 +1,18 @@
 ; Test that the LLVMMemSetOptimizer works correctly
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplify-libcalls | llvm-dis | \
+; RUN: llvm-as < %s | opt -simplify-libcalls | llvm-dis | \
 ; RUN:   not grep {call.*llvm.memset}
 ; END.
 
-declare void %llvm.memset.i32(sbyte*,ubyte,uint,uint)
+declare void @llvm.memset.i32(i8*, i8, i32, i32)
 
-implementation   ; Functions:
-
-int %main () {
-  %target = alloca [1024 x sbyte]
-  %target_p = getelementptr [1024 x sbyte]* %target, int 0, int 0
-  call void %llvm.memset.i32(sbyte* %target_p, ubyte 1, uint 0, uint 1)
-  call void %llvm.memset.i32(sbyte* %target_p, ubyte 1, uint 1, uint 1)
-  call void %llvm.memset.i32(sbyte* %target_p, ubyte 1, uint 2, uint 2)
-  call void %llvm.memset.i32(sbyte* %target_p, ubyte 1, uint 4, uint 4)
-  call void %llvm.memset.i32(sbyte* %target_p, ubyte 1, uint 8, uint 8)
-  ret int 0
+define i32 @main() {
+	%target = alloca [1024 x i8]		; <[1024 x i8]*> [#uses=1]
+	%target_p = getelementptr [1024 x i8]* %target, i32 0, i32 0		; <i8*> [#uses=5]
+	call void @llvm.memset.i32( i8* %target_p, i8 1, i32 0, i32 1 )
+	call void @llvm.memset.i32( i8* %target_p, i8 1, i32 1, i32 1 )
+	call void @llvm.memset.i32( i8* %target_p, i8 1, i32 2, i32 2 )
+	call void @llvm.memset.i32( i8* %target_p, i8 1, i32 4, i32 4 )
+	call void @llvm.memset.i32( i8* %target_p, i8 1, i32 8, i32 8 )
+	ret i32 0
 }
+

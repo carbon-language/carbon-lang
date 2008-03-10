@@ -1,31 +1,27 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -tailduplicate  | llvm-dis | grep add | not grep uses=1
+; RUN: llvm-as < %s | opt -tailduplicate  | llvm-dis | grep add | not grep uses=1
 
-int %test1(bool %C, int %A, int* %P) {
+define i32 @test1(i1 %C, i32 %A, i32* %P) {
 entry:
-        br bool %C, label %L1, label %L2
-
-L1:
-	store int 1, int* %P
-        br label %L2
-
-L2:
-	%X = add int %A, 17
-	ret int %X
+	br i1 %C, label %L1, label %L2
+L1:		; preds = %entry
+	store i32 1, i32* %P
+	br label %L2
+L2:		; preds = %L1, %entry
+	%X = add i32 %A, 17		; <i32> [#uses=1]
+	ret i32 %X
 }
 
-int %test2(bool %C, int %A, int* %P) {
+define i32 @test2(i1 %C, i32 %A, i32* %P) {
 entry:
-        br bool %C, label %L1, label %L2
-
-L1:
-	store int 1, int* %P
-        br label %L3
-
-L2:
-	store int 7, int* %P
+	br i1 %C, label %L1, label %L2
+L1:		; preds = %entry
+	store i32 1, i32* %P
 	br label %L3
-L3:
-	%X = add int %A, 17
-	ret int %X
+L2:		; preds = %entry
+	store i32 7, i32* %P
+	br label %L3
+L3:		; preds = %L2, %L1
+	%X = add i32 %A, 17		; <i32> [#uses=1]
+	ret i32 %X
 }
 

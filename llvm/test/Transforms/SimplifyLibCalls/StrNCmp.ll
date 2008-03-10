@@ -1,27 +1,28 @@
 ; Test that the StrNCmpOptimizer works correctly
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplify-libcalls | llvm-dis | \
+; RUN: llvm-as < %s | opt -simplify-libcalls | llvm-dis | \
 ; RUN:   not grep {call.*strncmp}
 
-declare int %strncmp(sbyte*,sbyte*,int)
-declare int %puts(sbyte*)
-%hello = constant [6 x sbyte] c"hello\00"
-%hell = constant [5 x sbyte] c"hell\00"
-%null = constant [1 x sbyte] c"\00"
+@hello = constant [6 x i8] c"hello\00"		; <[6 x i8]*> [#uses=1]
+@hell = constant [5 x i8] c"hell\00"		; <[5 x i8]*> [#uses=1]
+@null = constant [1 x i8] zeroinitializer		; <[1 x i8]*> [#uses=1]
 
-implementation   ; Functions:
+declare i32 @strncmp(i8*, i8*, i32)
 
-int %main () {
-  %hello_p = getelementptr [6 x sbyte]* %hello, int 0, int 0
-  %hell_p  = getelementptr [5 x sbyte]* %hell, int 0, int 0
-  %null_p  = getelementptr [1 x sbyte]* %null, int 0, int 0
-  %temp1 = call int %strncmp(sbyte* %hello_p, sbyte* %hello_p,int 5)
-  %temp2 = call int %strncmp(sbyte* %null_p, sbyte* %null_p,int 0)
-  %temp3 = call int %strncmp(sbyte* %hello_p, sbyte* %null_p,int 0)
-  %temp4 = call int %strncmp(sbyte* %null_p, sbyte* %hello_p,int 0)
-  %temp5 = call int %strncmp(sbyte* %hell_p, sbyte* %hello_p,int 4)
-  %rslt1 = add int %temp1, %temp2
-  %rslt2 = add int %rslt1, %temp3
-  %rslt3 = add int %rslt2, %temp4
-  %rslt4 = add int %rslt3, %temp5
-  ret int %rslt4
+declare i32 @puts(i8*)
+
+define i32 @main() {
+	%hello_p = getelementptr [6 x i8]* @hello, i32 0, i32 0		; <i8*> [#uses=5]
+	%hell_p = getelementptr [5 x i8]* @hell, i32 0, i32 0		; <i8*> [#uses=1]
+	%null_p = getelementptr [1 x i8]* @null, i32 0, i32 0		; <i8*> [#uses=4]
+	%temp1 = call i32 @strncmp( i8* %hello_p, i8* %hello_p, i32 5 )		; <i32> [#uses=1]
+	%temp2 = call i32 @strncmp( i8* %null_p, i8* %null_p, i32 0 )		; <i32> [#uses=1]
+	%temp3 = call i32 @strncmp( i8* %hello_p, i8* %null_p, i32 0 )		; <i32> [#uses=1]
+	%temp4 = call i32 @strncmp( i8* %null_p, i8* %hello_p, i32 0 )		; <i32> [#uses=1]
+	%temp5 = call i32 @strncmp( i8* %hell_p, i8* %hello_p, i32 4 )		; <i32> [#uses=1]
+	%rslt1 = add i32 %temp1, %temp2		; <i32> [#uses=1]
+	%rslt2 = add i32 %rslt1, %temp3		; <i32> [#uses=1]
+	%rslt3 = add i32 %rslt2, %temp4		; <i32> [#uses=1]
+	%rslt4 = add i32 %rslt3, %temp5		; <i32> [#uses=1]
+	ret i32 %rslt4
 }
+

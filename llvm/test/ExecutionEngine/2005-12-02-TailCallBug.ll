@@ -1,21 +1,21 @@
 ; PR672
-; RUN: llvm-upgrade < %s | llvm-as | lli
+; RUN: llvm-as < %s | lli
 
-int %main(){ 
- %f   = cast int (int, int*, int)* %check_tail to int*
- %res = tail call fastcc int %check_tail( int 10, int* %f,int 10)
- ret int %res
+define i32 @main() {
+	%f = bitcast i32 (i32, i32*, i32)* @check_tail to i32*		; <i32*> [#uses=1]
+	%res = tail call fastcc i32 @check_tail( i32 10, i32* %f, i32 10 )		; <i32> [#uses=1]
+	ret i32 %res
 }
-fastcc int %check_tail(int %x, int* %f, int %g) {
-	%tmp1 = setgt int %x, 0
-	br bool %tmp1, label %if-then, label %if-else
 
-if-then:
-	%fun_ptr = cast int* %f to int(int, int*, int)*	
-	%arg1    = add int %x, -1		
-	%res = tail call fastcc int %fun_ptr( int %arg1, int * %f, int %g)
-	ret int %res
-
-if-else:
-        ret int %x
+define fastcc i32 @check_tail(i32 %x, i32* %f, i32 %g) {
+	%tmp1 = icmp sgt i32 %x, 0		; <i1> [#uses=1]
+	br i1 %tmp1, label %if-then, label %if-else
+if-then:		; preds = %0
+	%fun_ptr = bitcast i32* %f to i32 (i32, i32*, i32)*		; <i32 (i32, i32*, i32)*> [#uses=1]
+	%arg1 = add i32 %x, -1		; <i32> [#uses=1]
+	%res = tail call fastcc i32 %fun_ptr( i32 %arg1, i32* %f, i32 %g )		; <i32> [#uses=1]
+	ret i32 %res
+if-else:		; preds = %0
+	ret i32 %x
 }
+

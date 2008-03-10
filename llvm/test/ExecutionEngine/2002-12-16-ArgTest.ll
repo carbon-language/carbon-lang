@@ -1,47 +1,38 @@
-; RUN: llvm-upgrade %s | llvm-as -f -o %t.bc
+; RUN: llvm-as < %s -f -o %t.bc
 ; RUN: lli %t.bc > /dev/null
 
-%.LC0 = internal global [10 x sbyte] c"argc: %d\0A\00"
+@.LC0 = internal global [10 x i8] c"argc: %d\0A\00"		; <[10 x i8]*> [#uses=1]
 
-implementation   ; Functions:
+declare i32 @puts(i8*)
 
-declare int %puts(sbyte*)
-
-void %getoptions(int* %argc) {
-bb0:		; No predecessors!
+define void @getoptions(i32* %argc) {
+bb0:
 	ret void
 }
 
-declare int %printf(sbyte*, ...)
+declare i32 @printf(i8*, ...)
 
-int %main(int %argc, sbyte** %argv) {
-bb0:		; No predecessors!
-	call int (sbyte*, ...)* %printf( sbyte* getelementptr ([10 x sbyte]* %.LC0, long 0, long 0), int %argc)
-	%cast224 = cast sbyte** %argv to sbyte*		; <sbyte*> [#uses=1]
-	%local = alloca sbyte*		; <sbyte**> [#uses=3]
-	store sbyte* %cast224, sbyte** %local
-	%cond226 = setle int %argc, 0		; <bool> [#uses=1]
-	br bool %cond226, label %bb3, label %bb2
-
+define i32 @main(i32 %argc, i8** %argv) {
+bb0:
+	call i32 (i8*, ...)* @printf( i8* getelementptr ([10 x i8]* @.LC0, i64 0, i64 0), i32 %argc )		; <i32>:0 [#uses=0]
+	%cast224 = bitcast i8** %argv to i8*		; <i8*> [#uses=1]
+	%local = alloca i8*		; <i8**> [#uses=3]
+	store i8* %cast224, i8** %local
+	%cond226 = icmp sle i32 %argc, 0		; <i1> [#uses=1]
+	br i1 %cond226, label %bb3, label %bb2
 bb2:		; preds = %bb2, %bb0
-	%cann-indvar = phi int [ 0, %bb0 ], [ %add1-indvar, %bb2 ]		; <int> [#uses=2]
-	%add1-indvar = add int %cann-indvar, 1		; <int> [#uses=2]
-	%cann-indvar-idxcast = cast int %cann-indvar to long		; <long> [#uses=1]
-	;%reg115 = load sbyte** %local		; <sbyte*> [#uses=1]
-	;%cann-indvar-idxcast-scale = mul long %cann-indvar-idxcast, 8		; <long> [#uses=1]
-	;%reg232 = getelementptr sbyte* %reg115, long %cann-indvar-idxcast-scale		; <sbyte*> [#uses=1]
-	;%cast235 = cast sbyte* %reg232 to sbyte**		; <sbyte**> [#uses=1]
-	%CT = cast sbyte**  %local to sbyte***
-	%reg115 = load sbyte*** %CT
-	%cast235 = getelementptr sbyte** %reg115, long %cann-indvar-idxcast
-
-	%reg117 = load sbyte** %cast235		; <sbyte*> [#uses=1]
-	%reg236 = call int %puts( sbyte* %reg117 )		; <int> [#uses=0]
-	%cond239 = setlt int %add1-indvar, %argc		; <bool> [#uses=1]
-	br bool %cond239, label %bb2, label %bb3
-
+	%cann-indvar = phi i32 [ 0, %bb0 ], [ %add1-indvar, %bb2 ]		; <i32> [#uses=2]
+	%add1-indvar = add i32 %cann-indvar, 1		; <i32> [#uses=2]
+	%cann-indvar-idxcast = sext i32 %cann-indvar to i64		; <i64> [#uses=1]
+	%CT = bitcast i8** %local to i8***		; <i8***> [#uses=1]
+	%reg115 = load i8*** %CT		; <i8**> [#uses=1]
+	%cast235 = getelementptr i8** %reg115, i64 %cann-indvar-idxcast		; <i8**> [#uses=1]
+	%reg117 = load i8** %cast235		; <i8*> [#uses=1]
+	%reg236 = call i32 @puts( i8* %reg117 )		; <i32> [#uses=0]
+	%cond239 = icmp slt i32 %add1-indvar, %argc		; <i1> [#uses=1]
+	br i1 %cond239, label %bb2, label %bb3
 bb3:		; preds = %bb2, %bb0
-	%cast243 = cast sbyte** %local to int*		; <int*> [#uses=1]
-	call void %getoptions( int* %cast243 )
-	ret int 0
+	%cast243 = bitcast i8** %local to i32*		; <i32*> [#uses=1]
+	call void @getoptions( i32* %cast243 )
+	ret i32 0
 }

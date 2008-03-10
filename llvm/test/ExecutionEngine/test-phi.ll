@@ -1,32 +1,35 @@
-; RUN: llvm-upgrade %s | llvm-as -f -o %t.bc
+; RUN: llvm-as < %s -f -o %t.bc
 ; RUN: lli %t.bc > /dev/null
 
 ; test phi node
+@Y = global i32 6		; <i32*> [#uses=1]
 
-%Y = global int 6
-
-void %blah(int *%X) {
+define void @blah(i32* %X) {
+; <label>:0
 	br label %T
-T:
-	phi int* [%X, %0], [%Y, %Dead]
+T:		; preds = %Dead, %0
+	phi i32* [ %X, %0 ], [ @Y, %Dead ]		; <i32*>:1 [#uses=0]
 	ret void
-Dead:
+Dead:		; No predecessors!
 	br label %T
 }
 
-int %test(bool %C) {
-	br bool %C, label %T, label %T
-T:
-	%X = phi int [123, %0], [123, %0]
-	ret int %X
+define i32 @test(i1 %C) {
+; <label>:0
+	br i1 %C, label %T, label %T
+T:		; preds = %0, %0
+	%X = phi i32 [ 123, %0 ], [ 123, %0 ]		; <i32> [#uses=1]
+	ret i32 %X
 }
 
-int %main() {
+define i32 @main() {
+; <label>:0
 	br label %Test
-Test:
-	%X = phi int [0, %0], [%Y, %Dead]
-	ret int %X
-Dead:
-	%Y = shr int 12, ubyte 4
+Test:		; preds = %Dead, %0
+	%X = phi i32 [ 0, %0 ], [ %Y, %Dead ]		; <i32> [#uses=1]
+	ret i32 %X
+Dead:		; No predecessors!
+	%Y = ashr i32 12, 4		; <i32> [#uses=1]
 	br label %Test
 }
+

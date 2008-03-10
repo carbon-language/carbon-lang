@@ -1,24 +1,24 @@
 ; Testcase for calls to the standard C "pow" function
 ;
 ; Equivalent to: http://gcc.gnu.org/ml/gcc-patches/2003-02/msg01786.html
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplify-libcalls | llvm-dis | \
+; RUN: llvm-as < %s | opt -simplify-libcalls | llvm-dis | \
 ; RUN:   not grep {call double .pow}
 ; END.
 
-declare double %pow(double, double)
+declare double @pow(double, double)
 
-double %test1(double %X) {
-	%Y = call double %pow(double %X, double 0.0)
-	ret double %Y    ; x^0.0 always equals 1.0
+define double @test1(double %X) {
+	%Y = call double @pow( double %X, double 0.000000e+00 )		; <double> [#uses=1]
+	ret double %Y
 }
 
-double %test2(double %X) {
-	%Y = call double %pow(double %X, double -0.0)
-	ret double %Y    ; x^-0.0 always equals 1.0
+define double @test2(double %X) {
+	%Y = call double @pow( double %X, double -0.000000e+00 )		; <double> [#uses=1]
+	ret double %Y
 }
 
-double %test3(double %X) {
-	%Y = call double %pow(double 1.0, double %X)
-	ret double %Y    ; 1.0^x always equals 1.0
+define double @test3(double %X) {
+	%Y = call double @pow( double 1.000000e+00, double %X )		; <double> [#uses=1]
+	ret double %Y
 }
 

@@ -1,33 +1,35 @@
-; RUN: llvm-upgrade < %s | llvm-as -f -o %t.bc
+; RUN: llvm-as < %s -f -o %t.bc
 ; RUN: lli %t.bc > /dev/null
 
 ; This testcase exposes a bug in the local register allocator where it runs out
 ; of registers (due to too many overlapping live ranges), but then attempts to
 ; use the ESP register (which is not allocatable) to hold a value.
 
-int %main(uint %A) {
-	%Ap2 = alloca uint, uint %A   ; ESP gets used again...
-	%B = add uint %A, 1 	      ; Produce lots of overlapping live ranges
-	%C = add uint %A, 2
-	%D = add uint %A, 3
-	%E = add uint %A, 4
-	%F = add uint %A, 5
-	%G = add uint %A, 6
-	%H = add uint %A, 7
-	%I = add uint %A, 8
-	%J = add uint %A, 9
-	%K = add uint %A, 10
-
-	store uint %A, uint *%Ap2      ; Uses of all of the values
-	store uint %B, uint *%Ap2
-	store uint %C, uint *%Ap2
-	store uint %D, uint *%Ap2
-	store uint %E, uint *%Ap2
-	store uint %F, uint *%Ap2
-	store uint %G, uint *%Ap2
-	store uint %H, uint *%Ap2
-	store uint %I, uint *%Ap2
-	store uint %J, uint *%Ap2
-	store uint %K, uint *%Ap2
-	ret int 0
+define i32 @main(i32 %A) {
+        ; ESP gets used again...
+	%Ap2 = alloca i32, i32 %A		; <i32*> [#uses=11]
+	; Produce lots of overlapping live ranges
+        %B = add i32 %A, 1		; <i32> [#uses=1]
+	%C = add i32 %A, 2		; <i32> [#uses=1]
+	%D = add i32 %A, 3		; <i32> [#uses=1]
+	%E = add i32 %A, 4		; <i32> [#uses=1]
+	%F = add i32 %A, 5		; <i32> [#uses=1]
+	%G = add i32 %A, 6		; <i32> [#uses=1]
+	%H = add i32 %A, 7		; <i32> [#uses=1]
+	%I = add i32 %A, 8		; <i32> [#uses=1]
+	%J = add i32 %A, 9		; <i32> [#uses=1]
+	%K = add i32 %A, 10		; <i32> [#uses=1]
+        ; Uses of all of the values
+	store i32 %A, i32* %Ap2
+	store i32 %B, i32* %Ap2
+	store i32 %C, i32* %Ap2
+	store i32 %D, i32* %Ap2
+	store i32 %E, i32* %Ap2
+	store i32 %F, i32* %Ap2
+	store i32 %G, i32* %Ap2
+	store i32 %H, i32* %Ap2
+	store i32 %I, i32* %Ap2
+	store i32 %J, i32* %Ap2
+	store i32 %K, i32* %Ap2
+	ret i32 0
 }

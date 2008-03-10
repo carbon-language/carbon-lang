@@ -1,13 +1,11 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -tailduplicate -disable-output
+; RUN: llvm-as < %s | opt -tailduplicate -disable-output
 
-implementation
-
-int %sum() {
+define i32 @sum() {
 entry:
 	br label %loopentry
-
-loopentry:
-	%i.0 = phi int [ 1, %entry ], [ %tmp.3, %loopentry ]
-	%tmp.3 = add int %i.0, 1
+loopentry:		; preds = %loopentry, %entry
+	%i.0 = phi i32 [ 1, %entry ], [ %tmp.3, %loopentry ]		; <i32> [#uses=1]
+	%tmp.3 = add i32 %i.0, 1		; <i32> [#uses=1]
 	br label %loopentry
 }
+

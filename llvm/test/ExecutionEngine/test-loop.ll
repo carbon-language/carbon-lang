@@ -1,13 +1,15 @@
-; RUN: llvm-upgrade < %s | llvm-as -f -o %t.bc
+; RUN: llvm-as < %s -f -o %t.bc
 ; RUN: lli %t.bc > /dev/null
 
-int %main() {
+define i32 @main() {
+; <label>:0
 	br label %Loop
-Loop:
-	%I = phi int [0, %0], [%i2, %Loop]
-	%i2 = add int %I, 1
-	%C = seteq int %i2, 10
-	br bool %C, label %Out, label %Loop
-Out:
-	ret int 0
+Loop:		; preds = %Loop, %0
+	%I = phi i32 [ 0, %0 ], [ %i2, %Loop ]		; <i32> [#uses=1]
+	%i2 = add i32 %I, 1		; <i32> [#uses=2]
+	%C = icmp eq i32 %i2, 10		; <i1> [#uses=1]
+	br i1 %C, label %Out, label %Loop
+Out:		; preds = %Loop
+	ret i32 0
 }
+

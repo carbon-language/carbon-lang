@@ -1,136 +1,110 @@
-; RUN: llvm-upgrade < %s | llvm-as -f -o %t.bc
+; RUN: llvm-as < %s -f -o %t.bc
 ; RUN: lli %t.bc > /dev/null
 
-
-int %foo() {
-  ret int 0
+define i32 @foo() {
+	ret i32 0
 }
 
-int %main() {
-  ; cast bool to ...
-  cast bool true to bool
-  cast bool true to ubyte
-  cast bool true to sbyte
-  cast bool true to short
-  cast bool true to ushort
-  cast bool true to int
-  cast bool true to uint
-  cast bool true to long
-  cast bool true to ulong
-  cast bool true to float
-  cast bool true to double
-
-  ; cast sbyte to ...
-  cast sbyte 0 to bool
-  cast sbyte 1 to bool
-  cast sbyte 0 to sbyte
-  cast sbyte -1 to ubyte
-  cast sbyte 4 to short
-  cast sbyte 4 to ushort
-  cast sbyte 4 to long
-  cast sbyte 4 to ulong
-  cast sbyte 4 to float
-  cast sbyte 4 to double
-
-  ; cast ubyte to ...
-  cast ubyte 0 to bool
-  cast ubyte 1 to bool
-  cast ubyte 0 to sbyte
-  cast ubyte 1 to ubyte
-  cast ubyte 4 to short
-  cast ubyte 4 to ushort
-  cast ubyte 4 to long
-  cast ubyte 4 to ulong
-  cast ubyte 0 to float
-  cast ubyte 0 to double
-
-  ; cast short to ...
-  cast short 1 to bool
-  cast short -1 to sbyte
-  cast short 255 to ubyte
-  cast short 0 to short
-  cast short 0 to ushort
-  cast short 0 to long
-  cast short 0 to ulong
-  cast short 0 to float
-  cast short 0 to double
-
-  ; cast ushort to ...
-  cast ushort 1 to bool
-  cast ushort 1 to sbyte
-  cast ushort 255 to ubyte
-  cast ushort 0 to short
-  cast ushort 0 to ushort
-  cast ushort 0 to long
-  cast ushort 0 to ulong
-  cast ushort 0 to float
-  cast ushort 0 to double
-
-  ; cast int to ...
-  cast int 6 to bool
-  cast int -6 to sbyte
-  cast int 6 to ubyte
-  cast int 6 to short
-  cast int 0 to int
-  cast int 0 to long
-  cast int 0 to ulong
-  cast int 0 to float
-  cast int 0 to double
-
-  ; cast uint to ...
-  cast uint 6 to bool
-  cast uint 7 to sbyte
-  cast uint 8 to ubyte
-  cast uint 9 to short
-  cast uint 10 to int
-  cast uint 0 to long
-  cast uint 0 to ulong
-  cast uint 0 to float
-  cast uint 0 to double
-
-  ; cast long to ...
-  cast long 0 to bool
-  cast long 0 to sbyte
-  cast long 0 to ubyte
-  cast long 0 to short
-  cast long 0 to ushort
-  cast long 0 to int
-  cast long 0 to uint
-  cast long 0 to long
-  cast long 0 to ulong
-  cast long 0 to float
-  cast long 0 to double
-
-  ; cast ulong to ...
-  cast ulong 1 to bool
-  cast ulong 1 to sbyte
-  cast ulong 1 to ubyte
-  cast ulong 1 to short
-  cast ulong 1 to ushort
-  cast ulong 1 to int
-  cast ulong 1 to uint
-  cast ulong 1 to long
-  cast ulong 1 to ulong
-  cast ulong 1 to float
-  cast ulong 0 to double
-  
-  ; cast float to ...
-  ;cast float 0.0 to bool
-  cast float 0.0 to float
-  cast float 0.0 to double
-
-  ; cast double to ...
-  ;cast double 0.0 to bool
-  cast double 0.0 to sbyte
-  cast double 0.0 to ubyte
-  cast double 0.0 to short
-  cast double 0.0 to ushort
-  cast double 0.0 to int
-  cast double 0.0 to uint
-  cast double 0.0 to long
-  ;cast double 0.0 to ulong
-  cast double 0.0 to float
-  cast double 0.0 to double
-
-  ret int 0
+define i32 @main() {
+	icmp ne i1 true, false		; <i1>:1 [#uses=0]
+	zext i1 true to i8		; <i8>:2 [#uses=0]
+	zext i1 true to i8		; <i8>:3 [#uses=0]
+	zext i1 true to i16		; <i16>:4 [#uses=0]
+	zext i1 true to i16		; <i16>:5 [#uses=0]
+	zext i1 true to i32		; <i32>:6 [#uses=0]
+	zext i1 true to i32		; <i32>:7 [#uses=0]
+	zext i1 true to i64		; <i64>:8 [#uses=0]
+	zext i1 true to i64		; <i64>:9 [#uses=0]
+	uitofp i1 true to float		; <float>:10 [#uses=0]
+	uitofp i1 true to double		; <double>:11 [#uses=0]
+	icmp ne i8 0, 0		; <i1>:12 [#uses=0]
+	icmp ne i8 1, 0		; <i1>:13 [#uses=0]
+	bitcast i8 0 to i8		; <i8>:14 [#uses=0]
+	bitcast i8 -1 to i8		; <i8>:15 [#uses=0]
+	sext i8 4 to i16		; <i16>:16 [#uses=0]
+	sext i8 4 to i16		; <i16>:17 [#uses=0]
+	sext i8 4 to i64		; <i64>:18 [#uses=0]
+	sext i8 4 to i64		; <i64>:19 [#uses=0]
+	sitofp i8 4 to float		; <float>:20 [#uses=0]
+	sitofp i8 4 to double		; <double>:21 [#uses=0]
+	icmp ne i8 0, 0		; <i1>:22 [#uses=0]
+	icmp ne i8 1, 0		; <i1>:23 [#uses=0]
+	bitcast i8 0 to i8		; <i8>:24 [#uses=0]
+	bitcast i8 1 to i8		; <i8>:25 [#uses=0]
+	zext i8 4 to i16		; <i16>:26 [#uses=0]
+	zext i8 4 to i16		; <i16>:27 [#uses=0]
+	zext i8 4 to i64		; <i64>:28 [#uses=0]
+	zext i8 4 to i64		; <i64>:29 [#uses=0]
+	uitofp i8 0 to float		; <float>:30 [#uses=0]
+	uitofp i8 0 to double		; <double>:31 [#uses=0]
+	icmp ne i16 1, 0		; <i1>:32 [#uses=0]
+	trunc i16 -1 to i8		; <i8>:33 [#uses=0]
+	trunc i16 255 to i8		; <i8>:34 [#uses=0]
+	bitcast i16 0 to i16		; <i16>:35 [#uses=0]
+	bitcast i16 0 to i16		; <i16>:36 [#uses=0]
+	sext i16 0 to i64		; <i64>:37 [#uses=0]
+	sext i16 0 to i64		; <i64>:38 [#uses=0]
+	sitofp i16 0 to float		; <float>:39 [#uses=0]
+	sitofp i16 0 to double		; <double>:40 [#uses=0]
+	icmp ne i16 1, 0		; <i1>:41 [#uses=0]
+	trunc i16 1 to i8		; <i8>:42 [#uses=0]
+	trunc i16 255 to i8		; <i8>:43 [#uses=0]
+	bitcast i16 0 to i16		; <i16>:44 [#uses=0]
+	bitcast i16 0 to i16		; <i16>:45 [#uses=0]
+	zext i16 0 to i64		; <i64>:46 [#uses=0]
+	zext i16 0 to i64		; <i64>:47 [#uses=0]
+	uitofp i16 0 to float		; <float>:48 [#uses=0]
+	uitofp i16 0 to double		; <double>:49 [#uses=0]
+	icmp ne i32 6, 0		; <i1>:50 [#uses=0]
+	trunc i32 -6 to i8		; <i8>:51 [#uses=0]
+	trunc i32 6 to i8		; <i8>:52 [#uses=0]
+	trunc i32 6 to i16		; <i16>:53 [#uses=0]
+	bitcast i32 0 to i32		; <i32>:54 [#uses=0]
+	sext i32 0 to i64		; <i64>:55 [#uses=0]
+	sext i32 0 to i64		; <i64>:56 [#uses=0]
+	sitofp i32 0 to float		; <float>:57 [#uses=0]
+	sitofp i32 0 to double		; <double>:58 [#uses=0]
+	icmp ne i32 6, 0		; <i1>:59 [#uses=0]
+	trunc i32 7 to i8		; <i8>:60 [#uses=0]
+	trunc i32 8 to i8		; <i8>:61 [#uses=0]
+	trunc i32 9 to i16		; <i16>:62 [#uses=0]
+	bitcast i32 10 to i32		; <i32>:63 [#uses=0]
+	zext i32 0 to i64		; <i64>:64 [#uses=0]
+	zext i32 0 to i64		; <i64>:65 [#uses=0]
+	uitofp i32 0 to float		; <float>:66 [#uses=0]
+	uitofp i32 0 to double		; <double>:67 [#uses=0]
+	icmp ne i64 0, 0		; <i1>:68 [#uses=0]
+	trunc i64 0 to i8		; <i8>:69 [#uses=0]
+	trunc i64 0 to i8		; <i8>:70 [#uses=0]
+	trunc i64 0 to i16		; <i16>:71 [#uses=0]
+	trunc i64 0 to i16		; <i16>:72 [#uses=0]
+	trunc i64 0 to i32		; <i32>:73 [#uses=0]
+	trunc i64 0 to i32		; <i32>:74 [#uses=0]
+	bitcast i64 0 to i64		; <i64>:75 [#uses=0]
+	bitcast i64 0 to i64		; <i64>:76 [#uses=0]
+	sitofp i64 0 to float		; <float>:77 [#uses=0]
+	sitofp i64 0 to double		; <double>:78 [#uses=0]
+	icmp ne i64 1, 0		; <i1>:79 [#uses=0]
+	trunc i64 1 to i8		; <i8>:80 [#uses=0]
+	trunc i64 1 to i8		; <i8>:81 [#uses=0]
+	trunc i64 1 to i16		; <i16>:82 [#uses=0]
+	trunc i64 1 to i16		; <i16>:83 [#uses=0]
+	trunc i64 1 to i32		; <i32>:84 [#uses=0]
+	trunc i64 1 to i32		; <i32>:85 [#uses=0]
+	bitcast i64 1 to i64		; <i64>:86 [#uses=0]
+	bitcast i64 1 to i64		; <i64>:87 [#uses=0]
+	uitofp i64 1 to float		; <float>:88 [#uses=0]
+	uitofp i64 0 to double		; <double>:89 [#uses=0]
+	bitcast float 0.000000e+00 to float		; <float>:90 [#uses=0]
+	fpext float 0.000000e+00 to double		; <double>:91 [#uses=0]
+	fptosi double 0.000000e+00 to i8		; <i8>:92 [#uses=0]
+	fptoui double 0.000000e+00 to i8		; <i8>:93 [#uses=0]
+	fptosi double 0.000000e+00 to i16		; <i16>:94 [#uses=0]
+	fptoui double 0.000000e+00 to i16		; <i16>:95 [#uses=0]
+	fptosi double 0.000000e+00 to i32		; <i32>:96 [#uses=0]
+	fptoui double 0.000000e+00 to i32		; <i32>:97 [#uses=0]
+	fptosi double 0.000000e+00 to i64		; <i64>:98 [#uses=0]
+	fptrunc double 0.000000e+00 to float		; <float>:99 [#uses=0]
+	bitcast double 0.000000e+00 to double		; <double>:100 [#uses=0]
+	ret i32 0
 }

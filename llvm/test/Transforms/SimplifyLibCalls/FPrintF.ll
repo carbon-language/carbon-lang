@@ -1,29 +1,25 @@
 ; Test that the FPrintFOptimizer works correctly
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplify-libcalls | llvm-dis | \
+; RUN: llvm-as < %s | opt -simplify-libcalls | llvm-dis | \
 ; RUN:   not grep {call.*fprintf}
 ;
 
-%struct._IO_FILE = type { int, sbyte*, sbyte*, sbyte*, sbyte*, sbyte*, sbyte*, sbyte*, sbyte*, sbyte*, sbyte*, sbyte*, %struct._IO_marker*, %struct._IO_FILE*, int, int, int, ushort, sbyte, [1 x sbyte], sbyte*, long, sbyte*, sbyte*, int, [52 x sbyte] }
-%struct._IO_marker = type { %struct._IO_marker*, %struct._IO_FILE*, int }
+	%struct._IO_FILE = type { i32, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, %struct._IO_marker*, %struct._IO_FILE*, i32, i32, i32, i16, i8, [1 x i8], i8*, i64, i8*, i8*, i32, [52 x i8] }
+	%struct._IO_marker = type { %struct._IO_marker*, %struct._IO_FILE*, i32 }
+@str = constant [3 x i8] c"%s\00"		; <[3 x i8]*> [#uses=1]
+@chr = constant [3 x i8] c"%c\00"		; <[3 x i8]*> [#uses=1]
+@hello = constant [13 x i8] c"hello world\0A\00"		; <[13 x i8]*> [#uses=1]
+@stdout = external global %struct._IO_FILE*		; <%struct._IO_FILE**> [#uses=3]
 
-%str = constant [3 x sbyte] c"%s\00"		
-%chr = constant [3 x sbyte] c"%c\00"		
-%hello = constant [13 x sbyte] c"hello world\0A\00"
-%stdout = external global %struct._IO_FILE*		
+declare i32 @fprintf(%struct._IO_FILE*, i8*, ...)
 
-declare int %fprintf(%struct._IO_FILE*, sbyte*, ...)
-
-implementation  
-
-int %foo() 
-{
+define i32 @foo() {
 entry:
-	%tmp.1 = load %struct._IO_FILE** %stdout
-	%tmp.0 = call int (%struct._IO_FILE*, sbyte*, ...)* %fprintf( %struct._IO_FILE* %tmp.1, sbyte* getelementptr ([13 x sbyte]* %hello, int 0, int 0) )
-	%tmp.4 = load %struct._IO_FILE** %stdout
-	%tmp.3 = call int (%struct._IO_FILE*, sbyte*, ...)* %fprintf( %struct._IO_FILE* %tmp.4, sbyte* getelementptr ([3 x sbyte]* %str, int 0, int 0), sbyte* getelementptr ([13 x sbyte]* %hello, int 0, int 0) )
-	%tmp.8 = load %struct._IO_FILE** %stdout
-	%tmp.7 = call int (%struct._IO_FILE*, sbyte*, ...)* %fprintf( %struct._IO_FILE* %tmp.8, sbyte* getelementptr ([3 x sbyte]* %chr, int 0, int 0), int 33 )
-	ret int 0
+	%tmp.1 = load %struct._IO_FILE** @stdout		; <%struct._IO_FILE*> [#uses=1]
+	%tmp.0 = call i32 (%struct._IO_FILE*, i8*, ...)* @fprintf( %struct._IO_FILE* %tmp.1, i8* getelementptr ([13 x i8]* @hello, i32 0, i32 0) )		; <i32> [#uses=0]
+	%tmp.4 = load %struct._IO_FILE** @stdout		; <%struct._IO_FILE*> [#uses=1]
+	%tmp.3 = call i32 (%struct._IO_FILE*, i8*, ...)* @fprintf( %struct._IO_FILE* %tmp.4, i8* getelementptr ([3 x i8]* @str, i32 0, i32 0), i8* getelementptr ([13 x i8]* @hello, i32 0, i32 0) )		; <i32> [#uses=0]
+	%tmp.8 = load %struct._IO_FILE** @stdout		; <%struct._IO_FILE*> [#uses=1]
+	%tmp.7 = call i32 (%struct._IO_FILE*, i8*, ...)* @fprintf( %struct._IO_FILE* %tmp.8, i8* getelementptr ([3 x i8]* @chr, i32 0, i32 0), i32 33 )		; <i32> [#uses=0]
+	ret i32 0
 }
 

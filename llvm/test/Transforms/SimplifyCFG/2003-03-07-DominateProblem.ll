@@ -1,22 +1,17 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg -disable-output
+; RUN: llvm-as < %s | opt -simplifycfg -disable-output
 
-implementation   ; Functions:
-
-void %test(int* %ldo, bool %c, bool %d) {
+define void @test(i32* %ldo, i1 %c, i1 %d) {
 bb9:
-	br bool %c, label %bb11, label %bb10
-
+	br i1 %c, label %bb11, label %bb10
 bb10:		; preds = %bb9
 	br label %bb11
-
 bb11:		; preds = %bb10, %bb9
-	%reg330 = phi int* [ null, %bb10 ], [ %ldo, %bb9 ]
+	%reg330 = phi i32* [ null, %bb10 ], [ %ldo, %bb9 ]		; <i32*> [#uses=1]
 	br label %bb20
-
-bb20:		; preds = %bb23, %bb25, %bb27, %bb11
-	store int* %reg330, int** null
-	br bool %d, label %bb20, label %done
-
-done:
+bb20:		; preds = %bb20, %bb11
+	store i32* %reg330, i32** null
+	br i1 %d, label %bb20, label %done
+done:		; preds = %bb20
 	ret void
 }
+

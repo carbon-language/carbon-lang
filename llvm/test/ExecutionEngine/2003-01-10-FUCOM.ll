@@ -1,11 +1,11 @@
-; RUN: llvm-upgrade < %s | llvm-as -f -o %t.bc
+; RUN: llvm-as < %s -f -o %t.bc
 ; RUN: lli %t.bc > /dev/null
 
-
-int %main() {
-	%X = add double 0.0, 1.0
-	%Y = sub double 0.0, 1.0
-	%Z = seteq double %X, %Y
-	add double %Y, 0.0
-	ret int 0
+define i32 @main() {
+	%X = add double 0.000000e+00, 1.000000e+00		; <double> [#uses=1]
+	%Y = sub double 0.000000e+00, 1.000000e+00		; <double> [#uses=2]
+	%Z = fcmp oeq double %X, %Y		; <i1> [#uses=0]
+	add double %Y, 0.000000e+00		; <double>:1 [#uses=0]
+	ret i32 0
 }
+

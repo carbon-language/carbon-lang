@@ -2,35 +2,40 @@
 ;
 ; RUN: true
 
-%MyVar     = global int 4
-%MyIntList = external global { \2 *, int }
+@MyVar = global i32 4		; <i32*> [#uses=2]
+@MyIntList = external global { \2*, i32 }		; <{ \2*, i32 }*> [#uses=2]
+@AConst = constant i32 123		; <i32*> [#uses=0]
 
-%AConst    = constant int 123
+;; Intern in both testlink[12].ll
+@Intern1 = internal constant i32 52		; <i32*> [#uses=0]
 
-%Intern1   = internal constant int 52 ;; Intern in both testlink[12].ll
-%Intern2   = constant int 12345       ;; Intern in one but not in other
+;; Intern in one but not in other
+@Intern2 = constant i32 12345		; <i32*> [#uses=0]
 
-%MyIntListPtr = constant { {\2,int}* } { {\2,int}* %MyIntList }
-%MyVarPtr  = linkonce global { int * }  { int * %MyVar }
+@MyIntListPtr = constant { { \2*, i32 }* } { { \2*, i32 }* @MyIntList }		; <{ { \2*, i32 }* }*> [#uses=0]
+@MyVarPtr = linkonce global { i32* } { i32* @MyVar }		; <{ i32* }*> [#uses=0]
+constant i32 412		; <i32*>:0 [#uses=1]
 
-constant int 412
+define i32 @foo(i32 %blah) {
+	store i32 %blah, i32* @MyVar
+	%idx = getelementptr { \2*, i32 }* @MyIntList, i64 0, i32 1		; <i32*> [#uses=1]
+	store i32 12, i32* %idx
+	%ack = load i32* @0		; <i32> [#uses=1]
+	%fzo = add i32 %ack, %blah		; <i32> [#uses=1]
+	ret i32 %fzo
+}
 
-implementation
+declare void @unimp(float, double)
 
-int "foo"(int %blah)
-begin
-	store int %blah, int *%MyVar
-	%idx = getelementptr { \2 *, int } * %MyIntList, long 0, uint 1
-	store int 12, int* %idx
+define internal void @testintern() {
+	ret void
+}
 
-	%ack = load int * %0   ;; Load from the unnamed constant
-	%fzo = add int %ack, %blah
-	ret int %fzo
-end
+define void @Testintern() {
+	ret void
+}
 
-declare void "unimp"(float, double)
-
-internal void "testintern"() begin ret void end
-         void "Testintern"() begin ret void end
-internal void "testIntern"() begin ret void end
+define internal void @testIntern() {
+	ret void
+}
 

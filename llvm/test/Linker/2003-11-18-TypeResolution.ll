@@ -4,19 +4,16 @@
 ; little symbol table.  This is causing llvm-link to die, at no fault of its
 ; own.
 
-; RUN: llvm-upgrade %s | llvm-as > %t.out2.bc
+; RUN: llvm-as < %s > %t.out2.bc
 ; RUN: echo "%T1 = type opaque  @GVar = external global %T1*" | llvm-as > %t.out1.bc
 ; RUN: llvm-link %t.out1.bc %t.out2.bc
 
-	%T1 = type opaque
-	%T2 = type int
+%T1 = type opaque
+%T2 = type i32
+@GVar = global i32* null		; <i32**> [#uses=0]
 
-%GVar = global %T2 * null
-
-implementation
-
-void %foo(%T2 * %X) {
-	%X = cast %T2* %X to %T1 *
+define void @foo(i32* %X) {
+	%X.upgrd.1 = bitcast i32* %X to %T1*		; <%T1*> [#uses=0]
 	ret void
 }
 

@@ -1,10 +1,12 @@
 ; Do not remove the invoke!
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | grep invoke
+; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | grep invoke
 
-int %test() {
-	invoke int %test() to label %Ret except label %Ret
-Ret:
-	%A = add int 0, 1
-	ret int %A
+define i32 @test() {
+	invoke i32 @test( )
+			to label %Ret unwind label %Ret		; <i32>:1 [#uses=0]
+Ret:		; preds = %0, %0
+	%A = add i32 0, 1		; <i32> [#uses=1]
+	ret i32 %A
 }
+

@@ -1,14 +1,14 @@
 ; -simplifycfg is not folding blocks if there is a PHI node involved.  This 
 ; should be fixed eventually
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | not grep br
+; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | not grep br
 
-int %main(int %argc) {
-        br label %InlinedFunctionReturnNode
-
-InlinedFunctionReturnNode:                                      ;[#uses=1]
-        %X = phi int [ 7, %0 ]          ; <int> [#uses=1]
-        %Y = add int %X, %argc          ; <int> [#uses=1]
-        ret int %Y
+define i32 @main(i32 %argc) {
+; <label>:0
+	br label %InlinedFunctionReturnNode
+InlinedFunctionReturnNode:		; preds = %0
+	%X = phi i32 [ 7, %0 ]		; <i32> [#uses=1]
+	%Y = add i32 %X, %argc		; <i32> [#uses=1]
+	ret i32 %Y
 }
 

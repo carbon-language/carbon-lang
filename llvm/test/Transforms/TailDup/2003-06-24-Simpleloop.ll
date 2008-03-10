@@ -1,18 +1,15 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -tailduplicate -disable-output
+; RUN: llvm-as < %s | opt -tailduplicate -disable-output
 
-void %motion_result7() {
+define void @motion_result7() {
 entry:
-        br label %endif
-
-endif:
-        %i.1 = phi int [ %inc, %no_exit ], [ 0, %entry ]
-        %inc = add int %i.1, 1
-        br bool false, label %no_exit, label %UnifiedExitNode
-
-no_exit:
-        br bool false, label %UnifiedExitNode, label %endif
-
-UnifiedExitNode:
-        ret void
+	br label %endif
+endif:		; preds = %no_exit, %entry
+	%i.1 = phi i32 [ %inc, %no_exit ], [ 0, %entry ]		; <i32> [#uses=1]
+	%inc = add i32 %i.1, 1		; <i32> [#uses=1]
+	br i1 false, label %no_exit, label %UnifiedExitNode
+no_exit:		; preds = %endif
+	br i1 false, label %UnifiedExitNode, label %endif
+UnifiedExitNode:		; preds = %no_exit, %endif
+	ret void
 }
 

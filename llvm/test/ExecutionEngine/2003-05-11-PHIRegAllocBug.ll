@@ -1,18 +1,16 @@
-; RUN: llvm-upgrade < %s | llvm-as -f -o %t.bc
+; RUN: llvm-as < %s -f -o %t.bc
 ; RUN: lli %t.bc > /dev/null
 
-target endian = little
-target pointersize = 32
+target datalayout = "e-p:32:32"
 
-implementation
-
-int %main() {
+define i32 @main() {
 entry:
 	br label %endif
-then:
+then:		; No predecessors!
 	br label %endif
-endif:
-	%x = phi uint [ 4, %entry ], [ 27, %then ]
-	%result = phi int [ 32, %then ], [ 0, %entry ]
-	ret int 0
+endif:		; preds = %then, %entry
+	%x = phi i32 [ 4, %entry ], [ 27, %then ]		; <i32> [#uses=0]
+	%result = phi i32 [ 32, %then ], [ 0, %entry ]		; <i32> [#uses=0]
+	ret i32 0
 }
+

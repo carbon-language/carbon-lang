@@ -1,61 +1,80 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | \
+; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | \
 ; RUN:   not grep switch
 
-int %test1() {   ; Test normal folding
-	switch uint 5, label %Default [
-		uint 0, label %Foo
-		uint 1, label %Bar
-		uint 2, label %Baz
-		uint 5, label %TheDest
-	]
-Default:ret int -1
-Foo:	ret int -2
-Bar:	ret int -3
-Baz: 	ret int -4
-TheDest:ret int 1234
+; Test normal folding
+define i32 @test1() {
+        switch i32 5, label %Default [
+                 i32 0, label %Foo
+                 i32 1, label %Bar
+                 i32 2, label %Baz
+                 i32 5, label %TheDest
+        ]
+Default:                ; preds = %0
+        ret i32 -1
+Foo:            ; preds = %0
+        ret i32 -2
+Bar:            ; preds = %0
+        ret i32 -3
+Baz:            ; preds = %0
+        ret i32 -4
+TheDest:                ; preds = %0
+        ret i32 1234
 }
 
-int %test2() {   ; Test folding to default dest
-	switch uint 3, label %Default [
-		uint 0, label %Foo
-		uint 1, label %Bar
-		uint 2, label %Baz
-		uint 5, label %TheDest
-	]
-Default:ret int 1234
-Foo:	ret int -2
-Bar:	ret int -5
-Baz: 	ret int -6
-TheDest:ret int -8
+; Test folding to default dest
+define i32 @test2() {
+        switch i32 3, label %Default [
+                 i32 0, label %Foo
+                 i32 1, label %Bar
+                 i32 2, label %Baz
+                 i32 5, label %TheDest
+        ]
+Default:                ; preds = %0
+        ret i32 1234
+Foo:            ; preds = %0
+        ret i32 -2
+Bar:            ; preds = %0
+        ret i32 -5
+Baz:            ; preds = %0
+        ret i32 -6
+TheDest:                ; preds = %0
+        ret i32 -8
 }
 
-int %test3(bool %C) {   ; Test folding all to same dest
-	br bool %C, label %Start, label %TheDest
-Start:
-	switch uint 3, label %TheDest [
-		uint 0, label %TheDest
-		uint 1, label %TheDest
-		uint 2, label %TheDest
-		uint 5, label %TheDest
-	]
-TheDest: ret int 1234
+; Test folding all to same dest
+define i32 @test3(i1 %C) {
+        br i1 %C, label %Start, label %TheDest
+Start:          ; preds = %0
+        switch i32 3, label %TheDest [
+                 i32 0, label %TheDest
+                 i32 1, label %TheDest
+                 i32 2, label %TheDest
+                 i32 5, label %TheDest
+        ]
+TheDest:                ; preds = %Start, %Start, %Start, %Start, %Start, %0
+        ret i32 1234
 }
 
-int %test4(uint %C) {   ; Test folding switch -> branch
-	switch uint %C, label %L1 [
-		uint 0, label %L2
-	]
-L1:	ret int 0
-L2:	ret int 1
+; Test folding switch -> branch
+define i32 @test4(i32 %C) {
+        switch i32 %C, label %L1 [
+                 i32 0, label %L2
+        ]
+L1:             ; preds = %0
+        ret i32 0
+L2:             ; preds = %0
+        ret i32 1
 }
 
-int %test5(uint %C) {
-	switch uint %C, label %L1 [   ; Can fold into a cond branch!
-		uint 0, label %L2
-		uint 123, label %L1
-	]
-L1:	ret int 0
-L2:	ret int 1
+; Can fold into a cond branch!
+define i32 @test5(i32 %C) {
+        switch i32 %C, label %L1 [
+                 i32 0, label %L2
+                 i32 123, label %L1
+        ]
+L1:             ; preds = %0, %0
+        ret i32 0
+L2:             ; preds = %0
+        ret i32 1
 }
-
 

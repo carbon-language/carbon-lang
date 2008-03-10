@@ -1,19 +1,18 @@
-; RUN: llvm-upgrade < %s | llvm-as -f -o %t.bc
+; RUN: llvm-as < %s -f -o %t.bc
 ; RUN: lli %t.bc > /dev/null
 
 ; Testcase distilled from 256.bzip2.
 
-target endian = little
-target pointersize = 32
+target datalayout = "e-p:32:32"
 
-int %main() {
+define i32 @main() {
 entry:
-	%X = add int 1, -1
+	%X = add i32 1, -1		; <i32> [#uses=3]
 	br label %Next
-
-Next:
-	%A = phi int [ %X, %entry ]
-	%B = phi int [ %X, %entry ]
-	%C = phi int [ %X, %entry ]
-	ret int %C
+Next:		; preds = %entry
+	%A = phi i32 [ %X, %entry ]		; <i32> [#uses=0]
+	%B = phi i32 [ %X, %entry ]		; <i32> [#uses=0]
+	%C = phi i32 [ %X, %entry ]		; <i32> [#uses=1]
+	ret i32 %C
 }
+

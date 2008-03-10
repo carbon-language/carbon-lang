@@ -1,15 +1,13 @@
-; RUN: llvm-upgrade < %s | llvm-as -f -o %t1.bc
+; RUN: llvm-as < %s -f -o %t1.bc
 ; RUN: llvm-link -f -o %t2.bc %t1.bc
 
-target endian = big
-target pointersize = 32
+target datalayout = "E-p:32:32"
 target triple = "powerpc-apple-darwin7.7.0"
 deplibs = [ "c", "crtend" ]
-%source = global <4 x int> < int 0, int 1, int 2, int 3 >
+@source = global <4 x i32> < i32 0, i32 1, i32 2, i32 3 >		; <<4 x i32>*> [#uses=0]
 
-implementation   ; Functions:
-
-int %main() {
+define i32 @main() {
 entry:
-        ret int 0
+	ret i32 0
 }
+

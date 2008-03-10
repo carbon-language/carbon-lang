@@ -1,16 +1,14 @@
-; RUN: llvm-upgrade %s | llvm-as -f -o %t.bc
+; RUN: llvm-as < %s -f -o %t.bc
 ; RUN: lli %t.bc > /dev/null
 
-
-implementation   ; Functions:
-
-int %foo(int %X, int %Y, double %A) {
-	%cond212 = setne double %A, 1.000000e+00		; <bool> [#uses=1]
-	%cast110 = cast bool %cond212 to int		; <int> [#uses=1]
-	ret int %cast110
+define i32 @foo(i32 %X, i32 %Y, double %A) {
+	%cond212 = fcmp une double %A, 1.000000e+00		; <i1> [#uses=1]
+	%cast110 = zext i1 %cond212 to i32		; <i32> [#uses=1]
+	ret i32 %cast110
 }
 
-int %main() {
-	%reg212 = call int %foo( int 0, int 1, double 1.000000e+00 )		; <int> [#uses=1]
-	ret int %reg212
+define i32 @main() {
+	%reg212 = call i32 @foo( i32 0, i32 1, double 1.000000e+00 )		; <i32> [#uses=1]
+	ret i32 %reg212
 }
+

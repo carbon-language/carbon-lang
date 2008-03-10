@@ -1,24 +1,24 @@
 ; Test that the memcmpOptimizer works correctly
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplify-libcalls | llvm-dis | \
+; RUN: llvm-as < %s | opt -simplify-libcalls | llvm-dis | \
 ; RUN:   not grep {call.*memcmp}
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplify-libcalls -disable-output
+; RUN: llvm-as < %s | opt -simplify-libcalls -disable-output
 
-declare int %memcmp(sbyte*,sbyte*,int)
-%h = constant [2 x sbyte] c"h\00"
-%hel = constant [4 x sbyte] c"hel\00"
-%hello_u = constant [8 x sbyte] c"hello_u\00"
+@h = constant [2 x i8] c"h\00"		; <[2 x i8]*> [#uses=0]
+@hel = constant [4 x i8] c"hel\00"		; <[4 x i8]*> [#uses=0]
+@hello_u = constant [8 x i8] c"hello_u\00"		; <[8 x i8]*> [#uses=0]
 
-implementation
+declare i32 @memcmp(i8*, i8*, i32)
 
-void %test(sbyte *%P, sbyte *%Q, int %N, int* %IP, bool *%BP) {
-  %A = call int %memcmp(sbyte *%P, sbyte* %P, int %N)
-  volatile store int %A, int* %IP
-  %B = call int %memcmp(sbyte *%P, sbyte* %Q, int 0)
-  volatile store int %B, int* %IP
-  %C = call int %memcmp(sbyte *%P, sbyte* %Q, int 1)
-  volatile store int %C, int* %IP
-  %D = call int %memcmp(sbyte *%P, sbyte* %Q, int 2)
-  %E = seteq int %D, 0
-  volatile store bool %E, bool* %BP
-  ret void
+define void @test(i8* %P, i8* %Q, i32 %N, i32* %IP, i1* %BP) {
+	%A = call i32 @memcmp( i8* %P, i8* %P, i32 %N )		; <i32> [#uses=1]
+	volatile store i32 %A, i32* %IP
+	%B = call i32 @memcmp( i8* %P, i8* %Q, i32 0 )		; <i32> [#uses=1]
+	volatile store i32 %B, i32* %IP
+	%C = call i32 @memcmp( i8* %P, i8* %Q, i32 1 )		; <i32> [#uses=1]
+	volatile store i32 %C, i32* %IP
+	%D = call i32 @memcmp( i8* %P, i8* %Q, i32 2 )		; <i32> [#uses=1]
+	%E = icmp eq i32 %D, 0		; <i1> [#uses=1]
+	volatile store i1 %E, i1* %BP
+	ret void
 }
+

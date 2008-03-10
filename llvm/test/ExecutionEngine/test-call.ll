@@ -1,22 +1,22 @@
-; RUN: llvm-upgrade %s | llvm-as -f -o %t.bc
+; RUN: llvm-as < %s -f -o %t.bc
 ; RUN: lli %t.bc > /dev/null
 
+declare void @exit(i32)
 
-declare void %exit(int)
-
-int %test(sbyte %C, short %S) {
-  %X = cast short %S to ubyte
-  %Y = cast ubyte %X to int
-  ret int %Y
+define i32 @test(i8 %C, i16 %S) {
+	%X = trunc i16 %S to i8		; <i8> [#uses=1]
+	%Y = zext i8 %X to i32		; <i32> [#uses=1]
+	ret i32 %Y
 }
 
-void %FP(void(int) * %F) {
-	%X = call int %test(sbyte 123, short 1024)
-	call void %F(int %X)
+define void @FP(void (i32)* %F) {
+	%X = call i32 @test( i8 123, i16 1024 )		; <i32> [#uses=1]
+	call void %F( i32 %X )
 	ret void
 }
 
-int %main() {
-	call void %FP(void(int)* %exit)
-	ret int 1
+define i32 @main() {
+	call void @FP( void (i32)* @exit )
+	ret i32 1
 }
+

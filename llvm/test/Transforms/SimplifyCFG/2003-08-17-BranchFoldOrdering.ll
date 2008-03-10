@@ -3,23 +3,24 @@
 ; due to the fact that the SimplifyCFG function does not use 
 ; the ConstantFoldTerminator function.
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | \
+; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | \
 ; RUN:   not grep {br bool %c2}
 
-declare void %noop()
+declare void @noop()
 
-int %test(bool %c1, bool %c2) {
-	call void %noop()
-	br bool %c1, label %A, label %Y
-A:
-	call void %noop()
- 	br bool %c2, label %Z, label %X   ; Can be converted to unconditional br
-Z:
+define i32 @test(i1 %c1, i1 %c2) {
+	call void @noop( )
+	br i1 %c1, label %A, label %Y
+A:		; preds = %0
+	call void @noop( )
+	br i1 %c2, label %Z, label %X
+Z:		; preds = %A
 	br label %X
-X:
-	call void %noop()
-	ret int 0
-Y:
-	call void %noop()
+X:		; preds = %Y, %Z, %A
+	call void @noop( )
+	ret i32 0
+Y:		; preds = %0
+	call void @noop( )
 	br label %X
 }
+

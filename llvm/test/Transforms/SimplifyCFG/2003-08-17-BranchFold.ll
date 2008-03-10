@@ -1,21 +1,22 @@
 ; This test checks to make sure that 'br X, Dest, Dest' is folded into 
 ; 'br Dest'
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | \
+; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | \
 ; RUN:   not grep {br bool %c2}
 
-declare void %noop()
+declare void @noop()
 
-int %test(bool %c1, bool %c2) {
-	call void %noop()
-	br bool %c1, label %A, label %Y
-A:
-	call void %noop()
- 	br bool %c2, label %X, label %X   ; Can be converted to unconditional br
-X:
-	call void %noop()
-	ret int 0
-Y:
-	call void %noop()
+define i32 @test(i1 %c1, i1 %c2) {
+	call void @noop( )
+	br i1 %c1, label %A, label %Y
+A:		; preds = %0
+	call void @noop( )
+	br i1 %c2, label %X, label %X
+X:		; preds = %Y, %A, %A
+	call void @noop( )
+	ret i32 0
+Y:		; preds = %0
+	call void @noop( )
 	br label %X
 }
+

@@ -1,20 +1,16 @@
 ; This test checks to make sure phi nodes are updated properly
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -tailduplicate -disable-output
+; RUN: llvm-as < %s | opt -tailduplicate -disable-output
 
-
-
-int %test(bool %c, int %X, int %Y) {
+define i32 @test(i1 %c, i32 %X, i32 %Y) {
 	br label %L
-
-L:
-	%A = add int %X, %Y
-	br bool %c, label %T, label %F
-
-F:
-	br bool %c, label %L, label %T
-
-T:
-	%V = phi int [%A, %L], [0, %F]
-	ret int %V
+L:		; preds = %F, %0
+	%A = add i32 %X, %Y		; <i32> [#uses=1]
+	br i1 %c, label %T, label %F
+F:		; preds = %L
+	br i1 %c, label %L, label %T
+T:		; preds = %F, %L
+	%V = phi i32 [ %A, %L ], [ 0, %F ]		; <i32> [#uses=1]
+	ret i32 %V
 }
+

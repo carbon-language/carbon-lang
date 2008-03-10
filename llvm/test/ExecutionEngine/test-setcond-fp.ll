@@ -1,23 +1,25 @@
-; RUN: llvm-upgrade < %s | llvm-as -f -o %t.bc
+; RUN: llvm-as < %s -f -o %t.bc
 ; RUN: lli %t.bc > /dev/null
 
 
-int %main() {
-	%double1 = add double 0.0, 0.0
-	%double2 = add double 0.0, 0.0
-	%float1 = add float 0.0, 0.0
-	%float2 = add float 0.0, 0.0
-	%test49 = seteq float %float1, %float2
-	%test50 = setge float %float1, %float2
-	%test51 = setgt float %float1, %float2
-	%test52 = setle float %float1, %float2
-	%test53 = setlt float %float1, %float2
-	%test54 = setne float %float1, %float2
-	%test55 = seteq double %double1, %double2
-	%test56 = setge double %double1, %double2
-	%test57 = setgt double %double1, %double2
-	%test58 = setle double %double1, %double2
-	%test59 = setlt double %double1, %double2
-	%test60 = setne double %double1, %double2
-	ret int 0
+define i32 @main() {
+	%double1 = add double 0.000000e+00, 0.000000e+00		; <double> [#uses=6]
+	%double2 = add double 0.000000e+00, 0.000000e+00		; <double> [#uses=6]
+	%float1 = add float 0.000000e+00, 0.000000e+00		; <float> [#uses=6]
+	%float2 = add float 0.000000e+00, 0.000000e+00		; <float> [#uses=6]
+	%test49 = fcmp oeq float %float1, %float2		; <i1> [#uses=0]
+	%test50 = fcmp oge float %float1, %float2		; <i1> [#uses=0]
+	%test51 = fcmp ogt float %float1, %float2		; <i1> [#uses=0]
+	%test52 = fcmp ole float %float1, %float2		; <i1> [#uses=0]
+	%test53 = fcmp olt float %float1, %float2		; <i1> [#uses=0]
+	%test54 = fcmp une float %float1, %float2		; <i1> [#uses=0]
+	%test55 = fcmp oeq double %double1, %double2		; <i1> [#uses=0]
+	%test56 = fcmp oge double %double1, %double2		; <i1> [#uses=0]
+	%test57 = fcmp ogt double %double1, %double2		; <i1> [#uses=0]
+	%test58 = fcmp ole double %double1, %double2		; <i1> [#uses=0]
+	%test59 = fcmp olt double %double1, %double2		; <i1> [#uses=0]
+	%test60 = fcmp une double %double1, %double2		; <i1> [#uses=0]
+	ret i32 0
 }
+
+

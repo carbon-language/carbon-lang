@@ -1,10 +1,11 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplify-libcalls -disable-output
+; RUN: llvm-as < %s | opt -simplify-libcalls -disable-output
 
-%G = constant [3 x sbyte] c"%s\00"
+@G = constant [3 x i8] c"%s\00"		; <[3 x i8]*> [#uses=1]
 
-declare int %sprintf(sbyte*, sbyte*, ...)
+declare i32 @sprintf(i8*, i8*, ...)
 
-void %foo(sbyte*%P, int *%X) {
-  call int(sbyte*,sbyte*, ...)* %sprintf(sbyte* %P, sbyte* getelementptr ([3 x sbyte]* %G, int 0, int 0), int* %X)
-  ret void
+define void @foo(i8* %P, i32* %X) {
+	call i32 (i8*, i8*, ...)* @sprintf( i8* %P, i8* getelementptr ([3 x i8]* @G, i32 0, i32 0), i32* %X )		; <i32>:1 [#uses=0]
+	ret void
 }
+

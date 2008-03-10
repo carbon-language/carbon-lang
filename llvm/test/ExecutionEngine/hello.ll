@@ -1,14 +1,12 @@
-; RUN: llvm-upgrade < %s | llvm-as -f -o %t.bc
+; RUN: llvm-as < %s -f -o %t.bc
 ; RUN: lli %t.bc > /dev/null
 
-%.LC0 = internal global [12 x sbyte] c"Hello World\00"
+@.LC0 = internal global [12 x i8] c"Hello World\00"		; <[12 x i8]*> [#uses=1]
 
-implementation
+declare i32 @puts(i8*)
 
-declare int %puts(sbyte*)
-
-int %main() {
-        %reg210 = call int %puts( sbyte* getelementptr ([12 x sbyte]* %.LC0, long 0, long 0) )
-        ret int 0
+define i32 @main() {
+	%reg210 = call i32 @puts( i8* getelementptr ([12 x i8]* @.LC0, i64 0, i64 0) )		; <i32> [#uses=0]
+	ret i32 0
 }
 
