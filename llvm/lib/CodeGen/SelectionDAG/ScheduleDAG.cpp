@@ -693,19 +693,13 @@ void ScheduleDAG::EmitSubregNode(SDNode *Node,
     MI->addOperand(MachineOperand::CreateImm(SubIdx));
     
   } else if (Opc == TargetInstrInfo::INSERT_SUBREG) {
-    assert((Node->getNumOperands() == 2 || Node->getNumOperands() == 3) &&
+    assert((Node->getNumOperands() == 3) &&
             "Malformed insert_subreg node");
-    bool isUndefInput = (Node->getNumOperands() == 2);
-    unsigned SubReg = 0;
-    unsigned SubIdx = 0;
-    
-    if (isUndefInput) {
-      SubReg = getVR(Node->getOperand(0), VRBaseMap);
-      SubIdx = cast<ConstantSDNode>(Node->getOperand(1))->getValue();
-    } else {
-      SubReg = getVR(Node->getOperand(1), VRBaseMap);
-      SubIdx = cast<ConstantSDNode>(Node->getOperand(2))->getValue();
-    }
+    SDOperand N0 = Node->getOperand(0);
+    SDOperand N1 = Node->getOperand(1);
+    SDOperand N2 = Node->getOperand(2);
+    unsigned SubReg = getVR(N1, VRBaseMap);
+    unsigned SubIdx = cast<ConstantSDNode>(N2)->getValue();
     
     // TODO: Add tracking info to MachineRegisterInfo of which vregs are subregs
     // to allow coalescing in the allocator
@@ -743,9 +737,15 @@ void ScheduleDAG::EmitSubregNode(SDNode *Node,
     }
     
     MI->addOperand(MachineOperand::CreateReg(VRBase, true));
-    AddOperand(MI, Node->getOperand(0), 0, 0, VRBaseMap);
-    if (!isUndefInput)
-      AddOperand(MI, Node->getOperand(1), 0, 0, VRBaseMap);
+    
+    // If N0 is a constant then it indicates the insert is being done
+    // into a target specific constant value, not a register.
+    if (const ConstantSDNode *SD = dyn_cast<ConstantSDNode>(N0))
+      MI->addOperand(MachineOperand::CreateImm(SD->getValue()));
+    else
+      AddOperand(MI, N0, 0, 0, VRBaseMap);
+    // Add the subregster being inserted
+    AddOperand(MI, N1, 0, 0, VRBaseMap);
     MI->addOperand(MachineOperand::CreateImm(SubIdx));
   } else
     assert(0 && "Node is not a subreg insert or extract");

@@ -322,9 +322,12 @@ namespace ISD {
     // This node takes a superreg and a constant sub-register index as operands.
     EXTRACT_SUBREG,
     
-    // INSERT_SUBREG - This node is used to insert a sub-register value. 
+    // INSERT_SUBREG - This node is used to insert a sub-register value into 
+    // either explicitly into a superreg, or implicitly into a superreg value.
     // This node takes a superreg, a subreg value, and a constant sub-register
-    // index as operands.
+    // index as operands. The superreg may be either a superregister operand or a
+    // target constant indicating that the insert is being done into a target 
+    // specific implicit value.
     INSERT_SUBREG,
     
     // MULHU/MULHS - Multiply high - Multiply two integers of type iN, producing

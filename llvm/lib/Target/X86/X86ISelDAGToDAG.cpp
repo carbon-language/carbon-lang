@@ -1491,22 +1491,27 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
       AddToISelQueue(N0);
       if (NVT == MVT::i64 || NVT == MVT::i32 || NVT == MVT::i16) {
         SDOperand SRIdx;
+        SDOperand ImplVal = CurDAG->getTargetConstant(X86::IMPL_VAL_UNDEF, 
+                                                      MVT::i32);
         switch(N0.getValueType()) {
         case MVT::i32:
-          SRIdx = CurDAG->getTargetConstant(3, MVT::i32); // SubRegSet 3
+          SRIdx = CurDAG->getTargetConstant(X86::SUBREG_32BIT, MVT::i32);
+          // x86-64 zero extends 32-bit inserts int 64-bit registers
+          if (Subtarget->is64Bit())
+            ImplVal = CurDAG->getTargetConstant(X86::IMPL_VAL_ZERO, MVT::i32);
           break;
         case MVT::i16:
-          SRIdx = CurDAG->getTargetConstant(2, MVT::i32); // SubRegSet 2
+          SRIdx = CurDAG->getTargetConstant(X86::SUBREG_16BIT, MVT::i32);
           break;
         case MVT::i8:
           if (Subtarget->is64Bit())
-            SRIdx = CurDAG->getTargetConstant(1, MVT::i32); // SubRegSet 1
+            SRIdx = CurDAG->getTargetConstant(X86::SUBREG_8BIT, MVT::i32);
           break;
         default: assert(0 && "Unknown any_extend!");
         }
         if (SRIdx.Val) {
           SDNode *ResNode = CurDAG->getTargetNode(X86::INSERT_SUBREG,
-                                                  NVT, N0, SRIdx);
+                                                  NVT, ImplVal, N0, SRIdx);
 
 #ifndef NDEBUG
           DOUT << std::string(Indent-2, ' ') << "=> ";

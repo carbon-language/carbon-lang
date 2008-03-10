@@ -105,32 +105,21 @@ bool LowerSubregsInstructionPass::LowerInsert(MachineInstr *MI) {
   MachineFunction &MF = *MBB->getParent();
   const TargetRegisterInfo &TRI = *MF.getTarget().getRegisterInfo(); 
   const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
-  unsigned DstReg = 0;
+  assert((MI->getOperand(0).isRegister() && MI->getOperand(0).isDef()) &&
+         ((MI->getOperand(1).isRegister() && MI->getOperand(1).isUse()) || 
+            MI->getOperand(1).isImmediate()) &&
+         (MI->getOperand(2).isRegister() && MI->getOperand(2).isUse()) &&
+          MI->getOperand(3).isImmediate() && "Invalid insert_subreg");
+          
+  unsigned DstReg = MI->getOperand(0).getReg();
   unsigned SrcReg = 0;
-  unsigned InsReg = 0;
-  unsigned SubIdx = 0;
-
-  // If only have 3 operands, then the source superreg is undef
-  // and we can supress the copy from the undef value
-  if (MI->getNumOperands() == 3) {
-    assert((MI->getOperand(0).isRegister() && MI->getOperand(0).isDef()) &&
-           (MI->getOperand(1).isRegister() && MI->getOperand(1).isUse()) &&
-            MI->getOperand(2).isImmediate() && "Invalid extract_subreg");
-    DstReg = MI->getOperand(0).getReg();
+  // Check if we're inserting into an implicit value.
+  if (MI->getOperand(1).isImmediate())
     SrcReg = DstReg;
-    InsReg = MI->getOperand(1).getReg();
-    SubIdx = MI->getOperand(2).getImm();
-  } else if (MI->getNumOperands() == 4) {
-    assert((MI->getOperand(0).isRegister() && MI->getOperand(0).isDef()) &&
-           (MI->getOperand(1).isRegister() && MI->getOperand(1).isUse()) &&
-           (MI->getOperand(2).isRegister() && MI->getOperand(2).isUse()) &&
-            MI->getOperand(3).isImmediate() && "Invalid extract_subreg");
-    DstReg = MI->getOperand(0).getReg();
+  else
     SrcReg = MI->getOperand(1).getReg();
-    InsReg = MI->getOperand(2).getReg();
-    SubIdx = MI->getOperand(3).getImm();     
-  } else 
-    assert(0 && "Malformed extract_subreg");
+  unsigned InsReg = MI->getOperand(2).getReg();
+  unsigned SubIdx = MI->getOperand(3).getImm();     
 
   assert(SubIdx != 0 && "Invalid index for extract_subreg");
   unsigned DstSubReg = TRI.getSubReg(DstReg, SubIdx);

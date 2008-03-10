@@ -32,6 +32,15 @@ namespace N86 {
   };
 }
 
+namespace X86 {
+  /// SubregIndex - The index of various sized subregister classes. Note that 
+  /// these indices must be kept in sync with the class indices in the 
+  /// X86RegisterInfo.td file.
+  enum SubregIndex {
+    SUBREG_8BIT = 1, SUBREG_16BIT = 2, SUBREG_32BIT = 3
+  };
+}
+
 /// DWARFFlavour - Flavour of dwarf regnumbers
 ///
 namespace DWARFFlavour {

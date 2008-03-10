@@ -1098,12 +1098,11 @@ def PsMOVZX64rm32: I<0x8B, MRMSrcMem, (outs GR64:$dst), (ins i32mem:$src),
                      "mov{l}\t{$src, ${dst:subreg32}|${dst:subreg32}, $src}",
                      [(set GR64:$dst, (zextloadi64i32 addr:$src))]>;
 
-/// PsAND64rrFFFFFFFF - r = r & (2^32-1)
-def PsAND64rrFFFFFFFF
-  : I<0x89, MRMDestReg, (outs GR64:$dst), (ins GR64:$src),
-  "mov{l}\t{${src:subreg32}, ${dst:subreg32}|${dst:subreg32}, ${src:subreg32}}",
-      [(set GR64:$dst, (and GR64:$src, i64immFFFFFFFF))]>;
-
+// r & (2^32-1)
+def : Pat<(and GR64:$src, i64immFFFFFFFF), 
+          (INSERT_SUBREG x86_impl_val_zero, 
+            (MOV32rr (EXTRACT_SUBREG GR64:$src, x86_subreg_32bit)),
+            x86_subreg_32bit)>;
 
 // Alias instructions that map movr0 to xor. Use xorl instead of xorq; it's
 // equivalent due to implicit zero-extending, and it sometimes has a smaller
