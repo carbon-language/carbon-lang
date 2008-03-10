@@ -106,9 +106,10 @@ void DAGTypeLegalizer::ExpandResult_UNDEF(SDNode *N,
 void DAGTypeLegalizer::ExpandResult_Constant(SDNode *N,
                                              SDOperand &Lo, SDOperand &Hi) {
   MVT::ValueType NVT = TLI.getTypeToTransformTo(N->getValueType(0));
-  uint64_t Cst = cast<ConstantSDNode>(N)->getValue();
-  Lo = DAG.getConstant(Cst, NVT);
-  Hi = DAG.getConstant(Cst >> MVT::getSizeInBits(NVT), NVT);
+  unsigned NBitWidth = MVT::getSizeInBits(NVT);
+  const APInt &Cst = cast<ConstantSDNode>(N)->getAPIntValue();
+  Lo = DAG.getConstant(APInt(Cst).trunc(NBitWidth), NVT);
+  Hi = DAG.getConstant(Cst.lshr(NBitWidth).trunc(NBitWidth), NVT);
 }
 
 void DAGTypeLegalizer::ExpandResult_BUILD_PAIR(SDNode *N,
