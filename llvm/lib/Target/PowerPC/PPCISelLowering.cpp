@@ -1950,8 +1950,8 @@ SDOperand PPCTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG,
  
   // With the ELF 32 ABI, set CR6 to true if this is a vararg call.
   if (isVarArg && isELF32_ABI) {
-    SDOperand SetCR(DAG.getTargetNode(PPC::SETCR, MVT::i32), 0);
-    Chain = DAG.getCopyToReg(Chain, PPC::CR6, SetCR, InFlag);
+    SDOperand SetCR(DAG.getTargetNode(PPC::CRSET, MVT::i32), 0);
+    Chain = DAG.getCopyToReg(Chain, PPC::CR1EQ, SetCR, InFlag);
     InFlag = Chain.getValue(1);
   }
 

@@ -408,7 +408,9 @@ let isCall = 1, PPC970_Unit = 7,
           F0,F1,F2,F3,F4,F5,F6,F7,F8,F9,F10,F11,F12,F13,
           V0,V1,V2,V3,V4,V5,V6,V7,V8,V9,V10,V11,V12,V13,V14,V15,V16,V17,V18,V19,
           LR,CTR,
-          CR0,CR1,CR5,CR6,CR7] in {
+          CR0,CR1,CR5,CR6,CR7,
+          CR0LT,CR0GT,CR0EQ,CR0UN,CR1LT,CR1GT,CR1EQ,CR1UN,CR5LT,CR5GT,CR5EQ,
+          CR5UN,CR6LT,CR6GT,CR6EQ,CR6UN,CR7LT,CR7GT,CR7EQ,CR7UN] in {
   // Convenient aliases for call instructions
   def BL_Macho  : IForm<18, 0, 1,
                         (outs), (ins calltarget:$func, variable_ops), 
@@ -429,7 +431,9 @@ let isCall = 1, PPC970_Unit = 7,
           F0,F1,F2,F3,F4,F5,F6,F7,F8,
           V0,V1,V2,V3,V4,V5,V6,V7,V8,V9,V10,V11,V12,V13,V14,V15,V16,V17,V18,V19,
           LR,CTR,
-          CR0,CR1,CR5,CR6,CR7] in {
+          CR0,CR1,CR5,CR6,CR7,
+          CR0LT,CR0GT,CR0EQ,CR0UN,CR1LT,CR1GT,CR1EQ,CR1UN,CR5LT,CR5GT,CR5EQ,
+          CR5UN,CR6LT,CR6GT,CR6EQ,CR6UN,CR7LT,CR7GT,CR7EQ,CR7UN] in {
   // Convenient aliases for call instructions
   def BL_ELF  : IForm<18, 0, 1,
                       (outs), (ins calltarget:$func, variable_ops), 
@@ -860,11 +864,17 @@ def MCRF   : XLForm_3<19, 0, (outs CRRC:$BF), (ins CRRC:$BFA),
                       "mcrf $BF, $BFA", BrMCR>,
              PPC970_DGroup_First, PPC970_Unit_CRU;
 
-def CREQV  : XLForm_1<19, 289, (outs CRRC:$CRD), (ins CRRC:$CRA, CRRC:$CRB),
+def CREQV  : XLForm_1<19, 289, (outs CRBITRC:$CRD),
+                               (ins CRBITRC:$CRA, CRBITRC:$CRB),
                       "creqv $CRD, $CRA, $CRB", BrCR,
                       []>;
 
-def SETCR  : XLForm_1_ext<19, 289, (outs CRRC:$dst), (ins),
+def CROR  : XLForm_1<19, 449, (outs CRBITRC:$CRD),
+                               (ins CRBITRC:$CRA, CRBITRC:$CRB),
+                      "cror $CRD, $CRA, $CRB", BrCR,
+                      []>;
+
+def CRSET  : XLForm_1_ext<19, 289, (outs CRBITRC:$dst), (ins),
               "creqv $dst, $dst, $dst", BrCR,
               []>;
 
