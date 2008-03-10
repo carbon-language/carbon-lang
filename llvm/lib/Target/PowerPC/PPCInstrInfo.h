@@ -64,6 +64,13 @@ enum PPC970_Unit {
 class PPCInstrInfo : public TargetInstrInfoImpl {
   PPCTargetMachine &TM;
   const PPCRegisterInfo RI;
+
+  bool StoreRegToStackSlot(unsigned SrcReg, bool isKill, int FrameIdx,
+                           const TargetRegisterClass *RC,
+                           SmallVectorImpl<MachineInstr*> &NewMIs) const;
+  void LoadRegFromStackSlot(unsigned DestReg, int FrameIdx,
+                            const TargetRegisterClass *RC,
+                            SmallVectorImpl<MachineInstr*> &NewMIs) const;
 public:
   PPCInstrInfo(PPCTargetMachine &TM);
 
