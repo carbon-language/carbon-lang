@@ -56,10 +56,10 @@ proc substitute { line test tmpFile } {
   regsub -all {%llvmgcc} $new_line "$llvmgcc -emit-llvm" new_line
   #replace %llvmgxx with actual path to llvmg++
   regsub -all {%llvmgxx} $new_line "$llvmgxx -emit-llvm" new_line
-  #replace %compile_c with C compilation command
-  regsub -all {%compile_c} $new_line "$compile_c" new_line
   #replace %compile_cxx with C++ compilation command
   regsub -all {%compile_cxx} $new_line "$compile_cxx" new_line
+  #replace %compile_c with C compilation command
+  regsub -all {%compile_c} $new_line "$compile_c" new_line
   #replace %link with C++ link command
   regsub -all {%link} $new_line "$link" new_line
   #replace %shlibext with shared library extension
