@@ -386,30 +386,27 @@ static bool StoreRegToStackSlot(const TargetInstrInfo &TII,
     // backend currently only uses CR1EQ as an individual bit, this should
     // not cause any bug. If we need other uses of CR bits, the following
     // code may be invalid.
+    unsigned Reg = 0;
     if (SrcReg >= PPC::CR0LT || SrcReg <= PPC::CR0UN) 
-      return StoreRegToStackSlot(TII, PPC::CR0, isKill, FrameIdx, 
-                                 PPC::CRRCRegisterClass, NewMIs);
+      Reg = PPC::CR0;
     else if (SrcReg >= PPC::CR1LT || SrcReg <= PPC::CR1UN) 
-      return StoreRegToStackSlot(TII, PPC::CR1, isKill, FrameIdx, 
-                                 PPC::CRRCRegisterClass, NewMIs);
-    if (SrcReg >= PPC::CR2LT || SrcReg <= PPC::CR2UN) 
-      return StoreRegToStackSlot(TII, PPC::CR2, isKill, FrameIdx, 
-                                 PPC::CRRCRegisterClass, NewMIs);
-    if (SrcReg >= PPC::CR3LT || SrcReg <= PPC::CR3UN) 
-      return StoreRegToStackSlot(TII, PPC::CR3, isKill, FrameIdx, 
-                                 PPC::CRRCRegisterClass, NewMIs);
-    if (SrcReg >= PPC::CR4LT || SrcReg <= PPC::CR4UN) 
-      return StoreRegToStackSlot(TII, PPC::CR4, isKill, FrameIdx, 
-                                 PPC::CRRCRegisterClass, NewMIs);
-    if (SrcReg >= PPC::CR5LT || SrcReg <= PPC::CR5UN) 
-      return StoreRegToStackSlot(TII, PPC::CR5, isKill, FrameIdx, 
-                                 PPC::CRRCRegisterClass, NewMIs);
-    if (SrcReg >= PPC::CR6LT || SrcReg <= PPC::CR6UN) 
-      return StoreRegToStackSlot(TII, PPC::CR6, isKill, FrameIdx, 
-                                 PPC::CRRCRegisterClass, NewMIs);
-    if (SrcReg >= PPC::CR7LT || SrcReg <= PPC::CR7UN) 
-      return StoreRegToStackSlot(TII, PPC::CR7, isKill, FrameIdx, 
-                                 PPC::CRRCRegisterClass, NewMIs);
+      Reg = PPC::CR1;
+    else if (SrcReg >= PPC::CR2LT || SrcReg <= PPC::CR2UN) 
+      Reg = PPC::CR2;
+    else if (SrcReg >= PPC::CR3LT || SrcReg <= PPC::CR3UN) 
+      Reg = PPC::CR3;
+    else if (SrcReg >= PPC::CR4LT || SrcReg <= PPC::CR4UN) 
+      Reg = PPC::CR4;
+    else if (SrcReg >= PPC::CR5LT || SrcReg <= PPC::CR5UN) 
+      Reg = PPC::CR5;
+    else if (SrcReg >= PPC::CR6LT || SrcReg <= PPC::CR6UN) 
+      Reg = PPC::CR6;
+    else if (SrcReg >= PPC::CR7LT || SrcReg <= PPC::CR7UN) 
+      Reg = PPC::CR7;
+
+    return StoreRegToStackSlot(TII, Reg, isKill, FrameIdx, 
+                               PPC::CRRCRegisterClass, NewMIs);
+
   } else if (RC == PPC::VRRCRegisterClass) {
     // We don't have indexed addressing for vector loads.  Emit:
     // R0 = ADDI FI#
@@ -533,30 +530,28 @@ static void LoadRegFromStackSlot(const TargetInstrInfo &TII,
     
     NewMIs.push_back(BuildMI(TII.get(PPC::MTCRF), DestReg).addReg(PPC::R0));
   } else if (RC == PPC::CRBITRCRegisterClass) {
+   
+    unsigned Reg = 0;
     if (DestReg >= PPC::CR0LT || DestReg <= PPC::CR0UN) 
-      return LoadRegFromStackSlot(TII, PPC::CR0, FrameIdx, 
-                                  PPC::CRRCRegisterClass, NewMIs);
+      Reg = PPC::CR0;
     else if (DestReg >= PPC::CR1LT || DestReg <= PPC::CR1UN) 
-      return LoadRegFromStackSlot(TII, PPC::CR1, FrameIdx, 
-                                  PPC::CRRCRegisterClass, NewMIs);
-    if (DestReg >= PPC::CR2LT || DestReg <= PPC::CR2UN) 
-      return LoadRegFromStackSlot(TII, PPC::CR2, FrameIdx, 
-                                  PPC::CRRCRegisterClass, NewMIs);
-    if (DestReg >= PPC::CR3LT || DestReg <= PPC::CR3UN) 
-      return LoadRegFromStackSlot(TII, PPC::CR3, FrameIdx, 
-                                  PPC::CRRCRegisterClass, NewMIs);
-    if (DestReg >= PPC::CR4LT || DestReg <= PPC::CR4UN) 
-      return LoadRegFromStackSlot(TII, PPC::CR4, FrameIdx, 
-                                  PPC::CRRCRegisterClass, NewMIs);
-    if (DestReg >= PPC::CR5LT || DestReg <= PPC::CR5UN) 
-      return LoadRegFromStackSlot(TII, PPC::CR5, FrameIdx, 
-                                  PPC::CRRCRegisterClass, NewMIs);
-    if (DestReg >= PPC::CR6LT || DestReg <= PPC::CR6UN) 
-      return LoadRegFromStackSlot(TII, PPC::CR6, FrameIdx, 
-                                  PPC::CRRCRegisterClass, NewMIs);
-    if (DestReg >= PPC::CR7LT || DestReg <= PPC::CR7UN) 
-      return LoadRegFromStackSlot(TII, PPC::CR7, FrameIdx, 
-                                  PPC::CRRCRegisterClass, NewMIs);
+      Reg = PPC::CR1;
+    else if (DestReg >= PPC::CR2LT || DestReg <= PPC::CR2UN) 
+      Reg = PPC::CR2;
+    else if (DestReg >= PPC::CR3LT || DestReg <= PPC::CR3UN) 
+      Reg = PPC::CR3;
+    else if (DestReg >= PPC::CR4LT || DestReg <= PPC::CR4UN) 
+      Reg = PPC::CR4;
+    else if (DestReg >= PPC::CR5LT || DestReg <= PPC::CR5UN) 
+      Reg = PPC::CR5;
+    else if (DestReg >= PPC::CR6LT || DestReg <= PPC::CR6UN) 
+      Reg = PPC::CR6;
+    else if (DestReg >= PPC::CR7LT || DestReg <= PPC::CR7UN) 
+      Reg = PPC::CR7;
+
+    return LoadRegFromStackSlot(TII, Reg, FrameIdx, 
+                                PPC::CRRCRegisterClass, NewMIs);
+
   } else if (RC == PPC::VRRCRegisterClass) {
     // We don't have indexed addressing for vector loads.  Emit:
     // R0 = ADDI FI#
