@@ -481,14 +481,14 @@ def FR64 : RegisterClass<"X86", [f64], 64,
 // faster on common hardware.  In reality, this should be controlled by a
 // command line option or something.
 
-def RFP32 : RegisterClass<"X86", [f32], 32, [FP0, FP1, FP2, FP3, FP4, FP5, FP6]>;
-def RFP64 : RegisterClass<"X86", [f64], 32, [FP0, FP1, FP2, FP3, FP4, FP5, FP6]>;
-def RFP80 : RegisterClass<"X86", [f80], 32, [FP0, FP1, FP2, FP3, FP4, FP5, FP6]>;
+def RFP32 : RegisterClass<"X86",[f32], 32, [FP0, FP1, FP2, FP3, FP4, FP5, FP6]>;
+def RFP64 : RegisterClass<"X86",[f64], 32, [FP0, FP1, FP2, FP3, FP4, FP5, FP6]>;
+def RFP80 : RegisterClass<"X86",[f80], 32, [FP0, FP1, FP2, FP3, FP4, FP5, FP6]>;
 
 // Floating point stack registers (these are not allocatable by the
 // register allocator - the floating point stackifier is responsible
 // for transforming FPn allocations to STn registers)
-def RST : RegisterClass<"X86", [f80], 32,
+def RST : RegisterClass<"X86", [f80, f64, f32], 32,
                         [ST0, ST1, ST2, ST3, ST4, ST5, ST6, ST7]> {
     let MethodProtos = [{
     iterator allocation_order_end(const MachineFunction &MF) const;

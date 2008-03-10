@@ -854,28 +854,18 @@ SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
   SDOperand Flag;
 
   // Copy the result values into the output registers.
-  if (RVLocs.size() != 1 || !RVLocs[0].isRegLoc() ||
-      RVLocs[0].getLocReg() != X86::ST0) {
-    for (unsigned i = 0; i != RVLocs.size(); ++i) {
-      CCValAssign &VA = RVLocs[i];
-      assert(VA.isRegLoc() && "Can only return in registers!");
-      Chain = DAG.getCopyToReg(Chain, VA.getLocReg(), Op.getOperand(i*2+1),
-                               Flag);
-      Flag = Chain.getValue(1);
-    }
-  } else {
-    // We need to handle a destination of ST0 specially, because it isn't really
-    // a register.
-    SDOperand Value = Op.getOperand(1);
+  for (unsigned i = 0; i != RVLocs.size(); ++i) {
+    CCValAssign &VA = RVLocs[i];
+    assert(VA.isRegLoc() && "Can only return in registers!");
+    SDOperand ValToCopy = Op.getOperand(i*2+1);
     
-    // an XMM register onto the fp-stack.  Do this with an FP_EXTEND to f80.
-    // This will get legalized into a load/store if it can't get optimized away.
-    if (isScalarFPTypeInSSEReg(RVLocs[0].getValVT()))
-      Value = DAG.getNode(ISD::FP_EXTEND, MVT::f80, Value);
+    // If this is a copy from an xmm register to ST(0), use an FPExtend to
+    // change the value to the FP stack register class.
+    if (RVLocs[i].getLocReg() == X86::ST0 &&
+        isScalarFPTypeInSSEReg(RVLocs[i].getValVT()))
+      ValToCopy = DAG.getNode(ISD::FP_EXTEND, MVT::f80, ValToCopy);
     
-    SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
-    SDOperand Ops[] = { Chain, Value };
-    Chain = DAG.getNode(X86ISD::FP_SET_ST0, Tys, Ops, 2);
+    Chain = DAG.getCopyToReg(Chain, VA.getLocReg(), ValToCopy, Flag);
     Flag = Chain.getValue(1);
   }
   
@@ -905,37 +895,31 @@ LowerCallResult(SDOperand Chain, SDOperand InFlag, SDNode *TheCall,
   SmallVector<SDOperand, 8> ResultVals;
   
   // Copy all of the result registers out of their specified physreg.
-  if (RVLocs.size() != 1 || RVLocs[0].getLocReg() != X86::ST0) {
-    for (unsigned i = 0; i != RVLocs.size(); ++i) {
-      Chain = DAG.getCopyFromReg(Chain, RVLocs[i].getLocReg(),
-                                 RVLocs[i].getValVT(), InFlag).getValue(1);
-      InFlag = Chain.getValue(2);
-      ResultVals.push_back(Chain.getValue(0));
+  for (unsigned i = 0; i != RVLocs.size(); ++i) {
+    MVT::ValueType CopyVT = RVLocs[i].getValVT();
+    
+    // If this is a call to a function that returns an fp value on the floating
+    // point stack, but where we prefer to use the value in xmm registers, copy
+    // it out as F80 and use a truncate to move it from fp stack reg to xmm reg.
+    if (RVLocs[i].getLocReg() == X86::ST0 &&
+        isScalarFPTypeInSSEReg(RVLocs[i].getValVT())) {
+      CopyVT = MVT::f80;
     }
-  } else {
-    // Copies from the FP stack are special, as ST0 isn't a valid register
-    // before the fp stackifier runs.
     
-    // Copy ST0 into an RFP register with FP_GET_RESULT.  If this will end up
-    // in an SSE register, copy it out as F80 and do a truncate, otherwise use
-    // the specified value type.
-    MVT::ValueType GetResultTy = RVLocs[0].getValVT();
-    if (isScalarFPTypeInSSEReg(GetResultTy))
-      GetResultTy = MVT::f80;
-    SDVTList Tys = DAG.getVTList(GetResultTy, MVT::Other, MVT::Flag);
-    SDOperand GROps[] = { Chain, InFlag };
-    SDOperand RetVal = DAG.getNode(X86ISD::FP_GET_ST0, Tys, GROps, 2);
-    Chain  = RetVal.getValue(1);
-    InFlag = RetVal.getValue(2);
+    Chain = DAG.getCopyFromReg(Chain, RVLocs[i].getLocReg(),
+                               CopyVT, InFlag).getValue(1);
+    SDOperand Val = Chain.getValue(0);
+    InFlag = Chain.getValue(2);
 
-    // If we want the result in an SSE register, use an FP_TRUNCATE to get it
-    // there.
-    if (GetResultTy != RVLocs[0].getValVT())
-      RetVal = DAG.getNode(ISD::FP_ROUND, RVLocs[0].getValVT(), RetVal,
-                           // This truncation won't change the value.
-                           DAG.getIntPtrConstant(1));
+    if (CopyVT != RVLocs[i].getValVT()) {
+      // Round the F80 the right size, which also moves to the appropriate xmm
+      // register.
+      Val = DAG.getNode(ISD::FP_ROUND, RVLocs[i].getValVT(), Val,
+                        // This truncation won't change the value.
+                        DAG.getIntPtrConstant(1));
+    }
     
-    ResultVals.push_back(RetVal);
+    ResultVals.push_back(Val);
   }
   
   // Merge everything together with a MERGE_VALUES node.
@@ -5573,9 +5557,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::FP_TO_INT64_IN_MEM: return "X86ISD::FP_TO_INT64_IN_MEM";
   case X86ISD::FLD:                return "X86ISD::FLD";
   case X86ISD::FST:                return "X86ISD::FST";
-  case X86ISD::FP_GET_ST0:         return "X86ISD::FP_GET_ST0";
   case X86ISD::FP_GET_ST0_ST1:     return "X86ISD::FP_GET_ST0_ST1";
-  case X86ISD::FP_SET_ST0:         return "X86ISD::FP_SET_ST0";
   case X86ISD::CALL:               return "X86ISD::CALL";
   case X86ISD::TAILCALL:           return "X86ISD::TAILCALL";
   case X86ISD::RDTSC_DAG:          return "X86ISD::RDTSC_DAG";

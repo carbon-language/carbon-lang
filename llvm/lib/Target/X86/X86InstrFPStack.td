@@ -17,10 +17,8 @@
 // FPStack specific DAG Nodes.
 //===----------------------------------------------------------------------===//
 
-def SDTX86FpGet     : SDTypeProfile<1, 0, [SDTCisFP<0>]>;
 def SDTX86FpGet2    : SDTypeProfile<2, 0, [SDTCisVT<0, f80>, 
                                            SDTCisVT<1, f80>]>;
-def SDTX86FpSet     : SDTypeProfile<0, 1, [SDTCisFP<0>]>;
 def SDTX86Fld       : SDTypeProfile<1, 2, [SDTCisFP<0>,
                                            SDTCisPtrTy<1>, 
                                            SDTCisVT<2, OtherVT>]>;
@@ -33,10 +31,6 @@ def SDTX86FpToIMem  : SDTypeProfile<0, 2, [SDTCisFP<0>, SDTCisPtrTy<1>]>;
 
 def SDTX86CwdStore  : SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>;
 
-def X86fpget_st0    : SDNode<"X86ISD::FP_GET_ST0", SDTX86FpGet,
-                             [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
-def X86fpset        : SDNode<"X86ISD::FP_SET_ST0", SDTX86FpSet,
-                             [SDNPHasChain, SDNPOutFlag]>;
 def X86fld          : SDNode<"X86ISD::FLD", SDTX86Fld,
                              [SDNPHasChain, SDNPMayLoad]>;
 def X86fst          : SDNode<"X86ISD::FST", SDTX86Fst,
@@ -138,26 +132,18 @@ let isTerminator = 1 in
 // encoding and asm printing info).
 
 // Pseudo Instructions for FP stack return values.
-def FpGET_ST0_32 : FpI_<(outs RFP32:$dst), (ins), SpecialFP,
-                        [(set RFP32:$dst, X86fpget_st0)]>;       // FPR = ST(0)
-def FpGET_ST0_64 : FpI_<(outs RFP64:$dst), (ins), SpecialFP,
-                        [(set RFP64:$dst, X86fpget_st0)]>;       // FPR = ST(0)
-def FpGET_ST0_80 : FpI_<(outs RFP80:$dst), (ins), SpecialFP,
-                        [(set RFP80:$dst, X86fpget_st0)]>;       // FPR = ST(0)
+def FpGET_ST0_32 : FpI_<(outs RFP32:$dst), (ins), SpecialFP, []>; // FPR = ST(0)
+def FpGET_ST0_64 : FpI_<(outs RFP64:$dst), (ins), SpecialFP, []>; // FPR = ST(0)
+def FpGET_ST0_80 : FpI_<(outs RFP80:$dst), (ins), SpecialFP, []>; // FPR = ST(0)
 
 def FpGET_ST0_ST1 : FpI_<(outs RFP80:$dst1, RFP80:$dst2), (ins), SpecialFP,
                          []>;                        // FPR = ST(0), FPR = ST(1)
 
 
 let Defs = [ST0] in {
-def FpSET_ST0_32 : FpI_<(outs), (ins RFP32:$src), SpecialFP,
-                        [(X86fpset RFP32:$src)]>;// ST(0) = FPR
-
-def FpSET_ST0_64 : FpI_<(outs), (ins RFP64:$src), SpecialFP,
-                        [(X86fpset RFP64:$src)]>;// ST(0) = FPR
-
-def FpSET_ST0_80 : FpI_<(outs), (ins RFP80:$src), SpecialFP,
-                        [(X86fpset RFP80:$src)]>;// ST(0) = FPR
+def FpSET_ST0_32 : FpI_<(outs), (ins RFP32:$src), SpecialFP, []>; // ST(0) = FPR
+def FpSET_ST0_64 : FpI_<(outs), (ins RFP64:$src), SpecialFP, []>; // ST(0) = FPR
+def FpSET_ST0_80 : FpI_<(outs), (ins RFP80:$src), SpecialFP, []>; // ST(0) = FPR
 }
 
 // FpIf32, FpIf64 - Floating Point Psuedo Instruction template.
