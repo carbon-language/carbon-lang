@@ -316,7 +316,7 @@ static Value *RemapOperand(const Value *In,
   
   // Cache the mapping in our local map structure
   if (Result) {
-    ValueMap.insert(std::make_pair(In, Result));
+    ValueMap[In] = Result;
     return Result;
   }
   
@@ -512,7 +512,8 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
         ForceRenaming(NewDGV, SGV->getName());
 
       // Make sure to remember this mapping...
-      ValueMap.insert(std::make_pair(SGV, NewDGV));
+      ValueMap[SGV] = NewDGV;
+
       if (SGV->hasAppendingLinkage())
         // Keep track that this is an appending variable...
         AppendingVars.insert(std::make_pair(SGV->getName(), NewDGV));
@@ -532,22 +533,23 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
       CopyGVAttributes(NewDGV, SGV);
 
       // Make sure to remember this mapping...
-      ValueMap.insert(std::make_pair(SGV, NewDGV));
+      ValueMap[SGV] = NewDGV;
 
       // Keep track that this is an appending variable...
       AppendingVars.insert(std::make_pair(SGV->getName(), NewDGV));
     } else if (GlobalAlias *DGA = dyn_cast<GlobalAlias>(DGV)) {
       // SGV is global, but DGV is alias. The only valid mapping is when SGV is
       // external declaration, which is effectively a no-op. Also make sure
-      // linkage is correct.
+      // linkage calculation was correct.
       if (SGV->isDeclaration() && !LinkFromSrc) {
         // Make sure to remember this mapping...
-        ValueMap.insert(std::make_pair(SGV, DGA));
+        ValueMap[SGV] = DGA;
       } else
         return Error(Err, "Global-Alias Collision on '" + SGV->getName() +
                      "': symbol multiple defined");
     } else if (GlobalVariable *DGVar = dyn_cast<GlobalVariable>(DGV)) {
-      // Otherwise, perform the mapping as instructed by GetLinkageResult.
+      // Otherwise, perform the global-global mapping as instructed by
+      // GetLinkageResult.
       if (LinkFromSrc) {
         // Propagate alignment, section, and visibility info.
         CopyGVAttributes(DGVar, SGV);
@@ -592,9 +594,7 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
       DGVar->setLinkage(NewLinkage);
 
       // Make sure to remember this mapping...
-      ValueMap.insert(std::make_pair(SGV,
-                                     ConstantExpr::getBitCast(DGVar,
-                                                              SGV->getType())));
+      ValueMap[SGV] = ConstantExpr::getBitCast(DGVar, SGV->getType());
     }
   }
   return false;
@@ -726,7 +726,7 @@ static bool LinkAlias(Module *Dest, const Module *Src,
 
     // Remember this mapping so uses in the source module get remapped
     // later by RemapOperand.
-    ValueMap.insert(std::make_pair(SGA, NewGA));
+    ValueMap[SGA] = NewGA;
   }
 
   return false;
@@ -860,7 +860,7 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
         ForceRenaming(NewDF, SF->getName());
 
       // ... and remember this mapping...
-      ValueMap.insert(std::make_pair(SF, NewDF));
+      ValueMap[SF] = NewDF;
     } else if (SF->isDeclaration()) {
       // If SF is a declaration or if both SF & DF are declarations, just link 
       // the declarations, we aren't adding anything.
@@ -870,7 +870,7 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
           DF->setLinkage(SF->getLinkage());          
         }        
       } else {
-        ValueMap.insert(std::make_pair(SF, DF));
+        ValueMap[SF] = DF;
       }      
     } else if (DF->isDeclaration() && !DF->hasDLLImportLinkage()) {
       // If DF is external but SF is not...
@@ -881,7 +881,7 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
       DF->setVisibility(SF->getVisibility());
     } else if (SF->hasWeakLinkage() || SF->hasLinkOnceLinkage()) {
       // At this point we know that DF has LinkOnce, Weak, or External* linkage.
-      ValueMap.insert(std::make_pair(SF, DF));
+      ValueMap[SF] = DF;
 
       // Linkonce+Weak = Weak
       // *+External Weak = *
@@ -890,7 +890,7 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
         DF->setLinkage(SF->getLinkage());
     } else if (DF->hasWeakLinkage() || DF->hasLinkOnceLinkage()) {
       // At this point we know that SF has LinkOnce or External* linkage.
-      ValueMap.insert(std::make_pair(SF, DF));
+      ValueMap[SF] = DF;
       if (!SF->hasLinkOnceLinkage() && !SF->hasExternalWeakLinkage())
         // Don't inherit linkonce & external weak linkage
         DF->setLinkage(SF->getLinkage());
@@ -924,7 +924,7 @@ static bool LinkFunctionBody(Function *Dest, Function *Src,
     DI->setName(I->getName());  // Copy the name information over...
 
     // Add a mapping to our local map
-    ValueMap.insert(std::make_pair(I, DI));
+    ValueMap[I] = DI;
   }
 
   // Splice the body of the source function into the dest function.
