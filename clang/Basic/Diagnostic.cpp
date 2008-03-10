@@ -16,6 +16,7 @@
 #include <cassert>
 #include <vector>
 #include <map>
+#include <cstring>
 using namespace clang;
 
 //===----------------------------------------------------------------------===//

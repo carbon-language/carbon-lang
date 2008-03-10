@@ -14,6 +14,7 @@
 #include "clang/Lex/ScratchBuffer.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include <cstring>
 using namespace clang;
 
 // ScratchBufSize - The size of each chunk of scratch memory.  Slightly less

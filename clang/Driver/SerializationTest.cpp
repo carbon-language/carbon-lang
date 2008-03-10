@@ -23,7 +23,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/Streams.h"
 #include <fstream>
-
+#include <cstring>
 using namespace clang;
 
 //===----------------------------------------------------------------------===//

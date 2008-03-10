@@ -16,7 +16,7 @@
 
 #include "llvm/ADT/iterator"
 #include <list>
-
+#include <cstring>
 
 namespace clang {
 
