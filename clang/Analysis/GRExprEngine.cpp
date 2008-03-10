@@ -403,6 +403,8 @@ void GRExprEngine::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
 
   CleanedState = StateMgr.RemoveDeadBindings(StmtEntryNode->getState(),
                                              CurrentStmt, Liveness);
+  
+  Builder->SetCleanedState(CleanedState);
 
   // Visit the statement.
 

@@ -121,6 +121,7 @@ class GRStmtNodeBuilderImpl {
   GRCoreEngineImpl& Eng;
   CFGBlock& B;
   const unsigned Idx;
+  ExplodedNodeImpl* Pred;
   ExplodedNodeImpl* LastNode;  
   bool HasGeneratedNode;
   bool Populated;
@@ -136,7 +137,9 @@ public:
   
   ~GRStmtNodeBuilderImpl();
   
-  inline ExplodedNodeImpl* getLastNode() {
+  ExplodedNodeImpl* getBasePredecessor() const { return Pred; }
+  
+  ExplodedNodeImpl* getLastNode() const {
     return LastNode ? (LastNode->isSink() ? NULL : LastNode) : NULL;
   }
   
@@ -160,9 +163,12 @@ class GRStmtNodeBuilder  {
   typedef ExplodedNode<StateTy>   NodeTy;
   
   GRStmtNodeBuilderImpl& NB;
+  StateTy* CleanedState;
   
 public:
-  GRStmtNodeBuilder(GRStmtNodeBuilderImpl& nb) : NB(nb), BuildSinks(false) {}
+  GRStmtNodeBuilder(GRStmtNodeBuilderImpl& nb) : NB(nb), BuildSinks(false) {
+    CleanedState = getLastNode()->getState();
+  }
     
   NodeTy* getLastNode() const {
     return static_cast<NodeTy*>(NB.getLastNode());
@@ -176,12 +182,24 @@ public:
     return static_cast<NodeTy*>(NB.generateNodeImpl(S, St));    
   }
   
+  StateTy* GetState(NodeTy* Pred) const {
+    if ((ExplodedNodeImpl*) Pred == NB.getBasePredecessor())
+      return CleanedState;
+    else
+      return Pred->getState();
+  }
+  
+  void SetCleanedState(StateTy* St) {
+    CleanedState = St;
+  }
+  
   NodeTy* Nodify(ExplodedNodeSet<StateTy>& Dst, Stmt* S,
                  NodeTy* Pred, StateTy* St) {    
     
+    StateTy* PredState = GetState(Pred);
     
     // If the state hasn't changed, don't generate a new node.
-    if (!BuildSinks && St == Pred->getState()) {
+    if (!BuildSinks && St == PredState) {
       Dst.Add(Pred);
       return NULL;
     }
