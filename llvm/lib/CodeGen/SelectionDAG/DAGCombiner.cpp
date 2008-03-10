@@ -1102,12 +1102,13 @@ SDOperand DAGCombiner::visitSUB(SDNode *N) {
   }
   
   // fold (sub x, x) -> 0
-  if (N0 == N1)
+  if (N0 == N1) {
     if (ISD::isBuildVectorAllZeros(N0.Val))
       // Zero vectors might be normalized to a particular vector type to ensure
       // they are CSE'd. Return it as it is.
       return N0;
     return DAG.getConstant(0, N->getValueType(0));
+  }
   // fold (sub c1, c2) -> c1-c2
   if (N0C && N1C)
     return DAG.getNode(ISD::SUB, VT, N0, N1);
