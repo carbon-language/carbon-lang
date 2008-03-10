@@ -28,7 +28,7 @@ static inline const PostStmt& GetLocation(ITERATOR I) {
 }
   
 template <>
-static inline const PostStmt& GetLocation(GRExprEngine::undef_arg_iterator I) {
+inline const PostStmt& GetLocation(GRExprEngine::undef_arg_iterator I) {
   return cast<PostStmt>(I->first->getLocation());
 }
 
@@ -55,8 +55,8 @@ static void EmitDiag(Diagnostic& Diag, SourceManager& SrcMgr,
 }
 
 template <typename ITERATOR>
-static void EmitWarning(Diagnostic& Diag, SourceManager& SrcMgr,
-                        ITERATOR I, ITERATOR E, const char* msg) {
+void EmitWarning(Diagnostic& Diag, SourceManager& SrcMgr,
+                 ITERATOR I, ITERATOR E, const char* msg) {
  
   std::ostringstream Out;
   Out << "[CHECKER] " << msg;
