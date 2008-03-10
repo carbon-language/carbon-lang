@@ -122,9 +122,6 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   setUseUnderscoreLongJmp(true);
     
   // Set up the SPU's register classes:
-  // NOTE: i8 register class is not registered because we cannot determine when
-  // we need to zero or sign extend for custom-lowered loads and stores.
-  // NOTE: Ignore the previous note. For now. :-)
   addRegisterClass(MVT::i8,   SPU::R8CRegisterClass);
   addRegisterClass(MVT::i16,  SPU::R16CRegisterClass);
   addRegisterClass(MVT::i32,  SPU::R32CRegisterClass);
@@ -243,22 +240,19 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
 
   setOperationAction(ISD::CTLZ , MVT::i32,   Legal);
   
-  // SPU has a version of select
+  // SPU has a version of select that implements (a&~c)|(b|c), just like
+  // select ought to work:
   setOperationAction(ISD::SELECT, MVT::i1,   Promote);
   setOperationAction(ISD::SELECT, MVT::i8,   Legal);
   setOperationAction(ISD::SELECT, MVT::i16,  Legal);
   setOperationAction(ISD::SELECT, MVT::i32,  Legal);
   setOperationAction(ISD::SELECT, MVT::i64,  Expand);
-  setOperationAction(ISD::SELECT, MVT::f32,  Expand);
-  setOperationAction(ISD::SELECT, MVT::f64,  Expand);
 
   setOperationAction(ISD::SETCC, MVT::i1,    Promote);
   setOperationAction(ISD::SETCC, MVT::i8,    Legal);
   setOperationAction(ISD::SETCC, MVT::i16,   Legal);
   setOperationAction(ISD::SETCC, MVT::i32,   Legal);
   setOperationAction(ISD::SETCC, MVT::i64,   Expand);
-  setOperationAction(ISD::SETCC, MVT::f32,   Expand);
-  setOperationAction(ISD::SETCC, MVT::f64,   Expand);
 
   // Zero extension and sign extension for i64 have to be
   // custom legalized
@@ -449,7 +443,11 @@ SPUTargetLowering::getTargetNodeName(unsigned Opcode) const
 
 MVT::ValueType
 SPUTargetLowering::getSetCCResultType(const SDOperand &Op) const {
-  return Op.getValueType();
+  MVT::ValueType VT = Op.getValueType();
+  if (MVT::isInteger(VT))
+    return VT;
+  else
+    return MVT::i32;
 }
 
 //===----------------------------------------------------------------------===//

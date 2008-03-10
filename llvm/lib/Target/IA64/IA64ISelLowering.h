@@ -47,7 +47,9 @@ namespace llvm {
     unsigned VirtGPR; // this is public so it can be accessed in the selector
                       // for ISD::RET. add an accessor instead? FIXME
     const char *getTargetNodeName(unsigned Opcode) const;
-    MVT::ValueType getSetCCResultType(const SDOperand &) const;
+
+    /// getSetCCResultType: return ISD::SETCC's result type.
+    virtual MVT::ValueType getSetCCResultType(const SDOperand &) const;
       
     /// LowerArguments - This hook must be implemented to indicate how we should
     /// lower the arguments for the specified function, into the specified DAG.
