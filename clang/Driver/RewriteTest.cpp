@@ -2183,6 +2183,8 @@ void RewriteTest::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
     endBuf += Lexer::MeasureTokenLength(LocEnd, *SM);
     Result += " {\n    struct ";
     Result += RCDecl->getName();
+    if (LangOpts.Microsoft)
+      Result += "_IMPL";
     // Note: We don't name the field decl. This simplifies the "codegen" for
     // accessing a superclasses instance variables (and is similar to what gcc
     // does internally). The unnamed struct field feature is enabled with
@@ -2751,6 +2753,8 @@ void RewriteTest::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
     // class has size. Must synthesize its size.
     Result += ",sizeof(struct ";
     Result += CDecl->getName();
+    if (LangOpts.Microsoft)
+      Result += "_IMPL";
     Result += ")";
   }
   if (NumIvars > 0) {
