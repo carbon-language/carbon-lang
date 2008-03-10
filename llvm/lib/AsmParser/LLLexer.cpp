@@ -474,7 +474,7 @@ int LLLexer::LexIdentifier() {
   KEYWORD("asm", ASM_TOK);
   KEYWORD("sideeffect", SIDEEFFECT);
   KEYWORD("gc", GC);
-  KEYWORD("unwind_to", UNWIND_TO);
+  KEYWORD("unwinds", UNWINDS);
 
   KEYWORD("cc", CC_TOK);
   KEYWORD("ccc", CCC_TOK);

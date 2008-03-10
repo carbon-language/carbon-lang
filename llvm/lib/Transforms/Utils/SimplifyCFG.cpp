@@ -1829,7 +1829,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
     // Move all definitions in the successor to the predecessor.
     OnlyPred->getInstList().splice(OnlyPred->end(), BB->getInstList());
 
-    // Move the unwind_to block
+    // Move the unwind destination block
     if (!OnlyPred->getUnwindDest() && BB->getUnwindDest())
       OnlyPred->setUnwindDest(BB->getUnwindDest());
 

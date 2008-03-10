@@ -1,14 +1,14 @@
-; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | grep unwind_to | count 3
+; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | grep {unwinds to} | count 3
 
 declare void @g(i32)
 
 define i32 @f1() {
 entry:
   br label %bb1
-bb1: unwind_to %cleanup1
+bb1: unwinds to %cleanup1
   call void @g(i32 0)
   br label %bb2
-bb2: unwind_to %cleanup2
+bb2: unwinds to %cleanup2
   call void @g(i32 1)
   br label %exit
 exit:
@@ -20,22 +20,22 @@ cleanup2:
 }
 
 define i32 @f2() {
-entry: unwind_to %cleanup
+entry: unwinds to %cleanup
   br label %bb1
-bb1: unwind_to %cleanup
+bb1: unwinds to %cleanup
   br label %bb2
-bb2: unwind_to %cleanup
+bb2: unwinds to %cleanup
   br label %bb3
 bb3:
   br label %bb4
-bb4: unwind_to %cleanup
+bb4: unwinds to %cleanup
   ret i32 0
 cleanup:
   ret i32 1
 }
 
 define i32 @f3() {
-entry: unwind_to %cleanup
+entry: unwinds to %cleanup
   call void @g(i32 0)
   ret i32 0
 cleanup:
@@ -43,7 +43,7 @@ cleanup:
 }
 
 define i32 @f4() {
-entry: unwind_to %cleanup
+entry: unwinds to %cleanup
   call void @g(i32 0)
   br label %cleanup
 cleanup:
@@ -51,7 +51,7 @@ cleanup:
 }
 
 define i32 @f5() {
-entry: unwind_to %cleanup
+entry: unwinds to %cleanup
   call void @g(i32 0)
   br label %other
 other:

@@ -69,7 +69,7 @@ llvm::CloneTrace(const std::vector<BasicBlock*> &origTrace) {
   for (std::vector<BasicBlock *>::const_iterator BB = clonedTrace.begin(),
     BE = clonedTrace.end(); BB != BE; ++BB) {
 
-    //Remap the unwind_to label
+    //Remap the unwind destination
     if (BasicBlock *UnwindDest = (*BB)->getUnwindDest())
       (*BB)->setUnwindDest(cast<BasicBlock>(ValueMap[UnwindDest]));
 

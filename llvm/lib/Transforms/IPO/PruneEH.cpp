@@ -32,7 +32,7 @@ using namespace llvm;
 
 STATISTIC(NumRemoved, "Number of invokes removed");
 STATISTIC(NumUnreach, "Number of noreturn calls optimized");
-STATISTIC(NumBBUnwind, "Number of unwind_to removed from blocks");
+STATISTIC(NumBBUnwind, "Number of unwind dest removed from blocks");
 
 namespace {
   struct VISIBILITY_HIDDEN PruneEH : public CallGraphSCCPass {

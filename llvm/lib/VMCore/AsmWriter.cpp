@@ -1169,7 +1169,7 @@ void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
     if (BB->hasName())
       Out << ' ';
 
-    Out << "unwind_to";
+    Out << "unwinds to";
     writeOperand(unwindDest, false);
   }
 

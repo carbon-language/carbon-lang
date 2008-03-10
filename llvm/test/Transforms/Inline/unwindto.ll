@@ -5,7 +5,7 @@ define void @g() {
 }
 
 define i32 @f1() {
-entry: unwind_to %cleanup
+entry: unwinds to %cleanup
   call void @g()
   ret i32 0
 cleanup:

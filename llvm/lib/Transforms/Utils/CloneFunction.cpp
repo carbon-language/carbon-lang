@@ -105,7 +105,7 @@ void llvm::CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
   //
   for (Function::iterator BB = cast<BasicBlock>(ValueMap[OldFunc->begin()]),
          BE = NewFunc->end(); BB != BE; ++BB) {
-    // Fix up the unwind_to label.
+    // Fix up the unwind destination.
     if (BasicBlock *UnwindDest = BB->getUnwindDest())
       BB->setUnwindDest(cast<BasicBlock>(ValueMap[UnwindDest]));
 
