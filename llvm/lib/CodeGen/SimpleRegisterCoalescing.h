@@ -201,6 +201,10 @@ namespace llvm {
     /// subregister.
     void UpdateRegDefsUses(unsigned SrcReg, unsigned DstReg, unsigned SubIdx);
 
+    /// RemoveUnnecessaryKills - Remove kill markers that are no longer accurate
+    /// due to live range lengthening as the result of coalescing.
+    void RemoveUnnecessaryKills(unsigned Reg, LiveInterval &LI);
+
     /// ShortenDeadCopyLiveRange - Shorten a live range as it's artificially
     /// extended by a dead copy. Mark the last use (if any) of the val# as kill
     /// as ends the live range there. If there isn't another use, then this

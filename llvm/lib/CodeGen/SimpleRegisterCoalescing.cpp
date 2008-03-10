@@ -310,11 +310,26 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
   unsigned OpIdx = NewMI->findRegisterUseOperandIdx(IntA.reg, false);
   NewMI->getOperand(OpIdx).setIsKill();
 
-  // Update uses of IntA of the specific Val# with IntB.
   bool BHasPHIKill = BValNo->hasPHIKill;
   SmallVector<VNInfo*, 4> BDeadValNos;
   SmallVector<unsigned, 4> BKills;
   std::map<unsigned, unsigned> BExtend;
+
+  // If ALR and BLR overlaps and end of BLR extends beyond end of ALR, e.g.
+  // A = or A, B
+  // ...
+  // B = A
+  // ...
+  // C = A<kill>
+  // ...
+  //   = B
+  //
+  // then do not add kills of A to the newly created B interval.
+  bool Extended = BLR->end > ALR->end && ALR->end != ALR->start;
+  if (Extended)
+    BExtend[ALR->end] = BLR->end;
+
+  // Update uses of IntA of the specific Val# with IntB.
   for (MachineRegisterInfo::use_iterator UI = mri_->use_begin(IntA.reg),
          UE = mri_->use_end(); UI != UE;) {
     MachineOperand &UseMO = UI.getOperand();
@@ -329,8 +344,12 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
     UseMO.setReg(NewReg);
     if (UseMI == CopyMI)
       continue;
-    if (UseMO.isKill())
-      BKills.push_back(li_->getUseIndex(UseIdx)+1);
+    if (UseMO.isKill()) {
+      if (Extended)
+        UseMO.setIsKill(false);
+      else
+        BKills.push_back(li_->getUseIndex(UseIdx)+1);
+    }
     unsigned SrcReg, DstReg;
     if (!tii_->isMoveInstr(*UseMI, SrcReg, DstReg))
       continue;
@@ -347,9 +366,8 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
       JoinedCopies.insert(UseMI);
       // If this is a kill but it's going to be removed, the last use
       // of the same val# is the new kill.
-      if (UseMO.isKill()) {
+      if (UseMO.isKill())
         BKills.pop_back();
-      }
     }
   }
 
@@ -447,6 +465,29 @@ SimpleRegisterCoalescing::UpdateRegDefsUses(unsigned SrcReg, unsigned DstReg,
       else if (SubIdx)
         O.setSubReg(SubIdx);
       O.setReg(DstReg);
+    }
+  }
+}
+
+/// RemoveUnnecessaryKills - Remove kill markers that are no longer accurate
+/// due to live range lengthening as the result of coalescing.
+void SimpleRegisterCoalescing::RemoveUnnecessaryKills(unsigned Reg,
+                                                      LiveInterval &LI) {
+  for (MachineRegisterInfo::use_iterator UI = mri_->use_begin(Reg),
+         UE = mri_->use_end(); UI != UE; ++UI) {
+    MachineOperand &UseMO = UI.getOperand();
+    if (UseMO.isKill()) {
+      MachineInstr *UseMI = UseMO.getParent();
+      unsigned SReg, DReg;
+      if (!tii_->isMoveInstr(*UseMI, SReg, DReg))
+        continue;
+      unsigned UseIdx = li_->getUseIndex(li_->getInstructionIndex(UseMI));
+      if (JoinedCopies.count(UseMI))
+        continue;
+      LiveInterval::const_iterator UI = LI.FindLiveRangeContaining(UseIdx);
+      assert(UI != LI.end());
+      if (!LI.isKill(UI->valno, UseIdx+1))
+        UseMO.setIsKill(false);
     }
   }
 }
@@ -802,6 +843,12 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
 
   // Remember to delete the copy instruction.
   JoinedCopies.insert(CopyMI);
+
+  // Some live range has been lengthened due to colaescing, eliminate the
+  // unnecessary kills.
+  RemoveUnnecessaryKills(SrcReg, *ResDstInt);
+  if (TargetRegisterInfo::isVirtualRegister(DstReg))
+    RemoveUnnecessaryKills(DstReg, *ResDstInt);
 
   // SrcReg is guarateed to be the register whose live interval that is
   // being merged.
@@ -1481,8 +1528,6 @@ SimpleRegisterCoalescing::lastRegisterUse(unsigned Start, unsigned End,
 }
 
 
-/// RemoveUnnecessaryKills - Remove kill markers that are no longer accurate
-/// due to live range lengthening as the result of coalescing.
 void SimpleRegisterCoalescing::printRegName(unsigned reg) const {
   if (TargetRegisterInfo::isPhysicalRegister(reg))
     cerr << tri_->getName(reg);
