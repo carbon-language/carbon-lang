@@ -734,8 +734,8 @@ static void LoadIntFromMemory(APInt &IntVal, uint8_t *Src, unsigned LoadBytes) {
 /// FIXME: document
 ///
 void ExecutionEngine::LoadValueFromMemory(GenericValue &Result,
-                                                  GenericValue *Ptr,
-                                                  const Type *Ty) {
+                                          GenericValue *Ptr,
+                                          const Type *Ty) {
   const unsigned LoadBytes = getTargetData()->getTypeStoreSize(Ty);
 
   if (sys::littleEndianHost() != getTargetData()->isLittleEndian()) {
