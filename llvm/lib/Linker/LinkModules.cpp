@@ -544,9 +544,8 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
         // Make sure to remember this mapping...
         ValueMap.insert(std::make_pair(SGV, DGA));
       } else
-        return Error(Err, "Global-Alias Collision on '" +
-                     ToStr(SGV->getType(), Src) +"':%"+SGV->getName()+
-                     " - symbol multiple defined");
+        return Error(Err, "Global-Alias Collision on '" + SGV->getName() +
+                     "': symbol multiple defined");
     } else if (GlobalVariable *DGVar = dyn_cast<GlobalVariable>(DGV)) {
       // Otherwise, perform the mapping as instructed by GetLinkageResult.
       if (LinkFromSrc) {
@@ -638,9 +637,8 @@ static bool LinkAlias(Module *Dest, const Module *Src,
       // If types don't agree due to opaque types, try to resolve them.
       if (RecursiveResolveTypes(SGA->getType(), DGA->getType(),
                                 &Dest->getTypeSymbolTable(), ""))
-        return Error(Err, "Alias Collision on '" +
-                         ToStr(SGA->getType(), Src) +"':%"+SGA->getName()+
-                     " - aliases have different types");
+        return Error(Err, "Alias Collision on '" + SGA->getName()+
+                     "': aliases have different types");
 
       // Now types are known to be the same, check whether aliasees equal. As
       // globals are already linked we just need query ValueMap to find the
@@ -653,9 +651,8 @@ static bool LinkAlias(Module *Dest, const Module *Src,
         NewGA = DGA;
         // Proceed to 'common' steps
       } else
-        return Error(Err, "Alias Collision on '" +
-                     ToStr(SGA->getType(), Src) +"':%"+SGA->getName()+
-                     " - aliases have different aliasees");
+        return Error(Err, "Alias Collision on '"  + SGA->getName()+
+                     "': aliases have different aliasees");
     } else if (GlobalVariable *DGV = Dest->getGlobalVariable(SGA->getName())) {
       RecursiveResolveTypes(SGA->getType(), DGV->getType(),
                             &Dest->getTypeSymbolTable(), "");
@@ -680,9 +677,8 @@ static bool LinkAlias(Module *Dest, const Module *Src,
 
         // Proceed to 'common' steps
       } else
-        return Error(Err, "Global-Alias Collision on '" +
-                     ToStr(SGA->getType(), Src) +"':%"+SGA->getName()+
-                     " - symbol multiple defined");
+        return Error(Err, "Global-Alias Collision on '" + SGA->getName() +
+                     "': symbol multiple defined");
     } else if (Function *DF = Dest->getFunction(SGA->getName())) {
       RecursiveResolveTypes(SGA->getType(), DF->getType(),
                             &Dest->getTypeSymbolTable(), "");
@@ -707,9 +703,8 @@ static bool LinkAlias(Module *Dest, const Module *Src,
 
         // Proceed to 'common' steps
       } else
-        return Error(Err, "Function-Alias Collision on '" +
-                     ToStr(SGA->getType(), Src) +"':%"+SGA->getName()+
-                     " - symbol multiple defined");
+        return Error(Err, "Function-Alias Collision on '" + SGA->getName() +
+                     "': symbol multiple defined");
     } else {
       // Nothing similar found, just copy alias into destination module.
 
@@ -758,9 +753,8 @@ static bool LinkGlobalInits(Module *Dest, const Module *Src,
       if (DGV->hasInitializer()) {
         if (SGV->hasExternalLinkage()) {
           if (DGV->getInitializer() != SInit)
-            return Error(Err, "Global Variable Collision on '" +
-                         ToStr(SGV->getType(), Src) +"':%"+SGV->getName()+
-                         " - Global variables have different initializers");
+            return Error(Err, "Global Variable Collision on '" + SGV->getName() +
+                         "': global variables have different initializers");
         } else if (DGV->hasLinkOnceLinkage() || DGV->hasWeakLinkage()) {
           // Nothing is required, mapped values will take the new global
           // automatically.
