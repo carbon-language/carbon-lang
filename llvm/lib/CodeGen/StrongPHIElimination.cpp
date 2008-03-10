@@ -21,7 +21,7 @@
 
 #define DEBUG_TYPE "strongphielim"
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/CodeGen/LiveVariables.h"
+#include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -65,7 +65,10 @@ namespace {
     
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<MachineDominatorTree>();
-      AU.addRequired<LiveVariables>();
+      AU.addRequired<LiveIntervals>();
+      
+      // TODO: Actually make this true.
+      AU.addPreserved<LiveIntervals>();
       MachineFunctionPass::getAnalysisUsage(AU);
     }
     
@@ -269,34 +272,23 @@ StrongPHIElimination::computeDomForest(std::set<unsigned>& regs,
   return ret;
 }
 
-/// isLiveIn - helper method that determines, from a VarInfo, if a register
+/// isLiveIn - helper method that determines, from a regno, if a register
 /// is live into a block
 static bool isLiveIn(unsigned r, MachineBasicBlock* MBB,
-                     MachineRegisterInfo& MRI, LiveVariables& LV) {
-  LiveVariables::VarInfo V = LV.getVarInfo(r);
-  if (V.AliveBlocks.test(MBB->getNumber()))
-    return true;
-  
-  if (MRI.getVRegDef(r)->getParent() != MBB &&
-      V.UsedBlocks.test(MBB->getNumber()))
-    return true;
-  
-  return false;
+                     LiveIntervals& LI) {
+  LiveInterval& I = LI.getOrCreateInterval(r);
+  unsigned idx = LI.getMBBStartIdx(MBB);
+  return I.liveBeforeAndAt(idx);
 }
 
-/// isLiveOut - help method that determines, from a VarInfo, if a register is
+/// isLiveOut - help method that determines, from a regno, if a register is
 /// live out of a block.
 static bool isLiveOut(unsigned r, MachineBasicBlock* MBB,
-                      MachineRegisterInfo& MRI, LiveVariables& LV) {
-  LiveVariables::VarInfo& V = LV.getVarInfo(r);
-  if (MBB == MRI.getVRegDef(r)->getParent() ||
-      V.UsedBlocks.test(MBB->getNumber())) {
-    for (std::vector<MachineInstr*>::iterator I = V.Kills.begin(), 
-         E = V.Kills.end(); I != E; ++I)
-      if ((*I)->getParent() == MBB)
-        return false;
-    
-    return true;
+                      LiveIntervals& LI) {
+  for (MachineBasicBlock::succ_iterator PI = MBB->succ_begin(),
+       E = MBB->succ_end(); PI != E; ++PI) {
+    if (isLiveIn(r, *PI, LI))
+      return true;
   }
   
   return false;
@@ -307,7 +299,7 @@ static bool isLiveOut(unsigned r, MachineBasicBlock* MBB,
 /// registers. 0 - defined in the same block, 1 - first properly dominates
 /// second, 2 - second properly dominates first 
 static bool interferes(unsigned a, unsigned b, MachineBasicBlock* scan,
-                       LiveVariables& LV, unsigned mode) {
+                       LiveIntervals& LV, unsigned mode) {
   MachineInstr* def = 0;
   MachineInstr* kill = 0;
   
@@ -400,7 +392,7 @@ static bool interferes(unsigned a, unsigned b, MachineBasicBlock* scan,
 /// copies.  This method is responsible for determining which operands receive
 /// which treatment.
 void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
-  LiveVariables& LV = getAnalysis<LiveVariables>();
+  LiveIntervals& LI = getAnalysis<LiveIntervals>();
   MachineRegisterInfo& MRI = MBB->getParent()->getRegInfo();
   
   // Holds names that have been added to a set in any PHI within this block
@@ -435,12 +427,12 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
       //      in this block OR
       //   5) if any two operands are defined in the same block, insert copies
       //      for one of them
-      if (isLiveIn(SrcReg, P->getParent(), MRI, LV) ||
+      if (isLiveIn(SrcReg, P->getParent(), LI) ||
           isLiveOut(P->getOperand(0).getReg(),
-                    MRI.getVRegDef(SrcReg)->getParent(), MRI, LV) ||
+                    MRI.getVRegDef(SrcReg)->getParent(), LI) ||
           ( MRI.getVRegDef(SrcReg)->getOpcode() == TargetInstrInfo::PHI &&
             isLiveIn(P->getOperand(0).getReg(),
-                     MRI.getVRegDef(SrcReg)->getParent(), MRI, LV) ) ||
+                     MRI.getVRegDef(SrcReg)->getParent(), LI) ) ||
           ProcessedNames.count(SrcReg) ||
           UnionedBlocks.count(MRI.getVRegDef(SrcReg)->getParent())) {
         
@@ -494,7 +486,7 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
       }
       
       // If there's an interference, we need to insert  copies
-      if (interferes(p.first, p.second, scan, LV, mode)) {
+      if (interferes(p.first, p.second, scan, LI, mode)) {
         // Insert copies for First
         for (int i = P->getNumOperands() - 1; i >= 2; i-=2) {
           if (P->getOperand(i-1).getReg() == p.first) {
@@ -537,7 +529,7 @@ void StrongPHIElimination::processPHIUnion(MachineInstr* Inst,
   // Code is still in SSA form, so we can use MRI::getVRegDef()
   MachineRegisterInfo& MRI = Inst->getParent()->getParent()->getRegInfo();
   
-  LiveVariables& LV = getAnalysis<LiveVariables>();
+  LiveIntervals& LI = getAnalysis<LiveIntervals>();
   unsigned DestReg = Inst->getOperand(0).getReg();
   
   // DF walk on the DomForest
@@ -557,7 +549,7 @@ void StrongPHIElimination::processPHIUnion(MachineInstr* Inst,
       // for the child or the parent.  In the interest of simplicity, we're
       // just always choosing the parent.
       if (isLiveOut(DFNode->getReg(),
-          MRI.getVRegDef(child->getReg())->getParent(), MRI, LV)) {
+          MRI.getVRegDef(child->getReg())->getParent(), LI)) {
         // Insert copies for parent
         for (int i = Inst->getNumOperands() - 1; i >= 2; i-=2) {
           if (Inst->getOperand(i-1).getReg() == DFNode->getReg()) {
@@ -574,8 +566,7 @@ void StrongPHIElimination::processPHIUnion(MachineInstr* Inst,
       // If a node is live-in to the defining block of one of its children, but
       // not live-out, then we need to scan that block for local interferences.
       } else if (isLiveIn(DFNode->getReg(),
-                          MRI.getVRegDef(child->getReg())->getParent(),
-                          MRI, LV) ||
+                          MRI.getVRegDef(child->getReg())->getParent(), LI) ||
                  MRI.getVRegDef(DFNode->getReg())->getParent() ==
                                  MRI.getVRegDef(child->getReg())->getParent()) {
         // Add (p, c) to possible local interferences
@@ -624,7 +615,7 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
     }
   }
   
-  LiveVariables& LV = getAnalysis<LiveVariables>();
+  LiveIntervals& LI = getAnalysis<LiveIntervals>();
   MachineFunction* MF = MBB->getParent();
   MachineRegisterInfo& MRI = MF->getRegInfo();
   const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
@@ -637,7 +628,7 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
       
       const TargetRegisterClass *RC = MF->getRegInfo().getRegClass(curr.first);
       
-      if (isLiveOut(curr.second, MBB, MRI, LV)) {
+      if (isLiveOut(curr.second, MBB, LI)) {
         // Create a temporary
         unsigned t = MF->getRegInfo().createVirtualRegister(RC);
         
