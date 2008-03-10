@@ -69,8 +69,7 @@ static void CheckForPhysRegDependency(SDNode *Def, SDNode *Use, unsigned Op,
 
 SUnit *ScheduleDAG::Clone(SUnit *Old) {
   SUnit *SU = NewSUnit(Old->Node);
-  for (unsigned i = 0, e = SU->FlaggedNodes.size(); i != e; ++i)
-    SU->FlaggedNodes.push_back(SU->FlaggedNodes[i]);
+  SU->FlaggedNodes = Old->FlaggedNodes;
   SU->InstanceNo = SUnitMap[Old->Node].size();
   SU->Latency = Old->Latency;
   SU->isTwoAddress = Old->isTwoAddress;
