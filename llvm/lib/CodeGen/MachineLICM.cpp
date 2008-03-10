@@ -50,8 +50,7 @@ namespace {
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
 
-    /// FIXME: Loop preheaders?
-    ///
+    // FIXME: Loop preheaders?
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
       AU.addRequired<MachineLoopInfo>();
@@ -119,6 +118,9 @@ namespace {
           if (ToMBB->getBasicBlock())
             DOUT << " to MachineBasicBlock "
                  << ToMBB->getBasicBlock()->getName();
+          if (FromMBB->getBasicBlock())
+            DOUT << " from MachineBasicBlock "
+                 << FromMBB->getBasicBlock()->getName();
           DOUT << "\n";
         });
 
@@ -241,8 +243,7 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
       return false;
     }
   }
-  
-  
+
   DEBUG({
       DOUT << "--- Checking if we can hoist " << I;
       if (I.getDesc().getImplicitUses()) {
@@ -271,13 +272,14 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
   for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = I.getOperand(i);
 
-    if (!(MO.isRegister() && MO.getReg() && MO.isUse()))
+    if (!MO.isRegister() || !MO.isUse())
       continue;
 
     unsigned Reg = MO.getReg();
+    if (Reg == 0) continue;
 
     // Don't hoist instructions that access physical registers.
-    if (!TargetRegisterInfo::isVirtualRegister(Reg))
+    if (TargetRegisterInfo::isPhysicalRegister(Reg))
       return false;
 
     assert(RegInfo->getVRegDef(Reg)&&"Machine instr not mapped for this vreg?");
