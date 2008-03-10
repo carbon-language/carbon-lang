@@ -109,7 +109,6 @@ IA64TargetLowering::IA64TargetLowering(TargetMachine &TM)
       setOperationAction(ISD::STACKSAVE, MVT::Other, Expand);
       setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
       setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64, Expand);
-      setOperationAction(ISD::PREFETCH          , MVT::Other, Expand);
 
       // Thread Local Storage
       setOperationAction(ISD::GlobalTLSAddress, MVT::i64, Custom);

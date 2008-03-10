@@ -286,8 +286,8 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::MEMSET          , MVT::Other, Custom);
   setOperationAction(ISD::MEMCPY          , MVT::Other, Custom);
 
-  if (!Subtarget->hasSSE1())
-    setOperationAction(ISD::PREFETCH      , MVT::Other, Expand);
+  if (Subtarget->hasSSE1())
+    setOperationAction(ISD::PREFETCH      , MVT::Other, Legal);
 
   if (!Subtarget->hasSSE2())
     setOperationAction(ISD::MEMBARRIER    , MVT::Other, Expand);

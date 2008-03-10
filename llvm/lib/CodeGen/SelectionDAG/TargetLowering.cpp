@@ -178,6 +178,9 @@ TargetLowering::TargetLowering(TargetMachine &tm)
     // These operations default to expand.
     setOperationAction(ISD::FGETSIGN, (MVT::ValueType)VT, Expand);
   }
+
+  // Most targets ignore the @llvm.prefetch intrinsic.
+  setOperationAction(ISD::PREFETCH, MVT::Other, Expand);
   
   // ConstantFP nodes default to expand.  Targets can either change this to 
   // Legal, in which case all fp constants are legal, or use addLegalFPImmediate
