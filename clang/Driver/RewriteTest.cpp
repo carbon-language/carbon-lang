@@ -1878,13 +1878,22 @@ Stmt *RewriteTest::SynthMessageExpr(ObjCMessageExpr *Exp) {
         Cls, SourceLocation())); // set 'super class', using objc_getClass().
       // struct objc_super
       QualType superType = getSuperStructType();
+      Expr *SuperRep;
       
-      // (struct objc_super) { <exprs from above> }
-      InitListExpr *ILE = new InitListExpr(SourceLocation(), 
-                                           &InitExprs[0], InitExprs.size(), 
-                                           SourceLocation());
-      CompoundLiteralExpr *SuperRep = new CompoundLiteralExpr(SourceLocation(),
-                                                              superType, ILE, false);
+      if (LangOpts.Microsoft) {
+        SynthSuperContructorFunctionDecl();
+        // Simulate a contructor call...
+        DeclRefExpr *DRE = new DeclRefExpr(SuperContructorFunctionDecl, 
+                                           superType, SourceLocation());
+        SuperRep = new CallExpr(DRE, &InitExprs[0], InitExprs.size(), 
+                                superType, SourceLocation());
+      } else {      
+        // (struct objc_super) { <exprs from above> }
+        InitListExpr *ILE = new InitListExpr(SourceLocation(), 
+                                             &InitExprs[0], InitExprs.size(), 
+                                             SourceLocation());
+        SuperRep = new CompoundLiteralExpr(SourceLocation(), superType, ILE, false);
+      }
       // struct objc_super *
       Expr *Unop = new UnaryOperator(SuperRep, UnaryOperator::AddrOf,
                                Context->getPointerType(SuperRep->getType()), 
@@ -2753,7 +2762,7 @@ void RewriteTest::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
   // 'info' field is initialized to CLS_META(2) for metaclass
   Result += ", 0,2, sizeof(struct _objc_class), 0";
   if (IDecl->getNumClassMethods() > 0) {
-    Result += "\n\t, &_OBJC_CLASS_METHODS_";
+    Result += "\n\t, (struct _objc_method_list *)&_OBJC_CLASS_METHODS_";
     Result += IDecl->getName();
     Result += "\n"; 
   }
