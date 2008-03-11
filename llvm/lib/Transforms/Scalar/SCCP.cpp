@@ -129,6 +129,21 @@ public:
   }
 };
 
+/// LatticeValIndex - LatticeVal and associated Index. This is used
+/// to track individual operand Lattice values for multi value ret instructions.
+class VISIBILITY_HIDDEN LatticeValIndexed {
+ public:
+  LatticeValIndexed(unsigned I = 0) { Index = I; }
+  LatticeVal &getLatticeVal() { return LV; }
+  unsigned getIndex() const { return Index; }
+
+  void setLatticeVal(LatticeVal &L) { LV = L; }
+  void setIndex(unsigned I) { Index = I; }
+
+ private:
+  LatticeVal LV;
+  unsigned Index;
+};
 //===----------------------------------------------------------------------===//
 //
 /// SCCPSolver - This class is a general purpose solver for Sparse Conditional
@@ -144,10 +159,14 @@ class SCCPSolver : public InstVisitor<SCCPSolver> {
   /// overdefined, it's entry is simply removed from this map.
   DenseMap<GlobalVariable*, LatticeVal> TrackedGlobals;
 
-  /// TrackedFunctionRetVals - If we are tracking arguments into and the return
+  /// TrackedRetVals - If we are tracking arguments into and the return
   /// value out of a function, it will have an entry in this map, indicating
   /// what the known return value for the function is.
-  DenseMap<Function*, LatticeVal> TrackedFunctionRetVals;
+  DenseMap<Function*, LatticeVal> TrackedRetVals;
+
+  /// TrackedMultipleRetVals - Same as TrackedRetVals, but used for functions
+  /// that return multiple values.
+  std::multimap<Function*, LatticeValIndexed> TrackedMultipleRetVals;
 
   // The reason for two worklists is that overdefined is the lowest state
   // on the lattice, and moving things to overdefined as fast as possible
@@ -198,7 +217,13 @@ public:
   void AddTrackedFunction(Function *F) {
     assert(F->hasInternalLinkage() && "Can only track internal functions!");
     // Add an entry, F -> undef.
-    TrackedFunctionRetVals[F];
+    if (const StructType *STy = dyn_cast<StructType>(F->getReturnType())) {
+      for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i)
+        TrackedMultipleRetVals.insert(std::pair<Function *, LatticeValIndexed>
+                                      (F, LatticeValIndexed(i)));
+    }
+    else
+      TrackedRetVals[F];
   }
 
   /// Solve - Solve for constants and executable blocks.
@@ -224,10 +249,10 @@ public:
     return ValueState;
   }
 
-  /// getTrackedFunctionRetVals - Get the inferred return value map.
+  /// getTrackedRetVals - Get the inferred return value map.
   ///
-  const DenseMap<Function*, LatticeVal> &getTrackedFunctionRetVals() {
-    return TrackedFunctionRetVals;
+  const DenseMap<Function*, LatticeVal> &getTrackedRetVals() {
+    return TrackedRetVals;
   }
 
   /// getTrackedGlobals - Get and return the set of inferred initializers for
@@ -374,6 +399,7 @@ private:
   void visitTerminatorInst(TerminatorInst &TI);
 
   void visitCastInst(CastInst &I);
+  void visitGetResultInst(GetResultInst &GRI);
   void visitSelectInst(SelectInst &I);
   void visitBinaryOperator(Instruction &I);
   void visitCmpInst(CmpInst &I);
@@ -608,19 +634,34 @@ void SCCPSolver::visitPHINode(PHINode &PN) {
 void SCCPSolver::visitReturnInst(ReturnInst &I) {
   if (I.getNumOperands() == 0) return;  // Ret void
 
-  // If we are tracking the return value of this function, merge it in.
   Function *F = I.getParent()->getParent();
-  if (F->hasInternalLinkage() && !TrackedFunctionRetVals.empty()) {
+  // If we are tracking the return value of this function, merge it in.
+  if (!F->hasInternalLinkage())
+    return;
+
+  if (!TrackedRetVals.empty()) {
     DenseMap<Function*, LatticeVal>::iterator TFRVI =
-      TrackedFunctionRetVals.find(F);
-    if (TFRVI != TrackedFunctionRetVals.end() &&
+      TrackedRetVals.find(F);
+    if (TFRVI != TrackedRetVals.end() &&
         !TFRVI->second.isOverdefined()) {
       LatticeVal &IV = getValueState(I.getOperand(0));
       mergeInValue(TFRVI->second, F, IV);
+      return;
+    }
+  }
+  
+  // Handle function that returns multiple values.
+  std::multimap<Function*, LatticeValIndexed>::iterator It, E;
+  tie(It, E) = TrackedMultipleRetVals.equal_range(F);
+  if (It != E) {
+    for (; It != E; ++It) {
+      LatticeValIndexed &LV = It->second;
+      unsigned Idx = LV.getIndex();
+      Value *V = I.getOperand(Idx);
+      mergeInValue(LV.getLatticeVal(), V, getValueState(V));
     }
   }
 }
-
 
 void SCCPSolver::visitTerminatorInst(TerminatorInst &TI) {
   SmallVector<bool, 16> SuccFeasible;
@@ -642,6 +683,30 @@ void SCCPSolver::visitCastInst(CastInst &I) {
   else if (VState.isConstant())        // Propagate constant value
     markConstant(&I, ConstantExpr::getCast(I.getOpcode(), 
                                            VState.getConstant(), I.getType()));
+}
+
+void SCCPSolver::visitGetResultInst(GetResultInst &GRI) {
+  unsigned Idx = GRI.getIndex();
+  Value *Aggr = GRI.getOperand(0);
+  Function *F = NULL;
+  if (CallInst *CI = dyn_cast<CallInst>(Aggr)) 
+    F = CI->getCalledFunction();
+  else if (InvokeInst *II = dyn_cast<InvokeInst>(Aggr))
+    F = II->getCalledFunction();
+
+  assert (F && "Invalid GetResultInst operands!");
+
+  std::multimap<Function*, LatticeValIndexed>::iterator It, E;
+  tie(It, E) = TrackedMultipleRetVals.equal_range(F);
+  if (It == E) 
+    return;
+
+  for (; It != E; ++It) {
+    LatticeValIndexed &LIV = It->second;
+    if (LIV.getIndex() == Idx) {
+      mergeInValue(&GRI, LIV.getLatticeVal());
+    }
+  }
 }
 
 void SCCPSolver::visitSelectInst(SelectInst &I) {
@@ -1061,18 +1126,28 @@ void SCCPSolver::visitLoadInst(LoadInst &I) {
 void SCCPSolver::visitCallSite(CallSite CS) {
   Function *F = CS.getCalledFunction();
 
+  DenseMap<Function*, LatticeVal>::iterator TFRVI =TrackedRetVals.end();
   // If we are tracking this function, we must make sure to bind arguments as
   // appropriate.
-  DenseMap<Function*, LatticeVal>::iterator TFRVI =TrackedFunctionRetVals.end();
-  if (F && F->hasInternalLinkage())
-    TFRVI = TrackedFunctionRetVals.find(F);
+  bool FirstCall = false;
+  if (F && F->hasInternalLinkage()) {
+    TFRVI = TrackedRetVals.find(F);
+    if (TFRVI != TrackedRetVals.end()) 
+      FirstCall = true;
+    else {
+      std::multimap<Function*, LatticeValIndexed>::iterator It, E;
+      tie(It, E) = TrackedMultipleRetVals.equal_range(F);
+      if (It != E) 
+        FirstCall = true;
+    }
+  }
 
-  if (TFRVI != TrackedFunctionRetVals.end()) {
+  if (FirstCall) {
     // If this is the first call to the function hit, mark its entry block
     // executable.
     if (!BBExecutable.count(F->begin()))
       MarkBlockExecutable(F->begin());
-
+    
     CallSite::arg_iterator CAI = CS.arg_begin();
     for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end();
          AI != E; ++AI, ++CAI) {
@@ -1091,8 +1166,9 @@ void SCCPSolver::visitCallSite(CallSite CS) {
   LatticeVal &IV = ValueState[I];
   if (IV.isOverdefined()) return;
 
-  // Propagate the return value of the function to the value of the instruction.
-  if (TFRVI != TrackedFunctionRetVals.end()) {
+  // Propagate the single return value of the function to the value of the 
+  // instruction.
+  if (TFRVI != TrackedRetVals.end()) {
     mergeInValue(IV, I, TFRVI->second);
     return;
   }
@@ -1684,7 +1760,7 @@ bool IPSCCP::runOnModule(Module &M) {
   // all call uses with the inferred value.  This means we don't need to bother
   // actually returning anything from the function.  Replace all return
   // instructions with return undef.
-  const DenseMap<Function*, LatticeVal> &RV =Solver.getTrackedFunctionRetVals();
+  const DenseMap<Function*, LatticeVal> &RV = Solver.getTrackedRetVals();
   for (DenseMap<Function*, LatticeVal>::const_iterator I = RV.begin(),
          E = RV.end(); I != E; ++I)
     if (!I->second.isOverdefined() &&
