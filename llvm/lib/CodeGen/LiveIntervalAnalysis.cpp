@@ -779,6 +779,7 @@ bool LiveIntervals::tryFoldMemoryOperand(MachineInstr* &MI,
       vrm.virtFolded(Reg, MI, fmi, (VirtRegMap::ModRef)MRInfo);
     vrm.transferSpillPts(MI, fmi);
     vrm.transferRestorePts(MI, fmi);
+    vrm.transferEmergencySpills(MI, fmi);
     mi2iMap_.erase(MI);
     i2miMap_[InstrIdx /InstrSlots::NUM] = fmi;
     mi2iMap_[fmi] = InstrIdx;

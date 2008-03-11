@@ -268,6 +268,8 @@ namespace llvm {
       }
     }
 
+    /// @brief - transfer spill point information from one instruction to
+    /// another.
     void transferSpillPts(MachineInstr *Old, MachineInstr *New) {
       std::map<MachineInstr*,std::vector<std::pair<unsigned,bool> > >::iterator
         I = SpillPt2VirtMap.find(Old);
@@ -341,6 +343,21 @@ namespace llvm {
     /// the instruction.
     std::vector<unsigned> &getEmergencySpills(MachineInstr *MI) {
       return EmergencySpillMap[MI];
+    }
+
+    /// @brief - transfer emergency spill information from one instruction to
+    /// another.
+    void transferEmergencySpills(MachineInstr *Old, MachineInstr *New) {
+      std::map<MachineInstr*,std::vector<unsigned> >::iterator I =
+        EmergencySpillMap.find(Old);
+      if (I == EmergencySpillMap.end())
+        return;
+      while (!I->second.empty()) {
+        unsigned virtReg = I->second.back();
+        I->second.pop_back();
+        addEmergencySpill(virtReg, New);
+      }
+      EmergencySpillMap.erase(I);
     }
 
     /// @brief return or get a emergency spill slot for the register class.
