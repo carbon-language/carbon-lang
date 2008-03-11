@@ -137,13 +137,20 @@ public:
   typedef ConstEqTy::iterator ce_iterator;
   ce_iterator ce_begin() const { return ConstEq.begin(); }
   ce_iterator ce_end() const { return ConstEq.end(); }
-
-  void print(std::ostream& Out,
-             const char* nl = "\n",
-             const char* sep = "") const;
   
-  void printStdErr() const { print(*llvm::cerr); }  
-  void printDOT(std::ostream& Out) const;
+  class CheckerStatePrinter {
+  public:
+    virtual ~CheckerStatePrinter() {}
+    virtual void PrintCheckerState(std::ostream& Out, void* State,
+                                   const char* nl, const char* sep) = 0;
+  };
+
+  void print(std::ostream& Out, CheckerStatePrinter* P = NULL,
+             const char* nl = "\n", const char* sep = "") const;
+  
+  void printStdErr(CheckerStatePrinter* P = NULL) const;
+  
+  void printDOT(std::ostream& Out, CheckerStatePrinter*P = NULL) const;
 };  
   
 template<> struct GRTrait<ValueState*> {
@@ -154,7 +161,8 @@ template<> struct GRTrait<ValueState*> {
     // add the pointer.
     profile.AddPointer(St);
   }
-};    
+};
+  
   
 class ValueStateManager {
 private:

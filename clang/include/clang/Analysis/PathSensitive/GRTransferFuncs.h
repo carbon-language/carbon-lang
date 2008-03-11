@@ -30,27 +30,31 @@ public:
   
   // Casts.
   
-  virtual RVal EvalCast(BasicValueFactory& BasicVals, NonLVal V, QualType CastT) =0;
-  virtual RVal EvalCast(BasicValueFactory& BasicVals, LVal V, QualType CastT) = 0;
+  virtual RVal EvalCast(BasicValueFactory& BasicVals, NonLVal V,
+                        QualType CastT) =0;
+  
+  virtual RVal EvalCast(BasicValueFactory& BasicVals, LVal V,
+                        QualType CastT) = 0;
 
   // Unary Operators.
   
-  virtual RVal EvalMinus(BasicValueFactory& BasicVals, UnaryOperator* U, NonLVal X) = 0;
+  virtual RVal EvalMinus(BasicValueFactory& BasicVals, UnaryOperator* U,
+                         NonLVal X) = 0;
 
   virtual RVal EvalComplement(BasicValueFactory& BasicVals, NonLVal X) = 0;
 
   // Binary Operators.
   
-  virtual RVal EvalBinOp(BasicValueFactory& BasicVals, BinaryOperator::Opcode Op,
-                         NonLVal L, NonLVal R) = 0;
+  virtual RVal EvalBinOp(BasicValueFactory& BasicVals,
+                         BinaryOperator::Opcode Op, NonLVal L, NonLVal R) = 0;
   
-  virtual RVal EvalBinOp(BasicValueFactory& BasicVals, BinaryOperator::Opcode Op,
-                         LVal L, LVal R) = 0;
+  virtual RVal EvalBinOp(BasicValueFactory& BasicVals,
+                         BinaryOperator::Opcode Op, LVal L, LVal R) = 0;
   
   // Pointer arithmetic.
   
-  virtual RVal EvalBinOp(BasicValueFactory& BasicVals, BinaryOperator::Opcode Op,
-                         LVal L, NonLVal R) = 0;
+  virtual RVal EvalBinOp(BasicValueFactory& BasicVals,
+                         BinaryOperator::Opcode Op, LVal L, NonLVal R) = 0;
   
   // Calls.
   

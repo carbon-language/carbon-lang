@@ -476,13 +476,16 @@ ValueState* ValueStateManager::getPersistentState(ValueState& State) {
   return I;
 }
 
-void ValueState::printDOT(std::ostream& Out) const {
-  print(Out, "\\l", "\\|");
+void ValueState::printDOT(std::ostream& Out, CheckerStatePrinter* P) const {
+  print(Out, P, "\\l", "\\|");
 }
 
-void ValueState::print(std::ostream& Out,
-                       const char* nl,
-                       const char* sep) const {
+void ValueState::printStdErr(CheckerStatePrinter* P) const {
+  print(*llvm::cerr, P);
+}  
+
+void ValueState::print(std::ostream& Out, CheckerStatePrinter* P,
+                       const char* nl, const char* sep) const {
 
   // Print Variable Bindings
   Out << "Variables:" << nl;
@@ -570,4 +573,9 @@ void ValueState::print(std::ostream& Out,
       }
     }
   }
+  
+  // Print checker-specific data.
+  
+  if (P && CheckerState)
+    P->PrintCheckerState(Out, CheckerState, nl, sep);
 }
