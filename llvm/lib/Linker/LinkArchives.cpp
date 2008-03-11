@@ -71,13 +71,8 @@ GetAllUndefinedSymbols(Module *M, std::set<std::string> &UndefinedSymbols) {
 
   for (Module::alias_iterator I = M->alias_begin(), E = M->alias_end();
        I != E; ++I)
-    if (I->hasName()) {
-      const GlobalValue *Aliased = I->getAliasedGlobal();
-      if (Aliased->isDeclaration())
-        UndefinedSymbols.insert(I->getName());
-      else
-        DefinedSymbols.insert(I->getName());
-    }
+    if (I->hasName())
+      DefinedSymbols.insert(I->getName());
 
   // Prune out any defined symbols from the undefined symbols set...
   for (std::set<std::string>::iterator I = UndefinedSymbols.begin();

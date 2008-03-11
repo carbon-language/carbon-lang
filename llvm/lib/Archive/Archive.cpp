@@ -207,10 +207,8 @@ static void getSymbols(Module*M, std::vector<std::string>& symbols) {
   // Loop over aliases
   for (Module::alias_iterator AI = M->alias_begin(), AE = M->alias_end();
        AI != AE; ++AI) {
-    const GlobalValue *Aliased = AI->getAliasedGlobal();
-    if (!Aliased->isDeclaration())
-      if (AI->hasName())
-        symbols.push_back(AI->getName());
+    if (AI->hasName())
+      symbols.push_back(AI->getName());
   }
 }
 
