@@ -1825,8 +1825,10 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     assert(MVT::isFloatingPoint(VT) &&
            MVT::isFloatingPoint(Operand.getValueType()) && "Invalid FP cast!");
     if (Operand.getValueType() == VT) return Operand;  // noop conversion.
+    if (Operand.getOpcode() == ISD::UNDEF)
+      return getNode(ISD::UNDEF, VT);
     break;
-    case ISD::SIGN_EXTEND:
+  case ISD::SIGN_EXTEND:
     assert(MVT::isInteger(VT) && MVT::isInteger(Operand.getValueType()) &&
            "Invalid SIGN_EXTEND!");
     if (Operand.getValueType() == VT) return Operand;   // noop extension
