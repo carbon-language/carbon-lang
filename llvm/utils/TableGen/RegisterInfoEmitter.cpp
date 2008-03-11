@@ -77,7 +77,7 @@ void RegisterInfoEmitter::runHeader(std::ostream &OS) {
     for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i) {
       if (i) OS << ",\n";
       OS << "    " << RegisterClasses[i].getName() << "RegClassID";
-      if (!i) OS << " = 1";
+      OS << " = " << (i+1);
     }
     OS << "\n  };\n\n";
 
