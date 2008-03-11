@@ -442,6 +442,14 @@ ValueState* ValueStateManager::UnbindVar(ValueState* St, VarDecl* D) {
   return getPersistentState(NewSt);
 }
 
+void ValueStateManager::Unbind(ValueState& StImpl, LVal LV) {
+  
+  if (isa<lval::DeclVal>(LV))
+    StImpl.VarBindings = VBFactory.Remove(StImpl.VarBindings,
+                                          cast<lval::DeclVal>(LV).getDecl());
+  
+}
+
 ValueState* ValueStateManager::getInitialState() {
 
   // Create a state with empty variable bindings.

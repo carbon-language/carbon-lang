@@ -234,6 +234,9 @@ public:
   RVal GetBlkExprRVal(ValueState* St, Expr* Ex);
   
   void BindVar(ValueState& StImpl, VarDecl* D, RVal V);
+  
+  void Unbind(ValueState& StImpl, LVal LV);
+  
   ValueState* getPersistentState(ValueState& Impl);
   
   ValueState* AddEQ(ValueState* St, SymbolID sym, const llvm::APSInt& V);
