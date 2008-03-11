@@ -1224,6 +1224,12 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
   // away...
   Changed |= ConstantFoldTerminator(BB);
 
+  // If there is a trivial two-entry PHI node in this basic block, and we can
+  // eliminate it, do so now.
+  if (PHINode *PN = dyn_cast<PHINode>(BB->begin()))
+    if (PN->getNumIncomingValues() == 2)
+      Changed |= FoldTwoEntryPHINode(PN); 
+
   // If this is a returning block with only PHI nodes in it, fold the return
   // instruction into any unconditional branch predecessors.
   //
@@ -1914,12 +1920,6 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
           return true;
         }
       }
-
-  // If there is a trivial two-entry PHI node in this basic block, and we can
-  // eliminate it, do so now.
-  if (PHINode *PN = dyn_cast<PHINode>(BB->begin()))
-    if (PN->getNumIncomingValues() == 2)
-      Changed |= FoldTwoEntryPHINode(PN); 
 
   return Changed;
 }
