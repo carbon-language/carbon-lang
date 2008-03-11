@@ -872,6 +872,10 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
         std::vector<unsigned char> VT;
         VT.push_back(MVT::iPTR);
         MadeChange = UpdateNodeType(VT, TP);
+      } else if (ResultNode->getName() == "unknown") {
+        std::vector<unsigned char> VT;
+        VT.push_back(MVT::isUnknown);
+        MadeChange = UpdateNodeType(VT, TP);
       } else {
         assert(ResultNode->isSubClassOf("RegisterClass") &&
                "Operands should be register classes!");
@@ -910,13 +914,15 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
         MadeChange |= Child->UpdateNodeType(VT, TP);
       } else if (OperandNode->getName() == "ptr_rc") {
         MadeChange |= Child->UpdateNodeType(MVT::iPTR, TP);
+      } else if (OperandNode->getName() == "unknown") {
+        MadeChange |= Child->UpdateNodeType(MVT::isUnknown, TP);
       } else {
         assert(0 && "Unknown operand type!");
         abort();
       }
       MadeChange |= Child->ApplyTypeConstraints(TP, NotRegisters);
     }
-    
+
     if (ChildNo != getNumChildren())
       TP.error("Instruction '" + getOperator()->getName() +
                "' was provided too many operands!");
