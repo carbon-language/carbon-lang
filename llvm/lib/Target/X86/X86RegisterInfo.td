@@ -415,6 +415,9 @@ def GR64 : RegisterClass<"X86", [i64], 64,
     GR64Class::allocation_order_end(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
       const TargetRegisterInfo *RI = TM.getRegisterInfo();
+      const X86Subtarget &Subtarget = TM.getSubtarget<X86Subtarget>();
+      if (!Subtarget.is64Bit())
+        return begin();  // None of these are allocatable in 32-bit.
       if (RI->hasFP(MF)) // Does the function dedicate RBP to being a frame ptr?
         return end()-2;  // If so, don't allocate RSP or RBP
       else
