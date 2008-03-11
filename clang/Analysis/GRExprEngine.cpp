@@ -1554,6 +1554,7 @@ GRExprEngine::AssumeSymInt(ValueState* St, bool Assumption,
 #ifndef NDEBUG
 static GRExprEngine* GraphPrintCheckerState;
 static SourceManager* GraphPrintSourceManager;
+static ValueState::CheckerStatePrinter* GraphCheckerStatePrinter;
 
 namespace llvm {
 template<>
@@ -1794,7 +1795,7 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
     
     Out << "\\|StateID: " << (void*) N->getState() << "\\|";
 
-    N->getState()->printDOT(Out);
+    N->getState()->printDOT(Out, GraphCheckerStatePrinter);
       
     Out << "\\l";
     return Out.str();
@@ -1825,11 +1826,13 @@ void GRExprEngine::ViewGraph(bool trim) {
   else {
     GraphPrintCheckerState = this;
     GraphPrintSourceManager = &getContext().getSourceManager();
+    GraphCheckerStatePrinter = TF->getCheckerStatePrinter();
 
     llvm::ViewGraph(*G.roots_begin(), "GRExprEngine");
     
     GraphPrintCheckerState = NULL;
     GraphPrintSourceManager = NULL;
+    GraphCheckerStatePrinter = NULL;
   }
 #endif
 }
@@ -1838,6 +1841,7 @@ void GRExprEngine::ViewGraph(NodeTy** Beg, NodeTy** End) {
 #ifndef NDEBUG
   GraphPrintCheckerState = this;
   GraphPrintSourceManager = &getContext().getSourceManager();
+  GraphCheckerStatePrinter = TF->getCheckerStatePrinter();
   
   GRExprEngine::GraphTy* TrimmedG = G.Trim(Beg, End);
 
@@ -1850,5 +1854,6 @@ void GRExprEngine::ViewGraph(NodeTy** Beg, NodeTy** End) {
   
   GraphPrintCheckerState = NULL;
   GraphPrintSourceManager = NULL;
+  GraphCheckerStatePrinter = NULL;
 #endif
 }

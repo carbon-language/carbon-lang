@@ -17,16 +17,18 @@
 
 #include "clang/Analysis/PathSensitive/RValues.h"
 #include "clang/Analysis/PathSensitive/GRCoreEngine.h"
+#include "clang/Analysis/PathSensitive/ValueState.h"
 
 namespace clang {
-  
-  class ValueState;
-  class ValueStateManager;
   
 class GRTransferFuncs {
 public:
   GRTransferFuncs() {}
   virtual ~GRTransferFuncs() {}
+  
+  virtual ValueState::CheckerStatePrinter* getCheckerStatePrinter() {
+    return NULL;
+  }
   
   // Casts.
   
