@@ -182,6 +182,8 @@ public:
     return Data >> 3;
   }
   
+  static bool isError(Kind k) { return k >= ErrorUseAfterRelease; }
+  
   static RefVal makeOwned(unsigned Count) { return RefVal(Owned, Count); }
   static RefVal makeAcqOwned(unsigned Count) { return RefVal(AcqOwned, Count); }
   static RefVal makeNotOwned() { return RefVal(NotOwned); }
@@ -197,9 +199,16 @@ public:
 class CFRefCount : public GRSimpleVals {
   typedef llvm::ImmutableMap<SymbolID, RefVal> RefBindings;
   typedef RefBindings::Factory RefBFactoryTy;
-
+  
+  typedef llvm::SmallPtrSet<GRExprEngine::NodeTy*,2> UseAfterReleasesTy;
+  typedef llvm::SmallPtrSet<GRExprEngine::NodeTy*,2> ReleasesNotOwnedTy;
+  
   CFRefSummaryManager Summaries;
   RefBFactoryTy  RefBFactory;
+  
+  UseAfterReleasesTy UseAfterReleases;
+  ReleasesNotOwnedTy ReleasesNotOwned;
+  
     
   static RefBindings GetRefBindings(ValueState& StImpl) {
     return RefBindings((RefBindings::TreeTy*) StImpl.CheckerState);
@@ -214,7 +223,7 @@ class CFRefCount : public GRSimpleVals {
   }
   
   RefBindings Update(RefBindings B, SymbolID sym, RefVal V, ArgEffect E,
-                     bool& hasError);
+                     RefVal::Kind& hasError);
   
 public:
   CFRefCount() {}
@@ -258,7 +267,7 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
   // Evaluate the effects of the call.
   
   ValueState StVals = *St;
-  bool hasError = false;
+  RefVal::Kind hasError = (RefVal::Kind) 0;
   
   if (!Summ) {
     
@@ -310,16 +319,31 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
   St = StateMgr.getPersistentState(StVals);
   
   if (hasError) {
-    
+    GRExprEngine::NodeTy* N = Builder.generateNode(CE, St, Pred);
+
+    if (N) {
+      N->markAsSink();
+      
+      switch (hasError) {
+        default: assert(false);
+        case RefVal::ErrorUseAfterRelease:
+          UseAfterReleases.insert(N);
+          break;
+          
+        case RefVal::ErrorReleaseNotOwned:
+          ReleasesNotOwned.insert(N);
+          break;
+      }
+    }    
   }
-  
-  Builder.Nodify(Dst, CE, Pred, St);
+  else
+    Builder.Nodify(Dst, CE, Pred, St);
 }
 
 
 CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
                                            RefVal V, ArgEffect E,
-                                           bool& hasError) {
+                                           RefVal::Kind& hasError) {
   
   // FIXME: This dispatch can potentially be sped up by unifiying it into
   //  a single switch statement.  Opt for simplicity for now.
@@ -348,8 +372,8 @@ CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
           break;
           
         case RefVal::Released:
-          hasError = true;
           V = RefVal::makeUseAfterRelease();
+          hasError = V.getKind();
           break;
       }
       
@@ -371,13 +395,13 @@ CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
         }
           
         case RefVal::NotOwned:
-          hasError = true;
           V = RefVal::makeReleaseNotOwned();
+          hasError = V.getKind();
           break;
 
         case RefVal::Released:
-          hasError = true;
           V = RefVal::makeUseAfterRelease();
+          hasError = V.getKind();
           break;          
       }
   }
