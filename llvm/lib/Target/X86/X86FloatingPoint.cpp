@@ -214,7 +214,12 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
   for (MachineBasicBlock::iterator I = BB.begin(); I != BB.end(); ++I) {
     MachineInstr *MI = I;
     unsigned Flags = MI->getDesc().TSFlags;
-    if ((Flags & X86II::FPTypeMask) == X86II::NotFP)
+    
+    unsigned FPInstClass = Flags & X86II::FPTypeMask;
+    if (MI->getOpcode() == TargetInstrInfo::INLINEASM)
+      FPInstClass = X86II::SpecialFP;
+    
+    if (FPInstClass == X86II::NotFP)
       continue;  // Efficiently ignore non-fp insts!
 
     MachineInstr *PrevMI = 0;
@@ -233,7 +238,7 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
         DeadRegs.push_back(MO.getReg());
     }
 
-    switch (Flags & X86II::FPTypeMask) {
+    switch (FPInstClass) {
     case X86II::ZeroArgFP:  handleZeroArgFP(I); break;
     case X86II::OneArgFP:   handleOneArgFP(I);  break;  // fstp ST(0)
     case X86II::OneArgFPRW: handleOneArgFPRW(I); break; // ST(0) = fsqrt(ST(0))
@@ -966,6 +971,44 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
     }
     }
     break;
+  case TargetInstrInfo::INLINEASM: {
+    // The inline asm MachineInstr currently only *uses* FP registers for the
+    // 'f' constraint.  These should be turned into the current ST(x) register
+    // in the machine instr.  Also, any kills should be explicitly popped after
+    // the inline asm.
+    unsigned Kills[7];
+    unsigned NumKills = 0;
+    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+      MachineOperand &Op = MI->getOperand(i);
+      if (!Op.isReg() || Op.getReg() < X86::FP0 || Op.getReg() > X86::FP6)
+        continue;
+      assert(Op.isUse() && "Only handle inline asm uses right now");
+      
+      unsigned FPReg = getFPReg(Op);
+      Op.setReg(getSTReg(FPReg));
+      
+      // If we kill this operand, make sure to pop it from the stack after the
+      // asm.  We just remember it for now, and pop them all off at the end in
+      // a batch.
+      if (Op.isKill())
+        Kills[NumKills++] = FPReg;
+    }
+
+    // If this asm kills any FP registers (is the last use of them) we must
+    // explicitly emit pop instructions for them.  Do this now after the asm has
+    // executed so that the ST(x) numbers are not off (which would happen if we
+    // did this inline with operand rewriting).
+    //
+    // Note: this might be a non-optimal pop sequence.  We might be able to do
+    // better by trying to pop in stack order or something.
+    MachineBasicBlock::iterator InsertPt = MI;
+    while (NumKills)
+      freeStackSlotAfter(InsertPt, Kills[--NumKills]);
+
+    // Don't delete the inline asm!
+    return;
+  }
+      
   case X86::RET:
   case X86::RETI:
     // If RET has an FP register use operand, pass the first one in ST(0) and
