@@ -685,14 +685,8 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
     }
 
     // All registers must have inf weight. Just grab one!
-    if (!minReg) {
-      if (active_.size() == 0) {
-        // FIXME: All the registers are occupied by fixed intervals.
-        cerr << "Register allocator ran out of registers!\n";
-        abort();
-      }
+    if (!minReg)
       minReg = *RC->allocation_order_begin(*mf_);
-    }
   }
   
   DOUT << "\t\tregister with min weight: "
