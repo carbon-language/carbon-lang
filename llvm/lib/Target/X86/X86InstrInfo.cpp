@@ -636,26 +636,39 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
 bool X86InstrInfo::isMoveInstr(const MachineInstr& MI,
                                unsigned& sourceReg,
                                unsigned& destReg) const {
-  unsigned oc = MI.getOpcode();
-  if (oc == X86::MOV8rr || oc == X86::MOV16rr ||
-      oc == X86::MOV32rr || oc == X86::MOV64rr ||
-      oc == X86::MOV16to16_ || oc == X86::MOV32to32_ ||
-      oc == X86::MOV_Fp3232  || oc == X86::MOVSSrr || oc == X86::MOVSDrr ||
-      oc == X86::MOV_Fp3264 || oc == X86::MOV_Fp6432 || oc == X86::MOV_Fp6464 ||
-      oc == X86::FsMOVAPSrr || oc == X86::FsMOVAPDrr ||
-      oc == X86::MOVAPSrr || oc == X86::MOVAPDrr ||
-      oc == X86::MOVSS2PSrr || oc == X86::MOVSD2PDrr ||
-      oc == X86::MOVPS2SSrr || oc == X86::MOVPD2SDrr ||
-      oc == X86::MMX_MOVD64rr || oc == X86::MMX_MOVQ64rr) {
-      assert(MI.getNumOperands() >= 2 &&
-             MI.getOperand(0).isRegister() &&
-             MI.getOperand(1).isRegister() &&
-             "invalid register-register move instruction");
-      sourceReg = MI.getOperand(1).getReg();
-      destReg = MI.getOperand(0).getReg();
-      return true;
+  switch (MI.getOpcode()) {
+  default:
+    return false;
+  case X86::MOV8rr:
+  case X86::MOV16rr:
+  case X86::MOV32rr: 
+  case X86::MOV64rr:
+  case X86::MOV16to16_:
+  case X86::MOV32to32_:
+  case X86::MOV_Fp3232:
+  case X86::MOVSSrr:
+  case X86::MOVSDrr:
+  case X86::MOV_Fp3264:
+  case X86::MOV_Fp6432:
+  case X86::MOV_Fp6464:
+  case X86::FsMOVAPSrr:
+  case X86::FsMOVAPDrr:
+  case X86::MOVAPSrr:
+  case X86::MOVAPDrr:
+  case X86::MOVSS2PSrr:
+  case X86::MOVSD2PDrr:
+  case X86::MOVPS2SSrr:
+  case X86::MOVPD2SDrr:
+  case X86::MMX_MOVD64rr:
+  case X86::MMX_MOVQ64rr:
+    assert(MI.getNumOperands() >= 2 &&
+           MI.getOperand(0).isRegister() &&
+           MI.getOperand(1).isRegister() &&
+           "invalid register-register move instruction");
+    sourceReg = MI.getOperand(1).getReg();
+    destReg = MI.getOperand(0).getReg();
+    return true;
   }
-  return false;
 }
 
 unsigned X86InstrInfo::isLoadFromStackSlot(MachineInstr *MI, 
