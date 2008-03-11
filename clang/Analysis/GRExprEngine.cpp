@@ -1814,28 +1814,39 @@ static void AddSources(llvm::SmallVector<GRExprEngine::NodeTy*, 10>& Sources,
 #endif
 
 void GRExprEngine::ViewGraph(bool trim) {
-#ifndef NDEBUG
-  GraphPrintCheckerState = this;
-  GraphPrintSourceManager = &getContext().getSourceManager();
-  
+#ifndef NDEBUG  
   if (trim) {
     llvm::SmallVector<NodeTy*, 10> Sources;
     AddSources(Sources, null_derefs_begin(), null_derefs_end());
     AddSources(Sources, undef_derefs_begin(), undef_derefs_end());
     
-    GRExprEngine::GraphTy* TrimmedG = G.Trim(&Sources[0],
-                                             &Sources[0]+Sources.size());
-    
-    if (!TrimmedG)
-      llvm::cerr << "warning: Trimmed ExplodedGraph is empty.\n";
-    else {
-      llvm::ViewGraph(*TrimmedG->roots_begin(), "TrimmedGRExprEngine");    
-      delete TrimmedG;
-    }
+    ViewGraph(&Sources[0], &Sources[0]+Sources.size());
   }
-  else
+  else {
+    GraphPrintCheckerState = this;
+    GraphPrintSourceManager = &getContext().getSourceManager();
+
     llvm::ViewGraph(*G.roots_begin(), "GRExprEngine");
+    
+    GraphPrintCheckerState = NULL;
+    GraphPrintSourceManager = NULL;
+  }
+#endif
+}
+
+void GRExprEngine::ViewGraph(NodeTy** Beg, NodeTy** End) {
+#ifndef NDEBUG
+  GraphPrintCheckerState = this;
+  GraphPrintSourceManager = &getContext().getSourceManager();
   
+  GRExprEngine::GraphTy* TrimmedG = G.Trim(Beg, End);
+
+  if (!TrimmedG)
+    llvm::cerr << "warning: Trimmed ExplodedGraph is empty.\n";
+  else {
+    llvm::ViewGraph(*TrimmedG->roots_begin(), "TrimmedGRExprEngine");    
+    delete TrimmedG;
+  }  
   
   GraphPrintCheckerState = NULL;
   GraphPrintSourceManager = NULL;

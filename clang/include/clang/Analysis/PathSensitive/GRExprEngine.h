@@ -153,6 +153,8 @@ public:
   ///  simulation.
   void ViewGraph(bool trim = false);
   
+  void ViewGraph(NodeTy** Beg, NodeTy** End);
+  
   /// getInitialState - Return the initial state used for the root vertex
   ///  in the ExplodedGraph.
   ValueState* getInitialState();
