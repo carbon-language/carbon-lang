@@ -62,6 +62,7 @@ namespace {
     FunctionDecl *SelGetUidFunctionDecl;
     FunctionDecl *CFStringFunctionDecl;
     FunctionDecl *GetProtocolFunctionDecl;
+    FunctionDecl *SuperContructorFunctionDecl;
       
     // ObjC string constant support.
     FileVarDecl *ConstantStringClassReference;
@@ -181,6 +182,7 @@ namespace {
     void SynthCFStringFunctionDecl();
     void SynthSelGetUidFunctionDecl();
     void SynthGetProtocolFunctionDecl();
+    void SynthSuperContructorFunctionDecl();
       
     // Metadata emission.
     void RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
@@ -249,6 +251,7 @@ void RewriteTest::Initialize(ASTContext &context) {
   CurMethodDecl = 0;
   SuperStructDecl = 0;
   BcLabelCount = 0;
+  SuperContructorFunctionDecl = 0;
   
   // Get the ID and start/end of the main file.
   MainFileID = SM->getMainFileID();
@@ -264,8 +267,14 @@ void RewriteTest::Initialize(ASTContext &context) {
   std::string S = "#pragma once\n";
   S += "struct objc_selector; struct objc_class;\n";
   S += "#ifndef OBJC_SUPER\n";
-  S += "struct objc_super { struct objc_object *o; ";
-  S += "struct objc_object *superClass; };\n";
+  S += "struct objc_super { struct objc_object *object; ";
+  S += "struct objc_object *superClass; ";
+  if (LangOpts.Microsoft) {
+    // Add a constructor for creating temporary objects.
+    S += "objc_super(struct objc_object *o, struct objc_object *s) : ";
+    S += "object(o), superClass(s) {} ";
+  }
+  S += "};\n";
   S += "#define OBJC_SUPER\n";
   S += "#endif\n";
   S += "#ifndef _REWRITER_typedef_Protocol\n";
@@ -1542,6 +1551,24 @@ void RewriteTest::RewriteFunctionDecl(FunctionDecl *FD) {
   RewriteObjCQualifiedInterfaceTypes(FD);
 }
 
+// SynthSuperContructorFunctionDecl - id objc_super(id obj, id super);
+void RewriteTest::SynthSuperContructorFunctionDecl() {
+  if (SuperContructorFunctionDecl)
+    return;
+  IdentifierInfo *msgSendIdent = &Context->Idents.get("objc_super");
+  llvm::SmallVector<QualType, 16> ArgTys;
+  QualType argT = Context->getObjCIdType();
+  assert(!argT.isNull() && "Can't find 'id' type");
+  ArgTys.push_back(argT);
+  ArgTys.push_back(argT);
+  QualType msgSendType = Context->getFunctionType(Context->getObjCIdType(),
+                                                  &ArgTys[0], ArgTys.size(),
+                                                  false);
+  SuperContructorFunctionDecl = new FunctionDecl(SourceLocation(), 
+                                         msgSendIdent, msgSendType,
+                                         FunctionDecl::Extern, false, 0);
+}
+
 // SynthMsgSendFunctionDecl - id objc_msgSend(id self, SEL op, ...);
 void RewriteTest::SynthMsgSendFunctionDecl() {
   IdentifierInfo *msgSendIdent = &Context->Idents.get("objc_msgSend");
@@ -1851,6 +1878,7 @@ Stmt *RewriteTest::SynthMessageExpr(ObjCMessageExpr *Exp) {
         Cls, SourceLocation())); // set 'super class', using objc_getClass().
       // struct objc_super
       QualType superType = getSuperStructType();
+      
       // (struct objc_super) { <exprs from above> }
       InitListExpr *ILE = new InitListExpr(SourceLocation(), 
                                            &InitExprs[0], InitExprs.size(), 
@@ -1904,12 +1932,22 @@ Stmt *RewriteTest::SynthMessageExpr(ObjCMessageExpr *Exp) {
         Cls, SourceLocation())); // set 'super class', using objc_getClass().
       // struct objc_super
       QualType superType = getSuperStructType();
-      // (struct objc_super) { <exprs from above> }
-      InitListExpr *ILE = new InitListExpr(SourceLocation(), 
-                                           &InitExprs[0], InitExprs.size(), 
-                                           SourceLocation());
-      CompoundLiteralExpr *SuperRep = new CompoundLiteralExpr(SourceLocation(),
-                                                              superType, ILE, false);
+      Expr *SuperRep;
+      
+      if (LangOpts.Microsoft) {
+        SynthSuperContructorFunctionDecl();
+        // Simulate a contructor call...
+        DeclRefExpr *DRE = new DeclRefExpr(SuperContructorFunctionDecl, 
+                                           superType, SourceLocation());
+        SuperRep = new CallExpr(DRE, &InitExprs[0], InitExprs.size(), 
+                                superType, SourceLocation());
+      } else {
+        // (struct objc_super) { <exprs from above> }
+        InitListExpr *ILE = new InitListExpr(SourceLocation(), 
+                                             &InitExprs[0], InitExprs.size(), 
+                                             SourceLocation());
+        SuperRep = new CompoundLiteralExpr(SourceLocation(), superType, ILE, false);
+      }
       // struct objc_super *
       Expr *Unop = new UnaryOperator(SuperRep, UnaryOperator::AddrOf,
                                Context->getPointerType(SuperRep->getType()), 
@@ -2761,7 +2799,7 @@ void RewriteTest::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
     Result += ")";
   }
   if (NumIvars > 0) {
-    Result += ", &_OBJC_INSTANCE_VARIABLES_";
+    Result += ", (struct _objc_ivar_list *)&_OBJC_INSTANCE_VARIABLES_";
     Result += CDecl->getName();
     Result += "\n\t";
   }
