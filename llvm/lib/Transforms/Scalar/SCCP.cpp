@@ -1760,6 +1760,7 @@ bool IPSCCP::runOnModule(Module &M) {
   // all call uses with the inferred value.  This means we don't need to bother
   // actually returning anything from the function.  Replace all return
   // instructions with return undef.
+  // TODO: Process multiple value ret instructions also.
   const DenseMap<Function*, LatticeVal> &RV = Solver.getTrackedRetVals();
   for (DenseMap<Function*, LatticeVal>::const_iterator I = RV.begin(),
          E = RV.end(); I != E; ++I)
