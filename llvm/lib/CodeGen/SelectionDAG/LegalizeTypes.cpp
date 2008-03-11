@@ -464,19 +464,42 @@ SDOperand DAGTypeLegalizer::HandleMemIntrinsic(SDNode *N) {
   return DAG.UpdateNodeOperands(SDOperand(N, 0), Ops, 6);
 }
 
-/// SplitOp - Return the lower and upper halves of Op's bits in a value type
-/// half the size of Op's.
-void DAGTypeLegalizer::SplitOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi) {
-  unsigned NVTBits = MVT::getSizeInBits(Op.getValueType())/2;
-  assert(MVT::getSizeInBits(Op.getValueType()) == 2*NVTBits &&
-         "Cannot split odd sized integer type");
-  MVT::ValueType NVT = MVT::getIntegerType(NVTBits);
-  Lo = DAG.getNode(ISD::TRUNCATE, NVT, Op);
-  Hi = DAG.getNode(ISD::SRL, Op.getValueType(), Op,
-                   DAG.getConstant(NVTBits, TLI.getShiftAmountTy()));
-  Hi = DAG.getNode(ISD::TRUNCATE, NVT, Hi);
+/// JoinIntegers - Build an integer with low bits Lo and high bits Hi.
+SDOperand DAGTypeLegalizer::JoinIntegers(SDOperand Lo, SDOperand Hi) {
+  MVT::ValueType LVT = Lo.getValueType();
+  MVT::ValueType HVT = Hi.getValueType();
+  MVT::ValueType NVT = MVT::getIntegerType(MVT::getSizeInBits(LVT) +
+                                           MVT::getSizeInBits(HVT));
+
+  Lo = DAG.getNode(ISD::ZERO_EXTEND, NVT, Lo);
+  Hi = DAG.getNode(ISD::ANY_EXTEND, NVT, Hi);
+  Hi = DAG.getNode(ISD::SHL, NVT, Hi, DAG.getConstant(MVT::getSizeInBits(LVT),
+                                                      TLI.getShiftAmountTy()));
+  return DAG.getNode(ISD::OR, NVT, Lo, Hi);
 }
 
+/// SplitInteger - Return the lower LoVT bits of Op in Lo and the upper HiVT
+/// bits in Hi.
+void DAGTypeLegalizer::SplitInteger(SDOperand Op,
+                                    MVT::ValueType LoVT, MVT::ValueType HiVT,
+                                    SDOperand &Lo, SDOperand &Hi) {
+  assert(MVT::getSizeInBits(LoVT) + MVT::getSizeInBits(HiVT) ==
+         MVT::getSizeInBits(Op.getValueType()) && "Invalid integer splitting!");
+  Lo = DAG.getNode(ISD::TRUNCATE, LoVT, Op);
+  Hi = DAG.getNode(ISD::SRL, Op.getValueType(), Op,
+                   DAG.getConstant(MVT::getSizeInBits(LoVT),
+                                   TLI.getShiftAmountTy()));
+  Hi = DAG.getNode(ISD::TRUNCATE, HiVT, Hi);
+}
+
+/// SplitInteger - Return the lower and upper halves of Op's bits in a value type
+/// half the size of Op's.
+void DAGTypeLegalizer::SplitInteger(SDOperand Op,
+                                    SDOperand &Lo, SDOperand &Hi) {
+  MVT::ValueType HalfVT =
+    MVT::getIntegerType(MVT::getSizeInBits(Op.getValueType())/2);
+  SplitInteger(Op, HalfVT, HalfVT, Lo, Hi);
+}
 
 //===----------------------------------------------------------------------===//
 //  Entry Point

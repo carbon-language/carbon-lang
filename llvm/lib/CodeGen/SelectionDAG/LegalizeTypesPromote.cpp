@@ -209,15 +209,10 @@ SDOperand DAGTypeLegalizer::PromoteResult_LOAD(LoadSDNode *N) {
 
 SDOperand DAGTypeLegalizer::PromoteResult_BUILD_PAIR(SDNode *N) {
   // The pair element type may be legal, or may not promote to the same type as
-  // the result, for example i16 = BUILD_PAIR (i8, i8) when i8 is legal but i16
-  // is not.  Handle all cases.
-  MVT::ValueType LVT = N->getOperand(0).getValueType();
-  MVT::ValueType NVT = TLI.getTypeToTransformTo(N->getValueType(0));
-  SDOperand Lo = DAG.getNode(ISD::ZERO_EXTEND, NVT, N->getOperand(0));
-  SDOperand Hi = DAG.getNode(ISD::ANY_EXTEND, NVT, N->getOperand(1));
-  Hi = DAG.getNode(ISD::SHL, NVT, Hi, DAG.getConstant(MVT::getSizeInBits(LVT),
-                                                      TLI.getShiftAmountTy()));
-  return DAG.getNode(ISD::OR, NVT, Lo, Hi);
+  // the result, for example i14 = BUILD_PAIR (i7, i7).  Handle all cases.
+  return DAG.getNode(ISD::ANY_EXTEND,
+                     TLI.getTypeToTransformTo(N->getValueType(0)),
+                     JoinIntegers(N->getOperand(0), N->getOperand(1)));
 }
 
 SDOperand DAGTypeLegalizer::PromoteResult_BIT_CONVERT(SDNode *N) {
@@ -262,15 +257,10 @@ SDOperand DAGTypeLegalizer::PromoteResult_BIT_CONVERT(SDNode *N) {
     if (TLI.isBigEndian())
       std::swap(Lo, Hi);
 
-    MVT::ValueType TargetTy = MVT::getIntegerType(MVT::getSizeInBits(OutVT));
-    Hi = DAG.getNode(ISD::ANY_EXTEND, TargetTy, Hi);
-    Hi = DAG.getNode(ISD::SHL, TargetTy, Hi,
-                     DAG.getConstant(MVT::getSizeInBits(Lo.getValueType()),
-                                     TLI.getShiftAmountTy()));
-    Lo = DAG.getNode(ISD::ZERO_EXTEND, TargetTy, Lo);
-
-    return DAG.getNode(ISD::BIT_CONVERT, OutVT,
-                       DAG.getNode(ISD::OR, TargetTy, Lo, Hi));
+    InOp = DAG.getNode(ISD::ANY_EXTEND,
+                       MVT::getIntegerType(MVT::getSizeInBits(OutVT)),
+                       JoinIntegers(Lo, Hi));
+    return DAG.getNode(ISD::BIT_CONVERT, OutVT, InOp);
   }
 
   // Otherwise, lower the bit-convert to a store/load from the stack, then
@@ -693,7 +683,7 @@ SDOperand DAGTypeLegalizer::PromoteOperand_BUILD_VECTOR(SDNode *N) {
     SDOperand Hi = N->getOperand(i+1);
     if (TLI.isBigEndian())
       std::swap(Lo, Hi);
-    NewElts.push_back(DAG.getNode(ISD::BUILD_PAIR, NewVT, Lo, Hi));
+    NewElts.push_back(JoinIntegers(Lo, Hi));
   }
 
   SDOperand NewVec = DAG.getNode(ISD::BUILD_VECTOR,

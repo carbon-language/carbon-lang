@@ -154,7 +154,10 @@ private:
   // Common routines.
   SDOperand CreateStackStoreLoad(SDOperand Op, MVT::ValueType DestVT);
   SDOperand HandleMemIntrinsic(SDNode *N);
-  void SplitOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi);
+  SDOperand JoinIntegers(SDOperand Lo, SDOperand Hi);
+  void SplitInteger(SDOperand Op, SDOperand &Lo, SDOperand &Hi);
+  void SplitInteger(SDOperand Op, MVT::ValueType LoVT, MVT::ValueType HiVT,
+                    SDOperand &Lo, SDOperand &Hi);
 
   //===--------------------------------------------------------------------===//
   // Promotion Support: LegalizeTypesPromote.cpp

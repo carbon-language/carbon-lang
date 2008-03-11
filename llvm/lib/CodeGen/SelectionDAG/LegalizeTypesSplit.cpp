@@ -45,7 +45,7 @@ static void GetSplitDestVTs(MVT::ValueType InVT,
 /// legalization, we just know that (at least) one result needs vector
 /// splitting.
 void DAGTypeLegalizer::SplitResult(SDNode *N, unsigned ResNo) {
-  DEBUG(cerr << "Expand node result: "; N->dump(&DAG); cerr << "\n");
+  DEBUG(cerr << "Split node result: "; N->dump(&DAG); cerr << "\n");
   SDOperand Lo, Hi;
   
 #if 0
@@ -257,26 +257,20 @@ void DAGTypeLegalizer::SplitRes_BIT_CONVERT(SDNode *N,
 
   SDOperand InOp = N->getOperand(0);
   MVT::ValueType InVT = InOp.getValueType();
-  MVT::ValueType NewInVT = TLI.getTypeToTransformTo(InVT);
 
+  // Handle some special cases efficiently.
   switch (getTypeAction(InVT)) {
   default:
     assert(false && "Unknown type action!");
   case Legal:
-    break;
   case Promote:
-    break;
   case Scalarize:
-    // While it is tempting to extract the scalarized operand, check whether it
-    // needs expansion, and if so process it in the Expand case below, there is
-    // no guarantee that the scalarized operand has been processed yet.  If it
-    // hasn't then the call to GetExpandedOp will abort.  So just give up.
     break;
   case Expand:
     // A scalar to vector conversion, where the scalar needs expansion.
-    // Check that the vector is being split in two.
-    if (MVT::getSizeInBits(NewInVT) == MVT::getSizeInBits(LoVT)) {
-      // Convert each expanded piece of the scalar now.
+    // If the vector is being split in two then we can just convert the
+    // expanded pieces.
+    if (LoVT == HiVT) {
       GetExpandedOp(InOp, Lo, Hi);
       if (TLI.isBigEndian())
         std::swap(Lo, Hi);
@@ -294,9 +288,21 @@ void DAGTypeLegalizer::SplitRes_BIT_CONVERT(SDNode *N,
     return;
   }
 
-  // Lower the bit-convert to a store/load from the stack, then split the load.
-  SDOperand Op = CreateStackStoreLoad(InOp, N->getValueType(0));
-  SplitRes_LOAD(cast<LoadSDNode>(Op.Val), Lo, Hi);
+  // In the general case, convert the input to an integer and split it by hand.
+  InVT = MVT::getIntegerType(MVT::getSizeInBits(InVT));
+  InOp = DAG.getNode(ISD::BIT_CONVERT, InVT, InOp);
+
+  MVT::ValueType LoIntVT = MVT::getIntegerType(MVT::getSizeInBits(LoVT));
+  MVT::ValueType HiIntVT = MVT::getIntegerType(MVT::getSizeInBits(HiVT));
+  if (TLI.isBigEndian())
+    std::swap(LoIntVT, HiIntVT);
+
+  SplitInteger(InOp, LoIntVT, HiIntVT, Lo, Hi);
+
+  if (TLI.isBigEndian())
+    std::swap(Lo, Hi);
+  Lo = DAG.getNode(ISD::BIT_CONVERT, LoVT, Lo);
+  Hi = DAG.getNode(ISD::BIT_CONVERT, HiVT, Hi);
 }
 
 void DAGTypeLegalizer::SplitRes_BinOp(SDNode *N, SDOperand &Lo, SDOperand &Hi) {
@@ -448,11 +454,8 @@ SDOperand DAGTypeLegalizer::SplitOp_BIT_CONVERT(SDNode *N) {
   if (TLI.isBigEndian())
     std::swap(Lo, Hi);
 
-  assert(LoBits == HiBits && "Do not know how to assemble odd sized vectors!");
-
   return DAG.getNode(ISD::BIT_CONVERT, N->getValueType(0),
-                     DAG.getNode(ISD::BUILD_PAIR,
-                                 MVT::getIntegerType(LoBits+HiBits), Lo, Hi));
+                     JoinIntegers(Lo, Hi));
 }
 
 SDOperand DAGTypeLegalizer::SplitOp_EXTRACT_VECTOR_ELT(SDNode *N) {

@@ -157,7 +157,7 @@ void DAGTypeLegalizer::ExpandResult_ANY_EXTEND(SDNode *N,
     assert(Res.getValueType() == N->getValueType(0) &&
            "Operand over promoted?");
     // Split the promoted operand.  This will simplify when it is expanded.
-    SplitOp(Res, Lo, Hi);
+    SplitInteger(Res, Lo, Hi);
   }
 }
 
@@ -178,7 +178,7 @@ void DAGTypeLegalizer::ExpandResult_ZERO_EXTEND(SDNode *N,
     assert(Res.getValueType() == N->getValueType(0) &&
            "Operand over promoted?");
     // Split the promoted operand.  This will simplify when it is expanded.
-    SplitOp(Res, Lo, Hi);
+    SplitInteger(Res, Lo, Hi);
     unsigned ExcessBits =
       MVT::getSizeInBits(Op.getValueType()) - MVT::getSizeInBits(NVT);
     Hi = DAG.getZeroExtendInReg(Hi, MVT::getIntegerType(ExcessBits));
@@ -205,7 +205,7 @@ void DAGTypeLegalizer::ExpandResult_SIGN_EXTEND(SDNode *N,
     assert(Res.getValueType() == N->getValueType(0) &&
            "Operand over promoted?");
     // Split the promoted operand.  This will simplify when it is expanded.
-    SplitOp(Res, Lo, Hi);
+    SplitInteger(Res, Lo, Hi);
     unsigned ExcessBits =
       MVT::getSizeInBits(Op.getValueType()) - MVT::getSizeInBits(NVT);
     Hi = DAG.getNode(ISD::SIGN_EXTEND_INREG, Hi.getValueType(), Hi,
@@ -243,10 +243,47 @@ void DAGTypeLegalizer::ExpandResult_TRUNCATE(SDNode *N,
 
 void DAGTypeLegalizer::ExpandResult_BIT_CONVERT(SDNode *N,
                                                 SDOperand &Lo, SDOperand &Hi) {
+  MVT::ValueType NVT = TLI.getTypeToTransformTo(N->getValueType(0));
+  SDOperand InOp = N->getOperand(0);
+  MVT::ValueType InVT = InOp.getValueType();
+
+  // Handle some special cases efficiently.
+  switch (getTypeAction(InVT)) {
+    default:
+      assert(false && "Unknown type action!");
+    case Legal:
+    case Promote:
+      break;
+    case Expand:
+      // Convert the expanded pieces of the input.
+      GetExpandedOp(InOp, Lo, Hi);
+      Lo = DAG.getNode(ISD::BIT_CONVERT, NVT, Lo);
+      Hi = DAG.getNode(ISD::BIT_CONVERT, NVT, Hi);
+      return;
+    case Split:
+      // Convert the split parts of the input if it was split in two.
+      GetSplitOp(InOp, Lo, Hi);
+      if (Lo.getValueType() == Hi.getValueType()) {
+        if (TLI.isBigEndian())
+          std::swap(Lo, Hi);
+        Lo = DAG.getNode(ISD::BIT_CONVERT, NVT, Lo);
+        Hi = DAG.getNode(ISD::BIT_CONVERT, NVT, Hi);
+        return;
+      }
+      break;
+    case Scalarize:
+      // Convert the element instead.
+      InOp = DAG.getNode(ISD::BIT_CONVERT,
+                         MVT::getIntegerType(MVT::getSizeInBits(InVT)),
+                         GetScalarizedOp(InOp));
+      SplitInteger(InOp, Lo, Hi);
+      Lo = DAG.getNode(ISD::BIT_CONVERT, NVT, Lo);
+      Hi = DAG.getNode(ISD::BIT_CONVERT, NVT, Hi);
+      return;
+  }
+
   // Lower the bit-convert to a store/load from the stack, then expand the load.
-  // TODO: If the operand also needs expansion then this could be turned into
-  // conversion of the expanded pieces.  But there needs to be a testcase first!
-  SDOperand Op = CreateStackStoreLoad(N->getOperand(0), N->getValueType(0));
+  SDOperand Op = CreateStackStoreLoad(InOp, N->getValueType(0));
   ExpandResult_LOAD(cast<LoadSDNode>(Op.Val), Lo, Hi);
 }
 
@@ -694,8 +731,9 @@ void DAGTypeLegalizer::ExpandResult_EXTRACT_VECTOR_ELT(SDNode *N,
   SDOperand Idx = N->getOperand(1);
 
   // Make sure the type of Idx is big enough to hold the new values.
-  if (MVT::getSizeInBits(Idx.getValueType()) < 32)
-    Idx = DAG.getNode(ISD::ZERO_EXTEND, MVT::i32, Idx);
+  if (MVT::getSizeInBits(Idx.getValueType()) <
+      MVT::getSizeInBits(TLI.getPointerTy()))
+    Idx = DAG.getNode(ISD::ZERO_EXTEND, TLI.getPointerTy(), Idx);
 
   Idx = DAG.getNode(ISD::ADD, Idx.getValueType(), Idx, Idx);
   Lo = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, NewVT, NewVec, Idx);
