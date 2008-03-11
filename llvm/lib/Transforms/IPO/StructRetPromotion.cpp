@@ -213,7 +213,7 @@ Function *SRETPromotion::cloneFunctionBody(Function *F,
   unsigned ParamIndex = 1; // 0th parameter attribute is reserved for return type.
   while (I != E) {
     Params.push_back(I->getType());
-    ParameterAttributes Attrs;
+    ParameterAttributes Attrs = ParamAttr::None;
     if (PAL) {
       Attrs = PAL->getParamAttrs(ParamIndex);
       if (ParamIndex == 1) // Skip sret attribute
@@ -272,7 +272,7 @@ void SRETPromotion::updateCallSites(Function *F, Function *NF) {
     unsigned ParamIndex = 1; // 0th parameter attribute is reserved for return type.
     while (AI != AE) {
       Args.push_back(*AI); 
-      ParameterAttributes Attrs;
+      ParameterAttributes Attrs = ParamAttr::None;
       if (PAL) {
         Attrs = PAL->getParamAttrs(ParamIndex);
         if (ParamIndex == 1) // Skip sret attribute
