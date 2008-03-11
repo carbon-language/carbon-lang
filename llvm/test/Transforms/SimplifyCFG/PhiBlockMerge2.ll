@@ -5,12 +5,18 @@
 ; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | not grep N:
 ;
 
+declare i1 @foo()
+
 define i32 @test(i1 %a, i1 %b) {
-	br i1 %b, label %N, label %Q
+        %c = call i1 @foo()
+	br i1 %c, label %N, label %P
+P:
+        %d = call i1 @foo()
+	br i1 %d, label %N, label %Q
 Q:
 	br label %N
 N:
-	%W = phi i32 [0, %0], [1, %Q]
+	%W = phi i32 [0, %0], [1, %Q], [2, %P]
 	; This block should be foldable into M
 	br label %M
 
