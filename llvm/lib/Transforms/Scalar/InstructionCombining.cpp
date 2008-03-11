@@ -8428,6 +8428,9 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   const FunctionType *FT = Callee->getFunctionType();
   const Type *OldRetTy = Caller->getType();
 
+  if (isa<StructType>(FT->getReturnType()))
+    return false; // TODO: Handle multiple return values.
+
   // Check to see if we are changing the return type...
   if (OldRetTy != FT->getReturnType()) {
     if (Callee->isDeclaration() && !Caller->use_empty() && 
