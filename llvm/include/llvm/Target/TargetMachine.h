@@ -30,7 +30,7 @@ class TargetFrameInfo;
 class MachineCodeEmitter;
 class TargetRegisterInfo;
 class Module;
-class FunctionPassManager;
+class PassManagerBase;
 class PassManager;
 class Pass;
 class TargetMachOWriterInfo;
@@ -195,7 +195,7 @@ public:
   /// This method should return FileModel::Error if emission of this file type
   /// is not supported.
   ///
-  virtual FileModel::Model addPassesToEmitFile(FunctionPassManager &PM,
+  virtual FileModel::Model addPassesToEmitFile(PassManagerBase &PM,
                                                std::ostream &Out,
                                                CodeGenFileType FileType,
                                                bool Fast) {
@@ -206,7 +206,7 @@ public:
   /// to be split up (e.g., to add an object writer pass), this method can be
   /// used to finish up adding passes to emit the file, if necessary.
   ///
-  virtual bool addPassesToEmitFileFinish(FunctionPassManager &PM,
+  virtual bool addPassesToEmitFileFinish(PassManagerBase &PM,
                                          MachineCodeEmitter *MCE, bool Fast) {
     return true;
   }
@@ -217,7 +217,7 @@ public:
   /// of functions.  This method returns true if machine code emission is
   /// not supported.
   ///
-  virtual bool addPassesToEmitMachineCode(FunctionPassManager &PM,
+  virtual bool addPassesToEmitMachineCode(PassManagerBase &PM,
                                           MachineCodeEmitter &MCE, bool Fast) {
     return true;
   }
@@ -251,7 +251,7 @@ public:
   /// LLVM retargetable code generator, invoking the methods below to get
   /// target-specific passes in standard locations.
   ///
-  virtual FileModel::Model addPassesToEmitFile(FunctionPassManager &PM,
+  virtual FileModel::Model addPassesToEmitFile(PassManagerBase &PM,
                                                std::ostream &Out,
                                                CodeGenFileType FileType,
                                                bool Fast);
@@ -260,7 +260,7 @@ public:
   /// to be split up (e.g., to add an object writer pass), this method can be
   /// used to finish up adding passes to emit the file, if necessary.
   ///
-  virtual bool addPassesToEmitFileFinish(FunctionPassManager &PM,
+  virtual bool addPassesToEmitFileFinish(PassManagerBase &PM,
                                          MachineCodeEmitter *MCE, bool Fast);
  
   /// addPassesToEmitMachineCode - Add passes to the specified pass manager to
@@ -269,7 +269,7 @@ public:
   /// of functions.  This method returns true if machine code emission is
   /// not supported.
   ///
-  virtual bool addPassesToEmitMachineCode(FunctionPassManager &PM,
+  virtual bool addPassesToEmitMachineCode(PassManagerBase &PM,
                                           MachineCodeEmitter &MCE, bool Fast);
   
   /// Target-Independent Code Generator Pass Configuration Options.
@@ -277,7 +277,7 @@ public:
   /// addInstSelector - This method should add any "last minute" LLVM->LLVM
   /// passes, then install an instruction selector pass, which converts from
   /// LLVM code to machine instructions.
-  virtual bool addInstSelector(FunctionPassManager &PM, bool Fast) {
+  virtual bool addInstSelector(PassManagerBase &PM, bool Fast) {
     return true;
   }
   
@@ -285,14 +285,14 @@ public:
   /// want to run passes after register allocation but before prolog-epilog
   /// insertion.  This should return true if -print-machineinstrs should print
   /// after these passes.
-  virtual bool addPostRegAlloc(FunctionPassManager &PM, bool Fast) {
+  virtual bool addPostRegAlloc(PassManagerBase &PM, bool Fast) {
     return false;
   }
   
   /// addPreEmitPass - This pass may be implemented by targets that want to run
   /// passes immediately before machine code is emitted.  This should return
   /// true if -print-machineinstrs should print out the code after the passes.
-  virtual bool addPreEmitPass(FunctionPassManager &PM, bool Fast) {
+  virtual bool addPreEmitPass(PassManagerBase &PM, bool Fast) {
     return false;
   }
   
@@ -300,7 +300,7 @@ public:
   /// addAssemblyEmitter - This pass should be overridden by the target to add
   /// the asmprinter, if asm emission is supported.  If this is not supported,
   /// 'true' should be returned.
-  virtual bool addAssemblyEmitter(FunctionPassManager &PM, bool Fast, 
+  virtual bool addAssemblyEmitter(PassManagerBase &PM, bool Fast, 
                                   std::ostream &Out) {
     return true;
   }
@@ -308,7 +308,7 @@ public:
   /// addCodeEmitter - This pass should be overridden by the target to add a
   /// code emitter, if supported.  If this is not supported, 'true' should be
   /// returned. If DumpAsm is true, the generated assembly is printed to cerr.
-  virtual bool addCodeEmitter(FunctionPassManager &PM, bool Fast, bool DumpAsm,
+  virtual bool addCodeEmitter(PassManagerBase &PM, bool Fast, bool DumpAsm,
                               MachineCodeEmitter &MCE) {
     return true;
   }
@@ -317,7 +317,7 @@ public:
   /// a code emitter (without setting flags), if supported.  If this is not
   /// supported, 'true' should be returned.  If DumpAsm is true, the generated
   /// assembly is printed to cerr.
-  virtual bool addSimpleCodeEmitter(FunctionPassManager &PM, bool Fast, 
+  virtual bool addSimpleCodeEmitter(PassManagerBase &PM, bool Fast, 
                                     bool DumpAsm, MachineCodeEmitter &MCE) {
     return true;
   }

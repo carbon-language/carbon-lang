@@ -70,29 +70,29 @@ AlphaTargetMachine::AlphaTargetMachine(const Module &M, const std::string &FS)
 // Pass Pipeline Configuration
 //===----------------------------------------------------------------------===//
 
-bool AlphaTargetMachine::addInstSelector(FunctionPassManager &PM, bool Fast) {
+bool AlphaTargetMachine::addInstSelector(PassManagerBase &PM, bool Fast) {
   PM.add(createAlphaISelDag(*this));
   return false;
 }
-bool AlphaTargetMachine::addPreEmitPass(FunctionPassManager &PM, bool Fast) {
+bool AlphaTargetMachine::addPreEmitPass(PassManagerBase &PM, bool Fast) {
   // Must run branch selection immediately preceding the asm printer
   PM.add(createAlphaBranchSelectionPass());
   return false;
 }
-bool AlphaTargetMachine::addAssemblyEmitter(FunctionPassManager &PM, bool Fast, 
+bool AlphaTargetMachine::addAssemblyEmitter(PassManagerBase &PM, bool Fast, 
                                             std::ostream &Out) {
   PM.add(createAlphaLLRPPass(*this));
   PM.add(createAlphaCodePrinterPass(Out, *this));
   return false;
 }
-bool AlphaTargetMachine::addCodeEmitter(FunctionPassManager &PM, bool Fast,
+bool AlphaTargetMachine::addCodeEmitter(PassManagerBase &PM, bool Fast,
                                         bool DumpAsm, MachineCodeEmitter &MCE) {
   PM.add(createAlphaCodeEmitterPass(*this, MCE));
   if (DumpAsm)
     PM.add(createAlphaCodePrinterPass(*cerr.stream(), *this));
   return false;
 }
-bool AlphaTargetMachine::addSimpleCodeEmitter(FunctionPassManager &PM,
+bool AlphaTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
                                               bool Fast, bool DumpAsm,
                                               MachineCodeEmitter &MCE) {
   return addCodeEmitter(PM, Fast, DumpAsm, MCE);

@@ -118,26 +118,26 @@ PPC64TargetMachine::PPC64TargetMachine(const Module &M, const std::string &FS)
 // Pass Pipeline Configuration
 //===----------------------------------------------------------------------===//
 
-bool PPCTargetMachine::addInstSelector(FunctionPassManager &PM, bool Fast) {
+bool PPCTargetMachine::addInstSelector(PassManagerBase &PM, bool Fast) {
   // Install an instruction selector.
   PM.add(createPPCISelDag(*this));
   return false;
 }
 
-bool PPCTargetMachine::addPreEmitPass(FunctionPassManager &PM, bool Fast) {
+bool PPCTargetMachine::addPreEmitPass(PassManagerBase &PM, bool Fast) {
   
   // Must run branch selection immediately preceding the asm printer.
   PM.add(createPPCBranchSelectionPass());
   return false;
 }
 
-bool PPCTargetMachine::addAssemblyEmitter(FunctionPassManager &PM, bool Fast, 
+bool PPCTargetMachine::addAssemblyEmitter(PassManagerBase &PM, bool Fast, 
                                           std::ostream &Out) {
   PM.add(createPPCAsmPrinterPass(Out, *this));
   return false;
 }
 
-bool PPCTargetMachine::addCodeEmitter(FunctionPassManager &PM, bool Fast,
+bool PPCTargetMachine::addCodeEmitter(PassManagerBase &PM, bool Fast,
                                       bool DumpAsm, MachineCodeEmitter &MCE) {
   // The JIT should use the static relocation model in ppc32 mode, PIC in ppc64.
   // FIXME: This should be moved to TargetJITInfo!!
@@ -161,7 +161,7 @@ bool PPCTargetMachine::addCodeEmitter(FunctionPassManager &PM, bool Fast,
   return false;
 }
 
-bool PPCTargetMachine::addSimpleCodeEmitter(FunctionPassManager &PM, bool Fast,
+bool PPCTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM, bool Fast,
                                             bool DumpAsm, MachineCodeEmitter &MCE) {
   // Machine code emitter pass for PowerPC.
   PM.add(createPPCCodeEmitterPass(*this, MCE));

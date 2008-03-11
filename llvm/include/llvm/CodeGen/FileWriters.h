@@ -18,13 +18,13 @@
 
 namespace llvm {
 
-  class FunctionPassManager;
+  class PassManagerBase;
   class MachineCodeEmitter;
   class TargetMachine;
 
-  MachineCodeEmitter *AddELFWriter(FunctionPassManager &FPM, std::ostream &O,
+  MachineCodeEmitter *AddELFWriter(PassManagerBase &FPM, std::ostream &O,
                                    TargetMachine &TM);
-  MachineCodeEmitter *AddMachOWriter(FunctionPassManager &FPM, std::ostream &O,
+  MachineCodeEmitter *AddMachOWriter(PassManagerBase &FPM, std::ostream &O,
                                      TargetMachine &TM);
 
 } // end llvm namespace

@@ -116,12 +116,12 @@ const TargetAsmInfo *ARMTargetMachine::createTargetAsmInfo() const {
 
 
 // Pass Pipeline Configuration
-bool ARMTargetMachine::addInstSelector(FunctionPassManager &PM, bool Fast) {
+bool ARMTargetMachine::addInstSelector(PassManagerBase &PM, bool Fast) {
   PM.add(createARMISelDag(*this));
   return false;
 }
 
-bool ARMTargetMachine::addPreEmitPass(FunctionPassManager &PM, bool Fast) {
+bool ARMTargetMachine::addPreEmitPass(PassManagerBase &PM, bool Fast) {
   // FIXME: temporarily disabling load / store optimization pass for Thumb mode.
   if (!Fast && !DisableLdStOpti && !Subtarget.isThumb())
     PM.add(createARMLoadStoreOptimizationPass());
@@ -133,7 +133,7 @@ bool ARMTargetMachine::addPreEmitPass(FunctionPassManager &PM, bool Fast) {
   return true;
 }
 
-bool ARMTargetMachine::addAssemblyEmitter(FunctionPassManager &PM, bool Fast, 
+bool ARMTargetMachine::addAssemblyEmitter(PassManagerBase &PM, bool Fast, 
                                           std::ostream &Out) {
   // Output assembly language.
   PM.add(createARMCodePrinterPass(Out, *this));
@@ -141,7 +141,7 @@ bool ARMTargetMachine::addAssemblyEmitter(FunctionPassManager &PM, bool Fast,
 }
 
 
-bool ARMTargetMachine::addCodeEmitter(FunctionPassManager &PM, bool Fast,
+bool ARMTargetMachine::addCodeEmitter(PassManagerBase &PM, bool Fast,
                                       bool DumpAsm, MachineCodeEmitter &MCE) {
   // FIXME: Move this to TargetJITInfo!
   setRelocationModel(Reloc::Static);
@@ -153,7 +153,7 @@ bool ARMTargetMachine::addCodeEmitter(FunctionPassManager &PM, bool Fast,
   return false;
 }
 
-bool ARMTargetMachine::addSimpleCodeEmitter(FunctionPassManager &PM, bool Fast,
+bool ARMTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM, bool Fast,
                                         bool DumpAsm, MachineCodeEmitter &MCE) {
   // Machine code emitter pass for ARM.
   PM.add(createARMCodeEmitterPass(*this, MCE));

@@ -61,13 +61,13 @@ public:
   static unsigned getJITMatchQuality();
   
   // Set up the pass pipeline.
-  virtual bool addInstSelector(FunctionPassManager &PM, bool Fast);  
-  virtual bool addPostRegAlloc(FunctionPassManager &PM, bool Fast);
-  virtual bool addAssemblyEmitter(FunctionPassManager &PM, bool Fast, 
+  virtual bool addInstSelector(PassManagerBase &PM, bool Fast);  
+  virtual bool addPostRegAlloc(PassManagerBase &PM, bool Fast);
+  virtual bool addAssemblyEmitter(PassManagerBase &PM, bool Fast, 
                                   std::ostream &Out);
-  virtual bool addCodeEmitter(FunctionPassManager &PM, bool Fast,
+  virtual bool addCodeEmitter(PassManagerBase &PM, bool Fast,
                               bool DumpAsm, MachineCodeEmitter &MCE);
-  virtual bool addSimpleCodeEmitter(FunctionPassManager &PM, bool Fast,
+  virtual bool addSimpleCodeEmitter(PassManagerBase &PM, bool Fast,
                                     bool DumpAsm, MachineCodeEmitter &MCE);
 };
 

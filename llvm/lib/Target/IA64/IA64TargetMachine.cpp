@@ -73,17 +73,17 @@ IA64TargetMachine::IA64TargetMachine(const Module &M, const std::string &FS)
 // Pass Pipeline Configuration
 //===----------------------------------------------------------------------===//
 
-bool IA64TargetMachine::addInstSelector(FunctionPassManager &PM, bool Fast) {
+bool IA64TargetMachine::addInstSelector(PassManagerBase &PM, bool Fast) {
   PM.add(createIA64DAGToDAGInstructionSelector(*this));
   return false;
 }
 
-bool IA64TargetMachine::addPreEmitPass(FunctionPassManager &PM, bool Fast) {
+bool IA64TargetMachine::addPreEmitPass(PassManagerBase &PM, bool Fast) {
   // Make sure everything is bundled happily
   PM.add(createIA64BundlingPass(*this));
   return true;
 }
-bool IA64TargetMachine::addAssemblyEmitter(FunctionPassManager &PM, bool Fast, 
+bool IA64TargetMachine::addAssemblyEmitter(PassManagerBase &PM, bool Fast, 
                                            std::ostream &Out) {
   PM.add(createIA64CodePrinterPass(Out, *this));
   return false;

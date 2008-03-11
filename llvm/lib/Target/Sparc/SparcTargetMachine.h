@@ -46,9 +46,9 @@ public:
   static unsigned getModuleMatchQuality(const Module &M);
 
   // Pass Pipeline Configuration
-  virtual bool addInstSelector(FunctionPassManager &PM, bool Fast);
-  virtual bool addPreEmitPass(FunctionPassManager &PM, bool Fast);
-  virtual bool addAssemblyEmitter(FunctionPassManager &PM, bool Fast, 
+  virtual bool addInstSelector(PassManagerBase &PM, bool Fast);
+  virtual bool addPreEmitPass(PassManagerBase &PM, bool Fast);
+  virtual bool addAssemblyEmitter(PassManagerBase &PM, bool Fast, 
                                   std::ostream &Out);
 };
 

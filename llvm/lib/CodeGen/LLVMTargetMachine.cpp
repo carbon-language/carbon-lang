@@ -51,7 +51,7 @@ DisablePostRAScheduler("disable-post-RA-scheduler",
                        cl::init(true));
 
 FileModel::Model
-LLVMTargetMachine::addPassesToEmitFile(FunctionPassManager &PM,
+LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
                                        std::ostream &Out,
                                        CodeGenFileType FileType,
                                        bool Fast) {
@@ -158,7 +158,7 @@ LLVMTargetMachine::addPassesToEmitFile(FunctionPassManager &PM,
 /// addPassesToEmitFileFinish - If the passes to emit the specified file had to
 /// be split up (e.g., to add an object writer pass), this method can be used to
 /// finish up adding passes to emit the file, if necessary.
-bool LLVMTargetMachine::addPassesToEmitFileFinish(FunctionPassManager &PM,
+bool LLVMTargetMachine::addPassesToEmitFileFinish(PassManagerBase &PM,
                                                   MachineCodeEmitter *MCE,
                                                   bool Fast) {
   if (MCE)
@@ -178,7 +178,7 @@ bool LLVMTargetMachine::addPassesToEmitFileFinish(FunctionPassManager &PM,
 /// of functions.  This method should returns true if machine code emission is
 /// not supported.
 ///
-bool LLVMTargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
+bool LLVMTargetMachine::addPassesToEmitMachineCode(PassManagerBase &PM,
                                                    MachineCodeEmitter &MCE,
                                                    bool Fast) {
   // Standard LLVM-Level Passes.

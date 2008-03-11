@@ -20,7 +20,6 @@
 namespace llvm {
 
 class X86TargetMachine;
-class FunctionPassManager;
 class FunctionPass;
 class MachineCodeEmitter;
 

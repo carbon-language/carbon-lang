@@ -50,11 +50,11 @@ using namespace llvm;
 char ELFWriter::ID = 0;
 /// AddELFWriter - Concrete function to add the ELF writer to the function pass
 /// manager.
-MachineCodeEmitter *llvm::AddELFWriter(FunctionPassManager &FPM,
+MachineCodeEmitter *llvm::AddELFWriter(PassManagerBase &PM,
                                        std::ostream &O,
                                        TargetMachine &TM) {
   ELFWriter *EW = new ELFWriter(O, TM);
-  FPM.add(EW);
+  PM.add(EW);
   return &EW->getMachineCodeEmitter();
 }
 

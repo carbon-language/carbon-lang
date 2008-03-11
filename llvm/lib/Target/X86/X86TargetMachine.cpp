@@ -153,24 +153,24 @@ X86TargetMachine::X86TargetMachine(const Module &M, const std::string &FS,
 // Pass Pipeline Configuration
 //===----------------------------------------------------------------------===//
 
-bool X86TargetMachine::addInstSelector(FunctionPassManager &PM, bool Fast) {
+bool X86TargetMachine::addInstSelector(PassManagerBase &PM, bool Fast) {
   // Install an instruction selector.
   PM.add(createX86ISelDag(*this, Fast));
   return false;
 }
 
-bool X86TargetMachine::addPostRegAlloc(FunctionPassManager &PM, bool Fast) {
+bool X86TargetMachine::addPostRegAlloc(PassManagerBase &PM, bool Fast) {
   PM.add(createX86FloatingPointStackifierPass());
   return true;  // -print-machineinstr should print after this.
 }
 
-bool X86TargetMachine::addAssemblyEmitter(FunctionPassManager &PM, bool Fast, 
+bool X86TargetMachine::addAssemblyEmitter(PassManagerBase &PM, bool Fast, 
                                           std::ostream &Out) {
   PM.add(createX86CodePrinterPass(Out, *this));
   return false;
 }
 
-bool X86TargetMachine::addCodeEmitter(FunctionPassManager &PM, bool Fast,
+bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM, bool Fast,
                                       bool DumpAsm, MachineCodeEmitter &MCE) {
   // FIXME: Move this to TargetJITInfo!
   if (DefRelocModel == Reloc::Default) {
@@ -189,7 +189,7 @@ bool X86TargetMachine::addCodeEmitter(FunctionPassManager &PM, bool Fast,
   return false;
 }
 
-bool X86TargetMachine::addSimpleCodeEmitter(FunctionPassManager &PM, bool Fast,
+bool X86TargetMachine::addSimpleCodeEmitter(PassManagerBase &PM, bool Fast,
                                         bool DumpAsm, MachineCodeEmitter &MCE) {
   PM.add(createX86CodeEmitterPass(*this, MCE));
   if (DumpAsm)

@@ -23,7 +23,6 @@
 
 namespace llvm {
   class PPCTargetMachine;
-  class FunctionPassManager;
   class FunctionPass;
   class MachineCodeEmitter;
   

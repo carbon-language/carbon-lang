@@ -19,7 +19,6 @@
 
 namespace llvm {
   class MipsTargetMachine;
-  class FunctionPassManager;
   class FunctionPass;
   class MachineCodeEmitter;
 

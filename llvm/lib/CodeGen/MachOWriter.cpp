@@ -43,11 +43,11 @@ using namespace llvm;
 
 /// AddMachOWriter - Concrete function to add the Mach-O writer to the function
 /// pass manager.
-MachineCodeEmitter *llvm::AddMachOWriter(FunctionPassManager &FPM,
+MachineCodeEmitter *llvm::AddMachOWriter(PassManagerBase &PM,
                                          std::ostream &O,
                                          TargetMachine &TM) {
   MachOWriter *MOW = new MachOWriter(O, TM);
-  FPM.add(MOW);
+  PM.add(MOW);
   return &MOW->getMachineCodeEmitter();
 }
 
