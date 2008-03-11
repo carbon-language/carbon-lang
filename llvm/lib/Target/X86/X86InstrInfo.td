@@ -161,6 +161,10 @@ def i32i8imm  : Operand<i32>;
 // Branch targets have OtherVT type.
 def brtarget : Operand<OtherVT>;
 
+// These should match the enum X86::ImplicitVal
+def x86_impl_val_undef : PatLeaf<(i32 0)>;
+def x86_impl_val_zero  : PatLeaf<(i32 1)>;
+
 //===----------------------------------------------------------------------===//
 // X86 Complex Pattern Definitions.
 //
