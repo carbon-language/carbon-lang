@@ -2222,21 +2222,23 @@ void RewriteTest::RewriteObjCMethodsMetaData(instmeth_iterator MethodBegin,
     Result += "\tvoid *_imp;\n";
     Result += "};\n";
     
-    /* struct _objc_method_list {
-     struct _objc_method_list *next_method;
-     int method_count;
-     struct _objc_method method_list[];
-     }
-     */
-    Result += "\nstruct _objc_method_list {\n";
-    Result += "\tstruct _objc_method_list *next_method;\n";
-    Result += "\tint method_count;\n";
-    Result += "\tstruct _objc_method method_list[];\n};\n";
     objc_impl_method = true;
   }
   
   // Build _objc_method_list for class's methods if needed
-  Result += "\nstatic struct _objc_method_list _OBJC_";
+  
+  /* struct  {
+   struct _objc_method_list *next_method;
+   int method_count;
+   struct _objc_method method_list[];
+   }
+   */
+  Result += "\nstatic struct {\n";
+  Result += "\tstruct _objc_method_list *next_method;\n";
+  Result += "\tint method_count;\n";
+  Result += "\tstruct _objc_method method_list[";
+  Result += utostr(MethodEnd-MethodBegin);
+  Result += "];\n} _OBJC_";
   Result += prefix;
   Result += IsInstanceMethod ? "INSTANCE" : "CLASS";
   Result += "_METHODS_";
@@ -2252,7 +2254,7 @@ void RewriteTest::RewriteObjCMethodsMetaData(instmeth_iterator MethodBegin,
   Context->getObjCEncodingForMethodDecl(*MethodBegin, MethodTypeString);
   Result += "\", \"";
   Result += MethodTypeString;
-  Result += "\", ";
+  Result += "\", (void *)";
   Result += MethodInternalNames[*MethodBegin];
   Result += "}\n";
   for (++MethodBegin; MethodBegin != MethodEnd; ++MethodBegin) {
@@ -2262,7 +2264,7 @@ void RewriteTest::RewriteObjCMethodsMetaData(instmeth_iterator MethodBegin,
     Context->getObjCEncodingForMethodDecl(*MethodBegin, MethodTypeString);
     Result += "\", \"";
     Result += MethodTypeString;
-    Result += "\", ";
+    Result += "\", (void *)";
     Result += MethodInternalNames[*MethodBegin];
     Result += "}\n";
   }
@@ -2579,18 +2581,19 @@ void RewriteTest::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
       Result += "\tint ivar_offset;\n";
       Result += "};\n";
       
-      /* struct _objc_ivar_list {
-       int ivar_count;
-       struct _objc_ivar ivar_list[];
-       };  
-       */
-      Result += "\nstruct _objc_ivar_list {\n";
-      Result += "\tint ivar_count;\n";
-      Result += "\tstruct _objc_ivar ivar_list[];\n};\n";
       objc_ivar = true;
     }
 
-    Result += "\nstatic struct _objc_ivar_list _OBJC_INSTANCE_VARIABLES_";
+    /* struct {
+       int ivar_count;
+       struct _objc_ivar ivar_list[nIvars];
+       };  
+     */
+    Result += "\nstatic struct {\n"; 
+    Result += "\tint ivar_count;\n";
+    Result += "\tstruct _objc_ivar ivar_list[";
+    Result += utostr(NumIvars);
+    Result += "];\n} _OBJC_INSTANCE_VARIABLES_";
     Result += IDecl->getName();
     Result += " __attribute__ ((section (\"__OBJC, __instance_vars\")))= "
       "{\n\t";
@@ -2765,7 +2768,7 @@ void RewriteTest::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
   else
     Result += ",0";
   if (IDecl->getNumInstanceMethods() > 0) {
-    Result += ", &_OBJC_INSTANCE_METHODS_";
+    Result += ", (struct _objc_method_list *)&_OBJC_INSTANCE_METHODS_";
     Result += CDecl->getName();
     Result += ", 0\n\t"; 
   }
