@@ -2380,6 +2380,10 @@ SDOperand PPCTargetLowering::LowerFP_ROUND_INREG(SDOperand Op,
 }
 
 SDOperand PPCTargetLowering::LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
+  // Don't handle ppc_fp128 here; let it be lowered to a libcall.
+  if (Op.getValueType() != MVT::f32 && Op.getValueType() != MVT::f64)
+    return SDOperand();
+
   if (Op.getOperand(0).getValueType() == MVT::i64) {
     SDOperand Bits = DAG.getNode(ISD::BIT_CONVERT, MVT::f64, Op.getOperand(0));
     SDOperand FP = DAG.getNode(PPCISD::FCFID, MVT::f64, Bits);

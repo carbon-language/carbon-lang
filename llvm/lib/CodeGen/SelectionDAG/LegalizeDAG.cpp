@@ -5366,20 +5366,25 @@ SDOperand SelectionDAGLegalize::ExpandLibCall(const char *Name, SDNode *Node,
 SDOperand SelectionDAGLegalize::
 ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
   MVT::ValueType SourceVT = Source.getValueType();
-  assert(getTypeAction(SourceVT) == Expand &&
-         "This is not an expansion!");
+  bool ExpandSource = getTypeAction(SourceVT) == Expand;
 
   if (!isSigned) {
     // The integer value loaded will be incorrectly if the 'sign bit' of the
     // incoming integer is set.  To handle this, we dynamically test to see if
     // it is set, and, if so, add a fudge factor.
-    SDOperand Lo, Hi;
-    ExpandOp(Source, Lo, Hi);
+    SDOperand Hi;
+    if (ExpandSource) {
+      SDOperand Lo;
+      ExpandOp(Source, Lo, Hi);
+      Source = DAG.getNode(ISD::BUILD_PAIR, SourceVT, Lo, Hi);
+    } else {
+      // The comparison for the sign bit will use the entire operand.
+      Hi = Source;
+    }
 
     // If this is unsigned, and not supported, first perform the conversion to
     // signed, then adjust the result if the sign bit is set.
-    SDOperand SignedConv = ExpandIntToFP(true, DestTy,
-                   DAG.getNode(ISD::BUILD_PAIR, SourceVT, Lo, Hi));
+    SDOperand SignedConv = ExpandIntToFP(true, DestTy, Source);
 
     SDOperand SignSet = DAG.getSetCC(TLI.getSetCCResultType(Hi), Hi,
                                      DAG.getConstant(0, Hi.getValueType()),
@@ -5437,17 +5442,23 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
 
   // Expand the source, then glue it back together for the call.  We must expand
   // the source in case it is shared (this pass of legalize must traverse it).
-  SDOperand SrcLo, SrcHi;
-  ExpandOp(Source, SrcLo, SrcHi);
-  Source = DAG.getNode(ISD::BUILD_PAIR, SourceVT, SrcLo, SrcHi);
+  if (ExpandSource) {
+    SDOperand SrcLo, SrcHi;
+    ExpandOp(Source, SrcLo, SrcHi);
+    Source = DAG.getNode(ISD::BUILD_PAIR, SourceVT, SrcLo, SrcHi);
+  }
 
   RTLIB::Libcall LC;
   if (SourceVT == MVT::i64) {
     if (DestTy == MVT::f32)
       LC = RTLIB::SINTTOFP_I64_F32;
-    else {
-      assert(DestTy == MVT::f64 && "Unknown fp value type!");
+    else if (DestTy == MVT::f64)
       LC = RTLIB::SINTTOFP_I64_F64;
+    else if (DestTy == MVT::f80)
+      LC = RTLIB::SINTTOFP_I64_F80;
+    else {
+      assert(DestTy == MVT::ppcf128 && "Unknown fp value type!");
+      LC = RTLIB::SINTTOFP_I64_PPCF128;
     }
   } else if (SourceVT == MVT::i128) {
     if (DestTy == MVT::f32)
