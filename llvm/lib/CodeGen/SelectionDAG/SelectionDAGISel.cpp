@@ -608,9 +608,7 @@ public:
 
   void visitMemIntrinsic(CallInst &I, unsigned Op);
 
-  void visitGetResult(GetResultInst &I) {
-    assert (0 && "getresult unimplemented");
-  }
+  void visitGetResult(GetResultInst &I);
 
   void visitUserOp1(Instruction &I) {
     assert(0 && "UserOp1 should not exist at instruction selection time!");
@@ -3246,6 +3244,12 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
 }
 
 
+void SelectionDAGLowering::visitGetResult(GetResultInst &I) {
+  SDOperand Call = getValue(I.getOperand(0));
+  setValue(&I, SDOperand(Call.Val, I.getIndex()));
+}
+
+
 /// getCopyFromRegs - Emit a series of CopyFromReg nodes that copies from
 /// this value and returns the result as a ValueVT value.  This uses 
 /// Chain/Flag as the input and updates them for the output Chain/Flag.
@@ -4233,21 +4237,36 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
     }
   }
   
-  // Figure out the result value types.
-  MVT::ValueType VT = getValueType(RetTy);
-  MVT::ValueType RegisterVT = getRegisterType(VT);
-  unsigned NumRegs = getNumRegisters(VT);
-  SmallVector<MVT::ValueType, 4> RetTys(NumRegs);
-  for (unsigned i = 0; i != NumRegs; ++i)
-    RetTys[i] = RegisterVT;
+  // Figure out the result value types. We start by making a list of
+  // the high-level LLVM return types.
+  SmallVector<const Type *, 4> LLVMRetTys;
+  if (const StructType *ST = dyn_cast<StructType>(RetTy))
+    // A struct return type in the LLVM IR means we have multiple return values.
+    LLVMRetTys.insert(LLVMRetTys.end(), ST->element_begin(), ST->element_end());
+  else
+    LLVMRetTys.push_back(RetTy);
+
+  // Then we translate that to a list of lowered codegen result types.
+  SmallVector<MVT::ValueType, 4> LoweredRetTys;
+  SmallVector<MVT::ValueType, 4> RetTys;
+  for (unsigned I = 0, E = LLVMRetTys.size(); I != E; ++I) {
+    MVT::ValueType VT = getValueType(LLVMRetTys[I]);
+    RetTys.push_back(VT);
+
+    MVT::ValueType RegisterVT = getRegisterType(VT);
+    unsigned NumRegs = getNumRegisters(VT);
+    for (unsigned i = 0; i != NumRegs; ++i)
+      LoweredRetTys.push_back(RegisterVT);
+  }
   
-  RetTys.push_back(MVT::Other);  // Always has a chain.
+  LoweredRetTys.push_back(MVT::Other);  // Always has a chain.
   
   // Create the CALL node.
   SDOperand Res = DAG.getNode(ISD::CALL,
-                              DAG.getVTList(&RetTys[0], NumRegs + 1),
+                              DAG.getVTList(&LoweredRetTys[0],
+                                            LoweredRetTys.size()),
                               &Ops[0], Ops.size());
-  Chain = Res.getValue(NumRegs);
+  Chain = Res.getValue(LoweredRetTys.size() - 1);
 
   // Gather up the call result into a single value.
   if (RetTy != Type::VoidTy) {
@@ -4258,11 +4277,25 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
     else if (RetZExt)
       AssertOp = ISD::AssertZext;
 
-    SmallVector<SDOperand, 4> Results(NumRegs);
-    for (unsigned i = 0; i != NumRegs; ++i)
-      Results[i] = Res.getValue(i);
-    Res = getCopyFromParts(DAG, &Results[0], NumRegs, RegisterVT, VT,
-                           AssertOp);
+    SmallVector<SDOperand, 4> ReturnValues;
+    unsigned RegNo = 0;
+    for (unsigned I = 0, E = LLVMRetTys.size(); I != E; ++I) {
+      MVT::ValueType VT = getValueType(LLVMRetTys[I]);
+      MVT::ValueType RegisterVT = getRegisterType(VT);
+      unsigned NumRegs = getNumRegisters(VT);
+      unsigned RegNoEnd = NumRegs + RegNo;
+      SmallVector<SDOperand, 4> Results;
+      for (; RegNo != RegNoEnd; ++RegNo)
+        Results.push_back(Res.getValue(RegNo));
+      SDOperand ReturnValue =
+        getCopyFromParts(DAG, &Results[0], NumRegs, RegisterVT, VT,
+                         AssertOp);
+      ReturnValues.push_back(ReturnValue);
+    }
+    Res = ReturnValues.size() == 1 ? ReturnValues.front() :
+          DAG.getNode(ISD::MERGE_VALUES,
+                      DAG.getVTList(&RetTys[0], RetTys.size()),
+                      &ReturnValues[0], ReturnValues.size());
   }
 
   return std::make_pair(Res, Chain);
