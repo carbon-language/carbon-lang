@@ -161,7 +161,15 @@ bool AsmPrinter::doFinalization(Module &M) {
         O << TAI->getWeakRefDirective() << Name << "\n";
       else if (!I->hasInternalLinkage())
         assert(0 && "Invalid alias linkage");
-      
+
+      if (I->hasHiddenVisibility()) {
+        if (const char *Directive = TAI->getHiddenDirective())
+          O << Directive << Name << "\n";
+      } else if (I->hasProtectedVisibility()) {
+        if (const char *Directive = TAI->getProtectedDirective())
+          O << Directive << Name << "\n";
+      }
+
       O << TAI->getSetDirective() << ' ' << Name << ", " << Target << "\n";
 
       // If the aliasee has external weak linkage it can be referenced only by
