@@ -6238,6 +6238,7 @@ X86TargetLowering::getConstraintType(const std::string &Constraint) const {
   if (Constraint.size() == 1) {
     switch (Constraint[0]) {
     case 'A':
+    case 'f':
     case 'r':
     case 'R':
     case 'l':
@@ -6399,6 +6400,14 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
       else if (VT == MVT::i8)
         return std::make_pair(0U, X86::GR8RegisterClass);
       break;
+    case 'f':  // FP Stack registers.
+      // If SSE is enabled for this VT, use f80 to ensure the isel moves the
+      // value to the correct fpstack register class.
+      if (VT == MVT::f32 && !isScalarFPTypeInSSEReg(VT))
+        return std::make_pair(0U, X86::RFP32RegisterClass);
+      if (VT == MVT::f64 && !isScalarFPTypeInSSEReg(VT))
+        return std::make_pair(0U, X86::RFP64RegisterClass);
+      return std::make_pair(0U, X86::RFP80RegisterClass);
     case 'y':   // MMX_REGS if MMX allowed.
       if (!Subtarget->hasMMX()) break;
       return std::make_pair(0U, X86::VR64RegisterClass);
