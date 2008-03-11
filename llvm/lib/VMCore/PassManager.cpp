@@ -179,8 +179,8 @@ char FunctionPassManagerImpl::ID = 0;
 // MPPassManager
 //
 /// MPPassManager manages ModulePasses and function pass managers.
-/// It batches all Module passes  passes and function pass managers together and
-/// sequence them to process one module.
+/// It batches all Module passes and function pass managers together and
+/// sequences them to process one module.
 class MPPassManager : public Pass, public PMDataManager {
  
 public:
