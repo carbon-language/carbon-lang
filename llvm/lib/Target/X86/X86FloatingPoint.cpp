@@ -964,6 +964,7 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
       // This could be made better, but would require substantial changes.
       duplicateToTop(SrcReg, DestReg, I);
     }
+    }
     break;
   case X86::RET:
   case X86::RETI:
@@ -1042,7 +1043,6 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
     assert(getStackEntry(0) == SecondFPRegOp && "Unknown regs live");
     StackTop = 0;
     return;
-  }
   }
 
   I = MBB->erase(I);  // Remove the pseudo instruction
