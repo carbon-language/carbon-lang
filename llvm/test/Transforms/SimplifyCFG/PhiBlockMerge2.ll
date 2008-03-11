@@ -2,20 +2,20 @@
 ; where the mergedinto block doesn't have any PHI nodes, and is in fact 
 ; dominated by the block-to-be-eliminated
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | not grep N:
+; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | not grep N:
 ;
 
-int %test(bool %a, bool %b) {
-	br bool %b, label %N, label %Q
+define i32 @test(i1 %a, i1 %b) {
+	br i1 %b, label %N, label %Q
 Q:
 	br label %N
 N:
-	%W = phi int [0, %0], [1, %Q]
+	%W = phi i32 [0, %0], [1, %Q]
 	; This block should be foldable into M
 	br label %M
 
 M:
-	%R = add int %W, 1
-	ret int %R
+	%R = add i32 %W, 1
+	ret i32 %R
 }
 
