@@ -249,6 +249,10 @@ static Value *getCommonReturnValue(ReturnInst *TheRI, CallInst *CI) {
   Function *F = TheRI->getParent()->getParent();
   Value *ReturnedValue = 0;
 
+  // TODO: Handle multiple value ret instructions;
+  if (isa<StructType>(F->getReturnType()))
+      return 0;
+
   for (Function::iterator BBI = F->begin(), E = F->end(); BBI != E; ++BBI)
     if (ReturnInst *RI = dyn_cast<ReturnInst>(BBI->getTerminator()))
       if (RI != TheRI) {
@@ -363,7 +367,7 @@ bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
   // of the call and return void, ignore the value of the call and return a
   // constant, return the value returned by the tail call, or that are being
   // accumulator recursion variable eliminated.
-  if (Ret->getNumOperands() != 0 && Ret->getReturnValue() != CI &&
+  if (Ret->getNumOperands() == 1 && Ret->getReturnValue() != CI &&
       !isa<UndefValue>(Ret->getReturnValue()) &&
       AccumulatorRecursionEliminationInitVal == 0 &&
       !getCommonReturnValue(Ret, CI))
