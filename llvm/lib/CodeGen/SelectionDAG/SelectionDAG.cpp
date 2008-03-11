@@ -13,6 +13,7 @@
 
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Constants.h"
+#include "llvm/GlobalAlias.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/DerivedTypes.h"
@@ -814,12 +815,20 @@ SDOperand SelectionDAG::getConstantFP(double Val, MVT::ValueType VT,
 SDOperand SelectionDAG::getGlobalAddress(const GlobalValue *GV,
                                          MVT::ValueType VT, int Offset,
                                          bool isTargetGA) {
-  const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV);
   unsigned Opc;
+
+  const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV);
+  if (!GVar) {
+    // If GV is an alias - use aliasee for determing thread-localness
+    if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(GV))
+      GVar = dyn_cast_or_null<GlobalVariable>(GA->resolveAliasedGlobal());
+  }
+
   if (GVar && GVar->isThreadLocal())
     Opc = isTargetGA ? ISD::TargetGlobalTLSAddress : ISD::GlobalTLSAddress;
   else
     Opc = isTargetGA ? ISD::TargetGlobalAddress : ISD::GlobalAddress;
+
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, Opc, getVTList(VT), 0, 0);
   ID.AddPointer(GV);
