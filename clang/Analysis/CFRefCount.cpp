@@ -19,6 +19,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/ImmutableMap.h"
+#include <ostream>
 
 using namespace clang;
 
@@ -193,15 +194,56 @@ public:
   
   bool operator==(const RefVal& X) const { return Data == X.Data; }
   void Profile(llvm::FoldingSetNodeID& ID) const { ID.AddInteger(Data); }
+  
+  void print(std::ostream& Out) const;
 };
-
+  
+void RefVal::print(std::ostream& Out) const {
+  switch (getKind()) {
+    default: assert(false);
+    case Owned:
+      Out << "Owned(" << getCount() << ")";
+      break;
+      
+    case AcqOwned:
+      Out << "Acquired-Owned(" << getCount() << ")";
+      break;
+      
+    case NotOwned:
+      Out << "Not-Owned";
+      break;
+      
+    case Released:
+      Out << "Released";
+      break;
+      
+    case ErrorUseAfterRelease:
+      Out << "Use-After-Release [ERROR]";
+      break;
+      
+    case ErrorReleaseNotOwned:
+      Out << "Release of Not-Owned [ERROR]";
+      break;
+  }
+}
   
 class CFRefCount : public GRSimpleVals {
+  
+  // Type definitions.
+  
   typedef llvm::ImmutableMap<SymbolID, RefVal> RefBindings;
   typedef RefBindings::Factory RefBFactoryTy;
   
   typedef llvm::SmallPtrSet<GRExprEngine::NodeTy*,2> UseAfterReleasesTy;
   typedef llvm::SmallPtrSet<GRExprEngine::NodeTy*,2> ReleasesNotOwnedTy;
+  
+  class BindingsPrinter : public ValueState::CheckerStatePrinter {
+  public:
+    virtual void PrintCheckerState(std::ostream& Out, void* State,
+                                   const char* nl, const char* sep);
+  };
+  
+  // Instance variables.
   
   CFRefSummaryManager Summaries;
   RefBFactoryTy  RefBFactory;
@@ -209,6 +251,9 @@ class CFRefCount : public GRSimpleVals {
   UseAfterReleasesTy UseAfterReleases;
   ReleasesNotOwnedTy ReleasesNotOwned;
   
+  BindingsPrinter Printer;
+  
+  // Private methods.
     
   static RefBindings GetRefBindings(ValueState& StImpl) {
     return RefBindings((RefBindings::TreeTy*) StImpl.CheckerState);
@@ -224,10 +269,15 @@ class CFRefCount : public GRSimpleVals {
   
   RefBindings Update(RefBindings B, SymbolID sym, RefVal V, ArgEffect E,
                      RefVal::Kind& hasError);
+ 
   
 public:
   CFRefCount() {}
   virtual ~CFRefCount() {}
+ 
+  virtual ValueState::CheckerStatePrinter* getCheckerStatePrinter() {
+    return &Printer;
+  }
   
   // Calls.
   
@@ -240,6 +290,21 @@ public:
 };
 
 } // end anonymous namespace
+
+void CFRefCount::BindingsPrinter::PrintCheckerState(std::ostream& Out,
+                                                    void* State, const char* nl,
+                                                    const char* sep) {
+  RefBindings B((RefBindings::TreeTy*) State);
+  
+  if (State)
+    Out << sep << nl;
+  
+  for (RefBindings::iterator I=B.begin(), E=B.end(); I!=E; ++I) {
+    Out << (*I).first << " : ";
+    (*I).second.print(Out);
+    Out << nl;
+  }
+}
 
 void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
                             ValueStateManager& StateMgr,
