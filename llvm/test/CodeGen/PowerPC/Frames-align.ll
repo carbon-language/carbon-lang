@@ -7,7 +7,7 @@
 ; RUN: llvm-upgrade < %s | llvm-as | \
 ; RUN:   llc -march=ppc64 -mtriple=powerpc-apple-darwin8 | \
 ; RUN:   grep {rldicl r0, r1, 0, 54}
-; XFAIL
+; XFAIL: *
 
 implementation
 
