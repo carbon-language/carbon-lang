@@ -1,8 +1,10 @@
 ; RUN: llvm-as < %s | \
 ; RUN:   llc -mtriple=i686-pc-linux-gnu -o %t -f
-; RUN: grep set %t   | count 5
-; RUN: grep globl %t | count 4
+; RUN: grep set %t   | count 7
+; RUN: grep globl %t | count 6
 ; RUN: grep weak %t  | count 1
+; RUN: grep hidden %t | count 1
+; RUN: grep protected %t | count 1
 
 @bar = external global i32
 @foo1 = alias i32* @bar
@@ -16,6 +18,10 @@ declare i32 @foo_f()
 @bar_i = alias internal i32* @bar
 
 @A = alias bitcast (i32* @bar to i64*)
+
+@bar_h = hidden alias i32* @bar
+
+@bar_p = protected alias i32* @bar
 
 define i32 @test() {
 entry:
