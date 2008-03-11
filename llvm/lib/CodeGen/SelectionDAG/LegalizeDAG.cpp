@@ -495,7 +495,7 @@ static SDOperand ExpandConstantFP(ConstantFPSDNode *CFP, bool UseCP,
   if (!UseCP) {
     if (VT!=MVT::f64 && VT!=MVT::f32)
       assert(0 && "Invalid type expansion");
-    return DAG.getConstant(LLVMC->getValueAPF().convertToAPInt().getZExtValue(),
+    return DAG.getConstant(LLVMC->getValueAPF().convertToAPInt(),
                            (VT == MVT::f64) ? MVT::i64 : MVT::i32);
   }
 
@@ -2331,8 +2331,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(ST->getValue())) {
         if (CFP->getValueType(0) == MVT::f32 && 
             getTypeAction(MVT::i32) == Legal) {
-          Tmp3 = DAG.getConstant((uint32_t)CFP->getValueAPF().
-                                          convertToAPInt().getZExtValue(),
+          Tmp3 = DAG.getConstant(CFP->getValueAPF().
+                                          convertToAPInt().zextOrTrunc(32),
                                   MVT::i32);
           Result = DAG.getStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
                                 SVOffset, isVolatile, Alignment);
@@ -2341,7 +2341,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           // If this target supports 64-bit registers, do a single 64-bit store.
           if (getTypeAction(MVT::i64) == Legal) {
             Tmp3 = DAG.getConstant(CFP->getValueAPF().convertToAPInt().
-                                     getZExtValue(), MVT::i64);
+                                     zextOrTrunc(64), MVT::i64);
             Result = DAG.getStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
                                   SVOffset, isVolatile, Alignment);
             break;
@@ -2349,9 +2349,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
             // Otherwise, if the target supports 32-bit registers, use 2 32-bit
             // stores.  If the target supports neither 32- nor 64-bits, this
             // xform is certainly not worth it.
-            uint64_t IntVal =CFP->getValueAPF().convertToAPInt().getZExtValue();
-            SDOperand Lo = DAG.getConstant(uint32_t(IntVal), MVT::i32);
-            SDOperand Hi = DAG.getConstant(uint32_t(IntVal >>32), MVT::i32);
+            const APInt &IntVal =CFP->getValueAPF().convertToAPInt();
+            SDOperand Lo = DAG.getConstant(APInt(IntVal).trunc(32), MVT::i32);
+            SDOperand Hi = DAG.getConstant(IntVal.lshr(32).trunc(32), MVT::i32);
             if (TLI.isBigEndian()) std::swap(Lo, Hi);
 
             Lo = DAG.getStore(Tmp1, Lo, Tmp2, ST->getSrcValue(),
