@@ -80,6 +80,11 @@ public:
   
   unsigned getNumArgs() const { return Args->size(); }
   
+  ArgEffect getArg(unsigned idx) const {
+    assert (idx < getNumArgs());
+    return (*Args)[idx];
+  }
+  
   typedef ArgEffects::const_iterator arg_iterator;
   
   arg_iterator begin_args() const { return Args->begin(); }
@@ -152,12 +157,45 @@ CFRefSummary* CFRefSummaryManager::getSummary(FunctionDecl* FD) {
 // Transfer functions.
 //===----------------------------------------------------------------------===//
 
-typedef unsigned RefState; // FIXME
-
 namespace {
   
+class RefVal {
+  unsigned Data;
+  
+  RefVal(unsigned K, unsigned D) : Data((D << 3) | K) {
+    assert ((K & ~0x5) == 0x0);
+  }
+  
+  RefVal(unsigned K) : Data(K) {
+    assert ((K & ~0x5) == 0x0);
+  }
+
+public:  
+  enum Kind { Owned = 0, AcqOwned = 1, NotOwned = 2, Released = 3,
+              ErrorUseAfterRelease = 4, ErrorReleaseNotOwned = 5 };
+    
+  
+  Kind getKind() const { return (Kind) (Data & 0x5); }
+
+  unsigned getCount() const {
+    assert (getKind() == Owned || getKind() == AcqOwned);
+    return Data >> 3;
+  }
+  
+  static RefVal makeOwned(unsigned Count) { return RefVal(Owned, Count); }
+  static RefVal makeAcqOwned(unsigned Count) { return RefVal(AcqOwned, Count); }
+  static RefVal makeNotOwned() { return RefVal(NotOwned); }
+  static RefVal makeReleased() { return RefVal(Released); }
+  static RefVal makeUseAfterRelease() { return RefVal(ErrorUseAfterRelease); }
+  static RefVal makeReleaseNotOwned() { return RefVal(ErrorReleaseNotOwned); }
+  
+  bool operator==(const RefVal& X) const { return Data == X.Data; }
+  void Profile(llvm::FoldingSetNodeID& ID) const { ID.AddInteger(Data); }
+};
+
+  
 class CFRefCount : public GRSimpleVals {
-  typedef llvm::ImmutableMap<SymbolID, RefState> RefBindings;
+  typedef llvm::ImmutableMap<SymbolID, RefVal> RefBindings;
   typedef RefBindings::Factory RefBFactoryTy;
 
   CFRefSummaryManager Summaries;
@@ -175,8 +213,8 @@ class CFRefCount : public GRSimpleVals {
     return RefBFactory.Remove(B, sym);
   }
   
-  RefBindings Update(RefBindings B, SymbolID sym,
-                     CFRefSummary* Summ, unsigned ArgIdx);
+  RefBindings Update(RefBindings B, SymbolID sym, RefVal V, ArgEffect E,
+                     bool& hasError);
   
 public:
   CFRefCount() {}
@@ -220,6 +258,7 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
   // Evaluate the effects of the call.
   
   ValueState StVals = *St;
+  bool hasError = false;
   
   if (!Summ) {
     
@@ -258,25 +297,92 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
       if (isa<lval::SymbolVal>(V)) {
         SymbolID Sym = cast<lval::SymbolVal>(V).getSymbol();
         RefBindings B = GetRefBindings(StVals);
-        SetRefBindings(StVals, Update(B, Sym, Summ, idx));
+
+        if (RefBindings::TreeTy* T = B.SlimFind(Sym)) {
+          B = Update(B, Sym, T->getValue().second, Summ->getArg(idx), hasError);
+          SetRefBindings(StVals, B);
+          if (hasError) break;
+        }
       }
     }    
   }
   
   St = StateMgr.getPersistentState(StVals);
+  
+  if (hasError) {
     
+  }
+  
   Builder.Nodify(Dst, CE, Pred, St);
 }
 
 
 CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
-                                           CFRefSummary* Summ, unsigned ArgIdx){
+                                           RefVal V, ArgEffect E,
+                                           bool& hasError) {
   
-  assert (Summ);
+  // FIXME: This dispatch can potentially be sped up by unifiying it into
+  //  a single switch statement.  Opt for simplicity for now.
   
-  // FIXME: Implement.
-  
-  return B;
+  switch (E) {
+    default:
+      assert (false && "Unhandled CFRef transition.");
+      
+    case DoNothing:
+      return B;
+      
+    case IncRef:      
+      switch (V.getKind()) {
+        default:
+          assert(false);
+
+        case RefVal::Owned:
+          V = RefVal::makeOwned(V.getCount()+1); break;
+          
+        case RefVal::AcqOwned:
+          V = RefVal::makeAcqOwned(V.getCount()+1);
+          break;
+          
+        case RefVal::NotOwned:
+          V = RefVal::makeAcqOwned(1);
+          break;
+          
+        case RefVal::Released:
+          hasError = true;
+          V = RefVal::makeUseAfterRelease();
+          break;
+      }
+      
+    case DecRef:
+      switch (V.getKind()) {
+        default:
+          assert (false);
+          
+        case RefVal::Owned: {
+          unsigned Count = V.getCount() - 1;
+          V = Count ? RefVal::makeOwned(Count) : RefVal::makeReleased();
+          break;
+        }
+          
+        case RefVal::AcqOwned: {
+          unsigned Count = V.getCount() - 1;
+          V = Count ? RefVal::makeAcqOwned(Count) : RefVal::makeNotOwned();
+          break;
+        }
+          
+        case RefVal::NotOwned:
+          hasError = true;
+          V = RefVal::makeReleaseNotOwned();
+          break;
+
+        case RefVal::Released:
+          hasError = true;
+          V = RefVal::makeUseAfterRelease();
+          break;          
+      }
+  }
+
+  return RefBFactory.Add(B, sym, V);
 }
 
 //===----------------------------------------------------------------------===//
