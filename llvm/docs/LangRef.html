@@ -1799,10 +1799,10 @@ returns a value and then causes control flow, and one that just causes
 control flow to occur.</p>
 <h5>Arguments:</h5>
 <p>The '<tt>ret</tt>' instruction may return one or multiple values. The
-type of each return value must be '<a href="#t_firstclass">first class</a>'
- type.  Notice that a function is not <a href="#wellformed">well formed</a> 
+type of each return value must be a '<a href="#t_firstclass">first class</a>'
+ type.  Note that a function is not <a href="#wellformed">well formed</a> 
 if there exists a '<tt>ret</tt>' instruction inside of the function that 
-returns values that does not match the return type of the function.</p>
+returns values that do not match the return type of the function.</p>
 <h5>Semantics:</h5>
 <p>When the '<tt>ret</tt>' instruction is executed, control flow
 returns back to the calling function's context.  If the caller is a "<a
@@ -1812,8 +1812,8 @@ the instruction after the call.  If the caller was an "<a
 at the beginning of the "normal" destination block.  If the instruction
 returns a value, that value shall set the call or invoke instruction's
 return value. If the instruction returns multiple values then these 
-value can only be accessed through '<a href="#i_getresult"><tt>getresult</tt>
-</a>' insctruction.</p>
+values can only be accessed through a '<a href="#i_getresult"><tt>getresult</tt>
+</a>' instruction.</p>
 <h5>Example:</h5>
 <pre>  ret i32 5                       <i>; Return an integer value of 5</i>
   ret void                        <i>; Return from a void function</i>
@@ -1928,8 +1928,8 @@ function, with the possibility of control flow transfer to either the
 "normal" label.  If the callee (or any indirect callees) returns with the "<a
 href="#i_unwind"><tt>unwind</tt></a>" instruction, control is interrupted and
 continued at the dynamically nearest "exception" label. If the callee function 
-returns multiple values then individual return values are accessed only through 
-'<tt><a href="#i_getresult">getresult</a></tt>' instruction.</p>
+returns multiple values then individual return values are only accessible through 
+a '<tt><a href="#i_getresult">getresult</a></tt>' instruction.</p>
 
 <h5>Arguments:</h5>
 
@@ -3818,8 +3818,8 @@ the specified values. Upon a '<tt><a href="#i_ret">ret</a></tt>'
 instruction in the called function, control flow continues with the
 instruction after the function call, and the return value of the
 function is bound to the result argument.  If the '<tt><a href="#i_ret">ret</a>
-</tt>' instruction returns multiple values then the return value of the
-function is only accessed through '<tt><a href="#i_getresult">getresult</a>
+</tt>' instruction returns multiple values then the return values of the
+function are only accessible through a '<tt><a href="#i_getresult">getresult</a>
 </tt>' instruction. This is a simpler case of
 the <a href="#i_invoke">invoke</a> instruction.</p>
 
@@ -3902,18 +3902,18 @@ argument.</p>
 <h5>Overview:</h5>
 
 <p> The '<tt>getresult</tt>' instruction is used to extract individual values
-from multiple values returned by '<tt><a href="#i_call">call</a></tt>' 
+from multiple values returned by a '<tt><a href="#i_call">call</a></tt>' 
 or '<tt><a href="#i_invoke">invoke</a></tt>' instruction.
 
 <h5>Arguments:</h5>
 
-The '<tt>getresult</tt>' instruction takes return value as first argument. The 
-value must have <a href="#t_struct">structure type</a>. The second argument 
-is unsigned index value. 
+The '<tt>getresult</tt>' instruction takes a return value as first argument. 
+The value must have <a href="#t_struct">structure type</a>. The second argument 
+is an unsigned index value. 
 
 <h5>Semantics:</h5>
 
-The '<tt>getresult</tt>' instruction extracts element identified by
+The '<tt>getresult</tt>' instruction extracts the element identified by
 '<tt>index</tt>' from the aggregate value.
 
 <h5>Example:</h5>
