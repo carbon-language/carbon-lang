@@ -645,12 +645,14 @@ bool X86InstrInfo::isMoveInstr(const MachineInstr& MI,
   case X86::MOV64rr:
   case X86::MOV16to16_:
   case X86::MOV32to32_:
-  case X86::MOV_Fp3232:
   case X86::MOVSSrr:
   case X86::MOVSDrr:
-  case X86::MOV_Fp3264:
-  case X86::MOV_Fp6432:
-  case X86::MOV_Fp6464:
+
+  // FP Stack register class copies
+  case X86::MOV_Fp3232: case X86::MOV_Fp6464: case X86::MOV_Fp8080:
+  case X86::MOV_Fp3264: case X86::MOV_Fp3280:
+  case X86::MOV_Fp6432: case X86::MOV_Fp8032:
+      
   case X86::FsMOVAPSrr:
   case X86::FsMOVAPDrr:
   case X86::MOVAPSrr:
