@@ -538,6 +538,7 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
       // the regclass is ok.
       const TargetRegisterClass *RC =
                           getInstrOperandRegClass(TRI, TII, *II, IIOpNum);
+      assert((RC || II->isVariadic()) && "Expected reg class info!");
       const TargetRegisterClass *VRC = RegInfo.getRegClass(VReg);
       if (RC && VRC != RC) {
         cerr << "Register class of operand and regclass of use don't agree!\n";
@@ -604,7 +605,7 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
     // to be able to handle it.  This handles things like copies from ST(0) to
     // an FP vreg on x86.
     assert(TargetRegisterInfo::isVirtualRegister(VReg) && "Not a vreg?");
-    if (II) {
+    if (II && !II->isVariadic()) {
       assert(getInstrOperandRegClass(TRI, TII, *II, IIOpNum) &&
              "Don't have operand info for this instruction!");
     }
