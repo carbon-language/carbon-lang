@@ -1531,4 +1531,4 @@ void BasicBlockPass::assignPassManager(PMStack &PMS,
   BBP->add(this);
 }
 
-
+PassManagerBase::~PassManagerBase() {}

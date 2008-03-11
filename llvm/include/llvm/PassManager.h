@@ -29,8 +29,22 @@ class ModuleProvider;
 class PassManagerImpl;
 class FunctionPassManagerImpl;
 
+/// PassManagerBase - An abstract interface to allow code to add passes to
+/// a pass manager without having to hard-code what kind of pass manager
+/// it is.
+class PassManagerBase {
+public:
+  virtual ~PassManagerBase();
+
+  /// add - Add a pass to the queue of passes to run.  This passes ownership of
+  /// the Pass to the PassManager.  When the PassManager is destroyed, the pass
+  /// will be destroyed as well, so there is no need to delete the pass.  This
+  /// implies that all passes MUST be allocated with 'new'.
+  virtual void add(Pass *P) = 0;
+};
+
 /// PassManager manages ModulePassManagers
-class PassManager {
+class PassManager : public PassManagerBase {
 public:
 
   PassManager();
@@ -54,7 +68,7 @@ private:
 };
 
 /// FunctionPassManager manages FunctionPasses and BasicBlockPassManagers.
-class FunctionPassManager {
+class FunctionPassManager : public PassManagerBase {
 public:
   /// FunctionPassManager ctor - This initializes the pass manager.  It needs,
   /// but does not take ownership of, the specified module provider.
