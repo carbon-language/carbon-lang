@@ -1168,6 +1168,35 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
     case X86ISD::GlobalBaseReg: 
       return getGlobalBaseReg();
 
+    // FIXME: This is a workaround for a tblgen problem: rdar://5791600
+    case X86ISD::RET_FLAG:
+      if (ConstantSDNode *Amt = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+        if (Amt->getSignExtended() != 0) break;
+        
+        // Match (X86retflag 0).
+        SDOperand Chain = N.getOperand(0);
+        bool HasInFlag = N.getOperand(N.getNumOperands()-1).getValueType()
+                          == MVT::Flag;
+        SmallVector<SDOperand, 8> Ops0;
+        AddToISelQueue(Chain);
+        SDOperand InFlag(0, 0);
+        if (HasInFlag) {
+          InFlag = N.getOperand(N.getNumOperands()-1);
+          AddToISelQueue(InFlag);
+        }
+        for (unsigned i = 2, e = N.getNumOperands()-(HasInFlag?1:0); i != e;
+             ++i) {
+          AddToISelQueue(N.getOperand(i));
+          Ops0.push_back(N.getOperand(i));
+        }
+        Ops0.push_back(Chain);
+        if (HasInFlag)
+          Ops0.push_back(InFlag);
+        return CurDAG->getTargetNode(X86::RET, MVT::Other,
+                                     &Ops0[0], Ops0.size());
+      }
+      break;
+      
     case X86ISD::FP_GET_ST0_ST1: {
       SDOperand Chain = N.getOperand(0);
       SDOperand InFlag = N.getOperand(1);

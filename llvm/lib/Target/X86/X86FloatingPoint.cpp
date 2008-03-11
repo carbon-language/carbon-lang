@@ -75,26 +75,31 @@ namespace {
       cerr << "\n";
     }
   private:
+    /// isStackEmpty - Return true if the FP stack is empty.
+    bool isStackEmpty() const {
+      return StackTop == 0;
+    }
+    
     // getSlot - Return the stack slot number a particular register number is
-    // in...
+    // in.
     unsigned getSlot(unsigned RegNo) const {
       assert(RegNo < 8 && "Regno out of range!");
       return RegMap[RegNo];
     }
 
-    // getStackEntry - Return the X86::FP<n> register in register ST(i)
+    // getStackEntry - Return the X86::FP<n> register in register ST(i).
     unsigned getStackEntry(unsigned STi) const {
       assert(STi < StackTop && "Access past stack top!");
       return Stack[StackTop-1-STi];
     }
 
     // getSTReg - Return the X86::ST(i) register which contains the specified
-    // FP<RegNo> register
+    // FP<RegNo> register.
     unsigned getSTReg(unsigned RegNo) const {
       return StackTop - 1 - getSlot(RegNo) + llvm::X86::ST0;
     }
 
-    // pushReg - Push the specified FP<n> register onto the stack
+    // pushReg - Push the specified FP<n> register onto the stack.
     void pushReg(unsigned Reg) {
       assert(Reg < 8 && "Register number out of range!");
       assert(StackTop < 8 && "Stack overflow!");
@@ -103,22 +108,22 @@ namespace {
     }
 
     bool isAtTop(unsigned RegNo) const { return getSlot(RegNo) == StackTop-1; }
-    void moveToTop(unsigned RegNo, MachineBasicBlock::iterator &I) {
-      if (!isAtTop(RegNo)) {
-        unsigned STReg = getSTReg(RegNo);
-        unsigned RegOnTop = getStackEntry(0);
+    void moveToTop(unsigned RegNo, MachineBasicBlock::iterator I) {
+      if (isAtTop(RegNo)) return;
+      
+      unsigned STReg = getSTReg(RegNo);
+      unsigned RegOnTop = getStackEntry(0);
 
-        // Swap the slots the regs are in
-        std::swap(RegMap[RegNo], RegMap[RegOnTop]);
+      // Swap the slots the regs are in.
+      std::swap(RegMap[RegNo], RegMap[RegOnTop]);
 
-        // Swap stack slot contents
-        assert(RegMap[RegOnTop] < StackTop);
-        std::swap(Stack[RegMap[RegOnTop]], Stack[StackTop-1]);
+      // Swap stack slot contents.
+      assert(RegMap[RegOnTop] < StackTop);
+      std::swap(Stack[RegMap[RegOnTop]], Stack[StackTop-1]);
 
-        // Emit an fxch to update the runtime processors version of the state
-        BuildMI(*MBB, I, TII->get(X86::XCH_F)).addReg(STReg);
-        NumFXCH++;
-      }
+      // Emit an fxch to update the runtime processors version of the state.
+      BuildMI(*MBB, I, TII->get(X86::XCH_F)).addReg(STReg);
+      NumFXCH++;
     }
 
     void duplicateToTop(unsigned RegNo, unsigned AsReg, MachineInstr *I) {
@@ -268,7 +273,7 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
     Changed = true;
   }
 
-  assert(StackTop == 0 && "Stack not empty at end of basic block?");
+  assert(isStackEmpty() && "Stack not empty at end of basic block?");
   return Changed;
 }
 
@@ -960,6 +965,83 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
       duplicateToTop(SrcReg, DestReg, I);
     }
     break;
+  case X86::RET:
+  case X86::RETI:
+    // If RET has an FP register use operand, pass the first one in ST(0) and
+    // the second one in ST(1).
+    if (isStackEmpty()) return;  // Quick check to see if any are possible.
+    
+    // Find the register operands.
+    unsigned FirstFPRegOp = ~0U, SecondFPRegOp = ~0U;
+    
+    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+      MachineOperand &Op = MI->getOperand(i);
+      if (!Op.isReg() || Op.getReg() < X86::FP0 || Op.getReg() > X86::FP6)
+        continue;
+      assert(Op.isUse() && Op.isKill() &&
+             "Ret only defs operands, and values aren't live beyond it");
+
+      if (FirstFPRegOp == ~0U)
+        FirstFPRegOp = getFPReg(Op);
+      else {
+        assert(SecondFPRegOp == ~0U && "More than two fp operands!");
+        SecondFPRegOp = getFPReg(Op);
+      }
+
+      // Remove the operand so that later passes don't see it.
+      MI->RemoveOperand(i);
+      --i, --e;
+    }
+    
+    // There are only four possibilities here:
+    // 1) we are returning a single FP value.  In this case, it has to be in
+    //    ST(0) already, so just declare success by removing the value from the
+    //    FP Stack.
+    if (SecondFPRegOp == ~0U) {
+      // Assert that the top of stack contains the right FP register.
+      assert(StackTop == 1 && FirstFPRegOp == getStackEntry(0) &&
+             "Top of stack not the right register for RET!");
+      
+      // Ok, everything is good, mark the value as not being on the stack
+      // anymore so that our assertion about the stack being empty at end of
+      // block doesn't fire.
+      StackTop = 0;
+      return;
+    }
+    
+    assert(0 && "TODO: This code should work, but has never been tested."
+           "Test it when we have multiple FP return values working");
+    
+    // Otherwise, we are returning two values:
+    // 2) If returning the same value for both, we only have one thing in the FP
+    //    stack.  Consider:  RET FP1, FP1
+    if (StackTop == 1) {
+      assert(FirstFPRegOp == SecondFPRegOp && FirstFPRegOp == getStackEntry(0)&&
+             "Stack misconfiguration for RET!");
+      
+      // Duplicate the TOS so that we return it twice.  Just pick some other FPx
+      // register to hold it.
+      unsigned NewReg = (FirstFPRegOp+1)%7;
+      duplicateToTop(FirstFPRegOp, NewReg, MI);
+      FirstFPRegOp = NewReg;
+    }
+    
+    /// Okay we know we have two different FPx operands now:
+    assert(StackTop == 2 && "Must have two values live!");
+    
+    /// 3) If SecondFPRegOp is currently in ST(0) and FirstFPRegOp is currently
+    ///    in ST(1).  In this case, emit an fxch.
+    if (getStackEntry(0) == SecondFPRegOp) {
+      assert(getStackEntry(1) == FirstFPRegOp && "Unknown regs live");
+      moveToTop(FirstFPRegOp, MI);
+    }
+    
+    /// 4) Finally, FirstFPRegOp must be in ST(0) and SecondFPRegOp must be in
+    /// ST(1).  Just remove both from our understanding of the stack and return.
+    assert(getStackEntry(0) == FirstFPRegOp && "Unknown regs live");
+    assert(getStackEntry(0) == SecondFPRegOp && "Unknown regs live");
+    StackTop = 0;
+    return;
   }
   }
 

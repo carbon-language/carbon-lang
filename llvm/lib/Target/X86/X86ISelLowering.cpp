@@ -853,27 +853,41 @@ SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
   // Regular return.
   SDOperand Flag;
 
+  SmallVector<SDOperand, 6> RetOps;
+  RetOps.push_back(Chain); // Operand #0 = Chain (updated below)
+  // Operand #1 = Bytes To Pop
+  RetOps.push_back(DAG.getConstant(getBytesToPopOnReturn(), MVT::i16));
+  
   // Copy the result values into the output registers.
   for (unsigned i = 0; i != RVLocs.size(); ++i) {
     CCValAssign &VA = RVLocs[i];
     assert(VA.isRegLoc() && "Can only return in registers!");
     SDOperand ValToCopy = Op.getOperand(i*2+1);
     
-    // If this is a copy from an xmm register to ST(0), use an FPExtend to
-    // change the value to the FP stack register class.
-    if (RVLocs[i].getLocReg() == X86::ST0 &&
-        isScalarFPTypeInSSEReg(RVLocs[i].getValVT()))
-      ValToCopy = DAG.getNode(ISD::FP_EXTEND, MVT::f80, ValToCopy);
+    // Returns in ST0/ST1 are handled specially: these are pushed as operands to
+    // the RET instruction and handled by the FP Stackifier.
+    if (RVLocs[i].getLocReg() == X86::ST0 ||
+        RVLocs[i].getLocReg() == X86::ST1) {
+      // If this is a copy from an xmm register to ST(0), use an FPExtend to
+      // change the value to the FP stack register class.
+      if (isScalarFPTypeInSSEReg(RVLocs[i].getValVT()))
+        ValToCopy = DAG.getNode(ISD::FP_EXTEND, MVT::f80, ValToCopy);
+      RetOps.push_back(ValToCopy);
+      // Don't emit a copytoreg.
+      continue;
+    }
     
     Chain = DAG.getCopyToReg(Chain, VA.getLocReg(), ValToCopy, Flag);
     Flag = Chain.getValue(1);
   }
   
-  SDOperand BytesToPop = DAG.getConstant(getBytesToPopOnReturn(), MVT::i16);
+  RetOps[0] = Chain;  // Update chain.
+
+  // Add the flag if we have it.
   if (Flag.Val)
-    return DAG.getNode(X86ISD::RET_FLAG, MVT::Other, Chain, BytesToPop, Flag);
-  else
-    return DAG.getNode(X86ISD::RET_FLAG, MVT::Other, Chain, BytesToPop);
+    RetOps.push_back(Flag);
+  
+  return DAG.getNode(X86ISD::RET_FLAG, MVT::Other, &RetOps[0], RetOps.size());
 }
 
 

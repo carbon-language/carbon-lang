@@ -39,7 +39,7 @@ def SDTX86cas : SDTypeProfile<0, 3, [SDTCisPtrTy<0>, SDTCisInt<1>,
                                      SDTCisVT<2, i8>]>;
 def SDTX86cas8 : SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>;
 
-def SDTX86Ret     : SDTypeProfile<0, 1, [SDTCisVT<0, i16>]>;
+def SDTX86Ret     : SDTypeProfile<0, -1, [SDTCisVT<0, i16>]>;
 
 def SDT_X86CallSeqStart : SDCallSeqStart<[ SDTCisVT<0, i32> ]>;
 def SDT_X86CallSeqEnd   : SDCallSeqEnd<[ SDTCisVT<0, i32>,
@@ -269,8 +269,8 @@ def and_su : PatFrag<(ops node:$lhs, node:$rhs), (and node:$lhs, node:$rhs), [{
 // ADJCALLSTACKDOWN/UP implicitly use/def ESP because they may be expanded into
 // a stack adjustment and the codegen must know that they may modify the stack
 // pointer before prolog-epilog rewriting occurs.
-// Pessimistically assume ADJCALLSTACKDOWN / ADJCALLSTACKUP will become sub / add
-// which can clobber EFLAGS.
+// Pessimistically assume ADJCALLSTACKDOWN / ADJCALLSTACKUP will become
+// sub / add which can clobber EFLAGS.
 let Defs = [ESP, EFLAGS], Uses = [ESP] in {
 def ADJCALLSTACKDOWN : I<0, Pseudo, (outs), (ins i32imm:$amt),
                          "#ADJCALLSTACKDOWN",
@@ -306,9 +306,12 @@ let neverHasSideEffects = 1, isNotDuplicable = 1 in
 
 // Return instructions.
 let isTerminator = 1, isReturn = 1, isBarrier = 1,
-    hasCtrlDep = 1 in {
-  def RET    : I<0xC3, RawFrm, (outs), (ins), "ret", [(X86retflag 0)]>;
-  def RETI   : Ii16<0xC2, RawFrm, (outs), (ins i16imm:$amt), "ret\t$amt",
+    hasCtrlDep = 1, FPForm = SpecialFP, FPFormBits = SpecialFP.Value in {
+  def RET    : I   <0xC3, RawFrm, (outs), (ins variable_ops),
+                    "ret",
+                    [/*(X86retflag 0)*/ /*FIXME: Disabled: rdar://5791600*/]>;
+  def RETI   : Ii16<0xC2, RawFrm, (outs), (ins i16imm:$amt, variable_ops),
+                    "ret\t$amt",
                     [(X86retflag imm:$amt)]>;
 }
 
@@ -384,7 +387,7 @@ let isCall = 1 in
 
 // Tail call stuff.
 
-def TAILCALL : I<0, Pseudo, (outs), (ins ),
+def TAILCALL : I<0, Pseudo, (outs), (ins),
                          "#TAILCALL",
                          []>;
 
