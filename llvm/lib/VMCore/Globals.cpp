@@ -17,6 +17,7 @@
 #include "llvm/GlobalAlias.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/LeakDetector.h"
 using namespace llvm;
 
@@ -230,3 +231,18 @@ const GlobalValue *GlobalAlias::getAliasedGlobal() const {
   return 0;
 }
 
+const GlobalValue *GlobalAlias::resolveAliasedGlobal() const {
+  SmallPtrSet<const GlobalValue*, 1> Visited;
+
+  const GlobalValue *GV = getAliasedGlobal();
+  Visited.insert(GV);
+
+  while (const GlobalAlias *GA = dyn_cast<GlobalAlias>(GV)) {
+    GV = GA->getAliasedGlobal();
+
+    if (!Visited.insert(GV))
+      return NULL;
+  }
+
+  return GV;
+}

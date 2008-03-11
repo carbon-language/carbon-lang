@@ -78,7 +78,12 @@ public:
   /// getAliasedGlobal() - Aliasee can be either global or bitcast of
   /// global. This method retrives the global for both aliasee flavours.
   const GlobalValue* getAliasedGlobal() const;
-    
+
+  /// resolveAliasedGlobal() - This method tries to ultimately resolve alias by
+  /// going through aliasing chain and trying to find the very last
+  /// global. Return NULL is cycle was found.
+  const GlobalValue* resolveAliasedGlobal() const;
+
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const GlobalAlias *) { return true; }
   static inline bool classof(const Value *V) {
