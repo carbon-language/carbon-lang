@@ -24,6 +24,7 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/SmallVector.h"
 using namespace llvm;
 
 STATISTIC(NumArgumentsProped, "Number of args turned into constants");
@@ -142,22 +143,44 @@ bool IPCP::PropagateConstantReturn(Function &F) {
     return false; // No return value.
 
   // Check to see if this function returns a constant.
-  Value *RetVal = 0;
+  SmallVector<Value *,4> RetVals;
+  unsigned N = 0;
+  const StructType *STy = dyn_cast<StructType>(F.getReturnType());
+  if (STy)
+    N = STy->getNumElements();
+  else
+    N = 1;
+  for (unsigned i = 0; i < N; ++i)
+    RetVals.push_back(0);
+
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
     if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator())) {
-      if (isa<UndefValue>(RI->getOperand(0))) {
-        // Ignore.
-      } else if (Constant *C = dyn_cast<Constant>(RI->getOperand(0))) {
-        if (RetVal == 0)
-          RetVal = C;
-        else if (RetVal != C)
-          return false;  // Does not return the same constant.
-      } else {
-        return false;  // Does not return a constant.
+      assert (N == RI->getNumOperands() && "Invalid ReturnInst operands!");
+      for (unsigned i = 0; i < N; ++i) {
+        if (isa<UndefValue>(RI->getOperand(i))) {
+          // Ignore
+        } else if (Constant *C = dyn_cast<Constant>(RI->getOperand(i))) { 
+          Value *RV = RetVals[i];
+          if (RV == 0)
+            RetVals[i] = C;
+          else if (RV != C)
+            return false; // Does not return the same constant.
+        } else {
+          return false; // Does not return a constant.
+        }
       }
     }
 
-  if (RetVal == 0) RetVal = UndefValue::get(F.getReturnType());
+  if (N == 1) {
+    if (RetVals[0] == 0)
+      RetVals[0] = UndefValue::get(F.getReturnType());
+  } else {
+    for (unsigned i = 0; i < N; ++i) {
+      Value *RetVal = RetVals[i];
+      if (RetVal == 0) 
+        RetVals[i] = UndefValue::get(STy->getElementType(i));
+    }
+  }
 
   // If we got here, the function returns a constant value.  Loop over all
   // users, replacing any uses of the return value with the returned constant.
@@ -172,8 +195,18 @@ bool IPCP::PropagateConstantReturn(Function &F) {
           CS.getCalledFunction() != &F) {
         ReplacedAllUsers = false;
       } else {
-        if (!CS.getInstruction()->use_empty()) {
-          CS.getInstruction()->replaceAllUsesWith(RetVal);
+        Instruction *Call = CS.getInstruction();
+        if (!Call->use_empty()) {
+          if (N == 1)
+            Call->replaceAllUsesWith(RetVals[0]);
+          else {
+            for(Value::use_iterator CUI = Call->use_begin(), CUE = Call->use_end();
+                CUI != CUE; ++CUI) {
+              GetResultInst *GR = cast<GetResultInst>(CUI);
+              GR->replaceAllUsesWith(RetVals[GR->getIndex()]);
+              GR->eraseFromParent();
+            }
+          }
           MadeChange = true;
         }
       }
@@ -182,15 +215,20 @@ bool IPCP::PropagateConstantReturn(Function &F) {
   // If we replace all users with the returned constant, and there can be no
   // other callers of the function, replace the constant being returned in the
   // function with an undef value.
-  if (ReplacedAllUsers && F.hasInternalLinkage() && !isa<UndefValue>(RetVal)) {
-    Value *RV = UndefValue::get(RetVal->getType());
-    for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
-      if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator())) {
-        if (RI->getOperand(0) != RV) {
-          RI->setOperand(0, RV);
-          MadeChange = true;
+  if (ReplacedAllUsers && F.hasInternalLinkage()) {
+    for (unsigned i = 0; i < N; ++i) {
+      Value *RetVal = RetVals[i];
+      if (isa<UndefValue>(RetVal))
+        continue;
+      Value *RV = UndefValue::get(RetVal->getType());
+      for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
+        if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator())) {
+          if (RI->getOperand(i) != RV) {
+            RI->setOperand(i, RV);
+            MadeChange = true;
+          }
         }
-      }
+    }
   }
 
   if (MadeChange) ++NumReturnValProped;
