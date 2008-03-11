@@ -768,7 +768,7 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
           // Issue expensive cross register class copies.
           MVT::ValueType VT = getPhysicalRegisterVT(LRDef->Node, Reg, TII);
           const TargetRegisterClass *RC =
-            TRI->getPhysicalRegisterRegClass(VT, Reg);
+            TRI->getPhysicalRegisterRegClass(Reg, VT);
           const TargetRegisterClass *DestRC = TRI->getCrossCopyRegClass(RC);
           if (!DestRC) {
             assert(false && "Don't know how to copy this physical register!");

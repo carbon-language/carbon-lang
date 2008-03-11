@@ -125,6 +125,21 @@ void VirtRegMap::assignVirtReMatId(unsigned virtReg, int id) {
   Virt2ReMatIdMap[virtReg] = id;
 }
 
+int VirtRegMap::getEmergencySpillSlot(const TargetRegisterClass *RC) {
+  std::map<const TargetRegisterClass*, int>::iterator I =
+    EmergencySpillSlots.find(RC);
+  if (I != EmergencySpillSlots.end())
+    return I->second;
+  int SS = MF.getFrameInfo()->CreateStackObject(RC->getSize(),
+                                                RC->getAlignment());
+  if (LowSpillSlot == NO_STACK_SLOT)
+    LowSpillSlot = SS;
+  if (HighSpillSlot == NO_STACK_SLOT || SS > HighSpillSlot)
+    HighSpillSlot = SS;
+  I->second = SS;
+  return SS;
+}
+
 void VirtRegMap::addSpillSlotUse(int FI, MachineInstr *MI) {
   if (!MF.getFrameInfo()->isFixedObjectIndex(FI)) {
     assert(FI >= 0 && "Spill slot index should not be negative!");
@@ -164,6 +179,7 @@ void VirtRegMap::RemoveMachineInstrFromMaps(MachineInstr *MI) {
   MI2VirtMap.erase(MI);
   SpillPt2VirtMap.erase(MI);
   RestorePt2VirtMap.erase(MI);
+  EmergencySpillMap.erase(MI);
 }
 
 void VirtRegMap::print(std::ostream &OS) const {
@@ -1042,6 +1058,30 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
 
     MachineInstr &MI = *MII;
     const TargetInstrDesc &TID = MI.getDesc();
+
+    if (VRM.hasEmergencySpills(&MI)) {
+      // Spill physical register(s) in the rare case the allocator has run out
+      // of registers to allocate.
+      SmallSet<int, 4> UsedSS;
+      std::vector<unsigned> &EmSpills = VRM.getEmergencySpills(&MI);
+      for (unsigned i = 0, e = EmSpills.size(); i != e; ++i) {
+        unsigned PhysReg = EmSpills[i];
+        const TargetRegisterClass *RC =
+          TRI->getPhysicalRegisterRegClass(PhysReg);
+        assert(RC && "Unable to determine register class!");
+        int SS = VRM.getEmergencySpillSlot(RC);
+        if (UsedSS.count(SS))
+          assert(0 && "Need to spill more than one physical registers!");
+        UsedSS.insert(SS);
+        TII->storeRegToStackSlot(MBB, MII, PhysReg, true, SS, RC);
+        MachineInstr *StoreMI = prior(MII);
+        VRM.addSpillSlotUse(SS, StoreMI);
+        TII->loadRegFromStackSlot(MBB, next(MII), PhysReg, SS, RC);
+        MachineInstr *LoadMI = next(MII);
+        VRM.addSpillSlotUse(SS, LoadMI);
+        ++NumSpills;
+      }
+    }
 
     // Insert restores here if asked to.
     if (VRM.isRestorePt(&MI)) {

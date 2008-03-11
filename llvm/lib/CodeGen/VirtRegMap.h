@@ -93,6 +93,17 @@ namespace llvm {
     /// splitting.
     std::map<MachineInstr*, std::vector<unsigned> > RestorePt2VirtMap;
 
+    /// EmergencySpillMap - This records the physical registers that should
+    /// be spilled / restored around the MachineInstr since the register
+    /// allocator has run out of registers.
+    std::map<MachineInstr*, std::vector<unsigned> > EmergencySpillMap;
+
+    /// EmergencySpillSlots - This records emergency spill slots used to
+    /// spill physical registers when the register allocator runs out of
+    /// registers. Ideally only one stack slot is used per function per
+    /// register class.
+    std::map<const TargetRegisterClass*, int> EmergencySpillSlots;
+
     /// ReMatId - Instead of assigning a stack slot to a to be rematerialized
     /// virtual register, an unique id is being assigned. This keeps track of
     /// the highest id used so far. Note, this starts at (1<<18) to avoid
@@ -293,6 +304,8 @@ namespace llvm {
       }
     }
 
+    /// @brief - transfer restore point information from one instruction to
+    /// another.
     void transferRestorePts(MachineInstr *Old, MachineInstr *New) {
       std::map<MachineInstr*,std::vector<unsigned> >::iterator I =
         RestorePt2VirtMap.find(Old);
@@ -305,6 +318,33 @@ namespace llvm {
       }
       RestorePt2VirtMap.erase(I);
     }
+
+    /// @brief records that the specified physical register must be spilled
+    /// around the specified machine instr.
+    void addEmergencySpill(unsigned PhysReg, MachineInstr *MI) {
+      if (EmergencySpillMap.find(MI) != EmergencySpillMap.end())
+        EmergencySpillMap[MI].push_back(PhysReg);
+      else {
+        std::vector<unsigned> PhysRegs;
+        PhysRegs.push_back(PhysReg);
+        EmergencySpillMap.insert(std::make_pair(MI, PhysRegs));
+      }
+    }
+
+    /// @brief returns true if one or more physical registers must be spilled
+    /// around the specified instruction.
+    bool hasEmergencySpills(MachineInstr *MI) const {
+      return EmergencySpillMap.find(MI) != EmergencySpillMap.end();
+    }
+
+    /// @brief returns the physical registers to be spilled and restored around
+    /// the instruction.
+    std::vector<unsigned> &getEmergencySpills(MachineInstr *MI) {
+      return EmergencySpillMap[MI];
+    }
+
+    /// @brief return or get a emergency spill slot for the register class.
+    int getEmergencySpillSlot(const TargetRegisterClass *RC);
 
     /// @brief Return lowest spill slot index.
     int getLowSpillSlot() const {

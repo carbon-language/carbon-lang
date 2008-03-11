@@ -282,10 +282,24 @@ namespace llvm {
     addIntervalsForSpills(const LiveInterval& i,
                           const MachineLoopInfo *loopInfo, VirtRegMap& vrm);
 
+    /// spillPhysRegAroundRegDefsUses - Spill the specified physical register
+    /// around all defs and uses of the specified interval.
+    void spillPhysRegAroundRegDefsUses(const LiveInterval &li,
+                                       unsigned PhysReg, VirtRegMap &vrm);
+
     /// isReMaterializable - Returns true if every definition of MI of every
     /// val# of the specified interval is re-materializable. Also returns true
     /// by reference if all of the defs are load instructions.
     bool isReMaterializable(const LiveInterval &li, bool &isLoad);
+
+    /// getRepresentativeReg - Find the largest super register of the specified
+    /// physical register.
+    unsigned getRepresentativeReg(unsigned Reg) const;
+
+    /// getNumConflictsWithPhysReg - Return the number of uses and defs of the
+    /// specified interval that conflicts with the specified physical register.
+    unsigned getNumConflictsWithPhysReg(const LiveInterval &li,
+                                        unsigned PhysReg) const;
 
   private:      
     /// computeIntervals - Compute live intervals.
@@ -359,6 +373,10 @@ namespace llvm {
     /// intervalIsInOneMBB - Returns true if the specified interval is entirely
     /// within a single basic block.
     bool intervalIsInOneMBB(const LiveInterval &li) const;
+
+    /// hasAllocatableSuperReg - Return true if the specified physical register
+    /// has any super register that's allocatable.
+    bool hasAllocatableSuperReg(unsigned Reg) const;
 
     /// SRInfo - Spill / restore info.
     struct SRInfo {

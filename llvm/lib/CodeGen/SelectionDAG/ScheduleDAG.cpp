@@ -61,7 +61,7 @@ static void CheckForPhysRegDependency(SDNode *Def, SDNode *Use, unsigned Op,
         II.ImplicitDefs[ResNo - II.getNumDefs()] == Reg) {
       PhysReg = Reg;
       const TargetRegisterClass *RC =
-        TRI->getPhysicalRegisterRegClass(Def->getValueType(ResNo), Reg);
+        TRI->getPhysicalRegisterRegClass(Reg, Def->getValueType(ResNo));
       Cost = RC->getCopyCost();
     }
   }
@@ -433,7 +433,7 @@ void ScheduleDAG::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
   }
 
   const TargetRegisterClass *SrcRC = 0, *DstRC = 0;
-  SrcRC = TRI->getPhysicalRegisterRegClass(Node->getValueType(ResNo), SrcReg);
+  SrcRC = TRI->getPhysicalRegisterRegClass(SrcReg, Node->getValueType(ResNo));
   
   // Figure out the register class to create for the destreg.
   if (VRBase) {
@@ -862,14 +862,13 @@ void ScheduleDAG::EmitNode(SDNode *Node, unsigned InstanceNo,
       if (TargetRegisterInfo::isVirtualRegister(SrcReg))
         SrcTRC = RegInfo.getRegClass(SrcReg);
       else
-        SrcTRC = TRI->getPhysicalRegisterRegClass(SrcVal.getValueType(),SrcReg);
+        SrcTRC = TRI->getPhysicalRegisterRegClass(SrcReg,SrcVal.getValueType());
 
       if (TargetRegisterInfo::isVirtualRegister(DestReg))
         DstTRC = RegInfo.getRegClass(DestReg);
       else
-        DstTRC = TRI->getPhysicalRegisterRegClass(
-                                            Node->getOperand(1).getValueType(),
-                                                  DestReg);
+        DstTRC = TRI->getPhysicalRegisterRegClass(DestReg,
+                                            Node->getOperand(1).getValueType());
       TII->copyRegToReg(*BB, BB->end(), DestReg, SrcReg, DstTRC, SrcTRC);
       break;
     }

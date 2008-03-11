@@ -1620,3 +1620,81 @@ addIntervalsForSpills(const LiveInterval &li,
 
   return RetNewLIs;
 }
+
+/// hasAllocatableSuperReg - Return true if the specified physical register has
+/// any super register that's allocatable.
+bool LiveIntervals::hasAllocatableSuperReg(unsigned Reg) const {
+  for (const unsigned* AS = tri_->getSuperRegisters(Reg); *AS; ++AS)
+    if (allocatableRegs_[*AS] && hasInterval(*AS))
+      return true;
+  return false;
+}
+
+/// getRepresentativeReg - Find the largest super register of the specified
+/// physical register.
+unsigned LiveIntervals::getRepresentativeReg(unsigned Reg) const {
+  // Find the largest super-register that is allocatable. 
+  unsigned BestReg = Reg;
+  for (const unsigned* AS = tri_->getSuperRegisters(Reg); *AS; ++AS) {
+    unsigned SuperReg = *AS;
+    if (!hasAllocatableSuperReg(SuperReg) && hasInterval(SuperReg)) {
+      BestReg = SuperReg;
+      break;
+    }
+  }
+  return BestReg;
+}
+
+/// getNumConflictsWithPhysReg - Return the number of uses and defs of the
+/// specified interval that conflicts with the specified physical register.
+unsigned LiveIntervals::getNumConflictsWithPhysReg(const LiveInterval &li,
+                                                   unsigned PhysReg) const {
+  unsigned NumConflicts = 0;
+  const LiveInterval &pli = getInterval(getRepresentativeReg(PhysReg));
+  for (MachineRegisterInfo::reg_iterator I = mri_->reg_begin(li.reg),
+         E = mri_->reg_end(); I != E; ++I) {
+    MachineOperand &O = I.getOperand();
+    MachineInstr *MI = O.getParent();
+    unsigned Index = getInstructionIndex(MI);
+    if (pli.liveAt(Index))
+      ++NumConflicts;
+  }
+  return NumConflicts;
+}
+
+/// spillPhysRegAroundRegDefsUses - Spill the specified physical register
+/// around all defs and uses of the specified interval.
+void LiveIntervals::spillPhysRegAroundRegDefsUses(const LiveInterval &li,
+                                            unsigned PhysReg, VirtRegMap &vrm) {
+  unsigned SpillReg = getRepresentativeReg(PhysReg);
+
+  for (const unsigned *AS = tri_->getAliasSet(PhysReg); *AS; ++AS)
+    // If there are registers which alias PhysReg, but which are not a
+    // sub-register of the chosen representative super register. Assert
+    // since we can't handle it yet.
+    assert(*AS == SpillReg || !allocatableRegs_[*AS] ||
+           tri_->isSuperRegister(*AS, SpillReg));
+
+  LiveInterval &pli = getInterval(SpillReg);
+  SmallPtrSet<MachineInstr*, 8> SeenMIs;
+  for (MachineRegisterInfo::reg_iterator I = mri_->reg_begin(li.reg),
+         E = mri_->reg_end(); I != E; ++I) {
+    MachineOperand &O = I.getOperand();
+    MachineInstr *MI = O.getParent();
+    if (SeenMIs.count(MI))
+      continue;
+    SeenMIs.insert(MI);
+    unsigned Index = getInstructionIndex(MI);
+    if (pli.liveAt(Index)) {
+      vrm.addEmergencySpill(SpillReg, MI);
+      pli.removeRange(getLoadIndex(Index), getStoreIndex(Index)+1);
+      for (const unsigned* AS = tri_->getSubRegisters(SpillReg); *AS; ++AS) {
+        if (!hasInterval(*AS))
+          continue;
+        LiveInterval &spli = getInterval(*AS);
+        if (spli.liveAt(Index))
+          spli.removeRange(getLoadIndex(Index), getStoreIndex(Index)+1);
+      }
+    }
+  }
+}

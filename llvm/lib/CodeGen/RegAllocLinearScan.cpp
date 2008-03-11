@@ -561,6 +561,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
   // is very bad (it contains all callee clobbered registers for any functions
   // with a call), so we want to avoid doing that if possible.
   unsigned physReg = getFreePhysReg(cur);
+  unsigned BestPhysReg = physReg;
   if (physReg) {
     // We got a register.  However, if it's in the fixed_ list, we might
     // conflict with it.  Check to see if we conflict with it or any of its
@@ -685,8 +686,27 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
     }
 
     // All registers must have inf weight. Just grab one!
-    if (!minReg)
-      minReg = *RC->allocation_order_begin(*mf_);
+    if (!minReg) {
+      if (BestPhysReg)
+        minReg = BestPhysReg;
+      else {
+        // Get the physical register with the fewest conflicts.
+        unsigned MinConflicts = ~0U;
+        for (TargetRegisterClass::iterator i = RC->allocation_order_begin(*mf_),
+               e = RC->allocation_order_end(*mf_); i != e; ++i) {
+          unsigned reg = *i;
+          unsigned NumConflicts = li_->getNumConflictsWithPhysReg(*cur, reg);
+          if (NumConflicts <= MinConflicts) {
+            MinConflicts = NumConflicts;
+            minReg = reg;
+          }
+        }
+      }
+
+      if (cur->weight == HUGE_VALF || cur->getSize() == 1)
+        // Spill a physical register around defs and uses.
+        li_->spillPhysRegAroundRegDefsUses(*cur, minReg, *vrm_);
+    }
   }
   
   DOUT << "\t\tregister with min weight: "

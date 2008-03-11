@@ -321,9 +321,10 @@ public:
   }
 
   /// getPhysicalRegisterRegClass - Returns the Register Class of a physical
-  /// register of the given type.
-  const TargetRegisterClass *getPhysicalRegisterRegClass(MVT::ValueType VT,
-                                                         unsigned Reg) const;
+  /// register of the given type. If type is MVT::Other, then just return any
+  /// register class the register belongs to.
+  const TargetRegisterClass *getPhysicalRegisterRegClass(unsigned Reg,
+                                          MVT::ValueType VT = MVT::Other) const;
 
   /// getAllocatableSet - Returns a bitset indexed by register number
   /// indicating if a register is allocatable or not. If a register class is
