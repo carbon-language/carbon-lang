@@ -531,14 +531,16 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
     
     // Verify that it is right.
     assert(TargetRegisterInfo::isVirtualRegister(VReg) && "Not a vreg?");
+#ifndef NDEBUG
     if (II) {
+      // There may be no register class for this operand if it is a variadic
+      // argument (RC will be NULL in this case).  In this case, we just assume
+      // the regclass is ok.
       const TargetRegisterClass *RC =
                           getInstrOperandRegClass(TRI, TII, *II, IIOpNum);
-      assert(RC && "Don't have operand info for this instruction!");
       const TargetRegisterClass *VRC = RegInfo.getRegClass(VReg);
-      if (VRC != RC) {
+      if (RC && VRC != RC) {
         cerr << "Register class of operand and regclass of use don't agree!\n";
-#ifndef NDEBUG
         cerr << "Operand = " << IIOpNum << "\n";
         cerr << "Op->Val = "; Op.Val->dump(&DAG); cerr << "\n";
         cerr << "MI = "; MI->print(cerr);
@@ -547,11 +549,11 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
              << ", align = " << VRC->getAlignment() << "\n";
         cerr << "Expected RegClass size = " << RC->getSize()
              << ", align = " << RC->getAlignment() << "\n";
-#endif
         cerr << "Fatal error, aborting.\n";
         abort();
       }
     }
+#endif
   } else if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op)) {
     MI->addOperand(MachineOperand::CreateImm(C->getValue()));
   } else if (ConstantFPSDNode *F = dyn_cast<ConstantFPSDNode>(Op)) {
