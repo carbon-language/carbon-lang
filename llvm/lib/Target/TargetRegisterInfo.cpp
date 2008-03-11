@@ -33,6 +33,17 @@ TargetRegisterInfo::TargetRegisterInfo(const TargetRegisterDesc *D, unsigned NR,
 
 TargetRegisterInfo::~TargetRegisterInfo() {}
 
+namespace {
+  // Sort according to super- / sub- class relations.
+  // i.e. super- register class < sub- register class.
+  struct RCCompare {
+    bool operator()(const TargetRegisterClass* const &LHS,
+                    const TargetRegisterClass* const &RHS) {
+      return RHS->hasSuperClass(LHS);
+    }
+  };
+}
+
 /// getPhysicalRegisterRegClass - Returns the Register Class of a physical
 /// register of the given type. If type is MVT::Other, then just return any
 /// register class the register belongs to.
@@ -40,11 +51,23 @@ const TargetRegisterClass *
 TargetRegisterInfo::getPhysicalRegisterRegClass(unsigned reg,
                                                 MVT::ValueType VT) const {
   assert(isPhysicalRegister(reg) && "reg must be a physical register");
+
   // Pick the register class of the right type that contains this physreg.
-  for (regclass_iterator I = regclass_begin(), E = regclass_end(); I != E; ++I)
-    if ((VT == MVT::Other || (*I)->hasType(VT))
-        && (*I)->contains(reg))
-      return *I;
+  SmallVector<const TargetRegisterClass*, 4> RCs;
+  for (regclass_iterator I = regclass_begin(), E = regclass_end(); I != E; ++I) {
+    if ((VT == MVT::Other || (*I)->hasType(VT)) && (*I)->contains(reg))
+      RCs.push_back(*I);
+  }
+
+  if (RCs.size() == 1)
+    return RCs[0];
+
+  if (RCs.size()) {
+    // Multiple compatible register classes. Get the super- class.
+    std::stable_sort(RCs.begin(), RCs.end(), RCCompare());
+    return RCs[0];
+  }
+
   assert(false && "Couldn't find the register class");
   return 0;
 }
