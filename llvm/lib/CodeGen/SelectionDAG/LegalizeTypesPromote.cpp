@@ -234,25 +234,20 @@ SDOperand DAGTypeLegalizer::PromoteResult_BIT_CONVERT(SDNode *N) {
     break;
   case Expand:
     break;
+  case FloatToInt:
+    // Promote the integer operand by hand.
+    return DAG.getNode(ISD::ANY_EXTEND, OutVT, GetIntegerOp(InOp));
   case Scalarize:
     // Convert the element to an integer and promote it by hand.
-    InOp = DAG.getNode(ISD::BIT_CONVERT,
-                       MVT::getIntegerType(MVT::getSizeInBits(InVT)),
-                       GetScalarizedOp(InOp));
-    InOp = DAG.getNode(ISD::ANY_EXTEND,
-                       MVT::getIntegerType(MVT::getSizeInBits(OutVT)), InOp);
-    return DAG.getNode(ISD::BIT_CONVERT, OutVT, InOp);
+    return DAG.getNode(ISD::ANY_EXTEND, OutVT,
+                       BitConvertToInteger(GetScalarizedOp(InOp)));
   case Split:
     // For example, i32 = BIT_CONVERT v2i16 on alpha.  Convert the split
     // pieces of the input into integers and reassemble in the final type.
     SDOperand Lo, Hi;
     GetSplitOp(N->getOperand(0), Lo, Hi);
-
-    unsigned LoBits = MVT::getSizeInBits(Lo.getValueType());
-    Lo = DAG.getNode(ISD::BIT_CONVERT, MVT::getIntegerType(LoBits), Lo);
-
-    unsigned HiBits = MVT::getSizeInBits(Hi.getValueType());
-    Hi = DAG.getNode(ISD::BIT_CONVERT, MVT::getIntegerType(HiBits), Hi);
+    Lo = BitConvertToInteger(Lo);
+    Hi = BitConvertToInteger(Hi);
 
     if (TLI.isBigEndian())
       std::swap(Lo, Hi);

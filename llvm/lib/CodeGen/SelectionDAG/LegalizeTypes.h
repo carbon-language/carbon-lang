@@ -62,6 +62,7 @@ private:
     Legal,      // The target natively supports this type.
     Promote,    // This type should be executed in a larger type.
     Expand,     // This type should be split into two types of half the size.
+    FloatToInt, // Convert a floating point type to an integer of the same size.
     Scalarize,  // Replace this one-element vector type with its element type.
     Split       // This vector type should be split into smaller vectors.
   };
@@ -85,14 +86,20 @@ private:
     case TargetLowering::Promote:
       return Promote;
     case TargetLowering::Expand:
-      // Expand can mean 1) split integer in half 2) scalarize single-element
-      // vector 3) split vector in two.
-      if (!MVT::isVector(VT))
-        return Expand;
-      else if (MVT::getVectorNumElements(VT) == 1)
+      // Expand can mean
+      // 1) split scalar in half, 2) convert a float to an integer,
+      // 3) scalarize a single-element vector, 4) split a vector in two.
+      if (!MVT::isVector(VT)) {
+        if (MVT::getSizeInBits(VT) ==
+            MVT::getSizeInBits(TLI.getTypeToTransformTo(VT)))
+          return FloatToInt;
+        else
+          return Expand;
+      } else if (MVT::getVectorNumElements(VT) == 1) {
         return Scalarize;
-      else
+      } else {
         return Split;
+      }
     }
   }
 
@@ -108,6 +115,10 @@ private:
   /// ExpandedNodes - For nodes that need to be expanded this map indicates
   /// which operands are the expanded version of the input.
   DenseMap<SDOperand, std::pair<SDOperand, SDOperand> > ExpandedNodes;
+
+  /// FloatToIntedNodes - For floating point nodes converted to integers of
+  /// the same size, this map indicates the converted value to use.
+  DenseMap<SDOperand, SDOperand> FloatToIntedNodes;
 
   /// ScalarizedNodes - For nodes that are <1 x ty>, this map indicates the
   /// scalar value of type 'ty' to use.
@@ -152,6 +163,7 @@ private:
   void RemapNode(SDOperand &N);
 
   // Common routines.
+  SDOperand BitConvertToInteger(SDOperand Op);
   SDOperand CreateStackStoreLoad(SDOperand Op, MVT::ValueType DestVT);
   SDOperand HandleMemIntrinsic(SDNode *N);
   SDOperand JoinIntegers(SDOperand Lo, SDOperand Hi);
@@ -282,6 +294,28 @@ private:
                            ISD::CondCode &CCCode);
   
   //===--------------------------------------------------------------------===//
+  // Float to Integer Conversion Support: LegalizeTypesFloatToInt.cpp
+  //===--------------------------------------------------------------------===//
+
+  SDOperand GetIntegerOp(SDOperand Op) {
+    SDOperand &IntegerOp = FloatToIntedNodes[Op];
+    RemapNode(IntegerOp);
+    assert(IntegerOp.Val && "Operand wasn't converted to integer?");
+    return IntegerOp;
+  }
+  void SetIntegerOp(SDOperand Op, SDOperand Result);
+
+  // Result Float to Integer Conversion.
+  void FloatToIntResult(SDNode *N, unsigned OpNo);
+  SDOperand FloatToIntRes_BIT_CONVERT(SDNode *N);
+  SDOperand FloatToIntRes_BUILD_PAIR(SDNode *N);
+  SDOperand FloatToIntRes_FCOPYSIGN(SDNode *N);
+
+  // Operand Float to Integer Conversion.
+  bool FloatToIntOperand(SDNode *N, unsigned OpNo);
+  SDOperand FloatToIntOp_BIT_CONVERT(SDNode *N);
+
+  //===--------------------------------------------------------------------===//
   // Scalarization Support: LegalizeTypesScalarize.cpp
   //===--------------------------------------------------------------------===//
   
@@ -336,7 +370,7 @@ private:
   void SplitRes_FPOWI(SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void SplitRes_SELECT(SDNode *N, SDOperand &Lo, SDOperand &Hi);
   
-  // Operand Vector Scalarization: <128 x ty> -> 2 x <64 x ty>.
+  // Operand Vector Splitting: <128 x ty> -> 2 x <64 x ty>.
   bool SplitOperand(SDNode *N, unsigned OpNo);
 
   SDOperand SplitOp_BIT_CONVERT(SDNode *N);

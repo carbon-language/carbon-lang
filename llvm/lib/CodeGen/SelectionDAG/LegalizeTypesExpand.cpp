@@ -260,6 +260,12 @@ void DAGTypeLegalizer::ExpandResult_BIT_CONVERT(SDNode *N,
       Lo = DAG.getNode(ISD::BIT_CONVERT, NVT, Lo);
       Hi = DAG.getNode(ISD::BIT_CONVERT, NVT, Hi);
       return;
+    case FloatToInt:
+      // Convert the integer operand instead.
+      SplitInteger(GetIntegerOp(InOp), Lo, Hi);
+      Lo = DAG.getNode(ISD::BIT_CONVERT, NVT, Lo);
+      Hi = DAG.getNode(ISD::BIT_CONVERT, NVT, Hi);
+      return;
     case Split:
       // Convert the split parts of the input if it was split in two.
       GetSplitOp(InOp, Lo, Hi);
@@ -273,10 +279,7 @@ void DAGTypeLegalizer::ExpandResult_BIT_CONVERT(SDNode *N,
       break;
     case Scalarize:
       // Convert the element instead.
-      InOp = DAG.getNode(ISD::BIT_CONVERT,
-                         MVT::getIntegerType(MVT::getSizeInBits(InVT)),
-                         GetScalarizedOp(InOp));
-      SplitInteger(InOp, Lo, Hi);
+      SplitInteger(BitConvertToInteger(GetScalarizedOp(InOp)), Lo, Hi);
       Lo = DAG.getNode(ISD::BIT_CONVERT, NVT, Lo);
       Hi = DAG.getNode(ISD::BIT_CONVERT, NVT, Hi);
       return;

@@ -263,6 +263,7 @@ void DAGTypeLegalizer::SplitRes_BIT_CONVERT(SDNode *N,
   default:
     assert(false && "Unknown type action!");
   case Legal:
+  case FloatToInt:
   case Promote:
   case Scalarize:
     break;
@@ -289,15 +290,12 @@ void DAGTypeLegalizer::SplitRes_BIT_CONVERT(SDNode *N,
   }
 
   // In the general case, convert the input to an integer and split it by hand.
-  InVT = MVT::getIntegerType(MVT::getSizeInBits(InVT));
-  InOp = DAG.getNode(ISD::BIT_CONVERT, InVT, InOp);
-
   MVT::ValueType LoIntVT = MVT::getIntegerType(MVT::getSizeInBits(LoVT));
   MVT::ValueType HiIntVT = MVT::getIntegerType(MVT::getSizeInBits(HiVT));
   if (TLI.isBigEndian())
     std::swap(LoIntVT, HiIntVT);
 
-  SplitInteger(InOp, LoIntVT, HiIntVT, Lo, Hi);
+  SplitInteger(BitConvertToInteger(InOp), LoIntVT, HiIntVT, Lo, Hi);
 
   if (TLI.isBigEndian())
     std::swap(Lo, Hi);
@@ -444,12 +442,8 @@ SDOperand DAGTypeLegalizer::SplitOp_BIT_CONVERT(SDNode *N) {
   // split pieces into integers and reassemble.
   SDOperand Lo, Hi;
   GetSplitOp(N->getOperand(0), Lo, Hi);
-
-  unsigned LoBits = MVT::getSizeInBits(Lo.getValueType());
-  Lo = DAG.getNode(ISD::BIT_CONVERT, MVT::getIntegerType(LoBits), Lo);
-
-  unsigned HiBits = MVT::getSizeInBits(Hi.getValueType());
-  Hi = DAG.getNode(ISD::BIT_CONVERT, MVT::getIntegerType(HiBits), Hi);
+  Lo = BitConvertToInteger(Lo);
+  Hi = BitConvertToInteger(Hi);
 
   if (TLI.isBigEndian())
     std::swap(Lo, Hi);

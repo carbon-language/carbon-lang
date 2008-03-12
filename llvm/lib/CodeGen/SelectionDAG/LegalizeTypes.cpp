@@ -79,6 +79,9 @@ void DAGTypeLegalizer::run() {
       case Expand:
         ExpandResult(N, i);
         goto NodeDone;
+      case FloatToInt:
+        FloatToIntResult(N, i);
+        goto NodeDone;
       case Scalarize:
         ScalarizeResult(N, i);
         goto NodeDone;
@@ -105,6 +108,9 @@ void DAGTypeLegalizer::run() {
         break;
       case Expand:
         NeedsRevisit = ExpandOperand(N, i);
+        break;
+      case FloatToInt:
+        NeedsRevisit = FloatToIntOperand(N, i);
         break;
       case Scalarize:
         NeedsRevisit = ScalarizeOperand(N, i);
@@ -355,6 +361,14 @@ void DAGTypeLegalizer::SetPromotedOp(SDOperand Op, SDOperand Result) {
   OpEntry = Result;
 }
 
+void DAGTypeLegalizer::SetIntegerOp(SDOperand Op, SDOperand Result) {
+  AnalyzeNewNode(Result.Val);
+
+  SDOperand &OpEntry = FloatToIntedNodes[Op];
+  assert(OpEntry.Val == 0 && "Node is already converted to integer!");
+  OpEntry = Result;
+}
+
 void DAGTypeLegalizer::SetScalarizedOp(SDOperand Op, SDOperand Result) {
   AnalyzeNewNode(Result.Val);
 
@@ -362,7 +376,6 @@ void DAGTypeLegalizer::SetScalarizedOp(SDOperand Op, SDOperand Result) {
   assert(OpEntry.Val == 0 && "Node is already scalarized!");
   OpEntry = Result;
 }
-
 
 void DAGTypeLegalizer::GetExpandedOp(SDOperand Op, SDOperand &Lo, 
                                      SDOperand &Hi) {
@@ -407,6 +420,13 @@ void DAGTypeLegalizer::SetSplitOp(SDOperand Op, SDOperand Lo, SDOperand Hi) {
   Entry.second = Hi;
 }
 
+
+/// BitConvertToInteger - Convert to an integer of the same size.
+SDOperand DAGTypeLegalizer::BitConvertToInteger(SDOperand Op) {
+  return DAG.getNode(ISD::BIT_CONVERT,
+                     MVT::getIntegerType(MVT::getSizeInBits(Op.getValueType())),
+                     Op);
+}
 
 SDOperand DAGTypeLegalizer::CreateStackStoreLoad(SDOperand Op, 
                                                  MVT::ValueType DestVT) {
