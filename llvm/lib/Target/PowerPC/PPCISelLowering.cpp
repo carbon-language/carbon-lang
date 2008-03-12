@@ -1535,9 +1535,11 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op,
         }
         ++VR_idx;
       } else {
-        // This should be simple, but requires getting 16-byte aligned stack
-        // values.
-        assert(0 && "Loading VR argument not implemented yet!");
+        // Stack offset is aligned.
+        while (ArgOffset % 16 !=0) {
+          ArgOffset += PtrByteSize;
+        }
+        ArgOffset += 16;
         needsLoad = true;
       }
       break;
