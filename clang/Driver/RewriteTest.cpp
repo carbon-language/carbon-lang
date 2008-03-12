@@ -2195,8 +2195,7 @@ void RewriteTest::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
       Result += RCDecl->getName();
       Result += "_IMPL ";
       Result += RCDecl->getName();
-      Result += "_IVARS";
-      Result += ";\n";
+      Result += "_IVARS;\n";
       
       // insert the super class structure definition.
       SourceLocation OnePastCurly =
@@ -2241,8 +2240,7 @@ void RewriteTest::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
     Result += RCDecl->getName();
     Result += "_IMPL ";
     Result += RCDecl->getName();
-    Result += "_IVARS";
-    Result += ";\n};\n";
+    Result += "_IVARS;\n};\n";
     ReplaceText(LocStart, endBuf-startBuf, Result.c_str(), Result.size());
   }
   // Mark this struct as having been generated.
