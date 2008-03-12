@@ -1125,7 +1125,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         TII->storeRegToStackSlot(MBB, next(MII), Phys, isKill, StackSlot, RC);
         MachineInstr *StoreMI = next(MII);
         VRM.addSpillSlotUse(StackSlot, StoreMI);
-        DOUT << "Store:\t" << StoreMI;
+        DOUT << "Store:\t" << *StoreMI;
         VRM.virtFolded(VirtReg, StoreMI, VirtRegMap::isMod);
       }
       NextMII = next(MII);
