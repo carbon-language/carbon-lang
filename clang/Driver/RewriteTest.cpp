@@ -654,11 +654,12 @@ void RewriteTest::RewriteObjCMethodDecl(ObjCMethodDecl *OMD,
   if (OMD->isInstance()) {
     QualType selfTy = Context->getObjCInterfaceType(OMD->getClassInterface());
     selfTy = Context->getPointerType(selfTy);
-    if (ObjCSynthesizedStructs.count(OMD->getClassInterface()))
-      ResultStr += "struct ";
+    if (!LangOpts.Microsoft) {
+      if (ObjCSynthesizedStructs.count(OMD->getClassInterface()))
+        ResultStr += "struct ";
+    }
+    // When rewriting for Microsoft, explicitly omit the structure name.
     ResultStr += OMD->getClassInterface()->getName();
-    if (LangOpts.Microsoft)
-      ResultStr += "_IMPL";
     ResultStr += " *";
   }
   else
@@ -759,40 +760,43 @@ void RewriteTest::RewriteInterfaceDecl(ObjCInterfaceDecl *ClassDecl) {
   ReplaceText(ClassDecl->getAtEndLoc(), 0, "// ", 3);
 }
 
+/// FIXME: Investigate the following comment...
+/// This code is not right. It seems unnecessary. It breaks use of 
+/// ivar reference used as 'receiver' of an expression; as in:
+/// [newInv->_container addObject:0];
 Stmt *RewriteTest::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
   ObjCIvarDecl *D = IV->getDecl();
-  if (IV->isFreeIvar()) {
-    Expr *Replacement = new MemberExpr(IV->getBase(), true, D, 
-                                       IV->getLocation(), D->getType());
-    ReplaceStmt(IV, Replacement);
-    delete IV;
-    return Replacement;
-  } else {
-#if 0
-    /// This code is not right. It seems unnecessary. It breaks use of 
-    /// ivar reference used as 'receiver' of an expression; as in:
-    /// [newInv->_container addObject:0];
-    if (CurMethodDecl) {
-      if (const PointerType *pType = IV->getBase()->getType()->getAsPointerType()) {
-        ObjCInterfaceType *intT = dyn_cast<ObjCInterfaceType>(pType->getPointeeType());
-        if (CurMethodDecl->getClassInterface() == intT->getDecl()) {
-          IdentifierInfo *II = intT->getDecl()->getIdentifier();
-          RecordDecl *RD = new RecordDecl(Decl::Struct, SourceLocation(),
-                                          II, 0);
-          QualType castT = Context->getPointerType(Context->getTagDeclType(RD));
-          
-          CastExpr *castExpr = new CastExpr(castT, IV->getBase(), SourceLocation());
-          // Don't forget the parens to enforce the proper binding.
-          ParenExpr *PE = new ParenExpr(SourceLocation(), SourceLocation(), castExpr);
+  if (CurMethodDecl) {
+    if (const PointerType *pType = IV->getBase()->getType()->getAsPointerType()) {
+      ObjCInterfaceType *intT = dyn_cast<ObjCInterfaceType>(pType->getPointeeType());
+      if (CurMethodDecl->getClassInterface() == intT->getDecl()) {
+        std::string RecName = intT->getDecl()->getIdentifier()->getName();
+        RecName += "_IMPL";
+        IdentifierInfo *II = &Context->Idents.get(RecName.c_str());
+        RecordDecl *RD = new RecordDecl(Decl::Struct, SourceLocation(), II, 0);
+        assert(RD && "RewriteObjCIvarRefExpr(): Can't find RecordDecl");
+        QualType castT = Context->getPointerType(Context->getTagDeclType(RD));
+        CastExpr *castExpr = new CastExpr(castT, IV->getBase(), SourceLocation());
+        // Don't forget the parens to enforce the proper binding.
+        ParenExpr *PE = new ParenExpr(SourceLocation(), SourceLocation(), castExpr);
+        if (IV->isFreeIvar()) {
+          MemberExpr *ME = new MemberExpr(PE, true, D, IV->getLocation(), D->getType());
+          ReplaceStmt(IV, ME);
+          delete IV;
+          return ME;
+        } else {
           ReplaceStmt(IV->getBase(), PE);
           delete IV->getBase();
           return PE;
         }
       }
     }
-#endif
-    return IV;
   }
+  Expr *Replacement = new MemberExpr(IV->getBase(), true, D, 
+                                     IV->getLocation(), D->getType());
+  ReplaceStmt(IV, Replacement);
+  delete IV;
+  return Replacement;
 }
 
 //===----------------------------------------------------------------------===//
@@ -2169,7 +2173,7 @@ void RewriteTest::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
   Result += CDecl->getName();
   if (LangOpts.Microsoft)
     Result += "_IMPL";
-  
+
   if (NumIvars > 0) {
     const char *cursor = strchr(startBuf, '{');
     assert((cursor && endBuf) 
@@ -2182,6 +2186,7 @@ void RewriteTest::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
       Result += RCDecl->getName();
       if (LangOpts.Microsoft)
         Result += "_IMPL";
+
       // Note: We don't name the field decl. This simplifies the "codegen" for
       // accessing a superclasses instance variables (and is similar to what gcc
       // does internally). The unnamed struct field feature is enabled with
@@ -2232,6 +2237,7 @@ void RewriteTest::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
     Result += RCDecl->getName();
     if (LangOpts.Microsoft)
       Result += "_IMPL";
+
     // Note: We don't name the field decl. This simplifies the "codegen" for
     // accessing a superclasses instance variables (and is similar to what gcc
     // does internally). The unnamed struct field feature is enabled with
