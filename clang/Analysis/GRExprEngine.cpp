@@ -177,7 +177,7 @@ void GRExprEngine::ProcessBranch(Expr* Condition, Stmt* Term,
 
   // Process the true branch.
 
-  bool isFeasible = true;  
+  bool isFeasible = false;  
   ValueState* St = Assume(PrevState, V, true, isFeasible);
 
   if (isFeasible)
@@ -300,8 +300,8 @@ void GRExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
       RVal Res = EvalBinOp(BinaryOperator::EQ, CondV, CaseVal);
       
       // Now "assume" that the case matches.
-      bool isFeasible = false;
       
+      bool isFeasible = false;      
       ValueState* StNew = Assume(St, Res, true, isFeasible);
       
       if (isFeasible) {
@@ -317,6 +317,7 @@ void GRExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
       // Now "assume" that the case doesn't match.  Add this state
       // to the default state (if it is feasible).
       
+      isFeasible = false;
       StNew = Assume(DefaultSt, Res, false, isFeasible);
       
       if (isFeasible)
@@ -1114,10 +1115,27 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
             continue;
           }
           
+          // EXPERIMENTAL: "Conjured" symbols.
+          
+          if (RightV.isUnknown()) {            
+            unsigned Count = Builder->getCurrentBlockCount();
+            SymbolID Sym = SymMgr.getConjuredSymbol(B->getRHS(), Count);
+            
+            RightV = B->getRHS()->getType()->isPointerType() 
+                     ? cast<RVal>(lval::SymbolVal(Sym)) 
+                     : cast<RVal>(nonlval::SymbolVal(Sym));            
+          }
+          
+          // Even if the LHS evaluates to an unknown L-Value, the entire
+          // expression still evaluates to the RHS.
+          
           if (LeftV.isUnknown()) {
             St = SetRVal(St, B, RightV);
             break;
           }
+          
+          // Simulate the effects of a "store":  bind the value of the RHS
+          // to the L-Value represented by the LHS.
 
           St = SetRVal(SetRVal(St, B, RightV), cast<LVal>(LeftV), RightV);
           break;
@@ -1531,6 +1549,7 @@ GRExprEngine::AssumeSymInt(ValueState* St, bool Assumption,
   switch (C.getOpcode()) {
     default:
       // No logic yet for other operators.
+      isFeasible = true;
       return St;
       
     case BinaryOperator::EQ:

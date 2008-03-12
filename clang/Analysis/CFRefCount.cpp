@@ -588,7 +588,7 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
     
     if (CE->getType() != Eng.getContext().VoidTy) {    
       unsigned Count = Builder.getCurrentBlockCount();
-      SymbolID Sym = Eng.getSymbolManager().getCallRetValSymbol(CE, Count);
+      SymbolID Sym = Eng.getSymbolManager().getConjuredSymbol(CE, Count);
       
       RVal X = CE->getType()->isPointerType() 
       ? cast<RVal>(lval::SymbolVal(Sym)) 
@@ -664,7 +664,7 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
       
     case RetEffect::OwnedSymbol: {
       unsigned Count = Builder.getCurrentBlockCount();
-      SymbolID Sym = Eng.getSymbolManager().getCallRetValSymbol(CE, Count);
+      SymbolID Sym = Eng.getSymbolManager().getConjuredSymbol(CE, Count);
 
       ValueState StImpl = *St;
       RefBindings B = GetRefBindings(StImpl);
@@ -679,7 +679,7 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
       
     case RetEffect::NotOwnedSymbol: {
       unsigned Count = Builder.getCurrentBlockCount();
-      SymbolID Sym = Eng.getSymbolManager().getCallRetValSymbol(CE, Count);
+      SymbolID Sym = Eng.getSymbolManager().getConjuredSymbol(CE, Count);
       
       ValueState StImpl = *St;
       RefBindings B = GetRefBindings(StImpl);

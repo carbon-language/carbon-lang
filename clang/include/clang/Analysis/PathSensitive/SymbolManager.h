@@ -69,7 +69,7 @@ namespace clang {
   
 class SymbolData : public llvm::FoldingSetNode {
 public:
-  enum Kind { UndefKind, ParmKind, GlobalKind, ContentsOfKind, CallRetValKind };
+  enum Kind { UndefKind, ParmKind, GlobalKind, ContentsOfKind, ConjuredKind };
   
 private:
   Kind K;
@@ -165,32 +165,32 @@ public:
   }  
 };
   
-class SymbolDataCallRetVal : public SymbolData {
-  CallExpr* CE;
+class SymbolConjured : public SymbolData {
+  Expr* E;
   unsigned Count;
 
 public:
-  SymbolDataCallRetVal(SymbolID Sym, CallExpr* ce, unsigned count)
-    : SymbolData(CallRetValKind, Sym), CE(ce), Count(count) {}
+  SymbolConjured(SymbolID Sym, Expr* exp, unsigned count)
+    : SymbolData(ConjuredKind, Sym), E(exp), Count(count) {}
   
-  CallExpr* getCallExpr() const { return CE; }
+  Expr* getExpr() const { return E; }
   unsigned getCount() const { return Count; }  
   
   static void Profile(llvm::FoldingSetNodeID& profile,
-                      CallExpr* CE, unsigned Count) {
+                      Expr* E, unsigned Count) {
     
-    profile.AddInteger((unsigned) CallRetValKind);
-    profile.AddPointer(CE);
+    profile.AddInteger((unsigned) ConjuredKind);
+    profile.AddPointer(E);
     profile.AddInteger(Count);
   }
   
   virtual void Profile(llvm::FoldingSetNodeID& profile) {
-    Profile(profile, CE, Count);
+    Profile(profile, E, Count);
   }
   
   // Implement isa<T> support.
   static inline bool classof(const SymbolData* D) {
-    return D->getKind() == CallRetValKind;
+    return D->getKind() == ConjuredKind;
   }  
 };
 
@@ -243,7 +243,7 @@ public:
   
   SymbolID getSymbol(VarDecl* D);
   SymbolID getContentsOfSymbol(SymbolID sym);
-  SymbolID getCallRetValSymbol(CallExpr* CE, unsigned VisitCount);
+  SymbolID getConjuredSymbol(Expr* E, unsigned VisitCount);
   
   const SymbolData& getSymbolData(SymbolID ID) const;
   

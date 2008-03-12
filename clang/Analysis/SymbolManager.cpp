@@ -72,10 +72,10 @@ SymbolID SymbolManager::getContentsOfSymbol(SymbolID sym) {
   return SymbolCounter++;
 }
   
-SymbolID SymbolManager::getCallRetValSymbol(CallExpr* CE, unsigned Count) {
+SymbolID SymbolManager::getConjuredSymbol(Expr* E, unsigned Count) {
   
   llvm::FoldingSetNodeID profile;
-  SymbolDataCallRetVal::Profile(profile, CE, Count);
+  SymbolConjured::Profile(profile, E, Count);
   void* InsertPos;
   
   SymbolData* SD = DataSet.FindNodeOrInsertPos(profile, InsertPos);
@@ -83,8 +83,8 @@ SymbolID SymbolManager::getCallRetValSymbol(CallExpr* CE, unsigned Count) {
   if (SD)
     return SD->getSymbol();
   
-  SD = (SymbolData*) BPAlloc.Allocate<SymbolDataCallRetVal>();
-  new (SD) SymbolDataCallRetVal(SymbolCounter, CE, Count);
+  SD = (SymbolData*) BPAlloc.Allocate<SymbolConjured>();
+  new (SD) SymbolConjured(SymbolCounter, E, Count);
   
   DataSet.InsertNode(SD, InsertPos);  
   DataMap[SymbolCounter] = SD;
@@ -116,8 +116,8 @@ QualType SymbolData::getType(const SymbolManager& SymMgr) const {
       return T->getAsPointerType()->getPointeeType();
     }
       
-    case CallRetValKind:
-      return cast<SymbolDataCallRetVal>(this)->getCallExpr()->getType();
+    case ConjuredKind:
+      return cast<SymbolConjured>(this)->getExpr()->getType();
   }
 }
 
