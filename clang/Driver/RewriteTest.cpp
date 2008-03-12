@@ -774,7 +774,11 @@ Stmt *RewriteTest::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
     if (const PointerType *pType = IV->getBase()->getType()->getAsPointerType()) {
       ObjCInterfaceType *intT = dyn_cast<ObjCInterfaceType>(pType->getPointeeType());
       if (CurMethodDecl->getClassInterface() == intT->getDecl()) {
-        std::string RecName = intT->getDecl()->getIdentifier()->getName();
+        // lookup which class implements the instance variable.
+        ObjCInterfaceDecl *clsDeclared = 0;
+        intT->getDecl()->lookupInstanceVariable(D->getIdentifier(), clsDeclared);
+        assert(clsDeclared && "RewriteObjCIvarRefExpr(): Can't find class");
+        std::string RecName = clsDeclared->getIdentifier()->getName();
         RecName += "_IMPL";
         IdentifierInfo *II = &Context->Idents.get(RecName.c_str());
         RecordDecl *RD = new RecordDecl(Decl::Struct, SourceLocation(), II, 0);
@@ -2189,14 +2193,9 @@ void RewriteTest::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
     if (RCDecl && ObjCSynthesizedStructs.count(RCDecl)) {
       Result = "\n    struct ";
       Result += RCDecl->getName();
-      if (LangOpts.Microsoft)
-        Result += "_IMPL";
-
-      // Note: We don't name the field decl. This simplifies the "codegen" for
-      // accessing a superclasses instance variables (and is similar to what gcc
-      // does internally). The unnamed struct field feature is enabled with
-      // -fms-extensions. If the struct definition were "inlined", we wouldn't
-      // need to use this switch. That said, I don't want to inline the def.
+      Result += "_IMPL ";
+      Result += RCDecl->getName();
+      Result += "_IVARS";
       Result += ";\n";
       
       // insert the super class structure definition.
@@ -2240,14 +2239,9 @@ void RewriteTest::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
     endBuf += Lexer::MeasureTokenLength(LocEnd, *SM);
     Result += " {\n    struct ";
     Result += RCDecl->getName();
-    if (LangOpts.Microsoft)
-      Result += "_IMPL";
-
-    // Note: We don't name the field decl. This simplifies the "codegen" for
-    // accessing a superclasses instance variables (and is similar to what gcc
-    // does internally). The unnamed struct field feature is enabled with
-    // -fms-extensions. If the struct definition were "inlined", we wouldn't
-    // need to use this switch. That said, I don't want to inline the def.
+    Result += "_IMPL ";
+    Result += RCDecl->getName();
+    Result += "_IVARS";
     Result += ";\n};\n";
     ReplaceText(LocStart, endBuf-startBuf, Result.c_str(), Result.size());
   }
