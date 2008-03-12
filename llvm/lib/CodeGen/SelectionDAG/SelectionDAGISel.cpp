@@ -852,19 +852,25 @@ static void getCopyToParts(SelectionDAG &DAG,
 
     // The number of parts is a power of 2.  Repeatedly bisect the value using
     // EXTRACT_ELEMENT.
-    Parts[0] = Val;
+    Parts[0] = DAG.getNode(ISD::BIT_CONVERT,
+                           MVT::getIntegerType(MVT::getSizeInBits(ValueVT)),
+                           Val);
     for (unsigned StepSize = NumParts; StepSize > 1; StepSize /= 2) {
       for (unsigned i = 0; i < NumParts; i += StepSize) {
         unsigned ThisBits = StepSize * PartBits / 2;
-        MVT::ValueType ThisVT =
-          ThisBits == PartBits ? PartVT : MVT::getIntegerType (ThisBits);
+        MVT::ValueType ThisVT = MVT::getIntegerType (ThisBits);
+        SDOperand &Part0 = Parts[i];
+        SDOperand &Part1 = Parts[i+StepSize/2];
 
-        Parts[i+StepSize/2] =
-          DAG.getNode(ISD::EXTRACT_ELEMENT, ThisVT, Parts[i],
-                      DAG.getConstant(1, PtrVT));
-        Parts[i] =
-          DAG.getNode(ISD::EXTRACT_ELEMENT, ThisVT, Parts[i],
-                      DAG.getConstant(0, PtrVT));
+        Part1 = DAG.getNode(ISD::EXTRACT_ELEMENT, ThisVT, Part0,
+                            DAG.getConstant(1, PtrVT));
+        Part0 = DAG.getNode(ISD::EXTRACT_ELEMENT, ThisVT, Part0,
+                            DAG.getConstant(0, PtrVT));
+
+        if (ThisBits == PartBits && ThisVT != PartVT) {
+          Part0 = DAG.getNode(ISD::BIT_CONVERT, PartVT, Part0);
+          Part1 = DAG.getNode(ISD::BIT_CONVERT, PartVT, Part1);
+        }
       }
     }
 

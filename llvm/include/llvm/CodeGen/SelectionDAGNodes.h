@@ -217,10 +217,10 @@ namespace ISD {
     /// alignment '1' in other argument pieces.
     CALL,
 
-    // EXTRACT_ELEMENT - This is used to get the first or second (determined by
-    // a Constant, which is required to be operand #1), element of the aggregate
-    // value specified as operand #0.  This is only for use before legalization,
-    // for values that will be broken into multiple registers.
+    // EXTRACT_ELEMENT - This is used to get the lower or upper (determined by
+    // a Constant, which is required to be operand #1) half of the integer value
+    // specified as operand #0.  This is only for use before legalization, for
+    // values that will be broken into multiple registers.
     EXTRACT_ELEMENT,
 
     // BUILD_PAIR - This is the opposite of EXTRACT_ELEMENT in some ways.  Given
