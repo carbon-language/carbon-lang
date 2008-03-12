@@ -136,6 +136,7 @@ namespace  {
     void VisitObjCMessageExpr(ObjCMessageExpr* Node);
     void VisitObjCSelectorExpr(ObjCSelectorExpr *Node);
     void VisitObjCProtocolExpr(ObjCProtocolExpr *Node);
+    void VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node);
   };
 }
 
@@ -290,6 +291,13 @@ void StmtDumper::VisitDeclRefExpr(DeclRefExpr *Node) {
     default: fprintf(F,"Decl"); break;
   }
   
+  fprintf(F, "='%s' %p", Node->getDecl()->getName(), (void*)Node->getDecl());
+}
+
+void StmtDumper::VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node) {
+  DumpExpr(Node->getBase());
+
+  fprintf(F, " ObjCIvarRefExpr");
   fprintf(F, "='%s' %p", Node->getDecl()->getName(), (void*)Node->getDecl());
 }
 

@@ -281,7 +281,9 @@ void RewriteTest::Initialize(ASTContext &context) {
   S += "typedef struct objc_object Protocol;\n";
   S += "#define _REWRITER_typedef_Protocol\n";
   S += "#endif\n";
-  S += "extern struct objc_object *objc_msgSend";
+  if (LangOpts.Microsoft) 
+    S += "extern \"C\" {\n";
+  S += "struct objc_object *objc_msgSend";
   S += "(struct objc_object *, struct objc_selector *, ...);\n";
   S += "extern struct objc_object *objc_msgSendSuper";
   S += "(struct objc_super *, struct objc_selector *, ...);\n";
@@ -291,7 +293,7 @@ void RewriteTest::Initialize(ASTContext &context) {
   S += "(struct objc_super *, struct objc_selector *, ...);\n";
   S += "extern struct objc_object *objc_msgSend_fpret";
   S += "(struct objc_object *, struct objc_selector *, ...);\n";
-  S += "extern struct objc_object *objc_getClass";
+  S += "struct objc_object *objc_getClass";
   S += "(const char *);\n";
   S += "extern struct objc_object *objc_getMetaClass";
   S += "(const char *);\n";
@@ -302,6 +304,8 @@ void RewriteTest::Initialize(ASTContext &context) {
   S += "extern int objc_exception_match";
   S += "(struct objc_class *, struct objc_object *, ...);\n";
   S += "extern Protocol *objc_getProtocol(const char *);\n";
+  if (LangOpts.Microsoft) 
+    S += "} // end extern \"C\"\n";
   S += "#include <objc/objc.h>\n";
   S += "#ifndef __FASTENUMERATIONSTATE\n";
   S += "struct __objcFastEnumerationState {\n\t";
@@ -1967,6 +1971,7 @@ Stmt *RewriteTest::SynthMessageExpr(ObjCMessageExpr *Exp) {
                                SourceLocation());
       MsgExprs.push_back(Unop);
     } else {
+      //recExpr->dump();
       // Remove all type-casts because it may contain objc-style types; e.g.
       // Foo<Proto> *.
       while (CastExpr *CE = dyn_cast<CastExpr>(recExpr))
