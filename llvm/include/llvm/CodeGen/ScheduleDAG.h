@@ -15,7 +15,9 @@
 #ifndef LLVM_CODEGEN_SCHEDULEDAG_H
 #define LLVM_CODEGEN_SCHEDULEDAG_H
 
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/SmallSet.h"
@@ -245,7 +247,7 @@ namespace llvm {
     const TargetInstrInfo *TII;           // Target instruction information
     const TargetRegisterInfo *TRI;        // Target processor register info
     MachineFunction *MF;                  // Machine function
-    MachineRegisterInfo &RegInfo;         // Virtual/real register map
+    MachineRegisterInfo &MRI;             // Virtual/real register map
     MachineConstantPool *ConstPool;       // Target constant pool
     std::vector<SUnit*> Sequence;         // The schedule. Null SUnit*'s
                                           // represent noop instructions.
@@ -346,6 +348,22 @@ namespace llvm {
     void CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
                                 const TargetInstrDesc &II,
                                 DenseMap<SDOperand, unsigned> &VRBaseMap);
+
+    /// EmitLiveInCopy - Emit a copy for a live in physical register. If the
+    /// physical register has only a single copy use, then coalesced the copy
+    /// if possible. It returns the destination register of the emitted copy
+    /// if it is a physical register; otherwise it returns zero.
+    unsigned EmitLiveInCopy(MachineBasicBlock *MBB,
+                            MachineBasicBlock::iterator &InsertPos,
+                            unsigned VirtReg, unsigned PhysReg,
+                            const TargetRegisterClass *RC,
+                            BitVector &LiveRegsBefore,
+                            BitVector &LiveRegsAfter);
+
+    /// EmitLiveInCopies - If this is the first basic block in the function,
+    /// and if it has live ins that need to be copied into vregs, emit the
+    /// copies into the top of the block.
+    void EmitLiveInCopies(MachineBasicBlock *MBB);
 
     void EmitSchedule();
 
