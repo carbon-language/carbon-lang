@@ -1103,7 +1103,7 @@ SDOperand DAGCombiner::visitSUB(SDNode *N) {
   
   // fold (sub x, x) -> 0
   if (N0 == N1) {
-    if (!AfterLegalize || !MVT::isVector(VT))
+    if (AfterLegalize && ISD::isBuildVectorAllZeros(N0.Val))
       // For example, zero vectors might be normalized to a particular vector
       // type to ensure they are CSE'd. Avoid issuing zero vector nodes of
       // *unexpected* type after legalization.
