@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llvm-dis > %t1.ll
+; RUN: llvm-as < %s | llvm-dis > /dev/null
 ; RUN: llvm-as < %s | llvm2cpp -gen-program -o -
 
 @X = global i32 4, align 16		; <i32*> [#uses=0]
