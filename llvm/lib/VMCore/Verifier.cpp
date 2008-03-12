@@ -40,18 +40,17 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/Verifier.h"
-#include "llvm/Assembly/Writer.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
-#include "llvm/Pass.h"
-#include "llvm/Module.h"
-#include "llvm/ModuleProvider.h"
-#include "llvm/ParamAttrsList.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/Module.h"
+#include "llvm/ModuleProvider.h"
+#include "llvm/Pass.h"
 #include "llvm/PassManager.h"
 #include "llvm/Analysis/Dominators.h"
+#include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"
@@ -264,7 +263,7 @@ namespace {  // Anonymous namespace for class
                                   unsigned Count, ...);
     void VerifyAttrs(ParameterAttributes Attrs, const Type *Ty,
                      bool isReturnValue, const Value *V);
-    void VerifyFunctionAttrs(const FunctionType *FT, const ParamAttrsList *Attrs,
+    void VerifyFunctionAttrs(const FunctionType *FT, const PAListPtr &Attrs,
                              const Value *V);
 
     void WriteValue(const Value *V) {
@@ -394,11 +393,11 @@ void Verifier::VerifyAttrs(ParameterAttributes Attrs, const Type *Ty,
 
   if (isReturnValue) {
     ParameterAttributes RetI = Attrs & ParamAttr::ParameterOnly;
-    Assert1(!RetI, "Attribute " + ParamAttrsList::getParamAttrsText(RetI) +
+    Assert1(!RetI, "Attribute " + ParamAttr::getAsString(RetI) +
             "does not apply to return values!", V);
   } else {
     ParameterAttributes ParmI = Attrs & ParamAttr::ReturnOnly;
-    Assert1(!ParmI, "Attribute " + ParamAttrsList::getParamAttrsText(ParmI) +
+    Assert1(!ParmI, "Attribute " + ParamAttr::getAsString(ParmI) +
             "only applies to return values!", V);
   }
 
@@ -406,37 +405,44 @@ void Verifier::VerifyAttrs(ParameterAttributes Attrs, const Type *Ty,
        i < array_lengthof(ParamAttr::MutuallyIncompatible); ++i) {
     ParameterAttributes MutI = Attrs & ParamAttr::MutuallyIncompatible[i];
     Assert1(!(MutI & (MutI - 1)), "Attributes " +
-            ParamAttrsList::getParamAttrsText(MutI) + "are incompatible!", V);
+            ParamAttr::getAsString(MutI) + "are incompatible!", V);
   }
 
   ParameterAttributes TypeI = Attrs & ParamAttr::typeIncompatible(Ty);
   Assert1(!TypeI, "Wrong type for attribute " +
-          ParamAttrsList::getParamAttrsText(TypeI), V);
+          ParamAttr::getAsString(TypeI), V);
 }
 
 // VerifyFunctionAttrs - Check parameter attributes against a function type.
 // The value V is printed in error messages.
 void Verifier::VerifyFunctionAttrs(const FunctionType *FT,
-                                   const ParamAttrsList *Attrs,
+                                   const PAListPtr &Attrs,
                                    const Value *V) {
-  if (!Attrs)
+  if (Attrs.isEmpty())
     return;
 
   bool SawNest = false;
 
-  for (unsigned Idx = 0; Idx <= FT->getNumParams(); ++Idx) {
-    ParameterAttributes Attr = Attrs->getParamAttrs(Idx);
+  for (unsigned i = 0, e = Attrs.getNumSlots(); i != e; ++i) {
+    const ParamAttrsWithIndex &Attr = Attrs.getSlot(i);
 
-    VerifyAttrs(Attr, FT->getParamType(Idx-1), !Idx, V);
+    const Type *Ty;
+    if (Attr.Index == 0)
+      Ty = FT->getReturnType();
+    else if (Attr.Index-1 < FT->getNumParams())
+      Ty = FT->getParamType(Attr.Index-1);
+    else
+      break;  // VarArgs attributes, don't verify.
+    
+    VerifyAttrs(Attr.Attrs, Ty, Attr.Index == 0, V);
 
-    if (Attr & ParamAttr::Nest) {
+    if (Attr.Attrs & ParamAttr::Nest) {
       Assert1(!SawNest, "More than one parameter has attribute nest!", V);
       SawNest = true;
     }
 
-    if (Attr & ParamAttr::StructRet) {
-      Assert1(Idx == 1, "Attribute sret not on first parameter!", V);
-    }
+    if (Attr.Attrs & ParamAttr::StructRet)
+      Assert1(Attr.Index == 1, "Attribute sret not on first parameter!", V);
   }
 }
 
@@ -458,11 +464,10 @@ void Verifier::visitFunction(Function &F) {
   Assert1(!F.hasStructRetAttr() || F.getReturnType() == Type::VoidTy,
           "Invalid struct return type!", &F);
 
-  const ParamAttrsList *Attrs = F.getParamAttrs();
+  const PAListPtr &Attrs = F.getParamAttrs();
 
-  Assert1(!Attrs ||
-          (Attrs->size() &&
-           Attrs->getParamIndex(Attrs->size()-1) <= FT->getNumParams()),
+  Assert1(Attrs.isEmpty() ||
+          Attrs.getSlot(Attrs.getNumSlots()-1).Index <= FT->getNumParams(),
           "Attributes after last parameter!", &F);
 
   // Check function attributes.
@@ -712,15 +717,19 @@ void Verifier::visitUIToFPInst(UIToFPInst &I) {
   const Type *SrcTy = I.getOperand(0)->getType();
   const Type *DestTy = I.getType();
 
-  bool SrcVec = SrcTy->getTypeID() == Type::VectorTyID;
-  bool DstVec = DestTy->getTypeID() == Type::VectorTyID;
+  bool SrcVec = isa<VectorType>(SrcTy);
+  bool DstVec = isa<VectorType>(DestTy);
 
-  Assert1(SrcVec == DstVec,"UIToFP source and dest must both be vector or scalar", &I);
-  Assert1(SrcTy->isIntOrIntVector(),"UIToFP source must be integer or integer vector", &I);
-  Assert1(DestTy->isFPOrFPVector(),"UIToFP result must be FP or FP vector", &I);
+  Assert1(SrcVec == DstVec,
+          "UIToFP source and dest must both be vector or scalar", &I);
+  Assert1(SrcTy->isIntOrIntVector(),
+          "UIToFP source must be integer or integer vector", &I);
+  Assert1(DestTy->isFPOrFPVector(),
+          "UIToFP result must be FP or FP vector", &I);
 
   if (SrcVec && DstVec)
-    Assert1(cast<VectorType>(SrcTy)->getNumElements() == cast<VectorType>(DestTy)->getNumElements(),
+    Assert1(cast<VectorType>(SrcTy)->getNumElements() ==
+            cast<VectorType>(DestTy)->getNumElements(),
             "UIToFP source and dest vector length mismatch", &I);
 
   visitInstruction(I);
@@ -734,12 +743,16 @@ void Verifier::visitSIToFPInst(SIToFPInst &I) {
   bool SrcVec = SrcTy->getTypeID() == Type::VectorTyID;
   bool DstVec = DestTy->getTypeID() == Type::VectorTyID;
 
-  Assert1(SrcVec == DstVec,"SIToFP source and dest must both be vector or scalar", &I);
-  Assert1(SrcTy->isIntOrIntVector(),"SIToFP source must be integer or integer vector", &I);
-  Assert1(DestTy->isFPOrFPVector(),"SIToFP result must be FP or FP vector", &I);
+  Assert1(SrcVec == DstVec,
+          "SIToFP source and dest must both be vector or scalar", &I);
+  Assert1(SrcTy->isIntOrIntVector(),
+          "SIToFP source must be integer or integer vector", &I);
+  Assert1(DestTy->isFPOrFPVector(),
+          "SIToFP result must be FP or FP vector", &I);
 
   if (SrcVec && DstVec)
-    Assert1(cast<VectorType>(SrcTy)->getNumElements() == cast<VectorType>(DestTy)->getNumElements(),
+    Assert1(cast<VectorType>(SrcTy)->getNumElements() ==
+            cast<VectorType>(DestTy)->getNumElements(),
             "SIToFP source and dest vector length mismatch", &I);
 
   visitInstruction(I);
@@ -750,15 +763,18 @@ void Verifier::visitFPToUIInst(FPToUIInst &I) {
   const Type *SrcTy = I.getOperand(0)->getType();
   const Type *DestTy = I.getType();
 
-  bool SrcVec = SrcTy->getTypeID() == Type::VectorTyID;
-  bool DstVec = DestTy->getTypeID() == Type::VectorTyID;
+  bool SrcVec = isa<VectorType>(SrcTy);
+  bool DstVec = isa<VectorType>(DestTy);
 
-  Assert1(SrcVec == DstVec,"FPToUI source and dest must both be vector or scalar", &I);
-  Assert1(SrcTy->isFPOrFPVector(),"FPToUI source must be FP or FP vector", &I);
-  Assert1(DestTy->isIntOrIntVector(),"FPToUI result must be integer or integer vector", &I);
+  Assert1(SrcVec == DstVec,
+          "FPToUI source and dest must both be vector or scalar", &I);
+  Assert1(SrcTy->isFPOrFPVector(), "FPToUI source must be FP or FP vector", &I);
+  Assert1(DestTy->isIntOrIntVector(),
+          "FPToUI result must be integer or integer vector", &I);
 
   if (SrcVec && DstVec)
-    Assert1(cast<VectorType>(SrcTy)->getNumElements() == cast<VectorType>(DestTy)->getNumElements(),
+    Assert1(cast<VectorType>(SrcTy)->getNumElements() ==
+            cast<VectorType>(DestTy)->getNumElements(),
             "FPToUI source and dest vector length mismatch", &I);
 
   visitInstruction(I);
@@ -769,15 +785,19 @@ void Verifier::visitFPToSIInst(FPToSIInst &I) {
   const Type *SrcTy = I.getOperand(0)->getType();
   const Type *DestTy = I.getType();
 
-  bool SrcVec = SrcTy->getTypeID() == Type::VectorTyID;
-  bool DstVec = DestTy->getTypeID() == Type::VectorTyID;
+  bool SrcVec = isa<VectorType>(SrcTy);
+  bool DstVec = isa<VectorType>(DestTy);
 
-  Assert1(SrcVec == DstVec,"FPToSI source and dest must both be vector or scalar", &I);
-  Assert1(SrcTy->isFPOrFPVector(),"FPToSI source must be FP or FP vector", &I);
-  Assert1(DestTy->isIntOrIntVector(),"FPToSI result must be integer or integer vector", &I);
+  Assert1(SrcVec == DstVec,
+          "FPToSI source and dest must both be vector or scalar", &I);
+  Assert1(SrcTy->isFPOrFPVector(),
+          "FPToSI source must be FP or FP vector", &I);
+  Assert1(DestTy->isIntOrIntVector(),
+          "FPToSI result must be integer or integer vector", &I);
 
   if (SrcVec && DstVec)
-    Assert1(cast<VectorType>(SrcTy)->getNumElements() == cast<VectorType>(DestTy)->getNumElements(),
+    Assert1(cast<VectorType>(SrcTy)->getNumElements() ==
+            cast<VectorType>(DestTy)->getNumElements(),
             "FPToSI source and dest vector length mismatch", &I);
 
   visitInstruction(I);
@@ -871,25 +891,24 @@ void Verifier::VerifyCallSite(CallSite CS) {
             "Call parameter type does not match function signature!",
             CS.getArgument(i), FTy->getParamType(i), I);
 
-  const ParamAttrsList *Attrs = CS.getParamAttrs();
+  const PAListPtr &Attrs = CS.getParamAttrs();
 
-  Assert1(!Attrs ||
-          (Attrs->size() &&
-           Attrs->getParamIndex(Attrs->size()-1) <= CS.arg_size()),
-          "Attributes after last argument!", I);
+  Assert1(Attrs.isEmpty() ||
+          Attrs.getSlot(Attrs.getNumSlots()-1).Index <= CS.arg_size(),
+          "Attributes after last parameter!", I);
 
   // Verify call attributes.
   VerifyFunctionAttrs(FTy, Attrs, I);
 
-  if (Attrs && FTy->isVarArg())
+  if (FTy->isVarArg())
     // Check attributes on the varargs part.
     for (unsigned Idx = 1 + FTy->getNumParams(); Idx <= CS.arg_size(); ++Idx) {
-      ParameterAttributes Attr = Attrs->getParamAttrs(Idx);
+      ParameterAttributes Attr = Attrs.getParamAttrs(Idx);
 
       VerifyAttrs(Attr, CS.getArgument(Idx-1)->getType(), false, I);
 
       ParameterAttributes VArgI = Attr & ParamAttr::VarArgsIncompatible;
-      Assert1(!VArgI, "Attribute " + ParamAttrsList::getParamAttrsText(VArgI) +
+      Assert1(!VArgI, "Attribute " + ParamAttr::getAsString(VArgI) +
               "cannot be used for vararg call arguments!", I);
     }
 

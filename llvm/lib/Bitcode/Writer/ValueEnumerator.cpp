@@ -245,10 +245,10 @@ void ValueEnumerator::EnumerateOperandType(const Value *V) {
   }
 }
 
-void ValueEnumerator::EnumerateParamAttrs(const ParamAttrsList *PAL) {
-  if (PAL == 0) return;  // null is always 0.
+void ValueEnumerator::EnumerateParamAttrs(const PAListPtr &PAL) {
+  if (PAL.isEmpty()) return;  // null is always 0.
   // Do a lookup.
-  unsigned &Entry = ParamAttrMap[PAL];
+  unsigned &Entry = ParamAttrMap[PAL.getRawPointer()];
   if (Entry == 0) {
     // Never saw this before, add it.
     ParamAttrs.push_back(PAL);

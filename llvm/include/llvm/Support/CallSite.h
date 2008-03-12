@@ -28,7 +28,6 @@ namespace llvm {
 
 class CallInst;
 class InvokeInst;
-class ParamAttrsList;
 
 class CallSite {
   Instruction *I;
@@ -62,8 +61,8 @@ public:
 
   /// getParamAttrs/setParamAttrs - get or set the parameter attributes of
   /// the call.
-  const ParamAttrsList *getParamAttrs() const;
-  void setParamAttrs(const ParamAttrsList *PAL);
+  const PAListPtr &getParamAttrs() const;
+  void setParamAttrs(const PAListPtr &PAL);
 
   /// paramHasAttr - whether the call or the callee has the given attribute.
   bool paramHasAttr(uint16_t i, ParameterAttributes attr) const;

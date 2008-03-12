@@ -17,7 +17,7 @@
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
-#include "llvm/ParamAttrsList.h"
+#include "llvm/ADT/SmallVector.h"
 #include <cstring>
 using namespace llvm;
 
@@ -226,18 +226,18 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
   case Intrinsic::x86_mmx_psrl_d:
   case Intrinsic::x86_mmx_psrl_q:
   case Intrinsic::x86_mmx_psrl_w: {
-    SmallVector<Value*, 2> Operands;
+    Value *Operands[2];
     
-    Operands.push_back(CI->getOperand(1));
+    Operands[0] = CI->getOperand(1);
     
     // Cast the second parameter to the correct type.
     BitCastInst *BC = new BitCastInst(CI->getOperand(2), 
                                       NewFn->getFunctionType()->getParamType(1),
                                       "upgraded", CI);
-    Operands.push_back(BC);
+    Operands[1] = BC;
     
     //  Construct a new CallInst
-    CallInst *NewCI = new CallInst(NewFn, Operands.begin(), Operands.end(), 
+    CallInst *NewCI = new CallInst(NewFn, Operands, Operands+2, 
                                    "upgraded."+CI->getName(), CI);
     NewCI->setTailCall(CI->isTailCall());
     NewCI->setCallingConv(CI->getCallingConv());
@@ -257,7 +257,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
   case Intrinsic::cttz:
     //  Build a small vector of the 1..(N-1) operands, which are the 
     //  parameters.
-    SmallVector<Value*, 8>   Operands(CI->op_begin()+1, CI->op_end());
+    SmallVector<Value*, 8> Operands(CI->op_begin()+1, CI->op_end());
 
     //  Construct a new CallInst
     CallInst *NewCI = new CallInst(NewFn, Operands.begin(), Operands.end(), 
@@ -268,10 +268,8 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
     //  Handle any uses of the old CallInst.
     if (!CI->use_empty()) {
       //  Check for sign extend parameter attributes on the return values.
-      bool SrcSExt = NewFn->getParamAttrs() &&
-                     NewFn->getParamAttrs()->paramHasAttr(0,ParamAttr::SExt);
-      bool DestSExt = F->getParamAttrs() &&
-                      F->getParamAttrs()->paramHasAttr(0,ParamAttr::SExt);
+      bool SrcSExt = NewFn->getParamAttrs().paramHasAttr(0, ParamAttr::SExt);
+      bool DestSExt = F->getParamAttrs().paramHasAttr(0, ParamAttr::SExt);
       
       //  Construct an appropriate cast from the new return type to the old.
       CastInst *RetCast = CastInst::create(

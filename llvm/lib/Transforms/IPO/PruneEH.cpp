@@ -25,7 +25,6 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
-#include "llvm/ParamAttrsList.h"
 #include <set>
 #include <algorithm>
 using namespace llvm;
@@ -131,9 +130,8 @@ bool PruneEH::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
       if (!SCCMightReturn)
         NewAttributes |= ParamAttr::NoReturn;
 
-      const ParamAttrsList *PAL = SCC[i]->getFunction()->getParamAttrs();
-      PAL = ParamAttrsList::includeAttrs(PAL, 0, NewAttributes);
-      SCC[i]->getFunction()->setParamAttrs(PAL);
+      const PAListPtr &PAL = SCC[i]->getFunction()->getParamAttrs();
+      SCC[i]->getFunction()->setParamAttrs(PAL.addAttr(0, NewAttributes));
     }
 
   for (unsigned i = 0, e = SCC.size(); i != e; ++i) {

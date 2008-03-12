@@ -15,6 +15,7 @@
 #define VALUE_ENUMERATOR_H
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ParameterAttributes.h"
 #include <vector>
 
 namespace llvm {
@@ -24,7 +25,7 @@ class Value;
 class BasicBlock;
 class Function;
 class Module;
-class ParamAttrsList;
+class PAListPtr;
 class TypeSymbolTable;
 class ValueSymbolTable;
 
@@ -44,9 +45,9 @@ private:
   ValueMapType ValueMap;
   ValueList Values;
   
-  typedef DenseMap<const ParamAttrsList*, unsigned> ParamAttrMapType;
+  typedef DenseMap<void*, unsigned> ParamAttrMapType;
   ParamAttrMapType ParamAttrMap;
-  std::vector<const ParamAttrsList*> ParamAttrs;
+  std::vector<PAListPtr> ParamAttrs;
   
   /// BasicBlocks - This contains all the basic blocks for the currently
   /// incorporated function.  Their reverse mapping is stored in ValueMap.
@@ -75,9 +76,9 @@ public:
     return I->second-1;
   }
   
-  unsigned getParamAttrID(const ParamAttrsList *PAL) const {
-    if (PAL == 0) return 0;  // Null maps to zero.
-    ParamAttrMapType::const_iterator I = ParamAttrMap.find(PAL);
+  unsigned getParamAttrID(const PAListPtr &PAL) const {
+    if (PAL.isEmpty()) return 0;  // Null maps to zero.
+    ParamAttrMapType::const_iterator I = ParamAttrMap.find(PAL.getRawPointer());
     assert(I != ParamAttrMap.end() && "ParamAttr not in ValueEnumerator!");
     return I->second;
   }
@@ -94,7 +95,7 @@ public:
   const std::vector<const BasicBlock*> &getBasicBlocks() const {
     return BasicBlocks; 
   }
-  const std::vector<const ParamAttrsList*> &getParamAttrs() const {
+  const std::vector<PAListPtr> &getParamAttrs() const {
     return ParamAttrs;
   }
 
@@ -115,7 +116,7 @@ private:
   void EnumerateValue(const Value *V);
   void EnumerateType(const Type *T);
   void EnumerateOperandType(const Value *V);
-  void EnumerateParamAttrs(const ParamAttrsList *PAL);
+  void EnumerateParamAttrs(const PAListPtr &PAL);
   
   void EnumerateTypeSymbolTable(const TypeSymbolTable &ST);
   void EnumerateValueSymbolTable(const ValueSymbolTable &ST);

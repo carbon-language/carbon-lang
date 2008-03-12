@@ -20,7 +20,6 @@
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
-#include "llvm/ParamAttrsList.h"
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/Support/MathExtras.h"
@@ -109,17 +108,18 @@ static void WriteStringRecord(unsigned Code, const std::string &Str,
 // Emit information about parameter attributes.
 static void WriteParamAttrTable(const ValueEnumerator &VE, 
                                 BitstreamWriter &Stream) {
-  const std::vector<const ParamAttrsList*> &Attrs = VE.getParamAttrs();
+  const std::vector<PAListPtr> &Attrs = VE.getParamAttrs();
   if (Attrs.empty()) return;
   
   Stream.EnterSubblock(bitc::PARAMATTR_BLOCK_ID, 3);
 
   SmallVector<uint64_t, 64> Record;
   for (unsigned i = 0, e = Attrs.size(); i != e; ++i) {
-    const ParamAttrsList *A = Attrs[i];
-    for (unsigned op = 0, e = A->size(); op != e; ++op) {
-      Record.push_back(A->getParamIndex(op));
-      Record.push_back(A->getParamAttrsAtIndex(op));
+    const PAListPtr &A = Attrs[i];
+    for (unsigned i = 0, e = A.getNumSlots(); i != e; ++i) {
+      const ParamAttrsWithIndex &PAWI = A.getSlot(i);
+      Record.push_back(PAWI.Index);
+      Record.push_back(PAWI.Attrs);
     }
     
     Stream.EmitRecord(bitc::PARAMATTR_CODE_ENTRY, Record);

@@ -15,12 +15,14 @@
 #ifndef LLVM_PARAMETER_ATTRIBUTES_H
 #define LLVM_PARAMETER_ATTRIBUTES_H
 
-#include "llvm/Support/DataTypes.h"
-#include <cassert>
+#include <string>
 
 namespace llvm {
 class Type;
 
+/// ParameterAttributes - A bitset of attributes for a parameter.
+typedef unsigned ParameterAttributes;
+  
 namespace ParamAttr {
 
 /// Function parameters and results can have attributes to indicate how they 
@@ -28,9 +30,7 @@ namespace ParamAttr {
 /// lists the attributes that can be associated with parameters or function 
 /// results.
 /// @brief Function parameter attributes.
-
-/// @brief A more friendly way to reference the attributes.
-typedef uint32_t Attributes;
+typedef ParameterAttributes Attributes;
 
 const Attributes None      = 0;     ///< No attributes have been set
 const Attributes ZExt      = 1<<0;  ///< Zero extended before/after call
@@ -64,32 +64,140 @@ const Attributes MutuallyIncompatible[3] = {
 };
 
 /// @brief Which attributes cannot be applied to a type.
-Attributes typeIncompatible (const Type *Ty);
+Attributes typeIncompatible(const Type *Ty);
 
 /// This turns an int alignment (a power of 2, normally) into the
 /// form used internally in ParameterAttributes.
-ParamAttr::Attributes inline constructAlignmentFromInt(uint32_t i) {
+ParamAttr::Attributes inline constructAlignmentFromInt(unsigned i) {
   return (i << 16);
 }
 
+/// The set of ParameterAttributes set in Attributes is converted to a
+/// string of equivalent mnemonics. This is, presumably, for writing out
+/// the mnemonics for the assembly writer. 
+/// @brief Convert parameter attribute bits to text
+std::string getAsString(ParameterAttributes Attrs);
 } // end namespace ParamAttr
 
-/// @brief A more friendly way to reference the attributes.
-typedef ParamAttr::Attributes ParameterAttributes;
 
 /// This is just a pair of values to associate a set of parameter attributes
 /// with a parameter index. 
-/// @brief ParameterAttributes with a parameter index.
 struct ParamAttrsWithIndex {
-  ParameterAttributes attrs; ///< The attributes that are set, or'd together
-  uint16_t index; ///< Index of the parameter for which the attributes apply
+  ParameterAttributes Attrs; ///< The attributes that are set, or'd together.
+  unsigned Index; ///< Index of the parameter for which the attributes apply.
   
-  static ParamAttrsWithIndex get(uint16_t idx, ParameterAttributes attrs) {
+  static ParamAttrsWithIndex get(unsigned Idx, ParameterAttributes Attrs) {
     ParamAttrsWithIndex P;
-    P.index = idx;
-    P.attrs = attrs;
+    P.Index = Idx;
+    P.Attrs = Attrs;
     return P;
   }
+};
+  
+//===----------------------------------------------------------------------===//
+// PAListPtr Smart Pointer
+//===----------------------------------------------------------------------===//
+
+class ParamAttributeListImpl;
+  
+/// PAListPtr - This class manages the ref count for the opaque 
+/// ParamAttributeListImpl object and provides accessors for it.
+class PAListPtr {
+  /// PAList - The parameter attributes that we are managing.  This can be null
+  /// to represent the empty parameter attributes list.
+  ParamAttributeListImpl *PAList;
+public:
+  PAListPtr() : PAList(0) {}
+  PAListPtr(const PAListPtr &P);
+  const PAListPtr &operator=(const PAListPtr &RHS);
+  ~PAListPtr();
+  
+  //===--------------------------------------------------------------------===//
+  // Parameter Attribute List Construction and Mutation
+  //===--------------------------------------------------------------------===//
+  
+  /// get - Return a ParamAttrs list with the specified parameter in it.
+  static PAListPtr get(const ParamAttrsWithIndex *Attr, unsigned NumAttrs);
+  
+  /// get - Return a ParamAttr list with the parameters specified by the
+  /// consequtive random access iterator range.
+  template <typename Iter>
+  static PAListPtr get(const Iter &I, const Iter &E) {
+    if (I == E) return PAListPtr();  // Empty list.
+    return get(&*I, E-I);
+  }
+
+  /// addAttr - Add the specified attribute at the specified index to this
+  /// attribute list.  Since parameter attribute lists are immutable, this
+  /// returns the new list.
+  PAListPtr addAttr(unsigned Idx, ParameterAttributes Attrs) const;
+  
+  /// removeAttr - Remove the specified attribute at the specified index from
+  /// this attribute list.  Since parameter attribute lists are immutable, this
+  /// returns the new list.
+  PAListPtr removeAttr(unsigned Idx, ParameterAttributes Attrs) const;
+  
+  //===--------------------------------------------------------------------===//
+  // Parameter Attribute List Accessors
+  //===--------------------------------------------------------------------===//
+  
+  /// getParamAttrs - The parameter attributes for the specified parameter are
+  /// returned.  Parameters for the result are denoted with Idx = 0.
+  ParameterAttributes getParamAttrs(unsigned Idx) const;
+  
+  /// paramHasAttr - Return true if the specified parameter index has the
+  /// specified attribute set.
+  bool paramHasAttr(unsigned Idx, ParameterAttributes Attr) const {
+    return getParamAttrs(Idx) & Attr;
+  }
+  
+  /// getParamAlignment - Return the alignment for the specified function
+  /// parameter.
+  unsigned getParamAlignment(unsigned Idx) const {
+    return (getParamAttrs(Idx) & ParamAttr::Alignment) >> 16;
+  }
+  
+  /// hasAttrSomewhere - Return true if the specified attribute is set for at
+  /// least one parameter or for the return value.
+  bool hasAttrSomewhere(ParameterAttributes Attr) const;
+
+  /// operator< - Provide an ordering for parameter attribute lists.
+  bool operator==(const PAListPtr &RHS) const { return PAList == RHS.PAList; }
+  bool operator!=(const PAListPtr &RHS) const { return PAList != RHS.PAList; }
+  
+  void dump() const;
+
+  //===--------------------------------------------------------------------===//
+  // Parameter Attribute List Introspection
+  //===--------------------------------------------------------------------===//
+  
+  /// getRawPointer - Return a raw pointer that uniquely identifies this
+  /// parameter attribute list. 
+  void *getRawPointer() const {
+    return PAList;
+  }
+  
+  // Parameter attributes are stored as a dense set of slots, where there is one
+  // slot for each argument that has an attribute.  This allows walking over the
+  // dense set instead of walking the sparse list of attributes.
+  
+  /// isEmpty - Return true if no parameters have an attribute.
+  ///
+  bool isEmpty() const {
+    return PAList == 0;
+  }
+  
+  /// getNumSlots - Return the number of slots used in this attribute list. 
+  /// This is the number of arguments that have an attribute set on them
+  /// (including the function itself).
+  unsigned getNumSlots() const;
+  
+  /// getSlot - Return the ParamAttrsWithIndex at the specified slot.  This
+  /// holds a parameter number plus a set of attributes.
+  const ParamAttrsWithIndex &getSlot(unsigned Slot) const;
+  
+private:
+  explicit PAListPtr(ParamAttributeListImpl *L);
 };
 
 } // End llvm namespace

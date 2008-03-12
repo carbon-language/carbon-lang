@@ -35,7 +35,6 @@
 #include "llvm/Module.h"
 #include "llvm/CallGraphSCCPass.h"
 #include "llvm/Instructions.h"
-#include "llvm/ParamAttrsList.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Target/TargetData.h"
@@ -401,11 +400,11 @@ Function *ArgPromotion::DoPromotion(Function *F,
   // ParamAttrs - Keep track of the parameter attributes for the arguments
   // that we are *not* promoting. For the ones that we do promote, the parameter
   // attributes are lost
-  ParamAttrsVector ParamAttrsVec;
-  const ParamAttrsList *PAL = F->getParamAttrs();
+  SmallVector<ParamAttrsWithIndex, 8> ParamAttrsVec;
+  const PAListPtr &PAL = F->getParamAttrs();
 
   // Add any return attributes.
-  if (ParameterAttributes attrs = PAL ? PAL->getParamAttrs(0) : ParamAttr::None)
+  if (ParameterAttributes attrs = PAL.getParamAttrs(0))
     ParamAttrsVec.push_back(ParamAttrsWithIndex::get(0, attrs));
 
   unsigned ArgIndex = 1;
@@ -420,8 +419,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
       ++NumByValArgsPromoted;
     } else if (!ArgsToPromote.count(I)) {
       Params.push_back(I->getType());
-      if (ParameterAttributes attrs = PAL ? PAL->getParamAttrs(ArgIndex) : 
-                                            ParamAttr::None)
+      if (ParameterAttributes attrs = PAL.getParamAttrs(ArgIndex))
         ParamAttrsVec.push_back(ParamAttrsWithIndex::get(Params.size(), attrs));
     } else if (I->use_empty()) {
       ++NumArgumentsDead;
@@ -476,8 +474,8 @@ Function *ArgPromotion::DoPromotion(Function *F,
 
   // Recompute the parameter attributes list based on the new arguments for
   // the function.
-  NF->setParamAttrs(ParamAttrsList::get(ParamAttrsVec));
-  ParamAttrsVec.clear(); PAL = 0;
+  NF->setParamAttrs(PAListPtr::get(ParamAttrsVec.begin(), ParamAttrsVec.end()));
+  ParamAttrsVec.clear();
   
   if (F->hasCollector())
     NF->setCollector(F->getCollector());
@@ -494,11 +492,10 @@ Function *ArgPromotion::DoPromotion(Function *F,
   while (!F->use_empty()) {
     CallSite CS = CallSite::get(F->use_back());
     Instruction *Call = CS.getInstruction();
-    PAL = CS.getParamAttrs();
+    const PAListPtr &CallPAL = CS.getParamAttrs();
     
     // Add any return attributes.
-    if (ParameterAttributes attrs = PAL ? PAL->getParamAttrs(0) : 
-                                          ParamAttr::None)
+    if (ParameterAttributes attrs = CallPAL.getParamAttrs(0))
       ParamAttrsVec.push_back(ParamAttrsWithIndex::get(0, attrs));
 
     // Loop over the operands, inserting GEP and loads in the caller as
@@ -510,8 +507,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
       if (!ArgsToPromote.count(I) && !ByValArgsToTransform.count(I)) {
         Args.push_back(*AI);          // Unmodified argument
         
-        if (ParameterAttributes Attrs = PAL ? PAL->getParamAttrs(ArgIndex) :
-                                              ParamAttr::None)
+        if (ParameterAttributes Attrs = CallPAL.getParamAttrs(ArgIndex))
           ParamAttrsVec.push_back(ParamAttrsWithIndex::get(Args.size(), Attrs));
         
       } else if (ByValArgsToTransform.count(I)) {
@@ -550,8 +546,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
     // Push any varargs arguments on the list
     for (; AI != CS.arg_end(); ++AI, ++ArgIndex) {
       Args.push_back(*AI);
-      if (ParameterAttributes Attrs = PAL ? PAL->getParamAttrs(ArgIndex) :
-                                            ParamAttr::None)
+      if (ParameterAttributes Attrs = CallPAL.getParamAttrs(ArgIndex))
         ParamAttrsVec.push_back(ParamAttrsWithIndex::get(Args.size(), Attrs));
     }
 
@@ -560,11 +555,13 @@ Function *ArgPromotion::DoPromotion(Function *F,
       New = new InvokeInst(NF, II->getNormalDest(), II->getUnwindDest(),
                            Args.begin(), Args.end(), "", Call);
       cast<InvokeInst>(New)->setCallingConv(CS.getCallingConv());
-      cast<InvokeInst>(New)->setParamAttrs(ParamAttrsList::get(ParamAttrsVec));
+      cast<InvokeInst>(New)->setParamAttrs(PAListPtr::get(ParamAttrsVec.begin(),
+                                                          ParamAttrsVec.end()));
     } else {
       New = new CallInst(NF, Args.begin(), Args.end(), "", Call);
       cast<CallInst>(New)->setCallingConv(CS.getCallingConv());
-      cast<CallInst>(New)->setParamAttrs(ParamAttrsList::get(ParamAttrsVec));
+      cast<CallInst>(New)->setParamAttrs(PAListPtr::get(ParamAttrsVec.begin(),
+                                                        ParamAttrsVec.end()));
       if (cast<CallInst>(Call)->isTailCall())
         cast<CallInst>(New)->setTailCall();
     }

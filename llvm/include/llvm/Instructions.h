@@ -30,7 +30,6 @@ class PointerType;
 class VectorType;
 class ConstantRange;
 class APInt;
-class ParamAttrsList;
 
 //===----------------------------------------------------------------------===//
 //                             AllocationInst Class
@@ -851,7 +850,7 @@ public:
 ///
 
 class CallInst : public Instruction {
-  const ParamAttrsList *ParamAttrs; ///< parameter attributes for call
+  PAListPtr ParamAttrs; ///< parameter attributes for call
   CallInst(const CallInst &CI);
   void init(Value *Func, Value* const *Params, unsigned NumParams);
   void init(Value *Func, Value *Actual1, Value *Actual2);
@@ -927,16 +926,12 @@ public:
     SubclassData = (SubclassData & 1) | (CC << 1);
   }
 
-  /// Obtains a pointer to the ParamAttrsList object which holds the
-  /// parameter attributes information, if any.
-  /// @returns 0 if no attributes have been set.
-  /// @brief Get the parameter attributes.
-  const ParamAttrsList *getParamAttrs() const { return ParamAttrs; }
+  /// getParamAttrs - Return the PAListPtr for the parameter attributes of this
+  /// call.
+  const PAListPtr &getParamAttrs() const { return ParamAttrs; }
 
-  /// Sets the parameter attributes for this CallInst. To construct a 
-  /// ParamAttrsList, see ParameterAttributes.h
-  /// @brief Set the parameter attributes.
-  void setParamAttrs(const ParamAttrsList *attrs);
+  /// setParamAttrs - Sets the parameter attributes for this CallInst.
+  void setParamAttrs(const PAListPtr &Attrs) { ParamAttrs = Attrs; }
 
   /// @brief Determine whether the call or the callee has the given attribute.
   bool paramHasAttr(uint16_t i, unsigned attr) const;
@@ -1678,7 +1673,7 @@ private:
 /// calling convention of the call.
 ///
 class InvokeInst : public TerminatorInst {
-  const ParamAttrsList *ParamAttrs;
+  PAListPtr ParamAttrs;
   InvokeInst(const InvokeInst &BI);
   void init(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
             Value* const *Args, unsigned NumArgs);
@@ -1745,16 +1740,13 @@ public:
     SubclassData = CC;
   }
 
-  /// Obtains a pointer to the ParamAttrsList object which holds the
-  /// parameter attributes information, if any.
-  /// @returns 0 if no attributes have been set.
-  /// @brief Get the parameter attributes.
-  const ParamAttrsList *getParamAttrs() const { return ParamAttrs; }
+  /// getParamAttrs - Return the parameter attribute list for this invoke.
+  ///
+  const PAListPtr &getParamAttrs() const { return ParamAttrs; }
 
-  /// Sets the parameter attributes for this InvokeInst. To construct a 
-  /// ParamAttrsList, see ParameterAttributes.h
-  /// @brief Set the parameter attributes.
-  void setParamAttrs(const ParamAttrsList *attrs);
+  /// setParamAttrs - Set the parameter attribute list for this invoke.
+  ///
+  void setParamAttrs(const PAListPtr &Attrs) { ParamAttrs = Attrs; }
 
   /// @brief Determine whether the call or the callee has the given attribute.
   bool paramHasAttr(uint16_t i, ParameterAttributes attr) const;

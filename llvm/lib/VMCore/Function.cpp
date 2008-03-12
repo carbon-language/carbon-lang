@@ -14,7 +14,6 @@
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/IntrinsicInst.h"
-#include "llvm/ParamAttrsList.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/StringPool.h"
@@ -140,12 +139,12 @@ void Function::eraseFromParent() {
 
 /// @brief Determine whether the function has the given attribute.
 bool Function::paramHasAttr(uint16_t i, ParameterAttributes attr) const {
-  return ParamAttrs && ParamAttrs->paramHasAttr(i, attr);
+  return ParamAttrs.paramHasAttr(i, attr);
 }
 
 /// @brief Extract the alignment for a call or parameter (0=unknown).
 uint16_t Function::getParamAlignment(uint16_t i) const {
-  return ParamAttrs ? ParamAttrs->getParamAlignment(i) : 0;
+  return ParamAttrs.getParamAlignment(i);
 }
 
 /// @brief Determine if the function cannot return.
@@ -181,8 +180,7 @@ bool Function::hasStructRetAttr() const {
 Function::Function(const FunctionType *Ty, LinkageTypes Linkage,
                    const std::string &name, Module *ParentModule)
   : GlobalValue(PointerType::getUnqual(Ty), 
-                Value::FunctionVal, 0, 0, Linkage, name),
-    ParamAttrs(0) {
+                Value::FunctionVal, 0, 0, Linkage, name) {
   SymTab = new ValueSymbolTable();
 
   assert((getReturnType()->isFirstClassType() ||getReturnType() == Type::VoidTy
@@ -207,10 +205,6 @@ Function::~Function() {
   ArgumentList.clear();
   delete SymTab;
 
-  // Drop our reference to the parameter attributes, if any.
-  if (ParamAttrs)
-    ParamAttrs->dropRef();
-  
   // Remove the function from the on-the-side collector table.
   clearCollector();
 }
@@ -241,24 +235,6 @@ void Function::setParent(Module *parent) {
   Parent = parent;
   if (getParent())
     LeakDetector::removeGarbageObject(this);
-}
-
-void Function::setParamAttrs(const ParamAttrsList *attrs) {
-  // Avoid deleting the ParamAttrsList if they are setting the
-  // attributes to the same list.
-  if (ParamAttrs == attrs)
-    return;
-
-  // Drop reference on the old ParamAttrsList
-  if (ParamAttrs)
-    ParamAttrs->dropRef();
-
-  // Add reference to the new ParamAttrsList
-  if (attrs)
-    attrs->addRef();
-
-  // Set the new ParamAttrsList.
-  ParamAttrs = attrs; 
 }
 
 // dropAllReferences() - This function causes all the subinstructions to "let
@@ -370,8 +346,7 @@ const FunctionType *Intrinsic::getType(ID id, const Type **Tys,
   return FunctionType::get(ResultTy, ArgTys, IsVarArg); 
 }
 
-const ParamAttrsList *Intrinsic::getParamAttrs(ID id) {
-  ParamAttrsVector Attrs;
+PAListPtr Intrinsic::getParamAttrs(ID id) {
   ParameterAttributes Attr = ParamAttr::None;
 
 #define GET_INTRINSIC_ATTRIBUTES
@@ -381,8 +356,8 @@ const ParamAttrsList *Intrinsic::getParamAttrs(ID id) {
   // Intrinsics cannot throw exceptions.
   Attr |= ParamAttr::NoUnwind;
 
-  Attrs.push_back(ParamAttrsWithIndex::get(0, Attr));
-  return ParamAttrsList::get(Attrs);
+  ParamAttrsWithIndex PAWI = ParamAttrsWithIndex::get(0, Attr);
+  return PAListPtr::get(&PAWI, 1);
 }
 
 Function *Intrinsic::getDeclaration(Module *M, ID id, const Type **Tys, 

@@ -11,41 +11,19 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ParamAttrsList.h"
-#include "llvm/DerivedTypes.h"
+#include "llvm/ParameterAttributes.h"
+#include "llvm/Type.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/FoldingSet.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/Support/ManagedStatic.h"
-
 using namespace llvm;
 
-static ManagedStatic<FoldingSet<ParamAttrsList> > ParamAttrsLists;
+//===----------------------------------------------------------------------===//
+// ParamAttr Function Definitions
+//===----------------------------------------------------------------------===//
 
-ParamAttrsList::ParamAttrsList(const ParamAttrsVector &attrVec) 
-  : attrs(attrVec), refCount(0) {
-}
-
-ParamAttrsList::~ParamAttrsList() {
-  ParamAttrsLists->RemoveNode(this);
-}
-
-ParameterAttributes
-ParamAttrsList::getParamAttrs(uint16_t Index) const {
-  unsigned limit = attrs.size();
-  for (unsigned i = 0; i < limit && attrs[i].index <= Index; ++i)
-    if (attrs[i].index == Index)
-      return attrs[i].attrs;
-  return ParamAttr::None;
-}
-
-bool ParamAttrsList::hasAttrSomewhere(ParameterAttributes attr) const {
-  for (unsigned i = 0, e = attrs.size(); i < e; ++i)
-    if (attrs[i].attrs & attr)
-      return true;
-  return false;
-}
-
-std::string 
-ParamAttrsList::getParamAttrsText(ParameterAttributes Attrs) {
+std::string ParamAttr::getAsString(ParameterAttributes Attrs) {
   std::string Result;
   if (Attrs & ParamAttr::ZExt)
     Result += "zeroext ";
@@ -77,155 +55,240 @@ ParamAttrsList::getParamAttrsText(ParameterAttributes Attrs) {
   return Result;
 }
 
-void ParamAttrsList::Profile(FoldingSetNodeID &ID,
-                             const ParamAttrsVector &Attrs) {
-  for (unsigned i = 0; i < Attrs.size(); ++i)
-    ID.AddInteger(uint64_t(Attrs[i].attrs) << 16 | unsigned(Attrs[i].index));
+ParameterAttributes ParamAttr::typeIncompatible(const Type *Ty) {
+  ParameterAttributes Incompatible = None;
+  
+  if (!Ty->isInteger())
+    // Attributes that only apply to integers.
+    Incompatible |= SExt | ZExt;
+  
+  if (!isa<PointerType>(Ty))
+    // Attributes that only apply to pointers.
+    Incompatible |= ByVal | Nest | NoAlias | StructRet;
+  
+  return Incompatible;
 }
 
-const ParamAttrsList *
-ParamAttrsList::get(const ParamAttrsVector &attrVec) {
-  // If there are no attributes then return a null ParamAttrsList pointer.
-  if (attrVec.empty())
-    return 0;
+//===----------------------------------------------------------------------===//
+// ParamAttributeListImpl Definition
+//===----------------------------------------------------------------------===//
 
+namespace llvm {
+class ParamAttributeListImpl : public FoldingSetNode {
+  unsigned RefCount;
+  
+  // ParamAttrsList is uniqued, these should not be publicly available
+  void operator=(const ParamAttributeListImpl &); // Do not implement
+  ParamAttributeListImpl(const ParamAttributeListImpl &); // Do not implement
+  ~ParamAttributeListImpl();                        // Private implementation
+public:
+  SmallVector<ParamAttrsWithIndex, 4> Attrs;
+  
+  ParamAttributeListImpl(const ParamAttrsWithIndex *Attr, unsigned NumAttrs)
+    : Attrs(Attr, Attr+NumAttrs) {
+    RefCount = 0;
+  }
+  
+  void AddRef() { ++RefCount; }
+  void DropRef() { if (--RefCount == 0) delete this; }
+  
+  void Profile(FoldingSetNodeID &ID) const {
+    Profile(ID, &Attrs[0], Attrs.size());
+  }
+  static void Profile(FoldingSetNodeID &ID, const ParamAttrsWithIndex *Attr,
+                      unsigned NumAttrs) {
+    for (unsigned i = 0; i != NumAttrs; ++i)
+      ID.AddInteger(uint64_t(Attr[i].Attrs) << 32 | unsigned(Attr[i].Index));
+  }
+};
+}
+
+static ManagedStatic<FoldingSet<ParamAttributeListImpl> > ParamAttrsLists;
+
+ParamAttributeListImpl::~ParamAttributeListImpl() {
+  ParamAttrsLists->RemoveNode(this);
+}
+
+
+PAListPtr PAListPtr::get(const ParamAttrsWithIndex *Attrs, unsigned NumAttrs) {
+  // If there are no attributes then return a null ParamAttrsList pointer.
+  if (NumAttrs == 0)
+    return PAListPtr();
+  
 #ifndef NDEBUG
-  for (unsigned i = 0, e = attrVec.size(); i < e; ++i) {
-    assert(attrVec[i].attrs != ParamAttr::None
-           && "Pointless parameter attribute!");
-    assert((!i || attrVec[i-1].index < attrVec[i].index)
-           && "Misordered ParamAttrsList!");
+  for (unsigned i = 0; i != NumAttrs; ++i) {
+    assert(Attrs[i].Attrs != ParamAttr::None && 
+           "Pointless parameter attribute!");
+    assert((!i || Attrs[i-1].Index < Attrs[i].Index) &&
+           "Misordered ParamAttrsList!");
   }
 #endif
-
+  
   // Otherwise, build a key to look up the existing attributes.
   FoldingSetNodeID ID;
-  ParamAttrsList::Profile(ID, attrVec);
+  ParamAttributeListImpl::Profile(ID, Attrs, NumAttrs);
   void *InsertPos;
-  ParamAttrsList *PAL = ParamAttrsLists->FindNodeOrInsertPos(ID, InsertPos);
-
+  ParamAttributeListImpl *PAL =
+    ParamAttrsLists->FindNodeOrInsertPos(ID, InsertPos);
+  
   // If we didn't find any existing attributes of the same shape then
   // create a new one and insert it.
   if (!PAL) {
-    PAL = new ParamAttrsList(attrVec);
+    PAL = new ParamAttributeListImpl(Attrs, NumAttrs);
     ParamAttrsLists->InsertNode(PAL, InsertPos);
   }
-
+  
   // Return the ParamAttrsList that we found or created.
-  return PAL;
+  return PAListPtr(PAL);
 }
 
-const ParamAttrsList *
-ParamAttrsList::getModified(const ParamAttrsList *PAL,
-                            const ParamAttrsVector &modVec) {
-  if (modVec.empty())
-    return PAL;
 
-#ifndef NDEBUG
-  for (unsigned i = 0, e = modVec.size(); i < e; ++i)
-    assert((!i || modVec[i-1].index < modVec[i].index)
-           && "Misordered ParamAttrsList!");
-#endif
+//===----------------------------------------------------------------------===//
+// PAListPtr Method Implementations
+//===----------------------------------------------------------------------===//
 
-  if (!PAL) {
-    // Strip any instances of ParamAttr::None from modVec before calling 'get'.
-    ParamAttrsVector newVec;
-    newVec.reserve(modVec.size());
-    for (unsigned i = 0, e = modVec.size(); i < e; ++i)
-      if (modVec[i].attrs != ParamAttr::None)
-        newVec.push_back(modVec[i]);
-    return get(newVec);
-  }
-
-  const ParamAttrsVector &oldVec = PAL->attrs;
-
-  ParamAttrsVector newVec;
-  unsigned oldI = 0;
-  unsigned modI = 0;
-  unsigned oldE = oldVec.size();
-  unsigned modE = modVec.size();
-
-  while (oldI < oldE && modI < modE) {
-    uint16_t oldIndex = oldVec[oldI].index;
-    uint16_t modIndex = modVec[modI].index;
-
-    if (oldIndex < modIndex) {
-      newVec.push_back(oldVec[oldI]);
-      ++oldI;
-    } else if (modIndex < oldIndex) {
-      if (modVec[modI].attrs != ParamAttr::None)
-        newVec.push_back(modVec[modI]);
-      ++modI;
-    } else {
-      // Same index - overwrite or delete existing attributes.
-      if (modVec[modI].attrs != ParamAttr::None)
-        newVec.push_back(modVec[modI]);
-      ++oldI;
-      ++modI;
-    }
-  }
-
-  for (; oldI < oldE; ++oldI)
-    newVec.push_back(oldVec[oldI]);
-  for (; modI < modE; ++modI)
-    if (modVec[modI].attrs != ParamAttr::None)
-      newVec.push_back(modVec[modI]);
-
-  return get(newVec);
+PAListPtr::PAListPtr(ParamAttributeListImpl *LI) : PAList(LI) {
+  if (LI) LI->AddRef();
 }
 
-const ParamAttrsList *
-ParamAttrsList::includeAttrs(const ParamAttrsList *PAL,
-                             uint16_t idx, ParameterAttributes attrs) {
-  ParameterAttributes OldAttrs = PAL ? PAL->getParamAttrs(idx) : 
-                                       ParamAttr::None;
+PAListPtr::PAListPtr(const PAListPtr &P) : PAList(P.PAList) {
+  if (PAList) PAList->AddRef();  
+}
+
+const PAListPtr &PAListPtr::operator=(const PAListPtr &RHS) {
+  if (PAList == RHS.PAList) return *this;
+  if (PAList) PAList->DropRef();
+  PAList = RHS.PAList;
+  if (PAList) PAList->AddRef();
+  return *this;
+}
+
+PAListPtr::~PAListPtr() {
+  if (PAList) PAList->DropRef();
+}
+
+/// getNumSlots - Return the number of slots used in this attribute list. 
+/// This is the number of arguments that have an attribute set on them
+/// (including the function itself).
+unsigned PAListPtr::getNumSlots() const {
+  return PAList ? PAList->Attrs.size() : 0;
+}
+
+/// getSlot - Return the ParamAttrsWithIndex at the specified slot.  This
+/// holds a parameter number plus a set of attributes.
+const ParamAttrsWithIndex &PAListPtr::getSlot(unsigned Slot) const {
+  assert(PAList && Slot < PAList->Attrs.size() && "Slot # out of range!");
+  return PAList->Attrs[Slot];
+}
+
+
+/// getParamAttrs - The parameter attributes for the specified parameter are
+/// returned.  Parameters for the result are denoted with Idx = 0.
+ParameterAttributes PAListPtr::getParamAttrs(unsigned Idx) const {
+  if (PAList == 0) return ParamAttr::None;
+  
+  const SmallVector<ParamAttrsWithIndex, 4> &Attrs = PAList->Attrs;
+  for (unsigned i = 0, e = Attrs.size(); i != e && Attrs[i].Index <= Idx; ++i)
+    if (Attrs[i].Index == Idx)
+      return Attrs[i].Attrs;
+  return ParamAttr::None;
+}
+
+/// hasAttrSomewhere - Return true if the specified attribute is set for at
+/// least one parameter or for the return value.
+bool PAListPtr::hasAttrSomewhere(ParameterAttributes Attr) const {
+  if (PAList == 0) return false;
+  
+  const SmallVector<ParamAttrsWithIndex, 4> &Attrs = PAList->Attrs;
+  for (unsigned i = 0, e = Attrs.size(); i != e; ++i)
+    if (Attrs[i].Attrs & Attr)
+      return true;
+  return false;
+}
+
+
+PAListPtr PAListPtr::addAttr(unsigned Idx, ParameterAttributes Attrs) const {
+  ParameterAttributes OldAttrs = getParamAttrs(Idx);
 #ifndef NDEBUG
   // FIXME it is not obvious how this should work for alignment.
   // For now, say we can't change a known alignment.
   ParameterAttributes OldAlign = OldAttrs & ParamAttr::Alignment;
-  ParameterAttributes NewAlign = attrs & ParamAttr::Alignment;
+  ParameterAttributes NewAlign = Attrs & ParamAttr::Alignment;
   assert((!OldAlign || !NewAlign || OldAlign == NewAlign) &&
          "Attempt to change alignment!");
 #endif
-
-  ParameterAttributes NewAttrs = OldAttrs | attrs;
+  
+  ParameterAttributes NewAttrs = OldAttrs | Attrs;
   if (NewAttrs == OldAttrs)
-    return PAL;
+    return *this;
+  
+  SmallVector<ParamAttrsWithIndex, 8> NewAttrList;
+  if (PAList == 0)
+    NewAttrList.push_back(ParamAttrsWithIndex::get(Idx, Attrs));
+  else {
+    const SmallVector<ParamAttrsWithIndex, 4> &OldAttrList = PAList->Attrs;
+    unsigned i = 0, e = OldAttrList.size();
+    // Copy attributes for arguments before this one.
+    for (; i != e && OldAttrList[i].Index < Idx; ++i)
+      NewAttrList.push_back(OldAttrList[i]);
 
-  ParamAttrsVector modVec(1);
-  modVec[0] = ParamAttrsWithIndex::get(idx, NewAttrs);
-  return getModified(PAL, modVec);
+    // If there are attributes already at this index, merge them in.
+    if (i != e && OldAttrList[i].Index == Idx) {
+      Attrs |= OldAttrList[i].Attrs;
+      ++i;
+    }
+    
+    NewAttrList.push_back(ParamAttrsWithIndex::get(Idx, Attrs));
+    
+    // Copy attributes for arguments after this one.
+    NewAttrList.insert(NewAttrList.end(), 
+                       OldAttrList.begin()+i, OldAttrList.end());
+  }
+  
+  return get(&NewAttrList[0], NewAttrList.size());
 }
 
-const ParamAttrsList *
-ParamAttrsList::excludeAttrs(const ParamAttrsList *PAL,
-                             uint16_t idx, ParameterAttributes attrs) {
+PAListPtr PAListPtr::removeAttr(unsigned Idx, ParameterAttributes Attrs) const {
 #ifndef NDEBUG
   // FIXME it is not obvious how this should work for alignment.
   // For now, say we can't pass in alignment, which no current use does.
-  assert(!(attrs & ParamAttr::Alignment) && "Attempt to exclude alignment!");
+  assert(!(Attrs & ParamAttr::Alignment) && "Attempt to exclude alignment!");
 #endif
-  ParameterAttributes OldAttrs = PAL ? PAL->getParamAttrs(idx) : 
-                                       ParamAttr::None;
-  ParameterAttributes NewAttrs = OldAttrs & ~attrs;
+  if (PAList == 0) return PAListPtr();
+  
+  ParameterAttributes OldAttrs = getParamAttrs(Idx);
+  ParameterAttributes NewAttrs = OldAttrs & ~Attrs;
   if (NewAttrs == OldAttrs)
-    return PAL;
+    return *this;
 
-  ParamAttrsVector modVec(1);
-  modVec[0] = ParamAttrsWithIndex::get(idx, NewAttrs);
-  return getModified(PAL, modVec);
+  SmallVector<ParamAttrsWithIndex, 8> NewAttrList;
+  const SmallVector<ParamAttrsWithIndex, 4> &OldAttrList = PAList->Attrs;
+  unsigned i = 0, e = OldAttrList.size();
+  
+  // Copy attributes for arguments before this one.
+  for (; i != e && OldAttrList[i].Index < Idx; ++i)
+    NewAttrList.push_back(OldAttrList[i]);
+  
+  // If there are attributes already at this index, merge them in.
+  assert(OldAttrList[i].Index == Idx && "Attribute isn't set?");
+  Attrs = OldAttrList[i].Attrs & ~Attrs;
+  ++i;
+  if (Attrs)  // If any attributes left for this parameter, add them.
+    NewAttrList.push_back(ParamAttrsWithIndex::get(Idx, Attrs));
+  
+  // Copy attributes for arguments after this one.
+  NewAttrList.insert(NewAttrList.end(), 
+                     OldAttrList.begin()+i, OldAttrList.end());
+  
+  return get(&NewAttrList[0], NewAttrList.size());
 }
 
-ParameterAttributes ParamAttr::typeIncompatible (const Type *Ty) {
-  ParameterAttributes Incompatible = None;
-
-  if (!Ty->isInteger())
-    // Attributes that only apply to integers.
-    Incompatible |= SExt | ZExt;
-
-  if (!isa<PointerType>(Ty))
-    // Attributes that only apply to pointers.
-    Incompatible |= ByVal | Nest | NoAlias | StructRet;
-
-  return Incompatible;
+void PAListPtr::dump() const {
+  cerr << "PAL[ ";
+  for (unsigned i = 0; i < getNumSlots(); ++i) {
+    const ParamAttrsWithIndex &PAWI = getSlot(i);
+    cerr << "{" << PAWI.Index << "," << PAWI.Attrs << "} ";
+  }
+  
+  cerr << "]\n";
 }

@@ -25,7 +25,6 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Streams.h"
-#include "llvm/ParamAttrsList.h"
 #include <algorithm>
 #include <list>
 #include <map>
@@ -2256,13 +2255,9 @@ FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
     GEN_ERROR("Reference to abstract result: "+ $2->get()->getDescription());
 
   std::vector<const Type*> ParamTypeList;
-  ParamAttrsVector Attrs;
-  if ($7 != ParamAttr::None) {
-    ParamAttrsWithIndex PAWI;
-    PAWI.index = 0;
-    PAWI.attrs = $7;
-    Attrs.push_back(PAWI);
-  }
+  SmallVector<ParamAttrsWithIndex, 8> Attrs;
+  if ($7 != ParamAttr::None)
+    Attrs.push_back(ParamAttrsWithIndex::get(0, $7));
   if ($5) {   // If there are arguments...
     unsigned index = 1;
     for (ArgListType::iterator I = $5->begin(); I != $5->end(); ++I, ++index) {
@@ -2270,22 +2265,17 @@ FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
       if (!CurFun.isDeclare && CurModule.TypeIsUnresolved(I->Ty))
         GEN_ERROR("Reference to abstract argument: " + Ty->getDescription());
       ParamTypeList.push_back(Ty);
-      if (Ty != Type::VoidTy)
-        if (I->Attrs != ParamAttr::None) {
-          ParamAttrsWithIndex PAWI;
-          PAWI.index = index;
-          PAWI.attrs = I->Attrs;
-          Attrs.push_back(PAWI);
-        }
+      if (Ty != Type::VoidTy && I->Attrs != ParamAttr::None)
+        Attrs.push_back(ParamAttrsWithIndex::get(index, I->Attrs));
     }
   }
 
   bool isVarArg = ParamTypeList.size() && ParamTypeList.back() == Type::VoidTy;
   if (isVarArg) ParamTypeList.pop_back();
 
-  const ParamAttrsList *PAL = 0;
+  PAListPtr PAL;
   if (!Attrs.empty())
-    PAL = ParamAttrsList::get(Attrs);
+    PAL = PAListPtr::get(Attrs.begin(), Attrs.end());
 
   FunctionType *FT = FunctionType::get(*$2, ParamTypeList, isVarArg);
   const PointerType *PFT = PointerType::getUnqual(FT);
@@ -2304,7 +2294,8 @@ FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
     // Move the function to the end of the list, from whereever it was 
     // previously inserted.
     Fn = cast<Function>(FWRef);
-    assert(!Fn->getParamAttrs() && "Forward reference has parameter attributes!");
+    assert(Fn->getParamAttrs().isEmpty() &&
+           "Forward reference has parameter attributes!");
     CurModule.CurrentModule->getFunctionList().remove(Fn);
     CurModule.CurrentModule->getFunctionList().push_back(Fn);
   } else if (!FunctionName.empty() &&     // Merge with an earlier prototype?
@@ -2669,11 +2660,9 @@ BBTerminatorInst :
     BasicBlock *Except = getBBVal($14);
     CHECK_FOR_ERROR
 
-    ParamAttrsVector Attrs;
-    if ($8 != ParamAttr::None) {
-      ParamAttrsWithIndex PAWI; PAWI.index = 0; PAWI.attrs = $8;
-      Attrs.push_back(PAWI);
-    }
+    SmallVector<ParamAttrsWithIndex, 8> Attrs;
+    if ($8 != ParamAttr::None)
+      Attrs.push_back(ParamAttrsWithIndex::get(0, $8));
 
     // Check the arguments
     ValueList Args;
@@ -2695,35 +2684,27 @@ BBTerminatorInst :
           GEN_ERROR("Parameter " + ArgI->Val->getName()+ " is not of type '" +
                          (*I)->getDescription() + "'");
         Args.push_back(ArgI->Val);
-        if (ArgI->Attrs != ParamAttr::None) {
-          ParamAttrsWithIndex PAWI;
-          PAWI.index = index;
-          PAWI.attrs = ArgI->Attrs;
-          Attrs.push_back(PAWI);
-        }
+        if (ArgI->Attrs != ParamAttr::None)
+          Attrs.push_back(ParamAttrsWithIndex::get(index, ArgI->Attrs));
       }
 
       if (Ty->isVarArg()) {
         if (I == E)
           for (; ArgI != ArgE; ++ArgI, ++index) {
             Args.push_back(ArgI->Val); // push the remaining varargs
-            if (ArgI->Attrs != ParamAttr::None) {
-              ParamAttrsWithIndex PAWI;
-              PAWI.index = index;
-              PAWI.attrs = ArgI->Attrs;
-              Attrs.push_back(PAWI);
-            }
+            if (ArgI->Attrs != ParamAttr::None)
+              Attrs.push_back(ParamAttrsWithIndex::get(index, ArgI->Attrs));
           }
       } else if (I != E || ArgI != ArgE)
         GEN_ERROR("Invalid number of parameters detected");
     }
 
-    const ParamAttrsList *PAL = 0;
+    PAListPtr PAL;
     if (!Attrs.empty())
-      PAL = ParamAttrsList::get(Attrs);
+      PAL = PAListPtr::get(Attrs.begin(), Attrs.end());
 
     // Create the InvokeInst
-    InvokeInst *II = new InvokeInst(V, Normal, Except, Args.begin(), Args.end());
+    InvokeInst *II = new InvokeInst(V, Normal, Except, Args.begin(),Args.end());
     II->setCallingConv($2);
     II->setParamAttrs(PAL);
     $$ = II;
@@ -3007,13 +2988,9 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     }
 
     // Set up the ParamAttrs for the function
-    ParamAttrsVector Attrs;
-    if ($8 != ParamAttr::None) {
-      ParamAttrsWithIndex PAWI;
-      PAWI.index = 0;
-      PAWI.attrs = $8;
-      Attrs.push_back(PAWI);
-    }
+    SmallVector<ParamAttrsWithIndex, 8> Attrs;
+    if ($8 != ParamAttr::None)
+      Attrs.push_back(ParamAttrsWithIndex::get(0, $8));
     // Check the arguments 
     ValueList Args;
     if ($6->empty()) {                                   // Has no arguments?
@@ -3034,32 +3011,24 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
           GEN_ERROR("Parameter " + ArgI->Val->getName()+ " is not of type '" +
                          (*I)->getDescription() + "'");
         Args.push_back(ArgI->Val);
-        if (ArgI->Attrs != ParamAttr::None) {
-          ParamAttrsWithIndex PAWI;
-          PAWI.index = index;
-          PAWI.attrs = ArgI->Attrs;
-          Attrs.push_back(PAWI);
-        }
+        if (ArgI->Attrs != ParamAttr::None)
+          Attrs.push_back(ParamAttrsWithIndex::get(index, ArgI->Attrs));
       }
       if (Ty->isVarArg()) {
         if (I == E)
           for (; ArgI != ArgE; ++ArgI, ++index) {
             Args.push_back(ArgI->Val); // push the remaining varargs
-            if (ArgI->Attrs != ParamAttr::None) {
-              ParamAttrsWithIndex PAWI;
-              PAWI.index = index;
-              PAWI.attrs = ArgI->Attrs;
-              Attrs.push_back(PAWI);
-            }
+            if (ArgI->Attrs != ParamAttr::None)
+              Attrs.push_back(ParamAttrsWithIndex::get(index, ArgI->Attrs));
           }
       } else if (I != E || ArgI != ArgE)
         GEN_ERROR("Invalid number of parameters detected");
     }
 
     // Finish off the ParamAttrs and check them
-    const ParamAttrsList *PAL = 0;
+    PAListPtr PAL;
     if (!Attrs.empty())
-      PAL = ParamAttrsList::get(Attrs);
+      PAL = PAListPtr::get(Attrs.begin(), Attrs.end());
 
     // Create the call node
     CallInst *CI = new CallInst(V, Args.begin(), Args.end());

@@ -17,7 +17,6 @@
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
-#include "llvm/ParamAttrsList.h"
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/ADT/STLExtras.h"
@@ -2056,13 +2055,11 @@ UpRTypes
     bool isVarArg = Params.size() && Params.back() == Type::VoidTy;
     if (isVarArg) Params.pop_back();
 
-    const ParamAttrsList *PAL = 0;
+    PAListPtr PAL;
     if (lastCallingConv == OldCallingConv::CSRet) {
-      ParamAttrsVector Attrs;
-      ParamAttrsWithIndex PAWI;
-      PAWI.index = 1;  PAWI.attrs = ParamAttr::StructRet; // first arg
-      Attrs.push_back(PAWI);
-      PAL = ParamAttrsList::get(Attrs);
+      ParamAttrsWithIndex PAWI = 
+        ParamAttrsWithIndex::get(1, ParamAttr::StructRet);
+      PAL = PAListPtr::get(&PAWI, 1);
     }
 
     const FunctionType *FTy =
@@ -2974,11 +2971,9 @@ FunctionHeaderH
     // Convert the CSRet calling convention into the corresponding parameter
     // attribute.
     if ($1 == OldCallingConv::CSRet) {
-      ParamAttrsVector Attrs;
-      ParamAttrsWithIndex PAWI;
-      PAWI.index = 1;  PAWI.attrs = ParamAttr::StructRet; // first arg
-      Attrs.push_back(PAWI);
-      Fn->setParamAttrs(ParamAttrsList::get(Attrs));
+      ParamAttrsWithIndex PAWI =
+        ParamAttrsWithIndex::get(1, ParamAttr::StructRet); // first arg
+      Fn->setParamAttrs(PAListPtr::get(&PAWI, 1));
     }
 
     // Add all of the arguments we parsed to the function...
@@ -3296,11 +3291,9 @@ BBTerminatorInst
     }
     cast<InvokeInst>($$.TI)->setCallingConv(upgradeCallingConv($2));
     if ($2 == OldCallingConv::CSRet) {
-      ParamAttrsVector Attrs;
-      ParamAttrsWithIndex PAWI;
-      PAWI.index = 1;  PAWI.attrs = ParamAttr::StructRet; // first arg
-      Attrs.push_back(PAWI);
-      cast<InvokeInst>($$.TI)->setParamAttrs(ParamAttrsList::get(Attrs));
+      ParamAttrsWithIndex PAWI =
+        ParamAttrsWithIndex::get(1, ParamAttr::StructRet); // first arg
+      cast<InvokeInst>($$.TI)->setParamAttrs(PAListPtr::get(&PAWI, 1));
     }
     delete $3.PAT;
     delete $6;
@@ -3715,11 +3708,9 @@ InstVal
     }
     // Deal with CSRetCC
     if ($2 == OldCallingConv::CSRet) {
-      ParamAttrsVector Attrs;
-      ParamAttrsWithIndex PAWI;
-      PAWI.index = 1;  PAWI.attrs = ParamAttr::StructRet; // first arg
-      Attrs.push_back(PAWI);
-      cast<CallInst>($$.I)->setParamAttrs(ParamAttrsList::get(Attrs));
+      ParamAttrsWithIndex PAWI =
+        ParamAttrsWithIndex::get(1, ParamAttr::StructRet); // first arg
+      cast<CallInst>($$.I)->setParamAttrs(PAListPtr::get(&PAWI, 1));
     }
     delete $3.PAT;
     delete $6;

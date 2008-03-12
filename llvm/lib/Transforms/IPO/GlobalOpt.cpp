@@ -21,7 +21,6 @@
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Module.h"
-#include "llvm/ParamAttrsList.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Target/TargetData.h"
@@ -1592,18 +1591,13 @@ static void ChangeCalleesToFastCall(Function *F) {
   }
 }
 
-static const ParamAttrsList *StripNest(const ParamAttrsList *Attrs) {
-  if (!Attrs)
-    return NULL;
-
-  for (unsigned i = 0, e = Attrs->size(); i != e; ++i) {
-    if ((Attrs->getParamAttrsAtIndex(i) & ParamAttr::Nest) == 0)
+static PAListPtr StripNest(const PAListPtr &Attrs) {
+  for (unsigned i = 0, e = Attrs.getNumSlots(); i != e; ++i) {
+    if ((Attrs.getSlot(i).Attrs & ParamAttr::Nest) == 0)
       continue;
 
-    Attrs = ParamAttrsList::excludeAttrs(Attrs, Attrs->getParamIndex(i),
-                                         ParamAttr::Nest);
     // There can be only one.
-    break;
+    return Attrs.removeAttr(Attrs.getSlot(i).Index, ParamAttr::Nest);
   }
 
   return Attrs;
@@ -1640,8 +1634,7 @@ bool GlobalOpt::OptimizeFunctions(Module &M) {
         Changed = true;
       }
 
-      if (F->getParamAttrs() &&
-          F->getParamAttrs()->hasAttrSomewhere(ParamAttr::Nest) &&
+      if (F->getParamAttrs().hasAttrSomewhere(ParamAttr::Nest) &&
           OnlyCalledDirectly(F)) {
         // The function is not used by a trampoline intrinsic, so it is safe
         // to remove the 'nest' attribute.

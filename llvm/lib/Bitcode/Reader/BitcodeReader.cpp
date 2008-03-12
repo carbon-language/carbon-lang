@@ -18,7 +18,6 @@
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
-#include "llvm/ParamAttrsList.h"
 #include "llvm/AutoUpgrade.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
@@ -32,11 +31,7 @@ void BitcodeReader::FreeState() {
   std::vector<PATypeHolder>().swap(TypeList);
   ValueList.clear();
   
-  // Drop references to ParamAttrs.
-  for (unsigned i = 0, e = ParamAttrs.size(); i != e; ++i)
-    ParamAttrs[i]->dropRef();
-  
-  std::vector<const ParamAttrsList*>().swap(ParamAttrs);
+  std::vector<PAListPtr>().swap(ParamAttrs);
   std::vector<BasicBlock*>().swap(FunctionBBs);
   std::vector<Function*>().swap(FunctionsWithBodies);
   DeferredFunctionInfo.clear();
@@ -205,7 +200,7 @@ bool BitcodeReader::ParseParamAttrBlock() {
   
   SmallVector<uint64_t, 64> Record;
   
-  ParamAttrsVector Attrs;
+  SmallVector<ParamAttrsWithIndex, 8> Attrs;
   
   // Read all the records.
   while (1) {
@@ -242,13 +237,8 @@ bool BitcodeReader::ParseParamAttrBlock() {
         if (Record[i+1] != ParamAttr::None)
           Attrs.push_back(ParamAttrsWithIndex::get(Record[i], Record[i+1]));
       }
-      if (Attrs.empty()) {
-        ParamAttrs.push_back(0);
-      } else {
-        ParamAttrs.push_back(ParamAttrsList::get(Attrs));
-        ParamAttrs.back()->addRef();
-      }
 
+      ParamAttrs.push_back(PAListPtr::get(Attrs.begin(), Attrs.end()));
       Attrs.clear();
       break;
     }
@@ -1062,8 +1052,7 @@ bool BitcodeReader::ParseModule(const std::string &ModuleID) {
       Func->setCallingConv(Record[1]);
       bool isProto = Record[2];
       Func->setLinkage(GetDecodedLinkage(Record[3]));
-      const ParamAttrsList *PAL = getParamAttrs(Record[4]);
-      Func->setParamAttrs(PAL);
+      Func->setParamAttrs(getParamAttrs(Record[4]));
       
       Func->setAlignment((1 << Record[5]) >> 1);
       if (Record[6]) {
@@ -1427,7 +1416,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
     case bitc::FUNC_CODE_INST_INVOKE: {
       // INVOKE: [attrs, cc, normBB, unwindBB, fnty, op0,op1,op2, ...]
       if (Record.size() < 4) return Error("Invalid INVOKE record");
-      const ParamAttrsList *PAL = getParamAttrs(Record[0]);
+      PAListPtr PAL = getParamAttrs(Record[0]);
       unsigned CCInfo = Record[1];
       BasicBlock *NormalBB = getBasicBlock(Record[2]);
       BasicBlock *UnwindBB = getBasicBlock(Record[3]);
@@ -1565,7 +1554,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       if (Record.size() < 3)
         return Error("Invalid CALL record");
       
-      const ParamAttrsList *PAL = getParamAttrs(Record[0]);
+      PAListPtr PAL = getParamAttrs(Record[0]);
       unsigned CCInfo = Record[1];
       
       unsigned OpNum = 2;

@@ -17,7 +17,6 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
-#include "llvm/ParamAttrsList.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/MathExtras.h"
@@ -43,13 +42,13 @@ void CallSite::setCallingConv(unsigned CC) {
   else
     cast<InvokeInst>(I)->setCallingConv(CC);
 }
-const ParamAttrsList* CallSite::getParamAttrs() const {
+const PAListPtr &CallSite::getParamAttrs() const {
   if (CallInst *CI = dyn_cast<CallInst>(I))
     return CI->getParamAttrs();
   else
     return cast<InvokeInst>(I)->getParamAttrs();
 }
-void CallSite::setParamAttrs(const ParamAttrsList *PAL) {
+void CallSite::setParamAttrs(const PAListPtr &PAL) {
   if (CallInst *CI = dyn_cast<CallInst>(I))
     CI->setParamAttrs(PAL);
   else
@@ -243,12 +242,9 @@ Value *PHINode::hasConstantValue(bool AllowNonDominatingInstruction) const {
 
 CallInst::~CallInst() {
   delete [] OperandList;
-  if (ParamAttrs)
-    ParamAttrs->dropRef();
 }
 
 void CallInst::init(Value *Func, Value* const *Params, unsigned NumParams) {
-  ParamAttrs = 0;
   NumOperands = NumParams+1;
   Use *OL = OperandList = new Use[NumParams+1];
   OL[0].init(Func, this);
@@ -269,7 +265,6 @@ void CallInst::init(Value *Func, Value* const *Params, unsigned NumParams) {
 }
 
 void CallInst::init(Value *Func, Value *Actual1, Value *Actual2) {
-  ParamAttrs = 0;
   NumOperands = 3;
   Use *OL = OperandList = new Use[3];
   OL[0].init(Func, this);
@@ -292,7 +287,6 @@ void CallInst::init(Value *Func, Value *Actual1, Value *Actual2) {
 }
 
 void CallInst::init(Value *Func, Value *Actual) {
-  ParamAttrs = 0;
   NumOperands = 2;
   Use *OL = OperandList = new Use[2];
   OL[0].init(Func, this);
@@ -311,7 +305,6 @@ void CallInst::init(Value *Func, Value *Actual) {
 }
 
 void CallInst::init(Value *Func) {
-  ParamAttrs = 0;
   NumOperands = 1;
   Use *OL = OperandList = new Use[1];
   OL[0].init(Func, this);
@@ -360,8 +353,7 @@ CallInst::CallInst(Value *Func, const std::string &Name,
 
 CallInst::CallInst(const CallInst &CI)
   : Instruction(CI.getType(), Instruction::Call, new Use[CI.getNumOperands()],
-                CI.getNumOperands()),
-    ParamAttrs(0) {
+                CI.getNumOperands()) {
   setParamAttrs(CI.getParamAttrs());
   SubclassData = CI.SubclassData;
   Use *OL = OperandList;
@@ -370,21 +362,8 @@ CallInst::CallInst(const CallInst &CI)
     OL[i].init(InOL[i], this);
 }
 
-void CallInst::setParamAttrs(const ParamAttrsList *newAttrs) {
-  if (ParamAttrs == newAttrs)
-    return;
-
-  if (ParamAttrs)
-    ParamAttrs->dropRef();
-
-  if (newAttrs)
-    newAttrs->addRef();
-
-  ParamAttrs = newAttrs; 
-}
-
 bool CallInst::paramHasAttr(uint16_t i, ParameterAttributes attr) const {
-  if (ParamAttrs && ParamAttrs->paramHasAttr(i, attr))
+  if (ParamAttrs.paramHasAttr(i, attr))
     return true;
   if (const Function *F = getCalledFunction())
     return F->paramHasAttr(i, attr);
@@ -392,11 +371,7 @@ bool CallInst::paramHasAttr(uint16_t i, ParameterAttributes attr) const {
 }
 
 uint16_t CallInst::getParamAlignment(uint16_t i) const {
-  if (ParamAttrs && ParamAttrs->getParamAlignment(i))
-    return ParamAttrs->getParamAlignment(i);
-  if (const Function *F = getCalledFunction())
-    return F->getParamAlignment(i);
-  return 0;
+  return ParamAttrs.getParamAlignment(i);
 }
 
 /// @brief Determine if the call does not access memory.
@@ -428,21 +403,20 @@ bool CallInst::hasStructRetAttr() const {
 
 /// @brief Determine if any call argument is an aggregate passed by value.
 bool CallInst::hasByValArgument() const {
-  if (ParamAttrs && ParamAttrs->hasAttrSomewhere(ParamAttr::ByVal))
+  if (ParamAttrs.hasAttrSomewhere(ParamAttr::ByVal))
     return true;
   // Be consistent with other methods and check the callee too.
   if (const Function *F = getCalledFunction())
-    if (const ParamAttrsList *PAL = F->getParamAttrs())
-      return PAL->hasAttrSomewhere(ParamAttr::ByVal);
+    return F->getParamAttrs().hasAttrSomewhere(ParamAttr::ByVal);
   return false;
 }
 
 void CallInst::setDoesNotThrow(bool doesNotThrow) {
-  const ParamAttrsList *PAL = getParamAttrs();
+  PAListPtr PAL = getParamAttrs();
   if (doesNotThrow)
-    PAL = ParamAttrsList::includeAttrs(PAL, 0, ParamAttr::NoUnwind);
+    PAL = PAL.addAttr(0, ParamAttr::NoUnwind);
   else
-    PAL = ParamAttrsList::excludeAttrs(PAL, 0, ParamAttr::NoUnwind);
+    PAL = PAL.removeAttr(0, ParamAttr::NoUnwind);
   setParamAttrs(PAL);
 }
 
@@ -453,13 +427,10 @@ void CallInst::setDoesNotThrow(bool doesNotThrow) {
 
 InvokeInst::~InvokeInst() {
   delete [] OperandList;
-  if (ParamAttrs)
-    ParamAttrs->dropRef();
 }
 
 void InvokeInst::init(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
                       Value* const *Args, unsigned NumArgs) {
-  ParamAttrs = 0;
   NumOperands = 3+NumArgs;
   Use *OL = OperandList = new Use[3+NumArgs];
   OL[0].init(Fn, this);
@@ -484,8 +455,7 @@ void InvokeInst::init(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
 
 InvokeInst::InvokeInst(const InvokeInst &II)
   : TerminatorInst(II.getType(), Instruction::Invoke,
-                   new Use[II.getNumOperands()], II.getNumOperands()),
-    ParamAttrs(0) {
+                   new Use[II.getNumOperands()], II.getNumOperands()) {
   setParamAttrs(II.getParamAttrs());
   SubclassData = II.SubclassData;
   Use *OL = OperandList, *InOL = II.OperandList;
@@ -503,21 +473,8 @@ void InvokeInst::setSuccessorV(unsigned idx, BasicBlock *B) {
   return setSuccessor(idx, B);
 }
 
-void InvokeInst::setParamAttrs(const ParamAttrsList *newAttrs) {
-  if (ParamAttrs == newAttrs)
-    return;
-
-  if (ParamAttrs)
-    ParamAttrs->dropRef();
-
-  if (newAttrs)
-    newAttrs->addRef();
-
-  ParamAttrs = newAttrs; 
-}
-
 bool InvokeInst::paramHasAttr(uint16_t i, ParameterAttributes attr) const {
-  if (ParamAttrs && ParamAttrs->paramHasAttr(i, attr))
+  if (ParamAttrs.paramHasAttr(i, attr))
     return true;
   if (const Function *F = getCalledFunction())
     return F->paramHasAttr(i, attr);
@@ -525,11 +482,7 @@ bool InvokeInst::paramHasAttr(uint16_t i, ParameterAttributes attr) const {
 }
 
 uint16_t InvokeInst::getParamAlignment(uint16_t i) const {
-  if (ParamAttrs && ParamAttrs->getParamAlignment(i))
-    return ParamAttrs->getParamAlignment(i);
-  if (const Function *F = getCalledFunction())
-    return F->getParamAlignment(i);
-  return 0;
+  return ParamAttrs.getParamAlignment(i);
 }
 
 /// @brief Determine if the call does not access memory.
@@ -553,11 +506,11 @@ bool InvokeInst::doesNotThrow() const {
 }
 
 void InvokeInst::setDoesNotThrow(bool doesNotThrow) {
-  const ParamAttrsList *PAL = getParamAttrs();
+  PAListPtr PAL = getParamAttrs();
   if (doesNotThrow)
-    PAL = ParamAttrsList::includeAttrs(PAL, 0, ParamAttr::NoUnwind);
+    PAL = PAL.addAttr(0, ParamAttr::NoUnwind);
   else
-    PAL = ParamAttrsList::excludeAttrs(PAL, 0, ParamAttr::NoUnwind);
+    PAL = PAL.removeAttr(0, ParamAttr::NoUnwind);
   setParamAttrs(PAL);
 }
 

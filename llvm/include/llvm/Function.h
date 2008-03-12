@@ -27,7 +27,6 @@
 namespace llvm {
 
 class FunctionType;
-class ParamAttrsList;
 
 // Traits for intrusive list of instructions...
 template<> struct ilist_traits<BasicBlock>
@@ -69,7 +68,7 @@ private:
   BasicBlockListType  BasicBlocks;        ///< The basic blocks
   mutable ArgumentListType ArgumentList;  ///< The formal arguments
   ValueSymbolTable *SymTab;               ///< Symbol table of args/instructions
-  const ParamAttrsList *ParamAttrs;       ///< Parameter attributes
+  PAListPtr ParamAttrs;                   ///< Parameter attributes
   
   // The Calling Convention is stored in Value::SubclassData.
   /*unsigned CallingConvention;*/
@@ -145,16 +144,11 @@ public:
     SubclassData = (SubclassData & 1) | (CC << 1);
   }
   
-  /// Obtains a constant pointer to the ParamAttrsList object which holds the
-  /// parameter attributes information, if any. 
-  /// @returns 0 if no parameter attributes have been set.
-  /// @brief Get the parameter attributes.
-  const ParamAttrsList *getParamAttrs() const { return ParamAttrs; }
+  /// getParamAttrs - Return the parameter attributes for this function.
+  const PAListPtr &getParamAttrs() const { return ParamAttrs; }
 
-  /// Sets the parameter attributes for this Function. To construct a 
-  /// ParamAttrsList, see ParameterAttributes.h
-  /// @brief Set the parameter attributes.
-  void setParamAttrs(const ParamAttrsList *attrs);
+  /// setParamAttrs - Set the parameter attributes for this Function.
+  void setParamAttrs(const PAListPtr &attrs) { ParamAttrs = attrs; }
 
   /// hasCollector/getCollector/setCollector/clearCollector - The name of the
   /// garbage collection algorithm to use during code generation.

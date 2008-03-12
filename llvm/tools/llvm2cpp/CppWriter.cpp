@@ -18,7 +18,6 @@
 #include "llvm/InlineAsm.h"
 #include "llvm/Instruction.h"
 #include "llvm/Instructions.h"
-#include "llvm/ParamAttrsList.h"
 #include "llvm/Module.h"
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/ADT/StringExtras.h"
@@ -125,7 +124,7 @@ private:
   std::string getCppName(const Value* val);
   inline void printCppName(const Value* val);
 
-  void printParamAttrs(const ParamAttrsList* PAL, const std::string &name);
+  void printParamAttrs(const PAListPtr &PAL, const std::string &name);
   bool printTypeInternal(const Type* Ty);
   inline void printType(const Type* Ty);
   void printTypes(const Module* M);
@@ -438,16 +437,16 @@ CppWriter::printCppName(const Value* val) {
 }
 
 void
-CppWriter::printParamAttrs(const ParamAttrsList* PAL, const std::string &name) {
-  Out << "ParamAttrsList *" << name << "_PAL = 0;";
+CppWriter::printParamAttrs(const PAListPtr &PAL, const std::string &name) {
+  Out << "PAListPtr " << name << "_PAL = 0;";
   nl(Out);
-  if (PAL) {
+  if (!PAL.isEmpty()) {
     Out << '{'; in(); nl(Out);
-    Out << "ParamAttrsVector Attrs;"; nl(Out);
+    Out << "SmallVector<ParamAttrsWithIndex, 4> Attrs;"; nl(Out);
     Out << "ParamAttrsWithIndex PAWI;"; nl(Out);
-    for (unsigned i = 0; i < PAL->size(); ++i) {
-      uint16_t index = PAL->getParamIndex(i);
-      ParameterAttributes attrs = PAL->getParamAttrs(index);
+    for (unsigned i = 0; i < PAL.getNumSlots(); ++i) {
+      uint16_t index = PAL.getSlot(i).Index;
+      ParameterAttributes attrs = PAL.getSlot(i).Attrs;
       Out << "PAWI.index = " << index << "; PAWI.attrs = 0 ";
       if (attrs & ParamAttr::SExt)
         Out << " | ParamAttr::SExt";
@@ -466,7 +465,7 @@ CppWriter::printParamAttrs(const ParamAttrsList* PAL, const std::string &name) {
       Out << "Attrs.push_back(PAWI);";
       nl(Out);
     }
-    Out << name << "_PAL = ParamAttrsList::get(Attrs);";
+    Out << name << "_PAL = PAListPtr::get(Attrs.begin(), Attrs.end());";
     nl(Out);
     out(); nl(Out);
     Out << '}'; nl(Out);
@@ -1748,7 +1747,6 @@ void CppWriter::printProgram(
   Out << "#include <llvm/BasicBlock.h>\n";
   Out << "#include <llvm/Instructions.h>\n";
   Out << "#include <llvm/InlineAsm.h>\n";
-  Out << "#include <llvm/ParamAttrsList.h>\n";
   Out << "#include <llvm/Support/MathExtras.h>\n";
   Out << "#include <llvm/Pass.h>\n";
   Out << "#include <llvm/PassManager.h>\n";

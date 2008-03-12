@@ -39,7 +39,6 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/ParamAttrsList.h"
 using namespace llvm;
 
 X86TargetLowering::X86TargetLowering(TargetMachine &TM)
@@ -5251,15 +5250,15 @@ SDOperand X86TargetLowering::LowerTRAMPOLINE(SDOperand Op,
 
       // Check that ECX wasn't needed by an 'inreg' parameter.
       const FunctionType *FTy = Func->getFunctionType();
-      const ParamAttrsList *Attrs = Func->getParamAttrs();
+      const PAListPtr &Attrs = Func->getParamAttrs();
 
-      if (Attrs && !Func->isVarArg()) {
+      if (!Attrs.isEmpty() && !Func->isVarArg()) {
         unsigned InRegCount = 0;
         unsigned Idx = 1;
 
         for (FunctionType::param_iterator I = FTy->param_begin(),
              E = FTy->param_end(); I != E; ++I, ++Idx)
-          if (Attrs->paramHasAttr(Idx, ParamAttr::InReg))
+          if (Attrs.paramHasAttr(Idx, ParamAttr::InReg))
             // FIXME: should only count parameters that are lowered to integers.
             InRegCount += (getTargetData()->getTypeSizeInBits(*I) + 31) / 32;
 
