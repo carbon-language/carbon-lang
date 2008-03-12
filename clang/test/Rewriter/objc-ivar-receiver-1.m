@@ -17,6 +17,7 @@
 
 + (NSInvocation *)invocationWithMethodSignature {
     NSInvocation *newInv;
+    id obj = newInv->_container;
     [newInv->_container addObject:0];
    return 0;
 }

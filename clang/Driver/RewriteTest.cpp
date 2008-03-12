@@ -764,10 +764,6 @@ void RewriteTest::RewriteInterfaceDecl(ObjCInterfaceDecl *ClassDecl) {
   ReplaceText(ClassDecl->getAtEndLoc(), 0, "// ", 3);
 }
 
-/// FIXME: Investigate the following comment...
-/// This code is not right. It seems unnecessary. It breaks use of 
-/// ivar reference used as 'receiver' of an expression; as in:
-/// [newInv->_container addObject:0];
 Stmt *RewriteTest::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
   ObjCIvarDecl *D = IV->getDecl();
   if (CurMethodDecl) {
@@ -778,6 +774,8 @@ Stmt *RewriteTest::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
         ObjCInterfaceDecl *clsDeclared = 0;
         intT->getDecl()->lookupInstanceVariable(D->getIdentifier(), clsDeclared);
         assert(clsDeclared && "RewriteObjCIvarRefExpr(): Can't find class");
+        
+        // Synthesize an explicit cast to gain access to the ivar.
         std::string RecName = clsDeclared->getIdentifier()->getName();
         RecName += "_IMPL";
         IdentifierInfo *II = &Context->Idents.get(RecName.c_str());
@@ -794,12 +792,16 @@ Stmt *RewriteTest::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
           return ME;
         } else {
           ReplaceStmt(IV->getBase(), PE);
-          delete IV->getBase();
-          return PE;
+          // Cannot delete IV->getBase(), since PE points to it.
+          // Replace the old base with the cast. This is important when doing
+          // embedded rewrites. For example, [newInv->_container addObject:0].
+          IV->setBase(PE); 
+          return IV;
         }
       }
     }
   }
+  // FIXME: Implement public ivar access from a function.
   Expr *Replacement = new MemberExpr(IV->getBase(), true, D, 
                                      IV->getLocation(), D->getType());
   ReplaceStmt(IV, Replacement);
@@ -1975,7 +1977,6 @@ Stmt *RewriteTest::SynthMessageExpr(ObjCMessageExpr *Exp) {
                                SourceLocation());
       MsgExprs.push_back(Unop);
     } else {
-      //recExpr->dump();
       // Remove all type-casts because it may contain objc-style types; e.g.
       // Foo<Proto> *.
       while (CastExpr *CE = dyn_cast<CastExpr>(recExpr))
