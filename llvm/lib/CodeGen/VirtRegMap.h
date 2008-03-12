@@ -58,7 +58,7 @@ namespace llvm {
     /// at.
     IndexedMap<int, VirtReg2IndexFunctor> Virt2StackSlotMap;
 
-    /// Virt2StackSlotMap - This is virtual register to rematerialization id
+    /// Virt2ReMatIdMap - This is virtual register to rematerialization id
     /// mapping. Each spilled virtual register that should be remat'd has an
     /// entry in it which corresponds to the remat id.
     IndexedMap<int, VirtReg2IndexFunctor> Virt2ReMatIdMap;
@@ -173,7 +173,7 @@ namespace llvm {
       return Virt2SplitMap[virtReg];
     }
 
-    /// @brief returns true is the specified virtual register is not
+    /// @brief returns true if the specified virtual register is not
     /// mapped to a stack slot or rematerialized.
     bool isAssignedReg(unsigned virtReg) const {
       if (getStackSlot(virtReg) == NO_STACK_SLOT &&
