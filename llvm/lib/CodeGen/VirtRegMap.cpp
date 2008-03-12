@@ -1082,6 +1082,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         VRM.addSpillSlotUse(SS, LoadMI);
         ++NumPSpills;
       }
+      NextMII = next(MII);
     }
 
     // Insert restores here if asked to.
