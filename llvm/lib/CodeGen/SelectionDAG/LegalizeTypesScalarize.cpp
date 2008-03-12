@@ -83,7 +83,7 @@ void DAGTypeLegalizer::ScalarizeResult(SDNode *N, unsigned ResNo) {
   case ISD::SELECT:            R = ScalarizeRes_SELECT(N); break;
   }
   
-  // If R is null, the sub-method took care of registering the resul.
+  // If R is null, the sub-method took care of registering the result.
   if (R.Val)
     SetScalarizedOp(SDOperand(N, ResNo), R);
 }
