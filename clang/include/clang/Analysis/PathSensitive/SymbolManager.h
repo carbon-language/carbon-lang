@@ -24,23 +24,22 @@
 
 namespace clang {
   
+
 class SymbolManager;
-  
+
 class SymbolID {
   unsigned Data;
-  
 public:
+  SymbolID() : Data(~0U - 2) {}
   SymbolID(unsigned x) : Data(x) {}
-  
-  operator unsigned() const { return Data; }
-  unsigned getNumber() const { return Data; }
-  
+    
+  bool isInitialized() const { return Data != (unsigned) (~0U - 2); }
+  operator unsigned() const { return getNumber(); }
+  unsigned getNumber() const { assert (isInitialized()); return Data; }
+    
   void Profile(llvm::FoldingSetNodeID& ID) const { 
+    assert (isInitialized());
     ID.AddInteger(Data);
-  }
-  
-  static inline void Profile(llvm::FoldingSetNodeID& ID, SymbolID X) {
-    X.Profile(ID);
   }
 };
   
@@ -208,11 +207,11 @@ public:
   Op(op), Val(V) {}
   
   BinaryOperator::Opcode getOpcode() const { return Op; }
-  SymbolID getSymbol() const { return Symbol; }
+  const SymbolID& getSymbol() const { return Symbol; }
   const llvm::APSInt& getInt() const { return Val; }
   
   static inline void Profile(llvm::FoldingSetNodeID& ID,
-                             const SymbolID& Symbol,
+                             SymbolID Symbol,
                              BinaryOperator::Opcode Op,
                              const llvm::APSInt& Val) {
     Symbol.Profile(ID);
