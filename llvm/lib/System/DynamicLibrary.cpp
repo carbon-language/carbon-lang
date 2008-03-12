@@ -63,7 +63,8 @@ bool DynamicLibrary::LoadLibraryPermanently(const char *Filename,
                                             std::string *ErrMsg) {
   void *H = dlopen(Filename, RTLD_LAZY);
   if (H == 0) {
-    ErrMsg = new std::string(dlerror());
+    if (ErrMsg)
+      *ErrMsg = dlerror();
     return true;
   }
   OpenedHandles.push_back(H);
