@@ -507,7 +507,7 @@ public:
   // Calls.
   
   virtual void EvalCall(ExplodedNodeSet<ValueState>& Dst,
-                        GRExprEngine& Engine,
+                        GRExprEngine& Eng,
                         GRStmtNodeBuilder<ValueState>& Builder,
                         CallExpr* CE, LVal L,
                         ExplodedNode<ValueState>* Pred);  
@@ -531,12 +531,12 @@ void CFRefCount::BindingsPrinter::PrintCheckerState(std::ostream& Out,
 }
 
 void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
-                          GRExprEngine& Engine,
+                          GRExprEngine& Eng,
                           GRStmtNodeBuilder<ValueState>& Builder,
                           CallExpr* CE, LVal L,
                           ExplodedNode<ValueState>* Pred) {
   
-  ValueStateManager& StateMgr = Engine.getStateManager();
+  ValueStateManager& StateMgr = Eng.getStateManager();
   
   // FIXME: Support calls to things other than lval::FuncVal.  At the very
   //  least we should stop tracking ref-state for ref-counted objects passed
@@ -548,7 +548,7 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
 
   lval::FuncVal FV = cast<lval::FuncVal>(L);
   FunctionDecl* FD = FV.getDecl();
-  CFRefSummary* Summ = Summaries.getSummary(FD, Engine.getContext());
+  CFRefSummary* Summ = Summaries.getSummary(FD, Eng.getContext());
 
   // Get the state.
   
@@ -583,6 +583,20 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
     }
     
     St = StateMgr.getPersistentState(StVals);
+    
+    // Make up a symbol for the return value of this function.
+    
+    if (CE->getType() != Eng.getContext().VoidTy) {    
+      unsigned Count = Builder.getCurrentBlockCount();
+      SymbolID Sym = Eng.getSymbolManager().getCallRetValSymbol(CE, Count);
+      
+      RVal X = CE->getType()->isPointerType() 
+      ? cast<RVal>(lval::SymbolVal(Sym)) 
+      : cast<RVal>(nonlval::SymbolVal(Sym));
+      
+      St = StateMgr.SetRVal(St, CE, X, Eng.getCFG().isBlkExpr(CE), false);
+    }      
+    
     Builder.Nodify(Dst, CE, Pred, St);
     return;
   }
@@ -644,13 +658,13 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
       unsigned idx = RE.getValue();
       assert (idx < CE->getNumArgs());
       RVal V = StateMgr.GetRVal(St, CE->getArg(idx));
-      St = StateMgr.SetRVal(St, CE, V, Engine.getCFG().isBlkExpr(CE), false);
+      St = StateMgr.SetRVal(St, CE, V, Eng.getCFG().isBlkExpr(CE), false);
       break;
     }
       
     case RetEffect::OwnedSymbol: {
       unsigned Count = Builder.getCurrentBlockCount();
-      SymbolID Sym = Engine.getSymbolManager().getCallRetValSymbol(CE, Count);
+      SymbolID Sym = Eng.getSymbolManager().getCallRetValSymbol(CE, Count);
 
       ValueState StImpl = *St;
       RefBindings B = GetRefBindings(StImpl);
@@ -658,14 +672,14 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
       
       St = StateMgr.SetRVal(StateMgr.getPersistentState(StImpl),
                             CE, lval::SymbolVal(Sym),
-                            Engine.getCFG().isBlkExpr(CE), false);
+                            Eng.getCFG().isBlkExpr(CE), false);
       
       break;
     }
       
     case RetEffect::NotOwnedSymbol: {
       unsigned Count = Builder.getCurrentBlockCount();
-      SymbolID Sym = Engine.getSymbolManager().getCallRetValSymbol(CE, Count);
+      SymbolID Sym = Eng.getSymbolManager().getCallRetValSymbol(CE, Count);
       
       ValueState StImpl = *St;
       RefBindings B = GetRefBindings(StImpl);
@@ -673,7 +687,7 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
       
       St = StateMgr.SetRVal(StateMgr.getPersistentState(StImpl),
                             CE, lval::SymbolVal(Sym),
-                            Engine.getCFG().isBlkExpr(CE), false);
+                            Eng.getCFG().isBlkExpr(CE), false);
       
       break;
     }
@@ -771,11 +785,11 @@ namespace clang {
     
     // FIXME: Refactor some day so this becomes a single function invocation.
     
-    GRCoreEngine<GRExprEngine> Engine(cfg, FD, Ctx);
-    GRExprEngine* CS = &Engine.getCheckerState();
+    GRCoreEngine<GRExprEngine> Eng(cfg, FD, Ctx);
+    GRExprEngine* CS = &Eng.getCheckerState();
     CFRefCount TF;
     CS->setTransferFunctions(TF);
-    Engine.ExecuteWorkList(20000);
+    Eng.ExecuteWorkList(20000);
     
   }
   
