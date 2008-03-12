@@ -1,4 +1,4 @@
-// RUN: clang -rewrite-test %s | clang
+// RUN: clang -rewrite-test %s 
 
 #include <stdarg.h>
 
