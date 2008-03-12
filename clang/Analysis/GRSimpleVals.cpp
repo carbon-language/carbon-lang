@@ -101,7 +101,7 @@ unsigned RunGRSimpleVals(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx,
   CheckerState->setTransferFunctions(GRSV);
   
   // Execute the worklist algorithm.
-  Eng.ExecuteWorkList(50000);
+  Eng.ExecuteWorkList(100000);
   
   SourceManager& SrcMgr = Ctx.getSourceManager();  
 

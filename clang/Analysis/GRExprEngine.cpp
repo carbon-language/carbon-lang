@@ -1805,23 +1805,49 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
 #endif
 
 #ifndef NDEBUG
+
+template <typename ITERATOR>
+GRExprEngine::NodeTy* GetGraphNode(ITERATOR I) { return *I; }
+
+template <>
+GRExprEngine::NodeTy*
+GetGraphNode<llvm::DenseMap<GRExprEngine::NodeTy*, Expr*>::iterator>
+  (llvm::DenseMap<GRExprEngine::NodeTy*, Expr*>::iterator I) {
+  return I->first;
+}
+
 template <typename ITERATOR>
 static void AddSources(llvm::SmallVector<GRExprEngine::NodeTy*, 10>& Sources,
-                              ITERATOR I, ITERATOR E) {
+                       ITERATOR I, ITERATOR E) {
   
-  for ( ; I != E; ++I )
-    Sources.push_back(*I);
+  llvm::SmallPtrSet<void*,10> CachedSources;
+  
+  for ( ; I != E; ++I ) {
+    GRExprEngine::NodeTy* N = GetGraphNode(I);
+    void* p = N->getLocation().getRawData();
+    
+    if (CachedSources.count(p))
+      continue;
+    
+    CachedSources.insert(p);
+    
+    Sources.push_back(N);
+  }
 }
 #endif
 
 void GRExprEngine::ViewGraph(bool trim) {
 #ifndef NDEBUG  
   if (trim) {
-    llvm::SmallVector<NodeTy*, 10> Sources;
-    AddSources(Sources, null_derefs_begin(), null_derefs_end());
-    AddSources(Sources, undef_derefs_begin(), undef_derefs_end());
+    llvm::SmallVector<NodeTy*, 10> Src;
+    AddSources(Src, null_derefs_begin(), null_derefs_end());
+    AddSources(Src, undef_derefs_begin(), undef_derefs_end());
+    AddSources(Src, explicit_bad_divides_begin(), explicit_bad_divides_end());
+    AddSources(Src, undef_results_begin(), undef_results_end());
+    AddSources(Src, bad_calls_begin(), bad_calls_end());
+    AddSources(Src, undef_arg_begin(), undef_arg_end());
     
-    ViewGraph(&Sources[0], &Sources[0]+Sources.size());
+    ViewGraph(&Src[0], &Src[0]+Src.size());
   }
   else {
     GraphPrintCheckerState = this;

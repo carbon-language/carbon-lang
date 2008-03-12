@@ -17,6 +17,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include <vector>
+#include <list>
 
 using namespace clang;
 
@@ -89,7 +90,7 @@ ExplodedNodeImpl::NodeGroup::~NodeGroup() {
 ExplodedGraphImpl* ExplodedGraphImpl::Trim(ExplodedNodeImpl** BeginSources,
                                            ExplodedNodeImpl** EndSources) const{
   
-  typedef llvm::DenseSet<ExplodedNodeImpl*> Pass1Ty;
+  typedef llvm::DenseMap<ExplodedNodeImpl*, ExplodedNodeImpl*> Pass1Ty;
   typedef llvm::DenseMap<ExplodedNodeImpl*, ExplodedNodeImpl*> Pass2Ty;
   
   Pass1Ty Pass1;
@@ -101,30 +102,58 @@ ExplodedGraphImpl* ExplodedGraphImpl::Trim(ExplodedNodeImpl** BeginSources,
     
     // Enqueue the source nodes to the first worklist. 
     
-    llvm::SmallVector<ExplodedNodeImpl*, 10> WL1;
+    std::list<std::pair<ExplodedNodeImpl*, ExplodedNodeImpl*> > WL1;
   
     for (ExplodedNodeImpl** I = BeginSources; I != EndSources; ++I)
-      WL1.push_back(*I);
+      WL1.push_back(std::make_pair(*I, *I));
     
     // Process the worklist.
 
     while (!WL1.empty()) {
       
-      ExplodedNodeImpl* N = WL1.back();
+      ExplodedNodeImpl* N = WL1.back().first;
+      ExplodedNodeImpl* Src = WL1.back().second;
+      
       WL1.pop_back();
       
-      if (Pass1.count(N))
+      if (Pass1.find(N) != Pass1.end())
         continue;
       
-      Pass1.insert(N);
-      
-      if (N->Preds.empty()) {
-        WL2.push_back(N);
-        continue;      
+      bool PredHasSameSource = false;
+      bool VisitPreds = true;
+            
+      for (ExplodedNodeImpl** I=N->Preds.begin(), **E=N->Preds.end();
+            I!=E; ++I) {
+        
+        Pass1Ty::iterator pi = Pass1.find(*I);
+        
+        if (pi == Pass1.end())
+          continue;
+        
+        VisitPreds = false;
+        
+        if (pi->second == Src) {
+          PredHasSameSource = true;
+          break;
+        }
       }
       
-      for (ExplodedNodeImpl** I=N->Preds.begin(), **E=N->Preds.end(); I!=E; ++I)
-        WL1.push_back(*I);
+      if (VisitPreds || !PredHasSameSource) {
+        
+        Pass1[N] = Src;
+      
+        if (N->Preds.empty()) {
+          WL2.push_back(N);
+          continue;      
+        }
+      }
+      else
+        Pass1[N] = NULL;
+      
+      if (VisitPreds)
+        for (ExplodedNodeImpl** I=N->Preds.begin(), **E=N->Preds.end();
+             I!=E; ++I)
+          WL1.push_front(std::make_pair(*I, Src));
     }
   }
   
@@ -182,8 +211,12 @@ ExplodedGraphImpl* ExplodedGraphImpl::Trim(ExplodedNodeImpl** BeginSources,
 
       // Enqueue nodes to the worklist that were marked during pass 1.
       
-      if (Pass1.count(*I))
-        WL2.push_back(*I);
+      Pass1Ty::iterator pi = Pass1.find(*I);
+      
+      if (pi == Pass1.end() || pi->second == NULL)
+        continue;
+            
+      WL2.push_back(*I);
     }
     
     if (N->isSink())
