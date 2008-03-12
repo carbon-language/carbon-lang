@@ -969,6 +969,14 @@ def V_SET0 : PSI<0x57, MRMInitReg, (outs VR128:$dst), (ins),
                  "xorps\t$dst, $dst",
                  [(set VR128:$dst, (v4i32 immAllZerosV))]>;
 
+let Predicates = [HasSSE1] in {
+  def : Pat<(v2i64 immAllZerosV), (V_SET0)>;
+  def : Pat<(v8i16 immAllZerosV), (V_SET0)>;
+  def : Pat<(v16i8 immAllZerosV), (V_SET0)>;
+  def : Pat<(v2f64 immAllZerosV), (V_SET0)>;
+  def : Pat<(v4f32 immAllZerosV), (V_SET0)>;
+}
+
 // FR32 to 128-bit vector conversion.
 def MOVSS2PSrr : SSI<0x10, MRMSrcReg, (outs VR128:$dst), (ins FR32:$src),
                       "movss\t{$src, $dst|$dst, $src}",

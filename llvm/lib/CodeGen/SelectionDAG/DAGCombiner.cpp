@@ -1102,14 +1102,8 @@ SDOperand DAGCombiner::visitSUB(SDNode *N) {
   }
   
   // fold (sub x, x) -> 0
-  if (N0 == N1) {
-    if (AfterLegalize && ISD::isBuildVectorAllZeros(N0.Val))
-      // For example, zero vectors might be normalized to a particular vector
-      // type to ensure they are CSE'd. Avoid issuing zero vector nodes of
-      // *unexpected* type after legalization.
-      return N0;
+  if (N0 == N1)
     return DAG.getConstant(0, N->getValueType(0));
-  }
   // fold (sub c1, c2) -> c1-c2
   if (N0C && N1C)
     return DAG.getNode(ISD::SUB, VT, N0, N1);

@@ -510,6 +510,12 @@ let isReMaterializable = 1 in {
                               [(set VR64:$dst, (v2i32 immAllOnesV))]>;
 }
 
+let Predicates = [HasMMX] in {
+  def : Pat<(v1i64 immAllZerosV), (MMX_V_SET0)>;
+  def : Pat<(v4i16 immAllZerosV), (MMX_V_SET0)>;
+  def : Pat<(v8i8  immAllZerosV), (MMX_V_SET0)>;
+}
+
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
 //===----------------------------------------------------------------------===//
