@@ -210,17 +210,17 @@ Function *SRETPromotion::cloneFunctionBody(Function *F,
   // Skip first argument.
   Function::arg_iterator I = F->arg_begin(), E = F->arg_end();
   ++I;
-  unsigned ParamIndex = 1; // 0th parameter attribute is reserved for return type.
+  // 0th parameter attribute is reserved for return type.
+  // 1th parameter attribute is for first 1st sret argument.
+  unsigned ParamIndex = 2; 
   while (I != E) {
     Params.push_back(I->getType());
-    ParameterAttributes Attrs = ParamAttr::None;
     if (PAL) {
-      Attrs = PAL->getParamAttrs(ParamIndex);
-      if (ParamIndex == 1) // Skip sret attribute
-        Attrs = Attrs ^ ParamAttr::StructRet;
+      ParameterAttributes Attrs = PAL->getParamAttrs(ParamIndex);
+      if (Attrs != ParamAttr::None)
+        ParamAttrsVec.push_back(ParamAttrsWithIndex::get(ParamIndex - 1,
+                                                         Attrs));
     }
-    if (Attrs != ParamAttr::None)
-      ParamAttrsVec.push_back(ParamAttrsWithIndex::get(ParamIndex, Attrs));
     ++I;
     ++ParamIndex;
   }
@@ -269,17 +269,17 @@ void SRETPromotion::updateCallSites(Function *F, Function *NF) {
     CallSite::arg_iterator AI = CS.arg_begin(), AE = CS.arg_end();
     Value *FirstCArg = *AI;
     ++AI;
-    unsigned ParamIndex = 1; // 0th parameter attribute is reserved for return type.
+    // 0th parameter attribute is reserved for return type.
+    // 1th parameter attribute is for first 1st sret argument.
+    unsigned ParamIndex = 2; 
     while (AI != AE) {
       Args.push_back(*AI); 
-      ParameterAttributes Attrs = ParamAttr::None;
       if (PAL) {
-        Attrs = PAL->getParamAttrs(ParamIndex);
-        if (ParamIndex == 1) // Skip sret attribute
-          Attrs = Attrs ^ ParamAttr::StructRet;
+        ParameterAttributes Attrs = PAL->getParamAttrs(ParamIndex);
+        if (Attrs != ParamAttr::None)
+          ArgAttrsVec.push_back(ParamAttrsWithIndex::get(ParamIndex - 1, 
+                                                         Attrs));
       }
-      if (Attrs != ParamAttr::None)
-        ArgAttrsVec.push_back(ParamAttrsWithIndex::get(Args.size(), Attrs));
       ++ParamIndex;
       ++AI;
     }
