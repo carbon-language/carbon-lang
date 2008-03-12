@@ -2348,21 +2348,20 @@ void RewriteTest::RewriteObjCProtocolsMetaData(ObjCProtocolDecl **Protocols,
         Result += "\tchar *method_types;\n";
         Result += "};\n";
         
+        objc_protocol_methods = true;
+      }
+      int NumMethods = PDecl->getNumInstanceMethods();
+      if(NumMethods > 0) {
         /* struct _objc_protocol_method_list {
          int protocol_method_count;
          struct protocol_methods protocols[];
          }
          */
-        Result += "\nstruct _objc_protocol_method_list {\n";
+        Result += "\nstatic struct {\n";
         Result += "\tint protocol_method_count;\n";
-        Result += "\tstruct protocol_methods protocols[];\n};\n";
-        objc_protocol_methods = true;
-      }
-      
-      int NumMethods = PDecl->getNumInstanceMethods();
-      if(NumMethods > 0) {
-        Result += "\nstatic struct _objc_protocol_method_list "
-               "_OBJC_PROTOCOL_INSTANCE_METHODS_";
+        Result += "\tstruct protocol_methods protocols[";
+        Result += utostr(NumMethods);
+        Result += "];\n} _OBJC_PROTOCOL_INSTANCE_METHODS_";
         Result += PDecl->getName();
         Result += " __attribute__ ((section (\"__OBJC, __cat_inst_meth\")))= "
           "{\n\t" + utostr(NumMethods) + "\n";
@@ -2387,8 +2386,16 @@ void RewriteTest::RewriteObjCProtocolsMetaData(ObjCProtocolDecl **Protocols,
       // Output class methods declared in this protocol.
       NumMethods = PDecl->getNumClassMethods();
       if (NumMethods > 0) {
-        Result += "\nstatic struct _objc_protocol_method_list "
-               "_OBJC_PROTOCOL_CLASS_METHODS_";
+        /* struct _objc_protocol_method_list {
+         int protocol_method_count;
+         struct protocol_methods protocols[];
+         }
+         */
+        Result += "\nstatic struct {\n";
+        Result += "\tint protocol_method_count;\n";
+        Result += "\tstruct protocol_methods protocols[";
+        Result += utostr(NumMethods);
+        Result += "];\n} _OBJC_PROTOCOL_CLASS_METHODS_";
         Result += PDecl->getName();
         Result += " __attribute__ ((section (\"__OBJC, __cat_cls_meth\")))= "
                "{\n\t";
@@ -2431,17 +2438,6 @@ void RewriteTest::RewriteObjCProtocolsMetaData(ObjCProtocolDecl **Protocols,
         Result += "\tstruct _objc_protocol_method_list *class_methods;\n";
         Result += "};\n";
         
-        /* struct _objc_protocol_list {
-         struct _objc_protocol_list *next;
-         int    protocol_count;
-         struct _objc_protocol *class_protocols[];
-         }
-         */
-        Result += "\nstruct _objc_protocol_list {\n";
-        Result += "\tstruct _objc_protocol_list *next;\n";
-        Result += "\tint    protocol_count;\n";
-        Result += "\tstruct _objc_protocol *class_protocols[];\n";
-        Result += "};\n";
         objc_protocol = true;
       }
       
@@ -2452,14 +2448,14 @@ void RewriteTest::RewriteObjCProtocolsMetaData(ObjCProtocolDecl **Protocols,
       Result += PDecl->getName();
       Result += "\", 0, ";
       if (PDecl->getNumInstanceMethods() > 0) {
-        Result += "&_OBJC_PROTOCOL_INSTANCE_METHODS_";
+        Result += "(struct _objc_protocol_method_list *)&_OBJC_PROTOCOL_INSTANCE_METHODS_";
         Result += PDecl->getName();
         Result += ", ";
       }
       else
         Result += "0, ";
       if (PDecl->getNumClassMethods() > 0) {
-        Result += "&_OBJC_PROTOCOL_CLASS_METHODS_";
+        Result += "(struct _objc_protocol_method_list *)&_OBJC_PROTOCOL_CLASS_METHODS_";
         Result += PDecl->getName();
         Result += "\n";
       }
@@ -2468,7 +2464,18 @@ void RewriteTest::RewriteObjCProtocolsMetaData(ObjCProtocolDecl **Protocols,
       Result += "};\n";
     }
     // Output the top lovel protocol meta-data for the class.
-    Result += "\nstatic struct _objc_protocol_list _OBJC_";
+    /* struct _objc_protocol_list {
+     struct _objc_protocol_list *next;
+     int    protocol_count;
+     struct _objc_protocol *class_protocols[];
+     }
+     */
+    Result += "\nstatic struct {\n";
+    Result += "\tstruct _objc_protocol_list *next;\n";
+    Result += "\tint    protocol_count;\n";
+    Result += "\tstruct _objc_protocol *class_protocols[";
+    Result += utostr(NumProtocols);
+    Result += "];\n} _OBJC_";
     Result += prefix;
     Result += "_PROTOCOLS_";
     Result += ClassName;
@@ -2483,7 +2490,7 @@ void RewriteTest::RewriteObjCProtocolsMetaData(ObjCProtocolDecl **Protocols,
     
     for (int i = 1; i < NumProtocols; i++) {
       ObjCProtocolDecl *PDecl = Protocols[i];
-      Result += "\t ,&_OBJC_PROTOCOL_";
+      Result += "\t ,(struct _objc_protocol_list*)&_OBJC_PROTOCOL_";
       Result += PDecl->getName();
       Result += "\n";
     }
@@ -2775,7 +2782,7 @@ void RewriteTest::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
   else
     Result += ", 0\n";
   if (CDecl->getNumIntfRefProtocols() > 0) {
-    Result += "\t,0, &_OBJC_CLASS_PROTOCOLS_";
+    Result += "\t,0, (struct _objc_protocol_list *)&_OBJC_CLASS_PROTOCOLS_";
     Result += CDecl->getName();
     Result += ",0,0\n";
   }
@@ -2828,7 +2835,7 @@ void RewriteTest::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
   else
     Result += ",0,0";
   if (CDecl->getNumIntfRefProtocols() > 0) {
-    Result += ", &_OBJC_CLASS_PROTOCOLS_";
+    Result += ", (struct _objc_protocol_list*)&_OBJC_CLASS_PROTOCOLS_";
     Result += CDecl->getName();
     Result += ", 0,0\n";
   }
