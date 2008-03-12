@@ -1075,6 +1075,7 @@ bool BitcodeReader::ParseModule(const std::string &ModuleID) {
         FunctionsWithBodies.push_back(Func);
       break;
     }
+    // ALIAS: [alias type, aliasee val#, linkage]
     // ALIAS: [alias type, aliasee val#, linkage, visibility]
     case bitc::MODULE_CODE_ALIAS: {
       if (Record.size() < 3)
@@ -1085,7 +1086,9 @@ bool BitcodeReader::ParseModule(const std::string &ModuleID) {
       
       GlobalAlias *NewGA = new GlobalAlias(Ty, GetDecodedLinkage(Record[2]),
                                            "", 0, TheModule);
-      NewGA->setVisibility(GetDecodedVisibility(Record[3]));
+      // Old bitcode files didn't have visibility field.
+      if (Record.size() > 3)
+        NewGA->setVisibility(GetDecodedVisibility(Record[3]));
       ValueList.push_back(NewGA);
       AliasInits.push_back(std::make_pair(NewGA, Record[1]));
       break;
