@@ -31,6 +31,11 @@ void BitcodeReader::FreeState() {
   Buffer = 0;
   std::vector<PATypeHolder>().swap(TypeList);
   ValueList.clear();
+  
+  // Drop references to ParamAttrs.
+  for (unsigned i = 0, e = ParamAttrs.size(); i != e; ++i)
+    ParamAttrs[i]->dropRef();
+  
   std::vector<const ParamAttrsList*>().swap(ParamAttrs);
   std::vector<BasicBlock*>().swap(FunctionBBs);
   std::vector<Function*>().swap(FunctionsWithBodies);
@@ -237,7 +242,13 @@ bool BitcodeReader::ParseParamAttrBlock() {
         if (Record[i+1] != ParamAttr::None)
           Attrs.push_back(ParamAttrsWithIndex::get(Record[i], Record[i+1]));
       }
-      ParamAttrs.push_back(Attrs.empty() ? NULL : ParamAttrsList::get(Attrs));
+      if (Attrs.empty()) {
+        ParamAttrs.push_back(0);
+      } else {
+        ParamAttrs.push_back(ParamAttrsList::get(Attrs));
+        ParamAttrs.back()->addRef();
+      }
+
       Attrs.clear();
       break;
     }
