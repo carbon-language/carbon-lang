@@ -320,6 +320,9 @@ namespace ISD {
     
     // EXTRACT_SUBREG - This node is used to extract a sub-register value. 
     // This node takes a superreg and a constant sub-register index as operands.
+    // Note sub-register indices must be increasing. That is, if the
+    // sub-register index of a 8-bit sub-register is N, then the index for a
+    // 16-bit sub-register must be at least N+1.
     EXTRACT_SUBREG,
     
     // INSERT_SUBREG - This node is used to insert a sub-register value. 
