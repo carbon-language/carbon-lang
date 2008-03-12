@@ -52,8 +52,12 @@ namespace {
     std::set<unsigned> UsedByAnother;
     
     // RenameSets are the sets of operands (and their VNInfo IDs) to a PHI
-    // (the defining instruction of the key) that can be renamed without copies
+    // (the defining instruction of the key) that can be renamed without copies.
     std::map<unsigned, std::map<unsigned, unsigned> > RenameSets;
+    
+    // PhiValueNumber holds the ID numbers of the VNs for each phi that we're
+    // eliminating, indexed by the register defined by that phi.
+    std::map<unsigned, unsigned> PhiValueNumber;
 
     // Store the DFS-in number of each block
     DenseMap<MachineBasicBlock*, unsigned> preorder;
@@ -404,6 +408,11 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
   MachineBasicBlock::iterator P = MBB->begin();
   while (P != MBB->end() && P->getOpcode() == TargetInstrInfo::PHI) {
     unsigned DestReg = P->getOperand(0).getReg();
+
+    LiveInterval& PI = LI.getOrCreateInterval(DestReg);
+    unsigned pIdx = LI.getInstructionIndex(P);
+    VNInfo* PVN = PI.getLiveRangeContaining(pIdx)->valno;
+    PhiValueNumber.insert(std::make_pair(DestReg, PVN->id));
 
     // PHIUnion is the set of incoming registers to the PHI node that
     // are going to be renames rather than having copies inserted.  This set
