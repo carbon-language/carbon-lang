@@ -20,30 +20,84 @@ SymbolID SymbolManager::getSymbol(VarDecl* D) {
 
   assert (isa<ParmVarDecl>(D) || D->hasGlobalStorage());
   
-  SymbolID& X = DataToSymbol[getKey(D)];
+  llvm::FoldingSetNodeID profile;
   
-  if (!X.isInitialized()) {
-    X = SymbolToData.size();
-    
-    if (ParmVarDecl* VD = dyn_cast<ParmVarDecl>(D))
-      SymbolToData.push_back(SymbolDataParmVar(VD));
-    else
-      SymbolToData.push_back(SymbolDataGlobalVar(D));
+  ParmVarDecl* PD = dyn_cast<ParmVarDecl>(D);
+  
+  if (PD)
+    SymbolDataParmVar::Profile(profile, PD);
+  else
+    SymbolDataGlobalVar::Profile(profile, D);
+  
+  void* InsertPos;
+  
+  SymbolData* SD = DataSet.FindNodeOrInsertPos(profile, InsertPos);
+
+  if (SD)
+    return SD->getSymbol();
+  
+  if (PD) {
+    SD = (SymbolData*) BPAlloc.Allocate<SymbolDataParmVar>();
+    new (SD) SymbolDataParmVar(SymbolCounter, PD);
+  }
+  else {
+    SD = (SymbolData*) BPAlloc.Allocate<SymbolDataGlobalVar>();
+    new (SD) SymbolDataGlobalVar(SymbolCounter, D);
   }
   
-  return X;
+  DataSet.InsertNode(SD, InsertPos);
+  
+  DataMap[SymbolCounter] = SD;
+  return SymbolCounter++;
 }  
  
 SymbolID SymbolManager::getContentsOfSymbol(SymbolID sym) {
-  SymbolID& X = DataToSymbol[getKey(sym)];
   
-  if (!X.isInitialized()) {
-    X = SymbolToData.size();
-    SymbolToData.push_back(SymbolDataContentsOf(sym));
-  }
+  llvm::FoldingSetNodeID profile;
+  SymbolDataContentsOf::Profile(profile, sym);
+  void* InsertPos;
   
-  return X;  
+  SymbolData* SD = DataSet.FindNodeOrInsertPos(profile, InsertPos);
+  
+  if (SD)
+    return SD->getSymbol();
+
+  SD = (SymbolData*) BPAlloc.Allocate<SymbolDataContentsOf>();
+  new (SD) SymbolDataContentsOf(SymbolCounter, sym);
+
+
+  DataSet.InsertNode(SD, InsertPos);  
+  DataMap[SymbolCounter] = SD;
+  
+  return SymbolCounter++;
 }
+  
+SymbolID SymbolManager::getCallRetValSymbol(CallExpr* CE, unsigned Count) {
+  
+  llvm::FoldingSetNodeID profile;
+  SymbolDataCallRetVal::Profile(profile, CE, Count);
+  void* InsertPos;
+  
+  SymbolData* SD = DataSet.FindNodeOrInsertPos(profile, InsertPos);
+  
+  if (SD)
+    return SD->getSymbol();
+  
+  SD = (SymbolData*) BPAlloc.Allocate<SymbolDataCallRetVal>();
+  new (SD) SymbolDataCallRetVal(SymbolCounter, CE, Count);
+  
+  DataSet.InsertNode(SD, InsertPos);  
+  DataMap[SymbolCounter] = SD;
+  
+  return SymbolCounter++;
+}
+
+const SymbolData& SymbolManager::getSymbolData(SymbolID Sym) const {  
+  DataMapTy::const_iterator I = DataMap.find(Sym);
+  assert (I != DataMap.end());  
+  return *I->second;
+}
+
 
 QualType SymbolData::getType(const SymbolManager& SymMgr) const {
   switch (getKind()) {
@@ -57,12 +111,14 @@ QualType SymbolData::getType(const SymbolManager& SymMgr) const {
       return cast<SymbolDataGlobalVar>(this)->getDecl()->getType();
       
     case ContentsOfKind: {
-      SymbolID x = cast<SymbolDataContentsOf>(this)->getSymbol();
+      SymbolID x = cast<SymbolDataContentsOf>(this)->getContainerSymbol();
       QualType T = SymMgr.getSymbolData(x).getType(SymMgr);
       return T->getAsPointerType()->getPointeeType();
     }
+      
+    case CallRetValKind:
+      return cast<SymbolDataCallRetVal>(this)->getCallExpr()->getType();
   }
 }
 
-SymbolManager::SymbolManager() {}
 SymbolManager::~SymbolManager() {}

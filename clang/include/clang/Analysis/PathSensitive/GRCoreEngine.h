@@ -143,6 +143,12 @@ public:
     return LastNode ? (LastNode->isSink() ? NULL : LastNode) : NULL;
   }
   
+  GRBlockCounter getBlockCounter() const { return Eng.WList->getBlockCounter();}
+  
+  unsigned getCurrentBlockCount() const {
+    return getBlockCounter().getNumVisited(B.getBlockID());
+  }  
+  
   ExplodedNodeImpl* generateNodeImpl(Stmt* S, void* State,
                                      ExplodedNodeImpl* Pred);
 
@@ -180,6 +186,14 @@ public:
   
   NodeTy* generateNode(Stmt* S, StateTy* St) {
     return static_cast<NodeTy*>(NB.generateNodeImpl(S, St));    
+  }
+  
+  GRBlockCounter getBlockCounter() const {
+    return NB.getBlockCounter();
+  }  
+  
+  unsigned getCurrentBlockCount() const {
+    return NB.getCurrentBlockCount();
   }
   
   StateTy* GetState(NodeTy* Pred) const {

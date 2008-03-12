@@ -86,6 +86,10 @@ public:
     return (*Args)[idx];
   }
   
+  RetEffect getRet() const {
+    return Ret;
+  }
+  
   typedef ArgEffects::const_iterator arg_iterator;
   
   arg_iterator begin_args() const { return Args->begin(); }
@@ -113,12 +117,24 @@ class CFRefSummaryManager {
   llvm::BumpPtrAllocator BPAlloc;
   
   ArgEffects             ScratchArgs;
+  
+  
+  ArgEffects*   getArgEffects();
 
+  CFRefSummary* getCannedCFSummary(FunctionTypeProto* FT, bool isRetain);
+
+  CFRefSummary* getCFSummary(FunctionDecl* FD, const char* FName);
+  
+  CFRefSummary* getCFSummaryCreateRule(FunctionTypeProto* FT);
+  CFRefSummary* getCFSummaryGetRule(FunctionTypeProto* FT);  
+  
+  CFRefSummary* getPersistentSummary(ArgEffects* AE, RetEffect RE);
+  
 public:
   CFRefSummaryManager() {}
   ~CFRefSummaryManager();
   
-  CFRefSummary* getSummary(FunctionDecl* FD);
+  CFRefSummary* getSummary(FunctionDecl* FD, ASTContext& Ctx);
 };
   
 } // end anonymous namespace
@@ -137,7 +153,59 @@ CFRefSummaryManager::~CFRefSummaryManager() {
     I->getValue().~ArgEffects();
 }
 
-CFRefSummary* CFRefSummaryManager::getSummary(FunctionDecl* FD) {
+ArgEffects* CFRefSummaryManager::getArgEffects() {
+
+  assert (!ScratchArgs.empty());
+  
+  llvm::FoldingSetNodeID profile;
+  profile.Add(ScratchArgs);
+  void* InsertPos;
+  
+  llvm::FoldingSetNodeWrapper<ArgEffects>* E =
+    AESet.FindNodeOrInsertPos(profile, InsertPos);
+  
+  if (E) {    
+    ScratchArgs.clear();
+    return &E->getValue();
+  }
+  
+  E = (llvm::FoldingSetNodeWrapper<ArgEffects>*)
+      BPAlloc.Allocate<llvm::FoldingSetNodeWrapper<ArgEffects> >();
+                       
+  new (E) llvm::FoldingSetNodeWrapper<ArgEffects>(ScratchArgs);
+  AESet.InsertNode(E, InsertPos);
+
+  ScratchArgs.clear();
+  return &E->getValue();
+}
+
+CFRefSummary* CFRefSummaryManager::getPersistentSummary(ArgEffects* AE,
+                                                        RetEffect RE) {
+  
+  llvm::FoldingSetNodeID profile;
+  CFRefSummary::Profile(profile, AE, RE);
+  void* InsertPos;
+  
+  CFRefSummary* Summ = SummarySet.FindNodeOrInsertPos(profile, InsertPos);
+  
+  if (Summ)
+    return Summ;
+  
+  Summ = (CFRefSummary*) BPAlloc.Allocate<CFRefSummary>();
+  new (Summ) CFRefSummary(AE, RE);
+  SummarySet.InsertNode(Summ, InsertPos);
+  
+  return Summ;
+}
+
+
+CFRefSummary* CFRefSummaryManager::getSummary(FunctionDecl* FD,
+                                              ASTContext& Ctx) {
+
+  SourceLocation Loc = FD->getLocation();
+  
+  if (!Loc.isFileID())
+    return NULL;
   
   { // Look into our cache of summaries to see if we have already computed
     // a summary for this FunctionDecl.
@@ -148,10 +216,167 @@ CFRefSummary* CFRefSummaryManager::getSummary(FunctionDecl* FD) {
       return I->second;
   }
   
-  //
+#if 0
+  SourceManager& SrcMgr = Ctx.getSourceManager();
+  unsigned fid = Loc.getFileID();
+  const FileEntry* FE = SrcMgr.getFileEntryForID(fid);
   
+  if (!FE)
+    return NULL;
+  
+  const char* DirName = FE->getDir()->getName();  
+  assert (DirName);
+  assert (strlen(DirName) > 0);
+  
+  if (!strstr(DirName, "CoreFoundation")) {
+    SummaryMap[FD] = NULL;
+    return NULL;
+  }
+#endif
+  
+  const char* FName = FD->getIdentifier()->getName();
+    
+  if (FName[0] == 'C' && FName[1] == 'F') {
+    CFRefSummary* S = getCFSummary(FD, FName);
+    SummaryMap[FD] = S;
+    return S;
+  }
   
   return NULL;  
+}
+
+CFRefSummary* CFRefSummaryManager::getCFSummary(FunctionDecl* FD,
+                                                const char* FName) {
+  
+  // For now, only generate summaries for functions that have a prototype.
+  
+  FunctionTypeProto* FT =
+    dyn_cast<FunctionTypeProto>(FD->getType().getTypePtr());
+  
+  if (!FT)
+    return NULL;
+  
+  FName += 2;
+
+  if (strcmp(FName, "Retain") == 0)
+    return getCannedCFSummary(FT, true);
+  
+  if (strcmp(FName, "Release") == 0)
+    return getCannedCFSummary(FT, false);
+  
+  assert (ScratchArgs.empty());
+  bool usesCreateRule = false;
+  
+  if (strstr(FName, "Create"))
+    usesCreateRule = true;
+  
+  if (!usesCreateRule && strstr(FName, "Copy"))
+    usesCreateRule = true;
+  
+  if (usesCreateRule)
+    return getCFSummaryCreateRule(FT);
+
+  if (strstr(FName, "Get"))
+    return getCFSummaryGetRule(FT);
+  
+  return NULL;
+}
+
+CFRefSummary* CFRefSummaryManager::getCannedCFSummary(FunctionTypeProto* FT,
+                                                      bool isRetain) {
+  
+  if (FT->getNumArgs() != 1)
+    return NULL;
+  
+  TypedefType* ArgT = dyn_cast<TypedefType>(FT->getArgType(0).getTypePtr());
+  
+  if (!ArgT)
+    return NULL;
+  
+  // For CFRetain/CFRelease, the first (and only) argument is of type 
+  // "CFTypeRef".
+  
+  const char* TDName = ArgT->getDecl()->getIdentifier()->getName();
+  assert (TDName);
+  
+  if (strcmp("CFTypeRef", TDName) == 0)
+    return NULL;
+  
+  if (!ArgT->isPointerType())
+    return NULL;
+  
+  // Check the return type.  It should also be "CFTypeRef".
+  
+  QualType RetTy = FT->getResultType();
+  
+  if (RetTy.getTypePtr() != ArgT)
+    return NULL;
+  
+  // The function's interface checks out.  Generate a canned summary.
+  
+  assert (ScratchArgs.empty());
+  ScratchArgs.push_back(isRetain ? IncRef : DecRef);
+  
+  return getPersistentSummary(getArgEffects(), RetEffect::MakeAlias(0));
+}
+
+static bool isCFRefType(QualType T) {
+  
+  if (!T->isPointerType())
+    return false;
+  
+  // Check the typedef for the name "CF" and the substring "Ref".
+  
+  TypedefType* TD = dyn_cast<TypedefType>(T.getTypePtr());
+  
+  if (!TD)
+    return false;
+  
+  const char* TDName = TD->getDecl()->getIdentifier()->getName();
+  assert (TDName);
+  
+  if (TDName[0] != 'C' || TDName[1] != 'F')
+    return false;
+  
+  if (strstr(TDName, "Ref") == 0)
+    return false;
+  
+  return true;
+}
+  
+
+CFRefSummary*
+CFRefSummaryManager::getCFSummaryCreateRule(FunctionTypeProto* FT) {
+ 
+  if (!isCFRefType(FT->getResultType()))
+    return NULL;
+
+  assert (ScratchArgs.empty());
+  
+  // FIXME: Add special-cases for functions that retain/release.  For now
+  //  just handle the default case.
+  
+  for (unsigned i = 0, n = FT->getNumArgs(); i != n; ++i)
+    ScratchArgs.push_back(DoNothing);
+  
+  return getPersistentSummary(getArgEffects(), RetEffect::MakeOwned());
+}
+
+CFRefSummary*
+CFRefSummaryManager::getCFSummaryGetRule(FunctionTypeProto* FT) {
+  
+  if (!isCFRefType(FT->getResultType()))
+    return NULL;
+  
+  assert (ScratchArgs.empty());
+  
+  // FIXME: Add special-cases for functions that retain/release.  For now
+  //  just handle the default case.
+  
+  for (unsigned i = 0, n = FT->getNumArgs(); i != n; ++i)
+    ScratchArgs.push_back(DoNothing);
+  
+  return getPersistentSummary(getArgEffects(), RetEffect::MakeNotOwned());
 }
 
 //===----------------------------------------------------------------------===//
@@ -246,8 +471,8 @@ class CFRefCount : public GRSimpleVals {
   // Instance variables.
   
   CFRefSummaryManager Summaries;
-  RefBFactoryTy  RefBFactory;
-  
+  RefBFactoryTy       RefBFactory;
+     
   UseAfterReleasesTy UseAfterReleases;
   ReleasesNotOwnedTy ReleasesNotOwned;
   
@@ -282,9 +507,8 @@ public:
   // Calls.
   
   virtual void EvalCall(ExplodedNodeSet<ValueState>& Dst,
-                        ValueStateManager& StateMgr,
+                        GRExprEngine& Engine,
                         GRStmtNodeBuilder<ValueState>& Builder,
-                        BasicValueFactory& BasicVals,
                         CallExpr* CE, LVal L,
                         ExplodedNode<ValueState>* Pred);  
 };
@@ -307,11 +531,12 @@ void CFRefCount::BindingsPrinter::PrintCheckerState(std::ostream& Out,
 }
 
 void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
-                            ValueStateManager& StateMgr,
-                            GRStmtNodeBuilder<ValueState>& Builder,
-                            BasicValueFactory& BasicVals,
-                            CallExpr* CE, LVal L,
-                            ExplodedNode<ValueState>* Pred) {
+                          GRExprEngine& Engine,
+                          GRStmtNodeBuilder<ValueState>& Builder,
+                          CallExpr* CE, LVal L,
+                          ExplodedNode<ValueState>* Pred) {
+  
+  ValueStateManager& StateMgr = Engine.getStateManager();
   
   // FIXME: Support calls to things other than lval::FuncVal.  At the very
   //  least we should stop tracking ref-state for ref-counted objects passed
@@ -323,7 +548,7 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
 
   lval::FuncVal FV = cast<lval::FuncVal>(L);
   FunctionDecl* FD = FV.getDecl();
-  CFRefSummary* Summ = Summaries.getSummary(FD);
+  CFRefSummary* Summ = Summaries.getSummary(FD, Engine.getContext());
 
   // Get the state.
   
@@ -355,35 +580,36 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
             
       if (isa<LVal>(V))
         StateMgr.Unbind(StVals, cast<LVal>(V));
-    }    
+    }
+    
+    St = StateMgr.getPersistentState(StVals);
+    Builder.Nodify(Dst, CE, Pred, St);
+    return;
   }
-  else {
+  
+  // This function has a summary.  Evaluate the effect of the arguments.
+  
+  unsigned idx = 0;
+  
+  for (CallExpr::arg_iterator I=CE->arg_begin(), E=CE->arg_end();
+        I!=E; ++I, ++idx) {
     
-    // This function has a summary.  Evaluate the effect of the arguments.
+    RVal V = StateMgr.GetRVal(St, *I);
     
-    unsigned idx = 0;
-    
-    for (CallExpr::arg_iterator I=CE->arg_begin(), E=CE->arg_end();
-          I!=E; ++I, ++idx) {
-      
-      RVal V = StateMgr.GetRVal(St, *I);
-      
-      if (isa<lval::SymbolVal>(V)) {
-        SymbolID Sym = cast<lval::SymbolVal>(V).getSymbol();
-        RefBindings B = GetRefBindings(StVals);
+    if (isa<lval::SymbolVal>(V)) {
+      SymbolID Sym = cast<lval::SymbolVal>(V).getSymbol();
+      RefBindings B = GetRefBindings(StVals);
 
-        if (RefBindings::TreeTy* T = B.SlimFind(Sym)) {
-          B = Update(B, Sym, T->getValue().second, Summ->getArg(idx), hasError);
-          SetRefBindings(StVals, B);
-          if (hasError) break;
-        }
+      if (RefBindings::TreeTy* T = B.SlimFind(Sym)) {
+        B = Update(B, Sym, T->getValue().second, Summ->getArg(idx), hasError);
+        SetRefBindings(StVals, B);
+        if (hasError) break;
       }
-    }    
-  }
-  
-  St = StateMgr.getPersistentState(StVals);
-  
+    }
+  }    
+    
   if (hasError) {
+    St = StateMgr.getPersistentState(StVals);
     GRExprEngine::NodeTy* N = Builder.generateNode(CE, St, Pred);
 
     if (N) {
@@ -399,10 +625,61 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
           ReleasesNotOwned.insert(N);
           break;
       }
-    }    
+    }
+    
+    return;
   }
-  else
-    Builder.Nodify(Dst, CE, Pred, St);
+
+  // Finally, consult the summary for the return value.
+  
+  RetEffect RE = Summ->getRet();
+  St = StateMgr.getPersistentState(StVals);
+
+  
+  switch (RE.getKind()) {
+    default:
+      assert (false && "Unhandled RetEffect."); break;
+    
+    case RetEffect::Alias: {
+      unsigned idx = RE.getValue();
+      assert (idx < CE->getNumArgs());
+      RVal V = StateMgr.GetRVal(St, CE->getArg(idx));
+      St = StateMgr.SetRVal(St, CE, V, Engine.getCFG().isBlkExpr(CE), false);
+      break;
+    }
+      
+    case RetEffect::OwnedSymbol: {
+      unsigned Count = Builder.getCurrentBlockCount();
+      SymbolID Sym = Engine.getSymbolManager().getCallRetValSymbol(CE, Count);
+
+      ValueState StImpl = *St;
+      RefBindings B = GetRefBindings(StImpl);
+      SetRefBindings(StImpl, RefBFactory.Add(B, Sym, RefVal::makeOwned(1)));
+      
+      St = StateMgr.SetRVal(StateMgr.getPersistentState(StImpl),
+                            CE, lval::SymbolVal(Sym),
+                            Engine.getCFG().isBlkExpr(CE), false);
+      
+      break;
+    }
+      
+    case RetEffect::NotOwnedSymbol: {
+      unsigned Count = Builder.getCurrentBlockCount();
+      SymbolID Sym = Engine.getSymbolManager().getCallRetValSymbol(CE, Count);
+      
+      ValueState StImpl = *St;
+      RefBindings B = GetRefBindings(StImpl);
+      SetRefBindings(StImpl, RefBFactory.Add(B, Sym, RefVal::makeNotOwned()));
+      
+      St = StateMgr.SetRVal(StateMgr.getPersistentState(StImpl),
+                            CE, lval::SymbolVal(Sym),
+                            Engine.getCFG().isBlkExpr(CE), false);
+      
+      break;
+    }
+  }
+      
+  Builder.Nodify(Dst, CE, Pred, St);
 }
 
 
@@ -418,6 +695,12 @@ CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
       assert (false && "Unhandled CFRef transition.");
       
     case DoNothing:
+      if (V.getKind() == RefVal::Released) {
+        V = RefVal::makeUseAfterRelease();        
+        hasError = V.getKind();
+        break;
+      }
+      
       return B;
       
     case IncRef:      

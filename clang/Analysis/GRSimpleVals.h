@@ -28,34 +28,33 @@ public:
   
   // Casts.
   
-  virtual RVal EvalCast(BasicValueFactory& BasicVals, NonLVal V, QualType CastT);
-  virtual RVal EvalCast(BasicValueFactory& BasicVals, LVal V, QualType CastT);
+  virtual RVal EvalCast(GRExprEngine& Engine, NonLVal V, QualType CastT);
+  virtual RVal EvalCast(GRExprEngine& Engine, LVal V, QualType CastT);
   
   // Unary Operators.
   
-  virtual RVal EvalMinus(BasicValueFactory& BasicVals, UnaryOperator* U, NonLVal X);
+  virtual RVal EvalMinus(GRExprEngine& Engine, UnaryOperator* U, NonLVal X);
 
-  virtual RVal EvalComplement(BasicValueFactory& BasicVals, NonLVal X);
+  virtual RVal EvalComplement(GRExprEngine& Engine, NonLVal X);
   
   // Binary Operators.
   
-  virtual RVal EvalBinOp(BasicValueFactory& BasicVals, BinaryOperator::Opcode Op,
+  virtual RVal EvalBinOp(GRExprEngine& Engine, BinaryOperator::Opcode Op,
                          NonLVal L, NonLVal R);
   
-  virtual RVal EvalBinOp(BasicValueFactory& BasicVals, BinaryOperator::Opcode Op,
+  virtual RVal EvalBinOp(GRExprEngine& Engine, BinaryOperator::Opcode Op,
                          LVal L, LVal R);
   
   // Pointer arithmetic.
   
-  virtual RVal EvalBinOp(BasicValueFactory& BasicVals, BinaryOperator::Opcode Op,
+  virtual RVal EvalBinOp(GRExprEngine& Engine, BinaryOperator::Opcode Op,
                          LVal L, NonLVal R);  
   
   // Calls.
   
   virtual void EvalCall(ExplodedNodeSet<ValueState>& Dst,
-                        ValueStateManager& StateMgr,
+                        GRExprEngine& Engine,
                         GRStmtNodeBuilder<ValueState>& Builder,
-                        BasicValueFactory& BasicVals,
                         CallExpr* CE, LVal L,
                         ExplodedNode<ValueState>* Pred);
   
@@ -63,8 +62,8 @@ protected:
   
   // Equality operators for LVals.
   
-  RVal EvalEQ(BasicValueFactory& BasicVals, LVal L, LVal R);
-  RVal EvalNE(BasicValueFactory& BasicVals, LVal L, LVal R);
+  RVal EvalEQ(GRExprEngine& Engine, LVal L, LVal R);
+  RVal EvalNE(GRExprEngine& Engine, LVal L, LVal R);
 };
   
 } // end clang namespace

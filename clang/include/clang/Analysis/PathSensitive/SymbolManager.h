@@ -20,7 +20,7 @@
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/DataTypes.h"
-#include <vector>
+#include "llvm/Support/Allocator.h"
 
 namespace clang {
   
@@ -28,15 +28,14 @@ class SymbolManager;
   
 class SymbolID {
   unsigned Data;
+  
 public:
-  SymbolID() : Data(~0) {}
   SymbolID(unsigned x) : Data(x) {}
   
-  bool isInitialized() const { return Data != (unsigned) ~0; }
-  operator unsigned() const { assert (isInitialized()); return Data; }
+  operator unsigned() const { return Data; }
+  unsigned getNumber() const { return Data; }
   
   void Profile(llvm::FoldingSetNodeID& ID) const { 
-    assert (isInitialized());
     ID.AddInteger(Data);
   }
   
@@ -44,51 +43,74 @@ public:
     X.Profile(ID);
   }
 };
+  
+} // end clang namespace
+
+namespace llvm {
+  template <> struct DenseMapInfo<clang::SymbolID> {
+    static inline clang::SymbolID getEmptyKey() {
+      return clang::SymbolID(~0U);
+    }
+    static inline clang::SymbolID getTombstoneKey() {
+      return clang::SymbolID(~0U - 1);
+    }
+    static unsigned getHashValue(clang::SymbolID X) {
+      return X.getNumber();
+    }
+    static bool isEqual(clang::SymbolID X, clang::SymbolID Y) {
+      return X.getNumber() == Y.getNumber();
+    }
+    static bool isPod() { return true; }
+  };
+}
 
 // SymbolData: Used to record meta data about symbols.
 
-class SymbolData {
+namespace clang {
+  
+class SymbolData : public llvm::FoldingSetNode {
 public:
-  enum Kind { UndefKind, ParmKind, GlobalKind, ContentsOfKind };
+  enum Kind { UndefKind, ParmKind, GlobalKind, ContentsOfKind, CallRetValKind };
   
 private:
-  uintptr_t Data;
   Kind K;
+  SymbolID Sym;
   
 protected:
-  SymbolData(uintptr_t D, Kind k) : Data(D), K(k) {}
-  SymbolData(void* D, Kind k) : Data(reinterpret_cast<uintptr_t>(D)), K(k) {}
-  
-  void* getPtr() const { 
-    assert (K != UndefKind);
-    return reinterpret_cast<void*>(Data);
-  }
-  
-  uintptr_t getInt() const {
-    assert (K != UndefKind);
-    return Data;
-  }
-  
+  SymbolData(Kind k, SymbolID sym) : K(k), Sym(sym) {}  
+
 public:
-  SymbolData() : Data(0), K(UndefKind) {}
+  virtual ~SymbolData() {}
   
-  Kind  getKind() const { return K; }  
+  Kind getKind() const { return K; }  
   
-  inline bool operator==(const SymbolData& R) const { 
-    return K == R.K && Data == R.Data;
-  }
-  
+  SymbolID getSymbol() const { return Sym; }
+    
   QualType getType(const SymbolManager& SymMgr) const;
+  
+  virtual void Profile(llvm::FoldingSetNodeID& profile) = 0;
   
   // Implement isa<T> support.
   static inline bool classof(const SymbolData*) { return true; }
 };
 
 class SymbolDataParmVar : public SymbolData {
-public:
-  SymbolDataParmVar(ParmVarDecl* VD) : SymbolData(VD, ParmKind) {}
+  ParmVarDecl *VD;
+
+public:  
+  SymbolDataParmVar(SymbolID MySym, ParmVarDecl* vd)
+    : SymbolData(ParmKind, MySym), VD(vd) {}
   
-  ParmVarDecl* getDecl() const { return (ParmVarDecl*) getPtr(); }
+  ParmVarDecl* getDecl() const { return VD; }  
+  
+  static void Profile(llvm::FoldingSetNodeID& profile, ParmVarDecl* VD) {
+    profile.AddInteger((unsigned) ParmKind);
+    profile.AddPointer(VD);
+  }
+  
+  virtual void Profile(llvm::FoldingSetNodeID& profile) {
+    Profile(profile, VD);
+  }
   
   // Implement isa<T> support.
   static inline bool classof(const SymbolData* D) {
@@ -97,10 +119,22 @@ public:
 };
   
 class SymbolDataGlobalVar : public SymbolData {
+  VarDecl *VD;
+
 public:
-  SymbolDataGlobalVar(VarDecl* VD) : SymbolData(VD, GlobalKind) {}
+  SymbolDataGlobalVar(SymbolID MySym, VarDecl* vd) :
+    SymbolData(GlobalKind, MySym), VD(vd) {}
   
-  VarDecl* getDecl() const { return (VarDecl*) getPtr(); }
+  VarDecl* getDecl() const { return VD; }
+  
+  static void Profile(llvm::FoldingSetNodeID& profile, VarDecl* VD) {
+    profile.AddInteger((unsigned) GlobalKind);
+    profile.AddPointer(VD);
+  }
+  
+  virtual void Profile(llvm::FoldingSetNodeID& profile) {
+    Profile(profile, VD);
+  }
   
   // Implement isa<T> support.
   static inline bool classof(const SymbolData* D) {
@@ -109,14 +143,55 @@ public:
 };
 
 class SymbolDataContentsOf : public SymbolData {
+  SymbolID Sym;
+      
 public:
-  SymbolDataContentsOf(SymbolID ID) : SymbolData(ID, ContentsOfKind) {}
+  SymbolDataContentsOf(SymbolID MySym, SymbolID sym) : 
+    SymbolData(ContentsOfKind, MySym), Sym(sym) {}
   
-  SymbolID getSymbol() const { return (SymbolID) getInt(); }
+  SymbolID getContainerSymbol() const { return Sym; }
+  
+  static void Profile(llvm::FoldingSetNodeID& profile, SymbolID Sym) {
+    profile.AddInteger((unsigned) ContentsOfKind);
+    profile.AddInteger(Sym);
+  }
+  
+  virtual void Profile(llvm::FoldingSetNodeID& profile) {
+    Profile(profile, Sym);
+  }
   
   // Implement isa<T> support.
   static inline bool classof(const SymbolData* D) {
     return D->getKind() == ContentsOfKind;
+  }  
+};
+  
+class SymbolDataCallRetVal : public SymbolData {
+  CallExpr* CE;
+  unsigned Count;
+
+public:
+  SymbolDataCallRetVal(SymbolID Sym, CallExpr* ce, unsigned count)
+    : SymbolData(CallRetValKind, Sym), CE(ce), Count(count) {}
+  
+  CallExpr* getCallExpr() const { return CE; }
+  unsigned getCount() const { return Count; }  
+  
+  static void Profile(llvm::FoldingSetNodeID& profile,
+                      CallExpr* CE, unsigned Count) {
+    
+    profile.AddInteger((unsigned) CallRetValKind);
+    profile.AddPointer(CE);
+    profile.AddInteger(Count);
+  }
+  
+  virtual void Profile(llvm::FoldingSetNodeID& profile) {
+    Profile(profile, CE, Count);
+  }
+  
+  // Implement isa<T> support.
+  static inline bool classof(const SymbolData* D) {
+    return D->getKind() == CallRetValKind;
   }  
 };
 
@@ -133,7 +208,7 @@ public:
   Op(op), Val(V) {}
   
   BinaryOperator::Opcode getOpcode() const { return Op; }
-  const SymbolID& getSymbol() const { return Symbol; }
+  SymbolID getSymbol() const { return Symbol; }
   const llvm::APSInt& getInt() const { return Val; }
   
   static inline void Profile(llvm::FoldingSetNodeID& ID,
@@ -152,32 +227,28 @@ public:
 
 
 class SymbolManager {
-  std::vector<SymbolData> SymbolToData;
+  typedef llvm::FoldingSet<SymbolData> DataSetTy;
+  typedef llvm::DenseMap<SymbolID, SymbolData*> DataMapTy;
   
-  typedef llvm::DenseMap<void*,SymbolID> MapTy;
-  MapTy DataToSymbol;
+  DataSetTy DataSet;
+  DataMapTy DataMap;
   
-  void* getKey(void* P) const {
-    return reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(P) | 0x1);
-  }
-  
-  void* getKey(SymbolID sym) const {
-    return reinterpret_cast<void*>((uintptr_t) (sym << 1));
-  }
+  unsigned SymbolCounter;
+  llvm::BumpPtrAllocator& BPAlloc;
   
 public:
-  SymbolManager();
+  SymbolManager(llvm::BumpPtrAllocator& bpalloc)
+    : SymbolCounter(0), BPAlloc(bpalloc) {}
+  
   ~SymbolManager();
   
   SymbolID getSymbol(VarDecl* D);
   SymbolID getContentsOfSymbol(SymbolID sym);
+  SymbolID getCallRetValSymbol(CallExpr* CE, unsigned VisitCount);
   
-  inline const SymbolData& getSymbolData(SymbolID ID) const {
-    assert (ID < SymbolToData.size());
-    return SymbolToData[ID];
-  }
+  const SymbolData& getSymbolData(SymbolID ID) const;
   
-  inline QualType getType(SymbolID ID) const {
+  QualType getType(SymbolID ID) const {
     return getSymbolData(ID).getType(*this);
   }
 };

@@ -263,6 +263,16 @@ public:
   ///  nodes by processing the 'effects' of a switch statement.
   void ProcessSwitch(SwitchNodeBuilder& builder);
   
+  
+  ValueStateManager& getStateManager() { return StateMgr; }
+  const ValueStateManager& getStateManger() const { return StateMgr; }
+  
+  BasicValueFactory& getBasicVals() { return BasicVals; }
+  const BasicValueFactory& getBasicVals() const { return BasicVals; }
+  
+  SymbolManager& getSymbolManager() { return SymMgr; }
+  const SymbolManager& getSymbolManager() const { return SymMgr; }
+  
 protected:
   
   ValueState* GetState(NodeTy* N) {
@@ -394,25 +404,25 @@ protected:
       return X;
     
     if (isa<LVal>(X))
-      return TF->EvalCast(BasicVals, cast<LVal>(X), CastT);
+      return TF->EvalCast(*this, cast<LVal>(X), CastT);
     else
-      return TF->EvalCast(BasicVals, cast<NonLVal>(X), CastT);
+      return TF->EvalCast(*this, cast<NonLVal>(X), CastT);
   }
   
   RVal EvalMinus(UnaryOperator* U, RVal X) {
-    return X.isValid() ? TF->EvalMinus(BasicVals, U, cast<NonLVal>(X)) : X;
+    return X.isValid() ? TF->EvalMinus(*this, U, cast<NonLVal>(X)) : X;
   }
   
   RVal EvalComplement(RVal X) {
-    return X.isValid() ? TF->EvalComplement(BasicVals, cast<NonLVal>(X)) : X;
+    return X.isValid() ? TF->EvalComplement(*this, cast<NonLVal>(X)) : X;
   }
 
   RVal EvalBinOp(BinaryOperator::Opcode Op, NonLVal L, RVal R) {
-    return R.isValid() ? TF->EvalBinOp(BasicVals, Op, L, cast<NonLVal>(R)) : R;
+    return R.isValid() ? TF->EvalBinOp(*this, Op, L, cast<NonLVal>(R)) : R;
   }
   
   RVal EvalBinOp(BinaryOperator::Opcode Op, NonLVal L, NonLVal R) {
-    return R.isValid() ? TF->EvalBinOp(BasicVals, Op, L, R) : R;
+    return R.isValid() ? TF->EvalBinOp(*this, Op, L, R) : R;
   }
   
   RVal EvalBinOp(BinaryOperator::Opcode Op, RVal L, RVal R) {
@@ -425,9 +435,9 @@ protected:
         
     if (isa<LVal>(L)) {
       if (isa<LVal>(R))
-        return TF->EvalBinOp(BasicVals, Op, cast<LVal>(L), cast<LVal>(R));
+        return TF->EvalBinOp(*this, Op, cast<LVal>(L), cast<LVal>(R));
       else
-        return TF->EvalBinOp(BasicVals, Op, cast<LVal>(L), cast<NonLVal>(R));
+        return TF->EvalBinOp(*this, Op, cast<LVal>(L), cast<NonLVal>(R));
     }
     
     if (isa<LVal>(R)) {
@@ -437,15 +447,15 @@ protected:
       assert (Op == BinaryOperator::Add || Op == BinaryOperator::Sub);
 
       // Commute the operands.      
-      return TF->EvalBinOp(BasicVals, Op, cast<LVal>(R), cast<NonLVal>(L));
+      return TF->EvalBinOp(*this, Op, cast<LVal>(R), cast<NonLVal>(L));
     }
     else
-      return TF->EvalBinOp(BasicVals, Op, cast<NonLVal>(L), cast<NonLVal>(R));
+      return TF->EvalBinOp(*this, Op, cast<NonLVal>(L), cast<NonLVal>(R));
   }
   
   void EvalCall(NodeSet& Dst, CallExpr* CE, LVal L, NodeTy* Pred) {
     assert (Builder && "GRStmtNodeBuilder must be defined.");    
-    return TF->EvalCall(Dst, StateMgr, *Builder, BasicVals, CE, L, Pred);
+    return TF->EvalCall(Dst, *this, *Builder, CE, L, Pred);
   }
   
   ValueState* MarkBranch(ValueState* St, Stmt* Terminator, bool branchTaken);

@@ -214,6 +214,7 @@ public:
       CNEFactory(alloc),
       CEFactory(alloc),
       BasicVals(Ctx, alloc),
+      SymMgr(alloc),
       Alloc(alloc) {}
   
   ValueState* getInitialState();
