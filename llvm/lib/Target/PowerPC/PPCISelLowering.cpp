@@ -1317,6 +1317,7 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op,
   MachineRegisterInfo &RegInfo = MF.getRegInfo();
   SmallVector<SDOperand, 8> ArgValues;
   SDOperand Root = Op.getOperand(0);
+  bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
   
   MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   bool isPPC64 = PtrVT == MVT::i64;
@@ -1517,11 +1518,21 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op,
     case MVT::v4i32:
     case MVT::v8i16:
     case MVT::v16i8:
-      // Note that vector arguments in registers don't reserve stack space.
+      // Note that vector arguments in registers don't reserve stack space,
+      // except in varargs functions.
       if (VR_idx != Num_VR_Regs) {
         unsigned VReg = RegInfo.createVirtualRegister(&PPC::VRRCRegClass);
         RegInfo.addLiveIn(VR[VR_idx], VReg);
         ArgVal = DAG.getCopyFromReg(Root, VReg, ObjectVT);
+        if (isVarArg) {
+          while ((ArgOffset % 16) != 0) {
+            ArgOffset += PtrByteSize;
+            if (GPR_idx != Num_GPR_Regs)
+              GPR_idx++;
+          }
+          ArgOffset += 16;
+          GPR_idx = std::min(GPR_idx+4, Num_GPR_Regs);
+        }
         ++VR_idx;
       } else {
         // This should be simple, but requires getting 16-byte aligned stack
@@ -1546,7 +1557,6 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op,
 
   // If the function takes variable number of arguments, make a frame index for
   // the start of the first vararg value... for expansion of llvm.va_start.
-  bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
   if (isVarArg) {
     
     int depth;
@@ -1698,9 +1708,16 @@ SDOperand PPCTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG,
   // area, and parameter passing area.  We start with 24/48 bytes, which is
   // prereserved space for [SP][CR][LR][3 x unused].
   unsigned NumBytes = PPCFrameInfo::getLinkageSize(isPPC64, isMachoABI);
-  
+
   // Add up all the space actually used.
   for (unsigned i = 0; i != NumOps; ++i) {
+    SDOperand Arg = Op.getOperand(5+2*i);
+    MVT::ValueType ArgVT = Arg.getValueType();
+    // Non-varargs Altivec parameters do not have corresponding stack space.
+    if (!isVarArg &&
+        (ArgVT==MVT::v4f32 || ArgVT==MVT::v4i32 ||
+         ArgVT==MVT::v8i16 || ArgVT==MVT::v16i8))
+      continue;
     ISD::ParamFlags::ParamFlagsTy Flags = 
           cast<ConstantSDNode>(Op.getOperand(5+2*i+1))->getValue();
     unsigned ArgSize =MVT::getSizeInBits(Op.getOperand(5+2*i).getValueType())/8;
@@ -1708,6 +1725,10 @@ SDOperand PPCTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG,
       ArgSize = (Flags & ISD::ParamFlags::ByValSize) >> 
                 ISD::ParamFlags::ByValSizeOffs;
     ArgSize = ((ArgSize + PtrByteSize - 1)/PtrByteSize) * PtrByteSize;
+    // Varargs Altivec parameters are padded to a 16 byte boundary.
+    if (ArgVT==MVT::v4f32 || ArgVT==MVT::v4i32 ||
+        ArgVT==MVT::v8i16 || ArgVT==MVT::v16i8)
+      NumBytes = ((NumBytes+15)/16)*16;
     NumBytes += ArgSize;
   }
 
@@ -1933,10 +1954,54 @@ SDOperand PPCTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG,
     case MVT::v4i32:
     case MVT::v8i16:
     case MVT::v16i8:
-      assert(!isVarArg && "Don't support passing vectors to varargs yet!");
-      assert(VR_idx != NumVRs &&
-             "Don't support passing more than 12 vector args yet!");
-      RegsToPass.push_back(std::make_pair(VR[VR_idx++], Arg));
+      if (isVarArg) {
+        // These go aligned on the stack, or in the corresponding R registers
+        // when within range.  The Darwin PPC ABI doc claims they also go in 
+        // V registers; in fact gcc does this only for arguments that are
+        // prototyped, not for those that match the ...  We do it for all
+        // arguments, seems to work.
+        while (ArgOffset % 16 !=0) {
+          ArgOffset += PtrByteSize;
+          if (GPR_idx != NumGPRs)
+            GPR_idx++;
+        }
+        // We could elide this store in the case where the object fits
+        // entirely in R registers.  Maybe later.
+        PtrOff = DAG.getNode(ISD::ADD, PtrVT, StackPtr, 
+                            DAG.getConstant(ArgOffset, PtrVT));
+        SDOperand Store = DAG.getStore(Chain, Arg, PtrOff, NULL, 0);
+        MemOpChains.push_back(Store);
+        if (VR_idx != NumVRs) {
+          SDOperand Load = DAG.getLoad(MVT::v4f32, Store, PtrOff, NULL, 0);
+          MemOpChains.push_back(Load.getValue(1));
+          RegsToPass.push_back(std::make_pair(VR[VR_idx++], Load));
+        }
+        ArgOffset += 16;
+        for (unsigned i=0; i<16; i+=PtrByteSize) {
+          if (GPR_idx == NumGPRs)
+            break;
+          SDOperand Ix = DAG.getNode(ISD::ADD, PtrVT, PtrOff,
+                                  DAG.getConstant(i, PtrVT));
+          SDOperand Load = DAG.getLoad(PtrVT, Store, Ix, NULL, 0);
+          MemOpChains.push_back(Load.getValue(1));
+          RegsToPass.push_back(std::make_pair(GPR[GPR_idx++], Load));
+        }
+        break;
+      }
+      if (VR_idx == NumVRs) {
+        // Out of V registers; these go aligned on the stack.
+        while (ArgOffset % 16 !=0) {
+          ArgOffset += PtrByteSize;
+        }
+        PtrOff = DAG.getNode(ISD::ADD, PtrVT, StackPtr, 
+                            DAG.getConstant(ArgOffset, PtrVT));
+        SDOperand Store = DAG.getStore(Chain, Arg, PtrOff, NULL, 0);
+        MemOpChains.push_back(Store);
+        ArgOffset += 16;
+      } else {
+        // Doesn't have memory or GPR space allocated
+        RegsToPass.push_back(std::make_pair(VR[VR_idx++], Arg));
+      }
       break;
     }
   }
