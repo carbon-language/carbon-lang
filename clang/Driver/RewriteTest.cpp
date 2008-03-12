@@ -2301,7 +2301,7 @@ void RewriteTest::RewriteObjCMethodsMetaData(instmeth_iterator MethodBegin,
   Result += IsInstanceMethod ? "INSTANCE" : "CLASS";
   Result += "_METHODS_";
   Result += ClassName;
-  Result += " __attribute__ ((section (\"__OBJC, __";
+  Result += " __attribute__ ((used, section (\"__OBJC, __";
   Result += IsInstanceMethod ? "inst" : "cls";
   Result += "_meth\")))= ";
   Result += "{\n\t0, " + utostr(MethodEnd-MethodBegin) + "\n";
@@ -2368,7 +2368,7 @@ void RewriteTest::RewriteObjCProtocolsMetaData(ObjCProtocolDecl **Protocols,
         Result += utostr(NumMethods);
         Result += "];\n} _OBJC_PROTOCOL_INSTANCE_METHODS_";
         Result += PDecl->getName();
-        Result += " __attribute__ ((section (\"__OBJC, __cat_inst_meth\")))= "
+        Result += " __attribute__ ((used, section (\"__OBJC, __cat_inst_meth\")))= "
           "{\n\t" + utostr(NumMethods) + "\n";
         
         // Output instance methods declared in this protocol.
@@ -2402,7 +2402,7 @@ void RewriteTest::RewriteObjCProtocolsMetaData(ObjCProtocolDecl **Protocols,
         Result += utostr(NumMethods);
         Result += "];\n} _OBJC_PROTOCOL_CLASS_METHODS_";
         Result += PDecl->getName();
-        Result += " __attribute__ ((section (\"__OBJC, __cat_cls_meth\")))= "
+        Result += " __attribute__ ((used, section (\"__OBJC, __cat_cls_meth\")))= "
                "{\n\t";
         Result += utostr(NumMethods);
         Result += "\n";
@@ -2448,7 +2448,7 @@ void RewriteTest::RewriteObjCProtocolsMetaData(ObjCProtocolDecl **Protocols,
       
       Result += "\nstatic struct _objc_protocol _OBJC_PROTOCOL_";
       Result += PDecl->getName();
-      Result += " __attribute__ ((section (\"__OBJC, __protocol\")))= "
+      Result += " __attribute__ ((used, section (\"__OBJC, __protocol\")))= "
         "{\n\t0, \"";
       Result += PDecl->getName();
       Result += "\", 0, ";
@@ -2484,7 +2484,7 @@ void RewriteTest::RewriteObjCProtocolsMetaData(ObjCProtocolDecl **Protocols,
     Result += prefix;
     Result += "_PROTOCOLS_";
     Result += ClassName;
-    Result += " __attribute__ ((section (\"__OBJC, __cat_cls_meth\")))= "
+    Result += " __attribute__ ((used, section (\"__OBJC, __cat_cls_meth\")))= "
       "{\n\t0, ";
     Result += utostr(NumProtocols);
     Result += "\n";
@@ -2565,7 +2565,7 @@ void RewriteTest::RewriteObjCCategoryImplDecl(ObjCCategoryImplDecl *IDecl,
   }
   Result += "\nstatic struct _objc_category _OBJC_CATEGORY_";
   Result += FullCategoryName;
-  Result += " __attribute__ ((section (\"__OBJC, __category\")))= {\n\t\"";
+  Result += " __attribute__ ((used, section (\"__OBJC, __category\")))= {\n\t\"";
   Result += IDecl->getName();
   Result += "\"\n\t, \"";
   Result += ClassDecl->getName();
@@ -2660,7 +2660,7 @@ void RewriteTest::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
     Result += utostr(NumIvars);
     Result += "];\n} _OBJC_INSTANCE_VARIABLES_";
     Result += IDecl->getName();
-    Result += " __attribute__ ((section (\"__OBJC, __instance_vars\")))= "
+    Result += " __attribute__ ((used, section (\"__OBJC, __instance_vars\")))= "
       "{\n\t";
     Result += utostr(NumIvars);
     Result += "\n";
@@ -2759,7 +2759,7 @@ void RewriteTest::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
   
   Result += "\nstatic struct _objc_class _OBJC_METACLASS_";
   Result += CDecl->getName();
-  Result += " __attribute__ ((section (\"__OBJC, __meta_class\")))= "
+  Result += " __attribute__ ((used, section (\"__OBJC, __meta_class\")))= "
   "{\n\t(struct _objc_class *)\"";
   Result += (RootClass ? RootClass->getName() : CDecl->getName());
   Result += "\"";
@@ -2798,7 +2798,7 @@ void RewriteTest::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
   // class metadata generation.
   Result += "\nstatic struct _objc_class _OBJC_CLASS_";
   Result += CDecl->getName();
-  Result += " __attribute__ ((section (\"__OBJC, __class\")))= "
+  Result += " __attribute__ ((used, section (\"__OBJC, __class\")))= "
             "{\n\t&_OBJC_METACLASS_";
   Result += CDecl->getName();
   if (SuperClass) {
@@ -2897,7 +2897,7 @@ void RewriteTest::RewriteImplementations(std::string &Result) {
   Result += "};\n\n";
   
   Result += "static struct _objc_symtab "
-         "_OBJC_SYMBOLS __attribute__((section (\"__OBJC, __symbols\")))= {\n";
+         "_OBJC_SYMBOLS __attribute__((used, section (\"__OBJC, __symbols\")))= {\n";
   Result += "\t0, 0, " + utostr(ClsDefCount) 
             + ", " + utostr(CatDefCount) + "\n";
   for (int i = 0; i < ClsDefCount; i++) {
@@ -2934,7 +2934,7 @@ void RewriteTest::RewriteImplementations(std::string &Result) {
   Result += "\tstruct _objc_symtab *symtab;\n";
   Result += "};\n\n";
   Result += "static struct _objc_module "
-    "_OBJC_MODULES __attribute__ ((section (\"__OBJC, __module_info\")))= {\n";
+    "_OBJC_MODULES __attribute__ ((used, section (\"__OBJC, __module_info\")))= {\n";
   Result += "\t" + utostr(OBJC_ABI_VERSION) + 
   ", sizeof(struct _objc_module), \"\", &_OBJC_SYMBOLS\n";
   Result += "};\n\n";
