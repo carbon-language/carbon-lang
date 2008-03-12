@@ -51,9 +51,9 @@ namespace {
     // used as operands to another another PHI node
     std::set<unsigned> UsedByAnother;
     
-    // RenameSets are the sets of operands to a PHI (the defining instruction
-    // of the key) that can be renamed without copies
-    std::map<unsigned, std::set<unsigned> > RenameSets;
+    // RenameSets are the sets of operands (and their VNInfo IDs) to a PHI
+    // (the defining instruction of the key) that can be renamed without copies
+    std::map<unsigned, std::map<unsigned, unsigned> > RenameSets;
 
     // Store the DFS-in number of each block
     DenseMap<MachineBasicBlock*, unsigned> preorder;
@@ -124,14 +124,15 @@ namespace {
     void computeDFS(MachineFunction& MF);
     void processBlock(MachineBasicBlock* MBB);
     
-    std::vector<DomForestNode*> computeDomForest(std::set<unsigned>& instrs,
+    std::vector<DomForestNode*> computeDomForest(std::map<unsigned, unsigned>& instrs,
                                                  MachineRegisterInfo& MRI);
     void processPHIUnion(MachineInstr* Inst,
-                         std::set<unsigned>& PHIUnion,
+                         std::map<unsigned, unsigned>& PHIUnion,
                          std::vector<StrongPHIElimination::DomForestNode*>& DF,
                          std::vector<std::pair<unsigned, unsigned> >& locals);
     void ScheduleCopies(MachineBasicBlock* MBB, std::set<unsigned>& pushed);
     void InsertCopies(MachineBasicBlock* MBB, std::set<MachineBasicBlock*>& v);
+    void mergeLiveIntervals(unsigned primary, unsigned secondary, unsigned VN);
   };
 
   char StrongPHIElimination::ID = 0;
@@ -215,7 +216,7 @@ public:
 /// computeDomForest - compute the subforest of the DomTree corresponding
 /// to the defining blocks of the registers in question
 std::vector<StrongPHIElimination::DomForestNode*>
-StrongPHIElimination::computeDomForest(std::set<unsigned>& regs, 
+StrongPHIElimination::computeDomForest(std::map<unsigned, unsigned>& regs, 
                                        MachineRegisterInfo& MRI) {
   // Begin by creating a virtual root node, since the actual results
   // may well be a forest.  Assume this node has maximum DFS-out number.
@@ -225,9 +226,9 @@ StrongPHIElimination::computeDomForest(std::set<unsigned>& regs,
   // Populate a worklist with the registers
   std::vector<unsigned> worklist;
   worklist.reserve(regs.size());
-  for (std::set<unsigned>::iterator I = regs.begin(), E = regs.end();
+  for (std::map<unsigned, unsigned>::iterator I = regs.begin(), E = regs.end();
        I != E; ++I)
-    worklist.push_back(*I);
+    worklist.push_back(I->first);
   
   // Sort the registers by the DFS-in number of their defining block
   PreorderSorter PS(preorder, MRI);
@@ -408,7 +409,7 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
     // are going to be renames rather than having copies inserted.  This set
     // is refinded over the course of this function.  UnionedBlocks is the set
     // of corresponding MBBs.
-    std::set<unsigned> PHIUnion;
+    std::map<unsigned, unsigned> PHIUnion;
     std::set<MachineBasicBlock*> UnionedBlocks;
   
     // Iterate over the operands of the PHI node
@@ -442,7 +443,13 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
         UsedByAnother.insert(SrcReg);
       } else {
         // Otherwise, add it to the renaming set
-        PHIUnion.insert(SrcReg);
+        LiveInterval& I = LI.getOrCreateInterval(SrcReg);
+        unsigned idx = LI.getMBBEndIdx(P->getOperand(i).getMBB());
+        VNInfo* VN = I.getLiveRangeContaining(idx)->valno;
+        
+        assert(VN && "No VNInfo for register?");
+        
+        PHIUnion.insert(std::make_pair(SrcReg, VN->id));
         UnionedBlocks.insert(MRI.getVRegDef(SrcReg)->getParent());
       }
     }
@@ -508,7 +515,9 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
     
     // Remember which registers are already renamed, so that we don't try to 
     // rename them for another PHI node in this block
-    ProcessedNames.insert(PHIUnion.begin(), PHIUnion.end());
+    for (std::map<unsigned, unsigned>::iterator I = PHIUnion.begin(),
+         E = PHIUnion.end(); I != E; ++I)
+      ProcessedNames.insert(I->first);
     
     ++P;
   }
@@ -519,7 +528,7 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
 /// that are known to interfere, and flag others that need to be checked for
 /// local interferences.
 void StrongPHIElimination::processPHIUnion(MachineInstr* Inst,
-                                           std::set<unsigned>& PHIUnion,
+                                        std::map<unsigned, unsigned>& PHIUnion,
                         std::vector<StrongPHIElimination::DomForestNode*>& DF,
                         std::vector<std::pair<unsigned, unsigned> >& locals) {
   
@@ -716,6 +725,11 @@ void StrongPHIElimination::InsertCopies(MachineBasicBlock* MBB,
     Stacks[*I].pop_back();
 }
 
+void StrongPHIElimination::mergeLiveIntervals(unsigned primary,
+                                              unsigned secondary, unsigned VN) {
+  // FIXME: Update LiveIntervals
+}
+
 bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
   // Compute DFS numbers of each block
   computeDFS(Fn);
@@ -732,12 +746,14 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
   InsertCopies(Fn.begin(), visited);
   
   // Perform renaming
-  typedef std::map<unsigned, std::set<unsigned> > RenameSetType;
+  typedef std::map<unsigned, std::map<unsigned, unsigned> > RenameSetType;
   for (RenameSetType::iterator I = RenameSets.begin(), E = RenameSets.end();
        I != E; ++I)
-    for (std::set<unsigned>::iterator SI = I->second.begin(),
-         SE = I->second.end(); SI != SE; ++SI)
-      Fn.getRegInfo().replaceRegWith(*SI, I->first);
+    for (std::map<unsigned, unsigned>::iterator SI = I->second.begin(),
+         SE = I->second.end(); SI != SE; ++SI) {
+      mergeLiveIntervals(I->first, SI->first, SI->second);
+      Fn.getRegInfo().replaceRegWith(SI->first, I->first);
+    }
   
   // FIXME: Insert last-minute copies
   
