@@ -19,7 +19,6 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
-#include "llvm/ParamAttrsList.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Support/CFG.h"
 using namespace clang;
@@ -92,9 +91,9 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
     FuncAttrs |= llvm::ParamAttr::NoReturn;
   
   if (FuncAttrs) {
-    llvm::ParamAttrsVector ParamAttrsVec;
-    ParamAttrsVec.push_back(llvm::ParamAttrsWithIndex::get(0, FuncAttrs));
-    CurFn->setParamAttrs(llvm::ParamAttrsList::get(ParamAttrsVec));
+    llvm::ParamAttrsWithIndex PAWI = 
+      llvm::ParamAttrsWithIndex::get(0, FuncAttrs);
+    CurFn->setParamAttrs(llvm::PAListPtr::get(&PAWI, 1));
   }
 
   llvm::BasicBlock *EntryBB = new llvm::BasicBlock("entry", CurFn);
