@@ -414,18 +414,32 @@ void GRSimpleVals::EvalCall(ExplodedNodeSet<ValueState>& Dst,
                             CallExpr* CE, LVal L,
                             ExplodedNode<ValueState>* Pred) {
   
-  ValueState* St = Pred->getState();
+  ValueStateManager& StateMgr = Eng.getStateManager();
+  ValueState* St = Builder.GetState(Pred);
   
   // Invalidate all arguments passed in by reference (LVals).
 
   for (CallExpr::arg_iterator I = CE->arg_begin(), E = CE->arg_end();
         I != E; ++I) {
 
-    RVal V = Eng.getStateManager().GetRVal(St, *I);
+    RVal V = StateMgr.GetRVal(St, *I);
     
     if (isa<LVal>(V))
-      St = Eng.getStateManager().SetRVal(St, cast<LVal>(V), UnknownVal());
+      St = StateMgr.SetRVal(St, cast<LVal>(V), UnknownVal());
   }
+  
+  // Make up a symbol for the return value of this function.
+  
+  if (CE->getType() != Eng.getContext().VoidTy) {    
+    unsigned Count = Builder.getCurrentBlockCount();
+    SymbolID Sym = Eng.getSymbolManager().getCallRetValSymbol(CE, Count);
+        
+    RVal X = CE->getType()->isPointerType() 
+             ? cast<RVal>(lval::SymbolVal(Sym)) 
+             : cast<RVal>(nonlval::SymbolVal(Sym));
+    
+    St = StateMgr.SetRVal(St, CE, X, Eng.getCFG().isBlkExpr(CE), false);
+  }  
     
   Builder.Nodify(Dst, CE, Pred, St);
 }
