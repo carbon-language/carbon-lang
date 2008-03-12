@@ -420,7 +420,8 @@ struct VISIBILITY_HIDDEN ExitInMainOptimization : public LibCallOptimization {
     // to exit have the same type.
     Function *from = ci->getParent()->getParent();
     if (from->hasExternalLinkage())
-      if (from->getReturnType() == ci->getOperand(1)->getType())
+      if (from->getReturnType() == ci->getOperand(1)->getType()
+          && !isa<StructType>(from->getReturnType()))
         if (from->getName() == "main") {
           // Okay, time to actually do the optimization. First, get the basic
           // block of the call instruction
