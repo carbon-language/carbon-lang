@@ -743,8 +743,8 @@ namespace {
                              SmallVector<Instruction*, 4>& toErase);
     bool processMemCpy(MemCpyInst* M, MemCpyInst* MDep,
                        SmallVector<Instruction*, 4>& toErase);
-    bool performReturnSlotOptzn(MemCpyInst* cpy, CallInst* C,
-                                SmallVector<Instruction*, 4>& toErase);
+    bool performCallSlotOptzn(MemCpyInst* cpy, CallInst* C,
+                              SmallVector<Instruction*, 4>& toErase);
     Value *GetValueForBlock(BasicBlock *BB, LoadInst* orig,
                             DenseMap<BasicBlock*, Value*> &Phis,
                             bool top_level = false);
@@ -752,8 +752,6 @@ namespace {
     bool iterateOnFunction(Function &F);
     Value* CollapsePhi(PHINode* p);
     bool isSafeReplacement(PHINode* p, Instruction* inst);
-    bool valueHasOnlyOneUseAfter(Value* val, MemCpyInst* use,
-                                 Instruction* cutoff);
   };
   
   char GVN::ID = 0;
@@ -1057,116 +1055,134 @@ bool GVN::processLoad(LoadInst* L,
   return deletedLoad;
 }
 
-/// valueHasOnlyOneUse - Returns true if a value has only one use after the
-/// cutoff that is in the current same block and is the same as the use
-/// parameter.
-bool GVN::valueHasOnlyOneUseAfter(Value* val, MemCpyInst* use,
-                                  Instruction* cutoff) {
-  DominatorTree& DT = getAnalysis<DominatorTree>();
-  
-  SmallVector<User*, 8> useList(val->use_begin(), val->use_end());
-  while (!useList.empty()) {
-    User* UI = useList.back();
-    
-    
-    if (isa<GetElementPtrInst>(UI) || isa<BitCastInst>(UI)) {
-      useList.pop_back();
-      for (User::use_iterator I = UI->use_begin(), E = UI->use_end();
-           I != E; ++I)
-        useList.push_back(*I);
-    } else if (UI == use) {
-      useList.pop_back();
-    } else if (Instruction* inst = dyn_cast<Instruction>(UI)) {
-      if (inst->getParent() == use->getParent() &&
-          (inst == cutoff || !DT.dominates(cutoff, inst))) {
-        useList.pop_back();
-      } else
-        return false;
-    } else
-      return false;
-  }
-  
-  return true;
-}
+/// performCallSlotOptzn - takes a memcpy and a call that it depends on,
+/// and checks for the possibility of a call slot optimization by having
+/// the call write its result directly into the destination of the memcpy.
+bool GVN::performCallSlotOptzn(MemCpyInst* cpy, CallInst* C,
+                               SmallVector<Instruction*, 4>& toErase) {
+  // The general transformation to keep in mind is
+  //
+  //   call @func(..., src, ...)
+  //   memcpy(dest, src, ...)
+  //
+  // ->
+  //
+  //   memcpy(dest, src, ...)
+  //   call @func(..., dest, ...)
+  //
+  // Since moving the memcpy is technically awkward, we additionally check that
+  // src only holds uninitialized values at the moment of the call, meaning that
+  // the memcpy can be discarded rather than moved.
 
-/// performReturnSlotOptzn - takes a memcpy and a call that it depends on,
-/// and checks for the possibility of a return slot optimization by having
-/// the call write its result directly into the callees return parameter
-/// rather than using memcpy
-bool GVN::performReturnSlotOptzn(MemCpyInst* cpy, CallInst* C,
-                                 SmallVector<Instruction*, 4>& toErase) {
   // Deliberately get the source and destination with bitcasts stripped away,
   // because we'll need to do type comparisons based on the underlying type.
   Value* cpyDest = cpy->getDest();
   Value* cpySrc = cpy->getSource();
   CallSite CS = CallSite::get(C);
-  
-  // Since this is a return slot optimization, we need to make sure that
-  // the value being copied is, in fact, in a return slot.  We also need to
-  // check that the return slot parameter is marked noalias, so that we can
-  // be sure that changing it will not cause unexpected behavior changes due
-  // to it being accessed through a global or another parameter.
-  if (CS.arg_size() == 0 ||
-      cpySrc != CS.getArgument(0) ||
-      !CS.paramHasAttr(1, ParamAttr::NoAlias | ParamAttr::StructRet))
+
+  // We need to be able to reason about the size of the memcpy, so we require
+  // that it be a constant.
+  ConstantInt* cpyLength = dyn_cast<ConstantInt>(cpy->getLength());
+  if (!cpyLength)
     return false;
-  
+
+  // Require that src be an alloca.  This simplifies the reasoning considerably.
+  AllocaInst* srcAlloca = dyn_cast<AllocaInst>(cpySrc);
+  if (!srcAlloca)
+    return false;
+
+  // Check that all of src is copied to dest.
+  TargetData& TD = getAnalysis<TargetData>();
+
+  ConstantInt* srcArraySize = dyn_cast<ConstantInt>(srcAlloca->getArraySize());
+  if (!srcArraySize)
+    return false;
+
+  uint64_t srcSize = TD.getABITypeSize(srcAlloca->getAllocatedType()) *
+    srcArraySize->getZExtValue();
+
+  if (cpyLength->getZExtValue() < srcSize)
+    return false;
+
+  // Check that accessing the first srcSize bytes of dest will not cause a
+  // trap.  Otherwise the transform is invalid since it might cause a trap
+  // to occur earlier than it otherwise would.
+  if (AllocaInst* A = dyn_cast<AllocaInst>(cpyDest)) {
+    // The destination is an alloca.  Check it is larger than srcSize.
+    ConstantInt* destArraySize = dyn_cast<ConstantInt>(A->getArraySize());
+    if (!destArraySize)
+      return false;
+
+    uint64_t destSize = TD.getABITypeSize(A->getAllocatedType()) *
+      destArraySize->getZExtValue();
+
+    if (destSize < srcSize)
+      return false;
+  } else if (Argument* A = dyn_cast<Argument>(cpyDest)) {
+    // If the destination is an sret parameter then only accesses that are
+    // outside of the returned struct type can trap.
+    if (!A->hasStructRetAttr())
+      return false;
+
+    const Type* StructTy = cast<PointerType>(A->getType())->getElementType();
+    uint64_t destSize = TD.getABITypeSize(StructTy);
+
+    if (destSize < srcSize)
+      return false;
+  } else {
+    return false;
+  }
+
+  // Check that src is not accessed except via the call and the memcpy.  This
+  // guarantees that it holds only undefined values when passed in (so the final
+  // memcpy can be dropped), that it is not read or written between the call and
+  // the memcpy, and that writing beyond the end of it is undefined.
+
+  SmallVector<User*, 8> srcUseList(srcAlloca->use_begin(),
+                                   srcAlloca->use_end());
+  while (!srcUseList.empty()) {
+    User* UI = srcUseList.back();
+    srcUseList.pop_back();
+
+    if (isa<GetElementPtrInst>(UI) || isa<BitCastInst>(UI)) {
+      for (User::use_iterator I = UI->use_begin(), E = UI->use_end();
+           I != E; ++I)
+        srcUseList.push_back(*I);
+    } else if (UI != C && UI != cpy) {
+      return false;
+    }
+  }
+
   // Since we're changing the parameter to the callsite, we need to make sure
   // that what would be the new parameter dominates the callsite.
   DominatorTree& DT = getAnalysis<DominatorTree>();
   if (Instruction* cpyDestInst = dyn_cast<Instruction>(cpyDest))
     if (!DT.dominates(cpyDestInst, C))
       return false;
-  
-  // Check that something sneaky is not happening involving casting
-  // return slot types around.
-  if (CS.getArgument(0)->getType() != cpyDest->getType())
-    return false;
-  // sret --> pointer
-  const PointerType* PT = cast<PointerType>(cpyDest->getType()); 
-  
-  // We can only perform the transformation if the size of the memcpy
-  // is constant and equal to the size of the structure.
-  ConstantInt* cpyLength = dyn_cast<ConstantInt>(cpy->getLength());
-  if (!cpyLength)
-    return false;
-  
-  TargetData& TD = getAnalysis<TargetData>();
-  if (TD.getTypeStoreSize(PT->getElementType()) != cpyLength->getZExtValue())
-    return false;
-  
-  // For safety, we must ensure that the output parameter of the call only has
-  // a single use, the memcpy.  Otherwise this can introduce an invalid
-  // transformation.
-  if (!valueHasOnlyOneUseAfter(CS.getArgument(0), cpy, C))
-    return false;
-  
-  // We only perform the transformation if it will be profitable. 
-  if (!valueHasOnlyOneUseAfter(cpyDest, cpy, C))
-    return false;
-  
-  // In addition to knowing that the call does not access the return slot
-  // in some unexpected manner, which we derive from the noalias attribute,
-  // we also need to know that it does not sneakily modify the destination
-  // slot in the caller.  We don't have parameter attributes to go by
-  // for this one, so we just rely on AA to figure it out for us.
+
+  // In addition to knowing that the call does not access src in some
+  // unexpected manner, for example via a global, which we deduce from
+  // the use analysis, we also need to know that it does not sneakily
+  // access dest.  We rely on AA to figure this out for us.
   AliasAnalysis& AA = getAnalysis<AliasAnalysis>();
-  if (AA.getModRefInfo(C, cpy->getRawDest(), cpyLength->getZExtValue()) !=
+  if (AA.getModRefInfo(C, cpy->getRawDest(), srcSize) !=
       AliasAnalysis::NoModRef)
     return false;
-  
-  // If all the checks have passed, then we're alright to do the transformation.
-  CS.setArgument(0, cpyDest);
-  
+
+  // All the checks have passed, so do the transformation.
+  for (unsigned i = 0; i < CS.arg_size(); ++i)
+    if (CS.getArgument(i) == cpySrc)
+      CS.setArgument(i, cpyDest);
+
   // Drop any cached information about the call, because we may have changed
   // its dependence information by changing its parameter.
   MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
   MD.dropInstruction(C);
-  
+
   // Remove the memcpy
   MD.removeInstruction(cpy);
   toErase.push_back(cpy);
-  
+
   return true;
 }
 
@@ -1245,7 +1261,7 @@ bool GVN::processInstruction(Instruction* I,
 
     // The are two possible optimizations we can do for memcpy:
     //   a) memcpy-memcpy xform which exposes redundance for DSE
-    //   b) call-memcpy xform for sret return slot optimization
+    //   b) call-memcpy xform for return slot optimization
     Instruction* dep = MD.getDependency(M);
     if (dep == MemoryDependenceAnalysis::None ||
         dep == MemoryDependenceAnalysis::NonLocal)
@@ -1253,7 +1269,7 @@ bool GVN::processInstruction(Instruction* I,
     if (MemCpyInst *MemCpy = dyn_cast<MemCpyInst>(dep))
       return processMemCpy(M, MemCpy, toErase);
     if (CallInst* C = dyn_cast<CallInst>(dep))
-      return performReturnSlotOptzn(M, C, toErase);
+      return performCallSlotOptzn(M, C, toErase);
     return false;
   }
   
