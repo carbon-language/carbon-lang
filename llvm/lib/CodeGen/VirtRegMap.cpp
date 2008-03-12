@@ -202,7 +202,7 @@ void VirtRegMap::print(std::ostream &OS) const {
 }
 
 void VirtRegMap::dump() const {
-  print(DOUT);
+  print(cerr);
 }
 
 
