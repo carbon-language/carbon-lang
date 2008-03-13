@@ -21,8 +21,7 @@ include "IA64InstrFormats.td"
 
 def IA64getfd : SDNode<"IA64ISD::GETFD", SDTFPToIntOp, []>;
 
-def SDT_IA64RetFlag : SDTypeProfile<0, 0, []>;
-def retflag         : SDNode<"IA64ISD::RET_FLAG", SDT_IA64RetFlag,
+def retflag         : SDNode<"IA64ISD::RET_FLAG", SDTNone,
                            [SDNPHasChain, SDNPOptInFlag]>;
 
 //===---------

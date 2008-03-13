@@ -127,8 +127,7 @@ def SDT_SPCall    : SDTypeProfile<0, 1, [SDTCisVT<0, i32>]>;
 def call          : SDNode<"SPISD::CALL", SDT_SPCall,
                            [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 
-def SDT_SPRetFlag : SDTypeProfile<0, 0, []>;
-def retflag       : SDNode<"SPISD::RET_FLAG", SDT_SPRetFlag,
+def retflag       : SDNode<"SPISD::RET_FLAG", SDTNone,
                            [SDNPHasChain, SDNPOptInFlag]>;
 
 //===----------------------------------------------------------------------===//
