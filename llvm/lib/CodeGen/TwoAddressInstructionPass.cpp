@@ -37,8 +37,9 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Support/Debug.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 using namespace llvm;
@@ -46,10 +47,22 @@ using namespace llvm;
 STATISTIC(NumTwoAddressInstrs, "Number of two-address instructions");
 STATISTIC(NumCommuted        , "Number of instructions commuted to coalesce");
 STATISTIC(NumConvertedTo3Addr, "Number of instructions promoted to 3-address");
+STATISTIC(Num3AddrSunk,        "Number of 3-address instructions sunk");
+
+namespace {
+  static cl::opt<int>
+  SinkLimit("two-addr-sink-limit", cl::init(-1), cl::Hidden);
+}
 
 namespace {
   struct VISIBILITY_HIDDEN TwoAddressInstructionPass
    : public MachineFunctionPass {
+    const TargetInstrInfo *TII;
+    const TargetRegisterInfo *TRI;
+    MachineRegisterInfo *MRI;
+    LiveVariables *LV;
+
+  public:
     static char ID; // Pass identification, replacement for typeid
     TwoAddressInstructionPass() : MachineFunctionPass((intptr_t)&ID) {}
 
@@ -57,6 +70,11 @@ namespace {
 
     /// runOnMachineFunction - pass entry point
     bool runOnMachineFunction(MachineFunction&);
+
+  private:
+    bool Sink3AddrInstruction(MachineBasicBlock *MBB, MachineInstr *MI,
+                              unsigned Reg,
+                              MachineBasicBlock::iterator OldPos);
   };
 
   char TwoAddressInstructionPass::ID = 0;
@@ -75,14 +93,113 @@ void TwoAddressInstructionPass::getAnalysisUsage(AnalysisUsage &AU) const {
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
+/// Sink3AddrInstruction - A two-address instruction has been converted to a
+/// three-address instruction to avoid clobbering a register. Try to sink it
+/// past the instruction that would kill the above mentioned register to
+/// reduce register pressure.
+bool TwoAddressInstructionPass::Sink3AddrInstruction(MachineBasicBlock *MBB,
+                                           MachineInstr *MI, unsigned SavedReg,
+                                           MachineBasicBlock::iterator OldPos) {
+  // Check if it's safe to move this instruction.
+  bool SeenStore = true; // Be conservative.
+  if (!MI->isSafeToMove(TII, SeenStore))
+    return false;
+
+  unsigned DefReg = 0;
+  SmallSet<unsigned, 4> UseRegs;
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    const MachineOperand &MO = MI->getOperand(i);
+    if (!MO.isRegister())
+      continue;
+    unsigned MOReg = MO.getReg();
+    if (!MOReg)
+      continue;
+    if (MO.isUse() && MOReg != SavedReg)
+      UseRegs.insert(MO.getReg());
+    if (!MO.isDef())
+      continue;
+    if (MO.isImplicit())
+      // Don't try to move it if it implicitly defines a register.
+      return false;
+    if (DefReg)
+      // For now, don't move any instructions that define multiple registers.
+      return false;
+    DefReg = MO.getReg();
+  }
+
+  // Find the instruction that kills SavedReg.
+  MachineInstr *KillMI = NULL;
+  for (MachineRegisterInfo::use_iterator UI = MRI->use_begin(SavedReg),
+         UE = MRI->use_end(); UI != UE; ++UI) {
+    MachineOperand &UseMO = UI.getOperand();
+    if (!UseMO.isKill())
+      continue;
+    KillMI = UseMO.getParent();
+    break;
+  }
+  if (!KillMI || KillMI->getParent() != MBB)
+    return false;
+
+  // If any of the definitions are used  by another instruction between
+  // the position and the kill use, then it's not safe to sink it.
+  // FIXME: This can be sped up if there is an easy way to query whether
+  // an instruction if before or after another instruction. Then we can
+  // use MachineRegisterInfo def / use instead.
+  MachineOperand *KillMO = NULL;
+  MachineBasicBlock::iterator KillPos = KillMI;
+  ++KillPos;
+  for (MachineBasicBlock::iterator I = next(OldPos); I != KillPos; ++I) {
+    MachineInstr *OtherMI = I;
+    for (unsigned i = 0, e = OtherMI->getNumOperands(); i != e; ++i) {
+      MachineOperand &MO = OtherMI->getOperand(i);
+      if (!MO.isRegister())
+        continue;
+      unsigned MOReg = MO.getReg();
+      if (!MOReg)
+        continue;
+      if (DefReg == MOReg)
+        return false;
+      if (MO.isKill()) {
+        if (OtherMI == KillMI && MOReg == SavedReg)
+          // Save the operand that kills the register. We want unset the kill
+          // marker is we can sink MI past it.
+          KillMO = &MO;
+        else if (UseRegs.count(MOReg))
+          // One of the uses is killed before the destination.
+          return false;
+      }
+    }
+  }
+
+  if (SinkLimit != -1 && Num3AddrSunk == (unsigned)SinkLimit)
+    return false;
+
+  // Update kill and LV information.
+  KillMO->setIsKill(false);
+  KillMO = MI->findRegisterUseOperand(SavedReg, false, TRI);
+  KillMO->setIsKill(true);
+  LiveVariables::VarInfo& VarInfo = LV->getVarInfo(SavedReg);
+  VarInfo.removeKill(KillMI);
+  VarInfo.Kills.push_back(MI);
+
+  // Move instruction to its destination.
+  MBB->remove(MI);
+  MBB->insert(KillPos, MI);
+
+  ++Num3AddrSunk;
+  return true;
+}
+
 /// runOnMachineFunction - Reduce two-address instructions to two
 /// operands.
 ///
 bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
   DOUT << "Machine Function\n";
   const TargetMachine &TM = MF.getTarget();
-  const TargetInstrInfo &TII = *TM.getInstrInfo();
-  LiveVariables &LV = getAnalysis<LiveVariables>();
+  MRI = &MF.getRegInfo();
+  TII = TM.getInstrInfo();
+  TRI = TM.getRegisterInfo();
+  LV = &getAnalysis<LiveVariables>();
 
   bool MadeChange = false;
 
@@ -150,14 +267,14 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
               unsigned regC = mi->getOperand(3-si).getReg();
               if (mi->killsRegister(regC)) {
                 DOUT << "2addr: COMMUTING  : " << *mi;
-                MachineInstr *NewMI = TII.commuteInstruction(mi);
+                MachineInstr *NewMI = TII->commuteInstruction(mi);
                 if (NewMI == 0) {
                   DOUT << "2addr: COMMUTING FAILED!\n";
                 } else {
                   DOUT << "2addr: COMMUTED TO: " << *NewMI;
                   // If the instruction changed to commute it, update livevar.
                   if (NewMI != mi) {
-                    LV.instructionChanged(mi, NewMI);  // Update live variables
+                    LV->instructionChanged(mi, NewMI); // Update live variables
                     mbbi->insert(mi, NewMI);           // Insert the new inst
                     mbbi->erase(mi);                   // Nuke the old inst.
                     mi = NewMI;
@@ -180,11 +297,12 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
                 assert(TID.getOperandConstraint(i, TOI::TIED_TO) == -1);
 #endif
 
-              if (MachineInstr *New = TII.convertToThreeAddress(mbbi, mi, LV)) {
+              if (MachineInstr *New=TII->convertToThreeAddress(mbbi, mi, *LV)) {
                 DOUT << "2addr: CONVERTING 2-ADDR: " << *mi;
                 DOUT << "2addr:         TO 3-ADDR: " << *New;
+                bool Sunk = Sink3AddrInstruction(mbbi, New, regB, mi);
                 mbbi->erase(mi);                 // Nuke the old inst.
-                mi = New;
+                if (!Sunk) mi = New;
                 ++NumConvertedTo3Addr;
                 // Done with this instruction.
                 break;
@@ -194,20 +312,20 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
 
         InstructionRearranged:
           const TargetRegisterClass* rc = MF.getRegInfo().getRegClass(regA);
-          TII.copyRegToReg(*mbbi, mi, regA, regB, rc, rc);
+          TII->copyRegToReg(*mbbi, mi, regA, regB, rc, rc);
 
           MachineBasicBlock::iterator prevMi = prior(mi);
           DOUT << "\t\tprepend:\t"; DEBUG(prevMi->print(*cerr.stream(), &TM));
 
           // update live variables for regB
-          LiveVariables::VarInfo& varInfoB = LV.getVarInfo(regB);
+          LiveVariables::VarInfo& varInfoB = LV->getVarInfo(regB);
           // regB is used in this BB.
           varInfoB.UsedBlocks[mbbi->getNumber()] = true;
-          if (LV.removeVirtualRegisterKilled(regB, mbbi, mi))
-            LV.addVirtualRegisterKilled(regB, prevMi);
+          if (LV->removeVirtualRegisterKilled(regB, mbbi, mi))
+            LV->addVirtualRegisterKilled(regB, prevMi);
 
-          if (LV.removeVirtualRegisterDead(regB, mbbi, mi))
-            LV.addVirtualRegisterDead(regB, prevMi);
+          if (LV->removeVirtualRegisterDead(regB, mbbi, mi))
+            LV->addVirtualRegisterDead(regB, prevMi);
 
           // replace all occurences of regB with regA
           for (unsigned i = 0, e = mi->getNumOperands(); i != e; ++i) {
