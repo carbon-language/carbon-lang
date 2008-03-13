@@ -1038,8 +1038,7 @@ FunctionPassManager::FunctionPassManager(ModuleProvider *P) {
   // FPM is the top level manager.
   FPM->setTopLevelManager(FPM);
 
-  PMDataManager *PMD = dynamic_cast<PMDataManager *>(FPM);
-  AnalysisResolver *AR = new AnalysisResolver(*PMD);
+  AnalysisResolver *AR = new AnalysisResolver(*FPM);
   FPM->setResolver(AR);
   
   MP = P;
@@ -1471,14 +1470,13 @@ void FunctionPass::assignPassManager(PMStack &PMS,
 
     // [3] Assign manager to manage this new manager. This may create
     // and push new managers into PMS
-    Pass *P = dynamic_cast<Pass *>(FPP);
 
     // If Call Graph Pass Manager is active then use it to manage
     // this new Function Pass manager.
     if (PMD->getPassManagerType() == PMT_CallGraphPassManager)
-      P->assignPassManager(PMS, PMT_CallGraphPassManager);
+      FPP->assignPassManager(PMS, PMT_CallGraphPassManager);
     else
-      P->assignPassManager(PMS);
+      FPP->assignPassManager(PMS);
 
     // [4] Push new manager into PMS
     PMS.push(FPP);
@@ -1517,8 +1515,7 @@ void BasicBlockPass::assignPassManager(PMStack &PMS,
 
     // [3] Assign manager to manage this new manager. This may create
     // and push new managers into PMS
-    Pass *P = dynamic_cast<Pass *>(BBP);
-    P->assignPassManager(PMS);
+    BBP->assignPassManager(PMS);
 
     // [4] Push new manager into PMS
     PMS.push(BBP);
