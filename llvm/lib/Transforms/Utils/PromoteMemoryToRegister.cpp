@@ -884,12 +884,10 @@ NextIteration:
       // operands so far.  Remember this count.
       unsigned NewPHINumOperands = APN->getNumOperands();
       
-      TerminatorInst *PredTerm = Pred->getTerminator();
       unsigned NumEdges = 0;
-      for (unsigned i = 0, e = PredTerm->getNumSuccessors(); i != e; ++i) {
-        if (PredTerm->getSuccessor(i) == BB)
+      for (succ_iterator I = succ_begin(Pred), E = succ_end(Pred); I != E; ++I)
+        if (*I == BB)
           ++NumEdges;
-      }
       assert(NumEdges && "Must be at least one edge from Pred to BB!");
       
       // Add entries for all the phis.
@@ -952,18 +950,17 @@ NextIteration:
   }
 
   // 'Recurse' to our successors.
-  TerminatorInst *TI = BB->getTerminator();
-  unsigned NumSuccs = TI->getNumSuccessors();
-  if (NumSuccs == 0) return;
-  
-  // Add all-but-one successor to the worklist.
-  for (unsigned i = 0; i != NumSuccs-1; i++)
-    Worklist.push_back(RenamePassData(TI->getSuccessor(i), BB, IncomingVals));
-  
+  succ_iterator I = succ_begin(BB), E = succ_end(BB);
+  if (I == E) return;
+
   // Handle the last successor without using the worklist.  This allows us to
   // handle unconditional branches directly, for example.
+  --E;
+  for (; I != E; ++I)
+    Worklist.push_back(RenamePassData(*I, BB, IncomingVals));
+
   Pred = BB;
-  BB = TI->getSuccessor(NumSuccs-1);
+  BB = *I;
   goto NextIteration;
 }
 
