@@ -37,7 +37,6 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
@@ -48,11 +47,6 @@ STATISTIC(NumTwoAddressInstrs, "Number of two-address instructions");
 STATISTIC(NumCommuted        , "Number of instructions commuted to coalesce");
 STATISTIC(NumConvertedTo3Addr, "Number of instructions promoted to 3-address");
 STATISTIC(Num3AddrSunk,        "Number of 3-address instructions sunk");
-
-namespace {
-  static cl::opt<int>
-  SinkLimit("two-addr-sink-limit", cl::init(-1), cl::Hidden);
-}
 
 namespace {
   struct VISIBILITY_HIDDEN TwoAddressInstructionPass
@@ -170,9 +164,6 @@ bool TwoAddressInstructionPass::Sink3AddrInstruction(MachineBasicBlock *MBB,
       }
     }
   }
-
-  if (SinkLimit != -1 && Num3AddrSunk == (unsigned)SinkLimit)
-    return false;
 
   // Update kill and LV information.
   KillMO->setIsKill(false);
