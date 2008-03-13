@@ -96,13 +96,10 @@ bool LowerSubregsInstructionPass::LowerInsert(MachineInstr *MI) {
          (MI->getOperand(2).isRegister() && MI->getOperand(2).isUse()) &&
           MI->getOperand(3).isImmediate() && "Invalid insert_subreg");
           
+  // Check if we're inserting into an implicit undef value.
+  bool isImplicit = MI->getOperand(1).isImmediate();
   unsigned DstReg = MI->getOperand(0).getReg();
-  unsigned SrcReg = 0;
-  // Check if we're inserting into an implicit value.
-  if (MI->getOperand(1).isImmediate())
-    SrcReg = DstReg;
-  else
-    SrcReg = MI->getOperand(1).getReg();
+  unsigned SrcReg = isImplicit ? DstReg : MI->getOperand(1).getReg();
   unsigned InsReg = MI->getOperand(2).getReg();
   unsigned SubIdx = MI->getOperand(3).getImm();     
 
@@ -118,13 +115,20 @@ bool LowerSubregsInstructionPass::LowerInsert(MachineInstr *MI) {
 
   DOUT << "subreg: CONVERTING: " << *MI;
        
+  // Check whether the implict subreg copy has side affects or not. Only copies
+  // into an undef value have no side affects, that is they can be eliminated
+  // without changing the semantics of the program.
+  bool copyHasSideAffects = isImplicit? 
+                  MI->getOperand(1).getImm() != TargetInstrInfo::IMPL_VAL_UNDEF
+                  : false; 
+       
   // If the inserted register is already allocated into a subregister
   // of the destination, we copy the subreg into the source
   // However, this is only safe if the insert instruction is the kill
   // of the source register
   bool revCopyOrder = TRI.isSubRegister(DstReg, InsReg);
-  if (revCopyOrder && InsReg != DstSubReg) {
-    if (MI->getOperand(1).isKill()) {
+  if (revCopyOrder && (InsReg != DstSubReg || copyHasSideAffects)) {
+    if (isImplicit || MI->getOperand(1).isKill()) {
       DstSubReg = TRI.getSubReg(SrcReg, SubIdx);
       // Insert sub-register copy
       const TargetRegisterClass *TRC1 = 0;
@@ -144,7 +148,7 @@ bool LowerSubregsInstructionPass::LowerInsert(MachineInstr *MI) {
     }
   }
 #ifndef NDEBUG
-  if (InsReg == DstSubReg) {
+  if (InsReg == DstSubReg && !copyHasSideAffects) {
      DOUT << "subreg: Eliminated subreg copy\n";
   }
 #endif
@@ -174,7 +178,7 @@ bool LowerSubregsInstructionPass::LowerInsert(MachineInstr *MI) {
   }
 #endif
 
-  if (!revCopyOrder && InsReg != DstSubReg) {
+  if (!revCopyOrder && (InsReg != DstSubReg || copyHasSideAffects)) {
     // Insert sub-register copy
     const TargetRegisterClass *TRC1 = 0;
     if (TargetRegisterInfo::isPhysicalRegister(InsReg)) {

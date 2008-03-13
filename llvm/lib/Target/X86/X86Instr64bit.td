@@ -1089,22 +1089,6 @@ def Int_CVTTSS2SI64rm: RSSI<0x2C, MRMSrcMem, (outs GR64:$dst), (ins f32mem:$src)
 // Alias Instructions
 //===----------------------------------------------------------------------===//
 
-// Zero-extension
-// TODO: Remove this after proper i32 -> i64 zext support.
-def PsMOVZX64rr32: I<0x89, MRMDestReg, (outs GR64:$dst), (ins GR32:$src),
-                     "mov{l}\t{$src, ${dst:subreg32}|${dst:subreg32}, $src}",
-                     [(set GR64:$dst, (zext GR32:$src))]>;
-def PsMOVZX64rm32: I<0x8B, MRMSrcMem, (outs GR64:$dst), (ins i32mem:$src),
-                     "mov{l}\t{$src, ${dst:subreg32}|${dst:subreg32}, $src}",
-                     [(set GR64:$dst, (zextloadi64i32 addr:$src))]>;
-
-/// PsAND64rrFFFFFFFF - r = r & (2^32-1)
-def PsAND64rrFFFFFFFF
-  : I<0x89, MRMDestReg, (outs GR64:$dst), (ins GR64:$src),
-  "mov{l}\t{${src:subreg32}, ${dst:subreg32}|${dst:subreg32}, ${src:subreg32}}",
-      [(set GR64:$dst, (and GR64:$src, i64immFFFFFFFF))]>;
-
-
 // Alias instructions that map movr0 to xor. Use xorl instead of xorq; it's
 // equivalent due to implicit zero-extending, and it sometimes has a smaller
 // encoding.
@@ -1220,26 +1204,47 @@ def : Pat<(X86tcret (i64 texternalsym:$dst), imm:$off),
 def : Pat<(parallel (X86cmp GR64:$src1, 0), (implicit EFLAGS)),
           (TEST64rr GR64:$src1, GR64:$src1)>;
 
+
+
+// Zero-extension
+def : Pat<(i64 (zext GR32:$src)), (INSERT_SUBREG tii_impl_val_zero, 
+                                            GR32:$src, x86_subreg_32bit)>;
+
 // zextload bool -> zextload byte
 def : Pat<(zextloadi64i1 addr:$src), (MOVZX64rm8 addr:$src)>;
+
+def : Pat<(zextloadi64i32 addr:$src), (INSERT_SUBREG tii_impl_val_zero, 
+                                        (MOV32rm addr:$src), x86_subreg_32bit)>;
 
 // extload
 def : Pat<(extloadi64i1 addr:$src),  (MOVZX64rm8  addr:$src)>;
 def : Pat<(extloadi64i8 addr:$src),  (MOVZX64rm8  addr:$src)>;
 def : Pat<(extloadi64i16 addr:$src), (MOVZX64rm16 addr:$src)>;
-def : Pat<(extloadi64i32 addr:$src), (PsMOVZX64rm32 addr:$src)>;
+def : Pat<(extloadi64i32 addr:$src), (INSERT_SUBREG tii_impl_val_undef, 
+                                        (MOV32rm addr:$src), x86_subreg_32bit)>;
 
 // anyext -> zext
 def : Pat<(i64 (anyext GR8 :$src)), (MOVZX64rr8  GR8 :$src)>;
 def : Pat<(i64 (anyext GR16:$src)), (MOVZX64rr16 GR16:$src)>;
-def : Pat<(i64 (anyext GR32:$src)), (PsMOVZX64rr32 GR32:$src)>;
+def : Pat<(i64 (anyext GR32:$src)), (INSERT_SUBREG tii_impl_val_undef, 
+                                        GR32:$src, x86_subreg_32bit)>;
+
 def : Pat<(i64 (anyext (loadi8  addr:$src))), (MOVZX64rm8  addr:$src)>;
 def : Pat<(i64 (anyext (loadi16 addr:$src))), (MOVZX64rm16 addr:$src)>;
-def : Pat<(i64 (anyext (loadi32 addr:$src))), (PsMOVZX64rm32 addr:$src)>;
+def : Pat<(i64 (anyext (loadi32 addr:$src))), (INSERT_SUBREG tii_impl_val_undef, 
+                                                (MOV32rm addr:$src), 
+                                                  x86_subreg_32bit)>;
 
 //===----------------------------------------------------------------------===//
 // Some peepholes
 //===----------------------------------------------------------------------===//
+
+
+// r & (2^32-1) ==> mov32 + implicit zext
+def : Pat<(and GR64:$src, i64immFFFFFFFF), 
+          (INSERT_SUBREG tii_impl_val_zero, 
+            (MOV32rr (EXTRACT_SUBREG GR64:$src, x86_subreg_32bit)),
+            x86_subreg_32bit)>;
 
 // (shl x, 1) ==> (add x, x)
 def : Pat<(shl GR64:$src1, (i8 1)), (ADD64rr GR64:$src1, GR64:$src1)>;

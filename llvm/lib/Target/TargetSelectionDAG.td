@@ -919,5 +919,10 @@ def SDT_dwarf_loc : SDTypeProfile<0, 3,
                       [SDTCisInt<0>, SDTCisInt<1>, SDTCisInt<2>]>;
 def dwarf_loc : SDNode<"ISD::DEBUG_LOC", SDT_dwarf_loc,[SDNPHasChain]>;
 
-
+//===----------------------------------------------------------------------===//
+// Implict value insert subreg support.
+//
+// These should match the enum TargetInstrInfo::ImplictVal.
+def tii_impl_val_undef : PatLeaf<(i32 0)>;
+def tii_impl_val_zero  : PatLeaf<(i32 1)>;
 

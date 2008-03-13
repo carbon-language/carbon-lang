@@ -392,7 +392,6 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::PSHUFDri,        X86::PSHUFDmi },
     { X86::PSHUFHWri,       X86::PSHUFHWmi },
     { X86::PSHUFLWri,       X86::PSHUFLWmi },
-    { X86::PsMOVZX64rr32,   X86::PsMOVZX64rm32 },
     { X86::RCPPSr,          X86::RCPPSm },
     { X86::RCPPSr_Int,      X86::RCPPSm_Int },
     { X86::RSQRTPSr,        X86::RSQRTPSm },
@@ -922,8 +921,9 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
       // Build and insert into an implicit UNDEF value. This is OK because
       // well be shifting and then extracting the lower 16-bits. 
       MachineInstr *Ins = 
-       BuildMI(get(X86::INSERT_SUBREG),leaInReg).addImm(X86::IMPL_VAL_UNDEF)
-         .addReg(Src).addImm(X86::SUBREG_16BIT);
+       BuildMI(get(X86::INSERT_SUBREG),leaInReg)
+                    .addImm(X86InstrInfo::IMPL_VAL_UNDEF)
+                    .addReg(Src).addImm(X86::SUBREG_16BIT);
       
       NewMI = BuildMI(get(Opc), leaOutReg)
         .addReg(0).addImm(1 << ShAmt).addReg(leaInReg).addImm(0);

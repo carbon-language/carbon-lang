@@ -975,9 +975,9 @@ public:
         }
       }
 
-      // Generate MemOperandSDNodes nodes for each memory accesses covered by this
-      // pattern.
-      if (isRoot) {
+      // Generate MemOperandSDNodes nodes for each memory accesses covered by 
+      // this pattern.
+      if (II.isSimpleLoad | II.mayLoad | II.mayStore) {
         std::vector<std::string>::const_iterator mi, mie;
         for (mi = LSI.begin(), mie = LSI.end(); mi != mie; ++mi) {
           emitCode("SDOperand LSI_" + *mi + " = "
@@ -1880,14 +1880,9 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  SDOperand Tmp = CurDAG->getTargetConstant(C, MVT::i32);\n"
      << "  AddToISelQueue(N1);\n"
      << "  SDOperand Ops[] = { N0, N1, Tmp };\n"
-     << "  if (N0.getOpcode() == ISD::UNDEF) {\n"
-     << "    return CurDAG->getTargetNode(TargetInstrInfo::INSERT_SUBREG,\n"
-     << "                                 N.getValueType(), Ops+1, 2);\n"
-     << "  } else {\n"
-     << "    AddToISelQueue(N0);\n"
-     << "    return CurDAG->getTargetNode(TargetInstrInfo::INSERT_SUBREG,\n"
-     << "                                 N.getValueType(), Ops, 3);\n"
-     << "  }\n"
+     << "  AddToISelQueue(N0);\n"
+     << "  return CurDAG->getTargetNode(TargetInstrInfo::INSERT_SUBREG,\n"
+     << "                               N.getValueType(), Ops, 3);\n"
      << "}\n\n";
 
   OS << "// The main instruction selector code.\n"

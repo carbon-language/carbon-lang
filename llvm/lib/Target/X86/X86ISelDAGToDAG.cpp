@@ -1533,14 +1533,9 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
       AddToISelQueue(N0);
       if (NVT == MVT::i64 || NVT == MVT::i32 || NVT == MVT::i16) {
         SDOperand SRIdx;
-        SDOperand ImplVal = CurDAG->getTargetConstant(X86::IMPL_VAL_UNDEF, 
-                                                      MVT::i32);
         switch(N0.getValueType()) {
         case MVT::i32:
           SRIdx = CurDAG->getTargetConstant(X86::SUBREG_32BIT, MVT::i32);
-          // x86-64 zero extends 32-bit inserts int 64-bit registers
-          if (Subtarget->is64Bit())
-            ImplVal = CurDAG->getTargetConstant(X86::IMPL_VAL_ZERO, MVT::i32);
           break;
         case MVT::i16:
           SRIdx = CurDAG->getTargetConstant(X86::SUBREG_16BIT, MVT::i32);
@@ -1552,6 +1547,8 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
         default: assert(0 && "Unknown any_extend!");
         }
         if (SRIdx.Val) {
+          SDOperand ImplVal = 
+              CurDAG->getTargetConstant(X86InstrInfo::IMPL_VAL_UNDEF, MVT::i32);
           SDNode *ResNode = CurDAG->getTargetNode(X86::INSERT_SUBREG,
                                                   NVT, ImplVal, N0, SRIdx);
 
