@@ -1171,8 +1171,12 @@ bool GVN::performCallSlotOptzn(MemCpyInst* cpy, CallInst* C,
 
   // All the checks have passed, so do the transformation.
   for (unsigned i = 0; i < CS.arg_size(); ++i)
-    if (CS.getArgument(i) == cpySrc)
+    if (CS.getArgument(i) == cpySrc) {
+      if (cpySrc->getType() != cpyDest->getType())
+        cpyDest = CastInst::createPointerCast(cpyDest, cpySrc->getType(),
+                                              cpyDest->getName(), C);
       CS.setArgument(i, cpyDest);
+    }
 
   // Drop any cached information about the call, because we may have changed
   // its dependence information by changing its parameter.
