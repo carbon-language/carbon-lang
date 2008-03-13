@@ -110,3 +110,27 @@ The "selection of target" behavior is defined as follows:
 (1) If the user does not specify -triple, we default to the host triple.
 (2) If the user specifies a -arch, that overrides the arch in the host or
     specified triple. 
+
+//===---------------------------------------------------------------------===//
+
+
+verifyInputConstraint and verifyOutputConstraint should not return bool. 
+
+Instead we should return something like:
+
+enum VerifyConstraintResult {
+  Valid,
+  
+  // Output only
+  OutputOperandConstraintLacksEqualsCharacter,
+  MatchingConstraintNotValidInOutputOperand,
+
+  // Input only
+  InputOperandConstraintContainsEqualsCharacter,
+  MatchingConstraintReferencesInvalidOperandNumber,
+  
+  // Both
+  PercentConstraintUsedWithLastOperand
+};
+
+//===---------------------------------------------------------------------===//
