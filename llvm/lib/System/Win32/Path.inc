@@ -44,8 +44,7 @@ static void FlipBackSlashes(std::string& s) {
 
 namespace llvm {
 namespace sys {
-
-extern const char sys::PathSeparator = ';';
+const char PathSeparator = ';';
 
 bool
 Path::isValid() const {
