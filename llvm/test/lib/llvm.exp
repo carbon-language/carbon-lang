@@ -119,7 +119,7 @@ proc RunLLVMTests { test_source_files } {
     foreach line [split [read $testFileId] \n] {
 
       # if its the END. line then stop parsing (optimization for big files)
-      if {[regexp {END.[ *]$} $line match endofscript]} {
+      if {[regexp {END.[[:space:]]*$} $line match endofscript]} {        
         break
 
       # if the line is continued, concatenate and continue the loop
