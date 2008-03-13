@@ -144,10 +144,12 @@ public:
     SubclassData = (SubclassData & 1) | (CC << 1);
   }
   
-  /// getParamAttrs - Return the parameter attributes for this function.
+  /// getParamAttrs - Return the parameter attributes for this Function.
+  ///
   const PAListPtr &getParamAttrs() const { return ParamAttrs; }
 
   /// setParamAttrs - Set the parameter attributes for this Function.
+  ///
   void setParamAttrs(const PAListPtr &attrs) { ParamAttrs = attrs; }
 
   /// hasCollector/getCollector/setCollector/clearCollector - The name of the

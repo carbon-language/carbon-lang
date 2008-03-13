@@ -120,7 +120,7 @@ public:
   static PAListPtr get(const ParamAttrsWithIndex *Attr, unsigned NumAttrs);
   
   /// get - Return a ParamAttr list with the parameters specified by the
-  /// consequtive random access iterator range.
+  /// consecutive random access iterator range.
   template <typename Iter>
   static PAListPtr get(const Iter &I, const Iter &E) {
     if (I == E) return PAListPtr();  // Empty list.
@@ -161,7 +161,7 @@ public:
   /// least one parameter or for the return value.
   bool hasAttrSomewhere(ParameterAttributes Attr) const;
 
-  /// operator< - Provide an ordering for parameter attribute lists.
+  /// operator==/!= - Provide equality predicates.
   bool operator==(const PAListPtr &RHS) const { return PAList == RHS.PAList; }
   bool operator!=(const PAListPtr &RHS) const { return PAList != RHS.PAList; }
   

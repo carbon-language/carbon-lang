@@ -77,7 +77,7 @@ namespace llvm {
 class ParamAttributeListImpl : public FoldingSetNode {
   unsigned RefCount;
   
-  // ParamAttrsList is uniqued, these should not be publicly available
+  // ParamAttrsList is uniqued, these should not be publicly available.
   void operator=(const ParamAttributeListImpl &); // Do not implement
   ParamAttributeListImpl(const ParamAttributeListImpl &); // Do not implement
   ~ParamAttributeListImpl();                        // Private implementation

@@ -926,11 +926,11 @@ public:
     SubclassData = (SubclassData & 1) | (CC << 1);
   }
 
-  /// getParamAttrs - Return the PAListPtr for the parameter attributes of this
-  /// call.
+  /// getParamAttrs - Return the parameter attributes for this call.
+  ///
   const PAListPtr &getParamAttrs() const { return ParamAttrs; }
 
-  /// setParamAttrs - Sets the parameter attributes for this CallInst.
+  /// setParamAttrs - Sets the parameter attributes for this call.
   void setParamAttrs(const PAListPtr &Attrs) { ParamAttrs = Attrs; }
 
   /// @brief Determine whether the call or the callee has the given attribute.
@@ -1740,11 +1740,11 @@ public:
     SubclassData = CC;
   }
 
-  /// getParamAttrs - Return the parameter attribute list for this invoke.
+  /// getParamAttrs - Return the parameter attributes for this invoke.
   ///
   const PAListPtr &getParamAttrs() const { return ParamAttrs; }
 
-  /// setParamAttrs - Set the parameter attribute list for this invoke.
+  /// setParamAttrs - Set the parameter attributes for this invoke.
   ///
   void setParamAttrs(const PAListPtr &Attrs) { ParamAttrs = Attrs; }
 
