@@ -541,8 +541,6 @@ PMTopLevelManager::~PMTopLevelManager() {
   for (std::vector<ImmutablePass *>::iterator
          I = ImmutablePasses.begin(), E = ImmutablePasses.end(); I != E; ++I)
     delete *I;
-  
-  PassManagers.clear();
 }
 
 //===----------------------------------------------------------------------===//
@@ -928,7 +926,6 @@ PMDataManager::~PMDataManager() {
          E = PassVector.end(); I != E; ++I)
     delete *I;
   
-  PassVector.clear();
 }
 
 //===----------------------------------------------------------------------===//
