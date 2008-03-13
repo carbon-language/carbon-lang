@@ -362,52 +362,11 @@ CallInst::CallInst(const CallInst &CI)
     OL[i].init(InOL[i], this);
 }
 
-bool CallInst::paramHasAttr(uint16_t i, ParameterAttributes attr) const {
+bool CallInst::paramHasAttr(unsigned i, ParameterAttributes attr) const {
   if (ParamAttrs.paramHasAttr(i, attr))
     return true;
   if (const Function *F = getCalledFunction())
     return F->paramHasAttr(i, attr);
-  return false;
-}
-
-uint16_t CallInst::getParamAlignment(uint16_t i) const {
-  return ParamAttrs.getParamAlignment(i);
-}
-
-/// @brief Determine if the call does not access memory.
-bool CallInst::doesNotAccessMemory() const {
-  return paramHasAttr(0, ParamAttr::ReadNone);
-}
-
-/// @brief Determine if the call does not access or only reads memory.
-bool CallInst::onlyReadsMemory() const {
-  return doesNotAccessMemory() || paramHasAttr(0, ParamAttr::ReadOnly);
-}
-
-/// @brief Determine if the call cannot return.
-bool CallInst::doesNotReturn() const {
-  return paramHasAttr(0, ParamAttr::NoReturn);
-}
-
-/// @brief Determine if the call cannot unwind.
-bool CallInst::doesNotThrow() const {
-  return paramHasAttr(0, ParamAttr::NoUnwind);
-}
-
-/// @brief Determine if the call returns a structure through first 
-/// pointer argument.
-bool CallInst::hasStructRetAttr() const {
-  // Be friendly and also check the callee.
-  return paramHasAttr(1, ParamAttr::StructRet);
-}
-
-/// @brief Determine if any call argument is an aggregate passed by value.
-bool CallInst::hasByValArgument() const {
-  if (ParamAttrs.hasAttrSomewhere(ParamAttr::ByVal))
-    return true;
-  // Be consistent with other methods and check the callee too.
-  if (const Function *F = getCalledFunction())
-    return F->getParamAttrs().hasAttrSomewhere(ParamAttr::ByVal);
   return false;
 }
 
@@ -473,36 +432,12 @@ void InvokeInst::setSuccessorV(unsigned idx, BasicBlock *B) {
   return setSuccessor(idx, B);
 }
 
-bool InvokeInst::paramHasAttr(uint16_t i, ParameterAttributes attr) const {
+bool InvokeInst::paramHasAttr(unsigned i, ParameterAttributes attr) const {
   if (ParamAttrs.paramHasAttr(i, attr))
     return true;
   if (const Function *F = getCalledFunction())
     return F->paramHasAttr(i, attr);
   return false;
-}
-
-uint16_t InvokeInst::getParamAlignment(uint16_t i) const {
-  return ParamAttrs.getParamAlignment(i);
-}
-
-/// @brief Determine if the call does not access memory.
-bool InvokeInst::doesNotAccessMemory() const {
-  return paramHasAttr(0, ParamAttr::ReadNone);
-}
-
-/// @brief Determine if the call does not access or only reads memory.
-bool InvokeInst::onlyReadsMemory() const {
-  return doesNotAccessMemory() || paramHasAttr(0, ParamAttr::ReadOnly);
-}
-
-/// @brief Determine if the call cannot return.
-bool InvokeInst::doesNotReturn() const {
-  return paramHasAttr(0, ParamAttr::NoReturn);
-}
-
-/// @brief Determine if the call cannot unwind.
-bool InvokeInst::doesNotThrow() const {
-  return paramHasAttr(0, ParamAttr::NoUnwind);
 }
 
 void InvokeInst::setDoesNotThrow(bool doesNotThrow) {
@@ -512,13 +447,6 @@ void InvokeInst::setDoesNotThrow(bool doesNotThrow) {
   else
     PAL = PAL.removeAttr(0, ParamAttr::NoUnwind);
   setParamAttrs(PAL);
-}
-
-/// @brief Determine if the invoke returns a structure through first 
-/// pointer argument.
-bool InvokeInst::hasStructRetAttr() const {
-  // Be friendly and also check the callee.
-  return paramHasAttr(1, ParamAttr::StructRet);
 }
 
 

@@ -160,26 +160,38 @@ public:
   void clearCollector();
 
   /// @brief Determine whether the function has the given attribute.
-  bool paramHasAttr(uint16_t i, ParameterAttributes attr) const;
+  bool paramHasAttr(unsigned i, ParameterAttributes attr) const {
+    return ParamAttrs.paramHasAttr(i, attr);
+  }
   
   /// @brief Extract the alignment for a call or parameter (0=unknown).
-  uint16_t getParamAlignment(uint16_t i) const;
+  unsigned getParamAlignment(unsigned i) const {
+    return ParamAttrs.getParamAlignment(i);
+  }
 
   /// @brief Determine if the function cannot return.
-  bool doesNotReturn() const;
+  bool doesNotReturn() const { return paramHasAttr(0, ParamAttr::NoReturn); }
 
   /// @brief Determine if the function cannot unwind.
-  bool doesNotThrow() const;
+  bool doesNotThrow() const {
+    return paramHasAttr(0, ParamAttr::NoUnwind);
+  }
 
   /// @brief Determine if the function does not access memory.
-  bool doesNotAccessMemory() const;
+  bool doesNotAccessMemory() const {
+    return paramHasAttr(0, ParamAttr::ReadNone);
+  }
 
   /// @brief Determine if the function does not access or only reads memory.
-  bool onlyReadsMemory() const;
+  bool onlyReadsMemory() const {
+    return doesNotAccessMemory() || paramHasAttr(0, ParamAttr::ReadOnly);
+  }
 
   /// @brief Determine if the function returns a structure through first 
   /// pointer argument.
-  bool hasStructRetAttr() const;
+  bool hasStructRetAttr() const {
+    return paramHasAttr(1, ParamAttr::StructRet);
+  }
 
   /// deleteBody - This method deletes the body of the function, and converts
   /// the linkage to external.

@@ -934,30 +934,45 @@ public:
   void setParamAttrs(const PAListPtr &Attrs) { ParamAttrs = Attrs; }
 
   /// @brief Determine whether the call or the callee has the given attribute.
-  bool paramHasAttr(uint16_t i, unsigned attr) const;
+  bool paramHasAttr(unsigned i, unsigned attr) const;
 
   /// @brief Extract the alignment for a call or parameter (0=unknown).
-  uint16_t getParamAlignment(uint16_t i) const;
+  unsigned getParamAlignment(unsigned i) const {
+    return ParamAttrs.getParamAlignment(i);
+  }
 
   /// @brief Determine if the call does not access memory.
-  bool doesNotAccessMemory() const;
+  bool doesNotAccessMemory() const {
+    return paramHasAttr(0, ParamAttr::ReadNone);
+  }
   
   /// @brief Determine if the call does not access or only reads memory.
-  bool onlyReadsMemory() const;
+  bool onlyReadsMemory() const {
+    return doesNotAccessMemory() || paramHasAttr(0, ParamAttr::ReadOnly);
+  }
   
   /// @brief Determine if the call cannot return.
-  bool doesNotReturn() const;
+  bool doesNotReturn() const {
+    return paramHasAttr(0, ParamAttr::NoReturn);
+  }
 
   /// @brief Determine if the call cannot unwind.
-  bool doesNotThrow() const;
+  bool doesNotThrow() const {
+    return paramHasAttr(0, ParamAttr::NoUnwind);
+  }
   void setDoesNotThrow(bool doesNotThrow = true);
 
   /// @brief Determine if the call returns a structure through first 
   /// pointer argument.
-  bool hasStructRetAttr() const;
+  bool hasStructRetAttr() const {
+    // Be friendly and also check the callee.
+    return paramHasAttr(1, ParamAttr::StructRet);
+  }
 
   /// @brief Determine if any call argument is an aggregate passed by value.
-  bool hasByValArgument() const;
+  bool hasByValArgument() const {
+    return ParamAttrs.hasAttrSomewhere(ParamAttr::ByVal);
+  }
 
   /// getCalledFunction - Return the function being called by this instruction
   /// if it is a direct call.  If it is a call through a function pointer,
@@ -1749,27 +1764,40 @@ public:
   void setParamAttrs(const PAListPtr &Attrs) { ParamAttrs = Attrs; }
 
   /// @brief Determine whether the call or the callee has the given attribute.
-  bool paramHasAttr(uint16_t i, ParameterAttributes attr) const;
+  bool paramHasAttr(unsigned i, ParameterAttributes attr) const;
 
   /// @brief Extract the alignment for a call or parameter (0=unknown).
-  uint16_t getParamAlignment(uint16_t i) const;
+  unsigned getParamAlignment(unsigned i) const {
+    return ParamAttrs.getParamAlignment(i);
+  }
 
   /// @brief Determine if the call does not access memory.
-  bool doesNotAccessMemory() const;
+  bool doesNotAccessMemory() const {
+    return paramHasAttr(0, ParamAttr::ReadNone);
+  }
 
   /// @brief Determine if the call does not access or only reads memory.
-  bool onlyReadsMemory() const;
+  bool onlyReadsMemory() const {
+    return doesNotAccessMemory() || paramHasAttr(0, ParamAttr::ReadOnly);
+  }
 
   /// @brief Determine if the call cannot return.
-  bool doesNotReturn() const;
+  bool doesNotReturn() const {
+    return paramHasAttr(0, ParamAttr::NoReturn);
+  }
 
   /// @brief Determine if the call cannot unwind.
-  bool doesNotThrow() const;
+  bool doesNotThrow() const {
+    return paramHasAttr(0, ParamAttr::NoUnwind);
+  }
   void setDoesNotThrow(bool doesNotThrow = true);
 
   /// @brief Determine if the call returns a structure through first 
   /// pointer argument.
-  bool hasStructRetAttr() const;
+  bool hasStructRetAttr() const {
+    // Be friendly and also check the callee.
+    return paramHasAttr(1, ParamAttr::StructRet);
+  }
 
   /// getCalledFunction - Return the function called, or null if this is an
   /// indirect function invocation.

@@ -137,42 +137,6 @@ void Function::eraseFromParent() {
   getParent()->getFunctionList().erase(this);
 }
 
-/// @brief Determine whether the function has the given attribute.
-bool Function::paramHasAttr(uint16_t i, ParameterAttributes attr) const {
-  return ParamAttrs.paramHasAttr(i, attr);
-}
-
-/// @brief Extract the alignment for a call or parameter (0=unknown).
-uint16_t Function::getParamAlignment(uint16_t i) const {
-  return ParamAttrs.getParamAlignment(i);
-}
-
-/// @brief Determine if the function cannot return.
-bool Function::doesNotReturn() const {
-  return paramHasAttr(0, ParamAttr::NoReturn);
-}
-
-/// @brief Determine if the function cannot unwind.
-bool Function::doesNotThrow() const {
-  return paramHasAttr(0, ParamAttr::NoUnwind);
-}
-
-/// @brief Determine if the function does not access memory.
-bool Function::doesNotAccessMemory() const {
-  return paramHasAttr(0, ParamAttr::ReadNone);
-}
-
-/// @brief Determine if the function does not access or only reads memory.
-bool Function::onlyReadsMemory() const {
-  return doesNotAccessMemory() || paramHasAttr(0, ParamAttr::ReadOnly);
-}
-
-/// @brief Determine if the function returns a structure through first 
-/// pointer argument.
-bool Function::hasStructRetAttr() const {
-  return paramHasAttr(1, ParamAttr::StructRet);
-}
-
 //===----------------------------------------------------------------------===//
 // Function Implementation
 //===----------------------------------------------------------------------===//
