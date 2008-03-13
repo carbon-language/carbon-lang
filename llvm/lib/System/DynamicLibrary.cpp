@@ -50,7 +50,7 @@ using namespace llvm::sys;
 //static std::vector<lt_dlhandle> OpenedHandles;
 static std::vector<void *> OpenedHandles;
 
-DynamicLibrary::DynamicLibrary() : handle(0) {}
+DynamicLibrary::DynamicLibrary() {}
 
 DynamicLibrary::~DynamicLibrary() {
   while(!OpenedHandles.empty()) {
@@ -156,11 +156,6 @@ void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
 #undef EXPLICIT_SYMBOL
 
   return 0;
-}
-
-void *DynamicLibrary::GetAddressOfSymbol(const char *symbolName) {
-  assert(handle != 0 && "Invalid DynamicLibrary handle");
-  return dlsym(handle, symbolName);
 }
 
 #endif // LLVM_ON_WIN32

@@ -38,19 +38,13 @@ namespace sys {
     public:
       /// Construct a DynamicLibrary that represents the currently executing
       /// program. The program must have been linked with -export-dynamic or
-      /// -dlopen self for this to work. Any symbols retrieved with the
-      /// GetAddressOfSymbol function will refer to the program not to any
-      /// library.
+      /// -dlopen self for this to work. 
       /// @throws std::string indicating why the program couldn't be opened.
       /// @brief Open program as dynamic library.
       DynamicLibrary();
 
       /// After destruction, the symbols of the library will no longer be
-      /// available to the program. It is important to make sure the lifespan
-      /// of a DynamicLibrary exceeds the lifetime of the pointers returned
-      /// by the GetAddressOfSymbol otherwise the program may walk off into
-      /// uncharted territory.
-      /// @see GetAddressOfSymbol.
+      /// available to the program. 
       /// @brief Closes the DynamicLibrary
       ~DynamicLibrary();
 
@@ -92,26 +86,9 @@ namespace sys {
       }
 
     /// @}
-    /// @name Accessors
-    /// @{
-    public:
-      /// Looks up a \p symbolName in the DynamicLibrary and returns its address
-      /// if it exists. If the symbol does not exist, returns (void*)0.
-      /// @returns the address of the symbol or 0.
-      /// @brief Get the address of a symbol in the DynamicLibrary.
-      void* GetAddressOfSymbol(const char* symbolName);
-
-      /// @brief Convenience function for C++ophiles.
-      void* GetAddressOfSymbol(const std::string& symbolName) {
-        return GetAddressOfSymbol(symbolName.c_str());
-      }
-
-    /// @}
     /// @name Implementation
     /// @{
     protected:
-      void* handle;  // Opaque handle for information about the library
-
       DynamicLibrary(const DynamicLibrary&); ///< Do not implement
       DynamicLibrary& operator=(const DynamicLibrary&); ///< Do not implement
     /// @}
