@@ -291,7 +291,12 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
               if (MachineInstr *New=TII->convertToThreeAddress(mbbi, mi, *LV)) {
                 DOUT << "2addr: CONVERTING 2-ADDR: " << *mi;
                 DOUT << "2addr:         TO 3-ADDR: " << *New;
-                bool Sunk = Sink3AddrInstruction(mbbi, New, regB, mi);
+                bool Sunk = false;
+                if (New->findRegisterUseOperand(regB, New, TRI))
+                  // FIXME: Temporary workaround. If the new instruction doesn't
+                  // uses regB, convertToThreeAddress must have created more
+                  // then one instruction.
+                  Sunk = Sink3AddrInstruction(mbbi, New, regB, mi);
                 mbbi->erase(mi);                 // Nuke the old inst.
                 if (!Sunk) mi = New;
                 ++NumConvertedTo3Addr;
