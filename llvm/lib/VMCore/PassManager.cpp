@@ -83,7 +83,7 @@ public:
   bool doFinalization(Function &F);
 
   virtual const char *getPassName() const {
-    return "BasicBlock Pass  Manager";
+    return "BasicBlock Pass Manager";
   }
 
   // Print passes managed by this manager
