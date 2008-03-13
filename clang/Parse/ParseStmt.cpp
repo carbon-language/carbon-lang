@@ -431,19 +431,25 @@ Parser::StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
       while (Tok.is(tok::kw___extension__))
         ConsumeToken();
       
+      // __extension__ silences extension warnings in the subexpression.
+      bool SavedExtWarn = Diags.getWarnOnExtensions();
+      Diags.setWarnOnExtensions(false);
+      
       // If this is the start of a declaration, parse it as such.
       if (isDeclarationSpecifier()) {
         // FIXME: Save the __extension__ on the decl as a node somehow.
-        // FIXME: disable extwarns.
         SourceLocation DeclStart = Tok.getLocation();
         DeclTy *Res = ParseDeclaration(Declarator::BlockContext);
         // FIXME: Pass in the right location for the end of the declstmt.
         R = Actions.ActOnDeclStmt(Res, DeclStart, DeclStart);
+        
+        Diags.setWarnOnExtensions(SavedExtWarn);
       } else {
         // Otherwise this was a unary __extension__ marker.  Parse the
         // subexpression and add the __extension__ unary op. 
-        // FIXME: disable extwarns.
         ExprResult Res = ParseCastExpression(false);
+        Diags.setWarnOnExtensions(SavedExtWarn);
+
         if (Res.isInvalid) {
           SkipUntil(tok::semi);
           continue;
