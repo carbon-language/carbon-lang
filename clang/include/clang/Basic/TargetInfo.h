@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines the TargetInfo and TargetInfoImpl interfaces.
+//  This file defines the TargetInfo interface.
 //
 //===----------------------------------------------------------------------===//
 
