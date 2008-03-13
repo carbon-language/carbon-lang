@@ -53,14 +53,6 @@ namespace {
                 cl::desc("Use new coalescer heuristic"),
                 cl::init(false));
 
-  static cl::opt<bool>
-  CommuteDef("coalescer-commute-instrs",
-             cl::init(true), cl::Hidden);
-
-  static cl::opt<int>
-  CommuteLimit("commute-limit",
-               cl::init(-1), cl::Hidden);
-
   RegisterPass<SimpleRegisterCoalescing> 
   X("simple-register-coalescing", "Simple Register Coalescing");
 
@@ -247,8 +239,6 @@ bool SimpleRegisterCoalescing::HasOtherReachingDefs(LiveInterval &IntA,
 bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
                                                         LiveInterval &IntB,
                                                         MachineInstr *CopyMI) {
-  if (!CommuteDef) return false;
-
   unsigned CopyIdx = li_->getDefIndex(li_->getInstructionIndex(CopyMI));
 
   // FIXME: For now, only eliminate the copy by commuting its def when the
@@ -291,9 +281,6 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
   // Make sure there are no other definitions of IntB that would reach the
   // uses which the new definition can reach.
   if (HasOtherReachingDefs(IntA, IntB, AValNo, BValNo))
-    return false;
-
-  if (CommuteLimit >= 0 && numCommutes >= (unsigned)CommuteLimit)
     return false;
 
   // At this point we have decided that it is legal to do this
