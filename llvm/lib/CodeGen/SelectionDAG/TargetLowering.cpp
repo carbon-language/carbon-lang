@@ -1217,7 +1217,7 @@ TargetLowering::SimplifySetCC(MVT::ValueType VT, SDOperand N0, SDOperand N1,
               N0.getOperand(0).getOpcode() == ISD::XOR &&
               N0.getOperand(1) == N0.getOperand(0).getOperand(1))) &&
             isa<ConstantSDNode>(N0.getOperand(1)) &&
-            cast<ConstantSDNode>(N0.getOperand(1))->getValue() == 1) {
+            cast<ConstantSDNode>(N0.getOperand(1))->getAPIntValue() == 1) {
           // If this is (X^1) == 0/1, swap the RHS and eliminate the xor.  We
           // can only do this if the top bits are known zero.
           unsigned BitWidth = N0.getValueSizeInBits();

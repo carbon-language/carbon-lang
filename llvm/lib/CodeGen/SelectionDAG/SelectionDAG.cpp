@@ -1639,7 +1639,7 @@ unsigned SelectionDAG::ComputeNumSignBits(SDOperand Op, unsigned Depth) const{
       
     // Handle NEG.
     if (ConstantSDNode *CLHS = dyn_cast<ConstantSDNode>(Op.getOperand(0)))
-      if (CLHS->getValue() == 0) {
+      if (CLHS->isNullValue()) {
         APInt KnownZero, KnownOne;
         APInt Mask = APInt::getAllOnesValue(VTBits);
         ComputeMaskedBits(Op.getOperand(1), Mask, KnownZero, KnownOne, Depth+1);
@@ -1960,7 +1960,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
            N1.getValueType() == VT && "Binary operator types must match!");
     // (X & 0) -> 0.  This commonly occurs when legalizing i64 values, so it's
     // worth handling here.
-    if (N2C && N2C->getValue() == 0)
+    if (N2C && N2C->isNullValue())
       return N2;
     if (N2C && N2C->isAllOnesValue())  // X & -1 -> X
       return N1;
@@ -1971,7 +1971,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
            N1.getValueType() == VT && "Binary operator types must match!");
     // (X ^| 0) -> X.  This commonly occurs when legalizing i64 values, so it's
     // worth handling here.
-    if (N2C && N2C->getValue() == 0)
+    if (N2C && N2C->isNullValue())
       return N1;
     break;
   case ISD::UDIV:

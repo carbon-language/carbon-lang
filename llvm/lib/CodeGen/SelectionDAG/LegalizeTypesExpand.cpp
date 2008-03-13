@@ -1187,7 +1187,7 @@ void DAGTypeLegalizer::ExpandSetCCOperands(SDOperand &NewLHS, SDOperand &NewRHS,
   // If this is a comparison of the sign bit, just look at the top part.
   // X > -1,  x < 0
   if (ConstantSDNode *CST = dyn_cast<ConstantSDNode>(NewRHS))
-    if ((CCCode == ISD::SETLT && CST->getValue() == 0) ||   // X < 0
+    if ((CCCode == ISD::SETLT && CST->isNullValue()) ||     // X < 0
         (CCCode == ISD::SETGT && CST->isAllOnesValue())) {  // X > -1
       NewLHS = LHSHi;
       NewRHS = RHSHi;
@@ -1228,11 +1228,11 @@ void DAGTypeLegalizer::ExpandSetCCOperands(SDOperand &NewLHS, SDOperand &NewRHS,
   
   ConstantSDNode *Tmp1C = dyn_cast<ConstantSDNode>(Tmp1.Val);
   ConstantSDNode *Tmp2C = dyn_cast<ConstantSDNode>(Tmp2.Val);
-  if ((Tmp1C && Tmp1C->getValue() == 0) ||
-      (Tmp2C && Tmp2C->getValue() == 0 &&
+  if ((Tmp1C && Tmp1C->isNullValue()) ||
+      (Tmp2C && Tmp2C->isNullValue() &&
        (CCCode == ISD::SETLE || CCCode == ISD::SETGE ||
         CCCode == ISD::SETUGE || CCCode == ISD::SETULE)) ||
-      (Tmp2C && Tmp2C->getValue() == 1 &&
+      (Tmp2C && Tmp2C->getAPIntValue() == 1 &&
        (CCCode == ISD::SETLT || CCCode == ISD::SETGT ||
         CCCode == ISD::SETUGT || CCCode == ISD::SETULT))) {
     // low part is known false, returns high part.

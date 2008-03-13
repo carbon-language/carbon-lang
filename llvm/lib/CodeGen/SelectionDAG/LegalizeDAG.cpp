@@ -4849,7 +4849,7 @@ void SelectionDAGLegalize::LegalizeSetCCOperands(SDOperand &LHS,
       // X > -1,  x < 0
       if (ConstantSDNode *CST = dyn_cast<ConstantSDNode>(RHS))
         if ((cast<CondCodeSDNode>(CC)->get() == ISD::SETLT && 
-             CST->getValue() == 0) ||             // X < 0
+             CST->isNullValue()) ||               // X < 0
             (cast<CondCodeSDNode>(CC)->get() == ISD::SETGT &&
              CST->isAllOnesValue())) {            // X > -1
           Tmp1 = LHSHi;
@@ -4890,11 +4890,11 @@ void SelectionDAGLegalize::LegalizeSetCCOperands(SDOperand &LHS,
       
       ConstantSDNode *Tmp1C = dyn_cast<ConstantSDNode>(Tmp1.Val);
       ConstantSDNode *Tmp2C = dyn_cast<ConstantSDNode>(Tmp2.Val);
-      if ((Tmp1C && Tmp1C->getValue() == 0) ||
-          (Tmp2C && Tmp2C->getValue() == 0 &&
+      if ((Tmp1C && Tmp1C->isNullValue()) ||
+          (Tmp2C && Tmp2C->isNullValue() &&
            (CCCode == ISD::SETLE || CCCode == ISD::SETGE ||
             CCCode == ISD::SETUGE || CCCode == ISD::SETULE)) ||
-          (Tmp2C && Tmp2C->getValue() == 1 &&
+          (Tmp2C && Tmp2C->getAPIntValue() == 1 &&
            (CCCode == ISD::SETLT || CCCode == ISD::SETGT ||
             CCCode == ISD::SETUGT || CCCode == ISD::SETULT))) {
         // low part is known false, returns high part.
@@ -6321,7 +6321,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     // If ADDC/ADDE are supported and if the shift amount is a constant 1, emit 
     // this X << 1 as X+X.
     if (ConstantSDNode *ShAmt = dyn_cast<ConstantSDNode>(ShiftAmt)) {
-      if (ShAmt->getValue() == 1 && TLI.isOperationLegal(ISD::ADDC, NVT) && 
+      if (ShAmt->getAPIntValue() == 1 && TLI.isOperationLegal(ISD::ADDC, NVT) && 
           TLI.isOperationLegal(ISD::ADDE, NVT)) {
         SDOperand LoOps[2], HiOps[3];
         ExpandOp(Node->getOperand(0), LoOps[0], HiOps[0]);
