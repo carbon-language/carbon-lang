@@ -370,7 +370,7 @@ public:
 };
 
 /// PMStack
-/// Top level pass manager (see PasManager.cpp) maintains active Pass Managers 
+/// Top level pass manager (see PassManager.cpp) maintains active Pass Managers 
 /// using PMStack. Each Pass implements assignPassManager() to connect itself
 /// with appropriate manager. assignPassManager() walks PMStack to find
 /// suitable manager.
