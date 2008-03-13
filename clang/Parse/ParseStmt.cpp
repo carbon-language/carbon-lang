@@ -96,7 +96,7 @@ Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
       SourceLocation DeclStart = Tok.getLocation();
       DeclTy *Res = ParseDeclaration(Declarator::BlockContext);
       // FIXME: Pass in the right location for the end of the declstmt.
-      return Actions.ActOnDeclStmt(Res, DeclStart, SourceLocation());
+      return Actions.ActOnDeclStmt(Res, DeclStart, DeclStart);
     } else if (Tok.is(tok::r_brace)) {
       Diag(Tok, diag::err_expected_statement);
       return true;
@@ -438,7 +438,7 @@ Parser::StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
         SourceLocation DeclStart = Tok.getLocation();
         DeclTy *Res = ParseDeclaration(Declarator::BlockContext);
         // FIXME: Pass in the right location for the end of the declstmt.
-        R = Actions.ActOnDeclStmt(Res, DeclStart, SourceLocation());
+        R = Actions.ActOnDeclStmt(Res, DeclStart, DeclStart);
       } else {
         // Otherwise this was a unary __extension__ marker.  Parse the
         // subexpression and add the __extension__ unary op. 
@@ -756,7 +756,7 @@ Parser::StmtResult Parser::ParseForStatement() {
     DeclTy *aBlockVarDecl = ParseDeclaration(Declarator::ForContext);
     // FIXME: Pass in the right location for the end of the declstmt.
     StmtResult stmtResult = Actions.ActOnDeclStmt(aBlockVarDecl, DeclStart,
-                                                  SourceLocation());
+                                                  DeclStart);
     FirstPart = stmtResult.isInvalid ? 0 : stmtResult.Val;
     if ((ForEach = isTokIdentifier_in())) {
       ConsumeToken(); // consume 'in'
