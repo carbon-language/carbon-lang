@@ -388,7 +388,7 @@ void Parser::ParseSpecifierQualifierList(DeclSpec &DS) {
 /// [C99]   'inline'
 ///
 void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
-  DS.Range.setBegin(Tok.getLocation());
+  DS.SetRangeStart(Tok.getLocation());
   while (1) {
     int isInvalid = false;
     const char *PrevSpec = 0;
@@ -409,7 +409,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
           if (isInvalid)
             break;
           // FIXME: restrict this to "id" and ObjC classnames.
-          DS.Range.setEnd(Tok.getLocation());
+          DS.SetRangeEnd(Tok.getLocation());
           ConsumeToken(); // The identifier
           if (Tok.is(tok::less)) {
             SourceLocation endProtoLoc;
@@ -555,7 +555,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
       else                 // extwarn.
         Diag(Tok, diag::ext_duplicate_declspec, PrevSpec);
     }
-    DS.Range.setEnd(Tok.getLocation());
+    DS.SetRangeEnd(Tok.getLocation());
     ConsumeToken();
   }
 }

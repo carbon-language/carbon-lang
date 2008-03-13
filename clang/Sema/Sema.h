@@ -339,7 +339,8 @@ public:
   virtual StmtResult ActOnCompoundStmt(SourceLocation L, SourceLocation R,
                                        StmtTy **Elts, unsigned NumElts,
                                        bool isStmtExpr);
-  virtual StmtResult ActOnDeclStmt(DeclTy *Decl);
+  virtual StmtResult ActOnDeclStmt(DeclTy *Decl, SourceLocation StartLoc,
+                                   SourceLocation EndLoc);
   virtual StmtResult ActOnCaseStmt(SourceLocation CaseLoc, ExprTy *LHSVal,
                                    SourceLocation DotDotDotLoc, ExprTy *RHSVal,
                                    SourceLocation ColonLoc, StmtTy *SubStmt);

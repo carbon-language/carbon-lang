@@ -33,13 +33,13 @@ Sema::StmtResult Sema::ActOnNullStmt(SourceLocation SemiLoc) {
   return new NullStmt(SemiLoc);
 }
 
-Sema::StmtResult Sema::ActOnDeclStmt(DeclTy *decl) {
-  if (decl) {
-    ScopedDecl *SD = dyn_cast<ScopedDecl>(static_cast<Decl *>(decl));
-    assert(SD && "Sema::ActOnDeclStmt(): expected ScopedDecl");
-    return new DeclStmt(SD);
-  } else 
-    return true; // error
+Sema::StmtResult Sema::ActOnDeclStmt(DeclTy *decl, SourceLocation StartLoc,
+                                     SourceLocation EndLoc) {
+  if (decl == 0)
+    return true;
+  
+  ScopedDecl *SD = cast<ScopedDecl>(static_cast<Decl *>(decl));
+  return new DeclStmt(SD, StartLoc, EndLoc);
 }
 
 Action::StmtResult 

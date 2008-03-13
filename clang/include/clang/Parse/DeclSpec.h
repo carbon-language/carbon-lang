@@ -28,9 +28,6 @@ namespace clang {
 /// type-qualifiers, and function-specifiers.
 class DeclSpec {
 public:
-  SourceRange Range;
-  const SourceRange &getSourceRange() const { return Range; }
-  
   // storage-class-specifier
   enum SCS {
     SCS_unspecified,
@@ -130,6 +127,8 @@ private:
   
   // SourceLocation info.  These are null if the item wasn't specified or if
   // the setting was synthesized.
+  SourceRange Range;
+  
   SourceLocation StorageClassSpecLoc, SCS_threadLoc;
   SourceLocation TSWLoc, TSCLoc, TSSLoc, TSTLoc;
   SourceLocation TQ_constLoc, TQ_restrictLoc, TQ_volatileLoc;
@@ -181,6 +180,7 @@ public:
   TST getTypeSpecType() const { return (TST)TypeSpecType; }
   void *getTypeRep() const { return TypeRep; }
   
+  const SourceRange &getSourceRange() const { return Range; }
   SourceLocation getTypeSpecWidthLoc() const { return TSWLoc; }
   SourceLocation getTypeSpecComplexLoc() const { return TSCLoc; }
   SourceLocation getTypeSpecSignLoc() const { return TSSLoc; }
@@ -221,6 +221,9 @@ public:
   /// DeclSpec includes.
   ///
   unsigned getParsedSpecifiers() const;
+  
+  void SetRangeStart(SourceLocation Loc) { Range.setBegin(Loc); }
+  void SetRangeEnd(SourceLocation Loc) { Range.setEnd(Loc); }
   
   /// These methods set the specified attribute of the DeclSpec, but return true
   /// and ignore the request if invalid (e.g. "extern" then "auto" is

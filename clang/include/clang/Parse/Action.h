@@ -220,7 +220,8 @@ public:
                                        bool isStmtExpr) {
     return 0;
   }
-  virtual StmtResult ActOnDeclStmt(DeclTy *Decl) {
+  virtual StmtResult ActOnDeclStmt(DeclTy *Decl, SourceLocation StartLoc,
+                                   SourceLocation EndLoc) {
     return 0;
   }
   

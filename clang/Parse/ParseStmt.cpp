@@ -93,7 +93,10 @@ Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
 
   default:
     if (!OnlyStatement && isDeclarationSpecifier()) {
-      return Actions.ActOnDeclStmt(ParseDeclaration(Declarator::BlockContext));
+      SourceLocation DeclStart = Tok.getLocation();
+      DeclTy *Res = ParseDeclaration(Declarator::BlockContext);
+      // FIXME: Pass in the right location for the end of the declstmt.
+      return Actions.ActOnDeclStmt(Res, DeclStart, SourceLocation());
     } else if (Tok.is(tok::r_brace)) {
       Diag(Tok, diag::err_expected_statement);
       return true;
@@ -255,7 +258,9 @@ Parser::StmtResult Parser::ParseIdentifierStatement(bool OnlyStatement) {
     ParseDeclarator(DeclaratorInfo);
     
     DeclTy *Decl = ParseInitDeclaratorListAfterFirstDeclarator(DeclaratorInfo);
-    return Decl ? Actions.ActOnDeclStmt(Decl) : 0;
+    if (!Decl) return 0;
+    return Actions.ActOnDeclStmt(Decl, DS.getSourceRange().getBegin(),
+                                 DeclaratorInfo.getSourceRange().getEnd());
   }
   
   // Otherwise, this is an expression.  Seed it with II and parse it.
@@ -430,7 +435,10 @@ Parser::StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
       if (isDeclarationSpecifier()) {
         // FIXME: Save the __extension__ on the decl as a node somehow.
         // FIXME: disable extwarns.
-        R = Actions.ActOnDeclStmt(ParseDeclaration(Declarator::BlockContext));
+        SourceLocation DeclStart = Tok.getLocation();
+        DeclTy *Res = ParseDeclaration(Declarator::BlockContext);
+        // FIXME: Pass in the right location for the end of the declstmt.
+        R = Actions.ActOnDeclStmt(Res, DeclStart, SourceLocation());
       } else {
         // Otherwise this was a unary __extension__ marker.  Parse the
         // subexpression and add the __extension__ unary op. 
@@ -743,8 +751,12 @@ Parser::StmtResult Parser::ParseForStatement() {
     // Parse declaration, which eats the ';'.
     if (!getLang().C99)   // Use of C99-style for loops in C90 mode?
       Diag(Tok, diag::ext_c99_variable_decl_in_for_loop);
+    
+    SourceLocation DeclStart = Tok.getLocation();
     DeclTy *aBlockVarDecl = ParseDeclaration(Declarator::ForContext);
-    StmtResult stmtResult = Actions.ActOnDeclStmt(aBlockVarDecl);
+    // FIXME: Pass in the right location for the end of the declstmt.
+    StmtResult stmtResult = Actions.ActOnDeclStmt(aBlockVarDecl, DeclStart,
+                                                  SourceLocation());
     FirstPart = stmtResult.isInvalid ? 0 : stmtResult.Val;
     if ((ForEach = isTokIdentifier_in())) {
       ConsumeToken(); // consume 'in'

@@ -132,13 +132,19 @@ public:
 ///
 class DeclStmt : public Stmt {
   ScopedDecl *TheDecl;
+  SourceLocation StartLoc, EndLoc;
 public:
-  DeclStmt(ScopedDecl *D) : Stmt(DeclStmtClass), TheDecl(D) {}
+  DeclStmt(ScopedDecl *D, SourceLocation startLoc, SourceLocation endLoc)
+    : Stmt(DeclStmtClass), TheDecl(D), StartLoc(startLoc), EndLoc(endLoc) {}
   
   const ScopedDecl *getDecl() const { return TheDecl; }
   ScopedDecl *getDecl() { return TheDecl; }
 
-  virtual SourceRange getSourceRange() const { return SourceRange(); }
+  SourceLocation getStartLoc() const { return StartLoc; }
+  SourceLocation getEndLoc() const { return EndLoc; }
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(StartLoc, EndLoc);
+  }
   
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == DeclStmtClass; 

@@ -456,6 +456,8 @@ ContinueStmt* ContinueStmt::CreateImpl(Deserializer& D) {
 void DeclStmt::EmitImpl(Serializer& S) const {
   // FIXME: special handling for struct decls.
   S.EmitOwnedPtr(getDecl());  
+  S.Emit(StartLoc);
+  S.Emit(EndLoc);
 }
 
 void DeclRefExpr::EmitImpl(Serializer& S) const {
@@ -505,7 +507,9 @@ DeclRefExpr* DeclRefExpr::CreateImpl(Deserializer& D) {
 
 DeclStmt* DeclStmt::CreateImpl(Deserializer& D) {
   ScopedDecl* decl = cast<ScopedDecl>(D.ReadOwnedPtr<Decl>());
-  return new DeclStmt(decl);
+  SourceLocation StartLoc = SourceLocation::ReadVal(D);
+  SourceLocation EndLoc = SourceLocation::ReadVal(D);
+  return new DeclStmt(decl, StartLoc, EndLoc);
 }
 
 void DefaultStmt::EmitImpl(Serializer& S) const {

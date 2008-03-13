@@ -1186,9 +1186,11 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
           // FIXME: Is BlockContext right?
           Declarator DeclaratorInfo(DS, Declarator::BlockContext);
           ParseDeclarator(DeclaratorInfo);
-          DeclTy * aBlockVarDecl = Actions.ActOnDeclarator(CurScope, 
-                                                           DeclaratorInfo, 0);
-          StmtResult stmtResult = Actions.ActOnDeclStmt(aBlockVarDecl);
+          DeclTy *aBlockVarDecl = Actions.ActOnDeclarator(CurScope, 
+                                                          DeclaratorInfo, 0);
+          StmtResult stmtResult =
+            Actions.ActOnDeclStmt(aBlockVarDecl, DS.getSourceRange().getBegin(),
+                                  DeclaratorInfo.getSourceRange().getEnd());
           FirstPart = stmtResult.isInvalid ? 0 : stmtResult.Val;
         } else
           ConsumeToken(); // consume '...'
