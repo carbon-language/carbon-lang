@@ -150,7 +150,7 @@ public:
     return ImmutablePasses;
   }
 
-  void addPassManager(Pass *Manager) {
+  void addPassManager(PMDataManager *Manager) {
     PassManagers.push_back(Manager);
   }
 
@@ -172,7 +172,7 @@ public:
 protected:
   
   /// Collection of pass managers
-  std::vector<Pass *> PassManagers;
+  std::vector<PMDataManager *> PassManagers;
 
 private:
 

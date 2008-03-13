@@ -455,10 +455,9 @@ Pass *PMTopLevelManager::findAnalysisPass(AnalysisID AID) {
 
   Pass *P = NULL;
   // Check pass managers
-  for (std::vector<Pass *>::iterator I = PassManagers.begin(),
+  for (std::vector<PMDataManager *>::iterator I = PassManagers.begin(),
          E = PassManagers.end(); P == NULL && I != E; ++I) {
-    PMDataManager *PMD = dynamic_cast<PMDataManager *>(*I);
-    assert(PMD && "This is not a PassManager");
+    PMDataManager *PMD = *I;
     P = PMD->findAnalysisPass(AID, false);
   }
 
@@ -496,9 +495,13 @@ void PMTopLevelManager::dumpPasses() const {
     ImmutablePasses[i]->dumpPassStructure(0);
   }
   
-  for (std::vector<Pass *>::const_iterator I = PassManagers.begin(),
+  // Every class that derives from PMDataManager also derives from Pass
+  // (sometimes indirectly), but there's no inheritance relationship
+  // between PMDataManager and Pass, so we have to dynamic_cast to get
+  // from a PMDataManager* to a Pass*.
+  for (std::vector<PMDataManager *>::const_iterator I = PassManagers.begin(),
          E = PassManagers.end(); I != E; ++I)
-    (*I)->dumpPassStructure(1);
+    dynamic_cast<Pass *>(*I)->dumpPassStructure(1);
 }
 
 void PMTopLevelManager::dumpArguments() const {
@@ -507,10 +510,9 @@ void PMTopLevelManager::dumpArguments() const {
     return;
 
   cerr << "Pass Arguments: ";
-  for (std::vector<Pass *>::const_iterator I = PassManagers.begin(),
+  for (std::vector<PMDataManager *>::const_iterator I = PassManagers.begin(),
          E = PassManagers.end(); I != E; ++I) {
-    PMDataManager *PMD = dynamic_cast<PMDataManager *>(*I);
-    assert(PMD && "This is not a PassManager");
+    PMDataManager *PMD = *I;
     PMD->dumpPassArguments();
   }
   cerr << "\n";
@@ -518,10 +520,9 @@ void PMTopLevelManager::dumpArguments() const {
 
 void PMTopLevelManager::initializeAllAnalysisInfo() {
   
-  for (std::vector<Pass *>::iterator I = PassManagers.begin(),
+  for (std::vector<PMDataManager *>::iterator I = PassManagers.begin(),
          E = PassManagers.end(); I != E; ++I) {
-    PMDataManager *PMD = dynamic_cast<PMDataManager *>(*I);
-    assert(PMD && "This is not a PassManager");
+    PMDataManager *PMD = *I;
     PMD->initializeAnalysisInfo();
   }
   
@@ -533,7 +534,7 @@ void PMTopLevelManager::initializeAllAnalysisInfo() {
 
 /// Destructor
 PMTopLevelManager::~PMTopLevelManager() {
-  for (std::vector<Pass *>::iterator I = PassManagers.begin(),
+  for (std::vector<PMDataManager *>::iterator I = PassManagers.begin(),
          E = PassManagers.end(); I != E; ++I)
     delete *I;
   
