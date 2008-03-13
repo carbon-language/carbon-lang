@@ -10,7 +10,7 @@
 // This file implements the LiveInterval analysis pass.  Given some numbering of
 // each the machine instructions (in this implemention depth-first order) an
 // interval [i, j) is said to be a live interval for register v if there is no
-// instruction with number j' > j such that v is live at j' abd there is no
+// instruction with number j' > j such that v is live at j' and there is no
 // instruction with number i' < i such that v is live at i'. In this
 // implementation intervals can have holes, i.e. an interval might look like
 // [1,20), [50,65), [1000,1001).
