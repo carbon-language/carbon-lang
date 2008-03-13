@@ -126,7 +126,7 @@ protected:
   
 public:
   GRExprEngine(GraphTy& g) : 
-    G(g), Liveness(G.getCFG(), G.getFunctionDecl()),
+    G(g), Liveness(G.getCFG()),
     Builder(NULL),
     StateMgr(G.getContext(), G.getAllocator()),
     BasicVals(StateMgr.getBasicValueFactory()),

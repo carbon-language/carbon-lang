@@ -28,6 +28,21 @@ namespace clang {
   
 struct DeclBitVector_Types {
   
+  class Idx {
+    unsigned I;
+  public:
+    Idx(unsigned i) : I(i) {}
+    explicit Idx() : I(~0U) {}
+    
+    bool isValid() const {
+      return I != ~0U;
+    }
+    operator unsigned() const {
+      assert (isValid());
+      return I;
+    }
+  };    
+    
   //===--------------------------------------------------------------------===//
   // AnalysisDataTy - Whole-function meta data.
   //===--------------------------------------------------------------------===//
@@ -48,10 +63,9 @@ struct DeclBitVector_Types {
     
     bool isTracked(const ScopedDecl* SD) { return DMap.find(SD) != DMap.end(); }
     
-    unsigned getIdx(const ScopedDecl* SD) const {
+    Idx getIdx(const ScopedDecl* SD) const {
       DMapTy::const_iterator I = DMap.find(SD);
-      assert (I != DMap.end());
-      return I->second;
+      return I == DMap.end() ? Idx() : Idx(I->second);
     }
 
     unsigned getNumDecls() const { return NDecls; }
@@ -84,13 +98,21 @@ struct DeclBitVector_Types {
     
     void copyValues(const ValTy& RHS) { DeclBV = RHS.DeclBV; }
     
+    llvm::BitVector::reference getBit(unsigned i) {
+      return DeclBV[i];
+    }
+    
+    const bool getBit(unsigned i) const {
+      return DeclBV[i];
+    }
+    
     llvm::BitVector::reference
     operator()(const ScopedDecl* SD, const AnalysisDataTy& AD) {
-      return DeclBV[AD.getIdx(SD)];      
+      return getBit(AD.getIdx(SD));
     }
-    const llvm::BitVector::reference
-    operator()(const ScopedDecl* SD, const AnalysisDataTy& AD) const {
-      return const_cast<ValTy&>(*this)(SD,AD);
+
+    bool operator()(const ScopedDecl* SD, const AnalysisDataTy& AD) const {
+      return getBit(AD.getIdx(SD));
     }
     
     llvm::BitVector::reference getDeclBit(unsigned i) { return DeclBV[i]; }    

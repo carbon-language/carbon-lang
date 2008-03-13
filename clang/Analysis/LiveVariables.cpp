@@ -43,14 +43,9 @@ public:
 } // end anonymous namespace
 
 
-LiveVariables::LiveVariables(CFG& cfg, FunctionDecl& FD) {
+LiveVariables::LiveVariables(CFG& cfg) {
+  // Register all referenced VarDecls.
   getAnalysisData().setCFG(&cfg);
-
-  for (FunctionDecl::param_iterator I=FD.param_begin(), E=FD.param_end();
-       I !=E; ++I)
-    getAnalysisData().Register(*I);
-  
-  // Now register all the other VarDecls;
   RegisterDecls R(getAnalysisData());
   cfg.VisitBlockStmts(R);
 }
@@ -201,11 +196,13 @@ void LiveVariables::runOnAllBlocks(const CFG& cfg,
 //
 
 bool LiveVariables::isLive(const CFGBlock* B, const VarDecl* D) const {
-  return getBlockData(B)(D,getAnalysisData());
+  DeclBitVector_Types::Idx i = getAnalysisData().getIdx(D);
+  return i.isValid() ? getBlockData(B).getBit(i) : false;
 }
 
 bool LiveVariables::isLive(const ValTy& Live, const VarDecl* D) const {
-  return Live(D,getAnalysisData());
+  DeclBitVector_Types::Idx i = getAnalysisData().getIdx(D);
+  return i.isValid() ? Live.getBit(i) : false;
 }
 
 bool LiveVariables::isLive(const Stmt* Loc, const Stmt* StmtVal) const {

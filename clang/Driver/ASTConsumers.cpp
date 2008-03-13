@@ -528,7 +528,7 @@ namespace {
     }
 
     virtual void VisitCFG(CFG& C, FunctionDecl& FD) {
-      LiveVariables L(C, FD);
+      LiveVariables L(C);
       L.runOnCFG(C);
       L.dumpBlockLiveness(*SM);
     }
@@ -553,7 +553,7 @@ namespace {
     }
     
     virtual void VisitCFG(CFG& C, FunctionDecl& FD) {
-      CheckDeadStores(C, FD, *Ctx, Diags);
+      CheckDeadStores(C, *Ctx, Diags);
     }
     
     virtual bool printFuncDeclStart() { return false; }
