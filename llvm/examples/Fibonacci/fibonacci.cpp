@@ -58,7 +58,7 @@ static Function *CreateFibFunction(Module *M) {
   // Create an exit block.
   BasicBlock* RecurseBB = new BasicBlock("recurse", FibF);
 
-  // Create the "if (arg < 2) goto exitbb"
+  // Create the "if (arg <= 2) goto exitbb"
   Value *CondInst = new ICmpInst(ICmpInst::ICMP_SLE, ArgX, Two, "cond", BB);
   new BranchInst(RetBB, RecurseBB, CondInst, BB);
 
