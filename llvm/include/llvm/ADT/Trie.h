@@ -41,13 +41,13 @@ public:
     typedef typename NodeVectorType::const_iterator const_iterator;
 
   private:
-    typedef enum {
+    enum QueryResult {
       Same           = -3,
       StringIsPrefix = -2,
       LabelIsPrefix  = -1,
       DontMatch      = 0,
       HaveCommonPart
-    } QueryResult;
+    };
 
     struct NodeCmp {
       bool operator() (Node* N1, Node* N2) {
