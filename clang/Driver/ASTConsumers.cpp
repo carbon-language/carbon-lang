@@ -482,8 +482,13 @@ void CFGVisitor::HandleTopLevelDecl(Decl *D) {
   }
     
   CFG *C = CFG::buildCFG(FD->getBody());
-  VisitCFG(*C, *FD);
-  delete C;
+  
+  if (C) {  
+    VisitCFG(*C, *FD);
+    delete C;
+  }
+  else
+    llvm::cerr << "warning: CFG could not be constructed.\n";
 }
 
 //===----------------------------------------------------------------------===//

@@ -113,6 +113,18 @@ public:
   CFGBlock* VisitDefaultStmt(DefaultStmt* D);
   CFGBlock* VisitIndirectGotoStmt(IndirectGotoStmt* I);
   
+  // FIXME: Add support for ObjC-specific control-flow structures.
+  
+  CFGBlock* VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
+    badCFG = true;
+    return Block;
+  }
+  
+  CFGBlock* VisitObjCAtTryStmt(ObjCAtTryStmt* S) {
+    badCFG = true;
+    return Block;
+  }
+  
 private:
   CFGBlock* createBlock(bool add_successor = true);
   CFGBlock* addStmt(Stmt* S);
@@ -122,6 +134,7 @@ private:
   CFGBlock* WalkAST_VisitStmtExpr(StmtExpr* S);
   void FinishBlock(CFGBlock* B);
   
+  bool badCFG;
 };
     
 /// BuildCFG - Constructs a CFG from an AST (a Stmt*).  The AST can
@@ -133,6 +146,8 @@ CFG* CFGBuilder::buildCFG(Stmt* Statement) {
   assert (cfg);
   if (!Statement) return NULL;
 
+  badCFG = false;
+  
   // Create an empty block that will serve as the exit block for the CFG.
   // Since this is the first block added to the CFG, it will be implicitly
   // registered as the exit block.
@@ -185,6 +200,12 @@ CFG* CFGBuilder::buildCFG(Stmt* Statement) {
   
   // Create an empty entry block that has no predecessors.    
   cfg->setEntry(createBlock());
+    
+  if (badCFG) {
+    delete cfg;
+    cfg = NULL;
+    return NULL;
+  }
     
   // NULL out cfg so that repeated calls to the builder will fail and that
   // the ownership of the constructed CFG is passed to the caller.
