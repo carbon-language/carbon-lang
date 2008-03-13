@@ -292,7 +292,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
                 DOUT << "2addr: CONVERTING 2-ADDR: " << *mi;
                 DOUT << "2addr:         TO 3-ADDR: " << *New;
                 bool Sunk = false;
-                if (New->findRegisterUseOperand(regB, New, TRI))
+                if (New->findRegisterUseOperand(regB, false, TRI))
                   // FIXME: Temporary workaround. If the new instruction doesn't
                   // uses regB, convertToThreeAddress must have created more
                   // then one instruction.
