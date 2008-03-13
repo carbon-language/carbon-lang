@@ -251,8 +251,17 @@ Path::GetCurrentDirectory() {
 /// GetMainExecutable - Return the path to the main executable, given the
 /// value of argv[0] from program startup.
 Path Path::GetMainExecutable(const char *argv0, void *MainAddr) {
+#if defined(__CYGWIN__)
+  char exe_link[64];
+  snprintf(exe_link, sizeof(exe_link), "/proc/%d/exe", getpid());
+  char exe_path[MAXPATHLEN];
+  ssize_t len = readlink(exe_link, exe_path, sizeof(exe_path));
+  if (len > 0 && len < MAXPATHLEN - 1) {
+    exe_path[len] = '\0';
+    return Path(std::string(exe_path));
+  }
+#elif defined(HAVE_DLFCN_H)
   // Use dladdr to get executable path if available.
-#ifdef HAVE_DLFCN_H
   Dl_info DLInfo;
   int err = dladdr(MainAddr, &DLInfo);
   if (err != 0)
