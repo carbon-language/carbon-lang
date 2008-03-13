@@ -132,30 +132,9 @@ bool MachineSinking::ProcessBlock(MachineBasicBlock &MBB) {
 /// SinkInstruction - Determine whether it is safe to sink the specified machine
 /// instruction out of its current block into a successor.
 bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
-  const TargetInstrDesc &TID = MI->getDesc();
-  
-  // Ignore stuff that we obviously can't sink.
-  if (TID.mayStore() || TID.isCall()) {
-    SawStore = true;
+  // Check if it's safe to move the instruction.
+  if (!MI->isSafeToMove(TII, SawStore))
     return false;
-  }
-  if (TID.isReturn() || TID.isBranch() || TID.hasUnmodeledSideEffects())
-    return false;
-
-  // See if this instruction does a load.  If so, we have to guarantee that the
-  // loaded value doesn't change between the load and the end of block.  The
-  // check for isInvariantLoad gives the targe the chance to classify the load
-  // as always returning a constant, e.g. a constant pool load.
-  if (TID.mayLoad() && !TII->isInvariantLoad(MI)) {
-    // Otherwise, this is a real load.  If there is a store between the load and
-    // end of block, we can't sink the load.
-    //
-    // FIXME: we can't do this transformation until we know that the load is
-    // not volatile, and machineinstrs don't keep this info. :(
-    //
-    //if (SawStore) 
-    return false;
-  }
   
   // FIXME: This should include support for sinking instructions within the
   // block they are currently in to shorten the live ranges.  We often get

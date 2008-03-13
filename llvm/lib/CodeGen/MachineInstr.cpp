@@ -628,14 +628,44 @@ void MachineInstr::copyKillDeadInfo(const MachineInstr *MI) {
 /// copyPredicates - Copies predicate operand(s) from MI.
 void MachineInstr::copyPredicates(const MachineInstr *MI) {
   const TargetInstrDesc &TID = MI->getDesc();
-  if (TID.isPredicable()) {
-    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-      if (TID.OpInfo[i].isPredicate()) {
-        // Predicated operands must be last operands.
-        addOperand(MI->getOperand(i));
-      }
+  if (!TID.isPredicable())
+    return;
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    if (TID.OpInfo[i].isPredicate()) {
+      // Predicated operands must be last operands.
+      addOperand(MI->getOperand(i));
     }
   }
+}
+
+/// isSafeToMove - Return true if it is safe to this instruction. If SawStore
+/// true, it means there is a store (or call) between the instruction the
+/// localtion and its intended destination.
+bool MachineInstr::isSafeToMove(const TargetInstrInfo *TII, bool &SawStore) {
+  // Ignore stuff that we obviously can't move.
+  if (TID->mayStore() || TID->isCall()) {
+    SawStore = true;
+    return false;
+  }
+  if (TID->isReturn() || TID->isBranch() || TID->hasUnmodeledSideEffects())
+    return false;
+
+  // See if this instruction does a load.  If so, we have to guarantee that the
+  // loaded value doesn't change between the load and the its intended
+  // destination. The check for isInvariantLoad gives the targe the chance to
+  // classify the load as always returning a constant, e.g. a constant pool
+  // load.
+  if (TID->mayLoad() && !TII->isInvariantLoad(this)) {
+    // Otherwise, this is a real load.  If there is a store between the load and
+    // end of block, we can't sink the load.
+    //
+    // FIXME: we can't do this transformation until we know that the load is
+    // not volatile, and machineinstrs don't keep this info. :(
+    //
+    //if (SawStore) 
+    return false;
+  }
+  return true;
 }
 
 void MachineInstr::dump() const {

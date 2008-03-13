@@ -22,6 +22,7 @@
 namespace llvm {
 
 class TargetInstrDesc;
+class TargetInstrInfo;
 class TargetRegisterInfo;
 
 template <typename T> struct ilist_traits;
@@ -229,9 +230,14 @@ public:
   bool addRegisterDead(unsigned IncomingReg, const TargetRegisterInfo *RegInfo,
                        bool AddIfNotFound = false);
 
-  /// copyKillDeadInfo - copies killed/dead information from one instr to another
+  /// copyKillDeadInfo - Copies killed/dead information from one instr to another
   void copyKillDeadInfo(MachineInstr *OldMI,
                         const TargetRegisterInfo *RegInfo);
+
+  /// isSafeToMove - Return true if it is safe to this instruction. If SawStore
+  /// true, it means there is a store (or call) between the instruction the
+  /// localtion and its intended destination.
+  bool isSafeToMove(const TargetInstrInfo *TII, bool &SawStore);
 
   //
   // Debugging support
