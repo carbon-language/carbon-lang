@@ -687,25 +687,10 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
 
     // All registers must have inf weight. Just grab one!
     if (!minReg) {
-      if (BestPhysReg)
-        minReg = BestPhysReg;
-      else {
-        // Get the physical register with the fewest conflicts.
-        unsigned MinConflicts = ~0U;
-        for (TargetRegisterClass::iterator i = RC->allocation_order_begin(*mf_),
-               e = RC->allocation_order_end(*mf_); i != e; ++i) {
-          unsigned reg = *i;
-          unsigned NumConflicts = li_->getNumConflictsWithPhysReg(*cur, reg);
-          if (NumConflicts <= MinConflicts) {
-            MinConflicts = NumConflicts;
-            minReg = reg;
-          }
-        }
-      }
-
-      if (cur->weight == HUGE_VALF || cur->getSize() == 1)
-        // Spill a physical register around defs and uses.
-        li_->spillPhysRegAroundRegDefsUses(*cur, minReg, *vrm_);
+        minReg = BestPhysReg ? BestPhysReg : *RC->allocation_order_begin(*mf_);
+        if (cur->weight == HUGE_VALF || cur->getSize() == 1)
+          // Spill a physical register around defs and uses.
+          li_->spillPhysRegAroundRegDefsUses(*cur, minReg, *vrm_);
     }
   }
   
