@@ -387,7 +387,7 @@ public:
 
   void pop();
   inline PMDataManager *top() { return S.back(); }
-  void push(Pass *P);
+  void push(PMDataManager *PM);
   inline bool empty() { return S.empty(); }
 
   void dump();

@@ -1395,10 +1395,9 @@ void PMStack::pop() {
 }
 
 // Push PM on the stack and set its top level manager.
-void PMStack::push(Pass *P) {
+void PMStack::push(PMDataManager *PM) {
 
   PMDataManager *Top = NULL;
-  PMDataManager *PM = dynamic_cast<PMDataManager *>(P);
   assert (PM && "Unable to push. Pass Manager expected");
 
   if (this->empty()) {
