@@ -13,6 +13,7 @@
 
 #include "llvm/PassManager.h"
 #include "llvm/ADT/SmallVector.h"
+#include <deque>
 
 //===----------------------------------------------------------------------===//
 // Overview:
@@ -104,6 +105,36 @@ enum PassDebuggingString {
   ON_LOOP_MSG, // " 'on Loop ...\n'"
   ON_CG_MSG // "' on Call Graph ...\n'"
 };  
+
+//===----------------------------------------------------------------------===//
+// PMStack
+//
+/// PMStack
+/// Top level pass managers (see PassManager.cpp) maintain active Pass Managers 
+/// using PMStack. Each Pass implements assignPassManager() to connect itself
+/// with appropriate manager. assignPassManager() walks PMStack to find
+/// suitable manager.
+///
+/// PMStack is just a wrapper around standard deque that overrides pop() and
+/// push() methods.
+class PMStack {
+public:
+  typedef std::deque<PMDataManager *>::reverse_iterator iterator;
+  iterator begin() { return S.rbegin(); }
+  iterator end() { return S.rend(); }
+
+  void handleLastUserOverflow();
+
+  void pop();
+  inline PMDataManager *top() { return S.back(); }
+  void push(PMDataManager *PM);
+  inline bool empty() { return S.empty(); }
+
+  void dump();
+private:
+  std::deque<PMDataManager *> S;
+};
+
 
 //===----------------------------------------------------------------------===//
 // PMTopLevelManager

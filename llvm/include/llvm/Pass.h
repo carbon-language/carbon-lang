@@ -32,7 +32,6 @@
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Streams.h"
 #include <vector>
-#include <deque>
 #include <map>
 #include <iosfwd>
 #include <cassert>
@@ -368,33 +367,6 @@ public:
     return PMT_BasicBlockPassManager; 
   }
 };
-
-/// PMStack
-/// Top level pass manager (see PassManager.cpp) maintains active Pass Managers 
-/// using PMStack. Each Pass implements assignPassManager() to connect itself
-/// with appropriate manager. assignPassManager() walks PMStack to find
-/// suitable manager.
-///
-/// PMStack is just a wrapper around standard deque that overrides pop() and
-/// push() methods.
-class PMStack {
-public:
-  typedef std::deque<PMDataManager *>::reverse_iterator iterator;
-  iterator begin() { return S.rbegin(); }
-  iterator end() { return S.rend(); }
-
-  void handleLastUserOverflow();
-
-  void pop();
-  inline PMDataManager *top() { return S.back(); }
-  void push(PMDataManager *PM);
-  inline bool empty() { return S.empty(); }
-
-  void dump();
-private:
-  std::deque<PMDataManager *> S;
-};
-
 
 /// If the user specifies the -time-passes argument on an LLVM tool command line
 /// then the value of this boolean will be true, otherwise false.

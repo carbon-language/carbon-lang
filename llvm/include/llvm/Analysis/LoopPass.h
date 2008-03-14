@@ -24,6 +24,7 @@ namespace llvm {
 
 class LPPassManager;
 class Function;
+class PMStack;
 
 class LoopPass : public Pass {
 
