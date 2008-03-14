@@ -7416,7 +7416,7 @@ Instruction *InstCombiner::visitIntToPtr(IntToPtrInst &CI) {
     // is a single-index GEP.
     if (X->getType() == CI.getType()) {
       // Get the size of the pointee type.
-      uint64_t Size = TD->getABITypeSizeInBits(DestPointee);
+      uint64_t Size = TD->getABITypeSize(DestPointee);
 
       // Convert the constant to intptr type.
       APInt Offset = Cst->getValue();
