@@ -200,6 +200,10 @@ external define_type_name : string -> lltype -> llmodule -> bool
 external delete_type_name : string -> llmodule -> unit
                           = "llvm_delete_type_name"
 
+(** [dump_module m] prints the .ll representation of the module [m] to standard
+    error. See the method [llvm::Module::dump]. *)
+external dump_module : llmodule -> unit = "llvm_dump_module"
+
 
 (** {6 Types} *)
 
