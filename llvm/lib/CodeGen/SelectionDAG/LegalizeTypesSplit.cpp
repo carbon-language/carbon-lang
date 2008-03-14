@@ -171,7 +171,7 @@ void DAGTypeLegalizer::SplitRes_INSERT_VECTOR_ELT(SDNode *N, SDOperand &Lo,
                      N->getOperand(2));
   else
     Hi = DAG.getNode(ISD::INSERT_VECTOR_ELT, Hi.getValueType(), Hi, ScalarOp,
-                     DAG.getConstant(Index - LoNumElts, TLI.getPointerTy()));
+                     DAG.getIntPtrConstant(Index - LoNumElts));
 }
 
 void DAGTypeLegalizer::SplitRes_VECTOR_SHUFFLE(SDNode *N, 
@@ -179,8 +179,6 @@ void DAGTypeLegalizer::SplitRes_VECTOR_SHUFFLE(SDNode *N,
   // Build the low part.
   SDOperand Mask = N->getOperand(2);
   SmallVector<SDOperand, 16> Ops;
-  MVT::ValueType PtrVT = TLI.getPointerTy();
-  
   MVT::ValueType LoVT, HiVT;
   GetSplitDestVTs(N->getValueType(0), LoVT, HiVT);
   MVT::ValueType EltVT = MVT::getVectorElementType(LoVT);
@@ -198,7 +196,7 @@ void DAGTypeLegalizer::SplitRes_VECTOR_SHUFFLE(SDNode *N,
       Idx -= NumElements;
     }
     Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, EltVT, InVec,
-                              DAG.getConstant(Idx, PtrVT)));
+                              DAG.getIntPtrConstant(Idx)));
   }
   Lo = DAG.getNode(ISD::BUILD_VECTOR, LoVT, &Ops[0], Ops.size());
   Ops.clear();
@@ -211,7 +209,7 @@ void DAGTypeLegalizer::SplitRes_VECTOR_SHUFFLE(SDNode *N,
       Idx -= NumElements;
     }
     Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, EltVT, InVec,
-                              DAG.getConstant(Idx, PtrVT)));
+                              DAG.getIntPtrConstant(Idx)));
   }
   Hi = DAG.getNode(ISD::BUILD_VECTOR, HiVT, &Ops[0], Ops.size());
 }
