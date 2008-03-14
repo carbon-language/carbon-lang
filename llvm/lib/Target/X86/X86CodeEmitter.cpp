@@ -28,6 +28,7 @@
 #include "llvm/Function.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
@@ -118,6 +119,7 @@ bool Emitter::runOnMachineFunction(MachineFunction &MF) {
   Is64BitMode = TM.getSubtarget<X86Subtarget>().is64Bit();
   
   do {
+    DOUT << "JITTing function '" << MF.getFunction()->getName() << "'\n";
     MCE.startFunction(MF);
     for (MachineFunction::iterator MBB = MF.begin(), E = MF.end(); 
          MBB != E; ++MBB) {
@@ -538,6 +540,8 @@ unsigned Emitter::determineREX(const MachineInstr &MI) {
 
 void Emitter::emitInstruction(const MachineInstr &MI,
                               const TargetInstrDesc *Desc) {
+  DOUT << MI;
+
   unsigned Opcode = Desc->Opcode;
 
   // Emit the lock opcode prefix as needed.
