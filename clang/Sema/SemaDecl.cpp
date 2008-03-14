@@ -800,12 +800,19 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     // Handle attributes prior to checking for duplicates in MergeVarDecl
     HandleDeclAttributes(NewVD, D.getDeclSpec().getAttributes(),
                          D.getAttributes());
-    // Emit a warning (error?) if an address space was applied to decl with
-    // local storage.
-    if (NewVD->hasLocalStorage() && 
-        (NewVD->getCanonicalType().getAddressSpace() != 0)) {
-      Diag(D.getIdentifierLoc(), diag::err_as_qualified_auto_decl);
-      InvalidDecl = true;
+
+    // Emit an error if an address space was applied to decl with local storage.
+    // This includes arrays of objects with address space qualifiers, but not
+    // automatic variables that point to other address spaces.
+    // ISO/IEC TR 18037 S5.1.2
+    if (NewVD->hasLocalStorage()) {
+      QualType AutoTy = NewVD->getCanonicalType();
+      if (const ArrayType *AT = AutoTy->getAsArrayType())
+        AutoTy = AT->getElementType().getCanonicalType();
+      if (AutoTy.getAddressSpace() != 0) {
+        Diag(D.getIdentifierLoc(), diag::err_as_qualified_auto_decl);
+        InvalidDecl = true;
+      }
     }
     // Merge the decl with the existing one if appropriate. If the decl is
     // in an outer scope, it isn't the same thing.
