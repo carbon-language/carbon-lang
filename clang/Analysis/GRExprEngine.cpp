@@ -1865,6 +1865,7 @@ void GRExprEngine::ViewGraph(bool trim) {
     AddSources(Src, undef_results_begin(), undef_results_end());
     AddSources(Src, bad_calls_begin(), bad_calls_end());
     AddSources(Src, undef_arg_begin(), undef_arg_end());
+    AddSources(Src, undef_branches_begin(), undef_branches_end());
     
     ViewGraph(&Src[0], &Src[0]+Src.size());
   }

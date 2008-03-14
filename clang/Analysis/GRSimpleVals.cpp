@@ -23,22 +23,33 @@ using namespace clang;
 namespace clang {
 
 template <typename ITERATOR>
-static inline const PostStmt& GetLocation(ITERATOR I) {
-  return cast<PostStmt>((*I)->getLocation());
+static inline ProgramPoint GetLocation(ITERATOR I) {
+  return (*I)->getLocation();
 }
   
 template <>
-inline const PostStmt& GetLocation(GRExprEngine::undef_arg_iterator I) {
-  return cast<PostStmt>(I->first->getLocation());
+inline ProgramPoint GetLocation(GRExprEngine::undef_arg_iterator I) {
+  return I->first->getLocation();
+}
+  
+static inline Stmt* GetStmt(const ProgramPoint& P) {
+  if (const PostStmt* PS = dyn_cast<PostStmt>(&P)) {
+    return PS->getStmt();
+  }
+  else if (const BlockEdge* BE = dyn_cast<BlockEdge>(&P)) {
+    return BE->getSrc()->getTerminator();
+  }
+
+  assert (false && "Unsupported ProgramPoint.");
+  return NULL;
 }
 
 template <typename ITERATOR>
 static void EmitDiag(Diagnostic& Diag, SourceManager& SrcMgr,
                      unsigned ErrorDiag, ITERATOR I) {  
   
-  Expr* Exp = cast<Expr>(GetLocation(I).getStmt());
-  cast<Expr>(GetLocation(I).getStmt());  
-  Diag.Report(FullSourceLoc(Exp->getExprLoc(), SrcMgr), ErrorDiag);    
+  Stmt* S = GetStmt(GetLocation(I));
+  Diag.Report(FullSourceLoc(S->getLocStart(), SrcMgr), ErrorDiag);    
 }
 
 
@@ -46,10 +57,10 @@ template <>
 static void EmitDiag(Diagnostic& Diag, SourceManager& SrcMgr,
                      unsigned ErrorDiag, GRExprEngine::undef_arg_iterator I) {
 
-  Expr* E1 = cast<Expr>(GetLocation(I).getStmt());
+  Stmt* S1 = GetStmt(GetLocation(I));
   Expr* E2 = cast<Expr>(I->second);
   
-  SourceLocation Loc = E1->getExprLoc();
+  SourceLocation Loc = S1->getLocStart();
   SourceRange R = E2->getSourceRange();
   Diag.Report(FullSourceLoc(Loc, SrcMgr), ErrorDiag, 0, 0, &R, 1);
 }
@@ -139,6 +150,11 @@ unsigned RunGRSimpleVals(CFG& cfg, Decl& CD, ASTContext& Ctx,
               CheckerState->undef_arg_begin(),
               CheckerState->undef_arg_end(),
       "Pass-by-value argument in function or message expression is undefined.");
+  
+  EmitWarning(Diag, SrcMgr,
+              CheckerState->undef_branches_begin(),
+              CheckerState->undef_branches_end(),
+      "Branch condition evaluates to an uninitialized value.");
       
 #ifndef NDEBUG
   if (Visualize) CheckerState->ViewGraph(TrimGraph);
@@ -161,7 +177,8 @@ RVal GRSimpleVals::EvalCast(GRExprEngine& Eng, NonLVal X, QualType T) {
   BasicValueFactory& BasicVals = Eng.getBasicVals();
   
   llvm::APSInt V = cast<nonlval::ConcreteInt>(X).getValue();
-  V.setIsUnsigned(T->isUnsignedIntegerType() || T->isPointerType());
+  V.setIsUnsigned(T->isUnsignedIntegerType() || T->isPointerType() 
+                  || T->isObjCQualifiedIdType());
   V.extOrTrunc(Eng.getContext().getTypeSize(T));
   
   if (T->isPointerType())
@@ -174,7 +191,7 @@ RVal GRSimpleVals::EvalCast(GRExprEngine& Eng, NonLVal X, QualType T) {
 
 RVal GRSimpleVals::EvalCast(GRExprEngine& Eng, LVal X, QualType T) {
   
-  if (T->isPointerType() || T->isReferenceType())
+  if (T->isPointerType() || T->isReferenceType() || T->isObjCQualifiedIdType())
     return X;
   
   assert (T->isIntegerType());

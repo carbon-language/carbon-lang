@@ -505,6 +505,9 @@ void CFGVisitor::HandleTopLevelDecl(Decl *D) {
     
     if (!MD->getBody())
       return;
+      
+    if (FName.size() > 0 && FName != MD->getSelector().getName())
+      return;
     
     if (printFuncDeclStart()) {
       DeclPrinter().PrintObjCMethodDecl(MD);
@@ -649,11 +652,11 @@ ASTConsumer* clang::CreateGRSimpleVals(Diagnostic &Diags,
 void GRSimpleValsVisitor::VisitCFG(CFG& C, Decl& CD) {
   
   SourceLocation Loc = CD.getLocation();
-  
+
   if (!Loc.isFileID() ||
        Loc.getFileID() != Ctx->getSourceManager().getMainFileID())
     return;
-  
+
   if (!Visualize) {
     
     if (FunctionDecl *FD = dyn_cast<FunctionDecl>(&CD)) {
@@ -662,8 +665,8 @@ void GRSimpleValsVisitor::VisitCFG(CFG& C, Decl& CD) {
                  << ' ';
     }
     else if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(&CD)) {
-      llvm::cerr << "ANALYZE (ObjC Method): "
-        << MD->getSelector().getName() << ' '
+      llvm::cerr << "ANALYZE (ObjC Method): '"
+        << MD->getSelector().getName() << "' "
         << Ctx->getSourceManager().getSourceName(MD->getLocation())
         << ' ';
     }

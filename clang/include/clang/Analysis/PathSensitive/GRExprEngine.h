@@ -204,6 +204,10 @@ public:
            UndefArgs.find(const_cast<NodeTy*>(N)) != UndefArgs.end();
   }
   
+  typedef UndefBranchesTy::iterator undef_branch_iterator;
+  undef_branch_iterator undef_branches_begin() { return UndefBranches.begin(); }
+  undef_branch_iterator undef_branches_end() { return UndefBranches.end(); }  
+  
   typedef BadDerefTy::iterator null_deref_iterator;
   null_deref_iterator null_derefs_begin() { return ExplicitNullDeref.begin(); }
   null_deref_iterator null_derefs_end() { return ExplicitNullDeref.end(); }
