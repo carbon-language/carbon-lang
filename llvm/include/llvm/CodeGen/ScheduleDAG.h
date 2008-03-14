@@ -351,14 +351,12 @@ namespace llvm {
 
     /// EmitLiveInCopy - Emit a copy for a live in physical register. If the
     /// physical register has only a single copy use, then coalesced the copy
-    /// if possible. It returns the destination register of the emitted copy
-    /// if it is a physical register; otherwise it returns zero.
-    unsigned EmitLiveInCopy(MachineBasicBlock *MBB,
-                            MachineBasicBlock::iterator &InsertPos,
-                            unsigned VirtReg, unsigned PhysReg,
-                            const TargetRegisterClass *RC,
-                            BitVector &LiveRegsBefore,
-                            BitVector &LiveRegsAfter);
+    /// if possible.
+    void EmitLiveInCopy(MachineBasicBlock *MBB,
+                        MachineBasicBlock::iterator &InsertPos,
+                        unsigned VirtReg, unsigned PhysReg,
+                        const TargetRegisterClass *RC,
+                        DenseMap<MachineInstr*, unsigned> &CopyRegMap);
 
     /// EmitLiveInCopies - If this is the first basic block in the function,
     /// and if it has live ins that need to be copied into vregs, emit the
