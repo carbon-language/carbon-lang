@@ -84,11 +84,6 @@ public:
     return *this;
   }
 
-  const MachineInstrBuilder &addUndef() const {
-    MI->addOperand(MachineOperand::CreateUndef());
-    return *this;
-  }
-
   /// addMemOperand - Add a memory operand to the machine instruction.
   const MachineInstrBuilder &addMemOperand(const MemOperand &MO) const {
     MI->addMemOperand(MO);
