@@ -1437,9 +1437,9 @@ def Int_CVTDQ2PSrr : I<0x5B, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                        [(set VR128:$dst, (int_x86_sse2_cvtdq2ps VR128:$src))]>,
                      TB, Requires<[HasSSE2]>;
 def Int_CVTDQ2PSrm : I<0x5B, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
-                       "cvtdq2ps\t{$src, $dst|$dst, $src}",
-                       [(set VR128:$dst, (int_x86_sse2_cvtdq2ps
-                                         (bitconvert (memopv2i64 addr:$src))))]>,
+                      "cvtdq2ps\t{$src, $dst|$dst, $src}",
+                      [(set VR128:$dst, (int_x86_sse2_cvtdq2ps
+                                        (bitconvert (memopv2i64 addr:$src))))]>,
                      TB, Requires<[HasSSE2]>;
 
 // SSE2 instructions with XS prefix
@@ -1448,14 +1448,14 @@ def Int_CVTDQ2PDrr : I<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                        [(set VR128:$dst, (int_x86_sse2_cvtdq2pd VR128:$src))]>,
                      XS, Requires<[HasSSE2]>;
 def Int_CVTDQ2PDrm : I<0xE6, MRMSrcMem, (outs VR128:$dst), (ins i64mem:$src),
-                       "cvtdq2pd\t{$src, $dst|$dst, $src}",
-                       [(set VR128:$dst, (int_x86_sse2_cvtdq2pd
-                                          (bitconvert (memopv2i64 addr:$src))))]>,
+                     "cvtdq2pd\t{$src, $dst|$dst, $src}",
+                     [(set VR128:$dst, (int_x86_sse2_cvtdq2pd
+                                        (bitconvert (memopv2i64 addr:$src))))]>,
                      XS, Requires<[HasSSE2]>;
 
 def Int_CVTPS2DQrr : PDI<0x5B, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                         "cvtps2dq\t{$src, $dst|$dst, $src}",
-                         [(set VR128:$dst, (int_x86_sse2_cvtps2dq VR128:$src))]>;
+                        "cvtps2dq\t{$src, $dst|$dst, $src}",
+                        [(set VR128:$dst, (int_x86_sse2_cvtps2dq VR128:$src))]>;
 def Int_CVTPS2DQrm : PDI<0x5B, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                          "cvtps2dq\t{$src, $dst|$dst, $src}",
                          [(set VR128:$dst, (int_x86_sse2_cvtps2dq
@@ -1485,7 +1485,7 @@ def Int_CVTPD2DQrm : I<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
 def Int_CVTTPD2DQrr : PDI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                           "cvttpd2dq\t{$src, $dst|$dst, $src}",
                        [(set VR128:$dst, (int_x86_sse2_cvttpd2dq VR128:$src))]>;
-def Int_CVTTPD2DQrm : PDI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
+def Int_CVTTPD2DQrm : PDI<0xE6, MRMSrcMem, (outs VR128:$dst),(ins f128mem:$src),
                           "cvttpd2dq\t{$src, $dst|$dst, $src}",
                           [(set VR128:$dst, (int_x86_sse2_cvttpd2dq
                                              (load addr:$src)))]>;
@@ -1677,25 +1677,25 @@ let Constraints = "$src1 = $dst" in {
 
 let Constraints = "$src1 = $dst" in {
   def CMPPDrri : PDIi8<0xC2, MRMSrcReg, 
-                      (outs VR128:$dst), (ins VR128:$src1, VR128:$src, SSECC:$cc),
-                      "cmp${cc}pd\t{$src, $dst|$dst, $src}",
-                      [(set VR128:$dst, (int_x86_sse2_cmp_pd VR128:$src1,
-                                         VR128:$src, imm:$cc))]>;
+                    (outs VR128:$dst), (ins VR128:$src1, VR128:$src, SSECC:$cc),
+                    "cmp${cc}pd\t{$src, $dst|$dst, $src}",
+                    [(set VR128:$dst, (int_x86_sse2_cmp_pd VR128:$src1,
+                                       VR128:$src, imm:$cc))]>;
   def CMPPDrmi : PDIi8<0xC2, MRMSrcMem, 
-                      (outs VR128:$dst), (ins VR128:$src1, f128mem:$src, SSECC:$cc),
-                      "cmp${cc}pd\t{$src, $dst|$dst, $src}",
-                      [(set VR128:$dst, (int_x86_sse2_cmp_pd VR128:$src1,
-                                         (load addr:$src), imm:$cc))]>;
+                  (outs VR128:$dst), (ins VR128:$src1, f128mem:$src, SSECC:$cc),
+                  "cmp${cc}pd\t{$src, $dst|$dst, $src}",
+                  [(set VR128:$dst, (int_x86_sse2_cmp_pd VR128:$src1,
+                                     (load addr:$src), imm:$cc))]>;
 }
 
 // Shuffle and unpack instructions
 let Constraints = "$src1 = $dst" in {
   def SHUFPDrri : PDIi8<0xC6, MRMSrcReg, 
-                        (outs VR128:$dst), (ins VR128:$src1, VR128:$src2, i8imm:$src3),
-                        "shufpd\t{$src3, $src2, $dst|$dst, $src2, $src3}",
-                        [(set VR128:$dst, (v2f64 (vector_shuffle
-                                                  VR128:$src1, VR128:$src2,
-                                                  SHUFP_shuffle_mask:$src3)))]>;
+                 (outs VR128:$dst), (ins VR128:$src1, VR128:$src2, i8imm:$src3),
+                 "shufpd\t{$src3, $src2, $dst|$dst, $src2, $src3}",
+                 [(set VR128:$dst, (v2f64 (vector_shuffle
+                                           VR128:$src1, VR128:$src2,
+                                           SHUFP_shuffle_mask:$src3)))]>;
   def SHUFPDrmi : PDIi8<0xC6, MRMSrcMem, 
                         (outs VR128:$dst), (ins VR128:$src1,
                          f128mem:$src2, i8imm:$src3),
