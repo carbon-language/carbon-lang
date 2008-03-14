@@ -497,9 +497,29 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
     
     SaveAndRestore<bool> OldSink(Builder->BuildSinks);
     
-    if (isa<lval::FuncVal>(L))
-      if (cast<lval::FuncVal>(L).getDecl()->getAttr<NoReturnAttr>())
+    if (isa<lval::FuncVal>(L)) {      
+      
+      FunctionDecl* FD = cast<lval::FuncVal>(L).getDecl();
+      
+      if (FD->getAttr<NoReturnAttr>())
         Builder->BuildSinks = true;
+      else {
+        // HACK: Some functions are not marked noreturn, and don't return.
+        //  Here are a few hardwired ones.  If this takes too long, we can
+        //  potentially cache these results.
+        const char* s = FD->getIdentifier()->getName();
+        unsigned n = strlen(s);
+        
+        switch (n) {
+          default:
+            break;
+          case 4:
+            if (!memcmp(s, "exit", 4) || !memcmp(s, "panic", 4)) {
+              Builder->BuildSinks = true; break;
+            }
+        }
+      }
+    }
     
     // Evaluate the call.
     
