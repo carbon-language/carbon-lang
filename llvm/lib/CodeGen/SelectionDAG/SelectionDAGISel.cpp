@@ -3134,11 +3134,7 @@ void SelectionDAGLowering::LowerCallTo(CallSite CS, SDOperand Callee,
     Args.push_back(Entry);
   }
 
-  bool MarkTryRange = LandingPad ||
-    // C++ requires special handling of 'nounwind' calls.
-    (CS.doesNotThrow());
-
-  if (MarkTryRange && ExceptionHandling && MMI) {
+  if (LandingPad && ExceptionHandling && MMI) {
     // Insert a label before the invoke call to mark the try range.  This can be
     // used to detect deletion of the invoke via the MachineModuleInfo.
     BeginLabel = MMI->NextLabelID();
@@ -3157,7 +3153,7 @@ void SelectionDAGLowering::LowerCallTo(CallSite CS, SDOperand Callee,
     setValue(CS.getInstruction(), Result.first);
   DAG.setRoot(Result.second);
 
-  if (MarkTryRange && ExceptionHandling && MMI) {
+  if (LandingPad && ExceptionHandling && MMI) {
     // Insert a label at the end of the invoke call to mark the try range.  This
     // can be used to detect deletion of the invoke via the MachineModuleInfo.
     EndLabel = MMI->NextLabelID();
