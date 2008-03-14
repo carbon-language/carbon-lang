@@ -206,14 +206,14 @@ class SS3AI<bits<8> o, Format F, dag outs, dag ins, string asm,
 // SSE4.1 Instruction Templates:
 // 
 //   SS48I - SSE 4.1 instructions with T8 prefix.
-//   SS41AI - SSE 4.1 instructions with TA prefix.
+//   SS41AIi8 - SSE 4.1 instructions with TA prefix and ImmT == Imm8.
 //
 class SS48I<bits<8> o, Format F, dag outs, dag ins, string asm,
             list<dag> pattern>
       : I<o, F, outs, ins, asm, pattern>, T8, Requires<[HasSSE41]>;
-class SS4AI<bits<8> o, Format F, dag outs, dag ins, string asm,
+class SS4AIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
             list<dag> pattern>
-      : I<o, F, outs, ins, asm, pattern>, TA, Requires<[HasSSE41]>;
+      : Ii8<o, F, outs, ins, asm, pattern>, TA, Requires<[HasSSE41]>;
 
 
 // X86-64 Instruction templates...
