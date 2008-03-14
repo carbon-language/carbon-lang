@@ -38,6 +38,7 @@ CodeGenModule::CodeGenModule(ASTContext &C, const LangOptions &LO,
 }
 
 CodeGenModule::~CodeGenModule() {
+  EmitGlobalCtors();
   delete Runtime;
 }
 
@@ -60,6 +61,59 @@ void CodeGenModule::WarnUnsupported(const Decl *D, const char *Type) {
   std::string Msg = Type;
   getDiags().Report(Context.getFullLoc(D->getLocation()), DiagID,
                     &Msg, 1);
+}
+
+/// AddGlobalCtor - Add a function to the list that will be called before
+/// main() runs.
+void CodeGenModule::AddGlobalCtor(llvm::Function * Ctor) {
+  // TODO: Type coercion of void()* types.
+  GlobalCtors.push_back(Ctor);
+}
+
+void CodeGenModule::EmitGlobalCtors() {
+  // Get the type of @llvm.global_ctors
+  std::vector<const llvm::Type*> CtorFields;
+  CtorFields.push_back(llvm::IntegerType::get(32));
+  // Constructor function type
+  std::vector<const llvm::Type*> VoidArgs;
+  llvm::FunctionType* CtorFuncTy = llvm::FunctionType::get(
+    llvm::Type::VoidTy,
+    VoidArgs,
+    false);
+  // i32, function type pair
+  CtorFields.push_back(llvm::PointerType::getUnqual(CtorFuncTy));
+  llvm::StructType* CtorStructTy = llvm::StructType::get(CtorFields, false);
+  // Array of fields
+  llvm::ArrayType* GlobalCtorsTy = llvm::ArrayType::get(CtorStructTy,
+      GlobalCtors.size());
+  
+  const std::string GlobalCtorsVar = std::string("llvm.global_ctors");
+  // Define the global variable
+  llvm::GlobalVariable *GlobalCtorsVal = new llvm::GlobalVariable(
+    GlobalCtorsTy,
+    false,
+    llvm::GlobalValue::AppendingLinkage,
+    (llvm::Constant*)0, 
+    GlobalCtorsVar,
+    &TheModule);
+
+  // Populate the array
+  std::vector<llvm::Constant*> CtorValues;
+  llvm::Constant *MagicNumber = llvm::ConstantInt::get(llvm::IntegerType::Int32Ty,
+      65535,
+      false);
+  for (std::vector<llvm::Constant*>::iterator I = GlobalCtors.begin(), 
+      E = GlobalCtors.end(); I != E; ++I) {
+    std::vector<llvm::Constant*> StructValues;
+    StructValues.push_back(MagicNumber);
+    StructValues.push_back(*I);
+
+    llvm::Constant* CtorEntry = llvm::ConstantStruct::get(CtorStructTy, StructValues);
+    CtorValues.push_back(CtorEntry);
+  }
+  llvm::Constant* CtorArray = llvm::ConstantArray::get(GlobalCtorsTy, CtorValues);
+  GlobalCtorsVal->setInitializer(CtorArray);
+
 }
 
 /// ReplaceMapValuesWith - This is a really slow and bad function that

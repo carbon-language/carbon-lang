@@ -58,6 +58,7 @@ class CodeGenModule {
   llvm::Function *MemCpyFn;
   llvm::Function *MemSetFn;
   llvm::DenseMap<const Decl*, llvm::Constant*> GlobalDeclMap;
+  std::vector<llvm::Constant*> GlobalCtors;
     
   llvm::StringMap<llvm::Constant*> CFConstantStringMap;
   llvm::StringMap<llvm::Constant*> ConstantStringMap;
@@ -96,6 +97,9 @@ public:
   llvm::Function *getIntrinsic(unsigned IID, const llvm::Type **Tys = 0, 
                                unsigned NumTys = 0);
   
+  void AddGlobalCtor(llvm::Function * Ctor);
+  void EmitGlobalCtors(void);
+
   void EmitFunction(const FunctionDecl *FD);
   void EmitGlobalVar(const FileVarDecl *D);
   void EmitGlobalVarDeclarator(const FileVarDecl *D);
