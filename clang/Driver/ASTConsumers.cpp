@@ -409,7 +409,13 @@ namespace {
         Out << "Read objc fwd class decl\n";
       } else if (isa<FileScopeAsmDecl>(D)) {
         Out << "Read file scope asm decl\n";
-      } else {
+      } else if (ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(D)) {
+        Out << "Read objc method decl: '" << MD->getSelector().getName()
+            << "'\n";
+      } else if (isa<ObjCImplementationDecl>(D)) {
+        Out << "Read objc implementation decl\n";
+      }
+      else {
         assert(0 && "Unknown decl type!");
       }
     }
@@ -439,6 +445,15 @@ namespace {
           llvm::cerr << '\n';
         }
       }
+      else if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
+        DeclPrinter().PrintObjCMethodDecl(MD);
+        
+        if (MD->getBody()) {
+          llvm::cerr << '\n';
+          MD->getBody()->viewAST();
+          llvm::cerr << '\n';
+        }
+      }
     }
   };
 }
@@ -459,7 +474,7 @@ public:
   CFGVisitor() : FName("") {}
   
   // CFG Visitor interface to be implemented by subclass.
-  virtual void VisitCFG(CFG& C, FunctionDecl& FD) = 0;
+  virtual void VisitCFG(CFG& C, Decl& CD) = 0;
   virtual bool printFuncDeclStart() { return true; }
   
   virtual void HandleTopLevelDecl(Decl *D);
@@ -468,27 +483,41 @@ public:
 } // end anonymous namespace
 
 void CFGVisitor::HandleTopLevelDecl(Decl *D) {
-  FunctionDecl *FD = dyn_cast<FunctionDecl>(D);
-
-  if (!FD || !FD->getBody())
-    return;
   
-  if (FName.size() > 0 && FName != FD->getIdentifier()->getName())
-    return;
+  CFG *C = NULL;
+  
+  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+
+    if (!FD->getBody())
+      return;
+  
+    if (FName.size() > 0 && FName != FD->getIdentifier()->getName())
+      return;
       
-  if (printFuncDeclStart()) {
-    DeclPrinter().PrintFunctionDeclStart(FD);
-    llvm::cerr << '\n';
+    if (printFuncDeclStart()) {
+      DeclPrinter().PrintFunctionDeclStart(FD);
+      llvm::cerr << '\n';
+    }
+      
+    C = CFG::buildCFG(FD->getBody());
   }
+  else if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
     
-  CFG *C = CFG::buildCFG(FD->getBody());
+    if (!MD->getBody())
+      return;
+    
+    if (printFuncDeclStart()) {
+      DeclPrinter().PrintObjCMethodDecl(MD);
+      llvm::cerr << '\n';
+    }
+    
+    C = CFG::buildCFG(MD->getBody());
+  }
   
   if (C) {  
-    VisitCFG(*C, *FD);
+    VisitCFG(*C, *D);
     delete C;
   }
-  else
-    llvm::cerr << "warning: CFG could not be constructed.\n";
 }
 
 //===----------------------------------------------------------------------===//
@@ -501,7 +530,7 @@ namespace {
     CFGDumper(bool use_graphviz, const std::string& fname) 
      : CFGVisitor(fname), UseGraphviz(use_graphviz) {}
     
-    virtual void VisitCFG(CFG& C, FunctionDecl&) {
+    virtual void VisitCFG(CFG& C, Decl&) {
       if (UseGraphviz)
         C.viewCFG();
       else
@@ -527,7 +556,7 @@ namespace {
       SM = &Context.getSourceManager();
     }
 
-    virtual void VisitCFG(CFG& C, FunctionDecl& FD) {
+    virtual void VisitCFG(CFG& C, Decl& CD) {
       LiveVariables L(C);
       L.runOnCFG(C);
       L.dumpBlockLiveness(*SM);
@@ -552,7 +581,7 @@ namespace {
       Ctx = &Context;
     }
     
-    virtual void VisitCFG(CFG& C, FunctionDecl& FD) {
+    virtual void VisitCFG(CFG& C, Decl& CD) {
       CheckDeadStores(C, *Ctx, Diags);
     }
     
@@ -578,7 +607,7 @@ namespace {
       Ctx = &Context;
     }
     
-    virtual void VisitCFG(CFG& C, FunctionDecl&) { 
+    virtual void VisitCFG(CFG& C, Decl&) { 
       CheckUninitializedValues(C, *Ctx, Diags);
     }
     
@@ -605,7 +634,7 @@ namespace {
       : CFGVisitor(fname), Diags(diags), Visualize(visualize), TrimGraph(trim){}
     
     virtual void Initialize(ASTContext &Context) { Ctx = &Context; }    
-    virtual void VisitCFG(CFG& C, FunctionDecl&);
+    virtual void VisitCFG(CFG& C, Decl&);
     virtual bool printFuncDeclStart() { return false; }
   };
 } // end anonymous namespace
@@ -617,28 +646,37 @@ ASTConsumer* clang::CreateGRSimpleVals(Diagnostic &Diags,
   return new GRSimpleValsVisitor(Diags, FunctionName, Visualize, TrimGraph);
 }
 
-void GRSimpleValsVisitor::VisitCFG(CFG& C, FunctionDecl& FD) {
+void GRSimpleValsVisitor::VisitCFG(CFG& C, Decl& CD) {
   
-  SourceLocation Loc = FD.getLocation();
+  SourceLocation Loc = CD.getLocation();
   
   if (!Loc.isFileID() ||
        Loc.getFileID() != Ctx->getSourceManager().getMainFileID())
     return;
   
   if (!Visualize) {
-    llvm::cerr << "ANALYZE: " << FD.getIdentifier()->getName() << ' '
-               << Ctx->getSourceManager().getSourceName(FD.getLocation())
-               << ' ';
+    
+    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(&CD)) {
+      llvm::cerr << "ANALYZE: " << FD->getIdentifier()->getName() << ' '
+                 << Ctx->getSourceManager().getSourceName(FD->getLocation())
+                 << ' ';
+    }
+    else if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(&CD)) {
+      llvm::cerr << "ANALYZE (ObjC Method): "
+        << MD->getSelector().getName() << ' '
+        << Ctx->getSourceManager().getSourceName(MD->getLocation())
+        << ' ';
+    }
 
     llvm::Timer T("GRSimpleVals");
     T.startTimer();
-    unsigned size = RunGRSimpleVals(C, FD, *Ctx, Diags, false, false);
+    unsigned size = RunGRSimpleVals(C, CD, *Ctx, Diags, false, false);
     T.stopTimer();    
     llvm::cerr << size << ' ' << T.getWallTime() << '\n';
   }
   else {  
     llvm::cerr << '\n';    
-    RunGRSimpleVals(C, FD, *Ctx, Diags, Visualize, TrimGraph);
+    RunGRSimpleVals(C, CD, *Ctx, Diags, Visualize, TrimGraph);
   }    
 }
 
@@ -656,7 +694,7 @@ namespace {
       : CFGVisitor(fname), Diags(diags) {}
     
     virtual void Initialize(ASTContext &Context) { Ctx = &Context; }    
-    virtual void VisitCFG(CFG& C, FunctionDecl&);
+    virtual void VisitCFG(CFG& C, Decl&);
     virtual bool printFuncDeclStart() { return false; }
   };
 } // end anonymous namespace
@@ -668,15 +706,15 @@ ASTConsumer* clang::CreateCFRefChecker(Diagnostic &Diags,
   return new CFRefCountCheckerVisitor(Diags, FunctionName);
 }
 
-void CFRefCountCheckerVisitor::VisitCFG(CFG& C, FunctionDecl& FD) {
+void CFRefCountCheckerVisitor::VisitCFG(CFG& C, Decl& CD) {
   
-  SourceLocation Loc = FD.getLocation();
+  SourceLocation Loc = CD.getLocation();
   
   if (!Loc.isFileID() ||
       Loc.getFileID() != Ctx->getSourceManager().getMainFileID())
     return;
      
-  CheckCFRefCount(C, FD, *Ctx, Diags);
+  CheckCFRefCount(C, CD, *Ctx, Diags);
 }
 
 //===----------------------------------------------------------------------===//

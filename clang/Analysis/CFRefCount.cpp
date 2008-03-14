@@ -777,7 +777,7 @@ CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
 
 namespace clang {
   
-  void CheckCFRefCount(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx,
+  void CheckCFRefCount(CFG& cfg, Decl& CD, ASTContext& Ctx,
                        Diagnostic& Diag) {
     
     if (Diag.hasErrorOccurred())
@@ -785,7 +785,7 @@ namespace clang {
     
     // FIXME: Refactor some day so this becomes a single function invocation.
     
-    GRCoreEngine<GRExprEngine> Eng(cfg, FD, Ctx);
+    GRCoreEngine<GRExprEngine> Eng(cfg, CD, Ctx);
     GRExprEngine* CS = &Eng.getCheckerState();
     CFRefCount TF;
     CS->setTransferFunctions(TF);

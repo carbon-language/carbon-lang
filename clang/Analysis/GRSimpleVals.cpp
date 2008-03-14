@@ -89,13 +89,13 @@ void EmitWarning(Diagnostic& Diag, SourceManager& SrcMgr,
   }
 }
   
-unsigned RunGRSimpleVals(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx,
+unsigned RunGRSimpleVals(CFG& cfg, Decl& CD, ASTContext& Ctx,
                          Diagnostic& Diag, bool Visualize, bool TrimGraph) {
   
   if (Diag.hasErrorOccurred())
     return 0;
   
-  GRCoreEngine<GRExprEngine> Eng(cfg, FD, Ctx);
+  GRCoreEngine<GRExprEngine> Eng(cfg, CD, Ctx);
   GRExprEngine* CheckerState = &Eng.getCheckerState();
   GRSimpleVals GRSV;
   CheckerState->setTransferFunctions(GRSV);

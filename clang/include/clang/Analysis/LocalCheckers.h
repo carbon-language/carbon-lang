@@ -18,7 +18,7 @@
 namespace clang {
 
 class CFG;
-class FunctionDecl;
+class Decl;
 class Diagnostic;
 class ASTContext;
 
@@ -27,7 +27,7 @@ void CheckDeadStores(CFG& cfg, ASTContext &Ctx, Diagnostic &Diags);
 void CheckUninitializedValues(CFG& cfg, ASTContext& Ctx, Diagnostic& Diags,
                               bool FullUninitTaint=false);
   
-void CheckCFRefCount(CFG& cfg, FunctionDecl& FD, ASTContext& Ctx,
+void CheckCFRefCount(CFG& cfg, Decl& CodeDecl, ASTContext& Ctx,
                      Diagnostic& Diag);
 
 } // end namespace clang

@@ -505,15 +505,15 @@ protected:
 public:  
   /// Construct a GRCoreEngine object to analyze the provided CFG using
   ///  a DFS exploration of the exploded graph.
-  GRCoreEngine(CFG& cfg, FunctionDecl& fd, ASTContext& ctx)
-    : GRCoreEngineImpl(new GraphTy(cfg, fd, ctx), GRWorkList::MakeDFS()),
+  GRCoreEngine(CFG& cfg, Decl& cd, ASTContext& ctx)
+    : GRCoreEngineImpl(new GraphTy(cfg, cd, ctx), GRWorkList::MakeDFS()),
       Checker(static_cast<GraphTy*>(G.get())->getCheckerState()) {}
   
   /// Construct a GRCoreEngine object to analyze the provided CFG and to
   ///  use the provided worklist object to execute the worklist algorithm.
   ///  The GRCoreEngine object assumes ownership of 'wlist'.
-  GRCoreEngine(CFG& cfg, FunctionDecl& fd, ASTContext& ctx, GRWorkList* wlist)
-    : GRCoreEngineImpl(new GraphTy(cfg, fd, ctx), wlist),
+  GRCoreEngine(CFG& cfg, Decl& cd, ASTContext& ctx, GRWorkList* wlist)
+    : GRCoreEngineImpl(new GraphTy(cfg, cd, ctx), wlist),
       Checker(static_cast<GraphTy*>(G.get())->getCheckerState()) {}
   
   virtual ~GRCoreEngine() {}

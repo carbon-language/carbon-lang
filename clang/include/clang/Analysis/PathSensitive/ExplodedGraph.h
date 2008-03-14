@@ -16,6 +16,7 @@
 #define LLVM_CLANG_ANALYSIS_EXPLODEDGRAPH
 
 #include "clang/Analysis/ProgramPoint.h"
+#include "clang/AST/Decl.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -23,6 +24,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/DepthFirstIterator.h"
+#include "llvm/Support/Casting.h"
 
 namespace clang {
 
@@ -34,9 +36,7 @@ class GRIndirectGotoNodeBuilderImpl;
 class GRSwitchNodeBuilderImpl;
 class CFG;
 class ASTContext;
-class FunctionDecl;
 
-  
 class ExplodedNodeImpl : public llvm::FoldingSetNode {
 protected:
   friend class ExplodedGraphImpl;
@@ -220,10 +220,11 @@ protected:
   /// cfg - The CFG associated with this analysis graph.
   CFG& cfg;
   
-  /// FD - The function declaration of the function being analyzed.
-  FunctionDecl& FD;
+  /// CodeDecl - The declaration containing the code being analyzed.  This
+  ///  can be a FunctionDecl or and ObjCMethodDecl.
+  Decl& CodeDecl;
   
-  /// Ctx - The ASTContext used to "interpret" FD.
+  /// Ctx - The ASTContext used to "interpret" CodeDecl.
   ASTContext& Ctx;
   
   /// NumNodes - The number of nodes in the graph.
@@ -250,8 +251,8 @@ protected:
   }
   
   // ctor.
-  ExplodedGraphImpl(CFG& c, FunctionDecl& f, ASTContext& ctx)
-    : cfg(c), FD(f), Ctx(ctx), NumNodes(0) {}
+  ExplodedGraphImpl(CFG& c, Decl& cd, ASTContext& ctx)
+    : cfg(c), CodeDecl(cd), Ctx(ctx), NumNodes(0) {}
 
 public:
   virtual ~ExplodedGraphImpl() {}
@@ -265,7 +266,12 @@ public:
   llvm::BumpPtrAllocator& getAllocator() { return Allocator; }
   CFG& getCFG() { return cfg; }
   ASTContext& getContext() { return Ctx; }
-  FunctionDecl& getFunctionDecl() { return FD; }
+  
+  const Decl& getCodeDecl() const { return CodeDecl; }
+
+  const FunctionDecl* getFunctionDecl() const {
+    return llvm::dyn_cast<FunctionDecl>(&CodeDecl);
+  }
   
   ExplodedGraphImpl* Trim(ExplodedNodeImpl** NBeg,
                           ExplodedNodeImpl** NEnd) const;
@@ -294,12 +300,12 @@ protected:
   }
   
   virtual ExplodedGraphImpl* MakeEmptyGraph() const {
-    return new ExplodedGraph(cfg, FD, Ctx);
+    return new ExplodedGraph(cfg, CodeDecl, Ctx);
   }  
     
 public:
-  ExplodedGraph(CFG& c, FunctionDecl& fd, ASTContext& ctx)
-    : ExplodedGraphImpl(c, fd, ctx), CheckerState(new CheckerTy(*this)) {}
+  ExplodedGraph(CFG& c, Decl& cd, ASTContext& ctx)
+    : ExplodedGraphImpl(c, cd, ctx), CheckerState(new CheckerTy(*this)) {}
   
   /// getCheckerState - Returns the internal checker state associated
   ///  with the exploded graph.  Ownership remains with the ExplodedGraph
