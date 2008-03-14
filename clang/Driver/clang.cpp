@@ -1262,6 +1262,16 @@ int main(int argc, char **argv) {
       --i;
     }
   }
+
+  // Get information about the target being compiled for.
+  std::string Triple = CreateTargetTriple();
+  TargetInfo *Target = TargetInfo::CreateTargetInfo(Triple);
+  if (Target == 0) {
+    fprintf(stderr, "Sorry, I don't know what target this is: %s\n",
+            Triple.c_str());
+    fprintf(stderr, "Please use -triple or -arch.\n");
+    exit(1);
+  }
   
   for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i) {
     const std::string &InFile = InputFilenames[i];
@@ -1285,19 +1295,6 @@ int main(int argc, char **argv) {
       DiagClient->setHeaderSearch(HeaderInfo);
       InitializeIncludePaths(argv[0], HeaderInfo, FileMgr, LangInfo);
       
-      // Get information about the targets being compiled for.  Note that this
-      // pointer and the TargetInfoImpl objects are never deleted by this toy
-      // driver.
-      std::string Triple = CreateTargetTriple();
-      TargetInfo *Target = TargetInfo::CreateTargetInfo(Triple);
-        
-      if (Target == 0) {
-        fprintf(stderr, "Sorry, I don't know what target this is: %s\n",
-                Triple.c_str());
-        fprintf(stderr, "Please use -triple or -arch.\n");
-        exit(1);
-      }
-      
       // Set up the preprocessor with these options.
       Preprocessor PP(Diags, LangInfo, *Target, SourceMgr, HeaderInfo);
       
@@ -1313,6 +1310,8 @@ int main(int argc, char **argv) {
     }
   }
   
+  delete Target;
+
   unsigned NumDiagnostics = Diags.getNumDiagnostics();
   
   if (NumDiagnostics)
