@@ -2,11 +2,6 @@
 // Random ideas for the X86 backend.
 //===---------------------------------------------------------------------===//
 
-Missing features:
-  - Support for SSE4: http://www.intel.com/software/penryn
-http://softwarecommunity.intel.com/isn/Downloads/Intel%20SSE4%20Programming%20Reference.pdf
-  - support for 3DNow!
-  - weird abis?
 
 //===---------------------------------------------------------------------===//
 
@@ -1653,3 +1648,46 @@ if it commuted the addl in LBB1_1.
 
 //===---------------------------------------------------------------------===//
 
+These two functions perform identical operations:
+
+define i32 @test(i32 %f12) {
+	%tmp7.25 = lshr i32 %f12, 16		
+	%tmp7.26 = trunc i32 %tmp7.25 to i8
+	%tmp78.2 = sext i8 %tmp7.26 to i32
+	ret i32 %tmp78.2
+}
+
+define i32 @test2(i32 %f12) {
+	%f11 = shl i32 %f12, 8
+	%tmp7.25 = ashr i32 %f11, 24
+	ret i32 %tmp7.25
+}
+
+but the first compiles into significantly better code on x86-32:
+
+_test:
+	movsbl	6(%esp), %eax
+	ret
+_test2:
+	movl	4(%esp), %eax
+	shll	$8, %eax
+	sarl	$24, %eax
+	ret
+        
+and on x86-64:
+
+_test:
+	shrl	$16, %edi
+	movsbl	%dil, %eax
+	ret
+_test2:
+	shll	$8, %edi
+	movl	%edi, %eax
+	sarl	$24, %eax
+	ret
+
+I would like instcombine to canonicalize the first into the second (since it is
+shorter and doesn't involve type width changes) but the x86 backend needs to do
+the right thing with the later sequence first.
+
+//===---------------------------------------------------------------------===//
