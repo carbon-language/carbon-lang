@@ -46,7 +46,7 @@ typedef StringMapEntry<Value*> ValueName;
 /// the super class of other important classes such as Instruction and Function.
 /// All Values have a Type. Type is not a subclass of Value. All types can have
 /// a name and they should belong to some Module. Setting the name on the Value
-/// automatically update's the module's symbol table.
+/// automatically updates the module's symbol table.
 ///
 /// Every value has a "use list" that keeps track of which other Values are
 /// using this Value.
@@ -227,10 +227,6 @@ void Use::init(Value *v, User *user) {
   Val = v;
   U = user;
   if (Val) Val->addUse(*this);
-}
-
-Use::~Use() {
-  if (Val) removeFromList();
 }
 
 void Use::set(Value *V) {

@@ -37,7 +37,9 @@ public:
 
   Use(Value *V, User *U) { init(V, U); }
   Use(const Use &U) { init(U.Val, U.U); }
-  inline ~Use();
+  inline ~Use() {
+    if (Val) removeFromList();
+  }
 
   /// Default ctor - This leaves the Use completely unitialized.  The only thing
   /// that is valid to do with this use is to call the "init" method.
