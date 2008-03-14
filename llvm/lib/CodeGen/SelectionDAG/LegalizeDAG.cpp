@@ -3575,7 +3575,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         MVT::ValueType VT = Node->getValueType(0);
         Tmp2 = DAG.getConstantFP(0.0, VT);
         Tmp2 = DAG.getSetCC(TLI.getSetCCResultType(Tmp1), Tmp1, Tmp2,
-			    ISD::SETUGT);
+                            ISD::SETUGT);
         Tmp3 = DAG.getNode(ISD::FNEG, VT, Tmp1);
         Result = DAG.getNode(ISD::SELECT, VT, Tmp2, Tmp1, Tmp3);
         break;
@@ -4164,11 +4164,11 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
 
   case ISD::SETCC:
     assert(isTypeLegal(TLI.getSetCCResultType(Node->getOperand(0)))
-	   && "SetCC type is not legal??");
+           && "SetCC type is not legal??");
     Result = DAG.getNode(ISD::SETCC,
-			 TLI.getSetCCResultType(Node->getOperand(0)),
-	                 Node->getOperand(0), Node->getOperand(1),
-			 Node->getOperand(2));
+                         TLI.getSetCCResultType(Node->getOperand(0)),
+                         Node->getOperand(0), Node->getOperand(1),
+                         Node->getOperand(2));
     break;
     
   case ISD::TRUNCATE:
@@ -4791,7 +4791,7 @@ void SelectionDAGLegalize::LegalizeSetCCOperands(SDOperand &LHS,
       CC = DAG.getCondCode(TLI.getCmpLibcallCC(LC1));
       if (LC2 != RTLIB::UNKNOWN_LIBCALL) {
         Tmp1 = DAG.getNode(ISD::SETCC, TLI.getSetCCResultType(Tmp1), Tmp1, Tmp2,
-			   CC);
+                           CC);
         LHS = ExpandLibCall(TLI.getLibcallName(LC2),
                             DAG.getNode(ISD::MERGE_VALUES, VT, LHS, RHS).Val, 
                             false /*sign irrelevant*/, Dummy);
@@ -4879,14 +4879,14 @@ void SelectionDAGLegalize::LegalizeSetCCOperands(SDOperand &LHS,
       // this identity: (B1 ? B2 : B3) --> (B1 & B2)|(!B1&B3)
       TargetLowering::DAGCombinerInfo DagCombineInfo(DAG, false, true, NULL);
       Tmp1 = TLI.SimplifySetCC(TLI.getSetCCResultType(LHSLo), LHSLo, RHSLo,
-			       LowCC, false, DagCombineInfo);
+                               LowCC, false, DagCombineInfo);
       if (!Tmp1.Val)
         Tmp1 = DAG.getSetCC(TLI.getSetCCResultType(LHSLo), LHSLo, RHSLo, LowCC);
       Tmp2 = TLI.SimplifySetCC(TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi,
                                CCCode, false, DagCombineInfo);
       if (!Tmp2.Val)
         Tmp2 = DAG.getNode(ISD::SETCC, TLI.getSetCCResultType(LHSHi), LHSHi,
-			   RHSHi,CC);
+                           RHSHi,CC);
       
       ConstantSDNode *Tmp1C = dyn_cast<ConstantSDNode>(Tmp1.Val);
       ConstantSDNode *Tmp2C = dyn_cast<ConstantSDNode>(Tmp2.Val);
@@ -4907,7 +4907,7 @@ void SelectionDAGLegalize::LegalizeSetCCOperands(SDOperand &LHS,
                                    ISD::SETEQ, false, DagCombineInfo);
         if (!Result.Val)
           Result=DAG.getSetCC(TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi,
-			      ISD::SETEQ);
+                              ISD::SETEQ);
         Result = LegalizeOp(DAG.getNode(ISD::SELECT, Tmp1.getValueType(),
                                         Result, Tmp1, Tmp2));
         Tmp1 = Result;
@@ -6834,11 +6834,10 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
     SDOperand ScalarOp = Node->getOperand(1);
     if (Index < NewNumElts_Lo)
       Lo = DAG.getNode(ISD::INSERT_VECTOR_ELT, NewVT_Lo, Lo, ScalarOp,
-                       DAG.getConstant(Index, TLI.getPointerTy()));
+                       DAG.getIntPtrConstant(Index));
     else
       Hi = DAG.getNode(ISD::INSERT_VECTOR_ELT, NewVT_Hi, Hi, ScalarOp,
-                       DAG.getConstant(Index - NewNumElts_Lo,
-                                       TLI.getPointerTy()));
+                       DAG.getIntPtrConstant(Index - NewNumElts_Lo));
     break;
   }
   case ISD::VECTOR_SHUFFLE: {
@@ -6851,7 +6850,12 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
     // buildvector of extractelement here because the input vectors will have
     // to be legalized, so this makes the code simpler.
     for (unsigned i = 0; i != NewNumElts_Lo; ++i) {
-      unsigned Idx = cast<ConstantSDNode>(Mask.getOperand(i))->getValue();
+      SDOperand IdxNode = Mask.getOperand(i);
+      if (IdxNode.getOpcode() == ISD::UNDEF) {
+        Ops.push_back(DAG.getNode(ISD::UNDEF, NewEltVT));
+        continue;
+      }
+      unsigned Idx = cast<ConstantSDNode>(IdxNode)->getValue();
       SDOperand InVec = Node->getOperand(0);
       if (Idx >= NumElements) {
         InVec = Node->getOperand(1);
@@ -6864,7 +6868,12 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
     Ops.clear();
     
     for (unsigned i = NewNumElts_Lo; i != NumElements; ++i) {
-      unsigned Idx = cast<ConstantSDNode>(Mask.getOperand(i))->getValue();
+      SDOperand IdxNode = Mask.getOperand(i);
+      if (IdxNode.getOpcode() == ISD::UNDEF) {
+        Ops.push_back(DAG.getNode(ISD::UNDEF, NewEltVT));
+        continue;
+      }
+      unsigned Idx = cast<ConstantSDNode>(IdxNode)->getValue();
       SDOperand InVec = Node->getOperand(0);
       if (Idx >= NumElements) {
         InVec = Node->getOperand(1);
