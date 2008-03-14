@@ -109,6 +109,8 @@ Preprocessor::~Preprocessor() {
 
   // Delete the scratch buffer info.
   delete ScratchBuf;
+
+  delete Callbacks;
 }
 
 /// Diag - Forwarding function for diagnostics.  This emits a diagnostic at
