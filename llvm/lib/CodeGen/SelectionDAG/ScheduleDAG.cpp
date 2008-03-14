@@ -987,50 +987,14 @@ void ScheduleDAG::EmitCrossRCCopy(SUnit *SU,
   }
 }
 
-/// regIsLive - Return true if the specified register is live due to a
-/// live in copy.
-static bool regIsLive(unsigned Reg, BitVector &LiveRegs,
-                      const TargetRegisterInfo *TRI) {
-  if (LiveRegs[Reg])
-    return true;
-  for (const unsigned *AS = TRI->getAliasSet(Reg); *AS; ++AS)
-    if (LiveRegs[*AS])
-      return true;
-  return false;
-}
-
-/// regIsClobbered - Return true if the specified register is defined in
-/// between the two specific instructions.
-static bool regIsClobbered(unsigned Reg, MachineBasicBlock *MBB,
-                           MachineBasicBlock::iterator InsertPos,
-                           MachineBasicBlock::iterator UsePos,
-                           const TargetRegisterInfo *TRI) {
-  for (MachineBasicBlock::iterator I = InsertPos; I != UsePos; ++I) {
-    MachineInstr *MI = I;
-    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-      const MachineOperand &MO = MI->getOperand(i);
-      if (!MO.isRegister() || !MO.isDef())
-        continue;
-      unsigned DefReg = MO.getReg();
-      if (TargetRegisterInfo::isVirtualRegister(DefReg))
-        continue;
-      if (TRI->regsOverlap(DefReg, Reg))
-        return true;
-    }
-  }
-  return false;
-}
-
 /// EmitLiveInCopy - Emit a copy for a live in physical register. If the
 /// physical register has only a single copy use, then coalesced the copy
-/// if possible. It returns the destination register of the emitted copy
-/// if it is a physical register; otherwise it returns zero.
-unsigned ScheduleDAG::EmitLiveInCopy(MachineBasicBlock *MBB,
-                                     MachineBasicBlock::iterator &InsertPos,
-                                     unsigned VirtReg, unsigned PhysReg,
-                                     const TargetRegisterClass *RC,
-                                     BitVector &LiveRegsBefore,
-                                     BitVector &LiveRegsAfter) {
+/// if possible.
+void ScheduleDAG::EmitLiveInCopy(MachineBasicBlock *MBB,
+                                 MachineBasicBlock::iterator &InsertPos,
+                                 unsigned VirtReg, unsigned PhysReg,
+                                 const TargetRegisterClass *RC,
+                                 DenseMap<MachineInstr*, unsigned> &CopyRegMap){
   unsigned NumUses = 0;
   MachineInstr *UseMI = NULL;
   for (MachineRegisterInfo::use_iterator UI = MRI.use_begin(VirtReg),
@@ -1041,95 +1005,61 @@ unsigned ScheduleDAG::EmitLiveInCopy(MachineBasicBlock *MBB,
   }
 
   // If the number of uses is not one, or the use is not a move instruction,
-  // don't coalesce.
+  // don't coalesce. Also, only coalesce away a virtual register to virtual
+  // register copy.
+  bool Coalesced = false;
   unsigned SrcReg, DstReg;
-  if (NumUses != 1 ||
-      !TII->isMoveInstr(*UseMI, SrcReg, DstReg)) {
-    TII->copyRegToReg(*MBB, InsertPos, VirtReg, PhysReg, RC, RC);
-    return 0;
+  if (NumUses == 1 &&
+      TII->isMoveInstr(*UseMI, SrcReg, DstReg) &&
+      TargetRegisterInfo::isVirtualRegister(DstReg)) {
+    VirtReg = DstReg;
+    Coalesced = true;
   }
 
-  // Coalesce away a virtual register to virtual register copy.
-  if (TargetRegisterInfo::isVirtualRegister(DstReg)) {
-    TII->copyRegToReg(*MBB, InsertPos, DstReg, PhysReg, RC, RC);
+  // Now find an ideal location to insert the copy.
+  MachineBasicBlock::iterator Pos = InsertPos;
+  while (Pos != MBB->begin()) {
+    MachineInstr *PrevMI = prior(Pos);
+    DenseMap<MachineInstr*, unsigned>::iterator RI = CopyRegMap.find(PrevMI);
+    // copyRegToReg might emit multiple instructions to do a copy.
+    unsigned CopyDstReg = (RI == CopyRegMap.end()) ? 0 : RI->second;
+    if (CopyDstReg && !TRI->regsOverlap(CopyDstReg, PhysReg))
+      // This is what the BB looks like right now:
+      // r1024 = mov r0
+      // ...
+      // r1    = mov r1024
+      //
+      // We want to insert "r1025 = mov r1". Inserting this copy below the
+      // move to r1024 makes it impossible for that move to be coalesced.
+      //
+      // r1025 = mov r1
+      // r1024 = mov r0
+      // ...
+      // r1    = mov 1024
+      // r2    = mov 1025
+      break; // Woot! Found a good location.
+    --Pos;
+  }
+
+  TII->copyRegToReg(*MBB, Pos, VirtReg, PhysReg, RC, RC);
+  CopyRegMap.insert(std::make_pair(prior(Pos), VirtReg));
+  if (Coalesced) {
     if (&*InsertPos == UseMI) ++InsertPos;
     MBB->erase(UseMI);
-    return 0;
   }
-
-  // If the destination is a physical register, check if it's safe to
-  // coalesce. If there is a def of the register between the insertion point and
-  // the use, then it's not safe.
-  if (regIsClobbered(DstReg, MBB, InsertPos, UseMI, TRI)) {
-    TII->copyRegToReg(*MBB, InsertPos, VirtReg, PhysReg, RC, RC);
-    return 0;
-  }
-
-  // Also check already processed livein copies and determine the safe location
-  // to insert the copy.  e.g. Suppose livein r0 is already processed and now
-  // we are inserting r1 copy to vr1025 which will be coalesced to r0.
-  // vr1024 = r0
-  // <this is the insertion pt>
-  // ...
-  // It's safe to insert the copy from r1 to r0.
-  // vr1024 = r0
-  // r0     = r1
-  //
-  // However, if livein r0 copy is coalesced to r1:
-  // r1 = r0
-  // <insertion pt>
-  // ...
-  // Then it's not safe to insert the copy from r1 to r0 at the insertion pt.
-  // Nor is it safe to insert it at the start of the MBB.
-  //
-  // If livein r3 is already processed and it's coalesced to r1.
-  // <begin of MBB>   -- safe to insert here
-  // r1    = r3
-  // <insertion pt>  -- not safe
-  // Then it's safe to insert at the start of the MBB.
-  if (regIsLive(DstReg, LiveRegsAfter, TRI)) {
-    if (regIsLive(PhysReg, LiveRegsBefore, TRI)) {
-      // FIXME: Still possible to find a safe place to insert the copy.
-      TII->copyRegToReg(*MBB, InsertPos, VirtReg, PhysReg, RC, RC);
-      return 0;
-    }
-    TII->copyRegToReg(*MBB, MBB->begin(), DstReg, PhysReg, RC, RC);
-    if (&*InsertPos == UseMI) ++InsertPos;
-    MBB->erase(UseMI);
-    return DstReg;
-  }
-  TII->copyRegToReg(*MBB, InsertPos, DstReg, PhysReg, RC, RC);
-  if (&*InsertPos == UseMI) ++InsertPos;
-  MBB->erase(UseMI);
-  return DstReg;
 }
 
 /// EmitLiveInCopies - If this is the first basic block in the function,
 /// and if it has live ins that need to be copied into vregs, emit the
 /// copies into the top of the block.
 void ScheduleDAG::EmitLiveInCopies(MachineBasicBlock *MBB) {
-  BitVector LiveRegsBefore; // Live registers before insertion pt.
-  BitVector LiveRegsAfter;  // Live registers after insertion pt.
-  LiveRegsBefore.resize(TRI->getNumRegs());
-  LiveRegsAfter.resize(TRI->getNumRegs());
-
+  DenseMap<MachineInstr*, unsigned> CopyRegMap;
   MachineBasicBlock::iterator InsertPos = MBB->begin();
   for (MachineRegisterInfo::livein_iterator LI = MRI.livein_begin(),
          E = MRI.livein_end(); LI != E; ++LI)
     if (LI->second) {
       const TargetRegisterClass *RC = MRI.getRegClass(LI->second);
-      unsigned Reg = EmitLiveInCopy(MBB, InsertPos, LI->second, LI->first, RC,
-                                    LiveRegsBefore, LiveRegsAfter);
-      if (Reg) {
-        LiveRegsAfter.set(Reg);
-        for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
-             unsigned SubReg = *SubRegs; ++SubRegs)
-          LiveRegsAfter.set(SubReg);
-      }
-      LiveRegsBefore.set(LI->first);
-      for (const unsigned *SubRegs = TRI->getSubRegisters(LI->first);
-           unsigned SubReg = *SubRegs; ++SubRegs)
-        LiveRegsBefore.set(SubReg);
+      EmitLiveInCopy(MBB, InsertPos, LI->second, LI->first, RC, CopyRegMap);
     }
 }
 
