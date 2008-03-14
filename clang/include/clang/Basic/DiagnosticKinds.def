@@ -584,6 +584,8 @@ DIAG(err_attribute_address_space_not_int, ERROR,
      "address space attribute requires an integer constant")
 DIAG(err_attribute_address_multiple_qualifiers, ERROR,
      "multiple address spaces specified for type")
+DIAG(err_as_qualified_auto_decl, ERROR,
+     "automatic variable qualified with an address space")
 DIAG(err_attribute_annotate_no_string, ERROR,
      "argument to annotate attribute was not a string literal")
 DIAG(warn_attribute_ignored, WARNING,

@@ -757,7 +757,6 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
                                            D.getDeclSpec().isInlineSpecified(),
                                            LastDeclarator);
     // Handle attributes.
-
     HandleDeclAttributes(NewFD, D.getDeclSpec().getAttributes(),
                          D.getAttributes());
     
@@ -801,7 +800,13 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     // Handle attributes prior to checking for duplicates in MergeVarDecl
     HandleDeclAttributes(NewVD, D.getDeclSpec().getAttributes(),
                          D.getAttributes());
-     
+    // Emit a warning (error?) if an address space was applied to decl with
+    // local storage.
+    if (NewVD->hasLocalStorage() && 
+        (NewVD->getCanonicalType().getAddressSpace() != 0)) {
+      Diag(D.getIdentifierLoc(), diag::err_as_qualified_auto_decl);
+      InvalidDecl = true;
+    }
     // Merge the decl with the existing one if appropriate. If the decl is
     // in an outer scope, it isn't the same thing.
     if (PrevDecl && S->isDeclScope(PrevDecl)) {
