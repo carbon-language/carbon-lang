@@ -76,6 +76,10 @@ void LLVMDeleteTypeName(LLVMModuleRef M, const char *Name) {
       TST.remove(I);
 }
 
+void LLVMDumpModule(LLVMModuleRef M) {
+  unwrap(M)->dump();
+}
+
 
 /*===-- Operations on types -----------------------------------------------===*/
 

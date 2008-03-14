@@ -183,6 +183,9 @@ void LLVMSetTarget(LLVMModuleRef M, const char *Triple);
 int LLVMAddTypeName(LLVMModuleRef M, const char *Name, LLVMTypeRef Ty);
 void LLVMDeleteTypeName(LLVMModuleRef M, const char *Name);
 
+/** See Module::dump. */
+void LLVMDumpModule(LLVMModuleRef M);
+
 
 /*===-- Types -------------------------------------------------------------===*/
 

@@ -119,6 +119,7 @@ external define_type_name : string -> lltype -> llmodule -> bool
                           = "llvm_add_type_name"
 external delete_type_name : string -> llmodule -> unit
                           = "llvm_delete_type_name"
+external dump_module : llmodule -> unit = "llvm_dump_module"
 
 (*===-- Types -------------------------------------------------------------===*)
 

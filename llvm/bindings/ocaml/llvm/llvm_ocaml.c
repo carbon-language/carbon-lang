@@ -98,6 +98,12 @@ CAMLprim value llvm_delete_type_name(value Name, LLVMModuleRef M) {
   return Val_unit;
 }
 
+/* llmodule -> unit */
+CAMLprim value llvm_dump_module(LLVMModuleRef M) {
+  LLVMDumpModule(M);
+  return Val_unit;
+}
+
 
 /*===-- Types -------------------------------------------------------------===*/
 
