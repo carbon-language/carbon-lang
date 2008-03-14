@@ -33,15 +33,16 @@ class MachineRegisterInfo;
 class MachineOperand {
 public:
   enum MachineOperandType {
-    MO_Register,                // Register operand.
-    MO_Immediate,               // Immediate Operand
-    MO_FPImmediate,
+    MO_Register,                // Register operand
+    MO_Immediate,               // Immediate operand
+    MO_FPImmediate,             // FP immediate operand
     MO_MachineBasicBlock,       // MachineBasicBlock reference
     MO_FrameIndex,              // Abstract Stack Frame Index
     MO_ConstantPoolIndex,       // Address of indexed Constant in Constant Pool
     MO_JumpTableIndex,          // Address of indexed Jump Table for switch
     MO_ExternalSymbol,          // Name of external global symbol
-    MO_GlobalAddress            // Address of a global value
+    MO_GlobalAddress,           // Address of a global value
+    MO_Undef                    // Undef
   };
 
 private:
@@ -130,6 +131,7 @@ public:
   bool isJumpTableIndex() const { return OpKind == MO_JumpTableIndex; }
   bool isGlobalAddress() const { return OpKind == MO_GlobalAddress; }
   bool isExternalSymbol() const { return OpKind == MO_ExternalSymbol; }
+  bool isUndef() const { return OpKind == MO_Undef; }
 
   bool isReg() const { return OpKind == MO_Register; }
   bool isImm() const { return OpKind == MO_Immediate; }
@@ -375,6 +377,11 @@ public:
     Op.setOffset(Offset);
     return Op;
   }
+  static MachineOperand CreateUndef() {
+    MachineOperand Op(MachineOperand::MO_Undef);
+    return Op;
+  }
+
   const MachineOperand &operator=(const MachineOperand &MO) {
     OpKind   = MO.OpKind;
     IsDef    = MO.IsDef;
