@@ -43,8 +43,10 @@ void Pass::dumpPassStructure(unsigned Offset) {
   cerr << std::string(Offset*2, ' ') << getPassName() << "\n";
 }
 
-// getPassName - Use C++ RTTI to get a SOMEWHAT intelligible name for the pass.
-//
+/// getPassName - Return a nice clean name for a pass.  This usually
+/// implemented in terms of the name that is registered by one of the
+/// Registration templates, but can be overloaded directly.
+///
 const char *Pass::getPassName() const {
   if (const PassInfo *PI = getPassInfo())
     return PI->getPassName();
