@@ -30,8 +30,6 @@ namespace sys {
   /// It also allows for symbols to be defined which don't live in any library,
   /// but rather the main program itself, useful on Windows where the main
   /// executable cannot be searched.
-  /// @since 1.4
-  /// @brief Portable dynamic library abstraction.
   class DynamicLibrary {
     /// @name Constructors
     /// @{
@@ -89,6 +87,7 @@ namespace sys {
     /// @name Implementation
     /// @{
     protected:
+      void* handle;  // Opaque handle for information about the library
       DynamicLibrary(const DynamicLibrary&); ///< Do not implement
       DynamicLibrary& operator=(const DynamicLibrary&); ///< Do not implement
     /// @}
