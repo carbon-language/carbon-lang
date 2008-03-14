@@ -1351,6 +1351,59 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op,
   
   const unsigned *GPR = isPPC64 ? GPR_64 : GPR_32;
   
+  // In 32-bit non-varargs functions, the stack space for vectors is after the
+  // stack space for non-vectors.  We do not use this space unless we have
+  // too many vectors to fit in registers, something that only occurs in
+  // constructed examples:), but we have to walk the arglist to figure 
+  // that out...for the pathological case, compute VecArgOffset as the
+  // start of the vector parameter area.  Computing VecArgOffset is the
+  // entire point of the following loop.
+  // Altivec is not mentioned in the ppc32 Elf Supplement, so I'm not trying
+  // to handle Elf here.
+  unsigned VecArgOffset = ArgOffset;
+  if (!isVarArg && !isPPC64) {
+    for (unsigned ArgNo = 0, e = Op.Val->getNumValues()-1; ArgNo != e; 
+         ++ArgNo) {
+      MVT::ValueType ObjectVT = Op.getValue(ArgNo).getValueType();
+      unsigned ObjSize = MVT::getSizeInBits(ObjectVT)/8;
+      ISD::ParamFlags::ParamFlagsTy Flags = 
+                cast<ConstantSDNode>(Op.getOperand(ArgNo+3))->getValue();
+      unsigned isByVal = Flags & ISD::ParamFlags::ByVal;
+
+      if (isByVal) {
+        // ObjSize is the true size, ArgSize rounded up to multiple of regs.
+        ObjSize = (Flags & ISD::ParamFlags::ByValSize) >>
+                        ISD::ParamFlags::ByValSizeOffs;
+        unsigned ArgSize = 
+                ((ObjSize + PtrByteSize - 1)/PtrByteSize) * PtrByteSize;
+        VecArgOffset += ArgSize;
+        continue;
+      }
+
+      switch(ObjectVT) {
+      default: assert(0 && "Unhandled argument type!");
+      case MVT::i32:
+      case MVT::f32:
+        VecArgOffset += isPPC64 ? 8 : 4;
+        break;
+      case MVT::i64:  // PPC64
+      case MVT::f64:
+        VecArgOffset += 8;
+        break;
+      case MVT::v4f32:
+      case MVT::v4i32:
+      case MVT::v8i16:
+      case MVT::v16i8:
+        // Nothing to do, we're only looking at Nonvector args here.
+        break;
+      }
+    }
+  }
+  // We've found where the vector parameter area in memory is.  Skip the
+  // first 12 parameters; these don't use that memory.
+  VecArgOffset = ((VecArgOffset+15)/16)*16;
+  VecArgOffset += 12*16;
+
   // Add DAG nodes to load the arguments or copy them out of registers.  On
   // entry to a function on PPC, the arguments start after the linkage area,
   // although the first ones are often in registers.
@@ -1535,11 +1588,16 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op,
         }
         ++VR_idx;
       } else {
-        // Stack offset is aligned.
-        while (ArgOffset % 16 !=0) {
-          ArgOffset += PtrByteSize;
+        if (!isVarArg && !isPPC64) {
+          // Vectors go after all the nonvectors.
+          CurArgOffset = VecArgOffset;
+          VecArgOffset += 16;
+        } else {
+          // Vectors are aligned.
+          ArgOffset = ((ArgOffset+15)/16)*16;
+          CurArgOffset = ArgOffset;
+          ArgOffset += 16;
         }
-        ArgOffset += 16;
         needsLoad = true;
       }
       break;
@@ -1712,14 +1770,27 @@ SDOperand PPCTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG,
   unsigned NumBytes = PPCFrameInfo::getLinkageSize(isPPC64, isMachoABI);
 
   // Add up all the space actually used.
+  // In 32-bit non-varargs calls, Altivec parameters all go at the end; usually
+  // they all go in registers, but we must reserve stack space for them for
+  // possible use by the caller.  In varargs or 64-bit calls, parameters are 
+  // assigned stack space in order, with padding so Altivec parameters are 
+  // 16-byte aligned.
+  unsigned nAltivecParamsAtEnd = 0;
   for (unsigned i = 0; i != NumOps; ++i) {
     SDOperand Arg = Op.getOperand(5+2*i);
     MVT::ValueType ArgVT = Arg.getValueType();
-    // Non-varargs Altivec parameters do not have corresponding stack space.
-    if (!isVarArg &&
-        (ArgVT==MVT::v4f32 || ArgVT==MVT::v4i32 ||
-         ArgVT==MVT::v8i16 || ArgVT==MVT::v16i8))
-      continue;
+    if (ArgVT==MVT::v4f32 || ArgVT==MVT::v4i32 ||
+        ArgVT==MVT::v8i16 || ArgVT==MVT::v16i8) {
+      if (!isVarArg && !isPPC64) {
+      // Non-varargs Altivec parameters go after all the non-Altivec parameters;
+      // do those last so we know how much padding we need.
+        nAltivecParamsAtEnd++;
+        continue;
+      } else {
+        // Varargs and 64-bit Altivec parameters are padded to 16 byte boundary.
+        NumBytes = ((NumBytes+15)/16)*16;
+      }
+    }
     ISD::ParamFlags::ParamFlagsTy Flags = 
           cast<ConstantSDNode>(Op.getOperand(5+2*i+1))->getValue();
     unsigned ArgSize =MVT::getSizeInBits(Op.getOperand(5+2*i).getValueType())/8;
@@ -1727,11 +1798,12 @@ SDOperand PPCTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG,
       ArgSize = (Flags & ISD::ParamFlags::ByValSize) >> 
                 ISD::ParamFlags::ByValSizeOffs;
     ArgSize = ((ArgSize + PtrByteSize - 1)/PtrByteSize) * PtrByteSize;
-    // Varargs Altivec parameters are padded to a 16 byte boundary.
-    if (ArgVT==MVT::v4f32 || ArgVT==MVT::v4i32 ||
-        ArgVT==MVT::v8i16 || ArgVT==MVT::v16i8)
-      NumBytes = ((NumBytes+15)/16)*16;
     NumBytes += ArgSize;
+  }
+  // Allow for Altivec parameters at the end, if needed.
+  if (nAltivecParamsAtEnd) {
+    NumBytes = ((NumBytes+15)/16)*16;
+    NumBytes += 16*nAltivecParamsAtEnd;
   }
 
   // The prolog code of the callee may store up to 8 GPR argument registers to
@@ -1984,23 +2056,48 @@ SDOperand PPCTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG,
         }
         break;
       }
-      if (VR_idx == NumVRs) {
-        // Out of V registers; these go aligned on the stack.
-        while (ArgOffset % 16 !=0) {
-          ArgOffset += PtrByteSize;
-        }
+      // Non-varargs Altivec params generally go in registers, but have
+      // stack space allocated at the end.
+      if (VR_idx != NumVRs) {
+        // Doesn't have GPR space allocated.
+        RegsToPass.push_back(std::make_pair(VR[VR_idx++], Arg));
+      } else if (nAltivecParamsAtEnd==0) {
+        // We are emitting Altivec params in order.
         PtrOff = DAG.getNode(ISD::ADD, PtrVT, StackPtr, 
                             DAG.getConstant(ArgOffset, PtrVT));
         SDOperand Store = DAG.getStore(Chain, Arg, PtrOff, NULL, 0);
         MemOpChains.push_back(Store);
         ArgOffset += 16;
-      } else {
-        // Doesn't have memory or GPR space allocated
-        RegsToPass.push_back(std::make_pair(VR[VR_idx++], Arg));
       }
       break;
     }
   }
+  // If all Altivec parameters fit in registers, as they usually do,
+  // they get stack space following the non-Altivec parameters.  We
+  // don't track this here because nobody below needs it.
+  // If there are more Altivec parameters than fit in registers emit
+  // the stores here.
+  if (!isVarArg && nAltivecParamsAtEnd > NumVRs) {
+    unsigned j = 0;
+    // Offset is aligned; skip 1st 12 params which go in V registers.
+    ArgOffset = ((ArgOffset+15)/16)*16;
+    ArgOffset += 12*16;
+    for (unsigned i = 0; i != NumOps; ++i) {
+      SDOperand Arg = Op.getOperand(5+2*i);
+      MVT::ValueType ArgType = Arg.getValueType();
+      if (ArgType==MVT::v4f32 || ArgType==MVT::v4i32 ||
+          ArgType==MVT::v8i16 || ArgType==MVT::v16i8) {
+        if (++j > NumVRs) {
+          SDOperand PtrOff = DAG.getNode(ISD::ADD, PtrVT, StackPtr, 
+                              DAG.getConstant(ArgOffset, PtrVT));
+          SDOperand Store = DAG.getStore(Chain, Arg, PtrOff, NULL, 0);
+          MemOpChains.push_back(Store);
+          ArgOffset += 16;
+        }
+      }
+    }
+  }
+
   if (!MemOpChains.empty())
     Chain = DAG.getNode(ISD::TokenFactor, MVT::Other,
                         &MemOpChains[0], MemOpChains.size());
