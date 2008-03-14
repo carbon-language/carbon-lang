@@ -176,10 +176,5 @@ void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
   return 0;
 }
 
-void *DynamicLibrary::GetAddressOfSymbol(const char *symbolName) {
-  assert(handle != 0 && "Invalid DynamicLibrary handle");
-  return (void *) GetProcAddress((HMODULE)handle, symbolName);
-}
-
 }
 
