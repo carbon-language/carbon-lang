@@ -513,10 +513,14 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
         switch (n) {
           default:
             break;
+            
           case 4:
-            if (!memcmp(s, "exit", 4) || !memcmp(s, "panic", 4)) {
-              Builder->BuildSinks = true; break;
-            }
+            if (!memcmp(s, "exit", 4)) Builder->BuildSinks = true;
+            break;
+
+          case 5:
+            if (!memcmp(s, "panic", 5)) Builder->BuildSinks = true;
+            break;
         }
       }
     }
