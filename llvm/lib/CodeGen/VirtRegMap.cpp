@@ -865,12 +865,15 @@ bool LocalSpiller::PrepForUnfoldOpti(MachineBasicBlock &MBB,
   unsigned UnfoldVR = 0;
   int FoldedSS = VirtRegMap::NO_STACK_SLOT;
   VirtRegMap::MI2VirtMapTy::const_iterator I, End;
-  for (tie(I, End) = VRM.getFoldedVirts(&MI); I != End; ++I) {
+  for (tie(I, End) = VRM.getFoldedVirts(&MI); I != End; ) {
     // Only transform a MI that folds a single register.
     if (UnfoldedOpc)
       return false;
     UnfoldVR = I->second.first;
     VirtRegMap::ModRef MR = I->second.second;
+    // MI2VirtMap be can updated which invalidate the iterator.
+    // Increment the iterator first.
+    ++I; 
     if (VRM.isAssignedReg(UnfoldVR))
       continue;
     // If this reference is not a use, any previous store is now dead.
@@ -1380,11 +1383,14 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
     // physical registers that may contain the value of the spilled virtual
     // register
     SmallSet<int, 2> FoldedSS;
-    for (tie(I, End) = VRM.getFoldedVirts(&MI); I != End; ++I) {
+    for (tie(I, End) = VRM.getFoldedVirts(&MI); I != End; ) {
       unsigned VirtReg = I->second.first;
       VirtRegMap::ModRef MR = I->second.second;
       DOUT << "Folded vreg: " << VirtReg << "  MR: " << MR;
 
+      // MI2VirtMap be can updated which invalidate the iterator.
+      // Increment the iterator first.
+      ++I;
       int SS = VRM.getStackSlot(VirtReg);
       if (SS == VirtRegMap::NO_STACK_SLOT)
         continue;
