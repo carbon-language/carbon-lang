@@ -74,7 +74,7 @@ void EmitWarning(Diagnostic& Diag, SourceManager& SrcMgr,
   msg = Out.str().c_str();
   
   bool isFirst = true;
-  unsigned ErrorDiag;
+  unsigned ErrorDiag = 0;
   llvm::SmallPtrSet<void*,10> CachedErrors;  
   
   for (; I != E; ++I) {
