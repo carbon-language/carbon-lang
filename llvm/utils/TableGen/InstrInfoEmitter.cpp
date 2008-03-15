@@ -346,7 +346,6 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   if (Inst.isSimpleLoad) OS << "|(1<<TID::SimpleLoad)";
   if (mayLoad)           OS << "|(1<<TID::MayLoad)";
   if (mayStore)          OS << "|(1<<TID::MayStore)";
-  if (Inst.isImplicitDef)OS << "|(1<<TID::ImplicitDef)";
   if (Inst.isPredicable) OS << "|(1<<TID::Predicable)";
   if (Inst.isConvertibleToThreeAddress) OS << "|(1<<TID::ConvertibleTo3Addr)";
   if (Inst.isCommutable) OS << "|(1<<TID::Commutable)";

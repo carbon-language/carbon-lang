@@ -86,7 +86,6 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
   isSimpleLoad = R->getValueAsBit("isSimpleLoad");
   mayLoad      = R->getValueAsBit("mayLoad");
   mayStore     = R->getValueAsBit("mayStore");
-  isImplicitDef= R->getValueAsBit("isImplicitDef");
   bool isTwoAddress = R->getValueAsBit("isTwoAddress");
   isPredicable = R->getValueAsBit("isPredicable");
   isConvertibleToThreeAddress = R->getValueAsBit("isConvertibleToThreeAddress");

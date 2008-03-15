@@ -193,7 +193,6 @@ class Instruction {
   bit isSimpleLoad = 0;     // Is this just a load instruction?
   bit mayLoad      = 0;     // Is it possible for this inst to read memory?
   bit mayStore     = 0;     // Is it possible for this inst to write memory?
-  bit isImplicitDef = 0;    // Is this instruction an implicit def instruction?
   bit isTwoAddress = 0;     // Is this a two address instruction?
   bit isConvertibleToThreeAddress = 0;  // Can this 2-addr instruction promote?
   bit isCommutable = 0;     // Is this 3 operand instruction commutable?

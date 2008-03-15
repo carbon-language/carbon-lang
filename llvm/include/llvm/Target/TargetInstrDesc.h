@@ -81,7 +81,6 @@ namespace TID {
     HasOptionalDef,
     Return,
     Call,
-    ImplicitDef,
     Barrier,
     Terminator,
     Branch,
@@ -217,13 +216,6 @@ public:
   
   bool isCall() const {
     return Flags & (1 << TID::Call);
-  }
-  
-  /// isImplicitDef - Return true if this is an "IMPLICIT_DEF" instruction,
-  /// which defines a register to an unspecified value.  These basically
-  /// correspond to x = undef.
-  bool isImplicitDef() const {
-    return Flags & (1 << TID::ImplicitDef);
   }
   
   /// isBarrier - Returns true if the specified instruction stops control flow

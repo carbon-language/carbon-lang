@@ -641,8 +641,7 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li,
     return false;
 
   isLoad = false;
-  const TargetInstrDesc &TID = MI->getDesc();
-  if (TID.isImplicitDef())
+  if (MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF)
     return true;
 
   int FrameIdx = 0;
@@ -655,6 +654,7 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li,
     return true;
 
   if (tii_->isTriviallyReMaterializable(MI)) {
+    const TargetInstrDesc &TID = MI->getDesc();
     isLoad = TID.isSimpleLoad();
 
     unsigned ImpUse = getReMatImplicitUse(li, MI);
@@ -741,9 +741,8 @@ bool LiveIntervals::tryFoldMemoryOperand(MachineInstr* &MI,
                                          unsigned InstrIdx,
                                          SmallVector<unsigned, 2> &Ops,
                                          bool isSS, int Slot, unsigned Reg) {
-  const TargetInstrDesc &TID = MI->getDesc();
   // If it is an implicit def instruction, just delete it.
-  if (TID.isImplicitDef()) {
+  if (MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF) {
     RemoveMachineInstrFromMaps(MI);
     vrm.RemoveMachineInstrFromMaps(MI);
     MI->eraseFromParent();
