@@ -796,7 +796,8 @@ Stmt *RewriteTest::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
         std::string RecName = clsDeclared->getIdentifier()->getName();
         RecName += "_IMPL";
         IdentifierInfo *II = &Context->Idents.get(RecName.c_str());
-        RecordDecl *RD = RecordDecl::Create(Decl::Struct, SourceLocation(), II, 0, *Context);
+        RecordDecl *RD = RecordDecl::Create(*Context, Decl::Struct, 
+                                            SourceLocation(), II, 0);
         assert(RD && "RewriteObjCIvarRefExpr(): Can't find RecordDecl");
         QualType castT = Context->getPointerType(Context->getTagDeclType(RD));
         CastExpr *castExpr = new CastExpr(castT, IV->getBase(), SourceLocation());
@@ -1622,9 +1623,8 @@ void RewriteTest::SynthMsgSendFunctionDecl() {
 void RewriteTest::SynthMsgSendSuperFunctionDecl() {
   IdentifierInfo *msgSendIdent = &Context->Idents.get("objc_msgSendSuper");
   llvm::SmallVector<QualType, 16> ArgTys;
-  RecordDecl *RD = RecordDecl::Create(Decl::Struct, SourceLocation(),
-                                      &Context->Idents.get("objc_super"), 0,
-                                      *Context);
+  RecordDecl *RD = RecordDecl::Create(*Context, Decl::Struct, SourceLocation(),
+                                      &Context->Idents.get("objc_super"), 0);
   QualType argT = Context->getPointerType(Context->getTagDeclType(RD));
   assert(!argT.isNull() && "Can't build 'struct objc_super *' type");
   ArgTys.push_back(argT);
@@ -1663,9 +1663,8 @@ void RewriteTest::SynthMsgSendSuperStretFunctionDecl() {
   IdentifierInfo *msgSendIdent = 
     &Context->Idents.get("objc_msgSendSuper_stret");
   llvm::SmallVector<QualType, 16> ArgTys;
-  RecordDecl *RD = RecordDecl::Create(Decl::Struct, SourceLocation(),
-                                      &Context->Idents.get("objc_super"), 0,
-                                      *Context);
+  RecordDecl *RD = RecordDecl::Create(*Context, Decl::Struct, SourceLocation(),
+                                      &Context->Idents.get("objc_super"), 0);
   QualType argT = Context->getPointerType(Context->getTagDeclType(RD));
   assert(!argT.isNull() && "Can't build 'struct objc_super *' type");
   ArgTys.push_back(argT);
@@ -1745,9 +1744,9 @@ Stmt *RewriteTest::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
   InsertText(SourceLocation::getFileLoc(MainFileID, 0), 
              StrObjDecl.c_str(), StrObjDecl.size());
   
-  FileVarDecl *NewVD = FileVarDecl::Create(SourceLocation(), 
+  FileVarDecl *NewVD = FileVarDecl::Create(*Context, SourceLocation(), 
                                        &Context->Idents.get(S.c_str()), strType, 
-                                       VarDecl::Static, NULL, *Context);
+                                       VarDecl::Static, NULL);
   DeclRefExpr *DRE = new DeclRefExpr(NewVD, strType, SourceLocation());
   Expr *Unop = new UnaryOperator(DRE, UnaryOperator::AddrOf,
                                  Context->getPointerType(DRE->getType()), 
@@ -1793,9 +1792,9 @@ ObjCInterfaceDecl *RewriteTest::isSuperReceiver(Expr *recExpr) {
 // struct objc_super { struct objc_object *receiver; struct objc_class *super; };
 QualType RewriteTest::getSuperStructType() {
   if (!SuperStructDecl) {
-    SuperStructDecl = RecordDecl::Create(Decl::Struct, SourceLocation(), 
-                                         &Context->Idents.get("objc_super"), 0,
-                                         *Context);
+    SuperStructDecl = RecordDecl::Create(*Context, Decl::Struct,
+                                         SourceLocation(), 
+                                         &Context->Idents.get("objc_super"), 0);
     QualType FieldTypes[2];
   
     // struct objc_object *receiver;
@@ -1815,9 +1814,9 @@ QualType RewriteTest::getSuperStructType() {
 
 QualType RewriteTest::getConstantStringStructType() {
   if (!ConstantStringDecl) {
-    ConstantStringDecl = RecordDecl::Create(Decl::Struct, SourceLocation(), 
-                         &Context->Idents.get("__NSConstantStringImpl"), 0,
-                                            *Context);
+    ConstantStringDecl = RecordDecl::Create(*Context, Decl::Struct,
+                                            SourceLocation(), 
+                         &Context->Idents.get("__NSConstantStringImpl"), 0);
     QualType FieldTypes[4];
   
     // struct objc_object *receiver;

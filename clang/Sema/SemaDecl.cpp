@@ -794,11 +794,11 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
              R.getAsString());
         InvalidDecl = true;
       }
-      NewVD = FileVarDecl::Create(D.getIdentifierLoc(), II, R, SC,
-                                  LastDeclarator, Context);
+      NewVD = FileVarDecl::Create(Context, D.getIdentifierLoc(), II, R, SC,
+                                  LastDeclarator);
     } else {
-      NewVD = BlockVarDecl::Create(D.getIdentifierLoc(), II, R, SC,
-                                   LastDeclarator, Context);
+      NewVD = BlockVarDecl::Create(Context, D.getIdentifierLoc(), II, R, SC,
+                                   LastDeclarator);
     }
     // Handle attributes prior to checking for duplicates in MergeVarDecl
     HandleDeclAttributes(NewVD, D.getDeclSpec().getAttributes(),
@@ -1017,8 +1017,8 @@ Sema::ActOnParamDeclarator(struct DeclaratorChunk::ParamInfo &PI,
   } else if (parmDeclType->isFunctionType())
     parmDeclType = Context.getPointerType(parmDeclType);
   
-  ParmVarDecl *New = ParmVarDecl::Create(PI.IdentLoc, II, parmDeclType, 
-                                         VarDecl::None, 0, Context);
+  ParmVarDecl *New = ParmVarDecl::Create(Context, PI.IdentLoc, II, parmDeclType, 
+                                         VarDecl::None, 0);
   
   if (PI.InvalidType)
     New->setInvalidDecl();
@@ -1178,9 +1178,9 @@ TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
   assert(!T.isNull() && "GetTypeForDeclarator() returned null type");
   
   // Scope manipulation handled by caller.
-  TypedefDecl *NewTD = TypedefDecl::Create(D.getIdentifierLoc(), 
+  TypedefDecl *NewTD = TypedefDecl::Create(Context, D.getIdentifierLoc(), 
                                            D.getIdentifier(), 
-                                           T, LastDeclarator, Context);
+                                           T, LastDeclarator);
   if (D.getInvalidType())
     NewTD->setInvalidDecl();
   return NewTD;
@@ -1259,7 +1259,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
   case Decl::Enum:
     // FIXME: Tag decls should be chained to any simultaneous vardecls, e.g.:
     // enum X { A, B, C } D;    D should chain to X.
-    New = EnumDecl::Create(Loc, Name, 0, Context);
+    New = EnumDecl::Create(Context, Loc, Name, 0);
     // If this is an undefined enum, warn.
     if (TK != TK_Definition) Diag(Loc, diag::ext_forward_ref_enum);
     break;
@@ -1268,7 +1268,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
   case Decl::Class:
     // FIXME: Tag decls should be chained to any simultaneous vardecls, e.g.:
     // struct X { int A; } D;    D should chain to X.
-    New = RecordDecl::Create(Kind, Loc, Name, 0, Context);
+    New = RecordDecl::Create(Context, Kind, Loc, Name, 0);
     break;
   }    
   
@@ -1582,8 +1582,8 @@ Sema::DeclTy *Sema::ActOnEnumConstant(Scope *S, DeclTy *theEnumDecl,
   }
   
   EnumConstantDecl *New = 
-    EnumConstantDecl::Create(IdLoc, Id, EltTy, Val, EnumVal, LastEnumConst,
-                             Context);
+    EnumConstantDecl::Create(Context, IdLoc, Id, EltTy, Val, EnumVal,
+                             LastEnumConst);
   
   // Register this decl in the current scope stack.
   New->setNext(Id->getFETokenInfo<ScopedDecl>());

@@ -354,9 +354,9 @@ class BlockVarDecl : public VarDecl {
                ScopedDecl *PrevDecl)
     : VarDecl(BlockVar, L, Id, T, S, PrevDecl) {}
 public:
-  static BlockVarDecl *Create(SourceLocation L, IdentifierInfo *Id, QualType T,
-                              StorageClass S, ScopedDecl *PrevDecl,
-                              ASTContext &C);
+  static BlockVarDecl *Create(ASTContext &C, SourceLocation L,
+                              IdentifierInfo *Id, QualType T, StorageClass S,
+                              ScopedDecl *PrevDecl);
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == BlockVar; }
   static bool classof(const BlockVarDecl *D) { return true; }  
@@ -377,9 +377,8 @@ class FileVarDecl : public VarDecl {
               ScopedDecl *PrevDecl)
     : VarDecl(FileVar, L, Id, T, S, PrevDecl) {}
 public:
-  static FileVarDecl *Create(SourceLocation L, IdentifierInfo *Id, QualType T,
-                             StorageClass S, ScopedDecl *PrevDecl,
-                             ASTContext &C);
+  static FileVarDecl *Create(ASTContext &C, SourceLocation L,IdentifierInfo *Id,
+                             QualType T, StorageClass S, ScopedDecl *PrevDecl);
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == FileVar; }
@@ -404,9 +403,8 @@ class ParmVarDecl : public VarDecl {
     : VarDecl(ParmVar, L, Id, T, S, PrevDecl), 
     objcDeclQualifier(OBJC_TQ_None) {}
 public:
-  static ParmVarDecl *Create(SourceLocation L, IdentifierInfo *Id, QualType T,
-                             StorageClass S, ScopedDecl *PrevDecl,
-                             ASTContext &C);
+  static ParmVarDecl *Create(ASTContext &C, SourceLocation L,IdentifierInfo *Id,
+                             QualType T, StorageClass S, ScopedDecl *PrevDecl);
   
   ObjCDeclQualifier getObjCDeclQualifier() const {
     return ObjCDeclQualifier(objcDeclQualifier);
@@ -559,9 +557,9 @@ protected:
   ~EnumConstantDecl() {}
 public:
 
-  static EnumConstantDecl *Create(SourceLocation L, IdentifierInfo *Id,
-                                  QualType T, Expr *E, const llvm::APSInt &V, 
-                                  ScopedDecl *PrevDecl, ASTContext &C);
+  static EnumConstantDecl *Create(ASTContext &C, SourceLocation L,
+                                  IdentifierInfo *Id, QualType T, Expr *E,
+                                  const llvm::APSInt &V, ScopedDecl *PrevDecl);
   
   const Expr *getInitExpr() const { return Init; }
   Expr *getInitExpr() { return Init; }
@@ -615,8 +613,8 @@ class TypedefDecl : public TypeDecl {
   ~TypedefDecl() {}
 public:
   
-  static TypedefDecl *Create(SourceLocation L, IdentifierInfo *Id, QualType T,
-                             ScopedDecl *PD, ASTContext &C);
+  static TypedefDecl *Create(ASTContext &C, SourceLocation L,IdentifierInfo *Id,
+                             QualType T, ScopedDecl *PD);
   
   QualType getUnderlyingType() const { return UnderlyingType; }
   void setUnderlyingType(QualType newType) { UnderlyingType = newType; }
@@ -691,8 +689,8 @@ class EnumDecl : public TagDecl {
     }
   ~EnumDecl() {}
 public:
-  static EnumDecl *Create(SourceLocation L, IdentifierInfo *Id,
-                          ScopedDecl *PrevDecl, ASTContext &C);
+  static EnumDecl *Create(ASTContext &C, SourceLocation L, IdentifierInfo *Id,
+                          ScopedDecl *PrevDecl);
   
   /// defineElements - When created, EnumDecl correspond to a forward declared
   /// enum.  This method is used to mark the decl as being defined, with the
@@ -754,8 +752,8 @@ class RecordDecl : public TagDecl {
   ~RecordDecl() {}
 public:
   
-  static RecordDecl *Create(Kind DK, SourceLocation L, IdentifierInfo *Id, 
-                            ScopedDecl *PrevDecl, ASTContext &C);
+  static RecordDecl *Create(ASTContext &C, Kind DK, SourceLocation L,
+                            IdentifierInfo *Id, ScopedDecl *PrevDecl);
   
   bool hasFlexibleArrayMember() const { return HasFlexibleArrayMember; }
   void setHasFlexibleArrayMember(bool V) { HasFlexibleArrayMember = V; }

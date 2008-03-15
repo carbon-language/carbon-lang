@@ -1048,8 +1048,8 @@ QualType ASTContext::maxIntegerType(QualType lhs, QualType rhs) {
 QualType ASTContext::getCFConstantStringType() {
   if (!CFConstantStringTypeDecl) {
     CFConstantStringTypeDecl = 
-      RecordDecl::Create(Decl::Struct, SourceLocation(), 
-                         &Idents.get("NSConstantString"), 0, *this);
+      RecordDecl::Create(*this, Decl::Struct, SourceLocation(), 
+                         &Idents.get("NSConstantString"), 0);
     QualType FieldTypes[4];
   
     // const int *isa;

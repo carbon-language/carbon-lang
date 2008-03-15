@@ -205,24 +205,24 @@ void Decl::addDeclKind(Kind k) {
 // Decl Allocation/Deallocation Method Implementations
 //===----------------------------------------------------------------------===//
 
-BlockVarDecl *BlockVarDecl::Create(SourceLocation L, IdentifierInfo *Id,
-                                   QualType T, StorageClass S,
-                                   ScopedDecl *PrevDecl, ASTContext &C) {
+BlockVarDecl *BlockVarDecl::Create(ASTContext &C, SourceLocation L,
+                                   IdentifierInfo *Id, QualType T,
+                                   StorageClass S, ScopedDecl *PrevDecl) {
   void *Mem = C.getAllocator().Allocate<BlockVarDecl>();
   return new (Mem) BlockVarDecl(L, Id, T, S, PrevDecl);
 }
 
 
-FileVarDecl *FileVarDecl::Create(SourceLocation L, IdentifierInfo *Id,
-                                 QualType T, StorageClass S, 
-                                 ScopedDecl *PrevDecl, ASTContext &C) {
+FileVarDecl *FileVarDecl::Create(ASTContext &C, SourceLocation L,
+                                 IdentifierInfo *Id, QualType T, StorageClass S,
+                                 ScopedDecl *PrevDecl) {
   void *Mem = C.getAllocator().Allocate<FileVarDecl>();
   return new (Mem) FileVarDecl(L, Id, T, S, PrevDecl);
 }
 
-ParmVarDecl *ParmVarDecl::Create(SourceLocation L, IdentifierInfo *Id,
-                                 QualType T, StorageClass S, 
-                                 ScopedDecl *PrevDecl, ASTContext &C) {
+ParmVarDecl *ParmVarDecl::Create(ASTContext &C, SourceLocation L,
+                                 IdentifierInfo *Id, QualType T, StorageClass S,
+                                 ScopedDecl *PrevDecl) {
   void *Mem = C.getAllocator().Allocate<ParmVarDecl>();
   return new (Mem) ParmVarDecl(L, Id, T, S, PrevDecl);
 }
@@ -236,28 +236,29 @@ FunctionDecl *FunctionDecl::Create(ASTContext &C, SourceLocation L,
 }
 
 
-EnumConstantDecl *EnumConstantDecl::Create(SourceLocation L, IdentifierInfo *Id,
-                                           QualType T, Expr *E, 
-                                           const llvm::APSInt &V, 
-                                           ScopedDecl *PrevDecl, ASTContext &C){
+EnumConstantDecl *EnumConstantDecl::Create(ASTContext &C, SourceLocation L,
+                                           IdentifierInfo *Id, QualType T,
+                                           Expr *E, const llvm::APSInt &V, 
+                                           ScopedDecl *PrevDecl){
   void *Mem = C.getAllocator().Allocate<EnumConstantDecl>();
   return new (Mem) EnumConstantDecl(L, Id, T, E, V, PrevDecl);
 }
 
-TypedefDecl *TypedefDecl::Create(SourceLocation L, IdentifierInfo *Id,
-                                 QualType T, ScopedDecl *PD, ASTContext &C) {
+TypedefDecl *TypedefDecl::Create(ASTContext &C, SourceLocation L,
+                                 IdentifierInfo *Id, QualType T,
+                                 ScopedDecl *PD) {
   void *Mem = C.getAllocator().Allocate<TypedefDecl>();
   return new (Mem) TypedefDecl(L, Id, T, PD);
 }
 
-EnumDecl *EnumDecl::Create(SourceLocation L, IdentifierInfo *Id,
-                           ScopedDecl *PrevDecl, ASTContext &C) {
+EnumDecl *EnumDecl::Create(ASTContext &C, SourceLocation L, IdentifierInfo *Id,
+                           ScopedDecl *PrevDecl) {
   void *Mem = C.getAllocator().Allocate<EnumDecl>();
   return new (Mem) EnumDecl(L, Id, PrevDecl);
 }
 
-RecordDecl *RecordDecl::Create(Kind DK, SourceLocation L, IdentifierInfo *Id, 
-                               ScopedDecl *PrevDecl, ASTContext &C) {
+RecordDecl *RecordDecl::Create(ASTContext &C, Kind DK, SourceLocation L,
+                               IdentifierInfo *Id, ScopedDecl *PrevDecl) {
   void *Mem = C.getAllocator().Allocate<RecordDecl>();
   return new (Mem) RecordDecl(DK, L, Id, PrevDecl);
 }
