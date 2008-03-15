@@ -1,0 +1,49 @@
+LEVEL = ../../..
+include $(LEVEL)/Makefile.common
+
+AWK = awk
+
+TESTDIRS = CodeGen Lexer Preprocessor Parser Sema Analysis Serialization
+
+# Only run rewriter tests on darwin.
+ifeq ($(OS),Darwin)
+TESTDIRS += Rewriter
+endif
+
+
+Makefile.tests:
+	@ echo '%.testresults: %' > $@
+	@ echo "^@ echo $$<" | tr "^" "\t" >> $@
+	@ echo "^@ PATH=$$PATH:$(ToolDir):$(LLVM_SRC_ROOT)/test/Scripts ./TestRunner.sh &< > &@" | tr "^&" '\t$$' >> $@
+	@ echo >> $@
+	@ echo "TESTS =" \\ >> $@
+	@ find $(TESTDIRS) \
+	  \( -name '*.c' -or -name '*.cpp' -or -name '*.m' \) \
+	| $(AWK) '{print "  " $$0 ".testresults \\"}' >> $@
+	@ echo '  ' >> $@
+	@ echo >> $@
+	@ echo "all:: &(TESTS)" | tr "&" '$$' >> $@
+	@ echo >> $@
+	@ echo "report: &(TESTS)" | tr "&" '$$' >> $@
+	@ echo "^@ cat $$<" | tr "^&<" "\t$$^" >> $@
+	@ echo >> $@
+	@ echo "clean:" | tr "&" '$$' >> $@
+	@ echo "^@ rm -f &(TESTS)" | tr "^&<" "\t$$^" >> $@
+	@ echo >> $@
+	@ echo ".PHONY: all report clean" >> $@
+
+
+#	find $(TESTDIRS) \
+#	  \( -name '*.c' -or -name '*.cpp' -or -name '*.m' \) \
+#	| $(AWK) '{print ".PHONY:", $$0 ".testresults"}' >> $@
+
+all:: Makefile.tests
+	@ $(MAKE) -f $< clean
+	@ $(MAKE) -f $< all report
+	@ $(MAKE) -f $< clean
+	@ rm $<
+
+.PHONY: all
+
+.NOTPARALLEL:
+
