@@ -514,13 +514,14 @@ protected:
 class FieldDecl : public NamedDecl {
   QualType DeclType;  
   Expr *BitWidth;
+protected:
+  FieldDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, QualType T,
+            Expr *BW = NULL)
+    : NamedDecl(DK, L, Id), DeclType(T), BitWidth(BW) {}
 public:
   FieldDecl(SourceLocation L, IdentifierInfo *Id, QualType T, 
             Expr *BW = NULL)
     : NamedDecl(Field, L, Id), DeclType(T), BitWidth(BW) {}
-  FieldDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, QualType T,
-            Expr *BW = NULL)
-    : NamedDecl(DK, L, Id), DeclType(T), BitWidth(BW) {}
 
   QualType getType() const { return DeclType; }
   QualType getCanonicalType() const { return DeclType.getCanonicalType(); }
