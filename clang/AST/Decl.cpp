@@ -16,8 +16,11 @@
 #include "clang/AST/Attr.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "llvm/ADT/DenseMap.h"
-
 using namespace clang;
+
+//===----------------------------------------------------------------------===//
+//  Statistics
+//===----------------------------------------------------------------------===//
 
 // temporary statistics gathering
 static unsigned nFuncs = 0;
@@ -54,42 +57,28 @@ static DeclAttrMapTy *DeclAttrs = 0;
 const char *Decl::getDeclKindName() const {
   switch (DeclKind) {
   default: assert(0 && "Unknown decl kind!");
-  case Typedef:
-    return "Typedef";
-  case Function:
-    return "Function";
-  case BlockVar:
-    return "BlockVar";
-  case FileVar:
-    return "FileVar";
-  case ParmVar:
-    return "ParmVar";
-  case EnumConstant:
-    return "EnumConstant";
-  case ObjCInterface:
-    return "ObjCInterface";
-  case ObjCClass:
-    return "ObjCClass";
-  case ObjCMethod:
-    return "ObjCMethod";
-  case ObjCProtocol:
-    return "ObjCProtocol";
-  case ObjCForwardProtocol:
-    return "ObjCForwardProtocol"; 
-  case Struct:
-    return "Struct";
-  case Union:
-    return "Union";
-  case Class:
-    return "Class";
-  case Enum:
-    return "Enum";
+  case Typedef:             return "Typedef";
+  case Function:            return "Function";
+  case BlockVar:            return "BlockVar";
+  case FileVar:             return "FileVar";
+  case ParmVar:             return "ParmVar";
+  case EnumConstant:        return "EnumConstant";
+  case ObjCInterface:       return "ObjCInterface";
+  case ObjCClass:           return "ObjCClass";
+  case ObjCMethod:          return "ObjCMethod";
+  case ObjCProtocol:        return "ObjCProtocol";
+  case ObjCForwardProtocol: return "ObjCForwardProtocol"; 
+  case Struct:              return "Struct";
+  case Union:               return "Union";
+  case Class:               return "Class";
+  case Enum:                return "Enum";
   }
 }
 
-bool Decl::CollectingStats(bool enable) {
-  if (enable) StatSwitch = true;
-    return StatSwitch;
+bool Decl::CollectingStats(bool Enable) {
+  if (Enable)
+    StatSwitch = true;
+  return StatSwitch;
 }
 
 void Decl::PrintStats() {
@@ -184,78 +173,36 @@ void Decl::PrintStats() {
     
 }
 
-void Decl::addDeclKind(const Kind k) {
+void Decl::addDeclKind(Kind k) {
   switch (k) {
-    case Typedef:
-      nTypedef++;
-      break;
-    case Function:
-      nFuncs++;
-      break;
-    case BlockVar:
-      nBlockVars++;
-      break;
-    case FileVar:
-      nFileVars++;
-      break;
-    case ParmVar:
-      nParmVars++;
-      break;
-    case EnumConstant:
-      nEnumConst++;
-      break;
-    case Field:
-      nFieldDecls++;
-      break;
-    case Struct:
-    case Union:
-    case Class:
-      nSUC++;
-      break;
-    case Enum:
-      nEnumDecls++;
-      break;
-    case ObjCInterface:
-      nInterfaceDecls++;
-      break;
-    case ObjCClass:
-      nClassDecls++;
-      break;
-    case ObjCMethod:
-      nMethodDecls++;
-      break;
-    case ObjCProtocol:
-      nProtocolDecls++;
-      break;
-    case ObjCForwardProtocol:
-      nForwardProtocolDecls++;
-      break;
-    case ObjCCategory:
-     nCategoryDecls++;
-     break;
-    case ObjCIvar:
-      nIvarDecls++;
-      break;
-    case ObjCImplementation: 
-      nObjCImplementationDecls++;
-      break;
-    case ObjCCategoryImpl:
-      nObjCCategoryImpl++;
-      break;
-    case CompatibleAlias:
-      nObjCCompatibleAlias++;
-      break;
-    case PropertyDecl:
-      nObjCPropertyDecl++;
-      break;
-    case LinkageSpec:
-      nLinkageSpecDecl++;
-      break;
-    case FileScopeAsm:
-      nFileScopeAsmDecl++;
-      break;
+  case Typedef:             nTypedef++; break;
+  case Function:            nFuncs++; break;
+  case BlockVar:            nBlockVars++; break;
+  case FileVar:             nFileVars++; break;
+  case ParmVar:             nParmVars++; break;
+  case EnumConstant:        nEnumConst++; break;
+  case Field:               nFieldDecls++; break;
+  case Struct: case Union: case Class: nSUC++; break;
+  case Enum:                nEnumDecls++; break;
+  case ObjCInterface:       nInterfaceDecls++; break;
+  case ObjCClass:           nClassDecls++; break;
+  case ObjCMethod:          nMethodDecls++; break;
+  case ObjCProtocol:        nProtocolDecls++; break;
+  case ObjCForwardProtocol: nForwardProtocolDecls++; break;
+  case ObjCCategory:        nCategoryDecls++; break;
+  case ObjCIvar:            nIvarDecls++; break;
+  case ObjCImplementation:  nObjCImplementationDecls++; break;
+  case ObjCCategoryImpl:    nObjCCategoryImpl++; break;
+  case CompatibleAlias:     nObjCCompatibleAlias++; break;
+  case PropertyDecl:        nObjCPropertyDecl++; break;
+  case LinkageSpec:         nLinkageSpecDecl++; break;
+  case FileScopeAsm:        nFileScopeAsmDecl++; break;
   }
 }
+
+//===----------------------------------------------------------------------===//
+// Decl Implementation
+//===----------------------------------------------------------------------===//
 
 // Out-of-line virtual method providing a home for Decl.
 Decl::~Decl() {
@@ -273,21 +220,19 @@ Decl::~Decl() {
   }        
 }
 
-void Decl::addAttr(Attr *newattr)
-{
+void Decl::addAttr(Attr *NewAttr) {
   if (!DeclAttrs)
-    DeclAttrs = new llvm::DenseMap<const Decl*, Attr*>;
+    DeclAttrs = new llvm::DenseMap<const Decl*, Attr*>();
   
-  Attr *&attr = (*DeclAttrs)[this];
+  Attr *&ExistingAttr = (*DeclAttrs)[this];
 
-  newattr->setNext(attr);
-  attr = newattr;
+  NewAttr->setNext(ExistingAttr);
+  ExistingAttr = NewAttr;
   
   HasAttrs = true;
 }
 
-const Attr *Decl::getAttrs() const
-{
+const Attr *Decl::getAttrs() const {
   if (!HasAttrs)
     return 0;
   
@@ -305,7 +250,8 @@ FunctionDecl::~FunctionDecl() {
 }
 
 unsigned FunctionDecl::getNumParams() const {
-  if (isa<FunctionTypeNoProto>(getCanonicalType())) return 0;
+  if (isa<FunctionTypeNoProto>(getCanonicalType()))
+    return 0;
   return cast<FunctionTypeProto>(getCanonicalType())->getNumArgs();
 }
 
@@ -345,6 +291,11 @@ FieldDecl* RecordDecl::getMember(IdentifierInfo *name) {
   }
   return 0;
 }
+
+
+//===----------------------------------------------------------------------===//
+// Objective-C Decl Implementation
+//===----------------------------------------------------------------------===//
 
 void ObjCMethodDecl::setMethodParams(ParmVarDecl **NewParamInfo,
                                      unsigned NumParams) {
