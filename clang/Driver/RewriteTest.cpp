@@ -1554,7 +1554,7 @@ void RewriteTest::SynthSelGetUidFunctionDecl() {
   QualType getFuncType = Context->getFunctionType(Context->getObjCSelType(),
                                                    &ArgTys[0], ArgTys.size(),
                                                    false /*isVariadic*/);
-  SelGetUidFunctionDecl = new FunctionDecl(SourceLocation(), 
+  SelGetUidFunctionDecl = FunctionDecl::Create(*Context, SourceLocation(), 
                                            SelGetUidIdent, getFuncType,
                                            FunctionDecl::Extern, false, 0);
 }
@@ -1568,7 +1568,7 @@ void RewriteTest::SynthGetProtocolFunctionDecl() {
   QualType getFuncType = Context->getFunctionType(Context->getObjCProtoType(),
                                                   &ArgTys[0], ArgTys.size(),
                                                   false /*isVariadic*/);
-  GetProtocolFunctionDecl = new FunctionDecl(SourceLocation(), 
+  GetProtocolFunctionDecl = FunctionDecl::Create(*Context, SourceLocation(), 
                                              SelGetProtoIdent, getFuncType,
                                              FunctionDecl::Extern, false, 0);
 }
@@ -1595,7 +1595,7 @@ void RewriteTest::SynthSuperContructorFunctionDecl() {
   QualType msgSendType = Context->getFunctionType(Context->getObjCIdType(),
                                                   &ArgTys[0], ArgTys.size(),
                                                   false);
-  SuperContructorFunctionDecl = new FunctionDecl(SourceLocation(), 
+  SuperContructorFunctionDecl = FunctionDecl::Create(*Context, SourceLocation(), 
                                          msgSendIdent, msgSendType,
                                          FunctionDecl::Extern, false, 0);
 }
@@ -1613,7 +1613,7 @@ void RewriteTest::SynthMsgSendFunctionDecl() {
   QualType msgSendType = Context->getFunctionType(Context->getObjCIdType(),
                                                   &ArgTys[0], ArgTys.size(),
                                                   true /*isVariadic*/);
-  MsgSendFunctionDecl = new FunctionDecl(SourceLocation(), 
+  MsgSendFunctionDecl = FunctionDecl::Create(*Context, SourceLocation(), 
                                          msgSendIdent, msgSendType,
                                          FunctionDecl::Extern, false, 0);
 }
@@ -1634,7 +1634,7 @@ void RewriteTest::SynthMsgSendSuperFunctionDecl() {
   QualType msgSendType = Context->getFunctionType(Context->getObjCIdType(),
                                                   &ArgTys[0], ArgTys.size(),
                                                   true /*isVariadic*/);
-  MsgSendSuperFunctionDecl = new FunctionDecl(SourceLocation(), 
+  MsgSendSuperFunctionDecl = FunctionDecl::Create(*Context, SourceLocation(), 
                                               msgSendIdent, msgSendType,
                                               FunctionDecl::Extern, false, 0);
 }
@@ -1652,7 +1652,7 @@ void RewriteTest::SynthMsgSendStretFunctionDecl() {
   QualType msgSendType = Context->getFunctionType(Context->getObjCIdType(),
                                                   &ArgTys[0], ArgTys.size(),
                                                   true /*isVariadic*/);
-  MsgSendStretFunctionDecl = new FunctionDecl(SourceLocation(), 
+  MsgSendStretFunctionDecl = FunctionDecl::Create(*Context, SourceLocation(), 
                                          msgSendIdent, msgSendType,
                                          FunctionDecl::Extern, false, 0);
 }
@@ -1675,7 +1675,8 @@ void RewriteTest::SynthMsgSendSuperStretFunctionDecl() {
   QualType msgSendType = Context->getFunctionType(Context->getObjCIdType(),
                                                   &ArgTys[0], ArgTys.size(),
                                                   true /*isVariadic*/);
-  MsgSendSuperStretFunctionDecl = new FunctionDecl(SourceLocation(), 
+  MsgSendSuperStretFunctionDecl = FunctionDecl::Create(*Context,
+                                                       SourceLocation(), 
                                               msgSendIdent, msgSendType,
                                               FunctionDecl::Extern, false, 0);
 }
@@ -1693,7 +1694,7 @@ void RewriteTest::SynthMsgSendFpretFunctionDecl() {
   QualType msgSendType = Context->getFunctionType(Context->getObjCIdType(),
                                                   &ArgTys[0], ArgTys.size(),
                                                   true /*isVariadic*/);
-  MsgSendFpretFunctionDecl = new FunctionDecl(SourceLocation(), 
+  MsgSendFpretFunctionDecl = FunctionDecl::Create(*Context, SourceLocation(), 
                                               msgSendIdent, msgSendType,
                                               FunctionDecl::Extern, false, 0);
 }
@@ -1707,7 +1708,7 @@ void RewriteTest::SynthGetClassFunctionDecl() {
   QualType getClassType = Context->getFunctionType(Context->getObjCIdType(),
                                                    &ArgTys[0], ArgTys.size(),
                                                    false /*isVariadic*/);
-  GetClassFunctionDecl = new FunctionDecl(SourceLocation(), 
+  GetClassFunctionDecl = FunctionDecl::Create(*Context, SourceLocation(), 
                                           getClassIdent, getClassType,
                                           FunctionDecl::Extern, false, 0);
 }
@@ -1721,7 +1722,7 @@ void RewriteTest::SynthGetMetaClassFunctionDecl() {
   QualType getClassType = Context->getFunctionType(Context->getObjCIdType(),
                                                    &ArgTys[0], ArgTys.size(),
                                                    false /*isVariadic*/);
-  GetMetaClassFunctionDecl = new FunctionDecl(SourceLocation(), 
+  GetMetaClassFunctionDecl = FunctionDecl::Create(*Context, SourceLocation(), 
                                               getClassIdent, getClassType,
                                               FunctionDecl::Extern, false, 0);
 }

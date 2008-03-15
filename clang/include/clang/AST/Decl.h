@@ -435,13 +435,18 @@ public:
   enum StorageClass {
     None, Extern, Static, PrivateExtern
   };
+private:
   FunctionDecl(SourceLocation L, IdentifierInfo *Id, QualType T,
-               StorageClass S = None, bool isInline = false, 
-               ScopedDecl *PrevDecl = 0)
+               StorageClass S, bool isInline, ScopedDecl *PrevDecl)
     : ValueDecl(Function, L, Id, T, PrevDecl), 
       ParamInfo(0), Body(0), DeclChain(0), SClass(S), IsInline(isInline) {}
   virtual ~FunctionDecl();
-
+public:
+  static FunctionDecl *Create(ASTContext &C, SourceLocation L,
+                              IdentifierInfo *Id, QualType T, 
+                              StorageClass S = None, bool isInline = false, 
+                              ScopedDecl *PrevDecl = 0);
+  
   Stmt *getBody() const { return Body; }
   void setBody(Stmt *B) { Body = B; }
   

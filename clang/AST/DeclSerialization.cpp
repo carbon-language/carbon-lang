@@ -338,7 +338,7 @@ FunctionDecl* FunctionDecl::CreateImpl(Deserializer& D) {
   bool IsInline = D.ReadBool();
   
   FunctionDecl* decl =
-    new FunctionDecl(SourceLocation(),NULL,QualType(),SClass,IsInline);
+    new FunctionDecl(SourceLocation(),NULL,QualType(),SClass, IsInline, 0);
   
   decl->ValueDecl::ReadInRec(D);
   D.ReadPtr(decl->DeclChain);

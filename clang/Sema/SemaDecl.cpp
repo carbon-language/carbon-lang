@@ -166,8 +166,8 @@ ScopedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
     InitBuiltinVaListType();
     
   QualType R = Context.BuiltinInfo.GetBuiltinType(BID, Context);  
-  FunctionDecl *New = new FunctionDecl(SourceLocation(), II, R,
-                                       FunctionDecl::Extern, false, 0);
+  FunctionDecl *New = FunctionDecl::Create(Context, SourceLocation(), II, R,
+                                           FunctionDecl::Extern, false, 0);
   
   // Find translation-unit scope to insert this function into.
   if (Scope *FnS = S->getFnParent())
@@ -753,9 +753,10 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
       case DeclSpec::SCS_private_extern: SC = FunctionDecl::PrivateExtern;break;
     }
 
-    FunctionDecl *NewFD = new FunctionDecl(D.getIdentifierLoc(), II, R, SC,
-                                           D.getDeclSpec().isInlineSpecified(),
-                                           LastDeclarator);
+    bool isInline = D.getDeclSpec().isInlineSpecified();
+    FunctionDecl *NewFD = FunctionDecl::Create(Context, D.getIdentifierLoc(),
+                                               II, R, SC, isInline,
+                                               LastDeclarator);
     // Handle attributes.
     HandleDeclAttributes(NewFD, D.getDeclSpec().getAttributes(),
                          D.getAttributes());

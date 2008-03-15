@@ -227,6 +227,15 @@ ParmVarDecl *ParmVarDecl::Create(SourceLocation L, IdentifierInfo *Id,
   return new (Mem) ParmVarDecl(L, Id, T, S, PrevDecl);
 }
 
+FunctionDecl *FunctionDecl::Create(ASTContext &C, SourceLocation L, 
+                                   IdentifierInfo *Id, QualType T, 
+                                   StorageClass S, bool isInline, 
+                                   ScopedDecl *PrevDecl) {
+  void *Mem = C.getAllocator().Allocate<FunctionDecl>();
+  return new (Mem) FunctionDecl(L, Id, T, S, isInline, PrevDecl);
+}
+
+
 EnumConstantDecl *EnumConstantDecl::Create(SourceLocation L, IdentifierInfo *Id,
                                            QualType T, Expr *E, 
                                            const llvm::APSInt &V, 
