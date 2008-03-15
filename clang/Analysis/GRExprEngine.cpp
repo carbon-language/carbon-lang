@@ -1421,9 +1421,17 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
       StmtExpr* SE = cast<StmtExpr>(S);
       
       ValueState* St = GetState(Pred);
-      Expr* LastExpr = cast<Expr>(*SE->getSubStmt()->body_rbegin());
-      Nodify(Dst, SE, Pred, SetRVal(St, SE, GetRVal(St, LastExpr)));
-      break;      
+      
+      // FIXME: Not certain if we can have empty StmtExprs.  If so, we should
+      // probably just remove these from the CFG.
+      assert (!SE->getSubStmt()->body_empty());
+
+      if (Expr* LastExpr = dyn_cast<Expr>(*SE->getSubStmt()->body_rbegin()))
+        Nodify(Dst, SE, Pred, SetRVal(St, SE, GetRVal(St, LastExpr)));
+      else
+        Dst.Add(Pred);
+      
+      break;
     }
       
       // FIXME: We may wish to always bind state to ReturnStmts so
