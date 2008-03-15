@@ -163,17 +163,29 @@ RVal ValueStateManager::GetRVal(ValueState* St, LVal LV, QualType T) {
       // FIXME: We should limit how far a "ContentsOf" will go...
       
     case lval::SymbolValKind: {
+      
+      
+      // FIXME: This is a broken representation of memory, and is prone
+      //  to crashing the analyzer when addresses to symbolic values are
+      //  passed through casts.  We need a better representation of symbolic
+      //  memory (or just memory in general); probably we should do this
+      //  as a plugin class (similar to GRTransferFuncs).
+      
+#if 0      
       const lval::SymbolVal& SV = cast<lval::SymbolVal>(LV);
       assert (T.getTypePtr());
       
       // Punt on "symbolic" function pointers.
       if (T->isFunctionType())
-        return UnknownVal();
-      
+        return UnknownVal();      
+
       if (T->isPointerType())
         return lval::SymbolVal(SymMgr.getContentsOfSymbol(SV.getSymbol()));
       else
         return nonlval::SymbolVal(SymMgr.getContentsOfSymbol(SV.getSymbol()));
+#endif
+      
+      return UnknownVal();
     }
       
     default:
