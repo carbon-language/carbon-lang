@@ -729,27 +729,27 @@ void GRExprEngine::VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr* Ex,
                                               NodeTy* Pred,
                                               NodeSet& Dst) {
 
-  assert (Ex->isSizeOf() && "FIXME: AlignOf(Expr) not yet implemented.");
-  
-  // 6.5.3.4 sizeof: "The result type is an integer."
-  
   QualType T = Ex->getArgumentType();
+  uint64_t amt;  
+  
+  if (Ex->isSizeOf()) {
 
-
-  // FIXME: Add support for VLAs.
-  if (!T.getTypePtr()->isConstantSizeType())
-    return;
-  
-  
-  uint64_t size = 1;  // Handle sizeof(void)
-  
-  if (T != getContext().VoidTy)
-    size = getContext().getTypeSize(T) / 8;
+    // FIXME: Add support for VLAs.
+    if (!T.getTypePtr()->isConstantSizeType())
+      return;
+    
+    amt = 1;  // Handle sizeof(void)
+    
+    if (T != getContext().VoidTy)
+      amt = getContext().getTypeSize(T) / 8;
+    
+  }
+  else  // Get alignment of the type.
+    amt = getContext().getTypeAlign(T);
   
   Nodify(Dst, Ex, Pred,
          SetRVal(GetState(Pred), Ex,
-                  NonLVal::MakeVal(BasicVals, size, Ex->getType())));
-  
+                 NonLVal::MakeVal(BasicVals, amt, Ex->getType())));  
 }
 
 void GRExprEngine::VisitDeref(UnaryOperator* U, NodeTy* Pred,
