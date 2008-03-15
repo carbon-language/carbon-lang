@@ -327,8 +327,8 @@ void RewriteTest::Initialize(ASTContext &context) {
   S += "  long length;\n";
   S += "  __NSConstantStringImpl(char *s, long l) :\n";
   S += "  flags(0), str(s), length(l)\n";
-  S += "    { extern struct objc_object *_NSConstantStringClassReference;\n";
-  S += "      isa = _NSConstantStringClassReference; }\n";
+  S += "    { extern int __CFConstantStringClassReference[];\n";
+  S += "      isa = (struct objc_object *)__CFConstantStringClassReference;}\n";
   S += "};\n";
   S += "#define __NSCONSTANTSTRINGIMPL\n";
   S += "#endif\n";
@@ -1737,9 +1737,8 @@ Stmt *RewriteTest::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
   Exp->getString()->printPretty(prettyBuf);
   StrObjDecl += prettyBuf.str();
   StrObjDecl += ",";
-  // FIXME: This length isn't correct. It doesn't include escape characters
-  // inserted by the pretty printer.
-  StrObjDecl += utostr(Exp->getString()->getByteLength()) + ");\n";
+  // The minus 2 removes the begin/end double quotes.
+  StrObjDecl += utostr(prettyBuf.str().size()-2) + ");\n";
   InsertText(SourceLocation::getFileLoc(MainFileID, 0), 
              StrObjDecl.c_str(), StrObjDecl.size());
   
