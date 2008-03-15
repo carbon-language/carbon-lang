@@ -467,8 +467,7 @@ void ScheduleDAG::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
   assert(isNew && "Node emitted out of order - early");
 }
 
-void ScheduleDAG::CreateVirtualRegisters(SDNode *Node,
-                                         MachineInstr *MI,
+void ScheduleDAG::CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
                                          const TargetInstrDesc &II,
                                      DenseMap<SDOperand, unsigned> &VRBaseMap) {
   for (unsigned i = 0; i < II.getNumDefs(); ++i) {
@@ -494,7 +493,13 @@ void ScheduleDAG::CreateVirtualRegisters(SDNode *Node,
     // Create the result registers for this node and add the result regs to
     // the machine instruction.
     if (VRBase == 0) {
-      const TargetRegisterClass *RC = getInstrOperandRegClass(TRI, TII, II, i);
+      const TargetRegisterClass *RC;
+      if (Node->getTargetOpcode() == TargetInstrInfo::IMPLICIT_DEF)
+        // IMPLICIT_DEF can produce any type of result so its TargetInstrDesc
+        // does not include operand register class info.
+        RC = DAG.getTargetLoweringInfo().getRegClassFor(Node->getValueType(0));
+      else
+        RC = getInstrOperandRegClass(TRI, TII, II, i);
       assert(RC && "Isn't a register operand!");
       VRBase = MRI.createVirtualRegister(RC);
       MI->addOperand(MachineOperand::CreateReg(VRBase, true));

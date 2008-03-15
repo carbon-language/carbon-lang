@@ -877,6 +877,8 @@ unsigned ARM::GetInstSize(MachineInstr *MI) {
       return TAI->getInlineAsmLength(MI->getOperand(0).getSymbolName());
     if (MI->getOpcode() == ARM::LABEL)
       return 0;
+    if (MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF)
+      return 0;
     assert(0 && "Unknown or unset size field for instr!");
     break;
   case ARMII::Size8Bytes: return 8;          // Arm instruction x 2.

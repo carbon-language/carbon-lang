@@ -66,6 +66,10 @@ namespace llvm {
     ///
     const TargetAsmInfo *TAI;
 
+    /// Target Register Information.
+    ///
+    const TargetRegisterInfo *TRI;
+
     /// Name-mangler for global names.
     ///
     Mangler *Mang;
@@ -318,6 +322,10 @@ namespace llvm {
     /// printInlineAsm - This method formats and prints the specified machine
     /// instruction that is an inline asm.
     void printInlineAsm(const MachineInstr *MI) const;
+
+    /// printImplicitDef - This method prints the specified machine instruction
+    /// that is an implicit def.
+    virtual void printImplicitDef(const MachineInstr *MI) const;
     
     /// printBasicBlockLabel - This method prints the label for the specified
     /// MachineBasicBlock

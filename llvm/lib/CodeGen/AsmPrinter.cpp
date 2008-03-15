@@ -29,6 +29,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include <cerrno>
 using namespace llvm;
@@ -39,7 +40,8 @@ AsmVerbose("asm-verbose", cl::Hidden, cl::desc("Add comments to directives."));
 char AsmPrinter::ID = 0;
 AsmPrinter::AsmPrinter(std::ostream &o, TargetMachine &tm,
                        const TargetAsmInfo *T)
-  : MachineFunctionPass((intptr_t)&ID), FunctionNumber(0), O(o), TM(tm), TAI(T),
+  : MachineFunctionPass((intptr_t)&ID), FunctionNumber(0), O(o),
+    TM(tm), TAI(T), TRI(tm.getRegisterInfo()),
     IsInTextSection(false)
 {}
 
@@ -1292,6 +1294,13 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
     }
   }
   O << "\n\t" << TAI->getInlineAsmEnd() << "\n";
+}
+
+/// printImplicitDef - This method prints the specified machine instruction
+/// that is an implicit def.
+void AsmPrinter::printImplicitDef(const MachineInstr *MI) const {
+  O << "\t" << TAI->getCommentString() << " implicit-def: "
+    << TRI->getAsmName(MI->getOperand(0).getReg()) << "\n";
 }
 
 /// printLabel - This method prints a local label used by debug and

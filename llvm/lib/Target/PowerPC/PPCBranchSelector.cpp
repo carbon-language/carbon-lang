@@ -59,12 +59,6 @@ FunctionPass *llvm::createPPCBranchSelectionPass() {
 ///
 static unsigned getNumBytesForInstruction(MachineInstr *MI) {
   switch (MI->getOpcode()) {
-  case PPC::IMPLICIT_DEF_GPRC: // no asm emitted
-  case PPC::IMPLICIT_DEF_G8RC: // no asm emitted
-  case PPC::IMPLICIT_DEF_F4:   // no asm emitted
-  case PPC::IMPLICIT_DEF_F8:   // no asm emitted
-  case PPC::IMPLICIT_DEF_VRRC: // no asm emitted
-    return 0;
   case PPC::INLINEASM: {       // Inline Asm: Variable size.
     MachineFunction *MF = MI->getParent()->getParent();
     const char *AsmStr = MI->getOperand(0).getSymbolName();

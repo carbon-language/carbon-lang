@@ -112,12 +112,6 @@ void PPCCodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
     case TargetInstrInfo::LABEL:
       MCE.emitLabel(MI.getOperand(0).getImm());
       break;
-    case PPC::IMPLICIT_DEF_GPRC:
-    case PPC::IMPLICIT_DEF_G8RC:
-    case PPC::IMPLICIT_DEF_F8:
-    case PPC::IMPLICIT_DEF_F4:
-    case PPC::IMPLICIT_DEF_VRRC:
-      break; // pseudo opcode, no side effects
     case PPC::MovePCtoLR:
     case PPC::MovePCtoLR8:
       assert(TM.getRelocationModel() == Reloc::PIC_);

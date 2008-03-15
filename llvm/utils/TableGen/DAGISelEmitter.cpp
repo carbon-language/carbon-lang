@@ -1825,7 +1825,12 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
                  "Ops.size());\n"
      << "  return New.Val;\n"
      << "}\n\n";
-  
+
+  OS << "SDNode *Select_UNDEF(const SDOperand &N) {\n"
+     << "  return CurDAG->getTargetNode(TargetInstrInfo::IMPLICIT_DEF,\n"
+     << "                               N.getValueType());\n"
+     << "}\n\n";
+
   OS << "SDNode *Select_LABEL(const SDOperand &N) {\n"
      << "  SDOperand Chain = N.getOperand(0);\n"
      << "  SDOperand N1 = N.getOperand(1);\n"
@@ -1926,7 +1931,8 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  case ISD::LABEL: return Select_LABEL(N);\n"
      << "  case ISD::DECLARE: return Select_DECLARE(N);\n"
      << "  case ISD::EXTRACT_SUBREG: return Select_EXTRACT_SUBREG(N);\n"
-     << "  case ISD::INSERT_SUBREG:  return Select_INSERT_SUBREG(N);\n";
+     << "  case ISD::INSERT_SUBREG: return Select_INSERT_SUBREG(N);\n"
+     << "  case ISD::UNDEF: return Select_UNDEF(N);\n";
 
     
   // Loop over all of the case statements, emiting a call to each method we

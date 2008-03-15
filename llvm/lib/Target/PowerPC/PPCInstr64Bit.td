@@ -54,14 +54,6 @@ def HI48_64 : SDNodeXForm<imm, [{
 
 
 //===----------------------------------------------------------------------===//
-// Pseudo instructions.
-//
-
-def IMPLICIT_DEF_G8RC : Pseudo<(outs G8RC:$rD), (ins),"; IMPLICIT_DEF_G8RC $rD",
-                              [(set G8RC:$rD, (undef))]>;
-
-
-//===----------------------------------------------------------------------===//
 // Calls.
 //
 

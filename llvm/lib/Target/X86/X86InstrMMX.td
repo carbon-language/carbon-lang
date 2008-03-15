@@ -13,19 +13,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-// Some 'special' instructions
-let isImplicitDef = 1 in
-def IMPLICIT_DEF_VR64 : I<0, Pseudo, (outs VR64:$dst), (ins),
-                          "#IMPLICIT_DEF $dst",
-                          [(set VR64:$dst, (v8i8 (undef)))]>,
-                        Requires<[HasMMX]>;
-
-// 64-bit vector undef's.
-def : Pat<(v8i8  (undef)), (IMPLICIT_DEF_VR64)>;
-def : Pat<(v4i16 (undef)), (IMPLICIT_DEF_VR64)>;
-def : Pat<(v2i32 (undef)), (IMPLICIT_DEF_VR64)>;
-def : Pat<(v1i64 (undef)), (IMPLICIT_DEF_VR64)>;
-
 //===----------------------------------------------------------------------===//
 // MMX Pattern Fragments
 //===----------------------------------------------------------------------===//

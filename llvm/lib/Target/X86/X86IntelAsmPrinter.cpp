@@ -114,7 +114,6 @@ void X86IntelAsmPrinter::printSSECC(const MachineInstr *MI, unsigned Op) {
 
 void X86IntelAsmPrinter::printOp(const MachineOperand &MO, 
                                  const char *Modifier) {
-  const TargetRegisterInfo &RI = *TM.getRegisterInfo();
   switch (MO.getType()) {
   case MachineOperand::MO_Register: {      
     if (TargetRegisterInfo::isPhysicalRegister(MO.getReg())) {
@@ -125,7 +124,7 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
                       ((strcmp(Modifier,"subreg16") == 0) ? MVT::i16 :MVT::i8));
         Reg = getX86SubSuperRegister(Reg, VT);
       }
-      O << RI.get(Reg).AsmName;
+      O << TRI->getAsmName(Reg);
     } else
       O << "reg" << MO.getReg();
     return;
@@ -253,7 +252,6 @@ void X86IntelAsmPrinter::printPICLabel(const MachineInstr *MI, unsigned Op) {
 
 bool X86IntelAsmPrinter::printAsmMRegister(const MachineOperand &MO,
                                            const char Mode) {
-  const TargetRegisterInfo &RI = *TM.getRegisterInfo();
   unsigned Reg = MO.getReg();
   switch (Mode) {
   default: return true;  // Unknown mode.
@@ -271,7 +269,7 @@ bool X86IntelAsmPrinter::printAsmMRegister(const MachineOperand &MO,
     break;
   }
 
-  O << '%' << RI.get(Reg).AsmName;
+  O << '%' << TRI->getAsmName(Reg);
   return false;
 }
 

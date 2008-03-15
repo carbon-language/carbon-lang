@@ -160,9 +160,6 @@ class VX2_Int<bits<11> xo, string opc, Intrinsic IntID>
 //===----------------------------------------------------------------------===//
 // Instruction Definitions.
 
-def IMPLICIT_DEF_VRRC : Pseudo<(outs VRRC:$rD), (ins),"; IMPLICIT_DEF_VRRC $rD",
-                               [(set VRRC:$rD, (v4i32 (undef)))]>;
-
 def DSS      : DSS_Form<822, (outs),
                         (ins u5imm:$ZERO0, u5imm:$STRM,u5imm:$ZERO1,u5imm:$ZERO2),
                         "dss $STRM", LdStGeneral /*FIXME*/, []>;
@@ -578,11 +575,6 @@ def : Pat<(int_ppc_altivec_dstst G8RC:$rA, GPRC:$rB, imm:$STRM),
           (DSTST64 0, imm:$STRM, (i64 G8RC:$rA), GPRC:$rB)>;
 def : Pat<(int_ppc_altivec_dststt G8RC:$rA, GPRC:$rB, imm:$STRM),
           (DSTSTT64 1, imm:$STRM, (i64 G8RC:$rA), GPRC:$rB)>;
-
-// Undef.
-def : Pat<(v16i8 (undef)), (IMPLICIT_DEF_VRRC)>;
-def : Pat<(v8i16 (undef)), (IMPLICIT_DEF_VRRC)>;
-def : Pat<(v4f32 (undef)), (IMPLICIT_DEF_VRRC)>;
 
 // Loads.
 def : Pat<(v4i32 (load xoaddr:$src)), (LVX xoaddr:$src)>;

@@ -205,7 +205,6 @@ static inline bool printStub(TargetMachine &TM, const X86Subtarget* ST) {
 void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
                                     const char *Modifier, bool NotRIPRel) {
   const MachineOperand &MO = MI->getOperand(OpNo);
-  const TargetRegisterInfo &RI = *TM.getRegisterInfo();
   switch (MO.getType()) {
   case MachineOperand::MO_Register: {
     assert(TargetRegisterInfo::isPhysicalRegister(MO.getReg()) &&
@@ -218,7 +217,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
                     ((strcmp(Modifier+6,"16") == 0) ? MVT::i16 : MVT::i8));
       Reg = getX86SubSuperRegister(Reg, VT);
     }
-    for (const char *Name = RI.get(Reg).AsmName; *Name; ++Name)
+    for (const char *Name = TRI->getAsmName(Reg); *Name; ++Name)
       O << (char)tolower(*Name);
     return;
   }
@@ -548,7 +547,6 @@ void X86ATTAsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
 
 bool X86ATTAsmPrinter::printAsmMRegister(const MachineOperand &MO,
                                          const char Mode) {
-  const TargetRegisterInfo &RI = *TM.getRegisterInfo();
   unsigned Reg = MO.getReg();
   switch (Mode) {
   default: return true;  // Unknown mode.
@@ -570,7 +568,7 @@ bool X86ATTAsmPrinter::printAsmMRegister(const MachineOperand &MO,
   }
 
   O << '%';
-  for (const char *Name = RI.get(Reg).AsmName; *Name; ++Name)
+  for (const char *Name = TRI->getAsmName(Reg); *Name; ++Name)
     O << (char)tolower(*Name);
   return false;
 }

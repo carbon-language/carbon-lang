@@ -120,9 +120,6 @@ namespace {
           case Alpha::ALTENT:
           case Alpha::MEMLABEL:
           case Alpha::PCLABEL:
-          case Alpha::IDEF_I:
-          case Alpha::IDEF_F32:
-          case Alpha::IDEF_F64:
             --count;
             break;
           case Alpha::BR:

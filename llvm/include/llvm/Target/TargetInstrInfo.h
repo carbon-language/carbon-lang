@@ -49,7 +49,8 @@ public:
     LABEL = 2,
     DECLARE = 3,
     EXTRACT_SUBREG = 4,
-    INSERT_SUBREG = 5
+    INSERT_SUBREG = 5,
+    IMPLICIT_DEF = 6
   };
   
   // Target independent implict values for use with subreg insert. All targets

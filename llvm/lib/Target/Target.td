@@ -368,6 +368,13 @@ def INSERT_SUBREG : Instruction {
   let Namespace = "TargetInstrInfo";
   let neverHasSideEffects = 1;
 }
+def IMPLICIT_DEF : Instruction {
+  let OutOperandList = (ops unknown:$dst);
+  let InOperandList = (ops);
+  let AsmString = "";
+  let Namespace = "TargetInstrInfo";
+  let neverHasSideEffects = 1;
+}
 
 //===----------------------------------------------------------------------===//
 // AsmWriter - This class can be implemented by targets that need to customize

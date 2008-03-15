@@ -630,6 +630,9 @@ void AsmWriterEmitter::run(std::ostream &O) {
     << "  } else if (MI->getOpcode() == TargetInstrInfo::DECLARE) {\n"
     << "    printDeclare(MI);\n"
     << "    return true;\n"
+    << "  } else if (MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF) {\n"
+    << "    printImplicitDef(MI);\n"
+    << "    return true;\n"
     << "  }\n\n";
   
   O << "  O << \"\\t\";\n\n";

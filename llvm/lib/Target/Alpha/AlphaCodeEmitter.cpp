@@ -95,9 +95,6 @@ void AlphaCodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
     case Alpha::ALTENT:
     case Alpha::PCLABEL:
     case Alpha::MEMLABEL:
-    case Alpha::IDEF_I:
-    case Alpha::IDEF_F32:
-    case Alpha::IDEF_F64:
       break; //skip these
     }
   }

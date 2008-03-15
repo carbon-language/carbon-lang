@@ -49,23 +49,6 @@ def X86insrtps : SDNode<"X86ISD::INSERTPS",
                                       SDTCisVT<2, f32>, SDTCisPtrTy<3>]>>;
 
 //===----------------------------------------------------------------------===//
-// SSE 'Special' Instructions
-//===----------------------------------------------------------------------===//
-
-let isImplicitDef = 1 in {
-def IMPLICIT_DEF_VR128 : I<0, Pseudo, (outs VR128:$dst), (ins),
-                           "#IMPLICIT_DEF $dst",
-                           [(set VR128:$dst, (v4f32 (undef)))]>,
-                         Requires<[HasSSE1]>;
-def IMPLICIT_DEF_FR32  : I<0, Pseudo, (outs FR32:$dst), (ins),
-                           "#IMPLICIT_DEF $dst",
-                           [(set FR32:$dst, (undef))]>, Requires<[HasSSE1]>;
-def IMPLICIT_DEF_FR64  : I<0, Pseudo, (outs FR64:$dst), (ins),
-                           "#IMPLICIT_DEF $dst",
-                           [(set FR64:$dst, (undef))]>, Requires<[HasSSE2]>;
-}
-
-//===----------------------------------------------------------------------===//
 // SSE Complex Patterns
 //===----------------------------------------------------------------------===//
 
@@ -2753,14 +2736,6 @@ let Constraints = "$src1 = $dst" in {
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
 //===----------------------------------------------------------------------===//
-
-// 128-bit vector undef's.
-def : Pat<(v4f32 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
-def : Pat<(v2f64 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
-def : Pat<(v16i8 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
-def : Pat<(v8i16 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
-def : Pat<(v4i32 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
-def : Pat<(v2i64 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
 
 // extload f32 -> f64.  This matches load+fextend because we have a hack in 
 // the isel (PreprocessForFPConvert) that can introduce loads after dag combine.

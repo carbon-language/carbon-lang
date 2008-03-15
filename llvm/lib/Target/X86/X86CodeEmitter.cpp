@@ -623,14 +623,6 @@ void Emitter::emitInstruction(const MachineInstr &MI,
       break;
     case TargetInstrInfo::DECLARE:
     case X86::DWARF_LOC:
-    case X86::IMPLICIT_DEF_GR8:
-    case X86::IMPLICIT_DEF_GR16:
-    case X86::IMPLICIT_DEF_GR32:
-    case X86::IMPLICIT_DEF_GR64:
-    case X86::IMPLICIT_DEF_FR32:
-    case X86::IMPLICIT_DEF_FR64:
-    case X86::IMPLICIT_DEF_VR64:
-    case X86::IMPLICIT_DEF_VR128:
     case X86::FP_REG_KILL:
       break;
     case X86::MOVPC32r: {
