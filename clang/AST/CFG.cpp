@@ -577,7 +577,8 @@ CFGBlock* CFGBuilder::VisitReturnStmt(ReturnStmt* R) {
 
 CFGBlock* CFGBuilder::VisitLabelStmt(LabelStmt* L) {
   // Get the block of the labeled statement.  Add it to our map.
-  CFGBlock* LabelBlock = Visit(L->getSubStmt());
+  Visit(L->getSubStmt());
+  CFGBlock* LabelBlock = Block;
   
   if (!LabelBlock)            // This can happen when the body is empty, i.e.
     LabelBlock=createBlock(); // scopes that only contains NullStmts.
@@ -970,7 +971,7 @@ CFGBlock* CFGBuilder::VisitCaseStmt(CaseStmt* S) {
   // This block is now the implicit successor of other blocks.
   Succ = CaseBlock;
   
-  return CaseBlock;    
+  return CaseBlock;
 }
   
 CFGBlock* CFGBuilder::VisitDefaultStmt(DefaultStmt* S) {
