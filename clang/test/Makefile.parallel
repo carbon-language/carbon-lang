@@ -13,8 +13,8 @@ endif
 
 Makefile.tests:
 	@ echo '%.testresults: %' > $@
-	@ echo "^@ echo $$<" | tr "^" "\t" >> $@
-	@ echo "^@ PATH=$$PATH:$(ToolDir):$(LLVM_SRC_ROOT)/test/Scripts ./TestRunner.sh &< > &@" | tr "^&" '\t$$' >> $@
+	@ echo "^@ printf '.'" | tr "^" "\t" >> $@
+	@ echo "^@ PATH=$$PATH:$(ToolDir):$(LLVM_SRC_ROOT)/test/Scripts ./TestRunner.sh &< > &@ || echo $$^" | tr "^&" '\t$$' >> $@
 	@ echo >> $@
 	@ echo "TESTS =" \\ >> $@
 	@ find $(TESTDIRS) \
@@ -31,11 +31,6 @@ Makefile.tests:
 	@ echo "^@ rm -f &(TESTS)" | tr "^&<" "\t$$^" >> $@
 	@ echo >> $@
 	@ echo ".PHONY: all report clean" >> $@
-
-
-#	find $(TESTDIRS) \
-#	  \( -name '*.c' -or -name '*.cpp' -or -name '*.m' \) \
-#	| $(AWK) '{print ".PHONY:", $$0 ".testresults"}' >> $@
 
 all:: Makefile.tests
 	@ $(MAKE) -f $< clean
