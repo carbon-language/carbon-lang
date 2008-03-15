@@ -1,4 +1,4 @@
-##===- clang/Lex/Makefile ----------------------------------*- Makefile -*-===##
+##===- clang/lib/Analysis/Makefile -------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,22 +7,16 @@
 # 
 ##===----------------------------------------------------------------------===##
 #
-#  This implements the Lexer library for the C-Language front-end.
+# This implements analyses built on top of source-level CFGs. 
 #
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ../../..
-include $(LEVEL)/Makefile.config
-
-LIBRARYNAME := clangLex
+LEVEL = ../../../..
+LIBRARYNAME := clangAnalysis
 BUILD_ARCHIVE = 1
-CXXFLAGS = -fno-rtti 
+CXXFLAGS = -fno-rtti
 
-ifeq ($(ARCH),PowerPC)
-CXXFLAGS += -maltivec
-endif
-
-CPPFLAGS += -I$(PROJ_SRC_DIR)/../include
+CPPFLAGS += -I$(PROJ_SRC_DIR)/../../include
 
 include $(LEVEL)/Makefile.common
 

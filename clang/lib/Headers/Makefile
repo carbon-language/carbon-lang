@@ -1,4 +1,4 @@
-##===- clang/Headers/Makefile ------------------------------*- Makefile -*-===##
+##===- clang/lib/Headers/Makefile --------------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,7 +7,7 @@
 # 
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ../../..
+LEVEL = ../../../..
 include $(LEVEL)/Makefile.common
 
 HeaderDir := $(PROJ_OBJ_ROOT)/$(BuildMode)/Headers

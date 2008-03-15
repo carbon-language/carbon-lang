@@ -1,4 +1,4 @@
-##===- clang/Parse/Makefile --------------------------------*- Makefile -*-===##
+##===- clang/lib/CodeGen/Makefile --------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,16 +7,17 @@
 # 
 ##===----------------------------------------------------------------------===##
 #
-#  This implements the Parser library for the C-Language front-end.
+# This implements the AST -> LLVM code generation library for the 
+# C-Language front-end.
 #
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ../../..
-LIBRARYNAME := clangParse
+LEVEL = ../../../..
+LIBRARYNAME := clangCodeGen
 BUILD_ARCHIVE = 1
 CXXFLAGS = -fno-rtti
 
-CPPFLAGS += -I$(PROJ_SRC_DIR)/../include
+CPPFLAGS += -I$(PROJ_SRC_DIR)/../../include
 
 include $(LEVEL)/Makefile.common
 

@@ -1,4 +1,4 @@
-##===- clang/Basic/Makefile --------------------------------*- Makefile -*-===##
+##===- clang/lib/Sema/Makefile -----------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,16 +7,17 @@
 # 
 ##===----------------------------------------------------------------------===##
 #
-#  This implements the Basic library for the C-Language front-end.
+#  This implements the semantic analyzer and AST builder library for the 
+#  C-Language front-end.
 #
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ../../..
-LIBRARYNAME := clangBasic
+LEVEL = ../../../..
+LIBRARYNAME := clangSEMA
 BUILD_ARCHIVE = 1
 CXXFLAGS = -fno-rtti
 
-CPPFLAGS += -I$(PROJ_SRC_DIR)/../include
+CPPFLAGS += -I$(PROJ_SRC_DIR)/../../include
 
 include $(LEVEL)/Makefile.common
 

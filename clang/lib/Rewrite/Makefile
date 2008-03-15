@@ -1,4 +1,4 @@
-##===- clang/Sema/Makefile ---------------------------------*- Makefile -*-===##
+##===- clang/lib/Rewrite/Makefile --------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,17 +7,16 @@
 # 
 ##===----------------------------------------------------------------------===##
 #
-#  This implements the semantic analyzer and AST builder library for the 
-#  C-Language front-end.
+# This implements code transformation / rewriting facilities.
 #
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ../../..
-LIBRARYNAME := clangSEMA
+LEVEL = ../../../..
+LIBRARYNAME := clangRewrite
 BUILD_ARCHIVE = 1
 CXXFLAGS = -fno-rtti
 
-CPPFLAGS += -I$(PROJ_SRC_DIR)/../include
+CPPFLAGS += -I$(PROJ_SRC_DIR)/../../include
 
 include $(LEVEL)/Makefile.common
 

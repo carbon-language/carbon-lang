@@ -1,4 +1,4 @@
-##===- clang/Rewrite/Makefile ------------------------------*- Makefile -*-===##
+##===- clang/lib/Basic/Makefile ----------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,16 +7,16 @@
 # 
 ##===----------------------------------------------------------------------===##
 #
-# This implements code transformation / rewriting facilities.
+#  This implements the Basic library for the C-Language front-end.
 #
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ../../..
-LIBRARYNAME := clangRewrite
+LEVEL = ../../../..
+LIBRARYNAME := clangBasic
 BUILD_ARCHIVE = 1
 CXXFLAGS = -fno-rtti
 
-CPPFLAGS += -I$(PROJ_SRC_DIR)/../include
+CPPFLAGS += -I$(PROJ_SRC_DIR)/../../include
 
 include $(LEVEL)/Makefile.common
 

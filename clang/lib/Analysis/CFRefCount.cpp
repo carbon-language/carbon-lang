@@ -1,4 +1,4 @@
-// CFRefCount.cpp - Transfer functions for tracking simple values -*- C++ -*--
+// CFRefCount.cpp - Transfer functions for tracking simple values -*- C++ -*--//
 //
 //                     The LLVM Compiler Infrastructure
 //

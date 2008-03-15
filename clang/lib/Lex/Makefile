@@ -1,4 +1,4 @@
-##===- clang/AST/Makefile ----------------------------------*- Makefile -*-===##
+##===- clang/lib/Lex/Makefile ------------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,16 +7,22 @@
 # 
 ##===----------------------------------------------------------------------===##
 #
-#  This implements the AST library for the C-Language front-end.
+#  This implements the Lexer library for the C-Language front-end.
 #
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ../../..
-LIBRARYNAME := clangAST
-BUILD_ARCHIVE = 1
-CXXFLAGS = -fno-rtti
+LEVEL = ../../../..
+include $(LEVEL)/Makefile.config
 
-CPPFLAGS += -I$(PROJ_SRC_DIR)/../include
+LIBRARYNAME := clangLex
+BUILD_ARCHIVE = 1
+CXXFLAGS = -fno-rtti 
+
+ifeq ($(ARCH),PowerPC)
+CXXFLAGS += -maltivec
+endif
+
+CPPFLAGS += -I$(PROJ_SRC_DIR)/../../include
 
 include $(LEVEL)/Makefile.common
 

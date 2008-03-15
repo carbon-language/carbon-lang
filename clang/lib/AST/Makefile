@@ -1,4 +1,4 @@
-##===- clang/Analysis/Makefile -----------------------------*- Makefile -*-===##
+##===- clang/lib/AST/Makefile ------------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,16 +7,16 @@
 # 
 ##===----------------------------------------------------------------------===##
 #
-# This implements analyses built on top of source-level CFGs. 
+#  This implements the AST library for the C-Language front-end.
 #
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ../../..
-LIBRARYNAME := clangAnalysis
+LEVEL = ../../../..
+LIBRARYNAME := clangAST
 BUILD_ARCHIVE = 1
 CXXFLAGS = -fno-rtti
 
-CPPFLAGS += -I$(PROJ_SRC_DIR)/../include
+CPPFLAGS += -I$(PROJ_SRC_DIR)/../../include
 
 include $(LEVEL)/Makefile.common
 
