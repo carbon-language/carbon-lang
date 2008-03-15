@@ -926,6 +926,10 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
     // Handle all other unary operators.
     
     switch (U->getOpcode()) {
+        
+      case UnaryOperator::Extension:
+        St = SetRVal(St, U, SubV);
+        break;
 
       case UnaryOperator::Minus:
         St = SetRVal(St, U, EvalMinus(U, cast<NonLVal>(SubV)));
