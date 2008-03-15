@@ -745,7 +745,7 @@ void GRExprEngine::VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr* Ex,
     
   }
   else  // Get alignment of the type.
-    amt = getContext().getTypeAlign(T);
+    amt = getContext().getTypeAlign(T) / 8;
   
   Nodify(Dst, Ex, Pred,
          SetRVal(GetState(Pred), Ex,
