@@ -1744,9 +1744,9 @@ Stmt *RewriteTest::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
   InsertText(SourceLocation::getFileLoc(MainFileID, 0), 
              StrObjDecl.c_str(), StrObjDecl.size());
   
-  FileVarDecl *NewVD = new FileVarDecl(SourceLocation(), 
+  FileVarDecl *NewVD = FileVarDecl::Create(SourceLocation(), 
                                        &Context->Idents.get(S.c_str()), strType, 
-                                       VarDecl::Static, NULL);
+                                       VarDecl::Static, NULL, *Context);
   DeclRefExpr *DRE = new DeclRefExpr(NewVD, strType, SourceLocation());
   Expr *Unop = new UnaryOperator(DRE, UnaryOperator::AddrOf,
                                  Context->getPointerType(DRE->getType()), 

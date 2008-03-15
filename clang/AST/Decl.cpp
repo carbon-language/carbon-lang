@@ -205,6 +205,28 @@ void Decl::addDeclKind(Kind k) {
 // Decl Allocation/Deallocation Method Implementations
 //===----------------------------------------------------------------------===//
 
+BlockVarDecl *BlockVarDecl::Create(SourceLocation L, IdentifierInfo *Id,
+                                   QualType T, StorageClass S,
+                                   ScopedDecl *PrevDecl, ASTContext &C) {
+  void *Mem = C.getAllocator().Allocate<BlockVarDecl>();
+  return new (Mem) BlockVarDecl(L, Id, T, S, PrevDecl);
+}
+
+
+FileVarDecl *FileVarDecl::Create(SourceLocation L, IdentifierInfo *Id,
+                                 QualType T, StorageClass S, 
+                                 ScopedDecl *PrevDecl, ASTContext &C) {
+  void *Mem = C.getAllocator().Allocate<FileVarDecl>();
+  return new (Mem) FileVarDecl(L, Id, T, S, PrevDecl);
+}
+
+ParmVarDecl *ParmVarDecl::Create(SourceLocation L, IdentifierInfo *Id,
+                                 QualType T, StorageClass S, 
+                                 ScopedDecl *PrevDecl, ASTContext &C) {
+  void *Mem = C.getAllocator().Allocate<ParmVarDecl>();
+  return new (Mem) ParmVarDecl(L, Id, T, S, PrevDecl);
+}
+
 EnumConstantDecl *EnumConstantDecl::Create(SourceLocation L, IdentifierInfo *Id,
                                            QualType T, Expr *E, 
                                            const llvm::APSInt &V, 

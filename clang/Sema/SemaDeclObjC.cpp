@@ -823,8 +823,9 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
       argType = QualType::getFromOpaquePtr(ArgTypes[i]);
     else
       argType = Context.getObjCIdType();
-    ParmVarDecl* Param = new ParmVarDecl(SourceLocation(/*FIXME*/), ArgNames[i], 
-                                         argType, VarDecl::None, 0);
+    ParmVarDecl* Param = ParmVarDecl::Create(SourceLocation(/*FIXME*/),
+                                             ArgNames[i], argType,
+                                             VarDecl::None, 0, Context);
     Param->setObjCDeclQualifier(
       CvtQTToAstBitMask(ArgQT[i].getObjCDeclQualifier()));
     Params.push_back(Param);

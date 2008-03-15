@@ -294,6 +294,17 @@ public:
   enum StorageClass {
     None, Auto, Register, Extern, Static, PrivateExtern
   };
+private:
+  Expr *Init;
+  // FIXME: This can be packed into the bitfields in Decl.
+  unsigned SClass : 3;
+  
+  friend class StmtIteratorBase;
+protected:
+  VarDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, QualType T,
+          StorageClass SC, ScopedDecl *PrevDecl)
+    : ValueDecl(DK, L, Id, T, PrevDecl), Init(0) { SClass = SC; }
+public:
   StorageClass getStorageClass() const { return (StorageClass)SClass; }
 
   const Expr *getInit() const { return Init; }
@@ -322,17 +333,7 @@ public:
     return D->getKind() >= VarFirst && D->getKind() <= VarLast;
   }
   static bool classof(const VarDecl *D) { return true; }
-protected:
-  VarDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, QualType T,
-          StorageClass SC, ScopedDecl *PrevDecl)
-    : ValueDecl(DK, L, Id, T, PrevDecl), Init(0) { SClass = SC; }
-private:
-  Expr *Init;
-  // FIXME: This can be packed into the bitfields in Decl.
-  unsigned SClass : 3;
-    
-  friend class StmtIteratorBase;
-  
+
 protected:
   void EmitInRec(llvm::Serializer& S) const;
   void ReadInRec(llvm::Deserializer& D);
@@ -349,11 +350,13 @@ protected:
 
 /// BlockVarDecl - Represent a local variable declaration.
 class BlockVarDecl : public VarDecl {
-public:
   BlockVarDecl(SourceLocation L, IdentifierInfo *Id, QualType T, StorageClass S,
                ScopedDecl *PrevDecl)
     : VarDecl(BlockVar, L, Id, T, S, PrevDecl) {}
-  
+public:
+  static BlockVarDecl *Create(SourceLocation L, IdentifierInfo *Id, QualType T,
+                              StorageClass S, ScopedDecl *PrevDecl,
+                              ASTContext &C);
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == BlockVar; }
   static bool classof(const BlockVarDecl *D) { return true; }  
@@ -370,10 +373,13 @@ protected:
 /// definitions (C99 6.9.2p2) using our type system (without storing a
 /// pointer to the decl's scope, which is transient).
 class FileVarDecl : public VarDecl {
-public:
   FileVarDecl(SourceLocation L, IdentifierInfo *Id, QualType T, StorageClass S,
               ScopedDecl *PrevDecl)
     : VarDecl(FileVar, L, Id, T, S, PrevDecl) {}
+public:
+  static FileVarDecl *Create(SourceLocation L, IdentifierInfo *Id, QualType T,
+                             StorageClass S, ScopedDecl *PrevDecl,
+                             ASTContext &C);
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == FileVar; }
@@ -388,11 +394,19 @@ protected:
 
 /// ParmVarDecl - Represent a parameter to a function.
 class ParmVarDecl : public VarDecl {
-public:
+  // NOTE: VC++ treats enums as signed, avoid using the ObjCDeclQualifier enum
+  /// FIXME: Also can be paced into the bitfields in Decl.
+  /// in, inout, etc.
+  unsigned objcDeclQualifier : 6;
+  
   ParmVarDecl(SourceLocation L, IdentifierInfo *Id, QualType T, StorageClass S,
               ScopedDecl *PrevDecl)
     : VarDecl(ParmVar, L, Id, T, S, PrevDecl), 
     objcDeclQualifier(OBJC_TQ_None) {}
+public:
+  static ParmVarDecl *Create(SourceLocation L, IdentifierInfo *Id, QualType T,
+                             StorageClass S, ScopedDecl *PrevDecl,
+                             ASTContext &C);
   
   ObjCDeclQualifier getObjCDeclQualifier() const {
     return ObjCDeclQualifier(objcDeclQualifier);
@@ -403,12 +417,6 @@ public:
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == ParmVar; }
   static bool classof(const ParmVarDecl *D) { return true; }
-  
-private:
-  // NOTE: VC++ treats enums as signed, avoid using the ObjCDeclQualifier enum
-  /// FIXME: Also can be paced into the bitfields in Decl.
-  /// in, inout, etc.
-  unsigned objcDeclQualifier : 6;
   
 protected:
   /// EmitImpl - Serialize this ParmVarDecl. Called by Decl::Emit.
