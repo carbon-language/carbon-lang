@@ -796,7 +796,7 @@ Stmt *RewriteTest::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
         std::string RecName = clsDeclared->getIdentifier()->getName();
         RecName += "_IMPL";
         IdentifierInfo *II = &Context->Idents.get(RecName.c_str());
-        RecordDecl *RD = new RecordDecl(Decl::Struct, SourceLocation(), II, 0);
+        RecordDecl *RD = RecordDecl::Create(Decl::Struct, SourceLocation(), II, 0, *Context);
         assert(RD && "RewriteObjCIvarRefExpr(): Can't find RecordDecl");
         QualType castT = Context->getPointerType(Context->getTagDeclType(RD));
         CastExpr *castExpr = new CastExpr(castT, IV->getBase(), SourceLocation());
@@ -1622,8 +1622,9 @@ void RewriteTest::SynthMsgSendFunctionDecl() {
 void RewriteTest::SynthMsgSendSuperFunctionDecl() {
   IdentifierInfo *msgSendIdent = &Context->Idents.get("objc_msgSendSuper");
   llvm::SmallVector<QualType, 16> ArgTys;
-  RecordDecl *RD = new RecordDecl(Decl::Struct, SourceLocation(),
-                                  &Context->Idents.get("objc_super"), 0);
+  RecordDecl *RD = RecordDecl::Create(Decl::Struct, SourceLocation(),
+                                      &Context->Idents.get("objc_super"), 0,
+                                      *Context);
   QualType argT = Context->getPointerType(Context->getTagDeclType(RD));
   assert(!argT.isNull() && "Can't build 'struct objc_super *' type");
   ArgTys.push_back(argT);
@@ -1662,8 +1663,9 @@ void RewriteTest::SynthMsgSendSuperStretFunctionDecl() {
   IdentifierInfo *msgSendIdent = 
     &Context->Idents.get("objc_msgSendSuper_stret");
   llvm::SmallVector<QualType, 16> ArgTys;
-  RecordDecl *RD = new RecordDecl(Decl::Struct, SourceLocation(),
-                                  &Context->Idents.get("objc_super"), 0);
+  RecordDecl *RD = RecordDecl::Create(Decl::Struct, SourceLocation(),
+                                      &Context->Idents.get("objc_super"), 0,
+                                      *Context);
   QualType argT = Context->getPointerType(Context->getTagDeclType(RD));
   assert(!argT.isNull() && "Can't build 'struct objc_super *' type");
   ArgTys.push_back(argT);
@@ -1758,35 +1760,41 @@ Stmt *RewriteTest::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
 
 ObjCInterfaceDecl *RewriteTest::isSuperReceiver(Expr *recExpr) {
   // check if we are sending a message to 'super'
-  if (CurMethodDecl && CurMethodDecl->isInstance()) {
-    if (CastExpr *CE = dyn_cast<CastExpr>(recExpr)) {
-      if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(CE->getSubExpr())) {
-        if (ParmVarDecl *PVD = dyn_cast<ParmVarDecl>(DRE->getDecl())) {
-          if (!strcmp(PVD->getName(), "self")) {
-            // is this id<P1..> type?
-            if (CE->getType()->isObjCQualifiedIdType())
-              return 0;
-            if (const PointerType *PT = CE->getType()->getAsPointerType()) {
-              if (ObjCInterfaceType *IT = 
-                    dyn_cast<ObjCInterfaceType>(PT->getPointeeType())) {
-                if (IT->getDecl() == 
-                    CurMethodDecl->getClassInterface()->getSuperClass())
-                  return IT->getDecl();
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-  return 0;
+  if (!CurMethodDecl || !CurMethodDecl->isInstance()) return 0;
+  
+  CastExpr *CE = dyn_cast<CastExpr>(recExpr);
+  if (!CE) return 0;
+  
+  DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(CE->getSubExpr());
+  if (!DRE) return 0;
+  
+  ParmVarDecl *PVD = dyn_cast<ParmVarDecl>(DRE->getDecl());
+  if (!PVD) return 0;
+  
+  if (strcmp(PVD->getName(), "self") != 0)
+    return 0;
+          
+  // is this id<P1..> type?
+  if (CE->getType()->isObjCQualifiedIdType())
+    return 0;
+  const PointerType *PT = CE->getType()->getAsPointerType();
+  if (!PT) return 0;
+  
+  ObjCInterfaceType *IT = dyn_cast<ObjCInterfaceType>(PT->getPointeeType());
+  if (!IT) return 0;
+  
+  if (IT->getDecl() != CurMethodDecl->getClassInterface()->getSuperClass())
+    return 0;
+              
+  return IT->getDecl();
 }
 
 // struct objc_super { struct objc_object *receiver; struct objc_class *super; };
 QualType RewriteTest::getSuperStructType() {
   if (!SuperStructDecl) {
-    SuperStructDecl = new RecordDecl(Decl::Struct, SourceLocation(), 
-                                     &Context->Idents.get("objc_super"), 0);
+    SuperStructDecl = RecordDecl::Create(Decl::Struct, SourceLocation(), 
+                                         &Context->Idents.get("objc_super"), 0,
+                                         *Context);
     QualType FieldTypes[2];
   
     // struct objc_object *receiver;
@@ -1806,8 +1814,9 @@ QualType RewriteTest::getSuperStructType() {
 
 QualType RewriteTest::getConstantStringStructType() {
   if (!ConstantStringDecl) {
-    ConstantStringDecl = new RecordDecl(Decl::Struct, SourceLocation(), 
-                                     &Context->Idents.get("__NSConstantStringImpl"), 0);
+    ConstantStringDecl = RecordDecl::Create(Decl::Struct, SourceLocation(), 
+                         &Context->Idents.get("__NSConstantStringImpl"), 0,
+                                            *Context);
     QualType FieldTypes[4];
   
     // struct objc_object *receiver;

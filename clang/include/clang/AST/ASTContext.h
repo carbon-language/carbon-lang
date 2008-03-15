@@ -22,6 +22,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/Bitcode/SerializationFwd.h"
+#include "llvm/Support/Allocator.h"
 #include <vector>
 
 namespace clang {
@@ -75,13 +76,15 @@ class ASTContext {
   RecordDecl *CFConstantStringTypeDecl;
 
   SourceManager &SourceMgr;
+  llvm::MallocAllocator Allocator;
 public:
   TargetInfo &Target;
   IdentifierTable &Idents;
   SelectorTable &Selectors;
   
   SourceManager& getSourceManager() { return SourceMgr; }
-
+  llvm::MallocAllocator &getAllocator() { return Allocator; }
+  
   FullSourceLoc getFullLoc(SourceLocation Loc) const { 
     return FullSourceLoc(Loc,SourceMgr);
   }

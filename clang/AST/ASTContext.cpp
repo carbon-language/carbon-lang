@@ -1047,9 +1047,9 @@ QualType ASTContext::maxIntegerType(QualType lhs, QualType rhs) {
 // getCFConstantStringType - Return the type used for constant CFStrings. 
 QualType ASTContext::getCFConstantStringType() {
   if (!CFConstantStringTypeDecl) {
-    CFConstantStringTypeDecl = new RecordDecl(Decl::Struct, SourceLocation(), 
-                                              &Idents.get("NSConstantString"),
-                                              0);
+    CFConstantStringTypeDecl = 
+      RecordDecl::Create(Decl::Struct, SourceLocation(), 
+                         &Idents.get("NSConstantString"), 0, *this);
     QualType FieldTypes[4];
   
     // const int *isa;

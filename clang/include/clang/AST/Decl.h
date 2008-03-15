@@ -171,8 +171,8 @@ public:
     }
   }
   // global temp stats (until we have a per-module visitor)
-  static void addDeclKind(const Kind k);
-  static bool CollectingStats(bool enable=false);
+  static void addDeclKind(Kind k);
+  static bool CollectingStats(bool Enable = false);
   static void PrintStats();
     
   // Implement isa/cast/dyncast/etc.
@@ -539,11 +539,17 @@ protected:
 class EnumConstantDecl : public ValueDecl {
   Expr *Init; // an integer constant expression
   llvm::APSInt Val; // The value.
-public:
+protected:
   EnumConstantDecl(SourceLocation L, IdentifierInfo *Id, QualType T, Expr *E,
                    const llvm::APSInt &V, ScopedDecl *PrevDecl)
     : ValueDecl(EnumConstant, L, Id, T, PrevDecl), Init(E), Val(V) {}
+  ~EnumConstantDecl() {}
+public:
 
+  static EnumConstantDecl *Create(SourceLocation L, IdentifierInfo *Id,
+                                  QualType T, Expr *E, const llvm::APSInt &V, 
+                                  ScopedDecl *PrevDecl, ASTContext &C);
+  
   const Expr *getInitExpr() const { return Init; }
   Expr *getInitExpr() { return Init; }
   const llvm::APSInt &getInitVal() const { return Val; }
@@ -591,9 +597,13 @@ public:
 class TypedefDecl : public TypeDecl {
   /// UnderlyingType - This is the type the typedef is set to.
   QualType UnderlyingType;
-public:
   TypedefDecl(SourceLocation L, IdentifierInfo *Id, QualType T, ScopedDecl *PD) 
     : TypeDecl(Typedef, L, Id, PD), UnderlyingType(T) {}
+  ~TypedefDecl() {}
+public:
+  
+  static TypedefDecl *Create(SourceLocation L, IdentifierInfo *Id, QualType T,
+                             ScopedDecl *PD, ASTContext &C);
   
   QualType getUnderlyingType() const { return UnderlyingType; }
   void setUnderlyingType(QualType newType) { UnderlyingType = newType; }
@@ -660,12 +670,16 @@ class EnumDecl : public TagDecl {
   /// to for code generation purposes.  Note that the enumerator constants may
   /// have a different type than this does.
   QualType IntegerType;
-public:
+  
   EnumDecl(SourceLocation L, IdentifierInfo *Id, ScopedDecl *PrevDecl)
     : TagDecl(Enum, L, Id, PrevDecl) {
-    ElementList = 0;
-        IntegerType = QualType();
-  }
+      ElementList = 0;
+      IntegerType = QualType();
+    }
+  ~EnumDecl() {}
+public:
+  static EnumDecl *Create(SourceLocation L, IdentifierInfo *Id,
+                          ScopedDecl *PrevDecl, ASTContext &C);
   
   /// defineElements - When created, EnumDecl correspond to a forward declared
   /// enum.  This method is used to mark the decl as being defined, with the
@@ -715,14 +729,20 @@ class RecordDecl : public TagDecl {
   /// Members/NumMembers - This is a new[]'d array of pointers to Decls.
   FieldDecl **Members;   // Null if not defined.
   int NumMembers;   // -1 if not defined.
-public:
-  RecordDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, ScopedDecl*PrevDecl)
-    : TagDecl(DK, L, Id, PrevDecl) {
+  
+  RecordDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, 
+             ScopedDecl *PrevDecl) : TagDecl(DK, L, Id, PrevDecl) {
     HasFlexibleArrayMember = false;
     assert(classof(static_cast<Decl*>(this)) && "Invalid Kind!");
     Members = 0;
     NumMembers = -1;
   }
+  
+  ~RecordDecl() {}
+public:
+  
+  static RecordDecl *Create(Kind DK, SourceLocation L, IdentifierInfo *Id, 
+                            ScopedDecl *PrevDecl, ASTContext &C);
   
   bool hasFlexibleArrayMember() const { return HasFlexibleArrayMember; }
   void setHasFlexibleArrayMember(bool V) { HasFlexibleArrayMember = V; }

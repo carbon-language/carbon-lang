@@ -1175,8 +1175,9 @@ TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
   assert(!T.isNull() && "GetTypeForDeclarator() returned null type");
   
   // Scope manipulation handled by caller.
-  TypedefDecl *NewTD = new TypedefDecl(D.getIdentifierLoc(), D.getIdentifier(), 
-                                       T, LastDeclarator);
+  TypedefDecl *NewTD = TypedefDecl::Create(D.getIdentifierLoc(), 
+                                           D.getIdentifier(), 
+                                           T, LastDeclarator, Context);
   if (D.getInvalidType())
     NewTD->setInvalidDecl();
   return NewTD;
@@ -1255,7 +1256,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
   case Decl::Enum:
     // FIXME: Tag decls should be chained to any simultaneous vardecls, e.g.:
     // enum X { A, B, C } D;    D should chain to X.
-    New = new EnumDecl(Loc, Name, 0);
+    New = EnumDecl::Create(Loc, Name, 0, Context);
     // If this is an undefined enum, warn.
     if (TK != TK_Definition) Diag(Loc, diag::ext_forward_ref_enum);
     break;
@@ -1264,7 +1265,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
   case Decl::Class:
     // FIXME: Tag decls should be chained to any simultaneous vardecls, e.g.:
     // struct X { int A; } D;    D should chain to X.
-    New = new RecordDecl(Kind, Loc, Name, 0);
+    New = RecordDecl::Create(Kind, Loc, Name, 0, Context);
     break;
   }    
   
@@ -1577,8 +1578,9 @@ Sema::DeclTy *Sema::ActOnEnumConstant(Scope *S, DeclTy *theEnumDecl,
     }
   }
   
-  EnumConstantDecl *New = new EnumConstantDecl(IdLoc, Id, EltTy, Val, EnumVal,
-                                               LastEnumConst);
+  EnumConstantDecl *New = 
+    EnumConstantDecl::Create(IdLoc, Id, EltTy, Val, EnumVal, LastEnumConst,
+                             Context);
   
   // Register this decl in the current scope stack.
   New->setNext(Id->getFETokenInfo<ScopedDecl>());

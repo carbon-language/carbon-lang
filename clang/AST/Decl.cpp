@@ -13,6 +13,7 @@
 
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/Attr.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "llvm/ADT/DenseMap.h"
@@ -201,6 +202,37 @@ void Decl::addDeclKind(Kind k) {
 }
 
 //===----------------------------------------------------------------------===//
+// Decl Allocation/Deallocation Method Implementations
+//===----------------------------------------------------------------------===//
+
+EnumConstantDecl *EnumConstantDecl::Create(SourceLocation L, IdentifierInfo *Id,
+                                           QualType T, Expr *E, 
+                                           const llvm::APSInt &V, 
+                                           ScopedDecl *PrevDecl, ASTContext &C){
+  void *Mem = C.getAllocator().Allocate<EnumConstantDecl>();
+  return new (Mem) EnumConstantDecl(L, Id, T, E, V, PrevDecl);
+}
+
+TypedefDecl *TypedefDecl::Create(SourceLocation L, IdentifierInfo *Id,
+                                 QualType T, ScopedDecl *PD, ASTContext &C) {
+  void *Mem = C.getAllocator().Allocate<TypedefDecl>();
+  return new (Mem) TypedefDecl(L, Id, T, PD);
+}
+
+EnumDecl *EnumDecl::Create(SourceLocation L, IdentifierInfo *Id,
+                           ScopedDecl *PrevDecl, ASTContext &C) {
+  void *Mem = C.getAllocator().Allocate<EnumDecl>();
+  return new (Mem) EnumDecl(L, Id, PrevDecl);
+}
+
+RecordDecl *RecordDecl::Create(Kind DK, SourceLocation L, IdentifierInfo *Id, 
+                               ScopedDecl *PrevDecl, ASTContext &C) {
+  void *Mem = C.getAllocator().Allocate<RecordDecl>();
+  return new (Mem) RecordDecl(DK, L, Id, PrevDecl);
+}
+
+
+//===----------------------------------------------------------------------===//
 // Decl Implementation
 //===----------------------------------------------------------------------===//
 
@@ -291,7 +323,6 @@ FieldDecl* RecordDecl::getMember(IdentifierInfo *name) {
   }
   return 0;
 }
-
 
 //===----------------------------------------------------------------------===//
 // Objective-C Decl Implementation
