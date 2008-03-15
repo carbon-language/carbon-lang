@@ -52,6 +52,8 @@ namespace {
     llvm::SmallVector<int, 8> ObjCBcLabelNo;
     llvm::SmallVector<const RecordType *, 8> EncodingRecordTypes;
     
+    unsigned NumObjCStringLiterals;
+    
     FunctionDecl *MsgSendFunctionDecl;
     FunctionDecl *MsgSendSuperFunctionDecl;
     FunctionDecl *MsgSendStretFunctionDecl;
@@ -74,6 +76,7 @@ namespace {
     // Needed for super.
     ObjCMethodDecl *CurMethodDecl;
     RecordDecl *SuperStructDecl;
+    RecordDecl *ConstantStringDecl;
     
     // Needed for header files being rewritten
     bool IsHeader;
@@ -149,6 +152,7 @@ namespace {
     bool needToScanForQualifiers(QualType T);
     ObjCInterfaceDecl *isSuperReceiver(Expr *recExpr);
     QualType getSuperStructType();
+    QualType getConstantStringStructType();
     
     // Expression Rewriting.
     Stmt *RewriteFunctionBodyOrGlobalInitializer(Stmt *S);
@@ -179,7 +183,6 @@ namespace {
     void SynthMsgSendSuperStretFunctionDecl();
     void SynthGetClassFunctionDecl();
     void SynthGetMetaClassFunctionDecl();
-    void SynthCFStringFunctionDecl();
     void SynthSelGetUidFunctionDecl();
     void SynthGetProtocolFunctionDecl();
     void SynthSuperContructorFunctionDecl();
@@ -252,6 +255,7 @@ void RewriteTest::Initialize(ASTContext &context) {
   SuperStructDecl = 0;
   BcLabelCount = 0;
   SuperContructorFunctionDecl = 0;
+  NumObjCStringLiterals = 0;
   
   // Get the ID and start/end of the main file.
   MainFileID = SM->getMainFileID();
@@ -314,6 +318,19 @@ void RewriteTest::Initialize(ASTContext &context) {
   S += "unsigned long *mutationsPtr;\n\t";
   S += "unsigned long extra[5];\n};\n";
   S += "#define __FASTENUMERATIONSTATE\n";
+  S += "#endif\n";
+  S += "#ifndef __NSCONSTANTSTRINGIMPL\n";
+  S += "struct __NSConstantStringImpl {\n";
+  S += "  struct objc_object *isa;\n";
+  S += "  int flags;\n";
+  S += "  char *str;\n";
+  S += "  long length;\n";
+  S += "  __NSConstantStringImpl(char *s, long l) :\n";
+  S += "  flags(0), str(s), length(l)\n";
+  S += "    { extern struct objc_object *_NSConstantStringClassReference;\n";
+  S += "      isa = _NSConstantStringClassReference; }\n";
+  S += "};\n";
+  S += "#define __NSCONSTANTSTRINGIMPL\n";
   S += "#endif\n";
 #if 0
   if (LangOpts.Microsoft) 
@@ -1707,74 +1724,37 @@ void RewriteTest::SynthGetMetaClassFunctionDecl() {
                                               FunctionDecl::Extern, false, 0);
 }
 
-// SynthCFStringFunctionDecl - id __builtin___CFStringMakeConstantString(const char *name);
-void RewriteTest::SynthCFStringFunctionDecl() {
-  IdentifierInfo *getClassIdent = &Context->Idents.get("__builtin___CFStringMakeConstantString");
-  llvm::SmallVector<QualType, 16> ArgTys;
-  ArgTys.push_back(Context->getPointerType(
-                     Context->CharTy.getQualifiedType(QualType::Const)));
-  QualType getClassType = Context->getFunctionType(Context->getObjCIdType(),
-                                                   &ArgTys[0], ArgTys.size(),
-                                                   false /*isVariadic*/);
-  CFStringFunctionDecl = new FunctionDecl(SourceLocation(), 
-                                          getClassIdent, getClassType,
-                                          FunctionDecl::Extern, false, 0);
-}
-
 Stmt *RewriteTest::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
-#if 1
-  // This rewrite is specific to GCC, which has builtin support for CFString.
-  if (!CFStringFunctionDecl)
-    SynthCFStringFunctionDecl();
-  // Create a call to __builtin___CFStringMakeConstantString("cstr").
-  llvm::SmallVector<Expr*, 8> StrExpr;
-  StrExpr.push_back(Exp->getString());
-  CallExpr *call = SynthesizeCallToFunctionDecl(CFStringFunctionDecl,
-                                                &StrExpr[0], StrExpr.size());
+  QualType strType = getConstantStringStructType();
+
+  std::string S = "__NSConstantStringImpl_";
+  S += utostr(NumObjCStringLiterals++);
+
+  std::string StrObjDecl = "static __NSConstantStringImpl " + S;
+  StrObjDecl += " = __NSConstantStringImpl(";
+  // The pretty printer for StringLiteral handles escape characters properly.
+  std::ostringstream prettyBuf;
+  Exp->getString()->printPretty(prettyBuf);
+  StrObjDecl += prettyBuf.str();
+  StrObjDecl += ",";
+  // FIXME: This length isn't correct. It doesn't include escape characters
+  // inserted by the pretty printer.
+  StrObjDecl += utostr(Exp->getString()->getByteLength()) + ");\n";
+  InsertText(SourceLocation::getFileLoc(MainFileID, 0), 
+             StrObjDecl.c_str(), StrObjDecl.size());
+  
+  FileVarDecl *NewVD = new FileVarDecl(SourceLocation(), 
+                                       &Context->Idents.get(S.c_str()), strType, 
+                                       VarDecl::Static, NULL);
+  DeclRefExpr *DRE = new DeclRefExpr(NewVD, strType, SourceLocation());
+  Expr *Unop = new UnaryOperator(DRE, UnaryOperator::AddrOf,
+                                 Context->getPointerType(DRE->getType()), 
+                                 SourceLocation());
   // cast to NSConstantString *
-  CastExpr *cast = new CastExpr(Exp->getType(), call, SourceLocation());
+  CastExpr *cast = new CastExpr(Exp->getType(), Unop, SourceLocation());
   ReplaceStmt(Exp, cast);
   delete Exp;
   return cast;
-#else
-  assert(ConstantStringClassReference && "Can't find constant string reference");
-  llvm::SmallVector<Expr*, 4> InitExprs;
-  
-  // Synthesize "(Class)&_NSConstantStringClassReference"
-  DeclRefExpr *ClsRef = new DeclRefExpr(ConstantStringClassReference,
-                                        ConstantStringClassReference->getType(),
-                                        SourceLocation());
-  QualType expType = Context->getPointerType(ClsRef->getType());
-  UnaryOperator *Unop = new UnaryOperator(ClsRef, UnaryOperator::AddrOf,
-                                          expType, SourceLocation());
-  CastExpr *cast = new CastExpr(Context->getObjCClassType(), Unop, 
-                                SourceLocation());
-  InitExprs.push_back(cast); // set the 'isa'.
-  InitExprs.push_back(Exp->getString()); // set "char *bytes".
-  unsigned IntSize = static_cast<unsigned>(
-      Context->getTypeSize(Context->IntTy, Exp->getLocStart()));
-  llvm::APInt IntVal(IntSize, Exp->getString()->getByteLength());
-  IntegerLiteral *len = new IntegerLiteral(IntVal, Context->IntTy, 
-                                           Exp->getLocStart());
-  InitExprs.push_back(len); // set "int numBytes".
-  
-  // struct NSConstantString
-  QualType CFConstantStrType = Context->getCFConstantStringType();
-  // (struct NSConstantString) { <exprs from above> }
-  InitListExpr *ILE = new InitListExpr(SourceLocation(), 
-                                       &InitExprs[0], InitExprs.size(), 
-                                       SourceLocation());
-  CompoundLiteralExpr *StrRep = new CompoundLiteralExpr(CFConstantStrType, ILE, false);
-  // struct NSConstantString *
-  expType = Context->getPointerType(StrRep->getType());
-  Unop = new UnaryOperator(StrRep, UnaryOperator::AddrOf, expType, 
-                           SourceLocation());
-  // cast to NSConstantString *
-  cast = new CastExpr(Exp->getType(), Unop, SourceLocation());
-  ReplaceStmt(Exp, cast);
-  delete Exp;
-  return cast;
-#endif
 }
 
 ObjCInterfaceDecl *RewriteTest::isSuperReceiver(Expr *recExpr) {
@@ -1823,6 +1803,31 @@ QualType RewriteTest::getSuperStructType() {
     SuperStructDecl->defineBody(FieldDecls, 4);
   }
   return Context->getTagDeclType(SuperStructDecl);
+}
+
+QualType RewriteTest::getConstantStringStructType() {
+  if (!ConstantStringDecl) {
+    ConstantStringDecl = new RecordDecl(Decl::Struct, SourceLocation(), 
+                                     &Context->Idents.get("__NSConstantStringImpl"), 0);
+    QualType FieldTypes[4];
+  
+    // struct objc_object *receiver;
+    FieldTypes[0] = Context->getObjCIdType();  
+    // int flags;
+    FieldTypes[1] = Context->IntTy;  
+    // char *str;
+    FieldTypes[2] = Context->getPointerType(Context->CharTy);  
+    // long length;
+    FieldTypes[3] = Context->LongTy;  
+    // Create fields
+    FieldDecl *FieldDecls[2];
+  
+    for (unsigned i = 0; i < 4; ++i)
+      FieldDecls[i] = new FieldDecl(SourceLocation(), 0, FieldTypes[i]);
+  
+    ConstantStringDecl->defineBody(FieldDecls, 4);
+  }
+  return Context->getTagDeclType(ConstantStringDecl);
 }
 
 Stmt *RewriteTest::SynthMessageExpr(ObjCMessageExpr *Exp) {
