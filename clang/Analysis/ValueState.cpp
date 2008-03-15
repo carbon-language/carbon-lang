@@ -196,7 +196,8 @@ RVal ValueStateManager::GetRVal(ValueState* St, LVal LV, QualType T) {
   return UnknownVal();
 }
 
-ValueState* ValueStateManager::AddNE(ValueState* St, SymbolID sym, const llvm::APSInt& V) {
+ValueState* ValueStateManager::AddNE(ValueState* St, SymbolID sym,
+                                     const llvm::APSInt& V) {
 
   // First, retrieve the NE-set associated with the given symbol.
   ValueState::ConstNotEqTy::TreeTy* T = St->ConstNotEq.SlimFind(sym);  
@@ -213,7 +214,8 @@ ValueState* ValueStateManager::AddNE(ValueState* St, SymbolID sym, const llvm::A
   return getPersistentState(NewSt);
 }
 
-ValueState* ValueStateManager::AddEQ(ValueState* St, SymbolID sym, const llvm::APSInt& V) {
+ValueState* ValueStateManager::AddEQ(ValueState* St, SymbolID sym,
+                                     const llvm::APSInt& V) {
 
   // Create a new state with the old binding replaced.
   ValueState NewSt = *St;
