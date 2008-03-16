@@ -1291,11 +1291,12 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
 
 /// ActOnField - Each field of a struct/union/class is passed into this in order
 /// to create a FieldDecl object for it.
-Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *TagDecl,
+Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *tagDecl,
                                SourceLocation DeclStart, 
                                Declarator &D, ExprTy *BitfieldWidth) {
   IdentifierInfo *II = D.getIdentifier();
   Expr *BitWidth = (Expr*)BitfieldWidth;
+  Decl *TagDecl = static_cast<Decl *>(tagDecl);
   SourceLocation Loc = DeclStart;
   if (II) Loc = D.getIdentifierLoc();
   
@@ -1331,15 +1332,15 @@ Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *TagDecl,
   // FIXME: Chain fielddecls together.
   FieldDecl *NewFD;
   
-  if (isa<RecordDecl>(static_cast<Decl *>(TagDecl)))
+  if (isa<RecordDecl>(TagDecl))
     NewFD = FieldDecl::Create(Context, Loc, II, T, BitWidth);
-  else if (isa<ObjCInterfaceDecl>(static_cast<Decl *>(TagDecl)) ||
-           isa<ObjCImplementationDecl>(static_cast<Decl *>(TagDecl)) ||
-           isa<ObjCCategoryDecl>(static_cast<Decl *>(TagDecl)) ||
+  else if (isa<ObjCInterfaceDecl>(TagDecl) ||
+           isa<ObjCImplementationDecl>(TagDecl) ||
+           isa<ObjCCategoryDecl>(TagDecl) ||
            // FIXME: ivars are currently used to model properties, and
            // properties can appear within a protocol.
            // See corresponding FIXME in DeclObjC.h:ObjCPropertyDecl.
-           isa<ObjCProtocolDecl>(static_cast<Decl *>(TagDecl)))
+           isa<ObjCProtocolDecl>(TagDecl))
     NewFD = ObjCIvarDecl::Create(Context, Loc, II, T);
   else
     assert(0 && "Sema::ActOnField(): Unknown TagDecl");
