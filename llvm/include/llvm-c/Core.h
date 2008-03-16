@@ -39,8 +39,6 @@
    and 'unwrap' conversion functions. */
 #include "llvm/Module.h"
 #include "llvm/Support/LLVMBuilder.h"
-#include "llvm/Pass.h"
-#include "llvm/PassManager.h"
 
 extern "C" {
 #endif
@@ -627,6 +625,7 @@ void LLVMDisposePassManager(LLVMPassManagerRef PM);
 namespace llvm {
   class ModuleProvider;
   class MemoryBuffer;
+  class PassManagerBase;
   
   #define DEFINE_SIMPLE_CONVERSION_FUNCTIONS(ty, ref)   \
     inline ty *unwrap(ref P) {                          \
