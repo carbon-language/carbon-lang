@@ -840,7 +840,7 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
   
   ObjCMethodDecl* ObjCMethod = 
     ObjCMethodDecl::Create(Context, MethodLoc, EndLoc, Sel, resultDeclType,
-                           ClassDecl, 0, -1, AttrList, 
+                           ClassDecl, AttrList, 
                            MethodType == tok::minus, isVariadic,
                            MethodDeclKind == tok::objc_optional ? 
                            ObjCMethodDecl::Optional : 

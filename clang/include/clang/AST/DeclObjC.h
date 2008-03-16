@@ -77,7 +77,7 @@ private:
   /// ParamInfo - new[]'d array of pointers to VarDecls for the formal
   /// parameters of this Method.  This is null if there are no formals.  
   ParmVarDecl **ParamInfo;
-  int NumMethodParams;  // -1 if no parameters
+  int NumMethodParams;
   
   /// List of attributes for this method declaration.
   AttributeList *MethodAttrs;
@@ -92,7 +92,6 @@ private:
   ObjCMethodDecl(SourceLocation beginLoc, SourceLocation endLoc,
                  Selector SelInfo, QualType T,
                  Decl *contextDecl,
-                 ParmVarDecl **paramInfo = 0, int numParams=-1,
                  AttributeList *M = 0, bool isInstance = true,
                  bool isVariadic = false,
                  ImplementationControl impControl = None,
@@ -102,20 +101,17 @@ private:
     DeclImplementation(impControl), objcDeclQualifier(OBJC_TQ_None),
     MethodContext(static_cast<NamedDecl*>(contextDecl)),
     SelName(SelInfo), MethodDeclType(T), 
-    ParamInfo(paramInfo), NumMethodParams(numParams),
+    ParamInfo(0), NumMethodParams(0),
     MethodAttrs(M), EndLoc(endLoc), Body(0), SelfDecl(0) {}
+  virtual ~ObjCMethodDecl();
 public:
 
   static ObjCMethodDecl *Create(ASTContext &C, SourceLocation beginLoc, 
                                 SourceLocation endLoc, Selector SelInfo,
                                 QualType T, Decl *contextDecl,
-                                ParmVarDecl **paramInfo = 0, int numParams=-1,
                                 AttributeList *M = 0, bool isInstance = true,
                                 bool isVariadic = false,
-                                ImplementationControl impControl = None,
-                                Decl *PrevDecl = 0);
-  
-  virtual ~ObjCMethodDecl();
+                                ImplementationControl impControl = None);
   
   ObjCDeclQualifier getObjCDeclQualifier() const {
     return ObjCDeclQualifier(objcDeclQualifier);

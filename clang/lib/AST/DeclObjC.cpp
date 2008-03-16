@@ -23,15 +23,13 @@ ObjCMethodDecl *ObjCMethodDecl::Create(ASTContext &C, SourceLocation beginLoc,
                                        SourceLocation endLoc,
                                        Selector SelInfo, QualType T,
                                        Decl *contextDecl,
-                                       ParmVarDecl **paramInfo, int numParams,
                                        AttributeList *M, bool isInstance,
                                        bool isVariadic,
-                                       ImplementationControl impControl,
-                                       Decl *PrevDecl) {
+                                       ImplementationControl impControl) {
   void *Mem = C.getAllocator().Allocate<ObjCMethodDecl>();
   return new (Mem) ObjCMethodDecl(beginLoc, endLoc, SelInfo, T, contextDecl,
-                                  paramInfo, numParams, M, isInstance, 
-                                  isVariadic, impControl, PrevDecl);
+                                  M, isInstance, 
+                                  isVariadic, impControl);
 
 }
 
