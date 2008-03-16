@@ -104,6 +104,9 @@
 		9F68EB250C77AD2C004AA152 /* ValueEnumerator.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = ValueEnumerator.cpp; sourceTree = "<group>"; };
 		9F68EB260C77AD2C004AA152 /* ValueEnumerator.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = ValueEnumerator.h; sourceTree = "<group>"; };
 		9F6B2CC00D0F6E56000F00FD /* bitreader.ml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = bitreader.ml; sourceTree = "<group>"; };
+		9F70401A0D8D732400FD06FF /* llvm_scalar_opts.ml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = llvm_scalar_opts.ml; path = transforms/scalar/llvm_scalar_opts.ml; sourceTree = "<group>"; };
+		9F70401B0D8D732400FD06FF /* llvm_scalar_opts.mli */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = llvm_scalar_opts.mli; path = transforms/scalar/llvm_scalar_opts.mli; sourceTree = "<group>"; };
+		9F70401E0D8D735E00FD06FF /* scalar_opts_ocaml.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = scalar_opts_ocaml.c; path = transforms/scalar/scalar_opts_ocaml.c; sourceTree = "<group>"; };
 		9F7793460C73BC2000551F9C /* CodeGenPrepare.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CodeGenPrepare.cpp; sourceTree = "<group>"; };
 		9F7793470C73BC2000551F9C /* GVN.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GVN.cpp; sourceTree = "<group>"; };
 		9F7793480C73BC2000551F9C /* GVNPRE.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GVNPRE.cpp; sourceTree = "<group>"; };
@@ -237,6 +240,9 @@
 		9FE450E10C77ABE400C4FEA4 /* ArchiveReader.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = ArchiveReader.cpp; sourceTree = "<group>"; };
 		9FE450E20C77ABE400C4FEA4 /* ArchiveWriter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = ArchiveWriter.cpp; sourceTree = "<group>"; };
 		9FEB8C550D1CD1E200EE46BC /* ExecutionEngine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ExecutionEngine.h; sourceTree = "<group>"; };
+		9FEDD5F10D8D73AB009F6DF1 /* Scalar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Scalar.h; sourceTree = "<group>"; };
+		9FEDD5F70D8D797D009F6DF1 /* Scalar.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Scalar.cpp; sourceTree = "<group>"; };
+		9FEDD6140D8D7C3B009F6DF1 /* scalar_opts.ml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = scalar_opts.ml; sourceTree = "<group>"; };
 		CF1ACC9709C9DE4400D3C5EB /* IntrinsicInst.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = IntrinsicInst.cpp; path = ../lib/VMCore/IntrinsicInst.cpp; sourceTree = "<group>"; };
 		CF26835B09178F5500C5F253 /* TargetInstrItineraries.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TargetInstrItineraries.h; sourceTree = "<group>"; };
 		CF32AF5C0AEE6A4E00D24CD4 /* LLVMTargetMachine.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LLVMTargetMachine.cpp; sourceTree = "<group>"; };
@@ -746,7 +752,6 @@
 		DE66F15F08ABEFB400323D32 /* BasicBlockPlacement.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = BasicBlockPlacement.cpp; sourceTree = "<group>"; };
 		DE66F16008ABEFB400323D32 /* CondPropagate.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = CondPropagate.cpp; sourceTree = "<group>"; };
 		DE66F16108ABEFB400323D32 /* ConstantProp.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = ConstantProp.cpp; sourceTree = "<group>"; };
-		DE66F16208ABEFB400323D32 /* CorrelatedExprs.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = CorrelatedExprs.cpp; sourceTree = "<group>"; };
 		DE66F16308ABEFB400323D32 /* DCE.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = DCE.cpp; sourceTree = "<group>"; };
 		DE66F16408ABEFB400323D32 /* DeadStoreElimination.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = DeadStoreElimination.cpp; sourceTree = "<group>"; };
 		DE66F1A308ABEFB400323D32 /* GCSE.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GCSE.cpp; sourceTree = "<group>"; };
@@ -756,8 +761,6 @@
 		DE66F1A808ABEFB400323D32 /* LoopStrengthReduce.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = LoopStrengthReduce.cpp; sourceTree = "<group>"; };
 		DE66F1A908ABEFB400323D32 /* LoopUnroll.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = LoopUnroll.cpp; sourceTree = "<group>"; };
 		DE66F1AA08ABEFB400323D32 /* LoopUnswitch.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = LoopUnswitch.cpp; sourceTree = "<group>"; };
-		DE66F1AD08ABEFB400323D32 /* LowerGC.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = LowerGC.cpp; sourceTree = "<group>"; };
-		DE66F1AF08ABEFB400323D32 /* LowerPacked.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = LowerPacked.cpp; sourceTree = "<group>"; };
 		DE66F1B508ABEFB400323D32 /* Reassociate.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = Reassociate.cpp; sourceTree = "<group>"; };
 		DE66F1B608ABEFB400323D32 /* ScalarReplAggregates.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = ScalarReplAggregates.cpp; sourceTree = "<group>"; };
 		DE66F1B708ABEFB400323D32 /* SCCP.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = SCCP.cpp; sourceTree = "<group>"; };
@@ -1166,6 +1169,24 @@
 			path = Writer;
 			sourceTree = "<group>";
 		};
+		9F7040170D8D72FF00FD06FF /* transforms */ = {
+			isa = PBXGroup;
+			children = (
+				9F7040190D8D730A00FD06FF /* scalar */,
+			);
+			name = transforms;
+			sourceTree = "<group>";
+		};
+		9F7040190D8D730A00FD06FF /* scalar */ = {
+			isa = PBXGroup;
+			children = (
+				9F70401A0D8D732400FD06FF /* llvm_scalar_opts.ml */,
+				9F70401B0D8D732400FD06FF /* llvm_scalar_opts.mli */,
+				9F70401E0D8D735E00FD06FF /* scalar_opts_ocaml.c */,
+			);
+			name = scalar;
+			sourceTree = "<group>";
+		};
 		9F77937F0C73C54C00551F9C /* Bitcode */ = {
 			isa = PBXGroup;
 			children = (
@@ -1253,6 +1274,7 @@
 				9F6B2CC00D0F6E56000F00FD /* bitreader.ml */,
 				9F7C2C520CB9496C00498408 /* bitwriter.ml */,
 				9F502AEC0D1D8CF8007939DF /* executionengine.ml */,
+				9FEDD6140D8D7C3B009F6DF1 /* scalar_opts.ml */,
 				9F7C2C5D0CB9496C00498408 /* vmcore.ml */,
 			);
 			path = Ocaml;
@@ -1278,6 +1300,7 @@
 		9FD3E56F0CA0116100E54D15 /* ocaml */ = {
 			isa = PBXGroup;
 			children = (
+				9F7040170D8D72FF00FD06FF /* transforms */,
 				9F502ACD0D1D8CA3007939DF /* executionengine */,
 				9F7C240B0CB81ECD00498408 /* analysis */,
 				9F4B0E5D0D0E02580061F270 /* bitreader */,
@@ -1319,6 +1342,14 @@
 			path = ../lib/Archive;
 			sourceTree = SOURCE_ROOT;
 		};
+		9FEDD5F00D8D73AB009F6DF1 /* Transforms */ = {
+			isa = PBXGroup;
+			children = (
+				9FEDD5F10D8D73AB009F6DF1 /* Scalar.h */,
+			);
+			path = Transforms;
+			sourceTree = "<group>";
+		};
 		CF8F1B480B64F7AB00BB4199 /* include/llvm-c */ = {
 			isa = PBXGroup;
 			children = (
@@ -1328,6 +1359,7 @@
 				9FD3E58E0CA0125F00E54D15 /* Core.h */,
 				9FEB8C550D1CD1E200EE46BC /* ExecutionEngine.h */,
 				CF8F1B490B64F7AB00BB4199 /* LinkTimeOptimizer.h */,
+				9FEDD5F00D8D73AB009F6DF1 /* Transforms */,
 			);
 			name = "include/llvm-c";
 			path = "../include/llvm-c";
@@ -2088,7 +2120,6 @@
 				9F7793460C73BC2000551F9C /* CodeGenPrepare.cpp */,
 				DE66F16008ABEFB400323D32 /* CondPropagate.cpp */,
 				DE66F16108ABEFB400323D32 /* ConstantProp.cpp */,
-				DE66F16208ABEFB400323D32 /* CorrelatedExprs.cpp */,
 				DE66F16308ABEFB400323D32 /* DCE.cpp */,
 				DE66F16408ABEFB400323D32 /* DeadStoreElimination.cpp */,
 				DE66F1A308ABEFB400323D32 /* GCSE.cpp */,
@@ -2102,11 +2133,10 @@
 				DE66F1A808ABEFB400323D32 /* LoopStrengthReduce.cpp */,
 				DE66F1A908ABEFB400323D32 /* LoopUnroll.cpp */,
 				DE66F1AA08ABEFB400323D32 /* LoopUnswitch.cpp */,
-				DE66F1AD08ABEFB400323D32 /* LowerGC.cpp */,
-				DE66F1AF08ABEFB400323D32 /* LowerPacked.cpp */,
 				CF8F1B5B0B64FA2F00BB4199 /* PredicateSimplifier.cpp */,
 				DE66F1B508ABEFB400323D32 /* Reassociate.cpp */,
 				CF73C0B9098A546000627152 /* Reg2Mem.cpp */,
+				9FEDD5F70D8D797D009F6DF1 /* Scalar.cpp */,
 				DE66F1B608ABEFB400323D32 /* ScalarReplAggregates.cpp */,
 				DE66F1B708ABEFB400323D32 /* SCCP.cpp */,
 				DE66F1B808ABEFB400323D32 /* SimplifyCFG.cpp */,
