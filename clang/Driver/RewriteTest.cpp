@@ -146,7 +146,7 @@ namespace {
     void RewriteProtocolDecl(ObjCProtocolDecl *Dcl);
     void RewriteForwardProtocolDecl(ObjCForwardProtocolDecl *Dcl);
     void RewriteMethodDeclaration(ObjCMethodDecl *Method);
-    void RewriteProperties(int nProperties, ObjCPropertyDecl **Properties);
+    void RewriteProperties(unsigned nProperties, ObjCPropertyDecl **Properties);
     void RewriteFunctionDecl(FunctionDecl *FD);
     void RewriteObjCQualifiedInterfaceTypes(Decl *Dcl);
     bool needToScanForQualifiers(QualType T);
@@ -549,9 +549,9 @@ void RewriteTest::RewriteMethodDeclaration(ObjCMethodDecl *Method) {
   }
 }
 
-void RewriteTest::RewriteProperties(int nProperties, ObjCPropertyDecl **Properties) 
+void RewriteTest::RewriteProperties(unsigned nProperties, ObjCPropertyDecl **Properties) 
 {
-  for (int i = 0; i < nProperties; i++) {
+  for (unsigned i = 0; i < nProperties; i++) {
     ObjCPropertyDecl *Property = Properties[i];
     SourceLocation Loc = Property->getLocation();
     

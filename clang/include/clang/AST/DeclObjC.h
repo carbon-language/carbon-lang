@@ -217,7 +217,7 @@ class ObjCInterfaceDecl : public TypeDecl {
     
   /// class properties
   ObjCPropertyDecl **PropertyDecl;  // Null if no property
-  int NumPropertyDecl;  // -1 if no property
+  unsigned NumPropertyDecl;  // 0 if none.
   
   bool ForwardDecl:1; // declared with @class.
   bool InternalInterface:1; // true - no @interface for @implementation
@@ -285,6 +285,9 @@ public:
                   ObjCMethodDecl **clsMethods, unsigned numClsMembers,
                   SourceLocation AtEnd);
   
+  void addProperties(ObjCPropertyDecl **Properties, unsigned NumProperties);
+  
+  
   bool isForwardDecl() const { return ForwardDecl; }
   void setForwardDecl(bool val) { ForwardDecl = val; }
   
@@ -335,13 +338,9 @@ public:
   SourceLocation getAtEndLoc() const { return AtEndLoc; }
   
   int getNumPropertyDecl() const { return NumPropertyDecl; }
-  void setNumPropertyDecl(int num) { NumPropertyDecl = num; }
   
-  ObjCPropertyDecl **const getPropertyDecl() const { return PropertyDecl; }
+  ObjCPropertyDecl * const * getPropertyDecl() const { return PropertyDecl; }
   ObjCPropertyDecl **getPropertyDecl() { return PropertyDecl; }
-  void setPropertyDecls(ObjCPropertyDecl **properties) { 
-    PropertyDecl = properties; 
-  }
 
   /// ImplicitInterfaceDecl - check that this is an implicitely declared
   /// ObjCInterfaceDecl node. This is for legacy objective-c @implementation

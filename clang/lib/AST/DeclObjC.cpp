@@ -171,6 +171,18 @@ void ObjCInterfaceDecl::addMethods(ObjCMethodDecl **insMethods,
 }
 
 /// addMethods - Insert instance and methods declarations into
+/// ObjCInterfaceDecl's InsMethods and ClsMethods fields.
+///
+void ObjCInterfaceDecl::addProperties(ObjCPropertyDecl **Properties, 
+                                      unsigned NumProperties) {
+  if (NumProperties == 0) return;
+  
+  NumPropertyDecl = NumProperties;
+  PropertyDecl = new ObjCPropertyDecl*[NumProperties];
+  memcpy(PropertyDecl, Properties, NumProperties*sizeof(ObjCPropertyDecl*));
+}                                   
+
+/// addMethods - Insert instance and methods declarations into
 /// ObjCProtocolDecl's ProtoInsMethods and ProtoClsMethods fields.
 ///
 void ObjCProtocolDecl::addMethods(ObjCMethodDecl **insMethods, 

@@ -705,13 +705,8 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
   
   // TODO: property declaration in category and protocols.
   if (pNum != 0)
-    if (ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(ClassDecl)) {
-      // FIXME: Move the memory allocation into setPropertyDecls!
-      ObjCPropertyDecl **properties = new ObjCPropertyDecl*[pNum];
-      memcpy(properties, allProperties, pNum*sizeof(ObjCPropertyDecl*));
-      IDecl->setPropertyDecls(properties);
-      IDecl->setNumPropertyDecl(pNum);
-    }
+    if (ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(ClassDecl))
+      IDecl->addProperties((ObjCPropertyDecl**)allProperties, pNum);
   
   for (unsigned i = 0; i < allNum; i++ ) {
     ObjCMethodDecl *Method =
