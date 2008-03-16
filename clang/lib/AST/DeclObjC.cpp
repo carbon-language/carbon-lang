@@ -54,6 +54,26 @@ ObjCProtocolDecl *ObjCProtocolDecl::Create(ASTContext &C, SourceLocation L,
   return new (Mem) ObjCProtocolDecl(L, numRefProtos, Id);
 }
 
+ObjCClassDecl *ObjCClassDecl::Create(ASTContext &C, SourceLocation L,
+                                     ObjCInterfaceDecl **Elts, unsigned nElts) {
+  void *Mem = C.getAllocator().Allocate<ObjCClassDecl>();
+  return new (Mem) ObjCClassDecl(L, Elts, nElts);
+}
+
+ObjCForwardProtocolDecl *
+ObjCForwardProtocolDecl::Create(ASTContext &C, SourceLocation L, 
+                                ObjCProtocolDecl **Elts, unsigned NumElts) {
+  void *Mem = C.getAllocator().Allocate<ObjCForwardProtocolDecl>();
+  return new (Mem) ObjCForwardProtocolDecl(L, Elts, NumElts);
+}
+
+ObjCCategoryDecl *ObjCCategoryDecl::Create(ASTContext &C, SourceLocation L,
+                                           unsigned numRefProtocol, 
+                                           IdentifierInfo *Id) {
+  void *Mem = C.getAllocator().Allocate<ObjCCategoryDecl>();
+  return new (Mem) ObjCCategoryDecl(L, numRefProtocol, Id);
+}
+
 
 //===----------------------------------------------------------------------===//
 // Objective-C Decl Implementation

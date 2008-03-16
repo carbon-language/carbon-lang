@@ -268,8 +268,8 @@ Sema::ActOnForwardProtocolDeclaration(SourceLocation AtProtocolLoc,
     
     Protocols.push_back(PDecl);
   }
-  return new ObjCForwardProtocolDecl(AtProtocolLoc,
-                                     &Protocols[0], Protocols.size());
+  return ObjCForwardProtocolDecl::Create(Context, AtProtocolLoc,
+                                         &Protocols[0], Protocols.size());
 }
 
 Sema::DeclTy *Sema::ActOnStartCategoryInterface(
@@ -280,8 +280,9 @@ Sema::DeclTy *Sema::ActOnStartCategoryInterface(
                       SourceLocation EndProtoLoc) {
   ObjCInterfaceDecl *IDecl = getObjCInterfaceDecl(ClassName);
   
-  ObjCCategoryDecl *CDecl = new ObjCCategoryDecl(AtInterfaceLoc, NumProtoRefs,
-                                                 CategoryName);
+  ObjCCategoryDecl *CDecl = 
+    ObjCCategoryDecl::Create(Context, AtInterfaceLoc, NumProtoRefs, 
+                             CategoryName);
   CDecl->setClassInterface(IDecl);
   
   /// Check that class of this category is already completely declared.
@@ -605,7 +606,8 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
     Interfaces.push_back(IDecl);
   }
   
-  return new ObjCClassDecl(AtClassLoc, &Interfaces[0], Interfaces.size());
+  return ObjCClassDecl::Create(Context, AtClassLoc,
+                               &Interfaces[0], Interfaces.size());
 }
 
 

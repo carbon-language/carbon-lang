@@ -523,7 +523,7 @@ public:
 class ObjCClassDecl : public Decl {
   ObjCInterfaceDecl **ForwardDecls;
   unsigned NumForwardDecls;
-public:
+  
   ObjCClassDecl(SourceLocation L, ObjCInterfaceDecl **Elts, unsigned nElts)
     : Decl(ObjCClass, L) { 
     if (nElts) {
@@ -534,6 +534,10 @@ public:
     }
     NumForwardDecls = nElts;
   }
+public:
+  static ObjCClassDecl *Create(ASTContext &C, SourceLocation L,
+                               ObjCInterfaceDecl **Elts, unsigned nElts);
+  
   void setInterfaceDecl(unsigned idx, ObjCInterfaceDecl *OID) {
     assert(idx < NumForwardDecls && "index out of range");
     ForwardDecls[idx] = OID;
@@ -553,7 +557,7 @@ public:
 class ObjCForwardProtocolDecl : public Decl {
   ObjCProtocolDecl **ReferencedProtocols;
   unsigned NumReferencedProtocols;
-public:
+  
   ObjCForwardProtocolDecl(SourceLocation L, 
                           ObjCProtocolDecl **Elts, unsigned nElts)
   : Decl(ObjCForwardProtocol, L) { 
@@ -565,6 +569,11 @@ public:
       ReferencedProtocols = 0;
     }
   }
+public:
+  static ObjCForwardProtocolDecl *Create(ASTContext &C, SourceLocation L, 
+                                         ObjCProtocolDecl **Elts, unsigned Num);
+
+  
   void setForwardProtocolDecl(unsigned idx, ObjCProtocolDecl *OID) {
     assert(idx < NumReferencedProtocols && "index out of range");
     ReferencedProtocols[idx] = OID;
@@ -625,7 +634,7 @@ class ObjCCategoryDecl : public NamedDecl {
   
   SourceLocation EndLoc; // marks the '>' or identifier.
   SourceLocation AtEndLoc; // marks the end of the entire interface.
-public:
+  
   ObjCCategoryDecl(SourceLocation L, unsigned numRefProtocol,IdentifierInfo *Id)
     : NamedDecl(ObjCCategory, L, Id),
       ClassInterface(0), ReferencedProtocols(0), NumReferencedProtocols(0),
@@ -639,7 +648,12 @@ public:
       NumReferencedProtocols = numRefProtocol;
     }
   }
+public:
+  
+  static ObjCCategoryDecl *Create(ASTContext &C, SourceLocation L,
+                                  unsigned numRefProtocol, IdentifierInfo *Id);
 
+  
   ObjCInterfaceDecl *getClassInterface() const { return ClassInterface; }
   void setClassInterface(ObjCInterfaceDecl *IDecl) { ClassInterface = IDecl; }
   
