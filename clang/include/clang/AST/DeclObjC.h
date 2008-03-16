@@ -610,14 +610,14 @@ public:
 /// several files (a feature more naturally supported in C++).
 ///
 /// Categories were originally inspired by dynamic languages such as Common
-/// Lisp and Smalltalk. More traditional class-based languages (C++, Java) 
+/// Lisp and Smalltalk.  More traditional class-based languages (C++, Java) 
 /// don't support this level of dynamism, which is both powerful and dangerous.
 ///
 class ObjCCategoryDecl : public NamedDecl {
   /// Interface belonging to this category
   ObjCInterfaceDecl *ClassInterface;
   
-  /// referenced protocols in this category
+  /// referenced protocols in this category.
   ObjCProtocolDecl **ReferencedProtocols;  // Null if none
   unsigned NumReferencedProtocols;  // 0 if none
   
@@ -635,27 +635,22 @@ class ObjCCategoryDecl : public NamedDecl {
   SourceLocation EndLoc; // marks the '>' or identifier.
   SourceLocation AtEndLoc; // marks the end of the entire interface.
   
-  ObjCCategoryDecl(SourceLocation L, unsigned numRefProtocol,IdentifierInfo *Id)
+  ObjCCategoryDecl(SourceLocation L, IdentifierInfo *Id)
     : NamedDecl(ObjCCategory, L, Id),
       ClassInterface(0), ReferencedProtocols(0), NumReferencedProtocols(0),
       InstanceMethods(0), NumInstanceMethods(0),
       ClassMethods(0), NumClassMethods(0),
       NextClassCategory(0) {
-    if (numRefProtocol) {
-      ReferencedProtocols = new ObjCProtocolDecl*[numRefProtocol];
-      memset(ReferencedProtocols, '\0', 
-             numRefProtocol*sizeof(ObjCProtocolDecl*));
-      NumReferencedProtocols = numRefProtocol;
-    }
   }
 public:
   
   static ObjCCategoryDecl *Create(ASTContext &C, SourceLocation L,
-                                  unsigned numRefProtocol, IdentifierInfo *Id);
-
+                                  IdentifierInfo *Id);
   
   ObjCInterfaceDecl *getClassInterface() const { return ClassInterface; }
   void setClassInterface(ObjCInterfaceDecl *IDecl) { ClassInterface = IDecl; }
+  
+  void setReferencedProtocolList(ObjCProtocolDecl **List, unsigned NumRPs);
   
   void setCatReferencedProtocols(unsigned idx, ObjCProtocolDecl *OID) {
     assert((idx < NumReferencedProtocols) && "index out of range");
@@ -682,22 +677,22 @@ public:
   }
 
   // Get the local instance method declared in this interface.
-  ObjCMethodDecl *getInstanceMethod(const Selector &Sel) {
+  ObjCMethodDecl *getInstanceMethod(Selector Sel) {
     for (instmeth_iterator I = instmeth_begin(), E = instmeth_end(); 
-             I != E; ++I) {
+         I != E; ++I) {
       if ((*I)->getSelector() == Sel)
         return *I;
     }
-        return 0;
+    return 0;
   }
   // Get the local class method declared in this interface.
-  ObjCMethodDecl *getClassMethod(const Selector &Sel) {
+  ObjCMethodDecl *getClassMethod(Selector Sel) {
     for (classmeth_iterator I = classmeth_begin(), E = classmeth_end(); 
-             I != E; ++I) {
+         I != E; ++I) {
       if ((*I)->getSelector() == Sel)
         return *I;
     }
-        return 0;
+    return 0;
   }
   
   void addMethods(ObjCMethodDecl **insMethods, unsigned numInsMembers,

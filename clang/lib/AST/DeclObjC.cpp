@@ -68,10 +68,9 @@ ObjCForwardProtocolDecl::Create(ASTContext &C, SourceLocation L,
 }
 
 ObjCCategoryDecl *ObjCCategoryDecl::Create(ASTContext &C, SourceLocation L,
-                                           unsigned numRefProtocol, 
                                            IdentifierInfo *Id) {
   void *Mem = C.getAllocator().Allocate<ObjCCategoryDecl>();
-  return new (Mem) ObjCCategoryDecl(L, numRefProtocol, Id);
+  return new (Mem) ObjCCategoryDecl(L, Id);
 }
 
 
@@ -163,6 +162,17 @@ void ObjCProtocolDecl::addMethods(ObjCMethodDecl **insMethods,
   }
   AtEndLoc = endLoc;
 }
+
+void ObjCCategoryDecl::setReferencedProtocolList(ObjCProtocolDecl **List,
+                                                 unsigned NumRPs) {
+  assert(NumReferencedProtocols == 0 && "Protocol list already set");
+  if (NumRPs == 0) return;
+  
+  ReferencedProtocols = new ObjCProtocolDecl*[NumRPs];
+  memcpy(ReferencedProtocols, List, NumRPs*sizeof(ObjCProtocolDecl*));
+  NumReferencedProtocols = NumRPs;
+}
+
 
 /// addMethods - Insert instance and methods declarations into
 /// ObjCCategoryDecl's CatInsMethods and CatClsMethods fields.

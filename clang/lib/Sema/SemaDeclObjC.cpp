@@ -281,8 +281,7 @@ Sema::DeclTy *Sema::ActOnStartCategoryInterface(
   ObjCInterfaceDecl *IDecl = getObjCInterfaceDecl(ClassName);
   
   ObjCCategoryDecl *CDecl = 
-    ObjCCategoryDecl::Create(Context, AtInterfaceLoc, NumProtoRefs, 
-                             CategoryName);
+    ObjCCategoryDecl::Create(Context, AtInterfaceLoc, CategoryName);
   CDecl->setClassInterface(IDecl);
   
   /// Check that class of this category is already completely declared.
@@ -304,7 +303,8 @@ Sema::DeclTy *Sema::ActOnStartCategoryInterface(
   }
 
   if (NumProtoRefs) {
-    /// Check then save referenced protocols
+    llvm::SmallVector<ObjCProtocolDecl*, 32> RefProtocols;
+    /// Check and then save the referenced protocols.
     for (unsigned int i = 0; i != NumProtoRefs; i++) {
       ObjCProtocolDecl* RefPDecl = ObjCProtocols[ProtoRefNames[i]];
       if (!RefPDecl || RefPDecl->isForwardDecl()) {
@@ -312,10 +312,13 @@ Sema::DeclTy *Sema::ActOnStartCategoryInterface(
              ProtoRefNames[i]->getName(),
              CategoryName->getName());
       }
-      CDecl->setCatReferencedProtocols(i, RefPDecl);
+      if (RefPDecl)
+        RefProtocols.push_back(RefPDecl);
     }
-    CDecl->setLocEnd(EndProtoLoc);
+    if (!RefProtocols.empty())
+      CDecl->setReferencedProtocolList(&RefProtocols[0], RefProtocols.size());
   }
+  CDecl->setLocEnd(EndProtoLoc);
   return CDecl;
 }
 
