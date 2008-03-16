@@ -618,7 +618,7 @@ class ObjCCategoryDecl : public NamedDecl {
 
   /// category class methods
   ObjCMethodDecl **ClassMethods;  // Null if not defined
-  int NumClassMethods;  // -1 if not defined
+  unsigned NumClassMethods;  // 0 if not defined
   
   /// Next category belonging to this class
   ObjCCategoryDecl *NextClassCategory;
@@ -630,15 +630,15 @@ public:
     : NamedDecl(ObjCCategory, L, Id),
       ClassInterface(0), ReferencedProtocols(0), NumReferencedProtocols(0),
       InstanceMethods(0), NumInstanceMethods(0),
-      ClassMethods(0), NumClassMethods(-1),
+      ClassMethods(0), NumClassMethods(0),
       NextClassCategory(0) {
-        if (numRefProtocol) {
-          ReferencedProtocols = new ObjCProtocolDecl*[numRefProtocol];
-          memset(ReferencedProtocols, '\0', 
-                 numRefProtocol*sizeof(ObjCProtocolDecl*));
-          NumReferencedProtocols = numRefProtocol;
-        }
-      }
+    if (numRefProtocol) {
+      ReferencedProtocols = new ObjCProtocolDecl*[numRefProtocol];
+      memset(ReferencedProtocols, '\0', 
+             numRefProtocol*sizeof(ObjCProtocolDecl*));
+      NumReferencedProtocols = numRefProtocol;
+    }
+  }
 
   ObjCInterfaceDecl *getClassInterface() const { return ClassInterface; }
   void setClassInterface(ObjCInterfaceDecl *IDecl) { ClassInterface = IDecl; }
@@ -653,7 +653,7 @@ public:
   }
   unsigned getNumReferencedProtocols() const { return NumReferencedProtocols; }
   unsigned getNumInstanceMethods() const { return NumInstanceMethods; }
-  int getNumClassMethods() const { return NumClassMethods; }
+  unsigned getNumClassMethods() const { return NumClassMethods; }
 
   typedef ObjCMethodDecl * const * instmeth_iterator;
   instmeth_iterator instmeth_begin() const { return InstanceMethods; }
@@ -664,11 +664,11 @@ public:
   typedef ObjCMethodDecl * const * classmeth_iterator;
   classmeth_iterator classmeth_begin() const { return ClassMethods; }
   classmeth_iterator classmeth_end() const {
-    return ClassMethods+(NumClassMethods == -1 ? 0 : NumClassMethods);
+    return ClassMethods+NumClassMethods;
   }
 
   // Get the local instance method declared in this interface.
-  ObjCMethodDecl *getInstanceMethod(Selector &Sel) {
+  ObjCMethodDecl *getInstanceMethod(const Selector &Sel) {
     for (instmeth_iterator I = instmeth_begin(), E = instmeth_end(); 
              I != E; ++I) {
       if ((*I)->getSelector() == Sel)
@@ -677,7 +677,7 @@ public:
         return 0;
   }
   // Get the local class method declared in this interface.
-  ObjCMethodDecl *getClassMethod(Selector &Sel) {
+  ObjCMethodDecl *getClassMethod(const Selector &Sel) {
     for (classmeth_iterator I = classmeth_begin(), E = classmeth_end(); 
              I != E; ++I) {
       if ((*I)->getSelector() == Sel)
