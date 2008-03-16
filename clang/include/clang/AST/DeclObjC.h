@@ -202,7 +202,7 @@ class ObjCInterfaceDecl : public TypeDecl {
   
   /// Ivars/NumIvars - This is a new[]'d array of pointers to Decls.
   ObjCIvarDecl **Ivars;   // Null if not defined.
-  int NumIvars;   // -1 if not defined.
+  unsigned NumIvars;      // 0 if none.
   
   /// instance methods
   ObjCMethodDecl **InstanceMethods;  // Null if not defined
@@ -229,7 +229,7 @@ class ObjCInterfaceDecl : public TypeDecl {
                     IdentifierInfo *Id, bool FD, bool isInternal)
     : TypeDecl(ObjCInterface, atLoc, Id, 0), SuperClass(0),
       ReferencedProtocols(0), NumReferencedProtocols(0), Ivars(0), 
-      NumIvars(-1),
+      NumIvars(0),
       InstanceMethods(0), NumInstanceMethods(-1), 
       ClassMethods(0), NumClassMethods(0),
       CategoryList(0), PropertyDecl(0), NumPropertyDecl(-1),
@@ -258,12 +258,10 @@ public:
   }
   unsigned getNumIntfRefProtocols() const { return NumReferencedProtocols; }
   
-  int getNumInstanceVariables() const { return NumIvars; }
-  
   typedef ObjCIvarDecl * const *ivar_iterator;
-  unsigned ivar_size() const { return NumIvars == -1 ?0 : NumIvars; }
   ivar_iterator ivar_begin() const { return Ivars; }
   ivar_iterator ivar_end() const { return Ivars + ivar_size();}
+  unsigned ivar_size() const { return NumIvars; }
   
   int getNumInstanceMethods() const { return NumInstanceMethods; }
   unsigned getNumClassMethods() const { return NumClassMethods; }
@@ -799,7 +797,7 @@ class ObjCImplementationDecl : public NamedDecl {
     
   /// Optional Ivars/NumIvars - This is a new[]'d array of pointers to Decls.
   ObjCIvarDecl **Ivars;   // Null if not specified
-  int NumIvars;   // -1 if not defined.
+  unsigned NumIvars;      // 0 if none.
 
   /// implemented instance methods
   llvm::SmallVector<ObjCMethodDecl*, 32> InstanceMethods;
@@ -814,7 +812,7 @@ class ObjCImplementationDecl : public NamedDecl {
                          ObjCInterfaceDecl *superDecl)
     : NamedDecl(ObjCImplementation, L, Id),
       ClassInterface(classInterface), SuperClass(superDecl),
-      Ivars(0), NumIvars(-1) {}
+      Ivars(0), NumIvars(0) {}
 public:  
   static ObjCImplementationDecl *Create(ASTContext &C, SourceLocation L,
                                         IdentifierInfo *Id,
@@ -839,15 +837,11 @@ public:
   ObjCInterfaceDecl *getClassInterface() const { return ClassInterface; }
   ObjCInterfaceDecl *getSuperClass() const { return SuperClass; }
   
-  void setSuperClass(ObjCInterfaceDecl * superCls) 
-         { SuperClass = superCls; }
+  void setSuperClass(ObjCInterfaceDecl * superCls) { SuperClass = superCls; }
   
   int getNumInstanceMethods() const { return InstanceMethods.size(); }
   unsigned getNumClassMethods() const { return ClassMethods.size(); }
 
-  int getImplDeclNumIvars() const { return NumIvars; }
-  
-  
   typedef llvm::SmallVector<ObjCMethodDecl*, 32>::const_iterator
        instmeth_iterator;
   instmeth_iterator instmeth_begin() const { return InstanceMethods.begin(); }
@@ -866,7 +860,9 @@ public:
   
   typedef ObjCIvarDecl * const *ivar_iterator;
   ivar_iterator ivar_begin() const { return Ivars; }
-  ivar_iterator ivar_end() const {return Ivars+(NumIvars == -1 ? 0 : NumIvars);}
+  ivar_iterator ivar_end() const { return Ivars+NumIvars; }
+  unsigned ivar_size() const { return NumIvars; }
+  bool ivar_empty() const { return NumIvars == 0; }
   
   static bool classof(const Decl *D) {
     return D->getKind() == ObjCImplementation;

@@ -2178,7 +2178,7 @@ void RewriteTest::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
   if (ObjCSynthesizedStructs.count(CDecl))
     return;
   ObjCInterfaceDecl *RCDecl = CDecl->getSuperClass();
-  int NumIvars = CDecl->getNumInstanceVariables();
+  int NumIvars = CDecl->ivar_size();
   SourceLocation LocStart = CDecl->getLocStart();
   SourceLocation LocEnd = CDecl->getLocEnd();
   
@@ -2186,7 +2186,8 @@ void RewriteTest::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
   const char *endBuf = SM->getCharacterData(LocEnd);
   // If no ivars and no root or if its root, directly or indirectly,
   // have no ivars (thus not synthesized) then no need to synthesize this class.
-  if (NumIvars <= 0 && (!RCDecl || !ObjCSynthesizedStructs.count(RCDecl))) {
+  if ((CDecl->isForwardDecl() || NumIvars == 0) &&
+      (!RCDecl || !ObjCSynthesizedStructs.count(RCDecl))) {
     endBuf += Lexer::MeasureTokenLength(LocEnd, *SM);
     ReplaceText(LocStart, endBuf-startBuf, Result.c_str(), Result.size());
     return;
@@ -2634,9 +2635,9 @@ void RewriteTest::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
   }
   
   // Build _objc_ivar_list metadata for classes ivars if needed
-  int NumIvars = IDecl->getImplDeclNumIvars() > 0 
-                   ? IDecl->getImplDeclNumIvars() 
-                   : (CDecl ? CDecl->getNumInstanceVariables() : 0);
+  unsigned NumIvars = !IDecl->ivar_empty()
+                      ? IDecl->ivar_size() 
+                      : (CDecl ? CDecl->ivar_size() : 0);
   if (NumIvars > 0) {
     static bool objc_ivar = false;
     if (!objc_ivar) {
@@ -2672,7 +2673,7 @@ void RewriteTest::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
     Result += "\n";
     
     ObjCInterfaceDecl::ivar_iterator IVI, IVE;
-    if (IDecl->getImplDeclNumIvars() > 0) {
+    if (!IDecl->ivar_empty()) {
       IVI = IDecl->ivar_begin();
       IVE = IDecl->ivar_end();
     } else {

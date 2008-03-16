@@ -247,7 +247,7 @@ void DeclPrinter::PrintObjCInterfaceDecl(ObjCInterfaceDecl *OID) {
   else
     Out << '\n';
   
-  if (OID->getNumInstanceVariables() > 0) {
+  if (OID->ivar_size() > 0) {
     Out << '{';
     for (ObjCInterfaceDecl::ivar_iterator I = OID->ivar_begin(),
          E = OID->ivar_end(); I != E; ++I) {
