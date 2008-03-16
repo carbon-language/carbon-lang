@@ -49,10 +49,9 @@ ObjCIvarDecl *ObjCIvarDecl::Create(ASTContext &C, SourceLocation L,
 
 ObjCProtocolDecl *ObjCProtocolDecl::Create(ASTContext &C, SourceLocation L, 
                                            unsigned numRefProtos,
-                                           IdentifierInfo *Id, 
-                                           bool ForwardDecl) {
+                                           IdentifierInfo *Id) {
   void *Mem = C.getAllocator().Allocate<ObjCProtocolDecl>();
-  return new (Mem) ObjCProtocolDecl(L, numRefProtos, Id, ForwardDecl);
+  return new (Mem) ObjCProtocolDecl(L, numRefProtos, Id);
 }
 
 

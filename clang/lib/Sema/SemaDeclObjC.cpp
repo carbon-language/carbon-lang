@@ -214,12 +214,13 @@ Sema::DeclTy *Sema::ActOnStartProtocolInterface(
     PDecl->AllocReferencedProtocols(NumProtoRefs);
   } else {
     PDecl = ObjCProtocolDecl::Create(Context, AtProtoInterfaceLoc, NumProtoRefs, 
-                                     ProtocolName, false);
+                                     ProtocolName);
+    PDecl->setForwardDecl(false);
     ObjCProtocols[ProtocolName] = PDecl;
   }
   
   if (NumProtoRefs) {
-    /// Check then save referenced protocols
+    /// Check then save referenced protocols.
     for (unsigned int i = 0; i != NumProtoRefs; i++) {
       ObjCProtocolDecl* RefPDecl = ObjCProtocols[ProtoRefNames[i]];
       if (!RefPDecl || RefPDecl->isForwardDecl())
@@ -258,12 +259,11 @@ Sema::ActOnForwardProtocolDeclaration(SourceLocation AtProtocolLoc,
   llvm::SmallVector<ObjCProtocolDecl*, 32> Protocols;
   
   for (unsigned i = 0; i != NumElts; ++i) {
-    IdentifierInfo *P = IdentList[i];
-    ObjCProtocolDecl *PDecl = ObjCProtocols[P];
-    if (!PDecl)  { // Not already seen?
+    IdentifierInfo *Ident = IdentList[i];
+    ObjCProtocolDecl *&PDecl = ObjCProtocols[Ident];
+    if (PDecl == 0)  { // Not already seen?
       // FIXME: Pass in the location of the identifier!
-      PDecl = ObjCProtocolDecl::Create(Context, AtProtocolLoc, 0, P, true);
-      ObjCProtocols[P] = PDecl;
+      PDecl = ObjCProtocolDecl::Create(Context, AtProtocolLoc, 0, Ident);
     }
     
     Protocols.push_back(PDecl);

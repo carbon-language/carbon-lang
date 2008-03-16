@@ -2348,9 +2348,7 @@ void RewriteTest::RewriteObjCProtocolsMetaData(ObjCProtocolDecl **Protocols,
     for (int i = 0; i < NumProtocols; i++) {
       ObjCProtocolDecl *PDecl = Protocols[i];
       // Output struct protocol_methods holder of method selector and type.
-      if (!objc_protocol_methods &&
-          (PDecl->getNumInstanceMethods() > 0 
-           || PDecl->getNumClassMethods() > 0)) {
+      if (!objc_protocol_methods && !PDecl->isForwardDecl()) {
         /* struct protocol_methods {
          SEL _cmd;
          char *method_types;
@@ -2363,8 +2361,8 @@ void RewriteTest::RewriteObjCProtocolsMetaData(ObjCProtocolDecl **Protocols,
         
         objc_protocol_methods = true;
       }
-      int NumMethods = PDecl->getNumInstanceMethods();
-      if(NumMethods > 0) {
+      if (PDecl->instmeth_begin() != PDecl->instmeth_end()) {
+        unsigned NumMethods = PDecl->getNumInstanceMethods();
         /* struct _objc_protocol_method_list {
          int protocol_method_count;
          struct protocol_methods protocols[];
@@ -2397,7 +2395,7 @@ void RewriteTest::RewriteObjCProtocolsMetaData(ObjCProtocolDecl **Protocols,
       }
       
       // Output class methods declared in this protocol.
-      NumMethods = PDecl->getNumClassMethods();
+      int NumMethods = PDecl->getNumClassMethods();
       if (NumMethods > 0) {
         /* struct _objc_protocol_method_list {
          int protocol_method_count;
@@ -2460,7 +2458,7 @@ void RewriteTest::RewriteObjCProtocolsMetaData(ObjCProtocolDecl **Protocols,
         "{\n\t0, \"";
       Result += PDecl->getName();
       Result += "\", 0, ";
-      if (PDecl->getNumInstanceMethods() > 0) {
+      if (PDecl->instmeth_begin() != PDecl->instmeth_end()) {
         Result += "(struct _objc_protocol_method_list *)&_OBJC_PROTOCOL_INSTANCE_METHODS_";
         Result += PDecl->getName();
         Result += ", ";

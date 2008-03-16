@@ -429,19 +429,17 @@ class ObjCProtocolDecl : public NamedDecl {
   SourceLocation EndLoc; // marks the '>' or identifier.
   SourceLocation AtEndLoc; // marks the end of the entire interface.
   
-  ObjCProtocolDecl(SourceLocation L, unsigned numRefProtos,
-                   IdentifierInfo *Id, bool FD)
+  ObjCProtocolDecl(SourceLocation L, unsigned numRefProtos, IdentifierInfo *Id)
     : NamedDecl(ObjCProtocol, L, Id), 
       ReferencedProtocols(0), NumReferencedProtocols(0),
       InstanceMethods(0), NumInstanceMethods(-1), 
       ClassMethods(0), NumClassMethods(-1),
-      isForwardProtoDecl(FD) {
+      isForwardProtoDecl(true) {
     AllocReferencedProtocols(numRefProtos);
   }
 public:
   static ObjCProtocolDecl *Create(ASTContext &C, SourceLocation L,
-                                  unsigned numRefProtos, IdentifierInfo *Id,
-                                  bool ForwardDecl = false);
+                                  unsigned numRefProtos, IdentifierInfo *Id);
 
   void AllocReferencedProtocols(unsigned numRefProtos) {
     if (numRefProtos) {
@@ -464,7 +462,7 @@ public:
     return ReferencedProtocols; 
   }
   unsigned getNumReferencedProtocols() const { return NumReferencedProtocols; }
-  int getNumInstanceMethods() const { return NumInstanceMethods; }
+  unsigned getNumInstanceMethods() const { return NumInstanceMethods; }
   int getNumClassMethods() const { return NumClassMethods; }
 
   typedef ObjCMethodDecl * const * instmeth_iterator;
@@ -616,7 +614,7 @@ class ObjCCategoryDecl : public NamedDecl {
   
   /// category instance methods
   ObjCMethodDecl **InstanceMethods;  // Null if not defined
-  int NumInstanceMethods;  // -1 if not defined
+  unsigned NumInstanceMethods;  // 0 if none
 
   /// category class methods
   ObjCMethodDecl **ClassMethods;  // Null if not defined
@@ -631,7 +629,7 @@ public:
   ObjCCategoryDecl(SourceLocation L, unsigned numRefProtocol,IdentifierInfo *Id)
     : NamedDecl(ObjCCategory, L, Id),
       ClassInterface(0), ReferencedProtocols(0), NumReferencedProtocols(0),
-      InstanceMethods(0), NumInstanceMethods(-1),
+      InstanceMethods(0), NumInstanceMethods(0),
       ClassMethods(0), NumClassMethods(-1),
       NextClassCategory(0) {
         if (numRefProtocol) {
@@ -654,13 +652,13 @@ public:
     return ReferencedProtocols; 
   }
   unsigned getNumReferencedProtocols() const { return NumReferencedProtocols; }
-  int getNumInstanceMethods() const { return NumInstanceMethods; }
+  unsigned getNumInstanceMethods() const { return NumInstanceMethods; }
   int getNumClassMethods() const { return NumClassMethods; }
 
   typedef ObjCMethodDecl * const * instmeth_iterator;
   instmeth_iterator instmeth_begin() const { return InstanceMethods; }
   instmeth_iterator instmeth_end() const {
-    return InstanceMethods+(NumInstanceMethods == -1 ? 0 : NumInstanceMethods);
+    return InstanceMethods+NumInstanceMethods;
   }
   
   typedef ObjCMethodDecl * const * classmeth_iterator;

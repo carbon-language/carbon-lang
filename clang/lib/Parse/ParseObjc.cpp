@@ -847,7 +847,6 @@ void Parser::ParseObjCClassInstanceVariables(DeclTy *interfaceDecl,
 ///   "@protocol identifier ;" should be resolved as "@protocol
 ///   identifier-list ;": objc-interface-decl-list may not start with a
 ///   semicolon in the first alternative if objc-protocol-refs are omitted.
-
 Parser::DeclTy *Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc) {
   assert(Tok.isObjCAtKeyword(tok::objc_protocol) &&
          "ParseObjCAtProtocolDeclaration(): Expected @protocol");
@@ -887,7 +886,7 @@ Parser::DeclTy *Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc) {
     if (ExpectAndConsume(tok::semi, diag::err_expected_semi_after, "@protocol"))
       return 0;
   }
-  if (ProtocolRefs.size() > 0)
+  if (!ProtocolRefs.empty())
     return Actions.ActOnForwardProtocolDeclaration(AtLoc,
                                                    &ProtocolRefs[0], 
                                                    ProtocolRefs.size());
