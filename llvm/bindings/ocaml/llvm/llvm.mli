@@ -1357,3 +1357,57 @@ module MemoryBuffer : sig
   (** Disposes of a memory buffer. *)
   external dispose : llmemorybuffer -> unit = "llvm_memorybuffer_dispose"
 end
+
+
+(** {6 Pass Managers} *)
+
+module PassManager : sig
+  (**  *)
+  type 'a t
+  type any = [ `Module | `Function ]
+  
+  (** [PassManager.create ()] constructs a new whole-module pass pipeline. This
+      type of pipeline is suitable for link-time optimization and whole-module
+      transformations.
+      See the constructor of [llvm::PassManager]. *)
+  external create : unit -> [ `Module ] t = "llvm_passmanager_create"
+  
+  (** [PassManager.create_function mp] constructs a new function-by-function
+      pass pipeline over the module provider [mp]. It does not take ownership of
+      [mp]. This type of pipeline is suitable for code generation and JIT
+      compilation tasks.
+      See the constructor of [llvm::FunctionPassManager]. *)
+  external create_function : llmoduleprovider -> [ `Function ] t
+                           = "LLVMCreateFunctionPassManager"
+  
+  (** [run_module m pm] initializes, executes on the module [m], and finalizes
+      all of the passes scheduled in the pass manager [pm]. Returns [true] if
+      any of the passes modified the module, [false] otherwise.
+      See the [llvm::PassManager::run] method. *)
+  external run_module : llmodule -> [ `Module ] t -> bool
+                      = "llvm_passmanager_run_module"
+  
+  (** [initialize fpm] initializes all of the function passes scheduled in the
+      function pass manager [fpm]. Returns [true] if any of the passes modified
+      the module, [false] otherwise.
+      See the [llvm::FunctionPassManager::doInitialization] method. *)
+  external initialize : [ `Function ] t -> bool = "llvm_passmanager_initialize"
+  
+  (** [run_function f fpm] executes all of the function passes scheduled in the
+      function pass manager [fpm] over the function [f]. Returns [true] if any
+      of the passes modified [f], [false] otherwise.
+      See the [llvm::FunctionPassManager::run] method. *)
+  external run_function : llvalue -> [ `Function ] t -> bool
+                        = "llvm_passmanager_run_function"
+  
+  (** [finalize fpm] finalizes all of the function passes scheduled in in the
+      function pass manager [fpm]. Returns [true] if any of the passes
+      modified the module, [false] otherwise.
+      See the [llvm::FunctionPassManager::doFinalization] method. *)
+  external finalize : [ `Function ] t -> bool = "llvm_passmanager_finalize"
+  
+  (** Frees the memory of a pass pipeline. For function pipelines, does not free
+      the module provider.
+      See the destructor of [llvm::BasePassManager]. *)
+  external dispose : [< any ] t -> unit = "llvm_passmanager_dispose"
+end

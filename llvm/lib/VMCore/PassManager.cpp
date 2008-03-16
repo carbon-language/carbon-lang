@@ -19,6 +19,7 @@
 #include "llvm/ModuleProvider.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm-c/Core.h"
 #include <algorithm>
 #include <vector>
 #include <map>
@@ -1526,3 +1527,33 @@ void BasicBlockPass::assignPassManager(PMStack &PMS,
 }
 
 PassManagerBase::~PassManagerBase() {}
+  
+/*===-- C Bindings --------------------------------------------------------===*/
+
+LLVMPassManagerRef LLVMCreatePassManager() {
+  return wrap(new PassManager());
+}
+
+LLVMPassManagerRef LLVMCreateFunctionPassManager(LLVMModuleProviderRef P) {
+  return wrap(new FunctionPassManager(unwrap(P)));
+}
+
+int LLVMRunPassManager(LLVMPassManagerRef PM, LLVMModuleRef M) {
+  return unwrap<PassManager>(PM)->run(*unwrap(M));
+}
+
+int LLVMInitializeFunctionPassManager(LLVMPassManagerRef FPM) {
+  return unwrap<FunctionPassManager>(FPM)->doInitialization();
+}
+
+int LLVMRunFunctionPassManager(LLVMPassManagerRef FPM, LLVMValueRef F) {
+  return unwrap<FunctionPassManager>(FPM)->run(*unwrap<Function>(F));
+}
+
+int LLVMFinalizeFunctionPassManager(LLVMPassManagerRef FPM) {
+  return unwrap<FunctionPassManager>(FPM)->doFinalization();
+}
+
+void LLVMDisposePassManager(LLVMPassManagerRef PM) {
+  delete unwrap(PM);
+}

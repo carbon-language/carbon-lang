@@ -39,6 +39,8 @@
    and 'unwrap' conversion functions. */
 #include "llvm/Module.h"
 #include "llvm/Support/LLVMBuilder.h"
+#include "llvm/Pass.h"
+#include "llvm/PassManager.h"
 
 extern "C" {
 #endif
@@ -78,6 +80,9 @@ typedef struct LLVMOpaqueModuleProvider *LLVMModuleProviderRef;
  * See the llvm::MemoryBuffer class.
  */
 typedef struct LLVMOpaqueMemoryBuffer *LLVMMemoryBufferRef;
+
+/** See the llvm::PassManagerBase class. */
+typedef struct LLVMOpaquePassManager *LLVMPassManagerRef;
 
 typedef enum {
   LLVMVoidTypeKind,        /**< type with no size */
@@ -575,6 +580,47 @@ int LLVMCreateMemoryBufferWithSTDIN(LLVMMemoryBufferRef *OutMemBuf,
                                     char **OutMessage);
 void LLVMDisposeMemoryBuffer(LLVMMemoryBufferRef MemBuf);
 
+
+/*===-- Pass Managers -----------------------------------------------------===*/
+
+/** Constructs a new whole-module pass pipeline. This type of pipeline is
+    suitable for link-time optimization and whole-module transformations.
+    See llvm::PassManager::PassManager. */
+LLVMPassManagerRef LLVMCreatePassManager();
+
+/** Constructs a new function-by-function pass pipeline over the module
+    provider. It does not take ownership of the module provider. This type of
+    pipeline is suitable for code generation and JIT compilation tasks.
+    See llvm::FunctionPassManager::FunctionPassManager. */
+LLVMPassManagerRef LLVMCreateFunctionPassManager(LLVMModuleProviderRef MP);
+
+/** Initializes, executes on the provided module, and finalizes all of the
+    passes scheduled in the pass manager. Returns 1 if any of the passes
+    modified the module, 0 otherwise. See llvm::PassManager::run(Module&). */
+int LLVMRunPassManager(LLVMPassManagerRef PM, LLVMModuleRef M);
+
+/** Initializes all of the function passes scheduled in the function pass
+    manager. Returns 1 if any of the passes modified the module, 0 otherwise.
+    See llvm::FunctionPassManager::doInitialization. */
+int LLVMInitializeFunctionPassManager(LLVMPassManagerRef FPM);
+
+/** Executes all of the function passes scheduled in the function pass manager
+    on the provided function. Returns 1 if any of the passes modified the
+    function, false otherwise.
+    See llvm::FunctionPassManager::run(Function&). */
+int LLVMRunFunctionPassManager(LLVMPassManagerRef FPM, LLVMValueRef F);
+
+/** Finalizes all of the function passes scheduled in in the function pass
+    manager. Returns 1 if any of the passes modified the module, 0 otherwise.
+    See llvm::FunctionPassManager::doFinalization. */
+int LLVMFinalizeFunctionPassManager(LLVMPassManagerRef FPM);
+
+/** Frees the memory of a pass pipeline. For function pipelines, does not free
+    the module provider.
+    See llvm::PassManagerBase::~PassManagerBase. */
+void LLVMDisposePassManager(LLVMPassManagerRef PM);
+
+
 #ifdef __cplusplus
 }
 
@@ -591,24 +637,40 @@ namespace llvm {
       return reinterpret_cast<ref>(const_cast<ty*>(P)); \
     }
   
-  DEFINE_SIMPLE_CONVERSION_FUNCTIONS(Type,               LLVMTypeRef          )
-  DEFINE_SIMPLE_CONVERSION_FUNCTIONS(Value,              LLVMValueRef         )
+  #define DEFINE_ISA_CONVERSION_FUNCTIONS(ty, ref)  \
+    DEFINE_SIMPLE_CONVERSION_FUNCTIONS(ty, ref)         \
+                                                        \
+    template<typename T>                                \
+    inline T *unwrap(ref P) {                           \
+      return cast<T>(unwrap(P));                        \
+    }
+  
+  #define DEFINE_STDCXX_CONVERSION_FUNCTIONS(ty, ref)   \
+    DEFINE_SIMPLE_CONVERSION_FUNCTIONS(ty, ref)         \
+                                                        \
+    template<typename T>                                \
+    inline T *unwrap(ref P) {                           \
+      T *Q = dynamic_cast<T*>(unwrap(P));               \
+      assert(Q && "Invalid cast!");                     \
+      return Q;                                         \
+    }
+  
+  DEFINE_ISA_CONVERSION_FUNCTIONS   (Type,               LLVMTypeRef          )
+  DEFINE_ISA_CONVERSION_FUNCTIONS   (Value,              LLVMValueRef         )
   DEFINE_SIMPLE_CONVERSION_FUNCTIONS(Module,             LLVMModuleRef        )
   DEFINE_SIMPLE_CONVERSION_FUNCTIONS(BasicBlock,         LLVMBasicBlockRef    )
   DEFINE_SIMPLE_CONVERSION_FUNCTIONS(LLVMFoldingBuilder, LLVMBuilderRef       )
   DEFINE_SIMPLE_CONVERSION_FUNCTIONS(PATypeHolder,       LLVMTypeHandleRef    )
   DEFINE_SIMPLE_CONVERSION_FUNCTIONS(ModuleProvider,     LLVMModuleProviderRef)
   DEFINE_SIMPLE_CONVERSION_FUNCTIONS(MemoryBuffer,       LLVMMemoryBufferRef  )
+  DEFINE_STDCXX_CONVERSION_FUNCTIONS(PassManagerBase,    LLVMPassManagerRef   )
   
+  #undef DEFINE_STDCXX_CONVERSION_FUNCTIONS
+  #undef DEFINE_ISA_CONVERSION_FUNCTIONS
   #undef DEFINE_SIMPLE_CONVERSION_FUNCTIONS
   
   /* Specialized opaque type conversions.
    */
-  template<typename T>
-  inline T *unwrap(LLVMTypeRef Ty) {
-    return cast<T>(unwrap(Ty));
-  }
-  
   inline Type **unwrap(LLVMTypeRef* Tys) {
     return reinterpret_cast<Type**>(Tys);
   }
@@ -619,11 +681,6 @@ namespace llvm {
   
   /* Specialized opaque value conversions.
    */ 
-  template<typename T>
-  inline T *unwrap(LLVMValueRef Val) {
-    return cast<T>(unwrap(Val));
-  }
-
   inline Value **unwrap(LLVMValueRef *Vals) {
     return reinterpret_cast<Value**>(Vals);
   }
