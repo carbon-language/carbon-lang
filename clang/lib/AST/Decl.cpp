@@ -235,6 +235,12 @@ FunctionDecl *FunctionDecl::Create(ASTContext &C, SourceLocation L,
   return new (Mem) FunctionDecl(L, Id, T, S, isInline, PrevDecl);
 }
 
+FieldDecl *FieldDecl::Create(ASTContext &C, SourceLocation L,
+                             IdentifierInfo *Id, QualType T, Expr *BW) {
+  void *Mem = C.getAllocator().Allocate<FieldDecl>();
+  return new (Mem) FieldDecl(L, Id, T, BW);
+}
+
 
 EnumConstantDecl *EnumConstantDecl::Create(ASTContext &C, SourceLocation L,
                                            IdentifierInfo *Id, QualType T,
@@ -263,6 +269,17 @@ RecordDecl *RecordDecl::Create(ASTContext &C, Kind DK, SourceLocation L,
   return new (Mem) RecordDecl(DK, L, Id, PrevDecl);
 }
 
+FileScopeAsmDecl *FileScopeAsmDecl::Create(ASTContext &C, SourceLocation L,
+                                           StringLiteral *Str) {
+  void *Mem = C.getAllocator().Allocate<FileScopeAsmDecl>();
+  return new (Mem) FileScopeAsmDecl(L, Str);
+}
+
+LinkageSpecDecl *LinkageSpecDecl::Create(ASTContext &C, SourceLocation L,
+                                         LanguageIDs Lang, Decl *D) {
+  void *Mem = C.getAllocator().Allocate<LinkageSpecDecl>();
+  return new (Mem) LinkageSpecDecl(L, Lang, D);
+}
 
 //===----------------------------------------------------------------------===//
 // Decl Implementation

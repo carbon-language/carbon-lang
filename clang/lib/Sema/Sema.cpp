@@ -116,8 +116,8 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer)
     RecordDecl *ObjectTag = 
       RecordDecl::Create(Context, Decl::Struct, SourceLocation(),
                          &IT.get("objc_object"), 0);
-    FieldDecl *IsaDecl = new FieldDecl(SourceLocation(), 0, 
-                                       Context.getObjCClassType());
+    FieldDecl *IsaDecl = FieldDecl::Create(Context, SourceLocation(), 0, 
+                                           Context.getObjCClassType());
     ObjectTag->defineBody(&IsaDecl, 1);
     QualType ObjT = Context.getPointerType(Context.getTagDeclType(ObjectTag));
     TypedefDecl *IdTypedef = TypedefDecl::Create(Context, SourceLocation(),

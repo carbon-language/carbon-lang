@@ -434,6 +434,22 @@ public:
     None, Extern, Static, PrivateExtern
   };
 private:
+  /// ParamInfo - new[]'d array of pointers to VarDecls for the formal
+  /// parameters of this function.  This is null if a prototype or if there are
+  /// no formals.  TODO: we could allocate this space immediately after the
+  /// FunctionDecl object to save an allocation like FunctionType does.
+  ParmVarDecl **ParamInfo;
+  
+  Stmt *Body;  // Null if a prototype.
+  
+  /// DeclChain - Linked list of declarations that are defined inside this
+  /// function.
+  ScopedDecl *DeclChain;
+  
+  // NOTE: VC++ treats enums as signed, avoid using the StorageClass enum
+  unsigned SClass : 2;
+  bool IsInline : 1;
+  
   FunctionDecl(SourceLocation L, IdentifierInfo *Id, QualType T,
                StorageClass S, bool isInline, ScopedDecl *PrevDecl)
     : ValueDecl(Function, L, Id, T, PrevDecl), 
@@ -480,23 +496,6 @@ public:
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == Function; }
   static bool classof(const FunctionDecl *D) { return true; }
-  
-private:
-  /// ParamInfo - new[]'d array of pointers to VarDecls for the formal
-  /// parameters of this function.  This is null if a prototype or if there are
-  /// no formals.  TODO: we could allocate this space immediately after the
-  /// FunctionDecl object to save an allocation like FunctionType does.
-  ParmVarDecl **ParamInfo;
-  
-  Stmt *Body;  // Null if a prototype.
-  
-  /// DeclChain - Linked list of declarations that are defined inside this
-  /// function.
-  ScopedDecl *DeclChain;
-
-  // NOTE: VC++ treats enums as signed, avoid using the StorageClass enum
-  unsigned SClass : 2;
-  bool IsInline : 1;
 
 protected:
   /// EmitImpl - Serialize this FunctionDecl.  Called by Decl::Emit.
@@ -518,10 +517,11 @@ protected:
   FieldDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, QualType T,
             Expr *BW = NULL)
     : NamedDecl(DK, L, Id), DeclType(T), BitWidth(BW) {}
-public:
-  FieldDecl(SourceLocation L, IdentifierInfo *Id, QualType T, 
-            Expr *BW = NULL)
+  FieldDecl(SourceLocation L, IdentifierInfo *Id, QualType T, Expr *BW)
     : NamedDecl(Field, L, Id), DeclType(T), BitWidth(BW) {}
+public:
+  static FieldDecl *Create(ASTContext &C, SourceLocation L, IdentifierInfo *Id,
+                           QualType T, Expr *BW = NULL);
 
   QualType getType() const { return DeclType; }
   QualType getCanonicalType() const { return DeclType.getCanonicalType(); }
@@ -688,7 +688,6 @@ class EnumDecl : public TagDecl {
       ElementList = 0;
       IntegerType = QualType();
     }
-  ~EnumDecl() {}
 public:
   static EnumDecl *Create(ASTContext &C, SourceLocation L, IdentifierInfo *Id,
                           ScopedDecl *PrevDecl);
@@ -749,8 +748,6 @@ class RecordDecl : public TagDecl {
     Members = 0;
     NumMembers = -1;
   }
-  
-  ~RecordDecl() {}
 public:
   
   static RecordDecl *Create(ASTContext &C, Kind DK, SourceLocation L,
@@ -791,9 +788,11 @@ protected:
 
 class FileScopeAsmDecl : public Decl {
   StringLiteral *AsmString;
-public:
   FileScopeAsmDecl(SourceLocation L, StringLiteral *asmstring)
     : Decl(FileScopeAsm, L), AsmString(asmstring) {}
+public:
+  static FileScopeAsmDecl *Create(ASTContext &C, SourceLocation L,
+                                  StringLiteral *Str);
 
   const StringLiteral *getAsmString() const { return AsmString; }
   StringLiteral *getAsmString() { return AsmString; }
@@ -828,10 +827,13 @@ private:
   LanguageIDs Language;
   /// D - This is the Decl of the linkage specification.
   Decl *D;
-public:
+  
   LinkageSpecDecl(SourceLocation L, LanguageIDs lang, Decl *d)
    : Decl(LinkageSpec, L), Language(lang), D(d) {}
-  
+public:
+  static LinkageSpecDecl *Create(ASTContext &C, SourceLocation L,
+                                 LanguageIDs Lang, Decl *D);
+
   LanguageIDs getLanguage() const { return Language; }
   const Decl *getDecl() const { return D; }
   Decl *getDecl() { return D; }

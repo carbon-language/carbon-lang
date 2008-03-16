@@ -302,7 +302,7 @@ void FieldDecl::EmitImpl(Serializer& S) const {
 }
 
 FieldDecl* FieldDecl::CreateImpl(Deserializer& D) {
-  FieldDecl* decl = new FieldDecl(SourceLocation(),NULL,QualType());
+  FieldDecl* decl = new FieldDecl(SourceLocation(), NULL, QualType(), 0);
   decl->DeclType.ReadBackpatch(D);  
   decl->ReadInRec(D);
   decl->BitWidth = D.ReadOwnedPtr<Expr>();

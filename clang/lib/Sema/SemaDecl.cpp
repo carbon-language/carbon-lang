@@ -1332,7 +1332,7 @@ Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *TagDecl,
   FieldDecl *NewFD;
   
   if (isa<RecordDecl>(static_cast<Decl *>(TagDecl)))
-    NewFD = new FieldDecl(Loc, II, T, BitWidth);
+    NewFD = FieldDecl::Create(Context, Loc, II, T, BitWidth);
   else if (isa<ObjCInterfaceDecl>(static_cast<Decl *>(TagDecl)) ||
            isa<ObjCImplementationDecl>(static_cast<Decl *>(TagDecl)) ||
            isa<ObjCCategoryDecl>(static_cast<Decl *>(TagDecl)) ||
@@ -1750,7 +1750,7 @@ Sema::DeclTy *Sema::ActOnFileScopeAsmDecl(SourceLocation Loc,
                                           ExprTy *expr) {
   StringLiteral *AsmString = cast<StringLiteral>((Expr*)expr);
   
-  return new FileScopeAsmDecl(Loc, AsmString);
+  return FileScopeAsmDecl::Create(Context, Loc, AsmString);
 }
 
 Sema::DeclTy* Sema::ActOnLinkageSpec(SourceLocation Loc,
@@ -1771,7 +1771,7 @@ Sema::DeclTy* Sema::ActOnLinkageSpec(SourceLocation Loc,
   }
 
   // FIXME: Add all the various semantics of linkage specifications
-  return new LinkageSpecDecl(Loc, Language, dcl);
+  return LinkageSpecDecl::Create(Context, Loc, Language, dcl);
 }
 
 void Sema::HandleDeclAttribute(Decl *New, AttributeList *Attr) {

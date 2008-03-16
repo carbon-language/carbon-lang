@@ -62,6 +62,7 @@
 		DE34621D0AFEB19B00DBC861 /* StmtPrinter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE34621C0AFEB19B00DBC861 /* StmtPrinter.cpp */; };
 		DE3464220B03040900DBC861 /* Type.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE3464210B03040900DBC861 /* Type.h */; };
 		DE38CD500D794D0100A273B6 /* CGObjCGNU.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE38CD4F0D794D0100A273B6 /* CGObjCGNU.cpp */; };
+		DE38CF160D8C9DE000A273B6 /* DiagChecker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE38CF150D8C9DE000A273B6 /* DiagChecker.cpp */; };
 		DE3985790CB8ADC800223765 /* ASTConsumers.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE3985780CB8ADC800223765 /* ASTConsumers.h */; };
 		DE39857B0CB8ADCB00223765 /* ASTConsumers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE39857A0CB8ADCB00223765 /* ASTConsumers.cpp */; };
 		DE3986F00CB8D4B300223765 /* IdentifierTable.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE3986EF0CB8D4B300223765 /* IdentifierTable.h */; };
@@ -119,7 +120,6 @@
 		DEB0AEBB0C2087AB00718A22 /* TextDiagnostics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEB0AEBA0C2087AB00718A22 /* TextDiagnostics.cpp */; };
 		DEC63B1A0C7B940200DBF169 /* CFG.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEC63B190C7B940200DBF169 /* CFG.cpp */; };
 		DEC63B1C0C7B940600DBF169 /* CFG.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEC63B1B0C7B940600DBF169 /* CFG.h */; };
-		DEC82DC40C32D50A00BAC245 /* DiagChecker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEC82DC30C32D50A00BAC245 /* DiagChecker.cpp */; };
 		DEC8D9910A9433CD00353FCA /* Decl.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEC8D9900A9433CD00353FCA /* Decl.h */; };
 		DEC8D9A40A94346E00353FCA /* AST.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEC8D9A30A94346E00353FCA /* AST.h */; };
 		DED626C90AE0C065001E80A4 /* TargetInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED626C80AE0C065001E80A4 /* TargetInfo.cpp */; };
@@ -312,6 +312,7 @@
 		DE3464210B03040900DBC861 /* Type.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Type.h; path = clang/AST/Type.h; sourceTree = "<group>"; };
 		DE38CD4E0D794CF900A273B6 /* CGObjCRuntime.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CGObjCRuntime.h; path = lib/CodeGen/CGObjCRuntime.h; sourceTree = "<group>"; };
 		DE38CD4F0D794D0100A273B6 /* CGObjCGNU.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CGObjCGNU.cpp; path = lib/CodeGen/CGObjCGNU.cpp; sourceTree = "<group>"; };
+		DE38CF150D8C9DE000A273B6 /* DiagChecker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DiagChecker.cpp; path = Driver/DiagChecker.cpp; sourceTree = "<group>"; };
 		DE3985780CB8ADC800223765 /* ASTConsumers.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ASTConsumers.h; path = Driver/ASTConsumers.h; sourceTree = "<group>"; };
 		DE39857A0CB8ADCB00223765 /* ASTConsumers.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ASTConsumers.cpp; path = Driver/ASTConsumers.cpp; sourceTree = "<group>"; };
 		DE3986EF0CB8D4B300223765 /* IdentifierTable.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = IdentifierTable.h; sourceTree = "<group>"; };
@@ -384,7 +385,6 @@
 		DEB0AEBA0C2087AB00718A22 /* TextDiagnostics.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = TextDiagnostics.cpp; path = Driver/TextDiagnostics.cpp; sourceTree = "<group>"; };
 		DEC63B190C7B940200DBF169 /* CFG.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = CFG.cpp; path = lib/AST/CFG.cpp; sourceTree = "<group>"; };
 		DEC63B1B0C7B940600DBF169 /* CFG.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = CFG.h; path = clang/AST/CFG.h; sourceTree = "<group>"; };
-		DEC82DC30C32D50A00BAC245 /* DiagChecker.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = DiagChecker.cpp; path = lib/Driver/DiagChecker.cpp; sourceTree = "<group>"; };
 		DEC8D9900A9433CD00353FCA /* Decl.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Decl.h; path = clang/AST/Decl.h; sourceTree = "<group>"; };
 		DEC8D9A30A94346E00353FCA /* AST.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = AST.h; path = clang/AST/AST.h; sourceTree = "<group>"; };
 		DED626C80AE0C065001E80A4 /* TargetInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = TargetInfo.cpp; sourceTree = "<group>"; };
@@ -674,7 +674,7 @@
 				DE5932CE0AD60FF400BC794C /* clang.h */,
 				DE3985780CB8ADC800223765 /* ASTConsumers.h */,
 				DE39857A0CB8ADCB00223765 /* ASTConsumers.cpp */,
-				DEC82DC30C32D50A00BAC245 /* DiagChecker.cpp */,
+				DE38CF150D8C9DE000A273B6 /* DiagChecker.cpp */,
 				DE5932CF0AD60FF400BC794C /* PrintParserCallbacks.cpp */,
 				DE5932D00AD60FF400BC794C /* PrintPreprocessedOutput.cpp */,
 				DEA977890CBE87EB00F872F9 /* RewriteTest.cpp */,
@@ -946,7 +946,6 @@
 				84D9A8880C1A57E100AC7ABC /* AttributeList.cpp in Sources */,
 				DEB0AEBB0C2087AB00718A22 /* TextDiagnostics.cpp in Sources */,
 				DEEBC3BC0C2363BC00A9FE82 /* CodeGenTypes.cpp in Sources */,
-				DEC82DC40C32D50A00BAC245 /* DiagChecker.cpp in Sources */,
 				DEEBCBE50C33703100A9FE82 /* TextDiagnosticBuffer.cpp in Sources */,
 				DEF2EDA70C6A4252000C4259 /* StmtDumper.cpp in Sources */,
 				DEF2EFF30C6CDD74000C4259 /* CGExprAgg.cpp in Sources */,
@@ -997,6 +996,7 @@
 				DE85CDAC0D838C120070E26E /* PPMacroExpansion.cpp in Sources */,
 				DE85CDB00D838C390070E26E /* PPDirectives.cpp in Sources */,
 				DE85CDB60D839BAE0070E26E /* PPLexerChange.cpp in Sources */,
+				DE38CF160D8C9DE000A273B6 /* DiagChecker.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

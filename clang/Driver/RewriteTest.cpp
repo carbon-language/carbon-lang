@@ -1805,7 +1805,8 @@ QualType RewriteTest::getSuperStructType() {
     FieldDecl *FieldDecls[2];
   
     for (unsigned i = 0; i < 2; ++i)
-      FieldDecls[i] = new FieldDecl(SourceLocation(), 0, FieldTypes[i]);
+      FieldDecls[i] = FieldDecl::Create(*Context, SourceLocation(), 0, 
+                                        FieldTypes[i]);
   
     SuperStructDecl->defineBody(FieldDecls, 4);
   }
@@ -1831,7 +1832,8 @@ QualType RewriteTest::getConstantStringStructType() {
     FieldDecl *FieldDecls[2];
   
     for (unsigned i = 0; i < 4; ++i)
-      FieldDecls[i] = new FieldDecl(SourceLocation(), 0, FieldTypes[i]);
+      FieldDecls[i] = FieldDecl::Create(*Context, SourceLocation(), 0,
+                                        FieldTypes[i]);
   
     ConstantStringDecl->defineBody(FieldDecls, 4);
   }

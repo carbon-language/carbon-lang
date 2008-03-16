@@ -1064,7 +1064,8 @@ QualType ASTContext::getCFConstantStringType() {
     FieldDecl *FieldDecls[4];
   
     for (unsigned i = 0; i < 4; ++i)
-      FieldDecls[i] = new FieldDecl(SourceLocation(), 0, FieldTypes[i]);
+      FieldDecls[i] = FieldDecl::Create(*this, SourceLocation(), 0,
+                                        FieldTypes[i]);
   
     CFConstantStringTypeDecl->defineBody(FieldDecls, 4);
   }
