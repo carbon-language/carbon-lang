@@ -1940,6 +1940,10 @@ void APInt::fromString(uint32_t numbits, const char *str, uint32_t slen,
         assert(0 && "huh? we shouldn't get here");
     } else if (isdigit(cdigit)) {
       digit = cdigit - '0';
+      assert((radix == 10 ||
+              (radix == 8 && digit != 8 && digit != 9) ||
+              (radix == 2 && (digit == 0 || digit == 1))) &&
+             "Invalid digit in string for given radix");
     } else {
       assert(0 && "Invalid character in digit string");
     }
