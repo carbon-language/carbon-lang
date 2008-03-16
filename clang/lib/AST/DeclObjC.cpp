@@ -30,7 +30,21 @@ ObjCMethodDecl *ObjCMethodDecl::Create(ASTContext &C, SourceLocation beginLoc,
   return new (Mem) ObjCMethodDecl(beginLoc, endLoc, SelInfo, T, contextDecl,
                                   M, isInstance, 
                                   isVariadic, impControl);
+}
 
+ObjCInterfaceDecl *ObjCInterfaceDecl::Create(ASTContext &C,SourceLocation atLoc,
+                                             unsigned numRefProtos,
+                                             IdentifierInfo *Id,
+                                             bool ForwardDecl, bool isInternal){
+  void *Mem = C.getAllocator().Allocate<ObjCInterfaceDecl>();
+  return new (Mem) ObjCInterfaceDecl(atLoc, numRefProtos, Id, ForwardDecl,
+                                     isInternal);
+}
+
+ObjCIvarDecl *ObjCIvarDecl::Create(ASTContext &C, SourceLocation L,
+                                   IdentifierInfo *Id, QualType T) {
+  void *Mem = C.getAllocator().Allocate<ObjCIvarDecl>();
+  return new (Mem) ObjCIvarDecl(L, Id, T);
 }
 
 

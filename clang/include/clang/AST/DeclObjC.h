@@ -224,7 +224,7 @@ class ObjCInterfaceDecl : public TypeDecl {
   
   SourceLocation EndLoc; // marks the '>', '}', or identifier.
   SourceLocation AtEndLoc; // marks the end of the entire interface.
-public:
+
   ObjCInterfaceDecl(SourceLocation atLoc, unsigned numRefProtos,
                     IdentifierInfo *Id, bool FD = false, 
                     bool isInternal = false)
@@ -237,6 +237,12 @@ public:
       ForwardDecl(FD), InternalInterface(isInternal) {
         AllocIntfRefProtocols(numRefProtos);
       }
+public:
+
+  static ObjCInterfaceDecl *Create(ASTContext &C, SourceLocation atLoc,
+                                   unsigned numRefProtos, IdentifierInfo *Id,
+                                   bool ForwardDecl = false,
+                                   bool isInternal = false);
   
   // This is necessary when converting a forward declaration to a definition.
   void AllocIntfRefProtocols(unsigned numRefProtos) {
@@ -303,20 +309,20 @@ public:
   // Get the local instance method declared in this interface.
   ObjCMethodDecl *getInstanceMethod(Selector &Sel) {
     for (instmeth_iterator I = instmeth_begin(), E = instmeth_end(); 
-             I != E; ++I) {
+         I != E; ++I) {
       if ((*I)->getSelector() == Sel)
         return *I;
     }
-        return 0;
+    return 0;
   }
   // Get the local class method declared in this interface.
   ObjCMethodDecl *getClassMethod(Selector &Sel) {
     for (classmeth_iterator I = classmeth_begin(), E = classmeth_end(); 
-             I != E; ++I) {
+         I != E; ++I) {
       if ((*I)->getSelector() == Sel)
         return *I;
     }
-        return 0;
+    return 0;
   }
   // Lookup a method. First, we search locally. If a method isn't
   // found, we search referenced protocols and class categories.
@@ -365,9 +371,11 @@ public:
 ///   }
 ///
 class ObjCIvarDecl : public FieldDecl {
-public:
   ObjCIvarDecl(SourceLocation L, IdentifierInfo *Id, QualType T) 
     : FieldDecl(ObjCIvar, L, Id, T) {}
+public:
+  static ObjCIvarDecl *Create(ASTContext &C, SourceLocation L,
+                              IdentifierInfo *Id, QualType T);
     
   enum AccessControl {
     None, Private, Protected, Public, Package

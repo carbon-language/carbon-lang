@@ -98,7 +98,8 @@ Sema::DeclTy *Sema::ActOnStartClassInterface(
     }
   }
   else {
-    IDecl = new ObjCInterfaceDecl(AtInterfaceLoc, NumProtocols, ClassName);
+    IDecl = ObjCInterfaceDecl::Create(Context, AtInterfaceLoc, NumProtocols,
+                                      ClassName);
   
     // Chain & install the interface decl into the identifier.
     IDecl->setNext(ClassName->getFETokenInfo<ScopedDecl>());
@@ -382,8 +383,8 @@ Sema::DeclTy *Sema::ActOnStartClassImplementation(
   if (!IDecl) {
     // Legacy case of @implementation with no corresponding @interface.
     // Build, chain & install the interface decl into the identifier.
-    IDecl = new ObjCInterfaceDecl(AtClassImplLoc, 0, ClassName, 
-                                  false, true);
+    IDecl = ObjCInterfaceDecl::Create(Context, AtClassImplLoc, 0, ClassName, 
+                                      false, true);
     IDecl->setNext(ClassName->getFETokenInfo<ScopedDecl>());
     ClassName->setFETokenInfo(IDecl);
     IDecl->setSuperClass(SDecl);
@@ -589,7 +590,8 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
     }
     ObjCInterfaceDecl *IDecl = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl); 
     if (!IDecl) {  // Not already seen?  Make a forward decl.
-      IDecl = new ObjCInterfaceDecl(AtClassLoc, 0, IdentList[i], true);
+      IDecl = ObjCInterfaceDecl::Create(Context, AtClassLoc, 0, IdentList[i],
+                                        true);
       // Chain & install the interface decl into the identifier.
       IDecl->setNext(IdentList[i]->getFETokenInfo<ScopedDecl>());
       IdentList[i]->setFETokenInfo(IDecl);

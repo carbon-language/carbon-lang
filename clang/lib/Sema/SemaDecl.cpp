@@ -1340,7 +1340,7 @@ Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *TagDecl,
            // properties can appear within a protocol.
            // See corresponding FIXME in DeclObjC.h:ObjCPropertyDecl.
            isa<ObjCProtocolDecl>(static_cast<Decl *>(TagDecl)))
-    NewFD = new ObjCIvarDecl(Loc, II, T);
+    NewFD = ObjCIvarDecl::Create(Context, Loc, II, T);
   else
     assert(0 && "Sema::ActOnField(): Unknown TagDecl");
     
