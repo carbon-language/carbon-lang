@@ -243,6 +243,13 @@
 		9FEDD5F10D8D73AB009F6DF1 /* Scalar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Scalar.h; sourceTree = "<group>"; };
 		9FEDD5F70D8D797D009F6DF1 /* Scalar.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Scalar.cpp; sourceTree = "<group>"; };
 		9FEDD6140D8D7C3B009F6DF1 /* scalar_opts.ml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = scalar_opts.ml; sourceTree = "<group>"; };
+		9FEDD6B60D8D83D0009F6DF1 /* Target.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Target.cpp; sourceTree = "<group>"; };
+		9FEDD6B80D8D83EC009F6DF1 /* Target.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Target.h; sourceTree = "<group>"; };
+		9FEDD6BB0D8D8408009F6DF1 /* lto.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = lto.h; sourceTree = "<group>"; };
+		9FEDD6BD0D8D8426009F6DF1 /* target.ml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = target.ml; sourceTree = "<group>"; };
+		9FEDD6C10D8D844E009F6DF1 /* llvm_target.ml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = llvm_target.ml; sourceTree = "<group>"; };
+		9FEDD6C20D8D844E009F6DF1 /* llvm_target.mli */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = llvm_target.mli; sourceTree = "<group>"; };
+		9FEDD6C40D8D844E009F6DF1 /* target_ocaml.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = target_ocaml.c; sourceTree = "<group>"; };
 		CF1ACC9709C9DE4400D3C5EB /* IntrinsicInst.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = IntrinsicInst.cpp; path = ../lib/VMCore/IntrinsicInst.cpp; sourceTree = "<group>"; };
 		CF26835B09178F5500C5F253 /* TargetInstrItineraries.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TargetInstrItineraries.h; sourceTree = "<group>"; };
 		CF32AF5C0AEE6A4E00D24CD4 /* LLVMTargetMachine.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LLVMTargetMachine.cpp; sourceTree = "<group>"; };
@@ -1275,6 +1282,7 @@
 				9F7C2C520CB9496C00498408 /* bitwriter.ml */,
 				9F502AEC0D1D8CF8007939DF /* executionengine.ml */,
 				9FEDD6140D8D7C3B009F6DF1 /* scalar_opts.ml */,
+				9FEDD6BD0D8D8426009F6DF1 /* target.ml */,
 				9F7C2C5D0CB9496C00498408 /* vmcore.ml */,
 			);
 			path = Ocaml;
@@ -1300,12 +1308,13 @@
 		9FD3E56F0CA0116100E54D15 /* ocaml */ = {
 			isa = PBXGroup;
 			children = (
-				9F7040170D8D72FF00FD06FF /* transforms */,
 				9F502ACD0D1D8CA3007939DF /* executionengine */,
 				9F7C240B0CB81ECD00498408 /* analysis */,
 				9F4B0E5D0D0E02580061F270 /* bitreader */,
 				9FD3E5700CA0116100E54D15 /* bitwriter */,
 				9FD3E57A0CA0116100E54D15 /* llvm */,
+				9FEDD6C00D8D844E009F6DF1 /* target */,
+				9F7040170D8D72FF00FD06FF /* transforms */,
 			);
 			path = ocaml;
 			sourceTree = "<group>";
@@ -1350,6 +1359,16 @@
 			path = Transforms;
 			sourceTree = "<group>";
 		};
+		9FEDD6C00D8D844E009F6DF1 /* target */ = {
+			isa = PBXGroup;
+			children = (
+				9FEDD6C10D8D844E009F6DF1 /* llvm_target.ml */,
+				9FEDD6C20D8D844E009F6DF1 /* llvm_target.mli */,
+				9FEDD6C40D8D844E009F6DF1 /* target_ocaml.c */,
+			);
+			path = target;
+			sourceTree = "<group>";
+		};
 		CF8F1B480B64F7AB00BB4199 /* include/llvm-c */ = {
 			isa = PBXGroup;
 			children = (
@@ -1359,6 +1378,8 @@
 				9FD3E58E0CA0125F00E54D15 /* Core.h */,
 				9FEB8C550D1CD1E200EE46BC /* ExecutionEngine.h */,
 				CF8F1B490B64F7AB00BB4199 /* LinkTimeOptimizer.h */,
+				9FEDD6BB0D8D8408009F6DF1 /* lto.h */,
+				9FEDD6B80D8D83EC009F6DF1 /* Target.h */,
 				9FEDD5F00D8D73AB009F6DF1 /* Transforms */,
 			);
 			name = "include/llvm-c";
@@ -1799,6 +1820,7 @@
 				DE66F09308ABEE6000323D32 /* X86 */,
 				DE66EF1008ABEE5E00323D32 /* TargetRegisterInfo.cpp */,
 				CF9BCD1508C75070001E7011 /* SubtargetFeature.cpp */,
+				9FEDD6B60D8D83D0009F6DF1 /* Target.cpp */,
 				DE66F08A08ABEE6000323D32 /* Target.td */,
 				CF47BD860AAF487E00A8B13E /* TargetAsmInfo.cpp */,
 				9FE25D960CAB1759005383FC /* TargetCallingConv.td */,

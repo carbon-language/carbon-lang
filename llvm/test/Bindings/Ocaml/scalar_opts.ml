@@ -1,4 +1,4 @@
-(* RUN: %ocamlc -warn-error A llvm.cma llvm_scalar_opts.cma %s -o %t
+(* RUN: %ocamlc -warn-error A llvm.cma llvm_scalar_opts.cma llvm_target.cma %s -o %t
  *)
 
 (* Note: It takes several seconds for ocamlc to link an executable with
@@ -7,6 +7,7 @@
 
 open Llvm
 open Llvm_scalar_opts
+open Llvm_target
 
 
 (* Tiny unit test framework - really just to help find which line is busted *)
@@ -31,8 +32,11 @@ let test_transforms () =
   let fn = define_function "fn" fty m in
   ignore (build_ret_void (builder_at_end (entry_block fn)));
   
+  let td = TargetData.create (target_triple m) in
+  
   ignore (PassManager.create_function mp
-        (* ++ add_instruction_combining  Requires target data. *)
+           ++ TargetData.add td
+           ++ add_instruction_combining
            ++ add_reassociation
            ++ add_gvn
            ++ add_cfg_simplification
@@ -40,7 +44,9 @@ let test_transforms () =
            ++ PassManager.initialize
            ++ PassManager.run_function fn
            ++ PassManager.finalize
-           ++ PassManager.dispose)
+           ++ PassManager.dispose);
+  
+  TargetData.dispose td
 
 
 (*===-- Driver ------------------------------------------------------------===*)
