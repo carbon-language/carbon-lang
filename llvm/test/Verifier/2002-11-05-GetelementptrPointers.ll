@@ -1,9 +1,9 @@
-; RUN: not llvm-as -f %s -o /dev/null
+; RUN: not llvm-as < %s |& grep {Invalid getelementptr indices}
 
 ; This testcase is invalid because we are indexing into a pointer that is 
 ; contained WITHIN a structure.
 
-void %test({int, int*} * %X) {
-	getelementptr {int, int*} * %X, long 0, uint 1, long 0
+define void @test({i32, i32*} * %X) {
+	getelementptr {i32, i32*} * %X, i32 0, i32 1, i32 0
 	ret void
 }

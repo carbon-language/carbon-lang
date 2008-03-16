@@ -1,10 +1,10 @@
-; RUN: not llvm-as -f %s -o /dev/null
+; RUN: not llvm-as < %s |& grep {multiple entries for the same basic block}
 
 
 
-int "test"(int %i, int %j, bool %c) {
-	br bool %c, label %A, label %A
+define i32 @test(i32 %i, i32 %j, i1 %c) {
+	br i1 %c, label %A, label %A
 A:
-	%a = phi int [%i, %0], [%j, %0]  ; Error, different values from same block!
-	ret int %a
+	%a = phi i32 [%i, %0], [%j, %0]  ; Error, different values from same block!
+	ret i32 %a
 }

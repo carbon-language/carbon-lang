@@ -1,5 +1,6 @@
-; RUN: not llvm-as -f %s -o /dev/null
-void %test() {
+; RUN: not llvm-as < %s |& grep {Reference to an undefined type}
+
+define void @test() {
         malloc %InvalidType
         ret void
 }
