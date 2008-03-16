@@ -50,16 +50,8 @@ public:
     DECLARE = 3,
     EXTRACT_SUBREG = 4,
     INSERT_SUBREG = 5,
-    IMPLICIT_DEF = 6
-  };
-  
-  // Target independent implict values for use with subreg insert. All targets
-  // that support insert_subreg support IMPL_VAL_UNDEF. Support for the other 
-  // values is target dependent.
-  enum ImplictVal {
-    IMPL_VAL_UNDEF = 0,
-    IMPL_VAL_ZERO  = 1,
-    LAST_IMPL_VAL  = 3
+    IMPLICIT_DEF = 6,
+    SUBREG_TO_REG = 7
   };
 
   unsigned getNumOpcodes() const { return NumOpcodes; }

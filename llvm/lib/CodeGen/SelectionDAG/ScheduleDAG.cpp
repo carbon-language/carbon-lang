@@ -661,26 +661,24 @@ void ScheduleDAG::EmitSubregNode(SDNode *Node,
                            DenseMap<SDOperand, unsigned> &VRBaseMap) {
   unsigned VRBase = 0;
   unsigned Opc = Node->getTargetOpcode();
-  if (Opc == TargetInstrInfo::EXTRACT_SUBREG) {
-    // If the node is only used by a CopyToReg and the dest reg is a vreg, use
-    // the CopyToReg'd destination register instead of creating a new vreg.
-    for (SDNode::use_iterator UI = Node->use_begin(), E = Node->use_end();
-         UI != E; ++UI) {
-      SDNode *Use = *UI;
-      if (Use->getOpcode() == ISD::CopyToReg && 
-          Use->getOperand(2).Val == Node) {
-        unsigned DestReg = cast<RegisterSDNode>(Use->getOperand(1))->getReg();
-        if (TargetRegisterInfo::isVirtualRegister(DestReg)) {
-          VRBase = DestReg;
-          break;
-        }
+  
+  // If the node is only used by a CopyToReg and the dest reg is a vreg, use
+  // the CopyToReg'd destination register instead of creating a new vreg.
+  for (SDNode::use_iterator UI = Node->use_begin(), E = Node->use_end();
+       UI != E; ++UI) {
+    SDNode *Use = *UI;
+    if (Use->getOpcode() == ISD::CopyToReg && 
+        Use->getOperand(2).Val == Node) {
+      unsigned DestReg = cast<RegisterSDNode>(Use->getOperand(1))->getReg();
+      if (TargetRegisterInfo::isVirtualRegister(DestReg)) {
+        VRBase = DestReg;
+        break;
       }
     }
-    
+  }
+  
+  if (Opc == TargetInstrInfo::EXTRACT_SUBREG) {
     unsigned SubIdx = cast<ConstantSDNode>(Node->getOperand(1))->getValue();
-    
-    // TODO: If the node is a use of a CopyFromReg from a physical register
-    // fold the extract into the copy now
 
     // Create the extract_subreg machine instruction.
     MachineInstr *MI =
@@ -707,36 +705,14 @@ void ScheduleDAG::EmitSubregNode(SDNode *Node,
     AddOperand(MI, Node->getOperand(0), 0, 0, VRBaseMap);
     MI->addOperand(MachineOperand::CreateImm(SubIdx));
     
-  } else if (Opc == TargetInstrInfo::INSERT_SUBREG) {
+  } else if (Opc == TargetInstrInfo::INSERT_SUBREG ||
+             Opc == TargetInstrInfo::SUBREG_TO_REG) {
     SDOperand N0 = Node->getOperand(0);
     SDOperand N1 = Node->getOperand(1);
     SDOperand N2 = Node->getOperand(2);
     unsigned SubReg = getVR(N1, VRBaseMap);
     unsigned SubIdx = cast<ConstantSDNode>(N2)->getValue();
     
-    // TODO: Add tracking info to MachineRegisterInfo of which vregs are subregs
-    // to allow coalescing in the allocator
-          
-    // If the node is only used by a CopyToReg and the dest reg is a vreg, use
-    // the CopyToReg'd destination register instead of creating a new vreg.
-    // If the CopyToReg'd destination register is physical, then fold the
-    // insert into the copy
-    for (SDNode::use_iterator UI = Node->use_begin(), E = Node->use_end();
-         UI != E; ++UI) {
-      SDNode *Use = *UI;
-      if (Use->getOpcode() == ISD::CopyToReg && 
-          Use->getOperand(2).Val == Node) {
-        unsigned DestReg = cast<RegisterSDNode>(Use->getOperand(1))->getReg();
-        if (TargetRegisterInfo::isVirtualRegister(DestReg)) {
-          VRBase = DestReg;
-          break;
-        }
-      }
-    }
-    
-    // Create the insert_subreg machine instruction.
-    MachineInstr *MI =
-      new MachineInstr(BB, TII->get(TargetInstrInfo::INSERT_SUBREG));
       
     // Figure out the register class to create for the destreg.
     const TargetRegisterClass *TRC = 0;
@@ -749,19 +725,23 @@ void ScheduleDAG::EmitSubregNode(SDNode *Node,
       VRBase = MRI.createVirtualRegister(TRC); // Create the reg
     }
     
+    // Create the insert_subreg or subreg_to_reg machine instruction.
+    MachineInstr *MI =
+      new MachineInstr(BB, TII->get(Opc));
     MI->addOperand(MachineOperand::CreateReg(VRBase, true));
     
-    // If N0 is a constant then it indicates the insert is being done
-    // into a target specific constant value, not a register.
-    if (const ConstantSDNode *SD = dyn_cast<ConstantSDNode>(N0))
+    // If creating a subreg_to_reg, then the first input operand
+    // is an implicit value immediate, otherwise it's a register
+    if (Opc == TargetInstrInfo::SUBREG_TO_REG) {
+      const ConstantSDNode *SD = cast<ConstantSDNode>(N0);
       MI->addOperand(MachineOperand::CreateImm(SD->getValue()));
-    else
+    } else
       AddOperand(MI, N0, 0, 0, VRBaseMap);
     // Add the subregster being inserted
     AddOperand(MI, N1, 0, 0, VRBaseMap);
     MI->addOperand(MachineOperand::CreateImm(SubIdx));
   } else
-    assert(0 && "Node is not a subreg insert or extract");
+    assert(0 && "Node is not insert_subreg, extract_subreg, or subreg_to_reg");
      
   bool isNew = VRBaseMap.insert(std::make_pair(SDOperand(Node,0), VRBase));
   assert(isNew && "Node emitted out of order - early");
@@ -777,7 +757,8 @@ void ScheduleDAG::EmitNode(SDNode *Node, unsigned InstanceNo,
     
     // Handle subreg insert/extract specially
     if (Opc == TargetInstrInfo::EXTRACT_SUBREG || 
-        Opc == TargetInstrInfo::INSERT_SUBREG) {
+        Opc == TargetInstrInfo::INSERT_SUBREG ||
+        Opc == TargetInstrInfo::SUBREG_TO_REG) {
       EmitSubregNode(Node, VRBaseMap);
       return;
     }

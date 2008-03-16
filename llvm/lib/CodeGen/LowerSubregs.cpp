@@ -35,6 +35,7 @@ namespace {
     
     bool LowerExtract(MachineInstr *MI);
     bool LowerInsert(MachineInstr *MI);
+    bool LowerSubregToReg(MachineInstr *MI);
   };
 
   char LowerSubregsInstructionPass::ID = 0;
@@ -54,29 +55,28 @@ bool LowerSubregsInstructionPass::LowerExtract(MachineInstr *MI) {
           MI->getOperand(1).isRegister() && MI->getOperand(1).isUse() &&
           MI->getOperand(2).isImmediate() && "Malformed extract_subreg");
 
+   unsigned DstReg   = MI->getOperand(0).getReg();
    unsigned SuperReg = MI->getOperand(1).getReg();
-   unsigned SubIdx = MI->getOperand(2).getImm();
+   unsigned SubIdx   = MI->getOperand(2).getImm();
+   unsigned SrcReg   = TRI.getSubReg(SuperReg, SubIdx);
 
    assert(TargetRegisterInfo::isPhysicalRegister(SuperReg) &&
           "Extract supperg source must be a physical register");
-   unsigned SrcReg = TRI.getSubReg(SuperReg, SubIdx);
-   unsigned DstReg = MI->getOperand(0).getReg();
-
+   assert(TargetRegisterInfo::isPhysicalRegister(DstReg) &&
+          "Insert destination must be in a physical register");
+          
    DOUT << "subreg: CONVERTING: " << *MI;
 
    if (SrcReg != DstReg) {
-     const TargetRegisterClass *TRC = 0;
-     if (TargetRegisterInfo::isPhysicalRegister(DstReg)) {
-       TRC = TRI.getPhysicalRegisterRegClass(DstReg);
-     } else {
-       TRC = MF.getRegInfo().getRegClass(DstReg);
-     }
+     const TargetRegisterClass *TRC = TRI.getPhysicalRegisterRegClass(DstReg);
      assert(TRC == TRI.getPhysicalRegisterRegClass(SrcReg) &&
              "Extract subreg and Dst must be of same register class");
-
      TII.copyRegToReg(*MBB, MI, DstReg, SrcReg, TRC, TRC);
+     
+#ifndef NDEBUG
      MachineBasicBlock::iterator dMI = MI;
      DOUT << "subreg: " << *(--dMI);
+#endif
    }
 
    DOUT << "\n";
@@ -84,6 +84,44 @@ bool LowerSubregsInstructionPass::LowerExtract(MachineInstr *MI) {
    return true;
 }
 
+bool LowerSubregsInstructionPass::LowerSubregToReg(MachineInstr *MI) {
+  MachineBasicBlock *MBB = MI->getParent();
+  MachineFunction &MF = *MBB->getParent();
+  const TargetRegisterInfo &TRI = *MF.getTarget().getRegisterInfo(); 
+  const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
+  assert((MI->getOperand(0).isRegister() && MI->getOperand(0).isDef()) &&
+         MI->getOperand(1).isImmediate() &&
+         (MI->getOperand(2).isRegister() && MI->getOperand(2).isUse()) &&
+          MI->getOperand(3).isImmediate() && "Invalid subreg_to_reg");
+          
+  unsigned DstReg  = MI->getOperand(0).getReg();
+  unsigned InsReg  = MI->getOperand(2).getReg();
+  unsigned SubIdx  = MI->getOperand(3).getImm();     
+
+  assert(SubIdx != 0 && "Invalid index for insert_subreg");
+  unsigned DstSubReg = TRI.getSubReg(DstReg, SubIdx);
+  
+  assert(TargetRegisterInfo::isPhysicalRegister(DstReg) &&
+         "Insert destination must be in a physical register");
+  assert(TargetRegisterInfo::isPhysicalRegister(InsReg) &&
+         "Inserted value must be in a physical register");
+
+  DOUT << "subreg: CONVERTING: " << *MI;
+
+  // Insert sub-register copy
+  const TargetRegisterClass *TRC0 = TRI.getPhysicalRegisterRegClass(DstSubReg);
+  const TargetRegisterClass *TRC1 = TRI.getPhysicalRegisterRegClass(InsReg);
+  TII.copyRegToReg(*MBB, MI, DstSubReg, InsReg, TRC0, TRC1);
+
+#ifndef NDEBUG
+  MachineBasicBlock::iterator dMI = MI;
+  DOUT << "subreg: " << *(--dMI);
+#endif
+
+  DOUT << "\n";
+  MBB->remove(MI);
+  return true;                    
+}
 
 bool LowerSubregsInstructionPass::LowerInsert(MachineInstr *MI) {
   MachineBasicBlock *MBB = MI->getParent();
@@ -91,108 +129,35 @@ bool LowerSubregsInstructionPass::LowerInsert(MachineInstr *MI) {
   const TargetRegisterInfo &TRI = *MF.getTarget().getRegisterInfo(); 
   const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
   assert((MI->getOperand(0).isRegister() && MI->getOperand(0).isDef()) &&
-         ((MI->getOperand(1).isRegister() && MI->getOperand(1).isUse()) || 
-            MI->getOperand(1).isImmediate()) &&
+         (MI->getOperand(1).isRegister() && MI->getOperand(1).isUse()) &&
          (MI->getOperand(2).isRegister() && MI->getOperand(2).isUse()) &&
           MI->getOperand(3).isImmediate() && "Invalid insert_subreg");
           
-  // Check if we're inserting into an implicit undef value.
-  bool isImplicit = MI->getOperand(1).isImmediate();
   unsigned DstReg = MI->getOperand(0).getReg();
-  unsigned SrcReg = isImplicit ? DstReg : MI->getOperand(1).getReg();
+  unsigned SrcReg = MI->getOperand(1).getReg();
   unsigned InsReg = MI->getOperand(2).getReg();
   unsigned SubIdx = MI->getOperand(3).getImm();     
 
-  assert(SubIdx != 0 && "Invalid index for extract_subreg");
+  assert(DstReg == SrcReg && "insert_subreg not a two-address instruction?");
+  assert(SubIdx != 0 && "Invalid index for insert_subreg");
   unsigned DstSubReg = TRI.getSubReg(DstReg, SubIdx);
-
+  
   assert(TargetRegisterInfo::isPhysicalRegister(SrcReg) &&
          "Insert superreg source must be in a physical register");
-  assert(TargetRegisterInfo::isPhysicalRegister(DstReg) &&
-         "Insert destination must be in a physical register");
   assert(TargetRegisterInfo::isPhysicalRegister(InsReg) &&
          "Inserted value must be in a physical register");
 
   DOUT << "subreg: CONVERTING: " << *MI;
-       
-  // Check whether the implict subreg copy has side affects or not. Only copies
-  // into an undef value have no side affects, that is they can be eliminated
-  // without changing the semantics of the program.
-  bool copyHasSideAffects = isImplicit? 
-                  MI->getOperand(1).getImm() != TargetInstrInfo::IMPL_VAL_UNDEF
-                  : false; 
-       
-  // If the inserted register is already allocated into a subregister
-  // of the destination, we copy the subreg into the source
-  // However, this is only safe if the insert instruction is the kill
-  // of the source register
-  bool revCopyOrder = TRI.isSubRegister(DstReg, InsReg);
-  if (revCopyOrder && (InsReg != DstSubReg || copyHasSideAffects)) {
-    if (isImplicit || MI->getOperand(1).isKill()) {
-      DstSubReg = TRI.getSubReg(SrcReg, SubIdx);
-      // Insert sub-register copy
-      const TargetRegisterClass *TRC1 = 0;
-      if (TargetRegisterInfo::isPhysicalRegister(InsReg)) {
-        TRC1 = TRI.getPhysicalRegisterRegClass(InsReg);
-      } else {
-        TRC1 = MF.getRegInfo().getRegClass(InsReg);
-      }
-      TII.copyRegToReg(*MBB, MI, DstSubReg, InsReg, TRC1, TRC1);
+
+  // Insert sub-register copy
+  const TargetRegisterClass *TRC0 = TRI.getPhysicalRegisterRegClass(DstSubReg);
+  const TargetRegisterClass *TRC1 = TRI.getPhysicalRegisterRegClass(InsReg);
+  TII.copyRegToReg(*MBB, MI, DstSubReg, InsReg, TRC0, TRC1);
 
 #ifndef NDEBUG
-      MachineBasicBlock::iterator dMI = MI;
-      DOUT << "subreg: " << *(--dMI);
+  MachineBasicBlock::iterator dMI = MI;
+  DOUT << "subreg: " << *(--dMI);
 #endif
-    } else {
-      assert(0 && "Don't know how to convert this insert");
-    }
-  }
-#ifndef NDEBUG
-  if (InsReg == DstSubReg && !copyHasSideAffects) {
-     DOUT << "subreg: Eliminated subreg copy\n";
-  }
-#endif
-
-  if (SrcReg != DstReg) {
-    // Insert super-register copy
-    const TargetRegisterClass *TRC0 = 0;
-    if (TargetRegisterInfo::isPhysicalRegister(DstReg)) {
-      TRC0 = TRI.getPhysicalRegisterRegClass(DstReg);
-    } else {
-      TRC0 = MF.getRegInfo().getRegClass(DstReg);
-    }
-    assert(TRC0 == TRI.getPhysicalRegisterRegClass(SrcReg) &&
-            "Insert superreg and Dst must be of same register class");
-
-    TII.copyRegToReg(*MBB, MI, DstReg, SrcReg, TRC0, TRC0);
-
-#ifndef NDEBUG
-    MachineBasicBlock::iterator dMI = MI;
-    DOUT << "subreg: " << *(--dMI);
-#endif
-  }
-  
-#ifndef NDEBUG
-  if (SrcReg == DstReg) {
-     DOUT << "subreg: Eliminated superreg copy\n";
-  }
-#endif
-
-  if (!revCopyOrder && (InsReg != DstSubReg || copyHasSideAffects)) {
-    // Insert sub-register copy
-    const TargetRegisterClass *TRC1 = 0;
-    if (TargetRegisterInfo::isPhysicalRegister(InsReg)) {
-      TRC1 = TRI.getPhysicalRegisterRegClass(InsReg);
-    } else {
-      TRC1 = MF.getRegInfo().getRegClass(InsReg);
-    }
-    TII.copyRegToReg(*MBB, MI, DstSubReg, InsReg, TRC1, TRC1);
-
-#ifndef NDEBUG
-    MachineBasicBlock::iterator dMI = MI;
-    DOUT << "subreg: " << *(--dMI);
-#endif
-  }
 
   DOUT << "\n";
   MBB->remove(MI);
@@ -220,6 +185,8 @@ bool LowerSubregsInstructionPass::runOnMachineFunction(MachineFunction &MF) {
         MadeChange |= LowerExtract(MI);
       } else if (MI->getOpcode() == TargetInstrInfo::INSERT_SUBREG) {
         MadeChange |= LowerInsert(MI);
+      } else if (MI->getOpcode() == TargetInstrInfo::SUBREG_TO_REG) {
+        MadeChange |= LowerSubregToReg(MI);
       }
     }
   }

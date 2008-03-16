@@ -309,6 +309,11 @@ getInstructionsByEnumValue(std::vector<const CodeGenInstruction*>
     throw "Could not find 'IMPLICIT_DEF' instruction!";
   const CodeGenInstruction *IMPLICIT_DEF = &I->second;
   
+  I = getInstructions().find("SUBREG_TO_REG");
+  if (I == Instructions.end())
+    throw "Could not find 'SUBREG_TO_REG' instruction!";
+  const CodeGenInstruction *SUBREG_TO_REG = &I->second;
+  
   // Print out the rest of the instructions now.
   NumberedInstructions.push_back(PHI);
   NumberedInstructions.push_back(INLINEASM);
@@ -317,6 +322,7 @@ getInstructionsByEnumValue(std::vector<const CodeGenInstruction*>
   NumberedInstructions.push_back(EXTRACT_SUBREG);
   NumberedInstructions.push_back(INSERT_SUBREG);
   NumberedInstructions.push_back(IMPLICIT_DEF);
+  NumberedInstructions.push_back(SUBREG_TO_REG);
   for (inst_iterator II = inst_begin(), E = inst_end(); II != E; ++II)
     if (&II->second != PHI &&
         &II->second != INLINEASM &&
@@ -324,7 +330,8 @@ getInstructionsByEnumValue(std::vector<const CodeGenInstruction*>
         &II->second != DECLARE &&
         &II->second != EXTRACT_SUBREG &&
         &II->second != INSERT_SUBREG &&
-        &II->second != IMPLICIT_DEF)
+        &II->second != IMPLICIT_DEF &&
+        &II->second != SUBREG_TO_REG)
       NumberedInstructions.push_back(&II->second);
 }
 

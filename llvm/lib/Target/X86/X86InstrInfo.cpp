@@ -920,10 +920,11 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
             
       // Build and insert into an implicit UNDEF value. This is OK because
       // well be shifting and then extracting the lower 16-bits. 
+      MachineInstr *Undef = BuildMI(get(X86::IMPLICIT_DEF), leaInReg);
+      
       MachineInstr *Ins = 
        BuildMI(get(X86::INSERT_SUBREG),leaInReg)
-                    .addImm(X86InstrInfo::IMPL_VAL_UNDEF)
-                    .addReg(Src).addImm(X86::SUBREG_16BIT);
+                    .addReg(leaInReg).addReg(Src).addImm(X86::SUBREG_16BIT);
       
       NewMI = BuildMI(get(Opc), leaOutReg)
         .addReg(0).addImm(1 << ShAmt).addReg(leaInReg).addImm(0);
@@ -933,6 +934,7 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
          .addReg(leaOutReg).addImm(X86::SUBREG_16BIT);
       Ext->copyKillDeadInfo(MI);
       
+      MFI->insert(MBBI, Undef);
       MFI->insert(MBBI, Ins);            // Insert the insert_subreg
       LV.instructionChanged(MI, NewMI);  // Update live variables
       LV.addVirtualRegisterKilled(leaInReg, NewMI);

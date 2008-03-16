@@ -1529,39 +1529,36 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
     }
 
     case ISD::ANY_EXTEND: {
+      // Check if the type  extended to supports subregs.
+      if (NVT == MVT::i8)
+        break;
+      
       SDOperand N0 = Node->getOperand(0);
+      // Get the subregsiter index for the type to extend.
+      MVT::ValueType N0VT = N0.getValueType();
+      unsigned Idx = (N0VT == MVT::i32) ? X86::SUBREG_32BIT :
+                      (N0VT == MVT::i16) ? X86::SUBREG_16BIT :
+                        (Subtarget->is64Bit()) ? X86::SUBREG_8BIT : 0;
+      
+      // If we don't have a subreg Idx, let generated ISel have a try.
+      if (Idx == 0)
+        break;
+        
+      // If we have an index, generate an insert_subreg into undef.
       AddToISelQueue(N0);
-      if (NVT == MVT::i64 || NVT == MVT::i32 || NVT == MVT::i16) {
-        SDOperand SRIdx;
-        switch(N0.getValueType()) {
-        case MVT::i32:
-          SRIdx = CurDAG->getTargetConstant(X86::SUBREG_32BIT, MVT::i32);
-          break;
-        case MVT::i16:
-          SRIdx = CurDAG->getTargetConstant(X86::SUBREG_16BIT, MVT::i32);
-          break;
-        case MVT::i8:
-          if (Subtarget->is64Bit())
-            SRIdx = CurDAG->getTargetConstant(X86::SUBREG_8BIT, MVT::i32);
-          break;
-        default: assert(0 && "Unknown any_extend!");
-        }
-        if (SRIdx.Val) {
-          SDOperand ImplVal = 
-              CurDAG->getTargetConstant(X86InstrInfo::IMPL_VAL_UNDEF, MVT::i32);
-          SDNode *ResNode = CurDAG->getTargetNode(X86::INSERT_SUBREG,
-                                                  NVT, ImplVal, N0, SRIdx);
+      SDOperand Undef = 
+                  SDOperand(CurDAG->getTargetNode(X86::IMPLICIT_DEF, NVT), 0);
+      SDOperand SRIdx = CurDAG->getTargetConstant(Idx, MVT::i32);
+      SDNode *ResNode = CurDAG->getTargetNode(X86::INSERT_SUBREG,
+                                                NVT, Undef, N0, SRIdx);
 
 #ifndef NDEBUG
-          DOUT << std::string(Indent-2, ' ') << "=> ";
-          DEBUG(ResNode->dump(CurDAG));
-          DOUT << "\n";
-          Indent -= 2;
+      DOUT << std::string(Indent-2, ' ') << "=> ";
+      DEBUG(ResNode->dump(CurDAG));
+      DOUT << "\n";
+      Indent -= 2;
 #endif
-          return ResNode;
-        } // Otherwise let generated ISel handle it.
-      }
-      break;
+      return ResNode;
     }
     
     case ISD::SIGN_EXTEND_INREG: {

@@ -366,10 +366,18 @@ def INSERT_SUBREG : Instruction {
   let AsmString = "";
   let Namespace = "TargetInstrInfo";
   let neverHasSideEffects = 1;
+  let Constraints = "$supersrc = $dst";
 }
 def IMPLICIT_DEF : Instruction {
   let OutOperandList = (ops unknown:$dst);
   let InOperandList = (ops);
+  let AsmString = "";
+  let Namespace = "TargetInstrInfo";
+  let neverHasSideEffects = 1;
+}
+def SUBREG_TO_REG : Instruction {
+  let OutOperandList = (ops unknown:$dst);
+  let InOperandList = (ops unknown:$implsrc, unknown:$subsrc, i32imm:$subidx);
   let AsmString = "";
   let Namespace = "TargetInstrInfo";
   let neverHasSideEffects = 1;
