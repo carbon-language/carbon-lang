@@ -182,7 +182,7 @@ void DeclPrinter::PrintObjCMethodDecl(ObjCMethodDecl *OMD) {
   // FIXME: just print original selector name!
   Out << OMD->getSelector().getName();
   
-  for (int i = 0; i < OMD->getNumParams(); i++) {
+  for (unsigned i = 0, e = OMD->getNumParams(); i != e; ++i) {
     ParmVarDecl *PDecl = OMD->getParamDecl(i);
     // FIXME: selector is missing here!    
     Out << " :(" << PDecl->getType().getAsString() << ") " << PDecl->getName(); 

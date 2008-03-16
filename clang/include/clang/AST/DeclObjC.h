@@ -77,7 +77,7 @@ private:
   /// ParamInfo - new[]'d array of pointers to VarDecls for the formal
   /// parameters of this Method.  This is null if there are no formals.  
   ParmVarDecl **ParamInfo;
-  int NumMethodParams;
+  unsigned NumMethodParams;
   
   /// List of attributes for this method declaration.
   AttributeList *MethodAttrs;
@@ -94,8 +94,7 @@ private:
                  Decl *contextDecl,
                  AttributeList *M = 0, bool isInstance = true,
                  bool isVariadic = false,
-                 ImplementationControl impControl = None,
-                 Decl *PrevDecl = 0)
+                 ImplementationControl impControl = None)
   : Decl(ObjCMethod, beginLoc),
     IsInstance(isInstance), IsVariadic(isVariadic),
     DeclImplementation(impControl), objcDeclQualifier(OBJC_TQ_None),
@@ -131,9 +130,7 @@ public:
   QualType getResultType() const { return MethodDeclType; }
   
   // Iterator access to formal parameters.
-  unsigned param_size() const {
-    return NumMethodParams == -1 ? 0 : NumMethodParams;
-  }
+  unsigned param_size() const { return NumMethodParams; }
   typedef ParmVarDecl **param_iterator;
   typedef ParmVarDecl * const *param_const_iterator;
   param_iterator param_begin() { return ParamInfo; }
@@ -141,8 +138,8 @@ public:
   param_const_iterator param_begin() const { return ParamInfo; }
   param_const_iterator param_end() const { return ParamInfo+param_size(); }
   
-  int getNumParams() const { return NumMethodParams; }
-  ParmVarDecl *getParamDecl(int i) const {
+  unsigned getNumParams() const { return NumMethodParams; }
+  ParmVarDecl *getParamDecl(unsigned i) const {
     assert(i < getNumParams() && "Illegal param #");
     return ParamInfo[i];
   }  

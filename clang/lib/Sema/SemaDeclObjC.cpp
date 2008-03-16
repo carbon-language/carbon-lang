@@ -61,7 +61,7 @@ void Sema::ObjCActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
   PI.TypeInfo = Context.getObjCSelType().getAsOpaquePtr();
   ActOnParamDeclarator(PI, FnBodyScope);
   
-  for (int i = 0; i <  MDecl->getNumParams(); i++) {
+  for (unsigned i = 0, e = MDecl->getNumParams(); i != e; ++i) {
     ParmVarDecl *PDecl = MDecl->getParamDecl(i);
     PI.Ident = PDecl->getIdentifier();
     PI.IdentLoc = PDecl->getLocation(); // user vars have a real location.
@@ -613,7 +613,7 @@ bool Sema::MatchTwoMethodDeclarations(const ObjCMethodDecl *Method,
   if (Method->getResultType().getCanonicalType() !=
       PrevMethod->getResultType().getCanonicalType())
     return false;
-  for (int i = 0; i < Method->getNumParams(); i++) {
+  for (unsigned i = 0, e = Method->getNumParams(); i != e; ++i) {
     ParmVarDecl *ParamDecl = Method->getParamDecl(i);
     ParmVarDecl *PrevParamDecl = PrevMethod->getParamDecl(i);
     if (ParamDecl->getCanonicalType() != PrevParamDecl->getCanonicalType())

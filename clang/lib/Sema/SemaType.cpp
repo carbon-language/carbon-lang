@@ -383,7 +383,7 @@ QualType Sema::ObjCGetTypeForMethodDefinition(DeclTy *D) {
     ArgTys.push_back(Context.getObjCIdType());
   ArgTys.push_back(Context.getObjCSelType());
       
-  for (int i = 0; i <  MDecl->getNumParams(); i++) {
+  for (int i = 0, e = MDecl->getNumParams(); i != e; ++i) {
     ParmVarDecl *PDecl = MDecl->getParamDecl(i);
     QualType ArgTy = PDecl->getType();
     assert(!ArgTy.isNull() && "Couldn't parse type?");

@@ -691,7 +691,7 @@ void RewriteTest::RewriteObjCMethodDecl(ObjCMethodDecl *OMD,
   ResultStr += " _cmd";
   
   // Method arguments.
-  for (int i = 0; i < OMD->getNumParams(); i++) {
+  for (unsigned i = 0; i < OMD->getNumParams(); i++) {
     ParmVarDecl *PDecl = OMD->getParamDecl(i);
     ResultStr += ", ";
     if (PDecl->getType()->isObjCQualifiedIdType())
@@ -2048,7 +2048,7 @@ Stmt *RewriteTest::SynthMessageExpr(ObjCMessageExpr *Exp) {
   ArgTypes.push_back(Context->getObjCSelType());
   if (ObjCMethodDecl *mDecl = Exp->getMethodDecl()) {
     // Push any user argument types.
-    for (int i = 0; i < mDecl->getNumParams(); i++) {
+    for (unsigned i = 0; i < mDecl->getNumParams(); i++) {
       QualType t = mDecl->getParamDecl(i)->getType()->isObjCQualifiedIdType()
                      ? Context->getObjCIdType() 
                      : mDecl->getParamDecl(i)->getType();
