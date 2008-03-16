@@ -211,10 +211,10 @@ Sema::DeclTy *Sema::ActOnStartProtocolInterface(
     }
   }
   else {
-    PDecl = new ObjCProtocolDecl(AtProtoInterfaceLoc, NumProtoRefs, 
-                                 ProtocolName);
+    PDecl = ObjCProtocolDecl::Create(Context, AtProtoInterfaceLoc, NumProtoRefs, 
+                                     ProtocolName);
     ObjCProtocols[ProtocolName] = PDecl;
-  }    
+  }
   
   if (NumProtoRefs) {
     /// Check then save referenced protocols
@@ -260,7 +260,7 @@ Sema::ActOnForwardProtocolDeclaration(SourceLocation AtProtocolLoc,
     ObjCProtocolDecl *PDecl = ObjCProtocols[P];
     if (!PDecl)  { // Not already seen?
       // FIXME: Pass in the location of the identifier!
-      PDecl = new ObjCProtocolDecl(AtProtocolLoc, 0, P, true);
+      PDecl = ObjCProtocolDecl::Create(Context, AtProtocolLoc, 0, P, true);
       ObjCProtocols[P] = PDecl;
     }
     

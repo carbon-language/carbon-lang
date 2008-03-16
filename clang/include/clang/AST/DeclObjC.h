@@ -226,8 +226,7 @@ class ObjCInterfaceDecl : public TypeDecl {
   SourceLocation AtEndLoc; // marks the end of the entire interface.
 
   ObjCInterfaceDecl(SourceLocation atLoc, unsigned numRefProtos,
-                    IdentifierInfo *Id, bool FD = false, 
-                    bool isInternal = false)
+                    IdentifierInfo *Id, bool FD, bool isInternal)
     : TypeDecl(ObjCInterface, atLoc, Id, 0), SuperClass(0),
       ReferencedProtocols(0), NumReferencedProtocols(0), Ivars(0), 
       NumIvars(-1),
@@ -429,16 +428,21 @@ class ObjCProtocolDecl : public NamedDecl {
   
   SourceLocation EndLoc; // marks the '>' or identifier.
   SourceLocation AtEndLoc; // marks the end of the entire interface.
-public:
+  
   ObjCProtocolDecl(SourceLocation L, unsigned numRefProtos,
-                   IdentifierInfo *Id, bool FD = false)
+                   IdentifierInfo *Id, bool FD)
     : NamedDecl(ObjCProtocol, L, Id), 
       ReferencedProtocols(0), NumReferencedProtocols(0),
       InstanceMethods(0), NumInstanceMethods(-1), 
       ClassMethods(0), NumClassMethods(-1),
       isForwardProtoDecl(FD) {
-        AllocReferencedProtocols(numRefProtos);
-      }
+    AllocReferencedProtocols(numRefProtos);
+  }
+public:
+  static ObjCProtocolDecl *Create(ASTContext &C, SourceLocation L,
+                                  unsigned numRefProtos, IdentifierInfo *Id,
+                                  bool ForwardDecl = false);
+
   void AllocReferencedProtocols(unsigned numRefProtos) {
     if (numRefProtos) {
       ReferencedProtocols = new ObjCProtocolDecl*[numRefProtos];

@@ -47,6 +47,14 @@ ObjCIvarDecl *ObjCIvarDecl::Create(ASTContext &C, SourceLocation L,
   return new (Mem) ObjCIvarDecl(L, Id, T);
 }
 
+ObjCProtocolDecl *ObjCProtocolDecl::Create(ASTContext &C, SourceLocation L, 
+                                           unsigned numRefProtos,
+                                           IdentifierInfo *Id, 
+                                           bool ForwardDecl) {
+  void *Mem = C.getAllocator().Allocate<ObjCProtocolDecl>();
+  return new (Mem) ObjCProtocolDecl(L, numRefProtos, Id, ForwardDecl);
+}
+
 
 //===----------------------------------------------------------------------===//
 // Objective-C Decl Implementation
