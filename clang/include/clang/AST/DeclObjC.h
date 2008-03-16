@@ -729,10 +729,14 @@ class ObjCCategoryImplDecl : public NamedDecl {
   llvm::SmallVector<ObjCMethodDecl*, 32> ClassMethods;
 
   SourceLocation EndLoc;  
-public:
+
   ObjCCategoryImplDecl(SourceLocation L, IdentifierInfo *Id,
                        ObjCInterfaceDecl *classInterface)
     : NamedDecl(ObjCCategoryImpl, L, Id), ClassInterface(classInterface) {}
+public:
+  static ObjCCategoryImplDecl *Create(ASTContext &C, SourceLocation L,
+                                      IdentifierInfo *Id,
+                                      ObjCInterfaceDecl *classInterface);
         
   ObjCInterfaceDecl *getClassInterface() const { return ClassInterface; }
   
@@ -804,13 +808,19 @@ class ObjCImplementationDecl : public NamedDecl {
   llvm::SmallVector<ObjCMethodDecl*, 32> ClassMethods;
 
   SourceLocation EndLoc;
-public:
+
   ObjCImplementationDecl(SourceLocation L, IdentifierInfo *Id,
                          ObjCInterfaceDecl *classInterface,
                          ObjCInterfaceDecl *superDecl)
     : NamedDecl(ObjCImplementation, L, Id),
       ClassInterface(classInterface), SuperClass(superDecl),
       Ivars(0), NumIvars(-1) {}
+public:  
+  static ObjCImplementationDecl *Create(ASTContext &C, SourceLocation L,
+                                        IdentifierInfo *Id,
+                                        ObjCInterfaceDecl *classInterface,
+                                        ObjCInterfaceDecl *superDecl);
+  
   
   void ObjCAddInstanceVariablesToClassImpl(ObjCIvarDecl **ivars, 
                                            unsigned numIvars);

@@ -330,8 +330,8 @@ Sema::DeclTy *Sema::ActOnStartCategoryImplementation(
                       IdentifierInfo *ClassName, SourceLocation ClassLoc,
                       IdentifierInfo *CatName, SourceLocation CatLoc) {
   ObjCInterfaceDecl *IDecl = getObjCInterfaceDecl(ClassName);
-  ObjCCategoryImplDecl *CDecl = new ObjCCategoryImplDecl(AtCatImplLoc, 
-                                                         CatName, IDecl);
+  ObjCCategoryImplDecl *CDecl = 
+    ObjCCategoryImplDecl::Create(Context, AtCatImplLoc, CatName, IDecl);
   /// Check that class of this category is already completely declared.
   if (!IDecl || IDecl->isForwardDecl())
     Diag(ClassLoc, diag::err_undef_interface, ClassName->getName());
@@ -401,10 +401,12 @@ Sema::DeclTy *Sema::ActOnStartClassImplementation(
   }
   
   ObjCImplementationDecl* IMPDecl = 
-  new ObjCImplementationDecl(AtClassImplLoc, ClassName, IDecl, SDecl);
+    ObjCImplementationDecl::Create(Context, AtClassImplLoc, ClassName, 
+                                   IDecl, SDecl);
   
   // Check that there is no duplicate implementation of this class.
   if (ObjCImplementations[ClassName])
+    // FIXME: Don't leak everything!
     Diag(ClassLoc, diag::err_dup_implementation_class, ClassName->getName());
   else // add it to the list.
     ObjCImplementations[ClassName] = IMPDecl;

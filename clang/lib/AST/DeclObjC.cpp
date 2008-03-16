@@ -73,6 +73,21 @@ ObjCCategoryDecl *ObjCCategoryDecl::Create(ASTContext &C, SourceLocation L,
   return new (Mem) ObjCCategoryDecl(L, Id);
 }
 
+ObjCCategoryImplDecl *
+ObjCCategoryImplDecl::Create(ASTContext &C, SourceLocation L,IdentifierInfo *Id,
+                             ObjCInterfaceDecl *ClassInterface) {
+  void *Mem = C.getAllocator().Allocate<ObjCCategoryImplDecl>();
+  return new (Mem) ObjCCategoryImplDecl(L, Id, ClassInterface);
+}
+
+ObjCImplementationDecl *
+ObjCImplementationDecl::Create(ASTContext &C, SourceLocation L,
+                               IdentifierInfo *Id,
+                               ObjCInterfaceDecl *ClassInterface,
+                               ObjCInterfaceDecl *SuperDecl) {
+  void *Mem = C.getAllocator().Allocate<ObjCImplementationDecl>();
+  return new (Mem) ObjCImplementationDecl(L, Id, ClassInterface, SuperDecl);
+}
 
 //===----------------------------------------------------------------------===//
 // Objective-C Decl Implementation
