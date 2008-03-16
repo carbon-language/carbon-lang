@@ -63,6 +63,7 @@
 		DE3464220B03040900DBC861 /* Type.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE3464210B03040900DBC861 /* Type.h */; };
 		DE38CD500D794D0100A273B6 /* CGObjCGNU.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE38CD4F0D794D0100A273B6 /* CGObjCGNU.cpp */; };
 		DE38CF160D8C9DE000A273B6 /* DiagChecker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE38CF150D8C9DE000A273B6 /* DiagChecker.cpp */; };
+		DE38CF270D8C9E6C00A273B6 /* DeclObjC.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE38CF260D8C9E6C00A273B6 /* DeclObjC.cpp */; };
 		DE3985790CB8ADC800223765 /* ASTConsumers.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE3985780CB8ADC800223765 /* ASTConsumers.h */; };
 		DE39857B0CB8ADCB00223765 /* ASTConsumers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE39857A0CB8ADCB00223765 /* ASTConsumers.cpp */; };
 		DE3986F00CB8D4B300223765 /* IdentifierTable.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE3986EF0CB8D4B300223765 /* IdentifierTable.h */; };
@@ -313,6 +314,7 @@
 		DE38CD4E0D794CF900A273B6 /* CGObjCRuntime.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CGObjCRuntime.h; path = lib/CodeGen/CGObjCRuntime.h; sourceTree = "<group>"; };
 		DE38CD4F0D794D0100A273B6 /* CGObjCGNU.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CGObjCGNU.cpp; path = lib/CodeGen/CGObjCGNU.cpp; sourceTree = "<group>"; };
 		DE38CF150D8C9DE000A273B6 /* DiagChecker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DiagChecker.cpp; path = Driver/DiagChecker.cpp; sourceTree = "<group>"; };
+		DE38CF260D8C9E6C00A273B6 /* DeclObjC.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DeclObjC.cpp; path = lib/AST/DeclObjC.cpp; sourceTree = "<group>"; };
 		DE3985780CB8ADC800223765 /* ASTConsumers.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ASTConsumers.h; path = Driver/ASTConsumers.h; sourceTree = "<group>"; };
 		DE39857A0CB8ADCB00223765 /* ASTConsumers.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ASTConsumers.cpp; path = Driver/ASTConsumers.cpp; sourceTree = "<group>"; };
 		DE3986EF0CB8D4B300223765 /* IdentifierTable.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = IdentifierTable.h; sourceTree = "<group>"; };
@@ -727,6 +729,7 @@
 				DED677C80B6C854100AAD4A3 /* Builtins.cpp */,
 				DEC63B190C7B940200DBF169 /* CFG.cpp */,
 				DED62ABA0AE2EDF1001E80A4 /* Decl.cpp */,
+				DE38CF260D8C9E6C00A273B6 /* DeclObjC.cpp */,
 				3513185F0CD14468006B66F7 /* DeclSerialization.cpp */,
 				DE0FCB330A9C21F100248FD5 /* Expr.cpp */,
 				35260CA40C7F75C000D66CE9 /* ExprCXX.cpp */,
@@ -997,6 +1000,7 @@
 				DE85CDB00D838C390070E26E /* PPDirectives.cpp in Sources */,
 				DE85CDB60D839BAE0070E26E /* PPLexerChange.cpp in Sources */,
 				DE38CF160D8C9DE000A273B6 /* DiagChecker.cpp in Sources */,
+				DE38CF270D8C9E6C00A273B6 /* DeclObjC.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
