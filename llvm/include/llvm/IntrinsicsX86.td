@@ -819,7 +819,7 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 // Vector sum of absolute differences
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse41_movntdqa        : GCCBuiltin<"__builtin_ia32_movntdqa">,
-          Intrinsic<[llvm_v2i64_ty, llvm_ptr_ty]>;
+          Intrinsic<[llvm_v2i64_ty, llvm_ptr_ty], [IntrReadMem]>;
 }
 
 
