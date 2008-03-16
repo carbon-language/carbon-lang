@@ -202,17 +202,19 @@ Sema::DeclTy *Sema::ActOnStartProtocolInterface(
   ObjCProtocolDecl *PDecl = ObjCProtocols[ProtocolName];
   if (PDecl) {
     // Protocol already seen. Better be a forward protocol declaration
-    if (!PDecl->isForwardDecl())
+    if (!PDecl->isForwardDecl()) {
       Diag(ProtocolLoc, diag::err_duplicate_protocol_def, 
            ProtocolName->getName());
-    else {
-      PDecl->setForwardDecl(false);
-      PDecl->AllocReferencedProtocols(NumProtoRefs);
+      // Just return the protocol we already had.
+      // FIXME: don't leak the objects passed in!
+      return PDecl;
     }
-  }
-  else {
+    
+    PDecl->setForwardDecl(false);
+    PDecl->AllocReferencedProtocols(NumProtoRefs);
+  } else {
     PDecl = ObjCProtocolDecl::Create(Context, AtProtoInterfaceLoc, NumProtoRefs, 
-                                     ProtocolName);
+                                     ProtocolName, false);
     ObjCProtocols[ProtocolName] = PDecl;
   }
   
