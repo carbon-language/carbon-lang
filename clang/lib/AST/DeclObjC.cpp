@@ -15,6 +15,26 @@
 #include "clang/AST/ASTContext.h"
 using namespace clang;
 
+//===----------------------------------------------------------------------===//
+// ObjC Decl Allocation/Deallocation Method Implementations
+//===----------------------------------------------------------------------===//
+
+ObjCMethodDecl *ObjCMethodDecl::Create(ASTContext &C, SourceLocation beginLoc, 
+                                       SourceLocation endLoc,
+                                       Selector SelInfo, QualType T,
+                                       Decl *contextDecl,
+                                       ParmVarDecl **paramInfo, int numParams,
+                                       AttributeList *M, bool isInstance,
+                                       bool isVariadic,
+                                       ImplementationControl impControl,
+                                       Decl *PrevDecl) {
+  void *Mem = C.getAllocator().Allocate<ObjCMethodDecl>();
+  return new (Mem) ObjCMethodDecl(beginLoc, endLoc, SelInfo, T, contextDecl,
+                                  paramInfo, numParams, M, isInstance, 
+                                  isVariadic, impControl, PrevDecl);
+
+}
+
 
 //===----------------------------------------------------------------------===//
 // Objective-C Decl Implementation

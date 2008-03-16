@@ -88,7 +88,7 @@ private:
   // FIXME: space savings opportunity, consider a sub-class.
   Stmt *Body;
   ParmVarDecl *SelfDecl;
-public:
+  
   ObjCMethodDecl(SourceLocation beginLoc, SourceLocation endLoc,
                  Selector SelInfo, QualType T,
                  Decl *contextDecl,
@@ -104,6 +104,17 @@ public:
     SelName(SelInfo), MethodDeclType(T), 
     ParamInfo(paramInfo), NumMethodParams(numParams),
     MethodAttrs(M), EndLoc(endLoc), Body(0), SelfDecl(0) {}
+public:
+
+  static ObjCMethodDecl *Create(ASTContext &C, SourceLocation beginLoc, 
+                                SourceLocation endLoc, Selector SelInfo,
+                                QualType T, Decl *contextDecl,
+                                ParmVarDecl **paramInfo = 0, int numParams=-1,
+                                AttributeList *M = 0, bool isInstance = true,
+                                bool isVariadic = false,
+                                ImplementationControl impControl = None,
+                                Decl *PrevDecl = 0);
+  
   virtual ~ObjCMethodDecl();
   
   ObjCDeclQualifier getObjCDeclQualifier() const {

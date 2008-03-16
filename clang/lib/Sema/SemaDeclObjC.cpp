@@ -799,7 +799,7 @@ CvtQTToAstBitMask(ObjCDeclSpec::ObjCDeclQualifier PQTVal) {
 
 Sema::DeclTy *Sema::ActOnMethodDeclaration(
     SourceLocation MethodLoc, SourceLocation EndLoc,
-    tok::TokenKind MethodType, DeclTy *ClassDecl,
+    tok::TokenKind MethodType, DeclTy *classDecl,
     ObjCDeclSpec &ReturnQT, TypeTy *ReturnType,
     Selector Sel,
     // optional arguments. The number of types/arguments is obtained
@@ -807,6 +807,7 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
     ObjCDeclSpec *ArgQT, TypeTy **ArgTypes, IdentifierInfo **ArgNames,
     AttributeList *AttrList, tok::ObjCKeywordKind MethodDeclKind,
     bool isVariadic) {
+  Decl *ClassDecl = static_cast<Decl*>(classDecl);
 
   // Make sure we can establish a context for the method.
   if (!ClassDecl) {
@@ -837,15 +838,14 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
   else // get the type for "id".
     resultDeclType = Context.getObjCIdType();
   
-  Decl *CDecl = static_cast<Decl*>(ClassDecl);
-  ObjCMethodDecl* ObjCMethod =  new ObjCMethodDecl(MethodLoc, EndLoc, Sel,
-                                      resultDeclType,
-                                      CDecl,
-                                      0, -1, AttrList, 
-                                      MethodType == tok::minus, isVariadic,
-                                      MethodDeclKind == tok::objc_optional ? 
-                                      ObjCMethodDecl::Optional : 
-                                      ObjCMethodDecl::Required);
+  ObjCMethodDecl* ObjCMethod = 
+    ObjCMethodDecl::Create(Context, MethodLoc, EndLoc, Sel, resultDeclType,
+                           ClassDecl, 0, -1, AttrList, 
+                           MethodType == tok::minus, isVariadic,
+                           MethodDeclKind == tok::objc_optional ? 
+                           ObjCMethodDecl::Optional : 
+                           ObjCMethodDecl::Required);
+  
   ObjCMethod->setMethodParams(&Params[0], Sel.getNumArgs());
   ObjCMethod->setObjCDeclQualifier(
     CvtQTToAstBitMask(ReturnQT.getObjCDeclQualifier()));
@@ -856,7 +856,7 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
   // incrementally (without waiting until we parse the @end). It also allows 
   // us to flag multiple declaration errors as they occur.
   if (ObjCImplementationDecl *ImpDecl = 
-        dyn_cast<ObjCImplementationDecl>(CDecl)) {
+        dyn_cast<ObjCImplementationDecl>(ClassDecl)) {
     if (MethodType == tok::minus) {
       PrevMethod = ImpDecl->getInstanceMethod(Sel);
       ImpDecl->addInstanceMethod(ObjCMethod);
@@ -866,7 +866,7 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
     }
   } 
   else if (ObjCCategoryImplDecl *CatImpDecl = 
-            dyn_cast<ObjCCategoryImplDecl>(CDecl)) {
+            dyn_cast<ObjCCategoryImplDecl>(ClassDecl)) {
     if (MethodType == tok::minus) {
       PrevMethod = CatImpDecl->getInstanceMethod(Sel);
       CatImpDecl->addInstanceMethod(ObjCMethod);
