@@ -89,6 +89,19 @@ ObjCImplementationDecl::Create(ASTContext &C, SourceLocation L,
   return new (Mem) ObjCImplementationDecl(L, Id, ClassInterface, SuperDecl);
 }
 
+ObjCCompatibleAliasDecl *
+ObjCCompatibleAliasDecl::Create(ASTContext &C, SourceLocation L,
+                                IdentifierInfo *Id, 
+                                ObjCInterfaceDecl* AliasedClass) {
+  void *Mem = C.getAllocator().Allocate<ObjCCompatibleAliasDecl>();
+  return new (Mem) ObjCCompatibleAliasDecl(L, Id, AliasedClass);
+}
+
+ObjCPropertyDecl *ObjCPropertyDecl::Create(ASTContext &C, SourceLocation L) {
+  void *Mem = C.getAllocator().Allocate<ObjCPropertyDecl>();
+  return new (Mem) ObjCPropertyDecl(L);
+}
+
 //===----------------------------------------------------------------------===//
 // Objective-C Decl Implementation
 //===----------------------------------------------------------------------===//

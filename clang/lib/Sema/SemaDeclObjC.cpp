@@ -172,20 +172,20 @@ Sema::DeclTy *Sema::ActOnCompatiblityAlias(
     return 0;
   }
   // Check for class declaration
-  ScopedDecl *CDecl = LookupScopedDecl(ClassName, Decl::IDNS_Ordinary,
-                                       ClassLocation, TUScope);
-  if (!CDecl || !isa<ObjCInterfaceDecl>(CDecl)) {
-    Diag(ClassLocation, diag::warn_undef_interface,
-         ClassName->getName());
-    if (CDecl)
-      Diag(CDecl->getLocation(), diag::warn_previous_declaration);
+  ScopedDecl *CDeclU = LookupScopedDecl(ClassName, Decl::IDNS_Ordinary,
+                                        ClassLocation, TUScope);
+  ObjCInterfaceDecl *CDecl = dyn_cast_or_null<ObjCInterfaceDecl>(CDeclU);
+  if (CDecl == 0) {
+    Diag(ClassLocation, diag::warn_undef_interface, ClassName->getName());
+    if (CDeclU)
+      Diag(CDeclU->getLocation(), diag::warn_previous_declaration);
     return 0;
   }
-  // Everything checked out, instantiate a new alias declaration ast
+  
+  // Everything checked out, instantiate a new alias declaration AST.
   ObjCCompatibleAliasDecl *AliasDecl = 
-    new ObjCCompatibleAliasDecl(AtCompatibilityAliasLoc, 
-                                AliasName,
-                                dyn_cast<ObjCInterfaceDecl>(CDecl));
+    ObjCCompatibleAliasDecl::Create(Context, AtCompatibilityAliasLoc, 
+                                    AliasName, CDecl);
     
   // Chain & install the interface decl into the identifier.
   AliasDecl->setNext(AliasName->getFETokenInfo<ScopedDecl>());
@@ -699,17 +699,19 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
   llvm::DenseMap<Selector, const ObjCMethodDecl*> ClsMap;
   
   bool isInterfaceDeclKind = 
-        (isa<ObjCInterfaceDecl>(ClassDecl) || isa<ObjCCategoryDecl>(ClassDecl)
-         || isa<ObjCProtocolDecl>(ClassDecl));
+        isa<ObjCInterfaceDecl>(ClassDecl) || isa<ObjCCategoryDecl>(ClassDecl)
+         || isa<ObjCProtocolDecl>(ClassDecl);
   bool checkIdenticalMethods = isa<ObjCImplementationDecl>(ClassDecl);
   
   // TODO: property declaration in category and protocols.
-  if (pNum != 0 && isa<ObjCInterfaceDecl>(ClassDecl)) {
-    ObjCPropertyDecl **properties = new ObjCPropertyDecl*[pNum];
-    memcpy(properties, allProperties, pNum*sizeof(ObjCPropertyDecl*));
-    dyn_cast<ObjCInterfaceDecl>(ClassDecl)->setPropertyDecls(properties);
-    dyn_cast<ObjCInterfaceDecl>(ClassDecl)->setNumPropertyDecl(pNum);
-  }
+  if (pNum != 0)
+    if (ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(ClassDecl)) {
+      // FIXME: Move the memory allocation into setPropertyDecls!
+      ObjCPropertyDecl **properties = new ObjCPropertyDecl*[pNum];
+      memcpy(properties, allProperties, pNum*sizeof(ObjCPropertyDecl*));
+      IDecl->setPropertyDecls(properties);
+      IDecl->setNumPropertyDecl(pNum);
+    }
   
   for (unsigned i = 0; i < allNum; i++ ) {
     ObjCMethodDecl *Method =
@@ -897,7 +899,7 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
 
 Sema::DeclTy *Sema::ActOnAddObjCProperties(SourceLocation AtLoc, 
   DeclTy **allProperties, unsigned NumProperties, ObjCDeclSpec &DS) {
-  ObjCPropertyDecl *PDecl = new ObjCPropertyDecl(AtLoc);
+  ObjCPropertyDecl *PDecl = ObjCPropertyDecl::Create(Context, AtLoc);
   
   if(DS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_readonly)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_readonly);

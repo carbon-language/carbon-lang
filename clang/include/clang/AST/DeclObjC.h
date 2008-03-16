@@ -876,13 +876,16 @@ class ObjCCompatibleAliasDecl : public ScopedDecl {
   /// Class that this is an alias of.
   ObjCInterfaceDecl *AliasedClass;
   
-public:
   ObjCCompatibleAliasDecl(SourceLocation L, IdentifierInfo *Id,
                          ObjCInterfaceDecl* aliasedClass)
-  : ScopedDecl(CompatibleAlias, L, Id, 0),
-  AliasedClass(aliasedClass) {}
-  
-  ObjCInterfaceDecl *getClassInterface() const { return AliasedClass; }
+  : ScopedDecl(CompatibleAlias, L, Id, 0), AliasedClass(aliasedClass) {}
+public:
+  static ObjCCompatibleAliasDecl *Create(ASTContext &C, SourceLocation L,
+                                         IdentifierInfo *Id,
+                                         ObjCInterfaceDecl* aliasedClass);
+
+  const ObjCInterfaceDecl *getClassInterface() const { return AliasedClass; }
+  ObjCInterfaceDecl *getClassInterface() { return AliasedClass; }
   
   static bool classof(const Decl *D) {
     return D->getKind() == CompatibleAlias;
@@ -914,11 +917,11 @@ private:
   IdentifierInfo *GetterName;    // getter name of NULL if no getter
   IdentifierInfo *SetterName;    // setter name of NULL if no setter
   
-public:
   ObjCPropertyDecl(SourceLocation L)
-  : Decl(PropertyDecl, L),
-  PropertyDecls(0), NumPropertyDecls(-1), PropertyAttributes(OBJC_PR_noattr),
-  GetterName(0), SetterName(0) {}
+    : Decl(PropertyDecl, L), PropertyDecls(0), NumPropertyDecls(-1),
+      PropertyAttributes(OBJC_PR_noattr), GetterName(0), SetterName(0) {}
+public:
+  static ObjCPropertyDecl *Create(ASTContext &C, SourceLocation L);
   
   ObjCIvarDecl **const getPropertyDecls() const { return PropertyDecls; }
   void setPropertyDecls(ObjCIvarDecl **property) { PropertyDecls = property; }
