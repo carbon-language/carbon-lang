@@ -3458,3 +3458,14 @@ let Constraints = "$src1 = $dst" in {
 }
 
 defm INSERTPS    : SS41I_insertf32<0x31, "insertps">;
+
+let Defs = [EFLAGS] in {
+def PTESTrr : SS48I<0x17, MRMSrcReg, (outs), (ins VR128:$src1, VR128:$src2),
+                    "ptest \t{$src2, $src1|$src1, $src2}", []>, OpSize;
+def PTESTrm : SS48I<0x17, MRMSrcMem, (outs), (ins VR128:$src1, i128mem:$src2),
+                    "ptest \t{$src2, $src1|$src1, $src2}", []>, OpSize;
+}
+
+def MOVNTDQArm : SS48I<0x2A, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
+                       "movntdqa\t{$src, $dst|$dst, $src}",
+                       [(set VR128:$dst, (int_x86_sse41_movntdqa addr:$src))]>;
