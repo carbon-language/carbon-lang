@@ -547,7 +547,7 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
                           MemberLoc, MemberType);
   } else if (BaseType->isOCUVectorType() && OpKind == tok::period) {
     // Component access limited to variables (reject vec4.rg.g).
-    if (!isa<DeclRefExpr>(BaseExpr)) 
+    if (!isa<DeclRefExpr>(BaseExpr) && !isa<ArraySubscriptExpr>(BaseExpr))
       return Diag(OpLoc, diag::err_ocuvector_component_access, 
                   SourceRange(MemberLoc));
     QualType ret = CheckOCUVectorComponent(BaseType, OpLoc, Member, MemberLoc);
@@ -1284,7 +1284,7 @@ inline QualType Sema::CheckVectorOperands(SourceLocation loc, Expr *&lex,
   QualType lhsType = lex->getType(), rhsType = rex->getType();
   
   // make sure the vector types are identical. 
-  if (lhsType == rhsType)
+  if (lhsType.getCanonicalType() == rhsType.getCanonicalType())
     return lhsType;
 
   // if the lhs is an ocu vector and the rhs is a scalar of the same type,
