@@ -1922,6 +1922,18 @@ SDOperand PPCTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG,
         }
         continue;
       }
+      // Copy entire object into memory.  There are cases where gcc-generated
+      // code assumes it is there, even if it could be put entirely into
+      // registers.  (This is not what the doc says.)
+      SDOperand MemcpyCall = CreateCopyOfByValArgument(Arg, PtrOff,
+                            CallSeqStart.Val->getOperand(0), 
+                            Flags, DAG, Size);
+      // This must go outside the CALLSEQ_START..END.
+      SDOperand NewCallSeqStart = DAG.getCALLSEQ_START(MemcpyCall,
+                           CallSeqStart.Val->getOperand(1));
+      DAG.ReplaceAllUsesWith(CallSeqStart.Val, NewCallSeqStart.Val);
+      Chain = CallSeqStart = NewCallSeqStart;
+      // And copy the pieces of it that fit into registers.
       for (unsigned j=0; j<Size; j+=PtrByteSize) {
         SDOperand Const = DAG.getConstant(j, PtrOff.getValueType());
         SDOperand AddArg = DAG.getNode(ISD::ADD, PtrVT, Arg, Const);
@@ -1932,16 +1944,7 @@ SDOperand PPCTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG,
           if (isMachoABI)
             ArgOffset += PtrByteSize;
         } else {
-          SDOperand AddPtr = DAG.getNode(ISD::ADD, PtrVT, PtrOff, Const);
-          SDOperand MemcpyCall = CreateCopyOfByValArgument(AddArg, AddPtr,
-                                CallSeqStart.Val->getOperand(0), 
-                                Flags, DAG, Size - j);
-          // This must go outside the CALLSEQ_START..END.
-          SDOperand NewCallSeqStart = DAG.getCALLSEQ_START(MemcpyCall,
-                               CallSeqStart.Val->getOperand(1));
-          DAG.ReplaceAllUsesWith(CallSeqStart.Val, NewCallSeqStart.Val);
-          Chain = CallSeqStart = NewCallSeqStart;
-          ArgOffset += ((Size - j + 3)/4)*4;
+          ArgOffset += ((Size - j + PtrByteSize-1)/PtrByteSize)*PtrByteSize;
           break;
         }
       }
@@ -2181,7 +2184,7 @@ SDOperand PPCTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG,
   if (Op.Val->getValueType(0) != MVT::Other)
     InFlag = Chain.getValue(1);
 
-  SDOperand ResultVals[3];
+  SDOperand ResultVals[9];
   unsigned NumResults = 0;
   NodeTys.clear();
   
@@ -2190,7 +2193,57 @@ SDOperand PPCTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG,
   default: assert(0 && "Unexpected ret value!");
   case MVT::Other: break;
   case MVT::i32:
-    if (Op.Val->getValueType(1) == MVT::i32) {
+    // There are 8 result regs for Complex double, and 4 for Complex long long.
+    if (Op.Val->getNumValues()>=8 && Op.Val->getValueType(7) == MVT::i32) {
+      Chain = DAG.getCopyFromReg(Chain, PPC::R3, MVT::i32, InFlag).getValue(1);
+      ResultVals[0] = Chain.getValue(0);
+      Chain = DAG.getCopyFromReg(Chain, PPC::R4, MVT::i32,
+                                 Chain.getValue(2)).getValue(1);
+      ResultVals[1] = Chain.getValue(0);
+      Chain = DAG.getCopyFromReg(Chain, PPC::R5, MVT::i32,
+                                 Chain.getValue(2)).getValue(1);
+      ResultVals[2] = Chain.getValue(0);
+      Chain = DAG.getCopyFromReg(Chain, PPC::R6, MVT::i32,
+                                 Chain.getValue(2)).getValue(1);
+      ResultVals[3] = Chain.getValue(0);
+      Chain = DAG.getCopyFromReg(Chain, PPC::R7, MVT::i32,
+                                 Chain.getValue(2)).getValue(1);
+      ResultVals[4] = Chain.getValue(0);
+      Chain = DAG.getCopyFromReg(Chain, PPC::R8, MVT::i32,
+                                 Chain.getValue(2)).getValue(1);
+      ResultVals[5] = Chain.getValue(0);
+      Chain = DAG.getCopyFromReg(Chain, PPC::R9, MVT::i32,
+                                 Chain.getValue(2)).getValue(1);
+      ResultVals[6] = Chain.getValue(0);
+      Chain = DAG.getCopyFromReg(Chain, PPC::R10, MVT::i32,
+                                 Chain.getValue(2)).getValue(1);
+      ResultVals[7] = Chain.getValue(0);
+      NumResults = 8;
+      NodeTys.push_back(MVT::i32);
+      NodeTys.push_back(MVT::i32);
+      NodeTys.push_back(MVT::i32);
+      NodeTys.push_back(MVT::i32);
+      NodeTys.push_back(MVT::i32);
+      NodeTys.push_back(MVT::i32);
+      NodeTys.push_back(MVT::i32);
+    } else if (Op.Val->getNumValues()>=4 && 
+               Op.Val->getValueType(3) == MVT::i32) {
+      Chain = DAG.getCopyFromReg(Chain, PPC::R3, MVT::i32, InFlag).getValue(1);
+      ResultVals[0] = Chain.getValue(0);
+      Chain = DAG.getCopyFromReg(Chain, PPC::R4, MVT::i32,
+                                 Chain.getValue(2)).getValue(1);
+      ResultVals[1] = Chain.getValue(0);
+      Chain = DAG.getCopyFromReg(Chain, PPC::R5, MVT::i32,
+                                 Chain.getValue(2)).getValue(1);
+      ResultVals[2] = Chain.getValue(0);
+      Chain = DAG.getCopyFromReg(Chain, PPC::R6, MVT::i32,
+                                 Chain.getValue(2)).getValue(1);
+      ResultVals[3] = Chain.getValue(0);
+      NumResults = 4;
+      NodeTys.push_back(MVT::i32);
+      NodeTys.push_back(MVT::i32);
+      NodeTys.push_back(MVT::i32);
+    } else if (Op.Val->getValueType(1) == MVT::i32) {
       Chain = DAG.getCopyFromReg(Chain, PPC::R3, MVT::i32, InFlag).getValue(1);
       ResultVals[0] = Chain.getValue(0);
       Chain = DAG.getCopyFromReg(Chain, PPC::R4, MVT::i32,
