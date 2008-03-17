@@ -153,59 +153,59 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\..\CodeGen\CGBuiltin.cpp"
+				RelativePath="..\..\lib\CodeGen\CGBuiltin.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\CodeGen\CGDecl.cpp"
+				RelativePath="..\..\lib\CodeGen\CGDecl.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\CodeGen\CGExpr.cpp"
+				RelativePath="..\..\lib\CodeGen\CGExpr.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\CodeGen\CGExprAgg.cpp"
+				RelativePath="..\..\lib\CodeGen\CGExprAgg.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\CodeGen\CGExprComplex.cpp"
+				RelativePath="..\..\lib\CodeGen\CGExprComplex.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\CodeGen\CGExprConstant.cpp"
+				RelativePath="..\..\lib\CodeGen\CGExprConstant.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\CodeGen\CGExprScalar.cpp"
+				RelativePath="..\..\lib\CodeGen\CGExprScalar.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\CodeGen\CGObjC.cpp"
+				RelativePath="..\..\lib\CodeGen\CGObjC.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\CodeGen\CGObjCGNU.cpp"
+				RelativePath="..\..\lib\CodeGen\CGObjCGNU.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\CodeGen\CGStmt.cpp"
+				RelativePath="..\..\lib\CodeGen\CGStmt.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\CodeGen\CodeGenFunction.cpp"
+				RelativePath="..\..\lib\CodeGen\CodeGenFunction.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\CodeGen\CodeGenModule.cpp"
+				RelativePath="..\..\lib\CodeGen\CodeGenModule.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\CodeGen\CodeGenTypes.cpp"
+				RelativePath="..\..\lib\CodeGen\CodeGenTypes.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\CodeGen\ModuleBuilder.cpp"
+				RelativePath="..\..\lib\CodeGen\ModuleBuilder.cpp"
 				>
 			</File>
 		</Filter>
@@ -215,15 +215,15 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath="..\..\CodeGen\CodeGenFunction.h"
+				RelativePath="..\..\lib\CodeGen\CodeGenFunction.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\CodeGen\CodeGenModule.h"
+				RelativePath="..\..\lib\CodeGen\CodeGenModule.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\CodeGen\CodeGenTypes.h"
+				RelativePath="..\..\lib\CodeGen\CodeGenTypes.h"
 				>
 			</File>
 			<File

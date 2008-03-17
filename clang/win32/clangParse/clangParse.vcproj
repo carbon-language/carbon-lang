@@ -153,47 +153,47 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\..\Parse\AttributeList.cpp"
+				RelativePath="..\..\lib\Parse\AttributeList.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Parse\DeclSpec.cpp"
+				RelativePath="..\..\lib\Parse\DeclSpec.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Parse\MinimalAction.cpp"
+				RelativePath="..\..\lib\Parse\MinimalAction.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Parse\ParseDecl.cpp"
+				RelativePath="..\..\lib\Parse\ParseDecl.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Parse\ParseDeclCXX.cpp"
+				RelativePath="..\..\lib\Parse\ParseDeclCXX.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Parse\ParseExpr.cpp"
+				RelativePath="..\..\lib\Parse\ParseExpr.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Parse\ParseExprCXX.cpp"
+				RelativePath="..\..\lib\Parse\ParseExprCXX.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Parse\ParseInit.cpp"
+				RelativePath="..\..\lib\Parse\ParseInit.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Parse\ParseObjc.cpp"
+				RelativePath="..\..\lib\Parse\ParseObjc.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Parse\Parser.cpp"
+				RelativePath="..\..\lib\Parse\Parser.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Parse\ParseStmt.cpp"
+				RelativePath="..\..\lib\Parse\ParseStmt.cpp"
 				>
 			</File>
 		</Filter>

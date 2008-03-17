@@ -154,39 +154,39 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\..\Basic\Diagnostic.cpp"
+				RelativePath="..\..\lib\Basic\Diagnostic.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Basic\FileManager.cpp"
+				RelativePath="..\..\lib\Basic\FileManager.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Basic\IdentifierTable.cpp"
+				RelativePath="..\..\lib\Basic\IdentifierTable.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Basic\LangOptions.cpp"
+				RelativePath="..\..\lib\Basic\LangOptions.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Basic\SourceLocation.cpp"
+				RelativePath="..\..\lib\Basic\SourceLocation.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Basic\SourceManager.cpp"
+				RelativePath="..\..\lib\Basic\SourceManager.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Basic\TargetInfo.cpp"
+				RelativePath="..\..\lib\Basic\TargetInfo.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Basic\Targets.cpp"
+				RelativePath="..\..\lib\Basic\Targets.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Basic\TokenKinds.cpp"
+				RelativePath="..\..\lib\Basic\TokenKinds.cpp"
 				>
 			</File>
 		</Filter>

@@ -153,43 +153,43 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\..\Lex\HeaderMap.cpp"
+				RelativePath="..\..\lib\Lex\HeaderMap.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Lex\HeaderSearch.cpp"
+				RelativePath="..\..\lib\Lex\HeaderSearch.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Lex\Lexer.cpp"
+				RelativePath="..\..\lib\Lex\Lexer.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Lex\LiteralSupport.cpp"
+				RelativePath="..\..\lib\Lex\LiteralSupport.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Lex\MacroExpander.cpp"
+				RelativePath="..\..\lib\Lex\MacroExpander.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Lex\MacroInfo.cpp"
+				RelativePath="..\..\lib\Lex\MacroInfo.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Lex\PPExpressions.cpp"
+				RelativePath="..\..\lib\Lex\PPExpressions.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Lex\Pragma.cpp"
+				RelativePath="..\..\lib\Lex\Pragma.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Lex\Preprocessor.cpp"
+				RelativePath="..\..\lib\Lex\Preprocessor.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Lex\ScratchBuffer.cpp"
+				RelativePath="..\..\lib\Lex\ScratchBuffer.cpp"
 				>
 			</File>
 		</Filter>

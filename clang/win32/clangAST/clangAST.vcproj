@@ -153,71 +153,71 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\..\AST\ASTConsumer.cpp"
+				RelativePath="..\..\lib\AST\ASTConsumer.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\AST\ASTContext.cpp"
+				RelativePath="..\..\lib\AST\ASTContext.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\AST\Builtins.cpp"
+				RelativePath="..\..\lib\AST\Builtins.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\AST\CFG.cpp"
+				RelativePath="..\..\lib\AST\CFG.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\AST\Decl.cpp"
+				RelativePath="..\..\lib\AST\Decl.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\AST\DeclSerialization.cpp"
+				RelativePath="..\..\lib\AST\DeclSerialization.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\AST\Expr.cpp"
+				RelativePath="..\..\lib\AST\Expr.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\AST\ExprCXX.cpp"
+				RelativePath="..\..\lib\AST\ExprCXX.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\AST\Stmt.cpp"
+				RelativePath="..\..\lib\AST\Stmt.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\AST\StmtDumper.cpp"
+				RelativePath="..\..\lib\AST\StmtDumper.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\AST\StmtIterator.cpp"
+				RelativePath="..\..\lib\AST\StmtIterator.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\AST\StmtPrinter.cpp"
+				RelativePath="..\..\lib\AST\StmtPrinter.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\AST\StmtSerialization.cpp"
+				RelativePath="..\..\lib\AST\StmtSerialization.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\AST\StmtViz.cpp"
+				RelativePath="..\..\lib\AST\StmtViz.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\AST\TranslationUnit.cpp"
+				RelativePath="..\..\lib\AST\TranslationUnit.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\AST\Type.cpp"
+				RelativePath="..\..\lib\AST\Type.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\AST\TypeSerialization.cpp"
+				RelativePath="..\..\lib\AST\TypeSerialization.cpp"
 				>
 			</File>
 		</Filter>

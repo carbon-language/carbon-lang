@@ -153,55 +153,55 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\..\Analysis\DeadStores.cpp"
+				RelativePath="..\..\lib\Analysis\DeadStores.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Analysis\ExplodedGraph.cpp"
+				RelativePath="..\..\lib\Analysis\ExplodedGraph.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Analysis\GRBlockCounter.cpp"
+				RelativePath="..\..\lib\Analysis\GRBlockCounter.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Analysis\GRCoreEngine.cpp"
+				RelativePath="..\..\lib\Analysis\GRCoreEngine.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Analysis\GRExprEngine.cpp"
+				RelativePath="..\..\lib\Analysis\GRExprEngine.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Analysis\GRSimpleVals.cpp"
+				RelativePath="..\..\lib\Analysis\GRSimpleVals.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Analysis\LiveVariables.cpp"
+				RelativePath="..\..\lib\Analysis\LiveVariables.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Analysis\ProgramPoint.cpp"
+				RelativePath="..\..\lib\Analysis\ProgramPoint.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Analysis\RValues.cpp"
+				RelativePath="..\..\lib\Analysis\RValues.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Analysis\SymbolManager.cpp"
+				RelativePath="..\..\lib\Analysis\SymbolManager.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Analysis\UninitializedValues.cpp"
+				RelativePath="..\..\lib\Analysis\UninitializedValues.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Analysis\ValueManager.cpp"
+				RelativePath="..\..\lib\Analysis\ValueManager.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Analysis\ValueState.cpp"
+				RelativePath="..\..\lib\Analysis\ValueState.cpp"
 				>
 			</File>
 		</Filter>

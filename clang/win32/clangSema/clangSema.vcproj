@@ -153,43 +153,43 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\..\Sema\ParseAST.cpp"
+				RelativePath="..\..\lib\Sema\ParseAST.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Sema\Sema.cpp"
+				RelativePath="..\..\lib\Sema\Sema.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Sema\SemaChecking.cpp"
+				RelativePath="..\..\lib\Sema\SemaChecking.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Sema\SemaDecl.cpp"
+				RelativePath="..\..\lib\Sema\SemaDecl.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Sema\SemaDeclObjC.cpp"
+				RelativePath="..\..\lib\Sema\SemaDeclObjC.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Sema\SemaExpr.cpp"
+				RelativePath="..\..\lib\Sema\SemaExpr.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Sema\SemaExprCXX.cpp"
+				RelativePath="..\..\lib\Sema\SemaExprCXX.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Sema\SemaExprObjC.cpp"
+				RelativePath="..\..\lib\Sema\SemaExprObjC.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Sema\SemaStmt.cpp"
+				RelativePath="..\..\lib\Sema\SemaStmt.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Sema\SemaType.cpp"
+				RelativePath="..\..\lib\Sema\SemaType.cpp"
 				>
 			</File>
 		</Filter>
@@ -203,7 +203,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\Sema\Sema.h"
+				RelativePath="..\..\lib\Sema\Sema.h"
 				>
 			</File>
 		</Filter>
