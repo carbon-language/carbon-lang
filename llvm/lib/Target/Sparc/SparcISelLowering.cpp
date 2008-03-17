@@ -162,16 +162,6 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         if (CurArgReg < ArgRegEnd) ++CurArgReg;
         if (CurArgReg < ArgRegEnd) ++CurArgReg;
         ArgValues.push_back(DAG.getNode(ISD::UNDEF, ObjectVT));
-      } else if (/* FIXME: Apparently this isn't safe?? */
-                 0 && CurArgReg == ArgRegEnd && ObjectVT == MVT::f64 &&
-                 ((CurArgReg-ArgRegs) & 1) == 0) {
-        // If this is a double argument and the whole thing lives on the stack,
-        // and the argument is aligned, load the double straight from the stack.
-        // We can't do a load in cases like void foo([6ints], int,double),
-        // because the double wouldn't be aligned!
-        int FrameIdx = MF.getFrameInfo()->CreateFixedObject(8, ArgOffset);
-        SDOperand FIPtr = DAG.getFrameIndex(FrameIdx, MVT::i32);
-        ArgValues.push_back(DAG.getLoad(MVT::f64, Root, FIPtr, NULL, 0));
       } else {
         SDOperand HiVal;
         if (CurArgReg < ArgRegEnd) {  // Lives in an incoming GPR
@@ -280,20 +270,6 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     unsigned ObjSize;
     switch (ObjectVT) {
     default: assert(0 && "Unhandled argument type!");
-    case MVT::i1:
-    case MVT::i8:
-    case MVT::i16: {
-      assert(0 && "unreach");
-      // Promote the integer to 32-bits.  If the input type is signed, use a
-      // sign extend, otherwise use a zero extend.
-      ISD::NodeType ExtendKind = ISD::ANY_EXTEND;
-      if (Op.getConstantOperandVal(i+1) & 1)
-        ExtendKind = ISD::SIGN_EXTEND;
-      else
-        ExtendKind = ISD::ZERO_EXTEND;
-      Val = DAG.getNode(ExtendKind, MVT::i32, Val);
-      // FALL THROUGH
-    }
     case MVT::i32:
       ObjSize = 4;
 
@@ -315,14 +291,6 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
       break;
     case MVT::f64:
       ObjSize = 8;
-      // If we can store this directly into the outgoing slot, do so.  We can
-      // do this when all ArgRegs are used and if the outgoing slot is aligned.
-      // FIXME: McGill/misr fails with this.
-      if (0 && RegValuesToPass.size() >= 6 && ((ArgOffset-68) & 7) == 0) {
-        ValToStore = Val;
-        break;
-      }
-      
       // Otherwise, convert this to a FP value in int regs.
       Val = DAG.getNode(ISD::BIT_CONVERT, MVT::i64, Val);
       // FALL THROUGH
