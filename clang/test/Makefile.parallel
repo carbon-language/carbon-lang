@@ -8,18 +8,24 @@ ifeq ($(OS),Darwin)
 TESTDIRS += Rewriter
 endif
 
+ifdef VERBOSE
+PROGRESS = echo $<
+REPORTFAIL = cat $@
+else
+PROGRESS = printf '.'
+REPORTFAIL = (echo; echo '----' $< 'failed ----')
+endif
+
 TESTS = $(addprefix Output/, $(addsuffix .testresults, $(shell find $(TESTDIRS) \( -name '*.c' -or -name '*.cpp' -or -name '*.m' \))))
 
 Output/%.testresults: %
-	@ printf '.'
-	@ PATH=$$PATH:$(ToolDir):$(LLVM_SRC_ROOT)/test/Scripts ./TestRunner.sh $< > $@ || (echo; echo '----' $< 'failed ----')
+	@ $(PROGRESS)
+	@ PATH=$$PATH:$(ToolDir):$(LLVM_SRC_ROOT)/test/Scripts ./TestRunner.sh $< > $@ || $(REPORTFAIL)
 
 all::
 	@ rm -f $(TESTS)
 	@ echo '--- Running clang tests ---'
 	@ $(MAKE) -f Makefile.parallel $(TESTS)
-	@ echo
-	@ $(MAKE) -f Makefile.parallel report
 
 report: $(TESTS)
 	@ cat $^
