@@ -52,5 +52,6 @@ grep -q XFAIL $FILENAME && (printf "XFAILED '$TESTNAME': "; grep XFAIL $FILENAME
   cat $OUTPUT
   rm $OUTPUT
   echo "******************** TEST '$TESTNAME' FAILED! ********************"
+  exit 1
 )
 

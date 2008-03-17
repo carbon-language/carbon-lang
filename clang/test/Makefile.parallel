@@ -14,7 +14,7 @@ endif
 Makefile.tests:
 	@ echo '%.testresults: %' > $@
 	@ echo "^@ printf '.'" | tr "^" "\t" >> $@
-	@ echo "^@ PATH=$$PATH:$(ToolDir):$(LLVM_SRC_ROOT)/test/Scripts ./TestRunner.sh &< > &@ || echo $$^" | tr "^&" '\t$$' >> $@
+	@ echo "^@ PATH=$$PATH:$(ToolDir):$(LLVM_SRC_ROOT)/test/Scripts ./TestRunner.sh &< > &@ || (echo; echo '----' &! 'failed ----')" | tr '^!&' '\t^$$' >> $@
 	@ echo >> $@
 	@ echo "TESTS =" \\ >> $@
 	@ find $(TESTDIRS) \
@@ -33,6 +33,7 @@ Makefile.tests:
 	@ echo ".PHONY: all report clean" >> $@
 
 all:: Makefile.tests
+	@ echo '--- Running clang tests ---'
 	@ $(MAKE) -f $< clean
 	@ $(MAKE) -f $< all report
 	@ $(MAKE) -f $< clean
