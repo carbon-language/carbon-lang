@@ -475,13 +475,15 @@ CFGBlock* CFGBuilder::VisitNullStmt(NullStmt* Statement) {
 }
 
 CFGBlock* CFGBuilder::VisitCompoundStmt(CompoundStmt* C) {
+  
+  CFGBlock* LastBlock = NULL;
 
   for (CompoundStmt::reverse_body_iterator I=C->body_rbegin(), E=C->body_rend();
                                                                I != E; ++I ) {
-    Visit(*I);
+    LastBlock = Visit(*I);
   }
 
-  return Block;
+  return LastBlock;
 }
 
 CFGBlock* CFGBuilder::VisitIfStmt(IfStmt* I) {
