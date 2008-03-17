@@ -365,6 +365,19 @@ protected:
   ///  other functions that handle specific kinds of statements.
   void Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst);
   
+  /// VisitAsmStmt - Transfer function logic for inline asm.
+  void VisitAsmStmt(AsmStmt* A, NodeTy* Pred, NodeSet& Dst);
+  
+  void VisitAsmStmtHelperOutputs(AsmStmt* A,
+                                 AsmStmt::outputs_iterator I,
+                                 AsmStmt::outputs_iterator E,
+                                 NodeTy* Pred, NodeSet& Dst);
+  
+  void VisitAsmStmtHelperInputs(AsmStmt* A,
+                                AsmStmt::inputs_iterator I,
+                                AsmStmt::inputs_iterator E,
+                                NodeTy* Pred, NodeSet& Dst);
+  
   /// VisitBinaryOperator - Transfer function logic for binary operators.
   void VisitBinaryOperator(BinaryOperator* B, NodeTy* Pred, NodeSet& Dst);
   

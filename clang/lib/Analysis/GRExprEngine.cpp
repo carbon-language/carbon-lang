@@ -1013,6 +1013,68 @@ void GRExprEngine::VisitLVal(Expr* Ex, NodeTy* Pred, NodeSet& Dst) {
   Visit(Ex, Pred, Dst);
 }
 
+void GRExprEngine::VisitAsmStmt(AsmStmt* A, NodeTy* Pred, NodeSet& Dst) {
+  VisitAsmStmtHelperOutputs(A, A->begin_outputs(), A->end_outputs(), Pred, Dst);
+}  
+
+void GRExprEngine::VisitAsmStmtHelperOutputs(AsmStmt* A,
+                                             AsmStmt::outputs_iterator I,
+                                             AsmStmt::outputs_iterator E,
+                                             NodeTy* Pred, NodeSet& Dst) {
+  if (I == E) {
+    VisitAsmStmtHelperInputs(A, A->begin_inputs(), A->end_inputs(), Pred, Dst);
+    return;
+  }
+  
+  NodeSet Tmp;
+  VisitLVal(*I, Pred, Tmp);
+  
+  ++I;
+  
+  for (NodeSet::iterator NI = Tmp.begin(), NE = Tmp.end(); NI != NE; ++NI)
+    VisitAsmStmtHelperOutputs(A, I, E, *NI, Dst);
+}
+
+void GRExprEngine::VisitAsmStmtHelperInputs(AsmStmt* A,
+                                            AsmStmt::inputs_iterator I,
+                                            AsmStmt::inputs_iterator E,
+                                            NodeTy* Pred, NodeSet& Dst) {
+  if (I == E) {
+    
+    // We have processed both the inputs and the outputs.  All of the outputs
+    // should evaluate to LVals.  Nuke all of their values.
+    
+    // FIXME: Some day in the future it would be nice to allow a "plug-in"
+    // which interprets the inline asm and stores proper results in the
+    // outputs.
+    
+    ValueState* St = GetState(Pred);
+    
+    for (AsmStmt::outputs_iterator OI = A->begin_outputs(),
+                                   OE = A->end_outputs(); OI != OE; ++OI) {
+      
+      RVal X = GetLVal(St, *OI);
+      
+      assert (!isa<NonLVal>(X));
+      
+      if (isa<LVal>(X))
+        St = SetRVal(St, cast<LVal>(X), UnknownVal());
+    }
+    
+    Nodify(Dst, A, Pred, St);
+    return;
+  }
+  
+  NodeSet Tmp;
+  Visit(*I, Pred, Tmp);
+  
+  ++I;
+  
+  for (NodeSet::iterator NI = Tmp.begin(), NE = Tmp.end(); NI != NE; ++NI)
+    VisitAsmStmtHelperInputs(A, I, E, *NI, Dst);
+}
+
+
 void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
                                        GRExprEngine::NodeTy* Pred,
                                        GRExprEngine::NodeSet& Dst) {
