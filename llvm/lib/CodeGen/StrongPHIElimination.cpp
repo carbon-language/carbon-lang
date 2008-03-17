@@ -25,6 +25,7 @@
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -404,13 +405,16 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
   // before the current one.
   std::set<unsigned> ProcessedNames;
   
+  MachineBasicBlock::iterator FirstNonPHI = MBB->begin();
+  while (FirstNonPHI->getOpcode() == TargetInstrInfo::PHI) FirstNonPHI++;
+  
   // Iterate over all the PHI nodes in this block
   MachineBasicBlock::iterator P = MBB->begin();
-  while (P != MBB->end() && P->getOpcode() == TargetInstrInfo::PHI) {
+  while (P != FirstNonPHI && P->getOpcode() == TargetInstrInfo::PHI) {
     unsigned DestReg = P->getOperand(0).getReg();
 
     LiveInterval& PI = LI.getOrCreateInterval(DestReg);
-    unsigned pIdx = LI.getInstructionIndex(P);
+    unsigned pIdx = LI.getInstructionIndex(FirstNonPHI);
     VNInfo* PVN = PI.getLiveRangeContaining(pIdx)->valno;
     PhiValueNumber.insert(std::make_pair(DestReg, PVN->id));
 
@@ -734,9 +738,177 @@ void StrongPHIElimination::InsertCopies(MachineBasicBlock* MBB,
     Stacks[*I].pop_back();
 }
 
+/// ComputeUltimateVN - Assuming we are going to join two live intervals,
+/// compute what the resultant value numbers for each value in the input two
+/// ranges will be.  This is complicated by copies between the two which can
+/// and will commonly cause multiple value numbers to be merged into one.
+///
+/// VN is the value number that we're trying to resolve.  InstDefiningValue
+/// keeps track of the new InstDefiningValue assignment for the result
+/// LiveInterval.  ThisFromOther/OtherFromThis are sets that keep track of
+/// whether a value in this or other is a copy from the opposite set.
+/// ThisValNoAssignments/OtherValNoAssignments keep track of value #'s that have
+/// already been assigned.
+///
+/// ThisFromOther[x] - If x is defined as a copy from the other interval, this
+/// contains the value number the copy is from.
+///
+static unsigned ComputeUltimateVN(VNInfo *VNI,
+                                  SmallVector<VNInfo*, 16> &NewVNInfo,
+                                  DenseMap<VNInfo*, VNInfo*> &ThisFromOther,
+                                  DenseMap<VNInfo*, VNInfo*> &OtherFromThis,
+                                  SmallVector<int, 16> &ThisValNoAssignments,
+                                  SmallVector<int, 16> &OtherValNoAssignments) {
+  unsigned VN = VNI->id;
+
+  // If the VN has already been computed, just return it.
+  if (ThisValNoAssignments[VN] >= 0)
+    return ThisValNoAssignments[VN];
+//  assert(ThisValNoAssignments[VN] != -2 && "Cyclic case?");
+
+  // If this val is not a copy from the other val, then it must be a new value
+  // number in the destination.
+  DenseMap<VNInfo*, VNInfo*>::iterator I = ThisFromOther.find(VNI);
+  if (I == ThisFromOther.end()) {
+    NewVNInfo.push_back(VNI);
+    return ThisValNoAssignments[VN] = NewVNInfo.size()-1;
+  }
+  VNInfo *OtherValNo = I->second;
+
+  // Otherwise, this *is* a copy from the RHS.  If the other side has already
+  // been computed, return it.
+  if (OtherValNoAssignments[OtherValNo->id] >= 0)
+    return ThisValNoAssignments[VN] = OtherValNoAssignments[OtherValNo->id];
+  
+  // Mark this value number as currently being computed, then ask what the
+  // ultimate value # of the other value is.
+  ThisValNoAssignments[VN] = -2;
+  unsigned UltimateVN =
+    ComputeUltimateVN(OtherValNo, NewVNInfo, OtherFromThis, ThisFromOther,
+                      OtherValNoAssignments, ThisValNoAssignments);
+  return ThisValNoAssignments[VN] = UltimateVN;
+}
+
 void StrongPHIElimination::mergeLiveIntervals(unsigned primary,
-                                              unsigned secondary, unsigned VN) {
-  // FIXME: Update LiveIntervals
+                                              unsigned secondary, unsigned secondaryVN) {
+  unsigned primaryVN = PhiValueNumber[primary];
+  
+  LiveIntervals& LI = getAnalysis<LiveIntervals>();
+  LiveInterval& LHS = LI.getOrCreateInterval(primary);
+  LiveInterval& RHS = LI.getOrCreateInterval(secondary);
+  
+  // Compute the final value assignment, assuming that the live ranges can be
+  // coalesced.
+  SmallVector<int, 16> LHSValNoAssignments;
+  SmallVector<int, 16> RHSValNoAssignments;
+  DenseMap<VNInfo*, VNInfo*> LHSValsDefinedFromRHS;
+  DenseMap<VNInfo*, VNInfo*> RHSValsDefinedFromLHS;
+  SmallVector<VNInfo*, 16> NewVNInfo;
+  
+  LHSValNoAssignments.resize(LHS.getNumValNums(), -1);
+  RHSValNoAssignments.resize(RHS.getNumValNums(), -1);
+  NewVNInfo.resize(LHS.getNumValNums(), NULL);
+  
+  // Loop over the value numbers of the LHS, seeing if any are defined from
+  // the RHS.
+  for (LiveInterval::vni_iterator I = LHS.vni_begin(), E = LHS.vni_end();
+       I != E; ++E) {
+    VNInfo *VNI = *I;
+    if (VNI->def == ~1U || VNI->copy == 0)  // Src not defined by a copy?
+      continue;
+    
+    // DstReg is known to be a register in the LHS interval.  If the src is
+    // from the RHS interval, we can use its value #.
+    if (LI.getVNInfoSourceReg(VNI) != RHS.reg)
+      continue;
+    
+    // Figure out the value # from the RHS.
+    LHSValsDefinedFromRHS[VNI]=RHS.getLiveRangeContaining(VNI->def-1)->valno;
+  }
+  
+  // Loop over the value numbers of the RHS, seeing if any are defined from
+  // the LHS.
+  for (LiveInterval::vni_iterator i = RHS.vni_begin(), e = RHS.vni_end();
+       i != e; ++i) {
+    VNInfo *VNI = *i;
+    if (VNI->def == ~1U || VNI->copy == 0)  // Src not defined by a copy?
+      continue;
+    
+    // DstReg is known to be a register in the RHS interval.  If the src is
+    // from the LHS interval, we can use its value #.
+    if (LI.getVNInfoSourceReg(VNI) != LHS.reg)
+      continue;
+    
+    // Figure out the value # from the LHS.
+    RHSValsDefinedFromLHS[VNI]=LHS.getLiveRangeContaining(VNI->def-1)->valno;
+  }
+  
+  LHSValNoAssignments.resize(LHS.getNumValNums(), -1);
+  RHSValNoAssignments.resize(RHS.getNumValNums(), -1);
+  NewVNInfo.reserve(LHS.getNumValNums() + RHS.getNumValNums());
+  
+  for (LiveInterval::vni_iterator I = LHS.vni_begin(), E = LHS.vni_end();
+       I != E; ++I) {
+    VNInfo *VNI = *I;
+    unsigned VN = VNI->id;
+    if (LHSValNoAssignments[VN] >= 0 || VNI->def == ~1U) 
+      continue;
+    ComputeUltimateVN(VNI, NewVNInfo,
+                      LHSValsDefinedFromRHS, RHSValsDefinedFromLHS,
+                      LHSValNoAssignments, RHSValNoAssignments);
+  }
+  
+  for (LiveInterval::vni_iterator I = RHS.vni_begin(), E = RHS.vni_end();
+       I != E; ++I) {
+    VNInfo *VNI = *I;
+    unsigned VN = VNI->id;
+    if (RHSValNoAssignments[VN] >= 0 || VNI->def == ~1U)
+      continue;
+    // If this value number isn't a copy from the LHS, it's a new number.
+    if (RHSValsDefinedFromLHS.find(VNI) == RHSValsDefinedFromLHS.end()) {
+      NewVNInfo.push_back(VNI);
+      RHSValNoAssignments[VN] = NewVNInfo.size()-1;
+      continue;
+    }
+    
+    ComputeUltimateVN(VNI, NewVNInfo,
+                      RHSValsDefinedFromLHS, LHSValsDefinedFromRHS,
+                      RHSValNoAssignments, LHSValNoAssignments);
+  }
+  
+  // Update kill info. Some live ranges are extended due to copy coalescing.
+  for (DenseMap<VNInfo*, VNInfo*>::iterator I = LHSValsDefinedFromRHS.begin(),
+         E = LHSValsDefinedFromRHS.end(); I != E; ++I) {
+    VNInfo *VNI = I->first;
+    unsigned LHSValID = LHSValNoAssignments[VNI->id];
+    LiveInterval::removeKill(NewVNInfo[LHSValID], VNI->def);
+    NewVNInfo[LHSValID]->hasPHIKill |= VNI->hasPHIKill;
+    RHS.addKills(NewVNInfo[LHSValID], VNI->kills);
+  }
+
+  // Update kill info. Some live ranges are extended due to copy coalescing.
+  for (DenseMap<VNInfo*, VNInfo*>::iterator I = RHSValsDefinedFromLHS.begin(),
+         E = RHSValsDefinedFromLHS.end(); I != E; ++I) {
+    VNInfo *VNI = I->first;
+    unsigned RHSValID = RHSValNoAssignments[VNI->id];
+    LiveInterval::removeKill(NewVNInfo[RHSValID], VNI->def);
+    NewVNInfo[RHSValID]->hasPHIKill |= VNI->hasPHIKill;
+    LHS.addKills(NewVNInfo[RHSValID], VNI->kills);
+  }
+
+  // Use the VNInfo we collected earlier to ensure that the phi copy is
+  // merged correctly.
+  RHSValNoAssignments[secondaryVN] = primaryVN;
+
+  // If we get here, we know that we can coalesce the live ranges.  Ask the
+  // intervals to coalesce themselves now.
+  if ((RHS.ranges.size() > LHS.ranges.size() &&
+      TargetRegisterInfo::isVirtualRegister(LHS.reg)) ||
+      TargetRegisterInfo::isPhysicalRegister(RHS.reg)) {
+    RHS.join(LHS, &RHSValNoAssignments[0], &LHSValNoAssignments[0], NewVNInfo);
+  } else {
+    LHS.join(RHS, &LHSValNoAssignments[0], &RHSValNoAssignments[0], NewVNInfo);
+  }
 }
 
 bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
