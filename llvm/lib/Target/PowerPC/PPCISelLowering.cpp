@@ -2259,7 +2259,24 @@ SDOperand PPCTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG,
     NodeTys.push_back(MVT::i32);
     break;
   case MVT::i64:
-    if (Op.Val->getValueType(1) == MVT::i64) {
+    if (Op.Val->getNumValues()>=4 && 
+        Op.Val->getValueType(3) == MVT::i64) {
+      Chain = DAG.getCopyFromReg(Chain, PPC::X3, MVT::i64, InFlag).getValue(1);
+      ResultVals[0] = Chain.getValue(0);
+      Chain = DAG.getCopyFromReg(Chain, PPC::X4, MVT::i64,
+                                 Chain.getValue(2)).getValue(1);
+      ResultVals[1] = Chain.getValue(0);
+      Chain = DAG.getCopyFromReg(Chain, PPC::X5, MVT::i64,
+                                 Chain.getValue(2)).getValue(1);
+      ResultVals[2] = Chain.getValue(0);
+      Chain = DAG.getCopyFromReg(Chain, PPC::X6, MVT::i64,
+                                 Chain.getValue(2)).getValue(1);
+      ResultVals[3] = Chain.getValue(0);
+      NumResults = 4;
+      NodeTys.push_back(MVT::i64);
+      NodeTys.push_back(MVT::i64);
+      NodeTys.push_back(MVT::i64);
+    } else if (Op.Val->getValueType(1) == MVT::i64) {
       Chain = DAG.getCopyFromReg(Chain, PPC::X3, MVT::i64, InFlag).getValue(1);
       ResultVals[0] = Chain.getValue(0);
       Chain = DAG.getCopyFromReg(Chain, PPC::X4, MVT::i64,
