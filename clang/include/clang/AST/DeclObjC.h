@@ -206,7 +206,7 @@ class ObjCInterfaceDecl : public TypeDecl {
   
   /// instance methods
   ObjCMethodDecl **InstanceMethods;  // Null if not defined
-  int NumInstanceMethods;  // -1 if not defined
+  unsigned NumInstanceMethods;  // 0 if none.
   
   /// class methods
   ObjCMethodDecl **ClassMethods;  // Null if not defined
@@ -230,7 +230,7 @@ class ObjCInterfaceDecl : public TypeDecl {
     : TypeDecl(ObjCInterface, atLoc, Id, 0), SuperClass(0),
       ReferencedProtocols(0), NumReferencedProtocols(0), Ivars(0), 
       NumIvars(0),
-      InstanceMethods(0), NumInstanceMethods(-1), 
+      InstanceMethods(0), NumInstanceMethods(0), 
       ClassMethods(0), NumClassMethods(0),
       CategoryList(0), PropertyDecl(0), NumPropertyDecl(0),
       ForwardDecl(FD), InternalInterface(isInternal) {
@@ -263,13 +263,13 @@ public:
   ivar_iterator ivar_end() const { return Ivars + ivar_size();}
   unsigned ivar_size() const { return NumIvars; }
   
-  int getNumInstanceMethods() const { return NumInstanceMethods; }
+  unsigned getNumInstanceMethods() const { return NumInstanceMethods; }
   unsigned getNumClassMethods() const { return NumClassMethods; }
   
   typedef ObjCMethodDecl * const * instmeth_iterator;
   instmeth_iterator instmeth_begin() const { return InstanceMethods; }
   instmeth_iterator instmeth_end() const {
-    return InstanceMethods+(NumInstanceMethods == -1 ? 0 : NumInstanceMethods);
+    return InstanceMethods+NumInstanceMethods;
   }
   
   typedef ObjCMethodDecl * const * classmeth_iterator;
@@ -838,7 +838,7 @@ public:
   
   void setSuperClass(ObjCInterfaceDecl * superCls) { SuperClass = superCls; }
   
-  int getNumInstanceMethods() const { return InstanceMethods.size(); }
+  unsigned getNumInstanceMethods() const { return InstanceMethods.size(); }
   unsigned getNumClassMethods() const { return ClassMethods.size(); }
 
   typedef llvm::SmallVector<ObjCMethodDecl*, 32>::const_iterator
