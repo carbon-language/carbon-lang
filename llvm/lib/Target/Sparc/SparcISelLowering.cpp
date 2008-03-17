@@ -33,7 +33,7 @@ using namespace llvm;
 static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
   // CCValAssign - represent the assignment of the return value to locations.
   SmallVector<CCValAssign, 16> RVLocs;
-  unsigned CC   = DAG.getMachineFunction().getFunction()->getCallingConv();
+  unsigned CC = DAG.getMachineFunction().getFunction()->getCallingConv();
   bool isVarArg = DAG.getMachineFunction().getFunction()->isVarArg();
   
   // CCState - Info about the registers and stack slot.
@@ -235,15 +235,16 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   return ArgValues;
 }
 
-std::pair<SDOperand, SDOperand>
-SparcTargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
-                                 bool RetSExt, bool RetZExt, bool isVarArg,
-                                 unsigned CC, bool isTailCall, SDOperand Callee,
-                                 ArgListTy &Args, SelectionDAG &DAG) {
+static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
+  unsigned CallingConv = cast<ConstantSDNode>(Op.getOperand(1))->getValue();
+  SDOperand Chain = Op.getOperand(0);
+  SDOperand Callee = Op.getOperand(4);
+  bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
+
   // Count the size of the outgoing arguments.
   unsigned ArgsSize = 0;
-  for (unsigned i = 0, e = Args.size(); i != e; ++i) {
-    switch (getValueType(Args[i].Ty)) {
+  for (unsigned i = 5, e = Op.getNumOperands(); i != e; i += 2) {
+    switch (Op.getOperand(i).getValueType()) {
     default: assert(0 && "Unknown value type!");
     case MVT::i1:
     case MVT::i8:
@@ -266,14 +267,14 @@ SparcTargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
   // Keep stack frames 8-byte aligned.
   ArgsSize = (ArgsSize+7) & ~7;
 
-  Chain = DAG.getCALLSEQ_START(Chain,DAG.getConstant(ArgsSize, getPointerTy()));
+  Chain = DAG.getCALLSEQ_START(Chain,DAG.getConstant(ArgsSize, MVT::i32));
   
   SDOperand StackPtr;
   std::vector<SDOperand> Stores;
   std::vector<SDOperand> RegValuesToPass;
   unsigned ArgOffset = 68;
-  for (unsigned i = 0, e = Args.size(); i != e; ++i) {
-    SDOperand Val = Args[i].Node;
+  for (unsigned i = 5, e = Op.getNumOperands(); i != e; i += 2) {
+    SDOperand Val = Op.getOperand(i);
     MVT::ValueType ObjectVT = Val.getValueType();
     SDOperand ValToStore(0, 0);
     unsigned ObjSize;
@@ -282,12 +283,13 @@ SparcTargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
     case MVT::i1:
     case MVT::i8:
     case MVT::i16: {
+      assert(0 && "unreach");
       // Promote the integer to 32-bits.  If the input type is signed, use a
       // sign extend, otherwise use a zero extend.
       ISD::NodeType ExtendKind = ISD::ANY_EXTEND;
-      if (Args[i].isSExt)
+      if (Op.getConstantOperandVal(i+1) & 1)
         ExtendKind = ISD::SIGN_EXTEND;
-      else if (Args[i].isZExt)
+      else
         ExtendKind = ISD::ZERO_EXTEND;
       Val = DAG.getNode(ExtendKind, MVT::i32, Val);
       // FALL THROUGH
@@ -332,9 +334,9 @@ SparcTargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
       }
       
       // Split the value into top and bottom part.  Top part goes in a reg.
-      SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, getPointerTy(), Val, 
+      SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Val, 
                                  DAG.getConstant(1, MVT::i32));
-      SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, getPointerTy(), Val,
+      SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Val,
                                  DAG.getConstant(0, MVT::i32));
       RegValuesToPass.push_back(Hi);
       
@@ -352,7 +354,7 @@ SparcTargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
       if (!StackPtr.Val) {
         StackPtr = DAG.getRegister(SP::O6, MVT::i32);
       }
-      SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
+      SDOperand PtrOff = DAG.getConstant(ArgOffset, MVT::i32);
       PtrOff = DAG.getNode(ISD::ADD, MVT::i32, StackPtr, PtrOff);
       Stores.push_back(DAG.getStore(Chain, ValToStore, PtrOff, NULL, 0));
     }
@@ -390,59 +392,37 @@ SparcTargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
   Chain = DAG.getNode(SPISD::CALL, NodeTys, Ops, InFlag.Val ? 3 : 2);
   InFlag = Chain.getValue(1);
   
-  MVT::ValueType RetTyVT = getValueType(RetTy);
+  Chain = DAG.getCALLSEQ_END(Chain,
+                             DAG.getConstant(ArgsSize, MVT::i32),
+                             DAG.getConstant(0, MVT::i32), InFlag);
+  InFlag = Chain.getValue(1);
   
-  SDOperand RetVal;
-  if (RetTyVT != MVT::isVoid) {
-    switch (RetTyVT) {
-    default: assert(0 && "Unknown value type to return!");
-    case MVT::i1:
-    case MVT::i8:
-    case MVT::i16: {
-      RetVal = DAG.getCopyFromReg(Chain, SP::O0, MVT::i32, InFlag);
-      Chain = RetVal.getValue(1);
-      
-      // Add a note to keep track of whether it is sign or zero extended.
-      ISD::NodeType AssertKind = ISD::DELETED_NODE;
-      if (RetSExt)
-        AssertKind = ISD::AssertSext;
-      else if (RetZExt)
-        AssertKind = ISD::AssertZext;
-
-      if (AssertKind != ISD::DELETED_NODE)
-        RetVal = DAG.getNode(AssertKind, MVT::i32, RetVal,
-                             DAG.getValueType(RetTyVT));
-
-      RetVal = DAG.getNode(ISD::TRUNCATE, RetTyVT, RetVal);
-      break;
-    }
-    case MVT::i32:
-      RetVal = DAG.getCopyFromReg(Chain, SP::O0, MVT::i32, InFlag);
-      Chain = RetVal.getValue(1);
-      break;
-    case MVT::f32:
-      RetVal = DAG.getCopyFromReg(Chain, SP::F0, MVT::f32, InFlag);
-      Chain = RetVal.getValue(1);
-      break;
-    case MVT::f64:
-      RetVal = DAG.getCopyFromReg(Chain, SP::D0, MVT::f64, InFlag);
-      Chain = RetVal.getValue(1);
-      break;
-    case MVT::i64:
-      SDOperand Lo = DAG.getCopyFromReg(Chain, SP::O1, MVT::i32, InFlag);
-      SDOperand Hi = DAG.getCopyFromReg(Lo.getValue(1), SP::O0, MVT::i32, 
-                                        Lo.getValue(2));
-      RetVal = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Lo, Hi);
-      Chain = Hi.getValue(1);
-      break;
-    }
+  // Assign locations to each value returned by this call.
+  SmallVector<CCValAssign, 16> RVLocs;
+  CCState CCInfo(CallingConv, isVarArg, DAG.getTarget(), RVLocs);
+  
+  CCInfo.AnalyzeCallResult(Op.Val, RetCC_Sparc32);
+  SmallVector<SDOperand, 8> ResultVals;
+  
+  // Copy all of the result registers out of their specified physreg.
+  for (unsigned i = 0; i != RVLocs.size(); ++i) {
+    unsigned Reg = RVLocs[i].getLocReg();
+    
+    // Remap I0->I7 -> O0->O7.
+    if (Reg >= SP::I0 && Reg <= SP::I7)
+      Reg = Reg-SP::I0+SP::O0;
+    
+    Chain = DAG.getCopyFromReg(Chain, Reg,
+                               RVLocs[i].getValVT(), InFlag).getValue(1);
+    InFlag = Chain.getValue(2);
+    ResultVals.push_back(Chain.getValue(0));
   }
   
-  Chain = DAG.getCALLSEQ_END(Chain,
-                             DAG.getConstant(ArgsSize, getPointerTy()),
-                             DAG.getConstant(0, getPointerTy()),
-                             SDOperand());
-  return std::make_pair(RetVal, Chain);
+  ResultVals.push_back(Chain);
+  
+  // Merge everything together with a MERGE_VALUES node.
+  return DAG.getNode(ISD::MERGE_VALUES, Op.Val->getVTList(),
+                     &ResultVals[0], ResultVals.size());
 }
 
 
@@ -866,6 +846,7 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::VASTART:            return LowerVASTART(Op, DAG, *this);
   case ISD::VAARG:              return LowerVAARG(Op, DAG);
   case ISD::DYNAMIC_STACKALLOC: return LowerDYNAMIC_STACKALLOC(Op, DAG);
+  case ISD::CALL:               return LowerCALL(Op, DAG);
   case ISD::RET:                return LowerRET(Op, DAG);
   }
 }

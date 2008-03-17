@@ -59,11 +59,6 @@ namespace llvm {
     
     virtual std::vector<SDOperand>
       LowerArguments(Function &F, SelectionDAG &DAG);
-    virtual std::pair<SDOperand, SDOperand>
-      LowerCallTo(SDOperand Chain, const Type *RetTy,
-                  bool RetSExt, bool RetZExt, bool isVarArg,
-                  unsigned CC, bool isTailCall, SDOperand Callee,
-                  ArgListTy &Args, SelectionDAG &DAG);
     virtual MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
                                                         MachineBasicBlock *MBB);
     
