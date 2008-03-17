@@ -10,4 +10,9 @@
 LEVEL := ../../..
 DIRS = scalar
 
+ocamldoc:
+	$(Verb) for i in $(DIRS) ; do \
+		$(MAKE) -C $$i ocamldoc; \
+	done
+
 include $(LEVEL)/Makefile.common
