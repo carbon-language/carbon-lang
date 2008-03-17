@@ -11,6 +11,7 @@
 #     %llvmgcc - llvm-gcc command
 #     %llvmgxx - llvm-g++ command
 #     %prcontext - prcontext.tcl script
+#     %t1 - temporary file name (derived from testcase name)
 #
 
 FILENAME=$1
@@ -40,7 +41,8 @@ grep -q 'RUN:' $FILENAME || (
 )
 
 SCRIPT=$OUTPUT.script
-grep 'RUN:' $FILENAME | sed "s|^.*RUN:\(.*\)$|\1|g;s|%s|$SUBST|g;s|%llvmgcc|llvm-gcc -emit-llvm|g;s|%llvmgxx|llvm-g++ -emit-llvm|g;s|%prcontext|prcontext.tcl|g" > $SCRIPT  
+TEMPOUTPUT=$OUTPUT.tmp
+grep 'RUN:' $FILENAME | sed "s|^.*RUN:\(.*\)$|\1|g;s|%s|$SUBST|g;s|%llvmgcc|llvm-gcc -emit-llvm|g;s|%llvmgxx|llvm-g++ -emit-llvm|g;s|%prcontext|prcontext.tcl|g;s|%t1|$TEMPOUTPUT|g" > $SCRIPT  
 
 grep -q XFAIL $FILENAME && (printf "XFAILED '$TESTNAME': "; grep XFAIL $FILENAME)
 
