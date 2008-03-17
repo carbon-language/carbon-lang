@@ -829,6 +829,7 @@ declare i32 @atoi(i8*) nounwind readonly
     <dt><tt>sret</tt></dt>
     <dd>This indicates that the pointer parameter specifies the address of a
     structure that is the return value of the function in the source program.
+    Loads and stores to the structure are assumed not to trap.
     May only be applied to the first parameter.</dd>
 
     <dt><tt>noalias</tt></dt>
@@ -842,10 +843,11 @@ declare i32 @atoi(i8*) nounwind readonly
     an <tt>unreachable</tt> instruction immediately followed the call.</dd> 
 
     <dt><tt>nounwind</tt></dt>
-    <dd>This function attribute indicates that the function type does not use
-    the unwind instruction and does not allow stack unwinding to propagate
-    through it.</dd>
-    
+    <dd>This function attribute indicates that no exceptions unwind out of the
+    function.  Usually this is because the function makes no use of exceptions,
+    but it may also be that the function catches any exceptions thrown when
+    executing it.</dd>
+
     <dt><tt>nest</tt></dt>
     <dd>This indicates that the parameter can be excised using the
     <a href="#int_trampoline">trampoline intrinsics</a>.</dd>
