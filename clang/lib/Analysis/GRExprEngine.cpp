@@ -288,13 +288,14 @@ void GRExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
       
       assert (V1 <= V2);
     }
-    else V2 = V1;
+    else
+      V2 = V1;
     
     // FIXME: Eventually we should replace the logic below with a range
     //  comparison, rather than concretize the values within the range.
     //  This should be easy once we have "ranges" for NonLVals.
         
-    do {      
+    do {
       nonlval::ConcreteInt CaseVal(BasicVals.getValue(V1));
       
       RVal Res = EvalBinOp(BinaryOperator::EQ, CondV, CaseVal);
@@ -323,10 +324,14 @@ void GRExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
       if (isFeasible)
         DefaultSt = StNew;
 
-      // Concretize the next value in the range.      
-      ++V1;
+      // Concretize the next value in the range.
+      if (V1 == V2)
+        break;
       
-    } while (V1 < V2);
+      ++V1;
+      assert (V1 < V2);
+      
+    } while (true);
   }
   
   // If we reach here, than we know that the default branch is
