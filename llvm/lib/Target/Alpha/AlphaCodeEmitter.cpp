@@ -95,6 +95,7 @@ void AlphaCodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
     case Alpha::ALTENT:
     case Alpha::PCLABEL:
     case Alpha::MEMLABEL:
+    case TargetInstrInfo::IMPLICIT_DEF:
       break; //skip these
     }
   }
