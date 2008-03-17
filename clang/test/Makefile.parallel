@@ -10,34 +10,22 @@ endif
 
 TESTS = $(addsuffix .testresults, $(shell find $(TESTDIRS) \( -name '*.c' -or -name '*.cpp' -or -name '*.m' \)))
 
-Makefile.tests:
-	@ echo '%.testresults: %' > $@
-	@ echo "^@ printf '.'" | tr "^" "\t" >> $@
-	@ echo "^@ PATH=$$PATH:$(ToolDir):$(LLVM_SRC_ROOT)/test/Scripts ./TestRunner.sh &< > &@ || (echo; echo '----' &! 'failed ----')" | tr '^!&' '\t^$$' >> $@
-	@ echo >> $@
-	@ echo "TESTS = $(TESTS)" >> $@
-	@ echo '  ' >> $@
-	@ echo >> $@
-	@ echo "all:: &(TESTS)" | tr "&" '$$' >> $@
-	@ echo >> $@
-	@ echo "report: &(TESTS)" | tr "&" '$$' >> $@
-	@ echo "^@ cat $$<" | tr "^&<" "\t$$^" >> $@
-	@ echo >> $@
-	@ echo "clean:" | tr "&" '$$' >> $@
-	@ echo "^@ rm -f &(TESTS)" | tr "^&<" "\t$$^" >> $@
-	@ echo >> $@
-	@ echo ".PHONY: all report clean" >> $@
+%.testresults: %
+	@ printf '.'
+	@ PATH=$$PATH:$(ToolDir):$(LLVM_SRC_ROOT)/test/Scripts ./TestRunner.sh $< > $@ || (echo; echo '----' $< 'failed ----')
 
-all:: Makefile.tests
+all::
 	@ echo '--- Running clang tests ---'
-	@ $(MAKE) -f $< clean
-	@ $(MAKE) -f $< all
-	@ echo "^@ echo" | tr "^" "\t" >> $@
-	@ $(MAKE) -f $< report
-	@ $(MAKE) -f $< clean
-	@ rm $<
+	@ $(MAKE) -f Makefile.parallel testclean
+	@ $(MAKE) -f Makefile.parallel $(TESTS)
+	@ echo
+	@ $(MAKE) -f Makefile.parallel report
+	@ $(MAKE) -f Makefile.parallel testclean
 
-.PHONY: all
+report: $(TESTS)
+	@ cat $^
 
-.NOTPARALLEL:
+testclean:
+	@ rm -f $(TESTS)
 
+.PHONY: all report testclean
