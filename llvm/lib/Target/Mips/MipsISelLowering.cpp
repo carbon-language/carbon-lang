@@ -227,11 +227,10 @@ LowerJumpTable(SDOperand Op, SelectionDAG &DAG)
 SDOperand MipsTargetLowering::
 LowerCALL(SDOperand Op, SelectionDAG &DAG)
 {
-  unsigned CallingConv= cast<ConstantSDNode>(Op.getOperand(1))->getValue();
+  unsigned CallingConv = cast<ConstantSDNode>(Op.getOperand(1))->getValue();
 
   // By now, only CallingConv::C implemented
-  switch (CallingConv) 
-  {
+  switch (CallingConv) {
     default:
       assert(0 && "Unsupported calling convention");
     case CallingConv::Fast:
@@ -248,7 +247,6 @@ SDOperand MipsTargetLowering::
 LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC) 
 {
   MachineFunction &MF = DAG.getMachineFunction();
-  unsigned StackReg   = MF.getTarget().getRegisterInfo()->getFrameRegister(MF);
 
   SDOperand Chain  = Op.getOperand(0);
   SDOperand Callee = Op.getOperand(4);
@@ -275,8 +273,7 @@ LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC)
   SmallVector<std::pair<unsigned, SDOperand>, 8> RegsToPass;
   SmallVector<SDOperand, 8> MemOpChains;
 
-  SDOperand StackPtr;
-  int LastStackLoc=0;
+  int LastStackLoc = 0;
 
   // Walk the register/memloc assignments, inserting copies/loads.
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
@@ -287,43 +284,40 @@ LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC)
     
     // Promote the value if needed.
     switch (VA.getLocInfo()) {
-      default: assert(0 && "Unknown loc info!");
-      case CCValAssign::Full: break;
-      case CCValAssign::SExt:
-        Arg = DAG.getNode(ISD::SIGN_EXTEND, VA.getLocVT(), Arg);
-        break;
-      case CCValAssign::ZExt:
-        Arg = DAG.getNode(ISD::ZERO_EXTEND, VA.getLocVT(), Arg);
-        break;
-      case CCValAssign::AExt:
-        Arg = DAG.getNode(ISD::ANY_EXTEND, VA.getLocVT(), Arg);
-        break;
+    default: assert(0 && "Unknown loc info!");
+    case CCValAssign::Full: break;
+    case CCValAssign::SExt:
+      Arg = DAG.getNode(ISD::SIGN_EXTEND, VA.getLocVT(), Arg);
+      break;
+    case CCValAssign::ZExt:
+      Arg = DAG.getNode(ISD::ZERO_EXTEND, VA.getLocVT(), Arg);
+      break;
+    case CCValAssign::AExt:
+      Arg = DAG.getNode(ISD::ANY_EXTEND, VA.getLocVT(), Arg);
+      break;
     }
     
     // Arguments that can be passed on register must be kept at 
     // RegsToPass vector
     if (VA.isRegLoc()) {
       RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
-    } else {
-
-      assert(VA.isMemLoc());
-
-      if (StackPtr.Val == 0)
-        StackPtr = DAG.getRegister(StackReg, getPointerTy());
-     
-      // Create the frame index object for this incoming parameter
-      // This guarantees that when allocating Local Area the firsts
-      // 16 bytes which are alwayes reserved won't be overwritten.
-      LastStackLoc = (16 + VA.getLocMemOffset());
-      int FI = MFI->CreateFixedObject(MVT::getSizeInBits(VA.getValVT())/8,
-                                      LastStackLoc);
-
-      SDOperand PtrOff = DAG.getFrameIndex(FI,getPointerTy());
-
-      // emit ISD::STORE whichs stores the 
-      // parameter value to a stack Location
-      MemOpChains.push_back(DAG.getStore(Chain, Arg, PtrOff, NULL, 0));
+      continue;
     }
+    
+    assert(VA.isMemLoc());
+    
+    // Create the frame index object for this incoming parameter
+    // This guarantees that when allocating Local Area the firsts
+    // 16 bytes which are alwayes reserved won't be overwritten.
+    LastStackLoc = (16 + VA.getLocMemOffset());
+    int FI = MFI->CreateFixedObject(MVT::getSizeInBits(VA.getValVT())/8,
+                                    LastStackLoc);
+
+    SDOperand PtrOff = DAG.getFrameIndex(FI,getPointerTy());
+
+    // emit ISD::STORE whichs stores the 
+    // parameter value to a stack Location
+    MemOpChains.push_back(DAG.getStore(Chain, Arg, PtrOff, NULL, 0));
   }
 
   // Transform all store nodes into one single node because
