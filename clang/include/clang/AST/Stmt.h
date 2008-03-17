@@ -781,6 +781,32 @@ public:
   static bool classof(const Stmt *T) {return T->getStmtClass() == AsmStmtClass;}
   static bool classof(const AsmStmt *) { return true; }
   
+  // Input expr iterators.
+  
+  typedef Expr* const * inputs_iterator;
+  typedef const Expr* const* const_inputs_iterator;
+  
+  inputs_iterator begin_inputs() { return &Exprs[0] + NumOutputs; }
+  inputs_iterator end_inputs() { return begin_inputs() + NumInputs; }
+  
+  const_inputs_iterator begin_inputs() const { return &Exprs[0] + NumOutputs; }
+  const_inputs_iterator end_inputs() const { return begin_inputs() + NumInputs;}
+  
+  // Output expr iterators.
+  
+  typedef Expr* const * outputs_iterator;
+  typedef const Expr* const* const_outputs_iterator;
+  
+  outputs_iterator begin_outputs() { return &Exprs[0]; }
+  outputs_iterator end_outputs() { return begin_outputs() + NumOutputs; }
+  
+  const_outputs_iterator begin_outputs() const { return &Exprs[0]; }
+  const_outputs_iterator end_outputs() const {
+    return begin_outputs() + NumOutputs;
+  }
+  
+  // Child iterators  
+  
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
