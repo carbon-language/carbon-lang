@@ -895,15 +895,17 @@ public:
   
 class ObjCPropertyDecl : public Decl {
 public:
-  enum PropertyAttributeKind { OBJC_PR_noattr = 0x0, 
-                       OBJC_PR_readonly = 0x01, 
-                       OBJC_PR_getter = 0x02,
-                       OBJC_PR_assign = 0x04, 
-                       OBJC_PR_readwrite = 0x08, 
-                       OBJC_PR_retain = 0x10,
-                       OBJC_PR_copy = 0x20, 
-                       OBJC_PR_nonatomic = 0x40,
-                       OBJC_PR_setter = 0x80 };
+  enum PropertyAttributeKind {
+    OBJC_PR_noattr    = 0x00, 
+    OBJC_PR_readonly  = 0x01, 
+    OBJC_PR_getter    = 0x02,
+    OBJC_PR_assign    = 0x04, 
+    OBJC_PR_readwrite = 0x08, 
+    OBJC_PR_retain    = 0x10,
+    OBJC_PR_copy      = 0x20, 
+    OBJC_PR_nonatomic = 0x40,
+    OBJC_PR_setter    = 0x80
+  };
 private:
   // List of property name declarations
   // FIXME: Property is not an ivar.
@@ -920,24 +922,29 @@ private:
 public:
   static ObjCPropertyDecl *Create(ASTContext &C, SourceLocation L);
   
-  ObjCIvarDecl *const* getPropertyDecls() const { return PropertyDecls; }
-  unsigned getNumPropertyDecls() const { return NumPropertyDecls; }
+  typedef ObjCIvarDecl * const *propdecl_iterator;
+  propdecl_iterator propdecl_begin() const { return PropertyDecls; }
+  propdecl_iterator propdecl_end() const {
+    return PropertyDecls+NumPropertyDecls; 
+  }
+  unsigned propdecl_size() const { return NumPropertyDecls; }
+  bool propdecl_empty() const { return NumPropertyDecls == 0; }
 
+  /// setPropertyDeclLists - Set the property decl list to the specified array
+  /// of decls.
   void setPropertyDeclLists(ObjCIvarDecl **Properties, unsigned NumProp);
   
-  const PropertyAttributeKind getPropertyAttributes() const {
+  PropertyAttributeKind getPropertyAttributes() const {
     return PropertyAttributeKind(PropertyAttributes);
   }
   void setPropertyAttributes(PropertyAttributeKind PRVal) { 
-    PropertyAttributes =  (PropertyAttributeKind) (PropertyAttributes | PRVal);
+    PropertyAttributes |= PRVal;
   }
   
-  const IdentifierInfo *getGetterName() const { return GetterName; }
-  IdentifierInfo *getGetterName() { return GetterName; }
+  IdentifierInfo *getGetterName() const { return GetterName; }
   void setGetterName(IdentifierInfo *Id) { GetterName = Id; }
   
-  const IdentifierInfo *getSetterName() const { return SetterName; }
-  IdentifierInfo *getSetterName() { return SetterName; }
+  IdentifierInfo *getSetterName() const { return SetterName; }
   void setSetterName(IdentifierInfo *Id) { SetterName = Id; }
   
   static bool classof(const Decl *D) {
