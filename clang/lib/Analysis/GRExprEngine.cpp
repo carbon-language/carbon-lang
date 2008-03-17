@@ -329,7 +329,7 @@ void GRExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
         break;
       
       ++V1;
-      assert (V1 < V2);
+      assert (V1 <= V2);
       
     } while (true);
   }
