@@ -14,7 +14,7 @@ TARGET = Sparc
 BUILT_SOURCES = SparcGenRegisterInfo.h.inc SparcGenRegisterNames.inc \
                 SparcGenRegisterInfo.inc SparcGenInstrNames.inc \
                 SparcGenInstrInfo.inc SparcGenAsmWriter.inc \
-                SparcGenDAGISel.inc SparcGenSubtarget.inc
+                SparcGenDAGISel.inc SparcGenSubtarget.inc SparcGenCallingConv.inc
 
 include $(LEVEL)/Makefile.common
 

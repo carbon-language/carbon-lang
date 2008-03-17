@@ -31,15 +31,11 @@ def FeatureVIS
                      "Enable UltraSPARC Visual Instruction Set extensions">;
 
 //===----------------------------------------------------------------------===//
-// Register File Description
+// Register File, Calling Conv, Instruction Descriptions
 //===----------------------------------------------------------------------===//
 
 include "SparcRegisterInfo.td"
-
-//===----------------------------------------------------------------------===//
-// Instruction Descriptions
-//===----------------------------------------------------------------------===//
-
+include "SparcCallingConv.td"
 include "SparcInstrInfo.td"
 
 def SparcInstrInfo : InstrInfo {
