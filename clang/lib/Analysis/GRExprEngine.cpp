@@ -1408,6 +1408,10 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
       
       Dst.Add(Pred); // No-op. Simply propagate the current state unchanged.
       break;
+      
+    case Stmt::AsmStmtClass:
+      VisitAsmStmt(cast<AsmStmt>(S), Pred, Dst);
+      break;
                                                        
     case Stmt::BinaryOperatorClass: {
       BinaryOperator* B = cast<BinaryOperator>(S);
