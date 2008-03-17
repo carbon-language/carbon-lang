@@ -122,7 +122,7 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
   std::string::size_type LastEmitted = 0;
   while (LastEmitted != AsmString.size()) {
     std::string::size_type DollarPos =
-      AsmString.find_first_of("${|}", LastEmitted);
+      AsmString.find_first_of("${|}\\", LastEmitted);
     if (DollarPos == std::string::npos) DollarPos = AsmString.size();
 
     // Emit a constant string fragment.
@@ -132,6 +132,23 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
         AddLiteralString(std::string(AsmString.begin()+LastEmitted,
                                      AsmString.begin()+DollarPos));
       LastEmitted = DollarPos;
+    } else if (AsmString[DollarPos] == '\\') {
+      if (DollarPos+1 != AsmString.size() &&
+          (CurVariant == Variant || CurVariant == ~0U)) {
+        if (AsmString[DollarPos+1] == 'n') {
+          AddLiteralString("\\n");
+        } else if (AsmString[DollarPos+1] == 't') {
+          AddLiteralString("\\t");
+        } else if (std::string("${|}\\").find(AsmString[DollarPos+1]) 
+                   != std::string::npos) {
+          AddLiteralString(std::string(1, AsmString[DollarPos+1]));
+        } else {
+          throw "Non-supported escaped character found in instruction '" +
+            CGI.TheDef->getName() + "'!";
+        }
+        LastEmitted = DollarPos+2;
+        continue;
+      }
     } else if (AsmString[DollarPos] == '{') {
       if (CurVariant != ~0U)
         throw "Nested variants found for instruction '" +
