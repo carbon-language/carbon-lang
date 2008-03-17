@@ -728,3 +728,47 @@ reduction in code size.  The resultant code would then also be suitable for
 exit value computation.
 
 //===---------------------------------------------------------------------===//
+
+We miss a bunch of rotate opportunities on various targets, including ppc, x86,
+etc.  On X86, we miss a bunch of 'rotate by variable' cases because the rotate
+matching code in dag combine doesn't look through truncates aggressively 
+enough.  Here are some testcases reduces from GCC PR17886:
+
+unsigned long long f(unsigned long long x, int y) {
+  return (x << y) | (x >> 64-y); 
+} 
+unsigned f2(unsigned x, int y){
+  return (x << y) | (x >> 32-y); 
+} 
+unsigned long long f3(unsigned long long x){
+  int y = 9;
+  return (x << y) | (x >> 64-y); 
+} 
+unsigned f4(unsigned x){
+  int y = 10;
+  return (x << y) | (x >> 32-y); 
+}
+unsigned long long f5(unsigned long long x, unsigned long long y) {
+  return (x << 8) | ((y >> 48) & 0xffull);
+}
+unsigned long long f6(unsigned long long x, unsigned long long y, int z) {
+  switch(z) {
+  case 1:
+    return (x << 8) | ((y >> 48) & 0xffull);
+  case 2:
+    return (x << 16) | ((y >> 40) & 0xffffull);
+  case 3:
+    return (x << 24) | ((y >> 32) & 0xffffffull);
+  case 4:
+    return (x << 32) | ((y >> 24) & 0xffffffffull);
+  default:
+    return (x << 40) | ((y >> 16) & 0xffffffffffull);
+  }
+}
+
+On X86-64, we only handle f3/f4 right.  On x86-32, several of these 
+generate truly horrible code, instead of using shld and friends.  On
+ARM, we end up with calls to L___lshrdi3/L___ashldi3 in f, which is
+badness.  PPC64 misses f, f5 and f6.  CellSPU aborts in isel.
+
+//===---------------------------------------------------------------------===//
