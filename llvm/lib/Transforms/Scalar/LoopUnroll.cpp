@@ -100,6 +100,11 @@ static unsigned ApproximateLoopSize(const Loop *L) {
         // Ignore instructions only used by the loop terminator.
       } else if (isa<DbgInfoIntrinsic>(I)) {
         // Ignore debug instructions
+      } else if (isa<CallInst>(I)) {
+        if (isa<IntrinsicInst>(I))
+          Size = Size + 3;
+        else
+          Size = Size + 10;
       } else {
         ++Size;
       }
