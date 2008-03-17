@@ -8,24 +8,20 @@ ifeq ($(OS),Darwin)
 TESTDIRS += Rewriter
 endif
 
-TESTS = $(addsuffix .testresults, $(shell find $(TESTDIRS) \( -name '*.c' -or -name '*.cpp' -or -name '*.m' \)))
+TESTS = $(addprefix Output/, $(addsuffix .testresults, $(shell find $(TESTDIRS) \( -name '*.c' -or -name '*.cpp' -or -name '*.m' \))))
 
-%.testresults: %
+Output/%.testresults: %
 	@ printf '.'
 	@ PATH=$$PATH:$(ToolDir):$(LLVM_SRC_ROOT)/test/Scripts ./TestRunner.sh $< > $@ || (echo; echo '----' $< 'failed ----')
 
 all::
+	@ rm -f $(TESTS)
 	@ echo '--- Running clang tests ---'
-	@ $(MAKE) -f Makefile.parallel testclean
 	@ $(MAKE) -f Makefile.parallel $(TESTS)
 	@ echo
 	@ $(MAKE) -f Makefile.parallel report
-	@ $(MAKE) -f Makefile.parallel testclean
 
 report: $(TESTS)
 	@ cat $^
 
-testclean:
-	@ rm -f $(TESTS)
-
-.PHONY: all report testclean
+.PHONY: all report
