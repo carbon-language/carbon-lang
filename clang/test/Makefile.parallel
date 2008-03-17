@@ -11,9 +11,11 @@ endif
 ifdef VERBOSE
 PROGRESS = echo $<
 REPORTFAIL = cat $@
+DONE = true
 else
 PROGRESS = printf '.'
 REPORTFAIL = (echo; echo '----' $< 'failed ----')
+DONE = echo
 endif
 
 TESTS = $(addprefix Output/, $(addsuffix .testresults, $(shell find $(TESTDIRS) \( -name '*.c' -or -name '*.cpp' -or -name '*.m' \))))
@@ -26,6 +28,7 @@ all::
 	@ rm -f $(TESTS)
 	@ echo '--- Running clang tests ---'
 	@ $(MAKE) -f Makefile.parallel $(TESTS)
+	@ $(DONE)
 
 report: $(TESTS)
 	@ cat $^
