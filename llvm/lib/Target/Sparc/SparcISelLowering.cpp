@@ -231,38 +231,96 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   SDOperand Callee = Op.getOperand(4);
   bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
 
+#if 0
+  // Analyze operands of the call, assigning locations to each operand.
+  SmallVector<CCValAssign, 16> ArgLocs;
+  CCState CCInfo(CallingConv, isVarArg, DAG.getTarget(), ArgLocs);
+  CCInfo.AnalyzeCallOperands(Op.Val, CC_Sparc32);
+  
+  // Get the size of the outgoing arguments stack space requirement.
+  unsigned ArgsSize = CCInfo.getNextStackOffset();
+  // FIXME: We can't use this until f64 is known to take two GPRs.
+#else
+  (void)CC_Sparc32;
+  
   // Count the size of the outgoing arguments.
   unsigned ArgsSize = 0;
   for (unsigned i = 5, e = Op.getNumOperands(); i != e; i += 2) {
     switch (Op.getOperand(i).getValueType()) {
-    default: assert(0 && "Unknown value type!");
-    case MVT::i1:
-    case MVT::i8:
-    case MVT::i16:
-    case MVT::i32:
-    case MVT::f32:
-      ArgsSize += 4;
-      break;
-    case MVT::i64:
-    case MVT::f64:
-      ArgsSize += 8;
-      break;
+      default: assert(0 && "Unknown value type!");
+      case MVT::i1:
+      case MVT::i8:
+      case MVT::i16:
+      case MVT::i32:
+      case MVT::f32:
+        ArgsSize += 4;
+        break;
+      case MVT::i64:
+      case MVT::f64:
+        ArgsSize += 8;
+        break;
     }
   }
   if (ArgsSize > 4*6)
     ArgsSize -= 4*6;    // Space for first 6 arguments is prereserved.
   else
     ArgsSize = 0;
-
+#endif  
+  
   // Keep stack frames 8-byte aligned.
   ArgsSize = (ArgsSize+7) & ~7;
 
-  Chain = DAG.getCALLSEQ_START(Chain,DAG.getConstant(ArgsSize, MVT::i32));
+  Chain = DAG.getCALLSEQ_START(Chain, DAG.getIntPtrConstant(ArgsSize));
   
-  SDOperand StackPtr;
-  std::vector<SDOperand> Stores;
-  std::vector<SDOperand> RegValuesToPass;
+  SmallVector<std::pair<unsigned, SDOperand>, 8> RegsToPass;
+  SmallVector<SDOperand, 8> MemOpChains;
+  
+#if 0
+  // Walk the register/memloc assignments, inserting copies/loads.
+  for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
+    CCValAssign &VA = ArgLocs[i];
+    
+    // Arguments start after the 5 first operands of ISD::CALL
+    SDOperand Arg = Op.getOperand(5+2*VA.getValNo());
+
+    // Promote the value if needed.
+    switch (VA.getLocInfo()) {
+    default: assert(0 && "Unknown loc info!");
+    case CCValAssign::Full: break;
+    case CCValAssign::SExt:
+      Arg = DAG.getNode(ISD::SIGN_EXTEND, VA.getLocVT(), Arg);
+      break;
+    case CCValAssign::ZExt:
+      Arg = DAG.getNode(ISD::ZERO_EXTEND, VA.getLocVT(), Arg);
+      break;
+    case CCValAssign::AExt:
+      Arg = DAG.getNode(ISD::ANY_EXTEND, VA.getLocVT(), Arg);
+      break;
+    }
+    
+    // Arguments that can be passed on register must be kept at 
+    // RegsToPass vector
+    if (VA.isRegLoc()) {
+      RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
+      continue;
+    }
+    
+    assert(VA.isMemLoc());
+    
+    // Create a store off the stack pointer for this argument.
+    SDOperand StackPtr = DAG.getRegister(SP::O6, MVT::i32);
+    // FIXME: VERIFY THAT 68 IS RIGHT.
+    SDOperand PtrOff = DAG.getIntPtrConstant(VA.getLocMemOffset()+68);
+    PtrOff = DAG.getNode(ISD::ADD, MVT::i32, StackPtr, PtrOff);
+    MemOpChains.push_back(DAG.getStore(Chain, Arg, PtrOff, NULL, 0));
+  }
+  
+#else  
+  static const unsigned ArgRegs[] = {
+    SP::I0, SP::I1, SP::I2, SP::I3, SP::I4, SP::I5
+  };
   unsigned ArgOffset = 68;
+
   for (unsigned i = 5, e = Op.getNumOperands(); i != e; i += 2) {
     SDOperand Val = Op.getOperand(i);
     MVT::ValueType ObjectVT = Val.getValueType();
@@ -273,20 +331,20 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     case MVT::i32:
       ObjSize = 4;
 
-      if (RegValuesToPass.size() >= 6) {
+      if (RegsToPass.size() >= 6) {
         ValToStore = Val;
       } else {
-        RegValuesToPass.push_back(Val);
+        RegsToPass.push_back(std::make_pair(ArgRegs[RegsToPass.size()], Val));
       }
       break;
     case MVT::f32:
       ObjSize = 4;
-      if (RegValuesToPass.size() >= 6) {
+      if (RegsToPass.size() >= 6) {
         ValToStore = Val;
       } else {
         // Convert this to a FP value in an int reg.
         Val = DAG.getNode(ISD::BIT_CONVERT, MVT::i32, Val);
-        RegValuesToPass.push_back(Val);
+        RegsToPass.push_back(std::make_pair(ArgRegs[RegsToPass.size()], Val));
       }
       break;
     case MVT::f64:
@@ -296,7 +354,7 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
       // FALL THROUGH
     case MVT::i64:
       ObjSize = 8;
-      if (RegValuesToPass.size() >= 6) {
+      if (RegsToPass.size() >= 6) {
         ValToStore = Val;    // Whole thing is passed in memory.
         break;
       }
@@ -306,42 +364,45 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
                                  DAG.getConstant(1, MVT::i32));
       SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Val,
                                  DAG.getConstant(0, MVT::i32));
-      RegValuesToPass.push_back(Hi);
+      RegsToPass.push_back(std::make_pair(ArgRegs[RegsToPass.size()], Hi));
       
-      if (RegValuesToPass.size() >= 6) {
+      if (RegsToPass.size() >= 6) {
         ValToStore = Lo;
         ArgOffset += 4;
         ObjSize = 4;
       } else {
-        RegValuesToPass.push_back(Lo);
+        RegsToPass.push_back(std::make_pair(ArgRegs[RegsToPass.size()], Lo));
       }
       break;
     }
     
     if (ValToStore.Val) {
-      if (!StackPtr.Val) {
-        StackPtr = DAG.getRegister(SP::O6, MVT::i32);
-      }
+      SDOperand StackPtr = DAG.getRegister(SP::O6, MVT::i32);
       SDOperand PtrOff = DAG.getConstant(ArgOffset, MVT::i32);
       PtrOff = DAG.getNode(ISD::ADD, MVT::i32, StackPtr, PtrOff);
-      Stores.push_back(DAG.getStore(Chain, ValToStore, PtrOff, NULL, 0));
+      MemOpChains.push_back(DAG.getStore(Chain, ValToStore, PtrOff, NULL, 0));
     }
     ArgOffset += ObjSize;
   }
+#endif
   
   // Emit all stores, make sure the occur before any copies into physregs.
-  if (!Stores.empty())
-    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, &Stores[0],Stores.size());
+  if (!MemOpChains.empty())
+    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other,
+                        &MemOpChains[0], MemOpChains.size());
   
-  static const unsigned ArgRegs[] = {
-    SP::O0, SP::O1, SP::O2, SP::O3, SP::O4, SP::O5
-  };
-  
-  // Build a sequence of copy-to-reg nodes chained together with token chain
-  // and flag operands which copy the outgoing args into O[0-5].
+  // Build a sequence of copy-to-reg nodes chained together with token 
+  // chain and flag operands which copy the outgoing args into registers.
+  // The InFlag in necessary since all emited instructions must be
+  // stuck together.
   SDOperand InFlag;
-  for (unsigned i = 0, e = RegValuesToPass.size(); i != e; ++i) {
-    Chain = DAG.getCopyToReg(Chain, ArgRegs[i], RegValuesToPass[i], InFlag);
+  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
+    unsigned Reg = RegsToPass[i].first;
+    // Remap I0->I7 -> O0->O7.
+    if (Reg >= SP::I0 && Reg <= SP::I7)
+      Reg = Reg-SP::I0+SP::O0;
+
+    Chain = DAG.getCopyToReg(Chain, Reg, RegsToPass[i].second, InFlag);
     InFlag = Chain.getValue(1);
   }
 
@@ -367,9 +428,9 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   
   // Assign locations to each value returned by this call.
   SmallVector<CCValAssign, 16> RVLocs;
-  CCState CCInfo(CallingConv, isVarArg, DAG.getTarget(), RVLocs);
+  CCState RVInfo(CallingConv, isVarArg, DAG.getTarget(), RVLocs);
   
-  CCInfo.AnalyzeCallResult(Op.Val, RetCC_Sparc32);
+  RVInfo.AnalyzeCallResult(Op.Val, RetCC_Sparc32);
   SmallVector<SDOperand, 8> ResultVals;
   
   // Copy all of the result registers out of their specified physreg.
