@@ -232,7 +232,7 @@ class ObjCInterfaceDecl : public TypeDecl {
       NumIvars(0),
       InstanceMethods(0), NumInstanceMethods(-1), 
       ClassMethods(0), NumClassMethods(0),
-      CategoryList(0), PropertyDecl(0), NumPropertyDecl(-1),
+      CategoryList(0), PropertyDecl(0), NumPropertyDecl(0),
       ForwardDecl(FD), InternalInterface(isInternal) {
         AllocIntfRefProtocols(numRefProtos);
       }
@@ -337,7 +337,7 @@ public:
   // We also need to record the @end location.
   SourceLocation getAtEndLoc() const { return AtEndLoc; }
   
-  int getNumPropertyDecl() const { return NumPropertyDecl; }
+  unsigned getNumPropertyDecl() const { return NumPropertyDecl; }
   
   ObjCPropertyDecl * const * getPropertyDecl() const { return PropertyDecl; }
   ObjCPropertyDecl **getPropertyDecl() { return PropertyDecl; }
@@ -908,31 +908,28 @@ private:
   // List of property name declarations
   // FIXME: Property is not an ivar.
   ObjCIvarDecl **PropertyDecls;
-  int NumPropertyDecls;
-
-  // NOTE: VC++ treats enums as signed, avoid using PropertyAttributeKind enum
+  unsigned NumPropertyDecls;
   unsigned PropertyAttributes : 8;
   
   IdentifierInfo *GetterName;    // getter name of NULL if no getter
   IdentifierInfo *SetterName;    // setter name of NULL if no setter
   
   ObjCPropertyDecl(SourceLocation L)
-    : Decl(PropertyDecl, L), PropertyDecls(0), NumPropertyDecls(-1),
+    : Decl(PropertyDecl, L), PropertyDecls(0), NumPropertyDecls(0),
       PropertyAttributes(OBJC_PR_noattr), GetterName(0), SetterName(0) {}
 public:
   static ObjCPropertyDecl *Create(ASTContext &C, SourceLocation L);
   
-  ObjCIvarDecl **const getPropertyDecls() const { return PropertyDecls; }
-  void setPropertyDecls(ObjCIvarDecl **property) { PropertyDecls = property; }
+  ObjCIvarDecl *const* getPropertyDecls() const { return PropertyDecls; }
+  unsigned getNumPropertyDecls() const { return NumPropertyDecls; }
+
+  void setPropertyDeclLists(ObjCIvarDecl **Properties, unsigned NumProp);
   
-  const int getNumPropertyDecls() const { return NumPropertyDecls; }
-  void setNumPropertyDecls(int num) { NumPropertyDecls = num; }
-  
-  const PropertyAttributeKind getPropertyAttributes() const 
-    { return PropertyAttributeKind(PropertyAttributes); }
+  const PropertyAttributeKind getPropertyAttributes() const {
+    return PropertyAttributeKind(PropertyAttributes);
+  }
   void setPropertyAttributes(PropertyAttributeKind PRVal) { 
-    PropertyAttributes = 
-    (PropertyAttributeKind) (PropertyAttributes | PRVal);
+    PropertyAttributes =  (PropertyAttributeKind) (PropertyAttributes | PRVal);
   }
   
   const IdentifierInfo *getGetterName() const { return GetterName; }

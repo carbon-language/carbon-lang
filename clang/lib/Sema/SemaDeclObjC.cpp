@@ -893,43 +893,42 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
 }
 
 Sema::DeclTy *Sema::ActOnAddObjCProperties(SourceLocation AtLoc, 
-  DeclTy **allProperties, unsigned NumProperties, ObjCDeclSpec &DS) {
+                                           DeclTy **allProperties,
+                                           unsigned NumProperties, 
+                                           ObjCDeclSpec &DS) {
   ObjCPropertyDecl *PDecl = ObjCPropertyDecl::Create(Context, AtLoc);
   
-  if(DS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_readonly)
+  if (DS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_readonly)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_readonly);
   
-  if(DS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_getter) {
+  if (DS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_getter) {
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_getter);
     PDecl->setGetterName(DS.getGetterName());
   }
   
-  if(DS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_setter) {
+  if (DS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_setter) {
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_setter);
     PDecl->setSetterName(DS.getSetterName());
   }
   
-  if(DS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_assign)
+  if (DS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_assign)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_assign);
   
-  if(DS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_readwrite)
+  if (DS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_readwrite)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_readwrite);
   
-  if(DS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_retain)
+  if (DS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_retain)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_retain);
   
-  if(DS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_copy)
+  if (DS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_copy)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_copy);
   
-  if(DS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_nonatomic)
+  if (DS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_nonatomic)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_nonatomic);
   
-  PDecl->setNumPropertyDecls(NumProperties);
-  if (NumProperties != 0) {
-    ObjCIvarDecl **properties = new ObjCIvarDecl*[NumProperties];
-    memcpy(properties, allProperties, NumProperties*sizeof(ObjCIvarDecl*));
-    PDecl->setPropertyDecls(properties);
-  }
+  if (NumProperties != 0)
+    PDecl->setPropertyDeclLists((ObjCIvarDecl**)allProperties, NumProperties);
+  
   return PDecl;
 }
 

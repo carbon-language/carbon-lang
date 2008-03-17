@@ -394,8 +394,8 @@ Parser::DeclTy *Parser::ParseObjCPropertyDecl(DeclTy *interfaceDecl,
     Diag(Tok, diag::err_expected_semi_decl_list);
     SkipUntil(tok::r_brace, true, true);
   }
-  return Actions.ActOnAddObjCProperties(AtLoc, 
-           &PropertyDecls[0], PropertyDecls.size(), DS);
+  return Actions.ActOnAddObjCProperties(AtLoc,  &PropertyDecls[0],
+                                        PropertyDecls.size(), DS);
 }
 
 ///   objc-method-proto:

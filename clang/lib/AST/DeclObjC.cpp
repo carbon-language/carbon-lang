@@ -419,3 +419,15 @@ ObjCInterfaceDecl *const ObjCMethodDecl::getClassInterface() const {
   assert(false && "unknown method context");
   return 0;
 }
+
+void ObjCPropertyDecl::setPropertyDeclLists(ObjCIvarDecl **Properties, 
+                                            unsigned NumProp) {
+  assert(PropertyDecls == 0 && "Properties already set");
+  if (NumProp == 0) return;
+  NumPropertyDecls = NumProp;
+
+  PropertyDecls = new ObjCIvarDecl*[NumProp];
+  memcpy(PropertyDecls, Properties, NumProp*sizeof(ObjCIvarDecl*));
+}
+
+
