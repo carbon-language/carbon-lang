@@ -32,10 +32,12 @@ unsigned RewriteBuffer::getMappedOffset(unsigned OrigOffset,
   for (; DeltaIdx != Deltas.size() && 
        Deltas[DeltaIdx].FileLoc < OrigOffset; ++DeltaIdx)
     ResultOffset += Deltas[DeltaIdx].Delta;
-
-  if (AfterInserts && DeltaIdx != Deltas.size() && 
-      OrigOffset == Deltas[DeltaIdx].FileLoc)
-    ResultOffset += Deltas[DeltaIdx].Delta;
+  
+  if (AfterInserts)
+    for (; DeltaIdx != Deltas.size() &&
+         OrigOffset == Deltas[DeltaIdx].FileLoc; ++DeltaIdx)
+      ResultOffset += Deltas[DeltaIdx].Delta;
+  
   return ResultOffset;
 }
 
