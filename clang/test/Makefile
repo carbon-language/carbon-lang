@@ -12,3 +12,8 @@ all::
 	PATH=$$PATH:$(ToolDir):$(LLVM_SRC_ROOT)/test/Scripts \
           find $(TESTDIRS) \( -name '*.c' -or -name '*.cpp' -or -name '*.m' \) \
 	      -print -exec ./TestRunner.sh {} \;
+
+clean::
+	rm -rf Output/
+
+.PHONY: all clean

@@ -25,6 +25,7 @@ Output/%.testresults: %
 	@ PATH=$$PATH:$(ToolDir):$(LLVM_SRC_ROOT)/test/Scripts ./TestRunner.sh $< > $@ || $(REPORTFAIL)
 
 all::
+	@ mkdir -p $(addprefix Output/, $(TESTDIRS))
 	@ rm -f $(TESTS)
 	@ echo '--- Running clang tests ---'
 	@ $(MAKE) -f Makefile.parallel $(TESTS)
@@ -33,4 +34,7 @@ all::
 report: $(TESTS)
 	@ cat $^
 
-.PHONY: all report
+clean::
+	rm -rf Output/
+
+.PHONY: all report clean
