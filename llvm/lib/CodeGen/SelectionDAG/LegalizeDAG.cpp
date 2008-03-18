@@ -6713,6 +6713,19 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   case ISD::UINT_TO_FP: {
     bool isSigned = Node->getOpcode() == ISD::SINT_TO_FP;
     MVT::ValueType SrcVT = Node->getOperand(0).getValueType();
+
+    // Promote the operand if needed.  Do this before checking for
+    // ppcf128 so conversions of i16 and i8 work.
+    if (getTypeAction(SrcVT) == Promote) {
+      SDOperand Tmp = PromoteOp(Node->getOperand(0));
+      Tmp = isSigned
+        ? DAG.getNode(ISD::SIGN_EXTEND_INREG, Tmp.getValueType(), Tmp,
+                      DAG.getValueType(SrcVT))
+        : DAG.getZeroExtendInReg(Tmp, SrcVT);
+      Node = DAG.UpdateNodeOperands(Op, Tmp).Val;
+      SrcVT = Node->getOperand(0).getValueType();
+    }
+
     if (VT == MVT::ppcf128 && SrcVT == MVT::i32) {
       static const uint64_t zero = 0;
       if (isSigned) {
@@ -6755,16 +6768,6 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
                            DAG.getCondCode(ISD::SETLT)),
                Lo, Hi);
       break;
-    }
-
-    // Promote the operand if needed.
-    if (getTypeAction(SrcVT) == Promote) {
-      SDOperand Tmp = PromoteOp(Node->getOperand(0));
-      Tmp = isSigned
-        ? DAG.getNode(ISD::SIGN_EXTEND_INREG, Tmp.getValueType(), Tmp,
-                      DAG.getValueType(SrcVT))
-        : DAG.getZeroExtendInReg(Tmp, SrcVT);
-      Node = DAG.UpdateNodeOperands(Op, Tmp).Val;
     }
 
     Lo = ExpandIntToFP(Node->getOpcode() == ISD::SINT_TO_FP, VT,
