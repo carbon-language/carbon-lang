@@ -42,7 +42,7 @@ grep -q 'RUN:' $FILENAME || (
 
 SCRIPT=$OUTPUT.script
 TEMPOUTPUT=$OUTPUT.tmp
-grep 'RUN:' $FILENAME | sed "s|^.*RUN:\(.*\)$|\1|g;s|%s|$SUBST|g;s|%llvmgcc|llvm-gcc -emit-llvm|g;s|%llvmgxx|llvm-g++ -emit-llvm|g;s|%prcontext|prcontext.tcl|g;s|%t1|$TEMPOUTPUT|g" > $SCRIPT  
+grep 'RUN:' $FILENAME | sed "s|^.*RUN:\(.*\)$|\1|g;s|%s|$SUBST|g;s|%llvmgcc|llvm-gcc -emit-llvm|g;s|%llvmgxx|llvm-g++ -emit-llvm|g;s|%prcontext|prcontext.tcl|g;s|%t|$TEMPOUTPUT|g" > $SCRIPT  
 
 grep -q XFAIL $FILENAME && (printf "XFAILED '$TESTNAME': "; grep XFAIL $FILENAME)
 
