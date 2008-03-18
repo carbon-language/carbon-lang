@@ -321,15 +321,12 @@ void RewriteTest::Initialize(ASTContext &context) {
   S += "#endif\n";
   S += "#ifndef __NSCONSTANTSTRINGIMPL\n";
   S += "struct __NSConstantStringImpl {\n";
-  S += "  struct objc_object *isa;\n";
+  S += "  int *isa;\n";
   S += "  int flags;\n";
   S += "  char *str;\n";
   S += "  long length;\n";
-  S += "  __NSConstantStringImpl(char *s, long l) :\n";
-  S += "  flags(0), str(s), length(l)\n";
-  S += "    { extern int __CFConstantStringClassReference[];\n";
-  S += "      isa = (struct objc_object *)__CFConstantStringClassReference;}\n";
   S += "};\n";
+  S += "extern int __CFConstantStringClassReference[];\n";
   S += "#define __NSCONSTANTSTRINGIMPL\n";
   S += "#endif\n";
 #if 0
@@ -1733,14 +1730,15 @@ Stmt *RewriteTest::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
   S += utostr(NumObjCStringLiterals++);
 
   std::string StrObjDecl = "static __NSConstantStringImpl " + S;
-  StrObjDecl += " = __NSConstantStringImpl(";
+  StrObjDecl += " __attribute__ ((section (\"__DATA, __cfstring\"))) = {__CFConstantStringClassReference,";
+  StrObjDecl += "0x000007c8,"; // utf8_str
   // The pretty printer for StringLiteral handles escape characters properly.
   std::ostringstream prettyBuf;
   Exp->getString()->printPretty(prettyBuf);
   StrObjDecl += prettyBuf.str();
   StrObjDecl += ",";
   // The minus 2 removes the begin/end double quotes.
-  StrObjDecl += utostr(prettyBuf.str().size()-2) + ");\n";
+  StrObjDecl += utostr(prettyBuf.str().size()-2) + "};\n";
   InsertText(SourceLocation::getFileLoc(MainFileID, 0), 
              StrObjDecl.c_str(), StrObjDecl.size());
   
