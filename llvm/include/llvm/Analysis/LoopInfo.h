@@ -580,9 +580,6 @@ public:
   LoopInfoBase() { }
   ~LoopInfoBase() { releaseMemory(); }
   
-  /// isAnalysis - Return true if this pass is  implementing an analysis pass.
-  virtual bool isAnalysis() const { return true; }
-
   void releaseMemory() {
     for (typename std::vector<LoopBase<BlockT>* >::iterator I =
          TopLevelLoops.begin(), E = TopLevelLoops.end(); I != E; ++I)
@@ -921,6 +918,9 @@ public:
   inline bool isLoopHeader(BasicBlock *BB) const {
     return LI->isLoopHeader(BB);
   }
+
+  /// isAnalysis - Return true if this pass is  implementing an analysis pass.
+  bool isAnalysis() const { return true; }
 
   /// runOnFunction - Calculate the natural loop information.
   ///
