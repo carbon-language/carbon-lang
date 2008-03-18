@@ -63,6 +63,7 @@ enum ProgActions {
   EmitLLVM,                     // Emit a .ll file.
   EmitBC,                       // Emit a .bc file.
   SerializeAST,                 // Emit a .ast file.
+  EmitHTML,                     // Translate input source into HTML.
   ASTPrint,                     // Parse ASTs and print them.
   ASTDump,                      // Parse ASTs and dump them.
   ASTView,                      // Parse ASTs and view them in Graphviz.
@@ -100,6 +101,8 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Run parser and perform semantic analysis"),
              clEnumValN(ParsePrintCallbacks, "parse-print-callbacks",
                         "Run parser and print each callback invoked"),
+             clEnumValN(EmitHTML, "emit-html",
+                        "Output input source as HTML"),
              clEnumValN(ASTPrint, "ast-print",
                         "Build ASTs and then pretty-print them"),
              clEnumValN(ASTDump, "ast-dump",
@@ -994,7 +997,10 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
       return CreateASTDumper();
       
     case ASTView:
-      return CreateASTViewer();      
+      return CreateASTViewer();   
+      
+    case EmitHTML:
+      return CreateHTMLPrinter();
       
     case ParseCFGDump:
     case ParseCFGView:
