@@ -49,9 +49,10 @@ HTMLPrinter::~HTMLPrinter() {
   
   html::EscapeText(R, FileID);
   html::AddLineNumbers(R, FileID);
-//  html::InsertTag(R, html::HEAD, StartLoc, EndLoc, true);  
-//  html::InsertTag(R, html::BODY, StartLoc, EndLoc, true);
-//  html::InsertTag(R, html::PRE, StartLoc, EndLoc);
+  html::InsertTag(R, html::PRE, StartLoc, EndLoc, 0, 0, true);
+  html::InsertTag(R, html::BODY, StartLoc, EndLoc, NULL, "\n", true);
+  html::InsertTag(R, html::HEAD, StartLoc, StartLoc, 0, 0, true);
+  html::InsertTag(R, html::HTML, StartLoc, EndLoc, NULL, "\n", true);
   
   // Emit the HTML.
   
