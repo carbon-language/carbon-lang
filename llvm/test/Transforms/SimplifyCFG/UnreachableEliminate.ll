@@ -1,29 +1,33 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | not grep unreachable
+; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | not grep unreachable
 
-void %test1(bool %C, bool* %BP) {
-	br bool %C, label %T, label %F
-T:
-	store bool %C, bool* %BP  ;; dead
-	unreachable
-F:
-	ret void
+define void @test1(i1 %C, i1* %BP) {
+        br i1 %C, label %T, label %F
+T:              ; preds = %0
+        store i1 %C, i1* %BP
+        unreachable
+F:              ; preds = %0
+        ret void
 }
 
-void %test2() {
-	invoke void %test2() to label %N unwind label %U
-U:
-	unreachable
-N:
-	ret void
+define void @test2() {
+        invoke void @test2( )
+                        to label %N unwind label %U
+U:              ; preds = %0
+        unreachable
+N:              ; preds = %0
+        ret void
 }
 
-int %test3(int %v) {
-	switch int %v, label %default [ int 1, label %U
-                                        int 2, label %T]
-default:
-	ret int 1
-U:
-	unreachable
-T:
-	ret int 2
+define i32 @test3(i32 %v) {
+        switch i32 %v, label %default [
+                 i32 1, label %U
+                 i32 2, label %T
+        ]
+default:                ; preds = %0
+        ret i32 1
+U:              ; preds = %0
+        unreachable
+T:              ; preds = %0
+        ret i32 2
 }
+

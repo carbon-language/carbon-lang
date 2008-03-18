@@ -1,24 +1,25 @@
 ; Test CFG simplify removal of branch instructions...
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | not grep br
+; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | not grep br
 
-
-void "test1"() {
-	br label %BB1
-BB1:
-	ret void
+define void @test1() {
+        br label %BB1
+BB1:            ; preds = %0
+        ret void
 }
 
-void "test2"() {
-	ret void
-BB1:
-	ret void
+define void @test2() {
+        ret void
+BB1:            ; No predecessors!
+        ret void
 }
 
-void "test3"(bool %T) {
-	br bool %T, label %BB1, label %BB1
-BB1:
-	ret void
+define void @test3(i1 %T) {
+        br i1 %T, label %BB1, label %BB1
+BB1:            ; preds = %0, %0
+        ret void
 }
+
+
 
 

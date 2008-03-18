@@ -3,16 +3,16 @@
 
 ; If this test is successful, the function should be reduced to 'call; ret'
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | \
+; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | \
 ; RUN:   not egrep {\\(invoke\\)|\\(br\\)}
 
-declare void %bar()
+declare void @bar()
 
-int %test() {
-	invoke void %bar() to label %Ok except label %Rethrow
-Ok:
-	ret int 0
-Rethrow:
-	unwind
+define i32 @test() {
+        invoke void @bar( )
+                        to label %Ok unwind label %Rethrow
+Ok:             ; preds = %0
+        ret i32 0
+Rethrow:                ; preds = %0
+        unwind
 }
-

@@ -3,36 +3,39 @@
 ; nodes away allows the branches to be eliminated, performing a simple form of
 ; 'if conversion'.
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis > %t.xform
+; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis > %t.xform
 ; RUN:   not grep phi %t.xform 
 ; RUN:   grep ret %t.xform
 
-declare void %use(bool)
-declare void %use(int)
+declare void @use(i1)
 
+declare void @use.upgrd.1(i32)
 
-void %test2(bool %c, bool %d, int %V, int %V2) {
-	br bool %d, label %X, label %F
-X:
-	br bool %c, label %T, label %F
-T:
-	br label %F
-F:
-	%B1 = phi bool [true, %0], [false, %T], [false, %X]
-	%I7 = phi int  [%V, %0], [%V2, %T], [%V2, %X]
-	call void %use(bool %B1)
-	call void %use(int  %I7)
-	ret void
+define void @test2(i1 %c, i1 %d, i32 %V, i32 %V2) {
+; <label>:0
+        br i1 %d, label %X, label %F
+X:              ; preds = %0
+        br i1 %c, label %T, label %F
+T:              ; preds = %X
+        br label %F
+F:              ; preds = %T, %X, %0
+        %B1 = phi i1 [ true, %0 ], [ false, %T ], [ false, %X ]         ; <i1> [#uses=1]
+        %I7 = phi i32 [ %V, %0 ], [ %V2, %T ], [ %V2, %X ]              ; <i32> [#uses=1]
+        call void @use( i1 %B1 )
+        call void @use.upgrd.1( i32 %I7 )
+        ret void
 }
 
-void %test(bool %c, int %V, int %V2) {
-	br bool %c, label %T, label %F
-T:
-	br label %F
-F:
-	%B1 = phi bool [true, %0], [false, %T]
-	%I6 = phi int  [%V, %0], [0, %T]
-	call void %use(bool %B1)
-	call void %use(int  %I6)
-	ret void
+define void @test(i1 %c, i32 %V, i32 %V2) {
+; <label>:0
+        br i1 %c, label %T, label %F
+T:              ; preds = %0
+        br label %F
+F:              ; preds = %T, %0
+        %B1 = phi i1 [ true, %0 ], [ false, %T ]                ; <i1> [#uses=1]
+        %I6 = phi i32 [ %V, %0 ], [ 0, %T ]             ; <i32> [#uses=1]
+        call void @use( i1 %B1 )
+        call void @use.upgrd.1( i32 %I6 )
+        ret void
 }
+

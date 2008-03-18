@@ -1,18 +1,19 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | not grep br
+; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | not grep br
 
-int %test1(bool %C) {
+define i32 @test1(i1 %C) {
 entry:
-        br bool %C, label %T, label %F
-T:
-        ret int 1
-F:
-        ret int 0
+        br i1 %C, label %T, label %F
+T:              ; preds = %entry
+        ret i32 1
+F:              ; preds = %entry
+        ret i32 0
 }
 
-void %test2(bool %C) {
-	br bool %C, label %T, label %F
-T:
-	ret void
-F:
-	ret void
+define void @test2(i1 %C) {
+        br i1 %C, label %T, label %F
+T:              ; preds = %0
+        ret void
+F:              ; preds = %0
+        ret void
 }
+

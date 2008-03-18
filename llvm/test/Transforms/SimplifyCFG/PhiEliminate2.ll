@@ -1,15 +1,14 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | not grep br
+; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | not grep br
 
-int %test(bool %C, int %V1, int %V2) {
+define i32 @test(i1 %C, i32 %V1, i32 %V2) {
 entry:
-        br bool %C, label %then, label %Cont
-
-then:
-        %V3 = or int %V2, %V1
+        br i1 %C, label %then, label %Cont
+then:           ; preds = %entry
+        %V3 = or i32 %V2, %V1           ; <i32> [#uses=1]
         br label %Cont
-Cont:
-	%V4 = phi int [%V1, %entry], [%V3, %then]
-	call int %test(bool false, int 0, int 0)           ;; don't fold into preds
-        ret int %V1
+Cont:           ; preds = %then, %entry
+        %V4 = phi i32 [ %V1, %entry ], [ %V3, %then ]           ; <i32> [#uses=0]
+        call i32 @test( i1 false, i32 0, i32 0 )                ; <i32>:0 [#uses=0]
+        ret i32 %V1
 }
 

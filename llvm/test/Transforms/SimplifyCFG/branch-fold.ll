@@ -1,12 +1,13 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | grep {br i1} | count 1
+; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | grep {br i1} | count 1
 
-void %test(int* %P, int* %Q, bool %A, bool %B) {
-	br bool %A, label %a, label %b   ;; fold the two branches into one
-a:
-	br bool %B, label %b, label %c
-b:
-	store int 123, int* %P
-	ret void
-c:
-	ret void
+define void @test(i32* %P, i32* %Q, i1 %A, i1 %B) {
+        br i1 %A, label %a, label %b
+a:              ; preds = %0
+        br i1 %B, label %b, label %c
+b:              ; preds = %a, %0
+        store i32 123, i32* %P
+        ret void
+c:              ; preds = %a
+        ret void
 }
+

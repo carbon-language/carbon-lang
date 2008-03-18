@@ -1,69 +1,74 @@
 ; This test makes sure that div instructions are properly eliminated.
 ;
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep div
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep div
 ; END.
 
-implementation
-
-int %test1(int %A) {
-	%B = div int %A, 1
-	ret int %B
+define i32 @test1(i32 %A) {
+        %B = sdiv i32 %A, 1             ; <i32> [#uses=1]
+        ret i32 %B
 }
 
-uint %test2(uint %A) {
-	%B = div uint %A, 8   ; => Shift
-	ret uint %B
+define i32 @test2(i32 %A) {
+        ; => Shift
+        %B = udiv i32 %A, 8             ; <i32> [#uses=1]
+        ret i32 %B
 }
 
-int %test3(int %A) {
-	%B = div int 0, %A    ; => 0, don't need to keep traps
-	ret int %B
+define i32 @test3(i32 %A) {
+        ; => 0, don't need to keep traps
+        %B = sdiv i32 0, %A             ; <i32> [#uses=1]
+        ret i32 %B
 }
 
-int %test4(int %A) {
-	%B = div int %A, -1    ; 0-A
-	ret int %B
+define i32 @test4(i32 %A) {
+        ; 0-A
+        %B = sdiv i32 %A, -1            ; <i32> [#uses=1]
+        ret i32 %B
 }
 
-uint %test5(uint %A) {
-	%B = div uint %A, 4294967280
-	%C = div uint %B, 4294967292
-	ret uint %C
+define i32 @test5(i32 %A) {
+        %B = udiv i32 %A, -16           ; <i32> [#uses=1]
+        %C = udiv i32 %B, -4            ; <i32> [#uses=1]
+        ret i32 %C
 }
 
-bool %test6(uint %A) {
-	%B = div uint %A, 123
-	%C = seteq uint %B, 0   ; A < 123
-	ret bool %C
-} 
-
-bool %test7(uint %A) {
-	%B = div uint %A, 10
-	%C = seteq uint %B, 2    ; A >= 20 && A < 30
-	ret bool %C
+define i1 @test6(i32 %A) {
+        %B = udiv i32 %A, 123           ; <i32> [#uses=1]
+        ; A < 123
+        %C = icmp eq i32 %B, 0          ; <i1> [#uses=1]
+        ret i1 %C
 }
 
-bool %test8(ubyte %A) {
-	%B = div ubyte %A, 123
-	%C = seteq ubyte %B, 2   ; A >= 246
-	ret bool %C
-} 
-
-bool %test9(ubyte %A) {
-	%B = div ubyte %A, 123
-	%C = setne ubyte %B, 2   ; A < 246
-	ret bool %C
-} 
-
-uint %test10(uint %X, bool %C) {
-        %V = select bool %C, uint 64, uint 8
-        %R = udiv uint %X, %V
-        ret uint %R
+define i1 @test7(i32 %A) {
+        %B = udiv i32 %A, 10            ; <i32> [#uses=1]
+        ; A >= 20 && A < 30
+        %C = icmp eq i32 %B, 2          ; <i1> [#uses=1]
+        ret i1 %C
 }
 
-int %test11(int %X, bool %C) {
-        %A = select bool %C, int 1024, int 32
-        %B = udiv int %X, %A
-        ret int %B
+define i1 @test8(i8 %A) {
+        %B = udiv i8 %A, 123            ; <i8> [#uses=1]
+        ; A >= 246
+        %C = icmp eq i8 %B, 2           ; <i1> [#uses=1]
+        ret i1 %C
+}
+
+define i1 @test9(i8 %A) {
+        %B = udiv i8 %A, 123            ; <i8> [#uses=1]
+        ; A < 246
+        %C = icmp ne i8 %B, 2           ; <i1> [#uses=1]
+        ret i1 %C
+}
+
+define i32 @test10(i32 %X, i1 %C) {
+        %V = select i1 %C, i32 64, i32 8                ; <i32> [#uses=1]
+        %R = udiv i32 %X, %V            ; <i32> [#uses=1]
+        ret i32 %R
+}
+
+define i32 @test11(i32 %X, i1 %C) {
+        %A = select i1 %C, i32 1024, i32 32             ; <i32> [#uses=1]
+        %B = udiv i32 %X, %A            ; <i32> [#uses=1]
+        ret i32 %B
 }

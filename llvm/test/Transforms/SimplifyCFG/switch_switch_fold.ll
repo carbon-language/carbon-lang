@@ -1,47 +1,47 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | \
+; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | \
 ; RUN:   grep switch | count 1
 
 ; Test that a switch going to a switch on the same value can be merged.   All 
 ; three switches in this example can be merged into one big one.
 
-declare void %foo1()
-declare void %foo2()
-declare void %foo3()
-declare void %foo4()
+declare void @foo1()
 
-void %test1(uint %V) {
-        switch uint %V, label %F [
-                 uint 4, label %T
-                 uint 17, label %T
-                 uint 5, label %T
-                 uint 1234, label %F
-        ]
+declare void @foo2()
 
-T:
-        switch uint %V, label %F [
-                 uint 4, label %A
-                 uint 17, label %B
-		 uint 42, label %C
+declare void @foo3()
+
+declare void @foo4()
+
+define void @test1(i32 %V) {
+        switch i32 %V, label %F [
+                 i32 4, label %T
+                 i32 17, label %T
+                 i32 5, label %T
+                 i32 1234, label %F
         ]
-A:
-        call void %foo1()
+T:              ; preds = %0, %0, %0
+        switch i32 %V, label %F [
+                 i32 4, label %A
+                 i32 17, label %B
+                 i32 42, label %C
+        ]
+A:              ; preds = %T
+        call void @foo1( )
         ret void
-
-B:
-        call void %foo2()
+B:              ; preds = %F, %F, %T
+        call void @foo2( )
         ret void
-C:
-	call void %foo3()
-	ret void
-
-F:
-        switch uint %V, label %F [
-                 uint 4, label %B
-                 uint 18, label %B
-		 uint 42, label %D
+C:              ; preds = %T
+        call void @foo3( )
+        ret void
+F:              ; preds = %F, %T, %0, %0
+        switch i32 %V, label %F [
+                 i32 4, label %B
+                 i32 18, label %B
+                 i32 42, label %D
         ]
-D:
-        call void %foo4()
+D:              ; preds = %F
+        call void @foo4( )
         ret void
 }
 

@@ -1,74 +1,80 @@
 ; This test makes sure that mul instructions are properly eliminated.
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep mul
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep mul
 ; END.
 
-implementation
-
-int %test1(int %A) {
-	%B = mul int %A, 1
-	ret int %B
+define i32 @test1(i32 %A) {
+        %B = mul i32 %A, 1              ; <i32> [#uses=1]
+        ret i32 %B
 }
 
-int %test2(int %A) {
-	%B = mul int %A, 2   ; Should convert to an add instruction
-	ret int %B
+define i32 @test2(i32 %A) {
+        ; Should convert to an add instruction
+        %B = mul i32 %A, 2              ; <i32> [#uses=1]
+        ret i32 %B
 }
 
-int %test3(int %A) {
-	%B = mul int %A, 0   ; This should disappear entirely
-	ret int %B
+define i32 @test3(i32 %A) {
+        ; This should disappear entirely
+        %B = mul i32 %A, 0              ; <i32> [#uses=1]
+        ret i32 %B
 }
 
-double %test4(double %A) {
-	%B = mul double 1.0, %A   ; This is safe for FP
-	ret double %B
+define double @test4(double %A) {
+        ; This is safe for FP
+        %B = mul double 1.000000e+00, %A                ; <double> [#uses=1]
+        ret double %B
 }
 
-int %test5(int %A) {
-	%B = mul int %A, 8
-	ret int %B
+define i32 @test5(i32 %A) {
+        %B = mul i32 %A, 8              ; <i32> [#uses=1]
+        ret i32 %B
 }
 
-ubyte %test6(ubyte %A) {
-	%B = mul ubyte %A, 8
-	%C = mul ubyte %B, 8
-	ret ubyte %C
+define i8 @test6(i8 %A) {
+        %B = mul i8 %A, 8               ; <i8> [#uses=1]
+        %C = mul i8 %B, 8               ; <i8> [#uses=1]
+        ret i8 %C
 }
 
-int %test7(int %i) {
-        %tmp = mul int %i, -1   ; %tmp = sub 0, %i
-        ret int %tmp
+define i32 @test7(i32 %i) {
+        %tmp = mul i32 %i, -1           ; <i32> [#uses=1]
+        ret i32 %tmp
 }
 
-ulong %test8(ulong %i) {
-	%j = mul ulong %i, 18446744073709551615 ; tmp = sub 0, %i
-	ret ulong %j
+define i64 @test8(i64 %i) {
+       ; tmp = sub 0, %i
+        %j = mul i64 %i, -1             ; <i64> [#uses=1]
+        ret i64 %j
 }
 
-uint %test9(uint %i) {
-	%j = mul uint %i, 4294967295    ; %j = sub 0, %i
-	ret uint %j
+define i32 @test9(i32 %i) {
+        ; %j = sub 0, %i
+        %j = mul i32 %i, -1             ; <i32> [#uses=1]
+        ret i32 %j
 }
 
-uint %test10(int %a, uint %b) {
-	%c = setlt int %a, 0
-	%d = cast bool %c to uint
-	%e = mul uint %d, %b           ; e = b & (a >> 31)
-	ret uint %e
+define i32 @test10(i32 %a, i32 %b) {
+        %c = icmp slt i32 %a, 0         ; <i1> [#uses=1]
+        %d = zext i1 %c to i32          ; <i32> [#uses=1]
+       ; e = b & (a >> 31)
+        %e = mul i32 %d, %b             ; <i32> [#uses=1]
+        ret i32 %e
 }
 
-uint %test11(int %a, uint %b) {
-	%c = setle int %a, -1
-	%d = cast bool %c to uint
-	%e = mul uint %d, %b           ; e = b & (a >> 31)
-	ret uint %e
+define i32 @test11(i32 %a, i32 %b) {
+        %c = icmp sle i32 %a, -1                ; <i1> [#uses=1]
+        %d = zext i1 %c to i32          ; <i32> [#uses=1]
+        ; e = b & (a >> 31)
+        %e = mul i32 %d, %b             ; <i32> [#uses=1]
+        ret i32 %e
 }
 
-uint %test12(ubyte %a, uint %b) {
-	%c = setgt ubyte %a, 127
-	%d = cast bool %c to uint
-	%e = mul uint %d, %b           ; e = b & (a >> 31)
-	ret uint %e
+define i32 @test12(i8 %a, i32 %b) {
+        %c = icmp ugt i8 %a, 127                ; <i1> [#uses=1]
+        %d = zext i1 %c to i32          ; <i32> [#uses=1]
+        ; e = b & (a >> 31)
+        %e = mul i32 %d, %b             ; <i32> [#uses=1]
+        ret i32 %e
 }
 
