@@ -171,10 +171,10 @@ namespace {
     // it's thing
     struct PairKeyInfo {
       static inline std::pair<unsigned, unsigned> getEmptyKey() {
-        return std::make_pair(~0UL, ~0UL);
+        return std::make_pair(~0U, ~0U);
       }
       static inline std::pair<unsigned, unsigned> getTombstoneKey() {
-        return std::make_pair(~0UL - 1, ~0UL - 1);
+        return std::make_pair(~0U - 1, ~0U - 1);
       }
       static unsigned getHashValue(const std::pair<unsigned, unsigned> &P) {
         return P.first ^ P.second;
@@ -187,10 +187,10 @@ namespace {
     
     struct ConstraintKeyInfo {
       static inline Constraint getEmptyKey() {
-        return Constraint(Constraint::Copy, ~0UL, ~0UL, ~0UL);
+        return Constraint(Constraint::Copy, ~0U, ~0U, ~0U);
       }
       static inline Constraint getTombstoneKey() {
-        return Constraint(Constraint::Copy, ~0UL - 1, ~0UL - 1, ~0UL - 1);
+        return Constraint(Constraint::Copy, ~0U - 1, ~0U - 1, ~0U - 1);
       }
       static unsigned getHashValue(const Constraint &C) {
         return C.Src ^ C.Dest ^ C.Type ^ C.Offset;

@@ -70,7 +70,7 @@ private:
   BitWord Bits[BITWORDS_PER_ELEMENT];
   // Needed for sentinels
   SparseBitVectorElement() {
-    ElementIndex = ~0UL;
+    ElementIndex = ~0U;
     memset(&Bits[0], 0, sizeof (BitWord) * BITWORDS_PER_ELEMENT);
   }
 
