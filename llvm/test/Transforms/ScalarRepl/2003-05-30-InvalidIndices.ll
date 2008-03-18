@@ -1,7 +1,8 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -scalarrepl
+; RUN: llvm-as < %s | opt -scalarrepl
 
-void %main() {
-	%E = alloca { { int, float, double, long }, { int, float, double, long } }		; <{ { int, float, double, long }, { int, float, double, long } }*> [#uses=1]
-	%tmp.151 = getelementptr { { int, float, double, long }, { int, float, double, long } }* %E, long 0, uint 1, uint 3		; <long*> [#uses=0]
+define void @main() {
+	%E = alloca { { i32, float, double, i64 }, { i32, float, double, i64 } }	; <{ { i32, float, double, i64 }, { i32, float, double, i64 } }*> [#uses=1]
+	%tmp.151 = getelementptr { { i32, float, double, i64 }, { i32, float, double, i64 } }* %E, i64 0, i32 1, i32 3		; <i64*> [#uses=0]
 	ret void
 }
+

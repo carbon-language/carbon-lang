@@ -1,18 +1,18 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -scalarrepl -disable-output
+; RUN: llvm-as < %s | opt -scalarrepl -disable-output
 
-void %output_toc() {
+define void @output_toc() {
 entry:
-	%buf = alloca [256 x sbyte], align 16		; <[256 x sbyte]*> [#uses=1]
-	%name = alloca sbyte*, align 4		; <sbyte**> [#uses=1]
-	%real_name = alloca sbyte*, align 4		; <sbyte**> [#uses=0]
-	"alloca point" = cast int 0 to int		; <int> [#uses=0]
-	%buf = cast [256 x sbyte]* %buf to sbyte*		; <sbyte*> [#uses=1]
-	store sbyte* %buf, sbyte** %name
-	call void %abort( )
+	%buf = alloca [256 x i8], align 16		; <[256 x i8]*> [#uses=1]
+	%name = alloca i8*, align 4		; <i8**> [#uses=1]
+	%real_name = alloca i8*, align 4		; <i8**> [#uses=0]
+	%"alloca point" = bitcast i32 0 to i32		; <i32> [#uses=0]
+	%buf.upgrd.1 = bitcast [256 x i8]* %buf to i8*		; <i8*> [#uses=1]
+	store i8* %buf.upgrd.1, i8** %name
+	call void @abort( )
 	unreachable
-
 return:		; No predecessors!
 	ret void
 }
 
-declare void %abort()
+declare void @abort()
+

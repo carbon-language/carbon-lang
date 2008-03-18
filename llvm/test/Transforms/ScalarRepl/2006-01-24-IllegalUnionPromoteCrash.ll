@@ -1,12 +1,12 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -scalarrepl -disable-output
+; RUN: llvm-as < %s | opt -scalarrepl -disable-output
 
-target endian = big
-target pointersize = 32
+target datalayout = "E-p:32:32"
 
-int %test(long %L) {
-	%X = alloca int
-	%Y = cast int* %X to ulong*
-	store ulong 0, ulong* %Y
-	%Z = load int *%X
-	ret int %Z
+define i32 @test(i64 %L) {
+	%X = alloca i32		; <i32*> [#uses=2]
+	%Y = bitcast i32* %X to i64*		; <i64*> [#uses=1]
+	store i64 0, i64* %Y
+	%Z = load i32* %X		; <i32> [#uses=1]
+	ret i32 %Z
 }
+

@@ -1,14 +1,13 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -scalarrepl | llvm-dis | \
+; RUN: llvm-as < %s | opt -scalarrepl | llvm-dis | \
 ; RUN:   not grep alloca
-; RUN: llvm-upgrade < %s | llvm-as | opt -scalarrepl | llvm-dis | \
+; RUN: llvm-as < %s | opt -scalarrepl | llvm-dis | \
 ; RUN:   grep {bitcast.*float.*i32}
 
-implementation
-
-int %test(float %X) {
-        %X_addr = alloca float
-        store float %X, float* %X_addr
-        %X_addr = bitcast float* %X_addr to int*
-        %tmp = load int* %X_addr
-        ret int %tmp
+define i32 @test(float %X) {
+	%X_addr = alloca float		; <float*> [#uses=2]
+	store float %X, float* %X_addr
+	%X_addr.upgrd.1 = bitcast float* %X_addr to i32*		; <i32*> [#uses=1]
+	%tmp = load i32* %X_addr.upgrd.1		; <i32> [#uses=1]
+	ret i32 %tmp
 }
+

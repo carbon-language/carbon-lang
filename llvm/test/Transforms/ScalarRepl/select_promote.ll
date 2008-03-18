@@ -1,18 +1,18 @@
 ; Test promotion of loads that use the result of a select instruction.  This
 ; should be simplified by the instcombine pass.
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -mem2reg | llvm-dis | not grep alloca
+; RUN: llvm-as < %s | opt -instcombine -mem2reg | llvm-dis | not grep alloca
 
-int %main() {
-        %mem_tmp.0 = alloca int         ; <int*> [#uses=3]
-        %mem_tmp.1 = alloca int         ; <int*> [#uses=3]
-        store int 0, int* %mem_tmp.0
-        store int 1, int* %mem_tmp.1
-        %tmp.1.i = load int* %mem_tmp.1         ; <int> [#uses=1]
-        %tmp.3.i = load int* %mem_tmp.0         ; <int> [#uses=1]
-        %tmp.4.i = setle int %tmp.1.i, %tmp.3.i         ; <bool> [#uses=1]
-        %mem_tmp.i.0 = select bool %tmp.4.i, int* %mem_tmp.1, int* %mem_tmp.0           ; <int*> [#uses=1]
-        %tmp.3 = load int* %mem_tmp.i.0         ; <int> [#uses=1]
-        ret int %tmp.3
+define i32 @main() {
+	%mem_tmp.0 = alloca i32		; <i32*> [#uses=3]
+	%mem_tmp.1 = alloca i32		; <i32*> [#uses=3]
+	store i32 0, i32* %mem_tmp.0
+	store i32 1, i32* %mem_tmp.1
+	%tmp.1.i = load i32* %mem_tmp.1		; <i32> [#uses=1]
+	%tmp.3.i = load i32* %mem_tmp.0		; <i32> [#uses=1]
+	%tmp.4.i = icmp sle i32 %tmp.1.i, %tmp.3.i		; <i1> [#uses=1]
+	%mem_tmp.i.0 = select i1 %tmp.4.i, i32* %mem_tmp.1, i32* %mem_tmp.0		; <i32*> [#uses=1]
+	%tmp.3 = load i32* %mem_tmp.i.0		; <i32> [#uses=1]
+	ret i32 %tmp.3
 }
 
