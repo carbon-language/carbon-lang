@@ -115,6 +115,7 @@ public:
   explicit Rewriter() : SourceMgr(0) {}
   
   void setSourceMgr(SourceManager &SM) { SourceMgr = &SM; }
+  SourceManager& getSourceMgr() { return *SourceMgr; }
   
   /// isRewritable - Return true if this location is a raw file location, which
   /// is rewritable.  Locations from macros, etc are not rewritable.
