@@ -51,24 +51,39 @@ void html::EscapeText(Rewriter& R, unsigned FileID, bool EscapeSpaces) {
 }
 
 
-static void TagOpen(std::ostringstream& os, const char* TagStr,
-                    const char* Attr, const char* Content) {
+static void TagOpen(Rewriter& R, const char* TagStr,
+                    const char* Attr, const char* Content,
+                    SourceLocation L, bool InsertBefore) {
   
+  std::ostringstream os;
   os << '<' << TagStr;
   if (Attr) os << ' ' << Attr;
   os << '>';
   if (Content) os << Content;
+  
+  if (InsertBefore)
+    R.InsertTextBefore(L, os.str().c_str(), os.str().size());
+  else
+    R.InsertTextAfter(L, os.str().c_str(), os.str().size());
 }
 
-static void TagClose(std::ostringstream& os, const char* TagStr) {
+static void TagClose(Rewriter& R, const char* TagStr, SourceLocation L,
+                     bool Newline, bool InsertBefore) {
+  
+  std::ostringstream os;
   os << "</" << TagStr << ">";
+  if (Newline) os << '\n';
+  
+  if (InsertBefore)
+    R.InsertTextBefore(L, os.str().c_str(), os.str().size());
+  else
+    R.InsertTextAfter(L, os.str().c_str(), os.str().size());
 }
 
 void html::InsertTag(Rewriter& R, html::Tags tag,
                      SourceLocation B, SourceLocation E,
-                     const char* Attributes,
-                     const char* Content, bool Newline,
-                     bool OpenInsertBefore, bool CloseInsertAfter) {
+                     const char* Attr, const char* Content, bool Newline,
+                     bool OpenInsertBefore, bool CloseInsertBefore) {
   
   const char* TagStr = 0;
   
@@ -80,6 +95,7 @@ void html::InsertTag(Rewriter& R, html::Tags tag,
     case HTML: TagStr = "html"; break;
     case PRE:  TagStr = "pre";  break;
     case SPAN: TagStr = "span"; break;
+    case STYLE: TagStr = "style"; break;
   }
   
   assert (TagStr && "Tag not supported.");
@@ -87,32 +103,13 @@ void html::InsertTag(Rewriter& R, html::Tags tag,
   // Generate the opening tag.  We also generate the closing
   // tag of the start and end SourceLocations are the same.
 
-  { 
-    std::ostringstream os;
-    TagOpen(os, TagStr, Attributes, Content);
-    if (B == E)  {
-      TagClose(os, TagStr);
-      if (Newline) os << '\n';
-    }
-    
-    if (OpenInsertBefore)    
-      R.InsertTextBefore(B, os.str().c_str(), os.str().size());
-    else
-      R.InsertTextAfter(B, os.str().c_str(), os.str().size());
+  if (OpenInsertBefore) {    
+    TagClose(R, TagStr, E, Newline, CloseInsertBefore);
+    TagOpen(R, TagStr, Attr, Content, B, true);
   }
-  
-  // Generate the closing tag if the start and end SourceLocations
-  // are different.
-  
-  if (B != E) {
-    std::ostringstream os;
-    TagClose(os, TagStr);
-    if (Newline) os << '\n';
-    
-    if (CloseInsertAfter)    
-      R.InsertTextAfter(E, os.str().c_str(), os.str().size());
-    else
-      R.InsertTextBefore(E, os.str().c_str(), os.str().size());
+  else {
+    TagOpen(R, TagStr, Attr, Content, B, false);
+    TagClose(R, TagStr, E, Newline, true);
   }
 }
 
@@ -128,8 +125,8 @@ static void AddLineNumber(Rewriter& R, unsigned LineNo,
 
   std::ostringstream os;
   os << LineNo;
-  html::InsertTag(R, html::SPAN, B, E, "class=Line");  
-  html::InsertTag(R, html::SPAN, B, B, "class=Num", os.str().c_str());  
+  html::InsertTag(R, html::SPAN, B, E, "style=lines");  
+  html::InsertTag(R, html::SPAN, B, B, "style=nums", os.str().c_str());  
 }
 
 void html::AddLineNumbers(Rewriter& R, unsigned FileID) {

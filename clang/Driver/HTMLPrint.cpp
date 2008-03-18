@@ -18,6 +18,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "clang/AST/ASTContext.h"
+#include <sstream>
 
 using namespace clang;
 
@@ -49,10 +50,22 @@ HTMLPrinter::~HTMLPrinter() {
   
   html::EscapeText(R, FileID);
   html::AddLineNumbers(R, FileID);
-  html::InsertTag(R, html::PRE, StartLoc, EndLoc, 0, 0, true);
-  html::InsertTag(R, html::BODY, StartLoc, EndLoc, NULL, "\n", true);
-  html::InsertTag(R, html::HEAD, StartLoc, StartLoc, 0, 0, true);
-  html::InsertTag(R, html::HTML, StartLoc, EndLoc, NULL, "\n", true);
+  html::InsertOuterTag(R, html::PRE, StartLoc, EndLoc, 0, 0, true);
+  html::InsertOuterTag(R, html::BODY, StartLoc, EndLoc, NULL, "\n", true);
+  
+  // Generate CSS.
+  
+  std::ostringstream css;
+  css << "\n <style type=\"text/css\">\n";
+  css << "  .nums, .lines { vertical-align:top }\n";
+  css << "  .nums { padding-right:.5em; width:2.5em }\n";
+  css << "  </style>\n";
+
+  
+  // Add <head> and <html> tags.
+  
+  html::InsertTagBefore(R, html::HEAD, StartLoc, StartLoc, 0,css.str().c_str());
+  html::InsertOuterTag(R, html::HTML, StartLoc, EndLoc, 0, "\n");
   
   // Emit the HTML.
   

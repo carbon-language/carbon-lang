@@ -30,15 +30,33 @@ namespace html {
               HEAD,
               HTML,
               PRE,
-              SPAN };
+              SPAN,
+              STYLE };
   
   void EscapeText(Rewriter& R, unsigned FileID, bool EscapeSpaces = false);
 
   void InsertTag(Rewriter& R, Tags tag,
                  SourceLocation OpenLoc, SourceLocation CloseLoc,
-                 const char* Attributes = NULL, const char* Content = NULL,
+                 const char* Attrs = NULL, const char* Content = NULL,
                  bool Newline = false,
-                 bool OpenInsertBefore = true, bool CloseInsertAfter = true);
+                 bool OpenInsertBefore = true, bool CloseInsertBefore = false);
+  
+  static inline
+  void InsertTagBefore(Rewriter& R, Tags tag,
+                      SourceLocation OpenLoc, SourceLocation CloseLoc,
+                      const char* Attrs = NULL, const char* Content = NULL,
+                      bool Newline = false) {
+    InsertTag(R, tag, OpenLoc, CloseLoc, Attrs, Content, Newline, true, true);    
+  }  
+  
+  static inline
+  void InsertOuterTag(Rewriter& R, Tags tag,
+                      SourceLocation OpenLoc, SourceLocation CloseLoc,
+                      const char* Attrs = NULL, const char* Content = NULL,
+                      bool Newline = false) {
+    
+    InsertTag(R, tag, OpenLoc, CloseLoc, Attrs, Content, Newline, true, false);    
+  }
   
   // High-level operations.
   
