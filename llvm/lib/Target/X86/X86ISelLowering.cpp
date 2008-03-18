@@ -1746,18 +1746,22 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   if (IsTailCall)
     Ops.push_back(DAG.getConstant(FPDiff, MVT::i32));
 
-  // Add an implicit use GOT pointer in EBX.
-  if (!IsTailCall && !Is64Bit &&
-      getTargetMachine().getRelocationModel() == Reloc::PIC_ &&
-      Subtarget->isPICStyleGOT())
-    Ops.push_back(DAG.getRegister(X86::EBX, getPointerTy()));
-
   // Add argument registers to the end of the list so that they are known live
   // into the call.
   for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i)
     Ops.push_back(DAG.getRegister(RegsToPass[i].first,
                                   RegsToPass[i].second.getValueType()));
   
+  // Add an implicit use GOT pointer in EBX.
+  if (!IsTailCall && !Is64Bit &&
+      getTargetMachine().getRelocationModel() == Reloc::PIC_ &&
+      Subtarget->isPICStyleGOT())
+    Ops.push_back(DAG.getRegister(X86::EBX, getPointerTy()));
+
+  // Add an implicit use of AL for x86 vararg functions.
+  if (Is64Bit && isVarArg)
+    Ops.push_back(DAG.getRegister(X86::AL, MVT::i8));
+
   if (InFlag.Val)
     Ops.push_back(InFlag);
 
