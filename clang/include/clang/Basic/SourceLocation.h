@@ -116,7 +116,8 @@ public:
   /// getRawFilePos - Return the byte offset from the start of the file-chunk
   /// referred to by FileID.  This method should not be used to get the offset
   /// from the start of the file, instead you should use
-  /// SourceManager::getFilePos.  This method will be incorrect for large files.
+  /// SourceManager::getDecomposedFileLoc.  This method will be 
+  //  incorrect for large files.
   unsigned getRawFilePos() const { 
     assert(isFileID() && "can't get the file id of a non-file sloc!");
     return ID & (ChunkSize-1);
