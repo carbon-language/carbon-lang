@@ -173,6 +173,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\AST\DeclObjC.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\AST\DeclSerialization.cpp"
 				>
 			</File>

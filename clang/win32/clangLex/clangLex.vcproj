@@ -169,7 +169,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Lex\MacroExpander.cpp"
+				RelativePath="..\..\lib\Lex\MacroArgs.cpp"
 				>
 			</File>
 			<File
@@ -177,7 +177,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\Lex\PPDirectives.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\Lex\PPExpressions.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\Lex\PPLexerChange.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\Lex\PPMacroExpansion.cpp"
 				>
 			</File>
 			<File
@@ -190,6 +202,10 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\Lex\ScratchBuffer.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\Lex\TokenLexer.cpp"
 				>
 			</File>
 		</Filter>

@@ -153,6 +153,14 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath="..\..\lib\Analysis\BasicValueFactory.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\Analysis\CFRefCount.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\Analysis\DeadStores.cpp"
 				>
 			</File>
@@ -194,10 +202,6 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\Analysis\UninitializedValues.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\lib\Analysis\ValueManager.cpp"
 				>
 			</File>
 			<File
