@@ -87,12 +87,30 @@ private:  // Methods only usable by Rewriter.
   void RemoveText(unsigned OrigOffset, unsigned Size);
   
   /// InsertText - Insert some text at the specified point, where the offset in
-  /// the buffer is specified relative to the original SourceBuffer.
+  /// the buffer is specified relative to the original SourceBuffer.  The
+  /// text is inserted after the specified location.
   ///
-  /// TODO: Consider a bool to indicate whether the text is inserted 'before' or
-  /// after the atomic point: i.e. whether the atomic point is moved to after
-  /// the inserted text or not.
-  void InsertText(unsigned OrigOffset, const char *StrData, unsigned StrLen);
+  void InsertText(unsigned OrigOffset, const char *StrData, unsigned StrLen,
+                  bool InsertAfter = true);
+  
+
+  /// InsertTextBefore - Insert some text before the specified point,
+  /// where the offset in the buffer is specified relative to the original
+  /// SourceBuffer.
+  ///
+  void InsertTextBefore(unsigned OrigOffset, const char *StrData,
+                        unsigned StrLen) {
+    InsertText(OrigOffset, StrData, StrLen, false);
+  }
+  
+  /// InsertText - Insert some text at the specified point, where the offset in
+  /// the buffer is specified relative to the original SourceBuffer.  The
+  /// text is inserted after the specified location.  This is method is the
+  /// same as InsertText with "InsertAfter == false".
+  void InsertTextAfter(unsigned OrigOffset, const char *StrData,
+                       unsigned StrLen) {
+    InsertText(OrigOffset, StrData, StrLen);
+  }
   
   /// ReplaceText - This method replaces a range of characters in the input
   /// buffer with a new string.  This is effectively a combined "remove/insert"
@@ -130,7 +148,28 @@ public:
   /// InsertText - Insert the specified string at the specified location in the
   /// original buffer.  This method returns true (and does nothing) if the input
   /// location was not rewritable, false otherwise.
-  bool InsertText(SourceLocation Loc, const char *StrData, unsigned StrLen);
+  bool InsertText(SourceLocation Loc, const char *StrData, unsigned StrLen,
+                  bool InsertAfter = true);
+  
+  /// InsertTextAfter - Insert the specified string at the specified location in
+  ///  the original buffer.  This method returns true (and does nothing) if 
+  ///  the input location was not rewritable, false otherwise.  Text is
+  ///  inserted after any other text that has been previously inserted
+  ///  at the some point (the default behavior for InsertText).
+  bool InsertTextAfter(SourceLocation Loc, const char *StrData,
+                       unsigned StrLen) {
+    return InsertText(Loc, StrData, StrLen);
+  }    
+  
+  /// InsertText - Insert the specified string at the specified location in the
+  /// original buffer.  This method returns true (and does nothing) if the input
+  /// location was not rewritable, false otherwise.  Text is
+  /// inserted before any other text that has been previously inserted
+  /// at the some point.
+  bool InsertTextBefore(SourceLocation Loc, const char *StrData,
+                       unsigned StrLen) {
+    return InsertText(Loc, StrData, StrLen, false);
+  }    
   
   /// RemoveText - Remove the specified text region.
   bool RemoveText(SourceLocation Start, unsigned Length);

@@ -101,11 +101,13 @@ void RewriteBuffer::RemoveText(unsigned OrigOffset, unsigned Size) {
 }
 
 void RewriteBuffer::InsertText(unsigned OrigOffset,
-                               const char *StrData, unsigned StrLen) {
+                               const char *StrData, unsigned StrLen,
+                               bool InsertAfter) {
+  
   // Nothing to insert, exit early.
   if (StrLen == 0) return;
   
-  unsigned RealOffset = getMappedOffset(OrigOffset, true);
+  unsigned RealOffset = getMappedOffset(OrigOffset, InsertAfter);
   assert(RealOffset <= Buffer.size() && "Invalid location");
 
   // Insert the new characters.
@@ -207,12 +209,12 @@ RewriteBuffer &Rewriter::getEditBuffer(unsigned FileID) {
 
 /// InsertText - Insert the specified string at the specified location in the
 /// original buffer.
-bool Rewriter::InsertText(SourceLocation Loc,
-                          const char *StrData, unsigned StrLen) {
+bool Rewriter::InsertText(SourceLocation Loc, const char *StrData,
+                          unsigned StrLen, bool InsertAfter) {
   if (!isRewritable(Loc)) return true;
   unsigned FileID;
   unsigned StartOffs = getLocationOffsetAndFileID(Loc, FileID);
-  getEditBuffer(FileID).InsertText(StartOffs, StrData, StrLen);
+  getEditBuffer(FileID).InsertText(StartOffs, StrData, StrLen, InsertAfter);
   return false;
 }
 
