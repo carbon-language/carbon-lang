@@ -236,7 +236,7 @@ software you will need.</p>
   <td>GCC</td>
 </tr>
 <tr>
-  <td>MacOS X<sup><a href="#pf_2">2</a></sup></td>
+  <td>MacOS X<sup><a href="#pf_2">2</a>,<a href="#pf_9">9</a></sup></td>
   <td>x86</td>
   <td>GCC</td>
 
@@ -320,6 +320,11 @@ project.</li>
     future. We highly recommend that you rebuild your current binutils with the
     patch from <a href="http://sourceware.org/bugzilla/show_bug.cgi?id=2659">
     Binutils bugzilla</a>, if it wasn't already applied.</li>
+<li><a name="pf_9">XCode 2.5 and gcc 4.0.1 (Apple Build 5370) will trip
+    internal LLVM assert messages when compiled for Release at optimization
+    levels greater than 0 (i.e., <i>&ldquo;-O1&rdquo;</i> and higher).
+    Add <i>OPTIMIZE_OPTION=&quot;-O0&quot;</i> to the build command line
+    if compiling for LLVM Release or bootstrapping the LLVM toolchain.</li>
 </ol>
 </div>
 
