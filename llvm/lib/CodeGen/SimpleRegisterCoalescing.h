@@ -205,11 +205,15 @@ namespace llvm {
     /// due to live range lengthening as the result of coalescing.
     void RemoveUnnecessaryKills(unsigned Reg, LiveInterval &LI);
 
+    /// ShortenDeadCopyLiveRange - Shorten a live range defined by a dead copy.
+    ///
+    void ShortenDeadCopyLiveRange(LiveInterval &li, MachineInstr *CopyMI);
+
     /// ShortenDeadCopyLiveRange - Shorten a live range as it's artificially
     /// extended by a dead copy. Mark the last use (if any) of the val# as kill
     /// as ends the live range there. If there isn't another use, then this
     /// live range is dead.
-    void ShortenDeadCopyLiveRange(LiveInterval &li, MachineInstr *CopyMI);
+    void ShortenDeadCopySrcLiveRange(LiveInterval &li, MachineInstr *CopyMI);
 
     /// lastRegisterUse - Returns the last use of the specific register between
     /// cycles Start and End or NULL if there are no uses.
