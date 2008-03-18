@@ -4,7 +4,10 @@ DIRS := lib Driver
 include $(LEVEL)/Makefile.common
 
 test::
-	cd test; $(MAKE)
+	cd test && $(MAKE) -f Makefile.parallel
+
+report::
+	cd test && $(MAKE) -f Makefile.parallel report
 
 clean::
 	@rm -rf build
