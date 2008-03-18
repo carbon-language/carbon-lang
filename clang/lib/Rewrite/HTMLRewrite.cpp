@@ -48,7 +48,7 @@ void html::EscapeText(Rewriter& R, unsigned FileID, bool EscapeSpaces) {
 
 void html::InsertTag(Rewriter& R, html::Tags tag,
                      SourceLocation B, SourceLocation E,
-                     bool NewlineOpen, bool NewlineClose) {
+                     bool NewlineOpen, bool NewlineClose, bool OutermostTag) {
   
   const char* TagStr = 0;
   
@@ -65,13 +65,27 @@ void html::InsertTag(Rewriter& R, html::Tags tag,
     std::ostringstream os;  
     os << '<' << TagStr << '>';
     if (NewlineOpen) os << '\n';
-    R.InsertTextAfter(B, os.str().c_str(), os.str().size());
+    
+    const char* s = os.str().c_str();
+    unsigned n = os.str().size();
+    
+    if (OutermostTag)
+      R.InsertTextBefore(B, s, n);
+    else
+      R.InsertTextAfter(B, s, n);
   }
   
   { // Generate the closing tag.
     std::ostringstream os;  
     os << "</" << TagStr << '>';
     if (NewlineClose) os << '\n';
-    R.InsertTextBefore(E, os.str().c_str(), os.str().size());
+    
+    const char* s = os.str().c_str();
+    unsigned n = os.str().size();
+    
+    if (OutermostTag)
+      R.InsertTextAfter(E, s, n);
+    else
+      R.InsertTextBefore(E, s, n);
   }
 }

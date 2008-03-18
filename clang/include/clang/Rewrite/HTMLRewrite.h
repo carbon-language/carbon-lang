@@ -29,7 +29,8 @@ namespace html {
 
   void InsertTag(Rewriter& R, Tags tag,
                  SourceLocation OpenLoc, SourceLocation CloseLoc,
-                 bool NewlineOpen = false, bool NewlineClose = true);
+                 bool NewlineOpen = false, bool NewlineClose = true,
+                 bool OutermostTag = false);
 
 } // end html namespace
 } // end clang namespace
