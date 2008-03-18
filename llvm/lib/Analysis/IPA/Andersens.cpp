@@ -647,9 +647,13 @@ Andersens::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
 
       if (N1->PointsTo->empty())
         return NoModRef;
-
+#if FULL_UNIVERSAL
+      if (!UniversalSet->PointsTo->test(FindNode(getNode(P))))
+        return NoModRef;  // Universal set does not contain P
+#else
       if (!N1->PointsTo->test(UniversalSet))
         return NoModRef;  // P doesn't point to the universal set.
+#endif
     }
 
   return AliasAnalysis::getModRefInfo(CS, P, Size);
@@ -1266,29 +1270,43 @@ void Andersens::AddConstraintsForCall(CallSite CS, Function *F) {
   }
 
   CallSite::arg_iterator ArgI = CS.arg_begin(), ArgE = CS.arg_end();
+  bool external = !F ||  F->isDeclaration();
   if (F) {
     // Direct Call
     Function::arg_iterator AI = F->arg_begin(), AE = F->arg_end();
-    for (; AI != AE && ArgI != ArgE; ++AI, ++ArgI)
-      if (isa<PointerType>(AI->getType())) {
-        if (isa<PointerType>((*ArgI)->getType())) {
-          // Copy the actual argument into the formal argument.
-          Constraints.push_back(Constraint(Constraint::Copy, getNode(AI),
-                                           getNode(*ArgI)));
-        } else {
-          Constraints.push_back(Constraint(Constraint::Copy, getNode(AI),
-                                           UniversalSet));
-        }
-      } else if (isa<PointerType>((*ArgI)->getType())) {
-#if FULL_UNIVERSAL
-        Constraints.push_back(Constraint(Constraint::Copy,
-                                         UniversalSet,
-                                         getNode(*ArgI)));
-#else
-        Constraints.push_back(Constraint(Constraint::Copy,
-                                         getNode(*ArgI),
-                                         UniversalSet));
+    for (; AI != AE && ArgI != ArgE; ++AI, ++ArgI) 
+      {
+#if !FULL_UNIVERSAL
+        if (external && isa<PointerType>((*ArgI)->getType())) 
+          {
+            // Add constraint that ArgI can now point to anything due to
+            // escaping, as can everything it points to. The second portion of
+            // this should be taken care of by universal = *universal
+            Constraints.push_back(Constraint(Constraint::Copy,
+                                             getNode(*ArgI),
+                                             UniversalSet));
+          }
 #endif
+        if (isa<PointerType>(AI->getType())) {
+          if (isa<PointerType>((*ArgI)->getType())) {
+            // Copy the actual argument into the formal argument.
+            Constraints.push_back(Constraint(Constraint::Copy, getNode(AI),
+                                             getNode(*ArgI)));
+          } else {
+            Constraints.push_back(Constraint(Constraint::Copy, getNode(AI),
+                                             UniversalSet));
+          }
+        } else if (isa<PointerType>((*ArgI)->getType())) {
+#if FULL_UNIVERSAL
+          Constraints.push_back(Constraint(Constraint::Copy,
+                                           UniversalSet,
+                                           getNode(*ArgI)));
+#else
+          Constraints.push_back(Constraint(Constraint::Copy,
+                                           getNode(*ArgI),
+                                           UniversalSet));
+#endif
+        }
       }
   } else {
     //Indirect Call
