@@ -2074,7 +2074,8 @@ Stmt *RewriteTest::SynthMessageExpr(ObjCMessageExpr *Exp) {
   // Now do the "normal" pointer to function cast.
   QualType castType = Context->getFunctionType(returnType, 
     &ArgTypes[0], ArgTypes.size(),
-    Exp->getMethodDecl() ? Exp->getMethodDecl()->isVariadic() : false);
+    // If we don't have a method decl, force a variadic cast.
+    Exp->getMethodDecl() ? Exp->getMethodDecl()->isVariadic() : true);
   castType = Context->getPointerType(castType);
   cast = new CastExpr(castType, cast, SourceLocation());
 
