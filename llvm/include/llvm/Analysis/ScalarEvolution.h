@@ -291,6 +291,9 @@ namespace llvm {
     /// that no dangling references are left around.
     void deleteValueFromRecords(Value *V) const;
 
+    /// isAnalysis - Return true if this pass is  implementing an analysis pass.
+    virtual bool isAnalysis() const { return true; }
+
     virtual bool runOnFunction(Function &F);
     virtual void releaseMemory();
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;

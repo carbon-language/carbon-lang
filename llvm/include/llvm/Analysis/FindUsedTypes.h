@@ -50,6 +50,10 @@ private:
   void IncorporateValue(const Value *V);
 
 public:
+
+  /// isAnalysis - Return true if this pass is  implementing an analysis pass.
+  virtual bool isAnalysis() const { return true; }
+
   /// run - This incorporates all types used by the specified module
   bool runOnModule(Module &M);
 

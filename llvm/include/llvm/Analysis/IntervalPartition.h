@@ -49,6 +49,9 @@ public:
 
   IntervalPartition() : FunctionPass((intptr_t)&ID), RootInterval(0) {}
 
+  /// isAnalysis - Return true if this pass is  implementing an analysis pass.
+  virtual bool isAnalysis() const { return true; }
+
   // run - Calculate the interval partition for this function
   virtual bool runOnFunction(Function &F);
 

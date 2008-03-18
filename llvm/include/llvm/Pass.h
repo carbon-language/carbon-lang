@@ -130,6 +130,11 @@ public:
     return Resolver; 
   }
 
+  /// isAnalysis - Return true if this pass is  implementing an analysis pass.
+  virtual bool isAnalysis() const {
+    return false;
+  }
+
   /// getAnalysisUsage - This function should be overriden by passes that need
   /// analysis information to do their job.  If a pass specifies that it uses a
   /// particular analysis result to this function, it can then use the

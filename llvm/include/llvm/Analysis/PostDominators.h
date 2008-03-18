@@ -29,6 +29,9 @@ struct PostDominatorTree : public FunctionPass {
     DT = new DominatorTreeBase<BasicBlock>(true);
   }
 
+  /// isAnalysis - Return true if this pass is  implementing an analysis pass.
+  virtual bool isAnalysis() const { return true; }
+
   virtual bool runOnFunction(Function &F);
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -68,6 +71,9 @@ struct PostDominanceFrontier : public DominanceFrontierBase {
   static char ID;
   PostDominanceFrontier() 
     : DominanceFrontierBase((intptr_t) &ID, true) {}
+
+  /// isAnalysis - Return true if this pass is  implementing an analysis pass.
+  virtual bool isAnalysis() const { return true; }
 
   virtual bool runOnFunction(Function &) {
     Frontiers.clear();

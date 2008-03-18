@@ -43,6 +43,9 @@ namespace {
     static char ID; // Class identification, replacement for typeinfo
     AliasDebugger() : ModulePass((intptr_t)&ID) {}
 
+    /// isAnalysis - Return true if this pass is  implementing an analysis pass.
+    virtual bool isAnalysis() const { return true; }
+
     bool runOnModule(Module &M) {
       InitializeAliasAnalysis(this);                 // set up super class
 

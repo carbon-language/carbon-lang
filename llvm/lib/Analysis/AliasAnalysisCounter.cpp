@@ -72,6 +72,9 @@ namespace {
       }
     }
 
+    /// isAnalysis - Return true if this pass is  implementing an analysis pass.
+    virtual bool isAnalysis() const { return true; }
+
     bool runOnModule(Module &M) {
       this->M = &M;
       InitializeAliasAnalysis(this);

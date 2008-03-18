@@ -558,6 +558,9 @@ namespace {
       AU.addRequired<AliasAnalysis>();
     }
 
+    /// isAnalysis - Return true if this pass is  implementing an analysis pass.
+    virtual bool isAnalysis() const { return true; }
+
     virtual bool runOnFunction(Function &F) {
       Tracker = new AliasSetTracker(getAnalysis<AliasAnalysis>());
 

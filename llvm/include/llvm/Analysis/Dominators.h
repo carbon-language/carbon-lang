@@ -300,6 +300,9 @@ public:
   // FIXME: Should remove this
   virtual bool runOnFunction(Function &F) { return false; }
 
+  /// isAnalysis - Return true if this pass is  implementing an analysis pass.
+  virtual bool isAnalysis() const { return true; }
+
   virtual void releaseMemory() { reset(); }
 
   /// getNode - return the (Post)DominatorTree node for the specified basic
@@ -691,6 +694,9 @@ public:
     return DT->getRootNode();
   }
   
+  /// isAnalysis - Return true if this pass is  implementing an analysis pass.
+  virtual bool isAnalysis() const { return true; }
+
   virtual bool runOnFunction(Function &F);
   
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -909,6 +915,9 @@ public:
     assert(Roots.size() == 1 && "Should always have entry node!");
     return Roots[0];
   }
+
+  /// isAnalysis - Return true if this pass is  implementing an analysis pass.
+  virtual bool isAnalysis() const { return true; }
 
   virtual bool runOnFunction(Function &) {
     Frontiers.clear();

@@ -68,6 +68,9 @@ class MemoryDependenceAnalysis : public FunctionPass {
     static char ID; // Class identification, replacement for typeinfo
     MemoryDependenceAnalysis() : FunctionPass((intptr_t)&ID) {}
 
+    /// isAnalysis - Return true if this pass is  implementing an analysis pass.
+    virtual bool isAnalysis() const { return true; }
+
     /// Pass Implementation stuff.  This doesn't do any analysis.
     ///
     bool runOnFunction(Function &) {return false; }

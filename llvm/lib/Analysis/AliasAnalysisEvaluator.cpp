@@ -70,6 +70,9 @@ namespace {
       return false;
     }
 
+    /// isAnalysis - Return true if this pass is  implementing an analysis pass.
+    virtual bool isAnalysis() const { return true; }
+
     bool runOnFunction(Function &F);
     bool doFinalization(Module &M);
   };

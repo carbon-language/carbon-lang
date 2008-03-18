@@ -426,6 +426,12 @@ void PMTopLevelManager::schedulePass(Pass *P) {
   // Give pass a chance to prepare the stage.
   P->preparePassManager(activeStack);
 
+  // If P is an analysis pass and it is available then do not
+  // generate the analysis again. Stale analysis info should not be
+  // available at this point.
+  if (P->isAnalysis() && findAnalysisPass(P->getPassInfo()))
+      return;
+
   AnalysisUsage AnUsage;
   P->getAnalysisUsage(AnUsage);
   const std::vector<AnalysisID> &RequiredSet = AnUsage.getRequiredSet();

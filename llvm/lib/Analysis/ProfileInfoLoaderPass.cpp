@@ -46,6 +46,9 @@ namespace {
       return "Profiling information loader";
     }
 
+    /// isAnalysis - Return true if this pass is  implementing an analysis pass.
+    virtual bool isAnalysis() const { return true; }
+
     /// run - Load the profile information from the specified file.
     virtual bool runOnModule(Module &M);
   };
