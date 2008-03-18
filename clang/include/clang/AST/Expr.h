@@ -1140,7 +1140,7 @@ public:
   virtual child_iterator child_end();
 };
 
-/// OverloadExpr - Clang builtin-in function __builtin_overload.
+/// OverloadExpr - Clang builtin function __builtin_overload.
 /// This AST node provides a way to overload functions in C.
 ///
 /// The first argument is required to be a constant expression, for the number
