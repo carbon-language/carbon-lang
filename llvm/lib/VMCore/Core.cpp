@@ -601,6 +601,38 @@ LLVMValueRef LLVMGetNamedGlobal(LLVMModuleRef M, const char *Name) {
   return wrap(unwrap(M)->getNamedGlobal(Name));
 }
 
+LLVMValueRef LLVMGetFirstGlobal(LLVMModuleRef M) {
+  Module *Mod = unwrap(M);
+  Module::global_iterator I = Mod->global_begin();
+  if (I == Mod->global_end())
+    return 0;
+  return wrap(I);
+}
+
+LLVMValueRef LLVMGetLastGlobal(LLVMModuleRef M) {
+  Module *Mod = unwrap(M);
+  Module::global_iterator I = Mod->global_end();
+  if (I == Mod->global_begin())
+    return 0;
+  return wrap(--I);
+}
+
+LLVMValueRef LLVMGetNextGlobal(LLVMValueRef GlobalVar) {
+  GlobalVariable *GV = unwrap<GlobalVariable>(GlobalVar);
+  Module::global_iterator I = GV;
+  if (++I == GV->getParent()->global_end())
+    return 0;
+  return wrap(I);
+}
+
+LLVMValueRef LLVMGetPreviousGlobal(LLVMValueRef GlobalVar) {
+  GlobalVariable *GV = unwrap<GlobalVariable>(GlobalVar);
+  Module::global_iterator I = GV;
+  if (I == GV->getParent()->global_end())
+    return 0;
+  return wrap(--I);
+}
+
 void LLVMDeleteGlobal(LLVMValueRef GlobalVar) {
   unwrap<GlobalVariable>(GlobalVar)->eraseFromParent();
 }
@@ -644,6 +676,38 @@ LLVMValueRef LLVMAddFunction(LLVMModuleRef M, const char *Name,
 
 LLVMValueRef LLVMGetNamedFunction(LLVMModuleRef M, const char *Name) {
   return wrap(unwrap(M)->getFunction(Name));
+}
+
+LLVMValueRef LLVMGetFirstFunction(LLVMModuleRef M) {
+  Module *Mod = unwrap(M);
+  Module::iterator I = Mod->begin();
+  if (I == Mod->end())
+    return 0;
+  return wrap(I);
+}
+
+LLVMValueRef LLVMGetLastFunction(LLVMModuleRef M) {
+  Module *Mod = unwrap(M);
+  Module::iterator I = Mod->end();
+  if (I == Mod->begin())
+    return 0;
+  return wrap(--I);
+}
+
+LLVMValueRef LLVMGetNextFunction(LLVMValueRef Fn) {
+  Function *Func = unwrap<Function>(Fn);
+  Module::iterator I = Func;
+  if (++I == Func->getParent()->end())
+    return 0;
+  return wrap(I);
+}
+
+LLVMValueRef LLVMGetPreviousFunction(LLVMValueRef Fn) {
+  Function *Func = unwrap<Function>(Fn);
+  Module::iterator I = Func;
+  if (I == Func->getParent()->end())
+    return 0;
+  return wrap(--I);
 }
 
 void LLVMDeleteFunction(LLVMValueRef Fn) {
@@ -735,6 +799,38 @@ LLVMBasicBlockRef LLVMGetEntryBasicBlock(LLVMValueRef Fn) {
   return wrap(&unwrap<Function>(Fn)->getEntryBlock());
 }
 
+LLVMBasicBlockRef LLVMGetFirstBasicBlock(LLVMValueRef Fn) {
+  Function *Func = unwrap<Function>(Fn);
+  Function::iterator I = Func->begin();
+  if (I == Func->end())
+    return 0;
+  return wrap(I);
+}
+
+LLVMBasicBlockRef LLVMGetLastBasicBlock(LLVMValueRef Fn) {
+  Function *Func = unwrap<Function>(Fn);
+  Function::iterator I = Func->end();
+  if (I == Func->begin())
+    return 0;
+  return wrap(--I);
+}
+
+LLVMBasicBlockRef LLVMGetNextBasicBlock(LLVMBasicBlockRef BB) {
+  BasicBlock *Block = unwrap(BB);
+  Function::iterator I = Block;
+  if (++I == Block->getParent()->end())
+    return 0;
+  return wrap(I);
+}
+
+LLVMBasicBlockRef LLVMGetPreviousBasicBlock(LLVMBasicBlockRef BB) {
+  BasicBlock *Block = unwrap(BB);
+  Function::iterator I = Block;
+  if (I == Block->getParent()->begin())
+    return 0;
+  return wrap(--I);
+}
+
 LLVMBasicBlockRef LLVMAppendBasicBlock(LLVMValueRef FnRef, const char *Name) {
   return wrap(new BasicBlock(Name, unwrap<Function>(FnRef)));
 }
@@ -754,6 +850,38 @@ void LLVMDeleteBasicBlock(LLVMBasicBlockRef BBRef) {
 
 LLVMBasicBlockRef LLVMGetInstructionParent(LLVMValueRef Inst) {
   return wrap(unwrap<Instruction>(Inst)->getParent());
+}
+
+LLVMValueRef LLVMGetFirstInstruction(LLVMBasicBlockRef BB) {
+  BasicBlock *Block = unwrap(BB);
+  BasicBlock::iterator I = Block->begin();
+  if (I == Block->end())
+    return 0;
+  return wrap(I);
+}
+
+LLVMValueRef LLVMGetLastInstruction(LLVMBasicBlockRef BB) {
+  BasicBlock *Block = unwrap(BB);
+  BasicBlock::iterator I = Block->end();
+  if (I == Block->begin())
+    return 0;
+  return wrap(--I);
+}
+
+LLVMValueRef LLVMGetNextInstruction(LLVMValueRef Inst) {
+  Instruction *Instr = unwrap<Instruction>(Inst);
+  BasicBlock::iterator I = Instr;
+  if (++I == Instr->getParent()->end())
+    return 0;
+  return wrap(I);
+}
+
+LLVMValueRef LLVMGetPreviousInstruction(LLVMValueRef Inst) {
+  Instruction *Instr = unwrap<Instruction>(Inst);
+  BasicBlock::iterator I = Instr;
+  if (I == Instr->getParent()->begin())
+    return 0;
+  return wrap(--I);
 }
 
 /*--.. Call and invoke instructions ........................................--*/
@@ -803,6 +931,13 @@ LLVMBasicBlockRef LLVMGetIncomingBlock(LLVMValueRef PhiNode, unsigned Index) {
 
 LLVMBuilderRef LLVMCreateBuilder() {
   return wrap(new LLVMFoldingBuilder());
+}
+
+void LLVMPositionBuilder(LLVMBuilderRef Builder, LLVMBasicBlockRef Block,
+                         LLVMValueRef Instr) {
+  BasicBlock *BB = unwrap(Block);
+  Instruction *I = Instr? unwrap<Instruction>(Instr) : (Instruction*) BB->end();
+  unwrap(Builder)->SetInsertPoint(BB, I);
 }
 
 void LLVMPositionBuilderBefore(LLVMBuilderRef Builder, LLVMValueRef Instr) {

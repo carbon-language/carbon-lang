@@ -389,6 +389,10 @@ void LLVMSetGlobalConstant(LLVMValueRef GlobalVar, int IsConstant);
 LLVMValueRef LLVMAddFunction(LLVMModuleRef M, const char *Name,
                              LLVMTypeRef FunctionTy);
 LLVMValueRef LLVMGetNamedFunction(LLVMModuleRef M, const char *Name);
+LLVMValueRef LLVMGetFirstFunction(LLVMModuleRef M);
+LLVMValueRef LLVMGetLastFunction(LLVMModuleRef M);
+LLVMValueRef LLVMGetNextFunction(LLVMValueRef Fn);
+LLVMValueRef LLVMGetPreviousFunction(LLVMValueRef Fn);
 void LLVMDeleteFunction(LLVMValueRef Fn);
 unsigned LLVMGetIntrinsicID(LLVMValueRef Fn);
 unsigned LLVMGetFunctionCallConv(LLVMValueRef Fn);
@@ -409,6 +413,10 @@ LLVMBasicBlockRef LLVMValueAsBasicBlock(LLVMValueRef Val);
 LLVMValueRef LLVMGetBasicBlockParent(LLVMValueRef V);
 unsigned LLVMCountBasicBlocks(LLVMValueRef Fn);
 void LLVMGetBasicBlocks(LLVMValueRef Fn, LLVMBasicBlockRef *BasicBlocks);
+LLVMBasicBlockRef LLVMGetFirstBasicBlock(LLVMValueRef Fn);
+LLVMBasicBlockRef LLVMGetLastBasicBlock(LLVMValueRef Fn);
+LLVMBasicBlockRef LLVMGetNextBasicBlock(LLVMBasicBlockRef BB);
+LLVMBasicBlockRef LLVMGetPreviousBasicBlock(LLVMBasicBlockRef BB);
 LLVMBasicBlockRef LLVMGetEntryBasicBlock(LLVMValueRef Fn);
 LLVMBasicBlockRef LLVMAppendBasicBlock(LLVMValueRef Fn, const char *Name);
 LLVMBasicBlockRef LLVMInsertBasicBlock(LLVMBasicBlockRef InsertBeforeBB,
@@ -417,6 +425,10 @@ void LLVMDeleteBasicBlock(LLVMBasicBlockRef BB);
 
 /* Operations on instructions */
 LLVMBasicBlockRef LLVMGetInstructionParent(LLVMValueRef Inst);
+LLVMValueRef LLVMGetFirstInstruction(LLVMBasicBlockRef BB);
+LLVMValueRef LLVMGetLastInstruction(LLVMBasicBlockRef BB);
+LLVMValueRef LLVMGetNextInstruction(LLVMValueRef Inst);
+LLVMValueRef LLVMGetPreviousInstruction(LLVMValueRef Inst);
 
 /* Operations on call sites */
 void LLVMSetInstructionCallConv(LLVMValueRef Instr, unsigned CC);
@@ -436,6 +448,8 @@ LLVMBasicBlockRef LLVMGetIncomingBlock(LLVMValueRef PhiNode, unsigned Index);
  */
 
 LLVMBuilderRef LLVMCreateBuilder();
+void LLVMPositionBuilder(LLVMBuilderRef Builder, LLVMBasicBlockRef Block,
+                         LLVMValueRef Instr);
 void LLVMPositionBuilderBefore(LLVMBuilderRef Builder, LLVMValueRef Instr);
 void LLVMPositionBuilderAtEnd(LLVMBuilderRef Builder, LLVMBasicBlockRef Block);
 LLVMBasicBlockRef LLVMGetInsertBlock(LLVMBuilderRef Builder);
