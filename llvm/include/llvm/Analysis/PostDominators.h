@@ -25,12 +25,9 @@ struct PostDominatorTree : public FunctionPass {
   static char ID; // Pass identification, replacement for typeid
   DominatorTreeBase<BasicBlock>* DT;
 
-  PostDominatorTree() : FunctionPass((intptr_t)&ID) {
+  PostDominatorTree() : FunctionPass((intptr_t)&ID, true) {
     DT = new DominatorTreeBase<BasicBlock>(true);
   }
-
-  /// isAnalysis - Return true if this pass is  implementing an analysis pass.
-  virtual bool isAnalysis() const { return true; }
 
   virtual bool runOnFunction(Function &F);
 
@@ -71,9 +68,6 @@ struct PostDominanceFrontier : public DominanceFrontierBase {
   static char ID;
   PostDominanceFrontier() 
     : DominanceFrontierBase((intptr_t) &ID, true) {}
-
-  /// isAnalysis - Return true if this pass is  implementing an analysis pass.
-  virtual bool isAnalysis() const { return true; }
 
   virtual bool runOnFunction(Function &) {
     Frontiers.clear();

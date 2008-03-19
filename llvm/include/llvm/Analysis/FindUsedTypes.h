@@ -25,7 +25,7 @@ class FindUsedTypes : public ModulePass {
   std::set<const Type *> UsedTypes;
 public:
   static char ID; // Pass identification, replacement for typeid
-  FindUsedTypes() : ModulePass((intptr_t)&ID) {}
+  FindUsedTypes() : ModulePass((intptr_t)&ID, true) {}
 
   /// getTypes - After the pass has been run, return the set containing all of
   /// the types used in the module.
@@ -50,10 +50,6 @@ private:
   void IncorporateValue(const Value *V);
 
 public:
-
-  /// isAnalysis - Return true if this pass is  implementing an analysis pass.
-  virtual bool isAnalysis() const { return true; }
-
   /// run - This incorporates all types used by the specified module
   bool runOnModule(Module &M);
 

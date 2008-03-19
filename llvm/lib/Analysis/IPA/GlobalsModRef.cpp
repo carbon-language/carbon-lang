@@ -84,10 +84,7 @@ namespace {
 
   public:
     static char ID;
-    GlobalsModRef() : ModulePass((intptr_t)&ID) {}
-
-    /// isAnalysis - Return true if this pass is  implementing an analysis pass.
-    virtual bool isAnalysis() const { return true; }
+    GlobalsModRef() : ModulePass((intptr_t)&ID, true) {}
 
     bool runOnModule(Module &M) {
       InitializeAliasAnalysis(this);                 // set up super class

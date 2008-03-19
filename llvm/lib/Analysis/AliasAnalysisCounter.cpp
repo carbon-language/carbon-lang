@@ -35,7 +35,7 @@ namespace {
     Module *M;
   public:
     static char ID; // Class identification, replacement for typeinfo
-    AliasAnalysisCounter() : ModulePass((intptr_t) &ID) {
+    AliasAnalysisCounter() : ModulePass((intptr_t) &ID, true) {
       No = May = Must = 0;
       NoMR = JustRef = JustMod = MR = 0;
     }
@@ -71,9 +71,6 @@ namespace {
         }
       }
     }
-
-    /// isAnalysis - Return true if this pass is  implementing an analysis pass.
-    virtual bool isAnalysis() const { return true; }
 
     bool runOnModule(Module &M) {
       this->M = &M;

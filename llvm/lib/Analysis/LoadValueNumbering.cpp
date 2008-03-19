@@ -41,10 +41,7 @@ namespace {
   // FIXME: This should not be a FunctionPass.
   struct VISIBILITY_HIDDEN LoadVN : public FunctionPass, public ValueNumbering {
     static char ID; // Class identification, replacement for typeinfo
-    LoadVN() : FunctionPass((intptr_t)&ID) {}
-
-    /// isAnalysis - Return true if this pass is  implementing an analysis pass.
-    virtual bool isAnalysis() const { return true; }
+    LoadVN() : FunctionPass((intptr_t)&ID, true) {}
 
     /// Pass Implementation stuff.  This doesn't do any analysis.
     ///

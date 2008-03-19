@@ -430,7 +430,7 @@ void PMTopLevelManager::schedulePass(Pass *P) {
   // generate the analysis again. Stale analysis info should not be
   // available at this point.
   if (P->isAnalysis() && findAnalysisPass(P->getPassInfo()))
-      return;
+    return;
 
   AnalysisUsage AnUsage;
   P->getAnalysisUsage(AnUsage);

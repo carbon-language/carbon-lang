@@ -551,15 +551,12 @@ namespace {
     AliasSetTracker *Tracker;
   public:
     static char ID; // Pass identification, replacement for typeid
-    AliasSetPrinter() : FunctionPass((intptr_t)&ID) {}
+    AliasSetPrinter() : FunctionPass((intptr_t)&ID, true) {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
       AU.addRequired<AliasAnalysis>();
     }
-
-    /// isAnalysis - Return true if this pass is  implementing an analysis pass.
-    virtual bool isAnalysis() const { return true; }
 
     virtual bool runOnFunction(Function &F) {
       Tracker = new AliasSetTracker(getAnalysis<AliasAnalysis>());

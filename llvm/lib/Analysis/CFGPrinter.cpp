@@ -92,10 +92,7 @@ struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
 namespace {
   struct VISIBILITY_HIDDEN CFGViewer : public FunctionPass {
     static char ID; // Pass identifcation, replacement for typeid
-    CFGViewer() : FunctionPass((intptr_t)&ID) {}
-
-    /// isAnalysis - Return true if this pass is  implementing an analysis pass.
-    virtual bool isAnalysis() const { return true; }
+    CFGViewer() : FunctionPass((intptr_t)&ID, true) {}
 
     virtual bool runOnFunction(Function &F) {
       F.viewCFG();
@@ -115,10 +112,7 @@ namespace {
 
   struct VISIBILITY_HIDDEN CFGOnlyViewer : public FunctionPass {
     static char ID; // Pass identifcation, replacement for typeid
-    CFGOnlyViewer() : FunctionPass((intptr_t)&ID) {}
-
-    /// isAnalysis - Return true if this pass is  implementing an analysis pass.
-    virtual bool isAnalysis() const { return true; }
+    CFGOnlyViewer() : FunctionPass((intptr_t)&ID, true) {}
 
     virtual bool runOnFunction(Function &F) {
       CFGOnly = true;
@@ -141,10 +135,7 @@ namespace {
   struct VISIBILITY_HIDDEN CFGPrinter : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
     CFGPrinter() : FunctionPass((intptr_t)&ID) {}
-    explicit CFGPrinter(intptr_t pid) : FunctionPass(pid) {}
-
-    /// isAnalysis - Return true if this pass is  implementing an analysis pass.
-    virtual bool isAnalysis() const { return true; }
+    explicit CFGPrinter(intptr_t pid) : FunctionPass(pid, true) {}
 
     virtual bool runOnFunction(Function &F) {
       std::string Filename = "cfg." + F.getName() + ".dot";
@@ -173,10 +164,6 @@ namespace {
   struct VISIBILITY_HIDDEN CFGOnlyPrinter : public CFGPrinter {
     static char ID; // Pass identification, replacement for typeid
     CFGOnlyPrinter() : CFGPrinter((intptr_t)&ID) {}
-
-    /// isAnalysis - Return true if this pass is  implementing an analysis pass.
-    virtual bool isAnalysis() const { return true; }
-
     virtual bool runOnFunction(Function &F) {
       bool OldCFGOnly = CFGOnly;
       CFGOnly = true;

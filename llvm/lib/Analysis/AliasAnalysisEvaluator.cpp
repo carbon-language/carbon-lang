@@ -52,7 +52,7 @@ namespace {
 
   public:
     static char ID; // Pass identification, replacement for typeid
-    AAEval() : FunctionPass((intptr_t)&ID) {}
+    AAEval() : FunctionPass((intptr_t)&ID, true) {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<AliasAnalysis>();
@@ -69,9 +69,6 @@ namespace {
       }
       return false;
     }
-
-    /// isAnalysis - Return true if this pass is  implementing an analysis pass.
-    virtual bool isAnalysis() const { return true; }
 
     bool runOnFunction(Function &F);
     bool doFinalization(Module &M);

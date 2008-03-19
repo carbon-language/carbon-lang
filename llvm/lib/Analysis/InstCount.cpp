@@ -51,12 +51,8 @@ namespace {
       abort();
     }
   public:
-
-    /// isAnalysis - Return true if this pass is  implementing an analysis pass.
-    virtual bool isAnalysis() const { return true; }
-
     static char ID; // Pass identification, replacement for typeid
-    InstCount() : FunctionPass((intptr_t)&ID) {}
+    InstCount() : FunctionPass((intptr_t)&ID, true) {}
 
     virtual bool runOnFunction(Function &F);
 

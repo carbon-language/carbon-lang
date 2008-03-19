@@ -34,7 +34,7 @@ namespace {
   public:
     static char ID; // Class identification, replacement for typeinfo
     explicit LoaderPass(const std::string &filename = "")
-      : ModulePass((intptr_t)&ID), Filename(filename) {
+      : ModulePass((intptr_t)&ID, true), Filename(filename) {
       if (filename.empty()) Filename = ProfileInfoFilename;
     }
 
@@ -45,9 +45,6 @@ namespace {
     virtual const char *getPassName() const {
       return "Profiling information loader";
     }
-
-    /// isAnalysis - Return true if this pass is  implementing an analysis pass.
-    virtual bool isAnalysis() const { return true; }
 
     /// run - Load the profile information from the specified file.
     virtual bool runOnModule(Module &M);

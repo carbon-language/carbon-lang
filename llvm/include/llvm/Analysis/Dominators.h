@@ -300,9 +300,6 @@ public:
   // FIXME: Should remove this
   virtual bool runOnFunction(Function &F) { return false; }
 
-  /// isAnalysis - Return true if this pass is  implementing an analysis pass.
-  virtual bool isAnalysis() const { return true; }
-
   virtual void releaseMemory() { reset(); }
 
   /// getNode - return the (Post)DominatorTree node for the specified basic
@@ -667,7 +664,7 @@ public:
   static char ID; // Pass ID, replacement for typeid
   DominatorTreeBase<BasicBlock>* DT;
   
-  DominatorTree() : FunctionPass(intptr_t(&ID)) {
+  DominatorTree() : FunctionPass(intptr_t(&ID), true) {
     DT = new DominatorTreeBase<BasicBlock>(false);
   }
   
@@ -694,9 +691,6 @@ public:
     return DT->getRootNode();
   }
   
-  /// isAnalysis - Return true if this pass is  implementing an analysis pass.
-  virtual bool isAnalysis() const { return true; }
-
   virtual bool runOnFunction(Function &F);
   
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -843,7 +837,7 @@ protected:
   
 public:
   DominanceFrontierBase(intptr_t ID, bool isPostDom) 
-    : FunctionPass(ID), IsPostDominators(isPostDom) {}
+    : FunctionPass(ID, true), IsPostDominators(isPostDom) {}
 
   /// getRoots -  Return the root blocks of the current CFG.  This may include
   /// multiple blocks if we are computing post dominators.  For forward
@@ -915,9 +909,6 @@ public:
     assert(Roots.size() == 1 && "Should always have entry node!");
     return Roots[0];
   }
-
-  /// isAnalysis - Return true if this pass is  implementing an analysis pass.
-  virtual bool isAnalysis() const { return true; }
 
   virtual bool runOnFunction(Function &) {
     Frontiers.clear();

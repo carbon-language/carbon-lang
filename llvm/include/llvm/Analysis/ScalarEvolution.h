@@ -192,7 +192,7 @@ namespace llvm {
     void *Impl;    // ScalarEvolution uses the pimpl pattern
   public:
     static char ID; // Pass identification, replacement for typeid
-    ScalarEvolution() : FunctionPass((intptr_t)&ID), Impl(0) {}
+    ScalarEvolution() : FunctionPass((intptr_t)&ID, true), Impl(0) {}
 
     /// getSCEV - Return a SCEV expression handle for the full generality of the
     /// specified expression.
@@ -290,9 +290,6 @@ namespace llvm {
     /// client before it removes a Value from the program, to make sure
     /// that no dangling references are left around.
     void deleteValueFromRecords(Value *V) const;
-
-    /// isAnalysis - Return true if this pass is  implementing an analysis pass.
-    virtual bool isAnalysis() const { return true; }
 
     virtual bool runOnFunction(Function &F);
     virtual void releaseMemory();

@@ -879,7 +879,7 @@ class LoopInfo : public FunctionPass {
 public:
   static char ID; // Pass identification, replacement for typeid
 
-  LoopInfo() : FunctionPass(intptr_t(&ID)) {
+  LoopInfo() : FunctionPass(intptr_t(&ID), true) {
     LI = new LoopInfoBase<BasicBlock>();
   }
   
@@ -918,9 +918,6 @@ public:
   inline bool isLoopHeader(BasicBlock *BB) const {
     return LI->isLoopHeader(BB);
   }
-
-  /// isAnalysis - Return true if this pass is  implementing an analysis pass.
-  bool isAnalysis() const { return true; }
 
   /// runOnFunction - Calculate the natural loop information.
   ///

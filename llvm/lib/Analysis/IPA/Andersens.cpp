@@ -430,10 +430,7 @@ namespace {
 
   public:
     static char ID;
-    Andersens() : ModulePass((intptr_t)&ID) {}
-
-    /// isAnalysis - Return true if this pass is  implementing an analysis pass.
-    virtual bool isAnalysis() const { return true; }
+    Andersens() : ModulePass((intptr_t)&ID, true) {}
 
     bool runOnModule(Module &M) {
       InitializeAliasAnalysis(this);
