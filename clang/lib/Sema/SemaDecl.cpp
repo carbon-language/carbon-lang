@@ -1089,8 +1089,19 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
     // empty arg list, don't push any params.
   } else {
     for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i) {
-      Params.push_back(ActOnParamDeclarator(D.getTypeObject(0).Fun.ArgInfo[i],
-                                            FnBodyScope));
+      ParmVarDecl *parmDecl;
+      
+      parmDecl = ActOnParamDeclarator(D.getTypeObject(0).Fun.ArgInfo[i],
+                                      FnBodyScope);
+      // C99 6.7.5.3p4: the parameters in a parameter type list in a function
+      // declarator that is part of a function definition of that function
+      // shall not have incomplete type.
+      if (parmDecl->getType()->isIncompleteType()) {
+        Diag(parmDecl->getLocation(), diag::err_typecheck_decl_incomplete_type,
+             parmDecl->getType().getAsString());
+        parmDecl->setInvalidDecl();
+      }
+      Params.push_back(parmDecl);
     }
   }
   
