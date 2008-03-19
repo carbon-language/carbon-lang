@@ -107,12 +107,12 @@ let isCall = 1 in
 
 
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
-def TCRETURNdi64 : I<0, Pseudo, (outs), (ins i64imm:$dst, i32imm:$offset),
+def TCRETURNdi64 : I<0, Pseudo, (outs), (ins i64imm:$dst, i32imm:$offset, variable_ops),
                  "#TC_RETURN $dst $offset",
                  []>;
 
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
-def TCRETURNri64 : I<0, Pseudo, (outs), (ins GR64:$dst, i32imm:$offset),
+def TCRETURNri64 : I<0, Pseudo, (outs), (ins GR64:$dst, i32imm:$offset, variable_ops),
                  "#TC_RETURN $dst $offset",
                  []>;
 

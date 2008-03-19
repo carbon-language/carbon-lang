@@ -381,12 +381,12 @@ def TAILCALL : I<0, Pseudo, (outs), (ins),
                          []>;
 
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
-def TCRETURNdi : I<0, Pseudo, (outs), (ins i32imm:$dst, i32imm:$offset),
+def TCRETURNdi : I<0, Pseudo, (outs), (ins i32imm:$dst, i32imm:$offset, variable_ops),
                  "#TC_RETURN $dst $offset",
                  []>;
 
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
-def TCRETURNri : I<0, Pseudo, (outs), (ins GR32:$dst, i32imm:$offset),
+def TCRETURNri : I<0, Pseudo, (outs), (ins GR32:$dst, i32imm:$offset, variable_ops),
                  "#TC_RETURN $dst $offset",
                  []>;
 

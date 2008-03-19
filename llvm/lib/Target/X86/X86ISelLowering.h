@@ -191,11 +191,11 @@ namespace llvm {
       // Exception Handling helpers
       EH_RETURN,
       
-      // tail call return 
-      //   oeprand #0 chain
-      //   operand #1 callee (register or absolute)
-      //   operand #2 stack adjustment
-      //   operand #3 optional in flag
+      /// TC_RETURN - Tail call return.
+      ///   operand #0 chain
+      ///   operand #1 callee (register or absolute)
+      ///   operand #2 stack adjustment
+      ///   operand #3 optional in flag
       TC_RETURN,
 
       // compare and swap
