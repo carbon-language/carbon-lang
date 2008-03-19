@@ -1,26 +1,26 @@
 ; This test makes sure that these instructions are properly constant propagated.
 ;
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -sccp | llvm-dis | not grep load
+; RUN: llvm-as < %s | opt -sccp | llvm-dis | not grep load
 
-%X = constant int 42
-%Y = constant [2 x { int, float }] [ { int, float } { int 12, float 1.0 }, 
-                                     { int, float } { int 37, float 0x3FF3B2FEC0000000 } ]
-int %test1() {
-	%B = load int* %X
-	ret int %B
+
+@X = constant i32 42		; <i32*> [#uses=1]
+@Y = constant [2 x { i32, float }] [ { i32, float } { i32 12, float 1.000000e+00 }, { i32, float } { i32 37, float 0x3FF3B2FEC0000000 } ]		; <[2 x { i32, float }]*> [#uses=2]
+
+define i32 @test1() {
+	%B = load i32* @X		; <i32> [#uses=1]
+	ret i32 %B
 }
 
-float %test2() {
-	%A = getelementptr [2 x { int, float}]* %Y, long 0, long 1, uint 1
-	%B = load float* %A
+define float @test2() {
+	%A = getelementptr [2 x { i32, float }]* @Y, i64 0, i64 1, i32 1		; <float*> [#uses=1]
+	%B = load float* %A		; <float> [#uses=1]
 	ret float %B
 }
 
-int %test3() {
-	%A = getelementptr [2 x { int, float}]* %Y, long 0, long 0, uint 0
-	%B = load int* %A
-	ret int %B
+define i32 @test3() {
+	%A = getelementptr [2 x { i32, float }]* @Y, i64 0, i64 0, i32 0		; <i32*> [#uses=1]
+	%B = load i32* %A		; <i32> [#uses=1]
+	ret i32 %B
 }
-
 

@@ -1,14 +1,13 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -sccp -disable-output
+; RUN: llvm-as < %s | opt -sccp -disable-output
 
-implementation
+declare i32 @foo()
 
-declare int %foo()
-
-void %caller() {
-	br bool true, label %T, label %F
-F:
-	%X = invoke int %foo() to label %T unwind label %T
-
-T:
+define void @caller() {
+	br i1 true, label %T, label %F
+F:		; preds = %0
+	%X = invoke i32 @foo( )
+			to label %T unwind label %T		; <i32> [#uses=0]
+T:		; preds = %F, %F, %0
 	ret void
 }
+

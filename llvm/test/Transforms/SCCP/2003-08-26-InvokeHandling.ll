@@ -1,15 +1,18 @@
 ; The PHI cannot be eliminated from this testcase, SCCP is mishandling invoke's!
-; RUN: llvm-upgrade < %s | llvm-as | opt -sccp | llvm-dis | grep phi
+; RUN: llvm-as < %s | opt -sccp | llvm-dis | grep phi
 
-declare void %foo()
-int %test(bool %cond) {
+declare void @foo()
+
+define i32 @test(i1 %cond) {
 Entry:
-	br bool %cond, label %Inv, label %Cont
-Inv:
-	invoke void %foo() to label %Ok except label %Cont
-Ok:
+	br i1 %cond, label %Inv, label %Cont
+Inv:		; preds = %Entry
+	invoke void @foo( )
+			to label %Ok unwind label %Cont
+Ok:		; preds = %Inv
 	br label %Cont
-Cont:
-	%X = phi int [0, %Entry], [1,%Ok], [0, %Inv]
-	ret int %X
+Cont:		; preds = %Ok, %Inv, %Entry
+	%X = phi i32 [ 0, %Entry ], [ 1, %Ok ], [ 0, %Inv ]		; <i32> [#uses=1]
+	ret i32 %X
 }
+

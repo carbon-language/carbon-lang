@@ -1,7 +1,8 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -sccp | llvm-dis | \
+; RUN: llvm-as < %s | opt -sccp | llvm-dis | \
 ; RUN:   grep {ret i1 false}
 
-bool %foo() {
-	%X = and bool false, undef
-	ret bool %X
+define i1 @foo() {
+	%X = and i1 false, undef		; <i1> [#uses=1]
+	ret i1 %X
 }
+

@@ -1,11 +1,12 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -sccp | llvm-dis | not grep select
+; RUN: llvm-as < %s | opt -sccp | llvm-dis | not grep select
 
-int %test1(bool %C) {
-	%X = select bool %C, int 0, int 0
-	ret int %X
+define i32 @test1(i1 %C) {
+	%X = select i1 %C, i32 0, i32 0		; <i32> [#uses=1]
+	ret i32 %X
 }
 
-int %test2(bool %C) {
-	%X = select bool %C, int 0, int undef
-	ret int %X
+define i32 @test2(i1 %C) {
+	%X = select i1 %C, i32 0, i32 undef		; <i32> [#uses=1]
+	ret i32 %X
 }
+

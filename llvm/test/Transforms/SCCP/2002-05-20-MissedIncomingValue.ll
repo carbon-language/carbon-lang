@@ -1,20 +1,19 @@
 ; This test shows a case where SCCP is incorrectly eliminating the PHI node
 ; because it thinks it has a constant 0 value, when it really doesn't.
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -sccp | llvm-dis | grep phi
+; RUN: llvm-as < %s | opt -sccp | llvm-dis | grep phi
 
-int "test"(int %A, bool %c) {
+define i32 @test(i32 %A, i1 %c) {
 bb1:
 	br label %BB2
-BB2:
-	%V = phi int [0, %bb1], [%A, %BB4]
+BB2:		; preds = %BB4, %bb1
+	%V = phi i32 [ 0, %bb1 ], [ %A, %BB4 ]		; <i32> [#uses=1]
 	br label %BB3
-
-BB3:
-	br bool %c, label %BB4, label %BB5
-BB4:
+BB3:		; preds = %BB2
+	br i1 %c, label %BB4, label %BB5
+BB4:		; preds = %BB3
 	br label %BB2
-
-BB5:
-	ret int %V
+BB5:		; preds = %BB3
+	ret i32 %V
 }
+

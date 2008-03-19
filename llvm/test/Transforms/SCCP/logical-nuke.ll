@@ -1,8 +1,9 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -sccp | llvm-dis | grep {ret i32 0}
+; RUN: llvm-as < %s | opt -sccp | llvm-dis | grep {ret i32 0}
 
 ; Test that SCCP has basic knowledge of when and/or nuke overdefined values.
 
-int %test(int %X) {
-	%Y = and int %X, 0
-	ret int %Y
+define i32 @test(i32 %X) {
+	%Y = and i32 %X, 0		; <i32> [#uses=1]
+	ret i32 %Y
 }
+
