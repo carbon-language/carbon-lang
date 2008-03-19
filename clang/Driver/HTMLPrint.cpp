@@ -57,14 +57,21 @@ HTMLPrinter::~HTMLPrinter() {
     std::ostringstream os;
   
     os << "<html>\n<head>\n"
-       << " <style type=\"text/css\">\n"
-       << "  .nums, .lines { vertical-align:top }\n"
-       << "  .nums { padding-right:.5em; width:2.5em }\n"
+       << " <style type=\"text/css\">\n"    
+       << "  .codeblock { width:100% }\n"
+       << "  .codeline { font-family: \"Monaco\", fixed; font-size:11pt }\n"
+       << "  .codeline { height:1.5em; line-height:1.5em }\n"
+       << "  .nums, .lines { float:left; height:100% }\n"
+       << "  .nums { background-color: #eeeeee }\n"
+       << "  .nums { font-family: \"Andale Mono\", fixed; font-size:smaller }\n"
+       << "  .nums { width:2.5em; padding-right:2ex; text-align:right }\n"
+       << "  .lines { padding-left: 1ex; border-left: 3px solid #ccc }\n"
+       << "  .lines { white-space: pre }\n"
        << " </style>\n"
        << "</head>\n"
-       << "<body>\n<pre>";
+       << "<body>";
 
-    R.InsertTextBefore(StartLoc, os.str().c_str(), os.str().size());
+    R.InsertStrBefore(StartLoc, os.str());
   }
   
   // Generate footer
@@ -72,8 +79,8 @@ HTMLPrinter::~HTMLPrinter() {
   {
     std::ostringstream os;
     
-    os << "</pre>\n</body></html>\n";
-    R.InsertTextAfter(EndLoc, os.str().c_str(), os.str().size());
+    os << "</body></html>\n";
+    R.InsertStrAfter(EndLoc, os.str());
   }
     
   

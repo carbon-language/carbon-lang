@@ -49,16 +49,26 @@ void html::EscapeText(Rewriter& R, unsigned FileID, bool EscapeSpaces) {
 static void AddLineNumber(Rewriter& R, unsigned LineNo,
                           SourceLocation B, SourceLocation E) {
     
-  // Surround the line with a span tag.
+  // Surround the line text with a div tag.
   
-  R.InsertTextBefore(E, "</span>", 7);
-  R.InsertTextBefore(B, "<span class=lines>", 18);
+  if (B == E) // Handle empty lines.
+    R.InsertCStrBefore(B, "<div class=\"lines\"> </div>");
+  else {                         
+    R.InsertCStrBefore(E, "</div>");
+    R.InsertCStrBefore(B, "<div class=\"lines\">");
+  }
   
-  // Insert a span tag for the line number.
-
+  // Insert a div tag for the line number.
+  
   std::ostringstream os;
-  os << "<span class=nums>" << LineNo << "</span>";
-  R.InsertTextBefore(B, os.str().c_str(), os.str().size());
+  os << "<div class=\"nums\">" << LineNo << "</div>";
+  
+  R.InsertStrBefore(B, os.str());
+  
+  // Now surround the whole line with another div tag.
+  
+  R.InsertCStrBefore(B, "<div class=\"codeline\">");
+  R.InsertCStrAfter(E, "</div>");
 }
 
 void html::AddLineNumbers(Rewriter& R, unsigned FileID) {
@@ -98,5 +108,13 @@ void html::AddLineNumbers(Rewriter& R, unsigned FileID) {
       ++C;
       ++FilePos;
     }      
-  }    
+  }
+  
+  // Add one big div tag that surrounds all of the code.
+  
+  R.InsertCStrBefore(SourceLocation::getFileLoc(FileID, 0),
+                     "<div id=\"codeblock\">");
+  
+  R.InsertCStrAfter(SourceLocation::getFileLoc(FileID, FileEnd - FileBeg),
+                    "</div>");
 }
