@@ -226,6 +226,14 @@ public:
   GetElementPtrInst *CreateGEP(Value *Ptr, Value *Idx, const char *Name = "") {
     return Insert(new GetElementPtrInst(Ptr, Idx, Name));
   }
+  GetElementPtrInst *CreateStructGEP(Value *Ptr, unsigned Idx, 
+                                     const char *Name = "") {
+    llvm::Value *Idxs[] = {
+      ConstantInt::get(llvm::Type::Int32Ty, 0),
+      ConstantInt::get(llvm::Type::Int32Ty, Idx)
+    };
+    return Insert(new GetElementPtrInst(Ptr, Idxs, Idxs+2, Name));
+  }
   
   //===--------------------------------------------------------------------===//
   // Instruction creation methods: Cast/Conversion Operators

@@ -22,6 +22,7 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Debug.h"
 #include <algorithm>
+#include <cstdarg>
 using namespace llvm;
 
 // DEBUG_MERGE_TYPES - Enable this #define to see how and when derived types are
@@ -1245,6 +1246,16 @@ StructType *StructType::get(const std::vector<const Type*> &ETypes,
   DOUT << "Derived new type: " << *ST << "\n";
 #endif
   return ST;
+}
+
+StructType *StructType::get(const Type *type, ...) {
+  va_list ap;
+  std::vector<const llvm::Type*> StructFields;
+  va_start(ap, type);
+  do {
+    StructFields.push_back(type);
+  } while ((type = va_arg(ap, llvm::Type*)));
+  return llvm::StructType::get(StructFields);
 }
 
 

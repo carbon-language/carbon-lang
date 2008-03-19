@@ -220,6 +220,11 @@ public:
   static StructType *get(const std::vector<const Type*> &Params, 
                          bool isPacked=false);
 
+  /// StructType::get - This static method is a convenience method for
+  /// creating structure types by specifying the elements as arguments.  Note
+  /// that this method always returns a non-packed struct.
+  static StructType *get(const Type *type, ...) END_WITH_NULL;
+
   // Iterator access to the elements
   typedef Type::subtype_iterator element_iterator;
   element_iterator element_begin() const { return ContainedTys; }
