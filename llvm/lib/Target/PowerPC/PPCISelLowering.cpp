@@ -1747,7 +1747,8 @@ CreateCopyOfByValArgument(SDOperand Src, SDOperand Dst, SDOperand Chain,
 }
 
 SDOperand PPCTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG,
-                                       const PPCSubtarget &Subtarget) {
+                                       const PPCSubtarget &Subtarget,
+                                       TargetMachine &TM) {
   SDOperand Chain  = Op.getOperand(0);
   bool isVarArg    = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
   SDOperand Callee = Op.getOperand(4);
@@ -2184,155 +2185,30 @@ SDOperand PPCTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG,
   if (Op.Val->getValueType(0) != MVT::Other)
     InFlag = Chain.getValue(1);
 
-  SDOperand ResultVals[9];
-  unsigned NumResults = 0;
-  NodeTys.clear();
+  SmallVector<SDOperand, 16> ResultVals;
+  SmallVector<CCValAssign, 16> RVLocs;
+  unsigned CC = DAG.getMachineFunction().getFunction()->getCallingConv();
+  CCState CCInfo(CC, isVarArg, TM, RVLocs);
+  CCInfo.AnalyzeCallResult(Op.Val, RetCC_PPC);
   
-  // If the call has results, copy the values out of the ret val registers.
-  switch (Op.Val->getValueType(0)) {
-  default: assert(0 && "Unexpected ret value!");
-  case MVT::Other: break;
-  case MVT::i32:
-    // There are 8 result regs for Complex double, and 4 for Complex long long.
-    if (Op.Val->getNumValues()>=8 && Op.Val->getValueType(7) == MVT::i32) {
-      Chain = DAG.getCopyFromReg(Chain, PPC::R3, MVT::i32, InFlag).getValue(1);
-      ResultVals[0] = Chain.getValue(0);
-      Chain = DAG.getCopyFromReg(Chain, PPC::R4, MVT::i32,
-                                 Chain.getValue(2)).getValue(1);
-      ResultVals[1] = Chain.getValue(0);
-      Chain = DAG.getCopyFromReg(Chain, PPC::R5, MVT::i32,
-                                 Chain.getValue(2)).getValue(1);
-      ResultVals[2] = Chain.getValue(0);
-      Chain = DAG.getCopyFromReg(Chain, PPC::R6, MVT::i32,
-                                 Chain.getValue(2)).getValue(1);
-      ResultVals[3] = Chain.getValue(0);
-      Chain = DAG.getCopyFromReg(Chain, PPC::R7, MVT::i32,
-                                 Chain.getValue(2)).getValue(1);
-      ResultVals[4] = Chain.getValue(0);
-      Chain = DAG.getCopyFromReg(Chain, PPC::R8, MVT::i32,
-                                 Chain.getValue(2)).getValue(1);
-      ResultVals[5] = Chain.getValue(0);
-      Chain = DAG.getCopyFromReg(Chain, PPC::R9, MVT::i32,
-                                 Chain.getValue(2)).getValue(1);
-      ResultVals[6] = Chain.getValue(0);
-      Chain = DAG.getCopyFromReg(Chain, PPC::R10, MVT::i32,
-                                 Chain.getValue(2)).getValue(1);
-      ResultVals[7] = Chain.getValue(0);
-      NumResults = 8;
-      NodeTys.push_back(MVT::i32);
-      NodeTys.push_back(MVT::i32);
-      NodeTys.push_back(MVT::i32);
-      NodeTys.push_back(MVT::i32);
-      NodeTys.push_back(MVT::i32);
-      NodeTys.push_back(MVT::i32);
-      NodeTys.push_back(MVT::i32);
-    } else if (Op.Val->getNumValues()>=4 && 
-               Op.Val->getValueType(3) == MVT::i32) {
-      Chain = DAG.getCopyFromReg(Chain, PPC::R3, MVT::i32, InFlag).getValue(1);
-      ResultVals[0] = Chain.getValue(0);
-      Chain = DAG.getCopyFromReg(Chain, PPC::R4, MVT::i32,
-                                 Chain.getValue(2)).getValue(1);
-      ResultVals[1] = Chain.getValue(0);
-      Chain = DAG.getCopyFromReg(Chain, PPC::R5, MVT::i32,
-                                 Chain.getValue(2)).getValue(1);
-      ResultVals[2] = Chain.getValue(0);
-      Chain = DAG.getCopyFromReg(Chain, PPC::R6, MVT::i32,
-                                 Chain.getValue(2)).getValue(1);
-      ResultVals[3] = Chain.getValue(0);
-      NumResults = 4;
-      NodeTys.push_back(MVT::i32);
-      NodeTys.push_back(MVT::i32);
-      NodeTys.push_back(MVT::i32);
-    } else if (Op.Val->getValueType(1) == MVT::i32) {
-      Chain = DAG.getCopyFromReg(Chain, PPC::R3, MVT::i32, InFlag).getValue(1);
-      ResultVals[0] = Chain.getValue(0);
-      Chain = DAG.getCopyFromReg(Chain, PPC::R4, MVT::i32,
-                                 Chain.getValue(2)).getValue(1);
-      ResultVals[1] = Chain.getValue(0);
-      NumResults = 2;
-      NodeTys.push_back(MVT::i32);
-    } else {
-      Chain = DAG.getCopyFromReg(Chain, PPC::R3, MVT::i32, InFlag).getValue(1);
-      ResultVals[0] = Chain.getValue(0);
-      NumResults = 1;
-    }
-    NodeTys.push_back(MVT::i32);
-    break;
-  case MVT::i64:
-    if (Op.Val->getNumValues()>=4 && 
-        Op.Val->getValueType(3) == MVT::i64) {
-      Chain = DAG.getCopyFromReg(Chain, PPC::X3, MVT::i64, InFlag).getValue(1);
-      ResultVals[0] = Chain.getValue(0);
-      Chain = DAG.getCopyFromReg(Chain, PPC::X4, MVT::i64,
-                                 Chain.getValue(2)).getValue(1);
-      ResultVals[1] = Chain.getValue(0);
-      Chain = DAG.getCopyFromReg(Chain, PPC::X5, MVT::i64,
-                                 Chain.getValue(2)).getValue(1);
-      ResultVals[2] = Chain.getValue(0);
-      Chain = DAG.getCopyFromReg(Chain, PPC::X6, MVT::i64,
-                                 Chain.getValue(2)).getValue(1);
-      ResultVals[3] = Chain.getValue(0);
-      NumResults = 4;
-      NodeTys.push_back(MVT::i64);
-      NodeTys.push_back(MVT::i64);
-      NodeTys.push_back(MVT::i64);
-    } else if (Op.Val->getValueType(1) == MVT::i64) {
-      Chain = DAG.getCopyFromReg(Chain, PPC::X3, MVT::i64, InFlag).getValue(1);
-      ResultVals[0] = Chain.getValue(0);
-      Chain = DAG.getCopyFromReg(Chain, PPC::X4, MVT::i64,
-                                 Chain.getValue(2)).getValue(1);
-      ResultVals[1] = Chain.getValue(0);
-      NumResults = 2;
-      NodeTys.push_back(MVT::i64);
-    } else {
-      Chain = DAG.getCopyFromReg(Chain, PPC::X3, MVT::i64, InFlag).getValue(1);
-      ResultVals[0] = Chain.getValue(0);
-      NumResults = 1;
-    }
-    NodeTys.push_back(MVT::i64);
-    break;
-  case MVT::f64:
-    if (Op.Val->getValueType(1) == MVT::f64) {
-      Chain = DAG.getCopyFromReg(Chain, PPC::F1, MVT::f64, InFlag).getValue(1);
-      ResultVals[0] = Chain.getValue(0);
-      Chain = DAG.getCopyFromReg(Chain, PPC::F2, MVT::f64,
-                                 Chain.getValue(2)).getValue(1);
-      ResultVals[1] = Chain.getValue(0);
-      NumResults = 2;
-      NodeTys.push_back(MVT::f64);
-      NodeTys.push_back(MVT::f64);
-      break;
-    } 
-    // else fall through
-  case MVT::f32:
-    Chain = DAG.getCopyFromReg(Chain, PPC::F1, Op.Val->getValueType(0),
-                               InFlag).getValue(1);
-    ResultVals[0] = Chain.getValue(0);
-    NumResults = 1;
-    NodeTys.push_back(Op.Val->getValueType(0));
-    break;
-  case MVT::v4f32:
-  case MVT::v4i32:
-  case MVT::v8i16:
-  case MVT::v16i8:
-    Chain = DAG.getCopyFromReg(Chain, PPC::V2, Op.Val->getValueType(0),
-                                   InFlag).getValue(1);
-    ResultVals[0] = Chain.getValue(0);
-    NumResults = 1;
-    NodeTys.push_back(Op.Val->getValueType(0));
-    break;
+  // Copy all of the result registers out of their specified physreg.
+  for (unsigned i = 0, e = RVLocs.size(); i != e; ++i) {
+    CCValAssign &VA = RVLocs[i];
+    MVT::ValueType VT = VA.getValVT();
+    assert(VA.isRegLoc() && "Can only return in registers!");
+    Chain = DAG.getCopyFromReg(Chain, VA.getLocReg(), VT, InFlag).getValue(1);
+    ResultVals.push_back(Chain.getValue(0));
+    InFlag = Chain.getValue(2);
   }
-  
-  NodeTys.push_back(MVT::Other);
-  
+
   // If the function returns void, just return the chain.
-  if (NumResults == 0)
+  if (RVLocs.empty())
     return Chain;
   
   // Otherwise, merge everything together with a MERGE_VALUES node.
-  ResultVals[NumResults++] = Chain;
-  SDOperand Res = DAG.getNode(ISD::MERGE_VALUES, NodeTys,
-                              ResultVals, NumResults);
+  ResultVals.push_back(Chain);
+  SDOperand Res = DAG.getNode(ISD::MERGE_VALUES, Op.Val->getVTList(),
+                              &ResultVals[0], ResultVals.size());
   return Res.getValue(Op.ResNo);
 }
 
@@ -3537,7 +3413,8 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
                                  VarArgsStackOffset, VarArgsNumGPR,
                                  VarArgsNumFPR, PPCSubTarget);
 
-  case ISD::CALL:               return LowerCALL(Op, DAG, PPCSubTarget);
+  case ISD::CALL:               return LowerCALL(Op, DAG, PPCSubTarget,
+                                                 getTargetMachine());
   case ISD::RET:                return LowerRET(Op, DAG, getTargetMachine());
   case ISD::STACKRESTORE:       return LowerSTACKRESTORE(Op, DAG, PPCSubTarget);
   case ISD::DYNAMIC_STACKALLOC:

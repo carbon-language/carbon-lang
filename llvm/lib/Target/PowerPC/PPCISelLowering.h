@@ -317,7 +317,7 @@ namespace llvm {
                                     unsigned &VarArgsNumFPR,
                                     const PPCSubtarget &Subtarget);
     SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG,
-                        const PPCSubtarget &Subtarget);
+                        const PPCSubtarget &Subtarget, TargetMachine &TM);
     SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG, TargetMachine &TM);
     SDOperand LowerSTACKRESTORE(SDOperand Op, SelectionDAG &DAG,
                                 const PPCSubtarget &Subtarget);
