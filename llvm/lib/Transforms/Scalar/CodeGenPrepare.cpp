@@ -30,16 +30,10 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/Support/CallSite.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 using namespace llvm;
-
-namespace {
-  cl::opt<bool> OptExtUses("optimize-ext-uses",
-                           cl::init(true), cl::Hidden);
-}
 
 namespace {  
   class VISIBILITY_HIDDEN CodeGenPrepare : public FunctionPass {
@@ -1098,7 +1092,7 @@ bool CodeGenPrepare::OptimizeBlock(BasicBlock &BB) {
         MadeChange |= Change;
       }
 
-      if (OptExtUses && !Change && (isa<ZExtInst>(I) || isa<SExtInst>(I)))
+      if (!Change && (isa<ZExtInst>(I) || isa<SExtInst>(I)))
         MadeChange |= OptimizeExtUses(I);
     } else if (CmpInst *CI = dyn_cast<CmpInst>(I)) {
       MadeChange |= OptimizeCmpExpression(CI);

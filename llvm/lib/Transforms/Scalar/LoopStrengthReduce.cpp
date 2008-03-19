@@ -34,7 +34,6 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Target/TargetLowering.h"
 #include <algorithm>
@@ -45,12 +44,6 @@ STATISTIC(NumReduced ,    "Number of GEPs strength reduced");
 STATISTIC(NumInserted,    "Number of PHIs inserted");
 STATISTIC(NumVariable,    "Number of PHIs with variable strides");
 STATISTIC(NumEliminated , "Number of strides eliminated");
-
-namespace {
-  // Hidden options for help debugging.
-  cl::opt<bool> AllowPHIIVReuse("lsr-allow-phi-iv-reuse",
-                                cl::init(true), cl::Hidden);
-}
 
 namespace {
 
@@ -997,11 +990,8 @@ bool LoopStrengthReduce::ValidStride(bool HasBaseReg,
       AccessTy = SI->getOperand(0)->getType();
     else if (LoadInst *LI = dyn_cast<LoadInst>(UsersToProcess[i].Inst))
       AccessTy = LI->getType();
-    else if (isa<PHINode>(UsersToProcess[i].Inst)) {
-      if (AllowPHIIVReuse)
-        continue;
-      return false;
-    }
+    else if (isa<PHINode>(UsersToProcess[i].Inst))
+      continue;
     
     TargetLowering::AddrMode AM;
     if (SCEVConstant *SC = dyn_cast<SCEVConstant>(UsersToProcess[i].Imm))
@@ -1189,7 +1179,7 @@ SCEVHandle LoopStrengthReduce::CollectIVUsers(const SCEVHandle &Stride,
       }
 
       // If this use isn't an address, then not all uses are addresses.
-      if (!isAddress && !(AllowPHIIVReuse && isPHI))
+      if (!isAddress && !isPHI)
         AllUsesAreAddresses = false;
       
       MoveImmediateValues(TLI, UsersToProcess[i].Inst, UsersToProcess[i].Base,
