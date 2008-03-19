@@ -292,13 +292,19 @@ function.</p>
 initialization value is not important.</p>
 
 <div class="doc_code"><pre>
-  RegisterPass&lt;Hello&gt; X("<i>hello</i>", "<i>Hello World Pass</i>");
+  RegisterPass&lt;Hello&gt; X("<i>hello</i>", "<i>Hello World Pass</i>",
+                        false /* Only looks at CFG */,
+                        false /* Analysis Pass */);
 }  <i>// end of anonymous namespace</i>
 </pre></div>
 
 <p>Lastly, we <a href="#registration">register our class</a> <tt>Hello</tt>, 
 giving it a command line
-argument "<tt>hello</tt>", and a name "<tt>Hello World Pass</tt>".</p>
+argument "<tt>hello</tt>", and a name "<tt>Hello World Pass</tt>".
+Last two RegisterPass arguments are optional. Their default value is false.
+If a pass walks CFG without modifying it then third argument is set to true. 
+If  a pass is an analysis pass, for example dominator tree pass, then true 
+is supplied as fourth argument. </p>
 
 <p>As a whole, the <tt>.cpp</tt> file looks like:</p>
 

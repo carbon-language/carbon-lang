@@ -41,7 +41,7 @@ namespace {
     
   public:
     static char ID; // Class identification, replacement for typeinfo
-    AliasDebugger() : ModulePass((intptr_t)&ID, true) {}
+    AliasDebugger() : ModulePass((intptr_t)&ID) {}
 
     bool runOnModule(Module &M) {
       InitializeAliasAnalysis(this);                 // set up super class
@@ -123,7 +123,7 @@ namespace {
   };
 
   char AliasDebugger::ID = 0;
-  RegisterPass<AliasDebugger> X("debug-aa", "AA use debugger");
+  RegisterPass<AliasDebugger> X("debug-aa", "AA use debugger", true, true);
   RegisterAnalysisGroup<AliasAnalysis> Y(X);
 }
 

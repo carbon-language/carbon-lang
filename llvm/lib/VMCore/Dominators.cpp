@@ -54,7 +54,7 @@ TEMPLATE_INSTANTIATION(class DominatorTreeBase<BasicBlock>);
 
 char DominatorTree::ID = 0;
 static RegisterPass<DominatorTree>
-E("domtree", "Dominator Tree Construction", true);
+E("domtree", "Dominator Tree Construction", true, true);
 
 bool DominatorTree::runOnFunction(Function &F) {
   DT->recalculate(F);
@@ -68,7 +68,7 @@ bool DominatorTree::runOnFunction(Function &F) {
 
 char DominanceFrontier::ID = 0;
 static RegisterPass<DominanceFrontier>
-G("domfrontier", "Dominance Frontier Construction", true);
+G("domfrontier", "Dominance Frontier Construction", true, true);
 
 // NewBB is split and now it has one successor. Update dominace frontier to
 // reflect this change.

@@ -426,11 +426,14 @@ void PMTopLevelManager::schedulePass(Pass *P) {
   // Give pass a chance to prepare the stage.
   P->preparePassManager(activeStack);
 
+#if 1
   // If P is an analysis pass and it is available then do not
   // generate the analysis again. Stale analysis info should not be
   // available at this point.
-  if (P->isAnalysis() && findAnalysisPass(P->getPassInfo()))
+  if (P->getPassInfo() &&
+      P->getPassInfo()->isAnalysis() && findAnalysisPass(P->getPassInfo()))
     return;
+#endif
 
   AnalysisUsage AnUsage;
   P->getAnalysisUsage(AnUsage);

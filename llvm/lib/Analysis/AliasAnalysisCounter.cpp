@@ -35,7 +35,7 @@ namespace {
     Module *M;
   public:
     static char ID; // Class identification, replacement for typeinfo
-    AliasAnalysisCounter() : ModulePass((intptr_t) &ID, true) {
+    AliasAnalysisCounter() : ModulePass((intptr_t) &ID) {
       No = May = Must = 0;
       NoMR = JustRef = JustMod = MR = 0;
     }
@@ -116,7 +116,7 @@ namespace {
 
   char AliasAnalysisCounter::ID = 0;
   RegisterPass<AliasAnalysisCounter>
-  X("count-aa", "Count Alias Analysis Query Responses");
+  X("count-aa", "Count Alias Analysis Query Responses", true, true);
   RegisterAnalysisGroup<AliasAnalysis> Y(X);
 }
 

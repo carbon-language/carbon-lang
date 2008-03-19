@@ -25,7 +25,7 @@ struct PostDominatorTree : public FunctionPass {
   static char ID; // Pass identification, replacement for typeid
   DominatorTreeBase<BasicBlock>* DT;
 
-  PostDominatorTree() : FunctionPass((intptr_t)&ID, true) {
+  PostDominatorTree() : FunctionPass((intptr_t)&ID) {
     DT = new DominatorTreeBase<BasicBlock>(true);
   }
 

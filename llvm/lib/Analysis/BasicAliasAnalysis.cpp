@@ -83,7 +83,7 @@ namespace {
   // Register this pass...
   char NoAA::ID = 0;
   RegisterPass<NoAA>
-  U("no-aa", "No Alias Analysis (always returns 'may' alias)");
+  U("no-aa", "No Alias Analysis (always returns 'may' alias)", true, true);
 
   // Declare that we implement the AliasAnalysis interface
   RegisterAnalysisGroup<AliasAnalysis> V(U);
@@ -128,7 +128,7 @@ namespace {
   // Register this pass...
   char BasicAliasAnalysis::ID = 0;
   RegisterPass<BasicAliasAnalysis>
-  X("basicaa", "Basic Alias Analysis (default AA impl)");
+  X("basicaa", "Basic Alias Analysis (default AA impl)", true, true);
 
   // Declare that we implement the AliasAnalysis interface
   RegisterAnalysisGroup<AliasAnalysis, true> Y(X);

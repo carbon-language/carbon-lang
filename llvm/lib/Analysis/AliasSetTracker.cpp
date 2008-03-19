@@ -551,7 +551,7 @@ namespace {
     AliasSetTracker *Tracker;
   public:
     static char ID; // Pass identification, replacement for typeid
-    AliasSetPrinter() : FunctionPass((intptr_t)&ID, true) {}
+    AliasSetPrinter() : FunctionPass((intptr_t)&ID) {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
@@ -569,5 +569,5 @@ namespace {
     }
   };
   char AliasSetPrinter::ID = 0;
-  RegisterPass<AliasSetPrinter> X("print-alias-sets", "Alias Set Printer");
+  RegisterPass<AliasSetPrinter> X("print-alias-sets", "Alias Set Printer", true, true);
 }

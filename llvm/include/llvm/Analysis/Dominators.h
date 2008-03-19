@@ -664,7 +664,7 @@ public:
   static char ID; // Pass ID, replacement for typeid
   DominatorTreeBase<BasicBlock>* DT;
   
-  DominatorTree() : FunctionPass(intptr_t(&ID), true) {
+  DominatorTree() : FunctionPass(intptr_t(&ID)) {
     DT = new DominatorTreeBase<BasicBlock>(false);
   }
   
@@ -837,7 +837,7 @@ protected:
   
 public:
   DominanceFrontierBase(intptr_t ID, bool isPostDom) 
-    : FunctionPass(ID, true), IsPostDominators(isPostDom) {}
+    : FunctionPass(ID), IsPostDominators(isPostDom) {}
 
   /// getRoots -  Return the root blocks of the current CFG.  This may include
   /// multiple blocks if we are computing post dominators.  For forward

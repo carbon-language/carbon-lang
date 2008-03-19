@@ -430,7 +430,7 @@ namespace {
 
   public:
     static char ID;
-    Andersens() : ModulePass((intptr_t)&ID, true) {}
+    Andersens() : ModulePass((intptr_t)&ID) {}
 
     bool runOnModule(Module &M) {
       InitializeAliasAnalysis(this);
@@ -602,7 +602,8 @@ namespace {
 
   char Andersens::ID = 0;
   RegisterPass<Andersens> X("anders-aa",
-                            "Andersen's Interprocedural Alias Analysis");
+                            "Andersen's Interprocedural Alias Analysis", true, 
+                            true);
   RegisterAnalysisGroup<AliasAnalysis> Y(X);
 
   // Initialize Timestamp Counter (static).

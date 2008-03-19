@@ -52,7 +52,7 @@ namespace {
     }
   public:
     static char ID; // Pass identification, replacement for typeid
-    InstCount() : FunctionPass((intptr_t)&ID, true) {}
+    InstCount() : FunctionPass((intptr_t)&ID) {}
 
     virtual bool runOnFunction(Function &F);
 
@@ -65,7 +65,7 @@ namespace {
 
   char InstCount::ID = 0;
   RegisterPass<InstCount> X("instcount",
-                            "Counts the various types of Instructions");
+                            "Counts the various types of Instructions", true, true);
 }
 
 FunctionPass *llvm::createInstCountPass() { return new InstCount(); }

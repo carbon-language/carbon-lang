@@ -34,7 +34,7 @@ namespace {
   public:
     static char ID; // Class identification, replacement for typeinfo
     explicit LoaderPass(const std::string &filename = "")
-      : ModulePass((intptr_t)&ID, true), Filename(filename) {
+      : ModulePass((intptr_t)&ID), Filename(filename) {
       if (filename.empty()) Filename = ProfileInfoFilename;
     }
 
@@ -52,7 +52,7 @@ namespace {
 
   char LoaderPass::ID = 0;
   RegisterPass<LoaderPass>
-  X("profile-loader", "Load profile information from llvmprof.out");
+  X("profile-loader", "Load profile information from llvmprof.out", true, true);
 
   RegisterAnalysisGroup<ProfileInfo> Y(X);
 }  // End of anonymous namespace

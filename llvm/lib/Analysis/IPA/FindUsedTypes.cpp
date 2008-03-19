@@ -23,7 +23,7 @@ using namespace llvm;
 
 char FindUsedTypes::ID = 0;
 static RegisterPass<FindUsedTypes>
-X("printusedtypes", "Find Used Types");
+X("printusedtypes", "Find Used Types", true, true);
 
 // IncorporateType - Incorporate one type and all of its subtypes into the
 // collection of used types.

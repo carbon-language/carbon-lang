@@ -52,7 +52,7 @@ namespace {
 
   public:
     static char ID; // Pass identification, replacement for typeid
-    AAEval() : FunctionPass((intptr_t)&ID, true) {}
+    AAEval() : FunctionPass((intptr_t)&ID) {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<AliasAnalysis>();
@@ -76,7 +76,7 @@ namespace {
 
   char AAEval::ID = 0;
   RegisterPass<AAEval>
-  X("aa-eval", "Exhaustive Alias Analysis Precision Evaluator");
+  X("aa-eval", "Exhaustive Alias Analysis Precision Evaluator", true, true);
 }
 
 FunctionPass *llvm::createAAEvalPass() { return new AAEval(); }

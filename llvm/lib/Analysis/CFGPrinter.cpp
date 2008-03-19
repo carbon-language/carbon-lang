@@ -92,7 +92,7 @@ struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
 namespace {
   struct VISIBILITY_HIDDEN CFGViewer : public FunctionPass {
     static char ID; // Pass identifcation, replacement for typeid
-    CFGViewer() : FunctionPass((intptr_t)&ID, true) {}
+    CFGViewer() : FunctionPass((intptr_t)&ID) {}
 
     virtual bool runOnFunction(Function &F) {
       F.viewCFG();
@@ -108,11 +108,11 @@ namespace {
 
   char CFGViewer::ID = 0;
   RegisterPass<CFGViewer> V0("view-cfg",
-                             "View CFG of function");
+                             "View CFG of function", true, true);
 
   struct VISIBILITY_HIDDEN CFGOnlyViewer : public FunctionPass {
     static char ID; // Pass identifcation, replacement for typeid
-    CFGOnlyViewer() : FunctionPass((intptr_t)&ID, true) {}
+    CFGOnlyViewer() : FunctionPass((intptr_t)&ID) {}
 
     virtual bool runOnFunction(Function &F) {
       CFGOnly = true;
@@ -130,12 +130,12 @@ namespace {
 
   char CFGOnlyViewer::ID = 0;
   RegisterPass<CFGOnlyViewer> V1("view-cfg-only",
-                                 "View CFG of function (with no function bodies)");
+                                 "View CFG of function (with no function bodies)", true, true);
 
   struct VISIBILITY_HIDDEN CFGPrinter : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
     CFGPrinter() : FunctionPass((intptr_t)&ID) {}
-    explicit CFGPrinter(intptr_t pid) : FunctionPass(pid, true) {}
+    explicit CFGPrinter(intptr_t pid) : FunctionPass(pid) {}
 
     virtual bool runOnFunction(Function &F) {
       std::string Filename = "cfg." + F.getName() + ".dot";
@@ -159,7 +159,7 @@ namespace {
 
   char CFGPrinter::ID = 0;
   RegisterPass<CFGPrinter> P1("print-cfg",
-                              "Print CFG of function to 'dot' file");
+                              "Print CFG of function to 'dot' file", true, true);
 
   struct VISIBILITY_HIDDEN CFGOnlyPrinter : public CFGPrinter {
     static char ID; // Pass identification, replacement for typeid
@@ -181,7 +181,7 @@ namespace {
   char CFGOnlyPrinter::ID = 0;
   RegisterPass<CFGOnlyPrinter>
   P2("print-cfg-only",
-     "Print CFG of function to 'dot' file (with no function bodies)");
+     "Print CFG of function to 'dot' file (with no function bodies)", true, true);
 }
 
 /// viewCFG - This function is meant for use from the debugger.  You can just

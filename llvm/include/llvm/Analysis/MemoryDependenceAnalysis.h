@@ -66,7 +66,7 @@ class MemoryDependenceAnalysis : public FunctionPass {
     static Instruction* const Dirty;
     
     static char ID; // Class identification, replacement for typeinfo
-    MemoryDependenceAnalysis() : FunctionPass((intptr_t)&ID, true) {}
+    MemoryDependenceAnalysis() : FunctionPass((intptr_t)&ID) {}
 
     /// Pass Implementation stuff.  This doesn't do any analysis.
     ///

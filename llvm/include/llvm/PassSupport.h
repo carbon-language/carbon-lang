@@ -39,6 +39,7 @@ class PassInfo {
   const char           *PassArgument;  // Command Line argument to run this pass
   intptr_t             PassID;      
   bool IsCFGOnlyPass;                  // Pass only looks at the CFG.
+  bool IsAnalysis;                     // True if an analysis pass.
   bool IsAnalysisGroup;                // True if an analysis group.
   std::vector<const PassInfo*> ItfImpl;// Interfaces implemented by this pass
 
@@ -48,9 +49,10 @@ public:
   /// PassInfo ctor - Do not call this directly, this should only be invoked
   /// through RegisterPass.
   PassInfo(const char *name, const char *arg, intptr_t pi,
-           Pass *(*normal)() = 0, bool isCFGOnly = false)
+           Pass *(*normal)() = 0, bool isCFGOnly = false, bool isAnalysis = false)
     : PassName(name), PassArgument(arg), PassID(pi), 
-      IsCFGOnlyPass(isCFGOnly), IsAnalysisGroup(false), NormalCtor(normal) {
+      IsCFGOnlyPass(isCFGOnly), 
+      IsAnalysis(isAnalysis), IsAnalysisGroup(false), NormalCtor(normal) {
   }
 
   /// getPassName - Return the friendly name for the pass, never returns null
@@ -72,6 +74,7 @@ public:
   /// pass.
   ///
   bool isAnalysisGroup() const { return IsAnalysisGroup; }
+  bool isAnalysis() const { return IsAnalysis; }
   void SetIsAnalysisGroup() { IsAnalysisGroup = true; }
 
   /// isCFGOnlyPass - return true if this pass only looks at the CFG for the
@@ -140,8 +143,9 @@ struct RegisterPassBase {
   typedef Pass* (*NormalCtor_t)();
   
   RegisterPassBase(const char *Name, const char *Arg, intptr_t TI,
-                   NormalCtor_t NormalCtor = 0, bool CFGOnly = false)
-    : PIObj(Name, Arg, TI, NormalCtor, CFGOnly) {
+                   NormalCtor_t NormalCtor = 0, bool CFGOnly = false, 
+                   bool IsAnalysis = false)
+    : PIObj(Name, Arg, TI, NormalCtor, CFGOnly, IsAnalysis) {
     registerPass();
   }
   explicit RegisterPassBase(intptr_t TI)
@@ -164,9 +168,11 @@ template<typename PassName>
 struct RegisterPass : public RegisterPassBase {
 
   // Register Pass using default constructor...
-  RegisterPass(const char *PassArg, const char *Name, bool CFGOnly = false)
+  RegisterPass(const char *PassArg, const char *Name, bool CFGOnly = false,
+               bool IsAnalysis = false)
     : RegisterPassBase(Name, PassArg, intptr_t(&PassName::ID),
-                     RegisterPassBase::NormalCtor_t(callDefaultCtor<PassName>), CFGOnly) {
+                      RegisterPassBase::NormalCtor_t(callDefaultCtor<PassName>),
+                      CFGOnly, IsAnalysis) {
   }
 };
 

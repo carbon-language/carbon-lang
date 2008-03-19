@@ -29,7 +29,7 @@ class PMStack;
 class LoopPass : public Pass {
 
  public:
-  explicit LoopPass(intptr_t pid, bool AP = false) : Pass(pid, AP) {}
+  explicit LoopPass(intptr_t pid) : Pass(pid) {}
 
   // runOnLoop - This method should be implemented by the subclass to perform
   // whatever action is necessary for the specfied Loop. 

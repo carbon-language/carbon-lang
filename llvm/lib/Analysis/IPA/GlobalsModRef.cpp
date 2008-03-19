@@ -84,7 +84,7 @@ namespace {
 
   public:
     static char ID;
-    GlobalsModRef() : ModulePass((intptr_t)&ID, true) {}
+    GlobalsModRef() : ModulePass((intptr_t)&ID) {}
 
     bool runOnModule(Module &M) {
       InitializeAliasAnalysis(this);                 // set up super class
@@ -149,7 +149,8 @@ namespace {
 
   char GlobalsModRef::ID = 0;
   RegisterPass<GlobalsModRef> X("globalsmodref-aa",
-                                "Simple mod/ref analysis for globals");
+                                "Simple mod/ref analysis for globals", true, 
+                                true);
   RegisterAnalysisGroup<AliasAnalysis> Y(X);
 }
 

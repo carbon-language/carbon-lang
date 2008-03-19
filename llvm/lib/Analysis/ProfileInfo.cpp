@@ -93,7 +93,7 @@ namespace {
   char NoProfileInfo::ID = 0;
   // Register this pass...
   RegisterPass<NoProfileInfo>
-  X("no-profile", "No Profile Information");
+  X("no-profile", "No Profile Information", true, true);
 
   // Declare that we implement the ProfileInfo interface
   RegisterAnalysisGroup<ProfileInfo, true> Y(X);
