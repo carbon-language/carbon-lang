@@ -101,6 +101,10 @@ static unsigned ApproximateLoopSize(const Loop *L) {
       } else if (isa<DbgInfoIntrinsic>(I)) {
         // Ignore debug instructions
       } else if (isa<CallInst>(I)) {
+        // Estimate size overhead introduced by call instructions which
+        // is higher than other instructions. Here 3 and 10 are magic
+        // numbers that help one isolated test case from PR2067 without
+        // negatively impacting measured benchmarks.
         if (isa<IntrinsicInst>(I))
           Size = Size + 3;
         else
