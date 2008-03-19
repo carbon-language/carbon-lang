@@ -154,10 +154,16 @@ void HTMLDiagnostic::HandleDiagnostic(Diagnostic &Diags,
   if (!Pos.isValid())
     return;  
   
+  SourceManager& SM = R.getSourceMgr();
+  
   FullSourceLoc LPos = Pos.getLogicalLoc();
   unsigned FileID = LPos.getLocation().getFileID();
   
-  if (FileID != LPos.getManager().getMainFileID())
+  assert (&LPos.getManager() == &SM && "SourceManagers are different!");
+  
+  unsigned MainFileID = SM.getMainFileID();
+  
+  if (FileID != MainFileID)
     return;
   
   
@@ -202,9 +208,33 @@ void HTMLDiagnostic::HandleDiagnostic(Diagnostic &Diags,
   
   // Insert the new html.
   
-  const llvm::MemoryBuffer *Buf = R.getSourceMgr().getBuffer(FileID);
+  const llvm::MemoryBuffer *Buf = SM.getBuffer(FileID);
   const char* FileStart = Buf->getBufferStart();
   
   R.InsertStrBefore(SourceLocation::getFileLoc(FileID, LineStart - FileStart),
                     os.str());
+  
+  // Now highlight the ranges.
+  
+  for (unsigned i = 0; i < NumRanges; ++i) {
+    
+    SourceLocation B = SM.getLogicalLoc(Ranges->getBegin());
+    SourceLocation E = SM.getLogicalLoc(Ranges->getEnd());
+    
+    // We do this because the position seems to point to the beginning of
+    // the last character.  FIXME: Is this what is suppose to happen?
+    std::pair<unsigned,unsigned> X = SM.getDecomposedFileLoc(E);
+    E = SourceLocation::getFileLoc(X.first, X.second+1);
+
+    ++Ranges;
+    
+    if (B.getFileID() != MainFileID || E.getFileID() != MainFileID)
+      continue;
+    
+    // Highlight the range.  Make the span tag the outermost tag for the
+    // selected range.
+    R.InsertCStrBefore(B, "<span class=\"mrange\">");
+    R.InsertCStrAfter(E, "</span>");
+  }
+  
 }
