@@ -165,6 +165,12 @@ private:   // Intermediate data structures
   void HandlePhysRegUse(unsigned Reg, MachineInstr *MI);
   void HandlePhysRegDef(unsigned Reg, MachineInstr *MI);
 
+  /// hasRegisterUseBelow - Return true if the specified register is used after
+  /// the current instruction and before it's next definition.
+  bool hasRegisterUseBelow(unsigned Reg,
+                           MachineBasicBlock::iterator I,
+                           MachineBasicBlock *MBB);
+
   /// analyzePHINodes - Gather information about the PHI nodes in here. In
   /// particular, we want to map the variable information of a virtual
   /// register which is used in a PHI node. We map that to the BB the vreg

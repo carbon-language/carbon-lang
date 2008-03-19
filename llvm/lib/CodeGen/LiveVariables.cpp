@@ -267,8 +267,9 @@ bool LiveVariables::HandlePhysRegKill(unsigned Reg, const MachineInstr *RefMI,
 
   if (*SubRegs == 0) {
     // No sub-registers, just check if reg is killed by RefMI.
-    if (PhysRegInfo[Reg] == RefMI)
+    if (PhysRegInfo[Reg] == RefMI && PhysRegInfo[Reg]->readsRegister(Reg)) {
       return true;
+    }
   } else if (SubKills.empty()) {
     // None of the sub-registers are killed elsewhere.
     return true;
@@ -294,6 +295,34 @@ bool LiveVariables::HandlePhysRegKill(unsigned Reg, MachineInstr *RefMI) {
        unsigned SubReg = *SubRegs; ++SubRegs)
     addRegisterKills(SubReg, RefMI, SubKills);
 
+  return false;
+}
+
+/// hasRegisterUseBelow - Return true if the specified register is used after
+/// the current instruction and before it's next definition.
+bool LiveVariables::hasRegisterUseBelow(unsigned Reg,
+                                        MachineBasicBlock::iterator I,
+                                        MachineBasicBlock *MBB) {
+  if (I == MBB->end())
+    return false;
+  ++I;
+  // FIXME: This is slow. We probably need a smarter solution. Possibilities:
+  // 1. Scan all instructions once and build def / use information of physical
+  //    registers. We also need a fast way to compare relative ordering of
+  //    instructions.
+  // 2. Cache information so this function only has to scan instructions that
+  //    read / def physical instructions.
+  for (MachineBasicBlock::iterator E = MBB->end(); I != E; ++I) {
+    MachineInstr *MI = I;
+    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+      const MachineOperand &MO = MI->getOperand(i);
+      if (!MO.isRegister() || MO.getReg() != Reg)
+        continue;
+      if (MO.isDef())
+        return false;
+      return true;
+    }
+  }
   return false;
 }
 
@@ -338,14 +367,22 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI) {
          unsigned SuperReg = *SuperRegs; ++SuperRegs) {
       if (PhysRegInfo[SuperReg] && PhysRegInfo[SuperReg] != MI) {
         // The larger register is previously defined. Now a smaller part is
-        // being re-defined. Treat it as read/mod/write.
+        // being re-defined. Treat it as read/mod/write if there are uses
+        // below.
         // EAX =
         // AX  =        EAX<imp-use,kill>, EAX<imp-def>
-        MI->addOperand(MachineOperand::CreateReg(SuperReg, false/*IsDef*/,
+        // ...
+        ///    =  EAX
+        if (MI && hasRegisterUseBelow(SuperReg, MI, MI->getParent())) {
+          MI->addOperand(MachineOperand::CreateReg(SuperReg, false/*IsDef*/,
                                                  true/*IsImp*/,true/*IsKill*/));
-        MI->addOperand(MachineOperand::CreateReg(SuperReg, true/*IsDef*/,
-                                                 true/*IsImp*/));
-        PhysRegInfo[SuperReg] = MI;
+          MI->addOperand(MachineOperand::CreateReg(SuperReg, true/*IsDef*/,
+                                                   true/*IsImp*/));
+          PhysRegInfo[SuperReg] = MI;
+        } else {
+          PhysRegInfo[SuperReg]->addRegisterKilled(SuperReg, TRI, true);
+          PhysRegInfo[SuperReg] = NULL;
+        }
         PhysRegUsed[SuperReg] = false;
         PhysRegPartUse[SuperReg] = NULL;
       } else {
