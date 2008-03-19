@@ -184,11 +184,11 @@ public:
   }
   
   bool InsertStrBefore(SourceLocation Loc, const std::string& S) {
-    return InsertTextBefore(Loc, S.c_str(), S.size());
+    return S.empty() ? false : InsertTextBefore(Loc, S.c_str(), S.size());
   }
 
   bool InsertStrAfter(SourceLocation Loc, const std::string& S) {
-    return InsertTextAfter(Loc, S.c_str(), S.size());
+    return S.empty() ? false : InsertTextAfter(Loc, S.c_str(), S.size());
   }
   
   
