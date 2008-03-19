@@ -1,16 +1,15 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -lowerinvoke -enable-correct-eh-support -disable-output
+; RUN: llvm-as < %s | opt -lowerinvoke -enable-correct-eh-support -disable-output
 
-declare fastcc int %ll_listnext__listiterPtr()
+declare fastcc i32 @ll_listnext__listiterPtr()
 
-fastcc int %WorkTask.fn() {
+define fastcc i32 @WorkTask.fn() {
 block0:
-	%v2679 = invoke fastcc int %ll_listnext__listiterPtr( )
-			to label %block9 unwind label %block8_exception_handling		; <int> [#uses=1]
-
+	%v2679 = invoke fastcc i32 @ll_listnext__listiterPtr( )
+			to label %block9 unwind label %block8_exception_handling	; <i32> [#uses=1]
 block8_exception_handling:		; preds = %block0
-	ret int 0
-
+	ret i32 0
 block9:		; preds = %block0
-	%i_2689 = phi int [ %v2679, %block0 ]		; <int> [#uses=0]
-	ret int %i_2689
+	%i_2689 = phi i32 [ %v2679, %block0 ]		; <i32> [#uses=1]
+	ret i32 %i_2689
 }
+

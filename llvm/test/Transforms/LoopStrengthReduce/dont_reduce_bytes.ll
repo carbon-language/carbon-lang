@@ -1,21 +1,22 @@
 ; Don't reduce the byte access to P[i], at least not on targets that 
 ; support an efficient 'mem[r1+r2]' addressing mode.
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -loop-reduce -disable-output
+; RUN: llvm-as < %s | opt -loop-reduce -disable-output
 
-declare bool %pred(int)
 
-void %test(sbyte* %PTR) {
+declare i1 @pred(i32)
+
+define void @test(i8* %PTR) {
+; <label>:0
 	br label %Loop
-Loop:
-	%INDVAR = phi int [0, %0], [%INDVAR2, %Loop]
-
-	%STRRED = getelementptr sbyte* %PTR, int %INDVAR
-	store sbyte 0, sbyte* %STRRED
-
-	%INDVAR2 = add int %INDVAR, 1
-	%cond = call bool %pred(int %INDVAR2)  ;; cannot eliminate indvar
-	br bool %cond, label %Loop, label %Out
-Out:
+Loop:		; preds = %Loop, %0
+	%INDVAR = phi i32 [ 0, %0 ], [ %INDVAR2, %Loop ]		; <i32> [#uses=2]
+	%STRRED = getelementptr i8* %PTR, i32 %INDVAR		; <i8*> [#uses=1]
+	store i8 0, i8* %STRRED
+	%INDVAR2 = add i32 %INDVAR, 1		; <i32> [#uses=2]
+        ;; cannot eliminate indvar
+	%cond = call i1 @pred( i32 %INDVAR2 )		; <i1> [#uses=1]
+	br i1 %cond, label %Loop, label %Out
+Out:		; preds = %Loop
 	ret void
 }

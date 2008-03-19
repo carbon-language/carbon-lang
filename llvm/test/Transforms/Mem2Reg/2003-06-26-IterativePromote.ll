@@ -1,16 +1,16 @@
 ; Promoting some values allows promotion of other values.
-; RUN: llvm-upgrade < %s | llvm-as | opt -mem2reg | llvm-dis | not grep alloca
+; RUN: llvm-as < %s | opt -mem2reg | llvm-dis | not grep alloca
 
-int %test2() {
-        %result = alloca int             ; ty=int*
-        %a = alloca int          ; ty=int*
-        %p = alloca int*                 ; ty=int**
-        store int 0, int* %a
-        store int* %a, int** %p
-        %tmp.0 = load int** %p           ; ty=int*
-        %tmp.1 = load int* %tmp.0                ; ty=int
-        store int %tmp.1, int* %result
-        %tmp.2 = load int* %result               ; ty=int
-        ret int %tmp.2
+define i32 @test2() {
+	%result = alloca i32		; <i32*> [#uses=2]
+	%a = alloca i32		; <i32*> [#uses=2]
+	%p = alloca i32*		; <i32**> [#uses=2]
+	store i32 0, i32* %a
+	store i32* %a, i32** %p
+	%tmp.0 = load i32** %p		; <i32*> [#uses=1]
+	%tmp.1 = load i32* %tmp.0		; <i32> [#uses=1]
+	store i32 %tmp.1, i32* %result
+	%tmp.2 = load i32* %result		; <i32> [#uses=1]
+	ret i32 %tmp.2
 }
 

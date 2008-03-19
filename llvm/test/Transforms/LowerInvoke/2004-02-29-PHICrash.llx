@@ -1,16 +1,15 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -lowerinvoke -enable-correct-eh-support -disable-output
+; RUN: llvm-as < %s | opt -lowerinvoke -enable-correct-eh-support -disable-output
 
-void %_ZNKSt11__use_cacheISt16__numpunct_cacheIcEEclERKSt6locale() {
+define void @_ZNKSt11__use_cacheISt16__numpunct_cacheIcEEclERKSt6locale() {
 entry:
-	br bool false, label %then, label %UnifiedReturnBlock
-
+	br i1 false, label %then, label %UnifiedReturnBlock
 then:		; preds = %entry
-	invoke void %_Znwj( )
+	invoke void @_Znwj( )
 			to label %UnifiedReturnBlock unwind label %UnifiedReturnBlock
-
-UnifiedReturnBlock:		; preds = %entry, %then, %then
-	%UnifiedRetVal = phi int* [ null, %entry ], [ null, %then ], [ null, %then ]
+UnifiedReturnBlock:		; preds = %then, %then, %entry
+	%UnifiedRetVal = phi i32* [ null, %entry ], [ null, %then ], [ null, %then ] ; <i32*> [#uses=0]
 	ret void
 }
 
-declare void %_Znwj()
+declare void @_Znwj()
+

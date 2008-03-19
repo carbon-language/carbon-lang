@@ -1,21 +1,19 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -lowerswitch -disable-output
+; RUN: llvm-as < %s | opt -lowerswitch -disable-output
 
-void %solve() {
+define void @solve() {
 entry:
-	%targetBlock = call ushort %solve_code( )		; <ushort> [#uses=1]
+	%targetBlock = call i16 @solve_code( )		; <i16> [#uses=1]
 	br label %codeReplTail
-
 then.1:		; preds = %codeReplTail
 	ret void
-
 loopexit.0:		; preds = %codeReplTail
 	ret void
-
-codeReplTail:		; preds = %entry, %codeReplTail
-	switch ushort %targetBlock, label %codeReplTail [
-		 ushort 0, label %loopexit.0
-		 ushort 1, label %then.1
+codeReplTail:		; preds = %codeReplTail, %entry
+	switch i16 %targetBlock, label %codeReplTail [
+		 i16 0, label %loopexit.0
+		 i16 1, label %then.1
 	]
 }
 
-declare ushort %solve_code()
+declare i16 @solve_code()
+

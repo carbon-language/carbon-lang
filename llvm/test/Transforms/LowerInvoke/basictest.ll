@@ -1,27 +1,30 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -lowerinvoke -disable-output -enable-correct-eh-support
+; RUN: llvm-as < %s | opt -lowerinvoke -disable-output -enable-correct-eh-support
 
-implementation
 
-int %foo() {
-	invoke int %foo() to label %Ok unwind label %Crap
-Ok:
-	invoke int %foo() to label %Ok2 unwind label %Crap
-Ok2:
-	ret int 2
-Crap:
-	ret int 1
+define i32 @foo() {
+	invoke i32 @foo( )
+			to label %Ok unwind label %Crap		; <i32>:1 [#uses=0]
+Ok:		; preds = %0
+	invoke i32 @foo( )
+			to label %Ok2 unwind label %Crap		; <i32>:2 [#uses=0]
+Ok2:		; preds = %Ok
+	ret i32 2
+Crap:		; preds = %Ok, %0
+	ret i32 1
 }
 
-int %bar(int %blah) {
+define i32 @bar(i32 %blah) {
 	br label %doit
-doit:
-	;; Value live across an unwind edge.
-	%B2 = add int %blah, 1
-	invoke int %foo() to label %Ok unwind label %Crap
-Ok:
-	invoke int %foo() to label %Ok2 unwind label %Crap
-Ok2:
-	ret int 2
-Crap:
-	ret int %B2
+doit:		; preds = %0
+        ;; Value live across an unwind edge.
+	%B2 = add i32 %blah, 1		; <i32> [#uses=1]
+	invoke i32 @foo( )
+			to label %Ok unwind label %Crap		; <i32>:1 [#uses=0]
+Ok:		; preds = %doit
+	invoke i32 @foo( )
+			to label %Ok2 unwind label %Crap		; <i32>:2 [#uses=0]
+Ok2:		; preds = %Ok
+	ret i32 2
+Crap:		; preds = %Ok, %doit
+	ret i32 %B2
 }

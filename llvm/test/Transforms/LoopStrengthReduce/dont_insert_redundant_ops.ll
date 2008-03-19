@@ -1,40 +1,36 @@
 ; Check that this test makes INDVAR and related stuff dead.
-; RUN: llvm-upgrade < %s | llvm-as | opt -loop-reduce | llvm-dis | grep phi | count 2
+; RUN: llvm-as < %s | opt -loop-reduce | llvm-dis | grep phi | count 2
 
-declare bool %pred()
+declare i1 @pred()
 
-void %test1({ int, int }* %P) {
+define void @test1({ i32, i32 }* %P) {
+; <label>:0
 	br label %Loop
-Loop:
-	%INDVAR = phi int [0, %0], [%INDVAR2, %Loop]
-
-	%gep1 = getelementptr { int, int}* %P, int %INDVAR, uint 0
-	store int 0, int* %gep1
-
-	%gep2 = getelementptr { int, int}* %P, int %INDVAR, uint 1
-	store int 0, int* %gep2
-
-	%INDVAR2 = add int %INDVAR, 1
-	%cond = call bool %pred()
-	br bool %cond, label %Loop, label %Out
-Out:
+Loop:		; preds = %Loop, %0
+	%INDVAR = phi i32 [ 0, %0 ], [ %INDVAR2, %Loop ]		; <i32> [#uses=3]
+	%gep1 = getelementptr { i32, i32 }* %P, i32 %INDVAR, i32 0		; <i32*> [#uses=1]
+	store i32 0, i32* %gep1
+	%gep2 = getelementptr { i32, i32 }* %P, i32 %INDVAR, i32 1		; <i32*> [#uses=1]
+	store i32 0, i32* %gep2
+	%INDVAR2 = add i32 %INDVAR, 1		; <i32> [#uses=1]
+	%cond = call i1 @pred( )		; <i1> [#uses=1]
+	br i1 %cond, label %Loop, label %Out
+Out:		; preds = %Loop
 	ret void
 }
 
-void %test2([2 x int]* %P) {
+define void @test2([2 x i32]* %P) {
+; <label>:0
 	br label %Loop
-Loop:
-	%INDVAR = phi int [0, %0], [%INDVAR2, %Loop]
-
-	%gep1 = getelementptr [2 x int]* %P, int %INDVAR, uint 0
-	store int 0, int* %gep1
-
-	%gep2 = getelementptr [2 x int]* %P, int %INDVAR, uint 1
-	store int 0, int* %gep2
-
-	%INDVAR2 = add int %INDVAR, 1
-	%cond = call bool %pred()
-	br bool %cond, label %Loop, label %Out
-Out:
+Loop:		; preds = %Loop, %0
+	%INDVAR = phi i32 [ 0, %0 ], [ %INDVAR2, %Loop ]		; <i32> [#uses=3]
+	%gep1 = getelementptr [2 x i32]* %P, i32 %INDVAR, i64 0		; <i32*> [#uses=1]
+	store i32 0, i32* %gep1
+	%gep2 = getelementptr [2 x i32]* %P, i32 %INDVAR, i64 1		; <i32*> [#uses=1]
+	store i32 0, i32* %gep2
+	%INDVAR2 = add i32 %INDVAR, 1		; <i32> [#uses=1]
+	%cond = call i1 @pred( )		; <i1> [#uses=1]
+	br i1 %cond, label %Loop, label %Out
+Out:		; preds = %Loop
 	ret void
 }

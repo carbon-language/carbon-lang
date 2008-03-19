@@ -1,17 +1,16 @@
 ; This testcases makes sure that mem2reg can handle unreachable blocks.
-; RUN: llvm-upgrade < %s | llvm-as | opt -mem2reg
+; RUN: llvm-as < %s | opt -mem2reg
 
-int %test() {
-	%X = alloca int
-
-	store int 6, int* %X
+define i32 @test() {
+	%X = alloca i32		; <i32*> [#uses=2]
+	store i32 6, i32* %X
 	br label %Loop
-Loop:
-	store int 5, int* %X
+Loop:		; preds = %EndOfLoop, %0
+	store i32 5, i32* %X
 	br label %EndOfLoop
-Unreachable:
+Unreachable:		; No predecessors!
 	br label %EndOfLoop
-
-EndOfLoop:
+EndOfLoop:		; preds = %Unreachable, %Loop
 	br label %Loop
 }
+

@@ -1,17 +1,15 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -lowerswitch
+; RUN: llvm-as < %s | opt -lowerswitch
 
-void %child(int %ct.1) {
-entry:          ; No predecessors!
-        switch uint 0, label %return [
-                 uint 3, label %UnifiedExitNode
-                 uint 0, label %return
-        ]
-
-return:         ; preds = %entry, %entry
-        %result.0 = phi int* [ null, %entry ], [ null, %entry ]         ; <%struct.quad_struct*> [#uses=0]
-        br label %UnifiedExitNode
-
-UnifiedExitNode:                ; preds = %entry, %return, %entry, %entry
-        ret void
+define void @child(i32 %ct.1) {
+entry:
+	switch i32 0, label %return [
+		 i32 3, label %UnifiedExitNode
+		 i32 0, label %return
+	]
+return:		; preds = %entry, %entry
+	%result.0 = phi i32* [ null, %entry ], [ null, %entry ]		; <i32*> [#uses=0]
+	br label %UnifiedExitNode
+UnifiedExitNode:		; preds = %return, %entry
+	ret void
 }
 
