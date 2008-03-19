@@ -70,7 +70,7 @@ Sema::ActOnStringLiteral(const Token *StringToks, unsigned NumStringToks) {
 
 /// ActOnIdentifierExpr - The parser read an identifier in expression context,
 /// validate it per-C99 6.5.1.  HasTrailingLParen indicates whether this
-/// identifier is used in an function call context.
+/// identifier is used in a function call context.
 Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
                                            IdentifierInfo &II,
                                            bool HasTrailingLParen) {
