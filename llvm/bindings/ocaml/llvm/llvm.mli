@@ -676,6 +676,10 @@ external const_shufflevector : llvalue -> llvalue -> llvalue -> llvalue
 
 (** {7 Operations on global variables, functions, and aliases (globals)} *)
 
+(** [global_parent g] is the enclosing module of the global value [g].
+    See the method [llvm::GlobalValue::getParent]. *)
+external global_parent : llvalue -> llmodule = "LLVMGetGlobalParent"
+
 (** [is_declaration g] returns [true] if the global value [g] is a declaration
     only. Returns [false] otherwise.
     See the method [llvm::GlobalValue::isDeclaration]. *)
@@ -808,14 +812,6 @@ external lookup_function : string -> llmodule -> llvalue option
     See the method [llvm::Function::eraseFromParent]. *)
 external delete_function : llvalue -> unit = "llvm_delete_function"
 
-(** [params f] returns the parameters of function [f].
-    See the method [llvm::Function::getArgumentList]. *)
-external params : llvalue -> llvalue array = "llvm_params"
-
-(** [param f n] returns the [n]th parameter of function [f].
-    See the method [llvm::Function::getArgumentList]. *)
-external param : llvalue -> int -> llvalue = "llvm_param"
-
 (** [is_intrinsic f] returns true if the function [f] is an intrinsic.
     See the method [llvm::Function::isIntrinsic]. *)
 external is_intrinsic : llvalue -> bool = "llvm_is_intrinsic"
@@ -838,6 +834,21 @@ external collector : llvalue -> string option = "llvm_collector"
 (** [set_collector gc f] sets the collection algorithm for the function [f] to
     [gc]. See the method [llvm::Function::setCollector]. *)
 external set_collector : string option -> llvalue -> unit = "llvm_set_collector"
+
+
+(** {7 Operations on params} *)
+
+(** [params f] returns the parameters of function [f].
+    See the method [llvm::Function::getArgumentList]. *)
+external params : llvalue -> llvalue array = "llvm_params"
+
+(** [param f n] returns the [n]th parameter of function [f].
+    See the method [llvm::Function::getArgumentList]. *)
+external param : llvalue -> int -> llvalue = "llvm_param"
+
+(** [param_parent p] returns the parent function that owns the parameter.
+    See the method [llvm::Argument::getParent]. *)
+external param_parent : llvalue -> llvalue = "LLVMGetParamParent"
 
 
 (** {7 Operations on basic blocks} *)
@@ -865,6 +876,10 @@ external append_block : string -> llvalue -> llbasicblock = "llvm_append_block"
 external insert_block : string -> llbasicblock -> llbasicblock
                       = "llvm_insert_block"
 
+(** [block_parent bb] returns the parent function that owns the basic block.
+    See the method [llvm::BasicBlock::getParent]. *)
+external block_parent : llbasicblock -> llvalue = "LLVMGetBasicBlockParent"
+
 (** [value_of_block bb] losslessly casts [bb] to an [llvalue]. *)
 external value_of_block : llbasicblock -> llvalue = "LLVMBasicBlockAsValue"
 
@@ -877,6 +892,13 @@ external value_is_block : llvalue -> bool = "llvm_value_is_block"
 external block_of_value : llvalue -> llbasicblock = "LLVMValueAsBasicBlock"
 
 
+(** {7 Operations on instructions} *)
+
+(** [instr_parent i] is the enclosing basic block of the instruction [i].
+    See the method [llvm::Instruction::getParent]. *)
+external instr_parent : llvalue -> llbasicblock = "LLVMGetInstructionParent"
+
+
 (** {7 Operations on call sites} *)
 
 (** [instruction_call_conv ci] is the calling convention for the call or invoke
@@ -886,9 +908,10 @@ external block_of_value : llvalue -> llbasicblock = "LLVMValueAsBasicBlock"
 external instruction_call_conv: llvalue -> int
                               = "llvm_instruction_call_conv"
 
-(** [set_inst_call_conv cc ci] sets the calling convention for the call or
-    invoke instruction [ci] to the integer [cc], which can be one of the values
-    from the module {!CallConv}. See the method [llvm::CallInst::setCallingConv]
+(** [set_instruction_call_conv cc ci] sets the calling convention for the call
+    or invoke instruction [ci] to the integer [cc], which can be one of the
+    values from the module {!CallConv}.
+    See the method [llvm::CallInst::setCallingConv]
     and [llvm::InvokeInst::setCallingConv]. *)
 external set_instruction_call_conv: int -> llvalue -> unit
                                   = "llvm_set_instruction_call_conv"
@@ -909,8 +932,8 @@ external incoming : llvalue -> (llvalue * llbasicblock) list = "llvm_incoming"
 
 (** {6 Instruction builders} *)
 
-(** [builder] creates an instruction builder with no position. It is invalid to
-    use this builder until its position is set with {!position_before} or
+(** [builder ()] creates an instruction builder with no position. It is invalid
+    to use this builder until its position is set with {!position_before} or
     {!position_at_end}. See the constructor for [llvm::LLVMBuilder]. *)
 external builder: unit-> llbuilder
                 = "llvm_builder"
@@ -931,6 +954,12 @@ external position_before : llvalue -> llbuilder -> unit = "llvm_position_before"
     basic block [bb]. See the method [llvm::LLVMBuilder::SetInsertPoint]. *)
 external position_at_end : llbasicblock -> llbuilder -> unit
                          = "llvm_position_at_end"
+
+(** [insertion_block b] returns the basic block that the builder [b] is
+    positioned to insert into. Raises [Not_Found] if the instruction builder is
+    uninitialized.
+    See the method [llvm::LLVMBuilder::GetInsertBlock]. *)
+external insertion_block : llbuilder -> llbasicblock = "llvm_insertion_block"
 
 
 (** {7 Terminators} *)

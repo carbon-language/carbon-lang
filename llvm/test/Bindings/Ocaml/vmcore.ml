@@ -478,17 +478,19 @@ let test_functions () =
   
   (* RUN: grep {declare i32 @Fn1\(i32, i64\)} < %t.ll
    *)
-  group "declare";
-  insist (None = lookup_function "Fn1" m);
-  let fn = declare_function "Fn1" ty m in
-  insist (pointer_type ty = type_of fn);
-  insist (is_declaration fn);
-  insist (0 = Array.length (basic_blocks fn));
-  insist (pointer_type ty2 == type_of (declare_function "Fn1" ty2 m));
-  insist (fn == declare_function "Fn1" ty m);
-  insist (None <> lookup_function "Fn1" m);
-  insist (match lookup_function "Fn1" m with Some x -> x = fn
-                                           | None -> false);
+  begin group "declare";
+    insist (None = lookup_function "Fn1" m);
+    let fn = declare_function "Fn1" ty m in
+    insist (pointer_type ty = type_of fn);
+    insist (is_declaration fn);
+    insist (0 = Array.length (basic_blocks fn));
+    insist (pointer_type ty2 == type_of (declare_function "Fn1" ty2 m));
+    insist (fn == declare_function "Fn1" ty m);
+    insist (None <> lookup_function "Fn1" m);
+    insist (match lookup_function "Fn1" m with Some x -> x = fn
+                                             | None -> false);
+    insist (m == global_parent fn)
+  end;
   
   (* RUN: grep -v {Fn2} < %t.ll
    *)
@@ -592,6 +594,27 @@ let test_basic_blocks () =
 
 let test_builder () =
   let (++) x f = f x; x in
+  
+  begin group "parent";
+    insist (try
+              ignore (insertion_block (builder ()));
+              false
+            with Not_found ->
+              true);
+    
+    let fty = function_type void_type [| i32_type |] in
+    let fn = define_function "BuilderParent" fty m in
+    let bb = entry_block fn in
+    let b = builder_at_end bb in
+    let p = param fn 0 in
+    let sum = build_add p p "sum" b in
+    ignore (build_ret_void b);
+    
+    insist (fn = block_parent bb);
+    insist (fn = param_parent p);
+    insist (bb = instr_parent sum);
+    insist (bb = insertion_block b)
+  end;
   
   group "ret void";
   begin

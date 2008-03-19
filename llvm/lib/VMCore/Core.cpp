@@ -215,7 +215,7 @@ LLVMTypeRef LLVMOpaqueType() {
   return wrap(llvm::OpaqueType::get());
 }
 
-/* Operations on type handles */
+/*--.. Operations on type handles ..........................................--*/
 
 LLVMTypeHandleRef LLVMCreateTypeHandle(LLVMTypeRef PotentiallyAbstractTy) {
   return wrap(new PATypeHolder(unwrap(PotentiallyAbstractTy)));
@@ -546,6 +546,10 @@ LLVMValueRef LLVMConstShuffleVector(LLVMValueRef VectorAConstant,
 
 /*--.. Operations on global variables, functions, and aliases (globals) ....--*/
 
+LLVMModuleRef LLVMGetGlobalParent(LLVMValueRef Global) {
+  return wrap(unwrap<GlobalValue>(Global)->getParent());
+}
+
 int LLVMIsDeclaration(LLVMValueRef Global) {
   return unwrap<GlobalValue>(Global)->isDeclaration();
 }
@@ -646,26 +650,6 @@ void LLVMDeleteFunction(LLVMValueRef Fn) {
   unwrap<Function>(Fn)->eraseFromParent();
 }
 
-unsigned LLVMCountParams(LLVMValueRef FnRef) {
-  // This function is strictly redundant to
-  //   LLVMCountParamTypes(LLVMGetElementType(LLVMTypeOf(FnRef)))
-  return unwrap<Function>(FnRef)->getArgumentList().size();
-}
-
-LLVMValueRef LLVMGetParam(LLVMValueRef FnRef, unsigned index) {
-  Function::arg_iterator AI = unwrap<Function>(FnRef)->arg_begin();
-  while (index --> 0)
-    AI++;
-  return wrap(AI);
-}
-
-void LLVMGetParams(LLVMValueRef FnRef, LLVMValueRef *ParamRefs) {
-  Function *Fn = unwrap<Function>(FnRef);
-  for (Function::arg_iterator I = Fn->arg_begin(),
-                              E = Fn->arg_end(); I != E; I++)
-    *ParamRefs++ = wrap(I);
-}
-
 unsigned LLVMGetIntrinsicID(LLVMValueRef Fn) {
   if (Function *F = dyn_cast<Function>(unwrap(Fn)))
     return F->getIntrinsicID();
@@ -693,10 +677,36 @@ void LLVMSetCollector(LLVMValueRef Fn, const char *Coll) {
     F->clearCollector();
 }
 
+/*--.. Operations on parameters ............................................--*/
+
+unsigned LLVMCountParams(LLVMValueRef FnRef) {
+  // This function is strictly redundant to
+  //   LLVMCountParamTypes(LLVMGetElementType(LLVMTypeOf(FnRef)))
+  return unwrap<Function>(FnRef)->getArgumentList().size();
+}
+
+void LLVMGetParams(LLVMValueRef FnRef, LLVMValueRef *ParamRefs) {
+  Function *Fn = unwrap<Function>(FnRef);
+  for (Function::arg_iterator I = Fn->arg_begin(),
+                              E = Fn->arg_end(); I != E; I++)
+    *ParamRefs++ = wrap(I);
+}
+
+LLVMValueRef LLVMGetParam(LLVMValueRef FnRef, unsigned index) {
+  Function::arg_iterator AI = unwrap<Function>(FnRef)->arg_begin();
+  while (index --> 0)
+    AI++;
+  return wrap(AI);
+}
+
+LLVMValueRef LLVMGetParamParent(LLVMValueRef V) {
+  return wrap(unwrap<Argument>(V)->getParent());
+}
+
 /*--.. Operations on basic blocks ..........................................--*/
 
-LLVMValueRef LLVMBasicBlockAsValue(LLVMBasicBlockRef Bb) {
-  return wrap(static_cast<Value*>(unwrap(Bb)));
+LLVMValueRef LLVMBasicBlockAsValue(LLVMBasicBlockRef BB) {
+  return wrap(static_cast<Value*>(unwrap(BB)));
 }
 
 int LLVMValueIsBasicBlock(LLVMValueRef Val) {
@@ -705,6 +715,10 @@ int LLVMValueIsBasicBlock(LLVMValueRef Val) {
 
 LLVMBasicBlockRef LLVMValueAsBasicBlock(LLVMValueRef Val) {
   return wrap(unwrap<BasicBlock>(Val));
+}
+
+LLVMValueRef LLVMGetBasicBlockParent(LLVMValueRef V) {
+  return wrap(unwrap<BasicBlock>(V)->getParent());
 }
 
 unsigned LLVMCountBasicBlocks(LLVMValueRef FnRef) {
@@ -734,6 +748,12 @@ LLVMBasicBlockRef LLVMInsertBasicBlock(LLVMBasicBlockRef InsertBeforeBBRef,
 
 void LLVMDeleteBasicBlock(LLVMBasicBlockRef BBRef) {
   unwrap(BBRef)->eraseFromParent();
+}
+
+/*--.. Operations on instructions ..........................................--*/
+
+LLVMBasicBlockRef LLVMGetInstructionParent(LLVMValueRef Inst) {
+  return wrap(unwrap<Instruction>(Inst)->getParent());
 }
 
 /*--.. Call and invoke instructions ........................................--*/
@@ -793,6 +813,10 @@ void LLVMPositionBuilderBefore(LLVMBuilderRef Builder, LLVMValueRef Instr) {
 void LLVMPositionBuilderAtEnd(LLVMBuilderRef Builder, LLVMBasicBlockRef Block) {
   BasicBlock *BB = unwrap(Block);
   unwrap(Builder)->SetInsertPoint(BB);
+}
+
+LLVMBasicBlockRef LLVMGetInsertBlock(LLVMBuilderRef Builder) {
+   return wrap(unwrap(Builder)->GetInsertBlock());
 }
 
 void LLVMDisposeBuilder(LLVMBuilderRef Builder) {

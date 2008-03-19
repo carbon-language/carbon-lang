@@ -270,6 +270,7 @@ external const_shufflevector : llvalue -> llvalue -> llvalue -> llvalue
                              = "LLVMConstShuffleVector"
 
 (*--... Operations on global variables, functions, and aliases (globals) ...--*)
+external global_parent : llvalue -> llmodule = "LLVMGetGlobalParent"
 external is_declaration : llvalue -> bool = "llvm_is_declaration"
 external linkage : llvalue -> Linkage.t = "llvm_linkage"
 external set_linkage : Linkage.t -> llvalue -> unit = "llvm_set_linkage"
@@ -306,8 +307,6 @@ external define_function : string -> lltype -> llmodule -> llvalue
 external lookup_function : string -> llmodule -> llvalue option
                          = "llvm_lookup_function"
 external delete_function : llvalue -> unit = "llvm_delete_function"
-external params : llvalue -> llvalue array = "llvm_params"
-external param : llvalue -> int -> llvalue = "llvm_param"
 external is_intrinsic : llvalue -> bool = "llvm_is_intrinsic"
 external function_call_conv : llvalue -> int = "llvm_function_call_conv"
 external set_function_call_conv : int -> llvalue -> unit
@@ -317,16 +316,25 @@ external set_collector : string option -> llvalue -> unit = "llvm_set_collector"
 
 (* TODO: param attrs *)
 
+(*--... Operations on params ...............................................--*)
+external params : llvalue -> llvalue array = "llvm_params"
+external param : llvalue -> int -> llvalue = "llvm_param"
+external param_parent : llvalue -> llvalue = "LLVMGetParamParent"
+
 (*--... Operations on basic blocks .........................................--*)
+external value_of_block : llbasicblock -> llvalue = "LLVMBasicBlockAsValue"
+external value_is_block : llvalue -> bool = "llvm_value_is_block"
+external block_of_value : llvalue -> llbasicblock = "LLVMValueAsBasicBlock"
+external block_parent : llbasicblock -> llvalue = "LLVMGetBasicBlockParent"
 external basic_blocks : llvalue -> llbasicblock array = "llvm_basic_blocks"
 external entry_block : llvalue -> llbasicblock = "LLVMGetEntryBasicBlock"
 external delete_block : llbasicblock -> unit = "llvm_delete_block"
 external append_block : string -> llvalue -> llbasicblock = "llvm_append_block"
 external insert_block : string -> llbasicblock -> llbasicblock
                       = "llvm_insert_block"
-external value_of_block : llbasicblock -> llvalue = "LLVMBasicBlockAsValue"
-external value_is_block : llvalue -> bool = "llvm_value_is_block"
-external block_of_value : llvalue -> llbasicblock = "LLVMValueAsBasicBlock"
+
+(*--... Operations on instructions .........................................--*)
+external instr_parent : llvalue -> llbasicblock = "LLVMGetInstructionParent"
 
 (*--... Operations on call sites ...........................................--*)
 external instruction_call_conv: llvalue -> int
@@ -341,13 +349,13 @@ external incoming : llvalue -> (llvalue * llbasicblock) list = "llvm_incoming"
 
 
 (*===-- Instruction builders ----------------------------------------------===*)
-external builder: unit-> llbuilder
-                = "llvm_builder"
+external builder: unit-> llbuilder = "llvm_builder"
 external builder_before : llvalue -> llbuilder = "llvm_builder_before"
 external builder_at_end : llbasicblock -> llbuilder = "llvm_builder_at_end"
 external position_before : llvalue -> llbuilder -> unit = "llvm_position_before"
 external position_at_end : llbasicblock -> llbuilder -> unit
                          = "llvm_position_at_end"
+external insertion_block : llbuilder -> llbasicblock = "llvm_insertion_block"
 
 (*--... Terminators ........................................................--*)
 external build_ret_void : llbuilder -> llvalue = "llvm_build_ret_void"

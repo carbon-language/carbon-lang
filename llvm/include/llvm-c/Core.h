@@ -362,6 +362,7 @@ LLVMValueRef LLVMConstShuffleVector(LLVMValueRef VectorAConstant,
                                     LLVMValueRef MaskConstant);
 
 /* Operations on global variables, functions, and aliases (globals) */
+LLVMModuleRef LLVMGetGlobalParent(LLVMValueRef Global);
 int LLVMIsDeclaration(LLVMValueRef Global);
 LLVMLinkage LLVMGetLinkage(LLVMValueRef Global);
 void LLVMSetLinkage(LLVMValueRef Global, LLVMLinkage Linkage);
@@ -389,19 +390,23 @@ LLVMValueRef LLVMAddFunction(LLVMModuleRef M, const char *Name,
                              LLVMTypeRef FunctionTy);
 LLVMValueRef LLVMGetNamedFunction(LLVMModuleRef M, const char *Name);
 void LLVMDeleteFunction(LLVMValueRef Fn);
-unsigned LLVMCountParams(LLVMValueRef Fn);
-void LLVMGetParams(LLVMValueRef Fn, LLVMValueRef *Params);
-LLVMValueRef LLVMGetParam(LLVMValueRef Fn, unsigned Index);
 unsigned LLVMGetIntrinsicID(LLVMValueRef Fn);
 unsigned LLVMGetFunctionCallConv(LLVMValueRef Fn);
 void LLVMSetFunctionCallConv(LLVMValueRef Fn, unsigned CC);
 const char *LLVMGetCollector(LLVMValueRef Fn);
 void LLVMSetCollector(LLVMValueRef Fn, const char *Coll);
 
+/* Operations on parameters */
+unsigned LLVMCountParams(LLVMValueRef Fn);
+void LLVMGetParams(LLVMValueRef Fn, LLVMValueRef *Params);
+LLVMValueRef LLVMGetParam(LLVMValueRef Fn, unsigned Index);
+LLVMValueRef LLVMGetParamParent(LLVMValueRef Inst);
+
 /* Operations on basic blocks */
 LLVMValueRef LLVMBasicBlockAsValue(LLVMBasicBlockRef Bb);
 int LLVMValueIsBasicBlock(LLVMValueRef Val);
 LLVMBasicBlockRef LLVMValueAsBasicBlock(LLVMValueRef Val);
+LLVMValueRef LLVMGetBasicBlockParent(LLVMValueRef V);
 unsigned LLVMCountBasicBlocks(LLVMValueRef Fn);
 void LLVMGetBasicBlocks(LLVMValueRef Fn, LLVMBasicBlockRef *BasicBlocks);
 LLVMBasicBlockRef LLVMGetEntryBasicBlock(LLVMValueRef Fn);
@@ -409,6 +414,9 @@ LLVMBasicBlockRef LLVMAppendBasicBlock(LLVMValueRef Fn, const char *Name);
 LLVMBasicBlockRef LLVMInsertBasicBlock(LLVMBasicBlockRef InsertBeforeBB,
                                        const char *Name);
 void LLVMDeleteBasicBlock(LLVMBasicBlockRef BB);
+
+/* Operations on instructions */
+LLVMBasicBlockRef LLVMGetInstructionParent(LLVMValueRef Inst);
 
 /* Operations on call sites */
 void LLVMSetInstructionCallConv(LLVMValueRef Instr, unsigned CC);
@@ -430,6 +438,7 @@ LLVMBasicBlockRef LLVMGetIncomingBlock(LLVMValueRef PhiNode, unsigned Index);
 LLVMBuilderRef LLVMCreateBuilder();
 void LLVMPositionBuilderBefore(LLVMBuilderRef Builder, LLVMValueRef Instr);
 void LLVMPositionBuilderAtEnd(LLVMBuilderRef Builder, LLVMBasicBlockRef Block);
+LLVMBasicBlockRef LLVMGetInsertBlock(LLVMBuilderRef Builder);
 void LLVMDisposeBuilder(LLVMBuilderRef Builder);
 
 /* Terminators */

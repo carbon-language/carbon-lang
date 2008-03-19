@@ -761,6 +761,14 @@ CAMLprim value llvm_position_at_end(LLVMBasicBlockRef BB, value B) {
   return Val_unit;
 }
 
+/* llbuilder -> llbasicblock */
+CAMLprim LLVMBasicBlockRef llvm_insertion_block(LLVMBuilderRef B) {
+  LLVMBasicBlockRef InsertBlock = LLVMGetInsertBlock(Builder_val(B));
+  if (!InsertBlock)
+    raise_not_found();
+  return InsertBlock;
+}
+
 /*--... Terminators ........................................................--*/
 
 /* llbuilder -> llvalue */
