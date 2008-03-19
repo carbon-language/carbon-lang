@@ -365,7 +365,7 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
   IntB.removeValNo(BValNo);
   for (unsigned i = 0, e = BDeadValNos.size(); i != e; ++i)
     IntB.removeValNo(BDeadValNos[i]);
-  VNInfo *ValNo = IntB.getNextValue(ALR->start, 0, li_->getVNInfoAllocator());
+  VNInfo *ValNo = IntB.getNextValue(AValNo->def, 0, li_->getVNInfoAllocator());
   for (LiveInterval::iterator AI = IntA.begin(), AE = IntA.end();
        AI != AE; ++AI) {
     if (AI->valno != AValNo) continue;
