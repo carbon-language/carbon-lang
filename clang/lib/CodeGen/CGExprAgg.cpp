@@ -268,15 +268,9 @@ void AggExprEmitter::EmitNonConstInit(InitListExpr *E) {
   if (const llvm::ArrayType *AType = dyn_cast<llvm::ArrayType>(DestType)) {
     unsigned NumInitElements = E->getNumInits();
 
-    llvm::Value *Idxs[] = {
-      llvm::Constant::getNullValue(llvm::Type::Int32Ty),
-      NULL
-    };
-    llvm::Value *NextVal = NULL;
     unsigned i;
     for (i = 0; i != NumInitElements; ++i) {
-      Idxs[1] = llvm::ConstantInt::get(llvm::Type::Int32Ty, i);
-      NextVal = Builder.CreateGEP(DestPtr, Idxs, Idxs + 2,".array");
+      llvm::Value *NextVal = Builder.CreateStructGEP(DestPtr, i, ".array");
       Expr *Init = E->getInit(i);
       if (isa<InitListExpr>(Init))
         CGF.EmitAggExpr(Init, NextVal, VolatileDest);
@@ -289,8 +283,7 @@ void AggExprEmitter::EmitNonConstInit(InitListExpr *E) {
     QualType QType = E->getInit(0)->getType();
     const llvm::Type *EType = AType->getElementType();
     for (/*Do not initialize i*/; i < NumArrayElements; ++i) {
-      Idxs[1] = llvm::ConstantInt::get(llvm::Type::Int32Ty, i);
-      NextVal = Builder.CreateGEP(DestPtr, Idxs, Idxs + 2,".array");
+      llvm::Value *NextVal = Builder.CreateStructGEP(DestPtr, i, ".array");
       if (EType->isFirstClassType())
         Builder.CreateStore(llvm::Constant::getNullValue(EType), NextVal);
       else

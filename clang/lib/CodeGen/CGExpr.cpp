@@ -367,13 +367,9 @@ LValue CodeGenFunction::EmitUnaryOpLValue(const UnaryOperator *E) {
   case UnaryOperator::Real:
   case UnaryOperator::Imag:
     LValue LV = EmitLValue(E->getSubExpr());
-
-    llvm::Constant *Zero = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
-    llvm::Constant *Idx  = llvm::ConstantInt::get(llvm::Type::Int32Ty,
-                                        E->getOpcode() == UnaryOperator::Imag);
-    llvm::Value *Ops[] = {Zero, Idx};
-    return LValue::MakeAddr(Builder.CreateGEP(LV.getAddress(), Ops, Ops+2,
-                                              "idx"));
+    unsigned Idx = E->getOpcode() == UnaryOperator::Imag;
+    return LValue::MakeAddr(Builder.CreateStructGEP(LV.getAddress(),
+                                                    Idx, "idx"));
   }
 }
 
@@ -490,9 +486,11 @@ LValue CodeGenFunction::EmitLValueForField(llvm::Value* BaseValue,
   llvm::Value *V;
   unsigned idx = CGM.getTypes().getLLVMFieldNo(Field);
 
-  if (Field->isBitField()) {
-    const llvm::Type * FieldTy = ConvertType(Field->getType());
-    const llvm::PointerType * BaseTy =
+  if (!Field->isBitField()) {
+    V = Builder.CreateStructGEP(BaseValue, idx, "tmp");
+  } else {
+    const llvm::Type *FieldTy = ConvertType(Field->getType());
+    const llvm::PointerType *BaseTy =
       cast<llvm::PointerType>(BaseValue->getType());
     unsigned AS = BaseTy->getAddressSpace();
     BaseValue = Builder.CreateBitCast(BaseValue,
@@ -501,11 +499,8 @@ LValue CodeGenFunction::EmitLValueForField(llvm::Value* BaseValue,
     V = Builder.CreateGEP(BaseValue,
                           llvm::ConstantInt::get(llvm::Type::Int32Ty, idx),
                           "tmp");
-  } else {
-    llvm::Value *Idxs[2] = { llvm::Constant::getNullValue(llvm::Type::Int32Ty),
-                             llvm::ConstantInt::get(llvm::Type::Int32Ty, idx) };
-    V = Builder.CreateGEP(BaseValue,Idxs, Idxs + 2, "tmp");
   }
+  
   // Match union field type.
   if (isUnion) {
     const llvm::Type * FieldTy = ConvertType(Field->getType());
@@ -519,13 +514,13 @@ LValue CodeGenFunction::EmitLValueForField(llvm::Value* BaseValue,
     }
   }
 
-  if (Field->isBitField()) {
-    CodeGenTypes::BitFieldInfo bitFieldInfo =
-      CGM.getTypes().getBitFieldInfo(Field);
-    return LValue::MakeBitfield(V, bitFieldInfo.Begin, bitFieldInfo.Size,
-                                Field->getType()->isSignedIntegerType());
-  } else
+  if (!Field->isBitField())
     return LValue::MakeAddr(V);
+    
+  CodeGenTypes::BitFieldInfo bitFieldInfo =
+    CGM.getTypes().getBitFieldInfo(Field);
+  return LValue::MakeBitfield(V, bitFieldInfo.Begin, bitFieldInfo.Size,
+                              Field->getType()->isSignedIntegerType());
 }
 
 //===--------------------------------------------------------------------===//

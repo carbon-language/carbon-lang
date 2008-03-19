@@ -185,15 +185,11 @@ public:
 /// load the real and imaginary pieces, returning them as Real/Imag.
 ComplexPairTy ComplexExprEmitter::EmitLoadOfComplex(llvm::Value *SrcPtr,
                                                     bool isVolatile) {
-  llvm::Constant *Zero = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
-  llvm::Constant *One  = llvm::ConstantInt::get(llvm::Type::Int32Ty, 1);
-  
   llvm::SmallString<64> Name(SrcPtr->getNameStart(),
                              SrcPtr->getNameStart()+SrcPtr->getNameLen());
   
   Name += ".realp";
-  llvm::Value *Ops[] = {Zero, Zero};
-  llvm::Value *RealPtr = Builder.CreateGEP(SrcPtr, Ops, Ops+2, Name.c_str());
+  llvm::Value *RealPtr = Builder.CreateStructGEP(SrcPtr, 0, Name.c_str());
 
   Name.pop_back();  // .realp -> .real
   llvm::Value *Real = Builder.CreateLoad(RealPtr, isVolatile, Name.c_str());
@@ -201,8 +197,7 @@ ComplexPairTy ComplexExprEmitter::EmitLoadOfComplex(llvm::Value *SrcPtr,
   Name.resize(Name.size()-4); // .real -> .imagp
   Name += "imagp";
   
-  Ops[1] = One; // { Ops = { Zero, One }
-  llvm::Value *ImagPtr = Builder.CreateGEP(SrcPtr, Ops, Ops+2, Name.c_str());
+  llvm::Value *ImagPtr = Builder.CreateStructGEP(SrcPtr, 1, Name.c_str());
 
   Name.pop_back();  // .imagp -> .imag
   llvm::Value *Imag = Builder.CreateLoad(ImagPtr, isVolatile, Name.c_str());
@@ -213,14 +208,8 @@ ComplexPairTy ComplexExprEmitter::EmitLoadOfComplex(llvm::Value *SrcPtr,
 /// specified value pointer.
 void ComplexExprEmitter::EmitStoreOfComplex(ComplexPairTy Val, llvm::Value *Ptr,
                                             bool isVolatile) {
-  llvm::Constant *Zero = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
-  llvm::Constant *One  = llvm::ConstantInt::get(llvm::Type::Int32Ty, 1);
-
-  llvm::Value *Ops[] = {Zero, Zero};
-  llvm::Value *RealPtr = Builder.CreateGEP(Ptr, Ops, Ops+2, "real");
-  
-  Ops[1] = One; // { Ops = { Zero, One }
-  llvm::Value *ImagPtr = Builder.CreateGEP(Ptr, Ops, Ops+2, "imag");
+  llvm::Value *RealPtr = Builder.CreateStructGEP(Ptr, 0, "real");
+  llvm::Value *ImagPtr = Builder.CreateStructGEP(Ptr, 1, "imag");
   
   Builder.CreateStore(Val.first, RealPtr, isVolatile);
   Builder.CreateStore(Val.second, ImagPtr, isVolatile);

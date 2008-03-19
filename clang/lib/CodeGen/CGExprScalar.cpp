@@ -524,10 +524,7 @@ Value *ScalarExprEmitter::VisitImplicitCastExpr(const ImplicitCastExpr *E) {
            isa<llvm::ArrayType>(cast<llvm::PointerType>(V->getType())
                                 ->getElementType()) &&
            "Doesn't support VLAs yet!");
-    llvm::Constant *Idx0 = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
-    
-    llvm::Value *Ops[] = {Idx0, Idx0};
-    V = Builder.CreateGEP(V, Ops, Ops+2, "arraydecay");
+    V = Builder.CreateStructGEP(V, 0, "arraydecay");
     
     // The resultant pointer type can be implicitly casted to other pointer
     // types as well, for example void*.
@@ -597,7 +594,7 @@ Value *ScalarExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
   if (isa<llvm::PointerType>(InVal->getType())) {
     // FIXME: This isn't right for VLAs.
     NextVal = llvm::ConstantInt::get(llvm::Type::Int32Ty, AmountVal);
-    NextVal = Builder.CreateGEP(InVal, NextVal);
+    NextVal = Builder.CreateGEP(InVal, NextVal, "ptrincdec");
   } else {
     // Add the inc/dec to the real part.
     if (isa<llvm::IntegerType>(InVal->getType()))
