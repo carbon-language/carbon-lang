@@ -189,10 +189,9 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     break;
   }
   case Type::Complex: {
-    std::vector<const llvm::Type*> Elts;
-    Elts.push_back(ConvertType(cast<ComplexType>(Ty).getElementType()));
-    Elts.push_back(Elts[0]);
-    return llvm::StructType::get(Elts);
+    const llvm::Type *EltTy = 
+      ConvertType(cast<ComplexType>(Ty).getElementType());
+    return llvm::StructType::get(EltTy, EltTy, NULL);
   }
   case Type::Pointer: {
     const PointerType &P = cast<PointerType>(Ty);

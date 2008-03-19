@@ -50,8 +50,8 @@ llvm::Value *CGObjCGNU::generateMessageSend(llvm::LLVMFoldingBuilder &Builder,
   // Get the selector Type.
   const llvm::Type *PtrToInt8Ty = 
     llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
-  std::vector<const llvm::Type*> Str2(2, PtrToInt8Ty);
-  const llvm::Type *SelStructTy = llvm::StructType::get(Str2);
+  const llvm::Type *SelStructTy = 
+    llvm::StructType::get(PtrToInt8Ty, PtrToInt8Ty, NULL);
   const llvm::Type *SelTy = llvm::PointerType::getUnqual(SelStructTy);
 
   // Look up the selector.
