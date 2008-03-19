@@ -179,19 +179,15 @@ void HTMLDiagnostic::HandleDiagnostic(Diagnostic &Diags,
       (StrNo < NumStrs ? Strs[StrNo] : "<<<INTERNAL ERROR>>>") +
       std::string(Msg.begin() + i + 2, Msg.end());
     }
-  }
-
-  // Start making the div tag.
+  }  
+  
+  // Create the html for the message.
   
   std::ostringstream os;
 
-  os << "\n<div class=\"codeline\"><div class=\"nums\">&nbsp;</div>"
-     << "<div class=\"lines\">";
-  
-  for (unsigned i = 0; i < ColNo+1; ++i)
-    os << ' ';
-  
-  os << "</div><span class=\"msg\">";
+  os << "\n<tr><td class=\"num\"></td><td class=\"line\">"
+     << "<div class=\"msg\" style=\"margin-left:"
+     << ColNo << "ex\">";
   
   switch (DiagLevel) {
     default: assert(0 && "Unknown diagnostic type!");
@@ -202,14 +198,12 @@ void HTMLDiagnostic::HandleDiagnostic(Diagnostic &Diags,
       break;
   }
   
-  os << Msg; // FIXME: HTML escape "Msg"
-  os << "</span></div";
+  os << Msg << "</div></td></tr>";
   
-  // Insert a div tag with the warning.
+  // Insert the new html.
   
   const llvm::MemoryBuffer *Buf = R.getSourceMgr().getBuffer(FileID);
   const char* FileStart = Buf->getBufferStart();
-  
   
   R.InsertStrBefore(SourceLocation::getFileLoc(FileID, LineStart - FileStart),
                     os.str());

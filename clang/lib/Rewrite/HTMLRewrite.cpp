@@ -49,27 +49,27 @@ void html::EscapeText(Rewriter& R, unsigned FileID, bool EscapeSpaces) {
 static void AddLineNumber(Rewriter& R, unsigned LineNo,
                           SourceLocation B, SourceLocation E) {
     
-  // Surround the line text with a div tag.
+  // Put the closing </tr> first.
 
-  R.InsertCStrBefore(E, "</div>");
+  R.InsertCStrBefore(E, "</tr>");
   
   if (B == E) // Handle empty lines.
-    R.InsertCStrBefore(B, "<div class=\"lines\"> </div>");
+    R.InsertCStrBefore(B, "<td class=\"line\"> </td>");
   else {                         
-    R.InsertCStrBefore(E, "</div>");
-    R.InsertCStrBefore(B, "<div class=\"lines\">");
+    R.InsertCStrBefore(E, "</td>");
+    R.InsertCStrBefore(B, "<td class=\"line\">");
   }
   
   // Insert a div tag for the line number.
   
   std::ostringstream os;
-  os << "<div class=\"nums\">" << LineNo << "</div>";
+  os << "<td class=\"num\">" << LineNo << "</td>";
   
   R.InsertStrBefore(B, os.str());
   
-  // Now surround the whole line with another div tag.
+  // Now prepend the <tr>.
   
-  R.InsertCStrBefore(B, "<div class=\"codeline\">");
+  R.InsertCStrBefore(B, "<tr>");
 
 }
 
@@ -115,10 +115,10 @@ void html::AddLineNumbers(Rewriter& R, unsigned FileID) {
   // Add one big div tag that surrounds all of the code.
   
   R.InsertCStrBefore(SourceLocation::getFileLoc(FileID, 0),
-                     "<div id=\"codeblock\">");
+                     "<table class=\"code\">\n");
   
   R.InsertCStrAfter(SourceLocation::getFileLoc(FileID, FileEnd - FileBeg),
-                    "</div>");
+                    "</table>");
 }
 
 void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID) {
@@ -136,22 +136,19 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID) {
     std::ostringstream os;
     
     os << "<html>\n<head>\n"
-    << " <style type=\"text/css\">\n"    
-    << "  .codeblock { width:100% }\n"
-    << "  .codeline { font-family: \"Andale Mono\", fixed; font-size:10pt }\n"
-    << "  .codeline { height:1.5em; line-height:1.5em }\n"
-    << "  .nums, .lines { float:left; height:100% }\n"
-    << "  .nums { background-color: #eeeeee }\n"
-    << "  .nums { font-size:smaller }\n"
-    << "  .nums { width:2.5em; padding-right:2ex; text-align:right }\n"    
-    << "  .lines { padding-left: 1ex; border-left: 3px solid #ccc }\n"
-    << "  .lines { white-space: pre }\n"
-    << "  .msg { background-color:#fcff4c; float:left }\n"
-    << "  .msg { font-family:Helvetica, sans-serif; font-size: smaller }\n"
-    << "  .msg { padding:5px; margin-top:10px; margin-bottom:10px }\n"
-    << " </style>\n"
-    << "</head>\n"
-    << "<body>";
+       << "<style type=\"text/css\">\n"    
+       << " .code { border-spacing:0px; width:100%; }\n"
+       << " .code { font-family: \"Andale Mono\", fixed; font-size:10pt }\n"
+       << " .code { line-height: 1.2em }\n"
+       << " .num { width:2.5em; padding-right:2ex; background-color:#eeeeee }\n"
+       << " .num { text-align:right; font-size: smaller }\n"
+       << " .line { padding-left: 1ex; border-left: 3px solid #ccc }\n"
+       << " .line { white-space: pre }\n"
+       << " .msg { background-color:#fcff4c }\n"
+       << " .msg { font-family:Helvetica, sans-serif; font-size: smaller }\n"
+       << " .msg { float:left }\n"
+       << " .msg { padding:5px; margin-top:10px; margin-bottom:10px }\n"
+       << "</style>\n</head>\n<body>";
     
     R.InsertStrBefore(StartLoc, os.str());
   }
