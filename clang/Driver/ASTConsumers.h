@@ -54,7 +54,7 @@ ASTConsumer *CreateCodeRewriterTest(const std::string& InFile,
                                     const LangOptions &LOpts);
 
 ASTConsumer* CreateHTMLPrinter();
-
+ASTConsumer* CreateHTMLTest();
 
 ASTConsumer *CreateSerializationTest(Diagnostic &Diags,
                                      FileManager& FMgr, 

@@ -50,6 +50,8 @@ static void AddLineNumber(Rewriter& R, unsigned LineNo,
                           SourceLocation B, SourceLocation E) {
     
   // Surround the line text with a div tag.
+
+  R.InsertCStrBefore(E, "</div>");
   
   if (B == E) // Handle empty lines.
     R.InsertCStrBefore(B, "<div class=\"lines\"> </div>");
@@ -68,7 +70,7 @@ static void AddLineNumber(Rewriter& R, unsigned LineNo,
   // Now surround the whole line with another div tag.
   
   R.InsertCStrBefore(B, "<div class=\"codeline\">");
-  R.InsertCStrAfter(E, "</div>");
+
 }
 
 void html::AddLineNumbers(Rewriter& R, unsigned FileID) {
@@ -141,9 +143,12 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID) {
     << "  .nums, .lines { float:left; height:100% }\n"
     << "  .nums { background-color: #eeeeee }\n"
     << "  .nums { font-size:smaller }\n"
-    << "  .nums { width:2.5em; padding-right:2ex; text-align:right }\n"
+    << "  .nums { width:2.5em; padding-right:2ex; text-align:right }\n"    
     << "  .lines { padding-left: 1ex; border-left: 3px solid #ccc }\n"
     << "  .lines { white-space: pre }\n"
+    << "  .msg { background-color:#fcff4c; float:left }\n"
+    << "  .msg { font-family:Helvetica, sans-serif; font-size: smaller }\n"
+    << "  .msg { padding:5px; margin-top:10px; margin-bottom:10px }\n"
     << " </style>\n"
     << "</head>\n"
     << "<body>";

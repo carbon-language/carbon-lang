@@ -60,6 +60,7 @@ Stats("print-stats",
 
 enum ProgActions {
   RewriteTest,                  // Rewriter testing stuff.
+  HTMLTest,                     // HTML displayer testing stuff.
   EmitLLVM,                     // Emit a .ll file.
   EmitBC,                       // Emit a .bc file.
   SerializeAST,                 // Emit a .ast file.
@@ -135,6 +136,8 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Build ASTs and emit .ast file"),
              clEnumValN(RewriteTest, "rewrite-test",
                         "Playground for the code rewriter"),
+             clEnumValN(HTMLTest, "html-test",
+                        "Playground for the HTML displayer"),
              clEnumValEnd));
 
 
@@ -1001,6 +1004,9 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
       
     case EmitHTML:
       return CreateHTMLPrinter();
+      
+    case HTMLTest:
+      return CreateHTMLTest();
       
     case ParseCFGDump:
     case ParseCFGView:
