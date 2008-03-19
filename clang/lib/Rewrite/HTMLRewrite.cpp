@@ -52,12 +52,12 @@ static void AddLineNumber(Rewriter& R, unsigned LineNo,
   // Surround the line with a span tag.
   
   R.InsertTextBefore(E, "</span>", 7);
-  R.InsertTextBefore(B, "<span style=lines>", 18);
+  R.InsertTextBefore(B, "<span class=lines>", 18);
   
   // Insert a span tag for the line number.
 
   std::ostringstream os;
-  os << "<span style=nums>" << LineNo << "</span>";
+  os << "<span class=nums>" << LineNo << "</span>";
   R.InsertTextBefore(B, os.str().c_str(), os.str().size());
 }
 
