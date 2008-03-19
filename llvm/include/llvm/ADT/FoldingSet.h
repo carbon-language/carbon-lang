@@ -32,7 +32,7 @@ namespace llvm {
 /// 
 /// This class is implemented as a single-link chained hash table, where the
 /// "buckets" are actually the nodes themselves (the next pointer is in the
-/// node).  The last node points back to the bucket to simplified node removal.
+/// node).  The last node points back to the bucket to simplify node removal.
 ///
 /// Any node that is to be included in the folding set must be a subclass of
 /// FoldingSetNode.  The node class must also define a Profile method used to
