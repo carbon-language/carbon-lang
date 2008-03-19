@@ -146,6 +146,7 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID) {
        << " .line { white-space: pre }\n"
        << " .msg { background-color:#fcff4c }\n"
        << " .msg { font-family:Helvetica, sans-serif; font-size: smaller }\n"
+       << " .msg { font-weight: bold }\n"
        << " .msg { float:left }\n"
        << " .msg { padding:5px; margin-top:10px; margin-bottom:10px }\n"
        << "</style>\n</head>\n<body>";
