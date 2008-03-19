@@ -916,29 +916,53 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_mmx_psll_w : GCCBuiltin<"__builtin_ia32_psllw">,
               Intrinsic<[llvm_v4i16_ty, llvm_v4i16_ty,
                          llvm_v1i64_ty], [IntrNoMem]>;
+  def int_x86_mmx_pslli_w : GCCBuiltin<"__builtin_ia32_psllwi">,
+              Intrinsic<[llvm_v4i16_ty, llvm_v4i16_ty,
+                         llvm_i32_ty], [IntrNoMem]>;
   def int_x86_mmx_psll_d : GCCBuiltin<"__builtin_ia32_pslld">,
               Intrinsic<[llvm_v2i32_ty, llvm_v2i32_ty,
                          llvm_v1i64_ty], [IntrNoMem]>;
+  def int_x86_mmx_pslli_d : GCCBuiltin<"__builtin_ia32_pslldi">,
+              Intrinsic<[llvm_v2i32_ty, llvm_v2i32_ty,
+                         llvm_i32_ty], [IntrNoMem]>;
   def int_x86_mmx_psll_q : GCCBuiltin<"__builtin_ia32_psllq">,
               Intrinsic<[llvm_v1i64_ty, llvm_v1i64_ty,
                          llvm_v1i64_ty], [IntrNoMem]>;
+  def int_x86_mmx_pslli_q : GCCBuiltin<"__builtin_ia32_psllqi">,
+              Intrinsic<[llvm_v1i64_ty, llvm_v1i64_ty,
+                         llvm_i32_ty], [IntrNoMem]>;
 
   def int_x86_mmx_psrl_w : GCCBuiltin<"__builtin_ia32_psrlw">,
               Intrinsic<[llvm_v4i16_ty, llvm_v4i16_ty,
                          llvm_v1i64_ty], [IntrNoMem]>;
+  def int_x86_mmx_psrli_w : GCCBuiltin<"__builtin_ia32_psrlwi">,
+              Intrinsic<[llvm_v4i16_ty, llvm_v4i16_ty,
+                         llvm_i32_ty], [IntrNoMem]>;
   def int_x86_mmx_psrl_d : GCCBuiltin<"__builtin_ia32_psrld">,
               Intrinsic<[llvm_v2i32_ty, llvm_v2i32_ty,
                          llvm_v1i64_ty], [IntrNoMem]>;
+  def int_x86_mmx_psrli_d : GCCBuiltin<"__builtin_ia32_psrldi">,
+              Intrinsic<[llvm_v2i32_ty, llvm_v2i32_ty,
+                         llvm_i32_ty], [IntrNoMem]>;
   def int_x86_mmx_psrl_q : GCCBuiltin<"__builtin_ia32_psrlq">,
               Intrinsic<[llvm_v1i64_ty,   llvm_v1i64_ty,
                          llvm_v1i64_ty], [IntrNoMem]>;
+  def int_x86_mmx_psrli_q : GCCBuiltin<"__builtin_ia32_psrlqi">,
+              Intrinsic<[llvm_v1i64_ty,   llvm_v1i64_ty,
+                         llvm_i32_ty], [IntrNoMem]>;
 
   def int_x86_mmx_psra_w : GCCBuiltin<"__builtin_ia32_psraw">,
               Intrinsic<[llvm_v4i16_ty, llvm_v4i16_ty,
                          llvm_v1i64_ty], [IntrNoMem]>;
+  def int_x86_mmx_psrai_w : GCCBuiltin<"__builtin_ia32_psrawi">,
+              Intrinsic<[llvm_v4i16_ty, llvm_v4i16_ty,
+                         llvm_i32_ty], [IntrNoMem]>;
   def int_x86_mmx_psra_d : GCCBuiltin<"__builtin_ia32_psrad">,
               Intrinsic<[llvm_v2i32_ty, llvm_v2i32_ty,
                          llvm_v1i64_ty], [IntrNoMem]>;
+  def int_x86_mmx_psrai_d : GCCBuiltin<"__builtin_ia32_psradi">,
+              Intrinsic<[llvm_v2i32_ty, llvm_v2i32_ty,
+                         llvm_i32_ty], [IntrNoMem]>;
 }
 
 // Pack ops.
