@@ -1,10 +1,9 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -licm -disable-output
+; RUN: llvm-as < %s | opt -licm -disable-output
 
-void %test({int}* %P) {
+define void @test({ i32 }* %P) {
 	br label %Loop
-
-Loop:
-	free {int}* %P
+Loop:		; preds = %Loop, %0
+	free { i32 }* %P
 	br label %Loop
 }
 

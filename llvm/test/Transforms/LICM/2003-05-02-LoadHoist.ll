@@ -3,19 +3,21 @@
 ; loaded from.  Basically if the load gets hoisted, the subtract gets turned
 ; into a constant zero.
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -licm -load-vn -gcse -instcombine | llvm-dis | grep load
+; RUN: llvm-as < %s | opt -licm -load-vn -gcse -instcombine | llvm-dis | grep load
 
-%X = global int 7
-declare void %foo()
+@X = global i32 7		; <i32*> [#uses=2]
 
-int %test(bool %c) {
-	%A = load int *%X
+declare void @foo()
+
+define i32 @test(i1 %c) {
+	%A = load i32* @X		; <i32> [#uses=1]
 	br label %Loop
-Loop:
-	call void %foo()
-	%B = load int *%X  ;; Should not hoist this load!
-	br bool %c, label %Loop, label %Out
-Out:
-	%C = sub int %A, %B
-	ret int %C
+Loop:		; preds = %Loop, %0
+	call void @foo( )
+        ;; Should not hoist this load!
+	%B = load i32* @X		; <i32> [#uses=1]
+	br i1 %c, label %Loop, label %Out
+Out:		; preds = %Loop
+	%C = sub i32 %A, %B		; <i32> [#uses=1]
+	ret i32 %C
 }

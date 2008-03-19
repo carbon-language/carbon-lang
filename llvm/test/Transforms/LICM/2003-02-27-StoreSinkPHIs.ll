@@ -1,13 +1,15 @@
 ; LICM is adding stores before phi nodes.  bad.
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -licm
+; RUN: llvm-as < %s | opt -licm
 
-bool %test(bool %c) {
-	br bool %c, label %Loop, label %Out
-Loop:
-	store int 0, int* null
-	br bool %c, label %Loop, label %Out
-Out:
-	%X = phi bool [%c, %0], [true, %Loop]
-	ret bool %X
+define i1 @test(i1 %c) {
+; <label>:0
+	br i1 %c, label %Loop, label %Out
+Loop:		; preds = %Loop, %0
+	store i32 0, i32* null
+	br i1 %c, label %Loop, label %Out
+Out:		; preds = %Loop, %0
+	%X = phi i1 [ %c, %0 ], [ true, %Loop ]		; <i1> [#uses=1]
+	ret i1 %X
 }
+

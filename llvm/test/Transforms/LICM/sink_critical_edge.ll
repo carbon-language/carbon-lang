@@ -1,19 +1,16 @@
 ; This testcase checks to make sure the sinker does not cause problems with
 ; critical edges.
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -licm | llvm-dis | %prcontext add 1 | grep Exit
+; RUN: llvm-as < %s | opt -licm | llvm-dis | %prcontext add 1 | grep Exit
 
-implementation   ; Functions:
-
-void %test() {
+define void @test() {
 Entry:
-	br bool false, label %Loop, label %Exit
-
-Loop:
-	%X = add int 0, 1
-	br bool false, label %Loop, label %Exit
-
-Exit:
-	%Y = phi int [ 0, %Entry ], [ %X, %Loop ]
+	br i1 false, label %Loop, label %Exit
+Loop:		; preds = %Loop, %Entry
+	%X = add i32 0, 1		; <i32> [#uses=1]
+	br i1 false, label %Loop, label %Exit
+Exit:		; preds = %Loop, %Entry
+	%Y = phi i32 [ 0, %Entry ], [ %X, %Loop ]		; <i32> [#uses=0]
 	ret void
 }
+

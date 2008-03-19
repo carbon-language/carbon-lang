@@ -3,24 +3,22 @@
 ; happens because preheader insertion doesn't insert a preheader for this
 ; case... bad.
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -licm -adce -simplifycfg | llvm-dis | \
+; RUN: llvm-as < %s | opt -licm -adce -simplifycfg | llvm-dis | \
 ; RUN:   not grep {br }
 
-int %main(int %argc) {
-        br label %bb5
-
-bb5:            ; preds = %bb5, %0
-	%I = phi int [0, %0], [%I2, %bb5]
-	%I2 = add int %I, 1
-	%c = seteq int %I2, 10
-        br bool %c, label %bb5, label %bb8
-
-bb8:            ; preds = %bb8, %bb5
-        %cann-indvar = phi uint [ 0, %bb8 ], [ 0, %bb5 ]
-	%X = add int %argc, %argc  ; Loop invariant
-        br bool false, label %bb8, label %bb10
-
-bb10:           ; preds = %bb8
-        ret int %X
+define i32 @main(i32 %argc) {
+; <label>:0
+	br label %bb5
+bb5:		; preds = %bb5, %0
+	%I = phi i32 [ 0, %0 ], [ %I2, %bb5 ]		; <i32> [#uses=1]
+	%I2 = add i32 %I, 1		; <i32> [#uses=2]
+	%c = icmp eq i32 %I2, 10		; <i1> [#uses=1]
+	br i1 %c, label %bb5, label %bb8
+bb8:		; preds = %bb8, %bb5
+	%cann-indvar = phi i32 [ 0, %bb8 ], [ 0, %bb5 ]		; <i32> [#uses=0]
+	%X = add i32 %argc, %argc		; <i32> [#uses=1]
+	br i1 false, label %bb8, label %bb10
+bb10:		; preds = %bb8
+	ret i32 %X
 }
 

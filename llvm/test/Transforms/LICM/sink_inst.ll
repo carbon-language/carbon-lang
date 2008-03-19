@@ -2,18 +2,19 @@
 ; the instruction to the exit blocks instead of executing it on every
 ; iteration of the loop.
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -licm | llvm-dis | %prcontext mul 1 | grep Out: 
+; RUN: llvm-as < %s | opt -licm | llvm-dis | %prcontext mul 1 | grep Out: 
 
-int %test(int %N) {
+define i32 @test(i32 %N) {
 Entry:
 	br label %Loop
-Loop:
-        %N_addr.0.pn = phi int [ %dec, %Loop ], [ %N, %Entry ]
-        %tmp.6 = mul int %N, %N_addr.0.pn
-        %tmp.7 = sub int %tmp.6, %N
-        %dec = add int %N_addr.0.pn, -1
-        %tmp.1 = setne int %N_addr.0.pn, 1
-        br bool %tmp.1, label %Loop, label %Out
-Out:
-	ret int %tmp.7
+Loop:		; preds = %Loop, %Entry
+	%N_addr.0.pn = phi i32 [ %dec, %Loop ], [ %N, %Entry ]		; <i32> [#uses=3]
+	%tmp.6 = mul i32 %N, %N_addr.0.pn		; <i32> [#uses=1]
+	%tmp.7 = sub i32 %tmp.6, %N		; <i32> [#uses=1]
+	%dec = add i32 %N_addr.0.pn, -1		; <i32> [#uses=1]
+	%tmp.1 = icmp ne i32 %N_addr.0.pn, 1		; <i1> [#uses=1]
+	br i1 %tmp.1, label %Loop, label %Out
+Out:		; preds = %Loop
+	ret i32 %tmp.7
 }
+

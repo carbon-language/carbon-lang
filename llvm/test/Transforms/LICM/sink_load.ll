@@ -2,19 +2,20 @@
 ; result of the load is only used outside of the loop, sink the load instead of
 ; hoisting it!
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -licm | llvm-dis | %prcontext load 1 | grep Out: 
+; RUN: llvm-as < %s | opt -licm | llvm-dis | %prcontext load 1 | grep Out: 
 
-%X = global int 5
+@X = global i32 5		; <i32*> [#uses=1]
 
-int %test(int %N) {
+define i32 @test(i32 %N) {
 Entry:
 	br label %Loop
-Loop:
-        %N_addr.0.pn = phi int [ %dec, %Loop ], [ %N, %Entry ]
-        %tmp.6 = load int* %X
-        %dec = add int %N_addr.0.pn, -1
-        %tmp.1 = setne int %N_addr.0.pn, 1
-        br bool %tmp.1, label %Loop, label %Out
-Out:
-	ret int %tmp.6
+Loop:		; preds = %Loop, %Entry
+	%N_addr.0.pn = phi i32 [ %dec, %Loop ], [ %N, %Entry ]		; <i32> [#uses=2]
+	%tmp.6 = load i32* @X		; <i32> [#uses=1]
+	%dec = add i32 %N_addr.0.pn, -1		; <i32> [#uses=1]
+	%tmp.1 = icmp ne i32 %N_addr.0.pn, 1		; <i1> [#uses=1]
+	br i1 %tmp.1, label %Loop, label %Out
+Out:		; preds = %Loop
+	ret i32 %tmp.6
 }
+
