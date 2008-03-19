@@ -136,7 +136,8 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID) {
     std::ostringstream os;
     
     os << "<html>\n<head>\n"
-       << "<style type=\"text/css\">\n"    
+       << "<style type=\"text/css\">\n"
+       << " body { color:#000000; background-color:#ffffff }\n"
        << " .code { border-spacing:0px; width:100%; }\n"
        << " .code { font-family: \"Andale Mono\", fixed; font-size:10pt }\n"
        << " .code { line-height: 1.2em }\n"
@@ -144,11 +145,13 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID) {
        << " .num { text-align:right; font-size: smaller }\n"
        << " .line { padding-left: 1ex; border-left: 3px solid #ccc }\n"
        << " .line { white-space: pre }\n"
-       << " .msg { background-color:#fcff4c }\n"
+       << " .msg { background-color:#ff8000; color:#000000 }\n"
+       << " .msg { border: solid 1px #944a00 }\n"
        << " .msg { font-family:Helvetica, sans-serif; font-size: smaller }\n"
        << " .msg { font-weight: bold }\n"
        << " .msg { float:left }\n"
-       << " .msg { padding:5px; margin-top:10px; margin-bottom:10px }\n"
+       << " .msg { padding:0.5em 1ex 0.5em 1ex }\n"
+       << " .msg { margin-top:10px; margin-bottom:10px }\n"
        << "</style>\n</head>\n<body>";
     
     R.InsertStrBefore(StartLoc, os.str());
