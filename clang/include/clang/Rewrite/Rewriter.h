@@ -19,6 +19,8 @@
 #include "clang/Rewrite/RewriteRope.h"
 #include <map>
 #include <vector>
+#include <cstring>
+#include <string>
 
 namespace clang {
   class SourceManager;
@@ -169,7 +171,26 @@ public:
   bool InsertTextBefore(SourceLocation Loc, const char *StrData,
                        unsigned StrLen) {
     return InsertText(Loc, StrData, StrLen, false);
-  }    
+  }
+
+
+  bool InsertCStrBefore(SourceLocation Loc, const char* Str) {
+    return InsertTextBefore(Loc, Str, strlen(Str));
+  }
+  
+  
+  bool InsertCStrAfter(SourceLocation Loc, const char* Str) {
+    return InsertTextAfter(Loc, Str, strlen(Str));
+  }
+  
+  bool InsertStrBefore(SourceLocation Loc, const std::string& S) {
+    return InsertTextBefore(Loc, S.c_str(), S.size());
+  }
+
+  bool InsertStrAfter(SourceLocation Loc, const std::string& S) {
+    return InsertTextAfter(Loc, S.c_str(), S.size());
+  }
+  
   
   /// RemoveText - Remove the specified text region.
   bool RemoveText(SourceLocation Start, unsigned Length);
