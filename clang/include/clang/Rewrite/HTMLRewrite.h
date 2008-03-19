@@ -26,6 +26,9 @@ namespace html {
   void EscapeText(Rewriter& R, unsigned FileID, bool EscapeSpaces = false);
   
   void AddLineNumbers(Rewriter& R, unsigned FileID);  
+  
+  void AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID);
+  
 
 } // end html namespace
 } // end clang namespace

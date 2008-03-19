@@ -50,39 +50,7 @@ HTMLPrinter::~HTMLPrinter() {
   
   html::EscapeText(R, FileID);
   html::AddLineNumbers(R, FileID);
-  
-  // Generate header
-
-  {
-    std::ostringstream os;
-  
-    os << "<html>\n<head>\n"
-       << " <style type=\"text/css\">\n"    
-       << "  .codeblock { width:100% }\n"
-       << "  .codeline { font-family: \"Monaco\", fixed; font-size:11pt }\n"
-       << "  .codeline { height:1.5em; line-height:1.5em }\n"
-       << "  .nums, .lines { float:left; height:100% }\n"
-       << "  .nums { background-color: #eeeeee }\n"
-       << "  .nums { font-family: \"Andale Mono\", fixed; font-size:smaller }\n"
-       << "  .nums { width:2.5em; padding-right:2ex; text-align:right }\n"
-       << "  .lines { padding-left: 1ex; border-left: 3px solid #ccc }\n"
-       << "  .lines { white-space: pre }\n"
-       << " </style>\n"
-       << "</head>\n"
-       << "<body>";
-
-    R.InsertStrBefore(StartLoc, os.str());
-  }
-  
-  // Generate footer
-  
-  {
-    std::ostringstream os;
-    
-    os << "</body></html>\n";
-    R.InsertStrAfter(EndLoc, os.str());
-  }
-    
+  html::AddHeaderFooterInternalBuiltinCSS(R, FileID);
   
   // Emit the HTML.
   

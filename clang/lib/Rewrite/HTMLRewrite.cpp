@@ -118,3 +118,47 @@ void html::AddLineNumbers(Rewriter& R, unsigned FileID) {
   R.InsertCStrAfter(SourceLocation::getFileLoc(FileID, FileEnd - FileBeg),
                     "</div>");
 }
+
+void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID) {
+
+  const llvm::MemoryBuffer *Buf = R.getSourceMgr().getBuffer(FileID);
+  const char* FileStart = Buf->getBufferStart();
+  const char* FileEnd = Buf->getBufferEnd();
+
+  SourceLocation StartLoc = SourceLocation::getFileLoc(FileID, 0);
+  SourceLocation EndLoc = SourceLocation::getFileLoc(FileID, FileEnd-FileStart);
+
+  // Generate header
+
+  {
+    std::ostringstream os;
+    
+    os << "<html>\n<head>\n"
+    << " <style type=\"text/css\">\n"    
+    << "  .codeblock { width:100% }\n"
+    << "  .codeline { font-family: \"Andale Mono\", fixed; font-size:10pt }\n"
+    << "  .codeline { height:1.5em; line-height:1.5em }\n"
+    << "  .nums, .lines { float:left; height:100% }\n"
+    << "  .nums { background-color: #eeeeee }\n"
+    << "  .nums { font-size:smaller }\n"
+    << "  .nums { width:2.5em; padding-right:2ex; text-align:right }\n"
+    << "  .lines { padding-left: 1ex; border-left: 3px solid #ccc }\n"
+    << "  .lines { white-space: pre }\n"
+    << " </style>\n"
+    << "</head>\n"
+    << "<body>";
+    
+    R.InsertStrBefore(StartLoc, os.str());
+  }
+  
+  // Generate footer
+  
+  {
+    std::ostringstream os;
+    
+    os << "</body></html>\n";
+    R.InsertStrAfter(EndLoc, os.str());
+  }
+}
+  
+  
