@@ -1,21 +1,22 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -predsimplify -simplifycfg | llvm-dis | grep pass
+; RUN: llvm-as < %s | opt -predsimplify -simplifycfg | llvm-dis | grep pass
 
-void %regtest(int %x) {
+define void @regtest(i32 %x) {
 entry:
-  %A = seteq int %x, 0
-  br bool %A, label %middle, label %after
-middle:
-  br label %after
-after:
-  %B = seteq int %x, 0
-  br bool %B, label %then, label %else
-then:
-  br label %end
-else:
-  call void (...)* %pass( )
-  br label %end
-end:
-  ret void
+	%A = icmp eq i32 %x, 0		; <i1> [#uses=1]
+	br i1 %A, label %middle, label %after
+middle:		; preds = %entry
+	br label %after
+after:		; preds = %middle, %entry
+	%B = icmp eq i32 %x, 0		; <i1> [#uses=1]
+	br i1 %B, label %then, label %else
+then:		; preds = %after
+	br label %end
+else:		; preds = %after
+	call void (...)* @pass( )
+	br label %end
+end:		; preds = %else, %then
+	ret void
 }
 
-declare void %pass(...)
+declare void @pass(...)
+

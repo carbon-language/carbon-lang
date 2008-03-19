@@ -1,53 +1,48 @@
-; RUN: llvm-upgrade < %s | llvm-as | \
+; RUN: llvm-as < %s | \
 ; RUN:   opt -predsimplify -instcombine -simplifycfg  | llvm-dis > %t
 ; RUN: grep -v declare %t | not grep fail
 ; RUN: grep -v declare %t | grep pass | count 3
 
-int %test1(int %x, int %y) {
+define i32 @test1(i32 %x, i32 %y) {
 entry:
-	%tmp2 = or int %x, %y		; <int> [#uses=1]
-	%tmp = seteq int %tmp2, 0		; <bool> [#uses=1]
-	br bool %tmp, label %cond_true, label %return
-
+	%tmp2 = or i32 %x, %y		; <i32> [#uses=1]
+	%tmp = icmp eq i32 %tmp2, 0		; <i1> [#uses=1]
+	br i1 %tmp, label %cond_true, label %return
 cond_true:		; preds = %entry
-	%tmp4 = seteq int %x, 0		; <bool> [#uses=1]
-	br bool %tmp4, label %cond_true5, label %cond_false
-
+	%tmp4 = icmp eq i32 %x, 0		; <i1> [#uses=1]
+	br i1 %tmp4, label %cond_true5, label %cond_false
 cond_true5:		; preds = %cond_true
-	%tmp6 = call int %pass( )		; <int> [#uses=1]
-	ret int %tmp6
-
-cond_false:
-	%tmp8 = call int %fail ( )		; <int> [#uses=1]
-	ret int %tmp8
-
-return:		; preds = %cond_next7
-	ret int 0
+	%tmp6 = call i32 @pass( )		; <i32> [#uses=1]
+	ret i32 %tmp6
+cond_false:		; preds = %cond_true
+	%tmp8 = call i32 @fail( )		; <i32> [#uses=1]
+	ret i32 %tmp8
+return:		; preds = %entry
+	ret i32 0
 }
 
-int %test2(int %x, int %y) {
+define i32 @test2(i32 %x, i32 %y) {
 entry:
-	%tmp2 = or int %x, %y		; <int> [#uses=1]
-	%tmp = setne int %tmp2, 0		; <bool> [#uses=1]
-	br bool %tmp, label %cond_true, label %return
-
+	%tmp2 = or i32 %x, %y		; <i32> [#uses=1]
+	%tmp = icmp ne i32 %tmp2, 0		; <i1> [#uses=1]
+	br i1 %tmp, label %cond_true, label %return
 cond_true:		; preds = %entry
-	%tmp4 = seteq int %x, 0		; <bool> [#uses=1]
-	br bool %tmp4, label %cond_true5, label %cond_false
-
+	%tmp4 = icmp eq i32 %x, 0		; <i1> [#uses=1]
+	br i1 %tmp4, label %cond_true5, label %cond_false
 cond_true5:		; preds = %cond_true
-	%tmp6 = call int %pass1( )		; <int> [#uses=1]
-	ret int %tmp6
-
-cond_false:
-	%tmp8 = call int %pass2( )		; <int> [#uses=1]
-	ret int %tmp8
-
-return:		; preds = %cond_next7
-	ret int 0
+	%tmp6 = call i32 @pass1( )		; <i32> [#uses=1]
+	ret i32 %tmp6
+cond_false:		; preds = %cond_true
+	%tmp8 = call i32 @pass2( )		; <i32> [#uses=1]
+	ret i32 %tmp8
+return:		; preds = %entry
+	ret i32 0
 }
 
-declare int %fail()
-declare int %pass()
-declare int %pass1()
-declare int %pass2()
+declare i32 @fail()
+
+declare i32 @pass()
+
+declare i32 @pass1()
+
+declare i32 @pass2()

@@ -1,14 +1,13 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -predsimplify -disable-output
+; RUN: llvm-as < %s | opt -predsimplify -disable-output
 
-void %diff(int %N) {
+define void @diff(i32 %N) {
 entry:
-	%tmp = setgt int %N, 0		; <bool> [#uses=1]
-	br bool %tmp, label %bb519, label %bb744
-
+	%tmp = icmp sgt i32 %N, 0		; <i1> [#uses=1]
+	br i1 %tmp, label %bb519, label %bb744
 bb519:		; preds = %entry
-	%tmp720101 = setlt int %N, 0		; <bool> [#uses=1]
-	br bool %tmp720101, label %bb744, label %bb744
-
-bb744:		; preds = %bb519, %entry
+	%tmp720101 = icmp slt i32 %N, 0		; <i1> [#uses=1]
+	br i1 %tmp720101, label %bb744, label %bb744
+bb744:		; preds = %bb519, %bb519, %entry
 	ret void
 }
+

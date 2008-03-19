@@ -1,10 +1,10 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -raiseallocs -disable-output
-implementation   ; Functions:
+; RUN: llvm-as < %s | opt -raiseallocs -disable-output
 
-void %main() {
-	%tmp.13 = call int (...)* %free( int 32 )
-	%tmp.14 = cast int %tmp.13 to int*
+define void @main() {
+	%tmp.13 = call i32 (...)* @free( i32 32 )		; <i32> [#uses=1]
+	%tmp.14 = inttoptr i32 %tmp.13 to i32*		; <i32*> [#uses=0]
 	ret void
 }
 
-declare int %free(...)
+declare i32 @free(...)
+

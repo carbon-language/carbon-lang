@@ -1,19 +1,17 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -predsimplify -disable-output
+; RUN: llvm-as < %s | opt -predsimplify -disable-output
 
-void %ercMarkCurrMBConcealed(int %comp) {
+define void @ercMarkCurrMBConcealed(i32 %comp) {
 entry:
-	%tmp5 = icmp slt int %comp, 0		; <bool> [#uses=2]
-	%comp_addr.0 = select bool %tmp5, int 0, int %comp		; <int> [#uses=1]
-	switch int %comp_addr.0, label %return [
-		 int 0, label %bb
+	%tmp5 = icmp slt i32 %comp, 0		; <i1> [#uses=2]
+	%comp_addr.0 = select i1 %tmp5, i32 0, i32 %comp		; <i32> [#uses=1]
+	switch i32 %comp_addr.0, label %return [
+		 i32 0, label %bb
 	]
-
 bb:		; preds = %entry
-	br bool %tmp5, label %bb87.bb97_crit_edge.critedge, label %return
-
+	br i1 %tmp5, label %bb87.bb97_crit_edge.critedge, label %return
 bb87.bb97_crit_edge.critedge:		; preds = %bb
 	ret void
-
 return:		; preds = %bb, %entry
 	ret void
 }
+

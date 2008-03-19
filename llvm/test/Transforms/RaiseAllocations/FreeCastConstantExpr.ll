@@ -1,10 +1,11 @@
 ; This situation can occur due to the funcresolve pass.
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -raiseallocs | llvm-dis | not grep call
+; RUN: llvm-as < %s | opt -raiseallocs | llvm-dis | not grep call
 
-declare void %free(sbyte*)
+declare void @free(i8*)
 
-void %test(int *%P) {
-  call void(int*)* cast (void(sbyte*)* %free to void(int*)*)(int* %P)
-  ret void
+define void @test(i32* %P) {
+	call void bitcast (void (i8*)* @free to void (i32*)*)( i32* %P )
+	ret void
 }
+

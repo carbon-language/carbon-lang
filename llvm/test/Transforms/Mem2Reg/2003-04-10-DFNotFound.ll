@@ -1,11 +1,10 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -mem2reg
+; RUN: llvm-as < %s | opt -mem2reg
 
-implementation   ; Functions:
-
-void %_Z3barv() {
-	%result = alloca int
+define void @_Z3barv() {
+	%result = alloca i32		; <i32*> [#uses=1]
 	ret void
-
-	store int 0, int* %result  ; DF not set!
+		; No predecessors!
+	store i32 0, i32* %result
 	ret void
 }
+

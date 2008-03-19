@@ -1,15 +1,12 @@
 ; This input caused the mem2reg pass to die because it was trying to promote
 ; the %r alloca, even though it is invalid to do so in this case!
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -mem2reg
+; RUN: llvm-as < %s | opt -mem2reg
 
-
-implementation
-
-void "test"()
-begin
-	%r = alloca int		; <int*> [#uses=2]
-	store int 4, int* %r
-	store int* %r, int** null
+define void @test() {
+	%r = alloca i32		; <i32*> [#uses=2]
+	store i32 4, i32* %r
+	store i32* %r, i32** null
 	ret void
-end
+}
+

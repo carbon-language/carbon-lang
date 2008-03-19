@@ -1,15 +1,15 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -prune-eh -disable-output
+; RUN: llvm-as < %s | opt -prune-eh -disable-output
 
-implementation
-
-internal void %callee() {  ; does not throw
-  ret void
+define internal void @callee() {
+	ret void
 }
 
-int %caller() {
-  invoke void %callee() to label %E except label %E
-
-E:
-	%X = phi int [0, %0], [0, %0]
-	ret int %X
+define i32 @caller() {
+; <label>:0
+	invoke void @callee( )
+			to label %E unwind label %E
+E:		; preds = %0, %0
+	%X = phi i32 [ 0, %0 ], [ 0, %0 ]		; <i32> [#uses=1]
+	ret i32 %X
 }
+
