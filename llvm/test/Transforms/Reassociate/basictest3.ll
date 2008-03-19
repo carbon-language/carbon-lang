@@ -1,50 +1,54 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -reassociate -gcse | llvm-dis | grep add | count 6
+; RUN: llvm-as < %s | opt -reassociate -gcse | llvm-dis | grep add | count 6
 ; Each of these functions should turn into two adds each.
 
-%e = external global int
-%a = external global int
-%b = external global int
-%c = external global int
-%f = external global int
+@e = external global i32		; <i32*> [#uses=3]
+@a = external global i32		; <i32*> [#uses=3]
+@b = external global i32		; <i32*> [#uses=3]
+@c = external global i32		; <i32*> [#uses=3]
+@f = external global i32		; <i32*> [#uses=3]
 
-implementation
-
-void %test1() {
-        %A = load int* %a
-        %B = load int* %b
-        %C = load int* %c
-        %t1 = add int %A, %B
-	%t2 = add int %t1, %C
-        %t3 = add int %C, %A
-	%t4 = add int %t3, %B
-        store int %t2, int* %e  ; e = (a+b)+c;
-        store int %t4, int* %f  ; f = (a+c)+b
-        ret void
+define void @test1() {
+	%A = load i32* @a		; <i32> [#uses=2]
+	%B = load i32* @b		; <i32> [#uses=2]
+	%C = load i32* @c		; <i32> [#uses=2]
+	%t1 = add i32 %A, %B		; <i32> [#uses=1]
+	%t2 = add i32 %t1, %C		; <i32> [#uses=1]
+	%t3 = add i32 %C, %A		; <i32> [#uses=1]
+	%t4 = add i32 %t3, %B		; <i32> [#uses=1]
+	; e = (a+b)+c;
+        store i32 %t2, i32* @e
+        ; f = (a+c)+b
+	store i32 %t4, i32* @f
+	ret void
 }
 
-void %test2() {
-        %A = load int* %a
-        %B = load int* %b
-        %C = load int* %c
-	%t1 = add int %A, %B
-	%t2 = add int %t1, %C
-	%t3 = add int %C, %A
-	%t4 = add int %t3, %B
-        store int %t2, int* %e  ; e = c+(a+b)
-        store int %t4, int* %f  ; f = (c+a)+b
-        ret void
+define void @test2() {
+	%A = load i32* @a		; <i32> [#uses=2]
+	%B = load i32* @b		; <i32> [#uses=2]
+	%C = load i32* @c		; <i32> [#uses=2]
+	%t1 = add i32 %A, %B		; <i32> [#uses=1]
+	%t2 = add i32 %t1, %C		; <i32> [#uses=1]
+	%t3 = add i32 %C, %A		; <i32> [#uses=1]
+	%t4 = add i32 %t3, %B		; <i32> [#uses=1]
+	; e = c+(a+b)
+        store i32 %t2, i32* @e
+        ; f = (c+a)+b
+	store i32 %t4, i32* @f
+	ret void
 }
 
-void %test3() {
-        %A = load int* %a
-        %B = load int* %b
-        %C = load int* %c
-	%t1 = add int %B, %A
-	%t2 = add int %t1, %C
-	%t3 = add int %C, %A
-	%t4 = add int %t3, %B
-        store int %t2, int* %e  ; e = c+(b+a)
-        store int %t4, int* %f  ; f = (c+a)+b
-        ret void
+define void @test3() {
+	%A = load i32* @a		; <i32> [#uses=2]
+	%B = load i32* @b		; <i32> [#uses=2]
+	%C = load i32* @c		; <i32> [#uses=2]
+	%t1 = add i32 %B, %A		; <i32> [#uses=1]
+	%t2 = add i32 %t1, %C		; <i32> [#uses=1]
+	%t3 = add i32 %C, %A		; <i32> [#uses=1]
+	%t4 = add i32 %t3, %B		; <i32> [#uses=1]
+	; e = c+(b+a)
+        store i32 %t2, i32* @e
+        ; f = (c+a)+b
+	store i32 %t4, i32* @f
+	ret void
 }
 

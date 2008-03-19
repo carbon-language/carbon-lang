@@ -1,11 +1,12 @@
 ; With sub reassociation, constant folding can eliminate all of the constants.
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -reassociate -constprop -instcombine -dce | llvm-dis | not grep add
+; RUN: llvm-as < %s | opt -reassociate -constprop -instcombine -dce | llvm-dis | not grep add
 
-int %test(int %A, int %B) {
-	%W = add int 5, %B
-	%X = add int -7, %A
-	%Y = sub int %X, %W
-	%Z = add int %Y, 12
-	ret int %Z
+define i32 @test(i32 %A, i32 %B) {
+	%W = add i32 5, %B		; <i32> [#uses=1]
+	%X = add i32 -7, %A		; <i32> [#uses=1]
+	%Y = sub i32 %X, %W		; <i32> [#uses=1]
+	%Z = add i32 %Y, 12		; <i32> [#uses=1]
+	ret i32 %Z
 }
+

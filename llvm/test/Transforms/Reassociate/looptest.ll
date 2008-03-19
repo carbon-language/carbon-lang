@@ -12,45 +12,39 @@
 ; In this case, we want to reassociate the specified expr so that i+j can be
 ; hoisted out of the inner most loop.
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -reassociate | llvm-dis | grep 115 | not grep 117
+; RUN: llvm-as < %s | opt -reassociate | llvm-dis | grep 115 | not grep 117
+; END.
+@.LC0 = internal global [4 x i8] c"%d\0A\00"		; <[4 x i8]*> [#uses=1]
 
-%.LC0 = internal global [4 x sbyte] c"%d\0A\00"		; <[4 x sbyte]*> [#uses=1]
+declare i32 @printf(i8*, ...)
 
-declare int "printf"(sbyte*, ...)
-
-void "test"(uint %Num, int* %Array) {
-bb0:					;[#uses=1]
-	%cond221 = seteq uint 0, %Num		; <bool> [#uses=3]
-	br bool %cond221, label %bb7, label %bb2
-
-bb2:					;[#uses=3]
-	%reg115 = phi uint [ %reg120, %bb6 ], [ 0, %bb0 ]		; <uint> [#uses=2]
-	br bool %cond221, label %bb6, label %bb3
-
-bb3:					;[#uses=3]
-	%reg116 = phi uint [ %reg119, %bb5 ], [ 0, %bb2 ]		; <uint> [#uses=2]
-	br bool %cond221, label %bb5, label %bb4
-
-bb4:					;[#uses=3]
-	%reg117 = phi uint [ %reg118, %bb4 ], [ 0, %bb3 ]		; <uint> [#uses=2]
-	%reg113 = add uint %reg115, %reg117		; <uint> [#uses=1]
-	%reg114 = add uint %reg113, %reg116		; <uint> [#uses=1]
-	%cast227 = getelementptr [4 x sbyte]* %.LC0, long 0, long 0		; <sbyte*> [#uses=1]
-	call int (sbyte*, ...)* %printf( sbyte* %cast227, uint %reg114 )		; <int>:0 [#uses=0]
-	%reg118 = add uint %reg117, 1		; <uint> [#uses=2]
-	%cond224 = setne uint %reg118, %Num		; <bool> [#uses=1]
-	br bool %cond224, label %bb4, label %bb5
-
-bb5:					;[#uses=3]
-	%reg119 = add uint %reg116, 1		; <uint> [#uses=2]
-	%cond225 = setne uint %reg119, %Num		; <bool> [#uses=1]
-	br bool %cond225, label %bb3, label %bb6
-
-bb6:					;[#uses=3]
-	%reg120 = add uint %reg115, 1		; <uint> [#uses=2]
-	%cond226 = setne uint %reg120, %Num		; <bool> [#uses=1]
-	br bool %cond226, label %bb2, label %bb7
-
-bb7:					;[#uses=2]
+define void @test(i32 %Num, i32* %Array) {
+bb0:
+	%cond221 = icmp eq i32 0, %Num		; <i1> [#uses=3]
+	br i1 %cond221, label %bb7, label %bb2
+bb2:		; preds = %bb6, %bb0
+	%reg115 = phi i32 [ %reg120, %bb6 ], [ 0, %bb0 ]		; <i32> [#uses=2]
+	br i1 %cond221, label %bb6, label %bb3
+bb3:		; preds = %bb5, %bb2
+	%reg116 = phi i32 [ %reg119, %bb5 ], [ 0, %bb2 ]		; <i32> [#uses=2]
+	br i1 %cond221, label %bb5, label %bb4
+bb4:		; preds = %bb4, %bb3
+	%reg117 = phi i32 [ %reg118, %bb4 ], [ 0, %bb3 ]		; <i32> [#uses=2]
+	%reg113 = add i32 %reg115, %reg117		; <i32> [#uses=1]
+	%reg114 = add i32 %reg113, %reg116		; <i32> [#uses=1]
+	%cast227 = getelementptr [4 x i8]* @.LC0, i64 0, i64 0		; <i8*> [#uses=1]
+	call i32 (i8*, ...)* @printf( i8* %cast227, i32 %reg114 )		; <i32>:0 [#uses=0]
+	%reg118 = add i32 %reg117, 1		; <i32> [#uses=2]
+	%cond224 = icmp ne i32 %reg118, %Num		; <i1> [#uses=1]
+	br i1 %cond224, label %bb4, label %bb5
+bb5:		; preds = %bb4, %bb3
+	%reg119 = add i32 %reg116, 1		; <i32> [#uses=2]
+	%cond225 = icmp ne i32 %reg119, %Num		; <i1> [#uses=1]
+	br i1 %cond225, label %bb3, label %bb6
+bb6:		; preds = %bb5, %bb2
+	%reg120 = add i32 %reg115, 1		; <i32> [#uses=2]
+	%cond226 = icmp ne i32 %reg120, %Num		; <i1> [#uses=1]
+	br i1 %cond226, label %bb2, label %bb7
+bb7:		; preds = %bb6, %bb0
 	ret void
 }

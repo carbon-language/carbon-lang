@@ -1,20 +1,21 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -reassociate -instcombine | llvm-dis | not grep sub
+; RUN: llvm-as < %s | opt -reassociate -instcombine | llvm-dis | not grep sub
 
 ; Test that we can turn things like X*-(Y*Z) -> X*-1*Y*Z.
 
-int %test1(int %a, int %b, int %z) {
-	%c = sub int 0, %z
-	%d = mul int %a, %b
-	%e = mul int %c, %d
-	%f = mul int %e, 12345
-	%g = sub int 0, %f
-	ret int %g
+define i32 @test1(i32 %a, i32 %b, i32 %z) {
+	%c = sub i32 0, %z		; <i32> [#uses=1]
+	%d = mul i32 %a, %b		; <i32> [#uses=1]
+	%e = mul i32 %c, %d		; <i32> [#uses=1]
+	%f = mul i32 %e, 12345		; <i32> [#uses=1]
+	%g = sub i32 0, %f		; <i32> [#uses=1]
+	ret i32 %g
 }
 
-int %test2(int %a, int %b, int %z) {
-	%d = mul int %z, 40
-	%c = sub int 0, %d
-	%e = mul int %a, %c
-	%f = sub int 0, %e
-	ret int %f
+define i32 @test2(i32 %a, i32 %b, i32 %z) {
+	%d = mul i32 %z, 40		; <i32> [#uses=1]
+	%c = sub i32 0, %d		; <i32> [#uses=1]
+	%e = mul i32 %a, %c		; <i32> [#uses=1]
+	%f = sub i32 0, %e		; <i32> [#uses=1]
+	ret i32 %f
 }
+
