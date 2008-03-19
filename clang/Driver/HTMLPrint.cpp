@@ -50,22 +50,32 @@ HTMLPrinter::~HTMLPrinter() {
   
   html::EscapeText(R, FileID);
   html::AddLineNumbers(R, FileID);
-  html::InsertOuterTag(R, html::PRE, StartLoc, EndLoc, 0, 0, true);
-  html::InsertOuterTag(R, html::BODY, StartLoc, EndLoc, NULL, "\n", true);
   
-  // Generate CSS.
-  
-  std::ostringstream css;
-  css << "\n <style type=\"text/css\">\n";
-  css << "  .nums, .lines { vertical-align:top }\n";
-  css << "  .nums { padding-right:.5em; width:2.5em }\n";
-  css << "  </style>\n";
+  // Generate header
 
+  {
+    std::ostringstream os;
   
-  // Add <head> and <html> tags.
+    os << "<html>\n<head>\n"
+       << " <style type=\"text/css\">\n"
+       << "  .nums, .lines { vertical-align:top }\n"
+       << "  .nums { padding-right:.5em; width:2.5em }\n"
+       << " </style>\n"
+       << "</head>\n"
+       << "<body>\n<pre>";
+
+    R.InsertTextBefore(StartLoc, os.str().c_str(), os.str().size());
+  }
   
-  html::InsertTagBefore(R, html::HEAD, StartLoc, StartLoc, 0,css.str().c_str());
-  html::InsertOuterTag(R, html::HTML, StartLoc, EndLoc, 0, "\n");
+  // Generate footer
+  
+  {
+    std::ostringstream os;
+    
+    os << "</pre>\n</body></html>\n";
+    R.InsertTextAfter(EndLoc, os.str().c_str(), os.str().size());
+  }
+    
   
   // Emit the HTML.
   
