@@ -32,6 +32,9 @@ using namespace llvm;
 static cl::list<const PassInfo*, bool, PassNameParser>
   OptimizationList(cl::desc("Optimizations available:"));
 
+//Don't veryify at the end
+static cl::opt<bool> DontVerify("disable-verify", cl::ReallyHidden);
+
 // Optimization Enumeration
 enum OptimizationLevels {
   OPT_FAST_COMPILE         = 1,
@@ -206,7 +209,8 @@ void Optimize(Module* M) {
   }
 
   // Make sure everything is still good.
-  Passes.add(createVerifierPass());
+  if(!DontVerify)
+    Passes.add(createVerifierPass());
 
   // Run our queue of passes all at once now, efficiently.
   Passes.run(*M);
