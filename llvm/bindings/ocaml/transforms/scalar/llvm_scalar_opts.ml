@@ -13,6 +13,14 @@ external add_constant_propagation : [<Llvm.PassManager.any] Llvm.PassManager.t
 external add_instruction_combining : [<Llvm.PassManager.any] Llvm.PassManager.t
                                      -> unit
                                    = "llvm_add_instruction_combining"
+external
+add_memory_to_register_promotion : [<Llvm.PassManager.any] Llvm.PassManager.t
+                                   -> unit
+                                 = "llvm_add_memory_to_register_promotion"
+external
+add_memory_to_register_demotion : [<Llvm.PassManager.any] Llvm.PassManager.t
+                                  -> unit
+                                = "llvm_add_memory_to_register_demotion"
 external add_reassociation : [<Llvm.PassManager.any] Llvm.PassManager.t
                              -> unit
                            = "llvm_add_reassociation"

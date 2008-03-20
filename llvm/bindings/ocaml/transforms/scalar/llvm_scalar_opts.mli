@@ -22,6 +22,18 @@ external add_instruction_combining : [<Llvm.PassManager.any] Llvm.PassManager.t
                                      -> unit
                                    = "llvm_add_instruction_combining"
 
+(** See the [llvm::createPromoteMemoryToRegisterPass] function. *)
+external
+add_memory_to_register_promotion : [<Llvm.PassManager.any] Llvm.PassManager.t
+                                   -> unit
+                                 = "llvm_add_memory_to_register_promotion"
+
+(** See the [llvm::createDemoteMemoryToRegisterPass] function. *)
+external
+add_memory_to_register_demotion : [<Llvm.PassManager.any] Llvm.PassManager.t
+                                  -> unit
+                                = "llvm_add_memory_to_register_demotion"
+
 (** See the [llvm::createReassociatePass] function. *)
 external add_reassociation : [<Llvm.PassManager.any] Llvm.PassManager.t
                              -> unit

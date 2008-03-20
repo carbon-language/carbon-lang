@@ -31,6 +31,12 @@ void LLVMAddConstantPropagationPass(LLVMPassManagerRef PM);
 /** See llvm::createInstructionCombiningPass function. */
 void LLVMAddInstructionCombiningPass(LLVMPassManagerRef PM);
 
+/** See llvm::createPromoteMemoryToRegisterPass function. */
+void LLVMAddPromoteMemoryToRegisterPass(LLVMPassManagerRef PM);
+
+/** See llvm::demotePromoteMemoryToRegisterPass function. */
+void LLVMAddDemoteMemoryToRegisterPass(LLVMPassManagerRef PM);
+
 /** See llvm::createReassociatePass function. */
 void LLVMAddReassociatePass(LLVMPassManagerRef PM);
 

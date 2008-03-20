@@ -26,6 +26,14 @@ void LLVMAddInstructionCombiningPass(LLVMPassManagerRef PM) {
   unwrap(PM)->add(createInstructionCombiningPass());
 }
 
+void LLVMAddPromoteMemoryToRegisterPass(LLVMPassManagerRef PM) {
+  unwrap(PM)->add(createPromoteMemoryToRegisterPass());
+}
+
+void LLVMAddDemoteMemoryToRegisterPass(LLVMPassManagerRef PM) {
+  unwrap(PM)->add(createDemoteRegisterToMemoryPass());
+}
+
 void LLVMAddReassociatePass(LLVMPassManagerRef PM) {
   unwrap(PM)->add(createReassociatePass());
 }
