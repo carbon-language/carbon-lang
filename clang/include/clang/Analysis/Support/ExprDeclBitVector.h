@@ -119,7 +119,7 @@ struct DeclBitVector_Types {
     const llvm::BitVector::reference getDeclBit(unsigned i) const {
       return const_cast<llvm::BitVector&>(DeclBV)[i];
     }
-    
+        
     ValTy& operator|=(const ValTy& RHS) {
       assert (sizesEqual(RHS));
       DeclBV |= RHS.DeclBV;
@@ -132,6 +132,14 @@ struct DeclBitVector_Types {
       return *this;
     }
     
+    ValTy& OrDeclBits(const ValTy& RHS) {
+      return operator|=(RHS);
+    }
+    
+    ValTy& AndDeclBits(const ValTy& RHS) {
+      return operator&=(RHS);
+    }
+        
     bool sizesEqual(const ValTy& RHS) const {
       return DeclBV.size() == RHS.DeclBV.size();
     }
@@ -223,6 +231,16 @@ struct ExprDeclBitVector_Types {
     llvm::BitVector::reference getExprBit(unsigned i) { return ExprBV[i]; }    
     const llvm::BitVector::reference getExprBit(unsigned i) const {
       return const_cast<llvm::BitVector&>(ExprBV)[i];
+    }
+    
+    ValTy& OrExprBits(const ValTy& RHS) {
+      ExprBV |= RHS.ExprBV;
+      return *this;
+    }
+    
+    ValTy& AndExprBits(const ValTy& RHS) {
+      ExprBV &= RHS.ExprBV;
+      return *this;
     }
     
     ValTy& operator|=(const ValTy& RHS) {
