@@ -480,6 +480,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
   if (F->hasCollector())
     NF->setCollector(F->getCollector());
   F->getParent()->getFunctionList().insert(F, NF);
+  NF->takeName(F);
 
   // Get the alias analysis information that we need to update to reflect our
   // changes.
