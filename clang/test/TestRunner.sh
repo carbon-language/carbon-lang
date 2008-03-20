@@ -11,7 +11,7 @@
 #     %llvmgcc - llvm-gcc command
 #     %llvmgxx - llvm-g++ command
 #     %prcontext - prcontext.tcl script
-#     %t1 - temporary file name (derived from testcase name)
+#     %t - temporary file name (derived from testcase name)
 #
 
 FILENAME=$1
@@ -40,20 +40,50 @@ grep -q 'RUN:' $FILENAME || (
    exit 1
 )
 
+# Run under valgrind if the VG environment variable has been set.
+CLANG="clang"
+if [ -n "$VG" ]; then
+  rm -f $OUTPUT.vg.*
+  CLANG="valgrind --leak-check=full --quiet --log-file=$OUTPUT.vg $CLANG"
+fi
+
 SCRIPT=$OUTPUT.script
 TEMPOUTPUT=$OUTPUT.tmp
-grep 'RUN:' $FILENAME | sed "s|^.*RUN:\(.*\)$|\1|g;s|%s|$SUBST|g;s|%llvmgcc|llvm-gcc -emit-llvm|g;s|%llvmgxx|llvm-g++ -emit-llvm|g;s|%prcontext|prcontext.tcl|g;s|%t|$TEMPOUTPUT|g" > $SCRIPT  
+grep 'RUN:' $FILENAME | \
+  sed -e "s|^.*RUN:\(.*\)$|\1|g" \
+      -e "s|%s|$SUBST|g" \
+      -e "s|%llvmgcc|llvm-gcc -emit-llvm|g" \
+      -e "s|%llvmgxx|llvm-g++ -emit-llvm|g" \
+      -e "s|%prcontext|prcontext.tcl|g" \
+      -e "s|%t|$TEMPOUTPUT|g" \
+      -e "s|clang|$CLANG|g" > $SCRIPT  
 
 grep -q XFAIL $FILENAME && (printf "XFAILED '$TESTNAME': "; grep XFAIL $FILENAME)
 
-/bin/sh $SCRIPT > $OUTPUT 2>&1 || (
+/bin/sh $SCRIPT > $OUTPUT 2>&1
+SCRIPT_STATUS=$?
+
+if [ -n "$VG" ]; then
+  VG_STATUS=`cat $OUTPUT.vg.* | wc -l`
+else
+  VG_STATUS=0
+fi
+
+if [ $SCRIPT_STATUS -ne 0 -o $VG_STATUS -ne 0 ]; then
   echo "******************** TEST '$TESTNAME' FAILED! ********************"
   echo "Command: "
   cat $SCRIPT
-  echo "Output:"
+  if [ $SCRIPT_STATUS -eq 0 ]; then
+    echo "Output:"
+  else
+    echo "Incorrect Output:"
+  fi
   cat $OUTPUT
-  rm $OUTPUT
+  if [ $VG_STATUS -ne 0 ]; then
+    echo "Valgrind Output:"
+    cat $OUTPUT.vg.*
+  fi
   echo "******************** TEST '$TESTNAME' FAILED! ********************"
   exit 1
-)
+fi
 
