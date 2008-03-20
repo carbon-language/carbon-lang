@@ -144,19 +144,17 @@ bool IPCP::PropagateConstantReturn(Function &F) {
 
   // Check to see if this function returns a constant.
   SmallVector<Value *,4> RetVals;
-  unsigned N = 0;
   const StructType *STy = dyn_cast<StructType>(F.getReturnType());
   if (STy)
-    N = STy->getNumElements();
+    RetVals.assign(STy->getNumElements(), 0);
   else
-    N = 1;
-  for (unsigned i = 0; i < N; ++i)
     RetVals.push_back(0);
 
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
     if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator())) {
-      assert (N == RI->getNumOperands() && "Invalid ReturnInst operands!");
-      for (unsigned i = 0; i < N; ++i) {
+      unsigned RetValsSize = RetVals.size();
+      assert (RetValsSize == RI->getNumOperands() && "Invalid ReturnInst operands!");
+      for (unsigned i = 0; i < RetValsSize; ++i) {
         if (isa<UndefValue>(RI->getOperand(i))) {
           // Ignore
         } else if (Constant *C = dyn_cast<Constant>(RI->getOperand(i))) { 
@@ -171,15 +169,14 @@ bool IPCP::PropagateConstantReturn(Function &F) {
       }
     }
 
-  if (N == 1) {
-    if (RetVals[0] == 0)
-      RetVals[0] = UndefValue::get(F.getReturnType());
-  } else {
-    for (unsigned i = 0; i < N; ++i) {
-      Value *RetVal = RetVals[i];
-      if (RetVal == 0) 
+  if (STy) {
+    for (unsigned i = 0, e = RetVals.size(); i < e; ++i) 
+      if (RetVals[i] == 0) 
         RetVals[i] = UndefValue::get(STy->getElementType(i));
-    }
+  } else {
+    if (RetVals.size() == 1) 
+      if (RetVals[0] == 0)
+        RetVals[0] = UndefValue::get(F.getReturnType());
   }
 
   // If we got here, the function returns a constant value.  Loop over all
@@ -197,14 +194,16 @@ bool IPCP::PropagateConstantReturn(Function &F) {
       } else {
         Instruction *Call = CS.getInstruction();
         if (!Call->use_empty()) {
-          if (N == 1)
+          if (RetVals.size() == 1)
             Call->replaceAllUsesWith(RetVals[0]);
           else {
             for(Value::use_iterator CUI = Call->use_begin(), CUE = Call->use_end();
                 CUI != CUE; ++CUI) {
               GetResultInst *GR = cast<GetResultInst>(CUI);
-              GR->replaceAllUsesWith(RetVals[GR->getIndex()]);
-              GR->eraseFromParent();
+              if (RetVals[GR->getIndex()]) {
+                GR->replaceAllUsesWith(RetVals[GR->getIndex()]);
+                GR->eraseFromParent();
+              }
             }
           }
           MadeChange = true;
@@ -216,18 +215,19 @@ bool IPCP::PropagateConstantReturn(Function &F) {
   // other callers of the function, replace the constant being returned in the
   // function with an undef value.
   if (ReplacedAllUsers && F.hasInternalLinkage()) {
-    for (unsigned i = 0; i < N; ++i) {
-      Value *RetVal = RetVals[i];
-      if (isa<UndefValue>(RetVal))
-        continue;
-      Value *RV = UndefValue::get(RetVal->getType());
-      for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
-        if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator())) {
+    for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
+      if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator())) {
+        for (unsigned i = 0, e = RetVals.size(); i < e; ++i) {
+          Value *RetVal = RetVals[i];
+          if (isa<UndefValue>(RetVal))
+            continue;
+          Value *RV = UndefValue::get(RetVal->getType());
           if (RI->getOperand(i) != RV) {
             RI->setOperand(i, RV);
             MadeChange = true;
           }
         }
+      }
     }
   }
 
