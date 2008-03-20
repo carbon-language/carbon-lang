@@ -772,3 +772,11 @@ ARM, we end up with calls to L___lshrdi3/L___ashldi3 in f, which is
 badness.  PPC64 misses f, f5 and f6.  CellSPU aborts in isel.
 
 //===---------------------------------------------------------------------===//
+
+We do a number of simplifications in simplify libcalls to strength reduce
+standard library functions, but we don't currently merge them together.  For
+example, it is useful to merge memcpy(a,b,strlen(b)) -> strcpy.  This can only
+be done safely if "b" isn't modified between the strlen and memcpy of course.
+
+//===---------------------------------------------------------------------===//
+
