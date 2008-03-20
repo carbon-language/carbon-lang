@@ -35,6 +35,6 @@ report: $(TESTS)
 	@ cat $^
 
 clean::
-	rm -rf Output/
+	@ rm -rf Output/
 
 .PHONY: all report clean

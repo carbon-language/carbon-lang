@@ -14,6 +14,6 @@ all::
 	      -print -exec ./TestRunner.sh {} \;
 
 clean::
-	rm -rf Output/
+	@ rm -rf Output/
 
 .PHONY: all clean
