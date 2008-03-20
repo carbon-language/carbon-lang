@@ -2386,27 +2386,33 @@ SDOperand DAGCombiner::visitSRA(SDNode *N) {
 
   // fold sra (shl X, m), result_size - n
   // -> (sign_extend (trunc (shl X, result_size - n - m))) for
-  // result_size - n != m. If truncate is free for the target sext(shl) is
-  // likely to result in better code.
+  // result_size - n != m. 
+  // If truncate is free for the target sext(shl) is likely to result in better 
+  // code.
   if (N0.getOpcode() == ISD::SHL) {
     // Get the two constanst of the shifts, CN0 = m, CN = n.
     const ConstantSDNode *N01C = dyn_cast<ConstantSDNode>(N0.getOperand(1));
     if (N01C && N1C) {
-      // Determine if the truncate type's bitsize would correspond to
-      // an integer type for this target.
+      // Determine what the truncate's result bitsize and type would be.
       unsigned VTValSize = MVT::getSizeInBits(VT);
       MVT::ValueType TruncVT = MVT::getIntegerType(VTValSize - N1C->getValue());
+      // Determine the residual right-shift amount.
       unsigned ShiftAmt = N1C->getValue() - N01C->getValue();
-
-      // If the shift wouldn't be a noop, the truncated type is an actual type,
-      // and the truncate is free, then proceed with the transform.
-      if (ShiftAmt != 0 &&
-          TLI.isTypeLegal(TruncVT) &&
+      
+      // If the shift is not a no-op (in which case this should be just a sign 
+      // extend already), the truncated to type is legal, sign_extend is legal 
+      // on that type, and the the truncate to that type is both legal and free, 
+      // perform the transform.
+      if (ShiftAmt && 
+          TLI.isTypeLegal(TruncVT) && 
+          TLI.isOperationLegal(ISD::SIGN_EXTEND, TruncVT) &&
+          TLI.isOperationLegal(ISD::TRUNCATE, VT) &&
           TLI.isTruncateFree(VT, TruncVT)) {
-        SDOperand Amt = DAG.getConstant(ShiftAmt, TLI.getShiftAmountTy());
-        SDOperand Shift = DAG.getNode(ISD::SRL, VT, N0.getOperand(0), Amt);
-        SDOperand Trunc = DAG.getNode(ISD::TRUNCATE, TruncVT, Shift);
-        return DAG.getNode(ISD::SIGN_EXTEND, N->getValueType(0), Trunc);
+
+          SDOperand Amt = DAG.getConstant(ShiftAmt, TLI.getShiftAmountTy());
+          SDOperand Shift = DAG.getNode(ISD::SRL, VT, N0.getOperand(0), Amt);
+          SDOperand Trunc = DAG.getNode(ISD::TRUNCATE, TruncVT, Shift);
+          return DAG.getNode(ISD::SIGN_EXTEND, N->getValueType(0), Trunc);
       }
     }
   }
