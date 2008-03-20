@@ -123,7 +123,7 @@ namespace {
   };
 
   char AliasDebugger::ID = 0;
-  RegisterPass<AliasDebugger> X("debug-aa", "AA use debugger", true, true);
+  RegisterPass<AliasDebugger> X("debug-aa", "AA use debugger", false, true);
   RegisterAnalysisGroup<AliasAnalysis> Y(X);
 }
 

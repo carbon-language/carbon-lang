@@ -128,7 +128,7 @@ namespace {
   // Register this pass...
   char BasicAliasAnalysis::ID = 0;
   RegisterPass<BasicAliasAnalysis>
-  X("basicaa", "Basic Alias Analysis (default AA impl)", true, true);
+  X("basicaa", "Basic Alias Analysis (default AA impl)", false, true);
 
   // Declare that we implement the AliasAnalysis interface
   RegisterAnalysisGroup<AliasAnalysis, true> Y(X);

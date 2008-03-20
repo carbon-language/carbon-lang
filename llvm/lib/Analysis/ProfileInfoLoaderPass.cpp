@@ -52,7 +52,7 @@ namespace {
 
   char LoaderPass::ID = 0;
   RegisterPass<LoaderPass>
-  X("profile-loader", "Load profile information from llvmprof.out", true, true);
+  X("profile-loader", "Load profile information from llvmprof.out", false, true);
 
   RegisterAnalysisGroup<ProfileInfo> Y(X);
 }  // End of anonymous namespace

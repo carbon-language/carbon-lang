@@ -602,7 +602,7 @@ namespace {
 
   char Andersens::ID = 0;
   RegisterPass<Andersens> X("anders-aa",
-                            "Andersen's Interprocedural Alias Analysis", true, 
+                            "Andersen's Interprocedural Alias Analysis", false,
                             true);
   RegisterAnalysisGroup<AliasAnalysis> Y(X);
 

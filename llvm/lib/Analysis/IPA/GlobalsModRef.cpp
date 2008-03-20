@@ -149,7 +149,7 @@ namespace {
 
   char GlobalsModRef::ID = 0;
   RegisterPass<GlobalsModRef> X("globalsmodref-aa",
-                                "Simple mod/ref analysis for globals", true, 
+                                "Simple mod/ref analysis for globals", false,
                                 true);
   RegisterAnalysisGroup<AliasAnalysis> Y(X);
 }

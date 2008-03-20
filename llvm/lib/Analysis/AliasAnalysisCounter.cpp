@@ -116,7 +116,7 @@ namespace {
 
   char AliasAnalysisCounter::ID = 0;
   RegisterPass<AliasAnalysisCounter>
-  X("count-aa", "Count Alias Analysis Query Responses", true, true);
+  X("count-aa", "Count Alias Analysis Query Responses", false, true);
   RegisterAnalysisGroup<AliasAnalysis> Y(X);
 }
 

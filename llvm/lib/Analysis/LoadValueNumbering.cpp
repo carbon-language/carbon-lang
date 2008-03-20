@@ -85,7 +85,7 @@ namespace {
 
   char LoadVN::ID = 0;
   // Register this pass...
-  RegisterPass<LoadVN> X("load-vn", "Load Value Numbering", true, true);
+  RegisterPass<LoadVN> X("load-vn", "Load Value Numbering", false, true);
 
   // Declare that we implement the ValueNumbering interface
   RegisterAnalysisGroup<ValueNumbering> Y(X);

@@ -76,7 +76,7 @@ namespace {
 
   char AAEval::ID = 0;
   RegisterPass<AAEval>
-  X("aa-eval", "Exhaustive Alias Analysis Precision Evaluator", true, true);
+  X("aa-eval", "Exhaustive Alias Analysis Precision Evaluator", false, true);
 }
 
 FunctionPass *llvm::createAAEvalPass() { return new AAEval(); }

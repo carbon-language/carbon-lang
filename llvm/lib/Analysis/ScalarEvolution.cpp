@@ -103,7 +103,7 @@ MaxBruteForceIterations("scalar-evolution-max-iterations", cl::ReallyHidden,
 
 namespace {
   RegisterPass<ScalarEvolution>
-  R("scalar-evolution", "Scalar Evolution Analysis", true, true);
+  R("scalar-evolution", "Scalar Evolution Analysis", false, true);
 }
 char ScalarEvolution::ID = 0;
 

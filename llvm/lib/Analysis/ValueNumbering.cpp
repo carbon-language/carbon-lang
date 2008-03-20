@@ -68,7 +68,7 @@ namespace {
   char BasicVN::ID = 0;
   // Register this pass...
   RegisterPass<BasicVN>
-  X("basicvn", "Basic Value Numbering (default GVN impl)", true, true);
+  X("basicvn", "Basic Value Numbering (default GVN impl)", false, true);
 
   // Declare that we implement the ValueNumbering interface
   RegisterAnalysisGroup<ValueNumbering, true> Y(X);

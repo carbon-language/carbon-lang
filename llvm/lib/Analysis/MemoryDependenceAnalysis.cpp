@@ -48,7 +48,7 @@ Instruction* const MemoryDependenceAnalysis::Dirty = (Instruction*)-5;
   
 // Register this pass...
 static RegisterPass<MemoryDependenceAnalysis> X("memdep",
-                                                "Memory Dependence Analysis", true, true);
+                                                "Memory Dependence Analysis", false, true);
 
 void MemoryDependenceAnalysis::ping(Instruction *D) {
   for (depMapType::iterator I = depGraphLocal.begin(), E = depGraphLocal.end();

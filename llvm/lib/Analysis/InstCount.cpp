@@ -65,7 +65,7 @@ namespace {
 
   char InstCount::ID = 0;
   RegisterPass<InstCount> X("instcount",
-                            "Counts the various types of Instructions", true, true);
+                            "Counts the various types of Instructions", false, true);
 }
 
 FunctionPass *llvm::createInstCountPass() { return new InstCount(); }
