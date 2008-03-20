@@ -1159,6 +1159,9 @@ bool FPPassManager::runOnFunction(Function &F) {
 
   if (F.isDeclaration())
     return false;
+  
+  // Collect inherited analysis from Module level pass manager.
+  populateInheritedAnalysis(TPM->activeStack);
 
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
     FunctionPass *FP = getContainedPass(Index);
@@ -1471,6 +1474,7 @@ void FunctionPass::assignPassManager(PMStack &PMS,
 
     // [1] Create new Function Pass Manager
     FPP = new FPPassManager(PMD->getDepth() + 1);
+    FPP->populateInheritedAnalysis(PMS);
 
     // [2] Set up new manager's top level manager
     PMTopLevelManager *TPM = PMD->getTopLevelManager();
