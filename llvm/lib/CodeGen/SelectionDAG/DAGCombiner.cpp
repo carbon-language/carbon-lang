@@ -2400,7 +2400,9 @@ SDOperand DAGCombiner::visitSRA(SDNode *N) {
 
       // If the shift wouldn't be a noop, the truncated type is an actual type,
       // and the truncate is free, then proceed with the transform.
-      if (ShiftAmt != 0 && TLI.isTruncateFree(VT, TruncVT)) {
+      if (ShiftAmt != 0 &&
+          TLI.isTypeLegal(TruncVT) &&
+          TLI.isTruncateFree(VT, TruncVT)) {
         SDOperand Amt = DAG.getConstant(ShiftAmt, TLI.getShiftAmountTy());
         SDOperand Shift = DAG.getNode(ISD::SRL, VT, N0.getOperand(0), Amt);
         SDOperand Trunc = DAG.getNode(ISD::TRUNCATE, TruncVT, Shift);
