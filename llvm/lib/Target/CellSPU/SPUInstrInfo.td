@@ -2708,7 +2708,7 @@ multiclass CmpGtrByteImm
                                                v16i8SExt8Imm:$val))]>;
   def r8:
     CGTBIInst<(outs R8C:$rT), (ins R8C:$rA, s10imm_i8:$val),
-             [(set R8C:$rT, (setgt R8C:$rA, immSExt8:$val))]>;
+              [(set R8C:$rT, (setgt R8C:$rA, immSExt8:$val))]>;
 }
 
 class CGTHInst<dag OOL, dag IOL, list<dag> pattern> :
@@ -2962,14 +2962,14 @@ def : SETCCBinOpImm<setult, R16C, i16ImmSExt10, i16, NORr16,
                     CLGTHIr16, CEQHIr16>;
 def : Pat<(setule R16C:$rA, R16C:$rB),
           (XORHIr16 (CLGTHr16 R16C:$rA, R16C:$rB), 0xffff)>;
-def :  Pat<(setule R16C:$rA, i16ImmUns10:$imm),
+def :  Pat<(setule R16C:$rA, i16ImmSExt10:$imm),
            (XORHIr16 (CLGTHIr16 R16C:$rA, i16ImmSExt10:$imm), 0xffff)>;
 
 def : SETCCBinOpReg<setuge, R32C, ORr32, CLGTr32, CEQr32>;
-def : SETCCBinOpImm<setuge, R32C, i32ImmUns10, i32,
+def : SETCCBinOpImm<setuge, R32C, i32ImmSExt10, i32,
                     ORr32, CLGTIr32, CEQIr32>;
 def : SETCCBinOpReg<setult, R32C, NORr32, CLGTr32, CEQr32>;
-def : SETCCBinOpImm<setult, R32C, immSExt8, i32, NORr32, CLGTIr32, CEQIr32>;
+def : SETCCBinOpImm<setult, R32C, i32ImmSExt10, i32, NORr32, CLGTIr32, CEQIr32>;
 def : Pat<(setule R32C:$rA, R32C:$rB),
           (XORIr32 (CLGTr32 R32C:$rA, R32C:$rB), 0xffffffff)>;
 def : Pat<(setule R32C:$rA, i32ImmSExt10:$imm),

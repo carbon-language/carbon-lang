@@ -76,9 +76,8 @@ def uimm7: PatLeaf<(imm), [{
 // immSExt8 predicate - True if the immediate fits in an 8-bit sign extended
 // field.
 def immSExt8  : PatLeaf<(imm), [{
-  int Value = (int) N->getValue();
-  int Value8 = (Value << 24) >> 24;
-  return (Value < 0xff && (Value8 >= -128 && Value8 < 127));
+  int Value = int(N->getSignExtended());
+  return (Value >= -(1 << 8) && Value <= (1 << 8) - 1);
 }]>;
 
 // immU8: immediate, unsigned 8-bit quantity

@@ -1,9 +1,9 @@
 ; RUN: llvm-as -o - %s | llc -march=cellspu > %t1.s
 ; RUN: grep ila                                %t1.s | count 6
 ; RUN: grep ceq                                %t1.s | count 28
-; RUN: grep ceqi                               %t1.s | count 11
+; RUN: grep ceqi                               %t1.s | count 12
 ; RUN: grep clgt                               %t1.s | count 16
-; RUN: grep clgti                              %t1.s | count 5
+; RUN: grep clgti                              %t1.s | count 6
 ; RUN: grep cgt                                %t1.s | count 16
 ; RUN: grep cgti                               %t1.s | count 6
 ; RUN: grep {selb\t\\\$3, \\\$6, \\\$5, \\\$3} %t1.s | count 7

@@ -1,4 +1,13 @@
 ; RUN: llvm-as -o - %s | llc -march=cellspu > %t1.s
+; RUN: grep ceqb                               %t1.s | count 24
+; RUN: grep ceqbi                              %t1.s | count 12
+; RUN: grep clgtb                              %t1.s | count 11
+; RUN: grep cgtb                               %t1.s | count 13
+; RUN: grep cgtbi                              %t1.s | count 5
+; RUN: grep {selb\t\\\$3, \\\$6, \\\$5, \\\$3} %t1.s | count 7
+; RUN: grep {selb\t\\\$3, \\\$5, \\\$6, \\\$3} %t1.s | count 3
+; RUN: grep {selb\t\\\$3, \\\$5, \\\$4, \\\$3} %t1.s | count 11
+; RUN: grep {selb\t\\\$3, \\\$4, \\\$5, \\\$3} %t1.s | count 4
 
 target datalayout = "E-p:32:32:128-f64:64:128-f32:32:128-i64:32:128-i32:32:128-i16:16:128-i8:8:128-i1:8:128-a0:0:128-v128:128:128-s0:128:128"
 target triple = "spu"
@@ -184,7 +193,7 @@ entry:
 
 define i8 @icmp_sgt_immed01_i8(i8 %arg1, i8 %val1, i8 %val2) nounwind {
 entry:
-       %A = icmp sgt i8 %arg1, 127
+       %A = icmp sgt i8 %arg1, 96
        %B = select i1 %A, i8 %val1, i8 %val2
        ret i8 %B
 }
@@ -237,14 +246,14 @@ entry:
 
 define i8 @icmp_slt_immed01_i8(i8 %arg1, i8 %val1, i8 %val2) nounwind {
 entry:
-       %A = icmp slt i8 %arg1, 127
+       %A = icmp slt i8 %arg1, 96
        %B = select i1 %A, i8 %val1, i8 %val2
        ret i8 %B
 }
 
 define i8 @icmp_slt_immed02_i8(i8 %arg1, i8 %val1, i8 %val2) nounwind {
 entry:
-       %A = icmp slt i8 %arg1, -128
+       %A = icmp slt i8 %arg1, -120
        %B = select i1 %A, i8 %val1, i8 %val2
        ret i8 %B
 }

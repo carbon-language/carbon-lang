@@ -1,4 +1,14 @@
 ; RUN: llvm-as -o - %s | llc -march=cellspu > %t1.s
+; RUN: grep ilh                                %t1.s | count 5
+; RUN: grep ceqh                               %t1.s | count 29
+; RUN: grep ceqhi                              %t1.s | count 13
+; RUN: grep clgth                              %t1.s | count 15
+; RUN: grep cgth                               %t1.s | count 14
+; RUN: grep cgthi                              %t1.s | count 6
+; RUN: grep {selb\t\\\$3, \\\$6, \\\$5, \\\$3} %t1.s | count 7
+; RUN: grep {selb\t\\\$3, \\\$5, \\\$6, \\\$3} %t1.s | count 3
+; RUN: grep {selb\t\\\$3, \\\$5, \\\$4, \\\$3} %t1.s | count 17
+; RUN: grep {selb\t\\\$3, \\\$4, \\\$5, \\\$3} %t1.s | count 6
 
 target datalayout = "E-p:32:32:128-f64:64:128-f32:32:128-i64:32:128-i32:32:128-i16:16:128-i8:8:128-i1:8:128-a0:0:128-v128:128:128-s0:128:128"
 target triple = "spu"
@@ -113,14 +123,14 @@ entry:
 
 define i16 @icmp_ugt_immed01_i16(i16 %arg1, i16 %val1, i16 %val2) nounwind {
 entry:
-       %A = icmp ugt i16 %arg1, 511
+       %A = icmp ugt i16 %arg1, 500
        %B = select i1 %A, i16 %val1, i16 %val2
        ret i16 %B
 }
 
 define i16 @icmp_ugt_immed02_i16(i16 %arg1, i16 %val1, i16 %val2) nounwind {
 entry:
-       %A = icmp ugt i16 %arg1, 65534
+       %A = icmp ugt i16 %arg1, 0
        %B = select i1 %A, i16 %val1, i16 %val2
        ret i16 %B
 }
