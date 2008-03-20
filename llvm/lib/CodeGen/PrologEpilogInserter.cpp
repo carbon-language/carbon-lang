@@ -520,57 +520,57 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
       if (I->getOpcode() == TargetInstrInfo::DECLARE) {
         // Ignore it.
         ++I;
-	continue;
+        continue;
       }
 
       if (I->getOpcode() == FrameSetupOpcode ||
           I->getOpcode() == FrameDestroyOpcode) {
         // Remember how much SP has been adjusted to create the call
         // frame.
-	int Size = I->getOperand(0).getImm();
+        int Size = I->getOperand(0).getImm();
 
-	if ((!StackGrowsDown && I->getOpcode() == FrameSetupOpcode) ||
-	    (StackGrowsDown && I->getOpcode() == FrameDestroyOpcode))
-	  Size = -Size;
+        if ((!StackGrowsDown && I->getOpcode() == FrameSetupOpcode) ||
+            (StackGrowsDown && I->getOpcode() == FrameDestroyOpcode))
+          Size = -Size;
 
-	SPAdj += Size;
+        SPAdj += Size;
 
-	MachineBasicBlock::iterator PrevI = prior(I);
-	TRI.eliminateCallFramePseudoInstr(Fn, *BB, I);
+        MachineBasicBlock::iterator PrevI = prior(I);
+        TRI.eliminateCallFramePseudoInstr(Fn, *BB, I);
 
-	// Visit the instructions created by eliminateCallFramePseudoInstr().
-	I = next(PrevI);
-	continue;
+        // Visit the instructions created by eliminateCallFramePseudoInstr().
+        I = next(PrevI);
+        continue;
       }
 
       bool DoIncr = true;
 
       for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i)
-	if (MI->getOperand(i).isFrameIndex()) {
-	  // Some instructions (e.g. inline asm instructions) can have
-	  // multiple frame indices and/or cause eliminateFrameIndex
-	  // to insert more than one instruction. We need the register
-	  // scavenger to go through all of these instructions so that
-	  // it can update its register information. We keep the
-	  // iterator at the point before insertion so that we can
-	  // revisit them in full.
-	  bool AtBeginning = (I == BB->begin());
-	  if (!AtBeginning) --I;
+        if (MI->getOperand(i).isFrameIndex()) {
+          // Some instructions (e.g. inline asm instructions) can have
+          // multiple frame indices and/or cause eliminateFrameIndex
+          // to insert more than one instruction. We need the register
+          // scavenger to go through all of these instructions so that
+          // it can update its register information. We keep the
+          // iterator at the point before insertion so that we can
+          // revisit them in full.
+          bool AtBeginning = (I == BB->begin());
+          if (!AtBeginning) --I;
 
-	  // If this instruction has a FrameIndex operand, we need to
-	  // use that target machine register info object to eliminate
-	  // it.
-	  TRI.eliminateFrameIndex(MI, SPAdj, RS);
+          // If this instruction has a FrameIndex operand, we need to
+          // use that target machine register info object to eliminate
+          // it.
+          TRI.eliminateFrameIndex(MI, SPAdj, RS);
 
-	  // Reset the iterator if we were at the beginning of the BB.
-	  if (AtBeginning) {
-	    I = BB->begin();
-	    DoIncr = false;
-	  }
+          // Reset the iterator if we were at the beginning of the BB.
+          if (AtBeginning) {
+            I = BB->begin();
+            DoIncr = false;
+          }
 
-	  MI = 0;
-	  break;
-	}
+          MI = 0;
+          break;
+        }
 
       if (DoIncr) ++I;
 

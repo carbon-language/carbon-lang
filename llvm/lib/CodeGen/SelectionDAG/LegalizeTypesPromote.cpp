@@ -187,9 +187,9 @@ SDOperand DAGTypeLegalizer::PromoteResult_FP_TO_XINT(SDNode *N) {
 
 SDOperand DAGTypeLegalizer::PromoteResult_SETCC(SDNode *N) {
   assert(isTypeLegal(TLI.getSetCCResultType(N->getOperand(0)))
-	 && "SetCC type is not legal??");
+         && "SetCC type is not legal??");
   return DAG.getNode(ISD::SETCC, TLI.getSetCCResultType(N->getOperand(0)),
-		     N->getOperand(0), N->getOperand(1), N->getOperand(2));
+                     N->getOperand(0), N->getOperand(1), N->getOperand(2));
 }
 
 SDOperand DAGTypeLegalizer::PromoteResult_LOAD(LoadSDNode *N) {

@@ -483,12 +483,12 @@ void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II,
   } else if (LP64) {
     if (EnableRegisterScavenging) // FIXME (64-bit): Use "true" part.
       BuildMI(MBB, II, TII.get(PPC::LD), Reg)
-	.addImm(0)
-	.addReg(PPC::X1);
+        .addImm(0)
+        .addReg(PPC::X1);
     else
       BuildMI(MBB, II, TII.get(PPC::LD), PPC::X0)
-	.addImm(0)
-	.addReg(PPC::X1);
+        .addImm(0)
+        .addReg(PPC::X1);
   } else {
     BuildMI(MBB, II, TII.get(PPC::LWZ), Reg)
       .addImm(0)
@@ -500,25 +500,25 @@ void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II,
   if (LP64) {
     if (EnableRegisterScavenging) // FIXME (64-bit): Use "true" part.
       BuildMI(MBB, II, TII.get(PPC::STDUX))
-	.addReg(Reg, false, false, true)
-	.addReg(PPC::X1)
-	.addReg(MI.getOperand(1).getReg());
+        .addReg(Reg, false, false, true)
+        .addReg(PPC::X1)
+        .addReg(MI.getOperand(1).getReg());
     else
       BuildMI(MBB, II, TII.get(PPC::STDUX))
-	.addReg(PPC::X0, false, false, true)
-	.addReg(PPC::X1)
-	.addReg(MI.getOperand(1).getReg());
+        .addReg(PPC::X0, false, false, true)
+        .addReg(PPC::X1)
+        .addReg(MI.getOperand(1).getReg());
 
     if (!MI.getOperand(1).isKill())
       BuildMI(MBB, II, TII.get(PPC::ADDI8), MI.getOperand(0).getReg())
-	.addReg(PPC::X1)
-	.addImm(maxCallFrameSize);
+        .addReg(PPC::X1)
+        .addImm(maxCallFrameSize);
     else
       // Implicitly kill the register.
       BuildMI(MBB, II, TII.get(PPC::ADDI8), MI.getOperand(0).getReg())
-	.addReg(PPC::X1)
-	.addImm(maxCallFrameSize)
-	.addReg(MI.getOperand(1).getReg(), false, true, true);
+        .addReg(PPC::X1)
+        .addImm(maxCallFrameSize)
+        .addReg(MI.getOperand(1).getReg(), false, true, true);
   } else {
     BuildMI(MBB, II, TII.get(PPC::STWUX))
       .addReg(Reg, false, false, true)
@@ -527,14 +527,14 @@ void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II,
 
     if (!MI.getOperand(1).isKill())
       BuildMI(MBB, II, TII.get(PPC::ADDI), MI.getOperand(0).getReg())
-	.addReg(PPC::R1)
-	.addImm(maxCallFrameSize);
+        .addReg(PPC::R1)
+        .addImm(maxCallFrameSize);
     else
       // Implicitly kill the register.
       BuildMI(MBB, II, TII.get(PPC::ADDI), MI.getOperand(0).getReg())
-	.addReg(PPC::R1)
-	.addImm(maxCallFrameSize)
-	.addReg(MI.getOperand(1).getReg(), false, true, true);
+        .addReg(PPC::R1)
+        .addImm(maxCallFrameSize)
+        .addReg(MI.getOperand(1).getReg(), false, true, true);
   }
   
   // Discard the DYNALLOC instruction.
@@ -945,7 +945,7 @@ PPCRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
       const TargetRegisterClass *G8RC = &PPC::G8RCRegClass;
       const TargetRegisterClass *RC = IsPPC64 ? G8RC : GPRC;
       RS->setScavengingFrameIndex(MFI->CreateStackObject(RC->getSize(),
-							 RC->getAlignment()));
+                                                         RC->getAlignment()));
     }
 }
 

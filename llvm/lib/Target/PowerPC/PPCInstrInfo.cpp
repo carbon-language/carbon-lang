@@ -366,7 +366,7 @@ PPCInstrInfo::StoreRegToStackSlot(unsigned SrcReg, bool isKill,
       // FIXME (64-bit): Enable
       NewMIs.push_back(addFrameReference(BuildMI(get(PPC::SPILL_CR))
                                          .addReg(SrcReg, false, false, isKill),
-					 FrameIdx));
+                                         FrameIdx));
       return true;
     } else {
       // FIXME: We use R0 here, because it isn't available for RA.  We need to

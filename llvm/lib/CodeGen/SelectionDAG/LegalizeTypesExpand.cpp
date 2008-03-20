@@ -1247,7 +1247,7 @@ void DAGTypeLegalizer::ExpandSetCCOperands(SDOperand &NewLHS, SDOperand &NewRHS,
                              ISD::SETEQ, false, DagCombineInfo);
   if (!NewLHS.Val)
     NewLHS = DAG.getSetCC(TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi,
-			  ISD::SETEQ);
+                          ISD::SETEQ);
   NewLHS = DAG.getNode(ISD::SELECT, Tmp1.getValueType(),
                        NewLHS, Tmp1, Tmp2);
   NewRHS = SDOperand();
