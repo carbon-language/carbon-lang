@@ -286,7 +286,7 @@ namespace {
         Timestamp = Counter++;
       }
 
-      bool isRep() {
+      bool isRep() const {
         return( (int) NodeRep < 0 );
       }
     };
@@ -446,10 +446,11 @@ namespace {
 
       // Free the constraints list, as we don't need it to respond to alias
       // requests.
-      ObjectNodes.clear();
-      ReturnNodes.clear();
-      VarargNodes.clear();
       std::vector<Constraint>().swap(Constraints);
+      //These are needed for Print() (-analyze in opt)
+      //ObjectNodes.clear();
+      //ReturnNodes.clear();
+      //VarargNodes.clear();
       return false;
     }
 
@@ -510,7 +511,7 @@ namespace {
 
     /// getObject - Return the node corresponding to the memory object for the
     /// specified global or allocation instruction.
-    unsigned getObject(Value *V) {
+    unsigned getObject(Value *V) const {
       DenseMap<Value*, unsigned>::iterator I = ObjectNodes.find(V);
       assert(I != ObjectNodes.end() &&
              "Value does not have an object in the points-to graph!");
@@ -519,7 +520,7 @@ namespace {
 
     /// getReturnNode - Return the node representing the return value for the
     /// specified function.
-    unsigned getReturnNode(Function *F) {
+    unsigned getReturnNode(Function *F) const {
       DenseMap<Function*, unsigned>::iterator I = ReturnNodes.find(F);
       assert(I != ReturnNodes.end() && "Function does not return a value!");
       return I->second;
@@ -527,7 +528,7 @@ namespace {
 
     /// getVarargNode - Return the node representing the variable arguments
     /// formal for the specified function.
-    unsigned getVarargNode(Function *F) {
+    unsigned getVarargNode(Function *F) const {
       DenseMap<Function*, unsigned>::iterator I = VarargNodes.find(F);
       assert(I != VarargNodes.end() && "Function does not take var args!");
       return I->second;
@@ -544,6 +545,7 @@ namespace {
     unsigned UniteNodes(unsigned First, unsigned Second,
                         bool UnionByRank = true);
     unsigned FindNode(unsigned Node);
+    unsigned FindNode(unsigned Node) const;
 
     void IdentifyObjects(Module &M);
     void CollectConstraints(Module &M);
@@ -572,11 +574,11 @@ namespace {
     bool AddConstraintsForExternalCall(CallSite CS, Function *F);
 
 
-    void PrintNode(Node *N);
-    void PrintConstraints();
-    void PrintConstraint(const Constraint &);
-    void PrintLabels();
-    void PrintPointsToGraph();
+    void PrintNode(const Node *N) const;
+    void PrintConstraints() const ;
+    void PrintConstraint(const Constraint &) const;
+    void PrintLabels() const;
+    void PrintPointsToGraph() const;
 
     //===------------------------------------------------------------------===//
     // Instruction visitation methods for adding constraints
@@ -598,6 +600,12 @@ namespace {
     void visitVAArg(VAArgInst &I);
     void visitInstruction(Instruction &I);
 
+    //===------------------------------------------------------------------===//
+    // Implement Analyize interface
+    //
+    void print(std::ostream &O, const Module* M) const {
+      PrintPointsToGraph();
+    }
   };
 
   char Andersens::ID = 0;
@@ -1994,7 +2002,7 @@ unsigned Andersens::FindEquivalentNode(unsigned NodeIndex,
   return NodeIndex;
 }
 
-void Andersens::PrintLabels() {
+void Andersens::PrintLabels() const {
   for (unsigned i = 0; i < GraphNodes.size(); ++i) {
     if (i < FirstRefNode) {
       PrintNode(&GraphNodes[i]);
@@ -2736,11 +2744,23 @@ unsigned Andersens::FindNode(unsigned NodeIndex) {
     return (N->NodeRep = FindNode(N->NodeRep));
 }
 
+// Find the index into GraphNodes of the node representing Node, 
+// don't perform path compression along the way (for Print)
+unsigned Andersens::FindNode(unsigned NodeIndex) const {
+  assert (NodeIndex < GraphNodes.size()
+          && "Attempting to find a node that can't exist");
+  const Node *N = &GraphNodes[NodeIndex];
+  if (N->isRep())
+    return NodeIndex;
+  else
+    return FindNode(N->NodeRep);
+}
+
 //===----------------------------------------------------------------------===//
 //                               Debugging Output
 //===----------------------------------------------------------------------===//
 
-void Andersens::PrintNode(Node *N) {
+void Andersens::PrintNode(const Node *N) const {
   if (N == &GraphNodes[UniversalSet]) {
     cerr << "<universal>";
     return;
@@ -2784,7 +2804,7 @@ void Andersens::PrintNode(Node *N) {
     if (N == &GraphNodes[getObject(V)])
       cerr << "<mem>";
 }
-void Andersens::PrintConstraint(const Constraint &C) {
+void Andersens::PrintConstraint(const Constraint &C) const {
   if (C.Type == Constraint::Store) {
     cerr << "*";
     if (C.Offset != 0)
@@ -2809,18 +2829,18 @@ void Andersens::PrintConstraint(const Constraint &C) {
   cerr << "\n";
 }
 
-void Andersens::PrintConstraints() {
+void Andersens::PrintConstraints() const {
   cerr << "Constraints:\n";
 
   for (unsigned i = 0, e = Constraints.size(); i != e; ++i)
     PrintConstraint(Constraints[i]);
 }
 
-void Andersens::PrintPointsToGraph() {
+void Andersens::PrintPointsToGraph() const {
   cerr << "Points-to graph:\n";
   for (unsigned i = 0, e = GraphNodes.size(); i != e; ++i) {
-    Node *N = &GraphNodes[i];
-    if (FindNode (i) != i) {
+    const Node *N = &GraphNodes[i];
+    if (FindNode(i) != i) {
       PrintNode(N);
       cerr << "\t--> same as ";
       PrintNode(&GraphNodes[FindNode(i)]);
