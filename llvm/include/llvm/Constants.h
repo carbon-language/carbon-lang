@@ -320,8 +320,8 @@ public:
     return reinterpret_cast<const ArrayType*>(Value::getType());
   }
 
-  /// isString - This method returns true if the array is an array of sbyte or
-  /// ubyte, and if the elements of the array are all ConstantInt's.
+  /// isString - This method returns true if the array is an array of i8 and
+  /// the elements of the array are all ConstantInt's.
   bool isString() const;
 
   /// isCString - This method returns true if the array is a string (see
