@@ -54,7 +54,7 @@ TEMPLATE_INSTANTIATION(class DominatorTreeBase<BasicBlock>);
 
 char DominatorTree::ID = 0;
 static RegisterPass<DominatorTree>
-E("domtree", "Dominator Tree Construction", false, true);
+E("domtree", "Dominator Tree Construction", true, true);
 
 bool DominatorTree::runOnFunction(Function &F) {
   DT->recalculate(F);

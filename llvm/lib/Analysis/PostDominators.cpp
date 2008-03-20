@@ -26,7 +26,7 @@ using namespace llvm;
 char PostDominatorTree::ID = 0;
 char PostDominanceFrontier::ID = 0;
 static RegisterPass<PostDominatorTree>
-F("postdomtree", "Post-Dominator Tree Construction", false, true);
+F("postdomtree", "Post-Dominator Tree Construction", true, true);
 
 bool PostDominatorTree::runOnFunction(Function &F) {
   DT->recalculate(F);
@@ -38,7 +38,7 @@ bool PostDominatorTree::runOnFunction(Function &F) {
 //===----------------------------------------------------------------------===//
 
 static RegisterPass<PostDominanceFrontier>
-H("postdomfrontier", "Post-Dominance Frontier Construction", false, true);
+H("postdomfrontier", "Post-Dominance Frontier Construction", true, true);
 
 const DominanceFrontier::DomSetType &
 PostDominanceFrontier::calculate(const PostDominatorTree &DT,

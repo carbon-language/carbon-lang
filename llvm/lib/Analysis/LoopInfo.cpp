@@ -29,7 +29,7 @@ using namespace llvm;
 
 char LoopInfo::ID = 0;
 static RegisterPass<LoopInfo>
-X("loops", "Natural Loop Construction", false, true);
+X("loops", "Natural Loop Construction", true, true);
 
 //===----------------------------------------------------------------------===//
 // Loop implementation
