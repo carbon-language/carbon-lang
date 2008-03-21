@@ -221,8 +221,9 @@ public:
                          bool isPacked=false);
 
   /// StructType::get - This static method is a convenience method for
-  /// creating structure types by specifying the elements as arguments.  Note
-  /// that this method always returns a non-packed struct.
+  /// creating structure types by specifying the elements as arguments.
+  /// Note that this method always returns a non-packed struct.  To get
+  /// an empty struct, pass NULL, NULL.
   static StructType *get(const Type *type, ...) END_WITH_NULL;
 
   // Iterator access to the elements

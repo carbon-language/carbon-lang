@@ -1252,9 +1252,10 @@ StructType *StructType::get(const Type *type, ...) {
   va_list ap;
   std::vector<const llvm::Type*> StructFields;
   va_start(ap, type);
-  do {
+  while (type) {
     StructFields.push_back(type);
-  } while ((type = va_arg(ap, llvm::Type*)));
+    type = va_arg(ap, llvm::Type*);
+  }
   return llvm::StructType::get(StructFields);
 }
 
