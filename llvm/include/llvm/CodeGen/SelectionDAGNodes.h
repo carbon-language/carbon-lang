@@ -56,31 +56,6 @@ struct SDVTList {
 /// SelectionDAG node types and value types.
 ///
 namespace ISD {
-  namespace ParamFlags {    
-    typedef uint64_t ParamFlagsTy;
-
-    const ParamFlagsTy NoFlagSet         = 0ULL;
-    const ParamFlagsTy ZExt              = 1ULL<<0;  ///< Zero extended
-    const ParamFlagsTy ZExtOffs          = 0;
-    const ParamFlagsTy SExt              = 1ULL<<1;  ///< Sign extended
-    const ParamFlagsTy SExtOffs          = 1;
-    const ParamFlagsTy InReg             = 1ULL<<2;  ///< Passed in register
-    const ParamFlagsTy InRegOffs         = 2;
-    const ParamFlagsTy StructReturn      = 1ULL<<3;  ///< Hidden struct-ret ptr
-    const ParamFlagsTy StructReturnOffs  = 3;
-    const ParamFlagsTy ByVal             = 1ULL<<4;  ///< Struct passed by value
-    const ParamFlagsTy ByValOffs         = 4;
-    const ParamFlagsTy Nest              = 1ULL<<5;  ///< Nested fn static chain
-    const ParamFlagsTy NestOffs          = 5;
-    const ParamFlagsTy ByValAlign        = 0xFULL << 6; //< Struct alignment
-    const ParamFlagsTy ByValAlignOffs    = 6;
-    const ParamFlagsTy OrigAlignment     = 0x1FULL<<27;
-    const ParamFlagsTy OrigAlignmentOffs = 27;
-    const ParamFlagsTy ByValSize         = 0xffffffffULL << 32; //< Struct size 
-    const ParamFlagsTy ByValSizeOffs     = 32;
-
-    const ParamFlagsTy One               = 1LL; //< 1 of this type, for shifts
-  }
 
   //===--------------------------------------------------------------------===//
   /// ISD::NodeType enum - This enum defines all of the operators valid in a
@@ -107,7 +82,7 @@ namespace ISD {
     AssertSext, AssertZext,
 
     // Various leaf nodes.
-    STRING, BasicBlock, VALUETYPE, CONDCODE, Register,
+    STRING, BasicBlock, VALUETYPE, ARG_FLAGS, CONDCODE, Register,
     Constant, ConstantFP,
     GlobalAddress, GlobalTLSAddress, FrameIndex,
     JumpTable, ConstantPool, ExternalSymbol,
@@ -659,7 +634,7 @@ namespace ISD {
   ///              computed and is available in the base pointer. The offset
   ///              operand is always undefined. In addition to producing a
   ///              chain, an unindexed load produces one value (result of the
-  ///              load); an unindexed store does not produces a value.
+  ///              load); an unindexed store does not produce a value.
   ///
   /// PRE_INC      Similar to the unindexed mode where the effective address is
   /// PRE_DEC      the value of the base pointer add / subtract the offset.
@@ -1581,6 +1556,102 @@ public:
   static bool classof(const CondCodeSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::CONDCODE;
+  }
+};
+
+namespace ISD {
+  struct ArgFlagsTy {
+  private:
+    static const uint64_t NoFlagSet      = 0ULL;
+    static const uint64_t ZExt           = 1ULL<<0;  ///< Zero extended
+    static const uint64_t ZExtOffs       = 0;
+    static const uint64_t SExt           = 1ULL<<1;  ///< Sign extended
+    static const uint64_t SExtOffs       = 1;
+    static const uint64_t InReg          = 1ULL<<2;  ///< Passed in register
+    static const uint64_t InRegOffs      = 2;
+    static const uint64_t SRet           = 1ULL<<3;  ///< Hidden struct-ret ptr
+    static const uint64_t SRetOffs       = 3;
+    static const uint64_t ByVal          = 1ULL<<4;  ///< Struct passed by value
+    static const uint64_t ByValOffs      = 4;
+    static const uint64_t Nest           = 1ULL<<5;  ///< Nested fn static chain
+    static const uint64_t NestOffs       = 5;
+    static const uint64_t ByValAlign     = 0xFULL << 6; //< Struct alignment
+    static const uint64_t ByValAlignOffs = 6;
+    static const uint64_t OrigAlign      = 0x1FULL<<27;
+    static const uint64_t OrigAlignOffs  = 27;
+    static const uint64_t ByValSize      = 0xffffffffULL << 32; //< Struct size
+    static const uint64_t ByValSizeOffs  = 32;
+
+    static const uint64_t One            = 1ULL; //< 1 of this type, for shifts
+
+    uint64_t Flags;
+  public:
+    ArgFlagsTy() : Flags(0) { }
+
+    bool isZExt()   const { return Flags & ZExt; }
+    void setZExt()  { Flags |= One << ZExtOffs; }
+
+    bool isSExt()   const { return Flags & SExt; }
+    void setSExt()  { Flags |= One << SExtOffs; }
+
+    bool isInReg()  const { return Flags & InReg; }
+    void setInReg() { Flags |= One << InRegOffs; }
+
+    bool isSRet()   const { return Flags & SRet; }
+    void setSRet()  { Flags |= One << SRetOffs; }
+
+    bool isByVal()  const { return Flags & ByVal; }
+    void setByVal() { Flags |= One << ByValOffs; }
+
+    bool isNest()   const { return Flags & Nest; }
+    void setNest()  { Flags |= One << NestOffs; }
+
+    unsigned getByValAlign() const {
+      return (One << ((Flags & ByValAlign) >> ByValAlignOffs)) / 2;
+    }
+    void setByValAlign(unsigned A) {
+      Flags = (Flags & ~ByValAlign) |
+        (uint64_t(Log2_32(A) + 1) << ByValAlignOffs);
+    }
+
+    unsigned getOrigAlign() const {
+      return (One << ((Flags & OrigAlign) >> OrigAlignOffs)) / 2;
+    }
+    void setOrigAlign(unsigned A) {
+      Flags = (Flags & ~OrigAlign) |
+        (uint64_t(Log2_32(A) + 1) << OrigAlignOffs);
+    }
+
+    unsigned getByValSize() const {
+      return (Flags & ByValSize) >> ByValSizeOffs;
+    }
+    void setByValSize(unsigned S) {
+      Flags = (Flags & ~ByValSize) | (uint64_t(S) << ByValSizeOffs);
+    }
+
+    /// getArgFlagsString - Returns the flags as a string, eg: "zext align:4".
+    std::string getArgFlagsString();
+
+    /// getRawBits - Represent the flags as a bunch of bits.
+    uint64_t getRawBits() const { return Flags; }
+  };
+}
+
+/// ARG_FLAGSSDNode - Leaf node holding parameter flags.
+class ARG_FLAGSSDNode : public SDNode {
+  ISD::ArgFlagsTy TheFlags;
+  virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
+protected:
+  friend class SelectionDAG;
+  explicit ARG_FLAGSSDNode(ISD::ArgFlagsTy Flags)
+    : SDNode(ISD::ARG_FLAGS, getSDVTList(MVT::Other)), TheFlags(Flags) {
+  }
+public:
+  ISD::ArgFlagsTy getArgFlags() const { return TheFlags; }
+
+  static bool classof(const ARG_FLAGSSDNode *) { return true; }
+  static bool classof(const SDNode *N) {
+    return N->getOpcode() == ISD::ARG_FLAGS;
   }
 };
 

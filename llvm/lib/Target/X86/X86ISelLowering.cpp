@@ -969,9 +969,8 @@ static bool CallIsStructReturn(SDOperand Op) {
   unsigned NumOps = (Op.getNumOperands() - 5) / 2;
   if (!NumOps)
     return false;
-  
-  ConstantSDNode *Flags = cast<ConstantSDNode>(Op.getOperand(6));
-  return Flags->getValue() & ISD::ParamFlags::StructReturn;
+
+  return cast<ARG_FLAGSSDNode>(Op.getOperand(6))->getArgFlags().isSRet();
 }
 
 /// ArgsAreStructReturn - Determines whether a FORMAL_ARGUMENTS node uses struct
@@ -980,9 +979,8 @@ static bool ArgsAreStructReturn(SDOperand Op) {
   unsigned NumArgs = Op.Val->getNumValues() - 1;
   if (!NumArgs)
     return false;
-  
-  ConstantSDNode *Flags = cast<ConstantSDNode>(Op.getOperand(3));
-  return Flags->getValue() & ISD::ParamFlags::StructReturn;
+
+  return cast<ARG_FLAGSSDNode>(Op.getOperand(3))->getArgFlags().isSRet();
 }
 
 /// IsCalleePop - Determines whether a CALL or FORMAL_ARGUMENTS node requires the
@@ -1110,14 +1108,9 @@ CopyTailCallClobberedArgumentsToVRegs(SDOperand Chain,
 /// parameter.
 static SDOperand 
 CreateCopyOfByValArgument(SDOperand Src, SDOperand Dst, SDOperand Chain,
-                          ISD::ParamFlags::ParamFlagsTy Flags, 
-                          SelectionDAG &DAG) {
-  unsigned Align = ISD::ParamFlags::One <<
-    ((Flags & ISD::ParamFlags::ByValAlign) >> ISD::ParamFlags::ByValAlignOffs);
-  unsigned Size = (Flags & ISD::ParamFlags::ByValSize) >>
-    ISD::ParamFlags::ByValSizeOffs;
-  SDOperand AlignNode    = DAG.getConstant(Align, MVT::i32);
-  SDOperand SizeNode     = DAG.getConstant(Size, MVT::i32);
+                          ISD::ArgFlagsTy Flags, SelectionDAG &DAG) {
+  SDOperand AlignNode    = DAG.getConstant(Flags.getByValAlign(), MVT::i32);
+  SDOperand SizeNode     = DAG.getConstant(Flags.getByValSize(), MVT::i32);
   SDOperand AlwaysInline = DAG.getConstant(1, MVT::i32);
   return DAG.getMemcpy(Chain, Dst, Src, SizeNode, AlignNode, AlwaysInline);
 }
@@ -1128,11 +1121,10 @@ SDOperand X86TargetLowering::LowerMemArgument(SDOperand Op, SelectionDAG &DAG,
                                               unsigned CC,
                                               SDOperand Root, unsigned i) {
   // Create the nodes corresponding to a load from this parameter slot.
-  ISD::ParamFlags::ParamFlagsTy Flags = 
-                cast<ConstantSDNode>(Op.getOperand(3 + i))->getValue();
+  ISD::ArgFlagsTy Flags =
+    cast<ARG_FLAGSSDNode>(Op.getOperand(3 + i))->getArgFlags();
   bool AlwaysUseMutable = (CC==CallingConv::Fast) && PerformTailCallOpt;
-  bool isByVal = Flags & ISD::ParamFlags::ByVal;
-  bool isImmutable = !AlwaysUseMutable && !isByVal;
+  bool isImmutable = !AlwaysUseMutable && !Flags.isByVal();
 
   // FIXME: For now, all byval parameter objects are marked mutable. This can be
   // changed with more analysis.  
@@ -1141,7 +1133,7 @@ SDOperand X86TargetLowering::LowerMemArgument(SDOperand Op, SelectionDAG &DAG,
   int FI = MFI->CreateFixedObject(MVT::getSizeInBits(VA.getValVT())/8,
                                   VA.getLocMemOffset(), isImmutable);
   SDOperand FIN = DAG.getFrameIndex(FI, getPointerTy());
-  if (isByVal)
+  if (Flags.isByVal())
     return FIN;
   return DAG.getLoad(VA.getValVT(), Root, FIN,
                      PseudoSourceValue::getFixedStack(), FI);
@@ -1346,10 +1338,9 @@ X86TargetLowering::LowerMemOpCallTo(SDOperand Op, SelectionDAG &DAG,
   unsigned LocMemOffset = VA.getLocMemOffset();
   SDOperand PtrOff = DAG.getIntPtrConstant(LocMemOffset);
   PtrOff = DAG.getNode(ISD::ADD, getPointerTy(), StackPtr, PtrOff);
-  SDOperand FlagsOp = Op.getOperand(6+2*VA.getValNo());
-  ISD::ParamFlags::ParamFlagsTy Flags = 
-            cast<ConstantSDNode>(FlagsOp)->getValue();
-  if (Flags & ISD::ParamFlags::ByVal) {
+  ISD::ArgFlagsTy Flags =
+    cast<ARG_FLAGSSDNode>(Op.getOperand(6+2*VA.getValNo()))->getArgFlags();
+  if (Flags.isByVal()) {
     return CreateCopyOfByValArgument(Arg, PtrOff, Chain, Flags, DAG);
   }
   return DAG.getStore(Chain, Arg, PtrOff,
@@ -1536,8 +1527,8 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
         assert(VA.isMemLoc());
         SDOperand Arg = Op.getOperand(5+2*VA.getValNo());
         SDOperand FlagsOp = Op.getOperand(6+2*VA.getValNo());
-        ISD::ParamFlags::ParamFlagsTy Flags = 
-                  cast<ConstantSDNode>(FlagsOp)->getValue();
+        ISD::ArgFlagsTy Flags =
+          cast<ARG_FLAGSSDNode>(FlagsOp)->getArgFlags();
         // Create frame index.
         int32_t Offset = VA.getLocMemOffset()+FPDiff;
         uint32_t OpSize = (MVT::getSizeInBits(VA.getLocVT())+7)/8;
@@ -1554,8 +1545,8 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
           }
         assert(IsPossiblyOverwrittenArgumentOfTailCall(Arg, MFI)==false || 
           (Found==true && "No corresponding Argument was found"));
-        
-        if (Flags & ISD::ParamFlags::ByVal) {
+
+        if (Flags.isByVal()) {
           // Copy relative to framepointer.
           MemOpChains2.push_back(CreateCopyOfByValArgument(Arg, FIN, Chain,
                                                            Flags, DAG));

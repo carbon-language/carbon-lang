@@ -1064,7 +1064,7 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
 
     for (unsigned i = 0; i < NumParts; ++i) {
       NewValues.push_back(Parts[i]);
-      NewValues.push_back(DAG.getConstant(false, MVT::i32));
+      NewValues.push_back(DAG.getArgFlags(ISD::ArgFlagsTy()));
     }
   }
   DAG.setRoot(DAG.getNode(ISD::RET, MVT::Other,
@@ -4065,39 +4065,34 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end();
        I != E; ++I, ++j) {
     MVT::ValueType VT = getValueType(I->getType());
-    ISD::ParamFlags::ParamFlagsTy Flags = ISD::ParamFlags::NoFlagSet;
+    ISD::ArgFlagsTy Flags;
     unsigned OriginalAlignment =
       getTargetData()->getABITypeAlignment(I->getType());
 
-    // FIXME: Distinguish between a formal with no [sz]ext attribute from one
-    // that is zero extended!
     if (F.paramHasAttr(j, ParamAttr::ZExt))
-      Flags &= ~(ISD::ParamFlags::SExt);
+      Flags.setZExt();
     if (F.paramHasAttr(j, ParamAttr::SExt))
-      Flags |= ISD::ParamFlags::SExt;
+      Flags.setSExt();
     if (F.paramHasAttr(j, ParamAttr::InReg))
-      Flags |= ISD::ParamFlags::InReg;
+      Flags.setInReg();
     if (F.paramHasAttr(j, ParamAttr::StructRet))
-      Flags |= ISD::ParamFlags::StructReturn;
+      Flags.setSRet();
     if (F.paramHasAttr(j, ParamAttr::ByVal)) {
-      Flags |= ISD::ParamFlags::ByVal;
+      Flags.setByVal();
       const PointerType *Ty = cast<PointerType>(I->getType());
       const Type *ElementTy = Ty->getElementType();
-      unsigned FrameAlign = Log2_32(getByValTypeAlignment(ElementTy));
+      unsigned FrameAlign = getByValTypeAlignment(ElementTy);
       unsigned FrameSize  = getTargetData()->getABITypeSize(ElementTy);
       // For ByVal, alignment should be passed from FE.  BE will guess if
       // this info is not there but there are cases it cannot get right.
       if (F.getParamAlignment(j))
-        FrameAlign = Log2_32(F.getParamAlignment(j));
-      Flags |= ((ISD::ParamFlags::ParamFlagsTy)FrameAlign
-                   << ISD::ParamFlags::ByValAlignOffs);
-      Flags |= ((ISD::ParamFlags::ParamFlagsTy)FrameSize  
-                    << ISD::ParamFlags::ByValSizeOffs);
+        FrameAlign = F.getParamAlignment(j);
+      Flags.setByValAlign(FrameAlign);
+      Flags.setByValSize(FrameSize);
     }
     if (F.paramHasAttr(j, ParamAttr::Nest))
-      Flags |= ISD::ParamFlags::Nest;
-    Flags |= ((ISD::ParamFlags::ParamFlagsTy)OriginalAlignment 
-                  << ISD::ParamFlags::OrigAlignmentOffs);
+      Flags.setNest();
+    Flags.setOrigAlign(OriginalAlignment);
 
     MVT::ValueType RegisterVT = getRegisterType(VT);
     unsigned NumRegs = getNumRegisters(VT);
@@ -4105,9 +4100,8 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       RetVals.push_back(RegisterVT);
       // if it isn't first piece, alignment must be 1
       if (i > 0)
-        Flags = (Flags & (~ISD::ParamFlags::OrigAlignment)) |
-          (ISD::ParamFlags::One << ISD::ParamFlags::OrigAlignmentOffs);
-      Ops.push_back(DAG.getConstant(Flags, MVT::i64));
+        Flags.setOrigAlign(1);
+      Ops.push_back(DAG.getArgFlags(Flags));
     }
   }
 
@@ -4183,37 +4177,34 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
   for (unsigned i = 0, e = Args.size(); i != e; ++i) {
     MVT::ValueType VT = getValueType(Args[i].Ty);
     SDOperand Op = Args[i].Node;
-    ISD::ParamFlags::ParamFlagsTy Flags = ISD::ParamFlags::NoFlagSet;
+    ISD::ArgFlagsTy Flags;
     unsigned OriginalAlignment =
       getTargetData()->getABITypeAlignment(Args[i].Ty);
-    
-    if (Args[i].isSExt)
-      Flags |= ISD::ParamFlags::SExt;
+
     if (Args[i].isZExt)
-      Flags |= ISD::ParamFlags::ZExt;
+      Flags.setZExt();
+    if (Args[i].isSExt)
+      Flags.setSExt();
     if (Args[i].isInReg)
-      Flags |= ISD::ParamFlags::InReg;
+      Flags.setInReg();
     if (Args[i].isSRet)
-      Flags |= ISD::ParamFlags::StructReturn;
+      Flags.setSRet();
     if (Args[i].isByVal) {
-      Flags |= ISD::ParamFlags::ByVal;
+      Flags.setByVal();
       const PointerType *Ty = cast<PointerType>(Args[i].Ty);
       const Type *ElementTy = Ty->getElementType();
-      unsigned FrameAlign = Log2_32(getByValTypeAlignment(ElementTy));
+      unsigned FrameAlign = getByValTypeAlignment(ElementTy);
       unsigned FrameSize  = getTargetData()->getABITypeSize(ElementTy);
       // For ByVal, alignment should come from FE.  BE will guess if this
       // info is not there but there are cases it cannot get right.
       if (Args[i].Alignment)
-        FrameAlign = Log2_32(Args[i].Alignment);
-      Flags |= ((ISD::ParamFlags::ParamFlagsTy)FrameAlign 
-                      << ISD::ParamFlags::ByValAlignOffs);
-      Flags |= ((ISD::ParamFlags::ParamFlagsTy)FrameSize  
-                      << ISD::ParamFlags::ByValSizeOffs);
+        FrameAlign = Args[i].Alignment;
+      Flags.setByValAlign(FrameAlign);
+      Flags.setByValSize(FrameSize);
     }
     if (Args[i].isNest)
-      Flags |= ISD::ParamFlags::Nest;
-    Flags |= ((ISD::ParamFlags::ParamFlagsTy)OriginalAlignment) 
-                    << ISD::ParamFlags::OrigAlignmentOffs;
+      Flags.setNest();
+    Flags.setOrigAlign(OriginalAlignment);
 
     MVT::ValueType PartVT = getRegisterType(VT);
     unsigned NumParts = getNumRegisters(VT);
@@ -4229,13 +4220,12 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
 
     for (unsigned i = 0; i != NumParts; ++i) {
       // if it isn't first piece, alignment must be 1
-      ISD::ParamFlags::ParamFlagsTy MyFlags = Flags;
+      ISD::ArgFlagsTy MyFlags = Flags;
       if (i != 0)
-        MyFlags = (MyFlags & (~ISD::ParamFlags::OrigAlignment)) |
-          (ISD::ParamFlags::One << ISD::ParamFlags::OrigAlignmentOffs);
+        MyFlags.setOrigAlign(1);
 
       Ops.push_back(Parts[i]);
-      Ops.push_back(DAG.getConstant(MyFlags, MVT::i64));
+      Ops.push_back(DAG.getArgFlags(MyFlags));
     }
   }
   

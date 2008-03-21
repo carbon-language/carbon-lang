@@ -1366,14 +1366,12 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op,
          ++ArgNo) {
       MVT::ValueType ObjectVT = Op.getValue(ArgNo).getValueType();
       unsigned ObjSize = MVT::getSizeInBits(ObjectVT)/8;
-      ISD::ParamFlags::ParamFlagsTy Flags = 
-                cast<ConstantSDNode>(Op.getOperand(ArgNo+3))->getValue();
-      unsigned isByVal = Flags & ISD::ParamFlags::ByVal;
+      ISD::ArgFlagsTy Flags =
+        cast<ARG_FLAGSSDNode>(Op.getOperand(ArgNo+3))->getArgFlags();
 
-      if (isByVal) {
+      if (Flags.isByVal()) {
         // ObjSize is the true size, ArgSize rounded up to multiple of regs.
-        ObjSize = (Flags & ISD::ParamFlags::ByValSize) >>
-                        ISD::ParamFlags::ByValSizeOffs;
+        ObjSize = Flags.getByValSize();
         unsigned ArgSize = 
                 ((ObjSize + PtrByteSize - 1)/PtrByteSize) * PtrByteSize;
         VecArgOffset += ArgSize;
@@ -1410,7 +1408,7 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op,
   // 
   // In the ELF 32 ABI, GPRs and stack are double word align: an argument
   // represented with two words (long long or double) must be copied to an
-  // even GPR_idx value or to an even ArgOffset value.
+  // even GPR_idx value or to an even ArgOffset value.  TODO: implement this.
 
   SmallVector<SDOperand, 8> MemOps;
 
@@ -1420,25 +1418,19 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op,
     MVT::ValueType ObjectVT = Op.getValue(ArgNo).getValueType();
     unsigned ObjSize = MVT::getSizeInBits(ObjectVT)/8;
     unsigned ArgSize = ObjSize;
-    ISD::ParamFlags::ParamFlagsTy Flags = 
-              cast<ConstantSDNode>(Op.getOperand(ArgNo+3))->getValue();
-    unsigned AlignFlag = ISD::ParamFlags::One 
-                                << ISD::ParamFlags::OrigAlignmentOffs;
-    unsigned isByVal = Flags & ISD::ParamFlags::ByVal;
+    ISD::ArgFlagsTy Flags =
+      cast<ARG_FLAGSSDNode>(Op.getOperand(ArgNo+3))->getArgFlags();
     // See if next argument requires stack alignment in ELF
-    bool Expand = (ObjectVT == MVT::f64) || ((ArgNo + 1 < e) &&
-      (cast<ConstantSDNode>(Op.getOperand(ArgNo+4))->getValue() & AlignFlag) &&
-      (!(Flags & AlignFlag)));
+    bool Expand = false; // TODO: implement this.
 
     unsigned CurArgOffset = ArgOffset;
 
     // FIXME alignment for ELF may not be right
     // FIXME the codegen can be much improved in some cases.
     // We do not have to keep everything in memory.
-    if (isByVal) {
+    if (Flags.isByVal()) {
       // ObjSize is the true size, ArgSize rounded up to multiple of registers.
-      ObjSize = (Flags & ISD::ParamFlags::ByValSize) >>
-                      ISD::ParamFlags::ByValSizeOffs;
+      ObjSize = Flags.getByValSize();
       ArgSize = ((ObjSize + PtrByteSize - 1)/PtrByteSize) * PtrByteSize;
       // Double word align in ELF
       if (Expand && isELF32_ABI) GPR_idx += (GPR_idx % 2);
@@ -1521,10 +1513,10 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op,
         if (ObjectVT == MVT::i32) {
           // PPC64 passes i8, i16, and i32 values in i64 registers. Promote
           // value to MVT::i64 and then truncate to the correct register size.
-          if (Flags & ISD::ParamFlags::SExt)
+          if (Flags.isSExt())
             ArgVal = DAG.getNode(ISD::AssertSext, MVT::i64, ArgVal,
                                  DAG.getValueType(ObjectVT));
-          else if (Flags & ISD::ParamFlags::ZExt)
+          else if (Flags.isZExt())
             ArgVal = DAG.getNode(ISD::AssertZext, MVT::i64, ArgVal,
                                  DAG.getValueType(ObjectVT));
 
@@ -1736,11 +1728,9 @@ static SDNode *isBLACompatibleAddress(SDOperand Op, SelectionDAG &DAG) {
 /// does not fit in registers.
 static SDOperand 
 CreateCopyOfByValArgument(SDOperand Src, SDOperand Dst, SDOperand Chain,
-                          ISD::ParamFlags::ParamFlagsTy Flags, 
-                          SelectionDAG &DAG, unsigned Size) {
-  unsigned Align = ISD::ParamFlags::One <<
-    ((Flags & ISD::ParamFlags::ByValAlign) >> ISD::ParamFlags::ByValAlignOffs);
-  SDOperand AlignNode    = DAG.getConstant(Align, MVT::i32);
+                          ISD::ArgFlagsTy Flags, SelectionDAG &DAG,
+                          unsigned Size) {
+  SDOperand AlignNode    = DAG.getConstant(Flags.getByValAlign(), MVT::i32);
   SDOperand SizeNode     = DAG.getConstant(Size, MVT::i32);
   SDOperand AlwaysInline = DAG.getConstant(0, MVT::i32);
   return DAG.getMemcpy(Chain, Dst, Src, SizeNode, AlignNode, AlwaysInline);
@@ -1792,12 +1782,11 @@ SDOperand PPCTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG,
         NumBytes = ((NumBytes+15)/16)*16;
       }
     }
-    ISD::ParamFlags::ParamFlagsTy Flags = 
-          cast<ConstantSDNode>(Op.getOperand(5+2*i+1))->getValue();
+    ISD::ArgFlagsTy Flags =
+      cast<ARG_FLAGSSDNode>(Op.getOperand(5+2*i+1))->getArgFlags();
     unsigned ArgSize =MVT::getSizeInBits(Op.getOperand(5+2*i).getValueType())/8;
-    if (Flags & ISD::ParamFlags::ByVal)
-      ArgSize = (Flags & ISD::ParamFlags::ByValSize) >> 
-                ISD::ParamFlags::ByValSizeOffs;
+    if (Flags.isByVal())
+      ArgSize = Flags.getByValSize();
     ArgSize = ((ArgSize + PtrByteSize - 1)/PtrByteSize) * PtrByteSize;
     NumBytes += ArgSize;
   }
@@ -1862,15 +1851,10 @@ SDOperand PPCTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG,
   for (unsigned i = 0; i != NumOps; ++i) {
     bool inMem = false;
     SDOperand Arg = Op.getOperand(5+2*i);
-    ISD::ParamFlags::ParamFlagsTy Flags = 
-            cast<ConstantSDNode>(Op.getOperand(5+2*i+1))->getValue();
-    unsigned AlignFlag = ISD::ParamFlags::One << 
-                         ISD::ParamFlags::OrigAlignmentOffs;
+    ISD::ArgFlagsTy Flags =
+      cast<ARG_FLAGSSDNode>(Op.getOperand(5+2*i+1))->getArgFlags();
     // See if next argument requires stack alignment in ELF
-    unsigned next = 5+2*(i+1)+1;
-    bool Expand = (Arg.getValueType() == MVT::f64) || ((i + 1 < NumOps) &&
-      (cast<ConstantSDNode>(Op.getOperand(next))->getValue() & AlignFlag) &&
-      (!(Flags & AlignFlag)));
+    bool Expand = false; // TODO: implement this.
 
     // PtrOff will be used to store the current argument to the stack if a
     // register cannot be found for it.
@@ -1887,15 +1871,15 @@ SDOperand PPCTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG,
 
     // On PPC64, promote integers to 64-bit values.
     if (isPPC64 && Arg.getValueType() == MVT::i32) {
-      unsigned ExtOp = (Flags & 1) ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND;
+      // FIXME: Should this use ANY_EXTEND if neither sext nor zext?
+      unsigned ExtOp = Flags.isSExt() ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND;
       Arg = DAG.getNode(ExtOp, MVT::i64, Arg);
     }
 
     // FIXME Elf untested, what are alignment rules?
     // FIXME memcpy is used way more than necessary.  Correctness first.
-    if (Flags & ISD::ParamFlags::ByVal) {
-      unsigned Size = (Flags & ISD::ParamFlags::ByValSize) >>
-                      ISD::ParamFlags::ByValSizeOffs;
+    if (Flags.isByVal()) {
+      unsigned Size = Flags.getByValSize();
       if (isELF32_ABI && Expand) GPR_idx += (GPR_idx % 2);
       if (Size==1 || Size==2) {
         // Very small objects are passed right-justified.

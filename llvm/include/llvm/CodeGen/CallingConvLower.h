@@ -98,7 +98,7 @@ public:
 /// reflect the change.
 typedef bool CCAssignFn(unsigned ValNo, MVT::ValueType ValVT,
                         MVT::ValueType LocVT, CCValAssign::LocInfo LocInfo,
-                        ISD::ParamFlags::ParamFlagsTy ArgFlags, CCState &State);
+                        ISD::ArgFlagsTy ArgFlags, CCState &State);
 
   
 /// CCState - This class holds information needed while lowering arguments and
@@ -197,8 +197,7 @@ public:
   // parameter attribute.
   void HandleByVal(unsigned ValNo, MVT::ValueType ValVT,
                    MVT::ValueType LocVT, CCValAssign::LocInfo LocInfo,
-                   int MinSize, int MinAlign, 
-                   ISD::ParamFlags::ParamFlagsTy ArgFlags);
+                   int MinSize, int MinAlign, ISD::ArgFlagsTy ArgFlags);
 
 private:
   /// MarkAllocated - Mark a register and all of its aliases as allocated.

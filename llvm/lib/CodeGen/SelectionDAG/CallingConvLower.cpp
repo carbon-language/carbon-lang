@@ -35,11 +35,9 @@ CCState::CCState(unsigned CC, bool isVarArg, const TargetMachine &tm,
 void CCState::HandleByVal(unsigned ValNo, MVT::ValueType ValVT,
                           MVT::ValueType LocVT, CCValAssign::LocInfo LocInfo,
                           int MinSize, int MinAlign,
-                          ISD::ParamFlags::ParamFlagsTy ArgFlags) {
-  unsigned Align  = 1 << ((ArgFlags & ISD::ParamFlags::ByValAlign) >>
-                          ISD::ParamFlags::ByValAlignOffs);
-  unsigned Size   = (ArgFlags & ISD::ParamFlags::ByValSize) >>
-      ISD::ParamFlags::ByValSizeOffs;
+                          ISD::ArgFlagsTy ArgFlags) {
+  unsigned Align = ArgFlags.getByValAlign();
+  unsigned Size  = ArgFlags.getByValSize();
   if (MinSize > (int)Size)
     Size = MinSize;
   if (MinAlign > (int)Align)
@@ -65,9 +63,8 @@ void CCState::AnalyzeFormalArguments(SDNode *TheArgs, CCAssignFn Fn) {
   
   for (unsigned i = 0; i != NumArgs; ++i) {
     MVT::ValueType ArgVT = TheArgs->getValueType(i);
-    SDOperand FlagOp = TheArgs->getOperand(3+i);
-    ISD::ParamFlags::ParamFlagsTy ArgFlags = 
-              cast<ConstantSDNode>(FlagOp)->getValue();
+    ISD::ArgFlagsTy ArgFlags =
+      cast<ARG_FLAGSSDNode>(TheArgs->getOperand(3+i))->getArgFlags();
     if (Fn(i, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, *this)) {
       cerr << "Formal argument #" << i << " has unhandled type "
            << MVT::getValueTypeString(ArgVT) << "\n";
@@ -82,8 +79,9 @@ void CCState::AnalyzeReturn(SDNode *TheRet, CCAssignFn Fn) {
   // Determine which register each value should be copied into.
   for (unsigned i = 0, e = TheRet->getNumOperands() / 2; i != e; ++i) {
     MVT::ValueType VT = TheRet->getOperand(i*2+1).getValueType();
-    if (Fn(i, VT, VT, CCValAssign::Full,
-           cast<ConstantSDNode>(TheRet->getOperand(i*2+2))->getValue(), *this)){
+    ISD::ArgFlagsTy ArgFlags =
+      cast<ARG_FLAGSSDNode>(TheRet->getOperand(i*2+2))->getArgFlags();
+    if (Fn(i, VT, VT, CCValAssign::Full, ArgFlags, *this)){
       cerr << "Return operand #" << i << " has unhandled type "
            << MVT::getValueTypeString(VT) << "\n";
       abort();
@@ -98,9 +96,8 @@ void CCState::AnalyzeCallOperands(SDNode *TheCall, CCAssignFn Fn) {
   unsigned NumOps = (TheCall->getNumOperands() - 5) / 2;
   for (unsigned i = 0; i != NumOps; ++i) {
     MVT::ValueType ArgVT = TheCall->getOperand(5+2*i).getValueType();
-    SDOperand FlagOp = TheCall->getOperand(5+2*i+1);
-    ISD::ParamFlags::ParamFlagsTy ArgFlags =
-                cast<ConstantSDNode>(FlagOp)->getValue();
+    ISD::ArgFlagsTy ArgFlags =
+      cast<ARG_FLAGSSDNode>(TheCall->getOperand(5+2*i+1))->getArgFlags();
     if (Fn(i, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, *this)) {
       cerr << "Call operand #" << i << " has unhandled type "
            << MVT::getValueTypeString(ArgVT) << "\n";
@@ -114,7 +111,7 @@ void CCState::AnalyzeCallOperands(SDNode *TheCall, CCAssignFn Fn) {
 void CCState::AnalyzeCallResult(SDNode *TheCall, CCAssignFn Fn) {
   for (unsigned i = 0, e = TheCall->getNumValues() - 1; i != e; ++i) {
     MVT::ValueType VT = TheCall->getValueType(i);
-    if (Fn(i, VT, VT, CCValAssign::Full, 0, *this)) {
+    if (Fn(i, VT, VT, CCValAssign::Full, ISD::ArgFlagsTy(), *this)) {
       cerr << "Call result #" << i << " has unhandled type "
            << MVT::getValueTypeString(VT) << "\n";
       abort();

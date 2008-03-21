@@ -355,6 +355,9 @@ static void AddNodeIDNode(FoldingSetNodeID &ID, SDNode *N) {
   // Handle SDNode leafs with special info.
   switch (N->getOpcode()) {
   default: break;  // Normal nodes don't need extra info.
+  case ISD::ARG_FLAGS:
+    ID.AddInteger(cast<ARG_FLAGSSDNode>(N)->getArgFlags().getRawBits());
+    break;
   case ISD::TargetConstant:
   case ISD::Constant:
     ID.Add(cast<ConstantSDNode>(N)->getAPIntValue());
@@ -918,6 +921,19 @@ SDOperand SelectionDAG::getBasicBlock(MachineBasicBlock *MBB) {
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
   SDNode *N = new BasicBlockSDNode(MBB);
+  CSEMap.InsertNode(N, IP);
+  AllNodes.push_back(N);
+  return SDOperand(N, 0);
+}
+
+SDOperand SelectionDAG::getArgFlags(ISD::ArgFlagsTy Flags) {
+  FoldingSetNodeID ID;
+  AddNodeIDNode(ID, ISD::ARG_FLAGS, getVTList(MVT::Other), 0, 0);
+  ID.AddInteger(Flags.getRawBits());
+  void *IP = 0;
+  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
+    return SDOperand(E, 0);
+  SDNode *N = new ARG_FLAGSSDNode(Flags);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
@@ -3584,6 +3600,7 @@ void MemOperandSDNode::ANCHOR() {}
 void RegisterSDNode::ANCHOR() {}
 void ExternalSymbolSDNode::ANCHOR() {}
 void CondCodeSDNode::ANCHOR() {}
+void ARG_FLAGSSDNode::ANCHOR() {}
 void VTSDNode::ANCHOR() {}
 void LoadSDNode::ANCHOR() {}
 void StoreSDNode::ANCHOR() {}
@@ -3831,6 +3848,7 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
 
   case ISD::STRING:        return "String";
   case ISD::BasicBlock:    return "BasicBlock";
+  case ISD::ARG_FLAGS:     return "ArgFlags";
   case ISD::VALUETYPE:     return "ValueType";
   case ISD::Register:      return "Register";
 
@@ -4043,6 +4061,30 @@ const char *SDNode::getIndexedModeName(ISD::MemIndexedMode AM) {
   }
 }
 
+std::string ISD::ArgFlagsTy::getArgFlagsString() {
+  std::string S = "< ";
+
+  if (isZExt())
+    S += "zext ";
+  if (isSExt())
+    S += "sext ";
+  if (isInReg())
+    S += "inreg ";
+  if (isSRet())
+    S += "sret ";
+  if (isByVal())
+    S += "byval ";
+  if (isNest())
+    S += "nest ";
+  if (getByValAlign())
+    S += "byval-align:" + utostr(getByValAlign()) + " ";
+  if (getOrigAlign())
+    S += "orig-align:" + utostr(getOrigAlign()) + " ";
+  if (getByValSize())
+    S += "byval-size:" + utostr(getByValSize()) + " ";
+  return S + ">";
+}
+
 void SDNode::dump() const { dump(0); }
 void SDNode::dump(const SelectionDAG *G) const {
   cerr << (void*)this << ": ";
@@ -4138,6 +4180,8 @@ void SDNode::dump(const SelectionDAG *G) const {
       cerr << "<" << M->MO.getValue() << ":" << M->MO.getOffset() << ">";
     else
       cerr << "<null:" << M->MO.getOffset() << ">";
+  } else if (const ARG_FLAGSSDNode *N = dyn_cast<ARG_FLAGSSDNode>(this)) {
+    cerr << N->getArgFlags().getArgFlagsString();
   } else if (const VTSDNode *N = dyn_cast<VTSDNode>(this)) {
     cerr << ":" << MVT::getValueTypeString(N->getVT());
   } else if (const LoadSDNode *LD = dyn_cast<LoadSDNode>(this)) {

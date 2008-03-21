@@ -34,7 +34,7 @@ class CCIf<string predicate, CCAction A> : CCPredicateAction<A> {
 
 /// CCIfByVal - If the current argument has ByVal parameter attribute, apply
 /// Action A.
-class CCIfByVal<CCAction A> : CCIf<"ArgFlags & ISD::ParamFlags::ByVal", A> {
+class CCIfByVal<CCAction A> : CCIf<"ArgFlags.isByVal()", A> {
 }
 
 /// CCIfCC - Match of the current calling convention is 'CC'.
@@ -43,11 +43,11 @@ class CCIfCC<string CC, CCAction A>
 
 /// CCIfInReg - If this argument is marked with the 'inreg' attribute, apply
 /// the specified action.
-class CCIfInReg<CCAction A> : CCIf<"ArgFlags & ISD::ParamFlags::InReg", A> {}
+class CCIfInReg<CCAction A> : CCIf<"ArgFlags.isInReg()", A> {}
 
 /// CCIfNest - If this argument is marked with the 'nest' attribute, apply
 /// the specified action.
-class CCIfNest<CCAction A> : CCIf<"ArgFlags & ISD::ParamFlags::Nest", A> {}
+class CCIfNest<CCAction A> : CCIf<"ArgFlags.isNest()", A> {}
 
 /// CCIfNotVarArg - If the current function is not vararg - apply the action
 class CCIfNotVarArg<CCAction A> : CCIf<"!State.isVarArg()", A> {}

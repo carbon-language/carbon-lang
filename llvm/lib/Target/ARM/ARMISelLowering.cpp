@@ -367,13 +367,12 @@ static void
 HowToPassArgument(MVT::ValueType ObjectVT, unsigned NumGPRs,
                   unsigned StackOffset, unsigned &NeededGPRs,
                   unsigned &NeededStackSize, unsigned &GPRPad,
-                  unsigned &StackPad, ISD::ParamFlags::ParamFlagsTy Flags) {
+                  unsigned &StackPad, ISD::ArgFlagsTy Flags) {
   NeededStackSize = 0;
   NeededGPRs = 0;
   StackPad = 0;
   GPRPad = 0;
-  unsigned align = ((Flags & ISD::ParamFlags::OrigAlignment) 
-                        >> ISD::ParamFlags::OrigAlignmentOffs);
+  unsigned align = Flags.getOrigAlign();
   GPRPad = NumGPRs % ((align + 3)/4);
   StackPad = StackOffset % align;
   unsigned firstGPR = NumGPRs + GPRPad;
@@ -422,7 +421,8 @@ SDOperand ARMTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     unsigned StackPad;
     unsigned GPRPad;
     MVT::ValueType ObjectVT = Op.getOperand(5+2*i).getValueType();
-    ISD::ParamFlags::ParamFlagsTy Flags = Op.getConstantOperandVal(5+2*i+1);
+    ISD::ArgFlagsTy Flags =
+      cast<ARG_FLAGSSDNode>(Op.getOperand(5+2*i+1))->getArgFlags();
     HowToPassArgument(ObjectVT, NumGPRs, NumBytes, ObjGPRs, ObjSize,
                       GPRPad, StackPad, Flags);
     NumBytes += ObjSize + StackPad;
@@ -445,7 +445,8 @@ SDOperand ARMTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   std::vector<SDOperand> MemOpChains;
   for (unsigned i = 0; i != NumOps; ++i) {
     SDOperand Arg = Op.getOperand(5+2*i);
-    ISD::ParamFlags::ParamFlagsTy Flags = Op.getConstantOperandVal(5+2*i+1);
+    ISD::ArgFlagsTy Flags =
+      cast<ARG_FLAGSSDNode>(Op.getOperand(5+2*i+1))->getArgFlags();
     MVT::ValueType ArgVT = Arg.getValueType();
 
     unsigned ObjSize;
@@ -924,7 +925,8 @@ static SDOperand LowerFORMAL_ARGUMENT(SDOperand Op, SelectionDAG &DAG,
   unsigned ObjGPRs;
   unsigned GPRPad;
   unsigned StackPad;
-  ISD::ParamFlags::ParamFlagsTy Flags = Op.getConstantOperandVal(ArgNo + 3);
+  ISD::ArgFlagsTy Flags =
+    cast<ARG_FLAGSSDNode>(Op.getOperand(ArgNo + 3))->getArgFlags();
   HowToPassArgument(ObjectVT, NumGPRs, ArgOffset, ObjGPRs,
                     ObjSize, GPRPad, StackPad, Flags);
   NumGPRs += GPRPad;

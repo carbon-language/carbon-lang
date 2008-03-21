@@ -30,7 +30,7 @@ void CallingConvEmitter::run(std::ostream &O) {
       << std::string(CCs[i]->getName().size()+13, ' ')
       << "MVT::ValueType LocVT, CCValAssign::LocInfo LocInfo,\n"
       << std::string(CCs[i]->getName().size()+13, ' ')
-      << "ISD::ParamFlags::ParamFlagsTy ArgFlags, CCState &State);\n";
+      << "ISD::ArgFlagsTy ArgFlags, CCState &State);\n";
   }
   
   // Emit each calling convention description in full.
@@ -48,7 +48,7 @@ void CallingConvEmitter::EmitCallingConv(Record *CC, std::ostream &O) {
     << std::string(CC->getName().size()+13, ' ')
     << "MVT::ValueType LocVT, CCValAssign::LocInfo LocInfo,\n"
     << std::string(CC->getName().size()+13, ' ')
-    << "ISD::ParamFlags::ParamFlagsTy ArgFlags, CCState &State) {\n";
+    << "ISD::ArgFlagsTy ArgFlags, CCState &State) {\n";
   // Emit all of the actions, in order.
   for (unsigned i = 0, e = CCActions->getSize(); i != e; ++i) {
     O << "\n";
@@ -134,9 +134,9 @@ void CallingConvEmitter::EmitAction(Record *Action,
     } else if (Action->isSubClassOf("CCPromoteToType")) {
       Record *DestTy = Action->getValueAsDef("DestTy");
       O << IndentStr << "LocVT = " << getEnumName(getValueType(DestTy)) <<";\n";
-      O << IndentStr << "if (ArgFlags & ISD::ParamFlags::SExt)\n"
+      O << IndentStr << "if (ArgFlags.isSExt())\n"
         << IndentStr << IndentStr << "LocInfo = CCValAssign::SExt;\n"
-        << IndentStr << "else if (ArgFlags & ISD::ParamFlags::ZExt)\n"
+        << IndentStr << "else if (ArgFlags.isZExt())\n"
         << IndentStr << IndentStr << "LocInfo = CCValAssign::ZExt;\n"
         << IndentStr << "else\n"
         << IndentStr << IndentStr << "LocInfo = CCValAssign::AExt;\n";

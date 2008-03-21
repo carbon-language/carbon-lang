@@ -219,6 +219,7 @@ public:
   SDOperand getBasicBlock(MachineBasicBlock *MBB);
   SDOperand getExternalSymbol(const char *Sym, MVT::ValueType VT);
   SDOperand getTargetExternalSymbol(const char *Sym, MVT::ValueType VT);
+  SDOperand getArgFlags(ISD::ArgFlagsTy Flags);
   SDOperand getValueType(MVT::ValueType);
   SDOperand getRegister(unsigned Reg, MVT::ValueType VT);
 

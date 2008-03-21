@@ -808,6 +808,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::MEMOPERAND:
   case ISD::STRING:
   case ISD::CONDCODE:
+  case ISD::ARG_FLAGS:
     // Primitives must all be legal.
     assert(TLI.isOperationLegal(Node->getOpcode(), Node->getValueType(0)) &&
            "This must be legal!");
