@@ -26,16 +26,29 @@
 /// 
 /// And, foo.cp would use:<br/>
 /// <tt>DEFINING_FILE_FOR(foo)</tt><br/>
+#ifdef __GNUC__
+// If the `used' attribute is available, use it to create a variable
+// with an initializer that will force the linking of the defining file.
 #define FORCE_DEFINING_FILE_TO_BE_LINKED(name) \
   namespace llvm { \
-    extern char name ## LinkVar; \
-    static IncludeFile name ## LinkObj ( &name ## LinkVar ); \
+    extern const char name ## LinkVar; \
+    __attribute__((used)) static const char *const name ## LinkObj = \
+      &name ## LinkVar; \
   } 
+#else
+// Otherwise use a constructor call.
+#define FORCE_DEFINING_FILE_TO_BE_LINKED(name) \
+  namespace llvm { \
+    extern const char name ## LinkVar; \
+    static const IncludeFile name ## LinkObj ( &name ## LinkVar ); \
+  } 
+#endif
 
 /// This macro is the counterpart to FORCE_DEFINING_FILE_TO_BE_LINKED. It should
 /// be used in a .cpp file to define the name referenced in a header file that
 /// will cause linkage of the .cpp file. It should only be used at extern level.
-#define DEFINING_FILE_FOR(name) namespace llvm { char name ## LinkVar; }
+#define DEFINING_FILE_FOR(name) \
+  namespace llvm { const char name ## LinkVar = 0; }
 
 namespace llvm {
 
@@ -57,7 +70,7 @@ namespace llvm {
 /// <tt>static IncludeFile LinkMyModule(&LinkMyCodeStub);</tt><br/>
 /// @brief Class to ensure linking of corresponding object file.
 struct IncludeFile {
-  IncludeFile(void *);
+  explicit IncludeFile(const void *);
 };
 
 }
