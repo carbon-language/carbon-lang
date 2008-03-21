@@ -207,7 +207,7 @@ public:
     CleanedState = St;
   }
   
-  NodeTy* Nodify(ExplodedNodeSet<StateTy>& Dst, Stmt* S,
+  NodeTy* MakeNode(ExplodedNodeSet<StateTy>& Dst, Stmt* S,
                  NodeTy* Pred, StateTy* St) {    
     
     StateTy* PredState = GetState(Pred);

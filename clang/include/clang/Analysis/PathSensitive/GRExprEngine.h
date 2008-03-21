@@ -352,9 +352,9 @@ protected:
   ValueState* AssumeSymInt(ValueState* St, bool Assumption,
                            const SymIntConstraint& C, bool& isFeasible);
   
-  NodeTy* Nodify(NodeSet& Dst, Stmt* S, NodeTy* Pred, ValueState* St) {
+  NodeTy* MakeNode(NodeSet& Dst, Stmt* S, NodeTy* Pred, ValueState* St) {
     assert (Builder && "GRStmtNodeBuilder not present.");
-    return Builder->Nodify(Dst, S, Pred, St);
+    return Builder->MakeNode(Dst, S, Pred, St);
   }
   
   /// HandleUndefinedStore - Create the necessary sink node to represent

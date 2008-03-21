@@ -458,5 +458,5 @@ void GRSimpleVals::EvalCall(ExplodedNodeSet<ValueState>& Dst,
     St = StateMgr.SetRVal(St, CE, X, Eng.getCFG().isBlkExpr(CE), false);
   }  
     
-  Builder.Nodify(Dst, CE, Pred, St);
+  Builder.MakeNode(Dst, CE, Pred, St);
 }

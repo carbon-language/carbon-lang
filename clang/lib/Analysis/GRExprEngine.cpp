@@ -364,7 +364,7 @@ void GRExprEngine::VisitLogicalExpr(BinaryOperator* B, NodeTy* Pred,
     // Handle undefined values.
     
     if (X.isUndef()) {
-      Nodify(Dst, B, Pred, SetBlkExprRVal(St, B, X));
+      MakeNode(Dst, B, Pred, SetBlkExprRVal(St, B, X));
       return;
     }
     
@@ -379,13 +379,15 @@ void GRExprEngine::VisitLogicalExpr(BinaryOperator* B, NodeTy* Pred,
     ValueState* NewState = Assume(St, X, true, isFeasible);
     
     if (isFeasible)
-      Nodify(Dst, B, Pred, SetBlkExprRVal(NewState, B, MakeConstantVal(1U, B)));
+      MakeNode(Dst, B, Pred,
+               SetBlkExprRVal(NewState, B, MakeConstantVal(1U, B)));
       
     isFeasible = false;
     NewState = Assume(St, X, false, isFeasible);
     
     if (isFeasible)
-      Nodify(Dst, B, Pred, SetBlkExprRVal(NewState, B, MakeConstantVal(0U, B)));
+      MakeNode(Dst, B, Pred,
+               SetBlkExprRVal(NewState, B, MakeConstantVal(0U, B)));
   }
   else {
     // We took the LHS expression.  Depending on whether we are '&&' or
@@ -393,7 +395,7 @@ void GRExprEngine::VisitLogicalExpr(BinaryOperator* B, NodeTy* Pred,
     // the short-circuiting.
     
     X = MakeConstantVal( B->getOpcode() == BinaryOperator::LAnd ? 0U : 1U, B);
-    Nodify(Dst, B, Pred, SetBlkExprRVal(St, B, X));
+    MakeNode(Dst, B, Pred, SetBlkExprRVal(St, B, X));
   }
 }
  
@@ -443,7 +445,7 @@ void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* D, NodeTy* Pred, NodeSet& Dst){
   ValueState* St = GetState(Pred);  
   RVal X = RVal::MakeVal(BasicVals, D);
   RVal Y = isa<lval::DeclVal>(X) ? GetRVal(St, cast<lval::DeclVal>(X)) : X;
-  Nodify(Dst, D, Pred, SetBlkExprRVal(St, D, Y));
+  MakeNode(Dst, D, Pred, SetBlkExprRVal(St, D, Y));
 }
 
 void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
@@ -549,7 +551,7 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
             // For __builtin_expect, just return the value of the subexpression.
             assert (CE->arg_begin() != CE->arg_end());            
             RVal X = GetRVal(St, *(CE->arg_begin()));
-            Nodify(Dst, CE, *DI, SetRVal(St, CE, X));
+            MakeNode(Dst, CE, *DI, SetRVal(St, CE, X));
             continue;            
           }
             
@@ -570,7 +572,7 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
           St = SetRVal(St, cast<LVal>(V), UnknownVal());
       }
       
-      Nodify(Dst, CE, *DI, St);
+      MakeNode(Dst, CE, *DI, St);
     }
     else {
 
@@ -604,7 +606,7 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
       EvalCall(Dst, CE, cast<LVal>(L), *DI);
       
       if (!Builder->BuildSinks && Dst.size() == size)
-        Nodify(Dst, CE, *DI, St);
+        MakeNode(Dst, CE, *DI, St);
     }
   }
 }
@@ -636,7 +638,7 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
     
     RVal V = T->isReferenceType() ? GetLVal(St, Ex) : GetRVal(St, Ex);
     
-    Nodify(Dst, CastE, N, SetRVal(St, CastE, EvalCast(V, CastE->getType())));
+    MakeNode(Dst, CastE, N, SetRVal(St, CastE, EvalCast(V, CastE->getType())));
   }
 }
 
@@ -705,7 +707,7 @@ void GRExprEngine::VisitDeclStmt(DeclStmt* DS, GRExprEngine::NodeTy* Pred,
       }
     }
 
-  Nodify(Dst, DS, Pred, St);
+  MakeNode(Dst, DS, Pred, St);
 }
 
 
@@ -726,7 +728,7 @@ void GRExprEngine::VisitGuardedExpr(Expr* Ex, Expr* L, Expr* R,
   X = GetBlkExprRVal(St, SE);
   
   // Make sure that we invalidate the previous binding.
-  Nodify(Dst, Ex, Pred, StateMgr.SetRVal(St, Ex, X, true, true));
+  MakeNode(Dst, Ex, Pred, StateMgr.SetRVal(St, Ex, X, true, true));
 }
 
 /// VisitSizeOfAlignOfTypeExpr - Transfer function for sizeof(type).
@@ -752,7 +754,7 @@ void GRExprEngine::VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr* Ex,
   else  // Get alignment of the type.
     amt = getContext().getTypeAlign(T) / 8;
   
-  Nodify(Dst, Ex, Pred,
+  MakeNode(Dst, Ex, Pred,
          SetRVal(GetState(Pred), Ex,
                  NonLVal::MakeVal(BasicVals, amt, Ex->getType())));  
 }
@@ -814,13 +816,13 @@ void GRExprEngine::VisitDeref(UnaryOperator* U, NodeTy* Pred,
     
     if (isFeasibleNotNull) {
 
-      if (GetLVal) Nodify(Dst, U, N, SetRVal(StNotNull, U, LV));
+      if (GetLVal) MakeNode(Dst, U, N, SetRVal(StNotNull, U, LV));
       else {
         
         // FIXME: Currently symbolic analysis "generates" new symbols
         //  for the contents of values.  We need a better approach.
       
-        Nodify(Dst, U, N, SetRVal(StNotNull, U,
+        MakeNode(Dst, U, N, SetRVal(StNotNull, U,
                                   GetRVal(StNotNull, LV, U->getType())));
       }
     }
@@ -833,7 +835,7 @@ void GRExprEngine::VisitDeref(UnaryOperator* U, NodeTy* Pred,
     
     if (isFeasibleNull) {
       
-      // We don't use "Nodify" here because the node will be a sink
+      // We don't use "MakeNode" here because the node will be a sink
       // and we have no intention of processing it later.
 
       NodeTy* NullNode = Builder->generateNode(U, StNull, N);
@@ -890,7 +892,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
     }
 
     if (SubV.isUndef()) {
-      Nodify(Dst, U, N1, SetRVal(St, U, SubV));
+      MakeNode(Dst, U, N1, SetRVal(St, U, SubV));
       continue;
     }
     
@@ -908,7 +910,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
 
       // Propagate undefined values.      
       if (V.isUndef()) {
-        Nodify(Dst, U, N1, SetRVal(St, U, V));
+        MakeNode(Dst, U, N1, SetRVal(St, U, V));
         continue;
       }
       
@@ -924,7 +926,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
       else
         St = SetRVal(SetRVal(St, U, Result), SubLV, Result);
         
-      Nodify(Dst, U, N1, St);
+      MakeNode(Dst, U, N1, St);
       continue;
     }    
     
@@ -975,7 +977,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
         assert (false && "Not implemented.");
     } 
     
-    Nodify(Dst, U, N1, St);
+    MakeNode(Dst, U, N1, St);
   }
 }
 
@@ -992,7 +994,7 @@ void GRExprEngine::VisitSizeOfExpr(UnaryOperator* U, NodeTy* Pred,
   ValueState* St = GetState(Pred);
   St = SetRVal(St, U, NonLVal::MakeVal(BasicVals, size, U->getType()));
 
-  Nodify(Dst, U, Pred, St);
+  MakeNode(Dst, U, Pred, St);
 }
 
 void GRExprEngine::VisitLVal(Expr* Ex, NodeTy* Pred, NodeSet& Dst) {
@@ -1066,7 +1068,7 @@ void GRExprEngine::VisitAsmStmtHelperInputs(AsmStmt* A,
         St = SetRVal(St, cast<LVal>(X), UnknownVal());
     }
     
-    Nodify(Dst, A, Pred, St);
+    MakeNode(Dst, A, Pred, St);
     return;
   }
   
@@ -1193,7 +1195,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           continue;
         }
         
-        Nodify(Dst, B, N2, SetRVal(St, B, Result));
+        MakeNode(Dst, B, N2, SetRVal(St, B, Result));
         continue;
       }
         
@@ -1383,7 +1385,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
         }
       }
     
-      Nodify(Dst, B, N2, St);
+      MakeNode(Dst, B, N2, St);
     }
   }
 }
@@ -1427,7 +1429,7 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
       }
       else if (B->getOpcode() == BinaryOperator::Comma) {
         ValueState* St = GetState(Pred);
-        Nodify(Dst, B, Pred, SetRVal(St, B, GetRVal(St, B->getRHS())));
+        MakeNode(Dst, B, Pred, SetRVal(St, B, GetRVal(St, B->getRHS())));
         break;
       }
       
@@ -1498,7 +1500,7 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
       assert (!SE->getSubStmt()->body_empty());
 
       if (Expr* LastExpr = dyn_cast<Expr>(*SE->getSubStmt()->body_rbegin()))
-        Nodify(Dst, SE, Pred, SetRVal(St, SE, GetRVal(St, LastExpr)));
+        MakeNode(Dst, SE, Pred, SetRVal(St, SE, GetRVal(St, LastExpr)));
       else
         Dst.Add(Pred);
       

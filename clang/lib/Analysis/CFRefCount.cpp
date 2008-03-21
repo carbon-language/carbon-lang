@@ -597,7 +597,7 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
       St = StateMgr.SetRVal(St, CE, X, Eng.getCFG().isBlkExpr(CE), false);
     }      
     
-    Builder.Nodify(Dst, CE, Pred, St);
+    Builder.MakeNode(Dst, CE, Pred, St);
     return;
   }
   
@@ -693,7 +693,7 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
     }
   }
       
-  Builder.Nodify(Dst, CE, Pred, St);
+  Builder.MakeNode(Dst, CE, Pred, St);
 }
 
 
