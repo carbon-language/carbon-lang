@@ -833,6 +833,49 @@ static void ComputeMaskedBits(Value *V, const APInt &Mask, APInt& KnownZero,
       return;
     }
     break;
+  case Instruction::Add:
+    // If either the LHS or the RHS are Zero, the result is zero.
+    ComputeMaskedBits(I->getOperand(1), Mask, KnownZero, KnownOne, Depth+1);
+    ComputeMaskedBits(I->getOperand(0), Mask, KnownZero2, KnownOne2, Depth+1);
+    assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
+    assert((KnownZero2 & KnownOne2) == 0 && "Bits known to be one AND zero?"); 
+      
+    // Output known-0 bits are known if clear or set in both the low clear bits
+    // common to both LHS & RHS.  For example, 8+(X<<3) is known to have the
+    // low 3 bits clear.
+    unsigned KnownZeroOut = std::min(KnownZero.countTrailingOnes(), 
+                                     KnownZero2.countTrailingOnes());
+      
+    KnownZero = APInt::getLowBitsSet(BitWidth, KnownZeroOut);
+    KnownOne = APInt(BitWidth, 0);
+    return;
+  case Instruction::Sub: {
+    ConstantInt *CLHS = dyn_cast<ConstantInt>(I->getOperand(0));
+    if (!CLHS) break;
+        
+    // We know that the top bits of C-X are clear if X contains less bits
+    // than C (i.e. no wrap-around can happen).  For example, 20-X is
+    // positive if we can prove that X is >= 0 and < 16.
+    if (CLHS->getValue().isNegative())
+      break;
+    
+    unsigned NLZ = (CLHS->getValue()+1).countLeadingZeros();
+    // NLZ can't be BitWidth with no sign bit
+    APInt MaskV = APInt::getHighBitsSet(BitWidth, NLZ+1);
+    ComputeMaskedBits(I->getOperand(1), MaskV, KnownZero, KnownOne, Depth+1);
+    
+    // If all of the MaskV bits are known to be zero, then we know the output
+    // top bits are zero, because we now know that the output is from [0-C].
+    if ((KnownZero & MaskV) == MaskV) {
+      unsigned NLZ2 = CLHS->getValue().countLeadingZeros();
+      // Top bits known zero.
+      KnownZero = APInt::getHighBitsSet(BitWidth, NLZ2) & Mask;
+      KnownOne = APInt(BitWidth, 0);   // No one bits known.
+    } else {
+      KnownZero = KnownOne = APInt(BitWidth, 0);  // Otherwise, nothing known.
+    }
+    return;
+  }        
   case Instruction::SRem:
     if (ConstantInt *Rem = dyn_cast<ConstantInt>(I->getOperand(1))) {
       APInt RA = Rem->getValue();
@@ -869,7 +912,8 @@ static void ComputeMaskedBits(Value *V, const APInt &Mask, APInt& KnownZero,
       // Since the result is less than or equal to RHS, any leading zero bits
       // in RHS must also exist in the result.
       APInt AllOnes = APInt::getAllOnesValue(BitWidth);
-      ComputeMaskedBits(I->getOperand(1), AllOnes, KnownZero2, KnownOne2, Depth+1);
+      ComputeMaskedBits(I->getOperand(1), AllOnes, KnownZero2, KnownOne2,
+                        Depth+1);
 
       uint32_t Leaders = KnownZero2.countLeadingOnes();
       KnownZero |= APInt::getHighBitsSet(BitWidth, Leaders) & Mask;
@@ -5701,44 +5745,53 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
     
   case Instruction::LShr:         // (icmp pred (shr X, ShAmt), CI)
   case Instruction::AShr: {
+    // Only handle equality comparisons of shift-by-constant.
     ConstantInt *ShAmt = dyn_cast<ConstantInt>(LHSI->getOperand(1));
-    if (!ShAmt) break;
+    if (!ShAmt || !ICI.isEquality()) break;
 
-    if (ICI.isEquality()) {
-      // Check that the shift amount is in range.  If not, don't perform
-      // undefined shifts.  When the shift is visited it will be
-      // simplified.
-      uint32_t TypeBits = RHSV.getBitWidth();
-      if (ShAmt->uge(TypeBits))
-        break;
-      uint32_t ShAmtVal = (uint32_t)ShAmt->getLimitedValue(TypeBits);
+    // Check that the shift amount is in range.  If not, don't perform
+    // undefined shifts.  When the shift is visited it will be
+    // simplified.
+    uint32_t TypeBits = RHSV.getBitWidth();
+    if (ShAmt->uge(TypeBits))
+      break;
+    
+    uint32_t ShAmtVal = (uint32_t)ShAmt->getLimitedValue(TypeBits);
       
-      // If we are comparing against bits always shifted out, the
-      // comparison cannot succeed.
-      APInt Comp = RHSV << ShAmtVal;
-      if (LHSI->getOpcode() == Instruction::LShr)
-        Comp = Comp.lshr(ShAmtVal);
-      else
-        Comp = Comp.ashr(ShAmtVal);
+    // If we are comparing against bits always shifted out, the
+    // comparison cannot succeed.
+    APInt Comp = RHSV << ShAmtVal;
+    if (LHSI->getOpcode() == Instruction::LShr)
+      Comp = Comp.lshr(ShAmtVal);
+    else
+      Comp = Comp.ashr(ShAmtVal);
+    
+    if (Comp != RHSV) { // Comparing against a bit that we know is zero.
+      bool IsICMP_NE = ICI.getPredicate() == ICmpInst::ICMP_NE;
+      Constant *Cst = ConstantInt::get(Type::Int1Ty, IsICMP_NE);
+      return ReplaceInstUsesWith(ICI, Cst);
+    }
+    
+    // Otherwise, check to see if the bits shifted out are known to be zero.
+    // If so, we can compare against the unshifted value:
+    //  (X & 4) >> 1 == 2  --> (X & 4) == 4.
+    if (MaskedValueIsZero(LHSI->getOperand(0), 
+                          APInt::getLowBitsSet(Comp.getBitWidth(), ShAmtVal))) {
+      return new ICmpInst(ICI.getPredicate(), LHSI->getOperand(0),
+                          ConstantExpr::getShl(RHS, ShAmt));
+    }
       
-      if (Comp != RHSV) { // Comparing against a bit that we know is zero.
-        bool IsICMP_NE = ICI.getPredicate() == ICmpInst::ICMP_NE;
-        Constant *Cst = ConstantInt::get(Type::Int1Ty, IsICMP_NE);
-        return ReplaceInstUsesWith(ICI, Cst);
-      }
+    if (LHSI->hasOneUse() || RHSV == 0) {
+      // Otherwise strength reduce the shift into an and.
+      APInt Val(APInt::getHighBitsSet(TypeBits, TypeBits - ShAmtVal));
+      Constant *Mask = ConstantInt::get(Val);
       
-      if (LHSI->hasOneUse() || RHSV == 0) {
-        // Otherwise strength reduce the shift into an and.
-        APInt Val(APInt::getHighBitsSet(TypeBits, TypeBits - ShAmtVal));
-        Constant *Mask = ConstantInt::get(Val);
-        
-        Instruction *AndI =
-          BinaryOperator::createAnd(LHSI->getOperand(0),
-                                    Mask, LHSI->getName()+".mask");
-        Value *And = InsertNewInstBefore(AndI, ICI);
-        return new ICmpInst(ICI.getPredicate(), And,
-                            ConstantExpr::getShl(RHS, ShAmt));
-      }
+      Instruction *AndI =
+        BinaryOperator::createAnd(LHSI->getOperand(0),
+                                  Mask, LHSI->getName()+".mask");
+      Value *And = InsertNewInstBefore(AndI, ICI);
+      return new ICmpInst(ICI.getPredicate(), And,
+                          ConstantExpr::getShl(RHS, ShAmt));
     }
     break;
   }

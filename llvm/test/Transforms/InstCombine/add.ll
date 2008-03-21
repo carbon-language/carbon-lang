@@ -268,3 +268,10 @@ define i32 @test35(i32 %a) {
         ret i32 %tmp2
 }
 
+define i32 @test36(i32 %a) {
+	%x = and i32 %a, -2
+	%y = and i32 %a, -126
+	%z = add i32 %x, %y
+	%q = and i32 %z, 1  ; always zero
+	ret i32 %q
+}
