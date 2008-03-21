@@ -1287,15 +1287,16 @@ bool GVN::iterateOnFunction(Function &F) {
   DominatorTree &DT = getAnalysis<DominatorTree>();   
   
   SmallVector<Instruction*, 4> toErase;
-  
+  DenseMap<Value*, LoadInst*> lastSeenLoad;
+
   // Top-down walk of the dominator tree
   for (df_iterator<DomTreeNode*> DI = df_begin(DT.getRootNode()),
          E = df_end(DT.getRootNode()); DI != E; ++DI) {
     
     // Get the set to update for this block
     ValueNumberedSet& currAvail = availableOut[DI->getBlock()];     
-    DenseMap<Value*, LoadInst*> lastSeenLoad;
-    
+    lastSeenLoad.clear();
+
     BasicBlock* BB = DI->getBlock();
   
     // A block inherits AVAIL_OUT from its dominator
