@@ -933,6 +933,42 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
     assert(StackTop == 0 && "Stack should be empty after a call!");
     pushReg(getFPReg(MI->getOperand(0)));
     break;
+  case X86::FpGET_ST1_32:// Appears immediately after a call returning FP type!
+  case X86::FpGET_ST1_64:// Appears immediately after a call returning FP type!
+  case X86::FpGET_ST1_80:{// Appears immediately after a call returning FP type!
+    // FpGET_ST1 should occur right after a FpGET_ST0 for a call or inline asm.
+    // The pattern we expect is:
+    //  CALL
+    //  FP1 = FpGET_ST0
+    //  FP4 = FpGET_ST1
+    //
+    // At this point, we've pushed FP1 on the top of stack, so it should be
+    // present if it isn't dead.  If it was dead, we already emitted a pop to
+    // remove it from the stack and StackTop = 0.
+    
+    // Push FP4 as top of stack next.
+    pushReg(getFPReg(MI->getOperand(0)));
+
+    // If StackTop was 0 before we pushed our operand, then ST(0) must have been
+    // dead.  In this case, the ST(1) value is the only thing that is live, so
+    // it should be on the TOS (after the pop that was emitted) and is.  Just
+    // continue in this case.
+    if (StackTop == 1)
+      break;
+    
+    // Because pushReg just pushed ST(1) as TOS, we now have to swap the two top
+    // elements so that our accounting is correct.
+    unsigned RegOnTop = getStackEntry(0);
+    unsigned RegNo = getStackEntry(1);
+    
+    // Swap the slots the regs are in.
+    std::swap(RegMap[RegNo], RegMap[RegOnTop]);
+    
+    // Swap stack slot contents.
+    assert(RegMap[RegOnTop] < StackTop);
+    std::swap(Stack[RegMap[RegOnTop]], Stack[StackTop-1]);
+    break;
+  }
   case X86::FpGET_ST0_ST1:
     assert(StackTop == 0 && "Stack should be empty after a call!");
     pushReg(getFPReg(MI->getOperand(0)));

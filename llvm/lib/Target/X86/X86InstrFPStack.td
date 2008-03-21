@@ -136,6 +136,15 @@ def FpGET_ST0_32 : FpI_<(outs RFP32:$dst), (ins), SpecialFP, []>; // FPR = ST(0)
 def FpGET_ST0_64 : FpI_<(outs RFP64:$dst), (ins), SpecialFP, []>; // FPR = ST(0)
 def FpGET_ST0_80 : FpI_<(outs RFP80:$dst), (ins), SpecialFP, []>; // FPR = ST(0)
 
+// FpGET_ST1* should only be issued *after* an FpGET_ST0* has been issued when
+// there are two values live out on the stack from a call or inlineasm.  This
+// magic is handled by the stackifier.  It is not valid to emit FpGET_ST1* and
+// then FpGET_ST0*.  In addition, it is invalid for any FP-using operations to
+// occur between them.
+def FpGET_ST1_32 : FpI_<(outs RFP32:$dst), (ins), SpecialFP, []>; // FPR = ST(1)
+def FpGET_ST1_64 : FpI_<(outs RFP64:$dst), (ins), SpecialFP, []>; // FPR = ST(1)
+def FpGET_ST1_80 : FpI_<(outs RFP80:$dst), (ins), SpecialFP, []>; // FPR = ST(1)
+
 def FpGET_ST0_ST1 : FpI_<(outs RFP80:$dst1, RFP80:$dst2), (ins), SpecialFP,
                          []>;                        // FPR = ST(0), FPR = ST(1)
 

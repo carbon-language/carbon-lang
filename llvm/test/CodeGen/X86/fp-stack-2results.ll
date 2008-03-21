@@ -19,3 +19,42 @@ define {x86_fp80, x86_fp80} @test2() {
   ret x86_fp80 %A, x86_fp80 %A
 }
 
+; Uses both values.
+define void @call1(x86_fp80 *%P1, x86_fp80 *%P2) {
+  %a = call {x86_fp80,x86_fp80} @test()
+  %b = getresult {x86_fp80,x86_fp80} %a, 0
+  store x86_fp80 %b, x86_fp80* %P1
+
+  %c = getresult {x86_fp80,x86_fp80} %a, 1
+  store x86_fp80 %c, x86_fp80* %P2
+  ret void 
+}
+
+; Uses both values, requires fxch
+define void @call2(x86_fp80 *%P1, x86_fp80 *%P2) {
+  %a = call {x86_fp80,x86_fp80} @test()
+  %b = getresult {x86_fp80,x86_fp80} %a, 1
+  store x86_fp80 %b, x86_fp80* %P1
+
+  %c = getresult {x86_fp80,x86_fp80} %a, 0
+  store x86_fp80 %c, x86_fp80* %P2
+  ret void
+}
+
+; Uses ST(0), ST(1) is dead but must be popped.
+define void @call3(x86_fp80 *%P1, x86_fp80 *%P2) {
+  %a = call {x86_fp80,x86_fp80} @test()
+  %b = getresult {x86_fp80,x86_fp80} %a, 0
+  store x86_fp80 %b, x86_fp80* %P1
+  ret void 
+}
+
+; Uses ST(1), ST(0) is dead and must be popped.
+define void @call4(x86_fp80 *%P1, x86_fp80 *%P2) {
+  %a = call {x86_fp80,x86_fp80} @test()
+
+  %c = getresult {x86_fp80,x86_fp80} %a, 1
+  store x86_fp80 %c, x86_fp80* %P2
+  ret void 
+}
+

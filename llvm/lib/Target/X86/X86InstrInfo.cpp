@@ -1487,16 +1487,18 @@ void X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
   
   // Moving from ST(0) turns into FpGET_ST0_32 etc.
   if (SrcRC == &X86::RSTRegClass) {
-    // Copying from ST(0).  FIXME: handle ST(1) also
-    assert(SrcReg == X86::ST0 && "Can only copy from TOS right now");
+    // Copying from ST(0)/ST(1).
+    assert((SrcReg == X86::ST0 || SrcReg == X86::ST1) &&
+           "Can only copy from ST(0)/ST(1) right now");
+    bool isST0 = SrcReg == X86::ST0;
     unsigned Opc;
     if (DestRC == &X86::RFP32RegClass)
-      Opc = X86::FpGET_ST0_32;
+      Opc = isST0 ? X86::FpGET_ST0_32 : X86::FpGET_ST1_32;
     else if (DestRC == &X86::RFP64RegClass)
-      Opc = X86::FpGET_ST0_64;
+      Opc = isST0 ? X86::FpGET_ST0_64 : X86::FpGET_ST1_64;
     else {
       assert(DestRC == &X86::RFP80RegClass);
-      Opc = X86::FpGET_ST0_80;
+      Opc = isST0 ? X86::FpGET_ST0_80 : X86::FpGET_ST1_80;
     }
     BuildMI(MBB, MI, get(Opc), DestReg);
     return;
