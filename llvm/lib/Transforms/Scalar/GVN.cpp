@@ -198,147 +198,82 @@ template <> struct DenseMapInfo<Expression> {
 //===----------------------------------------------------------------------===//
 //                     ValueTable Internal Functions
 //===----------------------------------------------------------------------===//
-Expression::ExpressionOpcode 
-                             ValueTable::getOpcode(BinaryOperator* BO) {
+Expression::ExpressionOpcode ValueTable::getOpcode(BinaryOperator* BO) {
   switch(BO->getOpcode()) {
-    case Instruction::Add:
-      return Expression::ADD;
-    case Instruction::Sub:
-      return Expression::SUB;
-    case Instruction::Mul:
-      return Expression::MUL;
-    case Instruction::UDiv:
-      return Expression::UDIV;
-    case Instruction::SDiv:
-      return Expression::SDIV;
-    case Instruction::FDiv:
-      return Expression::FDIV;
-    case Instruction::URem:
-      return Expression::UREM;
-    case Instruction::SRem:
-      return Expression::SREM;
-    case Instruction::FRem:
-      return Expression::FREM;
-    case Instruction::Shl:
-      return Expression::SHL;
-    case Instruction::LShr:
-      return Expression::LSHR;
-    case Instruction::AShr:
-      return Expression::ASHR;
-    case Instruction::And:
-      return Expression::AND;
-    case Instruction::Or:
-      return Expression::OR;
-    case Instruction::Xor:
-      return Expression::XOR;
-    
-    // THIS SHOULD NEVER HAPPEN
-    default:
-      assert(0 && "Binary operator with unknown opcode?");
-      return Expression::ADD;
+  default: // THIS SHOULD NEVER HAPPEN
+    assert(0 && "Binary operator with unknown opcode?");
+  case Instruction::Add:  return Expression::ADD;
+  case Instruction::Sub:  return Expression::SUB;
+  case Instruction::Mul:  return Expression::MUL;
+  case Instruction::UDiv: return Expression::UDIV;
+  case Instruction::SDiv: return Expression::SDIV;
+  case Instruction::FDiv: return Expression::FDIV;
+  case Instruction::URem: return Expression::UREM;
+  case Instruction::SRem: return Expression::SREM;
+  case Instruction::FRem: return Expression::FREM;
+  case Instruction::Shl:  return Expression::SHL;
+  case Instruction::LShr: return Expression::LSHR;
+  case Instruction::AShr: return Expression::ASHR;
+  case Instruction::And:  return Expression::AND;
+  case Instruction::Or:   return Expression::OR;
+  case Instruction::Xor:  return Expression::XOR;
   }
 }
 
 Expression::ExpressionOpcode ValueTable::getOpcode(CmpInst* C) {
-  if (C->getOpcode() == Instruction::ICmp) {
+  if (isa<ICmpInst>(C)) {
     switch (C->getPredicate()) {
-      case ICmpInst::ICMP_EQ:
-        return Expression::ICMPEQ;
-      case ICmpInst::ICMP_NE:
-        return Expression::ICMPNE;
-      case ICmpInst::ICMP_UGT:
-        return Expression::ICMPUGT;
-      case ICmpInst::ICMP_UGE:
-        return Expression::ICMPUGE;
-      case ICmpInst::ICMP_ULT:
-        return Expression::ICMPULT;
-      case ICmpInst::ICMP_ULE:
-        return Expression::ICMPULE;
-      case ICmpInst::ICMP_SGT:
-        return Expression::ICMPSGT;
-      case ICmpInst::ICMP_SGE:
-        return Expression::ICMPSGE;
-      case ICmpInst::ICMP_SLT:
-        return Expression::ICMPSLT;
-      case ICmpInst::ICMP_SLE:
-        return Expression::ICMPSLE;
-      
-      // THIS SHOULD NEVER HAPPEN
-      default:
-        assert(0 && "Comparison with unknown predicate?");
-        return Expression::ICMPEQ;
+    default:  // THIS SHOULD NEVER HAPPEN
+      assert(0 && "Comparison with unknown predicate?");
+    case ICmpInst::ICMP_EQ:  return Expression::ICMPEQ;
+    case ICmpInst::ICMP_NE:  return Expression::ICMPNE;
+    case ICmpInst::ICMP_UGT: return Expression::ICMPUGT;
+    case ICmpInst::ICMP_UGE: return Expression::ICMPUGE;
+    case ICmpInst::ICMP_ULT: return Expression::ICMPULT;
+    case ICmpInst::ICMP_ULE: return Expression::ICMPULE;
+    case ICmpInst::ICMP_SGT: return Expression::ICMPSGT;
+    case ICmpInst::ICMP_SGE: return Expression::ICMPSGE;
+    case ICmpInst::ICMP_SLT: return Expression::ICMPSLT;
+    case ICmpInst::ICMP_SLE: return Expression::ICMPSLE;
     }
-  } else {
-    switch (C->getPredicate()) {
-      case FCmpInst::FCMP_OEQ:
-        return Expression::FCMPOEQ;
-      case FCmpInst::FCMP_OGT:
-        return Expression::FCMPOGT;
-      case FCmpInst::FCMP_OGE:
-        return Expression::FCMPOGE;
-      case FCmpInst::FCMP_OLT:
-        return Expression::FCMPOLT;
-      case FCmpInst::FCMP_OLE:
-        return Expression::FCMPOLE;
-      case FCmpInst::FCMP_ONE:
-        return Expression::FCMPONE;
-      case FCmpInst::FCMP_ORD:
-        return Expression::FCMPORD;
-      case FCmpInst::FCMP_UNO:
-        return Expression::FCMPUNO;
-      case FCmpInst::FCMP_UEQ:
-        return Expression::FCMPUEQ;
-      case FCmpInst::FCMP_UGT:
-        return Expression::FCMPUGT;
-      case FCmpInst::FCMP_UGE:
-        return Expression::FCMPUGE;
-      case FCmpInst::FCMP_ULT:
-        return Expression::FCMPULT;
-      case FCmpInst::FCMP_ULE:
-        return Expression::FCMPULE;
-      case FCmpInst::FCMP_UNE:
-        return Expression::FCMPUNE;
-      
-      // THIS SHOULD NEVER HAPPEN
-      default:
-        assert(0 && "Comparison with unknown predicate?");
-        return Expression::FCMPOEQ;
-    }
+  }
+  assert(isa<FCmpInst>(C) && "Unknown compare");
+  switch (C->getPredicate()) {
+  default: // THIS SHOULD NEVER HAPPEN
+    assert(0 && "Comparison with unknown predicate?");
+  case FCmpInst::FCMP_OEQ: return Expression::FCMPOEQ;
+  case FCmpInst::FCMP_OGT: return Expression::FCMPOGT;
+  case FCmpInst::FCMP_OGE: return Expression::FCMPOGE;
+  case FCmpInst::FCMP_OLT: return Expression::FCMPOLT;
+  case FCmpInst::FCMP_OLE: return Expression::FCMPOLE;
+  case FCmpInst::FCMP_ONE: return Expression::FCMPONE;
+  case FCmpInst::FCMP_ORD: return Expression::FCMPORD;
+  case FCmpInst::FCMP_UNO: return Expression::FCMPUNO;
+  case FCmpInst::FCMP_UEQ: return Expression::FCMPUEQ;
+  case FCmpInst::FCMP_UGT: return Expression::FCMPUGT;
+  case FCmpInst::FCMP_UGE: return Expression::FCMPUGE;
+  case FCmpInst::FCMP_ULT: return Expression::FCMPULT;
+  case FCmpInst::FCMP_ULE: return Expression::FCMPULE;
+  case FCmpInst::FCMP_UNE: return Expression::FCMPUNE;
   }
 }
 
-Expression::ExpressionOpcode 
-                             ValueTable::getOpcode(CastInst* C) {
+Expression::ExpressionOpcode ValueTable::getOpcode(CastInst* C) {
   switch(C->getOpcode()) {
-    case Instruction::Trunc:
-      return Expression::TRUNC;
-    case Instruction::ZExt:
-      return Expression::ZEXT;
-    case Instruction::SExt:
-      return Expression::SEXT;
-    case Instruction::FPToUI:
-      return Expression::FPTOUI;
-    case Instruction::FPToSI:
-      return Expression::FPTOSI;
-    case Instruction::UIToFP:
-      return Expression::UITOFP;
-    case Instruction::SIToFP:
-      return Expression::SITOFP;
-    case Instruction::FPTrunc:
-      return Expression::FPTRUNC;
-    case Instruction::FPExt:
-      return Expression::FPEXT;
-    case Instruction::PtrToInt:
-      return Expression::PTRTOINT;
-    case Instruction::IntToPtr:
-      return Expression::INTTOPTR;
-    case Instruction::BitCast:
-      return Expression::BITCAST;
-    
-    // THIS SHOULD NEVER HAPPEN
-    default:
-      assert(0 && "Cast operator with unknown opcode?");
-      return Expression::BITCAST;
+  default: // THIS SHOULD NEVER HAPPEN
+    assert(0 && "Cast operator with unknown opcode?");
+  case Instruction::Trunc:    return Expression::TRUNC;
+  case Instruction::ZExt:     return Expression::ZEXT;
+  case Instruction::SExt:     return Expression::SEXT;
+  case Instruction::FPToUI:   return Expression::FPTOUI;
+  case Instruction::FPToSI:   return Expression::FPTOSI;
+  case Instruction::UIToFP:   return Expression::UITOFP;
+  case Instruction::SIToFP:   return Expression::SITOFP;
+  case Instruction::FPTrunc:  return Expression::FPTRUNC;
+  case Instruction::FPExt:    return Expression::FPEXT;
+  case Instruction::PtrToInt: return Expression::PTRTOINT;
+  case Instruction::IntToPtr: return Expression::INTTOPTR;
+  case Instruction::BitCast:  return Expression::BITCAST;
   }
 }
 
@@ -618,12 +553,8 @@ uint32_t ValueTable::lookup_or_add(Value* V) {
 /// the value has not yet been numbered.
 uint32_t ValueTable::lookup(Value* V) const {
   DenseMap<Value*, uint32_t>::iterator VI = valueNumbering.find(V);
-  if (VI != valueNumbering.end())
-    return VI->second;
-  else
-    assert(0 && "Value not numbered?");
-  
-  return 0;
+  assert(VI != valueNumbering.end() && "Value not numbered?");
+  return VI->second;
 }
 
 /// clear - Remove all entries from the ValueTable
@@ -642,7 +573,7 @@ void ValueTable::erase(Value* V) {
 //                       ValueNumberedSet Class
 //===----------------------------------------------------------------------===//
 namespace {
-class ValueNumberedSet {
+class VISIBILITY_HIDDEN ValueNumberedSet {
   private:
     SmallPtrSet<Value*, 8> contents;
     BitVector numbers;
@@ -755,7 +686,6 @@ namespace {
   };
   
   char GVN::ID = 0;
-  
 }
 
 // createGVNPass - The public interface to this file...
@@ -807,16 +737,15 @@ Value* GVN::CollapsePhi(PHINode* p) {
   DominatorTree &DT = getAnalysis<DominatorTree>();
   Value* constVal = p->hasConstantValue();
   
-  if (constVal) {
-    if (Instruction* inst = dyn_cast<Instruction>(constVal)) {
-      if (DT.dominates(inst, p))
-        if (isSafeReplacement(p, inst))
-          return inst;
-    } else {
-      return constVal;
-    }
-  }
+  if (!constVal) return 0;
   
+  Instruction* inst = dyn_cast<Instruction>(constVal);
+  if (!inst)
+    return constVal;
+    
+  if (DT.dominates(inst, p))
+    if (isSafeReplacement(p, inst))
+      return inst;
   return 0;
 }
 
@@ -836,8 +765,8 @@ bool GVN::isSafeReplacement(PHINode* p, Instruction* inst) {
 /// GetValueForBlock - Get the value to use within the specified basic block.
 /// available values are in Phis.
 Value *GVN::GetValueForBlock(BasicBlock *BB, LoadInst* orig,
-                               DenseMap<BasicBlock*, Value*> &Phis,
-                               bool top_level) { 
+                             DenseMap<BasicBlock*, Value*> &Phis,
+                             bool top_level) { 
                                  
   // If we have already computed this value, return the previously computed val.
   DenseMap<BasicBlock*, Value*>::iterator V = Phis.find(BB);
@@ -849,6 +778,7 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, LoadInst* orig,
     Phis[BB] = ret;
     return ret;
   }
+  
   // Otherwise, the idom is the loop, so we need to insert a PHI node.  Do so
   // now, then get values to fill in the incoming values for the PHI.
   PHINode *PN = new PHINode(orig->getType(), orig->getName()+".rle",
@@ -861,35 +791,34 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, LoadInst* orig,
   // Fill in the incoming values for the block.
   for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
     Value* val = GetValueForBlock(*PI, orig, Phis);
-    
     PN->addIncoming(val, *PI);
   }
+  
   AliasAnalysis& AA = getAnalysis<AliasAnalysis>();
   AA.copyValue(orig, PN);
   
   // Attempt to collapse PHI nodes that are trivially redundant
   Value* v = CollapsePhi(PN);
-  if (v) {
-    MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
-
-    MD.removeInstruction(PN);
-    PN->replaceAllUsesWith(v);
-
-    for (DenseMap<BasicBlock*, Value*>::iterator I = Phis.begin(),
-         E = Phis.end(); I != E; ++I)
-      if (I->second == PN)
-        I->second = v;
-
-    PN->eraseFromParent();
-
-    Phis[BB] = v;
-
-    return v;
+  if (!v) {
+    // Cache our phi construction results
+    phiMap[orig->getPointerOperand()].insert(PN);
+    return PN;
   }
+    
+  MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
 
-  // Cache our phi construction results
-  phiMap[orig->getPointerOperand()].insert(PN);
-  return PN;
+  MD.removeInstruction(PN);
+  PN->replaceAllUsesWith(v);
+
+  for (DenseMap<BasicBlock*, Value*>::iterator I = Phis.begin(),
+       E = Phis.end(); I != E; ++I)
+    if (I->second == PN)
+      I->second = v;
+
+  PN->eraseFromParent();
+
+  Phis[BB] = v;
+  return v;
 }
 
 /// processNonLocalLoad - Attempt to eliminate a load whose dependencies are
@@ -906,24 +835,25 @@ bool GVN::processNonLocalLoad(LoadInst* L,
   
   // Filter out useless results (non-locals, etc)
   for (DenseMap<BasicBlock*, Value*>::iterator I = deps.begin(), E = deps.end();
-       I != E; ++I)
-    if (I->second == MemoryDependenceAnalysis::None) {
+       I != E; ++I) {
+    if (I->second == MemoryDependenceAnalysis::None)
       return false;
-    } else if (I->second == MemoryDependenceAnalysis::NonLocal) {
+  
+    if (I->second == MemoryDependenceAnalysis::NonLocal)
       continue;
-    } else if (StoreInst* S = dyn_cast<StoreInst>(I->second)) {
-      if (S->getPointerOperand() == L->getPointerOperand())
-        repl[I->first] = S->getOperand(0);
-      else
+  
+    if (StoreInst* S = dyn_cast<StoreInst>(I->second)) {
+      if (S->getPointerOperand() != L->getPointerOperand())
         return false;
+      repl[I->first] = S->getOperand(0);
     } else if (LoadInst* LD = dyn_cast<LoadInst>(I->second)) {
-      if (LD->getPointerOperand() == L->getPointerOperand())
-        repl[I->first] = LD;
-      else
+      if (LD->getPointerOperand() != L->getPointerOperand())
         return false;
+      repl[I->first] = LD;
     } else {
       return false;
     }
+  }
   
   // Use cached PHI construction information from previous runs
   SmallPtrSet<Instruction*, 4>& p = phiMap[L->getPointerOperand()];
@@ -934,11 +864,10 @@ bool GVN::processNonLocalLoad(LoadInst* L,
       L->replaceAllUsesWith(*I);
       toErase.push_back(L);
       NumGVNLoad++;
-      
       return true;
-    } else {
-      repl.insert(std::make_pair((*I)->getParent(), *I));
     }
+    
+    repl.insert(std::make_pair((*I)->getParent(), *I));
   }
   
   // Perform PHI construction
@@ -1245,11 +1174,11 @@ bool GVN::processMemCpy(MemCpyInst* M, MemCpyInst* MDep,
     MD.dropInstruction(M);
     toErase.push_back(M);
     return true;
-  } else {
-    MD.removeInstruction(C);
-    toErase.push_back(C);
-    return false;
   }
+  
+  MD.removeInstruction(C);
+  toErase.push_back(C);
+  return false;
 }
 
 /// processInstruction - When calculating availability, handle an instruction
@@ -1384,9 +1313,8 @@ bool GVN::iterateOnFunction(Function &F) {
       ++BI;
 
       for (SmallVector<Instruction*, 4>::iterator I = toErase.begin(),
-           E = toErase.end(); I != E; ++I) {
+           E = toErase.end(); I != E; ++I)
         (*I)->eraseFromParent();
-      }
 
       toErase.clear();
     }
