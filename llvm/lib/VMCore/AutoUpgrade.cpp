@@ -122,8 +122,7 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
     if (Name.compare(5,10,"x86.mmx.ps",10) == 0 &&
         (Name.compare(13,4,"psll", 4) == 0 ||
          Name.compare(13,4,"psra", 4) == 0 ||
-         Name.compare(13,4,"psrl", 4) == 0) &&
-        Name[17] != 'i') {
+         Name.compare(13,4,"psrl", 4) == 0)) {
       
       const llvm::Type *VT = VectorType::get(IntegerType::get(64), 1);
       
