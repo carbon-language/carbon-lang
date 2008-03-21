@@ -1,4 +1,5 @@
-// RUN: clang %s -fsyntax-only -fms-extensions
+// RUN: clang -E -fms-extensions %s | sed '/^#.\+/d' | tr -d '\n' |
+// RUN:   grep '^int foo;int bar;int baz;$' | count 1
 // This horrible stuff should preprocess into (other than whitespace):
 //   int foo;
 //   int bar;
