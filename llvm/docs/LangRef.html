@@ -3899,24 +3899,27 @@ argument.</p>
 
 <h5>Syntax:</h5>
 <pre>
-  &lt;resultval&gt; = getresult &lt;type&gt; &lt;retval&gt;,  &lt;index&gt;
+  &lt;resultval&gt; = getresult &lt;type&gt; &lt;retval&gt;, &lt;index&gt;
 </pre>
+
 <h5>Overview:</h5>
 
 <p> The '<tt>getresult</tt>' instruction is used to extract individual values
-from multiple values returned by a '<tt><a href="#i_call">call</a></tt>' 
-or '<tt><a href="#i_invoke">invoke</a></tt>' instruction.
+from a '<tt><a href="#i_call">call</a></tt>' 
+or '<tt><a href="#i_invoke">invoke</a></tt>' instruction that returns multiple
+results.</p>
 
 <h5>Arguments:</h5>
 
-The '<tt>getresult</tt>' instruction takes a return value as first argument. 
-The value must have <a href="#t_struct">structure type</a>. The second argument 
-is an unsigned index value. 
+<p>The '<tt>getresult</tt>' instruction takes a call or invoke value as its 
+first argument.  The value must have <a href="#t_struct">structure type</a>. 
+The second argument is an unsigned index value which must be in range for 
+the number of values returned by the call.</p>
 
 <h5>Semantics:</h5>
 
-The '<tt>getresult</tt>' instruction extracts the element identified by
-'<tt>index</tt>' from the aggregate value.
+<p>The '<tt>getresult</tt>' instruction extracts the element identified by
+'<tt>index</tt>' from the aggregate value.</p>
 
 <h5>Example:</h5>
 
@@ -3924,8 +3927,8 @@ The '<tt>getresult</tt>' instruction extracts the element identified by
   %struct.A = type { i32, i8 }
 
   %r = call %struct.A @foo()
-  %gr = getresult %struct.A %r, 0
-  %gr1 = getresult %struct.A %r, 1 
+  %gr = getresult %struct.A %r, 0    <i>; yields i32:%gr</i>
+  %gr1 = getresult %struct.A %r, 1   <i>; yields i8:%gr1</i>
   add i32 %gr, 42
   add i8 %gr1, 41
 </pre>
