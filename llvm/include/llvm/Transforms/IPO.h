@@ -79,14 +79,6 @@ ModulePass *createGlobalDCEPass();
 
 
 //===----------------------------------------------------------------------===//
-/// createFunctionExtractionPass - If deleteFn is true, this pass deletes as
-/// the specified function. Otherwise, it deletes as much of the module as
-/// possible, except for the function specified.
-///
-ModulePass *createFunctionExtractionPass(Function *F, bool deleteFn = false,
-                                         bool relinkCallees = false);
-
-//===----------------------------------------------------------------------===//
 /// createGVExtractionPass - If deleteFn is true, this pass deletes as
 /// the specified global values. Otherwise, it deletes as much of the module as
 /// possible, except for the global values specified.
