@@ -1053,9 +1053,6 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
       return;
     }
     
-    assert(0 && "TODO: This code should work, but has never been tested."
-           "Test it when we have multiple FP return values working");
-    
     // Otherwise, we are returning two values:
     // 2) If returning the same value for both, we only have one thing in the FP
     //    stack.  Consider:  RET FP1, FP1
@@ -1083,7 +1080,7 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
     /// 4) Finally, FirstFPRegOp must be in ST(0) and SecondFPRegOp must be in
     /// ST(1).  Just remove both from our understanding of the stack and return.
     assert(getStackEntry(0) == FirstFPRegOp && "Unknown regs live");
-    assert(getStackEntry(0) == SecondFPRegOp && "Unknown regs live");
+    assert(getStackEntry(1) == SecondFPRegOp && "Unknown regs live");
     StackTop = 0;
     return;
   }
