@@ -221,7 +221,10 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
     // Otherwise, if this macro expands into a single trivially-expanded
     // token: expand it now.  This handles common cases like 
     // "#define VAL 42".
-    
+
+    // No need for arg info.
+    if (Args) Args->destroy();
+
     // Propagate the isAtStartOfLine/hasLeadingSpace markers of the macro
     // identifier to the expanded token.
     bool isAtStartOfLine = Identifier.isAtStartOfLine();
