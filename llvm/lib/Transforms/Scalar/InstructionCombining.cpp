@@ -833,7 +833,7 @@ static void ComputeMaskedBits(Value *V, const APInt &Mask, APInt& KnownZero,
       return;
     }
     break;
-  case Instruction::Add:
+  case Instruction::Add: {
     // If either the LHS or the RHS are Zero, the result is zero.
     ComputeMaskedBits(I->getOperand(1), Mask, KnownZero, KnownOne, Depth+1);
     ComputeMaskedBits(I->getOperand(0), Mask, KnownZero2, KnownOne2, Depth+1);
@@ -849,6 +849,7 @@ static void ComputeMaskedBits(Value *V, const APInt &Mask, APInt& KnownZero,
     KnownZero = APInt::getLowBitsSet(BitWidth, KnownZeroOut);
     KnownOne = APInt(BitWidth, 0);
     return;
+  }
   case Instruction::Sub: {
     ConstantInt *CLHS = dyn_cast<ConstantInt>(I->getOperand(0));
     if (!CLHS) break;
