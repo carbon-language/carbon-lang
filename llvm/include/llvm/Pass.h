@@ -32,7 +32,7 @@
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Streams.h"
 #include <vector>
-#include <map>
+#include <utility>
 #include <iosfwd>
 #include <cassert>
 

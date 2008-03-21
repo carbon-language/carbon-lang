@@ -34,6 +34,7 @@
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include <algorithm>
+#include <map>
 using namespace llvm;
 
 STATISTIC(NumLinear , "Number of insts linearized");

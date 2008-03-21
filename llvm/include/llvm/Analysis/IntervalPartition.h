@@ -25,6 +25,7 @@
 
 #include "llvm/Analysis/Interval.h"
 #include "llvm/Pass.h"
+#include <map>
 
 namespace llvm {
 

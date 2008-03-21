@@ -32,6 +32,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
+#include <map>
 using namespace llvm;
 
 STATISTIC(NumEliminated, "Number of unconditional branches eliminated");

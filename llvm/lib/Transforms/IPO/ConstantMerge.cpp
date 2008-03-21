@@ -23,6 +23,7 @@
 #include "llvm/Pass.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Compiler.h"
+#include <map>
 using namespace llvm;
 
 STATISTIC(NumMerged, "Number of global constants merged");

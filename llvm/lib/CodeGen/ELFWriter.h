@@ -16,6 +16,7 @@
 
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include <list>
+#include <map>
 
 namespace llvm {
   class GlobalVariable;

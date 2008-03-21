@@ -50,6 +50,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/VectorExtras.h"
 #include "llvm/ADT/SmallVector.h"
+#include <map>
 using namespace llvm;
 
 STATISTIC(LongJmpsTransformed, "Number of longjmps transformed");

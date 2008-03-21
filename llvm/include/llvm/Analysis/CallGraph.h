@@ -55,6 +55,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CallSite.h"
+#include <map>
 
 namespace llvm {
 

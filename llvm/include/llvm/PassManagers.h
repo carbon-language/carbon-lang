@@ -14,6 +14,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/ADT/SmallVector.h"
 #include <deque>
+#include <map>
 
 //===----------------------------------------------------------------------===//
 // Overview:

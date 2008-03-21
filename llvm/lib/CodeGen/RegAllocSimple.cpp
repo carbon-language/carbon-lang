@@ -27,6 +27,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
+#include <map>
 using namespace llvm;
 
 STATISTIC(NumStores, "Number of stores added");

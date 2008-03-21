@@ -71,6 +71,7 @@
 #include <algorithm>
 #include <set>
 #include <list>
+#include <map>
 #include <stack>
 #include <vector>
 #include <queue>

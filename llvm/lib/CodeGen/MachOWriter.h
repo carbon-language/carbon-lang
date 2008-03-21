@@ -21,6 +21,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetMachOWriterInfo.h"
+#include <map>
 
 namespace llvm {
   class GlobalVariable;
