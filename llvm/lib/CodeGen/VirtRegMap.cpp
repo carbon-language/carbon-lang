@@ -610,7 +610,7 @@ static void UpdateKills(MachineInstr &MI, BitVector &RegKills,
     if (Reg == 0)
       continue;
     
-    if (RegKills[Reg]) {
+    if (RegKills[Reg] && KillOps[Reg]->getParent() != &MI) {
       // That can't be right. Register is killed but not re-defined and it's
       // being reused. Let's fix that.
       KillOps[Reg]->setIsKill(false);

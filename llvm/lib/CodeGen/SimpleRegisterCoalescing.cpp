@@ -432,6 +432,7 @@ SimpleRegisterCoalescing::UpdateRegDefsUses(unsigned SrcReg, unsigned DstReg,
   for (MachineRegisterInfo::reg_iterator I = mri_->reg_begin(SrcReg),
          E = mri_->reg_end(); I != E; ) {
     MachineOperand &O = I.getOperand();
+    MachineInstr *UseMI = &*I;
     ++I;
     if (DstIsPhys) {
       unsigned UseSubIdx = O.getSubReg();
@@ -451,6 +452,9 @@ SimpleRegisterCoalescing::UpdateRegDefsUses(unsigned SrcReg, unsigned DstReg,
         assert(OldSubIdx < SubIdx && "Conflicting sub-register index!");
       else if (SubIdx)
         O.setSubReg(SubIdx);
+      // Remove would-be duplicated kill marker.
+      if (O.isKill() && UseMI->killsRegister(DstReg))
+        O.setIsKill(false);
       O.setReg(DstReg);
     }
   }
