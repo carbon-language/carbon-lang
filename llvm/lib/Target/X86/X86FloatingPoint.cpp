@@ -1053,8 +1053,13 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
       MachineOperand &Op = MI->getOperand(i);
       if (!Op.isReg() || Op.getReg() < X86::FP0 || Op.getReg() > X86::FP6)
         continue;
-//      assert(Op.isUse() && Op.isKill() &&
-//             "Ret only defs operands, and values aren't live beyond it");
+      // FP Register uses must be kills unless there are two uses of the same
+      // register, in which case only one will be a kill.
+      assert(Op.isUse() &&
+             (Op.isKill() ||                        // Marked kill.
+              getFPReg(Op) == FirstFPRegOp ||       // Second instance.
+              MI->killsRegister(Op.getReg())) &&    // Later use is marked kill.
+             "Ret only defs operands, and values aren't live beyond it");
 
       if (FirstFPRegOp == ~0U)
         FirstFPRegOp = getFPReg(Op);
