@@ -9,3 +9,13 @@ define {x86_fp80, x86_fp80} @test() {
   ret x86_fp80 %A, x86_fp80 %B
 }
 
+
+;_test2:
+;	fld1
+;	fld	%st(0)
+;	ret
+define {x86_fp80, x86_fp80} @test2() {
+  %A = fpext double 1.0 to x86_fp80
+  ret x86_fp80 %A, x86_fp80 %A
+}
+

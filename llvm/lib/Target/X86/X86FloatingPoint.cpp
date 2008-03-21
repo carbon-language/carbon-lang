@@ -1022,8 +1022,8 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
       MachineOperand &Op = MI->getOperand(i);
       if (!Op.isReg() || Op.getReg() < X86::FP0 || Op.getReg() > X86::FP6)
         continue;
-      assert(Op.isUse() && Op.isKill() &&
-             "Ret only defs operands, and values aren't live beyond it");
+//      assert(Op.isUse() && Op.isKill() &&
+//             "Ret only defs operands, and values aren't live beyond it");
 
       if (FirstFPRegOp == ~0U)
         FirstFPRegOp = getFPReg(Op);
