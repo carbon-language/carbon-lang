@@ -664,18 +664,18 @@ namespace {
     Value* find_leader(ValueNumberedSet& vals, uint32_t v) ;
     void val_insert(ValueNumberedSet& s, Value* v);
     bool processLoad(LoadInst* L,
-                     DenseMap<Value*, LoadInst*>& lastLoad,
-                     SmallVector<Instruction*, 4>& toErase);
+                     DenseMap<Value*, LoadInst*> &lastLoad,
+                     SmallVectorImpl<Instruction*> &toErase);
     bool processInstruction(Instruction* I,
                             ValueNumberedSet& currAvail,
                             DenseMap<Value*, LoadInst*>& lastSeenLoad,
-                            SmallVector<Instruction*, 4>& toErase);
+                            SmallVectorImpl<Instruction*> &toErase);
     bool processNonLocalLoad(LoadInst* L,
-                             SmallVector<Instruction*, 4>& toErase);
+                             SmallVectorImpl<Instruction*> &toErase);
     bool processMemCpy(MemCpyInst* M, MemCpyInst* MDep,
-                       SmallVector<Instruction*, 4>& toErase);
+                       SmallVectorImpl<Instruction*> &toErase);
     bool performCallSlotOptzn(MemCpyInst* cpy, CallInst* C,
-                              SmallVector<Instruction*, 4>& toErase);
+                              SmallVectorImpl<Instruction*> &toErase);
     Value *GetValueForBlock(BasicBlock *BB, LoadInst* orig,
                             DenseMap<BasicBlock*, Value*> &Phis,
                             bool top_level = false);
@@ -824,7 +824,7 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, LoadInst* orig,
 /// processNonLocalLoad - Attempt to eliminate a load whose dependencies are
 /// non-local by performing PHI construction.
 bool GVN::processNonLocalLoad(LoadInst* L,
-                              SmallVector<Instruction*, 4>& toErase) {
+                              SmallVectorImpl<Instruction*> &toErase) {
   MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
   
   // Find the non-local dependencies of the load
@@ -884,9 +884,8 @@ bool GVN::processNonLocalLoad(LoadInst* L,
 
 /// processLoad - Attempt to eliminate a load, first by eliminating it
 /// locally, and then attempting non-local elimination if that fails.
-bool GVN::processLoad(LoadInst* L,
-                         DenseMap<Value*, LoadInst*>& lastLoad,
-                         SmallVector<Instruction*, 4>& toErase) {
+bool GVN::processLoad(LoadInst *L, DenseMap<Value*, LoadInst*> &lastLoad,
+                      SmallVectorImpl<Instruction*> &toErase) {
   if (L->isVolatile()) {
     lastLoad[L->getPointerOperand()] = L;
     return false;
@@ -987,8 +986,8 @@ bool GVN::processLoad(LoadInst* L,
 /// performCallSlotOptzn - takes a memcpy and a call that it depends on,
 /// and checks for the possibility of a call slot optimization by having
 /// the call write its result directly into the destination of the memcpy.
-bool GVN::performCallSlotOptzn(MemCpyInst* cpy, CallInst* C,
-                               SmallVector<Instruction*, 4>& toErase) {
+bool GVN::performCallSlotOptzn(MemCpyInst *cpy, CallInst *C,
+                               SmallVectorImpl<Instruction*> &toErase) {
   // The general transformation to keep in mind is
   //
   //   call @func(..., src, ...)
@@ -1066,7 +1065,6 @@ bool GVN::performCallSlotOptzn(MemCpyInst* cpy, CallInst* C,
   // guarantees that it holds only undefined values when passed in (so the final
   // memcpy can be dropped), that it is not read or written between the call and
   // the memcpy, and that writing beyond the end of it is undefined.
-
   SmallVector<User*, 8> srcUseList(srcAlloca->use_begin(),
                                    srcAlloca->use_end());
   while (!srcUseList.empty()) {
@@ -1124,7 +1122,7 @@ bool GVN::performCallSlotOptzn(MemCpyInst* cpy, CallInst* C,
 /// a memcpy from X to Z (or potentially a memmove, depending on circumstances).
 ///  This allows later passes to remove the first memcpy altogether.
 bool GVN::processMemCpy(MemCpyInst* M, MemCpyInst* MDep,
-                        SmallVector<Instruction*, 4>& toErase) {
+                        SmallVectorImpl<Instruction*> &toErase) {
   // We can only transforms memcpy's where the dest of one is the source of the
   // other
   if (M->getSource() != MDep->getDest())
@@ -1183,13 +1181,13 @@ bool GVN::processMemCpy(MemCpyInst* M, MemCpyInst* MDep,
 
 /// processInstruction - When calculating availability, handle an instruction
 /// by inserting it into the appropriate sets
-bool GVN::processInstruction(Instruction* I,
-                                ValueNumberedSet& currAvail,
-                                DenseMap<Value*, LoadInst*>& lastSeenLoad,
-                                SmallVector<Instruction*, 4>& toErase) {
-  if (LoadInst* L = dyn_cast<LoadInst>(I)) {
+bool GVN::processInstruction(Instruction *I, ValueNumberedSet &currAvail,
+                             DenseMap<Value*, LoadInst*> &lastSeenLoad,
+                             SmallVectorImpl<Instruction*> &toErase) {
+  if (LoadInst* L = dyn_cast<LoadInst>(I))
     return processLoad(L, lastSeenLoad, toErase);
-  } else if (MemCpyInst* M = dyn_cast<MemCpyInst>(I)) {
+  
+  if (MemCpyInst* M = dyn_cast<MemCpyInst>(I)) {
     MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
 
     // The are two possible optimizations we can do for memcpy:
