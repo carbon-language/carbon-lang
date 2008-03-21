@@ -3819,25 +3819,23 @@ transfer to a specified function, with its incoming arguments bound to
 the specified values. Upon a '<tt><a href="#i_ret">ret</a></tt>'
 instruction in the called function, control flow continues with the
 instruction after the function call, and the return value of the
-function is bound to the result argument.  If the '<tt><a href="#i_ret">ret</a>
-</tt>' instruction returns multiple values then the return values of the
-function are only accessible through a '<tt><a href="#i_getresult">getresult</a>
-</tt>' instruction. This is a simpler case of
-the <a href="#i_invoke">invoke</a> instruction.</p>
+function is bound to the result argument.  If the callee returns multiple 
+values then the return values of the function are only accessible through 
+the '<tt><a href="#i_getresult">getresult</a></tt>' instruction.</p>
 
 <h5>Example:</h5>
 
 <pre>
   %retval = call i32 @test(i32 %argc)
-  call i32 (i8 *, ...)* @printf(i8 * %msg, i32 12, i8 42);
-  %X = tail call i32 @foo()
-  %Y = tail call <a href="#callingconv">fastcc</a> i32 @foo()
-  %Z = call void %foo(i8 97 signext)
+  call i32 (i8 *, ...)* @printf(i8 * %msg, i32 12, i8 42)      <i>; yields i32</i>
+  %X = tail call i32 @foo()                                    <i>; yields i32</i>
+  %Y = tail call <a href="#callingconv">fastcc</a> i32 @foo()  <i>; yields i32</i>
+  call void %foo(i8 97 signext)
 
   %struct.A = type { i32, i8 }
-  %r = call %struct.A @foo()
-  %gr = getresult %struct.A %r, 0
-  %gr1 = getresult %struct.A %r, 1
+  %r = call %struct.A @foo()                     <i>; yields { 32, i8 }</i>
+  %gr = getresult %struct.A %r, 0                <i>; yields i32</i>
+  %gr1 = getresult %struct.A %r, 1               <i>; yields i8</i>
 </pre>
 
 </div>
