@@ -84,10 +84,6 @@ namespace llvm {
       /// as.
       FST,
 
-      /// FP_GET_ST0_ST1 - Same as FP_GET_ST0 except it copies two values
-      /// ST(0) and ST(1).
-      FP_GET_ST0_ST1,
-
       /// CALL/TAILCALL - These operations represent an abstract X86 call
       /// instruction, which includes a bunch of information.  In particular the
       /// operands of these node are:
@@ -472,20 +468,8 @@ namespace llvm {
     bool X86ScalarSSEf32;
     bool X86ScalarSSEf64;
 
-    X86::X86_64SRet ClassifyX86_64SRetCallReturn(const Function *Fn);
-
-    void X86_64AnalyzeSRetCallOperands(SDNode*, CCAssignFn*, CCState&);
-
     SDNode *LowerCallResult(SDOperand Chain, SDOperand InFlag, SDNode*TheCall,
                             unsigned CallingConv, SelectionDAG &DAG);
-
-    SDNode *LowerCallResultToTwo64BitRegs(SDOperand Chain, SDOperand InFlag,
-                                          SDNode *TheCall, unsigned Reg1,
-                                          unsigned Reg2, MVT::ValueType VT,
-                                          SelectionDAG &DAG);        
-
-    SDNode *LowerCallResultToTwoX87Regs(SDOperand Chain, SDOperand InFlag,
-                                        SDNode *TheCall, SelectionDAG &DAG);        
 
     SDOperand LowerMemArgument(SDOperand Op, SelectionDAG &DAG,
                                const CCValAssign &VA,  MachineFrameInfo *MFI,

@@ -969,11 +969,6 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
     std::swap(Stack[RegMap[RegOnTop]], Stack[StackTop-1]);
     break;
   }
-  case X86::FpGET_ST0_ST1:
-    assert(StackTop == 0 && "Stack should be empty after a call!");
-    pushReg(getFPReg(MI->getOperand(0)));
-    pushReg(getFPReg(MI->getOperand(1)));
-    break;
   case X86::FpSET_ST0_32:
   case X86::FpSET_ST0_64:
   case X86::FpSET_ST0_80:

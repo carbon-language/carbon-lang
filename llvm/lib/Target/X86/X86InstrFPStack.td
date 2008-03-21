@@ -145,10 +145,6 @@ def FpGET_ST1_32 : FpI_<(outs RFP32:$dst), (ins), SpecialFP, []>; // FPR = ST(1)
 def FpGET_ST1_64 : FpI_<(outs RFP64:$dst), (ins), SpecialFP, []>; // FPR = ST(1)
 def FpGET_ST1_80 : FpI_<(outs RFP80:$dst), (ins), SpecialFP, []>; // FPR = ST(1)
 
-def FpGET_ST0_ST1 : FpI_<(outs RFP80:$dst1, RFP80:$dst2), (ins), SpecialFP,
-                         []>;                        // FPR = ST(0), FPR = ST(1)
-
-
 let Defs = [ST0] in {
 def FpSET_ST0_32 : FpI_<(outs), (ins RFP32:$src), SpecialFP, []>; // ST(0) = FPR
 def FpSET_ST0_64 : FpI_<(outs), (ins RFP64:$src), SpecialFP, []>; // ST(0) = FPR
