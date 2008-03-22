@@ -822,7 +822,7 @@ SDOperand SelectionDAG::getGlobalAddress(const GlobalValue *GV,
 
   const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV);
   if (!GVar) {
-    // If GV is an alias - use aliasee for determing thread-localness
+    // If GV is an alias then use the aliasee for determining thread-localness.
     if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(GV))
       GVar = dyn_cast_or_null<GlobalVariable>(GA->resolveAliasedGlobal());
   }
