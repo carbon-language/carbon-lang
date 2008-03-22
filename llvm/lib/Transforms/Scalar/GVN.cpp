@@ -33,6 +33,7 @@
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Target/TargetData.h"
 using namespace llvm;
 
@@ -1036,11 +1037,63 @@ static Value *isBytewiseValue(Value *V) {
   return 0;
 }
 
+static int64_t GetOffsetFromIndex(const GetElementPtrInst *GEP, unsigned Idx,
+                                  bool &VariableIdxFound, TargetData &TD) {
+  // Skip over the first indices.
+  gep_type_iterator GTI = gep_type_begin(GEP);
+  for (unsigned i = 1; i != Idx; ++i, ++GTI)
+    /*skip along*/;
+  
+  // Compute the offset implied by the rest of the indices.
+  int64_t Offset = 0;
+  for (unsigned i = Idx, e = GEP->getNumOperands(); i != e; ++i, ++GTI) {
+    ConstantInt *OpC = dyn_cast<ConstantInt>(GEP->getOperand(i));
+    if (OpC == 0)
+      return VariableIdxFound = true;
+    if (OpC->isZero()) continue;  // No offset.
+
+    // Handle struct indices, which add their field offset to the pointer.
+    if (const StructType *STy = dyn_cast<StructType>(*GTI)) {
+      Offset += TD.getStructLayout(STy)->getElementOffset(OpC->getZExtValue());
+      continue;
+    }
+    
+    // Otherwise, we have a sequential type like an array or vector.  Multiply
+    // the index by the ElementSize.
+    uint64_t Size = TD.getABITypeSize(GTI.getIndexedType());
+    Offset += Size*OpC->getSExtValue();
+  }
+
+  return Offset;
+}
+
 /// IsPointerAtOffset - Return true if Ptr1 is exactly provably equal to Ptr2
 /// plus the specified constant offset.  For example, Ptr1 might be &A[42], and
 /// Ptr2 might be &A[40] and Offset might be 8.
-static bool IsPointerAtOffset(Value *Ptr1, Value *Ptr2, uint64_t Offset) {
-  return true;
+static bool IsPointerAtOffset(Value *Ptr1, Value *Ptr2, uint64_t Offset,
+                              TargetData &TD) {
+  // Right now we handle the case when Ptr1/Ptr2 are both GEPs with an identical
+  // base.  After that base, they may have some number of common (and
+  // potentially variable) indices.  After that they handle some constant
+  // offset, which determines their offset from each other.  At this point, we
+  // handle no other case.
+  GetElementPtrInst *GEP1 = dyn_cast<GetElementPtrInst>(Ptr1);
+  GetElementPtrInst *GEP2 = dyn_cast<GetElementPtrInst>(Ptr2);
+  if (!GEP1 || !GEP2 || GEP1->getOperand(0) != GEP2->getOperand(0))
+    return false;
+  
+  // Skip any common indices and track the GEP types.
+  unsigned Idx = 1;
+  for (; Idx != GEP1->getNumOperands() && Idx != GEP2->getNumOperands(); ++Idx)
+    if (GEP1->getOperand(Idx) != GEP2->getOperand(Idx))
+      break;
+
+  bool VariableIdxFound = false;
+  int64_t Offset1 = GetOffsetFromIndex(GEP1, Idx, VariableIdxFound, TD);
+  int64_t Offset2 = GetOffsetFromIndex(GEP2, Idx, VariableIdxFound, TD);
+  if (VariableIdxFound) return false;
+  
+  return Offset1 == Offset2+(int64_t)Offset;
 }
 
 
@@ -1049,7 +1102,6 @@ static bool IsPointerAtOffset(Value *Ptr1, Value *Ptr2, uint64_t Offset) {
 /// neighboring locations of memory.  If it sees enough consequtive ones
 /// (currently 4) it attempts to merge them together into a memcpy/memset.
 bool GVN::processStore(StoreInst *SI, SmallVectorImpl<Instruction*> &toErase) {
-  return false;
   if (SI->isVolatile()) return false;
   
   // There are two cases that are interesting for this code to handle: memcpy
@@ -1078,7 +1130,7 @@ bool GVN::processStore(StoreInst *SI, SmallVectorImpl<Instruction*> &toErase) {
   SmallVector<StoreInst*, 16> Stores;
   Stores.push_back(SI);
   
-  BasicBlock::iterator BI = SI; ++BI;
+  BasicBlock::iterator BI = SI;
   for (++BI; !isa<TerminatorInst>(BI); ++BI) {
     if (isa<CallInst>(BI) || isa<InvokeInst>(BI)) { 
       // If the call is readnone, ignore it, otherwise bail out.  We don't even
@@ -1110,7 +1162,7 @@ bool GVN::processStore(StoreInst *SI, SmallVectorImpl<Instruction*> &toErase) {
     
     // If so, check to see if the store is before the current range or after it
     // in either case, extend the range, otherwise reject it.
-    if (IsPointerAtOffset(ThisPointer, StartPtr, BytesSoFar)) {
+    if (IsPointerAtOffset(ThisPointer, StartPtr, BytesSoFar, TD)) {
       // Okay, this extends the stored area on the end, just add to the bytes
       // so far and remember this store.
       BytesSoFar += AccessSize;
@@ -1118,7 +1170,7 @@ bool GVN::processStore(StoreInst *SI, SmallVectorImpl<Instruction*> &toErase) {
       continue;
     }
     
-    if (IsPointerAtOffset(StartPtr, ThisPointer, AccessSize)) {
+    if (IsPointerAtOffset(StartPtr, ThisPointer, AccessSize, TD)) {
       // Okay, the store is before the current range.  Reset our start pointer
       // and get new alignment info etc.
       BytesSoFar  += AccessSize;
@@ -1170,6 +1222,7 @@ bool GVN::processStore(StoreInst *SI, SmallVectorImpl<Instruction*> &toErase) {
   };
   new CallInst(F, Ops, Ops+4, "", InsertPt);
   
+  // Zap all the stores.
   toErase.append(Stores.begin(), Stores.end());
   
   ++NumMemSetInfer;
