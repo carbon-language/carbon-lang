@@ -61,6 +61,10 @@ namespace llvm {
   }
 }
 
+#if defined (__GNUC__)
+extern "C" void __register_frame(void*);
+#endif
+
 /// createJIT - This is the factory method for creating a JIT for the current
 /// machine, it does not fall back to the interpreter.  This takes ownership
 /// of the module provider.
@@ -70,7 +74,11 @@ ExecutionEngine *ExecutionEngine::createJIT(ModuleProvider *MP,
   ExecutionEngine *EE = JIT::createJIT(MP, ErrorStr, JMM);
   if (!EE) return 0;
   
-  
+  // Register routine for informing unwinding runtime about new EH frames
+#if defined(__GNUC__)
+  EE->InstallExceptionTableRegister(__register_frame);
+#endif
+
   // Make sure we can resolve symbols in the program as well. The zero arg
   // to the function tells DynamicLibrary to load the program, not a library.
   sys::DynamicLibrary::LoadLibraryPermanently(0, ErrorStr);
