@@ -377,7 +377,12 @@ void Verifier::visitGlobalAlias(GlobalAlias &GA) {
             "Aliasee should be either GlobalValue or bitcast of GlobalValue",
             &GA);
   }
-  
+
+  const GlobalValue* Aliasee = GA.resolveAliasedGlobal();
+  Assert1(Aliasee,
+          "Aliasing chain should end with global function or global variable",
+          &GA);
+
   visitGlobalValue(GA);
 }
 
