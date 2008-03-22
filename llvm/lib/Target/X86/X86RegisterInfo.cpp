@@ -45,6 +45,7 @@ X86RegisterInfo::X86RegisterInfo(X86TargetMachine &tm,
   // Cache some information.
   const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
   Is64Bit = Subtarget->is64Bit();
+  IsWin64 = Subtarget->isTargetWin64();
   StackAlign = TM.getFrameInfo()->getStackAlignment();
   if (Is64Bit) {
     SlotSize = 8;
@@ -196,9 +197,17 @@ X86RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
     X86::RBX, X86::R12, X86::R13, X86::R14, X86::R15, X86::RBP, 0
   };
 
-  if (Is64Bit)
-    return CalleeSavedRegs64Bit;
-  else {
+  static const unsigned CalleeSavedRegsWin64[] = {
+    X86::RBX, X86::RBP, X86::RDI, X86::RSI,
+    X86::R12, X86::R13, X86::R14, X86::R15, 0
+  };
+
+  if (Is64Bit) {
+    if (IsWin64)
+      return CalleeSavedRegsWin64;
+    else
+      return CalleeSavedRegs64Bit;
+  } else {
     if (MF) {
         MachineFrameInfo *MFI = MF->getFrameInfo();
         MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
@@ -225,10 +234,19 @@ X86RegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
     &X86::GR64RegClass, &X86::GR64RegClass,
     &X86::GR64RegClass, &X86::GR64RegClass, 0
   };
+  static const TargetRegisterClass * const CalleeSavedRegClassesWin64[] = {
+    &X86::GR64RegClass, &X86::GR64RegClass,
+    &X86::GR64RegClass, &X86::GR64RegClass,
+    &X86::GR64RegClass, &X86::GR64RegClass,
+    &X86::GR64RegClass, &X86::GR64RegClass, 0
+  };
 
-  if (Is64Bit)
-    return CalleeSavedRegClasses64Bit;
-  else {
+  if (Is64Bit) {
+    if (IsWin64)
+      return CalleeSavedRegClassesWin64;
+    else
+      return CalleeSavedRegClasses64Bit;
+  } else {
     if (MF) {
         MachineFrameInfo *MFI = MF->getFrameInfo();
         MachineModuleInfo *MMI = MFI->getMachineModuleInfo();

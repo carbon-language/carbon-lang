@@ -59,6 +59,10 @@ private:
   ///
   bool Is64Bit;
 
+  /// IsWin64 - Is the target on of win64 flavours
+  ///
+  bool IsWin64;
+
   /// SlotSize - Stack slot size in bytes.
   ///
   unsigned SlotSize;
