@@ -232,7 +232,7 @@ const GlobalValue *GlobalAlias::getAliasedGlobal() const {
 }
 
 const GlobalValue *GlobalAlias::resolveAliasedGlobal() const {
-  SmallPtrSet<const GlobalValue*, 1> Visited;
+  SmallPtrSet<const GlobalValue*, 3> Visited;
 
   const GlobalValue *GV = getAliasedGlobal();
   Visited.insert(GV);
