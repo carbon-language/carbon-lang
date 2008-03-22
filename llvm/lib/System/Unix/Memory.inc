@@ -103,7 +103,7 @@ llvm::sys::Memory::AllocateRW(unsigned NumBytes, const MemoryBlock* NearBlock,
                     flags, fd, 0);
   if (pa == MAP_FAILED) {
     if (NearBlock) //Try again without a near hint
-      return AllocateRWX(NumBytes, 0);
+      return AllocateRW(NumBytes, 0);
 
     MakeErrMsg(ErrMsg, "Can't allocate RWX Memory");
     return MemoryBlock();
