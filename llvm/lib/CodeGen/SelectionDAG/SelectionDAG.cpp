@@ -3291,6 +3291,20 @@ SDNode *SelectionDAG::getTargetNode(unsigned Opcode,
                  Ops, NumOps).Val;
 }
 
+/// getNodeIfExists - Get the specified node if it's already available, or
+/// else return NULL.
+SDNode *SelectionDAG::getNodeIfExists(unsigned Opcode, SDVTList VTList,
+                                      const SDOperand *Ops, unsigned NumOps) {
+  if (VTList.VTs[VTList.NumVTs-1] != MVT::Flag) {
+    FoldingSetNodeID ID;
+    AddNodeIDNode(ID, Opcode, VTList, Ops, NumOps);
+    void *IP = 0;
+    if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
+      return E;
+  }
+  return NULL;
+}
+
 
 /// ReplaceAllUsesWith - Modify anything using 'From' to use 'To' instead.
 /// This can cause recursive merging of nodes in the DAG.

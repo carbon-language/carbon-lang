@@ -477,6 +477,11 @@ public:
                         const SDOperand *Ops, unsigned NumOps);
   SDNode *getTargetNode(unsigned Opcode, std::vector<MVT::ValueType> &ResultTys,
                         const SDOperand *Ops, unsigned NumOps);
+
+  /// getNodeIfExists - Get the specified node if it's already available, or
+  /// else return NULL.
+  SDNode *getNodeIfExists(unsigned Opcode, SDVTList VTs,
+                          const SDOperand *Ops, unsigned NumOps);
   
   /// DAGUpdateListener - Clients of various APIs that cause global effects on
   /// the DAG can optionally implement this interface.  This allows the clients

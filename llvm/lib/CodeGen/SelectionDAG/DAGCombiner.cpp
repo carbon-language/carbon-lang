@@ -758,6 +758,23 @@ SDOperand DAGCombiner::combine(SDNode *N) {
     }
   }
 
+  // If N is a commutative binary node, try commuting it to enable more 
+  // sdisel CSE.
+  if (RV.Val == 0 && 
+      SelectionDAG::isCommutativeBinOp(N->getOpcode()) &&
+      N->getNumValues() == 1) {
+    SDOperand N0 = N->getOperand(0);
+    SDOperand N1 = N->getOperand(1);
+    // Constant operands are canonicalized to RHS.
+    if (isa<ConstantSDNode>(N0) || !isa<ConstantSDNode>(N1)) {
+      SDOperand Ops[] = { N1, N0 };
+      SDNode *CSENode = DAG.getNodeIfExists(N->getOpcode(), N->getVTList(),
+                                            Ops, 2);
+      if (CSENode && CSENode->use_size() <= N->use_size())
+        return SDOperand(CSENode, 0);
+    }
+  }
+
   return RV;
 } 
 
