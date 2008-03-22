@@ -50,6 +50,7 @@ ASTConsumer* CreateCFRefChecker(Diagnostic &Diags,
                                 const std::string& FunctionName); 
 
 ASTConsumer *CreateCodeRewriterTest(const std::string& InFile,
+                                    const std::string& OutFile,
                                     Diagnostic &Diags,
                                     const LangOptions &LOpts);
 

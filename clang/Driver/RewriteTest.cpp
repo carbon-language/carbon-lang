@@ -23,7 +23,9 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/System/Path.h"
 #include <sstream>
+#include <fstream>
 using namespace clang;
 using llvm::utostr;
 
@@ -81,6 +83,8 @@ namespace {
     // Needed for header files being rewritten
     bool IsHeader;
     
+    std::ostream &OutFile;
+    
     static const int OBJC_ABI_VERSION =7 ;
   public:
     void Initialize(ASTContext &context);
@@ -89,8 +93,9 @@ namespace {
     // Top Level Driver code.
     virtual void HandleTopLevelDecl(Decl *D);
     void HandleDeclInMainFile(Decl *D);
-    RewriteTest(bool isHeader, Diagnostic &D, const LangOptions &LOpts) : 
-      Diags(D), LangOpts(LOpts) {
+    RewriteTest(bool isHeader, std::ostream &outFile,
+                Diagnostic &D, const LangOptions &LOpts)
+      : Diags(D), LangOpts(LOpts), OutFile(outFile) {
       IsHeader = isHeader;
       RewriteFailedDiag = Diags.getCustomDiagID(Diagnostic::Warning, 
                "rewriting sub-expression within a macro (may not be correct)");
@@ -231,9 +236,28 @@ static bool IsHeaderFile(const std::string &Filename) {
 }    
 
 ASTConsumer *clang::CreateCodeRewriterTest(const std::string& InFile,
+                                           const std::string& OutFile,
                                            Diagnostic &Diags, 
                                            const LangOptions &LOpts) {
-  return new RewriteTest(IsHeaderFile(InFile), Diags, LOpts);
+  // Create the output file.
+  
+  std::ostream *Out;
+  if (OutFile == "-") {
+    Out = llvm::cout.stream();
+  } else if (!OutFile.empty()) {
+    Out = new std::ofstream(OutFile.c_str(), 
+                            std::ios_base::binary|std::ios_base::out);
+  } else if (InFile == "-") {
+    Out = llvm::cout.stream();
+  } else {
+    llvm::sys::Path Path(InFile);
+    Path.eraseSuffix();
+    Path.appendSuffix("cpp");
+    Out = new std::ofstream(Path.toString().c_str(), 
+                            std::ios_base::binary|std::ios_base::out);
+  }
+  
+  return new RewriteTest(IsHeaderFile(InFile), *Out, Diags, LOpts);
 }
 
 void RewriteTest::Initialize(ASTContext &context) {
@@ -429,13 +453,12 @@ RewriteTest::~RewriteTest() {
   if (const RewriteBuffer *RewriteBuf = 
       Rewrite.getRewriteBufferFor(MainFileID)) {
     //printf("Changed:\n");
-    std::string S(RewriteBuf->begin(), RewriteBuf->end());
-    printf("%s\n", S.c_str());
+    OutFile << std::string(RewriteBuf->begin(), RewriteBuf->end());
   } else {
-    printf("No changes\n");
+    fprintf(stderr, "No changes\n");
   }
   // Emit metadata.
-  printf("%s", ResultStr.c_str());
+  OutFile << ResultStr;
 }
 
 //===----------------------------------------------------------------------===//

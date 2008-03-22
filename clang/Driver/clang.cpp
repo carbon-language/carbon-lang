@@ -1044,7 +1044,7 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
       return CreateASTSerializer(InFile, OutputFile, Diag, LangOpts);
       
     case RewriteTest:
-      return CreateCodeRewriterTest(InFile, Diag, LangOpts);
+      return CreateCodeRewriterTest(InFile, OutputFile, Diag, LangOpts);
   }
 }
 
