@@ -20,7 +20,7 @@ int f3(int x) {
 int f4(int x) {
   int y;
   if (x) y = 1;
-  return y; // no-warning
+  return y; // expected-warning {{use of uninitialized variable}}
 }
 
 int f5() {

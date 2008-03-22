@@ -223,7 +223,7 @@ bool TransferFuncs::BlockStmt_VisitExpr(Expr* E) {
 //===----------------------------------------------------------------------===//      
 
 namespace {
-  typedef ExprDeclBitVector_Types::Union Merge;
+  typedef ExprDeclBitVector_Types::Intersect Merge;
   typedef DataflowSolver<UninitializedValues,TransferFuncs,Merge> Solver;
 }
 
