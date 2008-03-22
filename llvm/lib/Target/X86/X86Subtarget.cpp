@@ -274,7 +274,7 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS, bool is64Bit)
   } else if (TT.empty()) {
 #if defined(__CYGWIN__)
     TargetType = isCygwin;
-#elif defined(__MINGW32__)
+#elif defined(__MINGW32__) || defined(__MINGW64__)
     TargetType = isMingw;
 #elif defined(__APPLE__)
     TargetType = isDarwin;
@@ -284,7 +284,7 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS, bool is64Bit)
     DarwinVers = 8;  // Minimum supported darwin is Tiger.
 #endif
     
-#elif defined(_WIN32)
+#elif defined(_WIN32) || defined(_WIN64)
     TargetType = isWindows;
 #endif
   }
@@ -299,6 +299,7 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS, bool is64Bit)
   if (TargetType == isDarwin ||
       TargetType == isCygwin ||
       TargetType == isMingw  ||
+      TargetType == isWindows ||
       (TargetType == isELF && Is64Bit))
     stackAlignment = 16;
 }
