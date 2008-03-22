@@ -78,6 +78,16 @@ def RetCC_X86_64_C : CallingConv<[
   CCDelegateTo<RetCC_X86Common>
 ]>;
 
+// X86-Win64 C return-value convention.
+def RetCC_X86_Win64_C : CallingConv<[
+  // The X86-Win64 calling convention always returns __m64 values in RAX
+  CCIfType<[v8i8, v4i16, v2i32, v1i64], CCAssignToReg<[RAX]>>,
+
+  // Otherwise, everything is the same as 'norma' X86-64 C CC
+  CCDelegateTo<RetCC_X86_64_C>
+]>;
+
+
 // This is the root return-value convention for the X86-32 backend.
 def RetCC_X86_32 : CallingConv<[
   // If FastCC, use RetCC_X86_32_Fast.
@@ -90,7 +100,11 @@ def RetCC_X86_32 : CallingConv<[
 
 // This is the root return-value convention for the X86-64 backend.
 def RetCC_X86_64 : CallingConv<[
-  // Always just the same as C calling conv for X86-64.
+  // Mingw64 and native Win64 use Win64 CC
+  CCIfSubtarget<"isTargetMingw()", CCDelegateTo<RetCC_X86_Win64_C>>,
+  CCIfSubtarget<"isTargetWindows()", CCDelegateTo<RetCC_X86_Win64_C>>,
+
+  // Otherwise, drop to normal X86-64 CC
   CCDelegateTo<RetCC_X86_64_C>
 ]>;
 
@@ -139,6 +153,37 @@ def CC_X86_64_C : CallingConv<[
 
   // __m64 vectors get 8-byte stack slots that are 8-byte aligned.
   CCIfType<[v8i8, v4i16, v2i32, v1i64], CCAssignToStack<8, 8>>
+]>;
+
+// Calling convention used on Win64
+def CC_X86_Win64_C : CallingConv<[
+  // FIXME: Handle byval stuff
+  // FIXME: Handle fp80
+  // FIXME: Handle shadowed arguments
+
+  // Promote i8/i16 arguments to i32.
+  CCIfType<[i8, i16], CCPromoteToType<i32>>,
+
+  // The first 4 integer arguments are passed in integer registers.
+  CCIfType<[i32], CCAssignToReg<[ECX, EDX, R8D, R9D]>>,
+  CCIfType<[i64], CCAssignToReg<[RCX, RDX, R8 , R9 ]>>,
+
+  // The first 4 FP/Vector arguments are passed in XMM registers.
+  CCIfType<[f32, f64, v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
+              CCAssignToReg<[XMM0, XMM1, XMM2, XMM3]>>,
+
+  // The first 4 MMX vector arguments are passed in GPRs.
+  CCIfType<[v8i8, v4i16, v2i32, v1i64], CCAssignToReg<[RCX, RDX, R8, R9]>>,
+
+  // Integer/FP values get stored in stack slots that are 8 bytes in size and
+  // 16-byte aligned if there are no more registers to hold them.
+  CCIfType<[i32, i64, f32, f64], CCAssignToStack<8, 16>>,
+
+  // Vectors get 16-byte stack slots that are 16-byte aligned.
+  CCIfType<[v16i8, v8i16, v4i32, v2i64, v4f32, v2f64], CCAssignToStack<16, 16>>,
+
+  // __m64 vectors get 8-byte stack slots that are 16-byte aligned.
+  CCIfType<[v8i8, v4i16, v2i32, v1i64], CCAssignToStack<8, 16>>
 ]>;
 
 // Tail call convention (fast): One register is reserved for target address,
