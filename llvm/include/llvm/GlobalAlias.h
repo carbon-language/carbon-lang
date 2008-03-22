@@ -79,9 +79,9 @@ public:
   /// global. This method retrives the global for both aliasee flavours.
   const GlobalValue* getAliasedGlobal() const;
 
-  /// resolveAliasedGlobal() - This method tries to ultimately resolve alias by
-  /// going through aliasing chain and trying to find the very last
-  /// global. Return NULL is cycle was found.
+  /// resolveAliasedGlobal() - This method tries to ultimately resolve the alias
+  /// by going through the aliasing chain and trying to find the very last
+  /// global. Returns NULL if a cycle was found.
   const GlobalValue* resolveAliasedGlobal() const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
