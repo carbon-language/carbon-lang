@@ -101,8 +101,7 @@ def RetCC_X86_32 : CallingConv<[
 // This is the root return-value convention for the X86-64 backend.
 def RetCC_X86_64 : CallingConv<[
   // Mingw64 and native Win64 use Win64 CC
-  CCIfSubtarget<"isTargetMingw()", CCDelegateTo<RetCC_X86_Win64_C>>,
-  CCIfSubtarget<"isTargetWindows()", CCDelegateTo<RetCC_X86_Win64_C>>,
+  CCIfSubtarget<"isTargetWin64()", CCDelegateTo<RetCC_X86_Win64_C>>,
 
   // Otherwise, drop to normal X86-64 CC
   CCDelegateTo<RetCC_X86_64_C>

@@ -138,6 +138,9 @@ public:
   bool isTargetCygMing() const { return (TargetType == isMingw ||
                                          TargetType == isCygwin); }
   bool isTargetCygwin() const { return TargetType == isCygwin; }
+  bool isTargetWin64() const {
+    return (Is64Bit && (TargetType == isMingw || TargetType == isWindows));
+  }
 
   std::string getDataLayout() const {
     const char *p;

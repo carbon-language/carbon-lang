@@ -1009,7 +1009,7 @@ CCAssignFn *X86TargetLowering::CCAssignFnForNode(SDOperand Op) const {
   unsigned CC = cast<ConstantSDNode>(Op.getOperand(1))->getValue();
   
   if (Subtarget->is64Bit()) {
-    if (Subtarget->isTargetWindows() || Subtarget->isTargetMingw())
+    if (Subtarget->isTargetWin64())
       return CC_X86_Win64_C;
     else {
       if (CC == CallingConv::Fast && PerformTailCallOpt)
