@@ -5,11 +5,13 @@
 @bar = external global i32
 @foo1 = alias i32* @bar
 @foo2 = alias i32* @bar
+@foo3 = alias i32* @foo2
 
 %FunTy = type i32()
 
 declare i32 @foo_f()
 @bar_f = alias weak %FunTy* @foo_f
+@bar_ff = alias i32()* @bar_f
 
 @bar_i = alias internal i32* @bar
 

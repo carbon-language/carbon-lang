@@ -1003,6 +1003,9 @@ void AssemblyWriter::printAlias(const GlobalAlias *GA) {
       Out << getLLVMName(F->getName(), GlobalPrefix);
     else
       Out << "@\"\"";
+  } else if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(Aliasee)) {
+    printType(GA->getType());
+    Out << " " << getLLVMName(GA->getName(), GlobalPrefix);
   } else {
     const ConstantExpr *CE = 0;
     if ((CE = dyn_cast<ConstantExpr>(Aliasee)) &&
