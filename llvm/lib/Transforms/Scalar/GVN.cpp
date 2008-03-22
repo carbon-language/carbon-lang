@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "gvn"
-
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Constants.h"
@@ -36,6 +35,11 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Target/TargetData.h"
 using namespace llvm;
+
+STATISTIC(NumGVNInstr, "Number of instructions deleted");
+STATISTIC(NumGVNLoad, "Number of loads deleted");
+STATISTIC(NumMemSetInfer, "Number of memsets inferred");
+
 
 //===----------------------------------------------------------------------===//
 //                         ValueTable Class
@@ -695,9 +699,6 @@ FunctionPass *llvm::createGVNPass() { return new GVN(); }
 static RegisterPass<GVN> X("gvn",
                            "Global Value Numbering");
 
-STATISTIC(NumGVNInstr, "Number of instructions deleted");
-STATISTIC(NumGVNLoad, "Number of loads deleted");
-
 /// find_leader - Given a set and a value number, return the first
 /// element of the set with that value number, or 0 if no such element
 /// is present
@@ -1039,7 +1040,7 @@ static Value *isBytewiseValue(Value *V) {
 /// plus the specified constant offset.  For example, Ptr1 might be &A[42], and
 /// Ptr2 might be &A[40] and Offset might be 8.
 static bool IsPointerAtOffset(Value *Ptr1, Value *Ptr2, uint64_t Offset) {
-  return false;
+  return true;
 }
 
 
@@ -1049,7 +1050,6 @@ static bool IsPointerAtOffset(Value *Ptr1, Value *Ptr2, uint64_t Offset) {
 /// (currently 4) it attempts to merge them together into a memcpy/memset.
 bool GVN::processStore(StoreInst *SI, SmallVectorImpl<Instruction*> &toErase) {
   return false;
-  
   if (SI->isVolatile()) return false;
   
   // There are two cases that are interesting for this code to handle: memcpy
@@ -1072,6 +1072,7 @@ bool GVN::processStore(StoreInst *SI, SmallVectorImpl<Instruction*> &toErase) {
   // in practice, right now we only worry about cases where stores are
   // consequtive in increasing or decreasing address order.
   uint64_t BytesSoFar = TD.getTypeStoreSize(SI->getOperand(0)->getType());
+  uint64_t BytesFromSI = 0;
   unsigned StartAlign = SI->getAlignment();
   Value *StartPtr = SI->getPointerOperand();
   SmallVector<StoreInst*, 16> Stores;
@@ -1086,6 +1087,9 @@ bool GVN::processStore(StoreInst *SI, SmallVectorImpl<Instruction*> &toErase) {
       if (AA.getModRefBehavior(CallSite::get(BI)) ==
             AliasAnalysis::DoesNotAccessMemory)
         continue;
+      
+      // TODO: If this is a memset, try to join it in.
+      
       break;
     } else if (isa<VAArgInst>(BI) || isa<LoadInst>(BI))
       break;
@@ -1110,15 +1114,16 @@ bool GVN::processStore(StoreInst *SI, SmallVectorImpl<Instruction*> &toErase) {
       // Okay, this extends the stored area on the end, just add to the bytes
       // so far and remember this store.
       BytesSoFar += AccessSize;
-      Stores.push_back(SI);
+      Stores.push_back(NextStore);
       continue;
     }
     
     if (IsPointerAtOffset(StartPtr, ThisPointer, AccessSize)) {
       // Okay, the store is before the current range.  Reset our start pointer
       // and get new alignment info etc.
-      BytesSoFar += AccessSize;
-      Stores.push_back(SI);
+      BytesSoFar  += AccessSize;
+      BytesFromSI += AccessSize;
+      Stores.push_back(NextStore);
       StartPtr = ThisPointer;
       StartAlign = NextStore->getAlignment();
       continue;
@@ -1133,9 +1138,42 @@ bool GVN::processStore(StoreInst *SI, SmallVectorImpl<Instruction*> &toErase) {
   if (Stores.size() < 4) 
     return false;
   
-  // Otherwise, we do want to transform this!  But not yet. :)
+  // Otherwise, we do want to transform this!  Create a new memset.  We put the
+  // memset right after the first store that we found in this block.  This
+  // ensures that the caller will increment the iterator to  the memset before
+  // it deletes all the stores.
+  BasicBlock::iterator InsertPt = SI; ++InsertPt;
   
-  return false;
+  Function *F = Intrinsic::getDeclaration(SI->getParent()->getParent()
+                                          ->getParent(), Intrinsic::memset_i64);
+  
+  // StartPtr may not dominate the starting point.  Instead of using it, base
+  // the destination pointer off the input to the first store in the block.
+  StartPtr = SI->getPointerOperand();
+  
+  // Cast the start ptr to be i8* as memset requires.
+  const Type *i8Ptr = PointerType::getUnqual(Type::Int8Ty);
+  if (StartPtr->getType() != i8Ptr)
+    StartPtr = new BitCastInst(StartPtr, i8Ptr, StartPtr->getNameStart(),
+                               InsertPt);
+  
+  // Offset the pointer if needed.
+  if (BytesFromSI)
+    StartPtr = new GetElementPtrInst(StartPtr, ConstantInt::get(Type::Int64Ty,
+                                                                -BytesFromSI),
+                                     "ptroffset", InsertPt);
+  
+  Value *Ops[] = {
+    StartPtr, ByteVal,   // Start, value
+    ConstantInt::get(Type::Int64Ty, BytesSoFar),  // size
+    ConstantInt::get(Type::Int32Ty, StartAlign)   // align
+  };
+  new CallInst(F, Ops, Ops+4, "", InsertPt);
+  
+  toErase.append(Stores.begin(), Stores.end());
+  
+  ++NumMemSetInfer;
+  return true;
 }
 
 
