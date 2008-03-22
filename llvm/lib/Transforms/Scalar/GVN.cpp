@@ -666,6 +666,7 @@ namespace {
     bool processLoad(LoadInst* L,
                      DenseMap<Value*, LoadInst*> &lastLoad,
                      SmallVectorImpl<Instruction*> &toErase);
+    bool processStore(StoreInst *SI, SmallVectorImpl<Instruction*> &toErase);
     bool processInstruction(Instruction* I,
                             ValueNumberedSet& currAvail,
                             DenseMap<Value*, LoadInst*>& lastSeenLoad,
@@ -983,6 +984,161 @@ bool GVN::processLoad(LoadInst *L, DenseMap<Value*, LoadInst*> &lastLoad,
   return deletedLoad;
 }
 
+/// isBytewiseValue - If the specified value can be set by repeating the same
+/// byte in memory, return the i8 value that it is represented with.  This is
+/// true for all i8 values obviously, but is also true for i32 0, i32 -1,
+/// i16 0xF0F0, double 0.0 etc.  If the value can't be handled with a repeated
+/// byte store (e.g. i16 0x1234), return null.
+static Value *isBytewiseValue(Value *V) {
+  // All byte-wide stores are splatable, even of arbitrary variables.
+  if (V->getType() == Type::Int8Ty) return V;
+  
+  // Constant float and double values can be handled as integer values if the
+  // corresponding integer value is "byteable".  An important case is 0.0. 
+  if (ConstantFP *CFP = dyn_cast<ConstantFP>(V)) {
+    if (CFP->getType() == Type::FloatTy)
+      V = ConstantExpr::getBitCast(CFP, Type::Int32Ty);
+    if (CFP->getType() == Type::DoubleTy)
+      V = ConstantExpr::getBitCast(CFP, Type::Int64Ty);
+    // Don't handle long double formats, which have strange constraints.
+  }
+  
+  // We can handle constant integers that are power of two in size and a 
+  // multiple of 8 bits.
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
+    unsigned Width = CI->getBitWidth();
+    if (isPowerOf2_32(Width) && Width > 8) {
+      // We can handle this value if the recursive binary decomposition is the
+      // same at all levels.
+      APInt Val = CI->getValue();
+      APInt Val2;
+      while (Val.getBitWidth() != 8) {
+        unsigned NextWidth = Val.getBitWidth()/2;
+        Val2  = Val.lshr(NextWidth);
+        Val2.trunc(Val.getBitWidth()/2);
+        Val.trunc(Val.getBitWidth()/2);
+
+        // If the top/bottom halves aren't the same, reject it.
+        if (Val != Val2)
+          return 0;
+      }
+      return ConstantInt::get(Val);
+    }
+  }
+  
+  // Conceptually, we could handle things like:
+  //   %a = zext i8 %X to i16
+  //   %b = shl i16 %a, 8
+  //   %c = or i16 %a, %b
+  // but until there is an example that actually needs this, it doesn't seem
+  // worth worrying about.
+  return 0;
+}
+
+/// IsPointerAtOffset - Return true if Ptr1 is exactly provably equal to Ptr2
+/// plus the specified constant offset.  For example, Ptr1 might be &A[42], and
+/// Ptr2 might be &A[40] and Offset might be 8.
+static bool IsPointerAtOffset(Value *Ptr1, Value *Ptr2, uint64_t Offset) {
+  return false;
+}
+
+
+/// processStore - When GVN is scanning forward over instructions, we look for
+/// some other patterns to fold away.  In particular, this looks for stores to
+/// neighboring locations of memory.  If it sees enough consequtive ones
+/// (currently 4) it attempts to merge them together into a memcpy/memset.
+bool GVN::processStore(StoreInst *SI, SmallVectorImpl<Instruction*> &toErase) {
+  return false;
+  
+  if (SI->isVolatile()) return false;
+  
+  // There are two cases that are interesting for this code to handle: memcpy
+  // and memset.  Right now we only handle memset.
+  
+  // Ensure that the value being stored is something that can be memset'able a
+  // byte at a time like "0" or "-1" or any width, as well as things like
+  // 0xA0A0A0A0 and 0.0.
+  Value *ByteVal = isBytewiseValue(SI->getOperand(0));
+  if (!ByteVal)
+    return false;
+
+  TargetData &TD = getAnalysis<TargetData>();
+  AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
+
+  // Okay, so we now have a single store that can be splatable.  Try to 'grow'
+  // this store by looking for neighboring stores to the immediate left or right
+  // of the store we have so far.  While we could in theory handle stores in
+  // this order:  A[0], A[2], A[1]
+  // in practice, right now we only worry about cases where stores are
+  // consequtive in increasing or decreasing address order.
+  uint64_t BytesSoFar = TD.getTypeStoreSize(SI->getOperand(0)->getType());
+  unsigned StartAlign = SI->getAlignment();
+  Value *StartPtr = SI->getPointerOperand();
+  SmallVector<StoreInst*, 16> Stores;
+  Stores.push_back(SI);
+  
+  BasicBlock::iterator BI = SI; ++BI;
+  for (++BI; !isa<TerminatorInst>(BI); ++BI) {
+    if (isa<CallInst>(BI) || isa<InvokeInst>(BI)) { 
+      // If the call is readnone, ignore it, otherwise bail out.  We don't even
+      // allow readonly here because we don't want something like:
+      // A[1] = 2; strlen(A); A[2] = 2; -> memcpy(A, ...); strlen(A).
+      if (AA.getModRefBehavior(CallSite::get(BI)) ==
+            AliasAnalysis::DoesNotAccessMemory)
+        continue;
+      break;
+    } else if (isa<VAArgInst>(BI) || isa<LoadInst>(BI))
+      break;
+
+    // If this is a non-store instruction it is fine, ignore it.
+    StoreInst *NextStore = dyn_cast<StoreInst>(BI);
+    if (NextStore == 0) continue;
+    
+    // If this is a store, see if we can merge it in.
+    if (NextStore->isVolatile()) break;
+    
+    // Check to see if this stored value is of the same byte-splattable value.
+    if (ByteVal != isBytewiseValue(NextStore->getOperand(0)))
+      break;
+    
+    Value *ThisPointer = NextStore->getPointerOperand();
+    unsigned AccessSize = TD.getTypeStoreSize(SI->getOperand(0)->getType());
+    
+    // If so, check to see if the store is before the current range or after it
+    // in either case, extend the range, otherwise reject it.
+    if (IsPointerAtOffset(ThisPointer, StartPtr, BytesSoFar)) {
+      // Okay, this extends the stored area on the end, just add to the bytes
+      // so far and remember this store.
+      BytesSoFar += AccessSize;
+      Stores.push_back(SI);
+      continue;
+    }
+    
+    if (IsPointerAtOffset(StartPtr, ThisPointer, AccessSize)) {
+      // Okay, the store is before the current range.  Reset our start pointer
+      // and get new alignment info etc.
+      BytesSoFar += AccessSize;
+      Stores.push_back(SI);
+      StartPtr = ThisPointer;
+      StartAlign = NextStore->getAlignment();
+      continue;
+    }
+
+    // Otherwise, this store wasn't contiguous with our current range, bail out.
+    break;
+  }
+  
+  // If we found less than 4 stores to merge, bail out, it isn't worth losing
+  // type information in llvm IR to do the transformation.
+  if (Stores.size() < 4) 
+    return false;
+  
+  // Otherwise, we do want to transform this!  But not yet. :)
+  
+  return false;
+}
+
+
 /// performCallSlotOptzn - takes a memcpy and a call that it depends on,
 /// and checks for the possibility of a call slot optimization by having
 /// the call write its result directly into the destination of the memcpy.
@@ -1186,6 +1342,9 @@ bool GVN::processInstruction(Instruction *I, ValueNumberedSet &currAvail,
                              SmallVectorImpl<Instruction*> &toErase) {
   if (LoadInst* L = dyn_cast<LoadInst>(I))
     return processLoad(L, lastSeenLoad, toErase);
+  
+  if (StoreInst *SI = dyn_cast<StoreInst>(I))
+    return processStore(SI, toErase);
   
   if (MemCpyInst* M = dyn_cast<MemCpyInst>(I)) {
     MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
