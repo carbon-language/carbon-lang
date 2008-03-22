@@ -141,9 +141,11 @@ fi
 echo "#define LLVM_VERSION ${RC_ProjectSourceVersion}" > $DEST_DIR$DEST_ROOT/include/llvm/Version.h
 echo "#define LLVM_MINOR_VERSION ${RC_ProjectSourceSubversion}" >> $DEST_DIR$DEST_ROOT/include/llvm/Version.h
 
-# Strip local symbols from llvm libraries.
-strip -S $DEST_DIR$DEST_ROOT/lib/*.[oa]
-strip -Sx $DEST_DIR$DEST_ROOT/lib/*.so
+if [ "x$LLVM_DEBUG" != "x1" ]; then
+    # Strip local symbols from llvm libraries.
+    strip -S $DEST_DIR$DEST_ROOT/lib/*.[oa]
+    strip -Sx $DEST_DIR$DEST_ROOT/lib/*.so
+fi
 
 # Remove .dir files 
 cd $DEST_DIR$DEST_ROOT
