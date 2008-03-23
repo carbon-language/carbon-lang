@@ -97,6 +97,10 @@ N: Saem Ghani
 E: saemghani@gmail.com
 D: Callgraph class cleanups
 
+N: Mikhail Glushenkov
+E: foldr@codedgers.com
+D: Author of llvmc2
+
 N: Dan Gohman
 E: djg@cray.com
 D: Miscellaneous bug fixes
