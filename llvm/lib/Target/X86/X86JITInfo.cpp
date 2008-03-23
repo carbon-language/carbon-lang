@@ -153,11 +153,10 @@ extern "C" {
     CFI(".cfi_endproc\n")
   );
 # else
-  // No inline assembler support on this platform
-  void X86CompilationCallback() {
-    assert(0 && "Cannot call X86CompilationCallback() on a non-x86 arch!\n");
-    abort();
-  }
+  // No inline assembler support on this platform. The routine is in external
+  // file.
+  void X86CompilationCallback();
+
 # endif
 #elif defined (X86_32_JIT)
 # ifndef _MSC_VER
