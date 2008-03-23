@@ -119,8 +119,10 @@ X86TargetMachine::X86TargetMachine(const Module &M, const std::string &FS,
               Subtarget.getStackAlignment(), Subtarget.is64Bit() ? -8 : -4),
     InstrInfo(*this), JITInfo(*this), TLInfo(*this) {
   DefRelocModel = getRelocationModel();
+  // FIXME: Correctly select PIC model for Win64 stuff
   if (getRelocationModel() == Reloc::Default) {
-    if (Subtarget.isTargetDarwin() || Subtarget.isTargetCygMing())
+    if (Subtarget.isTargetDarwin() ||
+        (Subtarget.isTargetCygMing() && !Subtarget.isTargetWin64()))
       setRelocationModel(Reloc::DynamicNoPIC);
     else
       setRelocationModel(Reloc::Static);
