@@ -329,17 +329,6 @@ FR64 to VR128.
 
 //===---------------------------------------------------------------------===//
 
-mov $reg, 48(%esp)
-...
-leal 48(%esp), %eax
-mov %eax, (%esp)
-call _foo
-
-Obviously it would have been better for the first mov (or any op) to store
-directly %esp[0] if there are no other uses.
-
-//===---------------------------------------------------------------------===//
-
 Adding to the list of cmp / test poor codegen issues:
 
 int test(__m128 *A, __m128 *B) {
@@ -1100,30 +1089,6 @@ This seems like a cross between remat and spill folding.
 This has redundant subtractions of %eax from a stack slot. However, %ecx doesn't
 change, so we could simply subtract %eax from %ecx first and then use %ecx (or
 vice-versa).
-
-//===---------------------------------------------------------------------===//
-
-For this code:
-
-cond_next603:		; preds = %bb493, %cond_true336, %cond_next599
-	%v.21050.1 = phi i32 [ %v.21050.0, %cond_next599 ], [ %tmp344, %cond_true336 ], [ %v.2, %bb493 ]		; <i32> [#uses=1]
-	%maxz.21051.1 = phi i32 [ %maxz.21051.0, %cond_next599 ], [ 0, %cond_true336 ], [ %maxz.2, %bb493 ]		; <i32> [#uses=2]
-	%cnt.01055.1 = phi i32 [ %cnt.01055.0, %cond_next599 ], [ 0, %cond_true336 ], [ %cnt.0, %bb493 ]		; <i32> [#uses=2]
-	%byteptr.9 = phi i8* [ %byteptr.12, %cond_next599 ], [ %byteptr.0, %cond_true336 ], [ %byteptr.10, %bb493 ]		; <i8*> [#uses=9]
-	%bitptr.6 = phi i32 [ %tmp5571104.1, %cond_next599 ], [ %tmp4921049, %cond_true336 ], [ %bitptr.7, %bb493 ]		; <i32> [#uses=4]
-	%source.5 = phi i32 [ %tmp602, %cond_next599 ], [ %source.0, %cond_true336 ], [ %source.6, %bb493 ]		; <i32> [#uses=7]
-	%tmp606 = getelementptr %struct.const_tables* @tables, i32 0, i32 0, i32 %cnt.01055.1		; <i8*> [#uses=1]
-	%tmp607 = load i8* %tmp606, align 1		; <i8> [#uses=1]
-
-We produce this:
-
-LBB4_70:	# cond_next603
-	movl	-20(%ebp), %esi
-	movl	L_tables$non_lazy_ptr-"L4$pb"(%esi), %esi
-
-However, ICC caches this information before the loop and produces this:
-
-        movl      88(%esp), %eax                                #481.12
 
 //===---------------------------------------------------------------------===//
 
