@@ -345,7 +345,6 @@
 		CF8F1B570B64F9AC00BB4199 /* PPCPredicates.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PPCPredicates.cpp; sourceTree = "<group>"; };
 		CF8F1B580B64F9AC00BB4199 /* PPCPredicates.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PPCPredicates.h; sourceTree = "<group>"; };
 		CF8F1B590B64F9E100BB4199 /* X86COFF.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = X86COFF.h; sourceTree = "<group>"; };
-		CF8F1B5A0B64F9E100BB4199 /* X86InstrX86-64.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "X86InstrX86-64.td"; sourceTree = "<group>"; };
 		CF8F1B5B0B64FA2F00BB4199 /* PredicateSimplifier.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PredicateSimplifier.cpp; sourceTree = "<group>"; };
 		CF8F1B5C0B64FA7300BB4199 /* PassManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PassManager.cpp; path = ../lib/VMCore/PassManager.cpp; sourceTree = SOURCE_ROOT; };
 		CF8F1B680B64FADA00BB4199 /* llvm-upgrade.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = "llvm-upgrade.cpp"; sourceTree = "<group>"; };
@@ -398,7 +397,6 @@
 		CF97208A0A9F3C6F002CEEDD /* LCSSA.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LCSSA.cpp; sourceTree = "<group>"; };
 		CF97208B0A9F3C6F002CEEDD /* LowerAllocations.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LowerAllocations.cpp; sourceTree = "<group>"; };
 		CF97208C0A9F3C6F002CEEDD /* LowerInvoke.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LowerInvoke.cpp; sourceTree = "<group>"; };
-		CF97208D0A9F3C6F002CEEDD /* LowerSelect.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LowerSelect.cpp; sourceTree = "<group>"; };
 		CF97208E0A9F3C6F002CEEDD /* LowerSwitch.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LowerSwitch.cpp; sourceTree = "<group>"; };
 		CF97208F0A9F3C6F002CEEDD /* Mem2Reg.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Mem2Reg.cpp; sourceTree = "<group>"; };
 		CF9720900A9F3CA2002CEEDD /* ValueTypes.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueTypes.cpp; path = ../lib/VMCore/ValueTypes.cpp; sourceTree = SOURCE_ROOT; };
@@ -639,8 +637,6 @@
 		DE66EE4708ABEDE700323D32 /* Timer.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = Timer.cpp; sourceTree = "<group>"; };
 		DE66EE6008ABEE3400323D32 /* DynamicLibrary.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = DynamicLibrary.cpp; sourceTree = "<group>"; };
 		DE66EE6108ABEE3400323D32 /* LICENSE.TXT */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = LICENSE.TXT; sourceTree = "<group>"; };
-		DE66EE6208ABEE3400323D32 /* ltdl.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = ltdl.c; sourceTree = "<group>"; };
-		DE66EE6308ABEE3400323D32 /* ltdl.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = ltdl.h; sourceTree = "<group>"; };
 		DE66EE6508ABEE3400323D32 /* MappedFile.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = MappedFile.cpp; sourceTree = "<group>"; };
 		DE66EE6608ABEE3400323D32 /* Memory.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = Memory.cpp; sourceTree = "<group>"; };
 		DE66EE6708ABEE3400323D32 /* Mutex.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = Mutex.cpp; sourceTree = "<group>"; };
@@ -742,7 +738,6 @@
 		DE66F12108ABEFB300323D32 /* ConstantMerge.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = ConstantMerge.cpp; sourceTree = "<group>"; };
 		DE66F12208ABEFB300323D32 /* DeadArgumentElimination.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = DeadArgumentElimination.cpp; sourceTree = "<group>"; };
 		DE66F12308ABEFB300323D32 /* DeadTypeElimination.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = DeadTypeElimination.cpp; sourceTree = "<group>"; };
-		DE66F14A08ABEFB400323D32 /* ExtractFunction.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = ExtractFunction.cpp; sourceTree = "<group>"; };
 		DE66F14C08ABEFB400323D32 /* GlobalDCE.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GlobalDCE.cpp; sourceTree = "<group>"; };
 		DE66F14D08ABEFB400323D32 /* GlobalOpt.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = GlobalOpt.cpp; sourceTree = "<group>"; };
 		DE66F14E08ABEFB400323D32 /* Inliner.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = Inliner.cpp; sourceTree = "<group>"; };
@@ -854,7 +849,6 @@
 		DE66F24608ABF03100323D32 /* SelectionDAG.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SelectionDAG.h; sourceTree = "<group>"; };
 		DE66F24708ABF03100323D32 /* SelectionDAGISel.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SelectionDAGISel.h; sourceTree = "<group>"; };
 		DE66F24808ABF03100323D32 /* SelectionDAGNodes.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SelectionDAGNodes.h; sourceTree = "<group>"; };
-		DE66F24908ABF03100323D32 /* SSARegMap.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SSARegMap.h; sourceTree = "<group>"; };
 		DE66F24B08ABF03100323D32 /* ValueTypes.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = ValueTypes.h; sourceTree = "<group>"; };
 		DE66F24E08ABF03100323D32 /* alloca.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = alloca.h; sourceTree = "<group>"; };
 		DE66F25008ABF03100323D32 /* config.h.in */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = config.h.in; sourceTree = "<group>"; };
@@ -1754,8 +1748,6 @@
 				CF8F1B530B64F8C000BB4199 /* IncludeFile.cpp */,
 				DE66EE6108ABEE3400323D32 /* LICENSE.TXT */,
 				CFD99ABA0AFE84D70068D19C /* IncludeFile.cpp */,
-				DE66EE6208ABEE3400323D32 /* ltdl.c */,
-				DE66EE6308ABEE3400323D32 /* ltdl.h */,
 				DE66EE6508ABEE3400323D32 /* MappedFile.cpp */,
 				DE66EE6608ABEE3400323D32 /* Memory.cpp */,
 				DE66EE6708ABEE3400323D32 /* Mutex.cpp */,
@@ -2059,7 +2051,6 @@
 				DE66F0CD08ABEE6000323D32 /* X86InstrInfo.cpp */,
 				DE66F0CE08ABEE6000323D32 /* X86InstrInfo.h */,
 				DE66F0CF08ABEE6100323D32 /* X86InstrInfo.td */,
-				CF8F1B5A0B64F9E100BB4199 /* X86InstrX86-64.td */,
 				DE66F0D008ABEE6100323D32 /* X86IntelAsmPrinter.cpp */,
 				DE66F0D108ABEE6100323D32 /* X86IntelAsmPrinter.h */,
 				DE66F0D508ABEE6100323D32 /* X86JITInfo.cpp */,
@@ -2116,7 +2107,6 @@
 				DE66F12108ABEFB300323D32 /* ConstantMerge.cpp */,
 				DE66F12208ABEFB300323D32 /* DeadArgumentElimination.cpp */,
 				DE66F12308ABEFB300323D32 /* DeadTypeElimination.cpp */,
-				DE66F14A08ABEFB400323D32 /* ExtractFunction.cpp */,
 				DE66F14C08ABEFB400323D32 /* GlobalDCE.cpp */,
 				DE66F14D08ABEFB400323D32 /* GlobalOpt.cpp */,
 				CFE4213F0A66FB5E00AB4BF6 /* IndMemRemoval.cpp */,
@@ -2187,7 +2177,6 @@
 				DE4DA0390911476D0012D44B /* LoopSimplify.cpp */,
 				CF97208B0A9F3C6F002CEEDD /* LowerAllocations.cpp */,
 				CF97208C0A9F3C6F002CEEDD /* LowerInvoke.cpp */,
-				CF97208D0A9F3C6F002CEEDD /* LowerSelect.cpp */,
 				CF97208E0A9F3C6F002CEEDD /* LowerSwitch.cpp */,
 				CF97208F0A9F3C6F002CEEDD /* Mem2Reg.cpp */,
 				DE66F1E408ABEFB400323D32 /* PromoteMemoryToRegister.cpp */,
@@ -2385,7 +2374,6 @@
 				DE66F24608ABF03100323D32 /* SelectionDAG.h */,
 				DE66F24708ABF03100323D32 /* SelectionDAGISel.h */,
 				DE66F24808ABF03100323D32 /* SelectionDAGNodes.h */,
-				DE66F24908ABF03100323D32 /* SSARegMap.h */,
 				DE66F24B08ABF03100323D32 /* ValueTypes.h */,
 				CFE420FC0A66F67300AB4BF6 /* ValueTypes.td */,
 			);
