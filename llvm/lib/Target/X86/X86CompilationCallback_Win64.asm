@@ -1,3 +1,16 @@
+;;===-- X86CompilationCallback_Win64.asm - Implement Win64 JIT callback ---===
+;;
+;;                     The LLVM Compiler Infrastructure
+;;
+;; This file is distributed under the University of Illinois Open Source
+;; License. See LICENSE.TXT for details.
+;;
+;;===----------------------------------------------------------------------===
+;;
+;; This file implements the JIT interfaces for the X86 target.
+;;
+;;===----------------------------------------------------------------------===
+
 extrn X86CompilationCallback2: PROC
 
 .code
