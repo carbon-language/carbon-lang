@@ -80,10 +80,10 @@ def RetCC_X86_64_C : CallingConv<[
 
 // X86-Win64 C return-value convention.
 def RetCC_X86_Win64_C : CallingConv<[
-  // The X86-Win64 calling convention always returns __m64 values in RAX
+  // The X86-Win64 calling convention always returns __m64 values in RAX.
   CCIfType<[v8i8, v4i16, v2i32, v1i64], CCAssignToReg<[RAX]>>,
 
-  // Otherwise, everything is the same as 'norma' X86-64 C CC
+  // Otherwise, everything is the same as 'normal' X86-64 C CC.
   CCDelegateTo<RetCC_X86_64_C>
 ]>;
 
@@ -156,9 +156,10 @@ def CC_X86_64_C : CallingConv<[
 
 // Calling convention used on Win64
 def CC_X86_Win64_C : CallingConv<[
-  // FIXME: Handle byval stuff
-  // FIXME: Handle fp80
-  // FIXME: Handle shadowed arguments
+  // FIXME: Handle byval stuff.
+  // FIXME: Handle fp80.
+  // FIXME: Handle shadowed arguments.
+  // FIXME: Handle nested functions.
 
   // Promote i8/i16 arguments to i32.
   CCIfType<[i8, i16], CCPromoteToType<i32>>,
