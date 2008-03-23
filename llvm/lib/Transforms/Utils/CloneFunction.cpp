@@ -83,6 +83,9 @@ void llvm::CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
   // Clone the parameter attributes
   NewFunc->setParamAttrs(OldFunc->getParamAttrs());
 
+  // Clone the calling convention
+  NewFunc->setCallingConv(OldFunc->getCallingConv());
+
   // Loop over all of the basic blocks in the function, cloning them as
   // appropriate.  Note that we save BE this way in order to handle cloning of
   // recursive functions into themselves.
