@@ -260,20 +260,30 @@ extern "C" {
     CFI(".cfi_endproc\n")
   );
 #else
-  void X86CompilationCallback2(void);
+  void X86CompilationCallback2(intptr_t *StackPtr, intptr_t RetAddr);
 
   _declspec(naked) void X86CompilationCallback(void) {
     __asm {
+      push  ebp
+      mov   ebp, esp
       push  eax
       push  edx
       push  ecx
+      and   esp, -16
+      mov   eax, dword ptr [ebp+4]
+      mov   dword ptr [esp+4], eax
+      mov   dword ptr [esp], ebp
       call  X86CompilationCallback2
+      mov   esp, ebp
+      sub   esp, 12
       pop   ecx
       pop   edx
       pop   eax
+      pop   ebp
       ret
     }
   }
+
 #endif // _MSC_VER
 
 #else // Not an i386 host
@@ -288,16 +298,8 @@ extern "C" {
 /// function stub when we did not know the real target of a call.  This function
 /// must locate the start of the stub or call site and pass it into the JIT
 /// compiler function.
-#ifdef _MSC_VER
-extern "C" void X86CompilationCallback2() {
-  assert(sizeof(size_t) == 4); // FIXME: handle Win64
-  intptr_t *RetAddrLoc = (intptr_t *)_AddressOfReturnAddress();
-  RetAddrLoc += 4;  // skip over ret addr, edx, eax, ecx
-  intptr_t RetAddr = *RetAddrLoc;
-#else
 extern "C" void X86CompilationCallback2(intptr_t *StackPtr, intptr_t RetAddr) {
   intptr_t *RetAddrLoc = &StackPtr[1];
-#endif
   assert(*RetAddrLoc == RetAddr &&
          "Could not find return address on the stack!");
 
