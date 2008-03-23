@@ -21,9 +21,11 @@
 #include <cstring>
 using namespace llvm;
 
-#ifdef _MSC_VER
-  extern "C" void *_AddressOfReturnAddress(void);
-  #pragma intrinsic(_AddressOfReturnAddress)
+// Determine the platform we're running on
+#if defined (__x86_64__) || defined (_M_AMD64)
+# define X86_64_JIT
+#elif defined(__i386__) || defined(i386) || defined(_M_IX86)
+# define X86_32_JIT
 #endif
 
 void X86JITInfo::replaceMachineCodeForFunction(void *Old, void *New) {
@@ -63,7 +65,8 @@ static TargetJITInfo::JITCompilerFn JITCompilerFunction;
 // Provide a wrapper for X86CompilationCallback2 that saves non-traditional
 // callee saved registers, for the fastcc calling convention.
 extern "C" {
-#if defined(__x86_64__)
+#if defined(X86_64_JIT)
+# ifndef _MSC_VER
   // No need to save EAX/EDX for X86-64.
   void X86CompilationCallback(void);
   asm(
@@ -149,8 +152,15 @@ extern "C" {
     "ret\n"
     CFI(".cfi_endproc\n")
   );
-#elif defined(__i386__) || defined(i386) || defined(_M_IX86)
-#ifndef _MSC_VER
+# else
+  // No inline assembler support on this platform
+  void X86CompilationCallback() {
+    assert(0 && "Cannot call X86CompilationCallback() on a non-x86 arch!\n");
+    abort();
+  }
+# endif
+#elif defined (X86_32_JIT)
+# ifndef _MSC_VER
   void X86CompilationCallback(void);
   asm(
     ".text\n"
@@ -169,9 +179,9 @@ extern "C" {
     CFI(".cfi_rel_offset %edx, 4\n")
     "pushl   %ecx\n"
     CFI(".cfi_rel_offset %ecx, 8\n")
-#if defined(__APPLE__)
+#  if defined(__APPLE__)
     "andl    $-16, %esp\n"    // Align ESP on 16-byte boundary
-#endif
+#  endif
     "subl    $16, %esp\n"
     "movl    4(%ebp), %eax\n" // Pass prev frame and return address
     "movl    %eax, 4(%esp)\n"
@@ -259,7 +269,7 @@ extern "C" {
     "ret\n"
     CFI(".cfi_endproc\n")
   );
-#else
+# else
   void X86CompilationCallback2(intptr_t *StackPtr, intptr_t RetAddr);
 
   _declspec(naked) void X86CompilationCallback(void) {
@@ -284,7 +294,7 @@ extern "C" {
     }
   }
 
-#endif // _MSC_VER
+# endif // _MSC_VER
 
 #else // Not an i386 host
   void X86CompilationCallback() {
@@ -307,7 +317,7 @@ extern "C" void X86CompilationCallback2(intptr_t *StackPtr, intptr_t RetAddr) {
   bool isStub = ((unsigned char*)RetAddr)[0] == 0xCD;
 
   // The call instruction should have pushed the return value onto the stack...
-#ifdef __x86_64__
+#if defined (X86_64_JIT)
   RetAddr--;     // Backtrack to the reference itself...
 #else
   RetAddr -= 4;  // Backtrack to the reference itself...
@@ -321,7 +331,7 @@ extern "C" void X86CompilationCallback2(intptr_t *StackPtr, intptr_t RetAddr) {
 #endif
 
   // Sanity check to make sure this really is a call instruction.
-#ifdef __x86_64__
+#if defined (X86_64_JIT)
   assert(((unsigned char*)RetAddr)[-2] == 0x41 &&"Not a call instr!");
   assert(((unsigned char*)RetAddr)[-1] == 0xFF &&"Not a call instr!");
 #else
@@ -332,7 +342,7 @@ extern "C" void X86CompilationCallback2(intptr_t *StackPtr, intptr_t RetAddr) {
 
   // Rewrite the call target... so that we don't end up here every time we
   // execute the call.
-#ifdef __x86_64__
+#if defined (X86_64_JIT)
   *(intptr_t *)(RetAddr - 0xa) = NewVal;
 #else
   *(intptr_t *)RetAddr = (intptr_t)(NewVal-RetAddr-4);
@@ -343,7 +353,7 @@ extern "C" void X86CompilationCallback2(intptr_t *StackPtr, intptr_t RetAddr) {
     // instruction so that two return addresses are not pushed onto the stack
     // when the requested function finally gets called.  This also makes the
     // 0xCD byte (interrupt) dead, so the marker doesn't effect anything.
-#ifdef __x86_64__
+#if defined (X86_64_JIT)
     ((unsigned char*)RetAddr)[0] = (2 | (4 << 3) | (3 << 6));
 #else
     ((unsigned char*)RetAddr)[-1] = 0xE9;
@@ -351,7 +361,7 @@ extern "C" void X86CompilationCallback2(intptr_t *StackPtr, intptr_t RetAddr) {
   }
 
   // Change the return address to reexecute the call instruction...
-#ifdef __x86_64__
+#if defined (X86_64_JIT)
   *RetAddrLoc -= 0xd;
 #else
   *RetAddrLoc -= 5;
@@ -362,8 +372,7 @@ TargetJITInfo::LazyResolverFn
 X86JITInfo::getLazyResolverFunction(JITCompilerFn F) {
   JITCompilerFunction = F;
 
-#if (defined(__i386__) || defined(i386) || defined(_M_IX86)) && \
-  !defined(_MSC_VER) && !defined(__x86_64__)
+#if defined (X86_32_JIT) && !defined (_MSC_VER)
   unsigned EAX = 0, EBX = 0, ECX = 0, EDX = 0;
   union {
     unsigned u[3];
@@ -384,7 +393,7 @@ X86JITInfo::getLazyResolverFunction(JITCompilerFn F) {
 }
 
 void *X86JITInfo::emitGlobalValueLazyPtr(void *GV, MachineCodeEmitter &MCE) {
-#ifdef __x86_64__
+#if defined (X86_64_JIT)
   MCE.startFunctionStub(8, 8);
   MCE.emitWordLE(((unsigned *)&GV)[0]);
   MCE.emitWordLE(((unsigned *)&GV)[1]);
@@ -398,15 +407,14 @@ void *X86JITInfo::emitGlobalValueLazyPtr(void *GV, MachineCodeEmitter &MCE) {
 void *X86JITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
   // Note, we cast to intptr_t here to silence a -pedantic warning that 
   // complains about casting a function pointer to a normal pointer.
-#if (defined(__i386__) || defined(i386) || defined(_M_IX86)) && \
-  !defined(_MSC_VER) && !defined(__x86_64__)
+#if defined (X86_32_JIT) && !defined (_MSC_VER)
   bool NotCC = (Fn != (void*)(intptr_t)X86CompilationCallback &&
                 Fn != (void*)(intptr_t)X86CompilationCallback_SSE);
 #else
   bool NotCC = Fn != (void*)(intptr_t)X86CompilationCallback;
 #endif
   if (NotCC) {
-#ifdef __x86_64__
+#if defined (X86_64_JIT)
     MCE.startFunctionStub(13, 4);
     MCE.emitByte(0x49);          // REX prefix
     MCE.emitByte(0xB8+2);        // movabsq r10
@@ -423,7 +431,7 @@ void *X86JITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
     return MCE.finishFunctionStub(0);
   }
 
-#ifdef __x86_64__
+#if defined (X86_64_JIT)
   MCE.startFunctionStub(14, 4);
   MCE.emitByte(0x49);          // REX prefix
   MCE.emitByte(0xB8+2);        // movabsq r10
