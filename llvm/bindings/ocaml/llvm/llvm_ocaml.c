@@ -72,7 +72,7 @@ static value alloc_variant(int tag, void *Value) {
     cty Next = LLVMGetNext##cname(Kid);                   \
     if (Next)                                             \
       return alloc_variant(1, Next);                      \
-    return alloc_variant(0, pfun(Kid))                  ; \
+    return alloc_variant(0, pfun(Kid));                   \
   }                                                       \
                                                           \
   /* llmodule -> ('a, 'b) llrev_pos */                    \
