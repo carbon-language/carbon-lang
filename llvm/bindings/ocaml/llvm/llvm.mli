@@ -152,7 +152,7 @@ end
 (** {6 Iteration} *)
 
 (** [Before b] and [At_end a] specify positions from the start of the ['b] list
-    of [a]. [llpos] is used to specify positions in and for reverse iteration
+    of [a]. [llpos] is used to specify positions in and for forward iteration
     through the various value lists maintained by the LLVM IR. *)
 type ('a, 'b) llpos =
 | At_end of 'a
