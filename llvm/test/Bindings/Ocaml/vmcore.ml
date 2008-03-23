@@ -467,7 +467,33 @@ let test_global_variables () =
   let g = define_global "ConstGlobalVar" fourty_two32 m in
   insist (not (is_global_constant g));
   set_global_constant true g;
-  insist (is_global_constant g)
+  insist (is_global_constant g);
+  
+  begin group "iteration";
+    let m = create_module "temp" in
+    
+    insist (At_end m = global_begin m);
+    insist (At_start m = global_end m);
+    
+    let g1 = declare_global i32_type "One" m in
+    let g2 = declare_global i32_type "Two" m in
+    
+    insist (Before g1 = global_begin m);
+    insist (Before g2 = global_succ g1);
+    insist (At_end m = global_succ g2);
+    
+    insist (After g2 = global_end m);
+    insist (After g1 = global_pred g2);
+    insist (At_start m = global_pred g1);
+    
+    let lf s x = s ^ "->" ^ value_name x in
+    insist ("->One->Two" = fold_left_globals lf "" m);
+    
+    let rf x s = value_name x ^ "<-" ^ s in
+    insist ("One<-Two<-" = fold_right_globals rf m "");
+    
+    dispose_module m
+  end
 
 
 (*===-- Functions ---------------------------------------------------------===*)
@@ -540,6 +566,68 @@ let test_functions () =
     insist (None = collector fn);
     set_collector (Some "shadowstack") fn;
     ignore (build_unreachable (builder_at_end (entry_block fn)));
+  end;
+  
+  begin group "iteration";
+    let m = create_module "temp" in
+    
+    insist (At_end m = function_begin m);
+    insist (At_start m = function_end m);
+    
+    let f1 = define_function "One" ty m in
+    let f2 = define_function "Two" ty m in
+    
+    insist (Before f1 = function_begin m);
+    insist (Before f2 = function_succ f1);
+    insist (At_end m = function_succ f2);
+    
+    insist (After f2 = function_end m);
+    insist (After f1 = function_pred f2);
+    insist (At_start m = function_pred f1);
+    
+    let lf s x = s ^ "->" ^ value_name x in
+    insist ("->One->Two" = fold_left_functions lf "" m);
+    
+    let rf x s = value_name x ^ "<-" ^ s in
+    insist ("One<-Two<-" = fold_right_functions rf m "");
+    
+    dispose_module m
+  end
+
+
+(*===-- Params ------------------------------------------------------------===*)
+
+let test_params () =
+  begin group "iteration";
+    let m = create_module "temp" in
+    
+    let vf = define_function "void" (function_type void_type [| |]) m in
+    
+    insist (At_end vf = param_begin vf);
+    insist (At_start vf = param_end vf);
+    
+    let ty = function_type void_type [| i32_type; i32_type |] in
+    let f = define_function "f" ty m in
+    let p1 = param f 0 in
+    let p2 = param f 1 in
+    set_value_name "One" p1;
+    set_value_name "Two" p2;
+    
+    insist (Before p1 = param_begin f);
+    insist (Before p2 = param_succ p1);
+    insist (At_end f = param_succ p2);
+    
+    insist (After p2 = param_end f);
+    insist (After p1 = param_pred p2);
+    insist (At_start f = param_pred p1);
+    
+    let lf s x = s ^ "->" ^ value_name x in
+    insist ("->One->Two" = fold_left_params lf "" f);
+    
+    let rf x s = value_name x ^ "<-" ^ s in
+    insist ("One<-Two<-" = fold_right_params rf f "");
+    
+    dispose_module m
   end
 
 
@@ -587,7 +675,34 @@ let test_basic_blocks () =
   ignore (build_unreachable (builder_at_end bb));
   insist (bb = block_of_value (value_of_block bb));
   insist (value_is_block (value_of_block bb));
-  insist (not (value_is_block (const_null i32_type)))
+  insist (not (value_is_block (const_null i32_type)));
+  
+  begin group "iteration";
+    let m = create_module "temp" in
+    let f = declare_function "Temp" (function_type i32_type [| |]) m in
+    
+    insist (At_end f = block_begin f);
+    insist (At_start f = block_end f);
+    
+    let b1 = append_block "One" f in
+    let b2 = append_block "Two" f in
+    
+    insist (Before b1 = block_begin f);
+    insist (Before b2 = block_succ b1);
+    insist (At_end f = block_succ b2);
+    
+    insist (After b2 = block_end f);
+    insist (After b1 = block_pred b2);
+    insist (At_start f = block_pred b1);
+    
+    let lf s x = s ^ "->" ^ value_name (value_of_block x) in
+    insist ("->One->Two" = fold_left_blocks lf "" f);
+    
+    let rf x s = value_name (value_of_block x) ^ "<-" ^ s in
+    insist ("One<-Two<-" = fold_right_blocks rf f "");
+    
+    dispose_module m
+  end
 
 
 (*===-- Builder -----------------------------------------------------------===*)
@@ -907,6 +1022,7 @@ let _ =
   suite "global values"    test_global_values;
   suite "global variables" test_global_variables;
   suite "functions"        test_functions;
+  suite "params"           test_params;
   suite "basic blocks"     test_basic_blocks;
   suite "builder"          test_builder;
   suite "module provider"  test_module_provider;

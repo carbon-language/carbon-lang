@@ -376,6 +376,10 @@ void LLVMSetAlignment(LLVMValueRef Global, unsigned Bytes);
 /* Operations on global variables */
 LLVMValueRef LLVMAddGlobal(LLVMModuleRef M, LLVMTypeRef Ty, const char *Name);
 LLVMValueRef LLVMGetNamedGlobal(LLVMModuleRef M, const char *Name);
+LLVMValueRef LLVMGetFirstGlobal(LLVMModuleRef M);
+LLVMValueRef LLVMGetLastGlobal(LLVMModuleRef M);
+LLVMValueRef LLVMGetNextGlobal(LLVMValueRef GlobalVar);
+LLVMValueRef LLVMGetPreviousGlobal(LLVMValueRef GlobalVar);
 void LLVMDeleteGlobal(LLVMValueRef GlobalVar);
 int LLVMHasInitializer(LLVMValueRef GlobalVar);
 LLVMValueRef LLVMGetInitializer(LLVMValueRef GlobalVar);
@@ -405,12 +409,16 @@ unsigned LLVMCountParams(LLVMValueRef Fn);
 void LLVMGetParams(LLVMValueRef Fn, LLVMValueRef *Params);
 LLVMValueRef LLVMGetParam(LLVMValueRef Fn, unsigned Index);
 LLVMValueRef LLVMGetParamParent(LLVMValueRef Inst);
+LLVMValueRef LLVMGetFirstParam(LLVMValueRef Fn);
+LLVMValueRef LLVMGetLastParam(LLVMValueRef Fn);
+LLVMValueRef LLVMGetNextParam(LLVMValueRef Arg);
+LLVMValueRef LLVMGetPreviousParam(LLVMValueRef Arg);
 
 /* Operations on basic blocks */
-LLVMValueRef LLVMBasicBlockAsValue(LLVMBasicBlockRef Bb);
+LLVMValueRef LLVMBasicBlockAsValue(LLVMBasicBlockRef BB);
 int LLVMValueIsBasicBlock(LLVMValueRef Val);
 LLVMBasicBlockRef LLVMValueAsBasicBlock(LLVMValueRef Val);
-LLVMValueRef LLVMGetBasicBlockParent(LLVMValueRef V);
+LLVMValueRef LLVMGetBasicBlockParent(LLVMBasicBlockRef BB);
 unsigned LLVMCountBasicBlocks(LLVMValueRef Fn);
 void LLVMGetBasicBlocks(LLVMValueRef Fn, LLVMBasicBlockRef *BasicBlocks);
 LLVMBasicBlockRef LLVMGetFirstBasicBlock(LLVMValueRef Fn);

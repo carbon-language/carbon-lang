@@ -628,7 +628,7 @@ LLVMValueRef LLVMGetNextGlobal(LLVMValueRef GlobalVar) {
 LLVMValueRef LLVMGetPreviousGlobal(LLVMValueRef GlobalVar) {
   GlobalVariable *GV = unwrap<GlobalVariable>(GlobalVar);
   Module::global_iterator I = GV;
-  if (I == GV->getParent()->global_end())
+  if (I == GV->getParent()->global_begin())
     return 0;
   return wrap(--I);
 }
@@ -705,7 +705,7 @@ LLVMValueRef LLVMGetNextFunction(LLVMValueRef Fn) {
 LLVMValueRef LLVMGetPreviousFunction(LLVMValueRef Fn) {
   Function *Func = unwrap<Function>(Fn);
   Module::iterator I = Func;
-  if (I == Func->getParent()->end())
+  if (I == Func->getParent()->begin())
     return 0;
   return wrap(--I);
 }
@@ -767,6 +767,38 @@ LLVMValueRef LLVMGetParamParent(LLVMValueRef V) {
   return wrap(unwrap<Argument>(V)->getParent());
 }
 
+LLVMValueRef LLVMGetFirstParam(LLVMValueRef Fn) {
+  Function *Func = unwrap<Function>(Fn);
+  Function::arg_iterator I = Func->arg_begin();
+  if (I == Func->arg_end())
+    return 0;
+  return wrap(I);
+}
+
+LLVMValueRef LLVMGetLastParam(LLVMValueRef Fn) {
+  Function *Func = unwrap<Function>(Fn);
+  Function::arg_iterator I = Func->arg_end();
+  if (I == Func->arg_begin())
+    return 0;
+  return wrap(--I);
+}
+
+LLVMValueRef LLVMGetNextParam(LLVMValueRef Arg) {
+  Argument *A = unwrap<Argument>(Arg);
+  Function::arg_iterator I = A;
+  if (++I == A->getParent()->arg_end())
+    return 0;
+  return wrap(I);
+}
+
+LLVMValueRef LLVMGetPreviousParam(LLVMValueRef Arg) {
+  Argument *A = unwrap<Argument>(Arg);
+  Function::arg_iterator I = A;
+  if (I == A->getParent()->arg_begin())
+    return 0;
+  return wrap(--I);
+}
+
 /*--.. Operations on basic blocks ..........................................--*/
 
 LLVMValueRef LLVMBasicBlockAsValue(LLVMBasicBlockRef BB) {
@@ -781,8 +813,8 @@ LLVMBasicBlockRef LLVMValueAsBasicBlock(LLVMValueRef Val) {
   return wrap(unwrap<BasicBlock>(Val));
 }
 
-LLVMValueRef LLVMGetBasicBlockParent(LLVMValueRef V) {
-  return wrap(unwrap<BasicBlock>(V)->getParent());
+LLVMValueRef LLVMGetBasicBlockParent(LLVMBasicBlockRef BB) {
+  return wrap(unwrap(BB)->getParent());
 }
 
 unsigned LLVMCountBasicBlocks(LLVMValueRef FnRef) {

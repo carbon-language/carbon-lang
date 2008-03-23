@@ -149,6 +149,23 @@ module Fcmp : sig
 end
 
 
+(** {6 Iteration} *)
+
+(** [Before b] and [At_end a] specify positions from the start of the ['b] list
+    of [a]. [llpos] is used to specify positions in and for reverse iteration
+    through the various value lists maintained by the LLVM IR. *)
+type ('a, 'b) llpos =
+| At_end of 'a
+| Before of 'b
+
+(** [After b] and [At_start a] specify positions from the end of the ['b] list
+    of [a]. [llrev_pos] is used for reverse iteration through the various value
+    lists maintained by the LLVM IR. *)
+type ('a, 'b) llrev_pos =
+| At_start of 'a
+| After of 'b
+
+
 (** {6 Exceptions} *)
 
 exception IoError of string
@@ -745,6 +762,48 @@ external lookup_global : string -> llmodule -> llvalue option
     See the method [llvm::GlobalVariable::eraseFromParent]. *)
 external delete_global : llvalue -> unit = "llvm_delete_global"
 
+(** [global_begin m] returns the first position in the global variable list of
+    the module [m]. [global_begin] and [global_succ] can be used to iterate
+    over the global list in order.
+    See the method [llvm::Module::global_begin]. *)
+external global_begin : llmodule -> (llmodule, llvalue) llpos
+                      = "llvm_global_begin"
+
+(** [global_succ gv] returns the global variable list position succeeding
+    [Before gv].
+    See the method [llvm::Module::global_iterator::operator++]. *)
+external global_succ : llvalue -> (llmodule, llvalue) llpos
+                     = "llvm_global_succ"
+
+(** [iter_globals f m] applies function [f] to each of the global variables of
+    module [m] in order. Tail recursive. *)
+val iter_globals : (llvalue -> unit) -> llmodule -> unit
+
+(** [fold_left_globals f init m] is [f (... (f init g1) ...) gN] where
+    [g1,...,gN] are the global variables of module [m]. Tail recursive. *)
+val fold_left_globals : ('a -> llvalue -> 'a) -> 'a -> llmodule -> 'a
+
+(** [global_end m] returns the last position in the global variable list of the
+    module [m]. [global_end] and [global_pred] can be used to iterate over the
+    global list in reverse.
+    See the method [llvm::Module::global_end]. *)
+external global_end : llmodule -> (llmodule, llvalue) llrev_pos
+                    = "llvm_global_end"
+
+(** [global_pred gv] returns the global variable list position preceding
+    [After gv].
+    See the method [llvm::Module::global_iterator::operator--]. *)
+external global_pred : llvalue -> (llmodule, llvalue) llrev_pos
+                     = "llvm_global_pred"
+
+(** [rev_iter_globals f m] applies function [f] to each of the global variables
+    of module [m] in reverse order. Tail recursive. *)
+val rev_iter_globals : (llvalue -> unit) -> llmodule -> unit
+
+(** [fold_right_globals f m init] is [f g1 (... (f gN init) ...)] where
+    [g1,...,gN] are the global variables of module [m]. Tail recursive. *)
+val fold_right_globals : (llvalue -> 'a -> 'a) -> llmodule -> 'a -> 'a
+
 (** [is_global_constant gv] returns [true] if the global variabile [gv] is a
     constant. Returns [false] otherwise.
     See the method [llvm::GlobalVariable::isConstant]. *)
@@ -812,6 +871,47 @@ external lookup_function : string -> llmodule -> llvalue option
     See the method [llvm::Function::eraseFromParent]. *)
 external delete_function : llvalue -> unit = "llvm_delete_function"
 
+(** [function_begin m] returns the first position in the function list of the
+    module [m]. [function_begin] and [function_succ] can be used to iterate over
+    the function list in order.
+    See the method [llvm::Module::begin]. *)
+external function_begin : llmodule -> (llmodule, llvalue) llpos
+                        = "llvm_function_begin"
+
+(** [function_succ gv] returns the function list position succeeding
+    [Before gv].
+    See the method [llvm::Module::iterator::operator++]. *)
+external function_succ : llvalue -> (llmodule, llvalue) llpos
+                       = "llvm_function_succ"
+
+(** [iter_functions f m] applies function [f] to each of the functions of module
+    [m] in order. Tail recursive. *)
+val iter_functions : (llvalue -> unit) -> llmodule -> unit
+
+(** [fold_left_function f init m] is [f (... (f init f1) ...) fN] where
+    [f1,...,fN] are the functions of module [m]. Tail recursive. *)
+val fold_left_functions : ('a -> llvalue -> 'a) -> 'a -> llmodule -> 'a
+
+(** [function_end m] returns the last position in the function list of
+    the module [m]. [function_end] and [function_pred] can be used to iterate
+    over the function list in reverse.
+    See the method [llvm::Module::end]. *)
+external function_end : llmodule -> (llmodule, llvalue) llrev_pos
+                      = "llvm_function_end"
+
+(** [function_pred gv] returns the function list position preceding [After gv].
+    See the method [llvm::Module::iterator::operator--]. *)
+external function_pred : llvalue -> (llmodule, llvalue) llrev_pos
+                       = "llvm_function_pred"
+
+(** [rev_iter_functions f fn] applies function [f] to each of the functions of
+    module [m] in reverse order. Tail recursive. *)
+val rev_iter_functions : (llvalue -> unit) -> llmodule -> unit
+
+(** [fold_right_functions f m init] is [f (... (f init fN) ...) f1] where
+    [f1,...,fN] are the functions of module [m]. Tail recursive. *)
+val fold_right_functions : (llvalue -> 'a -> 'a) -> llmodule -> 'a -> 'a
+
 (** [is_intrinsic f] returns true if the function [f] is an intrinsic.
     See the method [llvm::Function::isIntrinsic]. *)
 external is_intrinsic : llvalue -> bool = "llvm_is_intrinsic"
@@ -850,6 +950,44 @@ external param : llvalue -> int -> llvalue = "llvm_param"
     See the method [llvm::Argument::getParent]. *)
 external param_parent : llvalue -> llvalue = "LLVMGetParamParent"
 
+(** [param_begin f] returns the first position in the parameter list of the
+    function [f]. [param_begin] and [param_succ] can be used to iterate over
+    the parameter list in order.
+    See the method [llvm::Function::arg_begin]. *)
+external param_begin : llvalue -> (llvalue, llvalue) llpos = "llvm_param_begin"
+
+(** [param_succ bb] returns the parameter list position succeeding
+    [Before bb].
+    See the method [llvm::Function::arg_iterator::operator++]. *)
+external param_succ : llvalue -> (llvalue, llvalue) llpos = "llvm_param_succ"
+
+(** [iter_params f fn] applies function [f] to each of the parameters
+    of function [fn] in order. Tail recursive. *)
+val iter_params : (llvalue -> unit) -> llvalue -> unit
+
+(** [fold_left_params f init fn] is [f (... (f init b1) ...) bN] where
+    [b1,...,bN] are the parameters of function [fn]. Tail recursive. *)
+val fold_left_params : ('a -> llvalue -> 'a) -> 'a -> llvalue -> 'a
+
+(** [param_end f] returns the last position in the parameter list of
+    the function [f]. [param_end] and [param_pred] can be used to iterate
+    over the parameter list in reverse.
+    See the method [llvm::Function::arg_end]. *)
+external param_end : llvalue -> (llvalue, llvalue) llrev_pos = "llvm_param_end"
+
+(** [param_pred gv] returns the function list position preceding [After gv].
+    See the method [llvm::Function::arg_iterator::operator--]. *)
+external param_pred : llvalue -> (llvalue, llvalue) llrev_pos
+                    = "llvm_param_pred"
+
+(** [rev_iter_params f fn] applies function [f] to each of the parameters
+    of function [fn] in reverse order. Tail recursive. *)
+val rev_iter_params : (llvalue -> unit) -> llvalue -> unit
+
+(** [fold_right_params f fn init] is [f (... (f init bN) ...) b1] where
+    [b1,...,bN] are the parameters of function [fn]. Tail recursive. *)
+val fold_right_params : (llvalue -> 'a -> 'a) -> llvalue -> 'a -> 'a
+
 
 (** {7 Operations on basic blocks} *)
 
@@ -879,6 +1017,47 @@ external insert_block : string -> llbasicblock -> llbasicblock
 (** [block_parent bb] returns the parent function that owns the basic block.
     See the method [llvm::BasicBlock::getParent]. *)
 external block_parent : llbasicblock -> llvalue = "LLVMGetBasicBlockParent"
+
+(** [block_begin f] returns the first position in the basic block list of the
+    function [f]. [block_begin] and [block_succ] can be used to iterate over
+    the basic block list in order.
+    See the method [llvm::Function::begin]. *)
+external block_begin : llvalue -> (llvalue, llbasicblock) llpos
+                     = "llvm_block_begin"
+
+(** [block_succ bb] returns the basic block list position succeeding
+    [Before bb].
+    See the method [llvm::Function::iterator::operator++]. *)
+external block_succ : llbasicblock -> (llvalue, llbasicblock) llpos
+                    = "llvm_block_succ"
+
+(** [iter_blocks f fn] applies function [f] to each of the basic blocks
+    of function [fn] in order. Tail recursive. *)
+val iter_blocks : (llbasicblock -> unit) -> llvalue -> unit
+
+(** [fold_left_blocks f init fn] is [f (... (f init b1) ...) bN] where
+    [b1,...,bN] are the basic blocks of function [fn]. Tail recursive. *)
+val fold_left_blocks : ('a -> llbasicblock -> 'a) -> 'a -> llvalue -> 'a
+
+(** [block_end f] returns the last position in the basic block list of
+    the function [f]. [block_end] and [block_pred] can be used to iterate
+    over the basic block list in reverse.
+    See the method [llvm::Function::end]. *)
+external block_end : llvalue -> (llvalue, llbasicblock) llrev_pos
+                   = "llvm_block_end"
+
+(** [block_pred gv] returns the function list position preceding [After gv].
+    See the method [llvm::Function::iterator::operator--]. *)
+external block_pred : llbasicblock -> (llvalue, llbasicblock) llrev_pos
+                    = "llvm_block_pred"
+
+(** [rev_iter_blocks f fn] applies function [f] to each of the basic blocks
+    of function [fn] in reverse order. Tail recursive. *)
+val rev_iter_blocks : (llbasicblock -> unit) -> llvalue -> unit
+
+(** [fold_right_blocks f fn init] is [f (... (f init bN) ...) b1] where
+    [b1,...,bN] are the basic blocks of function [fn]. Tail recursive. *)
+val fold_right_blocks : (llbasicblock -> 'a -> 'a) -> llvalue -> 'a -> 'a
 
 (** [value_of_block bb] losslessly casts [bb] to an [llvalue]. *)
 external value_of_block : llbasicblock -> llvalue = "LLVMBasicBlockAsValue"

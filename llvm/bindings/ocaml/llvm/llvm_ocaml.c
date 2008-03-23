@@ -50,6 +50,47 @@ static void llvm_raise(value Prototype, char *Message) {
 #endif
 }
 
+static value alloc_variant(int tag, void *Value) {
+  value Iter = alloc_small(1, tag);
+  Field(Iter, 0) = Val_op(Value);
+  return Iter;
+}
+
+/* Macro to convert the C first/next/last/prev idiom to the Ocaml llpos/
+   llrev_pos idiom. */
+#define DEFINE_ITERATORS(camlname, cname, pty, cty, pfun) \
+  /* llmodule -> ('a, 'b) llpos */                        \
+  CAMLprim value llvm_##camlname##_begin(pty Mom) {       \
+    cty First = LLVMGetFirst##cname(Mom);                 \
+    if (First)                                            \
+      return alloc_variant(1, First);                     \
+    return alloc_variant(0, Mom);                         \
+  }                                                       \
+                                                          \
+  /* llvalue -> ('a, 'b) llpos */                         \
+  CAMLprim value llvm_##camlname##_succ(cty Kid) {        \
+    cty Next = LLVMGetNext##cname(Kid);                   \
+    if (Next)                                             \
+      return alloc_variant(1, Next);                      \
+    return alloc_variant(0, pfun(Kid))                  ; \
+  }                                                       \
+                                                          \
+  /* llmodule -> ('a, 'b) llrev_pos */                    \
+  CAMLprim value llvm_##camlname##_end(pty Mom) {         \
+    cty Last = LLVMGetLast##cname(Mom);                   \
+    if (Last)                                             \
+      return alloc_variant(1, Last);                      \
+    return alloc_variant(0, Mom);                         \
+  }                                                       \
+                                                          \
+  /* llvalue -> ('a, 'b) llrev_pos */                     \
+  CAMLprim value llvm_##camlname##_pred(cty Kid) {        \
+    cty Prev = LLVMGetPrevious##cname(Kid);               \
+    if (Prev)                                             \
+      return alloc_variant(1, Prev);                      \
+    return alloc_variant(0, pfun(Kid));                   \
+  }
+
 
 /*===-- Modules -----------------------------------------------------------===*/
 
@@ -464,6 +505,9 @@ CAMLprim value llvm_set_alignment(value Bytes, LLVMValueRef Global) {
 
 /*--... Operations on global variables .....................................--*/
 
+DEFINE_ITERATORS(global, Global, LLVMModuleRef, LLVMValueRef,
+                 LLVMGetGlobalParent)
+
 /* lltype -> string -> llmodule -> llvalue */
 CAMLprim LLVMValueRef llvm_declare_global(LLVMTypeRef Ty, value Name,
                                           LLVMModuleRef M) {
@@ -541,6 +585,9 @@ CAMLprim value llvm_set_global_constant(value Flag, LLVMValueRef GlobalVar) {
 
 /*--... Operations on functions ............................................--*/
 
+DEFINE_ITERATORS(function, Function, LLVMModuleRef, LLVMValueRef,
+                 LLVMGetGlobalParent)
+
 /* string -> lltype -> llmodule -> llvalue */
 CAMLprim LLVMValueRef llvm_declare_function(value Name, LLVMTypeRef Ty,
                                             LLVMModuleRef M) {
@@ -577,18 +624,6 @@ CAMLprim LLVMValueRef llvm_define_function(value Name, LLVMTypeRef Ty,
 CAMLprim value llvm_delete_function(LLVMValueRef Fn) {
   LLVMDeleteFunction(Fn);
   return Val_unit;
-}
-
-/* llvalue -> int -> llvalue */
-CAMLprim LLVMValueRef llvm_param(LLVMValueRef Fn, value Index) {
-  return LLVMGetParam(Fn, Int_val(Index));
-}
-
-/* llvalue -> int -> llvalue */
-CAMLprim value llvm_params(LLVMValueRef Fn, value Index) {
-  value Params = alloc(LLVMCountParams(Fn), 0);
-  LLVMGetParams(Fn, (LLVMValueRef *) Op_val(Params));
-  return Params;
 }
 
 /* llvalue -> bool */
@@ -630,7 +665,26 @@ CAMLprim value llvm_set_collector(value GC, LLVMValueRef Fn) {
   return Val_unit;
 }
 
+/*--... Operations on parameters ...........................................--*/
+
+DEFINE_ITERATORS(param, Param, LLVMValueRef, LLVMValueRef, LLVMGetParamParent)
+
+/* llvalue -> int -> llvalue */
+CAMLprim LLVMValueRef llvm_param(LLVMValueRef Fn, value Index) {
+  return LLVMGetParam(Fn, Int_val(Index));
+}
+
+/* llvalue -> int -> llvalue */
+CAMLprim value llvm_params(LLVMValueRef Fn, value Index) {
+  value Params = alloc(LLVMCountParams(Fn), 0);
+  LLVMGetParams(Fn, (LLVMValueRef *) Op_val(Params));
+  return Params;
+}
+
 /*--... Operations on basic blocks .........................................--*/
+
+DEFINE_ITERATORS(
+  block, BasicBlock, LLVMValueRef, LLVMBasicBlockRef, LLVMGetBasicBlockParent)
 
 /* llvalue -> llbasicblock array */
 CAMLprim value llvm_basic_blocks(LLVMValueRef Fn) {

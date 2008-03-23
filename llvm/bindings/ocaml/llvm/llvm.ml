@@ -102,6 +102,14 @@ exception IoError of string
 external register_exns : exn -> unit = "llvm_register_core_exns"
 let _ = register_exns (IoError "")
 
+type ('a, 'b) llpos =
+| At_end of 'a
+| Before of 'b
+
+type ('a, 'b) llrev_pos =
+| At_start of 'a
+| After of 'b
+
 
 (*===-- Modules -----------------------------------------------------------===*)
 
@@ -298,6 +306,54 @@ external set_initializer : llvalue -> llvalue -> unit = "llvm_set_initializer"
 external remove_initializer : llvalue -> unit = "llvm_remove_initializer"
 external is_thread_local : llvalue -> bool = "llvm_is_thread_local"
 external set_thread_local : bool -> llvalue -> unit = "llvm_set_thread_local"
+external global_begin : llmodule -> (llmodule, llvalue) llpos
+                      = "llvm_global_begin"
+external global_succ : llvalue -> (llmodule, llvalue) llpos
+                     = "llvm_global_succ"
+external global_end : llmodule -> (llmodule, llvalue) llrev_pos
+                    = "llvm_global_end"
+external global_pred : llvalue -> (llmodule, llvalue) llrev_pos
+                     = "llvm_global_pred"
+
+let rec iter_global_range f i e =
+  if i = e then () else
+  match i with
+  | At_end _ -> raise (Invalid_argument "Invalid global variable range.")
+  | Before bb ->
+      f bb;
+      iter_global_range f (global_succ bb) e
+
+let iter_globals f m =
+  iter_global_range f (global_begin m) (At_end m)
+
+let rec fold_left_global_range f init i e =
+  if i = e then init else
+  match i with
+  | At_end _ -> raise (Invalid_argument "Invalid global variable range.")
+  | Before bb -> fold_left_global_range f (f init bb) (global_succ bb) e
+
+let fold_left_globals f init m =
+  fold_left_global_range f init (global_begin m) (At_end m)
+
+let rec rev_iter_global_range f i e =
+  if i = e then () else
+  match i with
+  | At_start _ -> raise (Invalid_argument "Invalid global variable range.")
+  | After bb ->
+      f bb;
+      rev_iter_global_range f (global_pred bb) e
+
+let rev_iter_globals f m =
+  rev_iter_global_range f (global_end m) (At_start m)
+
+let rec fold_right_global_range f i e init =
+  if i = e then init else
+  match i with
+  | At_start _ -> raise (Invalid_argument "Invalid global variable range.")
+  | After bb -> fold_right_global_range f (global_pred bb) e (f bb init)
+
+let fold_right_globals f m init =
+  fold_right_global_range f (global_end m) (At_start m) init
 
 (*--... Operations on functions ............................................--*)
 external declare_function : string -> lltype -> llmodule -> llvalue
@@ -313,6 +369,54 @@ external set_function_call_conv : int -> llvalue -> unit
                                 = "llvm_set_function_call_conv"
 external collector : llvalue -> string option = "llvm_collector"
 external set_collector : string option -> llvalue -> unit = "llvm_set_collector"
+external function_begin : llmodule -> (llmodule, llvalue) llpos
+                        = "llvm_function_begin"
+external function_succ : llvalue -> (llmodule, llvalue) llpos
+                       = "llvm_function_succ"
+external function_end : llmodule -> (llmodule, llvalue) llrev_pos
+                      = "llvm_function_end"
+external function_pred : llvalue -> (llmodule, llvalue) llrev_pos
+                       = "llvm_function_pred"
+
+let rec iter_function_range f i e =
+  if i = e then () else
+  match i with
+  | At_end _ -> raise (Invalid_argument "Invalid function range.")
+  | Before fn ->
+      f fn;
+      iter_function_range f (function_succ fn) e
+
+let iter_functions f m =
+  iter_function_range f (function_begin m) (At_end m)
+
+let rec fold_left_function_range f init i e =
+  if i = e then init else
+  match i with
+  | At_end _ -> raise (Invalid_argument "Invalid function range.")
+  | Before fn -> fold_left_function_range f (f init fn) (function_succ fn) e
+
+let fold_left_functions f init m =
+  fold_left_function_range f init (function_begin m) (At_end m)
+
+let rec rev_iter_function_range f i e =
+  if i = e then () else
+  match i with
+  | At_start _ -> raise (Invalid_argument "Invalid function range.")
+  | After fn ->
+      f fn;
+      rev_iter_function_range f (function_pred fn) e
+
+let rev_iter_functions f m =
+  rev_iter_function_range f (function_end m) (At_start m)
+
+let rec fold_right_function_range f i e init =
+  if i = e then init else
+  match i with
+  | At_start _ -> raise (Invalid_argument "Invalid function range.")
+  | After fn -> fold_right_function_range f (function_pred fn) e (f fn init)
+
+let fold_right_functions f m init =
+  fold_right_function_range f (function_end m) (At_start m) init
 
 (* TODO: param attrs *)
 
@@ -320,6 +424,50 @@ external set_collector : string option -> llvalue -> unit = "llvm_set_collector"
 external params : llvalue -> llvalue array = "llvm_params"
 external param : llvalue -> int -> llvalue = "llvm_param"
 external param_parent : llvalue -> llvalue = "LLVMGetParamParent"
+external param_begin : llvalue -> (llvalue, llvalue) llpos = "llvm_param_begin"
+external param_succ : llvalue -> (llvalue, llvalue) llpos = "llvm_param_succ"
+external param_end : llvalue -> (llvalue, llvalue) llrev_pos = "llvm_param_end"
+external param_pred : llvalue -> (llvalue, llvalue) llrev_pos ="llvm_param_pred"
+
+let rec iter_param_range f i e =
+  if i = e then () else
+  match i with
+  | At_end _ -> raise (Invalid_argument "Invalid parameter range.")
+  | Before p ->
+      f p;
+      iter_param_range f (param_succ p) e
+
+let iter_params f fn =
+  iter_param_range f (param_begin fn) (At_end fn)
+
+let rec fold_left_param_range f init i e =
+  if i = e then init else
+  match i with
+  | At_end _ -> raise (Invalid_argument "Invalid parameter range.")
+  | Before p -> fold_left_param_range f (f init p) (param_succ p) e
+
+let fold_left_params f init fn =
+  fold_left_param_range f init (param_begin fn) (At_end fn)
+
+let rec rev_iter_param_range f i e =
+  if i = e then () else
+  match i with
+  | At_start _ -> raise (Invalid_argument "Invalid parameter range.")
+  | After p ->
+      f p;
+      rev_iter_param_range f (param_pred p) e
+
+let rev_iter_params f fn =
+  rev_iter_param_range f (param_end fn) (At_start fn)
+
+let rec fold_right_param_range f init i e =
+  if i = e then init else
+  match i with
+  | At_start _ -> raise (Invalid_argument "Invalid parameter range.")
+  | After p -> fold_right_param_range f (f p init) (param_pred p) e
+
+let fold_right_params f fn init =
+  fold_right_param_range f init (param_end fn) (At_start fn)
 
 (*--... Operations on basic blocks .........................................--*)
 external value_of_block : llbasicblock -> llvalue = "LLVMBasicBlockAsValue"
@@ -332,6 +480,54 @@ external delete_block : llbasicblock -> unit = "llvm_delete_block"
 external append_block : string -> llvalue -> llbasicblock = "llvm_append_block"
 external insert_block : string -> llbasicblock -> llbasicblock
                       = "llvm_insert_block"
+external block_begin : llvalue -> (llvalue, llbasicblock) llpos
+                     = "llvm_block_begin"
+external block_succ : llbasicblock -> (llvalue, llbasicblock) llpos
+                    = "llvm_block_succ"
+external block_end : llvalue -> (llvalue, llbasicblock) llrev_pos
+                   = "llvm_block_end"
+external block_pred : llbasicblock -> (llvalue, llbasicblock) llrev_pos
+                    = "llvm_block_pred"
+
+let rec iter_block_range f i e =
+  if i = e then () else
+  match i with
+  | At_end _ -> raise (Invalid_argument "Invalid block range.")
+  | Before bb ->
+      f bb;
+      iter_block_range f (block_succ bb) e
+
+let iter_blocks f fn =
+  iter_block_range f (block_begin fn) (At_end fn)
+
+let rec fold_left_block_range f init i e =
+  if i = e then init else
+  match i with
+  | At_end _ -> raise (Invalid_argument "Invalid block range.")
+  | Before bb -> fold_left_block_range f (f init bb) (block_succ bb) e
+
+let fold_left_blocks f init fn =
+  fold_left_block_range f init (block_begin fn) (At_end fn)
+
+let rec rev_iter_block_range f i e =
+  if i = e then () else
+  match i with
+  | At_start _ -> raise (Invalid_argument "Invalid block range.")
+  | After bb ->
+      f bb;
+      rev_iter_block_range f (block_pred bb) e
+
+let rev_iter_blocks f fn =
+  rev_iter_block_range f (block_end fn) (At_start fn)
+
+let rec fold_right_block_range f init i e =
+  if i = e then init else
+  match i with
+  | At_start _ -> raise (Invalid_argument "Invalid block range.")
+  | After bb -> fold_right_block_range f (f bb init) (block_pred bb) e
+
+let fold_right_blocks f fn init =
+  fold_right_block_range f init (block_end fn) (At_start fn)
 
 (*--... Operations on instructions .........................................--*)
 external instr_parent : llvalue -> llbasicblock = "LLVMGetInstructionParent"
