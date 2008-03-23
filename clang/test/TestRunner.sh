@@ -44,7 +44,7 @@ grep -q 'RUN:' $FILENAME || (
 CLANG="clang"
 if [ -n "$VG" ]; then
   rm -f $OUTPUT.vg.*
-  CLANG="valgrind --leak-check=full --quiet --log-file=$OUTPUT.vg $CLANG"
+  CLANG="valgrind --leak-check=full --quiet --log-file=$OUTPUT.vg.%p $CLANG"
 fi
 
 SCRIPT=$OUTPUT.script
