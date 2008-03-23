@@ -50,7 +50,7 @@ unsigned X86_32TargetMachine::getJITMatchQuality() {
 }
 
 unsigned X86_64TargetMachine::getJITMatchQuality() {
-#if defined(__x86_64__)
+#if defined(__x86_64__) || defined(_M_AMD64)
   return 10;
 #endif
   return 0;
