@@ -31,6 +31,7 @@
 #include "DAGISelEmitter.h"
 #include "SubtargetEmitter.h"
 #include "IntrinsicEmitter.h"
+#include "LLVMCCConfigurationEmitter.h"
 #include <algorithm>
 #include <cstdio>
 #include <fstream>
@@ -41,11 +42,12 @@ enum ActionType {
   PrintRecords,
   GenEmitter,
   GenRegisterEnums, GenRegister, GenRegisterHeader,
-  GenInstrEnums, GenInstrs, GenAsmWriter, 
+  GenInstrEnums, GenInstrs, GenAsmWriter,
   GenCallingConv,
   GenDAGISel,
   GenSubtarget,
   GenIntrinsic,
+  GenLLVMCCConf,
   PrintEnums
 };
 
@@ -76,6 +78,8 @@ namespace {
                                "Generate subtarget enumerations"),
                     clEnumValN(GenIntrinsic, "gen-intrinsic",
                                "Generate intrinsic information"),
+                    clEnumValN(GenLLVMCCConf, "gen-llvmcc",
+                               "Generate LLVMCC configuration library"),
                     clEnumValN(PrintEnums, "print-enums",
                                "Print enum values for a class"),
                     clEnumValEnd));
@@ -179,6 +183,9 @@ int main(int argc, char **argv) {
       break;
     case GenIntrinsic:
       IntrinsicEmitter(Records).run(*Out);
+      break;
+    case GenLLVMCCConf:
+      LLVMCCConfigurationEmitter(Records).run(*Out);
       break;
     case PrintEnums:
     {

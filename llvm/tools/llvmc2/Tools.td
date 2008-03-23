@@ -1,0 +1,87 @@
+//===- Tools.td - Tools description for the LLVMCC  --------*- tablegen -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file contains descriptions of the various build tools run by llvmcc.
+//
+//===----------------------------------------------------------------------===//
+
+// Open issue: should we use DAG lists in Tool specifications
+// or change to something like
+// def LLVMGccC : < Tool<
+// [ InLanguage<"c">,
+//   PrefixListOption<"Wl", [UnpackValues, PropertyName<Arg>, ...]>
+//  ...] ?
+// DAG lists look more aesthetically pleasing to me.
+
+def llvm_gcc_c : Tool<
+[(in_language "c"),
+ (out_language "llvm-assembler"),
+ (output_suffix "bc"),
+ (cmd_line "llvm-gcc -c $INFILE -o $OUTFILE -emit-llvm"),
+ (sink)
+]>;
+
+def llvm_gcc_cpp : Tool<
+[(in_language "c++"),
+ (out_language "llvm-assembler"),
+ (output_suffix "bc"),
+ (cmd_line "llvm-g++ -c $INFILE -o $OUTFILE -emit-llvm"),
+ (sink)
+]>;
+
+def opt : Tool<
+[(in_language "llvm-bitcode"),
+ (out_language "llvm-bitcode"),
+ (output_suffix "bc"),
+ (cmd_line "opt $INFILE -o $OUTFILE")
+]>;
+
+def llvm_as : Tool<
+[(in_language "llvm-assembler"),
+ (out_language "llvm-bitcode"),
+ (output_suffix "bc"),
+ (cmd_line "llvm-as $INFILE -o $OUTFILE")
+]>;
+
+def llc : Tool<
+[(in_language "llvm-bitcode"),
+ (out_language "assembler"),
+ (output_suffix "s"),
+ (cmd_line "llc $INFILE -o $OUTFILE")
+]>;
+
+def llvm_gcc_assembler : Tool<
+[(in_language "assembler"),
+ (out_language "object-code"),
+ (output_suffix "o"),
+ (cmd_line "llvm-gcc -c $INFILE -o $OUTFILE"),
+ (prefix_list_option "Wa", (unpack_values), (help "pass options to assembler"))
+]>;
+
+def llvm_gcc_linker : Tool<
+[(in_language "object-code"),
+ (out_language "executable"),
+ (output_suffix "out"),
+ (cmd_line "llvm-gcc $INFILE -o $OUTFILE"),
+ (join),
+ (prefix_list_option "L", (forward), (help "add a directory to link path")),
+ (prefix_list_option "l", (forward), (help "search a library when linking")),
+ (prefix_list_option "Wl", (unpack_values), (help "pass options to linker"))
+]>;
+
+// Language map
+
+def LanguageMap : LanguageMap<
+    [LangToSuffixes<"c++", ["cc", "cp", "cxx", "cpp", "CPP", "c++", "C"]>,
+     LangToSuffixes<"c", ["c"]>,
+     LangToSuffixes<"assembler", ["s"]>,
+     LangToSuffixes<"llvm-assembler", ["ll"]>,
+     LangToSuffixes<"llvm-bitcode", ["bc"]>,
+     LangToSuffixes<"object-code", ["o"]>,
+     LangToSuffixes<"executable", ["out"]>]>;
