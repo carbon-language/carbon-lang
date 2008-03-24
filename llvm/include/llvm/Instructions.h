@@ -21,6 +21,7 @@
 #include "llvm/InstrTypes.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/ParameterAttributes.h"
+#include "llvm/Support/MathExtras.h"
 
 namespace llvm {
 
@@ -39,7 +40,6 @@ class APInt;
 /// AllocaInst.
 ///
 class AllocationInst : public UnaryInstruction {
-  unsigned Alignment;
 protected:
   AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy, unsigned Align,
                  const std::string &Name = "", Instruction *InsertBefore = 0);
@@ -74,11 +74,8 @@ public:
   /// getAlignment - Return the alignment of the memory that is being allocated
   /// by the instruction.
   ///
-  unsigned getAlignment() const { return Alignment; }
-  void setAlignment(unsigned Align) {
-    assert((Align & (Align-1)) == 0 && "Alignment is not a power of 2!");
-    Alignment = Align;
-  }
+  unsigned getAlignment() const { return (1u << SubclassData) >> 1; }
+  void setAlignment(unsigned Align);
 
   virtual Instruction *clone() const = 0;
 

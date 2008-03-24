@@ -677,8 +677,8 @@ AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy,
                                unsigned Align, const std::string &Name,
                                Instruction *InsertBefore)
   : UnaryInstruction(PointerType::getUnqual(Ty), iTy, getAISize(ArraySize),
-                     InsertBefore), Alignment(Align) {
-  assert((Align & (Align-1)) == 0 && "Alignment is not a power of 2!");
+                     InsertBefore) {
+  setAlignment(Align);
   assert(Ty != Type::VoidTy && "Cannot allocate void!");
   setName(Name);
 }
@@ -687,14 +687,20 @@ AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy,
                                unsigned Align, const std::string &Name,
                                BasicBlock *InsertAtEnd)
   : UnaryInstruction(PointerType::getUnqual(Ty), iTy, getAISize(ArraySize),
-                     InsertAtEnd), Alignment(Align) {
-  assert((Align & (Align-1)) == 0 && "Alignment is not a power of 2!");
+                     InsertAtEnd) {
+  setAlignment(Align);
   assert(Ty != Type::VoidTy && "Cannot allocate void!");
   setName(Name);
 }
 
 // Out of line virtual method, so the vtable, etc has a home.
 AllocationInst::~AllocationInst() {
+}
+
+void AllocationInst::setAlignment(unsigned Align) {
+  assert((Align & (Align-1)) == 0 && "Alignment is not a power of 2!");
+  SubclassData = Log2_32(Align) + 1;
+  assert(getAlignment() == Align && "Alignment representation error!");
 }
 
 bool AllocationInst::isArrayAllocation() const {
