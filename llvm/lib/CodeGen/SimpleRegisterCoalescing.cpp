@@ -323,7 +323,8 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
     MachineInstr *UseMI = &*UI;
     ++UI;
     if (JoinedCopies.count(UseMI))
-      continue;
+      // It'll no longer be "joined" after the change.
+      JoinedCopies.erase(UseMI);
     unsigned UseIdx = li_->getInstructionIndex(UseMI);
     LiveInterval::iterator ULR = IntA.FindLiveRangeContaining(UseIdx);
     if (ULR->valno != AValNo)
