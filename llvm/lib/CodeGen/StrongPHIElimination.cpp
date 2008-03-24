@@ -790,8 +790,6 @@ static unsigned ComputeUltimateVN(VNInfo *VNI,
   return ThisValNoAssignments[VN] = UltimateVN;
 }
 
-#include <iostream>
-
 void StrongPHIElimination::mergeLiveIntervals(unsigned primary,
                                               unsigned secondary,
                                               unsigned secondaryVN) {
