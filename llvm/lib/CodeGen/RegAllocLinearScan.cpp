@@ -886,6 +886,7 @@ unsigned RALinScan::getFreePhysReg(LiveInterval *cur) {
   // Scan for the first available register.
   TargetRegisterClass::iterator I = RC->allocation_order_begin(*mf_);
   TargetRegisterClass::iterator E = RC->allocation_order_end(*mf_);
+  assert(I != E && "No allocatable register in this register class!");
   for (; I != E; ++I)
     if (prt_->isRegAvail(*I)) {
       FreeReg = *I;
