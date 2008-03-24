@@ -32,6 +32,7 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Target/TargetData.h"
@@ -41,6 +42,12 @@ STATISTIC(NumGVNInstr, "Number of instructions deleted");
 STATISTIC(NumGVNLoad, "Number of loads deleted");
 STATISTIC(NumMemSetInfer, "Number of memsets inferred");
 
+namespace {
+  cl::opt<bool>
+  FormMemSet("form-memset-from-stores",
+             cl::desc("Transform straight-line stores to memsets"),
+             cl::init(false), cl::Hidden);
+}
 
 //===----------------------------------------------------------------------===//
 //                         ValueTable Class
@@ -1102,6 +1109,7 @@ static bool IsPointerAtOffset(Value *Ptr1, Value *Ptr2, uint64_t Offset,
 /// neighboring locations of memory.  If it sees enough consequtive ones
 /// (currently 4) it attempts to merge them together into a memcpy/memset.
 bool GVN::processStore(StoreInst *SI, SmallVectorImpl<Instruction*> &toErase) {
+  if (!FormMemSet) return false;
   if (SI->isVolatile()) return false;
   
   // There are two cases that are interesting for this code to handle: memcpy
