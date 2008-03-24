@@ -2119,8 +2119,10 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 
     // EXTRACT_ELEMENT of a constant int is also very common.
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(N1)) {
-      unsigned Shift = MVT::getSizeInBits(VT) * N2C->getValue();
-      return getConstant(C->getValue() >> Shift, VT);
+      unsigned ElementSize = MVT::getSizeInBits(VT);
+      unsigned Shift = ElementSize * N2C->getValue();
+      APInt ShiftedVal = C->getAPIntValue().lshr(Shift);
+      return getConstant(ShiftedVal.trunc(ElementSize), VT);
     }
     break;
   case ISD::EXTRACT_SUBVECTOR:
