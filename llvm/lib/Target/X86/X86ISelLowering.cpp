@@ -699,7 +699,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v16i8, Custom);
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v8i16, Custom);
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v4i32, Legal);
-    setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v4f32, Legal);
+    setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v4f32, Custom);
 
     if (Subtarget->is64Bit()) {
       setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v2i64, Legal);
@@ -3718,6 +3718,19 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT_SSE4(SDOperand Op,
     SDOperand Assert  = DAG.getNode(ISD::AssertZext, MVT::i32, Extract,
                                     DAG.getValueType(VT));
     return DAG.getNode(ISD::TRUNCATE, VT, Assert);
+  } else if (VT == MVT::f32) {
+    // EXTRACTPS outputs to a GPR32 register which will require a movd to copy
+    // the result back to FR32 register. It's only worth matching if the
+    // result has a single use which is a store.
+    if (!Op.hasOneUse())
+      return SDOperand();
+    SDNode *User = *Op.Val->use_begin();
+    if (User->getOpcode() != ISD::STORE)
+      return SDOperand();
+    SDOperand Extract = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, MVT::i32,
+                    DAG.getNode(ISD::BIT_CONVERT, MVT::v4i32, Op.getOperand(0)),
+                                    Op.getOperand(1));
+    return DAG.getNode(ISD::BIT_CONVERT, MVT::f32, Extract);
   }
   return SDOperand();
 }
@@ -3728,8 +3741,11 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
   if (!isa<ConstantSDNode>(Op.getOperand(1)))
     return SDOperand();
 
-  if (Subtarget->hasSSE41())
-    return LowerEXTRACT_VECTOR_ELT_SSE4(Op, DAG);
+  if (Subtarget->hasSSE41()) {
+    SDOperand Res = LowerEXTRACT_VECTOR_ELT_SSE4(Op, DAG);
+    if (Res.Val)
+      return Res;
+  }
 
   MVT::ValueType VT = Op.getValueType();
   // TODO: handle v16i8.

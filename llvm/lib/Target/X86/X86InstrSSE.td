@@ -3380,19 +3380,22 @@ multiclass SS41I_extract32<bits<8> opc, string OpcodeStr> {
 defm PEXTRD      : SS41I_extract32<0x16, "pextrd">;
 
 
-/// SS41I_extractf32 - SSE 4.1 extract 32 bits to fp reg or memory destination
+/// SS41I_extractf32 - SSE 4.1 extract 32 bits fp value to int reg or memory
+/// destination
 multiclass SS41I_extractf32<bits<8> opc, string OpcodeStr> {
-  def rr : SS4AIi8<opc, MRMSrcReg, (outs FR32:$dst),
+  // Not worth matching to rr form of extractps since the result is in GPR32.
+  def rr : SS4AIi8<opc, MRMSrcReg, (outs GR32:$dst),
                  (ins VR128:$src1, i32i8imm:$src2),
                  !strconcat(OpcodeStr, 
                   "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                 [(set FR32:$dst,
-                  (extractelt (v4f32 VR128:$src1), imm:$src2))]>, OpSize;
+                 [/*(set GR32:$dst,
+                  (extractelt (bc_v4i32 (v4f32 VR128:$src1)), imm:$src2))*/]>,
+           OpSize;
   def mr : SS4AIi8<opc, MRMDestMem, (outs), 
                  (ins f32mem:$dst, VR128:$src1, i32i8imm:$src2),
                  !strconcat(OpcodeStr, 
                   "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                 [(store (extractelt (v4f32 VR128:$src1), imm:$src2),
+                 [(store (extractelt (bc_v4i32 (v4f32 VR128:$src1)), imm:$src2),
                           addr:$dst)]>, OpSize;
 }
 
