@@ -136,7 +136,8 @@ namespace {
                          std::vector<StrongPHIElimination::DomForestNode*>& DF,
                          std::vector<std::pair<unsigned, unsigned> >& locals);
     void ScheduleCopies(MachineBasicBlock* MBB, std::set<unsigned>& pushed);
-    void InsertCopies(MachineBasicBlock* MBB, std::set<MachineBasicBlock*>& v);
+    void InsertCopies(MachineBasicBlock* MBB,
+                      SmallPtrSet<MachineBasicBlock*, 16>& v);
     void mergeLiveIntervals(unsigned primary, unsigned secondary, unsigned VN);
   };
 
@@ -423,7 +424,7 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
     // is refinded over the course of this function.  UnionedBlocks is the set
     // of corresponding MBBs.
     std::map<unsigned, unsigned> PHIUnion;
-    std::set<MachineBasicBlock*> UnionedBlocks;
+    SmallPtrSet<MachineBasicBlock*, 8> UnionedBlocks;
   
     // Iterate over the operands of the PHI node
     for (int i = P->getNumOperands() - 1; i >= 2; i-=2) {
@@ -708,7 +709,7 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
 
 /// InsertCopies - insert copies into MBB and all of its successors
 void StrongPHIElimination::InsertCopies(MachineBasicBlock* MBB,
-                                        std::set<MachineBasicBlock*>& visited) {
+                                 SmallPtrSet<MachineBasicBlock*, 16>& visited) {
   visited.insert(MBB);
   
   std::set<unsigned> pushed;
@@ -789,9 +790,11 @@ static unsigned ComputeUltimateVN(VNInfo *VNI,
   return ThisValNoAssignments[VN] = UltimateVN;
 }
 
+#include <iostream>
+
 void StrongPHIElimination::mergeLiveIntervals(unsigned primary,
-                                              unsigned secondary, unsigned secondaryVN) {
-  unsigned primaryVN = PhiValueNumber[primary];
+                                              unsigned secondary,
+                                              unsigned secondaryVN) {
   
   LiveIntervals& LI = getAnalysis<LiveIntervals>();
   LiveInterval& LHS = LI.getOrCreateInterval(primary);
@@ -804,44 +807,6 @@ void StrongPHIElimination::mergeLiveIntervals(unsigned primary,
   DenseMap<VNInfo*, VNInfo*> LHSValsDefinedFromRHS;
   DenseMap<VNInfo*, VNInfo*> RHSValsDefinedFromLHS;
   SmallVector<VNInfo*, 16> NewVNInfo;
-  
-  LHSValNoAssignments.resize(LHS.getNumValNums(), -1);
-  RHSValNoAssignments.resize(RHS.getNumValNums(), -1);
-  NewVNInfo.resize(LHS.getNumValNums(), NULL);
-  
-  // Loop over the value numbers of the LHS, seeing if any are defined from
-  // the RHS.
-  for (LiveInterval::vni_iterator I = LHS.vni_begin(), E = LHS.vni_end();
-       I != E; ++E) {
-    VNInfo *VNI = *I;
-    if (VNI->def == ~1U || VNI->copy == 0)  // Src not defined by a copy?
-      continue;
-    
-    // DstReg is known to be a register in the LHS interval.  If the src is
-    // from the RHS interval, we can use its value #.
-    if (LI.getVNInfoSourceReg(VNI) != RHS.reg)
-      continue;
-    
-    // Figure out the value # from the RHS.
-    LHSValsDefinedFromRHS[VNI]=RHS.getLiveRangeContaining(VNI->def-1)->valno;
-  }
-  
-  // Loop over the value numbers of the RHS, seeing if any are defined from
-  // the LHS.
-  for (LiveInterval::vni_iterator i = RHS.vni_begin(), e = RHS.vni_end();
-       i != e; ++i) {
-    VNInfo *VNI = *i;
-    if (VNI->def == ~1U || VNI->copy == 0)  // Src not defined by a copy?
-      continue;
-    
-    // DstReg is known to be a register in the RHS interval.  If the src is
-    // from the LHS interval, we can use its value #.
-    if (LI.getVNInfoSourceReg(VNI) != LHS.reg)
-      continue;
-    
-    // Figure out the value # from the LHS.
-    RHSValsDefinedFromLHS[VNI]=LHS.getLiveRangeContaining(VNI->def-1)->valno;
-  }
   
   LHSValNoAssignments.resize(LHS.getNumValNums(), -1);
   RHSValNoAssignments.resize(RHS.getNumValNums(), -1);
@@ -898,7 +863,8 @@ void StrongPHIElimination::mergeLiveIntervals(unsigned primary,
 
   // Use the VNInfo we collected earlier to ensure that the phi copy is
   // merged correctly.
-  RHSValNoAssignments[secondaryVN] = primaryVN;
+  // FIXME: This is not working correctly yet.
+  // RHSValNoAssignments[secondaryVN] = primaryVN;
 
   // If we get here, we know that we can coalesce the live ranges.  Ask the
   // intervals to coalesce themselves now.
@@ -906,8 +872,10 @@ void StrongPHIElimination::mergeLiveIntervals(unsigned primary,
       TargetRegisterInfo::isVirtualRegister(LHS.reg)) ||
       TargetRegisterInfo::isPhysicalRegister(RHS.reg)) {
     RHS.join(LHS, &RHSValNoAssignments[0], &LHSValNoAssignments[0], NewVNInfo);
+    LI.removeInterval(primary);
   } else {
     LHS.join(RHS, &LHSValNoAssignments[0], &RHSValNoAssignments[0], NewVNInfo);
+    LI.removeInterval(secondary);
   }
 }
 
@@ -923,7 +891,7 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
   
   // Insert copies
   // FIXME: This process should probably preserve LiveVariables
-  std::set<MachineBasicBlock*> visited;
+  SmallPtrSet<MachineBasicBlock*, 16> visited;
   InsertCopies(Fn.begin(), visited);
   
   // Perform renaming
@@ -947,9 +915,13 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
         phis.push_back(BI);
   }
   
+  LiveIntervals& LI = getAnalysis<LiveIntervals>();
+  
   for (std::vector<MachineInstr*>::iterator I = phis.begin(), E = phis.end();
-       I != E; ++I)
+       I != E; ++I) {
+    LI.RemoveMachineInstrFromMaps(*I);
     (*I)->eraseFromParent();
+  }
   
   return false;
 }
