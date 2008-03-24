@@ -1,13 +1,13 @@
 Tutorial - Writing LLVMCC Configuration files
 =============================================
 
-LLVMCC is a generic compiler driver(just like ``gcc``), designed to be
+LLVMCC is a generic compiler driver (just like ``gcc``), designed to be
 customizable and extensible. Its job is essentially to transform a set
 of input files into a set of targets, depending on configuration rules
 and user options. This tutorial describes how one can write
 configuration files for ``llvmcc``.
 
-Since LLVMCC uses TableGen [1]_ as the language of its configuration
+Because LLVMCC uses TableGen [1]_ as the language of its configuration
 files, you need to be familiar with it.
 
 Describing a toolchain
