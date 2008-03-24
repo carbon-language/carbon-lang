@@ -147,14 +147,16 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID) {
        << " .line { padding-left: 1ex; border-left: 3px solid #ccc }\n"
        << " .line { white-space: pre }\n"
        << " .msg { background-color:#ff8000; color:#000000 }\n"
+       << " .msg { -webkit-box-shadow:1px 1px 7px #000 }\n"
+       << " .msg { -webkit-border-radius:5px }\n"
        << " .msg { border: solid 1px #944a00 }\n"
        << " .msg { font-family:Helvetica, sans-serif; font-size: smaller }\n"
        << " .msg { font-weight: bold }\n"
        << " .msg { float:left }\n"
        << " .msg { padding:0.5em 1ex 0.5em 1ex }\n"
        << " .msg { margin-top:10px; margin-bottom:10px }\n"
-       << " .mrange { color:#ff8000 }\n"
-       << " .mrange { border-bottom: 1px dotted #ff8000 }\n"
+       << " .mrange { background-color:#ffcc66 }\n"
+       << " .mrange { border-bottom: 1px solid #ff8000 }\n"
        << "</style>\n</head>\n<body>";
     
     R.InsertStrBefore(StartLoc, os.str());
