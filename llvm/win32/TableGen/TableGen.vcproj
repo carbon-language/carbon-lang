@@ -408,6 +408,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\utils\TableGen\LLVMCCConfigurationEmitter.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\utils\TableGen\Record.cpp"
 				>
 			</File>
