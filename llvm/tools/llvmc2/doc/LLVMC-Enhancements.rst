@@ -7,56 +7,55 @@ making it more configurable and useful.
 Motivation
 ==========
 
-As it stands, current version of LLVMC does not meet its stated goals
-of configurability and extensibility and is therefore not used
-much. The need for enhancements in LLVMC is also reflected in [1]_. The
+As it stands, the current version of LLVMC does not meet its stated goals
+of configurability and extensibility, and is therefore not used
+much. The need for enhancements to LLVMC is also reflected in [1]_. The
 proposed rewrite will fix the aforementioned deficiences and provide
 an extensible, future-proof solution.
 
 Design
 ======
 
-A compiler driver's job is essentially to find a way how to transform
-a set of input files into a set of targets, depending on the
-user-provided options. Since several ways of transformation can exist
-potentially, it's natural to use a directed graph to represent all of
-them. In this graph, nodes are tools (for example, ``gcc -S`` is a tool
-that generates assembly from C language files) and edges between them
-mean that the output of one tool can be given as input to another (as
-in ``gcc -S -o - file.c | as``). We'll call this graph the compilation
-graph.
+A compiler driver's job is essentially to find a way to transform a set
+of input files into a set of targets, depending on the user-provided
+options. Since several methods of transformation can potentially exist,
+it's natural to use a directed graph to represent all of them. In this
+graph, nodes are tools -- e.g.,  ``gcc -S`` is a tool that generates
+assembly from C language files -- and edges between the nodes indicate
+that the output of one tool can be given as input to another -- i.e.,
+``gcc -S -o - file.c | as``. We'll call this graph the compilation graph.
 
 The proposed design revolves around the compilation graph and the
 following core abstractions:
 
 - Target - An (intermediate) compilation target.
 
-- Action - A shell command template that represents basic compilation
-  transformation(example: ``gcc -S $INPUT_FILE -o $OUTPUT_FILE``).
+- Action - A shell command template that represents a basic compilation
+  transformation -- example: ``gcc -S $INPUT_FILE -o $OUTPUT_FILE``.
 
 - Tool - Encapsulates information about a concrete tool used in the
-  compilation process, produces Actions. Operation depends on
+  compilation process, produces Actions. Its operation depends on
   command-line options provided by the user.
 
-- GraphBuilder - Constructs the compilation graph, operation depends
-  on command-line options.
+- GraphBuilder - Constructs the compilation graph. Its operation
+  depends on command-line options.
 
 - GraphTraverser - Traverses the compilation graph and constructs a
-  sequence of Actions needed to build the target file, operation
+  sequence of Actions needed to build the target file. Its operation
   depends on command-line options.
 
 A high-level view of the compilation process:
 
   1. Configuration libraries (see below) are loaded in and the
-  compilation graph is constructed from the tool descriptions.
+     compilation graph is constructed from the tool descriptions.
 
   2. Information about possible options is gathered from (the nodes of)
-  the compilation graph.
+     the compilation graph.
 
   3. Options are parsed based on data gathered in step 2.
 
   4. A sequence of Actions needed to build the target is constructed
-  using the compilation graph and provided options.
+     using the compilation graph and provided options.
 
   5. The resulting action sequence is executed.
 
@@ -65,8 +64,8 @@ Extensibility
 
 To make this design extensible, TableGen [2]_ will be used for
 automatic generation of the Tool classes. Users wanting to customize
-LLVMC will need to write a configuration library consisting of a set
-of TableGen descriptions of compilation tools plus a number of hooks
+LLVMC need to write a configuration library consisting of a set of
+TableGen descriptions of compilation tools plus a number of hooks
 that influence compilation graph construction and traversal. LLVMC
 will have the ability to load user configuration libraries at runtime;
 in fact, its own basic functionality will be implemented as a
@@ -76,7 +75,7 @@ TableGen specification example
 ------------------------------
 
 This small example specifies a Tool that converts C source to object
-files. Note that it is only a mock-up of inteded functionality, not a
+files. Note that it is only a mock-up of intended functionality, not a
 final specification::
 
     def GCC : Tool<
@@ -192,15 +191,15 @@ mock-up)::
 Option handling
 ===============
 
-Since one of the main tasks of the compiler driver is to correctly
+Because one of the main tasks of the compiler driver is to correctly
 handle user-provided options, it is important to define this process
-in exact way. The intent of the proposed scheme is to function as a
-drop-in replacement for GCC.
+in an exact way. The intent of the proposed scheme is to function as
+a drop-in replacement for GCC.
 
 Option syntax
 -------------
 
-Option syntax is specified by the following formal grammar::
+The option syntax is specified by the following formal grammar::
 
         <command-line>      ::=  <option>*
         <option>            ::=  <positional-option> | <named-option>
@@ -211,20 +210,20 @@ Option syntax is specified by the following formal grammar::
         <option-argument>   ::=  <string>
 
 This roughly corresponds to the GCC option syntax. Note that grouping
-of short options(as in ``ls -la``) is forbidden.
+of short options (as in ``ls -la``) is forbidden.
 
 Example::
 
         llvmc -O3 -Wa,-foo,-bar -pedantic -std=c++0x a.c b.c c.c
 
-Option arguments can also have special forms: for example, an argument
+Option arguments can also have special forms. For example, an argument
 can be a comma-separated list (like in -Wa,-foo,-bar). In such cases,
 it's up to the option handler to parse the argument.
 
 Option semantics
 ----------------
 
-According to their meaning, options are classified into following
+According to their meaning, options are classified into the following
 categories:
 
 - Global options - Options that influence compilation graph
@@ -233,19 +232,19 @@ categories:
 - Local options - Options that influence one or several Actions in
   the generated action sequence. Example: -O3 (turn on optimization).
 
-- Prefix options - Options that influence meaning of the following
+- Prefix options - Options that influence the meaning of the following
   command-line arguments. Example: -x language (specify language for
   the input files explicitly). Prefix options can be local or global.
 
-- Built-in options - Options that are hard-coded into
+- Built-in options - Options that are hard-coded into the
   driver. Examples: --help, -o file/-pipe (redirect output). Can be
   local or global.
 
 Naming
 ======
 
-Since the compiler driver, as a single point of access to the LLVM
-tool set, is a very often used tool, it would be desirable to make its name
+Because the compiler driver, as a single point of access to the LLVM
+tool set, is a frequently used tool, it is desirable to make its name
 as short and easy to type as possible. Some possible names are 'llcc' or
 'lcc', by analogy with gcc.
 
