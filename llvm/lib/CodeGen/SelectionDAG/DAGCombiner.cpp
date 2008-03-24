@@ -770,7 +770,7 @@ SDOperand DAGCombiner::combine(SDNode *N) {
       SDOperand Ops[] = { N1, N0 };
       SDNode *CSENode = DAG.getNodeIfExists(N->getOpcode(), N->getVTList(),
                                             Ops, 2);
-      if (CSENode && CSENode->use_size() <= N->use_size())
+      if (CSENode)
         return SDOperand(CSENode, 0);
     }
   }
