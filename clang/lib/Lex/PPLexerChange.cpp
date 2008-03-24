@@ -86,7 +86,7 @@ Token Preprocessor::LookAhead(unsigned N) {
   // left, we can just grow it.  This means we only have to do the new 1/16th as
   // often.
   
-  Token *LookaheadTokens = new Token[N];
+  Token *LookaheadTokens = new Token[N+1];
 
   // Read N+1 tokens into LookaheadTokens.  After this loop, Tok is the token
   // to return.
