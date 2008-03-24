@@ -353,10 +353,8 @@ void RewriteTest::Initialize(ASTContext &context) {
   S += "extern int __CFConstantStringClassReference[];\n";
   S += "#define __NSCONSTANTSTRINGIMPL\n";
   S += "#endif\n";
-#if 0
   if (LangOpts.Microsoft) 
     S += "#define __attribute__(X)\n";
-#endif
   if (IsHeader) {
     // insert the whole string when rewriting a header file
     InsertText(SourceLocation::getFileLoc(MainFileID, 0), S.c_str(), S.size());

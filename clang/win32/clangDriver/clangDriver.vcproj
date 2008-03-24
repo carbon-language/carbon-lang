@@ -198,6 +198,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Driver\HTMLPrint.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Driver\PrintParserCallbacks.cpp"
 				>
 			</File>
