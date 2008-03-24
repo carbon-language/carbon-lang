@@ -67,53 +67,6 @@ llvm::sys::Memory::AllocateRWX(unsigned NumBytes, const MemoryBlock* NearBlock,
   return result;
 }
 
-/// AllocateRWMemory - Allocate a slab of memory with read/write permissions. 
-/// This memory needs to have executable permissions set before it can be used
-/// to execute JIT'ed code.
-llvm::sys::MemoryBlock 
-llvm::sys::Memory::AllocateRW(unsigned NumBytes, const MemoryBlock* NearBlock,
-                               std::string *ErrMsg) {
-  if (NumBytes == 0) return MemoryBlock();
-
-  long pageSize = Process::GetPageSize();
-  unsigned NumPages = (NumBytes+pageSize-1)/pageSize;
-
-  int fd = -1;
-#ifdef NEED_DEV_ZERO_FOR_MMAP
-  static int zero_fd = open("/dev/zero", O_RDWR);
-  if (zero_fd == -1) {
-    MakeErrMsg(ErrMsg, "Can't open /dev/zero device");
-    return MemoryBlock();
-  }
-  fd = zero_fd;
-#endif
-
-  int flags = MAP_PRIVATE |
-#ifdef HAVE_MMAP_ANONYMOUS
-  MAP_ANONYMOUS
-#else
-  MAP_ANON
-#endif
-  ;
-
-  void* start = NearBlock ? (unsigned char*)NearBlock->base() + 
-                            NearBlock->size() : 0;
-
-  void *pa = ::mmap(start, pageSize*NumPages, PROT_READ|PROT_WRITE,
-                    flags, fd, 0);
-  if (pa == MAP_FAILED) {
-    if (NearBlock) //Try again without a near hint
-      return AllocateRW(NumBytes, 0);
-
-    MakeErrMsg(ErrMsg, "Can't allocate RWX Memory");
-    return MemoryBlock();
-  }
-  MemoryBlock result;
-  result.Address = pa;
-  result.Size = NumPages*pageSize;
-  return result;
-}
-
 bool llvm::sys::Memory::ReleaseRWX(MemoryBlock &M, std::string *ErrMsg) {
   if (M.Address == 0 || M.Size == 0) return false;
   if (0 != ::munmap(M.Address, M.Size))

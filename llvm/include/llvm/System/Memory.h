@@ -57,18 +57,6 @@ namespace sys {
                                      const MemoryBlock *NearBlock,
                                      std::string *ErrMsg = 0);
 
-      /// This method allocates a block of Read/Write memory.  This memory
-      /// needs to have executable permissions set before it can be used
-      /// to execute JIT'ed code.
-      ///
-      /// On success, this returns a non-null memory block, otherwise it returns
-      /// a null memory block and fills in *ErrMsg.
-      /// 
-      /// @brief Allocate Read/Write/Execute memory.
-      static MemoryBlock AllocateRW(unsigned NumBytes,
-                                    const MemoryBlock *NearBlock,
-                                    std::string *ErrMsg = 0);
-
       /// This method releases a block of Read/Write/Execute memory that was
       /// allocated with the AllocateRWX method. It should not be used to
       /// release any memory block allocated any other way.
@@ -78,7 +66,6 @@ namespace sys {
       /// @throws std::string if an error occurred.
       /// @brief Release Read/Write/Execute memory.
       static bool ReleaseRWX(MemoryBlock &block, std::string *ErrMsg = 0);
-      
     /// @}
   };
 }

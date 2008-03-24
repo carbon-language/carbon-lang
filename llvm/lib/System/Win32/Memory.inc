@@ -46,29 +46,6 @@ MemoryBlock Memory::AllocateRWX(unsigned NumBytes,
   return result;
 }
 
-MemoryBlock Memory::AllocateRW(unsigned NumBytes,
-                                const MemoryBlock *NearBlock,
-                                std::string *ErrMsg) {
-  if (NumBytes == 0) return MemoryBlock();
-
-  static const long pageSize = Process::GetPageSize();
-  unsigned NumPages = (NumBytes+pageSize-1)/pageSize;
-
-  //FIXME: support NearBlock if ever needed on Win64.
-
-  void *pa = VirtualAlloc(NULL, NumPages*pageSize, MEM_COMMIT,
-                  PAGE_READWRITE);
-  if (pa == NULL) {
-    MakeErrMsg(ErrMsg, "Can't allocate RWX Memory: ");
-    return MemoryBlock();
-  }
-
-  MemoryBlock result;
-  result.Address = pa;
-  result.Size = NumPages*pageSize;
-  return result;
-}
-
 bool Memory::ReleaseRWX(MemoryBlock &M, std::string *ErrMsg) {
   if (M.Address == 0 || M.Size == 0) return false;
   if (!VirtualFree(M.Address, 0, MEM_RELEASE))
