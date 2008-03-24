@@ -125,13 +125,14 @@ bool
 ReduceCrashingGlobalVariables::TestGlobalVariables(
                               std::vector<GlobalVariable*>& GVs) {
   // Clone the program to try hacking it apart...
-  Module *M = CloneModule(BD.getProgram());
+  DenseMap<const Value*, Value*> ValueMap;
+  Module *M = CloneModule(BD.getProgram(), ValueMap);
 
   // Convert list to set for fast lookup...
   std::set<GlobalVariable*> GVSet;
 
   for (unsigned i = 0, e = GVs.size(); i != e; ++i) {
-    GlobalVariable* CMGV = M->getNamedGlobal(GVs[i]->getName());
+    GlobalVariable* CMGV = cast<GlobalVariable>(ValueMap[GVs[i]]);
     assert(CMGV && "Global Variable not in module?!");
     GVSet.insert(CMGV);
   }
