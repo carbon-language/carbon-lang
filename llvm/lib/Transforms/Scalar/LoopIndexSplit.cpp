@@ -1665,8 +1665,9 @@ void LoopIndexSplit::updatePHINodes(BasicBlock *ExitBB, BasicBlock *Latch,
             break;
           }
 
-      assert (NewV && "Unable to find new incoming value for exit block PHI");
-      PN->addIncoming(NewV, Header);
+      // Add incoming value from header only if PN has any use inside the loop.
+      if (NewV)
+        PN->addIncoming(NewV, Header);
 
     } else if (Instruction *PHI = dyn_cast<Instruction>(V)) {
       // If this instruction is IVIncrement then IV is new incoming value 
