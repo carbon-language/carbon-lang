@@ -236,6 +236,8 @@ namespace {
     Instruction *visitCallSite(CallSite CS);
     bool transformConstExprCastCall(CallSite CS);
     Instruction *transformCallThroughTrampoline(CallSite CS);
+    Instruction *transformZExtICmp(ICmpInst *ICI, Instruction &CI,
+                                   bool DoXform = true);
 
   public:
     // InsertNewInstBefore - insert an instruction New before instruction Old
@@ -4363,18 +4365,22 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   if (CastInst *Op0C = dyn_cast<CastInst>(Op0)) {
     if (CastInst *Op1C = dyn_cast<CastInst>(Op1))
       if (Op0C->getOpcode() == Op1C->getOpcode()) {// same cast kind ?
-        const Type *SrcTy = Op0C->getOperand(0)->getType();
-        if (SrcTy == Op1C->getOperand(0)->getType() && SrcTy->isInteger() &&
-            // Only do this if the casts both really cause code to be generated.
-            ValueRequiresCast(Op0C->getOpcode(), Op0C->getOperand(0), 
-                              I.getType(), TD) &&
-            ValueRequiresCast(Op1C->getOpcode(), Op1C->getOperand(0), 
-                              I.getType(), TD)) {
-          Instruction *NewOp = BinaryOperator::createOr(Op0C->getOperand(0),
-                                                        Op1C->getOperand(0),
-                                                        I.getName());
-          InsertNewInstBefore(NewOp, I);
-          return CastInst::create(Op0C->getOpcode(), NewOp, I.getType());
+        if (!isa<ICmpInst>(Op0C->getOperand(0)) ||
+            !isa<ICmpInst>(Op1C->getOperand(0))) {
+          const Type *SrcTy = Op0C->getOperand(0)->getType();
+          if (SrcTy == Op1C->getOperand(0)->getType() && SrcTy->isInteger() &&
+              // Only do this if the casts both really cause code to be
+              // generated.
+              ValueRequiresCast(Op0C->getOpcode(), Op0C->getOperand(0), 
+                                I.getType(), TD) &&
+              ValueRequiresCast(Op1C->getOpcode(), Op1C->getOperand(0), 
+                                I.getType(), TD)) {
+            Instruction *NewOp = BinaryOperator::createOr(Op0C->getOperand(0),
+                                                          Op1C->getOperand(0),
+                                                          I.getName());
+            InsertNewInstBefore(NewOp, I);
+            return CastInst::create(Op0C->getOpcode(), NewOp, I.getType());
+          }
         }
       }
   }
@@ -7188,6 +7194,101 @@ Instruction *InstCombiner::visitTrunc(TruncInst &CI) {
   return 0;
 }
 
+/// transformZExtICmp - Transform (zext icmp) to bitwise / integer operations
+/// in order to eliminate the icmp.
+Instruction *InstCombiner::transformZExtICmp(ICmpInst *ICI, Instruction &CI,
+                                             bool DoXform) {
+  // If we are just checking for a icmp eq of a single bit and zext'ing it
+  // to an integer, then shift the bit to the appropriate place and then
+  // cast to integer to avoid the comparison.
+  if (ConstantInt *Op1C = dyn_cast<ConstantInt>(ICI->getOperand(1))) {
+    const APInt &Op1CV = Op1C->getValue();
+      
+    // zext (x <s  0) to i32 --> x>>u31      true if signbit set.
+    // zext (x >s -1) to i32 --> (x>>u31)^1  true if signbit clear.
+    if ((ICI->getPredicate() == ICmpInst::ICMP_SLT && Op1CV == 0) ||
+        (ICI->getPredicate() == ICmpInst::ICMP_SGT &&Op1CV.isAllOnesValue())) {
+      if (!DoXform) return ICI;
+
+      Value *In = ICI->getOperand(0);
+      Value *Sh = ConstantInt::get(In->getType(),
+                                   In->getType()->getPrimitiveSizeInBits()-1);
+      In = InsertNewInstBefore(BinaryOperator::createLShr(In, Sh,
+                                                        In->getName()+".lobit"),
+                               CI);
+      if (In->getType() != CI.getType())
+        In = CastInst::createIntegerCast(In, CI.getType(),
+                                         false/*ZExt*/, "tmp", &CI);
+
+      if (ICI->getPredicate() == ICmpInst::ICMP_SGT) {
+        Constant *One = ConstantInt::get(In->getType(), 1);
+        In = InsertNewInstBefore(BinaryOperator::createXor(In, One,
+                                                         In->getName()+".not"),
+                                 CI);
+      }
+
+      return ReplaceInstUsesWith(CI, In);
+    }
+      
+      
+      
+    // zext (X == 0) to i32 --> X^1      iff X has only the low bit set.
+    // zext (X == 0) to i32 --> (X>>1)^1 iff X has only the 2nd bit set.
+    // zext (X == 1) to i32 --> X        iff X has only the low bit set.
+    // zext (X == 2) to i32 --> X>>1     iff X has only the 2nd bit set.
+    // zext (X != 0) to i32 --> X        iff X has only the low bit set.
+    // zext (X != 0) to i32 --> X>>1     iff X has only the 2nd bit set.
+    // zext (X != 1) to i32 --> X^1      iff X has only the low bit set.
+    // zext (X != 2) to i32 --> (X>>1)^1 iff X has only the 2nd bit set.
+    if ((Op1CV == 0 || Op1CV.isPowerOf2()) && 
+        // This only works for EQ and NE
+        ICI->isEquality()) {
+      // If Op1C some other power of two, convert:
+      uint32_t BitWidth = Op1C->getType()->getBitWidth();
+      APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
+      APInt TypeMask(APInt::getAllOnesValue(BitWidth));
+      ComputeMaskedBits(ICI->getOperand(0), TypeMask, KnownZero, KnownOne);
+        
+      APInt KnownZeroMask(~KnownZero);
+      if (KnownZeroMask.isPowerOf2()) { // Exactly 1 possible 1?
+        if (!DoXform) return ICI;
+
+        bool isNE = ICI->getPredicate() == ICmpInst::ICMP_NE;
+        if (Op1CV != 0 && (Op1CV != KnownZeroMask)) {
+          // (X&4) == 2 --> false
+          // (X&4) != 2 --> true
+          Constant *Res = ConstantInt::get(Type::Int1Ty, isNE);
+          Res = ConstantExpr::getZExt(Res, CI.getType());
+          return ReplaceInstUsesWith(CI, Res);
+        }
+          
+        uint32_t ShiftAmt = KnownZeroMask.logBase2();
+        Value *In = ICI->getOperand(0);
+        if (ShiftAmt) {
+          // Perform a logical shr by shiftamt.
+          // Insert the shift to put the result in the low bit.
+          In = InsertNewInstBefore(BinaryOperator::createLShr(In,
+                                  ConstantInt::get(In->getType(), ShiftAmt),
+                                                   In->getName()+".lobit"), CI);
+        }
+          
+        if ((Op1CV != 0) == isNE) { // Toggle the low bit.
+          Constant *One = ConstantInt::get(In->getType(), 1);
+          In = BinaryOperator::createXor(In, One, "tmp");
+          InsertNewInstBefore(cast<Instruction>(In), CI);
+        }
+          
+        if (CI.getType() == In->getType())
+          return ReplaceInstUsesWith(CI, In);
+        else
+          return CastInst::createIntegerCast(In, CI.getType(), false/*ZExt*/);
+      }
+    }
+  }
+
+  return 0;
+}
+
 Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
   // If one of the common conversion will work ..
   if (Instruction *Result = commonIntCastTransforms(CI))
@@ -7224,92 +7325,24 @@ Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
     }
   }
 
-  if (ICmpInst *ICI = dyn_cast<ICmpInst>(Src)) {
-    // If we are just checking for a icmp eq of a single bit and zext'ing it
-    // to an integer, then shift the bit to the appropriate place and then
-    // cast to integer to avoid the comparison.
-    if (ConstantInt *Op1C = dyn_cast<ConstantInt>(ICI->getOperand(1))) {
-      const APInt &Op1CV = Op1C->getValue();
-      
-      // zext (x <s  0) to i32 --> x>>u31      true if signbit set.
-      // zext (x >s -1) to i32 --> (x>>u31)^1  true if signbit clear.
-      if ((ICI->getPredicate() == ICmpInst::ICMP_SLT && Op1CV == 0) ||
-          (ICI->getPredicate() == ICmpInst::ICMP_SGT &&Op1CV.isAllOnesValue())){
-        Value *In = ICI->getOperand(0);
-        Value *Sh = ConstantInt::get(In->getType(),
-                                    In->getType()->getPrimitiveSizeInBits()-1);
-        In = InsertNewInstBefore(BinaryOperator::createLShr(In, Sh,
-                                                        In->getName()+".lobit"),
-                                 CI);
-        if (In->getType() != CI.getType())
-          In = CastInst::createIntegerCast(In, CI.getType(),
-                                           false/*ZExt*/, "tmp", &CI);
+  if (ICmpInst *ICI = dyn_cast<ICmpInst>(Src))
+    return transformZExtICmp(ICI, CI);
 
-        if (ICI->getPredicate() == ICmpInst::ICMP_SGT) {
-          Constant *One = ConstantInt::get(In->getType(), 1);
-          In = InsertNewInstBefore(BinaryOperator::createXor(In, One,
-                                                          In->getName()+".not"),
-                                   CI);
-        }
-
-        return ReplaceInstUsesWith(CI, In);
-      }
-      
-      
-      
-      // zext (X == 0) to i32 --> X^1      iff X has only the low bit set.
-      // zext (X == 0) to i32 --> (X>>1)^1 iff X has only the 2nd bit set.
-      // zext (X == 1) to i32 --> X        iff X has only the low bit set.
-      // zext (X == 2) to i32 --> X>>1     iff X has only the 2nd bit set.
-      // zext (X != 0) to i32 --> X        iff X has only the low bit set.
-      // zext (X != 0) to i32 --> X>>1     iff X has only the 2nd bit set.
-      // zext (X != 1) to i32 --> X^1      iff X has only the low bit set.
-      // zext (X != 2) to i32 --> (X>>1)^1 iff X has only the 2nd bit set.
-      if ((Op1CV == 0 || Op1CV.isPowerOf2()) && 
-          // This only works for EQ and NE
-          ICI->isEquality()) {
-        // If Op1C some other power of two, convert:
-        uint32_t BitWidth = Op1C->getType()->getBitWidth();
-        APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
-        APInt TypeMask(APInt::getAllOnesValue(BitWidth));
-        ComputeMaskedBits(ICI->getOperand(0), TypeMask, KnownZero, KnownOne);
-        
-        APInt KnownZeroMask(~KnownZero);
-        if (KnownZeroMask.isPowerOf2()) { // Exactly 1 possible 1?
-          bool isNE = ICI->getPredicate() == ICmpInst::ICMP_NE;
-          if (Op1CV != 0 && (Op1CV != KnownZeroMask)) {
-            // (X&4) == 2 --> false
-            // (X&4) != 2 --> true
-            Constant *Res = ConstantInt::get(Type::Int1Ty, isNE);
-            Res = ConstantExpr::getZExt(Res, CI.getType());
-            return ReplaceInstUsesWith(CI, Res);
-          }
-          
-          uint32_t ShiftAmt = KnownZeroMask.logBase2();
-          Value *In = ICI->getOperand(0);
-          if (ShiftAmt) {
-            // Perform a logical shr by shiftamt.
-            // Insert the shift to put the result in the low bit.
-            In = InsertNewInstBefore(
-                   BinaryOperator::createLShr(In,
-                                     ConstantInt::get(In->getType(), ShiftAmt),
-                                              In->getName()+".lobit"), CI);
-          }
-          
-          if ((Op1CV != 0) == isNE) { // Toggle the low bit.
-            Constant *One = ConstantInt::get(In->getType(), 1);
-            In = BinaryOperator::createXor(In, One, "tmp");
-            InsertNewInstBefore(cast<Instruction>(In), CI);
-          }
-          
-          if (CI.getType() == In->getType())
-            return ReplaceInstUsesWith(CI, In);
-          else
-            return CastInst::createIntegerCast(In, CI.getType(), false/*ZExt*/);
-        }
-      }
+  BinaryOperator *SrcI = dyn_cast<BinaryOperator>(Src);
+  if (SrcI && SrcI->getOpcode() == Instruction::Or) {
+    // zext (or icmp, icmp) --> or (zext icmp), (zext icmp) if at least one
+    // of the (zext icmp) will be transformed.
+    ICmpInst *LHS = dyn_cast<ICmpInst>(SrcI->getOperand(0));
+    ICmpInst *RHS = dyn_cast<ICmpInst>(SrcI->getOperand(1));
+    if (LHS && RHS && LHS->hasOneUse() && RHS->hasOneUse() &&
+        (transformZExtICmp(LHS, CI, false) ||
+         transformZExtICmp(RHS, CI, false))) {
+      Value *LCast = InsertCastBefore(Instruction::ZExt, LHS, CI.getType(), CI);
+      Value *RCast = InsertCastBefore(Instruction::ZExt, RHS, CI.getType(), CI);
+      return BinaryOperator::create(Instruction::Or, LCast, RCast);
     }
-  }    
+  }
+
   return 0;
 }
 
