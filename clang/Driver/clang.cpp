@@ -917,7 +917,10 @@ static void InitializeIncludePaths(const char *Argv0, HeaderSearch &Headers,
     //Debian testing/lenny x86
     AddPath("/usr/lib/gcc/i486-linux-gnu/4.2.3/include", System,
             false, false, false, Headers);
-    
+
+    //Debian testing/lenny amd64
+    AddPath("/usr/lib/gcc/x86_64-linux-gnu/4.2.3/include", System,
+            false, false, false, Headers);
 
     AddPath("/usr/include", System, false, false, false, Headers);
     AddPath("/System/Library/Frameworks", System, true, false, true, Headers);
