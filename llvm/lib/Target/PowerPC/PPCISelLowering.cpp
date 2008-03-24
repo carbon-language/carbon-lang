@@ -822,8 +822,10 @@ bool PPCTargetLowering::SelectAddressRegImm(SDOperand N, SDOperand &Disp,
       // provably disjoint.
       APInt LHSKnownZero, LHSKnownOne;
       DAG.ComputeMaskedBits(N.getOperand(0),
-                            APInt::getAllOnesValue(32),
+                            APInt::getAllOnesValue(N.getOperand(0)
+                                                   .getValueSizeInBits()),
                             LHSKnownZero, LHSKnownOne);
+
       if ((LHSKnownZero.getZExtValue()|~(uint64_t)imm) == ~0ULL) {
         // If all of the bits are known zero on the LHS or RHS, the add won't
         // carry.
@@ -932,7 +934,8 @@ bool PPCTargetLowering::SelectAddressRegImmShift(SDOperand N, SDOperand &Disp,
       // provably disjoint.
       APInt LHSKnownZero, LHSKnownOne;
       DAG.ComputeMaskedBits(N.getOperand(0),
-                            APInt::getAllOnesValue(32),
+                            APInt::getAllOnesValue(N.getOperand(0)
+                                                   .getValueSizeInBits()),
                             LHSKnownZero, LHSKnownOne);
       if ((LHSKnownZero.getZExtValue()|~(uint64_t)imm) == ~0ULL) {
         // If all of the bits are known zero on the LHS or RHS, the add won't
