@@ -49,7 +49,7 @@ ARMTargetAsmInfo::ARMTargetAsmInfo(const ARMTargetMachine &TM) {
     PrivateGlobalPrefix = "L";
     BSSSection = 0;                       // no BSS section.
     ZeroFillDirective = "\t.zerofill\t";  // Uses .zerofill
-    SetDirective = "\t.set";
+    SetDirective = "\t.set\t";
     WeakRefDirective = "\t.weak_reference\t";
     HiddenDirective = "\t.private_extern\t";
     ProtectedDirective = NULL;
