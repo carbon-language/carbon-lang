@@ -93,7 +93,7 @@ unsigned InlineCostAnalyzer::FunctionInfo::
 /// analyzeFunction - Fill in the current structure with information gleaned
 /// from the specified function.
 void InlineCostAnalyzer::FunctionInfo::analyzeFunction(Function *F) {
-  unsigned NumInsts = 0, NumBlocks = 0;
+  unsigned NumInsts = 0, NumBlocks = 0, NumVectorInsts = 0;
 
   // Look at the size of the callee.  Each basic block counts as 20 units, and
   // each instruction counts as 5.
@@ -101,6 +101,11 @@ void InlineCostAnalyzer::FunctionInfo::analyzeFunction(Function *F) {
     for (BasicBlock::const_iterator II = BB->begin(), E = BB->end();
          II != E; ++II) {
       if (isa<DbgInfoIntrinsic>(II)) continue;  // Debug intrinsics don't count.
+      if (isa<PHINode>(II)) continue;           // PHI nodes don't count.
+
+      if (isa<InsertElementInst>(II) || isa<ExtractElementInst>(II) ||
+          isa<ShuffleVectorInst>(II) || isa<VectorType>(II->getType()))
+        ++NumVectorInsts; 
       
       // Noop casts, including ptr <-> int,  don't count.
       if (const CastInst *CI = dyn_cast<CastInst>(II)) {
@@ -108,7 +113,7 @@ void InlineCostAnalyzer::FunctionInfo::analyzeFunction(Function *F) {
             isa<PtrToIntInst>(CI))
           continue;
       } else if (const GetElementPtrInst *GEPI =
-                         dyn_cast<GetElementPtrInst>(II)) {
+                 dyn_cast<GetElementPtrInst>(II)) {
         // If a GEP has all constant indices, it will probably be folded with
         // a load/store.
         bool AllConstant = true;
@@ -126,8 +131,9 @@ void InlineCostAnalyzer::FunctionInfo::analyzeFunction(Function *F) {
     ++NumBlocks;
   }
 
-  this->NumBlocks = NumBlocks;
-  this->NumInsts  = NumInsts;
+  this->NumBlocks      = NumBlocks;
+  this->NumInsts       = NumInsts;
+  this->NumVectorInsts = NumVectorInsts;
 
   // Check out all of the arguments to the function, figuring out how much
   // code can be eliminated if one of the arguments is a constant.
@@ -233,10 +239,28 @@ int InlineCostAnalyzer::getInlineCost(CallSite CS,
   //
   InlineCost += Caller->size()/20;
   
-  
   // Look at the size of the callee.  Each basic block counts as 20 units, and
   // each instruction counts as 5.
   InlineCost += CalleeFI.NumInsts*5 + CalleeFI.NumBlocks*20;
+
   return InlineCost;
 }
 
+// getInlineFudgeFactor - Return a > 1.0 factor if the inliner should use a
+// higher threshold to determine if the function call should be inlined.
+float InlineCostAnalyzer::getInlineFudgeFactor(CallSite CS) {
+  Function *Callee = CS.getCalledFunction();
+  
+  // Get information about the callee...
+  FunctionInfo &CalleeFI = CachedFunctionInfo[Callee];
+  
+  // If we haven't calculated this information yet, do so now.
+  if (CalleeFI.NumBlocks == 0)
+    CalleeFI.analyzeFunction(Callee);
+
+  // Be more aggressive if the function contains a good chunk (if it mades up
+  // at least 10% of the instructions) of vector instructions.
+  if (CalleeFI.NumVectorInsts > CalleeFI.NumInsts/10)
+    return 1.5f;
+  return 1.0f;
+}

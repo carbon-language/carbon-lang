@@ -40,6 +40,9 @@ namespace {
     int getInlineCost(CallSite CS) {
       return CA.getInlineCost(CS, NeverInline);
     }
+    float getInlineFudgeFactor(CallSite CS) {
+      return CA.getInlineFudgeFactor(CS);
+    }
     virtual bool doInitialization(CallGraph &CG);
   };
   char SimpleInliner::ID = 0;

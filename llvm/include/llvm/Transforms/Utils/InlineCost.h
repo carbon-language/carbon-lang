@@ -41,6 +41,10 @@ namespace llvm {
       // NumInsts, NumBlocks - Keep track of how large each function is, which is
       // used to estimate the code size cost of inlining it.
       unsigned NumInsts, NumBlocks;
+
+      // NumVectorInsts - Keep track how many instrctions produce vector values.
+      // The inliner is being more aggressive with inlining vector kernels.
+      unsigned NumVectorInsts;
       
       // ArgumentWeights - Each formal argument of the function is inspected to
       // see if it is used in any contexts where making it a constant or alloca
@@ -48,7 +52,7 @@ namespace llvm {
       // entry here.
       std::vector<ArgInfo> ArgumentWeights;
       
-      FunctionInfo() : NumInsts(0), NumBlocks(0) {}
+      FunctionInfo() : NumInsts(0), NumBlocks(0), NumVectorInsts(0) {}
       
       /// analyzeFunction - Fill in the current structure with information gleaned
       /// from the specified function.
@@ -73,7 +77,12 @@ namespace llvm {
     // getInlineCost - The heuristic used to determine if we should inline the
     // function call or not.
     //
-    int getInlineCost(CallSite CS, SmallPtrSet<const Function *, 16> &NeverInline);
+    int getInlineCost(CallSite CS,
+                      SmallPtrSet<const Function *, 16> &NeverInline);
+
+    // getInlineFudgeFactor - Return a > 1.0 factor if the inliner should use a
+    // higher threshold to determine if the function call should be inlined.
+    float getInlineFudgeFactor(CallSite CS);
   };
 }
 

@@ -31,9 +31,9 @@ STATISTIC(NumInlined, "Number of functions inlined");
 STATISTIC(NumDeleted, "Number of functions deleted because all callers found");
 
 namespace {
-  cl::opt<int>             // FIXME: 200 is VERY conservative
-  InlineLimit("inline-threshold", cl::Hidden, cl::init(200),
-        cl::desc("Control the amount of inlining to perform (default = 200)"));
+  cl::opt<int>
+  InlineLimit("inline-threshold", cl::Hidden, cl::init(400),
+        cl::desc("Control the amount of inlining to perform (default = 400)"));
 }
 
 Inliner::Inliner(const void *ID) 
@@ -140,7 +140,9 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
         // try to do so.
         CallSite CS = CallSites[CSi];
         int InlineCost = getInlineCost(CS);
-        if (InlineCost >= (int)InlineThreshold) {
+        float FudgeFactor = getInlineFudgeFactor(CS);
+
+        if (InlineCost >= (int)(InlineThreshold * FudgeFactor)) {
           DOUT << "    NOT Inlining: cost=" << InlineCost
                << ", Call: " << *CS.getInstruction();
         } else {
