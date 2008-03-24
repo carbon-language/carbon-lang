@@ -1226,8 +1226,8 @@ type "{ i32, [0 x float]}", for example.</p>
 <h5>Overview:</h5>
 <p>The function type can be thought of as a function signature.  It
 consists of a return type and a list of formal parameter types. The
-return type of a function type is a scalar type or a struct type. If the 
-return type is a struct type then all struct elements must be of first 
+return type of a function type is a scalar type or a void type or a struct type. 
+If the return type is a struct type then all struct elements must be of first 
 class types. Function types are usually used to build virtual function tables
 (which are structures of pointers to functions), for indirect function
 calls, and when defining a function.</p>
