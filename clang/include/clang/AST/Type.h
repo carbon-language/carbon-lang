@@ -1087,7 +1087,11 @@ public:
   // FIXME: This predicate is a helper to QualType/Type. It needs to 
   // recursively check all fields for const-ness. If any field is declared
   // const, it needs to return false. 
-  bool hasConstFields() const { return false; } 
+  bool hasConstFields() const { return false; }
+
+  // FIXME: RecordType needs to check when it is created that all fields are in
+  // the same address space, and return that.
+  unsigned getAddressSpace() const { return 0; }
   
   static bool classof(const Type *T);
   static bool classof(const RecordType *) { return true; }
@@ -1114,6 +1118,10 @@ inline QualType QualType::getUnqualifiedType() const {
 
 /// getAddressSpace - Return the address space of this type.
 inline unsigned QualType::getAddressSpace() const {
+  if (const ArrayType *AT = dyn_cast<ArrayType>(getCanonicalType()))
+    return AT->getBaseType().getAddressSpace();
+  if (const RecordType *RT = dyn_cast<RecordType>(getCanonicalType()))
+    return RT->getAddressSpace();
   if (const ASQualType *ASQT = dyn_cast<ASQualType>(getCanonicalType()))
     return ASQT->getAddressSpace();
   return 0;
