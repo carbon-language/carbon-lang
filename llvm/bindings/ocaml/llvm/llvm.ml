@@ -531,6 +531,55 @@ let fold_right_blocks f fn init =
 
 (*--... Operations on instructions .........................................--*)
 external instr_parent : llvalue -> llbasicblock = "LLVMGetInstructionParent"
+external instr_begin : llbasicblock -> (llbasicblock, llvalue) llpos
+                     = "llvm_instr_begin"
+external instr_succ : llvalue -> (llbasicblock, llvalue) llpos
+                     = "llvm_instr_succ"
+external instr_end : llbasicblock -> (llbasicblock, llvalue) llrev_pos
+                     = "llvm_instr_end"
+external instr_pred : llvalue -> (llbasicblock, llvalue) llrev_pos
+                     = "llvm_instr_pred"
+
+let rec iter_instrs_range f i e =
+  if i = e then () else
+  match i with
+  | At_end _ -> raise (Invalid_argument "Invalid instruction range.")
+  | Before i ->
+      f i;
+      iter_instrs_range f (instr_succ i) e
+
+let iter_instrs f bb =
+  iter_instrs_range f (instr_begin bb) (At_end bb)
+
+let rec fold_left_instrs_range f init i e =
+  if i = e then init else
+  match i with
+  | At_end _ -> raise (Invalid_argument "Invalid instruction range.")
+  | Before i -> fold_left_instrs_range f (f init i) (instr_succ i) e
+
+let fold_left_instrs f init bb =
+  fold_left_instrs_range f init (instr_begin bb) (At_end bb)
+
+let rec rev_iter_instrs_range f i e =
+  if i = e then () else
+  match i with
+  | At_start _ -> raise (Invalid_argument "Invalid instruction range.")
+  | After i ->
+      f i;
+      rev_iter_instrs_range f (instr_pred i) e
+
+let rev_iter_instrs f bb =
+  rev_iter_instrs_range f (instr_end bb) (At_start bb)
+
+let rec fold_right_instr_range f i e init =
+  if i = e then init else
+  match i with
+  | At_start _ -> raise (Invalid_argument "Invalid instruction range.")
+  | After i -> fold_right_instr_range f (instr_pred i) e (f i init)
+
+let fold_right_instrs f bb init =
+  fold_right_instr_range f (instr_end bb) (At_start bb) init
+
 
 (*--... Operations on call sites ...........................................--*)
 external instruction_call_conv: llvalue -> int
@@ -545,13 +594,22 @@ external incoming : llvalue -> (llvalue * llbasicblock) list = "llvm_incoming"
 
 
 (*===-- Instruction builders ----------------------------------------------===*)
-external builder: unit-> llbuilder = "llvm_builder"
-external builder_before : llvalue -> llbuilder = "llvm_builder_before"
-external builder_at_end : llbasicblock -> llbuilder = "llvm_builder_at_end"
-external position_before : llvalue -> llbuilder -> unit = "llvm_position_before"
-external position_at_end : llbasicblock -> llbuilder -> unit
-                         = "llvm_position_at_end"
+external builder : unit -> llbuilder = "llvm_builder"
+external position_builder : (llbasicblock, llvalue) llpos -> llbuilder -> unit
+                          = "llvm_position_builder"
 external insertion_block : llbuilder -> llbasicblock = "llvm_insertion_block"
+
+let builder_at ip =
+  let b = builder () in
+  position_builder ip b;
+  b
+
+let builder_before i = builder_at (Before i)
+let builder_at_end bb = builder_at (At_end bb)
+
+let position_before i = position_builder (Before i)
+let position_at_end bb = position_builder (At_end bb)
+
 
 (*--... Terminators ........................................................--*)
 external build_ret_void : llbuilder -> llvalue = "llvm_build_ret_void"

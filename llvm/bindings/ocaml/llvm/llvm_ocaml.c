@@ -714,6 +714,12 @@ CAMLprim value llvm_value_is_block(LLVMValueRef Val) {
   return Val_bool(LLVMValueIsBasicBlock(Val));
 }
 
+/*--... Operations on instructions .........................................--*/
+
+DEFINE_ITERATORS(instr, Instruction, LLVMBasicBlockRef, LLVMValueRef,
+                 LLVMGetInstructionParent)
+
+
 /*--... Operations on call sites ...........................................--*/
 
 /* llvalue -> int */
@@ -789,29 +795,15 @@ CAMLprim value llvm_builder(value Unit) {
   return alloc_builder(LLVMCreateBuilder());
 }
 
-/* llvalue -> llbuilder */
-CAMLprim value llvm_builder_before(LLVMValueRef Inst) {
-  LLVMBuilderRef B = LLVMCreateBuilder();
-  LLVMPositionBuilderBefore(B, Inst);
-  return alloc_builder(B);
-}
-
-/* llbasicblock -> llbuilder */
-CAMLprim value llvm_builder_at_end(LLVMBasicBlockRef BB) {
-  LLVMBuilderRef B = LLVMCreateBuilder();
-  LLVMPositionBuilderAtEnd(B, BB);
-  return alloc_builder(B);
-}
-
-/* llvalue -> llbuilder -> unit */
-CAMLprim value llvm_position_before(LLVMValueRef Inst, value B) {
-  LLVMPositionBuilderBefore(Builder_val(B), Inst);
-  return Val_unit;
-}
-
-/* llbasicblock -> llbuilder -> unit */
-CAMLprim value llvm_position_at_end(LLVMBasicBlockRef BB, value B) {
-  LLVMPositionBuilderAtEnd(Builder_val(B), BB);
+/* (llbasicblock, llvalue) llpos -> llbuilder -> unit */
+CAMLprim value llvm_position_builder(value Pos, value B) {
+  if (Tag_val(Pos) == 0) {
+    LLVMBasicBlockRef BB = (LLVMBasicBlockRef) Op_val(Field(Pos, 0));
+    LLVMPositionBuilderAtEnd(Builder_val(B), BB);
+  } else {
+    LLVMValueRef I = (LLVMValueRef) Op_val(Field(Pos, 0));
+    LLVMPositionBuilderBefore(Builder_val(B), I);
+  }
   return Val_unit;
 }
 

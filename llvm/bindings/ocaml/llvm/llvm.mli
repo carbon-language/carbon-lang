@@ -1077,6 +1077,42 @@ external block_of_value : llvalue -> llbasicblock = "LLVMValueAsBasicBlock"
     See the method [llvm::Instruction::getParent]. *)
 external instr_parent : llvalue -> llbasicblock = "LLVMGetInstructionParent"
 
+(** [instr_begin bb] returns the first position in the instruction list of the
+    basic block [bb]. [instr_begin] and [instr_succ] can be used to iterate over
+    the instruction list in order.
+    See the method [llvm::BasicBlock::begin]. *)
+external instr_begin : llbasicblock -> (llbasicblock, llvalue) llpos
+                     = "llvm_instr_begin"
+
+(** [instr_succ i] returns the instruction list position succeeding [Before i].
+    See the method [llvm::BasicBlock::iterator::operator++]. *)
+external instr_succ : llvalue -> (llbasicblock, llvalue) llpos
+                     = "llvm_instr_succ"
+
+(** [iter_instrs f bb] applies function [f] to each of the instructions of basic
+    block [bb] in order. Tail recursive. *)
+val iter_instrs: (llvalue -> unit) -> llbasicblock -> unit
+
+(** [fold_left_instrs f init bb] is [f (... (f init g1) ...) gN] where
+    [g1,...,gN] are the instructions of basic block [bb]. Tail recursive. *)
+val fold_left_instrs: ('a -> llvalue -> 'a) -> 'a -> llbasicblock -> 'a
+
+(** [instr_end bb] returns the last position in the instruction list of the
+    basic block [bb]. [instr_end] and [instr_pred] can be used to iterate over
+    the instruction list in reverse.
+    See the method [llvm::BasicBlock::end]. *)
+external instr_end : llbasicblock -> (llbasicblock, llvalue) llrev_pos
+                     = "llvm_instr_end"
+
+(** [instr_pred i] returns the instruction list position preceding [After i].
+    See the method [llvm::BasicBlock::iterator::operator--]. *)
+external instr_pred : llvalue -> (llbasicblock, llvalue) llrev_pos
+                     = "llvm_instr_pred"
+
+(** [fold_right_instrs f bb init] is [f (... (f init fN) ...) f1] where
+    [f1,...,fN] are the instructions of basic block [bb]. Tail recursive. *)
+val fold_right_instrs: (llvalue -> 'a -> 'a) -> llbasicblock -> 'a -> 'a
+
 
 (** {7 Operations on call sites} *)
 
@@ -1114,25 +1150,33 @@ external incoming : llvalue -> (llvalue * llbasicblock) list = "llvm_incoming"
 (** [builder ()] creates an instruction builder with no position. It is invalid
     to use this builder until its position is set with {!position_before} or
     {!position_at_end}. See the constructor for [llvm::LLVMBuilder]. *)
-external builder: unit-> llbuilder
-                = "llvm_builder"
+external builder : unit -> llbuilder = "llvm_builder"
+
+(** [builder_at ip] creates an instruction builder positioned at [ip].
+    See the constructor for [llvm::LLVMBuilder]. *)
+val builder_at : (llbasicblock, llvalue) llpos -> llbuilder
 
 (** [builder_before ins] creates an instruction builder positioned before the
     instruction [isn]. See the constructor for [llvm::LLVMBuilder]. *)
-external builder_before : llvalue -> llbuilder = "llvm_builder_before"
+val builder_before : llvalue -> llbuilder
 
 (** [builder_at_end bb] creates an instruction builder positioned at the end of
     the basic block [bb]. See the constructor for [llvm::LLVMBuilder]. *)
-external builder_at_end : llbasicblock -> llbuilder = "llvm_builder_at_end"
+val builder_at_end : llbasicblock -> llbuilder
+
+(** [position_builder ip bb] moves the instruction builder [bb] to the position
+    [ip].
+    See the constructor for [llvm::LLVMBuilder]. *)
+external position_builder : (llbasicblock, llvalue) llpos -> llbuilder -> unit
+                          = "llvm_position_builder"
 
 (** [position_before ins b] moves the instruction builder [b] to before the
     instruction [isn]. See the method [llvm::LLVMBuilder::SetInsertPoint]. *)
-external position_before : llvalue -> llbuilder -> unit = "llvm_position_before"
+val position_before : llvalue -> llbuilder -> unit
 
 (** [position_at_end bb b] moves the instruction builder [b] to the end of the
     basic block [bb]. See the method [llvm::LLVMBuilder::SetInsertPoint]. *)
-external position_at_end : llbasicblock -> llbuilder -> unit
-                         = "llvm_position_at_end"
+val position_at_end : llbasicblock -> llbuilder -> unit
 
 (** [insertion_block b] returns the basic block that the builder [b] is
     positioned to insert into. Raises [Not_Found] if the instruction builder is
