@@ -705,6 +705,40 @@ let test_basic_blocks () =
   end
 
 
+(*===-- Instructions ------------------------------------------------------===*)
+
+let test_instructions () =
+  begin group "iteration";
+    let m = create_module "temp" in
+    let fty = function_type void_type [| i32_type; i32_type |] in
+    let f = define_function "f" fty m in
+    let bb = entry_block f in
+    let b = builder_at (At_end bb) in
+    
+    insist (At_end bb = instr_begin bb);
+    insist (At_start bb = instr_end bb);
+    
+    let i1 = build_add (param f 0) (param f 1) "One" b in
+    let i2 = build_sub (param f 0) (param f 1) "Two" b in
+    
+    insist (Before i1 = instr_begin bb);
+    insist (Before i2 = instr_succ i1);
+    insist (At_end bb = instr_succ i2);
+    
+    insist (After i2 = instr_end bb);
+    insist (After i1 = instr_pred i2);
+    insist (At_start bb = instr_pred i1);
+    
+    let lf s x = s ^ "->" ^ value_name x in
+    insist ("->One->Two" = fold_left_instrs lf "" bb);
+    
+    let rf x s = value_name x ^ "<-" ^ s in
+    insist ("One<-Two<-" = fold_right_instrs rf bb "");
+    
+    dispose_module m
+  end
+
+
 (*===-- Builder -----------------------------------------------------------===*)
 
 let test_builder () =
@@ -1024,6 +1058,7 @@ let _ =
   suite "functions"        test_functions;
   suite "params"           test_params;
   suite "basic blocks"     test_basic_blocks;
+  suite "instructions"     test_instructions;
   suite "builder"          test_builder;
   suite "module provider"  test_module_provider;
   suite "pass manager"     test_pass_manager;
