@@ -96,7 +96,7 @@ namespace {
 
     static JITResolver *TheJITResolver;
   public:
-    JITResolver(JIT &jit) : nextGOTIndex(0) {
+    explicit JITResolver(JIT &jit) : nextGOTIndex(0) {
       TheJIT = &jit;
 
       LazyResolverFn = jit.getJITInfo().getLazyResolverFunction(JITCompilerFn);

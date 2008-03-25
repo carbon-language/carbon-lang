@@ -74,7 +74,7 @@ public:
 /// if we just have a Module.  Note that the ModuleProvider takes ownership of
 /// the Module specified.
 struct ExistingModuleProvider : public ModuleProvider {
-  ExistingModuleProvider(Module *M) {
+  explicit ExistingModuleProvider(Module *M) {
     TheModule = M;
   }
   bool materializeFunction(Function *F, std::string *ErrInfo = 0) {

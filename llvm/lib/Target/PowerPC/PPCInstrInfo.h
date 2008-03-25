@@ -72,7 +72,7 @@ class PPCInstrInfo : public TargetInstrInfoImpl {
                             const TargetRegisterClass *RC,
                             SmallVectorImpl<MachineInstr*> &NewMIs) const;
 public:
-  PPCInstrInfo(PPCTargetMachine &TM);
+  explicit PPCInstrInfo(PPCTargetMachine &TM);
 
   /// getRegisterInfo - TargetInstrInfo is a superset of MRegister info.  As
   /// such, whenever a client has an instance of instruction info, it should

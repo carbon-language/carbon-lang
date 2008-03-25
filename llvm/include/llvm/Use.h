@@ -107,7 +107,7 @@ class value_use_iterator : public forward_iterator<UserTy*, ptrdiff_t> {
   typedef value_use_iterator<UserTy> _Self;
 
   Use *U;
-  value_use_iterator(Use *u) : U(u) {}
+  explicit value_use_iterator(Use *u) : U(u) {}
   friend class Value;
 public:
   typedef typename super::reference reference;

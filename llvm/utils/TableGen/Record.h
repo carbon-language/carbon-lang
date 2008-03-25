@@ -509,7 +509,7 @@ public:
 class BitInit : public Init {
   bool Value;
 public:
-  BitInit(bool V) : Value(V) {}
+  explicit BitInit(bool V) : Value(V) {}
 
   bool getValue() const { return Value; }
 
@@ -526,7 +526,7 @@ public:
 class BitsInit : public Init {
   std::vector<Init*> Bits;
 public:
-  BitsInit(unsigned Size) : Bits(Size) {}
+  explicit BitsInit(unsigned Size) : Bits(Size) {}
 
   unsigned getNumBits() const { return Bits.size(); }
 
@@ -567,7 +567,7 @@ public:
 class IntInit : public Init {
   int Value;
 public:
-  IntInit(int V) : Value(V) {}
+  explicit IntInit(int V) : Value(V) {}
 
   int getValue() const { return Value; }
 
@@ -585,7 +585,7 @@ public:
 class StringInit : public Init {
   std::string Value;
 public:
-  StringInit(const std::string &V) : Value(V) {}
+  explicit StringInit(const std::string &V) : Value(V) {}
 
   const std::string &getValue() const { return Value; }
 
@@ -601,7 +601,7 @@ public:
 class CodeInit : public Init {
   std::string Value;
 public:
-  CodeInit(const std::string &V) : Value(V) {}
+  explicit CodeInit(const std::string &V) : Value(V) {}
 
   const std::string getValue() const { return Value; }
 
@@ -617,7 +617,7 @@ public:
 class ListInit : public Init {
   std::vector<Init*> Values;
 public:
-  ListInit(std::vector<Init*> &Vs) {
+  explicit ListInit(std::vector<Init*> &Vs) {
     Values.swap(Vs);
   }
 
@@ -693,7 +693,7 @@ public:
 class TypedInit : public Init {
   RecTy *Ty;
 public:
-  TypedInit(RecTy *T) : Ty(T) {}
+  explicit TypedInit(RecTy *T) : Ty(T) {}
 
   RecTy *getType() const { return Ty; }
 
@@ -719,7 +719,8 @@ public:
 class VarInit : public TypedInit {
   std::string VarName;
 public:
-  VarInit(const std::string &VN, RecTy *T) : TypedInit(T), VarName(VN) {}
+  explicit VarInit(const std::string &VN, RecTy *T)
+    : TypedInit(T), VarName(VN) {}
 
   virtual Init *convertInitializerTo(RecTy *Ty) {
     return Ty->convertValue(this);
@@ -807,7 +808,7 @@ public:
 class DefInit : public Init {
   Record *Def;
 public:
-  DefInit(Record *D) : Def(D) {}
+  explicit DefInit(Record *D) : Def(D) {}
 
   virtual Init *convertInitializerTo(RecTy *Ty) {
     return Ty->convertValue(this);

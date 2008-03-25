@@ -22,7 +22,7 @@ namespace llvm {
   class ARMJITInfo : public TargetJITInfo {
     ARMTargetMachine &TM;
   public:
-    ARMJITInfo(ARMTargetMachine &tm) : TM(tm) {useGOT = 0;}
+    explicit ARMJITInfo(ARMTargetMachine &tm) : TM(tm) {useGOT = 0;}
 
     /// replaceMachineCodeForFunction - Make it so that calling the function
     /// whose machine code is at OLD turns into a call to NEW, perhaps by

@@ -931,7 +931,7 @@ class HelpPrinter {
   }
 
 public:
-  HelpPrinter(bool showHidden) : ShowHidden(showHidden) {
+  explicit HelpPrinter(bool showHidden) : ShowHidden(showHidden) {
     EmptyArg = 0;
   }
 

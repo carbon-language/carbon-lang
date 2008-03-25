@@ -118,16 +118,16 @@ namespace {  // Anonymous namespace for class
       : FunctionPass((intptr_t)&ID), 
       Broken(false), RealPass(true), action(AbortProcessAction),
       DT(0), msgs( std::ios::app | std::ios::out ) {}
-    Verifier( VerifierFailureAction ctn )
+    explicit Verifier(VerifierFailureAction ctn)
       : FunctionPass((intptr_t)&ID), 
       Broken(false), RealPass(true), action(ctn), DT(0),
       msgs( std::ios::app | std::ios::out ) {}
-    Verifier(bool AB )
+    explicit Verifier(bool AB)
       : FunctionPass((intptr_t)&ID), 
       Broken(false), RealPass(true),
       action( AB ? AbortProcessAction : PrintMessageAction), DT(0),
       msgs( std::ios::app | std::ios::out ) {}
-    Verifier(DominatorTree &dt)
+    explicit Verifier(DominatorTree &dt)
       : FunctionPass((intptr_t)&ID), 
       Broken(false), RealPass(false), action(PrintMessageAction),
       DT(&dt), msgs( std::ios::app | std::ios::out ) {}

@@ -117,7 +117,8 @@ class BitcodeReader : public ModuleProvider {
   /// stream) and what linkage the original function had.
   DenseMap<Function*, std::pair<uint64_t, unsigned> > DeferredFunctionInfo;
 public:
-  BitcodeReader(MemoryBuffer *buffer) : Buffer(buffer), ErrorString(0) {
+  explicit BitcodeReader(MemoryBuffer *buffer)
+      : Buffer(buffer), ErrorString(0) {
     HasReversedFunctionsWithBodies = false;
   }
   ~BitcodeReader() {

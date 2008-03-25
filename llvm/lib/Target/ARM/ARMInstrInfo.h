@@ -128,7 +128,7 @@ namespace ARMII {
 class ARMInstrInfo : public TargetInstrInfoImpl {
   const ARMRegisterInfo RI;
 public:
-  ARMInstrInfo(const ARMSubtarget &STI);
+  explicit ARMInstrInfo(const ARMSubtarget &STI);
 
   /// getRegisterInfo - TargetInstrInfo is a superset of MRegister info.  As
   /// such, whenever a client has an instance of instruction info, it should

@@ -23,7 +23,7 @@ namespace llvm {
     X86TargetMachine &TM;
     intptr_t PICBase;
   public:
-    X86JITInfo(X86TargetMachine &tm) : TM(tm) {useGOT = 0;}
+    explicit X86JITInfo(X86TargetMachine &tm) : TM(tm) {useGOT = 0;}
 
     /// replaceMachineCodeForFunction - Make it so that calling the function
     /// whose machine code is at OLD turns into a call to NEW, perhaps by

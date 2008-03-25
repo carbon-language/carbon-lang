@@ -35,7 +35,7 @@ class SparcInstrInfo : public TargetInstrInfoImpl {
   const SparcRegisterInfo RI;
   const SparcSubtarget& Subtarget;
 public:
-  SparcInstrInfo(SparcSubtarget &ST);
+  explicit SparcInstrInfo(SparcSubtarget &ST);
 
   /// getRegisterInfo - TargetInstrInfo is a superset of MRegister info.  As
   /// such, whenever a client has an instance of instruction info, it should

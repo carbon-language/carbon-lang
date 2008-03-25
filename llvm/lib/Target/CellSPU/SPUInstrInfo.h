@@ -24,7 +24,7 @@ namespace llvm {
     SPUTargetMachine &TM;
     const SPURegisterInfo RI;
   public:
-    SPUInstrInfo(SPUTargetMachine &tm);
+    explicit SPUInstrInfo(SPUTargetMachine &tm);
 
     /// getRegisterInfo - TargetInstrInfo is a superset of MRegister info.  As
     /// such, whenever a client has an instance of instruction info, it should

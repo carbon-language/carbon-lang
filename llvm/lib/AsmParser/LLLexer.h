@@ -30,7 +30,7 @@ namespace llvm {
     
     std::string TheError;
   public:
-    LLLexer(MemoryBuffer *StartBuf);
+    explicit LLLexer(MemoryBuffer *StartBuf);
     ~LLLexer() {}
 
     const char *getTokStart() const { return TokStart; }

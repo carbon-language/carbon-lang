@@ -90,7 +90,7 @@ namespace {
 
   public:
     static char ID;
-    CWriter(std::ostream &o) 
+    explicit CWriter(std::ostream &o)
       : FunctionPass((intptr_t)&ID), Out(o), IL(0), Mang(0), LI(0), 
         TheModule(0), TAsm(0), TD(0) {}
 

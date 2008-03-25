@@ -46,7 +46,7 @@ class MipsInstrInfo : public TargetInstrInfoImpl {
   MipsTargetMachine &TM;
   const MipsRegisterInfo RI;
 public:
-  MipsInstrInfo(MipsTargetMachine &TM);
+  explicit MipsInstrInfo(MipsTargetMachine &TM);
 
   /// getRegisterInfo - TargetInstrInfo is a superset of MRegister info.  As
   /// such, whenever a client has an instance of instruction info, it should

@@ -26,7 +26,7 @@ namespace llvm {
   protected:
     TargetMachine &TM;
   public:
-    AlphaJITInfo(TargetMachine &tm) : TM(tm)
+    explicit AlphaJITInfo(TargetMachine &tm) : TM(tm)
     { useGOT = true; }
 
     virtual void *emitFunctionStub(void *Fn, MachineCodeEmitter &MCE);

@@ -243,7 +243,7 @@ class X86InstrInfo : public TargetInstrInfoImpl {
   DenseMap<unsigned*, std::pair<unsigned, unsigned> > MemOp2RegOpTable;
   
 public:
-  X86InstrInfo(X86TargetMachine &tm);
+  explicit X86InstrInfo(X86TargetMachine &tm);
 
   /// getRegisterInfo - TargetInstrInfo is a superset of MRegister info.  As
   /// such, whenever a client has an instance of instruction info, it should

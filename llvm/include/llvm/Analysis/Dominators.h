@@ -48,7 +48,7 @@ class DominatorBase {
 protected:
   std::vector<NodeT*> Roots;
   const bool IsPostDominators;
-  inline DominatorBase(bool isPostDom) : 
+  inline explicit DominatorBase(bool isPostDom) :
     Roots(), IsPostDominators(isPostDom) {}
 public:
 
@@ -294,7 +294,7 @@ protected:
   }
 
 public:
-  DominatorTreeBase(bool isPostDom) 
+  explicit DominatorTreeBase(bool isPostDom)
     : DominatorBase<NodeT>(isPostDom), DFSInfoValid(false), SlowQueries(0) {}
   virtual ~DominatorTreeBase() { reset(); }
 

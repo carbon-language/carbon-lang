@@ -57,7 +57,7 @@ protected:
   // Helper to copy construct a SmallPtrSet.
   SmallPtrSetImpl(const SmallPtrSetImpl& that);
 public:
-  SmallPtrSetImpl(unsigned SmallSize) {
+  explicit SmallPtrSetImpl(unsigned SmallSize) {
     assert(SmallSize && (SmallSize & (SmallSize-1)) == 0 &&
            "Initial size must be a power of two!");
     CurArray = &SmallArray[0];
@@ -140,7 +140,7 @@ class SmallPtrSetIteratorImpl {
 protected:
   const void *const *Bucket;
 public:
-  SmallPtrSetIteratorImpl(const void *const *BP) : Bucket(BP) {
+  explicit SmallPtrSetIteratorImpl(const void *const *BP) : Bucket(BP) {
     AdvanceIfNotValid();
   }
   
@@ -166,7 +166,8 @@ protected:
 template<typename PtrTy>
 class SmallPtrSetIterator : public SmallPtrSetIteratorImpl {
 public:
-  SmallPtrSetIterator(const void *const *BP) : SmallPtrSetIteratorImpl(BP) {}
+  explicit SmallPtrSetIterator(const void *const *BP)
+    : SmallPtrSetIteratorImpl(BP) {}
 
   // Most methods provided by baseclass.
   

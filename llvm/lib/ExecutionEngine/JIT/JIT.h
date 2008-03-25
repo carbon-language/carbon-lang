@@ -37,7 +37,7 @@ private:
   std::vector<const GlobalVariable*> PendingGlobals;
 
 public:
-  JITState(ModuleProvider *MP) : PM(MP) {}
+  explicit JITState(ModuleProvider *MP) : PM(MP) {}
 
   FunctionPassManager &getPM(const MutexGuard &L) {
     return PM;

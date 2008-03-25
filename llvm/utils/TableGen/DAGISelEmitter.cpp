@@ -2072,7 +2072,7 @@ void DAGISelEmitter::run(std::ostream &OS) {
   OS << "    std::vector<SDNode*> &ISelQueue;\n";
   OS << "    bool HadDelete;\n";
   OS << "  public:\n";
-  OS << "    ISelQueueUpdater(std::vector<SDNode*> &isq)\n";
+  OS << "    explicit ISelQueueUpdater(std::vector<SDNode*> &isq)\n";
   OS << "      : ISelQueue(isq), HadDelete(false) {}\n";
   OS << "    \n";
   OS << "    bool hadDelete() const { return HadDelete; }\n";

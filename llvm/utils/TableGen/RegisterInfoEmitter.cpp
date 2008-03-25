@@ -58,7 +58,7 @@ void RegisterInfoEmitter::runHeader(std::ostream &OS) {
   OS << "namespace llvm {\n\n";
 
   OS << "struct " << ClassName << " : public TargetRegisterInfo {\n"
-     << "  " << ClassName
+     << "  explicit " << ClassName
      << "(int CallFrameSetupOpcode = -1, int CallFrameDestroyOpcode = -1);\n"
      << "  virtual int getDwarfRegNumFull(unsigned RegNum, "
      << "unsigned Flavour) const;\n"
