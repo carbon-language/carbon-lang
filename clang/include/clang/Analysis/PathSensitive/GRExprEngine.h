@@ -211,7 +211,12 @@ public:
   
   bool isUndefArg(const NodeTy* N) const {
     return N->isSink() &&
-           UndefArgs.find(const_cast<NodeTy*>(N)) != UndefArgs.end();
+      (UndefArgs.find(const_cast<NodeTy*>(N)) != UndefArgs.end() ||
+       MsgExprUndefArgs.find(const_cast<NodeTy*>(N)) != MsgExprUndefArgs.end());            
+  }
+  
+  bool isUndefReceiver(const NodeTy* N) const {
+    return N->isSink() && UndefReceivers.count(const_cast<NodeTy*>(N)) != 0;
   }
   
   typedef UndefBranchesTy::iterator undef_branch_iterator;
@@ -255,6 +260,23 @@ public:
   typedef UndefArgsTy::iterator undef_arg_iterator;
   undef_arg_iterator undef_arg_begin() { return UndefArgs.begin(); }
   undef_arg_iterator undef_arg_end() { return UndefArgs.end(); }  
+  
+  undef_arg_iterator msg_expr_undef_arg_begin() {
+    return MsgExprUndefArgs.begin();
+  }
+  undef_arg_iterator msg_expr_undef_arg_end() {
+    return MsgExprUndefArgs.end();
+  }  
+  
+  typedef UndefReceiversTy::iterator undef_receivers_iterator;
+
+  undef_receivers_iterator undef_receivers_begin() {
+    return UndefReceivers.begin();
+  }
+  
+  undef_receivers_iterator undef_receivers_end() {
+    return UndefReceivers.end();
+  }
   
   /// ProcessStmt - Called by GRCoreEngine. Used to generate new successor
   ///  nodes by processing the 'effects' of a block-level statement.  

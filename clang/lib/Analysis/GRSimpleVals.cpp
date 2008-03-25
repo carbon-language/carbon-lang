@@ -119,7 +119,7 @@ unsigned RunGRSimpleVals(CFG& cfg, Decl& CD, ASTContext& Ctx,
   EmitWarning(Diag, SrcMgr,
               CheckerState->null_derefs_begin(),
               CheckerState->null_derefs_end(),
-              "NULL pointer is dereferenced after it is checked for NULL.");
+              "Dereference of NULL pointer.");
   
   EmitWarning(Diag, SrcMgr,
               CheckerState->undef_derefs_begin(),
@@ -127,9 +127,9 @@ unsigned RunGRSimpleVals(CFG& cfg, Decl& CD, ASTContext& Ctx,
               "Dereference of undefined value.");
   
   EmitWarning(Diag, SrcMgr,
-              CheckerState->undef_derefs_begin(),
-              CheckerState->undef_derefs_end(),
-              "Dereference of undefined value.");
+              CheckerState->undef_branches_begin(),
+              CheckerState->undef_branches_end(),
+              "Branch condition evaluates to an uninitialized value.");
   
   EmitWarning(Diag, SrcMgr,
               CheckerState->explicit_bad_divides_begin(),
@@ -149,12 +149,18 @@ unsigned RunGRSimpleVals(CFG& cfg, Decl& CD, ASTContext& Ctx,
   EmitWarning(Diag, SrcMgr,
               CheckerState->undef_arg_begin(),
               CheckerState->undef_arg_end(),
-      "Pass-by-value argument in function or message expression is undefined.");
+              "Pass-by-value argument in function is undefined.");
   
   EmitWarning(Diag, SrcMgr,
-              CheckerState->undef_branches_begin(),
-              CheckerState->undef_branches_end(),
-      "Branch condition evaluates to an uninitialized value.");
+              CheckerState->msg_expr_undef_arg_begin(),
+              CheckerState->msg_expr_undef_arg_end(),
+              "Pass-by-value argument in message expression is undefined.");
+  
+  EmitWarning(Diag, SrcMgr,
+              CheckerState->undef_receivers_begin(),
+              CheckerState->undef_receivers_end(),
+              "Receiver in message expression is an uninitialized value.");
+
       
 #ifndef NDEBUG
   if (Visualize) CheckerState->ViewGraph(TrimGraph);
