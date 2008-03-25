@@ -221,8 +221,8 @@ void ScheduleDAG::ComputeLatency(SUnit *SU) {
     if (SU->Node->isTargetOpcode()) {
       unsigned SchedClass =
         TII->get(SU->Node->getTargetOpcode()).getSchedClass();
-      InstrStage *S = InstrItins.begin(SchedClass);
-      InstrStage *E = InstrItins.end(SchedClass);
+      const InstrStage *S = InstrItins.begin(SchedClass);
+      const InstrStage *E = InstrItins.end(SchedClass);
       for (; S != E; ++S)
         SU->Latency += S->Cycles;
     }
@@ -230,8 +230,8 @@ void ScheduleDAG::ComputeLatency(SUnit *SU) {
       SDNode *FNode = SU->FlaggedNodes[i];
       if (FNode->isTargetOpcode()) {
         unsigned SchedClass =TII->get(FNode->getTargetOpcode()).getSchedClass();
-        InstrStage *S = InstrItins.begin(SchedClass);
-        InstrStage *E = InstrItins.end(SchedClass);
+        const InstrStage *S = InstrItins.begin(SchedClass);
+        const InstrStage *E = InstrItins.end(SchedClass);
         for (; S != E; ++S)
           SU->Latency += S->Cycles;
       }

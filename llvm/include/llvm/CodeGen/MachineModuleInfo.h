@@ -265,7 +265,7 @@ public:
   
   /// getAnchorString - Return a string used to label this descriptor's anchor.
   ///
-  static const char *AnchorString;
+  static const char *const AnchorString;
   virtual const char *getAnchorString() const;
     
 #ifndef NDEBUG
@@ -664,7 +664,7 @@ public:
   
   /// getAnchorString - Return a string used to label this descriptor's anchor.
   ///
-  static const char *AnchorString;
+  static const char *const AnchorString;
   virtual const char *getAnchorString() const;
     
 #ifndef NDEBUG
@@ -701,7 +701,7 @@ public:
   
   /// getAnchorString - Return a string used to label this descriptor's anchor.
   ///
-  static const char *AnchorString;
+  static const char *const AnchorString;
   virtual const char *getAnchorString() const;
     
 #ifndef NDEBUG

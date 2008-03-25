@@ -2825,7 +2825,7 @@ std::string CWriter::InterpretASMConstraint(InlineAsm::ConstraintInfo& c) {
 
   assert(c.Codes.size() == 1 && "Too many asm constraint codes to handle");
 
-  const char** table = 0;
+  const char *const *table = 0;
   
   //Grab the translation table from TargetAsmInfo if it exists
   if (!TAsm) {

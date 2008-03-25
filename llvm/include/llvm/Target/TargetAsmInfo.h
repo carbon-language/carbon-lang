@@ -388,7 +388,7 @@ namespace llvm {
 
     //===--- CBE Asm Translation Table -----------------------------------===//
 
-    const char** AsmTransCBE; // Defaults to empty
+    const char *const *AsmTransCBE; // Defaults to empty
 
   public:
     TargetAsmInfo();
@@ -664,7 +664,7 @@ namespace llvm {
     const char *getDwarfExceptionSection() const {
       return DwarfExceptionSection;
     }
-    const char** getAsmCBE() const {
+    const char *const *getAsmCBE() const {
       return AsmTransCBE;
     }
   };

@@ -670,7 +670,7 @@ const char *CompileUnitDesc::getTypeString() const {
 
 /// getAnchorString - Return a string used to label this descriptor's anchor.
 ///
-const char *CompileUnitDesc::AnchorString = "llvm.dbg.compile_units";
+const char *const CompileUnitDesc::AnchorString = "llvm.dbg.compile_units";
 const char *CompileUnitDesc::getAnchorString() const {
   return AnchorString;
 }
@@ -1120,7 +1120,7 @@ const char *GlobalVariableDesc::getTypeString() const {
 
 /// getAnchorString - Return a string used to label this descriptor's anchor.
 ///
-const char *GlobalVariableDesc::AnchorString = "llvm.dbg.global_variables";
+const char *const GlobalVariableDesc::AnchorString = "llvm.dbg.global_variables";
 const char *GlobalVariableDesc::getAnchorString() const {
   return AnchorString;
 }
@@ -1174,7 +1174,7 @@ const char *SubprogramDesc::getTypeString() const {
 
 /// getAnchorString - Return a string used to label this descriptor's anchor.
 ///
-const char *SubprogramDesc::AnchorString = "llvm.dbg.subprograms";
+const char *const SubprogramDesc::AnchorString = "llvm.dbg.subprograms";
 const char *SubprogramDesc::getAnchorString() const {
   return AnchorString;
 }

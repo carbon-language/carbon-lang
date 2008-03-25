@@ -1971,7 +1971,7 @@ void APInt::fromString(uint32_t numbits, const char *str, uint32_t slen,
 std::string APInt::toString(uint8_t radix, bool wantSigned) const {
   assert((radix == 10 || radix == 8 || radix == 16 || radix == 2) &&
          "Radix should be 2, 8, 10, or 16!");
-  static const char *digits[] = { 
+  static const char *const digits[] = { 
     "0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F" 
   };
   std::string result;

@@ -267,7 +267,7 @@ static bool EatsUnboundedNumberOfValues(const Option *O) {
 static void ParseCStringVector(std::vector<char *> &output,
                                const char *input) {
   // Characters which will be treated as token separators:
-  static const char *delims = " \v\f\t\r\n";
+  static const char *const delims = " \v\f\t\r\n";
 
   std::string work (input);
   // Skip past any delims at head of input string.

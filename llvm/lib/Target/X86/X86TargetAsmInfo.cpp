@@ -25,7 +25,8 @@
 using namespace llvm;
 using namespace llvm::dwarf;
 
-static const char* x86_asm_table[] = {"{si}", "S",
+static const char *const x86_asm_table[] = {
+                                      "{si}", "S",
                                       "{di}", "D",
                                       "{ax}", "a",
                                       "{cx}", "c",

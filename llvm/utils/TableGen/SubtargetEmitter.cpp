@@ -83,7 +83,7 @@ void SubtargetEmitter::FeatureKeyValues(std::ostream &OS) {
 
   // Begin feature table
   OS << "// Sorted (by key) array of values for CPU features.\n"
-     << "static llvm::SubtargetFeatureKV FeatureKV[] = {\n";
+     << "static const llvm::SubtargetFeatureKV FeatureKV[] = {\n";
   
   // For each feature
   for (unsigned i = 0, N = FeatureList.size(); i < N; ++i) {
@@ -269,7 +269,7 @@ void SubtargetEmitter::EmitStageData(std::ostream &OS,
   if (ProcItinList.size() < 2) return;
 
   // Begin stages table
-  OS << "static llvm::InstrStage Stages[] = {\n"
+  OS << "static const llvm::InstrStage Stages[] = {\n"
         "  { 0, 0 }, // No itinerary\n";
         
   unsigned ItinEnum = 1;
@@ -362,7 +362,7 @@ void SubtargetEmitter::EmitProcessorData(std::ostream &OS,
 
     // Begin processor itinerary table
     OS << "\n";
-    OS << "static llvm::InstrItinerary " << Name << "[] = {\n";
+    OS << "static const llvm::InstrItinerary " << Name << "[] = {\n";
     
     // For each itinerary class
     std::vector<InstrItinerary> &ItinList = *ProcListIter++;

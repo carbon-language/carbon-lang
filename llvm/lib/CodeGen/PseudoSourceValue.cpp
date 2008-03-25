@@ -29,7 +29,7 @@ namespace llvm {
   const PseudoSourceValue *PseudoSourceValue::getJumpTable()
   { return &(*PSVs)[4]; }
 
-  static const char *PSVNames[] = {
+  static const char *const PSVNames[] = {
     "FixedStack",
     "Stack",
     "GOT",

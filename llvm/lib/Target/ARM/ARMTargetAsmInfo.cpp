@@ -17,7 +17,8 @@
 #include <cctype>
 using namespace llvm;
 
-static const char* arm_asm_table[] = {"{r0}", "r0",
+static const char *const arm_asm_table[] = {
+                                      "{r0}", "r0",
                                       "{r1}", "r1",
                                       "{r2}", "r2",
                                       "{r3}", "r3",

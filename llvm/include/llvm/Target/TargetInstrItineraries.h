@@ -47,14 +47,15 @@ struct InstrItinerary {
 // used by a target.
 //
 struct InstrItineraryData {
-  InstrStage     *Stages;         // Array of stages selected
-  InstrItinerary *Itineratries;   // Array of itineraries selected
+  const InstrStage     *Stages;         // Array of stages selected
+  const InstrItinerary *Itineratries;   // Array of itineraries selected
 
 //
 // Ctors.
 //
   InstrItineraryData() : Stages(0), Itineratries(0) {}
-  InstrItineraryData(InstrStage *S, InstrItinerary *I) : Stages(S), Itineratries(I) {}
+  InstrItineraryData(const InstrStage *S, const InstrItinerary *I)
+    : Stages(S), Itineratries(I) {}
   
   //
   // isEmpty - Returns true if there are no itineraries.
@@ -64,7 +65,7 @@ struct InstrItineraryData {
   //
   // begin - Return the first stage of the itinerary.
   // 
-  inline InstrStage *begin(unsigned ItinClassIndx) const {
+  inline const InstrStage *begin(unsigned ItinClassIndx) const {
     unsigned StageIdx = Itineratries[ItinClassIndx].First;
     return Stages + StageIdx;
   }
@@ -72,7 +73,7 @@ struct InstrItineraryData {
   //
   // end - Return the last+1 stage of the itinerary.
   // 
-  inline InstrStage *end(unsigned ItinClassIndx) const {
+  inline const InstrStage *end(unsigned ItinClassIndx) const {
     unsigned StageIdx = Itineratries[ItinClassIndx].Last;
     return Stages + StageIdx;
   }
