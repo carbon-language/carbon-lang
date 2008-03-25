@@ -915,8 +915,5 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
     (*I)->eraseFromParent();
   }
   
-  for (LiveIntervals::iterator I = LI.begin(), E = LI.end(); I != E; ++I)
-    I->second.dump();
-  
   return false;
 }
