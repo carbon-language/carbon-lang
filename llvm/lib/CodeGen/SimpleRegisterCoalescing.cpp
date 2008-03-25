@@ -1541,6 +1541,10 @@ SimpleRegisterCoalescing::lastRegisterUse(unsigned Start, unsigned End,
            E = mri_->use_end(); I != E; ++I) {
       MachineOperand &Use = I.getOperand();
       MachineInstr *UseMI = Use.getParent();
+      unsigned SrcReg, DstReg;
+      if (tii_->isMoveInstr(*UseMI, SrcReg, DstReg) && SrcReg == DstReg)
+        // Ignore identity copies.
+        continue;
       unsigned Idx = li_->getInstructionIndex(UseMI);
       if (Idx >= Start && Idx < End && Idx >= UseIdx) {
         LastUse = &Use;
@@ -1562,14 +1566,17 @@ SimpleRegisterCoalescing::lastRegisterUse(unsigned Start, unsigned End,
     if (e < s || MI == NULL)
       return NULL;
 
-    for (unsigned i = 0, NumOps = MI->getNumOperands(); i != NumOps; ++i) {
-      MachineOperand &Use = MI->getOperand(i);
-      if (Use.isRegister() && Use.isUse() && Use.getReg() &&
-          tri_->regsOverlap(Use.getReg(), Reg)) {
-        UseIdx = e;
-        return &Use;
+    // Ignore identity copies.
+    unsigned SrcReg, DstReg;
+    if (!(tii_->isMoveInstr(*MI, SrcReg, DstReg) && SrcReg == DstReg))
+      for (unsigned i = 0, NumOps = MI->getNumOperands(); i != NumOps; ++i) {
+        MachineOperand &Use = MI->getOperand(i);
+        if (Use.isRegister() && Use.isUse() && Use.getReg() &&
+            tri_->regsOverlap(Use.getReg(), Reg)) {
+          UseIdx = e;
+          return &Use;
+        }
       }
-    }
 
     e -= InstrSlots::NUM;
   }
