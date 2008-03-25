@@ -12,7 +12,7 @@ LEVEL := ..
 # large and three small executables. This is done to minimize memory load 
 # in parallel builds.  Please retain this ordering.
 PARALLEL_DIRS := llvm-config  \
-                 opt llvm-as llvm-dis llvm-upgrade \
+                 opt llvm-as llvm-dis \
                  llc llvm-ranlib llvm-ar llvm-nm \
                  llvm-ld llvmc llvm-prof llvm-link \
 		 lli gccas gccld llvm-extract llvm-db llvm2cpp \
