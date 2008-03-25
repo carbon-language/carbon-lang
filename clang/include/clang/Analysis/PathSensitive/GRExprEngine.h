@@ -72,6 +72,7 @@ protected:
   typedef llvm::SmallPtrSet<NodeTy*,2> UndefStoresTy;
   typedef llvm::SmallPtrSet<NodeTy*,2> BadDerefTy;
   typedef llvm::SmallPtrSet<NodeTy*,2> BadCallsTy;
+  typedef llvm::SmallPtrSet<NodeTy*,2> UndefReceiversTy;
   typedef llvm::DenseMap<NodeTy*, Expr*> UndefArgsTy;
   typedef llvm::SmallPtrSet<NodeTy*,2> BadDividesTy;
   typedef llvm::SmallPtrSet<NodeTy*,2> NoReturnCallsTy;  
@@ -120,9 +121,18 @@ protected:
   ///  pointers that are NULL (or other constants) or Undefined.
   BadCallsTy BadCalls;
   
+  /// UndefReceiver - Nodes in the ExplodedGraph resulting from message
+  ///  ObjC message expressions where the receiver is undefined (uninitialized).
+  UndefReceiversTy UndefReceivers;
+  
   /// UndefArg - Nodes in the ExplodedGraph resulting from calls to functions
   ///   where a pass-by-value argument has an undefined value.
   UndefArgsTy UndefArgs;
+  
+  /// MsgExprUndefArgs - Nodes in the ExplodedGraph resulting from
+  ///   message expressions where a pass-by-value argument has an undefined
+  ///  value.
+  UndefArgsTy MsgExprUndefArgs;
   
 public:
   GRExprEngine(GraphTy& g) : 

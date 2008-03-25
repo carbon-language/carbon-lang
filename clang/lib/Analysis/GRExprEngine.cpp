@@ -1088,10 +1088,10 @@ void GRExprEngine::VisitObjCMessageExpr(ObjCMessageExpr* ME, NodeTy* Pred,
 }  
 
 void GRExprEngine::VisitObjCMessageExprHelper(ObjCMessageExpr* ME,
-                                              ObjCMessageExpr::arg_iterator I,
-                                              ObjCMessageExpr::arg_iterator E,
+                                              ObjCMessageExpr::arg_iterator AI,
+                                              ObjCMessageExpr::arg_iterator AE,
                                               NodeTy* Pred, NodeSet& Dst) {
-  if (I == E) {
+  if (AI == AE) {
     
     // Process the receiver.
     
@@ -1101,19 +1101,75 @@ void GRExprEngine::VisitObjCMessageExprHelper(ObjCMessageExpr* ME,
         
     // FIXME: More logic for the processing the method call. 
     
-    for (NodeSet::iterator NI = Tmp.begin(), NE = Tmp.end(); NI != NE; ++NI)
-      Dst.Add(*NI);
+    for (NodeSet::iterator NI = Tmp.begin(), NE = Tmp.end(); NI != NE; ++NI) {
+     
+      ValueState* St = GetState(*NI);
+      RVal L = GetLVal(St, Receiver);
+      
+      // Check for undefined control-flow or calls to NULL.
+      
+      if (L.isUndef()) {
+        NodeTy* N = Builder->generateNode(ME, St, *NI);
+        
+        if (N) {
+          N->markAsSink();
+          UndefReceivers.insert(N);
+        }
+        
+        continue;
+      }
+      
+      // Check for any arguments that are uninitialized/undefined.
+      
+      bool badArg = false;
+      
+      for (ObjCMessageExpr::arg_iterator I = ME->arg_begin(), E = ME->arg_end();
+           I != E; ++I) {
+        
+        if (GetRVal(St, *I).isUndef()) {
+          
+          NodeTy* N = Builder->generateNode(ME, St, *NI);
+          
+          if (N) {
+            N->markAsSink();
+            MsgExprUndefArgs[N] = *I;
+          }
+          
+          badArg = true;
+          break;
+        }
+        
+        RVal V = GetRVal(St, *I);
+      }
+      
+      if (badArg)
+        continue;
+      
+      // FIXME: Eventually we will properly handle the effects of a message
+      //  expr.  For now invalidate all arguments passed in by references.
+
+      for (ObjCMessageExpr::arg_iterator I = ME->arg_begin(), E = ME->arg_end();
+           I != E; ++I) {
+        
+        RVal V = GetRVal(St, *I);
+        
+        if (isa<LVal>(V))
+          St = SetRVal(St, cast<LVal>(V), UnknownVal());
+      }
+        
+      MakeNode(Dst, ME, *NI, St);
+    }
 
     return;
   }
   
   NodeSet Tmp;
-  Visit(*I, Pred, Tmp);
+  Visit(*AI, Pred, Tmp);
   
-  ++I;
+  ++AI;
   
   for (NodeSet::iterator NI = Tmp.begin(), NE = Tmp.end(); NI != NE; ++NI)
-    VisitObjCMessageExprHelper(ME, I, E, *NI, Dst);
+    VisitObjCMessageExprHelper(ME, AI, AE, *NI, Dst);
 }
 
 
