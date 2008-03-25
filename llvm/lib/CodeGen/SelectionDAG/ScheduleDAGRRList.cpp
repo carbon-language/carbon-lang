@@ -32,7 +32,7 @@
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;
 
-STATISTIC(NumBacktracks, "Number of times scheduler backtraced");
+STATISTIC(NumBacktracks, "Number of times scheduler backtracked");
 STATISTIC(NumUnfolds,    "Number of nodes unfolded");
 STATISTIC(NumDups,       "Number of duplicated nodes");
 STATISTIC(NumCCCopies,   "Number of cross class copies");
@@ -348,7 +348,7 @@ static bool isReachable(SUnit *SU, SUnit *TargetSU) {
   return Reached;
 }
 
-/// willCreateCycle - Returns true if adding an edge from SU to TargetSU will
+/// WillCreateCycle - Returns true if adding an edge from SU to TargetSU will
 /// create a cycle.
 static bool WillCreateCycle(SUnit *SU, SUnit *TargetSU) {
   if (isReachable(TargetSU, SU))
@@ -755,7 +755,7 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
       }
 
       if (!CurSU) {
-        // Can't backtrace. Try duplicating the nodes that produces these
+        // Can't backtrack. Try duplicating the nodes that produces these
         // "expensive to copy" values to break the dependency. In case even
         // that doesn't work, insert cross class copies.
         SUnit *TrySU = NotReady[0];
