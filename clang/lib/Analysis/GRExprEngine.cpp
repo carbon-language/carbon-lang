@@ -1084,10 +1084,10 @@ void GRExprEngine::VisitAsmStmtHelperInputs(AsmStmt* A,
 
 void GRExprEngine::VisitObjCMessageExpr(ObjCMessageExpr* ME, NodeTy* Pred,
                                         NodeSet& Dst){
-  VisitObjCMessageExprHelper(ME, ME->arg_begin(), ME->arg_end(), Pred, Dst);
+  VisitObjCMessageExprArgHelper(ME, ME->arg_begin(), ME->arg_end(), Pred, Dst);
 }  
 
-void GRExprEngine::VisitObjCMessageExprHelper(ObjCMessageExpr* ME,
+void GRExprEngine::VisitObjCMessageExprArgHelper(ObjCMessageExpr* ME,
                                               ObjCMessageExpr::arg_iterator AI,
                                               ObjCMessageExpr::arg_iterator AE,
                                               NodeTy* Pred, NodeSet& Dst) {
@@ -1095,71 +1095,17 @@ void GRExprEngine::VisitObjCMessageExprHelper(ObjCMessageExpr* ME,
     
     // Process the receiver.
     
-    Expr* Receiver = ME->getReceiver();
-    NodeSet Tmp;
-    VisitLVal(Receiver, Pred, Tmp);
-        
-    // FIXME: More logic for the processing the method call. 
-    
-    for (NodeSet::iterator NI = Tmp.begin(), NE = Tmp.end(); NI != NE; ++NI) {
-     
-      ValueState* St = GetState(*NI);
-      RVal L = GetLVal(St, Receiver);
+    if (Expr* Receiver = ME->getReceiver()) {
+      NodeSet Tmp;
+      VisitLVal(Receiver, Pred, Tmp);
+            
+      for (NodeSet::iterator NI = Tmp.begin(), NE = Tmp.end(); NI != NE; ++NI)
+        VisitObjCMessageExprDispatchHelper(ME, *NI, Dst);
       
-      // Check for undefined control-flow or calls to NULL.
-      
-      if (L.isUndef()) {
-        NodeTy* N = Builder->generateNode(ME, St, *NI);
-        
-        if (N) {
-          N->markAsSink();
-          UndefReceivers.insert(N);
-        }
-        
-        continue;
-      }
-      
-      // Check for any arguments that are uninitialized/undefined.
-      
-      bool badArg = false;
-      
-      for (ObjCMessageExpr::arg_iterator I = ME->arg_begin(), E = ME->arg_end();
-           I != E; ++I) {
-        
-        if (GetRVal(St, *I).isUndef()) {
-          
-          NodeTy* N = Builder->generateNode(ME, St, *NI);
-          
-          if (N) {
-            N->markAsSink();
-            MsgExprUndefArgs[N] = *I;
-          }
-          
-          badArg = true;
-          break;
-        }
-        
-        RVal V = GetRVal(St, *I);
-      }
-      
-      if (badArg)
-        continue;
-      
-      // FIXME: Eventually we will properly handle the effects of a message
-      //  expr.  For now invalidate all arguments passed in by references.
-
-      for (ObjCMessageExpr::arg_iterator I = ME->arg_begin(), E = ME->arg_end();
-           I != E; ++I) {
-        
-        RVal V = GetRVal(St, *I);
-        
-        if (isa<LVal>(V))
-          St = SetRVal(St, cast<LVal>(V), UnknownVal());
-      }
-        
-      MakeNode(Dst, ME, *NI, St);
+      return;
     }
-
+    
+    VisitObjCMessageExprDispatchHelper(ME, Pred, Dst);
     return;
   }
   
@@ -1169,9 +1115,67 @@ void GRExprEngine::VisitObjCMessageExprHelper(ObjCMessageExpr* ME,
   ++AI;
   
   for (NodeSet::iterator NI = Tmp.begin(), NE = Tmp.end(); NI != NE; ++NI)
-    VisitObjCMessageExprHelper(ME, AI, AE, *NI, Dst);
+    VisitObjCMessageExprArgHelper(ME, AI, AE, *NI, Dst);
 }
 
+void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
+                                                 NodeTy* Pred, NodeSet& Dst) {
+  
+  
+  // FIXME: More logic for the processing the method call. 
+  
+  ValueState* St = GetState(Pred);
+  
+  if (Expr* Receiver = ME->getReceiver()) {
+  
+    RVal L = GetLVal(St, Receiver);
+    
+    // Check for undefined control-flow or calls to NULL.
+    
+    if (L.isUndef()) {
+      NodeTy* N = Builder->generateNode(ME, St, Pred);
+      
+      if (N) {
+        N->markAsSink();
+        UndefReceivers.insert(N);
+      }
+      
+      return;
+    }
+  }
+    
+  // Check for any arguments that are uninitialized/undefined.
+  
+  for (ObjCMessageExpr::arg_iterator I = ME->arg_begin(), E = ME->arg_end();
+       I != E; ++I) {
+    
+    if (GetRVal(St, *I).isUndef()) {
+      
+      NodeTy* N = Builder->generateNode(ME, St, Pred);
+      
+      if (N) {
+        N->markAsSink();
+        MsgExprUndefArgs[N] = *I;
+      }
+      
+      return;
+    }    
+  }
+  
+  // FIXME: Eventually we will properly handle the effects of a message
+  //  expr.  For now invalidate all arguments passed in by references.
+  
+  for (ObjCMessageExpr::arg_iterator I = ME->arg_begin(), E = ME->arg_end();
+       I != E; ++I) {
+    
+    RVal V = GetRVal(St, *I);
+    
+    if (isa<LVal>(V))
+      St = SetRVal(St, cast<LVal>(V), UnknownVal());
+  }
+  
+  MakeNode(Dst, ME, Pred, St);
+}
 
 
 void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,

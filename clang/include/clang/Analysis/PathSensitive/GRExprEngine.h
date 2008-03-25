@@ -401,10 +401,13 @@ protected:
   /// VisitObjCMessageExpr - Transfer function for ObjC message expressions.
   void VisitObjCMessageExpr(ObjCMessageExpr* ME, NodeTy* Pred, NodeSet& Dst);
   
-  void VisitObjCMessageExprHelper(ObjCMessageExpr* ME,
-                                  ObjCMessageExpr::arg_iterator I,
-                                  ObjCMessageExpr::arg_iterator E,
-                                  NodeTy* Pred, NodeSet& Dst);
+  void VisitObjCMessageExprArgHelper(ObjCMessageExpr* ME,
+                                     ObjCMessageExpr::arg_iterator I,
+                                     ObjCMessageExpr::arg_iterator E,
+                                     NodeTy* Pred, NodeSet& Dst);
+  
+  void VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME, NodeTy* Pred,
+                                          NodeSet& Dst);
   
   /// VisitCast - Transfer function logic for all casts (implicit and explicit).
   void VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst);  
