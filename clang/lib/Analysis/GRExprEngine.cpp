@@ -1082,6 +1082,42 @@ void GRExprEngine::VisitAsmStmtHelperInputs(AsmStmt* A,
 }
 
 
+void GRExprEngine::VisitObjCMessageExpr(ObjCMessageExpr* ME, NodeTy* Pred,
+                                        NodeSet& Dst){
+  VisitObjCMessageExprHelper(ME, ME->arg_begin(), ME->arg_end(), Pred, Dst);
+}  
+
+void GRExprEngine::VisitObjCMessageExprHelper(ObjCMessageExpr* ME,
+                                              ObjCMessageExpr::arg_iterator I,
+                                              ObjCMessageExpr::arg_iterator E,
+                                              NodeTy* Pred, NodeSet& Dst) {
+  if (I == E) {
+    
+    // Process the receiver.
+    
+    Expr* Receiver = ME->getReceiver();
+    NodeSet Tmp;
+    VisitLVal(Receiver, Pred, Tmp);
+        
+    // FIXME: More logic for the processing the method call. 
+    
+    for (NodeSet::iterator NI = Tmp.begin(), NE = Tmp.end(); NI != NE; ++NI)
+      Dst.Add(*NI);
+
+    return;
+  }
+  
+  NodeSet Tmp;
+  Visit(*I, Pred, Tmp);
+  
+  ++I;
+  
+  for (NodeSet::iterator NI = Tmp.begin(), NE = Tmp.end(); NI != NE; ++NI)
+    VisitObjCMessageExprHelper(ME, I, E, *NI, Dst);
+}
+
+
+
 void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
                                        GRExprEngine::NodeTy* Pred,
                                        GRExprEngine::NodeSet& Dst) {
@@ -1479,6 +1515,11 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
     case Stmt::ImplicitCastExprClass: {
       ImplicitCastExpr* C = cast<ImplicitCastExpr>(S);
       VisitCast(C, C->getSubExpr(), Pred, Dst);
+      break;
+    }
+      
+    case Stmt::ObjCMessageExprClass: {
+      VisitObjCMessageExpr(cast<ObjCMessageExpr>(S), Pred, Dst);
       break;
     }
 
