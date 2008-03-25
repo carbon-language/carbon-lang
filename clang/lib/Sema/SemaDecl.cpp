@@ -2136,6 +2136,24 @@ void Sema::HandleNothrowAttribute(Decl *d, AttributeList *rawAttr) {
   d->addAttr(new NoThrowAttr());
 }
 
+static const FunctionTypeProto *getFunctionProto(Decl *d) {
+  ValueDecl *decl = dyn_cast<ValueDecl>(d);
+  if (!decl) return 0;
+
+  QualType Ty = decl->getType();
+
+  if (Ty->isFunctionPointerType()) {
+    const PointerType *PtrTy = Ty->getAsPointerType();
+    Ty = PtrTy->getPointeeType();
+  }
+
+  if (const FunctionType *FnTy = Ty->getAsFunctionType())
+    return dyn_cast<FunctionTypeProto>(FnTy->getAsFunctionType());
+
+  return 0;
+}
+
+
 /// Handle __attribute__((format(type,idx,firstarg))) attributes
 /// based on http://gcc.gnu.org/onlinedocs/gcc/Function-Attributes.html
 void Sema::HandleFormatAttribute(Decl *d, AttributeList *rawAttr) {
@@ -2152,22 +2170,20 @@ void Sema::HandleFormatAttribute(Decl *d, AttributeList *rawAttr) {
     return;
   }
 
-  FunctionDecl *Fn = dyn_cast<FunctionDecl>(d);
-  if (!Fn) {
+  // GCC ignores the format attribute on K&R style function
+  // prototypes, so we ignore it as well
+  const FunctionTypeProto *proto = getFunctionProto(d);
+
+  if (!proto) {
     Diag(rawAttr->getLoc(), diag::warn_attribute_wrong_decl_type,
            "format", "function");
     return;
   }
 
-  const FunctionTypeProto *proto =
-      dyn_cast<FunctionTypeProto>(Fn->getType()->getAsFunctionType());
-  if (!proto)
-    return;
-
   // FIXME: in C++ the implicit 'this' function parameter also counts.
   // this is needed in order to be compatible with GCC
   // the index must start in 1 and the limit is numargs+1
-  unsigned NumArgs  = Fn->getNumParams();
+  unsigned NumArgs  = proto->getNumArgs();
   unsigned FirstIdx = 1;
 
   const char *Format = rawAttr->getParameterName()->getName();
