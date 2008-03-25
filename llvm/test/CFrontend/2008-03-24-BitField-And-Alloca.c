@@ -1,3 +1,4 @@
+// RUN: %llvmgcc -S --emit-llvm %s -o - | not grep "\{ i8, .7 x i8. \}"
 // RUN: %llvmgcc -O2 -S %s -o - | not grep alloca
 enum {
  PP_C,
