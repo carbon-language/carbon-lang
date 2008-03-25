@@ -78,6 +78,10 @@ namespace llvm {
   /// on the commandline. When the flag is on, the target will perform tail call
   /// optimization (pop the caller's stack) providing it supports it.
   extern bool PerformTailCallOpt;
+
+  /// OptimizeForSize - When this flags is set, code generator avoids optimization
+  /// that increases size.
+  extern bool OptimizeForSize;
 } // End llvm namespace
 
 #endif

@@ -34,6 +34,7 @@ namespace llvm {
   Reloc::Model RelocationModel;
   CodeModel::Model CMModel;
   bool PerformTailCallOpt;
+  bool OptimizeForSize;
 }
 namespace {
   cl::opt<bool, true> PrintCode("print-machineinstrs",
@@ -122,6 +123,11 @@ namespace {
   EnablePerformTailCallOpt("tailcallopt",
                            cl::desc("Turn on tail call optimization."),
                            cl::location(PerformTailCallOpt),
+                           cl::init(false));
+  cl::opt<bool, true>
+  EnableOptimizeForSize("optimizeforsize",
+                        cl::desc("Optimize for size."),
+                           cl::location(OptimizeForSize),
                            cl::init(false));
 }
 
