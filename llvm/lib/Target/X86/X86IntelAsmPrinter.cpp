@@ -57,17 +57,18 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   SwitchToTextSection(getSectionForFunction(*F).c_str(), F);
 
+  unsigned FnAlign = OptimizeForSize ? 1 : 4;
   switch (F->getLinkage()) {
   default: assert(0 && "Unsupported linkage type!");
   case Function::InternalLinkage:
-    EmitAlignment(4);
+    EmitAlignment(FnAlign);
     break;    
   case Function::DLLExportLinkage:
     DLLExportedFns.insert(CurrentFnName);
     //FALLS THROUGH
   case Function::ExternalLinkage:
     O << "\tpublic " << CurrentFnName << "\n";
-    EmitAlignment(4);
+    EmitAlignment(FnAlign);
     break;    
   }
   

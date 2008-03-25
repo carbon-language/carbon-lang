@@ -819,7 +819,7 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     if (const char *Directive = TAI->getHiddenDirective())
       O << Directive << CurrentFnName << "\n";
   
-  EmitAlignment(4, F);
+  EmitAlignment(OptimizeForSize ? 2 : 4, F);
   O << CurrentFnName << ":\n";
 
   // Emit pre-function debug information.

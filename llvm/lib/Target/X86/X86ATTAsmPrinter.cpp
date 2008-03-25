@@ -98,21 +98,22 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   SwitchToTextSection(getSectionForFunction(*F).c_str(), F);
     
+  unsigned FnAlign = OptimizeForSize ? 1 : 4;
   switch (F->getLinkage()) {
   default: assert(0 && "Unknown linkage type!");
   case Function::InternalLinkage:  // Symbols default to internal.
-    EmitAlignment(4, F);
+    EmitAlignment(FnAlign, F);
     break;
   case Function::DLLExportLinkage:
     DLLExportedFns.insert(Mang->makeNameProper(F->getName(), ""));
     //FALLS THROUGH
   case Function::ExternalLinkage:
-    EmitAlignment(4, F);
+    EmitAlignment(FnAlign, F);
     O << "\t.globl\t" << CurrentFnName << "\n";    
     break;
   case Function::LinkOnceLinkage:
   case Function::WeakLinkage:
-    EmitAlignment(4, F);
+    EmitAlignment(FnAlign, F);
     if (Subtarget->isTargetDarwin()) {
       O << "\t.globl\t" << CurrentFnName << "\n";
       O << TAI->getWeakDefDirective() << CurrentFnName << "\n";
