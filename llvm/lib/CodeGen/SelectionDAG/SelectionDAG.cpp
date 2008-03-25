@@ -2245,6 +2245,12 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   // Fold a bunch of operators when the RHS is undef. 
   if (N2.getOpcode() == ISD::UNDEF) {
     switch (Opcode) {
+    case ISD::XOR:
+      if (N1.getOpcode() == ISD::UNDEF)
+        // Handle undef ^ undef -> 0 special case. This is a common
+        // idiom (misuse).
+        return getConstant(0, VT);
+      // fallthrough
     case ISD::ADD:
     case ISD::ADDC:
     case ISD::ADDE:
@@ -2258,7 +2264,6 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     case ISD::SDIV:
     case ISD::UREM:
     case ISD::SREM:
-    case ISD::XOR:
       return N2;       // fold op(arg1, undef) -> undef
     case ISD::MUL: 
     case ISD::AND:

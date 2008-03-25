@@ -474,9 +474,14 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
   // Handle UndefValue up front
   if (isa<UndefValue>(C1) || isa<UndefValue>(C2)) {
     switch (Opcode) {
+    case Instruction::Xor:
+      if (isa<UndefValue>(C1) && isa<UndefValue>(C2))
+        // Handle undef ^ undef -> 0 special case. This is a common
+        // idiom (misuse).
+        return Constant::getNullValue(C1->getType());
+      // Fallthrough
     case Instruction::Add:
     case Instruction::Sub:
-    case Instruction::Xor:
       return UndefValue::get(C1->getType());
     case Instruction::Mul:
     case Instruction::And:

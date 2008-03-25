@@ -2119,6 +2119,9 @@ SDOperand DAGCombiner::visitXOR(SDNode *N) {
     if (FoldedVOp.Val) return FoldedVOp;
   }
   
+  // fold (xor undef, undef) -> 0. This is a common idiom (misuse).
+  if (N0.getOpcode() == ISD::UNDEF && N1.getOpcode() == ISD::UNDEF)
+    return DAG.getConstant(0, VT);
   // fold (xor x, undef) -> undef
   if (N0.getOpcode() == ISD::UNDEF)
     return N0;
