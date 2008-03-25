@@ -25,7 +25,7 @@ endif
 # The degree of horrorshowness in that file is too much for me atm.
 $(ObjDir)/Tools.inc.tmp: $(TOOLS_SOURCE) $(ObjDir)/.dir
 	$(Echo) "Building LLVMCC configuration library with tblgen"
-	$(Verb) $(TableGen) -gen-llvmcc -o $@ $<
+	$(Verb) $(TableGen) -gen-llvmcc -o $(call SYSPATH, $@) $<
 
 Tools.inc : $(ObjDir)/Tools.inc.tmp
 	$(Verb) $(CMP) -s $@ $< || $(CP) $< $@
