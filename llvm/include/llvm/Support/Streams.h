@@ -46,7 +46,7 @@ namespace llvm {
     }
 
     template <typename Ty>
-    BaseStream &operator >> (const Ty &Thing) {
+    BaseStream &operator >> (Ty &Thing) {
       if (Stream) *Stream >> Thing;
       return *this;
     }
