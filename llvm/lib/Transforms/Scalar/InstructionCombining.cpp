@@ -4425,8 +4425,13 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
   bool Changed = SimplifyCommutative(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
-  if (isa<UndefValue>(Op1))
+  if (isa<UndefValue>(Op1)) {
+    if (isa<UndefValue>(Op0))
+      // Handle undef ^ undef -> 0 special case. This is a common
+      // idiom (misuse).
+      return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
     return ReplaceInstUsesWith(I, Op1);  // X ^ undef -> undef
+  }
 
   // xor X, X = 0, even if X is nested in a sequence of Xor's.
   if (Instruction *Result = AssociativeOpt(I, XorSelf(Op1))) {
