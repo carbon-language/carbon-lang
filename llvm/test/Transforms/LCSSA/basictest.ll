@@ -1,28 +1,24 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -lcssa | llvm-dis | \
+; RUN: llvm-as < %s | opt -lcssa | llvm-dis | \
 ; RUN:   grep {X3.lcssa = phi i32}
-; RUN: llvm-upgrade < %s | llvm-as | opt -lcssa | llvm-dis | \
+; RUN: llvm-as < %s | opt -lcssa | llvm-dis | \
 ; RUN:   grep {X4 = add i32 3, %X3.lcssa}
 
-void %lcssa(bool %S2) {
+define void @lcssa(i1 %S2) {
 entry:
 	br label %loop.interior
-
-loop.interior:		; preds = %entry
-	br bool %S2, label %if.true, label %if.false
-	
-if.true:
-	%X1 = add int 0, 0
+loop.interior:		; preds = %post.if, %entry
+	br i1 %S2, label %if.true, label %if.false
+if.true:		; preds = %loop.interior
+	%X1 = add i32 0, 0		; <i32> [#uses=1]
 	br label %post.if
-
-if.false:
-	%X2 = add int 0, 1
+if.false:		; preds = %loop.interior
+	%X2 = add i32 0, 1		; <i32> [#uses=1]
 	br label %post.if
-
-post.if:
-	%X3 = phi int [%X1, %if.true], [%X2, %if.false]
-	br bool %S2, label %loop.exit, label %loop.interior
-
-loop.exit:
-	%X4 = add int 3, %X3
+post.if:		; preds = %if.false, %if.true
+	%X3 = phi i32 [ %X1, %if.true ], [ %X2, %if.false ]		; <i32> [#uses=1]
+	br i1 %S2, label %loop.exit, label %loop.interior
+loop.exit:		; preds = %post.if
+	%X4 = add i32 3, %X3		; <i32> [#uses=0]
 	ret void
 }
+

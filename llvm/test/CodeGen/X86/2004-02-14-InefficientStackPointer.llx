@@ -1,5 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep -i ESP | not grep sub
+; RUN: llvm-as < %s | llc -march=x86 | grep -i ESP | not grep sub
 
-int %test(int %X) {
-	ret int %X
+define i32 @test(i32 %X) {
+        ret i32 %X
 }

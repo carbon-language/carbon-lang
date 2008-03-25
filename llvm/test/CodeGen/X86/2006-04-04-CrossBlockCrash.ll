@@ -1,55 +1,50 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mcpu=yonah 
+; RUN: llvm-as < %s | llc -march=x86 -mcpu=yonah
+; END.
 
-target endian = little
-target pointersize = 32
+target datalayout = "e-p:32:32"
 target triple = "i686-apple-darwin8.6.1"
 	%struct.GLTColor4 = type { float, float, float, float }
 	%struct.GLTCoord3 = type { float, float, float }
-	%struct.__GLIContextRec = type { { %struct.anon, { [24 x [16 x float]], [24 x [16 x float]] }, %struct.GLTColor4, { float, float, float, float, %struct.GLTCoord3, float } }, { float, float, float, float, float, float, float, float, [4 x uint], [4 x uint], [4 x uint] } }
-	%struct.__GLvertex = type { %struct.GLTColor4, %struct.GLTColor4, %struct.GLTColor4, %struct.GLTColor4, %struct.GLTColor4, %struct.GLTCoord3, float, %struct.GLTColor4, float, float, float, ubyte, ubyte, ubyte, ubyte, [4 x float], [2 x sbyte*], uint, uint, [16 x %struct.GLTColor4] }
+	%struct.__GLIContextRec = type { { %struct.anon, { [24 x [16 x float]], [24 x [16 x float]] }, %struct.GLTColor4, { float, float, float, float, %struct.GLTCoord3, float } }, { float, float, float, float, float, float, float, float, [4 x i32], [4 x i32], [4 x i32] } }
+	%struct.__GLvertex = type { %struct.GLTColor4, %struct.GLTColor4, %struct.GLTColor4, %struct.GLTColor4, %struct.GLTColor4, %struct.GLTCoord3, float, %struct.GLTColor4, float, float, float, i8, i8, i8, i8, [4 x float], [2 x i8*], i32, i32, [16 x %struct.GLTColor4] }
 	%struct.anon = type { float, float, float, float, float, float, float, float }
 
-implementation   ; Functions:
+declare <4 x float> @llvm.x86.sse.cmp.ps(<4 x float>, <4 x float>, i8)
 
-declare <4 x float> %llvm.x86.sse.cmp.ps(<4 x float>, <4 x float>, sbyte)
+declare <4 x i32> @llvm.x86.sse2.packssdw.128(<4 x i32>, <4 x i32>)
 
-declare <4 x int> %llvm.x86.sse2.packssdw.128(<4 x int>, <4 x int>)
+declare i32 @llvm.x86.sse2.pmovmskb.128(<16 x i8>)
 
-declare int %llvm.x86.sse2.pmovmskb.128(<16 x sbyte>)
-
-void %gleLLVMVecInterpolateClip() {
+define void @gleLLVMVecInterpolateClip() {
 entry:
-	br bool false, label %cond_false, label %cond_false183
-
+	br i1 false, label %cond_false, label %cond_false183
 cond_false:		; preds = %entry
-	br bool false, label %cond_false183, label %cond_true69
-
+	br i1 false, label %cond_false183, label %cond_true69
 cond_true69:		; preds = %cond_false
 	ret void
-
 cond_false183:		; preds = %cond_false, %entry
-	%vuizmsk.0.1 = phi <4 x int> [ < int -1, int -1, int -1, int 0 >, %entry ], [ < int -1, int 0, int 0, int 0 >, %cond_false ]		; <<4 x int>> [#uses=2]
-	%tmp192 = extractelement <4 x int> %vuizmsk.0.1, uint 2		; <int> [#uses=1]
-	%tmp193 = extractelement <4 x int> %vuizmsk.0.1, uint 3		; <int> [#uses=2]
-	%tmp195 = insertelement <4 x int> zeroinitializer, int %tmp192, uint 1		; <<4 x int>> [#uses=1]
-	%tmp196 = insertelement <4 x int> %tmp195, int %tmp193, uint 2		; <<4 x int>> [#uses=1]
-	%tmp197 = insertelement <4 x int> %tmp196, int %tmp193, uint 3		; <<4 x int>> [#uses=1]
-	%tmp336 = and <4 x int> zeroinitializer, %tmp197		; <<4 x int>> [#uses=1]
-	%tmp337 = cast <4 x int> %tmp336 to <4 x float>		; <<4 x float>> [#uses=1]
-	%tmp378 = tail call <4 x float> %llvm.x86.sse.cmp.ps( <4 x float> %tmp337, <4 x float> zeroinitializer, sbyte 1 )		; <<4 x float>> [#uses=1]
-	%tmp379 = cast <4 x float> %tmp378 to <4 x int>		; <<4 x int>> [#uses=1]
-	%tmp388 = tail call <4 x int> %llvm.x86.sse2.packssdw.128( <4 x int> zeroinitializer, <4 x int> %tmp379 )		; <<4 x int>> [#uses=1]
-	%tmp392 = cast <4 x int> %tmp388 to <8 x short>		; <<8 x short>> [#uses=1]
-	%tmp399 = extractelement <8 x short> %tmp392, uint 7		; <short> [#uses=1]
-	%tmp423 = insertelement <8 x short> zeroinitializer, short %tmp399, uint 7		; <<8 x short>> [#uses=1]
-	%tmp427 = cast <8 x short> %tmp423 to <16 x sbyte>		; <<16 x sbyte>> [#uses=1]
-	%tmp428 = tail call int %llvm.x86.sse2.pmovmskb.128( <16 x sbyte> %tmp427 )		; <int> [#uses=1]
-	%tmp432 = cast int %tmp428 to sbyte		; <sbyte> [#uses=1]
-	%tmp = and sbyte %tmp432, 42		; <sbyte> [#uses=1]
-	%tmp436 = cast sbyte %tmp to ubyte		; <ubyte> [#uses=1]
-	%tmp446 = cast ubyte %tmp436 to uint		; <uint> [#uses=1]
-	%tmp447 = shl uint %tmp446, ubyte 24		; <uint> [#uses=1]
-	%tmp449 = or uint 0, %tmp447		; <uint> [#uses=1]
-	store uint %tmp449, uint* null
+	%vuizmsk.0.1 = phi <4 x i32> [ < i32 -1, i32 -1, i32 -1, i32 0 >, %entry ], [ < i32 -1, i32 0, i32 0, i32 0 >, %cond_false ]		; <<4 x i32>> [#uses=2]
+	%tmp192 = extractelement <4 x i32> %vuizmsk.0.1, i32 2		; <i32> [#uses=1]
+	%tmp193 = extractelement <4 x i32> %vuizmsk.0.1, i32 3		; <i32> [#uses=2]
+	%tmp195 = insertelement <4 x i32> zeroinitializer, i32 %tmp192, i32 1		; <<4 x i32>> [#uses=1]
+	%tmp196 = insertelement <4 x i32> %tmp195, i32 %tmp193, i32 2		; <<4 x i32>> [#uses=1]
+	%tmp197 = insertelement <4 x i32> %tmp196, i32 %tmp193, i32 3		; <<4 x i32>> [#uses=1]
+	%tmp336 = and <4 x i32> zeroinitializer, %tmp197		; <<4 x i32>> [#uses=1]
+	%tmp337 = bitcast <4 x i32> %tmp336 to <4 x float>		; <<4 x float>> [#uses=1]
+	%tmp378 = tail call <4 x float> @llvm.x86.sse.cmp.ps( <4 x float> %tmp337, <4 x float> zeroinitializer, i8 1 )		; <<4 x float>> [#uses=1]
+	%tmp379 = bitcast <4 x float> %tmp378 to <4 x i32>		; <<4 x i32>> [#uses=1]
+	%tmp388 = tail call <4 x i32> @llvm.x86.sse2.packssdw.128( <4 x i32> zeroinitializer, <4 x i32> %tmp379 )		; <<4 x i32>> [#uses=1]
+	%tmp392 = bitcast <4 x i32> %tmp388 to <8 x i16>		; <<8 x i16>> [#uses=1]
+	%tmp399 = extractelement <8 x i16> %tmp392, i32 7		; <i16> [#uses=1]
+	%tmp423 = insertelement <8 x i16> zeroinitializer, i16 %tmp399, i32 7		; <<8 x i16>> [#uses=1]
+	%tmp427 = bitcast <8 x i16> %tmp423 to <16 x i8>		; <<16 x i8>> [#uses=1]
+	%tmp428 = tail call i32 @llvm.x86.sse2.pmovmskb.128( <16 x i8> %tmp427 )		; <i32> [#uses=1]
+	%tmp432 = trunc i32 %tmp428 to i8		; <i8> [#uses=1]
+	%tmp = and i8 %tmp432, 42		; <i8> [#uses=1]
+	%tmp436 = bitcast i8 %tmp to i8		; <i8> [#uses=1]
+	%tmp446 = zext i8 %tmp436 to i32		; <i32> [#uses=1]
+	%tmp447 = shl i32 %tmp446, 24		; <i32> [#uses=1]
+	%tmp449 = or i32 0, %tmp447		; <i32> [#uses=1]
+	store i32 %tmp449, i32* null
 	ret void
 }

@@ -1,12 +1,14 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep {ori\\|lis}
+; RUN: llvm-as < %s | llc -march=ppc32 | not grep {ori\\|lis}
 
-int %test(int %X) {
-	%Y = and int %X, 32769   ; andi. r3, r3, 32769
-	ret int %Y
+; andi. r3, r3, 32769	
+define i32 @test(i32 %X) {
+        %Y = and i32 %X, 32769          ; <i32> [#uses=1]
+        ret i32 %Y
 }
 
-int %test2(int %X) {
-	%Y = and int %X, -2147418112 ; andis. r3, r3, 32769
-	ret int %Y
+; andis. r3, r3, 32769
+define i32 @test2(i32 %X) {
+        %Y = and i32 %X, -2147418112            ; <i32> [#uses=1]
+        ret i32 %Y
 }
 

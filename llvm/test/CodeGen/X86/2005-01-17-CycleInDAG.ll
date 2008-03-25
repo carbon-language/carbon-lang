@@ -3,14 +3,15 @@
 ; is invalid code (there is no correct way to order the instruction).  Check
 ; that we do not fold the load into the sub.
 
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | not grep sub.*GLOBAL
+; RUN: llvm-as < %s | llc -march=x86 | not grep sub.*GLOBAL
 
-%GLOBAL = external global int
+@GLOBAL = external global i32           ; <i32*> [#uses=1]
 
-int %test(int* %P1, int* %P2, int* %P3) {
-   %L = load int* %GLOBAL
-   store int 12, int* %P2
-   %Y = load int* %P3
-   %Z = sub int %Y, %L
-   ret int %Z
+define i32 @test(i32* %P1, i32* %P2, i32* %P3) {
+        %L = load i32* @GLOBAL          ; <i32> [#uses=1]
+        store i32 12, i32* %P2
+        %Y = load i32* %P3              ; <i32> [#uses=1]
+        %Z = sub i32 %Y, %L             ; <i32> [#uses=1]
+        ret i32 %Z
 }
+

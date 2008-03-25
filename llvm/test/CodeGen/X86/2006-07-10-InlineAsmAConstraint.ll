@@ -1,7 +1,8 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86
+; RUN: llvm-as < %s | llc -march=x86
 ; PR825
 
-long %test() {
-	%tmp.i5 = call long asm sideeffect "rdtsc", "=A,~{dirflag},~{fpsr},~{flags}"( )		; <long> [#uses=0]
-	ret long %tmp.i5
+define i64 @test() {
+	%tmp.i5 = call i64 asm sideeffect "rdtsc", "=A,~{dirflag},~{fpsr},~{flags}"( )		; <i64> [#uses=1]
+	ret i64 %tmp.i5
 }
+

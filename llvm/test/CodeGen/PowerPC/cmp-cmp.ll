@@ -1,15 +1,13 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep mfcr
+; RUN: llvm-as < %s | llc -march=ppc32 | not grep mfcr
 
-void %test(long %X) {
-        %tmp1 = and long %X, 3          ; <long> [#uses=1]
-        %tmp = setgt long %tmp1, 2              ; <bool> [#uses=1]
-        br bool %tmp, label %UnifiedReturnBlock, label %cond_true
-
-cond_true:              ; preds = %entry
-        tail call void %test(long 0)
+define void @test(i64 %X) {
+        %tmp1 = and i64 %X, 3           ; <i64> [#uses=1]
+        %tmp = icmp sgt i64 %tmp1, 2            ; <i1> [#uses=1]
+        br i1 %tmp, label %UnifiedReturnBlock, label %cond_true
+cond_true:              ; preds = %0
+        tail call void @test( i64 0 )
         ret void
-
-UnifiedReturnBlock:             ; preds = %entry
+UnifiedReturnBlock:             ; preds = %0
         ret void
 }
 

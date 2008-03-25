@@ -2,11 +2,12 @@
 ; overlapping live intervals. When two overlapping intervals have the same
 ; value, they can be joined though.
 ;
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -regalloc=linearscan | \
+; RUN: llvm-as < %s | llc -march=x86 -regalloc=linearscan | \
 ; RUN:   not grep {mov %\[A-Z\]\\\{2,3\\\}, %\[A-Z\]\\\{2,3\\\}}
 
-long %test(long %x) {
+define i64 @test(i64 %x) {
 entry:
-        %tmp.1 = mul long %x, 4294967297                ; <long> [#uses=1]
-        ret long %tmp.1
+        %tmp.1 = mul i64 %x, 4294967297         ; <i64> [#uses=1]
+        ret i64 %tmp.1
 }
+

@@ -1,12 +1,10 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc | not grep {, f1}
+; RUN: llvm-as < %s | llc | not grep {, f1}
 
-target endian = big
-target pointersize = 32
+target datalayout = "E-p:32:32"
 target triple = "powerpc-apple-darwin8.2.0"
 
 ; Dead argument should reserve an FP register.
-double %bar(double %DEAD, double %X, double %Y) {
-        %tmp.2 = add double %X, %Y
+define double @bar(double %DEAD, double %X, double %Y) {
+        %tmp.2 = add double %X, %Y              ; <double> [#uses=1]
         ret double %tmp.2
 }
-

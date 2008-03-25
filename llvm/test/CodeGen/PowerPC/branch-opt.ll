@@ -1,93 +1,71 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | \
+; RUN: llvm-as < %s | llc -march=ppc32 | \
 ; RUN:   grep {b LBB.*} | count 4
 
-target endian = big
-target pointersize = 32
+target datalayout = "E-p:32:32"
 target triple = "powerpc-apple-darwin8.7.0"
 
-implementation   ; Functions:
-
-void %foo(int %W, int %X, int %Y, int %Z) {
+define void @foo(i32 %W, i32 %X, i32 %Y, i32 %Z) {
 entry:
-	%X = cast int %X to uint		; <uint> [#uses=1]
-	%Y = cast int %Y to uint		; <uint> [#uses=1]
-	%Z = cast int %Z to uint		; <uint> [#uses=1]
-	%W = cast int %W to uint		; <uint> [#uses=1]
-	%tmp1 = and int %W, 1		; <int> [#uses=1]
-	%tmp1 = seteq int %tmp1, 0		; <bool> [#uses=1]
-	br bool %tmp1, label %cond_false, label %bb5
-
+	%tmp1 = and i32 %W, 1		; <i32> [#uses=1]
+	%tmp1.upgrd.1 = icmp eq i32 %tmp1, 0		; <i1> [#uses=1]
+	br i1 %tmp1.upgrd.1, label %cond_false, label %bb5
 bb:		; preds = %bb5, %bb
-	%indvar77 = phi uint [ %indvar.next78, %bb ], [ 0, %bb5 ]		; <uint> [#uses=1]
-	%tmp2 = tail call int (...)* %bar( )		; <int> [#uses=0]
-	%indvar.next78 = add uint %indvar77, 1		; <uint> [#uses=2]
-	%exitcond79 = seteq uint %indvar.next78, %X		; <bool> [#uses=1]
-	br bool %exitcond79, label %cond_next48, label %bb
-
+	%indvar77 = phi i32 [ %indvar.next78, %bb ], [ 0, %bb5 ]		; <i32> [#uses=1]
+	%tmp2 = tail call i32 (...)* @bar( )		; <i32> [#uses=0]
+	%indvar.next78 = add i32 %indvar77, 1		; <i32> [#uses=2]
+	%exitcond79 = icmp eq i32 %indvar.next78, %X		; <i1> [#uses=1]
+	br i1 %exitcond79, label %cond_next48, label %bb
 bb5:		; preds = %entry
-	%tmp = seteq int %X, 0		; <bool> [#uses=1]
-	br bool %tmp, label %cond_next48, label %bb
-
+	%tmp = icmp eq i32 %X, 0		; <i1> [#uses=1]
+	br i1 %tmp, label %cond_next48, label %bb
 cond_false:		; preds = %entry
-	%tmp10 = and int %W, 2		; <int> [#uses=1]
-	%tmp10 = seteq int %tmp10, 0		; <bool> [#uses=1]
-	br bool %tmp10, label %cond_false20, label %bb16
-
+	%tmp10 = and i32 %W, 2		; <i32> [#uses=1]
+	%tmp10.upgrd.2 = icmp eq i32 %tmp10, 0		; <i1> [#uses=1]
+	br i1 %tmp10.upgrd.2, label %cond_false20, label %bb16
 bb12:		; preds = %bb16, %bb12
-	%indvar72 = phi uint [ %indvar.next73, %bb12 ], [ 0, %bb16 ]		; <uint> [#uses=1]
-	%tmp13 = tail call int (...)* %bar( )		; <int> [#uses=0]
-	%indvar.next73 = add uint %indvar72, 1		; <uint> [#uses=2]
-	%exitcond74 = seteq uint %indvar.next73, %Y		; <bool> [#uses=1]
-	br bool %exitcond74, label %cond_next48, label %bb12
-
+	%indvar72 = phi i32 [ %indvar.next73, %bb12 ], [ 0, %bb16 ]		; <i32> [#uses=1]
+	%tmp13 = tail call i32 (...)* @bar( )		; <i32> [#uses=0]
+	%indvar.next73 = add i32 %indvar72, 1		; <i32> [#uses=2]
+	%exitcond74 = icmp eq i32 %indvar.next73, %Y		; <i1> [#uses=1]
+	br i1 %exitcond74, label %cond_next48, label %bb12
 bb16:		; preds = %cond_false
-	%tmp18 = seteq int %Y, 0		; <bool> [#uses=1]
-	br bool %tmp18, label %cond_next48, label %bb12
-
+	%tmp18 = icmp eq i32 %Y, 0		; <i1> [#uses=1]
+	br i1 %tmp18, label %cond_next48, label %bb12
 cond_false20:		; preds = %cond_false
-	%tmp23 = and int %W, 4		; <int> [#uses=1]
-	%tmp23 = seteq int %tmp23, 0		; <bool> [#uses=1]
-	br bool %tmp23, label %cond_false33, label %bb29
-
+	%tmp23 = and i32 %W, 4		; <i32> [#uses=1]
+	%tmp23.upgrd.3 = icmp eq i32 %tmp23, 0		; <i1> [#uses=1]
+	br i1 %tmp23.upgrd.3, label %cond_false33, label %bb29
 bb25:		; preds = %bb29, %bb25
-	%indvar67 = phi uint [ %indvar.next68, %bb25 ], [ 0, %bb29 ]		; <uint> [#uses=1]
-	%tmp26 = tail call int (...)* %bar( )		; <int> [#uses=0]
-	%indvar.next68 = add uint %indvar67, 1		; <uint> [#uses=2]
-	%exitcond69 = seteq uint %indvar.next68, %Z		; <bool> [#uses=1]
-	br bool %exitcond69, label %cond_next48, label %bb25
-
+	%indvar67 = phi i32 [ %indvar.next68, %bb25 ], [ 0, %bb29 ]		; <i32> [#uses=1]
+	%tmp26 = tail call i32 (...)* @bar( )		; <i32> [#uses=0]
+	%indvar.next68 = add i32 %indvar67, 1		; <i32> [#uses=2]
+	%exitcond69 = icmp eq i32 %indvar.next68, %Z		; <i1> [#uses=1]
+	br i1 %exitcond69, label %cond_next48, label %bb25
 bb29:		; preds = %cond_false20
-	%tmp31 = seteq int %Z, 0		; <bool> [#uses=1]
-	br bool %tmp31, label %cond_next48, label %bb25
-
+	%tmp31 = icmp eq i32 %Z, 0		; <i1> [#uses=1]
+	br i1 %tmp31, label %cond_next48, label %bb25
 cond_false33:		; preds = %cond_false20
-	%tmp36 = and int %W, 8		; <int> [#uses=1]
-	%tmp36 = seteq int %tmp36, 0		; <bool> [#uses=1]
-	br bool %tmp36, label %cond_next48, label %bb42
-
+	%tmp36 = and i32 %W, 8		; <i32> [#uses=1]
+	%tmp36.upgrd.4 = icmp eq i32 %tmp36, 0		; <i1> [#uses=1]
+	br i1 %tmp36.upgrd.4, label %cond_next48, label %bb42
 bb38:		; preds = %bb42
-	%tmp39 = tail call int (...)* %bar( )		; <int> [#uses=0]
-	%indvar.next = add uint %indvar, 1		; <uint> [#uses=1]
+	%tmp39 = tail call i32 (...)* @bar( )		; <i32> [#uses=0]
+	%indvar.next = add i32 %indvar, 1		; <i32> [#uses=1]
 	br label %bb42
-
-bb42:		; preds = %cond_false33, %bb38
-	%indvar = phi uint [ %indvar.next, %bb38 ], [ 0, %cond_false33 ]		; <uint> [#uses=3]
-	%indvar = cast uint %indvar to int		; <int> [#uses=1]
-	%W_addr.0 = sub int %W, %indvar		; <int> [#uses=1]
-	%exitcond = seteq uint %indvar, %W		; <bool> [#uses=1]
-	br bool %exitcond, label %cond_next48, label %bb38
-
-cond_next48:		; preds = %bb, %bb12, %bb25, %bb42, %cond_false33, %bb29, %bb16, %bb5
-	%W_addr.1 = phi int [ %W, %bb5 ], [ %W, %bb16 ], [ %W, %bb29 ], [ %W, %cond_false33 ], [ %W_addr.0, %bb42 ], [ %W, %bb25 ], [ %W, %bb12 ], [ %W, %bb ]		; <int> [#uses=1]
-	%tmp50 = seteq int %W_addr.1, 0		; <bool> [#uses=1]
-	br bool %tmp50, label %UnifiedReturnBlock, label %cond_true51
-
+bb42:		; preds = %bb38, %cond_false33
+	%indvar = phi i32 [ %indvar.next, %bb38 ], [ 0, %cond_false33 ]		; <i32> [#uses=4]
+	%W_addr.0 = sub i32 %W, %indvar		; <i32> [#uses=1]
+	%exitcond = icmp eq i32 %indvar, %W		; <i1> [#uses=1]
+	br i1 %exitcond, label %cond_next48, label %bb38
+cond_next48:		; preds = %bb42, %cond_false33, %bb29, %bb25, %bb16, %bb12, %bb5, %bb
+	%W_addr.1 = phi i32 [ %W, %bb5 ], [ %W, %bb16 ], [ %W, %bb29 ], [ %W, %cond_false33 ], [ %W_addr.0, %bb42 ], [ %W, %bb25 ], [ %W, %bb12 ], [ %W, %bb ]		; <i32> [#uses=1]
+	%tmp50 = icmp eq i32 %W_addr.1, 0		; <i1> [#uses=1]
+	br i1 %tmp50, label %UnifiedReturnBlock, label %cond_true51
 cond_true51:		; preds = %cond_next48
-	%tmp52 = tail call int (...)* %bar( )		; <int> [#uses=0]
+	%tmp52 = tail call i32 (...)* @bar( )		; <i32> [#uses=0]
 	ret void
-
 UnifiedReturnBlock:		; preds = %cond_next48
 	ret void
 }
 
-declare int %bar(...)
+declare i32 @bar(...)

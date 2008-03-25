@@ -4,39 +4,33 @@
 ;
 ; This is distilled from a monsterous crafty example.
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -licm -disable-output
+; RUN: llvm-as < %s | opt -licm -disable-output
 
-%G = weak global int 0		; <int*> [#uses=13]
 
-implementation   ; Functions:
+@G = weak global i32 0		; <i32*> [#uses=7]
 
-int %main() {
+define i32 @main() {
 entry:
-	store int 123, int* %G
+	store i32 123, i32* @G
 	br label %loopentry.i
-
-loopentry.i:		; preds = %entry, %endif.1.i
-	%tmp.0.i = load int* %G		; <int> [#uses=1]
-	%tmp.1.i = seteq int %tmp.0.i, 123		; <bool> [#uses=1]
-	br bool %tmp.1.i, label %Out.i, label %endif.0.i
-
+loopentry.i:		; preds = %endif.1.i, %entry
+	%tmp.0.i = load i32* @G		; <i32> [#uses=1]
+	%tmp.1.i = icmp eq i32 %tmp.0.i, 123		; <i1> [#uses=1]
+	br i1 %tmp.1.i, label %Out.i, label %endif.0.i
 endif.0.i:		; preds = %loopentry.i
-	%tmp.3.i = load int* %G		; <int> [#uses=1]
-	%tmp.4.i = seteq int %tmp.3.i, 126		; <bool> [#uses=1]
-	br bool %tmp.4.i, label %ExitBlock.i, label %endif.1.i
-
+	%tmp.3.i = load i32* @G		; <i32> [#uses=1]
+	%tmp.4.i = icmp eq i32 %tmp.3.i, 126		; <i1> [#uses=1]
+	br i1 %tmp.4.i, label %ExitBlock.i, label %endif.1.i
 endif.1.i:		; preds = %endif.0.i
-	%tmp.6.i = load int* %G		; <int> [#uses=1]
-	%inc.i = add int %tmp.6.i, 1		; <int> [#uses=1]
-	store int %inc.i, int* %G
+	%tmp.6.i = load i32* @G		; <i32> [#uses=1]
+	%inc.i = add i32 %tmp.6.i, 1		; <i32> [#uses=1]
+	store i32 %inc.i, i32* @G
 	br label %loopentry.i
-
 Out.i:		; preds = %loopentry.i
-	store int 0, int* %G
+	store i32 0, i32* @G
 	br label %ExitBlock.i
-
-ExitBlock.i:		; preds = %endif.0.i, %Out.i
-	%tmp.7.i = load int* %G		; <int> [#uses=1]
-	ret int %tmp.7.i
+ExitBlock.i:		; preds = %Out.i, %endif.0.i
+	%tmp.7.i = load i32* @G		; <i32> [#uses=1]
+	ret i32 %tmp.7.i
 }
 

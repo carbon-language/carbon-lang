@@ -1,27 +1,22 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc64
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32
-; RUN: llvm-upgrade < %s | llvm-as | llc
+; RUN: llvm-as < %s | llc -march=ppc64
+; RUN: llvm-as < %s | llc -march=ppc32
+; RUN: llvm-as < %s | llc
 
-%qsz.b = external global bool		; <bool*> [#uses=1]
+@qsz.b = external global i1             ; <i1*> [#uses=1]
 
-implementation   ; Functions:
-
-fastcc void %qst() {
+define fastcc void @qst() {
 entry:
-	br bool true, label %cond_next71, label %cond_true
-
-cond_true:		; preds = %entry
-	ret void
-
-cond_next71:		; preds = %entry
-	%tmp73.b = load bool* %qsz.b		; <bool> [#uses=1]
-	%ii.4.ph = select bool %tmp73.b, ulong 4, ulong 0		; <ulong> [#uses=1]
-	br label %bb139
-
-bb82:		; preds = %bb139
-	ret void
-
-bb139:		; preds = %bb139, %cond_next71
-	%exitcond89 = seteq ulong 0, %ii.4.ph		; <bool> [#uses=1]
-	br bool %exitcond89, label %bb82, label %bb139
+        br i1 true, label %cond_next71, label %cond_true
+cond_true:              ; preds = %entry
+        ret void
+cond_next71:            ; preds = %entry
+        %tmp73.b = load i1* @qsz.b              ; <i1> [#uses=1]
+        %ii.4.ph = select i1 %tmp73.b, i64 4, i64 0             ; <i64> [#uses=1]
+        br label %bb139
+bb82:           ; preds = %bb139
+        ret void
+bb139:          ; preds = %bb139, %cond_next71
+        %exitcond89 = icmp eq i64 0, %ii.4.ph           ; <i1> [#uses=1]
+        br i1 %exitcond89, label %bb82, label %bb139
 }
+

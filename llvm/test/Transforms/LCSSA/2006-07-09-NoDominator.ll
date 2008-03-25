@@ -1,31 +1,24 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -lcssa
+; RUN: llvm-as < %s | opt -lcssa
 
-	%struct.SetJmpMapEntry = type { sbyte*, uint, %struct.SetJmpMapEntry* }
+	%struct.SetJmpMapEntry = type { i8*, i32, %struct.SetJmpMapEntry* }
 
-implementation   ; Functions:
-
-void %__llvm_sjljeh_try_catching_longjmp_exception() {
+define void @__llvm_sjljeh_try_catching_longjmp_exception() {
 entry:
 	br label %loopentry
-
 loopentry:		; preds = %endif, %entry
-	%SJE.0 = phi %struct.SetJmpMapEntry* [ null, %entry ], [ %tmp.25, %endif ]		; <%struct.SetJmpMapEntry*> [#uses=1]
-	br bool false, label %no_exit, label %loopexit
-
+	%SJE.0 = phi %struct.SetJmpMapEntry* [ null, %entry ], [ %tmp.25, %endif ]	; <%struct.SetJmpMapEntry*> [#uses=1]
+	br i1 false, label %no_exit, label %loopexit
 no_exit:		; preds = %loopentry
-	br bool false, label %then, label %endif
-
+	br i1 false, label %then, label %endif
 then:		; preds = %no_exit
-	%tmp.21 = getelementptr %struct.SetJmpMapEntry* %SJE.0, int 0, uint 1		; <uint*> [#uses=0]
+	%tmp.21 = getelementptr %struct.SetJmpMapEntry* %SJE.0, i32 0, i32 1		; <i32*> [#uses=0]
 	br label %return
-
-endif:		; preds = %after_ret.0, %no_exit
+endif:		; preds = %no_exit
 	%tmp.25 = load %struct.SetJmpMapEntry** null		; <%struct.SetJmpMapEntry*> [#uses=1]
 	br label %loopentry
-
 loopexit:		; preds = %loopentry
 	br label %return
-
-return:		; preds = %after_ret.1, %loopexit, %then
+return:		; preds = %loopexit, %then
 	ret void
 }
+

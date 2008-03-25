@@ -2,16 +2,18 @@
 ; for all loops.  This allows the -indvars pass to recognize the %IV 
 ; induction variable in this testcase.
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -indvars | llvm-dis | grep indvar
+; RUN: llvm-as < %s | opt -indvars | llvm-dis | grep indvar
 
-int %test(bool %C) {
+define i32 @test(i1 %C) {
+; <label>:0
 	br label %Loop
-Loop:
-	%IV = phi uint [1, %0], [%IV2, %BE1], [%IV2, %BE2]
-	%IV2 = add uint %IV, 2
-	br bool %C, label %BE1, label %BE2
-BE1:
+Loop:		; preds = %BE2, %BE1, %0
+	%IV = phi i32 [ 1, %0 ], [ %IV2, %BE1 ], [ %IV2, %BE2 ]		; <i32> [#uses=1]
+	%IV2 = add i32 %IV, 2		; <i32> [#uses=2]
+	br i1 %C, label %BE1, label %BE2
+BE1:		; preds = %Loop
 	br label %Loop
-BE2:
+BE2:		; preds = %Loop
 	br label %Loop
 }
+

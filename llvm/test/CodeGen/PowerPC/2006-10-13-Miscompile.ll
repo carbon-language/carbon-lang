@@ -1,18 +1,16 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep IMPLICIT_DEF
+; RUN: llvm-as < %s | llc -march=ppc32 | not grep IMPLICIT_DEF
 
-void %foo(long %X) {
+define void @foo(i64 %X) {
 entry:
-        %tmp1 = and long %X, 3          ; <long> [#uses=1]
-        %tmp = setgt long %tmp1, 2              ; <bool> [#uses=1]
-        br bool %tmp, label %UnifiedReturnBlock, label %cond_true
-
+        %tmp1 = and i64 %X, 3           ; <i64> [#uses=1]
+        %tmp = icmp sgt i64 %tmp1, 2            ; <i1> [#uses=1]
+        br i1 %tmp, label %UnifiedReturnBlock, label %cond_true
 cond_true:              ; preds = %entry
-        %tmp = tail call int (...)* %bar( )             ; <int> [#uses=0]
+        %tmp.upgrd.1 = tail call i32 (...)* @bar( )             ; <i32> [#uses=0]
         ret void
-
 UnifiedReturnBlock:             ; preds = %entry
         ret void
 }
 
-declare int %bar(...)
+declare i32 @bar(...)
 

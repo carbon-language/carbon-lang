@@ -1,98 +1,101 @@
 ; Tests to make sure elimination of casts is working correctly
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
 ; RUN:    grep %c | notcast
 ; END.
 
-%inbuf = external global [32832 x ubyte]
+@inbuf = external global [32832 x i8]           ; <[32832 x i8]*> [#uses=1]
 
-implementation
-
-int %test1(int %A) {
-	%c1 = cast int %A to uint
-	%c2 = cast uint %c1 to int
-	ret int %c2
+define i32 @test1(i32 %A) {
+        %c1 = bitcast i32 %A to i32             ; <i32> [#uses=1]
+        %c2 = bitcast i32 %c1 to i32            ; <i32> [#uses=1]
+        ret i32 %c2
 }
 
-ulong %test2(ubyte %A) {
-	%c1 = cast ubyte %A to ushort
-	%c2 = cast ushort %c1 to uint
-	%Ret = cast uint %c2 to ulong
-	ret ulong %Ret
+define i64 @test2(i8 %A) {
+        %c1 = zext i8 %A to i16         ; <i16> [#uses=1]
+        %c2 = zext i16 %c1 to i32               ; <i32> [#uses=1]
+        %Ret = zext i32 %c2 to i64              ; <i64> [#uses=1]
+        ret i64 %Ret
 }
 
-ulong %test3(ulong %A) {    ; This function should just use bitwise AND
-	%c1 = cast ulong %A to ubyte
-	%c2 = cast ubyte %c1 to ulong
-	ret ulong %c2
+; This function should just use bitwise AND
+define i64 @test3(i64 %A) {
+        %c1 = trunc i64 %A to i8                ; <i8> [#uses=1]
+        %c2 = zext i8 %c1 to i64                ; <i64> [#uses=1]
+        ret i64 %c2
 }
 
-uint %test4(int %A, int %B) {
-        %COND = setlt int %A, %B
-        %c = cast bool %COND to ubyte     ; Booleans are unsigned integrals
-        %result = cast ubyte %c to uint   ; for the cast elim purpose
-        ret uint %result
+define i32 @test4(i32 %A, i32 %B) {
+        %COND = icmp slt i32 %A, %B             ; <i1> [#uses=1]
+        ; Booleans are unsigned integrals
+        %c = zext i1 %COND to i8                ; <i8> [#uses=1]
+        ; for the cast elim purpose
+        %result = zext i8 %c to i32             ; <i32> [#uses=1]
+        ret i32 %result
 }
 
-int %test5(bool %B) {
-        %c = cast bool %B to ubyte       ; This cast should get folded into
-        %result = cast ubyte %c to int   ; this cast
-        ret int %result
+define i32 @test5(i1 %B) {
+        ; This cast should get folded into
+        %c = zext i1 %B to i8           ; <i8> [#uses=1]
+        ; this cast        
+        %result = zext i8 %c to i32             ; <i32> [#uses=1]
+        ret i32 %result
 }
 
-int %test6(ulong %A) {
-	%c1 = cast ulong %A to uint
-	%res = cast uint %c1 to int
-	ret int %res
+define i32 @test6(i64 %A) {
+        %c1 = trunc i64 %A to i32               ; <i32> [#uses=1]
+        %res = bitcast i32 %c1 to i32           ; <i32> [#uses=1]
+        ret i32 %res
 }
 
-long %test7(bool %A) {
-	%c1 = cast bool %A to int
-	%res = cast int %c1 to long
-	ret long %res
+define i64 @test7(i1 %A) {
+        %c1 = zext i1 %A to i32         ; <i32> [#uses=1]
+        %res = sext i32 %c1 to i64              ; <i64> [#uses=1]
+        ret i64 %res
 }
 
-long %test8(sbyte %A) {
-        %c1 = cast sbyte %A to ulong
-        %res = cast ulong %c1 to long
-        ret long %res
+define i64 @test8(i8 %A) {
+        %c1 = sext i8 %A to i64         ; <i64> [#uses=1]
+        %res = bitcast i64 %c1 to i64           ; <i64> [#uses=1]
+        ret i64 %res
 }
 
-short %test9(short %A) {
-	%c1 = cast short %A to int
-	%c2 = cast int %c1 to short
-	ret short %c2
+define i16 @test9(i16 %A) {
+        %c1 = sext i16 %A to i32                ; <i32> [#uses=1]
+        %c2 = trunc i32 %c1 to i16              ; <i16> [#uses=1]
+        ret i16 %c2
 }
 
-short %test10(short %A) {
-	%c1 = cast short %A to uint
-	%c2 = cast uint %c1 to short
-	ret short %c2
+define i16 @test10(i16 %A) {
+        %c1 = sext i16 %A to i32                ; <i32> [#uses=1]
+        %c2 = trunc i32 %c1 to i16              ; <i16> [#uses=1]
+        ret i16 %c2
 }
 
-declare void %varargs(int, ...)
+declare void @varargs(i32, ...)
 
-void %test11(int* %P) {
-	%c = cast int* %P to short*
-	call void(int, ...)* %varargs(int 5, short* %c)
-	ret void
+define void @test11(i32* %P) {
+        %c = bitcast i32* %P to i16*            ; <i16*> [#uses=1]
+        call void (i32, ...)* @varargs( i32 5, i16* %c )
+        ret void
 }
 
-int* %test12() {
-	%p = malloc [4 x sbyte]
-	%c = cast [4 x sbyte]* %p to int*
-	ret int* %c
+define i32* @test12() {
+        %p = malloc [4 x i8]            ; <[4 x i8]*> [#uses=1]
+        %c = bitcast [4 x i8]* %p to i32*               ; <i32*> [#uses=1]
+        ret i32* %c
+}
+define i8* @test13(i64 %A) {
+        %c = getelementptr [0 x i8]* bitcast ([32832 x i8]* @inbuf to [0 x i8]*), i64 0, i64 %A             ; <i8*> [#uses=1]
+        ret i8* %c
 }
 
-ubyte *%test13(long %A) {
-	%c = getelementptr [0 x ubyte]* cast ([32832 x ubyte]*  %inbuf to [0 x ubyte]*), long 0, long %A
-	ret ubyte* %c
+define i1 @test14(i8 %A) {
+        %c = bitcast i8 %A to i8                ; <i8> [#uses=1]
+        %X = icmp ult i8 %c, -128               ; <i1> [#uses=1]
+        ret i1 %X
 }
 
-bool %test14(sbyte %A) {
-        %c = cast sbyte %A to ubyte
-        %X = setlt ubyte %c, 128   ; setge %A, 0
-        ret bool %X
-}
 
 ; This just won't occur when there's no difference between ubyte and sbyte
 ;bool %test15(ubyte %A) {
@@ -101,130 +104,137 @@ bool %test14(sbyte %A) {
 ;        ret bool %X
 ;}
 
-bool %test16(int* %P) {
-	%c = cast int* %P to bool  ;; setne P, null
-	ret bool %c
+define i1 @test16(i32* %P) {
+        %c = icmp ne i32* %P, null              ; <i1> [#uses=1]
+        ret i1 %c
 }
 
-short %test17(bool %tmp3) {
-	%c = cast bool %tmp3 to int
-	%t86 = cast int %c to short
-	ret short %t86
+define i16 @test17(i1 %tmp3) {
+        %c = zext i1 %tmp3 to i32               ; <i32> [#uses=1]
+        %t86 = trunc i32 %c to i16              ; <i16> [#uses=1]
+        ret i16 %t86
 }
 
-short %test18(sbyte %tmp3) {
-	%c = cast sbyte %tmp3 to int
-	%t86 = cast int %c to short
-	ret short %t86
+define i16 @test18(i8 %tmp3) {
+        %c = sext i8 %tmp3 to i32               ; <i32> [#uses=1]
+        %t86 = trunc i32 %c to i16              ; <i16> [#uses=1]
+        ret i16 %t86
 }
 
-bool %test19(int %X) {
-	%c = cast int %X to long
-	%Z = setlt long %c, 12345
-	ret bool %Z
+define i1 @test19(i32 %X) {
+        %c = sext i32 %X to i64         ; <i64> [#uses=1]
+        %Z = icmp slt i64 %c, 12345             ; <i1> [#uses=1]
+        ret i1 %Z
 }
 
-bool %test20(bool %B) {
-	%c = cast bool %B to int
-	%D = setlt int %c, -1
-	ret bool %D                ;; false
+define i1 @test20(i1 %B) {
+        %c = zext i1 %B to i32          ; <i32> [#uses=1]
+        %D = icmp slt i32 %c, -1                ; <i1> [#uses=1]
+        ;; false
+        ret i1 %D
 }
 
-uint %test21(uint %X) {
-	%c1 = cast uint %X to sbyte
-	%c2 = cast sbyte %c1 to uint ;; sext -> zext -> and -> nop
-	%RV = and uint %c2, 255
-	ret uint %RV
+define i32 @test21(i32 %X) {
+        %c1 = trunc i32 %X to i8                ; <i8> [#uses=1]
+        ;; sext -> zext -> and -> nop
+        %c2 = sext i8 %c1 to i32                ; <i32> [#uses=1]
+        %RV = and i32 %c2, 255          ; <i32> [#uses=1]
+        ret i32 %RV
 }
 
-uint %test22(uint %X) {
-	%c1 = cast uint %X to sbyte
-	%c2 = cast sbyte %c1 to uint ;; sext -> zext -> and -> nop
-	%RV = shl uint %c2, ubyte 24
-	ret uint %RV
+define i32 @test22(i32 %X) {
+        %c1 = trunc i32 %X to i8                ; <i8> [#uses=1]
+        ;; sext -> zext -> and -> nop
+        %c2 = sext i8 %c1 to i32                ; <i32> [#uses=1]
+        %RV = shl i32 %c2, 24           ; <i32> [#uses=1]
+        ret i32 %RV
 }
 
-int %test23(int %X) {
-	%c1 = cast int %X to ushort  ;; Turn into an AND even though X
-	%c2 = cast ushort %c1 to int  ;; and Z are signed.
-	ret int %c2
+define i32 @test23(i32 %X) {
+        ;; Turn into an AND even though X
+        %c1 = trunc i32 %X to i16               ; <i16> [#uses=1]
+        ;; and Z are signed.
+        %c2 = zext i16 %c1 to i32               ; <i32> [#uses=1]
+        ret i32 %c2
 }
 
-bool %test24(bool %C) {
-        %X = select bool %C, uint 14, uint 1234
-        %c = cast uint %X to bool                  ;; Fold cast into select
-        ret bool %c
+define i1 @test24(i1 %C) {
+        %X = select i1 %C, i32 14, i32 1234             ; <i32> [#uses=1]
+        ;; Fold cast into select
+        %c = icmp ne i32 %X, 0          ; <i1> [#uses=1]
+        ret i1 %c
 }
 
-void %test25(int** %P) {
-        %c = cast int** %P to float**
-        store float* null, float** %c          ;; Fold cast into null
+define void @test25(i32** %P) {
+        %c = bitcast i32** %P to float**                ; <float**> [#uses=1]
+        ;; Fold cast into null
+        store float* null, float** %c
         ret void
 }
 
-int %test26(float %F) {
-	%c = cast float %F to double   ;; no need to cast from float->double.
-	%D = cast double %c to int
-	ret int %D
+define i32 @test26(float %F) {
+        ;; no need to cast from float->double.
+        %c = fpext float %F to double           ; <double> [#uses=1]
+        %D = fptosi double %c to i32            ; <i32> [#uses=1]
+        ret i32 %D
 }
 
-[4 x float]* %test27([9 x [4 x float]]* %A) {
-        %c = cast [9 x [4 x float]]* %A to [4 x float]*
-	ret [4 x float]* %c
+define [4 x float]* @test27([9 x [4 x float]]* %A) {
+        %c = bitcast [9 x [4 x float]]* %A to [4 x float]*              ; <[4 x float]*> [#uses=1]
+        ret [4 x float]* %c
 }
 
-float* %test28([4 x float]* %A) {
-        %c = cast [4 x float]* %A to float*
-	ret float* %c
+define float* @test28([4 x float]* %A) {
+        %c = bitcast [4 x float]* %A to float*          ; <float*> [#uses=1]
+        ret float* %c
 }
 
-uint %test29(uint %c1, uint %c2) {
-	%tmp1 = cast uint %c1 to ubyte
-        %tmp4.mask = cast uint %c2 to ubyte
-        %tmp = or ubyte %tmp4.mask, %tmp1
-        %tmp10 = cast ubyte %tmp to uint
-	ret uint %tmp10
+define i32 @test29(i32 %c1, i32 %c2) {
+        %tmp1 = trunc i32 %c1 to i8             ; <i8> [#uses=1]
+        %tmp4.mask = trunc i32 %c2 to i8                ; <i8> [#uses=1]
+        %tmp = or i8 %tmp4.mask, %tmp1          ; <i8> [#uses=1]
+        %tmp10 = zext i8 %tmp to i32            ; <i32> [#uses=1]
+        ret i32 %tmp10
 }
 
-uint %test30(uint %c1) {
-        %c2 = cast uint %c1 to ubyte
-        %c3 = xor ubyte %c2, 1     
-        %c4 = cast ubyte %c3 to uint
-        ret uint %c4
+define i32 @test30(i32 %c1) {
+        %c2 = trunc i32 %c1 to i8               ; <i8> [#uses=1]
+        %c3 = xor i8 %c2, 1             ; <i8> [#uses=1]
+        %c4 = zext i8 %c3 to i32                ; <i32> [#uses=1]
+        ret i32 %c4
 }
 
-bool %test31(ulong %A) {
-	%B = cast ulong %A to int
-	%C = and int %B, 42
-	%D = seteq int %C, 10
-	ret bool %D
+define i1 @test31(i64 %A) {
+        %B = trunc i64 %A to i32                ; <i32> [#uses=1]
+        %C = and i32 %B, 42             ; <i32> [#uses=1]
+        %D = icmp eq i32 %C, 10         ; <i1> [#uses=1]
+        ret i1 %D
 }
 
-
-void %test32(double** %tmp) {
-	%tmp8 = malloc [16 x sbyte]
-        %tmp8 = cast [16 x sbyte]* %tmp8 to double*
-        store double* %tmp8, double** %tmp
+define void @test32(double** %tmp) {
+        %tmp8 = malloc [16 x i8]                ; <[16 x i8]*> [#uses=1]
+        %tmp8.upgrd.1 = bitcast [16 x i8]* %tmp8 to double*             ; <double*> [#uses=1]
+        store double* %tmp8.upgrd.1, double** %tmp
         ret void
 }
 
-uint %test33(uint %c1) {
-        %x = bitcast uint %c1 to float 
-        %y = bitcast float %x to uint
-        ret uint %y
+define i32 @test33(i32 %c1) {
+        %x = bitcast i32 %c1 to float           ; <float> [#uses=1]
+        %y = bitcast float %x to i32            ; <i32> [#uses=1]
+        ret i32 %y
 }
 
-ushort %test34(ushort %a) {
-        %c1 = zext ushort %a to int
-        %tmp21 = lshr int %c1, ubyte 8
-        %c2 = trunc int %tmp21 to ushort
-        ret ushort %c2
+define i16 @test34(i16 %a) {
+        %c1 = zext i16 %a to i32                ; <i32> [#uses=1]
+        %tmp21 = lshr i32 %c1, 8                ; <i32> [#uses=1]
+        %c2 = trunc i32 %tmp21 to i16           ; <i16> [#uses=1]
+        ret i16 %c2
 }
 
-ushort %test35(ushort %a) {
-        %c1 = bitcast ushort %a to short
-        %tmp2 = lshr short %c1, ubyte 8
-        %c2 = bitcast short %tmp2 to ushort
-	ret ushort %c2
+define i16 @test35(i16 %a) {
+        %c1 = bitcast i16 %a to i16             ; <i16> [#uses=1]
+        %tmp2 = lshr i16 %c1, 8         ; <i16> [#uses=1]
+        %c2 = bitcast i16 %tmp2 to i16          ; <i16> [#uses=1]
+        ret i16 %c2
 }
 

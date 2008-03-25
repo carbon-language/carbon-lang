@@ -1,6 +1,7 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc64
+; RUN: llvm-as < %s | llc -march=ppc64
 
-int * %foo(uint %n) {
-	%A = alloca int, uint %n
-	ret int* %A
+define i32* @foo(i32 %n) {
+        %A = alloca i32, i32 %n         ; <i32*> [#uses=1]
+        ret i32* %A
 }
+

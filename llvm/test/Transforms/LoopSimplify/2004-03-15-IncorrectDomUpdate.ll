@@ -1,12 +1,11 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -loopsimplify -licm -disable-output
-void %main() {
+; RUN: llvm-as < %s | opt -loopsimplify -licm -disable-output
+define void @main() {
 entry:
-	br bool false, label %Out, label %loop
-
-loop:
-	%LI = setgt int 0, 0
-	br bool %LI, label %loop, label %Out
-
-Out:
+	br i1 false, label %Out, label %loop
+loop:		; preds = %loop, %entry
+	%LI = icmp sgt i32 0, 0		; <i1> [#uses=1]
+	br i1 %LI, label %loop, label %Out
+Out:		; preds = %loop, %entry
 	ret void
 }
+

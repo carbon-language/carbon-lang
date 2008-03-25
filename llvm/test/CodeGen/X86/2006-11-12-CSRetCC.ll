@@ -1,62 +1,59 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep {subl	\$4, %esp}
+; RUN: llvm-as < %s | llc -march=x86 | grep {subl	\$4, %esp}
 
 target triple = "i686-pc-linux-gnu"
+@str = internal constant [9 x i8] c"%f+%f*i\0A\00"              ; <[9 x i8]*> [#uses=1]
 
-%str = internal constant [9 x sbyte] c"%f+%f*i\0A\00"		; <[9 x sbyte]*> [#uses=1]
-
-implementation   ; Functions:
-
-int %main() {
+define i32 @main() {
 entry:
-	%retval = alloca int, align 4		; <int*> [#uses=1]
-	%tmp = alloca { double, double }, align 16		; <{ double, double }*> [#uses=4]
-	%tmp1 = alloca { double, double }, align 16		; <{ double, double }*> [#uses=4]
-	%tmp2 = alloca { double, double }, align 16		; <{ double, double }*> [#uses=3]
-	%pi = alloca double, align 8		; <double*> [#uses=2]
-	%z = alloca { double, double }, align 16		; <{ double, double }*> [#uses=4]
-	"alloca point" = cast int 0 to int		; <int> [#uses=0]
-	store double 0x400921FB54442D18, double* %pi
-	%tmp = load double* %pi		; <double> [#uses=1]
-	%real = getelementptr { double, double }* %tmp1, uint 0, uint 0		; <double*> [#uses=1]
-	store double 0.000000e+00, double* %real
-	%real3 = getelementptr { double, double }* %tmp1, uint 0, uint 1		; <double*> [#uses=1]
-	store double %tmp, double* %real3
-	%tmp = getelementptr { double, double }* %tmp, uint 0, uint 0		; <double*> [#uses=1]
-	%tmp4 = getelementptr { double, double }* %tmp1, uint 0, uint 0		; <double*> [#uses=1]
-	%tmp5 = load double* %tmp4		; <double> [#uses=1]
-	store double %tmp5, double* %tmp
-	%tmp6 = getelementptr { double, double }* %tmp, uint 0, uint 1		; <double*> [#uses=1]
-	%tmp7 = getelementptr { double, double }* %tmp1, uint 0, uint 1		; <double*> [#uses=1]
-	%tmp8 = load double* %tmp7		; <double> [#uses=1]
-	store double %tmp8, double* %tmp6
-	%tmp = cast { double, double }* %tmp to { long, long }*		; <{ long, long }*> [#uses=1]
-	%tmp = getelementptr { long, long }* %tmp, uint 0, uint 0		; <long*> [#uses=1]
-	%tmp = load long* %tmp		; <long> [#uses=1]
-	%tmp9 = cast { double, double }* %tmp to { long, long }*		; <{ long, long }*> [#uses=1]
-	%tmp10 = getelementptr { long, long }* %tmp9, uint 0, uint 1		; <long*> [#uses=1]
-	%tmp11 = load long* %tmp10		; <long> [#uses=1]
-	call csretcc void %cexp( { double, double }* %tmp2, long %tmp, long %tmp11 )
-	%tmp12 = getelementptr { double, double }* %z, uint 0, uint 0		; <double*> [#uses=1]
-	%tmp13 = getelementptr { double, double }* %tmp2, uint 0, uint 0		; <double*> [#uses=1]
-	%tmp14 = load double* %tmp13		; <double> [#uses=1]
-	store double %tmp14, double* %tmp12
-	%tmp15 = getelementptr { double, double }* %z, uint 0, uint 1		; <double*> [#uses=1]
-	%tmp16 = getelementptr { double, double }* %tmp2, uint 0, uint 1		; <double*> [#uses=1]
-	%tmp17 = load double* %tmp16		; <double> [#uses=1]
-	store double %tmp17, double* %tmp15
-	%tmp18 = getelementptr { double, double }* %z, uint 0, uint 1		; <double*> [#uses=1]
-	%tmp19 = load double* %tmp18		; <double> [#uses=1]
-	%tmp20 = getelementptr { double, double }* %z, uint 0, uint 0		; <double*> [#uses=1]
-	%tmp21 = load double* %tmp20		; <double> [#uses=1]
-	%tmp = getelementptr [9 x sbyte]* %str, int 0, uint 0		; <sbyte*> [#uses=1]
-	%tmp = call int (sbyte*, ...)* %printf( sbyte* %tmp, double %tmp21, double %tmp19 )		; <int> [#uses=0]
-	br label %return
-
-return:		; preds = %entry
-	%retval = load int* %retval		; <int> [#uses=1]
-	ret int %retval
+        %retval = alloca i32, align 4           ; <i32*> [#uses=1]
+        %tmp = alloca { double, double }, align 16              ; <{ double, double }*> [#uses=4]
+        %tmp1 = alloca { double, double }, align 16             ; <{ double, double }*> [#uses=4]
+        %tmp2 = alloca { double, double }, align 16             ; <{ double, double }*> [#uses=3]
+        %pi = alloca double, align 8            ; <double*> [#uses=2]
+        %z = alloca { double, double }, align 16                ; <{ double, double }*> [#uses=4]
+        %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
+        store double 0x400921FB54442D18, double* %pi
+        %tmp.upgrd.1 = load double* %pi         ; <double> [#uses=1]
+        %real = getelementptr { double, double }* %tmp1, i64 0, i32 0           ; <double*> [#uses=1]
+        store double 0.000000e+00, double* %real
+        %real3 = getelementptr { double, double }* %tmp1, i64 0, i32 1          ; <double*> [#uses=1]
+        store double %tmp.upgrd.1, double* %real3
+        %tmp.upgrd.2 = getelementptr { double, double }* %tmp, i64 0, i32 0             ; <double*> [#uses=1]
+        %tmp4 = getelementptr { double, double }* %tmp1, i64 0, i32 0           ; <double*> [#uses=1]
+        %tmp5 = load double* %tmp4              ; <double> [#uses=1]
+        store double %tmp5, double* %tmp.upgrd.2
+        %tmp6 = getelementptr { double, double }* %tmp, i64 0, i32 1            ; <double*> [#uses=1]
+        %tmp7 = getelementptr { double, double }* %tmp1, i64 0, i32 1           ; <double*> [#uses=1]
+        %tmp8 = load double* %tmp7              ; <double> [#uses=1]
+        store double %tmp8, double* %tmp6
+        %tmp.upgrd.3 = bitcast { double, double }* %tmp to { i64, i64 }*                ; <{ i64, i64 }*> [#uses=1]
+        %tmp.upgrd.4 = getelementptr { i64, i64 }* %tmp.upgrd.3, i64 0, i32 0           ; <i64*> [#uses=1]
+        %tmp.upgrd.5 = load i64* %tmp.upgrd.4           ; <i64> [#uses=1]
+        %tmp9 = bitcast { double, double }* %tmp to { i64, i64 }*               ; <{ i64, i64 }*> [#uses=1]
+        %tmp10 = getelementptr { i64, i64 }* %tmp9, i64 0, i32 1                ; <i64*> [#uses=1]
+        %tmp11 = load i64* %tmp10               ; <i64> [#uses=1]
+        call void @cexp( { double, double }* sret  %tmp2, i64 %tmp.upgrd.5, i64 %tmp11 )
+        %tmp12 = getelementptr { double, double }* %z, i64 0, i32 0             ; <double*> [#uses=1]
+        %tmp13 = getelementptr { double, double }* %tmp2, i64 0, i32 0          ; <double*> [#uses=1]
+        %tmp14 = load double* %tmp13            ; <double> [#uses=1]
+        store double %tmp14, double* %tmp12
+        %tmp15 = getelementptr { double, double }* %z, i64 0, i32 1             ; <double*> [#uses=1]
+        %tmp16 = getelementptr { double, double }* %tmp2, i64 0, i32 1          ; <double*> [#uses=1]
+        %tmp17 = load double* %tmp16            ; <double> [#uses=1]
+        store double %tmp17, double* %tmp15
+        %tmp18 = getelementptr { double, double }* %z, i64 0, i32 1             ; <double*> [#uses=1]
+        %tmp19 = load double* %tmp18            ; <double> [#uses=1]
+        %tmp20 = getelementptr { double, double }* %z, i64 0, i32 0             ; <double*> [#uses=1]
+        %tmp21 = load double* %tmp20            ; <double> [#uses=1]
+        %tmp.upgrd.6 = getelementptr [9 x i8]* @str, i32 0, i64 0               ; <i8*> [#uses=1]
+        %tmp.upgrd.7 = call i32 (i8*, ...)* @printf( i8* %tmp.upgrd.6, double %tmp21, double %tmp19 )           ; <i32> [#uses=0]
+        br label %return
+return:         ; preds = %entry
+        %retval.upgrd.8 = load i32* %retval             ; <i32> [#uses=1]
+        ret i32 %retval.upgrd.8
 }
 
-declare csretcc void %cexp({ double, double }*, long, long)
+declare void @cexp({ double, double }* sret , i64, i64)
 
-declare int %printf(sbyte*, ...)
+declare i32 @printf(i8*, ...)
+

@@ -1,14 +1,16 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep {(%esp}
+; RUN: llvm-as < %s | llc -march=x86 | grep {(%esp}
 
-declare sbyte* %llvm.returnaddress(uint)
-declare sbyte* %llvm.frameaddress(uint)
+declare i8* @llvm.returnaddress(i32)
 
-sbyte *%test1() {
-	%X = call sbyte* %llvm.returnaddress(uint 0)
-	ret sbyte* %X
+declare i8* @llvm.frameaddress(i32)
+
+define i8* @test1() {
+        %X = call i8* @llvm.returnaddress( i32 0 )              ; <i8*> [#uses=1]
+        ret i8* %X
 }
 
-sbyte *%test2() {
-	%X = call sbyte* %llvm.frameaddress(uint 0)
-	ret sbyte* %X
+define i8* @test2() {
+        %X = call i8* @llvm.frameaddress( i32 0 )               ; <i8*> [#uses=1]
+        ret i8* %X
 }
+

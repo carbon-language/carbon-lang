@@ -1,10 +1,11 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32
+; RUN: llvm-as < %s | llc -march=ppc32
 
-void %img2buf(int %symbol_size_in_bytes, ushort* %ui16) {
-	%tmp93 = load ushort* null		; <ushort> [#uses=1]
-	%tmp99 = call ushort %llvm.bswap.i16( ushort %tmp93 )		; <ushort> [#uses=1]
-	store ushort %tmp99, ushort* %ui16
-	ret void
+define void @img2buf(i32 %symbol_size_in_bytes, i16* %ui16) {
+        %tmp93 = load i16* null         ; <i16> [#uses=1]
+        %tmp99 = call i16 @llvm.bswap.i16( i16 %tmp93 )         ; <i16> [#uses=1]
+        store i16 %tmp99, i16* %ui16
+        ret void
 }
 
-declare ushort %llvm.bswap.i16(ushort)
+declare i16 @llvm.bswap.i16(i16)
+

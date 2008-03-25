@@ -1,23 +1,24 @@
-; RUN: llvm-upgrade < %s | llvm-as | \
+; RUN: llvm-as < %s | \
 ; RUN:   llc -march=x86 -relocation-model=static -stats |& \
 ; RUN:   grep asm-printer | grep 14
 ;
-%size20 = external global uint		; <uint*> [#uses=1]
-%in5 = external global ubyte*		; <ubyte**> [#uses=1]
+@size20 = external global i32		; <i32*> [#uses=1]
+@in5 = external global i8*		; <i8**> [#uses=1]
 
-int %compare(sbyte* %a, sbyte* %b) {
-	%tmp = cast sbyte* %a to uint*		; <uint*> [#uses=1]
-	%tmp1 = cast sbyte* %b to uint*		; <uint*> [#uses=1]
-	%tmp = load uint* %size20		; <uint> [#uses=1]
-	%tmp = load ubyte** %in5		; <ubyte*> [#uses=2]
-	%tmp3 = load uint* %tmp1		; <uint> [#uses=1]
-	%tmp4 = getelementptr ubyte* %tmp, uint %tmp3		; <ubyte*> [#uses=1]
-	%tmp7 = load uint* %tmp		; <uint> [#uses=1]
-	%tmp8 = getelementptr ubyte* %tmp, uint %tmp7		; <ubyte*> [#uses=1]
-	%tmp8 = cast ubyte* %tmp8 to sbyte*		; <sbyte*> [#uses=1]
-	%tmp4 = cast ubyte* %tmp4 to sbyte*		; <sbyte*> [#uses=1]
-	%tmp = tail call int %memcmp( sbyte* %tmp8, sbyte* %tmp4, uint %tmp )		; <int> [#uses=1]
-	ret int %tmp
+define i32 @compare(i8* %a, i8* %b) {
+	%tmp = bitcast i8* %a to i32*		; <i32*> [#uses=1]
+	%tmp1 = bitcast i8* %b to i32*		; <i32*> [#uses=1]
+	%tmp.upgrd.1 = load i32* @size20		; <i32> [#uses=1]
+	%tmp.upgrd.2 = load i8** @in5		; <i8*> [#uses=2]
+	%tmp3 = load i32* %tmp1		; <i32> [#uses=1]
+	%gep.upgrd.3 = zext i32 %tmp3 to i64		; <i64> [#uses=1]
+	%tmp4 = getelementptr i8* %tmp.upgrd.2, i64 %gep.upgrd.3		; <i8*> [#uses=2]
+	%tmp7 = load i32* %tmp		; <i32> [#uses=1]
+	%gep.upgrd.4 = zext i32 %tmp7 to i64		; <i64> [#uses=1]
+	%tmp8 = getelementptr i8* %tmp.upgrd.2, i64 %gep.upgrd.4		; <i8*> [#uses=2]
+	%tmp.upgrd.5 = tail call i32 @memcmp( i8* %tmp8, i8* %tmp4, i32 %tmp.upgrd.1 )		; <i32> [#uses=1]
+	ret i32 %tmp.upgrd.5
 }
 
-declare int %memcmp(sbyte*, sbyte*, uint)
+declare i32 @memcmp(i8*, i8*, i32)
+

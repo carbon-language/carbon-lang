@@ -1,44 +1,45 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | \
+; RUN: llvm-as < %s | llc -march=ppc32 | \
 ; RUN:   grep {stwbrx\\|lwbrx\\|sthbrx\\|lhbrx} | count 4
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep rlwinm
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep rlwimi
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc64 | \
+; RUN: llvm-as < %s | llc -march=ppc32 | not grep rlwinm
+; RUN: llvm-as < %s | llc -march=ppc32 | not grep rlwimi
+; RUN: llvm-as < %s | llc -march=ppc64 | \
 ; RUN:   grep {stwbrx\\|lwbrx\\|sthbrx\\|lhbrx} | count 4
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc64 | not grep rlwinm
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc64 | not grep rlwimi
+; RUN: llvm-as < %s | llc -march=ppc64 | not grep rlwinm
+; RUN: llvm-as < %s | llc -march=ppc64 | not grep rlwimi
 
-void %STWBRX(uint %i, sbyte* %ptr, int %off) {
-	%tmp1 = getelementptr sbyte* %ptr, int %off
-	%tmp1 = cast sbyte* %tmp1 to uint*
-	%tmp13 = tail call uint %llvm.bswap.i32(uint %i)
-	store uint %tmp13, uint* %tmp1
-	ret void
+define void @STWBRX(i32 %i, i8* %ptr, i32 %off) {
+        %tmp1 = getelementptr i8* %ptr, i32 %off                ; <i8*> [#uses=1]
+        %tmp1.upgrd.1 = bitcast i8* %tmp1 to i32*               ; <i32*> [#uses=1]
+        %tmp13 = tail call i32 @llvm.bswap.i32( i32 %i )                ; <i32> [#uses=1]
+        store i32 %tmp13, i32* %tmp1.upgrd.1
+        ret void
 }
 
-uint %LWBRX(sbyte* %ptr, int %off) {
-	%tmp1 = getelementptr sbyte* %ptr, int %off
-	%tmp1 = cast sbyte* %tmp1 to uint*		
-	%tmp = load uint* %tmp1		
-	%tmp14 = tail call uint %llvm.bswap.i32( uint %tmp )
-	ret uint %tmp14
+define i32 @LWBRX(i8* %ptr, i32 %off) {
+        %tmp1 = getelementptr i8* %ptr, i32 %off                ; <i8*> [#uses=1]
+        %tmp1.upgrd.2 = bitcast i8* %tmp1 to i32*               ; <i32*> [#uses=1]
+        %tmp = load i32* %tmp1.upgrd.2          ; <i32> [#uses=1]
+        %tmp14 = tail call i32 @llvm.bswap.i32( i32 %tmp )              ; <i32> [#uses=1]
+        ret i32 %tmp14
 }
 
-void %STHBRX(ushort %s, sbyte* %ptr, int %off) {
-	%tmp1 = getelementptr sbyte* %ptr, int %off
-	%tmp1 = cast sbyte* %tmp1 to ushort*
-	%tmp5 = call ushort %llvm.bswap.i16( ushort %s )
-	store ushort %tmp5, ushort* %tmp1
-	ret void
+define void @STHBRX(i16 %s, i8* %ptr, i32 %off) {
+        %tmp1 = getelementptr i8* %ptr, i32 %off                ; <i8*> [#uses=1]
+        %tmp1.upgrd.3 = bitcast i8* %tmp1 to i16*               ; <i16*> [#uses=1]
+        %tmp5 = call i16 @llvm.bswap.i16( i16 %s )              ; <i16> [#uses=1]
+        store i16 %tmp5, i16* %tmp1.upgrd.3
+        ret void
 }
 
-ushort %LHBRX(sbyte* %ptr, int %off) {
-	%tmp1 = getelementptr sbyte* %ptr, int %off
-	%tmp1 = cast sbyte* %tmp1 to ushort*
-	%tmp = load ushort* %tmp1
-	%tmp6 = call ushort %llvm.bswap.i16(ushort %tmp)
-	ret ushort %tmp6
+define i16 @LHBRX(i8* %ptr, i32 %off) {
+        %tmp1 = getelementptr i8* %ptr, i32 %off                ; <i8*> [#uses=1]
+        %tmp1.upgrd.4 = bitcast i8* %tmp1 to i16*               ; <i16*> [#uses=1]
+        %tmp = load i16* %tmp1.upgrd.4          ; <i16> [#uses=1]
+        %tmp6 = call i16 @llvm.bswap.i16( i16 %tmp )            ; <i16> [#uses=1]
+        ret i16 %tmp6
 }
 
-declare uint %llvm.bswap.i32(uint)
+declare i32 @llvm.bswap.i32(i32)
 
-declare ushort %llvm.bswap.i16(ushort)
+declare i16 @llvm.bswap.i16(i16)
+

@@ -1,11 +1,11 @@
 ; PR850
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -x86-asm-syntax=att | \
+; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=att | \
 ; RUN:   grep {movl 4(%eax),%ebp}
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -x86-asm-syntax=att | \
+; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=att | \
 ; RUN:   grep {movl 0(%eax), %ebx}
 
-int %foo(int %__s.i.i, int %tmp5.i.i, int %tmp6.i.i, int %tmp7.i.i, int %tmp8.i.i ) {
-
-%tmp9.i.i = call int asm sideeffect "push %ebp\0Apush %ebx\0Amovl 4($2),%ebp\0Amovl 0($2), %ebx\0Amovl $1,%eax\0Aint  $$0x80\0Apop  %ebx\0Apop %ebp", "={ax},i,0,{cx},{dx},{si},{di}"(int 192, int %__s.i.i, int %tmp5.i.i, int %tmp6.i.i, int %tmp7.i.i, int %tmp8.i.i )
-  ret int %tmp9.i.i
+define i32 @foo(i32 %__s.i.i, i32 %tmp5.i.i, i32 %tmp6.i.i, i32 %tmp7.i.i, i32 %tmp8.i.i) {
+	%tmp9.i.i = call i32 asm sideeffect "push %ebp\0Apush %ebx\0Amovl 4($2),%ebp\0Amovl 0($2), %ebx\0Amovl $1,%eax\0Aint  $$0x80\0Apop  %ebx\0Apop %ebp", "={ax},i,0,{cx},{dx},{si},{di}"( i32 192, i32 %__s.i.i, i32 %tmp5.i.i, i32 %tmp6.i.i, i32 %tmp7.i.i, i32 %tmp8.i.i )		; <i32> [#uses=1]
+	ret i32 %tmp9.i.i
 }
+

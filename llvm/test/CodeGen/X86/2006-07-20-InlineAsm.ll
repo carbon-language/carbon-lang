@@ -1,24 +1,23 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86
+; RUN: llvm-as < %s | llc -march=x86
 ; PR833
 
-%G = weak global int 0		; <int*> [#uses=3]
+@G = weak global i32 0		; <i32*> [#uses=3]
 
-implementation   ; Functions:
-
-int %foo(int %X) {
+define i32 @foo(i32 %X) {
 entry:
-	%X_addr = alloca int		; <int*> [#uses=3]
-	store int %X, int* %X_addr
-	call void asm sideeffect "xchg{l} {$0,$1|$1,$0}", "=*m,=*r,m,1,~{dirflag},~{fpsr},~{flags}"( int* %G, int* %X_addr, int* %G, int %X )
-	%tmp1 = load int* %X_addr		; <int> [#uses=1]
-	ret int %tmp1
+	%X_addr = alloca i32		; <i32*> [#uses=3]
+	store i32 %X, i32* %X_addr
+	call void asm sideeffect "xchg{l} {$0,$1|$1,$0}", "=*m,=*r,m,1,~{dirflag},~{fpsr},~{flags}"( i32* @G, i32* %X_addr, i32* @G, i32 %X )
+	%tmp1 = load i32* %X_addr		; <i32> [#uses=1]
+	ret i32 %tmp1
 }
 
-int %foo2(int %X) {
+define i32 @foo2(i32 %X) {
 entry:
-	%X_addr = alloca int		; <int*> [#uses=3]
-	store int %X, int* %X_addr
-	call void asm sideeffect "xchg{l} {$0,$1|$1,$0}", "=*m,=*r,1,~{dirflag},~{fpsr},~{flags}"( int* %G, int* %X_addr, int %X )
-	%tmp1 = load int* %X_addr		; <int> [#uses=1]
-	ret int %tmp1
+	%X_addr = alloca i32		; <i32*> [#uses=3]
+	store i32 %X, i32* %X_addr
+	call void asm sideeffect "xchg{l} {$0,$1|$1,$0}", "=*m,=*r,1,~{dirflag},~{fpsr},~{flags}"( i32* @G, i32* %X_addr, i32 %X )
+	%tmp1 = load i32* %X_addr		; <i32> [#uses=1]
+	ret i32 %tmp1
 }
+

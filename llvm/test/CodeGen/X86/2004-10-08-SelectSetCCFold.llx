@@ -1,8 +1,8 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86
+; RUN: llvm-as < %s | llc -march=x86
 
-bool %test(bool %C, bool %D, int %X, int %Y) {
-	%E = setlt int %X, %Y
-	%F = select bool %C, bool %D, bool %E
-	ret bool %F
+define i1 @test(i1 %C, i1 %D, i32 %X, i32 %Y) {
+        %E = icmp slt i32 %X, %Y                ; <i1> [#uses=1]
+        %F = select i1 %C, i1 %D, i1 %E         ; <i1> [#uses=1]
+        ret i1 %F
 }
 

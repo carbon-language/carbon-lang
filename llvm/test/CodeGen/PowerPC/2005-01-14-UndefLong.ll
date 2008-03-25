@@ -1,3 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32
+; RUN: llvm-as < %s | llc -march=ppc32
 
-long %test() { ret long undef }
+define i64 @test() {
+        ret i64 undef
+}

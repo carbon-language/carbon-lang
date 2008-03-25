@@ -1,13 +1,12 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86
+; RUN: llvm-as < %s | llc -march=x86
 
-implementation
-
-int %test() {
-entry:   ret int 7 
-Test:   ; dead block!
-	%A = call int %test()
-	%B = call int %test()
-	%C = add int %A, %B
-    	ret int %C
+define i32 @test() {
+entry:
+        ret i32 7
+Test:           ; No predecessors!
+        %A = call i32 @test( )          ; <i32> [#uses=1]
+        %B = call i32 @test( )          ; <i32> [#uses=1]
+        %C = add i32 %A, %B             ; <i32> [#uses=1]
+        ret i32 %C
 }
 

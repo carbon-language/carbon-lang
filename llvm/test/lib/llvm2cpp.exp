@@ -12,7 +12,6 @@ proc llvm2cpp-test { files } {
   set llvm2cpp [file join $llvmtoolsdir llvm2cpp ]
   set llvmas [file join $llvmtoolsdir llvm-as ]
   set llvmdis [file join $llvmtoolsdir llvm-dis ]
-  set llvmupgrade [ file join $llvmtoolsdir llvm-upgrade ]
 
   #Make Output Directory if it does not exist already
   if { [file exists path] } {
@@ -46,22 +45,10 @@ proc llvm2cpp-test { files } {
       continue;
     }
 
-    # Scan the test file to see if there's a line with "lvm-upgrade" in it. 
-    # If so, run llvm-upgrade first or else llvm-as will fail on it.
+    # Run llvm-as/llvm-dis
+    set pipeline llvm-as|llvm-dis
     set retval [ catch { 
-      exec -keepnewline grep llvm-upgrade $test 2>/dev/null } msg ]
-
-    if { $retval == 0 } {
-      # In this case we must run llvm-upgrade before llvm-as
-      set pipeline llvm-upgrade|llvm-as|llvm-dis
-      set retval [ catch { 
-        exec -keepnewline $llvmupgrade < $test -o - | $llvmas | $llvmdis -f -o $assembly 2>/dev/null } msg ]
-    } else {
-      # llvm-upgrade not necessary, just llvm-as/llvm-dis
-      set pipeline llvm-as|llvm-dis
-      set retval [ catch { 
-        exec -keepnewline $llvmas < $test -o - | $llvmdis -f -o $assembly 2>/dev/null } msg ]
-    }
+      exec -keepnewline $llvmas < $test -o - | $llvmdis -f -o $assembly 2>/dev/null } msg ]
 
     if { $retval != 0 } {
       fail "$test: $pipeline returned $retval\n$msg"

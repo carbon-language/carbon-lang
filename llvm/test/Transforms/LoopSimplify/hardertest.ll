@@ -1,17 +1,15 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -loopsimplify
+; RUN: llvm-as < %s | opt -loopsimplify
 
-void %foo(bool %C) {
-	br bool %C, label %T, label %F
-T:
+define void @foo(i1 %C) {
+	br i1 %C, label %T, label %F
+T:		; preds = %0
 	br label %Loop
-F: 
+F:		; preds = %0
 	br label %Loop
-
-Loop:    ; Two backedges, two incoming edges.
-	%Val = phi int [0, %T], [1, %F], [2, %Loop], [3, %L2]
-
-	br bool %C, label %Loop, label %L2
-
-L2:
+Loop:		; preds = %L2, %Loop, %F, %T
+	%Val = phi i32 [ 0, %T ], [ 1, %F ], [ 2, %Loop ], [ 3, %L2 ]		; <i32> [#uses=0]
+	br i1 %C, label %Loop, label %L2
+L2:		; preds = %Loop
 	br label %Loop
 }
+

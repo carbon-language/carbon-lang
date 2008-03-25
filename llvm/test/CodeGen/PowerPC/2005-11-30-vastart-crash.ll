@@ -1,17 +1,18 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc
-target endian = big
-target pointersize = 32
-target triple = "powerpc-apple-darwin8.2.0"
-implementation   ; Functions:
+; RUN: llvm-as < %s | llc
 
-void %bar(int %G, int %E, int %F, int %A, int %B, int %C, int %D, sbyte* %fmt, ...) {
-	%ap = alloca sbyte*		; <sbyte**> [#uses=2]
-	call void %llvm.va_start( sbyte** %ap )
-	%tmp.1 = load sbyte** %ap		; <sbyte*> [#uses=1]
-	%tmp.0 = call double %foo( sbyte* %tmp.1 )		; <double> [#uses=0]
-	ret void
+target datalayout = "E-p:32:32"
+target triple = "powerpc-apple-darwin8.2.0"
+
+define void @bar(i32 %G, i32 %E, i32 %F, i32 %A, i32 %B, i32 %C, i32 %D, i8* %fmt, ...) {
+        %ap = alloca i8*                ; <i8**> [#uses=2]
+        %va.upgrd.1 = bitcast i8** %ap to i8*           ; <i8*> [#uses=1]
+        call void @llvm.va_start( i8* %va.upgrd.1 )
+        %tmp.1 = load i8** %ap          ; <i8*> [#uses=1]
+        %tmp.0 = call double @foo( i8* %tmp.1 )         ; <double> [#uses=0]
+        ret void
 }
 
-declare void %llvm.va_start(sbyte**)
+declare void @llvm.va_start(i8*)
 
-declare double %foo(sbyte*)
+declare double @foo(i8*)
+

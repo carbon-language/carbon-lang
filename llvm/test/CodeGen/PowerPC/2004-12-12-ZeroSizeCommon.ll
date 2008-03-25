@@ -1,3 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep .comm.*X,0
+; RUN: llvm-as < %s | llc -march=ppc32 | not grep .comm.*X,0
 
-%X = linkonce global {} {}
+@X = linkonce global {  } zeroinitializer               ; <{  }*> [#uses=0]
+
