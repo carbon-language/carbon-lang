@@ -10,11 +10,11 @@ LEVEL = ../..
 LIBRARYNAME = LLVMCore
 BUILD_ARCHIVE = 1
 
-BUILT_SOURCES = $(PROJ_SRC_ROOT)/include/llvm/Intrinsics.gen
+BUILT_SOURCES = $(PROJ_OBJ_ROOT)/include/llvm/Intrinsics.gen
 
 include $(LEVEL)/Makefile.common
 
-GENFILE:=$(PROJ_SRC_ROOT)/include/llvm/Intrinsics.gen
+GENFILE:=$(PROJ_OBJ_ROOT)/include/llvm/Intrinsics.gen
 
 INTRINSICTD  := $(PROJ_SRC_ROOT)/include/llvm/Intrinsics.td
 INTRINSICTDS := $(wildcard $(PROJ_SRC_ROOT)/include/llvm/Intrinsics*.td)
