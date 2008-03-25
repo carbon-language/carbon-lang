@@ -83,8 +83,9 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
       PersonalitySuffix = "$non_lazy_ptr";
     }
     NeedsIndirectEncoding = true;
-    InlineAsmStart = "# InlineAsm Start";
-    InlineAsmEnd = "# InlineAsm End";
+    InlineAsmStart = "## InlineAsm Start";
+    InlineAsmEnd = "## InlineAsm End";
+    CommentString = "##";
     SetDirective = "\t.set";
     PCSymbol = ".";
     UsedDirective = "\t.no_dead_strip\t";
