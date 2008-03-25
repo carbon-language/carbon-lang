@@ -1551,6 +1551,14 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+  
+  typedef Expr** arg_iterator;
+  typedef const Expr* const* const_arg_iterator;
+  
+  arg_iterator arg_begin() { return &SubExprs[ARGS_START]; }
+  arg_iterator arg_end()   { return arg_begin() + NumArgs; }
+  const_arg_iterator arg_begin() const { return &SubExprs[ARGS_START]; }
+  const_arg_iterator arg_end() const { return arg_begin() + NumArgs; }  
 };
 
 }  // end namespace clang
