@@ -61,7 +61,7 @@ LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   if (!Fast) {
     PM.add(createLoopStrengthReducePass(getTargetLowering()));
     if (PrintLSR)
-      PM.add(new PrintFunctionPass("\n\n*** Code after LSR *** \n", &cerr));
+      PM.add(new PrintFunctionPass("\n\n*** Code after LSR ***\n", &cerr));
   }
   
   PM.add(createGCLoweringPass());
@@ -76,7 +76,7 @@ LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
     PM.add(createCodeGenPreparePass(getTargetLowering()));
 
   if (PrintISelInput)
-    PM.add(new PrintFunctionPass("\n\n*** Final LLVM Code input to ISel *** \n",
+    PM.add(new PrintFunctionPass("\n\n*** Final LLVM Code input to ISel ***\n",
                                  &cerr));
   
   // Ask the target for an isel.
@@ -187,7 +187,7 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(PassManagerBase &PM,
   if (!Fast) {
     PM.add(createLoopStrengthReducePass(getTargetLowering()));
     if (PrintLSR)
-      PM.add(new PrintFunctionPass("\n\n*** Code after LSR *** \n", &cerr));
+      PM.add(new PrintFunctionPass("\n\n*** Code after LSR ***\n", &cerr));
   }
   
   PM.add(createGCLoweringPass());
@@ -202,7 +202,7 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(PassManagerBase &PM,
     PM.add(createCodeGenPreparePass(getTargetLowering()));
 
   if (PrintISelInput)
-    PM.add(new PrintFunctionPass("\n\n*** Final LLVM Code input to ISel *** \n",
+    PM.add(new PrintFunctionPass("\n\n*** Final LLVM Code input to ISel ***\n",
                                  &cerr));
 
   // Ask the target for an isel.
