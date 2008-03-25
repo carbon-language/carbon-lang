@@ -866,15 +866,9 @@ void StrongPHIElimination::mergeLiveIntervals(unsigned primary,
 
   // If we get here, we know that we can coalesce the live ranges.  Ask the
   // intervals to coalesce themselves now.
-  if ((RHS.ranges.size() > LHS.ranges.size() &&
-      TargetRegisterInfo::isVirtualRegister(LHS.reg)) ||
-      TargetRegisterInfo::isPhysicalRegister(RHS.reg)) {
-    RHS.join(LHS, &RHSValNoAssignments[0], &LHSValNoAssignments[0], NewVNInfo);
-    LI.removeInterval(primary);
-  } else {
-    LHS.join(RHS, &LHSValNoAssignments[0], &RHSValNoAssignments[0], NewVNInfo);
-    LI.removeInterval(secondary);
-  }
+
+  LHS.join(RHS, &LHSValNoAssignments[0], &RHSValNoAssignments[0], NewVNInfo);
+  LI.removeInterval(secondary);
 }
 
 bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
@@ -920,6 +914,9 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
     LI.RemoveMachineInstrFromMaps(*I);
     (*I)->eraseFromParent();
   }
+  
+  for (LiveIntervals::iterator I = LI.begin(), E = LI.end(); I != E; ++I)
+    I->second.dump();
   
   return false;
 }
