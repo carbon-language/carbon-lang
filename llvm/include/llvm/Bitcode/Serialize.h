@@ -57,6 +57,8 @@ public:
   template <typename T>
   inline void EmitRef(const T& ref) { EmitPtr(&ref); }
   
+  // Emit a pointer and the object pointed to.  (This has no relation to the
+  // OwningPtr<> class.)
   template <typename T>
   inline void EmitOwnedPtr(T* ptr) {
     EmitPtr(ptr);
