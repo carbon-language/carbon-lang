@@ -125,7 +125,7 @@ namespace {
                            cl::location(PerformTailCallOpt),
                            cl::init(false));
   cl::opt<bool, true>
-  EnableOptimizeForSize("optimizeforsize",
+  EnableOptimizeForSize("optimize-size",
                         cl::desc("Optimize for size."),
                            cl::location(OptimizeForSize),
                            cl::init(false));
