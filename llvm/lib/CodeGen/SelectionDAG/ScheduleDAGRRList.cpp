@@ -81,6 +81,24 @@ public:
 
   void Schedule();
 
+  /// IsReachable - Checks if SU is reachable from TargetSU
+  bool IsReachable(SUnit *SU, SUnit *TargetSU);
+
+  /// willCreateCycle - Returns true if adding an edge from SU to TargetSU will
+  /// create a cycle.
+  bool WillCreateCycle(SUnit *SU, SUnit *TargetSU);
+
+  /// AddPred - This adds the specified node X as a predecessor of 
+  /// the current node Y if not already.
+  /// This returns true if this is a new pred.
+  /// Updates the topological oredering if required.
+  bool AddPred(SUnit *Y, SUnit *X, bool isCtrl, bool isSpecial,
+                 unsigned PhyReg = 0, int Cost = 1);
+
+  /// RemovePred - This removes the specified node N from predecessors of 
+  /// the current node M. Updates the topological oredering if required 
+  bool RemovePred(SUnit *M, SUnit *N, bool isCtrl, bool isSpecial);
+
 private:
   void ReleasePred(SUnit*, bool, unsigned);
   void ReleaseSucc(SUnit*, bool isChain, unsigned);
@@ -98,6 +116,84 @@ private:
   void ListScheduleTopDown();
   void ListScheduleBottomUp();
   void CommuteNodesToReducePressure();
+
+
+  /// CreateNewSUnit - Creates a new SUnit and returns a pointer to it.
+  /// Updates the topological oredering if required.
+  SUnit *CreateNewSUnit(SDNode *N) {
+    SUnit *NewNode = NewSUnit(N);
+    // Update the topologic ordering
+    if (NewNode->NodeNum >= Node2Index.size())
+      InitDAGTopologicalSorting();
+    return NewNode;
+  }
+
+  /// CreateClone - Creates a new SUnit from old one.
+  /// Updates the topological oredering if required.
+  SUnit *CreateClone(SUnit *N) {
+    SUnit *NewNode = Clone(N);
+    // Update the topologic ordering
+    if (NewNode->NodeNum >= Node2Index.size())
+      InitDAGTopologicalSorting();
+    return NewNode;
+  }
+
+  /// Functions for preserving the topological ordering
+  /// even after dynamic insertions of new edges.
+  /// This allows for very fast implementation of IsReachable.
+
+
+  /** 
+  The idea of the algorithm is taken from 
+  "Online algorithms for managing the topological order of
+  a directed acyclic graph" by David J.Pearce and Paul H.J. Kelly
+  This is the MNR algorithm, which is first introduced by 
+  A.Marchetti-Spaccamela, U.Nanni and H.Rohnert in  
+  "Maintaining a topological order under edge insertions".
+
+  Short description of the algorithm: 
+  
+  Topological ordering, ord, of a DAG maps each node to a topological
+  index so that fall all edges X->Y it is the case that ord(X) < ord(Y).
+  
+  This means that if there is a path from the node X to the node Z, 
+  then ord(X) < ord(Z).
+  
+  This property can be used to check for reachability of nodes:
+  if Z is reachable from X, then an insertion of the edge Z->X would 
+  create a cycle.
+   
+  Algorithm first computes a topological ordering for a DAG by initializing
+  the Index2Node and Node2Index arrays and then tries to keep the ordering
+  up-to-date after edge insertions by reordering the DAG.
+  
+  On insertion of the edge X->Y, the algorithm first marks by calling DFS the
+  nodes reachable from Y, and then shifts them using Shift to lie immediately
+  after X in Index2Node.
+  */
+
+  ///  InitDAGTopologicalSorting - create the initial topological 
+  ///  ordering from the DAG to be scheduled
+  void InitDAGTopologicalSorting();
+
+  /// DFS - make a DFS traversal and mark all nodes affected by the 
+  /// edge insertion. These nodes should later get new topological indexes
+  /// by means of Shift method 
+  void DFS(SUnit *SU, int UpperBound, bool& HasLoop);
+
+  /// Shift - reassign topological indexes for the nodes in the DAG
+  /// to preserve the topological ordering
+  void Shift(BitVector& Visited, int LowerBound, int UpperBound);
+
+  /// Allocate - assign the topological index to a node n
+  void Allocate(int n, int index);
+
+  /// Index2Node - Maps topological index to the node number
+  std::vector<int> Index2Node;
+  /// Node2Index - Maps the node number to its topological index
+  std::vector<int> Node2Index;
+  /// Visited - a set of nodes visited during a DFS traversal
+  BitVector Visited;
 };
 }  // end anonymous namespace
 
@@ -116,6 +212,7 @@ void ScheduleDAGRRList::Schedule() {
           SUnits[su].dumpAll(&DAG));
   CalculateDepths();
   CalculateHeights();
+  InitDAGTopologicalSorting();
 
   AvailableQueue->initNodes(SUnitMap, SUnits);
   
@@ -326,36 +423,185 @@ void ScheduleDAGRRList::UnscheduleNodeBottomUp(SUnit *SU) {
   AvailableQueue->push(SU);
 }
 
-// FIXME: This is probably too slow!
-static void isReachable(SUnit *SU, SUnit *TargetSU,
-                        SmallPtrSet<SUnit*, 32> &Visited, bool &Reached) {
-  if (Reached) return;
-  if (SU == TargetSU) {
-    Reached = true;
-    return;
+/// IsReachable - Checks if SU is reachable from TargetSU.
+bool ScheduleDAGRRList::IsReachable(SUnit *SU, SUnit *TargetSU) {
+  // If insertion of the edge SU->TargetSU would creates a cycle
+  // then there is a path from TargetSU to SU
+  int UpperBound, LowerBound;
+  LowerBound = Node2Index[TargetSU->NodeNum];
+  UpperBound = Node2Index[SU->NodeNum];
+  bool HasLoop = false;
+  // Is Ord(TargetSU) < Ord(SU) ?
+  if (LowerBound < UpperBound) {
+    Visited.reset();
+    // There may be a path from TargetSU to SU. Check for it. 
+    DFS(TargetSU, UpperBound, HasLoop);
   }
-  if (!Visited.insert(SU)) return;
-
-  for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end(); I != E;
-       ++I)
-    isReachable(I->Dep, TargetSU, Visited, Reached);
+  return HasLoop;
 }
 
-static bool isReachable(SUnit *SU, SUnit *TargetSU) {
-  SmallPtrSet<SUnit*, 32> Visited;
-  bool Reached = false;
-  isReachable(SU, TargetSU, Visited, Reached);
-  return Reached;
+/// Allocate - assign the topological index to a node n
+inline void ScheduleDAGRRList::Allocate(int n, int index) {
+  Node2Index[n] = index;
+  Index2Node[index] = n;
 }
+
+///  InitDAGTopologicalSorting - create the initial topological 
+///  ordering from the DAG to be scheduled.
+void ScheduleDAGRRList::InitDAGTopologicalSorting() {
+  unsigned DAGSize = SUnits.size();
+  std::vector<unsigned> InDegree(DAGSize);
+  std::vector<SUnit*> WorkList;
+  WorkList.reserve(DAGSize);
+  std::vector<SUnit*> TopOrder;
+  TopOrder.reserve(DAGSize);
+
+  // Initialize the data structures
+  for (unsigned i = 0, e = DAGSize; i != e; ++i) {
+    SUnit *SU = &SUnits[i];
+    int NodeNum = SU->NodeNum;
+    unsigned Degree = SU->Succs.size();
+    InDegree[NodeNum] = Degree;
+
+    // Is it a node without dependencies?
+    if (Degree == 0) {
+        assert(SU->Succs.empty() && "SUnit should have no successors");
+        // Collect leaf nodes
+        WorkList.push_back(SU);
+    }
+  }  
+
+  while (!WorkList.empty()) {
+    SUnit *SU = WorkList.back();
+    WorkList.pop_back();
+    TopOrder.push_back(SU);
+    for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
+         I != E; ++I) {
+      SUnit *SU = I->Dep;
+      if (!--InDegree[SU->NodeNum])
+        // If all dependencies of the node are processed already,
+        // then the node can be computed now
+        WorkList.push_back(SU);
+    }
+  }
+
+  // Second pass, assign the actual topological order as node ids.
+  int Id = 0;
+
+  Index2Node.clear();
+  Node2Index.clear();
+  Index2Node.resize(DAGSize);
+  Node2Index.resize(DAGSize);
+  Visited.resize(DAGSize);
+
+  for (std::vector<SUnit*>::reverse_iterator TI = TopOrder.rbegin(),
+       TE = TopOrder.rend();TI != TE; ++TI) {
+    Allocate((*TI)->NodeNum, Id);
+    Id++;
+  }
+
+#ifndef NDEBUG
+  // Check correctness of the ordering
+  for (unsigned i = 0, e = DAGSize; i != e; ++i) {
+    SUnit *SU = &SUnits[i];
+    for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
+         I != E; ++I) {
+       assert(Node2Index[SU->NodeNum] > Node2Index[I->Dep->NodeNum] && 
+       "Wrong topological sorting");
+    }
+  }
+#endif
+}
+
+/// AddPred - adds edge from SUnit X to SUnit Y
+/// Updates the topological oredering if required.
+bool ScheduleDAGRRList::AddPred(SUnit *Y, SUnit *X, bool isCtrl, bool isSpecial,
+                 unsigned PhyReg, int Cost) {
+  int UpperBound, LowerBound;
+  LowerBound = Node2Index[Y->NodeNum];
+  UpperBound = Node2Index[X->NodeNum];
+  bool HasLoop = false;
+  // Is Ord(X) < Ord(Y) ?
+  if (LowerBound < UpperBound) {
+    // Update the topological order
+    Visited.reset();
+    DFS(Y, UpperBound, HasLoop);
+    assert(!HasLoop && "Inserted edge creates a loop!");
+    // Recompute topological indexes
+    Shift(Visited, LowerBound, UpperBound);
+  }
+  // Now really insert the edge
+  return Y->addPred(X,isCtrl,isSpecial,PhyReg,Cost);
+}
+
+/// RemovePred - This removes the specified node N from preds of 
+/// the current node M. Updates the topological oredering if required 
+bool ScheduleDAGRRList::RemovePred(SUnit *M, SUnit *N, 
+                                   bool isCtrl, bool isSpecial) {
+  // InitDAGTopologicalSorting();
+  return M->removePred(N, isCtrl, isSpecial);
+}
+
+/// DFS - make a DFS traversal to mark all nodes reachable from SU and and mark /// all nodes affected by the edge insertion. These nodes should later get new /// topological indexes by means of the Shift method 
+void ScheduleDAGRRList::DFS(SUnit *SU, int UpperBound, bool& HasLoop) {
+  std::vector<SUnit*> WorkList;
+  WorkList.reserve(SUnits.size()); 
+
+  WorkList.push_back(SU);
+  while (!WorkList.empty()) {
+    SU = WorkList.back();
+    WorkList.pop_back();
+    Visited.set(SU->NodeNum);
+    for (int I = SU->Succs.size()-1; I >= 0; --I) {
+      int s = SU->Succs[I].Dep->NodeNum;
+      if (Node2Index[s] == UpperBound) {
+        HasLoop = true; 
+        return;
+      }
+      // Visit successors if not already and is in affected region
+      if (!Visited.test(s) && Node2Index[s] < UpperBound) {
+        WorkList.push_back(SU->Succs[I].Dep);
+      } 
+    } 
+  }
+}
+
+/// Shift - renumber the nodes so that the topological ordering is 
+/// preserved
+void ScheduleDAGRRList::Shift(BitVector& Visited, int LowerBound, 
+                              int UpperBound) {
+  std::vector<int> L;
+  int shift = 0;
+  int i;
+
+  for (i = LowerBound; i <= UpperBound; ++i) {
+    // w is node at topological index i
+    int w = Index2Node[i];
+    if (Visited.test(w)) {
+      // Unmark
+      Visited.reset(w);
+      L.push_back(w);
+      shift = shift + 1;
+    } else {
+      Allocate(w, i - shift);
+    }
+  }
+
+  for (unsigned j = 0; j < L.size(); ++j) {
+    Allocate(L[j], i - shift);
+    i = i + 1;
+  }
+}
+
 
 /// WillCreateCycle - Returns true if adding an edge from SU to TargetSU will
 /// create a cycle.
-static bool WillCreateCycle(SUnit *SU, SUnit *TargetSU) {
-  if (isReachable(TargetSU, SU))
+bool ScheduleDAGRRList::WillCreateCycle(SUnit *SU, SUnit *TargetSU) {
+  if (IsReachable(TargetSU, SU))
     return true;
   for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I)
-    if (I->Cost < 0 && isReachable(TargetSU, I->Dep))
+    if (I->Cost < 0 && IsReachable(TargetSU, I->Dep))
       return true;
   return false;
 }
@@ -428,7 +674,7 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
     DAG.ReplaceAllUsesOfValueWith(SDOperand(SU->Node, OldNumVals-1),
                                   SDOperand(LoadNode, 1));
 
-    SUnit *NewSU = NewSUnit(N);
+    SUnit *NewSU = CreateNewSUnit(N);
     SUnitMap[N].push_back(NewSU);
     const TargetInstrDesc &TID = TII->get(N->getTargetOpcode());
     for (unsigned i = 0; i != TID.getNumOperands(); ++i) {
@@ -455,7 +701,7 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
       LoadSU = SMI->second.front();
       isNewLoad = false;
     } else {
-      LoadSU = NewSUnit(LoadNode);
+      LoadSU = CreateNewSUnit(LoadNode);
       SUnitMap[LoadNode].push_back(LoadSU);
 
       LoadSU->Depth = SU->Depth;
@@ -487,37 +733,41 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
                                  I->isCtrl, I->isSpecial));
     }
 
-    SU->removePred(ChainPred, true, false);
-    if (isNewLoad)
-      LoadSU->addPred(ChainPred, true, false);
+    RemovePred(SU, ChainPred, true, false);
+    if (isNewLoad) {
+      AddPred(LoadSU,ChainPred, true, false);
+    }
     for (unsigned i = 0, e = LoadPreds.size(); i != e; ++i) {
       SDep *Pred = &LoadPreds[i];
-      SU->removePred(Pred->Dep, Pred->isCtrl, Pred->isSpecial);
-      if (isNewLoad)
-        LoadSU->addPred(Pred->Dep, Pred->isCtrl, Pred->isSpecial,
+      RemovePred(SU, Pred->Dep, Pred->isCtrl, Pred->isSpecial);
+      if (isNewLoad) {
+        AddPred(LoadSU, Pred->Dep, Pred->isCtrl, Pred->isSpecial,
                         Pred->Reg, Pred->Cost);
+      }
     }
     for (unsigned i = 0, e = NodePreds.size(); i != e; ++i) {
       SDep *Pred = &NodePreds[i];
-      SU->removePred(Pred->Dep, Pred->isCtrl, Pred->isSpecial);
-      NewSU->addPred(Pred->Dep, Pred->isCtrl, Pred->isSpecial,
+      RemovePred(SU, Pred->Dep, Pred->isCtrl, Pred->isSpecial);
+      AddPred(NewSU, Pred->Dep, Pred->isCtrl, Pred->isSpecial,
                      Pred->Reg, Pred->Cost);
     }
     for (unsigned i = 0, e = NodeSuccs.size(); i != e; ++i) {
       SDep *Succ = &NodeSuccs[i];
-      Succ->Dep->removePred(SU, Succ->isCtrl, Succ->isSpecial);
-      Succ->Dep->addPred(NewSU, Succ->isCtrl, Succ->isSpecial,
+      RemovePred(Succ->Dep, SU, Succ->isCtrl, Succ->isSpecial);
+      AddPred(Succ->Dep, NewSU, Succ->isCtrl, Succ->isSpecial,
                          Succ->Reg, Succ->Cost);
     }
     for (unsigned i = 0, e = ChainSuccs.size(); i != e; ++i) {
       SDep *Succ = &ChainSuccs[i];
-      Succ->Dep->removePred(SU, Succ->isCtrl, Succ->isSpecial);
-      if (isNewLoad)
-        Succ->Dep->addPred(LoadSU, Succ->isCtrl, Succ->isSpecial,
+      RemovePred(Succ->Dep, SU, Succ->isCtrl, Succ->isSpecial);
+      if (isNewLoad) {
+        AddPred(Succ->Dep, LoadSU, Succ->isCtrl, Succ->isSpecial,
                            Succ->Reg, Succ->Cost);
+      }
     } 
-    if (isNewLoad)
-      NewSU->addPred(LoadSU, false, false);
+    if (isNewLoad) {
+      AddPred(NewSU, LoadSU, false, false);
+    }
 
     if (isNewLoad)
       AvailableQueue->addNode(LoadSU);
@@ -533,13 +783,13 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
   }
 
   DOUT << "Duplicating SU # " << SU->NodeNum << "\n";
-  NewSU = Clone(SU);
+  NewSU = CreateClone(SU);
 
   // New SUnit has the exact same predecessors.
   for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I)
     if (!I->isSpecial) {
-      NewSU->addPred(I->Dep, I->isCtrl, false, I->Reg, I->Cost);
+      AddPred(NewSU, I->Dep, I->isCtrl, false, I->Reg, I->Cost);
       NewSU->Depth = std::max(NewSU->Depth, I->Dep->Depth+1);
     }
 
@@ -552,14 +802,14 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
       continue;
     if (I->Dep->isScheduled) {
       NewSU->Height = std::max(NewSU->Height, I->Dep->Height+1);
-      I->Dep->addPred(NewSU, I->isCtrl, false, I->Reg, I->Cost);
+      AddPred(I->Dep, NewSU, I->isCtrl, false, I->Reg, I->Cost);
       DelDeps.push_back(std::make_pair(I->Dep, I->isCtrl));
     }
   }
   for (unsigned i = 0, e = DelDeps.size(); i != e; ++i) {
     SUnit *Succ = DelDeps[i].first;
     bool isCtrl = DelDeps[i].second;
-    Succ->removePred(SU, isCtrl, false);
+    RemovePred(Succ, SU, isCtrl, false);
   }
 
   AvailableQueue->updateNode(SU);
@@ -575,13 +825,13 @@ void ScheduleDAGRRList::InsertCCCopiesAndMoveSuccs(SUnit *SU, unsigned Reg,
                                               const TargetRegisterClass *DestRC,
                                               const TargetRegisterClass *SrcRC,
                                                SmallVector<SUnit*, 2> &Copies) {
-  SUnit *CopyFromSU = NewSUnit(NULL);
+  SUnit *CopyFromSU = CreateNewSUnit(NULL);
   CopyFromSU->CopySrcRC = SrcRC;
   CopyFromSU->CopyDstRC = DestRC;
   CopyFromSU->Depth = SU->Depth;
   CopyFromSU->Height = SU->Height;
 
-  SUnit *CopyToSU = NewSUnit(NULL);
+  SUnit *CopyToSU = CreateNewSUnit(NULL);
   CopyToSU->CopySrcRC = DestRC;
   CopyToSU->CopyDstRC = SrcRC;
 
@@ -594,18 +844,18 @@ void ScheduleDAGRRList::InsertCCCopiesAndMoveSuccs(SUnit *SU, unsigned Reg,
       continue;
     if (I->Dep->isScheduled) {
       CopyToSU->Height = std::max(CopyToSU->Height, I->Dep->Height+1);
-      I->Dep->addPred(CopyToSU, I->isCtrl, false, I->Reg, I->Cost);
+      AddPred(I->Dep, CopyToSU, I->isCtrl, false, I->Reg, I->Cost);
       DelDeps.push_back(std::make_pair(I->Dep, I->isCtrl));
     }
   }
   for (unsigned i = 0, e = DelDeps.size(); i != e; ++i) {
     SUnit *Succ = DelDeps[i].first;
     bool isCtrl = DelDeps[i].second;
-    Succ->removePred(SU, isCtrl, false);
+    RemovePred(Succ, SU, isCtrl, false);
   }
 
-  CopyFromSU->addPred(SU, false, false, Reg, -1);
-  CopyToSU->addPred(CopyFromSU, false, false, Reg, 1);
+  AddPred(CopyFromSU, SU, false, false, Reg, -1);
+  AddPred(CopyToSU, CopyFromSU, false, false, Reg, 1);
 
   AvailableQueue->updateNode(SU);
   AvailableQueue->addNode(CopyFromSU);
@@ -739,7 +989,7 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
             OldSU->isAvailable = false;
             AvailableQueue->remove(OldSU);
           }
-          TrySU->addPred(OldSU, true, true);
+          AddPred(TrySU, OldSU, true, true);
           // If one or more successors has been unscheduled, then the current
           // node is no longer avaialable. Schedule a successor that's now
           // available instead.
@@ -778,14 +1028,14 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
           InsertCCCopiesAndMoveSuccs(LRDef, Reg, DestRC, RC, Copies);
           DOUT << "Adding an edge from SU # " << TrySU->NodeNum
                << " to SU #" << Copies.front()->NodeNum << "\n";
-          TrySU->addPred(Copies.front(), true, true);
+          AddPred(TrySU, Copies.front(), true, true);
           NewDef = Copies.back();
         }
 
         DOUT << "Adding an edge from SU # " << NewDef->NodeNum
              << " to SU #" << TrySU->NodeNum << "\n";
         LiveRegDefs[Reg] = NewDef;
-        NewDef->addPred(TrySU, true, true);
+        AddPred(NewDef, TrySU, true, true);
         TrySU->isAvailable = false;
         CurSU = NewDef;
       }
@@ -1064,10 +1314,11 @@ namespace {
 
     const TargetInstrInfo *TII;
     const TargetRegisterInfo *TRI;
+    ScheduleDAGRRList *scheduleDAG;
   public:
     explicit BURegReductionPriorityQueue(const TargetInstrInfo *tii,
                                          const TargetRegisterInfo *tri)
-      : TII(tii), TRI(tri) {}
+      : TII(tii), TRI(tri), scheduleDAG(NULL) {}
 
     void initNodes(DenseMap<SDNode*, std::vector<SUnit*> > &sumap,
                    std::vector<SUnit> &sunits) {
@@ -1123,6 +1374,10 @@ namespace {
         return 0;
       else
         return SethiUllmanNumbers[SU->NodeNum];
+    }
+
+    void setScheduleDAG(ScheduleDAGRRList *scheduleDag) { 
+      scheduleDAG = scheduleDag; 
     }
 
   private:
@@ -1400,10 +1655,10 @@ void BURegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
           if ((!canClobber(SuccSU, DUSU) ||
                (hasCopyToRegUse(SU) && !hasCopyToRegUse(SuccSU)) ||
                (!SU->isCommutable && SuccSU->isCommutable)) &&
-              !isReachable(SuccSU, SU)) {
+              !scheduleDAG->IsReachable(SuccSU, SU)) {
             DOUT << "Adding an edge from SU # " << SU->NodeNum
                  << " to SU #" << SuccSU->NodeNum << "\n";
-            SU->addPred(SuccSU, true, true);
+            scheduleDAG->AddPred(SU, SuccSU, true, true);
           }
         }
       }
@@ -1569,8 +1824,14 @@ llvm::ScheduleDAG* llvm::createBURRListDAGScheduler(SelectionDAGISel *IS,
                                                     MachineBasicBlock *BB) {
   const TargetInstrInfo *TII = DAG->getTarget().getInstrInfo();
   const TargetRegisterInfo *TRI = DAG->getTarget().getRegisterInfo();
-  return new ScheduleDAGRRList(*DAG, BB, DAG->getTarget(), true,
-                      new BURegReductionPriorityQueue<bu_ls_rr_sort>(TII, TRI));
+  
+  BURegReductionPriorityQueue<bu_ls_rr_sort> *priorityQueue = 
+    new BURegReductionPriorityQueue<bu_ls_rr_sort>(TII, TRI);
+
+  ScheduleDAGRRList * scheduleDAG = 
+    new ScheduleDAGRRList(*DAG, BB, DAG->getTarget(), true, priorityQueue);
+  priorityQueue->setScheduleDAG(scheduleDAG);
+  return scheduleDAG;  
 }
 
 llvm::ScheduleDAG* llvm::createTDRRListDAGScheduler(SelectionDAGISel *IS,
