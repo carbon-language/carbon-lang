@@ -3327,7 +3327,7 @@ defm PMOVZXBQ   : SS41I_binop_rm_int2<0x32, "pmovsxbq", int_x86_sse41_pmovzxbq>;
 
 /// SS41I_binop_ext8 - SSE 4.1 extract 8 bits to 32 bit reg or 8 bit mem
 multiclass SS41I_extract8<bits<8> opc, string OpcodeStr> {
-  def rr : SS4AIi8<opc, MRMSrcReg, (outs GR32:$dst),
+  def rr : SS4AIi8<opc, MRMDestReg, (outs GR32:$dst),
                  (ins VR128:$src1, i32i8imm:$src2),
                  !strconcat(OpcodeStr, 
                   "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
@@ -3363,7 +3363,7 @@ defm PEXTRW      : SS41I_extract16<0x15, "pextrw">;
 
 /// SS41I_extract32 - SSE 4.1 extract 32 bits to int reg or memory destination
 multiclass SS41I_extract32<bits<8> opc, string OpcodeStr> {
-  def rr : SS4AIi8<opc, MRMSrcReg, (outs GR32:$dst),
+  def rr : SS4AIi8<opc, MRMDestReg, (outs GR32:$dst),
                  (ins VR128:$src1, i32i8imm:$src2),
                  !strconcat(OpcodeStr, 
                   "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
@@ -3384,7 +3384,7 @@ defm PEXTRD      : SS41I_extract32<0x16, "pextrd">;
 /// destination
 multiclass SS41I_extractf32<bits<8> opc, string OpcodeStr> {
   // Not worth matching to rr form of extractps since the result is in GPR32.
-  def rr : SS4AIi8<opc, MRMSrcReg, (outs GR32:$dst),
+  def rr : SS4AIi8<opc, MRMDestReg, (outs GR32:$dst),
                  (ins VR128:$src1, i32i8imm:$src2),
                  !strconcat(OpcodeStr, 
                   "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
@@ -3460,7 +3460,7 @@ let Constraints = "$src1 = $dst" in {
   }
 }
 
-defm INSERTPS    : SS41I_insertf32<0x31, "insertps">;
+defm INSERTPS    : SS41I_insertf32<0x21, "insertps">;
 
 let Defs = [EFLAGS] in {
 def PTESTrr : SS48I<0x17, MRMSrcReg, (outs), (ins VR128:$src1, VR128:$src2),
