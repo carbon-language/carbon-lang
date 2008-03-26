@@ -1097,7 +1097,7 @@ void GRExprEngine::VisitObjCMessageExprArgHelper(ObjCMessageExpr* ME,
     
     if (Expr* Receiver = ME->getReceiver()) {
       NodeSet Tmp;
-      VisitLVal(Receiver, Pred, Tmp);
+      Visit(Receiver, Pred, Tmp);
             
       for (NodeSet::iterator NI = Tmp.begin(), NE = Tmp.end(); NI != NE; ++NI)
         VisitObjCMessageExprDispatchHelper(ME, *NI, Dst);
