@@ -1,4 +1,4 @@
-// RUN: clang -rewrite-test %s 
+// RUN: clang -rewrite-test %s -o=-
 
 @protocol MyProto1 
 @end

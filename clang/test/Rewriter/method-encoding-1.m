@@ -1,4 +1,4 @@
-// RUN: clang -rewrite-test %s
+// RUN: clang -rewrite-test %s -o=-
 
 @protocol P1
 - (void) MyProtoMeth : (int **) arg1 : (void*) arg2;

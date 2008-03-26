@@ -1,4 +1,4 @@
-// RUN: clang -rewrite-test %s
+// RUN: clang -rewrite-test %s -o=-
 
 typedef struct _NSPoint {
     float x;

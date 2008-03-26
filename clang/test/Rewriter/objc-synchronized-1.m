@@ -1,4 +1,4 @@
-// RUN: clang -rewrite-test %s 
+// RUN: clang -rewrite-test %s -o=-
 
 id SYNCH_EXPR();
 void SYNCH_BODY();

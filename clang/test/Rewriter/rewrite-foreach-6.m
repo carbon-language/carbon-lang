@@ -1,4 +1,4 @@
-// RUN: clang %s -rewrite-test
+// RUN: clang %s -rewrite-test -o=-
 // rdar://5716356
 // FIXME: Should be able to pipe into clang, but code is not
 // yet correct for other reasons: rdar://5716940

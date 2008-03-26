@@ -1,4 +1,4 @@
-// RUN: clang -rewrite-test %s 
+// RUN: clang -rewrite-test %s -o=-
 
 @protocol P
 - (id<P>) Meth: (id<P>) Arg;
