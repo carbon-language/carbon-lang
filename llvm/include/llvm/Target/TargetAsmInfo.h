@@ -65,8 +65,15 @@ namespace llvm {
     /// section on this target.  Null if this target doesn't support zerofill.
     const char *ZeroFillDirective;        // Default is null.
     
-    /// NeedsSet - True if target asm can't compute addresses on data
-    /// directives.
+    /// NeedsSet - True if target asm treats expressions in data directives
+    /// as linktime-relocatable.  For assembly-time computation, we need to
+    /// use a .set.  Thus:
+    /// .set w, x-y
+    /// .long w
+    /// is computed at assembly time, while
+    /// .long x-y
+    /// is relocated if the relative locations of x and y change at linktime.
+    /// We want both these things in different places.
     bool NeedsSet;                        // Defaults to false.
     
     /// MaxInstLength - This is the maximum possible length of an instruction,

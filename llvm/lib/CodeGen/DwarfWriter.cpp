@@ -925,19 +925,20 @@ public:
 
   void EmitSectionOffset(const char* Label, const char* Section,
                          unsigned LabelNumber, unsigned SectionNumber,
-                         bool IsSmall = false, bool isEH = false) {
+                         bool IsSmall = false, bool isEH = false,
+                         bool useSet = true) {
     bool printAbsolute = false;
-    if (TAI->needsSet()) {
+    if (isEH)
+      printAbsolute = TAI->isAbsoluteEHSectionOffsets();
+    else
+      printAbsolute = TAI->isAbsoluteDebugSectionOffsets();
+
+    if (TAI->needsSet() && useSet) {
       O << "\t.set\t";
       PrintLabelName("set", SetCounter, Flavor);
       O << ",";
       PrintLabelName(Label, LabelNumber);
 
-      if (isEH)
-        printAbsolute = TAI->isAbsoluteEHSectionOffsets();
-      else
-        printAbsolute = TAI->isAbsoluteDebugSectionOffsets();
-      
       if (!printAbsolute) {
         O << "-";
         PrintLabelName(Section, SectionNumber);
@@ -952,11 +953,6 @@ public:
       PrintRelDirective(IsSmall, true);
         
       PrintLabelName(Label, LabelNumber);
-
-      if (isEH)
-        printAbsolute = TAI->isAbsoluteEHSectionOffsets();
-      else
-        printAbsolute = TAI->isAbsoluteDebugSectionOffsets();
 
       if (!printAbsolute) {
         O << "-";
@@ -2919,7 +2915,7 @@ private:
 
       EmitSectionOffset("eh_frame_begin", "eh_frame_common",
                         EHFrameInfo.Number, EHFrameInfo.PersonalityIndex,
-                        true, true);
+                        true, true, false);
       Asm->EOL("FDE CIE offset");
 
       EmitReference("eh_func_begin", EHFrameInfo.Number, true);
