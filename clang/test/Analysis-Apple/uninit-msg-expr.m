@@ -1,6 +1,7 @@
 // RUN: clang -grsimple -verify %s
 
 #include <Foundation/NSString.h>
+#include <Foundation/NSArray.h>
 
 void f1() {
   NSString *aString;
@@ -10,4 +11,10 @@ void f1() {
 void f2() {
   NSString *aString = nil;
   unsigned i = [aString length]; // no-warning
+}
+
+void f3() {
+  NSMutableArray *aArray = [NSArray array];
+  NSString *aString;
+  [aArray addObject:aString]; // expected-warning {{Pass-by-value argument in message expression is undefined.}}
 }
