@@ -5,7 +5,7 @@ TESTDIRS := CodeGen Lexer Preprocessor Parser Sema Analysis Serialization
 
 # Only run rewriter tests on darwin.
 ifeq ($(OS),Darwin)
-TESTDIRS += Rewriter
+TESTDIRS += Rewriter Analysis-Apple
 endif
 
 all::
