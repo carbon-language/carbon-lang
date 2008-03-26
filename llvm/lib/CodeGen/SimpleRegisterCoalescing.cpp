@@ -283,6 +283,17 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
   if (HasOtherReachingDefs(IntA, IntB, AValNo, BValNo))
     return false;
 
+  // If some of the uses of IntA.reg is already coalesced away, return false.
+  // It's not possible to determine whether it's safe to perform the coalescing.
+  for (MachineRegisterInfo::use_iterator UI = mri_->use_begin(IntA.reg),
+         UE = mri_->use_end(); UI != UE; ++UI) {
+    MachineInstr *UseMI = &*UI;
+    unsigned UseIdx = li_->getInstructionIndex(UseMI);
+    LiveInterval::iterator ULR = IntA.FindLiveRangeContaining(UseIdx);
+    if (ULR->valno == AValNo && JoinedCopies.count(UseMI))
+      return false;
+  }
+
   // At this point we have decided that it is legal to do this
   // transformation.  Start by commuting the instruction.
   MachineBasicBlock *MBB = DefMI->getParent();
@@ -323,8 +334,7 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
     MachineInstr *UseMI = &*UI;
     ++UI;
     if (JoinedCopies.count(UseMI))
-      // It'll no longer be "joined" after the change.
-      JoinedCopies.erase(UseMI);
+      continue;
     unsigned UseIdx = li_->getInstructionIndex(UseMI);
     LiveInterval::iterator ULR = IntA.FindLiveRangeContaining(UseIdx);
     if (ULR->valno != AValNo)

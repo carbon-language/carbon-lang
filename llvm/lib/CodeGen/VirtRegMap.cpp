@@ -1593,6 +1593,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         }
       }
 
+      assert(PhysReg && "VR not assigned a physical register?");
       RegInfo->setPhysRegUsed(PhysReg);
       unsigned RReg = SubIdx ? TRI->getSubReg(PhysReg, SubIdx) : PhysReg;
       ReusedOperands.markClobbered(RReg);
