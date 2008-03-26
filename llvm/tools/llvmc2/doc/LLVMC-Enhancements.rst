@@ -240,15 +240,6 @@ categories:
   driver. Examples: --help, -o file/-pipe (redirect output). Can be
   local or global.
 
-Naming
-======
-
-Because the compiler driver, as a single point of access to the LLVM
-tool set, is a frequently used tool, it is desirable to make its name
-as short and easy to type as possible. Some possible names are 'llcc' or
-'lcc', by analogy with gcc.
-
-
 Issues
 ======
 
