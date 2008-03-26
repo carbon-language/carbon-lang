@@ -220,11 +220,12 @@ TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, ScopedDecl *OldD) {
   DirectoryLookup::DirType OldDirType = HdrInfo.getFileDirFlavor(OldDeclFile);
   DirectoryLookup::DirType NewDirType = HdrInfo.getFileDirFlavor(NewDeclFile);
   
-  if ((OldDirType == DirectoryLookup::ExternCSystemHeaderDir || 
-       NewDirType == DirectoryLookup::ExternCSystemHeaderDir) ||
+  // Allow reclarations in both SystemHeaderDir and ExternCSystemHeaderDir.
+  if ((OldDirType != DirectoryLookup::NormalHeaderDir ||
+       NewDirType != DirectoryLookup::NormalHeaderDir) ||
       getLangOptions().Microsoft)
     return New;
-    
+      
   // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
   // TODO: This is totally simplistic.  It should handle merging functions
   // together etc, merging extern int X; int X; ...
