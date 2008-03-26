@@ -554,6 +554,23 @@ void SimpleRegisterCoalescing::ShortenDeadCopyLiveRange(LiveInterval &li,
   }
 }
 
+/// PropagateDeadness - Propagate the dead marker to the instruction which
+/// defines the val#.
+static void PropagateDeadness(LiveInterval &li, MachineInstr *CopyMI,
+                              unsigned &LRStart, LiveIntervals *li_,
+                              const TargetRegisterInfo* tri_) {
+  MachineInstr *DefMI =
+    li_->getInstructionFromIndex(li_->getDefIndex(LRStart));
+  if (DefMI && DefMI != CopyMI) {
+    int DeadIdx = DefMI->findRegisterDefOperandIdx(li.reg, false, tri_);
+    if (DeadIdx != -1) {
+      DefMI->getOperand(DeadIdx).setIsDead();
+      // A dead def should have a single cycle interval.
+      ++LRStart;
+    }
+  }
+}
+
 /// ShortenDeadCopyLiveRange - Shorten a live range as it's artificially
 /// extended by a dead copy. Mark the last use (if any) of the val# as kill
 /// as ends the live range there. If there isn't another use, then this
@@ -613,23 +630,14 @@ SimpleRegisterCoalescing::ShortenDeadCopySrcLiveRange(LiveInterval &li,
       // Live-in to the function but dead. Remove it from entry live-in set.
       mf_->begin()->removeLiveIn(li.reg);
     }
-    removeRange(li, LR->start, LR->end, li_, tri_);
     // FIXME: Shorten intervals in BBs that reaches this BB.
-  } else {
-    // Not livein into BB.
-    MachineInstr *DefMI =
-      li_->getInstructionFromIndex(li_->getDefIndex(RemoveStart));
-    if (DefMI && DefMI != CopyMI) {
-      int DeadIdx = DefMI->findRegisterDefOperandIdx(li.reg, false, tri_);
-      if (DeadIdx != -1) {
-        DefMI->getOperand(DeadIdx).setIsDead();
-        // A dead def should have a single cycle interval.
-        ++RemoveStart;
-      }
-    }
-    removeRange(li, RemoveStart, LR->end, li_, tri_);
   }
 
+  if (LR->valno->def == RemoveStart)
+    // If the def MI defines the val#, propagate the dead marker.
+    PropagateDeadness(li, CopyMI, RemoveStart, li_, tri_);
+
+  removeRange(li, RemoveStart, LR->end, li_, tri_);
   removeIntervalIfEmpty(li, li_, tri_);
 }
 
