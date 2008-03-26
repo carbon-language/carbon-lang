@@ -414,6 +414,12 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
   while (P != FirstNonPHI && P->getOpcode() == TargetInstrInfo::PHI) {
     unsigned DestReg = P->getOperand(0).getReg();
 
+    // Don't both doing PHI elimination for dead PHI's.
+    if (P->registerDefIsDead(DestReg)) {
+      ++P;
+      continue;
+    }
+
     LiveInterval& PI = LI.getOrCreateInterval(DestReg);
     unsigned pIdx = LI.getInstructionIndex(FirstNonPHI);
     VNInfo* PVN = PI.getLiveRangeContaining(pIdx)->valno;
@@ -911,6 +917,22 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
   
   for (std::vector<MachineInstr*>::iterator I = phis.begin(), E = phis.end();
        I != E; ++I) {
+    // If this is a dead PHI node, then remove it from LiveIntervals.
+    unsigned DestReg = (*I)->getOperand(0).getReg();
+    if ((*I)->registerDefIsDead(DestReg)) {
+      LiveInterval& PI = LI.getInterval(DestReg);
+      
+      if (PI.containsOneValue()) {
+        LI.removeInterval(DestReg);
+      } else {
+        MachineBasicBlock::iterator PIter = *I;
+        while (PIter->getOpcode() == TargetInstrInfo::PHI) ++PIter;
+        unsigned idx = LI.getInstructionIndex(PIter);
+        
+        PI.removeRange(*PI.getLiveRangeContaining(idx), true);
+      }
+    }
+      
     LI.RemoveMachineInstrFromMaps(*I);
     (*I)->eraseFromParent();
   }
