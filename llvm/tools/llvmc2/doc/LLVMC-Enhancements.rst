@@ -1,6 +1,10 @@
 Introduction
 ============
 
+Disclaimer: this document is currently somewhat out-of-date and is
+retained for reference; for documentation, refer to
+LLVMC-Tutorial.rst.
+
 A complete rewrite of the LLVMC compiler driver is proposed, aimed at
 making it more configurable and useful.
 
