@@ -1128,7 +1128,7 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
   
   if (Expr* Receiver = ME->getReceiver()) {
   
-    RVal L = GetLVal(St, Receiver);
+    RVal L = GetRVal(St, Receiver);
     
     // Check for undefined control-flow or calls to NULL.
     
