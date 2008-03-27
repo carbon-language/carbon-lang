@@ -200,7 +200,8 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
   for (MachineFunction::iterator mbbi = MF.begin(), mbbe = MF.end();
        mbbi != mbbe; ++mbbi) {
     for (MachineBasicBlock::iterator mi = mbbi->begin(), me = mbbi->end();
-         mi != me; ++mi) {
+         mi != me; ) {
+      MachineBasicBlock::iterator nmi = next(mi);
       const TargetInstrDesc &TID = mi->getDesc();
 
       bool FirstTied = true;
@@ -298,7 +299,10 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
                   // then one instruction.
                   Sunk = Sink3AddrInstruction(mbbi, New, regB, mi);
                 mbbi->erase(mi);                 // Nuke the old inst.
-                if (!Sunk) mi = New;
+                if (!Sunk) {
+                  mi = New;
+                  nmi = next(mi);
+                }
                 ++NumConvertedTo3Addr;
                 // Done with this instruction.
                 break;
@@ -337,6 +341,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
 
         DOUT << "\t\trewrite to:\t"; DEBUG(mi->print(*cerr.stream(), &TM));
       }
+      mi = nmi;
     }
   }
 
