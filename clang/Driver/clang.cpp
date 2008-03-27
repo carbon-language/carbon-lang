@@ -26,6 +26,8 @@
 #include "ASTConsumers.h"
 #include "TextDiagnosticBuffer.h"
 #include "TextDiagnosticPrinter.h"
+#include "HTMLDiagnostics.h"
+#include "clang/Analysis/PathDiagnostic.h"
 #include "clang/AST/TranslationUnit.h"
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "clang/Sema/ParseAST.h"
@@ -138,6 +140,7 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Playground for the code rewriter"),
              clEnumValN(HTMLTest, "html-test",
                         "Playground for the HTML displayer"),
+                            
              clEnumValEnd));
 
 
@@ -149,6 +152,11 @@ OutputFile("o",
 static llvm::cl::opt<bool>
 VerifyDiagnostics("verify",
                   llvm::cl::desc("Verify emitted diagnostics and warnings."));
+
+static llvm::cl::opt<std::string>
+HTMLDiag("html-diags",
+         llvm::cl::desc("Generate HTML to report diagnostics"),
+         llvm::cl::value_desc("HTML directory"));
 
 //===----------------------------------------------------------------------===//
 // Language Options
@@ -1058,8 +1066,7 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
 
 /// ProcessInputFile - Process a single input file with the specified state.
 ///
-static void ProcessInputFile(Preprocessor &PP, const std::string &InFile,
-                             TextDiagnostics &OurDiagnosticClient) {
+static void ProcessInputFile(Preprocessor &PP, const std::string &InFile) {
 
   ASTConsumer* Consumer = NULL;
   bool ClearSourceMgr = false;
@@ -1255,19 +1262,29 @@ int main(int argc, char **argv) {
   
   // Create the diagnostic client for reporting errors or for
   // implementing -verify.
-  std::auto_ptr<TextDiagnostics> DiagClient;
-  if (!VerifyDiagnostics) {
-    // Print diagnostics to stderr by default.
-    DiagClient.reset(new TextDiagnosticPrinter());
-  } else {
-    // When checking diagnostics, just buffer them up.
-    DiagClient.reset(new TextDiagnosticBuffer());
-   
-    if (InputFilenames.size() != 1) {
-      fprintf(stderr,
-              "-verify only works on single input files for now.\n");
-      return 1;
+  std::auto_ptr<DiagnosticClient> DiagClient;
+  TextDiagnostics* TextDiagClient = NULL;
+  
+  if (!HTMLDiag.empty()) {
+    DiagClient.reset(CreateHTMLDiagnosticClient(HTMLDiag));
+  }
+  else { // Use Text diagnostics.
+    if (!VerifyDiagnostics) {
+      // Print diagnostics to stderr by default.
+      TextDiagClient = new TextDiagnosticPrinter();
+    } else {
+      // When checking diagnostics, just buffer them up.
+      TextDiagClient = new TextDiagnosticBuffer();
+     
+      if (InputFilenames.size() != 1) {
+        fprintf(stderr,
+                "-verify only works on single input files for now.\n");
+        return 1;
+      }
     }
+    
+    assert (TextDiagClient);
+    DiagClient.reset(TextDiagClient);
   }
   
   // Configure our handling of diagnostics.
@@ -1312,7 +1329,7 @@ int main(int argc, char **argv) {
       
       // Process the -I options and set them in the HeaderInfo.
       HeaderSearch HeaderInfo(FileMgr);
-      DiagClient->setHeaderSearch(HeaderInfo);
+      if (TextDiagClient) TextDiagClient->setHeaderSearch(HeaderInfo);
       InitializeIncludePaths(argv[0], HeaderInfo, FileMgr, LangInfo);
       
       // Set up the preprocessor with these options.
@@ -1322,7 +1339,7 @@ int main(int argc, char **argv) {
       if (!InitializePreprocessor(PP, InFile, PredefineBuffer))
         continue;
       
-      ProcessInputFile(PP, InFile, *DiagClient);      
+      ProcessInputFile(PP, InFile);
       HeaderInfo.ClearFileInfo();
       
       if (Stats)
