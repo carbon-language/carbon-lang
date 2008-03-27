@@ -20,29 +20,21 @@
 #include <vector>
 #include <list>
 #include <string>
+#include <algorithm>
 
 namespace clang {
 
 class PathDiagnosticPiece {
   FullSourceLoc Pos;
-  std::vector<std::string> strs;
+  std::string str;
   std::vector<SourceRange> ranges;
 public:
   
-  PathDiagnosticPiece(FullSourceLoc pos) : Pos(pos) {}
+  PathDiagnosticPiece(FullSourceLoc pos, const std::string& s)
+    : Pos(pos), str(s) {}
   
-  void addString(const std::string& s) {
-    strs.push_back(s);
-  }
-  
-  const std::string* strs_begin() const {
-    return strs.empty() ? NULL : &strs[0];
-  }
-
-  const std::string* strs_end() const {
-    return strs_begin() + strs.size();
-  }
-  
+  const std::string& getString() const { return str; }
+    
   void addRange(SourceRange R) {
     ranges.push_back(R);
   }
@@ -68,14 +60,11 @@ public:
   
 class PathDiagnostic {
   std::list<PathDiagnosticPiece*> path;
-  Diagnostic::Level DiagLevel;
-  diag::kind ID;
   unsigned Size;
 
 public:
   
-  PathDiagnostic(Diagnostic::Level lvl, diag::kind i)
-    : DiagLevel(lvl), ID(i), Size(0) {}
+  PathDiagnostic() : Size(0) {}
   
   ~PathDiagnostic();
 
@@ -89,9 +78,18 @@ public:
     ++Size;
   }
   
+  unsigned size() const { return Size; }
+  bool empty() const { return Size == 0; }
+  
   class iterator {
   public:  
     typedef std::list<PathDiagnosticPiece*>::iterator ImplTy;
+    
+    typedef PathDiagnosticPiece              value_type;
+    typedef value_type&                      reference;
+    typedef value_type*                      pointer;
+    typedef ptrdiff_t                        difference_type;
+    typedef std::bidirectional_iterator_tag  iterator_category;
     
   private:
     ImplTy I;
@@ -113,6 +111,12 @@ public:
   public:  
     typedef std::list<PathDiagnosticPiece*>::const_iterator ImplTy;
     
+    typedef const PathDiagnosticPiece        value_type;
+    typedef value_type&                      reference;
+    typedef value_type*                      pointer;
+    typedef ptrdiff_t                        difference_type;
+    typedef std::bidirectional_iterator_tag  iterator_category;
+    
   private:
     ImplTy I;
 
@@ -122,24 +126,30 @@ public:
     bool operator==(const const_iterator& X) const { return I == X.I; }
     bool operator!=(const const_iterator& X) const { return I != X.I; }
     
-    const PathDiagnosticPiece& operator*() const { return **I; }
-    const PathDiagnosticPiece* operator->() const { return *I; }
+    reference operator*() const { return **I; }
+    pointer operator->() const { return *I; }
     
     const_iterator& operator++() { ++I; return *this; }
     const_iterator& operator--() { --I; return *this; }
   };
-  
+
+  typedef std::reverse_iterator<iterator>       reverse_iterator;
+  typedef std::reverse_iterator<const_iterator> const_reverse_iterator;  
+
+
+  // forward iterator creation methods.
+
   iterator begin() { return path.begin(); }
   iterator end() { return path.end(); }
-
+  
   const_iterator begin() const { return path.begin(); }
   const_iterator end() const { return path.end(); }
   
-  unsigned size() const { return Size; }
-  bool empty() const { return Size == 0; }
-  
-  Diagnostic::Level getLevel() const { return DiagLevel; }
-  diag::kind getDiagKind() const { return ID; }
+  // reverse iterator creation methods.
+  reverse_iterator rbegin()            { return reverse_iterator(end()); }
+  const_reverse_iterator rbegin() const{ return const_reverse_iterator(end()); }
+  reverse_iterator rend()              { return reverse_iterator(begin()); }
+  const_reverse_iterator rend() const { return const_reverse_iterator(begin());}
 };
   
 class PathDiagnosticClient : public DiagnosticClient  {
@@ -156,8 +166,7 @@ public:
                                 const SourceRange *Ranges, 
                                 unsigned NumRanges);
     
-  virtual void HandlePathDiagnostic(Diagnostic& Diag,
-                                    const PathDiagnostic& D) = 0;
+  virtual void HandlePathDiagnostic(const PathDiagnostic& D) = 0;
 };
 
 } //end clang namespace

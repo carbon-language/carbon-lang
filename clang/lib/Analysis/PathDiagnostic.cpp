@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Analysis/PathDiagnostic.h"
+#include <sstream>
 
 using namespace clang;
   
@@ -30,15 +31,36 @@ void PathDiagnosticClient::HandleDiagnostic(Diagnostic &Diags,
   
   // Create a PathDiagnostic with a single piece.
   
-  PathDiagnostic D(DiagLevel, ID);
+  PathDiagnostic D;
   
-  PathDiagnosticPiece* P = new PathDiagnosticPiece(Pos);
+  // Ripped from TextDiagnostics::FormatDiagnostic.  Perhaps we should
+  // centralize it somewhere?
   
-  while (NumStrs) {
-    P->addString(*Strs);
-    --NumStrs;
-    ++Strs;
+  std::ostringstream os;
+  
+  switch (DiagLevel) {
+    default: assert(0 && "Unknown diagnostic type!");
+    case Diagnostic::Note:    os << "note: "; break;
+    case Diagnostic::Warning: os << "warning: "; break;
+    case Diagnostic::Error:   os << "error: "; break;
+    case Diagnostic::Fatal:   os << "fatal error: "; break;
+      break;
   }
+  
+  std::string Msg = Diags.getDescription(ID);
+
+  for (unsigned i = 0; i < Msg.size() - 1; ++i) {
+    if (Msg[i] == '%' && isdigit(Msg[i + 1])) {
+      unsigned StrNo = Msg[i + 1] - '0';
+      Msg = std::string(Msg.begin(), Msg.begin() + i) +
+      (StrNo < NumStrs ? Strs[StrNo] : "<<<INTERNAL ERROR>>>") +
+      std::string(Msg.begin() + i + 2, Msg.end());
+    }
+  }
+  
+  os << Msg;
+  
+  PathDiagnosticPiece* P = new PathDiagnosticPiece(Pos, os.str());
   
   while (NumRanges) {
     P->addRange(*Ranges);
@@ -48,5 +70,5 @@ void PathDiagnosticClient::HandleDiagnostic(Diagnostic &Diags,
   
   D.push_front(P);
 
-  HandlePathDiagnostic(Diags, D);  
+  HandlePathDiagnostic(D);  
 }
