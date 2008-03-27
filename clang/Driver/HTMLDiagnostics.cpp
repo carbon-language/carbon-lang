@@ -117,7 +117,8 @@ void HTMLDiagnostics::HandlePathDiagnostic(const PathDiagnostic& D) {
     std::ostringstream os;
     const FileEntry* Entry = SMgr.getFileEntryForID(FileID);
     
-    os << "<h1>" << Entry->getName() << "</h1>\n";
+    os << "<h1>" << Entry->getDir()->getName() << "/"
+       << Entry->getName() << "</h1>\n";
 
     R.InsertStrBefore(SourceLocation::getFileLoc(FileID, 0), os.str());
   }  
