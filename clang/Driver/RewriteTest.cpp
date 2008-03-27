@@ -281,6 +281,7 @@ void RewriteTest::Initialize(ASTContext &context) {
   NSStringRecord = 0;
   CurMethodDecl = 0;
   SuperStructDecl = 0;
+  ConstantStringDecl = 0;
   BcLabelCount = 0;
   SuperContructorFunctionDecl = 0;
   NumObjCStringLiterals = 0;
@@ -1844,7 +1845,7 @@ QualType RewriteTest::getConstantStringStructType() {
     // long length;
     FieldTypes[3] = Context->LongTy;  
     // Create fields
-    FieldDecl *FieldDecls[2];
+    FieldDecl *FieldDecls[4];
   
     for (unsigned i = 0; i < 4; ++i)
       FieldDecls[i] = FieldDecl::Create(*Context, SourceLocation(), 0,

@@ -153,6 +153,10 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath="..\..\lib\Analysis\BasicObjCFoundationChecks.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\Analysis\BasicValueFactory.cpp"
 				>
 			</File>
@@ -186,6 +190,10 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\Analysis\LiveVariables.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\Analysis\PathDiagnostic.cpp"
 				>
 			</File>
 			<File
