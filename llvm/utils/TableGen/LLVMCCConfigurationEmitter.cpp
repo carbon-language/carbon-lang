@@ -212,7 +212,7 @@ struct ToolOptionDescription : public OptionDescription {
   OptionPropertyList Props;
 
   // StringMap can only store DefaultConstructible objects
-  ToolOptionDescription() : OptionDescription() {}
+  ToolOptionDescription() : OptionDescription(), Flags(0) {}
 
   ToolOptionDescription (OptionType::OptionType t, const std::string& n)
     : OptionDescription(t, n)
