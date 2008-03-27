@@ -734,19 +734,20 @@ unsigned X86InstrInfo::isStoreToStackSlot(MachineInstr *MI,
 }
 
 
- static bool regIsPICBase(MachineInstr *MI, unsigned BaseReg) {
-   MachineRegisterInfo &MRI = MI->getParent()->getParent()->getRegInfo();
-   bool isPICBase = false;
-   for (MachineRegisterInfo::def_iterator I = MRI.def_begin(BaseReg),
-          E = MRI.def_end(); I != E; ++I) {
-     MachineInstr *DefMI = I.getOperand().getParent();
-     if (DefMI->getOpcode() != X86::MOVPC32r)
-       return false;
-     assert(!isPICBase && "More than one PIC base?");
-     isPICBase = true;
-   }
-   return isPICBase;
- }
+/// regIsPICBase - Return true if register is PIC base (i.e.g defined by
+/// X86::MOVPC32r.
+static bool regIsPICBase(unsigned BaseReg, MachineRegisterInfo &MRI) {
+  bool isPICBase = false;
+  for (MachineRegisterInfo::def_iterator I = MRI.def_begin(BaseReg),
+         E = MRI.def_end(); I != E; ++I) {
+    MachineInstr *DefMI = I.getOperand().getParent();
+    if (DefMI->getOpcode() != X86::MOVPC32r)
+      return false;
+    assert(!isPICBase && "More than one PIC base?");
+    isPICBase = true;
+  }
+  return isPICBase;
+}
  
 bool X86InstrInfo::isReallyTriviallyReMaterializable(MachineInstr *MI) const {
   switch (MI->getOpcode()) {
@@ -799,7 +800,8 @@ bool X86InstrInfo::isReallyTriviallyReMaterializable(MachineInstr *MI) const {
          if (BaseReg == 0)
            return true;
          // Allow re-materialization of lea PICBase + x.
-         return regIsPICBase(MI, BaseReg);
+         MachineRegisterInfo &MRI = MI->getParent()->getParent()->getRegInfo();
+         return regIsPICBase(BaseReg, MRI);
        }
        return false;
      }
