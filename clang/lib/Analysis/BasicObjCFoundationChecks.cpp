@@ -43,7 +43,7 @@ class VISIBILITY_HIDDEN BasicObjCFoundationChecks : public GRSimpleAPICheck {
   bool isNSString(ObjCInterfaceType* T, const char* suffix);
   bool AuditNSString(NodeTy* N, ObjCMessageExpr* ME);
       
-  void RegisterError(NodeTy* N, Expr* E, const char *msg);
+  void Warn(NodeTy* N, Expr* E, const char *msg);
 
 public:
   BasicObjCFoundationChecks(ASTContext& ctx, ValueStateManager* vmgr) 
@@ -112,7 +112,7 @@ static inline bool isNil(RVal X) {
 //===----------------------------------------------------------------------===//
 
 
-void BasicObjCFoundationChecks::RegisterError(NodeTy* N,
+void BasicObjCFoundationChecks::Warn(NodeTy* N,
                                               Expr* E, const char *msg) {
   
   Errors.push_back(AnnotatedPath<ValueState>());
@@ -135,7 +135,7 @@ void BasicObjCFoundationChecks::ReportResults(Diagnostic& D) {
     
     SourceRange R = AN.getExpr()->getSourceRange();
     
-    D.Report(diag, &AN.getString(), 1, &R, 1);
+    D.Report(L, diag, &AN.getString(), 1, &R, 1);
   }
 }
 
@@ -161,16 +161,30 @@ bool BasicObjCFoundationChecks::AuditNSString(NodeTy* N,
   //  lexical comparisons.
   
   std::string name = S.getName();
+  assert (!name.empty());
+  const char* cstr = &name[0];
+  unsigned len = name.size();
+  
+  
   ValueState* St = N->getState();
   
-  if (name == "compare:") {
-    // Check if the compared NSString is nil.
-    Expr * E = ME->getArg(0);
-    RVal X = GetRVal(St, E);
+  switch (len) {
+    default:
+      break;
+    case 8:
+      if (!strcmp(cstr, "compare:")) {
+        // Check if the compared NSString is nil.
+        Expr * E = ME->getArg(0);
     
-    if (isNil(X))
-      RegisterError(N, E,
-                    "Argument to NSString method 'compare:' cannot be nil.");
+        if (isNil(GetRVal(St, E))) {
+          Warn(N, E, "Argument to NSString method 'compare:' cannot be nil.");
+          return false;
+        }
+        
+        break;
+      }
+      
+      break;
   }
   
   return false;
