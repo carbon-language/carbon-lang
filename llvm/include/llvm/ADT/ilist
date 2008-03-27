@@ -356,6 +356,14 @@ public:
     setPrev(NextNode, PrevNode);
     IT = NextNode;
     removeNodeFromList(Node);  // Notify traits that we removed a node...
+    
+    // Set the next/prev pointers of the current node to null.  This isn't
+    // strictly required, but this catches errors where a node is removed from
+    // an ilist (and potentially deleted) with iterators still pointing at it.
+    // When those iterators are incremented or decremented, they will assert on
+    // the null next/prev pointer instead of "usually working".
+    setNext(Node, 0);
+    setPrev(Node, 0);
     return Node;
   }
 
