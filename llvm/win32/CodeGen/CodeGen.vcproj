@@ -361,6 +361,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\CodeGen\LoopAligner.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\CodeGen\LowerSubregs.cpp"
 				>
 			</File>
@@ -430,6 +434,10 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\CodeGen\PrologEpilogInserter.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\CodeGen\PseudoSourceValue.cpp"
 				>
 			</File>
 			<File
@@ -505,6 +513,10 @@
 				</File>
 				<File
 					RelativePath="..\..\lib\CodeGen\SelectionDAG\LegalizeTypesExpand.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\CodeGen\SelectionDAG\LegalizeTypesFloatToInt.cpp"
 					>
 				</File>
 				<File

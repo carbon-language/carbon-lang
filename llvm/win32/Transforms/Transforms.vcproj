@@ -352,10 +352,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Ipo\ExtractFunction.cpp"
-					>
-				</File>
-				<File
 					RelativePath="..\..\lib\Transforms\Ipo\GlobalDCE.cpp"
 					>
 				</File>
@@ -369,10 +365,6 @@
 				</File>
 				<File
 					RelativePath="..\..\lib\Transforms\Ipo\Inliner.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\Transforms\Ipo\Inliner.h"
 					>
 				</File>
 				<File
@@ -415,6 +407,10 @@
 					RelativePath="..\..\lib\Transforms\Ipo\StripSymbols.cpp"
 					>
 				</File>
+				<File
+					RelativePath="..\..\lib\Transforms\IPO\StructRetPromotion.cpp"
+					>
+				</File>
 			</Filter>
 			<Filter
 				Name="Scalar"
@@ -437,10 +433,6 @@
 				</File>
 				<File
 					RelativePath="..\..\lib\Transforms\Scalar\ConstantProp.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\Transforms\Scalar\CorrelatedExprs.cpp"
 					>
 				</File>
 				<File
@@ -496,10 +488,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\LowerPacked.cpp"
-					>
-				</File>
-				<File
 					RelativePath="..\..\lib\Transforms\Scalar\PredicateSimplifier.cpp"
 					>
 				</File>
@@ -509,6 +497,10 @@
 				</File>
 				<File
 					RelativePath="..\..\lib\Transforms\Scalar\Reg2Mem.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\Transforms\Scalar\Scalar.cpp"
 					>
 				</File>
 				<File
@@ -601,10 +593,6 @@
 				</File>
 				<File
 					RelativePath="..\..\lib\Transforms\Utils\LowerInvoke.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\Transforms\Utils\LowerSelect.cpp"
 					>
 				</File>
 				<File

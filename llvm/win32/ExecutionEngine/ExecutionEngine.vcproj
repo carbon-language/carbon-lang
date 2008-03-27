@@ -339,11 +339,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\include\llvm\ExecutionEngine\JIT.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\ExecutionEngine\Jit\JIT.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\ExecutionEngine\JIT.h"
+				RelativePath="..\..\lib\ExecutionEngine\JIT\JITDwarfEmitter.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\ExecutionEngine\JIT\JITDwarfEmitter.h"
 				>
 			</File>
 			<File
