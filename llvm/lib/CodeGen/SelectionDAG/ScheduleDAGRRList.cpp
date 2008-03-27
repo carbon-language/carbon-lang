@@ -1724,7 +1724,7 @@ static unsigned SumOfUnscheduledPredsOfSuccs(const SUnit *SU) {
   return Sum;
 }
 
-/// LimitedSumOfUnscheduledPredsOfSuccs - compute the sum of the unscheduled
+/// LimitedSumOfUnscheduledPredsOfSuccs - Compute the sum of the unscheduled
 /// predecessors of the successors of the SUnit SU. Stop when the provided
 /// limit is exceeded.
 
