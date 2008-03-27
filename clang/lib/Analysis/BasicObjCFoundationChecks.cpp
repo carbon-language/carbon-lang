@@ -25,6 +25,7 @@
 #include "llvm/Support/Compiler.h"
 
 #include <vector>
+#include <sstream>
 
 using namespace clang;
   
@@ -43,7 +44,10 @@ class VISIBILITY_HIDDEN BasicObjCFoundationChecks : public GRSimpleAPICheck {
   bool isNSString(ObjCInterfaceType* T, const char* suffix);
   bool AuditNSString(NodeTy* N, ObjCMessageExpr* ME);
       
-  void Warn(NodeTy* N, Expr* E, const char *msg);
+  void Warn(NodeTy* N, Expr* E, const std::string& s);  
+  void WarnNilArg(NodeTy* N, Expr* E);
+  
+  bool CheckNilArg(NodeTy* N, unsigned Arg);
 
 public:
   BasicObjCFoundationChecks(ASTContext& ctx, ValueStateManager* vmgr) 
@@ -67,28 +71,39 @@ clang::CreateBasicObjCFoundationChecks(ASTContext& Ctx,
   return new BasicObjCFoundationChecks(Ctx, VMgr);  
 }
 
+static ObjCInterfaceType* GetReceiverType(ObjCMessageExpr* ME) {
+  Expr* Receiver = ME->getReceiver();
+  
+  if (!Receiver)
+    return NULL;
+  
+  assert (Receiver->getType()->isPointerType());
+  
+  const PointerType* T = Receiver->getType()->getAsPointerType();
+  
+  return dyn_cast<ObjCInterfaceType>(T->getPointeeType().getTypePtr());
+}
+
+static const char* GetReceiverNameType(ObjCMessageExpr* ME) {
+  ObjCInterfaceType* ReceiverType = GetReceiverType(ME);
+  return ReceiverType ? ReceiverType->getDecl()->getIdentifier()->getName()
+                      : NULL;
+}
 
 bool BasicObjCFoundationChecks::Audit(ExplodedNode<ValueState>* N) {
   
   ObjCMessageExpr* ME =
     cast<ObjCMessageExpr>(cast<PostStmt>(N->getLocation()).getStmt());
-  
-  Expr* Receiver = ME->getReceiver();
-  
-  if (!Receiver)
-    return false;
-  
-  assert (Receiver->getType()->isPointerType());
 
-  const PointerType* T = Receiver->getType()->getAsPointerType();
-
-  ObjCInterfaceType* ReceiverType =
-    dyn_cast<ObjCInterfaceType>(T->getPointeeType().getTypePtr());
+  ObjCInterfaceType* ReceiverType = GetReceiverType(ME);
   
   if (!ReceiverType)
-    return false;
+    return NULL;
   
-  const char* name = ReceiverType->getDecl()->getIdentifier()->getName();  
+  const char* name = ReceiverType->getDecl()->getIdentifier()->getName();
+  
+  if (!name)
+    return false;
 
   if (name[0] != 'N' || name[1] != 'S')
     return false;
@@ -112,11 +127,9 @@ static inline bool isNil(RVal X) {
 //===----------------------------------------------------------------------===//
 
 
-void BasicObjCFoundationChecks::Warn(NodeTy* N,
-                                              Expr* E, const char *msg) {
-  
+void BasicObjCFoundationChecks::Warn(NodeTy* N, Expr* E, const std::string& s) {  
   Errors.push_back(AnnotatedPath<ValueState>());
-  Errors.back().push_back(N, msg, E);
+  Errors.back().push_back(N, s, E);
 }
 
 void BasicObjCFoundationChecks::ReportResults(Diagnostic& D) {
@@ -137,6 +150,34 @@ void BasicObjCFoundationChecks::ReportResults(Diagnostic& D) {
     
     D.Report(L, diag, &AN.getString(), 1, &R, 1);
   }
+}
+
+void BasicObjCFoundationChecks::WarnNilArg(NodeTy* N, Expr* E) {
+
+  ObjCMessageExpr* ME =
+    cast<ObjCMessageExpr>(cast<PostStmt>(N->getLocation()).getStmt());    
+  
+  std::ostringstream os;
+  
+  os << "Argument to '" << GetReceiverNameType(ME) << "' method '"
+    << ME->getSelector().getName()
+    << "' cannot be nil.";
+  
+  Warn(N, E, os.str());
+}
+
+bool BasicObjCFoundationChecks::CheckNilArg(NodeTy* N, unsigned Arg) {
+  ObjCMessageExpr* ME =
+    cast<ObjCMessageExpr>(cast<PostStmt>(N->getLocation()).getStmt());
+  
+  Expr * E = ME->getArg(Arg);
+  
+  if (isNil(GetRVal(N->getState(), E))) {
+    WarnNilArg(N, E);
+    return true;
+  }
+  
+  return false;
 }
 
 //===----------------------------------------------------------------------===//
@@ -164,27 +205,47 @@ bool BasicObjCFoundationChecks::AuditNSString(NodeTy* N,
   assert (!name.empty());
   const char* cstr = &name[0];
   unsigned len = name.size();
-  
-  
-  ValueState* St = N->getState();
-  
+      
   switch (len) {
     default:
       break;
     case 8:
-      if (!strcmp(cstr, "compare:")) {
-        // Check if the compared NSString is nil.
-        Expr * E = ME->getArg(0);
+      
+      if (!strcmp(cstr, "compare:"))
+        return CheckNilArg(N, 0);
+              
+      break;
     
-        if (isNil(GetRVal(St, E))) {
-          Warn(N, E, "Argument to NSString method 'compare:' cannot be nil.");
-          return false;
-        }
-        
-        break;
-      }
+    case 16:
+      if (!strcmp(cstr, "compare:options:"))
+        return CheckNilArg(N, 0);
       
       break;
+      
+    case 22:
+      if (!strcmp(cstr, "compare:options:range:"))
+        return CheckNilArg(N, 0);
+      
+      break;
+      
+    case 23:
+      
+      if (!strcmp(cstr, "caseInsensitiveCompare:"))
+        return CheckNilArg(N, 0);
+      
+      break;
+      
+    case 29:
+      if (!strcmp(cstr, "compare:options:range:locale:"))
+        return CheckNilArg(N, 0);
+    
+      break;    
+      
+    case 37:
+    if (!strcmp(cstr, "componentsSeparatedByCharactersInSet:"))
+      return CheckNilArg(N, 0);
+    
+    break;    
   }
   
   return false;
