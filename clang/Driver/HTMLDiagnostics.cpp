@@ -13,6 +13,7 @@
 
 #include "HTMLDiagnostics.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Basic/FileManager.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/Rewrite/Rewriter.h"
@@ -105,11 +106,21 @@ void HTMLDiagnostics::HandlePathDiagnostic(const PathDiagnostic& D) {
   }
   
   // Add line numbers, header, footer, etc.
+  
   unsigned FileID = R.getSourceMgr().getMainFileID();
   html::EscapeText(R, FileID);
   html::AddLineNumbers(R, FileID);
   
-  // FIXME: Add the number of the file here.
+  // Add the name of the file.
+  
+  {
+    std::ostringstream os;
+    const FileEntry* Entry = SMgr.getFileEntryForID(FileID);
+    
+    os << "<h1>" << Entry->getName() << "</h1>\n";
+
+    R.InsertStrBefore(SourceLocation::getFileLoc(FileID, 0), os.str());
+  }  
 
   // Add CSS, header, and footer.
   

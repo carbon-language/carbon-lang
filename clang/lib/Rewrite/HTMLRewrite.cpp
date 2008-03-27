@@ -138,6 +138,7 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID) {
     os << "<html>\n<head>\n"
        << "<style type=\"text/css\">\n"
        << " body { color:#000000; background-color:#ffffff }\n"
+       << " body { font-family:Helvetica, sans-serif }\n"
        << " .code { border-spacing:0px; width:100%; }\n"
        << " .code { font-family: \"Andale Mono\", fixed; font-size:10pt }\n"
        << " .code { line-height: 1.2em }\n"
