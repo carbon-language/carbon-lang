@@ -652,6 +652,9 @@ ASTConsumer* clang::CreateGRSimpleVals(Diagnostic &Diags,
 
 void GRSimpleValsVisitor::VisitCFG(CFG& C, Decl& CD) {
   
+  if (Diags.hasErrorOccurred())
+    return;
+  
   SourceLocation Loc = CD.getLocation();
 
   if (!Loc.isFileID() ||
