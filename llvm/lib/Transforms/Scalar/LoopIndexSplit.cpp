@@ -1647,8 +1647,9 @@ void LoopIndexSplit::updatePHINodes(BasicBlock *ExitBB, BasicBlock *Latch,
                                     Loop *LP) {
 
   for (BasicBlock::iterator BI = ExitBB->begin(), BE = ExitBB->end(); 
-       BI != BE; ++BI) {
+       BI != BE; ) {
     PHINode *PN = dyn_cast<PHINode>(BI);
+    ++BI;
     if (!PN)
       break;
 
