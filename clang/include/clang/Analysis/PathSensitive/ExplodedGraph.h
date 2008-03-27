@@ -118,7 +118,7 @@ protected:
 public:
   
   /// getLocation - Returns the edge associated with the given node.
-  const ProgramPoint& getLocation() const { return Location; }
+  ProgramPoint getLocation() const { return Location; }
   
   unsigned succ_size() const { return Succs.size(); }
   unsigned pred_size() const { return Preds.size(); }
