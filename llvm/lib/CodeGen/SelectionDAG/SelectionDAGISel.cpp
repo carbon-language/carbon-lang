@@ -339,6 +339,13 @@ class SelectionDAGLowering {
   /// analysis.
   std::vector<SDOperand> PendingLoads;
 
+  /// PendingExports - CopyToReg nodes that copy values to virtual registers
+  /// for export to other blocks need to be emitted before any terminator
+  /// instruction, but they have no other ordering requirements. We bunch them
+  /// up and the emit a single tokenfactor for them just before terminator
+  /// instructions.
+  std::vector<SDOperand> PendingExports;
+
   /// Case - A struct to record the Value for a switch case, and the
   /// case's target basic block.
   struct Case {
@@ -440,7 +447,10 @@ public:
       FuncInfo(funcinfo), GCI(gci) {
   }
 
-  /// getRoot - Return the current virtual root of the Selection DAG.
+  /// getRoot - Return the current virtual root of the Selection DAG,
+  /// flushing any PendingLoad items. This must be done before emitting
+  /// a store or any other node that may need to be ordered after any
+  /// prior load instructions.
   ///
   SDOperand getRoot() {
     if (PendingLoads.empty())
@@ -461,7 +471,38 @@ public:
     return Root;
   }
 
-  SDOperand CopyValueToVirtualRegister(Value *V, unsigned Reg);
+  /// getControlRoot - Similar to getRoot, but instead of flushing all the
+  /// PendingLoad items, flush all the PendingExports items. It is necessary
+  /// to do this before emitting a terminator instruction.
+  ///
+  SDOperand getControlRoot() {
+    SDOperand Root = DAG.getRoot();
+
+    if (PendingExports.empty())
+      return Root;
+
+    // Turn all of the CopyToReg chains into one factored node.
+    if (Root.getOpcode() != ISD::EntryToken) {
+      unsigned i = 0, e = PendingExports.size();
+      for (; i != e; ++i) {
+        assert(PendingExports[i].Val->getNumOperands() > 1);
+        if (PendingExports[i].Val->getOperand(0) == Root)
+          break;  // Don't add the root if we already indirectly depend on it.
+      }
+        
+      if (i == e)
+        PendingExports.push_back(Root);
+    }
+
+    Root = DAG.getNode(ISD::TokenFactor, MVT::Other,
+                       &PendingExports[0],
+                       PendingExports.size());
+    PendingExports.clear();
+    DAG.setRoot(Root);
+    return Root;
+  }
+
+  void CopyValueToVirtualRegister(Value *V, unsigned Reg);
 
   void visit(Instruction &I) { visit(I.getOpcode(), I); }
 
@@ -1032,12 +1073,12 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
 
 void SelectionDAGLowering::visitRet(ReturnInst &I) {
   if (I.getNumOperands() == 0) {
-    DAG.setRoot(DAG.getNode(ISD::RET, MVT::Other, getRoot()));
+    DAG.setRoot(DAG.getNode(ISD::RET, MVT::Other, getControlRoot()));
     return;
   }
   SmallVector<SDOperand, 8> NewValues;
-  NewValues.push_back(getRoot());
-  for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {
+  NewValues.push_back(getControlRoot());
+  for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {  
     SDOperand RetOp = getValue(I.getOperand(i));
     MVT::ValueType VT = RetOp.getValueType();
 
@@ -1082,7 +1123,7 @@ void SelectionDAGLowering::ExportFromCurrentBlock(Value *V) {
   if (FuncInfo.isExportedInst(V)) return;
 
   unsigned Reg = FuncInfo.InitializeRegForValue(V);
-  PendingLoads.push_back(CopyValueToVirtualRegister(V, Reg));
+  CopyValueToVirtualRegister(V, Reg);
 }
 
 bool SelectionDAGLowering::isExportableFromCurrentBlock(Value *V,
@@ -1273,7 +1314,7 @@ void SelectionDAGLowering::visitBr(BranchInst &I) {
   if (I.isUnconditional()) {
     // If this is not a fall-through branch, emit the branch.
     if (Succ0MBB != NextBlock)
-      DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, getRoot(),
+      DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, getControlRoot(),
                               DAG.getBasicBlock(Succ0MBB)));
 
     // Update machine-CFG edges.
@@ -1391,7 +1432,7 @@ void SelectionDAGLowering::visitSwitchCase(SelectionDAGISel::CaseBlock &CB) {
     SDOperand True = DAG.getConstant(1, Cond.getValueType());
     Cond = DAG.getNode(ISD::XOR, Cond.getValueType(), Cond, True);
   }
-  SDOperand BrCond = DAG.getNode(ISD::BRCOND, MVT::Other, getRoot(), Cond,
+  SDOperand BrCond = DAG.getNode(ISD::BRCOND, MVT::Other, getControlRoot(), Cond,
                                  DAG.getBasicBlock(CB.TrueBB));
   if (CB.FalseBB == NextBlock)
     DAG.setRoot(BrCond);
@@ -1408,7 +1449,7 @@ void SelectionDAGLowering::visitJumpTable(SelectionDAGISel::JumpTable &JT) {
   // Emit the code for the jump table
   assert(JT.Reg != -1U && "Should lower JT Header first!");
   MVT::ValueType PTy = TLI.getPointerTy();
-  SDOperand Index = DAG.getCopyFromReg(getRoot(), JT.Reg, PTy);
+  SDOperand Index = DAG.getCopyFromReg(getControlRoot(), JT.Reg, PTy);
   SDOperand Table = DAG.getJumpTable(JT.JTI, PTy);
   DAG.setRoot(DAG.getNode(ISD::BR_JT, MVT::Other, Index.getValue(1),
                           Table, Index));
@@ -1438,7 +1479,7 @@ void SelectionDAGLowering::visitJumpTableHeader(SelectionDAGISel::JumpTable &JT,
     SwitchOp = DAG.getNode(ISD::ZERO_EXTEND, TLI.getPointerTy(), SUB);
   
   unsigned JumpTableReg = FuncInfo.MakeReg(TLI.getPointerTy());
-  SDOperand CopyTo = DAG.getCopyToReg(getRoot(), JumpTableReg, SwitchOp);
+  SDOperand CopyTo = DAG.getCopyToReg(getControlRoot(), JumpTableReg, SwitchOp);
   JT.Reg = JumpTableReg;
 
   // Emit the range check for the jump table, and branch to the default
@@ -1493,7 +1534,7 @@ void SelectionDAGLowering::visitBitTestHeader(SelectionDAGISel::BitTestBlock &B)
                                     ShiftOp);
 
   unsigned SwitchReg = FuncInfo.MakeReg(TLI.getPointerTy());
-  SDOperand CopyTo = DAG.getCopyToReg(getRoot(), SwitchReg, SwitchVal);
+  SDOperand CopyTo = DAG.getCopyToReg(getControlRoot(), SwitchReg, SwitchVal);
   B.Reg = SwitchReg;
 
   SDOperand BrRange = DAG.getNode(ISD::BRCOND, MVT::Other, CopyTo, RangeCmp,
@@ -1524,7 +1565,7 @@ void SelectionDAGLowering::visitBitTestCase(MachineBasicBlock* NextMBB,
                                             unsigned Reg,
                                             SelectionDAGISel::BitTestCase &B) {
   // Emit bit tests and jumps
-  SDOperand SwitchVal = DAG.getCopyFromReg(getRoot(), Reg, TLI.getPointerTy());
+  SDOperand SwitchVal = DAG.getCopyFromReg(getControlRoot(), Reg, TLI.getPointerTy());
   
   SDOperand AndOp = DAG.getNode(ISD::AND, TLI.getPointerTy(),
                                 SwitchVal,
@@ -1533,7 +1574,7 @@ void SelectionDAGLowering::visitBitTestCase(MachineBasicBlock* NextMBB,
   SDOperand AndCmp = DAG.getSetCC(TLI.getSetCCResultType(AndOp), AndOp,
                                   DAG.getConstant(0, TLI.getPointerTy()),
                                   ISD::SETNE);
-  SDOperand BrAnd = DAG.getNode(ISD::BRCOND, MVT::Other, getRoot(),
+  SDOperand BrAnd = DAG.getNode(ISD::BRCOND, MVT::Other, getControlRoot(),
                                 AndCmp, DAG.getBasicBlock(B.TargetBB));
 
   // Set NextBlock to be the MBB immediately after the current one, if any.
@@ -1570,11 +1611,11 @@ void SelectionDAGLowering::visitInvoke(InvokeInst &I) {
   if (!I.use_empty()) {
     DenseMap<const Value*, unsigned>::iterator VMI = FuncInfo.ValueMap.find(&I);
     if (VMI != FuncInfo.ValueMap.end())
-      DAG.setRoot(CopyValueToVirtualRegister(&I, VMI->second));
+      CopyValueToVirtualRegister(&I, VMI->second);
   }
 
   // Drop into normal successor.
-  DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, getRoot(),
+  DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, getControlRoot(),
                           DAG.getBasicBlock(Return)));
 
   // Update successor info
@@ -2012,7 +2053,7 @@ bool SelectionDAGLowering::handleBitTestsSwitchCase(CaseRec& CR,
 }
 
 
-// Clusterify - Transform simple list of Cases into list of CaseRange's
+/// Clusterify - Transform simple list of Cases into list of CaseRange's
 unsigned SelectionDAGLowering::Clusterify(CaseVector& Cases,
                                           const SwitchInst& SI) {
   unsigned numCmps = 0;
@@ -2069,7 +2110,7 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &SI) {
 
     // If this is not a fall-through branch, emit the branch.
     if (Default != NextBlock)
-      DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, getRoot(),
+      DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, getControlRoot(),
                               DAG.getBasicBlock(Default)));
 
     CurMBB->addSuccessor(Default);
@@ -2864,7 +2905,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       MMI->setCallsEHReturn(true);
       DAG.setRoot(DAG.getNode(ISD::EH_RETURN,
                               MVT::Other,
-                              getRoot(),
+                              getControlRoot(),
                               getValue(I.getOperand(1)),
                               getValue(I.getOperand(2))));
     } else {
@@ -4597,12 +4638,13 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
   return true;
 }
 
-SDOperand SelectionDAGLowering::CopyValueToVirtualRegister(Value *V, 
-                                                           unsigned Reg) {
+void SelectionDAGLowering::CopyValueToVirtualRegister(Value *V, 
+                                                      unsigned Reg) {
   SDOperand Op = getValue(V);
   assert((Op.getOpcode() != ISD::CopyFromReg ||
           cast<RegisterSDNode>(Op.getOperand(1))->getReg() != Reg) &&
          "Copy from a reg to the same reg!");
+  assert(!TargetRegisterInfo::isPhysicalRegister(Reg) && "Is a physreg");
   
   MVT::ValueType SrcVT = Op.getValueType();
   MVT::ValueType RegisterVT = TLI.getRegisterType(SrcVT);
@@ -4613,13 +4655,13 @@ SDOperand SelectionDAGLowering::CopyValueToVirtualRegister(Value *V,
   // Copy the value by legal parts into sequential virtual registers.
   getCopyToParts(DAG, Op, &Regs[0], NumRegs, RegisterVT);
   for (unsigned i = 0; i != NumRegs; ++i)
-    Chains[i] = DAG.getCopyToReg(getRoot(), Reg + i, Regs[i]);
-  return DAG.getNode(ISD::TokenFactor, MVT::Other, &Chains[0], NumRegs);
+    Chains[i] = DAG.getCopyToReg(DAG.getEntryNode(), Reg + i, Regs[i]);
+  SDOperand Ch = DAG.getNode(ISD::TokenFactor, MVT::Other, &Chains[0], NumRegs);
+  PendingExports.push_back(Ch);
 }
 
 void SelectionDAGISel::
-LowerArguments(BasicBlock *LLVMBB, SelectionDAGLowering &SDL,
-               std::vector<SDOperand> &UnorderedChains) {
+LowerArguments(BasicBlock *LLVMBB, SelectionDAGLowering &SDL) {
   // If this is the entry block, emit arguments.
   Function &F = *LLVMBB->getParent();
   FunctionLoweringInfo &FuncInfo = SDL.FuncInfo;
@@ -4636,8 +4678,7 @@ LowerArguments(BasicBlock *LLVMBB, SelectionDAGLowering &SDL,
       // whereever we got it to the vreg that other BB's will reference it as.
       DenseMap<const Value*, unsigned>::iterator VMI=FuncInfo.ValueMap.find(AI);
       if (VMI != FuncInfo.ValueMap.end()) {
-        SDOperand Copy = SDL.CopyValueToVirtualRegister(AI, VMI->second);
-        UnorderedChains.push_back(Copy);
+        SDL.CopyValueToVirtualRegister(AI, VMI->second);
       }
     }
 
@@ -4706,11 +4747,9 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
                                          FunctionLoweringInfo &FuncInfo) {
   SelectionDAGLowering SDL(DAG, TLI, *AA, FuncInfo, GCI);
 
-  std::vector<SDOperand> UnorderedChains;
-
   // Lower any arguments needed in this block if this is the entry block.
   if (LLVMBB == &LLVMBB->getParent()->getEntryBlock())
-    LowerArguments(LLVMBB, SDL, UnorderedChains);
+    LowerArguments(LLVMBB, SDL);
 
   BB = FuncInfo.MBBMap[LLVMBB];
   SDL.setCurrentBasicBlock(BB);
@@ -4769,8 +4808,7 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
     if (!I->use_empty() && !isa<PHINode>(I) && !isa<InvokeInst>(I)) {
       DenseMap<const Value*, unsigned>::iterator VMI =FuncInfo.ValueMap.find(I);
       if (VMI != FuncInfo.ValueMap.end())
-        UnorderedChains.push_back(
-                                SDL.CopyValueToVirtualRegister(I, VMI->second));
+        SDL.CopyValueToVirtualRegister(I, VMI->second);
     }
 
   // Handle PHI nodes in successor blocks.  Emit code into the SelectionDAG to
@@ -4821,8 +4859,7 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
         unsigned &RegOut = ConstantsOut[C];
         if (RegOut == 0) {
           RegOut = FuncInfo.CreateRegForValue(C);
-          UnorderedChains.push_back(
-                           SDL.CopyValueToVirtualRegister(C, RegOut));
+          SDL.CopyValueToVirtualRegister(C, RegOut);
         }
         Reg = RegOut;
       } else {
@@ -4832,8 +4869,7 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
                  FuncInfo.StaticAllocaMap.count(cast<AllocaInst>(PHIOp)) &&
                  "Didn't codegen value into a register!??");
           Reg = FuncInfo.CreateRegForValue(PHIOp);
-          UnorderedChains.push_back(
-                           SDL.CopyValueToVirtualRegister(PHIOp, Reg));
+          SDL.CopyValueToVirtualRegister(PHIOp, Reg);
         }
       }
 
@@ -4846,24 +4882,6 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
     }
   }
   ConstantsOut.clear();
-
-  // Turn all of the unordered chains into one factored node.
-  if (!UnorderedChains.empty()) {
-    SDOperand Root = SDL.getRoot();
-    if (Root.getOpcode() != ISD::EntryToken) {
-      unsigned i = 0, e = UnorderedChains.size();
-      for (; i != e; ++i) {
-        assert(UnorderedChains[i].Val->getNumOperands() > 1);
-        if (UnorderedChains[i].Val->getOperand(0) == Root)
-          break;  // Don't add the root if we already indirectly depend on it.
-      }
-        
-      if (i == e)
-        UnorderedChains.push_back(Root);
-    }
-    DAG.setRoot(DAG.getNode(ISD::TokenFactor, MVT::Other,
-                            &UnorderedChains[0], UnorderedChains.size()));
-  }
 
   // Lower the terminator after the copies are emitted.
   SDL.visit(*LLVMBB->getTerminator());
@@ -4878,7 +4896,7 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
   BitTestCases = SDL.BitTestCases;
     
   // Make sure the root of the DAG is up-to-date.
-  DAG.setRoot(SDL.getRoot());
+  DAG.setRoot(SDL.getControlRoot());
 
   // Check whether calls in this block are real tail calls. Fix up CALL nodes
   // with correct tailcall attribute so that the target can rely on the tailcall

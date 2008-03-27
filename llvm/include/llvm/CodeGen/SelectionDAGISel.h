@@ -182,8 +182,7 @@ private:
            std::vector<std::pair<MachineInstr*, unsigned> > &PHINodesToUpdate,
                          FunctionLoweringInfo &FuncInfo);
   void CodeGenAndEmitDAG(SelectionDAG &DAG);
-  void LowerArguments(BasicBlock *BB, SelectionDAGLowering &SDL,
-                      std::vector<SDOperand> &UnorderedChains);
+  void LowerArguments(BasicBlock *BB, SelectionDAGLowering &SDL);
 
   /// SwitchCases - Vector of CaseBlock structures used to communicate
   /// SwitchInst code generation information.
