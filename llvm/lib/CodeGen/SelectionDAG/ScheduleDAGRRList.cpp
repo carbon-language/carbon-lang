@@ -1724,6 +1724,29 @@ static unsigned SumOfUnscheduledPredsOfSuccs(const SUnit *SU) {
   return Sum;
 }
 
+/// LimitedSumOfUnscheduledPredsOfSuccs - compute the sum of the unscheduled
+/// predecessors of the successors of the SUnit SU. Stop when the provided
+/// limit is exceeded.
+
+static unsigned LimitedSumOfUnscheduledPredsOfSuccs(const SUnit *SU, 
+                                                    unsigned Limit) {
+  unsigned Sum = 0;
+  for (SUnit::const_succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
+       I != E; ++I) {
+    SUnit *SuccSU = I->Dep;
+    for (SUnit::const_pred_iterator II = SuccSU->Preds.begin(),
+         EE = SuccSU->Preds.end(); II != EE; ++II) {
+      SUnit *PredSU = II->Dep;
+      if (!PredSU->isScheduled) {
+        ++Sum;
+        if(Sum > Limit)
+            return Sum;
+      }
+    }
+  }
+  return Sum;
+}
+
 
 // Top down
 bool td_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
@@ -1733,8 +1756,8 @@ bool td_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
   bool RIsTarget = right->Node && right->Node->isTargetOpcode();
   bool LIsFloater = LIsTarget && left->NumPreds == 0;
   bool RIsFloater = RIsTarget && right->NumPreds == 0;
-  unsigned LBonus = (SumOfUnscheduledPredsOfSuccs(left) == 1) ? 2 : 0;
-  unsigned RBonus = (SumOfUnscheduledPredsOfSuccs(right) == 1) ? 2 : 0;
+  unsigned LBonus = (LimitedSumOfUnscheduledPredsOfSuccs(left,1) == 1) ? 2 : 0;
+  unsigned RBonus = (LimitedSumOfUnscheduledPredsOfSuccs(right,1) == 1) ? 2 : 0;
 
   if (left->NumSuccs == 0 && right->NumSuccs != 0)
     return false;
