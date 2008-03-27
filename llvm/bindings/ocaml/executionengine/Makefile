@@ -15,6 +15,6 @@ LEVEL := ../../..
 LIBRARYNAME := llvm_executionengine
 DONT_BUILD_RELINKED := 1
 UsedComponents := executionengine jit interpreter native
-UsedOcamlInterfaces := llvm
+UsedOcamlInterfaces := llvm llvm_target
 
 include ../Makefile.ocaml

@@ -20,6 +20,7 @@
 #define LLVM_C_EXECUTIONENGINE_H
 
 #include "llvm-c/Core.h"
+#include "llvm-c/Target.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -87,6 +88,8 @@ int LLVMRemoveModuleProvider(LLVMExecutionEngineRef EE,
 
 int LLVMFindFunction(LLVMExecutionEngineRef EE, const char *Name,
                      LLVMValueRef *OutFn);
+
+LLVMTargetDataRef LLVMGetExecutionEngineTargetData(LLVMExecutionEngineRef EE);
 
 #ifdef __cplusplus
 }

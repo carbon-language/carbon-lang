@@ -147,4 +147,8 @@ module ExecutionEngine: sig
   (** [free_machine_code f ee] releases the memory in the execution engine [ee]
       used to store the machine code for the function [f]. *)
   val free_machine_code: Llvm.llvalue -> t -> unit
+
+  (** [target_data ee] is the target data owned by the execution engine
+      [ee]. *)
+  val target_data: t -> Llvm_target.TargetData.t
 end

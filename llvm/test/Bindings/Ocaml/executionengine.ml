@@ -1,9 +1,10 @@
-(* RUN: %ocamlc -warn-error A llvm.cma llvm_executionengine.cma %s -o %t
+(* RUN: %ocamlc -warn-error A llvm.cma llvm_target.cma llvm_executionengine.cma %s -o %t
  * RUN: ./%t %t.bc
  *)
 
 open Llvm
 open Llvm_executionengine
+open Llvm_target
 
 (* Note that this takes a moment to link, so it's best to keep the number of
    individual tests low. *)
@@ -92,6 +93,13 @@ let test_executionengine () =
   
   (* run_static_dtors *)
   ExecutionEngine.run_static_dtors ee;
+
+  (* Show that the target data binding links and runs.*)
+  let td = ExecutionEngine.target_data ee in
+
+  (* Demonstrate that a garbage pointer wasn't returned. *)
+  let ty = intptr_type td in
+  if ty != i32_type && ty != i64_type then bomb "target_data did not work";
   
   (* dispose *)
   ExecutionEngine.dispose ee

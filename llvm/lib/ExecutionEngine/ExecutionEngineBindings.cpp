@@ -187,3 +187,7 @@ int LLVMFindFunction(LLVMExecutionEngineRef EE, const char *Name,
   }
   return 1;
 }
+
+LLVMTargetDataRef LLVMGetExecutionEngineTargetData(LLVMExecutionEngineRef EE) {
+  return wrap(unwrap(EE)->getTargetData());
+}
