@@ -47,7 +47,7 @@ class AnnotatedPath {
   typedef std::list<AnnotatedNode<STATE> >  impl;
   impl path;
 public:
-  AnnotatedPath();
+  AnnotatedPath() {}
   
   void push_back(ExplodedNode<STATE>* N, const std::string& s, Expr* E = NULL) {
     path.push_back(AnnotatedNode<STATE>(N, s, E));
