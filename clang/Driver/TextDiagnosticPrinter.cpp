@@ -62,7 +62,7 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
   
   SourceLocation LogicalEnd = SourceMgr.getLogicalLoc(R.getEnd());
   unsigned EndLineNo = SourceMgr.getLineNumber(LogicalEnd);
-  if (EndLineNo < LineNo || LogicalStart.getFileID() != FileID)
+  if (EndLineNo < LineNo || LogicalEnd.getFileID() != FileID)
     return;  // No intersection.
   
   // Compute the column number of the start.
