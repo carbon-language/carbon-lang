@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "GRSimpleVals.h"
+#include "BasicObjCFoundationChecks.h"
 #include "clang/Analysis/PathSensitive/ValueState.h"
 #include "clang/Basic/Diagnostic.h"
 #include <sstream>
@@ -103,13 +104,18 @@ void EmitWarning(Diagnostic& Diag, SourceManager& SrcMgr,
 unsigned RunGRSimpleVals(CFG& cfg, Decl& CD, ASTContext& Ctx,
                          Diagnostic& Diag, bool Visualize, bool TrimGraph) {
   
-  if (Diag.hasErrorOccurred())
-    return 0;
-  
   GRCoreEngine<GRExprEngine> Eng(cfg, CD, Ctx);
   GRExprEngine* CheckerState = &Eng.getCheckerState();
+  
+  // Set base transfer functions.
   GRSimpleVals GRSV;
   CheckerState->setTransferFunctions(GRSV);
+  
+  // Add extra checkers.
+  llvm::OwningPtr<GRSimpleAPICheck> FoundationCheck(
+    CreateBasicObjCFoundationChecks(Ctx, &CheckerState->getStateManager()));
+  
+  CheckerState->AddObjCMessageExprCheck(FoundationCheck.get());
   
   // Execute the worklist algorithm.
   Eng.ExecuteWorkList(100000);

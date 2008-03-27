@@ -13,6 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "BasicObjCFoundationChecks.h"
+
 #include "clang/Analysis/PathSensitive/ExplodedGraph.h"
 #include "clang/Analysis/PathSensitive/GRSimpleAPICheck.h"
 #include "clang/Analysis/PathSensitive/ValueState.h"
@@ -51,6 +53,14 @@ public:
 };
   
 } // end anonymous namespace
+
+
+GRSimpleAPICheck*
+clang::CreateBasicObjCFoundationChecks(ASTContext& Ctx,
+                                       ValueStateManager* VMgr) {
+  
+  return new BasicObjCFoundationChecks(Ctx, VMgr);  
+}
 
 
 bool BasicObjCFoundationChecks::Audit(ExplodedNode<ValueState>* N) {
