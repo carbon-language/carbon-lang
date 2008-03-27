@@ -61,6 +61,7 @@ std::string html::EscapeText(const std::string& s, bool EscapeSpaces) {
         
       case ' ':
         if (EscapeSpaces) os << "&#32;";
+        else os << ' ';
         break;
         
         case '<': os << "&lt;"; break;
@@ -164,7 +165,8 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID) {
     os << "<html>\n<head>\n"
        << "<style type=\"text/css\">\n"
        << " body { color:#000000; background-color:#ffffff }\n"
-       << " body { font-family:Helvetica, sans-serif }\n"
+       << " body { font-family:Helvetica, sans-serif; font-size:10pt }\n"
+       << " h1 { font-size:12pt }\n"
        << " .code { border-spacing:0px; width:100%; }\n"
        << " .code { font-family: \"Andale Mono\", fixed; font-size:10pt }\n"
        << " .code { line-height: 1.2em }\n"
