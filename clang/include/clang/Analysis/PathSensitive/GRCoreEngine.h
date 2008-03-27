@@ -19,6 +19,7 @@
 #include "clang/Analysis/PathSensitive/ExplodedGraph.h"
 #include "clang/Analysis/PathSensitive/GRWorkList.h"
 #include "clang/Analysis/PathSensitive/GRBlockCounter.h"
+#include "clang/Analysis/PathSensitive/GRAuditor.h"
 #include "llvm/ADT/OwningPtr.h"
 
 namespace clang {
@@ -162,15 +163,6 @@ public:
   
   CFGBlock* getBlock() const { return &B; }
 };
-
-template <typename STATE>
-class GRNodeAuditor {
-public:
-  typedef ExplodedNode<STATE>   NodeTy;
-  
-  virtual ~GRNodeAuditor() {}
-  virtual bool Audit(NodeTy* N) = 0;
-};
   
   
 template<typename STATE>
@@ -181,8 +173,8 @@ class GRStmtNodeBuilder  {
   GRStmtNodeBuilderImpl& NB;
   StateTy* CleanedState;
   
-  GRNodeAuditor<StateTy> **CallExprAuditBeg, **CallExprAuditEnd;
-  GRNodeAuditor<StateTy> **ObjCMsgExprAuditBeg, **ObjCMsgExprAuditEnd;
+  GRAuditor<StateTy> **CallExprAuditBeg, **CallExprAuditEnd;
+  GRAuditor<StateTy> **ObjCMsgExprAuditBeg, **ObjCMsgExprAuditEnd;
   
 public:
   GRStmtNodeBuilder(GRStmtNodeBuilderImpl& nb) : NB(nb),
@@ -192,14 +184,14 @@ public:
     CleanedState = getLastNode()->getState();
   }
   
-  void setObjCMsgExprAuditors(GRNodeAuditor<StateTy> **B,
-                              GRNodeAuditor<StateTy> **E) {
+  void setObjCMsgExprAuditors(GRAuditor<StateTy> **B,
+                              GRAuditor<StateTy> **E) {
     ObjCMsgExprAuditBeg = B;
     ObjCMsgExprAuditEnd = E;
   }
   
-  void setCallExprAuditors(GRNodeAuditor<StateTy> **B,
-                           GRNodeAuditor<StateTy> **E) {
+  void setCallExprAuditors(GRAuditor<StateTy> **B,
+                           GRAuditor<StateTy> **E) {
     CallExprAuditBeg = B;
     CallExprAuditEnd = E;
   }  
@@ -240,8 +232,22 @@ public:
     
     StateTy* PredState = GetState(Pred);
     
+    GRAuditor<StateTy> **AB = NULL, **AE = NULL;
+    
+    switch (S->getStmtClass()) {
+      default: break;
+      case Stmt::CallExprClass:
+        AB = CallExprAuditBeg;
+        AE = CallExprAuditEnd;
+        break;
+      case Stmt::ObjCMessageExprClass:
+        AB = ObjCMsgExprAuditBeg;
+        AE = ObjCMsgExprAuditEnd;
+        break;
+    }
+    
     // If the state hasn't changed, don't generate a new node.
-    if (!BuildSinks && St == PredState) {
+    if (!BuildSinks && St == PredState && AB == NULL) {
       Dst.Add(Pred);
       return NULL;
     }
@@ -254,14 +260,8 @@ public:
       else {
         Dst.Add(N);
         
-        if (isa<CallExpr>(S))
-          for (GRNodeAuditor<StateTy>** I = CallExprAuditBeg;
-               I != CallExprAuditEnd; ++I)
-            (*I)->Audit(N);
-        else if (isa<ObjCMessageExpr>(S))
-          for (GRNodeAuditor<StateTy>** I = ObjCMsgExprAuditBeg;
-               I != ObjCMsgExprAuditEnd; ++I)
-            (*I)->Audit(N);
+        for ( ; AB != AE; ++AB)
+          (*AB)->Audit(N);
       }
     }
     

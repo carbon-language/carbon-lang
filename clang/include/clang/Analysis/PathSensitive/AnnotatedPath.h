@@ -34,7 +34,7 @@ public:
                 Expr* e = NULL)
   : Node(N), annotation(annot), E(e) {}
 
-  ExplodedNode<STATE> getNode() const { return Node; }
+  ExplodedNode<STATE>* getNode() const { return Node; }
   
   const std::string& getString() const { return annotation; }
   
@@ -58,6 +58,8 @@ public:
   iterator begin() { return path.begin(); }
   iterator end() { return path.end(); }
   
+  AnnotatedNode<STATE>& back() { return path.back(); }
+  const AnnotatedNode<STATE>& back() const { return path.back(); }
 };
   
 } // end clang namespace

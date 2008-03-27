@@ -21,13 +21,13 @@
 namespace clang {
   
 class ValueState;
+class Diagnostic;
   
 class GRSimpleAPICheck : public GRAuditor<ValueState> {
 public:
   GRSimpleAPICheck() {}
   virtual ~GRSimpleAPICheck() {}
-
-
+  virtual void ReportResults(Diagnostic& D) {}
 };
 
 } // end namespace clang

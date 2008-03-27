@@ -32,16 +32,18 @@ namespace {
   
 class VISIBILITY_HIDDEN BasicObjCFoundationChecks : public GRSimpleAPICheck {
 
- ASTContext &Ctx;
- ValueStateManager* VMgr;
- std::list<AnnotatedPath<ValueState> > Errors;
+  ASTContext &Ctx;
+  ValueStateManager* VMgr;
+  
+  typedef std::list<AnnotatedPath<ValueState> > ErrorsTy;
+  ErrorsTy Errors;
       
- RVal GetRVal(ValueState* St, Expr* E) { return VMgr->GetRVal(St, E); }
+  RVal GetRVal(ValueState* St, Expr* E) { return VMgr->GetRVal(St, E); }
       
- bool isNSString(ObjCInterfaceType* T, const char* suffix);
- bool AuditNSString(NodeTy* N, ObjCMessageExpr* ME);
+  bool isNSString(ObjCInterfaceType* T, const char* suffix);
+  bool AuditNSString(NodeTy* N, ObjCMessageExpr* ME);
       
- void RegisterError(NodeTy* N, Expr* E, const char *msg);
+  void RegisterError(NodeTy* N, Expr* E, const char *msg);
 
 public:
   BasicObjCFoundationChecks(ASTContext& ctx, ValueStateManager* vmgr) 
@@ -50,6 +52,9 @@ public:
   virtual ~BasicObjCFoundationChecks() {}
   
   virtual bool Audit(ExplodedNode<ValueState>* N);
+  
+  virtual void ReportResults(Diagnostic& D);
+
 };
   
 } // end anonymous namespace
@@ -98,6 +103,10 @@ bool BasicObjCFoundationChecks::Audit(ExplodedNode<ValueState>* N) {
   return false;  
 }
 
+static inline bool isNil(RVal X) {
+  return isa<lval::ConcreteInt>(X);  
+}
+
 //===----------------------------------------------------------------------===//
 // Error reporting.
 //===----------------------------------------------------------------------===//
@@ -108,6 +117,26 @@ void BasicObjCFoundationChecks::RegisterError(NodeTy* N,
   
   Errors.push_back(AnnotatedPath<ValueState>());
   Errors.back().push_back(N, msg, E);
+}
+
+void BasicObjCFoundationChecks::ReportResults(Diagnostic& D) {
+  
+  // FIXME: Expand errors into paths.  For now, just issue warnings.
+  
+  for (ErrorsTy::iterator I=Errors.begin(), E=Errors.end(); I!=E; ++I) {
+      
+    AnnotatedNode<ValueState>& AN = I->back();
+    
+    unsigned diag = D.getCustomDiagID(Diagnostic::Warning,
+                                      AN.getString().c_str());
+    
+    Stmt* S = cast<PostStmt>(AN.getNode()->getLocation()).getStmt();
+    FullSourceLoc L(S->getLocStart(), Ctx.getSourceManager());
+    
+    SourceRange R = AN.getExpr()->getSourceRange();
+    
+    D.Report(diag, &AN.getString(), 1, &R, 1);
+  }
 }
 
 //===----------------------------------------------------------------------===//
@@ -139,10 +168,9 @@ bool BasicObjCFoundationChecks::AuditNSString(NodeTy* N,
     Expr * E = ME->getArg(0);
     RVal X = GetRVal(St, E);
     
-    if (isa<lval::ConcreteInt>(X)) {
+    if (isNil(X))
       RegisterError(N, E,
                     "Argument to NSString method 'compare:' cannot be nil.");
-    }
   }
   
   return false;

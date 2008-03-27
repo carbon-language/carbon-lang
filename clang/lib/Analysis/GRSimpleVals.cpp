@@ -167,7 +167,7 @@ unsigned RunGRSimpleVals(CFG& cfg, Decl& CD, ASTContext& Ctx,
               CheckerState->undef_receivers_end(),
               "Receiver in message expression is an uninitialized value.");
 
-      
+  FoundationCheck.get()->ReportResults(Diag);
 #ifndef NDEBUG
   if (Visualize) CheckerState->ViewGraph(TrimGraph);
 #endif
