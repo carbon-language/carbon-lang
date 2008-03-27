@@ -45,6 +45,7 @@ namespace {
     unsigned MainFileID;
     const char *MainFileStart, *MainFileEnd;
     SourceLocation LastIncLoc;
+    
     llvm::SmallVector<ObjCImplementationDecl *, 8> ClassImplementation;
     llvm::SmallVector<ObjCCategoryImplDecl *, 8> CategoryImplementation;
     llvm::SmallPtrSet<ObjCInterfaceDecl*, 8> ObjCSynthesizedStructs;
@@ -85,6 +86,8 @@ namespace {
     
     std::ostream &OutFile;
     
+    std::string Preamble;
+    
     static const int OBJC_ABI_VERSION =7 ;
   public:
     void Initialize(ASTContext &context);
@@ -112,9 +115,10 @@ namespace {
                    0, 0, &Range, 1);
     }
     
-    void InsertText(SourceLocation Loc, const char *StrData, unsigned StrLen) {
+    void InsertText(SourceLocation Loc, const char *StrData, unsigned StrLen,
+                    bool InsertAfter = true) {
       // If insertion succeeded or warning disabled return with no warning.
-      if (!Rewrite.InsertText(Loc, StrData, StrLen) ||
+      if (!Rewrite.InsertText(Loc, StrData, StrLen, InsertAfter) ||
           SilenceRewriteMacroWarning)
         return;
       
@@ -286,84 +290,75 @@ void RewriteTest::Initialize(ASTContext &context) {
   const llvm::MemoryBuffer *MainBuf = SM->getBuffer(MainFileID);
   MainFileStart = MainBuf->getBufferStart();
   MainFileEnd = MainBuf->getBufferEnd();
-  
-  
+     
   Rewrite.setSourceMgr(Context->getSourceManager());
   
   // declaring objc_selector outside the parameter list removes a silly
   // scope related warning...
-  std::string S = "#pragma once\n";
-  S += "struct objc_selector; struct objc_class;\n";
-  S += "#ifndef OBJC_SUPER\n";
-  S += "struct objc_super { struct objc_object *object; ";
-  S += "struct objc_object *superClass; ";
+  if (IsHeader)
+    Preamble = "#pragma once\n";
+  Preamble += "struct objc_selector; struct objc_class;\n";
+  Preamble += "#ifndef OBJC_SUPER\n";
+  Preamble += "struct objc_super { struct objc_object *object; ";
+  Preamble += "struct objc_object *superClass; ";
   if (LangOpts.Microsoft) {
     // Add a constructor for creating temporary objects.
-    S += "objc_super(struct objc_object *o, struct objc_object *s) : ";
-    S += "object(o), superClass(s) {} ";
+    Preamble += "objc_super(struct objc_object *o, struct objc_object *s) : ";
+    Preamble += "object(o), superClass(s) {} ";
   }
-  S += "};\n";
-  S += "#define OBJC_SUPER\n";
-  S += "#endif\n";
-  S += "#ifndef _REWRITER_typedef_Protocol\n";
-  S += "typedef struct objc_object Protocol;\n";
-  S += "#define _REWRITER_typedef_Protocol\n";
-  S += "#endif\n";
+  Preamble += "};\n";
+  Preamble += "#define OBJC_SUPER\n";
+  Preamble += "#endif\n";
+  Preamble += "#ifndef _REWRITER_typedef_Protocol\n";
+  Preamble += "typedef struct objc_object Protocol;\n";
+  Preamble += "#define _REWRITER_typedef_Protocol\n";
+  Preamble += "#endif\n";
   if (LangOpts.Microsoft) 
-    S += "extern \"C\" {\n";
-  S += "struct objc_object *objc_msgSend";
-  S += "(struct objc_object *, struct objc_selector *, ...);\n";
-  S += "extern struct objc_object *objc_msgSendSuper";
-  S += "(struct objc_super *, struct objc_selector *, ...);\n";
-  S += "extern struct objc_object *objc_msgSend_stret";
-  S += "(struct objc_object *, struct objc_selector *, ...);\n";
-  S += "extern struct objc_object *objc_msgSendSuper_stret";
-  S += "(struct objc_super *, struct objc_selector *, ...);\n";
-  S += "extern struct objc_object *objc_msgSend_fpret";
-  S += "(struct objc_object *, struct objc_selector *, ...);\n";
-  S += "struct objc_object *objc_getClass";
-  S += "(const char *);\n";
-  S += "extern struct objc_object *objc_getMetaClass";
-  S += "(const char *);\n";
-  S += "extern void objc_exception_throw(struct objc_object *);\n";
-  S += "extern void objc_exception_try_enter(void *);\n";
-  S += "extern void objc_exception_try_exit(void *);\n";
-  S += "extern struct objc_object *objc_exception_extract(void *);\n";
-  S += "extern int objc_exception_match";
-  S += "(struct objc_class *, struct objc_object *, ...);\n";
-  S += "extern Protocol *objc_getProtocol(const char *);\n";
+    Preamble += "extern \"C\" {\n";
+  Preamble += "struct objc_object *objc_msgSend";
+  Preamble += "(struct objc_object *, struct objc_selector *, ...);\n";
+  Preamble += "extern struct objc_object *objc_msgSendSuper";
+  Preamble += "(struct objc_super *, struct objc_selector *, ...);\n";
+  Preamble += "extern struct objc_object *objc_msgSend_stret";
+  Preamble += "(struct objc_object *, struct objc_selector *, ...);\n";
+  Preamble += "extern struct objc_object *objc_msgSendSuper_stret";
+  Preamble += "(struct objc_super *, struct objc_selector *, ...);\n";
+  Preamble += "extern struct objc_object *objc_msgSend_fpret";
+  Preamble += "(struct objc_object *, struct objc_selector *, ...);\n";
+  Preamble += "struct objc_object *objc_getClass";
+  Preamble += "(const char *);\n";
+  Preamble += "extern struct objc_object *objc_getMetaClass";
+  Preamble += "(const char *);\n";
+  Preamble += "extern void objc_exception_throw(struct objc_object *);\n";
+  Preamble += "extern void objc_exception_try_enter(void *);\n";
+  Preamble += "extern void objc_exception_try_exit(void *);\n";
+  Preamble += "extern struct objc_object *objc_exception_extract(void *);\n";
+  Preamble += "extern int objc_exception_match";
+  Preamble += "(struct objc_class *, struct objc_object *, ...);\n";
+  Preamble += "extern Protocol *objc_getProtocol(const char *);\n";
   if (LangOpts.Microsoft) 
-    S += "} // end extern \"C\"\n";
-  S += "#include <objc/objc.h>\n";
-  S += "#ifndef __FASTENUMERATIONSTATE\n";
-  S += "struct __objcFastEnumerationState {\n\t";
-  S += "unsigned long state;\n\t";
-  S += "id *itemsPtr;\n\t";
-  S += "unsigned long *mutationsPtr;\n\t";
-  S += "unsigned long extra[5];\n};\n";
-  S += "#define __FASTENUMERATIONSTATE\n";
-  S += "#endif\n";
-  S += "#ifndef __NSCONSTANTSTRINGIMPL\n";
-  S += "struct __NSConstantStringImpl {\n";
-  S += "  int *isa;\n";
-  S += "  int flags;\n";
-  S += "  char *str;\n";
-  S += "  long length;\n";
-  S += "};\n";
-  S += "extern int __CFConstantStringClassReference[];\n";
-  S += "#define __NSCONSTANTSTRINGIMPL\n";
-  S += "#endif\n";
+    Preamble += "} // end extern \"C\"\n";
+  Preamble += "#include <objc/objc.h>\n";
+  Preamble += "#ifndef __FASTENUMERATIONSTATE\n";
+  Preamble += "struct __objcFastEnumerationState {\n\t";
+  Preamble += "unsigned long state;\n\t";
+  Preamble += "id *itemsPtr;\n\t";
+  Preamble += "unsigned long *mutationsPtr;\n\t";
+  Preamble += "unsigned long extra[5];\n};\n";
+  Preamble += "#define __FASTENUMERATIONSTATE\n";
+  Preamble += "#endif\n";
+  Preamble += "#ifndef __NSCONSTANTSTRINGIMPL\n";
+  Preamble += "struct __NSConstantStringImpl {\n";
+  Preamble += "  int *isa;\n";
+  Preamble += "  int flags;\n";
+  Preamble += "  char *str;\n";
+  Preamble += "  long length;\n";
+  Preamble += "};\n";
+  Preamble += "extern int __CFConstantStringClassReference[];\n";
+  Preamble += "#define __NSCONSTANTSTRINGIMPL\n";
+  Preamble += "#endif\n";
   if (LangOpts.Microsoft) 
-    S += "#define __attribute__(X)\n";
-  if (IsHeader) {
-    // insert the whole string when rewriting a header file
-    InsertText(SourceLocation::getFileLoc(MainFileID, 0), S.c_str(), S.size());
-  }
-  else {
-    // Not rewriting header, exclude the #pragma once pragma
-    const char *p = S.c_str() + strlen("#pragma once\n");
-    InsertText(SourceLocation::getFileLoc(MainFileID, 0), p, strlen(p));
-  }
+    Preamble += "#define __attribute__(X)\n";
 }
 
 
@@ -441,6 +436,9 @@ RewriteTest::~RewriteTest() {
   //RewriteTabs();
   
   RewriteInclude();
+  
+  InsertText(SourceLocation::getFileLoc(MainFileID, 0), 
+             Preamble.c_str(), Preamble.size(), false);
   
   // Rewrite Objective-c meta data*
   std::string ResultStr;
@@ -1750,18 +1748,16 @@ Stmt *RewriteTest::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
   std::string S = "__NSConstantStringImpl_";
   S += utostr(NumObjCStringLiterals++);
 
-  std::string StrObjDecl = "static __NSConstantStringImpl " + S;
-  StrObjDecl += " __attribute__ ((section (\"__DATA, __cfstring\"))) = {__CFConstantStringClassReference,";
-  StrObjDecl += "0x000007c8,"; // utf8_str
+  Preamble += "static __NSConstantStringImpl " + S;
+  Preamble += " __attribute__ ((section (\"__DATA, __cfstring\"))) = {__CFConstantStringClassReference,";
+  Preamble += "0x000007c8,"; // utf8_str
   // The pretty printer for StringLiteral handles escape characters properly.
   std::ostringstream prettyBuf;
   Exp->getString()->printPretty(prettyBuf);
-  StrObjDecl += prettyBuf.str();
-  StrObjDecl += ",";
+  Preamble += prettyBuf.str();
+  Preamble += ",";
   // The minus 2 removes the begin/end double quotes.
-  StrObjDecl += utostr(prettyBuf.str().size()-2) + "};\n";
-  InsertText(SourceLocation::getFileLoc(MainFileID, 0), 
-             StrObjDecl.c_str(), StrObjDecl.size());
+  Preamble += utostr(prettyBuf.str().size()-2) + "};\n";
   
   FileVarDecl *NewVD = FileVarDecl::Create(*Context, SourceLocation(), 
                                        &Context->Idents.get(S.c_str()), strType, 
