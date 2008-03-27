@@ -407,6 +407,19 @@ void GRExprEngine::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
   CurrentStmt = S;
   NodeSet Dst;
   
+  // Set up our simple checks.
+  
+  if (!MsgExprChecks.empty())
+    Builder->setObjCMsgExprAuditors(
+      (GRNodeAuditor<ValueState>**) &MsgExprChecks[0],
+      (GRNodeAuditor<ValueState>**) (&MsgExprChecks[0] + MsgExprChecks.size()));
+
+  
+  if (!CallChecks.empty())
+    Builder->setCallExprAuditors(
+      (GRNodeAuditor<ValueState>**) &CallChecks[0],
+      (GRNodeAuditor<ValueState>**) (&CallChecks[0] + CallChecks.size()));
+  
   // Create the cleaned state.
 
   CleanedState = StateMgr.RemoveDeadBindings(StmtEntryNode->getState(),

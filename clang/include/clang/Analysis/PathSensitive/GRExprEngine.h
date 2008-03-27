@@ -15,9 +15,12 @@
 
 #include "clang/Analysis/PathSensitive/GRCoreEngine.h"
 #include "clang/Analysis/PathSensitive/ValueState.h"
+#include "clang/Analysis/PathSensitive/GRSimpleAPICheck.h"
 #include "clang/Analysis/PathSensitive/GRTransferFuncs.h"
 
 namespace clang {
+  
+  class StatelessChecks;
   
 class GRExprEngine {
   
@@ -32,6 +35,7 @@ public:
   typedef GRIndirectGotoNodeBuilder<GRExprEngine>  IndirectGotoNodeBuilder;
   typedef GRSwitchNodeBuilder<GRExprEngine>        SwitchNodeBuilder;
   typedef ExplodedNodeSet<StateTy>                 NodeSet;
+  
     
 protected:
   /// G - the simulation graph.
@@ -67,6 +71,12 @@ protected:
   
   /// CurrentStmt - The current block-level statement.
   Stmt* CurrentStmt;
+  
+  typedef llvm::SmallVector<GRSimpleAPICheck*,2> SimpleChecksTy;
+  
+  SimpleChecksTy CallChecks;
+  SimpleChecksTy MsgExprChecks;
+  
 
   typedef llvm::SmallPtrSet<NodeTy*,2> UndefBranchesTy;  
   typedef llvm::SmallPtrSet<NodeTy*,2> UndefStoresTy;
@@ -276,6 +286,26 @@ public:
   
   undef_receivers_iterator undef_receivers_end() {
     return UndefReceivers.end();
+  }
+  
+  typedef SimpleChecksTy::iterator simple_checks_iterator;
+  
+  simple_checks_iterator call_auditors_begin() { return CallChecks.begin(); }
+  simple_checks_iterator call_auditors_end() { return CallChecks.end(); }
+  
+  simple_checks_iterator msgexpr_auditors_begin() {
+    return MsgExprChecks.begin();
+  }
+  simple_checks_iterator msgexpr_auditors_end() {
+    return MsgExprChecks.end();
+  }
+  
+  void AddCallCheck(GRSimpleAPICheck* A) {
+    CallChecks.push_back(A);
+  }
+  
+  void AddObjCMessageExprCheck(GRSimpleAPICheck* A) {
+    MsgExprChecks.push_back(A);
   }
   
   /// ProcessStmt - Called by GRCoreEngine. Used to generate new successor

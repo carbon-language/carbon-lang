@@ -15,7 +15,7 @@
 #ifndef LLVM_CLANG_ANALYSIS_GRENGINE
 #define LLVM_CLANG_ANALYSIS_GRENGINE
 
-#include "clang/AST/Stmt.h"
+#include "clang/AST/Expr.h"
 #include "clang/Analysis/PathSensitive/ExplodedGraph.h"
 #include "clang/Analysis/PathSensitive/GRWorkList.h"
 #include "clang/Analysis/PathSensitive/GRBlockCounter.h"
@@ -163,6 +163,16 @@ public:
   CFGBlock* getBlock() const { return &B; }
 };
 
+template <typename STATE>
+class GRNodeAuditor {
+public:
+  typedef ExplodedNode<STATE>   NodeTy;
+  
+  virtual ~GRNodeAuditor() {}
+  virtual bool Audit(NodeTy* N) = 0;
+};
+  
+  
 template<typename STATE>
 class GRStmtNodeBuilder  {
   typedef STATE                   StateTy;
@@ -171,10 +181,28 @@ class GRStmtNodeBuilder  {
   GRStmtNodeBuilderImpl& NB;
   StateTy* CleanedState;
   
+  GRNodeAuditor<StateTy> **CallExprAuditBeg, **CallExprAuditEnd;
+  GRNodeAuditor<StateTy> **ObjCMsgExprAuditBeg, **ObjCMsgExprAuditEnd;
+  
 public:
-  GRStmtNodeBuilder(GRStmtNodeBuilderImpl& nb) : NB(nb), BuildSinks(false) {
+  GRStmtNodeBuilder(GRStmtNodeBuilderImpl& nb) : NB(nb),
+    CallExprAuditBeg(0), CallExprAuditEnd(0),
+    ObjCMsgExprAuditBeg(0), ObjCMsgExprAuditEnd(0),  BuildSinks(false) {
+      
     CleanedState = getLastNode()->getState();
   }
+  
+  void setObjCMsgExprAuditors(GRNodeAuditor<StateTy> **B,
+                              GRNodeAuditor<StateTy> **E) {
+    ObjCMsgExprAuditBeg = B;
+    ObjCMsgExprAuditEnd = E;
+  }
+  
+  void setCallExprAuditors(GRNodeAuditor<StateTy> **B,
+                           GRNodeAuditor<StateTy> **E) {
+    CallExprAuditBeg = B;
+    CallExprAuditEnd = E;
+  }  
     
   NodeTy* getLastNode() const {
     return static_cast<NodeTy*>(NB.getLastNode());
@@ -223,8 +251,18 @@ public:
     if (N) {      
       if (BuildSinks)
         N->markAsSink();
-      else
+      else {
         Dst.Add(N);
+        
+        if (isa<CallExpr>(S))
+          for (GRNodeAuditor<StateTy>** I = CallExprAuditBeg;
+               I != CallExprAuditEnd; ++I)
+            (*I)->Audit(N);
+        else if (isa<ObjCMessageExpr>(S))
+          for (GRNodeAuditor<StateTy>** I = ObjCMsgExprAuditBeg;
+               I != ObjCMsgExprAuditEnd; ++I)
+            (*I)->Audit(N);
+      }
     }
     
     return N;
