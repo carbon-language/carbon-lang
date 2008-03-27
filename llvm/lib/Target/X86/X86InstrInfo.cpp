@@ -37,10 +37,6 @@ namespace {
                     cl::desc("Print instructions that the allocator wants to"
                              " fuse, but the X86 backend currently can't"),
                     cl::Hidden);
-  cl::opt<bool>
-  ReMatPICLoad("remat-pic-load",
-               cl::desc("Allow rematerializing pic load"),
-               cl::init(true), cl::Hidden);
 }
 
 X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
@@ -762,8 +758,6 @@ bool X86InstrInfo::isReallyTriviallyReMaterializable(MachineInstr *MI) const {
       unsigned BaseReg = MI->getOperand(1).getReg();
       if (BaseReg == 0)
         return true;
-      if (!ReMatPICLoad)
-        return false;
       // Allow re-materialization of PIC load.
       MachineRegisterInfo &MRI = MI->getParent()->getParent()->getRegInfo();
       bool isPICBase = false;
