@@ -23,6 +23,7 @@
 		35839B0B0CDF845F006ED061 /* StmtSerialization.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35839B090CDF845F006ED061 /* StmtSerialization.cpp */; };
 		35839B0C0CDF845F006ED061 /* TypeSerialization.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35839B0A0CDF845F006ED061 /* TypeSerialization.cpp */; };
 		35847BE50CC7DBAF00C40FFF /* StmtIterator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35847BE40CC7DBAF00C40FFF /* StmtIterator.cpp */; };
+		35A8FCF90D9B4B2A001C2F97 /* PathDiagnostic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35A8FCF80D9B4B29001C2F97 /* PathDiagnostic.cpp */; };
 		35BB2D7D0D19951A00944DB5 /* TranslationUnit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35BB2D7C0D19951A00944DB5 /* TranslationUnit.cpp */; };
 		35BB2D7F0D19954000944DB5 /* ASTConsumer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35BB2D7E0D19954000944DB5 /* ASTConsumer.cpp */; };
 		35CFFE000CA1CBCB00E6F2BE /* StmtViz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35CFFDFF0CA1CBCB00E6F2BE /* StmtViz.cpp */; };
@@ -265,6 +266,9 @@
 		35847BE30CC7DB9000C40FFF /* StmtIterator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StmtIterator.h; path = clang/AST/StmtIterator.h; sourceTree = "<group>"; };
 		35847BE40CC7DBAF00C40FFF /* StmtIterator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StmtIterator.cpp; path = lib/AST/StmtIterator.cpp; sourceTree = "<group>"; };
 		35A2B8610CF8FFA300E6C317 /* SemaUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SemaUtil.h; path = lib/Sema/SemaUtil.h; sourceTree = "<group>"; };
+		35A8FCF60D9B4ADD001C2F97 /* ProgramPoint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ProgramPoint.h; path = clang/Analysis/ProgramPoint.h; sourceTree = "<group>"; };
+		35A8FCF70D9B4ADD001C2F97 /* PathDiagnostic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PathDiagnostic.h; path = clang/Analysis/PathDiagnostic.h; sourceTree = "<group>"; };
+		35A8FCF80D9B4B29001C2F97 /* PathDiagnostic.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PathDiagnostic.cpp; path = lib/Analysis/PathDiagnostic.cpp; sourceTree = "<group>"; };
 		35BB2D7A0D1994FA00944DB5 /* TranslationUnit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TranslationUnit.h; path = clang/AST/TranslationUnit.h; sourceTree = "<group>"; };
 		35BB2D7C0D19951A00944DB5 /* TranslationUnit.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TranslationUnit.cpp; path = lib/AST/TranslationUnit.cpp; sourceTree = "<group>"; };
 		35BB2D7E0D19954000944DB5 /* ASTConsumer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ASTConsumer.cpp; path = lib/AST/ASTConsumer.cpp; sourceTree = "<group>"; };
@@ -496,6 +500,8 @@
 		356EF9AF0C8F7DA4006650F5 /* Analysis */ = {
 			isa = PBXGroup;
 			children = (
+				35A8FCF60D9B4ADD001C2F97 /* ProgramPoint.h */,
+				35A8FCF70D9B4ADD001C2F97 /* PathDiagnostic.h */,
 				355CF6820C90A8B600A08AA3 /* LocalCheckers.h */,
 				35F9B1540D1C6AFC00DDFDAE /* Analyses */,
 				35D1DDCF0CA9C6BE0096E967 /* FlowSensitive */,
@@ -509,6 +515,7 @@
 		356EF9B30C8F7DCA006650F5 /* Analysis */ = {
 			isa = PBXGroup;
 			children = (
+				35A8FCF80D9B4B29001C2F97 /* PathDiagnostic.cpp */,
 				35D55B240D81D8C60092E734 /* BasicValueFactory.cpp */,
 				35D55B250D81D8C60092E734 /* CFRefCount.cpp */,
 				356EF9B40C8F7DDF006650F5 /* LiveVariables.cpp */,
@@ -1009,6 +1016,7 @@
 				DE38CF270D8C9E6C00A273B6 /* DeclObjC.cpp in Sources */,
 				72D16C1F0D9975C400E6DA4A /* HTMLRewrite.cpp in Sources */,
 				72D16C220D9975EA00E6DA4A /* HTMLPrint.cpp in Sources */,
+				35A8FCF90D9B4B2A001C2F97 /* PathDiagnostic.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
