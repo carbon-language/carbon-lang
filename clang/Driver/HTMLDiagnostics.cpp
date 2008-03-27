@@ -117,8 +117,8 @@ void HTMLDiagnostics::HandlePathDiagnostic(const PathDiagnostic& D) {
     std::ostringstream os;
     const FileEntry* Entry = SMgr.getFileEntryForID(FileID);
     
-    os << "<h1>" << Entry->getDir()->getName() << "/"
-       << Entry->getName() << "</h1>\n";
+    os << "<h1>" << html::EscapeText(Entry->getDir()->getName())
+       << "/" << html::EscapeText(Entry->getName()) << "</h1>\n";
 
     R.InsertStrBefore(SourceLocation::getFileLoc(FileID, 0), os.str());
   }  
@@ -200,7 +200,7 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R,
      << "<div class=\"msg\" style=\"margin-left:"
      << ColNo << "ex\">";
   
-  os << P.getString() << "</div></td></tr>";
+  os << html::EscapeText(P.getString()) << "</div></td></tr>";
   
   // Insert the new html.
   

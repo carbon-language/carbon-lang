@@ -46,6 +46,32 @@ void html::EscapeText(Rewriter& R, unsigned FileID, bool EscapeSpaces) {
   }
 }
 
+std::string html::EscapeText(const std::string& s, bool EscapeSpaces) {
+  
+  unsigned len = s.size();
+  std::ostringstream os;
+  
+  for (unsigned i = 0 ; i < len; ++i) {
+    
+    char c = s[i];
+    
+    switch (c) {
+      default:
+        os << c; break;
+        
+      case ' ':
+        if (EscapeSpaces) os << "&#32;";
+        break;
+        
+        case '<': os << "&lt;"; break;
+        case '>': os << "&gt;"; break;
+        case '&': os << "&amp;"; break;
+    }
+  }
+  
+  return os.str();
+}
+
 static void AddLineNumber(Rewriter& R, unsigned LineNo,
                           SourceLocation B, SourceLocation E) {
     

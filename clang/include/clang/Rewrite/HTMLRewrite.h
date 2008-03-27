@@ -16,6 +16,7 @@
 #define LLVM_CLANG_HTMLREWRITER_H
 
 #include "clang/Basic/SourceLocation.h"
+#include <string>
 
 namespace clang {
   
@@ -24,7 +25,8 @@ class Rewriter;
 namespace html {
 
   void EscapeText(Rewriter& R, unsigned FileID, bool EscapeSpaces = false);
-  
+  std::string EscapeText(const std::string& s, bool EscapeSpaces = false);
+
   void AddLineNumbers(Rewriter& R, unsigned FileID);  
   
   void AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID);
