@@ -53,6 +53,7 @@ void DAGTypeLegalizer::FloatToIntResult(SDNode *N, unsigned ResNo) {
     case ISD::BIT_CONVERT: R = FloatToIntRes_BIT_CONVERT(N); break;
     case ISD::BUILD_PAIR:  R = FloatToIntRes_BUILD_PAIR(N); break;
     case ISD::FCOPYSIGN:   R = FloatToIntRes_FCOPYSIGN(N); break;
+    case ISD::LOAD:        R = FloatToIntRes_LOAD(N); break;
   }
 
   // If R is null, the sub-method took care of registering the result.
@@ -109,6 +110,16 @@ SDOperand DAGTypeLegalizer::FloatToIntRes_FCOPYSIGN(SDNode *N) {
 
   // Or the value with the sign bit.
   return DAG.getNode(ISD::OR, LVT, LHS, SignBit);
+}
+
+SDOperand DAGTypeLegalizer::FloatToIntRes_LOAD(SDNode *N) {
+  MVT::ValueType NVT = TLI.getTypeToTransformTo(N->getValueType(0));
+  LoadSDNode *L = cast<LoadSDNode>(N);
+
+  return DAG.getAnyLoad(L->getAddressingMode(), L->getExtensionType(),
+                        NVT, L->getChain(), L->getBasePtr(), L->getOffset(),
+                        L->getSrcValue(), L->getSrcValueOffset(),
+                        L->getMemoryVT(), L->isVolatile(), L->getAlignment());
 }
 
 

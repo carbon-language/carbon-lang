@@ -379,6 +379,11 @@ public:
                        unsigned Alignment=0);
   SDOperand getIndexedLoad(SDOperand OrigLoad, SDOperand Base,
                            SDOperand Offset, ISD::MemIndexedMode AM);
+  SDOperand getAnyLoad(ISD::MemIndexedMode AM, ISD::LoadExtType ExtType,
+                       MVT::ValueType VT, SDOperand Chain,
+                       SDOperand Ptr, SDOperand Offset,
+                       const Value *SV, int SVOffset, MVT::ValueType EVT,
+                       bool isVolatile=false, unsigned Alignment=0);
 
   /// getStore - Helper function to build ISD::STORE nodes.
   ///

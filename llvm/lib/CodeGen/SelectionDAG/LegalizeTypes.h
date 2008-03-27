@@ -310,6 +310,7 @@ private:
   SDOperand FloatToIntRes_BIT_CONVERT(SDNode *N);
   SDOperand FloatToIntRes_BUILD_PAIR(SDNode *N);
   SDOperand FloatToIntRes_FCOPYSIGN(SDNode *N);
+  SDOperand FloatToIntRes_LOAD(SDNode *N);
 
   // Operand Float to Integer Conversion.
   bool FloatToIntOperand(SDNode *N, unsigned OpNo);

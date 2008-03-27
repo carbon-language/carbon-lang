@@ -2447,10 +2447,12 @@ SDOperand SelectionDAG::getAtomic(unsigned Opcode, SDOperand Chain,
   return SDOperand(N, 0);
 }
 
-SDOperand SelectionDAG::getLoad(MVT::ValueType VT,
-                                SDOperand Chain, SDOperand Ptr,
-                                const Value *SV, int SVOffset,
-                                bool isVolatile, unsigned Alignment) {
+SDOperand
+SelectionDAG::getAnyLoad(ISD::MemIndexedMode AM, ISD::LoadExtType ExtType,
+                         MVT::ValueType VT, SDOperand Chain,
+                         SDOperand Ptr, SDOperand Offset,
+                         const Value *SV, int SVOffset, MVT::ValueType EVT,
+                         bool isVolatile, unsigned Alignment) {
   if (Alignment == 0) { // Ensure that codegen never sees alignment 0
     const Type *Ty = 0;
     if (VT != MVT::iPTR) {
@@ -2459,69 +2461,38 @@ SDOperand SelectionDAG::getLoad(MVT::ValueType VT,
       const PointerType *PT = dyn_cast<PointerType>(SV->getType());
       assert(PT && "Value for load must be a pointer");
       Ty = PT->getElementType();
-    }  
+    }
     assert(Ty && "Could not get type information for load");
     Alignment = TLI.getTargetData()->getABITypeAlignment(Ty);
   }
-  SDVTList VTs = getVTList(VT, MVT::Other);
-  SDOperand Undef = getNode(ISD::UNDEF, Ptr.getValueType());
-  SDOperand Ops[] = { Chain, Ptr, Undef };
-  FoldingSetNodeID ID;
-  AddNodeIDNode(ID, ISD::LOAD, VTs, Ops, 3);
-  ID.AddInteger(ISD::UNINDEXED);
-  ID.AddInteger(ISD::NON_EXTLOAD);
-  ID.AddInteger((unsigned int)VT);
-  ID.AddInteger(Alignment);
-  ID.AddInteger(isVolatile);
-  void *IP = 0;
-  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return SDOperand(E, 0);
-  SDNode *N = new LoadSDNode(Ops, VTs, ISD::UNINDEXED,
-                             ISD::NON_EXTLOAD, VT, SV, SVOffset, Alignment,
-                             isVolatile);
-  CSEMap.InsertNode(N, IP);
-  AllNodes.push_back(N);
-  return SDOperand(N, 0);
-}
 
-SDOperand SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, MVT::ValueType VT,
-                                   SDOperand Chain, SDOperand Ptr,
-                                   const Value *SV,
-                                   int SVOffset, MVT::ValueType EVT,
-                                   bool isVolatile, unsigned Alignment) {
-  // If they are asking for an extending load from/to the same thing, return a
-  // normal load.
-  if (VT == EVT)
-    return getLoad(VT, Chain, Ptr, SV, SVOffset, isVolatile, Alignment);
-
-  if (MVT::isVector(VT))
-    assert(EVT == MVT::getVectorElementType(VT) && "Invalid vector extload!");
-  else
-    assert(MVT::getSizeInBits(EVT) < MVT::getSizeInBits(VT) &&
-           "Should only be an extending load, not truncating!");
-  assert((ExtType == ISD::EXTLOAD || MVT::isInteger(VT)) &&
-         "Cannot sign/zero extend a FP/Vector load!");
-  assert(MVT::isInteger(VT) == MVT::isInteger(EVT) &&
-         "Cannot convert from FP to Int or Int -> FP!");
-
-  if (Alignment == 0) { // Ensure that codegen never sees alignment 0
-    const Type *Ty = 0;
-    if (VT != MVT::iPTR) {
-      Ty = MVT::getTypeForValueType(VT);
-    } else if (SV) {
-      const PointerType *PT = dyn_cast<PointerType>(SV->getType());
-      assert(PT && "Value for load must be a pointer");
-      Ty = PT->getElementType();
-    }  
-    assert(Ty && "Could not get type information for load");
-    Alignment = TLI.getTargetData()->getABITypeAlignment(Ty);
+  if (VT == EVT) {
+    ExtType = ISD::NON_EXTLOAD;
+  } else if (ExtType == ISD::NON_EXTLOAD) {
+    assert(VT == EVT && "Non-extending load from different memory type!");
+  } else {
+    // Extending load.
+    if (MVT::isVector(VT))
+      assert(EVT == MVT::getVectorElementType(VT) && "Invalid vector extload!");
+    else
+      assert(MVT::getSizeInBits(EVT) < MVT::getSizeInBits(VT) &&
+             "Should only be an extending load, not truncating!");
+    assert((ExtType == ISD::EXTLOAD || MVT::isInteger(VT)) &&
+           "Cannot sign/zero extend a FP/Vector load!");
+    assert(MVT::isInteger(VT) == MVT::isInteger(EVT) &&
+           "Cannot convert from FP to Int or Int -> FP!");
   }
-  SDVTList VTs = getVTList(VT, MVT::Other);
-  SDOperand Undef = getNode(ISD::UNDEF, Ptr.getValueType());
-  SDOperand Ops[] = { Chain, Ptr, Undef };
+
+  bool Indexed = AM != ISD::UNINDEXED;
+  assert(Indexed || Offset.getOpcode() == ISD::UNDEF &&
+         "Unindexed load with an offset!");
+
+  SDVTList VTs = Indexed ?
+    getVTList(VT, Ptr.getValueType(), MVT::Other) : getVTList(VT, MVT::Other);
+  SDOperand Ops[] = { Chain, Ptr, Offset };
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, ISD::LOAD, VTs, Ops, 3);
-  ID.AddInteger(ISD::UNINDEXED);
+  ID.AddInteger(AM);
   ID.AddInteger(ExtType);
   ID.AddInteger((unsigned int)EVT);
   ID.AddInteger(Alignment);
@@ -2529,11 +2500,30 @@ SDOperand SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, MVT::ValueType VT,
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-  SDNode *N = new LoadSDNode(Ops, VTs, ISD::UNINDEXED, ExtType, EVT,
-                             SV, SVOffset, Alignment, isVolatile);
+  SDNode *N = new LoadSDNode(Ops, VTs, AM, ExtType, EVT, SV, SVOffset,
+                             Alignment, isVolatile);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
+}
+
+SDOperand SelectionDAG::getLoad(MVT::ValueType VT,
+                                SDOperand Chain, SDOperand Ptr,
+                                const Value *SV, int SVOffset,
+                                bool isVolatile, unsigned Alignment) {
+  SDOperand Undef = getNode(ISD::UNDEF, Ptr.getValueType());
+  return getAnyLoad(ISD::UNINDEXED, ISD::NON_EXTLOAD, VT, Chain, Ptr, Undef,
+                    SV, SVOffset, VT, isVolatile, Alignment);
+}
+
+SDOperand SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, MVT::ValueType VT,
+                                   SDOperand Chain, SDOperand Ptr,
+                                   const Value *SV,
+                                   int SVOffset, MVT::ValueType EVT,
+                                   bool isVolatile, unsigned Alignment) {
+  SDOperand Undef = getNode(ISD::UNDEF, Ptr.getValueType());
+  return getAnyLoad(ISD::UNINDEXED, ExtType, VT, Chain, Ptr, Undef,
+                    SV, SVOffset, EVT, isVolatile, Alignment);
 }
 
 SDOperand
@@ -2542,26 +2532,10 @@ SelectionDAG::getIndexedLoad(SDOperand OrigLoad, SDOperand Base,
   LoadSDNode *LD = cast<LoadSDNode>(OrigLoad);
   assert(LD->getOffset().getOpcode() == ISD::UNDEF &&
          "Load is already a indexed load!");
-  MVT::ValueType VT = OrigLoad.getValueType();
-  SDVTList VTs = getVTList(VT, Base.getValueType(), MVT::Other);
-  SDOperand Ops[] = { LD->getChain(), Base, Offset };
-  FoldingSetNodeID ID;
-  AddNodeIDNode(ID, ISD::LOAD, VTs, Ops, 3);
-  ID.AddInteger(AM);
-  ID.AddInteger(LD->getExtensionType());
-  ID.AddInteger((unsigned int)(LD->getMemoryVT()));
-  ID.AddInteger(LD->getAlignment());
-  ID.AddInteger(LD->isVolatile());
-  void *IP = 0;
-  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return SDOperand(E, 0);
-  SDNode *N = new LoadSDNode(Ops, VTs, AM,
-                             LD->getExtensionType(), LD->getMemoryVT(),
-                             LD->getSrcValue(), LD->getSrcValueOffset(),
-                             LD->getAlignment(), LD->isVolatile());
-  CSEMap.InsertNode(N, IP);
-  AllNodes.push_back(N);
-  return SDOperand(N, 0);
+  return getAnyLoad(AM, LD->getExtensionType(), OrigLoad.getValueType(),
+                    LD->getChain(), Base, Offset, LD->getSrcValue(),
+                    LD->getSrcValueOffset(), LD->getMemoryVT(),
+                    LD->isVolatile(), LD->getAlignment());
 }
 
 SDOperand SelectionDAG::getStore(SDOperand Chain, SDOperand Val,
