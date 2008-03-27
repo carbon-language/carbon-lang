@@ -1515,7 +1515,7 @@ public:
   const Expr *getReceiver() const { return SubExprs[RECEIVER]; }
   Expr *getReceiver() { return SubExprs[RECEIVER]; }
   
-  const Selector &getSelector() const { return SelName; }
+  Selector getSelector() const { return SelName; }
   Selector &getSelector() { return SelName; }
 
   const ObjCMethodDecl *getMethodDecl() const { return MethodProto; }
