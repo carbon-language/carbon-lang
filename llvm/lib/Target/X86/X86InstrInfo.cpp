@@ -734,46 +734,77 @@ unsigned X86InstrInfo::isStoreToStackSlot(MachineInstr *MI,
 }
 
 
+ static bool regIsPICBase(MachineInstr *MI, unsigned BaseReg) {
+   MachineRegisterInfo &MRI = MI->getParent()->getParent()->getRegInfo();
+   bool isPICBase = false;
+   for (MachineRegisterInfo::def_iterator I = MRI.def_begin(BaseReg),
+          E = MRI.def_end(); I != E; ++I) {
+     MachineInstr *DefMI = I.getOperand().getParent();
+     if (DefMI->getOpcode() != X86::MOVPC32r)
+       return false;
+     assert(!isPICBase && "More than one PIC base?");
+     isPICBase = true;
+   }
+   return isPICBase;
+ }
+ 
 bool X86InstrInfo::isReallyTriviallyReMaterializable(MachineInstr *MI) const {
   switch (MI->getOpcode()) {
   default: break;
-  case X86::MOV8rm:
-  case X86::MOV16rm:
-  case X86::MOV16_rm:
-  case X86::MOV32rm:
-  case X86::MOV32_rm:
-  case X86::MOV64rm:
-  case X86::LD_Fp64m:
-  case X86::MOVSSrm:
-  case X86::MOVSDrm:
-  case X86::MOVAPSrm:
-  case X86::MOVAPDrm:
-  case X86::MMX_MOVD64rm:
-  case X86::MMX_MOVQ64rm:
-    // Loads from constant pools are trivially rematerializable.
-    if (MI->getOperand(1).isReg() && MI->getOperand(2).isImm() &&
-        MI->getOperand(3).isReg() && MI->getOperand(4).isCPI() &&
-        MI->getOperand(2).getImm() == 1 &&
-        MI->getOperand(3).getReg() == 0) {
-      unsigned BaseReg = MI->getOperand(1).getReg();
-      if (BaseReg == 0)
-        return true;
-      // Allow re-materialization of PIC load.
-      MachineRegisterInfo &MRI = MI->getParent()->getParent()->getRegInfo();
-      bool isPICBase = false;
-      for (MachineRegisterInfo::def_iterator I = MRI.def_begin(BaseReg),
-             E = MRI.def_end(); I != E; ++I) {
-        MachineInstr *DefMI = I.getOperand().getParent();
-        if (DefMI->getOpcode() != X86::MOVPC32r)
-          return false;
-        assert(!isPICBase && "More than one PIC base?");
-        isPICBase = true;
-      }
-      return isPICBase;
+    case X86::MOV8rm:
+    case X86::MOV16rm:
+    case X86::MOV16_rm:
+    case X86::MOV32rm:
+    case X86::MOV32_rm:
+    case X86::MOV64rm:
+    case X86::LD_Fp64m:
+    case X86::MOVSSrm:
+    case X86::MOVSDrm:
+    case X86::MOVAPSrm:
+    case X86::MOVAPDrm:
+    case X86::MMX_MOVD64rm:
+    case X86::MMX_MOVQ64rm: {
+      // Loads from constant pools are trivially rematerializable.
+      if (MI->getOperand(1).isReg() &&
+          MI->getOperand(2).isImm() &&
+          MI->getOperand(3).isReg() && MI->getOperand(3).getReg() == 0 &&
+          MI->getOperand(4).isCPI()) {
+        unsigned BaseReg = MI->getOperand(1).getReg();
+        if (BaseReg == 0)
+          return true;
+        // Allow re-materialization of PIC load.
+        MachineRegisterInfo &MRI = MI->getParent()->getParent()->getRegInfo();
+        bool isPICBase = false;
+        for (MachineRegisterInfo::def_iterator I = MRI.def_begin(BaseReg),
+               E = MRI.def_end(); I != E; ++I) {
+          MachineInstr *DefMI = I.getOperand().getParent();
+          if (DefMI->getOpcode() != X86::MOVPC32r)
+            return false;
+          assert(!isPICBase && "More than one PIC base?");
+          isPICBase = true;
+        }
+        return isPICBase;
+      } 
+      return false;
     }
-      
-    return false;
+ 
+     case X86::LEA32r:
+     case X86::LEA64r: {
+       if (MI->getOperand(1).isReg() &&
+           MI->getOperand(2).isImm() &&
+           MI->getOperand(3).isReg() && MI->getOperand(3).getReg() == 0 &&
+           !MI->getOperand(4).isReg()) {
+         // lea fi#, lea GV, etc. are all rematerializable.
+         unsigned BaseReg = MI->getOperand(1).getReg();
+         if (BaseReg == 0)
+           return true;
+         // Allow re-materialization of lea PICBase + x.
+         return regIsPICBase(MI, BaseReg);
+       }
+       return false;
+     }
   }
+
   // All other instructions marked M_REMATERIALIZABLE are always trivially
   // rematerializable.
   return true;

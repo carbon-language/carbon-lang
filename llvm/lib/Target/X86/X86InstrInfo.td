@@ -464,6 +464,7 @@ let neverHasSideEffects = 1 in
 def LEA16r   : I<0x8D, MRMSrcMem,
                  (outs GR16:$dst), (ins i32mem:$src),
                  "lea{w}\t{$src|$dst}, {$dst|$src}", []>, OpSize;
+let isReMaterializable = 1 in
 def LEA32r   : I<0x8D, MRMSrcMem,
                  (outs GR32:$dst), (ins lea32mem:$src),
                  "lea{l}\t{$src|$dst}, {$dst|$src}",

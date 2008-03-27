@@ -154,6 +154,7 @@ def LEA64_32r : I<0x8D, MRMSrcMem,
                   "lea{l}\t{$src|$dst}, {$dst|$src}",
                   [(set GR32:$dst, lea32addr:$src)]>, Requires<[In64BitMode]>;
 
+let isReMaterializable = 1 in
 def LEA64r   : RI<0x8D, MRMSrcMem, (outs GR64:$dst), (ins lea64mem:$src),
                   "lea{q}\t{$src|$dst}, {$dst|$src}",
                   [(set GR64:$dst, lea64addr:$src)]>;
