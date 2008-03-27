@@ -115,10 +115,18 @@ void HTMLDiagnostics::HandlePathDiagnostic(const PathDiagnostic& D) {
   
   {
     std::ostringstream os;
-    const FileEntry* Entry = SMgr.getFileEntryForID(FileID);
     
-    os << "<h1>" << html::EscapeText(Entry->getDir()->getName())
-       << "/" << html::EscapeText(Entry->getName()) << "</h1>\n";
+    os << "<h1>";
+
+    const FileEntry* Entry = SMgr.getFileEntryForID(FileID);
+    const char* dname = Entry->getDir()->getName();
+    
+    if (strcmp(dname,".") == 0)
+      os << html::EscapeText(llvm::sys::Path::GetCurrentDirectory().toString());
+    else
+      os << html::EscapeText(dname);
+    
+    os << "/" << html::EscapeText(Entry->getName()) << "</h1>\n";
 
     R.InsertStrBefore(SourceLocation::getFileLoc(FileID, 0), os.str());
   }  
