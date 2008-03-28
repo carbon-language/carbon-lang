@@ -1612,3 +1612,47 @@ The coalescer could coalesce "edx" with "eax" to avoid the movl in LBB1_2
 if it commuted the addl in LBB1_1.
 
 //===---------------------------------------------------------------------===//
+
+See rdar://4653682.
+
+From flops:
+
+LBB1_15:        # bb310
+        cvtss2sd        LCPI1_0, %xmm1
+        addsd   %xmm1, %xmm0
+        movsd   176(%esp), %xmm2
+        mulsd   %xmm0, %xmm2
+        movapd  %xmm2, %xmm3
+        mulsd   %xmm3, %xmm3
+        movapd  %xmm3, %xmm4
+        mulsd   LCPI1_23, %xmm4
+        addsd   LCPI1_24, %xmm4
+        mulsd   %xmm3, %xmm4
+        addsd   LCPI1_25, %xmm4
+        mulsd   %xmm3, %xmm4
+        addsd   LCPI1_26, %xmm4
+        mulsd   %xmm3, %xmm4
+        addsd   LCPI1_27, %xmm4
+        mulsd   %xmm3, %xmm4
+        addsd   LCPI1_28, %xmm4
+        mulsd   %xmm3, %xmm4
+        addsd   %xmm1, %xmm4
+        mulsd   %xmm2, %xmm4
+        movsd   152(%esp), %xmm1
+        addsd   %xmm4, %xmm1
+        movsd   %xmm1, 152(%esp)
+        incl    %eax
+        cmpl    %eax, %esi
+        jge     LBB1_15 # bb310
+LBB1_16:        # bb358.loopexit
+        movsd   152(%esp), %xmm0
+        addsd   %xmm0, %xmm0
+        addsd   LCPI1_22, %xmm0
+        movsd   %xmm0, 152(%esp)
+
+Rather than spilling the result of the last addsd in the loop, we should have
+insert a copy to split the interval (one for the duration of the loop, one
+extending to the fall through). The register pressure in the loop isn't high
+enough to warrant the spill.
+
+Also check why xmm7 is not used at all in the function.
