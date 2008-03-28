@@ -2448,11 +2448,11 @@ SDOperand SelectionDAG::getAtomic(unsigned Opcode, SDOperand Chain,
 }
 
 SDOperand
-SelectionDAG::getAnyLoad(ISD::MemIndexedMode AM, ISD::LoadExtType ExtType,
-                         MVT::ValueType VT, SDOperand Chain,
-                         SDOperand Ptr, SDOperand Offset,
-                         const Value *SV, int SVOffset, MVT::ValueType EVT,
-                         bool isVolatile, unsigned Alignment) {
+SelectionDAG::getLoad(ISD::MemIndexedMode AM, ISD::LoadExtType ExtType,
+                      MVT::ValueType VT, SDOperand Chain,
+                      SDOperand Ptr, SDOperand Offset,
+                      const Value *SV, int SVOffset, MVT::ValueType EVT,
+                      bool isVolatile, unsigned Alignment) {
   if (Alignment == 0) { // Ensure that codegen never sees alignment 0
     const Type *Ty = 0;
     if (VT != MVT::iPTR) {
@@ -2512,8 +2512,8 @@ SDOperand SelectionDAG::getLoad(MVT::ValueType VT,
                                 const Value *SV, int SVOffset,
                                 bool isVolatile, unsigned Alignment) {
   SDOperand Undef = getNode(ISD::UNDEF, Ptr.getValueType());
-  return getAnyLoad(ISD::UNINDEXED, ISD::NON_EXTLOAD, VT, Chain, Ptr, Undef,
-                    SV, SVOffset, VT, isVolatile, Alignment);
+  return getLoad(ISD::UNINDEXED, ISD::NON_EXTLOAD, VT, Chain, Ptr, Undef,
+                 SV, SVOffset, VT, isVolatile, Alignment);
 }
 
 SDOperand SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, MVT::ValueType VT,
@@ -2522,8 +2522,8 @@ SDOperand SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, MVT::ValueType VT,
                                    int SVOffset, MVT::ValueType EVT,
                                    bool isVolatile, unsigned Alignment) {
   SDOperand Undef = getNode(ISD::UNDEF, Ptr.getValueType());
-  return getAnyLoad(ISD::UNINDEXED, ExtType, VT, Chain, Ptr, Undef,
-                    SV, SVOffset, EVT, isVolatile, Alignment);
+  return getLoad(ISD::UNINDEXED, ExtType, VT, Chain, Ptr, Undef,
+                 SV, SVOffset, EVT, isVolatile, Alignment);
 }
 
 SDOperand
@@ -2532,10 +2532,10 @@ SelectionDAG::getIndexedLoad(SDOperand OrigLoad, SDOperand Base,
   LoadSDNode *LD = cast<LoadSDNode>(OrigLoad);
   assert(LD->getOffset().getOpcode() == ISD::UNDEF &&
          "Load is already a indexed load!");
-  return getAnyLoad(AM, LD->getExtensionType(), OrigLoad.getValueType(),
-                    LD->getChain(), Base, Offset, LD->getSrcValue(),
-                    LD->getSrcValueOffset(), LD->getMemoryVT(),
-                    LD->isVolatile(), LD->getAlignment());
+  return getLoad(AM, LD->getExtensionType(), OrigLoad.getValueType(),
+                 LD->getChain(), Base, Offset, LD->getSrcValue(),
+                 LD->getSrcValueOffset(), LD->getMemoryVT(),
+                 LD->isVolatile(), LD->getAlignment());
 }
 
 SDOperand SelectionDAG::getStore(SDOperand Chain, SDOperand Val,

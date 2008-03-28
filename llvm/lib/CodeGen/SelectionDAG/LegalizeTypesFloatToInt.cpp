@@ -116,10 +116,10 @@ SDOperand DAGTypeLegalizer::FloatToIntRes_LOAD(SDNode *N) {
   MVT::ValueType NVT = TLI.getTypeToTransformTo(N->getValueType(0));
   LoadSDNode *L = cast<LoadSDNode>(N);
 
-  return DAG.getAnyLoad(L->getAddressingMode(), L->getExtensionType(),
-                        NVT, L->getChain(), L->getBasePtr(), L->getOffset(),
-                        L->getSrcValue(), L->getSrcValueOffset(),
-                        L->getMemoryVT(), L->isVolatile(), L->getAlignment());
+  return DAG.getLoad(L->getAddressingMode(), L->getExtensionType(),
+                     NVT, L->getChain(), L->getBasePtr(), L->getOffset(),
+                     L->getSrcValue(), L->getSrcValueOffset(),
+                     L->getMemoryVT(), L->isVolatile(), L->getAlignment());
 }
 
 
