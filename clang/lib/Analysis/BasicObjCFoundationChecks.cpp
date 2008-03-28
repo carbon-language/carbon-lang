@@ -209,11 +209,20 @@ bool BasicObjCFoundationChecks::AuditNSString(NodeTy* N,
   switch (len) {
     default:
       break;
-    case 8:
-      
+    case 8:      
       if (!strcmp(cstr, "compare:"))
         return CheckNilArg(N, 0);
               
+      break;
+      
+    case 15:
+      // FIXME: Checking for initWithFormat: will not work in most cases
+      //  yet because [NSString alloc] returns id, not NSString*.  We will
+      //  need support for tracking expected-type information in the analyzer
+      //  to find these errors.
+      if (!strcmp(cstr, "initWithFormat:"))
+        return CheckNilArg(N, 0);
+      
       break;
     
     case 16:
@@ -234,7 +243,7 @@ bool BasicObjCFoundationChecks::AuditNSString(NodeTy* N,
         return CheckNilArg(N, 0);
       
       break;
-      
+
     case 29:
       if (!strcmp(cstr, "compare:options:range:locale:"))
         return CheckNilArg(N, 0);
