@@ -6021,7 +6021,7 @@ static SDOperand PerformSTORECombine(StoreSDNode *St, SelectionDAG &DAG,
                                       Ld->getAlignment());
         SDOperand NewChain = NewLd.getValue(1);
         if (TokenFactorIndex != -1) {
-          Ops.push_back(NewLd);
+          Ops.push_back(NewChain);
           NewChain = DAG.getNode(ISD::TokenFactor, MVT::Other, &Ops[0], 
                                  Ops.size());
         }
