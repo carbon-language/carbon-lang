@@ -748,6 +748,12 @@ static bool regIsPICBase(unsigned BaseReg, MachineRegisterInfo &MRI) {
   }
   return isPICBase;
 }
+
+/// isGVStub - Return true if the GV requires an extra load to get the
+/// real address.
+static inline bool isGVStub(GlobalValue *GV, X86TargetMachine &TM) {
+  return TM.getSubtarget<X86Subtarget>().GVRequiresExtraLoad(GV, TM, false);
+}
  
 bool X86InstrInfo::isReallyTriviallyReMaterializable(MachineInstr *MI) const {
   switch (MI->getOpcode()) {
@@ -769,7 +775,9 @@ bool X86InstrInfo::isReallyTriviallyReMaterializable(MachineInstr *MI) const {
       if (MI->getOperand(1).isReg() &&
           MI->getOperand(2).isImm() &&
           MI->getOperand(3).isReg() && MI->getOperand(3).getReg() == 0 &&
-          MI->getOperand(4).isCPI()) {
+          (MI->getOperand(4).isCPI() ||
+           (MI->getOperand(4).isGlobal() &&
+            isGVStub(MI->getOperand(4).getGlobal(), TM)))) {
         unsigned BaseReg = MI->getOperand(1).getReg();
         if (BaseReg == 0)
           return true;
@@ -831,13 +839,9 @@ bool X86InstrInfo::isInvariantLoad(MachineInstr *MI) const {
     // Loads from constant pools are trivially invariant.
     if (MO.isCPI())
       return true;
-    
-    if (MO.isGlobal()) {
-      if (TM.getSubtarget<X86Subtarget>().GVRequiresExtraLoad(MO.getGlobal(),
-                                                              TM, false))
-        return true;
-      return false;
-    }
+
+    if (MO.isGlobal())
+      return isGVStub(MO.getGlobal(), TM);
 
     // If this is a load from an invariant stack slot, the load is a constant.
     if (MO.isFI()) {
