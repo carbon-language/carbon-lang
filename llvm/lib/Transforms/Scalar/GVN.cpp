@@ -36,6 +36,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Target/TargetData.h"
+#include <list>
 using namespace llvm;
 
 STATISTIC(NumGVNInstr, "Number of instructions deleted");
@@ -1074,11 +1075,11 @@ static int64_t GetOffsetFromIndex(const GetElementPtrInst *GEP, unsigned Idx,
   return Offset;
 }
 
-/// IsPointerAtOffset - Return true if Ptr1 is exactly provably equal to Ptr2
-/// plus the specified constant offset.  For example, Ptr1 might be &A[42], and
-/// Ptr2 might be &A[40] and Offset might be 8.
-static bool IsPointerAtOffset(Value *Ptr1, Value *Ptr2, uint64_t Offset,
-                              TargetData &TD) {
+/// IsPointerOffset - Return true if Ptr1 is provably equal to Ptr2 plus a
+/// constant offset, and return that constant offset.  For example, Ptr1 might
+/// be &A[42], and Ptr2 might be &A[40].  In this case offset would be -8.
+static bool IsPointerOffset(Value *Ptr1, Value *Ptr2, int64_t &Offset,
+                            TargetData &TD) {
   // Right now we handle the case when Ptr1/Ptr2 are both GEPs with an identical
   // base.  After that base, they may have some number of common (and
   // potentially variable) indices.  After that they handle some constant
@@ -1100,8 +1101,120 @@ static bool IsPointerAtOffset(Value *Ptr1, Value *Ptr2, uint64_t Offset,
   int64_t Offset2 = GetOffsetFromIndex(GEP2, Idx, VariableIdxFound, TD);
   if (VariableIdxFound) return false;
   
-  return Offset1 == Offset2+(int64_t)Offset;
+  Offset = Offset2-Offset1;
+  return true;
 }
+
+
+/// MemsetRange - Represents a range of memset'd bytes with the ByteVal value.
+/// This allows us to analyze stores like:
+///   store 0 -> P+1
+///   store 0 -> P+0
+///   store 0 -> P+3
+///   store 0 -> P+2
+/// which sometimes happens with stores to arrays of structs etc.  When we see
+/// the first store, we make a range [1, 2).  The second store extends the range
+/// to [0, 2).  The third makes a new range [2, 3).  The fourth store joins the
+/// two ranges into [0, 3) which is memset'able.
+namespace {
+struct MemsetRange {
+  // Start/End - A semi range that describes the span that this range covers.
+  // The range is closed at the start and open at the end: [Start, End).  
+  int64_t Start, End;
+
+  /// StartPtr - The getelementptr instruction that points to the start of the
+  /// range.
+  Value *StartPtr;
+  
+  /// Alignment - The known alignment of the first store.
+  unsigned Alignment;
+  
+  /// TheStores - The actual stores that make up this range.
+  SmallVector<StoreInst*, 16> TheStores;
+};
+  
+ 
+class MemsetRanges {
+  /// Ranges - A sorted list of the memset ranges.  We use std::list here
+  /// because each element is relatively large and expensive to copy.
+  std::list<MemsetRange> Ranges;
+  typedef std::list<MemsetRange>::iterator range_iterator;
+  TargetData &TD;
+public:
+  MemsetRanges(TargetData &td) : TD(td) {}
+  
+  typedef std::list<MemsetRange>::const_iterator const_iterator;
+  const_iterator begin() const { return Ranges.begin(); }
+  const_iterator end() const { return Ranges.end(); }
+  
+  
+  void addStore(int64_t OffsetFromFirst, StoreInst *SI);
+};
+  
+}
+
+/// addStore - Add a new store to the MemsetRanges data structure.  This adds a
+/// new range for the specified store at the specified offset, merging into
+/// existing ranges as appropriate.
+void MemsetRanges::addStore(int64_t Start, StoreInst *SI) {
+  int64_t End = Start+TD.getTypeStoreSize(SI->getOperand(0)->getType());
+  
+  // Do a linear search of the ranges to see if this can be joined and/or to
+  // find the insertion point in the list.  We keep the ranges sorted for
+  // simplicity here.  This is a linear search of a linked list, which is ugly,
+  // however the number of ranges is limited, so this won't get crazy slow.
+  range_iterator I = Ranges.begin(), E = Ranges.end();
+  
+  while (I != E && Start > I->End)
+    ++I;
+  
+  // We now know that I == E, in which case we didn't find anything to merge
+  // with, or that Start <= I->End.  If End < I->Start or I == E, then we need
+  // to insert a new range.  Handle this now.
+  if (I == E || End < I->Start) {
+    MemsetRange &R = *Ranges.insert(I, MemsetRange());
+    R.Start        = Start;
+    R.End          = End;
+    R.StartPtr     = SI->getPointerOperand();
+    R.Alignment    = SI->getAlignment();
+    R.TheStores.push_back(SI);
+    return;
+  }
+
+  // This store overlaps with I, add it.
+  I->TheStores.push_back(SI);
+  
+  // At this point, we may have an interval that completely contains our store.
+  // If so, just add it to the interval and return.
+  if (I->Start <= Start && I->End >= End)
+    return;
+  
+  // Now we know that Start <= I->End and End >= I->Start so the range overlaps
+  // but is not entirely contained within the range.
+  
+  // See if the range extends the start of the range.  In this case, it couldn't
+  // possibly cause it to join the prior range, because otherwise we would have
+  // stopped on *it*.
+  if (Start < I->Start)
+    I->Start = Start;
+    
+  // Now we know that Start <= I->End and Start >= I->Start (so the startpoint
+  // is in or right at the end of I), and that End >= I->Start.  Extend I out to
+  // End.
+  if (End > I->End) {
+    I->End = End;
+    range_iterator NextI = I;;
+    while (++NextI != E && End >= NextI->Start) {
+      // Merge the range in.
+      I->TheStores.append(NextI->TheStores.begin(), NextI->TheStores.end());
+      if (NextI->End > I->End)
+        I->End = NextI->End;
+      Ranges.erase(NextI);
+      NextI = I;
+    }
+  }
+}
+
 
 
 /// processStore - When GVN is scanning forward over instructions, we look for
@@ -1125,18 +1238,15 @@ bool GVN::processStore(StoreInst *SI, SmallVectorImpl<Instruction*> &toErase) {
   TargetData &TD = getAnalysis<TargetData>();
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
 
-  // Okay, so we now have a single store that can be splatable.  Try to 'grow'
-  // this store by looking for neighboring stores to the immediate left or right
-  // of the store we have so far.  While we could in theory handle stores in
-  // this order:  A[0], A[2], A[1]
-  // in practice, right now we only worry about cases where stores are
-  // consequtive in increasing or decreasing address order.
-  uint64_t BytesSoFar = TD.getTypeStoreSize(SI->getOperand(0)->getType());
-  uint64_t BytesFromSI = 0;
-  unsigned StartAlign = SI->getAlignment();
+  // Okay, so we now have a single store that can be splatable.  Scan to find
+  // all subsequent stores of the same value to offset from the same pointer.
+  // Join these together into ranges, so we can decide whether contiguous blocks
+  // are stored.
+  MemsetRanges Ranges(TD);
+  
+  // Add our first pointer.
+  Ranges.addStore(0, SI);
   Value *StartPtr = SI->getPointerOperand();
-  SmallVector<StoreInst*, 16> Stores;
-  Stores.push_back(SI);
   
   BasicBlock::iterator BI = SI;
   for (++BI; !isa<TerminatorInst>(BI); ++BI) {
@@ -1164,77 +1274,69 @@ bool GVN::processStore(StoreInst *SI, SmallVectorImpl<Instruction*> &toErase) {
     // Check to see if this stored value is of the same byte-splattable value.
     if (ByteVal != isBytewiseValue(NextStore->getOperand(0)))
       break;
-    
-    Value *ThisPointer = NextStore->getPointerOperand();
-    unsigned AccessSize = TD.getTypeStoreSize(SI->getOperand(0)->getType());
-    
-    // If so, check to see if the store is before the current range or after it
-    // in either case, extend the range, otherwise reject it.
-    if (IsPointerAtOffset(ThisPointer, StartPtr, BytesSoFar, TD)) {
-      // Okay, this extends the stored area on the end, just add to the bytes
-      // so far and remember this store.
-      BytesSoFar += AccessSize;
-      Stores.push_back(NextStore);
-      continue;
-    }
-    
-    if (IsPointerAtOffset(StartPtr, ThisPointer, AccessSize, TD)) {
-      // Okay, the store is before the current range.  Reset our start pointer
-      // and get new alignment info etc.
-      BytesSoFar  += AccessSize;
-      BytesFromSI += AccessSize;
-      Stores.push_back(NextStore);
-      StartPtr = ThisPointer;
-      StartAlign = NextStore->getAlignment();
-      continue;
-    }
 
-    // Otherwise, this store wasn't contiguous with our current range, bail out.
-    break;
+    // Check to see if this store is to a constant offset from the start ptr.
+    int64_t Offset;
+    if (!IsPointerOffset(StartPtr, NextStore->getPointerOperand(), Offset, TD))
+      break;
+
+    Ranges.addStore(Offset, NextStore);
   }
   
-  // If we found less than 4 stores to merge, bail out, it isn't worth losing
-  // type information in llvm IR to do the transformation.
-  if (Stores.size() < 4) 
-    return false;
+  Function *MemSetF = 0;
   
-  // Otherwise, we do want to transform this!  Create a new memset.  We put the
-  // memset right after the first store that we found in this block.  This
-  // ensures that the caller will increment the iterator to  the memset before
-  // it deletes all the stores.
-  BasicBlock::iterator InsertPt = SI; ++InsertPt;
+  // Now that we have full information about ranges, loop over the ranges and
+  // emit memset's for anything big enough to be worthwhile.
+  bool MadeChange = false;
+  for (MemsetRanges::const_iterator I = Ranges.begin(), E = Ranges.end();
+       I != E; ++I) {
+    const MemsetRange &Range = *I;
+
+    // If we found less than 4 stores to merge, ignore the subrange: it isn't
+    // worth losing type information in llvm IR to do the transformation.
+    if (Range.TheStores.size() < 4)
+      continue;
+    
+    // Otherwise, we do want to transform this!  Create a new memset.  We put
+    // the memset right after the first store that we found in this block.  This
+    // ensures that the caller will increment the iterator to the memset before
+    // it deletes all the stores.
+    BasicBlock::iterator InsertPt = SI; ++InsertPt;
   
-  Function *F = Intrinsic::getDeclaration(SI->getParent()->getParent()
+    if (MemSetF == 0)
+      MemSetF = Intrinsic::getDeclaration(SI->getParent()->getParent()
                                           ->getParent(), Intrinsic::memset_i64);
+    
+    // StartPtr may not dominate the starting point.  Instead of using it, base
+    // the destination pointer off the input to the first store in the block.
+    StartPtr = SI->getPointerOperand();
   
-  // StartPtr may not dominate the starting point.  Instead of using it, base
-  // the destination pointer off the input to the first store in the block.
-  StartPtr = SI->getPointerOperand();
+    // Cast the start ptr to be i8* as memset requires.
+    const Type *i8Ptr = PointerType::getUnqual(Type::Int8Ty);
+    if (StartPtr->getType() != i8Ptr)
+      StartPtr = new BitCastInst(StartPtr, i8Ptr, StartPtr->getNameStart(),
+                                 InsertPt);
   
-  // Cast the start ptr to be i8* as memset requires.
-  const Type *i8Ptr = PointerType::getUnqual(Type::Int8Ty);
-  if (StartPtr->getType() != i8Ptr)
-    StartPtr = new BitCastInst(StartPtr, i8Ptr, StartPtr->getNameStart(),
-                               InsertPt);
+    // Offset the pointer if needed.
+    if (Range.Start)
+      StartPtr = new GetElementPtrInst(StartPtr, ConstantInt::get(Type::Int64Ty,
+                                                                  Range.Start),
+                                       "ptroffset", InsertPt);
   
-  // Offset the pointer if needed.
-  if (BytesFromSI)
-    StartPtr = new GetElementPtrInst(StartPtr, ConstantInt::get(Type::Int64Ty,
-                                                                -BytesFromSI),
-                                     "ptroffset", InsertPt);
+    Value *Ops[] = {
+      StartPtr, ByteVal,   // Start, value
+      ConstantInt::get(Type::Int64Ty, Range.End-Range.Start),  // size
+      ConstantInt::get(Type::Int32Ty, Range.Alignment)   // align
+    };
+    new CallInst(MemSetF, Ops, Ops+4, "", InsertPt);
   
-  Value *Ops[] = {
-    StartPtr, ByteVal,   // Start, value
-    ConstantInt::get(Type::Int64Ty, BytesSoFar),  // size
-    ConstantInt::get(Type::Int32Ty, StartAlign)   // align
-  };
-  new CallInst(F, Ops, Ops+4, "", InsertPt);
+    // Zap all the stores.
+    toErase.append(Range.TheStores.begin(), Range.TheStores.end());
+    ++NumMemSetInfer;
+    MadeChange = true;
+  }
   
-  // Zap all the stores.
-  toErase.append(Stores.begin(), Stores.end());
-  
-  ++NumMemSetInfer;
-  return true;
+  return MadeChange;
 }
 
 
