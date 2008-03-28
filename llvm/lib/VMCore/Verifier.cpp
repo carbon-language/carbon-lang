@@ -21,7 +21,7 @@
 //  * The code is in valid SSA form
 //  * It should be illegal to put a label into any other type (like a structure)
 //    or to return one. [except constant arrays!]
-//  * Only phi nodes can be self referential: 'add int %0, %0 ; <int>:0' is bad
+//  * Only phi nodes can be self referential: 'add i32 %0, %0 ; <int>:0' is bad
 //  * PHI nodes must have an entry for each predecessor, with no extras.
 //  * PHI nodes must be the first thing in a basic block, all grouped together
 //  * PHI nodes must have at least one entry
@@ -529,6 +529,12 @@ void Verifier::visitBasicBlock(BasicBlock &BB) {
 
   // Ensure that basic blocks have terminators!
   Assert1(BB.getTerminator(), "Basic Block does not have terminator!", &BB);
+
+  // Ensure that the BB doesn't point out of its Function for unwinding.
+  Assert2(!BB.getUnwindDest() ||
+          BB.getUnwindDest()->getParent() == BB.getParent(),
+          "Basic Block unwinds to block in different function!",
+          &BB, BB.getUnwindDest());
 
   // Check constraints that this basic block imposes on all of the PHI nodes in
   // it.
@@ -1217,7 +1223,7 @@ void Verifier::visitInstruction(Instruction &I) {
         }
 
         // Definition must dominate use unless use is unreachable!
-        Assert2(DT->dominates(OpBlock, BB) ||
+        Assert2(DT->dominates(Op, &I) ||
                 !DT->dominates(&BB->getParent()->getEntryBlock(), BB),
                 "Instruction does not dominate all uses!", Op, &I);
       } else {

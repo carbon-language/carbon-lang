@@ -1864,7 +1864,7 @@ if (i == j)
     <li>The code is in valid SSA form.</li>
     <li>It should be illegal to put a label into any other type (like a
         structure) or to return one. [except constant arrays!]</li>
-    <li>Only phi nodes can be self referential: <tt>%x = add int %x, %x</tt> is
+    <li>Only phi nodes can be self referential: <tt>%x = add i32 %x, %x</tt> is
         invalid.</li>
     <li>PHI nodes must have an entry for each predecessor, with no extras.</li>
     <li>PHI nodes must be the first thing in a basic block, all grouped
