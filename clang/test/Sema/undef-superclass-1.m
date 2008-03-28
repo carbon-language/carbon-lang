@@ -18,3 +18,9 @@
 
 @interface INTF1  // expected-error {{duplicate interface declaration for class 'INTF1'}}
 @end
+
+@implementation SUPER
+- (void)dealloc {
+    [super dealloc]; // expected-error {{no super class declared in @interface for 'SUPER'}}
+}
+@end

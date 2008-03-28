@@ -146,7 +146,10 @@ Sema::ExprResult Sema::ActOnClassMessage(
   ObjCInterfaceDecl* ClassDecl = 0;
   if (!strcmp(receiverName->getName(), "super") && CurMethodDecl) {
     ClassDecl = CurMethodDecl->getClassInterface()->getSuperClass();
-    if (ClassDecl && CurMethodDecl->isInstance()) {
+    if (!ClassDecl)
+      return Diag(lbrac, diag::error_no_super_class,
+                  CurMethodDecl->getClassInterface()->getName());
+    if (CurMethodDecl->isInstance()) {
       // Synthesize a cast to the super class. This hack allows us to loosely
       // represent super without creating a special expression node.
       IdentifierInfo &II = Context.Idents.get("self");
