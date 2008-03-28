@@ -84,8 +84,9 @@ namespace {
     // Needed for header files being rewritten
     bool IsHeader;
     
-    std::ostream &OutFile;
-    
+    std::string InFileName;
+    std::string OutFileName;
+     
     std::string Preamble;
     
     static const int OBJC_ABI_VERSION =7 ;
@@ -96,13 +97,8 @@ namespace {
     // Top Level Driver code.
     virtual void HandleTopLevelDecl(Decl *D);
     void HandleDeclInMainFile(Decl *D);
-    RewriteTest(bool isHeader, std::ostream &outFile,
-                Diagnostic &D, const LangOptions &LOpts)
-      : Diags(D), LangOpts(LOpts), OutFile(outFile) {
-      IsHeader = isHeader;
-      RewriteFailedDiag = Diags.getCustomDiagID(Diagnostic::Warning, 
-               "rewriting sub-expression within a macro (may not be correct)");
-    }
+    RewriteTest(std::string inFile, std::string outFile,
+                Diagnostic &D, const LangOptions &LOpts);
     ~RewriteTest();
     
     void ReplaceStmt(Stmt *Old, Stmt *New) {
@@ -239,29 +235,21 @@ static bool IsHeaderFile(const std::string &Filename) {
   return Ext == "h" || Ext == "hh" || Ext == "H";
 }    
 
+RewriteTest::RewriteTest(std::string inFile, std::string outFile,
+                         Diagnostic &D, const LangOptions &LOpts)
+      : Diags(D), LangOpts(LOpts) {
+  IsHeader = IsHeaderFile(inFile);
+  InFileName = inFile;
+  OutFileName = outFile;
+  RewriteFailedDiag = Diags.getCustomDiagID(Diagnostic::Warning, 
+               "rewriting sub-expression within a macro (may not be correct)");
+}
+
 ASTConsumer *clang::CreateCodeRewriterTest(const std::string& InFile,
                                            const std::string& OutFile,
                                            Diagnostic &Diags, 
                                            const LangOptions &LOpts) {
-  // Create the output file.
-  
-  std::ostream *Out;
-  if (OutFile == "-") {
-    Out = llvm::cout.stream();
-  } else if (!OutFile.empty()) {
-    Out = new std::ofstream(OutFile.c_str(), 
-                            std::ios_base::binary|std::ios_base::out);
-  } else if (InFile == "-") {
-    Out = llvm::cout.stream();
-  } else {
-    llvm::sys::Path Path(InFile);
-    Path.eraseSuffix();
-    Path.appendSuffix("cpp");
-    Out = new std::ofstream(Path.toString().c_str(), 
-                            std::ios_base::binary|std::ios_base::out);
-  }
-  
-  return new RewriteTest(IsHeaderFile(InFile), *Out, Diags, LOpts);
+  return new RewriteTest(InFile, OutFile, Diags, LOpts);
 }
 
 void RewriteTest::Initialize(ASTContext &context) {
@@ -436,6 +424,27 @@ RewriteTest::~RewriteTest() {
   // Rewrite tabs if we care.
   //RewriteTabs();
   
+  if (Diags.hasErrorOccurred())
+    return;
+
+  // Create the output file.
+  
+  std::ostream *OutFile;
+  if (OutFileName == "-") {
+    OutFile = llvm::cout.stream();
+  } else if (!OutFileName.empty()) {
+    OutFile = new std::ofstream(OutFileName.c_str(), 
+                                std::ios_base::binary|std::ios_base::out);
+  } else if (InFileName == "-") {
+    OutFile = llvm::cout.stream();
+  } else {
+    llvm::sys::Path Path(InFileName);
+    Path.eraseSuffix();
+    Path.appendSuffix("cpp");
+    OutFile = new std::ofstream(Path.toString().c_str(), 
+                                std::ios_base::binary|std::ios_base::out);
+  }
+  
   RewriteInclude();
   
   InsertText(SourceLocation::getFileLoc(MainFileID, 0), 
@@ -450,12 +459,12 @@ RewriteTest::~RewriteTest() {
   if (const RewriteBuffer *RewriteBuf = 
       Rewrite.getRewriteBufferFor(MainFileID)) {
     //printf("Changed:\n");
-    OutFile << std::string(RewriteBuf->begin(), RewriteBuf->end());
+    *OutFile << std::string(RewriteBuf->begin(), RewriteBuf->end());
   } else {
     fprintf(stderr, "No changes\n");
   }
   // Emit metadata.
-  OutFile << ResultStr;
+  *OutFile << ResultStr;
 }
 
 //===----------------------------------------------------------------------===//

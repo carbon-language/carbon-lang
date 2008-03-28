@@ -1,4 +1,4 @@
-// RUN: clang -rewrite-test %s 
+// RUN: clang -rewrite-test %s -o -
 // RUN: clang -rewrite-test %s -o - | grep 'newInv->_container'
 
 @interface NSMutableArray 
