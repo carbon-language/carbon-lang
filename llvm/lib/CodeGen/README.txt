@@ -199,3 +199,5 @@ effects).  Once this is in place, it would be even better to have tblgen
 synthesize the various copy insertion/inspection methods in TargetInstrInfo.
 
 //===---------------------------------------------------------------------===//
+
+Avoid issuing copies of TargetInstrInfo::implicit_def.
