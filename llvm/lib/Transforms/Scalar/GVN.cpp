@@ -1182,7 +1182,7 @@ public:
   typedef std::list<MemsetRange>::const_iterator const_iterator;
   const_iterator begin() const { return Ranges.begin(); }
   const_iterator end() const { return Ranges.end(); }
-  
+  bool empty() const { return Ranges.empty(); }
   
   void addStore(int64_t OffsetFromFirst, StoreInst *SI);
 };
@@ -1281,8 +1281,6 @@ bool GVN::processStore(StoreInst *SI, SmallVectorImpl<Instruction*> &toErase) {
   // are stored.
   MemsetRanges Ranges(TD);
   
-  // Add our first pointer.
-  Ranges.addStore(0, SI);
   Value *StartPtr = SI->getPointerOperand();
   
   BasicBlock::iterator BI = SI;
@@ -1319,6 +1317,17 @@ bool GVN::processStore(StoreInst *SI, SmallVectorImpl<Instruction*> &toErase) {
 
     Ranges.addStore(Offset, NextStore);
   }
+
+  // If we have no ranges, then we just had a single store with nothing that
+  // could be merged in.  This is a very common case of course.
+  if (Ranges.empty())
+    return false;
+  
+  // If we had at least one store that could be merged in, add the starting
+  // store as well.  We try to avoid this unless there is at least something
+  // interesting as a small compile-time optimization.
+  Ranges.addStore(0, SI);
+
   
   Function *MemSetF = 0;
   
