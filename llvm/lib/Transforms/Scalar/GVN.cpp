@@ -1232,8 +1232,10 @@ void MemsetRanges::addStore(int64_t Start, StoreInst *SI) {
   // See if the range extends the start of the range.  In this case, it couldn't
   // possibly cause it to join the prior range, because otherwise we would have
   // stopped on *it*.
-  if (Start < I->Start)
+  if (Start < I->Start) {
     I->Start = Start;
+    I->StartPtr = SI->getPointerOperand();
+  }
     
   // Now we know that Start <= I->End and Start >= I->Start (so the startpoint
   // is in or right at the end of I), and that End >= I->Start.  Extend I out to
@@ -1345,30 +1347,23 @@ bool GVN::processStore(StoreInst *SI, SmallVectorImpl<Instruction*> &toErase) {
       continue;
     
     // Otherwise, we do want to transform this!  Create a new memset.  We put
-    // the memset right after the first store that we found in this block.  This
-    // ensures that the caller will increment the iterator to the memset before
-    // it deletes all the stores.
-    BasicBlock::iterator InsertPt = SI; ++InsertPt;
+    // the memset right before the first instruction that isn't part of this
+    // memset block.  This ensure that the memset is dominated by any addressing
+    // instruction needed by the start of the block.
+    BasicBlock::iterator InsertPt = BI;
   
     if (MemSetF == 0)
       MemSetF = Intrinsic::getDeclaration(SI->getParent()->getParent()
                                           ->getParent(), Intrinsic::memset_i64);
     
-    // StartPtr may not dominate the starting point.  Instead of using it, base
-    // the destination pointer off the input to the first store in the block.
-    StartPtr = SI->getPointerOperand();
+    // Get the starting pointer of the block.
+    StartPtr = Range.StartPtr;
   
     // Cast the start ptr to be i8* as memset requires.
     const Type *i8Ptr = PointerType::getUnqual(Type::Int8Ty);
     if (StartPtr->getType() != i8Ptr)
       StartPtr = new BitCastInst(StartPtr, i8Ptr, StartPtr->getNameStart(),
                                  InsertPt);
-  
-    // Offset the pointer if needed.
-    if (Range.Start)
-      StartPtr = new GetElementPtrInst(StartPtr, ConstantInt::get(Type::Int64Ty,
-                                                                  Range.Start),
-                                       "ptroffset", InsertPt);
   
     Value *Ops[] = {
       StartPtr, ByteVal,   // Start, value
@@ -1695,7 +1690,7 @@ bool GVN::iterateOnFunction(Function &F) {
   
   DominatorTree &DT = getAnalysis<DominatorTree>();   
   
-  SmallVector<Instruction*, 4> toErase;
+  SmallVector<Instruction*, 8> toErase;
   DenseMap<Value*, LoadInst*> lastSeenLoad;
 
   // Top-down walk of the dominator tree
@@ -1713,19 +1708,31 @@ bool GVN::iterateOnFunction(Function &F) {
       currAvail = availableOut[DI->getIDom()->getBlock()];
 
     for (BasicBlock::iterator BI = BB->begin(), BE = BB->end();
-         BI != BE; ) {
+         BI != BE;) {
       changed_function |= processInstruction(BI, currAvail,
                                              lastSeenLoad, toErase);
+      if (toErase.empty()) {
+        ++BI;
+        continue;
+      }
       
+      // If we need some instructions deleted, do it now.
       NumGVNInstr += toErase.size();
       
-      // Avoid iterator invalidation
-      ++BI;
+      // Avoid iterator invalidation.
+      bool AtStart = BI == BB->begin();
+      if (!AtStart)
+        --BI;
 
       for (SmallVector<Instruction*, 4>::iterator I = toErase.begin(),
            E = toErase.end(); I != E; ++I)
         (*I)->eraseFromParent();
 
+      if (AtStart)
+        BI = BB->begin();
+      else
+        ++BI;
+      
       toErase.clear();
     }
   }
