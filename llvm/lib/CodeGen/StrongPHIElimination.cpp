@@ -406,12 +406,9 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
   // before the current one.
   std::set<unsigned> ProcessedNames;
   
-  MachineBasicBlock::iterator FirstNonPHI = MBB->begin();
-  while (FirstNonPHI->getOpcode() == TargetInstrInfo::PHI) FirstNonPHI++;
-  
   // Iterate over all the PHI nodes in this block
   MachineBasicBlock::iterator P = MBB->begin();
-  while (P != FirstNonPHI && P->getOpcode() == TargetInstrInfo::PHI) {
+  while (P->getOpcode() == TargetInstrInfo::PHI) {
     unsigned DestReg = P->getOperand(0).getReg();
 
     // Don't both doing PHI elimination for dead PHI's.
@@ -421,7 +418,7 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
     }
 
     LiveInterval& PI = LI.getOrCreateInterval(DestReg);
-    unsigned pIdx = LI.getInstructionIndex(FirstNonPHI);
+    unsigned pIdx = LI.getDefIndex(LI.getInstructionIndex(P));
     VNInfo* PVN = PI.getLiveRangeContaining(pIdx)->valno;
     PhiValueNumber.insert(std::make_pair(DestReg, PVN->id));
 
@@ -632,7 +629,7 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
     map.insert(std::make_pair(I->first, I->first));
     map.insert(std::make_pair(I->second, I->second));
          
-    if (!UsedByAnother.count(I->first)) {
+    if (!UsedByAnother.count(I->second)) {
       worklist.insert(*I);
       
       // Avoid iterator invalidation
@@ -808,8 +805,6 @@ void StrongPHIElimination::mergeLiveIntervals(unsigned primary,
   // coalesced.
   SmallVector<int, 16> LHSValNoAssignments;
   SmallVector<int, 16> RHSValNoAssignments;
-  DenseMap<VNInfo*, VNInfo*> LHSValsDefinedFromRHS;
-  DenseMap<VNInfo*, VNInfo*> RHSValsDefinedFromLHS;
   SmallVector<VNInfo*, 16> NewVNInfo;
   
   LHSValNoAssignments.resize(LHS.getNumValNums(), -1);
@@ -822,9 +817,9 @@ void StrongPHIElimination::mergeLiveIntervals(unsigned primary,
     unsigned VN = VNI->id;
     if (LHSValNoAssignments[VN] >= 0 || VNI->def == ~1U) 
       continue;
-    ComputeUltimateVN(VNI, NewVNInfo,
-                      LHSValsDefinedFromRHS, RHSValsDefinedFromLHS,
-                      LHSValNoAssignments, RHSValNoAssignments);
+    
+    NewVNInfo.push_back(VNI);
+    LHSValNoAssignments[VN] = NewVNInfo.size()-1;
   }
   
   for (LiveInterval::vni_iterator I = RHS.vni_begin(), E = RHS.vni_end();
@@ -833,51 +828,26 @@ void StrongPHIElimination::mergeLiveIntervals(unsigned primary,
     unsigned VN = VNI->id;
     if (RHSValNoAssignments[VN] >= 0 || VNI->def == ~1U)
       continue;
-    // If this value number isn't a copy from the LHS, it's a new number.
-    if (RHSValsDefinedFromLHS.find(VNI) == RHSValsDefinedFromLHS.end()) {
-      NewVNInfo.push_back(VNI);
-      RHSValNoAssignments[VN] = NewVNInfo.size()-1;
-      continue;
-    }
-    
-    ComputeUltimateVN(VNI, NewVNInfo,
-                      RHSValsDefinedFromLHS, LHSValsDefinedFromRHS,
-                      RHSValNoAssignments, LHSValNoAssignments);
+      
+    NewVNInfo.push_back(VNI);
+    RHSValNoAssignments[VN] = NewVNInfo.size()-1;
   }
-  
-  // Update kill info. Some live ranges are extended due to copy coalescing.
-  for (DenseMap<VNInfo*, VNInfo*>::iterator I = LHSValsDefinedFromRHS.begin(),
-         E = LHSValsDefinedFromRHS.end(); I != E; ++I) {
-    VNInfo *VNI = I->first;
-    unsigned LHSValID = LHSValNoAssignments[VNI->id];
-    LiveInterval::removeKill(NewVNInfo[LHSValID], VNI->def);
-    NewVNInfo[LHSValID]->hasPHIKill |= VNI->hasPHIKill;
-    RHS.addKills(NewVNInfo[LHSValID], VNI->kills);
-  }
-
-  // Update kill info. Some live ranges are extended due to copy coalescing.
-  for (DenseMap<VNInfo*, VNInfo*>::iterator I = RHSValsDefinedFromLHS.begin(),
-         E = RHSValsDefinedFromLHS.end(); I != E; ++I) {
-    VNInfo *VNI = I->first;
-    unsigned RHSValID = RHSValNoAssignments[VNI->id];
-    LiveInterval::removeKill(NewVNInfo[RHSValID], VNI->def);
-    NewVNInfo[RHSValID]->hasPHIKill |= VNI->hasPHIKill;
-    LHS.addKills(NewVNInfo[RHSValID], VNI->kills);
-  }
-
-  // Use the VNInfo we collected earlier to ensure that the phi copy is
-  // merged correctly.
-  // FIXME: This is not working correctly yet.
-  // RHSValNoAssignments[secondaryVN] = primaryVN;
 
   // If we get here, we know that we can coalesce the live ranges.  Ask the
   // intervals to coalesce themselves now.
 
   LHS.join(RHS, &LHSValNoAssignments[0], &RHSValNoAssignments[0], NewVNInfo);
   LI.removeInterval(secondary);
+  
+  // The valno that was previously the input to the PHI node
+  // now has a PHIKill.
+  LHS.getValNumInfo(RHSValNoAssignments[secondaryVN])->hasPHIKill = true;
 }
 
 bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
+  
+  LiveIntervals& LI = getAnalysis<LiveIntervals>();
+  
   // Compute DFS numbers of each block
   computeDFS(Fn);
   
@@ -913,29 +883,26 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
         phis.push_back(BI);
   }
   
-  LiveIntervals& LI = getAnalysis<LiveIntervals>();
-  
   for (std::vector<MachineInstr*>::iterator I = phis.begin(), E = phis.end();
-       I != E; ++I) {
+       I != E; ) {
+    MachineInstr* PInstr = *(I++);
+    
     // If this is a dead PHI node, then remove it from LiveIntervals.
-    unsigned DestReg = (*I)->getOperand(0).getReg();
-    if ((*I)->registerDefIsDead(DestReg)) {
+    unsigned DestReg = PInstr->getOperand(0).getReg();
+    if (PInstr->registerDefIsDead(DestReg)) {
       LiveInterval& PI = LI.getInterval(DestReg);
       
       if (PI.containsOneValue()) {
         LI.removeInterval(DestReg);
       } else {
-        MachineBasicBlock::iterator PIter = *I;
-        while (PIter->getOpcode() == TargetInstrInfo::PHI) ++PIter;
-        unsigned idx = LI.getInstructionIndex(PIter);
-        
+        unsigned idx = LI.getDefIndex(LI.getInstructionIndex(PInstr));
         PI.removeRange(*PI.getLiveRangeContaining(idx), true);
       }
     }
       
-    LI.RemoveMachineInstrFromMaps(*I);
-    (*I)->eraseFromParent();
+    LI.RemoveMachineInstrFromMaps(PInstr);
+    PInstr->eraseFromParent();
   }
   
-  return false;
+  return true;
 }
