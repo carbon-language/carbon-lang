@@ -1708,28 +1708,9 @@ void BURegReductionPriorityQueue<SF>::CalculateSethiUllmanNumbers() {
     CalcNodeSethiUllmanNumber(&(*SUnits)[i]);
 }
 
-#if 0
-static unsigned SumOfUnscheduledPredsOfSuccs(const SUnit *SU) {
-  unsigned Sum = 0;
-  for (SUnit::const_succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
-       I != E; ++I) {
-    SUnit *SuccSU = I->Dep;
-    for (SUnit::const_pred_iterator II = SuccSU->Preds.begin(),
-         EE = SuccSU->Preds.end(); II != EE; ++II) {
-      SUnit *PredSU = II->Dep;
-      if (!PredSU->isScheduled)
-        ++Sum;
-    }
-  }
-
-  return Sum;
-}
-#endif
-
 /// LimitedSumOfUnscheduledPredsOfSuccs - Compute the sum of the unscheduled
 /// predecessors of the successors of the SUnit SU. Stop when the provided
 /// limit is exceeded.
-
 static unsigned LimitedSumOfUnscheduledPredsOfSuccs(const SUnit *SU, 
                                                     unsigned Limit) {
   unsigned Sum = 0;
@@ -1739,11 +1720,9 @@ static unsigned LimitedSumOfUnscheduledPredsOfSuccs(const SUnit *SU,
     for (SUnit::const_pred_iterator II = SuccSU->Preds.begin(),
          EE = SuccSU->Preds.end(); II != EE; ++II) {
       SUnit *PredSU = II->Dep;
-      if (!PredSU->isScheduled) {
-        ++Sum;
-        if(Sum > Limit)
-            return Sum;
-      }
+      if (!PredSU->isScheduled)
+        if (++Sum > Limit)
+          return Sum;
     }
   }
   return Sum;
