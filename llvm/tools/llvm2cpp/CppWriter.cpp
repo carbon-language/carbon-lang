@@ -462,6 +462,14 @@ CppWriter::printParamAttrs(const PAListPtr &PAL, const std::string &name) {
         Out << " | ParamAttr::NoUnwind";
       if (attrs & ParamAttr::ByVal)
         Out << " | ParamAttr::ByVal";
+      if (attrs & ParamAttr::NoAlias)
+        Out << " | ParamAttr::NoAlias";
+      if (attrs & ParamAttr::Nest)
+        Out << " | ParamAttr::Nest";
+      if (attrs & ParamAttr::ReadNone)
+        Out << " | ParamAttr::ReadNone";
+      if (attrs & ParamAttr::ReadOnly)
+        Out << " | ParamAttr::ReadOnly";
       Out << ";";
       nl(Out);
       Out << "Attrs.push_back(PAWI);";
