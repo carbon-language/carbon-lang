@@ -177,7 +177,7 @@ public:
 
   /// findRegisterUseOperand - Wrapper for findRegisterUseOperandIdx, it returns
   /// a pointer to the MachineOperand rather than an index.
-  MachineOperand *findRegisterUseOperand(unsigned Reg,bool isKill = false,
+  MachineOperand *findRegisterUseOperand(unsigned Reg, bool isKill = false,
                                          const TargetRegisterInfo *TRI = NULL) {
     int Idx = findRegisterUseOperandIdx(Reg, isKill, TRI);
     return (Idx == -1) ? NULL : &getOperand(Idx);
