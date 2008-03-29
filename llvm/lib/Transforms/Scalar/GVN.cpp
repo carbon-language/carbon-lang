@@ -34,6 +34,7 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Target/TargetData.h"
 #include <list>
@@ -47,7 +48,7 @@ namespace {
   cl::opt<bool>
   FormMemSet("form-memset-from-stores",
              cl::desc("Transform straight-line stores to memsets"),
-             cl::init(false), cl::Hidden);
+             cl::init(true), cl::Hidden);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1131,9 +1132,44 @@ struct MemsetRange {
   
   /// TheStores - The actual stores that make up this range.
   SmallVector<StoreInst*, 16> TheStores;
-};
   
- 
+  bool isProfitableToUseMemset(const TargetData &TD) const;
+
+};
+} // end anon namespace
+
+bool MemsetRange::isProfitableToUseMemset(const TargetData &TD) const {
+  // If we found more than 8 stores to merge or 64 bytes, use memset.
+  if (TheStores.size() >= 8 || End-Start >= 64) return true;
+  
+  // Assume that the code generator is capable of merging pairs of stores
+  // together if it wants to.
+  if (TheStores.size() <= 2) return false;
+  
+  // If we have fewer than 8 stores, it can still be worthwhile to do this.
+  // For example, merging 4 i8 stores into an i32 store is useful almost always.
+  // However, merging 2 32-bit stores isn't useful on a 32-bit architecture (the
+  // memset will be split into 2 32-bit stores anyway) and doing so can
+  // pessimize the llvm optimizer.
+  //
+  // Since we don't have perfect knowledge here, make some assumptions: assume
+  // the maximum GPR width is the same size as the pointer size and assume that
+  // this width can be stored.  If so, check to see whether we will end up
+  // actually reducing the number of stores used.
+  unsigned Bytes = unsigned(End-Start);
+  unsigned NumPointerStores = Bytes/TD.getPointerSize();
+  
+  // Assume the remaining bytes if any are done a byte at a time.
+  unsigned NumByteStores = Bytes - NumPointerStores*TD.getPointerSize();
+  
+  // If we will reduce the # stores (according to this heuristic), do the
+  // transformation.  This encourages merging 4 x i8 -> i32 and 2 x i16 -> i32
+  // etc.
+  return TheStores.size() > NumPointerStores+NumByteStores;
+}    
+
+
+namespace {
 class MemsetRanges {
   /// Ranges - A sorted list of the memset ranges.  We use std::list here
   /// because each element is relatively large and expensive to copy.
@@ -1151,7 +1187,8 @@ public:
   void addStore(int64_t OffsetFromFirst, StoreInst *SI);
 };
   
-}
+} // end anon namespace
+
 
 /// addStore - Add a new store to the MemsetRanges data structure.  This adds a
 /// new range for the specified store at the specified offset, merging into
@@ -1292,9 +1329,10 @@ bool GVN::processStore(StoreInst *SI, SmallVectorImpl<Instruction*> &toErase) {
        I != E; ++I) {
     const MemsetRange &Range = *I;
 
-    // If we found less than 4 stores to merge, ignore the subrange: it isn't
-    // worth losing type information in llvm IR to do the transformation.
-    if (Range.TheStores.size() < 4)
+    if (Range.TheStores.size() == 1) continue;
+    
+    // If it is profitable to lower this range to memset, do so now.
+    if (!Range.isProfitableToUseMemset(TD))
       continue;
     
     // Otherwise, we do want to transform this!  Create a new memset.  We put
@@ -1328,7 +1366,11 @@ bool GVN::processStore(StoreInst *SI, SmallVectorImpl<Instruction*> &toErase) {
       ConstantInt::get(Type::Int64Ty, Range.End-Range.Start),  // size
       ConstantInt::get(Type::Int32Ty, Range.Alignment)   // align
     };
-    new CallInst(MemSetF, Ops, Ops+4, "", InsertPt);
+    Value *C = new CallInst(MemSetF, Ops, Ops+4, "", InsertPt);
+    DEBUG(cerr << "Replace stores:\n";
+          for (unsigned i = 0, e = Range.TheStores.size(); i != e; ++i)
+            cerr << *Range.TheStores[i];
+          cerr << "With: " << *C); C=C;
   
     // Zap all the stores.
     toErase.append(Range.TheStores.begin(), Range.TheStores.end());
