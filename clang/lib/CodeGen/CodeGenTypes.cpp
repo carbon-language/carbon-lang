@@ -148,16 +148,14 @@ void CodeGenTypes::UpdateCompletedType(const TagDecl *TD) {
 /// Objective-C object, in the order that they appear.  Used to create LLVM
 /// structures corresponding to Objective-C objects.
 void CodeGenTypes::CollectObjCIvarTypes(ObjCInterfaceDecl *ObjCClass,
-    std::vector<const llvm::Type*> &IvarTypes) {
+                                    std::vector<const llvm::Type*> &IvarTypes) {
   ObjCInterfaceDecl *SuperClass = ObjCClass->getSuperClass();
-  if(SuperClass) {
+  if (SuperClass)
     CollectObjCIvarTypes(SuperClass, IvarTypes);
-  }
-  for(ObjCInterfaceDecl::ivar_iterator ivar=ObjCClass->ivar_begin() ;
-      ivar != ObjCClass->ivar_end() ;
-      ivar++) {
-    IvarTypes.push_back(ConvertType((*ivar)->getType()));
-    ObjCIvarInfo[*ivar] = IvarTypes.size() - 1;
+  for (ObjCInterfaceDecl::ivar_iterator I = ObjCClass->ivar_begin(),
+       E = ObjCClass->ivar_end(); I != E; ++I) {
+    IvarTypes.push_back(ConvertType((*I)->getType()));
+    ObjCIvarInfo[*I] = IvarTypes.size() - 1;
   }
 }
 
@@ -420,8 +418,7 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
 /// getLLVMFieldNo - Return llvm::StructType element number
 /// that corresponds to the field FD.
 unsigned CodeGenTypes::getLLVMFieldNo(const FieldDecl *FD) {
-  llvm::DenseMap<const FieldDecl *, unsigned>::iterator
-    I = FieldInfo.find(FD);
+  llvm::DenseMap<const FieldDecl*, unsigned>::iterator I = FieldInfo.find(FD);
   assert (I != FieldInfo.end()  && "Unable to find field info");
   return I->second;
 }
@@ -429,7 +426,7 @@ unsigned CodeGenTypes::getLLVMFieldNo(const FieldDecl *FD) {
 unsigned CodeGenTypes::getLLVMFieldNo(const ObjCIvarDecl *OID) {
   llvm::DenseMap<const ObjCIvarDecl*, unsigned>::iterator
     I = ObjCIvarInfo.find(OID);
-  assert (I != ObjCIvarInfo.end()  && "Unable to find field info");
+  assert(I != ObjCIvarInfo.end() && "Unable to find field info");
   return I->second;
 }
 

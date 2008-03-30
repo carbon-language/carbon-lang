@@ -41,9 +41,8 @@ CodeGenModule::CodeGenModule(ASTContext &C, const LangOptions &LO,
 
 CodeGenModule::~CodeGenModule() {
   llvm::Function *ObjCInitFunction = Runtime->ModuleInitFunction();
-  if (ObjCInitFunction) {
+  if (ObjCInitFunction)
     AddGlobalCtor(ObjCInitFunction);
-  }
   EmitGlobalCtors();
   delete Runtime;
 }
@@ -80,15 +79,15 @@ void CodeGenModule::AddGlobalCtor(llvm::Function * Ctor) {
 /// called on module load, if any have been registered with AddGlobalCtor.
 void CodeGenModule::EmitGlobalCtors() {
   if (GlobalCtors.empty()) return;
+  
   // Get the type of @llvm.global_ctors
   std::vector<const llvm::Type*> CtorFields;
   CtorFields.push_back(llvm::IntegerType::get(32));
   // Constructor function type
   std::vector<const llvm::Type*> VoidArgs;
-  llvm::FunctionType* CtorFuncTy = llvm::FunctionType::get(
-    llvm::Type::VoidTy,
-    VoidArgs,
-    false);
+  llvm::FunctionType* CtorFuncTy =
+    llvm::FunctionType::get(llvm::Type::VoidTy, VoidArgs, false);
+  
   // i32, function type pair
   const llvm::Type *FPType = llvm::PointerType::getUnqual(CtorFuncTy);
   llvm::StructType* CtorStructTy = 
@@ -120,7 +119,6 @@ void CodeGenModule::EmitGlobalCtors() {
   
   GlobalCtorsVal->setInitializer(llvm::ConstantArray::get(GlobalCtorsTy,
                                                           CtorValues));
-
 }
 
 

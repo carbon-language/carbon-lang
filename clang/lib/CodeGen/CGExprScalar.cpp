@@ -19,7 +19,6 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Support/Compiler.h"
-#include "llvm/ValueSymbolTable.h"
 #include <cstdarg>
 
 using namespace clang;
@@ -51,7 +50,6 @@ public:
     Builder(CGF.Builder), 
     Runtime(CGF.CGM.getObjCRuntime()) {
   }
-
   
   //===--------------------------------------------------------------------===//
   //                               Utilities
@@ -127,7 +125,7 @@ public:
     return EmitLoadOfLValue(E);
   }
   Value *VisitObjCMessageExpr(ObjCMessageExpr *E);
-  Value *VisitObjCIvarRefExpr(ObjCIvarRefExpr *E);
+  Value *VisitObjCIvarRefExpr(ObjCIvarRefExpr *E) { return EmitLoadOfLValue(E);}
   Value *VisitArraySubscriptExpr(ArraySubscriptExpr *E);
   Value *VisitMemberExpr(Expr *E)           { return EmitLoadOfLValue(E); }
   Value *VisitOCUVectorElementExpr(Expr *E) { return EmitLoadOfLValue(E); }
@@ -451,22 +449,18 @@ Value *ScalarExprEmitter::VisitExpr(Expr *E) {
   return llvm::UndefValue::get(CGF.ConvertType(E->getType()));
 }
 
-Value *ScalarExprEmitter::VisitObjCIvarRefExpr(ObjCIvarRefExpr *E) {
-  return Builder.CreateLoad(CGF.EmitObjCIvarRefLValue(E).getAddress());
-}
-
 Value *ScalarExprEmitter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
   // Only the lookup mechanism and first two arguments of the method
   // implementation vary between runtimes.  We can get the receiver and
   // arguments in generic code.
   
   // Find the receiver
-  llvm::Value * Receiver = CGF.EmitScalarExpr(E->getReceiver());
+  llvm::Value *Receiver = CGF.EmitScalarExpr(E->getReceiver());
 
   // Process the arguments
-  unsigned int ArgC = E->getNumArgs();
+  unsigned ArgC = E->getNumArgs();
   llvm::SmallVector<llvm::Value*, 16> Args;
-  for(unsigned i=0 ; i<ArgC ; i++) {
+  for (unsigned i = 0; i != ArgC; ++i) {
     Expr *ArgExpr = E->getArg(i);
     QualType ArgTy = ArgExpr->getType();
     if (!CGF.hasAggregateLLVMType(ArgTy)) {
@@ -489,13 +483,11 @@ Value *ScalarExprEmitter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
   llvm::Constant *Selector = CGF.CGM.GetAddrOfConstantString(SelStr);
 
   llvm::Value *SelPtr = Builder.CreateStructGEP(Selector, 0);
-  return Runtime->generateMessageSend(Builder,
-      ConvertType(E->getType()),
-      CGF.CurFn->getValueSymbolTable().lookup("self"),
-      Receiver,
-      SelPtr,
-      &Args[0],
-      Args.size());
+  return Runtime->generateMessageSend(Builder, ConvertType(E->getType()),
+                                      // FIXME: Self can be assigned to!
+                                      CGF.CurFn->arg_begin(),
+                                      Receiver, SelPtr,
+                                      &Args[0], Args.size());
 }
 
 Value *ScalarExprEmitter::VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
