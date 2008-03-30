@@ -14,6 +14,7 @@
 #ifndef CLANG_CODEGEN_CODEGENFUNCTION_H
 #define CLANG_CODEGEN_CODEGENFUNCTION_H
 
+#include "clang/AST/Type.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/LLVMBuilder.h"
@@ -27,8 +28,8 @@ namespace clang {
   class ASTContext;
   class Decl;
   class FunctionDecl;
+  class ObjCMethodDecl;
   class TargetInfo;
-  class QualType;
   class FunctionTypeProto;
   
   class Stmt;
@@ -66,6 +67,7 @@ namespace clang {
   class ChooseExpr;
   class PreDefinedExpr;
   class ObjCStringLiteral;
+  class ObjCIvarRefExpr;
   class MemberExpr;
 
   class BlockVarDecl;
@@ -245,6 +247,7 @@ public:
   llvm::LLVMFoldingBuilder Builder;
   
   const FunctionDecl *CurFuncDecl;
+  QualType FnRetTy;
   llvm::Function *CurFn;
 
   /// AllocaInsertPoint - This is an instruction in the entry block before which
@@ -286,6 +289,7 @@ public:
   
   ASTContext &getContext() const;
 
+  void GenerateObjCMethod(const ObjCMethodDecl *OMD);
   void GenerateCode(const FunctionDecl *FD);
   
   const llvm::Type *ConvertType(QualType T);
@@ -422,7 +426,8 @@ public:
 
   LValue EmitLValueForField(llvm::Value* Base, FieldDecl* Field,
                             bool isUnion);
-    
+      
+  LValue EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E);
   //===--------------------------------------------------------------------===//
   //                         Scalar Expression Emission
   //===--------------------------------------------------------------------===//

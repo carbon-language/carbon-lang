@@ -144,7 +144,22 @@ void CodeGenTypes::UpdateCompletedType(const TagDecl *TD) {
   cast<llvm::OpaqueType>(OpaqueHolder.get())->refineAbstractTypeTo(NT);
 }
 
-
+/// Produces a vector containing the all of the instance variables in an
+/// Objective-C object, in the order that they appear.  Used to create LLVM
+/// structures corresponding to Objective-C objects.
+void CodeGenTypes::CollectObjCIvarTypes(ObjCInterfaceDecl *ObjCClass,
+    std::vector<const llvm::Type*> &IvarTypes) {
+  ObjCInterfaceDecl *SuperClass = ObjCClass->getSuperClass();
+  if(SuperClass) {
+    CollectObjCIvarTypes(SuperClass, IvarTypes);
+  }
+  for(ObjCInterfaceDecl::ivar_iterator ivar=ObjCClass->ivar_begin() ;
+      ivar != ObjCClass->ivar_end() ;
+      ivar++) {
+    IvarTypes.push_back(ConvertType((*ivar)->getType()));
+    ObjCIvarInfo[*ivar] = IvarTypes.size() - 1;
+  }
+}
 
 const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
   const clang::Type &Ty = *T.getCanonicalType();
@@ -263,9 +278,21 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
   case Type::ASQual:
     return ConvertType(QualType(cast<ASQualType>(Ty).getBaseType(), 0));
 
-  case Type::ObjCInterface:
-    assert(0 && "FIXME: add missing functionality here");
-    break;
+  case Type::ObjCInterface: {
+    // Warning: Use of this is strongly discouraged.  Late binding of instance
+    // variables is supported on some runtimes and so using static binding can
+    // break code when libraries are updated.  Only use this if you have
+    // previously checked that the ObjCRuntime subclass in use does not support
+    // late-bound ivars.
+    ObjCInterfaceType OIT = cast<ObjCInterfaceType>(Ty);
+    std::vector<const llvm::Type*> IvarTypes;
+    // Pointer to the class.  This is just a placeholder.  Operations that
+    // actually use the isa pointer should cast it to the Class type provided
+    // by the runtime.
+    IvarTypes.push_back(llvm::PointerType::getUnqual(llvm::Type::Int8Ty));
+    CollectObjCIvarTypes(OIT.getDecl(), IvarTypes);
+    return llvm::StructType::get(IvarTypes);
+  }
       
   case Type::ObjCQualifiedInterface:
     assert(0 && "FIXME: add missing functionality here");
@@ -396,6 +423,13 @@ unsigned CodeGenTypes::getLLVMFieldNo(const FieldDecl *FD) {
   llvm::DenseMap<const FieldDecl *, unsigned>::iterator
     I = FieldInfo.find(FD);
   assert (I != FieldInfo.end()  && "Unable to find field info");
+  return I->second;
+}
+
+unsigned CodeGenTypes::getLLVMFieldNo(const ObjCIvarDecl *OID) {
+  llvm::DenseMap<const ObjCIvarDecl*, unsigned>::iterator
+    I = ObjCIvarInfo.find(OID);
+  assert (I != ObjCIvarInfo.end()  && "Unable to find field info");
   return I->second;
 }
 

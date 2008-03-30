@@ -332,9 +332,6 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
   // Emit the result value, even if unused, to evalute the side effects.
   const Expr *RV = S.getRetValue();
 
-  QualType FnRetTy = CurFuncDecl->getType().getCanonicalType();
-  FnRetTy = cast<FunctionType>(FnRetTy)->getResultType();
-  
   if (FnRetTy->isVoidType()) {
     // If the function returns void, emit ret void.
     Builder.CreateRetVoid();

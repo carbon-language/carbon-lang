@@ -23,3 +23,4 @@ llvm::Value *CodeGenFunction::EmitObjCStringLiteral(const ObjCStringLiteral *E){
   return CGM.GetAddrOfConstantCFString(S);
 }
 
+

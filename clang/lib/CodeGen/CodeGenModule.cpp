@@ -34,10 +34,16 @@ CodeGenModule::CodeGenModule(ASTContext &C, const LangOptions &LO,
   : Context(C), Features(LO), TheModule(M), TheTargetData(TD), Diags(diags),
     Types(C, M, TD), MemCpyFn(0), MemSetFn(0), CFConstantStringClassRef(0) {
   //TODO: Make this selectable at runtime
-  Runtime = CreateObjCRuntime(M);
+  Runtime = CreateObjCRuntime(M,
+      getTypes().ConvertType(getContext().IntTy),
+      getTypes().ConvertType(getContext().LongTy));
 }
 
 CodeGenModule::~CodeGenModule() {
+  llvm::Function *ObjCInitFunction = Runtime->ModuleInitFunction();
+  if (ObjCInitFunction) {
+    AddGlobalCtor(ObjCInitFunction);
+  }
   EmitGlobalCtors();
   delete Runtime;
 }
@@ -70,7 +76,10 @@ void CodeGenModule::AddGlobalCtor(llvm::Function * Ctor) {
   GlobalCtors.push_back(Ctor);
 }
 
+/// EmitGlobalCtors - Generates the array of contsturctor functions to be
+/// called on module load, if any have been registered with AddGlobalCtor.
 void CodeGenModule::EmitGlobalCtors() {
+  if (GlobalCtors.empty()) return;
   // Get the type of @llvm.global_ctors
   std::vector<const llvm::Type*> CtorFields;
   CtorFields.push_back(llvm::IntegerType::get(32));
@@ -113,6 +122,8 @@ void CodeGenModule::EmitGlobalCtors() {
                                                           CtorValues));
 
 }
+
+
 
 /// ReplaceMapValuesWith - This is a really slow and bad function that
 /// searches for any entries in GlobalDeclMap that point to OldVal, changing
@@ -262,6 +273,12 @@ llvm::Constant *CodeGenModule::GetAddrOfGlobalVar(const VarDecl *D,
   return Entry = NewGV;
 }
 
+
+void CodeGenModule::EmitObjCMethod(const ObjCMethodDecl *OMD) {
+  // If this is not a prototype, emit the body.
+  if (OMD->getBody())
+    CodeGenFunction(*this).GenerateObjCMethod(OMD);
+}
 
 void CodeGenModule::EmitFunction(const FunctionDecl *FD) {
   // If this is not a prototype, emit the body.

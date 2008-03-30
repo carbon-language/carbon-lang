@@ -22,7 +22,9 @@ namespace llvm {
   class Type;
   class Value;
   class Module;
+  class Function;
 }
+
 
 namespace clang {
 namespace CodeGen {
@@ -32,16 +34,35 @@ class CGObjCRuntime {
 public:
   virtual ~CGObjCRuntime();
   
-  // Generate an Objective-C message send operation
+  /// Generate an Objective-C message send operation
   virtual llvm::Value *generateMessageSend(llvm::LLVMFoldingBuilder &Builder,
                                            const llvm::Type *ReturnTy,
+                                           llvm::Value *Sender,
                                            llvm::Value *Receiver,
-                                           llvm::Constant *Selector,
+                                           llvm::Value *Selector,
                                            llvm::Value** ArgV,
                                            unsigned ArgC) = 0;
+  /// Generate the function required to register all Objective-C components in
+  /// this compilation unit with the runtime library.
+  virtual llvm::Function *ModuleInitFunction() { return 0; }
+  /// Generate a function preamble for a method with the specified types
+  virtual llvm::Function *MethodPreamble(const llvm::Type *ReturnTy,
+                                         const llvm::Type *SelfTy,
+                                         const llvm::Type **ArgTy,
+                                         unsigned ArgC,
+                                         bool isVarArg) = 0;
+  /// If instance variable addresses are determined at runtime then this should
+  /// return true, otherwise instance variables will be accessed directly from
+  /// the structure.  If this returns true then @defs is invalid for this
+  /// runtime and a warning should be generated.
+  virtual bool LateBoundIVars() { return false; }
 };
 
-CGObjCRuntime *CreateObjCRuntime(llvm::Module &M);
+/// Creates an instance of an Objective-C runtime class.  
+//TODO: This should include some way of selecting which runtime to target.
+CGObjCRuntime *CreateObjCRuntime(llvm::Module &M,
+                                 const llvm::Type *LLVMIntType,
+                                 const llvm::Type *LLVMLongType);
 }
 }
 #endif

@@ -19,6 +19,7 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/ValueSymbolTable.h"
 #include <cstdarg>
 
 using namespace clang;
@@ -126,6 +127,7 @@ public:
     return EmitLoadOfLValue(E);
   }
   Value *VisitObjCMessageExpr(ObjCMessageExpr *E);
+  Value *VisitObjCIvarRefExpr(ObjCIvarRefExpr *E);
   Value *VisitArraySubscriptExpr(ArraySubscriptExpr *E);
   Value *VisitMemberExpr(Expr *E)           { return EmitLoadOfLValue(E); }
   Value *VisitOCUVectorElementExpr(Expr *E) { return EmitLoadOfLValue(E); }
@@ -449,6 +451,10 @@ Value *ScalarExprEmitter::VisitExpr(Expr *E) {
   return llvm::UndefValue::get(CGF.ConvertType(E->getType()));
 }
 
+Value *ScalarExprEmitter::VisitObjCIvarRefExpr(ObjCIvarRefExpr *E) {
+  return Builder.CreateLoad(CGF.EmitObjCIvarRefLValue(E).getAddress());
+}
+
 Value *ScalarExprEmitter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
   // Only the lookup mechanism and first two arguments of the method
   // implementation vary between runtimes.  We can get the receiver and
@@ -481,11 +487,13 @@ Value *ScalarExprEmitter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
   // Get the selector string
   std::string SelStr = E->getSelector().getName();
   llvm::Constant *Selector = CGF.CGM.GetAddrOfConstantString(SelStr);
-  ConvertType(E->getType());
+
+  llvm::Value *SelPtr = Builder.CreateStructGEP(Selector, 0);
   return Runtime->generateMessageSend(Builder,
       ConvertType(E->getType()),
+      CGF.CurFn->getValueSymbolTable().lookup("self"),
       Receiver,
-      Selector,
+      SelPtr,
       &Args[0],
       Args.size());
 }

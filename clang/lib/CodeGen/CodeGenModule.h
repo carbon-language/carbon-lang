@@ -30,6 +30,7 @@ namespace llvm {
 namespace clang {
   class ASTContext;
   class FunctionDecl;
+  class ObjCMethodDecl;
   class Decl;
   class Expr;
   class Stmt;
@@ -100,6 +101,7 @@ public:
   void AddGlobalCtor(llvm::Function * Ctor);
   void EmitGlobalCtors(void);
 
+  void EmitObjCMethod(const ObjCMethodDecl *OMD);
   void EmitFunction(const FunctionDecl *FD);
   void EmitGlobalVar(const FileVarDecl *D);
   void EmitGlobalVarDeclarator(const FileVarDecl *D);

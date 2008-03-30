@@ -65,6 +65,10 @@ namespace {
         Builder->EmitFunction(FD);
       } else if (FileVarDecl *FVD = dyn_cast<FileVarDecl>(D)) {
         Builder->EmitGlobalVarDeclarator(FVD);
+      } else if (isa<ObjCClassDecl>(D) || isa<ObjCCategoryDecl>(D)) {
+        // Forward declaration.  Only used for type checking.
+      } else if (ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(D)){
+        Builder->EmitObjCMethod(OMD);
       } else if (LinkageSpecDecl *LSD = dyn_cast<LinkageSpecDecl>(D)) {
         if (LSD->getLanguage() == LinkageSpecDecl::lang_cxx)
           Builder->WarnUnsupported(LSD, "linkage spec");

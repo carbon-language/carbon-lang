@@ -82,6 +82,7 @@ RValue CodeGenFunction::EmitAnyExpr(const Expr *E, llvm::Value *AggLoc,
 LValue CodeGenFunction::EmitLValue(const Expr *E) {
   switch (E->getStmtClass()) {
   default: {
+             printf("Statement class: %d\n", E->getStmtClass());
     WarnUnsupported(E, "l-value expression");
     llvm::Type *Ty = llvm::PointerType::getUnqual(ConvertType(E->getType()));
     return LValue::MakeAddr(llvm::UndefValue::get(Ty));
@@ -94,6 +95,9 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
     return EmitPreDefinedLValue(cast<PreDefinedExpr>(E));
   case Expr::StringLiteralClass:
     return EmitStringLiteralLValue(cast<StringLiteral>(E));
+
+  case Expr::ObjCIvarRefExprClass: 
+    return EmitObjCIvarRefLValue(cast<ObjCIvarRefExpr>(E));
     
   case Expr::UnaryOperatorClass: 
     return EmitUnaryOpLValue(cast<UnaryOperator>(E));
@@ -553,6 +557,41 @@ LValue CodeGenFunction::EmitCallExprLValue(const CallExpr *E) {
   // Can only get l-value for call expression returning aggregate type
   RValue RV = EmitCallExpr(E);
   return LValue::MakeAddr(RV.getAggregateAddr());
+}
+
+LValue CodeGenFunction::EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E) {
+  // Objective-C objects are traditionally C structures with their layout
+  // defined at compile-time.  In some implementations, their layout is not
+  // defined until run time in order to allow instance variables to be added to
+  // a class without recompiling all of the subclasses.  If this is the case
+  // then the CGObjCRuntime subclass must return true to LateBoundIvars and
+  // implement the lookup itself.
+  if(CGM.getObjCRuntime()->LateBoundIVars()) {
+    assert(0 && "FIXME: Implement support for late-bound instance variables");
+    return LValue(); // Not reached.
+  }
+  else {
+    // Get a structure type for the object
+    QualType ExprTy = E->getBase()->getType();
+    const llvm::Type *ObjectType = ConvertType(ExprTy);
+    //TODO:  Add a special case for isa (index 0)
+    // Work out which index the ivar is
+    const ObjCIvarDecl *Decl = E->getDecl();
+    unsigned Index = CGM.getTypes().getLLVMFieldNo(Decl);
+    
+    // Get object pointer
+    llvm::Value * Object = EmitLValue(E->getBase()).getAddress();
+    // Coerce object pointer to correct type.
+    if (Object->getType() != ObjectType) {
+      Object = Builder.CreateBitCast(Object, ObjectType);
+    }
+    // Get the correct element
+    llvm::Value * Element = Builder.CreateStructGEP(Object,
+        Index,
+        Decl->getName());
+  //  Element = Builder.CreateLoad(Element);
+    return LValue::MakeAddr(Element);
+  }
 }
 
 RValue CodeGenFunction::EmitCallExpr(llvm::Value *Callee, QualType FnType, 

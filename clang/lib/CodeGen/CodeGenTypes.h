@@ -34,6 +34,8 @@ namespace clang {
   class FunctionTypeProto;
   class FieldDecl;
   class RecordDecl;
+  class ObjCInterfaceDecl;
+  class ObjCIvarDecl;
 
 namespace CodeGen {
   class CodeGenTypes;
@@ -86,6 +88,7 @@ class CodeGenTypes {
   /// FieldInfo - This maps struct field with corresponding llvm struct type
   /// field no. This info is populated by record organizer.
   llvm::DenseMap<const FieldDecl *, unsigned> FieldInfo;
+  llvm::DenseMap<const ObjCIvarDecl *, unsigned> ObjCIvarInfo;
 
 public:
   class BitFieldInfo {
@@ -128,12 +131,15 @@ public:
   /// memory representation is usually i8 or i32, depending on the target.
   const llvm::Type *ConvertTypeForMem(QualType T);
   
+  void CollectObjCIvarTypes(ObjCInterfaceDecl *ObjCClass,
+      std::vector<const llvm::Type*> &IvarTypes);
   
   const CGRecordLayout *getCGRecordLayout(const TagDecl*) const;
   
   /// getLLVMFieldNo - Return llvm::StructType element number
   /// that corresponds to the field FD.
   unsigned getLLVMFieldNo(const FieldDecl *FD);
+  unsigned getLLVMFieldNo(const ObjCIvarDecl *OID);
     
   
   /// UpdateCompletedType - When we find the full definition for a TagDecl,

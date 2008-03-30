@@ -26,7 +26,7 @@ using namespace CodeGen;
 
 CodeGenFunction::CodeGenFunction(CodeGenModule &cgm) 
   : CGM(cgm), Target(CGM.getContext().Target), SwitchInsn(NULL), 
-    CaseRangeBlock(NULL) {}
+    CaseRangeBlock(NULL)  {}
 
 ASTContext &CodeGenFunction::getContext() const {
   return CGM.getContext();
@@ -55,6 +55,80 @@ bool CodeGenFunction::hasAggregateLLVMType(QualType T) {
          !T->isVoidType() && !T->isVectorType() && !T->isFunctionType();
 }
 
+/// Generate an Objective-C method.  An Objective-C method is a C function with
+/// its pointer, name, and types registered in the class struture.  
+// FIXME: This method contains a lot of code copied and pasted from
+// GenerateCode.  This should be factored out.
+void CodeGenFunction::GenerateObjCMethod(const ObjCMethodDecl *OMD) {
+  llvm::SmallVector<const llvm::Type *, 16> ParamTypes;
+  for (unsigned i=0 ; i<OMD->param_size() ; i++) {
+    ParamTypes.push_back(ConvertType(OMD->getParamDecl(i)->getType()));
+  }
+  CurFn = CGM.getObjCRuntime()->MethodPreamble(ConvertType(OMD->getResultType()),
+      llvm::PointerType::getUnqual(llvm::Type::Int32Ty),
+      ParamTypes.begin(),
+      OMD->param_size(),
+      OMD->isVariadic());
+  llvm::BasicBlock *EntryBB = new llvm::BasicBlock("entry", CurFn);
+  
+  // Create a marker to make it easy to insert allocas into the entryblock
+  // later.  Don't create this with the builder, because we don't want it
+  // folded.
+  llvm::Value *Undef = llvm::UndefValue::get(llvm::Type::Int32Ty);
+  AllocaInsertPt = new llvm::BitCastInst(Undef, llvm::Type::Int32Ty, "allocapt",
+                                         EntryBB);
+
+  FnRetTy = OMD->getResultType();
+
+  Builder.SetInsertPoint(EntryBB);
+  
+  // Emit allocs for param decls.  Give the LLVM Argument nodes names.
+  llvm::Function::arg_iterator AI = CurFn->arg_begin();
+  
+  // Name the struct return argument.
+  // FIXME: Probably should be in the runtime, or it will trample the other
+  // hidden arguments.
+  if (hasAggregateLLVMType(OMD->getResultType())) {
+    AI->setName("agg.result");
+    ++AI;
+  }
+
+  // Add implicit parameters to the decl map.
+  // TODO: Add something to AST to let the runtime specify the names and types
+  // of these.
+  llvm::Value *&DMEntry = LocalDeclMap[&(*OMD->getSelfDecl())];
+  DMEntry = AI;
+  ++AI; ++AI;
+
+
+  for (unsigned i = 0, e = OMD->getNumParams(); i != e; ++i, ++AI) {
+    assert(AI != CurFn->arg_end() && "Argument mismatch!");
+    EmitParmDecl(*OMD->getParamDecl(i), AI);
+  }
+  
+  // Emit the function body.
+  EmitStmt(OMD->getBody());
+  
+  // Emit a return for code that falls off the end. If insert point
+  // is a dummy block with no predecessors then remove the block itself.
+  llvm::BasicBlock *BB = Builder.GetInsertBlock();
+  if (isDummyBlock(BB))
+    BB->eraseFromParent();
+  else {
+    if (CurFn->getReturnType() == llvm::Type::VoidTy)
+      Builder.CreateRetVoid();
+    else
+      Builder.CreateRet(llvm::UndefValue::get(CurFn->getReturnType()));
+  }
+  assert(BreakContinueStack.empty() &&
+         "mismatched push/pop in break/continue stack!");
+  
+  // Remove the AllocaInsertPt instruction, which is just a convenience for us.
+  AllocaInsertPt->eraseFromParent();
+  AllocaInsertPt = 0;
+  // Verify that the function is well formed.
+  assert(!verifyFunction(*CurFn) && "Generated method is not well formed.");
+}
 
 void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
   LLVMIntTy = ConvertType(getContext().IntTy);
@@ -62,6 +136,9 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
     getContext().getTypeSize(getContext().getPointerType(getContext().VoidTy)));
   
   CurFuncDecl = FD;
+  FnRetTy = CurFuncDecl->getType()->getAsFunctionType()->getResultType();
+
+
   CurFn = cast<llvm::Function>(CGM.GetAddrOfFunctionDecl(FD, true));
   assert(CurFn->isDeclaration() && "Function already has body?");
   
@@ -144,7 +221,7 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
   AllocaInsertPt = 0;
   
   // Verify that the function is well formed.
-  assert(!verifyFunction(*CurFn));
+  assert(!verifyFunction(*CurFn) && "Generated function is not well formed.");
 }
 
 /// isDummyBlock - Return true if BB is an empty basic block
