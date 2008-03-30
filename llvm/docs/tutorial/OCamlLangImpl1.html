@@ -219,15 +219,15 @@ type token =
 </div>
 
 <p>Each token returned by our lexer will be one of the token variant values.
-An unknown character like '+' will be returned as <tt>Kwd '+'</tt>.  If the
-curr token is an identifier, the value will be <tt>Ident s</tt>.  If the
-current token is a numeric literal (like 1.0), the value will be
-<tt>Number 1.0</tt>.
+An unknown character like '+' will be returned as <tt>Token.Kwd '+'</tt>.  If
+the curr token is an identifier, the value will be <tt>Token.Ident s</tt>.  If
+the current token is a numeric literal (like 1.0), the value will be
+<tt>Token.Number 1.0</tt>.
 </p>
 
 <p>The actual implementation of the lexer is a collection of functions driven
-by a function named <tt>lex</tt>.  The <tt>lex</tt> function is called to
-return the next token from standard input.  We will use
+by a function named <tt>Lexer.lex</tt>.  The <tt>Lexer.lex</tt> function is
+called to return the next token from standard input.  We will use
 <a href="http://caml.inria.fr/pub/docs/manual-camlp4/index.html">Camlp4</a>
 to simplify the tokenization of the standard input.  Its definition starts
 as:</p>
@@ -245,13 +245,13 @@ let rec lex = parser
 </div>
 
 <p>
-<tt>lex</tt> works by recursing over a <tt>char Stream.t</tt> to read
+<tt>Lexer.lex</tt> works by recursing over a <tt>char Stream.t</tt> to read
 characters one at a time from the standard input.  It eats them as it recognizes
-them and stores them in in a <tt>token</tt> variant.  The first thing that it
-has to do is ignore whitespace between tokens.  This is accomplished with the
+them and stores them in in a <tt>Token.token</tt> variant.  The first thing that
+it has to do is ignore whitespace between tokens.  This is accomplished with the
 recursive call above.</p>
 
-<p>The next thing <tt>lex</tt> needs to do is recognize identifiers and
+<p>The next thing <tt>Lexer.lex</tt> needs to do is recognize identifiers and
 specific keywords like "def".  Kaleidoscope does this with this a pattern match
 and a helper function.<p>
 
@@ -300,8 +300,8 @@ and lex_number buffer = parser
 
 <p>This is all pretty straight-forward code for processing input.  When reading
 a numeric value from input, we use the ocaml <tt>float_of_string</tt> function
-to convert it to a numeric value that we store in <tt>NumVal</tt>.  Note that
-this isn't doing sufficient error checking: it will raise <tt>Failure</tt>
+to convert it to a numeric value that we store in <tt>Token.Number</tt>.  Note
+that this isn't doing sufficient error checking: it will raise <tt>Failure</tt>
 if the string "1.23.45.67".  Feel free to extend it :).  Next we handle
 comments:
 </p>

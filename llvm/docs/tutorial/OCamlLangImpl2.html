@@ -240,13 +240,13 @@ error"</tt>, where if the token before the <tt>??</tt> does not match, then
 <tt>Stream.Error "parse error"</tt> will be raised.</p>
 
 <p>2) Another interesting aspect of this function is that it uses recursion by
-calling <tt>parse_primary</tt> (we will soon see that <tt>parse_primary</tt> can
-call <tt>parse_primary</tt>).  This is powerful because it allows us to handle
-recursive grammars, and keeps each production very simple.  Note that
-parentheses do not cause construction of AST nodes themselves.  While we could
-do it this way, the most important role of parentheses are to guide the parser
-and provide grouping.  Once the parser constructs the AST, parentheses are not
-needed.</p>
+calling <tt>Parser.parse_primary</tt> (we will soon see that
+<tt>Parser.parse_primary</tt> can call <tt>Parser.parse_primary</tt>).  This is
+powerful because it allows us to handle recursive grammars, and keeps each
+production very simple.  Note that parentheses do not cause construction of AST
+nodes themselves.  While we could do it this way, the most important role of
+parentheses are to guide the parser and provide grouping.  Once the parser
+constructs the AST, parentheses are not needed.</p>
 
 <p>The next simple production is for handling variable references and function
 calls:</p>
@@ -345,12 +345,12 @@ let main () =
 
 <p>For the basic form of Kaleidoscope, we will only support 4 binary operators
 (this can obviously be extended by you, our brave and intrepid reader).  The
-<tt>precedence</tt> function returns the precedence for the current token,
-or -1 if the token is not a binary operator.  Having a <tt>Hashtbl.t</tt> makes
-it easy to add new operators and makes it clear that the algorithm doesn't
+<tt>Parser.precedence</tt> function returns the precedence for the current
+token, or -1 if the token is not a binary operator.  Having a <tt>Hashtbl.t</tt>
+makes it easy to add new operators and makes it clear that the algorithm doesn't
 depend on the specific operators involved, but it would be easy enough to
 eliminate the <tt>Hashtbl.t</tt> and do the comparisons in the
-<tt>precedence</tt> function.  (Or just use a fixed-size array).</p>
+<tt>Parser.precedence</tt> function.  (Or just use a fixed-size array).</p>
 
 <p>With the helper above defined, we can now start parsing binary expressions.
 The basic idea of operator precedence parsing is to break down an expression
@@ -376,19 +376,19 @@ and parse_expr = parser
 </pre>
 </div>
 
-<p><tt>parse_bin_rhs</tt> is the function that parses the sequence of pairs for
-us.  It takes a precedence and a pointer to an expression for the part that has been
-parsed so far.   Note that "x" is a perfectly valid expression: As such, "binoprhs" is
-allowed to be empty, in which case it returns the expression that is passed into
-it. In our example above, the code passes the expression for "a" into
-<tt>ParseBinOpRHS</tt> and the current token is "+".</p>
+<p><tt>Parser.parse_bin_rhs</tt> is the function that parses the sequence of
+pairs for us.  It takes a precedence and a pointer to an expression for the part
+that has been parsed so far.   Note that "x" is a perfectly valid expression: As
+such, "binoprhs" is allowed to be empty, in which case it returns the expression
+that is passed into it. In our example above, the code passes the expression for
+"a" into <tt>Parser.parse_bin_rhs</tt> and the current token is "+".</p>
 
-<p>The precedence value passed into <tt>parse_bin_rhs</tt> indicates the <em>
-minimal operator precedence</em> that the function is allowed to eat.  For
-example, if the current pair stream is [+, x] and <tt>parse_bin_rhs</tt> is
-passed in a precedence of 40, it will not consume any tokens (because the
-precedence of '+' is only 20).  With this in mind, <tt>parse_bin_rhs</tt> starts
-with:</p>
+<p>The precedence value passed into <tt>Parser.parse_bin_rhs</tt> indicates the
+<em>minimal operator precedence</em> that the function is allowed to eat.  For
+example, if the current pair stream is [+, x] and <tt>Parser.parse_bin_rhs</tt>
+is passed in a precedence of 40, it will not consume any tokens (because the
+precedence of '+' is only 20).  With this in mind, <tt>Parser.parse_bin_rhs</tt>
+starts with:</p>
 
 <div class="doc_code">
 <pre>
@@ -497,10 +497,10 @@ context):</p>
 has higher precedence than the binop we are currently parsing.  As such, we know
 that any sequence of pairs whose operators are all higher precedence than "+"
 should be parsed together and returned as "RHS".  To do this, we recursively
-invoke the <tt>parse_bin_rhs</tt> function specifying "token_prec+1" as the
-minimum precedence required for it to continue.  In our example above, this will
-cause it to return the AST node for "(c+d)*e*f" as RHS, which is then set as the
-RHS of the '+' expression.</p>
+invoke the <tt>Parser.parse_bin_rhs</tt> function specifying "token_prec+1" as
+the minimum precedence required for it to continue.  In our example above, this
+will cause it to return the AST node for "(c+d)*e*f" as RHS, which is then set
+as the RHS of the '+' expression.</p>
 
 <p>Finally, on the next iteration of the while loop, the "+g" piece is parsed
 and added to the AST.  With this little bit of code (14 non-trivial lines), we
@@ -705,7 +705,7 @@ course.)  To build this, just compile with:</p>
 # Compile
 ocamlbuild toy.byte
 # Run
-./toy
+./toy.byte
 </pre>
 </div>
 
