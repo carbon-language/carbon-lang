@@ -808,6 +808,7 @@ static SDOperand getCopyFromParts(SelectionDAG &DAG,
     return DAG.getNode(ISD::BIT_CONVERT, ValueVT, Val);
 
   assert(0 && "Unknown mismatch!");
+  return SDOperand();
 }
 
 /// getCopyToParts - Create a series of nodes that contain the specified value

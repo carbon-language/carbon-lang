@@ -259,6 +259,7 @@ std::string MSILWriter::getConvModopt(unsigned CallingConvID) {
     cerr << "CallingConvID = " << CallingConvID << '\n';
     assert(0 && "Unsupported calling convention");
   }
+  return ""; // Not reached
 }
 
 
@@ -304,6 +305,7 @@ std::string MSILWriter::getPrimitiveTypeName(const Type* Ty, bool isSigned) {
     cerr << "Type = " << *Ty << '\n';
     assert(0 && "Invalid primitive type");
   }
+  return ""; // Not reached
 }
 
 
@@ -331,6 +333,7 @@ std::string MSILWriter::getTypeName(const Type* Ty, bool isSigned,
     cerr << "Type = " << *Ty << '\n';
     assert(0 && "Invalid type in getTypeName()");
   }
+  return ""; // Not reached
 }
 
 
@@ -374,6 +377,7 @@ std::string MSILWriter::getTypePostfix(const Type* Ty, bool Expand,
     cerr << "TypeID = " << Ty->getTypeID() << '\n';
     assert(0 && "Invalid type in TypeToPostfix()");
   }
+  return ""; // Not reached
 }
 
 
@@ -1446,6 +1450,7 @@ unsigned int MSILWriter::getBitWidth(const Type* Ty) {
     cerr << "Bits = " << N << '\n';
     assert(0 && "Unsupported integer width");
   }
+  return 0; // Not reached
 }
 
 

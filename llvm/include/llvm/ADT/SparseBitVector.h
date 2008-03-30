@@ -166,6 +166,7 @@ public:
           assert(0 && "Unsupported!");
       }
     assert(0 && "Illegal empty element");
+    return 0; // Not reached
   }
 
   /// find_next - Returns the index of the next set bit starting from the

@@ -181,6 +181,7 @@ SDOperand MipsTargetLowering::
 LowerGlobalTLSAddress(SDOperand Op, SelectionDAG &DAG)
 {
   assert(0 && "TLS not implemented for MIPS.");
+  return SDOperand(); // Not reached
 }
 
 SDOperand MipsTargetLowering::

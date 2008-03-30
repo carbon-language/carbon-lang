@@ -210,6 +210,7 @@ public:
         return getTypeAction(NVT) == Promote ? getTypeToTransformTo(NVT) : NVT;
     }
     assert(0 && "Unsupported extended type!");
+    return MVT::ValueType(); // Not reached
   }
 
   /// getTypeToExpandTo - For types supported by the target, this is an
@@ -440,6 +441,7 @@ public:
       return getRegisterType(getTypeToTransformTo(VT));
     }
     assert(0 && "Unsupported extended type!");
+    return MVT::ValueType(); // Not reached
   }
 
   /// getNumRegisters - Return the number of registers that this ValueType will
@@ -464,6 +466,7 @@ public:
       return (BitWidth + RegWidth - 1) / RegWidth;
     }
     assert(0 && "Unsupported extended type!");
+    return 0; // Not reached
   }
 
   /// ShouldShrinkFPConstant - If true, then instruction selection should

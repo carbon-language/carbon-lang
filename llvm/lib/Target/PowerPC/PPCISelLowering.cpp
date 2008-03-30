@@ -1104,6 +1104,7 @@ SDOperand PPCTargetLowering::LowerJumpTable(SDOperand Op, SelectionDAG &DAG) {
 SDOperand PPCTargetLowering::LowerGlobalTLSAddress(SDOperand Op, 
                                                    SelectionDAG &DAG) {
   assert(0 && "TLS not implemented for PPC.");
+  return SDOperand(); // Not reached
 }
 
 SDOperand PPCTargetLowering::LowerGlobalAddress(SDOperand Op, 
@@ -1197,6 +1198,7 @@ SDOperand PPCTargetLowering::LowerVAARG(SDOperand Op, SelectionDAG &DAG,
                               const PPCSubtarget &Subtarget) {
   
   assert(0 && "VAARG in ELF32 ABI not implemented yet!");
+  return SDOperand(); // Not reached
 }
 
 SDOperand PPCTargetLowering::LowerVASTART(SDOperand Op, SelectionDAG &DAG,

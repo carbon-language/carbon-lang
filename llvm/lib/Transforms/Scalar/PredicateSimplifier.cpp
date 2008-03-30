@@ -244,6 +244,7 @@ namespace {
              *Node2 = getNodeForBlock(BB2);
         return Node1 && Node2 && Node1->dominates(Node2);
       }
+      return false; // Not reached
     }
 
   private:
@@ -1413,6 +1414,7 @@ namespace {
         if (!Node) return false;
         return Top->dominates(Node);
       }
+      return false; // Not reached
     }
 
     // aboveOrBelow - true if the Instruction either dominates or is dominated

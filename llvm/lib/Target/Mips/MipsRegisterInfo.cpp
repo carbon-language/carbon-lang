@@ -81,6 +81,7 @@ getRegisterNumbering(unsigned RegEnum)
     case Mips::RA   : return 31;
     default: assert(0 && "Unknown register number!");
   }    
+  return 0; // Not reached
 }
 
 void MipsRegisterInfo::reMaterialize(MachineBasicBlock &MBB, 

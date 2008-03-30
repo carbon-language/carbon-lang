@@ -78,6 +78,7 @@ double LLVMGenericValueToFloat(LLVMTypeRef TyRef, LLVMGenericValueRef GenVal) {
     assert(0 && "LLVMGenericValueToFloat supports only float and double.");
     break;
   }
+  return 0; // Not reached
 }
 
 void LLVMDisposeGenericValue(LLVMGenericValueRef GenVal) {

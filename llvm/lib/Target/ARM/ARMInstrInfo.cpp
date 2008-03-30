@@ -919,6 +919,7 @@ unsigned ARM::GetInstSize(MachineInstr *MI) {
     }
   }
   }
+  return 0; // Not reached
 }
 
 /// GetFunctionSize - Returns the size of the specified MachineFunction.

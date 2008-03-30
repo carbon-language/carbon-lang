@@ -307,6 +307,7 @@ static unsigned AlphaRevCondCode(unsigned Opcode) {
   default:
     assert(0 && "Unknown opcode");
   }
+  return 0; // Not reached
 }
 
 // Branch analysis.
