@@ -569,7 +569,8 @@ llvm::canConstantFoldCallTo(const Function *F) {
     if (Len == 3)
       return !strcmp(Str, "sin");
     if (Len == 4)
-      return !strcmp(Str, "sinh") || !strcmp(Str, "sqrt");
+      return !strcmp(Str, "sinh") || !strcmp(Str, "sqrt") ||
+             !strcmp(Str, "sinf");
     if (Len == 5)
       return !strcmp(Str, "sqrtf");
     return false;
@@ -586,16 +587,17 @@ static Constant *ConstantFoldFP(double (*NativeFP)(double), double V,
                                 const Type *Ty) {
   errno = 0;
   V = NativeFP(V);
-  if (errno == 0) {
-    if (Ty==Type::FloatTy)
-      return ConstantFP::get(Ty, APFloat((float)V));
-    else if (Ty==Type::DoubleTy)
-      return ConstantFP::get(Ty, APFloat(V));
-    else
-      assert(0);
+  if (errno != 0) {
+    errno = 0;
+    return 0;
   }
-  errno = 0;
-  return 0;
+  
+  if (Ty == Type::FloatTy)
+    return ConstantFP::get(Ty, APFloat((float)V));
+  
+  if (Ty == Type::DoubleTy)
+    return ConstantFP::get(Ty, APFloat(V));
+  assert(0 && "Can only constant fold float/double");
 }
 
 static Constant *ConstantFoldBinaryFP(double (*NativeFP)(double, double),
@@ -603,16 +605,16 @@ static Constant *ConstantFoldBinaryFP(double (*NativeFP)(double, double),
                                       const Type *Ty) {
   errno = 0;
   V = NativeFP(V, W);
-  if (errno == 0) {
-    if (Ty==Type::FloatTy)
-      return ConstantFP::get(Ty, APFloat((float)V));
-    else if (Ty==Type::DoubleTy)
-      return ConstantFP::get(Ty, APFloat(V));
-    else
-      assert(0);
+  if (errno != 0) {
+    errno = 0;
+    return 0;
   }
-  errno = 0;
-  return 0;
+  
+  if (Ty == Type::FloatTy)
+    return ConstantFP::get(Ty, APFloat((float)V));
+  if (Ty == Type::DoubleTy)
+    return ConstantFP::get(Ty, APFloat(V));
+  assert(0 && "Can only constant fold float/double");
 }
 
 /// ConstantFoldCall - Attempt to constant fold a call to the specified function
@@ -653,6 +655,8 @@ llvm::ConstantFoldCall(Function *F,
           return ConstantFoldFP(cos, V, Ty);
         else if (Len == 4 && !strcmp(Str, "cosh"))
           return ConstantFoldFP(cosh, V, Ty);
+        else if (Len == 4 && !strcmp(Str, "cosf"))
+          return ConstantFoldFP(cos, V, Ty);
         break;
       case 'e':
         if (Len == 3 && !strcmp(Str, "exp"))
@@ -675,7 +679,7 @@ llvm::ConstantFoldCall(Function *F,
             return ConstantFoldFP(sqrt, V, Ty);
           else // Undefined
             return ConstantFP::get(Ty, Ty==Type::FloatTy ? APFloat(0.0f) :
-                                       APFloat(0.0));
+                                   APFloat(0.0));
         }
         break;
       case 's':
@@ -687,6 +691,8 @@ llvm::ConstantFoldCall(Function *F,
           return ConstantFoldFP(sqrt, V, Ty);
         else if (Len == 5 && !strcmp(Str, "sqrtf") && V >= 0)
           return ConstantFoldFP(sqrt, V, Ty);
+        else if (Len == 4 && !strcmp(Str, "sinf"))
+          return ConstantFoldFP(sin, V, Ty);
         break;
       case 't':
         if (Len == 3 && !strcmp(Str, "tan"))
