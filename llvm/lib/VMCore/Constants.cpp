@@ -1510,7 +1510,7 @@ static ManagedStatic<ValueMap<ExprMapKeyType, Type,
                               ConstantExpr> > ExprConstants;
 
 /// This is a utility function to handle folding of casts and lookup of the
-/// cast in the ExprConstants map. It is usedby the various get* methods below.
+/// cast in the ExprConstants map. It is used by the various get* methods below.
 static inline Constant *getFoldedCast(
   Instruction::CastOps opc, Constant *C, const Type *Ty) {
   assert(Ty->isFirstClassType() && "Cannot cast to an aggregate type!");
