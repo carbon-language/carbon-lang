@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL      := ..
-DIRS       := CommandGuide
+DIRS       := CommandGuide tutorial
 
 ifdef BUILD_FOR_WEBSITE
 PROJ_OBJ_DIR = .
@@ -115,3 +115,7 @@ $(PROJ_OBJ_DIR)/ocamldoc.tar.gz:
 	$(Verb) $(TAR) cf $(PROJ_OBJ_DIR)/ocamldoc.tar ocamldoc
 	$(Verb) $(GZIP) $(PROJ_OBJ_DIR)/ocamldoc.tar
 	$(Verb) $(CP) $(PROJ_OBJ_DIR)/ocamldoc.tar.gz $(PROJ_OBJ_DIR)/ocamldoc/html/
+
+uninstall-local::
+	$(Echo) Uninstalling Documentation
+	$(Verb) $(RM) -rf $(PROJ_docsdir)

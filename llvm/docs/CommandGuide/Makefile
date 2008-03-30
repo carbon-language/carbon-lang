@@ -83,8 +83,8 @@ install-local:: $(HTML) $(MAN) $(PS)
 	$(Verb) $(DataInstall) $(PS) $(PS_DIR)
 
 uninstall-local::
-	$(Echo) Uninstalling Documentation
-	$(Verb) $(RM) -rf $(LLVM_DOCSDIR)
+	$(Echo) Uninstalling CommandGuide Documentation
+	$(Verb) $(RM) -rf $(HTML_DIR) $(MAN_DIR) $(PS_DIR)
 
 printvars::
 	$(Echo) "POD            : " '$(POD)'
