@@ -31,7 +31,7 @@ DOXYFILES  := doxygen.cfg.in doxygen.css doxygen.footer doxygen.header \
               doxygen.intro
 EXTRA_DIST := $(HTML) $(DOXYFILES) llvm.css CommandGuide img
 
-.PHONY: install-html install-doxygen doxygen install-ocamldoc ocamldoc
+.PHONY: install-html install-doxygen doxygen install-ocamldoc ocamldoc generated
 
 install_targets := install-html
 ifeq ($(ENABLE_DOXYGEN),1)
@@ -41,6 +41,10 @@ ifneq (,$(filter ocaml,$(BINDINGS_TO_BUILD)))
 install_targets += install-ocamldoc
 endif
 install-local:: $(install_targets)
+
+# Live documentation is generated for the web site using this target:
+# 'make generated BUILD_FOR_WEBSITE=1'
+generated:: doxygen ocamldoc
 
 install-html: $(PROJ_OBJ_DIR)/html.tar.gz
 	$(Echo) Installing HTML documentation
