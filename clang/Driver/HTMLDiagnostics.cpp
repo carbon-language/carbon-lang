@@ -44,7 +44,9 @@ public:
   
   virtual void HandlePathDiagnostic(const PathDiagnostic& D);
   
-  void HandlePiece(Rewriter& R, const PathDiagnosticPiece& P, unsigned num);
+  void HandlePiece(Rewriter& R, const PathDiagnosticPiece& P,
+                   unsigned num, unsigned max);
+  
   void HighlightRange(Rewriter& R, SourceRange Range, unsigned MainFileID);
 };
   
@@ -98,11 +100,12 @@ void HTMLDiagnostics::HandlePathDiagnostic(const PathDiagnostic& D) {
   // Process the path.
   
   unsigned n = D.size();
+  unsigned max = n;
   
   for (PathDiagnostic::const_reverse_iterator I=D.rbegin(), E=D.rend();
         I!=E; ++I, --n) {
     
-    HandlePiece(R, *I, n);
+    HandlePiece(R, *I, n, max);
   }
   
   // Add line numbers, header, footer, etc.
@@ -172,7 +175,7 @@ void HTMLDiagnostics::HandlePathDiagnostic(const PathDiagnostic& D) {
 
 void HTMLDiagnostics::HandlePiece(Rewriter& R,
                                   const PathDiagnosticPiece& P,
-                                  unsigned num) {
+                                  unsigned num, unsigned max) {
   
   // For now, just draw a box above the line in question, and emit the
   // warning.
@@ -212,7 +215,14 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R,
   std::ostringstream os;
   
   os << "\n<tr><td class=\"num\"></td><td class=\"line\">"
-     << "<div class=\"msg\" style=\"margin-left:"
+     << "<div id=\"";
+  
+  if (num == max)
+    os << "EndPath";
+  else
+    os << "Path" << num;
+  
+  os << "\" class=\"msg\" style=\"margin-left:"
      << PosNo << "ex\">";
   
   os << html::EscapeText(P.getString()) << "</div></td></tr>";
