@@ -57,7 +57,7 @@ public:
                Typedef,
     //         TagDecl
                  Enum,
-    //           RecordDecl,
+    //           RecordDecl
                    Struct,
                    Union,
                    Class,
