@@ -886,15 +886,6 @@ rewriteInstructionForSpills(const LiveInterval &li, const VNInfo *VNI,
       if (MI == ReMatOrigDefMI && CanDelete) {
         DOUT << "\t\t\t\tErasing re-materlizable def: ";
         DOUT << MI << '\n';
-        unsigned ImpUse = getReMatImplicitUse(li, MI);
-        if (ImpUse) {
-          // To be deleted MI has a virtual register operand, update the
-          // spill weight of the register interval.
-          unsigned loopDepth = loopInfo->getLoopDepth(MI->getParent());
-          LiveInterval &ImpLi = getInterval(ImpUse);
-          ImpLi.weight -=
-            getSpillWeight(false, true, loopDepth) / ImpLi.getSize();
-        }
         RemoveMachineInstrFromMaps(MI);
         vrm.RemoveMachineInstrFromMaps(MI);
         MI->eraseFromParent();
@@ -1116,6 +1107,7 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
     MachineInstr *MI = &(*ri);
     MachineOperand &O = ri.getOperand();
     ++ri;
+    assert(!O.isImplicit() && "Spilling register that's used as implicit use?");
     unsigned index = getInstructionIndex(MI);
     if (index < start || index >= end)
       continue;
@@ -1147,11 +1139,10 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
 
     if (ImpUse && MI != ReMatDefMI) {
       // Re-matting an instruction with virtual register use. Update the
-      // register interval's spill weight.
-      unsigned loopDepth = loopInfo->getLoopDepth(MI->getParent());
+      // register interval's spill weight to HUGE_VALF to prevent it from
+      // being spilled.
       LiveInterval &ImpLi = getInterval(ImpUse);
-      ImpLi.weight +=
-        getSpillWeight(false, true, loopDepth) * NumUses / ImpLi.getSize();
+      ImpLi.weight = HUGE_VALF;
     }
 
     unsigned MBBId = MBB->getNumber();
@@ -1575,12 +1566,10 @@ addIntervalsForSpills(const LiveInterval &li,
           if (ImpUse) {
             // Re-matting an instruction with virtual register use. Add the
             // register as an implicit use on the use MI and update the register
-            // interval's spill weight.
-            unsigned loopDepth = loopInfo->getLoopDepth(MI->getParent());
+            // interval's spill weight to HUGE_VALF to prevent it from being
+            // spilled.
             LiveInterval &ImpLi = getInterval(ImpUse);
-            ImpLi.weight +=
-              getSpillWeight(false, true, loopDepth) / ImpLi.getSize();
-
+            ImpLi.weight = HUGE_VALF;
             MI->addOperand(MachineOperand::CreateReg(ImpUse, false, true));
           }
         }
