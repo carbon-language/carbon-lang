@@ -183,7 +183,7 @@ variables</a>.</p>
             let i = build_fcmp Fcmp.Ult lhs_val rhs_val "cmptmp" builder in
             build_uitofp i double_type "booltmp" builder
         | _ -&gt; raise (Error "invalid binary operator")
-			end
+      end
 </pre>
 </div>
 
@@ -280,7 +280,7 @@ let codegen_proto = function
       (* Make the function type: double(double,double) etc. *)
       let doubles = Array.make (Array.length args) double_type in
       let ft = function_type double_type doubles in
-			let f =
+      let f =
         match lookup_function name the_module with
 </pre>
 </div>

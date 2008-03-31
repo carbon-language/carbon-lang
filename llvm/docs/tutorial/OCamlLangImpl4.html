@@ -237,7 +237,7 @@ We do this by running it after our newly created function is constructed (in
 <div class="doc_code">
 <pre>
 let codegen_func the_fpm = function
-			...
+      ...
       try
         let ret_val = codegen_expr body in
 
@@ -316,10 +316,9 @@ by adding a global variable and a call in <tt>main</tt>:</p>
 ...
 let main () =
   ...
-	<b>
-  (* Create the JIT. *)
+  <b>(* Create the JIT. *)
   let the_module_provider = ModuleProvider.create Codegen.the_module in
-	let the_execution_engine = ExecutionEngine.create the_module_provider in</b>
+  let the_execution_engine = ExecutionEngine.create the_module_provider in</b>
   ...
 </pre>
 </div>
@@ -507,6 +506,17 @@ constructs</a>, tackling some interesting LLVM IR issues along the way.</p>
 Here is the complete code listing for our running example, enhanced with the
 LLVM JIT and optimizer.  To build this example, use:
 </p>
+
+<div class="doc_code">
+<pre>
+# Compile
+ocamlbuild toy.byte
+# Run
+./toy.byte
+</pre>
+</div>
+
+<p>Here is the code:</p>
 
 <dl>
 <dt>_tags:</dt>
