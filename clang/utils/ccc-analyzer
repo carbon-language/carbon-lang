@@ -64,9 +64,13 @@ def analyze(args,language,output,files,verbose,htmldir):
       args = command + files + target.split()      
     else:
       command = 'clang --grsimple'.split()
-      args = command + args + [ '-o', htmldir ]
-      print_args.append('-o')
-      print_args.append(htmldir)
+      args = command + args;
+      
+      if htmldir is not None:
+        args.append('-o')
+        print_args.append('-o')
+        args.append(htmldir)
+        print_args.append(htmldir)
     
     if verbose:  
       print >> sys.stderr, ' '.join(command+print_args)
@@ -121,9 +125,6 @@ def main(args):
       verbose =1
     
     htmldir = os.environ.get('CCC_ANALYZER_HTML')
-    if htmldir is None:
-      print >> sys.stderr, 'error: CCC_ANALYZER_HTML environment variable not set.'
-      sys.exit(1)
       
     i = 0
     while i < len(args):
