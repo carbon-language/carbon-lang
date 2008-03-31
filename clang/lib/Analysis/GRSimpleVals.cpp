@@ -51,7 +51,9 @@ static void EmitDiag(Diagnostic& Diag, PathDiagnosticClient* PD,
 unsigned ErrorDiag, ITERATOR I) {  
   
   Stmt* S = GetStmt(GetLocation(I));
-  Diag.Report(PD, FullSourceLoc(S->getLocStart(), SrcMgr), ErrorDiag);    
+  SourceRange R = S->getSourceRange();
+  Diag.Report(PD, FullSourceLoc(S->getLocStart(), SrcMgr), ErrorDiag,
+              NULL, 0, &R, 1);    
 }
 
 
