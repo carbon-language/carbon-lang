@@ -381,9 +381,9 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
 
     O << "\n";
 
-    if (ExceptionHandling && TAI->doesSupportExceptionHandling() && MMI &&
-        !Subtarget->is64Bit()) {
+    if (TAI->doesSupportExceptionHandling() && MMI && !Subtarget->is64Bit()) {
       // Add the (possibly multiple) personalities to the set of global values.
+      // Only referenced functions get into the Personalities list.
       const std::vector<Function *>& Personalities = MMI->getPersonalities();
 
       for (std::vector<Function *>::const_iterator I = Personalities.begin(),

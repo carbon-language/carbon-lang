@@ -66,8 +66,7 @@ LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   
   PM.add(createGCLoweringPass());
 
-  if (!ExceptionHandling)
-    PM.add(createLowerInvokePass(getTargetLowering()));
+  PM.add(createLowerInvokePass(getTargetLowering()));
 
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());
@@ -192,8 +191,7 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(PassManagerBase &PM,
   
   PM.add(createGCLoweringPass());
   
-  if (!ExceptionHandling)
-    PM.add(createLowerInvokePass(getTargetLowering()));
+  PM.add(createLowerInvokePass(getTargetLowering()));
   
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());

@@ -47,6 +47,9 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Target/TargetLowering.h"
+#include "llvm/Target/TargetOptions.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetAsmInfo.h"
 #include <csetjmp>
 #include <set>
 using namespace llvm;
@@ -592,6 +595,12 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
 }
 
 bool LowerInvoke::runOnFunction(Function &F) {
+  // If we will be generating exception info, don't do anything here.
+  if ((ExceptionHandling || !F.doesNotThrow()) &&
+      TLI &&
+      TLI->getTargetMachine().getTargetAsmInfo()->
+                              doesSupportExceptionHandling())
+    return false;
   if (ExpensiveEHSupport)
     return insertExpensiveEHSupport(F);
   else
