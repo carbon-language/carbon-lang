@@ -12,18 +12,20 @@
 //===----------------------------------------------------------------------===//
 
 #include "ASTConsumers.h"
+#include "HTMLDiagnostics.h"
 #include "clang/AST/TranslationUnit.h"
-#include "clang/Basic/Diagnostic.h"
+#include "clang/Analysis/PathDiagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/AST/AST.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/CFG.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
-#include "clang/Analysis/Analyses/GRSimpleVals.h"
 #include "clang/Analysis/LocalCheckers.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/Timer.h"
+#include "llvm/ADT/OwningPtr.h"
+
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -630,12 +632,15 @@ namespace {
   class GRSimpleValsVisitor : public CFGVisitor {
     Diagnostic &Diags;
     ASTContext* Ctx;
+    const std::string& HTMLDir;
     bool Visualize;
     bool TrimGraph;
   public:
     GRSimpleValsVisitor(Diagnostic &diags, const std::string& fname,
+                        const std::string& htmldir,
                         bool visualize, bool trim)
-      : CFGVisitor(fname), Diags(diags), Visualize(visualize), TrimGraph(trim){}
+      : CFGVisitor(fname), Diags(diags), HTMLDir(htmldir),
+        Visualize(visualize), TrimGraph(trim) {}
     
     virtual void Initialize(ASTContext &Context) { Ctx = &Context; }    
     virtual void VisitCFG(CFG& C, Decl&);
@@ -645,9 +650,11 @@ namespace {
 
 ASTConsumer* clang::CreateGRSimpleVals(Diagnostic &Diags,
                                        const std::string& FunctionName,
+                                       const std::string& HTMLDir,
                                        bool Visualize, bool TrimGraph) {
   
-  return new GRSimpleValsVisitor(Diags, FunctionName, Visualize, TrimGraph);
+  return new GRSimpleValsVisitor(Diags, FunctionName, HTMLDir,
+                                 Visualize, TrimGraph);
 }
 
 void GRSimpleValsVisitor::VisitCFG(CFG& C, Decl& CD) {
@@ -678,16 +685,21 @@ void GRSimpleValsVisitor::VisitCFG(CFG& C, Decl& CD) {
 #if 0
     llvm::Timer T("GRSimpleVals");
     T.startTimer();
-    unsigned size = RunGRSimpleVals(C, CD, *Ctx, Diags, false, false);
+    unsigned size = RunGRSimpleVals(C, CD, *Ctx, Diags, NULL, false, false);
     T.stopTimer();    
     llvm::cerr << size << ' ' << T.getWallTime() << '\n';
 #else
-    RunGRSimpleVals(C, CD, *Ctx, Diags, false, false);
+    llvm::OwningPtr<PathDiagnosticClient> PD;
+    
+    if (!HTMLDir.empty())
+      PD.reset(CreateHTMLDiagnosticClient(HTMLDir));
+    
+    RunGRSimpleVals(C, CD, *Ctx, Diags, PD.get(), false, false);
 #endif
   }
   else {  
     llvm::cerr << '\n';    
-    RunGRSimpleVals(C, CD, *Ctx, Diags, Visualize, TrimGraph);
+    RunGRSimpleVals(C, CD, *Ctx, Diags, NULL, Visualize, TrimGraph);
   }    
 }
 
@@ -699,10 +711,12 @@ namespace {
   class CFRefCountCheckerVisitor : public CFGVisitor {
     Diagnostic &Diags;
     ASTContext* Ctx;
+    const std::string& HTMLDir;
     
   public:
-    CFRefCountCheckerVisitor(Diagnostic &diags, const std::string& fname)
-      : CFGVisitor(fname), Diags(diags) {}
+    CFRefCountCheckerVisitor(Diagnostic &diags, const std::string& fname,
+                             const std::string& htmldir)
+      : CFGVisitor(fname), Diags(diags), HTMLDir(htmldir) {}
     
     virtual void Initialize(ASTContext &Context) { Ctx = &Context; }    
     virtual void VisitCFG(CFG& C, Decl&);
@@ -712,20 +726,21 @@ namespace {
 
 
 ASTConsumer* clang::CreateCFRefChecker(Diagnostic &Diags,
-                                       const std::string& FunctionName) {
+                                       const std::string& FunctionName,
+                                       const std::string& HTMLDir) {
   
-  return new CFRefCountCheckerVisitor(Diags, FunctionName);
+  return new CFRefCountCheckerVisitor(Diags, FunctionName, HTMLDir);
 }
 
 void CFRefCountCheckerVisitor::VisitCFG(CFG& C, Decl& CD) {
-  
+    
   SourceLocation Loc = CD.getLocation();
   
   if (!Loc.isFileID() ||
       Loc.getFileID() != Ctx->getSourceManager().getMainFileID())
     return;
      
-  CheckCFRefCount(C, CD, *Ctx, Diags);
+  CheckCFRefCount(C, CD, *Ctx, Diags, NULL);
 }
 
 //===----------------------------------------------------------------------===//

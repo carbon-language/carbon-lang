@@ -14,7 +14,7 @@
 
 #include "GRSimpleVals.h"
 #include "clang/Analysis/PathSensitive/ValueState.h"
-#include "clang/Basic/Diagnostic.h"
+#include "clang/Analysis/PathDiagnostic.h"
 #include "clang/Analysis/LocalCheckers.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
@@ -778,7 +778,7 @@ CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
 namespace clang {
   
   void CheckCFRefCount(CFG& cfg, Decl& CD, ASTContext& Ctx,
-                       Diagnostic& Diag) {
+                       Diagnostic& Diag, PathDiagnosticClient* PD) {
     
     if (Diag.hasErrorOccurred())
       return;

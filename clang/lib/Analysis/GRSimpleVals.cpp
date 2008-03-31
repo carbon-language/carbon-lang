@@ -16,7 +16,7 @@
 #include "GRSimpleVals.h"
 #include "BasicObjCFoundationChecks.h"
 #include "clang/Analysis/PathSensitive/ValueState.h"
-#include "clang/Basic/Diagnostic.h"
+#include "clang/Analysis/PathDiagnostic.h"
 #include <sstream>
 
 using namespace clang;
@@ -46,28 +46,31 @@ static inline Stmt* GetStmt(const ProgramPoint& P) {
 }
 
 template <typename ITERATOR>
-static void EmitDiag(Diagnostic& Diag, SourceManager& SrcMgr,
-                     unsigned ErrorDiag, ITERATOR I) {  
+static void EmitDiag(Diagnostic& Diag, PathDiagnosticClient* PD,
+                     SourceManager& SrcMgr,
+unsigned ErrorDiag, ITERATOR I) {  
   
   Stmt* S = GetStmt(GetLocation(I));
-  Diag.Report(FullSourceLoc(S->getLocStart(), SrcMgr), ErrorDiag);    
+  Diag.Report(PD, FullSourceLoc(S->getLocStart(), SrcMgr), ErrorDiag);    
 }
 
 
 template <>
-static void EmitDiag(Diagnostic& Diag, SourceManager& SrcMgr,
-                     unsigned ErrorDiag, GRExprEngine::undef_arg_iterator I) {
+static void EmitDiag(Diagnostic& Diag, PathDiagnosticClient* PD, 
+                     SourceManager& SrcMgr, unsigned ErrorDiag,
+                     GRExprEngine::undef_arg_iterator I) {
 
   Stmt* S1 = GetStmt(GetLocation(I));
   Expr* E2 = cast<Expr>(I->second);
   
   SourceLocation Loc = S1->getLocStart();
   SourceRange R = E2->getSourceRange();
-  Diag.Report(FullSourceLoc(Loc, SrcMgr), ErrorDiag, 0, 0, &R, 1);
+  Diag.Report(PD, FullSourceLoc(Loc, SrcMgr), ErrorDiag, 0, 0, &R, 1);
 }
 
 template <typename ITERATOR>
-void EmitWarning(Diagnostic& Diag, SourceManager& SrcMgr,
+void EmitWarning(Diagnostic& Diag,  PathDiagnosticClient* PD,
+                 SourceManager& SrcMgr,
                  ITERATOR I, ITERATOR E, const char* msg) {
  
   std::ostringstream Out;
@@ -97,12 +100,13 @@ void EmitWarning(Diagnostic& Diag, SourceManager& SrcMgr,
       CachedErrors.insert(p);
     }
     
-    EmitDiag(Diag, SrcMgr, ErrorDiag, I);  
+    EmitDiag(Diag, PD, SrcMgr, ErrorDiag, I);  
   }
 }
   
 unsigned RunGRSimpleVals(CFG& cfg, Decl& CD, ASTContext& Ctx,
-                         Diagnostic& Diag, bool Visualize, bool TrimGraph) {
+                         Diagnostic& Diag, PathDiagnosticClient* PD,
+                         bool Visualize, bool TrimGraph) {
   
   GRCoreEngine<GRExprEngine> Eng(cfg, CD, Ctx);
   GRExprEngine* CheckerState = &Eng.getCheckerState();
@@ -118,56 +122,56 @@ unsigned RunGRSimpleVals(CFG& cfg, Decl& CD, ASTContext& Ctx,
   CheckerState->AddObjCMessageExprCheck(FoundationCheck.get());
   
   // Execute the worklist algorithm.
-  Eng.ExecuteWorkList(100000);
+  Eng.ExecuteWorkList(120000);
   
   SourceManager& SrcMgr = Ctx.getSourceManager();  
 
-  EmitWarning(Diag, SrcMgr,
+  EmitWarning(Diag, PD, SrcMgr,
               CheckerState->null_derefs_begin(),
               CheckerState->null_derefs_end(),
               "Dereference of NULL pointer.");
   
-  EmitWarning(Diag, SrcMgr,
+  EmitWarning(Diag, PD, SrcMgr,
               CheckerState->undef_derefs_begin(),
               CheckerState->undef_derefs_end(),
               "Dereference of undefined value.");
   
-  EmitWarning(Diag, SrcMgr,
+  EmitWarning(Diag, PD, SrcMgr,
               CheckerState->undef_branches_begin(),
               CheckerState->undef_branches_end(),
               "Branch condition evaluates to an uninitialized value.");
   
-  EmitWarning(Diag, SrcMgr,
+  EmitWarning(Diag, PD, SrcMgr,
               CheckerState->explicit_bad_divides_begin(),
               CheckerState->explicit_bad_divides_end(),
               "Division by zero/undefined value.");
   
-  EmitWarning(Diag, SrcMgr,
+  EmitWarning(Diag, PD, SrcMgr,
               CheckerState->undef_results_begin(),
               CheckerState->undef_results_end(),
               "Result of operation is undefined.");
   
-  EmitWarning(Diag, SrcMgr,
+  EmitWarning(Diag, PD, SrcMgr,
               CheckerState->bad_calls_begin(),
               CheckerState->bad_calls_end(),
               "Call using a NULL or undefined function pointer value.");
   
-  EmitWarning(Diag, SrcMgr,
+  EmitWarning(Diag, PD, SrcMgr,
               CheckerState->undef_arg_begin(),
               CheckerState->undef_arg_end(),
               "Pass-by-value argument in function is undefined.");
   
-  EmitWarning(Diag, SrcMgr,
+  EmitWarning(Diag, PD, SrcMgr,
               CheckerState->msg_expr_undef_arg_begin(),
               CheckerState->msg_expr_undef_arg_end(),
               "Pass-by-value argument in message expression is undefined.");
   
-  EmitWarning(Diag, SrcMgr,
+  EmitWarning(Diag, PD, SrcMgr,
               CheckerState->undef_receivers_begin(),
               CheckerState->undef_receivers_end(),
               "Receiver in message expression is an uninitialized value.");
   
-  EmitWarning(Diag, SrcMgr,
+  EmitWarning(Diag, PD, SrcMgr,
               CheckerState->ret_stackaddr_begin(),
               CheckerState->ret_stackaddr_end(),
               "Address of stack-allocated variable returned.");

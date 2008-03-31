@@ -1039,13 +1039,14 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
       return CreateUnitValsChecker(Diag);
       
     case AnalysisGRSimpleVals:
-      return CreateGRSimpleVals(Diag, AnalyzeSpecificFunction);
+      return CreateGRSimpleVals(Diag, AnalyzeSpecificFunction, OutputFile);
       
     case AnalysisGRSimpleValsView:
-      return CreateGRSimpleVals(Diag, AnalyzeSpecificFunction, true, TrimGraph);
+      return CreateGRSimpleVals(Diag, AnalyzeSpecificFunction, OutputFile,
+                                true, TrimGraph);
       
     case CheckerCFRef:
-      return CreateCFRefChecker(Diag, AnalyzeSpecificFunction);
+      return CreateCFRefChecker(Diag, AnalyzeSpecificFunction, OutputFile);
       
     case TestSerialization:
       return CreateSerializationTest(Diag, FileMgr, LangOpts);

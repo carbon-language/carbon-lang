@@ -21,6 +21,7 @@ class CFG;
 class Decl;
 class Diagnostic;
 class ASTContext;
+class PathDiagnosticClient;
 
 void CheckDeadStores(CFG& cfg, ASTContext &Ctx, Diagnostic &Diags); 
   
@@ -28,7 +29,11 @@ void CheckUninitializedValues(CFG& cfg, ASTContext& Ctx, Diagnostic& Diags,
                               bool FullUninitTaint=false);
   
 void CheckCFRefCount(CFG& cfg, Decl& CodeDecl, ASTContext& Ctx,
-                     Diagnostic& Diag);
+                     Diagnostic& Diag, PathDiagnosticClient* PD);
+  
+unsigned RunGRSimpleVals(CFG& cfg, Decl& CD, ASTContext& Ctx,
+                         Diagnostic& Diag, PathDiagnosticClient* PD,
+                         bool Visualize, bool TrimGraph);
 
 } // end namespace clang
 
