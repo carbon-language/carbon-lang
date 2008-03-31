@@ -198,7 +198,8 @@ Diagnostic::Level Diagnostic::getDiagnosticLevel(unsigned DiagID) const {
 /// Report - Issue the message to the client. If the client wants us to stop
 /// compilation, return true, otherwise return false.  DiagID is a member of
 /// the diag::kind enum.  
-void Diagnostic::Report(FullSourceLoc Pos, unsigned DiagID,
+void Diagnostic::Report(DiagnosticClient* C,
+                        FullSourceLoc Pos, unsigned DiagID,
                         const std::string *Strs, unsigned NumStrs,
                         const SourceRange *Ranges, unsigned NumRanges) {
   
@@ -224,8 +225,11 @@ void Diagnostic::Report(FullSourceLoc Pos, unsigned DiagID,
   }
 
   // Finally, report it.
-  Client.HandleDiagnostic(*this, DiagLevel, Pos, (diag::kind)DiagID,
-                          Strs, NumStrs, Ranges, NumRanges);
+  
+  if (!C) C = &Client;
+  
+  C->HandleDiagnostic(*this, DiagLevel, Pos, (diag::kind)DiagID,
+                      Strs, NumStrs, Ranges, NumRanges);
   ++NumDiagnostics;
 }
 
