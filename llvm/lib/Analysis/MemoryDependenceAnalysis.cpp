@@ -99,11 +99,11 @@ Instruction* MemoryDependenceAnalysis::getCallSiteDependency(CallSite C,
   // If the starting point was specifiy, use it
   if (start) {
     QI = start;
-    blockBegin = start->getParent()->end();
+    blockBegin = start->getParent()->begin();
   // If the starting point wasn't specified, but the block was, use it
   } else if (!start && block) {
     QI = block->end();
-    blockBegin = block->end();
+    blockBegin = block->begin();
   }
   
   // Walk backwards through the block, looking for dependencies
