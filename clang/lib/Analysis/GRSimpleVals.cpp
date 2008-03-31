@@ -166,6 +166,11 @@ unsigned RunGRSimpleVals(CFG& cfg, Decl& CD, ASTContext& Ctx,
               CheckerState->undef_receivers_begin(),
               CheckerState->undef_receivers_end(),
               "Receiver in message expression is an uninitialized value.");
+  
+  EmitWarning(Diag, SrcMgr,
+              CheckerState->ret_stackaddr_begin(),
+              CheckerState->ret_stackaddr_end(),
+              "Address of stack-allocated variable returned.");
 
   FoundationCheck.get()->ReportResults(Diag);
 #ifndef NDEBUG

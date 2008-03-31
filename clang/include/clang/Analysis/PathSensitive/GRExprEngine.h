@@ -86,8 +86,12 @@ protected:
   typedef llvm::DenseMap<NodeTy*, Expr*> UndefArgsTy;
   typedef llvm::SmallPtrSet<NodeTy*,2> BadDividesTy;
   typedef llvm::SmallPtrSet<NodeTy*,2> NoReturnCallsTy;  
-  typedef llvm::SmallPtrSet<NodeTy*,2> UndefResultsTy;  
+  typedef llvm::SmallPtrSet<NodeTy*,2> UndefResultsTy;
+  typedef llvm::SmallPtrSet<NodeTy*,2> RetsStackAddrTy;
 
+  /// RetsStackAddr - Nodes in the ExplodedGraph that result from returning
+  ///  the address of a stack variable.
+  RetsStackAddrTy RetsStackAddr;
   
   /// UndefBranches - Nodes in the ExplodedGraph that result from
   ///  taking a branch based on an undefined value.
@@ -179,6 +183,10 @@ public:
   ///  in the ExplodedGraph.
   ValueState* getInitialState();
   
+  bool isRetStackAddr(const NodeTy* N) const {
+    return N->isSink() && RetsStackAddr.count(const_cast<NodeTy*>(N)) != 0;
+  }
+  
   bool isUndefControlFlow(const NodeTy* N) const {
     return N->isSink() && UndefBranches.count(const_cast<NodeTy*>(N)) != 0;
   }
@@ -228,6 +236,10 @@ public:
   bool isUndefReceiver(const NodeTy* N) const {
     return N->isSink() && UndefReceivers.count(const_cast<NodeTy*>(N)) != 0;
   }
+  
+  typedef RetsStackAddrTy::iterator ret_stackaddr_iterator;
+  ret_stackaddr_iterator ret_stackaddr_begin() { return RetsStackAddr.begin(); }
+  ret_stackaddr_iterator ret_stackaddr_end() { return RetsStackAddr.end(); }  
   
   typedef UndefBranchesTy::iterator undef_branch_iterator;
   undef_branch_iterator undef_branches_begin() { return UndefBranches.begin(); }
@@ -475,6 +487,9 @@ protected:
   
   /// VisitLogicalExpr - Transfer function logic for '&&', '||'
   void VisitLogicalExpr(BinaryOperator* B, NodeTy* Pred, NodeSet& Dst);
+  
+  /// VisitReturnStmt - Transfer function logic for return statements.
+  void VisitReturnStmt(ReturnStmt* R, NodeTy* Pred, NodeSet& Dst);
   
   /// VisitSizeOfAlignOfTypeExpr - Transfer function for sizeof(type).
   void VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr* Ex, NodeTy* Pred,

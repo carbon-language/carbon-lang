@@ -1190,6 +1190,50 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
   MakeNode(Dst, ME, Pred, St);
 }
 
+void GRExprEngine::VisitReturnStmt(ReturnStmt* S, NodeTy* Pred, NodeSet& Dst) {
+
+  Expr* R = S->getRetValue();
+  
+  if (!R) {
+    Dst.Add(Pred);
+    return;
+  }
+  
+  QualType T = R->getType();
+  
+  if (T->isPointerType() || T->isReferenceType()) {
+    
+    // Check if any of the return values return the address of a stack variable.
+    
+    NodeSet Tmp;
+    Visit(R, Pred, Tmp);
+    
+    for (NodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {
+      RVal X = GetRVal((*I)->getState(), R);
+
+      if (isa<lval::DeclVal>(X)) {
+        
+        if (cast<lval::DeclVal>(X).getDecl()->hasLocalStorage()) {
+        
+          // Create a special node representing the v
+          
+          NodeTy* RetStackNode = Builder->generateNode(S, GetState(*I), *I);
+          
+          if (RetStackNode) {
+            RetStackNode->markAsSink();
+            RetsStackAddr.insert(RetStackNode);
+          }
+          
+          continue;
+        }
+      }
+      
+      Dst.Add(*I);
+    }
+  }
+  else
+    Visit(R, Pred, Dst);
+}
 
 void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
                                        GRExprEngine::NodeTy* Pred,
@@ -1625,14 +1669,8 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
       //  that users can quickly query what was the state at the
       //  exit points of a function.
       
-    case Stmt::ReturnStmtClass: {
-      if (Expr* R = cast<ReturnStmt>(S)->getRetValue())
-        Visit(R, Pred, Dst);
-      else
-        Dst.Add(Pred);
-      
-      break;
-    }
+    case Stmt::ReturnStmtClass:
+      VisitReturnStmt(cast<ReturnStmt>(S), Pred, Dst); break;
       
     case Stmt::UnaryOperatorClass: {
       UnaryOperator* U = cast<UnaryOperator>(S);
