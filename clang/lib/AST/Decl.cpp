@@ -193,7 +193,7 @@ void Decl::addDeclKind(Kind k) {
   case ObjCIvar:            nIvarDecls++; break;
   case ObjCImplementation:  nObjCImplementationDecls++; break;
   case ObjCCategoryImpl:    nObjCCategoryImpl++; break;
-  case CompatibleAlias:     nObjCCompatibleAlias++; break;
+  case ObjCCompatibleAlias: nObjCCompatibleAlias++; break;
   case PropertyDecl:        nObjCPropertyDecl++; break;
   case LinkageSpec:         nLinkageSpecDecl++; break;
   case FileScopeAsm:        nFileScopeAsmDecl++; break;
@@ -319,11 +319,45 @@ const Attr *Decl::getAttrs() const {
   return (*DeclAttrs)[this];
 }
 
+//===----------------------------------------------------------------------===//
+// NamedDecl Implementation
+//===----------------------------------------------------------------------===//
+
 const char *NamedDecl::getName() const {
   if (const IdentifierInfo *II = getIdentifier())
     return II->getName();
   return "";
 }
+
+//===----------------------------------------------------------------------===//
+// ScopedDecl Implementation
+//===----------------------------------------------------------------------===//
+
+// isDefinedOutsideFunctionOrMethod - This predicate returns true if this
+// scoped decl is defined outside the current function or method.  This is
+// roughly global variables and functions, but also handles enums (which could
+// be defined inside or outside a function etc).
+bool ScopedDecl::isDefinedOutsideFunctionOrMethod() const {
+  if (const VarDecl *VD = dyn_cast<VarDecl>(this))
+    return VD->hasGlobalStorage();
+  if (isa<FunctionDecl>(this))
+    return true;
+  
+  // FIXME: Why is ObjCCompatibleAlias a scopedecl?
+  if (isa<ObjCCompatibleAliasDecl>(this))
+    return true;
+  
+  // FIXME: This needs to check the context the decl was defined in!
+  if (isa<TypeDecl>(this) || isa<EnumConstantDecl>(this))
+    return true;
+  
+  assert(0 && "Unknown ScopedDecl!");
+  return false;
+}
+
+//===----------------------------------------------------------------------===//
+// FunctionDecl Implementation
+//===----------------------------------------------------------------------===//
 
 FunctionDecl::~FunctionDecl() {
   delete[] ParamInfo;
@@ -346,6 +380,9 @@ void FunctionDecl::setParams(ParmVarDecl **NewParamInfo, unsigned NumParams) {
   }
 }
 
+//===----------------------------------------------------------------------===//
+// RecordDecl Implementation
+//===----------------------------------------------------------------------===//
 
 /// defineBody - When created, RecordDecl's correspond to a forward declared
 /// record.  This method is used to mark the decl as being defined, with the
@@ -360,14 +397,13 @@ void RecordDecl::defineBody(FieldDecl **members, unsigned numMembers) {
   }
 }
 
-FieldDecl* RecordDecl::getMember(IdentifierInfo *name) {
+FieldDecl *RecordDecl::getMember(IdentifierInfo *II) {
   if (Members == 0 || NumMembers < 0)
     return 0;
   
-  // linear search. When C++ classes come along, will likely need to revisit.
-  for (int i = 0; i < NumMembers; ++i) {
-    if (Members[i]->getIdentifier() == name)
+  // Linear search.  When C++ classes come along, will likely need to revisit.
+  for (int i = 0; i != NumMembers; ++i)
+    if (Members[i]->getIdentifier() == II)
       return Members[i];
-  }
   return 0;
 }

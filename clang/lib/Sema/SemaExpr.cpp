@@ -74,31 +74,43 @@ Sema::ActOnStringLiteral(const Token *StringToks, unsigned NumStringToks) {
 Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
                                            IdentifierInfo &II,
                                            bool HasTrailingLParen) {
-  // Could be enum-constant or decl.
+  // Could be enum-constant, value decl, instance variable, etc.
   ScopedDecl *D = LookupScopedDecl(&II, Decl::IDNS_Ordinary, Loc, S);
+  
+  // If this reference is in an Objective-C method, then ivar lookup happens as
+  // well.
+  if (CurMethodDecl) {
+    // There are two cases to handle here.  1) scoped lookup could have failed,
+    // in which case we should look for an ivar.  2) scoped lookup could have
+    // found a decl, but that decl is outside the current method (i.e. a global
+    // variable).  In these two cases, we do a lookup for an ivar with this
+    // name, if the lookup suceeds, we replace it our current decl.
+    if (D == 0 || D->isDefinedOutsideFunctionOrMethod()) {
+      ObjCInterfaceDecl *IFace = CurMethodDecl->getClassInterface(), *DeclClass;
+      if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(&II, DeclClass)) {
+        // FIXME: This should use a new expr for a direct reference, don't turn
+        // this into Self->ivar, just return a BareIVarExpr or something.
+        IdentifierInfo &II = Context.Idents.get("self");
+        ExprResult SelfExpr = ActOnIdentifierExpr(S, Loc, II, false);
+        return new ObjCIvarRefExpr(IV, IV->getType(), Loc, 
+                                 static_cast<Expr*>(SelfExpr.Val), true, true);
+      }
+    }
+  }
+  
   if (D == 0) {
     // Otherwise, this could be an implicitly declared function reference (legal
     // in C90, extension in C99).
     if (HasTrailingLParen &&
-        // Not in C++.
-        !getLangOptions().CPlusPlus)
+        !getLangOptions().CPlusPlus) // Not in C++.
       D = ImplicitlyDefineFunction(Loc, II, S);
     else {
-      if (CurMethodDecl) {
-        ObjCInterfaceDecl *IFace = CurMethodDecl->getClassInterface();
-        ObjCInterfaceDecl *clsDeclared;
-        if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(&II, clsDeclared)) {
-          IdentifierInfo &II = Context.Idents.get("self");
-          ExprResult SelfExpr = ActOnIdentifierExpr(S, Loc, II, false);
-          return new ObjCIvarRefExpr(IV, IV->getType(), Loc, 
-                       static_cast<Expr*>(SelfExpr.Val), true, true);
-        }
-      }
       // If this name wasn't predeclared and if this is not a function call,
       // diagnose the problem.
       return Diag(Loc, diag::err_undeclared_var_use, II.getName());
     }
   }
+  
   if (ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
     // check if referencing an identifier with __attribute__((deprecated)).
     if (VD->getAttr<DeprecatedAttr>())
@@ -109,6 +121,7 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
       return true;
     return new DeclRefExpr(VD, VD->getType(), Loc);
   }
+  
   if (isa<TypedefDecl>(D))
     return Diag(Loc, diag::err_unexpected_typedef, II.getName());
   if (isa<ObjCInterfaceDecl>(D))

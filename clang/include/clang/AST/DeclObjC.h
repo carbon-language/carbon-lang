@@ -877,7 +877,7 @@ class ObjCCompatibleAliasDecl : public ScopedDecl {
   
   ObjCCompatibleAliasDecl(SourceLocation L, IdentifierInfo *Id,
                          ObjCInterfaceDecl* aliasedClass)
-  : ScopedDecl(CompatibleAlias, L, Id, 0), AliasedClass(aliasedClass) {}
+  : ScopedDecl(ObjCCompatibleAlias, L, Id, 0), AliasedClass(aliasedClass) {}
 public:
   static ObjCCompatibleAliasDecl *Create(ASTContext &C, SourceLocation L,
                                          IdentifierInfo *Id,
@@ -887,7 +887,7 @@ public:
   ObjCInterfaceDecl *getClassInterface() { return AliasedClass; }
   
   static bool classof(const Decl *D) {
-    return D->getKind() == CompatibleAlias;
+    return D->getKind() == ObjCCompatibleAlias;
   }
   static bool classof(const ObjCCompatibleAliasDecl *D) { return true; }
   

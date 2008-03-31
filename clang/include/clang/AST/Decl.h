@@ -51,7 +51,7 @@ public:
            ObjCProtocol,
            PropertyDecl,
     //     ScopedDecl
-             CompatibleAlias,
+             ObjCCompatibleAlias,
     //       TypeDecl
                ObjCInterface,
                Typedef,
@@ -78,7 +78,7 @@ public:
     // of the class, to allow efficient classof.
     NamedFirst  = Field,         NamedLast  = ParmVar,
     FieldFirst  = Field,         FieldLast  = ObjCIvar,
-    ScopedFirst = CompatibleAlias, ScopedLast = ParmVar,
+    ScopedFirst = ObjCCompatibleAlias, ScopedLast = ParmVar,
     TypeFirst   = ObjCInterface, TypeLast   = Class,
     TagFirst    = Enum         , TagLast    = Class,
     RecordFirst = Struct       , RecordLast = Class,
@@ -161,7 +161,7 @@ public:
     case ParmVar:
     case EnumConstant:
     case ObjCInterface:
-    case CompatibleAlias:
+    case ObjCCompatibleAlias:
       return IDNS_Ordinary;
     case Struct:
     case Union:
@@ -246,6 +246,12 @@ public:
   ScopedDecl *getNextDeclarator() { return NextDeclarator; }
   const ScopedDecl *getNextDeclarator() const { return NextDeclarator; }
   void setNextDeclarator(ScopedDecl *N) { NextDeclarator = N; }
+  
+  // isDefinedOutsideFunctionOrMethod - This predicate returns true if this
+  // scoped decl is defined outside the current function or method.  This is
+  // roughly global variables and functions, but also handles enums (which could
+  // be defined inside or outside a function etc).
+  bool isDefinedOutsideFunctionOrMethod() const;
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
@@ -348,7 +354,11 @@ protected:
   virtual void ReadImpl(llvm::Deserializer& S);
 };
 
-/// BlockVarDecl - Represent a local variable declaration.
+/// BlockVarDecl - Represent a local variable declaration.  Note that this
+/// includes static variables inside of functions.
+///
+///   void foo() { int x; static int y; extern int z; }
+///
 class BlockVarDecl : public VarDecl {
   BlockVarDecl(SourceLocation L, IdentifierInfo *Id, QualType T, StorageClass S,
                ScopedDecl *PrevDecl)
