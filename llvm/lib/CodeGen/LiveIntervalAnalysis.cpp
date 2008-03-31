@@ -757,8 +757,9 @@ bool LiveIntervals::tryFoldMemoryOperand(MachineInstr* &MI,
   if (FilterFoldedOps(MI, Ops, MRInfo, FoldOps))
     return false;
 
-  // Can't fold a load from fixed stack slot into a two address instruction.
-  if (isSS && DefMI && (MRInfo & VirtRegMap::isMod))
+  // The only time it's safe to fold into a two address instruction is when
+  // it's folding reload and spill from / into a spill stack slot.
+  if (DefMI && (MRInfo & VirtRegMap::isMod))
     return false;
 
   MachineInstr *fmi = isSS ? tii_->foldMemoryOperand(*mf_, MI, FoldOps, Slot)

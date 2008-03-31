@@ -1825,7 +1825,15 @@ X86InstrInfo::foldMemoryOperand(MachineInstr *MI, unsigned i,
       MI->getOperand(0).getReg() == MI->getOperand(1).getReg()) { 
     OpcodeTablePtr = &RegOp2MemOpTable2Addr;
     isTwoAddrFold = true;
+    // Can't write back to CPI or a GV stub.
+    if (MOs[3].isCPI() ||
+        (MOs[3].isGlobal() && isGVStub(MOs[3].getGlobal(), TM)))
+      return NULL;
   } else if (i == 0) { // If operand 0
+    // Can't write back to CPI or a GV stub.
+    if (MOs[3].isCPI() ||
+        (MOs[3].isGlobal() && isGVStub(MOs[3].getGlobal(), TM)))
+      return NULL;
     if (MI->getOpcode() == X86::MOV16r0)
       NewMI = MakeM0Inst(*this, X86::MOV16mi, MOs, MI);
     else if (MI->getOpcode() == X86::MOV32r0)
