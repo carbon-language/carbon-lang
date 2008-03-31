@@ -141,6 +141,22 @@ unsigned ARMInstrInfo::isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) con
   return 0;
 }
 
+void ARMInstrInfo::reMaterialize(MachineBasicBlock &MBB,
+                                 MachineBasicBlock::iterator I,
+                                 unsigned DestReg,
+                                 const MachineInstr *Orig) const {
+  if (Orig->getOpcode() == ARM::MOVi2pieces) {
+    RI.emitLoadConstPool(MBB, I, DestReg, Orig->getOperand(1).getImm(),
+                         Orig->getOperand(2).getImm(),
+                         Orig->getOperand(3).getReg(), this, false);
+    return;
+  }
+
+  MachineInstr *MI = Orig->clone();
+  MI->getOperand(0).setReg(DestReg);
+  MBB.insert(I, MI);
+}
+
 static unsigned getUnindexedOpcode(unsigned Opc) {
   switch (Opc) {
   default: break;
@@ -934,3 +950,4 @@ unsigned ARM::GetFunctionSize(MachineFunction &MF) {
   }
   return FnSize;
 }
+

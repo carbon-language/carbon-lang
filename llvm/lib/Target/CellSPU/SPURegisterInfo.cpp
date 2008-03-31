@@ -191,15 +191,6 @@ SPURegisterInfo::SPURegisterInfo(const SPUSubtarget &subtarget,
 {
 }
 
-void SPURegisterInfo::reMaterialize(MachineBasicBlock &MBB,
-                                    MachineBasicBlock::iterator I,
-                                    unsigned DestReg,
-                                    const MachineInstr *Orig) const {
-  MachineInstr *MI = Orig->clone();
-  MI->getOperand(0).setReg(DestReg);
-  MBB.insert(I, MI);
-}
-
 // SPU's 128-bit registers used for argument passing:
 static const unsigned SPU_ArgRegs[] = {
   SPU::R3,  SPU::R4,  SPU::R5,  SPU::R6,  SPU::R7,  SPU::R8,  SPU::R9,

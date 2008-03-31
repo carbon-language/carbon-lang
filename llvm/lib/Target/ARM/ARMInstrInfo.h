@@ -148,6 +148,9 @@ public:
   virtual unsigned isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const;
   virtual unsigned isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) const;
   
+  void reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
+                     unsigned DestReg, const MachineInstr *Orig) const;
+
   virtual MachineInstr *convertToThreeAddress(MachineFunction::iterator &MFI,
                                               MachineBasicBlock::iterator &MBBI,
                                               LiveVariables &LV) const;

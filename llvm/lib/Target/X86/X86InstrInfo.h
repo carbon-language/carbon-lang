@@ -258,7 +258,11 @@ public:
                    unsigned& destReg) const;
   unsigned isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const;
   unsigned isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) const;
+
   bool isReallyTriviallyReMaterializable(MachineInstr *MI) const;
+  void reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
+                     unsigned DestReg, const MachineInstr *Orig) const;
+
   bool isInvariantLoad(MachineInstr *MI) const;
 
   /// convertToThreeAddress - This method must be implemented by targets that

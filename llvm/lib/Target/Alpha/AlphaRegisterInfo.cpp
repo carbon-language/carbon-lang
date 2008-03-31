@@ -58,15 +58,6 @@ AlphaRegisterInfo::AlphaRegisterInfo(const TargetInstrInfo &tii)
 {
 }
 
-void AlphaRegisterInfo::reMaterialize(MachineBasicBlock &MBB,
-                                      MachineBasicBlock::iterator I,
-                                      unsigned DestReg,
-                                      const MachineInstr *Orig) const {
-  MachineInstr *MI = Orig->clone();
-  MI->getOperand(0).setReg(DestReg);
-  MBB.insert(I, MI);
-}
-
 const unsigned* AlphaRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF)
                                                                          const {
   static const unsigned CalleeSavedRegs[] = {

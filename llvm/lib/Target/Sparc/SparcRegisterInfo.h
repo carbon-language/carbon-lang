@@ -30,9 +30,6 @@ struct SparcRegisterInfo : public SparcGenRegisterInfo {
   SparcRegisterInfo(SparcSubtarget &st, const TargetInstrInfo &tii);
 
   /// Code Generation virtual methods...  
-  void reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
-                     unsigned DestReg, const MachineInstr *Orig) const;
-
   const unsigned *getCalleeSavedRegs(const MachineFunction *MF = 0) const;
 
   const TargetRegisterClass* const* getCalleeSavedRegClasses(

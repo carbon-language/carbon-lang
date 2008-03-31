@@ -112,6 +112,13 @@ public:
     return 0;
   }
 
+  /// reMaterialize - Re-issue the specified 'original' instruction at the
+  /// specific location targeting a new destination register.
+  virtual void reMaterialize(MachineBasicBlock &MBB,
+                             MachineBasicBlock::iterator MI,
+                             unsigned DestReg,
+                             const MachineInstr *Orig) const = 0;
+
   /// isInvariantLoad - Return true if the specified instruction (which is
   /// marked mayLoad) is loading from a location whose value is invariant across
   /// the function.  For example, loading a value from the constant pool or from
@@ -397,7 +404,10 @@ public:
                                          unsigned &OpIdx) const;
   virtual bool PredicateInstruction(MachineInstr *MI,
                               const std::vector<MachineOperand> &Pred) const;
-  
+  virtual void reMaterialize(MachineBasicBlock &MBB,
+                             MachineBasicBlock::iterator MI,
+                             unsigned DestReg,
+                             const MachineInstr *Orig) const;
 };
 
 } // End llvm namespace

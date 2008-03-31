@@ -32,14 +32,19 @@ private:
 public:
   ARMRegisterInfo(const TargetInstrInfo &tii, const ARMSubtarget &STI);
 
+  /// emitLoadConstPool - Emits a load from constpool to materialize the
+  /// specified immediate.
+  void emitLoadConstPool(MachineBasicBlock &MBB,
+                         MachineBasicBlock::iterator &MBBI,
+                         unsigned DestReg, int Val,
+                         unsigned Pred, unsigned PredReg,
+                         const TargetInstrInfo *TII, bool isThumb) const;
+
   /// getRegisterNumbering - Given the enum value for some register, e.g.
   /// ARM::LR, return the number that it corresponds to (e.g. 14).
   static unsigned getRegisterNumbering(unsigned RegEnum);
 
   /// Code Generation virtual methods...
-  void reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
-                     unsigned DestReg, const MachineInstr *Orig) const;
-
   const unsigned *getCalleeSavedRegs(const MachineFunction *MF = 0) const;
 
   const TargetRegisterClass* const*

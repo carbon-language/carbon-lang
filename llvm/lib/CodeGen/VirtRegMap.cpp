@@ -642,9 +642,10 @@ static void UpdateKills(MachineInstr &MI, BitVector &RegKills,
 static void ReMaterialize(MachineBasicBlock &MBB,
                           MachineBasicBlock::iterator &MII,
                           unsigned DestReg, unsigned Reg,
+                          const TargetInstrInfo *TII,
                           const TargetRegisterInfo *TRI,
                           VirtRegMap &VRM) {
-  TRI->reMaterialize(MBB, MII, DestReg, VRM.getReMaterializedMI(Reg));
+  TII->reMaterialize(MBB, MII, DestReg, VRM.getReMaterializedMI(Reg));
   MachineInstr *NewMI = prior(MII);
   for (unsigned i = 0, e = NewMI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = NewMI->getOperand(i);
@@ -784,7 +785,7 @@ namespace {
             
             MachineBasicBlock::iterator MII = MI;
             if (NewOp.StackSlotOrReMat > VirtRegMap::MAX_STACK_SLOT) {
-              ReMaterialize(*MBB, MII, NewPhysReg, NewOp.VirtReg, TRI, VRM);
+              ReMaterialize(*MBB, MII, NewPhysReg, NewOp.VirtReg, TII, TRI,VRM);
             } else {
               TII->loadRegFromStackSlot(*MBB, MII, NewPhysReg,
                                         NewOp.StackSlotOrReMat, AliasRC);
@@ -1098,7 +1099,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         unsigned Phys = VRM.getPhys(VirtReg);
         RegInfo->setPhysRegUsed(Phys);
         if (VRM.isReMaterialized(VirtReg)) {
-          ReMaterialize(MBB, MII, Phys, VirtReg, TRI, VRM);
+          ReMaterialize(MBB, MII, Phys, VirtReg, TII, TRI, VRM);
         } else {
           const TargetRegisterClass* RC = RegInfo->getRegClass(VirtReg);
           int SS = VRM.getStackSlot(VirtReg);
@@ -1351,7 +1352,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
       RegInfo->setPhysRegUsed(PhysReg);
       ReusedOperands.markClobbered(PhysReg);
       if (DoReMat) {
-        ReMaterialize(MBB, MII, PhysReg, VirtReg, TRI, VRM);
+        ReMaterialize(MBB, MII, PhysReg, VirtReg, TII, TRI, VRM);
       } else {
         const TargetRegisterClass* RC = RegInfo->getRegClass(VirtReg);
         TII->loadRegFromStackSlot(MBB, &MI, PhysReg, SSorRMId, RC);

@@ -97,9 +97,6 @@ public:
   const TargetRegisterClass *
   getCrossCopyRegClass(const TargetRegisterClass *RC) const;
 
-  void reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
-                     unsigned DestReg, const MachineInstr *Orig) const;
-
   /// getCalleeSavedRegs - Return a null-terminated list of all of the
   /// callee-save registers on this target.
   const unsigned *getCalleeSavedRegs(const MachineFunction* MF = 0) const;

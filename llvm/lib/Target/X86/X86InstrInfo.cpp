@@ -820,6 +820,34 @@ bool X86InstrInfo::isReallyTriviallyReMaterializable(MachineInstr *MI) const {
   return true;
 }
 
+void X86InstrInfo::reMaterialize(MachineBasicBlock &MBB,
+                                 MachineBasicBlock::iterator I,
+                                 unsigned DestReg,
+                                 const MachineInstr *Orig) const {
+  // MOV32r0 etc. are implemented with xor which clobbers condition code.
+  // Re-materialize them as movri instructions to avoid side effects.
+  switch (Orig->getOpcode()) {
+  case X86::MOV8r0:
+    BuildMI(MBB, I, get(X86::MOV8ri), DestReg).addImm(0);
+    break;
+  case X86::MOV16r0:
+    BuildMI(MBB, I, get(X86::MOV16ri), DestReg).addImm(0);
+    break;
+  case X86::MOV32r0:
+    BuildMI(MBB, I, get(X86::MOV32ri), DestReg).addImm(0);
+    break;
+  case X86::MOV64r0:
+    BuildMI(MBB, I, get(X86::MOV64ri32), DestReg).addImm(0);
+    break;
+  default: {
+    MachineInstr *MI = Orig->clone();
+    MI->getOperand(0).setReg(DestReg);
+    MBB.insert(I, MI);
+    break;
+  }
+  }
+}
+
 /// isInvariantLoad - Return true if the specified instruction (which is marked
 /// mayLoad) is loading from a location whose value is invariant across the
 /// function.  For example, loading a value from the constant pool or from

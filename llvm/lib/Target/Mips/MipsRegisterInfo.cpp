@@ -84,16 +84,6 @@ getRegisterNumbering(unsigned RegEnum)
   return 0; // Not reached
 }
 
-void MipsRegisterInfo::reMaterialize(MachineBasicBlock &MBB, 
-                                      MachineBasicBlock::iterator I,
-                                      unsigned DestReg, 
-                                      const MachineInstr *Orig) const 
-{
-    MachineInstr *MI = Orig->clone();
-    MI->getOperand(0).setReg(DestReg);
-    MBB.insert(I, MI);
-}
-
 //===----------------------------------------------------------------------===//
 //
 // Callee Saved Registers methods 

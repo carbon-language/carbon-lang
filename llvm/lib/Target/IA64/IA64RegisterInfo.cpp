@@ -37,15 +37,6 @@ IA64RegisterInfo::IA64RegisterInfo(const TargetInstrInfo &tii)
   : IA64GenRegisterInfo(IA64::ADJUSTCALLSTACKDOWN, IA64::ADJUSTCALLSTACKUP),
     TII(tii) {}
 
-void IA64RegisterInfo::reMaterialize(MachineBasicBlock &MBB,
-                                     MachineBasicBlock::iterator I,
-                                     unsigned DestReg,
-                                     const MachineInstr *Orig) const {
-  MachineInstr *MI = Orig->clone();
-  MI->getOperand(0).setReg(DestReg);
-  MBB.insert(I, MI);
-}
-
 const unsigned* IA64RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF)
                                                                          const {
   static const unsigned CalleeSavedRegs[] = {

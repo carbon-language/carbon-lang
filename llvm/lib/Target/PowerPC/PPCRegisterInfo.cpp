@@ -136,15 +136,6 @@ PPCRegisterInfo::PPCRegisterInfo(const PPCSubtarget &ST,
   ImmToIdxMap[PPC::ADDI8] = PPC::ADD8; ImmToIdxMap[PPC::STD_32] = PPC::STDX_32;
 }
 
-void PPCRegisterInfo::reMaterialize(MachineBasicBlock &MBB,
-                                    MachineBasicBlock::iterator I,
-                                    unsigned DestReg,
-                                    const MachineInstr *Orig) const {
-  MachineInstr *MI = Orig->clone();
-  MI->getOperand(0).setReg(DestReg);
-  MBB.insert(I, MI);
-}
-
 const unsigned*
 PPCRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   // 32-bit Darwin calling convention. 

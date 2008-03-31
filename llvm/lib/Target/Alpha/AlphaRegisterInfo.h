@@ -28,9 +28,6 @@ struct AlphaRegisterInfo : public AlphaGenRegisterInfo {
   AlphaRegisterInfo(const TargetInstrInfo &tii);
 
   /// Code Generation virtual methods...
-  void reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
-                     unsigned DestReg, const MachineInstr *Orig) const;
-
   const unsigned *getCalleeSavedRegs(const MachineFunction *MF = 0) const;
 
   const TargetRegisterClass* const* getCalleeSavedRegClasses(

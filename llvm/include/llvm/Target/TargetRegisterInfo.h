@@ -487,13 +487,6 @@ public:
     return NULL;
   }
 
-  /// reMaterialize - Re-issue the specified 'original' instruction at the
-  /// specific location targeting a new destination register.
-  virtual void reMaterialize(MachineBasicBlock &MBB,
-                             MachineBasicBlock::iterator MI,
-                             unsigned DestReg,
-                             const MachineInstr *Orig) const = 0;
-
   /// targetHandlesStackFrameRounding - Returns true if the target is
   /// responsible for rounding up the stack frame (probably at emitPrologue
   /// time).

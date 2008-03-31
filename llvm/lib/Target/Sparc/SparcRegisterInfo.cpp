@@ -30,15 +30,6 @@ SparcRegisterInfo::SparcRegisterInfo(SparcSubtarget &st,
     Subtarget(st), TII(tii) {
 }
 
-void SparcRegisterInfo::reMaterialize(MachineBasicBlock &MBB,
-                                      MachineBasicBlock::iterator I,
-                                      unsigned DestReg,
-                                      const MachineInstr *Orig) const {
-  MachineInstr *MI = Orig->clone();
-  MI->getOperand(0).setReg(DestReg);
-  MBB.insert(I, MI);
-}
-
 const unsigned* SparcRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF)
                                                                          const {
   static const unsigned CalleeSavedRegs[] = { 0 };

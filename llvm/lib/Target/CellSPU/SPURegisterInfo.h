@@ -41,9 +41,6 @@ namespace llvm {
      */
     static unsigned getRegisterNumbering(unsigned RegEnum);
 
-    void reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
-                       unsigned DestReg, const MachineInstr *Orig) const;
-    
     //! Return the array of callee-saved registers
     virtual const unsigned* getCalleeSavedRegs(const MachineFunction *MF) const;
 
