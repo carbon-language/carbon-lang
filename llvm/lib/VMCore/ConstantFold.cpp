@@ -96,27 +96,29 @@ static Constant *FoldBitCast(Constant *V, const Type *DestTy) {
   // Check to see if we are casting a pointer to an aggregate to a pointer to
   // the first element.  If so, return the appropriate GEP instruction.
   if (const PointerType *PTy = dyn_cast<PointerType>(V->getType()))
-    if (const PointerType *DPTy = dyn_cast<PointerType>(DestTy)) {
-      SmallVector<Value*, 8> IdxList;
-      IdxList.push_back(Constant::getNullValue(Type::Int32Ty));
-      const Type *ElTy = PTy->getElementType();
-      while (ElTy != DPTy->getElementType()) {
-        if (const StructType *STy = dyn_cast<StructType>(ElTy)) {
-          if (STy->getNumElements() == 0) break;
-          ElTy = STy->getElementType(0);
-          IdxList.push_back(Constant::getNullValue(Type::Int32Ty));
-        } else if (const SequentialType *STy = dyn_cast<SequentialType>(ElTy)) {
-          if (isa<PointerType>(ElTy)) break;  // Can't index into pointers!
-          ElTy = STy->getElementType();
-          IdxList.push_back(IdxList[0]);
-        } else {
-          break;
+    if (const PointerType *DPTy = dyn_cast<PointerType>(DestTy))
+      if (PTy->getAddressSpace() == DPTy->getAddressSpace()) {
+        SmallVector<Value*, 8> IdxList;
+        IdxList.push_back(Constant::getNullValue(Type::Int32Ty));
+        const Type *ElTy = PTy->getElementType();
+        while (ElTy != DPTy->getElementType()) {
+          if (const StructType *STy = dyn_cast<StructType>(ElTy)) {
+            if (STy->getNumElements() == 0) break;
+            ElTy = STy->getElementType(0);
+            IdxList.push_back(Constant::getNullValue(Type::Int32Ty));
+          } else if (const SequentialType *STy = 
+                     dyn_cast<SequentialType>(ElTy)) {
+            if (isa<PointerType>(ElTy)) break;  // Can't index into pointers!
+            ElTy = STy->getElementType();
+            IdxList.push_back(IdxList[0]);
+          } else {
+            break;
+          }
         }
+        
+        if (ElTy == DPTy->getElementType())
+          return ConstantExpr::getGetElementPtr(V, &IdxList[0], IdxList.size());
       }
-      
-      if (ElTy == DPTy->getElementType())
-        return ConstantExpr::getGetElementPtr(V, &IdxList[0], IdxList.size());
-    }
   
   // Handle casts from one vector constant to another.  We know that the src 
   // and dest type have the same size (otherwise its an illegal cast).
