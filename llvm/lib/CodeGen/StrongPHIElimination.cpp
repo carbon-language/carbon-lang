@@ -174,7 +174,7 @@ void StrongPHIElimination::computeDFS(MachineFunction& MF) {
     }
     
     bool inserted = false;
-    for (MachineDomTreeNode::iterator I = node->begin(), E = node->end();
+    for (MachineDomTreeNode::iterator I = currNode->begin(), E = currNode->end();
          I != E; ++I)
       if (!frontier.count(*I) && !visited.count(*I)) {
         worklist.push_back(*I);
