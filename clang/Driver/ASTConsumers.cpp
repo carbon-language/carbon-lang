@@ -675,11 +675,15 @@ void GRSimpleValsVisitor::VisitCFG(CFG& C, Decl& CD) {
         << ' ';
     }
 
+#if 0
     llvm::Timer T("GRSimpleVals");
     T.startTimer();
     unsigned size = RunGRSimpleVals(C, CD, *Ctx, Diags, false, false);
     T.stopTimer();    
     llvm::cerr << size << ' ' << T.getWallTime() << '\n';
+#else
+    RunGRSimpleVals(C, CD, *Ctx, Diags, false, false);
+#endif
   }
   else {  
     llvm::cerr << '\n';    
