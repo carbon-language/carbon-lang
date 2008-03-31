@@ -33,3 +33,14 @@ external assert_valid_module : Llvm.llmodule -> unit
     [llvm::verifyFunction]. *)
 external assert_valid_function : Llvm.llvalue -> unit
                                = "llvm_assert_valid_function"
+
+(** [view_function_cfg f] opens up a ghostscript window displaying the CFG of
+    the current function with the code for each basic block inside.
+    See [llvm::Function::viewCFG]. *)
+external view_function_cfg : Llvm.llvalue -> unit = "llvm_view_function_cfg"
+
+(** [view_function_cfg_only f] works just like [view_function_cfg], but does not
+    include the contents of basic blocks into the nodes.
+    See [llvm::Function::viewCFGOnly]. *)
+external view_function_cfg_only : Llvm.llvalue -> unit
+                                = "llvm_view_function_cfg_only"

@@ -43,6 +43,10 @@ int LLVMVerifyModule(LLVMModuleRef M, LLVMVerifierFailureAction Action,
    for debugging. */
 int LLVMVerifyFunction(LLVMValueRef Fn, LLVMVerifierFailureAction Action);
 
+/* Open up a ghostview window that displays the CFG of the current function.
+   Useful for debugging. */
+void LLVMViewFunctionCFG(LLVMValueRef Fn);
+void LLVMViewFunctionCFGOnly(LLVMValueRef Fn);
 
 #ifdef __cplusplus
 }

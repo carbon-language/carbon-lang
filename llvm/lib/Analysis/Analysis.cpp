@@ -33,3 +33,12 @@ int LLVMVerifyFunction(LLVMValueRef Fn, LLVMVerifierFailureAction Action) {
                         static_cast<VerifierFailureAction>(Action));
 }
 
+void LLVMViewFunctionCFG(LLVMValueRef Fn) {
+  Function *F = unwrap<Function>(Fn);
+  F->viewCFG();
+}
+
+void LLVMViewFunctionCFGOnly(LLVMValueRef Fn) {
+  Function *F = unwrap<Function>(Fn);
+  F->viewCFGOnly();
+}

@@ -17,3 +17,6 @@ external assert_valid_module : Llvm.llmodule -> unit
 
 external assert_valid_function : Llvm.llvalue -> unit
                                = "llvm_assert_valid_function"
+external view_function_cfg : Llvm.llvalue -> unit = "llvm_view_function_cfg"
+external view_function_cfg_only : Llvm.llvalue -> unit
+                                = "llvm_view_function_cfg_only"

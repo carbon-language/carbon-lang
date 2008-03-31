@@ -58,3 +58,15 @@ CAMLprim value llvm_assert_valid_function(LLVMValueRef Fn) {
   LLVMVerifyFunction(Fn, LLVMAbortProcessAction);
   return Val_unit;
 }
+
+/* Llvm.llvalue -> unit */
+CAMLprim value llvm_view_function_cfg(LLVMValueRef Fn) {
+  LLVMViewFunctionCFG(Fn);
+  return Val_unit;
+}
+
+/* Llvm.llvalue -> unit */
+CAMLprim value llvm_view_function_cfg_only(LLVMValueRef Fn) {
+  LLVMViewFunctionCFGOnly(Fn);
+  return Val_unit;
+}
