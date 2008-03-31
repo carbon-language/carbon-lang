@@ -1,6 +1,6 @@
 ; RUN: llvm-as < %s | llc -march=x86 | not grep set
 
-define void @foo(i32 %X, i32 %Y, i32 %Z) {
+define void @foo(i32 %X, i32 %Y, i32 %Z) nounwind {
 entry:
 	%tmp = tail call i32 (...)* @bar( )		; <i32> [#uses=0]
 	%tmp.upgrd.1 = icmp eq i32 %X, 0		; <i1> [#uses=1]

@@ -2,7 +2,7 @@
 
 declare i1 @llvm.isunordered.f32(float, float)
 
-define float @cmp(float %A, float %B, float %C, float %D) {
+define float @cmp(float %A, float %B, float %C, float %D) nounwind {
 entry:
         %tmp.1 = fcmp uno float %A, %B          ; <i1> [#uses=1]
         %tmp.2 = fcmp oge float %A, %B          ; <i1> [#uses=1]

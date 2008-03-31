@@ -5,7 +5,7 @@
 @size20 = external global i32		; <i32*> [#uses=1]
 @in5 = external global i8*		; <i8**> [#uses=1]
 
-define i32 @compare(i8* %a, i8* %b) {
+define i32 @compare(i8* %a, i8* %b) nounwind {
 	%tmp = bitcast i8* %a to i32*		; <i32*> [#uses=1]
 	%tmp1 = bitcast i8* %b to i32*		; <i32*> [#uses=1]
 	%tmp.upgrd.1 = load i32* @size20		; <i32> [#uses=1]
