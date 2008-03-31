@@ -200,13 +200,20 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R,
   const char *TokLogicalPtr = LPos.getCharacterData();
   const char *LineStart = TokLogicalPtr-ColNo;
   
+  // Compute the margin offset by counting tabs and non-tabs.
+  
+  unsigned PosNo = 0;
+  
+  for (const char* c = LineStart; c != TokLogicalPtr; ++c)
+    PosNo += *c == '\t' ? 8 : 1;
+  
   // Create the html for the message.
   
   std::ostringstream os;
   
   os << "\n<tr><td class=\"num\"></td><td class=\"line\">"
      << "<div class=\"msg\" style=\"margin-left:"
-     << ColNo << "ex\">";
+     << PosNo << "ex\">";
   
   os << html::EscapeText(P.getString()) << "</div></td></tr>";
   
