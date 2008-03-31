@@ -205,7 +205,7 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R,
   unsigned PosNo = 0;
   
   for (const char* c = LineStart; c != TokLogicalPtr; ++c)
-    PosNo += *c == '\t' ? 8 : 1;
+    PosNo += *c == '\t' ? 4 : 1;
   
   // Create the html for the message.
   

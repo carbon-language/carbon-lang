@@ -671,15 +671,17 @@ void GRSimpleValsVisitor::VisitCFG(CFG& C, Decl& CD) {
   if (!Visualize) {
     
     if (FunctionDecl *FD = dyn_cast<FunctionDecl>(&CD)) {
-      llvm::cerr << "ANALYZE: " << FD->getIdentifier()->getName() << ' '
+      llvm::cerr << "ANALYZE: "
                  << Ctx->getSourceManager().getSourceName(FD->getLocation())
-                 << ' ';
+                 << ' '
+                 << FD->getIdentifier()->getName()
+                 << '\n';
     }
     else if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(&CD)) {
-      llvm::cerr << "ANALYZE (ObjC Method): '"
-        << MD->getSelector().getName() << "' "
+      llvm::cerr << "ANALYZE (ObjC Method): "
         << Ctx->getSourceManager().getSourceName(MD->getLocation())
-        << ' ';
+        << " '"
+        << MD->getSelector().getName() << "'\n";
     }
 
 #if 0

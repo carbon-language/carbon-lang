@@ -36,9 +36,10 @@ void html::EscapeText(Rewriter& R, unsigned FileID, bool EscapeSpaces) {
       default: break;
         
       case ' ':
-        if (EscapeSpaces) R.ReplaceText(Loc, 1, "&#32;", 5);
+        if (EscapeSpaces) R.ReplaceText(Loc, 1, "&nbsp;", 6);
         break;
 
+      case '\t': R.ReplaceText(Loc, 1, "&nbsp;&nbsp;&nbsp;&nbsp;", 6*4); break;
       case '<': R.ReplaceText(Loc, 1, "&lt;", 4); break;
       case '>': R.ReplaceText(Loc, 1, "&gt;", 4); break;
       case '&': R.ReplaceText(Loc, 1, "&amp;", 5); break;
@@ -60,10 +61,11 @@ std::string html::EscapeText(const std::string& s, bool EscapeSpaces) {
         os << c; break;
         
       case ' ':
-        if (EscapeSpaces) os << "&#32;";
+        if (EscapeSpaces) os << "&nbsp;";
         else os << ' ';
         break;
         
+        case '\t': for (unsigned i = 0; i < 4; ++i) os << "&nbsp;"; break;
         case '<': os << "&lt;"; break;
         case '>': os << "&gt;"; break;
         case '&': os << "&amp;"; break;
