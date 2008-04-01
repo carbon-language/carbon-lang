@@ -6781,6 +6781,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     Lo = ExpandIntToFP(Node->getOpcode() == ISD::SINT_TO_FP, VT,
                        Node->getOperand(0));
     if (getTypeAction(Lo.getValueType()) == Expand)
+      // float to i32 etc. can be 'expanded' to a single node.
       ExpandOp(Lo, Lo, Hi);
     break;
   }
