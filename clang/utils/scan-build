@@ -149,8 +149,43 @@ sub Postprocess() {
 
 sub DisplayHelp() {
   
+print <<ENDTEXT
+USAGE: scan-build [options] <build command> [build options]
+
+OPTIONS:
+
+  -o            - Target directory for HTML report files.  Subdirectories
+                  Will be created as needed to represent separate "runs" of
+                  the analyzer.  If this option is not specified, a directory
+                  is created in /tmp to store the reports.
+                
+  -?            - Display this message.
+  --help
   
+  -k            - Add "keep on going option" to the specified build command.
+  --keep-going    This command currently supports "make" and "xcodebuild." You
+                  can also specify the corresponding option to the build command
+                  directly as a build option if you know it.
+
+  -v            - Verbose output from scan-build and the analyzer. A second
+                  "-v" increases verbosity.
+
+
+BUILD OPTIONS
+
+  You can specify any build option acceptable to the build command. For example:
+
+     scan-build -o /tmp/myhtmldir make -j4
+     
+  The above causes analysis reports to be deposited in /tmp/myhtmldir (or
+  rather a subdirectory corresponding to this particular running of the
+  analyzer), and causes "make" to be run with the "-j4" option, allowing
+  parallel builds (and parallel invocations of the analyzer).
   
+  NOTE: The analyzer will work for most parallel builds, but not distributed
+        builds (such as using distcc).
+
+ENDTEXT
 }
 
 ##----------------------------------------------------------------------------##
@@ -171,7 +206,7 @@ while (@ARGV) {
   
   my $arg = $ARGV[0];
 
-  if ($arg eq "-?") {
+  if ($arg eq "-?" or $arg eq "--help") {
     DisplayHelp();
     exit 1;
   }
@@ -188,7 +223,7 @@ while (@ARGV) {
     next;
   }
   
-  if ($arg eq "-k") {
+  if ($arg eq "-k" or $arg eq "--keep-going") {
     shift @ARGV;
     $IgnoreErrors = 1;
     next;
