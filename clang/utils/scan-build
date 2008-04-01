@@ -1,0 +1,246 @@
+#!/usr/bin/env perl
+#
+#                     The LLVM Compiler Infrastructure
+#
+# This file is distributed under the University of Illinois Open Source
+# License. See LICENSE.TXT for details.
+#
+##===----------------------------------------------------------------------===##
+#
+# A script designed to wrap a build so that all calls to gcc are intercepted
+# and piped to the static analyzer.
+#
+##===----------------------------------------------------------------------===##
+
+use strict;
+use warnings;
+use File::Temp qw/ :mktemp /;
+
+my $Verbose = 0;       # Verbose output from this script.
+my $Prog = "scan-build";
+
+##----------------------------------------------------------------------------##
+# GetHTMLRunDir - Construct an HTML directory name for the current run.
+##----------------------------------------------------------------------------##
+
+sub GetHTMLRunDir() {  
+
+  die "Not enough arguments." if (@_ == 0);
+  
+  my $Dir = shift @_;
+  
+  # Get current date and time.
+  
+  my @CurrentTime = localtime();
+  
+  my $year  = $CurrentTime[5] + 1900;
+  my $day   = $CurrentTime[3];
+  my $month = $CurrentTime[4] + 1;
+  
+  my $DateString = "$year-$month-$day";
+  
+  # Determine the run number.
+  
+  my $RunNumber;
+  
+  if (-d $Dir) {
+    
+    if (! -r $Dir) {
+      print STDERR "error: '$Dir' exists but is not readable.\n";
+      exit 0;
+    }
+    
+    # Iterate over all files in the specified directory.
+    
+    my $max = 0;
+    
+    opendir(DIR, $Dir);
+    my @FILES= readdir(DIR); 
+    closedir(DIR);
+    
+    foreach my $f (@FILES) {
+
+      my @x = split/-/, $f;
+      
+      next if (scalar(@x) != 4);
+      next if ($x[0] != $year);
+      next if ($x[1] != $month);
+      next if ($x[2] != $day);
+      
+      if ($x[3] > $max) {
+        $max = $x[3];
+      }      
+    }
+    
+    $RunNumber = $max + 1;
+  }
+  else {
+    
+    if (-x $Dir) {
+      print STDERR "error: '$Dir' exists but is not a directory.\n";
+      exit 0;
+    }
+    
+    # $Dir does not exist.  It will be automatically created by the 
+    # clang driver.  Set the run number to 1.  
+    
+    $RunNumber = 1;
+  }
+  
+  die "RunNumber must be defined!" if (!defined($RunNumber));
+  
+  # Append the run number.
+  
+  return "$Dir/$DateString-$RunNumber";  
+}
+
+sub SetHtmlEnv() {
+  
+  die "Wrong number of arguments." if (scalar(@_) != 2);
+  
+  my $Args = shift;
+  my $Dir = shift;
+  
+  die "No build command." if (scalar(@$Args) == 0);
+  
+  my $Cmd = $$Args[0];
+  
+  if ($Cmd =~ /configure/) {
+    return;
+  }
+  
+  if ($Verbose) {
+    print "$Prog: Emitting reports for this run to '$Dir'.\n";  
+  }
+  
+  $ENV{'CCC_ANALYZER_HTML'} = $Dir;
+}
+
+##----------------------------------------------------------------------------##
+# Postprocess - Postprocess the results of an analysis scan.
+##----------------------------------------------------------------------------##
+
+sub Postprocess() {
+  
+  my $Dir = shift;
+  
+  die "No directory specified." if (!defined($Dir));
+  
+  if (! -d $Dir) {
+    return;
+  }
+  
+  opendir(DIR, $Dir);
+  my @files = grep(/^report-.*\.html$/,readdir(DIR));
+  closedir(DIR);
+
+  if (scalar(@files) == 0) {
+    print "$Prog: Remove directory '$Dir' because it contains no reports.\n";
+    `rm -fR $Dir`;
+    return;
+  }
+
+
+}
+
+##----------------------------------------------------------------------------##
+# DisplayHelp - Utility function to display all help options.
+##----------------------------------------------------------------------------##
+
+sub DisplayHelp() {
+  
+  
+  
+}
+
+##----------------------------------------------------------------------------##
+# Process command-line arguments.
+##----------------------------------------------------------------------------##
+
+my $HtmlDir;           # Parent directory to store HTML files.
+my $IgnoreErrors = 0;  # Ignore build errors.
+
+if (!@ARGV) {
+  DisplayHelp();
+  exit 1
+}
+
+while (@ARGV) {
+  
+  # Scan for options we recognize.
+  
+  my $arg = $ARGV[0];
+
+  if ($arg eq "-?") {
+    DisplayHelp();
+    exit 1;
+  }
+  
+  if ($arg eq "-o") {
+    shift @ARGV;
+        
+    if (!@ARGV) {
+      print STDERR "'-o' option requires a target directory name.";
+      exit 0;
+    }
+    
+    $HtmlDir = shift @ARGV;
+    next;
+  }
+  
+  if ($arg eq "-k") {
+    shift @ARGV;
+    $IgnoreErrors = 1;
+    next;
+  }
+  
+  if ($arg eq "-v") {
+    shift @ARGV;
+    $Verbose++;
+    next;
+  }
+  
+  last;
+}
+
+if (!@ARGV) {
+  print STDERR "$Prog: No build command specified.\n\n";
+  DisplayHelp();
+  exit 0;
+}
+
+# Determine the output directory for the HTML reports.
+
+if (!defined($HtmlDir)) {
+  
+  $HtmlDir = mkdtemp("/tmp/scan-build-XXXXXX");
+  
+  if (!defined($HtmlDir)) {
+    print STDERR "error: Cannot create HTML directory in /tmp.\n";
+    exit 0;
+  }
+  
+  if (!$Verbose) {
+    print "$Prog: Using '$HtmlDir' as base HTML report directory.\n";
+  }
+}
+
+$HtmlDir = &GetHTMLRunDir($HtmlDir);
+
+# Set the appropriate environment variables.
+
+&SetHtmlEnv(\@ARGV, $HtmlDir);
+
+$ENV{'CC'} = "ccc-analyzer";
+
+if ($Verbose >= 2) {
+  $ENV{'CCC_ANALYZER_VERBOSE'} = 1;
+}
+
+# Run the build.
+
+system(@ARGV);
+
+# Postprocess the HTML directory.
+
+&Postprocess($HtmlDir);
