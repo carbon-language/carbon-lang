@@ -13,7 +13,6 @@
 
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
-#include "llvm/Config/config.h" 
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Path.h"
@@ -21,7 +20,6 @@
 #include "llvm/Bitcode/Deserialize.h"
 #include "llvm/Support/Streams.h"
 #include <algorithm>
-#include <fcntl.h>
 using namespace clang;
 using namespace SrcMgr;
 using llvm::MemoryBuffer;
