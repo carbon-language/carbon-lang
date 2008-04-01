@@ -14,7 +14,9 @@
 
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/System/Path.h"
-#include "llvm/System/MappedFile.h"
+#include "llvm/Support/MemoryBuffer.h"
+#include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include <cstdlib>
 #include <cstring>
@@ -44,7 +46,7 @@ static bool isNumberChar(char C) {
   }
 }
 
-static char *BackupNumber(char *Pos, char *FirstChar) {
+static const char *BackupNumber(const char *Pos, const char *FirstChar) {
   // If we didn't stop in the middle of a number, don't backup.
   if (!isNumberChar(*Pos)) return Pos;
 
@@ -57,11 +59,21 @@ static char *BackupNumber(char *Pos, char *FirstChar) {
   return Pos;
 }
 
+/// EndOfNumber - Return the first character that is not part of the specified
+/// number.  This assumes that the buffer is null terminated, so it won't fall
+/// off the end.
+static const char *EndOfNumber(const char *Pos) {
+  while (isNumberChar(*Pos))
+    ++Pos;
+  return Pos;
+}
+
 /// CompareNumbers - compare two numbers, returning true if they are different.
-static bool CompareNumbers(char *&F1P, char *&F2P, char *F1End, char *F2End,
+static bool CompareNumbers(const char *&F1P, const char *&F2P,
+                           const char *F1End, const char *F2End,
                            double AbsTolerance, double RelTolerance,
                            std::string *ErrorMsg) {
-  char *F1NumEnd, *F2NumEnd;
+  const char *F1NumEnd, *F2NumEnd;
   double V1 = 0.0, V2 = 0.0;
 
   // If one of the positions is at a space and the other isn't, chomp up 'til
@@ -71,30 +83,35 @@ static bool CompareNumbers(char *&F1P, char *&F2P, char *F1End, char *F2End,
   while (isspace(*F2P) && F2P != F2End)
     ++F2P;
 
-  // If we stop on numbers, compare their difference.  Note that some ugliness
-  // is built into this to permit support for numbers that use "D" or "d" as
-  // their exponential marker, e.g. "1.234D45".  This occurs in 200.sixtrack in
-  // spec2k.
-  if (isNumberChar(*F1P) && isNumberChar(*F2P)) {
-    bool isDNotation;
-    do {
-      isDNotation = false;
-      V1 = strtod(F1P, &F1NumEnd);
-      V2 = strtod(F2P, &F2NumEnd);
-
-      if (*F1NumEnd == 'D' || *F1NumEnd == 'd') {
-        *F1NumEnd = 'e';  // Strange exponential notation!
-        isDNotation = true;
-      }
-      if (*F2NumEnd == 'D' || *F2NumEnd == 'd') {
-        *F2NumEnd = 'e';  // Strange exponential notation!
-        isDNotation = true;
-      }
-    } while (isDNotation);
-  } else {
-    // Otherwise, the diff failed.
+  // If we stop on numbers, compare their difference.
+  if (!isNumberChar(*F1P) || !isNumberChar(*F2P)) {
+    // The diff failed.
     F1NumEnd = F1P;
     F2NumEnd = F2P;
+  } else {
+    // Note that some ugliness is built into this to permit support for numbers
+    // that use "D" or "d" as their exponential marker, e.g. "1.234D45".  This
+    // occurs in 200.sixtrack in spec2k.
+    V1 = strtod(F1P, const_cast<char**>(&F1NumEnd));
+    V2 = strtod(F2P, const_cast<char**>(&F2NumEnd));
+
+    if (*F1NumEnd == 'D' || *F1NumEnd == 'd') {
+      // Copy string into tmp buffer to replace the 'D' with an 'e'.
+      SmallString<200> StrTmp(F1P, EndOfNumber(F1NumEnd)+1);
+      StrTmp[F1NumEnd-F1P] = 'e';  // Strange exponential notation!
+      
+      V1 = strtod(&StrTmp[0], const_cast<char**>(&F1NumEnd));
+      F1NumEnd = F1P + (F1NumEnd-&StrTmp[0]);
+    }
+    
+    if (*F2NumEnd == 'D' || *F2NumEnd == 'd') {
+      // Copy string into tmp buffer to replace the 'D' with an 'e'.
+      SmallString<200> StrTmp(F2P, EndOfNumber(F2NumEnd)+1);
+      StrTmp[F2NumEnd-F2P] = 'e';  // Strange exponential notation!
+      
+      V2 = strtod(&StrTmp[0], const_cast<char**>(&F2NumEnd));
+      F2NumEnd = F2P + (F2NumEnd-&StrTmp[0]);
+    }
   }
 
   if (F1NumEnd == F1P || F2NumEnd == F2P) {
@@ -135,25 +152,6 @@ static bool CompareNumbers(char *&F1P, char *&F2P, char *F1End, char *F2End,
   return false;
 }
 
-// PadFileIfNeeded - If the files are not identical, we will have to be doing
-// numeric comparisons in here.  There are bad cases involved where we (i.e.,
-// strtod) might run off the beginning or end of the file if it starts or ends
-// with a number.  Because of this, if needed, we pad the file so that it starts
-// and ends with a null character.
-static void PadFileIfNeeded(char *&FileStart, char *&FileEnd, char *&FP) {
-  if (FileStart-FileEnd < 2 ||
-      isNumberChar(FileStart[0]) || isNumberChar(FileEnd[-1])) {
-    unsigned FileLen = FileEnd-FileStart;
-    char *NewFile = new char[FileLen+2];
-    NewFile[0] = 0;              // Add null padding
-    NewFile[FileLen+1] = 0;      // Add null padding
-    memcpy(NewFile+1, FileStart, FileLen);
-    FP = NewFile+(FP-FileStart)+1;
-    FileStart = NewFile+1;
-    FileEnd = FileStart+FileLen;
-  }
-}
-
 /// DiffFilesWithTolerance - Compare the two files specified, returning 0 if the
 /// files match, 1 if they are different, and 2 if there is a file error.  This
 /// function differs from DiffFiles in that you can specify an absolete and
@@ -191,27 +189,23 @@ int llvm::DiffFilesWithTolerance(const sys::PathWithStatus &FileA,
 
   // Now its safe to mmap the files into memory becasue both files
   // have a non-zero size.
-  sys::MappedFile F1;
-  if (F1.open(FileA, Error))
+  OwningPtr<MemoryBuffer> F1(MemoryBuffer::getFile(FileA.c_str(), FileA.size(),
+                                                   Error));
+  OwningPtr<MemoryBuffer> F2(MemoryBuffer::getFile(FileB.c_str(), FileB.size(),
+                                                   Error));
+  if (F1 == 0 || F2 == 0)
     return 2;
-  sys::MappedFile F2;
-  if (F2.open(FileB, Error))
-    return 2;
-  if (!F1.map(Error))
-    return 2;
-  if (!F2.map(Error))
-    return 2;
-
+  
   // Okay, now that we opened the files, scan them for the first difference.
-  char *File1Start = F1.charBase();
-  char *File2Start = F2.charBase();
-  char *File1End = File1Start+A_size;
-  char *File2End = File2Start+B_size;
-  char *F1P = File1Start;
-  char *F2P = File2Start;
+  const char *File1Start = F1->getBufferStart();
+  const char *File2Start = F2->getBufferStart();
+  const char *File1End = F1->getBufferEnd();
+  const char *File2End = F2->getBufferEnd();
+  const char *F1P = File1Start;
+  const char *F2P = File2Start;
 
   if (A_size == B_size) {
-    // Are the buffers identical?
+    // Are the buffers identical?  Common case: Handle this efficiently.
     if (std::memcmp(File1Start, File2Start, A_size) == 0)
       return 0;
 
@@ -221,13 +215,6 @@ int llvm::DiffFilesWithTolerance(const sys::PathWithStatus &FileA,
       return 1;   // Files different!
     }
   }
-
-  char *OrigFile1Start = File1Start;
-  char *OrigFile2Start = File2Start;
-
-  // If the files need padding, do so now.
-  PadFileIfNeeded(File1Start, File1End, F1P);
-  PadFileIfNeeded(File2Start, File2End, F2P);
 
   bool CompareFailed = false;
   while (1) {
@@ -272,9 +259,5 @@ int llvm::DiffFilesWithTolerance(const sys::PathWithStatus &FileA,
       CompareFailed = true;
   }
 
-  if (OrigFile1Start != File1Start)
-    delete[] (File1Start-1);   // Back up past null byte
-  if (OrigFile2Start != File2Start)
-    delete[] (File2Start-1);   // Back up past null byte
   return CompareFailed;
 }
