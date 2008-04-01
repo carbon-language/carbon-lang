@@ -408,7 +408,7 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
   
   // Iterate over all the PHI nodes in this block
   MachineBasicBlock::iterator P = MBB->begin();
-  while (P->getOpcode() == TargetInstrInfo::PHI) {
+  while (P != MBB->end() && P->getOpcode() == TargetInstrInfo::PHI) {
     unsigned DestReg = P->getOperand(0).getReg();
 
     // Don't both doing PHI elimination for dead PHI's.
