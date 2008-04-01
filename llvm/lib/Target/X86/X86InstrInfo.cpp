@@ -752,7 +752,10 @@ static bool regIsPICBase(unsigned BaseReg, MachineRegisterInfo &MRI) {
 /// isGVStub - Return true if the GV requires an extra load to get the
 /// real address.
 static inline bool isGVStub(GlobalValue *GV, X86TargetMachine &TM) {
+  return false;
+  /* Temporarily disabled.
   return TM.getSubtarget<X86Subtarget>().GVRequiresExtraLoad(GV, TM, false);
+  */
 }
  
 bool X86InstrInfo::isReallyTriviallyReMaterializable(MachineInstr *MI) const {
