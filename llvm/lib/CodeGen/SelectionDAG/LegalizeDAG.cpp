@@ -5369,7 +5369,8 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
   MVT::ValueType SourceVT = Source.getValueType();
   bool ExpandSource = getTypeAction(SourceVT) == Expand;
 
-  if (!isSigned) {
+  // Special case for i32 source to take advantage of UINTTOFP_I32_F32, etc.
+  if (!isSigned && SourceVT != MVT::i32) {
     // The integer value loaded will be incorrectly if the 'sign bit' of the
     // incoming integer is set.  To handle this, we dynamically test to see if
     // it is set, and, if so, add a fudge factor.

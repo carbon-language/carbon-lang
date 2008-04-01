@@ -16,8 +16,10 @@
 ; RUN: grep fixunssfsi %t
 ; RUN: grep fixdfsi %t
 ; RUN: grep fixunsdfsi %t
-; RUN: grep floatdisf %t
+; RUN: grep floatsisf %t
 ; RUN: grep floatsidf %t
+; RUN: grep floatunsisf %t
+; RUN: grep floatunsidf %t
 ; RUN: llvm-as < %s | llc -march=thumb
 
 define float @f1(double %x) {
