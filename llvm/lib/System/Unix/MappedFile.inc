@@ -1,4 +1,4 @@
-//===- Unix/MappedFile.cpp - Unix MappedFile Implementation -----*- C++ -*-===//
+//===- Unix/MappedFile.inc - Unix MappedFile Implementation -----*- C++ -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -9,11 +9,6 @@
 //
 // This file provides the generic Unix implementation of the MappedFile concept.
 //
-//===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-//=== WARNING: Implementation here must contain only generic UNIX code that
-//===          is guaranteed to work on *all* UNIX variants.
 //===----------------------------------------------------------------------===//
 
 #include "Unix.h"
@@ -44,16 +39,7 @@ namespace llvm {
 }
 
 bool MappedFile::initialize(std::string* ErrMsg) {
-  int mode = 0;
-  if (Options & READ_ACCESS) 
-    if (Options & WRITE_ACCESS)
-      mode = O_RDWR;
-    else
-      mode = O_RDONLY;
-  else if (Options & WRITE_ACCESS)
-    mode = O_WRONLY;
-
-  int FD = ::open(Path.c_str(), mode);
+  int FD = ::open(Path.c_str(), O_RDONLY);
   if (FD < 0) {
     MakeErrMsg(ErrMsg, "can't open file '" + Path.toString() + "'");
     return true;
@@ -80,8 +66,6 @@ void MappedFile::unmap() {
   assert(MapInfo && "MappedFile not initialized");
   if (!isMapped()) return;
   
-  if (Options & WRITE_ACCESS)
-    ::msync(BasePtr, MapInfo->Size, MS_SYNC);
   ::munmap(BasePtr, MapInfo->Size);
   BasePtr = 0;  // Mark this as non-mapped.
 }
@@ -90,28 +74,13 @@ void* MappedFile::map(std::string* ErrMsg) {
   assert(MapInfo && "MappedFile not initialized");
   if (isMapped()) return BasePtr;
   
-  int prot = PROT_NONE;
-  int flags = 0;
+  int prot = PROT_READ;
+  int flags = MAP_PRIVATE;
 #ifdef MAP_FILE
   flags |= MAP_FILE;
 #endif
-  if (Options == 0) {
-    prot = PROT_READ;
-    flags = MAP_PRIVATE;
-  } else {
-    if (Options & READ_ACCESS)
-      prot |= PROT_READ;
-    if (Options & WRITE_ACCESS)
-      prot |= PROT_WRITE;
-    if (Options & EXEC_ACCESS)
-      prot |= PROT_EXEC;
-    if (Options & SHARED_MAPPING)
-      flags |= MAP_SHARED;
-    else
-      flags |= MAP_PRIVATE;
-  }
-  size_t map_size = ((MapInfo->Size / Process::GetPageSize())+1) *
-    Process::GetPageSize();
+  size_t PageSize = Process::GetPageSize();
+  size_t map_size = ((MapInfo->Size / PageSize)+1) * PageSize;
 
   BasePtr = ::mmap(0, map_size, prot, flags, MapInfo->FD, 0);
   if (BasePtr == MAP_FAILED) {
@@ -126,30 +95,3 @@ size_t MappedFile::size() const {
   return MapInfo->Size;
 }
 
-bool MappedFile::resize(size_t new_size, std::string* ErrMsg) {
-  assert(MapInfo && "MappedFile not initialized");
-
-  // Take the mapping out of memory
-  unmap();
-
-  // Adjust the current size to a page boundary
-  size_t cur_size = ((MapInfo->Size / Process::GetPageSize())+1) *
-    Process::GetPageSize();
-
-  // Adjust the new_size to a page boundary
-  new_size = ((new_size / Process::GetPageSize())+1) *
-    Process::GetPageSize();
-
-  // If the file needs to be extended
-  if (new_size > cur_size) {
-    // Ensure we can allocate at least the idodes necessary to handle the
-    // file size requested. 
-    if ((off_t)-1 == ::lseek(MapInfo->FD, new_size, SEEK_SET))
-      return MakeErrMsg(ErrMsg, "Can't lseek: ");
-    if (-1 == ::write(MapInfo->FD, "\0", 1))
-      return MakeErrMsg(ErrMsg, "Can't write: ");
-  }
-
-  // Put the mapping back into memory.
-  return map(ErrMsg);
-}

@@ -148,7 +148,7 @@ bool
 Archive::mapToMemory(std::string* ErrMsg)
 {
   mapfile = new sys::MappedFile();
-  if (mapfile->open(archPath, sys::MappedFile::READ_ACCESS, ErrMsg))
+  if (mapfile->open(archPath, ErrMsg))
     return true;
   if (!(base = (char*) mapfile->map(ErrMsg)))
     return true;

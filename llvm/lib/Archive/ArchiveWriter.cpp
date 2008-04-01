@@ -212,7 +212,7 @@ Archive::writeMember(
   sys::MappedFile* mFile = 0;
   if (!data) {
     mFile = new sys::MappedFile();
-    if (mFile->open(member.getPath(), sys::MappedFile::READ_ACCESS, ErrMsg))
+    if (mFile->open(member.getPath(), ErrMsg))
       return true;
     if (!(data = (const char*) mFile->map(ErrMsg)))
       return true;
@@ -411,7 +411,7 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress,
 
     // Map in the archive we just wrote.
     sys::MappedFile arch;
-    if (arch.open(TmpArchive, sys::MappedFile::READ_ACCESS, ErrMsg))
+    if (arch.open(TmpArchive, ErrMsg))
       return true;
     const char* base;
     if (!(base = (const char*) arch.map(ErrMsg)))

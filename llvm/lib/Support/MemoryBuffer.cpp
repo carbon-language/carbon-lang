@@ -159,7 +159,7 @@ bool MemoryBufferMMapFile::open(const sys::Path &Filename,
                                 std::string *ErrStr) {
   // FIXME: This does an extra stat syscall to figure out the size, but we
   // already know the size!
-  bool Failure = File.open(Filename, sys::MappedFile::READ_ACCESS, ErrStr);
+  bool Failure = File.open(Filename, ErrStr);
   if (Failure) return true;
   
   if (!File.map(ErrStr))

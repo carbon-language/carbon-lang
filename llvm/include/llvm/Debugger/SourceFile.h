@@ -52,7 +52,7 @@ namespace llvm {
     SourceFile(const std::string &fn, const GlobalVariable *Desc)
       : Filename(fn), Descriptor(Desc), File() {
         std::string ErrMsg;
-      if (File.open(Filename, sys::MappedFile::READ_ACCESS, &ErrMsg))
+      if (File.open(Filename, &ErrMsg))
         throw ErrMsg;
       readFile();
     }

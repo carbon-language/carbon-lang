@@ -192,10 +192,10 @@ int llvm::DiffFilesWithTolerance(const sys::PathWithStatus &FileA,
   // Now its safe to mmap the files into memory becasue both files
   // have a non-zero size.
   sys::MappedFile F1;
-  if (F1.open(FileA, sys::MappedFile::READ_ACCESS, Error))
+  if (F1.open(FileA, Error))
     return 2;
   sys::MappedFile F2;
-  if (F2.open(FileB, sys::MappedFile::READ_ACCESS, Error))
+  if (F2.open(FileB, Error))
     return 2;
   if (!F1.map(Error))
     return 2;

@@ -25,26 +25,16 @@ namespace sys {
 
   /// This class provides an abstraction for a memory mapped file in the
   /// operating system's filesystem. It provides platform independent operations
-  /// for mapping a file into memory for both read and write access. This class
-  /// does not provide facilities for finding the file or operating on paths to
-  /// files. The sys::Path class is used for that.
+  /// for mapping a file into memory for both read access.
   class MappedFile {
     sys::PathWithStatus Path;        ///< Path to the file.
-    unsigned Options;                ///< Options used to create the mapping
     void *BasePtr;                   ///< Pointer to the base memory address
     mutable MappedFileInfo *MapInfo; ///< Platform specific info for the mapping
     
     MappedFile& operator=(const MappedFile &that); // DO NOT IMPLEMENT
     MappedFile(const MappedFile &that); // DO NOT IMPLEMENT
   public:
-    enum MappingOptions {
-      READ_ACCESS    = 0x0001,  ///< Map the file for reading
-      WRITE_ACCESS   = 0x0002,  ///< Map the file for write access
-      EXEC_ACCESS    = 0x0004,  ///< Map the file for execution access
-      SHARED_MAPPING = 0x0008   ///< Map the file shared with other processes
-    };
-    
-    MappedFile() : Options(READ_ACCESS), BasePtr(0), MapInfo(0) {}
+    MappedFile() : BasePtr(0), MapInfo(0) {}
 
     /// Destruct a MappedFile and release all memory associated with it.
     ~MappedFile() { close(); }
@@ -71,7 +61,7 @@ namespace sys {
     /// This function returns a reference to the sys::Path object kept by the
     /// MappedFile object. This contains the path to the file that is or
     /// will be mapped.
-    const sys::Path& path() const { return Path; }
+    const sys::PathWithStatus &path() const { return Path; }
 
     /// This function returns the number of bytes in the file.
     size_t size() const;
@@ -80,10 +70,8 @@ namespace sys {
     
     /// Open a file to be mapped and get its size but don't map it yet.  Return
     /// true on error.
-    bool open(const sys::Path &P, int options = READ_ACCESS,
-              std::string *ErrMsg = 0) {
+    bool open(const sys::Path &P, std::string *ErrMsg = 0) {
       Path = P;
-      Options = options;
       return initialize(ErrMsg);
     }
 
@@ -96,14 +84,6 @@ namespace sys {
     /// pointer to it.  This returns the base memory address of the mapped file
     /// or 0 if an error occurred.
     void *map(std::string* ErrMsg = 0);
-
-    /// resize - This method causes the size of the file, and consequently the
-    /// size of the mapping to be set. This is logically the same as unmap(),
-    /// adjust size of the file, map(). Consequently, when calling this
-    /// function, the caller should not rely on previous results of the
-    /// map(), base(), or baseChar() members as they may point to invalid
-    /// areas of memory after this call.
-    bool resize(size_t new_size, std::string *ErrMsg = 0);
 
     void close() { if (MapInfo) terminate(); }
 
