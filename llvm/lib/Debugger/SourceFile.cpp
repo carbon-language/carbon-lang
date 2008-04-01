@@ -28,7 +28,7 @@ void SourceFile::readFile() {
 ///
 void SourceFile::calculateLineOffsets() const {
   assert(LineOffset.empty() && "Line offsets already computed!");
-  const char *BufPtr = File.charBase();
+  const char *BufPtr = (const char *)File.getBase();
   const char *FileStart = BufPtr;
   const char *FileEnd = FileStart + File.size();
   do {
@@ -61,12 +61,12 @@ void SourceFile::getSourceLine(unsigned LineNo, const char *&LineStart,
   if (LineNo >= LineOffset.size()) return;
 
   // Otherwise, they are asking for a valid line, which we can fulfill.
-  LineStart = File.charBase()+LineOffset[LineNo];
+  LineStart = (const char *)File.getBase()+LineOffset[LineNo];
 
   if (LineNo+1 < LineOffset.size())
-    LineEnd = File.charBase()+LineOffset[LineNo+1];
+    LineEnd = (const char *)File.getBase()+LineOffset[LineNo+1];
   else
-    LineEnd = File.charBase() + File.size();
+    LineEnd = (const char *)File.getBase() + File.size();
 
   // If the line ended with a newline, strip it off.
   while (LineEnd != LineStart && (LineEnd[-1] == '\n' || LineEnd[-1] == '\r'))

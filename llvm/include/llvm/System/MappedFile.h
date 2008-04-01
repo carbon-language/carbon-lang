@@ -25,7 +25,7 @@ namespace sys {
 
   /// This class provides an abstraction for a memory mapped file in the
   /// operating system's filesystem. It provides platform independent operations
-  /// for mapping a file into memory for both read access.
+  /// for mapping a file into memory for read access.
   class MappedFile {
     sys::PathWithStatus Path;        ///< Path to the file.
     void *BasePtr;                   ///< Pointer to the base memory address
@@ -44,19 +44,9 @@ namespace sys {
     /// This function determines if the file is currently mapped or not.
     bool isMapped() const { return BasePtr != 0; }
 
-    /// This function returns a void* pointer to the base address of the file
+    /// getBase - Returns a const void* pointer to the base address of the file
     /// mapping. This is the memory address of the first byte in the file.
-    /// Note that although a non-const pointer is returned, the memory might
-    /// not actually be writable, depending on the MappingOptions used when
-    /// the MappedFile was opened.
-    void* base() const { return BasePtr; }
-
-    /// This function returns a char* pointer to the base address of the file
-    /// mapping. This is the memory address of the first byte in the file.
-    /// Note that although a non-const pointer is returned, the memory might
-    /// not actually be writable, depending on the MappingOptions used when
-    /// the MappedFile was opened.
-    char* charBase() const { return reinterpret_cast<char*>(BasePtr); }
+    const void *getBase() const { return BasePtr; }
 
     /// This function returns a reference to the sys::Path object kept by the
     /// MappedFile object. This contains the path to the file that is or

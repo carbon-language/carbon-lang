@@ -173,11 +173,12 @@ bool MemoryBufferMMapFile::open(const sys::Path &Filename,
   
   // If this file is not an exact multiple of the system page size (common
   // case), then the OS has zero terminated the buffer for us.
-  if ((Size & (PageSize-1))) {
-    init(File.charBase(), File.charBase()+Size);
+  const char *FileBase = static_cast<const char*>(File.getBase());
+  if ((Size & (PageSize-1)) != 0) {
+    init(FileBase, FileBase+Size);
   } else {
     // Otherwise, we allocate a new memory buffer and copy the data over
-    initCopyOf(File.charBase(), File.charBase()+Size);
+    initCopyOf(FileBase, FileBase+Size);
     
     // No need to keep the file mapped any longer.
     File.unmap();
