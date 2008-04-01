@@ -13,6 +13,7 @@
 
 #include "ArchiveInternals.h"
 #include "llvm/Bitcode/ReaderWriter.h"
+#include "llvm/System/MappedFile.h"
 #include "llvm/System/Signals.h"
 #include "llvm/System/Process.h"
 #include "llvm/ModuleProvider.h"

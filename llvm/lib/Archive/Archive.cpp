@@ -17,6 +17,7 @@
 #include "llvm/ModuleProvider.h"
 #include "llvm/Module.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/System/MappedFile.h"
 #include "llvm/System/Process.h"
 #include <memory>
 #include <cstring>

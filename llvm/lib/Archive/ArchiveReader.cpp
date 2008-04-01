@@ -14,6 +14,7 @@
 #include "ArchiveInternals.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/System/MappedFile.h"
 #include "llvm/Module.h"
 #include <memory>
 using namespace llvm;
