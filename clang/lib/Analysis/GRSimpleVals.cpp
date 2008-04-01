@@ -76,10 +76,12 @@ void EmitWarning(Diagnostic& Diag,  PathDiagnosticClient* PD,
                  ITERATOR I, ITERATOR E, const char* msg) {
  
   std::ostringstream Out;
+  std::string Str;
 
   if (!PD) {
     Out << "[CHECKER] " << msg;
-    msg = Out.str().c_str();
+    Str = Out.str();
+    msg = Str.c_str();
   }
   
   bool isFirst = true;
