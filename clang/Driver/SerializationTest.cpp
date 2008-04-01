@@ -163,8 +163,7 @@ SerializationTest::~SerializationTest() {
   using llvm::MemoryBuffer;
   
   llvm::OwningPtr<MemoryBuffer>
-    MBufferSer(MemoryBuffer::getFile(FNameDeclBefore.c_str(),
-                                     strlen(FNameDeclBefore.c_str())));
+    MBufferSer(MemoryBuffer::getFile(FNameDeclBefore.c_str()));
   
   if(!MBufferSer) {
     llvm::cerr << "ERROR: Cannot read pretty-printed file (pre-pickle).\n";
@@ -172,8 +171,7 @@ SerializationTest::~SerializationTest() {
   }
   
   llvm::OwningPtr<MemoryBuffer>
-    MBufferDSer(MemoryBuffer::getFile(FNameDeclAfter.c_str(),
-                                      strlen(FNameDeclAfter.c_str())));
+    MBufferDSer(MemoryBuffer::getFile(FNameDeclAfter.c_str()));
   
   if(!MBufferDSer) {
     llvm::cerr << "ERROR: Cannot read pretty-printed file (post-pickle).\n";

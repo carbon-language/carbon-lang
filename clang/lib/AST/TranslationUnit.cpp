@@ -126,8 +126,7 @@ clang::ReadASTBitcodeFile(const llvm::sys::Path& Filename, FileManager& FMgr) {
   
   // Create the memory buffer that contains the contents of the file.  
   llvm::OwningPtr<llvm::MemoryBuffer> 
-    MBuffer(llvm::MemoryBuffer::getFile(Filename.c_str(),
-                                        strlen(Filename.c_str())));
+    MBuffer(llvm::MemoryBuffer::getFile(Filename.c_str()));
   
   if (!MBuffer) {
     // FIXME: Provide diagnostic.

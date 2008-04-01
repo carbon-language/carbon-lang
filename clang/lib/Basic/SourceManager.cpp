@@ -43,8 +43,7 @@ const ContentCache* SourceManager::getContentCache(const FileEntry *FileEnt) {
   
   // Nope, get information.
   const MemoryBuffer *File =
-    MemoryBuffer::getFile(FileEnt->getName(), strlen(FileEnt->getName()), 0,
-                          FileEnt->getSize());
+    MemoryBuffer::getFile(FileEnt->getName(), 0, FileEnt->getSize());
   if (File == 0)
     return 0;
 
