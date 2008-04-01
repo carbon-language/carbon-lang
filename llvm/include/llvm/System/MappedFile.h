@@ -65,15 +65,13 @@ namespace sys {
       return initialize(ErrMsg);
     }
 
-    /// unmap - Remove the mapped file from memory. If the file was mapped for
-    /// write access, the memory contents will be automatically synchronized
-    /// with the file's disk contents.
+    /// unmap - Remove the mapped file from memory.
     void unmap();
 
     /// map - Reserve space for the file, map it into memory, and return a
     /// pointer to it.  This returns the base memory address of the mapped file
     /// or 0 if an error occurred.
-    void *map(std::string* ErrMsg = 0);
+    const void *map(std::string* ErrMsg = 0);
 
     void close() { if (MapInfo) terminate(); }
 

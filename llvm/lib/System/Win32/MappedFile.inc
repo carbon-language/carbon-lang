@@ -75,7 +75,7 @@ void MappedFile::unmap() {
   }
 }
 
-void* MappedFile::map(std::string* ErrMsg) {
+const void* MappedFile::map(std::string* ErrMsg) {
   if (!isMapped()) {
     MapInfo->hMapping = CreateFileMapping(MapInfo->hFile, NULL, PAGE_READONLY,
                                           0, 0, NULL);

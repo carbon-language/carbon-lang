@@ -56,6 +56,7 @@ bool MappedFile::initialize(std::string* ErrMsg) {
 }
 
 void MappedFile::terminate() {
+  unmap();
   assert(MapInfo && "MappedFile not initialized");
   ::close(MapInfo->FD);
   delete MapInfo;
@@ -70,7 +71,7 @@ void MappedFile::unmap() {
   BasePtr = 0;  // Mark this as non-mapped.
 }
 
-void* MappedFile::map(std::string* ErrMsg) {
+const void* MappedFile::map(std::string* ErrMsg) {
   assert(MapInfo && "MappedFile not initialized");
   if (isMapped()) return BasePtr;
   
