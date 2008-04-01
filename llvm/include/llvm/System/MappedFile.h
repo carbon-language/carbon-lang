@@ -15,7 +15,6 @@
 #define LLVM_SYSTEM_MAPPEDFILE_H
 
 #include "llvm/System/Path.h"
-#include "llvm/System/IncludeFile.h"
 
 namespace llvm {
 namespace sys {
@@ -162,14 +161,12 @@ namespace sys {
   /// @{
   private:
     ///< Disallow assignment
-    MappedFile& operator = ( const MappedFile & that );
+    MappedFile& operator=(const MappedFile &that);
     ///< Disallow copying
     MappedFile(const MappedFile& that);
   /// @}
   };
 }
 }
-
-FORCE_DEFINING_FILE_TO_BE_LINKED(SystemMappedFile)
 
 #endif
