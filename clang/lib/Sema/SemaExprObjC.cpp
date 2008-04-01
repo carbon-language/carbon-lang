@@ -52,8 +52,8 @@ Sema::ExprResult Sema::ParseObjCStringLiteral(SourceLocation *AtLocs,
     // Initialize the constant string interface lazily. This assumes
     // the NSConstantString interface is seen in this translation unit.
     IdentifierInfo *NSIdent = &Context.Idents.get("NSConstantString");
-    ScopedDecl *IFace = LookupScopedDecl(NSIdent, Decl::IDNS_Ordinary, 
-                                         SourceLocation(), TUScope);
+    Decl *IFace = LookupDecl(NSIdent, Decl::IDNS_Ordinary, 
+                             SourceLocation(), TUScope);
     ObjCInterfaceDecl *strIFace = dyn_cast_or_null<ObjCInterfaceDecl>(IFace);
     if (!strIFace)
       return Diag(S->getLocStart(), diag::err_undef_interface,

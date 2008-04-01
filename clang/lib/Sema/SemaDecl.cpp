@@ -35,15 +35,22 @@ using namespace clang;
 Sema::DeclTy *Sema::isTypeName(const IdentifierInfo &II, Scope *S) const {
   Decl *IIDecl = II.getFETokenInfo<Decl>();
   // Find first occurance of none-tagged declaration
-  while(IIDecl && IIDecl->getIdentifierNamespace() != Decl::IDNS_Ordinary)
+  while (IIDecl && IIDecl->getIdentifierNamespace() != Decl::IDNS_Ordinary)
     IIDecl = cast<ScopedDecl>(IIDecl)->getNext();
-  if (!IIDecl)
+  
+  if (!IIDecl) {
+    if (getLangOptions().ObjC1) {
+      // @interface and @compatibility_alias result in new type references. 
+      // Creating a class alias is *extremely* rare.
+      ObjCAliasTy::const_iterator I = ObjCAliasDecls.find((IdentifierInfo*)&II);
+      if (I != ObjCAliasDecls.end())
+        return I->second->getClassInterface();
+    }    
     return 0;
+  }
+  // FIXME: remove ObjCInterfaceDecl check when we make it a named decl.
   if (isa<TypedefDecl>(IIDecl) || isa<ObjCInterfaceDecl>(IIDecl))
     return IIDecl;
-  if (ObjCCompatibleAliasDecl *ADecl = 
-      dyn_cast<ObjCCompatibleAliasDecl>(IIDecl))
-    return ADecl->getClassInterface(); 
   return 0;
 }
 
@@ -91,15 +98,14 @@ void Sema::ActOnPopScope(SourceLocation Loc, Scope *S) {
   }
 }
 
-/// LookupInterfaceDecl - Lookup interface declaration in the scope chain.
-/// Return the first declaration found (which may or may not be a class
-/// declaration. Caller is responsible for handling the none-class case.
-/// Bypassing the alias of a class by returning the aliased class.
-ScopedDecl *Sema::LookupInterfaceDecl(IdentifierInfo *ClassName) {
+/// getObjCInterfaceDecl - Look up a for a class declaration in the scope.
+/// return 0 if one not found.
+/// FIXME: removed this when ObjCInterfaceDecl's aren't ScopedDecl's.
+ObjCInterfaceDecl *Sema::getObjCInterfaceDecl(IdentifierInfo *Id) {
   ScopedDecl *IDecl;
   // Scan up the scope chain looking for a decl that matches this identifier
   // that is in the appropriate namespace.
-  for (IDecl = ClassName->getFETokenInfo<ScopedDecl>(); IDecl; 
+  for (IDecl = Id->getFETokenInfo<ScopedDecl>(); IDecl; 
        IDecl = IDecl->getNext())
     if (IDecl->getIdentifierNamespace() == Decl::IDNS_Ordinary)
       break;
@@ -107,20 +113,13 @@ ScopedDecl *Sema::LookupInterfaceDecl(IdentifierInfo *ClassName) {
   if (ObjCCompatibleAliasDecl *ADecl =
       dyn_cast_or_null<ObjCCompatibleAliasDecl>(IDecl))
     return ADecl->getClassInterface();
-  return IDecl;
+  return cast_or_null<ObjCInterfaceDecl>(IDecl);
 }
 
-/// getObjCInterfaceDecl - Look up a for a class declaration in the scope.
-/// return 0 if one not found.
-ObjCInterfaceDecl *Sema::getObjCInterfaceDecl(IdentifierInfo *Id) {
-  ScopedDecl *IdDecl = LookupInterfaceDecl(Id);
-  return cast_or_null<ObjCInterfaceDecl>(IdDecl);
-}
-
-/// LookupScopedDecl - Look up the inner-most declaration in the specified
+/// LookupDecl - Look up the inner-most declaration in the specified
 /// namespace.
-ScopedDecl *Sema::LookupScopedDecl(IdentifierInfo *II, unsigned NSI,
-                                   SourceLocation IdLoc, Scope *S) {
+Decl *Sema::LookupDecl(IdentifierInfo *II, unsigned NSI,
+                       SourceLocation IdLoc, Scope *S) {
   if (II == 0) return 0;
   Decl::IdentifierNamespace NS = (Decl::IdentifierNamespace)NSI;
   
@@ -138,6 +137,16 @@ ScopedDecl *Sema::LookupScopedDecl(IdentifierInfo *II, unsigned NSI,
     // If this is a builtin on this (or all) targets, create the decl.
     if (unsigned BuiltinID = II->getBuiltinID())
       return LazilyCreateBuiltin(II, BuiltinID, S);
+
+    if (getLangOptions().ObjC1) {
+      // @interface and @compatibility_alias introduce typedef-like names.
+      // Unlike typedef's, they can only be introduced at file-scope (and are 
+      // not therefore not scoped decls). They can, however, be shadowed by
+      // other names in IDNS_Ordinary.
+      ObjCAliasTy::iterator I = ObjCAliasDecls.find(II);
+      if (I != ObjCAliasDecls.end())
+        return I->second->getClassInterface();
+    }
   }
   return 0;
 }
@@ -148,8 +157,8 @@ void Sema::InitBuiltinVaListType()
     return;
   
   IdentifierInfo *VaIdent = &Context.Idents.get("__builtin_va_list");
-  ScopedDecl *VaDecl = LookupScopedDecl(VaIdent, Decl::IDNS_Ordinary, 
-                                          SourceLocation(), TUScope);
+  Decl *VaDecl = LookupDecl(VaIdent, Decl::IDNS_Ordinary, 
+                            SourceLocation(), TUScope);
   TypedefDecl *VaTypedef = cast<TypedefDecl>(VaDecl);
   Context.setBuiltinVaListType(Context.getTypedefType(VaTypedef));
 }
@@ -193,7 +202,7 @@ ScopedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
 /// and scope as a previous declaration 'Old'.  Figure out how to resolve this
 /// situation, merging decls or emitting diagnostics as appropriate.
 ///
-TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, ScopedDecl *OldD) {
+TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
   // Verify the old decl was also a typedef.
   TypedefDecl *Old = dyn_cast<TypedefDecl>(OldD);
   if (!Old) {
@@ -265,7 +274,7 @@ static void MergeAttributes(Decl *New, Decl *Old) {
 /// and scope as a previous declaration 'Old'.  Figure out how to resolve this
 /// situation, merging decls or emitting diagnostics as appropriate.
 ///
-FunctionDecl *Sema::MergeFunctionDecl(FunctionDecl *New, ScopedDecl *OldD) {
+FunctionDecl *Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
   // Verify the old decl was also a function.
   FunctionDecl *Old = dyn_cast<FunctionDecl>(OldD);
   if (!Old) {
@@ -337,7 +346,7 @@ static bool areEquivalentArrayTypes(QualType NewQType, QualType OldQType) {
 /// FIXME: Need to carefully consider tentative definition rules (C99 6.9.2p2).
 /// For example, we incorrectly complain about i1, i4 from C99 6.9.2p4.
 /// 
-VarDecl *Sema::MergeVarDecl(VarDecl *New, ScopedDecl *OldD) {
+VarDecl *Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
   // Verify the old decl was also a variable.
   VarDecl *Old = dyn_cast<VarDecl>(OldD);
   if (!Old) {
@@ -707,8 +716,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     S = S->getParent();
   
   // See if this is a redefinition of a variable in the same scope.
-  ScopedDecl *PrevDecl = LookupScopedDecl(II, Decl::IDNS_Ordinary,
-                                          D.getIdentifierLoc(), S);
+  Decl *PrevDecl = LookupDecl(II, Decl::IDNS_Ordinary, D.getIdentifierLoc(), S);
   ScopedDecl *New;
   bool InvalidDecl = false;
   
@@ -980,8 +988,8 @@ Sema::ActOnParamDeclarator(struct DeclaratorChunk::ParamInfo &PI,
   // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
   // Can this happen for params?  We already checked that they don't conflict
   // among each other.  Here they can only shadow globals, which is ok.
-  if (/*Decl *PrevDecl = */LookupScopedDecl(II, Decl::IDNS_Ordinary,
-                                        PI.IdentLoc, FnScope)) {
+  if (/*Decl *PrevDecl = */LookupDecl(II, Decl::IDNS_Ordinary,
+                                      PI.IdentLoc, FnScope)) {
     
   }
   
@@ -1061,8 +1069,8 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
   Scope *GlobalScope = FnBodyScope->getParent();
 
   // See if this is a redefinition.
-  ScopedDecl *PrevDcl = LookupScopedDecl(D.getIdentifier(), Decl::IDNS_Ordinary,
-                                         D.getIdentifierLoc(), GlobalScope);
+  Decl *PrevDcl = LookupDecl(D.getIdentifier(), Decl::IDNS_Ordinary,
+                             D.getIdentifierLoc(), GlobalScope);
   if (FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(PrevDcl)) {
     if (FD->getBody()) {
       Diag(D.getIdentifierLoc(), diag::err_redefinition, 
@@ -1216,8 +1224,8 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
   // If this is a named struct, check to see if there was a previous forward
   // declaration or definition.
   if (TagDecl *PrevDecl = 
-          dyn_cast_or_null<TagDecl>(LookupScopedDecl(Name, Decl::IDNS_Tag,
-                                                     NameLoc, S))) {
+          dyn_cast_or_null<TagDecl>(LookupDecl(Name, Decl::IDNS_Tag,
+                                               NameLoc, S))) {
     
     // If this is a use of a previous tag, or if the tag is already declared in
     // the same scope (so that the definition/declaration completes or
@@ -1540,8 +1548,7 @@ Sema::DeclTy *Sema::ActOnEnumConstant(Scope *S, DeclTy *theEnumDecl,
   
   // Verify that there isn't already something declared with this name in this
   // scope.
-  if (ScopedDecl *PrevDecl = LookupScopedDecl(Id, Decl::IDNS_Ordinary, 
-                                              IdLoc, S)) {
+  if (Decl *PrevDecl = LookupDecl(Id, Decl::IDNS_Ordinary, IdLoc, S)) {
     if (S->isDeclScope(PrevDecl)) {
       if (isa<EnumConstantDecl>(PrevDecl))
         Diag(IdLoc, diag::err_redefinition_of_enumerator, Id->getName());

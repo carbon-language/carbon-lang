@@ -79,7 +79,7 @@ Sema::DeclTy *Sema::ActOnStartClassInterface(
   assert(ClassName && "Missing class identifier");
   
   // Check for another declaration kind with the same name.
-  ScopedDecl *PrevDecl = LookupInterfaceDecl(ClassName);
+  Decl *PrevDecl = LookupDecl(ClassName, Decl::IDNS_Ordinary, ClassLoc,TUScope);
   if (PrevDecl && !isa<ObjCInterfaceDecl>(PrevDecl)) {
     Diag(ClassLoc, diag::err_redefinition_different_kind,
          ClassName->getName());
@@ -112,7 +112,7 @@ Sema::DeclTy *Sema::ActOnStartClassInterface(
   if (SuperName) {
     ObjCInterfaceDecl* SuperClassEntry = 0;
     // Check if a different kind of symbol declared in this scope.
-    PrevDecl = LookupInterfaceDecl(SuperName);
+    PrevDecl = LookupDecl(SuperName, Decl::IDNS_Ordinary, SuperLoc, TUScope);
     if (PrevDecl && !isa<ObjCInterfaceDecl>(PrevDecl)) {
       Diag(SuperLoc, diag::err_redefinition_different_kind,
            SuperName->getName());
@@ -152,13 +152,14 @@ Sema::DeclTy *Sema::ActOnStartClassInterface(
 
 /// ActOnCompatiblityAlias - this action is called after complete parsing of
 /// @compaatibility_alias declaration. It sets up the alias relationships.
-Sema::DeclTy *Sema::ActOnCompatiblityAlias(
-                      SourceLocation AtCompatibilityAliasLoc,
-                      IdentifierInfo *AliasName,  SourceLocation AliasLocation,
-                      IdentifierInfo *ClassName, SourceLocation ClassLocation) {
+Sema::DeclTy *Sema::ActOnCompatiblityAlias(SourceLocation AtLoc,
+                                           IdentifierInfo *AliasName, 
+                                           SourceLocation AliasLocation,
+                                           IdentifierInfo *ClassName,
+                                           SourceLocation ClassLocation) {
   // Look for previous declaration of alias name
-  ScopedDecl *ADecl = LookupScopedDecl(AliasName, Decl::IDNS_Ordinary,
-                                       AliasLocation, TUScope);
+  Decl *ADecl = LookupDecl(AliasName, Decl::IDNS_Ordinary,
+                           AliasLocation, TUScope);
   if (ADecl) {
     if (isa<ObjCCompatibleAliasDecl>(ADecl)) {
       Diag(AliasLocation, diag::warn_previous_alias_decl);
@@ -172,8 +173,8 @@ Sema::DeclTy *Sema::ActOnCompatiblityAlias(
     return 0;
   }
   // Check for class declaration
-  ScopedDecl *CDeclU = LookupScopedDecl(ClassName, Decl::IDNS_Ordinary,
-                                        ClassLocation, TUScope);
+  Decl *CDeclU = LookupDecl(ClassName, Decl::IDNS_Ordinary,
+                            ClassLocation, TUScope);
   ObjCInterfaceDecl *CDecl = dyn_cast_or_null<ObjCInterfaceDecl>(CDeclU);
   if (CDecl == 0) {
     Diag(ClassLocation, diag::warn_undef_interface, ClassName->getName());
@@ -184,12 +185,10 @@ Sema::DeclTy *Sema::ActOnCompatiblityAlias(
   
   // Everything checked out, instantiate a new alias declaration AST.
   ObjCCompatibleAliasDecl *AliasDecl = 
-    ObjCCompatibleAliasDecl::Create(Context, AtCompatibilityAliasLoc, 
-                                    AliasName, CDecl);
-    
-  // Chain & install the interface decl into the identifier.
-  AliasDecl->setNext(AliasName->getFETokenInfo<ScopedDecl>());
-  AliasName->setFETokenInfo(AliasDecl);
+    ObjCCompatibleAliasDecl::Create(Context, AtLoc, AliasName, CDecl);
+  
+  ObjCAliasDecls[AliasName] = AliasDecl;
+  TUScope->AddDecl(AliasDecl);
   return AliasDecl;
 }
 
@@ -348,7 +347,7 @@ Sema::DeclTy *Sema::ActOnStartClassImplementation(
                       SourceLocation SuperClassLoc) {
   ObjCInterfaceDecl* IDecl = 0;
   // Check for another declaration kind with the same name.
-  ScopedDecl *PrevDecl = LookupInterfaceDecl(ClassName);
+  Decl *PrevDecl = LookupDecl(ClassName, Decl::IDNS_Ordinary, ClassLoc,TUScope);
   if (PrevDecl && !isa<ObjCInterfaceDecl>(PrevDecl)) {
     Diag(ClassLoc, diag::err_redefinition_different_kind,
          ClassName->getName());
@@ -365,7 +364,8 @@ Sema::DeclTy *Sema::ActOnStartClassImplementation(
   ObjCInterfaceDecl* SDecl = 0;
   if (SuperClassname) {
     // Check if a different kind of symbol declared in this scope.
-    PrevDecl = LookupInterfaceDecl(SuperClassname);
+    PrevDecl = LookupDecl(SuperClassname, Decl::IDNS_Ordinary,
+                          SuperClassLoc, TUScope);
     if (PrevDecl && !isa<ObjCInterfaceDecl>(PrevDecl)) {
       Diag(SuperClassLoc, diag::err_redefinition_different_kind,
            SuperClassname->getName());
@@ -590,7 +590,8 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
   
   for (unsigned i = 0; i != NumElts; ++i) {
     // Check for another declaration kind with the same name.
-    ScopedDecl *PrevDecl = LookupInterfaceDecl(IdentList[i]);
+    Decl *PrevDecl = LookupDecl(IdentList[i], Decl::IDNS_Ordinary,
+                                AtClassLoc, TUScope);
     if (PrevDecl && !isa<ObjCInterfaceDecl>(PrevDecl)) {
       Diag(AtClassLoc, diag::err_redefinition_different_kind,
            IdentList[i]->getName());

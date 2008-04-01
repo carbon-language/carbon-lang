@@ -51,7 +51,6 @@ public:
            ObjCProtocol,
            PropertyDecl,
     //     ScopedDecl
-             ObjCCompatibleAlias,
     //       TypeDecl
                ObjCInterface,
                Typedef,
@@ -68,6 +67,7 @@ public:
                  BlockVar,
                  FileVar,
                  ParmVar,
+         ObjCCompatibleAlias,
          ObjCMethod,
          ObjCClass,
          ObjCForwardProtocol,
@@ -78,7 +78,7 @@ public:
     // of the class, to allow efficient classof.
     NamedFirst  = Field,         NamedLast  = ParmVar,
     FieldFirst  = Field,         FieldLast  = ObjCIvar,
-    ScopedFirst = ObjCCompatibleAlias, ScopedLast = ParmVar,
+    ScopedFirst = ObjCInterface, ScopedLast = ParmVar,
     TypeFirst   = ObjCInterface, TypeLast   = Class,
     TagFirst    = Enum         , TagLast    = Class,
     RecordFirst = Struct       , RecordLast = Class,

@@ -343,10 +343,6 @@ bool ScopedDecl::isDefinedOutsideFunctionOrMethod() const {
   if (isa<FunctionDecl>(this))
     return true;
   
-  // FIXME: Why is ObjCCompatibleAlias a scopedecl?
-  if (isa<ObjCCompatibleAliasDecl>(this))
-    return true;
-  
   // FIXME: This needs to check the context the decl was defined in!
   if (isa<TypeDecl>(this) || isa<EnumConstantDecl>(this))
     return true;

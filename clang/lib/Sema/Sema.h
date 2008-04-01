@@ -32,6 +32,7 @@ namespace clang {
   class ASTConsumer;
   class Preprocessor;
   class Decl;
+  class NamedDecl;
   class ScopedDecl;
   class Expr;
   class InitListExpr;
@@ -51,6 +52,7 @@ namespace clang {
   class OCUVectorType;
   class TypedefDecl;
   class ObjCInterfaceDecl;
+  class ObjCCompatibleAliasDecl;
   class ObjCProtocolDecl;
   class ObjCImplementationDecl;
   class ObjCCategoryImplDecl;
@@ -92,6 +94,13 @@ class Sema : public Action {
   /// with @protocol keyword, so that we can emit errors on duplicates and
   /// find the declarations when needed.
   llvm::DenseMap<IdentifierInfo*, ObjCProtocolDecl*> ObjCProtocols;
+  
+  /// ObjCAliasDecls - Keep track of all class declarations declared
+  /// with @compatibility_alias, so that we can emit errors on duplicates and
+  /// find the declarations when needed. This construct is ancient and will
+  /// likely never be seen. Nevertheless, it is here for compatibility.
+  typedef llvm::DenseMap<IdentifierInfo*, ObjCCompatibleAliasDecl*> ObjCAliasTy;
+  ObjCAliasTy ObjCAliasDecls;
   
   // Enum values used by KnownFunctionIDs (see below).
   enum {
@@ -232,16 +241,15 @@ private:
   /// Subroutines of ActOnDeclarator().
   TypedefDecl *ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
                                 ScopedDecl *LastDecl);
-  TypedefDecl *MergeTypeDefDecl(TypedefDecl *New, ScopedDecl *Old);
-  FunctionDecl *MergeFunctionDecl(FunctionDecl *New, ScopedDecl *Old);
-  VarDecl *MergeVarDecl(VarDecl *New, ScopedDecl *Old);
+  TypedefDecl *MergeTypeDefDecl(TypedefDecl *New, Decl *Old);
+  FunctionDecl *MergeFunctionDecl(FunctionDecl *New, Decl *Old);
+  VarDecl *MergeVarDecl(VarDecl *New, Decl *Old);
 
   /// More parsing and symbol table subroutines...
   ParmVarDecl *ActOnParamDeclarator(struct DeclaratorChunk::ParamInfo &PI, 
                                     Scope *FnBodyScope);  
-  ScopedDecl *LookupScopedDecl(IdentifierInfo *II, unsigned NSI, 
-                               SourceLocation IdLoc, Scope *S);
-  ScopedDecl *LookupInterfaceDecl(IdentifierInfo *II);
+  Decl *LookupDecl(IdentifierInfo *II, unsigned NSI, 
+                   SourceLocation IdLoc, Scope *S);
   ObjCInterfaceDecl *getObjCInterfaceDecl(IdentifierInfo *Id);
   ScopedDecl *LazilyCreateBuiltin(IdentifierInfo *II, unsigned ID, Scope *S);
   ScopedDecl *ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,

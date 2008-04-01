@@ -75,17 +75,18 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
                                            IdentifierInfo &II,
                                            bool HasTrailingLParen) {
   // Could be enum-constant, value decl, instance variable, etc.
-  ScopedDecl *D = LookupScopedDecl(&II, Decl::IDNS_Ordinary, Loc, S);
+  Decl *D = LookupDecl(&II, Decl::IDNS_Ordinary, Loc, S);
   
   // If this reference is in an Objective-C method, then ivar lookup happens as
   // well.
   if (CurMethodDecl) {
+    ScopedDecl *SD = dyn_cast_or_null<ScopedDecl>(D);
     // There are two cases to handle here.  1) scoped lookup could have failed,
     // in which case we should look for an ivar.  2) scoped lookup could have
     // found a decl, but that decl is outside the current method (i.e. a global
     // variable).  In these two cases, we do a lookup for an ivar with this
     // name, if the lookup suceeds, we replace it our current decl.
-    if (D == 0 || D->isDefinedOutsideFunctionOrMethod()) {
+    if (SD == 0 || SD->isDefinedOutsideFunctionOrMethod()) {
       ObjCInterfaceDecl *IFace = CurMethodDecl->getClassInterface(), *DeclClass;
       if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(&II, DeclClass)) {
         // FIXME: This should use a new expr for a direct reference, don't turn

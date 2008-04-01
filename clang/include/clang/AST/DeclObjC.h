@@ -871,13 +871,13 @@ public:
 
 /// ObjCCompatibleAliasDecl - Represents alias of a class. This alias is 
 /// declared as @compatibility_alias alias class.
-class ObjCCompatibleAliasDecl : public ScopedDecl {
+class ObjCCompatibleAliasDecl : public NamedDecl {
   /// Class that this is an alias of.
   ObjCInterfaceDecl *AliasedClass;
   
   ObjCCompatibleAliasDecl(SourceLocation L, IdentifierInfo *Id,
-                         ObjCInterfaceDecl* aliasedClass)
-  : ScopedDecl(ObjCCompatibleAlias, L, Id, 0), AliasedClass(aliasedClass) {}
+                          ObjCInterfaceDecl* aliasedClass)
+    : NamedDecl(ObjCCompatibleAlias, L, Id), AliasedClass(aliasedClass) {}
 public:
   static ObjCCompatibleAliasDecl *Create(ASTContext &C, SourceLocation L,
                                          IdentifierInfo *Id,
