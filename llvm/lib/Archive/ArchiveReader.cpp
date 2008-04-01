@@ -14,7 +14,6 @@
 #include "ArchiveInternals.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/System/MappedFile.h"
 #include "llvm/Module.h"
 #include <memory>
 using namespace llvm;
@@ -239,7 +238,7 @@ Archive::parseMemberHeader(const char*& At, const char* End, std::string* error)
 bool
 Archive::checkSignature(std::string* error) {
   // Check the magic string at file's header
-  if (mapfile->size() < 8 || memcmp(base, ARFILE_MAGIC, 8)) {
+  if (mapfile->getBufferSize() < 8 || memcmp(base, ARFILE_MAGIC, 8)) {
     if (error)
       *error = "invalid signature for an archive file";
     return false;
@@ -257,7 +256,7 @@ Archive::loadArchive(std::string* error) {
   members.clear();
   symTab.clear();
   const char *At = base;
-  const char *End = base + mapfile->size();
+  const char *End = mapfile->getBufferEnd();
 
   if (!checkSignature(error))
     return false;
@@ -370,7 +369,7 @@ Archive::loadSymbolTable(std::string* ErrorMsg) {
   members.clear();
   symTab.clear();
   const char *At = base;
-  const char *End = base + mapfile->size();
+  const char *End = mapfile->getBufferEnd();
 
   // Make sure we're dealing with an archive
   if (!checkSignature(ErrorMsg))
@@ -478,7 +477,8 @@ Archive::findModuleDefiningSymbol(const std::string& symbol,
 
   // Module hasn't been loaded yet, we need to load it
   const char* modptr = base + fileOffset;
-  ArchiveMember* mbr = parseMemberHeader(modptr, base + mapfile->size(),ErrMsg);
+  ArchiveMember* mbr = parseMemberHeader(modptr, mapfile->getBufferEnd(),
+                                         ErrMsg);
   if (!mbr)
     return 0;
 
@@ -517,8 +517,8 @@ Archive::findModulesDefiningSymbols(std::set<std::string>& symbols,
     // below.
 
     // Get a pointer to the first file
-    const char* At  = ((const char*)base) + firstFileOffset;
-    const char* End = ((const char*)base) + mapfile->size();
+    const char* At  = base + firstFileOffset;
+    const char* End = mapfile->getBufferEnd();
 
     while ( At < End) {
       // Compute the offset to be put in the symbol table

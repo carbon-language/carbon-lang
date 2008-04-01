@@ -13,7 +13,8 @@
 
 #include "ArchiveInternals.h"
 #include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/System/MappedFile.h"
+#include "llvm/ADT/OwningPtr.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Signals.h"
 #include "llvm/System/Process.h"
 #include "llvm/ModuleProvider.h"
@@ -208,15 +209,15 @@ Archive::writeMember(
   // Get the data and its size either from the
   // member's in-memory data or directly from the file.
   size_t fSize = member.getSize();
-  const char* data = (const char*)member.getData();
-  sys::MappedFile* mFile = 0;
+  const char *data = (const char*)member.getData();
+  MemoryBuffer *mFile = 0;
   if (!data) {
-    mFile = new sys::MappedFile();
-    if (mFile->open(member.getPath(), ErrMsg))
+    mFile = MemoryBuffer::getFile(member.getPath().c_str(),
+                                  member.getPath().size(), ErrMsg);
+    if (mFile == 0)
       return true;
-    if (!(data = (const char*) mFile->map(ErrMsg)))
-      return true;
-    fSize = mFile->size();
+    data = mFile->getBufferStart();
+    fSize = mFile->getBufferSize();
   }
 
   // Now that we have the data in memory, update the
@@ -247,10 +248,7 @@ Archive::writeMember(
       // We don't need this module any more.
       delete MP;
     } else {
-      if (mFile != 0) {
-        mFile->close();
-        delete mFile;
-      }
+      delete mFile;
       if (ErrMsg)
         *ErrMsg = "Can't parse bitcode member: " + member.getPath().toString()
           + ": " + *ErrMsg;
@@ -281,10 +279,7 @@ Archive::writeMember(
     ARFile << ARFILE_PAD;
 
   // Close the mapped file if it was opened
-  if (mFile != 0) {
-    mFile->close();
-    delete mFile;
-  }
+  delete mFile;
   return false;
 }
 
@@ -349,7 +344,7 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress,
 {
   // Make sure they haven't opened up the file, not loaded it,
   // but are now trying to write it which would wipe out the file.
-  if (members.empty() && mapfile && mapfile->size() > 8) {
+  if (members.empty() && mapfile && mapfile->getBufferSize() > 8) {
     if (ErrMsg)
       *ErrMsg = "Can't write an archive not opened for writing";
     return true;
@@ -408,18 +403,17 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress,
     // ensure compatibility with other archivers we need to put the symbol
     // table first in the file. Unfortunately, this means mapping the file
     // we just wrote back in and copying it to the destination file.
+    sys::Path FinalFilePath = archPath;
 
     // Map in the archive we just wrote.
-    sys::MappedFile arch;
-    if (arch.open(TmpArchive, ErrMsg))
-      return true;
-    const char* base;
-    if (!(base = (const char*) arch.map(ErrMsg)))
-      return true;
+    {
+    OwningPtr<MemoryBuffer> arch(MemoryBuffer::getFile(TmpArchive.c_str(),
+                                                       TmpArchive.size()));
+    if (arch == 0) return true;
+    const char* base = arch->getBufferStart();
 
     // Open another temporary file in order to avoid invalidating the 
     // mmapped data
-    sys::Path FinalFilePath = archPath;
     if (FinalFilePath.createTemporaryFileOnDisk(ErrMsg))
       return true;
     sys::RemoveFileOnSignal(FinalFilePath);
@@ -456,11 +450,11 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress,
     // Copy the temporary file contents being sure to skip the file's magic
     // number.
     FinalFile.write(base + sizeof(ARFILE_MAGIC)-1,
-      arch.size()-sizeof(ARFILE_MAGIC)+1);
+      arch->getBufferSize()-sizeof(ARFILE_MAGIC)+1);
 
     // Close up shop
     FinalFile.close();
-    arch.close();
+    } // free arch.
     
     // Move the final file over top of TmpArchive
     if (FinalFilePath.renamePathOnDisk(TmpArchive, ErrMsg))

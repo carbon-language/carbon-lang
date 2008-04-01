@@ -24,7 +24,7 @@
 #include <fstream>
 
 namespace llvm {
-  namespace sys { class MappedFile; }
+  class MemoryBuffer;
 
 // Forward declare classes
 class ModuleProvider;      // From VMCore
@@ -534,7 +534,7 @@ class Archive {
   protected:
     sys::Path archPath;       ///< Path to the archive file we read/write
     MembersList members;      ///< The ilist of ArchiveMember
-    sys::MappedFile* mapfile; ///< Raw Archive contents mapped into memory
+    MemoryBuffer *mapfile;    ///< Raw Archive contents mapped into memory
     const char* base;         ///< Base of the memory mapped file data
     SymTabType symTab;        ///< The symbol table
     std::string strtab;       ///< The string table for long file names

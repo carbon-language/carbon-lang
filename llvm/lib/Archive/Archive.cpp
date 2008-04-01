@@ -17,7 +17,6 @@
 #include "llvm/ModuleProvider.h"
 #include "llvm/Module.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/System/MappedFile.h"
 #include "llvm/System/Process.h"
 #include <memory>
 #include <cstring>
@@ -145,25 +144,19 @@ Archive::Archive(const sys::Path& filename)
 }
 
 bool
-Archive::mapToMemory(std::string* ErrMsg)
-{
-  mapfile = new sys::MappedFile();
-  if (mapfile->open(archPath, ErrMsg))
+Archive::mapToMemory(std::string* ErrMsg) {
+  mapfile = MemoryBuffer::getFile(archPath.c_str(), archPath.size(), ErrMsg);
+  if (mapfile == 0)
     return true;
-  if (!(base = (char*) mapfile->map(ErrMsg)))
-    return true;
+  base = mapfile->getBufferStart();
   return false;
 }
 
 void Archive::cleanUpMemory() {
   // Shutdown the file mapping
-  if (mapfile) {
-    mapfile->close();
-    delete mapfile;
-    
-    mapfile = 0;
-    base = 0;
-  }
+  delete mapfile;
+  mapfile = 0;
+  base = 0;
   
   // Forget the entire symbol table
   symTab.clear();
