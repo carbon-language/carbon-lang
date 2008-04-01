@@ -4562,8 +4562,9 @@ SDOperand X86TargetLowering::LowerMEMSET(SDOperand Op, SelectionDAG &DAG) {
       (I && I->getValue() > Subtarget->getMaxInlineSizeThreshold())) {
 
     // Check to see if there is a specialized entry-point for memory zeroing.
-    const char *bzeroEntry = Subtarget->getBZeroEntry();
     ConstantSDNode *V = dyn_cast<ConstantSDNode>(Op.getOperand(2));
+    const char *bzeroEntry = 
+      V && V->isNullValue() ? Subtarget->getBZeroEntry() : 0;
 
     MVT::ValueType IntPtr = getPointerTy();
     const Type *IntPtrTy = getTargetData()->getIntPtrType();
