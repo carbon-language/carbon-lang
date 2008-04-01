@@ -1307,7 +1307,7 @@ int LLVMCreateMemoryBufferWithContentsOfFile(const char *Path,
                                              LLVMMemoryBufferRef *OutMemBuf,
                                              char **OutMessage) {
   std::string Error;
-  if (MemoryBuffer *MB = MemoryBuffer::getFile(Path, strlen(Path), &Error)) {
+  if (MemoryBuffer *MB = MemoryBuffer::getFile(Path, &Error)) {
     *OutMemBuf = wrap(MB);
     return 0;
   }

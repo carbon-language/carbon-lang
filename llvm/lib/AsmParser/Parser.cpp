@@ -22,8 +22,7 @@ ParseError* TheParseError = 0; /// FIXME: Not threading friendly
 
 Module *llvm::ParseAssemblyFile(const std::string &Filename, ParseError* Err) {
   std::string ErrorStr;
-  MemoryBuffer *F = MemoryBuffer::getFileOrSTDIN(&Filename[0], Filename.size(),
-                                                 &ErrorStr);
+  MemoryBuffer *F = MemoryBuffer::getFileOrSTDIN(Filename.c_str(), &ErrorStr);
   if (F == 0) {
     if (Err)
       Err->setError(Filename, "Could not open input file '" + Filename + "'");

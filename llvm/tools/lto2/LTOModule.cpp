@@ -43,11 +43,11 @@ bool LTOModule::isBitcodeFile(const char* path)
     return llvm::sys::Path(path).isBitcodeFile();
 }
 
-bool LTOModule::isBitcodeFileForTarget(const void* mem, 
-                                    size_t length, const char* triplePrefix) 
+bool LTOModule::isBitcodeFileForTarget(const void* mem, size_t length,
+                                       const char* triplePrefix) 
 {
     MemoryBuffer* buffer = MemoryBuffer::getMemBuffer((char*)mem, 
-                                                            (char*)mem+length);
+                                                      (char*)mem+length);
     if ( buffer == NULL )
         return false;
     return isTargetMatch(buffer, triplePrefix);
@@ -55,10 +55,10 @@ bool LTOModule::isBitcodeFileForTarget(const void* mem,
 
 
 bool LTOModule::isBitcodeFileForTarget(const char* path,
-                                                const char* triplePrefix) 
+                                       const char* triplePrefix) 
 {
-    MemoryBuffer* buffer = MemoryBuffer::getFile(path, strlen(path));
-    if ( buffer == NULL )
+    MemoryBuffer *buffer = MemoryBuffer::getFile(path);
+    if (buffer == NULL)
         return false;
     return isTargetMatch(buffer, triplePrefix);
 }
@@ -85,8 +85,7 @@ LTOModule::LTOModule(Module* m, TargetMachine* t)
 
 LTOModule* LTOModule::makeLTOModule(const char* path, std::string& errMsg)
 {
-    OwningPtr<MemoryBuffer> buffer(MemoryBuffer::getFile(
-                                                path, strlen(path), &errMsg));
+    OwningPtr<MemoryBuffer> buffer(MemoryBuffer::getFile(path, &errMsg));
     if ( !buffer )
         return NULL;
     return makeLTOModule(buffer.get(), errMsg);

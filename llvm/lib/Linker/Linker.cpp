@@ -19,7 +19,8 @@
 #include "llvm/Support/Streams.h"
 using namespace llvm;
 
-Linker::Linker(const std::string& progname, const std::string& modname, unsigned flags)
+Linker::Linker(const std::string& progname, const std::string& modname,
+               unsigned flags)
   : Composite(0)
   , LibPaths()
   , Flags(flags)
@@ -103,8 +104,7 @@ Linker::LoadObject(const sys::Path &FN) {
   Module *Result = 0;
   
   const std::string &FNS = FN.toString();
-  std::auto_ptr<MemoryBuffer> Buffer(
-                          MemoryBuffer::getFileOrSTDIN(&FNS[0], FNS.size()));
+  std::auto_ptr<MemoryBuffer> Buffer(MemoryBuffer::getFileOrSTDIN(FNS.c_str()));
   if (Buffer.get())
     Result = ParseBitcodeFile(Buffer.get(), &ParseErrorMessage);
   else

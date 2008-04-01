@@ -256,12 +256,12 @@ bool TGLexer::LexInclude() {
   std::string Filename = CurStrVal;
 
   // Try to find the file.
-  MemoryBuffer *NewBuf = MemoryBuffer::getFile(&Filename[0], Filename.size());
+  MemoryBuffer *NewBuf = MemoryBuffer::getFile(Filename.c_str());
 
   // If the file didn't exist directly, see if it's in an include path.
   for (unsigned i = 0, e = IncludeDirectories.size(); i != e && !NewBuf; ++i) {
     std::string IncFile = IncludeDirectories[i] + "/" + Filename;
-    NewBuf = MemoryBuffer::getFile(&IncFile[0], IncFile.size());
+    NewBuf = MemoryBuffer::getFile(IncFile.c_str());
   }
     
   if (NewBuf == 0) {

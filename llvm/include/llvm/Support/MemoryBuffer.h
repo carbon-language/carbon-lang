@@ -52,7 +52,7 @@ public:
   /// MemoryBuffer if successful, otherwise returning null.  If FileSize is
   /// specified, this means that the client knows that the file exists and that
   /// it has the specified size.
-  static MemoryBuffer *getFile(const char *FilenameStart, unsigned FnSize,
+  static MemoryBuffer *getFile(const char *Filename,
                                std::string *ErrStr = 0,
                                int64_t FileSize = -1);
 
@@ -90,7 +90,7 @@ public:
   /// if the Filename is "-".  If an error occurs, this returns null and fills
   /// in *ErrStr with a reason.  If stdin is empty, this API (unlike getSTDIN)
   /// returns an empty buffer.
-  static MemoryBuffer *getFileOrSTDIN(const char *FilenameStart,unsigned FnSize,
+  static MemoryBuffer *getFileOrSTDIN(const char *Filename,
                                       std::string *ErrStr = 0,
                                       int64_t FileSize = -1);
   
@@ -100,7 +100,7 @@ public:
   static MemoryBuffer *getFileOrSTDIN(const std::string &FN,
                                       std::string *ErrStr = 0,
                                       int64_t FileSize = -1) {
-    return getFileOrSTDIN(&FN[0], FN.size(), ErrStr, FileSize);
+    return getFileOrSTDIN(FN.c_str(), ErrStr, FileSize);
   }
 };
 

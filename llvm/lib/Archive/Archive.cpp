@@ -145,7 +145,7 @@ Archive::Archive(const sys::Path& filename)
 
 bool
 Archive::mapToMemory(std::string* ErrMsg) {
-  mapfile = MemoryBuffer::getFile(archPath.c_str(), archPath.size(), ErrMsg);
+  mapfile = MemoryBuffer::getFile(archPath.c_str(), ErrMsg);
   if (mapfile == 0)
     return true;
   base = mapfile->getBufferStart();
@@ -211,8 +211,7 @@ bool llvm::GetBitcodeSymbols(const sys::Path& fName,
                              std::vector<std::string>& symbols,
                              std::string* ErrMsg) {
   std::auto_ptr<MemoryBuffer> Buffer(
-                       MemoryBuffer::getFileOrSTDIN(&fName.toString()[0],
-                                                    fName.toString().size()));
+                       MemoryBuffer::getFileOrSTDIN(fName.c_str()));
   if (!Buffer.get()) {
     if (ErrMsg) *ErrMsg = "Could not open file '" + fName.toString() + "'";
     return true;

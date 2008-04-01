@@ -212,8 +212,7 @@ Archive::writeMember(
   const char *data = (const char*)member.getData();
   MemoryBuffer *mFile = 0;
   if (!data) {
-    mFile = MemoryBuffer::getFile(member.getPath().c_str(),
-                                  member.getPath().size(), ErrMsg);
+    mFile = MemoryBuffer::getFile(member.getPath().c_str(), ErrMsg);
     if (mFile == 0)
       return true;
     data = mFile->getBufferStart();
@@ -407,8 +406,7 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress,
 
     // Map in the archive we just wrote.
     {
-    OwningPtr<MemoryBuffer> arch(MemoryBuffer::getFile(TmpArchive.c_str(),
-                                                       TmpArchive.size()));
+    OwningPtr<MemoryBuffer> arch(MemoryBuffer::getFile(TmpArchive.c_str()));
     if (arch == 0) return true;
     const char* base = arch->getBufferStart();
 

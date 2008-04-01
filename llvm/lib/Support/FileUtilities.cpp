@@ -189,10 +189,8 @@ int llvm::DiffFilesWithTolerance(const sys::PathWithStatus &FileA,
 
   // Now its safe to mmap the files into memory becasue both files
   // have a non-zero size.
-  OwningPtr<MemoryBuffer> F1(MemoryBuffer::getFile(FileA.c_str(), FileA.size(),
-                                                   Error));
-  OwningPtr<MemoryBuffer> F2(MemoryBuffer::getFile(FileB.c_str(), FileB.size(),
-                                                   Error));
+  OwningPtr<MemoryBuffer> F1(MemoryBuffer::getFile(FileA.c_str(), Error));
+  OwningPtr<MemoryBuffer> F2(MemoryBuffer::getFile(FileB.c_str(), Error));
   if (F1 == 0 || F2 == 0)
     return 2;
   

@@ -186,8 +186,7 @@ const void* LTOCodeGenerator::compile(size_t* length, std::string& errMsg)
         delete _nativeObjectFile;
         
         // read .o file into memory buffer
-        _nativeObjectFile = MemoryBuffer::getFile(&uniqueObjStr[0], 
-                                                uniqueObjStr.size(), &errMsg);
+        _nativeObjectFile = MemoryBuffer::getFile(uniqueObjStr.c_str(),&errMsg);
     }
 
     // remove temp files

@@ -47,7 +47,7 @@ std::string Debugger::getProgramPath() const {
 static Module *
 getMaterializedModuleProvider(const std::string &Filename) {
   std::auto_ptr<MemoryBuffer> Buffer;
-  Buffer.reset(MemoryBuffer::getFileOrSTDIN(&Filename[0], Filename.size()));
+  Buffer.reset(MemoryBuffer::getFileOrSTDIN(Filename.c_str()));
   if (Buffer.get())
     return ParseBitcodeFile(Buffer.get());
   return 0;

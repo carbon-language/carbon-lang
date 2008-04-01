@@ -107,8 +107,7 @@ RecordKeeper llvm::Records;
 static bool ParseFile(const std::string &Filename, 
                       const std::vector<std::string> &IncludeDirs) {
   std::string ErrorStr;
-  MemoryBuffer *F = MemoryBuffer::getFileOrSTDIN(&Filename[0], Filename.size(),
-                                                 &ErrorStr);
+  MemoryBuffer *F = MemoryBuffer::getFileOrSTDIN(Filename.c_str(), &ErrorStr);
   if (F == 0) {
     cerr << "Could not open input file '" + Filename + "': " << ErrorStr <<"\n";
     return true;

@@ -132,12 +132,11 @@ MemoryBuffer *MemoryBuffer::getNewMemBuffer(unsigned Size,
 /// if the Filename is "-".  If an error occurs, this returns null and fills
 /// in *ErrStr with a reason.  If stdin is empty, this API (unlike getSTDIN)
 /// returns an empty buffer.
-MemoryBuffer *MemoryBuffer::getFileOrSTDIN(const char *FilenameStart,
-                                           unsigned FnSize,
+MemoryBuffer *MemoryBuffer::getFileOrSTDIN(const char *Filename,
                                            std::string *ErrStr,
                                            int64_t FileSize) {
-  if (FnSize != 1 || FilenameStart[0] != '-')
-    return getFile(FilenameStart, FnSize, ErrStr, FileSize);
+  if (Filename[0] != '-' || Filename[1] != 0)
+    return getFile(Filename, ErrStr, FileSize);
   MemoryBuffer *M = getSTDIN();
   if (M) return M;
 
@@ -172,17 +171,13 @@ public:
 };
 }
 
-MemoryBuffer *MemoryBuffer::getFile(const char *FilenameStart, unsigned FnSize,
-                                    std::string *ErrStr, int64_t FileSize) {
-  // Null terminate the filename.
-  SmallString<1000> Filename(FilenameStart, FilenameStart+FnSize);
-  Filename.push_back(0);
-  
+MemoryBuffer *MemoryBuffer::getFile(const char *Filename, std::string *ErrStr,
+                                    int64_t FileSize) {
   int OpenFlags = 0;
 #ifdef O_BINARY
   Flags |= O_BINARY;  // Open input file in binary mode on win32.
 #endif
-  int FD = ::open(&Filename[0], O_RDONLY|OpenFlags);
+  int FD = ::open(Filename, O_RDONLY|OpenFlags);
   if (FD == -1) {
     if (ErrStr) *ErrStr = "could not open file";
     return 0;
@@ -211,12 +206,12 @@ MemoryBuffer *MemoryBuffer::getFile(const char *FilenameStart, unsigned FnSize,
     if (const char *Pages = sys::Path::MapInFilePages(FD, FileSize)) {
       // Close the file descriptor, now that the whole file is in memory.
       ::close(FD);
-      return new MemoryBufferMMapFile(&Filename[0], Pages, FileSize);
+      return new MemoryBufferMMapFile(Filename, Pages, FileSize);
     }
   }
   
   OwningPtr<MemoryBuffer> SB;
-  SB.reset(MemoryBuffer::getNewUninitMemBuffer(FileSize, &Filename[0]));
+  SB.reset(MemoryBuffer::getNewUninitMemBuffer(FileSize, Filename));
   char *BufPtr = const_cast<char*>(SB->getBufferStart());
   
   unsigned BytesLeft = FileSize;

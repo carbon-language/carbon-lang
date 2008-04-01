@@ -374,11 +374,7 @@ static void PrintSize(double Bits) {
 /// AnalyzeBitcode - Analyze the bitcode file specified by InputFilename.
 static int AnalyzeBitcode() {
   // Read the input file.
-  MemoryBuffer *Buffer;
-  if (InputFilename == "-")
-    Buffer = MemoryBuffer::getSTDIN();
-  else
-    Buffer = MemoryBuffer::getFile(&InputFilename[0], InputFilename.size());
+  MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(InputFilename.c_str());
 
   if (Buffer == 0)
     return Error("Error reading '" + InputFilename + "'.");
