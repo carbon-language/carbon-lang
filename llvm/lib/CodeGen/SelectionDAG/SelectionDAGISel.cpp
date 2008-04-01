@@ -169,7 +169,6 @@ namespace llvm {
     Function &Fn;
     MachineFunction &MF;
     MachineRegisterInfo &RegInfo;
-    bool needsExceptionHandling;
 
     FunctionLoweringInfo(TargetLowering &TLI, Function &Fn,MachineFunction &MF);
 
@@ -305,10 +304,6 @@ FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli,
         BuildMI(MBB, TII->get(TargetInstrInfo::PHI), PHIReg+i);
     }
   }
-
-  // Figure out whether we need to generate EH info.  Currently we do this for
-  // all functions not marked no-unwind, or if requested via -enable-eh.
-  needsExceptionHandling = ExceptionHandling || !Fn.doesNotThrow();
 }
 
 /// CreateRegForValue - Allocate the appropriate number of virtual registers of
@@ -2832,7 +2827,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   }
     
   case Intrinsic::eh_exception: {
-    if (FuncInfo.needsExceptionHandling) {
+    if (ExceptionHandling) {
       if (!CurMBB->isLandingPad()) {
         // FIXME: Mark exception register as live in.  Hack for PR1508.
         unsigned Reg = TLI.getExceptionAddressRegister();
@@ -2857,7 +2852,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     MVT::ValueType VT = (Intrinsic == Intrinsic::eh_selector_i32 ?
                          MVT::i32 : MVT::i64);
     
-    if (FuncInfo.needsExceptionHandling && MMI) {
+    if (ExceptionHandling && MMI) {
       if (CurMBB->isLandingPad())
         addCatchInfo(I, MMI, CurMBB);
       else {
@@ -2907,7 +2902,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::eh_return: {
     MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
 
-    if (MMI && FuncInfo.needsExceptionHandling) {
+    if (MMI && ExceptionHandling) {
       MMI->setCallsEHReturn(true);
       DAG.setRoot(DAG.getNode(ISD::EH_RETURN,
                               MVT::Other,
@@ -2930,7 +2925,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
    }
 
    case Intrinsic::eh_dwarf_cfa: {
-     if (FuncInfo.needsExceptionHandling) {
+     if (ExceptionHandling) {
        MVT::ValueType VT = getValue(I.getOperand(1)).getValueType();
        SDOperand CfaArg;
        if (MVT::getSizeInBits(VT) > MVT::getSizeInBits(TLI.getPointerTy()))
@@ -3181,7 +3176,7 @@ void SelectionDAGLowering::LowerCallTo(CallSite CS, SDOperand Callee,
     Args.push_back(Entry);
   }
 
-  if (LandingPad && FuncInfo.needsExceptionHandling && MMI) {
+  if (LandingPad && ExceptionHandling && MMI) {
     // Insert a label before the invoke call to mark the try range.  This can be
     // used to detect deletion of the invoke via the MachineModuleInfo.
     BeginLabel = MMI->NextLabelID();
@@ -3200,7 +3195,7 @@ void SelectionDAGLowering::LowerCallTo(CallSite CS, SDOperand Callee,
     setValue(CS.getInstruction(), Result.first);
   DAG.setRoot(Result.second);
 
-  if (LandingPad && FuncInfo.needsExceptionHandling && MMI) {
+  if (LandingPad && ExceptionHandling && MMI) {
     // Insert a label at the end of the invoke call to mark the try range.  This
     // can be used to detect deletion of the invoke via the MachineModuleInfo.
     EndLabel = MMI->NextLabelID();
@@ -4619,7 +4614,7 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
 
   FunctionLoweringInfo FuncInfo(TLI, Fn, MF);
 
-  if (FuncInfo.needsExceptionHandling)
+  if (ExceptionHandling)
     for (Function::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
       if (InvokeInst *Invoke = dyn_cast<InvokeInst>(I->getTerminator()))
         // Mark landing pad.
@@ -4762,7 +4757,7 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
 
   MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
 
-  if (FuncInfo.needsExceptionHandling && MMI && BB->isLandingPad()) {
+  if (ExceptionHandling && MMI && BB->isLandingPad()) {
     // Add a label to mark the beginning of the landing pad.  Deletion of the
     // landing pad can thus be detected via the MachineModuleInfo.
     unsigned LabelID = MMI->addLandingPad(BB);

@@ -20,7 +20,6 @@
 #include "PPCFrameInfo.h"
 #include "PPCSubtarget.h"
 #include "llvm/Constants.h"
-#include "llvm/Function.h"
 #include "llvm/Type.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -947,8 +946,6 @@ PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
-  bool needsFrameInfo = (MMI && MMI->hasDebugInfo()) ||
-       ExceptionHandling || !MF.getFunction()->doesNotThrow();
   
   // Prepare for frame info.
   unsigned FrameLabelId = 0;
@@ -1022,7 +1019,7 @@ PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   unsigned TargetAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
   unsigned MaxAlign = MFI->getMaxAlignment();
 
-  if (needsFrameInfo) {
+  if (MMI && MMI->needsFrameInfo()) {
     // Mark effective beginning of when frame pointer becomes valid.
     FrameLabelId = MMI->NextLabelID();
     BuildMI(MBB, MBBI, TII.get(PPC::LABEL)).addImm(FrameLabelId).addImm(0);
@@ -1098,7 +1095,7 @@ PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
     }
   }
   
-  if (needsFrameInfo) {
+  if (MMI && MMI->needsFrameInfo()) {
     std::vector<MachineMove> &Moves = MMI->getFrameMoves();
     
     if (NegFrameSize) {

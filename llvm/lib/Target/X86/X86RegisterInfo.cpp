@@ -504,8 +504,6 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
   X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
   MachineBasicBlock::iterator MBBI = MBB.begin();
-  bool needsFrameInfo = (MMI && MMI->hasDebugInfo()) ||
-      ExceptionHandling || !Fn->doesNotThrow();
   
   // Prepare for frame info.
   unsigned FrameLabelId = 0;
@@ -538,7 +536,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
       .addReg(FramePtr);
     NumBytes -= SlotSize;
 
-    if (needsFrameInfo) {
+    if (MMI && MMI->needsFrameInfo()) {
       // Mark effective beginning of when frame pointer becomes valid.
       FrameLabelId = MMI->NextLabelID();
       BuildMI(MBB, MBBI, TII.get(X86::LABEL)).addImm(FrameLabelId).addImm(0);
@@ -550,7 +548,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   }
   
   unsigned ReadyLabelId = 0;
-  if (needsFrameInfo) {
+  if (MMI && MMI->needsFrameInfo()) {
     // Mark effective beginning of when frame pointer is ready.
     ReadyLabelId = MMI->NextLabelID();
     BuildMI(MBB, MBBI, TII.get(X86::LABEL)).addImm(ReadyLabelId).addImm(0);
@@ -609,7 +607,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     }
   }
 
-  if (needsFrameInfo) {
+  if (MMI && MMI->needsFrameInfo()) {
     std::vector<MachineMove> &Moves = MMI->getFrameMoves();
     const TargetData *TD = MF.getTarget().getTargetData();
 

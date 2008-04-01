@@ -2778,13 +2778,9 @@ private:
 
   std::vector<FunctionEHFrameInfo> EHFrames;
     
-  /// shouldEmit - Per-function flag to indicate if EH information should
-  /// be emitted.
+  /// shouldEmit - Flag to indicate if debug information should be emitted.
+  ///
   bool shouldEmit;
-
-  /// shouldEmitModule - Per-module flag to indicate if EH information should
-  /// be emitted.
-  bool shouldEmitModule;
   
   /// EmitCommonEHFrame - Emit the common eh unwind frame.
   ///
@@ -3372,7 +3368,6 @@ public:
   DwarfException(std::ostream &OS, AsmPrinter *A, const TargetAsmInfo *T)
   : Dwarf(OS, A, T, "eh")
   , shouldEmit(false)
-  , shouldEmitModule(false)
   {}
   
   virtual ~DwarfException() {}
@@ -3392,7 +3387,7 @@ public:
   /// EndModule - Emit all exception information that should come after the
   /// content.
   void EndModule() {
-    if (!shouldEmitModule) return;
+    if (!shouldEmit) return;
 
     const std::vector<Function *> Personalities = MMI->getPersonalities();
     for (unsigned i =0; i < Personalities.size(); ++i)
@@ -3408,14 +3403,13 @@ public:
   void BeginFunction(MachineFunction *MF) {
     this->MF = MF;
     
-    shouldEmit = false;
-    if ((ExceptionHandling || !MF->getFunction()->doesNotThrow()) &&
+    if (MMI &&
+        ExceptionHandling &&
         TAI->doesSupportExceptionHandling()) {
       shouldEmit = true;
       // Assumes in correct section after the entry point.
       EmitLabel("eh_func_begin", ++SubprogramCount);
     }
-    shouldEmitModule |= shouldEmit;
   }
 
   /// EndFunction - Gather and emit post-function exception information.

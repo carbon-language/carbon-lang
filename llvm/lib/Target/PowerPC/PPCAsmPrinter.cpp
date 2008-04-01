@@ -1086,9 +1086,8 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
 
   O << "\n";
 
-  if (TAI->doesSupportExceptionHandling() && MMI) {
+  if (ExceptionHandling && TAI->doesSupportExceptionHandling() && MMI) {
     // Add the (possibly multiple) personalities to the set of global values.
-    // Only referenced functions get into the Personalities list.
     const std::vector<Function *>& Personalities = MMI->getPersonalities();
 
     for (std::vector<Function *>::const_iterator I = Personalities.begin(),
