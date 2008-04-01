@@ -234,14 +234,12 @@ int InlineCostAnalyzer::getInlineCost(CallSite CS,
   // Now that we have considered all of the factors that make the call site more
   // likely to be inlined, look at factors that make us not want to inline it.
   
-  // Don't inline into something too big, which would make it bigger.  Here, we
-  // count each basic block as a single unit.
+  // Don't inline into something too big, which would make it bigger.
   //
   InlineCost += Caller->size()/20;
   
-  // Look at the size of the callee.  Each basic block counts as 20 units, and
-  // each instruction counts as 5.
-  InlineCost += CalleeFI.NumInsts*5 + CalleeFI.NumBlocks*20;
+  // Look at the size of the callee. Each instruction counts as 5.
+  InlineCost += CalleeFI.NumInsts*5;
 
   return InlineCost;
 }
@@ -258,9 +256,16 @@ float InlineCostAnalyzer::getInlineFudgeFactor(CallSite CS) {
   if (CalleeFI.NumBlocks == 0)
     CalleeFI.analyzeFunction(Callee);
 
+  float Factor = 1.0f;
+  // Single BB functions are often written to be inlined.
+  if (CalleeFI.NumBlocks == 1)
+    Factor += 0.5f;
+
   // Be more aggressive if the function contains a good chunk (if it mades up
   // at least 10% of the instructions) of vector instructions.
-  if (CalleeFI.NumVectorInsts > CalleeFI.NumInsts/10)
-    return 1.5f;
-  return 1.0f;
+  if (CalleeFI.NumVectorInsts > CalleeFI.NumInsts/2)
+    Factor += 2.0f;
+  else if (CalleeFI.NumVectorInsts > CalleeFI.NumInsts/10)
+    Factor += 1.5f;
+  return Factor;
 }
