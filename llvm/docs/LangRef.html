@@ -1465,8 +1465,10 @@ them all and their syntax.</p>
 
   <dd>Floating point constants use standard decimal notation (e.g. 123.421),
   exponential notation (e.g. 1.23421e+2), or a more precise hexadecimal
-  notation (see below).  Floating point constants must have a <a
-  href="#t_floating">floating point</a> type. </dd>
+  notation (see below).  The assembler requires the exact decimal value of
+  a floating-point constant.  For example, the assembler accepts 1.25 but
+  rejects 1.3 because 1.3 is a repeating decimal in binary.  Floating point
+  constants must have a <a href="#t_floating">floating point</a> type. </dd>
 
   <dt><b>Null pointer constants</b></dt>
 
@@ -2190,7 +2192,7 @@ operands.</p>
 types. This instruction can also take <a href="#t_vector">vector</a> versions 
 of the values in which case the elements must be integers.</p>
 <h5>Semantics:</h5>
-<p>The value produced is the signed integer quotient of the two operands.</p>
+<p>The value produced is the signed integer quotient of the two operands rounded towards zero.</p>
 <p>Note that signed integer division and unsigned integer division are distinct
 operations; for unsigned integer division, use '<tt>udiv</tt>'.</p>
 <p>Division by zero leads to undefined behavior. Overflow also leads to
@@ -2238,8 +2240,7 @@ types. This instruction can also take <a href="#t_vector">vector</a> versions
 of the values in which case the elements must be integers.</p>
 <h5>Semantics:</h5>
 <p>This instruction returns the unsigned integer <i>remainder</i> of a division.
-This instruction always performs an unsigned division to get the remainder,
-regardless of whether the arguments are unsigned or not.</p>
+This instruction always performs an unsigned division to get the remainder.</p>
 <p>Note that unsigned integer remainder and signed integer remainder are
 distinct operations; for signed integer remainder, use '<tt>srem</tt>'.</p>
 <p>Taking the remainder of a division by zero leads to undefined behavior.</p>
@@ -2303,7 +2304,8 @@ division of its two operands.</p>
 identical types.  This instruction can also take <a href="#t_vector">vector</a>
 versions of floating point values.</p>
 <h5>Semantics:</h5>
-<p>This instruction returns the <i>remainder</i> of a division.</p>
+<p>This instruction returns the <i>remainder</i> of a division.
+The remainder has the same sign as the dividend.</p>
 <h5>Example:</h5>
 <pre>  &lt;result&gt; = frem float 4.0, %var          <i>; yields {float}:result = 4.0 % %var</i>
 </pre>
@@ -2316,9 +2318,8 @@ Operations</a> </div>
 <p>Bitwise binary operators are used to do various forms of
 bit-twiddling in a program.  They are generally very efficient
 instructions and can commonly be strength reduced from other
-instructions.  They require two operands, execute an operation on them,
-and produce a single value.  The resulting value of the bitwise binary
-operators is always the same type as its first operand.</p>
+instructions.  They require two operands of the same type, execute an operation on them,
+and produce a single value.  The resulting value is the same type as its operands.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
@@ -2341,9 +2342,9 @@ the left a specified number of bits.</p>
  
 <h5>Semantics:</h5>
 
-<p>The value produced is <tt>var1</tt> * 2<sup><tt>var2</tt></sup>.  If
-<tt>var2</tt> is (statically or dynamically) equal to or larger than the number
-of bits in <tt>var1</tt>, the result is undefined.</p>
+<p>The value produced is <tt>var1</tt> * 2<sup><tt>var2</tt></sup> mod 2<sup>n</sup>,
+where n is the width of the result.  If <tt>var2</tt> is (statically or dynamically) negative or
+equal to or larger than the number of bits in <tt>var1</tt>, the result is undefined.</p>
 
 <h5>Example:</h5><pre>
   &lt;result&gt; = shl i32 4, %var   <i>; yields {i32}: 4 &lt;&lt; %var</i>
