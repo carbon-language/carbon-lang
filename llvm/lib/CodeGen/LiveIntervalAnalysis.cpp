@@ -794,7 +794,7 @@ bool LiveIntervals::tryFoldMemoryOperand(MachineInstr* &MI,
 /// folding is possible.
 bool LiveIntervals::canFoldMemoryOperand(MachineInstr *MI,
                                          SmallVector<unsigned, 2> &Ops,
-                                         bool ReMatLoad) const {
+                                         bool ReMat) const {
   // Filter the list of operand indexes that are to be folded. Abort if
   // any operand will prevent folding.
   unsigned MRInfo = 0;
@@ -802,8 +802,8 @@ bool LiveIntervals::canFoldMemoryOperand(MachineInstr *MI,
   if (FilterFoldedOps(MI, Ops, MRInfo, FoldOps))
     return false;
 
-  // Can't fold a remat'ed load into a two address instruction.
-  if (ReMatLoad && (MRInfo & VirtRegMap::isMod))
+  // It's only legal to remat for a use, not a def.
+  if (ReMat && (MRInfo & VirtRegMap::isMod))
     return false;
 
   return tii_->canFoldMemoryOperand(MI, FoldOps);
@@ -947,7 +947,7 @@ rewriteInstructionForSpills(const LiveInterval &li, const VNInfo *VNI,
           goto RestartInstruction;
         }
       } else {
-        CanFold = canFoldMemoryOperand(MI, Ops, DefIsReMat && isLoad);
+        CanFold = canFoldMemoryOperand(MI, Ops, DefIsReMat);
       }
     } else
       CanFold = false;
