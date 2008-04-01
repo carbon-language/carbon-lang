@@ -12,25 +12,32 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Debugger/SourceFile.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include <cassert>
-
 using namespace llvm;
 
-/// readFile - Load Filename
-///
-void SourceFile::readFile() {
-  std::string ErrMsg;
-  if (!File.map(&ErrMsg))
-    throw ErrMsg;
+static const char EmptyFile = 0;
+
+SourceFile::SourceFile(const std::string &fn, const GlobalVariable *Desc)
+  : Filename(fn), Descriptor(Desc) {
+  File.reset(MemoryBuffer::getFileOrSTDIN(fn));
+    
+  // On error, return an empty buffer.
+  if (File == 0)
+    File.reset(MemoryBuffer::getMemBuffer(&EmptyFile, &EmptyFile));
 }
+
+SourceFile::~SourceFile() {
+}
+
 
 /// calculateLineOffsets - Compute the LineOffset vector for the current file.
 ///
 void SourceFile::calculateLineOffsets() const {
   assert(LineOffset.empty() && "Line offsets already computed!");
-  const char *BufPtr = (const char *)File.getBase();
+  const char *BufPtr = File->getBufferStart();
   const char *FileStart = BufPtr;
-  const char *FileEnd = FileStart + File.size();
+  const char *FileEnd = File->getBufferEnd();
   do {
     LineOffset.push_back(BufPtr-FileStart);
 
@@ -54,19 +61,18 @@ void SourceFile::calculateLineOffsets() const {
 void SourceFile::getSourceLine(unsigned LineNo, const char *&LineStart,
                                const char *&LineEnd) const {
   LineStart = LineEnd = 0;
-  if (!File.isMapped()) return;  // Couldn't load file, return null pointers
   if (LineOffset.empty()) calculateLineOffsets();
 
   // Asking for an out-of-range line number?
   if (LineNo >= LineOffset.size()) return;
 
   // Otherwise, they are asking for a valid line, which we can fulfill.
-  LineStart = (const char *)File.getBase()+LineOffset[LineNo];
+  LineStart = File->getBufferStart()+LineOffset[LineNo];
 
   if (LineNo+1 < LineOffset.size())
-    LineEnd = (const char *)File.getBase()+LineOffset[LineNo+1];
+    LineEnd = File->getBufferStart()+LineOffset[LineNo+1];
   else
-    LineEnd = (const char *)File.getBase() + File.size();
+    LineEnd = File->getBufferEnd();
 
   // If the line ended with a newline, strip it off.
   while (LineEnd != LineStart && (LineEnd[-1] == '\n' || LineEnd[-1] == '\r'))

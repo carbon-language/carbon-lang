@@ -17,11 +17,12 @@
 #define LLVM_DEBUGGER_SOURCEFILE_H
 
 #include "llvm/System/Path.h"
-#include "llvm/System/MappedFile.h"
+#include "llvm/ADT/OwningPtr.h"
 #include <vector>
 
 namespace llvm {
   class GlobalVariable;
+  class MemoryBuffer;
 
   class SourceFile {
     /// Filename - This is the full path of the file that is loaded.
@@ -35,7 +36,7 @@ namespace llvm {
     const GlobalVariable *Descriptor;
 
     /// This is the memory mapping for the file so we can gain access to it.
-    sys::MappedFile File;
+    OwningPtr<MemoryBuffer> File;
 
     /// LineOffset - This vector contains a mapping from source line numbers to
     /// their offsets in the file.  This data is computed lazily, the first time
@@ -49,16 +50,9 @@ namespace llvm {
     /// NOT throw an exception if the file is not found, if there is an error
     /// reading it, or if the user cancels the operation.  Instead, it will just
     /// be an empty source file.
-    SourceFile(const std::string &fn, const GlobalVariable *Desc)
-      : Filename(fn), Descriptor(Desc), File() {
-        std::string ErrMsg;
-      if (File.open(Filename, &ErrMsg))
-        throw ErrMsg;
-      readFile();
-    }
-    ~SourceFile() {
-      File.unmap();
-    }
+    SourceFile(const std::string &fn, const GlobalVariable *Desc);
+    
+    ~SourceFile();
 
     /// getDescriptor - Return the debugging decriptor for this source file.
     ///
@@ -84,10 +78,6 @@ namespace llvm {
     }
 
   private:
-    /// readFile - Load Filename into memory
-    ///
-    void readFile();
-
     /// calculateLineOffsets - Compute the LineOffset vector for the current
     /// file.
     void calculateLineOffsets() const;
