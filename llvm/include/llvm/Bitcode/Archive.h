@@ -19,12 +19,12 @@
 
 #include "llvm/ADT/ilist"
 #include "llvm/System/Path.h"
-#include "llvm/System/MappedFile.h"
 #include <map>
 #include <set>
 #include <fstream>
 
 namespace llvm {
+  namespace sys { class MappedFile; }
 
 // Forward declare classes
 class ModuleProvider;      // From VMCore
