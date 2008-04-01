@@ -31,65 +31,6 @@ ContentCache::~ContentCache() {
   delete [] SourceLineCache;
 }
 
-// FIXME: REMOVE THESE
-#include <unistd.h>
-#include <sys/types.h>
-#if !defined(_MSC_VER) && !defined(__MINGW32__)
-#include <sys/uio.h>
-#include <sys/fcntl.h>
-#else
-#include <io.h>
-#endif
-#include <cerrno>
-
-static const MemoryBuffer *ReadFileFast(const FileEntry *FileEnt) {
-#if 0
-  // FIXME: Reintroduce this and zap this function once the common llvm stuff
-  // is fast for the small case.
-  return MemoryBuffer::getFile(FileEnt->getName(), strlen(FileEnt->getName()),
-                               FileEnt->getSize());
-#endif
-  
-  // If the file is larger than some threshold, use 'read', otherwise use mmap.
-  if (FileEnt->getSize() >= 4096*12)
-    return MemoryBuffer::getFile(FileEnt->getName(), strlen(FileEnt->getName()),
-                                 0, FileEnt->getSize());
-  
-  MemoryBuffer *SB = MemoryBuffer::getNewUninitMemBuffer(FileEnt->getSize(),
-                                                         FileEnt->getName());
-  char *BufPtr = const_cast<char*>(SB->getBufferStart());
-
-#if defined(LLVM_ON_WIN32)
-  int FD = ::open(FileEnt->getName(), O_RDONLY|O_BINARY);
-#else
-  int FD = ::open(FileEnt->getName(), O_RDONLY);
-#endif
-  if (FD == -1) {
-    delete SB;
-    return 0;
-  }
-  
-  unsigned BytesLeft = FileEnt->getSize();
-  while (BytesLeft) {
-    ssize_t NumRead = ::read(FD, BufPtr, BytesLeft);
-    if (NumRead != -1) {
-      BytesLeft -= NumRead;
-      BufPtr += NumRead;
-    } else if (errno == EINTR) {
-      // try again
-    } else {
-      // error reading.
-      close(FD);
-      delete SB;
-      return 0;
-    }
-  }
-  close(FD);
-  
-  return SB;
-}
-
-
 /// getFileInfo - Create or return a cached FileInfo for the specified file.
 ///
 const ContentCache* SourceManager::getContentCache(const FileEntry *FileEnt) {
@@ -103,7 +44,9 @@ const ContentCache* SourceManager::getContentCache(const FileEntry *FileEnt) {
     return &*I;
   
   // Nope, get information.
-  const MemoryBuffer *File = ReadFileFast(FileEnt);
+  const MemoryBuffer *File =
+    MemoryBuffer::getFile(FileEnt->getName(), strlen(FileEnt->getName()), 0,
+                          FileEnt->getSize());
   if (File == 0)
     return 0;
 
