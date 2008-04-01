@@ -164,8 +164,7 @@ OPTIONS:
   
   -k            - Add "keep on going option" to the specified build command.
   --keep-going    This command currently supports "make" and "xcodebuild." You
-                  can also specify the corresponding option to the build command
-                  directly as a build option if you know it.
+                  can also directly specify the corresponding option to the build command.
 
   -v            - Verbose output from scan-build and the analyzer. A second
                   "-v" increases verbosity.
