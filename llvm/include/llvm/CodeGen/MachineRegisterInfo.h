@@ -21,8 +21,9 @@
 
 namespace llvm {
   
-/// MachineRegisterInfo - Keep track of information for each virtual register,
-/// including its register class.
+/// MachineRegisterInfo - Keep track of information for virtual and physical
+/// registers, including vreg register classes, use/def chains for registers,
+/// etc.
 class MachineRegisterInfo {
   /// VRegInfo - Information we keep for each virtual register.  The entries in
   /// this vector are actually converted to vreg numbers by adding the 
