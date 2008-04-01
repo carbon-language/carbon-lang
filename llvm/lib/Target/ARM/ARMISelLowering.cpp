@@ -248,16 +248,20 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::FCOS     , MVT::f64, Expand);
   setOperationAction(ISD::FREM     , MVT::f64, Expand);
   setOperationAction(ISD::FREM     , MVT::f32, Expand);
-  setOperationAction(ISD::FCOPYSIGN, MVT::f64, Custom);
-  setOperationAction(ISD::FCOPYSIGN, MVT::f32, Custom);
+  if (!UseSoftFloat && Subtarget->hasVFP2() && !Subtarget->isThumb()) {
+    setOperationAction(ISD::FCOPYSIGN, MVT::f64, Custom);
+    setOperationAction(ISD::FCOPYSIGN, MVT::f32, Custom);
+  }
   setOperationAction(ISD::FPOW     , MVT::f64, Expand);
   setOperationAction(ISD::FPOW     , MVT::f32, Expand);
   
   // int <-> fp are custom expanded into bit_convert + ARMISD ops.
-  setOperationAction(ISD::SINT_TO_FP, MVT::i32, Custom);
-  setOperationAction(ISD::UINT_TO_FP, MVT::i32, Custom);
-  setOperationAction(ISD::FP_TO_UINT, MVT::i32, Custom);
-  setOperationAction(ISD::FP_TO_SINT, MVT::i32, Custom);
+  if (!UseSoftFloat && Subtarget->hasVFP2() && !Subtarget->isThumb()) {
+    setOperationAction(ISD::SINT_TO_FP, MVT::i32, Custom);
+    setOperationAction(ISD::UINT_TO_FP, MVT::i32, Custom);
+    setOperationAction(ISD::FP_TO_UINT, MVT::i32, Custom);
+    setOperationAction(ISD::FP_TO_SINT, MVT::i32, Custom);
+  }
 
   // We have target-specific dag combine patterns for the following nodes:
   // ARMISD::FMRRD  - No need to call setTargetDAGCombine

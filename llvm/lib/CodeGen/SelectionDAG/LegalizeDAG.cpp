@@ -5450,7 +5450,14 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
   }
 
   RTLIB::Libcall LC;
-  if (SourceVT == MVT::i64) {
+  if (SourceVT == MVT::i32) {
+    if (DestTy == MVT::f32)
+      LC = isSigned ? RTLIB::SINTTOFP_I64_F32 : RTLIB::UINTTOFP_I64_F32;
+    else {
+      assert(DestTy == MVT::f64 && "Unknown fp value type!");
+      LC = isSigned ? RTLIB::SINTTOFP_I32_F64 : RTLIB::UINTTOFP_I32_F64;
+    }
+  } else if (SourceVT == MVT::i64) {
     if (DestTy == MVT::f32)
       LC = RTLIB::SINTTOFP_I64_F32;
     else if (DestTy == MVT::f64)
@@ -5481,7 +5488,7 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
   SDOperand HiPart;
   SDOperand Result = ExpandLibCall(TLI.getLibcallName(LC), Source.Val, isSigned,
                                    HiPart);
-  if (Result.getValueType() != DestTy)
+  if (Result.getValueType() != DestTy && HiPart.Val)
     Result = DAG.getNode(ISD::BUILD_PAIR, DestTy, Result, HiPart);
   return Result;
 }
@@ -6773,7 +6780,8 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
 
     Lo = ExpandIntToFP(Node->getOpcode() == ISD::SINT_TO_FP, VT,
                        Node->getOperand(0));
-    ExpandOp(Lo, Lo, Hi);
+    if (getTypeAction(Lo.getValueType()) == Expand)
+      ExpandOp(Lo, Lo, Hi);
     break;
   }
   }

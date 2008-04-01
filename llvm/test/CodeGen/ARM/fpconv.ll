@@ -9,6 +9,16 @@
 ; RUN: grep fsitod %t
 ; RUN: grep fuitos %t
 ; RUN: grep fuitod %t
+; RUN: llvm-as < %s | llc -march=arm > %t
+; RUN: grep truncdfsf2 %t
+; RUN: grep extendsfdf2 %t
+; RUN: grep fixsfsi %t
+; RUN: grep fixunssfsi %t
+; RUN: grep fixdfsi %t
+; RUN: grep fixunsdfsi %t
+; RUN: grep floatdisf %t
+; RUN: grep floatsidf %t
+; RUN: llvm-as < %s | llc -march=thumb
 
 define float @f1(double %x) {
 entry:
