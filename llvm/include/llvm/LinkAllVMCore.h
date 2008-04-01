@@ -16,8 +16,6 @@
 #ifndef LLVM_LINKALLVMCORE_H
 #define LLVM_LINKALLVMCORE_H
 
-#include "llvm/System/IncludeFile.h"
-
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
@@ -25,7 +23,6 @@
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/System/Alarm.h"
 #include "llvm/System/DynamicLibrary.h"
-#include "llvm/System/MappedFile.h"
 #include "llvm/System/Memory.h"
 #include "llvm/System/Mutex.h"
 #include "llvm/System/Path.h"
