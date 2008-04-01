@@ -12,13 +12,24 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/System/MappedFile.h"
+#include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/SmallString.h"
+#include "llvm/System/Path.h"
 #include "llvm/System/Process.h"
 #include "llvm/System/Program.h"
 #include <cassert>
 #include <cstdio>
 #include <cstring>
 #include <cerrno>
+#include <sys/types.h>
+#include <sys/stat.h>
+#if !defined(_MSC_VER) && !defined(__MINGW32__)
+#include <unistd.h>
+#include <sys/uio.h>
+#include <sys/fcntl.h>
+#else
+#include <io.h>
+#endif
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -136,107 +147,77 @@ MemoryBuffer *MemoryBuffer::getFileOrSTDIN(const char *FilenameStart,
 }
 
 //===----------------------------------------------------------------------===//
-// MemoryBufferMMapFile implementation.
-//===----------------------------------------------------------------------===//
-
-namespace {
-class MemoryBufferMMapFile : public MemoryBuffer {
-  sys::MappedFile File;
-public:
-  MemoryBufferMMapFile() {}
-  
-  bool open(const sys::Path &Filename, std::string *ErrStr);
-  
-  virtual const char *getBufferIdentifier() const {
-    return File.path().c_str();
-  }
-    
-  ~MemoryBufferMMapFile();
-};
-}
-
-bool MemoryBufferMMapFile::open(const sys::Path &Filename,
-                                std::string *ErrStr) {
-  // FIXME: This does an extra stat syscall to figure out the size, but we
-  // already know the size!
-  bool Failure = File.open(Filename, ErrStr);
-  if (Failure) return true;
-  
-  if (!File.map(ErrStr))
-    return true;
-  
-  size_t Size = File.size();
-  
-  static unsigned PageSize = sys::Process::GetPageSize();
-  assert(((PageSize & (PageSize-1)) == 0) && PageSize &&
-         "Page size is not a power of 2!");
-  
-  // If this file is not an exact multiple of the system page size (common
-  // case), then the OS has zero terminated the buffer for us.
-  const char *FileBase = static_cast<const char*>(File.getBase());
-  if ((Size & (PageSize-1)) != 0) {
-    init(FileBase, FileBase+Size);
-  } else {
-    // Otherwise, we allocate a new memory buffer and copy the data over
-    initCopyOf(FileBase, FileBase+Size);
-    
-    // No need to keep the file mapped any longer.
-    File.unmap();
-  }
-  return false;
-}
-
-MemoryBufferMMapFile::~MemoryBufferMMapFile() {
-  if (File.isMapped())
-    File.unmap();
-}
-
-//===----------------------------------------------------------------------===//
 // MemoryBuffer::getFile implementation.
 //===----------------------------------------------------------------------===//
 
+namespace {
+/// MemoryBufferMMapFile - This represents a file that was mapped in with the
+/// sys::Path::MapInFilePages method.  When destroyed, it calls the
+/// sys::Path::UnMapFilePages method.
+class MemoryBufferMMapFile : public MemoryBuffer {
+  std::string Filename;
+public:
+  MemoryBufferMMapFile(const char *filename, const char *Pages, uint64_t Size)
+    : Filename(filename) {
+    init(Pages, Pages+Size);
+  }
+  
+  virtual const char *getBufferIdentifier() const {
+    return Filename.c_str();
+  }
+    
+  ~MemoryBufferMMapFile() {
+    sys::Path::UnMapFilePages(getBufferStart(), getBufferSize());
+  }
+};
+}
+
 MemoryBuffer *MemoryBuffer::getFile(const char *FilenameStart, unsigned FnSize,
-                                    std::string *ErrStr, int64_t FileSize){
-  // FIXME: it would be nice if PathWithStatus didn't copy the filename into a
-  // temporary string. :(
-  sys::PathWithStatus P(FilenameStart, FnSize);
-#if 1
-  MemoryBufferMMapFile *M = new MemoryBufferMMapFile();
-  if (!M->open(P, ErrStr))
-    return M;
-  delete M;
-  return 0;
-#else
-  // FIXME: We need an efficient and portable method to open a file and then use
-  // 'read' to copy the bits out.  The unix implementation is below.  This is
-  // an important optimization for clients that want to open large numbers of
-  // small files (using mmap on everything can easily exhaust address space!).
+                                    std::string *ErrStr, int64_t FileSize) {
+  // Null terminate the filename.
+  SmallString<1000> Filename(FilenameStart, FilenameStart+FnSize);
+  Filename.push_back(0);
   
-  // If the user didn't specify a filesize, do a stat to find it.
-  if (FileSize == -1) {
-    const sys::FileStatus *FS = P.getFileStatus();
-    if (FS == 0) return 0;  // Error stat'ing file.
-   
-    FileSize = FS->fileSize;
-  }
-  
-  // If the file is larger than some threshold, use mmap, otherwise use 'read'.
-  if (FileSize >= 4096*4) {
-    MemoryBufferMMapFile *M = new MemoryBufferMMapFile();
-    if (!M->open(P, ErrStr))
-      return M;
-    delete M;
-    return 0;
-  }
-  
-  MemoryBuffer *SB = getNewUninitMemBuffer(FileSize, FilenameStart);
-  char *BufPtr = const_cast<char*>(SB->getBufferStart());
-  
-  int FD = ::open(FilenameStart, O_RDONLY);
+  int OpenFlags = 0;
+#ifdef O_BINARY
+  Flags |= O_BINARY;  // Open input file in binary mode on win32.
+#endif
+  int FD = ::open(&Filename[0], O_RDONLY|OpenFlags);
   if (FD == -1) {
-    delete SB;
+    if (ErrStr) *ErrStr = "could not open file";
     return 0;
   }
+  
+  // If we don't know the file size, use fstat to find out.  fstat on an open
+  // file descriptor is cheaper than stat on a random path.
+  if (FileSize == -1) {
+    struct stat FileInfo;
+    // TODO: This should use fstat64 when available.
+    if (fstat(FD, &FileInfo) == -1) {
+      if (ErrStr) *ErrStr = "could not get file length";
+      ::close(FD);
+      return 0;
+    }
+    FileSize = FileInfo.st_size;
+  }
+  
+  
+  // If the file is large, try to use mmap to read it in.  We don't use mmap
+  // for small files, because this can severely fragment our address space. Also
+  // don't try to map files that are exactly a multiple of the system page size,
+  // as the file would not have the required null terminator.
+  if (FileSize >= 4096*4 &&
+      (FileSize & (sys::Process::GetPageSize()-1)) != 0) {
+    if (const char *Pages = sys::Path::MapInFilePages(FD, FileSize)) {
+      // Close the file descriptor, now that the whole file is in memory.
+      ::close(FD);
+      return new MemoryBufferMMapFile(&Filename[0], Pages, FileSize);
+    }
+  }
+  
+  OwningPtr<MemoryBuffer> SB;
+  SB.reset(MemoryBuffer::getNewUninitMemBuffer(FileSize, &Filename[0]));
+  char *BufPtr = const_cast<char*>(SB->getBufferStart());
   
   unsigned BytesLeft = FileSize;
   while (BytesLeft) {
@@ -249,16 +230,14 @@ MemoryBuffer *MemoryBuffer::getFile(const char *FilenameStart, unsigned FnSize,
     } else {
       // error reading.
       close(FD);
-      delete SB;
+      if (ErrStr) *ErrStr = "error reading file data";
       return 0;
     }
   }
   close(FD);
   
-  return SB;
-#endif
+  return SB.take();
 }
-
 
 //===----------------------------------------------------------------------===//
 // MemoryBuffer::getSTDIN implementation.
