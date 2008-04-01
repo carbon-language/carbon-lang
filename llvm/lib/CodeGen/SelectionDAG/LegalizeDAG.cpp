@@ -5452,7 +5452,7 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
   RTLIB::Libcall LC;
   if (SourceVT == MVT::i32) {
     if (DestTy == MVT::f32)
-      LC = isSigned ? RTLIB::SINTTOFP_I64_F32 : RTLIB::UINTTOFP_I64_F32;
+      LC = isSigned ? RTLIB::SINTTOFP_I32_F32 : RTLIB::UINTTOFP_I32_F32;
     else {
       assert(DestTy == MVT::f64 && "Unknown fp value type!");
       LC = isSigned ? RTLIB::SINTTOFP_I32_F64 : RTLIB::UINTTOFP_I32_F64;
