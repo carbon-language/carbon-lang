@@ -75,7 +75,6 @@ const void* MappedFile::map(std::string* ErrMsg) {
   assert(MapInfo && "MappedFile not initialized");
   if (isMapped()) return BasePtr;
   
-  int prot = PROT_READ;
   int flags = MAP_PRIVATE;
 #ifdef MAP_FILE
   flags |= MAP_FILE;
@@ -83,7 +82,7 @@ const void* MappedFile::map(std::string* ErrMsg) {
   size_t PageSize = Process::GetPageSize();
   size_t map_size = ((MapInfo->Size / PageSize)+1) * PageSize;
 
-  BasePtr = ::mmap(0, map_size, prot, flags, MapInfo->FD, 0);
+  BasePtr = ::mmap(0, map_size, PROT_READ, flags, MapInfo->FD, 0);
   if (BasePtr == MAP_FAILED) {
     MakeErrMsg(ErrMsg, "Can't map file:" + Path.toString());
     return 0;

@@ -745,14 +745,19 @@ Path::makeUnique(bool reuse_current, std::string* ErrMsg) {
   return false;
 }
 
-/// MapInFilePages - Not yet implemented on win32.
 const char *Path::MapInFilePages(int FD, uint64_t FileSize) {
-  return 0;
+  int Flags = MAP_PRIVATE;
+#ifdef MAP_FILE
+  Flags |= MAP_FILE;
+#endif
+  void *BasePtr = ::mmap(0, FileSize, PROT_READ, Flags, FD, 0);
+  if (BasePtr == MAP_FAILED)
+    return 0;
+  return BasePtr;
 }
 
-/// MapInFilePages - Not yet implemented on win32.
-void Path::UnMapFilePages(const char *Base, uint64_t FileSize) {
-  assert(0 && "NOT IMPLEMENTED");
+void Path::UnMapFilePages(const char *BasePtr, uint64_t FileSize) {
+  ::munmap(BasePtr, FileSize);
 }
 
 } // end llvm namespace
