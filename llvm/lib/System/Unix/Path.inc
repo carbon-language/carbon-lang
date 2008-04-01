@@ -24,6 +24,12 @@
 #if HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
+#ifdef HAVE_SYS_MMAN_H
+#include <sys/mman.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
 #if HAVE_UTIME_H
 #include <utime.h>
 #endif
@@ -753,11 +759,11 @@ const char *Path::MapInFilePages(int FD, uint64_t FileSize) {
   void *BasePtr = ::mmap(0, FileSize, PROT_READ, Flags, FD, 0);
   if (BasePtr == MAP_FAILED)
     return 0;
-  return BasePtr;
+  return (const char*)BasePtr;
 }
 
 void Path::UnMapFilePages(const char *BasePtr, uint64_t FileSize) {
-  ::munmap(BasePtr, FileSize);
+  ::munmap((void*)BasePtr, FileSize);
 }
 
 } // end llvm namespace
