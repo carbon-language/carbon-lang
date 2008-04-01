@@ -171,6 +171,12 @@ public:
   bool GVRequiresExtraLoad(const GlobalValue* GV, const TargetMachine& TM,
                            bool isDirectCall) const;
 
+  /// This function returns the name of a function which has an interface
+  /// like the non-standard bzero function, if such a function exists on
+  /// the current subtarget and it is considered prefereable over
+  /// memset with zero passed as the second argument. Otherwise it
+  /// returns null.
+  const char *getBZeroEntry() const;
 };
 
 namespace X86 {

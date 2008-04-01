@@ -53,6 +53,20 @@ bool X86Subtarget::GVRequiresExtraLoad(const GlobalValue* GV,
   return false;
 }
 
+/// This function returns the name of a function which has an interface
+/// like the non-standard bzero function, if such a function exists on
+/// the current subtarget and it is considered prefereable over
+/// memset with zero passed as the second argument. Otherwise it
+/// returns null.
+const char *X86Subtarget::getBZeroEntry() const {
+
+  // Darwin 10 has a __bzero entry point for this purpose.
+  if (getDarwinVers() >= 10)
+    return "__bzero";
+
+  return 0;
+}
+
 /// GetCpuIDAndInfo - Execute the specified cpuid and return the 4 values in the
 /// specified arguments.  If we can't run cpuid on the host, return true.
 bool X86::GetCpuIDAndInfo(unsigned value, unsigned *rEAX, unsigned *rEBX,

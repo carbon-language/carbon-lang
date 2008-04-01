@@ -4560,6 +4560,11 @@ SDOperand X86TargetLowering::LowerMEMSET(SDOperand Op, SelectionDAG &DAG) {
   // address value and run time information about the CPU.
   if ((Align & 3) != 0 ||
       (I && I->getValue() > Subtarget->getMaxInlineSizeThreshold())) {
+
+    // Check to see if there is a specialized entry-point for memory zeroing.
+    const char *bzeroEntry = Subtarget->getBZeroEntry();
+    ConstantSDNode *V = dyn_cast<ConstantSDNode>(Op.getOperand(2));
+
     MVT::ValueType IntPtr = getPointerTy();
     const Type *IntPtrTy = getTargetData()->getIntPtrType();
     TargetLowering::ArgListTy Args; 
@@ -4567,15 +4572,20 @@ SDOperand X86TargetLowering::LowerMEMSET(SDOperand Op, SelectionDAG &DAG) {
     Entry.Node = Op.getOperand(1);
     Entry.Ty = IntPtrTy;
     Args.push_back(Entry);
-    // Extend the unsigned i8 argument to be an int value for the call.
-    Entry.Node = DAG.getNode(ISD::ZERO_EXTEND, MVT::i32, Op.getOperand(2));
-    Entry.Ty = IntPtrTy;
-    Args.push_back(Entry);
+
+    if (!bzeroEntry) {
+      // Extend the unsigned i8 argument to be an int value for the call.
+      Entry.Node = DAG.getNode(ISD::ZERO_EXTEND, MVT::i32, Op.getOperand(2));
+      Entry.Ty = IntPtrTy;
+      Args.push_back(Entry);
+    }
+
     Entry.Node = Op.getOperand(3);
     Args.push_back(Entry);
+    const char *Name = bzeroEntry ? bzeroEntry : "memset";
     std::pair<SDOperand,SDOperand> CallResult =
       LowerCallTo(Chain, Type::VoidTy, false, false, false, CallingConv::C,
-                  false, DAG.getExternalSymbol("memset", IntPtr), Args, DAG);
+                  false, DAG.getExternalSymbol(Name, IntPtr), Args, DAG);
     return CallResult.second;
   }
 
