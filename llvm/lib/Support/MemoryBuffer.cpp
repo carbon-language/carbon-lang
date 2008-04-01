@@ -29,6 +29,7 @@
 #include <sys/fcntl.h>
 #else
 #include <io.h>
+#include <fcntl.h>
 #endif
 using namespace llvm;
 
@@ -175,7 +176,7 @@ MemoryBuffer *MemoryBuffer::getFile(const char *Filename, std::string *ErrStr,
                                     int64_t FileSize) {
   int OpenFlags = 0;
 #ifdef O_BINARY
-  Flags |= O_BINARY;  // Open input file in binary mode on win32.
+  OpenFlags |= O_BINARY;  // Open input file in binary mode on win32.
 #endif
   int FD = ::open(Filename, O_RDONLY|OpenFlags);
   if (FD == -1) {
