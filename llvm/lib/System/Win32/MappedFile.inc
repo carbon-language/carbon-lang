@@ -28,32 +28,32 @@ struct sys::MappedFileInfo {
 };
 
 bool MappedFile::initialize(std::string* ErrMsg) {
-  assert(!info_);
-  info_ = new MappedFileInfo;
-  info_->hFile = INVALID_HANDLE_VALUE;
-  info_->hMapping = NULL;
+  assert(!MapInfo);
+  MapInfo = new MappedFileInfo;
+  MapInfo->hFile = INVALID_HANDLE_VALUE;
+  MapInfo->hMapping = NULL;
 
-  DWORD mode = options_ & WRITE_ACCESS ? GENERIC_WRITE : GENERIC_READ;
-  DWORD disposition = options_ & WRITE_ACCESS ? OPEN_ALWAYS : OPEN_EXISTING;
-  DWORD share = options_ & WRITE_ACCESS ? FILE_SHARE_WRITE : FILE_SHARE_READ;
-  share = options_ & SHARED_MAPPING ? share : 0;
-  info_->hFile = CreateFile(path_.c_str(), mode, share, NULL, disposition,
+  DWORD mode = Options & WRITE_ACCESS ? GENERIC_WRITE : GENERIC_READ;
+  DWORD disposition = Options & WRITE_ACCESS ? OPEN_ALWAYS : OPEN_EXISTING;
+  DWORD share = Options & WRITE_ACCESS ? FILE_SHARE_WRITE : FILE_SHARE_READ;
+  share = Options & SHARED_MAPPING ? share : 0;
+  MapInfo->hFile = CreateFile(Path.c_str(), mode, share, NULL, disposition,
                             FILE_ATTRIBUTE_NORMAL, NULL);
-  if (info_->hFile == INVALID_HANDLE_VALUE) {
-    delete info_;
-    info_ = NULL;
+  if (MapInfo->hFile == INVALID_HANDLE_VALUE) {
+    delete MapInfo;
+    MapInfo = NULL;
     return MakeErrMsg(ErrMsg,
-      std::string("Can't open file: ") + path_.toString());
+      std::string("Can't open file: ") + Path.toString());
   }
 
   LARGE_INTEGER size;
-  if (!GetFileSizeEx(info_->hFile, &size) ||
-      (info_->size = size_t(size.QuadPart), info_->size != size.QuadPart)) {
-    CloseHandle(info_->hFile);
-    delete info_;
-    info_ = NULL;
+  if (!GetFileSizeEx(MapInfo->hFile, &size) ||
+      (MapInfo->size = size_t(size.QuadPart), MapInfo->size != size.QuadPart)) {
+    CloseHandle(MapInfo->hFile);
+    delete MapInfo;
+    MapInfo = NULL;
     return MakeErrMsg(ErrMsg, 
-      std::string("Can't get size of file: ") + path_.toString());
+      std::string("Can't get size of file: ") + Path.toString());
   }
 
   return false;
@@ -61,56 +61,56 @@ bool MappedFile::initialize(std::string* ErrMsg) {
 
 void MappedFile::terminate() {
   unmap();
-  if (info_->hFile != INVALID_HANDLE_VALUE)
-    CloseHandle(info_->hFile);
-  delete info_;
-  info_ = NULL;
+  if (MapInfo->hFile != INVALID_HANDLE_VALUE)
+    CloseHandle(MapInfo->hFile);
+  delete MapInfo;
+  MapInfo = NULL;
 }
 
 void MappedFile::unmap() {
-  assert(info_ && "MappedFile not initialized");
+  assert(MapInfo && "MappedFile not initialized");
   if (isMapped()) {
-    UnmapViewOfFile(base_);
-    base_ = NULL;
+    UnmapViewOfFile(BasePtr);
+    BasePtr = NULL;
   }
-  if (info_->hMapping != INVALID_HANDLE_VALUE) {
-    CloseHandle(info_->hMapping);
-    info_->hMapping = NULL;
+  if (MapInfo->hMapping != INVALID_HANDLE_VALUE) {
+    CloseHandle(MapInfo->hMapping);
+    MapInfo->hMapping = NULL;
   }
 }
 
 void* MappedFile::map(std::string* ErrMsg) {
   if (!isMapped()) {
     DWORD prot = PAGE_READONLY;
-    if (options_ & EXEC_ACCESS)
+    if (Options & EXEC_ACCESS)
       prot = SEC_IMAGE;
-    else if (options_ & WRITE_ACCESS)
+    else if (Options & WRITE_ACCESS)
       prot = PAGE_READWRITE;
-    info_->hMapping = CreateFileMapping(info_->hFile, NULL, prot, 0, 0, NULL);
-    if (info_->hMapping == NULL) {
-      MakeErrMsg(ErrMsg, std::string("Can't map file: ") + path_.toString());
+    MapInfo->hMapping = CreateFileMapping(MapInfo->hFile, NULL, prot, 0, 0, NULL);
+    if (MapInfo->hMapping == NULL) {
+      MakeErrMsg(ErrMsg, std::string("Can't map file: ") + Path.toString());
       return 0;
     }
 
-    prot = (options_ & WRITE_ACCESS) ? FILE_MAP_WRITE : FILE_MAP_READ;
-    base_ = MapViewOfFileEx(info_->hMapping, prot, 0, 0, 0, NULL);
-    if (base_ == NULL) {
-      CloseHandle(info_->hMapping);
-      info_->hMapping = NULL;
-      MakeErrMsg(ErrMsg, std::string("Can't map file: ") + path_.toString());
+    prot = (Options & WRITE_ACCESS) ? FILE_MAP_WRITE : FILE_MAP_READ;
+    BasePtr = MapViewOfFileEx(MapInfo->hMapping, prot, 0, 0, 0, NULL);
+    if (BasePtr == NULL) {
+      CloseHandle(MapInfo->hMapping);
+      MapInfo->hMapping = NULL;
+      MakeErrMsg(ErrMsg, std::string("Can't map file: ") + Path.toString());
       return 0;
     }
   }
-  return base_;
+  return BasePtr;
 }
 
 size_t MappedFile::size() const {
-  assert(info_ && "MappedFile not initialized");
-  return info_->size;
+  assert(MapInfo && "MappedFile not initialized");
+  return MapInfo->size;
 }
 
-bool MappedFile::size(size_t new_size, std::string* ErrMsg) {
-  assert(info_ && "MappedFile not initialized");
+bool MappedFile::resize(size_t new_size, std::string* ErrMsg) {
+  assert(MapInfo && "MappedFile not initialized");
 
   // Take the mapping out of memory.
   unmap();
@@ -120,16 +120,16 @@ bool MappedFile::size(size_t new_size, std::string* ErrMsg) {
   new_size = (new_size + pagesizem1) & ~pagesizem1;
 
   // If the file needs to be extended, do so.
-  if (new_size > info_->size) {
+  if (new_size > MapInfo->size) {
     LARGE_INTEGER eof;
     eof.QuadPart = new_size;
-    if (!SetFilePointerEx(info_->hFile, eof, NULL, FILE_BEGIN))
+    if (!SetFilePointerEx(MapInfo->hFile, eof, NULL, FILE_BEGIN))
       return MakeErrMsg(ErrMsg, 
-        std::string("Can't set end of file: ") + path_.toString());
-    if (!SetEndOfFile(info_->hFile))
+        std::string("Can't set end of file: ") + Path.toString());
+    if (!SetEndOfFile(MapInfo->hFile))
       return MakeErrMsg(ErrMsg, 
-        std::string("Can't set end of file: ") + path_.toString());
-    info_->size = new_size;
+        std::string("Can't set end of file: ") + Path.toString());
+    MapInfo->size = new_size;
   }
 
   // Remap the file.

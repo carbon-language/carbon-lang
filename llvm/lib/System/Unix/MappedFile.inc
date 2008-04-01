@@ -31,105 +31,109 @@
 #include <sys/stat.h>
 #endif
 
-namespace llvm {
+using namespace llvm;
 using namespace sys;
 
-struct sys::MappedFileInfo {
-  int   FD;
-  off_t Size;
-};
+namespace llvm {
+  namespace sys {
+    struct MappedFileInfo {
+      int   FD;
+      off_t Size;
+    };
+  }
+}
 
 bool MappedFile::initialize(std::string* ErrMsg) {
   int mode = 0;
-  if (options_ & READ_ACCESS) 
-    if (options_ & WRITE_ACCESS)
+  if (Options & READ_ACCESS) 
+    if (Options & WRITE_ACCESS)
       mode = O_RDWR;
     else
       mode = O_RDONLY;
-  else if (options_ & WRITE_ACCESS)
+  else if (Options & WRITE_ACCESS)
     mode = O_WRONLY;
 
-  int FD = ::open(path_.c_str(), mode);
+  int FD = ::open(Path.c_str(), mode);
   if (FD < 0) {
-    MakeErrMsg(ErrMsg, "can't open file '" + path_.toString() + "'");
+    MakeErrMsg(ErrMsg, "can't open file '" + Path.toString() + "'");
     return true;
   } 
-  const FileStatus *Status = path_.getFileStatus(false, ErrMsg);
+  const FileStatus *Status = Path.getFileStatus(false, ErrMsg);
   if (!Status) {
     ::close(FD);
     return true;
   }
-  info_ = new MappedFileInfo;
-  info_->FD = FD;
-  info_->Size = Status->getSize();
+  MapInfo = new MappedFileInfo();
+  MapInfo->FD = FD;
+  MapInfo->Size = Status->getSize();
   return false;
 }
 
 void MappedFile::terminate() {
-  assert(info_ && "MappedFile not initialized");
-  ::close(info_->FD);
-  delete info_;
-  info_ = 0;
+  assert(MapInfo && "MappedFile not initialized");
+  ::close(MapInfo->FD);
+  delete MapInfo;
+  MapInfo = 0;
 }
 
 void MappedFile::unmap() {
-  assert(info_ && "MappedFile not initialized");
-  if (isMapped()) {
-    if (options_ & WRITE_ACCESS)
-      ::msync(base_, info_->Size, MS_SYNC);
-    ::munmap(base_, info_->Size);
-    base_ = 0;  // Mark this as non-mapped.
-  }
+  assert(MapInfo && "MappedFile not initialized");
+  if (!isMapped()) return;
+  
+  if (Options & WRITE_ACCESS)
+    ::msync(BasePtr, MapInfo->Size, MS_SYNC);
+  ::munmap(BasePtr, MapInfo->Size);
+  BasePtr = 0;  // Mark this as non-mapped.
 }
 
 void* MappedFile::map(std::string* ErrMsg) {
-  assert(info_ && "MappedFile not initialized");
-  if (!isMapped()) {
-    int prot = PROT_NONE;
-    int flags = 0;
+  assert(MapInfo && "MappedFile not initialized");
+  if (isMapped()) return BasePtr;
+  
+  int prot = PROT_NONE;
+  int flags = 0;
 #ifdef MAP_FILE
-    flags |= MAP_FILE;
+  flags |= MAP_FILE;
 #endif
-    if (options_ == 0) {
-      prot = PROT_READ;
-      flags = MAP_PRIVATE;
-    } else {
-      if (options_ & READ_ACCESS)
-        prot |= PROT_READ;
-      if (options_ & WRITE_ACCESS)
-        prot |= PROT_WRITE;
-      if (options_ & EXEC_ACCESS)
-        prot |= PROT_EXEC;
-      if (options_ & SHARED_MAPPING)
-        flags |= MAP_SHARED;
-      else
-        flags |= MAP_PRIVATE;
-    }
-    size_t map_size = ((info_->Size / Process::GetPageSize())+1) *
-      Process::GetPageSize();
-
-    base_ = ::mmap(0, map_size, prot, flags, info_->FD, 0);
-    if (base_ == MAP_FAILED) {
-      MakeErrMsg(ErrMsg, "Can't map file:" + path_.toString());
-      return 0;
-    }
+  if (Options == 0) {
+    prot = PROT_READ;
+    flags = MAP_PRIVATE;
+  } else {
+    if (Options & READ_ACCESS)
+      prot |= PROT_READ;
+    if (Options & WRITE_ACCESS)
+      prot |= PROT_WRITE;
+    if (Options & EXEC_ACCESS)
+      prot |= PROT_EXEC;
+    if (Options & SHARED_MAPPING)
+      flags |= MAP_SHARED;
+    else
+      flags |= MAP_PRIVATE;
   }
-  return base_;
+  size_t map_size = ((MapInfo->Size / Process::GetPageSize())+1) *
+    Process::GetPageSize();
+
+  BasePtr = ::mmap(0, map_size, prot, flags, MapInfo->FD, 0);
+  if (BasePtr == MAP_FAILED) {
+    MakeErrMsg(ErrMsg, "Can't map file:" + Path.toString());
+    return 0;
+  }
+  return BasePtr;
 }
 
 size_t MappedFile::size() const {
-  assert(info_ && "MappedFile not initialized");
-  return info_->Size;
+  assert(MapInfo && "MappedFile not initialized");
+  return MapInfo->Size;
 }
 
-bool MappedFile::size(size_t new_size, std::string* ErrMsg) {
-  assert(info_ && "MappedFile not initialized");
+bool MappedFile::resize(size_t new_size, std::string* ErrMsg) {
+  assert(MapInfo && "MappedFile not initialized");
 
   // Take the mapping out of memory
-  this->unmap();
+  unmap();
 
   // Adjust the current size to a page boundary
-  size_t cur_size = ((info_->Size / Process::GetPageSize())+1) *
+  size_t cur_size = ((MapInfo->Size / Process::GetPageSize())+1) *
     Process::GetPageSize();
 
   // Adjust the new_size to a page boundary
@@ -140,15 +144,12 @@ bool MappedFile::size(size_t new_size, std::string* ErrMsg) {
   if (new_size > cur_size) {
     // Ensure we can allocate at least the idodes necessary to handle the
     // file size requested. 
-    if ((off_t)-1 == ::lseek(info_->FD, new_size, SEEK_SET))
+    if ((off_t)-1 == ::lseek(MapInfo->FD, new_size, SEEK_SET))
       return MakeErrMsg(ErrMsg, "Can't lseek: ");
-    if (-1 == ::write(info_->FD, "\0", 1))
+    if (-1 == ::write(MapInfo->FD, "\0", 1))
       return MakeErrMsg(ErrMsg, "Can't write: ");
   }
 
   // Put the mapping back into memory.
-  return this->map(ErrMsg);
+  return map(ErrMsg);
 }
-
-}
-
