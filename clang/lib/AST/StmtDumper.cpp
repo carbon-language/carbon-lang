@@ -88,8 +88,11 @@ namespace  {
 
       // If the type is directly a typedef, strip off typedefness to give at
       // least one level of concreteness.
-      if (TypedefType *TDT = dyn_cast<TypedefType>(T))
-        fprintf(F, ":'%s'", TDT->LookThroughTypedefs().getAsString().c_str());
+      if (TypedefType *TDT = dyn_cast<TypedefType>(T)) {
+        QualType Simplified = 
+          TDT->LookThroughTypedefs().getQualifiedType(T.getCVRQualifiers());
+        fprintf(F, ":'%s'", Simplified.getAsString().c_str());
+      }
     }
     void DumpStmt(const Stmt *Node) {
       Indent();
