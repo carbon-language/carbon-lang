@@ -443,7 +443,8 @@ ActOnArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
 
   // C99 6.5.2.1p1: "shall have type "pointer to *object* type".  In practice,
   // the following check catches trying to index a pointer to a function (e.g.
-  // void (*)(int)). Functions are not objects in C99.
+  // void (*)(int)) and pointers to incomplete types.  Functions are not
+  // objects in C99.
   if (!ResultType->isObjectType())
     return Diag(BaseExpr->getLocStart(), 
                 diag::err_typecheck_subscript_not_object,
@@ -837,7 +838,7 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
 
       // ignore qualifiers on void (C99 6.5.15p3, clause 6)
       if (lhptee->isVoidType() &&
-          (rhptee->isObjectType() || rhptee->isIncompleteType())) {
+          rhptee->isIncompleteOrObjectType()) {
         // Figure out necessary qualifiers (C99 6.5.15p6)
         QualType destPointee=lhptee.getQualifiedType(rhptee.getCVRQualifiers());
         QualType destType = Context.getPointerType(destPointee);
@@ -845,8 +846,7 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
         ImpCastExprToType(rex, destType); // promote to void*
         return destType;
       }
-      if (rhptee->isVoidType() &&
-          (lhptee->isObjectType() || lhptee->isIncompleteType())) {
+      if (rhptee->isVoidType() && lhptee->isIncompleteOrObjectType()) {
         QualType destPointee=rhptee.getQualifiedType(lhptee.getCVRQualifiers());
         QualType destType = Context.getPointerType(destPointee);
         ImpCastExprToType(lex, destType); // add qualifiers if necessary
@@ -1127,21 +1127,21 @@ Sema::CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
   // incomplete type and the other is a pointer to a qualified or unqualified 
   // version of void...
   if (lhptee->isVoidType()) {
-    if (rhptee->isObjectType() || rhptee->isIncompleteType())
+    if (rhptee->isIncompleteOrObjectType())
       return ConvTy;
     
     // As an extension, we allow cast to/from void* to function pointer.
-    if (rhptee->isFunctionType())
-      return FunctionVoidPointer;
+    assert(rhptee->isFunctionType());
+    return FunctionVoidPointer;
   }
   
   if (rhptee->isVoidType()) {
-    if (lhptee->isObjectType() || lhptee->isIncompleteType())
+    if (lhptee->isIncompleteOrObjectType())
       return ConvTy;
 
     // As an extension, we allow cast to/from void* to function pointer.
-    if (lhptee->isFunctionType())
-      return FunctionVoidPointer;
+    assert(lhptee->isFunctionType());
+    return FunctionVoidPointer;
   }
   
   // C99 6.5.16.1p1 (constraint 3): both operands are pointers to qualified or 

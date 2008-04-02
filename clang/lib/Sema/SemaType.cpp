@@ -167,8 +167,7 @@ QualType Sema::ConvertDeclSpecToType(DeclSpec &DS) {
 
       // If we have a pointer or reference, the pointee must have an object or
       // incomplete type.
-      if (!EltTy.isNull() && !EltTy->isObjectType() &&
-          !EltTy->isIncompleteType()) {
+      if (!EltTy.isNull() && !EltTy->isIncompleteOrObjectType()) {
         Diag(DS.getRestrictSpecLoc(),
              diag::err_typecheck_invalid_restrict_invalid_pointee,
              EltTy.getAsString(), DS.getSourceRange());
@@ -229,7 +228,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
       // Enforce C99 6.7.3p2: "Types other than pointer types derived from
       // object or incomplete types shall not be restrict-qualified."
       if ((DeclType.Ptr.TypeQuals & QualType::Restrict) &&
-          !T->isObjectType() && !T->isIncompleteType()) {
+          !T->isIncompleteOrObjectType()) {
         Diag(DeclType.Loc,
              diag::err_typecheck_invalid_restrict_invalid_pointee,
              T.getAsString());
@@ -256,7 +255,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
       // Enforce C99 6.7.3p2: "Types other than pointer types derived from
       // object or incomplete types shall not be restrict-qualified."
       if (DeclType.Ref.HasRestrict &&
-          !T->isObjectType() && !T->isIncompleteType()) {
+          !T->isIncompleteOrObjectType()) {
         Diag(DeclType.Loc,
              diag::err_typecheck_invalid_restrict_invalid_pointee,
              T.getAsString());

@@ -261,6 +261,12 @@ public:
   /// determine its size (e.g. void, or a fwd declared struct). Clients of this
   /// routine will need to determine if the size is actually required.  
   bool isIncompleteType() const;
+
+  /// isIncompleteOrObjectType - Return true if this is an incomplete or object
+  /// type, in other words, not a function type.
+  bool isIncompleteOrObjectType() const {
+    return !isFunctionType();
+  }
   
   /// isVariablyModifiedType (C99 6.7.5.2p2) - Return true for variable array
   /// types that have a non-constant expression. This does not include "[]".
