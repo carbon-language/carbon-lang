@@ -23,7 +23,7 @@ my $Prog = "scan-build";
 # GetHTMLRunDir - Construct an HTML directory name for the current run.
 ##----------------------------------------------------------------------------##
 
-sub GetHTMLRunDir() {  
+sub GetHTMLRunDir {  
 
   die "Not enough arguments." if (@_ == 0);
   
@@ -46,8 +46,7 @@ sub GetHTMLRunDir() {
   if (-d $Dir) {
     
     if (! -r $Dir) {
-      print STDERR "error: '$Dir' exists but is not readable.\n";
-      exit 0;
+      die "error: '$Dir' exists but is not readable.\n";
     }
     
     # Iterate over all files in the specified directory.
@@ -77,8 +76,7 @@ sub GetHTMLRunDir() {
   else {
     
     if (-x $Dir) {
-      print STDERR "error: '$Dir' exists but is not a directory.\n";
-      exit 0;
+      die "error: '$Dir' exists but is not a directory.\n";
     }
     
     # $Dir does not exist.  It will be automatically created by the 
@@ -94,7 +92,7 @@ sub GetHTMLRunDir() {
   return "$Dir/$DateString-$RunNumber";  
 }
 
-sub SetHtmlEnv() {
+sub SetHtmlEnv {
   
   die "Wrong number of arguments." if (scalar(@_) != 2);
   
@@ -120,7 +118,7 @@ sub SetHtmlEnv() {
 # Postprocess - Postprocess the results of an analysis scan.
 ##----------------------------------------------------------------------------##
 
-sub Postprocess() {
+sub Postprocess {
   
   my $Dir = shift;
   
@@ -147,34 +145,36 @@ sub Postprocess() {
 # DisplayHelp - Utility function to display all help options.
 ##----------------------------------------------------------------------------##
 
-sub DisplayHelp() {
+sub DisplayHelp {
   
 print <<ENDTEXT
-USAGE: scan-build [options] <build command> [build options]
+USAGE: $Prog [options] <build command> [build options]
 
 OPTIONS:
 
   -o            - Target directory for HTML report files.  Subdirectories
-                  Will be created as needed to represent separate "runs" of
+                  will be created as needed to represent separate "runs" of
                   the analyzer.  If this option is not specified, a directory
                   is created in /tmp to store the reports.
                 
-  -?            - Display this message.
+  -?, -h        - Display this message.
   --help
   
   -k            - Add "keep on going option" to the specified build command.
-  --keep-going    This command currently supports "make" and "xcodebuild." You
-                  can also directly specify the corresponding option to the build command.
+  --keep-going    This command currently supports "make" and "xcodebuild."  You
+                  can also directly specify the corresponding option to the
+                  build command.
 
-  -v            - Verbose output from scan-build and the analyzer. A second
+  -v            - Verbose output from $Prog and the analyzer.  A second
                   "-v" increases verbosity.
 
 
 BUILD OPTIONS
 
-  You can specify any build option acceptable to the build command. For example:
+  You can specify any build option acceptable to the build command.  For
+  example:
 
-     scan-build -o /tmp/myhtmldir make -j4
+     $Prog -o /tmp/myhtmldir make -j4
      
   The above causes analysis reports to be deposited in /tmp/myhtmldir (or
   rather a subdirectory corresponding to this particular running of the
@@ -196,7 +196,7 @@ my $IgnoreErrors = 0;  # Ignore build errors.
 
 if (!@ARGV) {
   DisplayHelp();
-  exit 1
+  exit 1;
 }
 
 while (@ARGV) {
@@ -205,17 +205,16 @@ while (@ARGV) {
   
   my $arg = $ARGV[0];
 
-  if ($arg eq "-?" or $arg eq "--help") {
+  if ($arg eq "-?" or $arg eq "-h" or $arg eq "--help") {
     DisplayHelp();
-    exit 1;
+    exit 0;
   }
   
   if ($arg eq "-o") {
     shift @ARGV;
         
     if (!@ARGV) {
-      print STDERR "'-o' option requires a target directory name.";
-      exit 0;
+      die "'-o' option requires a target directory name.";
     }
     
     $HtmlDir = shift @ARGV;
@@ -240,18 +239,17 @@ while (@ARGV) {
 if (!@ARGV) {
   print STDERR "$Prog: No build command specified.\n\n";
   DisplayHelp();
-  exit 0;
+  exit 1;
 }
 
 # Determine the output directory for the HTML reports.
 
 if (!defined($HtmlDir)) {
   
-  $HtmlDir = mkdtemp("/tmp/scan-build-XXXXXX");
+  $HtmlDir = mkdtemp("/tmp/$Prog-XXXXXX");
   
   if (!defined($HtmlDir)) {
-    print STDERR "error: Cannot create HTML directory in /tmp.\n";
-    exit 0;
+    die "error: Cannot create HTML directory in /tmp.\n";
   }
   
   if (!$Verbose) {
@@ -259,11 +257,11 @@ if (!defined($HtmlDir)) {
   }
 }
 
-$HtmlDir = &GetHTMLRunDir($HtmlDir);
+$HtmlDir = GetHTMLRunDir($HtmlDir);
 
 # Set the appropriate environment variables.
 
-&SetHtmlEnv(\@ARGV, $HtmlDir);
+SetHtmlEnv(\@ARGV, $HtmlDir);
 
 $ENV{'CC'} = "ccc-analyzer";
 
@@ -277,4 +275,4 @@ system(@ARGV);
 
 # Postprocess the HTML directory.
 
-&Postprocess($HtmlDir);
+Postprocess($HtmlDir);
