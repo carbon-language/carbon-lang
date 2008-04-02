@@ -15,6 +15,7 @@
 
 #include "GRSimpleVals.h"
 #include "BasicObjCFoundationChecks.h"
+#include "clang/Basic/SourceManager.h"
 #include "clang/Analysis/PathSensitive/ValueState.h"
 #include "clang/Analysis/PathDiagnostic.h"
 #include <sstream>
@@ -82,6 +83,9 @@ static inline Stmt* GetStmt(const ProgramPoint& P) {
   }
   else if (const BlockEdge* BE = dyn_cast<BlockEdge>(&P)) {
     return BE->getSrc()->getTerminator();
+  }
+  else if (const BlockEntrance* BE = dyn_cast<BlockEntrance>(&P)) {
+    return BE->getFirstStmt();
   }
 
   assert (false && "Unsupported ProgramPoint.");
@@ -163,44 +167,140 @@ static void EmitWarning(Diagnostic& Diag,  PathDiagnosticClient* PD,
 //===----------------------------------------------------------------------===//
 
 static void GeneratePathDiagnostic(PathDiagnostic& PD,
-                                   SourceManager& SMgr,
+                                   ASTContext& Ctx,
                                    ExplodedNode<ValueState>* N) {
   
-  if (N->pred_empty())
-    return;
+  SourceManager& SMgr = Ctx.getSourceManager();
   
-  N = *(N->pred_begin());
+  while (!N->pred_empty()) {
   
-  ProgramPoint P = N->getLocation();
-  
-  if (const BlockEdge* BE = dyn_cast<BlockEdge>(&P)) {
+    ExplodedNode<ValueState>* LastNode = N;
+    N = *(N->pred_begin());
     
-    CFGBlock* Src = BE->getSrc();
-    CFGBlock* Dst = BE->getDst();
+    ProgramPoint P = N->getLocation();
     
-    // FIXME: Better handling for switches.
-    
-    if (Src->succ_size() == 2) {
+    if (const BlockEdge* BE = dyn_cast<BlockEdge>(&P)) {
+      
+      CFGBlock* Src = BE->getSrc();
+      CFGBlock* Dst = BE->getDst();
       
       Stmt* T = Src->getTerminator();
       
-      if (!Src)
-        return;
-      
+      if (!T)
+        continue;
+
       FullSourceLoc L(T->getLocStart(), SMgr);
       
-      if (*(Src->succ_begin()+1) == Dst)
-        PD.push_front(new PathDiagnosticPiece(L, "Taking false branch."));
-      else 
-        PD.push_front(new PathDiagnosticPiece(L, "Taking true branch."));
-    }
-  }  
-  
-  GeneratePathDiagnostic(PD, SMgr, N);
+      switch (T->getStmtClass()) {
+        default:
+          break;
+        
+        case Stmt::GotoStmtClass:
+        case Stmt::IndirectGotoStmtClass: {
+          
+          Stmt* S = GetStmt(LastNode->getLocation());
+ 
+          if (!S)
+            continue;
+          
+          std::ostringstream os;
+
+          os << "Control jumps to line "
+             << SMgr.getLogicalLineNumber(S->getLocStart()) << ".\n";
+          
+          PD.push_front(new PathDiagnosticPiece(L, os.str()));
+          break;
+        }
+          
+        case Stmt::SwitchStmtClass: {
+          
+          // Figure out what case arm we took.
+          
+          Stmt* S = Dst->getLabel();
+
+          if (!S)
+            continue;
+          
+          std::ostringstream os;
+
+          switch (S->getStmtClass()) {
+            default:
+              continue;
+              
+            case Stmt::DefaultStmtClass: {
+                          
+              os << "Control jumps to the 'default' case at line "
+                  << SMgr.getLogicalLineNumber(S->getLocStart()) << ".\n";
+              
+              break;
+            }
+              
+            case Stmt::CaseStmtClass: {
+              
+              os << "Control jumps to 'case ";
+                            
+              Expr* CondE = cast<SwitchStmt>(T)->getCond();
+              unsigned bits = Ctx.getTypeSize(CondE->getType());
+              
+              llvm::APSInt V1(bits, false);
+              
+              CaseStmt* Case = cast<CaseStmt>(S);
+
+              if (!Case->getLHS()->isIntegerConstantExpr(V1, Ctx, 0, true)) {
+                assert (false &&
+                        "Case condition must evaluate to an integer constant.");
+                continue;
+              }
+              
+              os << V1.toString();
+                
+              // Get the RHS of the case, if it exists.
+                
+              if (Expr* E = Case->getRHS()) {
+              
+                llvm::APSInt V2(bits, false);
+
+                if (!E->isIntegerConstantExpr(V2, Ctx, 0, true)) {
+                  assert (false &&
+                          "Case condition (RHS) must evaluate to an integer constant.");
+                  continue;
+                }
+                  
+                os << " .. " << V2.toString();
+              }
+              
+              os << ":'  at line " 
+                 << SMgr.getLogicalLineNumber(S->getLocStart()) << ".\n";
+
+              break;
+              
+            }
+          }
+          
+          PD.push_front(new PathDiagnosticPiece(L, os.str()));
+          break;
+        }
+        
+        
+        case Stmt::DoStmtClass:
+        case Stmt::WhileStmtClass:
+        case Stmt::ForStmtClass:
+        case Stmt::IfStmtClass: {
+        
+          if (*(Src->succ_begin()+1) == Dst)
+            PD.push_front(new PathDiagnosticPiece(L, "Taking false branch."));
+          else 
+            PD.push_front(new PathDiagnosticPiece(L, "Taking true branch."));
+          
+          break;
+        }
+      }
+    }  
+  }
 }
 
 template <typename ITERATOR, typename DESC>
-static void Report(PathDiagnosticClient& PDC, SourceManager& SMgr, DESC,
+static void Report(PathDiagnosticClient& PDC, ASTContext& Ctx, DESC,
                    ITERATOR I, ITERATOR E) {
   
 
@@ -228,10 +328,10 @@ static void Report(PathDiagnosticClient& PDC, SourceManager& SMgr, DESC,
     PathDiagnostic D(BugName);
     
     // Get the end-of-path diagnostic.
-    D.push_back(DESC::getEndPath(SMgr, GetNode(I)));
+    D.push_back(DESC::getEndPath(Ctx.getSourceManager(), GetNode(I)));
     
     // Generate the rest of the diagnostic.
-    GeneratePathDiagnostic(D, SMgr, GetNode(I));
+    GeneratePathDiagnostic(D, Ctx, GetNode(I));
     
     PDC.HandlePathDiagnostic(D);
   }
@@ -271,7 +371,7 @@ unsigned RunGRSimpleVals(CFG& cfg, Decl& CD, ASTContext& Ctx,
                 CS->null_derefs_begin(), CS->null_derefs_end(),
                 "Dereference of NULL pointer.");
   else 
-    Report(*PD, SrcMgr, bugdesc::NullDeref(),
+    Report(*PD, Ctx, bugdesc::NullDeref(),
            CS->null_derefs_begin(), CS->null_derefs_end());
 
   
