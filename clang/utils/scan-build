@@ -150,7 +150,7 @@ sub RunBuildCommand {
   my $Args = shift;
   my $Cmd = $Args->[0];
   
-  if ($Cmd =~ /gcc/ or $Cmd eq "cc" or $Cmd =~ /"llvm-gcc"/) {
+  if ($Cmd eq "gcc" or $Cmd eq "cc" or $Cmd eq "llvm-gcc") {
     shift @$Args;
     unshift @$Args, "ccc-analyzer"
   }
