@@ -31,11 +31,13 @@
 
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/ADT/BitVector.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 
 namespace llvm {
 
+class MachineRegisterInfo;
 class TargetRegisterInfo;
 
 class LiveVariables : public MachineFunctionPass {
@@ -128,6 +130,8 @@ private:
 private:   // Intermediate data structures
   MachineFunction *MF;
 
+  MachineRegisterInfo* MRI;
+
   const TargetRegisterInfo *TRI;
 
   // PhysRegInfo - Keep track of which instruction was the last def/use of a
@@ -151,6 +155,10 @@ private:   // Intermediate data structures
   SmallVector<MachineInstr*, 4> *PhysRegPartDef;
 
   SmallVector<unsigned, 4> *PHIVarInfo;
+
+  // DistanceMap - Keep track the distance of a MI from the start of the
+  // current basic block.
+  DenseMap<MachineInstr*, unsigned> DistanceMap;
 
   void addRegisterKills(unsigned Reg, MachineInstr *MI,
                         SmallSet<unsigned, 4> &SubKills);

@@ -118,8 +118,7 @@ void LiveVariables::MarkVirtRegAliveInBlock(VarInfo &VRInfo,
 
 void LiveVariables::HandleVirtRegUse(unsigned reg, MachineBasicBlock *MBB,
                                      MachineInstr *MI) {
-  const MachineRegisterInfo &MRI = MBB->getParent()->getRegInfo();
-  assert(MRI.getVRegDef(reg) && "Register use before def!");
+  assert(MRI->getVRegDef(reg) && "Register use before def!");
 
   unsigned BBNum = MBB->getNumber();
 
@@ -140,7 +139,7 @@ void LiveVariables::HandleVirtRegUse(unsigned reg, MachineBasicBlock *MBB,
     assert(VRInfo.Kills[i]->getParent() != MBB && "entry should be at end!");
 #endif
 
-  assert(MBB != MRI.getVRegDef(reg)->getParent() &&
+  assert(MBB != MRI->getVRegDef(reg)->getParent() &&
          "Should have kill for defblock!");
 
   // Add a new kill entry for this basic block. If this virtual register is
@@ -152,7 +151,7 @@ void LiveVariables::HandleVirtRegUse(unsigned reg, MachineBasicBlock *MBB,
   // Update all dominating blocks to mark them as "known live".
   for (MachineBasicBlock::const_pred_iterator PI = MBB->pred_begin(),
          E = MBB->pred_end(); PI != E; ++PI)
-    MarkVirtRegAliveInBlock(VRInfo, MRI.getVRegDef(reg)->getParent(), *PI);
+    MarkVirtRegAliveInBlock(VRInfo, MRI->getVRegDef(reg)->getParent(), *PI);
 }
 
 /// HandlePhysRegUse - Turn previous partial def's into read/mod/writes. Add
@@ -305,25 +304,63 @@ bool LiveVariables::hasRegisterUseBelow(unsigned Reg,
                                         MachineBasicBlock *MBB) {
   if (I == MBB->end())
     return false;
-  ++I;
-  // FIXME: This is slow. We probably need a smarter solution. Possibilities:
-  // 1. Scan all instructions once and build def / use information of physical
-  //    registers. We also need a fast way to compare relative ordering of
-  //    instructions.
-  // 2. Cache information so this function only has to scan instructions that
-  //    read / def physical instructions.
-  for (MachineBasicBlock::iterator E = MBB->end(); I != E; ++I) {
-    MachineInstr *MI = I;
-    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-      const MachineOperand &MO = MI->getOperand(i);
-      if (!MO.isRegister() || MO.getReg() != Reg)
-        continue;
-      if (MO.isDef())
-        return false;
-      return true;
+
+  // First find out if there are any uses / defs below.
+  bool hasDistInfo = true;
+  unsigned CurDist = DistanceMap[I];
+  SmallVector<MachineInstr*, 4> Uses;
+  SmallVector<MachineInstr*, 4> Defs;
+  for (MachineRegisterInfo::reg_iterator RI = MRI->reg_begin(Reg),
+         RE = MRI->reg_end(); RI != RE; ++RI) {
+    MachineOperand &UDO = RI.getOperand();
+    MachineInstr *UDMI = &*RI;
+    if (UDMI->getParent() != MBB)
+      continue;
+    DenseMap<MachineInstr*, unsigned>::iterator DI = DistanceMap.find(UDMI);
+    bool isBelow = false;
+    if (DI == DistanceMap.end()) {
+      // Must be below if it hasn't been assigned a distance yet.
+      isBelow = true;
+      hasDistInfo = false;
+    } else if (DI->second > CurDist)
+      isBelow = true;
+    if (isBelow) {
+      if (UDO.isUse())
+        Uses.push_back(UDMI);
+      if (UDO.isDef())
+        Defs.push_back(UDMI);
     }
   }
-  return false;
+
+  if (Uses.empty())
+    // No uses below.
+    return false;
+  else if (!Uses.empty() && Defs.empty())
+    // There are uses below but no defs below.
+    return true;
+  // There are both uses and defs below. We need to know which comes first.
+  if (!hasDistInfo) {
+    // Complete DistanceMap for this MBB. This information is computed only
+    // once per MBB.
+    ++I;
+    ++CurDist;
+    for (MachineBasicBlock::iterator E = MBB->end(); I != E; ++I, ++CurDist)
+      DistanceMap.insert(std::make_pair(I, CurDist));
+  }
+
+  unsigned EarliestUse = CurDist;
+  for (unsigned i = 0, e = Uses.size(); i != e; ++i) {
+    unsigned Dist = DistanceMap[Uses[i]];
+    if (Dist < EarliestUse)
+      EarliestUse = Dist;
+  }
+  for (unsigned i = 0, e = Defs.size(); i != e; ++i) {
+    unsigned Dist = DistanceMap[Defs[i]];
+    if (Dist < EarliestUse)
+      // The register is defined before its first use below.
+      return false;
+  }
+  return true;
 }
 
 void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI) {
@@ -408,8 +445,8 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI) {
 
 bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
   MF = &mf;
+  MRI = &mf.getRegInfo();
   TRI = MF->getTarget().getRegisterInfo();
-  MachineRegisterInfo& MRI = mf.getRegInfo();
 
   ReservedRegisters = TRI->getReservedRegs(mf);
 
@@ -449,9 +486,12 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
     }
 
     // Loop over all of the instructions, processing them.
+    DistanceMap.clear();
+    unsigned Dist = 0;
     for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
          I != E; ++I) {
       MachineInstr *MI = I;
+      DistanceMap.insert(std::make_pair(MI, Dist++));
 
       // Process all of the operands of the instruction...
       unsigned NumOperandsToProcess = MI->getNumOperands();
@@ -507,7 +547,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
       for (SmallVector<unsigned, 4>::iterator I = VarInfoVec.begin(),
              E = VarInfoVec.end(); I != E; ++I)
         // Mark it alive only in the block we are representing.
-        MarkVirtRegAliveInBlock(getVarInfo(*I), MRI.getVRegDef(*I)->getParent(),
+        MarkVirtRegAliveInBlock(getVarInfo(*I),MRI->getVRegDef(*I)->getParent(),
                                 MBB);
     }
 
@@ -549,7 +589,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
   for (unsigned i = 0, e1 = VirtRegInfo.size(); i != e1; ++i)
     for (unsigned j = 0, e2 = VirtRegInfo[i].Kills.size(); j != e2; ++j)
       if (VirtRegInfo[i].Kills[j] ==
-          MRI.getVRegDef(i + TargetRegisterInfo::FirstVirtualRegister))
+          MRI->getVRegDef(i + TargetRegisterInfo::FirstVirtualRegister))
         VirtRegInfo[i]
           .Kills[j]->addRegisterDead(i +
                                      TargetRegisterInfo::FirstVirtualRegister,
