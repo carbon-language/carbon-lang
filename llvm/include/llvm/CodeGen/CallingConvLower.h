@@ -167,7 +167,15 @@ public:
     MarkAllocated(Reg);
     return Reg;
   }
-  
+
+  /// Version of AllocateReg with extra register to be shadowed.
+  unsigned AllocateReg(unsigned Reg, unsigned ShadowReg) {
+    if (isAllocated(Reg)) return 0;
+    MarkAllocated(Reg);
+    MarkAllocated(ShadowReg);
+    return Reg;
+  }
+
   /// AllocateReg - Attempt to allocate one of the specified registers.  If none
   /// are available, return zero.  Otherwise, return the first one available,
   /// marking it and any aliases as allocated.
@@ -175,13 +183,27 @@ public:
     unsigned FirstUnalloc = getFirstUnallocated(Regs, NumRegs);
     if (FirstUnalloc == NumRegs)
       return 0;    // Didn't find the reg.
-     
+
     // Mark the register and any aliases as allocated.
     unsigned Reg = Regs[FirstUnalloc];
     MarkAllocated(Reg);
     return Reg;
   }
-  
+
+  /// Version of AllocateReg with list of registers to be shadowed.
+  unsigned AllocateReg(const unsigned *Regs, const unsigned *ShadowRegs,
+                       unsigned NumRegs) {
+    unsigned FirstUnalloc = getFirstUnallocated(Regs, NumRegs);
+    if (FirstUnalloc == NumRegs)
+      return 0;    // Didn't find the reg.
+
+    // Mark the register and any aliases as allocated.
+    unsigned Reg = Regs[FirstUnalloc], ShadowReg = ShadowRegs[FirstUnalloc];
+    MarkAllocated(Reg);
+    MarkAllocated(ShadowReg);
+    return Reg;
+  }
+
   /// AllocateStack - Allocate a chunk of stack space with the specified size
   /// and alignment.
   unsigned AllocateStack(unsigned Size, unsigned Align) {

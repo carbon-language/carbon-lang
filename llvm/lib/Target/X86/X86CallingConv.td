@@ -158,22 +158,29 @@ def CC_X86_64_C : CallingConv<[
 def CC_X86_Win64_C : CallingConv<[
   // FIXME: Handle byval stuff.
   // FIXME: Handle fp80.
-  // FIXME: Handle shadowed arguments.
-  // FIXME: Handle nested functions.
+  // FIXME: Handle varargs.
 
   // Promote i8/i16 arguments to i32.
   CCIfType<[i8, i16], CCPromoteToType<i32>>,
 
+  // The 'nest' parameter, if any, is passed in R10.
+  CCIfNest<CCAssignToReg<[R10]>>,
+
   // The first 4 integer arguments are passed in integer registers.
-  CCIfType<[i32], CCAssignToReg<[ECX, EDX, R8D, R9D]>>,
-  CCIfType<[i64], CCAssignToReg<[RCX, RDX, R8 , R9 ]>>,
+  CCIfType<[i32], CCAssignToRegWithShadow<[ECX , EDX , R8D , R9D ],
+                                          [XMM0, XMM1, XMM2, XMM3]>>,
+  CCIfType<[i64], CCAssignToRegWithShadow<[RCX , RDX , R8  , R9  ],
+                                          [XMM0, XMM1, XMM2, XMM3]>>,
 
   // The first 4 FP/Vector arguments are passed in XMM registers.
   CCIfType<[f32, f64, v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
-              CCAssignToReg<[XMM0, XMM1, XMM2, XMM3]>>,
+           CCAssignToRegWithShadow<[XMM0, XMM1, XMM2, XMM3],
+                                   [RCX , RDX , R8  , R9  ]>>,
 
   // The first 4 MMX vector arguments are passed in GPRs.
-  CCIfType<[v8i8, v4i16, v2i32, v1i64], CCAssignToReg<[RCX, RDX, R8, R9]>>,
+  CCIfType<[v8i8, v4i16, v2i32, v1i64],
+           CCAssignToRegWithShadow<[RCX , RDX , R8  , R9  ],
+                                   [XMM0, XMM1, XMM2, XMM3]>>,
 
   // Integer/FP values get stored in stack slots that are 8 bytes in size and
   // 16-byte aligned if there are no more registers to hold them.

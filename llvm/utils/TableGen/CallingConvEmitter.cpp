@@ -111,6 +111,48 @@ void CallingConvEmitter::EmitAction(Record *Action,
         << "Reg, LocVT, LocInfo));\n";
       O << IndentStr << "  return false;\n";
       O << IndentStr << "}\n";
+    } else if (Action->isSubClassOf("CCAssignToRegWithShadow")) {
+      ListInit *RegList = Action->getValueAsListInit("RegList");
+      ListInit *ShadowRegList = Action->getValueAsListInit("ShadowRegList");
+      if (ShadowRegList->getSize() >0 &&
+          ShadowRegList->getSize() != RegList->getSize())
+        throw "Invalid length of list of shadowed registers";
+
+      if (RegList->getSize() == 1) {
+        O << IndentStr << "if (unsigned Reg = State.AllocateReg(";
+        O << getQualifiedName(RegList->getElementAsRecord(0));
+        O << ", " << getQualifiedName(ShadowRegList->getElementAsRecord(0));
+        O << ")) {\n";
+      } else {
+        unsigned RegListNumber = ++Counter;
+        unsigned ShadowRegListNumber = ++Counter;
+
+        O << IndentStr << "static const unsigned RegList" << RegListNumber
+          << "[] = {\n";
+        O << IndentStr << "  ";
+        for (unsigned i = 0, e = RegList->getSize(); i != e; ++i) {
+          if (i != 0) O << ", ";
+          O << getQualifiedName(RegList->getElementAsRecord(i));
+        }
+        O << "\n" << IndentStr << "};\n";
+
+        O << IndentStr << "static const unsigned RegList"
+          << ShadowRegListNumber << "[] = {\n";
+        O << IndentStr << "  ";
+        for (unsigned i = 0, e = ShadowRegList->getSize(); i != e; ++i) {
+          if (i != 0) O << ", ";
+          O << getQualifiedName(ShadowRegList->getElementAsRecord(i));
+        }
+        O << "\n" << IndentStr << "};\n";
+
+        O << IndentStr << "if (unsigned Reg = State.AllocateReg(RegList"
+          << RegListNumber << ", " << "RegList" << ShadowRegListNumber
+          << ", " << RegList->getSize() << ")) {\n";
+      }
+      O << IndentStr << "  State.addLoc(CCValAssign::getReg(ValNo, ValVT, "
+        << "Reg, LocVT, LocInfo));\n";
+      O << IndentStr << "  return false;\n";
+      O << IndentStr << "}\n";
     } else if (Action->isSubClassOf("CCAssignToStack")) {
       int Size = Action->getValueAsInt("Size");
       int Align = Action->getValueAsInt("Align");

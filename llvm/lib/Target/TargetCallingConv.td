@@ -59,6 +59,14 @@ class CCAssignToReg<list<Register> regList> : CCAction {
   list<Register> RegList = regList;
 }
 
+/// CCAssignToRegWithShadow - Same as CCAssignToReg, but with list of registers
+/// which became shadowed, when some register is used.
+class CCAssignToRegWithShadow<list<Register> regList,
+                              list<Register> shadowList> : CCAction {
+  list<Register> RegList = regList;
+  list<Register> ShadowRegList = shadowList;
+}
+
 /// CCAssignToStack - This action always matches: it assigns the value to a
 /// stack slot of the specified size and alignment on the stack.  If size is
 /// zero then the ABI size is used; if align is zero then the ABI alignment
