@@ -483,8 +483,17 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
     std::vector<std::pair<unsigned, unsigned> > localInterferences;
     processPHIUnion(P, PHIUnion, DF, localInterferences);
     
+    // If one of the inputs is defined in the same block as the current PHI
+    // then we need to check for a local interference between that input and
+    // the PHI.
+    for (std::map<unsigned, unsigned>::iterator I = PHIUnion.begin(),
+         E = PHIUnion.end(); I != E; ++I)
+      if (MRI.getVRegDef(I->first)->getParent() == P->getParent())
+        localInterferences.push_back(std::make_pair(I->first,
+                                                    P->getOperand(0).getReg()));
+    
     // The dominator forest walk may have returned some register pairs whose
-    // interference cannot be determines from dominator analysis.  We now 
+    // interference cannot be determined from dominator analysis.  We now 
     // examine these pairs for local interferences.
     for (std::vector<std::pair<unsigned, unsigned> >::iterator I =
         localInterferences.begin(), E = localInterferences.end(); I != E; ++I) {
@@ -527,7 +536,7 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
       }
     }
     
-    // Add the renaming set for this PHI node to our overal renaming information
+    // Add the renaming set for this PHI node to our overall renaming information
     RenameSets.insert(std::make_pair(P->getOperand(0).getReg(), PHIUnion));
     
     // Remember which registers are already renamed, so that we don't try to 
