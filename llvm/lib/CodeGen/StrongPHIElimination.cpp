@@ -845,7 +845,6 @@ void StrongPHIElimination::mergeLiveIntervals(unsigned primary,
 }
 
 bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
-  
   LiveIntervals& LI = getAnalysis<LiveIntervals>();
   
   // Compute DFS numbers of each block
@@ -889,17 +888,21 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
     
     // If this is a dead PHI node, then remove it from LiveIntervals.
     unsigned DestReg = PInstr->getOperand(0).getReg();
+    LiveInterval& PI = LI.getInterval(DestReg);
     if (PInstr->registerDefIsDead(DestReg)) {
-      LiveInterval& PI = LI.getInterval(DestReg);
-      
       if (PI.containsOneValue()) {
         LI.removeInterval(DestReg);
       } else {
         unsigned idx = LI.getDefIndex(LI.getInstructionIndex(PInstr));
         PI.removeRange(*PI.getLiveRangeContaining(idx), true);
       }
+    } else {
+      // If the PHI is not dead, then the valno defined by the PHI
+      // now has an unknown def.
+      unsigned idx = LI.getDefIndex(LI.getInstructionIndex(PInstr));
+      PI.getLiveRangeContaining(idx)->valno->def = ~0U;
     }
-      
+    
     LI.RemoveMachineInstrFromMaps(PInstr);
     PInstr->eraseFromParent();
   }
