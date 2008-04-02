@@ -148,16 +148,24 @@ sub Postprocess {
 sub RunBuildCommand {
   
   my $Args = shift;
+  my $IgnoreErrors = shift;
   my $Cmd = $Args->[0];
   
   if ($Cmd eq "gcc" or $Cmd eq "cc" or $Cmd eq "llvm-gcc") {
     shift @$Args;
     unshift @$Args, "ccc-analyzer"
   }
+  elsif ($IgnoreErrors) {
+    if ($Cmd eq "make" or $Cmd eq "gmake") {
+      push @$Args, "-k";
+    }
+    elsif ($Cmd eq "xcodebuild") {
+      push @$Args, "-PBXBuildsContinueAfterErrors=YES";
+    }
+  }
   
   system(@$Args);
 }
-
 
 ##----------------------------------------------------------------------------##
 # DisplayHelp - Utility function to display all help options.
@@ -288,7 +296,7 @@ if ($Verbose >= 2) {
 
 # Run the build.
 
-RunBuildCommand(\@ARGV);
+RunBuildCommand(\@ARGV, $IgnoreErrors);
 
 # Postprocess the HTML directory.
 
