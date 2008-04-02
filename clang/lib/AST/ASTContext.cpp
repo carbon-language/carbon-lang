@@ -929,6 +929,71 @@ QualType ASTContext::getPointerDiffType() const {
   return IntTy; 
 }
 
+//===----------------------------------------------------------------------===//
+//                              Type Operators
+//===----------------------------------------------------------------------===//
+
+/// getArrayDecayedType - Return the properly qualified result of decaying the
+/// specified array type to a pointer.  This operation is non-trivial when
+/// handling typedefs etc.  The canonical type of "T" must be an array type,
+/// this returns a pointer to a properly qualified element of the array.
+///
+/// See C99 6.7.5.3p7 and C99 6.3.2.1p3.
+QualType ASTContext::getArrayDecayedType(QualType Ty) {
+  // Handle the common case where typedefs are not involved directly.
+  QualType EltTy;
+  unsigned ArrayQuals = 0;
+  unsigned PointerQuals = 0;
+  if (ArrayType *AT = dyn_cast<ArrayType>(Ty)) {
+    // Since T "isa" an array type, it could not have had an address space
+    // qualifier, just CVR qualifiers.  The properly qualified element pointer
+    // gets the union of the CVR qualifiers from the element and the array, and
+    // keeps any address space qualifier on the element type if present.
+    EltTy = AT->getElementType();
+    ArrayQuals = Ty.getCVRQualifiers();
+    PointerQuals = AT->getIndexTypeQualifier();
+  } else {
+    // Otherwise, we have an ASQualType or a typedef, etc.  Make sure we don't
+    // lose qualifiers when dealing with typedefs. Example:
+    //   typedef int arr[10];
+    //   void test2() {
+    //     const arr b;
+    //     b[4] = 1;
+    //   }
+    //
+    // The decayed type of b is "const int*" even though the element type of the
+    // array is "int".
+    QualType CanTy = Ty.getCanonicalType();
+    const ArrayType *PrettyArrayType = Ty->getAsArrayType();
+    assert(PrettyArrayType && "Not an array type!");
+    
+    // Get the element type with 'getAsArrayType' so that we don't lose any
+    // typedefs in the element type of the array.
+    EltTy = PrettyArrayType->getElementType();
+
+    // If the array was address-space qualifier, make sure to ASQual the element
+    // type.  We can just grab the address space from the canonical type.
+    if (unsigned AS = CanTy.getAddressSpace())
+      EltTy = getASQualType(EltTy, AS);
+    
+    // To properly handle [multiple levels of] typedefs, typeof's etc, we take
+    // the CVR qualifiers directly from the canonical type, which is guaranteed
+    // to have the full set unioned together.
+    ArrayQuals = CanTy.getCVRQualifiers();
+    PointerQuals = PrettyArrayType->getIndexTypeQualifier();
+  }
+  
+  // Apply any CVR qualifiers from the array type.
+  EltTy = EltTy.getQualifiedType(ArrayQuals | EltTy.getCVRQualifiers());
+
+  QualType PtrTy = getPointerType(EltTy);
+
+  // int x[restrict 4] ->  int *restrict
+  PtrTy = PtrTy.getQualifiedType(PointerQuals);
+
+  return PtrTy;
+}
+
 /// getIntegerRank - Return an integer conversion rank (C99 6.3.1.1p1). This
 /// routine will assert if passed a built-in type that isn't an integer or enum.
 static int getIntegerRank(QualType t) {

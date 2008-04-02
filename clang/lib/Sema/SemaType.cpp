@@ -317,18 +317,17 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
           // type in ParmVarDecl (which makes the code generator unhappy).
           //
           // FIXME: We still apparently need the conversion in 
-          // Sema::ParseParamDeclarator(). This doesn't make any sense, since
+          // Sema::ActOnParamDeclarator(). This doesn't make any sense, since
           // it should be driving off the type being created here.
           // 
           // FIXME: If a source translation tool needs to see the original type,
           // then we need to consider storing both types somewhere...
           // 
-          if (const ArrayType *AT = ArgTy->getAsArrayType()) {
-            // int x[restrict 4] ->  int *restrict
-            ArgTy = Context.getPointerType(AT->getElementType());
-            ArgTy = ArgTy.getQualifiedType(AT->getIndexTypeQualifier());
+          if (ArgTy->isArrayType()) {
+            ArgTy = Context.getArrayDecayedType(ArgTy);
           } else if (ArgTy->isFunctionType())
             ArgTy = Context.getPointerType(ArgTy);
+          
           // Look for 'void'.  void is allowed only as a single argument to a
           // function with no other parameters (C99 6.7.5.3p10).  We record
           // int(void) as a FunctionTypeProto with an empty argument list.
@@ -391,9 +390,9 @@ QualType Sema::ObjCGetTypeForMethodDefinition(DeclTy *D) {
     assert(!ArgTy.isNull() && "Couldn't parse type?");
     // Perform the default function/array conversion (C99 6.7.5.3p[7,8]).
     // This matches the conversion that is done in 
-    // Sema::ParseParamDeclarator(). 
-    if (const ArrayType *AT = ArgTy->getAsArrayType())
-      ArgTy = Context.getPointerType(AT->getElementType());
+    // Sema::ActOnParamDeclarator(). 
+    if (ArgTy->isArrayType())
+      ArgTy = Context.getArrayDecayedType(ArgTy);
     else if (ArgTy->isFunctionType())
       ArgTy = Context.getPointerType(ArgTy);
     ArgTys.push_back(ArgTy);

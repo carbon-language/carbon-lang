@@ -932,18 +932,8 @@ void Sema::DefaultFunctionArrayConversion(Expr *&E) {
   }
   if (Ty->isFunctionType())
     ImpCastExprToType(E, Context.getPointerType(Ty));
-  else if (const ArrayType *ArrayTy = Ty->getAsArrayType()) {
-    // Make sure we don't lose qualifiers when dealing with typedefs. Example:
-    //   typedef int arr[10];
-    //   void test2() {
-    //     const arr b;
-    //     b[4] = 1;
-    //   }
-    QualType ELT = ArrayTy->getElementType();
-    // FIXME: Handle ASQualType
-    ELT = ELT.getQualifiedType(Ty.getCVRQualifiers()|ELT.getCVRQualifiers());
-    ImpCastExprToType(E, Context.getPointerType(ELT));
-  }
+  else if (Ty->isArrayType())
+    ImpCastExprToType(E, Context.getArrayDecayedType(Ty));
 }
 
 /// UsualUnaryConversions - Performs various conversions that are common to most

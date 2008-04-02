@@ -1014,10 +1014,9 @@ Sema::ActOnParamDeclarator(struct DeclaratorChunk::ParamInfo &PI,
   // we need to consider storing both types (in ParmVarDecl)...
   // 
   QualType parmDeclType = QualType::getFromOpaquePtr(PI.TypeInfo);
-  if (const ArrayType *AT = parmDeclType->getAsArrayType()) {
+  if (parmDeclType->isArrayType()) {
     // int x[restrict 4] ->  int *restrict
-    parmDeclType = Context.getPointerType(AT->getElementType());
-    parmDeclType = parmDeclType.getQualifiedType(AT->getIndexTypeQualifier());
+    parmDeclType = Context.getArrayDecayedType(parmDeclType);
   } else if (parmDeclType->isFunctionType())
     parmDeclType = Context.getPointerType(parmDeclType);
   

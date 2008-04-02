@@ -287,6 +287,14 @@ public:
   //                            Type Operators
   //===--------------------------------------------------------------------===//
   
+  /// getArrayDecayedType - Return the properly qualified result of decaying the
+  /// specified array type to a pointer.  This operation is non-trivial when
+  /// handling typedefs etc.  The canonical type of "T" must be an array type,
+  /// this returns a pointer to a properly qualified element of the array.
+  ///
+  /// See C99 6.7.5.3p7 and C99 6.3.2.1p3.
+  QualType getArrayDecayedType(QualType T);
+  
   /// maxIntegerType - Returns the highest ranked integer type. Handles 3
   /// different type combos: unsigned/unsigned, signed/signed, signed/unsigned.
   static QualType maxIntegerType(QualType lhs, QualType rhs);

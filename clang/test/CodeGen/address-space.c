@@ -1,4 +1,4 @@
-// RUN: clang -emit-llvm < %s 2>&1 | grep 'addrspace(1)' | count 5
+// RUN: clang -emit-llvm < %s 2>&1 | grep 'addrspace(1)' | count 6
 int foo __attribute__((address_space(1)));
 int ban[10] __attribute__((address_space(1)));
 
