@@ -208,19 +208,23 @@ public:
     construct_range(Begin, End, Elt);
   }
   
-  void erase(iterator I) {
+  iterator erase(iterator I) {
+    iterator N = I;
     // Shift all elts down one.
     std::copy(I+1, End, I);
     // Drop the last elt.
     pop_back();
+    return(N);
   }
   
-  void erase(iterator S, iterator E) {
+  iterator erase(iterator S, iterator E) {
+    iterator N = S;
     // Shift all elts down.
     iterator I = std::copy(E, End, S);
     // Drop the last elts.
     destroy_range(I, End);
     End = I;
+    return(N);
   }
   
   iterator insert(iterator I, const T &Elt) {

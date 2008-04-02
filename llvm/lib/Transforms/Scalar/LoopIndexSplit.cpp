@@ -232,8 +232,8 @@ bool LoopIndexSplit::runOnLoop(Loop *IncomingLoop, LPPassManager &LPM_Ref) {
     return false;
 
   // First see if it is possible to eliminate loop itself or not.
-  for (SmallVector<SplitInfo, 4>::iterator SI = SplitData.begin(),
-         E = SplitData.end(); SI != E;) {
+  for (SmallVector<SplitInfo, 4>::iterator SI = SplitData.begin();
+       SI != SplitData.end();) {
     SplitInfo &SD = *SI;
     ICmpInst *CI = dyn_cast<ICmpInst>(SD.SplitCondition);
     if (SD.SplitCondition->getOpcode() == Instruction::And) {
@@ -244,8 +244,7 @@ bool LoopIndexSplit::runOnLoop(Loop *IncomingLoop, LPPassManager &LPM_Ref) {
         return Changed;
       } else {
         SmallVector<SplitInfo, 4>::iterator Delete_SI = SI;
-        ++SI;
-        SplitData.erase(Delete_SI);
+        SI = SplitData.erase(Delete_SI);
       }
     }
     else if (CI && CI->getPredicate() == ICmpInst::ICMP_EQ) {
@@ -256,8 +255,7 @@ bool LoopIndexSplit::runOnLoop(Loop *IncomingLoop, LPPassManager &LPM_Ref) {
         return Changed;
       } else {
         SmallVector<SplitInfo, 4>::iterator Delete_SI = SI;
-        ++SI;
-        SplitData.erase(Delete_SI);
+        SI = SplitData.erase(Delete_SI);
       }
     } else
       ++SI;
