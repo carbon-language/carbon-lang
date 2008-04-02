@@ -303,10 +303,7 @@ LTO::optimize(Module *M, std::ostream &Out,
   // If the -s command line option was specified, strip the symbols out of the
   // resulting program to make it smaller.  -s is a GLD option that we are
   // supporting.
-  if(!ExceptionHandling)
-    // FIXME : This causes multiple nameless _.eh symbols on 
-    // darwin when EH is ON.
-    Passes.add(createStripSymbolsPass());
+  Passes.add(createStripSymbolsPass());
   
   // Propagate constants at call sites into the functions they call.
   Passes.add(createIPConstantPropagationPass());

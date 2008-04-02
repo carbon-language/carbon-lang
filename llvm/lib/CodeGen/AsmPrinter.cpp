@@ -198,8 +198,10 @@ bool AsmPrinter::doFinalization(Module &M) {
 
 std::string AsmPrinter::getCurrentFunctionEHName(const MachineFunction *MF) {
   assert(MF && "No machine function?");
-  return Mang->makeNameProper(MF->getFunction()->getName() + ".eh",
-                              TAI->getGlobalPrefix());
+  std::string Name = MF->getFunction()->getName();
+  if (Name.empty())
+    Name = Mang->getValueName(MF->getFunction());
+  return Mang->makeNameProper(Name + ".eh", TAI->getGlobalPrefix());
 }
 
 void AsmPrinter::SetupMachineFunction(MachineFunction &MF) {
