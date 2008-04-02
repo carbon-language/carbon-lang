@@ -196,18 +196,16 @@ OPTIONS:
 
 BUILD OPTIONS
 
-  You can specify any build option acceptable to the build command.  For
-  example:
+  You can specify any build option acceptable to the build command.
+
+  For example:
 
      $Prog -o /tmp/myhtmldir make -j4
      
-  The above causes analysis reports to be deposited in /tmp/myhtmldir (or
-  rather a subdirectory corresponding to this particular running of the
-  analyzer), and causes "make" to be run with the "-j4" option, allowing
-  parallel builds (and parallel invocations of the analyzer).
-  
-  NOTE: The analyzer will work for most parallel builds, but not distributed
-        builds (such as using distcc).
+  The above example causes analysis reports to be deposited into
+  a subdirectory of "/tmp/myhtmldir" and to run "make" with the "-j4" option.
+  A different subdirectory is created each time $Prog analyzes a project.
+  The analyzer should support most parallel builds, but not distributed builds.
 
 ENDTEXT
 }
