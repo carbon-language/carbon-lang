@@ -262,7 +262,7 @@ static void GeneratePathDiagnostic(PathDiagnostic& PD,
 
                 if (!E->isIntegerConstantExpr(V2, Ctx, 0, true)) {
                   assert (false &&
-                          "Case condition (RHS) must evaluate to an integer constant.");
+                "Case condition (RHS) must evaluate to an integer constant.");
                   continue;
                 }
                   
