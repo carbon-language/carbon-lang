@@ -1363,7 +1363,8 @@ void CWriter::writeOperandWithCast(Value* Operand, const ICmpInst &Cmp) {
 // generateCompilerSpecificCode - This is where we add conditional compilation
 // directives to cater to specific compilers as need be.
 //
-static void generateCompilerSpecificCode(std::ostream& Out) {
+static void generateCompilerSpecificCode(std::ostream& Out,
+                                         const TargetData *TD) {
   // Alloca is hard to get, and we don't want to include stdlib.h here.
   Out << "/* get a declaration for alloca */\n"
       << "#if defined(__CYGWIN__) || defined(__MINGW32__)\n"
@@ -1480,10 +1481,15 @@ static void generateCompilerSpecificCode(std::ostream& Out) {
       << "#define __builtin_stack_restore(X) /* noop */\n"
       << "#endif\n\n";
 
-  Out << "#ifdef __GNUC__ /* 128-bit integer types */\n"
-      << "typedef int __attribute__((mode(TI))) llvmInt128;\n"
-      << "typedef unsigned __attribute__((mode(TI))) llvmUInt128;\n"
-      << "#endif\n\n";
+  // Output typedefs for 128-bit integers. If these are needed with a
+  // 32-bit target or with a C compiler that doesn't support mode(TI),
+  // more drastic measures will be needed.
+  if (TD->getPointerSize() >= 8) {
+    Out << "#ifdef __GNUC__ /* 128-bit integer types */\n"
+        << "typedef int __attribute__((mode(TI))) llvmInt128;\n"
+        << "typedef unsigned __attribute__((mode(TI))) llvmUInt128;\n"
+        << "#endif\n\n";
+  }
 
   // Output target-specific code that should be inserted into main.
   Out << "#define CODE_FOR_MAIN() /* Any target-specific code for main()*/\n";
@@ -1568,7 +1574,7 @@ bool CWriter::doInitialization(Module &M) {
   Out << "/* Provide Declarations */\n";
   Out << "#include <stdarg.h>\n";      // Varargs support
   Out << "#include <setjmp.h>\n";      // Unwind support
-  generateCompilerSpecificCode(Out);
+  generateCompilerSpecificCode(Out, TD);
 
   // Provide a definition for `bool' if not compiling with a C++ compiler.
   Out << "\n"
