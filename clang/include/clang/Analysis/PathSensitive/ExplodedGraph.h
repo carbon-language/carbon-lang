@@ -123,7 +123,7 @@ public:
   unsigned succ_size() const { return Succs.size(); }
   unsigned pred_size() const { return Preds.size(); }
   bool succ_empty() const { return Succs.empty(); }
-  bool pred_empty() const { return Preds.size(); }
+  bool pred_empty() const { return Preds.empty(); }
   
   bool isSink() const { return Succs.getFlag(); }
   void markAsSink() { Succs.setFlag(); }  
