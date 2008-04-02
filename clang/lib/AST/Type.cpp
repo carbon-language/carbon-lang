@@ -20,7 +20,6 @@
 #include "llvm/Support/Streams.h"
 #include "llvm/ADT/StringExtras.h"
 #include <sstream>
-
 using namespace clang;
 
 Type::~Type() {}
