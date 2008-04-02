@@ -181,10 +181,10 @@ Action::ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
   // fast path for a single digit (which is quite common). A single digit 
   // cannot have a trigraph, escaped newline, radix prefix, or type suffix.
   if (Tok.getLength() == 1) {
-    const char *t = PP.getSourceManager().getCharacterData(Tok.getLocation());
+    const char *Ty = PP.getSourceManager().getCharacterData(Tok.getLocation());
     
     unsigned IntSize =static_cast<unsigned>(Context.getTypeSize(Context.IntTy));
-    return ExprResult(new IntegerLiteral(llvm::APInt(IntSize, *t-'0'),
+    return ExprResult(new IntegerLiteral(llvm::APInt(IntSize, *Ty-'0'),
                                          Context.IntTy, 
                                          Tok.getLocation()));
   }
@@ -225,7 +225,7 @@ Action::ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
   } else if (!Literal.isIntegerLiteral()) {
     return ExprResult(true);
   } else {
-    QualType t;
+    QualType Ty;
 
     // long long is a C99 feature.
     if (!getLangOptions().C99 && !getLangOptions().CPlusPlus0x &&
@@ -238,8 +238,8 @@ Action::ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
     if (Literal.GetIntegerValue(ResultVal)) {
       // If this value didn't fit into uintmax_t, warn and force to ull.
       Diag(Tok.getLocation(), diag::warn_integer_too_large);
-      t = Context.UnsignedLongLongTy;
-      assert(Context.getTypeSize(t) == ResultVal.getBitWidth() &&
+      Ty = Context.UnsignedLongLongTy;
+      assert(Context.getTypeSize(Ty) == ResultVal.getBitWidth() &&
              "long long is not intmax_t?");
     } else {
       // If this value fits into a ULL, try to figure out what else it fits into
@@ -258,17 +258,17 @@ Action::ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
         if (ResultVal.isIntN(IntSize)) {
           // Does it fit in a signed int?
           if (!Literal.isUnsigned && ResultVal[IntSize-1] == 0)
-            t = Context.IntTy;
+            Ty = Context.IntTy;
           else if (AllowUnsigned)
-            t = Context.UnsignedIntTy;
+            Ty = Context.UnsignedIntTy;
         }
         
-        if (!t.isNull())
+        if (!Ty.isNull())
           ResultVal.trunc(IntSize);
       }
       
       // Are long/unsigned long possibilities?
-      if (t.isNull() && !Literal.isLongLong) {
+      if (Ty.isNull() && !Literal.isLongLong) {
         unsigned LongSize =
           static_cast<unsigned>(Context.getTypeSize(Context.LongTy));
      
@@ -276,16 +276,16 @@ Action::ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
         if (ResultVal.isIntN(LongSize)) {
           // Does it fit in a signed long?
           if (!Literal.isUnsigned && ResultVal[LongSize-1] == 0)
-            t = Context.LongTy;
+            Ty = Context.LongTy;
           else if (AllowUnsigned)
-            t = Context.UnsignedLongTy;
+            Ty = Context.UnsignedLongTy;
         }
-        if (!t.isNull())
+        if (!Ty.isNull())
           ResultVal.trunc(LongSize);
       }      
       
       // Finally, check long long if needed.
-      if (t.isNull()) {
+      if (Ty.isNull()) {
         unsigned LongLongSize =
           static_cast<unsigned>(Context.getTypeSize(Context.LongLongTy));
         
@@ -293,21 +293,21 @@ Action::ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
         if (ResultVal.isIntN(LongLongSize)) {
           // Does it fit in a signed long long?
           if (!Literal.isUnsigned && ResultVal[LongLongSize-1] == 0)
-            t = Context.LongLongTy;
+            Ty = Context.LongLongTy;
           else if (AllowUnsigned)
-            t = Context.UnsignedLongLongTy;
+            Ty = Context.UnsignedLongLongTy;
         }
       }
       
       // If we still couldn't decide a type, we probably have something that
       // does not fit in a signed long long, but has no U suffix.
-      if (t.isNull()) {
+      if (Ty.isNull()) {
         Diag(Tok.getLocation(), diag::warn_integer_too_large_for_signed);
-        t = Context.UnsignedLongLongTy;
+        Ty = Context.UnsignedLongLongTy;
       }
     }
 
-    Res = new IntegerLiteral(ResultVal, t, Tok.getLocation());
+    Res = new IntegerLiteral(ResultVal, Ty, Tok.getLocation());
   }
   
   // If this is an imaginary literal, create the ImaginaryLiteral wrapper.
@@ -319,9 +319,9 @@ Action::ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
 
 Action::ExprResult Sema::ActOnParenExpr(SourceLocation L, SourceLocation R,
                                         ExprTy *Val) {
-  Expr *e = (Expr *)Val;
-  assert((e != 0) && "ActOnParenExpr() missing expr");
-  return new ParenExpr(L, R, e);
+  Expr *E = (Expr *)Val;
+  assert((E != 0) && "ActOnParenExpr() missing expr");
+  return new ParenExpr(L, R, E);
 }
 
 /// The UsualUnaryConversions() function is *not* called by this routine.
@@ -511,7 +511,7 @@ CheckOCUVectorComponent(QualType baseType, SourceLocation OpLoc,
   QualType VT = Context.getOCUVectorType(vecType->getElementType(), CompSize);
   // Now look up the TypeDefDecl from the vector type. Without this, 
   // diagostics look bad. We want OCU vector types to appear built-in.
-  for (unsigned i = 0, e = OCUVectorDecls.size(); i != e; ++i) {
+  for (unsigned i = 0, E = OCUVectorDecls.size(); i != E; ++i) {
     if (OCUVectorDecls[i]->getUnderlyingType() == VT)
       return Context.getTypedefType(OCUVectorDecls[i]);
   }
@@ -716,9 +716,9 @@ ActOnInitList(SourceLocation LBraceLoc, ExprTy **initlist, unsigned NumInit,
   // Semantic analysis for initializers is done by ActOnDeclarator() and
   // CheckInitializer() - it requires knowledge of the object being intialized. 
   
-  InitListExpr *e = new InitListExpr(LBraceLoc, InitList, NumInit, RBraceLoc);
-  e->setType(Context.VoidTy); // FIXME: just a place holder for now.
-  return e;
+  InitListExpr *E = new InitListExpr(LBraceLoc, InitList, NumInit, RBraceLoc);
+  E->setType(Context.VoidTy); // FIXME: just a place holder for now.
+  return E;
 }
 
 bool Sema::CheckVectorCast(SourceRange R, QualType VectorTy, QualType Ty) {
@@ -922,27 +922,27 @@ void Sema::DefaultArgumentPromotion(Expr *&Expr) {
 }
 
 /// DefaultFunctionArrayConversion (C99 6.3.2.1p3, C99 6.3.2.1p4).
-void Sema::DefaultFunctionArrayConversion(Expr *&e) {
-  QualType t = e->getType();
-  assert(!t.isNull() && "DefaultFunctionArrayConversion - missing type");
+void Sema::DefaultFunctionArrayConversion(Expr *&E) {
+  QualType Ty = E->getType();
+  assert(!Ty.isNull() && "DefaultFunctionArrayConversion - missing type");
 
-  if (const ReferenceType *ref = t->getAsReferenceType()) {
-    ImpCastExprToType(e, ref->getReferenceeType()); // C++ [expr]
-    t = e->getType();
+  if (const ReferenceType *ref = Ty->getAsReferenceType()) {
+    ImpCastExprToType(E, ref->getReferenceeType()); // C++ [expr]
+    Ty = E->getType();
   }
-  if (t->isFunctionType())
-    ImpCastExprToType(e, Context.getPointerType(t));
-  else if (const ArrayType *ary = t->getAsArrayType()) {
+  if (Ty->isFunctionType())
+    ImpCastExprToType(E, Context.getPointerType(Ty));
+  else if (const ArrayType *ArrayTy = Ty->getAsArrayType()) {
     // Make sure we don't lose qualifiers when dealing with typedefs. Example:
     //   typedef int arr[10];
     //   void test2() {
     //     const arr b;
     //     b[4] = 1;
     //   }
-    QualType ELT = ary->getElementType();
+    QualType ELT = ArrayTy->getElementType();
     // FIXME: Handle ASQualType
-    ELT = ELT.getQualifiedType(t.getCVRQualifiers()|ELT.getCVRQualifiers());
-    ImpCastExprToType(e, Context.getPointerType(ELT));
+    ELT = ELT.getQualifiedType(Ty.getCVRQualifiers()|ELT.getCVRQualifiers());
+    ImpCastExprToType(E, Context.getPointerType(ELT));
   }
 }
 
@@ -971,7 +971,8 @@ Expr *Sema::UsualUnaryConversions(Expr *&Expr) {
 /// binary operators (C99 6.3.1.8). If both operands aren't arithmetic, this
 /// routine returns the first non-arithmetic type found. The client is 
 /// responsible for emitting appropriate error diagnostics.
-/// FIXME: verify the conversion rules for "complex int" are consistent with GCC.
+/// FIXME: verify the conversion rules for "complex int" are consistent with
+/// GCC.
 QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
                                           bool isCompAssign) {
   if (!isCompAssign) {
@@ -1667,32 +1668,32 @@ QualType Sema::CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc) {
 /// This routine allows us to typecheck complex/recursive expressions
 /// where the declaration is needed for type checking. Here are some
 /// examples: &s.xx, &s.zz[1].yy, &(1+2), &(XX), &"123"[2].
-static ValueDecl *getPrimaryDecl(Expr *e) {
-  switch (e->getStmtClass()) {
+static ValueDecl *getPrimaryDecl(Expr *E) {
+  switch (E->getStmtClass()) {
   case Stmt::DeclRefExprClass:
-    return cast<DeclRefExpr>(e)->getDecl();
+    return cast<DeclRefExpr>(E)->getDecl();
   case Stmt::MemberExprClass:
     // Fields cannot be declared with a 'register' storage class.
     // &X->f is always ok, even if X is declared register.
-    if (cast<MemberExpr>(e)->isArrow())
+    if (cast<MemberExpr>(E)->isArrow())
       return 0;
-    return getPrimaryDecl(cast<MemberExpr>(e)->getBase());
+    return getPrimaryDecl(cast<MemberExpr>(E)->getBase());
   case Stmt::ArraySubscriptExprClass: {
     // &X[4] and &4[X] is invalid if X is invalid and X is not a pointer.
   
-    ValueDecl *VD = getPrimaryDecl(cast<ArraySubscriptExpr>(e)->getBase());
+    ValueDecl *VD = getPrimaryDecl(cast<ArraySubscriptExpr>(E)->getBase());
     if (!VD || VD->getType()->isPointerType())
       return 0;
     else
       return VD;
   }
   case Stmt::UnaryOperatorClass:
-    return getPrimaryDecl(cast<UnaryOperator>(e)->getSubExpr());
+    return getPrimaryDecl(cast<UnaryOperator>(E)->getSubExpr());
   case Stmt::ParenExprClass:
-    return getPrimaryDecl(cast<ParenExpr>(e)->getSubExpr());
+    return getPrimaryDecl(cast<ParenExpr>(E)->getSubExpr());
   case Stmt::ImplicitCastExprClass:
     // &X[4] when X is an array, has an implicit cast from array to pointer.
-    return getPrimaryDecl(cast<ImplicitCastExpr>(e)->getSubExpr());
+    return getPrimaryDecl(cast<ImplicitCastExpr>(E)->getSubExpr());
   default:
     return 0;
   }
