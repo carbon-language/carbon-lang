@@ -187,9 +187,9 @@ OPTIONS:
   --help
   
   -k            - Add a "keep on going" option to the specified build command.
-  --keep-going    This command currently supports make and xcodebuild.
-                  This is a convenience option; one can specify this behavior
-                  directly as build options.
+  --keep-going    This option currently supports make and xcodebuild.
+                  This is a convenience option; one can specify this
+                  behavior directly using build options.
 
   -v            - Verbose output from $Prog and the analyzer.
                   A second "-v" increases verbosity.
