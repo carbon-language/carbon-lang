@@ -239,7 +239,7 @@ while (@ARGV) {
     shift @ARGV;
         
     if (!@ARGV) {
-      die "'-o' option requires a target directory name.";
+      die "$Prog: '-o' option requires a target directory name.\n";
     }
     
     $HtmlDir = shift @ARGV;
@@ -257,6 +257,8 @@ while (@ARGV) {
     $Verbose++;
     next;
   }
+  
+  die "$Prog: unrecognized option '$arg'\n" if ($arg =~ /^-/);
   
   last;
 }
