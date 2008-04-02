@@ -198,7 +198,7 @@ private:
   //===--------------------------------------------------------------------===//
   // Symbol table / Decl tracking callbacks: SemaDecl.cpp.
   //
-  virtual DeclTy *isTypeName(const IdentifierInfo &II, Scope *S) const;
+  virtual DeclTy *isTypeName(const IdentifierInfo &II, Scope *S);
   virtual DeclTy *ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup);
   void AddInitializerToDecl(DeclTy *dcl, ExprTy *init);
   virtual DeclTy *FinalizeDeclaratorGroup(Scope *S, DeclTy *Group);
@@ -249,10 +249,11 @@ private:
   /// More parsing and symbol table subroutines...
   ParmVarDecl *ActOnParamDeclarator(struct DeclaratorChunk::ParamInfo &PI, 
                                     Scope *FnBodyScope);  
-  Decl *LookupDecl(IdentifierInfo *II, unsigned NSI, 
-                   SourceLocation IdLoc, Scope *S);
+  Decl *LookupDecl(const IdentifierInfo *II, unsigned NSI, Scope *S,
+                   bool enableLazyBuiltinCreation = true);
   ObjCInterfaceDecl *getObjCInterfaceDecl(IdentifierInfo *Id);
-  ScopedDecl *LazilyCreateBuiltin(IdentifierInfo *II, unsigned ID, Scope *S);
+  ScopedDecl *LazilyCreateBuiltin(IdentifierInfo *II, unsigned ID, 
+                                  Scope *S);
   ScopedDecl *ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,
                                  Scope *S);
   // Decl attributes - this routine is the top level dispatcher. 

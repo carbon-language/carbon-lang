@@ -32,24 +32,10 @@
 #include "llvm/ADT/DenseSet.h"
 using namespace clang;
 
-Sema::DeclTy *Sema::isTypeName(const IdentifierInfo &II, Scope *S) const {
-  Decl *IIDecl = II.getFETokenInfo<Decl>();
-  // Find first occurance of none-tagged declaration
-  while (IIDecl && IIDecl->getIdentifierNamespace() != Decl::IDNS_Ordinary)
-    IIDecl = cast<ScopedDecl>(IIDecl)->getNext();
-  
-  if (!IIDecl) {
-    if (getLangOptions().ObjC1) {
-      // @interface and @compatibility_alias result in new type references. 
-      // Creating a class alias is *extremely* rare.
-      ObjCAliasTy::const_iterator I = ObjCAliasDecls.find(&II);
-      if (I != ObjCAliasDecls.end())
-        return I->second->getClassInterface();
-    }    
-    return 0;
-  }
-  // FIXME: remove ObjCInterfaceDecl check when we make it a named decl.
-  if (isa<TypedefDecl>(IIDecl) || isa<ObjCInterfaceDecl>(IIDecl))
+Sema::DeclTy *Sema::isTypeName(const IdentifierInfo &II, Scope *S) {
+  Decl *IIDecl = LookupDecl(&II, Decl::IDNS_Ordinary, S, false);
+
+  if (IIDecl && (isa<TypedefDecl>(IIDecl) || isa<ObjCInterfaceDecl>(IIDecl)))
     return IIDecl;
   return 0;
 }
@@ -113,13 +99,13 @@ ObjCInterfaceDecl *Sema::getObjCInterfaceDecl(IdentifierInfo *Id) {
   if (ObjCCompatibleAliasDecl *ADecl =
       dyn_cast_or_null<ObjCCompatibleAliasDecl>(IDecl))
     return ADecl->getClassInterface();
-  return cast_or_null<ObjCInterfaceDecl>(IDecl);
+  return dyn_cast_or_null<ObjCInterfaceDecl>(IDecl);
 }
 
 /// LookupDecl - Look up the inner-most declaration in the specified
 /// namespace.
-Decl *Sema::LookupDecl(IdentifierInfo *II, unsigned NSI,
-                       SourceLocation IdLoc, Scope *S) {
+Decl *Sema::LookupDecl(const IdentifierInfo *II, unsigned NSI,
+                       Scope *S, bool enableLazyBuiltinCreation) {
   if (II == 0) return 0;
   Decl::IdentifierNamespace NS = (Decl::IdentifierNamespace)NSI;
   
@@ -134,10 +120,11 @@ Decl *Sema::LookupDecl(IdentifierInfo *II, unsigned NSI,
   // corresponds to a compiler builtin, create the decl object for the builtin
   // now, injecting it into translation unit scope, and return it.
   if (NS == Decl::IDNS_Ordinary) {
-    // If this is a builtin on this (or all) targets, create the decl.
-    if (unsigned BuiltinID = II->getBuiltinID())
-      return LazilyCreateBuiltin(II, BuiltinID, S);
-
+    if (enableLazyBuiltinCreation) {
+      // If this is a builtin on this (or all) targets, create the decl.
+      if (unsigned BuiltinID = II->getBuiltinID())
+        return LazilyCreateBuiltin((IdentifierInfo *)II, BuiltinID, S);
+    }
     if (getLangOptions().ObjC1) {
       // @interface and @compatibility_alias introduce typedef-like names.
       // Unlike typedef's, they can only be introduced at file-scope (and are 
@@ -157,8 +144,7 @@ void Sema::InitBuiltinVaListType()
     return;
   
   IdentifierInfo *VaIdent = &Context.Idents.get("__builtin_va_list");
-  Decl *VaDecl = LookupDecl(VaIdent, Decl::IDNS_Ordinary, 
-                            SourceLocation(), TUScope);
+  Decl *VaDecl = LookupDecl(VaIdent, Decl::IDNS_Ordinary, TUScope);
   TypedefDecl *VaTypedef = cast<TypedefDecl>(VaDecl);
   Context.setBuiltinVaListType(Context.getTypedefType(VaTypedef));
 }
@@ -716,7 +702,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     S = S->getParent();
   
   // See if this is a redefinition of a variable in the same scope.
-  Decl *PrevDecl = LookupDecl(II, Decl::IDNS_Ordinary, D.getIdentifierLoc(), S);
+  Decl *PrevDecl = LookupDecl(II, Decl::IDNS_Ordinary, S);
   ScopedDecl *New;
   bool InvalidDecl = false;
   
@@ -988,8 +974,7 @@ Sema::ActOnParamDeclarator(struct DeclaratorChunk::ParamInfo &PI,
   // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
   // Can this happen for params?  We already checked that they don't conflict
   // among each other.  Here they can only shadow globals, which is ok.
-  if (/*Decl *PrevDecl = */LookupDecl(II, Decl::IDNS_Ordinary,
-                                      PI.IdentLoc, FnScope)) {
+  if (/*Decl *PrevDecl = */LookupDecl(II, Decl::IDNS_Ordinary, FnScope)) {
     
   }
   
@@ -1069,7 +1054,7 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
 
   // See if this is a redefinition.
   Decl *PrevDcl = LookupDecl(D.getIdentifier(), Decl::IDNS_Ordinary,
-                             D.getIdentifierLoc(), GlobalScope);
+                             GlobalScope);
   if (FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(PrevDcl)) {
     if (FD->getBody()) {
       Diag(D.getIdentifierLoc(), diag::err_redefinition, 
@@ -1224,8 +1209,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
   // If this is a named struct, check to see if there was a previous forward
   // declaration or definition.
   if (TagDecl *PrevDecl = 
-          dyn_cast_or_null<TagDecl>(LookupDecl(Name, Decl::IDNS_Tag,
-                                               NameLoc, S))) {
+          dyn_cast_or_null<TagDecl>(LookupDecl(Name, Decl::IDNS_Tag, S))) {
     
     // If this is a use of a previous tag, or if the tag is already declared in
     // the same scope (so that the definition/declaration completes or
@@ -1548,7 +1532,7 @@ Sema::DeclTy *Sema::ActOnEnumConstant(Scope *S, DeclTy *theEnumDecl,
   
   // Verify that there isn't already something declared with this name in this
   // scope.
-  if (Decl *PrevDecl = LookupDecl(Id, Decl::IDNS_Ordinary, IdLoc, S)) {
+  if (Decl *PrevDecl = LookupDecl(Id, Decl::IDNS_Ordinary, S)) {
     if (S->isDeclScope(PrevDecl)) {
       if (isa<EnumConstantDecl>(PrevDecl))
         Diag(IdLoc, diag::err_redefinition_of_enumerator, Id->getName());

@@ -75,7 +75,7 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
                                            IdentifierInfo &II,
                                            bool HasTrailingLParen) {
   // Could be enum-constant, value decl, instance variable, etc.
-  Decl *D = LookupDecl(&II, Decl::IDNS_Ordinary, Loc, S);
+  Decl *D = LookupDecl(&II, Decl::IDNS_Ordinary, S);
   
   // If this reference is in an Objective-C method, then ivar lookup happens as
   // well.
