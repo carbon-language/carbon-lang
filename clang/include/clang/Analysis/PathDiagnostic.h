@@ -33,6 +33,9 @@ public:
   PathDiagnosticPiece(FullSourceLoc pos, const std::string& s)
     : Pos(pos), str(s) {}
   
+  PathDiagnosticPiece(FullSourceLoc pos, const char* s)
+    : Pos(pos), str(s) {}
+  
   const std::string& getString() const { return str; }
     
   void addRange(SourceRange R) {
@@ -61,13 +64,17 @@ public:
 class PathDiagnostic {
   std::list<PathDiagnosticPiece*> path;
   unsigned Size;
-
+  std::string Desc;
 public:
   
   PathDiagnostic() : Size(0) {}
+  PathDiagnostic(const char* desc) : Desc(desc) {}
+  PathDiagnostic(const std::string& desc) : Desc(desc) {}
   
   ~PathDiagnostic();
 
+  const std::string& getDescription() const { return Desc; }
+  
   void push_front(PathDiagnosticPiece* piece) {
     path.push_front(piece);
     ++Size;
