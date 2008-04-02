@@ -86,19 +86,11 @@ void Sema::ActOnPopScope(SourceLocation Loc, Scope *S) {
 
 /// getObjCInterfaceDecl - Look up a for a class declaration in the scope.
 /// return 0 if one not found.
-/// FIXME: removed this when ObjCInterfaceDecl's aren't ScopedDecl's.
 ObjCInterfaceDecl *Sema::getObjCInterfaceDecl(IdentifierInfo *Id) {
-  ScopedDecl *IDecl;
-  // Scan up the scope chain looking for a decl that matches this identifier
-  // that is in the appropriate namespace.
-  for (IDecl = Id->getFETokenInfo<ScopedDecl>(); IDecl; 
-       IDecl = IDecl->getNext())
-    if (IDecl->getIdentifierNamespace() == Decl::IDNS_Ordinary)
-      break;
+  // The third "scope" argument is 0 since we aren't enabling lazy built-in
+  // creation from this context.
+  Decl *IDecl = LookupDecl(Id, Decl::IDNS_Ordinary, 0, false);
   
-  if (ObjCCompatibleAliasDecl *ADecl =
-      dyn_cast_or_null<ObjCCompatibleAliasDecl>(IDecl))
-    return ADecl->getClassInterface();
   return dyn_cast_or_null<ObjCInterfaceDecl>(IDecl);
 }
 
@@ -130,6 +122,9 @@ Decl *Sema::LookupDecl(const IdentifierInfo *II, unsigned NSI,
       // Unlike typedef's, they can only be introduced at file-scope (and are 
       // therefore not scoped decls). They can, however, be shadowed by
       // other names in IDNS_Ordinary.
+      ObjCInterfaceDeclsTy::iterator IDI = ObjCInterfaceDecls.find(II);
+      if (IDI != ObjCInterfaceDecls.end())
+        return IDI->second;
       ObjCAliasTy::iterator I = ObjCAliasDecls.find(II);
       if (I != ObjCAliasDecls.end())
         return I->second->getClassInterface();

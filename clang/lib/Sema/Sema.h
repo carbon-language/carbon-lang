@@ -94,7 +94,14 @@ class Sema : public Action {
   /// with @protocol keyword, so that we can emit errors on duplicates and
   /// find the declarations when needed.
   llvm::DenseMap<IdentifierInfo*, ObjCProtocolDecl*> ObjCProtocols;
-  
+
+  /// ObjCInterfaceDecls - Keep track of all class declarations declared
+  /// with @interface, so that we can emit errors on duplicates and
+  /// find the declarations when needed. 
+  typedef llvm::DenseMap<const IdentifierInfo*, 
+                         ObjCInterfaceDecl*> ObjCInterfaceDeclsTy;
+  ObjCInterfaceDeclsTy ObjCInterfaceDecls;
+    
   /// ObjCAliasDecls - Keep track of all class declarations declared
   /// with @compatibility_alias, so that we can emit errors on duplicates and
   /// find the declarations when needed. This construct is ancient and will
@@ -102,7 +109,7 @@ class Sema : public Action {
   typedef llvm::DenseMap<const IdentifierInfo*, 
                          ObjCCompatibleAliasDecl*> ObjCAliasTy;
   ObjCAliasTy ObjCAliasDecls;
-  
+
   // Enum values used by KnownFunctionIDs (see below).
   enum {
     id_printf,

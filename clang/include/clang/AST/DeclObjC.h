@@ -191,7 +191,11 @@ public:
 ///   Unlike C++, ObjC is a single-rooted class model. In Cocoa, classes
 ///   typically inherit from NSObject (an exception is NSProxy).
 ///
-class ObjCInterfaceDecl : public TypeDecl {
+class ObjCInterfaceDecl : public NamedDecl {
+  /// TypeForDecl - This indicates the Type object that represents this
+  /// TypeDecl.  It is a cache maintained by ASTContext::getObjCInterfaceType
+  Type *TypeForDecl;
+  friend class ASTContext;
   
   /// Class's super class.
   ObjCInterfaceDecl *SuperClass;
@@ -227,7 +231,7 @@ class ObjCInterfaceDecl : public TypeDecl {
 
   ObjCInterfaceDecl(SourceLocation atLoc, unsigned numRefProtos,
                     IdentifierInfo *Id, bool FD, bool isInternal)
-    : TypeDecl(ObjCInterface, atLoc, Id, 0), SuperClass(0),
+    : NamedDecl(ObjCInterface, atLoc, Id), TypeForDecl(0), SuperClass(0),
       ReferencedProtocols(0), NumReferencedProtocols(0), Ivars(0), 
       NumIvars(0),
       InstanceMethods(0), NumInstanceMethods(0), 

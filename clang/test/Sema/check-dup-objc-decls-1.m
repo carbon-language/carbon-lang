@@ -20,8 +20,7 @@ typedef int OBJECT; // expected-error {{previous definition is here}}
 
 typedef int Gorf;  // expected-error {{previous definition is here}}
 
-@interface Gorf @end // expected-error {{redefinition of 'Gorf' as different kind of symbol}} \
-		     // expected-error {{previous definition is here}}
+@interface Gorf @end // expected-error {{redefinition of 'Gorf' as different kind of symbol}}
 
 void Gorf() // expected-error {{redefinition of 'Gorf' as different kind of symbol}}
 {

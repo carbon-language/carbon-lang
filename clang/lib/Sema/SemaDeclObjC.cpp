@@ -101,10 +101,7 @@ Sema::DeclTy *Sema::ActOnStartClassInterface(
     IDecl = ObjCInterfaceDecl::Create(Context, AtInterfaceLoc, NumProtocols,
                                       ClassName);
   
-    // Chain & install the interface decl into the identifier.
-    IDecl->setNext(ClassName->getFETokenInfo<ScopedDecl>());
-    ClassName->setFETokenInfo(IDecl);
-    
+    ObjCInterfaceDecls[ClassName] = IDecl;
     // Remember that this needs to be removed when the scope is popped.
     TUScope->AddDecl(IDecl);
   }
@@ -388,8 +385,7 @@ Sema::DeclTy *Sema::ActOnStartClassImplementation(
     // Build, chain & install the interface decl into the identifier.
     IDecl = ObjCInterfaceDecl::Create(Context, AtClassImplLoc, 0, ClassName, 
                                       false, true);
-    IDecl->setNext(ClassName->getFETokenInfo<ScopedDecl>());
-    ClassName->setFETokenInfo(IDecl);
+    ObjCInterfaceDecls[ClassName] = IDecl;
     IDecl->setSuperClass(SDecl);
     IDecl->setLocEnd(ClassLoc);
     
@@ -597,9 +593,7 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
     if (!IDecl) {  // Not already seen?  Make a forward decl.
       IDecl = ObjCInterfaceDecl::Create(Context, AtClassLoc, 0, IdentList[i],
                                         true);
-      // Chain & install the interface decl into the identifier.
-      IDecl->setNext(IdentList[i]->getFETokenInfo<ScopedDecl>());
-      IdentList[i]->setFETokenInfo(IDecl);
+      ObjCInterfaceDecls[IdentList[i]] = IDecl;
 
       // Remember that this needs to be removed when the scope is popped.
       TUScope->AddDecl(IDecl);
