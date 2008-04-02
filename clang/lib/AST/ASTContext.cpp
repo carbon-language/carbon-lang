@@ -983,7 +983,9 @@ QualType ASTContext::getArrayDecayedType(QualType Ty) {
     PointerQuals = PrettyArrayType->getIndexTypeQualifier();
   }
   
-  // Apply any CVR qualifiers from the array type.
+  // Apply any CVR qualifiers from the array type to the element type.  This
+  // implements C99 6.7.3p8: "If the specification of an array type includes
+  // any type qualifiers, the element type is so qualified, not the array type."
   EltTy = EltTy.getQualifiedType(ArrayQuals | EltTy.getCVRQualifiers());
 
   QualType PtrTy = getPointerType(EltTy);
