@@ -1201,7 +1201,7 @@ void GRExprEngine::VisitReturnStmt(ReturnStmt* S, NodeTy* Pred, NodeSet& Dst) {
   
   QualType T = R->getType();
   
-  if (T->isPointerType() || T->isReferenceType()) {
+  if (T->isPointerLikeType()) {
     
     // Check if any of the return values return the address of a stack variable.
     

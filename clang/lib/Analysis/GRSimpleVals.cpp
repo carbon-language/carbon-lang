@@ -356,7 +356,7 @@ RVal GRSimpleVals::EvalCast(GRExprEngine& Eng, NonLVal X, QualType T) {
 
 RVal GRSimpleVals::EvalCast(GRExprEngine& Eng, LVal X, QualType T) {
   
-  if (T->isPointerType() || T->isReferenceType() || T->isObjCQualifiedIdType())
+  if (T->isPointerLikeType() || T->isObjCQualifiedIdType())
     return X;
   
   assert (T->isIntegerType());

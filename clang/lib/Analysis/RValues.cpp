@@ -225,10 +225,9 @@ RVal RVal::GetSymbolValue(SymbolManager& SymMgr, VarDecl* D) {
 
   QualType T = D->getType();
   
-  if (T->isPointerType() || T->isReferenceType())
+  if (T->isPointerLikeType())
     return lval::SymbolVal(SymMgr.getSymbol(D));
-  else
-    return nonlval::SymbolVal(SymMgr.getSymbol(D));
+  return nonlval::SymbolVal(SymMgr.getSymbol(D));
 }
 
 //===----------------------------------------------------------------------===//

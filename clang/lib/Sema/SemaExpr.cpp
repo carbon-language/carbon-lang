@@ -927,7 +927,7 @@ void Sema::DefaultFunctionArrayConversion(Expr *&E) {
   assert(!Ty.isNull() && "DefaultFunctionArrayConversion - missing type");
 
   if (const ReferenceType *ref = Ty->getAsReferenceType()) {
-    ImpCastExprToType(E, ref->getReferenceeType()); // C++ [expr]
+    ImpCastExprToType(E, ref->getPointeeType()); // C++ [expr]
     Ty = E->getType();
   }
   if (Ty->isFunctionType())
@@ -946,7 +946,7 @@ Expr *Sema::UsualUnaryConversions(Expr *&Expr) {
   assert(!Ty.isNull() && "UsualUnaryConversions - missing type");
   
   if (const ReferenceType *Ref = Ty->getAsReferenceType()) {
-    ImpCastExprToType(Expr, Ref->getReferenceeType()); // C++ [expr]
+    ImpCastExprToType(Expr, Ref->getPointeeType()); // C++ [expr]
     Ty = Expr->getType();
   }
   if (Ty->isPromotableIntegerType()) // C99 6.3.1.1p2
