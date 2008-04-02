@@ -28,7 +28,7 @@ using namespace clang;
 namespace bugdesc {
 
 struct NullDeref {
-  static const char* getName() { return "Null pointer dereference"; }
+  static const char* getName() { return "Null dereference"; }
 
   static PathDiagnosticPiece* getEndPath(SourceManager& SMgr,
                                          ExplodedNode<ValueState> *N);
