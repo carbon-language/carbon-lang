@@ -662,6 +662,12 @@ DIAG(err_typecheck_illegal_vla, ERROR,
      "variable length array declared outside of any function")
 DIAG(err_typecheck_negative_array_size, ERROR,
      "array size is negative")
+DIAG(warn_typecheck_function_qualifiers, WARNING,
+     "qualifier on function type '%0' has unspecified behavior")
+DIAG(err_typecheck_invalid_restrict_not_pointer, ERROR,
+     "restrict requires a pointer or reference ('%0' is invalid)")
+DIAG(err_typecheck_invalid_restrict_invalid_pointee, ERROR,
+     "restrict pointee must be an object or incomplete type ('%0' is invalid)")
 DIAG(ext_typecheck_zero_array_size, EXTENSION,
      "zero size arrays are an extension")
 DIAG(err_at_least_one_initializer_needed_to_size_array, ERROR,

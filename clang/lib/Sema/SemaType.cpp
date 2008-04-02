@@ -28,7 +28,9 @@ QualType Sema::ConvertDeclSpecToType(DeclSpec &DS) {
   
   switch (DS.getTypeSpecType()) {
   default: return QualType(); // FIXME: Handle unimp cases!
-  case DeclSpec::TST_void: return Context.VoidTy;
+  case DeclSpec::TST_void:
+    Result = Context.VoidTy;
+    break;
   case DeclSpec::TST_char:
     if (DS.getTypeSpecSign() == DeclSpec::TSS_unspecified)
       Result = Context.CharTy;
@@ -145,6 +147,57 @@ QualType Sema::ConvertDeclSpecToType(DeclSpec &DS) {
   if (AttributeList *AL = DS.getAttributes())
     DS.SetAttributes(ProcessTypeAttributes(Result, AL));
     
+  // Apply const/volatile/restrict qualifiers to T.
+  if (unsigned TypeQuals = DS.getTypeQualifiers()) {
+
+    // Enforce C99 6.7.3p2: "Types other than pointer types derived from object
+    // or incomplete types shall not be restrict-qualified."  C++ also allows
+    // restrict-qualified references.
+    if (TypeQuals & QualType::Restrict) {
+      QualType EltTy;
+      if (const PointerType *PT = Result->getAsPointerType())
+        EltTy = PT->getPointeeType();
+      else if (const ReferenceType *RT = Result->getAsReferenceType())
+        EltTy = RT->getReferenceeType();
+      else {
+        Diag(DS.getRestrictSpecLoc(),
+             diag::err_typecheck_invalid_restrict_not_pointer,
+             Result.getAsString(), DS.getSourceRange());
+      }
+
+      // If we have a pointer or reference, the pointee must have an object or
+      // incomplete type.
+      if (!EltTy.isNull() && !EltTy->isObjectType() &&
+          !EltTy->isIncompleteType()) {
+        Diag(DS.getRestrictSpecLoc(),
+             diag::err_typecheck_invalid_restrict_invalid_pointee,
+             EltTy.getAsString(), DS.getSourceRange());
+        EltTy = QualType();
+      }
+      
+      if (EltTy.isNull()) // Invalid restrict: remove the restrict qualifier.
+        TypeQuals &= ~QualType::Restrict;
+    }
+    
+    // Warn about CV qualifiers on functions: C99 6.7.3p8: "If the specification
+    // of a function type includes any type qualifiers, the behavior is
+    // undefined."
+    if (Result->isFunctionType() && TypeQuals) {
+      // Get some location to point at, either the C or V location.
+      SourceLocation Loc;
+      if (TypeQuals & QualType::Const)
+        Loc = DS.getConstSpecLoc();
+      else {
+        assert((TypeQuals & QualType::Volatile) &&
+               "Has CV quals but not C or V?");
+        Loc = DS.getVolatileSpecLoc();
+      }
+      Diag(Loc, diag::warn_typecheck_function_qualifiers,
+           Result.getAsString(), DS.getSourceRange());
+    }
+    
+    Result = Result.getQualifiedType(TypeQuals);
+  }
   return Result;
 }
 
@@ -158,9 +211,6 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
   
   QualType T = ConvertDeclSpecToType(D.getDeclSpec());
   
-  // Apply const/volatile/restrict qualifiers to T.
-  T = T.getQualifiedType(D.getDeclSpec().getTypeQualifiers());
-  
   // Walk the DeclTypeInfo, building the recursive type as we go.  DeclTypeInfos
   // are ordered from the identifier out, which is opposite of what we want :).
   for (unsigned i = 0, e = D.getNumTypeObjects(); i != e; ++i) {
@@ -170,12 +220,22 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
     case DeclaratorChunk::Pointer:
       if (T->isReferenceType()) {
         // C++ 8.3.2p4: There shall be no ... pointers to references ...
-        Diag(D.getIdentifierLoc(), diag::err_illegal_decl_pointer_to_reference,
+        Diag(DeclType.Loc, diag::err_illegal_decl_pointer_to_reference,
              D.getIdentifier() ? D.getIdentifier()->getName() : "type name");
         D.setInvalidType(true);
         T = Context.IntTy;
       }
 
+      // Enforce C99 6.7.3p2: "Types other than pointer types derived from
+      // object or incomplete types shall not be restrict-qualified."
+      if ((DeclType.Ptr.TypeQuals & QualType::Restrict) &&
+          !T->isObjectType() && !T->isIncompleteType()) {
+        Diag(DeclType.Loc,
+             diag::err_typecheck_invalid_restrict_invalid_pointee,
+             T.getAsString());
+        DeclType.Ptr.TypeQuals &= QualType::Restrict;
+      }        
+        
       // Apply the pointer typequals to the pointer object.
       T = Context.getPointerType(T).getQualifiedType(DeclType.Ptr.TypeQuals);
         
@@ -187,16 +247,27 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
     case DeclaratorChunk::Reference:
       if (const ReferenceType *RT = T->getAsReferenceType()) {
         // C++ 8.3.2p4: There shall be no references to references.
-        Diag(D.getIdentifierLoc(),
-             diag::err_illegal_decl_reference_to_reference,
+        Diag(DeclType.Loc, diag::err_illegal_decl_reference_to_reference,
              D.getIdentifier() ? D.getIdentifier()->getName() : "type name");
         D.setInvalidType(true);
         T = RT->getReferenceeType();
       }
 
+      // Enforce C99 6.7.3p2: "Types other than pointer types derived from
+      // object or incomplete types shall not be restrict-qualified."
+      if (DeclType.Ref.HasRestrict &&
+          !T->isObjectType() && !T->isIncompleteType()) {
+        Diag(DeclType.Loc,
+             diag::err_typecheck_invalid_restrict_invalid_pointee,
+             T.getAsString());
+        DeclType.Ref.HasRestrict = false;
+      }        
+
       T = Context.getReferenceType(T);
-        
-      // FIXME: Handle Ref.Restrict!
+
+      // Handle restrict on references.
+      if (DeclType.Ref.HasRestrict)
+        T.addRestrict();
         
       // See if there are any attributes on the pointer that apply to it.
       if (AttributeList *AL = DeclType.Ref.AttrList)
