@@ -85,6 +85,14 @@ public:
     ++Size;
   }
   
+  PathDiagnosticPiece* back() {
+    return path.back();
+  }
+  
+  const PathDiagnosticPiece* back() const {
+    return path.back();
+  }
+  
   unsigned size() const { return Size; }
   bool empty() const { return Size == 0; }
   
