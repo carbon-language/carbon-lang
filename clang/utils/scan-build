@@ -181,8 +181,25 @@ sub Postprocess {
 print OUT <<ENDTEXT;
 <html>
 <head>
+<style type="text/css">
+ body { color:#000000; background-color:#ffffff }
+ body { font-family: Helvetica, sans-serif; font-size:10pt }
+ h1 { font-size:12pt }
+ .reports { border: 1px #000000 solid }
+ .reports { border-collapse: collapse; border-spacing: 0px }
+ tr { vertical-align:top }
+ td { border-bottom: 1px #000000 dotted }
+ td { padding:5px; padding-left:5px; padding-right:5px }
+ td.header { border-top: 2px solid #000000; }
+ td.header { border-bottom: 2px solid #000000; }
+ td.header { font-weight: bold; font-family: Verdana }
+</style>
 </head>\n<body>
 <table class="reports">
+<tr>
+  <td class="header">Bug Type</td>
+  <td class="header"></td>
+</tr>
 ENDTEXT
 
   for my $row ( sort { $a->[1] cmp $b->[1] } @Index ) {
@@ -196,9 +213,12 @@ ENDTEXT
     for my $j ( 2 .. $#{$row} ) {
       print OUT "<td>$row->[$j]</td>\n"
     }
+
+    # Emit the "View" link.
     
-#    print OUT "<td><input type=\"button\" value=\"View\"></td>\n";
-    print OUT "<td><a href=\"$ReportFile#EndPath\">View</a></td>\n";
+    print OUT " <td><a href=\"$ReportFile#EndPath\">View</a></td>\n";
+    
+    # End the row.
     print OUT "</tr>\n";
   }
   
@@ -259,6 +279,9 @@ OPTIONS:
   -v            - Verbose output from $Prog and the analyzer.
                   A second "-v" increases verbosity.
 
+  -V            - View analysis results in a web browser when the build
+  --view          completes.
+
 BUILD OPTIONS
 
   You can specify any build option acceptable to the build command.
@@ -281,6 +304,7 @@ ENDTEXT
 
 my $HtmlDir;           # Parent directory to store HTML files.
 my $IgnoreErrors = 0;  # Ignore build errors.
+my $ViewResults  = 0;  # View results when the build terminates.
 
 if (!@ARGV) {
   DisplayHelp();
@@ -318,6 +342,12 @@ while (@ARGV) {
   if ($arg eq "-v") {
     shift @ARGV;
     $Verbose++;
+    next;
+  }
+  
+  if ($arg eq "-V" or $arg eq "--view") {
+    shift @ARGV;
+    $ViewResults = 1;    
     next;
   }
   
@@ -366,3 +396,9 @@ RunBuildCommand(\@ARGV, $IgnoreErrors);
 # Postprocess the HTML directory.
 
 Postprocess($HtmlDir);
+
+if ($ViewResults and -r "$HtmlDir/index.html") {
+  # Only works on Mac OS X (for now).
+  print "Viewing analysis results: '$HtmlDir/index.html'\n";
+  `open $HtmlDir/index.html`
+}
