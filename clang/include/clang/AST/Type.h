@@ -38,6 +38,7 @@ namespace clang {
   class ObjCMethodDecl;
   class Expr;
   class SourceLocation;
+  class PointerLikeType;
   class PointerType;
   class ReferenceType;
   class VectorType;
@@ -303,9 +304,10 @@ public:
   // Type Predicates: Check to see if this type is structurally the specified
   // type, ignoring typedefs and qualifiers.
   bool isFunctionType() const;
+  bool isPointerLikeType() const; // Pointer or Reference.
   bool isPointerType() const;
-  bool isFunctionPointerType() const;
   bool isReferenceType() const;
+  bool isFunctionPointerType() const;
   bool isArrayType() const;
   bool isRecordType() const;
   bool isStructureType() const;   
@@ -321,6 +323,7 @@ public:
   // the best type we can.
   const BuiltinType *getAsBuiltinType() const;   
   const FunctionType *getAsFunctionType() const;   
+  const PointerLikeType *getAsPointerLikeType() const; // Pointer or Reference.
   const PointerType *getAsPointerType() const;
   const ReferenceType *getAsReferenceType() const;
   const ArrayType *getAsArrayType() const;
@@ -488,21 +491,34 @@ protected:
   friend class Type;
 };
 
+/// PointerLikeType - Common base class for pointers and references.
+///
+class PointerLikeType : public Type {
+  QualType PointeeType;
+protected:
+  PointerLikeType(TypeClass K, QualType Pointee, QualType CanonicalPtr) :
+    Type(K, CanonicalPtr), PointeeType(Pointee) {
+  }
+public:
+  
+  QualType getPointeeType() const { return PointeeType; }
+
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == Pointer || T->getTypeClass() == Reference;
+  }
+  static bool classof(const PointerLikeType *) { return true; }
+};
 
 /// PointerType - C99 6.7.5.1 - Pointer Declarators.
 ///
-class PointerType : public Type, public llvm::FoldingSetNode {
-  QualType PointeeType;
+class PointerType : public PointerLikeType, public llvm::FoldingSetNode {
   PointerType(QualType Pointee, QualType CanonicalPtr) :
-    Type(Pointer, CanonicalPtr), PointeeType(Pointee) {
+    PointerLikeType(Pointer, Pointee, CanonicalPtr) {
   }
   friend class ASTContext;  // ASTContext creates these.
 public:
-    
-  QualType getPointeeType() const { return PointeeType; }
   
   virtual void getAsStringInternal(std::string &InnerString) const;
-  
   
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, getPointeeType());
@@ -522,19 +538,16 @@ protected:
 
 /// ReferenceType - C++ 8.3.2 - Reference Declarators.
 ///
-class ReferenceType : public Type, public llvm::FoldingSetNode {
-  QualType ReferenceeType;
+class ReferenceType : public PointerLikeType, public llvm::FoldingSetNode {
   ReferenceType(QualType Referencee, QualType CanonicalRef) :
-    Type(Reference, CanonicalRef), ReferenceeType(Referencee) {
+    PointerLikeType(Reference, Referencee, CanonicalRef) {
   }
   friend class ASTContext;  // ASTContext creates these.
 public:
   virtual void getAsStringInternal(std::string &InnerString) const;
 
-  QualType getReferenceeType() const { return ReferenceeType; }
-
   void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, getReferenceeType());
+    Profile(ID, getPointeeType());
   }
   static void Profile(llvm::FoldingSetNodeID &ID, QualType Referencee) {
     ID.AddPointer(Referencee.getAsOpaquePtr());
@@ -1139,14 +1152,17 @@ inline bool Type::isFunctionType() const {
 inline bool Type::isPointerType() const {
   return isa<PointerType>(CanonicalType.getUnqualifiedType()); 
 }
+inline bool Type::isReferenceType() const {
+  return isa<ReferenceType>(CanonicalType.getUnqualifiedType());
+}
+inline bool Type::isPointerLikeType() const {
+  return isa<PointerLikeType>(CanonicalType.getUnqualifiedType()); 
+}
 inline bool Type::isFunctionPointerType() const {
   if (const PointerType* T = getAsPointerType())
     return T->getPointeeType()->isFunctionType();
   else
     return false;
-}
-inline bool Type::isReferenceType() const {
-  return isa<ReferenceType>(CanonicalType.getUnqualifiedType());
 }
 inline bool Type::isArrayType() const {
   return isa<ArrayType>(CanonicalType.getUnqualifiedType());

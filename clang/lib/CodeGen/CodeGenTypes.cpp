@@ -206,14 +206,10 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
       ConvertType(cast<ComplexType>(Ty).getElementType());
     return llvm::StructType::get(EltTy, EltTy, NULL);
   }
+  case Type::Reference:
   case Type::Pointer: {
-    const PointerType &P = cast<PointerType>(Ty);
-    QualType ETy = P.getPointeeType();
+    QualType ETy = cast<PointerLikeType>(Ty).getPointeeType();
     return llvm::PointerType::get(ConvertType(ETy), ETy.getAddressSpace()); 
-  }
-  case Type::Reference: {
-    const ReferenceType &R = cast<ReferenceType>(Ty);
-    return llvm::PointerType::getUnqual(ConvertType(R.getReferenceeType()));
   }
     
   case Type::VariableArray: {

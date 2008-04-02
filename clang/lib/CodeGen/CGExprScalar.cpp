@@ -213,7 +213,7 @@ public:
     return EmitSizeAlignOf(E->getSubExpr()->getType(), E->getType(), false);
   }
   Value *EmitSizeAlignOf(QualType TypeToSize, QualType RetType,
-                               bool isSizeOf);
+                         bool isSizeOf);
   Value *VisitUnaryReal     (const UnaryOperator *E);
   Value *VisitUnaryImag     (const UnaryOperator *E);
   Value *VisitUnaryExtension(const UnaryOperator *E) {
@@ -537,7 +537,7 @@ Value *ScalarExprEmitter::VisitImplicitCastExpr(const ImplicitCastExpr *E) {
     
   } else if (E->getType()->isReferenceType()) {
     assert(cast<ReferenceType>(E->getType().getCanonicalType())->
-           getReferenceeType() == 
+           getPointeeType() == 
            Op->getType().getCanonicalType() && "Incompatible types!");
     
     return EmitLValue(Op).getAddress();

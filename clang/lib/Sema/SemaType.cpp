@@ -154,28 +154,23 @@ QualType Sema::ConvertDeclSpecToType(DeclSpec &DS) {
     // or incomplete types shall not be restrict-qualified."  C++ also allows
     // restrict-qualified references.
     if (TypeQuals & QualType::Restrict) {
-      QualType EltTy;
-      if (const PointerType *PT = Result->getAsPointerType())
-        EltTy = PT->getPointeeType();
-      else if (const ReferenceType *RT = Result->getAsReferenceType())
-        EltTy = RT->getReferenceeType();
-      else {
+      if (const PointerLikeType *PT = Result->getAsPointerLikeType()) {
+        QualType EltTy = PT->getPointeeType();
+      
+        // If we have a pointer or reference, the pointee must have an object or
+        // incomplete type.
+        if (!EltTy->isIncompleteOrObjectType()) {
+          Diag(DS.getRestrictSpecLoc(),
+               diag::err_typecheck_invalid_restrict_invalid_pointee,
+               EltTy.getAsString(), DS.getSourceRange());
+          TypeQuals &= ~QualType::Restrict; // Remove the restrict qualifier.
+        }
+      } else {
         Diag(DS.getRestrictSpecLoc(),
              diag::err_typecheck_invalid_restrict_not_pointer,
              Result.getAsString(), DS.getSourceRange());
+        TypeQuals &= ~QualType::Restrict; // Remove the restrict qualifier.
       }
-
-      // If we have a pointer or reference, the pointee must have an object or
-      // incomplete type.
-      if (!EltTy.isNull() && !EltTy->isIncompleteOrObjectType()) {
-        Diag(DS.getRestrictSpecLoc(),
-             diag::err_typecheck_invalid_restrict_invalid_pointee,
-             EltTy.getAsString(), DS.getSourceRange());
-        EltTy = QualType();
-      }
-      
-      if (EltTy.isNull()) // Invalid restrict: remove the restrict qualifier.
-        TypeQuals &= ~QualType::Restrict;
     }
     
     // Warn about CV qualifiers on functions: C99 6.7.3p8: "If the specification
@@ -249,7 +244,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
         Diag(DeclType.Loc, diag::err_illegal_decl_reference_to_reference,
              D.getIdentifier() ? D.getIdentifier()->getName() : "type name");
         D.setInvalidType(true);
-        T = RT->getReferenceeType();
+        T = RT->getPointeeType();
       }
 
       // Enforce C99 6.7.3p2: "Types other than pointer types derived from
@@ -299,7 +294,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
         // C++ 8.3.2p4: There shall be no ... arrays of references ...
         Diag(D.getIdentifierLoc(), diag::err_illegal_decl_array_of_references,
              D.getIdentifier() ? D.getIdentifier()->getName() : "type name");
-        T = RT->getReferenceeType();
+        T = RT->getPointeeType();
         D.setInvalidType(true);
       } else if (const RecordType *EltTy = T->getAsRecordType()) {
         // If the element type is a struct or union that contains a variadic

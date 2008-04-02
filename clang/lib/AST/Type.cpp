@@ -155,6 +155,24 @@ const FunctionType *Type::getAsFunctionType() const {
   return getDesugaredType()->getAsFunctionType();
 }
 
+const PointerLikeType *Type::getAsPointerLikeType() const {
+  // If this is directly a pointer-like type, return it.
+  if (const PointerLikeType *PTy = dyn_cast<PointerLikeType>(this))
+    return PTy;
+  
+  // If the canonical form of this type isn't the right kind, reject it.
+  if (!isa<PointerLikeType>(CanonicalType)) {
+    // Look through type qualifiers
+    if (isa<PointerLikeType>(CanonicalType.getUnqualifiedType()))
+      return CanonicalType.getUnqualifiedType()->getAsPointerLikeType();
+    return 0;
+  }
+  
+  // If this is a typedef for a pointer type, strip the typedef off without
+  // losing all typedef information.
+  return getDesugaredType()->getAsPointerLikeType();
+}
+
 const PointerType *Type::getAsPointerType() const {
   // If this is directly a pointer type, return it.
   if (const PointerType *PTy = dyn_cast<PointerType>(this))
@@ -796,10 +814,10 @@ void PointerType::getAsStringInternal(std::string &S) const {
   
   // Handle things like 'int (*A)[4];' correctly.
   // FIXME: this should include vectors, but vectors use attributes I guess.
-  if (isa<ArrayType>(PointeeType.getTypePtr()))
+  if (isa<ArrayType>(getPointeeType()))
     S = '(' + S + ')';
   
-  PointeeType.getAsStringInternal(S);
+  getPointeeType().getAsStringInternal(S);
 }
 
 void ReferenceType::getAsStringInternal(std::string &S) const {
@@ -807,10 +825,10 @@ void ReferenceType::getAsStringInternal(std::string &S) const {
   
   // Handle things like 'int (&A)[4];' correctly.
   // FIXME: this should include vectors, but vectors use attributes I guess.
-  if (isa<ArrayType>(ReferenceeType.getTypePtr()))
+  if (isa<ArrayType>(getPointeeType()))
     S = '(' + S + ')';
   
-  ReferenceeType.getAsStringInternal(S);
+  getPointeeType().getAsStringInternal(S);
 }
 
 void ConstantArrayType::getAsStringInternal(std::string &S) const {

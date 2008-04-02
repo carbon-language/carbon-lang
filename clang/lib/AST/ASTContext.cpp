@@ -281,7 +281,7 @@ ASTContext::getTypeInfo(QualType T) {
     // of the referenced type." C++98 5.3.3p2: expr.sizeof.
     // FIXME: This is wrong for struct layout: a reference in a struct has
     // pointer size.
-    return getTypeInfo(cast<ReferenceType>(T)->getReferenceeType());
+    return getTypeInfo(cast<ReferenceType>(T)->getPointeeType());
     
   case Type::Complex: {
     // Complex types have the same alignment as their elements, but twice the
@@ -1725,12 +1725,12 @@ bool ASTContext::referenceTypesAreCompatible(QualType lhs, QualType rhs) {
   QualType ltype = lhs;
 
   if (lhs->isReferenceType())
-    ltype = cast<ReferenceType>(lhs.getCanonicalType())->getReferenceeType();
+    ltype = cast<ReferenceType>(lhs.getCanonicalType())->getPointeeType();
 
   QualType rtype = rhs;
 
   if (rhs->isReferenceType())
-    rtype = cast<ReferenceType>(rhs.getCanonicalType())->getReferenceeType();
+    rtype = cast<ReferenceType>(rhs.getCanonicalType())->getPointeeType();
 
   return typesAreCompatible(ltype, rtype);
 }
@@ -1817,9 +1817,9 @@ bool ASTContext::typesAreCompatible(QualType lhs, QualType rhs) {
   // designates the object or function denoted by the reference, and the
   // expression is an lvalue.
   if (ReferenceType *RT = dyn_cast<ReferenceType>(lcanon))
-    lcanon = RT->getReferenceeType();
+    lcanon = RT->getPointeeType();
   if (ReferenceType *RT = dyn_cast<ReferenceType>(rcanon))
-    rcanon = RT->getReferenceeType();
+    rcanon = RT->getPointeeType();
   
   Type::TypeClass LHSClass = lcanon->getTypeClass();
   Type::TypeClass RHSClass = rcanon->getTypeClass();
