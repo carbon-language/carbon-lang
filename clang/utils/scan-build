@@ -133,7 +133,7 @@ sub Postprocess {
   closedir(DIR);
 
   if (scalar(@files) == 0) {
-    print "$Prog: Remove directory '$Dir' because it contains no reports.\n";
+    print "$Prog: Removing directory '$Dir' because it contains no reports.\n";
     `rm -fR $Dir`;
     return;
   }
