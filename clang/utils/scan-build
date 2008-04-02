@@ -15,6 +15,7 @@
 use strict;
 use warnings;
 use File::Temp qw/ :mktemp /;
+use FindBin qw($RealBin);
 
 my $Verbose = 0;       # Verbose output from this script.
 my $Prog = "scan-build";
@@ -127,19 +128,46 @@ sub ScanFile {
   open(IN, "$Dir/$FName") or die "$Prog: Cannot open '$Dir/$FName'\n";
 
   my $BugDesc = "";
+  my $BugFile = "";
+  my $BugPathLength = 1;
+  my $BugLine = 0;
   
   while (<IN>) {
     
     if (/<!-- BUGDESC (.*) -->$/) {
       $BugDesc = $1;
-      last;
     }
-
+    elsif (/<!-- BUGFILE (.*) -->$/) {
+      $BugFile = $1;
+    }
+    elsif (/<!-- BUGPATHLENGTH (.*) -->$/) {
+      $BugPathLength = $1;
+    }
+    elsif (/<!-- BUGLINE (.*) -->$/) {
+      $BugLine = $1;    
+    }
   }
 
   close(IN);
     
-  push @$Index,[ $FName, $BugDesc ];
+  push @$Index,[ $FName, $BugDesc, $BugFile, $BugLine, $BugPathLength ];
+}
+
+##----------------------------------------------------------------------------##
+# CopyJS - Copy JavaScript code to target directory.
+##----------------------------------------------------------------------------##
+
+sub CopyJS {
+
+  my $Dir = shift;
+  
+  die "$Prog: Cannot find 'sorttable.js'.\n"
+    if (! -r "$RealBin/sorttable.js");  
+
+  `cp $RealBin/sorttable.js $Dir`;
+
+  die "$Prog: Could not copy 'sorttable.js' to '$Dir'."
+    if (! -r "$Dir/sorttable.js");
 }
 
 ##----------------------------------------------------------------------------##
@@ -183,21 +211,31 @@ print OUT <<ENDTEXT;
 <head>
 <style type="text/css">
  body { color:#000000; background-color:#ffffff }
- body { font-family: Helvetica, sans-serif; font-size:10pt }
+ body { font-family: Helvetica, sans-serif; font-size:9pt }
  h1 { font-size:12pt }
- .reports { border: 1px #000000 solid }
- .reports { border-collapse: collapse; border-spacing: 0px }
- tr { vertical-align:top }
+ table.sortable thead {
+   background-color:#eee; color:#666666;
+   font-weight: bold; cursor: default;
+ }
+ table.sortable { border: 1px #000000 solid }
+ table.sortable { border-collapse: collapse; border-spacing: 0px }
  td { border-bottom: 1px #000000 dotted }
- td { padding:5px; padding-left:5px; padding-right:5px }
+ td { padding:5px; padding-left:8px; padding-right:8px }
+ td { text-align:right; font-size:9pt }
+ td.header { text-align:center}
  td.header { border-top: 2px solid #000000; }
  td.header { border-bottom: 2px solid #000000; }
  td.header { font-weight: bold; font-family: Verdana }
+ td.View   { padding-left: 10px }
 </style>
+<script src="sorttable.js"></script>
 </head>\n<body>
-<table class="reports">
+<table class="sortable">
 <tr>
   <td class="header">Bug Type</td>
+  <td class="header">File</td>
+  <td class="header">Line</td>
+  <td class="header">Path Length</td>
   <td class="header"></td>
 </tr>
 ENDTEXT
@@ -208,7 +246,9 @@ ENDTEXT
 
     my $ReportFile = $row->[0];
 
-    print OUT " <td class=\"DESC\">$row->[1]</td>\n";
+    print OUT " <td class=\"DESC\">";
+    print OUT lc($row->[1]);
+    print OUT "</td>\n";
     
     for my $j ( 2 .. $#{$row} ) {
       print OUT "<td>$row->[$j]</td>\n"
@@ -216,7 +256,7 @@ ENDTEXT
 
     # Emit the "View" link.
     
-    print OUT " <td><a href=\"$ReportFile#EndPath\">View</a></td>\n";
+    print OUT " <td class=\"View\"><a href=\"$ReportFile#EndPath\">View</a></td>\n";
     
     # End the row.
     print OUT "</tr>\n";
@@ -224,6 +264,10 @@ ENDTEXT
   
   print OUT "</table>\n</body></html>\n";  
   close(OUT);
+  
+  print "$RealBin\n";
+  
+  CopyJS($Dir);
 }
 
 ##----------------------------------------------------------------------------##
@@ -247,7 +291,7 @@ sub RunBuildCommand {
     elsif ($Cmd eq "xcodebuild") {
       push @$Args, "-PBXBuildsContinueAfterErrors=YES";
     }
-  }
+  }  
   
   system(@$Args);
 }
