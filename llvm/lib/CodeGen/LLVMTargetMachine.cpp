@@ -19,6 +19,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/Collector.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;
@@ -66,7 +67,7 @@ LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   
   PM.add(createGCLoweringPass());
 
-  if (!ExceptionHandling)
+  if (!getTargetAsmInfo()->doesSupportExceptionHandling())
     PM.add(createLowerInvokePass(getTargetLowering()));
 
   // Make sure that no unreachable blocks are instruction selected.
@@ -192,7 +193,7 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(PassManagerBase &PM,
   
   PM.add(createGCLoweringPass());
   
-  if (!ExceptionHandling)
+  if (!getTargetAsmInfo()->doesSupportExceptionHandling())
     PM.add(createLowerInvokePass(getTargetLowering()));
   
   // Make sure that no unreachable blocks are instruction selected.

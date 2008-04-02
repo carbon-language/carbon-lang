@@ -150,8 +150,9 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
        F->getLinkage() == Function::WeakLinkage))
     O << "Lllvm$workaround$fake$stub$" << CurrentFnName << ":\n";
 
-  if (TAI->doesSupportDebugInformation()) {
-    // Emit pre-function debug information.
+  if (TAI->doesSupportDebugInformation() ||
+      TAI->doesSupportExceptionHandling()) {
+    // Emit pre-function debug and/or EH information.
     DW.BeginFunction(&MF);
   }
 

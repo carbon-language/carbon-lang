@@ -1091,10 +1091,6 @@ public:
   ///
   bool hasDebugInfo() const { return !CompileUnits.empty(); }
   
-  /// needsFrameInfo - Returns true if we need to gather callee-saved register
-  /// move info for the frame.
-  bool needsFrameInfo() const;
-
   bool callsEHReturn() const { return CallsEHReturn; }
   void setCallsEHReturn(bool b) { CallsEHReturn = b; }
 

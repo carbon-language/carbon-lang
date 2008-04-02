@@ -1583,12 +1583,6 @@ void MachineModuleInfo::AnalyzeModule(Module &M) {
   }
 }
 
-/// needsFrameInfo - Returns true if we need to gather callee-saved register
-/// move info for the frame.
-bool MachineModuleInfo::needsFrameInfo() const {
-  return hasDebugInfo() || ExceptionHandling;
-}
-
 /// SetupCompileUnits - Set up the unique vector of compile units.
 ///
 void MachineModuleInfo::SetupCompileUnits(Module &M) {

@@ -2827,22 +2827,18 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   }
     
   case Intrinsic::eh_exception: {
-    if (ExceptionHandling) {
-      if (!CurMBB->isLandingPad()) {
-        // FIXME: Mark exception register as live in.  Hack for PR1508.
-        unsigned Reg = TLI.getExceptionAddressRegister();
-        if (Reg) CurMBB->addLiveIn(Reg);
-      }
-      // Insert the EXCEPTIONADDR instruction.
-      SDVTList VTs = DAG.getVTList(TLI.getPointerTy(), MVT::Other);
-      SDOperand Ops[1];
-      Ops[0] = DAG.getRoot();
-      SDOperand Op = DAG.getNode(ISD::EXCEPTIONADDR, VTs, Ops, 1);
-      setValue(&I, Op);
-      DAG.setRoot(Op.getValue(1));
-    } else {
-      setValue(&I, DAG.getConstant(0, TLI.getPointerTy()));
+    if (!CurMBB->isLandingPad()) {
+      // FIXME: Mark exception register as live in.  Hack for PR1508.
+      unsigned Reg = TLI.getExceptionAddressRegister();
+      if (Reg) CurMBB->addLiveIn(Reg);
     }
+    // Insert the EXCEPTIONADDR instruction.
+    SDVTList VTs = DAG.getVTList(TLI.getPointerTy(), MVT::Other);
+    SDOperand Ops[1];
+    Ops[0] = DAG.getRoot();
+    SDOperand Op = DAG.getNode(ISD::EXCEPTIONADDR, VTs, Ops, 1);
+    setValue(&I, Op);
+    DAG.setRoot(Op.getValue(1));
     return 0;
   }
 
@@ -2852,7 +2848,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     MVT::ValueType VT = (Intrinsic == Intrinsic::eh_selector_i32 ?
                          MVT::i32 : MVT::i64);
     
-    if (ExceptionHandling && MMI) {
+    if (MMI) {
       if (CurMBB->isLandingPad())
         addCatchInfo(I, MMI, CurMBB);
       else {
@@ -2902,7 +2898,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::eh_return: {
     MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
 
-    if (MMI && ExceptionHandling) {
+    if (MMI) {
       MMI->setCallsEHReturn(true);
       DAG.setRoot(DAG.getNode(ISD::EH_RETURN,
                               MVT::Other,
@@ -2925,32 +2921,27 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
    }
 
    case Intrinsic::eh_dwarf_cfa: {
-     if (ExceptionHandling) {
-       MVT::ValueType VT = getValue(I.getOperand(1)).getValueType();
-       SDOperand CfaArg;
-       if (MVT::getSizeInBits(VT) > MVT::getSizeInBits(TLI.getPointerTy()))
-         CfaArg = DAG.getNode(ISD::TRUNCATE,
-                              TLI.getPointerTy(), getValue(I.getOperand(1)));
-       else
-         CfaArg = DAG.getNode(ISD::SIGN_EXTEND,
-                              TLI.getPointerTy(), getValue(I.getOperand(1)));
-       
-       SDOperand Offset = DAG.getNode(ISD::ADD,
-                                      TLI.getPointerTy(),
-                                      DAG.getNode(ISD::FRAME_TO_ARGS_OFFSET,
-                                                  TLI.getPointerTy()),
-                                      CfaArg);
-       setValue(&I, DAG.getNode(ISD::ADD,
-                                TLI.getPointerTy(),
-                                DAG.getNode(ISD::FRAMEADDR,
-                                            TLI.getPointerTy(),
-                                            DAG.getConstant(0,
-                                                            TLI.getPointerTy())),
-                                Offset));
-     } else {
-       setValue(&I, DAG.getConstant(0, TLI.getPointerTy()));
-     }
+     MVT::ValueType VT = getValue(I.getOperand(1)).getValueType();
+     SDOperand CfaArg;
+     if (MVT::getSizeInBits(VT) > MVT::getSizeInBits(TLI.getPointerTy()))
+       CfaArg = DAG.getNode(ISD::TRUNCATE,
+                            TLI.getPointerTy(), getValue(I.getOperand(1)));
+     else
+       CfaArg = DAG.getNode(ISD::SIGN_EXTEND,
+                            TLI.getPointerTy(), getValue(I.getOperand(1)));
 
+     SDOperand Offset = DAG.getNode(ISD::ADD,
+                                    TLI.getPointerTy(),
+                                    DAG.getNode(ISD::FRAME_TO_ARGS_OFFSET,
+                                                TLI.getPointerTy()),
+                                    CfaArg);
+     setValue(&I, DAG.getNode(ISD::ADD,
+                              TLI.getPointerTy(),
+                              DAG.getNode(ISD::FRAMEADDR,
+                                          TLI.getPointerTy(),
+                                          DAG.getConstant(0,
+                                                          TLI.getPointerTy())),
+                              Offset));
      return 0;
   }
 
@@ -3176,7 +3167,7 @@ void SelectionDAGLowering::LowerCallTo(CallSite CS, SDOperand Callee,
     Args.push_back(Entry);
   }
 
-  if (LandingPad && ExceptionHandling && MMI) {
+  if (LandingPad && MMI) {
     // Insert a label before the invoke call to mark the try range.  This can be
     // used to detect deletion of the invoke via the MachineModuleInfo.
     BeginLabel = MMI->NextLabelID();
@@ -3195,7 +3186,7 @@ void SelectionDAGLowering::LowerCallTo(CallSite CS, SDOperand Callee,
     setValue(CS.getInstruction(), Result.first);
   DAG.setRoot(Result.second);
 
-  if (LandingPad && ExceptionHandling && MMI) {
+  if (LandingPad && MMI) {
     // Insert a label at the end of the invoke call to mark the try range.  This
     // can be used to detect deletion of the invoke via the MachineModuleInfo.
     EndLabel = MMI->NextLabelID();
@@ -4614,11 +4605,10 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
 
   FunctionLoweringInfo FuncInfo(TLI, Fn, MF);
 
-  if (ExceptionHandling)
-    for (Function::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
-      if (InvokeInst *Invoke = dyn_cast<InvokeInst>(I->getTerminator()))
-        // Mark landing pad.
-        FuncInfo.MBBMap[Invoke->getSuccessor(1)]->setIsLandingPad();
+  for (Function::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
+    if (InvokeInst *Invoke = dyn_cast<InvokeInst>(I->getTerminator()))
+      // Mark landing pad.
+      FuncInfo.MBBMap[Invoke->getSuccessor(1)]->setIsLandingPad();
 
   for (Function::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
     SelectBasicBlock(I, MF, FuncInfo);
@@ -4757,7 +4747,7 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
 
   MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
 
-  if (ExceptionHandling && MMI && BB->isLandingPad()) {
+  if (MMI && BB->isLandingPad()) {
     // Add a label to mark the beginning of the landing pad.  Deletion of the
     // landing pad can thus be detected via the MachineModuleInfo.
     unsigned LabelID = MMI->addLandingPad(BB);

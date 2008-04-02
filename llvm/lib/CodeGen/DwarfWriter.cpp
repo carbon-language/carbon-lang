@@ -2777,10 +2777,22 @@ private:
   };
 
   std::vector<FunctionEHFrameInfo> EHFrames;
-    
-  /// shouldEmit - Flag to indicate if debug information should be emitted.
-  ///
-  bool shouldEmit;
+
+  /// shouldEmitTable - Per-function flag to indicate if EH tables should
+  /// be emitted.
+  bool shouldEmitTable;
+
+  /// shouldEmitMoves - Per-function flag to indicate if frame moves info
+  /// should be emitted.
+  bool shouldEmitMoves;
+
+  /// shouldEmitTableModule - Per-module flag to indicate if EH tables
+  /// should be emitted.
+  bool shouldEmitTableModule;
+
+  /// shouldEmitFrameModule - Per-module flag to indicate if frame moves 
+  /// should be emitted.
+  bool shouldEmitMovesModule;
   
   /// EmitCommonEHFrame - Emit the common eh unwind frame.
   ///
@@ -3045,9 +3057,6 @@ private:
   };
 
   void EmitExceptionTable() {
-    // Map all labels and get rid of any dead landing pads.
-    MMI->TidyLandingPads();
-
     const std::vector<GlobalVariable *> &TypeInfos = MMI->getTypeInfos();
     const std::vector<unsigned> &FilterIds = MMI->getFilterIds();
     const std::vector<LandingPadInfo> &PadInfos = MMI->getLandingPads();
@@ -3367,7 +3376,10 @@ public:
   //
   DwarfException(std::ostream &OS, AsmPrinter *A, const TargetAsmInfo *T)
   : Dwarf(OS, A, T, "eh")
-  , shouldEmit(false)
+  , shouldEmitTable(false)
+  , shouldEmitMoves(false)
+  , shouldEmitTableModule(false)
+  , shouldEmitMovesModule(false)
   {}
   
   virtual ~DwarfException() {}
@@ -3387,48 +3399,59 @@ public:
   /// EndModule - Emit all exception information that should come after the
   /// content.
   void EndModule() {
-    if (!shouldEmit) return;
+    if (shouldEmitMovesModule || shouldEmitTableModule) {
+      const std::vector<Function *> Personalities = MMI->getPersonalities();
+      for (unsigned i =0; i < Personalities.size(); ++i)
+        EmitCommonEHFrame(Personalities[i], i);
 
-    const std::vector<Function *> Personalities = MMI->getPersonalities();
-    for (unsigned i =0; i < Personalities.size(); ++i)
-      EmitCommonEHFrame(Personalities[i], i);
-
-    for (std::vector<FunctionEHFrameInfo>::iterator I = EHFrames.begin(),
-           E = EHFrames.end(); I != E; ++I)
-      EmitEHFrame(*I);
+      for (std::vector<FunctionEHFrameInfo>::iterator I = EHFrames.begin(),
+             E = EHFrames.end(); I != E; ++I)
+        EmitEHFrame(*I);
+    }
   }
 
   /// BeginFunction - Gather pre-function exception information.  Assumes being 
   /// emitted immediately after the function entry point.
   void BeginFunction(MachineFunction *MF) {
     this->MF = MF;
-    
-    if (MMI &&
-        ExceptionHandling &&
-        TAI->doesSupportExceptionHandling()) {
-      shouldEmit = true;
-      // Assumes in correct section after the entry point.
-      EmitLabel("eh_func_begin", ++SubprogramCount);
+    shouldEmitTable = shouldEmitMoves = false;
+    if (TAI->doesSupportExceptionHandling()) {
+
+      // Map all labels and get rid of any dead landing pads.
+      MMI->TidyLandingPads();
+      // If any landing pads survive, we need an EH table.
+      if (MMI->getLandingPads().size())
+        shouldEmitTable = true;
+
+      // See if we need frame move info.
+      if (MMI->hasDebugInfo() || !MF->getFunction()->doesNotThrow())
+        shouldEmitMoves = true;
+
+      if (shouldEmitMoves || shouldEmitTable)
+        // Assumes in correct section after the entry point.
+        EmitLabel("eh_func_begin", ++SubprogramCount);
     }
+    shouldEmitTableModule |= shouldEmitTable;
+    shouldEmitMovesModule |= shouldEmitMoves;
   }
 
   /// EndFunction - Gather and emit post-function exception information.
   ///
   void EndFunction() {
-    if (!shouldEmit) return;
+    if (shouldEmitMoves || shouldEmitTable) {
+      EmitLabel("eh_func_end", SubprogramCount);
+      EmitExceptionTable();
 
-    EmitLabel("eh_func_end", SubprogramCount);
-    EmitExceptionTable();
-
-    // Save EH frame information
-    EHFrames.
-      push_back(FunctionEHFrameInfo(getAsm()->getCurrentFunctionEHName(MF),
+      // Save EH frame information
+      EHFrames.
+        push_back(FunctionEHFrameInfo(getAsm()->getCurrentFunctionEHName(MF),
                                     SubprogramCount,
                                     MMI->getPersonalityIndex(),
                                     MF->getFrameInfo()->hasCalls(),
                                     !MMI->getLandingPads().empty(),
                                     MMI->getFrameMoves(),
                                     MF->getFunction()));
+      }
   }
 };
 
