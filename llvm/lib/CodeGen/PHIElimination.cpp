@@ -24,8 +24,9 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Compiler.h"
-#include <set>
 #include <algorithm>
+#include <map>
+#include <set>
 using namespace llvm;
 
 STATISTIC(NumAtomic, "Number of atomic phis lowered");
