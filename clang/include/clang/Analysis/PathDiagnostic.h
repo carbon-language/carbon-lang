@@ -68,8 +68,8 @@ class PathDiagnostic {
 public:
   
   PathDiagnostic() : Size(0) {}
-  PathDiagnostic(const char* desc) : Desc(desc) {}
-  PathDiagnostic(const std::string& desc) : Desc(desc) {}
+  PathDiagnostic(const char* desc) : Size(0), Desc(desc) {}
+  PathDiagnostic(const std::string& desc) : Size(0), Desc(desc) {}
   
   ~PathDiagnostic();
 
