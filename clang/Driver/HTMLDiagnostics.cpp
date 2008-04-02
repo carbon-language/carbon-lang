@@ -132,6 +132,16 @@ void HTMLDiagnostics::HandlePathDiagnostic(const PathDiagnostic& D) {
     os << "/" << html::EscapeText(Entry->getName()) << "</h1>\n";
 
     R.InsertStrBefore(SourceLocation::getFileLoc(FileID, 0), os.str());
+  }
+  
+  // Add the bug description.
+  
+  const std::string& BugDesc = D.getDescription();
+  
+  if (!BugDesc.empty()) {
+    std::ostringstream os;
+    os << "<!-- BUGDESC " << BugDesc << " -->\n";
+    R.InsertStrBefore(SourceLocation::getFileLoc(FileID, 0), os.str());
   }  
 
   // Add CSS, header, and footer.
