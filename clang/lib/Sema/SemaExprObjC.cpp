@@ -114,13 +114,13 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
     QualType rhsType = argExpr->getType();
 
     // If necessary, apply function/array conversion. C99 6.7.5.3p[7,8]. 
-    if (const ArrayType *ary = lhsType->getAsArrayType())
-      lhsType = Context.getPointerType(ary->getElementType());
+    if (lhsType->isArrayType())
+      lhsType = Context.getArrayDecayedType(lhsType);
     else if (lhsType->isFunctionType())
       lhsType = Context.getPointerType(lhsType);
 
-    AssignConvertType Result = CheckSingleAssignmentConstraints(lhsType,
-                                                                argExpr);
+    AssignConvertType Result = 
+      CheckSingleAssignmentConstraints(lhsType, argExpr);
     if (Args[i] != argExpr) // The expression was converted.
       Args[i] = argExpr; // Make sure we store the converted expression.
     
