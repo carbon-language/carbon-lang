@@ -42,7 +42,7 @@ Sema::DeclTy *Sema::isTypeName(const IdentifierInfo &II, Scope *S) const {
     if (getLangOptions().ObjC1) {
       // @interface and @compatibility_alias result in new type references. 
       // Creating a class alias is *extremely* rare.
-      ObjCAliasTy::const_iterator I = ObjCAliasDecls.find((IdentifierInfo*)&II);
+      ObjCAliasTy::const_iterator I = ObjCAliasDecls.find(&II);
       if (I != ObjCAliasDecls.end())
         return I->second->getClassInterface();
     }    
@@ -141,7 +141,7 @@ Decl *Sema::LookupDecl(IdentifierInfo *II, unsigned NSI,
     if (getLangOptions().ObjC1) {
       // @interface and @compatibility_alias introduce typedef-like names.
       // Unlike typedef's, they can only be introduced at file-scope (and are 
-      // not therefore not scoped decls). They can, however, be shadowed by
+      // therefore not scoped decls). They can, however, be shadowed by
       // other names in IDNS_Ordinary.
       ObjCAliasTy::iterator I = ObjCAliasDecls.find(II);
       if (I != ObjCAliasDecls.end())
