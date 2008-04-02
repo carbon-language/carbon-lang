@@ -140,7 +140,7 @@ void HTMLDiagnostics::HandlePathDiagnostic(const PathDiagnostic& D) {
   
   if (!BugDesc.empty()) {
     std::ostringstream os;
-    os << "<!-- BUGDESC " << BugDesc << " -->\n";
+    os << "\n<!-- BUGDESC " << BugDesc << " -->\n";
     R.InsertStrBefore(SourceLocation::getFileLoc(FileID, 0), os.str());
   }  
 
