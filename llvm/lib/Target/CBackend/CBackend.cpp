@@ -445,9 +445,11 @@ CWriter::printSimpleType(std::ostream &Out, const Type *Ty, bool isSigned,
       return Out << (isSigned?"signed":"unsigned") << " short " << NameSoFar;
     else if (NumBits <= 32)
       return Out << (isSigned?"signed":"unsigned") << " int " << NameSoFar;
-    else { 
-      assert(NumBits <= 64 && "Bit widths > 64 not implemented yet");
+    else if (NumBits <= 64)
       return Out << (isSigned?"signed":"unsigned") << " long long "<< NameSoFar;
+    else { 
+      assert(NumBits <= 128 && "Bit widths > 128 not implemented yet");
+      return Out << (isSigned?"llvmInt128":"llvmUInt128") << " " << NameSoFar;
     }
   }
   case Type::FloatTyID:  return Out << "float "   << NameSoFar;
@@ -1476,6 +1478,11 @@ static void generateCompilerSpecificCode(std::ostream& Out) {
   Out << "#if __GNUC__ < 4 /* Old GCC's, or compilers not GCC */ \n"
       << "#define __builtin_stack_save() 0   /* not implemented */\n"
       << "#define __builtin_stack_restore(X) /* noop */\n"
+      << "#endif\n\n";
+
+  Out << "#ifdef __GNUC__ /* 128-bit integer types */\n"
+      << "typedef int __attribute__((mode(TI))) llvmInt128;\n"
+      << "typedef unsigned __attribute__((mode(TI))) llvmUInt128;\n"
       << "#endif\n\n";
 
   // Output target-specific code that should be inserted into main.
