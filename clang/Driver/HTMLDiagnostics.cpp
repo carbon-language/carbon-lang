@@ -114,27 +114,26 @@ void HTMLDiagnostics::HandlePathDiagnostic(const PathDiagnostic& D) {
   html::EscapeText(R, FileID);
   html::AddLineNumbers(R, FileID);
   
-  // Add the name of the file.
+  // Get the full directory name of the analyzed file.
+
+  const FileEntry* Entry = SMgr.getFileEntryForID(FileID);
+  std::string DirName(Entry->getDir()->getName());
   
+  if (DirName == ".")
+    DirName = llvm::sys::Path::GetCurrentDirectory().toString();
+    
+  // Add the name of the file as an <h1> tag.
+
   {
     std::ostringstream os;
     
-    os << "<h1>";
-
-    const FileEntry* Entry = SMgr.getFileEntryForID(FileID);
-    const char* dname = Entry->getDir()->getName();
-    
-    if (strcmp(dname,".") == 0)
-      os << html::EscapeText(llvm::sys::Path::GetCurrentDirectory().toString());
-    else
-      os << html::EscapeText(dname);
-    
-    os << "/" << html::EscapeText(Entry->getName()) << "</h1>\n";
+    os << "<h1>" << html::EscapeText(DirName)
+       << "/"    << html::EscapeText(Entry->getName()) << "</h1>\n";
 
     R.InsertStrBefore(SourceLocation::getFileLoc(FileID, 0), os.str());
   }
   
-  // Add the bug description.
+  // Embed meta-data tags.
   
   const std::string& BugDesc = D.getDescription();
   
@@ -142,7 +141,26 @@ void HTMLDiagnostics::HandlePathDiagnostic(const PathDiagnostic& D) {
     std::ostringstream os;
     os << "\n<!-- BUGDESC " << BugDesc << " -->\n";
     R.InsertStrBefore(SourceLocation::getFileLoc(FileID, 0), os.str());
-  }  
+  }
+  
+  {
+    std::ostringstream os;
+    os << "\n<!-- BUGFILE " << DirName << "/" << Entry->getName() << " -->\n";
+    R.InsertStrBefore(SourceLocation::getFileLoc(FileID, 0), os.str());
+  }
+  
+  {
+    std::ostringstream os;
+    os << "\n<!-- BUGLINE " << D.back()->getLocation().getLineNumber()
+       << " -->\n";
+    R.InsertStrBefore(SourceLocation::getFileLoc(FileID, 0), os.str());
+  }
+  
+  {
+    std::ostringstream os;
+    os << "\n<!-- BUGPATHLENGTH " << D.size() << " -->\n";
+    R.InsertStrBefore(SourceLocation::getFileLoc(FileID, 0), os.str());
+  }
 
   // Add CSS, header, and footer.
   
