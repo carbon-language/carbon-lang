@@ -142,6 +142,24 @@ sub Postprocess {
 }
 
 ##----------------------------------------------------------------------------##
+# RunBuildCommand - Run the build command.
+##----------------------------------------------------------------------------##
+
+sub RunBuildCommand {
+  
+  my $Args = shift;
+  my $Cmd = $Args->[0];
+  
+  if ($Cmd =~ /gcc/ or $Cmd eq "cc" or $Cmd =~ /"llvm-gcc"/) {
+    shift @$Args;
+    unshift @$Args, "ccc-analyzer"
+  }
+  
+  system(@$Args);
+}
+
+
+##----------------------------------------------------------------------------##
 # DisplayHelp - Utility function to display all help options.
 ##----------------------------------------------------------------------------##
 
@@ -161,13 +179,12 @@ OPTIONS:
   --help
   
   -k            - Add "keep on going option" to the specified build command.
-  --keep-going    This command currently supports "make" and "xcodebuild."  You
-                  can also directly specify the corresponding option to the
-                  build command.
+  --keep-going    This command currently supports make and xcodebuild.
+                  This is a helper option; one can specify the arguments
+                  directly as build options.
 
-  -v            - Verbose output from $Prog and the analyzer.  A second
-                  "-v" increases verbosity.
-
+  -v            - Verbose output from $Prog and the analyzer.
+                  A second "-v" increases verbosity.
 
 BUILD OPTIONS
 
@@ -271,7 +288,7 @@ if ($Verbose >= 2) {
 
 # Run the build.
 
-system(@ARGV);
+RunBuildCommand(\@ARGV);
 
 # Postprocess the HTML directory.
 
