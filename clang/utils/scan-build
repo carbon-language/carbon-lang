@@ -115,6 +115,34 @@ sub SetHtmlEnv {
 }
 
 ##----------------------------------------------------------------------------##
+# ScanFile - Scan a report file for various identifying attributes.
+##----------------------------------------------------------------------------##
+
+sub ScanFile {
+  
+  my $Index = shift;
+  my $Dir = shift;
+  my $FName = shift;
+  
+  open(IN, "$Dir/$FName") or die "$Prog: Cannot open '$Dir/$FName'\n";
+
+  my $BugDesc = "";
+  
+  while (<IN>) {
+    
+    if (/<!-- BUGDESC (.*) -->$/) {
+      $BugDesc = $1;
+      last;
+    }
+
+  }
+
+  close(IN);
+    
+  push @$Index,[ $FName, $BugDesc ];
+}
+
+##----------------------------------------------------------------------------##
 # Postprocess - Postprocess the results of an analysis scan.
 ##----------------------------------------------------------------------------##
 
@@ -137,8 +165,45 @@ sub Postprocess {
     `rm -fR $Dir`;
     return;
   }
+  
+  # Scan each report file and build an index.
+  
+  my @Index;
+    
+  foreach my $file (@files) { ScanFile(\@Index, $Dir, $file); }
+  
+  # Generate an index.html file.
+  
+  my $FName = "$Dir/index.html";
+  
+  open(OUT, ">$FName") or die "$Prog: Cannot create file '$FName'\n";
+  
+print OUT <<ENDTEXT;
+<html>
+<head>
+</head>\n<body>
+<table class="reports">
+ENDTEXT
 
+  for my $row ( sort { $a->[1] cmp $b->[1] } @Index ) {
+    
+    print OUT "<tr>\n";
 
+    my $ReportFile = $row->[0];
+
+    print OUT " <td class=\"DESC\">$row->[1]</td>\n";
+    
+    for my $j ( 2 .. $#{$row} ) {
+      print OUT "<td>$row->[$j]</td>\n"
+    }
+    
+#    print OUT "<td><input type=\"button\" value=\"View\"></td>\n";
+    print OUT "<td><a href=\"$ReportFile#EndPath\">View</a></td>\n";
+    print OUT "</tr>\n";
+  }
+  
+  print OUT "</table>\n</body></html>\n";  
+  close(OUT);
 }
 
 ##----------------------------------------------------------------------------##
@@ -173,7 +238,7 @@ sub RunBuildCommand {
 
 sub DisplayHelp {
   
-print <<ENDTEXT
+print <<ENDTEXT;
 USAGE: $Prog [options] <build command> [build options]
 
 OPTIONS:
@@ -198,9 +263,9 @@ BUILD OPTIONS
 
   You can specify any build option acceptable to the build command.
 
-  For example:
+EXAMPLE
 
-     $Prog -o /tmp/myhtmldir make -j4
+    $Prog -o /tmp/myhtmldir make -j4
      
   The above example causes analysis reports to be deposited into
   a subdirectory of "/tmp/myhtmldir" and to run "make" with the "-j4" option.
