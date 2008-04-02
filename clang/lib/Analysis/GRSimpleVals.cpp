@@ -24,12 +24,23 @@ using namespace clang;
 namespace clang {
 
 template <typename ITERATOR>
+static inline ExplodedNode<ValueState>* GetNode(ITERATOR I) {
+  return *I;
+}
+
+template <>
+static inline ExplodedNode<ValueState>*
+GetNode(GRExprEngine::undef_arg_iterator I) {
+  return I->first;
+}
+  
+template <typename ITERATOR>
 static inline ProgramPoint GetLocation(ITERATOR I) {
   return (*I)->getLocation();
 }
   
 template <>
-inline ProgramPoint GetLocation(GRExprEngine::undef_arg_iterator I) {
+static inline ProgramPoint GetLocation(GRExprEngine::undef_arg_iterator I) {
   return I->first->getLocation();
 }
   
@@ -44,7 +55,93 @@ static inline Stmt* GetStmt(const ProgramPoint& P) {
   assert (false && "Unsupported ProgramPoint.");
   return NULL;
 }
+  
+  
+//===----------------------------------------------------------------------===//
+// Path Warnings.
+//===----------------------------------------------------------------------===//
 
+static inline SourceLocation GetSourceLoc(ProgramPoint P) {
+  
+  if (const PostStmt* PS = dyn_cast<PostStmt>(&P)) {
+    return PS->getStmt()->getLocStart();
+  }
+  else if (const BlockEdge* BE = dyn_cast<BlockEdge>(&P)) {
+    return BE->getSrc()->getTerminator()->getLocStart();
+  }
+  
+  return SourceLocation();
+}
+  
+static inline
+FullSourceLoc GetFullSourceLoc(SourceManager& SMgr, ProgramPoint P) {
+  return FullSourceLoc(GetSourceLoc(P), SMgr);  
+}
+  
+template <typename ITERATOR>
+static void EmitPathWarning(Diagnostic& Diag, PathDiagnosticClient* PD,
+                            SourceManager& SrcMgr, const std::string& msg,
+                            ITERATOR I) {
+  
+  
+  PathDiagnostic D;
+
+  { // Add the end message.
+   
+    ProgramPoint P = GetLocation(I);
+    D.push_back(new PathDiagnosticPiece(GetFullSourceLoc(SrcMgr, P), msg));
+  }
+  
+  // Walk up the path.
+  
+  ExplodedNode<ValueState> *N = GetNode(I);
+  
+  while (N) {
+    
+    if (N->pred_empty())
+      break;
+    
+    N = *(N->pred_begin()); // Grab the first predecessor.
+    
+    ProgramPoint P = N->getLocation();
+    
+    if (const BlockEdge* BE = dyn_cast<BlockEdge>(&P)) {
+      
+      CFGBlock* Src = BE->getSrc();
+      CFGBlock* Dst = BE->getDst();
+      
+      // FIXME: Better handling for switches.
+      
+      if (Src->succ_size() == 2) {
+        
+        Stmt* T = Src->getTerminator();
+        
+        if (!Src)
+          continue;
+        
+        if (*(Src->succ_begin()+1) == Dst) {
+          D.push_front(new PathDiagnosticPiece(FullSourceLoc(T->getLocStart(),
+                                                          SrcMgr),
+                                            "Taking false branch."));
+        
+        }
+        else {
+          D.push_front(new PathDiagnosticPiece(FullSourceLoc(T->getLocStart(),
+                                                            SrcMgr),
+                                              "Taking true branch."));
+        }
+      }
+    }
+  }
+  
+  // Emit the path.
+  PD->HandlePathDiagnostic(D);                                    
+}
+
+//===----------------------------------------------------------------------===//
+// Pathless Warnings
+//===----------------------------------------------------------------------===//
+  
 template <typename ITERATOR>
 static void EmitDiag(Diagnostic& Diag, PathDiagnosticClient* PD,
                      SourceManager& SrcMgr,
@@ -76,7 +173,7 @@ void EmitWarning(Diagnostic& Diag,  PathDiagnosticClient* PD,
                  ITERATOR I, ITERATOR E, const char* msg) {
  
   std::ostringstream Out;
-  std::string Str;
+  std::string Str(msg);
 
   if (!PD) {
     Out << "[CHECKER] " << msg;
@@ -107,9 +204,16 @@ void EmitWarning(Diagnostic& Diag,  PathDiagnosticClient* PD,
       CachedErrors.insert(p);
     }
     
-    EmitDiag(Diag, PD, SrcMgr, ErrorDiag, I);  
+    if (PD)
+      EmitPathWarning(Diag, PD, SrcMgr, Str, I);
+    else
+      EmitDiag(Diag, PD, SrcMgr, ErrorDiag, I);  
   }
 }
+  
+//===----------------------------------------------------------------------===//
+// Analysis Driver.
+//===----------------------------------------------------------------------===//
   
 unsigned RunGRSimpleVals(CFG& cfg, Decl& CD, ASTContext& Ctx,
                          Diagnostic& Diag, PathDiagnosticClient* PD,
