@@ -951,7 +951,7 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
     // Block scope. C99 6.7p7: If an identifier for an object is declared with
     // no linkage (C99 6.2.2p6), the type for the object shall be complete...
     if (BVD && IDecl->getStorageClass() != VarDecl::Extern) {
-      if (T->isIncompleteType()) {
+      if (T->isIncompleteType() && !IDecl->isInvalidDecl()) {
         Diag(IDecl->getLocation(), diag::err_typecheck_decl_incomplete_type,
              T.getAsString());
         IDecl->setInvalidDecl();
@@ -967,7 +967,7 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
       if (T->isIncompleteArrayType()) {
         // C99 6.9.2 (p2, p5): Implicit initialization causes an incomplete
         // array to be completed. Don't issue a diagnostic.
-      } else if (T->isIncompleteType()) {
+      } else if (T->isIncompleteType() && !IDecl->isInvalidDecl()) {
         // C99 6.9.2p3: If the declaration of an identifier for an object is
         // a tentative definition and has internal linkage (C99 6.2.2p3), the  
         // declared type shall not be an incomplete type.
@@ -1100,7 +1100,8 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
       // C99 6.7.5.3p4: the parameters in a parameter type list in a function
       // declarator that is part of a function definition of that function
       // shall not have incomplete type.
-      if (parmDecl->getType()->isIncompleteType()) {
+      if (parmDecl->getType()->isIncompleteType() &&
+          !parmDecl->isInvalidDecl()) {
         Diag(parmDecl->getLocation(), diag::err_typecheck_decl_incomplete_type,
              parmDecl->getType().getAsString());
         parmDecl->setInvalidDecl();

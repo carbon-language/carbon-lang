@@ -203,7 +203,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
         DeclType.Ref.AttrList = ProcessTypeAttributes(T, AL);
       break;
     case DeclaratorChunk::Array: {
-      const DeclaratorChunk::ArrayTypeInfo &ATI = DeclType.Arr;
+      DeclaratorChunk::ArrayTypeInfo &ATI = DeclType.Arr;
       Expr *ArraySize = static_cast<Expr*>(ATI.NumElts);
       ArrayType::ArraySizeModifier ASM;
       if (ATI.isStar)
@@ -246,9 +246,11 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
         Diag(ArraySize->getLocStart(), diag::err_array_size_non_int, 
              ArraySize->getType().getAsString(), ArraySize->getSourceRange());
         D.setInvalidType(true);
+        delete ArraySize;
+        ATI.NumElts = ArraySize = 0;
       }
       llvm::APSInt ConstVal(32);
-      // If no expression was provided, we consider it a VLA.
+      // If no expression was provided, we consider it an incomplete array.
       if (!ArraySize) {
         T = Context.getIncompleteArrayType(T, ASM, ATI.TypeQuals);
       } else if (!ArraySize->isIntegerConstantExpr(ConstVal, Context)) {

@@ -126,8 +126,7 @@ void illegal() {
       { 6 },
     },
   };
-  // FIXME: the following two errors are redundant
-  int a[][] = { 1, 2 }; // expected-error{{array has incomplete element type 'int []'}} expected-error{{variable has incomplete type 'int []'}}
+  int a[][] = { 1, 2 }; // expected-error{{array has incomplete element type 'int []'}}
 }
 
 typedef int AryT[];
@@ -159,7 +158,7 @@ void charArrays()
   char c3[5] = { "Hello" };
   char c4[4] = { "Hello" }; //expected-warning{{initializer-string for char array is too long}}
 
-  int i3[] = {}; //expected-error{{at least one initializer value required to size array}} expected-error{{variable has incomplete type 'int []'}} expected-warning{{use of GNU empty initializer extension}}
+  int i3[] = {}; //expected-error{{at least one initializer value required to size array}} expected-warning{{use of GNU empty initializer extension}}
 }
 
 void variableArrayInit() {
