@@ -3415,7 +3415,7 @@ public:
   void BeginFunction(MachineFunction *MF) {
     this->MF = MF;
     shouldEmitTable = shouldEmitMoves = false;
-    if (TAI->doesSupportExceptionHandling()) {
+    if (MMI && TAI->doesSupportExceptionHandling()) {
 
       // Map all labels and get rid of any dead landing pads.
       MMI->TidyLandingPads();
