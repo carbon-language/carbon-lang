@@ -253,6 +253,9 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R,
   os << "\" class=\"msg\" style=\"margin-left:"
      << PosNo << "ex\">";
   
+  if (max > 1)
+    os << "<span class=\"PathIndex\">[" << num << "]</span> ";
+  
   os << html::EscapeText(P.getString()) << "</div></td></tr>";
   
   // Insert the new html.

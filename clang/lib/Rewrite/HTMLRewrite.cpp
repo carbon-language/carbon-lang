@@ -188,6 +188,7 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID) {
        << " .msg { margin-top:10px; margin-bottom:10px }\n"
        << " .mrange { background-color:#ffcc66 }\n"
        << " .mrange { border-bottom: 1px solid #ff8000 }\n"
+       << " .PathIndex { font-weight: bold }\n"
        << "</style>\n</head>\n<body>";
     
     R.InsertStrBefore(StartLoc, os.str());
