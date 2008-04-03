@@ -119,8 +119,9 @@ public:
   bool hasSSE2() const { return X86SSELevel >= SSE2; }
   bool hasSSE3() const { return X86SSELevel >= SSE3; }
   bool hasSSSE3() const { return X86SSELevel >= SSSE3; }
-  bool hasSSE41() const { return X86SSELevel >= SSE41; }
-  bool hasSSE42() const { return X86SSELevel >= SSE42; }
+  // Temporarily disabling SSE4.
+  bool hasSSE41() const { return false && X86SSELevel >= SSE41; }
+  bool hasSSE42() const { return false && X86SSELevel >= SSE42; }
   bool has3DNow() const { return X863DNowLevel >= ThreeDNow; }
   bool has3DNowA() const { return X863DNowLevel >= ThreeDNowA; }
 
