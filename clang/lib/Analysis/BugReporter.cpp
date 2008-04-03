@@ -53,8 +53,18 @@ BugDescription::getEndPath(ASTContext& Ctx, ExplodedNode<ValueState> *N) const {
   FullSourceLoc L(S->getLocStart(), Ctx.getSourceManager());  
   PathDiagnosticPiece* P = new PathDiagnosticPiece(L, getDescription());
   
-  if (Expr* E = dyn_cast<Expr>(S))
-    P->addRange(E->getSourceRange());
+  const SourceRange *Beg, *End;
+  getRanges(Beg, End);
+  
+  if (Beg == End) {
+    if (Expr* E = dyn_cast<Expr>(S))
+      P->addRange(E->getSourceRange());
+  }
+  else {
+    assert (Beg < End);
+    for (; Beg != End; ++Beg)
+      P->addRange(*Beg);
+  }
   
   return P;
 }
