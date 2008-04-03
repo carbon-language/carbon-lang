@@ -2720,8 +2720,11 @@ public:
 
     // Emit label for the implicitly defined dbg.stoppoint at the start of
     // the function.
-    const SourceLineInfo &LineInfo = MMI->getSourceLines()[0];
-    Asm->printLabel(LineInfo.getLabelID());
+    const std::vector<SourceLineInfo> &LineInfos = MMI->getSourceLines();
+    if (!LineInfos.empty()) {
+      const SourceLineInfo &LineInfo = LineInfos[0];
+      Asm->printLabel(LineInfo.getLabelID());
+    }
   }
   
   /// EndFunction - Gather and emit post-function debug information.
