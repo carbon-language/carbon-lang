@@ -475,6 +475,13 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
                              i & 0x3, (i & 0xc) >> 2, 
                              ((i & 0x30) >> 4) + 4, 
                              ((i & 0x60) >> 6) + 4, "shufps");
+  case X86::BI__builtin_ia32_punpcklbw128:
+    return EmitShuffleVector(Ops[0], Ops[1], 0, 16, 1, 17, 2, 18, 3, 19,
+                                             4, 20, 5, 21, 6, 22, 7, 23,
+                                             "punpcklbw");
+  case X86::BI__builtin_ia32_punpcklwd128:
+    return EmitShuffleVector(Ops[0], Ops[1], 0, 8, 1, 9, 2, 10, 3, 11,
+                             "punpcklwd");
   }
 }
 
