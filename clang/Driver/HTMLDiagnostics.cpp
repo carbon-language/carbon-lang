@@ -74,18 +74,17 @@ void HTMLDiagnostics::HandlePathDiagnostic(const PathDiagnostic& D) {
   if (D.empty())
     return;
   
-  if (!D.back()->getLocation().isFileID())
-    return;
-  
   // Create the HTML directory if it is missing.
   
   if (!createdDir) {
     createdDir = true;
-    Directory.createDirectoryOnDisk(true, NULL);
+    std::string ErrorMsg;
+    Directory.createDirectoryOnDisk(true, &ErrorMsg);
   
     if (!Directory.isDirectory()) {
       llvm::cerr << "warning: could not create directory '"
-                  << FilePrefix.toString() << "'\n";
+                 << Directory.toString() << "'\n"
+                 << "reason: " << ErrorMsg << '\n'; 
       
       noDir = true;
       
@@ -154,8 +153,7 @@ void HTMLDiagnostics::HandlePathDiagnostic(const PathDiagnostic& D) {
   
   {
     std::ostringstream os;
-    FullSourceLoc L = D.back()->getLocation();
-    os << "\n<!-- BUGLINE " << L.getLineNumber()
+    os << "\n<!-- BUGLINE " << D.back()->getLocation().getLogicalLineNumber()
        << " -->\n";
     R.InsertStrBefore(SourceLocation::getFileLoc(FileID, 0), os.str());
   }
