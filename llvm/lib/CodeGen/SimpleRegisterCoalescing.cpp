@@ -813,7 +813,16 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
   // always canonicalizes DstInt to be it.  The output "SrcInt" will not have
   // been modified, so we can use this information below to update aliases.
   bool Swapped = false;
-  if (!JoinIntervals(DstInt, SrcInt, Swapped)) {
+  // If SrcInt is implicitly defined, it's safe to coalesce.
+  bool isEmpty = SrcInt.empty();
+  if (isEmpty && DstInt.getNumValNums() != 1) {
+    // Only coalesce an empty interval (defined by implicit_def) with
+    // another interval that's defined by a single copy.
+    DOUT << "Not profitable!\n";
+    return false;
+  }
+
+  if (!isEmpty && !JoinIntervals(DstInt, SrcInt, Swapped)) {
     // Coalescing failed.
     
     // If we can eliminate the copy without merging the live ranges, do so now.
@@ -906,9 +915,6 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
     }
   }
 
-  DOUT << "\n\t\tJoined.  Result = "; ResDstInt->print(DOUT, tri_);
-  DOUT << "\n";
-
   // Remember to delete the copy instruction.
   JoinedCopies.insert(CopyMI);
 
@@ -922,6 +928,20 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
   // being merged.
   li_->removeInterval(SrcReg);
   UpdateRegDefsUses(SrcReg, DstReg, SubIdx);
+
+  if (isEmpty) {
+    // Now the copy is being coalesced away, the val# previously defined
+    // by the copy is being defined by an IMPLICIT_DEF which defines a zero
+    // length interval. Remove the val#.
+    unsigned CopyIdx = li_->getDefIndex(li_->getInstructionIndex(CopyMI));
+    LiveInterval::iterator LR = ResDstInt->FindLiveRangeContaining(CopyIdx);
+    VNInfo *ImpVal = LR->valno;
+    assert(ImpVal->def == CopyIdx);
+    ResDstInt->removeValNo(ImpVal);
+  }
+
+  DOUT << "\n\t\tJoined.  Result = "; ResDstInt->print(DOUT, tri_);
+  DOUT << "\n";
 
   ++numJoins;
   return true;
@@ -1622,6 +1642,44 @@ static bool isZeroLengthInterval(LiveInterval *li) {
   return true;
 }
 
+/// TurnCopyIntoImpDef - If source of the specified copy is an implicit def,
+/// turn the copy into an implicit def.
+bool
+SimpleRegisterCoalescing::TurnCopyIntoImpDef(MachineBasicBlock::iterator &I,
+                                             MachineBasicBlock *MBB,
+                                             unsigned DstReg, unsigned SrcReg) {
+  MachineInstr *CopyMI = &*I;
+  unsigned CopyIdx = li_->getDefIndex(li_->getInstructionIndex(CopyMI));
+  if (!li_->hasInterval(SrcReg))
+    return false;
+  LiveInterval &SrcInt = li_->getInterval(SrcReg);
+  if (!SrcInt.empty())
+    return false;
+  LiveInterval &DstInt = li_->getInterval(DstReg);
+  LiveInterval::iterator DstLR = DstInt.FindLiveRangeContaining(CopyIdx);
+  DstInt.removeValNo(DstLR->valno);
+  CopyMI->setDesc(tii_->get(TargetInstrInfo::IMPLICIT_DEF));
+  for (int i = CopyMI->getNumOperands() - 1, e = 0; i > e; --i)
+    CopyMI->RemoveOperand(i);
+  bool NoUse = mri_->use_begin(SrcReg) == mri_->use_end();
+  if (NoUse) {
+    for (MachineRegisterInfo::reg_iterator I = mri_->reg_begin(SrcReg),
+           E = mri_->reg_end(); I != E; ) {
+      assert(I.getOperand().isDef());
+      MachineInstr *DefMI = &*I;
+      ++I;
+      // The implicit_def source has no other uses, delete it.
+      assert(DefMI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF);
+      li_->RemoveMachineInstrFromMaps(DefMI);
+      DefMI->eraseFromParent();
+      ++numPeep;
+    }
+  }
+  ++I;
+  return true;
+}
+
+
 bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
   mf_ = &fn;
   mri_ = &fn.getRegInfo();
@@ -1679,7 +1737,8 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
          mii != mie; ) {
       // if the move will be an identity move delete it
       unsigned srcReg, dstReg;
-      if (tii_->isMoveInstr(*mii, srcReg, dstReg) && srcReg == dstReg) {
+      bool isMove = tii_->isMoveInstr(*mii, srcReg, dstReg);
+      if (isMove && srcReg == dstReg) {
         if (li_->hasInterval(srcReg)) {
           LiveInterval &RegInt = li_->getInterval(srcReg);
           // If def of this move instruction is dead, remove its live range
@@ -1692,7 +1751,7 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
         li_->RemoveMachineInstrFromMaps(mii);
         mii = mbbi->erase(mii);
         ++numPeep;
-      } else {
+      } else if (!isMove || !TurnCopyIntoImpDef(mii, mbb, dstReg, srcReg)) {
         SmallSet<unsigned, 4> UniqueUses;
         for (unsigned i = 0, e = mii->getNumOperands(); i != e; ++i) {
           const MachineOperand &mop = mii->getOperand(i);

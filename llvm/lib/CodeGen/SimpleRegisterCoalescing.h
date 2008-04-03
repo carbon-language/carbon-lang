@@ -190,6 +190,12 @@ namespace llvm {
     bool RemoveCopyByCommutingDef(LiveInterval &IntA, LiveInterval &IntB,
                                   MachineInstr *CopyMI);
 
+    /// TurnCopyIntoImpDef - If source of the specified copy is an implicit def,
+    /// turn the copy into an implicit def.
+    bool TurnCopyIntoImpDef(MachineBasicBlock::iterator &I,
+                            MachineBasicBlock *MBB,
+                            unsigned DstReg, unsigned SrcReg);
+
     /// isBackEdgeCopy - Returns true if CopyMI is a back edge copy.
     ///
     bool isBackEdgeCopy(MachineInstr *CopyMI, unsigned DstReg);
