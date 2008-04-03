@@ -13,6 +13,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef LLVM_CLANG_ANALYSIS_GREXPRENGINE
+#define LLVM_CLANG_ANALYSIS_GREXPRENGINE
+
 #include "clang/Analysis/PathSensitive/GRCoreEngine.h"
 #include "clang/Analysis/PathSensitive/ValueState.h"
 #include "clang/Analysis/PathSensitive/GRSimpleAPICheck.h"
@@ -567,3 +570,4 @@ protected:
 };
 } // end clang namespace
 
+#endif
