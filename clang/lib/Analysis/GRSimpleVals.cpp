@@ -164,8 +164,8 @@ static void EmitWarning(Diagnostic& Diag, PathDiagnosticClient* PD,
 namespace clang {
   
 unsigned RunGRSimpleVals(CFG& cfg, Decl& CD, ASTContext& Ctx,
-                                Diagnostic& Diag, PathDiagnosticClient* PD,
-                                bool Visualize, bool TrimGraph) {
+                         Diagnostic& Diag, PathDiagnosticClient* PD,
+                         bool Visualize, bool TrimGraph) {
   
   GRCoreEngine<GRExprEngine> Eng(cfg, CD, Ctx);
   GRExprEngine* CS = &Eng.getCheckerState();
@@ -217,7 +217,8 @@ unsigned RunGRSimpleVals(CFG& cfg, Decl& CD, ASTContext& Ctx,
   EmitWarning(Diag, PD, Ctx, BR, RetStack(), G,
               CS->ret_stackaddr_begin(), CS->ret_stackaddr_end());
 
-  FoundationCheck.get()->ReportResults(Diag);
+  
+  FoundationCheck.get()->ReportResults(Diag, PD, Ctx, BR, G);
 #ifndef NDEBUG
   if (Visualize) CS->ViewGraph(TrimGraph);
 #endif

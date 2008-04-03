@@ -43,8 +43,7 @@ static inline Stmt* GetStmt(const ProgramPoint& P) {
 
 
 PathDiagnosticPiece*
-BugDescription::getEndPath(ASTContext& Ctx,
-                           ExplodedNode<ValueState> *N) const {
+BugDescription::getEndPath(ASTContext& Ctx, ExplodedNode<ValueState> *N) const {
   
   Stmt* S = GetStmt(N->getLocation());
   
@@ -58,6 +57,12 @@ BugDescription::getEndPath(ASTContext& Ctx,
     P->addRange(E->getSourceRange());
   
   return P;
+}
+
+void BugDescription::getRanges(const SourceRange*& beg,
+                               const SourceRange*& end) const {
+  beg = NULL;
+  end = NULL;
 }
 
 void BugReporter::GeneratePathDiagnostic(PathDiagnostic& PD, ASTContext& Ctx,
@@ -266,7 +271,7 @@ void BugReporter::EmitWarning(Diagnostic& Diag, ASTContext& Ctx,
     return;
   
   std::ostringstream os;
-  os << "[CHECKER] " << B.getName();
+  os << "[CHECKER] " << B.getDescription();
   
   unsigned ErrorDiag = Diag.getCustomDiagID(Diagnostic::Warning,
                                             os.str().c_str());

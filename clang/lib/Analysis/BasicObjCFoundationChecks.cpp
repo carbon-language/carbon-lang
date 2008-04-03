@@ -16,9 +16,10 @@
 #include "BasicObjCFoundationChecks.h"
 
 #include "clang/Analysis/PathSensitive/ExplodedGraph.h"
+#include "clang/Analysis/PathSensitive/GRExprEngine.h"
 #include "clang/Analysis/PathSensitive/GRSimpleAPICheck.h"
 #include "clang/Analysis/PathSensitive/ValueState.h"
-#include "clang/Analysis/PathSensitive/AnnotatedPath.h"
+#include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ASTContext.h"
@@ -28,48 +29,6 @@
 #include <sstream>
 
 using namespace clang;
-  
-namespace {
-  
-class VISIBILITY_HIDDEN BasicObjCFoundationChecks : public GRSimpleAPICheck {
-
-  ASTContext &Ctx;
-  ValueStateManager* VMgr;
-  
-  typedef std::list<AnnotatedPath<ValueState> > ErrorsTy;
-  ErrorsTy Errors;
-      
-  RVal GetRVal(ValueState* St, Expr* E) { return VMgr->GetRVal(St, E); }
-      
-  bool isNSString(ObjCInterfaceType* T, const char* suffix);
-  bool AuditNSString(NodeTy* N, ObjCMessageExpr* ME);
-      
-  void Warn(NodeTy* N, Expr* E, const std::string& s);  
-  void WarnNilArg(NodeTy* N, Expr* E);
-  
-  bool CheckNilArg(NodeTy* N, unsigned Arg);
-
-public:
-  BasicObjCFoundationChecks(ASTContext& ctx, ValueStateManager* vmgr) 
-    : Ctx(ctx), VMgr(vmgr) {}
-      
-  virtual ~BasicObjCFoundationChecks() {}
-  
-  virtual bool Audit(ExplodedNode<ValueState>* N);
-  
-  virtual void ReportResults(Diagnostic& D);
-
-};
-  
-} // end anonymous namespace
-
-
-GRSimpleAPICheck*
-clang::CreateBasicObjCFoundationChecks(ASTContext& Ctx,
-                                       ValueStateManager* VMgr) {
-  
-  return new BasicObjCFoundationChecks(Ctx, VMgr);  
-}
 
 static ObjCInterfaceType* GetReceiverType(ObjCMessageExpr* ME) {
   Expr* Receiver = ME->getReceiver();
@@ -89,6 +48,103 @@ static const char* GetReceiverNameType(ObjCMessageExpr* ME) {
   return ReceiverType ? ReceiverType->getDecl()->getIdentifier()->getName()
                       : NULL;
 }
+
+namespace {
+  
+class VISIBILITY_HIDDEN NilArg : public BugDescription {
+  std::string Msg;
+  const char* s;
+  SourceRange R;
+public:
+  NilArg(ObjCMessageExpr* ME, unsigned Arg);
+  virtual ~NilArg() {}
+  
+  virtual const char* getName() const {
+    return "nil argument";
+  }
+  
+  virtual const char* getDescription() const {
+    return s;
+  }
+  
+  virtual void getRanges(const SourceRange*& beg,
+                         const SourceRange*& end) const {
+    beg = &R;
+    end = beg+1;
+  }
+    
+};
+  
+NilArg::NilArg(ObjCMessageExpr* ME, unsigned Arg) : s(NULL) {
+  
+  Expr* E = ME->getArg(Arg);
+  R = E->getSourceRange();
+  
+  std::ostringstream os;
+  
+  os << "Argument to '" << GetReceiverNameType(ME) << "' method '"
+     << ME->getSelector().getName() << "' cannot be nil.";
+  
+  Msg = os.str();
+  s = Msg.c_str();
+}
+  
+  
+class VISIBILITY_HIDDEN BasicObjCFoundationChecks : public GRSimpleAPICheck {
+
+  ASTContext &Ctx;
+  ValueStateManager* VMgr;
+  
+  typedef std::vector<std::pair<NodeTy*,BugDescription*> > ErrorsTy;
+  ErrorsTy Errors;
+      
+  RVal GetRVal(ValueState* St, Expr* E) { return VMgr->GetRVal(St, E); }
+      
+  bool isNSString(ObjCInterfaceType* T, const char* suffix);
+  bool AuditNSString(NodeTy* N, ObjCMessageExpr* ME);
+      
+  void Warn(NodeTy* N, Expr* E, const std::string& s);  
+  void WarnNilArg(NodeTy* N, Expr* E);
+  
+  bool CheckNilArg(NodeTy* N, unsigned Arg);
+
+public:
+  BasicObjCFoundationChecks(ASTContext& ctx, ValueStateManager* vmgr) 
+    : Ctx(ctx), VMgr(vmgr) {}
+      
+  virtual ~BasicObjCFoundationChecks() {
+    for (ErrorsTy::iterator I = Errors.begin(), E = Errors.end(); I!=E; ++I)
+      delete I->second;    
+  }
+  
+  virtual bool Audit(ExplodedNode<ValueState>* N);
+  
+  virtual void ReportResults(Diagnostic& Diag, PathDiagnosticClient* PD,
+                             ASTContext& Ctx, BugReporter& BR,
+                             ExplodedGraph<GRExprEngine>& G);
+  
+private:
+  
+  void AddError(NodeTy* N, BugDescription* D) {
+    Errors.push_back(std::make_pair(N, D));
+  }
+  
+  void WarnNilArg(NodeTy* N, ObjCMessageExpr* ME, unsigned Arg) {
+    AddError(N, new NilArg(ME, Arg));
+  }
+};
+  
+} // end anonymous namespace
+
+
+GRSimpleAPICheck*
+clang::CreateBasicObjCFoundationChecks(ASTContext& Ctx,
+                                       ValueStateManager* VMgr) {
+  
+  return new BasicObjCFoundationChecks(Ctx, VMgr);  
+}
+
+
 
 bool BasicObjCFoundationChecks::Audit(ExplodedNode<ValueState>* N) {
   
@@ -127,43 +183,13 @@ static inline bool isNil(RVal X) {
 //===----------------------------------------------------------------------===//
 
 
-void BasicObjCFoundationChecks::Warn(NodeTy* N, Expr* E, const std::string& s) {  
-  Errors.push_back(AnnotatedPath<ValueState>());
-  Errors.back().push_back(N, s, E);
-}
-
-void BasicObjCFoundationChecks::ReportResults(Diagnostic& D) {
-  
-  // FIXME: Expand errors into paths.  For now, just issue warnings.
-  
-  for (ErrorsTy::iterator I=Errors.begin(), E=Errors.end(); I!=E; ++I) {
-      
-    AnnotatedNode<ValueState>& AN = I->back();
+void BasicObjCFoundationChecks::ReportResults(Diagnostic& Diag,
+                                              PathDiagnosticClient* PD,
+                                              ASTContext& Ctx, BugReporter& BR,
+                                              ExplodedGraph<GRExprEngine>& G) {
     
-    unsigned diag = D.getCustomDiagID(Diagnostic::Warning,
-                                      AN.getString().c_str());
-    
-    Stmt* S = cast<PostStmt>(AN.getNode()->getLocation()).getStmt();
-    FullSourceLoc L(S->getLocStart(), Ctx.getSourceManager());
-    
-    SourceRange R = AN.getExpr()->getSourceRange();
-    
-    D.Report(L, diag, &AN.getString(), 1, &R, 1);
-  }
-}
-
-void BasicObjCFoundationChecks::WarnNilArg(NodeTy* N, Expr* E) {
-
-  ObjCMessageExpr* ME =
-    cast<ObjCMessageExpr>(cast<PostStmt>(N->getLocation()).getStmt());    
-  
-  std::ostringstream os;
-  
-  os << "Argument to '" << GetReceiverNameType(ME) << "' method '"
-    << ME->getSelector().getName()
-    << "' cannot be nil.";
-  
-  Warn(N, E, os.str());
+  for (ErrorsTy::iterator I=Errors.begin(), E=Errors.end(); I!=E; ++I)
+    BR.EmitPathWarning(Diag, PD, Ctx, *I->second, G, I->first);
 }
 
 bool BasicObjCFoundationChecks::CheckNilArg(NodeTy* N, unsigned Arg) {
@@ -173,7 +199,7 @@ bool BasicObjCFoundationChecks::CheckNilArg(NodeTy* N, unsigned Arg) {
   Expr * E = ME->getArg(Arg);
   
   if (isNil(GetRVal(N->getState(), E))) {
-    WarnNilArg(N, E);
+    WarnNilArg(N, ME, Arg);
     return true;
   }
   

@@ -22,12 +22,20 @@ namespace clang {
   
 class ValueState;
 class Diagnostic;
+class BugReporter;
+class ASTContext;
+class GRExprEngine;
+class PathDiagnosticClient;
+template <typename T> class ExplodedGraph;
+  
   
 class GRSimpleAPICheck : public GRAuditor<ValueState> {
 public:
   GRSimpleAPICheck() {}
   virtual ~GRSimpleAPICheck() {}
-  virtual void ReportResults(Diagnostic& D) {}
+  virtual void ReportResults(Diagnostic& Diag, PathDiagnosticClient* PD,
+                             ASTContext& Ctx, BugReporter& BR,
+                             ExplodedGraph<GRExprEngine>& G) = 0;
 };
 
 } // end namespace clang

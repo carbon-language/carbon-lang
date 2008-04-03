@@ -41,6 +41,9 @@ public:
   
   virtual PathDiagnosticPiece* getEndPath(ASTContext& Ctx,
                                           ExplodedNode<ValueState> *N) const;
+  
+  virtual void getRanges(const SourceRange*& beg,
+                         const SourceRange*& end) const;
 };
   
 class BugReporter {

@@ -21,6 +21,9 @@
 
 namespace clang {
   
+class PathDiagnostic;
+class ASTContext;
+  
 class GRSimpleVals : public GRTransferFuncs {
 public:
   GRSimpleVals() {}
@@ -57,6 +60,9 @@ public:
                         GRStmtNodeBuilder<ValueState>& Builder,
                         CallExpr* CE, LVal L,
                         ExplodedNode<ValueState>* Pred);
+  
+  static void GeneratePathDiagnostic(PathDiagnostic& PD, ASTContext& Ctx,
+                                     ExplodedNode<ValueState>* N);
   
 protected:
   
