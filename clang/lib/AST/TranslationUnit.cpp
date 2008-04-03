@@ -30,8 +30,7 @@ enum { BasicMetadataBlock = 1,
        ASTContextBlock = 2,
        DeclsBlock = 3 };
 
-TranslationUnit::~TranslationUnit()
-{
+TranslationUnit::~TranslationUnit() {
   for (iterator I=begin(), E=end(); I!=E; ++I) 
     delete *I;
 }
