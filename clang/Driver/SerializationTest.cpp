@@ -99,6 +99,8 @@ bool SerializationTest::Deserialize(llvm::sys::Path& Filename,
     for (TranslationUnit::iterator I=NewTU->begin(), E=NewTU->end(); I!=E; ++I)
       FilePrinter->HandleTopLevelDecl(*I);
   }
+
+  delete NewTU;
   
   return true;
 }
