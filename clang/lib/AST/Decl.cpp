@@ -357,6 +357,7 @@ bool ScopedDecl::isDefinedOutsideFunctionOrMethod() const {
 
 FunctionDecl::~FunctionDecl() {
   delete[] ParamInfo;
+  delete Body;
 }
 
 unsigned FunctionDecl::getNumParams() const {
