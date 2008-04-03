@@ -74,6 +74,9 @@ void HTMLDiagnostics::HandlePathDiagnostic(const PathDiagnostic& D) {
   if (D.empty())
     return;
   
+  if (!D.back()->getLocation().isFileID())
+    return;
+  
   // Create the HTML directory if it is missing.
   
   if (!createdDir) {
@@ -151,7 +154,8 @@ void HTMLDiagnostics::HandlePathDiagnostic(const PathDiagnostic& D) {
   
   {
     std::ostringstream os;
-    os << "\n<!-- BUGLINE " << D.back()->getLocation().getLineNumber()
+    FullSourceLoc L = D.back()->getLocation();
+    os << "\n<!-- BUGLINE " << L.getLineNumber()
        << " -->\n";
     R.InsertStrBefore(SourceLocation::getFileLoc(FileID, 0), os.str());
   }
