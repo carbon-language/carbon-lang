@@ -103,7 +103,7 @@ public:
 class VISIBILITY_HIDDEN BadMsgExprArg : public BugDescription {
 public:
   virtual const char* getName() const {
-    return "bad argument";
+    return "bad receiver";
   }
   virtual const char* getDescription() const {
     return "Pass-by-value argument in message expression is undefined.";
@@ -111,12 +111,25 @@ public:
 };
 
 class VISIBILITY_HIDDEN BadReceiver : public BugDescription {
+  SourceRange R;
 public:
+  BadReceiver(ExplodedNode<ValueState>* N) {
+    Stmt *S = cast<PostStmt>(N->getLocation()).getStmt();
+    Expr* E = cast<ObjCMessageExpr>(S)->getReceiver();
+    assert (E && "Receiver cannot be NULL");
+    R = E->getSourceRange();
+  }
+  
   virtual const char* getName() const {
     return "invalid message expression";
   }
   virtual const char* getDescription() const {
     return "Receiver in message expression is an uninitialized value.";
+  }
+  
+  virtual void getRanges(const SourceRange*& B, const SourceRange*& E) const {
+    B = &R;
+    E = B+1;
   }
 };
   
@@ -211,8 +224,12 @@ unsigned RunGRSimpleVals(CFG& cfg, Decl& CD, ASTContext& Ctx,
   EmitWarning(Diag, PD, Ctx, BR, BadMsgExprArg(), G,
               CS->msg_expr_undef_arg_begin(), CS->msg_expr_undef_arg_end());
   
-  EmitWarning(Diag, PD, Ctx, BR, BadReceiver(), G,
-              CS->undef_receivers_begin(), CS->undef_receivers_end());
+  for (GRExprEngine::UndefReceiversTy::iterator I = CS->undef_receivers_begin(),
+                                  E = CS->undef_receivers_end(); I!=E; ++I) {
+       
+    BadReceiver Desc(*I);
+    BR.EmitPathWarning(Diag, PD, Ctx, Desc, G, *I);
+  }
   
   EmitWarning(Diag, PD, Ctx, BR, RetStack(), G,
               CS->ret_stackaddr_begin(), CS->ret_stackaddr_end());
