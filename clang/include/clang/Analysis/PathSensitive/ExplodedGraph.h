@@ -344,11 +344,28 @@ public:
   }
   
   // Iterators.
-  typedef NodeTy**         roots_iterator;
-  typedef const NodeTy**   const_roots_iterator;
-  typedef NodeTy**         eop_iterator;
-  typedef const NodeTy**   const_eop_iterator;
+  typedef NodeTy**                            roots_iterator;
+  typedef const NodeTy**                      const_roots_iterator;
+  typedef NodeTy**                            eop_iterator;
+  typedef const NodeTy**                      const_eop_iterator;
+  typedef typename AllNodesTy::iterator       node_iterator;
+  typedef typename AllNodesTy::const_iterator const_node_iterator;
   
+  node_iterator nodes_begin() {
+    return Nodes.begin();
+  }
+
+  node_iterator nodes_end() {
+    return Nodes.end();
+  }
+  
+  const_node_iterator nodes_begin() const {
+    return Nodes.begin();
+  }
+  
+  const_node_iterator nodes_end() const {
+    return Nodes.end();
+  }
   
   roots_iterator roots_begin() {
     return reinterpret_cast<roots_iterator>(Roots.begin());
