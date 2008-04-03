@@ -135,11 +135,11 @@ void ScheduleDAG::BuildSchedUnits() {
       bool HasFlagUse = false;
       for (SDNode::use_iterator UI = N->use_begin(), E = N->use_end(); 
            UI != E; ++UI)
-        if (FlagVal.isOperandOf(UI->getUser())) {
+        if (FlagVal.isOperandOf(*UI)) {
           HasFlagUse = true;
           NodeSUnit->FlaggedNodes.push_back(N);
           SUnitMap[N].push_back(NodeSUnit);
-          N = UI->getUser();
+          N = *UI;
           break;
         }
       if (!HasFlagUse) break;
@@ -398,7 +398,7 @@ static const TargetRegisterClass *getInstrOperandRegClass(
 
 void ScheduleDAG::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
                                   unsigned InstanceNo, unsigned SrcReg,
-                                  DenseMap<SDOperandImpl, unsigned> &VRBaseMap) {
+                                  DenseMap<SDOperand, unsigned> &VRBaseMap) {
   unsigned VRBase = 0;
   if (TargetRegisterInfo::isVirtualRegister(SrcReg)) {
     // Just use the input register directly!
@@ -414,7 +414,7 @@ void ScheduleDAG::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
   bool MatchReg = true;
   for (SDNode::use_iterator UI = Node->use_begin(), E = Node->use_end();
        UI != E; ++UI) {
-    SDNode *Use = UI->getUser();
+    SDNode *Use = *UI;
     bool Match = true;
     if (Use->getOpcode() == ISD::CopyToReg && 
         Use->getOperand(2).Val == Node &&
@@ -469,7 +469,7 @@ void ScheduleDAG::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
 
 void ScheduleDAG::CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
                                          const TargetInstrDesc &II,
-                                     DenseMap<SDOperandImpl, unsigned> &VRBaseMap) {
+                                     DenseMap<SDOperand, unsigned> &VRBaseMap) {
   for (unsigned i = 0; i < II.getNumDefs(); ++i) {
     // If the specific node value is only used by a CopyToReg and the dest reg
     // is a vreg, use the CopyToReg'd destination register instead of creating
@@ -477,7 +477,7 @@ void ScheduleDAG::CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
     unsigned VRBase = 0;
     for (SDNode::use_iterator UI = Node->use_begin(), E = Node->use_end();
          UI != E; ++UI) {
-      SDNode *Use = UI->getUser();
+      SDNode *Use = *UI;
       if (Use->getOpcode() == ISD::CopyToReg && 
           Use->getOperand(2).Val == Node &&
           Use->getOperand(2).ResNo == i) {
@@ -512,8 +512,8 @@ void ScheduleDAG::CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
 
 /// getVR - Return the virtual register corresponding to the specified result
 /// of the specified node.
-static unsigned getVR(SDOperand Op, DenseMap<SDOperandImpl, unsigned> &VRBaseMap) {
-  DenseMap<SDOperandImpl, unsigned>::iterator I = VRBaseMap.find(Op);
+static unsigned getVR(SDOperand Op, DenseMap<SDOperand, unsigned> &VRBaseMap) {
+  DenseMap<SDOperand, unsigned>::iterator I = VRBaseMap.find(Op);
   assert(I != VRBaseMap.end() && "Node emitted out of order - late");
   return I->second;
 }
@@ -526,7 +526,7 @@ static unsigned getVR(SDOperand Op, DenseMap<SDOperandImpl, unsigned> &VRBaseMap
 void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
                              unsigned IIOpNum,
                              const TargetInstrDesc *II,
-                             DenseMap<SDOperandImpl, unsigned> &VRBaseMap) {
+                             DenseMap<SDOperand, unsigned> &VRBaseMap) {
   if (Op.isTargetOpcode()) {
     // Note that this case is redundant with the final else block, but we
     // include it because it is the most common and it makes the logic
@@ -658,7 +658,7 @@ static const TargetRegisterClass *getSuperregRegisterClass(
 /// EmitSubregNode - Generate machine code for subreg nodes.
 ///
 void ScheduleDAG::EmitSubregNode(SDNode *Node, 
-                           DenseMap<SDOperandImpl, unsigned> &VRBaseMap) {
+                           DenseMap<SDOperand, unsigned> &VRBaseMap) {
   unsigned VRBase = 0;
   unsigned Opc = Node->getTargetOpcode();
   
@@ -666,7 +666,7 @@ void ScheduleDAG::EmitSubregNode(SDNode *Node,
   // the CopyToReg'd destination register instead of creating a new vreg.
   for (SDNode::use_iterator UI = Node->use_begin(), E = Node->use_end();
        UI != E; ++UI) {
-    SDNode *Use = UI->getUser();
+    SDNode *Use = *UI;
     if (Use->getOpcode() == ISD::CopyToReg && 
         Use->getOperand(2).Val == Node) {
       unsigned DestReg = cast<RegisterSDNode>(Use->getOperand(1))->getReg();
@@ -750,7 +750,7 @@ void ScheduleDAG::EmitSubregNode(SDNode *Node,
 /// EmitNode - Generate machine code for an node and needed dependencies.
 ///
 void ScheduleDAG::EmitNode(SDNode *Node, unsigned InstanceNo,
-                           DenseMap<SDOperandImpl, unsigned> &VRBaseMap) {
+                           DenseMap<SDOperand, unsigned> &VRBaseMap) {
   // If machine instruction
   if (Node->isTargetOpcode()) {
     unsigned Opc = Node->getTargetOpcode();
@@ -1067,7 +1067,7 @@ void ScheduleDAG::EmitSchedule() {
   }
 
   // Finally, emit the code for all of the scheduled instructions.
-  DenseMap<SDOperandImpl, unsigned> VRBaseMap;
+  DenseMap<SDOperand, unsigned> VRBaseMap;
   DenseMap<SUnit*, unsigned> CopyVRBaseMap;
   for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
     if (SUnit *SU = Sequence[i]) {
