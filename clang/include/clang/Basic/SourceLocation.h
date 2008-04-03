@@ -244,6 +244,8 @@ public:
   const char* getSourceName() const;
   const FileEntry* getFileEntryForLoc() const;
   
+  bool isFileID() const { return Loc.isFileID(); }
+  
   bool operator==(const FullSourceLoc& RHS) const {
     return SrcMgr == RHS.SrcMgr && Loc == RHS.Loc;
   }
