@@ -216,27 +216,27 @@ print OUT <<ENDTEXT;
  table.sortable thead {
    background-color:#eee; color:#666666;
    font-weight: bold; cursor: default;
- }
+   text-align:center;
+   border-top: 2px solid #000000;
+   border-bottom: 2px solid #000000;
+   font-weight: bold; font-family: Verdana
+ } 
  table.sortable { border: 1px #000000 solid }
  table.sortable { border-collapse: collapse; border-spacing: 0px }
  td { border-bottom: 1px #000000 dotted }
  td { padding:5px; padding-left:8px; padding-right:8px }
  td { text-align:right; font-size:9pt }
- td.header { text-align:center}
- td.header { border-top: 2px solid #000000; }
- td.header { border-bottom: 2px solid #000000; }
- td.header { font-weight: bold; font-family: Verdana }
  td.View   { padding-left: 10px }
 </style>
 <script src="sorttable.js"></script>
 </head>\n<body>
 <table class="sortable">
 <tr>
-  <td class="header">Bug Type</td>
-  <td class="header">File</td>
-  <td class="header">Line</td>
-  <td class="header">Path Length</td>
-  <td class="header"></td>
+  <td>Bug Type</td>
+  <td>File</td>
+  <td>Line</td>
+  <td>Path Length</td>
+  <td "sorttable_nosort"></td>
 </tr>
 ENDTEXT
 
