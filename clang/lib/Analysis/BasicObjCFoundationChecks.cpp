@@ -36,9 +36,12 @@ static ObjCInterfaceType* GetReceiverType(ObjCMessageExpr* ME) {
   if (!Receiver)
     return NULL;
   
-  assert (Receiver->getType()->isPointerType());
+  // FIXME: Cleanup
+  QualType X = Receiver->getType();
+  Type* TP = X.getTypePtr();
+  assert (TP->isPointerType());
   
-  const PointerType* T = Receiver->getType()->getAsPointerType();
+  const PointerType* T = TP->getAsPointerType();
   
   return dyn_cast<ObjCInterfaceType>(T->getPointeeType().getTypePtr());
 }
