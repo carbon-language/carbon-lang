@@ -69,8 +69,26 @@ void BugReporter::GeneratePathDiagnostic(PathDiagnostic& PD, ASTContext& Ctx,
   
   SourceManager& SMgr = Ctx.getSourceManager();
   
-  
   llvm::OwningPtr<ExplodedGraph<GRExprEngine> > GTrim(G.Trim(&N, &N+1));
+  
+  // Find the sink in the trimmed graph.
+  // FIXME: Should we eventually have a sink iterator?
+  
+  ExplodedNode<ValueState>* NewN = 0;
+  
+  for (ExplodedGraph<GRExprEngine>::node_iterator
+        I = GTrim->nodes_begin(), E = GTrim->nodes_end(); I != E; ++I) {
+    
+    if (I->isSink()) {
+      NewN = &*I;
+      break;
+    }    
+  }
+  
+  assert (NewN);
+  assert (NewN->getLocation() == N->getLocation());
+  
+  N = NewN;
 
   while (!N->pred_empty()) {
     
