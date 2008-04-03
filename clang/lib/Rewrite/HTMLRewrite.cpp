@@ -29,20 +29,40 @@ void html::EscapeText(Rewriter& R, unsigned FileID, bool EscapeSpaces) {
   assert (C <= FileEnd);
   
   for (unsigned FilePos = 0; C != FileEnd ; ++C, ++FilePos) {
-    
-    SourceLocation Loc = SourceLocation::getFileLoc(FileID, FilePos);
-  
+      
     switch (*C) {
       default: break;
         
       case ' ':
-        if (EscapeSpaces) R.ReplaceText(Loc, 1, "&nbsp;", 6);
+        if (EscapeSpaces) {
+          SourceLocation Loc = SourceLocation::getFileLoc(FileID, FilePos);
+          R.ReplaceText(Loc, 1, "&nbsp;", 6);
+        }
         break;
 
-      case '\t': R.ReplaceText(Loc, 1, "&nbsp;&nbsp;&nbsp;&nbsp;", 6*4); break;
-      case '<': R.ReplaceText(Loc, 1, "&lt;", 4); break;
-      case '>': R.ReplaceText(Loc, 1, "&gt;", 4); break;
-      case '&': R.ReplaceText(Loc, 1, "&amp;", 5); break;
+      case '\t': {
+        SourceLocation Loc = SourceLocation::getFileLoc(FileID, FilePos);
+        R.ReplaceText(Loc, 1, "&nbsp;&nbsp;&nbsp;&nbsp;", 6*4);
+        break;
+      }
+        
+      case '<': {
+        SourceLocation Loc = SourceLocation::getFileLoc(FileID, FilePos);
+        R.ReplaceText(Loc, 1, "&lt;", 4);
+        break;
+      }
+        
+      case '>': {
+        SourceLocation Loc = SourceLocation::getFileLoc(FileID, FilePos);
+        R.ReplaceText(Loc, 1, "&gt;", 4);
+        break;
+      }
+        
+      case '&': {
+        SourceLocation Loc = SourceLocation::getFileLoc(FileID, FilePos);
+        R.ReplaceText(Loc, 1, "&amp;", 5);
+        break;
+      }
     }
   }
 }
@@ -78,28 +98,17 @@ std::string html::EscapeText(const std::string& s, bool EscapeSpaces) {
 static void AddLineNumber(Rewriter& R, unsigned LineNo,
                           SourceLocation B, SourceLocation E) {
     
-  // Put the closing </tr> first.
-
-  R.InsertCStrBefore(E, "</tr>");
-  
-  if (B == E) // Handle empty lines.
-    R.InsertCStrBefore(B, "<td class=\"line\"> </td>");
-  else {                         
-    R.InsertCStrBefore(E, "</td>");
-    R.InsertCStrBefore(B, "<td class=\"line\">");
-  }
-  
-  // Insert a div tag for the line number.
-  
   std::ostringstream os;
-  os << "<td class=\"num\">" << LineNo << "</td>";
-  
-  R.InsertStrBefore(B, os.str());
-  
-  // Now prepend the <tr>.
-  
-  R.InsertCStrBefore(B, "<tr>");
+  os << "<tr><td class=\"num\">" << LineNo << "</td><td class=\"line\">";
 
+  if (B == E) { // Handle empty lines.
+    os << " </td></tr>";
+    R.InsertStrBefore(B, os.str());
+  }
+  else {
+    R.InsertStrBefore(B, os.str());
+    R.InsertCStrBefore(E, "</td></tr>");
+  }
 }
 
 void html::AddLineNumbers(Rewriter& R, unsigned FileID) {
@@ -125,20 +134,21 @@ void html::AddLineNumbers(Rewriter& R, unsigned FileID) {
     
     // Scan until the newline (or end-of-file).
     
-    for ( ; C != FileEnd ; ++C, ++FilePos)
-      if (*C == '\n') {
-        LineEndPos = FilePos;
+    while (C != FileEnd) {
+      char c = *C;
+      ++C;
+      
+      if (c == '\n') {
+        LineEndPos = FilePos++;
         break;
       }
+      
+      ++FilePos;
+    }
     
     AddLineNumber(R, LineNo,
                   SourceLocation::getFileLoc(FileID, LineStartPos),
-                  SourceLocation::getFileLoc(FileID, LineEndPos));
-    
-    if (C != FileEnd) {
-      ++C;
-      ++FilePos;
-    }      
+                  SourceLocation::getFileLoc(FileID, LineEndPos));    
   }
   
   // Add one big div tag that surrounds all of the code.
