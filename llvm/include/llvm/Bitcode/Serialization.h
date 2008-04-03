@@ -38,6 +38,11 @@ struct SerializeTrait {
   static inline void Emit(Serializer& S, const T& X) { X.Emit(S); }
   static inline void Read(Deserializer& D, T& X) { X.Read(D); }
   static inline T* Create(Deserializer& D) { return T::Create(D); }
+  
+  template <typename Arg1>
+  static inline T* Create(Deserializer& D, Arg1& arg1) {
+    return T::Create(D, arg1);
+  }
 };
 
 #define SERIALIZE_INT_TRAIT(TYPE)\
