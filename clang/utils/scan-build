@@ -428,7 +428,7 @@ $HtmlDir = GetHTMLRunDir($HtmlDir);
 SetHtmlEnv(\@ARGV, $HtmlDir);
 
 my $Cmd = `which ccc-analyzer`;
-chop $Cmd;
+$Cmd =~ s/\015?\012//;
 $ENV{'CC'} = $Cmd;
 
 if ($Verbose >= 2) {
