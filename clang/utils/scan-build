@@ -312,7 +312,7 @@ OPTIONS:
                   the analyzer.  If this option is not specified, a directory
                   is created in /tmp to store the reports.
                 
-  -?, -h        - Display this message.
+  -h            - Display this message.
   --help
   
   -k            - Add a "keep on going" option to the specified build command.
