@@ -370,6 +370,28 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\Target\X86\X86CompilationCallback_Win64.asm"
+				>
+				<FileConfiguration
+					Name="Debug|x64"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						CommandLine="ml64.exe /c /nologo /Fo &quot;$(IntDir)X86CompilationCallback_Win64.obj&quot; /Zi $(InputPath)"
+						Outputs="&quot;$(IntDir)X86CompilationCallback_Win64.obj&quot;"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						CommandLine="ml64.exe /c /nologo /Fo &quot;$(IntDir)X86CompilationCallback_Win64.obj&quot; /Zi $(InputPath)"
+						Outputs="&quot;$(IntDir)X86CompilationCallback_Win64.obj&quot;"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\..\lib\Target\X86\X86ELFWriterInfo.cpp"
 				>
 			</File>
