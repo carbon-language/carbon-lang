@@ -361,7 +361,7 @@ while (@ARGV) {
   
   my $arg = $ARGV[0];
 
-  if ($arg eq "-?" or $arg eq "-h" or $arg eq "--help") {
+  if ($arg eq "-h" or $arg eq "--help") {
     DisplayHelp();
     exit 0;
   }
