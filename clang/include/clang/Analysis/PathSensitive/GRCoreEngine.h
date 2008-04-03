@@ -261,7 +261,8 @@ public:
         Dst.Add(N);
         
         for ( ; AB != AE; ++AB)
-          (*AB)->Audit(N);
+          if ((*AB)->Audit(N))
+            N->markAsSink();            
       }
     }
     
