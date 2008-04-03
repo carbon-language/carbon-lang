@@ -527,6 +527,34 @@ Path::eraseSuffix() {
   return false;
 }
 
+static bool createDirectoryHelper(char* beg, char* end, bool create_parents) {
+  
+  if (access(beg, F_OK | R_OK | W_OK) == 0)
+    return false;
+    
+  if (create_parents) {
+    
+    char* c = end;
+        
+    for (; c != beg; --c)
+      if (*c == '/') {
+        
+        // Recurse to handling the parent directory.
+        *c = '\0';          
+        bool x = createDirectoryHelper(beg, c, create_parents);
+        *c = '/';
+        
+        // Return if we encountered an error.
+        if (x)
+          return true;
+          
+        break;
+      }
+  }      
+  
+  return mkdir(beg, S_IRWXU | S_IRWXG) != 0;
+}
+
 bool
 Path::createDirectoryOnDisk( bool create_parents, std::string* ErrMsg ) {
   // Get a writeable copy of the path name
@@ -534,38 +562,17 @@ Path::createDirectoryOnDisk( bool create_parents, std::string* ErrMsg ) {
   path.copy(pathname,MAXPATHLEN);
 
   // Null-terminate the last component
-  int lastchar = path.length() - 1 ; 
-  if (pathname[lastchar] == '/') 
-    pathname[lastchar] = 0;
-  else 
-    pathname[lastchar+1] = 0;
-
-  // If we're supposed to create intermediate directories
-  if ( create_parents ) {
-    // Find the end of the initial name component
-    char * next = strchr(pathname,'/');
-    if ( pathname[0] == '/') 
-      next = strchr(&pathname[1],'/');
-
-    // Loop through the directory components until we're done 
-    while ( next != 0 ) {
-      *next = 0;
-      if (0 != access(pathname, F_OK | R_OK | W_OK))
-        if (0 != mkdir(pathname, S_IRWXU | S_IRWXG)) {
-          return MakeErrMsg(ErrMsg, 
-                            std::string(pathname) + ": can't create directory");
-        }
-      char* save = next;
-      next = strchr(next+1,'/');
-      *save = '/';
-    }
-  } 
-
-  if (0 != access(pathname, F_OK | R_OK))
-    if (0 != mkdir(pathname, S_IRWXU | S_IRWXG)) {
-      return MakeErrMsg(ErrMsg, 
-                        std::string(pathname) + ": can't create directory");
-    }
+  int lastchar = path.length() - 1 ;
+  
+  if (pathname[lastchar] != '/')
+    ++lastchar;
+    
+  pathname[lastchar] = 0;
+    
+  if (createDirectoryHelper(pathname, pathname+lastchar, create_parents))
+    return MakeErrMsg(ErrMsg, 
+                      std::string(pathname) + ": can't create directory");
+  
   return false;
 }
 
