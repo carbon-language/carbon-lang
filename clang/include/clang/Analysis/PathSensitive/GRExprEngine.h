@@ -80,7 +80,7 @@ protected:
   SimpleChecksTy CallChecks;
   SimpleChecksTy MsgExprChecks;
   
-
+public:
   typedef llvm::SmallPtrSet<NodeTy*,2> UndefBranchesTy;  
   typedef llvm::SmallPtrSet<NodeTy*,2> UndefStoresTy;
   typedef llvm::SmallPtrSet<NodeTy*,2> BadDerefTy;
@@ -91,6 +91,8 @@ protected:
   typedef llvm::SmallPtrSet<NodeTy*,2> NoReturnCallsTy;  
   typedef llvm::SmallPtrSet<NodeTy*,2> UndefResultsTy;
   typedef llvm::SmallPtrSet<NodeTy*,2> RetsStackAddrTy;
+  
+protected:
 
   /// RetsStackAddr - Nodes in the ExplodedGraph that result from returning
   ///  the address of a stack variable.
