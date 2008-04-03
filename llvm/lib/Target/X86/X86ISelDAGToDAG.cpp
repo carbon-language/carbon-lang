@@ -1527,10 +1527,10 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
       // If we have an index, generate an insert_subreg into undef.
       AddToISelQueue(N0);
       SDOperand Undef = 
-                  SDOperand(CurDAG->getTargetNode(X86::IMPLICIT_DEF, NVT), 0);
+        SDOperand(CurDAG->getTargetNode(X86::IMPLICIT_DEF, NVT), 0);
       SDOperand SRIdx = CurDAG->getTargetConstant(Idx, MVT::i32);
       SDNode *ResNode = CurDAG->getTargetNode(X86::INSERT_SUBREG,
-                                                NVT, Undef, N0, SRIdx);
+                                              NVT, Undef, N0, SRIdx);
 
 #ifndef NDEBUG
       DOUT << std::string(Indent-2, ' ') << "=> ";
