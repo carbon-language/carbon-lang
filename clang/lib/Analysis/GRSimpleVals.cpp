@@ -91,19 +91,31 @@ public:
 };
   
 class VISIBILITY_HIDDEN BadArg : public BugDescription {
+  SourceRange R;
 public:
+  BadArg(Expr *E) {
+    R = E->getSourceRange();
+  }
+  
   virtual const char* getName() const {
     return "bad argument";
   }
   virtual const char* getDescription() const {
     return "Pass-by-value argument in function is undefined.";
   }
+  
+  virtual void getRanges(const SourceRange*& B, const SourceRange*& E) const {
+    B = &R;
+    E = B+1;
+  }
 };
 
-class VISIBILITY_HIDDEN BadMsgExprArg : public BugDescription {
+class VISIBILITY_HIDDEN BadMsgExprArg : public BadArg {
 public:
+  BadMsgExprArg(Expr *E) : BadArg(E) {}
+  
   virtual const char* getName() const {
-    return "bad receiver";
+    return "bad argument";
   }
   virtual const char* getDescription() const {
     return "Pass-by-value argument in message expression is undefined.";
@@ -121,7 +133,7 @@ public:
   }
   
   virtual const char* getName() const {
-    return "invalid message expression";
+    return "bad receiver";
   }
   virtual const char* getDescription() const {
     return "Receiver in message expression is an uninitialized value.";
@@ -218,11 +230,19 @@ unsigned RunGRSimpleVals(CFG& cfg, Decl& CD, ASTContext& Ctx,
   EmitWarning(Diag, PD, Ctx, BR, BadCall(), G,
               CS->bad_calls_begin(), CS->bad_calls_end());
   
-  EmitWarning(Diag, PD, Ctx, BR, BadArg(), G,
-              CS->undef_arg_begin(), CS->undef_arg_end());
+  for (GRExprEngine::UndefArgsTy::iterator I = CS->undef_arg_begin(),
+       E = CS->undef_arg_end(); I!=E; ++I) {
+    
+    BadArg Desc(I->second);
+    BR.EmitPathWarning(Diag, PD, Ctx, Desc, G, I->first);
+  }
   
-  EmitWarning(Diag, PD, Ctx, BR, BadMsgExprArg(), G,
-              CS->msg_expr_undef_arg_begin(), CS->msg_expr_undef_arg_end());
+  for (GRExprEngine::UndefArgsTy::iterator I = CS->msg_expr_undef_arg_begin(),
+        E = CS->msg_expr_undef_arg_end(); I!=E; ++I) {
+    
+    BadMsgExprArg Desc(I->second);
+    BR.EmitPathWarning(Diag, PD, Ctx, Desc, G, I->first);
+  }
   
   for (GRExprEngine::UndefReceiversTy::iterator I = CS->undef_receivers_begin(),
                                   E = CS->undef_receivers_end(); I!=E; ++I) {
