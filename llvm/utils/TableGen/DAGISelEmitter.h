@@ -14,6 +14,7 @@
 #ifndef DAGISEL_EMITTER_H
 #define DAGISEL_EMITTER_H
 
+#include "TableGenBackend.h"
 #include "CodeGenDAGPatterns.h"
 #include <set>
 

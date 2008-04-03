@@ -145,6 +145,10 @@ public:
     if (Instructions.empty()) ReadInstructions();
     return Instructions;
   }
+  std::map<std::string, CodeGenInstruction> &getInstructions() {
+    if (Instructions.empty()) ReadInstructions();
+    return Instructions;
+  }
 
   CodeGenInstruction &getInstruction(const std::string &Name) const {
     const std::map<std::string, CodeGenInstruction> &Insts = getInstructions();

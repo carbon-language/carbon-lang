@@ -138,131 +138,6 @@ void InstrInfoEmitter::EmitOperandInfo(std::ostream &OS,
 }
 
 //===----------------------------------------------------------------------===//
-// Instruction Analysis
-//===----------------------------------------------------------------------===//
-
-class InstAnalyzer {
-  const CodeGenDAGPatterns &CDP;
-  bool &mayStore;
-  bool &mayLoad;
-  bool &HasSideEffects;
-public:
-  InstAnalyzer(const CodeGenDAGPatterns &cdp,
-               bool &maystore, bool &mayload, bool &hse)
-    : CDP(cdp), mayStore(maystore), mayLoad(mayload), HasSideEffects(hse){
-  }
-  
-  /// Analyze - Analyze the specified instruction, returning true if the
-  /// instruction had a pattern.
-  bool Analyze(Record *InstRecord) {
-    const TreePattern *Pattern = CDP.getInstruction(InstRecord).getPattern();
-    if (Pattern == 0) {
-      HasSideEffects = 1;
-      return false;  // No pattern.
-    }
-    
-    // FIXME: Assume only the first tree is the pattern. The others are clobber
-    // nodes.
-    AnalyzeNode(Pattern->getTree(0));
-    return true;
-  }
-  
-private:
-  void AnalyzeNode(const TreePatternNode *N) {
-    if (N->isLeaf()) {
-      if (DefInit *DI = dynamic_cast<DefInit*>(N->getLeafValue())) {
-        Record *LeafRec = DI->getDef();
-        // Handle ComplexPattern leaves.
-        if (LeafRec->isSubClassOf("ComplexPattern")) {
-          const ComplexPattern &CP = CDP.getComplexPattern(LeafRec);
-          if (CP.hasProperty(SDNPMayStore)) mayStore = true;
-          if (CP.hasProperty(SDNPMayLoad)) mayLoad = true;
-          if (CP.hasProperty(SDNPSideEffect)) HasSideEffects = true;
-        }
-      }
-      return;
-    }
-
-    // Analyze children.
-    for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i)
-      AnalyzeNode(N->getChild(i));
-
-    // Ignore set nodes, which are not SDNodes.
-    if (N->getOperator()->getName() == "set")
-      return;
-    
-    // Get information about the SDNode for the operator.
-    const SDNodeInfo &OpInfo = CDP.getSDNodeInfo(N->getOperator());
-    
-    // Notice properties of the node.
-    if (OpInfo.hasProperty(SDNPMayStore)) mayStore = true;
-    if (OpInfo.hasProperty(SDNPMayLoad)) mayLoad = true;
-    if (OpInfo.hasProperty(SDNPSideEffect)) HasSideEffects = true;
-    
-    if (const CodeGenIntrinsic *IntInfo = N->getIntrinsicInfo(CDP)) {
-      // If this is an intrinsic, analyze it.
-      if (IntInfo->ModRef >= CodeGenIntrinsic::ReadArgMem)
-        mayLoad = true;// These may load memory.
-
-      if (IntInfo->ModRef >= CodeGenIntrinsic::WriteArgMem)
-        mayStore = true;// Intrinsics that can write to memory are 'mayStore'.
-
-      if (IntInfo->ModRef >= CodeGenIntrinsic::WriteMem)
-        // WriteMem intrinsics can have other strange effects.
-        HasSideEffects = true;
-    }
-  }
-  
-};
-
-void InstrInfoEmitter::InferFromPattern(const CodeGenInstruction &Inst, 
-                                        bool &MayStore, bool &MayLoad, 
-                                        bool &HasSideEffects) {
-  MayStore = MayLoad = HasSideEffects = false;
-  
-  bool HadPattern =
-    InstAnalyzer(CDP, MayStore, MayLoad, HasSideEffects).Analyze(Inst.TheDef);
-
-  // InstAnalyzer only correctly analyzes mayStore/mayLoad so far.
-  if (Inst.mayStore) {  // If the .td file explicitly sets mayStore, use it.
-    // If we decided that this is a store from the pattern, then the .td file
-    // entry is redundant.
-    if (MayStore)
-      fprintf(stderr, 
-              "Warning: mayStore flag explicitly set on instruction '%s'"
-              " but flag already inferred from pattern.\n", 
-              Inst.TheDef->getName().c_str());
-    MayStore = true;
-  }
-
-  if (Inst.mayLoad) {  // If the .td file explicitly sets mayLoad, use it.
-    // If we decided that this is a load from the pattern, then the .td file
-    // entry is redundant.
-    if (MayLoad)
-      fprintf(stderr, 
-              "Warning: mayLoad flag explicitly set on instruction '%s'"
-              " but flag already inferred from pattern.\n", 
-              Inst.TheDef->getName().c_str());
-    MayLoad = true;
-  }
-  
-  if (Inst.neverHasSideEffects) {
-    if (HadPattern)
-      fprintf(stderr, "Warning: neverHasSideEffects set on instruction '%s' "
-              "which already has a pattern\n", Inst.TheDef->getName().c_str());
-    HasSideEffects = false;
-  }
-  
-  if (Inst.hasSideEffects) {
-    if (HasSideEffects)
-      fprintf(stderr, "Warning: hasSideEffects set on instruction '%s' "
-              "which already inferred this.\n", Inst.TheDef->getName().c_str());
-    HasSideEffects = true;
-  }
-}
-
-
-//===----------------------------------------------------------------------===//
 // Main Output.
 //===----------------------------------------------------------------------===//
 
@@ -273,7 +148,7 @@ void InstrInfoEmitter::run(std::ostream &OS) {
   EmitSourceFileHeader("Target Instruction Descriptors", OS);
   OS << "namespace llvm {\n\n";
 
-  CodeGenTarget Target;
+  CodeGenTarget &Target = CDP.getTargetInfo();
   const std::string &TargetName = Target.getName();
   Record *InstrInfo = Target.getInstructionSet();
 
@@ -321,10 +196,6 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
                          std::map<std::vector<Record*>, unsigned> &EmittedLists,
                                   const OperandInfoMapTy &OpInfo,
                                   std::ostream &OS) {
-  // Determine properties of the instruction from its pattern.
-  bool mayStore, mayLoad, HasSideEffects;
-  InferFromPattern(Inst, mayStore, mayLoad, HasSideEffects);
-  
   int MinOperands = 0;
   if (!Inst.OperandList.empty())
     // Each logical operand can be multiple MI operands.
@@ -344,8 +215,8 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   if (Inst.hasDelaySlot) OS << "|(1<<TID::DelaySlot)";
   if (Inst.isCall)       OS << "|(1<<TID::Call)";
   if (Inst.isSimpleLoad) OS << "|(1<<TID::SimpleLoad)";
-  if (mayLoad)           OS << "|(1<<TID::MayLoad)";
-  if (mayStore)          OS << "|(1<<TID::MayStore)";
+  if (Inst.mayLoad)      OS << "|(1<<TID::MayLoad)";
+  if (Inst.mayStore)     OS << "|(1<<TID::MayStore)";
   if (Inst.isPredicable) OS << "|(1<<TID::Predicable)";
   if (Inst.isConvertibleToThreeAddress) OS << "|(1<<TID::ConvertibleTo3Addr)";
   if (Inst.isCommutable) OS << "|(1<<TID::Commutable)";
@@ -356,7 +227,7 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   if (Inst.usesCustomDAGSchedInserter)
     OS << "|(1<<TID::UsesCustomDAGSchedInserter)";
   if (Inst.isVariadic)         OS << "|(1<<TID::Variadic)";
-  if (HasSideEffects)          OS << "|(1<<TID::UnmodeledSideEffects)";
+  if (Inst.hasSideEffects)          OS << "|(1<<TID::UnmodeledSideEffects)";
   OS << ", 0";
 
   // Emit all of the target-specific flags...

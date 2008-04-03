@@ -29,7 +29,7 @@ class CodeGenInstruction;
 
 class InstrInfoEmitter : public TableGenBackend {
   RecordKeeper &Records;
-  const CodeGenDAGPatterns CDP;
+  CodeGenDAGPatterns CDP;
   std::map<std::string, unsigned> ItinClassMap;
   
 public:
@@ -40,10 +40,6 @@ public:
 
 private:
   typedef std::map<std::vector<std::string>, unsigned> OperandInfoMapTy;
-  
-  // Instruction analysis.
-  void InferFromPattern(const CodeGenInstruction &Inst, 
-                        bool &MayStore, bool &MayLoad, bool &HasSideEffects);
   
   void emitRecord(const CodeGenInstruction &Inst, unsigned Num,
                   Record *InstrInfo, 

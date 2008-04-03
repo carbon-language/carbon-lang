@@ -17,7 +17,6 @@
 
 #include <set>
 
-#include "TableGenBackend.h"
 #include "CodeGenTarget.h"
 #include "CodeGenIntrinsics.h"
 
@@ -277,7 +276,7 @@ public:   // Higher level manipulation routines.
   
   /// canPatternMatch - If it is impossible for this pattern to match on this
   /// target, fill in Reason and return false.  Otherwise, return true.
-  bool canPatternMatch(std::string &Reason, CodeGenDAGPatterns &CDP);
+  bool canPatternMatch(std::string &Reason, const CodeGenDAGPatterns &CDP);
 };
 
 
@@ -467,6 +466,7 @@ public:
   CodeGenDAGPatterns(RecordKeeper &R); 
   ~CodeGenDAGPatterns();
   
+  CodeGenTarget &getTargetInfo() { return Target; }
   const CodeGenTarget &getTargetInfo() const { return Target; }
   
   Record *getSDNodeNamed(const std::string &Name) const;
@@ -556,6 +556,7 @@ private:
   void ParseDefaultOperands();
   void ParseInstructions();
   void ParsePatterns();
+  void InferInstructionFlags();
   void GenerateVariants();
   
   void FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,

@@ -394,20 +394,12 @@ std::vector<CodeGenIntrinsic> llvm::LoadIntrinsics(const RecordKeeper &RC) {
   
   std::vector<CodeGenIntrinsic> Result;
 
-  // If we are in the context of a target .td file, get the target info so that
-  // we can decode the current intptr_t.
-  CodeGenTarget *CGT = 0;
-  if (Records.getClass("Target") &&
-      Records.getAllDerivedDefinitions("Target").size() == 1)
-    CGT = new CodeGenTarget();
-  
   for (unsigned i = 0, e = I.size(); i != e; ++i)
-    Result.push_back(CodeGenIntrinsic(I[i], CGT));
-  delete CGT;
+    Result.push_back(CodeGenIntrinsic(I[i]));
   return Result;
 }
 
-CodeGenIntrinsic::CodeGenIntrinsic(Record *R, CodeGenTarget *CGT) {
+CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
   TheDef = R;
   std::string DefName = R->getName();
   ModRef = WriteMem;

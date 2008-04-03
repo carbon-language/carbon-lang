@@ -965,7 +965,7 @@ static bool OnlyOnRHSOfCommutative(TreePatternNode *N) {
 /// that can never possibly work), and to prevent the pattern permuter from
 /// generating stuff that is useless.
 bool TreePatternNode::canPatternMatch(std::string &Reason, 
-                                      CodeGenDAGPatterns &CDP){
+                                      const CodeGenDAGPatterns &CDP) {
   if (isLeaf()) return true;
 
   for (unsigned i = 0, e = getNumChildren(); i != e; ++i)
@@ -1226,6 +1226,11 @@ CodeGenDAGPatterns::CodeGenDAGPatterns(RecordKeeper &R) : Records(R) {
   // Generate variants.  For example, commutative patterns can match
   // multiple ways.  Add them to PatternsToMatch as well.
   GenerateVariants();
+
+  // Infer instruction flags.  For example, we can detect loads,
+  // stores, and side effects in many cases by examining an
+  // instruction's pattern.
+  InferInstructionFlags();
 }
 
 CodeGenDAGPatterns::~CodeGenDAGPatterns() {
@@ -1558,6 +1563,131 @@ FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
                               InstImpInputs, InstImpResults);
 }
 
+//===----------------------------------------------------------------------===//
+// Instruction Analysis
+//===----------------------------------------------------------------------===//
+
+class InstAnalyzer {
+  const CodeGenDAGPatterns &CDP;
+  bool &mayStore;
+  bool &mayLoad;
+  bool &HasSideEffects;
+public:
+  InstAnalyzer(const CodeGenDAGPatterns &cdp,
+               bool &maystore, bool &mayload, bool &hse)
+    : CDP(cdp), mayStore(maystore), mayLoad(mayload), HasSideEffects(hse){
+  }
+
+  /// Analyze - Analyze the specified instruction, returning true if the
+  /// instruction had a pattern.
+  bool Analyze(Record *InstRecord) {
+    const TreePattern *Pattern = CDP.getInstruction(InstRecord).getPattern();
+    if (Pattern == 0) {
+      HasSideEffects = 1;
+      return false;  // No pattern.
+    }
+
+    // FIXME: Assume only the first tree is the pattern. The others are clobber
+    // nodes.
+    AnalyzeNode(Pattern->getTree(0));
+    return true;
+  }
+
+private:
+  void AnalyzeNode(const TreePatternNode *N) {
+    if (N->isLeaf()) {
+      if (DefInit *DI = dynamic_cast<DefInit*>(N->getLeafValue())) {
+        Record *LeafRec = DI->getDef();
+        // Handle ComplexPattern leaves.
+        if (LeafRec->isSubClassOf("ComplexPattern")) {
+          const ComplexPattern &CP = CDP.getComplexPattern(LeafRec);
+          if (CP.hasProperty(SDNPMayStore)) mayStore = true;
+          if (CP.hasProperty(SDNPMayLoad)) mayLoad = true;
+          if (CP.hasProperty(SDNPSideEffect)) HasSideEffects = true;
+        }
+      }
+      return;
+    }
+
+    // Analyze children.
+    for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i)
+      AnalyzeNode(N->getChild(i));
+
+    // Ignore set nodes, which are not SDNodes.
+    if (N->getOperator()->getName() == "set")
+      return;
+
+    // Get information about the SDNode for the operator.
+    const SDNodeInfo &OpInfo = CDP.getSDNodeInfo(N->getOperator());
+
+    // Notice properties of the node.
+    if (OpInfo.hasProperty(SDNPMayStore)) mayStore = true;
+    if (OpInfo.hasProperty(SDNPMayLoad)) mayLoad = true;
+    if (OpInfo.hasProperty(SDNPSideEffect)) HasSideEffects = true;
+
+    if (const CodeGenIntrinsic *IntInfo = N->getIntrinsicInfo(CDP)) {
+      // If this is an intrinsic, analyze it.
+      if (IntInfo->ModRef >= CodeGenIntrinsic::ReadArgMem)
+        mayLoad = true;// These may load memory.
+
+      if (IntInfo->ModRef >= CodeGenIntrinsic::WriteArgMem)
+        mayStore = true;// Intrinsics that can write to memory are 'mayStore'.
+
+      if (IntInfo->ModRef >= CodeGenIntrinsic::WriteMem)
+        // WriteMem intrinsics can have other strange effects.
+        HasSideEffects = true;
+    }
+  }
+
+};
+
+static void InferFromPattern(const CodeGenInstruction &Inst,
+                             bool &MayStore, bool &MayLoad,
+                             bool &HasSideEffects,
+                             const CodeGenDAGPatterns &CDP) {
+  MayStore = MayLoad = HasSideEffects = false;
+
+  bool HadPattern =
+    InstAnalyzer(CDP, MayStore, MayLoad, HasSideEffects).Analyze(Inst.TheDef);
+
+  // InstAnalyzer only correctly analyzes mayStore/mayLoad so far.
+  if (Inst.mayStore) {  // If the .td file explicitly sets mayStore, use it.
+    // If we decided that this is a store from the pattern, then the .td file
+    // entry is redundant.
+    if (MayStore)
+      fprintf(stderr,
+              "Warning: mayStore flag explicitly set on instruction '%s'"
+              " but flag already inferred from pattern.\n",
+              Inst.TheDef->getName().c_str());
+    MayStore = true;
+  }
+
+  if (Inst.mayLoad) {  // If the .td file explicitly sets mayLoad, use it.
+    // If we decided that this is a load from the pattern, then the .td file
+    // entry is redundant.
+    if (MayLoad)
+      fprintf(stderr,
+              "Warning: mayLoad flag explicitly set on instruction '%s'"
+              " but flag already inferred from pattern.\n",
+              Inst.TheDef->getName().c_str());
+    MayLoad = true;
+  }
+
+  if (Inst.neverHasSideEffects) {
+    if (HadPattern)
+      fprintf(stderr, "Warning: neverHasSideEffects set on instruction '%s' "
+              "which already has a pattern\n", Inst.TheDef->getName().c_str());
+    HasSideEffects = false;
+  }
+
+  if (Inst.hasSideEffects) {
+    if (HasSideEffects)
+      fprintf(stderr, "Warning: hasSideEffects set on instruction '%s' "
+              "which already inferred this.\n", Inst.TheDef->getName().c_str());
+    HasSideEffects = true;
+  }
+}
+
 /// ParseInstructions - Parse all of the instructions, inlining and resolving
 /// any fragments involved.  This populates the Instructions list with fully
 /// resolved instructions.
@@ -1788,6 +1918,22 @@ void CodeGenDAGPatterns::ParseInstructions() {
       push_back(PatternToMatch(Instr->getValueAsListInit("Predicates"),
                                SrcPattern, DstPattern, TheInst.getImpResults(),
                                Instr->getValueAsInt("AddedComplexity")));
+  }
+}
+
+
+void CodeGenDAGPatterns::InferInstructionFlags() {
+  std::map<std::string, CodeGenInstruction> &InstrDescs =
+    Target.getInstructions();
+  for (std::map<std::string, CodeGenInstruction>::iterator
+         II = InstrDescs.begin(), E = InstrDescs.end(); II != E; ++II) {
+    CodeGenInstruction &InstInfo = II->second;
+    // Determine properties of the instruction from its pattern.
+    bool MayStore, MayLoad, HasSideEffects;
+    InferFromPattern(InstInfo, MayStore, MayLoad, HasSideEffects, *this);
+    InstInfo.mayStore = MayStore;
+    InstInfo.mayLoad = MayLoad;
+    InstInfo.hasSideEffects = HasSideEffects;
   }
 }
 

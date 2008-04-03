@@ -49,7 +49,7 @@ namespace llvm {
     // types.
     bool isOverloaded;
 
-    CodeGenIntrinsic(Record *R, CodeGenTarget *CGT);
+    CodeGenIntrinsic(Record *R);
   };
 
   /// LoadIntrinsics - Read all of the intrinsics defined in the specified
