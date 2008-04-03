@@ -21,35 +21,26 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Compiler.h"
 #include <algorithm>
 #include <map>
-#include <set>
 using namespace llvm;
 
 STATISTIC(NumAtomic, "Number of atomic phis lowered");
-//STATISTIC(NumSimple, "Number of simple phis lowered");
 
 namespace {
-  struct VISIBILITY_HIDDEN PNE : public MachineFunctionPass {
+  class VISIBILITY_HIDDEN PNE : public MachineFunctionPass {
+    MachineRegisterInfo  *MRI; // Machine register information
+
+  public:
     static char ID; // Pass identification, replacement for typeid
     PNE() : MachineFunctionPass((intptr_t)&ID) {}
 
-    bool runOnMachineFunction(MachineFunction &Fn) {
-      analyzePHINodes(Fn);
-
-      bool Changed = false;
-
-      // Eliminate PHI instructions by inserting copies into predecessor blocks.
-      for (MachineFunction::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
-        Changed |= EliminatePHINodes(Fn, *I);
-
-      VRegPHIUseCount.clear();
-      return Changed;
-    }
-
+    virtual bool runOnMachineFunction(MachineFunction &Fn);
+    
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addPreserved<LiveVariables>();
       AU.addPreservedID(MachineLoopInfoID);
@@ -58,6 +49,12 @@ namespace {
     }
 
   private:
+    /// findInsertionPoint - Find a safe location to insert a move to copy
+    /// source of a PHI instruction.
+    MachineBasicBlock::iterator
+      findInsertionPoint(MachineBasicBlock &MBB, MachineInstr *DefMI,
+                         unsigned DstReg, unsigned SrcReg) const;
+
     /// EliminatePHINodes - Eliminate phi nodes by inserting copy instructions
     /// in predecessor basic blocks.
     ///
@@ -77,6 +74,9 @@ namespace {
     typedef std::map<BBVRegPair, unsigned> VRegPHIUse;
 
     VRegPHIUse VRegPHIUseCount;
+
+    // Defs of PHI sources which are implicit_def.
+    SmallPtrSet<MachineInstr*, 4> ImpDefs;
   };
 
   char PNE::ID = 0;
@@ -85,6 +85,32 @@ namespace {
 }
 
 const PassInfo *llvm::PHIEliminationID = X.getPassInfo();
+
+bool PNE::runOnMachineFunction(MachineFunction &Fn) {
+  MRI = &Fn.getRegInfo();
+
+  analyzePHINodes(Fn);
+
+  bool Changed = false;
+
+  // Eliminate PHI instructions by inserting copies into predecessor blocks.
+  for (MachineFunction::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
+    Changed |= EliminatePHINodes(Fn, *I);
+
+  // Remove dead IMPLICIT_DEF instructions.
+  for (SmallPtrSet<MachineInstr*,4>::iterator I = ImpDefs.begin(),
+         E = ImpDefs.end(); I != E; ++I) {
+    MachineInstr *DefMI = *I;
+    unsigned DefReg = DefMI->getOperand(0).getReg();
+    if (MRI->use_begin(DefReg) == MRI->use_end())
+      DefMI->eraseFromParent();
+  }
+
+  ImpDefs.clear();
+  VRegPHIUseCount.clear();
+  return Changed;
+}
+
 
 /// EliminatePHINodes - Eliminate phi nodes by inserting copy instructions in
 /// predecessor basic blocks.
@@ -106,15 +132,26 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
   return true;
 }
 
-/// InstructionUsesRegister - Return true if the specified machine instr has a
-/// use of the specified register.
-static bool InstructionUsesRegister(MachineInstr *MI, unsigned SrcReg) {
-  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i)
-    if (MI->getOperand(i).isRegister() &&
-        MI->getOperand(i).getReg() == SrcReg &&
-        MI->getOperand(i).isUse())
-      return true;
-  return false;
+/// findInsertionPoint - Find a safe location to insert a move to copy
+/// source of a PHI instruction.
+MachineBasicBlock::iterator
+PNE::findInsertionPoint(MachineBasicBlock &MBB, MachineInstr *DefMI,
+                        unsigned DstReg, unsigned SrcReg) const {
+  if (DefMI->getOpcode() == TargetInstrInfo::PHI ||
+      DefMI->getParent() != &MBB)
+    return MBB.getFirstTerminator();
+
+  for (MachineRegisterInfo::use_iterator I = MRI->use_begin(SrcReg),
+         E = MRI->use_end(); I != E; ++I)
+    if (I->getParent() == &MBB)
+      return MBB.getFirstTerminator();
+  for (MachineRegisterInfo::use_iterator I = MRI->use_begin(DstReg),
+         E = MRI->use_end(); I != E; ++I)
+    if (I->getParent() == &MBB)
+      return MBB.getFirstTerminator();
+
+  MachineBasicBlock::iterator I = DefMI;
+  return ++I;
 }
 
 /// LowerAtomicPHINode - Lower the PHI node at the top of the specified block,
@@ -179,11 +216,19 @@ void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
   // Now loop over all of the incoming arguments, changing them to copy into
   // the IncomingReg register in the corresponding predecessor basic block.
   //
-  std::set<MachineBasicBlock*> MBBsInsertedInto;
+  SmallPtrSet<MachineBasicBlock*, 8> MBBsInsertedInto;
   for (int i = MPhi->getNumOperands() - 1; i >= 2; i-=2) {
     unsigned SrcReg = MPhi->getOperand(i-1).getReg();
     assert(TargetRegisterInfo::isVirtualRegister(SrcReg) &&
            "Machine PHI Operands must all be virtual registers!");
+
+    // If source is defined by an implicit def, there is no need to insert
+    // a copy.
+    MachineInstr *DefMI = MRI->getVRegDef(SrcReg);
+    if (DefMI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF) {
+      ImpDefs.insert(DefMI);
+      continue;
+    }
 
     // Get the MachineBasicBlock equivalent of the BasicBlock that is the
     // source path the PHI.
@@ -192,15 +237,16 @@ void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
     // Check to make sure we haven't already emitted the copy for this block.
     // This can happen because PHI nodes may have multiple entries for the
     // same basic block.
-    if (!MBBsInsertedInto.insert(&opBlock).second)
+    if (!MBBsInsertedInto.insert(&opBlock))
       continue;  // If the copy has already been emitted, we're done.
  
-    // Get an iterator pointing to the first terminator in the block (or end()).
-    // This is the point where we can insert a copy if we'd like to.
-    MachineBasicBlock::iterator I = opBlock.getFirstTerminator();
+    // Find a safe location to insert the copy, this may be the first
+    // terminator in the block (or end()).
+    MachineBasicBlock::iterator InsertPos =
+      findInsertionPoint(opBlock, DefMI, IncomingReg, SrcReg);
     
     // Insert the copy.
-    TII->copyRegToReg(opBlock, I, IncomingReg, SrcReg, RC, RC);
+    TII->copyRegToReg(opBlock, InsertPos, IncomingReg, SrcReg, RC, RC);
 
     // Now update live variable information if we have it.  Otherwise we're done
     if (!LV) continue;
@@ -290,26 +336,22 @@ void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
       // terminator instruction at the end of the block may also use the value.
       // In this case, we should mark *it* as being the killing block, not the
       // copy.
-      bool FirstTerminatorUsesValue = false;
-      if (I != opBlock.end()) {
-        FirstTerminatorUsesValue = InstructionUsesRegister(I, SrcReg);
+      MachineBasicBlock::iterator KillInst = prior(InsertPos);
+      MachineBasicBlock::iterator Term = opBlock.getFirstTerminator();
+      if (Term != opBlock.end()) {
+        if (Term->readsRegister(SrcReg))
+          KillInst = Term;
       
         // Check that no other terminators use values.
 #ifndef NDEBUG
-        for (MachineBasicBlock::iterator TI = next(I); TI != opBlock.end();
+        for (MachineBasicBlock::iterator TI = next(Term); TI != opBlock.end();
              ++TI) {
-          assert(!InstructionUsesRegister(TI, SrcReg) &&
+          assert(!TI->readsRegister(SrcReg) &&
                  "Terminator instructions cannot use virtual registers unless"
                  "they are the first terminator in a block!");
         }
 #endif
       }
-      
-      MachineBasicBlock::iterator KillInst;
-      if (!FirstTerminatorUsesValue) 
-        KillInst = prior(I);
-      else
-        KillInst = I;
       
       // Finally, mark it killed.
       LV->addVirtualRegisterKilled(SrcReg, KillInst);
