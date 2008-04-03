@@ -30,6 +30,11 @@ enum { BasicMetadataBlock = 1,
        ASTContextBlock = 2,
        DeclsBlock = 3 };
 
+TranslationUnit::~TranslationUnit()
+{
+  for (iterator I=begin(), E=end(); I!=E; ++I) 
+    delete *I;
+}
 
 bool clang::EmitASTBitcodeFile(const TranslationUnit& TU, 
                                const llvm::sys::Path& Filename) {  

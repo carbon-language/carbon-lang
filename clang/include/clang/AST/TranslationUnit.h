@@ -42,6 +42,8 @@ public:
   explicit TranslationUnit(const LangOptions& lopt)
     : LangOpts(lopt), Context(NULL) {}
 
+  ~TranslationUnit();
+
   void setContext(ASTContext* context) { Context = context; }
   ASTContext* getContext() const { return Context; }
   
