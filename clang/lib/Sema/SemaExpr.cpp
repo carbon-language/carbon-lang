@@ -1494,13 +1494,15 @@ inline QualType Sema::CheckCompareOperands( // C99 6.5.8
   // when handling null pointer constants. One day, we can consider making them
   // errors (when -pedantic-errors is enabled).
   if (lType->isPointerType() && rType->isPointerType()) { // C99 6.5.8p2
-    QualType lpointee = lType->getAsPointerType()->getPointeeType();
-    QualType rpointee = rType->getAsPointerType()->getPointeeType();
+    QualType LCanPointeeTy =
+      lType->getAsPointerType()->getPointeeType().getCanonicalType();
+    QualType RCanPointeeTy =
+      rType->getAsPointerType()->getPointeeType().getCanonicalType();
     
     if (!LHSIsNull && !RHSIsNull &&                       // C99 6.5.9p2
-        !lpointee->isVoidType() && !lpointee->isVoidType() &&
-        !Context.typesAreCompatible(lpointee.getUnqualifiedType(),
-                                    rpointee.getUnqualifiedType())) {
+        !LCanPointeeTy->isVoidType() && !RCanPointeeTy->isVoidType() &&
+        !Context.typesAreCompatible(LCanPointeeTy.getUnqualifiedType(),
+                                    RCanPointeeTy.getUnqualifiedType())) {
       Diag(loc, diag::ext_typecheck_comparison_of_distinct_pointers,
            lType.getAsString(), rType.getAsString(),
            lex->getSourceRange(), rex->getSourceRange());
