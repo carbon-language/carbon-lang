@@ -35,6 +35,7 @@ namespace llvm {
   class SelectionDAGISel;
   class TargetInstrInfo;
   class TargetInstrDesc;
+  class TargetLowering;
   class TargetMachine;
   class TargetRegisterClass;
 
@@ -246,6 +247,7 @@ namespace llvm {
     const TargetMachine &TM;              // Target processor
     const TargetInstrInfo *TII;           // Target instruction information
     const TargetRegisterInfo *TRI;        // Target processor register info
+    TargetLowering *TLI;                  // Target lowering info
     MachineFunction *MF;                  // Machine function
     MachineRegisterInfo &MRI;             // Virtual/real register map
     MachineConstantPool *ConstPool;       // Target constant pool
@@ -337,6 +339,34 @@ namespace llvm {
     ///
     void EmitNoop();
 
+    void EmitSchedule();
+
+    void dumpSchedule() const;
+
+    /// Schedule - Order nodes according to selected style.
+    ///
+    virtual void Schedule() {}
+
+  private:
+    /// EmitSubregNode - Generate machine code for subreg nodes.
+    ///
+    void EmitSubregNode(SDNode *Node, 
+                        DenseMap<SDOperand, unsigned> &VRBaseMap);
+
+    /// getVR - Return the virtual register corresponding to the specified result
+    /// of the specified node.
+    unsigned getVR(SDOperand Op, DenseMap<SDOperand, unsigned> &VRBaseMap);
+  
+    /// getDstOfCopyToRegUse - If the only use of the specified result number of
+    /// node is a CopyToReg, return its destination register. Return 0 otherwise.
+    unsigned getDstOfOnlyCopyToRegUse(SDNode *Node, unsigned ResNo) const;
+
+    void AddOperand(MachineInstr *MI, SDOperand Op, unsigned IIOpNum,
+                    const TargetInstrDesc *II,
+                    DenseMap<SDOperand, unsigned> &VRBaseMap);
+
+    void AddMemOperand(MachineInstr *MI, const MemOperand &MO);
+
     void EmitCrossRCCopy(SUnit *SU, DenseMap<SUnit*, unsigned> &VRBaseMap);
 
     /// EmitCopyFromReg - Generate machine code for an CopyFromReg node or an
@@ -362,26 +392,6 @@ namespace llvm {
     /// and if it has live ins that need to be copied into vregs, emit the
     /// copies into the top of the block.
     void EmitLiveInCopies(MachineBasicBlock *MBB);
-
-    void EmitSchedule();
-
-    void dumpSchedule() const;
-
-    /// Schedule - Order nodes according to selected style.
-    ///
-    virtual void Schedule() {}
-
-  private:
-    /// EmitSubregNode - Generate machine code for subreg nodes.
-    ///
-    void EmitSubregNode(SDNode *Node, 
-                        DenseMap<SDOperand, unsigned> &VRBaseMap);
-  
-    void AddOperand(MachineInstr *MI, SDOperand Op, unsigned IIOpNum,
-                    const TargetInstrDesc *II,
-                    DenseMap<SDOperand, unsigned> &VRBaseMap);
-
-    void AddMemOperand(MachineInstr *MI, const MemOperand &MO);
   };
 
   /// createBURRListDAGScheduler - This creates a bottom up register usage
