@@ -64,7 +64,6 @@ void BugReporter::GeneratePathDiagnostic(PathDiagnostic& PD, ASTContext& Ctx,
                                          const BugDescription& B,
                                          ExplodedGraph<GRExprEngine>& G,
                                          ExplodedNode<ValueState>* N) {
-    
   PD.push_back(B.getEndPath(Ctx, N));
   
   SourceManager& SMgr = Ctx.getSourceManager();
@@ -248,7 +247,7 @@ void BugReporter::EmitPathWarning(Diagnostic& Diag,
   if (IsCached(N))
     return;
   
-  PathDiagnostic D;  
+  PathDiagnostic D(B.getName());  
   GeneratePathDiagnostic(D, Ctx, B, G, N);
   PDC->HandlePathDiagnostic(D);
 }
