@@ -16,8 +16,10 @@
 #include "GRSimpleVals.h"
 #include "BasicObjCFoundationChecks.h"
 #include "clang/Basic/SourceManager.h"
-#include "clang/Analysis/PathSensitive/ValueState.h"
 #include "clang/Analysis/PathDiagnostic.h"
+#include "clang/Analysis/PathSensitive/ValueState.h"
+#include "clang/Analysis/PathSensitive/BugReporter.h"
+#include "llvm/Support/Compiler.h"
 #include <sstream>
 
 using namespace clang;
@@ -26,322 +28,139 @@ using namespace clang;
 // Bug Descriptions.
 //===----------------------------------------------------------------------===//
 
-namespace bugdesc {
-
-struct NullDeref {
-  static const char* getName() { return "Null dereference"; }
-
-  static PathDiagnosticPiece* getEndPath(SourceManager& SMgr,
-                                         ExplodedNode<ValueState> *N);
+namespace {
+  
+class VISIBILITY_HIDDEN NullDeref : public BugDescription {
+public:
+  virtual const char* getName() const {
+    return "null dereference";
+  }
+  virtual const char* getDescription() const {
+    return "Dereference of null pointer.";
+  }
 };
   
-PathDiagnosticPiece* NullDeref::getEndPath(SourceManager& SMgr,
-                                           ExplodedNode<ValueState> *N) {
+class VISIBILITY_HIDDEN UndefDeref : public BugDescription {
+public:
+  virtual const char* getName() const {
+    return "bad dereference";
+  }
+  virtual const char* getDescription() const {
+    return "Dereference of undefined value.";
+  }
+};
   
-  Expr* E = cast<Expr>(cast<PostStmt>(N->getLocation()).getStmt());
-  
-  // FIXME: Do better ranges for different kinds of null dereferences.
+class VISIBILITY_HIDDEN UndefBranch : public BugDescription {
+public:
+  virtual const char* getName() const {
+    return "uninitialized value";
+  }
+  virtual const char* getDescription() const {
+    return "Branch condition evaluates to an uninitialized value.";
+  }
+};
 
-  FullSourceLoc L(E->getLocStart(), SMgr);
+class VISIBILITY_HIDDEN DivZero : public BugDescription {
+public:
+  virtual const char* getName() const {
+    return "divide-by-zero";
+  }
+  virtual const char* getDescription() const {
+    return "Division by zero/undefined value.";
+  }
+};
   
-  PathDiagnosticPiece* P = new PathDiagnosticPiece(L, getName());
-  P->addRange(E->getSourceRange());
+class VISIBILITY_HIDDEN UndefResult : public BugDescription {
+public:
+  virtual const char* getName() const {
+    return "undefined result";
+  }
+  virtual const char* getDescription() const {
+    return "Result of operation is undefined.";
+  }
+};
   
-  return P;
-}
+class VISIBILITY_HIDDEN BadCall : public BugDescription {
+public:
+  virtual const char* getName() const {
+    return "invalid function call";
+  }
+  virtual const char* getDescription() const {
+    return "Called function is a NULL or undefined function pointer value.";
+  }
+};
   
-} // end namespace: bugdesc
+class VISIBILITY_HIDDEN BadArg : public BugDescription {
+public:
+  virtual const char* getName() const {
+    return "bad argument";
+  }
+  virtual const char* getDescription() const {
+    return "Pass-by-value argument in function is undefined.";
+  }
+};
+
+class VISIBILITY_HIDDEN BadMsgExprArg : public BugDescription {
+public:
+  virtual const char* getName() const {
+    return "bad argument";
+  }
+  virtual const char* getDescription() const {
+    return "Pass-by-value argument in message expression is undefined.";
+  }
+};
+
+class VISIBILITY_HIDDEN BadReceiver : public BugDescription {
+public:
+  virtual const char* getName() const {
+    return "invalid message expression";
+  }
+  virtual const char* getDescription() const {
+    return "Receiver in message expression is an uninitialized value.";
+  }
+};
+  
+class VISIBILITY_HIDDEN RetStack : public BugDescription {
+public:
+  virtual const char* getName() const {
+    return "return of stack address";
+  }
+  virtual const char* getDescription() const {
+    return "Address of stack-allocated variable returned.";
+  }
+};
+  
+} // end anonymous namespace
   
 //===----------------------------------------------------------------------===//
 // Utility functions.
 //===----------------------------------------------------------------------===//
   
-template <typename ITERATOR>
-static inline ExplodedNode<ValueState>* GetNode(ITERATOR I) {
+template <typename ITERATOR> static inline
+ExplodedNode<ValueState>* GetNode(ITERATOR I) {
   return *I;
 }
 
-template <>
-static inline ExplodedNode<ValueState>*
-GetNode(GRExprEngine::undef_arg_iterator I) {
+template <> static inline
+ExplodedNode<ValueState>* GetNode(GRExprEngine::undef_arg_iterator I) {
   return I->first;
 }
-  
-template <typename ITERATOR>
-static inline ProgramPoint GetLocation(ITERATOR I) {
-  return (*I)->getLocation();
-}
-  
-template <>
-static inline ProgramPoint GetLocation(GRExprEngine::undef_arg_iterator I) {
-  return I->first->getLocation();
-}
-  
-static inline Stmt* GetStmt(const ProgramPoint& P) {
-  if (const PostStmt* PS = dyn_cast<PostStmt>(&P)) {
-    return PS->getStmt();
-  }
-  else if (const BlockEdge* BE = dyn_cast<BlockEdge>(&P)) {
-    return BE->getSrc()->getTerminator();
-  }
-  else if (const BlockEntrance* BE = dyn_cast<BlockEntrance>(&P)) {
-    return BE->getFirstStmt();
-  }
-
-  assert (false && "Unsupported ProgramPoint.");
-  return NULL;
-}
-
-//===----------------------------------------------------------------------===//
-// Pathless Warnings
-//===----------------------------------------------------------------------===//
-  
-template <typename ITERATOR>
-static void EmitDiag(Diagnostic& Diag, PathDiagnosticClient* PD,
-                     SourceManager& SrcMgr,
-unsigned ErrorDiag, ITERATOR I) {  
-  
-  Stmt* S = GetStmt(GetLocation(I));
-  SourceRange R = S->getSourceRange();
-  Diag.Report(PD, FullSourceLoc(S->getLocStart(), SrcMgr), ErrorDiag,
-              NULL, 0, &R, 1);    
-}
-
-
-template <>
-static void EmitDiag(Diagnostic& Diag, PathDiagnosticClient* PD, 
-                     SourceManager& SrcMgr, unsigned ErrorDiag,
-                     GRExprEngine::undef_arg_iterator I) {
-
-  Stmt* S1 = GetStmt(GetLocation(I));
-  Expr* E2 = cast<Expr>(I->second);
-  
-  SourceLocation Loc = S1->getLocStart();
-  SourceRange R = E2->getSourceRange();
-  Diag.Report(PD, FullSourceLoc(Loc, SrcMgr), ErrorDiag, 0, 0, &R, 1);
-}
-
-template <typename ITERATOR>
-static void EmitWarning(Diagnostic& Diag,  PathDiagnosticClient* PD,
-                        SourceManager& SrcMgr,
-                        ITERATOR I, ITERATOR E, const char* msg) {
- 
-  std::ostringstream Out;
-  std::string Str(msg);
-
-  if (!PD) {
-    Out << "[CHECKER] " << msg;
-    Str = Out.str();
-    msg = Str.c_str();
-  }
-  
-  bool isFirst = true;
-  unsigned ErrorDiag = 0;
-  llvm::SmallPtrSet<void*,10> CachedErrors;  
-  
-  for (; I != E; ++I) {
-  
-    if (isFirst) {
-      isFirst = false;    
-      ErrorDiag = Diag.getCustomDiagID(Diagnostic::Warning, msg);
-    }
-    else {
-      
-      // HACK: Cache the location of the error.  Don't emit the same
-      // warning for the same error type that occurs at the same program
-      // location but along a different path.
-      void* p = GetLocation(I).getRawData();
-
-      if (CachedErrors.count(p))
-        continue;
-      
-      CachedErrors.insert(p);
-    }
-    
-    EmitDiag(Diag, PD, SrcMgr, ErrorDiag, I);  
-  }
-}
-  
-//===----------------------------------------------------------------------===//
-// Path warnings.
-//===----------------------------------------------------------------------===//
-
-static void GeneratePathDiagnostic(PathDiagnostic& PD,
-                                   ASTContext& Ctx,
-                                   ExplodedNode<ValueState>* N) {
-  
-  SourceManager& SMgr = Ctx.getSourceManager();
-  
-  while (!N->pred_empty()) {
-  
-    ExplodedNode<ValueState>* LastNode = N;
-    N = *(N->pred_begin());
-    
-    ProgramPoint P = N->getLocation();
-    
-    if (const BlockEdge* BE = dyn_cast<BlockEdge>(&P)) {
-      
-      CFGBlock* Src = BE->getSrc();
-      CFGBlock* Dst = BE->getDst();
-      
-      Stmt* T = Src->getTerminator();
-      
-      if (!T)
-        continue;
-
-      FullSourceLoc L(T->getLocStart(), SMgr);
-      
-      switch (T->getStmtClass()) {
-        default:
-          break;
-        
-        case Stmt::GotoStmtClass:
-        case Stmt::IndirectGotoStmtClass: {
-          
-          Stmt* S = GetStmt(LastNode->getLocation());
- 
-          if (!S)
-            continue;
-          
-          std::ostringstream os;
-
-          os << "Control jumps to line "
-             << SMgr.getLogicalLineNumber(S->getLocStart()) << ".\n";
-          
-          PD.push_front(new PathDiagnosticPiece(L, os.str()));
-          break;
-        }
-          
-        case Stmt::SwitchStmtClass: {
-          
-          // Figure out what case arm we took.
-          
-          Stmt* S = Dst->getLabel();
-
-          if (!S)
-            continue;
-          
-          std::ostringstream os;
-
-          switch (S->getStmtClass()) {
-            default:
-              continue;
-              
-            case Stmt::DefaultStmtClass: {
-                          
-              os << "Control jumps to the 'default' case at line "
-                  << SMgr.getLogicalLineNumber(S->getLocStart()) << ".\n";
-              
-              break;
-            }
-              
-            case Stmt::CaseStmtClass: {
-              
-              os << "Control jumps to 'case ";
-                            
-              Expr* CondE = cast<SwitchStmt>(T)->getCond();
-              unsigned bits = Ctx.getTypeSize(CondE->getType());
-              
-              llvm::APSInt V1(bits, false);
-              
-              CaseStmt* Case = cast<CaseStmt>(S);
-
-              if (!Case->getLHS()->isIntegerConstantExpr(V1, Ctx, 0, true)) {
-                assert (false &&
-                        "Case condition must evaluate to an integer constant.");
-                continue;
-              }
-              
-              os << V1.toString();
-                
-              // Get the RHS of the case, if it exists.
-                
-              if (Expr* E = Case->getRHS()) {
-              
-                llvm::APSInt V2(bits, false);
-
-                if (!E->isIntegerConstantExpr(V2, Ctx, 0, true)) {
-                  assert (false &&
-                "Case condition (RHS) must evaluate to an integer constant.");
-                  continue;
-                }
-                  
-                os << " .. " << V2.toString();
-              }
-              
-              os << ":'  at line " 
-                 << SMgr.getLogicalLineNumber(S->getLocStart()) << ".\n";
-
-              break;
-              
-            }
-          }
-          
-          PD.push_front(new PathDiagnosticPiece(L, os.str()));
-          break;
-        }
-        
-        
-        case Stmt::DoStmtClass:
-        case Stmt::WhileStmtClass:
-        case Stmt::ForStmtClass:
-        case Stmt::IfStmtClass: {
-        
-          if (*(Src->succ_begin()+1) == Dst)
-            PD.push_front(new PathDiagnosticPiece(L, "Taking false branch."));
-          else 
-            PD.push_front(new PathDiagnosticPiece(L, "Taking true branch."));
-          
-          break;
-        }
-      }
-    }  
-  }
-}
-
-template <typename ITERATOR, typename DESC>
-static void Report(PathDiagnosticClient& PDC, ASTContext& Ctx, DESC,
-                   ITERATOR I, ITERATOR E) {
-  
-
-  if (I == E)
-    return;
-  
-  const char* BugName = DESC::getName();
-
-  llvm::SmallPtrSet<void*,10> CachedErrors;  
-  
-  for (; I != E; ++I) {
-    
-    // HACK: Cache the location of the error.  Don't emit the same
-    // warning for the same error type that occurs at the same program
-    // location but along a different path.
-    void* p = GetLocation(I).getRawData();
-    
-    if (CachedErrors.count(p))
-      continue;
-    
-    CachedErrors.insert(p);
-    
-    // Create the PathDiagnostic.
-    
-    PathDiagnostic D(BugName);
-    
-    // Get the end-of-path diagnostic.
-    D.push_back(DESC::getEndPath(Ctx.getSourceManager(), GetNode(I)));
-    
-    // Generate the rest of the diagnostic.
-    GeneratePathDiagnostic(D, Ctx, GetNode(I));
-    
-    PDC.HandlePathDiagnostic(D);
-  }
-}
-
 
 //===----------------------------------------------------------------------===//
 // Analysis Driver.
 //===----------------------------------------------------------------------===//
+
+template <typename ITERATOR>
+static void EmitWarning(Diagnostic& Diag, PathDiagnosticClient* PD,
+                        ASTContext& Ctx, BugReporter& BR,
+                        const BugDescription& Desc,
+                        ExplodedGraph<GRExprEngine>& G,
+                        ITERATOR I, ITERATOR E) {
   
+  for (; I != E; ++I)
+    BR.EmitPathWarning(Diag, PD, Ctx, Desc, G, GetNode(I));
+}
+
 namespace clang {
   
 unsigned RunGRSimpleVals(CFG& cfg, Decl& CD, ASTContext& Ctx,
@@ -364,61 +183,39 @@ unsigned RunGRSimpleVals(CFG& cfg, Decl& CD, ASTContext& Ctx,
   // Execute the worklist algorithm.
   Eng.ExecuteWorkList(120000);
   
-  SourceManager& SrcMgr = Ctx.getSourceManager();  
+  BugReporter BR;
+  ExplodedGraph<GRExprEngine>& G = Eng.getGraph();
+  
+  EmitWarning(Diag, PD, Ctx, BR, NullDeref(), G,
+              CS->null_derefs_begin(), CS->null_derefs_end());
 
-  if (!PD)
-    EmitWarning(Diag, PD, SrcMgr,
-                CS->null_derefs_begin(), CS->null_derefs_end(),
-                "Dereference of NULL pointer.");
-  else 
-    Report(*PD, Ctx, bugdesc::NullDeref(),
-           CS->null_derefs_begin(), CS->null_derefs_end());
 
+  EmitWarning(Diag, PD, Ctx, BR, UndefDeref(), G,
+              CS->undef_derefs_begin(), CS->undef_derefs_end());
+
+  EmitWarning(Diag, PD, Ctx, BR, UndefBranch(), G,
+              CS->undef_branches_begin(), CS->undef_branches_end());
   
-  EmitWarning(Diag, PD, SrcMgr,
-              CS->undef_derefs_begin(),
-              CS->undef_derefs_end(),
-              "Dereference of undefined value.");
+  EmitWarning(Diag, PD, Ctx, BR, DivZero(), G,
+              CS->explicit_bad_divides_begin(), CS->explicit_bad_divides_end());
   
-  EmitWarning(Diag, PD, SrcMgr,
-              CS->undef_branches_begin(),
-              CS->undef_branches_end(),
-              "Branch condition evaluates to an uninitialized value.");
+  EmitWarning(Diag, PD, Ctx, BR, UndefResult(), G,
+              CS->undef_results_begin(), CS->undef_results_end());
   
-  EmitWarning(Diag, PD, SrcMgr,
-              CS->explicit_bad_divides_begin(),
-              CS->explicit_bad_divides_end(),
-              "Division by zero/undefined value.");
+  EmitWarning(Diag, PD, Ctx, BR, BadCall(), G,
+              CS->bad_calls_begin(), CS->bad_calls_end());
   
-  EmitWarning(Diag, PD, SrcMgr,
-              CS->undef_results_begin(),
-              CS->undef_results_end(),
-              "Result of operation is undefined.");
+  EmitWarning(Diag, PD, Ctx, BR, BadArg(), G,
+              CS->undef_arg_begin(), CS->undef_arg_end());
   
-  EmitWarning(Diag, PD, SrcMgr,
-              CS->bad_calls_begin(),
-              CS->bad_calls_end(),
-              "Call using a NULL or undefined function pointer value.");
+  EmitWarning(Diag, PD, Ctx, BR, BadMsgExprArg(), G,
+              CS->msg_expr_undef_arg_begin(), CS->msg_expr_undef_arg_end());
   
-  EmitWarning(Diag, PD, SrcMgr,
-              CS->undef_arg_begin(),
-              CS->undef_arg_end(),
-              "Pass-by-value argument in function is undefined.");
+  EmitWarning(Diag, PD, Ctx, BR, BadReceiver(), G,
+              CS->undef_receivers_begin(), CS->undef_receivers_end());
   
-  EmitWarning(Diag, PD, SrcMgr,
-              CS->msg_expr_undef_arg_begin(),
-              CS->msg_expr_undef_arg_end(),
-              "Pass-by-value argument in message expression is undefined.");
-  
-  EmitWarning(Diag, PD, SrcMgr,
-              CS->undef_receivers_begin(),
-              CS->undef_receivers_end(),
-              "Receiver in message expression is an uninitialized value.");
-  
-  EmitWarning(Diag, PD, SrcMgr,
-              CS->ret_stackaddr_begin(),
-              CS->ret_stackaddr_end(),
-              "Address of stack-allocated variable returned.");
+  EmitWarning(Diag, PD, Ctx, BR, RetStack(), G,
+              CS->ret_stackaddr_begin(), CS->ret_stackaddr_end());
 
   FoundationCheck.get()->ReportResults(Diag);
 #ifndef NDEBUG
