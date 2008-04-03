@@ -234,8 +234,11 @@ public:
   FullSourceLoc getLogicalLoc();
   FullSourceLoc getIncludeLoc();
 
-  unsigned getLineNumber();
-  unsigned getColumnNumber();
+  unsigned getLineNumber() const;
+  unsigned getColumnNumber() const;
+  
+  unsigned getLogicalLineNumber() const;
+  unsigned getLogicalColumnNumber() const;
 
   const char *getCharacterData() const;
   

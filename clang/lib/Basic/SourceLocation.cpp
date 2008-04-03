@@ -48,14 +48,25 @@ FullSourceLoc FullSourceLoc::getIncludeLoc() {
   return FullSourceLoc(SrcMgr->getIncludeLoc(Loc),*SrcMgr);
 }
 
-unsigned FullSourceLoc::getLineNumber() {
+unsigned FullSourceLoc::getLineNumber() const {
   assert (isValid());
   return SrcMgr->getLineNumber(Loc);
 }
 
-unsigned FullSourceLoc::getColumnNumber() {
+unsigned FullSourceLoc::getColumnNumber() const {
   assert (isValid());
   return SrcMgr->getColumnNumber(Loc);
+}
+
+
+unsigned FullSourceLoc::getLogicalLineNumber() const {
+  assert (isValid());
+  return SrcMgr->getLogicalLineNumber(Loc);
+}
+
+unsigned FullSourceLoc::getLogicalColumnNumber() const {
+  assert (isValid());
+  return SrcMgr->getLogicalColumnNumber(Loc);
 }
 
 const char* FullSourceLoc::getSourceName() const {
