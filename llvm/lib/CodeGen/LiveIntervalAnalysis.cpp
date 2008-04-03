@@ -201,6 +201,11 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
   DOUT << "\t\tregister: "; DEBUG(printRegName(interval.reg));
   LiveVariables::VarInfo& vi = lv_->getVarInfo(interval.reg);
 
+  if (mi->getOpcode() == TargetInstrInfo::IMPLICIT_DEF) {
+    DOUT << "is a implicit_def\n";
+    return;
+  }
+
   // Virtual registers may be defined multiple times (due to phi
   // elimination and 2-addr elimination).  Much of what we do only has to be
   // done once for the vreg.  We use an empty interval to detect the first
@@ -1105,7 +1110,7 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
   std::vector<RewriteInfo> RewriteMIs;
   for (MachineRegisterInfo::reg_iterator ri = mri_->reg_begin(li.reg),
          re = mri_->reg_end(); ri != re; ) {
-    MachineInstr *MI = &(*ri);
+    MachineInstr *MI = &*ri;
     MachineOperand &O = ri.getOperand();
     ++ri;
     assert(!O.isImplicit() && "Spilling register that's used as implicit use?");
@@ -1307,6 +1312,22 @@ void LiveIntervals::eraseRestoreInfo(int Id, int index, unsigned vr,
       Restores[i].index = -1;
 }
 
+/// removeSpilledImpDefs - Remove IMPLICIT_DEF instructions which are being
+/// spilled.
+void LiveIntervals::removeSpilledImpDefs(const LiveInterval &li,
+                                         VirtRegMap &vrm) {
+  for (MachineRegisterInfo::reg_iterator ri = mri_->reg_begin(li.reg),
+         re = mri_->reg_end(); ri != re; ) {
+    MachineInstr *MI = &*ri;
+    ++ri;
+    if (MI->getOpcode() != TargetInstrInfo::IMPLICIT_DEF)
+      continue;
+    RemoveMachineInstrFromMaps(MI);
+    vrm.RemoveMachineInstrFromMaps(MI);
+    MI->eraseFromParent();
+  }
+}
+
 
 std::vector<LiveInterval*> LiveIntervals::
 addIntervalsForSpills(const LiveInterval &li,
@@ -1386,6 +1407,8 @@ addIntervalsForSpills(const LiveInterval &li,
       }
       IsFirstRange = false;
     }
+
+    removeSpilledImpDefs(li, vrm);
     return NewLIs;
   }
 
@@ -1454,8 +1477,10 @@ addIntervalsForSpills(const LiveInterval &li,
   }
 
   // Insert spills / restores if we are splitting.
-  if (!TrySplit)
+  if (!TrySplit) {
+    removeSpilledImpDefs(li, vrm);
     return NewLIs;
+  }
 
   SmallPtrSet<LiveInterval*, 4> AddedKill;
   SmallVector<unsigned, 2> Ops;
@@ -1608,6 +1633,7 @@ addIntervalsForSpills(const LiveInterval &li,
     }
   }
 
+  removeSpilledImpDefs(li, vrm);
   return RetNewLIs;
 }
 

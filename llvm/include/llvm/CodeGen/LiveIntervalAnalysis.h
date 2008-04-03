@@ -394,6 +394,10 @@ namespace llvm {
                           BitVector &RestoreMBBs,
                           std::map<unsigned,std::vector<SRInfo> >&RestoreIdxes);
 
+    /// removeSpilledImpDefs - Remove IMPLICIT_DEF instructions which are being
+    /// spilled.
+    void removeSpilledImpDefs(const LiveInterval &li, VirtRegMap &vrm);
+
     /// rewriteImplicitOps - Rewrite implicit use operands of MI (i.e. uses of
     /// interval on to-be re-materialized operands of MI) with new register.
     void rewriteImplicitOps(const LiveInterval &li,
