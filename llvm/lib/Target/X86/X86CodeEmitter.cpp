@@ -558,16 +558,10 @@ void Emitter::emitInstruction(const MachineInstr &MI,
 
   bool Need0FPrefix = false;
   switch (Desc->TSFlags & X86II::Op0Mask) {
-  case X86II::TB:
-    Need0FPrefix = true;   // Two-byte opcode prefix
-    break;
-  case X86II::T8:
-    MCE.emitByte(0x0F);
-    MCE.emitByte(0x38);
-    break;
-  case X86II::TA:
-    MCE.emitByte(0x0F);
-    MCE.emitByte(0x3A);
+  case X86II::TB:  // Two-byte opcode prefix
+  case X86II::T8:  // 0F 38
+  case X86II::TA:  // 0F 3A
+    Need0FPrefix = true;
     break;
   case X86II::REP: break; // already handled.
   case X86II::XS:   // F3 0F
@@ -598,6 +592,15 @@ void Emitter::emitInstruction(const MachineInstr &MI,
   // 0x0F escape code must be emitted just before the opcode.
   if (Need0FPrefix)
     MCE.emitByte(0x0F);
+
+  switch (Desc->TSFlags & X86II::Op0Mask) {
+  case X86II::T8:  // 0F 38
+    MCE.emitByte(0x38);
+    break;
+  case X86II::TA:    // 0F 3A
+    MCE.emitByte(0x3A);
+    break;
+  }
 
   // If this is a two-address instruction, skip one of the register operands.
   unsigned NumOps = Desc->getNumOperands();
