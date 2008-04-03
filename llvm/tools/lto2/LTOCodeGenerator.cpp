@@ -350,11 +350,7 @@ bool LTOCodeGenerator::generateAssemblyCode(std::ostream& out, std::string& errM
     // If the -s command line option was specified, strip the symbols out of the
     // resulting program to make it smaller.  -s is a GLD option that we are
     // supporting.
-    if( !llvm::ExceptionHandling ) {
-        // FIXME : This causes multiple nameless _.eh symbols on 
-        // darwin when EH is ON.
-        passes.add(createStripSymbolsPass());
-    }
+    passes.add(createStripSymbolsPass());
     
     // Propagate constants at call sites into the functions they call.
     passes.add(createIPConstantPropagationPass());
