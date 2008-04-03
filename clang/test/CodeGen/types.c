@@ -19,3 +19,16 @@ struct MpegEncContext;
 typedef struct MpegEncContext {int pb;} MpegEncContext;
 static void test2(void) {MpegEncContext s; s.pb;}
 
+
+struct Village;
+
+struct List {
+  struct Village *v;
+};
+
+struct Village {
+  struct List returned;
+};
+
+void test3(struct List a) {
+}

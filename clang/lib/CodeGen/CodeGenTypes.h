@@ -21,6 +21,7 @@
 namespace llvm {
   class Module;
   class Type;
+  class OpaqueType;
   class PATypeHolder;
   class TargetData;
 }
@@ -30,6 +31,8 @@ namespace clang {
   class TagDecl;
   class TargetInfo;
   class QualType;
+  class PointerType;
+  class PointerLikeType;
   class Type;
   class FunctionTypeProto;
   class FieldDecl;
@@ -77,6 +80,10 @@ class CodeGenTypes {
   llvm::Module& TheModule;
   const llvm::TargetData& TheTargetData;
   
+
+  llvm::SmallVector<std::pair<const PointerLikeType *,
+                              llvm::OpaqueType *>, 8>  PointersToResolve;
+
   llvm::DenseMap<const TagDecl*, llvm::PATypeHolder> TagDeclTypes;
 
   /// CGRecordLayouts - This maps llvm struct type with corresponding 
@@ -124,6 +131,7 @@ public:
 
   /// ConvertType - Convert type T into a llvm::Type.  
   const llvm::Type *ConvertType(QualType T);
+  const llvm::Type *ConvertTypeRecursive(QualType T);
   
   /// ConvertTypeForMem - Convert type T into a llvm::Type.  This differs from
   /// ConvertType in that it is used to convert to the memory representation for

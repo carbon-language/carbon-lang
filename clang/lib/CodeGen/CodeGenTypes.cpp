@@ -92,6 +92,27 @@ CodeGenTypes::~CodeGenTypes() {
 
 /// ConvertType - Convert the specified type to its LLVM form.
 const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
+  llvm::PATypeHolder Result = ConvertTypeRecursive(T);
+
+  // Any pointers that were converted defered evaluation of their pointee type,
+  // creating an opaque type instead.  This is in order to avoid problems with
+  // circular types.  Loop through all these defered pointees, if any, and
+  // resolve them now.
+  while (!PointersToResolve.empty()) {
+    std::pair<const PointerLikeType *, llvm::OpaqueType*> P =
+      PointersToResolve.back();
+    PointersToResolve.pop_back();
+    // We can handle bare pointers here because we know that the only pointers
+    // to the Opaque type are P.second and from other types.  Refining the
+    // opqaue type away will invalidate P.second, but we don't mind :).
+    const llvm::Type *NT = ConvertTypeRecursive(P.first->getPointeeType());
+    P.second->refineAbstractTypeTo(NT);
+  }
+
+  return Result;
+}
+
+const llvm::Type *CodeGenTypes::ConvertTypeRecursive(QualType T) {
   // See if type is already cached.
   llvm::DenseMap<Type *, llvm::PATypeHolder>::iterator
     I = TypeCache.find(T.getCanonicalType().getTypePtr());
@@ -203,13 +224,16 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
   }
   case Type::Complex: {
     const llvm::Type *EltTy = 
-      ConvertType(cast<ComplexType>(Ty).getElementType());
+      ConvertTypeRecursive(cast<ComplexType>(Ty).getElementType());
     return llvm::StructType::get(EltTy, EltTy, NULL);
   }
   case Type::Reference:
   case Type::Pointer: {
-    QualType ETy = cast<PointerLikeType>(Ty).getPointeeType();
-    return llvm::PointerType::get(ConvertType(ETy), ETy.getAddressSpace()); 
+    const PointerLikeType &PTy = cast<PointerLikeType>(Ty);
+    QualType ETy = PTy.getPointeeType();
+    llvm::OpaqueType *PointeeType = llvm::OpaqueType::get();
+    PointersToResolve.push_back(std::make_pair(&PTy, PointeeType));
+    return llvm::PointerType::get(PointeeType, ETy.getAddressSpace());
   }
     
   case Type::VariableArray: {
@@ -218,24 +242,24 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
            "FIXME: We only handle trivial array types so far!");
     // VLAs resolve to the innermost element type; this matches
     // the return of alloca, and there isn't any obviously better choice.
-    return ConvertType(A.getElementType());
+    return ConvertTypeRecursive(A.getElementType());
   }
   case Type::IncompleteArray: {
     const IncompleteArrayType &A = cast<IncompleteArrayType>(Ty);
     assert(A.getIndexTypeQualifier() == 0 &&
            "FIXME: We only handle trivial array types so far!");
     // int X[] -> [0 x int]
-    return llvm::ArrayType::get(ConvertType(A.getElementType()), 0);
+    return llvm::ArrayType::get(ConvertTypeRecursive(A.getElementType()), 0);
   }
   case Type::ConstantArray: {
     const ConstantArrayType &A = cast<ConstantArrayType>(Ty);
-    const llvm::Type *EltTy = ConvertType(A.getElementType());
+    const llvm::Type *EltTy = ConvertTypeRecursive(A.getElementType());
     return llvm::ArrayType::get(EltTy, A.getSize().getZExtValue());
   }
   case Type::OCUVector:
   case Type::Vector: {
     const VectorType &VT = cast<VectorType>(Ty);
-    return llvm::VectorType::get(ConvertType(VT.getElementType()),
+    return llvm::VectorType::get(ConvertTypeRecursive(VT.getElementType()),
                                  VT.getNumElements());
   }
   case Type::FunctionNoProto:
@@ -246,7 +270,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     if (FP.getResultType()->isVoidType())
       ResultType = llvm::Type::VoidTy;    // Result of function uses llvm void.
     else
-      ResultType = ConvertType(FP.getResultType());
+      ResultType = ConvertTypeRecursive(FP.getResultType());
     
     // FIXME: Convert argument types.
     bool isVarArg;
@@ -270,7 +294,8 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
   }
   
   case Type::ASQual:
-    return ConvertType(QualType(cast<ASQualType>(Ty).getBaseType(), 0));
+    return
+      ConvertTypeRecursive(QualType(cast<ASQualType>(Ty).getBaseType(), 0));
 
   case Type::ObjCInterface: {
     // Warning: Use of this is strongly discouraged.  Late binding of instance
@@ -324,7 +349,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
 void CodeGenTypes::DecodeArgumentTypes(const FunctionTypeProto &FTP, 
                                        std::vector<const llvm::Type*> &ArgTys) {
   for (unsigned i = 0, e = FTP.getNumArgs(); i != e; ++i) {
-    const llvm::Type *Ty = ConvertType(FTP.getArgType(i));
+    const llvm::Type *Ty = ConvertTypeRecursive(FTP.getArgType(i));
     if (Ty->isFirstClassType())
       ArgTys.push_back(Ty);
     else
@@ -355,7 +380,7 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
   
   if (TD->getKind() == Decl::Enum) {
     // Don't bother storing enums in TagDeclTypes.
-    return ConvertType(cast<EnumDecl>(TD)->getIntegerType());
+    return ConvertTypeRecursive(cast<EnumDecl>(TD)->getIntegerType());
   }
   
   // This decl could well be recursive.  In this case, insert an opaque
@@ -484,7 +509,7 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
     if (FD->isBitField()) 
       placeBitField(FD);
     else {
-      const llvm::Type *Ty = CGT.ConvertType(FD->getType());
+      const llvm::Type *Ty = CGT.ConvertTypeRecursive(FD->getType());
       addLLVMField(Ty);
       CGT.addFieldInfo(FD, llvmFieldNo - 1);
       Cursor = llvmSize;
@@ -562,7 +587,8 @@ void RecordOrganizer::layoutUnionFields() {
   }
 
   std::vector<const llvm::Type*> Fields;
-  const llvm::Type *Ty = CGT.ConvertType(FieldDecls[PrimaryEltNo]->getType());
+  const llvm::Type *Ty =
+    CGT.ConvertTypeRecursive(FieldDecls[PrimaryEltNo]->getType());
   Fields.push_back(Ty);
   STy = llvm::StructType::get(Fields);
 }
@@ -580,7 +606,7 @@ void RecordOrganizer::placeBitField(const FieldDecl *FD) {
   assert (isBitField  && "Invalid BitField size expression");
   uint64_t BitFieldSize =  FieldSize.getZExtValue();
 
-  const llvm::Type *Ty = CGT.ConvertType(FD->getType());
+  const llvm::Type *Ty = CGT.ConvertTypeRecursive(FD->getType());
   uint64_t TySize = CGT.getTargetData().getABITypeSizeInBits(Ty);
 
   unsigned Idx = Cursor / TySize;
