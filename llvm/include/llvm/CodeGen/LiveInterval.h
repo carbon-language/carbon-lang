@@ -275,14 +275,16 @@ namespace llvm {
 
     /// beginNumber - Return the lowest numbered slot covered by interval.
     unsigned beginNumber() const {
-      assert(!empty() && "empty interval for register");
+      if (empty())
+        return 0;
       return ranges.front().start;
     }
 
     /// endNumber - return the maximum point of the interval of the whole,
     /// exclusive.
     unsigned endNumber() const {
-      assert(!empty() && "empty interval for register");
+      if (empty())
+        return 0;
       return ranges.back().end;
     }
 

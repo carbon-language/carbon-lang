@@ -322,11 +322,13 @@ void RALinScan::linearScan()
     ++NumIters;
     DOUT << "\n*** CURRENT ***: " << *cur << '\n';
 
-    processActiveIntervals(cur->beginNumber());
-    processInactiveIntervals(cur->beginNumber());
+    if (!cur->empty()) {
+      processActiveIntervals(cur->beginNumber());
+      processInactiveIntervals(cur->beginNumber());
 
-    assert(TargetRegisterInfo::isVirtualRegister(cur->reg) &&
-           "Can only allocate virtual registers!");
+      assert(TargetRegisterInfo::isVirtualRegister(cur->reg) &&
+             "Can only allocate virtual registers!");
+    }
 
     // Allocating a virtual register. try to find a free
     // physical register or spill an interval (possibly this one) in order to
@@ -508,11 +510,23 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
 {
   DOUT << "\tallocating current interval: ";
 
+  // This is an implicitly defined live interval, just assign any register.
+  const TargetRegisterClass *RC = reginfo_->getRegClass(cur->reg);
+  if (cur->empty()) {
+    unsigned physReg = cur->preference;
+    if (!physReg)
+      physReg = *RC->allocation_order_begin(*mf_);
+    DOUT <<  tri_->getName(physReg) << '\n';
+    // Note the register is not really in use.
+    vrm_->assignVirt2Phys(cur->reg, physReg);
+    handled_.push_back(cur);
+    return;
+  }
+
   PhysRegTracker backupPrt = *prt_;
 
   std::vector<std::pair<unsigned, float> > SpillWeightsToAdd;
   unsigned StartPosition = cur->beginNumber();
-  const TargetRegisterClass *RC = reginfo_->getRegClass(cur->reg);
   const TargetRegisterClass *RCLeader = RelatedRegClasses.getLeaderValue(RC);
 
   // If this live interval is defined by a move instruction and its source is
