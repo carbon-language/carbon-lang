@@ -822,7 +822,7 @@ Stmt *RewriteTest::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
         std::string RecName = clsDeclared->getIdentifier()->getName();
         RecName += "_IMPL";
         IdentifierInfo *II = &Context->Idents.get(RecName.c_str());
-        RecordDecl *RD = RecordDecl::Create(*Context, Decl::Struct, 
+        RecordDecl *RD = RecordDecl::Create(*Context, Decl::Struct, NULL,
                                             SourceLocation(), II, 0);
         assert(RD && "RewriteObjCIvarRefExpr(): Can't find RecordDecl");
         QualType castT = Context->getPointerType(Context->getTagDeclType(RD));
@@ -1581,7 +1581,8 @@ void RewriteTest::SynthSelGetUidFunctionDecl() {
   QualType getFuncType = Context->getFunctionType(Context->getObjCSelType(),
                                                    &ArgTys[0], ArgTys.size(),
                                                    false /*isVariadic*/);
-  SelGetUidFunctionDecl = FunctionDecl::Create(*Context, SourceLocation(), 
+  SelGetUidFunctionDecl = FunctionDecl::Create(*Context, NULL,
+                                           SourceLocation(), 
                                            SelGetUidIdent, getFuncType,
                                            FunctionDecl::Extern, false, 0);
 }
@@ -1595,7 +1596,8 @@ void RewriteTest::SynthGetProtocolFunctionDecl() {
   QualType getFuncType = Context->getFunctionType(Context->getObjCProtoType(),
                                                   &ArgTys[0], ArgTys.size(),
                                                   false /*isVariadic*/);
-  GetProtocolFunctionDecl = FunctionDecl::Create(*Context, SourceLocation(), 
+  GetProtocolFunctionDecl = FunctionDecl::Create(*Context, NULL,
+                                             SourceLocation(), 
                                              SelGetProtoIdent, getFuncType,
                                              FunctionDecl::Extern, false, 0);
 }
@@ -1622,7 +1624,8 @@ void RewriteTest::SynthSuperContructorFunctionDecl() {
   QualType msgSendType = Context->getFunctionType(Context->getObjCIdType(),
                                                   &ArgTys[0], ArgTys.size(),
                                                   false);
-  SuperContructorFunctionDecl = FunctionDecl::Create(*Context, SourceLocation(), 
+  SuperContructorFunctionDecl = FunctionDecl::Create(*Context, NULL,
+                                         SourceLocation(), 
                                          msgSendIdent, msgSendType,
                                          FunctionDecl::Extern, false, 0);
 }
@@ -1640,7 +1643,8 @@ void RewriteTest::SynthMsgSendFunctionDecl() {
   QualType msgSendType = Context->getFunctionType(Context->getObjCIdType(),
                                                   &ArgTys[0], ArgTys.size(),
                                                   true /*isVariadic*/);
-  MsgSendFunctionDecl = FunctionDecl::Create(*Context, SourceLocation(), 
+  MsgSendFunctionDecl = FunctionDecl::Create(*Context, NULL,
+                                         SourceLocation(),
                                          msgSendIdent, msgSendType,
                                          FunctionDecl::Extern, false, 0);
 }
@@ -1649,7 +1653,8 @@ void RewriteTest::SynthMsgSendFunctionDecl() {
 void RewriteTest::SynthMsgSendSuperFunctionDecl() {
   IdentifierInfo *msgSendIdent = &Context->Idents.get("objc_msgSendSuper");
   llvm::SmallVector<QualType, 16> ArgTys;
-  RecordDecl *RD = RecordDecl::Create(*Context, Decl::Struct, SourceLocation(),
+  RecordDecl *RD = RecordDecl::Create(*Context, Decl::Struct, NULL,
+                                      SourceLocation(),
                                       &Context->Idents.get("objc_super"), 0);
   QualType argT = Context->getPointerType(Context->getTagDeclType(RD));
   assert(!argT.isNull() && "Can't build 'struct objc_super *' type");
@@ -1660,7 +1665,8 @@ void RewriteTest::SynthMsgSendSuperFunctionDecl() {
   QualType msgSendType = Context->getFunctionType(Context->getObjCIdType(),
                                                   &ArgTys[0], ArgTys.size(),
                                                   true /*isVariadic*/);
-  MsgSendSuperFunctionDecl = FunctionDecl::Create(*Context, SourceLocation(), 
+  MsgSendSuperFunctionDecl = FunctionDecl::Create(*Context, NULL,
+                                              SourceLocation(), 
                                               msgSendIdent, msgSendType,
                                               FunctionDecl::Extern, false, 0);
 }
@@ -1678,7 +1684,8 @@ void RewriteTest::SynthMsgSendStretFunctionDecl() {
   QualType msgSendType = Context->getFunctionType(Context->getObjCIdType(),
                                                   &ArgTys[0], ArgTys.size(),
                                                   true /*isVariadic*/);
-  MsgSendStretFunctionDecl = FunctionDecl::Create(*Context, SourceLocation(), 
+  MsgSendStretFunctionDecl = FunctionDecl::Create(*Context, NULL,
+                                         SourceLocation(), 
                                          msgSendIdent, msgSendType,
                                          FunctionDecl::Extern, false, 0);
 }
@@ -1689,7 +1696,8 @@ void RewriteTest::SynthMsgSendSuperStretFunctionDecl() {
   IdentifierInfo *msgSendIdent = 
     &Context->Idents.get("objc_msgSendSuper_stret");
   llvm::SmallVector<QualType, 16> ArgTys;
-  RecordDecl *RD = RecordDecl::Create(*Context, Decl::Struct, SourceLocation(),
+  RecordDecl *RD = RecordDecl::Create(*Context, Decl::Struct, NULL,
+                                      SourceLocation(),
                                       &Context->Idents.get("objc_super"), 0);
   QualType argT = Context->getPointerType(Context->getTagDeclType(RD));
   assert(!argT.isNull() && "Can't build 'struct objc_super *' type");
@@ -1700,7 +1708,7 @@ void RewriteTest::SynthMsgSendSuperStretFunctionDecl() {
   QualType msgSendType = Context->getFunctionType(Context->getObjCIdType(),
                                                   &ArgTys[0], ArgTys.size(),
                                                   true /*isVariadic*/);
-  MsgSendSuperStretFunctionDecl = FunctionDecl::Create(*Context,
+  MsgSendSuperStretFunctionDecl = FunctionDecl::Create(*Context, NULL,
                                                        SourceLocation(), 
                                               msgSendIdent, msgSendType,
                                               FunctionDecl::Extern, false, 0);
@@ -1719,7 +1727,8 @@ void RewriteTest::SynthMsgSendFpretFunctionDecl() {
   QualType msgSendType = Context->getFunctionType(Context->getObjCIdType(),
                                                   &ArgTys[0], ArgTys.size(),
                                                   true /*isVariadic*/);
-  MsgSendFpretFunctionDecl = FunctionDecl::Create(*Context, SourceLocation(), 
+  MsgSendFpretFunctionDecl = FunctionDecl::Create(*Context, NULL,
+                                              SourceLocation(), 
                                               msgSendIdent, msgSendType,
                                               FunctionDecl::Extern, false, 0);
 }
@@ -1733,7 +1742,8 @@ void RewriteTest::SynthGetClassFunctionDecl() {
   QualType getClassType = Context->getFunctionType(Context->getObjCIdType(),
                                                    &ArgTys[0], ArgTys.size(),
                                                    false /*isVariadic*/);
-  GetClassFunctionDecl = FunctionDecl::Create(*Context, SourceLocation(), 
+  GetClassFunctionDecl = FunctionDecl::Create(*Context, NULL,
+                                          SourceLocation(), 
                                           getClassIdent, getClassType,
                                           FunctionDecl::Extern, false, 0);
 }
@@ -1747,7 +1757,8 @@ void RewriteTest::SynthGetMetaClassFunctionDecl() {
   QualType getClassType = Context->getFunctionType(Context->getObjCIdType(),
                                                    &ArgTys[0], ArgTys.size(),
                                                    false /*isVariadic*/);
-  GetMetaClassFunctionDecl = FunctionDecl::Create(*Context, SourceLocation(), 
+  GetMetaClassFunctionDecl = FunctionDecl::Create(*Context, NULL,
+                                              SourceLocation(), 
                                               getClassIdent, getClassType,
                                               FunctionDecl::Extern, false, 0);
 }
@@ -1769,7 +1780,7 @@ Stmt *RewriteTest::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
   // The minus 2 removes the begin/end double quotes.
   Preamble += utostr(prettyBuf.str().size()-2) + "};\n";
   
-  FileVarDecl *NewVD = FileVarDecl::Create(*Context, SourceLocation(), 
+  FileVarDecl *NewVD = FileVarDecl::Create(*Context, NULL, SourceLocation(), 
                                        &Context->Idents.get(S.c_str()), strType, 
                                        VarDecl::Static, NULL);
   DeclRefExpr *DRE = new DeclRefExpr(NewVD, strType, SourceLocation());
@@ -1817,7 +1828,7 @@ ObjCInterfaceDecl *RewriteTest::isSuperReceiver(Expr *recExpr) {
 // struct objc_super { struct objc_object *receiver; struct objc_class *super; };
 QualType RewriteTest::getSuperStructType() {
   if (!SuperStructDecl) {
-    SuperStructDecl = RecordDecl::Create(*Context, Decl::Struct,
+    SuperStructDecl = RecordDecl::Create(*Context, Decl::Struct, NULL,
                                          SourceLocation(), 
                                          &Context->Idents.get("objc_super"), 0);
     QualType FieldTypes[2];
@@ -1830,7 +1841,8 @@ QualType RewriteTest::getSuperStructType() {
     FieldDecl *FieldDecls[2];
   
     for (unsigned i = 0; i < 2; ++i)
-      FieldDecls[i] = FieldDecl::Create(*Context, SourceLocation(), 0, 
+      FieldDecls[i] = FieldDecl::Create(*Context, SuperStructDecl,
+                                        SourceLocation(), 0, 
                                         FieldTypes[i]);
   
     SuperStructDecl->defineBody(FieldDecls, 4);
@@ -1840,7 +1852,7 @@ QualType RewriteTest::getSuperStructType() {
 
 QualType RewriteTest::getConstantStringStructType() {
   if (!ConstantStringDecl) {
-    ConstantStringDecl = RecordDecl::Create(*Context, Decl::Struct,
+    ConstantStringDecl = RecordDecl::Create(*Context, Decl::Struct, NULL,
                                             SourceLocation(), 
                          &Context->Idents.get("__NSConstantStringImpl"), 0);
     QualType FieldTypes[4];
@@ -1857,7 +1869,8 @@ QualType RewriteTest::getConstantStringStructType() {
     FieldDecl *FieldDecls[4];
   
     for (unsigned i = 0; i < 4; ++i)
-      FieldDecls[i] = FieldDecl::Create(*Context, SourceLocation(), 0,
+      FieldDecls[i] = FieldDecl::Create(*Context, ConstantStringDecl,
+                                        SourceLocation(), 0,
                                         FieldTypes[i]);
   
     ConstantStringDecl->defineBody(FieldDecls, 4);

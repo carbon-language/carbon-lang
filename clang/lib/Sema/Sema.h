@@ -32,6 +32,7 @@ namespace clang {
   class ASTConsumer;
   class Preprocessor;
   class Decl;
+  class ContextDecl;
   class NamedDecl;
   class ScopedDecl;
   class Expr;
@@ -73,7 +74,9 @@ class Sema : public Action {
   /// CurMethodDecl - If inside of a method body, this contains a pointer to
   /// the method decl for the method being parsed.
   ObjCMethodDecl *CurMethodDecl;
-  
+
+  ContextDecl *CurContext;
+
   /// LabelMap - This is a mapping from label identifiers to the LabelStmt for
   /// it (which acts like the label decl in some ways).  Forward referenced
   /// labels have a LabelStmt created for them with a null location & SubStmt.
@@ -246,6 +249,10 @@ private:
   virtual void ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDecl,
                              DeclTy **Elements, unsigned NumElements);
 private:
+  /// Set the current declaration context until it gets popped.
+  void PushContextDecl(ContextDecl *CD);
+  void PopContextDecl();
+
   /// Subroutines of ActOnDeclarator().
   TypedefDecl *ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
                                 ScopedDecl *LastDecl);

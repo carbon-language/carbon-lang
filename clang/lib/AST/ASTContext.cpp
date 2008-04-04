@@ -1115,7 +1115,7 @@ QualType ASTContext::maxIntegerType(QualType lhs, QualType rhs) {
 QualType ASTContext::getCFConstantStringType() {
   if (!CFConstantStringTypeDecl) {
     CFConstantStringTypeDecl = 
-      RecordDecl::Create(*this, Decl::Struct, SourceLocation(), 
+      RecordDecl::Create(*this, Decl::Struct, NULL, SourceLocation(), 
                          &Idents.get("NSConstantString"), 0);
     QualType FieldTypes[4];
   
@@ -1131,7 +1131,8 @@ QualType ASTContext::getCFConstantStringType() {
     FieldDecl *FieldDecls[4];
   
     for (unsigned i = 0; i < 4; ++i)
-      FieldDecls[i] = FieldDecl::Create(*this, SourceLocation(), 0,
+      FieldDecls[i] = FieldDecl::Create(*this, CFConstantStringTypeDecl,
+                                        SourceLocation(), 0,
                                         FieldTypes[i]);
   
     CFConstantStringTypeDecl->defineBody(FieldDecls, 4);
@@ -1907,14 +1908,14 @@ ASTContext* ASTContext::Create(llvm::Deserializer& D) {
   TargetInfo &t = D.ReadRef<TargetInfo>();
   IdentifierTable &idents = D.ReadRef<IdentifierTable>();
   SelectorTable &sels = D.ReadRef<SelectorTable>();
-  
+
   unsigned size_reserve = D.ReadInt();
   
   ASTContext* A = new ASTContext(SM,t,idents,sels,size_reserve);
   
   for (unsigned i = 0; i < size_reserve; ++i)
     Type::Create(*A,i,D);
-
+  
   // FIXME: A->CFConstantStringTypeDecl = D.ReadOwnedPtr<RecordDecl>();
   
   return A;

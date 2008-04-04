@@ -19,7 +19,8 @@ using namespace clang;
 // ObjC Decl Allocation/Deallocation Method Implementations
 //===----------------------------------------------------------------------===//
 
-ObjCMethodDecl *ObjCMethodDecl::Create(ASTContext &C, SourceLocation beginLoc, 
+ObjCMethodDecl *ObjCMethodDecl::Create(ASTContext &C,
+                                       SourceLocation beginLoc, 
                                        SourceLocation endLoc,
                                        Selector SelInfo, QualType T,
                                        Decl *contextDecl,
@@ -27,61 +28,71 @@ ObjCMethodDecl *ObjCMethodDecl::Create(ASTContext &C, SourceLocation beginLoc,
                                        bool isVariadic,
                                        ImplementationControl impControl) {
   void *Mem = C.getAllocator().Allocate<ObjCMethodDecl>();
-  return new (Mem) ObjCMethodDecl(beginLoc, endLoc, SelInfo, T, contextDecl,
+  return new (Mem) ObjCMethodDecl(beginLoc, endLoc,
+                                  SelInfo, T, contextDecl,
                                   M, isInstance, 
                                   isVariadic, impControl);
 }
 
-ObjCInterfaceDecl *ObjCInterfaceDecl::Create(ASTContext &C,SourceLocation atLoc,
+ObjCInterfaceDecl *ObjCInterfaceDecl::Create(ASTContext &C,
+                                             SourceLocation atLoc,
                                              unsigned numRefProtos,
                                              IdentifierInfo *Id,
                                              bool ForwardDecl, bool isInternal){
   void *Mem = C.getAllocator().Allocate<ObjCInterfaceDecl>();
-  return new (Mem) ObjCInterfaceDecl(atLoc, numRefProtos, Id, ForwardDecl,
+  return new (Mem) ObjCInterfaceDecl(atLoc, numRefProtos,
+                                     Id, ForwardDecl,
                                      isInternal);
 }
 
-ObjCIvarDecl *ObjCIvarDecl::Create(ASTContext &C, SourceLocation L,
+ObjCIvarDecl *ObjCIvarDecl::Create(ASTContext &C, ObjCInterfaceDecl *CD,
+                                   SourceLocation L,
                                    IdentifierInfo *Id, QualType T) {
   void *Mem = C.getAllocator().Allocate<ObjCIvarDecl>();
-  return new (Mem) ObjCIvarDecl(L, Id, T);
+  return new (Mem) ObjCIvarDecl(CD, L, Id, T);
 }
 
-ObjCProtocolDecl *ObjCProtocolDecl::Create(ASTContext &C, SourceLocation L, 
+ObjCProtocolDecl *ObjCProtocolDecl::Create(ASTContext &C,
+                                           SourceLocation L, 
                                            unsigned numRefProtos,
                                            IdentifierInfo *Id) {
   void *Mem = C.getAllocator().Allocate<ObjCProtocolDecl>();
   return new (Mem) ObjCProtocolDecl(L, numRefProtos, Id);
 }
 
-ObjCClassDecl *ObjCClassDecl::Create(ASTContext &C, SourceLocation L,
+ObjCClassDecl *ObjCClassDecl::Create(ASTContext &C,
+                                     SourceLocation L,
                                      ObjCInterfaceDecl **Elts, unsigned nElts) {
   void *Mem = C.getAllocator().Allocate<ObjCClassDecl>();
   return new (Mem) ObjCClassDecl(L, Elts, nElts);
 }
 
 ObjCForwardProtocolDecl *
-ObjCForwardProtocolDecl::Create(ASTContext &C, SourceLocation L, 
+ObjCForwardProtocolDecl::Create(ASTContext &C,
+                                SourceLocation L, 
                                 ObjCProtocolDecl **Elts, unsigned NumElts) {
   void *Mem = C.getAllocator().Allocate<ObjCForwardProtocolDecl>();
   return new (Mem) ObjCForwardProtocolDecl(L, Elts, NumElts);
 }
 
-ObjCCategoryDecl *ObjCCategoryDecl::Create(ASTContext &C, SourceLocation L,
+ObjCCategoryDecl *ObjCCategoryDecl::Create(ASTContext &C,
+                                           SourceLocation L,
                                            IdentifierInfo *Id) {
   void *Mem = C.getAllocator().Allocate<ObjCCategoryDecl>();
   return new (Mem) ObjCCategoryDecl(L, Id);
 }
 
 ObjCCategoryImplDecl *
-ObjCCategoryImplDecl::Create(ASTContext &C, SourceLocation L,IdentifierInfo *Id,
+ObjCCategoryImplDecl::Create(ASTContext &C,
+                             SourceLocation L,IdentifierInfo *Id,
                              ObjCInterfaceDecl *ClassInterface) {
   void *Mem = C.getAllocator().Allocate<ObjCCategoryImplDecl>();
   return new (Mem) ObjCCategoryImplDecl(L, Id, ClassInterface);
 }
 
 ObjCImplementationDecl *
-ObjCImplementationDecl::Create(ASTContext &C, SourceLocation L,
+ObjCImplementationDecl::Create(ASTContext &C,
+                               SourceLocation L,
                                IdentifierInfo *Id,
                                ObjCInterfaceDecl *ClassInterface,
                                ObjCInterfaceDecl *SuperDecl) {
@@ -90,14 +101,16 @@ ObjCImplementationDecl::Create(ASTContext &C, SourceLocation L,
 }
 
 ObjCCompatibleAliasDecl *
-ObjCCompatibleAliasDecl::Create(ASTContext &C, SourceLocation L,
+ObjCCompatibleAliasDecl::Create(ASTContext &C,
+                                SourceLocation L,
                                 IdentifierInfo *Id, 
                                 ObjCInterfaceDecl* AliasedClass) {
   void *Mem = C.getAllocator().Allocate<ObjCCompatibleAliasDecl>();
   return new (Mem) ObjCCompatibleAliasDecl(L, Id, AliasedClass);
 }
 
-ObjCPropertyDecl *ObjCPropertyDecl::Create(ASTContext &C, SourceLocation L) {
+ObjCPropertyDecl *ObjCPropertyDecl::Create(ASTContext &C,
+                                           SourceLocation L) {
   void *Mem = C.getAllocator().Allocate<ObjCPropertyDecl>();
   return new (Mem) ObjCPropertyDecl(L);
 }
@@ -429,5 +442,6 @@ void ObjCPropertyDecl::setPropertyDeclLists(ObjCIvarDecl **Properties,
   PropertyDecls = new ObjCIvarDecl*[NumProp];
   memcpy(PropertyDecls, Properties, NumProp*sizeof(ObjCIvarDecl*));
 }
+
 
 

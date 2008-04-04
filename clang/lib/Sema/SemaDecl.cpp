@@ -40,6 +40,17 @@ Sema::DeclTy *Sema::isTypeName(const IdentifierInfo &II, Scope *S) {
   return 0;
 }
 
+void Sema::PushContextDecl(ContextDecl *CD) {
+  assert(CD->getParent() == CurContext &&
+      "The next ContextDecl should be directly contained in the current one.");
+  CurContext = CD;
+}
+
+void Sema::PopContextDecl() {
+  assert(CurContext && "ContextDecl imbalance!");
+  CurContext = CurContext->getParent();
+}
+
 void Sema::ActOnPopScope(SourceLocation Loc, Scope *S) {
   if (S->decl_empty()) return;
   assert((S->getFlags() & Scope::DeclScope) &&"Scope shouldn't contain decls!");
@@ -156,7 +167,8 @@ ScopedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
     InitBuiltinVaListType();
     
   QualType R = Context.BuiltinInfo.GetBuiltinType(BID, Context);  
-  FunctionDecl *New = FunctionDecl::Create(Context, SourceLocation(), II, R,
+  FunctionDecl *New = FunctionDecl::Create(Context, CurContext,
+                                           SourceLocation(), II, R,
                                            FunctionDecl::Extern, false, 0);
   
   // Find translation-unit scope to insert this function into.
@@ -744,7 +756,8 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     }
 
     bool isInline = D.getDeclSpec().isInlineSpecified();
-    FunctionDecl *NewFD = FunctionDecl::Create(Context, D.getIdentifierLoc(),
+    FunctionDecl *NewFD = FunctionDecl::Create(Context, CurContext,
+                                               D.getIdentifierLoc(),
                                                II, R, SC, isInline,
                                                LastDeclarator);
     // Handle attributes.
@@ -784,10 +797,12 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
              R.getAsString());
         InvalidDecl = true;
       }
-      NewVD = FileVarDecl::Create(Context, D.getIdentifierLoc(), II, R, SC,
+      NewVD = FileVarDecl::Create(Context, CurContext, D.getIdentifierLoc(),
+                                  II, R, SC,
                                   LastDeclarator);
     } else {
-      NewVD = BlockVarDecl::Create(Context, D.getIdentifierLoc(), II, R, SC,
+      NewVD = BlockVarDecl::Create(Context, CurContext, D.getIdentifierLoc(),
+                                   II, R, SC,
                                    LastDeclarator);
     }
     // Handle attributes prior to checking for duplicates in MergeVarDecl
@@ -1000,7 +1015,8 @@ Sema::ActOnParamDeclarator(struct DeclaratorChunk::ParamInfo &PI,
   } else if (parmDeclType->isFunctionType())
     parmDeclType = Context.getPointerType(parmDeclType);
   
-  ParmVarDecl *New = ParmVarDecl::Create(Context, PI.IdentLoc, II, parmDeclType, 
+  ParmVarDecl *New = ParmVarDecl::Create(Context, CurContext, PI.IdentLoc, II,
+                                         parmDeclType, 
                                          VarDecl::None, 0);
   
   if (PI.InvalidType)
@@ -1060,6 +1076,7 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
   Decl *decl = static_cast<Decl*>(ActOnDeclarator(GlobalScope, D, 0));
   FunctionDecl *FD = cast<FunctionDecl>(decl);
   CurFunctionDecl = FD;
+  PushContextDecl(FD);
   
   // Create Decl objects for each parameter, adding them to the FunctionDecl.
   llvm::SmallVector<ParmVarDecl*, 16> Params;
@@ -1104,6 +1121,7 @@ Sema::DeclTy *Sema::ActOnFinishFunctionBody(DeclTy *D, StmtTy *Body) {
     MD->setBody((Stmt*)Body);
     CurMethodDecl = 0;
   }  
+  PopContextDecl();
   // Verify and clean out per-function state.
   
   // Check goto/label use.
@@ -1173,7 +1191,8 @@ TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
   assert(!T.isNull() && "GetTypeForDeclarator() returned null type");
   
   // Scope manipulation handled by caller.
-  TypedefDecl *NewTD = TypedefDecl::Create(Context, D.getIdentifierLoc(), 
+  TypedefDecl *NewTD = TypedefDecl::Create(Context, CurContext,
+                                           D.getIdentifierLoc(),
                                            D.getIdentifier(), 
                                            T, LastDeclarator);
   if (D.getInvalidType())
@@ -1253,7 +1272,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
   case Decl::Enum:
     // FIXME: Tag decls should be chained to any simultaneous vardecls, e.g.:
     // enum X { A, B, C } D;    D should chain to X.
-    New = EnumDecl::Create(Context, Loc, Name, 0);
+    New = EnumDecl::Create(Context, CurContext, Loc, Name, 0);
     // If this is an undefined enum, warn.
     if (TK != TK_Definition) Diag(Loc, diag::ext_forward_ref_enum);
     break;
@@ -1262,7 +1281,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
   case Decl::Class:
     // FIXME: Tag decls should be chained to any simultaneous vardecls, e.g.:
     // struct X { int A; } D;    D should chain to X.
-    New = RecordDecl::Create(Context, Kind, Loc, Name, 0);
+    New = RecordDecl::Create(Context, Kind, CurContext, Loc, Name, 0);
     break;
   }    
   
@@ -1326,8 +1345,8 @@ Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *tagDecl,
   // FIXME: Chain fielddecls together.
   FieldDecl *NewFD;
   
-  if (isa<RecordDecl>(TagDecl))
-    NewFD = FieldDecl::Create(Context, Loc, II, T, BitWidth);
+  if (RecordDecl *RD = dyn_cast<RecordDecl>(TagDecl))
+    NewFD = FieldDecl::Create(Context, RD, Loc, II, T, BitWidth);
   else if (isa<ObjCInterfaceDecl>(TagDecl) ||
            isa<ObjCImplementationDecl>(TagDecl) ||
            isa<ObjCCategoryDecl>(TagDecl) ||
@@ -1335,7 +1354,7 @@ Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *tagDecl,
            // properties can appear within a protocol.
            // See corresponding FIXME in DeclObjC.h:ObjCPropertyDecl.
            isa<ObjCProtocolDecl>(TagDecl))
-    NewFD = ObjCIvarDecl::Create(Context, Loc, II, T);
+    NewFD = ObjCIvarDecl::Create(Context, dyn_cast<ObjCInterfaceDecl>(TagDecl), Loc, II, T);
   else
     assert(0 && "Sema::ActOnField(): Unknown TagDecl");
     
@@ -1515,7 +1534,7 @@ Sema::DeclTy *Sema::ActOnEnumConstant(Scope *S, DeclTy *theEnumDecl,
                                       DeclTy *lastEnumConst,
                                       SourceLocation IdLoc, IdentifierInfo *Id,
                                       SourceLocation EqualLoc, ExprTy *val) {
-  theEnumDecl = theEnumDecl;  // silence unused warning.
+  EnumDecl *TheEnumDecl = cast<EnumDecl>(static_cast<Decl*>(theEnumDecl));
   EnumConstantDecl *LastEnumConst =
     cast_or_null<EnumConstantDecl>(static_cast<Decl*>(lastEnumConst));
   Expr *Val = static_cast<Expr*>(val);
@@ -1576,7 +1595,8 @@ Sema::DeclTy *Sema::ActOnEnumConstant(Scope *S, DeclTy *theEnumDecl,
   }
   
   EnumConstantDecl *New = 
-    EnumConstantDecl::Create(Context, IdLoc, Id, EltTy, Val, EnumVal,
+    EnumConstantDecl::Create(Context, TheEnumDecl, IdLoc, Id, EltTy,
+                             Val, EnumVal,
                              LastEnumConst);
   
   // Register this decl in the current scope stack.

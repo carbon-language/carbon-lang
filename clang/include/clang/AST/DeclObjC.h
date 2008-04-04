@@ -48,7 +48,7 @@ class ObjCPropertyDecl;
 /// A selector represents a unique name for a method. The selector names for
 /// the above methods are setMenu:, menu, replaceSubview:with:, and defaultMenu.
 ///
-class ObjCMethodDecl : public Decl {
+class ObjCMethodDecl : public Decl, public ContextDecl {
 public:
   enum ImplementationControl { None, Required, Optional };
 private:
@@ -96,6 +96,7 @@ private:
                  bool isVariadic = false,
                  ImplementationControl impControl = None)
   : Decl(ObjCMethod, beginLoc),
+    ContextDecl(ObjCMethod),
     IsInstance(isInstance), IsVariadic(isVariadic),
     DeclImplementation(impControl), objcDeclQualifier(OBJC_TQ_None),
     MethodContext(static_cast<NamedDecl*>(contextDecl)),
@@ -105,7 +106,8 @@ private:
   virtual ~ObjCMethodDecl();
 public:
 
-  static ObjCMethodDecl *Create(ASTContext &C, SourceLocation beginLoc, 
+  static ObjCMethodDecl *Create(ASTContext &C,
+                                SourceLocation beginLoc, 
                                 SourceLocation endLoc, Selector SelInfo,
                                 QualType T, Decl *contextDecl,
                                 AttributeList *M = 0, bool isInstance = true,
@@ -191,7 +193,7 @@ public:
 ///   Unlike C++, ObjC is a single-rooted class model. In Cocoa, classes
 ///   typically inherit from NSObject (an exception is NSProxy).
 ///
-class ObjCInterfaceDecl : public NamedDecl {
+class ObjCInterfaceDecl : public NamedDecl, public ContextDecl {
   /// TypeForDecl - This indicates the Type object that represents this
   /// TypeDecl.  It is a cache maintained by ASTContext::getObjCInterfaceType
   Type *TypeForDecl;
@@ -229,9 +231,11 @@ class ObjCInterfaceDecl : public NamedDecl {
   SourceLocation EndLoc; // marks the '>', '}', or identifier.
   SourceLocation AtEndLoc; // marks the end of the entire interface.
 
-  ObjCInterfaceDecl(SourceLocation atLoc, unsigned numRefProtos,
+  ObjCInterfaceDecl(SourceLocation atLoc,
+                    unsigned numRefProtos,
                     IdentifierInfo *Id, bool FD, bool isInternal)
-    : NamedDecl(ObjCInterface, atLoc, Id), TypeForDecl(0), SuperClass(0),
+    : NamedDecl(ObjCInterface, atLoc, Id), ContextDecl(ObjCInterface),
+      TypeForDecl(0), SuperClass(0),
       ReferencedProtocols(0), NumReferencedProtocols(0), Ivars(0), 
       NumIvars(0),
       InstanceMethods(0), NumInstanceMethods(0), 
@@ -242,7 +246,8 @@ class ObjCInterfaceDecl : public NamedDecl {
       }
 public:
 
-  static ObjCInterfaceDecl *Create(ASTContext &C, SourceLocation atLoc,
+  static ObjCInterfaceDecl *Create(ASTContext &C,
+                                   SourceLocation atLoc,
                                    unsigned numRefProtos, IdentifierInfo *Id,
                                    bool ForwardDecl = false,
                                    bool isInternal = false);
@@ -371,10 +376,12 @@ public:
 ///   }
 ///
 class ObjCIvarDecl : public FieldDecl {
-  ObjCIvarDecl(SourceLocation L, IdentifierInfo *Id, QualType T) 
-    : FieldDecl(ObjCIvar, L, Id, T) {}
+  ObjCIvarDecl(ContextDecl *CD, SourceLocation L, 
+               IdentifierInfo *Id, QualType T)
+    : FieldDecl(ObjCIvar, CD, L, Id, T) {}
 public:
-  static ObjCIvarDecl *Create(ASTContext &C, SourceLocation L,
+  static ObjCIvarDecl *Create(ASTContext &C, ObjCInterfaceDecl *CD,
+                              SourceLocation L,
                               IdentifierInfo *Id, QualType T);
     
   enum AccessControl {
@@ -559,7 +566,7 @@ class ObjCForwardProtocolDecl : public Decl {
   ObjCProtocolDecl **ReferencedProtocols;
   unsigned NumReferencedProtocols;
   
-  ObjCForwardProtocolDecl(SourceLocation L, 
+  ObjCForwardProtocolDecl(SourceLocation L,
                           ObjCProtocolDecl **Elts, unsigned nElts)
   : Decl(ObjCForwardProtocol, L) { 
     NumReferencedProtocols = nElts;
@@ -645,8 +652,8 @@ class ObjCCategoryDecl : public NamedDecl {
   }
 public:
   
-  static ObjCCategoryDecl *Create(ASTContext &C, SourceLocation L,
-                                  IdentifierInfo *Id);
+  static ObjCCategoryDecl *Create(ASTContext &C,
+                                  SourceLocation L, IdentifierInfo *Id);
   
   ObjCInterfaceDecl *getClassInterface() const { return ClassInterface; }
   void setClassInterface(ObjCInterfaceDecl *IDecl) { ClassInterface = IDecl; }
@@ -735,8 +742,8 @@ class ObjCCategoryImplDecl : public NamedDecl {
                        ObjCInterfaceDecl *classInterface)
     : NamedDecl(ObjCCategoryImpl, L, Id), ClassInterface(classInterface) {}
 public:
-  static ObjCCategoryImplDecl *Create(ASTContext &C, SourceLocation L,
-                                      IdentifierInfo *Id,
+  static ObjCCategoryImplDecl *Create(ASTContext &C,
+                                      SourceLocation L, IdentifierInfo *Id,
                                       ObjCInterfaceDecl *classInterface);
         
   ObjCInterfaceDecl *getClassInterface() const { return ClassInterface; }
@@ -817,8 +824,8 @@ class ObjCImplementationDecl : public NamedDecl {
       ClassInterface(classInterface), SuperClass(superDecl),
       Ivars(0), NumIvars(0) {}
 public:  
-  static ObjCImplementationDecl *Create(ASTContext &C, SourceLocation L,
-                                        IdentifierInfo *Id,
+  static ObjCImplementationDecl *Create(ASTContext &C,
+                                        SourceLocation L, IdentifierInfo *Id,
                                         ObjCInterfaceDecl *classInterface,
                                         ObjCInterfaceDecl *superDecl);
   
@@ -883,8 +890,8 @@ class ObjCCompatibleAliasDecl : public NamedDecl {
                           ObjCInterfaceDecl* aliasedClass)
     : NamedDecl(ObjCCompatibleAlias, L, Id), AliasedClass(aliasedClass) {}
 public:
-  static ObjCCompatibleAliasDecl *Create(ASTContext &C, SourceLocation L,
-                                         IdentifierInfo *Id,
+  static ObjCCompatibleAliasDecl *Create(ASTContext &C,
+                                         SourceLocation L, IdentifierInfo *Id,
                                          ObjCInterfaceDecl* aliasedClass);
 
   const ObjCInterfaceDecl *getClassInterface() const { return AliasedClass; }

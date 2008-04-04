@@ -33,6 +33,7 @@ void Sema::ObjCActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
   
   // Allow all of Sema to see that we are entering a method definition.
   CurMethodDecl = MDecl;
+  PushContextDecl(MDecl);
 
   // Create Decl objects for each parameter, entrring them in the scope for
   // binding to their use.
@@ -813,23 +814,6 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
     Diag(MethodLoc, diag::error_missing_method_context);
     return 0;
   }
-  llvm::SmallVector<ParmVarDecl*, 16> Params;
-  
-  for (unsigned i = 0; i < Sel.getNumArgs(); i++) {
-    // FIXME: arg->AttrList must be stored too!
-    QualType argType;
-    
-    if (ArgTypes[i])
-      argType = QualType::getFromOpaquePtr(ArgTypes[i]);
-    else
-      argType = Context.getObjCIdType();
-    ParmVarDecl* Param = ParmVarDecl::Create(Context, SourceLocation(/*FIXME*/),
-                                             ArgNames[i], argType,
-                                             VarDecl::None, 0);
-    Param->setObjCDeclQualifier(
-      CvtQTToAstBitMask(ArgQT[i].getObjCDeclQualifier()));
-    Params.push_back(Param);
-  }
   QualType resultDeclType;
   
   if (ReturnType)
@@ -845,6 +829,25 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
                            ObjCMethodDecl::Optional : 
                            ObjCMethodDecl::Required);
   
+  llvm::SmallVector<ParmVarDecl*, 16> Params;
+  
+  for (unsigned i = 0; i < Sel.getNumArgs(); i++) {
+    // FIXME: arg->AttrList must be stored too!
+    QualType argType;
+    
+    if (ArgTypes[i])
+      argType = QualType::getFromOpaquePtr(ArgTypes[i]);
+    else
+      argType = Context.getObjCIdType();
+    ParmVarDecl* Param = ParmVarDecl::Create(Context, ObjCMethod,
+                                             SourceLocation(/*FIXME*/),
+                                             ArgNames[i], argType,
+                                             VarDecl::None, 0);
+    Param->setObjCDeclQualifier(
+      CvtQTToAstBitMask(ArgQT[i].getObjCDeclQualifier()));
+    Params.push_back(Param);
+  }
+
   ObjCMethod->setMethodParams(&Params[0], Sel.getNumArgs());
   ObjCMethod->setObjCDeclQualifier(
     CvtQTToAstBitMask(ReturnQT.getObjCDeclQualifier()));

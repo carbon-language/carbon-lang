@@ -39,7 +39,7 @@ Decl* Decl::Create(Deserializer& D) {
     default:
       assert (false && "Not implemented.");
       break;
-      
+
     case BlockVar:
       return BlockVarDecl::CreateImpl(D);
       
@@ -106,11 +106,15 @@ void NamedDecl::ReadInRec(Deserializer& D) {
 void ScopedDecl::EmitInRec(Serializer& S) const {
   NamedDecl::EmitInRec(S);
   S.EmitPtr(getNext());                     // From ScopedDecl.  
+  S.EmitPtr(cast_or_null<Decl>(getContext()));  // From ScopedDecl.
 }
 
 void ScopedDecl::ReadInRec(Deserializer& D) {
   NamedDecl::ReadInRec(D);
   D.ReadPtr(Next);                                  // From ScopedDecl.
+  Decl *TmpD;
+  D.ReadPtr(TmpD);                                  // From ScopedDecl.
+  CtxDecl = cast_or_null<ContextDecl>(TmpD);
 }
     
   //===------------------------------------------------------------===//
@@ -194,7 +198,7 @@ void VarDecl::ReadImpl(Deserializer& D) {
 
 BlockVarDecl* BlockVarDecl::CreateImpl(Deserializer& D) {  
   BlockVarDecl* decl = 
-    new BlockVarDecl(SourceLocation(),NULL,QualType(),None,NULL);
+    new BlockVarDecl(0, SourceLocation(),NULL,QualType(),None,NULL);
  
   decl->VarDecl::ReadImpl(D);
   
@@ -207,7 +211,7 @@ BlockVarDecl* BlockVarDecl::CreateImpl(Deserializer& D) {
 
 FileVarDecl* FileVarDecl::CreateImpl(Deserializer& D) {
   FileVarDecl* decl =
-    new FileVarDecl(SourceLocation(),NULL,QualType(),None,NULL);
+    new FileVarDecl(0, SourceLocation(),NULL,QualType(),None,NULL);
   
   decl->VarDecl::ReadImpl(D);
 
@@ -225,7 +229,7 @@ void ParmVarDecl::EmitImpl(llvm::Serializer& S) const {
 
 ParmVarDecl* ParmVarDecl::CreateImpl(Deserializer& D) {
   ParmVarDecl* decl =
-    new ParmVarDecl(SourceLocation(),NULL,QualType(),None,NULL);
+    new ParmVarDecl(0, SourceLocation(),NULL,QualType(),None,NULL);
   
   decl->VarDecl::ReadImpl(D);
   decl->objcDeclQualifier = static_cast<ObjCDeclQualifier>(D.ReadInt());
@@ -245,7 +249,7 @@ void EnumDecl::EmitImpl(Serializer& S) const {
 }
 
 EnumDecl* EnumDecl::CreateImpl(Deserializer& D) {
-  EnumDecl* decl = new EnumDecl(SourceLocation(),NULL,NULL);
+  EnumDecl* decl = new EnumDecl(0, SourceLocation(),NULL,NULL);
   
   decl->ScopedDecl::ReadInRec(D);
   decl->setDefinition(D.ReadBool());
@@ -277,7 +281,7 @@ EnumConstantDecl* EnumConstantDecl::CreateImpl(Deserializer& D) {
   D.Read(val);
   
   EnumConstantDecl* decl = 
-    new EnumConstantDecl(SourceLocation(),NULL,QualType(),NULL,
+    new EnumConstantDecl(0, SourceLocation(),NULL,QualType(),NULL,
                          val,NULL);
   
   decl->ValueDecl::ReadInRec(D);
@@ -302,7 +306,7 @@ void FieldDecl::EmitImpl(Serializer& S) const {
 }
 
 FieldDecl* FieldDecl::CreateImpl(Deserializer& D) {
-  FieldDecl* decl = new FieldDecl(SourceLocation(), NULL, QualType(), 0);
+  FieldDecl* decl = new FieldDecl(0, SourceLocation(), NULL, QualType(), 0);
   decl->DeclType.ReadBackpatch(D);  
   decl->ReadInRec(D);
   decl->BitWidth = D.ReadOwnedPtr<Expr>();
@@ -338,7 +342,7 @@ FunctionDecl* FunctionDecl::CreateImpl(Deserializer& D) {
   bool IsInline = D.ReadBool();
   
   FunctionDecl* decl =
-    new FunctionDecl(SourceLocation(),NULL,QualType(),SClass, IsInline, 0);
+    new FunctionDecl(0, SourceLocation(),NULL,QualType(),SClass, IsInline, 0);
   
   decl->ValueDecl::ReadInRec(D);
   D.ReadPtr(decl->DeclChain);
@@ -382,7 +386,7 @@ void RecordDecl::EmitImpl(Serializer& S) const {
 }
 
 RecordDecl* RecordDecl::CreateImpl(Decl::Kind DK, Deserializer& D) {
-  RecordDecl* decl = new RecordDecl(DK,SourceLocation(),NULL,NULL);
+  RecordDecl* decl = new RecordDecl(DK,0,SourceLocation(),NULL,NULL);
     
   decl->ScopedDecl::ReadInRec(D);
   decl->setDefinition(D.ReadBool());
@@ -418,7 +422,7 @@ void TypedefDecl::EmitImpl(Serializer& S) const {
 TypedefDecl* TypedefDecl::CreateImpl(Deserializer& D) {
   QualType T = QualType::ReadVal(D);
   
-  TypedefDecl* decl = new TypedefDecl(SourceLocation(),NULL,T,NULL);
+  TypedefDecl* decl = new TypedefDecl(0, SourceLocation(),NULL,T,NULL);
   
   decl->ScopedDecl::ReadInRec(D);
   decl->ScopedDecl::ReadOutRec(D);

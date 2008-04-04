@@ -204,77 +204,87 @@ void Decl::addDeclKind(Kind k) {
 // Decl Allocation/Deallocation Method Implementations
 //===----------------------------------------------------------------------===//
 
-BlockVarDecl *BlockVarDecl::Create(ASTContext &C, SourceLocation L,
+BlockVarDecl *BlockVarDecl::Create(ASTContext &C, ContextDecl *CD,
+                                   SourceLocation L,
                                    IdentifierInfo *Id, QualType T,
                                    StorageClass S, ScopedDecl *PrevDecl) {
   void *Mem = C.getAllocator().Allocate<BlockVarDecl>();
-  return new (Mem) BlockVarDecl(L, Id, T, S, PrevDecl);
+  return new (Mem) BlockVarDecl(CD, L, Id, T, S, PrevDecl);
 }
 
 
-FileVarDecl *FileVarDecl::Create(ASTContext &C, SourceLocation L,
-                                 IdentifierInfo *Id, QualType T, StorageClass S,
+FileVarDecl *FileVarDecl::Create(ASTContext &C, ContextDecl *CD,
+                                 SourceLocation L, IdentifierInfo *Id,
+                                 QualType T, StorageClass S,
                                  ScopedDecl *PrevDecl) {
   void *Mem = C.getAllocator().Allocate<FileVarDecl>();
-  return new (Mem) FileVarDecl(L, Id, T, S, PrevDecl);
+  return new (Mem) FileVarDecl(CD, L, Id, T, S, PrevDecl);
 }
 
-ParmVarDecl *ParmVarDecl::Create(ASTContext &C, SourceLocation L,
-                                 IdentifierInfo *Id, QualType T, StorageClass S,
+ParmVarDecl *ParmVarDecl::Create(ASTContext &C, ContextDecl *CD,
+                                 SourceLocation L, IdentifierInfo *Id,
+                                 QualType T, StorageClass S,
                                  ScopedDecl *PrevDecl) {
   void *Mem = C.getAllocator().Allocate<ParmVarDecl>();
-  return new (Mem) ParmVarDecl(L, Id, T, S, PrevDecl);
+  return new (Mem) ParmVarDecl(CD, L, Id, T, S, PrevDecl);
 }
 
-FunctionDecl *FunctionDecl::Create(ASTContext &C, SourceLocation L, 
+FunctionDecl *FunctionDecl::Create(ASTContext &C, ContextDecl *CD,
+                                   SourceLocation L, 
                                    IdentifierInfo *Id, QualType T, 
                                    StorageClass S, bool isInline, 
                                    ScopedDecl *PrevDecl) {
   void *Mem = C.getAllocator().Allocate<FunctionDecl>();
-  return new (Mem) FunctionDecl(L, Id, T, S, isInline, PrevDecl);
+  return new (Mem) FunctionDecl(CD, L, Id, T, S, isInline, PrevDecl);
 }
 
-FieldDecl *FieldDecl::Create(ASTContext &C, SourceLocation L,
+FieldDecl *FieldDecl::Create(ASTContext &C, RecordDecl *CD, SourceLocation L,
                              IdentifierInfo *Id, QualType T, Expr *BW) {
   void *Mem = C.getAllocator().Allocate<FieldDecl>();
-  return new (Mem) FieldDecl(L, Id, T, BW);
+  return new (Mem) FieldDecl(CD, L, Id, T, BW);
 }
 
 
-EnumConstantDecl *EnumConstantDecl::Create(ASTContext &C, SourceLocation L,
+EnumConstantDecl *EnumConstantDecl::Create(ASTContext &C, EnumDecl *CD,
+                                           SourceLocation L,
                                            IdentifierInfo *Id, QualType T,
                                            Expr *E, const llvm::APSInt &V, 
                                            ScopedDecl *PrevDecl){
   void *Mem = C.getAllocator().Allocate<EnumConstantDecl>();
-  return new (Mem) EnumConstantDecl(L, Id, T, E, V, PrevDecl);
+  return new (Mem) EnumConstantDecl(CD, L, Id, T, E, V, PrevDecl);
 }
 
-TypedefDecl *TypedefDecl::Create(ASTContext &C, SourceLocation L,
+TypedefDecl *TypedefDecl::Create(ASTContext &C, ContextDecl *CD,
+                                 SourceLocation L,
                                  IdentifierInfo *Id, QualType T,
                                  ScopedDecl *PD) {
   void *Mem = C.getAllocator().Allocate<TypedefDecl>();
-  return new (Mem) TypedefDecl(L, Id, T, PD);
+  return new (Mem) TypedefDecl(CD, L, Id, T, PD);
 }
 
-EnumDecl *EnumDecl::Create(ASTContext &C, SourceLocation L, IdentifierInfo *Id,
+EnumDecl *EnumDecl::Create(ASTContext &C, ContextDecl *CD, SourceLocation L,
+                           IdentifierInfo *Id,
                            ScopedDecl *PrevDecl) {
   void *Mem = C.getAllocator().Allocate<EnumDecl>();
-  return new (Mem) EnumDecl(L, Id, PrevDecl);
+  return new (Mem) EnumDecl(CD, L, Id, PrevDecl);
 }
 
-RecordDecl *RecordDecl::Create(ASTContext &C, Kind DK, SourceLocation L,
-                               IdentifierInfo *Id, ScopedDecl *PrevDecl) {
+RecordDecl *RecordDecl::Create(ASTContext &C, Kind DK, ContextDecl *CD,
+                               SourceLocation L, IdentifierInfo *Id,
+                               ScopedDecl *PrevDecl) {
   void *Mem = C.getAllocator().Allocate<RecordDecl>();
-  return new (Mem) RecordDecl(DK, L, Id, PrevDecl);
+  return new (Mem) RecordDecl(DK, CD, L, Id, PrevDecl);
 }
 
-FileScopeAsmDecl *FileScopeAsmDecl::Create(ASTContext &C, SourceLocation L,
+FileScopeAsmDecl *FileScopeAsmDecl::Create(ASTContext &C,
+                                           SourceLocation L,
                                            StringLiteral *Str) {
   void *Mem = C.getAllocator().Allocate<FileScopeAsmDecl>();
   return new (Mem) FileScopeAsmDecl(L, Str);
 }
 
-LinkageSpecDecl *LinkageSpecDecl::Create(ASTContext &C, SourceLocation L,
+LinkageSpecDecl *LinkageSpecDecl::Create(ASTContext &C,
+                                         SourceLocation L,
                                          LanguageIDs Lang, Decl *D) {
   void *Mem = C.getAllocator().Allocate<LinkageSpecDecl>();
   return new (Mem) LinkageSpecDecl(L, Lang, D);
@@ -320,6 +330,25 @@ const Attr *Decl::getAttrs() const {
 }
 
 //===----------------------------------------------------------------------===//
+// ContextDecl Implementation
+//===----------------------------------------------------------------------===//
+
+ContextDecl *ContextDecl::getParent() const {
+  if (ScopedDecl *SD = dyn_cast<ScopedDecl>(this))
+    return SD->getContext();
+  else
+    return NULL;
+}
+
+Decl *ContextDecl::ToDecl (const ContextDecl *D) {
+  return CastTo<Decl>(D);
+}
+
+ContextDecl *ContextDecl::FromDecl (const Decl *D) {
+  return CastTo<ContextDecl>(D);
+}
+
+//===----------------------------------------------------------------------===//
 // NamedDecl Implementation
 //===----------------------------------------------------------------------===//
 
@@ -327,28 +356,6 @@ const char *NamedDecl::getName() const {
   if (const IdentifierInfo *II = getIdentifier())
     return II->getName();
   return "";
-}
-
-//===----------------------------------------------------------------------===//
-// ScopedDecl Implementation
-//===----------------------------------------------------------------------===//
-
-// isDefinedOutsideFunctionOrMethod - This predicate returns true if this
-// scoped decl is defined outside the current function or method.  This is
-// roughly global variables and functions, but also handles enums (which could
-// be defined inside or outside a function etc).
-bool ScopedDecl::isDefinedOutsideFunctionOrMethod() const {
-  if (const VarDecl *VD = dyn_cast<VarDecl>(this))
-    return VD->hasGlobalStorage();
-  if (isa<FunctionDecl>(this))
-    return true;
-  
-  // FIXME: This needs to check the context the decl was defined in!
-  if (isa<TypeDecl>(this) || isa<EnumConstantDecl>(this))
-    return true;
-  
-  assert(0 && "Unknown ScopedDecl!");
-  return false;
 }
 
 //===----------------------------------------------------------------------===//
