@@ -97,7 +97,13 @@ void CodeGenFunction::GenerateObjCMethod(const ObjCMethodDecl *OMD) {
   // TODO: Add something to AST to let the runtime specify the names and types
   // of these.
   llvm::Value *&DMEntry = LocalDeclMap[&(*OMD->getSelfDecl())];
-  DMEntry = AI;
+  const llvm::Type *SelfTy = AI->getType();
+  llvm::Value *DeclPtr = new llvm::AllocaInst(SelfTy, 0, "self.addr",
+                                   AllocaInsertPt);
+
+  // Store the initial value into the alloca.
+  Builder.CreateStore(AI, DeclPtr);
+  DMEntry = DeclPtr;
   ++AI; ++AI;
 
 
@@ -130,13 +136,22 @@ void CodeGenFunction::GenerateObjCMethod(const ObjCMethodDecl *OMD) {
   assert(!verifyFunction(*CurFn) && "Generated method is not well formed.");
 }
 
+llvm::Value *CodeGenFunction::LoadObjCSelf(void)
+{
+  if(const ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(CurFuncDecl)) {
+    llvm::Value *SelfPtr = LocalDeclMap[&(*OMD->getSelfDecl())];
+    return Builder.CreateLoad(SelfPtr, "self");
+  }
+  return NULL;
+}
+
 void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
   LLVMIntTy = ConvertType(getContext().IntTy);
   LLVMPointerWidth = static_cast<unsigned>(
     getContext().getTypeSize(getContext().getPointerType(getContext().VoidTy)));
   
   CurFuncDecl = FD;
-  FnRetTy = CurFuncDecl->getType()->getAsFunctionType()->getResultType();
+  FnRetTy = FD->getType()->getAsFunctionType()->getResultType();
 
 
   CurFn = cast<llvm::Function>(CGM.GetAddrOfFunctionDecl(FD, true));

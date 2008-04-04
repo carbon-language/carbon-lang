@@ -484,8 +484,7 @@ Value *ScalarExprEmitter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
 
   llvm::Value *SelPtr = Builder.CreateStructGEP(Selector, 0);
   return Runtime->generateMessageSend(Builder, ConvertType(E->getType()),
-                                      // FIXME: Self can be assigned to!
-                                      CGF.CurFn->arg_begin(),
+                                      CGF.LoadObjCSelf(),
                                       Receiver, SelPtr,
                                       &Args[0], Args.size());
 }

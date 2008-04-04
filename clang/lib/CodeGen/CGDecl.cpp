@@ -83,8 +83,8 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const BlockVarDecl &D) {
   assert(Init && "Unable to create initialiser for static decl");
   
   std::string ContextName;
-  if (CurFuncDecl)
-    ContextName = CurFuncDecl->getName();
+  if (const FunctionDecl * FD = dyn_cast<FunctionDecl>(CurFuncDecl))
+    ContextName = FD->getName();
   else
     assert(0 && "Unknown context for block var decl"); // FIXME Handle objc.
   

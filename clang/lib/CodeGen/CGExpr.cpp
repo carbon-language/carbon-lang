@@ -386,7 +386,13 @@ LValue CodeGenFunction::EmitStringLiteralLValue(const StringLiteral *E) {
 }
 
 LValue CodeGenFunction::EmitPreDefinedLValue(const PreDefinedExpr *E) {
-  std::string FunctionName(CurFuncDecl->getName());
+  std::string FunctionName;
+  if(const FunctionDecl *FD = dyn_cast<FunctionDecl>(CurFuncDecl)) {
+    FunctionName = FD->getName();
+  }
+  else {
+    assert(0 && "Attempting to load predefined constant for invalid decl type");
+  }
   std::string GlobalVarName;
   
   switch (E->getIdentType()) {
@@ -404,7 +410,7 @@ LValue CodeGenFunction::EmitPreDefinedLValue(const PreDefinedExpr *E) {
       break;
   }
   
-  GlobalVarName += CurFuncDecl->getName();
+  GlobalVarName += FunctionName;
   
   // FIXME: Can cache/reuse these within the module.
   llvm::Constant *C=llvm::ConstantArray::get(FunctionName);
@@ -581,8 +587,10 @@ LValue CodeGenFunction::EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E) {
     
   // Get object pointer and coerce object pointer to correct type.
   llvm::Value *Object = EmitLValue(E->getBase()).getAddress();
+  Object = Builder.CreateLoad(Object, E->getDecl()->getName());
   if (Object->getType() != ObjectType)
     Object = Builder.CreateBitCast(Object, ObjectType);
+
   
   // Return a pointer to the right element.
   return LValue::MakeAddr(Builder.CreateStructGEP(Object, Index,

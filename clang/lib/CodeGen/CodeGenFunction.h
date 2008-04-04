@@ -246,7 +246,8 @@ public:
   typedef std::pair<llvm::Value *, llvm::Value *> ComplexPairTy;
   llvm::LLVMFoldingBuilder Builder;
   
-  const FunctionDecl *CurFuncDecl;
+  // Holds the Decl for the current function or method
+  const Decl *CurFuncDecl;
   QualType FnRetTy;
   llvm::Function *CurFn;
 
@@ -293,6 +294,8 @@ public:
   void GenerateCode(const FunctionDecl *FD);
   
   const llvm::Type *ConvertType(QualType T);
+
+  llvm::Value *LoadObjCSelf();
   
   /// hasAggregateLLVMType - Return true if the specified AST type will map into
   /// an aggregate LLVM type or is void.
