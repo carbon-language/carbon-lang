@@ -3171,7 +3171,10 @@ void SelectionDAGLowering::LowerCallTo(CallSite CS, SDOperand Callee,
     // Insert a label before the invoke call to mark the try range.  This can be
     // used to detect deletion of the invoke via the MachineModuleInfo.
     BeginLabel = MMI->NextLabelID();
-    DAG.setRoot(DAG.getNode(ISD::LABEL, MVT::Other, getRoot(),
+    // Both PendingLoads and PendingExports must be flushed here;
+    // this call might not return.
+    (void)getRoot();
+    DAG.setRoot(DAG.getNode(ISD::LABEL, MVT::Other, getControlRoot(),
                             DAG.getConstant(BeginLabel, MVT::i32),
                             DAG.getConstant(1, MVT::i32)));
   }
