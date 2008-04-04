@@ -267,7 +267,7 @@ ComplexPairTy ComplexExprEmitter::EmitComplexToComplexCast(ComplexPairTy Val,
 
 ComplexPairTy ComplexExprEmitter::EmitCast(Expr *Op, QualType DestTy) {
   // Two cases here: cast from (complex to complex) and (scalar to complex).
-  if (Op->getType()->isComplexType())
+  if (Op->getType()->isAnyComplexType())
     return EmitComplexToComplexCast(Visit(Op), Op->getType(), DestTy);
   
   // C99 6.3.1.7: When a value of real type is converted to a complex type, the
@@ -506,7 +506,7 @@ ComplexPairTy ComplexExprEmitter::VisitChooseExpr(ChooseExpr *E) {
 /// EmitComplexExpr - Emit the computation of the specified expression of
 /// complex type, ignoring the result.
 ComplexPairTy CodeGenFunction::EmitComplexExpr(const Expr *E) {
-  assert(E && E->getType()->isComplexType() &&
+  assert(E && E->getType()->isAnyComplexType() &&
          "Invalid complex expression to emit");
   
   return ComplexExprEmitter(*this).Visit(const_cast<Expr*>(E));
@@ -517,7 +517,7 @@ ComplexPairTy CodeGenFunction::EmitComplexExpr(const Expr *E) {
 void CodeGenFunction::EmitComplexExprIntoAddr(const Expr *E,
                                               llvm::Value *DestAddr,
                                               bool DestIsVolatile) {
-  assert(E && E->getType()->isComplexType() &&
+  assert(E && E->getType()->isAnyComplexType() &&
          "Invalid complex expression to emit");
   ComplexExprEmitter Emitter(*this);
   ComplexPairTy Val = Emitter.Visit(const_cast<Expr*>(E));

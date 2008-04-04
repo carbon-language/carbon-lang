@@ -123,7 +123,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const BlockVarDecl &D) {
     if (!hasAggregateLLVMType(Init->getType())) {
       llvm::Value *V = EmitScalarExpr(Init);
       Builder.CreateStore(V, DeclPtr, D.getType().isVolatileQualified());
-    } else if (Init->getType()->isComplexType()) {
+    } else if (Init->getType()->isAnyComplexType()) {
       EmitComplexExprIntoAddr(Init, DeclPtr, D.getType().isVolatileQualified());
     } else {
       EmitAggExpr(Init, DeclPtr, D.getType().isVolatileQualified());

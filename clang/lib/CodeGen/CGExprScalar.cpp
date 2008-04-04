@@ -466,7 +466,7 @@ Value *ScalarExprEmitter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
     if (!CGF.hasAggregateLLVMType(ArgTy)) {
       // Scalar argument is passed by-value.
       Args.push_back(CGF.EmitScalarExpr(ArgExpr));
-    } else if (ArgTy->isComplexType()) {
+    } else if (ArgTy->isAnyComplexType()) {
       // Make a temporary alloca to pass the argument.
       llvm::Value *DestMem = CGF.CreateTempAlloca(ConvertType(ArgTy));
       CGF.EmitComplexExprIntoAddr(ArgExpr, DestMem, false);
@@ -559,7 +559,7 @@ Value *ScalarExprEmitter::EmitCastExpr(const Expr *E, QualType DestTy) {
     return EmitScalarConversion(Src, E->getType(), DestTy);
   }
   
-  if (E->getType()->isComplexType()) {
+  if (E->getType()->isAnyComplexType()) {
     // Handle cases where the source is a complex type.
     return EmitComplexToScalarConversion(CGF.EmitComplexExpr(E), E->getType(),
                                          DestTy);
@@ -669,13 +669,13 @@ Value *ScalarExprEmitter::EmitSizeAlignOf(QualType TypeToSize,
 
 Value *ScalarExprEmitter::VisitUnaryReal(const UnaryOperator *E) {
   Expr *Op = E->getSubExpr();
-  if (Op->getType()->isComplexType())
+  if (Op->getType()->isAnyComplexType())
     return CGF.EmitComplexExpr(Op).first;
   return Visit(Op);
 }
 Value *ScalarExprEmitter::VisitUnaryImag(const UnaryOperator *E) {
   Expr *Op = E->getSubExpr();
-  if (Op->getType()->isComplexType())
+  if (Op->getType()->isAnyComplexType())
     return CGF.EmitComplexExpr(Op).second;
   
   // __imag on a scalar returns zero.  Emit it the subexpr to ensure side
@@ -894,7 +894,7 @@ Value *ScalarExprEmitter::EmitCompare(const BinaryOperator *E,unsigned UICmpOpc,
                                       unsigned SICmpOpc, unsigned FCmpOpc) {
   Value *Result;
   QualType LHSTy = E->getLHS()->getType();
-  if (!LHSTy->isComplexType()) {
+  if (!LHSTy->isAnyComplexType()) {
     Value *LHS = Visit(E->getLHS());
     Value *RHS = Visit(E->getRHS());
     
@@ -1130,7 +1130,7 @@ Value *CodeGenFunction::EmitScalarConversion(Value *Src, QualType SrcTy,
 Value *CodeGenFunction::EmitComplexToScalarConversion(ComplexPairTy Src,
                                                       QualType SrcTy,
                                                       QualType DstTy) {
-  assert(SrcTy->isComplexType() && !hasAggregateLLVMType(DstTy) &&
+  assert(SrcTy->isAnyComplexType() && !hasAggregateLLVMType(DstTy) &&
          "Invalid complex -> scalar conversion");
   return ScalarExprEmitter(*this).EmitComplexToScalarConversion(Src, SrcTy,
                                                                 DstTy);

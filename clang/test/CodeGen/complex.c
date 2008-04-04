@@ -1,4 +1,4 @@
-// RUN: clang -emit-llvm %s
+// RUN: clang -emit-llvm < %s
 
 int main(void)
 {
@@ -44,5 +44,10 @@ void t1() {
 
 void t2() {
   (__imag__ cf) = 4.0;
+}
+
+// PR1960
+void t3() {
+  __complex__ long long v = 2;
 }
 

@@ -36,7 +36,7 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
     if (const Expr *E = dyn_cast<Expr>(S)) {
       if (!hasAggregateLLVMType(E->getType()))
         EmitScalarExpr(E);
-      else if (E->getType()->isComplexType())
+      else if (E->getType()->isAnyComplexType())
         EmitComplexExpr(E);
       else
         EmitAggExpr(E, 0, false);
@@ -344,7 +344,7 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
       Builder.CreateRet(llvm::UndefValue::get(RetTy));
   } else if (!hasAggregateLLVMType(RV->getType())) {
     Builder.CreateRet(EmitScalarExpr(RV));
-  } else if (RV->getType()->isComplexType()) {
+  } else if (RV->getType()->isAnyComplexType()) {
     llvm::Value *SRetPtr = CurFn->arg_begin();
     EmitComplexExprIntoAddr(RV, SRetPtr, false);
   } else {

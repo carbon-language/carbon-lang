@@ -37,7 +37,7 @@ llvm::AllocaInst *CodeGenFunction::CreateTempAlloca(const llvm::Type *Ty,
 /// expression and compare the result against zero, returning an Int1Ty value.
 llvm::Value *CodeGenFunction::EvaluateExprAsBool(const Expr *E) {
   QualType BoolTy = getContext().BoolTy;
-  if (!E->getType()->isComplexType())
+  if (!E->getType()->isAnyComplexType())
     return EmitScalarConversion(EmitScalarExpr(E), E->getType(), BoolTy);
 
   return EmitComplexToScalarConversion(EmitComplexExpr(E), E->getType(),BoolTy);
@@ -51,7 +51,7 @@ RValue CodeGenFunction::EmitAnyExpr(const Expr *E, llvm::Value *AggLoc,
                                     bool isAggLocVolatile) {
   if (!hasAggregateLLVMType(E->getType()))
     return RValue::get(EmitScalarExpr(E));
-  else if (E->getType()->isComplexType())
+  else if (E->getType()->isAnyComplexType())
     return RValue::getComplex(EmitComplexExpr(E));
   
   EmitAggExpr(E, AggLoc, isAggLocVolatile);
@@ -620,7 +620,7 @@ RValue CodeGenFunction::EmitCallExpr(llvm::Value *Callee, QualType FnType,
     if (!hasAggregateLLVMType(ArgTy)) {
       // Scalar argument is passed by-value.
       Args.push_back(EmitScalarExpr(ArgExprs[i]));
-    } else if (ArgTy->isComplexType()) {
+    } else if (ArgTy->isAnyComplexType()) {
       // Make a temporary alloca to pass the argument.
       llvm::Value *DestMem = CreateTempAlloca(ConvertType(ArgTy));
       EmitComplexExprIntoAddr(ArgExprs[i], DestMem, false);
@@ -637,7 +637,7 @@ RValue CodeGenFunction::EmitCallExpr(llvm::Value *Callee, QualType FnType,
     CI->setCallingConv(F->getCallingConv());
   if (CI->getType() != llvm::Type::VoidTy)
     CI->setName("call");
-  else if (ResultType->isComplexType())
+  else if (ResultType->isAnyComplexType())
     return RValue::getComplex(LoadComplexFromAddr(Args[0], false));
   else if (hasAggregateLLVMType(ResultType))
     // Struct return.

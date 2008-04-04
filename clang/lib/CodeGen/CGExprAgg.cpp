@@ -95,7 +95,7 @@ public:
 //===----------------------------------------------------------------------===//
 
 void AggExprEmitter::EmitAggregateClear(llvm::Value *DestPtr, QualType Ty) {
-  assert(!Ty->isComplexType() && "Shouldn't happen for complex");
+  assert(!Ty->isAnyComplexType() && "Shouldn't happen for complex");
 
   // Aggregate assignment turns into llvm.memset.
   const llvm::Type *BP = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
@@ -121,7 +121,7 @@ void AggExprEmitter::EmitAggregateClear(llvm::Value *DestPtr, QualType Ty) {
 
 void AggExprEmitter::EmitAggregateCopy(llvm::Value *DestPtr,
                                        llvm::Value *SrcPtr, QualType Ty) {
-  assert(!Ty->isComplexType() && "Shouldn't happen for complex");
+  assert(!Ty->isAnyComplexType() && "Shouldn't happen for complex");
   
   // Aggregate assignment turns into llvm.memcpy.
   const llvm::Type *BP = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
