@@ -21,9 +21,14 @@ def error(message):
     print >> sys.stderr, 'ccc: ' + message
     sys.exit(1)
 
+def quote(arg):
+    if '"' in arg:
+        return repr(arg)
+    return arg
+
 def run(args):
-    print >> sys.stderr, ' '.join(args)
-    print >> sys.stderr, '\n'    
+    print ' '.join(map(quote, args))
+    print
     code = subprocess.call(args)
     if code > 255:
         code = 1
