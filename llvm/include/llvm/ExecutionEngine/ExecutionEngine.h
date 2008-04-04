@@ -96,9 +96,9 @@ public:
   /// any of those classes.
   sys::Mutex lock; // Used to make this class and subclasses thread-safe
 
-  //===----------------------------------------------------------------------===//
+  //===--------------------------------------------------------------------===//
   //  ExecutionEngine Startup
-  //===----------------------------------------------------------------------===//
+  //===--------------------------------------------------------------------===//
 
   virtual ~ExecutionEngine();
 
@@ -176,8 +176,9 @@ public:
   
   /// updateGlobalMapping - Replace an existing mapping for GV with a new
   /// address.  This updates both maps as required.  If "Addr" is null, the
-  /// entry for the global is removed from the mappings.
-  void updateGlobalMapping(const GlobalValue *GV, void *Addr);
+  /// entry for the global is removed from the mappings.  This returns the old
+  /// value of the pointer, or null if it was not in the map.
+  void *updateGlobalMapping(const GlobalValue *GV, void *Addr);
   
   /// getPointerToGlobalIfAvailable - This returns the address of the specified
   /// global value if it is has already been codegen'd, otherwise it returns
@@ -211,7 +212,8 @@ public:
   const GlobalValue *getGlobalValueAtAddress(void *Addr);
 
 
-  void StoreValueToMemory(const GenericValue &Val, GenericValue *Ptr, const Type *Ty);
+  void StoreValueToMemory(const GenericValue &Val, GenericValue *Ptr,
+                          const Type *Ty);
   void InitializeMemory(const Constant *Init, void *Addr);
 
   /// recompileAndRelinkFunction - This method is used to force a function

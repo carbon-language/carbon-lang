@@ -109,18 +109,30 @@ void ExecutionEngine::clearAllGlobalMappings() {
 /// updateGlobalMapping - Replace an existing mapping for GV with a new
 /// address.  This updates both maps as required.  If "Addr" is null, the
 /// entry for the global is removed from the mappings.
-void ExecutionEngine::updateGlobalMapping(const GlobalValue *GV, void *Addr) {
+void *ExecutionEngine::updateGlobalMapping(const GlobalValue *GV, void *Addr) {
   MutexGuard locked(lock);
-  
+
+  std::map<const GlobalValue*, void *> &Map = state.getGlobalAddressMap(locked);
+
   // Deleting from the mapping?
   if (Addr == 0) {
-    state.getGlobalAddressMap(locked).erase(GV);
+    std::map<const GlobalValue*, void *>::iterator I = Map.find(GV);
+    void *OldVal;
+    if (I == Map.end())
+      OldVal = 0;
+    else {
+      OldVal = I->second;
+      Map.erase(I); 
+    }
+    
     if (!state.getGlobalAddressReverseMap(locked).empty())
       state.getGlobalAddressReverseMap(locked).erase(Addr);
-    return;
+    return OldVal;
   }
   
-  void *&CurVal = state.getGlobalAddressMap(locked)[GV];
+  void *&CurVal = Map[GV];
+  void *OldVal = CurVal;
+
   if (CurVal && !state.getGlobalAddressReverseMap(locked).empty())
     state.getGlobalAddressReverseMap(locked).erase(CurVal);
   CurVal = Addr;
@@ -131,6 +143,7 @@ void ExecutionEngine::updateGlobalMapping(const GlobalValue *GV, void *Addr) {
     assert((V == 0 || GV == 0) && "GlobalMapping already established!");
     V = GV;
   }
+  return OldVal;
 }
 
 /// getPointerToGlobalIfAvailable - This returns the address of the specified
