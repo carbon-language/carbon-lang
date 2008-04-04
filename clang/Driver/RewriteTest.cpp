@@ -327,11 +327,10 @@ void RewriteTest::Initialize(ASTContext &context) {
   Preamble += "extern Protocol *objc_getProtocol(const char *);\n";
   if (LangOpts.Microsoft) 
     Preamble += "} // end extern \"C\"\n";
-  Preamble += "#include <objc/objc.h>\n";
   Preamble += "#ifndef __FASTENUMERATIONSTATE\n";
   Preamble += "struct __objcFastEnumerationState {\n\t";
   Preamble += "unsigned long state;\n\t";
-  Preamble += "id *itemsPtr;\n\t";
+  Preamble += "void **itemsPtr;\n\t";
   Preamble += "unsigned long *mutationsPtr;\n\t";
   Preamble += "unsigned long extra[5];\n};\n";
   Preamble += "#define __FASTENUMERATIONSTATE\n";
@@ -2912,8 +2911,7 @@ void RewriteTest::RewriteImplementations(std::string &Result) {
     RewriteImplementationDecl(CategoryImplementation[i]);
   
   // This is needed for use of offsetof
-  Result += "#include <stddef.h>\n";
-    
+  Result += "#define offsetof(TYPE, MEMBER) ((int) &((TYPE *)0)->MEMBER)\n";   
   // For each implemented class, write out all its meta data.
   for (int i = 0; i < ClsDefCount; i++)
     RewriteObjCClassMetaData(ClassImplementation[i], Result);
