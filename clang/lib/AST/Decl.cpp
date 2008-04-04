@@ -335,7 +335,7 @@ const Attr *Decl::getAttrs() const {
 
 ContextDecl *ContextDecl::getParent() const {
   if (ScopedDecl *SD = dyn_cast<ScopedDecl>(this))
-    return SD->getContext();
+    return SD->getContextDecl();
   else
     return NULL;
 }

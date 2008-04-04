@@ -66,7 +66,7 @@ protected:
     : NamedDecl(DK, L, Id), NextDeclarator(PrevDecl), Next(0), CtxDecl(CD) {}
   
 public:
-  ContextDecl *getContext() const { return CtxDecl; }
+  ContextDecl *getContextDecl() const { return CtxDecl; }
 
   ScopedDecl *getNext() const { return Next; }
   void setNext(ScopedDecl *N) { Next = N; }
@@ -83,8 +83,8 @@ public:
   // roughly global variables and functions, but also handles enums (which could
   // be defined inside or outside a function etc).
   bool isDefinedOutsideFunctionOrMethod() const {
-    if (getContext())
-      return !getContext()->isFunctionOrMethod();
+    if (getContextDecl())
+      return !getContextDecl()->isFunctionOrMethod();
     else
       return true;
   }

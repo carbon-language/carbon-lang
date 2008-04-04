@@ -106,7 +106,7 @@ void NamedDecl::ReadInRec(Deserializer& D) {
 void ScopedDecl::EmitInRec(Serializer& S) const {
   NamedDecl::EmitInRec(S);
   S.EmitPtr(getNext());                     // From ScopedDecl.  
-  S.EmitPtr(cast_or_null<Decl>(getContext()));  // From ScopedDecl.
+  S.EmitPtr(cast_or_null<Decl>(getContextDecl()));  // From ScopedDecl.
 }
 
 void ScopedDecl::ReadInRec(Deserializer& D) {
