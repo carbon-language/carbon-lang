@@ -2271,6 +2271,7 @@ void RewriteTest::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
         // this transformation as well, which is still correct c-code.
         if (!strncmp(cursor, "public", strlen("public")) ||
             !strncmp(cursor, "private", strlen("private")) ||
+            !strncmp(cursor, "package", strlen("package")) ||
             !strncmp(cursor, "protected", strlen("protected")))
           InsertText(atLoc, "// ", 3);
       }
