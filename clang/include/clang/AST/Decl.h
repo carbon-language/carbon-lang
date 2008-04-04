@@ -300,13 +300,15 @@ private:
   // NOTE: VC++ treats enums as signed, avoid using the StorageClass enum
   unsigned SClass : 2;
   bool IsInline : 1;
+  bool IsImplicit : 1;
   
   FunctionDecl(ContextDecl *CD, SourceLocation L,
                IdentifierInfo *Id, QualType T,
                StorageClass S, bool isInline, ScopedDecl *PrevDecl)
     : ValueDecl(Function, CD, L, Id, T, PrevDecl), 
       ContextDecl(Function),
-      ParamInfo(0), Body(0), DeclChain(0), SClass(S), IsInline(isInline) {}
+      ParamInfo(0), Body(0), DeclChain(0), SClass(S), 
+      IsInline(isInline), IsImplicit(0) {}
   virtual ~FunctionDecl();
 public:
   static FunctionDecl *Create(ASTContext &C, ContextDecl *CD, SourceLocation L,
@@ -316,6 +318,9 @@ public:
   
   Stmt *getBody() const { return Body; }
   void setBody(Stmt *B) { Body = B; }
+  
+  bool isImplicit() { return IsImplicit; }
+  void setImplicit() { IsImplicit = true; }
   
   ScopedDecl *getDeclChain() const { return DeclChain; }
   void setDeclChain(ScopedDecl *D) { DeclChain = D; }

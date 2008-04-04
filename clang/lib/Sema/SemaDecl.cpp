@@ -290,8 +290,13 @@ FunctionDecl *Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
 
   // A function that has already been declared has been redeclared or defined
   // with a different type- show appropriate diagnostic
-  diag::kind PrevDiag = Old->getBody() ? diag::err_previous_definition :
-                                         diag::err_previous_declaration; 
+  diag::kind PrevDiag;
+  if (Old->getBody())
+    PrevDiag = diag::err_previous_definition;
+  else if (Old->isImplicit())
+    PrevDiag = diag::err_previous_implicit_declaration;
+  else
+    PrevDiag = diag::err_previous_declaration;
 
   // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
   // TODO: This is totally simplistic.  It should handle merging functions
@@ -1181,7 +1186,10 @@ ScopedDecl *Sema::ImplicitlyDefineFunction(SourceLocation Loc,
   while (S->getParent())
     S = S->getParent();
   
-  return dyn_cast<ScopedDecl>(static_cast<Decl*>(ActOnDeclarator(S, D, 0)));
+  FunctionDecl *FD = 
+    dyn_cast<FunctionDecl>(static_cast<Decl*>(ActOnDeclarator(S, D, 0)));
+  FD->setImplicit();
+  return FD;
 }
 
 
