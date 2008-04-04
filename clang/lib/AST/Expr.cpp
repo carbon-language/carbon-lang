@@ -453,6 +453,8 @@ bool Expr::hasGlobalStorage() const {
     const Decl *D = cast<DeclRefExpr>(this)->getDecl();
     if (const VarDecl *VD = dyn_cast<VarDecl>(D))
       return VD->hasGlobalStorage();
+    if (isa<FunctionDecl>(D))
+      return true;
     return false;
   }
   case MemberExprClass: {
