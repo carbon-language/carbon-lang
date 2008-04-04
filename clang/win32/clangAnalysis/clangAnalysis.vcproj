@@ -161,6 +161,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\Analysis\BugReporter.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\Analysis\CFRefCount.cpp"
 				>
 			</File>
