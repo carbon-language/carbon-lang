@@ -18,6 +18,7 @@
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Intrinsics.h"
 using namespace clang;
 using namespace CodeGen;
 
@@ -85,6 +86,9 @@ public:
   
   void VisitConditionalOperator(const ConditionalOperator *CO);
   void VisitInitListExpr(InitListExpr *E);
+
+  void EmitInitializationToLValue(Expr *E, LValue Address);
+  void EmitNullInitializationToLValue(LValue Address, QualType T);
   //  case Expr::ChooseExprClass:
 
 };
@@ -293,24 +297,121 @@ void AggExprEmitter::EmitNonConstInit(InitListExpr *E) {
     assert(false && "Invalid initializer");
 }
 
-void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
-
-  if (E->isConstantExpr(CGF.CGM.getContext(), NULL)) {
-    llvm::Constant *V = CGF.CGM.EmitConstantExpr(E);
-    // Create global value to hold this array.
-    V = new llvm::GlobalVariable(V->getType(), true,
-                                 llvm::GlobalValue::InternalLinkage,
-                                 V, ".array",
-                                 &CGF.CGM.getModule());
-
-    EmitAggregateCopy(DestPtr, V , E->getType());
+void AggExprEmitter::EmitInitializationToLValue(Expr* E, LValue LV) {
+  // FIXME: Are initializers affected by volatile?
+  if (E->getType()->isComplexType()) {
+    CGF.EmitComplexExprIntoAddr(E, LV.getAddress(), false);
     return;
+  }
+  RValue RV = CGF.EmitAnyExpr(E, LV.getAddress(), false);
+  if (CGF.hasAggregateLLVMType(E->getType()))
+    return;
+  CGF.EmitStoreThroughLValue(RV, LV, E->getType());
+}
+
+void AggExprEmitter::EmitNullInitializationToLValue(LValue LV, QualType T) {
+  if (!CGF.hasAggregateLLVMType(T)) {
+    // For non-aggregates, we can store zero
+    const llvm::Type *T =
+       cast<llvm::PointerType>(LV.getAddress()->getType())->getElementType();
+    Builder.CreateStore(llvm::Constant::getNullValue(T), LV.getAddress());
   } else {
-    if (!E->getType()->isArrayType()) {
-      CGF.WarnUnsupported(E, "aggregate init-list expression");
-      return;
+    // Otherwise, just memset the whole thing to zero.  This is legal
+    // because in LLVM, all default initializers are guaranteed to have a
+    // bit pattern of all zeros.
+    // There's a potential optimization opportunity in combining
+    // memsets; that would be easy for arrays, but relatively
+    // difficult for structures with the current code.
+    llvm::Value *MemSet = CGF.CGM.getIntrinsic(llvm::Intrinsic::memset_i64);
+    uint64_t Size = CGF.getContext().getTypeSize(T);
+    
+    const llvm::Type *BP = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+    llvm::Value* DestPtr = Builder.CreateBitCast(LV.getAddress(), BP, "tmp");
+    
+    llvm::Value *MemSetOps[4] = {
+      DestPtr, llvm::ConstantInt::get(llvm::Type::Int8Ty, 0),
+      llvm::ConstantInt::get(llvm::Type::Int64Ty, Size/8),
+      llvm::ConstantInt::get(llvm::Type::Int32Ty, 0)
+    };
+    
+    Builder.CreateCall(MemSet, MemSetOps, MemSetOps+4);
+  }
+}
+
+
+void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
+  if (E->isConstantExpr(CGF.getContext(), 0)) {
+    // FIXME: call into const expr emitter so that we can emit
+    // a memcpy instead of storing the individual members.
+    // This is purely for perf; both codepaths lead to equivalent
+    // (although not necessarily identical) code.
+    // It's worth noting that LLVM keeps on getting smarter, though,
+    // so it might not be worth bothering.
+  }
+  
+  // Handle initialization of an array.
+  if (E->getType()->isArrayType()) {
+    const llvm::PointerType *APType =
+      cast<llvm::PointerType>(DestPtr->getType());
+    const llvm::ArrayType *AType =
+      cast<llvm::ArrayType>(APType->getElementType());
+    
+    uint64_t NumInitElements = E->getNumInits();
+    uint64_t NumArrayElements = AType->getNumElements();
+    QualType ElementType = E->getType()->getAsArrayType()->getElementType();
+    
+    for (uint64_t i = 0; i != NumArrayElements; ++i) {
+      llvm::Value *NextVal = Builder.CreateStructGEP(DestPtr, i, ".array");
+      if (i < NumInitElements)
+        EmitInitializationToLValue(E->getInit(i), LValue::MakeAddr(NextVal));
+      else
+        EmitNullInitializationToLValue(LValue::MakeAddr(NextVal),
+                                       ElementType);
     }
-    EmitNonConstInit(E);
+    return;
+  }
+  
+  assert(E->getType()->isRecordType() && "Only support structs/unions here!");
+  
+  // Do struct initialization; this code just sets each individual member
+  // to the approprate value.  This makes bitfield support automatic;
+  // the disadvantage is that the generated code is more difficult for
+  // the optimizer, especially with bitfields.
+  unsigned NumInitElements = E->getNumInits();
+  RecordDecl *SD = E->getType()->getAsRecordType()->getDecl();
+  unsigned NumMembers = SD->getNumMembers() - SD->hasFlexibleArrayMember();
+  unsigned CurInitVal = 0;
+  bool isUnion = E->getType()->isUnionType();
+  
+  // Here we iterate over the fields; this makes it simpler to both
+  // default-initialize fields and skip over unnamed fields.
+  for (unsigned CurFieldNo = 0; CurFieldNo != NumMembers; ++CurFieldNo) {
+    if (CurInitVal >= NumInitElements) {
+      // No more initializers; we're done.
+      break;
+    }
+    
+    FieldDecl *CurField = SD->getMember(CurFieldNo);
+    if (CurField->getIdentifier() == 0) {
+      // Initializers can't initialize unnamed fields, e.g. "int : 20;"
+      continue;
+    }
+    LValue FieldLoc = CGF.EmitLValueForField(DestPtr, CurField, isUnion);
+    if (CurInitVal < NumInitElements) {
+      // Store the initializer into the field
+      // This will probably have to get a bit smarter when we support
+      // designators in initializers
+      EmitInitializationToLValue(E->getInit(CurInitVal++), FieldLoc);
+    } else {
+      // We're out of initalizers; default-initialize to null
+      EmitNullInitializationToLValue(FieldLoc, CurField->getType());
+    }
+
+    // Unions only initialize one field.
+    // (things can get weird with designators, but they aren't
+    // supported yet.)
+    if (E->getType()->isUnionType())
+      break;
   }
 }
 
