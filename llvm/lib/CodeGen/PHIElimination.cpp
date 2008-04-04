@@ -49,12 +49,6 @@ namespace {
     }
 
   private:
-    /// findInsertionPoint - Find a safe location to insert a move to copy
-    /// source of a PHI instruction.
-    MachineBasicBlock::iterator
-      findInsertionPoint(MachineBasicBlock &MBB, MachineInstr *DefMI,
-                         unsigned DstReg, unsigned SrcReg) const;
-
     /// EliminatePHINodes - Eliminate phi nodes by inserting copy instructions
     /// in predecessor basic blocks.
     ///
@@ -130,28 +124,6 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
     LowerAtomicPHINode(MBB, AfterPHIsIt);
 
   return true;
-}
-
-/// findInsertionPoint - Find a safe location to insert a move to copy
-/// source of a PHI instruction.
-MachineBasicBlock::iterator
-PNE::findInsertionPoint(MachineBasicBlock &MBB, MachineInstr *DefMI,
-                        unsigned DstReg, unsigned SrcReg) const {
-  if (DefMI->getOpcode() == TargetInstrInfo::PHI ||
-      DefMI->getParent() != &MBB)
-    return MBB.getFirstTerminator();
-
-  for (MachineRegisterInfo::use_iterator I = MRI->use_begin(SrcReg),
-         E = MRI->use_end(); I != E; ++I)
-    if (I->getParent() == &MBB)
-      return MBB.getFirstTerminator();
-  for (MachineRegisterInfo::use_iterator I = MRI->use_begin(DstReg),
-         E = MRI->use_end(); I != E; ++I)
-    if (I->getParent() == &MBB)
-      return MBB.getFirstTerminator();
-
-  MachineBasicBlock::iterator I = DefMI;
-  return ++I;
 }
 
 /// LowerAtomicPHINode - Lower the PHI node at the top of the specified block,
@@ -242,8 +214,7 @@ void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
  
     // Find a safe location to insert the copy, this may be the first
     // terminator in the block (or end()).
-    MachineBasicBlock::iterator InsertPos =
-      findInsertionPoint(opBlock, DefMI, IncomingReg, SrcReg);
+    MachineBasicBlock::iterator InsertPos = opBlock.getFirstTerminator();
     
     // Insert the copy.
     TII->copyRegToReg(opBlock, InsertPos, IncomingReg, SrcReg, RC, RC);
