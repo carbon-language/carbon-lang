@@ -76,16 +76,13 @@ CGObjCEtoile::CGObjCEtoile(llvm::Module &M,
   // Object type
   llvm::OpaqueType *OpaqueObjTy = llvm::OpaqueType::get();
   llvm::Type *OpaqueIdTy = llvm::PointerType::getUnqual(OpaqueObjTy);
-  IdTy = llvm::PointerType::getUnqual(llvm::StructType::get(OpaqueIdTy, 0));
+  IdTy = llvm::PointerType::getUnqual(llvm::StructType::get(OpaqueIdTy, NULL));
   OpaqueObjTy->refineAbstractTypeTo(IdTy);
 
   // Call structure type.
   llvm::OpaqueType *OpaqueSlotTy = llvm::OpaqueType::get();
   CallTy = llvm::StructType::get(llvm::PointerType::getUnqual(OpaqueSlotTy),
-      SelectorTy,
-      IdTy,
-      0);
-  //CallTy = llvm::PointerType::getUnqual(CallTy);
+                                 SelectorTy, IdTy, NULL);
 
   // IMP type
   std::vector<const llvm::Type*> IMPArgs;
@@ -94,12 +91,8 @@ CGObjCEtoile::CGObjCEtoile(llvm::Module &M,
   IMPTy = llvm::FunctionType::get(IdTy, IMPArgs, true);
 
   // Slot type
-  SlotTy = llvm::StructType::get(IntTy,
-      IMPTy,
-      PtrToInt8Ty,
-      PtrToInt8Ty,
-      llvm::Type::Int32Ty,
-      0);
+  SlotTy = llvm::StructType::get(IntTy, IMPTy, PtrToInt8Ty, PtrToInt8Ty,
+                                 llvm::Type::Int32Ty, NULL);
   OpaqueSlotTy->refineAbstractTypeTo(SlotTy);
   SlotTy = llvm::PointerType::getUnqual(SlotTy);
 
@@ -124,11 +117,8 @@ llvm::Value *CGObjCEtoile::getSelector(llvm::LLVMFoldingBuilder &Builder,
     SelTypes = llvm::ConstantPointerNull::get(PtrToInt8Ty);
   }
   llvm::Constant *SelFunction = 
-    TheModule.getOrInsertFunction("lookup_typed_selector",
-        SelectorTy,
-        PtrToInt8Ty,
-        PtrToInt8Ty,
-        0);
+    TheModule.getOrInsertFunction("lookup_typed_selector", SelectorTy,
+                                  PtrToInt8Ty, PtrToInt8Ty, NULL);
   llvm::SmallVector<llvm::Value*, 2> Args;
   Args.push_back(SelName);
   Args.push_back(SelTypes);

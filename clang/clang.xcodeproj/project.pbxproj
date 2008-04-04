@@ -129,6 +129,7 @@
 		DEC63B1C0C7B940600DBF169 /* CFG.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEC63B1B0C7B940600DBF169 /* CFG.h */; };
 		DEC8D9910A9433CD00353FCA /* Decl.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEC8D9900A9433CD00353FCA /* Decl.h */; };
 		DEC8D9A40A94346E00353FCA /* AST.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEC8D9A30A94346E00353FCA /* AST.h */; };
+		DECAB0950DA684C500E13CCB /* CGObjCEtoile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DECAB0940DA684C500E13CCB /* CGObjCEtoile.cpp */; };
 		DED626C90AE0C065001E80A4 /* TargetInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED626C80AE0C065001E80A4 /* TargetInfo.cpp */; };
 		DED62ABB0AE2EDF1001E80A4 /* Decl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED62ABA0AE2EDF1001E80A4 /* Decl.cpp */; };
 		DED676D10B6C786700AAD4A3 /* Builtins.def in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED676D00B6C786700AAD4A3 /* Builtins.def */; };
@@ -409,6 +410,7 @@
 		DEC63B1B0C7B940600DBF169 /* CFG.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = CFG.h; path = clang/AST/CFG.h; sourceTree = "<group>"; };
 		DEC8D9900A9433CD00353FCA /* Decl.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Decl.h; path = clang/AST/Decl.h; sourceTree = "<group>"; };
 		DEC8D9A30A94346E00353FCA /* AST.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = AST.h; path = clang/AST/AST.h; sourceTree = "<group>"; };
+		DECAB0940DA684C500E13CCB /* CGObjCEtoile.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CGObjCEtoile.cpp; path = lib/CodeGen/CGObjCEtoile.cpp; sourceTree = "<group>"; };
 		DED626C80AE0C065001E80A4 /* TargetInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = TargetInfo.cpp; sourceTree = "<group>"; };
 		DED62ABA0AE2EDF1001E80A4 /* Decl.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = Decl.cpp; path = lib/AST/Decl.cpp; sourceTree = "<group>"; tabWidth = 8; usesTabs = 0; };
 		DED676D00B6C786700AAD4A3 /* Builtins.def */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; name = Builtins.def; path = clang/AST/Builtins.def; sourceTree = "<group>"; };
@@ -685,6 +687,7 @@
 				1A7342470C7B57D500122F56 /* CGObjC.cpp */,
 				DE38CD4E0D794CF900A273B6 /* CGObjCRuntime.h */,
 				DE38CD4F0D794D0100A273B6 /* CGObjCGNU.cpp */,
+				DECAB0940DA684C500E13CCB /* CGObjCEtoile.cpp */,
 				DE4772F90C10EAE5002239E8 /* CGStmt.cpp */,
 				DE928B120C05659200231DA4 /* ModuleBuilder.cpp */,
 			);
@@ -1041,6 +1044,7 @@
 				3574BC2B0D9B531D00DF491A /* HTMLDiagnostics.cpp in Sources */,
 				35F8D0D60D9B82CD00D91C5E /* BasicObjCFoundationChecks.cpp in Sources */,
 				3593790A0DA48ABA0043B19C /* BugReporter.cpp in Sources */,
+				DECAB0950DA684C500E13CCB /* CGObjCEtoile.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
