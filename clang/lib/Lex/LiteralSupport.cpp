@@ -349,6 +349,35 @@ NumericLiteralParser(const char *begin, const char *end,
       }
       continue;  // Success.
     case 'i':
+      if (PP.getLangOptions().Microsoft) {
+        // Allow i8, i16, i32, i64, and i128.
+        if (++s == ThisTokEnd) break;
+        switch (*s) {
+          case '8': 
+            s++; // i8 suffix
+            break;
+          case '1':
+            if (++s == ThisTokEnd) break;
+            if (*s == '6') s++; // i16 suffix
+            else if (*s == '2') {
+              if (++s == ThisTokEnd) break;
+              if (*s == '8') s++; // i128 suffix
+            }
+            break;
+          case '3':
+            if (++s == ThisTokEnd) break;
+            if (*s == '2') s++; // i32 suffix
+            break;
+          case '6':
+            if (++s == ThisTokEnd) break;
+            if (*s == '4') s++; // i64 suffix
+            break;
+          default:
+            break;
+        }
+        break;
+      }
+      // fall through.
     case 'I':
     case 'j':
     case 'J':
