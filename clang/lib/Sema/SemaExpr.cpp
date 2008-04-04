@@ -1286,10 +1286,13 @@ QualType Sema::InvalidOperands(SourceLocation loc, Expr *&lex, Expr *&rex) {
 
 inline QualType Sema::CheckVectorOperands(SourceLocation loc, Expr *&lex, 
                                                               Expr *&rex) {
-  QualType lhsType = lex->getType(), rhsType = rex->getType();
+  // For conversion purposes, we ignore any qualifiers. 
+  // For example, "const float" and "float" are equivalent.
+  QualType lhsType = lex->getType().getCanonicalType().getUnqualifiedType();
+  QualType rhsType = rex->getType().getCanonicalType().getUnqualifiedType();
   
   // make sure the vector types are identical. 
-  if (lhsType.getCanonicalType() == rhsType.getCanonicalType())
+  if (lhsType == rhsType)
     return lhsType;
 
   // if the lhs is an ocu vector and the rhs is a scalar of the same type,
