@@ -615,20 +615,24 @@ public:
                        const char *Name = "") {
     return CreateCast(Instruction::BitCast, V, DestTy, Name);
   }
-  
+
   Value *CreateCast(Instruction::CastOps Op, Value *V, const Type *DestTy,
                     const char *Name = "") {
+    if (V->getType() == DestTy)
+      return V;
     if (Constant *VC = dyn_cast<Constant>(V))
       return ConstantExpr::getCast(Op, VC, DestTy);
     return LLVMBuilder::CreateCast(Op, V, DestTy, Name);
   }
   Value *CreateIntCast(Value *V, const Type *DestTy, bool isSigned,
                        const char *Name = "") {
+    if (V->getType() == DestTy)
+      return V;
     if (Constant *VC = dyn_cast<Constant>(V))
       return ConstantExpr::getIntegerCast(VC, DestTy, isSigned);
     return LLVMBuilder::CreateIntCast(V, DestTy, isSigned, Name);
   }
-  
+
   //===--------------------------------------------------------------------===//
   // Instruction creation methods: Compare Instructions
   //===--------------------------------------------------------------------===//
