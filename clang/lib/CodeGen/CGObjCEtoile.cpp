@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <stdarg.h>
 #include "CGObjCRuntime.h"
 #include "llvm/Module.h"
 #include "llvm/Support/Compiler.h"
@@ -74,15 +73,21 @@ CGObjCEtoile::CGObjCEtoile(llvm::Module &M,
   PtrTy = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
  
   // Object type
-  llvm::OpaqueType *OpaqueObjTy = llvm::OpaqueType::get();
+  llvm::PATypeHolder OpaqueObjTy = llvm::OpaqueType::get();
   llvm::Type *OpaqueIdTy = llvm::PointerType::getUnqual(OpaqueObjTy);
-  IdTy = llvm::PointerType::getUnqual(llvm::StructType::get(OpaqueIdTy, NULL));
-  OpaqueObjTy->refineAbstractTypeTo(IdTy);
+  IdTy = llvm::StructType::get(OpaqueIdTy, NULL);
+  llvm::cast<llvm::OpaqueType>(OpaqueObjTy.get())->refineAbstractTypeTo(IdTy);
+  IdTy = llvm::cast<llvm::StructType>(OpaqueObjTy.get());
+  IdTy = llvm::PointerType::getUnqual(IdTy);
 
   // Call structure type.
-  llvm::OpaqueType *OpaqueSlotTy = llvm::OpaqueType::get();
-  CallTy = llvm::StructType::get(llvm::PointerType::getUnqual(OpaqueSlotTy),
-                                 SelectorTy, IdTy, NULL);
+  llvm::PATypeHolder OpaqueSlotTy = llvm::OpaqueType::get();
+  CallTy = llvm::StructType::get(
+      llvm::PointerType::getUnqual(OpaqueSlotTy),
+      SelectorTy,
+      IdTy,
+      NULL);
+  //CallTy = llvm::PointerType::getUnqual(CallTy);
 
   // IMP type
   std::vector<const llvm::Type*> IMPArgs;
@@ -91,10 +96,16 @@ CGObjCEtoile::CGObjCEtoile(llvm::Module &M,
   IMPTy = llvm::FunctionType::get(IdTy, IMPArgs, true);
 
   // Slot type
-  SlotTy = llvm::StructType::get(IntTy, IMPTy, PtrToInt8Ty, PtrToInt8Ty,
-                                 llvm::Type::Int32Ty, NULL);
-  OpaqueSlotTy->refineAbstractTypeTo(SlotTy);
-  SlotTy = llvm::PointerType::getUnqual(SlotTy);
+  SlotTy = llvm::StructType::get(IntTy,
+      IMPTy,
+      PtrToInt8Ty,
+      PtrToInt8Ty,
+      llvm::Type::Int32Ty,
+      NULL);
+  llvm::cast<llvm::OpaqueType>(
+      OpaqueSlotTy.get())->refineAbstractTypeTo(SlotTy);
+  SlotTy = llvm::PointerType::getUnqual(
+      llvm::cast<llvm::StructType>(OpaqueSlotTy.get()));
 
   // Lookup function type
   std::vector<const llvm::Type*> LookupFunctionArgs;
@@ -102,12 +113,13 @@ CGObjCEtoile::CGObjCEtoile(llvm::Module &M,
   LookupFunctionArgs.push_back(IdTy);
   LookupFunctionArgs.push_back(SelectorTy);
   LookupFunctionArgs.push_back(IdTy);
-  LookupFunctionTy = llvm::FunctionType::get(SlotTy, LookupFunctionArgs, false);
+  LookupFunctionTy = 
+    llvm::FunctionType::get(SlotTy, LookupFunctionArgs, false);
   LookupFunctionTy = llvm::PointerType::getUnqual(LookupFunctionTy);
 
 }
 
-// Looks up the selector for the specified name / type pair.
+/// Looks up the selector for the specified name / type pair.
 llvm::Value *CGObjCEtoile::getSelector(llvm::LLVMFoldingBuilder &Builder,
     llvm::Value *SelName,
     llvm::Value *SelTypes)
@@ -117,20 +129,28 @@ llvm::Value *CGObjCEtoile::getSelector(llvm::LLVMFoldingBuilder &Builder,
     SelTypes = llvm::ConstantPointerNull::get(PtrToInt8Ty);
   }
   llvm::Constant *SelFunction = 
-    TheModule.getOrInsertFunction("lookup_typed_selector", SelectorTy,
-                                  PtrToInt8Ty, PtrToInt8Ty, NULL);
+    TheModule.getOrInsertFunction("lookup_typed_selector",
+        SelectorTy,
+        PtrToInt8Ty,
+        PtrToInt8Ty,
+        NULL);
   llvm::SmallVector<llvm::Value*, 2> Args;
   Args.push_back(SelName);
   Args.push_back(SelTypes);
   return Builder.CreateCall(SelFunction, Args.begin(), Args.end());
 }
 
-#define SET(structure, index, value) do {\
-    llvm::Value *element_ptr = Builder.CreateStructGEP(structure, index);\
-    Builder.CreateStore(value, element_ptr);} while(0)
+static void SetField(llvm::LLVMFoldingBuilder &Builder,
+                     llvm::Value *Structure, 
+                     unsigned Index, 
+                     llvm::Value *Value) {
+    llvm::Value *element_ptr = Builder.CreateStructGEP(Structure, Index);
+    Builder.CreateStore(Value, element_ptr);
+}
 // Generate code for a message send expression on the Etoile runtime.
 // BIG FAT WARNING: Much of this code will need factoring out later.
-llvm::Value *CGObjCEtoile::generateMessageSend(llvm::LLVMFoldingBuilder &Builder,
+llvm::Value *CGObjCEtoile::generateMessageSend(
+                                            llvm::LLVMFoldingBuilder &Builder,
                                             const llvm::Type *ReturnTy,
                                             llvm::Value *Sender,
                                             llvm::Value *Receiver,
@@ -172,9 +192,9 @@ llvm::Value *CGObjCEtoile::generateMessageSend(llvm::LLVMFoldingBuilder &Builder
   
   // Create the call structure
   llvm::Value *Call = Builder.CreateAlloca(CallTy);
-  SET(Call, 0, Slot);
-  SET(Call, 1, cmd);
-  SET(Call, 2, Sender);
+  SetField(Builder, Call, 0, Slot);
+  SetField(Builder, Call, 1, cmd);
+  SetField(Builder, Call, 2, Sender);
 
   // Get the IMP from the slot and call it
   // TODO: Property load / store optimisations
@@ -194,6 +214,8 @@ llvm::Value *CGObjCEtoile::generateMessageSend(llvm::LLVMFoldingBuilder &Builder
   return Builder.CreateCall(IMP, Args.begin(), Args.end());
 }
 
+/// Generates an LLVM Function object corresponding to the Objective-C method,
+/// including the implicit arguments.
 llvm::Function *CGObjCEtoile::MethodPreamble(
                                          const llvm::Type *ReturnTy,
                                          const llvm::Type *SelfTy,
@@ -207,7 +229,8 @@ llvm::Function *CGObjCEtoile::MethodPreamble(
   for (unsigned i=0; i<ArgC ; i++) {
     Args.push_back(ArgTy[i]);
   }
-  llvm::FunctionType *MethodTy = llvm::FunctionType::get(ReturnTy, Args, isVarArg);
+  llvm::FunctionType *MethodTy = 
+    llvm::FunctionType::get(ReturnTy, Args, isVarArg);
   llvm::Function *Method = new llvm::Function(MethodTy,
       llvm::GlobalValue::InternalLinkage,
       ".objc.method",
