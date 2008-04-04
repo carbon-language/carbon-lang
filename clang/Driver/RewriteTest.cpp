@@ -678,9 +678,8 @@ void RewriteTest::RewriteObjCMethodDecl(ObjCMethodDecl *OMD,
     NameStr += CID->getName();
     NameStr += "_";
   }
-  // Append selector names, replacing ':' with '_'
-  const char *selName = OMD->getSelector().getName().c_str();
-  if (!strchr(selName, ':'))
+  // Append selector names, replacing ':' with '_' 
+  if (OMD->getSelector().getName().find(':') == std::string::npos)
     NameStr +=  OMD->getSelector().getName();
   else {
     std::string selString = OMD->getSelector().getName();
