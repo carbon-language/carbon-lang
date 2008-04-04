@@ -293,6 +293,7 @@ public:
   /// isComplexType() does *not* include complex integers (a GCC extension).
   /// isComplexIntegerType() can be used to test for complex integers.
   bool isComplexType() const;      // C99 6.2.5p11 (complex)
+  bool isAnyComplexType() const;   // C99 6.2.5p11 (complex) + Complex Int.
   bool isFloatingType() const;     // C99 6.2.5p11 (real floating + complex)
   bool isRealType() const;         // C99 6.2.5p17 (real floating + integer)
   bool isArithmeticType() const;   // C99 6.2.5p18 (integer + floating)
@@ -1169,6 +1170,9 @@ inline bool Type::isArrayType() const {
 }
 inline bool Type::isRecordType() const {
   return isa<RecordType>(CanonicalType.getUnqualifiedType());
+}
+inline bool Type::isAnyComplexType() const {
+  return isa<ComplexType>(CanonicalType);
 }
 inline bool Type::isVectorType() const {
   return isa<VectorType>(CanonicalType.getUnqualifiedType());
