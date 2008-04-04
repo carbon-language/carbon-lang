@@ -469,12 +469,13 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
   }
   case X86::BI__builtin_ia32_movss:
     return EmitShuffleVector(Ops[0], Ops[1], 4, 1, 2, 3, "movss");
-  case X86::BI__builtin_ia32_shufps:
+  case X86::BI__builtin_ia32_shufps: {
     unsigned i = cast<ConstantInt>(Ops[2])->getZExtValue();
     return EmitShuffleVector(Ops[0], Ops[1], 
                              i & 0x3, (i & 0xc) >> 2, 
                              ((i & 0x30) >> 4) + 4, 
                              ((i & 0x60) >> 6) + 4, "shufps");
+  }
   case X86::BI__builtin_ia32_punpcklbw128:
     return EmitShuffleVector(Ops[0], Ops[1], 0, 16, 1, 17, 2, 18, 3, 19,
                                              4, 20, 5, 21, 6, 22, 7, 23,
