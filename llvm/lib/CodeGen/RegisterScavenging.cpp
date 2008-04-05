@@ -19,9 +19,11 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/STLExtras.h"
 using namespace llvm;
 
@@ -76,6 +78,7 @@ void RegScavenger::enterBasicBlock(MachineBasicBlock *mbb) {
   const TargetMachine &TM = MF.getTarget();
   TII = TM.getInstrInfo();
   TRI = TM.getRegisterInfo();
+  MRI = &MF.getRegInfo();
 
   assert((NumPhysRegs == 0 || NumPhysRegs == TRI->getNumRegs()) &&
          "Target changed?");
@@ -119,12 +122,46 @@ void RegScavenger::restoreScavengedReg() {
     return;
 
   TII->loadRegFromStackSlot(*MBB, MBBI, ScavengedReg,
-                                ScavengingFrameIndex, ScavengedRC);
+                            ScavengingFrameIndex, ScavengedRC);
   MachineBasicBlock::iterator II = prior(MBBI);
   TRI->eliminateFrameIndex(II, 0, this);
   setUsed(ScavengedReg);
   ScavengedReg = 0;
   ScavengedRC = NULL;
+}
+
+/// isLiveInButUnusedBefore - Return true if register is livein the MBB not
+/// not used before it reaches the MI that defines register.
+static bool isLiveInButUnusedBefore(unsigned Reg, MachineInstr *MI,
+                                    MachineBasicBlock *MBB,
+                                    const TargetRegisterInfo *TRI,
+                                    MachineRegisterInfo* MRI) {
+  // First check if register is livein.
+  bool isLiveIn = false;
+  for (MachineBasicBlock::const_livein_iterator I = MBB->livein_begin(),
+         E = MBB->livein_end(); I != E; ++I)
+    if (Reg == *I || TRI->isSuperRegister(Reg, *I)) {
+      isLiveIn = true;
+      break;
+    }
+  if (!isLiveIn)
+    return false;
+
+  // Is there any use of it before the specified MI?
+  SmallPtrSet<MachineInstr*, 4> UsesInMBB;
+  for (MachineRegisterInfo::use_iterator UI = MRI->use_begin(Reg),
+         UE = MRI->use_end(); UI != UE; ++UI) {
+    MachineInstr *UseMI = &*UI;
+    if (UseMI->getParent() == MBB)
+      UsesInMBB.insert(UseMI);
+  }
+  if (UsesInMBB.empty())
+    return true;
+
+  for (MachineBasicBlock::iterator I = MBB->begin(), E = MI; I != E; ++I)
+    if (UsesInMBB.count(&*I))
+      return false;
+  return true;
 }
 
 void RegScavenger::forward() {
@@ -203,7 +240,10 @@ void RegScavenger::forward() {
     if (RedefinesSuperRegPart(MI, MO, TRI))
       continue;
 
-    assert((isUnused(Reg) || isReserved(Reg)) &&
+    // Implicit def is allowed to "re-define" any register.
+    assert((isReserved(Reg) || isUnused(Reg) ||
+            MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF ||
+            isLiveInButUnusedBefore(Reg, MI, MBB, TRI, MRI)) &&
            "Re-defining a live register!");
     setUsed(Reg);
   }
