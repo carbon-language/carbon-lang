@@ -6,7 +6,7 @@ void f0();
 void f1(int [*]);
 void f2(int [const *]);
 void f3(int [volatile const*]);
-int f4(*XX)(void); /* expected-error {{cannot return}} expected-warning {{type specifier required}} */
+int f4(*XX)(void); /* expected-error {{cannot return}} expected-warning {{type specifier missing, defaults to 'int'}} */
 
 char ((((*X))));
 

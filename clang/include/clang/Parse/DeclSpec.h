@@ -664,7 +664,7 @@ public:
   AttributeList *getAttributes() const { return AttrList; }
   
   void setInvalidType(bool flag) { InvalidType = flag; }
-  bool getInvalidType() { return InvalidType; }
+  bool getInvalidType() const { return InvalidType; }
 };
 
 } // end namespace clang

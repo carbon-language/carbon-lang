@@ -400,6 +400,10 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK) {
     break;
   }
   
+  if (LangStd == lang_c89 || LangStd == lang_c94 || LangStd == lang_gnu89)
+    Options.ImplicitInt = 1;
+  else
+    Options.ImplicitInt = 0;
   Options.Trigraphs = 1; // -trigraphs or -ansi
   Options.DollarIdents = 1;  // FIXME: Really a target property.
   Options.PascalStrings = PascalStrings;

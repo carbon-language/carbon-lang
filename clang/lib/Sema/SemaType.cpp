@@ -27,7 +27,7 @@ QualType Sema::ConvertDeclSpecToType(DeclSpec &DS) {
   QualType Result;
   
   switch (DS.getTypeSpecType()) {
-  default: return QualType(); // FIXME: Handle unimp cases!
+  default: assert(0 && "Unknown TypeSpecType!");
   case DeclSpec::TST_void:
     Result = Context.VoidTy;
     break;
@@ -42,7 +42,29 @@ QualType Sema::ConvertDeclSpecToType(DeclSpec &DS) {
       Result = Context.UnsignedCharTy;
     }
     break;
-  case DeclSpec::TST_unspecified:  // Unspecific typespec defaults to int.
+  case DeclSpec::TST_unspecified:
+    // Unspecified typespec defaults to int in C90.  However, the C90 grammar
+    // [C90 6.5] only allows a decl-spec if there was *some* type-specifier,
+    // type-qualifier, or storage-class-specifier.  If not, emit an extwarn.
+    // Note that the one exception to this is function definitions, which are
+    // allowed to be completely missing a declspec.  This is handled in the
+    // parser already though by it pretending to have seen an 'int' in this
+    // case.
+    if (getLangOptions().ImplicitInt) {
+      if ((DS.getParsedSpecifiers() & (DeclSpec::PQ_StorageClassSpecifier |
+                                       DeclSpec::PQ_TypeSpecifier |
+                                       DeclSpec::PQ_TypeQualifier)) == 0)
+        Diag(DS.getSourceRange().getBegin(), diag::ext_missing_declspec);
+    } else {
+      // C99 and C++ require a type specifier.  For example, C99 6.7.2p2 says:
+      // "At least one type specifier shall be given in the declaration
+      // specifiers in each declaration, and in the specifier-qualifier list in
+      // each struct declaration and type name."
+      if (!DS.hasTypeSpecifier())
+        Diag(DS.getSourceRange().getBegin(), diag::ext_missing_type_specifier);
+    }
+      
+    // FALL THROUGH.  
   case DeclSpec::TST_int: {
     if (DS.getTypeSpecSign() != DeclSpec::TSS_unsigned) {
       switch (DS.getTypeSpecWidth()) {

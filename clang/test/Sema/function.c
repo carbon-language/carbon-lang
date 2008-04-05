@@ -18,7 +18,7 @@ void h (const char *fmt, ...) {} //expected-error{{conflicting types for 'h'}}
 
 // PR1965
 int t5(b);          // expected-error {{parameter list without types}}
-int t6(int x, g);   // expected-warning {{type specifier required for parameter 'g'}}
+int t6(int x, g);   // expected-warning {{type specifier missing, defaults to 'int'}}
 
 int t7(, );       // expected-error {{expected parameter declarator}} expected-error {{expected parameter declarator}}
 int t8(, int a);  // expected-error {{expected parameter declarator}}

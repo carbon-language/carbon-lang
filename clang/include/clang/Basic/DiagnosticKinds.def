@@ -257,6 +257,11 @@ DIAG(ext_top_level_semi, EXTENSION,
      "ISO C does not allow an extra ';' outside of a function")
 DIAG(ext_extra_struct_semi, EXTENSION,
      "ISO C does not allow an extra ';' inside a struct or union")
+DIAG(ext_missing_declspec, EXTENSION,
+     "declaration specifier missing, defaulting to 'int'")
+DIAG(ext_missing_type_specifier, EXTENSION,
+     "type specifier missing, defaults to 'int'")
+
 DIAG(ext_duplicate_declspec, EXTENSION,
      "duplicate '%0' declaration specifier")
 DIAG(ext_plain_complex, EXTENSION,
@@ -539,8 +544,6 @@ DIAG(err_invalid_storage_class_in_func_decl, ERROR,
      "invalid storage class specifier in function declarator")
 DIAG(ext_anon_param_requires_type_specifier, EXTENSION,
      "type specifier required for unnamed parameter, defaults to int")
-DIAG(ext_param_requires_type_specifier, EXTENSION,
-     "type specifier required for parameter '%0', defaults to int")
 DIAG(err_missing_param, ERROR,
      "expected parameter declarator")
 

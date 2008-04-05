@@ -36,6 +36,14 @@ int *__restrict;  /* expected-error {{expected identifier}} */
 
 
 /* Implicit int, always ok */
-foo() {}
+test6() {}
+
+/* PR2012 */
+test7;  /* expected-warning {{declaration specifier missing, defaulting to 'int'}} */
+
+void test8(int, x);  /* expected-warning {{declaration specifier missing, defaulting to 'int'}} */
+
+typedef int sometype;
+int a(sometype, y) {return 0;}  /* expected-warning {{declaration specifier missing, defaulting to 'int'}} */
 
 

@@ -1340,7 +1340,6 @@ void Parser::ParseParenDeclarator(Declarator &D) {
         ParmDecl.AddAttributes(ParseAttributes());
       
       // Verify C99 6.7.5.3p2: The only SCS allowed is 'register'.
-      // NOTE: we could trivially allow 'int foo(auto int X)' if we wanted.
       if (DS.getStorageClassSpec() != DeclSpec::SCS_unspecified &&
           DS.getStorageClassSpec() != DeclSpec::SCS_register) {
         Diag(DS.getStorageClassSpecLoc(),
@@ -1353,11 +1352,6 @@ void Parser::ParseParenDeclarator(Declarator &D) {
         DS.ClearStorageClassSpecs();
       }
       
-      // Inform the actions module about the parameter declarator, so it gets
-      // added to the current scope.
-      Action::TypeResult ParamTy =
-        Actions.ActOnParamDeclaratorType(CurScope, ParmDecl);
-        
       // Remember this parsed parameter in ParamInfo.
       IdentifierInfo *ParmII = ParmDecl.getIdentifier();
       
@@ -1366,28 +1360,28 @@ void Parser::ParseParenDeclarator(Declarator &D) {
         Diag(ParmDecl.getIdentifierLoc(), diag::err_param_redefinition,
              ParmII->getName());
         ParmII = 0;
+        ParmDecl.setInvalidType(true);
       }
 
       // If no parameter was specified, verify that *something* was specified,
       // otherwise we have a missing type and identifier.
       if (DS.getParsedSpecifiers() == DeclSpec::PQ_None && 
           ParmDecl.getIdentifier() == 0 && ParmDecl.getNumTypeObjects() == 0) {
+        // Completely missing, emit error.
         Diag(DSStart, diag::err_missing_param);
-      } else if (!DS.hasTypeSpecifier() &&
-                 (getLang().C99 || getLang().CPlusPlus)) {
-        // Otherwise, if something was specified but a type specifier wasn't,
-        // (e.g. "x" or "restrict x" or "restrict"), this is a use of implicit
-        // int.  This is valid in C90, but not in C99 or C++.
-        if (ParmII)
-          Diag(ParmDecl.getIdentifierLoc(),
-               diag::ext_param_requires_type_specifier, ParmII->getName());
-        else
-          Diag(DSStart, diag::ext_anon_param_requires_type_specifier);
-      }
+      } else {
+        // Otherwise, we have something.  Add it and let semantic analysis try
+        // to grok it and add the result to the ParamInfo we are building.
         
-      ParamInfo.push_back(DeclaratorChunk::ParamInfo(ParmII, 
-        ParmDecl.getIdentifierLoc(), ParamTy.Val, ParmDecl.getInvalidType(),
-        ParmDecl.getDeclSpec().TakeAttributes()));
+        // Inform the actions module about the parameter declarator, so it gets
+        // added to the current scope.
+        Action::TypeResult ParamTy =
+          Actions.ActOnParamDeclaratorType(CurScope, ParmDecl);
+        
+        ParamInfo.push_back(DeclaratorChunk::ParamInfo(ParmII, 
+            ParmDecl.getIdentifierLoc(), ParamTy.Val, ParmDecl.getInvalidType(),
+            ParmDecl.getDeclSpec().TakeAttributes()));
+      }
 
       // If the next token is a comma, consume it and keep reading arguments.
       if (Tok.isNot(tok::comma)) break;

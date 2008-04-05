@@ -22,8 +22,9 @@ namespace clang {
 /// enabled, which controls the dialect of C that is accepted.
 struct LangOptions {
   unsigned Trigraphs         : 1;  // Trigraphs in source files.
-  unsigned BCPLComment       : 1;  // BCPL-style // comments.
+  unsigned BCPLComment       : 1;  // BCPL-style '//' comments.
   unsigned DollarIdents      : 1;  // '$' allowed in identifiers.
+  unsigned ImplicitInt       : 1;  // C89 implicit 'int'.
   unsigned Digraphs          : 1;  // C94, C99 and C++
   unsigned HexFloats         : 1;  // C99 Hexadecimal float constants.
   unsigned C99               : 1;  // C99 Support
@@ -42,14 +43,13 @@ struct LangOptions {
   unsigned LaxVectorConversions : 1;
     
   LangOptions() {
-    Trigraphs = BCPLComment = DollarIdents = Digraphs = HexFloats = 0;
+    Trigraphs = BCPLComment = DollarIdents = ImplicitInt = Digraphs = 0;
+    HexFloats = 0;
     ObjC1 = ObjC2 = 0;
     C99 = Microsoft = CPlusPlus = CPlusPlus0x = NoExtensions = 0;
     CXXOperatorNames = PascalStrings = Boolean = WritableStrings = 0;
     LaxVectorConversions = 0;
   }
-  
-  bool isC90() const { return !C99 && !CPlusPlus; }
   
   /// Emit - Emit this LangOptions object to bitcode.
   void Emit(llvm::Serializer& S) const;
