@@ -1,6 +1,6 @@
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep 170
 
-define i16 @f(<4 x float>* %tmp116117.i1061.i) {
+define i16 @f(<4 x float>* %tmp116117.i1061.i) nounwind {
 entry:
 	alloca [4 x <4 x float>]		; <[4 x <4 x float>]*>:0 [#uses=167]
 	alloca [4 x <4 x float>]		; <[4 x <4 x float>]*>:1 [#uses=170]

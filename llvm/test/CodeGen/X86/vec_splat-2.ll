@@ -1,6 +1,6 @@
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep pshufd | count 1
 
-define void @test(<2 x i64>* %P, i8 %x) {
+define void @test(<2 x i64>* %P, i8 %x) nounwind {
 	%tmp = insertelement <16 x i8> zeroinitializer, i8 %x, i32 0		; <<16 x i8>> [#uses=1]
 	%tmp36 = insertelement <16 x i8> %tmp, i8 %x, i32 1		; <<16 x i8>> [#uses=1]
 	%tmp38 = insertelement <16 x i8> %tmp36, i8 %x, i32 2		; <<16 x i8>> [#uses=1]

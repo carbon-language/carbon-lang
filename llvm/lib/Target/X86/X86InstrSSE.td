@@ -2803,13 +2803,7 @@ def : Pat<(vector_shuffle (v2i64 VR128:$src), (undef), UNPCKH_shuffle_mask:$sm),
           (PUNPCKHQDQrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
 }
 
-// Splat v4f32
-def : Pat<(vector_shuffle (v4f32 VR128:$src), (undef), SSE_splat_mask:$sm),
-          (SHUFPSrri VR128:$src, VR128:$src, SSE_splat_mask:$sm)>,
-      Requires<[HasSSE1]>;
-
 // Special unary SHUFPSrri case.
-// FIXME: when we want non two-address code, then we should use PSHUFD?
 def : Pat<(v4f32 (vector_shuffle VR128:$src1, (undef),
            SHUFP_unary_shuffle_mask:$sm)),
           (SHUFPSrri VR128:$src1, VR128:$src1, SHUFP_unary_shuffle_mask:$sm)>,
@@ -2820,7 +2814,7 @@ def : Pat<(v2f64 (vector_shuffle VR128:$src1, (undef),
           (SHUFPDrri VR128:$src1, VR128:$src1, SHUFP_unary_shuffle_mask:$sm)>,
       Requires<[HasSSE2]>;
 // Unary v4f32 shuffle with PSHUF* in order to fold a load.
-def : Pat<(vector_shuffle (memopv4f32 addr:$src1), (undef),
+def : Pat<(vector_shuffle (bc_v4i32 (memopv4f32 addr:$src1)), (undef),
            SHUFP_unary_shuffle_mask:$sm),
           (PSHUFDmi addr:$src1, SHUFP_unary_shuffle_mask:$sm)>,
       Requires<[HasSSE2]>;

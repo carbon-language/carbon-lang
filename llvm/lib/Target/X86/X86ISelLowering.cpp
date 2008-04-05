@@ -2782,23 +2782,28 @@ static SDOperand getSwapEltZeroMask(unsigned NumElems, unsigned DestElt,
   return DAG.getNode(ISD::BUILD_VECTOR, MaskVT, &MaskVec[0], MaskVec.size());
 }
 
-/// PromoteSplat - Promote a splat of v8i16 or v16i8 to v4i32.
-///
-static SDOperand PromoteSplat(SDOperand Op, SelectionDAG &DAG) {
+/// PromoteSplat - Promote a splat of v4f32, v8i16 or v16i8 to v4i32.
+static SDOperand PromoteSplat(SDOperand Op, SelectionDAG &DAG, bool HasSSE2) {
+  MVT::ValueType PVT = HasSSE2 ? MVT::v4i32 : MVT::v4f32;
+  MVT::ValueType VT = Op.getValueType();
+  if (PVT == VT)
+    return Op;
   SDOperand V1 = Op.getOperand(0);
   SDOperand Mask = Op.getOperand(2);
-  MVT::ValueType VT = Op.getValueType();
   unsigned NumElems = Mask.getNumOperands();
-  Mask = getUnpacklMask(NumElems, DAG);
-  while (NumElems != 4) {
-    V1 = DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V1, Mask);
-    NumElems >>= 1;
+  // Special handling of v4f32 -> v4i32.
+  if (VT != MVT::v4f32) {
+    Mask = getUnpacklMask(NumElems, DAG);
+    while (NumElems > 4) {
+      V1 = DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V1, Mask);
+      NumElems >>= 1;
+    }
+    Mask = getZeroVector(MVT::v4i32, DAG);
   }
-  V1 = DAG.getNode(ISD::BIT_CONVERT, MVT::v4i32, V1);
 
-  Mask = getZeroVector(MVT::v4i32, DAG);
-  SDOperand Shuffle = DAG.getNode(ISD::VECTOR_SHUFFLE, MVT::v4i32, V1,
-                                  DAG.getNode(ISD::UNDEF, MVT::v4i32), Mask);
+  V1 = DAG.getNode(ISD::BIT_CONVERT, PVT, V1);
+  SDOperand Shuffle = DAG.getNode(ISD::VECTOR_SHUFFLE, PVT, V1,
+                                  DAG.getNode(ISD::UNDEF, PVT), Mask);
   return DAG.getNode(ISD::BIT_CONVERT, VT, Shuffle);
 }
 
@@ -3426,6 +3431,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
   SDOperand PermMask = Op.getOperand(2);
   MVT::ValueType VT = Op.getValueType();
   unsigned NumElems = PermMask.getNumOperands();
+  bool isMMX = MVT::getSizeInBits(VT) == 64;
   bool V1IsUndef = V1.getOpcode() == ISD::UNDEF;
   bool V2IsUndef = V2.getOpcode() == ISD::UNDEF;
   bool V1IsSplat = false;
@@ -3443,9 +3449,9 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
     return V2;
 
   if (isSplatMask(PermMask.Val)) {
-    if (NumElems <= 4) return Op;
-    // Promote it to a v4i32 splat.
-    return PromoteSplat(Op, DAG);
+    if (isMMX || NumElems < 4) return Op;
+    // Promote it to a v4{if}32 splat.
+    return PromoteSplat(Op, DAG, Subtarget->hasSSE2());
   }
 
   // If the shuffle can be profitably rewritten as a narrower shuffle, then
@@ -3556,35 +3562,39 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
       return Op;
   }
 
-  // If VT is integer, try PSHUF* first, then SHUFP*.
-  if (MVT::isInteger(VT)) {
-    // MMX doesn't have PSHUFD; it does have PSHUFW. While it's theoretically
-    // possible to shuffle a v2i32 using PSHUFW, that's not yet implemented.
-    if (((MVT::getSizeInBits(VT) != 64 || NumElems == 4) &&
-         X86::isPSHUFDMask(PermMask.Val)) ||
-        X86::isPSHUFHWMask(PermMask.Val) ||
-        X86::isPSHUFLWMask(PermMask.Val)) {
-      if (V2.getOpcode() != ISD::UNDEF)
-        return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1,
-                           DAG.getNode(ISD::UNDEF, V1.getValueType()),PermMask);
+  // Try PSHUF* first, then SHUFP*.
+  // MMX doesn't have PSHUFD but it does have PSHUFW. While it's theoretically
+  // possible to shuffle a v2i32 using PSHUFW, that's not yet implemented.
+  if (isMMX && NumElems == 4 && X86::isPSHUFDMask(PermMask.Val)) {
+    if (V2.getOpcode() != ISD::UNDEF)
+      return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1,
+                         DAG.getNode(ISD::UNDEF, VT), PermMask);
+    return Op;
+  }
+
+  if (!isMMX) {
+    if (Subtarget->hasSSE2() &&
+        (X86::isPSHUFDMask(PermMask.Val) ||
+         X86::isPSHUFHWMask(PermMask.Val) ||
+         X86::isPSHUFLWMask(PermMask.Val))) {
+      MVT::ValueType RVT = VT;
+      if (VT == MVT::v4f32) {
+        RVT = MVT::v4i32;
+        Op = DAG.getNode(ISD::VECTOR_SHUFFLE, RVT,
+                         DAG.getNode(ISD::BIT_CONVERT, RVT, V1),
+                         DAG.getNode(ISD::UNDEF, RVT), PermMask);
+      } else if (V2.getOpcode() != ISD::UNDEF)
+        Op = DAG.getNode(ISD::VECTOR_SHUFFLE, RVT, V1,
+                         DAG.getNode(ISD::UNDEF, RVT), PermMask);
+      if (RVT != VT)
+        Op = DAG.getNode(ISD::BIT_CONVERT, VT, Op);
       return Op;
     }
 
-    if (X86::isSHUFPMask(PermMask.Val) &&
-        MVT::getSizeInBits(VT) != 64)    // Don't do this for MMX.
+    // Binary or unary shufps.
+    if (X86::isSHUFPMask(PermMask.Val) ||
+        (V2.getOpcode() == ISD::UNDEF && X86::isPSHUFDMask(PermMask.Val)))
       return Op;
-  } else {
-    // Floating point cases in the other order.
-    if (X86::isSHUFPMask(PermMask.Val))
-      return Op;
-    if (X86::isPSHUFDMask(PermMask.Val) ||
-        X86::isPSHUFHWMask(PermMask.Val) ||
-        X86::isPSHUFLWMask(PermMask.Val)) {
-      if (V2.getOpcode() != ISD::UNDEF)
-        return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1,
-                           DAG.getNode(ISD::UNDEF, V1.getValueType()),PermMask);
-      return Op;
-    }
   }
 
   // Handle v8i16 specifically since SSE can do byte extraction and insertion.
@@ -3595,7 +3605,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
   }
 
   // Handle all 4 wide cases with a number of shuffles.
-  if (NumElems == 4 && MVT::getSizeInBits(VT) != 64) {
+  if (NumElems == 4 && !isMMX) {
     // Don't do this for MMX.
     MVT::ValueType MaskVT = PermMask.getValueType();
     MVT::ValueType MaskEVT = MVT::getVectorElementType(MaskVT);

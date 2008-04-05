@@ -3,7 +3,7 @@
 ; RUN: grep movupd  %t | count 1
 ; RUN: grep pshufhw %t | count 1
 
-define void @test_v4sf(<4 x float>* %P, float %X, float %Y) {
+define void @test_v4sf(<4 x float>* %P, float %X, float %Y) nounwind {
 	%tmp = insertelement <4 x float> zeroinitializer, float %X, i32 0		; <<4 x float>> [#uses=1]
 	%tmp2 = insertelement <4 x float> %tmp, float %X, i32 1		; <<4 x float>> [#uses=1]
 	%tmp4 = insertelement <4 x float> %tmp2, float %Y, i32 2		; <<4 x float>> [#uses=1]
@@ -12,14 +12,14 @@ define void @test_v4sf(<4 x float>* %P, float %X, float %Y) {
 	ret void
 }
 
-define void @test_v2sd(<2 x double>* %P, double %X, double %Y) {
+define void @test_v2sd(<2 x double>* %P, double %X, double %Y) nounwind {
 	%tmp = insertelement <2 x double> zeroinitializer, double %X, i32 0		; <<2 x double>> [#uses=1]
 	%tmp2 = insertelement <2 x double> %tmp, double %Y, i32 1		; <<2 x double>> [#uses=1]
 	store <2 x double> %tmp2, <2 x double>* %P
 	ret void
 }
 
-define void @test_v8i16(<2 x i64>* %res, <2 x i64>* %A) {
+define void @test_v8i16(<2 x i64>* %res, <2 x i64>* %A) nounwind {
 	%tmp = load <2 x i64>* %A		; <<2 x i64>> [#uses=1]
 	%tmp.upgrd.1 = bitcast <2 x i64> %tmp to <8 x i16>		; <<8 x i16>> [#uses=8]
 	%tmp.upgrd.2 = extractelement <8 x i16> %tmp.upgrd.1, i32 0		; <i16> [#uses=1]

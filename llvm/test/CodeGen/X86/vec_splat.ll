@@ -1,7 +1,7 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep shufps               
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep pshufd
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse3 | grep movddup
 
-define void @test_v4sf(<4 x float>* %P, <4 x float>* %Q, float %X) {
+define void @test_v4sf(<4 x float>* %P, <4 x float>* %Q, float %X) nounwind {
 	%tmp = insertelement <4 x float> zeroinitializer, float %X, i32 0		; <<4 x float>> [#uses=1]
 	%tmp2 = insertelement <4 x float> %tmp, float %X, i32 1		; <<4 x float>> [#uses=1]
 	%tmp4 = insertelement <4 x float> %tmp2, float %X, i32 2		; <<4 x float>> [#uses=1]
@@ -12,7 +12,7 @@ define void @test_v4sf(<4 x float>* %P, <4 x float>* %Q, float %X) {
 	ret void
 }
 
-define void @test_v2sd(<2 x double>* %P, <2 x double>* %Q, double %X) {
+define void @test_v2sd(<2 x double>* %P, <2 x double>* %Q, double %X) nounwind {
 	%tmp = insertelement <2 x double> zeroinitializer, double %X, i32 0		; <<2 x double>> [#uses=1]
 	%tmp2 = insertelement <2 x double> %tmp, double %X, i32 1		; <<2 x double>> [#uses=1]
 	%tmp4 = load <2 x double>* %Q		; <<2 x double>> [#uses=1]
