@@ -49,6 +49,8 @@ struct LangOptions {
     LaxVectorConversions = 0;
   }
   
+  bool isC90() const { return !C99 && !CPlusPlus; }
+  
   /// Emit - Emit this LangOptions object to bitcode.
   void Emit(llvm::Serializer& S) const;
   

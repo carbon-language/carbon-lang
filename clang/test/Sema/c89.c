@@ -33,3 +33,9 @@ void test5(register);
 /* PR2041 */
 int *restrict;
 int *__restrict;  /* expected-error {{expected identifier}} */
+
+
+/* Implicit int, always ok */
+foo() {}
+
+

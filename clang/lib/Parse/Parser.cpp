@@ -356,8 +356,10 @@ Parser::DeclTy *Parser::ParseExternalDeclaration() {
 /// compound-statement in function-definition.
 ///
 ///       function-definition: [C99 6.9.1]
-///         declaration-specifiers[opt] declarator declaration-list[opt] 
-///                 compound-statement
+///         decl-specs      declarator declaration-list[opt] compound-statement
+/// [C90] function-definition: [C99 6.7.1] - implicit int result
+/// [C90]   decl-specs[opt] declarator declaration-list[opt] compound-statement 
+///
 ///       declaration: [C99 6.7]
 ///         declaration-specifiers init-declarator-list[opt] ';'
 /// [!C99]  init-declarator-list ';'                   [TODO: warn in c99 mode]
@@ -451,14 +453,25 @@ Parser::DeclTy *Parser::ParseDeclarationOrFunctionDefinition() {
 /// Declarator is well formed.  If this is a K&R-style function, read the
 /// parameters declaration-list, then start the compound-statement.
 ///
-///         declaration-specifiers[opt] declarator declaration-list[opt] 
-///                 compound-statement                           [TODO]
+///       function-definition: [C99 6.9.1]
+///         decl-specs      declarator declaration-list[opt] compound-statement
+/// [C90] function-definition: [C99 6.7.1] - implicit int result
+/// [C90]   decl-specs[opt] declarator declaration-list[opt] compound-statement 
 ///
 Parser::DeclTy *Parser::ParseFunctionDefinition(Declarator &D) {
   const DeclaratorChunk &FnTypeInfo = D.getTypeObject(0);
   assert(FnTypeInfo.Kind == DeclaratorChunk::Function &&
          "This isn't a function declarator!");
   const DeclaratorChunk::FunctionTypeInfo &FTI = FnTypeInfo.Fun;
+  
+  // If this is C90 and the declspecs were completely missing, fudge in an
+  // implicit int.  We do this here because this is the only place where
+  // declaration-specifiers are completely optional in the grammar.
+  if (getLang().isC90() && !D.getDeclSpec().getParsedSpecifiers() == 0) {
+    const char *PrevSpec;
+    D.getDeclSpec().SetTypeSpecType(DeclSpec::TST_int, D.getIdentifierLoc(),
+                                    PrevSpec);
+  }
   
   // If this declaration was formed with a K&R-style identifier list for the
   // arguments, parse declarations for all of the args next.
