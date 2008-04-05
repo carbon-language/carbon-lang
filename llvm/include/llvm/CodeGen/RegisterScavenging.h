@@ -22,6 +22,7 @@
 
 namespace llvm {
 
+class MachineRegisterInfo;
 class TargetRegisterInfo;
 class TargetInstrInfo;
 class TargetRegisterClass;
@@ -129,6 +130,7 @@ public:
 private:
   const TargetRegisterInfo *TRI;
   const TargetInstrInfo *TII;
+  MachineRegisterInfo* MRI;
 
   /// CalleeSavedrRegs - A bitvector of callee saved registers for the target.
   ///
