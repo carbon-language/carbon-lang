@@ -1403,52 +1403,43 @@ void Parser::ParseFunctionDeclaratorIdentifierList(SourceLocation LParenLoc,
   ParamInfo.push_back(DeclaratorChunk::ParamInfo(Tok.getIdentifierInfo(),
                                                  Tok.getLocation(), 0));
   
-  ConsumeToken();
-  bool ErrorEmitted = false;
+  ConsumeToken();  // eat the first identifier.
   
   while (Tok.is(tok::comma)) {
     // Eat the comma.
     ConsumeToken();
     
+    // If this isn't an identifier, report the error and skip until ')'.
     if (Tok.isNot(tok::identifier)) {
       Diag(Tok, diag::err_expected_ident);
-      ErrorEmitted = true;
-      break;
+      SkipUntil(tok::r_paren);
+      return;
     }
     
     IdentifierInfo *ParmII = Tok.getIdentifierInfo();
     
     // Verify that the argument identifier has not already been mentioned.
     if (!ParamsSoFar.insert(ParmII)) {
-      Diag(Tok.getLocation(), diag::err_param_redefinition,ParmII->getName());
-      ParmII = 0;
-    }
-    
-    // Remember this identifier in ParamInfo.
-    if (ParmII)
+      Diag(Tok.getLocation(), diag::err_param_redefinition, ParmII->getName());
+    } else {
+      // Remember this identifier in ParamInfo.
       ParamInfo.push_back(DeclaratorChunk::ParamInfo(ParmII,
                                                      Tok.getLocation(), 0));
+    }
     
     // Eat the identifier.
     ConsumeToken();
   }
   
-  // Remember that we parsed a function type, and remember the attributes.
-  if (!ErrorEmitted)
-    D.AddTypeInfo(DeclaratorChunk::getFunction(false, false,
-                                               &ParamInfo[0], ParamInfo.size(),
-                                               LParenLoc));
+  // Remember that we parsed a function type, and remember the attributes.  This
+  // function type is always a K&R style function type, which is not varargs and
+  // has no prototype.
+  D.AddTypeInfo(DeclaratorChunk::getFunction(/*proto*/false, /*varargs*/false,
+                                             &ParamInfo[0], ParamInfo.size(),
+                                             LParenLoc));
   
   // If we have the closing ')', eat it and we're done.
-  if (Tok.is(tok::r_paren)) {
-    ConsumeParen();
-  } else {
-    // If an error happened earlier parsing something else in the proto, don't
-    // issue another error.
-    if (!ErrorEmitted)
-      Diag(Tok, diag::err_expected_rparen);
-    SkipUntil(tok::r_paren);
-  }
+  MatchRHSPunctuation(tok::r_paren, LParenLoc);
 }
 
 /// [C90]   direct-declarator '[' constant-expression[opt] ']'
