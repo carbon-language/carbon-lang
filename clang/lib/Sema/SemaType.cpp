@@ -504,10 +504,29 @@ Sema::TypeResult Sema::ActOnTypeName(Scope *S, Declarator &D) {
   return T.getAsOpaquePtr();
 }
 
-// Called from Parser::ParseParenDeclarator().
+/// ActOnParamDeclaratorType - Called from Parser::ParseFunctionDeclarator()
+/// when analyzing function prototypes.
+///
+/// Note: parameters have identifiers, but we don't care about them here, we
+/// just want the type converted.
+///
 Sema::TypeResult Sema::ActOnParamDeclaratorType(Scope *S, Declarator &D) {
-  // Note: parameters have identifiers, but we don't care about them here, we
-  // just want the type converted.
+  DeclSpec &DS = D.getDeclSpec();
+  
+  // Verify C99 6.7.5.3p2: The only SCS allowed is 'register'.
+  if (DS.getStorageClassSpec() != DeclSpec::SCS_unspecified &&
+      DS.getStorageClassSpec() != DeclSpec::SCS_register) {
+    Diag(DS.getStorageClassSpecLoc(),
+         diag::err_invalid_storage_class_in_func_decl);
+    DS.ClearStorageClassSpecs();
+  }
+  if (DS.isThreadSpecified()) {
+    Diag(DS.getThreadSpecLoc(),
+         diag::err_invalid_storage_class_in_func_decl);
+    DS.ClearStorageClassSpecs();
+  }
+  
+  
   QualType T = GetTypeForDeclarator(D, S);
   
   assert(!T.isNull() && "GetTypeForDeclarator() returned null type");

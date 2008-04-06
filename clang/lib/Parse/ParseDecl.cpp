@@ -1304,19 +1304,6 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D) {
     if (Tok.is(tok::kw___attribute))
       ParmDecl.AddAttributes(ParseAttributes());
     
-    // Verify C99 6.7.5.3p2: The only SCS allowed is 'register'.
-    if (DS.getStorageClassSpec() != DeclSpec::SCS_unspecified &&
-        DS.getStorageClassSpec() != DeclSpec::SCS_register) {
-      Diag(DS.getStorageClassSpecLoc(),
-           diag::err_invalid_storage_class_in_func_decl);
-      DS.ClearStorageClassSpecs();
-    }
-    if (DS.isThreadSpecified()) {
-      Diag(DS.getThreadSpecLoc(),
-           diag::err_invalid_storage_class_in_func_decl);
-      DS.ClearStorageClassSpecs();
-    }
-    
     // Remember this parsed parameter in ParamInfo.
     IdentifierInfo *ParmII = ParmDecl.getIdentifier();
     
