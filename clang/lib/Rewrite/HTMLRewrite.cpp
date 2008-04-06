@@ -180,7 +180,7 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID) {
        << " body { font-family:Helvetica, sans-serif; font-size:10pt }\n"
        << " h1 { font-size:12pt }\n"
        << " .code { border-spacing:0px; width:100%; }\n"
-       << " .code { font-family: \"Andale Mono\", fixed; font-size:10pt }\n"
+       << " .code { font-family: \"Andale Mono\", monospace; font-size:10pt }\n"
        << " .code { line-height: 1.2em }\n"
        << " .num { width:2.5em; padding-right:2ex; background-color:#eeeeee }\n"
        << " .num { text-align:right; font-size: smaller }\n"
