@@ -303,9 +303,10 @@ public:
   /// See C99 6.7.5.3p7 and C99 6.3.2.1p3.
   QualType getArrayDecayedType(QualType T);
   
-  /// getMaxIntegerType - Returns the highest ranked integer type: 
-  /// C99 6.3.1.8p1.
-  QualType getMaxIntegerType(QualType LHS, QualType RHS);
+  /// getIntegerTypeOrder - Returns the highest ranked integer type: 
+  /// C99 6.3.1.8p1.  If LHS > RHS, return 1.  If LHS == RHS, return 0. If
+  /// LHS < RHS, return -1. 
+  int getIntegerTypeOrder(QualType LHS, QualType RHS);
   
   /// getFloatingTypeOrder - Compare the rank of the two specified floating
   /// point types, ignoring the domain of the type (i.e. 'double' ==

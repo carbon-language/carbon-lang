@@ -1050,9 +1050,10 @@ QualType ASTContext::getFloatingTypeOfSizeWithinDomain(
   return VoidTy;
 }
 
-/// getFloatingTypeOrder - Handles 3 different combos: 
-/// float/float, float/complex, complex/complex. 
-/// If lt > rt, return 1. If lt == rt, return 0. If lt < rt, return -1. 
+/// getFloatingTypeOrder - Compare the rank of the two specified floating
+/// point types, ignoring the domain of the type (i.e. 'double' ==
+/// '_Complex double').  If LHS > RHS, return 1.  If LHS == RHS, return 0. If
+/// LHS < RHS, return -1. 
 int ASTContext::getFloatingTypeOrder(QualType LHS, QualType RHS) {
   FloatingRank LHSR = getFloatingRank(LHS);
   FloatingRank RHSR = getFloatingRank(RHS);
@@ -1073,58 +1074,68 @@ static unsigned getIntegerRank(Type *T) {
     return 4;
   
   switch (cast<BuiltinType>(T)->getKind()) {
-    default: assert(0 && "getIntegerRank(): not a built-in integer");
-    case BuiltinType::Bool:
-      return 1;
-    case BuiltinType::Char_S:
-    case BuiltinType::Char_U:
-    case BuiltinType::SChar:
-    case BuiltinType::UChar:
-      return 2;
-    case BuiltinType::Short:
-    case BuiltinType::UShort:
-      return 3;
-    case BuiltinType::Int:
-    case BuiltinType::UInt:
-      return 4;
-    case BuiltinType::Long:
-    case BuiltinType::ULong:
-      return 5;
-    case BuiltinType::LongLong:
-    case BuiltinType::ULongLong:
-      return 6;
+  default: assert(0 && "getIntegerRank(): not a built-in integer");
+  case BuiltinType::Bool:
+    return 1;
+  case BuiltinType::Char_S:
+  case BuiltinType::Char_U:
+  case BuiltinType::SChar:
+  case BuiltinType::UChar:
+    return 2;
+  case BuiltinType::Short:
+  case BuiltinType::UShort:
+    return 3;
+  case BuiltinType::Int:
+  case BuiltinType::UInt:
+    return 4;
+  case BuiltinType::Long:
+  case BuiltinType::ULong:
+    return 5;
+  case BuiltinType::LongLong:
+  case BuiltinType::ULongLong:
+    return 6;
   }
 }
 
-// getMaxIntegerType - Returns the highest ranked integer type. Handles 3 case:
-// unsigned/unsigned, signed/signed, signed/unsigned. C99 6.3.1.8p1.
-QualType ASTContext::getMaxIntegerType(QualType LHS, QualType RHS) {
+/// getIntegerTypeOrder - Returns the highest ranked integer type: 
+/// C99 6.3.1.8p1.  If LHS > RHS, return 1.  If LHS == RHS, return 0. If
+/// LHS < RHS, return -1. 
+int ASTContext::getIntegerTypeOrder(QualType LHS, QualType RHS) {
   Type *LHSC = getCanonicalType(LHS).getTypePtr();
   Type *RHSC = getCanonicalType(RHS).getTypePtr();
-  if (LHSC == RHSC) return LHS;
+  if (LHSC == RHSC) return 0;
   
   bool LHSUnsigned = LHSC->isUnsignedIntegerType();
   bool RHSUnsigned = RHSC->isUnsignedIntegerType();
   
-  if (LHSUnsigned == RHSUnsigned)  // Both signed or both unsigned.
-    return getIntegerRank(LHSC) >= getIntegerRank(RHSC) ? LHS : RHS; 
+  unsigned LHSRank = getIntegerRank(LHSC);
+  unsigned RHSRank = getIntegerRank(RHSC);
   
-  // We have two integer types with differing signs.
-  Type *UnsignedType = LHSC, *SignedType = RHSC;
+  if (LHSUnsigned == RHSUnsigned) {  // Both signed or both unsigned.
+    if (LHSRank == RHSRank) return 0;
+    return LHSRank > RHSRank ? 1 : -1;
+  }
   
-  if (RHSUnsigned)
-    std::swap(UnsignedType, SignedType);
+  // Otherwise, the LHS is signed and the RHS is unsigned or visa versa.
+  if (LHSUnsigned) {
+    // If the unsigned [LHS] type is larger, return it.
+    if (LHSRank >= RHSRank)
+      return 1;
+    
+    // If the signed type can represent all values of the unsigned type, it
+    // wins.  Because we are dealing with 2's complement and types that are
+    // powers of two larger than each other, this is always safe. 
+    return -1;
+  }
 
-  // If the unsigned type is larger, return it.
-  if (getIntegerRank(UnsignedType) >= getIntegerRank(SignedType))
-    return LHSUnsigned ? LHS : RHS;
-
-  // FIXME: Need to check if the signed type can represent all values of the 
-  // unsigned type. If it can, then the result is the signed type. 
-  // If it can't, then the result is the unsigned version of the signed type.  
-  // Should probably add a helper that returns a signed integer type from 
-  // an unsigned (and vice versa). C99 6.3.1.8.
-  return RHSUnsigned ? LHS : RHS;
+  // If the unsigned [RHS] type is larger, return it.
+  if (RHSRank >= LHSRank)
+    return -1;
+  
+  // If the signed type can represent all values of the unsigned type, it
+  // wins.  Because we are dealing with 2's complement and types that are
+  // powers of two larger than each other, this is always safe. 
+  return 1;
 }
 
 // getCFConstantStringType - Return the type used for constant CFStrings. 

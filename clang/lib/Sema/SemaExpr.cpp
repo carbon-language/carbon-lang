@@ -1068,8 +1068,8 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
     const ComplexType *rhsComplexInt = rhs->getAsComplexIntegerType();
 
     if (lhsComplexInt && rhsComplexInt) {
-      if (Context.getMaxIntegerType(lhsComplexInt->getElementType(), 
-                                    rhsComplexInt->getElementType()) == lhs) {
+      if (Context.getIntegerTypeOrder(lhsComplexInt->getElementType(), 
+                                      rhsComplexInt->getElementType()) >= 0) {
         // convert the rhs
         if (!isCompAssign) ImpCastExprToType(rhsExpr, lhs);
         return lhs;
@@ -1088,7 +1088,7 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
     }
   }
   // Finally, we have two differing integer types.
-  if (Context.getMaxIntegerType(lhs, rhs) == lhs) { // convert the rhs
+  if (Context.getIntegerTypeOrder(lhs, rhs) >= 0) { // convert the rhs
     if (!isCompAssign) ImpCastExprToType(rhsExpr, lhs);
     return lhs;
   }
