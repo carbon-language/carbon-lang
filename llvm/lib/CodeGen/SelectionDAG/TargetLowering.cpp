@@ -657,10 +657,25 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op,
     }
     
     // If the RHS is a constant, see if we can simplify it.
-    // FIXME: for XOR, we prefer to force bits to 1 if they will make a -1.
-    if (TLO.ShrinkDemandedConstant(Op, NewMask))
-      return true;
-    
+    // for XOR, we prefer to force bits to 1 if they will make a -1.
+    // if we can't force bits, try to shrink constant
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
+      APInt Expanded = C->getAPIntValue() | (~NewMask);
+      // if we can expand it to have all bits set, do it
+      if (Expanded.isAllOnesValue()) {
+        if (Expanded != C->getAPIntValue()) {
+          MVT::ValueType VT = Op.getValueType();
+          SDOperand New = TLO.DAG.getNode(Op.getOpcode(), VT, Op.getOperand(0),
+                                          TLO.DAG.getConstant(Expanded, VT));
+          return TLO.CombineTo(Op, New);
+        }
+        // if it already has all the bits set, nothing to change
+        // but don't shrink either!
+      } else if (TLO.ShrinkDemandedConstant(Op, NewMask)) {
+        return true;
+      }
+    }
+
     KnownZero = KnownZeroOut;
     KnownOne  = KnownOneOut;
     break;
