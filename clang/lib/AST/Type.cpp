@@ -491,9 +491,8 @@ bool Type::isSignedIntegerType() const {
            BT->getKind() <= BuiltinType::LongLong;
   }
   
-  if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
-    if (const EnumDecl *ED = dyn_cast<EnumDecl>(TT->getDecl()))
-      return ED->getIntegerType()->isSignedIntegerType();
+  if (const EnumType *ET = dyn_cast<EnumType>(CanonicalType))
+    return ET->getDecl()->getIntegerType()->isSignedIntegerType();
   
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
     return VT->getElementType()->isSignedIntegerType();
@@ -512,9 +511,8 @@ bool Type::isUnsignedIntegerType() const {
            BT->getKind() <= BuiltinType::ULongLong;
   }
 
-  if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
-    if (const EnumDecl *ED = dyn_cast<EnumDecl>(TT->getDecl()))
-      return ED->getIntegerType()->isUnsignedIntegerType();
+  if (const EnumType *ET = dyn_cast<EnumType>(CanonicalType))
+    return ET->getDecl()->getIntegerType()->isUnsignedIntegerType();
 
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
     return VT->getElementType()->isUnsignedIntegerType();
@@ -563,11 +561,10 @@ bool Type::isRealType() const {
 bool Type::isArithmeticType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() != BuiltinType::Void;
-  if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
-    if (const EnumDecl *ED = dyn_cast<EnumDecl>(TT->getDecl()))
-      // GCC allows forward declaration of enum types (forbid by C99 6.7.2.3p2).
-      // If a body isn't seen by the time we get here, return false.
-      return ED->isDefinition();
+  if (const EnumType *ET = dyn_cast<EnumType>(CanonicalType))
+    // GCC allows forward declaration of enum types (forbid by C99 6.7.2.3p2).
+    // If a body isn't seen by the time we get here, return false.
+    return ET->getDecl()->isDefinition();
   if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
     return ASQT->getBaseType()->isArithmeticType();
   return isa<ComplexType>(CanonicalType) || isa<VectorType>(CanonicalType);
