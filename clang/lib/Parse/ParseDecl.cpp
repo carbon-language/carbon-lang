@@ -1045,9 +1045,6 @@ void Parser::ParseDeclarator(Declarator &D) {
   /// This implements the 'declarator' production in the C grammar, then checks
   /// for well-formedness and issues diagnostics.
   ParseDeclaratorInternal(D);
-  
-  // TODO: validate D.
-
 }
 
 /// ParseDeclaratorInternal
@@ -1155,7 +1152,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
   
   while (1) {
     if (Tok.is(tok::l_paren)) {
-      ParseParenDeclarator(D);
+      ParseFunctionDeclarator(ConsumeParen(), D);
     } else if (Tok.is(tok::l_square)) {
       ParseBracketDeclarator(D);
     } else {
@@ -1164,10 +1161,64 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
   }
 }
 
-/// ParseParenDeclarator - We parsed the declarator D up to a paren.  This may
-/// either be before the identifier (in which case these are just grouping
-/// parens for precedence) or it may be after the identifier, in which case
-/// these are function arguments.
+/// ParseParenDeclarator - We parsed the declarator D up to a paren.  This is
+/// only called before the identifier, so these are most likely just grouping
+/// parens for precedence.  If we find that these are actually function 
+/// parameter parens in an abstract-declarator, we call ParseFunctionDeclarator.
+///
+///       direct-declarator:
+///         '(' declarator ')'
+/// [GNU]   '(' attributes declarator ')'
+///
+void Parser::ParseParenDeclarator(Declarator &D) {
+  SourceLocation StartLoc = ConsumeParen();
+  assert(!D.isPastIdentifier() && "Should be called before passing identifier");
+  
+  // If we haven't past the identifier yet (or where the identifier would be
+  // stored, if this is an abstract declarator), then this is probably just
+  // grouping parens. However, if this could be an abstract-declarator, then
+  // this could also be the start of function arguments (consider 'void()').
+  bool isGrouping;
+  
+  if (!D.mayOmitIdentifier()) {
+    // If this can't be an abstract-declarator, this *must* be a grouping
+    // paren, because we haven't seen the identifier yet.
+    isGrouping = true;
+  } else if (Tok.is(tok::r_paren) ||           // 'int()' is a function.
+             isDeclarationSpecifier()) {       // 'int(int)' is a function.
+    // This handles C99 6.7.5.3p11: in "typedef int X; void foo(X)", X is
+    // considered to be a type, not a K&R identifier-list.
+    isGrouping = false;
+  } else {
+    // Otherwise, this is a grouping paren, e.g. 'int (*X)' or 'int(X)'.
+    isGrouping = true;
+  }
+  
+  // If this is a grouping paren, handle:
+  // direct-declarator: '(' declarator ')'
+  // direct-declarator: '(' attributes declarator ')'
+  if (isGrouping) {
+    if (Tok.is(tok::kw___attribute))
+      D.AddAttributes(ParseAttributes());
+    
+    ParseDeclaratorInternal(D);
+    // Match the ')'.
+    MatchRHSPunctuation(tok::r_paren, StartLoc);
+    return;
+  }
+  
+  // Okay, if this wasn't a grouping paren, it must be the start of a function
+  // argument list.  Recognize that this declarator will never have an
+  // identifier (and remember where it would have been), then fall through to
+  // the handling of argument lists.
+  D.SetIdentifier(0, Tok.getLocation());
+
+  ParseFunctionDeclarator(StartLoc, D); 
+}
+
+/// ParseFunctionDeclarator - We are after the identifier and have parsed the
+/// declarator D up to a paren, which indicates that we are parsing function
+/// arguments.
 ///
 /// This method also handles this portion of the grammar:
 ///       parameter-type-list: [C99 6.7.5]
@@ -1188,51 +1239,9 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
 ///         identifier
 ///         identifier-list ',' identifier
 ///
-void Parser::ParseParenDeclarator(Declarator &D) {
-  SourceLocation StartLoc = ConsumeParen();
-  
-  // If we haven't past the identifier yet (or where the identifier would be
-  // stored, if this is an abstract declarator), then this is probably just
-  // grouping parens.
-  if (!D.isPastIdentifier()) {
-    // Okay, this is probably a grouping paren.  However, if this could be an
-    // abstract-declarator, then this could also be the start of function
-    // arguments (consider 'void()').
-    bool isGrouping;
-    
-    if (!D.mayOmitIdentifier()) {
-      // If this can't be an abstract-declarator, this *must* be a grouping
-      // paren, because we haven't seen the identifier yet.
-      isGrouping = true;
-    } else if (Tok.is(tok::r_paren) ||           // 'int()' is a function.
-               isDeclarationSpecifier()) {       // 'int(int)' is a function.
-      // This handles C99 6.7.5.3p11: in "typedef int X; void foo(X)", X is
-      // considered to be a type, not a K&R identifier-list.
-      isGrouping = false;
-    } else {
-      // Otherwise, this is a grouping paren, e.g. 'int (*X)' or 'int(X)'.
-      isGrouping = true;
-    }
-    
-    // If this is a grouping paren, handle:
-    // direct-declarator: '(' declarator ')'
-    // direct-declarator: '(' attributes declarator ')'
-    if (isGrouping) {
-      if (Tok.is(tok::kw___attribute))
-        D.AddAttributes(ParseAttributes());
-      
-      ParseDeclaratorInternal(D);
-      // Match the ')'.
-      MatchRHSPunctuation(tok::r_paren, StartLoc);
-      return;
-    }
-    
-    // Okay, if this wasn't a grouping paren, it must be the start of a function
-    // argument list.  Recognize that this declarator will never have an
-    // identifier (and remember where it would have been), then fall through to
-    // the handling of argument lists.
-    D.SetIdentifier(0, Tok.getLocation());
-  }
+void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D) {
+  // lparen is already consumed!
+  assert(D.isPastIdentifier() && "Should not call before identifier!");
   
   // Okay, this is the parameter list of a function definition, or it is an
   // identifier list of a K&R-style function.
@@ -1400,7 +1409,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
   if (!ErrorEmitted)
     D.AddTypeInfo(DeclaratorChunk::getFunction(HasPrototype, IsVariadic,
                                                &ParamInfo[0], ParamInfo.size(),
-                                               StartLoc));
+                                               LParenLoc));
   
   // If we have the closing ')', eat it and we're done.
   if (Tok.is(tok::r_paren)) {
@@ -1413,6 +1422,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
     SkipUntil(tok::r_paren);
   }
 }
+
 
 
 /// [C90]   direct-declarator '[' constant-expression[opt] ']'
