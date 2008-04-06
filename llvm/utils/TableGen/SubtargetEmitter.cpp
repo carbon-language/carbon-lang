@@ -272,6 +272,7 @@ void SubtargetEmitter::EmitStageData(std::ostream &OS,
   OS << "static const llvm::InstrStage Stages[] = {\n"
         "  { 0, 0 }, // No itinerary\n";
         
+  unsigned StageCount = 1;
   unsigned ItinEnum = 1;
   std::map<std::string, unsigned> ItinMap;
   for (unsigned i = 0, N = ProcItinList.size(); i < N; i++) {
@@ -308,8 +309,10 @@ void SubtargetEmitter::EmitStageData(std::ostream &OS,
       if (Find == 0) {
         // Emit as { cycles, u1 | u2 | ... | un }, // index
         OS << ItinString << ", // " << ItinEnum << "\n";
-        // Record Itin class number
-        ItinMap[ItinString] = Find = ItinEnum++;
+        // Record Itin class number.
+        ItinMap[ItinString] = Find = StageCount;
+        StageCount += NStages;
+        ItinEnum++;
       }
       
       // Set up itinerary as location and location + stage count
