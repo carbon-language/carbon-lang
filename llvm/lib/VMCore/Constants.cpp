@@ -811,7 +811,7 @@ namespace llvm {
   template<class ConstantClass, class TypeClass, class ValType>
   struct VISIBILITY_HIDDEN ConstantCreator {
     static ConstantClass *create(const TypeClass *Ty, const ValType &V) {
-      unsigned FIXME; // = traits<ValType>::uses(V)
+      unsigned FIXME = 0; // = traits<ValType>::uses(V)
       return new(FIXME) ConstantClass(Ty, V);
     }
   };
