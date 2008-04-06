@@ -106,7 +106,7 @@ void NamedDecl::ReadInRec(Deserializer& D) {
 void ScopedDecl::EmitInRec(Serializer& S) const {
   NamedDecl::EmitInRec(S);
   S.EmitPtr(getNext());                     // From ScopedDecl.  
-  S.EmitPtr(cast_or_null<Decl>(getContextDecl()));  // From ScopedDecl.
+  S.EmitPtr(cast_or_null<Decl>(getDeclContext()));  // From ScopedDecl.
 }
 
 void ScopedDecl::ReadInRec(Deserializer& D) {
@@ -114,7 +114,7 @@ void ScopedDecl::ReadInRec(Deserializer& D) {
   D.ReadPtr(Next);                                  // From ScopedDecl.
   Decl *TmpD;
   D.ReadPtr(TmpD);                                  // From ScopedDecl.
-  CtxDecl = cast_or_null<ContextDecl>(TmpD);
+  CtxDecl = cast_or_null<DeclContext>(TmpD);
 }
     
   //===------------------------------------------------------------===//
@@ -306,7 +306,7 @@ void FieldDecl::EmitImpl(Serializer& S) const {
 }
 
 FieldDecl* FieldDecl::CreateImpl(Deserializer& D) {
-  FieldDecl* decl = new FieldDecl(0, SourceLocation(), NULL, QualType(), 0);
+  FieldDecl* decl = new FieldDecl(SourceLocation(), NULL, QualType(), 0);
   decl->DeclType.ReadBackpatch(D);  
   decl->ReadInRec(D);
   decl->BitWidth = D.ReadOwnedPtr<Expr>();

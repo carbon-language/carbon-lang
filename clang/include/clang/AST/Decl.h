@@ -58,15 +58,15 @@ class ScopedDecl : public NamedDecl {
   ///
   ScopedDecl *Next;
 
-  ContextDecl *CtxDecl;
+  DeclContext *CtxDecl;
 
 protected:
-  ScopedDecl(Kind DK, ContextDecl *CD, SourceLocation L,
+  ScopedDecl(Kind DK, DeclContext *CD, SourceLocation L,
              IdentifierInfo *Id, ScopedDecl *PrevDecl)
     : NamedDecl(DK, L, Id), NextDeclarator(PrevDecl), Next(0), CtxDecl(CD) {}
   
 public:
-  ContextDecl *getContextDecl() const { return CtxDecl; }
+  DeclContext *getDeclContext() const { return CtxDecl; }
 
   ScopedDecl *getNext() const { return Next; }
   void setNext(ScopedDecl *N) { Next = N; }
@@ -83,8 +83,8 @@ public:
   // roughly global variables and functions, but also handles enums (which could
   // be defined inside or outside a function etc).
   bool isDefinedOutsideFunctionOrMethod() const {
-    if (getContextDecl())
-      return !getContextDecl()->isFunctionOrMethod();
+    if (getDeclContext())
+      return !getDeclContext()->isFunctionOrMethod();
     else
       return true;
   }
@@ -110,7 +110,7 @@ class ValueDecl : public ScopedDecl {
   QualType DeclType;
 
 protected:
-  ValueDecl(Kind DK, ContextDecl *CD, SourceLocation L,
+  ValueDecl(Kind DK, DeclContext *CD, SourceLocation L,
             IdentifierInfo *Id, QualType T, ScopedDecl *PrevDecl) 
     : ScopedDecl(DK, CD, L, Id, PrevDecl), DeclType(T) {}
 public:
@@ -143,7 +143,7 @@ private:
   
   friend class StmtIteratorBase;
 protected:
-  VarDecl(Kind DK, ContextDecl *CD, SourceLocation L, IdentifierInfo *Id, QualType T,
+  VarDecl(Kind DK, DeclContext *CD, SourceLocation L, IdentifierInfo *Id, QualType T,
           StorageClass SC, ScopedDecl *PrevDecl)
     : ValueDecl(DK, CD, L, Id, T, PrevDecl), Init(0) { SClass = SC; }
 public:
@@ -196,12 +196,12 @@ protected:
 ///   void foo() { int x; static int y; extern int z; }
 ///
 class BlockVarDecl : public VarDecl {
-  BlockVarDecl(ContextDecl *CD, SourceLocation L,
+  BlockVarDecl(DeclContext *CD, SourceLocation L,
                IdentifierInfo *Id, QualType T, StorageClass S,
                ScopedDecl *PrevDecl)
     : VarDecl(BlockVar, CD, L, Id, T, S, PrevDecl) {}
 public:
-  static BlockVarDecl *Create(ASTContext &C, ContextDecl *CD, SourceLocation L,
+  static BlockVarDecl *Create(ASTContext &C, DeclContext *CD, SourceLocation L,
                               IdentifierInfo *Id, QualType T, StorageClass S,
                               ScopedDecl *PrevDecl);
   // Implement isa/cast/dyncast/etc.
@@ -220,12 +220,12 @@ protected:
 /// definitions (C99 6.9.2p2) using our type system (without storing a
 /// pointer to the decl's scope, which is transient).
 class FileVarDecl : public VarDecl {
-  FileVarDecl(ContextDecl *CD, SourceLocation L,
+  FileVarDecl(DeclContext *CD, SourceLocation L,
               IdentifierInfo *Id, QualType T, StorageClass S,
               ScopedDecl *PrevDecl)
     : VarDecl(FileVar, CD, L, Id, T, S, PrevDecl) {}
 public:
-  static FileVarDecl *Create(ASTContext &C, ContextDecl *CD,
+  static FileVarDecl *Create(ASTContext &C, DeclContext *CD,
                              SourceLocation L, IdentifierInfo *Id,
                              QualType T, StorageClass S, ScopedDecl *PrevDecl);
   
@@ -247,13 +247,13 @@ class ParmVarDecl : public VarDecl {
   /// in, inout, etc.
   unsigned objcDeclQualifier : 6;
   
-  ParmVarDecl(ContextDecl *CD, SourceLocation L,
+  ParmVarDecl(DeclContext *CD, SourceLocation L,
               IdentifierInfo *Id, QualType T, StorageClass S,
               ScopedDecl *PrevDecl)
     : VarDecl(ParmVar, CD, L, Id, T, S, PrevDecl), 
     objcDeclQualifier(OBJC_TQ_None) {}
 public:
-  static ParmVarDecl *Create(ASTContext &C, ContextDecl *CD,
+  static ParmVarDecl *Create(ASTContext &C, DeclContext *CD,
                              SourceLocation L,IdentifierInfo *Id,
                              QualType T, StorageClass S, ScopedDecl *PrevDecl);
   
@@ -279,7 +279,7 @@ protected:
 
 /// FunctionDecl - An instance of this class is created to represent a function
 /// declaration or definition.
-class FunctionDecl : public ValueDecl, public ContextDecl {
+class FunctionDecl : public ValueDecl, public DeclContext {
 public:
   enum StorageClass {
     None, Extern, Static, PrivateExtern
@@ -302,16 +302,16 @@ private:
   bool IsInline : 1;
   bool IsImplicit : 1;
   
-  FunctionDecl(ContextDecl *CD, SourceLocation L,
+  FunctionDecl(DeclContext *CD, SourceLocation L,
                IdentifierInfo *Id, QualType T,
                StorageClass S, bool isInline, ScopedDecl *PrevDecl)
     : ValueDecl(Function, CD, L, Id, T, PrevDecl), 
-      ContextDecl(Function),
+      DeclContext(Function),
       ParamInfo(0), Body(0), DeclChain(0), SClass(S), 
       IsInline(isInline), IsImplicit(0) {}
   virtual ~FunctionDecl();
 public:
-  static FunctionDecl *Create(ASTContext &C, ContextDecl *CD, SourceLocation L,
+  static FunctionDecl *Create(ASTContext &C, DeclContext *CD, SourceLocation L,
                               IdentifierInfo *Id, QualType T, 
                               StorageClass S = None, bool isInline = false, 
                               ScopedDecl *PrevDecl = 0);
@@ -371,18 +371,14 @@ protected:
 class FieldDecl : public NamedDecl {
   QualType DeclType;  
   Expr *BitWidth;
-  ContextDecl *CtxDecl;
 protected:
-  FieldDecl(Kind DK, ContextDecl *CD,
-            SourceLocation L, IdentifierInfo *Id, QualType T,
+  FieldDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, QualType T,
             Expr *BW = NULL)
-    : NamedDecl(DK, L, Id), DeclType(T), BitWidth(BW), CtxDecl(CD) {}
-  FieldDecl(RecordDecl *CD, SourceLocation L,
-            IdentifierInfo *Id, QualType T, Expr *BW)
+    : NamedDecl(DK, L, Id), DeclType(T), BitWidth(BW) {}
+  FieldDecl(SourceLocation L, IdentifierInfo *Id, QualType T, Expr *BW)
     : NamedDecl(Field, L, Id), DeclType(T), BitWidth(BW) {}
 public:
-  static FieldDecl *Create(ASTContext &C, RecordDecl *CD,
-                           SourceLocation L, IdentifierInfo *Id,
+  static FieldDecl *Create(ASTContext &C, SourceLocation L, IdentifierInfo *Id,
                            QualType T, Expr *BW = NULL);
 
   QualType getType() const { return DeclType; }
@@ -390,7 +386,6 @@ public:
   
   bool isBitField() const { return BitWidth != NULL; }
   Expr *getBitWidth() const { return BitWidth; }
-  ContextDecl *getContextDecl() const { return CtxDecl; }
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
     return D->getKind() >= FieldFirst && D->getKind() <= FieldLast;
@@ -415,7 +410,7 @@ class EnumConstantDecl : public ValueDecl {
   Expr *Init; // an integer constant expression
   llvm::APSInt Val; // The value.
 protected:
-  EnumConstantDecl(ContextDecl *CD, SourceLocation L,
+  EnumConstantDecl(DeclContext *CD, SourceLocation L,
                    IdentifierInfo *Id, QualType T, Expr *E,
                    const llvm::APSInt &V, ScopedDecl *PrevDecl)
     : ValueDecl(EnumConstant, CD, L, Id, T, PrevDecl), Init(E), Val(V) {}
@@ -460,7 +455,7 @@ class TypeDecl : public ScopedDecl {
   Type *TypeForDecl;
   friend class ASTContext;
 protected:
-  TypeDecl(Kind DK, ContextDecl *CD, SourceLocation L,
+  TypeDecl(Kind DK, DeclContext *CD, SourceLocation L,
            IdentifierInfo *Id, ScopedDecl *PrevDecl)
     : ScopedDecl(DK, CD, L, Id, PrevDecl), TypeForDecl(0) {}
 public:
@@ -475,13 +470,13 @@ public:
 class TypedefDecl : public TypeDecl {
   /// UnderlyingType - This is the type the typedef is set to.
   QualType UnderlyingType;
-  TypedefDecl(ContextDecl *CD, SourceLocation L,
+  TypedefDecl(DeclContext *CD, SourceLocation L,
               IdentifierInfo *Id, QualType T, ScopedDecl *PD) 
     : TypeDecl(Typedef, CD, L, Id, PD), UnderlyingType(T) {}
   ~TypedefDecl() {}
 public:
   
-  static TypedefDecl *Create(ASTContext &C, ContextDecl *CD,
+  static TypedefDecl *Create(ASTContext &C, DeclContext *CD,
                              SourceLocation L,IdentifierInfo *Id,
                              QualType T, ScopedDecl *PD);
   
@@ -504,14 +499,14 @@ protected:
 
 
 /// TagDecl - Represents the declaration of a struct/union/class/enum.
-class TagDecl : public TypeDecl, public ContextDecl {
+class TagDecl : public TypeDecl {
   /// IsDefinition - True if this is a definition ("struct foo {};"), false if
   /// it is a declaration ("struct foo;").
   bool IsDefinition : 1;
 protected:
-  TagDecl(Kind DK, ContextDecl *CD, SourceLocation L,
+  TagDecl(Kind DK, DeclContext *CD, SourceLocation L,
           IdentifierInfo *Id, ScopedDecl *PrevDecl)
-    : TypeDecl(DK, CD, L, Id, PrevDecl), ContextDecl(DK) {
+    : TypeDecl(DK, CD, L, Id, PrevDecl) {
     IsDefinition = false;
   }
 public:
@@ -542,7 +537,7 @@ protected:
 
 /// EnumDecl - Represents an enum.  As an extension, we allow forward-declared
 /// enums.
-class EnumDecl : public TagDecl {
+class EnumDecl : public TagDecl, public DeclContext {
   /// ElementList - this is a linked list of EnumConstantDecl's which are linked
   /// together through their getNextDeclarator pointers.
   EnumConstantDecl *ElementList;
@@ -552,14 +547,14 @@ class EnumDecl : public TagDecl {
   /// have a different type than this does.
   QualType IntegerType;
   
-  EnumDecl(ContextDecl *CD, SourceLocation L,
+  EnumDecl(DeclContext *CD, SourceLocation L,
            IdentifierInfo *Id, ScopedDecl *PrevDecl)
-    : TagDecl(Enum, CD, L, Id, PrevDecl) {
+    : TagDecl(Enum, CD, L, Id, PrevDecl), DeclContext(Enum) {
       ElementList = 0;
       IntegerType = QualType();
     }
 public:
-  static EnumDecl *Create(ASTContext &C, ContextDecl *CD,
+  static EnumDecl *Create(ASTContext &C, DeclContext *CD,
                           SourceLocation L, IdentifierInfo *Id,
                           ScopedDecl *PrevDecl);
   
@@ -612,7 +607,7 @@ class RecordDecl : public TagDecl {
   FieldDecl **Members;   // Null if not defined.
   int NumMembers;   // -1 if not defined.
   
-  RecordDecl(Kind DK, ContextDecl *CD, SourceLocation L, IdentifierInfo *Id, 
+  RecordDecl(Kind DK, DeclContext *CD, SourceLocation L, IdentifierInfo *Id, 
              ScopedDecl *PrevDecl) : TagDecl(DK, CD, L, Id, PrevDecl) {
     HasFlexibleArrayMember = false;
     assert(classof(static_cast<Decl*>(this)) && "Invalid Kind!");
@@ -621,7 +616,7 @@ class RecordDecl : public TagDecl {
   }
 public:
   
-  static RecordDecl *Create(ASTContext &C, Kind DK, ContextDecl *CD,
+  static RecordDecl *Create(ASTContext &C, Kind DK, DeclContext *CD,
                             SourceLocation L, IdentifierInfo *Id,
                             ScopedDecl *PrevDecl);
   

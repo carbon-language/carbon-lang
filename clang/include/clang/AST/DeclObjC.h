@@ -48,7 +48,7 @@ class ObjCPropertyDecl;
 /// A selector represents a unique name for a method. The selector names for
 /// the above methods are setMenu:, menu, replaceSubview:with:, and defaultMenu.
 ///
-class ObjCMethodDecl : public Decl, public ContextDecl {
+class ObjCMethodDecl : public Decl, public DeclContext {
 public:
   enum ImplementationControl { None, Required, Optional };
 private:
@@ -96,7 +96,7 @@ private:
                  bool isVariadic = false,
                  ImplementationControl impControl = None)
   : Decl(ObjCMethod, beginLoc),
-    ContextDecl(ObjCMethod),
+    DeclContext(ObjCMethod),
     IsInstance(isInstance), IsVariadic(isVariadic),
     DeclImplementation(impControl), objcDeclQualifier(OBJC_TQ_None),
     MethodContext(static_cast<NamedDecl*>(contextDecl)),
@@ -198,7 +198,7 @@ public:
 ///   Unlike C++, ObjC is a single-rooted class model. In Cocoa, classes
 ///   typically inherit from NSObject (an exception is NSProxy).
 ///
-class ObjCInterfaceDecl : public NamedDecl, public ContextDecl {
+class ObjCInterfaceDecl : public NamedDecl, public DeclContext {
   /// TypeForDecl - This indicates the Type object that represents this
   /// TypeDecl.  It is a cache maintained by ASTContext::getObjCInterfaceType
   Type *TypeForDecl;
@@ -239,7 +239,7 @@ class ObjCInterfaceDecl : public NamedDecl, public ContextDecl {
   ObjCInterfaceDecl(SourceLocation atLoc,
                     unsigned numRefProtos,
                     IdentifierInfo *Id, bool FD, bool isInternal)
-    : NamedDecl(ObjCInterface, atLoc, Id), ContextDecl(ObjCInterface),
+    : NamedDecl(ObjCInterface, atLoc, Id), DeclContext(ObjCInterface),
       TypeForDecl(0), SuperClass(0),
       ReferencedProtocols(0), NumReferencedProtocols(0), Ivars(0), 
       NumIvars(0),
@@ -381,12 +381,10 @@ public:
 ///   }
 ///
 class ObjCIvarDecl : public FieldDecl {
-  ObjCIvarDecl(ContextDecl *CD, SourceLocation L, 
-               IdentifierInfo *Id, QualType T)
-    : FieldDecl(ObjCIvar, CD, L, Id, T) {}
+  ObjCIvarDecl(SourceLocation L, IdentifierInfo *Id, QualType T)
+    : FieldDecl(ObjCIvar, L, Id, T) {}
 public:
-  static ObjCIvarDecl *Create(ASTContext &C, ObjCInterfaceDecl *CD,
-                              SourceLocation L,
+  static ObjCIvarDecl *Create(ASTContext &C, SourceLocation L,
                               IdentifierInfo *Id, QualType T);
     
   enum AccessControl {

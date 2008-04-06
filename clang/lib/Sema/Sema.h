@@ -32,7 +32,7 @@ namespace clang {
   class ASTConsumer;
   class Preprocessor;
   class Decl;
-  class ContextDecl;
+  class DeclContext;
   class NamedDecl;
   class ScopedDecl;
   class Expr;
@@ -75,7 +75,7 @@ class Sema : public Action {
   /// the method decl for the method being parsed.
   ObjCMethodDecl *CurMethodDecl;
 
-  ContextDecl *CurContext;
+  DeclContext *CurContext;
 
   /// LabelMap - This is a mapping from label identifiers to the LabelStmt for
   /// it (which acts like the label decl in some ways).  Forward referenced
@@ -250,8 +250,8 @@ private:
                              DeclTy **Elements, unsigned NumElements);
 private:
   /// Set the current declaration context until it gets popped.
-  void PushContextDecl(ContextDecl *CD);
-  void PopContextDecl();
+  void PushDeclContext(DeclContext *CD);
+  void PopDeclContext();
 
   /// Subroutines of ActOnDeclarator().
   TypedefDecl *ParseTypedefDecl(Scope *S, Declarator &D, QualType T,

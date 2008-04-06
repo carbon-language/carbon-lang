@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines the Decl and ContextDecl interfaces.
+//  This file defines the Decl and DeclContext interfaces.
 //
 //===----------------------------------------------------------------------===//
 
@@ -21,7 +21,7 @@
 namespace clang {
 class FunctionDecl;
 class ObjCMethodDecl;
-class TagDecl;
+class EnumDecl;
 class ObjCInterfaceDecl;
 
 /// Decl - This represents one declaration (or definition), e.g. a variable, 
@@ -191,20 +191,20 @@ protected:
   void ReadInRec(llvm::Deserializer& D);
 };
 
-/// ContextDecl - This is used only as base class of specific decl types that
+/// DeclContext - This is used only as base class of specific decl types that
 /// can act as declaration contexts. These decls are:
 ///
 ///   FunctionDecl
 ///   ObjCMethodDecl
-///   TagDecl
+///   EnumDecl
 ///   ObjCInterfaceDecl
 ///
-class ContextDecl {
+class DeclContext {
   /// DeclKind - This indicates which class this is.
   Decl::Kind DeclKind   :  8;
 
   // Used in the CastTo template to get the DeclKind
-  // from a Decl or a ContextDecl. ContextDecl doesn't have a getKind() method
+  // from a Decl or a DeclContext. DeclContext doesn't have a getKind() method
   // to avoid 'ambiguous access' compiler errors.
   template<typename T> struct KindTrait {
     static Decl::Kind getKind(const T *D) { return D->getKind(); }
@@ -221,23 +221,21 @@ class ContextDecl {
         return static_cast<ObjCMethodDecl*>(const_cast<From*>(D));
       case Decl::ObjCInterface:
         return static_cast<ObjCInterfaceDecl*>(const_cast<From*>(D));
+      case Decl::Enum:
+        return static_cast<EnumDecl*>(const_cast<From*>(D));
       default:
-        // check for TagDecl
-        if (DK >= Decl::TagFirst && DK <= Decl::TagLast)
-          return static_cast<TagDecl*>(const_cast<From*>(D));
- 
-        assert(false && "a decl that inherits ContextDecl isn't handled");
+        assert(false && "a decl that inherits DeclContext isn't handled");
         return 0;
     }
   }
 
 protected:
-  ContextDecl(Decl::Kind K) : DeclKind(K) {}
+  DeclContext(Decl::Kind K) : DeclKind(K) {}
 
 public:
-  /// getParent - Returns the containing ContextDecl if this is a ScopedDecl,
+  /// getParent - Returns the containing DeclContext if this is a ScopedDecl,
   /// else returns NULL.
-  ContextDecl *getParent() const;
+  DeclContext *getParent() const;
 
   bool isFunctionOrMethod() const {
     switch (DeclKind) {
@@ -249,80 +247,79 @@ public:
     }
   }
 
-  /// ToDecl and FromDecl make Decl <-> ContextDecl castings.
+  /// ToDecl and FromDecl make Decl <-> DeclContext castings.
   /// They are intended to be used by the simplify_type and cast_convert_val
   /// templates.
-  static Decl        *ToDecl   (const ContextDecl *D);
-  static ContextDecl *FromDecl (const Decl *D);
+  static Decl        *ToDecl   (const DeclContext *D);
+  static DeclContext *FromDecl (const Decl *D);
 
   static bool classof(const Decl *D) {
     switch (D->getKind()) {
       case Decl::Function:
       case Decl::ObjCMethod:
       case Decl::ObjCInterface:
+      case Decl::Enum:
         return true;
       default:
-        // check for TagDecl
-        return D->getKind() >= Decl::TagFirst &&
-               D->getKind() <= Decl::TagLast;
+        return false;
     }
   }
-  static bool classof(const ContextDecl *D) { return true; }
+  static bool classof(const DeclContext *D) { return true; }
   static bool classof(const FunctionDecl *D) { return true; }
   static bool classof(const ObjCMethodDecl *D) { return true; }
-  static bool classof(const TagDecl *D) { return true; }
+  static bool classof(const EnumDecl *D) { return true; }
   static bool classof(const ObjCInterfaceDecl *D) { return true; }
 };
 
-template<> struct ContextDecl::KindTrait<ContextDecl> {
-  static Decl::Kind getKind(const ContextDecl *D) { return D->DeclKind; }
+template<> struct DeclContext::KindTrait<DeclContext> {
+  static Decl::Kind getKind(const DeclContext *D) { return D->DeclKind; }
 };
 
 } // end clang.
 
 namespace llvm {
-/// Implement simplify_type for ContextDecl, so that we can dyn_cast from 
-/// ContextDecl to a specific Decl class.
-  template<> struct simplify_type<const ::clang::ContextDecl*> {
+/// Implement simplify_type for DeclContext, so that we can dyn_cast from 
+/// DeclContext to a specific Decl class.
+  template<> struct simplify_type<const ::clang::DeclContext*> {
   typedef ::clang::Decl* SimpleType;
-  static SimpleType getSimplifiedValue(const ::clang::ContextDecl *Val) {
-    return ::clang::ContextDecl::ToDecl(Val);
+  static SimpleType getSimplifiedValue(const ::clang::DeclContext *Val) {
+    return ::clang::DeclContext::ToDecl(Val);
   }
 };
-template<> struct simplify_type< ::clang::ContextDecl*>
-  : public simplify_type<const ::clang::ContextDecl*> {};
+template<> struct simplify_type< ::clang::DeclContext*>
+  : public simplify_type<const ::clang::DeclContext*> {};
 
-template<> struct simplify_type<const ::clang::ContextDecl> {
+template<> struct simplify_type<const ::clang::DeclContext> {
   typedef ::clang::Decl SimpleType;
-  static SimpleType &getSimplifiedValue(const ::clang::ContextDecl &Val) {
-    return *::clang::ContextDecl::ToDecl(&Val);
+  static SimpleType &getSimplifiedValue(const ::clang::DeclContext &Val) {
+    return *::clang::DeclContext::ToDecl(&Val);
   }
 };
-template<> struct simplify_type< ::clang::ContextDecl>
-  : public simplify_type<const ::clang::ContextDecl> {};
+template<> struct simplify_type< ::clang::DeclContext>
+  : public simplify_type<const ::clang::DeclContext> {};
 
-/// Implement cast_convert_val for ContextDecl, so that we can dyn_cast from 
-/// a Decl class to ContextDecl.
+/// Implement cast_convert_val for DeclContext, so that we can dyn_cast from 
+/// a Decl class to DeclContext.
 template<class FromTy>
-struct cast_convert_val< ::clang::ContextDecl,const FromTy,const FromTy> {
-  static ::clang::ContextDecl &doit(const FromTy &Val) {
-    return *::clang::ContextDecl::FromDecl(&Val);
+struct cast_convert_val< ::clang::DeclContext,const FromTy,const FromTy> {
+  static ::clang::DeclContext &doit(const FromTy &Val) {
+    return *::clang::DeclContext::FromDecl(&Val);
   }
 };
 template<class FromTy>
-struct cast_convert_val< ::clang::ContextDecl,FromTy,FromTy>
-  : public cast_convert_val< ::clang::ContextDecl,const FromTy,const FromTy>
+struct cast_convert_val< ::clang::DeclContext,FromTy,FromTy>
+  : public cast_convert_val< ::clang::DeclContext,const FromTy,const FromTy>
     {};
 
 template<class FromTy>
-struct cast_convert_val< ::clang::ContextDecl,const FromTy*,const FromTy*> {
-  static ::clang::ContextDecl *doit(const FromTy *Val) {
-    return ::clang::ContextDecl::FromDecl(Val);
+struct cast_convert_val< ::clang::DeclContext,const FromTy*,const FromTy*> {
+  static ::clang::DeclContext *doit(const FromTy *Val) {
+    return ::clang::DeclContext::FromDecl(Val);
   }
 };
 template<class FromTy>
-struct cast_convert_val< ::clang::ContextDecl,FromTy*,FromTy*> 
-  : public cast_convert_val< ::clang::ContextDecl,const FromTy*,const FromTy*>
+struct cast_convert_val< ::clang::DeclContext,FromTy*,FromTy*> 
+  : public cast_convert_val< ::clang::DeclContext,const FromTy*,const FromTy*>
     {};
 
 } // end namespace llvm

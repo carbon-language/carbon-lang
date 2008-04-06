@@ -45,11 +45,10 @@ ObjCInterfaceDecl *ObjCInterfaceDecl::Create(ASTContext &C,
                                      isInternal);
 }
 
-ObjCIvarDecl *ObjCIvarDecl::Create(ASTContext &C, ObjCInterfaceDecl *CD,
-                                   SourceLocation L,
+ObjCIvarDecl *ObjCIvarDecl::Create(ASTContext &C, SourceLocation L,
                                    IdentifierInfo *Id, QualType T) {
   void *Mem = C.getAllocator().Allocate<ObjCIvarDecl>();
-  return new (Mem) ObjCIvarDecl(CD, L, Id, T);
+  return new (Mem) ObjCIvarDecl(L, Id, T);
 }
 
 ObjCProtocolDecl *ObjCProtocolDecl::Create(ASTContext &C,

@@ -204,7 +204,7 @@ void Decl::addDeclKind(Kind k) {
 // Decl Allocation/Deallocation Method Implementations
 //===----------------------------------------------------------------------===//
 
-BlockVarDecl *BlockVarDecl::Create(ASTContext &C, ContextDecl *CD,
+BlockVarDecl *BlockVarDecl::Create(ASTContext &C, DeclContext *CD,
                                    SourceLocation L,
                                    IdentifierInfo *Id, QualType T,
                                    StorageClass S, ScopedDecl *PrevDecl) {
@@ -213,7 +213,7 @@ BlockVarDecl *BlockVarDecl::Create(ASTContext &C, ContextDecl *CD,
 }
 
 
-FileVarDecl *FileVarDecl::Create(ASTContext &C, ContextDecl *CD,
+FileVarDecl *FileVarDecl::Create(ASTContext &C, DeclContext *CD,
                                  SourceLocation L, IdentifierInfo *Id,
                                  QualType T, StorageClass S,
                                  ScopedDecl *PrevDecl) {
@@ -221,7 +221,7 @@ FileVarDecl *FileVarDecl::Create(ASTContext &C, ContextDecl *CD,
   return new (Mem) FileVarDecl(CD, L, Id, T, S, PrevDecl);
 }
 
-ParmVarDecl *ParmVarDecl::Create(ASTContext &C, ContextDecl *CD,
+ParmVarDecl *ParmVarDecl::Create(ASTContext &C, DeclContext *CD,
                                  SourceLocation L, IdentifierInfo *Id,
                                  QualType T, StorageClass S,
                                  ScopedDecl *PrevDecl) {
@@ -229,7 +229,7 @@ ParmVarDecl *ParmVarDecl::Create(ASTContext &C, ContextDecl *CD,
   return new (Mem) ParmVarDecl(CD, L, Id, T, S, PrevDecl);
 }
 
-FunctionDecl *FunctionDecl::Create(ASTContext &C, ContextDecl *CD,
+FunctionDecl *FunctionDecl::Create(ASTContext &C, DeclContext *CD,
                                    SourceLocation L, 
                                    IdentifierInfo *Id, QualType T, 
                                    StorageClass S, bool isInline, 
@@ -238,10 +238,10 @@ FunctionDecl *FunctionDecl::Create(ASTContext &C, ContextDecl *CD,
   return new (Mem) FunctionDecl(CD, L, Id, T, S, isInline, PrevDecl);
 }
 
-FieldDecl *FieldDecl::Create(ASTContext &C, RecordDecl *CD, SourceLocation L,
+FieldDecl *FieldDecl::Create(ASTContext &C, SourceLocation L,
                              IdentifierInfo *Id, QualType T, Expr *BW) {
   void *Mem = C.getAllocator().Allocate<FieldDecl>();
-  return new (Mem) FieldDecl(CD, L, Id, T, BW);
+  return new (Mem) FieldDecl(L, Id, T, BW);
 }
 
 
@@ -254,7 +254,7 @@ EnumConstantDecl *EnumConstantDecl::Create(ASTContext &C, EnumDecl *CD,
   return new (Mem) EnumConstantDecl(CD, L, Id, T, E, V, PrevDecl);
 }
 
-TypedefDecl *TypedefDecl::Create(ASTContext &C, ContextDecl *CD,
+TypedefDecl *TypedefDecl::Create(ASTContext &C, DeclContext *CD,
                                  SourceLocation L,
                                  IdentifierInfo *Id, QualType T,
                                  ScopedDecl *PD) {
@@ -262,14 +262,14 @@ TypedefDecl *TypedefDecl::Create(ASTContext &C, ContextDecl *CD,
   return new (Mem) TypedefDecl(CD, L, Id, T, PD);
 }
 
-EnumDecl *EnumDecl::Create(ASTContext &C, ContextDecl *CD, SourceLocation L,
+EnumDecl *EnumDecl::Create(ASTContext &C, DeclContext *CD, SourceLocation L,
                            IdentifierInfo *Id,
                            ScopedDecl *PrevDecl) {
   void *Mem = C.getAllocator().Allocate<EnumDecl>();
   return new (Mem) EnumDecl(CD, L, Id, PrevDecl);
 }
 
-RecordDecl *RecordDecl::Create(ASTContext &C, Kind DK, ContextDecl *CD,
+RecordDecl *RecordDecl::Create(ASTContext &C, Kind DK, DeclContext *CD,
                                SourceLocation L, IdentifierInfo *Id,
                                ScopedDecl *PrevDecl) {
   void *Mem = C.getAllocator().Allocate<RecordDecl>();
@@ -330,22 +330,22 @@ const Attr *Decl::getAttrs() const {
 }
 
 //===----------------------------------------------------------------------===//
-// ContextDecl Implementation
+// DeclContext Implementation
 //===----------------------------------------------------------------------===//
 
-ContextDecl *ContextDecl::getParent() const {
+DeclContext *DeclContext::getParent() const {
   if (ScopedDecl *SD = dyn_cast<ScopedDecl>(this))
-    return SD->getContextDecl();
+    return SD->getDeclContext();
   else
     return NULL;
 }
 
-Decl *ContextDecl::ToDecl (const ContextDecl *D) {
+Decl *DeclContext::ToDecl (const DeclContext *D) {
   return CastTo<Decl>(D);
 }
 
-ContextDecl *ContextDecl::FromDecl (const Decl *D) {
-  return CastTo<ContextDecl>(D);
+DeclContext *DeclContext::FromDecl (const Decl *D) {
+  return CastTo<DeclContext>(D);
 }
 
 //===----------------------------------------------------------------------===//

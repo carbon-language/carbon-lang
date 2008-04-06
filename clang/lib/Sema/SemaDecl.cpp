@@ -40,14 +40,14 @@ Sema::DeclTy *Sema::isTypeName(const IdentifierInfo &II, Scope *S) {
   return 0;
 }
 
-void Sema::PushContextDecl(ContextDecl *CD) {
+void Sema::PushDeclContext(DeclContext *CD) {
   assert(CD->getParent() == CurContext &&
-      "The next ContextDecl should be directly contained in the current one.");
+      "The next DeclContext should be directly contained in the current one.");
   CurContext = CD;
 }
 
-void Sema::PopContextDecl() {
-  assert(CurContext && "ContextDecl imbalance!");
+void Sema::PopDeclContext() {
+  assert(CurContext && "DeclContext imbalance!");
   CurContext = CurContext->getParent();
 }
 
@@ -1081,7 +1081,7 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
   Decl *decl = static_cast<Decl*>(ActOnDeclarator(GlobalScope, D, 0));
   FunctionDecl *FD = cast<FunctionDecl>(decl);
   CurFunctionDecl = FD;
-  PushContextDecl(FD);
+  PushDeclContext(FD);
   
   // Create Decl objects for each parameter, adding them to the FunctionDecl.
   llvm::SmallVector<ParmVarDecl*, 16> Params;
@@ -1126,7 +1126,7 @@ Sema::DeclTy *Sema::ActOnFinishFunctionBody(DeclTy *D, StmtTy *Body) {
     MD->setBody((Stmt*)Body);
     CurMethodDecl = 0;
   }  
-  PopContextDecl();
+  PopDeclContext();
   // Verify and clean out per-function state.
   
   // Check goto/label use.
@@ -1353,8 +1353,8 @@ Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *tagDecl,
   // FIXME: Chain fielddecls together.
   FieldDecl *NewFD;
   
-  if (RecordDecl *RD = dyn_cast<RecordDecl>(TagDecl))
-    NewFD = FieldDecl::Create(Context, RD, Loc, II, T, BitWidth);
+  if (isa<RecordDecl>(TagDecl))
+    NewFD = FieldDecl::Create(Context, Loc, II, T, BitWidth);
   else if (isa<ObjCInterfaceDecl>(TagDecl) ||
            isa<ObjCImplementationDecl>(TagDecl) ||
            isa<ObjCCategoryDecl>(TagDecl) ||
@@ -1362,7 +1362,7 @@ Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *tagDecl,
            // properties can appear within a protocol.
            // See corresponding FIXME in DeclObjC.h:ObjCPropertyDecl.
            isa<ObjCProtocolDecl>(TagDecl))
-    NewFD = ObjCIvarDecl::Create(Context, dyn_cast<ObjCInterfaceDecl>(TagDecl), Loc, II, T);
+    NewFD = ObjCIvarDecl::Create(Context, Loc, II, T);
   else
     assert(0 && "Sema::ActOnField(): Unknown TagDecl");
     
