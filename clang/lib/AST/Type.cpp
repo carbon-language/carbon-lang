@@ -739,16 +739,12 @@ QualType TypedefType::LookThroughTypedefs() const {
   }
 }
 
-bool RecordType::classof(const Type *T) {
-  if (const TagType *TT = dyn_cast<TagType>(T))
-    return isa<RecordDecl>(TT->getDecl());
-  return false;
+bool RecordType::classof(const TagType *TT) {
+  return isa<RecordDecl>(TT->getDecl());
 }
 
-bool EnumType::classof(const Type *T) {
-  if (const TagType *TT = dyn_cast<TagType>(T))
-    return isa<EnumDecl>(TT->getDecl());
-  return false;
+bool EnumType::classof(const TagType *TT) {
+  return isa<EnumDecl>(TT->getDecl());
 }
 
 

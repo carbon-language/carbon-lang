@@ -1020,7 +1020,10 @@ public:
   // the same address space, and return that.
   unsigned getAddressSpace() const { return 0; }
   
-  static bool classof(const Type *T);
+  static bool classof(const TagType *T);
+  static bool classof(const Type *T) {
+    return isa<TagType>(T) && classof(cast<TagType>(T));
+  }
   static bool classof(const RecordType *) { return true; }
 };
 
@@ -1034,7 +1037,10 @@ public:
     return reinterpret_cast<EnumDecl*>(TagType::getDecl());
   }
   
-  static bool classof(const Type *T);
+  static bool classof(const TagType *T);
+  static bool classof(const Type *T) {
+    return isa<TagType>(T) && classof(cast<TagType>(T));
+  }
   static bool classof(const EnumType *) { return true; }
 };
 
