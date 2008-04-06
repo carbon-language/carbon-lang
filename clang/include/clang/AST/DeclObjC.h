@@ -125,7 +125,10 @@ public:
   
   NamedDecl *getMethodContext() const { return MethodContext; }
   
-  ObjCInterfaceDecl *const getClassInterface() const;
+  const ObjCInterfaceDecl *getClassInterface() const;
+  ObjCInterfaceDecl *getClassInterface() {
+    return (ObjCInterfaceDecl*)((ObjCMethodDecl*)this)->getClassInterface();
+  }
   
   Selector getSelector() const { return SelName; }
   unsigned getSynthesizedMethodSize() const;
@@ -161,10 +164,12 @@ public:
   ImplementationControl getImplementationControl() const { 
     return ImplementationControl(DeclImplementation); 
   }
-  Stmt *const getBody() const { return Body; }
+  Stmt *getBody() { return Body; }
+  const Stmt *getBody() const { return Body; }
   void setBody(Stmt *B) { Body = B; }
 
-  ParmVarDecl *const getSelfDecl() const { return SelfDecl; }
+  const ParmVarDecl *getSelfDecl() const { return SelfDecl; }
+  ParmVarDecl *getSelfDecl() { return SelfDecl; }
   void setSelfDecl(ParmVarDecl *PVD) { SelfDecl = PVD; }
   
   // Implement isa/cast/dyncast/etc.
@@ -655,7 +660,8 @@ public:
   static ObjCCategoryDecl *Create(ASTContext &C,
                                   SourceLocation L, IdentifierInfo *Id);
   
-  ObjCInterfaceDecl *getClassInterface() const { return ClassInterface; }
+  ObjCInterfaceDecl *getClassInterface() { return ClassInterface; }
+  const ObjCInterfaceDecl *getClassInterface() const { return ClassInterface; }
   void setClassInterface(ObjCInterfaceDecl *IDecl) { ClassInterface = IDecl; }
   
   void setReferencedProtocolList(ObjCProtocolDecl **List, unsigned NumRPs);
@@ -746,7 +752,8 @@ public:
                                       SourceLocation L, IdentifierInfo *Id,
                                       ObjCInterfaceDecl *classInterface);
         
-  ObjCInterfaceDecl *getClassInterface() const { return ClassInterface; }
+  const ObjCInterfaceDecl *getClassInterface() const { return ClassInterface; }
+  ObjCInterfaceDecl *getClassInterface() { return ClassInterface; }
   
   unsigned getNumInstanceMethods() const { return InstanceMethods.size(); }
   unsigned getNumClassMethods() const { return ClassMethods.size(); }
@@ -844,8 +851,10 @@ public:
   SourceLocation getLocEnd() const { return EndLoc; }
   void setLocEnd(SourceLocation LE) { EndLoc = LE; };
   
-  ObjCInterfaceDecl *getClassInterface() const { return ClassInterface; }
-  ObjCInterfaceDecl *getSuperClass() const { return SuperClass; }
+  const ObjCInterfaceDecl *getClassInterface() const { return ClassInterface; }
+  ObjCInterfaceDecl *getClassInterface() { return ClassInterface; }
+  const ObjCInterfaceDecl *getSuperClass() const { return SuperClass; }
+  ObjCInterfaceDecl *getSuperClass() { return SuperClass; }
   
   void setSuperClass(ObjCInterfaceDecl * superCls) { SuperClass = superCls; }
   

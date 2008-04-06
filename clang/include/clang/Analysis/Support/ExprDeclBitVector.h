@@ -102,7 +102,7 @@ struct DeclBitVector_Types {
       return DeclBV[i];
     }
     
-    const bool getBit(unsigned i) const {
+    bool getBit(unsigned i) const {
       return DeclBV[i];
     }
     

@@ -1458,10 +1458,11 @@ public:
   ObjCIvarDecl *getDecl() { return D; }
   const ObjCIvarDecl *getDecl() const { return D; }
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
-  Expr *const getBase() const { return Base; }
+  const Expr *getBase() const { return Base; }
+  Expr *getBase() { return Base; }
   void setBase(Expr * base) { Base = base; }
-  const bool isArrow() const { return IsArrow; }
-  const bool isFreeIvar() const { return IsFreeIvar; }
+  bool isArrow() const { return IsArrow; }
+  bool isFreeIvar() const { return IsFreeIvar; }
   
   SourceLocation getLocation() const { return Loc; }
   

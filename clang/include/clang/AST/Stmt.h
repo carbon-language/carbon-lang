@@ -1041,7 +1041,8 @@ public:
     AtThrowLoc = atThrowLoc;
   }
   
-  Expr *const getThrowExpr() const { return reinterpret_cast<Expr*>(Throw); }
+  const Expr *getThrowExpr() const { return reinterpret_cast<Expr*>(Throw); }
+  Expr *getThrowExpr() { return reinterpret_cast<Expr*>(Throw); }
   
   virtual SourceRange getSourceRange() const {
     if (Throw)

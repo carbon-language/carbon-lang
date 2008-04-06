@@ -418,7 +418,7 @@ unsigned ObjCMethodDecl::getSynthesizedMethodSize() const {
   return length; 
 }
 
-ObjCInterfaceDecl *const ObjCMethodDecl::getClassInterface() const {
+const ObjCInterfaceDecl *ObjCMethodDecl::getClassInterface() const {
   if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(MethodContext))
     return ID;
   if (ObjCCategoryDecl *CD = dyn_cast<ObjCCategoryDecl>(MethodContext))
