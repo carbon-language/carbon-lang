@@ -1400,6 +1400,7 @@ void Parser::ParseFunctionDeclaratorIdentifierList(SourceLocation LParenLoc,
 
   // Tok is known to be the first identifier in the list.  Remember this
   // identifier in ParamInfo.
+  ParamsSoFar.insert(Tok.getIdentifierInfo());
   ParamInfo.push_back(DeclaratorChunk::ParamInfo(Tok.getIdentifierInfo(),
                                                  Tok.getLocation(), 0));
   

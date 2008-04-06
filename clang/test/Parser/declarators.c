@@ -30,3 +30,5 @@ int test3(x,
           atype         /* expected-error {{unexpected type name 'atype': expected identifier}} */
          ) int x, atype; {}
 
+int test4(x, x) int x; {} /* expected-error {{redefinition of parameter 'x'}} */
+
