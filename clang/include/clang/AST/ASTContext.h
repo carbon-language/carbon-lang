@@ -305,12 +305,12 @@ public:
   
   /// maxIntegerType - Returns the highest ranked integer type. Handles 3
   /// different type combos: unsigned/unsigned, signed/signed, signed/unsigned.
-  static QualType maxIntegerType(QualType lhs, QualType rhs);
+  QualType maxIntegerType(QualType lhs, QualType rhs);
   
   /// compareFloatingType - Handles 3 different combos: 
   /// float/float, float/complex, complex/complex. 
   /// If lt > rt, return 1. If lt == rt, return 0. If lt < rt, return -1. 
-  static int compareFloatingType(QualType lt, QualType rt);
+  int compareFloatingType(QualType lt, QualType rt);
 
   /// getFloatingTypeOfSizeWithinDomain - Returns a real floating 
   /// point or a complex type (based on typeDomain/typeSize). 

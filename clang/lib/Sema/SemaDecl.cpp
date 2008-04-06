@@ -280,8 +280,8 @@ FunctionDecl *Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
   MergeAttributes(New, Old);
 
   
-  QualType OldQType = Old->getCanonicalType();
-  QualType NewQType = New->getCanonicalType();
+  QualType OldQType = Old->getType().getCanonicalType();
+  QualType NewQType = New->getType().getCanonicalType();
   
   // Function types need to be compatible, not identical. This handles
   // duplicate function decls like "void f(int); void f(enum X);" properly.

@@ -181,7 +181,7 @@ void ASTContext::InitBuiltinTypes() {
 /// does not work on incomplete types.
 std::pair<uint64_t, unsigned>
 ASTContext::getTypeInfo(QualType T) {
-  T = T.getCanonicalType();
+  T = getCanonicalType(T);
   uint64_t Width;
   unsigned Align;
   switch (T->getTypeClass()) {
@@ -445,12 +445,13 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
 //===----------------------------------------------------------------------===//
 
 QualType ASTContext::getASQualType(QualType T, unsigned AddressSpace) {
-  if (T.getCanonicalType().getAddressSpace() == AddressSpace)
+  QualType CanT = getCanonicalType(T);
+  if (CanT.getAddressSpace() == AddressSpace)
     return T;
   
   // Type's cannot have multiple ASQuals, therefore we know we only have to deal
   // with CVR qualifiers from here on out.
-  assert(T.getCanonicalType().getAddressSpace() == 0 &&
+  assert(CanT.getAddressSpace() == 0 &&
          "Type is already address space qualified");
   
   // Check if we've already instantiated an address space qual'd type of this
@@ -465,7 +466,7 @@ QualType ASTContext::getASQualType(QualType T, unsigned AddressSpace) {
   // so fill in the canonical type field.
   QualType Canonical;
   if (!T->isCanonical()) {
-    Canonical = getASQualType(T.getCanonicalType(), AddressSpace);
+    Canonical = getASQualType(CanT, AddressSpace);
     
     // Get the new insert position for the node we care about.
     ASQualType *NewIP = ASQualTypes.FindNodeOrInsertPos(ID, InsertPos);
@@ -494,7 +495,7 @@ QualType ASTContext::getComplexType(QualType T) {
   // so fill in the canonical type field.
   QualType Canonical;
   if (!T->isCanonical()) {
-    Canonical = getComplexType(T.getCanonicalType());
+    Canonical = getComplexType(getCanonicalType(T));
     
     // Get the new insert position for the node we care about.
     ComplexType *NewIP = ComplexTypes.FindNodeOrInsertPos(ID, InsertPos);
@@ -523,7 +524,7 @@ QualType ASTContext::getPointerType(QualType T) {
   // so fill in the canonical type field.
   QualType Canonical;
   if (!T->isCanonical()) {
-    Canonical = getPointerType(T.getCanonicalType());
+    Canonical = getPointerType(getCanonicalType(T));
    
     // Get the new insert position for the node we care about.
     PointerType *NewIP = PointerTypes.FindNodeOrInsertPos(ID, InsertPos);
@@ -551,7 +552,7 @@ QualType ASTContext::getReferenceType(QualType T) {
   // either, so fill in the canonical type field.
   QualType Canonical;
   if (!T->isCanonical()) {
-    Canonical = getReferenceType(T.getCanonicalType());
+    Canonical = getReferenceType(getCanonicalType(T));
    
     // Get the new insert position for the node we care about.
     ReferenceType *NewIP = ReferenceTypes.FindNodeOrInsertPos(ID, InsertPos);
@@ -582,7 +583,7 @@ QualType ASTContext::getConstantArrayType(QualType EltTy,
   // so fill in the canonical type field.
   QualType Canonical;
   if (!EltTy->isCanonical()) {
-    Canonical = getConstantArrayType(EltTy.getCanonicalType(), ArySize, 
+    Canonical = getConstantArrayType(getCanonicalType(EltTy), ArySize, 
                                      ASM, EltTypeQuals);
     // Get the new insert position for the node we care about.
     ConstantArrayType *NewIP = 
@@ -630,7 +631,7 @@ QualType ASTContext::getIncompleteArrayType(QualType EltTy,
   QualType Canonical;
 
   if (!EltTy->isCanonical()) {
-    Canonical = getIncompleteArrayType(EltTy.getCanonicalType(),
+    Canonical = getIncompleteArrayType(getCanonicalType(EltTy),
                                        ASM, EltTypeQuals);
 
     // Get the new insert position for the node we care about.
@@ -653,7 +654,7 @@ QualType ASTContext::getIncompleteArrayType(QualType EltTy,
 QualType ASTContext::getVectorType(QualType vecType, unsigned NumElts) {
   BuiltinType *baseType;
   
-  baseType = dyn_cast<BuiltinType>(vecType.getCanonicalType().getTypePtr());
+  baseType = dyn_cast<BuiltinType>(getCanonicalType(vecType).getTypePtr());
   assert(baseType != 0 && "getVectorType(): Expecting a built-in type");
          
   // Check if we've already instantiated a vector of this type.
@@ -667,7 +668,7 @@ QualType ASTContext::getVectorType(QualType vecType, unsigned NumElts) {
   // so fill in the canonical type field.
   QualType Canonical;
   if (!vecType->isCanonical()) {
-    Canonical = getVectorType(vecType.getCanonicalType(), NumElts);
+    Canonical = getVectorType(getCanonicalType(vecType), NumElts);
     
     // Get the new insert position for the node we care about.
     VectorType *NewIP = VectorTypes.FindNodeOrInsertPos(ID, InsertPos);
@@ -684,7 +685,7 @@ QualType ASTContext::getVectorType(QualType vecType, unsigned NumElts) {
 QualType ASTContext::getOCUVectorType(QualType vecType, unsigned NumElts) {
   BuiltinType *baseType;
   
-  baseType = dyn_cast<BuiltinType>(vecType.getCanonicalType().getTypePtr());
+  baseType = dyn_cast<BuiltinType>(getCanonicalType(vecType).getTypePtr());
   assert(baseType != 0 && "getOCUVectorType(): Expecting a built-in type");
          
   // Check if we've already instantiated a vector of this type.
@@ -698,7 +699,7 @@ QualType ASTContext::getOCUVectorType(QualType vecType, unsigned NumElts) {
   // so fill in the canonical type field.
   QualType Canonical;
   if (!vecType->isCanonical()) {
-    Canonical = getOCUVectorType(vecType.getCanonicalType(), NumElts);
+    Canonical = getOCUVectorType(getCanonicalType(vecType), NumElts);
     
     // Get the new insert position for the node we care about.
     VectorType *NewIP = VectorTypes.FindNodeOrInsertPos(ID, InsertPos);
@@ -725,7 +726,7 @@ QualType ASTContext::getFunctionTypeNoProto(QualType ResultTy) {
   
   QualType Canonical;
   if (!ResultTy->isCanonical()) {
-    Canonical = getFunctionTypeNoProto(ResultTy.getCanonicalType());
+    Canonical = getFunctionTypeNoProto(getCanonicalType(ResultTy));
     
     // Get the new insert position for the node we care about.
     FunctionTypeNoProto *NewIP =
@@ -765,9 +766,9 @@ QualType ASTContext::getFunctionType(QualType ResultTy, QualType *ArgArray,
     llvm::SmallVector<QualType, 16> CanonicalArgs;
     CanonicalArgs.reserve(NumArgs);
     for (unsigned i = 0; i != NumArgs; ++i)
-      CanonicalArgs.push_back(ArgArray[i].getCanonicalType());
+      CanonicalArgs.push_back(getCanonicalType(ArgArray[i]));
     
-    Canonical = getFunctionType(ResultTy.getCanonicalType(),
+    Canonical = getFunctionType(getCanonicalType(ResultTy),
                                 &CanonicalArgs[0], NumArgs,
                                 isVariadic);
     
@@ -794,7 +795,7 @@ QualType ASTContext::getFunctionType(QualType ResultTy, QualType *ArgArray,
 QualType ASTContext::getTypedefType(TypedefDecl *Decl) {
   if (Decl->TypeForDecl) return QualType(Decl->TypeForDecl, 0);
   
-  QualType Canonical = Decl->getUnderlyingType().getCanonicalType();
+  QualType Canonical = getCanonicalType(Decl->getUnderlyingType());
   Decl->TypeForDecl = new TypedefType(Type::TypeName, Decl, Canonical);
   Types.push_back(Decl->TypeForDecl);
   return QualType(Decl->TypeForDecl, 0);
@@ -848,7 +849,7 @@ QualType ASTContext::getObjCQualifiedIdType(QualType idType,
   // No Match;
   QualType Canonical;
   if (!idType->isCanonical()) {
-    Canonical = getObjCQualifiedIdType(idType.getCanonicalType(), 
+    Canonical = getObjCQualifiedIdType(getCanonicalType(idType), 
                                        Protocols, NumProtocols);
     ObjCQualifiedIdType *NewQT = 
       ObjCQualifiedIdTypes.FindNodeOrInsertPos(ID, InsertPos);
@@ -868,7 +869,7 @@ QualType ASTContext::getObjCQualifiedIdType(QualType idType,
 /// DeclRefExpr's. This doesn't effect the type checker, since it operates 
 /// on canonical type's (which are always unique).
 QualType ASTContext::getTypeOfExpr(Expr *tofExpr) {
-  QualType Canonical = tofExpr->getType().getCanonicalType();
+  QualType Canonical = getCanonicalType(tofExpr->getType());
   TypeOfExpr *toe = new TypeOfExpr(tofExpr, Canonical);
   Types.push_back(toe);
   return QualType(toe, 0);
@@ -880,7 +881,7 @@ QualType ASTContext::getTypeOfExpr(Expr *tofExpr) {
 /// an issue. This doesn't effect the type checker, since it operates 
 /// on canonical type's (which are always unique).
 QualType ASTContext::getTypeOfType(QualType tofType) {
-  QualType Canonical = tofType.getCanonicalType();
+  QualType Canonical = getCanonicalType(tofType);
   TypeOfType *tot = new TypeOfType(tofType, Canonical);
   Types.push_back(tot);
   return QualType(tot, 0);
@@ -974,7 +975,7 @@ QualType ASTContext::getArrayDecayedType(QualType Ty) {
     //
     // The decayed type of b is "const int*" even though the element type of the
     // array is "int".
-    QualType CanTy = Ty.getCanonicalType();
+    QualType CanTy = getCanonicalType(Ty);
     const ArrayType *PrettyArrayType = Ty->getAsArrayType();
     assert(PrettyArrayType && "Not an array type!");
     
@@ -1005,38 +1006,6 @@ QualType ASTContext::getArrayDecayedType(QualType Ty) {
   PtrTy = PtrTy.getQualifiedType(PointerQuals);
 
   return PtrTy;
-}
-
-/// getIntegerRank - Return an integer conversion rank (C99 6.3.1.1p1). This
-/// routine will assert if passed a built-in type that isn't an integer or enum.
-static int getIntegerRank(QualType t) {
-  if (isa<EnumType>(t.getCanonicalType()))
-    return 4;
-  
-  const BuiltinType *BT = t.getCanonicalType()->getAsBuiltinType();
-  switch (BT->getKind()) {
-  default:
-    assert(0 && "getIntegerRank(): not a built-in integer");
-  case BuiltinType::Bool:
-    return 1;
-  case BuiltinType::Char_S:
-  case BuiltinType::Char_U:
-  case BuiltinType::SChar:
-  case BuiltinType::UChar:
-    return 2;
-  case BuiltinType::Short:
-  case BuiltinType::UShort:
-    return 3;
-  case BuiltinType::Int:
-  case BuiltinType::UInt:
-    return 4;
-  case BuiltinType::Long:
-  case BuiltinType::ULong:
-    return 5;
-  case BuiltinType::LongLong:
-  case BuiltinType::ULongLong:
-    return 6;
-  }
 }
 
 /// getFloatingRank - Return a relative rank for floating point types.
@@ -1093,31 +1062,67 @@ int ASTContext::compareFloatingType(QualType lt, QualType rt) {
   return -1;
 }
 
+/// getIntegerRank - Return an integer conversion rank (C99 6.3.1.1p1). This
+/// routine will assert if passed a built-in type that isn't an integer or enum,
+/// or if it is not canonicalized.
+static unsigned getIntegerRank(Type *T) {
+  assert(T->isCanonical() && "T should be canonicalized");
+  if (isa<EnumType>(T))
+    return 4;
+  
+  switch (cast<BuiltinType>(T)->getKind()) {
+    default: assert(0 && "getIntegerRank(): not a built-in integer");
+    case BuiltinType::Bool:
+      return 1;
+    case BuiltinType::Char_S:
+    case BuiltinType::Char_U:
+    case BuiltinType::SChar:
+    case BuiltinType::UChar:
+      return 2;
+    case BuiltinType::Short:
+    case BuiltinType::UShort:
+      return 3;
+    case BuiltinType::Int:
+    case BuiltinType::UInt:
+      return 4;
+    case BuiltinType::Long:
+    case BuiltinType::ULong:
+      return 5;
+    case BuiltinType::LongLong:
+    case BuiltinType::ULongLong:
+      return 6;
+  }
+}
+
 // maxIntegerType - Returns the highest ranked integer type. Handles 3 case:
 // unsigned/unsigned, signed/signed, signed/unsigned. C99 6.3.1.8p1.
-QualType ASTContext::maxIntegerType(QualType lhs, QualType rhs) {
-  if (lhs == rhs) return lhs;
+QualType ASTContext::maxIntegerType(QualType LHS, QualType RHS) {
+  Type *LHSC = getCanonicalType(LHS).getTypePtr();
+  Type *RHSC = getCanonicalType(RHS).getTypePtr();
+  if (LHSC == RHSC) return LHS;
   
-  bool t1Unsigned = lhs->isUnsignedIntegerType();
-  bool t2Unsigned = rhs->isUnsignedIntegerType();
+  bool LHSUnsigned = LHSC->isUnsignedIntegerType();
+  bool RHSUnsigned = RHSC->isUnsignedIntegerType();
   
-  if ((t1Unsigned && t2Unsigned) || (!t1Unsigned && !t2Unsigned))
-    return getIntegerRank(lhs) >= getIntegerRank(rhs) ? lhs : rhs; 
+  if (LHSUnsigned == RHSUnsigned)  // Both signed or both unsigned.
+    return getIntegerRank(LHSC) >= getIntegerRank(RHSC) ? LHS : RHS; 
   
-  // We have two integer types with differing signs
-  QualType unsignedType = t1Unsigned ? lhs : rhs;
-  QualType signedType = t1Unsigned ? rhs : lhs;
+  // We have two integer types with differing signs.
+  Type *UnsignedType = LHSC, *SignedType = RHSC;
   
-  if (getIntegerRank(unsignedType) >= getIntegerRank(signedType))
-    return unsignedType;
-  else {
-    // FIXME: Need to check if the signed type can represent all values of the 
-    // unsigned type. If it can, then the result is the signed type. 
-    // If it can't, then the result is the unsigned version of the signed type.  
-    // Should probably add a helper that returns a signed integer type from 
-    // an unsigned (and vice versa). C99 6.3.1.8.
-    return signedType; 
-  }
+  if (RHSUnsigned)
+    std::swap(UnsignedType, SignedType);
+
+  // If the unsigned type is larger, return it.
+  if (getIntegerRank(UnsignedType) >= getIntegerRank(SignedType))
+    return LHSUnsigned ? LHS : RHS;
+
+  // FIXME: Need to check if the signed type can represent all values of the 
+  // unsigned type. If it can, then the result is the signed type. 
+  // If it can't, then the result is the unsigned version of the signed type.  
+  // Should probably add a helper that returns a signed integer type from 
+  // an unsigned (and vice versa). C99 6.3.1.8.
+  return RHSUnsigned ? LHS : RHS;
 }
 
 // getCFConstantStringType - Return the type used for constant CFStrings. 
