@@ -317,7 +317,8 @@ MachineFunction::construct(const Function *Fn, const TargetMachine &Tar)
 
 void MachineFunction::destruct(const Function *Fn) {
   bool Deleted = Fn->deleteAnnotation(MF_AID);
-  assert(Deleted && "Machine code did not exist for function!");
+  assert(Deleted && "Machine code did not exist for function!"); 
+  Deleted = Deleted; // silence warning when no assertions.
 }
 
 MachineFunction& MachineFunction::get(const Function *F)
