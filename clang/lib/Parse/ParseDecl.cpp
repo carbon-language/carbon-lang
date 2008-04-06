@@ -1446,9 +1446,7 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
   // the the token after the star is a ']'.  Since stars in arrays are
   // infrequent, use of lookahead is not costly here.
   if (Tok.is(tok::star) && GetLookAheadToken(1).is(tok::r_square)) {
-    // Remember the '*' token, in case we have to un-get it.
-    Token StarTok = Tok;
-    ConsumeToken();
+    ConsumeToken();  // Eat the '*'.
 
     if (StaticLoc.isValid())
       Diag(StaticLoc, diag::err_unspecified_vla_size_with_static);
