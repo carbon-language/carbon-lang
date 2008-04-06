@@ -161,12 +161,12 @@ public:
 // Utility functions.
 //===----------------------------------------------------------------------===//
   
-template <typename ITERATOR> static inline
+template <typename ITERATOR> inline
 ExplodedNode<ValueState>* GetNode(ITERATOR I) {
   return *I;
 }
 
-template <> static inline
+template <> inline
 ExplodedNode<ValueState>* GetNode(GRExprEngine::undef_arg_iterator I) {
   return I->first;
 }
@@ -176,11 +176,11 @@ ExplodedNode<ValueState>* GetNode(GRExprEngine::undef_arg_iterator I) {
 //===----------------------------------------------------------------------===//
 
 template <typename ITERATOR>
-static void EmitWarning(Diagnostic& Diag, PathDiagnosticClient* PD,
-                        ASTContext& Ctx, BugReporter& BR,
-                        const BugDescription& Desc,
-                        ExplodedGraph<GRExprEngine>& G,
-                        ITERATOR I, ITERATOR E) {
+void EmitWarning(Diagnostic& Diag, PathDiagnosticClient* PD,
+                 ASTContext& Ctx, BugReporter& BR,
+                 const BugDescription& Desc,
+                 ExplodedGraph<GRExprEngine>& G,
+                 ITERATOR I, ITERATOR E) {
   
   for (; I != E; ++I)
     BR.EmitPathWarning(Diag, PD, Ctx, Desc, G, GetNode(I));
