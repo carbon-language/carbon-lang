@@ -148,6 +148,7 @@ public:
   
   iterator getAtOffset(unsigned Offset) {
     assert(Offset <= CurSize && "Offset out of range!");
+    if (Offset == CurSize) return iterator(Chunks.end(), 0);
     std::list<RopePiece>::iterator Piece = Chunks.begin();
     while (Offset >= Piece->size()) {
       Offset -= Piece->size();
@@ -158,6 +159,7 @@ public:
 
   const_iterator getAtOffset(unsigned Offset) const {
     assert(Offset <= CurSize && "Offset out of range!");
+    if (Offset == CurSize) return const_iterator(Chunks.end(), 0);
     std::list<RopePiece>::const_iterator Piece = Chunks.begin();
     while (Offset >= Piece->size()) {
       Offset -= Piece->size();
