@@ -471,6 +471,8 @@ private:
   void ParseDirectDeclarator(Declarator &D);
   void ParseParenDeclarator(Declarator &D);
   void ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D);
+  void ParseFunctionDeclaratorIdentifierList(SourceLocation LParenLoc,
+                                             Declarator &D);
   void ParseBracketDeclarator(Declarator &D);
   
   //===--------------------------------------------------------------------===//

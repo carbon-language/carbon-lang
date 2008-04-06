@@ -1235,10 +1235,6 @@ void Parser::ParseParenDeclarator(Declarator &D) {
 ///         declaration-specifiers abstract-declarator[opt] 
 /// [GNU]   declaration-specifiers abstract-declarator[opt] attributes
 ///
-///       identifier-list: [C99 6.7.5]
-///         identifier
-///         identifier-list ',' identifier
-///
 void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D) {
   // lparen is already consumed!
   assert(D.isPastIdentifier() && "Should not call before identifier!");
@@ -1263,50 +1259,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D) {
              !Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope)) {
     // Identifier list.  Note that '(' identifier-list ')' is only allowed for
     // normal declarators, not for abstract-declarators.
-    assert(D.isPastIdentifier() && "Identifier (if present) must be passed!");
-    
-    // If there was no identifier specified, either we are in an
-    // abstract-declarator, or we are in a parameter declarator which was found
-    // to be abstract.  In abstract-declarators, identifier lists are not valid,
-    // diagnose this.
-    if (!D.getIdentifier())
-      Diag(Tok, diag::ext_ident_list_in_param);
-
-    // Remember this identifier in ParamInfo.
-    ParamInfo.push_back(DeclaratorChunk::ParamInfo(Tok.getIdentifierInfo(),
-                                                   Tok.getLocation(), 0));
-
-    ConsumeToken();
-    while (Tok.is(tok::comma)) {
-      // Eat the comma.
-      ConsumeToken();
-      
-      if (Tok.isNot(tok::identifier)) {
-        Diag(Tok, diag::err_expected_ident);
-        ErrorEmitted = true;
-        break;
-      }
-      
-      IdentifierInfo *ParmII = Tok.getIdentifierInfo();
-      
-      // Verify that the argument identifier has not already been mentioned.
-      if (!ParamsSoFar.insert(ParmII)) {
-        Diag(Tok.getLocation(), diag::err_param_redefinition,ParmII->getName());
-        ParmII = 0;
-      }
-          
-      // Remember this identifier in ParamInfo.
-      if (ParmII)
-        ParamInfo.push_back(DeclaratorChunk::ParamInfo(ParmII,
-                                                       Tok.getLocation(), 0));
-      
-      // Eat the identifier.
-      ConsumeToken();
-    }
-    
-    // K&R 'prototype'.
-    IsVariadic = false;
-    HasPrototype = false;
+    return ParseFunctionDeclaratorIdentifierList(LParenLoc, D);
   } else {
     // Finally, a normal, non-empty parameter type list.
     
@@ -1424,6 +1377,79 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D) {
 }
 
 
+/// ParseFunctionDeclaratorIdentifierList - While parsing a function declarator
+/// we found a K&R-style identifier list instead of a type argument list.  The
+/// current token is known to be the first identifier in the list.
+///
+///       identifier-list: [C99 6.7.5]
+///         identifier
+///         identifier-list ',' identifier
+///
+void Parser::ParseFunctionDeclaratorIdentifierList(SourceLocation LParenLoc,
+                                                   Declarator &D) {
+  // Build up an array of information about the parsed arguments.
+  llvm::SmallVector<DeclaratorChunk::ParamInfo, 16> ParamInfo;
+  llvm::SmallSet<const IdentifierInfo*, 16> ParamsSoFar;
+  
+  // If there was no identifier specified for the declarator, either we are in
+  // an abstract-declarator, or we are in a parameter declarator which was found
+  // to be abstract.  In abstract-declarators, identifier lists are not valid:
+  // diagnose this.
+  if (!D.getIdentifier())
+    Diag(Tok, diag::ext_ident_list_in_param);
+
+  // Tok is known to be the first identifier in the list.  Remember this
+  // identifier in ParamInfo.
+  ParamInfo.push_back(DeclaratorChunk::ParamInfo(Tok.getIdentifierInfo(),
+                                                 Tok.getLocation(), 0));
+  
+  ConsumeToken();
+  bool ErrorEmitted = false;
+  
+  while (Tok.is(tok::comma)) {
+    // Eat the comma.
+    ConsumeToken();
+    
+    if (Tok.isNot(tok::identifier)) {
+      Diag(Tok, diag::err_expected_ident);
+      ErrorEmitted = true;
+      break;
+    }
+    
+    IdentifierInfo *ParmII = Tok.getIdentifierInfo();
+    
+    // Verify that the argument identifier has not already been mentioned.
+    if (!ParamsSoFar.insert(ParmII)) {
+      Diag(Tok.getLocation(), diag::err_param_redefinition,ParmII->getName());
+      ParmII = 0;
+    }
+    
+    // Remember this identifier in ParamInfo.
+    if (ParmII)
+      ParamInfo.push_back(DeclaratorChunk::ParamInfo(ParmII,
+                                                     Tok.getLocation(), 0));
+    
+    // Eat the identifier.
+    ConsumeToken();
+  }
+  
+  // Remember that we parsed a function type, and remember the attributes.
+  if (!ErrorEmitted)
+    D.AddTypeInfo(DeclaratorChunk::getFunction(false, false,
+                                               &ParamInfo[0], ParamInfo.size(),
+                                               LParenLoc));
+  
+  // If we have the closing ')', eat it and we're done.
+  if (Tok.is(tok::r_paren)) {
+    ConsumeParen();
+  } else {
+    // If an error happened earlier parsing something else in the proto, don't
+    // issue another error.
+    if (!ErrorEmitted)
+      Diag(Tok, diag::err_expected_rparen);
+    SkipUntil(tok::r_paren);
+  }
+}
 
 /// [C90]   direct-declarator '[' constant-expression[opt] ']'
 /// [C99]   direct-declarator '[' type-qual-list[opt] assignment-expr[opt] ']'
