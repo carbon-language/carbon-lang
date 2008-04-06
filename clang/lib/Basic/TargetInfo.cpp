@@ -16,6 +16,7 @@
 #include "clang/AST/Builtins.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/STLExtras.h"
+#include <cstdlib>
 using namespace clang;
 
 // TargetInfo Constructor.
