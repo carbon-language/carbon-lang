@@ -572,7 +572,7 @@ int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,
   GCCArgs.push_back("-shared");  // `-shared' for Linux/X86, maybe others
 #endif
 
-#if defined(__ia64__) || defined(__alpha__)
+#if defined(__ia64__) || defined(__alpha__) || defined(__amd64__)
   GCCArgs.push_back("-fPIC");   // Requires shared objs to contain PIC
 #endif
 #ifdef __sparc__

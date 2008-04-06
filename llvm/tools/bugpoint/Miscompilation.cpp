@@ -907,7 +907,7 @@ bool BugDriver::debugCodeGenerator() {
 #if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
             << " -G"            // Compile a shared library, `-G' for Sparc
 #else
-            << " -shared"       // `-shared' for Linux/X86, maybe others
+            << " -fPIC -shared"       // `-shared' for Linux/X86, maybe others
 #endif
             << " -fno-strict-aliasing\n";
 
