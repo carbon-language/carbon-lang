@@ -83,10 +83,8 @@ Parser::ExprResult Parser::ParseCXXBoolLiteral() {
 ///         'throw' assignment-expression[opt]
 Parser::ExprResult Parser::ParseThrowExpression() {
   assert(Tok.is(tok::kw_throw) && "Not throw!");
-
-  ExprResult Expr;
-
   SourceLocation ThrowLoc = ConsumeToken();           // Eat the throw token.
+  
   // If the current token isn't the start of an assignment-expression,
   // then the expression is not present.  This handles things like:
   //   "C ? throw : (void)42", which is crazy but legal.
@@ -100,7 +98,7 @@ Parser::ExprResult Parser::ParseThrowExpression() {
     return Actions.ActOnCXXThrow(ThrowLoc);
 
   default:
-    Expr = ParseAssignmentExpression();
+    ExprResult Expr = ParseAssignmentExpression();
     if (Expr.isInvalid) return Expr;
     return Actions.ActOnCXXThrow(ThrowLoc, Expr.Val);
   }
