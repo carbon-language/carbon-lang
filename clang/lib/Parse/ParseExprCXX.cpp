@@ -87,13 +87,21 @@ Parser::ExprResult Parser::ParseThrowExpression() {
   ExprResult Expr;
 
   SourceLocation ThrowLoc = ConsumeToken();           // Eat the throw token.
-  // FIXME: Anything that isn't an assignment-expression should bail out now.
-  if (Tok.is(tok::semi) || Tok.is(tok::r_paren) || Tok.is(tok::colon) ||
-      Tok.is(tok::comma))
+  // If the current token isn't the start of an assignment-expression,
+  // then the expression is not present.  This handles things like:
+  //   "C ? throw : (void)42", which is crazy but legal.
+  switch (Tok.getKind()) {  // FIXME: move this predicate somewhere common.
+  case tok::semi:
+  case tok::r_paren:
+  case tok::r_square:
+  case tok::r_brace:
+  case tok::colon:
+  case tok::comma:
     return Actions.ActOnCXXThrow(ThrowLoc);
 
-  Expr = ParseAssignmentExpression();
-  if (!Expr.isInvalid)
-    Expr = Actions.ActOnCXXThrow(ThrowLoc, Expr.Val);
-  return Expr;
+  default:
+    Expr = ParseAssignmentExpression();
+    if (Expr.isInvalid) return Expr;
+    return Actions.ActOnCXXThrow(ThrowLoc, Expr.Val);
+  }
 }
