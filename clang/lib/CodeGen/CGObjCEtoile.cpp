@@ -231,7 +231,7 @@ llvm::Function *CGObjCEtoile::MethodPreamble(
   }
   llvm::FunctionType *MethodTy = 
     llvm::FunctionType::get(ReturnTy, Args, isVarArg);
-  llvm::Function *Method = new llvm::Function(MethodTy,
+  llvm::Function *Method = llvm::Function::Create(MethodTy,
       llvm::GlobalValue::InternalLinkage,
       ".objc.method",
       &TheModule);

@@ -38,7 +38,7 @@ llvm::BasicBlock *CodeGenFunction::getBasicBlockForLabel(const LabelStmt *S) {
   if (BB) return BB;
   
   // Create, but don't insert, the new block.
-  return BB = new llvm::BasicBlock(S->getName());
+  return BB = llvm::BasicBlock::Create(S->getName());
 }
 
 llvm::Constant *
@@ -69,7 +69,7 @@ void CodeGenFunction::GenerateObjCMethod(const ObjCMethodDecl *OMD) {
                                               ParamTypes.begin(),
                                               OMD->param_size(),
                                               OMD->isVariadic());
-  llvm::BasicBlock *EntryBB = new llvm::BasicBlock("entry", CurFn);
+  llvm::BasicBlock *EntryBB = llvm::BasicBlock::Create("entry", CurFn);
   
   // Create a marker to make it easy to insert allocas into the entryblock
   // later.  Don't create this with the builder, because we don't want it
@@ -188,7 +188,7 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
     CurFn->setParamAttrs(llvm::PAListPtr::get(&PAWI, 1));
   }
 
-  llvm::BasicBlock *EntryBB = new llvm::BasicBlock("entry", CurFn);
+  llvm::BasicBlock *EntryBB = llvm::BasicBlock::Create("entry", CurFn);
   
   // Create a marker to make it easy to insert allocas into the entryblock
   // later.  Don't create this with the builder, because we don't want it
@@ -252,7 +252,7 @@ bool CodeGenFunction::isDummyBlock(const llvm::BasicBlock *BB) {
 void CodeGenFunction::StartBlock(const char *N) {
   llvm::BasicBlock *BB = Builder.GetInsertBlock();
   if (!isDummyBlock(BB))
-    EmitBlock(new llvm::BasicBlock(N));
+    EmitBlock(llvm::BasicBlock::Create(N));
   else
     BB->setName(N);
 }

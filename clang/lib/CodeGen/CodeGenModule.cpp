@@ -149,7 +149,7 @@ llvm::Constant *CodeGenModule::GetAddrOfFunctionDecl(const FunctionDecl *D,
   // If it doesn't already exist, just create and return an entry.
   if (F == 0) {
     // FIXME: param attributes for sext/zext etc.
-    F = new llvm::Function(FTy, llvm::Function::ExternalLinkage, D->getName(),
+    F = llvm::Function::Create(FTy, llvm::Function::ExternalLinkage, D->getName(),
                            &getModule());
 
     // Set the appropriate calling convention for the Function.
@@ -174,7 +174,7 @@ llvm::Constant *CodeGenModule::GetAddrOfFunctionDecl(const FunctionDecl *D,
   // This happens if there is a prototype for a function (e.g. "int f()") and
   // then a definition of a different type (e.g. "int f(int x)").  Start by
   // making a new function of the correct type, RAUW, then steal the name.
-  llvm::Function *NewFn = new llvm::Function(FTy, 
+  llvm::Function *NewFn = llvm::Function::Create(FTy, 
                                              llvm::Function::ExternalLinkage,
                                              "", &getModule());
   NewFn->takeName(F);
@@ -399,7 +399,7 @@ llvm::Function *CodeGenModule::getBuiltinLibFunction(unsigned BuiltinID) {
   }
 
   // FIXME: param attributes for sext/zext etc.
-  return FunctionSlot = new llvm::Function(Ty, llvm::Function::ExternalLinkage,
+  return FunctionSlot = llvm::Function::Create(Ty, llvm::Function::ExternalLinkage,
                                            Name, &getModule());
 }
 
