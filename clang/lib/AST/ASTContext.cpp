@@ -1026,28 +1026,25 @@ static FloatingRank getFloatingRank(QualType T) {
 /// point or a complex type (based on typeDomain/typeSize). 
 /// 'typeDomain' is a real floating point or complex type.
 /// 'typeSize' is a real floating point or complex type.
-QualType ASTContext::getFloatingTypeOfSizeWithinDomain(
-  QualType typeSize, QualType typeDomain) const {
-  if (typeDomain->isComplexType()) {
-    switch (getFloatingRank(typeSize)) {
+QualType ASTContext::getFloatingTypeOfSizeWithinDomain(QualType Size,
+                                                       QualType Domain) const {
+  FloatingRank EltRank = getFloatingRank(Size);
+  if (Domain->isComplexType()) {
+    switch (EltRank) {
     default: assert(0 && "getFloatingRank(): illegal value for rank");
     case FloatRank:      return FloatComplexTy;
     case DoubleRank:     return DoubleComplexTy;
     case LongDoubleRank: return LongDoubleComplexTy;
     }
   }
-  if (typeDomain->isRealFloatingType()) {
-    switch (getFloatingRank(typeSize)) {
-    default: assert(0 && "getFloatingRank(): illegal value for rank");
-    case FloatRank:      return FloatTy;
-    case DoubleRank:     return DoubleTy;
-    case LongDoubleRank: return LongDoubleTy;
-    }
+
+  assert(Domain->isRealFloatingType() && "Unknown domain!");
+  switch (EltRank) {
+  default: assert(0 && "getFloatingRank(): illegal value for rank");
+  case FloatRank:      return FloatTy;
+  case DoubleRank:     return DoubleTy;
+  case LongDoubleRank: return LongDoubleTy;
   }
-  assert(0 && "getFloatingTypeOfSizeWithinDomain(): illegal domain");
-  //an invalid return value, but the assert
-  //will ensure that this code is never reached.
-  return VoidTy;
 }
 
 /// getFloatingTypeOrder - Compare the rank of the two specified floating
