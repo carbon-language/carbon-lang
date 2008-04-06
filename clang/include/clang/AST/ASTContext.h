@@ -303,14 +303,15 @@ public:
   /// See C99 6.7.5.3p7 and C99 6.3.2.1p3.
   QualType getArrayDecayedType(QualType T);
   
-  /// maxIntegerType - Returns the highest ranked integer type. Handles 3
-  /// different type combos: unsigned/unsigned, signed/signed, signed/unsigned.
-  QualType maxIntegerType(QualType lhs, QualType rhs);
+  /// getMaxIntegerType - Returns the highest ranked integer type: 
+  /// C99 6.3.1.8p1.
+  QualType getMaxIntegerType(QualType LHS, QualType RHS);
   
-  /// compareFloatingType - Handles 3 different combos: 
-  /// float/float, float/complex, complex/complex. 
-  /// If lt > rt, return 1. If lt == rt, return 0. If lt < rt, return -1. 
-  int compareFloatingType(QualType lt, QualType rt);
+  /// getFloatingTypeOrder - Compare the rank of the two specified floating
+  /// point types, ignoring the domain of the type (i.e. 'double' ==
+  /// '_Complex double').  If LHS > RHS, return 1.  If LHS == RHS, return 0. If
+  /// LHS < RHS, return -1. 
+  int getFloatingTypeOrder(QualType LHS, QualType RHS);
 
   /// getFloatingTypeOfSizeWithinDomain - Returns a real floating 
   /// point or a complex type (based on typeDomain/typeSize). 

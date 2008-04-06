@@ -1010,13 +1010,12 @@ QualType ASTContext::getArrayDecayedType(QualType Ty) {
 
 /// getFloatingRank - Return a relative rank for floating point types.
 /// This routine will assert if passed a built-in type that isn't a float.
-static int getFloatingRank(QualType T) {
-  T = T.getCanonicalType();
+static FloatingRank getFloatingRank(QualType T) {
   if (const ComplexType *CT = T->getAsComplexType())
     return getFloatingRank(CT->getElementType());
-  
+
   switch (T->getAsBuiltinType()->getKind()) {
-  default:  assert(0 && "getFloatingRank(): not a floating type");
+  default: assert(0 && "getFloatingRank(): not a floating type");
   case BuiltinType::Float:      return FloatRank;
   case BuiltinType::Double:     return DoubleRank;
   case BuiltinType::LongDouble: return LongDoubleRank;
@@ -1051,13 +1050,16 @@ QualType ASTContext::getFloatingTypeOfSizeWithinDomain(
   return VoidTy;
 }
 
-/// compareFloatingType - Handles 3 different combos: 
+/// getFloatingTypeOrder - Handles 3 different combos: 
 /// float/float, float/complex, complex/complex. 
 /// If lt > rt, return 1. If lt == rt, return 0. If lt < rt, return -1. 
-int ASTContext::compareFloatingType(QualType lt, QualType rt) {
-  if (getFloatingRank(lt) == getFloatingRank(rt))
+int ASTContext::getFloatingTypeOrder(QualType LHS, QualType RHS) {
+  FloatingRank LHSR = getFloatingRank(LHS);
+  FloatingRank RHSR = getFloatingRank(RHS);
+  
+  if (LHSR == RHSR)
     return 0;
-  if (getFloatingRank(lt) > getFloatingRank(rt))
+  if (LHSR > RHSR)
     return 1;
   return -1;
 }
@@ -1094,9 +1096,9 @@ static unsigned getIntegerRank(Type *T) {
   }
 }
 
-// maxIntegerType - Returns the highest ranked integer type. Handles 3 case:
+// getMaxIntegerType - Returns the highest ranked integer type. Handles 3 case:
 // unsigned/unsigned, signed/signed, signed/unsigned. C99 6.3.1.8p1.
-QualType ASTContext::maxIntegerType(QualType LHS, QualType RHS) {
+QualType ASTContext::getMaxIntegerType(QualType LHS, QualType RHS) {
   Type *LHSC = getCanonicalType(LHS).getTypePtr();
   Type *RHSC = getCanonicalType(RHS).getTypePtr();
   if (LHSC == RHSC) return LHS;

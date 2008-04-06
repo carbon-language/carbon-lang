@@ -1008,7 +1008,7 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
     // real or complex domain, to the precision of the other type. For example,
     // when combining a "long double" with a "double _Complex", the 
     // "double _Complex" is promoted to "long double _Complex".
-    int result = Context.compareFloatingType(lhs, rhs);
+    int result = Context.getFloatingTypeOrder(lhs, rhs);
     
     if (result > 0) { // The left side is bigger, convert rhs. 
       rhs = Context.getFloatingTypeOfSizeWithinDomain(lhs, rhs);
@@ -1050,7 +1050,7 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
     }
     // We have two real floating types, float/complex combos were handled above.
     // Convert the smaller operand to the bigger result.
-    int result = Context.compareFloatingType(lhs, rhs);
+    int result = Context.getFloatingTypeOrder(lhs, rhs);
     
     if (result > 0) { // convert the rhs
       if (!isCompAssign) ImpCastExprToType(rhsExpr, lhs);
@@ -1068,8 +1068,8 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
     const ComplexType *rhsComplexInt = rhs->getAsComplexIntegerType();
 
     if (lhsComplexInt && rhsComplexInt) {
-      if (Context.maxIntegerType(lhsComplexInt->getElementType(), 
-                                 rhsComplexInt->getElementType()) == lhs) {
+      if (Context.getMaxIntegerType(lhsComplexInt->getElementType(), 
+                                    rhsComplexInt->getElementType()) == lhs) {
         // convert the rhs
         if (!isCompAssign) ImpCastExprToType(rhsExpr, lhs);
         return lhs;
@@ -1088,7 +1088,7 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
     }
   }
   // Finally, we have two differing integer types.
-  if (Context.maxIntegerType(lhs, rhs) == lhs) { // convert the rhs
+  if (Context.getMaxIntegerType(lhs, rhs) == lhs) { // convert the rhs
     if (!isCompAssign) ImpCastExprToType(rhsExpr, lhs);
     return lhs;
   }
