@@ -125,9 +125,9 @@ public:
   
   NamedDecl *getMethodContext() const { return MethodContext; }
   
-  const ObjCInterfaceDecl *getClassInterface() const;
-  ObjCInterfaceDecl *getClassInterface() {
-    return (ObjCInterfaceDecl*)((ObjCMethodDecl*)this)->getClassInterface();
+  ObjCInterfaceDecl *getClassInterface();
+  const ObjCInterfaceDecl *getClassInterface() const {
+    return const_cast<ObjCMethodDecl*>(this)->getClassInterface();
   }
   
   Selector getSelector() const { return SelName; }

@@ -417,16 +417,15 @@ unsigned ObjCMethodDecl::getSynthesizedMethodSize() const {
   return length; 
 }
 
-const ObjCInterfaceDecl *ObjCMethodDecl::getClassInterface() const {
+ObjCInterfaceDecl *ObjCMethodDecl::getClassInterface() {
   if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(MethodContext))
     return ID;
   if (ObjCCategoryDecl *CD = dyn_cast<ObjCCategoryDecl>(MethodContext))
     return CD->getClassInterface();
   if (ObjCImplementationDecl *IMD = 
-      dyn_cast<ObjCImplementationDecl>(MethodContext))
+        dyn_cast<ObjCImplementationDecl>(MethodContext))
     return IMD->getClassInterface();
-  if (ObjCCategoryImplDecl *CID = 
-      dyn_cast<ObjCCategoryImplDecl>(MethodContext))
+  if (ObjCCategoryImplDecl *CID = dyn_cast<ObjCCategoryImplDecl>(MethodContext))
     return CID->getClassInterface();
   assert(false && "unknown method context");
   return 0;
