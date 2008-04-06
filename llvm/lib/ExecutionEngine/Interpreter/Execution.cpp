@@ -803,10 +803,10 @@ GenericValue Interpreter::executeGEPOperation(Value *Ptr, gep_type_iterator I,
         cast<IntegerType>(I.getOperand()->getType())->getBitWidth();
       if (BitWidth == 32)
         Idx = (int64_t)(int32_t)IdxGV.IntVal.getZExtValue();
-      else if (BitWidth == 64)
+      else {
+        assert(BitWidth == 64 && "Invalid index type for getelementptr");
         Idx = (int64_t)IdxGV.IntVal.getZExtValue();
-      else 
-        assert(0 && "Invalid index type for getelementptr");
+      }
       Total += TD.getABITypeSize(ST->getElementType())*Idx;
     }
   }
@@ -944,48 +944,35 @@ void Interpreter::visitAShr(BinaryOperator &I) {
 
 GenericValue Interpreter::executeTruncInst(Value *SrcVal, const Type *DstTy,
                                            ExecutionContext &SF) {
-  const Type *SrcTy = SrcVal->getType();
   GenericValue Dest, Src = getOperandValue(SrcVal, SF);
   const IntegerType *DITy = cast<IntegerType>(DstTy);
-  const IntegerType *SITy = cast<IntegerType>(SrcTy);
   unsigned DBitWidth = DITy->getBitWidth();
-  unsigned SBitWidth = SITy->getBitWidth();
-  assert(SBitWidth > DBitWidth && "Invalid truncate");
   Dest.IntVal = Src.IntVal.trunc(DBitWidth);
   return Dest;
 }
 
 GenericValue Interpreter::executeSExtInst(Value *SrcVal, const Type *DstTy,
                                           ExecutionContext &SF) {
-  const Type *SrcTy = SrcVal->getType();
   GenericValue Dest, Src = getOperandValue(SrcVal, SF);
   const IntegerType *DITy = cast<IntegerType>(DstTy);
-  const IntegerType *SITy = cast<IntegerType>(SrcTy);
   unsigned DBitWidth = DITy->getBitWidth();
-  unsigned SBitWidth = SITy->getBitWidth();
-  assert(SBitWidth < DBitWidth && "Invalid sign extend");
   Dest.IntVal = Src.IntVal.sext(DBitWidth);
   return Dest;
 }
 
 GenericValue Interpreter::executeZExtInst(Value *SrcVal, const Type *DstTy,
                                           ExecutionContext &SF) {
-  const Type *SrcTy = SrcVal->getType();
   GenericValue Dest, Src = getOperandValue(SrcVal, SF);
   const IntegerType *DITy = cast<IntegerType>(DstTy);
-  const IntegerType *SITy = cast<IntegerType>(SrcTy);
   unsigned DBitWidth = DITy->getBitWidth();
-  unsigned SBitWidth = SITy->getBitWidth();
-  assert(SBitWidth < DBitWidth && "Invalid sign extend");
   Dest.IntVal = Src.IntVal.zext(DBitWidth);
   return Dest;
 }
 
 GenericValue Interpreter::executeFPTruncInst(Value *SrcVal, const Type *DstTy,
                                              ExecutionContext &SF) {
-  const Type *SrcTy = SrcVal->getType();
   GenericValue Dest, Src = getOperandValue(SrcVal, SF);
-  assert(SrcTy == Type::DoubleTy && DstTy == Type::FloatTy &&
+  assert(SrcVal->getType() == Type::DoubleTy && DstTy == Type::FloatTy &&
          "Invalid FPTrunc instruction");
   Dest.FloatVal = (float) Src.DoubleVal;
   return Dest;
@@ -993,9 +980,8 @@ GenericValue Interpreter::executeFPTruncInst(Value *SrcVal, const Type *DstTy,
 
 GenericValue Interpreter::executeFPExtInst(Value *SrcVal, const Type *DstTy,
                                            ExecutionContext &SF) {
-  const Type *SrcTy = SrcVal->getType();
   GenericValue Dest, Src = getOperandValue(SrcVal, SF);
-  assert(SrcTy == Type::FloatTy && DstTy == Type::DoubleTy &&
+  assert(SrcVal->getType() == Type::FloatTy && DstTy == Type::DoubleTy &&
          "Invalid FPTrunc instruction");
   Dest.DoubleVal = (double) Src.FloatVal;
   return Dest;
@@ -1056,10 +1042,9 @@ GenericValue Interpreter::executeSIToFPInst(Value *SrcVal, const Type *DstTy,
 
 GenericValue Interpreter::executePtrToIntInst(Value *SrcVal, const Type *DstTy,
                                               ExecutionContext &SF) {
-  const Type *SrcTy = SrcVal->getType();
   uint32_t DBitWidth = cast<IntegerType>(DstTy)->getBitWidth();
   GenericValue Dest, Src = getOperandValue(SrcVal, SF);
-  assert(isa<PointerType>(SrcTy) && "Invalid PtrToInt instruction");
+  assert(isa<PointerType>(SrcVal->getType()) && "Invalid PtrToInt instruction");
 
   Dest.IntVal = APInt(DBitWidth, (intptr_t) Src.PointerVal);
   return Dest;
