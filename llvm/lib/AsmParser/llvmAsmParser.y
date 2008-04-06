@@ -493,7 +493,7 @@ static Value *getVal(const Type *Ty, const ValID &ID) {
    }
    const Type* ElTy = PTy->getElementType();
    if (const FunctionType *FTy = dyn_cast<FunctionType>(ElTy))
-     V = new Function(FTy, GlobalValue::ExternalLinkage);
+     V = Function::Create(FTy, GlobalValue::ExternalLinkage);
    else
      V = new GlobalVariable(ElTy, false, GlobalValue::ExternalLinkage, 0, "",
                             (Module*)0, false, PTy->getAddressSpace());
@@ -551,7 +551,7 @@ static BasicBlock *defineBBVal(const ValID &ID, BasicBlock *unwindDest) {
     // We haven't seen this BB before and its first mention is a definition. 
     // Just create it and return it.
     std::string Name (ID.Type == ValID::LocalName ? ID.getName() : "");
-    BB = new BasicBlock(Name, CurFun.CurrentFunction);
+    BB = BasicBlock::Create(Name, CurFun.CurrentFunction);
     if (ID.Type == ValID::LocalID) {
       assert(ID.Num == CurFun.NextValNum && "Invalid new block number");
       InsertValue(BB);
@@ -607,7 +607,7 @@ static BasicBlock *getBBVal(const ValID &ID) {
   std::string Name;
   if (ID.Type == ValID::LocalName)
     Name = ID.getName();
-  BB = new BasicBlock(Name, CurFun.CurrentFunction);
+  BB = BasicBlock::Create(Name, CurFun.CurrentFunction);
 
   // Insert it in the forward refs map.
   CurFun.BBForwardRefs[ID] = BB;
@@ -1779,8 +1779,8 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
         GlobalValue *GV;
         if (const FunctionType *FTy = 
                  dyn_cast<FunctionType>(PT->getElementType())) {
-          GV = new Function(FTy, GlobalValue::ExternalWeakLinkage, Name,
-                            CurModule.CurrentModule);
+          GV = Function::Create(FTy, GlobalValue::ExternalWeakLinkage, Name,
+                                CurModule.CurrentModule);
         } else {
           GV = new GlobalVariable(PT->getElementType(), false,
                                   GlobalValue::ExternalWeakLinkage, 0,
@@ -2319,8 +2319,8 @@ FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
         AI->setName("");
     }
   } else  {  // Not already defined?
-    Fn = new Function(FT, GlobalValue::ExternalWeakLinkage, FunctionName,
-                      CurModule.CurrentModule);
+    Fn = Function::Create(FT, GlobalValue::ExternalWeakLinkage, FunctionName,
+                          CurModule.CurrentModule);
     InsertValue(Fn, CurModule.Values);
   }
 
@@ -2579,18 +2579,18 @@ BBTerminatorInst :
   RET ReturnedVal  { // Return with a result...
     ValueList &VL = *$2;
     assert(!VL.empty() && "Invalid ret operands!");
-    $$ = new ReturnInst(&VL[0], VL.size());
+    $$ = ReturnInst::Create(&VL[0], VL.size());
     delete $2;
     CHECK_FOR_ERROR
   }
   | RET VOID {                                    // Return with no result...
-    $$ = new ReturnInst();
+    $$ = ReturnInst::Create();
     CHECK_FOR_ERROR
   }
   | BR LABEL ValueRef {                           // Unconditional Branch...
     BasicBlock* tmpBB = getBBVal($3);
     CHECK_FOR_ERROR
-    $$ = new BranchInst(tmpBB);
+    $$ = BranchInst::Create(tmpBB);
   }                                               // Conditional Branch...
   | BR INTTYPE ValueRef ',' LABEL ValueRef ',' LABEL ValueRef {  
     assert(cast<IntegerType>($2)->getBitWidth() == 1 && "Not Bool?");
@@ -2600,14 +2600,14 @@ BBTerminatorInst :
     CHECK_FOR_ERROR
     Value* tmpVal = getVal(Type::Int1Ty, $3);
     CHECK_FOR_ERROR
-    $$ = new BranchInst(tmpBBA, tmpBBB, tmpVal);
+    $$ = BranchInst::Create(tmpBBA, tmpBBB, tmpVal);
   }
   | SWITCH IntType ValueRef ',' LABEL ValueRef '[' JumpTable ']' {
     Value* tmpVal = getVal($2, $3);
     CHECK_FOR_ERROR
     BasicBlock* tmpBB = getBBVal($6);
     CHECK_FOR_ERROR
-    SwitchInst *S = new SwitchInst(tmpVal, tmpBB, $8->size());
+    SwitchInst *S = SwitchInst::Create(tmpVal, tmpBB, $8->size());
     $$ = S;
 
     std::vector<std::pair<Constant*,BasicBlock*> >::iterator I = $8->begin(),
@@ -2626,7 +2626,7 @@ BBTerminatorInst :
     CHECK_FOR_ERROR
     BasicBlock* tmpBB = getBBVal($6);
     CHECK_FOR_ERROR
-    SwitchInst *S = new SwitchInst(tmpVal, tmpBB, 0);
+    SwitchInst *S = SwitchInst::Create(tmpVal, tmpBB, 0);
     $$ = S;
     CHECK_FOR_ERROR
   }
@@ -2704,7 +2704,7 @@ BBTerminatorInst :
       PAL = PAListPtr::get(Attrs.begin(), Attrs.end());
 
     // Create the InvokeInst
-    InvokeInst *II = new InvokeInst(V, Normal, Except, Args.begin(),Args.end());
+    InvokeInst *II = InvokeInst::Create(V, Normal, Except, Args.begin(),Args.end());
     II->setCallingConv($2);
     II->setParamAttrs(PAL);
     $$ = II;
@@ -2911,7 +2911,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
       GEN_ERROR("select condition must be boolean");
     if ($4->getType() != $6->getType())
       GEN_ERROR("select value types should match");
-    $$ = new SelectInst($2, $4, $6);
+    $$ = SelectInst::Create($2, $4, $6);
     CHECK_FOR_ERROR
   }
   | VAARG ResolvedVal ',' Types {
@@ -2930,7 +2930,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
   | INSERTELEMENT ResolvedVal ',' ResolvedVal ',' ResolvedVal {
     if (!InsertElementInst::isValidOperands($2, $4, $6))
       GEN_ERROR("Invalid insertelement operands");
-    $$ = new InsertElementInst($2, $4, $6);
+    $$ = InsertElementInst::Create($2, $4, $6);
     CHECK_FOR_ERROR
   }
   | SHUFFLEVECTOR ResolvedVal ',' ResolvedVal ',' ResolvedVal {
@@ -2943,7 +2943,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     const Type *Ty = $2->front().first->getType();
     if (!Ty->isFirstClassType())
       GEN_ERROR("PHI node operands must be of first class type");
-    $$ = new PHINode(Ty);
+    $$ = PHINode::Create(Ty);
     ((PHINode*)$$)->reserveOperandSpace($2->size());
     while ($2->begin() != $2->end()) {
       if ($2->front().first->getType() != Ty) 
@@ -3031,7 +3031,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
       PAL = PAListPtr::get(Attrs.begin(), Attrs.end());
 
     // Create the call node
-    CallInst *CI = new CallInst(V, Args.begin(), Args.end());
+    CallInst *CI = CallInst::Create(V, Args.begin(), Args.end());
     CI->setTailCall($1);
     CI->setCallingConv($2);
     CI->setParamAttrs(PAL);
@@ -3144,7 +3144,7 @@ MemoryInst : MALLOC Types OptCAlign {
                      (*$2)->getDescription()+ "'");
     Value* tmpVal = getVal(*$2, $3);
     CHECK_FOR_ERROR
-    $$ = new GetElementPtrInst(tmpVal, $4->begin(), $4->end());
+    $$ = GetElementPtrInst::Create(tmpVal, $4->begin(), $4->end());
     delete $2; 
     delete $4;
   };

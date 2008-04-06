@@ -104,13 +104,20 @@ private:
   
   Function(const Function&); // DO NOT IMPLEMENT
   void operator=(const Function&); // DO NOT IMPLEMENT
-public:
+
   /// Function ctor - If the (optional) Module argument is specified, the
   /// function is automatically inserted into the end of the function list for
   /// the module.
   ///
   Function(const FunctionType *Ty, LinkageTypes Linkage,
            const std::string &N = "", Module *M = 0);
+
+public:
+  static Function *Create(const FunctionType *Ty, LinkageTypes Linkage,
+                          const std::string &N = "", Module *M = 0) {
+    return new(0) Function(Ty, Linkage, N, M);
+  }
+
   ~Function();
 
   const Type *getReturnType() const;           // Return the type of the ret val

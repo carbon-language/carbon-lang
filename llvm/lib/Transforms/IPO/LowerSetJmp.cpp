@@ -268,7 +268,7 @@ void LowerSetJmp::TransformLongJmpCall(CallInst* Inst)
   SmallVector<Value *, 2> Args;
   Args.push_back(CI);
   Args.push_back(Inst->getOperand(2));
-  new CallInst(ThrowLongJmp, Args.begin(), Args.end(), "", Inst);
+  CallInst::Create(ThrowLongJmp, Args.begin(), Args.end(), "", Inst);
 
   SwitchValuePair& SVP = SwitchValMap[Inst->getParent()->getParent()];
 
@@ -276,7 +276,7 @@ void LowerSetJmp::TransformLongJmpCall(CallInst* Inst)
   // we should branch to the basic block that determines if this longjmp
   // is applicable here. Otherwise, issue an unwind.
   if (SVP.first)
-    new BranchInst(SVP.first->getParent(), Inst);
+    BranchInst::Create(SVP.first->getParent(), Inst);
   else
     new UnwindInst(Inst);
 
@@ -311,7 +311,7 @@ AllocaInst* LowerSetJmp::GetSetJmpMap(Function* Func)
   // Fill in the alloca and call to initialize the SJ map.
   const Type *SBPTy = PointerType::getUnqual(Type::Int8Ty);
   AllocaInst* Map = new AllocaInst(SBPTy, 0, "SJMap", Inst);
-  new CallInst(InitSJMap, Map, "", Inst);
+  CallInst::Create(InitSJMap, Map, "", Inst);
   return SJMap[Func] = Map;
 }
 
@@ -324,7 +324,7 @@ BasicBlock* LowerSetJmp::GetRethrowBB(Function* Func)
 
   // The basic block we're going to jump to if we need to rethrow the
   // exception.
-  BasicBlock* Rethrow = new BasicBlock("RethrowExcept", Func);
+  BasicBlock* Rethrow = BasicBlock::Create("RethrowExcept", Func);
 
   // Fill in the "Rethrow" BB with a call to rethrow the exception. This
   // is the last instruction in the BB since at this point the runtime
@@ -340,7 +340,7 @@ LowerSetJmp::SwitchValuePair LowerSetJmp::GetSJSwitch(Function* Func,
 {
   if (SwitchValMap[Func].first) return SwitchValMap[Func];
 
-  BasicBlock* LongJmpPre = new BasicBlock("LongJmpBlkPre", Func);
+  BasicBlock* LongJmpPre = BasicBlock::Create("LongJmpBlkPre", Func);
   BasicBlock::InstListType& LongJmpPreIL = LongJmpPre->getInstList();
 
   // Keep track of the preliminary basic block for some of the other
@@ -348,24 +348,24 @@ LowerSetJmp::SwitchValuePair LowerSetJmp::GetSJSwitch(Function* Func,
   PrelimBBMap[Func] = LongJmpPre;
 
   // Grab the exception.
-  CallInst* Cond = new CallInst(IsLJException, "IsLJExcept");
+  CallInst* Cond = CallInst::Create(IsLJException, "IsLJExcept");
   LongJmpPreIL.push_back(Cond);
 
   // The "decision basic block" gets the number associated with the
   // setjmp call returning to switch on and the value returned by
   // longjmp.
-  BasicBlock* DecisionBB = new BasicBlock("LJDecisionBB", Func);
+  BasicBlock* DecisionBB = BasicBlock::Create("LJDecisionBB", Func);
   BasicBlock::InstListType& DecisionBBIL = DecisionBB->getInstList();
 
-  new BranchInst(DecisionBB, Rethrow, Cond, LongJmpPre);
+  BranchInst::Create(DecisionBB, Rethrow, Cond, LongJmpPre);
 
   // Fill in the "decision" basic block.
-  CallInst* LJVal = new CallInst(GetLJValue, "LJVal");
+  CallInst* LJVal = CallInst::Create(GetLJValue, "LJVal");
   DecisionBBIL.push_back(LJVal);
-  CallInst* SJNum = new CallInst(TryCatchLJ, GetSetJmpMap(Func), "SJNum");
+  CallInst* SJNum = CallInst::Create(TryCatchLJ, GetSetJmpMap(Func), "SJNum");
   DecisionBBIL.push_back(SJNum);
 
-  SwitchInst* SI = new SwitchInst(SJNum, Rethrow, 0, DecisionBB);
+  SwitchInst* SI = SwitchInst::Create(SJNum, Rethrow, 0, DecisionBB);
   return SwitchValMap[Func] = SwitchValuePair(SI, LJVal);
 }
 
@@ -386,7 +386,7 @@ void LowerSetJmp::TransformSetJmpCall(CallInst* Inst)
     make_vector<Value*>(GetSetJmpMap(Func), BufPtr,
                         ConstantInt::get(Type::Int32Ty,
                                          SetJmpIDMap[Func]++), 0);
-  new CallInst(AddSJToMap, Args.begin(), Args.end(), "", Inst);
+  CallInst::Create(AddSJToMap, Args.begin(), Args.end(), "", Inst);
 
   // We are guaranteed that there are no values live across basic blocks
   // (because we are "not in SSA form" yet), but there can still be values live
@@ -428,7 +428,7 @@ void LowerSetJmp::TransformSetJmpCall(CallInst* Inst)
 
   // This PHI node will be in the new block created from the
   // splitBasicBlock call.
-  PHINode* PHI = new PHINode(Type::Int32Ty, "SetJmpReturn", Inst);
+  PHINode* PHI = PHINode::Create(Type::Int32Ty, "SetJmpReturn", Inst);
 
   // Coming from a call to setjmp, the return is 0.
   PHI->addIncoming(ConstantInt::getNullValue(Type::Int32Ty), ABlock);
@@ -474,9 +474,9 @@ void LowerSetJmp::visitCallInst(CallInst& CI)
   // Construct the new "invoke" instruction.
   TerminatorInst* Term = OldBB->getTerminator();
   std::vector<Value*> Params(CI.op_begin() + 1, CI.op_end());
-  InvokeInst* II = new
-    InvokeInst(CI.getCalledValue(), NewBB, PrelimBBMap[Func],
-               Params.begin(), Params.end(), CI.getName(), Term);
+  InvokeInst* II =
+    InvokeInst::Create(CI.getCalledValue(), NewBB, PrelimBBMap[Func],
+                       Params.begin(), Params.end(), CI.getName(), Term);
   II->setCallingConv(CI.getCallingConv());
   II->setParamAttrs(CI.getParamAttrs());
 
@@ -507,15 +507,15 @@ void LowerSetJmp::visitInvokeInst(InvokeInst& II)
   BasicBlock* ExceptBB = II.getUnwindDest();
 
   Function* Func = BB->getParent();
-  BasicBlock* NewExceptBB = new BasicBlock("InvokeExcept", Func);
+  BasicBlock* NewExceptBB = BasicBlock::Create("InvokeExcept", Func);
   BasicBlock::InstListType& InstList = NewExceptBB->getInstList();
 
   // If this is a longjmp exception, then branch to the preliminary BB of
   // the longjmp exception handling. Otherwise, go to the old exception.
-  CallInst* IsLJExcept = new CallInst(IsLJException, "IsLJExcept");
+  CallInst* IsLJExcept = CallInst::Create(IsLJException, "IsLJExcept");
   InstList.push_back(IsLJExcept);
 
-  new BranchInst(PrelimBBMap[Func], ExceptBB, IsLJExcept, NewExceptBB);
+  BranchInst::Create(PrelimBBMap[Func], ExceptBB, IsLJExcept, NewExceptBB);
 
   II.setUnwindDest(NewExceptBB);
   ++InvokesTransformed;
@@ -525,14 +525,14 @@ void LowerSetJmp::visitInvokeInst(InvokeInst& II)
 // function.
 void LowerSetJmp::visitReturnInst(ReturnInst &RI) {
   Function* Func = RI.getParent()->getParent();
-  new CallInst(DestroySJMap, GetSetJmpMap(Func), "", &RI);
+  CallInst::Create(DestroySJMap, GetSetJmpMap(Func), "", &RI);
 }
 
 // visitUnwindInst - We want to destroy the setjmp map upon exit from the
 // function.
 void LowerSetJmp::visitUnwindInst(UnwindInst &UI) {
   Function* Func = UI.getParent()->getParent();
-  new CallInst(DestroySJMap, GetSetJmpMap(Func), "", &UI);
+  CallInst::Create(DestroySJMap, GetSetJmpMap(Func), "", &UI);
 }
 
 ModulePass *llvm::createLowerSetJmpPass() {

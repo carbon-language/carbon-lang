@@ -158,13 +158,13 @@ BasicBlock* LowerSwitch::switchConvert(CaseItr Begin, CaseItr End,
   // Create a new node that checks if the value is < pivot. Go to the
   // left branch if it is and right branch if not.
   Function* F = OrigBlock->getParent();
-  BasicBlock* NewNode = new BasicBlock("NodeBlock");
+  BasicBlock* NewNode = BasicBlock::Create("NodeBlock");
   Function::iterator FI = OrigBlock;
   F->getBasicBlockList().insert(++FI, NewNode);
 
   ICmpInst* Comp = new ICmpInst(ICmpInst::ICMP_SLT, Val, Pivot.Low, "Pivot");
   NewNode->getInstList().push_back(Comp);
-  new BranchInst(LBranch, RBranch, Comp, NewNode);
+  BranchInst::Create(LBranch, RBranch, Comp, NewNode);
   return NewNode;
 }
 
@@ -179,7 +179,7 @@ BasicBlock* LowerSwitch::newLeafBlock(CaseRange& Leaf, Value* Val,
                                       BasicBlock* Default)
 {
   Function* F = OrigBlock->getParent();
-  BasicBlock* NewLeaf = new BasicBlock("LeafBlock");
+  BasicBlock* NewLeaf = BasicBlock::Create("LeafBlock");
   Function::iterator FI = OrigBlock;
   F->getBasicBlockList().insert(++FI, NewLeaf);
 
@@ -213,7 +213,7 @@ BasicBlock* LowerSwitch::newLeafBlock(CaseRange& Leaf, Value* Val,
 
   // Make the conditional branch...
   BasicBlock* Succ = Leaf.BB;
-  new BranchInst(Succ, Default, Comp, NewLeaf);
+  BranchInst::Create(Succ, Default, Comp, NewLeaf);
 
   // If there were any PHI nodes in this successor, rewrite one entry
   // from OrigBlock to come from NewLeaf.
@@ -284,17 +284,17 @@ void LowerSwitch::processSwitchInst(SwitchInst *SI) {
 
   // If there is only the default destination, don't bother with the code below.
   if (SI->getNumOperands() == 2) {
-    new BranchInst(SI->getDefaultDest(), CurBlock);
+    BranchInst::Create(SI->getDefaultDest(), CurBlock);
     CurBlock->getInstList().erase(SI);
     return;
   }
 
   // Create a new, empty default block so that the new hierarchy of
   // if-then statements go to this and the PHI nodes are happy.
-  BasicBlock* NewDefault = new BasicBlock("NewDefault");
+  BasicBlock* NewDefault = BasicBlock::Create("NewDefault");
   F->getBasicBlockList().insert(Default, NewDefault);
 
-  new BranchInst(Default, NewDefault);
+  BranchInst::Create(Default, NewDefault);
 
   // If there is an entry in any PHI nodes for the default edge, make sure
   // to update them as well.
@@ -317,7 +317,7 @@ void LowerSwitch::processSwitchInst(SwitchInst *SI) {
                                           OrigBlock, NewDefault);
 
   // Branch to our shiny new if-then stuff...
-  new BranchInst(SwitchBlock, OrigBlock);
+  BranchInst::Create(SwitchBlock, OrigBlock);
 
   // We are now done with the switch instruction, delete it.
   CurBlock->getInstList().erase(SI);

@@ -323,8 +323,8 @@ void SROA::DoScalarReplacement(AllocationInst *AI,
       SmallVector<Value*, 8> NewArgs;
       NewArgs.push_back(Constant::getNullValue(Type::Int32Ty));
       NewArgs.append(GEPI->op_begin()+3, GEPI->op_end());
-      RepValue = new GetElementPtrInst(AllocaToUse, NewArgs.begin(),
-                                       NewArgs.end(), "", GEPI);
+      RepValue = GetElementPtrInst::Create(AllocaToUse, NewArgs.begin(),
+                                           NewArgs.end(), "", GEPI);
       RepValue->takeName(GEPI);
     }
     
@@ -634,9 +634,9 @@ void SROA::RewriteBitCastUserOfAlloca(Instruction *BCInst, AllocationInst *AI,
         Value *Idx[2];
         Idx[0] = Zero;
         Idx[1] = ConstantInt::get(Type::Int32Ty, i);
-        OtherElt = new GetElementPtrInst(OtherPtr, Idx, Idx + 2,
-                                         OtherPtr->getNameStr()+"."+utostr(i),
-                                         MI);
+        OtherElt = GetElementPtrInst::Create(OtherPtr, Idx, Idx + 2,
+                                             OtherPtr->getNameStr()+"."+utostr(i),
+                                             MI);
       }
 
       Value *EltPtr = NewElts[i];
@@ -716,7 +716,7 @@ void SROA::RewriteBitCastUserOfAlloca(Instruction *BCInst, AllocationInst *AI,
           ConstantInt::get(MI->getOperand(3)->getType(), EltSize), // Size
           Zero  // Align
         };
-        new CallInst(TheFn, Ops, Ops + 4, "", MI);
+        CallInst::Create(TheFn, Ops, Ops + 4, "", MI);
       } else {
         assert(isa<MemSetInst>(MI));
         Value *Ops[] = {
@@ -724,7 +724,7 @@ void SROA::RewriteBitCastUserOfAlloca(Instruction *BCInst, AllocationInst *AI,
           ConstantInt::get(MI->getOperand(3)->getType(), EltSize), // Size
           Zero  // Align
         };
-        new CallInst(TheFn, Ops, Ops + 4, "", MI);
+        CallInst::Create(TheFn, Ops, Ops + 4, "", MI);
       }
     }
 
@@ -838,22 +838,22 @@ void SROA::CanonicalizeAllocaUsers(AllocationInst *AI) {
           // Insert the new GEP instructions, which are properly indexed.
           SmallVector<Value*, 8> Indices(GEPI->op_begin()+1, GEPI->op_end());
           Indices[1] = Constant::getNullValue(Type::Int32Ty);
-          Value *ZeroIdx = new GetElementPtrInst(GEPI->getOperand(0),
-                                                 Indices.begin(),
-                                                 Indices.end(),
-                                                 GEPI->getName()+".0", GEPI);
+          Value *ZeroIdx = GetElementPtrInst::Create(GEPI->getOperand(0),
+                                                     Indices.begin(),
+                                                     Indices.end(),
+                                                     GEPI->getName()+".0", GEPI);
           Indices[1] = ConstantInt::get(Type::Int32Ty, 1);
-          Value *OneIdx = new GetElementPtrInst(GEPI->getOperand(0),
-                                                Indices.begin(),
-                                                Indices.end(),
-                                                GEPI->getName()+".1", GEPI);
+          Value *OneIdx = GetElementPtrInst::Create(GEPI->getOperand(0),
+                                                    Indices.begin(),
+                                                    Indices.end(),
+                                                    GEPI->getName()+".1", GEPI);
           // Replace all loads of the variable index GEP with loads from both
           // indexes and a select.
           while (!GEPI->use_empty()) {
             LoadInst *LI = cast<LoadInst>(GEPI->use_back());
             Value *Zero = new LoadInst(ZeroIdx, LI->getName()+".0", LI);
             Value *One  = new LoadInst(OneIdx , LI->getName()+".1", LI);
-            Value *R = new SelectInst(IsOne, One, Zero, LI->getName(), LI);
+            Value *R = SelectInst::Create(IsOne, One, Zero, LI->getName(), LI);
             LI->replaceAllUsesWith(R);
             LI->eraseFromParent();
           }
@@ -1261,9 +1261,9 @@ Value *SROA::ConvertUsesOfStoreToScalar(StoreInst *SI, AllocaInst *NewAI,
       // Must be an element insertion.
       const TargetData &TD = getAnalysis<TargetData>();
       unsigned Elt = Offset/TD.getABITypeSizeInBits(PTy->getElementType());
-      SV = new InsertElementInst(Old, SV,
-                                 ConstantInt::get(Type::Int32Ty, Elt),
-                                 "tmp", SI);
+      SV = InsertElementInst::Create(Old, SV,
+                                     ConstantInt::get(Type::Int32Ty, Elt),
+                                     "tmp", SI);
     }
   } else if (isa<PointerType>(AllocaType)) {
     // If the alloca type is a pointer, then all the elements must be

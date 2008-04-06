@@ -644,14 +644,14 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
       // Rename it
       oldMain->setName("llvm_bugpoint_old_main");
       // Create a NEW `main' function with same type in the test module.
-      Function *newMain = new Function(oldMain->getFunctionType(),
-                                       GlobalValue::ExternalLinkage,
-                                       "main", Test);
+      Function *newMain = Function::Create(oldMain->getFunctionType(),
+                                           GlobalValue::ExternalLinkage,
+                                           "main", Test);
       // Create an `oldmain' prototype in the test module, which will
       // corresponds to the real main function in the same module.
-      Function *oldMainProto = new Function(oldMain->getFunctionType(),
-                                            GlobalValue::ExternalLinkage,
-                                            oldMain->getName(), Test);
+      Function *oldMainProto = Function::Create(oldMain->getFunctionType(),
+                                                GlobalValue::ExternalLinkage,
+                                                oldMain->getName(), Test);
       // Set up and remember the argument list for the main function.
       std::vector<Value*> args;
       for (Function::arg_iterator
@@ -662,12 +662,12 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
       }
 
       // Call the old main function and return its result
-      BasicBlock *BB = new BasicBlock("entry", newMain);
-      CallInst *call = new CallInst(oldMainProto, args.begin(), args.end(),
-                                    "", BB);
+      BasicBlock *BB = BasicBlock::Create("entry", newMain);
+      CallInst *call = CallInst::Create(oldMainProto, args.begin(), args.end(),
+                                        "", BB);
 
       // If the type of old function wasn't void, return value of call
-      new ReturnInst(call, BB);
+      ReturnInst::Create(call, BB);
     }
 
   // The second nasty issue we must deal with in the JIT is that the Safe
@@ -717,35 +717,35 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
 
           // Construct a new stub function that will re-route calls to F
           const FunctionType *FuncTy = F->getFunctionType();
-          Function *FuncWrapper = new Function(FuncTy,
-                                               GlobalValue::InternalLinkage,
-                                               F->getName() + "_wrapper",
-                                               F->getParent());
-          BasicBlock *EntryBB  = new BasicBlock("entry", FuncWrapper);
-          BasicBlock *DoCallBB = new BasicBlock("usecache", FuncWrapper);
-          BasicBlock *LookupBB = new BasicBlock("lookupfp", FuncWrapper);
+          Function *FuncWrapper = Function::Create(FuncTy,
+                                                   GlobalValue::InternalLinkage,
+                                                   F->getName() + "_wrapper",
+                                                   F->getParent());
+          BasicBlock *EntryBB  = BasicBlock::Create("entry", FuncWrapper);
+          BasicBlock *DoCallBB = BasicBlock::Create("usecache", FuncWrapper);
+          BasicBlock *LookupBB = BasicBlock::Create("lookupfp", FuncWrapper);
 
           // Check to see if we already looked up the value.
           Value *CachedVal = new LoadInst(Cache, "fpcache", EntryBB);
           Value *IsNull = new ICmpInst(ICmpInst::ICMP_EQ, CachedVal,
                                        NullPtr, "isNull", EntryBB);
-          new BranchInst(LookupBB, DoCallBB, IsNull, EntryBB);
+          BranchInst::Create(LookupBB, DoCallBB, IsNull, EntryBB);
 
           // Resolve the call to function F via the JIT API:
           //
           // call resolver(GetElementPtr...)
-          CallInst *Resolver = new CallInst(resolverFunc, ResolverArgs.begin(),
-                                            ResolverArgs.end(),
-                                            "resolver", LookupBB);
+          CallInst *Resolver = CallInst::Create(resolverFunc, ResolverArgs.begin(),
+                                                ResolverArgs.end(),
+                                                "resolver", LookupBB);
           // cast the result from the resolver to correctly-typed function
           CastInst *CastedResolver = new BitCastInst(Resolver, 
             PointerType::getUnqual(F->getFunctionType()), "resolverCast", LookupBB);
 
           // Save the value in our cache.
           new StoreInst(CastedResolver, Cache, LookupBB);
-          new BranchInst(DoCallBB, LookupBB);
+          BranchInst::Create(DoCallBB, LookupBB);
 
-          PHINode *FuncPtr = new PHINode(NullPtr->getType(), "fp", DoCallBB);
+          PHINode *FuncPtr = PHINode::Create(NullPtr->getType(), "fp", DoCallBB);
           FuncPtr->addIncoming(CastedResolver, LookupBB);
           FuncPtr->addIncoming(CachedVal, EntryBB);
 
@@ -757,12 +757,12 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
 
           // Pass on the arguments to the real function, return its result
           if (F->getReturnType() == Type::VoidTy) {
-            new CallInst(FuncPtr, Args.begin(), Args.end(), "", DoCallBB);
-            new ReturnInst(DoCallBB);
+            CallInst::Create(FuncPtr, Args.begin(), Args.end(), "", DoCallBB);
+            ReturnInst::Create(DoCallBB);
           } else {
-            CallInst *Call = new CallInst(FuncPtr, Args.begin(), Args.end(),
-                                          "retval", DoCallBB);
-            new ReturnInst(Call, DoCallBB);
+            CallInst *Call = CallInst::Create(FuncPtr, Args.begin(), Args.end(),
+                                              "retval", DoCallBB);
+            ReturnInst::Create(Call, DoCallBB);
           }
 
           // Use the wrapper function instead of the old function

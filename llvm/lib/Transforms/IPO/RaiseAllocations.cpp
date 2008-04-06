@@ -175,7 +175,7 @@ bool RaiseAllocations::runOnModule(Module &M) {
           // If the old instruction was an invoke, add an unconditional branch
           // before the invoke, which will become the new terminator.
           if (InvokeInst *II = dyn_cast<InvokeInst>(I))
-            new BranchInst(II->getNormalDest(), I);
+            BranchInst::Create(II->getNormalDest(), I);
 
           // Delete the old call site
           MI->getParent()->getInstList().erase(I);
@@ -227,7 +227,7 @@ bool RaiseAllocations::runOnModule(Module &M) {
           // If the old instruction was an invoke, add an unconditional branch
           // before the invoke, which will become the new terminator.
           if (InvokeInst *II = dyn_cast<InvokeInst>(I))
-            new BranchInst(II->getNormalDest(), I);
+            BranchInst::Create(II->getNormalDest(), I);
 
           // Delete the old call site
           if (I->getType() != Type::VoidTy)

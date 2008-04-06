@@ -254,7 +254,7 @@ bool X86TargetAsmInfo::LowerToBSwap(CallInst *CI) const {
   Constant *Int = Intrinsic::getDeclaration(M, Intrinsic::bswap, Tys, 1);
   
   Value *Op = CI->getOperand(1);
-  Op = new CallInst(Int, Op, CI->getName(), CI);
+  Op = CallInst::Create(Int, Op, CI->getName(), CI);
   
   CI->replaceAllUsesWith(Op);
   CI->eraseFromParent();

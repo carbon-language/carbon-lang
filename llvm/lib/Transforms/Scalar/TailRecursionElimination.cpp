@@ -377,10 +377,10 @@ bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
   // create the new entry block, allowing us to branch back to the old entry.
   if (OldEntry == 0) {
     OldEntry = &F->getEntryBlock();
-    BasicBlock *NewEntry = new BasicBlock("", F, OldEntry);
+    BasicBlock *NewEntry = BasicBlock::Create("", F, OldEntry);
     NewEntry->takeName(OldEntry);
     OldEntry->setName("tailrecurse");
-    new BranchInst(OldEntry, NewEntry);
+    BranchInst::Create(OldEntry, NewEntry);
 
     // If this tail call is marked 'tail' and if there are any allocas in the
     // entry block, move them up to the new entry block.
@@ -400,7 +400,7 @@ bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
     Instruction *InsertPos = OldEntry->begin();
     for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end();
          I != E; ++I) {
-      PHINode *PN = new PHINode(I->getType(), I->getName()+".tr", InsertPos);
+      PHINode *PN = PHINode::Create(I->getType(), I->getName()+".tr", InsertPos);
       I->replaceAllUsesWith(PN); // Everyone use the PHI node now!
       PN->addIncoming(I, NewEntry);
       ArgumentPHIs.push_back(PN);
@@ -430,8 +430,8 @@ bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
   if (AccumulatorRecursionEliminationInitVal) {
     Instruction *AccRecInstr = AccumulatorRecursionInstr;
     // Start by inserting a new PHI node for the accumulator.
-    PHINode *AccPN = new PHINode(AccRecInstr->getType(), "accumulator.tr",
-                                 OldEntry->begin());
+    PHINode *AccPN = PHINode::Create(AccRecInstr->getType(), "accumulator.tr",
+                                     OldEntry->begin());
 
     // Loop over all of the predecessors of the tail recursion block.  For the
     // real entry into the function we seed the PHI with the initial value,
@@ -467,7 +467,7 @@ bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
 
   // Now that all of the PHI nodes are in place, remove the call and
   // ret instructions, replacing them with an unconditional branch.
-  new BranchInst(OldEntry, Ret);
+  BranchInst::Create(OldEntry, Ret);
   BB->getInstList().erase(Ret);  // Remove return.
   BB->getInstList().erase(CI);   // Remove call.
   ++NumEliminated;

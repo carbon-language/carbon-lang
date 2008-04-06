@@ -1740,7 +1740,7 @@ bool IPSCCP::runOnModule(Module &M) {
           
           // Make this an uncond branch to the first successor.
           TerminatorInst *TI = I->getParent()->getTerminator();
-          new BranchInst(TI->getSuccessor(0), TI);
+          BranchInst::Create(TI->getSuccessor(0), TI);
           
           // Remove entries in successor phi nodes to remove edges.
           for (unsigned i = 1, e = TI->getNumSuccessors(); i != e; ++i)

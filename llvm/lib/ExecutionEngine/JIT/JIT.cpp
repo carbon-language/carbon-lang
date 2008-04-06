@@ -220,11 +220,11 @@ GenericValue JIT::runFunction(Function *F,
 
   // First, create the function.
   FunctionType *STy=FunctionType::get(RetTy, std::vector<const Type*>(), false);
-  Function *Stub = new Function(STy, Function::InternalLinkage, "",
-                                F->getParent());
+  Function *Stub = Function::Create(STy, Function::InternalLinkage, "",
+                                    F->getParent());
 
   // Insert a basic block.
-  BasicBlock *StubBB = new BasicBlock("", Stub);
+  BasicBlock *StubBB = BasicBlock::Create("", Stub);
 
   // Convert all of the GenericValue arguments over to constants.  Note that we
   // currently don't support varargs.
@@ -257,12 +257,12 @@ GenericValue JIT::runFunction(Function *F,
     Args.push_back(C);
   }
 
-  CallInst *TheCall = new CallInst(F, Args.begin(), Args.end(), "", StubBB);
+  CallInst *TheCall = CallInst::Create(F, Args.begin(), Args.end(), "", StubBB);
   TheCall->setTailCall();
   if (TheCall->getType() != Type::VoidTy)
-    new ReturnInst(TheCall, StubBB);             // Return result of the call.
+    ReturnInst::Create(TheCall, StubBB);             // Return result of the call.
   else
-    new ReturnInst(StubBB);                      // Just return void.
+    ReturnInst::Create(StubBB);                      // Just return void.
 
   // Finally, return the value returned by our nullary stub function.
   return runFunction(Stub, std::vector<GenericValue>());

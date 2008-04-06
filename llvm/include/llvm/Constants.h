@@ -43,9 +43,15 @@ struct ConvertConstantType;
 /// @brief Class for constant integers.
 class ConstantInt : public Constant {
   static ConstantInt *TheTrueVal, *TheFalseVal;
+  void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
   ConstantInt(const ConstantInt &);      // DO NOT IMPLEMENT
   ConstantInt(const IntegerType *Ty, const APInt& V);
   APInt Val;
+protected:
+  // allocate space for exactly zero operands
+  void *operator new(size_t s) {
+    return User::operator new(s, 0);
+  }
 public:
   /// Return the constant as an APInt value reference. This allows clients to
   /// obtain a copy of the value, with all its precision in tact.
@@ -215,9 +221,15 @@ private:
 ///
 class ConstantFP : public Constant {
   APFloat Val;
+  void *operator new(size_t, unsigned);// DO NOT IMPLEMENT
   ConstantFP(const ConstantFP &);      // DO NOT IMPLEMENT
 protected:
   ConstantFP(const Type *Ty, const APFloat& V);
+protected:
+  // allocate space for exactly zero operands
+  void *operator new(size_t s) {
+    return User::operator new(s, 0);
+  }
 public:
   /// get() - Static factory methods - Return objects of the specified value
   static ConstantFP *get(const Type *Ty, const APFloat& V);
@@ -262,10 +274,16 @@ public:
 ///
 class ConstantAggregateZero : public Constant {
   friend struct ConstantCreator<ConstantAggregateZero, Type, char>;
+  void *operator new(size_t, unsigned);                      // DO NOT IMPLEMENT
   ConstantAggregateZero(const ConstantAggregateZero &);      // DO NOT IMPLEMENT
 protected:
   explicit ConstantAggregateZero(const Type *Ty)
     : Constant(Ty, ConstantAggregateZeroVal, 0, 0) {}
+protected:
+  // allocate space for exactly zero operands
+  void *operator new(size_t s) {
+    return User::operator new(s, 0);
+  }
 public:
   /// get() - static factory method for creating a null aggregate.  It is
   /// illegal to call this method with a non-aggregate type.
@@ -457,14 +475,19 @@ public:
 ///
 class ConstantPointerNull : public Constant {
   friend struct ConstantCreator<ConstantPointerNull, PointerType, char>;
+  void *operator new(size_t, unsigned);                  // DO NOT IMPLEMENT
   ConstantPointerNull(const ConstantPointerNull &);      // DO NOT IMPLEMENT
 protected:
   explicit ConstantPointerNull(const PointerType *T)
     : Constant(reinterpret_cast<const Type*>(T),
                Value::ConstantPointerNullVal, 0, 0) {}
 
+protected:
+  // allocate space for exactly zero operands
+  void *operator new(size_t s) {
+    return User::operator new(s, 0);
+  }
 public:
-
   /// get() - Static factory methods - Return objects of the specified value
   static ConstantPointerNull *get(const PointerType *T);
 
@@ -706,9 +729,15 @@ public:
 ///
 class UndefValue : public Constant {
   friend struct ConstantCreator<UndefValue, Type, char>;
+  void *operator new(size_t, unsigned); // DO NOT IMPLEMENT
   UndefValue(const UndefValue &);      // DO NOT IMPLEMENT
 protected:
   explicit UndefValue(const Type *T) : Constant(T, UndefValueVal, 0, 0) {}
+protected:
+  // allocate space for exactly zero operands
+  void *operator new(size_t s) {
+    return User::operator new(s, 0);
+  }
 public:
   /// get() - Static factory methods - Return an 'undef' object of the specified
   /// type.

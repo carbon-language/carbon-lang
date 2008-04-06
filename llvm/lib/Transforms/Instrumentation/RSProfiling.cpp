@@ -216,9 +216,9 @@ void GlobalRandomCounter::ProcessChoicePoint(BasicBlock* bb) {
   
   //reset counter
   BasicBlock* oldnext = t->getSuccessor(0);
-  BasicBlock* resetblock = new BasicBlock("reset", oldnext->getParent(), 
-                                          oldnext);
-  TerminatorInst* t2 = new BranchInst(oldnext, resetblock);
+  BasicBlock* resetblock = BasicBlock::Create("reset", oldnext->getParent(), 
+                                              oldnext);
+  TerminatorInst* t2 = BranchInst::Create(oldnext, resetblock);
   t->setSuccessor(0, resetblock);
   new StoreInst(ResetValue, Counter, t2);
   ReplacePhiPred(oldnext, bb, resetblock);
@@ -291,9 +291,9 @@ void GlobalRandomCounterOpt::ProcessChoicePoint(BasicBlock* bb) {
   
   //reset counter
   BasicBlock* oldnext = t->getSuccessor(0);
-  BasicBlock* resetblock = new BasicBlock("reset", oldnext->getParent(), 
-                                          oldnext);
-  TerminatorInst* t2 = new BranchInst(oldnext, resetblock);
+  BasicBlock* resetblock = BasicBlock::Create("reset", oldnext->getParent(), 
+                                              oldnext);
+  TerminatorInst* t2 = BranchInst::Create(oldnext, resetblock);
   t->setSuccessor(0, resetblock);
   new StoreInst(ResetValue, AI, t2);
   ReplacePhiPred(oldnext, bb, resetblock);
@@ -311,7 +311,7 @@ void CycleCounter::PrepFunction(Function* F) {}
 void CycleCounter::ProcessChoicePoint(BasicBlock* bb) {
   BranchInst* t = cast<BranchInst>(bb->getTerminator());
   
-  CallInst* c = new CallInst(F, "rdcc", t);
+  CallInst* c = CallInst::Create(F, "rdcc", t);
   BinaryOperator* b = 
     BinaryOperator::createAnd(c, ConstantInt::get(Type::Int64Ty, rm),
                               "mrdcc", t);
@@ -375,8 +375,8 @@ Value* ProfilerRS::Translate(Value* v) {
     if (bb == &bb->getParent()->getEntryBlock())
       TransCache[bb] = bb; //don't translate entry block
     else
-      TransCache[bb] = new BasicBlock("dup_" + bb->getName(), bb->getParent(), 
-                                      NULL);
+      TransCache[bb] = BasicBlock::Create("dup_" + bb->getName(), bb->getParent(), 
+                                          NULL);
     return TransCache[bb];
   } else if (Instruction* i = dyn_cast<Instruction>(v)) {
     //we have already translated this
@@ -464,16 +464,16 @@ void ProfilerRS::ProcessBackEdge(BasicBlock* src, BasicBlock* dst, Function& F) 
   
   //a:
   Function::iterator BBN = src; ++BBN;
-  BasicBlock* bbC = new BasicBlock("choice", &F, BBN);
+  BasicBlock* bbC = BasicBlock::Create("choice", &F, BBN);
   //ChoicePoints.insert(bbC);
   BBN = cast<BasicBlock>(Translate(src));
-  BasicBlock* bbCp = new BasicBlock("choice", &F, ++BBN);
+  BasicBlock* bbCp = BasicBlock::Create("choice", &F, ++BBN);
   ChoicePoints.insert(bbCp);
   
   //b:
-  new BranchInst(cast<BasicBlock>(Translate(dst)), bbC);
-  new BranchInst(dst, cast<BasicBlock>(Translate(dst)), 
-                 ConstantInt::get(Type::Int1Ty, true), bbCp);
+  BranchInst::Create(cast<BasicBlock>(Translate(dst)), bbC);
+  BranchInst::Create(dst, cast<BasicBlock>(Translate(dst)), 
+                     ConstantInt::get(Type::Int1Ty, true), bbCp);
   //c:
   {
     TerminatorInst* iB = src->getTerminator();
@@ -527,10 +527,11 @@ bool ProfilerRS::runOnFunction(Function& F) {
     //oh, and add the edge from the reg2mem created entry node to the 
     //duplicated second node
     TerminatorInst* T = F.getEntryBlock().getTerminator();
-    ReplaceInstWithInst(T, new BranchInst(T->getSuccessor(0),
-                                          cast<BasicBlock>(
-                                            Translate(T->getSuccessor(0))),
-                                          ConstantInt::get(Type::Int1Ty, true)));
+    ReplaceInstWithInst(T, BranchInst::Create(T->getSuccessor(0),
+                                              cast<BasicBlock>(
+                                                Translate(T->getSuccessor(0))),
+                                              ConstantInt::get(Type::Int1Ty,
+                                                               true)));
     
     //do whatever is needed now that the function is duplicated
     c->PrepFunction(&F);

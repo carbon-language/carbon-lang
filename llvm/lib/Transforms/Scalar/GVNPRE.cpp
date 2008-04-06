@@ -904,10 +904,10 @@ Value* GVNPRE::phi_translate(Value* V, BasicBlock* pred, BasicBlock* succ) {
         newVal = new ShuffleVectorInst(newOp1, newOp2, newOp3,
                                        S->getName()+".expr");
       else if (InsertElementInst* I = dyn_cast<InsertElementInst>(U))
-        newVal = new InsertElementInst(newOp1, newOp2, newOp3,
-                                       I->getName()+".expr");
+        newVal = InsertElementInst::Create(newOp1, newOp2, newOp3,
+                                           I->getName()+".expr");
       else if (SelectInst* I = dyn_cast<SelectInst>(U))
-        newVal = new SelectInst(newOp1, newOp2, newOp3, I->getName()+".expr");
+        newVal = SelectInst::Create(newOp1, newOp2, newOp3, I->getName()+".expr");
       
       uint32_t v = VN.lookup_or_add(newVal);
       
@@ -947,9 +947,10 @@ Value* GVNPRE::phi_translate(Value* V, BasicBlock* pred, BasicBlock* succ) {
       }
     
     if (newOp1 != U->getPointerOperand() || changed_idx) {
-      Instruction* newVal = new GetElementPtrInst(newOp1,
-                                       newIdx.begin(), newIdx.end(),
-                                       U->getName()+".expr");
+      Instruction* newVal =
+          GetElementPtrInst::Create(newOp1,
+                                    newIdx.begin(), newIdx.end(),
+                                    U->getName()+".expr");
       
       uint32_t v = VN.lookup_or_add(newVal);
       
@@ -1667,24 +1668,23 @@ void GVNPRE::insertion_pre(Value* e, BasicBlock* BB,
         newVal = new ShuffleVectorInst(s1, s2, s3, S->getName()+".gvnpre",
                                        (*PI)->getTerminator());
       else if (InsertElementInst* S = dyn_cast<InsertElementInst>(U))
-        newVal = new InsertElementInst(s1, s2, s3, S->getName()+".gvnpre",
-                                       (*PI)->getTerminator());
+        newVal = InsertElementInst::Create(s1, s2, s3, S->getName()+".gvnpre",
+                                           (*PI)->getTerminator());
       else if (ExtractElementInst* S = dyn_cast<ExtractElementInst>(U))
         newVal = new ExtractElementInst(s1, s2, S->getName()+".gvnpre",
                                         (*PI)->getTerminator());
       else if (SelectInst* S = dyn_cast<SelectInst>(U))
-        newVal = new SelectInst(s1, s2, s3, S->getName()+".gvnpre",
-                                (*PI)->getTerminator());
+        newVal = SelectInst::Create(s1, s2, s3, S->getName()+".gvnpre",
+                                    (*PI)->getTerminator());
       else if (CastInst* C = dyn_cast<CastInst>(U))
         newVal = CastInst::create(C->getOpcode(), s1, C->getType(),
                                   C->getName()+".gvnpre", 
                                   (*PI)->getTerminator());
       else if (GetElementPtrInst* G = dyn_cast<GetElementPtrInst>(U))
-        newVal = new GetElementPtrInst(s1, sVarargs.begin(), sVarargs.end(), 
-                                       G->getName()+".gvnpre", 
-                                       (*PI)->getTerminator());
-                                
-                  
+        newVal = GetElementPtrInst::Create(s1, sVarargs.begin(), sVarargs.end(),
+                                           G->getName()+".gvnpre", 
+                                           (*PI)->getTerminator());
+
       VN.add(newVal, VN.lookup(U));
                   
       ValueNumberedSet& predAvail = availableOut[*PI];
@@ -1705,7 +1705,7 @@ void GVNPRE::insertion_pre(Value* e, BasicBlock* BB,
               
   for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE; ++PI) {
     if (p == 0)
-      p = new PHINode(avail[*PI]->getType(), "gvnpre-join", BB->begin());
+      p = PHINode::Create(avail[*PI]->getType(), "gvnpre-join", BB->begin());
     
     p->addIncoming(avail[*PI], *PI);
   }

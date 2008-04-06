@@ -44,6 +44,10 @@ class GlobalAlias : public GlobalValue {
 
   Use Aliasee;
 public:
+  // allocate space for exactly zero operands
+  void *operator new(size_t s) {
+    return User::operator new(s, 0);
+  }
   /// GlobalAlias ctor - If a parent module is specified, the alias is
   /// automatically inserted into the end of the specified module's alias list.
   GlobalAlias(const Type *Ty, LinkageTypes Linkage, const std::string &Name = "",

@@ -192,7 +192,7 @@ void GCSE::ReplaceInstructionWith(Instruction *I, Value *V) {
   if (InvokeInst *II = dyn_cast<InvokeInst>(I)) {
     // Removing an invoke instruction requires adding a branch to the normal
     // destination and removing PHI node entries in the exception destination.
-    new BranchInst(II->getNormalDest(), II);
+    BranchInst::Create(II->getNormalDest(), II);
     II->getUnwindDest()->removePredecessor(II->getParent());
   }
 

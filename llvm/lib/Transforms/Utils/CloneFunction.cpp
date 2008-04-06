@@ -31,7 +31,7 @@ BasicBlock *llvm::CloneBasicBlock(const BasicBlock *BB,
                                   DenseMap<const Value*, Value*> &ValueMap,
                                   const char *NameSuffix, Function *F,
                                   ClonedCodeInfo *CodeInfo) {
-  BasicBlock *NewBB = new BasicBlock("", F);
+  BasicBlock *NewBB = BasicBlock::Create("", F);
   if (BB->hasName()) NewBB->setName(BB->getName()+NameSuffix);
   NewBB->setUnwindDest(const_cast<BasicBlock*>(BB->getUnwindDest()));
 
@@ -144,7 +144,7 @@ Function *llvm::CloneFunction(const Function *F,
                                     ArgTypes, F->getFunctionType()->isVarArg());
 
   // Create the new function...
-  Function *NewF = new Function(FTy, F->getLinkage(), F->getName());
+  Function *NewF = Function::Create(FTy, F->getLinkage(), F->getName());
 
   // Loop over the arguments, copying the names of the mapped arguments over...
   Function::arg_iterator DestI = NewF->arg_begin();
@@ -208,7 +208,7 @@ void PruningFunctionCloner::CloneBlock(const BasicBlock *BB,
   
   // Nope, clone it now.
   BasicBlock *NewBB;
-  BBEntry = NewBB = new BasicBlock();
+  BBEntry = NewBB = BasicBlock::Create();
   if (BB->hasName()) NewBB->setName(BB->getName()+NameSuffix);
 
   bool hasCalls = false, hasDynamicAllocas = false, hasStaticAllocas = false;
@@ -253,7 +253,7 @@ void PruningFunctionCloner::CloneBlock(const BasicBlock *BB,
       // Constant fold to uncond branch!
       if (Cond) {
         BasicBlock *Dest = BI->getSuccessor(!Cond->getZExtValue());
-        ValueMap[OldTI] = new BranchInst(Dest, NewBB);
+        ValueMap[OldTI] = BranchInst::Create(Dest, NewBB);
         ToClone.push_back(Dest);
         TerminatorDone = true;
       }
@@ -265,7 +265,7 @@ void PruningFunctionCloner::CloneBlock(const BasicBlock *BB,
       Cond = dyn_cast_or_null<ConstantInt>(ValueMap[SI->getCondition()]);
     if (Cond) {     // Constant fold to uncond branch!
       BasicBlock *Dest = SI->getSuccessor(SI->findCaseValue(Cond));
-      ValueMap[OldTI] = new BranchInst(Dest, NewBB);
+      ValueMap[OldTI] = BranchInst::Create(Dest, NewBB);
       ToClone.push_back(Dest);
       TerminatorDone = true;
     }

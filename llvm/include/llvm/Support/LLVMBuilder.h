@@ -87,32 +87,32 @@ public:
 
   /// CreateRetVoid - Create a 'ret void' instruction.
   ReturnInst *CreateRetVoid() {
-    return Insert(new ReturnInst());
+    return Insert(ReturnInst::Create());
   }
 
   /// @verbatim 
   /// CreateRet - Create a 'ret <val>' instruction. 
   /// @endverbatim
   ReturnInst *CreateRet(Value *V) {
-    return Insert(new ReturnInst(V));
+    return Insert(ReturnInst::Create(V));
   }
   
   /// CreateBr - Create an unconditional 'br label X' instruction.
   BranchInst *CreateBr(BasicBlock *Dest) {
-    return Insert(new BranchInst(Dest));
+    return Insert(BranchInst::Create(Dest));
   }
 
   /// CreateCondBr - Create a conditional 'br Cond, TrueDest, FalseDest'
   /// instruction.
   BranchInst *CreateCondBr(Value *Cond, BasicBlock *True, BasicBlock *False) {
-    return Insert(new BranchInst(True, False, Cond));
+    return Insert(BranchInst::Create(True, False, Cond));
   }
   
   /// CreateSwitch - Create a switch instruction with the specified value,
   /// default dest, and with a hint for the number of cases that will be added
   /// (for efficient allocation).
   SwitchInst *CreateSwitch(Value *V, BasicBlock *Dest, unsigned NumCases = 10) {
-    return Insert(new SwitchInst(V, Dest, NumCases));
+    return Insert(SwitchInst::Create(V, Dest, NumCases));
   }
   
   /// CreateInvoke - Create an invoke instruction.
@@ -120,8 +120,8 @@ public:
   InvokeInst *CreateInvoke(Value *Callee, BasicBlock *NormalDest, 
                            BasicBlock *UnwindDest, InputIterator ArgBegin, 
                            InputIterator ArgEnd, const char *Name = "") {
-    return(Insert(new InvokeInst(Callee, NormalDest, UnwindDest,
-                                 ArgBegin, ArgEnd, Name)));
+    return Insert(InvokeInst::Create(Callee, NormalDest, UnwindDest,
+                                     ArgBegin, ArgEnd, Name));
   }
   
   UnwindInst *CreateUnwind() {
@@ -221,10 +221,10 @@ public:
   template<typename InputIterator>
   GetElementPtrInst *CreateGEP(Value *Ptr, InputIterator IdxBegin, 
                                InputIterator IdxEnd, const char *Name = "") {
-    return(Insert(new GetElementPtrInst(Ptr, IdxBegin, IdxEnd, Name)));
+    return(Insert(GetElementPtrInst::Create(Ptr, IdxBegin, IdxEnd, Name)));
   }
   GetElementPtrInst *CreateGEP(Value *Ptr, Value *Idx, const char *Name = "") {
-    return Insert(new GetElementPtrInst(Ptr, Idx, Name));
+    return Insert(GetElementPtrInst::Create(Ptr, Idx, Name));
   }
   GetElementPtrInst *CreateStructGEP(Value *Ptr, unsigned Idx, 
                                      const char *Name = "") {
@@ -232,7 +232,7 @@ public:
       ConstantInt::get(llvm::Type::Int32Ty, 0),
       ConstantInt::get(llvm::Type::Int32Ty, Idx)
     };
-    return Insert(new GetElementPtrInst(Ptr, Idxs, Idxs+2, Name));
+    return Insert(GetElementPtrInst::Create(Ptr, Idxs, Idxs+2, Name));
   }
   
   //===--------------------------------------------------------------------===//
@@ -384,25 +384,25 @@ public:
   //===--------------------------------------------------------------------===//
   
   PHINode *CreatePHI(const Type *Ty, const char *Name = "") {
-    return Insert(new PHINode(Ty, Name));
+    return Insert(PHINode::Create(Ty, Name));
   }
 
   CallInst *CreateCall(Value *Callee, const char *Name = "") {
-    return Insert(new CallInst(Callee, Name));
+    return Insert(CallInst::Create(Callee, Name));
   }
   CallInst *CreateCall(Value *Callee, Value *Arg, const char *Name = "") {
-    return Insert(new CallInst(Callee, Arg, Name));
+    return Insert(CallInst::Create(Callee, Arg, Name));
   }
 
   template<typename InputIterator>
   CallInst *CreateCall(Value *Callee, InputIterator ArgBegin, 
                        InputIterator ArgEnd, const char *Name = "") {
-    return(Insert(new CallInst(Callee, ArgBegin, ArgEnd, Name)));
+    return Insert(CallInst::Create(Callee, ArgBegin, ArgEnd, Name));
   }
   
   SelectInst *CreateSelect(Value *C, Value *True, Value *False,
                            const char *Name = "") {
-    return Insert(new SelectInst(C, True, False, Name));
+    return Insert(SelectInst::Create(C, True, False, Name));
   }
   
   VAArgInst *CreateVAArg(Value *List, const Type *Ty, const char *Name = "") {
@@ -416,7 +416,7 @@ public:
   
   InsertElementInst *CreateInsertElement(Value *Vec, Value *NewElt, Value *Idx,
                                          const char *Name = "") {
-    return Insert(new InsertElementInst(Vec, NewElt, Idx, Name));
+    return Insert(InsertElementInst::Create(Vec, NewElt, Idx, Name));
   }
   
   ShuffleVectorInst *CreateShuffleVector(Value *V1, Value *V2, Value *Mask,

@@ -32,7 +32,7 @@ using namespace llvm;
 Function *ilist_traits<Function>::createSentinel() {
   FunctionType *FTy =
     FunctionType::get(Type::VoidTy, std::vector<const Type*>(), false);
-  Function *Ret = new Function(FTy, GlobalValue::ExternalLinkage);
+  Function *Ret = Function::Create(FTy, GlobalValue::ExternalLinkage);
   // This should not be garbage monitored.
   LeakDetector::removeGarbageObject(Ret);
   return Ret;
@@ -149,7 +149,7 @@ Constant *Module::getOrInsertFunction(const std::string &Name,
   GlobalValue *F = dyn_cast_or_null<GlobalValue>(SymTab.lookup(Name));
   if (F == 0) {
     // Nope, add it
-    Function *New = new Function(Ty, GlobalVariable::ExternalLinkage, Name);
+    Function *New = Function::Create(Ty, GlobalVariable::ExternalLinkage, Name);
     FunctionList.push_back(New);
     return New;                    // Return the new prototype.
   }

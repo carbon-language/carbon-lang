@@ -2710,7 +2710,7 @@ bool GetResultInst::isValidOperands(const Value *Aggregate, unsigned Index) {
 // unit that uses these classes.
 
 GetElementPtrInst *GetElementPtrInst::clone() const {
-  return new GetElementPtrInst(*this);
+  return new(getNumOperands()) GetElementPtrInst(*this);
 }
 
 BinaryOperator *BinaryOperator::clone() const {
@@ -2741,24 +2741,24 @@ CastInst   *FPToSIInst::clone()   const { return new FPToSIInst(*this); }
 CastInst   *PtrToIntInst::clone() const { return new PtrToIntInst(*this); }
 CastInst   *IntToPtrInst::clone() const { return new IntToPtrInst(*this); }
 CastInst   *BitCastInst::clone()  const { return new BitCastInst(*this); }
-CallInst   *CallInst::clone()     const { return new CallInst(*this); }
-SelectInst *SelectInst::clone()   const { return new SelectInst(*this); }
+CallInst   *CallInst::clone()     const { return new(getNumOperands()) CallInst(*this); }
+SelectInst *SelectInst::clone()   const { return new(getNumOperands()) SelectInst(*this); }
 VAArgInst  *VAArgInst::clone()    const { return new VAArgInst(*this); }
 
 ExtractElementInst *ExtractElementInst::clone() const {
   return new ExtractElementInst(*this);
 }
 InsertElementInst *InsertElementInst::clone() const {
-  return new InsertElementInst(*this);
+  return InsertElementInst::Create(*this);
 }
 ShuffleVectorInst *ShuffleVectorInst::clone() const {
   return new ShuffleVectorInst(*this);
 }
 PHINode    *PHINode::clone()    const { return new PHINode(*this); }
-ReturnInst *ReturnInst::clone() const { return new ReturnInst(*this); }
-BranchInst *BranchInst::clone() const { return new BranchInst(*this); }
-SwitchInst *SwitchInst::clone() const { return new SwitchInst(*this); }
-InvokeInst *InvokeInst::clone() const { return new InvokeInst(*this); }
+ReturnInst *ReturnInst::clone() const { return new(getNumOperands()) ReturnInst(*this); }
+BranchInst *BranchInst::clone() const { return new(getNumOperands()) BranchInst(*this); }
+SwitchInst *SwitchInst::clone() const { return new(getNumOperands()) SwitchInst(*this); }
+InvokeInst *InvokeInst::clone() const { return new(getNumOperands()) InvokeInst(*this); }
 UnwindInst *UnwindInst::clone() const { return new UnwindInst(); }
 UnreachableInst *UnreachableInst::clone() const { return new UnreachableInst();}
 GetResultInst *GetResultInst::clone() const { return new GetResultInst(*this); }

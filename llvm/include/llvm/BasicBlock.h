@@ -66,17 +66,22 @@ private :
   BasicBlock(const BasicBlock &);     // Do not implement
   void operator=(const BasicBlock &); // Do not implement
 
-public:
-  /// Instruction iterators...
-  typedef InstListType::iterator                              iterator;
-  typedef InstListType::const_iterator                  const_iterator;
-
   /// BasicBlock ctor - If the function parameter is specified, the basic block
   /// is automatically inserted at either the end of the function (if
   /// InsertBefore is null), or before the specified basic block.
   ///
   explicit BasicBlock(const std::string &Name = "", Function *Parent = 0,
-                      BasicBlock *InsertBefore = 0, BasicBlock *unwindDest = 0);
+                      BasicBlock *InsertBefore = 0, BasicBlock *UnwindDest = 0);
+public:
+  /// Instruction iterators...
+  typedef InstListType::iterator                              iterator;
+  typedef InstListType::const_iterator                  const_iterator;
+
+  // allocate space for exactly zero operands
+  static BasicBlock *Create(const std::string &Name = "", Function *Parent = 0,
+                            BasicBlock *InsertBefore = 0, BasicBlock *UnwindDest = 0) {
+    return new(!!UnwindDest) BasicBlock(Name, Parent, InsertBefore, UnwindDest);
+  }
   ~BasicBlock();
 
   /// getUnwindDest - Returns the BasicBlock that flow will enter if an unwind

@@ -163,7 +163,7 @@ bool ADCE::deleteDeadInstructionsInLiveBlock(BasicBlock *BB) {
 /// successors it goes to.  This eliminate a use of the condition as well.
 ///
 TerminatorInst *ADCE::convertToUnconditionalBranch(TerminatorInst *TI) {
-  BranchInst *NB = new BranchInst(TI->getSuccessor(0), TI);
+  BranchInst *NB = BranchInst::Create(TI->getSuccessor(0), TI);
   BasicBlock *BB = TI->getParent();
 
   // Remove entries from PHI nodes to avoid confusing ourself later...
@@ -325,8 +325,8 @@ bool ADCE::doADCE() {
   // node as a special case.
   //
   if (!AliveBlocks.count(&Func->front())) {
-    BasicBlock *NewEntry = new BasicBlock();
-    new BranchInst(&Func->front(), NewEntry);
+    BasicBlock *NewEntry = BasicBlock::Create();
+    BranchInst::Create(&Func->front(), NewEntry);
     Func->getBasicBlockList().push_front(NewEntry);
     AliveBlocks.insert(NewEntry);    // This block is always alive!
     LiveSet.insert(NewEntry->getTerminator());  // The branch is live

@@ -25,6 +25,7 @@ namespace llvm {
 
 class User : public Value {
   User(const User &);             // Do not implement
+  void *operator new(size_t);     // Do not implement
 protected:
   /// OperandList - This is a pointer to the array of Users for this operand.
   /// For nodes of fixed arity (e.g. a binary operator) this array will live
@@ -38,10 +39,13 @@ protected:
   ///
   unsigned NumOperands;
 
-public:
+  void *operator new(size_t s, unsigned) {
+    return ::operator new(s);
+  }
   User(const Type *Ty, unsigned vty, Use *OpList, unsigned NumOps)
     : Value(Ty, vty), OperandList(OpList), NumOperands(NumOps) {}
 
+public:
   Value *getOperand(unsigned i) const {
     assert(i < NumOperands && "getOperand() out of range!");
     return OperandList[i];

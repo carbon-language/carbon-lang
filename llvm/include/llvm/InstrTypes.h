@@ -83,6 +83,7 @@ public:
 //===----------------------------------------------------------------------===//
 
 class UnaryInstruction : public Instruction {
+  void *operator new(size_t, unsigned); // Do not implement
   Use Op;
   
   // avoiding warning: 'this' : used in base member initializer list
@@ -95,6 +96,11 @@ protected:
     : Instruction(Ty, iType, &Op, 1, IAE), Op(V, this_()) {
   }
 public:
+  // allocate space for exactly one operand
+  void *operator new(size_t s) {
+    return User::operator new(s, 1);
+  }
+
   // Out of line virtual method, so the vtable, etc has a home.
   ~UnaryInstruction();
 
@@ -129,6 +135,7 @@ public:
 //===----------------------------------------------------------------------===//
 
 class BinaryOperator : public Instruction {
+  void *operator new(size_t, unsigned); // Do not implement
   Use Ops[2];
 protected:
   void init(BinaryOps iType);
@@ -137,6 +144,10 @@ protected:
   BinaryOperator(BinaryOps iType, Value *S1, Value *S2, const Type *Ty,
                  const std::string &Name, BasicBlock *InsertAtEnd);
 public:
+  // allocate space for exactly two operands
+  void *operator new(size_t s) {
+    return User::operator new(s, 2);
+  }
 
   /// Transparently provide more efficient getOperand methods.
   Value *getOperand(unsigned i) const {
@@ -489,6 +500,7 @@ public:
 /// This class is the base class for the comparison instructions. 
 /// @brief Abstract base class of comparison instructions.
 class CmpInst: public Instruction {
+  void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
   CmpInst(); // do not implement
 protected:
   CmpInst(Instruction::OtherOps op, unsigned short pred, Value *LHS, Value *RHS,
@@ -500,6 +512,10 @@ protected:
   Use Ops[2]; // CmpInst instructions always have 2 operands, optimize
 
 public:
+  // allocate space for exactly two operands
+  void *operator new(size_t s) {
+    return User::operator new(s, 2);
+  }
   /// Construct a compare instruction, given the opcode, the predicate and 
   /// the two operands.  Optionally (if InstBefore is specified) insert the 
   /// instruction into a BasicBlock right before the specified instruction.  

@@ -78,15 +78,15 @@ static void ChangeToUnreachable(Instruction *I) {
 static void ChangeToCall(InvokeInst *II) {
   BasicBlock *BB = II->getParent();
   SmallVector<Value*, 8> Args(II->op_begin()+3, II->op_end());
-  CallInst *NewCall = new CallInst(II->getCalledValue(), Args.begin(),
-                                   Args.end(), "", II);
+  CallInst *NewCall = CallInst::Create(II->getCalledValue(), Args.begin(),
+                                       Args.end(), "", II);
   NewCall->takeName(II);
   NewCall->setCallingConv(II->getCallingConv());
   NewCall->setParamAttrs(II->getParamAttrs());
   II->replaceAllUsesWith(NewCall);
 
   // Follow the call by a branch to the normal destination.
-  new BranchInst(II->getNormalDest(), II);
+  BranchInst::Create(II->getNormalDest(), II);
 
   // Update PHI nodes in the unwind destination
   II->getUnwindDest()->removePredecessor(BB);

@@ -145,8 +145,8 @@ void IndVarSimplify::EliminatePointerRecurrence(PHINode *PN,
       Value *AddedVal = GEPI->getOperand(1);
 
       // Insert a new integer PHI node into the top of the block.
-      PHINode *NewPhi = new PHINode(AddedVal->getType(),
-                                    PN->getName()+".rec", PN);
+      PHINode *NewPhi = PHINode::Create(AddedVal->getType(),
+                                        PN->getName()+".rec", PN);
       NewPhi->addIncoming(Constant::getNullValue(NewPhi->getType()), Preheader);
 
       // Create the new add instruction.
@@ -181,7 +181,7 @@ void IndVarSimplify::EliminatePointerRecurrence(PHINode *PN,
               Value *Idx[2];
               Idx[0] = Constant::getNullValue(Type::Int32Ty);
               Idx[1] = NewAdd;
-              GetElementPtrInst *NGEPI = new GetElementPtrInst(
+              GetElementPtrInst *NGEPI = GetElementPtrInst::Create(
                   NCE, Idx, Idx + 2, 
                   GEPI->getName(), GEPI);
               SE->deleteValueFromRecords(GEPI);
@@ -200,8 +200,8 @@ void IndVarSimplify::EliminatePointerRecurrence(PHINode *PN,
         BasicBlock::iterator InsertPos = PN; ++InsertPos;
         while (isa<PHINode>(InsertPos)) ++InsertPos;
         Value *PreInc =
-          new GetElementPtrInst(PN->getIncomingValue(PreheaderIdx),
-                                NewPhi, "", InsertPos);
+          GetElementPtrInst::Create(PN->getIncomingValue(PreheaderIdx),
+                                    NewPhi, "", InsertPos);
         PreInc->takeName(PN);
         PN->replaceAllUsesWith(PreInc);
       }

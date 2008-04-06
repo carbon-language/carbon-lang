@@ -670,8 +670,8 @@ void LLVMSetGlobalConstant(LLVMValueRef GlobalVar, int IsConstant) {
 
 LLVMValueRef LLVMAddFunction(LLVMModuleRef M, const char *Name,
                              LLVMTypeRef FunctionTy) {
-  return wrap(new Function(unwrap<FunctionType>(FunctionTy),
-                           GlobalValue::ExternalLinkage, Name, unwrap(M)));
+  return wrap(Function::Create(unwrap<FunctionType>(FunctionTy),
+                               GlobalValue::ExternalLinkage, Name, unwrap(M)));
 }
 
 LLVMValueRef LLVMGetNamedFunction(LLVMModuleRef M, const char *Name) {
@@ -864,14 +864,14 @@ LLVMBasicBlockRef LLVMGetPreviousBasicBlock(LLVMBasicBlockRef BB) {
 }
 
 LLVMBasicBlockRef LLVMAppendBasicBlock(LLVMValueRef FnRef, const char *Name) {
-  return wrap(new BasicBlock(Name, unwrap<Function>(FnRef)));
+  return wrap(BasicBlock::Create(Name, unwrap<Function>(FnRef)));
 }
 
 LLVMBasicBlockRef LLVMInsertBasicBlock(LLVMBasicBlockRef InsertBeforeBBRef,
                                        const char *Name) {
   BasicBlock *InsertBeforeBB = unwrap(InsertBeforeBBRef);
-  return wrap(new BasicBlock(Name, InsertBeforeBB->getParent(),
-                             InsertBeforeBB));
+  return wrap(BasicBlock::Create(Name, InsertBeforeBB->getParent(),
+                                 InsertBeforeBB));
 }
 
 void LLVMDeleteBasicBlock(LLVMBasicBlockRef BBRef) {

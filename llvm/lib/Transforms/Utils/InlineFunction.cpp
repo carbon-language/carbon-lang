@@ -84,9 +84,9 @@ static void HandleInlinedInvoke(InvokeInst *II, BasicBlock *FirstNewBlock,
           // of the old basic block.
           SmallVector<Value*, 8> InvokeArgs(CI->op_begin()+1, CI->op_end());
           InvokeInst *II =
-            new InvokeInst(CI->getCalledValue(), Split, InvokeDest,
-                           InvokeArgs.begin(), InvokeArgs.end(),
-                           CI->getName(), BB->getTerminator());
+            InvokeInst::Create(CI->getCalledValue(), Split, InvokeDest,
+                               InvokeArgs.begin(), InvokeArgs.end(),
+                               CI->getName(), BB->getTerminator());
           II->setCallingConv(CI->getCallingConv());
           II->setParamAttrs(CI->getParamAttrs());
           
@@ -116,7 +116,7 @@ static void HandleInlinedInvoke(InvokeInst *II, BasicBlock *FirstNewBlock,
         // invoke site.  Once this happens, we know that the unwind would cause
         // a control transfer to the invoke exception destination, so we can
         // transform it into a direct branch to the exception destination.
-        new BranchInst(InvokeDest, UI);
+        BranchInst::Create(InvokeDest, UI);
         
         // Delete the unwind instruction!
         UI->getParent()->getInstList().pop_back();
@@ -275,7 +275,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
           DestCast, SrcCast, Size, ConstantInt::get(Type::Int32Ty, 1)
         };
         CallInst *TheMemCpy =
-          new CallInst(MemCpyFn, CallArgs, CallArgs+4, "", TheCall);
+          CallInst::Create(MemCpyFn, CallArgs, CallArgs+4, "", TheCall);
         
         // If we have a call graph, update it.
         if (CG) {
@@ -366,14 +366,14 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
     }
       
     // Insert the llvm.stacksave.
-    CallInst *SavedPtr = new CallInst(StackSave, "savedstack", 
-                                      FirstNewBlock->begin());
+    CallInst *SavedPtr = CallInst::Create(StackSave, "savedstack", 
+                                          FirstNewBlock->begin());
     if (CG) CallerNode->addCalledFunction(SavedPtr, StackSaveCGN);
       
     // Insert a call to llvm.stackrestore before any return instructions in the
     // inlined function.
     for (unsigned i = 0, e = Returns.size(); i != e; ++i) {
-      CallInst *CI = new CallInst(StackRestore, SavedPtr, "", Returns[i]);
+      CallInst *CI = CallInst::Create(StackRestore, SavedPtr, "", Returns[i]);
       if (CG) CallerNode->addCalledFunction(CI, StackRestoreCGN);
     }
 
@@ -386,7 +386,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
       for (Function::iterator BB = FirstNewBlock, E = Caller->end();
            BB != E; ++BB)
         if (UnwindInst *UI = dyn_cast<UnwindInst>(BB->getTerminator())) {
-          new CallInst(StackRestore, SavedPtr, "", UI);
+          CallInst::Create(StackRestore, SavedPtr, "", UI);
           ++NumStackRestores;
         }
     }
@@ -428,7 +428,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
          BB != E; ++BB) {
       TerminatorInst *Term = BB->getTerminator();
       if (isa<UnwindInst>(Term)) {
-        new BranchInst(UnwindBB, Term);
+        BranchInst::Create(UnwindBB, Term);
         BB->getInstList().erase(Term);
       }
     }
@@ -452,7 +452,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
     // If the call site was an invoke instruction, add a branch to the normal
     // destination.
     if (InvokeInst *II = dyn_cast<InvokeInst>(TheCall))
-      new BranchInst(II->getNormalDest(), TheCall);
+      BranchInst::Create(II->getNormalDest(), TheCall);
 
     // If the return instruction returned a value, replace uses of the call with
     // uses of the returned value.
@@ -489,7 +489,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
   if (InvokeInst *II = dyn_cast<InvokeInst>(TheCall)) {
 
     // Add an unconditional branch to make this look like the CallInst case...
-    BranchInst *NewBr = new BranchInst(II->getNormalDest(), TheCall);
+    BranchInst *NewBr = BranchInst::Create(II->getNormalDest(), TheCall);
 
     // Split the basic block.  This guarantees that no PHI nodes will have to be
     // updated due to new incoming edges, and make the invoke case more
@@ -535,9 +535,9 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
         // match corresponding return value operand number.
         Instruction *InsertPt = AfterCallBB->begin();
         for (unsigned i = 0; i < NumRetVals; ++i) {
-          PHINode *PHI = new PHINode(STy->getElementType(i),
-                                     TheCall->getName() + "." + utostr(i), 
-                                     InsertPt);
+            PHINode *PHI = PHINode::Create(STy->getElementType(i),
+                                           TheCall->getName() + "." + utostr(i), 
+                                           InsertPt);
           PHIs.push_back(PHI);
         }
         // TheCall results are used by GetResult instructions. 
@@ -547,7 +547,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
           GR->eraseFromParent();
         }
       } else {
-        PHINode *PHI = new PHINode(RTy, TheCall->getName(), AfterCallBB->begin());
+        PHINode *PHI = PHINode::Create(RTy, TheCall->getName(), AfterCallBB->begin());
         PHIs.push_back(PHI);
         // Anything that used the result of the function call should now use the
         // PHI node as their operand.
@@ -578,7 +578,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
     // Add a branch to the merge points and remove retrun instructions.
     for (unsigned i = 0, e = Returns.size(); i != e; ++i) {
       ReturnInst *RI = Returns[i];
-      new BranchInst(AfterCallBB, RI);
+      BranchInst::Create(AfterCallBB, RI);
       RI->eraseFromParent();
     }
   } else if (!Returns.empty()) {

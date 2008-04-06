@@ -74,7 +74,7 @@ void BrainF::header() {
   brainf_func = cast<Function>(module->
     getOrInsertFunction("brainf", Type::VoidTy, NULL));
 
-  builder = new LLVMBuilder(new BasicBlock(label, brainf_func));
+  builder = new LLVMBuilder(BasicBlock::Create(label, brainf_func));
 
   //%arr = malloc i8, i32 %d
   ConstantInt *val_mem = ConstantInt::get(APInt(32, memtotal));
@@ -110,13 +110,13 @@ void BrainF::header() {
   //Function footer
 
   //brainf.end:
-  endbb = new BasicBlock(label, brainf_func);
+  endbb = BasicBlock::Create(label, brainf_func);
 
   //free i8 *%arr
   new FreeInst(ptr_arr, endbb);
 
   //ret void
-  new ReturnInst(endbb);
+  ReturnInst::Create(endbb);
 
 
 
@@ -141,7 +141,7 @@ void BrainF::header() {
                           PointerType::getUnqual(IntegerType::Int8Ty), NULL));
 
     //brainf.aberror:
-    aberrorbb = new BasicBlock(label, brainf_func);
+    aberrorbb = BasicBlock::Create(label, brainf_func);
 
     //call i32 @puts(i8 *getelementptr([%d x i8] *@aberrormsg, i32 0, i32 0))
     {
@@ -161,14 +161,14 @@ void BrainF::header() {
       };
 
       CallInst *puts_call =
-        new CallInst(puts_func,
-                     puts_params, array_endof(puts_params),
-                     "", aberrorbb);
+        CallInst::Create(puts_func,
+                         puts_params, array_endof(puts_params),
+                         "", aberrorbb);
       puts_call->setTailCall(false);
     }
 
     //br label %brainf.end
-    new BranchInst(endbb, aberrorbb);
+    BranchInst::Create(endbb, aberrorbb);
   }
 }
 
@@ -247,7 +247,7 @@ void BrainF::readloop(PHINode *phi, BasicBlock *oldbb, BasicBlock *testbb) {
               CreateOr(test_0, test_1, testreg);
 
             //br i1 %test.%d, label %main.%d, label %main.%d
-            BasicBlock *nextbb = new BasicBlock(label, brainf_func);
+            BasicBlock *nextbb = BasicBlock::Create(label, brainf_func);
             builder->CreateCondBr(test_2, aberrorbb, nextbb);
 
             //main.%d:
@@ -273,16 +273,16 @@ void BrainF::readloop(PHINode *phi, BasicBlock *oldbb, BasicBlock *testbb) {
       case SYM_LOOP:
         {
           //br label %main.%d
-          BasicBlock *testbb = new BasicBlock(label, brainf_func);
+          BasicBlock *testbb = BasicBlock::Create(label, brainf_func);
           builder->CreateBr(testbb);
 
           //main.%d:
           BasicBlock *bb_0 = builder->GetInsertBlock();
-          BasicBlock *bb_1 = new BasicBlock(label, brainf_func);
+          BasicBlock *bb_1 = BasicBlock::Create(label, brainf_func);
           builder->SetInsertPoint(bb_1);
 
           //Make part of PHI instruction now, wait until end of loop to finish
-          PHINode *phi_0 = new PHINode(PointerType::getUnqual(IntegerType::Int8Ty),
+          PHINode *phi_0 = PHINode::Create(PointerType::getUnqual(IntegerType::Int8Ty),
                                        headreg, testbb);
           phi_0->reserveOperandSpace(2);
           phi_0->addIncoming(curhead, bb_0);
@@ -431,8 +431,8 @@ void BrainF::readloop(PHINode *phi, BasicBlock *oldbb, BasicBlock *testbb) {
                                       testbb);
 
       //br i1 %test.%d, label %main.%d, label %main.%d
-      BasicBlock *bb_0 = new BasicBlock(label, brainf_func);
-      new BranchInst(bb_0, oldbb, test_0, testbb);
+      BasicBlock *bb_0 = BasicBlock::Create(label, brainf_func);
+      BranchInst::Create(bb_0, oldbb, test_0, testbb);
 
       //main.%d:
       builder->SetInsertPoint(bb_0);

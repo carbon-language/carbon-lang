@@ -619,7 +619,7 @@ static bool SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
         assert(ThisCases.size() == 1 && "Branch can only have one case!");
         Value *Cond = BTI->getCondition();
         // Insert the new branch.
-        Instruction *NI = new BranchInst(ThisDef, TI);
+        Instruction *NI = BranchInst::Create(ThisDef, TI);
 
         // Remove PHI node entries for the dead edge.
         ThisCases[0].second->removePredecessor(TI->getParent());
@@ -689,7 +689,7 @@ static bool SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
         CheckEdge = 0;
 
     // Insert the new branch.
-    Instruction *NI = new BranchInst(TheRealDest, TI);
+    Instruction *NI = BranchInst::Create(TheRealDest, TI);
 
     DOUT << "Threading pred instr: " << *Pred->getTerminator()
          << "Through successor TI: " << *TI << "Leaving: " << *NI << "\n";
@@ -802,7 +802,7 @@ static bool FoldValueComparisonIntoPredecessors(TerminatorInst *TI) {
         AddPredecessorToBlock(NewSuccessors[i], Pred, BB);
 
       // Now that the successors are updated, create the new Switch instruction.
-      SwitchInst *NewSI = new SwitchInst(CV, PredDefault, PredCases.size(),PTI);
+      SwitchInst *NewSI = SwitchInst::Create(CV, PredDefault, PredCases.size(), PTI);
       for (unsigned i = 0, e = PredCases.size(); i != e; ++i)
         NewSI->addCase(PredCases[i].first, PredCases[i].second);
 
@@ -824,8 +824,8 @@ static bool FoldValueComparisonIntoPredecessors(TerminatorInst *TI) {
           if (InfLoopBlock == 0) {
             // Insert it at the end of the loop, because it's either code,
             // or it won't matter if it's hot. :)
-            InfLoopBlock = new BasicBlock("infloop", BB->getParent());
-            new BranchInst(InfLoopBlock, InfLoopBlock);
+            InfLoopBlock = BasicBlock::Create("infloop", BB->getParent());
+            BranchInst::Create(InfLoopBlock, InfLoopBlock);
           }
           NewSI->setSuccessor(i, InfLoopBlock);
         }
@@ -902,8 +902,8 @@ HoistTerminator:
         // that determines the right value.
         SelectInst *&SI = InsertedSelects[std::make_pair(BB1V, BB2V)];
         if (SI == 0)
-          SI = new SelectInst(BI->getCondition(), BB1V, BB2V,
-                              BB1V->getName()+"."+BB2V->getName(), NT);
+          SI = SelectInst::Create(BI->getCondition(), BB1V, BB2V,
+                                  BB1V->getName()+"."+BB2V->getName(), NT);
         // Make the PHI node use the select for all incoming values for BB1/BB2
         for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
           if (PN->getIncomingBlock(i) == BB1 || PN->getIncomingBlock(i) == BB2)
@@ -987,9 +987,9 @@ static bool FoldCondBranchOnPHI(BranchInst *BI) {
       // difficult cases.  Instead of being smart about this, just insert a new
       // block that jumps to the destination block, effectively splitting
       // the edge we are about to create.
-      BasicBlock *EdgeBB = new BasicBlock(RealDest->getName()+".critedge",
-                                          RealDest->getParent(), RealDest);
-      new BranchInst(RealDest, EdgeBB);
+      BasicBlock *EdgeBB = BasicBlock::Create(RealDest->getName()+".critedge",
+                                              RealDest->getParent(), RealDest);
+      BranchInst::Create(RealDest, EdgeBB);
       PHINode *PN;
       for (BasicBlock::iterator BBI = RealDest->begin();
            (PN = dyn_cast<PHINode>(BBI)); ++BBI) {
@@ -1156,7 +1156,7 @@ static bool FoldTwoEntryPHINode(PHINode *PN) {
     Value *FalseVal =
       PN->getIncomingValue(PN->getIncomingBlock(0) == IfTrue);
     
-    Value *NV = new SelectInst(IfCond, TrueVal, FalseVal, "", AfterPHIIt);
+    Value *NV = SelectInst::Create(IfCond, TrueVal, FalseVal, "", AfterPHIIt);
     PN->replaceAllUsesWith(NV);
     NV->takeName(PN);
     
@@ -1307,7 +1307,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
             if (RI->getNumOperands() == 0) {
               TrueSucc->removePredecessor(BI->getParent());
               FalseSucc->removePredecessor(BI->getParent());
-              new ReturnInst(0, BI);
+              ReturnInst::Create(0, BI);
               BI->getParent()->getInstList().erase(BI);
               return true;
             }
@@ -1341,8 +1341,8 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
               Value *NewRetVal;
               Value *BrCond = BI->getCondition();
               if (TrueValue != FalseValue)
-                NewRetVal = new SelectInst(BrCond, TrueValue,
-                                           FalseValue, "retval", BI);
+                NewRetVal = SelectInst::Create(BrCond, TrueValue,
+                                               FalseValue, "retval", BI);
               else
                 NewRetVal = TrueValue;
               
@@ -1350,7 +1350,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
                    << "\n  " << *BI << "Select = " << *NewRetVal
                    << "TRUEBLOCK: " << *TrueSucc << "FALSEBLOCK: "<< *FalseSucc;
 
-              new ReturnInst(NewRetVal, BI);
+              ReturnInst::Create(NewRetVal, BI);
               BI->eraseFromParent();
               if (Instruction *BrCondI = dyn_cast<Instruction>(BrCond))
                 if (isInstructionTriviallyDead(BrCondI))
@@ -1386,13 +1386,13 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
         if (II->getUnwindDest() == BB) {
           // Insert a new branch instruction before the invoke, because this
           // is now a fall through...
-          BranchInst *BI = new BranchInst(II->getNormalDest(), II);
+          BranchInst *BI = BranchInst::Create(II->getNormalDest(), II);
           Pred->getInstList().remove(II);   // Take out of symbol table
 
           // Insert the call now...
           SmallVector<Value*,8> Args(II->op_begin()+3, II->op_end());
-          CallInst *CI = new CallInst(II->getCalledValue(),
-                                      Args.begin(), Args.end(), II->getName(), BI);
+          CallInst *CI = CallInst::Create(II->getCalledValue(),
+                                          Args.begin(), Args.end(), II->getName(), BI);
           CI->setCallingConv(II->getCallingConv());
           CI->setParamAttrs(II->getParamAttrs());
           // If the invoke produced a value, the Call now does instead
@@ -1540,9 +1540,9 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
               // Otherwise, if there are multiple predecessors, insert a PHI 
               // that merges in the constant and simplify the block result.
               if (BlockIsSimpleEnoughToThreadThrough(BB)) {
-                PHINode *NewPN = new PHINode(Type::Int1Ty,
-                                            BI->getCondition()->getName()+".pr",
-                                            BB->begin());
+                PHINode *NewPN = PHINode::Create(Type::Int1Ty,
+                                                 BI->getCondition()->getName()+".pr",
+                                                 BB->begin());
                 for (PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
                   if ((PBI = dyn_cast<BranchInst>((*PI)->getTerminator())) &&
                       PBI != BI && PBI->isConditional() &&
@@ -1661,8 +1661,8 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
                   Value *PBIV = PN->getIncomingValue(PBBIdx);
                   if (BIV != PBIV) {
                     // Insert a select in PBI to pick the right value.
-                    Value *NV = new SelectInst(PBICond, PBIV, BIV,
-                                               PBIV->getName()+".mux", PBI);
+                    Value *NV = SelectInst::Create(PBICond, PBIV, BIV,
+                                                   PBIV->getName()+".mux", PBI);
                     PN->setIncomingValue(PBBIdx, NV);
                   }
                 }
@@ -1705,10 +1705,10 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
             }
           } else {
             if (BI->getSuccessor(0) == BB) {
-              new BranchInst(BI->getSuccessor(1), BI);
+              BranchInst::Create(BI->getSuccessor(1), BI);
               BI->eraseFromParent();
             } else if (BI->getSuccessor(1) == BB) {
-              new BranchInst(BI->getSuccessor(0), BI);
+              BranchInst::Create(BI->getSuccessor(0), BI);
               BI->eraseFromParent();
               Changed = true;
             }
@@ -1761,14 +1761,14 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
           if (II->getUnwindDest() == BB) {
             // Convert the invoke to a call instruction.  This would be a good
             // place to note that the call does not throw though.
-            BranchInst *BI = new BranchInst(II->getNormalDest(), II);
+            BranchInst *BI = BranchInst::Create(II->getNormalDest(), II);
             II->removeFromParent();   // Take out of symbol table
 
             // Insert the call now...
             SmallVector<Value*, 8> Args(II->op_begin()+3, II->op_end());
-            CallInst *CI = new CallInst(II->getCalledValue(),
-                                        Args.begin(), Args.end(),
-                                        II->getName(), BI);
+            CallInst *CI = CallInst::Create(II->getCalledValue(),
+                                            Args.begin(), Args.end(),
+                                            II->getName(), BI);
             CI->setCallingConv(II->getCallingConv());
             CI->setParamAttrs(II->getParamAttrs());
             // If the invoke produced a value, the Call does now instead.
@@ -1894,7 +1894,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
           if (!TrueWhenEqual) std::swap(DefaultBB, EdgeBB);
 
           // Create the new switch instruction now.
-          SwitchInst *New = new SwitchInst(CompVal, DefaultBB,Values.size(),BI);
+          SwitchInst *New = SwitchInst::Create(CompVal, DefaultBB,Values.size(),BI);
 
           // Add all of the 'cases' to the switch instruction.
           for (unsigned i = 0, e = Values.size(); i != e; ++i)

@@ -161,8 +161,8 @@ void CodeExtractor::severSplitPHINodes(BasicBlock *&Header) {
       PHINode *PN = cast<PHINode>(AfterPHIs);
       // Create a new PHI node in the new region, which has an incoming value
       // from OldPred of PN.
-      PHINode *NewPN = new PHINode(PN->getType(), PN->getName()+".ce",
-                                   NewBB->begin());
+      PHINode *NewPN = PHINode::Create(PN->getType(), PN->getName()+".ce",
+                                       NewBB->begin());
       NewPN->addIncoming(PN, OldPred);
 
       // Loop over all of the incoming value in PN, moving them to NewPN if they
@@ -280,10 +280,10 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
   const FunctionType *funcType = FunctionType::get(RetTy, paramTy, false);
 
   // Create the new function
-  Function *newFunction = new Function(funcType,
-                                       GlobalValue::InternalLinkage,
-                                       oldFunction->getName() + "_" +
-                                       header->getName(), M);
+  Function *newFunction = Function::Create(funcType,
+                                           GlobalValue::InternalLinkage,
+                                           oldFunction->getName() + "_" +
+                                           header->getName(), M);
   newFunction->getBasicBlockList().push_back(newRootNode);
 
   // Create an iterator to name all of the arguments we inserted.
@@ -299,8 +299,8 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
       Idx[1] = ConstantInt::get(Type::Int32Ty, i);
       std::string GEPname = "gep_" + inputs[i]->getName();
       TerminatorInst *TI = newFunction->begin()->getTerminator();
-      GetElementPtrInst *GEP = new GetElementPtrInst(AI, Idx, Idx+2, 
-                                                     GEPname, TI);
+      GetElementPtrInst *GEP = GetElementPtrInst::Create(AI, Idx, Idx+2, 
+                                                         GEPname, TI);
       RewriteVal = new LoadInst(GEP, "load" + GEPname, TI);
     } else
       RewriteVal = AI++;
@@ -386,8 +386,8 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
       Idx[0] = Constant::getNullValue(Type::Int32Ty);
       Idx[1] = ConstantInt::get(Type::Int32Ty, i);
       GetElementPtrInst *GEP =
-        new GetElementPtrInst(Struct, Idx, Idx + 2,
-                              "gep_" + StructValues[i]->getName());
+        GetElementPtrInst::Create(Struct, Idx, Idx + 2,
+                                  "gep_" + StructValues[i]->getName());
       codeReplacer->getInstList().push_back(GEP);
       StoreInst *SI = new StoreInst(StructValues[i], GEP);
       codeReplacer->getInstList().push_back(SI);
@@ -395,8 +395,8 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
   }
 
   // Emit the call to the function
-  CallInst *call = new CallInst(newFunction, params.begin(), params.end(),
-                                NumExitBlocks > 1 ? "targetBlock" : "");
+  CallInst *call = CallInst::Create(newFunction, params.begin(), params.end(),
+                                    NumExitBlocks > 1 ? "targetBlock" : "");
   codeReplacer->getInstList().push_back(call);
 
   Function::arg_iterator OutputArgBegin = newFunction->arg_begin();
@@ -412,8 +412,8 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
       Idx[0] = Constant::getNullValue(Type::Int32Ty);
       Idx[1] = ConstantInt::get(Type::Int32Ty, FirstOut + i);
       GetElementPtrInst *GEP
-        = new GetElementPtrInst(Struct, Idx, Idx + 2,
-                                "gep_reload_" + outputs[i]->getName());
+        = GetElementPtrInst::Create(Struct, Idx, Idx + 2,
+                                    "gep_reload_" + outputs[i]->getName());
       codeReplacer->getInstList().push_back(GEP);
       Output = GEP;
     } else {
@@ -431,8 +431,8 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
 
   // Now we can emit a switch statement using the call as a value.
   SwitchInst *TheSwitch =
-    new SwitchInst(ConstantInt::getNullValue(Type::Int16Ty),
-                   codeReplacer, 0, codeReplacer);
+      SwitchInst::Create(ConstantInt::getNullValue(Type::Int16Ty),
+                         codeReplacer, 0, codeReplacer);
 
   // Since there may be multiple exits from the original region, make the new
   // function return an unsigned, switch on that number.  This loop iterates
@@ -453,8 +453,8 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
         if (!NewTarget) {
           // If we don't already have an exit stub for this non-extracted
           // destination, create one now!
-          NewTarget = new BasicBlock(OldTarget->getName() + ".exitStub",
-                                     newFunction);
+          NewTarget = BasicBlock::Create(OldTarget->getName() + ".exitStub",
+                                         newFunction);
           unsigned SuccNum = switchVal++;
 
           Value *brVal = 0;
@@ -469,7 +469,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
             break;
           }
 
-          ReturnInst *NTRet = new ReturnInst(brVal, NewTarget);
+          ReturnInst *NTRet = ReturnInst::Create(brVal, NewTarget);
 
           // Update the switch instruction.
           TheSwitch->addCase(ConstantInt::get(Type::Int16Ty, SuccNum),
@@ -513,9 +513,9 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
                 Idx[0] = Constant::getNullValue(Type::Int32Ty);
                 Idx[1] = ConstantInt::get(Type::Int32Ty,FirstOut+out);
                 GetElementPtrInst *GEP =
-                  new GetElementPtrInst(OAI, Idx, Idx + 2,
-                                        "gep_" + outputs[out]->getName(),
-                                        NTRet);
+                  GetElementPtrInst::Create(OAI, Idx, Idx + 2,
+                                            "gep_" + outputs[out]->getName(),
+                                            NTRet);
                 new StoreInst(outputs[out], GEP, NTRet);
               } else {
                 new StoreInst(outputs[out], OAI, NTRet);
@@ -541,14 +541,14 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
 
     // Check if the function should return a value
     if (OldFnRetTy == Type::VoidTy) {
-      new ReturnInst(0, TheSwitch);  // Return void
+      ReturnInst::Create(0, TheSwitch);  // Return void
     } else if (OldFnRetTy == TheSwitch->getCondition()->getType()) {
       // return what we have
-      new ReturnInst(TheSwitch->getCondition(), TheSwitch);
+      ReturnInst::Create(TheSwitch->getCondition(), TheSwitch);
     } else {
       // Otherwise we must have code extracted an unwind or something, just
       // return whatever we want.
-      new ReturnInst(Constant::getNullValue(OldFnRetTy), TheSwitch);
+      ReturnInst::Create(Constant::getNullValue(OldFnRetTy), TheSwitch);
     }
 
     TheSwitch->getParent()->getInstList().erase(TheSwitch);
@@ -556,12 +556,12 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
   case 1:
     // Only a single destination, change the switch into an unconditional
     // branch.
-    new BranchInst(TheSwitch->getSuccessor(1), TheSwitch);
+    BranchInst::Create(TheSwitch->getSuccessor(1), TheSwitch);
     TheSwitch->getParent()->getInstList().erase(TheSwitch);
     break;
   case 2:
-    new BranchInst(TheSwitch->getSuccessor(1), TheSwitch->getSuccessor(2),
-                   call, TheSwitch);
+    BranchInst::Create(TheSwitch->getSuccessor(1), TheSwitch->getSuccessor(2),
+                       call, TheSwitch);
     TheSwitch->getParent()->getInstList().erase(TheSwitch);
     break;
   default:
@@ -641,12 +641,12 @@ ExtractCodeRegion(const std::vector<BasicBlock*> &code) {
   Function *oldFunction = header->getParent();
 
   // This takes place of the original loop
-  BasicBlock *codeReplacer = new BasicBlock("codeRepl", oldFunction, header);
+  BasicBlock *codeReplacer = BasicBlock::Create("codeRepl", oldFunction, header);
 
   // The new function needs a root node because other nodes can branch to the
   // head of the region, but the entry node of a function cannot have preds.
-  BasicBlock *newFuncRoot = new BasicBlock("newFuncRoot");
-  newFuncRoot->getInstList().push_back(new BranchInst(header));
+  BasicBlock *newFuncRoot = BasicBlock::Create("newFuncRoot");
+  newFuncRoot->getInstList().push_back(BranchInst::Create(header));
 
   // Find inputs to, outputs from the code region.
   findInputsOutputs(inputs, outputs);

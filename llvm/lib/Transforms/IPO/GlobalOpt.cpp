@@ -546,8 +546,8 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV) {
         Idxs.push_back(NullInt);
         for (unsigned i = 3, e = GEPI->getNumOperands(); i != e; ++i)
           Idxs.push_back(GEPI->getOperand(i));
-        NewPtr = new GetElementPtrInst(NewPtr, Idxs.begin(), Idxs.end(),
-                                       GEPI->getName()+"."+utostr(Val), GEPI);
+        NewPtr = GetElementPtrInst::Create(NewPtr, Idxs.begin(), Idxs.end(),
+                                           GEPI->getName()+"."+utostr(Val), GEPI);
       }
     }
     GEP->replaceAllUsesWith(NewPtr);
@@ -789,8 +789,8 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
                      MI->getAlignment(), MI->getName(), MI);
     Value* Indices[2];
     Indices[0] = Indices[1] = Constant::getNullValue(Type::Int32Ty);
-    Value *NewGEP = new GetElementPtrInst(NewMI, Indices, Indices + 2,
-                                          NewMI->getName()+".el0", MI);
+    Value *NewGEP = GetElementPtrInst::Create(NewMI, Indices, Indices + 2,
+                                              NewMI->getName()+".el0", MI);
     MI->replaceAllUsesWith(NewGEP);
     MI->eraseFromParent();
     MI = NewMI;
@@ -1054,8 +1054,8 @@ static void RewriteHeapSROALoadUser(LoadInst *Load, Instruction *LoadUser,
     GEPIdx.push_back(GEPI->getOperand(1));
     GEPIdx.append(GEPI->op_begin()+3, GEPI->op_end());
     
-    Value *NGEPI = new GetElementPtrInst(NewPtr, GEPIdx.begin(), GEPIdx.end(),
-                                         GEPI->getName(), GEPI);
+    Value *NGEPI = GetElementPtrInst::Create(NewPtr, GEPIdx.begin(), GEPIdx.end(),
+                                             GEPI->getName(), GEPI);
     GEPI->replaceAllUsesWith(NGEPI);
     GEPI->eraseFromParent();
     return;
@@ -1070,8 +1070,8 @@ static void RewriteHeapSROALoadUser(LoadInst *Load, Instruction *LoadUser,
   for (unsigned i = 0, e = FieldGlobals.size(); i != e; ++i) {
     Value *LoadV = GetHeapSROALoad(Load, i, FieldGlobals, InsertedLoadsForPtr);
 
-    PHINode *FieldPN = new PHINode(LoadV->getType(),
-                                   PN->getName()+"."+utostr(i), PN);
+    PHINode *FieldPN = PHINode::Create(LoadV->getType(),
+                                       PN->getName()+"."+utostr(i), PN);
     // Fill in the predecessor values.
     for (unsigned pred = 0, e = PN->getNumIncomingValues(); pred != e; ++pred) {
       // Each predecessor either uses the load or the original malloc.
@@ -1173,13 +1173,13 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, MallocInst *MI){
   
   // Create the block to check the first condition.  Put all these blocks at the
   // end of the function as they are unlikely to be executed.
-  BasicBlock *NullPtrBlock = new BasicBlock("malloc_ret_null",
-                                            OrigBB->getParent());
+  BasicBlock *NullPtrBlock = BasicBlock::Create("malloc_ret_null",
+                                                OrigBB->getParent());
   
   // Remove the uncond branch from OrigBB to ContBB, turning it into a cond
   // branch on RunningOr.
   OrigBB->getTerminator()->eraseFromParent();
-  new BranchInst(NullPtrBlock, ContBB, RunningOr, OrigBB);
+  BranchInst::Create(NullPtrBlock, ContBB, RunningOr, OrigBB);
   
   // Within the NullPtrBlock, we need to emit a comparison and branch for each
   // pointer, because some may be null while others are not.
@@ -1188,21 +1188,20 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, MallocInst *MI){
     Value *Cmp = new ICmpInst(ICmpInst::ICMP_NE, GVVal, 
                               Constant::getNullValue(GVVal->getType()),
                               "tmp", NullPtrBlock);
-    BasicBlock *FreeBlock = new BasicBlock("free_it", OrigBB->getParent());
-    BasicBlock *NextBlock = new BasicBlock("next", OrigBB->getParent());
-    new BranchInst(FreeBlock, NextBlock, Cmp, NullPtrBlock);
+    BasicBlock *FreeBlock = BasicBlock::Create("free_it", OrigBB->getParent());
+    BasicBlock *NextBlock = BasicBlock::Create("next", OrigBB->getParent());
+    BranchInst::Create(FreeBlock, NextBlock, Cmp, NullPtrBlock);
 
     // Fill in FreeBlock.
     new FreeInst(GVVal, FreeBlock);
     new StoreInst(Constant::getNullValue(GVVal->getType()), FieldGlobals[i],
                   FreeBlock);
-    new BranchInst(NextBlock, FreeBlock);
+    BranchInst::Create(NextBlock, FreeBlock);
     
     NullPtrBlock = NextBlock;
   }
   
-  new BranchInst(ContBB, NullPtrBlock);
-  
+  BranchInst::Create(ContBB, NullPtrBlock);
   
   // MI is no longer needed, remove it.
   MI->eraseFromParent();
@@ -1411,7 +1410,7 @@ static bool TryToShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
       if (IsOneZero)
         NSI = new ZExtInst(NLI, LI->getType(), "", LI);
       else
-        NSI = new SelectInst(NLI, OtherVal, InitVal, "", LI);
+        NSI = SelectInst::Create(NLI, OtherVal, InitVal, "", LI);
       NSI->takeName(LI);
       LI->replaceAllUsesWith(NSI);
     }

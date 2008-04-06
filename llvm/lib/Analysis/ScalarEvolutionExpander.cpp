@@ -143,7 +143,7 @@ Value *SCEVExpander::visitAddRecExpr(SCEVAddRecExpr *S) {
     // Create and insert the PHI node for the induction variable in the
     // specified loop.
     BasicBlock *Header = L->getHeader();
-    PHINode *PN = new PHINode(Ty, "indvar", Header->begin());
+    PHINode *PN = PHINode::Create(Ty, "indvar", Header->begin());
     PN->addIncoming(Constant::getNullValue(Ty), L->getLoopPreheader());
 
     pred_iterator HPI = pred_begin(Header);
@@ -215,7 +215,7 @@ Value *SCEVExpander::visitSMaxExpr(SCEVSMaxExpr *S) {
   for (unsigned i = 1; i < S->getNumOperands(); ++i) {
     Value *RHS = expand(S->getOperand(i));
     Value *ICmp = new ICmpInst(ICmpInst::ICMP_SGT, LHS, RHS, "tmp", InsertPt);
-    LHS = new SelectInst(ICmp, LHS, RHS, "smax", InsertPt);
+    LHS = SelectInst::Create(ICmp, LHS, RHS, "smax", InsertPt);
   }
   return LHS;
 }
@@ -225,7 +225,7 @@ Value *SCEVExpander::visitUMaxExpr(SCEVUMaxExpr *S) {
   for (unsigned i = 1; i < S->getNumOperands(); ++i) {
     Value *RHS = expand(S->getOperand(i));
     Value *ICmp = new ICmpInst(ICmpInst::ICMP_UGT, LHS, RHS, "tmp", InsertPt);
-    LHS = new SelectInst(ICmp, LHS, RHS, "umax", InsertPt);
+    LHS = SelectInst::Create(ICmp, LHS, RHS, "umax", InsertPt);
   }
   return LHS;
 }

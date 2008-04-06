@@ -216,7 +216,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
     return;
   }
 
-  switch(NewFn->getIntrinsicID()) {
+  switch (NewFn->getIntrinsicID()) {
   default:  assert(0 && "Unknown function for CallInst upgrade.");
   case Intrinsic::x86_mmx_psll_d:
   case Intrinsic::x86_mmx_psll_q:
@@ -237,8 +237,8 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
     Operands[1] = BC;
     
     //  Construct a new CallInst
-    CallInst *NewCI = new CallInst(NewFn, Operands, Operands+2, 
-                                   "upgraded."+CI->getName(), CI);
+    CallInst *NewCI = CallInst::Create(NewFn, Operands, Operands+2, 
+                                       "upgraded."+CI->getName(), CI);
     NewCI->setTailCall(CI->isTailCall());
     NewCI->setCallingConv(CI->getCallingConv());
     
@@ -254,14 +254,14 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
   }        
   case Intrinsic::ctlz:
   case Intrinsic::ctpop:
-  case Intrinsic::cttz:
+  case Intrinsic::cttz: {
     //  Build a small vector of the 1..(N-1) operands, which are the 
     //  parameters.
     SmallVector<Value*, 8> Operands(CI->op_begin()+1, CI->op_end());
 
     //  Construct a new CallInst
-    CallInst *NewCI = new CallInst(NewFn, Operands.begin(), Operands.end(), 
-                                   "upgraded."+CI->getName(), CI);
+    CallInst *NewCI = CallInst::Create(NewFn, Operands.begin(), Operands.end(),
+                                       "upgraded."+CI->getName(), CI);
     NewCI->setTailCall(CI->isTailCall());
     NewCI->setCallingConv(CI->getCallingConv());
 
@@ -287,7 +287,8 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
 
     //  Clean up the old call now that it has been completely upgraded.
     CI->eraseFromParent();
-    break;
+  }
+  break;
   }
 }
 

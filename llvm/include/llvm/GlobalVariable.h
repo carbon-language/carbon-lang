@@ -32,6 +32,7 @@ template<typename ValueSubClass, typename ItemParentClass>
 
 class GlobalVariable : public GlobalValue {
   friend class SymbolTableListTraits<GlobalVariable, Module>;
+  void *operator new(size_t, unsigned);       // Do not implement
   void operator=(const GlobalVariable &);     // Do not implement
   GlobalVariable(const GlobalVariable &);     // Do not implement
 
@@ -46,6 +47,10 @@ class GlobalVariable : public GlobalValue {
   Use Initializer;
 
 public:
+  // allocate space for exactly zero operands
+  void *operator new(size_t s) {
+    return User::operator new(s, 0);
+  }
   /// GlobalVariable ctor - If a parent module is specified, the global is
   /// automatically inserted into the end of the specified modules global list.
   GlobalVariable(const Type *Ty, bool isConstant, LinkageTypes Linkage,

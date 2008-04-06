@@ -469,7 +469,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
   FunctionType *NFTy = FunctionType::get(RetTy, Params, FTy->isVarArg());
 
   // Create the new function body and insert it into the module...
-  Function *NF = new Function(NFTy, F->getLinkage(), F->getName());
+  Function *NF = Function::Create(NFTy, F->getLinkage(), F->getName());
   NF->setCallingConv(F->getCallingConv());
 
   // Recompute the parameter attributes list based on the new arguments for
@@ -518,9 +518,9 @@ Function *ArgPromotion::DoPromotion(Function *F,
         Value *Idxs[2] = { ConstantInt::get(Type::Int32Ty, 0), 0 };
         for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
           Idxs[1] = ConstantInt::get(Type::Int32Ty, i);
-          Value *Idx = new GetElementPtrInst(*AI, Idxs, Idxs+2,
-                                             (*AI)->getName()+"."+utostr(i),
-                                             Call);
+          Value *Idx = GetElementPtrInst::Create(*AI, Idxs, Idxs+2,
+                                                 (*AI)->getName()+"."+utostr(i),
+                                                 Call);
           // TODO: Tell AA about the new values?
           Args.push_back(new LoadInst(Idx, Idx->getName()+".val", Call));
         }        
@@ -532,8 +532,8 @@ Function *ArgPromotion::DoPromotion(Function *F,
           Value *V = *AI;
           LoadInst *OrigLoad = OriginalLoads[*SI];
           if (!SI->empty()) {
-            V = new GetElementPtrInst(V, SI->begin(), SI->end(),
-                                      V->getName()+".idx", Call);
+            V = GetElementPtrInst::Create(V, SI->begin(), SI->end(),
+                                          V->getName()+".idx", Call);
             AA.copyValue(OrigLoad->getOperand(0), V);
           }
           Args.push_back(new LoadInst(V, V->getName()+".val", Call));
@@ -553,13 +553,13 @@ Function *ArgPromotion::DoPromotion(Function *F,
 
     Instruction *New;
     if (InvokeInst *II = dyn_cast<InvokeInst>(Call)) {
-      New = new InvokeInst(NF, II->getNormalDest(), II->getUnwindDest(),
-                           Args.begin(), Args.end(), "", Call);
+      New = InvokeInst::Create(NF, II->getNormalDest(), II->getUnwindDest(),
+                               Args.begin(), Args.end(), "", Call);
       cast<InvokeInst>(New)->setCallingConv(CS.getCallingConv());
       cast<InvokeInst>(New)->setParamAttrs(PAListPtr::get(ParamAttrsVec.begin(),
                                                           ParamAttrsVec.end()));
     } else {
-      New = new CallInst(NF, Args.begin(), Args.end(), "", Call);
+      New = CallInst::Create(NF, Args.begin(), Args.end(), "", Call);
       cast<CallInst>(New)->setCallingConv(CS.getCallingConv());
       cast<CallInst>(New)->setParamAttrs(PAListPtr::get(ParamAttrsVec.begin(),
                                                         ParamAttrsVec.end()));
@@ -616,9 +616,9 @@ Function *ArgPromotion::DoPromotion(Function *F,
       
       for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
         Idxs[1] = ConstantInt::get(Type::Int32Ty, i);
-        Value *Idx = new GetElementPtrInst(TheAlloca, Idxs, Idxs+2,
-                                           TheAlloca->getName()+"."+utostr(i),
-                                           InsertPt);
+        Value *Idx = GetElementPtrInst::Create(TheAlloca, Idxs, Idxs+2,
+                                               TheAlloca->getName()+"."+utostr(i),
+                                               InsertPt);
         I2->setName(I->getName()+"."+utostr(i));
         new StoreInst(I2++, Idx, InsertPt);
       }

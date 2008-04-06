@@ -122,10 +122,10 @@ bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P,
   BasicBlock *DestBB = TI->getSuccessor(SuccNum);
 
   // Create a new basic block, linking it into the CFG.
-  BasicBlock *NewBB = new BasicBlock(TIBB->getName() + "." +
-                                     DestBB->getName() + "_crit_edge");
+  BasicBlock *NewBB = BasicBlock::Create(TIBB->getName() + "." +
+                                         DestBB->getName() + "_crit_edge");
   // Create our unconditional branch...
-  new BranchInst(DestBB, NewBB);
+  BranchInst::Create(DestBB, NewBB);
 
   // Branch to the new block, breaking the edge.
   TI->setSuccessor(SuccNum, NewBB);

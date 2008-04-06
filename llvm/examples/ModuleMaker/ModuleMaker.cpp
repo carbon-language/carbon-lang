@@ -32,11 +32,11 @@ int main() {
 
   // By passing a module as the last parameter to the Function constructor,
   // it automatically gets appended to the Module.
-  Function *F = new Function(FT, Function::ExternalLinkage, "main", M);
+  Function *F = Function::Create(FT, Function::ExternalLinkage, "main", M);
 
   // Add a basic block to the function... again, it automatically inserts
   // because of the last argument.
-  BasicBlock *BB = new BasicBlock("EntryBlock", F);
+  BasicBlock *BB = BasicBlock::Create("EntryBlock", F);
 
   // Get pointers to the constant integers...
   Value *Two = ConstantInt::get(Type::Int32Ty, 2);
@@ -50,7 +50,7 @@ int main() {
   BB->getInstList().push_back(Add);
 
   // Create the return instruction and add it to the basic block
-  BB->getInstList().push_back(new ReturnInst(Add));
+  BB->getInstList().push_back(ReturnInst::Create(Add));
 
   // Output the bitcode file to stdout
   WriteBitcodeToFile(M, std::cout);

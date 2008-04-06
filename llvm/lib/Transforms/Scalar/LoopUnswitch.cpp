@@ -568,7 +568,7 @@ void LoopUnswitch::EmitPreheaderBranchOnCondition(Value *LIC, Constant *Val,
     std::swap(TrueDest, FalseDest);
 
   // Insert the new branch.
-  new BranchInst(TrueDest, FalseDest, BranchVal, InsertPt);
+  BranchInst::Create(TrueDest, FalseDest, BranchVal, InsertPt);
 
 }
 
@@ -673,9 +673,9 @@ void LoopUnswitch::SplitExitEdges(Loop *L, const SmallVector<BasicBlock *, 8> &E
       for (BasicBlock::iterator I = EndBlock->begin();
            (OldLCSSA = dyn_cast<PHINode>(I)); ++I) {
         Value* OldValue = OldLCSSA->getIncomingValueForBlock(MiddleBlock);
-        PHINode* NewLCSSA = new PHINode(OldLCSSA->getType(),
-                                        OldLCSSA->getName() + ".us-lcssa",
-                                        MiddleBlock->getTerminator());
+        PHINode* NewLCSSA = PHINode::Create(OldLCSSA->getType(),
+                                            OldLCSSA->getName() + ".us-lcssa",
+                                            MiddleBlock->getTerminator());
         NewLCSSA->addIncoming(OldValue, StartBlock);
         OldLCSSA->setIncomingValue(OldLCSSA->getBasicBlockIndex(MiddleBlock),
                                    NewLCSSA);
@@ -687,9 +687,9 @@ void LoopUnswitch::SplitExitEdges(Loop *L, const SmallVector<BasicBlock *, 8> &E
       for (BasicBlock::iterator I = MiddleBlock->begin();
          (OldLCSSA = dyn_cast<PHINode>(I)) && InsertedPHIs.count(OldLCSSA) == 0;
          ++I) {
-        PHINode *NewLCSSA = new PHINode(OldLCSSA->getType(),
-                                        OldLCSSA->getName() + ".us-lcssa",
-                                        InsertPt);
+        PHINode *NewLCSSA = PHINode::Create(OldLCSSA->getType(),
+                                            OldLCSSA->getName() + ".us-lcssa",
+                                            InsertPt);
         OldLCSSA->replaceAllUsesWith(NewLCSSA);
         NewLCSSA->addIncoming(OldLCSSA, MiddleBlock);
       }
@@ -1155,8 +1155,8 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
               BasicBlock* Split = SplitBlock(Old, SI, this);
               
               Instruction* OldTerm = Old->getTerminator();
-              new BranchInst(Split, SI->getSuccessor(i),
-                             ConstantInt::getTrue(), OldTerm);
+              BranchInst::Create(Split, SI->getSuccessor(i),
+                                 ConstantInt::getTrue(), OldTerm);
 
               LPM->deleteSimpleAnalysisValue(Old->getTerminator(), L);                
               Old->getTerminator()->eraseFromParent();
@@ -1295,7 +1295,7 @@ void LoopUnswitch::SimplifyCode(std::vector<Instruction*> &Worklist, Loop *L) {
         BasicBlock *DeadSucc = BI->getSuccessor(CB->getZExtValue());
         BasicBlock *LiveSucc = BI->getSuccessor(!CB->getZExtValue());
         DeadSucc->removePredecessor(BI->getParent(), true);
-        Worklist.push_back(new BranchInst(LiveSucc, BI));
+        Worklist.push_back(BranchInst::Create(LiveSucc, BI));
         LPM->deleteSimpleAnalysisValue(BI, L);
         BI->eraseFromParent();
         RemoveFromWorklist(BI, Worklist);

@@ -270,10 +270,10 @@ BasicBlock *LoopSimplify::SplitBlockPredecessors(BasicBlock *BB,
                                        const std::vector<BasicBlock*> &Preds) {
 
   // Create new basic block, insert right before the original block...
-  BasicBlock *NewBB = new BasicBlock(BB->getName()+Suffix, BB->getParent(), BB);
+  BasicBlock *NewBB = BasicBlock::Create(BB->getName()+Suffix, BB->getParent(), BB);
 
   // The preheader first gets an unconditional branch to the loop header...
-  BranchInst *BI = new BranchInst(BB, NewBB);
+  BranchInst *BI = BranchInst::Create(BB, NewBB);
 
   // For every PHI node in the block, insert a PHI node into NewBB where the
   // incoming values from the out of loop edges are moved to NewBB.  We have two
@@ -300,7 +300,7 @@ BasicBlock *LoopSimplify::SplitBlockPredecessors(BasicBlock *BB,
       // If the values coming into the block are not the same, we need a PHI.
       if (InVal == 0) {
         // Create the new PHI node, insert it into NewBB at the end of the block
-        PHINode *NewPHI = new PHINode(PN->getType(), PN->getName()+".ph", BI);
+        PHINode *NewPHI = PHINode::Create(PN->getType(), PN->getName()+".ph", BI);
         if (AA) AA->copyValue(PN, NewPHI);
 
         // Move all of the edges from blocks outside the loop to the new PHI
@@ -623,8 +623,8 @@ void LoopSimplify::InsertUniqueBackedgeBlock(Loop *L) {
     if (*I != Preheader) BackedgeBlocks.push_back(*I);
 
   // Create and insert the new backedge block...
-  BasicBlock *BEBlock = new BasicBlock(Header->getName()+".backedge", F);
-  BranchInst *BETerminator = new BranchInst(Header, BEBlock);
+  BasicBlock *BEBlock = BasicBlock::Create(Header->getName()+".backedge", F);
+  BranchInst *BETerminator = BranchInst::Create(Header, BEBlock);
 
   // Move the new backedge block to right after the last backedge block.
   Function::iterator InsertPos = BackedgeBlocks.back(); ++InsertPos;
@@ -634,8 +634,8 @@ void LoopSimplify::InsertUniqueBackedgeBlock(Loop *L) {
   // the backedge block which correspond to any PHI nodes in the header block.
   for (BasicBlock::iterator I = Header->begin(); isa<PHINode>(I); ++I) {
     PHINode *PN = cast<PHINode>(I);
-    PHINode *NewPN = new PHINode(PN->getType(), PN->getName()+".be",
-                                 BETerminator);
+    PHINode *NewPN = PHINode::Create(PN->getType(), PN->getName()+".be",
+                                     BETerminator);
     NewPN->reserveOperandSpace(BackedgeBlocks.size());
     if (AA) AA->copyValue(PN, NewPN);
 

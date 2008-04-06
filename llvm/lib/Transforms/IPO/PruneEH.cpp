@@ -158,8 +158,8 @@ bool PruneEH::SimplifyFunction(Function *F) {
       if (II->doesNotThrow()) {
         SmallVector<Value*, 8> Args(II->op_begin()+3, II->op_end());
         // Insert a call instruction before the invoke.
-        CallInst *Call = new CallInst(II->getCalledValue(),
-                                      Args.begin(), Args.end(), "", II);
+        CallInst *Call = CallInst::Create(II->getCalledValue(),
+                                          Args.begin(), Args.end(), "", II);
         Call->takeName(II);
         Call->setCallingConv(II->getCallingConv());
         Call->setParamAttrs(II->getParamAttrs());
@@ -172,7 +172,7 @@ bool PruneEH::SimplifyFunction(Function *F) {
 
         // Insert a branch to the normal destination right before the
         // invoke.
-        new BranchInst(II->getNormalDest(), II);
+        BranchInst::Create(II->getNormalDest(), II);
 
         // Finally, delete the invoke instruction!
         BB->getInstList().pop_back();

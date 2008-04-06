@@ -155,8 +155,8 @@ void LCSSA::ProcessInstruction(Instruction *Instr,
     DomTreeNode *ExitBBNode = DT->getNode(BB);
     Value *&Phi = Phis[ExitBBNode];
     if (!Phi && DT->dominates(InstrNode, ExitBBNode)) {
-      PHINode *PN = new PHINode(Instr->getType(), Instr->getName()+".lcssa",
-                                BB->begin());
+      PHINode *PN = PHINode::Create(Instr->getType(), Instr->getName()+".lcssa",
+                                    BB->begin());
       PN->reserveOperandSpace(std::distance(pred_begin(BB), pred_end(BB)));
 
       // Remember that this phi makes the value alive in this block.
@@ -259,8 +259,8 @@ Value *LCSSA::GetValueForBlock(DomTreeNode *BB, Instruction *OrigInst,
   
   // Otherwise, the idom is the loop, so we need to insert a PHI node.  Do so
   // now, then get values to fill in the incoming values for the PHI.
-  PHINode *PN = new PHINode(OrigInst->getType(), OrigInst->getName()+".lcssa",
-                            BBN->begin());
+  PHINode *PN = PHINode::Create(OrigInst->getType(), OrigInst->getName()+".lcssa",
+                                BBN->begin());
   PN->reserveOperandSpace(std::distance(pred_begin(BBN), pred_end(BBN)));
   V = PN;
                                  

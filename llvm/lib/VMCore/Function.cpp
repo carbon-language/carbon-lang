@@ -24,7 +24,7 @@
 using namespace llvm;
 
 BasicBlock *ilist_traits<BasicBlock>::createSentinel() {
-  BasicBlock *Ret = new BasicBlock();
+  BasicBlock *Ret = BasicBlock::Create();
   // This should not be garbage monitored.
   LeakDetector::removeGarbageObject(Ret);
   return Ret;

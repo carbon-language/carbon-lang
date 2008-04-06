@@ -1271,7 +1271,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
 
   if (RewriteFactor == 0) {
     // Create a new Phi for this base, and stick it in the loop header.
-    NewPHI = new PHINode(ReplacedTy, "iv.", PhiInsertBefore);
+    NewPHI = PHINode::Create(ReplacedTy, "iv.", PhiInsertBefore);
     ++NumInserted;
   
     // Add common base to the new Phi node.

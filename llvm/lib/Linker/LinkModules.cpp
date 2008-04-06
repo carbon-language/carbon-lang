@@ -822,8 +822,8 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
         // We have a definition of the same name but different type in the
         // source module. Copy the prototype to the destination and replace
         // uses of the destination's prototype with the new prototype.
-        Function *NewDF = new Function(SF->getFunctionType(), SF->getLinkage(),
-                                       SF->getName(), Dest);
+        Function *NewDF = Function::Create(SF->getFunctionType(), SF->getLinkage(),
+                                           SF->getName(), Dest);
         CopyGVAttributes(NewDF, SF);
 
         // Any uses of DF need to change to NewDF, with cast
@@ -858,8 +858,8 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
     } else if (!DF || SF->hasInternalLinkage() || DF->hasInternalLinkage()) {
       // Function does not already exist, simply insert an function signature
       // identical to SF into the dest module.
-      Function *NewDF = new Function(SF->getFunctionType(), SF->getLinkage(),
-                                     SF->getName(), Dest);
+      Function *NewDF = Function::Create(SF->getFunctionType(), SF->getLinkage(),
+                                         SF->getName(), Dest);
       CopyGVAttributes(NewDF, SF);
 
       // If the LLVM runtime renamed the function, but it is an externally

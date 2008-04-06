@@ -208,7 +208,7 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
     // Create new PHI node with two incoming values for NewHeader.
     // One incoming value is from OrigLatch (through OrigHeader) and 
     // second incoming value is from original pre-header.
-    PHINode *NH = new PHINode(In->getType(), In->getName());
+    PHINode *NH = PHINode::Create(In->getType(), In->getName());
     NH->addIncoming(PN->getIncomingValueForBlock(OrigLatch), OrigHeader);
     NH->addIncoming(NPV, OrigPreHeader);
     NewHeader->getInstList().push_front(NH);
@@ -249,7 +249,7 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
     // create new PHINode for this instruction.
     Instruction *NewHeaderReplacement = NULL;
     if (usedOutsideOriginalHeader(In)) {
-      PHINode *PN = new PHINode(In->getType(), In->getName());
+      PHINode *PN = PHINode::Create(In->getType(), In->getName());
       PN->addIncoming(In, OrigHeader);
       PN->addIncoming(C, OrigPreHeader);
       NewHeader->getInstList().push_front(PN);
@@ -336,7 +336,7 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
       } else {
         // Used outside Exit block. Create a new PHI node from exit block
         // to receive value from ne new header ane pre header.
-        PHINode *PN = new PHINode(U->getType(), U->getName());
+        PHINode *PN = PHINode::Create(U->getType(), U->getName());
         PN->addIncoming(ILoopHeaderInfo.PreHeader, OrigPreHeader);
         PN->addIncoming(OldPhi, OrigHeader);
         Exit->getInstList().push_front(PN);
@@ -447,12 +447,12 @@ void LoopRotate::preserveCanonicalLoopForm(LPPassManager &LPM) {
   // Right now original pre-header has two successors, new header and
   // exit block. Insert new block between original pre-header and
   // new header such that loop's new pre-header has only one successor.
-  BasicBlock *NewPreHeader = new BasicBlock("bb.nph", OrigHeader->getParent(), 
-                                NewHeader);
+  BasicBlock *NewPreHeader = BasicBlock::Create("bb.nph", OrigHeader->getParent(), 
+                                                NewHeader);
   LoopInfo &LI = LPM.getAnalysis<LoopInfo>();
   if (Loop *PL = LI.getLoopFor(OrigPreHeader))
     PL->addBasicBlockToLoop(NewPreHeader, LI.getBase());
-  new BranchInst(NewHeader, NewPreHeader);
+  BranchInst::Create(NewHeader, NewPreHeader);
   
   BranchInst *OrigPH_BI = cast<BranchInst>(OrigPreHeader->getTerminator());
   if (OrigPH_BI->getSuccessor(0) == NewHeader)
@@ -560,7 +560,7 @@ void LoopRotate::preserveCanonicalLoopForm(LPPassManager &LPM) {
   BasicBlock::iterator I = Exit->begin(), E = Exit->end();
   PHINode *PN = NULL;
   for (; (PN = dyn_cast<PHINode>(I)); ++I) {
-    PHINode *NewPN = new PHINode(PN->getType(), PN->getName());
+    PHINode *NewPN = PHINode::Create(PN->getType(), PN->getName());
     unsigned N = PN->getNumIncomingValues();
     for (unsigned index = 0; index < N; ++index)
       if (PN->getIncomingBlock(index) == NExit) {

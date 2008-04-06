@@ -69,14 +69,14 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
   } else if (UnwindingBlocks.size() == 1) {
     UnwindBlock = UnwindingBlocks.front();
   } else {
-    UnwindBlock = new BasicBlock("UnifiedUnwindBlock", &F);
+    UnwindBlock = BasicBlock::Create("UnifiedUnwindBlock", &F);
     new UnwindInst(UnwindBlock);
 
     for (std::vector<BasicBlock*>::iterator I = UnwindingBlocks.begin(),
            E = UnwindingBlocks.end(); I != E; ++I) {
       BasicBlock *BB = *I;
       BB->getInstList().pop_back();  // Remove the unwind insn
-      new BranchInst(UnwindBlock, BB);
+      BranchInst::Create(UnwindBlock, BB);
     }
   }
 
@@ -86,14 +86,14 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
   } else if (UnreachableBlocks.size() == 1) {
     UnreachableBlock = UnreachableBlocks.front();
   } else {
-    UnreachableBlock = new BasicBlock("UnifiedUnreachableBlock", &F);
+    UnreachableBlock = BasicBlock::Create("UnifiedUnreachableBlock", &F);
     new UnreachableInst(UnreachableBlock);
 
     for (std::vector<BasicBlock*>::iterator I = UnreachableBlocks.begin(),
            E = UnreachableBlocks.end(); I != E; ++I) {
       BasicBlock *BB = *I;
       BB->getInstList().pop_back();  // Remove the unreachable inst.
-      new BranchInst(UnreachableBlock, BB);
+      BranchInst::Create(UnreachableBlock, BB);
     }
   }
 
@@ -110,27 +110,27 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
   // nodes (if the function returns values), and convert all of the return
   // instructions into unconditional branches.
   //
-  BasicBlock *NewRetBlock = new BasicBlock("UnifiedReturnBlock", &F);
+  BasicBlock *NewRetBlock = BasicBlock::Create("UnifiedReturnBlock", &F);
 
   SmallVector<Value *, 4> Phis;
   unsigned NumRetVals = ReturningBlocks[0]->getTerminator()->getNumOperands();
   if (NumRetVals == 0)
-    new ReturnInst(NULL, NewRetBlock);
+    ReturnInst::Create(NULL, NewRetBlock);
   else if (const StructType *STy = dyn_cast<StructType>(F.getReturnType())) {
     Instruction *InsertPt = NewRetBlock->getFirstNonPHI();
     for (unsigned i = 0; i < NumRetVals; ++i) {
-      PHINode *PN = new PHINode(STy->getElementType(i), "UnifiedRetVal." 
-                                + utostr(i), InsertPt);
+      PHINode *PN = PHINode::Create(STy->getElementType(i), "UnifiedRetVal." 
+                                    + utostr(i), InsertPt);
       Phis.push_back(PN);
     }
-    new ReturnInst(&Phis[0], NumRetVals);
+    ReturnInst::Create(&Phis[0], NumRetVals);
   }
   else {
     // If the function doesn't return void... add a PHI node to the block...
-    PHINode *PN = new PHINode(F.getReturnType(), "UnifiedRetVal");
+    PHINode *PN = PHINode::Create(F.getReturnType(), "UnifiedRetVal");
     NewRetBlock->getInstList().push_back(PN);
     Phis.push_back(PN);
-    new ReturnInst(PN, NewRetBlock);
+    ReturnInst::Create(PN, NewRetBlock);
   }
 
   // Loop over all of the blocks, replacing the return instruction with an
@@ -149,7 +149,7 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
     }
 
     BB->getInstList().pop_back();  // Remove the return insn
-    new BranchInst(NewRetBlock, BB);
+    BranchInst::Create(NewRetBlock, BB);
   }
   ReturnBlock = NewRetBlock;
   return true;

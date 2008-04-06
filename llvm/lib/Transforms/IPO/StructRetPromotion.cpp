@@ -116,14 +116,14 @@ bool SRETPromotion::PromoteReturn(CallGraphNode *CGN) {
           SmallVector<Value*, 2> GEPIdx;
           GEPIdx.push_back(ConstantInt::get(Type::Int32Ty, 0));
           GEPIdx.push_back(ConstantInt::get(Type::Int32Ty, idx));
-          Value *NGEPI = new GetElementPtrInst(TheAlloca, GEPIdx.begin(),
-                                               GEPIdx.end(),
-                                               "mrv.gep", I);
+          Value *NGEPI = GetElementPtrInst::Create(TheAlloca, GEPIdx.begin(),
+                                                   GEPIdx.end(),
+                                                   "mrv.gep", I);
           Value *NV = new LoadInst(NGEPI, "mrv.ld", I);
           RetVals.push_back(NV);
         }
     
-        ReturnInst *NR = new ReturnInst(&RetVals[0], RetVals.size(), I);
+        ReturnInst *NR = ReturnInst::Create(&RetVals[0], RetVals.size(), I);
         I->replaceAllUsesWith(NR);
         I->eraseFromParent();
       }
@@ -222,7 +222,7 @@ Function *SRETPromotion::cloneFunctionBody(Function *F,
   }
 
   FunctionType *NFTy = FunctionType::get(STy, Params, FTy->isVarArg());
-  Function *NF = new Function(NFTy, F->getLinkage(), F->getName());
+  Function *NF = Function::Create(NFTy, F->getLinkage(), F->getName());
   NF->setCallingConv(F->getCallingConv());
   NF->setParamAttrs(PAListPtr::get(ParamAttrsVec.begin(), ParamAttrsVec.end()));
   F->getParent()->getFunctionList().insert(F, NF);
@@ -283,12 +283,12 @@ void SRETPromotion::updateCallSites(Function *F, Function *NF) {
     // Build new call instruction.
     Instruction *New;
     if (InvokeInst *II = dyn_cast<InvokeInst>(Call)) {
-      New = new InvokeInst(NF, II->getNormalDest(), II->getUnwindDest(),
-                           Args.begin(), Args.end(), "", Call);
+      New = InvokeInst::Create(NF, II->getNormalDest(), II->getUnwindDest(),
+                               Args.begin(), Args.end(), "", Call);
       cast<InvokeInst>(New)->setCallingConv(CS.getCallingConv());
       cast<InvokeInst>(New)->setParamAttrs(NewPAL);
     } else {
-      New = new CallInst(NF, Args.begin(), Args.end(), "", Call);
+      New = CallInst::Create(NF, Args.begin(), Args.end(), "", Call);
       cast<CallInst>(New)->setCallingConv(CS.getCallingConv());
       cast<CallInst>(New)->setParamAttrs(NewPAL);
       if (cast<CallInst>(Call)->isTailCall())

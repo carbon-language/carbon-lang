@@ -793,8 +793,8 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, LoadInst* orig,
   
   // Otherwise, the idom is the loop, so we need to insert a PHI node.  Do so
   // now, then get values to fill in the incoming values for the PHI.
-  PHINode *PN = new PHINode(orig->getType(), orig->getName()+".rle",
-                            BB->begin());
+  PHINode *PN = PHINode::Create(orig->getType(), orig->getName()+".rle",
+                                BB->begin());
   PN->reserveOperandSpace(std::distance(pred_begin(BB), pred_end(BB)));
   
   if (Phis.count(BB) == 0)
@@ -1370,7 +1370,7 @@ bool GVN::processStore(StoreInst *SI, SmallVectorImpl<Instruction*> &toErase) {
       ConstantInt::get(Type::Int64Ty, Range.End-Range.Start),  // size
       ConstantInt::get(Type::Int32Ty, Range.Alignment)   // align
     };
-    Value *C = new CallInst(MemSetF, Ops, Ops+4, "", InsertPt);
+    Value *C = CallInst::Create(MemSetF, Ops, Ops+4, "", InsertPt);
     DEBUG(cerr << "Replace stores:\n";
           for (unsigned i = 0, e = Range.TheStores.size(); i != e; ++i)
             cerr << *Range.TheStores[i];
@@ -1568,7 +1568,7 @@ bool GVN::processMemCpy(MemCpyInst* M, MemCpyInst* MDep,
   args.push_back(M->getLength());
   args.push_back(M->getAlignment());
   
-  CallInst* C = new CallInst(MemCpyFun, args.begin(), args.end(), "", M);
+  CallInst* C = CallInst::Create(MemCpyFun, args.begin(), args.end(), "", M);
   
   MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
   if (MD.getDependency(C) == MDep) {

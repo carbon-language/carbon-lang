@@ -35,6 +35,10 @@ namespace {
   /// DummyInst - An instance of this class is used to mark the end of the
   /// instruction list.  This is not a real instruction.
   struct VISIBILITY_HIDDEN DummyInst : public Instruction {
+    // allocate space for exactly zero operands
+    void *operator new(size_t s) {
+      return User::operator new(s, 0);
+    }
     DummyInst() : Instruction(Type::VoidTy, OtherOpsEnd, 0, 0) {
       // This should not be garbage monitored.
       LeakDetector::removeGarbageObject(this);
@@ -71,7 +75,7 @@ template class SymbolTableListTraits<Instruction, BasicBlock>;
 
 BasicBlock::BasicBlock(const std::string &Name, Function *NewParent,
                        BasicBlock *InsertBefore, BasicBlock *Dest)
-  : User(Type::LabelTy, Value::BasicBlockVal, &unwindDest, 0), Parent(0) {
+  : User(Type::LabelTy, Value::BasicBlockVal, &unwindDest, 0/*FIXME*/), Parent(0) {
 
   // Make sure that we get added to a function
   LeakDetector::addGarbageObject(this);
@@ -283,14 +287,14 @@ BasicBlock *BasicBlock::splitBasicBlock(iterator I, const std::string &BBName) {
   assert(I != InstList.end() &&
          "Trying to get me to create degenerate basic block!");
 
-  BasicBlock *New = new BasicBlock(BBName, getParent(), getNext());
+  BasicBlock *New = new(0/*FIXME*/) BasicBlock(BBName, getParent(), getNext());
 
   // Move all of the specified instructions from the original basic block into
   // the new basic block.
   New->getInstList().splice(New->end(), this->getInstList(), I, end());
 
   // Add a branch instruction to the newly formed basic block.
-  new BranchInst(New, this);
+  BranchInst::Create(New, this);
 
   // Now we must loop through all of the successors of the New block (which
   // _were_ the successors of the 'this' block), and update any PHI nodes in

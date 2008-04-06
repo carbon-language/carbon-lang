@@ -141,7 +141,7 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
       }
 
       // Create the call to Malloc.
-      CallInst *MCall = new CallInst(MallocFunc, MallocArg, "", I);
+      CallInst *MCall = CallInst::Create(MallocFunc, MallocArg, "", I);
       MCall->setTailCall();
 
       // Create a cast instruction to convert to the right type...
@@ -162,7 +162,7 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
                         PointerType::getUnqual(Type::Int8Ty), "", I);
 
       // Insert a call to the free function...
-      (new CallInst(FreeFunc, PtrCast, "", I))->setTailCall();
+      CallInst::Create(FreeFunc, PtrCast, "", I)->setTailCall();
 
       // Delete the old free instruction
       I = --BBIL.erase(I);

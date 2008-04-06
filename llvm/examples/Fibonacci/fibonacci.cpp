@@ -43,7 +43,7 @@ static Function *CreateFibFunction(Module *M) {
                                           (Type *)0));
 
   // Add a basic block to the function.
-  BasicBlock *BB = new BasicBlock("EntryBlock", FibF);
+  BasicBlock *BB = BasicBlock::Create("EntryBlock", FibF);
 
   // Get pointers to the constants.
   Value *One = ConstantInt::get(Type::Int32Ty, 1);
@@ -54,25 +54,25 @@ static Function *CreateFibFunction(Module *M) {
   ArgX->setName("AnArg");            // Give it a nice symbolic name for fun.
 
   // Create the true_block.
-  BasicBlock *RetBB = new BasicBlock("return", FibF);
+  BasicBlock *RetBB = BasicBlock::Create("return", FibF);
   // Create an exit block.
-  BasicBlock* RecurseBB = new BasicBlock("recurse", FibF);
+  BasicBlock* RecurseBB = BasicBlock::Create("recurse", FibF);
 
   // Create the "if (arg <= 2) goto exitbb"
   Value *CondInst = new ICmpInst(ICmpInst::ICMP_SLE, ArgX, Two, "cond", BB);
-  new BranchInst(RetBB, RecurseBB, CondInst, BB);
+  BranchInst::Create(RetBB, RecurseBB, CondInst, BB);
 
   // Create: ret int 1
-  new ReturnInst(One, RetBB);
+  ReturnInst::Create(One, RetBB);
 
   // create fib(x-1)
   Value *Sub = BinaryOperator::createSub(ArgX, One, "arg", RecurseBB);
-  CallInst *CallFibX1 = new CallInst(FibF, Sub, "fibx1", RecurseBB);
+  CallInst *CallFibX1 = CallInst::Create(FibF, Sub, "fibx1", RecurseBB);
   CallFibX1->setTailCall();
 
   // create fib(x-2)
   Sub = BinaryOperator::createSub(ArgX, Two, "arg", RecurseBB);
-  CallInst *CallFibX2 = new CallInst(FibF, Sub, "fibx2", RecurseBB);
+  CallInst *CallFibX2 = CallInst::Create(FibF, Sub, "fibx2", RecurseBB);
   CallFibX2->setTailCall();
 
 
@@ -81,7 +81,7 @@ static Function *CreateFibFunction(Module *M) {
                                          "addresult", RecurseBB);
 
   // Create the return instruction and add it to the basic block
-  new ReturnInst(Sum, RecurseBB);
+  ReturnInst::Create(Sum, RecurseBB);
 
   return FibF;
 }

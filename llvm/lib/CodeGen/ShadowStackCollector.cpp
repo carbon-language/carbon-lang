@@ -133,7 +133,7 @@ namespace {
           return 0;
         
         // Create a cleanup block.
-        BasicBlock *CleanupBB = new BasicBlock(CleanupBBName, &F);
+        BasicBlock *CleanupBB = BasicBlock::Create(CleanupBBName, &F);
         UnwindInst *UI = new UnwindInst(CleanupBB);
         
         // Transform the 'call' instructions into 'invoke's branching to the
@@ -155,10 +155,10 @@ namespace {
           Args.clear();
           Args.append(CI->op_begin() + 1, CI->op_end());
           
-          InvokeInst *II = new InvokeInst(CI->getOperand(0),
-                                          NewBB, CleanupBB,
-                                          Args.begin(), Args.end(),
-                                          CI->getName(), CallBB);
+          InvokeInst *II = InvokeInst::Create(CI->getOperand(0),
+                                              NewBB, CleanupBB,
+                                              Args.begin(), Args.end(),
+                                              CI->getName(), CallBB);
           II->setCallingConv(CI->getCallingConv());
           II->setParamAttrs(CI->getParamAttrs());
           CI->replaceAllUsesWith(II);

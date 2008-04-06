@@ -98,7 +98,7 @@ void llvm::RemoveSuccessor(TerminatorInst *TI, unsigned SuccNum) {
         RetVal = Constant::getNullValue(BB->getParent()->getReturnType());
 
       // Create the return...
-      NewTI = new ReturnInst(RetVal);
+      NewTI = ReturnInst::Create(RetVal);
     }
     break;
 

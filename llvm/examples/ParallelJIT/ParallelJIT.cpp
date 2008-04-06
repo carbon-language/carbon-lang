@@ -39,7 +39,7 @@ static Function* createAdd1(Module *M) {
 
   // Add a basic block to the function. As before, it automatically inserts
   // because of the last argument.
-  BasicBlock *BB = new BasicBlock("EntryBlock", Add1F);
+  BasicBlock *BB = BasicBlock::Create("EntryBlock", Add1F);
 
   // Get pointers to the constant `1'.
   Value *One = ConstantInt::get(Type::Int32Ty, 1);
@@ -53,7 +53,7 @@ static Function* createAdd1(Module *M) {
   Instruction *Add = BinaryOperator::createAdd(One, ArgX, "addresult", BB);
 
   // Create the return instruction and add it to the basic block
-  new ReturnInst(Add, BB);
+  ReturnInst::Create(Add, BB);
 
   // Now, function add1 is ready.
   return Add1F;
@@ -67,7 +67,7 @@ static Function *CreateFibFunction(Module *M) {
                                           (Type *)0));
 
   // Add a basic block to the function.
-  BasicBlock *BB = new BasicBlock("EntryBlock", FibF);
+  BasicBlock *BB = BasicBlock::Create("EntryBlock", FibF);
 
   // Get pointers to the constants.
   Value *One = ConstantInt::get(Type::Int32Ty, 1);
@@ -78,31 +78,31 @@ static Function *CreateFibFunction(Module *M) {
   ArgX->setName("AnArg");            // Give it a nice symbolic name for fun.
 
   // Create the true_block.
-  BasicBlock *RetBB = new BasicBlock("return", FibF);
+  BasicBlock *RetBB = BasicBlock::Create("return", FibF);
   // Create an exit block.
-  BasicBlock* RecurseBB = new BasicBlock("recurse", FibF);
+  BasicBlock* RecurseBB = BasicBlock::Create("recurse", FibF);
 
   // Create the "if (arg < 2) goto exitbb"
   Value *CondInst = new ICmpInst(ICmpInst::ICMP_SLE, ArgX, Two, "cond", BB);
-  new BranchInst(RetBB, RecurseBB, CondInst, BB);
+  BranchInst::Create(RetBB, RecurseBB, CondInst, BB);
 
   // Create: ret int 1
-  new ReturnInst(One, RetBB);
+  ReturnInst::Create(One, RetBB);
 
   // create fib(x-1)
   Value *Sub = BinaryOperator::createSub(ArgX, One, "arg", RecurseBB);
-  Value *CallFibX1 = new CallInst(FibF, Sub, "fibx1", RecurseBB);
+  Value *CallFibX1 = CallInst::Create(FibF, Sub, "fibx1", RecurseBB);
 
   // create fib(x-2)
   Sub = BinaryOperator::createSub(ArgX, Two, "arg", RecurseBB);
-  Value *CallFibX2 = new CallInst(FibF, Sub, "fibx2", RecurseBB);
+  Value *CallFibX2 = CallInst::Create(FibF, Sub, "fibx2", RecurseBB);
 
   // fib(x-1)+fib(x-2)
   Value *Sum =
     BinaryOperator::createAdd(CallFibX1, CallFibX2, "addresult", RecurseBB);
 
   // Create the return instruction and add it to the basic block
-  new ReturnInst(Sum, RecurseBB);
+  ReturnInst::Create(Sum, RecurseBB);
 
   return FibF;
 }

@@ -70,17 +70,17 @@ void addMainFunction(Module *mod) {
   }
 
   //main.0:
-  BasicBlock *bb = new BasicBlock("main.0", main_func);
+  BasicBlock *bb = BasicBlock::Create("main.0", main_func);
 
   //call void @brainf()
   {
-    CallInst *brainf_call = new CallInst(mod->getFunction("brainf"),
-                                         "", bb);
+    CallInst *brainf_call = CallInst::Create(mod->getFunction("brainf"),
+                                             "", bb);
     brainf_call->setTailCall(false);
   }
 
   //ret i32 0
-  new ReturnInst(ConstantInt::get(APInt(32, 0)), bb);
+  ReturnInst::Create(ConstantInt::get(APInt(32, 0)), bb);
 }
 
 int main(int argc, char **argv) {

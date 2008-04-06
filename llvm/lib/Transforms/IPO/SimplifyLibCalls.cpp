@@ -430,7 +430,7 @@ struct VISIBILITY_HIDDEN ExitInMainOptimization : public LibCallOptimization {
           // Create a return instruction that we'll replace the call with.
           // Note that the argument of the return is the argument of the call
           // instruction.
-          new ReturnInst(ci->getOperand(1), ci);
+          ReturnInst::Create(ci->getOperand(1), ci);
 
           // Split the block at the call instruction which places it in a new
           // basic block.
@@ -496,13 +496,13 @@ public:
 
     // We need to find the end of the destination string.  That's where the
     // memory is to be moved to. We just generate a call to strlen.
-    CallInst *DstLen = new CallInst(SLC.get_strlen(), Dst,
-                                    Dst->getName()+".len", CI);
+    CallInst *DstLen = CallInst::Create(SLC.get_strlen(), Dst,
+                                        Dst->getName()+".len", CI);
 
     // Now that we have the destination's length, we must index into the
     // destination's pointer to get the actual memcpy destination (end of
     // the string .. we're concatenating).
-    Dst = new GetElementPtrInst(Dst, DstLen, Dst->getName()+".indexed", CI);
+    Dst = GetElementPtrInst::Create(Dst, DstLen, Dst->getName()+".indexed", CI);
 
     // We have enough information to now generate the memcpy call to
     // do the concatenation for us.
@@ -511,7 +511,7 @@ public:
       ConstantInt::get(SLC.getIntPtrType(), SrcStr.size()+1), // copy nul byte.
       ConstantInt::get(Type::Int32Ty, 1)  // alignment
     };
-    new CallInst(SLC.get_memcpy(), Vals, Vals + 4, "", CI);
+    CallInst::Create(SLC.get_memcpy(), Vals, Vals + 4, "", CI);
 
     return ReplaceCallWith(CI, Dst);
   }
@@ -551,8 +551,8 @@ public:
         CI->getOperand(2),
         ConstantInt::get(SLC.getIntPtrType(), Str.size()+1)
       };
-      return ReplaceCallWith(CI, new CallInst(SLC.get_memchr(), Args, Args + 3,
-                                              CI->getName(), CI));
+      return ReplaceCallWith(CI, CallInst::Create(SLC.get_memchr(), Args, Args + 3,
+                                                  CI->getName(), CI));
     }
 
     // strchr can find the nul character.
@@ -575,9 +575,9 @@ public:
     // strchr(s+n,c)  -> gep(s+n+i,c)
     //    (if c is a constant integer and s is a constant string)
     Value *Idx = ConstantInt::get(Type::Int64Ty, i);
-    Value *GEP = new GetElementPtrInst(CI->getOperand(1), Idx, 
-                                       CI->getOperand(1)->getName() +
-                                       ".strchr", CI);
+    Value *GEP = GetElementPtrInst::Create(CI->getOperand(1), Idx, 
+                                           CI->getOperand(1)->getName() +
+                                           ".strchr", CI);
     return ReplaceCallWith(CI, GEP);
   }
 } StrChrOptimizer;
@@ -754,7 +754,7 @@ public:
       ConstantInt::get(SLC.getIntPtrType(), SrcStr.size()+1),
       ConstantInt::get(Type::Int32Ty, 1) // alignment
     };
-    new CallInst(SLC.get_memcpy(), MemcpyOps, MemcpyOps + 4, "", CI);
+    CallInst::Create(SLC.get_memcpy(), MemcpyOps, MemcpyOps + 4, "", CI);
 
     return ReplaceCallWith(CI, Dst);
   }
@@ -900,8 +900,8 @@ struct VISIBILITY_HIDDEN memcmpOptimization : public LibCallOptimization {
         Value *D1 = BinaryOperator::createSub(S1V1, S2V1,
                                               CI->getName()+".d1", CI);
         Constant *One = ConstantInt::get(Type::Int32Ty, 1);
-        Value *G1 = new GetElementPtrInst(Op1Cast, One, "next1v", CI);
-        Value *G2 = new GetElementPtrInst(Op2Cast, One, "next2v", CI);
+        Value *G1 = GetElementPtrInst::Create(Op1Cast, One, "next1v", CI);
+        Value *G2 = GetElementPtrInst::Create(Op2Cast, One, "next2v", CI);
         Value *S1V2 = new LoadInst(G1, LHS->getName()+".val2", CI);
         Value *S2V2 = new LoadInst(G2, RHS->getName()+".val2", CI);
         Value *D2 = BinaryOperator::createSub(S1V2, S2V2,
@@ -946,7 +946,7 @@ public:
       CI->getOperand(1), CI->getOperand(2), CI->getOperand(3),
       ConstantInt::get(Type::Int32Ty, 1)   // align = 1 always.
     };
-    new CallInst(SLC.get_memcpy(), MemcpyOps, MemcpyOps + 4, "", CI);
+    CallInst::Create(SLC.get_memcpy(), MemcpyOps, MemcpyOps + 4, "", CI);
     // memcpy always returns the destination
     return ReplaceCallWith(CI, CI->getOperand(1));
   }
@@ -1162,8 +1162,8 @@ public:
             Ty==Type::FloatTy ? APFloat(1.0f) : APFloat(1.0)));
       } else if (Op2->isExactlyValue(0.5)) {
         // pow(x,0.5) -> sqrt(x)
-        CallInst* sqrt_inst = new CallInst(SLC.get_sqrt(), base,
-            ci->getName()+".pow",ci);
+        CallInst* sqrt_inst = CallInst::Create(SLC.get_sqrt(), base,
+                                               ci->getName()+".pow",ci);
         return ReplaceCallWith(ci, sqrt_inst);
       } else if (Op2->isExactlyValue(1.0)) {
         // pow(x,1.0) -> x
@@ -1220,7 +1220,7 @@ public:
     if (FormatStr.size() == 1) {
       // Turn this into a putchar call, even if it is a %.
       Value *V = ConstantInt::get(Type::Int32Ty, FormatStr[0]);
-      new CallInst(SLC.get_putchar(), V, "", CI);
+      CallInst::Create(SLC.get_putchar(), V, "", CI);
       if (CI->use_empty()) return ReplaceCallWith(CI, 0);
       return ReplaceCallWith(CI, ConstantInt::get(CI->getType(), 1));
     }
@@ -1240,7 +1240,7 @@ public:
                                      CI->getParent()->getParent()->getParent());
       // Cast GV to be a pointer to char.
       GV = ConstantExpr::getBitCast(GV, PointerType::getUnqual(Type::Int8Ty));
-      new CallInst(SLC.get_puts(), GV, "", CI);
+      CallInst::Create(SLC.get_puts(), GV, "", CI);
 
       if (CI->use_empty()) return ReplaceCallWith(CI, 0);
       // The return value from printf includes the \n we just removed, so +1.
@@ -1264,8 +1264,8 @@ public:
         return false;
 
       // printf("%s\n",str) -> puts(str)
-      new CallInst(SLC.get_puts(), CastToCStr(CI->getOperand(2), CI),
-                   CI->getName(), CI);
+      CallInst::Create(SLC.get_puts(), CastToCStr(CI->getOperand(2), CI),
+                       CI->getName(), CI);
       return ReplaceCallWith(CI, 0);
     case 'c': {
       // printf("%c",c) -> putchar(c)
@@ -1279,7 +1279,7 @@ public:
 
       V = CastInst::createZExtOrBitCast(V, Type::Int32Ty, CI->getName()+".int",
                                         CI);
-      new CallInst(SLC.get_putchar(), V, "", CI);
+      CallInst::Create(SLC.get_putchar(), V, "", CI);
       return ReplaceCallWith(CI, ConstantInt::get(CI->getType(), 1));
     }
     }
@@ -1331,7 +1331,7 @@ public:
         ConstantInt::get(SLC.getIntPtrType(), 1),
         CI->getOperand(1)
       };
-      new CallInst(SLC.get_fwrite(FILEty), FWriteArgs, FWriteArgs + 4, CI->getName(), CI);
+      CallInst::Create(SLC.get_fwrite(FILEty), FWriteArgs, FWriteArgs + 4, CI->getName(), CI);
       return ReplaceCallWith(CI, ConstantInt::get(CI->getType(), 
                                                   FormatStr.size()));
     }
@@ -1351,7 +1351,7 @@ public:
       SmallVector<Value *, 2> Args;
       Args.push_back(C);
       Args.push_back(CI->getOperand(1));
-      new CallInst(SLC.get_fputc(FILETy), Args.begin(), Args.end(), "", CI);
+      CallInst::Create(SLC.get_fputc(FILETy), Args.begin(), Args.end(), "", CI);
       return ReplaceCallWith(CI, ConstantInt::get(CI->getType(), 1));
     }
     case 's': {
@@ -1366,8 +1366,8 @@ public:
       SmallVector<Value *, 2> Args;
       Args.push_back(CastToCStr(CI->getOperand(3), CI));
       Args.push_back(CI->getOperand(1));
-      new CallInst(SLC.get_fputs(FILETy), Args.begin(),
-                   Args.end(), CI->getName(), CI);
+      CallInst::Create(SLC.get_fputs(FILETy), Args.begin(),
+                       Args.end(), CI->getName(), CI);
       return ReplaceCallWith(CI, 0);
     }
     default:
@@ -1418,7 +1418,7 @@ public:
                          FormatStr.size()+1), // Copy the nul byte.
         ConstantInt::get(Type::Int32Ty, 1)
       };
-      new CallInst(SLC.get_memcpy(), MemCpyArgs, MemCpyArgs + 4, "", CI);
+      CallInst::Create(SLC.get_memcpy(), MemCpyArgs, MemCpyArgs + 4, "", CI);
       return ReplaceCallWith(CI, ConstantInt::get(CI->getType(), 
                                                   FormatStr.size()));
     }
@@ -1434,18 +1434,18 @@ public:
       Value *V = CastInst::createTruncOrBitCast(CI->getOperand(3),
                                                 Type::Int8Ty, "char", CI);
       new StoreInst(V, CI->getOperand(1), CI);
-      Value *Ptr = new GetElementPtrInst(CI->getOperand(1),
-                                         ConstantInt::get(Type::Int32Ty, 1),
-                                         CI->getOperand(1)->getName()+".end",
-                                         CI);
+      Value *Ptr = GetElementPtrInst::Create(CI->getOperand(1),
+                                             ConstantInt::get(Type::Int32Ty, 1),
+                                             CI->getOperand(1)->getName()+".end",
+                                             CI);
       new StoreInst(ConstantInt::get(Type::Int8Ty,0), Ptr, CI);
       return ReplaceCallWith(CI, ConstantInt::get(Type::Int32Ty, 1));
     }
     case 's': {
       // sprintf(dest,"%s",str) -> llvm.memcpy(dest, str, strlen(str)+1, 1)
-      Value *Len = new CallInst(SLC.get_strlen(),
-                                CastToCStr(CI->getOperand(3), CI),
-                                CI->getOperand(3)->getName()+".len", CI);
+      Value *Len = CallInst::Create(SLC.get_strlen(),
+                                    CastToCStr(CI->getOperand(3), CI),
+                                    CI->getOperand(3)->getName()+".len", CI);
       Value *UnincLen = Len;
       Len = BinaryOperator::createAdd(Len, ConstantInt::get(Len->getType(), 1),
                                       Len->getName()+"1", CI);
@@ -1455,7 +1455,7 @@ public:
         Len,
         ConstantInt::get(Type::Int32Ty, 1)
       };
-      new CallInst(SLC.get_memcpy(), MemcpyArgs, MemcpyArgs + 4, "", CI);
+      CallInst::Create(SLC.get_memcpy(), MemcpyArgs, MemcpyArgs + 4, "", CI);
       
       // The strlen result is the unincremented number of bytes in the string.
       if (!CI->use_empty()) {
@@ -1507,7 +1507,7 @@ public:
       ConstantInt::get(SLC.getIntPtrType(), 1),
       CI->getOperand(2)
     };
-    new CallInst(SLC.get_fwrite(FILETy), FWriteParms, FWriteParms + 4, "", CI);
+    CallInst::Create(SLC.get_fwrite(FILETy), FWriteParms, FWriteParms + 4, "", CI);
     return ReplaceCallWith(CI, 0);  // Known to have no uses (see above).
   }
 } FPutsOptimizer;
@@ -1555,7 +1555,7 @@ public:
       Args.push_back(new ZExtInst(Val, Type::Int32Ty, Val->getName()+".int", CI));
       Args.push_back(CI->getOperand(4));
       const Type *FILETy = CI->getOperand(4)->getType();
-      new CallInst(SLC.get_fputc(FILETy), Args.begin(), Args.end(), "", CI);
+      CallInst::Create(SLC.get_fputc(FILETy), Args.begin(), Args.end(), "", CI);
       return ReplaceCallWith(CI, ConstantInt::get(CI->getType(), 1));
     }
     return false;
@@ -1715,7 +1715,7 @@ public:
                                                        ArgType, NULL);
     Value *V = CastInst::createIntegerCast(TheCall->getOperand(1), ArgType, 
                                            false/*ZExt*/, "tmp", TheCall);
-    Value *V2 = new CallInst(F, V, "tmp", TheCall);
+    Value *V2 = CallInst::Create(F, V, "tmp", TheCall);
     V2 = CastInst::createIntegerCast(V2, Type::Int32Ty, false/*ZExt*/, 
                                      "tmp", TheCall);
     V2 = BinaryOperator::createAdd(V2, ConstantInt::get(Type::Int32Ty, 1),
@@ -1723,8 +1723,8 @@ public:
     Value *Cond = new ICmpInst(ICmpInst::ICMP_EQ, V, 
                                Constant::getNullValue(V->getType()), "tmp", 
                                TheCall);
-    V2 = new SelectInst(Cond, ConstantInt::get(Type::Int32Ty, 0), V2,
-                        TheCall->getName(), TheCall);
+    V2 = SelectInst::Create(Cond, ConstantInt::get(Type::Int32Ty, 0), V2,
+                            TheCall->getName(), TheCall);
     return ReplaceCallWith(TheCall, V2);
   }
 } FFSOptimizer;
@@ -1773,8 +1773,8 @@ struct UnaryDoubleFPOptimizer : public LibCallOptimization {
                                            Constant *(SimplifyLibCalls::*FP)()){
     if (FPExtInst *Cast = dyn_cast<FPExtInst>(CI->getOperand(1)))
       if (Cast->getOperand(0)->getType() == Type::FloatTy) {
-        Value *New = new CallInst((SLC.*FP)(), Cast->getOperand(0),
-                                  CI->getName(), CI);
+        Value *New = CallInst::Create((SLC.*FP)(), Cast->getOperand(0),
+                                      CI->getName(), CI);
         New = new FPExtInst(New, Type::DoubleTy, CI->getName(), CI);
         CI->replaceAllUsesWith(New);
         CI->eraseFromParent();

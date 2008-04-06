@@ -211,15 +211,15 @@ bool LowerInvoke::insertCheapEHSupport(Function &F) {
     if (InvokeInst *II = dyn_cast<InvokeInst>(BB->getTerminator())) {
       std::vector<Value*> CallArgs(II->op_begin()+3, II->op_end());
       // Insert a normal call instruction...
-      CallInst *NewCall = new CallInst(II->getCalledValue(),
-                                       CallArgs.begin(), CallArgs.end(), "",II);
+      CallInst *NewCall = CallInst::Create(II->getCalledValue(),
+                                           CallArgs.begin(), CallArgs.end(), "",II);
       NewCall->takeName(II);
       NewCall->setCallingConv(II->getCallingConv());
       NewCall->setParamAttrs(II->getParamAttrs());
       II->replaceAllUsesWith(NewCall);
 
       // Insert an unconditional branch to the normal destination.
-      new BranchInst(II->getNormalDest(), II);
+      BranchInst::Create(II->getNormalDest(), II);
 
       // Remove any PHI node entries from the exception destination.
       II->getUnwindDest()->removePredecessor(BB);
@@ -233,12 +233,12 @@ bool LowerInvoke::insertCheapEHSupport(Function &F) {
       writeAbortMessage(UI);
 
       // Insert a call to abort()
-      (new CallInst(AbortFn, "", UI))->setTailCall();
+      CallInst::Create(AbortFn, "", UI)->setTailCall();
 
       // Insert a return instruction.  This really should be a "barrier", as it
       // is unreachable.
-      new ReturnInst(F.getReturnType() == Type::VoidTy ? 0 :
-                            Constant::getNullValue(F.getReturnType()), UI);
+      ReturnInst::Create(F.getReturnType() == Type::VoidTy ? 0 :
+                         Constant::getNullValue(F.getReturnType()), UI);
 
       // Remove the unwind instruction now.
       BB->getInstList().erase(UI);
@@ -280,16 +280,16 @@ void LowerInvoke::rewriteExpensiveInvoke(InvokeInst *II, unsigned InvokeNo,
   
   // Insert a normal call instruction.
   std::vector<Value*> CallArgs(II->op_begin()+3, II->op_end());
-  CallInst *NewCall = new CallInst(II->getCalledValue(),
-                                   CallArgs.begin(), CallArgs.end(), "",
-                                   II);
+  CallInst *NewCall = CallInst::Create(II->getCalledValue(),
+                                       CallArgs.begin(), CallArgs.end(), "",
+                                       II);
   NewCall->takeName(II);
   NewCall->setCallingConv(II->getCallingConv());
   NewCall->setParamAttrs(II->getParamAttrs());
   II->replaceAllUsesWith(NewCall);
   
   // Replace the invoke with an uncond branch.
-  new BranchInst(II->getNormalDest(), NewCall->getParent());
+  BranchInst::Create(II->getNormalDest(), NewCall->getParent());
   II->eraseFromParent();
 }
 
@@ -463,8 +463,8 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
     std::vector<Value*> Idx;
     Idx.push_back(Constant::getNullValue(Type::Int32Ty));
     Idx.push_back(ConstantInt::get(Type::Int32Ty, 1));
-    OldJmpBufPtr = new GetElementPtrInst(JmpBuf, Idx.begin(), Idx.end(),
-                                         "OldBuf", EntryBB->getTerminator());
+    OldJmpBufPtr = GetElementPtrInst::Create(JmpBuf, Idx.begin(), Idx.end(),
+                                             "OldBuf", EntryBB->getTerminator());
 
     // Copy the JBListHead to the alloca.
     Value *OldBuf = new LoadInst(JBListHead, "oldjmpbufptr", true,
@@ -476,7 +476,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
 
     // Create the catch block.  The catch block is basically a big switch
     // statement that goes to all of the invoke catch blocks.
-    BasicBlock *CatchBB = new BasicBlock("setjmp.catch", &F);
+    BasicBlock *CatchBB = BasicBlock::Create("setjmp.catch", &F);
     
     // Create an alloca which keeps track of which invoke is currently
     // executing.  For normal calls it contains zero.
@@ -488,12 +488,12 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
     // Insert a load in the Catch block, and a switch on its value.  By default,
     // we go to a block that just does an unwind (which is the correct action
     // for a standard call).
-    BasicBlock *UnwindBB = new BasicBlock("unwindbb", &F);
+    BasicBlock *UnwindBB = BasicBlock::Create("unwindbb", &F);
     Unwinds.push_back(new UnwindInst(UnwindBB));
     
     Value *CatchLoad = new LoadInst(InvokeNum, "invoke.num", true, CatchBB);
-    SwitchInst *CatchSwitch = 
-      new SwitchInst(CatchLoad, UnwindBB, Invokes.size(), CatchBB);
+    SwitchInst *CatchSwitch =
+      SwitchInst::Create(CatchLoad, UnwindBB, Invokes.size(), CatchBB);
 
     // Now that things are set up, insert the setjmp call itself.
     
@@ -502,11 +502,11 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
                                                      "setjmp.cont");
 
     Idx[1] = ConstantInt::get(Type::Int32Ty, 0);
-    Value *JmpBufPtr = new GetElementPtrInst(JmpBuf, Idx.begin(), Idx.end(),
-                                             "TheJmpBuf",
-                                             EntryBB->getTerminator());
-    Value *SJRet = new CallInst(SetJmpFn, JmpBufPtr, "sjret",
-                                EntryBB->getTerminator());
+    Value *JmpBufPtr = GetElementPtrInst::Create(JmpBuf, Idx.begin(), Idx.end(),
+                                                 "TheJmpBuf",
+                                                 EntryBB->getTerminator());
+    Value *SJRet = CallInst::Create(SetJmpFn, JmpBufPtr, "sjret",
+                                    EntryBB->getTerminator());
     
     // Compare the return value to zero.
     Value *IsNormal = new ICmpInst(ICmpInst::ICMP_EQ, SJRet, 
@@ -516,7 +516,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
     EntryBB->getTerminator()->eraseFromParent();
     
     // Put in a new condbranch in its place.
-    new BranchInst(ContBlock, CatchBB, IsNormal, EntryBB);
+    BranchInst::Create(ContBlock, CatchBB, IsNormal, EntryBB);
 
     // At this point, we are all set up, rewrite each invoke instruction.
     for (unsigned i = 0, e = Invokes.size(); i != e; ++i)
@@ -528,9 +528,9 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
   // Create three new blocks, the block to load the jmpbuf ptr and compare
   // against null, the block to do the longjmp, and the error block for if it
   // is null.  Add them at the end of the function because they are not hot.
-  BasicBlock *UnwindHandler = new BasicBlock("dounwind", &F);
-  BasicBlock *UnwindBlock = new BasicBlock("unwind", &F);
-  BasicBlock *TermBlock = new BasicBlock("unwinderror", &F);
+  BasicBlock *UnwindHandler = BasicBlock::Create("dounwind", &F);
+  BasicBlock *UnwindBlock = BasicBlock::Create("unwind", &F);
+  BasicBlock *TermBlock = BasicBlock::Create("unwinderror", &F);
 
   // If this function contains an invoke, restore the old jumpbuf ptr.
   Value *BufPtr;
@@ -546,17 +546,17 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
   Value *NotNull = new ICmpInst(ICmpInst::ICMP_NE, BufPtr, 
                                 Constant::getNullValue(BufPtr->getType()),
     "notnull", UnwindHandler);
-  new BranchInst(UnwindBlock, TermBlock, NotNull, UnwindHandler);
+  BranchInst::Create(UnwindBlock, TermBlock, NotNull, UnwindHandler);
   
   // Create the block to do the longjmp.
   // Get a pointer to the jmpbuf and longjmp.
   std::vector<Value*> Idx;
   Idx.push_back(Constant::getNullValue(Type::Int32Ty));
   Idx.push_back(ConstantInt::get(Type::Int32Ty, 0));
-  Idx[0] = new GetElementPtrInst(BufPtr, Idx.begin(), Idx.end(), "JmpBuf",
-                                 UnwindBlock);
+  Idx[0] = GetElementPtrInst::Create(BufPtr, Idx.begin(), Idx.end(), "JmpBuf",
+                                     UnwindBlock);
   Idx[1] = ConstantInt::get(Type::Int32Ty, 1);
-  new CallInst(LongJmpFn, Idx.begin(), Idx.end(), "", UnwindBlock);
+  CallInst::Create(LongJmpFn, Idx.begin(), Idx.end(), "", UnwindBlock);
   new UnreachableInst(UnwindBlock);
   
   // Set up the term block ("throw without a catch").
@@ -566,13 +566,13 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
   writeAbortMessage(TermBlock->getTerminator());
   
   // Insert a call to abort()
-  (new CallInst(AbortFn, "",
-                TermBlock->getTerminator()))->setTailCall();
+  CallInst::Create(AbortFn, "",
+                   TermBlock->getTerminator())->setTailCall();
     
   
   // Replace all unwinds with a branch to the unwind handler.
   for (unsigned i = 0, e = Unwinds.size(); i != e; ++i) {
-    new BranchInst(UnwindHandler, Unwinds[i]);
+    BranchInst::Create(UnwindHandler, Unwinds[i]);
     Unwinds[i]->eraseFromParent();    
   } 
   

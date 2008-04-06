@@ -58,7 +58,7 @@ int main() {
 
   // Add a basic block to the function. As before, it automatically inserts
   // because of the last argument.
-  BasicBlock *BB = new BasicBlock("EntryBlock", Add1F);
+  BasicBlock *BB = BasicBlock::Create("EntryBlock", Add1F);
 
   // Get pointers to the constant `1'.
   Value *One = ConstantInt::get(Type::Int32Ty, 1);
@@ -72,7 +72,7 @@ int main() {
   Instruction *Add = BinaryOperator::createAdd(One, ArgX, "addresult", BB);
 
   // Create the return instruction and add it to the basic block
-  new ReturnInst(Add, BB);
+  ReturnInst::Create(Add, BB);
 
   // Now, function add1 is ready.
 
@@ -83,17 +83,17 @@ int main() {
     cast<Function>(M->getOrInsertFunction("foo", Type::Int32Ty, (Type *)0));
 
   // Add a basic block to the FooF function.
-  BB = new BasicBlock("EntryBlock", FooF);
+  BB = BasicBlock::Create("EntryBlock", FooF);
 
   // Get pointers to the constant `10'.
   Value *Ten = ConstantInt::get(Type::Int32Ty, 10);
 
   // Pass Ten to the call call:
-  CallInst *Add1CallRes = new CallInst(Add1F, Ten, "add1", BB);
+  CallInst *Add1CallRes = CallInst::Create(Add1F, Ten, "add1", BB);
   Add1CallRes->setTailCall(true);
 
   // Create the return instruction and add it to the basic block.
-  new ReturnInst(Add1CallRes, BB);
+  ReturnInst::Create(Add1CallRes, BB);
 
   // Now we create the JIT.
   ExistingModuleProvider* MP = new ExistingModuleProvider(M);

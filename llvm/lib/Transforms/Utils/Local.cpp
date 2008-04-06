@@ -134,7 +134,7 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB) {
     // now.
     if (TheOnlyDest) {
       // Insert the new branch..
-      new BranchInst(TheOnlyDest, SI);
+      BranchInst::Create(TheOnlyDest, SI);
       BasicBlock *BB = SI->getParent();
 
       // Remove entries from PHI nodes which we no longer branch to...
@@ -156,7 +156,7 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB) {
       Value *Cond = new ICmpInst(ICmpInst::ICMP_EQ, SI->getCondition(),
                                  SI->getSuccessorValue(1), "cond", SI);
       // Insert the new branch...
-      new BranchInst(SI->getSuccessor(1), SI->getSuccessor(0), Cond, SI);
+      BranchInst::Create(SI->getSuccessor(1), SI->getSuccessor(0), Cond, SI);
 
       // Delete the old switch...
       SI->getParent()->getInstList().erase(SI);
