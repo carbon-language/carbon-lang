@@ -1001,6 +1001,46 @@ protected:
   friend class Type;
 };
 
+/// RecordType - This is a helper class that allows the use of isa/cast/dyncast
+/// to detect TagType objects of structs/unions/classes.
+class RecordType : public TagType {
+  RecordType(); // DO NOT IMPLEMENT
+public:
+    
+  RecordDecl *getDecl() const {
+    return reinterpret_cast<RecordDecl*>(TagType::getDecl());
+  }
+  
+  // FIXME: This predicate is a helper to QualType/Type. It needs to 
+  // recursively check all fields for const-ness. If any field is declared
+  // const, it needs to return false. 
+  bool hasConstFields() const { return false; }
+
+  // FIXME: RecordType needs to check when it is created that all fields are in
+  // the same address space, and return that.
+  unsigned getAddressSpace() const { return 0; }
+  
+  static bool classof(const Type *T);
+  static bool classof(const RecordType *) { return true; }
+};
+
+/// EnumType - This is a helper class that allows the use of isa/cast/dyncast
+/// to detect TagType objects of enums.
+class EnumType : public TagType {
+  EnumType(); // DO NOT IMPLEMENT
+public:
+    
+  EnumDecl *getDecl() const {
+    return reinterpret_cast<EnumDecl*>(TagType::getDecl());
+  }
+  
+  static bool classof(const Type *T);
+  static bool classof(const EnumType *) { return true; }
+};
+
+
+  
+  
 class ObjCInterfaceType : public Type {
   ObjCInterfaceDecl *Decl;
 protected:
@@ -1094,29 +1134,6 @@ public:
     
 };
   
-/// RecordType - This is a helper class that allows the use of isa/cast/dyncast
-/// to detect TagType objects of structs/unions/classes.
-class RecordType : public TagType {
-  RecordType(); // DO NOT IMPLEMENT
-public:
-    
-  RecordDecl *getDecl() const {
-    return reinterpret_cast<RecordDecl*>(TagType::getDecl());
-  }
-  
-  // FIXME: This predicate is a helper to QualType/Type. It needs to 
-  // recursively check all fields for const-ness. If any field is declared
-  // const, it needs to return false. 
-  bool hasConstFields() const { return false; }
-
-  // FIXME: RecordType needs to check when it is created that all fields are in
-  // the same address space, and return that.
-  unsigned getAddressSpace() const { return 0; }
-  
-  static bool classof(const Type *T);
-  static bool classof(const RecordType *) { return true; }
-};
-
 
 // Inline function definitions.
 

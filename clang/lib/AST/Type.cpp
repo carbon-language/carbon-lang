@@ -745,6 +745,12 @@ bool RecordType::classof(const Type *T) {
   return false;
 }
 
+bool EnumType::classof(const Type *T) {
+  if (const TagType *TT = dyn_cast<TagType>(T))
+    return isa<EnumDecl>(TT->getDecl());
+  return false;
+}
+
 
 //===----------------------------------------------------------------------===//
 // Type Printing
