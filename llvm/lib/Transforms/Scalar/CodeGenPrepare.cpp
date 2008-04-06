@@ -726,7 +726,7 @@ static bool FindMaximalLegalAddressingMode(Value *Addr, const Type *AccessTy,
   }
   
   if (Instruction *I = dyn_cast_or_null<Instruction>(AddrInst)) {
-    assert(AddrModeInsts.back() == I && "Stack imbalance");
+    assert(AddrModeInsts.back() == I && "Stack imbalance"); I = I;
     AddrModeInsts.pop_back();
   }
   
