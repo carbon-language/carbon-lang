@@ -292,18 +292,16 @@ ASTContext::getTypeInfo(QualType T) {
     Align = EltInfo.second;
     break;
   }
-  case Type::Tagged:
-    TagType *TT = cast<TagType>(T);
-    if (RecordType *RT = dyn_cast<RecordType>(TT)) {
-      const ASTRecordLayout &Layout = getASTRecordLayout(RT->getDecl());
-      Width = Layout.getSize();
-      Align = Layout.getAlignment();
-    } else if (EnumDecl *ED = dyn_cast<EnumDecl>(TT->getDecl())) {
-      return getTypeInfo(ED->getIntegerType());
-    } else {
-      assert(0 && "Unimplemented type sizes!");
-    }
+  case Type::Tagged: {
+    if (EnumType *ET = dyn_cast<EnumType>(cast<TagType>(T)))
+      return getTypeInfo(ET->getDecl()->getIntegerType());
+
+    RecordType *RT = cast<RecordType>(T);
+    const ASTRecordLayout &Layout = getASTRecordLayout(RT->getDecl());
+    Width = Layout.getSize();
+    Align = Layout.getAlignment();
     break;
+  }
   }
   
   assert(Align && (Align & (Align-1)) == 0 && "Alignment must be power of 2");
@@ -999,10 +997,8 @@ QualType ASTContext::getArrayDecayedType(QualType Ty) {
 /// getIntegerRank - Return an integer conversion rank (C99 6.3.1.1p1). This
 /// routine will assert if passed a built-in type that isn't an integer or enum.
 static int getIntegerRank(QualType t) {
-  if (const TagType *TT = dyn_cast<TagType>(t.getCanonicalType())) {
-    assert(TT->getDecl()->getKind() == Decl::Enum && "not an int or enum");
+  if (isa<EnumType>(t.getCanonicalType()))
     return 4;
-  }
   
   const BuiltinType *BT = t.getCanonicalType()->getAsBuiltinType();
   switch (BT->getKind()) {
@@ -1219,55 +1215,24 @@ void ASTContext::getObjCEncodingForType(QualType T, std::string& S,
   if (const BuiltinType *BT = T->getAsBuiltinType()) {
     char encoding;
     switch (BT->getKind()) {
-    case BuiltinType::Void:
-      encoding = 'v';
-      break;
-    case BuiltinType::Bool:
-      encoding = 'B';
-      break;
+    default: assert(0 && "Unhandled builtin type kind");          
+    case BuiltinType::Void:       encoding = 'v'; break;
+    case BuiltinType::Bool:       encoding = 'B'; break;
     case BuiltinType::Char_U:
-    case BuiltinType::UChar:
-      encoding = 'C';
-      break;
-    case BuiltinType::UShort:
-      encoding = 'S';
-      break;
-    case BuiltinType::UInt:
-      encoding = 'I';
-      break;
-    case BuiltinType::ULong:
-      encoding = 'L';
-      break;
-    case BuiltinType::ULongLong:
-      encoding = 'Q';
-      break;
+    case BuiltinType::UChar:      encoding = 'C'; break;
+    case BuiltinType::UShort:     encoding = 'S'; break;
+    case BuiltinType::UInt:       encoding = 'I'; break;
+    case BuiltinType::ULong:      encoding = 'L'; break;
+    case BuiltinType::ULongLong:  encoding = 'Q'; break;
     case BuiltinType::Char_S:
-    case BuiltinType::SChar:
-      encoding = 'c';
-      break;
-    case BuiltinType::Short:
-      encoding = 's';
-      break;
-    case BuiltinType::Int:
-      encoding = 'i';
-      break;
-    case BuiltinType::Long:
-      encoding = 'l';
-      break;
-    case BuiltinType::LongLong:
-      encoding = 'q';
-      break;
-    case BuiltinType::Float:
-      encoding = 'f';
-      break;
-    case BuiltinType::Double:
-      encoding = 'd';
-      break;
-    case BuiltinType::LongDouble:
-      encoding = 'd';
-      break;
-    default:
-      assert(0 && "Unhandled builtin type kind");          
+    case BuiltinType::SChar:      encoding = 'c'; break;
+    case BuiltinType::Short:      encoding = 's'; break;
+    case BuiltinType::Int:        encoding = 'i'; break;
+    case BuiltinType::Long:       encoding = 'l'; break;
+    case BuiltinType::LongLong:   encoding = 'q'; break;
+    case BuiltinType::Float:      encoding = 'f'; break;
+    case BuiltinType::Double:     encoding = 'd'; break;
+    case BuiltinType::LongDouble: encoding = 'd'; break;
     }
     
     S += encoding;
@@ -1846,11 +1811,11 @@ bool ASTContext::typesAreCompatible(QualType lhs, QualType rhs) {
     // C99 6.7.2.2p4: Each enumerated type shall be compatible with char,
     // a signed integer type, or an unsigned integer type. 
     if (lcanon->isEnumeralType() && rcanon->isIntegralType()) {
-      EnumDecl* EDecl = cast<EnumDecl>(cast<TagType>(lcanon)->getDecl());
+      EnumDecl* EDecl = cast<EnumType>(lcanon)->getDecl();
       return EDecl->getIntegerType() == rcanon;
     }
     if (rcanon->isEnumeralType() && lcanon->isIntegralType()) {
-      EnumDecl* EDecl = cast<EnumDecl>(cast<TagType>(rcanon)->getDecl());
+      EnumDecl* EDecl = cast<EnumType>(rcanon)->getDecl();
       return EDecl->getIntegerType() == lcanon;
     }
 
