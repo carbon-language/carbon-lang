@@ -336,7 +336,6 @@ private:
   ExprResult ParseExpressionWithLeadingIdentifier(const Token &Tok);
   ExprResult ParseExpressionWithLeadingAt(SourceLocation AtLoc);
   ExprResult ParseAssignmentExprWithLeadingIdentifier(const Token &Tok);
-  ExprResult ParseAssignmentExpressionWithLeadingStar(const Token &Tok);
 
   ExprResult ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec);
   ExprResult ParseCastExpression(bool isUnaryExpression);

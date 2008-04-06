@@ -1440,24 +1440,20 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
   // Handle "direct-declarator [ type-qual-list[opt] * ]".
   bool isStar = false;
   ExprResult NumElements(false);
-  if (Tok.is(tok::star)) {
+  
+  // Handle the case where we have '[*]' as the array size.  However, a leading
+  // star could be the start of an expression, for example 'X[*p + 4]'.  Verify
+  // the the token after the star is a ']'.  Since stars in arrays are
+  // infrequent, use of lookahead is not costly here.
+  if (Tok.is(tok::star) && GetLookAheadToken(1).is(tok::r_square)) {
     // Remember the '*' token, in case we have to un-get it.
     Token StarTok = Tok;
     ConsumeToken();
 
-    // Check that the ']' token is present to avoid incorrectly parsing
-    // expressions starting with '*' as [*].
-    if (Tok.is(tok::r_square)) {
-      if (StaticLoc.isValid())
-        Diag(StaticLoc, diag::err_unspecified_vla_size_with_static);
-      StaticLoc = SourceLocation();  // Drop the static.
-      isStar = true;
-    } else {
-      // Otherwise, the * must have been some expression (such as '*ptr') that
-      // started an assignment-expr.  We already consumed the token, but now we
-      // need to reparse it.  This handles cases like 'X[*p + 4]'
-      NumElements = ParseAssignmentExpressionWithLeadingStar(StarTok);
-    }
+    if (StaticLoc.isValid())
+      Diag(StaticLoc, diag::err_unspecified_vla_size_with_static);
+    StaticLoc = SourceLocation();  // Drop the static.
+    isStar = true;
   } else if (Tok.isNot(tok::r_square)) {
     // Parse the assignment-expression now.
     NumElements = ParseAssignmentExpression();
