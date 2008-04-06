@@ -287,6 +287,14 @@ public:
   //                            Type Operators
   //===--------------------------------------------------------------------===//
   
+  /// getCanonicalType - Return the canonical (structural) type corresponding to
+  /// the specified potentially non-canonical type.  The non-canonical version
+  /// of a type may have many "decorated" versions of types.  Decorators can
+  /// include typedefs, 'typeof' operators, etc. The returned type is guaranteed
+  /// to be free of any of these, allowing two canonical types to be compared
+  /// for exact equality with a simple pointer comparison.
+  QualType getCanonicalType(QualType T);
+  
   /// getArrayDecayedType - Return the properly qualified result of decaying the
   /// specified array type to a pointer.  This operation is non-trivial when
   /// handling typedefs etc.  The canonical type of "T" must be an array type,
