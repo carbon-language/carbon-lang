@@ -1,6 +1,5 @@
 // RUN: clang -fsyntax-only -verify %s
 
-typedef int x; 
 int f3(y, x, 
        x)          // expected-error {{redefinition of parameter}}
   int y, x, 

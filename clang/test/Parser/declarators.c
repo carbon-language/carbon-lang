@@ -25,4 +25,8 @@ int test2(int *P, int A) {
   int Array[*(int*)P+A];
 }
 
+typedef int atype;
+int test3(x, 
+          atype         /* expected-error {{unexpected type name 'atype': expected identifier}} */
+         ) int x, atype; {}
 

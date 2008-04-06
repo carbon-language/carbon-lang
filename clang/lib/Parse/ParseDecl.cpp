@@ -1415,8 +1415,12 @@ void Parser::ParseFunctionDeclaratorIdentifierList(SourceLocation LParenLoc,
       SkipUntil(tok::r_paren);
       return;
     }
-    
+
     IdentifierInfo *ParmII = Tok.getIdentifierInfo();
+
+    // Reject 'typedef int y; int test(x, y)', but continue parsing.
+    if (Actions.isTypeName(*ParmII, CurScope))
+      Diag(Tok, diag::err_unexpected_typedef_ident, ParmII->getName());
     
     // Verify that the argument identifier has not already been mentioned.
     if (!ParamsSoFar.insert(ParmII)) {
