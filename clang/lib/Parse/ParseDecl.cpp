@@ -447,7 +447,8 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
       isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_extern, Loc, PrevSpec);
       break;
     case tok::kw___private_extern__:
-      isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_private_extern, Loc, PrevSpec);
+      isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_private_extern, Loc,
+                                         PrevSpec);
       break;
     case tok::kw_static:
       if (DS.isThreadSpecified())
@@ -1241,18 +1242,16 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D) {
   
   // Okay, this is the parameter list of a function definition, or it is an
   // identifier list of a K&R-style function.
-  bool IsVariadic;
-  bool HasPrototype;
-  bool ErrorEmitted = false;
-
-  // Build up an array of information about the parsed arguments.
-  llvm::SmallVector<DeclaratorChunk::ParamInfo, 16> ParamInfo;
-  llvm::SmallSet<const IdentifierInfo*, 16> ParamsSoFar;
   
   if (Tok.is(tok::r_paren)) {
+    // Remember that we parsed a function type, and remember the attributes.
     // int() -> no prototype, no '...'.
-    IsVariadic   = false;
-    HasPrototype = false;
+    D.AddTypeInfo(DeclaratorChunk::getFunction(/*prototype*/ false,
+                                               /*variadic*/ false,
+                                               /*arglist*/ 0, 0, LParenLoc));
+    
+    ConsumeParen();  // Eat the closing ')'.
+    return;
   } else if (Tok.is(tok::identifier) &&
              // K&R identifier lists can't have typedefs as identifiers, per
              // C99 6.7.5.3p11.
@@ -1260,120 +1259,112 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D) {
     // Identifier list.  Note that '(' identifier-list ')' is only allowed for
     // normal declarators, not for abstract-declarators.
     return ParseFunctionDeclaratorIdentifierList(LParenLoc, D);
-  } else {
-    // Finally, a normal, non-empty parameter type list.
-    
-    // Enter function-declaration scope, limiting any declarators for struct
-    // tags to the function prototype scope.
-    // FIXME: is this needed?
-    EnterScope(Scope::DeclScope);
-    
-    IsVariadic = false;
-    while (1) {
-      if (Tok.is(tok::ellipsis)) {
-        IsVariadic = true;
-
-        // Check to see if this is "void(...)" which is not allowed.
-        if (ParamInfo.empty()) {
-          // Otherwise, parse parameter type list.  If it starts with an
-          // ellipsis,  diagnose the malformed function.
-          Diag(Tok, diag::err_ellipsis_first_arg);
-          IsVariadic = false;       // Treat this like 'void()'.
-        }
-
-        // Consume the ellipsis.
-        ConsumeToken();
-        break;
-      }
+  }
+  
+  // Finally, a normal, non-empty parameter type list.
+  
+  // Build up an array of information about the parsed arguments.
+  llvm::SmallVector<DeclaratorChunk::ParamInfo, 16> ParamInfo;
+  llvm::SmallSet<const IdentifierInfo*, 16> ParamsSoFar;
+  
+  // Enter function-declaration scope, limiting any declarators for struct
+  // tags to the function prototype scope.
+  // FIXME: is this needed?
+  EnterScope(Scope::DeclScope);
+  
+  bool IsVariadic = false;
+  while (1) {
+    if (Tok.is(tok::ellipsis)) {
+      IsVariadic = true;
       
-      SourceLocation DSStart = Tok.getLocation();
-      
-      // Parse the declaration-specifiers.
-      DeclSpec DS;
-      ParseDeclarationSpecifiers(DS);
-
-      // Parse the declarator.  This is "PrototypeContext", because we must
-      // accept either 'declarator' or 'abstract-declarator' here.
-      Declarator ParmDecl(DS, Declarator::PrototypeContext);
-      ParseDeclarator(ParmDecl);
-
-      // Parse GNU attributes, if present.
-      if (Tok.is(tok::kw___attribute))
-        ParmDecl.AddAttributes(ParseAttributes());
-      
-      // Verify C99 6.7.5.3p2: The only SCS allowed is 'register'.
-      if (DS.getStorageClassSpec() != DeclSpec::SCS_unspecified &&
-          DS.getStorageClassSpec() != DeclSpec::SCS_register) {
-        Diag(DS.getStorageClassSpecLoc(),
-             diag::err_invalid_storage_class_in_func_decl);
-        DS.ClearStorageClassSpecs();
-      }
-      if (DS.isThreadSpecified()) {
-        Diag(DS.getThreadSpecLoc(),
-             diag::err_invalid_storage_class_in_func_decl);
-        DS.ClearStorageClassSpecs();
-      }
-      
-      // Remember this parsed parameter in ParamInfo.
-      IdentifierInfo *ParmII = ParmDecl.getIdentifier();
-      
-      // Verify that the argument identifier has not already been mentioned.
-      if (ParmII && !ParamsSoFar.insert(ParmII)) {
-        Diag(ParmDecl.getIdentifierLoc(), diag::err_param_redefinition,
-             ParmII->getName());
-        ParmII = 0;
-        ParmDecl.setInvalidType(true);
+      // Check to see if this is "void(...)" which is not allowed.
+      if (ParamInfo.empty()) {
+        // Otherwise, parse parameter type list.  If it starts with an
+        // ellipsis,  diagnose the malformed function.
+        Diag(Tok, diag::err_ellipsis_first_arg);
+        IsVariadic = false;       // Treat this like 'void()'.
       }
 
-      // If no parameter was specified, verify that *something* was specified,
-      // otherwise we have a missing type and identifier.
-      if (DS.getParsedSpecifiers() == DeclSpec::PQ_None && 
-          ParmDecl.getIdentifier() == 0 && ParmDecl.getNumTypeObjects() == 0) {
-        // Completely missing, emit error.
-        Diag(DSStart, diag::err_missing_param);
-      } else {
-        // Otherwise, we have something.  Add it and let semantic analysis try
-        // to grok it and add the result to the ParamInfo we are building.
-        
-        // Inform the actions module about the parameter declarator, so it gets
-        // added to the current scope.
-        Action::TypeResult ParamTy =
-          Actions.ActOnParamDeclaratorType(CurScope, ParmDecl);
-        
-        ParamInfo.push_back(DeclaratorChunk::ParamInfo(ParmII, 
-            ParmDecl.getIdentifierLoc(), ParamTy.Val, ParmDecl.getInvalidType(),
-            ParmDecl.getDeclSpec().TakeAttributes()));
-      }
-
-      // If the next token is a comma, consume it and keep reading arguments.
-      if (Tok.isNot(tok::comma)) break;
-      
-      // Consume the comma.
-      ConsumeToken();
+      ConsumeToken();     // Consume the ellipsis.
+      break;
     }
     
-    HasPrototype = true;
+    SourceLocation DSStart = Tok.getLocation();
     
-    // Leave prototype scope.
-    ExitScope();
+    // Parse the declaration-specifiers.
+    DeclSpec DS;
+    ParseDeclarationSpecifiers(DS);
+
+    // Parse the declarator.  This is "PrototypeContext", because we must
+    // accept either 'declarator' or 'abstract-declarator' here.
+    Declarator ParmDecl(DS, Declarator::PrototypeContext);
+    ParseDeclarator(ParmDecl);
+
+    // Parse GNU attributes, if present.
+    if (Tok.is(tok::kw___attribute))
+      ParmDecl.AddAttributes(ParseAttributes());
+    
+    // Verify C99 6.7.5.3p2: The only SCS allowed is 'register'.
+    if (DS.getStorageClassSpec() != DeclSpec::SCS_unspecified &&
+        DS.getStorageClassSpec() != DeclSpec::SCS_register) {
+      Diag(DS.getStorageClassSpecLoc(),
+           diag::err_invalid_storage_class_in_func_decl);
+      DS.ClearStorageClassSpecs();
+    }
+    if (DS.isThreadSpecified()) {
+      Diag(DS.getThreadSpecLoc(),
+           diag::err_invalid_storage_class_in_func_decl);
+      DS.ClearStorageClassSpecs();
+    }
+    
+    // Remember this parsed parameter in ParamInfo.
+    IdentifierInfo *ParmII = ParmDecl.getIdentifier();
+    
+    // Verify that the argument identifier has not already been mentioned.
+    if (ParmII && !ParamsSoFar.insert(ParmII)) {
+      Diag(ParmDecl.getIdentifierLoc(), diag::err_param_redefinition,
+           ParmII->getName());
+      ParmII = 0;
+      ParmDecl.setInvalidType(true);
+    }
+
+    // If no parameter was specified, verify that *something* was specified,
+    // otherwise we have a missing type and identifier.
+    if (DS.getParsedSpecifiers() == DeclSpec::PQ_None && 
+        ParmDecl.getIdentifier() == 0 && ParmDecl.getNumTypeObjects() == 0) {
+      // Completely missing, emit error.
+      Diag(DSStart, diag::err_missing_param);
+    } else {
+      // Otherwise, we have something.  Add it and let semantic analysis try
+      // to grok it and add the result to the ParamInfo we are building.
+      
+      // Inform the actions module about the parameter declarator, so it gets
+      // added to the current scope.
+      Action::TypeResult ParamTy =
+        Actions.ActOnParamDeclaratorType(CurScope, ParmDecl);
+      
+      ParamInfo.push_back(DeclaratorChunk::ParamInfo(ParmII, 
+          ParmDecl.getIdentifierLoc(), ParamTy.Val, ParmDecl.getInvalidType(),
+          ParmDecl.getDeclSpec().TakeAttributes()));
+    }
+
+    // If the next token is a comma, consume it and keep reading arguments.
+    if (Tok.isNot(tok::comma)) break;
+    
+    // Consume the comma.
+    ConsumeToken();
   }
+  
+  // Leave prototype scope.
+  ExitScope();
   
   // Remember that we parsed a function type, and remember the attributes.
-  if (!ErrorEmitted)
-    D.AddTypeInfo(DeclaratorChunk::getFunction(HasPrototype, IsVariadic,
-                                               &ParamInfo[0], ParamInfo.size(),
-                                               LParenLoc));
+  D.AddTypeInfo(DeclaratorChunk::getFunction(/*proto*/true, IsVariadic,
+                                             &ParamInfo[0], ParamInfo.size(),
+                                             LParenLoc));
   
   // If we have the closing ')', eat it and we're done.
-  if (Tok.is(tok::r_paren)) {
-    ConsumeParen();
-  } else {
-    // If an error happened earlier parsing something else in the proto, don't
-    // issue another error.
-    if (!ErrorEmitted)
-      Diag(Tok, diag::err_expected_rparen);
-    SkipUntil(tok::r_paren);
-  }
+  MatchRHSPunctuation(tok::r_paren, LParenLoc);
 }
 
 
