@@ -66,7 +66,7 @@ void CodeGenFunction::EmitBlockVarDecl(const BlockVarDecl &D) {
 }
 
 void CodeGenFunction::EmitStaticBlockVarDecl(const BlockVarDecl &D) {
-  QualType Ty = D.getCanonicalType();
+  QualType Ty = D.getType();
   assert(Ty->isConstantSizeType() && "VLAs can't be static");
   
   llvm::Value *&DMEntry = LocalDeclMap[&D];
@@ -94,14 +94,13 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const BlockVarDecl &D) {
                              Init, ContextName + "." + D.getName(),
                              &CGM.getModule(), 0,
                              Ty.getAddressSpace());
-  
 }
   
 /// EmitLocalBlockVarDecl - Emit code and set up an entry in LocalDeclMap for a
 /// variable declaration with auto, register, or no storage class specifier.
 /// These turn into simple stack objects.
 void CodeGenFunction::EmitLocalBlockVarDecl(const BlockVarDecl &D) {
-  QualType Ty = D.getCanonicalType();
+  QualType Ty = D.getType();
 
   llvm::Value *DeclPtr;
   if (Ty->isConstantSizeType()) {
@@ -133,7 +132,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const BlockVarDecl &D) {
 
 /// Emit an alloca for the specified parameter and set up LocalDeclMap.
 void CodeGenFunction::EmitParmDecl(const ParmVarDecl &D, llvm::Value *Arg) {
-  QualType Ty = D.getCanonicalType();
+  QualType Ty = D.getType();
   
   llvm::Value *DeclPtr;
   if (!Ty->isConstantSizeType()) {

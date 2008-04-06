@@ -280,8 +280,8 @@ FunctionDecl *Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
   MergeAttributes(New, Old);
 
   
-  QualType OldQType = Old->getType().getCanonicalType();
-  QualType NewQType = New->getType().getCanonicalType();
+  QualType OldQType = Context.getCanonicalType(Old->getType());
+  QualType NewQType = Context.getCanonicalType(New->getType());
   
   // Function types need to be compatible, not identical. This handles
   // duplicate function decls like "void f(int); void f(enum X);" properly.
@@ -357,8 +357,9 @@ VarDecl *Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
   MergeAttributes(New, Old);
 
   // Verify the types match.
-  if (Old->getCanonicalType() != New->getCanonicalType() && 
-      !areEquivalentArrayTypes(New->getCanonicalType(), Old->getCanonicalType())) {
+  QualType OldCType = Context.getCanonicalType(Old->getType());
+  QualType NewCType = Context.getCanonicalType(New->getType());
+  if (OldCType != NewCType && !areEquivalentArrayTypes(NewCType, OldCType)) {
     Diag(New->getLocation(), diag::err_redefinition, New->getName());
     Diag(Old->getLocation(), diag::err_previous_definition);
     return New;

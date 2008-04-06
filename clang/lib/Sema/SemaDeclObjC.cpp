@@ -619,7 +619,8 @@ bool Sema::MatchTwoMethodDeclarations(const ObjCMethodDecl *Method,
   for (unsigned i = 0, e = Method->getNumParams(); i != e; ++i) {
     ParmVarDecl *ParamDecl = Method->getParamDecl(i);
     ParmVarDecl *PrevParamDecl = PrevMethod->getParamDecl(i);
-    if (ParamDecl->getCanonicalType() != PrevParamDecl->getCanonicalType())
+    if (Context.getCanonicalType(ParamDecl->getType()) !=
+        Context.getCanonicalType(PrevParamDecl->getType()))
       return false;
   }
   return true;

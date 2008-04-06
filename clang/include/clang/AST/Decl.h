@@ -116,7 +116,6 @@ protected:
 public:
   QualType getType() const { return DeclType; }
   void setType(QualType newType) { DeclType = newType; }
-  QualType getCanonicalType() const { return DeclType.getCanonicalType(); }
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
