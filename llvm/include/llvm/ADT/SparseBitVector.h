@@ -89,6 +89,14 @@ public:
     ElementIndex = RHS.ElementIndex;
     std::copy(&RHS.Bits[0], &RHS.Bits[BITWORDS_PER_ELEMENT], Bits);
   }
+  
+  // Assignment 
+  SparseBitVectorElement& operator=(const SparseBitVectorElement& RHS) {
+    ElementIndex = RHS.ElementIndex;
+    std::copy(&RHS.Bits[0], &RHS.Bits[BITWORDS_PER_ELEMENT], Bits);
+    
+    return *this;
+  }
 
   // Comparison.
   bool operator==(const SparseBitVectorElement &RHS) const {
@@ -482,6 +490,21 @@ public:
     }
 
     CurrElementIter = Elements.begin ();
+  }
+  
+  // Assignment
+  SparseBitVector& operator=(const SparseBitVector& RHS) {
+    Elements.clear();
+    
+    ElementListConstIter ElementIter = RHS.Elements.begin();
+    while (ElementIter != RHS.Elements.end()) {
+      Elements.push_back(SparseBitVectorElement<ElementSize>(*ElementIter));
+      ++ElementIter;
+    }
+
+    CurrElementIter = Elements.begin ();
+    
+    return *this;
   }
 
   // Test, Reset, and Set a bit in the bitmap.

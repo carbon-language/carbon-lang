@@ -22,11 +22,11 @@
 #include "llvm/Instructions.h"
 #include "llvm/ParameterAttributes.h"
 #include "llvm/Value.h"
-#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/SparseBitVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/AliasAnalysis.h"
@@ -590,9 +590,9 @@ namespace {
 class VISIBILITY_HIDDEN ValueNumberedSet {
   private:
     SmallPtrSet<Value*, 8> contents;
-    BitVector numbers;
+    SparseBitVector<64> numbers;
   public:
-    ValueNumberedSet() { numbers.resize(1); }
+    ValueNumberedSet() { }
     ValueNumberedSet(const ValueNumberedSet& other) {
       numbers = other.numbers;
       contents = other.contents;
@@ -610,9 +610,6 @@ class VISIBILITY_HIDDEN ValueNumberedSet {
     size_t size() { return contents.size(); }
     
     void set(unsigned i)  {
-      if (i >= numbers.size())
-        numbers.resize(i+1);
-      
       numbers.set(i);
     }
     
@@ -622,20 +619,11 @@ class VISIBILITY_HIDDEN ValueNumberedSet {
     }
     
     void reset(unsigned i)  {
-      if (i < numbers.size())
-        numbers.reset(i);
+      numbers.reset(i);
     }
     
     bool test(unsigned i)  {
-      if (i >= numbers.size())
-        return false;
-      
       return numbers.test(i);
-    }
-    
-    void clear() {
-      contents.clear();
-      numbers.clear();
     }
 };
 }
@@ -1595,6 +1583,10 @@ bool GVN::processInstruction(Instruction *I, ValueNumberedSet &currAvail,
   
   // Allocations are always uniquely numbered, so we can save time and memory
   // by fast failing them.
+  if (isa<AllocationInst>(I))
+    return false;
+  
+  // Allocations are always unique, so don't bother value numbering them.
   if (isa<AllocationInst>(I))
     return false;
   
