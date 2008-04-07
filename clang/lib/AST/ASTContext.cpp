@@ -1478,21 +1478,33 @@ areCompatObjCQualInterfaces(const ObjCQualifiedInterfaceType *LHS,
   if (!LHS->getDecl()->isSuperClassOf(RHS->getDecl()))
     return false;
   
-  // All protocols in LHS must have a presence in RHS.
-  for (unsigned i = 0; i != LHS->getNumProtocols(); ++i) {
-    bool match = false;
-    ObjCProtocolDecl *lhsProto = LHS->getProtocols(i);
-    for (unsigned j = 0; j != RHS->getNumProtocols(); ++j) {
-      ObjCProtocolDecl *rhsProto = RHS->getProtocols(j);
-      if (lhsProto == rhsProto) {
-        match = true;
-        break;
-      }
-    }
-    if (!match)
-      return false;
+  // All protocols in LHS must have a presence in RHS.  Since the protocol lists
+  // are both sorted alphabetically and have no duplicates, we can scan RHS and
+  // LHS in a single parallel scan until we run out of elements in LHS.
+  ObjCQualifiedInterfaceType::qual_iterator LHSPI = LHS->qual_begin();
+  ObjCQualifiedInterfaceType::qual_iterator LHSPE = LHS->qual_end();
+  ObjCQualifiedInterfaceType::qual_iterator RHSPI = RHS->qual_begin();
+  ObjCQualifiedInterfaceType::qual_iterator RHSPE = RHS->qual_end();
+  
+  assert(LHSPI != LHSPE && "Empty LHS protocol list?");
+  ObjCProtocolDecl *LHSProto = *LHSPI;
+  
+  while (RHSPI != RHSPE) {
+    ObjCProtocolDecl *RHSProto = *RHSPI++;
+    // If the RHS has a protocol that the LHS doesn't, ignore it.
+    if (RHSProto != LHSProto)
+      continue;
+    
+    // Otherwise, the RHS does have this element.
+    ++LHSPI;
+    if (LHSPI == LHSPE)
+      return true;  // All protocols in LHS exist in RHS.
+    
+    LHSProto = *LHSPI;
   }
-  return true;
+  
+  // If we got here, we didn't find one of the LHS's protocols in the RHS list.
+  return false;
 }
 
 /// ProtocolCompatibleWithProtocol - return 'true' if 'lProto' is in the
