@@ -347,12 +347,10 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
   // code with llvm.stacksave/llvm.stackrestore intrinsics.
   if (InlinedFunctionInfo.ContainsDynamicAllocas) {
     Module *M = Caller->getParent();
-    const Type *BytePtr = PointerType::getUnqual(Type::Int8Ty);
     // Get the two intrinsics we care about.
     Constant *StackSave, *StackRestore;
-    StackSave    = M->getOrInsertFunction("llvm.stacksave", BytePtr, NULL);
-    StackRestore = M->getOrInsertFunction("llvm.stackrestore", Type::VoidTy,
-                                          BytePtr, NULL);
+    StackSave    = Intrinsic::getDeclaration(M, Intrinsic::stacksave);
+    StackRestore = Intrinsic::getDeclaration(M, Intrinsic::stackrestore);
 
     // If we are preserving the callgraph, add edges to the stacksave/restore
     // functions for the calls we insert.
@@ -368,14 +366,12 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
     // Insert the llvm.stacksave.
     CallInst *SavedPtr = CallInst::Create(StackSave, "savedstack", 
                                           FirstNewBlock->begin());
-    SavedPtr->setDoesNotThrow();
     if (CG) CallerNode->addCalledFunction(SavedPtr, StackSaveCGN);
       
     // Insert a call to llvm.stackrestore before any return instructions in the
     // inlined function.
     for (unsigned i = 0, e = Returns.size(); i != e; ++i) {
       CallInst *CI = CallInst::Create(StackRestore, SavedPtr, "", Returns[i]);
-      CI->setDoesNotThrow();
       if (CG) CallerNode->addCalledFunction(CI, StackRestoreCGN);
     }
 
@@ -388,8 +384,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
       for (Function::iterator BB = FirstNewBlock, E = Caller->end();
            BB != E; ++BB)
         if (UnwindInst *UI = dyn_cast<UnwindInst>(BB->getTerminator())) {
-          CallInst *CI = CallInst::Create(StackRestore, SavedPtr, "", UI);
-          CI->setDoesNotThrow();
+          CallInst::Create(StackRestore, SavedPtr, "", UI);
           ++NumStackRestores;
         }
     }
