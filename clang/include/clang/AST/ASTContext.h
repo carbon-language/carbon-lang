@@ -333,7 +333,6 @@ public:
   bool functionTypesAreCompatible(QualType, QualType); // C99 6.7.5.3p15
   bool arrayTypesAreCompatible(QualType, QualType); // C99 6.7.5.2p6
   bool builtinTypesAreCompatible(QualType, QualType);
-  bool vectorTypesAreCompatible(QualType, QualType);
   
   bool objcTypesAreCompatible(QualType, QualType);
   bool isObjCIdType(QualType T) const {

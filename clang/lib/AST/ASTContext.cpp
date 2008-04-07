@@ -1507,16 +1507,13 @@ areCompatObjCQualInterfaces(const ObjCQualifiedInterfaceType *LHS,
   return false;
 }
 
-
-bool ASTContext::vectorTypesAreCompatible(QualType lhs, QualType rhs) {
-  const VectorType *lVector = lhs->getAsVectorType();
-  const VectorType *rVector = rhs->getAsVectorType();
-  
-  if ((lVector->getElementType().getCanonicalType() ==
-      rVector->getElementType().getCanonicalType()) &&
-      (lVector->getNumElements() == rVector->getNumElements()))
-    return true;
-  return false;
+/// areCompatVectorTypes - Return true if the two specified vector types are 
+/// compatible.
+static bool areCompatVectorTypes(const VectorType *LHS,
+                                 const VectorType *RHS) {
+  assert(LHS->isCanonical() && RHS->isCanonical());
+  return LHS->getElementType() == RHS->getElementType() &&
+         LHS->getNumElements() == RHS->getNumElements();
 }
 
 // C99 6.2.7p1: If both are complete types, then the following additional
@@ -1704,7 +1701,7 @@ bool ASTContext::typesAreCompatible(QualType LHS_NC, QualType RHS_NC) {
                                    cast<ObjCInterfaceType>(RHS)->getDecl());
   case Type::Vector:
   case Type::OCUVector:
-    return vectorTypesAreCompatible(LHS, RHS);
+    return areCompatVectorTypes(cast<VectorType>(LHS), cast<VectorType>(RHS));
   case Type::ObjCQualifiedInterface:
     return areCompatObjCQualInterfaces(cast<ObjCQualifiedInterfaceType>(LHS),
                                        cast<ObjCQualifiedInterfaceType>(RHS));
