@@ -1435,69 +1435,9 @@ void ASTContext::setObjCConstantStringInterface(ObjCInterfaceDecl *Decl) {
   ObjCConstantStringType = getObjCInterfaceType(Decl);
 }
 
-
-/// areCompatObjCInterfaces - Return true if the two interface types are
-/// compatible for assignment from RHS to LHS.  This handles validation of any
-/// protocol qualifiers on the LHS or RHS.
-///
-static bool 
-areCompatObjCInterfaces(const ObjCInterfaceType *LHS, 
-                        const ObjCInterfaceType *RHS) {
-  // Verify that the base decls are compatible: the RHS must be a subclass of
-  // the LHS.
-  if (!LHS->getDecl()->isSuperClassOf(RHS->getDecl()))
-    return false;
-
-  // RHS must have a superset of the protocols in the LHS.  If the LHS is not
-  // protocol qualified at all, then we are good.
-  if (!isa<ObjCQualifiedInterfaceType>(LHS))
-    return true;
-  
-  // Okay, we know the LHS has protocol qualifiers.  If the RHS doesn't, then it
-  // isn't a superset.
-  if (!isa<ObjCQualifiedInterfaceType>(RHS))
-    return true;  // FIXME: should return false!
-
-  // Finally, we must have two protocol-qualified interfaces.
-  const ObjCQualifiedInterfaceType *LHSP =cast<ObjCQualifiedInterfaceType>(LHS);
-  const ObjCQualifiedInterfaceType *RHSP =cast<ObjCQualifiedInterfaceType>(RHS);
-  ObjCQualifiedInterfaceType::qual_iterator LHSPI = LHSP->qual_begin();
-  ObjCQualifiedInterfaceType::qual_iterator LHSPE = LHSP->qual_end();
-  ObjCQualifiedInterfaceType::qual_iterator RHSPI = RHSP->qual_begin();
-  ObjCQualifiedInterfaceType::qual_iterator RHSPE = RHSP->qual_end();
-  
-  // All protocols in LHS must have a presence in RHS.  Since the protocol lists
-  // are both sorted alphabetically and have no duplicates, we can scan RHS and
-  // LHS in a single parallel scan until we run out of elements in LHS.
-  assert(LHSPI != LHSPE && "Empty LHS protocol list?");
-  ObjCProtocolDecl *LHSProto = *LHSPI;
-  
-  while (RHSPI != RHSPE) {
-    ObjCProtocolDecl *RHSProto = *RHSPI++;
-    // If the RHS has a protocol that the LHS doesn't, ignore it.
-    if (RHSProto != LHSProto)
-      continue;
-    
-    // Otherwise, the RHS does have this element.
-    ++LHSPI;
-    if (LHSPI == LHSPE)
-      return true;  // All protocols in LHS exist in RHS.
-    
-    LHSProto = *LHSPI;
-  }
-  
-  // If we got here, we didn't find one of the LHS's protocols in the RHS list.
-  return false;
-}
-
-/// areCompatVectorTypes - Return true if the two specified vector types are 
-/// compatible.
-static bool areCompatVectorTypes(const VectorType *LHS,
-                                 const VectorType *RHS) {
-  assert(LHS->isCanonical() && RHS->isCanonical());
-  return LHS->getElementType() == RHS->getElementType() &&
-         LHS->getNumElements() == RHS->getNumElements();
-}
+//===----------------------------------------------------------------------===//
+//                        Type Compatibility Testing
+//===----------------------------------------------------------------------===//
 
 /// C99 6.2.7p1: If both are complete types, then the following additional
 /// requirements apply.
@@ -1605,6 +1545,70 @@ bool ASTContext::arrayTypesAreCompatible(QualType lhs, QualType rhs) {
 
   return true;
 }
+
+/// areCompatVectorTypes - Return true if the two specified vector types are 
+/// compatible.
+static bool areCompatVectorTypes(const VectorType *LHS,
+                                 const VectorType *RHS) {
+  assert(LHS->isCanonical() && RHS->isCanonical());
+  return LHS->getElementType() == RHS->getElementType() &&
+  LHS->getNumElements() == RHS->getNumElements();
+}
+
+/// areCompatObjCInterfaces - Return true if the two interface types are
+/// compatible for assignment from RHS to LHS.  This handles validation of any
+/// protocol qualifiers on the LHS or RHS.
+///
+static bool 
+areCompatObjCInterfaces(const ObjCInterfaceType *LHS, 
+                        const ObjCInterfaceType *RHS) {
+  // Verify that the base decls are compatible: the RHS must be a subclass of
+  // the LHS.
+  if (!LHS->getDecl()->isSuperClassOf(RHS->getDecl()))
+    return false;
+  
+  // RHS must have a superset of the protocols in the LHS.  If the LHS is not
+  // protocol qualified at all, then we are good.
+  if (!isa<ObjCQualifiedInterfaceType>(LHS))
+    return true;
+  
+  // Okay, we know the LHS has protocol qualifiers.  If the RHS doesn't, then it
+  // isn't a superset.
+  if (!isa<ObjCQualifiedInterfaceType>(RHS))
+    return true;  // FIXME: should return false!
+  
+  // Finally, we must have two protocol-qualified interfaces.
+  const ObjCQualifiedInterfaceType *LHSP =cast<ObjCQualifiedInterfaceType>(LHS);
+  const ObjCQualifiedInterfaceType *RHSP =cast<ObjCQualifiedInterfaceType>(RHS);
+  ObjCQualifiedInterfaceType::qual_iterator LHSPI = LHSP->qual_begin();
+  ObjCQualifiedInterfaceType::qual_iterator LHSPE = LHSP->qual_end();
+  ObjCQualifiedInterfaceType::qual_iterator RHSPI = RHSP->qual_begin();
+  ObjCQualifiedInterfaceType::qual_iterator RHSPE = RHSP->qual_end();
+  
+  // All protocols in LHS must have a presence in RHS.  Since the protocol lists
+  // are both sorted alphabetically and have no duplicates, we can scan RHS and
+  // LHS in a single parallel scan until we run out of elements in LHS.
+  assert(LHSPI != LHSPE && "Empty LHS protocol list?");
+  ObjCProtocolDecl *LHSProto = *LHSPI;
+  
+  while (RHSPI != RHSPE) {
+    ObjCProtocolDecl *RHSProto = *RHSPI++;
+    // If the RHS has a protocol that the LHS doesn't, ignore it.
+    if (RHSProto != LHSProto)
+      continue;
+    
+    // Otherwise, the RHS does have this element.
+    ++LHSPI;
+    if (LHSPI == LHSPE)
+      return true;  // All protocols in LHS exist in RHS.
+    
+    LHSProto = *LHSPI;
+  }
+  
+  // If we got here, we didn't find one of the LHS's protocols in the RHS list.
+  return false;
+}
+
 
 /// typesAreCompatible - C99 6.7.3p9: For two qualified types to be compatible, 
 /// both shall have the identically qualified version of a compatible type.
