@@ -187,7 +187,7 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID) {
        << " .num { color:#444444 }\n"
        << " .line { padding-left: 1ex; border-left: 3px solid #ccc }\n"
        << " .line { white-space: pre }\n"
-       << " .msg { background-color:#6F9DBE; color:#000000 }\n"
+       << " .msg { background-color:#fff8b4; color:#000000 }\n"
        << " .msg { -webkit-box-shadow:1px 1px 7px #000 }\n"
        << " .msg { -webkit-border-radius:5px }\n"
        << " .msg { font-family:Helvetica, sans-serif; font-size: smaller }\n"
