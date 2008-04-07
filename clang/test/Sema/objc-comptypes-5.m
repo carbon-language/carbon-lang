@@ -24,6 +24,7 @@ int main()
   MyClass *obj_c_cat_p = nil;
   MyOtherClass *obj_c_super_p = nil;
   MyOtherClass<MyProtocol> *obj_c_super_p_q = nil;
+  MyClass<MyProtocol> *obj_c_cat_p_q = nil;
 
   obj_c_cat_p = obj_id_p;   // expected-error {{incompatible type assigning 'id<MyProtocol>', expected 'MyClass *'}}
   obj_c_super_p = obj_id_p;  // expected-error {{incompatible type assigning 'id<MyProtocol>', expected 'MyOtherClass *'}}
@@ -37,6 +38,7 @@ int main()
 
   obj_c_cat_p = obj_c_super_p; // ok.
   obj_c_cat_p = obj_c_super_p_q; // ok.
-  
+  obj_c_super_p = obj_c_cat_p_q; // expected-warning {{incompatible pointer types}}
+  obj_c_cat_p_q = obj_c_super_p;
   return 0;
 }

@@ -839,7 +839,7 @@ QualType ASTContext::getObjCQualifiedInterfaceType(ObjCInterfaceDecl *Decl,
   SortAndUniqueProtocols(Protocols, NumProtocols);
   
   llvm::FoldingSetNodeID ID;
-  ObjCQualifiedInterfaceType::Profile(ID, Protocols, NumProtocols);
+  ObjCQualifiedInterfaceType::Profile(ID, Decl, Protocols, NumProtocols);
   
   void *InsertPos = 0;
   if (ObjCQualifiedInterfaceType *QT =
@@ -1435,40 +1435,40 @@ void ASTContext::setObjCConstantStringInterface(ObjCInterfaceDecl *Decl) {
   ObjCConstantStringType = getObjCInterfaceType(Decl);
 }
 
-/// areCompatObjCInterfaces - This routine is called when we are testing
-/// compatibility of two different [potentially qualified] ObjCInterfaceType's.
-static bool areCompatObjCInterfaces(const ObjCInterfaceType *LHS,
-                                    const ObjCInterfaceType *RHS) {
-  // II is compatible with II<P> if the base is the same.  Otherwise, no two
-  // qualified interface types are the same.
-  if (!LHS->getDecl()->isSuperClassOf(RHS->getDecl()))
-    return false;
-  
-  // If the base decls match and one is a qualified interface and one isn't,
-  // then they are compatible.
-  return isa<ObjCQualifiedInterfaceType>(LHS) != 
-         isa<ObjCQualifiedInterfaceType>(RHS);
-}
 
-/// areCompatObjCQualInterfaces - Return true if the two qualified interface
-/// types are compatible for assignment from RHS to LHS.
+/// areCompatObjCInterfaces - Return true if the two interface types are
+/// compatible for assignment from RHS to LHS.  This handles validation of any
+/// protocol qualifiers on the LHS or RHS.
 ///
 static bool 
-areCompatObjCQualInterfaces(const ObjCQualifiedInterfaceType *LHS, 
-                            const ObjCQualifiedInterfaceType *RHS) {
+areCompatObjCInterfaces(const ObjCInterfaceType *LHS, 
+                        const ObjCInterfaceType *RHS) {
   // Verify that the base decls are compatible: the RHS must be a subclass of
   // the LHS.
   if (!LHS->getDecl()->isSuperClassOf(RHS->getDecl()))
     return false;
+
+  // RHS must have a superset of the protocols in the LHS.  If the LHS is not
+  // protocol qualified at all, then we are good.
+  if (!isa<ObjCQualifiedInterfaceType>(LHS))
+    return true;
+  
+  // Okay, we know the LHS has protocol qualifiers.  If the RHS doesn't, then it
+  // isn't a superset.
+  if (!isa<ObjCQualifiedInterfaceType>(RHS))
+    return true;  // FIXME: should return false!
+
+  // Finally, we must have two protocol-qualified interfaces.
+  const ObjCQualifiedInterfaceType *LHSP =cast<ObjCQualifiedInterfaceType>(LHS);
+  const ObjCQualifiedInterfaceType *RHSP =cast<ObjCQualifiedInterfaceType>(RHS);
+  ObjCQualifiedInterfaceType::qual_iterator LHSPI = LHSP->qual_begin();
+  ObjCQualifiedInterfaceType::qual_iterator LHSPE = LHSP->qual_end();
+  ObjCQualifiedInterfaceType::qual_iterator RHSPI = RHSP->qual_begin();
+  ObjCQualifiedInterfaceType::qual_iterator RHSPE = RHSP->qual_end();
   
   // All protocols in LHS must have a presence in RHS.  Since the protocol lists
   // are both sorted alphabetically and have no duplicates, we can scan RHS and
   // LHS in a single parallel scan until we run out of elements in LHS.
-  ObjCQualifiedInterfaceType::qual_iterator LHSPI = LHS->qual_begin();
-  ObjCQualifiedInterfaceType::qual_iterator LHSPE = LHS->qual_end();
-  ObjCQualifiedInterfaceType::qual_iterator RHSPI = RHS->qual_begin();
-  ObjCQualifiedInterfaceType::qual_iterator RHSPE = RHS->qual_end();
-  
   assert(LHSPI != LHSPE && "Empty LHS protocol list?");
   ObjCProtocolDecl *LHSProto = *LHSPI;
   
@@ -1653,19 +1653,17 @@ bool ASTContext::typesAreCompatible(QualType LHS_NC, QualType RHS_NC) {
   if (LHSClass == Type::OCUVector) LHSClass = Type::Vector;
   if (RHSClass == Type::OCUVector) RHSClass = Type::Vector;
   
+  // Consider qualified interfaces and interfaces the same.
+  if (LHSClass == Type::ObjCQualifiedInterface) LHSClass = Type::ObjCInterface;
+  if (RHSClass == Type::ObjCQualifiedInterface) RHSClass = Type::ObjCInterface;
+  
   // If the canonical type classes don't match.
   if (LHSClass != RHSClass) {
-    // For Objective-C, it is possible for two types to be compatible
-    // when their classes don't match (when dealing with "id"). If either type
-    // is an interface, we defer to areCompatObjCIDType(). 
-    if (const ObjCInterfaceType *LHSIT = LHS->getAsObjCInterfaceType()) {
-      if (const ObjCInterfaceType *RHSIT = RHS->getAsObjCInterfaceType())
-        return areCompatObjCInterfaces(LHSIT, RHSIT);
-      return isObjCIdType(RHS);    // ID is compatible with all interface types.
-    }
-    
-    if (RHS->isObjCInterfaceType())
-      return isObjCIdType(LHS);    // ID is compatible with all interface types.
+    // ID is compatible with all interface types.
+    if (isa<ObjCInterfaceType>(LHS))
+      return isObjCIdType(RHS);
+    if (isa<ObjCInterfaceType>(RHS))
+      return isObjCIdType(LHS);
     
     // C99 6.7.2.2p4: Each enumerated type shall be compatible with char,
     // a signed integer type, or an unsigned integer type. 
@@ -1688,6 +1686,7 @@ bool ASTContext::typesAreCompatible(QualType LHS_NC, QualType RHS_NC) {
   case Type::VariableArray:
   case Type::IncompleteArray:
   case Type::Reference:
+  case Type::ObjCQualifiedInterface:
     assert(0 && "Canonicalized away above");
   case Type::Pointer:
     return pointerTypesAreCompatible(LHS, RHS);
@@ -1703,12 +1702,8 @@ bool ASTContext::typesAreCompatible(QualType LHS_NC, QualType RHS_NC) {
   case Type::Vector:
     return areCompatVectorTypes(cast<VectorType>(LHS), cast<VectorType>(RHS));
   case Type::ObjCInterface:
-    // The LHS must be a superclass of the RHS.
-    return cast<ObjCInterfaceType>(LHS)->getDecl()->isSuperClassOf(
-                                   cast<ObjCInterfaceType>(RHS)->getDecl());
-  case Type::ObjCQualifiedInterface:
-    return areCompatObjCQualInterfaces(cast<ObjCQualifiedInterfaceType>(LHS),
-                                       cast<ObjCQualifiedInterfaceType>(RHS));
+    return areCompatObjCInterfaces(cast<ObjCInterfaceType>(LHS),
+                                   cast<ObjCInterfaceType>(RHS));
   default:
     assert(0 && "unexpected type");
   }
