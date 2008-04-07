@@ -103,6 +103,10 @@ public:
     return C;
   }
   
+  size_t getNumChildren() const {
+    return Children.size();
+  }
+  
   void setIDom(DomTreeNodeBase<NodeT> *NewIDom) {
     assert(IDom && "No immediate dominator?");
     if (IDom != NewIDom) {

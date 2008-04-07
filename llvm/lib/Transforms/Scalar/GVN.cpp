@@ -1593,6 +1593,11 @@ bool GVN::processInstruction(Instruction *I, ValueNumberedSet &currAvail,
   if (StoreInst *SI = dyn_cast<StoreInst>(I))
     return processStore(SI, toErase);
   
+  // Allocations are always uniquely numbered, so we can save time and memory
+  // by fast failing them.
+  if (isa<AllocationInst>(I))
+    return false;
+  
   if (MemCpyInst* M = dyn_cast<MemCpyInst>(I)) {
     MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
 
@@ -1692,6 +1697,7 @@ bool GVN::iterateOnFunction(Function &F) {
   
   SmallVector<Instruction*, 8> toErase;
   DenseMap<Value*, LoadInst*> lastSeenLoad;
+  DenseMap<DomTreeNode*, size_t> numChildrenVisited;
 
   // Top-down walk of the dominator tree
   for (df_iterator<DomTreeNode*> DI = df_begin(DT.getRootNode()),
@@ -1704,8 +1710,16 @@ bool GVN::iterateOnFunction(Function &F) {
     BasicBlock* BB = DI->getBlock();
   
     // A block inherits AVAIL_OUT from its dominator
-    if (DI->getIDom() != 0)
+    if (DI->getIDom() != 0) {
       currAvail = availableOut[DI->getIDom()->getBlock()];
+      
+      numChildrenVisited[DI->getIDom()]++;
+      
+      if (numChildrenVisited[DI->getIDom()] == DI->getIDom()->getNumChildren()) {
+        availableOut.erase(DI->getIDom()->getBlock());
+        numChildrenVisited.erase(DI->getIDom());
+      }
+    }
 
     for (BasicBlock::iterator BI = BB->begin(), BE = BB->end();
          BI != BE;) {
