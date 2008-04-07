@@ -21,6 +21,7 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
+#include "llvm/Intrinsics.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/ADT/StringMap.h"
@@ -320,12 +321,9 @@ public:
   /// @brief Return a Function* for the memcpy libcall
   Constant *get_memcpy() {
     if (!memcpy_func) {
-      const Type *SBP = PointerType::getUnqual(Type::Int8Ty);
-      const char *N = TD->getIntPtrType() == Type::Int32Ty ?
-                            "llvm.memcpy.i32" : "llvm.memcpy.i64";
-      memcpy_func = M->getOrInsertFunction(N, Type::VoidTy, SBP, SBP,
-                                           TD->getIntPtrType(), Type::Int32Ty,
-                                           NULL);
+      Intrinsic::ID IID = (TD->getIntPtrType() == Type::Int32Ty) ?
+        Intrinsic::memcpy_i32 : Intrinsic::memcpy_i64;
+      memcpy_func = Intrinsic::getDeclaration(M, IID);
     }
     return memcpy_func;
   }
@@ -1696,23 +1694,11 @@ public:
     // ffsl(x)  -> x == 0 ? 0 : llvm.cttz(x)+1
     // ffsll(x) -> x == 0 ? 0 : llvm.cttz(x)+1
     const Type *ArgType = TheCall->getOperand(1)->getType();
-    const char *CTTZName;
     assert(ArgType->getTypeID() == Type::IntegerTyID &&
            "llvm.cttz argument is not an integer?");
-    unsigned BitWidth = cast<IntegerType>(ArgType)->getBitWidth();
-    if (BitWidth == 8)
-      CTTZName = "llvm.cttz.i8";
-    else if (BitWidth == 16)
-      CTTZName = "llvm.cttz.i16"; 
-    else if (BitWidth == 32)
-      CTTZName = "llvm.cttz.i32";
-    else {
-      assert(BitWidth == 64 && "Unknown bitwidth");
-      CTTZName = "llvm.cttz.i64";
-    }
-    
-    Constant *F = SLC.getModule()->getOrInsertFunction(CTTZName, ArgType,
-                                                       ArgType, NULL);
+    Constant *F = Intrinsic::getDeclaration(SLC.getModule(),
+                                            Intrinsic::cttz, &ArgType, 1);
+
     Value *V = CastInst::createIntegerCast(TheCall->getOperand(1), ArgType, 
                                            false/*ZExt*/, "tmp", TheCall);
     Value *V2 = CallInst::Create(F, V, "tmp", TheCall);

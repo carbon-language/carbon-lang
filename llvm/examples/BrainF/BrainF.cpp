@@ -25,6 +25,7 @@
 
 #include "BrainF.h"
 #include "llvm/Constants.h"
+#include "llvm/Intrinsics.h"
 #include "llvm/ADT/STLExtras.h"
 
 using namespace llvm;
@@ -52,11 +53,7 @@ void BrainF::header() {
   //Function prototypes
 
   //declare void @llvm.memset.i32(i8 *, i8, i32, i32)
-  Function *memset_func = cast<Function>(module->
-    getOrInsertFunction("llvm.memset.i32", Type::VoidTy,
-                        PointerType::getUnqual(IntegerType::Int8Ty),
-                        IntegerType::Int8Ty, IntegerType::Int32Ty,
-                        IntegerType::Int32Ty, NULL));
+  Function *memset_func = Intrinsic::getDeclaration(module, Intrinsic::memset_i32);
 
   //declare i32 @getchar()
   getchar_func = cast<Function>(module->

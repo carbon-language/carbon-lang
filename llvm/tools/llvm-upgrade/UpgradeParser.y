@@ -1593,8 +1593,7 @@ Module* UpgradeAssembly(const std::string &infile, std::istream& in,
       const Type* RetTy = Type::getPrimitiveType(Type::VoidTyID);
       const Type* ArgTy = F->getFunctionType()->getReturnType();
       const Type* ArgTyPtr = PointerType::getUnqual(ArgTy);
-      Function* NF = cast<Function>(Result->getOrInsertFunction(
-        "llvm.va_start", RetTy, ArgTyPtr, (Type *)0));
+      Function* NF = Intrinsic::getDeclaration(Result, Intrinsic::va_start);
 
       while (!F->use_empty()) {
         CallInst* CI = cast<CallInst>(F->use_back());
@@ -1620,8 +1619,7 @@ Module* UpgradeAssembly(const std::string &infile, std::istream& in,
       const Type* RetTy = Type::getPrimitiveType(Type::VoidTyID);
       const Type* ArgTy = F->getFunctionType()->getParamType(0);
       const Type* ArgTyPtr = PointerType::getUnqual(ArgTy);
-      Function* NF = cast<Function>(Result->getOrInsertFunction(
-        "llvm.va_end", RetTy, ArgTyPtr, (Type *)0));
+      Function* NF = Intrinsic::getDeclaration(Result, Intrinsic::va_end);
 
       while (!F->use_empty()) {
         CallInst* CI = cast<CallInst>(F->use_back());
@@ -1649,8 +1647,7 @@ Module* UpgradeAssembly(const std::string &infile, std::istream& in,
       const Type* RetTy = Type::getPrimitiveType(Type::VoidTyID);
       const Type* ArgTy = F->getFunctionType()->getReturnType();
       const Type* ArgTyPtr = PointerType::getUnqual(ArgTy);
-      Function* NF = cast<Function>(Result->getOrInsertFunction(
-        "llvm.va_copy", RetTy, ArgTyPtr, ArgTyPtr, (Type *)0));
+      Function* NF = Intrinsic::getDeclaration(Result, Intrinsic::va_copy);
 
       while (!F->use_empty()) {
         CallInst* CI = cast<CallInst>(F->use_back());
@@ -3551,8 +3548,8 @@ InstVal
     const Type* ArgTy = $2.V->getType();
     const Type* DstTy = $4.PAT->get();
     ObsoleteVarArgs = true;
-    Function* NF = cast<Function>(CurModule.CurrentModule->
-      getOrInsertFunction("llvm.va_copy", ArgTy, ArgTy, (Type *)0));
+    Function* NF = Intrinsic::getDeclaration(CurModule.CurrentModule,
+                                             Intrinsic::va_copy);
 
     //b = vaarg a, t -> 
     //foo = alloca 1 of t
@@ -3572,8 +3569,8 @@ InstVal
     const Type* ArgTy = $2.V->getType();
     const Type* DstTy = $4.PAT->get();
     ObsoleteVarArgs = true;
-    Function* NF = cast<Function>(CurModule.CurrentModule->
-      getOrInsertFunction("llvm.va_copy", ArgTy, ArgTy, (Type *)0));
+    Function* NF = Intrinsic::getDeclaration(CurModule.CurrentModule,
+                                             Intrinsic::va_copy);
 
     //b = vanext a, t ->
     //foo = alloca 1 of t

@@ -37,6 +37,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Intrinsics.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Support/CommandLine.h"
@@ -301,7 +302,7 @@ void GlobalRandomCounterOpt::ProcessChoicePoint(BasicBlock* bb) {
 
 
 CycleCounter::CycleCounter(Module& m, uint64_t resetmask) : rm(resetmask) {
-  F = m.getOrInsertFunction("llvm.readcyclecounter", Type::Int64Ty, NULL);
+  F = Intrinsic::getDeclaration(&m, Intrinsic::readcyclecounter);
 }
 
 CycleCounter::~CycleCounter() {}
