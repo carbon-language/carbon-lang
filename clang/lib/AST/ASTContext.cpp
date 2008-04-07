@@ -1427,17 +1427,18 @@ bool ASTContext::objcTypesAreCompatible(QualType lhs, QualType rhs) {
     return true;
   else if (isObjCIdType(lhs) && rhs->isObjCInterfaceType())
     return true;
-  if (ObjCInterfaceType *lhsIT = 
-      dyn_cast<ObjCInterfaceType>(lhs.getCanonicalType().getTypePtr())) {
-    ObjCQualifiedInterfaceType *rhsQI = 
-      dyn_cast<ObjCQualifiedInterfaceType>(rhs.getCanonicalType().getTypePtr());
-    return rhsQI && (lhsIT->getDecl() == rhsQI->getDecl());
+  
+  if (const ObjCInterfaceType *lhsIT = lhs->getAsObjCInterfaceType()) {
+    const ObjCQualifiedInterfaceType *rhsQI =
+      rhs->getAsObjCQualifiedInterfaceType();
+    if (!isa<ObjCQualifiedInterfaceType>(lhsIT))
+      return rhsQI && (lhsIT->getDecl() == rhsQI->getDecl());
   }
-  else if (ObjCInterfaceType *rhsIT = 
-           dyn_cast<ObjCInterfaceType>(rhs.getCanonicalType().getTypePtr())) {
-    ObjCQualifiedInterfaceType *lhsQI = 
-    dyn_cast<ObjCQualifiedInterfaceType>(lhs.getCanonicalType().getTypePtr());
-    return lhsQI && (rhsIT->getDecl() == lhsQI->getDecl());
+  if (const ObjCInterfaceType *rhsIT = rhs->getAsObjCInterfaceType()) {
+    const ObjCQualifiedInterfaceType *lhsQI = 
+      lhs->getAsObjCQualifiedInterfaceType();
+    if (!isa<ObjCQualifiedInterfaceType>(rhsIT))
+      return lhsQI && (rhsIT->getDecl() == lhsQI->getDecl());
   }
   return false;
 }

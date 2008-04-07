@@ -353,23 +353,22 @@ public:
     return T->getAsStructureType() == SelStructType;
   }
 
+  //===--------------------------------------------------------------------===//
+  //                    Serialization
+  //===--------------------------------------------------------------------===//
+
+  void Emit(llvm::Serializer& S) const;
+  static ASTContext* Create(llvm::Deserializer& D);  
+  
 private:
   ASTContext(const ASTContext&); // DO NOT IMPLEMENT
   void operator=(const ASTContext&); // DO NOT IMPLEMENT
   
   void InitBuiltinTypes();
   void InitBuiltinType(QualType &R, BuiltinType::Kind K);
-
+  
   /// helper function for Objective-C specific type checking.
   bool interfaceTypesAreCompatible(QualType, QualType);
-  
-  //===--------------------------------------------------------------------===//
-  //                    Serialization
-  //===--------------------------------------------------------------------===//
-
-public:
-  void Emit(llvm::Serializer& S) const;
-  static ASTContext* Create(llvm::Deserializer& D);  
 };
   
 }  // end namespace clang

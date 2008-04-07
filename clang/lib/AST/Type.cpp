@@ -428,6 +428,46 @@ const OCUVectorType *Type::getAsOCUVectorType() const {
   return getDesugaredType()->getAsOCUVectorType();
 }
 
+const ObjCInterfaceType *Type::getAsObjCInterfaceType() const {
+  // Are we directly an ObjCInterface type?
+  if (const ObjCInterfaceType *VTy = dyn_cast<ObjCInterfaceType>(this))
+    return VTy;
+  
+  // If the canonical form of this type isn't the right kind, reject it.
+  if (!isa<ObjCInterfaceType>(CanonicalType)) {  
+    // Look through type qualifiers
+    if (isa<ObjCInterfaceType>(CanonicalType.getUnqualifiedType()))
+      return CanonicalType.getUnqualifiedType()->getAsObjCInterfaceType();
+    return 0;
+  }
+  
+  // If this is a typedef for an objc interface type, strip the typedef off
+  // without losing all typedef information.
+  return getDesugaredType()->getAsObjCInterfaceType();
+}
+
+const ObjCQualifiedInterfaceType *
+Type::getAsObjCQualifiedInterfaceType() const {
+  // Are we directly an ObjCQualifiedInterfaceType?
+  if (const ObjCQualifiedInterfaceType *VTy =
+         dyn_cast<ObjCQualifiedInterfaceType>(this))
+    return VTy;
+  
+  // If the canonical form of this type isn't the right kind, reject it.
+  if (!isa<ObjCQualifiedInterfaceType>(CanonicalType)) {  
+    // Look through type qualifiers
+    if (isa<ObjCQualifiedInterfaceType>(CanonicalType.getUnqualifiedType()))
+      return CanonicalType.getUnqualifiedType()->
+         getAsObjCQualifiedInterfaceType();
+    return 0;
+  }
+  
+  // If this is a typedef for an objc qual interface type, strip the typedef off
+  // without losing all typedef information.
+  return getDesugaredType()->getAsObjCQualifiedInterfaceType();
+}
+
+
 bool Type::isIntegerType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() >= BuiltinType::Bool &&

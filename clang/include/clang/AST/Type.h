@@ -52,6 +52,8 @@ namespace clang {
   class FunctionType;
   class OCUVectorType;
   class BuiltinType;
+  class ObjCInterfaceType;
+  class ObjCQualifiedIdType;
   class ObjCQualifiedInterfaceType;
   class StmtIteratorBase;
   
@@ -153,9 +155,11 @@ public:
   
   void dump(const char *s = 0) const;
 
+//private:
   /// getCanonicalType - Return the canonical version of this type, with the
   /// appropriate type qualifiers on it.
   inline QualType getCanonicalType() const;
+public:
   
   /// getAddressSpace - Return the address space of this type.
   inline unsigned getAddressSpace() const;
@@ -313,11 +317,12 @@ public:
   bool isRecordType() const;
   bool isStructureType() const;   
   bool isUnionType() const;
-  bool isComplexIntegerType() const; // GCC complex int type.
-  bool isVectorType() const; // GCC vector type.
-  bool isOCUVectorType() const; // OCU vector type.
-  bool isObjCInterfaceType() const; // includes conforming protocol type
-  bool isObjCQualifiedIdType() const; // id includes conforming protocol type
+  bool isComplexIntegerType() const;            // GCC _Complex integer type.
+  bool isVectorType() const;                    // GCC vector type.
+  bool isOCUVectorType() const;                 // OCU vector type.
+  bool isObjCInterfaceType() const;             // NSString or NSString<foo>
+  bool isObjCQualifiedInterfaceType() const;    // NSString<foo>
+  bool isObjCQualifiedIdType() const;           // id<foo>
   
   // Type Checking Functions: Check to see if this type is structurally the
   // specified type, ignoring typedefs and qualifiers, and return a pointer to
@@ -338,6 +343,10 @@ public:
   const ComplexType *getAsComplexType() const;
   const ComplexType *getAsComplexIntegerType() const; // GCC complex int type.
   const OCUVectorType *getAsOCUVectorType() const; // OCU vector type.
+  const ObjCInterfaceType *getAsObjCInterfaceType() const;
+  const ObjCQualifiedInterfaceType *getAsObjCQualifiedInterfaceType() const;
+  const ObjCQualifiedIdType *getAsObjCQualifiedIdType() const;
+
   
   /// getDesugaredType - Return the specified type with any "sugar" removed from
   /// type type.  This takes off typedefs, typeof's etc.  If the outer level of
@@ -1060,7 +1069,8 @@ public:
   virtual void getAsStringInternal(std::string &InnerString) const;
   
   static bool classof(const Type *T) { 
-    return T->getTypeClass() == ObjCInterface; 
+    return T->getTypeClass() == ObjCInterface ||
+           T->getTypeClass() == ObjCQualifiedInterface; 
   }
   static bool classof(const ObjCInterfaceType *) { return true; }
 };
@@ -1204,8 +1214,10 @@ inline bool Type::isOCUVectorType() const {
   return isa<OCUVectorType>(CanonicalType.getUnqualifiedType());
 }
 inline bool Type::isObjCInterfaceType() const {
-  return isa<ObjCInterfaceType>(CanonicalType)
-           || isa<ObjCQualifiedInterfaceType>(CanonicalType);
+  return isa<ObjCInterfaceType>(CanonicalType);
+}
+inline bool Type::isObjCQualifiedInterfaceType() const {
+  return isa<ObjCQualifiedInterfaceType>(CanonicalType);
 }
 inline bool Type::isObjCQualifiedIdType() const {
   return isa<ObjCQualifiedIdType>(CanonicalType);
