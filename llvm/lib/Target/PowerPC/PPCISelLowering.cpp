@@ -2500,8 +2500,8 @@ SDOperand PPCTargetLowering::LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
                                 Op.getOperand(0));
   
   // STD the extended value into the stack slot.
-  MemOperand MO(PseudoSourceValue::getFixedStack(),
-                MemOperand::MOStore, FrameIdx, 8, 8);
+  MachineMemOperand MO(PseudoSourceValue::getFixedStack(),
+                       MachineMemOperand::MOStore, FrameIdx, 8, 8);
   SDOperand Store = DAG.getNode(PPCISD::STD_32, MVT::Other,
                                 DAG.getEntryNode(), Ext64, FIdx,
                                 DAG.getMemOperand(MO));

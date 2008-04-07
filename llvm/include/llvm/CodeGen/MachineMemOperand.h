@@ -1,4 +1,4 @@
-//===-- llvm/CodeGen/MemOperand.h - MemOperand class ------------*- C++ -*-===//
+//==- llvm/CodeGen/MachineMemOperand.h - MachineMemOperand class -*- C++ -*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the declaration of the MemOperand class, which is a
+// This file contains the declaration of the MachineMemOperand class, which is a
 // description of a memory reference. It is used to help track dependencies
 // in the backend.
 //
@@ -21,14 +21,14 @@ namespace llvm {
 class Value;
 
 //===----------------------------------------------------------------------===//
-/// MemOperand - A description of a memory reference used in the backend.
+/// MachineMemOperand - A description of a memory reference used in the backend.
 /// Instead of holding a StoreInst or LoadInst, this class holds the address
 /// Value of the reference along with a byte size and offset. This allows it
 /// to describe lowered loads and stores. Also, the special PseudoSourceValue
 /// objects can be used to represent loads and stores to memory locations
 /// that aren't explicit in the regular LLVM IR.
 ///
-class MemOperand {
+class MachineMemOperand {
   const Value *V;
   unsigned int Flags;
   int64_t Offset;
@@ -46,10 +46,10 @@ public:
     MOVolatile = 4
   };
 
-  /// MemOperand - Construct an MemOperand object with the specified
-  /// address Value, flags, offset, size, and alignment.
-  MemOperand(const Value *v, unsigned int f, int64_t o, uint64_t s,
-             unsigned int a)
+  /// MachineMemOperand - Construct an MachineMemOperand object with the
+  /// specified address Value, flags, offset, size, and alignment.
+  MachineMemOperand(const Value *v, unsigned int f, int64_t o, uint64_t s,
+                    unsigned int a)
     : V(v), Flags(f), Offset(o), Size(s), Alignment(a) {}
 
   /// getValue - Return the base address of the memory access.

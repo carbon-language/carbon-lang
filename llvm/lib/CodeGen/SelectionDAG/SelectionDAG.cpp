@@ -385,7 +385,7 @@ static void AddNodeIDNode(FoldingSetNodeID &ID, SDNode *N) {
     ID.AddPointer(cast<SrcValueSDNode>(N)->getValue());
     break;
   case ISD::MEMOPERAND: {
-    const MemOperand &MO = cast<MemOperandSDNode>(N)->MO;
+    const MachineMemOperand &MO = cast<MemOperandSDNode>(N)->MO;
     ID.AddPointer(MO.getValue());
     ID.AddInteger(MO.getFlags());
     ID.AddInteger(MO.getOffset());
@@ -1014,7 +1014,7 @@ SDOperand SelectionDAG::getSrcValue(const Value *V) {
   return SDOperand(N, 0);
 }
 
-SDOperand SelectionDAG::getMemOperand(const MemOperand &MO) {
+SDOperand SelectionDAG::getMemOperand(const MachineMemOperand &MO) {
   const Value *v = MO.getValue();
   assert((!v || isa<PointerType>(v->getType())) &&
          "SrcValue is not a pointer?");
@@ -3635,24 +3635,25 @@ GlobalAddressSDNode::GlobalAddressSDNode(bool isTarget, const GlobalValue *GA,
   TheGlobal = const_cast<GlobalValue*>(GA);
 }
 
-/// getMemOperand - Return a MemOperand object describing the memory
+/// getMemOperand - Return a MachineMemOperand object describing the memory
 /// reference performed by this load or store.
-MemOperand LSBaseSDNode::getMemOperand() const {
+MachineMemOperand LSBaseSDNode::getMemOperand() const {
   int Size = (MVT::getSizeInBits(getMemoryVT()) + 7) >> 3;
   int Flags =
-    getOpcode() == ISD::LOAD ? MemOperand::MOLoad : MemOperand::MOStore;
-  if (IsVolatile) Flags |= MemOperand::MOVolatile;
+    getOpcode() == ISD::LOAD ? MachineMemOperand::MOLoad :
+                               MachineMemOperand::MOStore;
+  if (IsVolatile) Flags |= MachineMemOperand::MOVolatile;
 
   // Check if the load references a frame index, and does not have
   // an SV attached.
   const FrameIndexSDNode *FI =
     dyn_cast<const FrameIndexSDNode>(getBasePtr().Val);
   if (!getSrcValue() && FI)
-    return MemOperand(PseudoSourceValue::getFixedStack(), Flags,
-                      FI->getIndex(), Size, Alignment);
+    return MachineMemOperand(PseudoSourceValue::getFixedStack(), Flags,
+                             FI->getIndex(), Size, Alignment);
   else
-    return MemOperand(getSrcValue(), Flags,
-                      getSrcValueOffset(), Size, Alignment);
+    return MachineMemOperand(getSrcValue(), Flags,
+                             getSrcValueOffset(), Size, Alignment);
 }
 
 /// Profile - Gather unique data for the node.

@@ -693,7 +693,7 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine *TM) const {
   if (getNumMemOperands() > 0) {
     OS << ", Mem:";
     for (unsigned i = 0; i < getNumMemOperands(); i++) {
-      const MemOperand &MRO = getMemOperand(i);
+      const MachineMemOperand &MRO = getMemOperand(i);
       const Value *V = MRO.getValue();
 
       assert((MRO.isLoad() || MRO.isStore()) &&

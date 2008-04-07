@@ -1930,7 +1930,7 @@ MachineInstr* X86InstrInfo::foldMemoryOperand(MachineFunction &MF,
 
   unsigned Alignment = 0;
   for (unsigned i = 0, e = LoadMI->getNumMemOperands(); i != e; ++i) {
-    const MemOperand &MRO = LoadMI->getMemOperand(i);
+    const MachineMemOperand &MRO = LoadMI->getMemOperand(i);
     unsigned Align = MRO.getAlignment();
     if (Align > Alignment)
       Alignment = Align;

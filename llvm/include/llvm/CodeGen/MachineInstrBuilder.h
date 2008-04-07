@@ -85,7 +85,7 @@ public:
   }
 
   /// addMemOperand - Add a memory operand to the machine instruction.
-  const MachineInstrBuilder &addMemOperand(const MemOperand &MO) const {
+  const MachineInstrBuilder &addMemOperand(const MachineMemOperand &MO) const {
     MI->addMemOperand(MO);
     return *this;
   }

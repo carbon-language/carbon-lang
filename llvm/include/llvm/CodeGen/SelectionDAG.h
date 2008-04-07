@@ -401,7 +401,7 @@ public:
 
   // getMemOperand - Construct a node to track a memory reference
   // through the backend.
-  SDOperand getMemOperand(const MemOperand &MO);
+  SDOperand getMemOperand(const MachineMemOperand &MO);
 
   /// UpdateNodeOperands - *Mutate* the specified node in-place to have the
   /// specified operands.  If the resultant node already exists in the DAG,

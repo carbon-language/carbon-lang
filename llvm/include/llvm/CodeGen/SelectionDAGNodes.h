@@ -26,7 +26,7 @@
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/CodeGen/ValueTypes.h"
-#include "llvm/CodeGen/MemOperand.h"
+#include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/Support/DataTypes.h"
 #include <cassert>
 
@@ -530,9 +530,9 @@ namespace ISD {
     // make reference to a value in the LLVM IR.
     SRCVALUE,
 
-    // MEMOPERAND - This is a node that contains a MemOperand which records
-    // information about a memory reference. This is used to make AliasAnalysis
-    // queries from the backend.
+    // MEMOPERAND - This is a node that contains a MachineMemOperand which
+    // records information about a memory reference. This is used to make
+    // AliasAnalysis queries from the backend.
     MEMOPERAND,
 
     // PCMARKER - This corresponds to the pcmarker intrinsic.
@@ -1645,7 +1645,7 @@ public:
 };
 
 
-/// MemOperandSDNode - An SDNode that holds a MemOperand. This is
+/// MemOperandSDNode - An SDNode that holds a MachineMemOperand. This is
 /// used to represent a reference to memory after ISD::LOAD
 /// and ISD::STORE have been lowered.
 ///
@@ -1653,13 +1653,13 @@ class MemOperandSDNode : public SDNode {
   virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
 protected:
   friend class SelectionDAG;
-  /// Create a MemOperand node
-  explicit MemOperandSDNode(const MemOperand &mo)
+  /// Create a MachineMemOperand node
+  explicit MemOperandSDNode(const MachineMemOperand &mo)
     : SDNode(ISD::MEMOPERAND, getSDVTList(MVT::Other)), MO(mo) {}
 
 public:
-  /// MO - The contained MemOperand.
-  const MemOperand MO;
+  /// MO - The contained MachineMemOperand.
+  const MachineMemOperand MO;
 
   static bool classof(const MemOperandSDNode *) { return true; }
   static bool classof(const SDNode *N) {
@@ -1906,9 +1906,9 @@ public:
   /// isUnindexed - Return true if this is NOT a pre/post inc/dec load/store.
   bool isUnindexed() const { return AddrMode == ISD::UNINDEXED; }
 
-  /// getMemOperand - Return a MemOperand object describing the memory
+  /// getMemOperand - Return a MachineMemOperand object describing the memory
   /// reference performed by this load or store.
-  MemOperand getMemOperand() const;
+  MachineMemOperand getMemOperand() const;
 
   static bool classof(const LSBaseSDNode *N) { return true; }
   static bool classof(const SDNode *N) {

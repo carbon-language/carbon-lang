@@ -365,7 +365,7 @@ namespace llvm {
                     const TargetInstrDesc *II,
                     DenseMap<SDOperandImpl, unsigned> &VRBaseMap);
 
-    void AddMemOperand(MachineInstr *MI, const MemOperand &MO);
+    void AddMemOperand(MachineInstr *MI, const MachineMemOperand &MO);
 
     void EmitCrossRCCopy(SUnit *SU, DenseMap<SUnit*, unsigned> &VRBaseMap);
 

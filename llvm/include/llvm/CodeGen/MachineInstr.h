@@ -17,7 +17,7 @@
 #define LLVM_CODEGEN_MACHINEINSTR_H
 
 #include "llvm/CodeGen/MachineOperand.h"
-#include "llvm/CodeGen/MemOperand.h"
+#include "llvm/CodeGen/MachineMemOperand.h"
 
 namespace llvm {
 
@@ -37,7 +37,7 @@ class MachineInstr {
                                         // are determined at construction time).
 
   std::vector<MachineOperand> Operands; // the operands
-  std::vector<MemOperand> MemOperands;  // information on memory references
+  std::vector<MachineMemOperand> MemOperands;// information on memory references
   MachineInstr *Prev, *Next;            // Links for MBB's intrusive list.
   MachineBasicBlock *Parent;            // Pointer to the owning basic block.
 
@@ -100,11 +100,11 @@ public:
   /// Access to memory operands of the instruction
   unsigned getNumMemOperands() const { return MemOperands.size(); }
 
-  const MemOperand& getMemOperand(unsigned i) const {
+  const MachineMemOperand& getMemOperand(unsigned i) const {
     assert(i < getNumMemOperands() && "getMemOperand() out of range!");
     return MemOperands[i];
   }
-  MemOperand& getMemOperand(unsigned i) {
+  MachineMemOperand& getMemOperand(unsigned i) {
     assert(i < getNumMemOperands() && "getMemOperand() out of range!");
     return MemOperands[i];
   }
@@ -268,9 +268,9 @@ public:
   ///
   void RemoveOperand(unsigned i);
 
-  /// addMemOperand - Add a MemOperand to the machine instruction, referencing
-  /// arbitrary storage.
-  void addMemOperand(const MemOperand &MO) {
+  /// addMemOperand - Add a MachineMemOperand to the machine instruction,
+  /// referencing arbitrary storage.
+  void addMemOperand(const MachineMemOperand &MO) {
     MemOperands.push_back(MO);
   }
 

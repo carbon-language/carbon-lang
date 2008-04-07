@@ -369,7 +369,7 @@ unsigned ScheduleDAG::CountResults(SDNode *Node) {
 unsigned ScheduleDAG::CountOperands(SDNode *Node) {
   unsigned N = ComputeMemOperandsEnd(Node);
   while (N && isa<MemOperandSDNode>(Node->getOperand(N - 1).Val))
-    --N; // Ignore MemOperand nodes
+    --N; // Ignore MEMOPERAND nodes
   return N;
 }
 
@@ -656,7 +656,7 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
   
 }
 
-void ScheduleDAG::AddMemOperand(MachineInstr *MI, const MemOperand &MO) {
+void ScheduleDAG::AddMemOperand(MachineInstr *MI, const MachineMemOperand &MO) {
   MI->addMemOperand(MO);
 }
 
