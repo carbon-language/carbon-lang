@@ -211,8 +211,6 @@ ASTContext::getTypeInfo(QualType T) {
   }
 
   case Type::Builtin:
-    // FIXME: need to use TargetInfo to derive the target specific sizes. This
-    // implementation will suffice for play with vector support.
     switch (cast<BuiltinType>(T)->getKind()) {
     default: assert(0 && "Unknown builtin type!");
     case BuiltinType::Void:
@@ -253,8 +251,8 @@ ASTContext::getTypeInfo(QualType T) {
       Align = Target.getFloatAlign();
       break;
     case BuiltinType::Double:
-        Width = Target.getDoubleWidth();
-        Align = Target.getDoubleAlign();
+      Width = Target.getDoubleWidth();
+      Align = Target.getDoubleAlign();
       break;
     case BuiltinType::LongDouble:
       Width = Target.getLongDoubleWidth();
@@ -267,12 +265,12 @@ ASTContext::getTypeInfo(QualType T) {
     // alignment requirements: getPointerInfo should take an AddrSpace.
     return getTypeInfo(QualType(cast<ASQualType>(T)->getBaseType(), 0));
   case Type::ObjCQualifiedId:
-    Width  = Target.getPointerWidth(0);
+    Width = Target.getPointerWidth(0);
     Align = Target.getPointerAlign(0);
     break;
   case Type::Pointer: {
     unsigned AS = cast<PointerType>(T)->getPointeeType().getAddressSpace();
-    Width  = Target.getPointerWidth(AS);
+    Width = Target.getPointerWidth(AS);
     Align = Target.getPointerAlign(AS);
     break;
   }
@@ -1499,12 +1497,12 @@ bool ASTContext::functionTypesAreCompatible(QualType lhs, QualType rhs) {
         return false;
     return true;
   }
+  
   if (!lproto && !rproto) // two K&R style function decls, nothing to do.
     return true;
 
   // we have a mixture of K&R style with C99 prototypes
   const FunctionTypeProto *proto = lproto ? lproto : rproto;
-  
   if (proto->isVariadic())
     return false;
     
@@ -1538,9 +1536,8 @@ static bool areCompatVectorTypes(const VectorType *LHS,
 /// compatible for assignment from RHS to LHS.  This handles validation of any
 /// protocol qualifiers on the LHS or RHS.
 ///
-static bool 
-areCompatObjCInterfaces(const ObjCInterfaceType *LHS, 
-                        const ObjCInterfaceType *RHS) {
+static bool areCompatObjCInterfaces(const ObjCInterfaceType *LHS, 
+                                    const ObjCInterfaceType *RHS) {
   // Verify that the base decls are compatible: the RHS must be a subclass of
   // the LHS.
   if (!LHS->getDecl()->isSuperClassOf(RHS->getDecl()))
@@ -1696,6 +1693,10 @@ bool ASTContext::typesAreCompatible(QualType LHS_NC, QualType RHS_NC) {
   }
   return true; // should never get here...
 }
+
+//===----------------------------------------------------------------------===//
+//                         Serialization Support
+//===----------------------------------------------------------------------===//
 
 /// Emit - Serialize an ASTContext object to Bitcode.
 void ASTContext::Emit(llvm::Serializer& S) const {
