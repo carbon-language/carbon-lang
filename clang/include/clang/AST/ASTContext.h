@@ -334,7 +334,6 @@ public:
   bool arrayTypesAreCompatible(QualType, QualType); // C99 6.7.5.2p6
   bool builtinTypesAreCompatible(QualType, QualType);
   
-  bool objcTypesAreCompatible(QualType, QualType);
   bool isObjCIdType(QualType T) const {
     if (!IdStructType) // ObjC isn't enabled
       return false;

@@ -1442,29 +1442,18 @@ bool ASTContext::builtinTypesAreCompatible(QualType lhs, QualType rhs) {
   return lBuiltin->getKind() == rBuiltin->getKind();
 }
 
-/// objcTypesAreCompatible - This routine is called when two types
-/// are of different class; one is interface type or is 
-/// a qualified interface type and the other type is of a different class.
-/// Example, II or II<P>. 
-bool ASTContext::objcTypesAreCompatible(QualType LHS, QualType RHS) {
-  // ID is compatible with all interface types.
-  if (LHS->isObjCInterfaceType() && isObjCIdType(RHS))
-    return true;
-  else if (isObjCIdType(LHS) && RHS->isObjCInterfaceType())
-    return true;
-  
+/// areCompatObjCInterfaces - This routine is called when we are testing
+/// compatibility of two different [potentially qualified] ObjCInterfaceType's.
+static bool areCompatObjCInterfaces(const ObjCInterfaceType *LHS,
+                                    const ObjCInterfaceType *RHS) {
   // II is compatible with II<P> if the base is the same.  Otherwise, no two
   // qualified interface types are the same.
-  if (const ObjCInterfaceType *LHSIT = LHS->getAsObjCInterfaceType()) {
-    if (const ObjCInterfaceType *RHSIT = RHS->getAsObjCInterfaceType()) {
-      // If the base decls match and one is a qualified interface and one isn't,
-      // then they are compatible.
-      return LHSIT->getDecl() == RHSIT->getDecl() &&
-                 isa<ObjCQualifiedInterfaceType>(LHSIT) != 
-                 isa<ObjCQualifiedInterfaceType>(RHSIT);
-    }
-  }
-  return false;
+  if (LHS->getDecl() != RHS->getDecl()) return false;
+  
+  // If the base decls match and one is a qualified interface and one isn't,
+  // then they are compatible.
+  return isa<ObjCQualifiedInterfaceType>(LHS) != 
+         isa<ObjCQualifiedInterfaceType>(RHS);
 }
 
 /// areCompatObjCQualInterfaces - Return true if the two qualified interface
@@ -1674,10 +1663,16 @@ bool ASTContext::typesAreCompatible(QualType LHS_NC, QualType RHS_NC) {
   if (LHSClass != RHSClass) {
     // For Objective-C, it is possible for two types to be compatible
     // when their classes don't match (when dealing with "id"). If either type
-    // is an interface, we defer to objcTypesAreCompatible(). 
-    if (LHS->isObjCInterfaceType() || RHS->isObjCInterfaceType())
-      return objcTypesAreCompatible(LHS, RHS);
-      
+    // is an interface, we defer to areCompatObjCIDType(). 
+    if (const ObjCInterfaceType *LHSIT = LHS->getAsObjCInterfaceType()) {
+      if (const ObjCInterfaceType *RHSIT = RHS->getAsObjCInterfaceType())
+        return areCompatObjCInterfaces(LHSIT, RHSIT);
+      return isObjCIdType(RHS);    // ID is compatible with all interface types.
+    }
+    
+    if (RHS->isObjCInterfaceType())
+      return isObjCIdType(LHS);    // ID is compatible with all interface types.
+    
     // C99 6.7.2.2p4: Each enumerated type shall be compatible with char,
     // a signed integer type, or an unsigned integer type. 
     if (LHS->isEnumeralType() && RHS->isIntegralType()) {
