@@ -225,7 +225,7 @@ print OUT <<ENDTEXT;
  table.sortable { border-collapse: collapse; border-spacing: 0px }
  td { border-bottom: 1px #000000 dotted }
  td { padding:5px; padding-left:8px; padding-right:8px }
- td { text-align:right; font-size:9pt }
+ td { text-align:left; font-size:9pt }
  td.View   { padding-left: 10px }
 </style>
 <script src="sorttable.js"></script>
