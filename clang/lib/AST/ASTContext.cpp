@@ -1515,17 +1515,14 @@ bool ASTContext::functionTypesAreCompatible(QualType lhs, QualType rhs) {
 
 // C99 6.7.5.2p6
 static bool areCompatArrayTypes(ArrayType *LHS, ArrayType *RHS, ASTContext &C) {
-  // Compatible arrays must have compatible element types
-  QualType ltype = LHS->getElementType();
-  QualType rtype = RHS->getElementType();
-
   // Constant arrays must be the same size to be compatible.
   if (const ConstantArrayType* LCAT = dyn_cast<ConstantArrayType>(LHS))
     if (const ConstantArrayType* RCAT = dyn_cast<ConstantArrayType>(RHS))
       if (RCAT->getSize() != LCAT->getSize())
         return false;
 
-  return C.typesAreCompatible(QualType(LHS, 0), QualType(RHS, 0));
+  // Compatible arrays must have compatible element types
+  return C.typesAreCompatible(LHS->getElementType(), RHS->getElementType());
 }
 
 /// areCompatVectorTypes - Return true if the two specified vector types are 
