@@ -1076,7 +1076,8 @@ public:
 };
 
 /// ObjCQualifiedInterfaceType - This class represents interface types 
-/// conforming to a list of protocols; such as, INTF<Proto1, Proto2, Proto1>.
+/// conforming to a list of protocols, such as INTF<Proto1, Proto2, Proto1>.
+///
 /// Duplicate protocols are removed and protocol list is canonicalized to be in
 /// alphabetical order.
 class ObjCQualifiedInterfaceType : public ObjCInterfaceType, 
@@ -1116,7 +1117,10 @@ public:
   static bool classof(const ObjCQualifiedInterfaceType *) { return true; }
 };
 
-/// ObjCQualifiedIdType - to represent id<protocol-list>
+/// ObjCQualifiedIdType - to represent id<protocol-list>.
+///
+/// Duplicate protocols are removed and protocol list is canonicalized to be in
+/// alphabetical order.
 class ObjCQualifiedIdType : public Type,
                             public llvm::FoldingSetNode {
   // List of protocols for this protocol conforming 'id' type
