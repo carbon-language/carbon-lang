@@ -366,9 +366,6 @@ private:
   
   void InitBuiltinTypes();
   void InitBuiltinType(QualType &R, BuiltinType::Kind K);
-  
-  /// helper function for Objective-C specific type checking.
-  bool interfaceTypesAreCompatible(QualType, QualType);
 };
   
 }  // end namespace clang

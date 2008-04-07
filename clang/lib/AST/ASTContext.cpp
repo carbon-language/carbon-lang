@@ -1443,45 +1443,36 @@ bool ASTContext::objcTypesAreCompatible(QualType LHS, QualType RHS) {
   return false;
 }
 
-/// Check that 'lhs' and 'rhs' are compatible interface types. Both types
-/// must be canonical types.
-bool ASTContext::interfaceTypesAreCompatible(QualType lhs, QualType rhs) {
-  assert (lhs->isCanonical() &&
-          "interfaceTypesAreCompatible strip typedefs of lhs");
-  assert (rhs->isCanonical() &&
-          "interfaceTypesAreCompatible strip typedefs of rhs");
-  if (lhs == rhs)
-    return true;
-  ObjCInterfaceType *lhsIT = cast<ObjCInterfaceType>(lhs.getTypePtr());
-  ObjCInterfaceType *rhsIT = cast<ObjCInterfaceType>(rhs.getTypePtr());
-  ObjCInterfaceDecl *rhsIDecl = rhsIT->getDecl();
-  ObjCInterfaceDecl *lhsIDecl = lhsIT->getDecl();
-  // rhs is derived from lhs it is OK; else it is not OK.
-  while (rhsIDecl != NULL) {
-    if (rhsIDecl == lhsIDecl)
+/// isCompatibleInterfaceAssign - Return true if it is ok to assign a
+/// pointer from the RHS interface to the LHS interface.  This is true if the
+/// RHS is exactly LHS or if it is a subclass of LHS.
+static bool isCompatibleInterfaceAssign(ObjCInterfaceDecl *LHS,
+                                        ObjCInterfaceDecl *RHS) {
+  // If RHS is derived from LHS it is OK; else it is not OK.
+  while (RHS != NULL) {
+    if (RHS == LHS)
       return true;
-    rhsIDecl = rhsIDecl->getSuperClass();
+    RHS = RHS->getSuperClass();
   }
   return false;
 }
 
 bool ASTContext::QualifiedInterfaceTypesAreCompatible(QualType lhs, 
                                                       QualType rhs) {
-  ObjCQualifiedInterfaceType *lhsQI = 
-    dyn_cast<ObjCQualifiedInterfaceType>(lhs.getCanonicalType().getTypePtr());
-  assert(lhsQI && "QualifiedInterfaceTypesAreCompatible - bad lhs type");
-  ObjCQualifiedInterfaceType *rhsQI = 
-    dyn_cast<ObjCQualifiedInterfaceType>(rhs.getCanonicalType().getTypePtr());
-  assert(rhsQI && "QualifiedInterfaceTypesAreCompatible - bad rhs type");
-  if (!interfaceTypesAreCompatible(
-         getObjCInterfaceType(lhsQI->getDecl()).getCanonicalType(), 
-         getObjCInterfaceType(rhsQI->getDecl()).getCanonicalType()))
+  const ObjCQualifiedInterfaceType *lhsQI =
+    lhs->getAsObjCQualifiedInterfaceType();
+  const ObjCQualifiedInterfaceType *rhsQI = 
+    rhs->getAsObjCQualifiedInterfaceType();
+  assert(lhsQI && rhsQI && "QualifiedInterfaceTypesAreCompatible - bad type");
+  
+  if (!isCompatibleInterfaceAssign(lhsQI->getDecl(), rhsQI->getDecl()))
     return false;
-  /* All protocols in lhs must have a presense in rhs. */
-  for (unsigned i =0; i < lhsQI->getNumProtocols(); i++) {
+  
+  // All protocols in lhs must have a presence in rhs.
+  for (unsigned i = 0; i != lhsQI->getNumProtocols(); ++i) {
     bool match = false;
     ObjCProtocolDecl *lhsProto = lhsQI->getProtocols(i);
-    for (unsigned j = 0; j < rhsQI->getNumProtocols(); j++) {
+    for (unsigned j = 0; j != rhsQI->getNumProtocols(); ++j) {
       ObjCProtocolDecl *rhsProto = rhsQI->getProtocols(j);
       if (lhsProto == rhsProto) {
         match = true;
@@ -1794,29 +1785,29 @@ bool ASTContext::arrayTypesAreCompatible(QualType lhs, QualType rhs) {
 /// both shall have the identically qualified version of a compatible type.
 /// C99 6.2.7p1: Two types have compatible types if their types are the 
 /// same. See 6.7.[2,3,5] for additional rules.
-bool ASTContext::typesAreCompatible(QualType lhs, QualType rhs) {
-  QualType lcanon = lhs.getCanonicalType();
-  QualType rcanon = rhs.getCanonicalType();
+bool ASTContext::typesAreCompatible(QualType LHS_NC, QualType RHS_NC) {
+  QualType LHS = LHS_NC.getCanonicalType();
+  QualType RHS = RHS_NC.getCanonicalType();
   
   // If two types are identical, they are are compatible
-  if (lcanon == rcanon)
+  if (LHS == RHS)
     return true;
   
-  if (lcanon.getCVRQualifiers() != rcanon.getCVRQualifiers() ||
-      lcanon.getAddressSpace() != rcanon.getAddressSpace())
+  if (LHS.getCVRQualifiers() != RHS.getCVRQualifiers() ||
+      LHS.getAddressSpace() != RHS.getAddressSpace())
     return false;
 
   // C++ [expr]: If an expression initially has the type "reference to T", the
   // type is adjusted to "T" prior to any further analysis, the expression
   // designates the object or function denoted by the reference, and the
   // expression is an lvalue.
-  if (ReferenceType *RT = dyn_cast<ReferenceType>(lcanon))
-    lcanon = RT->getPointeeType();
-  if (ReferenceType *RT = dyn_cast<ReferenceType>(rcanon))
-    rcanon = RT->getPointeeType();
+  if (ReferenceType *RT = dyn_cast<ReferenceType>(LHS))
+    LHS = RT->getPointeeType();
+  if (ReferenceType *RT = dyn_cast<ReferenceType>(RHS))
+    RHS = RT->getPointeeType();
   
-  Type::TypeClass LHSClass = lcanon->getTypeClass();
-  Type::TypeClass RHSClass = rcanon->getTypeClass();
+  Type::TypeClass LHSClass = LHS->getTypeClass();
+  Type::TypeClass RHSClass = RHS->getTypeClass();
   
   // We want to consider the two function types to be the same for these
   // comparisons, just force one to the other.
@@ -1834,18 +1825,18 @@ bool ASTContext::typesAreCompatible(QualType lhs, QualType rhs) {
     // For Objective-C, it is possible for two types to be compatible
     // when their classes don't match (when dealing with "id"). If either type
     // is an interface, we defer to objcTypesAreCompatible(). 
-    if (lcanon->isObjCInterfaceType() || rcanon->isObjCInterfaceType())
-      return objcTypesAreCompatible(lcanon, rcanon);
+    if (LHS->isObjCInterfaceType() || RHS->isObjCInterfaceType())
+      return objcTypesAreCompatible(LHS, RHS);
       
     // C99 6.7.2.2p4: Each enumerated type shall be compatible with char,
     // a signed integer type, or an unsigned integer type. 
-    if (lcanon->isEnumeralType() && rcanon->isIntegralType()) {
-      EnumDecl* EDecl = cast<EnumType>(lcanon)->getDecl();
-      return EDecl->getIntegerType() == rcanon;
+    if (LHS->isEnumeralType() && RHS->isIntegralType()) {
+      EnumDecl* EDecl = cast<EnumType>(LHS)->getDecl();
+      return EDecl->getIntegerType() == RHS;
     }
-    if (rcanon->isEnumeralType() && lcanon->isIntegralType()) {
-      EnumDecl* EDecl = cast<EnumType>(rcanon)->getDecl();
-      return EDecl->getIntegerType() == lcanon;
+    if (RHS->isEnumeralType() && LHS->isIntegralType()) {
+      EnumDecl* EDecl = cast<EnumType>(RHS)->getDecl();
+      return EDecl->getIntegerType() == LHS;
     }
 
     return false;
@@ -1854,24 +1845,25 @@ bool ASTContext::typesAreCompatible(QualType lhs, QualType rhs) {
   switch (LHSClass) {
   case Type::FunctionProto: assert(0 && "Canonicalized away above");
   case Type::Pointer:
-    return pointerTypesAreCompatible(lcanon, rcanon);
+    return pointerTypesAreCompatible(LHS, RHS);
   case Type::ConstantArray:
   case Type::VariableArray:
   case Type::IncompleteArray:
-    return arrayTypesAreCompatible(lcanon, rcanon);
+    return arrayTypesAreCompatible(LHS, RHS);
   case Type::FunctionNoProto:
-    return functionTypesAreCompatible(lcanon, rcanon);
+    return functionTypesAreCompatible(LHS, RHS);
   case Type::Tagged: // handle structures, unions
-    return tagTypesAreCompatible(lcanon, rcanon);
+    return tagTypesAreCompatible(LHS, RHS);
   case Type::Builtin:
-    return builtinTypesAreCompatible(lcanon, rcanon); 
+    return builtinTypesAreCompatible(LHS, RHS); 
   case Type::ObjCInterface:
-    return interfaceTypesAreCompatible(lcanon, rcanon); 
+    return isCompatibleInterfaceAssign(cast<ObjCInterfaceType>(LHS)->getDecl(),
+                                       cast<ObjCInterfaceType>(RHS)->getDecl());
   case Type::Vector:
   case Type::OCUVector:
-    return vectorTypesAreCompatible(lcanon, rcanon);
+    return vectorTypesAreCompatible(LHS, RHS);
   case Type::ObjCQualifiedInterface:
-    return QualifiedInterfaceTypesAreCompatible(lcanon, rcanon);
+    return QualifiedInterfaceTypesAreCompatible(LHS, RHS);
   default:
     assert(0 && "unexpected type");
   }
