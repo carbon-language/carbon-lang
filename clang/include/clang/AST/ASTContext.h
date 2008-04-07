@@ -335,7 +335,6 @@ public:
   bool builtinTypesAreCompatible(QualType, QualType);
   bool vectorTypesAreCompatible(QualType, QualType);
   
-  bool ObjCQualifiedIdTypesAreCompatible(QualType, QualType, bool = false);
   bool objcTypesAreCompatible(QualType, QualType);
   bool isObjCIdType(QualType T) const {
     if (!IdStructType) // ObjC isn't enabled

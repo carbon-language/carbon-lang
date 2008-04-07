@@ -420,10 +420,14 @@ private:
 /// Protocols orginally drew inspiration from C++ pure virtual functions (a C++ 
 /// feature with nice semantics and lousy syntax:-). Here is an example:
 ///
-/// @protocol NSDraggingInfo
+/// @protocol NSDraggingInfo <refproto1, refproto2>
 /// - (NSWindow *)draggingDestinationWindow;
 /// - (NSImage *)draggedImage;
 /// @end
+///
+/// This says that NSDraggingInfo requires two methods and requires everything
+/// that the two "referenced protocols" 'refproto1' and 'refproto2' require as
+/// well.
 ///
 /// @interface ImplementsNSDraggingInfo : NSObject <NSDraggingInfo>
 /// @end

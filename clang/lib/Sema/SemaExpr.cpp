@@ -1185,9 +1185,8 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
     return Incompatible;
   }
   
-  if (lhsType->isObjCQualifiedIdType() 
-           || rhsType->isObjCQualifiedIdType()) {
-    if (Context.ObjCQualifiedIdTypesAreCompatible(lhsType, rhsType))
+  if (lhsType->isObjCQualifiedIdType() || rhsType->isObjCQualifiedIdType()) {
+    if (ObjCQualifiedIdTypesAreCompatible(lhsType, rhsType, false))
       return Compatible;
     return Incompatible;
   }
@@ -1368,9 +1367,9 @@ inline QualType Sema::CheckAdditionOperands( // C99 6.5.6
   return InvalidOperands(loc, lex, rex);
 }
 
-inline QualType Sema::CheckSubtractionOperands( // C99 6.5.6
-  Expr *&lex, Expr *&rex, SourceLocation loc, bool isCompAssign) 
-{
+// C99 6.5.6
+QualType Sema::CheckSubtractionOperands(Expr *&lex, Expr *&rex,
+                                        SourceLocation loc, bool isCompAssign) {
   if (lex->getType()->isVectorType() || rex->getType()->isVectorType())
     return CheckVectorOperands(loc, lex, rex);
     
@@ -1437,8 +1436,9 @@ inline QualType Sema::CheckSubtractionOperands( // C99 6.5.6
   return InvalidOperands(loc, lex, rex);
 }
 
-inline QualType Sema::CheckShiftOperands( // C99 6.5.7
-  Expr *&lex, Expr *&rex, SourceLocation loc, bool isCompAssign) {
+// C99 6.5.7
+QualType Sema::CheckShiftOperands(Expr *&lex, Expr *&rex, SourceLocation loc,
+                                  bool isCompAssign) {
   // C99 6.5.7p2: Each of the operands shall have integer type.
   if (!lex->getType()->isIntegerType() || !rex->getType()->isIntegerType())
     return InvalidOperands(loc, lex, rex);
@@ -1453,9 +1453,9 @@ inline QualType Sema::CheckShiftOperands( // C99 6.5.7
   return lex->getType();
 }
 
-inline QualType Sema::CheckCompareOperands( // C99 6.5.8
-  Expr *&lex, Expr *&rex, SourceLocation loc, bool isRelational)
-{
+// C99 6.5.8
+QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation loc,
+                                    bool isRelational) {
   // C99 6.5.8p3 / C99 6.5.9p4
   if (lex->getType()->isArithmeticType() && rex->getType()->isArithmeticType())
     UsualArithmeticConversions(lex, rex);
@@ -1514,7 +1514,7 @@ inline QualType Sema::CheckCompareOperands( // C99 6.5.8
     return Context.IntTy;
   }
   if ((lType->isObjCQualifiedIdType() || rType->isObjCQualifiedIdType())
-      && Context.ObjCQualifiedIdTypesAreCompatible(lType, rType, true)) {
+      && ObjCQualifiedIdTypesAreCompatible(lType, rType, true)) {
     ImpCastExprToType(rex, lType); 
     return Context.IntTy;
   }

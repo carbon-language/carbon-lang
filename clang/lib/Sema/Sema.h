@@ -825,6 +825,10 @@ private:
                                           unsigned NewWidth, bool NewSign,
                                           SourceLocation Loc, unsigned DiagID);
   
+  bool ObjCQualifiedIdTypesAreCompatible(QualType LHS, QualType RHS,
+                                         bool ForCompare);
+
+  
   void InitBuiltinVaListType();
   
   //===--------------------------------------------------------------------===//
