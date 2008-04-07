@@ -368,12 +368,14 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
     // Insert the llvm.stacksave.
     CallInst *SavedPtr = CallInst::Create(StackSave, "savedstack", 
                                           FirstNewBlock->begin());
+    SavedPtr->setDoesNotThrow();
     if (CG) CallerNode->addCalledFunction(SavedPtr, StackSaveCGN);
       
     // Insert a call to llvm.stackrestore before any return instructions in the
     // inlined function.
     for (unsigned i = 0, e = Returns.size(); i != e; ++i) {
       CallInst *CI = CallInst::Create(StackRestore, SavedPtr, "", Returns[i]);
+      CI->setDoesNotThrow();
       if (CG) CallerNode->addCalledFunction(CI, StackRestoreCGN);
     }
 
@@ -386,7 +388,8 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
       for (Function::iterator BB = FirstNewBlock, E = Caller->end();
            BB != E; ++BB)
         if (UnwindInst *UI = dyn_cast<UnwindInst>(BB->getTerminator())) {
-          CallInst::Create(StackRestore, SavedPtr, "", UI);
+          CallInst *CI = CallInst::Create(StackRestore, SavedPtr, "", UI);
+          CI->setDoesNotThrow();
           ++NumStackRestores;
         }
     }
