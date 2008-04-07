@@ -1642,9 +1642,15 @@ bool ASTContext::typesAreCompatible(QualType LHS_NC, QualType RHS_NC) {
     return true;
   
   // If qualifiers differ, the types are different.
-  if (LHS.getCVRQualifiers() != RHS.getCVRQualifiers() ||
-      LHS.getAddressSpace() != RHS.getAddressSpace())
+  unsigned LHSAS = LHS.getAddressSpace(), RHSAS = RHS.getAddressSpace();
+  if (LHS.getCVRQualifiers() != RHS.getCVRQualifiers() || LHSAS != RHSAS)
     return false;
+  
+  // Strip off ASQual's if present.
+  if (LHSAS) {
+    LHS = LHS.getUnqualifiedType();
+    RHS = RHS.getUnqualifiedType();
+  }
 
   Type::TypeClass LHSClass = LHS->getTypeClass();
   Type::TypeClass RHSClass = RHS->getTypeClass();
@@ -1655,12 +1661,16 @@ bool ASTContext::typesAreCompatible(QualType LHS_NC, QualType RHS_NC) {
   if (RHSClass == Type::FunctionProto) RHSClass = Type::FunctionNoProto;
 
   // Same as above for arrays
-  if (LHSClass == Type::VariableArray) LHSClass = Type::ConstantArray;
-  if (RHSClass == Type::VariableArray) RHSClass = Type::ConstantArray;
-  if (LHSClass == Type::IncompleteArray) LHSClass = Type::ConstantArray;
-  if (RHSClass == Type::IncompleteArray) RHSClass = Type::ConstantArray;
+  if (LHSClass == Type::VariableArray || LHSClass == Type::IncompleteArray)
+    LHSClass = Type::ConstantArray;
+  if (RHSClass == Type::VariableArray || RHSClass == Type::IncompleteArray)
+    RHSClass = Type::ConstantArray;
   
-  // If the canonical type classes don't match...
+  // Canonicalize OCUVector -> Vector.
+  if (LHSClass == Type::OCUVector) LHSClass = Type::Vector;
+  if (RHSClass == Type::OCUVector) RHSClass = Type::Vector;
+  
+  // If the canonical type classes don't match.
   if (LHSClass != RHSClass) {
     // For Objective-C, it is possible for two types to be compatible
     // when their classes don't match (when dealing with "id"). If either type
@@ -1681,14 +1691,18 @@ bool ASTContext::typesAreCompatible(QualType LHS_NC, QualType RHS_NC) {
 
     return false;
   }
+  
   // The canonical type classes match.
   switch (LHSClass) {
-  case Type::FunctionProto: assert(0 && "Canonicalized away above");
+  case Type::ASQual:
+  case Type::FunctionProto:
+  case Type::VariableArray:
+  case Type::IncompleteArray:
+  case Type::Reference:
+    assert(0 && "Canonicalized away above");
   case Type::Pointer:
     return pointerTypesAreCompatible(LHS, RHS);
   case Type::ConstantArray:
-  case Type::VariableArray:
-  case Type::IncompleteArray:
     return arrayTypesAreCompatible(LHS, RHS);
   case Type::FunctionNoProto:
     return functionTypesAreCompatible(LHS, RHS);
@@ -1701,7 +1715,6 @@ bool ASTContext::typesAreCompatible(QualType LHS_NC, QualType RHS_NC) {
     return cast<ObjCInterfaceType>(LHS)->getDecl()->isSuperClassOf(
                                    cast<ObjCInterfaceType>(RHS)->getDecl());
   case Type::Vector:
-  case Type::OCUVector:
     return areCompatVectorTypes(cast<VectorType>(LHS), cast<VectorType>(RHS));
   case Type::ObjCQualifiedInterface:
     return areCompatObjCQualInterfaces(cast<ObjCQualifiedInterfaceType>(LHS),
