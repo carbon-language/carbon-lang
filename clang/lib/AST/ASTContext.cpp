@@ -1435,13 +1435,6 @@ void ASTContext::setObjCConstantStringInterface(ObjCInterfaceDecl *Decl) {
   ObjCConstantStringType = getObjCInterfaceType(Decl);
 }
 
-bool ASTContext::builtinTypesAreCompatible(QualType lhs, QualType rhs) {
-  const BuiltinType *lBuiltin = lhs->getAsBuiltinType();
-  const BuiltinType *rBuiltin = rhs->getAsBuiltinType();
-  
-  return lBuiltin->getKind() == rBuiltin->getKind();
-}
-
 /// areCompatObjCInterfaces - This routine is called when we are testing
 /// compatibility of two different [potentially qualified] ObjCInterfaceType's.
 static bool areCompatObjCInterfaces(const ObjCInterfaceType *LHS,
@@ -1704,13 +1697,14 @@ bool ASTContext::typesAreCompatible(QualType LHS_NC, QualType RHS_NC) {
   case Type::Tagged: // handle structures, unions
     return tagTypesAreCompatible(LHS, RHS);
   case Type::Builtin:
-    return builtinTypesAreCompatible(LHS, RHS); 
+    // Only exactly equal builtin types are compatible, which is tested above.
+    return false;
+  case Type::Vector:
+    return areCompatVectorTypes(cast<VectorType>(LHS), cast<VectorType>(RHS));
   case Type::ObjCInterface:
     // The LHS must be a superclass of the RHS.
     return cast<ObjCInterfaceType>(LHS)->getDecl()->isSuperClassOf(
                                    cast<ObjCInterfaceType>(RHS)->getDecl());
-  case Type::Vector:
-    return areCompatVectorTypes(cast<VectorType>(LHS), cast<VectorType>(RHS));
   case Type::ObjCQualifiedInterface:
     return areCompatObjCQualInterfaces(cast<ObjCQualifiedInterfaceType>(LHS),
                                        cast<ObjCQualifiedInterfaceType>(RHS));
