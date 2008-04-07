@@ -269,6 +269,10 @@ namespace sys {
       /// @returns std::string containing the basename of the path
       /// @brief Get the base name of the path
       std::string getBasename() const;
+    
+      /// This function strips off the suffix of the path beginning with the
+      /// path separator ('/' on Unix, '\' on Windows) and returns the result.
+      std::string getDirname() const;
 
       /// This function strips off the path and basename(up to and
       /// including the last dot) of the file or directory name and
@@ -567,11 +571,19 @@ namespace sys {
       /// MemoryBuffer::getFile instead.
       static void UnMapFilePages(const char *Base, uint64_t FileSize);
     
+
+    /// @}
+    /// @name Internal methods.
+    /// @{
+    protected:
+      std::string getDirnameCharSep(char Sep) const; 
+    
     /// @}
     /// @name Data
     /// @{
     protected:
       mutable std::string path;   ///< Storage for the path name.
+            
 
     /// @}
   };

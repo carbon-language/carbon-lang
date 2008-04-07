@@ -196,6 +196,45 @@ static void getPathList(const char*path, std::vector<Path>& Paths) {
         Paths.push_back(tmpPath);
 }
 
+std::string Path::getDirnameCharSep(char Sep) const {
+  
+  if (path.empty())
+    return ".";
+  
+  // If the path is all slashes, return a single slash.
+  // Otherwise, remove all trailing slashes.
+  
+  signed pos = path.size() - 1;
+  
+  while (pos >= 0 && path[pos] == Sep)
+    --pos;
+  
+  if (pos < 0)
+    return path[0] == Sep ? std::string(1, Sep) : std::string(".");
+  
+  // Any slashes left?
+  signed i = 0;
+  
+  while (i < pos && path[i] != Sep)
+    ++i;
+  
+  if (i == pos) // No slashes?  Return "."
+    return ".";
+  
+  // There is at least one slash left.  Remove all trailing non-slashes.  
+  while (pos >= 0 && path[pos] != Sep)
+    --pos;
+  
+  // Remove any trailing slashes.
+  while (pos >= 0 && path[pos] == Sep)
+    --pos;
+  
+  if (pos < 0)
+    return path[0] == Sep ? std::string(1, Sep) : std::string(".");
+  
+  return path.substr(0, pos+1);
+}
+
 // Include the truly platform-specific parts of this class.
 #if defined(LLVM_ON_UNIX)
 #include "Unix/Path.inc"
