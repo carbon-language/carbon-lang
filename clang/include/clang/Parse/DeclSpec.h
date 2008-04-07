@@ -122,7 +122,9 @@ private:
   // attributes.
   AttributeList *AttrList;
   
-  // List of protocol qualifiers for objective-c classes.
+  // List of protocol qualifiers for objective-c classes.  Used for 
+  // protocol-qualified interfaces "NString<foo>" and protocol-qualified id
+  // "id<foo>".
   llvm::SmallVector<Action::DeclTy *, 8> *ProtocolQualifiers;
   
   // SourceLocation info.  These are null if the item wasn't specified or if
