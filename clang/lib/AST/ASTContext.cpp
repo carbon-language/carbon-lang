@@ -1499,17 +1499,20 @@ static bool areCompatVectorTypes(const VectorType *LHS,
          LHS->getNumElements() == RHS->getNumElements();
 }
 
-// C99 6.2.7p1: If both are complete types, then the following additional
-// requirements apply...FIXME (handle compatibility across source files).
-bool ASTContext::tagTypesAreCompatible(QualType lhs, QualType rhs) {
+/// C99 6.2.7p1: If both are complete types, then the following additional
+/// requirements apply.
+/// FIXME (handle compatibility across source files).
+static bool areCompatTagTypes(TagType *LHS, TagType *RHS,
+                              const ASTContext &C) {
   // "Class" and "id" are compatible built-in structure types.
-  if (isObjCIdType(lhs) && isObjCClassType(rhs) ||
-      isObjCClassType(lhs) && isObjCIdType(rhs))
+  if (C.isObjCIdType(QualType(LHS, 0)) && C.isObjCClassType(QualType(RHS, 0)) ||
+      C.isObjCClassType(QualType(LHS, 0)) && C.isObjCIdType(QualType(RHS, 0)))
     return true;
 
-  // Within a translation unit a tag type is
-  // only compatible with itself.
-  return lhs.getCanonicalType() == rhs.getCanonicalType();
+  // Within a translation unit a tag type is only compatible with itself.  Self
+  // equality is already handled by the time we get here.
+  assert(LHS != RHS && "Self equality not handled!");
+  return false;
 }
 
 bool ASTContext::pointerTypesAreCompatible(QualType lhs, QualType rhs) {
@@ -1695,7 +1698,7 @@ bool ASTContext::typesAreCompatible(QualType LHS_NC, QualType RHS_NC) {
   case Type::FunctionNoProto:
     return functionTypesAreCompatible(LHS, RHS);
   case Type::Tagged: // handle structures, unions
-    return tagTypesAreCompatible(LHS, RHS);
+    return areCompatTagTypes(cast<TagType>(LHS), cast<TagType>(RHS), *this);
   case Type::Builtin:
     // Only exactly equal builtin types are compatible, which is tested above.
     return false;

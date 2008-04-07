@@ -327,7 +327,6 @@ public:
                                              
   /// Compatibility predicates used to check assignment expressions.
   bool typesAreCompatible(QualType, QualType); // C99 6.2.7p1
-  bool tagTypesAreCompatible(QualType, QualType); // C99 6.2.7p1
   bool pointerTypesAreCompatible(QualType, QualType);  // C99 6.7.5.1p2
   bool referenceTypesAreCompatible(QualType, QualType); // C++ 5.17p6
   bool functionTypesAreCompatible(QualType, QualType); // C99 6.7.5.3p15

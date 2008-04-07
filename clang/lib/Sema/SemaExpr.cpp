@@ -1167,7 +1167,6 @@ Sema::CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
 ///
 /// As a result, the code for dealing with pointers is more complex than the
 /// C99 spec dictates. 
-/// Note: the warning above turn into errors when -pedantic-errors is enabled. 
 ///
 Sema::AssignConvertType
 Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
@@ -1191,9 +1190,9 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
     return Incompatible;
   }
 
-  if (lhsType->isVectorType() || rhsType->isVectorType()) {
+  if (isa<VectorType>(lhsType) || isa<VectorType>(rhsType)) {
     // For OCUVector, allow vector splats; float -> <n x float>
-    if (const OCUVectorType *LV = lhsType->getAsOCUVectorType()) {
+    if (const OCUVectorType *LV = dyn_cast<OCUVectorType>(lhsType)) {
       if (LV->getElementType().getTypePtr() == rhsType.getTypePtr())
         return Compatible;
     }
@@ -1216,27 +1215,27 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
   if (lhsType->isArithmeticType() && rhsType->isArithmeticType())
     return Compatible;
   
-  if (lhsType->isPointerType()) {
+  if (isa<PointerType>(lhsType)) {
     if (rhsType->isIntegerType())
       return IntToPointer;
       
-    if (rhsType->isPointerType())
+    if (isa<PointerType>(rhsType))
       return CheckPointerTypesForAssignment(lhsType, rhsType);
     return Incompatible;
   }
 
-  if (rhsType->isPointerType()) {
+  if (isa<PointerType>(rhsType)) {
     // C99 6.5.16.1p1: the left operand is _Bool and the right is a pointer.
-    if ((lhsType->isIntegerType()) && (lhsType != Context.BoolTy))
+    if (lhsType->isIntegerType() && lhsType != Context.BoolTy)
       return PointerToInt;
 
-    if (lhsType->isPointerType()) 
+    if (isa<PointerType>(lhsType)) 
       return CheckPointerTypesForAssignment(lhsType, rhsType);
     return Incompatible;
   }
   
   if (isa<TagType>(lhsType) && isa<TagType>(rhsType)) {
-    if (Context.tagTypesAreCompatible(lhsType, rhsType))
+    if (Context.typesAreCompatible(lhsType, rhsType))
       return Compatible;
   }
   return Incompatible;
