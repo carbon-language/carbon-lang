@@ -1443,20 +1443,6 @@ bool ASTContext::objcTypesAreCompatible(QualType LHS, QualType RHS) {
   return false;
 }
 
-/// isCompatibleInterfaceAssign - Return true if it is ok to assign a
-/// pointer from the RHS interface to the LHS interface.  This is true if the
-/// RHS is exactly LHS or if it is a subclass of LHS.
-static bool isCompatibleInterfaceAssign(ObjCInterfaceDecl *LHS,
-                                        ObjCInterfaceDecl *RHS) {
-  // If RHS is derived from LHS it is OK; else it is not OK.
-  while (RHS != NULL) {
-    if (RHS == LHS)
-      return true;
-    RHS = RHS->getSuperClass();
-  }
-  return false;
-}
-
 bool ASTContext::QualifiedInterfaceTypesAreCompatible(QualType lhs, 
                                                       QualType rhs) {
   const ObjCQualifiedInterfaceType *lhsQI =
@@ -1465,7 +1451,9 @@ bool ASTContext::QualifiedInterfaceTypesAreCompatible(QualType lhs,
     rhs->getAsObjCQualifiedInterfaceType();
   assert(lhsQI && rhsQI && "QualifiedInterfaceTypesAreCompatible - bad type");
   
-  if (!isCompatibleInterfaceAssign(lhsQI->getDecl(), rhsQI->getDecl()))
+  // Verify that the base decls are compatible, the RHS must be a subclass of
+  // the LHS.
+  if (!lhsQI->getDecl()->isSuperClassOf(rhsQI->getDecl()))
     return false;
   
   // All protocols in lhs must have a presence in rhs.
@@ -1857,8 +1845,9 @@ bool ASTContext::typesAreCompatible(QualType LHS_NC, QualType RHS_NC) {
   case Type::Builtin:
     return builtinTypesAreCompatible(LHS, RHS); 
   case Type::ObjCInterface:
-    return isCompatibleInterfaceAssign(cast<ObjCInterfaceType>(LHS)->getDecl(),
-                                       cast<ObjCInterfaceType>(RHS)->getDecl());
+    // The LHS must be a superclass of the RHS.
+    return cast<ObjCInterfaceType>(LHS)->getDecl()->isSuperClassOf(
+                                   cast<ObjCInterfaceType>(RHS)->getDecl());
   case Type::Vector:
   case Type::OCUVector:
     return vectorTypesAreCompatible(LHS, RHS);

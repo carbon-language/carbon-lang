@@ -315,13 +315,26 @@ public:
   
   ObjCCategoryDecl* getCategoryList() const { return CategoryList; }
   void setCategoryList(ObjCCategoryDecl *category) { 
-         CategoryList = category; 
+    CategoryList = category;
   }
+  
+  /// isSuperClassOf - Return true if this class is the specified class or is a
+  /// super class of the specified interface class.
+  bool isSuperClassOf(const ObjCInterfaceDecl *I) const {
+    // If RHS is derived from LHS it is OK; else it is not OK.
+    while (I != NULL) {
+      if (this == I)
+        return true;
+      I = I->getSuperClass();
+    }
+    return false;
+  }
+  
   ObjCIvarDecl *lookupInstanceVariable(IdentifierInfo *ivarName,
                                        ObjCInterfaceDecl *&clsDeclared);
                                                                            
   // Get the local instance method declared in this interface.
-  ObjCMethodDecl *getInstanceMethod(Selector &Sel) {
+  ObjCMethodDecl *getInstanceMethod(Selector Sel) {
     for (instmeth_iterator I = instmeth_begin(), E = instmeth_end(); 
          I != E; ++I) {
       if ((*I)->getSelector() == Sel)
@@ -330,7 +343,7 @@ public:
     return 0;
   }
   // Get the local class method declared in this interface.
-  ObjCMethodDecl *getClassMethod(Selector &Sel) {
+  ObjCMethodDecl *getClassMethod(Selector Sel) {
     for (classmeth_iterator I = classmeth_begin(), E = classmeth_end(); 
          I != E; ++I) {
       if ((*I)->getSelector() == Sel)
