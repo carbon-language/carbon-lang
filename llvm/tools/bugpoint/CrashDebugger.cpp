@@ -309,8 +309,8 @@ bool ReduceCrashingBlocks::TestBlocks(std::vector<const BasicBlock*> &BBs) {
 
         // Add a new return instruction of the appropriate type...
         const Type *RetTy = BB->getParent()->getReturnType();
-	ReturnInst::Create(RetTy == Type::VoidTy ? 0 :
-			   Constant::getNullValue(RetTy), BB);
+        ReturnInst::Create(RetTy == Type::VoidTy ? 0 :
+                           Constant::getNullValue(RetTy), BB);
       }
 
   // The CFG Simplifier pass may delete one of the basic blocks we are
