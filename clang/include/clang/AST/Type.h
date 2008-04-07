@@ -1109,6 +1109,7 @@ public:
   
   void Profile(llvm::FoldingSetNodeID &ID);
   static void Profile(llvm::FoldingSetNodeID &ID, 
+                      const ObjCInterfaceDecl *Decl,
                       ObjCProtocolDecl **protocols, unsigned NumProtocols);
  
   static bool classof(const Type *T) { 

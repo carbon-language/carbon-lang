@@ -704,14 +704,16 @@ void FunctionTypeProto::Profile(llvm::FoldingSetNodeID &ID) {
 }
 
 void ObjCQualifiedInterfaceType::Profile(llvm::FoldingSetNodeID &ID,
+                                         const ObjCInterfaceDecl *Decl,
                                          ObjCProtocolDecl **protocols, 
                                          unsigned NumProtocols) {
+  ID.AddPointer(Decl);
   for (unsigned i = 0; i != NumProtocols; i++)
     ID.AddPointer(protocols[i]);
 }
 
 void ObjCQualifiedInterfaceType::Profile(llvm::FoldingSetNodeID &ID) {
-  Profile(ID, &Protocols[0], getNumProtocols());
+  Profile(ID, getDecl(), &Protocols[0], getNumProtocols());
 }
 
 void ObjCQualifiedIdType::Profile(llvm::FoldingSetNodeID &ID,
