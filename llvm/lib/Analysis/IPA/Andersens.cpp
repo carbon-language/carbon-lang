@@ -957,6 +957,9 @@ bool Andersens::AddConstraintsForExternalCall(CallSite CS, Function *F) {
                                      FirstArg, TempArg));
     Constraints.push_back(Constraint(Constraint::Load,
                                      TempArg, SecondArg));
+    // In addition, Dest = Src
+    Constraints.push_back(Constraint(Constraint::Copy,
+                                     FirstArg, SecondArg));
     return true;
   }
 
