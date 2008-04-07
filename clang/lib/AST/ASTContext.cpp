@@ -1628,14 +1628,6 @@ bool ASTContext::typesAreCompatible(QualType LHS_NC, QualType RHS_NC) {
   QualType LHS = LHS_NC.getCanonicalType();
   QualType RHS = RHS_NC.getCanonicalType();
   
-  // If two types are identical, they are are compatible
-  if (LHS == RHS)
-    return true;
-  
-  if (LHS.getCVRQualifiers() != RHS.getCVRQualifiers() ||
-      LHS.getAddressSpace() != RHS.getAddressSpace())
-    return false;
-
   // C++ [expr]: If an expression initially has the type "reference to T", the
   // type is adjusted to "T" prior to any further analysis, the expression
   // designates the object or function denoted by the reference, and the
@@ -1645,6 +1637,15 @@ bool ASTContext::typesAreCompatible(QualType LHS_NC, QualType RHS_NC) {
   if (ReferenceType *RT = dyn_cast<ReferenceType>(RHS))
     RHS = RT->getPointeeType();
   
+  // If two types are identical, they are compatible.
+  if (LHS == RHS)
+    return true;
+  
+  // If qualifiers differ, the types are different.
+  if (LHS.getCVRQualifiers() != RHS.getCVRQualifiers() ||
+      LHS.getAddressSpace() != RHS.getAddressSpace())
+    return false;
+
   Type::TypeClass LHSClass = LHS->getTypeClass();
   Type::TypeClass RHSClass = RHS->getTypeClass();
   
