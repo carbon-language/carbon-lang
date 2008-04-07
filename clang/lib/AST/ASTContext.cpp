@@ -1441,7 +1441,8 @@ static bool areCompatObjCInterfaces(const ObjCInterfaceType *LHS,
                                     const ObjCInterfaceType *RHS) {
   // II is compatible with II<P> if the base is the same.  Otherwise, no two
   // qualified interface types are the same.
-  if (LHS->getDecl() != RHS->getDecl()) return false;
+  if (!LHS->getDecl()->isSuperClassOf(RHS->getDecl()))
+    return false;
   
   // If the base decls match and one is a qualified interface and one isn't,
   // then they are compatible.
