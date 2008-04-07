@@ -99,7 +99,8 @@ static void AddLineNumber(Rewriter& R, unsigned LineNo,
                           SourceLocation B, SourceLocation E) {
     
   std::ostringstream os;
-  os << "<tr><td class=\"num\">" << LineNo << "</td><td class=\"line\">";
+  os << "<tr><td class=\"num\" id=\"LN" << LineNo << "\">" 
+     << LineNo << "</td><td class=\"line\">";
 
   if (B == E) { // Handle empty lines.
     os << " </td></tr>";
