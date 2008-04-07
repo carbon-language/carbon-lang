@@ -1422,23 +1422,23 @@ bool ASTContext::builtinTypesAreCompatible(QualType lhs, QualType rhs) {
 /// are of different class; one is interface type or is 
 /// a qualified interface type and the other type is of a different class.
 /// Example, II or II<P>. 
-bool ASTContext::objcTypesAreCompatible(QualType lhs, QualType rhs) {
-  if (lhs->isObjCInterfaceType() && isObjCIdType(rhs))
+bool ASTContext::objcTypesAreCompatible(QualType LHS, QualType RHS) {
+  // ID is compatible with all interface types.
+  if (LHS->isObjCInterfaceType() && isObjCIdType(RHS))
     return true;
-  else if (isObjCIdType(lhs) && rhs->isObjCInterfaceType())
+  else if (isObjCIdType(LHS) && RHS->isObjCInterfaceType())
     return true;
   
-  if (const ObjCInterfaceType *lhsIT = lhs->getAsObjCInterfaceType()) {
-    const ObjCQualifiedInterfaceType *rhsQI =
-      rhs->getAsObjCQualifiedInterfaceType();
-    if (!isa<ObjCQualifiedInterfaceType>(lhsIT))
-      return rhsQI && (lhsIT->getDecl() == rhsQI->getDecl());
-  }
-  if (const ObjCInterfaceType *rhsIT = rhs->getAsObjCInterfaceType()) {
-    const ObjCQualifiedInterfaceType *lhsQI = 
-      lhs->getAsObjCQualifiedInterfaceType();
-    if (!isa<ObjCQualifiedInterfaceType>(rhsIT))
-      return lhsQI && (rhsIT->getDecl() == lhsQI->getDecl());
+  // II is compatible with II<P> if the base is the same.  Otherwise, no two
+  // qualified interface types are the same.
+  if (const ObjCInterfaceType *LHSIT = LHS->getAsObjCInterfaceType()) {
+    if (const ObjCInterfaceType *RHSIT = RHS->getAsObjCInterfaceType()) {
+      // If the base decls match and one is a qualified interface and one isn't,
+      // then they are compatible.
+      return LHSIT->getDecl() == RHSIT->getDecl() &&
+                 isa<ObjCQualifiedInterfaceType>(LHSIT) != 
+                 isa<ObjCQualifiedInterfaceType>(RHSIT);
+    }
   }
   return false;
 }
