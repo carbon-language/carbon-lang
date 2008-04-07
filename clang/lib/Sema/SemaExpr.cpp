@@ -1179,7 +1179,7 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
     return Compatible; // Common case: fast path an exact match.
 
   if (lhsType->isReferenceType() || rhsType->isReferenceType()) {
-    if (Context.referenceTypesAreCompatible(lhsType, rhsType))
+    if (Context.typesAreCompatible(lhsType, rhsType))
       return Compatible;
     return Incompatible;
   }

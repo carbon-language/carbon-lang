@@ -1468,23 +1468,6 @@ bool ASTContext::pointerTypesAreCompatible(QualType lhs, QualType rhs) {
   return typesAreCompatible(ltype, rtype);
 }
 
-// C++ 5.17p6: When the left operand of an assignment operator denotes a
-// reference to T, the operation assigns to the object of type T denoted by the
-// reference.
-bool ASTContext::referenceTypesAreCompatible(QualType lhs, QualType rhs) {
-  QualType ltype = lhs;
-
-  if (lhs->isReferenceType())
-    ltype = cast<ReferenceType>(lhs.getCanonicalType())->getPointeeType();
-
-  QualType rtype = rhs;
-
-  if (rhs->isReferenceType())
-    rtype = cast<ReferenceType>(rhs.getCanonicalType())->getPointeeType();
-
-  return typesAreCompatible(ltype, rtype);
-}
-
 bool ASTContext::functionTypesAreCompatible(QualType lhs, QualType rhs) {
   const FunctionType *lbase = cast<FunctionType>(lhs.getCanonicalType());
   const FunctionType *rbase = cast<FunctionType>(rhs.getCanonicalType());
