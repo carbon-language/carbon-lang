@@ -177,7 +177,7 @@ public:
   void Emit(llvm::Serializer& S) const;
     
   /// Create - Deserialize a Decl from Bitcode.
-  static Decl* Create(llvm::Deserializer& D);
+  static Decl* Create(llvm::Deserializer& D, ASTContext& C);
 
 protected:
   /// EmitImpl - Provides the subclass-specific serialization logic for
@@ -188,7 +188,7 @@ protected:
   }
   
   void EmitInRec(llvm::Serializer& S) const;
-  void ReadInRec(llvm::Deserializer& D);
+  void ReadInRec(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// DeclContext - This is used only as base class of specific decl types that

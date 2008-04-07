@@ -42,7 +42,7 @@ public:
   
 protected:
   void EmitInRec(llvm::Serializer& S) const;
-  void ReadInRec(llvm::Deserializer& D);
+  void ReadInRec(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// ScopedDecl - Represent lexically scoped names, used for all ValueDecl's
@@ -97,10 +97,10 @@ public:
   
 protected:
   void EmitInRec(llvm::Serializer& S) const;
-  void ReadInRec(llvm::Deserializer& D);
+  void ReadInRec(llvm::Deserializer& D, ASTContext& C);
   
   void EmitOutRec(llvm::Serializer& S) const;
-  void ReadOutRec(llvm::Deserializer& D);
+  void ReadOutRec(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// ValueDecl - Represent the declaration of a variable (in which case it is 
@@ -125,7 +125,7 @@ public:
   
 protected:
   void EmitInRec(llvm::Serializer& S) const;
-  void ReadInRec(llvm::Deserializer& D);
+  void ReadInRec(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// VarDecl - An instance of this class is created to represent a variable
@@ -177,16 +177,16 @@ public:
 
 protected:
   void EmitInRec(llvm::Serializer& S) const;
-  void ReadInRec(llvm::Deserializer& D);
+  void ReadInRec(llvm::Deserializer& D, ASTContext& C);
   
   void EmitOutRec(llvm::Serializer& S) const;
-  void ReadOutRec(llvm::Deserializer& D);
+  void ReadOutRec(llvm::Deserializer& D, ASTContext& C);
   
   /// EmitImpl - Serialize this VarDecl. Called by Decl::Emit.
   virtual void EmitImpl(llvm::Serializer& S) const;
   
   /// ReadImpl - Deserialize this VarDecl. Called by subclasses.
-  virtual void ReadImpl(llvm::Deserializer& S);
+  virtual void ReadImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// BlockVarDecl - Represent a local variable declaration.  Note that this
@@ -209,9 +209,9 @@ public:
 
 protected:
   /// CreateImpl - Deserialize a BlockVarDecl.  Called by Decl::Create.
-  static BlockVarDecl* CreateImpl(llvm::Deserializer& D);  
+  static BlockVarDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 
-  friend Decl* Decl::Create(llvm::Deserializer& D);
+  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// FileVarDecl - Represent a file scoped variable declaration. This
@@ -234,9 +234,9 @@ public:
 
 protected:
   /// CreateImpl - Deserialize a FileVarDecl.  Called by Decl::Create.
-  static FileVarDecl* CreateImpl(llvm::Deserializer& D);
+  static FileVarDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 
-  friend Decl* Decl::Create(llvm::Deserializer& D);
+  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// ParmVarDecl - Represent a parameter to a function.
@@ -271,9 +271,9 @@ protected:
   virtual void EmitImpl(llvm::Serializer& S) const;
   
   /// CreateImpl - Deserialize a ParmVarDecl.  Called by Decl::Create.
-  static ParmVarDecl* CreateImpl(llvm::Deserializer& D);
+  static ParmVarDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 
-  friend Decl* Decl::Create(llvm::Deserializer& D);
+  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// FunctionDecl - An instance of this class is created to represent a function
@@ -359,9 +359,9 @@ protected:
   virtual void EmitImpl(llvm::Serializer& S) const;
   
   /// CreateImpl - Deserialize a FunctionDecl.  Called by Decl::Create.
-  static FunctionDecl* CreateImpl(llvm::Deserializer& D);
+  static FunctionDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
   
-  friend Decl* Decl::Create(llvm::Deserializer& D);
+  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
 };
 
 
@@ -396,9 +396,9 @@ protected:
   virtual void EmitImpl(llvm::Serializer& S) const;
   
   /// CreateImpl - Deserialize a FieldDecl.  Called by Decl::Create.
-  static FieldDecl* CreateImpl(llvm::Deserializer& D);
+  static FieldDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
   
-  friend Decl* Decl::Create(llvm::Deserializer& D);  
+  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// EnumConstantDecl - An instance of this object exists for each enum constant
@@ -439,9 +439,9 @@ protected:
   virtual void EmitImpl(llvm::Serializer& S) const;
   
   /// CreateImpl - Deserialize a EnumConstantDecl.  Called by Decl::Create.
-  static EnumConstantDecl* CreateImpl(llvm::Deserializer& D);
+  static EnumConstantDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
   
-  friend Decl* Decl::Create(llvm::Deserializer& D);
+  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
 };
 
 
@@ -491,9 +491,9 @@ protected:
   virtual void EmitImpl(llvm::Serializer& S) const;
   
   /// CreateImpl - Deserialize a TypedefDecl.  Called by Decl::Create.
-  static TypedefDecl* CreateImpl(llvm::Deserializer& D);
+  static TypedefDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
   
-  friend Decl* Decl::Create(llvm::Deserializer& D);
+  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
 };
 
 
@@ -585,9 +585,9 @@ protected:
   virtual void EmitImpl(llvm::Serializer& S) const;
   
   /// CreateImpl - Deserialize a EnumDecl.  Called by Decl::Create.
-  static EnumDecl* CreateImpl(llvm::Deserializer& D);
+  static EnumDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
   
-  friend Decl* Decl::Create(llvm::Deserializer& D);
+  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
 };
 
 
@@ -647,9 +647,9 @@ protected:
   virtual void EmitImpl(llvm::Serializer& S) const;
   
   /// CreateImpl - Deserialize a RecordDecl.  Called by Decl::Create.
-  static RecordDecl* CreateImpl(Kind DK, llvm::Deserializer& D);
+  static RecordDecl* CreateImpl(Kind DK, llvm::Deserializer& D, ASTContext& C);
   
-  friend Decl* Decl::Create(llvm::Deserializer& D);
+  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
 };
 
 class FileScopeAsmDecl : public Decl {
@@ -671,9 +671,9 @@ protected:
   virtual void EmitImpl(llvm::Serializer& S) const;
   
   /// CreateImpl - Deserialize a FileScopeAsmDecl.  Called by Decl::Create.
-  static FileScopeAsmDecl* CreateImpl(llvm::Deserializer& D);
+  static FileScopeAsmDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
   
-  friend Decl* Decl::Create(llvm::Deserializer& D);
+  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// LinkageSpecDecl - This represents a linkage specification.  For example:
@@ -711,7 +711,7 @@ public:
   
 protected:
   void EmitInRec(llvm::Serializer& S) const;
-  void ReadInRec(llvm::Deserializer& D);
+  void ReadInRec(llvm::Deserializer& D, ASTContext& C);
 };
 
 }  // end namespace clang

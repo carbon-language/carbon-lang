@@ -229,7 +229,7 @@ Type* TagType::CreateImpl(ASTContext& Context, Deserializer& D) {
   Types.push_back(T);
   
   // Deserialize the decl.
-  T->decl = cast<TagDecl>(D.ReadOwnedPtr<Decl>());
+  T->decl = cast<TagDecl>(D.ReadOwnedPtr<Decl>(Context));
 
   return T;
 }
@@ -269,7 +269,7 @@ Type* VariableArrayType::CreateImpl(ASTContext& Context, Deserializer& D) {
   QualType ElTy = QualType::ReadVal(D);
   ArraySizeModifier am = static_cast<ArraySizeModifier>(D.ReadInt());
   unsigned ITQ = D.ReadInt();  
-  Expr* SizeExpr = D.ReadOwnedPtr<Expr>();
+  Expr* SizeExpr = D.ReadOwnedPtr<Expr>(Context);
   
   return Context.getVariableArrayType(ElTy,SizeExpr,am,ITQ).getTypePtr();
 }

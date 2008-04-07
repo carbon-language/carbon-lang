@@ -26,6 +26,7 @@
 using llvm::dyn_cast_or_null;
 
 namespace clang {
+  class ASTContext;
   class Expr;
   class Decl;
   class ScopedDecl;
@@ -117,8 +118,8 @@ public:
   }
   
   void Emit(llvm::Serializer& S) const;
-  static Stmt* Create(llvm::Deserializer& D);
-  
+  static Stmt* Create(llvm::Deserializer& D, ASTContext& C);
+
   virtual void EmitImpl(llvm::Serializer& S) const {
     // This method will eventually be a pure-virtual function.
     assert (false && "Not implemented.");
@@ -156,7 +157,7 @@ public:
   virtual child_iterator child_end();
   
   virtual void EmitImpl(llvm::Serializer& S) const;
-  static DeclStmt* CreateImpl(llvm::Deserializer& D);
+  static DeclStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// NullStmt - This is the null statement ";": C99 6.8.3p3.
@@ -180,7 +181,7 @@ public:
   virtual child_iterator child_end();
   
   virtual void EmitImpl(llvm::Serializer& S) const;
-  static NullStmt* CreateImpl(llvm::Deserializer& D);
+  static NullStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// CompoundStmt - This represents a group of statements like { stmt stmt }.
@@ -234,7 +235,7 @@ public:
   virtual child_iterator child_end();
   
   virtual void EmitImpl(llvm::Serializer& S) const;
-  static CompoundStmt* CreateImpl(llvm::Deserializer& D);
+  static CompoundStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 // SwitchCase is the base class for CaseStmt and DefaultStmt,
@@ -311,7 +312,7 @@ public:
   virtual child_iterator child_end();
   
   virtual void EmitImpl(llvm::Serializer& S) const;
-  static CaseStmt* CreateImpl(llvm::Deserializer& D);
+  static CaseStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 class DefaultStmt : public SwitchCase {
@@ -340,7 +341,7 @@ public:
   virtual child_iterator child_end();
   
   virtual void EmitImpl(llvm::Serializer& S) const;
-  static DefaultStmt* CreateImpl(llvm::Deserializer& D);
+  static DefaultStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 class LabelStmt : public Stmt {
@@ -374,7 +375,7 @@ public:
   virtual child_iterator child_end();
   
   virtual void EmitImpl(llvm::Serializer& S) const;
-  static LabelStmt* CreateImpl(llvm::Deserializer& D);
+  static LabelStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 
@@ -418,7 +419,7 @@ public:
   virtual child_iterator child_end();
   
   virtual void EmitImpl(llvm::Serializer& S) const;
-  static IfStmt* CreateImpl(llvm::Deserializer& D);
+  static IfStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// SwitchStmt - This represents a 'switch' stmt.
@@ -466,7 +467,7 @@ public:
   virtual child_iterator child_end();
   
   virtual void EmitImpl(llvm::Serializer& S) const;
-  static SwitchStmt* CreateImpl(llvm::Deserializer& D);
+  static SwitchStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 
@@ -501,7 +502,7 @@ public:
   virtual child_iterator child_end();
   
   virtual void EmitImpl(llvm::Serializer& S) const;
-  static WhileStmt* CreateImpl(llvm::Deserializer& D);
+  static WhileStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// DoStmt - This represents a 'do/while' stmt.
@@ -536,7 +537,7 @@ public:
   virtual child_iterator child_end();
   
   virtual void EmitImpl(llvm::Serializer& S) const;
-  static DoStmt* CreateImpl(llvm::Deserializer& D);
+  static DoStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 
@@ -581,7 +582,7 @@ public:
   virtual child_iterator child_end();
   
   virtual void EmitImpl(llvm::Serializer& S) const;
-  static ForStmt* CreateImpl(llvm::Deserializer& D);
+  static ForStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
   
 /// GotoStmt - This represents a direct goto.
@@ -609,7 +610,7 @@ public:
   virtual child_iterator child_end();
   
   virtual void EmitImpl(llvm::Serializer& S) const;
-  static GotoStmt* CreateImpl(llvm::Deserializer& D);
+  static GotoStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// IndirectGotoStmt - This represents an indirect goto.
@@ -636,7 +637,7 @@ public:
   virtual child_iterator child_end();
   
   virtual void EmitImpl(llvm::Serializer& S) const;
-  static IndirectGotoStmt* CreateImpl(llvm::Deserializer& D);
+  static IndirectGotoStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 
@@ -660,7 +661,7 @@ public:
   virtual child_iterator child_end();
   
   virtual void EmitImpl(llvm::Serializer& S) const;
-  static ContinueStmt* CreateImpl(llvm::Deserializer& D);
+  static ContinueStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// BreakStmt - This represents a break.
@@ -682,7 +683,7 @@ public:
   virtual child_iterator child_end();
   
   virtual void EmitImpl(llvm::Serializer& S) const;
-  static BreakStmt* CreateImpl(llvm::Deserializer& D);
+  static BreakStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 
@@ -717,7 +718,7 @@ public:
   virtual child_iterator child_end();
   
   virtual void EmitImpl(llvm::Serializer& S) const;
-  static ReturnStmt* CreateImpl(llvm::Deserializer& D);
+  static ReturnStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// AsmStmt - This represents a GNU inline-assembly statement extension.
@@ -811,7 +812,7 @@ public:
   virtual child_iterator child_end();
   
   virtual void EmitImpl(llvm::Serializer& S) const;
-  static AsmStmt* CreateImpl(llvm::Deserializer& D);
+  static AsmStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// ObjCForCollectionStmt - This represents Objective-c's collection statement;
@@ -853,7 +854,7 @@ public:
   virtual child_iterator child_end();
   
   virtual void EmitImpl(llvm::Serializer& S) const;
-  static ObjCForCollectionStmt* CreateImpl(llvm::Deserializer& D);
+  static ObjCForCollectionStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };  
   
 /// ObjCAtCatchStmt - This represents objective-c's @catch statement.
@@ -901,7 +902,7 @@ public:
   virtual child_iterator child_end();
   
   virtual void EmitImpl(llvm::Serializer& S) const;
-  static ObjCAtCatchStmt* CreateImpl(llvm::Deserializer& D);
+  static ObjCAtCatchStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
   
 /// ObjCAtFinallyStmt - This represent objective-c's @finally Statement 
@@ -929,7 +930,7 @@ public:
   virtual child_iterator child_end();
   
   virtual void EmitImpl(llvm::Serializer& S) const;
-  static ObjCAtFinallyStmt* CreateImpl(llvm::Deserializer& D);    
+  static ObjCAtFinallyStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
   
 /// ObjCAtTryStmt - This represent objective-c's over-all 
@@ -978,7 +979,7 @@ public:
   virtual child_iterator child_end();
   
   virtual void EmitImpl(llvm::Serializer& S) const;
-  static ObjCAtTryStmt* CreateImpl(llvm::Deserializer& D);     
+  static ObjCAtTryStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// ObjCAtSynchronizedStmt - This is for objective-c's @synchronized statement.
@@ -1028,7 +1029,8 @@ public:
   virtual child_iterator child_end();
   
   virtual void EmitImpl(llvm::Serializer& S) const;
-  static ObjCAtSynchronizedStmt* CreateImpl(llvm::Deserializer& D);
+  static ObjCAtSynchronizedStmt* CreateImpl(llvm::Deserializer& D,
+                                            ASTContext& C);
 };
   
 /// ObjCAtThrowStmt - This represents objective-c's @throw statement.
@@ -1060,7 +1062,7 @@ public:
   virtual child_iterator child_end();
   
   virtual void EmitImpl(llvm::Serializer& S) const;
-  static ObjCAtThrowStmt* CreateImpl(llvm::Deserializer& D); 
+  static ObjCAtThrowStmt* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 }  // end namespace clang

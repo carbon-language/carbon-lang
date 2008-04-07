@@ -221,7 +221,7 @@ TranslationUnit* TranslationUnit::Create(llvm::Deserializer& Dezr,
   llvm::Deserializer::Location DeclBlockLoc = Dezr.getCurrentBlockLocation();
   
   while (!Dezr.FinishedBlock(DeclBlockLoc))
-    TU->AddTopLevelDecl(Dezr.ReadOwnedPtr<Decl>());
+    TU->AddTopLevelDecl(Dezr.ReadOwnedPtr<Decl>(*TU->Context));
 
   return TU;
 }
