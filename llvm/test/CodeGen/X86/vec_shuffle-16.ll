@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse  | grep shufps | count 4
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse  | grep mov | count 2
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse,-sse2 | grep shufps | count 4
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse,-sse2 | grep mov | count 2
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep pshufd | count 4
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | not grep shufps
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | not grep mov
