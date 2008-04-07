@@ -1443,25 +1443,20 @@ bool ASTContext::objcTypesAreCompatible(QualType LHS, QualType RHS) {
   return false;
 }
 
-bool ASTContext::QualifiedInterfaceTypesAreCompatible(QualType lhs, 
-                                                      QualType rhs) {
-  const ObjCQualifiedInterfaceType *lhsQI =
-    lhs->getAsObjCQualifiedInterfaceType();
-  const ObjCQualifiedInterfaceType *rhsQI = 
-    rhs->getAsObjCQualifiedInterfaceType();
-  assert(lhsQI && rhsQI && "QualifiedInterfaceTypesAreCompatible - bad type");
-  
-  // Verify that the base decls are compatible, the RHS must be a subclass of
+static bool 
+areCompatObjCQualInterfaces(const ObjCQualifiedInterfaceType *LHS, 
+                            const ObjCQualifiedInterfaceType *RHS) {
+  // Verify that the base decls are compatible: the RHS must be a subclass of
   // the LHS.
-  if (!lhsQI->getDecl()->isSuperClassOf(rhsQI->getDecl()))
+  if (!LHS->getDecl()->isSuperClassOf(RHS->getDecl()))
     return false;
   
-  // All protocols in lhs must have a presence in rhs.
-  for (unsigned i = 0; i != lhsQI->getNumProtocols(); ++i) {
+  // All protocols in LHS must have a presence in RHS.
+  for (unsigned i = 0; i != LHS->getNumProtocols(); ++i) {
     bool match = false;
-    ObjCProtocolDecl *lhsProto = lhsQI->getProtocols(i);
-    for (unsigned j = 0; j != rhsQI->getNumProtocols(); ++j) {
-      ObjCProtocolDecl *rhsProto = rhsQI->getProtocols(j);
+    ObjCProtocolDecl *lhsProto = LHS->getProtocols(i);
+    for (unsigned j = 0; j != RHS->getNumProtocols(); ++j) {
+      ObjCProtocolDecl *rhsProto = RHS->getProtocols(j);
       if (lhsProto == rhsProto) {
         match = true;
         break;
@@ -1852,7 +1847,8 @@ bool ASTContext::typesAreCompatible(QualType LHS_NC, QualType RHS_NC) {
   case Type::OCUVector:
     return vectorTypesAreCompatible(LHS, RHS);
   case Type::ObjCQualifiedInterface:
-    return QualifiedInterfaceTypesAreCompatible(LHS, RHS);
+    return areCompatObjCQualInterfaces(cast<ObjCQualifiedInterfaceType>(LHS),
+                                       cast<ObjCQualifiedInterfaceType>(RHS));
   default:
     assert(0 && "unexpected type");
   }
