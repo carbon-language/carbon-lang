@@ -811,9 +811,8 @@ QualType ASTContext::getObjCInterfaceType(ObjCInterfaceDecl *Decl) {
   return QualType(Decl->TypeForDecl, 0);
 }
 
-/// getObjCQualifiedInterfaceType - Return a 
-/// ObjCQualifiedInterfaceType type for the given interface decl and
-/// the conforming protocol list.
+/// getObjCQualifiedInterfaceType - Return a ObjCQualifiedInterfaceType type for
+/// the given interface decl and the conforming protocol list.
 QualType ASTContext::getObjCQualifiedInterfaceType(ObjCInterfaceDecl *Decl,
                        ObjCProtocolDecl **Protocols, unsigned NumProtocols) {
   llvm::FoldingSetNodeID ID;
@@ -1443,6 +1442,9 @@ bool ASTContext::objcTypesAreCompatible(QualType LHS, QualType RHS) {
   return false;
 }
 
+/// areCompatObjCQualInterfaces - Return true if the two qualified interface
+/// types are compatible for assignment from RHS to LHS.
+///
 static bool 
 areCompatObjCQualInterfaces(const ObjCQualifiedInterfaceType *LHS, 
                             const ObjCQualifiedInterfaceType *RHS) {
@@ -1525,13 +1527,10 @@ bool ASTContext::ObjCQualifiedIdTypesAreCompatible(QualType lhs,
     QualType PointeeTy = PT->getPointeeType();
     if (isObjCIdType(PointeeTy) || PointeeTy->isVoidType())
       return true;
-        
-  }
-  else if (const PointerType *PT = rhs->getAsPointerType()) {
+  } else if (const PointerType *PT = rhs->getAsPointerType()) {
     QualType PointeeTy = PT->getPointeeType();
     if (isObjCIdType(PointeeTy) || PointeeTy->isVoidType())
       return true;
-    
   }
   
   ObjCQualifiedInterfaceType *lhsQI = 0;
@@ -1558,15 +1557,13 @@ bool ASTContext::ObjCQualifiedIdTypesAreCompatible(QualType lhs,
     if (!rhsQI && !rhsQID && !rhsID)
       return false;
     
-    unsigned numRhsProtocols = 0;
-    ObjCProtocolDecl **rhsProtoList = 0;
+    ObjCQualifiedIdType::qual_iterator RHSProtoI, RHSProtoE;
     if (rhsQI) {
-      numRhsProtocols = rhsQI->getNumProtocols();
-      rhsProtoList = rhsQI->getReferencedProtocols();
-    }
-    else if (rhsQID) {
-      numRhsProtocols = rhsQID->getNumProtocols();
-      rhsProtoList = rhsQID->getReferencedProtocols();
+      RHSProtoI = rhsQI->qual_begin();
+      RHSProtoE = rhsQI->qual_end();
+    } else if (rhsQID) {
+      RHSProtoI = rhsQID->qual_begin();
+      RHSProtoE = rhsQID->qual_end();
     }
     
     for (unsigned i =0; i < lhsQID->getNumProtocols(); i++) {
@@ -1579,13 +1576,14 @@ bool ASTContext::ObjCQualifiedIdTypesAreCompatible(QualType lhs,
       if (rhsID) {
         if (ClassImplementsProtocol(lhsProto, rhsID, true))
           match = true;
-      }
-      else for (unsigned j = 0; j < numRhsProtocols; j++) {
-        ObjCProtocolDecl *rhsProto = rhsProtoList[j];
-        if (ProtocolCompatibleWithProtocol(lhsProto, rhsProto) ||
-            compare && ProtocolCompatibleWithProtocol(rhsProto, lhsProto)) {
-          match = true;
-          break;
+      } else {
+        for (; RHSProtoI != RHSProtoE; ++RHSProtoI) {
+          ObjCProtocolDecl *rhsProto = *RHSProtoI;
+          if (ProtocolCompatibleWithProtocol(lhsProto, rhsProto) ||
+              compare && ProtocolCompatibleWithProtocol(rhsProto, lhsProto)) {
+            match = true;
+            break;
+          }
         }
       }
       if (!match)
@@ -1609,16 +1607,15 @@ bool ASTContext::ObjCQualifiedIdTypesAreCompatible(QualType lhs,
     if (!lhsQI && !lhsQID && !lhsID)
       return false;
     
-    unsigned numLhsProtocols = 0;
-    ObjCProtocolDecl **lhsProtoList = 0;
+    ObjCQualifiedIdType::qual_iterator LHSProtoI, LHSProtoE;
     if (lhsQI) {
-      numLhsProtocols = lhsQI->getNumProtocols();
-      lhsProtoList = lhsQI->getReferencedProtocols();
+      LHSProtoI = lhsQI->qual_begin();
+      LHSProtoE = lhsQI->qual_end();
+    } else if (lhsQID) {
+      LHSProtoI = lhsQID->qual_begin();
+      LHSProtoE = lhsQID->qual_end();
     }
-    else if (lhsQID) {
-      numLhsProtocols = lhsQID->getNumProtocols();
-      lhsProtoList = lhsQID->getReferencedProtocols();
-    }    
+    
     bool match = false;
     // for static type vs. qualified 'id' type, check that class implements
     // one of 'id's protocols.
@@ -1630,16 +1627,17 @@ bool ASTContext::ObjCQualifiedIdTypesAreCompatible(QualType lhs,
           break;
         }
       }
-    }    
-    else for (unsigned i =0; i < numLhsProtocols; i++) {
-      match = false;
-      ObjCProtocolDecl *lhsProto = lhsProtoList[i];
-      for (unsigned j = 0; j < rhsQID->getNumProtocols(); j++) {
-        ObjCProtocolDecl *rhsProto = rhsQID->getProtocols(j);
-        if (ProtocolCompatibleWithProtocol(lhsProto, rhsProto) ||
-          compare && ProtocolCompatibleWithProtocol(rhsProto, lhsProto)) {
-          match = true;
-          break;
+    } else {
+      for (; LHSProtoI != LHSProtoE; ++LHSProtoI) {
+        match = false;
+        ObjCProtocolDecl *lhsProto = *LHSProtoI;
+        for (unsigned j = 0; j < rhsQID->getNumProtocols(); j++) {
+          ObjCProtocolDecl *rhsProto = rhsQID->getProtocols(j);
+          if (ProtocolCompatibleWithProtocol(lhsProto, rhsProto) ||
+            compare && ProtocolCompatibleWithProtocol(rhsProto, lhsProto)) {
+            match = true;
+            break;
+          }
         }
       }
     }

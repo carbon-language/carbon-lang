@@ -1087,7 +1087,7 @@ class ObjCQualifiedInterfaceType : public ObjCInterfaceType,
   llvm::SmallVector<ObjCProtocolDecl*, 8> Protocols;
 
   ObjCQualifiedInterfaceType(ObjCInterfaceDecl *D,
-                             ObjCProtocolDecl **Protos,  unsigned NumP) : 
+                             ObjCProtocolDecl **Protos, unsigned NumP) : 
     ObjCInterfaceType(ObjCQualifiedInterface, D), 
     Protocols(Protos, Protos+NumP) { }
   friend class ASTContext;  // ASTContext creates these.
@@ -1099,9 +1099,11 @@ public:
   unsigned getNumProtocols() const {
     return Protocols.size();
   }
-  ObjCProtocolDecl **getReferencedProtocols() {
-    return &Protocols[0];
-  }  
+
+  typedef llvm::SmallVector<ObjCProtocolDecl*, 8>::const_iterator qual_iterator;
+  qual_iterator qual_begin() const { return Protocols.begin(); }
+  qual_iterator qual_end() const   { return Protocols.end(); }
+                                     
   virtual void getAsStringInternal(std::string &InnerString) const;
   
   void Profile(llvm::FoldingSetNodeID &ID);
@@ -1135,7 +1137,11 @@ public:
   }
   ObjCProtocolDecl **getReferencedProtocols() {
     return &Protocols[0];
-  } 
+  }
+                              
+  typedef llvm::SmallVector<ObjCProtocolDecl*, 8>::const_iterator qual_iterator;
+  qual_iterator qual_begin() const { return Protocols.begin(); }
+  qual_iterator qual_end() const   { return Protocols.end(); }
     
   virtual void getAsStringInternal(std::string &InnerString) const;
     
