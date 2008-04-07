@@ -333,7 +333,7 @@ namespace llvm {
     /// register number for the results of the node.
     ///
     void EmitNode(SDNode *Node, unsigned InstNo,
-                  DenseMap<SDOperand, unsigned> &VRBaseMap);
+                  DenseMap<SDOperandImpl, unsigned> &VRBaseMap);
     
     /// EmitNoop - Emit a noop instruction.
     ///
@@ -351,11 +351,11 @@ namespace llvm {
     /// EmitSubregNode - Generate machine code for subreg nodes.
     ///
     void EmitSubregNode(SDNode *Node, 
-                        DenseMap<SDOperand, unsigned> &VRBaseMap);
+                        DenseMap<SDOperandImpl, unsigned> &VRBaseMap);
 
     /// getVR - Return the virtual register corresponding to the specified result
     /// of the specified node.
-    unsigned getVR(SDOperand Op, DenseMap<SDOperand, unsigned> &VRBaseMap);
+    unsigned getVR(SDOperand Op, DenseMap<SDOperandImpl, unsigned> &VRBaseMap);
   
     /// getDstOfCopyToRegUse - If the only use of the specified result number of
     /// node is a CopyToReg, return its destination register. Return 0 otherwise.
@@ -363,7 +363,7 @@ namespace llvm {
 
     void AddOperand(MachineInstr *MI, SDOperand Op, unsigned IIOpNum,
                     const TargetInstrDesc *II,
-                    DenseMap<SDOperand, unsigned> &VRBaseMap);
+                    DenseMap<SDOperandImpl, unsigned> &VRBaseMap);
 
     void AddMemOperand(MachineInstr *MI, const MemOperand &MO);
 
@@ -373,11 +373,11 @@ namespace llvm {
     /// implicit physical register output.
     void EmitCopyFromReg(SDNode *Node, unsigned ResNo, unsigned InstNo,
                          unsigned SrcReg,
-                         DenseMap<SDOperand, unsigned> &VRBaseMap);
+                         DenseMap<SDOperandImpl, unsigned> &VRBaseMap);
     
     void CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
                                 const TargetInstrDesc &II,
-                                DenseMap<SDOperand, unsigned> &VRBaseMap);
+                                DenseMap<SDOperandImpl, unsigned> &VRBaseMap);
 
     /// EmitLiveInCopy - Emit a copy for a live in physical register. If the
     /// physical register has only a single copy use, then coalesced the copy

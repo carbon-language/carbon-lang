@@ -3662,11 +3662,11 @@ SDOperand PPCTargetLowering::PerformDAGCombine(SDNode *N,
       SDNode *LHSN = N->getOperand(0).Val;
       for (SDNode::use_iterator UI = LHSN->use_begin(), E = LHSN->use_end();
            UI != E; ++UI)
-        if ((*UI)->getOpcode() == PPCISD::VCMPo &&
-            (*UI)->getOperand(1) == N->getOperand(1) &&
-            (*UI)->getOperand(2) == N->getOperand(2) &&
-            (*UI)->getOperand(0) == N->getOperand(0)) {
-          VCMPoNode = *UI;
+        if ((*UI).getUser()->getOpcode() == PPCISD::VCMPo &&
+            (*UI).getUser()->getOperand(1) == N->getOperand(1) &&
+            (*UI).getUser()->getOperand(2) == N->getOperand(2) &&
+            (*UI).getUser()->getOperand(0) == N->getOperand(0)) {
+          VCMPoNode = UI->getUser();
           break;
         }
       
@@ -3682,7 +3682,7 @@ SDOperand PPCTargetLowering::PerformDAGCombine(SDNode *N,
       for (SDNode::use_iterator UI = VCMPoNode->use_begin(); 
            FlagUser == 0; ++UI) {
         assert(UI != VCMPoNode->use_end() && "Didn't find user!");
-        SDNode *User = *UI;
+        SDNode *User = UI->getUser();
         for (unsigned i = 0, e = User->getNumOperands(); i != e; ++i) {
           if (User->getOperand(i) == SDOperand(VCMPoNode, 1)) {
             FlagUser = User;

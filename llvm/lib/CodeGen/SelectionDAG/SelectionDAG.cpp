@@ -10,7 +10,6 @@
 // This implements the SelectionDAG class.
 //
 //===----------------------------------------------------------------------===//
-
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Constants.h"
 #include "llvm/GlobalAlias.h"
@@ -465,14 +464,15 @@ void SelectionDAG::RemoveDeadNodes() {
     // no cycles in the graph.
     for (SDNode::op_iterator I = N->op_begin(), E = N->op_end(); I != E; ++I) {
       SDNode *Operand = I->Val;
-      Operand->removeUser(N);
+      Operand->removeUser(std::distance(N->op_begin(), I), N);
       
       // Now that we removed this operand, see if there are no uses of it left.
       if (Operand->use_empty())
         DeadNodes.push_back(Operand);
     }
-    if (N->OperandsNeedDelete)
+    if (N->OperandsNeedDelete) {
       delete[] N->OperandList;
+    }
     N->OperandList = 0;
     N->NumOperands = 0;
     
@@ -504,14 +504,15 @@ void SelectionDAG::RemoveDeadNode(SDNode *N, DAGUpdateListener *UpdateListener){
     // no cycles in the graph.
     for (SDNode::op_iterator I = N->op_begin(), E = N->op_end(); I != E; ++I) {
       SDNode *Operand = I->Val;
-      Operand->removeUser(N);
+      Operand->removeUser(std::distance(N->op_begin(), I), N);
       
       // Now that we removed this operand, see if there are no uses of it left.
       if (Operand->use_empty())
         DeadNodes.push_back(Operand);
     }
-    if (N->OperandsNeedDelete)
+    if (N->OperandsNeedDelete) {
       delete[] N->OperandList;
+    }
     N->OperandList = 0;
     N->NumOperands = 0;
     
@@ -538,9 +539,10 @@ void SelectionDAG::DeleteNodeNotInCSEMaps(SDNode *N) {
     
   // Drop all of the operands and decrement used nodes use counts.
   for (SDNode::op_iterator I = N->op_begin(), E = N->op_end(); I != E; ++I)
-    I->Val->removeUser(N);
-  if (N->OperandsNeedDelete)
+    I->Val->removeUser(std::distance(N->op_begin(), I), N);
+  if (N->OperandsNeedDelete) {
     delete[] N->OperandList;
+  }
   N->OperandList = 0;
   N->NumOperands = 0;
   
@@ -701,8 +703,9 @@ SelectionDAG::~SelectionDAG() {
   while (!AllNodes.empty()) {
     SDNode *N = AllNodes.begin();
     N->SetNextInBucket(0);
-    if (N->OperandsNeedDelete)
+    if (N->OperandsNeedDelete) {
       delete [] N->OperandList;
+    }
     N->OperandList = 0;
     N->NumOperands = 0;
     AllNodes.pop_front();
@@ -2894,9 +2897,10 @@ UpdateNodeOperands(SDOperand InN, SDOperand Op) {
     RemoveNodeFromCSEMaps(N);
   
   // Now we update the operands.
-  N->OperandList[0].Val->removeUser(N);
-  Op.Val->addUser(N);
+  N->OperandList[0].Val->removeUser(0, N);
   N->OperandList[0] = Op;
+  N->OperandList[0].setUser(N);
+  Op.Val->addUser(0, N);
   
   // If this gets put into a CSE map, add it.
   if (InsertPos) CSEMap.InsertNode(N, InsertPos);
@@ -2923,14 +2927,16 @@ UpdateNodeOperands(SDOperand InN, SDOperand Op1, SDOperand Op2) {
   
   // Now we update the operands.
   if (N->OperandList[0] != Op1) {
-    N->OperandList[0].Val->removeUser(N);
-    Op1.Val->addUser(N);
+    N->OperandList[0].Val->removeUser(0, N);
     N->OperandList[0] = Op1;
+    N->OperandList[0].setUser(N);
+    Op1.Val->addUser(0, N);
   }
   if (N->OperandList[1] != Op2) {
-    N->OperandList[1].Val->removeUser(N);
-    Op2.Val->addUser(N);
+    N->OperandList[1].Val->removeUser(1, N);
     N->OperandList[1] = Op2;
+    N->OperandList[1].setUser(N);
+    Op2.Val->addUser(1, N);
   }
   
   // If this gets put into a CSE map, add it.
@@ -2957,7 +2963,6 @@ UpdateNodeOperands(SDOperand N, SDOperand Op1, SDOperand Op2,
   SDOperand Ops[] = { Op1, Op2, Op3, Op4, Op5 };
   return UpdateNodeOperands(N, Ops, 5);
 }
-
 
 SDOperand SelectionDAG::
 UpdateNodeOperands(SDOperand InN, SDOperand *Ops, unsigned NumOps) {
@@ -2989,9 +2994,10 @@ UpdateNodeOperands(SDOperand InN, SDOperand *Ops, unsigned NumOps) {
   // Now we update the operands.
   for (unsigned i = 0; i != NumOps; ++i) {
     if (N->OperandList[i] != Ops[i]) {
-      N->OperandList[i].Val->removeUser(N);
-      Ops[i].Val->addUser(N);
+      N->OperandList[i].Val->removeUser(i, N);
       N->OperandList[i] = Ops[i];
+      N->OperandList[i].setUser(N);
+      Ops[i].Val->addUser(i, N);
     }
   }
 
@@ -2999,7 +3005,6 @@ UpdateNodeOperands(SDOperand InN, SDOperand *Ops, unsigned NumOps) {
   if (InsertPos) CSEMap.InsertNode(N, InsertPos);
   return InN;
 }
-
 
 /// MorphNodeTo - This frees the operands of the current node, resets the
 /// opcode, types, and operands to the specified value.  This should only be
@@ -3013,13 +3018,14 @@ void SDNode::MorphNodeTo(unsigned Opc, SDVTList L,
   // Clear the operands list, updating used nodes to remove this from their
   // use list.
   for (op_iterator I = op_begin(), E = op_end(); I != E; ++I)
-    I->Val->removeUser(this);
+    I->Val->removeUser(std::distance(op_begin(), I), this);
   
   // If NumOps is larger than the # of operands we currently have, reallocate
   // the operand list.
   if (NumOps > NumOperands) {
-    if (OperandsNeedDelete)
+    if (OperandsNeedDelete) {
       delete [] OperandList;
+    }
     OperandList = new SDOperand[NumOps];
     OperandsNeedDelete = true;
   }
@@ -3029,8 +3035,10 @@ void SDNode::MorphNodeTo(unsigned Opc, SDVTList L,
   
   for (unsigned i = 0, e = NumOps; i != e; ++i) {
     OperandList[i] = Ops[i];
+    OperandList[i].setUser(this);
     SDNode *N = OperandList[i].Val;
-    N->Uses.push_back(this);
+    N->addUser(i, this);
+    ++N->UsesSize;
   }
 }
 
@@ -3298,21 +3306,22 @@ void SelectionDAG::ReplaceAllUsesWith(SDOperand FromN, SDOperand To,
   assert(From->getNumValues() == 1 && FromN.ResNo == 0 && 
          "Cannot replace with this method!");
   assert(From != To.Val && "Cannot replace uses of with self");
-  
+
   while (!From->use_empty()) {
-    // Process users until they are all gone.
-    SDNode *U = *From->use_begin();
-    
+    SDNode::use_iterator UI = From->use_begin();
+    SDNode *U = UI->getUser();
+
     // This node is about to morph, remove its old self from the CSE maps.
     RemoveNodeFromCSEMaps(U);
-    
-    for (SDOperand *I = U->OperandList, *E = U->OperandList+U->NumOperands;
-         I != E; ++I)
+    int operandNum = 0;
+    for (SDNode::op_iterator I = U->op_begin(), E = U->op_end();
+         I != E; ++I, ++operandNum)
       if (I->Val == From) {
-        From->removeUser(U);
+        From->removeUser(operandNum, U);
         *I = To;
-        To.Val->addUser(U);
-      }
+        I->setUser(U);
+        To.Val->addUser(operandNum, U);
+      }    
 
     // Now that we have modified U, add it back to the CSE maps.  If it already
     // exists there, recursively merge the results together.
@@ -3347,20 +3356,20 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From, SDNode *To,
                               UpdateListener);
   
   while (!From->use_empty()) {
-    // Process users until they are all gone.
-    SDNode *U = *From->use_begin();
-    
+    SDNode::use_iterator UI = From->use_begin();
+    SDNode *U = UI->getUser();
+
     // This node is about to morph, remove its old self from the CSE maps.
     RemoveNodeFromCSEMaps(U);
-    
-    for (SDOperand *I = U->OperandList, *E = U->OperandList+U->NumOperands;
-         I != E; ++I)
+    int operandNum = 0;
+    for (SDNode::op_iterator I = U->op_begin(), E = U->op_end();
+         I != E; ++I, ++operandNum)
       if (I->Val == From) {
-        From->removeUser(U);
+        From->removeUser(operandNum, U);
         I->Val = To;
-        To->addUser(U);
+        To->addUser(operandNum, U);
       }
-        
+
     // Now that we have modified U, add it back to the CSE maps.  If it already
     // exists there, recursively merge the results together.
     if (SDNode *Existing = AddNonLeafNodeToCSEMaps(U)) {
@@ -3390,21 +3399,22 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From,
     return ReplaceAllUsesWith(SDOperand(From, 0), To[0], UpdateListener);
 
   while (!From->use_empty()) {
-    // Process users until they are all gone.
-    SDNode *U = *From->use_begin();
-    
+    SDNode::use_iterator UI = From->use_begin();
+    SDNode *U = UI->getUser();
+
     // This node is about to morph, remove its old self from the CSE maps.
     RemoveNodeFromCSEMaps(U);
-    
-    for (SDOperand *I = U->OperandList, *E = U->OperandList+U->NumOperands;
-         I != E; ++I)
+    int operandNum = 0;
+    for (SDNode::op_iterator I = U->op_begin(), E = U->op_end();
+         I != E; ++I, ++operandNum)
       if (I->Val == From) {
         const SDOperand &ToOp = To[I->ResNo];
-        From->removeUser(U);
+        From->removeUser(operandNum, U);
         *I = ToOp;
-        ToOp.Val->addUser(U);
+        I->setUser(U);
+        ToOp.Val->addUser(operandNum, U);
       }
-        
+
     // Now that we have modified U, add it back to the CSE maps.  If it already
     // exists there, recursively merge the results together.
     if (SDNode *Existing = AddNonLeafNodeToCSEMaps(U)) {
@@ -3434,7 +3444,7 @@ namespace {
     ChainedSetUpdaterListener(SmallSetVector<SDNode*, 16> &set,
                               SelectionDAG::DAGUpdateListener *chain)
       : Set(set), Chain(chain) {}
-    
+ 
     virtual void NodeDeleted(SDNode *N) {
       Set.remove(N);
       if (Chain) Chain->NodeDeleted(N);
@@ -3462,7 +3472,13 @@ void SelectionDAG::ReplaceAllUsesOfValueWith(SDOperand From, SDOperand To,
 
   // Get all of the users of From.Val.  We want these in a nice,
   // deterministically ordered and uniqued set, so we use a SmallSetVector.
-  SmallSetVector<SDNode*, 16> Users(From.Val->use_begin(), From.Val->use_end());
+  SmallSetVector<SDNode*, 16> Users;
+  for (SDNode::use_iterator UI = From.Val->use_begin(), 
+      E = From.Val->use_end(); UI != E; ++UI) {
+    SDNode *User = UI->getUser();
+    if (!Users.count(User))
+      Users.insert(User);
+  }
 
   // When one of the recursive merges deletes nodes from the graph, we need to
   // make sure that UpdateListener is notified *and* that the node is removed
@@ -3476,7 +3492,7 @@ void SelectionDAG::ReplaceAllUsesOfValueWith(SDOperand From, SDOperand To,
     Users.pop_back();
     
     // Scan for an operand that matches From.
-    SDOperand *Op = User->OperandList, *E = User->OperandList+User->NumOperands;
+    SDNode::op_iterator Op = User->op_begin(), E = User->op_end();
     for (; Op != E; ++Op)
       if (*Op == From) break;
     
@@ -3490,9 +3506,10 @@ void SelectionDAG::ReplaceAllUsesOfValueWith(SDOperand From, SDOperand To,
     // Update all operands that match "From" in case there are multiple uses.
     for (; Op != E; ++Op) {
       if (*Op == From) {
-        From.Val->removeUser(User);
-        *Op = To;
-        To.Val->addUser(User);
+        From.Val->removeUser(Op-User->op_begin(), User);
+	*Op = To;
+        Op->setUser(User);
+        To.Val->addUser(Op-User->op_begin(), User);
       }
     }
                
@@ -3672,16 +3689,13 @@ bool SDNode::hasNUsesOfValue(unsigned NUses, unsigned Value) const {
 
   SmallPtrSet<SDNode*, 32> UsersHandled;
 
-  for (SDNode::use_iterator UI = Uses.begin(), E = Uses.end(); UI != E; ++UI) {
-    SDNode *User = *UI;
-    if (User->getNumOperands() == 1 ||
-        UsersHandled.insert(User))     // First time we've seen this?
-      for (unsigned i = 0, e = User->getNumOperands(); i != e; ++i)
-        if (User->getOperand(i) == TheValue) {
-          if (NUses == 0)
-            return false;   // too many uses
-          --NUses;
-        }
+  // TODO: Only iterate over uses of a given value of the node
+  for (SDNode::use_iterator UI = use_begin(), E = use_end(); UI != E; ++UI) {
+    if (*UI == TheValue) {
+      if (NUses == 0)
+        return false;
+      --NUses;
+    }
   }
 
   // Found exactly the right number of uses?
@@ -3700,8 +3714,8 @@ bool SDNode::hasAnyUseOfValue(unsigned Value) const {
 
   SmallPtrSet<SDNode*, 32> UsersHandled;
 
-  for (SDNode::use_iterator UI = Uses.begin(), E = Uses.end(); UI != E; ++UI) {
-    SDNode *User = *UI;
+  for (SDNode::use_iterator UI = use_begin(), E = use_end(); UI != E; ++UI) {
+    SDNode *User = UI->getUser();
     if (User->getNumOperands() == 1 ||
         UsersHandled.insert(User))     // First time we've seen this?
       for (unsigned i = 0, e = User->getNumOperands(); i != e; ++i)
@@ -3719,7 +3733,7 @@ bool SDNode::hasAnyUseOfValue(unsigned Value) const {
 bool SDNode::isOnlyUseOf(SDNode *N) const {
   bool Seen = false;
   for (SDNode::use_iterator I = N->use_begin(), E = N->use_end(); I != E; ++I) {
-    SDNode *User = *I;
+    SDNode *User = I->getUser();
     if (User == this)
       Seen = true;
     else
@@ -3731,7 +3745,7 @@ bool SDNode::isOnlyUseOf(SDNode *N) const {
 
 /// isOperand - Return true if this node is an operand of N.
 ///
-bool SDOperand::isOperandOf(SDNode *N) const {
+bool SDOperandImpl::isOperandOf(SDNode *N) const {
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
     if (*this == N->getOperand(i))
       return true;
@@ -3750,7 +3764,7 @@ bool SDNode::isOperandOf(SDNode *N) const {
 /// side-effecting instructions.  In practice, this looks through token
 /// factors and non-volatile loads.  In order to remain efficient, this only
 /// looks a couple of nodes in, it does not do an exhaustive search.
-bool SDOperand::reachesChainWithoutSideEffects(SDOperand Dest, 
+bool SDOperandImpl::reachesChainWithoutSideEffects(SDOperandImpl Dest, 
                                                unsigned Depth) const {
   if (*this == Dest) return true;
   

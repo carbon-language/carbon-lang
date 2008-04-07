@@ -137,7 +137,7 @@ NodeDone:
     
     for (SDNode::use_iterator UI = N->use_begin(), E = N->use_end();
          UI != E; ++UI) {
-      SDNode *User = *UI;
+      SDNode *User = UI->getUser();
       int NodeID = User->getNodeId();
       assert(NodeID != ReadyToProcess && NodeID != Processed &&
              "Invalid node id for user of unprocessed node!");
@@ -344,7 +344,7 @@ void DAGTypeLegalizer::ReplaceNodeWith(SDNode *From, SDNode *To) {
 /// RemapNode - If the specified value was already legalized to another value,
 /// replace it by that value.
 void DAGTypeLegalizer::RemapNode(SDOperand &N) {
-  DenseMap<SDOperand, SDOperand>::iterator I = ReplacedNodes.find(N);
+  DenseMap<SDOperandImpl, SDOperand>::iterator I = ReplacedNodes.find(N);
   if (I != ReplacedNodes.end()) {
     // Use path compression to speed up future lookups if values get multiply
     // replaced with other values.

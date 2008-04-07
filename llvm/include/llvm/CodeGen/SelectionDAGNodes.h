@@ -779,7 +779,7 @@ namespace ISD {
 
 
 //===----------------------------------------------------------------------===//
-/// SDOperand - Unlike LLVM values, Selection DAG nodes may return multiple
+/// SDOperandImpl - Unlike LLVM values, Selection DAG nodes may return multiple
 /// values as the result of a computation.  Many nodes return multiple values,
 /// from loads (which define a token and a return value) to ADDC (which returns
 /// a result and a carry value), to calls (which may return an arbitrary number
@@ -787,28 +787,28 @@ namespace ISD {
 ///
 /// As such, each use of a SelectionDAG computation must indicate the node that
 /// computes it as well as which return value to use from that node.  This pair
-/// of information is represented with the SDOperand value type.
+/// of information is represented with the SDOperandImpl value type.
 ///
-class SDOperand {
+class SDOperandImpl {
 public:
   SDNode *Val;        // The node defining the value we are using.
   unsigned ResNo;     // Which return value of the node we are using.
 
-  SDOperand() : Val(0), ResNo(0) {}
-  SDOperand(SDNode *val, unsigned resno) : Val(val), ResNo(resno) {}
+  SDOperandImpl() : Val(0), ResNo(0) {}
+  SDOperandImpl(SDNode *val, unsigned resno) : Val(val), ResNo(resno) {}
 
-  bool operator==(const SDOperand &O) const {
+  bool operator==(const SDOperandImpl &O) const {
     return Val == O.Val && ResNo == O.ResNo;
   }
-  bool operator!=(const SDOperand &O) const {
+  bool operator!=(const SDOperandImpl &O) const {
     return !operator==(O);
   }
-  bool operator<(const SDOperand &O) const {
+  bool operator<(const SDOperandImpl &O) const {
     return Val < O.Val || (Val == O.Val && ResNo < O.ResNo);
   }
 
-  SDOperand getValue(unsigned R) const {
-    return SDOperand(Val, R);
+  SDOperandImpl getValue(unsigned R) const {
+    return SDOperandImpl(Val, R);
   }
 
   // isOperandOf - Return true if this node is an operand of N.
@@ -827,7 +827,7 @@ public:
   // Forwarding methods - These forward to the corresponding methods in SDNode.
   inline unsigned getOpcode() const;
   inline unsigned getNumOperands() const;
-  inline const SDOperand &getOperand(unsigned i) const;
+  inline const SDOperandImpl &getOperand(unsigned i) const;
   inline uint64_t getConstantOperandVal(unsigned i) const;
   inline bool isTargetOpcode() const;
   inline unsigned getTargetOpcode() const;
@@ -838,7 +838,8 @@ public:
   /// side-effecting instructions.  In practice, this looks through token
   /// factors and non-volatile loads.  In order to remain efficient, this only
   /// looks a couple of nodes in, it does not do an exhaustive search.
-  bool reachesChainWithoutSideEffects(SDOperand Dest, unsigned Depth = 2) const;
+  bool reachesChainWithoutSideEffects(SDOperandImpl Dest, 
+                                      unsigned Depth = 2) const;
   
   /// hasOneUse - Return true if there is exactly one operation using this
   /// result value of the defining operator.
@@ -850,18 +851,104 @@ public:
 };
 
 
-template<> struct DenseMapInfo<SDOperand> {
-  static inline SDOperand getEmptyKey() { return SDOperand((SDNode*)-1, -1U); }
-  static inline SDOperand getTombstoneKey() { return SDOperand((SDNode*)-1, 0);}
-  static unsigned getHashValue(const SDOperand &Val) {
+template<> struct DenseMapInfo<SDOperandImpl> {
+  static inline SDOperandImpl getEmptyKey() { 
+    return SDOperandImpl((SDNode*)-1, -1U); 
+  }
+  static inline SDOperandImpl getTombstoneKey() { 
+    return SDOperandImpl((SDNode*)-1, 0);
+  }
+  static unsigned getHashValue(const SDOperandImpl &Val) {
     return ((unsigned)((uintptr_t)Val.Val >> 4) ^
             (unsigned)((uintptr_t)Val.Val >> 9)) + Val.ResNo;
   }
-  static bool isEqual(const SDOperand &LHS, const SDOperand &RHS) {
+  static bool isEqual(const SDOperandImpl &LHS, const SDOperandImpl &RHS) {
     return LHS == RHS;
   }
   static bool isPod() { return true; }
 };
+
+/// simplify_type specializations - Allow casting operators to work directly on
+/// SDOperands as if they were SDNode*'s.
+template<> struct simplify_type<SDOperandImpl> {
+  typedef SDNode* SimpleType;
+  static SimpleType getSimplifiedValue(const SDOperandImpl &Val) {
+    return static_cast<SimpleType>(Val.Val);
+  }
+};
+template<> struct simplify_type<const SDOperandImpl> {
+  typedef SDNode* SimpleType;
+  static SimpleType getSimplifiedValue(const SDOperandImpl &Val) {
+    return static_cast<SimpleType>(Val.Val);
+  }
+};
+
+/// SDOperand - Represents a use of the SDNode referred by
+/// the SDOperandImpl.
+class SDOperand: public SDOperandImpl {
+  /// parent - Parent node of this operand.
+  SDNode    *parent;
+  /// Prev, next - Pointers to the uses list of the SDNode referred by 
+  /// this operand.
+  SDOperand **Prev, *Next;
+public:
+  friend class SDNode;
+  SDOperand(): SDOperandImpl(), parent(NULL), Prev(NULL), Next(NULL) {}
+
+  SDOperand(SDNode *val, unsigned resno) : 
+    SDOperandImpl(val,resno), parent(NULL), Prev(NULL), Next(NULL) {}
+
+  SDOperand(const SDOperandImpl& Op): SDOperandImpl(Op),parent(NULL),
+      Prev(NULL), Next(NULL)  {
+  }
+
+  SDOperand& operator= (SDOperandImpl& Op) {
+      *(SDOperandImpl*)this = Op;
+      Next = NULL;
+      Prev = NULL;
+      return *this;
+  }
+
+  SDOperand& operator= (const SDOperandImpl& Op) {
+      *(SDOperandImpl*)this = Op;
+      Next = NULL;
+      Prev = NULL;
+      return *this;
+  }
+
+  SDOperand& operator= (SDOperand& Op) {
+      *(SDOperandImpl*)this = Op;
+      Next = NULL;
+      Prev = NULL;
+      return *this;
+  }
+
+  SDOperand& operator= (const SDOperand& Op) {
+      *(SDOperandImpl*)this = Op;
+      Next = NULL;
+      Prev = NULL;
+      return *this;
+  }
+
+  SDOperand * getNext() { return Next; }
+
+  SDNode *getUser() { return parent; }
+  void setUser(SDNode *p) { parent = p; }
+
+protected:
+  void addToList(SDOperand **List) {
+    Next = *List;
+    if (Next) Next->Prev = &Next;
+    Prev = List;
+    *List = this;
+  }
+
+  void removeFromList() {
+    *Prev = Next;
+    if (Next) Next->Prev = Prev;
+  }
+};
+
 
 /// simplify_type specializations - Allow casting operators to work directly on
 /// SDOperands as if they were SDNode*'s.
@@ -882,6 +969,7 @@ template<> struct simplify_type<const SDOperand> {
 /// SDNode - Represents one node in the SelectionDAG.
 ///
 class SDNode : public FoldingSetNode {
+private:
   /// NodeType - The operation that this node performs.
   ///
   unsigned short NodeType;
@@ -909,10 +997,15 @@ class SDNode : public FoldingSetNode {
   SDNode *Prev, *Next;
   friend struct ilist_traits<SDNode>;
 
-  /// Uses - These are all of the SDNode's that use a value produced by this
-  /// node.
-  SmallVector<SDNode*,3> Uses;
-  
+  /// UsesSize - The size of the uses list.
+  unsigned UsesSize;
+
+  /// Uses - List of uses for this SDNode.
+  SDOperand *Uses;
+
+  /// addUse - add SDOperand to the list of uses.
+  void addUse(SDOperand &U) { U.addToList(&Uses); }
+
   // Out-of-line virtual method to give class a home.
   virtual void ANCHOR();
 public:
@@ -931,9 +1024,9 @@ public:
     return NodeType - ISD::BUILTIN_OP_END;
   }
 
-  size_t use_size() const { return Uses.size(); }
-  bool use_empty() const { return Uses.empty(); }
-  bool hasOneUse() const { return Uses.size() == 1; }
+  size_t use_size() const { return UsesSize; }
+  bool use_empty() const { return Uses == NULL; }
+  bool hasOneUse() const { return use_size() == 1; }
 
   /// getNodeId - Return the unique node id.
   ///
@@ -942,9 +1035,75 @@ public:
   /// setNodeId - Set unique node id.
   void setNodeId(int Id) { NodeId = Id; }
 
-  typedef SmallVector<SDNode*,3>::const_iterator use_iterator;
-  use_iterator use_begin() const { return Uses.begin(); }
-  use_iterator use_end() const { return Uses.end(); }
+  /// use_iterator - This class provides iterator support for SDOperand
+  /// operands that use a specific SDNode. 
+  class use_iterator
+    : public forward_iterator<SDOperand, ptrdiff_t> {
+    SDOperand *Op;
+    explicit use_iterator(SDOperand *op) : Op(op) {
+    }
+    friend class SDNode;
+  public:
+    typedef forward_iterator<SDOperand, ptrdiff_t>::reference reference;
+    typedef forward_iterator<SDOperand, ptrdiff_t>::pointer pointer;
+
+    use_iterator(const use_iterator &I) : Op(I.Op) {}
+    use_iterator() : Op(0) {}
+
+    bool operator==(const use_iterator &x) const {
+      return Op == x.Op;
+    }
+    bool operator!=(const use_iterator &x) const {
+      return !operator==(x);
+    }
+ 
+    /// atEnd - return true if this iterator is at the end of uses list.
+    bool atEnd() const { return Op == 0; }
+
+    // Iterator traversal: forward iteration only.
+    use_iterator &operator++() {          // Preincrement
+      assert(Op && "Cannot increment end iterator!");
+      Op = Op->getNext();
+      return *this;
+    }
+
+    use_iterator operator++(int) {        // Postincrement
+      use_iterator tmp = *this; ++*this; return tmp;
+    }
+
+
+    /// getOperandNum - Retrive a number of a current operand.
+    unsigned getOperandNum() const {
+      assert(Op && "Cannot dereference end iterator!");
+      return (Op - Op->getUser()->OperandList);
+    }
+
+    /// Retrieve a reference to the current operand.
+    SDOperand &operator*() const {
+      assert(Op && "Cannot dereference end iterator!");
+      return *Op;
+    }
+
+    /// Retrieve a pointer to the current operand.
+    SDOperand *operator->() const {
+      assert(Op && "Cannot dereference end iterator!");
+      return Op;
+    }
+  };
+
+  /// use_begin/use_end - Provide iteration support to walk over all uses
+  /// of an SDNode.
+
+  use_iterator use_begin(SDNode *node) const {
+    return use_iterator(node->Uses);
+  }
+
+  use_iterator use_begin() const {
+    return use_iterator(Uses);
+  }
+
+  static use_iterator use_end() { return use_iterator(0); }
+
 
   /// hasNUsesOfValue - Return true if there are exactly NUSES uses of the
   /// indicated value.  This method ignores uses of other values defined by this
@@ -982,7 +1141,7 @@ public:
     return OperandList[Num];
   }
 
-  typedef const SDOperand* op_iterator;
+  typedef SDOperand* op_iterator;
   op_iterator op_begin() const { return OperandList; }
   op_iterator op_end() const { return OperandList+NumOperands; }
 
@@ -1039,25 +1198,28 @@ protected:
   }
 
   SDNode(unsigned Opc, SDVTList VTs, const SDOperand *Ops, unsigned NumOps)
-    : NodeType(Opc), NodeId(-1) {
+    : NodeType(Opc), NodeId(-1), UsesSize(0), Uses(NULL) {
     OperandsNeedDelete = true;
     NumOperands = NumOps;
     OperandList = NumOps ? new SDOperand[NumOperands] : 0;
     
     for (unsigned i = 0; i != NumOps; ++i) {
       OperandList[i] = Ops[i];
-      Ops[i].Val->Uses.push_back(this);
+      OperandList[i].setUser(this);
+      Ops[i].Val->addUse(OperandList[i]);
+      ++Ops[i].Val->UsesSize;
     }
     
     ValueList = VTs.VTs;
     NumValues = VTs.NumVTs;
     Prev = 0; Next = 0;
   }
-  SDNode(unsigned Opc, SDVTList VTs) : NodeType(Opc), NodeId(-1) {
+
+  SDNode(unsigned Opc, SDVTList VTs)
+    : NodeType(Opc), NodeId(-1), UsesSize(0), Uses(NULL) {
     OperandsNeedDelete = false;  // Operands set with InitOperands.
     NumOperands = 0;
     OperandList = 0;
-    
     ValueList = VTs.VTs;
     NumValues = VTs.NumVTs;
     Prev = 0; Next = 0;
@@ -1070,9 +1232,14 @@ protected:
     assert(OperandList == 0 && "Operands already set!");
     NumOperands = NumOps;
     OperandList = Ops;
+    UsesSize = 0;
+    Uses = NULL;
     
-    for (unsigned i = 0; i != NumOps; ++i)
-      Ops[i].Val->Uses.push_back(this);
+    for (unsigned i = 0; i != NumOps; ++i) {
+      OperandList[i].setUser(this);
+      Ops[i].Val->addUse(OperandList[i]);
+      ++Ops[i].Val->UsesSize;
+    }
   }
   
   /// MorphNodeTo - This frees the operands of the current node, resets the
@@ -1081,50 +1248,48 @@ protected:
   void MorphNodeTo(unsigned Opc, SDVTList L,
                    const SDOperand *Ops, unsigned NumOps);
   
-  void addUser(SDNode *User) {
-    Uses.push_back(User);
+  void addUser(unsigned i, SDNode *User) {
+    assert(User->OperandList[i].getUser() && "Node without parent");
+    addUse(User->OperandList[i]);
+    ++UsesSize;
   }
-  void removeUser(SDNode *User) {
-    // Remove this user from the operand's use list.
-    for (unsigned i = Uses.size(); ; --i) {
-      assert(i != 0 && "Didn't find user!");
-      if (Uses[i-1] == User) {
-        Uses[i-1] = Uses.back();
-        Uses.pop_back();
-        return;
-      }
-    }
+
+  void removeUser(unsigned i, SDNode *User) {
+    assert(User->OperandList[i].getUser() && "Node without parent");
+    SDOperand &Op = User->OperandList[i];
+    Op.removeFromList();
+    --UsesSize;
   }
 };
 
 
-// Define inline functions from the SDOperand class.
+// Define inline functions from the SDOperandImpl class.
 
-inline unsigned SDOperand::getOpcode() const {
+inline unsigned SDOperandImpl::getOpcode() const {
   return Val->getOpcode();
 }
-inline MVT::ValueType SDOperand::getValueType() const {
+inline MVT::ValueType SDOperandImpl::getValueType() const {
   return Val->getValueType(ResNo);
 }
-inline unsigned SDOperand::getNumOperands() const {
+inline unsigned SDOperandImpl::getNumOperands() const {
   return Val->getNumOperands();
 }
-inline const SDOperand &SDOperand::getOperand(unsigned i) const {
+inline const SDOperandImpl &SDOperandImpl::getOperand(unsigned i) const {
   return Val->getOperand(i);
 }
-inline uint64_t SDOperand::getConstantOperandVal(unsigned i) const {
+inline uint64_t SDOperandImpl::getConstantOperandVal(unsigned i) const {
   return Val->getConstantOperandVal(i);
 }
-inline bool SDOperand::isTargetOpcode() const {
+inline bool SDOperandImpl::isTargetOpcode() const {
   return Val->isTargetOpcode();
 }
-inline unsigned SDOperand::getTargetOpcode() const {
+inline unsigned SDOperandImpl::getTargetOpcode() const {
   return Val->getTargetOpcode();
 }
-inline bool SDOperand::hasOneUse() const {
+inline bool SDOperandImpl::hasOneUse() const {
   return Val->hasNUsesOfValue(1, ResNo);
 }
-inline bool SDOperand::use_empty() const {
+inline bool SDOperandImpl::use_empty() const {
   return !Val->hasAnyUseOfValue(ResNo);
 }
 

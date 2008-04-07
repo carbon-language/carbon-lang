@@ -3734,7 +3734,7 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT_SSE4(SDOperand Op,
     // result has a single use which is a store.
     if (!Op.hasOneUse())
       return SDOperand();
-    SDNode *User = *Op.Val->use_begin();
+    SDNode *User = Op.Val->use_begin()->getUser();
     if (User->getOpcode() != ISD::STORE)
       return SDOperand();
     SDOperand Extract = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, MVT::i32,
