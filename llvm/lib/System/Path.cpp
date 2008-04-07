@@ -196,7 +196,7 @@ static void getPathList(const char*path, std::vector<Path>& Paths) {
         Paths.push_back(tmpPath);
 }
 
-std::string Path::getDirnameCharSep(char Sep) const {
+static std::string getDirnameCharSep(const std::string& path, char Sep) {
   
   if (path.empty())
     return ".";

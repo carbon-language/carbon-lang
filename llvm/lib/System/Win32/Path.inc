@@ -229,7 +229,9 @@ Path::isRootDirectory() const {
   return len > 0 && path[len-1] == '/';
 }
 
-std::string Path::getDirname() const { return getDirnameCharSep('\\'); }
+std::string Path::getDirname() const {
+  return getDirnameCharSep(path, '\\');
+}
 
 std::string
 Path::getBasename() const {

@@ -277,7 +277,9 @@ Path Path::GetMainExecutable(const char *argv0, void *MainAddr) {
 }
 
 
-std::string Path::getDirname() const { return getDirnameCharSep('/'); }
+std::string Path::getDirname() const {
+  return getDirnameCharSep(path, '/');
+}
 
 std::string
 Path::getBasename() const {

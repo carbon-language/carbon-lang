@@ -571,13 +571,6 @@ namespace sys {
       /// MemoryBuffer::getFile instead.
       static void UnMapFilePages(const char *Base, uint64_t FileSize);
     
-
-    /// @}
-    /// @name Internal methods.
-    /// @{
-    protected:
-      std::string getDirnameCharSep(char Sep) const; 
-    
     /// @}
     /// @name Data
     /// @{
