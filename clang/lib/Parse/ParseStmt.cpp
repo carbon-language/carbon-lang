@@ -950,7 +950,7 @@ Parser::StmtResult Parser::FuzzyParseMicrosoftAsmStatement() {
              Tok.isNot(tok::r_brace) && Tok.isNot(tok::semi) && 
              Tok.isNot(tok::eof));
   }
-  return false;
+  return Actions.ActOnNullStmt(Tok.getLocation());
 }
 
 /// ParseAsmStatement - Parse a GNU extended asm statement.
