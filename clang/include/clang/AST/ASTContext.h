@@ -330,7 +330,6 @@ public:
   bool pointerTypesAreCompatible(QualType, QualType);  // C99 6.7.5.1p2
   bool referenceTypesAreCompatible(QualType, QualType); // C++ 5.17p6
   bool functionTypesAreCompatible(QualType, QualType); // C99 6.7.5.3p15
-  bool arrayTypesAreCompatible(QualType, QualType); // C99 6.7.5.2p6
   
   bool isObjCIdType(QualType T) const {
     if (!IdStructType) // ObjC isn't enabled

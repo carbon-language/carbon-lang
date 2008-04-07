@@ -1513,20 +1513,19 @@ bool ASTContext::functionTypesAreCompatible(QualType lhs, QualType rhs) {
   return true;
 }
 
-bool ASTContext::arrayTypesAreCompatible(QualType lhs, QualType rhs) {
+// C99 6.7.5.2p6
+static bool areCompatArrayTypes(ArrayType *LHS, ArrayType *RHS, ASTContext &C) {
   // Compatible arrays must have compatible element types
-  QualType ltype = lhs->getAsArrayType()->getElementType();
-  QualType rtype = rhs->getAsArrayType()->getElementType();
+  QualType ltype = LHS->getElementType();
+  QualType rtype = RHS->getElementType();
 
-  if (!typesAreCompatible(ltype, rtype))
-    return false;
+  // Constant arrays must be the same size to be compatible.
+  if (const ConstantArrayType* LCAT = dyn_cast<ConstantArrayType>(LHS))
+    if (const ConstantArrayType* RCAT = dyn_cast<ConstantArrayType>(RHS))
+      if (RCAT->getSize() != LCAT->getSize())
+        return false;
 
-  // Compatible arrays must be the same size
-  if (const ConstantArrayType* LCAT = lhs->getAsConstantArrayType())
-    if (const ConstantArrayType* RCAT = rhs->getAsConstantArrayType())
-      return RCAT->getSize() == LCAT->getSize();
-
-  return true;
+  return C.typesAreCompatible(QualType(LHS, 0), QualType(RHS, 0));
 }
 
 /// areCompatVectorTypes - Return true if the two specified vector types are 
@@ -1681,7 +1680,8 @@ bool ASTContext::typesAreCompatible(QualType LHS_NC, QualType RHS_NC) {
   case Type::Pointer:
     return pointerTypesAreCompatible(LHS, RHS);
   case Type::ConstantArray:
-    return arrayTypesAreCompatible(LHS, RHS);
+    return areCompatArrayTypes(cast<ArrayType>(LHS), cast<ArrayType>(RHS),
+                               *this);
   case Type::FunctionNoProto:
     return functionTypesAreCompatible(LHS, RHS);
   case Type::Tagged: // handle structures, unions
