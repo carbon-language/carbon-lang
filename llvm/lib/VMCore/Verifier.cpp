@@ -1452,6 +1452,10 @@ void Verifier::VerifyIntrinsicPrototype(Intrinsic::ID ID,
                   F->getName().substr(Name.length()) + "'. It should be '" +
                   Suffix + "'", F);
   }
+
+  // Check parameter attributes.
+  Assert1(F->getParamAttrs() == Intrinsic::getParamAttrs(ID),
+          "Intrinsic has wrong parameter attributes!", F);
 }
 
 

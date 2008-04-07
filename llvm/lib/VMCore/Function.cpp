@@ -160,6 +160,10 @@ Function::Function(const FunctionType *Ty, LinkageTypes Linkage,
 
   if (ParentModule)
     ParentModule->getFunctionList().push_back(this);
+
+  // Ensure intrinsics have the right parameter attributes.
+  if (unsigned IID = getIntrinsicID(true))
+    setParamAttrs(Intrinsic::getParamAttrs(Intrinsic::ID(IID)));
 }
 
 Function::~Function() {
@@ -328,11 +332,9 @@ Function *Intrinsic::getDeclaration(Module *M, ID id, const Type **Tys,
                                     unsigned numTys) {
   // There can never be multiple globals with the same name of different types,
   // because intrinsics must be a specific type.
-  Function *F =
+  return
     cast<Function>(M->getOrInsertFunction(getName(id, Tys, numTys),
                                           getType(id, Tys, numTys)));
-  F->setParamAttrs(getParamAttrs(id));
-  return F;
 }
 
 Value *IntrinsicInst::StripPointerCasts(Value *Ptr) {
