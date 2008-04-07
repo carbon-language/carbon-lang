@@ -811,10 +811,33 @@ QualType ASTContext::getObjCInterfaceType(ObjCInterfaceDecl *Decl) {
   return QualType(Decl->TypeForDecl, 0);
 }
 
+/// CmpProtocolNames - Comparison predicate for sorting protocols
+/// alphabetically.
+static bool CmpProtocolNames(const ObjCProtocolDecl *LHS,
+                            const ObjCProtocolDecl *RHS) {
+  return strcmp(LHS->getName(), RHS->getName()) < 0;
+}
+
+static void SortAndUniqueProtocols(ObjCProtocolDecl **&Protocols,
+                                   unsigned &NumProtocols) {
+  ObjCProtocolDecl **ProtocolsEnd = Protocols+NumProtocols;
+  
+  // Sort protocols, keyed by name.
+  std::sort(Protocols, Protocols+NumProtocols, CmpProtocolNames);
+
+  // Remove duplicates.
+  ProtocolsEnd = std::unique(Protocols, ProtocolsEnd);
+  NumProtocols = ProtocolsEnd-Protocols;
+}
+
+
 /// getObjCQualifiedInterfaceType - Return a ObjCQualifiedInterfaceType type for
 /// the given interface decl and the conforming protocol list.
 QualType ASTContext::getObjCQualifiedInterfaceType(ObjCInterfaceDecl *Decl,
                        ObjCProtocolDecl **Protocols, unsigned NumProtocols) {
+  // Sort the protocol list alphabetically to canonicalize it.
+  SortAndUniqueProtocols(Protocols, NumProtocols);
+  
   llvm::FoldingSetNodeID ID;
   ObjCQualifiedInterfaceType::Profile(ID, Protocols, NumProtocols);
   
@@ -831,12 +854,14 @@ QualType ASTContext::getObjCQualifiedInterfaceType(ObjCInterfaceDecl *Decl,
   return QualType(QType, 0);
 }
 
-/// getObjCQualifiedIdType - Return a 
-/// getObjCQualifiedIdType type for the 'id' decl and
-/// the conforming protocol list.
+/// getObjCQualifiedIdType - Return an ObjCQualifiedIdType for the 'id' decl
+/// and the conforming protocol list.
 QualType ASTContext::getObjCQualifiedIdType(QualType idType,
                                             ObjCProtocolDecl **Protocols, 
                                             unsigned NumProtocols) {
+  // Sort the protocol list alphabetically to canonicalize it.
+  SortAndUniqueProtocols(Protocols, NumProtocols);
+
   llvm::FoldingSetNodeID ID;
   ObjCQualifiedIdType::Profile(ID, Protocols, NumProtocols);
   

@@ -701,18 +701,11 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
                                         MethodImplKind, isVariadic);
 }
 
-/// CmpProtocolVals - Comparison predicate for sorting protocols.
-static bool CmpProtocolVals(const IdentifierInfo* const& lhs,
-                            const IdentifierInfo* const& rhs) {
-  return strcmp(lhs->getName(), rhs->getName()) < 0;
-}
-
 ///   objc-protocol-refs:
 ///     '<' identifier-list '>'
 ///
 bool Parser::ParseObjCProtocolReferences(
-  llvm::SmallVectorImpl<IdentifierInfo*> &ProtocolRefs, SourceLocation &endLoc) 
-{
+  llvm::SmallVectorImpl<IdentifierInfo*> &ProtocolRefs, SourceLocation &endLoc){
   assert(Tok.is(tok::less) && "expected <");
   
   ConsumeToken(); // the "<"
@@ -731,13 +724,6 @@ bool Parser::ParseObjCProtocolReferences(
     ConsumeToken();
   }
   
-  // Sort protocols, keyed by name.
-  // Later on, we remove duplicates.
-  std::stable_sort(ProtocolRefs.begin(), ProtocolRefs.end(), CmpProtocolVals);
-  
-  // Make protocol names unique.
-  ProtocolRefs.erase(std::unique(ProtocolRefs.begin(), ProtocolRefs.end()), 
-                     ProtocolRefs.end());
   // Consume the '>'.
   if (Tok.is(tok::greater)) {
     endLoc = ConsumeAnyToken();
