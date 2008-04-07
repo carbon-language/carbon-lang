@@ -39,6 +39,7 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
+#include "llvm/Intrinsics.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
@@ -142,12 +143,8 @@ bool LowerInvoke::doInitialization(Module &M) {
                                       Constant::getNullValue(PtrJBList),
                                       "llvm.sjljeh.jblist", &M);
     }
-    SetJmpFn = M.getOrInsertFunction("llvm.setjmp", Type::Int32Ty,
-                                     PointerType::getUnqual(JmpBufTy), 
-                                     (Type *)0);
-    LongJmpFn = M.getOrInsertFunction("llvm.longjmp", Type::VoidTy,
-                                      PointerType::getUnqual(JmpBufTy),
-                                      Type::Int32Ty, (Type *)0);
+    SetJmpFn = Intrinsic::getDeclaration(&M, Intrinsic::setjmp);
+    LongJmpFn = Intrinsic::getDeclaration(&M, Intrinsic::longjmp);
   }
 
   // We need the 'write' and 'abort' functions for both models.
@@ -505,9 +502,11 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
     Value *JmpBufPtr = GetElementPtrInst::Create(JmpBuf, Idx.begin(), Idx.end(),
                                                  "TheJmpBuf",
                                                  EntryBB->getTerminator());
+    JmpBufPtr = new BitCastInst(JmpBufPtr, PointerType::getUnqual(Type::Int8Ty),
+                                "tmp", EntryBB->getTerminator());
     Value *SJRet = CallInst::Create(SetJmpFn, JmpBufPtr, "sjret",
                                     EntryBB->getTerminator());
-    
+
     // Compare the return value to zero.
     Value *IsNormal = new ICmpInst(ICmpInst::ICMP_EQ, SJRet, 
                                    Constant::getNullValue(SJRet->getType()),
@@ -555,6 +554,8 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
   Idx.push_back(ConstantInt::get(Type::Int32Ty, 0));
   Idx[0] = GetElementPtrInst::Create(BufPtr, Idx.begin(), Idx.end(), "JmpBuf",
                                      UnwindBlock);
+  Idx[0] = new BitCastInst(Idx[0], PointerType::getUnqual(Type::Int8Ty),
+                           "tmp", UnwindBlock);
   Idx[1] = ConstantInt::get(Type::Int32Ty, 1);
   CallInst::Create(LongJmpFn, Idx.begin(), Idx.end(), "", UnwindBlock);
   new UnreachableInst(UnwindBlock);
