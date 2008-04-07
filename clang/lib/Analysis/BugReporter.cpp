@@ -41,6 +41,11 @@ static inline Stmt* GetStmt(const ProgramPoint& P) {
   return NULL;
 }
 
+static inline Stmt* GetStmt(const CFGBlock* B) {
+  assert (!B->empty());
+  return (*B)[0];
+}
+
 
 PathDiagnosticPiece*
 BugDescription::getEndPath(ASTContext& Ctx, ExplodedNode<ValueState> *N) const {
@@ -142,7 +147,7 @@ void BugReporter::GeneratePathDiagnostic(PathDiagnostic& PD, ASTContext& Ctx,
           std::ostringstream os;
           
           os << "Control jumps to line "
-          << SMgr.getLogicalLineNumber(S->getLocStart()) << ".\n";
+             << SMgr.getLogicalLineNumber(S->getLocStart()) << ".\n";
           
           PD.push_front(new PathDiagnosticPiece(L, os.str()));
           break;
@@ -206,7 +211,7 @@ void BugReporter::GeneratePathDiagnostic(PathDiagnostic& PD, ASTContext& Ctx,
               }
               
               os << ":'  at line " 
-              << SMgr.getLogicalLineNumber(S->getLocStart()) << ".\n";
+                << SMgr.getLogicalLineNumber(S->getLocStart()) << ".\n";
               
               break;
               
@@ -216,11 +221,59 @@ void BugReporter::GeneratePathDiagnostic(PathDiagnostic& PD, ASTContext& Ctx,
           PD.push_front(new PathDiagnosticPiece(L, os.str()));
           break;
         }
+
+        case Stmt::ConditionalOperatorClass: {
           
+          std::ostringstream os;
+          os << "'?' condition evaluates to ";
+
+          if (*(Src->succ_begin()+1) == Dst)
+            os << "false.";
+          else
+            os << "true.";
           
-        case Stmt::DoStmtClass:
+          PD.push_front(new PathDiagnosticPiece(L, os.str()));
+          
+          break;
+        }
+          
+        case Stmt::DoStmtClass:  {
+          
+          if (*(Src->succ_begin()) == Dst) {
+            
+            std::ostringstream os;          
+            
+            os << "Loop condition is true. Execution continues on line "
+               << SMgr.getLogicalLineNumber(GetStmt(Dst)->getLocStart()) << '.';
+            
+            PD.push_front(new PathDiagnosticPiece(L, os.str()));
+          }
+          else
+            PD.push_front(new PathDiagnosticPiece(L,
+                              "Loop condition is false.  Exiting loop."));
+          
+          break;
+        }
+          
         case Stmt::WhileStmtClass:
-        case Stmt::ForStmtClass:
+        case Stmt::ForStmtClass: {
+          
+          if (*(Src->succ_begin()+1) == Dst) {
+            
+            std::ostringstream os;          
+
+            os << "Loop condition is false. Execution continues on line "
+               << SMgr.getLogicalLineNumber(GetStmt(Dst)->getLocStart()) << '.';
+          
+            PD.push_front(new PathDiagnosticPiece(L, os.str()));
+          }
+          else
+            PD.push_front(new PathDiagnosticPiece(L,
+                            "Loop condition is true.  Entering loop body."));
+          
+          break;
+        }
+          
         case Stmt::IfStmtClass: {
           
           if (*(Src->succ_begin()+1) == Dst)
