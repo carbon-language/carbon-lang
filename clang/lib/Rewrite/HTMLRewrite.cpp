@@ -42,7 +42,12 @@ void html::EscapeText(Rewriter& R, unsigned FileID, bool EscapeSpaces) {
 
       case '\t': {
         SourceLocation Loc = SourceLocation::getFileLoc(FileID, FilePos);
-        R.ReplaceText(Loc, 1, "&nbsp;&nbsp;&nbsp;&nbsp;", 6*4);
+        
+        if (EscapeSpaces)
+          R.ReplaceText(Loc, 1, "&nbsp;&nbsp;&nbsp;&nbsp;", 6*4);
+        else
+          R.ReplaceText(Loc, 1, "    ", 4);
+        
         break;
       }
         
