@@ -85,8 +85,8 @@ namespace {
                cl::location(ExceptionHandling),
                cl::init(false));
   cl::opt<bool, true>
-  DisableUnwindTables("disable-required-unwind-tables",
-               cl::desc("Do not require unwinding info for all functions"),
+  DisableUnwindTables("unwind-tables-optional",
+               cl::desc("Generate unwinding tables only for functions that require them"),
                cl::location(UnwindTablesOptional),
                cl::init(false));
 
