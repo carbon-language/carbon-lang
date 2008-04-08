@@ -45,3 +45,11 @@ Stmt::child_iterator CXXThrowExpr::child_end() {
     return reinterpret_cast<Stmt**>(&Op)+0;
   return reinterpret_cast<Stmt**>(&Op)+1;
 }
+
+// CXXDefaultArgExpr
+Stmt::child_iterator CXXDefaultArgExpr::child_begin() {
+  return reinterpret_cast<Stmt**>(Param->getDefaultArg());
+}
+Stmt::child_iterator CXXDefaultArgExpr::child_end() {
+  return reinterpret_cast<Stmt**>(Param->getDefaultArg())+1;
+}

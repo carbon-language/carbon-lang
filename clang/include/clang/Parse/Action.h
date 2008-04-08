@@ -107,6 +107,14 @@ public:
     return 0;
   }
 
+  /// ActOnParamDeclarator - This callback is invoked when a parameter
+  /// declarator is parsed. This callback only occurs for functions
+  /// with prototypes. S is the function prototype scope for the
+  /// parameters (C++ [basic.scope.proto]).
+  virtual DeclTy *ActOnParamDeclarator(Scope *S, Declarator &D) {
+    return 0;
+  }
+
   /// AddInitializerToDecl - This action is called immediately after 
   /// ParseDeclarator (when an initializer is present). The code is factored 
   /// this way to make sure we are able to handle the following:
@@ -170,10 +178,6 @@ public:
   //===--------------------------------------------------------------------===//
   
   virtual TypeResult ActOnTypeName(Scope *S, Declarator &D) {
-    return 0;
-  }
-  
-  virtual TypeResult ActOnParamDeclaratorType(Scope *S, Declarator &D) {
     return 0;
   }
   
@@ -502,6 +506,13 @@ public:
                                 ExprTy *expr, TypeTy *type,
                                 SourceLocation RPLoc) {
     return 0;
+  }
+
+  //===------------------------- C++ Declarations -------------------------===//
+  /// ActOnParamDefaultArgument - Parse default argument for function parameter
+  virtual void ActOnParamDefaultArgument(DeclTy *param,
+                                         SourceLocation EqualLoc,
+                                         ExprTy *defarg) {
   }
   
   //===------------------------- C++ Expressions --------------------------===//

@@ -263,9 +263,10 @@ static void MergeAttributes(Decl *New, Decl *Old) {
   }
 }
 
-/// MergeFunctionDecl - We just parsed a function 'New' which has the same name
-/// and scope as a previous declaration 'Old'.  Figure out how to resolve this
-/// situation, merging decls or emitting diagnostics as appropriate.
+/// MergeFunctionDecl - We just parsed a function 'New' from
+/// declarator D which has the same name and scope as a previous
+/// declaration 'Old'.  Figure out how to resolve this situation,
+/// merging decls or emitting diagnostics as appropriate.
 ///
 FunctionDecl *Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
   // Verify the old decl was also a function.
@@ -276,17 +277,24 @@ FunctionDecl *Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
     Diag(OldD->getLocation(), diag::err_previous_definition);
     return New;
   }
-
+  
   MergeAttributes(New, Old);
 
-  
   QualType OldQType = Context.getCanonicalType(Old->getType());
   QualType NewQType = Context.getCanonicalType(New->getType());
   
-  // Function types need to be compatible, not identical. This handles
+  // C++ [dcl.fct]p3:
+  //   All declarations for a function shall agree exactly in both the
+  //   return type and the parameter-type-list.
+  if (getLangOptions().CPlusPlus && OldQType == NewQType)
+    return MergeCXXFunctionDecl(New, Old);
+
+  // C: Function types need to be compatible, not identical. This handles
   // duplicate function decls like "void f(int); void f(enum X);" properly.
-  if (Context.functionTypesAreCompatible(OldQType, NewQType))
+  if (!getLangOptions().CPlusPlus &&
+      Context.functionTypesAreCompatible(OldQType, NewQType)) {
     return New;
+  }
 
   // A function that has already been declared has been redeclared or defined
   // with a different type- show appropriate diagnostic
@@ -295,7 +303,7 @@ FunctionDecl *Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
     PrevDiag = diag::err_previous_definition;
   else if (Old->isImplicit())
     PrevDiag = diag::err_previous_implicit_declaration;
-  else
+  else 
     PrevDiag = diag::err_previous_declaration;
 
   // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
@@ -410,6 +418,49 @@ VarDecl *Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
     Diag(New->getLocation(), diag::err_redefinition, New->getName());
     Diag(Old->getLocation(), diag::err_previous_definition);
   }
+  return New;
+}
+
+/// CheckParmsForFunctionDef - Check that the parameters of the given
+/// function are appropriate for the definition of a function. This
+/// takes care of any checks that cannot be performed on the
+/// declaration itself, e.g., that the types of each of the function
+/// parameters are complete.
+bool Sema::CheckParmsForFunctionDef(FunctionDecl *FD) {
+  bool HasInvalidParm = false;
+  for (unsigned p = 0, NumParams = FD->getNumParams(); p < NumParams; ++p) {
+    ParmVarDecl *Param = FD->getParamDecl(p);
+
+    // C99 6.7.5.3p4: the parameters in a parameter type list in a
+    // function declarator that is part of a function definition of
+    // that function shall not have incomplete type.
+    if (Param->getType()->isIncompleteType() &&
+        !Param->isInvalidDecl()) {
+      Diag(Param->getLocation(), diag::err_typecheck_decl_incomplete_type,
+           Param->getType().getAsString());
+      Param->setInvalidDecl();
+      HasInvalidParm = true;
+    }
+  }
+
+  return HasInvalidParm;
+}
+
+/// CreateImplicitParameter - Creates an implicit function parameter
+/// in the scope S and with the given type. This routine is used, for
+/// example, to create the implicit "self" parameter in an Objective-C
+/// method.
+ParmVarDecl *
+Sema::CreateImplicitParameter(Scope *S, IdentifierInfo *Id, 
+                              SourceLocation IdLoc, QualType Type) {
+  ParmVarDecl *New = ParmVarDecl::Create(Context, CurContext, IdLoc, Id, Type, 
+                                         VarDecl::None, 0, 0);
+  if (Id) {
+    New->setNext(Id->getFETokenInfo<ScopedDecl>());
+    Id->setFETokenInfo(New);
+    S->AddDecl(New);
+  }
+
   return New;
 }
 
@@ -769,7 +820,38 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     // Handle attributes.
     HandleDeclAttributes(NewFD, D.getDeclSpec().getAttributes(),
                          D.getAttributes());
-    
+
+    // Copy the parameter declarations from the declarator D to
+    // the function declaration NewFD, if they are available.
+    if (D.getNumTypeObjects() > 0 &&
+        D.getTypeObject(0).Fun.hasPrototype) {
+      DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
+
+      // Create Decl objects for each parameter, adding them to the
+      // FunctionDecl.
+      llvm::SmallVector<ParmVarDecl*, 16> Params;
+  
+      // Check for C99 6.7.5.3p10 - foo(void) is a non-varargs
+      // function that takes no arguments, not a function that takes a
+      // single void argument.  FIXME: Is this really the right place
+      // to check for this? C++ says that the parameter list (void) is
+      // the same as an empty parameter list, whereas the parameter
+      // list (T) (with T typedef'd to void) is not. For C++, this
+      // should be handled in the parser. Check C89 and C99 standards
+      // to see what the correct behavior is.
+      if (FTI.NumArgs == 1 && !FTI.isVariadic && FTI.ArgInfo[0].Ident == 0 &&
+          FTI.ArgInfo[0].Param &&
+          !((ParmVarDecl*)FTI.ArgInfo[0].Param)->getType().getCVRQualifiers() &&
+          ((ParmVarDecl*)FTI.ArgInfo[0].Param)->getType()->isVoidType()) {
+        // empty arg list, don't push any params.
+      } else {
+        for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i)
+          Params.push_back((ParmVarDecl *)FTI.ArgInfo[i].Param);
+      }
+  
+      NewFD->setParams(&Params[0], Params.size());
+    }
+
     // Merge the decl with the existing one if appropriate. Since C functions
     // are in a flat namespace, make sure we consider decls in outer scopes.
     if (PrevDecl) {
@@ -777,6 +859,10 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
       if (NewFD == 0) return 0;
     }
     New = NewFD;
+
+    // In C++, check default arguments now that we have merged decls.
+    if (getLangOptions().CPlusPlus)
+      CheckCXXDefaultArguments(NewFD);
   } else {
     if (R.getTypePtr()->isObjCInterfaceType()) {
       Diag(D.getIdentifierLoc(), diag::err_statically_allocated_object,
@@ -982,20 +1068,47 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
   return NewGroup;
 }
 
-// Called from Sema::ParseStartOfFunctionDef().
-ParmVarDecl *
-Sema::ActOnParamDeclarator(struct DeclaratorChunk::ParamInfo &PI,
-                           Scope *FnScope) {
-  IdentifierInfo *II = PI.Ident;
+/// ActOnParamDeclarator - Called from Parser::ParseFunctionDeclarator()
+/// to introduce parameters into function prototype scope.
+Sema::DeclTy *
+Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
+  DeclSpec &DS = D.getDeclSpec();
+  
+  // Verify C99 6.7.5.3p2: The only SCS allowed is 'register'.
+  if (DS.getStorageClassSpec() != DeclSpec::SCS_unspecified &&
+      DS.getStorageClassSpec() != DeclSpec::SCS_register) {
+    Diag(DS.getStorageClassSpecLoc(),
+         diag::err_invalid_storage_class_in_func_decl);
+    DS.ClearStorageClassSpecs();
+  }
+  if (DS.isThreadSpecified()) {
+    Diag(DS.getThreadSpecLoc(),
+         diag::err_invalid_storage_class_in_func_decl);
+    DS.ClearStorageClassSpecs();
+  }
+  
+  
+  // In this context, we *do not* check D.getInvalidType(). If the declarator
+  // type was invalid, GetTypeForDeclarator() still returns a "valid" type,
+  // though it will not reflect the user specified type.
+  QualType parmDeclType = GetTypeForDeclarator(D, S);
+  
+  assert(!parmDeclType.isNull() && "GetTypeForDeclarator() returned null type");
+
   // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
   // Can this happen for params?  We already checked that they don't conflict
   // among each other.  Here they can only shadow globals, which is ok.
-  if (/*Decl *PrevDecl = */LookupDecl(II, Decl::IDNS_Ordinary, FnScope)) {
-    
+  IdentifierInfo *II = D.getIdentifier();
+  if (Decl *PrevDecl = LookupDecl(II, Decl::IDNS_Ordinary, S)) {
+    if (S->isDeclScope(PrevDecl)) {
+      Diag(D.getIdentifierLoc(), diag::err_param_redefinition,
+           dyn_cast<NamedDecl>(PrevDecl)->getName());
+
+      // Recover by removing the name
+      II = 0;
+      D.SetIdentifier(0, D.getIdentifierLoc());
+    }
   }
-  
-  // FIXME: Handle storage class (auto, register). No declarator?
-  // TODO: Chain to previous parameter with the prevdeclarator chain?
 
   // Perform the default function/array conversion (C99 6.7.5.3p[7,8]).
   // Doing the promotion here has a win and a loss. The win is the type for
@@ -1014,29 +1127,29 @@ Sema::ActOnParamDeclarator(struct DeclaratorChunk::ParamInfo &PI,
   // FIXME: If a source translation tool needs to see the original type, then
   // we need to consider storing both types (in ParmVarDecl)...
   // 
-  QualType parmDeclType = QualType::getFromOpaquePtr(PI.TypeInfo);
   if (parmDeclType->isArrayType()) {
     // int x[restrict 4] ->  int *restrict
     parmDeclType = Context.getArrayDecayedType(parmDeclType);
   } else if (parmDeclType->isFunctionType())
     parmDeclType = Context.getPointerType(parmDeclType);
   
-  ParmVarDecl *New = ParmVarDecl::Create(Context, CurContext, PI.IdentLoc, II,
-                                         parmDeclType, 
-                                         VarDecl::None, 0);
+  ParmVarDecl *New = ParmVarDecl::Create(Context, CurContext, 
+                                         D.getIdentifierLoc(), II,
+                                         parmDeclType, VarDecl::None, 
+                                         0, 0);
   
-  if (PI.InvalidType)
+  if (D.getInvalidType())
     New->setInvalidDecl();
     
-  // If this has an identifier, add it to the scope stack.
   if (II) {
     New->setNext(II->getFETokenInfo<ScopedDecl>());
     II->setFETokenInfo(New);
-    FnScope->AddDecl(New);
+    S->AddDecl(New);
   }
 
-  HandleDeclAttributes(New, PI.AttrList, 0);
+  HandleDeclAttributes(New, D.getAttributes(), 0);
   return New;
+
 }
 
 Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
@@ -1044,17 +1157,23 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
   assert(D.getTypeObject(0).Kind == DeclaratorChunk::Function &&
          "Not a function declarator!");
   DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
-  
+
   // Verify 6.9.1p6: 'every identifier in the identifier list shall be declared'
   // for a K&R function.
   if (!FTI.hasPrototype) {
     for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i) {
-      if (FTI.ArgInfo[i].TypeInfo == 0) {
+      if (FTI.ArgInfo[i].Param == 0) {
         Diag(FTI.ArgInfo[i].IdentLoc, diag::ext_param_not_declared,
              FTI.ArgInfo[i].Ident->getName());
         // Implicitly declare the argument as type 'int' for lack of a better
         // type.
-        FTI.ArgInfo[i].TypeInfo = Context.IntTy.getAsOpaquePtr();
+        DeclSpec DS;
+        const char* PrevSpec; // unused
+        DS.SetTypeSpecType(DeclSpec::TST_int, FTI.ArgInfo[i].IdentLoc, 
+                           PrevSpec);
+        Declarator ParamD(DS, Declarator::KNRTypeListContext);
+        ParamD.SetIdentifier(FTI.ArgInfo[i].Ident, FTI.ArgInfo[i].IdentLoc);
+        FTI.ArgInfo[i].Param = ActOnParamDeclarator(FnBodyScope, ParamD);
       }
     }
 
@@ -1063,8 +1182,7 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
     if (FTI.NumArgs)
       FTI.hasPrototype = true;
   } else {
-    // FIXME: Diagnose arguments without names in C.
-    
+    // FIXME: Diagnose arguments without names in C. 
   }
   
   Scope *GlobalScope = FnBodyScope->getParent();
@@ -1083,37 +1201,21 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
   FunctionDecl *FD = cast<FunctionDecl>(decl);
   CurFunctionDecl = FD;
   PushDeclContext(FD);
-  
-  // Create Decl objects for each parameter, adding them to the FunctionDecl.
-  llvm::SmallVector<ParmVarDecl*, 16> Params;
-  
-  // Check for C99 6.7.5.3p10 - foo(void) is a non-varargs function that takes
-  // no arguments, not a function that takes a single void argument.
-  if (FTI.NumArgs == 1 && !FTI.isVariadic && FTI.ArgInfo[0].Ident == 0 &&
-      !QualType::getFromOpaquePtr(FTI.ArgInfo[0].TypeInfo).getCVRQualifiers() &&
-      QualType::getFromOpaquePtr(FTI.ArgInfo[0].TypeInfo)->isVoidType()) {
-    // empty arg list, don't push any params.
-  } else {
-    for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i) {
-      ParmVarDecl *parmDecl;
-      
-      parmDecl = ActOnParamDeclarator(D.getTypeObject(0).Fun.ArgInfo[i],
-                                      FnBodyScope);
-      // C99 6.7.5.3p4: the parameters in a parameter type list in a function
-      // declarator that is part of a function definition of that function
-      // shall not have incomplete type.
-      if (parmDecl->getType()->isIncompleteType() &&
-          !parmDecl->isInvalidDecl()) {
-        Diag(parmDecl->getLocation(), diag::err_typecheck_decl_incomplete_type,
-             parmDecl->getType().getAsString());
-        parmDecl->setInvalidDecl();
-      }
-      Params.push_back(parmDecl);
+    
+  // Check the validity of our function parameters
+  CheckParmsForFunctionDef(FD);
+
+  // Introduce our parameters into the function scope
+  for (unsigned p = 0, NumParams = FD->getNumParams(); p < NumParams; ++p) {
+    ParmVarDecl *Param = FD->getParamDecl(p);
+    // If this has an identifier, add it to the scope stack.
+    if (IdentifierInfo *II = Param->getIdentifier()) {
+      Param->setNext(II->getFETokenInfo<ScopedDecl>());
+      II->setFETokenInfo(Param);
+      FnBodyScope->AddDecl(Param);
     }
   }
-  
-  FD->setParams(&Params[0], Params.size());
-  
+
   return FD;
 }
 

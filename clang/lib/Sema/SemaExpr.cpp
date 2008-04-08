@@ -15,6 +15,7 @@
 #include "SemaUtil.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/ExprCXX.h"
 #include "clang/Parse/DeclSpec.h" 
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/LiteralSupport.h"
@@ -594,14 +595,24 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
   Expr *Fn = static_cast<Expr *>(fn);
   Expr **Args = reinterpret_cast<Expr**>(args);
   assert(Fn && "no function call expression");
-  
+  FunctionDecl *FDecl = NULL;
+  unsigned NumArgsPassed = NumArgs;
+
+  // Promote the function operand.
+  UsualUnaryConversions(Fn);
+
+  // If we're directly calling a function, get the declaration for
+  // that function.
+  if (ImplicitCastExpr *IcExpr = dyn_cast<ImplicitCastExpr>(Fn))
+    if (DeclRefExpr *DRExpr = dyn_cast<DeclRefExpr>(IcExpr->getSubExpr()))
+      FDecl = dyn_cast<FunctionDecl>(DRExpr->getDecl());
+
   // Make the call expr early, before semantic checks.  This guarantees cleanup
   // of arguments and function on error.
-  llvm::OwningPtr<CallExpr> TheCall(new CallExpr(Fn, Args, NumArgs,
+  if (getLangOptions().CPlusPlus && FDecl && NumArgs < FDecl->getNumParams())
+    NumArgsPassed = FDecl->getNumParams();
+  llvm::OwningPtr<CallExpr> TheCall(new CallExpr(Fn, Args, NumArgsPassed,
                                                  Context.BoolTy, RParenLoc));
-  
-  // Promote the function operand.
-  TheCall->setCallee(UsualUnaryConversions(Fn));
   
   // C99 6.5.2.2p1 - "The expression that denotes the called function shall have
   // type pointer to function".
@@ -623,11 +634,19 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
     unsigned NumArgsInProto = Proto->getNumArgs();
     unsigned NumArgsToCheck = NumArgs;
     
-    // If too few arguments are available, don't make the call.
-    if (NumArgs < NumArgsInProto)
-      return Diag(RParenLoc, diag::err_typecheck_call_too_few_args,
-                  Fn->getSourceRange());
-    
+    // If too few arguments are available (and we don't have default
+    // arguments for the remaining parameters), don't make the call.
+    if (NumArgs < NumArgsInProto) {
+      if (getLangOptions().CPlusPlus && 
+          FDecl &&
+          FDecl->getParamDecl(NumArgs)->getDefaultArg()) {
+        // Use default arguments for missing arguments
+        NumArgsToCheck = NumArgsInProto;
+      } else
+        return Diag(RParenLoc, diag::err_typecheck_call_too_few_args,
+                    Fn->getSourceRange());
+    }
+
     // If too many are passed and not variadic, error on the extras and drop
     // them.
     if (NumArgs > NumArgsInProto) {
@@ -644,8 +663,13 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
     
     // Continue to check argument types (even if we have too few/many args).
     for (unsigned i = 0; i != NumArgsToCheck; i++) {
-      Expr *Arg = Args[i];
       QualType ProtoArgType = Proto->getArgType(i);
+
+      Expr *Arg;
+      if (i < NumArgs) 
+        Arg = Args[i];
+      else 
+        Arg = new CXXDefaultArgExpr(FDecl->getParamDecl(i));
       QualType ArgType = Arg->getType();
 
       // Compute implicit casts from the operand to the formal argument type.
@@ -679,11 +703,8 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
   }
 
   // Do special checking on direct calls to functions.
-  if (ImplicitCastExpr *IcExpr = dyn_cast<ImplicitCastExpr>(Fn))
-    if (DeclRefExpr *DRExpr = dyn_cast<DeclRefExpr>(IcExpr->getSubExpr()))
-      if (FunctionDecl *FDecl = dyn_cast<FunctionDecl>(DRExpr->getDecl()))
-        if (CheckFunctionCall(FDecl, TheCall.get()))
-          return true;
+  if (FDecl && CheckFunctionCall(FDecl, TheCall.get()))
+    return true;
 
   return TheCall.take();
 }

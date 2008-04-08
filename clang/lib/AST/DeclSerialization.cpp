@@ -226,15 +226,16 @@ FileVarDecl* FileVarDecl::CreateImpl(Deserializer& D, ASTContext& C) {
 void ParmVarDecl::EmitImpl(llvm::Serializer& S) const {
   VarDecl::EmitImpl(S);
   S.EmitInt(getObjCDeclQualifier());        // From ParmVarDecl.
+  S.EmitOwnedPtr(getDefaultArg());          // From ParmVarDecl.
 }
 
 ParmVarDecl* ParmVarDecl::CreateImpl(Deserializer& D, ASTContext& C) {
   ParmVarDecl* decl =
-    new ParmVarDecl(0, SourceLocation(),NULL,QualType(),None,NULL);
+    new ParmVarDecl(0, SourceLocation(), NULL, QualType(), None, NULL, NULL);
   
   decl->VarDecl::ReadImpl(D, C);
   decl->objcDeclQualifier = static_cast<ObjCDeclQualifier>(D.ReadInt());
-
+  decl->DefaultArg = D.ReadOwnedPtr<Expr>(C);
   return decl;
 }
 

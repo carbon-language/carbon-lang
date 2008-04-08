@@ -91,6 +91,7 @@ STMT(58, ChooseExpr           , Expr)
 STMT(60, CXXCastExpr          , Expr)
 STMT(61, CXXBoolLiteralExpr   , Expr)
 STMT(62, CXXThrowExpr         , Expr)
+STMT(63, CXXDefaultArgExpr    , Expr)
 
 // Obj-C Expressions.
 STMT(70, ObjCStringLiteral    , Expr)

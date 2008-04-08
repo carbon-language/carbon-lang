@@ -120,6 +120,9 @@ public:
   ComplexPairTy VisitUnaryExtension(const UnaryOperator *E) {
     return Visit(E->getSubExpr());
   }
+  ComplexPairTy VisitCXXDefaultArgExpr(CXXDefaultArgExpr *DAE) {
+    return Visit(DAE->getExpr());
+  }
   
   struct BinOpInfo {
     ComplexPairTy LHS;

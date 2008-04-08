@@ -243,7 +243,6 @@ DIAG(err_pp_I_dash_not_supported, ERROR,
 //===----------------------------------------------------------------------===//
 // Parser Diagnostics
 //===----------------------------------------------------------------------===//
-
 DIAG(w_type_defaults_to_int, WARNING,
      "type defaults to 'int'")
 DIAG(w_no_declarators, WARNING,
@@ -314,7 +313,7 @@ DIAG(ext_gnu_old_style_field_designator, EXTENSION,
      "use of GNU old-style field designator extension")
 DIAG(ext_gnu_case_range, EXTENSION,
      "use of GNU case range extension")
-     
+   
 // Generic errors.
 DIAG(err_parse_error, ERROR,
      "parse error")
@@ -621,7 +620,14 @@ DIAG(err_no_matching_param, ERROR,
      "parameter named '%0' is missing")
 DIAG(ext_param_not_declared, EXTENSION,
      "parameter '%0' was not declared, defaulting to type 'int'")
-
+DIAG(err_param_default_argument, ERROR,
+     "C does not support default arguments")
+DIAG(err_param_default_argument_redefinition, ERROR,
+     "redefinition of default argument")
+DIAG(err_param_default_argument_missing, ERROR,
+     "missing default argument on parameter")
+DIAG(err_param_default_argument_missing_name, ERROR,
+     "missing default argument on parameter '%0'")
 DIAG(err_previous_definition, ERROR,
      "previous definition is here")
 DIAG(err_previous_use, ERROR,

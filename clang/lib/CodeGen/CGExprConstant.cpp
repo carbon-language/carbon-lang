@@ -69,6 +69,10 @@ public:
     return EmitConversion(C, E->getSubExpr()->getType(), E->getType());    
   }
 
+  llvm::Constant *VisitCXXDefaultArgExpr(CXXDefaultArgExpr *DAE) {
+    return Visit(DAE->getExpr());
+  }
+
   llvm::Constant *EmitArrayInitialization(InitListExpr *ILE,
                                           const llvm::ArrayType *AType) {
     std::vector<llvm::Constant*> Elts;

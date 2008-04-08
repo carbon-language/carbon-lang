@@ -202,14 +202,16 @@ public:
 
   
   virtual TypeResult ActOnTypeName(Scope *S, Declarator &D);
-  
-  virtual TypeResult ActOnParamDeclaratorType(Scope *S, Declarator &D);
 private:
   //===--------------------------------------------------------------------===//
   // Symbol table / Decl tracking callbacks: SemaDecl.cpp.
   //
   virtual DeclTy *isTypeName(const IdentifierInfo &II, Scope *S);
   virtual DeclTy *ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup);
+  virtual DeclTy *ActOnParamDeclarator(Scope *S, Declarator &D);
+  virtual void ActOnParamDefaultArgument(DeclTy *param, 
+                                         SourceLocation EqualLoc,
+                                         ExprTy *defarg);
   void AddInitializerToDecl(DeclTy *dcl, ExprTy *init);
   virtual DeclTy *FinalizeDeclaratorGroup(Scope *S, DeclTy *Group);
 
@@ -259,10 +261,15 @@ private:
   TypedefDecl *MergeTypeDefDecl(TypedefDecl *New, Decl *Old);
   FunctionDecl *MergeFunctionDecl(FunctionDecl *New, Decl *Old);
   VarDecl *MergeVarDecl(VarDecl *New, Decl *Old);
+  FunctionDecl *MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old);
+
+  /// Helpers for dealing with function parameters
+  bool CheckParmsForFunctionDef(FunctionDecl *FD);
+  ParmVarDecl *CreateImplicitParameter(Scope *S, IdentifierInfo *Id, 
+                                       SourceLocation IdLoc, QualType Type);
+  void CheckCXXDefaultArguments(FunctionDecl *FD);
 
   /// More parsing and symbol table subroutines...
-  ParmVarDecl *ActOnParamDeclarator(struct DeclaratorChunk::ParamInfo &PI, 
-                                    Scope *FnBodyScope);  
   Decl *LookupDecl(const IdentifierInfo *II, unsigned NSI, Scope *S,
                    bool enableLazyBuiltinCreation = true);
   ObjCInterfaceDecl *getObjCInterfaceDecl(IdentifierInfo *Id);

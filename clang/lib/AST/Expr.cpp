@@ -337,6 +337,9 @@ bool Expr::hasLocalSideEffect() const {
     if (getType()->isVoidType())
       return cast<CastExpr>(this)->getSubExpr()->hasLocalSideEffect();
     return false;
+
+  case CXXDefaultArgExprClass:
+    return cast<CXXDefaultArgExpr>(this)->getExpr()->hasLocalSideEffect();
   }     
 }
 
@@ -401,6 +404,8 @@ Expr::isLvalueResult Expr::isLvalue() const {
     return LV_Valid;
   case PreDefinedExprClass:
     return LV_Valid;
+  case CXXDefaultArgExprClass:
+    return cast<CXXDefaultArgExpr>(this)->getExpr()->isLvalue();
   default:
     break;
   }
@@ -465,6 +470,8 @@ bool Expr::hasGlobalStorage() const {
     return cast<ArraySubscriptExpr>(this)->getBase()->hasGlobalStorage();
   case PreDefinedExprClass:
     return true;
+  case CXXDefaultArgExprClass:
+    return cast<CXXDefaultArgExpr>(this)->getExpr()->hasGlobalStorage();
   }
 }
 
@@ -636,6 +643,8 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
     }
     return true;
   }
+  case CXXDefaultArgExprClass:
+    return cast<CXXDefaultArgExpr>(this)->getExpr()->isConstantExpr(Ctx, Loc);
   }
 }
 
@@ -981,6 +990,9 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
       return false;
     break;
   }
+  case CXXDefaultArgExprClass:
+    return cast<CXXDefaultArgExpr>(this)
+             ->isIntegerConstantExpr(Result, Ctx, Loc, isEvaluated);
   }
 
   // Cases that are valid constant exprs fall through to here.
@@ -1009,6 +1021,9 @@ bool Expr::isNullPointerConstant(ASTContext &Ctx) const {
     // Accept ((void*)0) as a null pointer constant, as many other
     // implementations do.
     return PE->getSubExpr()->isNullPointerConstant(Ctx);
+  } else if (const CXXDefaultArgExpr *DefaultArg = dyn_cast<CXXDefaultArgExpr>(this)) {
+    // See through default argument expressions
+    return DefaultArg->getExpr()->isNullPointerConstant(Ctx);
   }
   
   // This expression must be an integer type.

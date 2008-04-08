@@ -42,32 +42,31 @@ void Sema::ObjCActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
   // Insert the invisible arguments, self and _cmd!
   PI.Ident = &Context.Idents.get("self");
   PI.IdentLoc = SourceLocation(); // synthesized vars have a null location.
-  PI.InvalidType = false;
-  PI.AttrList = 0;
-  PI.TypeInfo = Context.getObjCIdType().getAsOpaquePtr();
-
+  QualType selfTy = Context.getObjCIdType();
   if (MDecl->isInstance()) {
     if (ObjCInterfaceDecl *OID = MDecl->getClassInterface()) {
       // There may be no interface context due to error in declaration of the 
       // interface (which has been reported). Recover gracefully
-      QualType selfTy = Context.getObjCInterfaceType(OID);
+      selfTy = Context.getObjCInterfaceType(OID);
       selfTy = Context.getPointerType(selfTy);
-      PI.TypeInfo = selfTy.getAsOpaquePtr();
     }
   }
-
-  CurMethodDecl->setSelfDecl(ActOnParamDeclarator(PI, FnBodyScope));
+  CurMethodDecl->setSelfDecl(CreateImplicitParameter(FnBodyScope, PI.Ident, 
+                                                     PI.IdentLoc, selfTy));
   
   PI.Ident = &Context.Idents.get("_cmd");
-  PI.TypeInfo = Context.getObjCSelType().getAsOpaquePtr();
-  ActOnParamDeclarator(PI, FnBodyScope);
-  
+  CreateImplicitParameter(FnBodyScope, PI.Ident, PI.IdentLoc, 
+                          Context.getObjCSelType());
+
+  // Introduce all of the othe parameters into this scope  
   for (unsigned i = 0, e = MDecl->getNumParams(); i != e; ++i) {
     ParmVarDecl *PDecl = MDecl->getParamDecl(i);
-    PI.Ident = PDecl->getIdentifier();
-    PI.IdentLoc = PDecl->getLocation(); // user vars have a real location.
-    PI.TypeInfo = PDecl->getType().getAsOpaquePtr();
-    MDecl->setParamDecl(i, ActOnParamDeclarator(PI, FnBodyScope));
+    IdentifierInfo *II = PDecl->getIdentifier();
+    if (II) {
+      PDecl->setNext(II->getFETokenInfo<ScopedDecl>());
+      II->setFETokenInfo(PDecl);
+      FnBodyScope->AddDecl(PDecl);
+    }
   }
 }
 
@@ -843,7 +842,7 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
     ParmVarDecl* Param = ParmVarDecl::Create(Context, ObjCMethod,
                                              SourceLocation(/*FIXME*/),
                                              ArgNames[i], argType,
-                                             VarDecl::None, 0);
+                                             VarDecl::None, 0, 0);
     Param->setObjCDeclQualifier(
       CvtQTToAstBitMask(ArgQT[i].getObjCDeclQualifier()));
     Params.push_back(Param);

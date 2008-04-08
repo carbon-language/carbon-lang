@@ -394,7 +394,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
         llvm::SmallVector<QualType, 16> ArgTys;
         
         for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i) {
-          QualType ArgTy = QualType::getFromOpaquePtr(FTI.ArgInfo[i].TypeInfo);
+          QualType ArgTy = ((ParmVarDecl *)FTI.ArgInfo[i].Param)->getType();
           assert(!ArgTy.isNull() && "Couldn't parse type?");
           //
           // Perform the default function/array conversion (C99 6.7.5.3p[7,8]).
@@ -425,13 +425,13 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
             if (FTI.NumArgs != 1 || FTI.isVariadic) {
               Diag(DeclType.Loc, diag::err_void_only_param);
               ArgTy = Context.IntTy;
-              FTI.ArgInfo[i].TypeInfo = ArgTy.getAsOpaquePtr();
+              ((ParmVarDecl *)FTI.ArgInfo[i].Param)->setType(ArgTy);
             } else if (FTI.ArgInfo[i].Ident) {
               // Reject, but continue to parse 'int(void abc)'.
               Diag(FTI.ArgInfo[i].IdentLoc,
                    diag::err_param_with_void_type);
               ArgTy = Context.IntTy;
-              FTI.ArgInfo[i].TypeInfo = ArgTy.getAsOpaquePtr();
+              ((ParmVarDecl *)FTI.ArgInfo[i].Param)->setType(ArgTy);
             } else {
               // Reject, but continue to parse 'float(const void)'.
               if (ArgTy.getCVRQualifiers())
@@ -498,39 +498,6 @@ Sema::TypeResult Sema::ActOnTypeName(Scope *S, Declarator &D) {
 
   assert(!T.isNull() && "GetTypeForDeclarator() returned null type");
   
-  // In this context, we *do not* check D.getInvalidType(). If the declarator
-  // type was invalid, GetTypeForDeclarator() still returns a "valid" type,
-  // though it will not reflect the user specified type.
-  return T.getAsOpaquePtr();
-}
-
-/// ActOnParamDeclaratorType - Called from Parser::ParseFunctionDeclarator()
-/// when analyzing function prototypes.
-///
-/// Note: parameters have identifiers, but we don't care about them here, we
-/// just want the type converted.
-///
-Sema::TypeResult Sema::ActOnParamDeclaratorType(Scope *S, Declarator &D) {
-  DeclSpec &DS = D.getDeclSpec();
-  
-  // Verify C99 6.7.5.3p2: The only SCS allowed is 'register'.
-  if (DS.getStorageClassSpec() != DeclSpec::SCS_unspecified &&
-      DS.getStorageClassSpec() != DeclSpec::SCS_register) {
-    Diag(DS.getStorageClassSpecLoc(),
-         diag::err_invalid_storage_class_in_func_decl);
-    DS.ClearStorageClassSpecs();
-  }
-  if (DS.isThreadSpecified()) {
-    Diag(DS.getThreadSpecLoc(),
-         diag::err_invalid_storage_class_in_func_decl);
-    DS.ClearStorageClassSpecs();
-  }
-  
-  
-  QualType T = GetTypeForDeclarator(D, S);
-  
-  assert(!T.isNull() && "GetTypeForDeclarator() returned null type");
-
   // In this context, we *do not* check D.getInvalidType(). If the declarator
   // type was invalid, GetTypeForDeclarator() still returns a "valid" type,
   // though it will not reflect the user specified type.

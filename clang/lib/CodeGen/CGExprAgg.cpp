@@ -86,6 +86,9 @@ public:
   
   void VisitConditionalOperator(const ConditionalOperator *CO);
   void VisitInitListExpr(InitListExpr *E);
+  void VisitCXXDefaultArgExpr(CXXDefaultArgExpr *DAE) {
+    Visit(DAE->getExpr());
+  }
 
   void EmitInitializationToLValue(Expr *E, LValue Address);
   void EmitNullInitializationToLValue(LValue Address, QualType T);

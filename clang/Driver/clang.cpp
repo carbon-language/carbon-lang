@@ -901,6 +901,11 @@ static void InitializeIncludePaths(const char *Argv0, HeaderSearch &Headers,
               false, Headers);
       AddPath("/usr/include/c++/4.1.3/backward", System, true, false, false,
               Headers);
+
+      // Fedora 8
+      AddPath("/usr/include/c++/4.1.2", System, true, false, false, Headers);
+      AddPath("/usr/include/c++/4.1.2/i386-redhat-linux", System, true, false, false, Headers);
+      AddPath("/usr/include/c++/4.1.2/backward", System, true, false, false, Headers);
     }
     
     AddPath("/usr/local/include", System, false, false, false, Headers);
@@ -924,6 +929,10 @@ static void InitializeIncludePaths(const char *Argv0, HeaderSearch &Headers,
 
     // Ubuntu 7.10 - Gutsy Gibbon
     AddPath("/usr/lib/gcc/i486-linux-gnu/4.1.3/include", System,
+            false, false, false, Headers);
+
+    // Fedora 8
+    AddPath("/usr/lib/gcc/i386-redhat-linux/4.1.2/include", System,
             false, false, false, Headers);
 
     //Debian testing/lenny x86

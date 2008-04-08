@@ -127,6 +127,45 @@ namespace clang {
     virtual child_iterator child_end();
   };
 
+  /// CXXDefaultArgExpr - C++ [dcl.fct.default]. This wraps up a
+  /// function call argument that was created from the corresponding
+  /// parameter's default argument, when the call did not explicitly
+  /// supply arguments for all of the parameters.
+  class CXXDefaultArgExpr : public Expr {
+    ParmVarDecl *Param;
+  public:
+    // Param is the parameter whose default argument is used by this
+    // expression.
+    explicit CXXDefaultArgExpr(ParmVarDecl *param) 
+      : Expr(CXXDefaultArgExprClass, param->getDefaultArg()->getType()),
+        Param(param) { }
+
+    // Retrieve the parameter that the argument was created from.
+    const ParmVarDecl *getParam() const { return Param; }
+    ParmVarDecl *getParam() { return Param; }
+
+    // Retrieve the actual argument to the function call.
+    const Expr *getExpr() const { return Param->getDefaultArg(); }
+    Expr *getExpr() { return Param->getDefaultArg(); }
+
+    virtual SourceRange getSourceRange() const {
+      return Param->getDefaultArg()->getSourceRange();
+    }
+
+    static bool classof(const Stmt *T) {
+      return T->getStmtClass() == CXXDefaultArgExprClass;
+    }
+    static bool classof(const CXXDefaultArgExpr *) { return true; }
+
+    // Iterators
+    virtual child_iterator child_begin();
+    virtual child_iterator child_end();
+
+    // Serialization
+    virtual void EmitImpl(llvm::Serializer& S) const;
+    static CXXDefaultArgExpr* CreateImpl(llvm::Deserializer& D,
+                                         ASTContext& C);
+  };
 }  // end namespace clang
 
 #endif

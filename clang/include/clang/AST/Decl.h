@@ -246,15 +246,20 @@ class ParmVarDecl : public VarDecl {
   /// in, inout, etc.
   unsigned objcDeclQualifier : 6;
   
+  /// Default argument, if any.  [C++ Only]
+  Expr *DefaultArg;
+
   ParmVarDecl(DeclContext *CD, SourceLocation L,
               IdentifierInfo *Id, QualType T, StorageClass S,
-              ScopedDecl *PrevDecl)
+              Expr *DefArg, ScopedDecl *PrevDecl)
     : VarDecl(ParmVar, CD, L, Id, T, S, PrevDecl), 
-    objcDeclQualifier(OBJC_TQ_None) {}
+      objcDeclQualifier(OBJC_TQ_None), DefaultArg(DefArg) {}
+
 public:
   static ParmVarDecl *Create(ASTContext &C, DeclContext *CD,
                              SourceLocation L,IdentifierInfo *Id,
-                             QualType T, StorageClass S, ScopedDecl *PrevDecl);
+                             QualType T, StorageClass S, Expr *DefArg,
+                             ScopedDecl *PrevDecl);
   
   ObjCDeclQualifier getObjCDeclQualifier() const {
     return ObjCDeclQualifier(objcDeclQualifier);
@@ -262,6 +267,10 @@ public:
   void setObjCDeclQualifier(ObjCDeclQualifier QTVal) 
   { objcDeclQualifier = QTVal; }
     
+  const Expr *getDefaultArg() const { return DefaultArg; }
+  Expr *getDefaultArg() { return DefaultArg; }
+  void setDefaultArg(Expr *defarg) { DefaultArg = defarg; }
+
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == ParmVar; }
   static bool classof(const ParmVarDecl *D) { return true; }

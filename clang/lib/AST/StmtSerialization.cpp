@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/Expr.h"
+#include "clang/AST/ExprCXX.h"
 #include "llvm/Bitcode/Serialize.h"
 #include "llvm/Bitcode/Deserialize.h"
 
@@ -185,6 +186,13 @@ Stmt* Stmt::Create(Deserializer& D, ASTContext& C) {
       
     case ObjCStringLiteralClass:
       return ObjCStringLiteral::CreateImpl(D, C);
+      
+    //==--------------------------------------==//
+    //    C++
+    //==--------------------------------------==//
+    case CXXDefaultArgExprClass:
+      return CXXDefaultArgExpr::CreateImpl(D, C);
+      
   }
 }
 
@@ -1001,4 +1009,17 @@ ObjCStringLiteral* ObjCStringLiteral::CreateImpl(Deserializer& D, ASTContext& C)
   QualType T = QualType::ReadVal(D);
   StringLiteral* String = cast<StringLiteral>(D.ReadOwnedPtr<Stmt>(C));
   return new ObjCStringLiteral(String,T,L);
+}
+
+//===----------------------------------------------------------------------===//
+//   C++ Serialization
+//===----------------------------------------------------------------------===//
+void CXXDefaultArgExpr::EmitImpl(Serializer& S) const {
+  S.EmitPtr(Param);
+}
+
+CXXDefaultArgExpr *CXXDefaultArgExpr::CreateImpl(Deserializer& D, ASTContext& C) {
+  ParmVarDecl* Param = 0;
+  D.ReadPtr(Param, false);
+  return new CXXDefaultArgExpr(Param);
 }

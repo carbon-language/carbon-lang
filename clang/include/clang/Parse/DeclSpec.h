@@ -416,14 +416,10 @@ struct DeclaratorChunk {
   struct ParamInfo {
     IdentifierInfo *Ident;
     SourceLocation IdentLoc;
-    Action::TypeTy *TypeInfo;
-    bool InvalidType;
-    AttributeList *AttrList;
+    Action::DeclTy *Param;
     ParamInfo() {}
-    ParamInfo(IdentifierInfo *ident, SourceLocation iloc, Action::TypeTy *typ,
-              bool flag = false, AttributeList *AL = 0)
-      : Ident(ident), IdentLoc(iloc), TypeInfo(typ), InvalidType(flag),
-        AttrList(AL) {}
+    ParamInfo(IdentifierInfo *ident, SourceLocation iloc, Action::DeclTy *param)
+      : Ident(ident), IdentLoc(iloc), Param(param) {}
   };
   
   struct FunctionTypeInfo {

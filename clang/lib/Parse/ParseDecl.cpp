@@ -1232,8 +1232,10 @@ void Parser::ParseParenDeclarator(Declarator &D) {
 ///
 ///       parameter-declaration: [C99 6.7.5]
 ///         declaration-specifiers declarator
+/// [C++]   declaration-specifiers declarator '=' assignment-expression
 /// [GNU]   declaration-specifiers declarator attributes
 ///         declaration-specifiers abstract-declarator[opt] 
+/// [C++]   declaration-specifiers abstract-declarator[opt] '=' assignment-expression
 /// [GNU]   declaration-specifiers abstract-declarator[opt] attributes
 ///
 void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D) {
@@ -1265,11 +1267,9 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D) {
   
   // Build up an array of information about the parsed arguments.
   llvm::SmallVector<DeclaratorChunk::ParamInfo, 16> ParamInfo;
-  llvm::SmallSet<const IdentifierInfo*, 16> ParamsSoFar;
-  
-  // Enter function-declaration scope, limiting any declarators for struct
-  // tags to the function prototype scope.
-  // FIXME: is this needed?
+
+  // Enter function-declaration scope, limiting any declarators to the
+  // function prototype scope, including parameter declarators.
   EnterScope(Scope::DeclScope);
   
   bool IsVariadic = false;
@@ -1307,14 +1307,6 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D) {
     // Remember this parsed parameter in ParamInfo.
     IdentifierInfo *ParmII = ParmDecl.getIdentifier();
     
-    // Verify that the argument identifier has not already been mentioned.
-    if (ParmII && !ParamsSoFar.insert(ParmII)) {
-      Diag(ParmDecl.getIdentifierLoc(), diag::err_param_redefinition,
-           ParmII->getName());
-      ParmII = 0;
-      ParmDecl.setInvalidType(true);
-    }
-
     // If no parameter was specified, verify that *something* was specified,
     // otherwise we have a missing type and identifier.
     if (DS.getParsedSpecifiers() == DeclSpec::PQ_None && 
@@ -1327,12 +1319,37 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D) {
       
       // Inform the actions module about the parameter declarator, so it gets
       // added to the current scope.
-      Action::TypeResult ParamTy =
-        Actions.ActOnParamDeclaratorType(CurScope, ParmDecl);
+      DeclTy *Param = Actions.ActOnParamDeclarator(CurScope, ParmDecl);
+
+      // Parse the default argument, if any. We parse the default
+      // arguments in all dialects; the semantic analysis in
+      // ActOnParamDefaultArgument will reject the default argument in
+      // C.
+      if (Tok.is(tok::equal)) {
+        SourceLocation EqualLoc = Tok.getLocation();
+        
+        // Consume the '='.
+        ConsumeToken();
+        
+        // Parse the default argument
+        // FIXME: For C++, name lookup from within the default argument 
+        // should be able to find parameter names, but we haven't put them
+        // in the scope. This means that we will accept ill-formed code
+        // such as:
+        //
+        //   int x;
+        //   void f(int x = x) { }
+        ExprResult DefArgResult = ParseAssignmentExpression();
+        if (DefArgResult.isInvalid) {
+          SkipUntil(tok::comma, tok::r_paren, true, true);
+        } else {
+          // Inform the actions module about the default argument
+          Actions.ActOnParamDefaultArgument(Param, EqualLoc, DefArgResult.Val);
+        }
+      }
       
       ParamInfo.push_back(DeclaratorChunk::ParamInfo(ParmII, 
-          ParmDecl.getIdentifierLoc(), ParamTy.Val, ParmDecl.getInvalidType(),
-          ParmDecl.getDeclSpec().TakeAttributes()));
+                             ParmDecl.getIdentifierLoc(), Param));
     }
 
     // If the next token is a comma, consume it and keep reading arguments.
@@ -1353,7 +1370,6 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D) {
   // If we have the closing ')', eat it and we're done.
   MatchRHSPunctuation(tok::r_paren, LParenLoc);
 }
-
 
 /// ParseFunctionDeclaratorIdentifierList - While parsing a function declarator
 /// we found a K&R-style identifier list instead of a type argument list.  The

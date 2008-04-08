@@ -509,6 +509,10 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
   // We know that the top-level of this declarator is a function.
   DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
 
+  // Enter function-declaration scope, limiting any declarators to the
+  // function prototype scope, including parameter declarators.
+  EnterScope(Scope::DeclScope);
+
   // Read all the argument declarations.
   while (isDeclarationSpecifier()) {
     SourceLocation DSStart = Tok.getLocation();
@@ -555,10 +559,10 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
         AttrList = ParseAttributes();
       
       // Ask the actions module to compute the type for this declarator.
-      Action::TypeResult TR =
-        Actions.ActOnParamDeclaratorType(CurScope, ParmDeclarator);
+      Action::DeclTy *Param = 
+        Actions.ActOnParamDeclarator(CurScope, ParmDeclarator);
 
-      if (!TR.isInvalid && 
+      if (Param && 
           // A missing identifier has already been diagnosed.
           ParmDeclarator.getIdentifier()) {
 
@@ -575,12 +579,12 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
           
           if (FTI.ArgInfo[i].Ident == ParmDeclarator.getIdentifier()) {
             // Reject redefinitions of parameters.
-            if (FTI.ArgInfo[i].TypeInfo) {
+            if (FTI.ArgInfo[i].Param) {
               Diag(ParmDeclarator.getIdentifierLoc(),
                    diag::err_param_redefinition,
                    ParmDeclarator.getIdentifier()->getName());
             } else {
-              FTI.ArgInfo[i].TypeInfo = TR.Val;
+              FTI.ArgInfo[i].Param = Param;
             }
             break;
           }
@@ -611,6 +615,9 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
     }
   }
   
+  // Leave prototype scope.
+  ExitScope();
+
   // The actions module must verify that all arguments were declared.
 }
 

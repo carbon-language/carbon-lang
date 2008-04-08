@@ -224,9 +224,9 @@ FileVarDecl *FileVarDecl::Create(ASTContext &C, DeclContext *CD,
 ParmVarDecl *ParmVarDecl::Create(ASTContext &C, DeclContext *CD,
                                  SourceLocation L, IdentifierInfo *Id,
                                  QualType T, StorageClass S,
-                                 ScopedDecl *PrevDecl) {
+                                 Expr *DefArg, ScopedDecl *PrevDecl) {
   void *Mem = C.getAllocator().Allocate<ParmVarDecl>();
-  return new (Mem) ParmVarDecl(CD, L, Id, T, S, PrevDecl);
+  return new (Mem) ParmVarDecl(CD, L, Id, T, S, DefArg, PrevDecl);
 }
 
 FunctionDecl *FunctionDecl::Create(ASTContext &C, DeclContext *CD,

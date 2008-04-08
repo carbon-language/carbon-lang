@@ -169,7 +169,7 @@ public:
   Value *VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
     return Visit(E->getInitializer());
   }
-
+  
   Value *VisitImplicitCastExpr(const ImplicitCastExpr *E);
   Value *VisitCastExpr(const CastExpr *E) { 
     return EmitCastExpr(E->getSubExpr(), E->getType());
@@ -220,6 +220,9 @@ public:
     return Visit(E->getSubExpr());
   }
   Value *VisitUnaryOffsetOf(const UnaryOperator *E);
+  Value *VisitCXXDefaultArgExpr(CXXDefaultArgExpr *DAE) {
+    return Visit(DAE->getExpr());
+  }
     
   // Binary Operators.
   Value *EmitMul(const BinOpInfo &Ops) {

@@ -658,6 +658,11 @@ void StmtPrinter::VisitCallExpr(CallExpr *Call) {
   PrintExpr(Call->getCallee());
   OS << "(";
   for (unsigned i = 0, e = Call->getNumArgs(); i != e; ++i) {
+    if (isa<CXXDefaultArgExpr>(Call->getArg(i))) {
+      // Don't print any defaulted arguments
+      break;
+    }
+
     if (i) OS << ", ";
     PrintExpr(Call->getArg(i));
   }
@@ -787,6 +792,10 @@ void StmtPrinter::VisitCXXThrowExpr(CXXThrowExpr *Node) {
     OS << "throw ";
     PrintExpr(Node->getSubExpr());
   }
+}
+
+void StmtPrinter::VisitCXXDefaultArgExpr(CXXDefaultArgExpr *Node) {
+  // Nothing to print: we picked up the default argument
 }
 
 // Obj-C 
