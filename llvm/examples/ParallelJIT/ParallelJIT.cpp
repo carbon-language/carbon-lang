@@ -204,7 +204,7 @@ private:
     waitFor = 0;
 
     int result = pthread_cond_broadcast( &condition );
-    assert( result == 0 );
+    assert(result == 0); result=result;
   }
 
   size_t n;
