@@ -49,7 +49,7 @@ void HTMLPrinter::Initialize(ASTContext &context) {
 HTMLPrinter::~HTMLPrinter() {
   
   unsigned FileID = R.getSourceMgr().getMainFileID();
-  html::EscapeText(R, FileID);
+  html::EscapeText(R, FileID, false, true);
   html::AddLineNumbers(R, FileID);
   html::AddHeaderFooterInternalBuiltinCSS(R, FileID);
   
