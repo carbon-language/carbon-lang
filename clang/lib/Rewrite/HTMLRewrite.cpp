@@ -20,7 +20,8 @@
 
 using namespace clang;
 
-void html::EscapeText(Rewriter& R, unsigned FileID, bool EscapeSpaces) {
+void html::EscapeText(Rewriter& R, unsigned FileID,
+                      bool EscapeSpaces, bool ReplaceTabs) {
   
   const llvm::MemoryBuffer *Buf = R.getSourceMgr().getBuffer(FileID);
   const char* C = Buf->getBufferStart();
@@ -41,6 +42,9 @@ void html::EscapeText(Rewriter& R, unsigned FileID, bool EscapeSpaces) {
         break;
 
       case '\t': {
+        if (!ReplaceTabs)
+          break;
+        
         SourceLocation Loc = SourceLocation::getFileLoc(FileID, FilePos);
         
         if (EscapeSpaces)
@@ -72,7 +76,8 @@ void html::EscapeText(Rewriter& R, unsigned FileID, bool EscapeSpaces) {
   }
 }
 
-std::string html::EscapeText(const std::string& s, bool EscapeSpaces) {
+std::string html::EscapeText(const std::string& s, bool EscapeSpaces,
+                             bool ReplaceTabs) {
   
   unsigned len = s.size();
   std::ostringstream os;
@@ -90,7 +95,13 @@ std::string html::EscapeText(const std::string& s, bool EscapeSpaces) {
         else os << ' ';
         break;
         
-        case '\t': for (unsigned i = 0; i < 4; ++i) os << "&nbsp;"; break;
+        case '\t':
+          if (ReplaceTabs)
+            for (unsigned i = 0; i < 4; ++i) os << "&nbsp;";
+          else os << c;
+        
+          break;
+        
         case '<': os << "&lt;"; break;
         case '>': os << "&gt;"; break;
         case '&': os << "&amp;"; break;
