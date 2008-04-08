@@ -156,17 +156,8 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     DW.BeginFunction(&MF);
   }
 
-  if (Subtarget->isTargetDarwin()) {
-    // If the function is empty, then we need to emit *something*. Otherwise,
-    // the function's label might be associated with something that it wasn't
-    // meant to be associated with. We emit a noop in this situation.
-    MachineFunction::iterator I = MF.begin();
-
-    if (++I == MF.end() && MF.front().empty())
-      O << "\tnop\n";
-  }
-
   // Print out code for the function.
+  bool hasAnyRealCode = false;
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
     // Print a label for the basic block.
@@ -177,8 +168,18 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     for (MachineBasicBlock::const_iterator II = I->begin(), IE = I->end();
          II != IE; ++II) {
       // Print the assembly for the instruction.
+      if (II->getOpcode() != X86::LABEL)
+        hasAnyRealCode = true;
       printMachineInstruction(II);
     }
+  }
+
+  if (Subtarget->isTargetDarwin() && !hasAnyRealCode) {
+    // If the function is empty, then we need to emit *something*. Otherwise,
+    // the function's label might be associated with something that it wasn't
+    // meant to be associated with. We emit a noop in this situation.
+    // We are assuming inline asms are code.
+    O << "\tnop\n";
   }
 
   if (TAI->hasDotTypeDotSizeDirective())
