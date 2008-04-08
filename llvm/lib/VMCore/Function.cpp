@@ -219,6 +219,15 @@ void Function::dropAllReferences() {
   BasicBlocks.clear();    // Delete all basic blocks...
 }
 
+void Function::setDoesNotThrow(bool doesNotThrow) {
+  PAListPtr PAL = getParamAttrs();
+  if (doesNotThrow)
+    PAL = PAL.addAttr(0, ParamAttr::NoUnwind);
+  else
+    PAL = PAL.removeAttr(0, ParamAttr::NoUnwind);
+  setParamAttrs(PAL);
+}
+
 // Maintain the collector name for each function in an on-the-side table. This
 // saves allocating an additional word in Function for programs which do not use
 // GC (i.e., most programs) at the cost of increased overhead for clients which

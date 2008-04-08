@@ -178,6 +178,7 @@ public:
 
   /// @brief Determine if the function cannot return.
   bool doesNotReturn() const { return paramHasAttr(0, ParamAttr::NoReturn); }
+  void setDoesNotThrow(bool doesNotThrow = true);
 
   /// @brief Determine if the function cannot unwind.
   bool doesNotThrow() const {
