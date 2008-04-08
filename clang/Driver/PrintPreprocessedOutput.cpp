@@ -17,9 +17,11 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/Pragma.h"
 #include "clang/Basic/SourceManager.h"
-#include "llvm/Support/CommandLine.h"
+#include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/System/Path.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Config/config.h"
 #include <cstdio>
 using namespace clang;
@@ -43,8 +45,9 @@ using namespace clang;
 #define USE_STDIO 1
 #endif
 
+static std::string OutputFilename;
 #ifdef USE_STDIO
-FILE *OutputFILE;
+static FILE *OutputFILE;
 #else
 static int OutputFD;
 static char *OutBufStart = 0, *OutBufEnd, *OutBufCur;
@@ -56,8 +59,10 @@ static void InitOutputBuffer(const std::string& Output) {
 #ifdef USE_STDIO
   if (!Output.size() || Output == "-")
     OutputFILE = stdout;
-  else
+  else {
     OutputFILE = fopen(Output.c_str(), "w+");
+    OutputFilename = Output;
+  }
 
   assert(OutputFILE && "failed to open output file");
 #else
@@ -67,8 +72,10 @@ static void InitOutputBuffer(const std::string& Output) {
 
   if (!Output.size() || Output == "-")
     OutputFD = STDOUT_FILENO;
-  else
+  else {
     OutputFD = open(Output.c_str(), O_WRONLY|O_CREAT|O_TRUNC, 0644);
+    OutputFilename = Output;
+  }
 
   assert(OutputFD >= 0 && "failed to open output file");
 #endif
@@ -85,11 +92,20 @@ static void FlushBuffer() {
 
 /// CleanupOutputBuffer - Finish up output.
 ///
-static void CleanupOutputBuffer() {
-#ifndef USE_STDIO
+static void CleanupOutputBuffer(bool ErrorOccurred) {
+#ifdef USE_STDIO
+  if (OutputFILE != stdout)
+    fclose(OutputFILE);
+#else
   FlushBuffer();
   delete [] OutBufStart;
+  if (OutputFD != STDOUT_FILENO)
+    close(OutputFD);
 #endif
+
+  // If an error occurred, remove the output file.
+  if (ErrorOccurred && !OutputFilename.empty())
+    llvm::sys::Path(OutputFilename).eraseFromDisk();
 }
 
 static void OutputChar(char c) {
@@ -169,7 +185,7 @@ public:
   bool MoveToLine(SourceLocation Loc);
   bool AvoidConcat(const Token &PrevTok, const Token &Tok);
 };
-}
+}  // end anonymous namespace
 
 /// UToStr - Do itoa on the specified number, in-place in the specified buffer.
 /// endptr points to the end of the buffer.
@@ -591,7 +607,8 @@ bool PrintPPOutputPPCallbacks::AvoidConcat(const Token &PrevTok,
 
 /// DoPrintPreprocessedInput - This implements -E mode.
 ///
-void clang::DoPrintPreprocessedInput(Preprocessor &PP, const std::string& OutFile) {
+void clang::DoPrintPreprocessedInput(Preprocessor &PP, 
+                                     const std::string &OutFile) {
   // Inform the preprocessor whether we want it to retain comments or not, due
   // to -C or -CC.
   PP.SetCommentRetentionState(EnableCommentOutput, EnableMacroCommentOutput);
@@ -655,6 +672,6 @@ void clang::DoPrintPreprocessedInput(Preprocessor &PP, const std::string& OutFil
   }
   OutputChar('\n');
   
-  CleanupOutputBuffer();
+  CleanupOutputBuffer(PP.getDiagnostics().hasErrorOccurred());
 }
 
