@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llc -march=x86-64 | grep xor | count 4
-; RUN: llvm-as < %s | llc -march=x86-64 -stats -info-output-file - | grep asm-printer | grep 12
+; RUN: llvm-as < %s | llc -march=x86-64 -stats -disable-required-unwind-tables -info-output-file - | grep asm-printer  | grep 12
 ; RUN: llvm-as < %s | llc -march=x86 | grep fldz
 ; RUN: llvm-as < %s | llc -march=x86 | not grep fldl
 

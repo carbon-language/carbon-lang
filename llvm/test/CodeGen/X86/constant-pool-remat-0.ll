@@ -1,7 +1,7 @@
 ; RUN: llvm-as < %s | llc -march=x86-64 | grep LCPI | count 3
-; RUN: llvm-as < %s | llc -march=x86-64 -stats -info-output-file - | grep asm-printer | grep 6
+; RUN: llvm-as < %s | llc -march=x86-64 -stats -disable-required-unwind-tables -info-output-file - | grep asm-printer | grep 6
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep LCPI | count 3
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -stats -info-output-file - | grep asm-printer | grep 8
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -stats -disable-required-unwind-tables -info-output-file - | grep asm-printer | grep 8
 
 declare fastcc float @qux(float %y)
 

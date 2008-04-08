@@ -1,6 +1,6 @@
 ; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin -o %t1 -f
 ; RUN: grep GOTPCREL %t1 | count 4
-; RUN: grep rip      %t1 | count 6
+; RUN: grep %%rip      %t1 | count 6
 ; RUN: grep movq     %t1 | count 6
 ; RUN: grep leaq     %t1 | count 1
 ; RUN: llvm-as < %s | \
