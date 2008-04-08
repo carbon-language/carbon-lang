@@ -390,6 +390,14 @@ public:
     
     return std::pair<unsigned,unsigned>(Loc.getFileID()-ChunkNo, Offset);
   }
+    
+  /// getFullFilePos - This (efficient) method returns the offset from the start
+  /// of the file that the specified physical SourceLocation represents.  This
+  /// returns the location of the physical character data, not the logical file
+  /// position.
+  unsigned getFullFilePos(SourceLocation PhysLoc) const {
+    return getDecomposedFileLoc(PhysLoc).second;
+  }
   
   /// PrintStats - Print statistics to stderr.
   ///
@@ -435,14 +443,6 @@ private:
   getContentCache(const SrcMgr::FileIDInfo* FIDInfo) const {
     return FIDInfo->getContentCache();
   }  
-  
-  /// getFullFilePos - This (efficient) method returns the offset from the start
-  /// of the file that the specified physical SourceLocation represents.  This
-  /// returns the location of the physical character data, not the logical file
-  /// position.
-  unsigned getFullFilePos(SourceLocation PhysLoc) const {
-    return getDecomposedFileLoc(PhysLoc).second;
-  }
 };
 
 
