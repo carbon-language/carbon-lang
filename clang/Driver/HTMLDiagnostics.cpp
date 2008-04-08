@@ -312,4 +312,60 @@ void HTMLDiagnostics::HighlightRange(Rewriter& R, SourceRange Range,
   
   R.InsertCStrBefore(LogicalStart, "<span class=\"mrange\">");
   R.InsertCStrAfter(E, "</span>");
+  
+  if (EndLineNo == StartLineNo)
+    return;
+  
+  // Add in </span><span> tags for intermediate lines.
+  
+  const llvm::MemoryBuffer *Buf = R.getSourceMgr().getBuffer(MainFileID);
+
+  unsigned Pos = SourceMgr.getFullFilePos(LogicalStart);
+  unsigned EndPos = SourceMgr.getFullFilePos(E);  
+  const char* buf = Buf->getBufferStart();
+  
+  for (; Pos != EndPos; ++Pos) {
+    
+    SourceLocation L = SourceLocation::getFileLoc(MainFileID, Pos);
+    unsigned Col = SourceMgr.getColumnNumber(L);
+    
+    if (Col == 1) {
+      
+      // Start if a new line.  Scan to see if we hit anything that is not
+      // whitespace or a newline.
+      
+      unsigned PosTmp = Pos;
+      bool NewLine = false;
+      
+      for ( ; PosTmp != EndPos ; ++PosTmp) {
+        switch (buf[PosTmp]) {
+          case ' ':
+          case '\t': continue;
+          case '\n':
+            NewLine = true;
+            break;
+          default:
+            break;
+        }
+        
+        break;
+      }
+      
+      if (PosTmp == EndPos)
+        break;
+      
+      Pos = PosTmp;
+
+      // Don't highlight a blank line.
+      if (NewLine)
+        continue;
+      
+      // This line contains text that we should highlight.
+      // Ignore leading whitespace.
+      L = SourceLocation::getFileLoc(MainFileID, Pos);
+      R.InsertCStrAfter(L, "<span class=\"mrange\">");
+    }
+    else if (buf[Pos] == '\n')
+      R.InsertCStrBefore(L, "</span>");
+  }
 }
