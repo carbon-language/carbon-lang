@@ -100,7 +100,11 @@ public:
   ReturnInst *CreateRet(Value * const* retVals, unsigned N) {
     return Insert(ReturnInst::Create(retVals,  N));
   }
-  
+
+  GetResultInst *CreateGetResult(Value *V, unsigned Index, const char *Name = "") {
+    return Insert(new GetResultInst(V, Index, Name));
+  }
+
   /// CreateBr - Create an unconditional 'br label X' instruction.
   BranchInst *CreateBr(BasicBlock *Dest) {
     return Insert(BranchInst::Create(Dest));
