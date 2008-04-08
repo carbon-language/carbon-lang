@@ -117,13 +117,21 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
   if (NumRetVals == 0)
     ReturnInst::Create(NULL, NewRetBlock);
   else if (const StructType *STy = dyn_cast<StructType>(F.getReturnType())) {
-    Instruction *InsertPt = NewRetBlock->getFirstNonPHI();
+    Instruction *InsertPt = NULL;
+    if (NumRetVals == 0)
+      InsertPt = NewRetBlock->getFirstNonPHI();
+    PHINode *PN = NULL;
     for (unsigned i = 0; i < NumRetVals; ++i) {
-      PHINode *PN = PHINode::Create(STy->getElementType(i), "UnifiedRetVal." 
-                                    + utostr(i), InsertPt);
+      if (InsertPt)
+        PN = PHINode::Create(STy->getElementType(i), "UnifiedRetVal." 
+                         + utostr(i), InsertPt);
+      else
+        PN = PHINode::Create(STy->getElementType(i), "UnifiedRetVal." 
+                         + utostr(i), NewRetBlock);
       Phis.push_back(PN);
+      InsertPt = PN;
     }
-    ReturnInst::Create(&Phis[0], NumRetVals);
+    ReturnInst::Create(&Phis[0], NumRetVals, NewRetBlock);
   }
   else {
     // If the function doesn't return void... add a PHI node to the block...
