@@ -952,7 +952,7 @@ private:
   IdentifierInfo *SetterName;    // setter name of NULL if no setter
   
   ObjCPropertyDecl(SourceLocation L)
-    : Decl(PropertyDecl, L), PropertyDecls(0), NumPropertyDecls(0),
+    : Decl(ObjCProperty, L), PropertyDecls(0), NumPropertyDecls(0),
       PropertyAttributes(OBJC_PR_noattr), GetterName(0), SetterName(0) {}
 public:
   static ObjCPropertyDecl *Create(ASTContext &C, SourceLocation L);
@@ -983,7 +983,7 @@ public:
   void setSetterName(IdentifierInfo *Id) { SetterName = Id; }
   
   static bool classof(const Decl *D) {
-    return D->getKind() == PropertyDecl;
+    return D->getKind() == ObjCProperty;
   }
   static bool classof(const ObjCPropertyDecl *D) { return true; }
 };

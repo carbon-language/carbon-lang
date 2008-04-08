@@ -42,7 +42,7 @@ public:
            ObjCCategoryImpl,
            ObjCImplementation,
            ObjCProtocol,
-           PropertyDecl,
+           ObjCProperty,
     //     ScopedDecl
     //       TypeDecl
                Typedef,

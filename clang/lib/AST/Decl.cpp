@@ -194,7 +194,7 @@ void Decl::addDeclKind(Kind k) {
   case ObjCImplementation:  nObjCImplementationDecls++; break;
   case ObjCCategoryImpl:    nObjCCategoryImpl++; break;
   case ObjCCompatibleAlias: nObjCCompatibleAlias++; break;
-  case PropertyDecl:        nObjCPropertyDecl++; break;
+  case ObjCProperty:        nObjCPropertyDecl++; break;
   case LinkageSpec:         nLinkageSpecDecl++; break;
   case FileScopeAsm:        nFileScopeAsmDecl++; break;
   }
