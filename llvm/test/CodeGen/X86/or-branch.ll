@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -disable-required-unwind-tables | not grep set
+; RUN: llvm-as < %s | llc -march=x86 -unwind-tables-optional | not grep set
 
 define void @foo(i32 %X, i32 %Y, i32 %Z) nounwind {
 entry:

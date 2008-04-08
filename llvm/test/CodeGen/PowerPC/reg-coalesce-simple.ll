@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 -disable-required-unwind-tables | not grep or
+; RUN: llvm-as < %s | llc -march=ppc32 -unwind-tables-optional | not grep or
 
 %struct.foo = type { i32, i32, [0 x i8] }
 

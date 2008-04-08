@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64 -stats -disable-required-unwind-tables |& \
+; RUN: llvm-as < %s | llc -march=x86-64 -stats -unwind-tables-optional |& \
 ; RUN:   grep {6 .*Number of machine instrs printed}
 
 ;; Integer absolute value, should produce something at least as good as:

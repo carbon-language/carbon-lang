@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=ppc32 -disable-required-unwind-tables | grep rlwinm | count 4
-; RUN: llvm-as < %s | llc -march=ppc32 -disable-required-unwind-tables | grep rlwnm | count 2
-; RUN: llvm-as < %s | llc -march=ppc32 -disable-required-unwind-tables | not grep or
+; RUN: llvm-as < %s | llc -march=ppc32 -unwind-tables-optional | grep rlwinm | count 4
+; RUN: llvm-as < %s | llc -march=ppc32 -unwind-tables-optional | grep rlwnm | count 2
+; RUN: llvm-as < %s | llc -march=ppc32 -unwind-tables-optional | not grep or
 
 define i32 @rotl32(i32 %A, i8 %Amt) nounwind {
 	%shift.upgrd.1 = zext i8 %Amt to i32		; <i32> [#uses=1]

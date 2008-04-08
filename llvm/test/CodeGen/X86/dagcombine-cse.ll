@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -disable-required-unwind-tables -stats |& grep asm-printer | grep 14
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -unwind-tables-optional -stats |& grep asm-printer | grep 14
 
 define i32 @t(i8* %ref_frame_ptr, i32 %ref_frame_stride, i32 %idxX, i32 %idxY) nounwind  {
 entry:

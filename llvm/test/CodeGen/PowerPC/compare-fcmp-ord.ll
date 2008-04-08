@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 -disable-required-unwind-tables | grep or | count 3
+; RUN: llvm-as < %s | llc -march=ppc32 -unwind-tables-optional | grep or | count 3
 ; This should produce one 'or' or 'cror' instruction per function.
 
 define i32 @test(double %x, double %y) nounwind  {

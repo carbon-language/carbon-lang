@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -disable-required-unwind-tables | not grep set
+; RUN: llvm-as < %s | llc -march=x86 -unwind-tables-optional | not grep set
 
 declare i1 @llvm.isunordered.f32(float, float)
 
