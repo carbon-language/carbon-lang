@@ -265,8 +265,6 @@ ENDTEXT
   print OUT "</table>\n</body></html>\n";  
   close(OUT);
   
-  print "$RealBin\n";
-  
   CopyJS($Dir);
 }
 
@@ -427,8 +425,11 @@ $HtmlDir = GetHTMLRunDir($HtmlDir);
 
 SetHtmlEnv(\@ARGV, $HtmlDir);
 
-my $Cmd = `which ccc-analyzer`;
-$Cmd =~ s/\015?\012//;
+my $Cmd = "$RealBin/ccc-analyzer";
+
+die "$Prog: Executable 'ccc-analyzer' does not exist at '$Cmd'\n"
+  if (! -x $Cmd);
+
 $ENV{'CC'} = $Cmd;
 
 if ($Verbose >= 2) {
