@@ -504,7 +504,9 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
   X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
   MachineBasicBlock::iterator MBBI = MBB.begin();
-  bool needsFrameMoves = (MMI && MMI->hasDebugInfo()) || !Fn->doesNotThrow();
+  bool needsFrameMoves = (MMI && MMI->hasDebugInfo()) || 
+                          !Fn->doesNotThrow() ||
+                          !UnwindTablesOptional;
   
   // Prepare for frame info.
   unsigned FrameLabelId = 0;

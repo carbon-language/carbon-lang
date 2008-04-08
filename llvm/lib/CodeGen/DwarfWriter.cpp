@@ -2905,8 +2905,11 @@ private:
 
     // If there are no calls then you can't unwind.  This may mean we can
     // omit the EH Frame, but some environments do not handle weak absolute
-    // symbols.
+    // symbols.  
+    // If UnwindTablesOptional is not set we cannot do this optimization; the
+    // unwind info is to be available for non-EH uses.
     if (!EHFrameInfo.hasCalls &&
+        UnwindTablesOptional &&
         ((linkage != Function::WeakLinkage && 
           linkage != Function::LinkOnceLinkage) ||
          !TAI->getWeakDefDirective() ||
@@ -3427,7 +3430,9 @@ public:
         shouldEmitTable = true;
 
       // See if we need frame move info.
-      if (MMI->hasDebugInfo() || !MF->getFunction()->doesNotThrow())
+      if (MMI->hasDebugInfo() || 
+          !MF->getFunction()->doesNotThrow() ||
+          !UnwindTablesOptional)
         shouldEmitMoves = true;
 
       if (shouldEmitMoves || shouldEmitTable)

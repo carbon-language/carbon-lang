@@ -31,6 +31,7 @@ namespace llvm {
   bool UseSoftFloat;
   bool NoZerosInBSS;
   bool ExceptionHandling;
+  bool UnwindTablesOptional;
   Reloc::Model RelocationModel;
   CodeModel::Model CMModel;
   bool PerformTailCallOpt;
@@ -80,8 +81,13 @@ namespace {
               cl::init(false));
   cl::opt<bool, true>
   EnableExceptionHandling("enable-eh",
-               cl::desc("Exception handling should be emitted."),
+               cl::desc("Emit DWARF exception handling (default if target supports)"),
                cl::location(ExceptionHandling),
+               cl::init(false));
+  cl::opt<bool, true>
+  DisableUnwindTables("disable-required-unwind-tables",
+               cl::desc("Do not require unwinding info for all functions"),
+               cl::location(UnwindTablesOptional),
                cl::init(false));
 
   cl::opt<llvm::Reloc::Model, true>

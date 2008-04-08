@@ -74,13 +74,18 @@ namespace llvm {
   /// be emitted.
   extern bool ExceptionHandling;
 
+  /// UnwindTablesOptional - This flag indicates that unwind tables need not
+  /// be emitted for all functions.  Exception handling may still require them
+  /// for some functions.
+  extern bool UnwindTablesOptional;
+
   /// PerformTailCallOpt - This flag is enabled when -tailcallopt is specified
   /// on the commandline. When the flag is on, the target will perform tail call
   /// optimization (pop the caller's stack) providing it supports it.
   extern bool PerformTailCallOpt;
 
-  /// OptimizeForSize - When this flags is set, code generator avoids optimization
-  /// that increases size.
+  /// OptimizeForSize - When this flag is set, the code generator avoids 
+  /// optimizations that increase size.
   extern bool OptimizeForSize;
 } // End llvm namespace
 
