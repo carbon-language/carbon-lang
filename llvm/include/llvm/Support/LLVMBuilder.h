@@ -96,6 +96,10 @@ public:
   ReturnInst *CreateRet(Value *V) {
     return Insert(ReturnInst::Create(V));
   }
+
+  ReturnInst *CreateRet(Value * const* retVals, unsigned N) {
+    return Insert(ReturnInst::Create(retVals,  N));
+  }
   
   /// CreateBr - Create an unconditional 'br label X' instruction.
   BranchInst *CreateBr(BasicBlock *Dest) {
