@@ -166,9 +166,11 @@ void DeclPrinter::PrintLinkageSpec(LinkageSpecDecl *LS) {
   const char *l;
   if (LS->getLanguage() == LinkageSpecDecl::lang_c)
     l = "C";
-  else if (LS->getLanguage() == LinkageSpecDecl::lang_cxx)
+  else {
+    assert(LS->getLanguage() == LinkageSpecDecl::lang_cxx &&
+           "unknown language in linkage specification");
     l = "C++";
-  else assert(0 && "unknown language in linkage specification");
+  }
   Out << "extern \"" << l << "\" { ";
   PrintDecl(LS->getDecl());
   Out << "}\n";

@@ -1067,12 +1067,11 @@ Stmt *RewriteTest::RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S,
     buf += elementName;
     buf += ";\n\t";
   }
-  else if (DeclRefExpr *DR = dyn_cast<DeclRefExpr>(S->getElement())) {
+  else {
+    DeclRefExpr *DR = cast<DeclRefExpr>(S->getElement());
     elementName = DR->getDecl()->getName();
     elementTypeAsString = DR->getDecl()->getType().getAsString();
   }
-  else
-    assert(false && "RewriteObjCForCollectionStmt - bad element kind");
   
   // struct __objcFastEnumerationState enumState = { 0 };
   buf += "struct __objcFastEnumerationState enumState = { 0 };\n\t";
@@ -1279,11 +1278,10 @@ Stmt *RewriteTest::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
     if (catchList->hasEllipsis()) {
       // Now rewrite the body...
       lastCatchBody = catchList->getCatchBody();
-      SourceLocation rParenLoc = catchList->getRParenLoc();
       SourceLocation bodyLoc = lastCatchBody->getLocStart();
       const char *bodyBuf = SM->getCharacterData(bodyLoc);
-      const char *rParenBuf = SM->getCharacterData(rParenLoc);
-      assert((*rParenBuf == ')') && "bogus @catch paren location");
+      assert(*SM->getCharacterData(catchList->getRParenLoc()) == ')' &&
+             "bogus @catch paren location");
       assert((*bodyBuf == '{') && "bogus @catch body location");
       
       buf += "1) { id _tmp = _caught;";
@@ -1328,8 +1326,8 @@ Stmt *RewriteTest::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
   // Complete the catch list...
   if (lastCatchBody) {
     SourceLocation bodyLoc = lastCatchBody->getLocEnd();
-    const char *bodyBuf = SM->getCharacterData(bodyLoc);
-    assert((*bodyBuf == '}') && "bogus @catch body location");
+    assert(*SM->getCharacterData(bodyLoc) == '}' &&
+           "bogus @catch body location");
     bodyLoc = bodyLoc.getFileLocWithOffset(1);
     buf = " } } /* @catch end */\n";
   
@@ -1349,10 +1347,10 @@ Stmt *RewriteTest::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
     Stmt *body = finalStmt->getFinallyBody();
     SourceLocation startLoc = body->getLocStart();
     SourceLocation endLoc = body->getLocEnd();
-    const char *startBuf = SM->getCharacterData(startLoc);
-    const char *endBuf = SM->getCharacterData(endLoc);
-    assert((*startBuf == '{') && "bogus @finally body location");
-    assert((*endBuf == '}') && "bogus @finally body location");
+    assert(*SM->getCharacterData(startLoc) == '{' &&
+           "bogus @finally body location");
+    assert(*SM->getCharacterData(endLoc) == '}' && 
+           "bogus @finally body location");
   
     startLoc = startLoc.getFileLocWithOffset(1);
     buf = " if (!_rethrow) objc_exception_try_exit(&_stack);\n";
