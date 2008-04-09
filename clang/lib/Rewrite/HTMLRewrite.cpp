@@ -188,46 +188,34 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID) {
 
   // Generate header
 
-  {
-    std::ostringstream os;
-    
-    os << "<html>\n<head>\n"
-       << "<style type=\"text/css\">\n"
-       << " body { color:#000000; background-color:#ffffff }\n"
-       << " body { font-family:Helvetica, sans-serif; font-size:10pt }\n"
-       << " h1 { font-size:12pt }\n"
-       << " .code { border-spacing:0px; width:100%; }\n"
-       << " .code { font-family: \"Andale Mono\", monospace; font-size:10pt }\n"
-       << " .code { line-height: 1.2em }\n"
-       << " .num { width:2.5em; padding-right:2ex; background-color:#eeeeee }\n"
-       << " .num { text-align:right; font-size: smaller }\n"
-       << " .num { color:#444444 }\n"
-       << " .line { padding-left: 1ex; border-left: 3px solid #ccc }\n"
-       << " .line { white-space: pre }\n"
-       << " .msg { background-color:#fff8b4; color:#000000 }\n"
-       << " .msg { -webkit-box-shadow:1px 1px 7px #000 }\n"
-       << " .msg { -webkit-border-radius:5px }\n"
-       << " .msg { font-family:Helvetica, sans-serif; font-size: smaller }\n"
-       << " .msg { font-weight: bold }\n"
-       << " .msg { float:left }\n"
-       << " .msg { padding:0.5em 1ex 0.5em 1ex }\n"
-       << " .msg { margin-top:10px; margin-bottom:10px }\n"
-       << " .mrange { background-color:#dfddf3 }\n"
-       << " .mrange { border-bottom:1px solid #6F9DBE }\n"
-       << " .PathIndex { font-weight: bold }\n"
-       << "</style>\n</head>\n<body>";
-    
-    R.InsertStrBefore(StartLoc, os.str());
-  }
-  
+  R.InsertCStrBefore(StartLoc,
+      "<html>\n<head>\n"
+      "<style type=\"text/css\">\n"
+      " body { color:#000000; background-color:#ffffff }\n"
+      " body { font-family:Helvetica, sans-serif; font-size:10pt }\n"
+      " h1 { font-size:12pt }\n"
+      " .code { border-spacing:0px; width:100%; }\n"
+      " .code { font-family: \"Andale Mono\", monospace; font-size:10pt }\n"
+      " .code { line-height: 1.2em }\n"
+      " .num { width:2.5em; padding-right:2ex; background-color:#eeeeee }\n"
+      " .num { text-align:right; font-size: smaller }\n"
+      " .num { color:#444444 }\n"
+      " .line { padding-left: 1ex; border-left: 3px solid #ccc }\n"
+      " .line { white-space: pre }\n"
+      " .msg { background-color:#fff8b4; color:#000000 }\n"
+      " .msg { -webkit-box-shadow:1px 1px 7px #000 }\n"
+      " .msg { -webkit-border-radius:5px }\n"
+      " .msg { font-family:Helvetica, sans-serif; font-size: smaller }\n"
+      " .msg { font-weight: bold }\n"
+      " .msg { float:left }\n"
+      " .msg { padding:0.5em 1ex 0.5em 1ex }\n"
+      " .msg { margin-top:10px; margin-bottom:10px }\n"
+      " .mrange { background-color:#dfddf3 }\n"
+      " .mrange { border-bottom:1px solid #6F9DBE }\n"
+      " .PathIndex { font-weight: bold }\n"
+      "</style>\n</head>\n<body>");
+
   // Generate footer
   
-  {
-    std::ostringstream os;
-    
-    os << "</body></html>\n";
-    R.InsertStrAfter(EndLoc, os.str());
-  }
+  R.InsertCStrAfter(EndLoc, "</body></html>\n");
 }
-  
-  
