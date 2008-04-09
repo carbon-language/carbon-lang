@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "CGObjCRuntime.h"
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
 #include "clang/AST/Expr.h"
@@ -23,4 +24,4 @@ llvm::Value *CodeGenFunction::EmitObjCStringLiteral(const ObjCStringLiteral *E){
   return CGM.GetAddrOfConstantCFString(S);
 }
 
-
+CGObjCRuntime::~CGObjCRuntime() {}

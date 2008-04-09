@@ -17,9 +17,6 @@
 #include "llvm/Support/LLVMBuilder.h"
 #include "llvm/ADT/SmallVector.h"
 
-
-clang::CodeGen::CGObjCRuntime::~CGObjCRuntime() {}
-
 namespace {
 class CGObjCEtoile : public clang::CodeGen::CGObjCRuntime {
 private:
