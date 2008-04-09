@@ -26,6 +26,10 @@
 
 using namespace clang;
 
+//===----------------------------------------------------------------------===//
+// Symbolic Evaluation of Reference Counting Logic
+//===----------------------------------------------------------------------===//
+
 namespace {  
   enum ArgEffect { IncRef, DecRef, DoNothing };
   typedef std::vector<ArgEffect> ArgEffects;
@@ -383,12 +387,62 @@ CFRefSummaryManager::getCFSummaryGetRule(FunctionTypeProto* FT) {
 }
 
 //===----------------------------------------------------------------------===//
+// Bug Descriptions.
+//===----------------------------------------------------------------------===//
+
+namespace {
+  
+  class CFRefCount;
+  
+  class VISIBILITY_HIDDEN CFRefBug : public BugType {
+  protected:
+    CFRefCount& TF;
+    
+  public:
+    CFRefBug(CFRefCount& tf) : TF(tf) {}
+  };
+  
+  class VISIBILITY_HIDDEN UseAfterRelease : public CFRefBug {
+  public:
+    UseAfterRelease(CFRefCount& tf) : CFRefBug(tf) {}
+    
+    virtual const char* getName() const {
+      return "(CoreFoundation) use-after-release";
+    }
+    virtual const char* getDescription() const {
+      return "(CoreFoundation) Reference-counted object is used"
+      " after it is released.";
+    }
+    
+    virtual void EmitWarnings(BugReporter& BR);
+    
+  };
+  
+  class VISIBILITY_HIDDEN BadRelease : public CFRefBug {
+  public:
+    BadRelease(CFRefCount& tf) : CFRefBug(tf) {}
+    
+    virtual const char* getName() const {
+      return "(CoreFoundation) release of non-owned object";
+    }
+    virtual const char* getDescription() const {
+      return "Incorrect decrement of the reference count of a "
+      "CoreFoundation object:\n"
+      "The object is not owned at this point by the caller.";
+    }
+    
+    virtual void EmitWarnings(BugReporter& BR);
+  };
+  
+} // end anonymous namespace
+
+//===----------------------------------------------------------------------===//
 // Transfer functions.
 //===----------------------------------------------------------------------===//
 
 namespace {
   
-class RefVal {
+class VISIBILITY_HIDDEN RefVal {
   unsigned Data;
   
   RefVal(unsigned K, unsigned D) : Data((D << 3) | K) {
@@ -455,7 +509,7 @@ void RefVal::print(std::ostream& Out) const {
   }
 }
   
-class CFRefCount : public GRSimpleVals {
+class VISIBILITY_HIDDEN CFRefCount : public GRSimpleVals {
   
   // Type definitions.
   
@@ -502,6 +556,8 @@ class CFRefCount : public GRSimpleVals {
 public:
   CFRefCount() {}
   virtual ~CFRefCount() {}
+  
+  virtual void RegisterChecks(GRExprEngine& Eng);
  
   virtual ValueState::CheckerStatePrinter* getCheckerStatePrinter() {
     return &Printer;
@@ -520,14 +576,21 @@ public:
   typedef UseAfterReleasesTy::iterator use_after_iterator;  
   typedef ReleasesNotOwnedTy::iterator bad_release_iterator;
   
-  use_after_iterator begin_use_after() { return UseAfterReleases.begin(); }
-  use_after_iterator end_use_after() { return UseAfterReleases.end(); }
+  use_after_iterator use_after_begin() { return UseAfterReleases.begin(); }
+  use_after_iterator use_after_end() { return UseAfterReleases.end(); }
   
-  bad_release_iterator begin_bad_release() { return ReleasesNotOwned.begin(); }
-  bad_release_iterator end_bad_release() { return ReleasesNotOwned.end(); }
+  bad_release_iterator bad_release_begin() { return ReleasesNotOwned.begin(); }
+  bad_release_iterator bad_release_end() { return ReleasesNotOwned.end(); }
 };
 
 } // end anonymous namespace
+
+void CFRefCount::RegisterChecks(GRExprEngine& Eng) {
+  GRSimpleVals::RegisterChecks(Eng);
+  Eng.Register(new UseAfterRelease(*this));
+  Eng.Register(new BadRelease(*this));
+}
+
 
 void CFRefCount::BindingsPrinter::PrintCheckerState(std::ostream& Out,
                                                     void* State, const char* nl,
@@ -787,36 +850,28 @@ CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
 
 
 //===----------------------------------------------------------------------===//
-// Bug Descriptions.
+// Error reporting.
 //===----------------------------------------------------------------------===//
 
-namespace {
-  
-class VISIBILITY_HIDDEN UseAfterRelease : public BugType {
+void UseAfterRelease::EmitWarnings(BugReporter& BR) {
 
-public:
-  virtual const char* getName() const {
-    return "(CoreFoundation) use-after-release";
+  for (CFRefCount::use_after_iterator I = TF.use_after_begin(),
+        E = TF.use_after_end(); I != E; ++I) {
+    
+    BugReport report(*this);
+    BR.EmitPathWarning(report, *I);    
   }
-  virtual const char* getDescription() const {
-    return "(CoreFoundation) Reference-counted object is used"
-           " after it is released.";
-  }
-};
+}
+
+void BadRelease::EmitWarnings(BugReporter& BR) {
   
-class VISIBILITY_HIDDEN BadRelease : public BugType {
-  
-public:
-  virtual const char* getName() const {
-    return "(CoreFoundation) release of non-owned object";
-  }
-  virtual const char* getDescription() const {
-    return "Incorrect decrement of reference count of CoreFoundation object:\n"
-           "The object is not owned at this point by the caller.";
-  }
-};
-  
-} // end anonymous namespace
+  for (CFRefCount::bad_release_iterator I = TF.bad_release_begin(),
+       E = TF.bad_release_end(); I != E; ++I) {
+    
+    BugReport report(*this);
+    BR.EmitPathWarning(report, *I);    
+  }  
+}
 
 //===----------------------------------------------------------------------===//
 // Driver for the CFRefCount Checker.
