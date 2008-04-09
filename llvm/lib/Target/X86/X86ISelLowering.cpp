@@ -5602,9 +5602,10 @@ X86TargetLowering::isShuffleMaskLegal(SDOperand Mask, MVT::ValueType VT) const {
           X86::isUNPCKH_v_undef_Mask(Mask.Val));
 }
 
-bool X86TargetLowering::isVectorClearMaskLegal(std::vector<SDOperand> &BVOps,
-                                               MVT::ValueType EVT,
-                                               SelectionDAG &DAG) const {
+bool
+X86TargetLowering::isVectorClearMaskLegal(const std::vector<SDOperand> &BVOps,
+                                          MVT::ValueType EVT,
+                                          SelectionDAG &DAG) const {
   unsigned NumElts = BVOps.size();
   // Only do shuffles on 128-bit vector types for now.
   if (MVT::getSizeInBits(EVT) * NumElts == 64) return false;

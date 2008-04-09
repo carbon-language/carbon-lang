@@ -420,7 +420,7 @@ namespace llvm {
     /// used by Targets can use this to indicate if there is a suitable
     /// VECTOR_SHUFFLE that can be used to replace a VAND with a constant
     /// pool entry.
-    virtual bool isVectorClearMaskLegal(std::vector<SDOperand> &BVOps,
+    virtual bool isVectorClearMaskLegal(const std::vector<SDOperand> &BVOps,
                                         MVT::ValueType EVT,
                                         SelectionDAG &DAG) const;
 
