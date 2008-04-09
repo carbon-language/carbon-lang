@@ -232,7 +232,10 @@ protected:
   }
 public:
   /// get() - Static factory methods - Return objects of the specified value
-  static ConstantFP *get(const Type *Ty, const APFloat& V);
+  static ConstantFP *get(const APFloat &V);
+  static ConstantFP *get(const Type *Ty, const APFloat &V) {
+    return get(V);
+  }
 
   /// isValueValidForType - return true if Ty is big enough to represent V.
   static bool isValueValidForType(const Type *Ty, const APFloat& V);

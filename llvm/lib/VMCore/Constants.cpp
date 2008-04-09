@@ -108,15 +108,15 @@ Constant *Constant::getNullValue(const Type *Ty) {
   case Type::IntegerTyID:
     return ConstantInt::get(Ty, 0);
   case Type::FloatTyID:
-    return ConstantFP::get(Ty, APFloat(APInt(32, 0)));
+    return ConstantFP::get(APFloat(APInt(32, 0)));
   case Type::DoubleTyID:
-    return ConstantFP::get(Ty, APFloat(APInt(64, 0)));
+    return ConstantFP::get(APFloat(APInt(64, 0)));
   case Type::X86_FP80TyID:
-    return ConstantFP::get(Ty, APFloat(APInt(80, 2, zero)));
+    return ConstantFP::get(APFloat(APInt(80, 2, zero)));
   case Type::FP128TyID:
-    return ConstantFP::get(Ty, APFloat(APInt(128, 2, zero), true));
+    return ConstantFP::get(APFloat(APInt(128, 2, zero), true));
   case Type::PPC_FP128TyID:
-    return ConstantFP::get(Ty, APFloat(APInt(128, 2, zero)));
+    return ConstantFP::get(APFloat(APInt(128, 2, zero)));
   case Type::PointerTyID:
     return ConstantPointerNull::get(cast<PointerType>(Ty));
   case Type::StructTyID:
@@ -270,7 +270,7 @@ bool ConstantFP::isNullValue() const {
 ConstantFP *ConstantFP::getNegativeZero(const Type *Ty) {
   APFloat apf = cast <ConstantFP>(Constant::getNullValue(Ty))->getValueAPF();
   apf.changeSign();
-  return ConstantFP::get(Ty, apf);
+  return ConstantFP::get(apf);
 }
 
 bool ConstantFP::isExactlyValue(const APFloat& V) const {
@@ -313,24 +313,25 @@ typedef DenseMap<DenseMapAPFloatKeyInfo::KeyTy, ConstantFP*,
 
 static ManagedStatic<FPMapTy> FPConstants;
 
-ConstantFP *ConstantFP::get(const Type *Ty, const APFloat& V) {
-  // temporary
-  if (Ty==Type::FloatTy)
-    assert(&V.getSemantics()==&APFloat::IEEEsingle);
-  else if (Ty==Type::DoubleTy)
-    assert(&V.getSemantics()==&APFloat::IEEEdouble);
-  else if (Ty==Type::X86_FP80Ty)
-    assert(&V.getSemantics()==&APFloat::x87DoubleExtended);
-  else if (Ty==Type::FP128Ty)
-    assert(&V.getSemantics()==&APFloat::IEEEquad);
-  else if (Ty==Type::PPC_FP128Ty)
-    assert(&V.getSemantics()==&APFloat::PPCDoubleDouble);
-  else
-    assert(0);
-  
+ConstantFP *ConstantFP::get(const APFloat &V) {
   DenseMapAPFloatKeyInfo::KeyTy Key(V);
   ConstantFP *&Slot = (*FPConstants)[Key];
   if (Slot) return Slot;
+  
+  const Type *Ty;
+  if (&V.getSemantics() == &APFloat::IEEEsingle)
+    Ty = Type::FloatTy;
+  else if (&V.getSemantics() == &APFloat::IEEEdouble)
+    Ty = Type::DoubleTy;
+  else if (&V.getSemantics() == &APFloat::x87DoubleExtended)
+    Ty = Type::X86_FP80Ty;
+  else if (&V.getSemantics() == &APFloat::IEEEquad)
+    Ty = Type::FP128Ty;
+  else {
+    assert(&V.getSemantics() == &APFloat::PPCDoubleDouble&&"Unknown FP format");
+    Ty = Type::PPC_FP128Ty;
+  }
+  
   return Slot = new ConstantFP(Ty, V);
 }
 
