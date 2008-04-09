@@ -174,7 +174,7 @@ public:
     return Flags & (1 << TID::HasOptionalDef);
   }
   
-  /// getImplicitUses - Return a list of machine operands that are potentially
+  /// getImplicitUses - Return a list of registers that are potentially
   /// read by any instance of this machine instruction.  For example, on X86,
   /// the "adc" instruction adds two register operands and adds the carry bit in
   /// from the flags register.  In this case, the instruction is marked as
@@ -187,7 +187,7 @@ public:
     return ImplicitUses;
   }
   
-  /// getImplicitDefs - Return a list of machine operands that are potentially
+  /// getImplicitDefs - Return a list of registers that are potentially
   /// written by any instance of this machine instruction.  For example, on X86,
   /// many instructions implicitly set the flags register.  In this case, they
   /// are marked as setting the FLAGS.  Likewise, many instructions always
@@ -196,7 +196,7 @@ public:
   /// registers.  For that instruction, this will return a list containing the
   /// EAX/EDX/EFLAGS registers.
   ///
-  /// This method returns null if the instruction has no implicit uses.
+  /// This method returns null if the instruction has no implicit defs.
   const unsigned *getImplicitDefs() const {
     return ImplicitDefs;
   }
