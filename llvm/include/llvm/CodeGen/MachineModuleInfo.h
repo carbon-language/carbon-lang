@@ -772,7 +772,7 @@ public:
 class DISerializer {
 private:
   Module *M;                            // Definition space module.
-  PointerType *StrPtrTy;                // A "sbyte *" type.  Created lazily.
+  PointerType *StrPtrTy;                // A "i8*" type.  Created lazily.
   PointerType *EmptyStructPtrTy;        // A "{ }*" type.  Created lazily.
   std::map<unsigned, StructType *> TagTypes;
                                         // Types per Tag.  Created lazily.
@@ -796,7 +796,7 @@ public:
   Module *getModule()        const { return M; };
   void setModule(Module *module)  { M = module; }
 
-  /// getStrPtrType - Return a "sbyte *" type.
+  /// getStrPtrType - Return a "i8*" type.
   ///
   const PointerType *getStrPtrType();
   

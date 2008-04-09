@@ -104,7 +104,7 @@ public:
 
   /// getBitMask - Return a bitmask with ones set for all of the bits
   /// that can be set by an unsigned version of this type.  This is 0xFF for
-  /// sbyte/ubyte, 0xFFFF for shorts, etc.
+  /// i8, 0xFFFF for i16, etc.
   uint64_t getBitMask() const {
     return ~uint64_t(0UL) >> (64-getBitWidth());
   }
