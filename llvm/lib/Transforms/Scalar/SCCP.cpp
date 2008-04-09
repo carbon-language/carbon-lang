@@ -690,12 +690,13 @@ void SCCPSolver::visitGetResultInst(GetResultInst &GRI) {
   unsigned Idx = GRI.getIndex();
   Value *Aggr = GRI.getOperand(0);
   Function *F = NULL;
-  if (CallInst *CI = dyn_cast<CallInst>(Aggr)) 
+  if (CallInst *CI = dyn_cast<CallInst>(Aggr))
     F = CI->getCalledFunction();
   else if (InvokeInst *II = dyn_cast<InvokeInst>(Aggr))
     F = II->getCalledFunction();
 
-  assert (F && "Invalid GetResultInst operands!");
+  if (!F)
+    return;
 
   std::multimap<Function*, LatticeValIndexed>::iterator It, E;
   tie(It, E) = TrackedMultipleRetVals.equal_range(F);
