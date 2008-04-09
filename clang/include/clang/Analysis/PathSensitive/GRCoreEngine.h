@@ -111,7 +111,7 @@ protected:
 public:
   /// ExecuteWorkList - Run the worklist algorithm for a maximum number of
   ///  steps.  Returns true if there is still simulation state on the worklist.
-  bool ExecuteWorkList(unsigned Steps = 1000000);
+  bool ExecuteWorkList(unsigned Steps);
   
   virtual ~GRCoreEngineImpl() {}
   
@@ -309,11 +309,10 @@ public:
   }
 };
 
-template<typename CHECKER>
+template<typename STATE>
 class GRBranchNodeBuilder {
-  typedef CHECKER                                CheckerTy; 
-  typedef typename CheckerTy::StateTy            StateTy;
-  typedef ExplodedGraph<CheckerTy>               GraphTy;
+  typedef STATE                                  StateTy;
+  typedef ExplodedGraph<StateTy>                 GraphTy;
   typedef typename GraphTy::NodeTy               NodeTy;
   
   GRBranchNodeBuilderImpl& NB;
@@ -392,11 +391,10 @@ public:
   inline void* getState() const { return Pred->State; }
 };
   
-template<typename CHECKER>
+template<typename STATE>
 class GRIndirectGotoNodeBuilder {
-  typedef CHECKER                                CheckerTy; 
-  typedef typename CheckerTy::StateTy            StateTy;
-  typedef ExplodedGraph<CheckerTy>               GraphTy;
+  typedef STATE                                  StateTy;
+  typedef ExplodedGraph<StateTy>                 GraphTy;
   typedef typename GraphTy::NodeTy               NodeTy;
 
   GRIndirectGotoNodeBuilderImpl& NB;
@@ -459,11 +457,10 @@ public:
   inline void* getState() const { return Pred->State; }
 };
 
-template<typename CHECKER>
+template<typename STATE>
 class GRSwitchNodeBuilder {
-  typedef CHECKER                                CheckerTy; 
-  typedef typename CheckerTy::StateTy            StateTy;
-  typedef ExplodedGraph<CheckerTy>               GraphTy;
+  typedef STATE                                  StateTy;
+  typedef ExplodedGraph<StateTy>                 GraphTy;
   typedef typename GraphTy::NodeTy               NodeTy;
   
   GRSwitchNodeBuilderImpl& NB;
@@ -492,21 +489,19 @@ public:
 };
 
   
-template<typename CHECKER>
+template<typename SUBENGINE>
 class GRCoreEngine : public GRCoreEngineImpl {
 public:
-  typedef CHECKER                                CheckerTy; 
-  typedef typename CheckerTy::StateTy            StateTy;
-  typedef ExplodedGraph<CheckerTy>               GraphTy;
+  typedef SUBENGINE                              SubEngineTy; 
+  typedef typename SubEngineTy::StateTy          StateTy;
+  typedef ExplodedGraph<StateTy>                 GraphTy;
   typedef typename GraphTy::NodeTy               NodeTy;
 
 protected:
-  // A local reference to the checker that avoids an indirect access
-  // via the Graph.
-  CheckerTy* Checker;  
+  SubEngineTy& SubEngine;
   
   virtual void* getInitialState() {
-    return getCheckerState().getInitialState();
+    return SubEngine.getInitialState();
   }
   
   virtual void* ProcessEOP(CFGBlock* Blk, void* State) {
@@ -516,44 +511,44 @@ protected:
   
   virtual void ProcessStmt(Stmt* S, GRStmtNodeBuilderImpl& BuilderImpl) {
     GRStmtNodeBuilder<StateTy> Builder(BuilderImpl);
-    Checker->ProcessStmt(S, Builder);
+    SubEngine.ProcessStmt(S, Builder);
   }
   
   virtual bool ProcessBlockEntrance(CFGBlock* Blk, void* State,
                                     GRBlockCounter BC) {    
-    return Checker->ProcessBlockEntrance(Blk,
-                                         static_cast<StateTy*>(State), BC);
+    return SubEngine.ProcessBlockEntrance(Blk, static_cast<StateTy*>(State),BC);
   }
 
   virtual void ProcessBranch(Expr* Condition, Stmt* Terminator,
                              GRBranchNodeBuilderImpl& BuilderImpl) {
-    GRBranchNodeBuilder<CHECKER> Builder(BuilderImpl);
-    Checker->ProcessBranch(Condition, Terminator, Builder);    
+    GRBranchNodeBuilder<StateTy> Builder(BuilderImpl);
+    SubEngine.ProcessBranch(Condition, Terminator, Builder);    
   }
   
   virtual void ProcessIndirectGoto(GRIndirectGotoNodeBuilderImpl& BuilderImpl) {
-    GRIndirectGotoNodeBuilder<CHECKER> Builder(BuilderImpl);
-    Checker->ProcessIndirectGoto(Builder);
+    GRIndirectGotoNodeBuilder<StateTy> Builder(BuilderImpl);
+    SubEngine.ProcessIndirectGoto(Builder);
   }
   
   virtual void ProcessSwitch(GRSwitchNodeBuilderImpl& BuilderImpl) {
-    GRSwitchNodeBuilder<CHECKER> Builder(BuilderImpl);
-    Checker->ProcessSwitch(Builder);
+    GRSwitchNodeBuilder<StateTy> Builder(BuilderImpl);
+    SubEngine.ProcessSwitch(Builder);
   }
   
 public:  
   /// Construct a GRCoreEngine object to analyze the provided CFG using
   ///  a DFS exploration of the exploded graph.
-  GRCoreEngine(CFG& cfg, Decl& cd, ASTContext& ctx)
+  GRCoreEngine(CFG& cfg, Decl& cd, ASTContext& ctx, SubEngineTy& subengine)
     : GRCoreEngineImpl(new GraphTy(cfg, cd, ctx), GRWorkList::MakeDFS()),
-      Checker(static_cast<GraphTy*>(G.get())->getCheckerState()) {}
+      SubEngine(subengine) {}
   
   /// Construct a GRCoreEngine object to analyze the provided CFG and to
   ///  use the provided worklist object to execute the worklist algorithm.
   ///  The GRCoreEngine object assumes ownership of 'wlist'.
-  GRCoreEngine(CFG& cfg, Decl& cd, ASTContext& ctx, GRWorkList* wlist)
+  GRCoreEngine(CFG& cfg, Decl& cd, ASTContext& ctx, GRWorkList* wlist,
+               SubEngineTy& subengine)
     : GRCoreEngineImpl(new GraphTy(cfg, cd, ctx), wlist),
-      Checker(static_cast<GraphTy*>(G.get())->getCheckerState()) {}
+      SubEngine(subengine) {}
   
   virtual ~GRCoreEngine() {}
   
@@ -561,11 +556,6 @@ public:
   GraphTy& getGraph() {
     return *static_cast<GraphTy*>(G.get());
   }
-  
-  /// getCheckerState - Returns the internal checker state.
-  CheckerTy& getCheckerState() {
-    return *Checker;
-  }  
   
   /// takeGraph - Returns the exploded graph.  Ownership of the graph is
   ///  transfered to the caller.

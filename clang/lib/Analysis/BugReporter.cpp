@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Analysis/PathSensitive/BugReporter.h"
+#include "clang/Analysis/PathSensitive/GRExprEngine.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/AST/ASTContext.h"
@@ -25,6 +26,9 @@
 using namespace clang;
 
 BugReporter::~BugReporter() {}
+BugType::~BugType() {}
+BugReport::~BugReport() {}
+ExplodedGraph<ValueState>& BugReporter::getGraph() { return Eng.getGraph(); }
 
 static inline Stmt* GetStmt(const ProgramPoint& P) {
   if (const PostStmt* PS = dyn_cast<PostStmt>(&P)) {
@@ -48,7 +52,7 @@ static inline Stmt* GetStmt(const CFGBlock* B) {
 
 
 PathDiagnosticPiece*
-BugDescription::getEndPath(ASTContext& Ctx, ExplodedNode<ValueState> *N) const {
+BugReport::getEndPath(ASTContext& Ctx, ExplodedNode<ValueState> *N) const {
   
   Stmt* S = GetStmt(N->getLocation());
   
@@ -56,7 +60,9 @@ BugDescription::getEndPath(ASTContext& Ctx, ExplodedNode<ValueState> *N) const {
     return NULL;
   
   FullSourceLoc L(S->getLocStart(), Ctx.getSourceManager());  
-  PathDiagnosticPiece* P = new PathDiagnosticPiece(L, getDescription());
+
+  PathDiagnosticPiece* P =
+    new PathDiagnosticPiece(L, getDescription());
   
   const SourceRange *Beg, *End;
   getRanges(Beg, End);
@@ -74,34 +80,38 @@ BugDescription::getEndPath(ASTContext& Ctx, ExplodedNode<ValueState> *N) const {
   return P;
 }
 
-void BugDescription::getRanges(const SourceRange*& beg,
-                               const SourceRange*& end) const {
+void BugReport::getRanges(const SourceRange*& beg,
+                          const SourceRange*& end) const {
   beg = NULL;
   end = NULL;
 }
 
-void BugReporter::GeneratePathDiagnostic(PathDiagnostic& PD, ASTContext& Ctx,
-                                         const BugDescription& B,
-                                         ExplodedGraph<GRExprEngine>& G,
-                                         ExplodedNode<ValueState>* N,
-                                         BugReporterHelper** BegHelpers,
-                                         BugReporterHelper** EndHelpers) {
-  
-  if (PathDiagnosticPiece* Piece = B.getEndPath(Ctx,N))
+PathDiagnosticPiece* BugReport::VisitNode(ExplodedNode<ValueState>* N,
+                                          ExplodedNode<ValueState>* PrevN,
+                                          ExplodedGraph<ValueState>& G,
+                                          ASTContext& Ctx) {
+  return NULL;
+}
+
+void BugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
+                                         BugReport& R,
+                                         ExplodedNode<ValueState>* N) {
+
+  if (PathDiagnosticPiece* Piece = R.getEndPath(Ctx,N))
     PD.push_back(Piece);
   else
     return;
   
   SourceManager& SMgr = Ctx.getSourceManager();
   
-  llvm::OwningPtr<ExplodedGraph<GRExprEngine> > GTrim(G.Trim(&N, &N+1));
+  llvm::OwningPtr<ExplodedGraph<ValueState> > GTrim(getGraph().Trim(&N, &N+1));
   
   // Find the sink in the trimmed graph.
   // FIXME: Should we eventually have a sink iterator?
   
   ExplodedNode<ValueState>* NewN = 0;
   
-  for (ExplodedGraph<GRExprEngine>::node_iterator
+  for (ExplodedGraph<ValueState>::node_iterator
         I = GTrim->nodes_begin(), E = GTrim->nodes_end(); I != E; ++I) {
     
     if (I->isSink()) {
@@ -292,13 +302,8 @@ void BugReporter::GeneratePathDiagnostic(PathDiagnostic& PD, ASTContext& Ctx,
       }
     }
     else
-      for (BugReporterHelper** I = BegHelpers; I != EndHelpers; ++I) {
-
-        PathDiagnosticPiece* piece = (*I)->VisitNode(N, NextNode, G, Ctx);
-
-        if (piece)
-          PD.push_front(piece);
-      }
+      if (PathDiagnosticPiece* piece = R.VisitNode(N, NextNode, *GTrim, Ctx))
+        PD.push_front(piece);
   }
 }
 
@@ -318,39 +323,30 @@ bool BugReporter::IsCached(ExplodedNode<ValueState>* N) {
   return false;
 }
 
-void BugReporter::EmitPathWarning(Diagnostic& Diag,
-                                  PathDiagnosticClient* PDC,
-                                  ASTContext& Ctx,
-                                  const BugDescription& B,
-                                  ExplodedGraph<GRExprEngine>& G,
-                                  ExplodedNode<ValueState>* N,
-                                  BugReporterHelper** BegHelpers,
-                                  BugReporterHelper** EndHelpers) {
+void BugReporter::EmitPathWarning(BugReport& R, ExplodedNode<ValueState>* N) {
   
-  if (!PDC) {
-    EmitWarning(Diag, Ctx, B, N);
+  if (!PD) {
+    EmitWarning(R, N);
     return;
   }
   
   if (IsCached(N))
     return;
   
-  PathDiagnostic D(B.getName());  
-  GeneratePathDiagnostic(D, Ctx, B, G, N, BegHelpers, EndHelpers);
+  PathDiagnostic D(R.getName());  
+  GeneratePathDiagnostic(D, R, N);
   
   if (!D.empty())  
-    PDC->HandlePathDiagnostic(D);
+    PD->HandlePathDiagnostic(D);
 }
 
 
-void BugReporter::EmitWarning(Diagnostic& Diag, ASTContext& Ctx,
-                              const BugDescription& B,
-                              ExplodedNode<ValueState>* N) {  
+void BugReporter::EmitWarning(BugReport& R, ExplodedNode<ValueState>* N) {  
   if (IsCached(N))
     return;
   
   std::ostringstream os;
-  os << "[CHECKER] " << B.getDescription();
+  os << "[CHECKER] " << R.getDescription();
   
   unsigned ErrorDiag = Diag.getCustomDiagID(Diagnostic::Warning,
                                             os.str().c_str());
@@ -362,8 +358,8 @@ void BugReporter::EmitWarning(Diagnostic& Diag, ASTContext& Ctx,
   if (!S)
     return;
   
-  SourceRange R = S->getSourceRange();
+  SourceRange Range = S->getSourceRange();
   
   Diag.Report(FullSourceLoc(S->getLocStart(), Ctx.getSourceManager()),
-              ErrorDiag, NULL, 0, &R, 1);   
+              ErrorDiag, NULL, 0, &Range, 1);   
 }

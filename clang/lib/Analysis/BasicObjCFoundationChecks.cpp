@@ -54,51 +54,61 @@ static const char* GetReceiverNameType(ObjCMessageExpr* ME) {
 
 namespace {
   
-class VISIBILITY_HIDDEN NilArg : public BugDescription {
-  std::string Msg;
-  const char* s;
-  SourceRange R;
+class VISIBILITY_HIDDEN NilArg : public BugType {
 public:
-  NilArg(ObjCMessageExpr* ME, unsigned Arg);
   virtual ~NilArg() {}
   
   virtual const char* getName() const {
     return "nil argument";
   }
   
-  virtual const char* getDescription() const {
-    return s;
-  }
-  
-  virtual void getRanges(const SourceRange*& beg,
-                         const SourceRange*& end) const {
-    beg = &R;
-    end = beg+1;
-  }
+  class Report : public BugReport {
+    std::string Msg;
+    const char* s;
+    SourceRange R;
+  public:
     
+    Report(NilArg& Desc, ObjCMessageExpr* ME, unsigned Arg) : BugReport(Desc) {
+      
+      Expr* E = ME->getArg(Arg);
+      R = E->getSourceRange();
+      
+      std::ostringstream os;
+      
+      os << "Argument to '" << GetReceiverNameType(ME) << "' method '"
+      << ME->getSelector().getName() << "' cannot be nil.";
+      
+      Msg = os.str();
+      s = Msg.c_str();      
+    }
+    
+    virtual ~Report() {}
+    
+    virtual PathDiagnosticPiece* getEndPath(ASTContext& Ctx,
+                                            ExplodedNode<ValueState> *N) const {
+      
+      Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();
+      
+      if (!S)
+        return NULL;
+      
+      FullSourceLoc L(S->getLocStart(), Ctx.getSourceManager());
+      PathDiagnosticPiece* P = new PathDiagnosticPiece(L, s);
+      
+      P->addRange(R);
+      
+      return P;
+    }
+  };  
 };
-  
-NilArg::NilArg(ObjCMessageExpr* ME, unsigned Arg) : s(NULL) {
-  
-  Expr* E = ME->getArg(Arg);
-  R = E->getSourceRange();
-  
-  std::ostringstream os;
-  
-  os << "Argument to '" << GetReceiverNameType(ME) << "' method '"
-     << ME->getSelector().getName() << "' cannot be nil.";
-  
-  Msg = os.str();
-  s = Msg.c_str();
-}
-  
+
   
 class VISIBILITY_HIDDEN BasicObjCFoundationChecks : public GRSimpleAPICheck {
-
+  NilArg Desc;
   ASTContext &Ctx;
   ValueStateManager* VMgr;
   
-  typedef std::vector<std::pair<NodeTy*,BugDescription*> > ErrorsTy;
+  typedef std::vector<std::pair<NodeTy*,BugReport*> > ErrorsTy;
   ErrorsTy Errors;
       
   RVal GetRVal(ValueState* St, Expr* E) { return VMgr->GetRVal(St, E); }
@@ -122,18 +132,16 @@ public:
   
   virtual bool Audit(ExplodedNode<ValueState>* N);
   
-  virtual void ReportResults(Diagnostic& Diag, PathDiagnosticClient* PD,
-                             ASTContext& Ctx, BugReporter& BR,
-                             ExplodedGraph<GRExprEngine>& G);
+  virtual void EmitWarnings(BugReporter& BR);
   
 private:
   
-  void AddError(NodeTy* N, BugDescription* D) {
-    Errors.push_back(std::make_pair(N, D));
+  void AddError(NodeTy* N, BugReport* R) {
+    Errors.push_back(std::make_pair(N, R));
   }
   
   void WarnNilArg(NodeTy* N, ObjCMessageExpr* ME, unsigned Arg) {
-    AddError(N, new NilArg(ME, Arg));
+    AddError(N, new NilArg::Report(Desc, ME, Arg));
   }
 };
   
@@ -186,13 +194,11 @@ static inline bool isNil(RVal X) {
 //===----------------------------------------------------------------------===//
 
 
-void BasicObjCFoundationChecks::ReportResults(Diagnostic& Diag,
-                                              PathDiagnosticClient* PD,
-                                              ASTContext& Ctx, BugReporter& BR,
-                                              ExplodedGraph<GRExprEngine>& G) {
-    
+void BasicObjCFoundationChecks::EmitWarnings(BugReporter& BR) {    
+                 
   for (ErrorsTy::iterator I=Errors.begin(), E=Errors.end(); I!=E; ++I)
-    BR.EmitPathWarning(Diag, PD, Ctx, *I->second, G, I->first);
+    
+    BR.EmitPathWarning(*I->second, I->first);
 }
 
 bool BasicObjCFoundationChecks::CheckNilArg(NodeTy* N, unsigned Arg) {

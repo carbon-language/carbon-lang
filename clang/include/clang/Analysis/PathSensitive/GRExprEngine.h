@@ -21,26 +21,30 @@
 #include "clang/Analysis/PathSensitive/GRSimpleAPICheck.h"
 #include "clang/Analysis/PathSensitive/GRTransferFuncs.h"
 
-namespace clang {
+namespace clang {  
   
-  class StatelessChecks;
+  class BugType;
+  class PathDiagnosticClient;
+  class Diagnostic;
   
 class GRExprEngine {
   
 public:
   typedef ValueState                  StateTy;
-  typedef ExplodedGraph<GRExprEngine> GraphTy;
+  typedef ExplodedGraph<StateTy>      GraphTy;
   typedef GraphTy::NodeTy             NodeTy;
   
   // Builders.
-  typedef GRStmtNodeBuilder<StateTy>               StmtNodeBuilder;
-  typedef GRBranchNodeBuilder<GRExprEngine>        BranchNodeBuilder;
-  typedef GRIndirectGotoNodeBuilder<GRExprEngine>  IndirectGotoNodeBuilder;
-  typedef GRSwitchNodeBuilder<GRExprEngine>        SwitchNodeBuilder;
-  typedef ExplodedNodeSet<StateTy>                 NodeSet;
+  typedef GRStmtNodeBuilder<StateTy>          StmtNodeBuilder;
+  typedef GRBranchNodeBuilder<StateTy>        BranchNodeBuilder;
+  typedef GRIndirectGotoNodeBuilder<StateTy>  IndirectGotoNodeBuilder;
+  typedef GRSwitchNodeBuilder<StateTy>        SwitchNodeBuilder;
+  typedef ExplodedNodeSet<StateTy>            NodeSet;
   
     
 protected:
+  GRCoreEngine<GRExprEngine> CoreEngine;
+  
   /// G - the simulation graph.
   GraphTy& G;
   
@@ -61,6 +65,10 @@ protected:
   /// TF - Object that represents a bundle of transfer functions
   ///  for manipulating and creating RVals.
   GRTransferFuncs* TF;
+  
+  /// BugTypes - Objects used for reporting bugs.
+  typedef std::vector<BugType*> BugTypeSet;
+  BugTypeSet BugTypes;
   
   /// SymMgr - Object that manages the symbol information.
   SymbolManager& SymMgr;
@@ -154,18 +162,11 @@ protected:
   UndefArgsTy MsgExprUndefArgs;
   
 public:
-  GRExprEngine(GraphTy& g) : 
-    G(g), Liveness(G.getCFG()),
-    Builder(NULL),
-    StateMgr(G.getContext(), G.getAllocator()),
-    BasicVals(StateMgr.getBasicValueFactory()),
-    TF(NULL), // FIXME.
-    SymMgr(StateMgr.getSymbolManager()),
-    StmtEntryNode(NULL), CleanedState(NULL), CurrentStmt(NULL) {
-    
-    // Compute liveness information.
-    Liveness.runOnCFG(G.getCFG());
-    Liveness.runOnAllBlocks(G.getCFG(), NULL, true);
+  GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx);
+  ~GRExprEngine();
+  
+  void ExecuteWorkList(unsigned Steps = 150000) {
+    CoreEngine.ExecuteWorkList(Steps);
   }
   
   /// getContext - Return the ASTContext associated with this analysis.
@@ -175,8 +176,11 @@ public:
   CFG& getCFG() { return G.getCFG(); }
   
   /// setTransferFunctions
-  void setTransferFunctions(GRTransferFuncs* tf) { TF = tf; }
-  void setTransferFunctions(GRTransferFuncs& tf) { TF = &tf; }
+  void setTransferFunctions(GRTransferFuncs* tf);
+
+  void setTransferFunctions(GRTransferFuncs& tf) {
+    setTransferFunctions(&tf);
+  }
   
   /// ViewGraph - Visualize the ExplodedGraph created by executing the
   ///  simulation.
@@ -187,6 +191,24 @@ public:
   /// getInitialState - Return the initial state used for the root vertex
   ///  in the ExplodedGraph.
   ValueState* getInitialState();
+  
+  GraphTy& getGraph() { return G; }
+  const GraphTy& getGraph() const { return G; }
+  
+  typedef BugTypeSet::iterator bug_type_iterator;
+  typedef BugTypeSet::const_iterator const_bug_type_iterator;
+  
+  bug_type_iterator bug_types_begin() { return BugTypes.begin(); }
+  bug_type_iterator bug_types_end() { return BugTypes.end(); }
+
+  const_bug_type_iterator bug_types_begin() const { return BugTypes.begin(); }
+  const_bug_type_iterator bug_types_end() const { return BugTypes.end(); }
+  
+  void Register(BugType* B) {
+    BugTypes.push_back(B);
+  }
+  
+  void EmitWarnings(Diagnostic& Diag, PathDiagnosticClient* PD);  
   
   bool isRetStackAddr(const NodeTy* N) const {
     return N->isSink() && RetsStackAddr.count(const_cast<NodeTy*>(N)) != 0;
@@ -317,13 +339,9 @@ public:
     return MsgExprChecks.end();
   }
   
-  void AddCallCheck(GRSimpleAPICheck* A) {
-    CallChecks.push_back(A);
-  }
+  void AddCallCheck(GRSimpleAPICheck* A);
   
-  void AddObjCMessageExprCheck(GRSimpleAPICheck* A) {
-    MsgExprChecks.push_back(A);
-  }
+  void AddObjCMessageExprCheck(GRSimpleAPICheck* A);
   
   /// ProcessStmt - Called by GRCoreEngine. Used to generate new successor
   ///  nodes by processing the 'effects' of a block-level statement.  

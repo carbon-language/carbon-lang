@@ -19,9 +19,6 @@
 #include "clang/Analysis/PathSensitive/ExplodedGraph.h"
 #include "llvm/ADT/SmallPtrSet.h"
 
-// FIXME: ExplodedGraph<> should be templated on state, not the checker engine.
-#include "clang/Analysis/PathSensitive/GRExprEngine.h"
-
 namespace clang {
   
 class PathDiagnostic;
@@ -29,61 +26,79 @@ class PathDiagnosticPiece;
 class PathDiagnosticClient;
 class ASTContext;
 class Diagnostic;
-
-class BugDescription {
+class BugReporter;
+class GRExprEngine;
+class ValueState;
+  
+class BugType {
 public:
-  BugDescription() {}
-  virtual ~BugDescription() {}
+  BugType() {}
+  virtual ~BugType();
   
   virtual const char* getName() const = 0;
+  virtual const char* getDescription() const { return getName(); }
+      
+  virtual void EmitWarnings(BugReporter& BR) {}
+};
   
-  virtual const char* getDescription() const = 0;
+class BugReport {
+  const BugType& Desc;  
+  
+public:
+  BugReport(const BugType& D) : Desc(D) {}
+  virtual ~BugReport();
+  
+  const BugType& getBugType() const { return Desc; }
+    
+  const char* getName() const { return getBugType().getName(); }
+  const char* getDescription() const { return getBugType().getDescription(); }
   
   virtual PathDiagnosticPiece* getEndPath(ASTContext& Ctx,
                                           ExplodedNode<ValueState> *N) const;
   
   virtual void getRanges(const SourceRange*& beg,
                          const SourceRange*& end) const;
-};
-  
-class BugReporterHelper {
-public:
-  virtual ~BugReporterHelper() {}
   
   virtual PathDiagnosticPiece* VisitNode(ExplodedNode<ValueState>* N,
                                          ExplodedNode<ValueState>* PrevN,
-                                         ExplodedGraph<GRExprEngine>& G,
-                                         ASTContext& Ctx) = 0;
+                                         ExplodedGraph<ValueState>& G,
+                                         ASTContext& Ctx);
 };
   
 class BugReporter {
   llvm::SmallPtrSet<void*,10> CachedErrors;
+  Diagnostic& Diag;
+  PathDiagnosticClient* PD;
+  ASTContext& Ctx;
+  GRExprEngine& Eng;
   
 public:
-  BugReporter() {}
+  BugReporter(Diagnostic& diag, PathDiagnosticClient* pd,
+              ASTContext& ctx, GRExprEngine& eng)
+  : Diag(diag), PD(pd), Ctx(ctx), Eng(eng) {}
+  
   ~BugReporter();
   
-  void EmitPathWarning(Diagnostic& Diag, PathDiagnosticClient* PDC,
-                       ASTContext& Ctx, const BugDescription& B,
-                       ExplodedGraph<GRExprEngine>& G,
-                       ExplodedNode<ValueState>* N,
-                       BugReporterHelper** BegHelpers = NULL,
-                       BugReporterHelper** EndHelpers = NULL);
+  Diagnostic& getDiagnostic() { return Diag; }
   
-  void EmitWarning(Diagnostic& Diag, ASTContext& Ctx,
-                   const BugDescription& B,
-                   ExplodedNode<ValueState>* N);
+  PathDiagnosticClient* getDiagnosticClient() { return PD; }
   
+  ASTContext& getContext() { return Ctx; }
+  
+  ExplodedGraph<ValueState>& getGraph();
 
-private:
+  GRExprEngine& getEngine() { return Eng; }
+  
+  void EmitPathWarning(BugReport& R, ExplodedNode<ValueState>* N);
+  
+  void EmitWarning(BugReport& R, ExplodedNode<ValueState>* N);
+  
+  void clearCache() { CachedErrors.clear(); }
+  
   bool IsCached(ExplodedNode<ValueState>* N);
   
-  void GeneratePathDiagnostic(PathDiagnostic& PD, ASTContext& Ctx,
-                              const BugDescription& B,
-                              ExplodedGraph<GRExprEngine>& G,
-                              ExplodedNode<ValueState>* N,
-                              BugReporterHelper** BegHelpers = NULL,
-                              BugReporterHelper** EndHelpers = NULL);
+  void GeneratePathDiagnostic(PathDiagnostic& PD, BugReport& R,
+                              ExplodedNode<ValueState>* N);
 };
   
 } // end clang namespace

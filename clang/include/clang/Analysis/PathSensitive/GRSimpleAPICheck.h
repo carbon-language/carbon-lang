@@ -33,9 +33,7 @@ class GRSimpleAPICheck : public GRAuditor<ValueState> {
 public:
   GRSimpleAPICheck() {}
   virtual ~GRSimpleAPICheck() {}
-  virtual void ReportResults(Diagnostic& Diag, PathDiagnosticClient* PD,
-                             ASTContext& Ctx, BugReporter& BR,
-                             ExplodedGraph<GRExprEngine>& G) = 0;
+  virtual void EmitWarnings(BugReporter& BR) = 0;
 };
 
 } // end namespace clang

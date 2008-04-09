@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
+#include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/Streams.h"
 
@@ -39,6 +40,67 @@ using llvm::dyn_cast;
 using llvm::cast;
 using llvm::APSInt;
 
+
+GRExprEngine::GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx)
+  : CoreEngine(cfg, CD, Ctx, *this), 
+    G(CoreEngine.getGraph()),
+    Liveness(G.getCFG()),
+    Builder(NULL),
+    StateMgr(G.getContext(), G.getAllocator()),
+    BasicVals(StateMgr.getBasicValueFactory()),
+    TF(NULL), // FIXME
+    SymMgr(StateMgr.getSymbolManager()),
+    StmtEntryNode(NULL), CleanedState(NULL), CurrentStmt(NULL) {
+  
+  // Compute liveness information.
+  Liveness.runOnCFG(G.getCFG());
+  Liveness.runOnAllBlocks(G.getCFG(), NULL, true);
+}
+
+GRExprEngine::~GRExprEngine() {
+  for (BugTypeSet::iterator I = BugTypes.begin(), E = BugTypes.end(); I!=E; ++I)
+    delete *I;
+    
+  for (SimpleChecksTy::iterator I = CallChecks.begin(), E = CallChecks.end();
+       I != E; ++I)
+    delete *I;
+  
+  for (SimpleChecksTy::iterator I=MsgExprChecks.begin(), E=MsgExprChecks.end();
+       I != E; ++I)
+    delete *I;  
+}
+
+void GRExprEngine::EmitWarnings(Diagnostic& Diag, PathDiagnosticClient* PD) {
+  for (bug_type_iterator I = bug_types_begin(), E = bug_types_end(); I!=E; ++I){
+    BugReporter BR(Diag, PD, getContext(), *this);
+    (*I)->EmitWarnings(BR);
+  }
+  
+  for (SimpleChecksTy::iterator I = CallChecks.begin(), E = CallChecks.end();
+       I != E; ++I) {
+    BugReporter BR(Diag, PD, getContext(), *this);
+    (*I)->EmitWarnings(BR);
+  }
+  
+  for (SimpleChecksTy::iterator I=MsgExprChecks.begin(), E=MsgExprChecks.end();
+       I != E; ++I) {
+    BugReporter BR(Diag, PD, getContext(), *this);
+    (*I)->EmitWarnings(BR);
+  }
+}
+
+void GRExprEngine::setTransferFunctions(GRTransferFuncs* tf) {
+  TF = tf;
+  TF->RegisterChecks(*this);
+}
+
+void GRExprEngine::AddCallCheck(GRSimpleAPICheck* A) {
+  CallChecks.push_back(A);
+}
+
+void GRExprEngine::AddObjCMessageExprCheck(GRSimpleAPICheck* A) {
+  MsgExprChecks.push_back(A);
+}
 
 ValueState* GRExprEngine::getInitialState() {
 

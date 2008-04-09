@@ -278,17 +278,14 @@ public:
   
 };
   
-template <typename CHECKER>
+template <typename STATE>
 class ExplodedGraph : public ExplodedGraphImpl {
 public:
-  typedef CHECKER                     CheckerTy;
-  typedef typename CHECKER::StateTy   StateTy;
+  typedef STATE                       StateTy;
   typedef ExplodedNode<StateTy>       NodeTy;  
   typedef llvm::FoldingSet<NodeTy>    AllNodesTy;
   
 protected:  
-  llvm::OwningPtr<CheckerTy> CheckerState;
-
   /// Nodes - The nodes in the graph.
   AllNodesTy Nodes;
   
@@ -305,12 +302,7 @@ protected:
     
 public:
   ExplodedGraph(CFG& c, Decl& cd, ASTContext& ctx)
-    : ExplodedGraphImpl(c, cd, ctx), CheckerState(new CheckerTy(*this)) {}
-  
-  /// getCheckerState - Returns the internal checker state associated
-  ///  with the exploded graph.  Ownership remains with the ExplodedGraph
-  ///  objecct.
-  CheckerTy* getCheckerState() const { return CheckerState.get(); }
+    : ExplodedGraphImpl(c, cd, ctx) {}
   
   /// getNode - Retrieve the node associated with a (Location,State) pair,
   ///  where the 'Location' is a ProgramPoint in the CFG.  If no node for

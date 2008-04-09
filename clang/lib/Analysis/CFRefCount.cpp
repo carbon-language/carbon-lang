@@ -792,7 +792,7 @@ CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
 
 namespace {
   
-class VISIBILITY_HIDDEN UseAfterRelease : public BugDescription {
+class VISIBILITY_HIDDEN UseAfterRelease : public BugType {
 
 public:
   virtual const char* getName() const {
@@ -804,7 +804,7 @@ public:
   }
 };
   
-class VISIBILITY_HIDDEN BadRelease : public BugDescription {
+class VISIBILITY_HIDDEN BadRelease : public BugType {
   
 public:
   virtual const char* getName() const {
@@ -831,14 +831,12 @@ void CheckCFRefCount(CFG& cfg, Decl& CD, ASTContext& Ctx,
     return;
   
   // FIXME: Refactor some day so this becomes a single function invocation.
-  
-  GRCoreEngine<GRExprEngine> Eng(cfg, CD, Ctx);
-  GRExprEngine* CS = &Eng.getCheckerState();
+  GRExprEngine Eng(cfg, CD, Ctx);
   CFRefCount TF;
-  CS->setTransferFunctions(TF);
+  Eng.setTransferFunctions(TF);
   Eng.ExecuteWorkList();
   
-  // Emit warnings.
+  // FIXME: Emit warnings.
 
 }
 
