@@ -246,21 +246,24 @@ ConstantInt *ConstantInt::get(const APInt& V) {
 //                                ConstantFP
 //===----------------------------------------------------------------------===//
 
+static const fltSemantics *TypeToFloatSemantics(const Type *Ty) {
+  if (Ty == Type::FloatTy)
+    return &APFloat::IEEEsingle;
+  if (Ty == Type::DoubleTy)
+    return &APFloat::IEEEdouble;
+  if (Ty == Type::X86_FP80Ty)
+    return &APFloat::x87DoubleExtended;
+  else if (Ty == Type::FP128Ty)
+    return &APFloat::IEEEquad;
+  
+  assert(Ty == Type::PPC_FP128Ty && "Unknown FP format");
+  return &APFloat::PPCDoubleDouble;
+}
+
 ConstantFP::ConstantFP(const Type *Ty, const APFloat& V)
   : Constant(Ty, ConstantFPVal, 0, 0), Val(V) {
-  // temporary
-  if (Ty==Type::FloatTy)
-    assert(&V.getSemantics()==&APFloat::IEEEsingle);
-  else if (Ty==Type::DoubleTy)
-    assert(&V.getSemantics()==&APFloat::IEEEdouble);
-  else if (Ty==Type::X86_FP80Ty)
-    assert(&V.getSemantics()==&APFloat::x87DoubleExtended);
-  else if (Ty==Type::FP128Ty)
-    assert(&V.getSemantics()==&APFloat::IEEEquad);
-  else if (Ty==Type::PPC_FP128Ty)
-    assert(&V.getSemantics()==&APFloat::PPCDoubleDouble);
-  else
-    assert(0);
+  assert(&V.getSemantics() == TypeToFloatSemantics(Ty) &&
+         "FP type Mismatch");
 }
 
 bool ConstantFP::isNullValue() const {
@@ -333,6 +336,15 @@ ConstantFP *ConstantFP::get(const APFloat &V) {
   }
   
   return Slot = new ConstantFP(Ty, V);
+}
+
+/// get() - This returns a constant fp for the specified value in the
+/// specified type.  This should only be used for simple constant values like
+/// 2.0/1.0 etc, that are known-valid both as double and as the target format.
+ConstantFP *ConstantFP::get(const Type *Ty, double V) {
+  APFloat FV(V);
+  FV.convert(*TypeToFloatSemantics(Ty), APFloat::rmNearestTiesToEven);
+  return get(FV);
 }
 
 //===----------------------------------------------------------------------===//
