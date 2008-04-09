@@ -30,3 +30,8 @@ define float @test4f(float %X) {
 	%Y = call float @powf( float %X, float 2.0)
 	ret float %Y
 }
+
+define float @test5f(float %X) {
+	%Y = call float @powf(float 2.0, float %X)  ;; exp2
+	ret float %Y
+}

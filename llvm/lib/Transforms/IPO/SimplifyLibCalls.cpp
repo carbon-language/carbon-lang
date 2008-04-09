@@ -328,18 +328,36 @@ public:
     return memcpy_func;
   }
 
-  Constant *getUnaryFloatFunction(const char *Name, Constant *&Cache) {
-    if (!Cache)
-      Cache = M->getOrInsertFunction(Name, Type::FloatTy, Type::FloatTy, NULL);
-    return Cache;
+  Constant *getUnaryFloatFunction(const char *BaseName, const Type *T = 0) {
+    if (T == 0) T = Type::FloatTy;
+    
+    char NameBuffer[20];
+    const char *Name;
+    if (T == Type::DoubleTy)
+      Name = BaseName;              // floor
+    else {
+      Name = NameBuffer;
+      unsigned NameLen = strlen(BaseName);
+      assert(NameLen < sizeof(NameBuffer)-2 && "Buffer too small");
+      memcpy(NameBuffer, BaseName, NameLen);
+      if (T == Type::FloatTy)
+        NameBuffer[NameLen] = 'f';  // floorf
+      else
+        NameBuffer[NameLen] = 'l';  // floorl
+      NameBuffer[NameLen+1] = 0;
+    }
+    
+    return M->getOrInsertFunction(Name, T, T, NULL);
   }
   
-  Constant *get_floorf() { return getUnaryFloatFunction("floorf", floorf_func);}
-  Constant *get_ceilf()  { return getUnaryFloatFunction( "ceilf",  ceilf_func);}
-  Constant *get_roundf() { return getUnaryFloatFunction("roundf", roundf_func);}
-  Constant *get_rintf()  { return getUnaryFloatFunction( "rintf",  rintf_func);}
-  Constant *get_nearbyintf() { return getUnaryFloatFunction("nearbyintf",
-                                                            nearbyintf_func); }
+  Constant *get_floorf() { return getUnaryFloatFunction("floor"); }
+  Constant *get_ceilf()  { return getUnaryFloatFunction( "ceil"); }
+  Constant *get_roundf() { return getUnaryFloatFunction("round"); }
+  Constant *get_rintf()  { return getUnaryFloatFunction( "rint"); }
+  Constant *get_nearbyintf() { return getUnaryFloatFunction("nearbyint"); }
+
+  
+  
 private:
   /// @brief Reset our cached data for a new Module
   void reset(Module& mod) {
@@ -355,11 +373,6 @@ private:
     sqrt_func   = 0;
     strcpy_func = 0;
     strlen_func = 0;
-    floorf_func = 0;
-    ceilf_func = 0;
-    roundf_func = 0;
-    rintf_func = 0;
-    nearbyintf_func = 0;
   }
 
 private:
@@ -369,8 +382,6 @@ private:
   Constant *memcpy_func, *memchr_func;
   Constant *sqrt_func;
   Constant *strcpy_func, *strlen_func;
-  Constant *floorf_func, *ceilf_func, *roundf_func;
-  Constant *rintf_func, *nearbyintf_func;
   Module *M;             ///< Cached Module
   TargetData *TD;        ///< Cached TargetData
 };
@@ -1154,6 +1165,11 @@ public:
     if (ConstantFP *Op1C = dyn_cast<ConstantFP>(Op1)) {
       if (Op1C->isExactlyValue(1.0)) // pow(1.0, x) -> 1.0
         return ReplaceCallWith(CI, Op1C);
+      if (Op1C->isExactlyValue(2.0)) {// pow(2.0, x) -> exp2(x)
+        Value *Exp2 = SLC.getUnaryFloatFunction("exp2", CI->getType());
+        Value *Res = CallInst::Create(Exp2, Op2, CI->getName()+"exp2", CI);
+        return ReplaceCallWith(CI, Res);
+      }
     }
     
     ConstantFP *Op2C = dyn_cast<ConstantFP>(Op2);
