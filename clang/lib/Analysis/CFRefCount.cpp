@@ -16,9 +16,12 @@
 #include "clang/Analysis/PathSensitive/ValueState.h"
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/Analysis/LocalCheckers.h"
+#include "clang/Analysis/PathDiagnostic.h"
+#include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/ImmutableMap.h"
+#include "llvm/Support/Compiler.h"
 #include <ostream>
 
 using namespace clang;
@@ -511,6 +514,17 @@ public:
                         GRStmtNodeBuilder<ValueState>& Builder,
                         CallExpr* CE, LVal L,
                         ExplodedNode<ValueState>* Pred);  
+  
+  // Error iterators.
+
+  typedef UseAfterReleasesTy::iterator use_after_iterator;  
+  typedef ReleasesNotOwnedTy::iterator bad_release_iterator;
+  
+  use_after_iterator begin_use_after() { return UseAfterReleases.begin(); }
+  use_after_iterator end_use_after() { return UseAfterReleases.end(); }
+  
+  bad_release_iterator begin_bad_release() { return ReleasesNotOwned.begin(); }
+  bad_release_iterator end_bad_release() { return ReleasesNotOwned.end(); }
 };
 
 } // end anonymous namespace
@@ -771,26 +785,61 @@ CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
   return RefBFactory.Add(B, sym, V);
 }
 
+
+//===----------------------------------------------------------------------===//
+// Bug Descriptions.
+//===----------------------------------------------------------------------===//
+
+namespace {
+  
+class VISIBILITY_HIDDEN UseAfterRelease : public BugDescription {
+
+public:
+  virtual const char* getName() const {
+    return "(CoreFoundation) use-after-release";
+  }
+  virtual const char* getDescription() const {
+    return "(CoreFoundation) Reference-counted object is used"
+           " after it is released.";
+  }
+};
+  
+class VISIBILITY_HIDDEN BadRelease : public BugDescription {
+  
+public:
+  virtual const char* getName() const {
+    return "(CoreFoundation) release of non-owned object";
+  }
+  virtual const char* getDescription() const {
+    return "Incorrect decrement of reference count of CoreFoundation object:\n"
+           "The object is not owned at this point by the caller.";
+  }
+};
+  
+} // end anonymous namespace
+
 //===----------------------------------------------------------------------===//
 // Driver for the CFRefCount Checker.
 //===----------------------------------------------------------------------===//
 
 namespace clang {
   
-  void CheckCFRefCount(CFG& cfg, Decl& CD, ASTContext& Ctx,
-                       Diagnostic& Diag, PathDiagnosticClient* PD) {
-    
-    if (Diag.hasErrorOccurred())
-      return;
-    
-    // FIXME: Refactor some day so this becomes a single function invocation.
-    
-    GRCoreEngine<GRExprEngine> Eng(cfg, CD, Ctx);
-    GRExprEngine* CS = &Eng.getCheckerState();
-    CFRefCount TF;
-    CS->setTransferFunctions(TF);
-    Eng.ExecuteWorkList(20000);
-    
-  }
+void CheckCFRefCount(CFG& cfg, Decl& CD, ASTContext& Ctx,
+                     Diagnostic& Diag, PathDiagnosticClient* PD) {
   
+  if (Diag.hasErrorOccurred())
+    return;
+  
+  // FIXME: Refactor some day so this becomes a single function invocation.
+  
+  GRCoreEngine<GRExprEngine> Eng(cfg, CD, Ctx);
+  GRExprEngine* CS = &Eng.getCheckerState();
+  CFRefCount TF;
+  CS->setTransferFunctions(TF);
+  Eng.ExecuteWorkList();
+  
+  // Emit warnings.
+
+}
+
 } // end clang namespace
