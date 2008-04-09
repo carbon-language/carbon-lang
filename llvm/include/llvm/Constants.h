@@ -251,16 +251,13 @@ public:
   /// As such, this method can be used to do an exact bit-for-bit comparison of
   /// two floating point values.  The version with a double operand is retained
   /// because it's so convenient to write isExactlyValue(2.0), but please use
-  /// it only for constants.
+  /// it only for simple constants.
   bool isExactlyValue(const APFloat& V) const;
 
   bool isExactlyValue(double V) const {
-    if (&Val.getSemantics() == &APFloat::IEEEdouble)
-      return isExactlyValue(APFloat(V));
-    else if (&Val.getSemantics() == &APFloat::IEEEsingle)
-      return isExactlyValue(APFloat((float)V));
-    assert(0);
-    return false;
+    APFloat FV(V);
+    FV.convert(Val.getSemantics(), APFloat::rmNearestTiesToEven);
+    return isExactlyValue(FV);
   }
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantFP *) { return true; }
