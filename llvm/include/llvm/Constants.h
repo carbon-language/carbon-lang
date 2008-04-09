@@ -237,6 +237,11 @@ public:
     return get(V);
   }
 
+  /// get() - This returns a constant fp for the specified value in the
+  /// specified type.  This should only be used for simple constant values like
+  /// 2.0/1.0 etc, that are known-valid both as double and as the target format.
+  ConstantFP *get(const Type *Ty, double V);
+
   /// isValueValidForType - return true if Ty is big enough to represent V.
   static bool isValueValidForType(const Type *Ty, const APFloat& V);
   inline const APFloat& getValueAPF() const { return Val; }
