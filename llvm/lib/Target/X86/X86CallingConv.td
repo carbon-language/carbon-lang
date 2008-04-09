@@ -24,7 +24,7 @@ class CCIfSubtarget<string F, CCAction A>
 def RetCC_X86Common : CallingConv<[
   // Scalar values are returned in AX first, then DX.
   CCIfType<[i8] , CCAssignToReg<[AL]>>,
-  CCIfType<[i16], CCAssignToReg<[AX]>>,
+  CCIfType<[i16], CCAssignToReg<[AX, DX]>>,
   CCIfType<[i32], CCAssignToReg<[EAX, EDX]>>,
   CCIfType<[i64], CCAssignToReg<[RAX, RDX]>>,
   
