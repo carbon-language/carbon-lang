@@ -31,6 +31,7 @@
 		35CFFE000CA1CBCB00E6F2BE /* StmtViz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35CFFDFF0CA1CBCB00E6F2BE /* StmtViz.cpp */; };
 		35D55B270D81D8C60092E734 /* BasicValueFactory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35D55B240D81D8C60092E734 /* BasicValueFactory.cpp */; };
 		35D55B280D81D8C60092E734 /* CFRefCount.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35D55B250D81D8C60092E734 /* CFRefCount.cpp */; };
+		35EF67700DAD1D2C00B19414 /* SemaDeclCXX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35EF676F0DAD1D2C00B19414 /* SemaDeclCXX.cpp */; };
 		35F8D0D60D9B82CD00D91C5E /* BasicObjCFoundationChecks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35F8D0D50D9B82CD00D91C5E /* BasicObjCFoundationChecks.cpp */; };
 		72D16C1F0D9975C400E6DA4A /* HTMLRewrite.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 72D16C1E0D9975C400E6DA4A /* HTMLRewrite.cpp */; };
 		72D16C220D9975EA00E6DA4A /* HTMLPrint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 72D16C210D9975EA00E6DA4A /* HTMLPrint.cpp */; };
@@ -291,6 +292,7 @@
 		35D55B240D81D8C60092E734 /* BasicValueFactory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BasicValueFactory.cpp; path = lib/Analysis/BasicValueFactory.cpp; sourceTree = "<group>"; };
 		35D55B250D81D8C60092E734 /* CFRefCount.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CFRefCount.cpp; path = lib/Analysis/CFRefCount.cpp; sourceTree = "<group>"; };
 		35D55B290D81D8E50092E734 /* BasicValueFactory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BasicValueFactory.h; path = clang/Analysis/PathSensitive/BasicValueFactory.h; sourceTree = "<group>"; };
+		35EF676F0DAD1D2C00B19414 /* SemaDeclCXX.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SemaDeclCXX.cpp; path = lib/Sema/SemaDeclCXX.cpp; sourceTree = "<group>"; };
 		35F2BE7B0DAC2963006E7668 /* HTMLRewrite.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HTMLRewrite.h; path = clang/Rewrite/HTMLRewrite.h; sourceTree = "<group>"; };
 		35F8D0CA0D9B7E8200D91C5E /* GRSimpleAPICheck.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GRSimpleAPICheck.h; path = clang/Analysis/PathSensitive/GRSimpleAPICheck.h; sourceTree = "<group>"; };
 		35F8D0CB0D9B7E8200D91C5E /* GRAuditor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GRAuditor.h; path = clang/Analysis/PathSensitive/GRAuditor.h; sourceTree = "<group>"; };
@@ -652,6 +654,7 @@
 				DE67E7160C020EE400F66BC5 /* Sema.cpp */,
 				DEF2F00F0C6CFED5000C4259 /* SemaChecking.cpp */,
 				DE67E7120C020ED900F66BC5 /* SemaDecl.cpp */,
+				35EF676F0DAD1D2C00B19414 /* SemaDeclCXX.cpp */,
 				DE704B250D0FBEBE009C7762 /* SemaDeclObjC.cpp */,
 				DE67E7100C020ED400F66BC5 /* SemaExpr.cpp */,
 				DE67E70E0C020ECF00F66BC5 /* SemaExprCXX.cpp */,
@@ -1049,6 +1052,7 @@
 				35F8D0D60D9B82CD00D91C5E /* BasicObjCFoundationChecks.cpp in Sources */,
 				3593790A0DA48ABA0043B19C /* BugReporter.cpp in Sources */,
 				DECAB0950DA684C500E13CCB /* CGObjCEtoile.cpp in Sources */,
+				35EF67700DAD1D2C00B19414 /* SemaDeclCXX.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
