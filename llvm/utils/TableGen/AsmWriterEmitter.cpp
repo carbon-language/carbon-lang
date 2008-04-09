@@ -536,7 +536,7 @@ void AsmWriterEmitter::run(std::ostream &O) {
   }
   
   // Figure out how many bits we used for the string index.
-  unsigned AsmStrBits = Log2_32_Ceil(MaxStringIdx);
+  unsigned AsmStrBits = Log2_32_Ceil(MaxStringIdx+1);
   
   // To reduce code size, we compactify common instructions into a few bits
   // in the opcode-indexed table.
