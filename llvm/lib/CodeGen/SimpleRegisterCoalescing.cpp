@@ -1655,6 +1655,8 @@ SimpleRegisterCoalescing::TurnCopyIntoImpDef(MachineBasicBlock::iterator &I,
   LiveInterval &SrcInt = li_->getInterval(SrcReg);
   if (!SrcInt.empty())
     return false;
+  if (!li_->hasInterval(DstReg))
+    return false;
   LiveInterval &DstInt = li_->getInterval(DstReg);
   LiveInterval::iterator DstLR = DstInt.FindLiveRangeContaining(CopyIdx);
   DstInt.removeValNo(DstLR->valno);
