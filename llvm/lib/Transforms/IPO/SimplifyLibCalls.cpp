@@ -1133,52 +1133,68 @@ LLVMMemSetOptimization MemSet64Optimizer("llvm.memset.i64");
 struct VISIBILITY_HIDDEN PowOptimization : public LibCallOptimization {
 public:
   /// @brief Default Constructor
-  PowOptimization() : LibCallOptimization("pow",
+  PowOptimization(const char *Name) : LibCallOptimization(Name,
       "Number of 'pow' calls simplified") {}
 
   /// @brief Make sure that the "pow" function has the right prototype
-  virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC){
-    // Just make sure this has 2 arguments
-    return (f->arg_size() == 2);
+  virtual bool ValidateCalledFunction(const Function *F, SimplifyLibCalls &SLC){
+    // Just make sure this has 2 arguments of the same FP type, which match the
+    // result type.
+    const FunctionType *FT = F->getFunctionType();
+    return FT->getNumParams() == 2 && 
+          FT->getParamType(0) == FT->getParamType(1) &&
+          FT->getParamType(0) == FT->getReturnType() &&
+          FT->getParamType(0)->isFloatingPoint();
   }
 
   /// @brief Perform the pow optimization.
-  virtual bool OptimizeCall(CallInst *ci, SimplifyLibCalls &SLC) {
-    const Type *Ty = cast<Function>(ci->getOperand(0))->getReturnType();
-    if (Ty!=Type::FloatTy && Ty!=Type::DoubleTy)
+  virtual bool OptimizeCall(CallInst *CI, SimplifyLibCalls &SLC) {
+    const Type *Ty = CI->getType();
+    if (Ty != Type::FloatTy && Ty != Type::DoubleTy)
       return false;   // FIXME long double not yet supported
-    Value* base = ci->getOperand(1);
-    Value* expn = ci->getOperand(2);
-    if (ConstantFP *Op1 = dyn_cast<ConstantFP>(base)) {
-      if (Op1->isExactlyValue(1.0)) // pow(1.0,x) -> 1.0
-        return ReplaceCallWith(ci, ConstantFP::get(Ty, 
+    
+    Value *Op1 = CI->getOperand(1);
+    Value *Op2 = CI->getOperand(2);
+    if (ConstantFP *Op1C = dyn_cast<ConstantFP>(Op1)) {
+      if (Op1C->isExactlyValue(1.0)) // pow(1.0, x) -> 1.0
+        return ReplaceCallWith(CI, Op1C);
+    }
+    
+    ConstantFP *Op2C = dyn_cast<ConstantFP>(Op2);
+    if (Op2C == 0) return false;
+    
+    if (Op2C->getValueAPF().isZero()) {
+      // pow(x, 0.0) -> 1.0
+      return ReplaceCallWith(CI, ConstantFP::get(Ty,
           Ty==Type::FloatTy ? APFloat(1.0f) : APFloat(1.0)));
-    }  else if (ConstantFP* Op2 = dyn_cast<ConstantFP>(expn)) {
-      if (Op2->getValueAPF().isZero()) {
-        // pow(x,0.0) -> 1.0
-        return ReplaceCallWith(ci, ConstantFP::get(Ty,
-            Ty==Type::FloatTy ? APFloat(1.0f) : APFloat(1.0)));
-      } else if (Op2->isExactlyValue(0.5)) {
-        // pow(x,0.5) -> sqrt(x)
-        CallInst* sqrt_inst = CallInst::Create(SLC.get_sqrt(), base,
-                                               ci->getName()+".pow",ci);
-        return ReplaceCallWith(ci, sqrt_inst);
-      } else if (Op2->isExactlyValue(1.0)) {
-        // pow(x,1.0) -> x
-        return ReplaceCallWith(ci, base);
-      } else if (Op2->isExactlyValue(-1.0)) {
-        // pow(x,-1.0)    -> 1.0/x
-        Value *div_inst = 
-          BinaryOperator::createFDiv(ConstantFP::get(Ty,
-            Ty==Type::FloatTy ? APFloat(1.0f) : APFloat(1.0)), 
-            base, ci->getName()+".pow", ci);
-        return ReplaceCallWith(ci, div_inst);
-      }
+    } else if (Op2C->isExactlyValue(0.5)) {
+      // pow(x, 0.5) -> sqrt(x)
+      Value *Sqrt = CallInst::Create(SLC.get_sqrt(), Op1, "sqrt", CI);
+      return ReplaceCallWith(CI, Sqrt);
+    } else if (Op2C->isExactlyValue(1.0)) {
+      // pow(x, 1.0) -> x
+      return ReplaceCallWith(CI, Op1);
+    } else if (Op2C->isExactlyValue(2.0)) {
+      // pow(x, 2.0) -> x*x
+      Value *Sq = BinaryOperator::createMul(Op1, Op1, "pow2", CI);
+      return ReplaceCallWith(CI, Sq);
+    } else if (Op2C->isExactlyValue(-1.0)) {
+      // pow(x, -1.0) -> 1.0/x
+      Value *div_inst = 
+        BinaryOperator::createFDiv(ConstantFP::get(Ty,
+          Ty==Type::FloatTy ? APFloat(1.0f) : APFloat(1.0)), 
+          Op1, CI->getName()+".pow", CI);
+      return ReplaceCallWith(CI, div_inst);
     }
     return false; // opt failed
   }
-} PowOptimizer;
+};
 
+PowOptimization PowFOptimizer("powf");
+PowOptimization PowOptimizer("pow");
+PowOptimization PowLOptimizer("powl");
+ 
+  
 /// This LibCallOptimization will simplify calls to the "printf" library
 /// function. It looks for cases where the result of printf is not used and the
 /// operation can be reduced to something simpler.
