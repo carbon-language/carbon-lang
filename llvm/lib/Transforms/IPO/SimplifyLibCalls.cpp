@@ -1149,10 +1149,6 @@ public:
 
   /// @brief Perform the pow optimization.
   virtual bool OptimizeCall(CallInst *CI, SimplifyLibCalls &SLC) {
-    const Type *Ty = CI->getType();
-    if (Ty != Type::FloatTy && Ty != Type::DoubleTy)
-      return false;   // FIXME long double not yet supported
-    
     Value *Op1 = CI->getOperand(1);
     Value *Op2 = CI->getOperand(2);
     if (ConstantFP *Op1C = dyn_cast<ConstantFP>(Op1)) {
@@ -1165,8 +1161,7 @@ public:
     
     if (Op2C->getValueAPF().isZero()) {
       // pow(x, 0.0) -> 1.0
-      return ReplaceCallWith(CI, ConstantFP::get(Ty,
-          Ty==Type::FloatTy ? APFloat(1.0f) : APFloat(1.0)));
+      return ReplaceCallWith(CI, ConstantFP::get(CI->getType(), 1.0));
     } else if (Op2C->isExactlyValue(0.5)) {
       // pow(x, 0.5) -> sqrt(x)
       Value *Sqrt = CallInst::Create(SLC.get_sqrt(), Op1, "sqrt", CI);
@@ -1180,11 +1175,9 @@ public:
       return ReplaceCallWith(CI, Sq);
     } else if (Op2C->isExactlyValue(-1.0)) {
       // pow(x, -1.0) -> 1.0/x
-      Value *div_inst = 
-        BinaryOperator::createFDiv(ConstantFP::get(Ty,
-          Ty==Type::FloatTy ? APFloat(1.0f) : APFloat(1.0)), 
-          Op1, CI->getName()+".pow", CI);
-      return ReplaceCallWith(CI, div_inst);
+      Value *R = BinaryOperator::createFDiv(ConstantFP::get(CI->getType(), 1.0),
+                                            Op1, CI->getName()+".pow", CI);
+      return ReplaceCallWith(CI, R);
     }
     return false; // opt failed
   }
