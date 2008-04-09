@@ -83,7 +83,9 @@ void BugDescription::getRanges(const SourceRange*& beg,
 void BugReporter::GeneratePathDiagnostic(PathDiagnostic& PD, ASTContext& Ctx,
                                          const BugDescription& B,
                                          ExplodedGraph<GRExprEngine>& G,
-                                         ExplodedNode<ValueState>* N) {
+                                         ExplodedNode<ValueState>* N,
+                                         BugReporterHelper** BegHelpers,
+                                         BugReporterHelper** EndHelpers) {
   
   if (PathDiagnosticPiece* Piece = B.getEndPath(Ctx,N))
     PD.push_back(Piece);
@@ -112,11 +114,15 @@ void BugReporter::GeneratePathDiagnostic(PathDiagnostic& PD, ASTContext& Ctx,
   assert (NewN->getLocation() == N->getLocation());
   
   N = NewN;
-
-  while (!N->pred_empty()) {
+  
+  ExplodedNode<ValueState>* NextNode = N->pred_empty() 
+                                       ? NULL : *(N->pred_begin());
+  
+  while (NextNode) {
     
     ExplodedNode<ValueState>* LastNode = N;
-    N = *(N->pred_begin());
+    N = NextNode;    
+    NextNode = N->pred_empty() ? NULL : *(N->pred_begin());
     
     ProgramPoint P = N->getLocation();
     
@@ -171,7 +177,7 @@ void BugReporter::GeneratePathDiagnostic(PathDiagnostic& PD, ASTContext& Ctx,
             case Stmt::DefaultStmtClass: {
               
               os << "Control jumps to the 'default' case at line "
-              << SMgr.getLogicalLineNumber(S->getLocStart()) << ".\n";
+                 << SMgr.getLogicalLineNumber(S->getLocStart()) << ".\n";
               
               break;
             }
@@ -284,7 +290,15 @@ void BugReporter::GeneratePathDiagnostic(PathDiagnostic& PD, ASTContext& Ctx,
           break;
         }
       }
-    }  
+    }
+    else
+      for (BugReporterHelper** I = BegHelpers; I != EndHelpers; ++I) {
+
+        PathDiagnosticPiece* piece = (*I)->VisitNode(N, NextNode, G, Ctx);
+
+        if (piece)
+          PD.push_front(piece);
+      }
   }
 }
 
@@ -309,7 +323,9 @@ void BugReporter::EmitPathWarning(Diagnostic& Diag,
                                   ASTContext& Ctx,
                                   const BugDescription& B,
                                   ExplodedGraph<GRExprEngine>& G,
-                                  ExplodedNode<ValueState>* N) {
+                                  ExplodedNode<ValueState>* N,
+                                  BugReporterHelper** BegHelpers,
+                                  BugReporterHelper** EndHelpers) {
   
   if (!PDC) {
     EmitWarning(Diag, Ctx, B, N);
@@ -320,7 +336,7 @@ void BugReporter::EmitPathWarning(Diagnostic& Diag,
     return;
   
   PathDiagnostic D(B.getName());  
-  GeneratePathDiagnostic(D, Ctx, B, G, N);
+  GeneratePathDiagnostic(D, Ctx, B, G, N, BegHelpers, EndHelpers);
   
   if (!D.empty())  
     PDC->HandlePathDiagnostic(D);

@@ -46,6 +46,16 @@ public:
                          const SourceRange*& end) const;
 };
   
+class BugReporterHelper {
+public:
+  virtual ~BugReporterHelper() {}
+  
+  virtual PathDiagnosticPiece* VisitNode(ExplodedNode<ValueState>* N,
+                                         ExplodedNode<ValueState>* PrevN,
+                                         ExplodedGraph<GRExprEngine>& G,
+                                         ASTContext& Ctx) = 0;
+};
+  
 class BugReporter {
   llvm::SmallPtrSet<void*,10> CachedErrors;
   
@@ -56,7 +66,9 @@ public:
   void EmitPathWarning(Diagnostic& Diag, PathDiagnosticClient* PDC,
                        ASTContext& Ctx, const BugDescription& B,
                        ExplodedGraph<GRExprEngine>& G,
-                       ExplodedNode<ValueState>* N);
+                       ExplodedNode<ValueState>* N,
+                       BugReporterHelper** BegHelpers = NULL,
+                       BugReporterHelper** EndHelpers = NULL);
   
   void EmitWarning(Diagnostic& Diag, ASTContext& Ctx,
                    const BugDescription& B,
@@ -69,7 +81,9 @@ private:
   void GeneratePathDiagnostic(PathDiagnostic& PD, ASTContext& Ctx,
                               const BugDescription& B,
                               ExplodedGraph<GRExprEngine>& G,
-                              ExplodedNode<ValueState>* N);
+                              ExplodedNode<ValueState>* N,
+                              BugReporterHelper** BegHelpers = NULL,
+                              BugReporterHelper** EndHelpers = NULL);
 };
   
 } // end clang namespace
