@@ -1586,10 +1586,6 @@ bool GVN::processInstruction(Instruction *I, ValueNumberedSet &currAvail,
   if (isa<AllocationInst>(I))
     return false;
   
-  // Allocations are always unique, so don't bother value numbering them.
-  if (isa<AllocationInst>(I))
-    return false;
-  
   if (MemCpyInst* M = dyn_cast<MemCpyInst>(I)) {
     MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
 
