@@ -127,13 +127,13 @@ public:
 
   /// isLogicalShift - Return true if this is a logical shift left or a logical
   /// shift right.
-  inline bool isLogicalShift() {
+  inline bool isLogicalShift() const {
     return getOpcode() == Shl || getOpcode() == LShr;
   }
 
   /// isLogicalShift - Return true if this is a logical shift left or a logical
   /// shift right.
-  inline bool isArithmeticShift() {
+  inline bool isArithmeticShift() const {
     return getOpcode() == AShr;
   }
 
