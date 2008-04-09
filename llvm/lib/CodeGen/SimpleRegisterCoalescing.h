@@ -196,9 +196,25 @@ namespace llvm {
                             MachineBasicBlock *MBB,
                             unsigned DstReg, unsigned SrcReg);
 
-    /// isBackEdgeCopy - Returns true if CopyMI is a back edge copy.
+    /// CanCoalesceWithImpDef - Returns true if the specified copy instruction
+    /// from an implicit def to another register can be coalesced away.
+    bool CanCoalesceWithImpDef(MachineInstr *CopyMI,
+                               LiveInterval &li, LiveInterval &ImpLi) const;
+
+    /// RemoveCopiesFromValNo - The specified value# is defined by an implicit
+    /// def and it is being removed. Turn all copies from this value# into
+    /// identity copies so they will be removed.
+    void RemoveCopiesFromValNo(LiveInterval &li, VNInfo *VNI);
+
+    /// RangeIsDefinedByCopyFromReg - Return true if the specified live range of
+    /// the specified live interval is defined by a copy from the specified
+    /// register.
+    bool RangeIsDefinedByCopyFromReg(LiveInterval &li, LiveRange *LR,
+                                     unsigned Reg);
+
+    /// isBackEdgeCopy - Return true if CopyMI is a back edge copy.
     ///
-    bool isBackEdgeCopy(MachineInstr *CopyMI, unsigned DstReg);
+    bool isBackEdgeCopy(MachineInstr *CopyMI, unsigned DstReg) const;
 
     /// UpdateRegDefsUses - Replace all defs and uses of SrcReg to DstReg and
     /// update the subregister number if it is not zero. If DstReg is a
@@ -206,6 +222,8 @@ namespace llvm {
     /// being updated is not zero, make sure to set it to the correct physical
     /// subregister.
     void UpdateRegDefsUses(unsigned SrcReg, unsigned DstReg, unsigned SubIdx);
+
+    void RemoveDeadImpDef(unsigned Reg, LiveInterval &LI);
 
     /// RemoveUnnecessaryKills - Remove kill markers that are no longer accurate
     /// due to live range lengthening as the result of coalescing.

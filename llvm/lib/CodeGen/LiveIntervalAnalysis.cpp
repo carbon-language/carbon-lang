@@ -217,6 +217,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
     MachineInstr *CopyMI = NULL;
     unsigned SrcReg, DstReg;
     if (mi->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG ||
+        mi->getOpcode() == TargetInstrInfo::INSERT_SUBREG ||
         tii_->isMoveInstr(*mi, SrcReg, DstReg))
       CopyMI = mi;
     ValNo = interval.getNextValue(defIndex, CopyMI, VNInfoAllocator);
@@ -372,6 +373,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       MachineInstr *CopyMI = NULL;
       unsigned SrcReg, DstReg;
       if (mi->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG ||
+          mi->getOpcode() == TargetInstrInfo::INSERT_SUBREG ||
           tii_->isMoveInstr(*mi, SrcReg, DstReg))
         CopyMI = mi;
       ValNo = interval.getNextValue(defIndex, CopyMI, VNInfoAllocator);
@@ -459,6 +461,7 @@ void LiveIntervals::handleRegisterDef(MachineBasicBlock *MBB,
     MachineInstr *CopyMI = NULL;
     unsigned SrcReg, DstReg;
     if (MI->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG ||
+        MI->getOpcode() == TargetInstrInfo::INSERT_SUBREG ||
         tii_->isMoveInstr(*MI, SrcReg, DstReg))
       CopyMI = MI;
     handlePhysicalRegisterDef(MBB, MI, MIIdx, getOrCreateInterval(reg), CopyMI);
@@ -594,6 +597,8 @@ unsigned LiveIntervals::getVNInfoSourceReg(const VNInfo *VNI) const {
 
   if (VNI->copy->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG)
     return VNI->copy->getOperand(1).getReg();
+  if (VNI->copy->getOpcode() == TargetInstrInfo::INSERT_SUBREG)
+    return VNI->copy->getOperand(2).getReg();
   unsigned SrcReg, DstReg;
   if (tii_->isMoveInstr(*VNI->copy, SrcReg, DstReg))
     return SrcReg;
@@ -949,6 +954,8 @@ rewriteInstructionForSpills(const LiveInterval &li, const VNInfo *VNI,
           HasUse = false;
           HasDef = false;
           CanFold = false;
+          if (isRemoved(MI))
+            break;
           goto RestartInstruction;
         }
       } else {
@@ -1106,7 +1113,7 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
   unsigned end = getBaseIndex(I->end-1) + InstrSlots::NUM;
 
   // First collect all the def / use in this live range that will be rewritten.
-  // Make sure they are sorted according instruction index.
+  // Make sure they are sorted according to instruction index.
   std::vector<RewriteInfo> RewriteMIs;
   for (MachineRegisterInfo::reg_iterator ri = mri_->reg_begin(li.reg),
          re = mri_->reg_end(); ri != re; ) {
@@ -1533,7 +1540,7 @@ addIntervalsForSpills(const LiveInterval &li,
           }
         }
 
-        // Else tell the spiller to issue a spill.
+        // Otherwise tell the spiller to issue a spill.
         if (!Folded) {
           LiveRange *LR = &nI.ranges[nI.ranges.size()-1];
           bool isKill = LR->end == getStoreIndex(index);
