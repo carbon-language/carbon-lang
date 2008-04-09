@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | opt -gvn -form-memset-from-stores | llvm-dis | not grep store
-; RUN: llvm-as < %s | opt -gvn -form-memset-from-stores | llvm-dis | grep {call.*llvm.memset}
+; RUN: llvm-as < %s | opt -memcpyopt -form-memset-from-stores | llvm-dis | not grep store
+; RUN: llvm-as < %s | opt -memcpyopt -form-memset-from-stores | llvm-dis | grep {call.*llvm.memset}
 
 ; All the stores in this example should be merged into a single memset.
 

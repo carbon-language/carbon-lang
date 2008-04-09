@@ -169,6 +169,7 @@ void Optimize(Module* M) {
     addPass(Passes, createGlobalsModRefPass());      // IP alias analysis
 
     addPass(Passes, createLICMPass());               // Hoist loop invariants
+    addPass(Passes, createMemCpyOptPass());          // Remove dead memcpy's
     addPass(Passes, createGVNPass());                  // Remove redundancies
     addPass(Passes, createDeadStoreEliminationPass()); // Nuke dead stores
 

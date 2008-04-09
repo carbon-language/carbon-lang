@@ -305,6 +305,13 @@ FunctionPass *createGVNPass();
 
 //===----------------------------------------------------------------------===//
 //
+// MemCpyOpt - This pass performs optimizations related to eliminating memcpy
+// calls and/or combining multiple stores into memset's.
+//
+FunctionPass *createMemCpyOptPass();
+
+//===----------------------------------------------------------------------===//
+//
 // CodeGenPrepare - This pass prepares a function for instruction selection.
 //
 FunctionPass *createCodeGenPreparePass(const TargetLowering *TLI = 0);
