@@ -181,7 +181,9 @@ void MemoryDependenceAnalysis::nonLocalHelper(Instruction* query,
   
   // Current stack of the DFS
   SmallVector<BasicBlock*, 4> stack;
-  stack.push_back(block);
+  for (pred_iterator PI = pred_begin(block), PE = pred_end(block);
+       PI != PE; ++PI)
+    stack.push_back(*PI);
   
   // Do a basic DFS
   while (!stack.empty()) {
@@ -208,7 +210,7 @@ void MemoryDependenceAnalysis::nonLocalHelper(Instruction* query,
     // If we re-encounter the starting block, we still need to search it
     // because there might be a dependency in the starting block AFTER
     // the position of the query.  This is necessary to get loops right.
-    } else if (BB == block && stack.size() > 1) {
+    } else if (BB == block) {
       visited.insert(BB);
       
       Instruction* localDep = getDependency(query, 0, BB);
