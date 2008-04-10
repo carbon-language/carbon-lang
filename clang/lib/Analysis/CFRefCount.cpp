@@ -457,22 +457,27 @@ class VISIBILITY_HIDDEN RefVal {
   }
 
 public:  
-  enum Kind { Owned = 0, AcqOwned = 1, NotOwned = 2, Released = 3,
-              ErrorUseAfterRelease = 4, ErrorReleaseNotOwned = 5 };
+  enum Kind { Owned = 0, NotOwned = 1, Released = 2,
+              ErrorUseAfterRelease = 3, ErrorReleaseNotOwned = 4 };
     
   
-  Kind getKind() const { return (Kind) (Data & 0x5); }
+  Kind getKind() const { return (Kind) (Data & 0x7); }
 
   unsigned getCount() const {
-    assert (getKind() == Owned || getKind() == AcqOwned);
+    assert (getKind() == Owned || getKind() == NotOwned);
     return Data >> 3;
   }
   
   static bool isError(Kind k) { return k >= ErrorUseAfterRelease; }
   
-  static RefVal makeOwned(unsigned Count) { return RefVal(Owned, Count); }
-  static RefVal makeAcqOwned(unsigned Count) { return RefVal(AcqOwned, Count); }
-  static RefVal makeNotOwned() { return RefVal(NotOwned); }
+  static RefVal makeOwned(unsigned Count = 0) {
+    return RefVal(Owned, Count);
+  }
+  
+  static RefVal makeNotOwned(unsigned Count = 0) {
+    return RefVal(NotOwned, Count);
+  }
+  
   static RefVal makeReleased() { return RefVal(Released); }
   static RefVal makeUseAfterRelease() { return RefVal(ErrorUseAfterRelease); }
   static RefVal makeReleaseNotOwned() { return RefVal(ErrorReleaseNotOwned); }
@@ -486,17 +491,19 @@ public:
 void RefVal::print(std::ostream& Out) const {
   switch (getKind()) {
     default: assert(false);
-    case Owned:
-      Out << "Owned(" << getCount() << ")";
+    case Owned: { 
+      Out << "Owned";
+      unsigned cnt = getCount();
+      if (cnt) Out << " (+ " << cnt << ")";
       break;
+    }
       
-    case AcqOwned:
-      Out << "Acquired-Owned(" << getCount() << ")";
-      break;
-      
-    case NotOwned:
+    case NotOwned: {
       Out << "Not-Owned";
+      unsigned cnt = getCount();
+      if (cnt) Out << " (+ " << cnt << ")";
       break;
+    }
       
     case Released:
       Out << "Released";
@@ -748,7 +755,7 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
 
       ValueState StImpl = *St;
       RefBindings B = GetRefBindings(StImpl);
-      SetRefBindings(StImpl, RefBFactory.Add(B, Sym, RefVal::makeOwned(1)));
+      SetRefBindings(StImpl, RefBFactory.Add(B, Sym, RefVal::makeOwned()));
       
       St = StateMgr.SetRVal(StateMgr.getPersistentState(StImpl),
                             CE, lval::SymbolVal(Sym),
@@ -804,13 +811,9 @@ CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
 
         case RefVal::Owned:
           V = RefVal::makeOwned(V.getCount()+1); break;
-          
-        case RefVal::AcqOwned:
-          V = RefVal::makeAcqOwned(V.getCount()+1);
-          break;
-          
+                    
         case RefVal::NotOwned:
-          V = RefVal::makeAcqOwned(1);
+          V = RefVal::makeNotOwned(V.getCount()+1);
           break;
           
         case RefVal::Released:
@@ -825,21 +828,23 @@ CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
           assert (false);
           
         case RefVal::Owned: {
-          unsigned Count = V.getCount() - 1;
-          V = Count ? RefVal::makeOwned(Count) : RefVal::makeReleased();
+          signed Count = ((signed) V.getCount()) - 1;
+          V = Count >= 0 ? RefVal::makeOwned(Count) : RefVal::makeReleased();
           break;
         }
           
-        case RefVal::AcqOwned: {
-          unsigned Count = V.getCount() - 1;
-          V = Count ? RefVal::makeAcqOwned(Count) : RefVal::makeNotOwned();
+        case RefVal::NotOwned: {
+          signed Count = ((signed) V.getCount()) - 1;
+          
+          if (Count >= 0)
+            V = RefVal::makeNotOwned(Count);
+          else {
+            V = RefVal::makeReleaseNotOwned();
+            hasError = V.getKind();
+          }
+          
           break;
         }
-          
-        case RefVal::NotOwned:
-          V = RefVal::makeReleaseNotOwned();
-          hasError = V.getKind();
-          break;
 
         case RefVal::Released:
           V = RefVal::makeUseAfterRelease();
