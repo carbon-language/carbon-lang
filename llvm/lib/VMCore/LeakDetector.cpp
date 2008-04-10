@@ -79,22 +79,22 @@ namespace {
     const char* const Name;
   };
 
-  LeakDetectorImpl<void>  *Objects;
-  LeakDetectorImpl<Value> *LLVMObjects;
+  static LeakDetectorImpl<void>  *Objects;
+  static LeakDetectorImpl<Value> *LLVMObjects;
 
-  LeakDetectorImpl<void> &getObjects() {
+  static LeakDetectorImpl<void> &getObjects() {
     if (Objects == 0)
       Objects = new LeakDetectorImpl<void>("GENERIC");
     return *Objects;
   }
 
-  LeakDetectorImpl<Value> &getLLVMObjects() {
+  static LeakDetectorImpl<Value> &getLLVMObjects() {
     if (LLVMObjects == 0)
       LLVMObjects = new LeakDetectorImpl<Value>("LLVM");
     return *LLVMObjects;
   }
 
-  void clearGarbage() {
+  static void clearGarbage() {
     delete Objects;
     delete LLVMObjects;
     Objects = 0;

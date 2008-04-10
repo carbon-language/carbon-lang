@@ -78,20 +78,20 @@ namespace llvm {
 /* Put a bunch of private, handy routines in an anonymous namespace.  */
 namespace {
 
-  inline unsigned int
+  static inline unsigned int
   partCountForBits(unsigned int bits)
   {
     return ((bits) + integerPartWidth - 1) / integerPartWidth;
   }
 
   /* Returns 0U-9U.  Return values >= 10U are not digits.  */
-  inline unsigned int
+  static inline unsigned int
   decDigitValue(unsigned int c)
   {
     return c - '0';
   }
 
-  unsigned int
+  static unsigned int
   hexDigitValue(unsigned int c)
   {
     unsigned int r;
@@ -111,7 +111,7 @@ namespace {
     return -1U;
   }
 
-  inline void
+  static inline void
   assertArithmeticOK(const llvm::fltSemantics &semantics) {
     assert(semantics.arithmeticOK
            && "Compile-time arithmetic does not support these semantics");
@@ -122,7 +122,7 @@ namespace {
 
      If the exponent overflows, returns a large exponent with the
      appropriate sign.  */
-  int
+  static int
   readExponent(const char *p)
   {
     bool isNegative;
@@ -160,7 +160,7 @@ namespace {
 
   /* This is ugly and needs cleaning up, but I don't immediately see
      how whilst remaining safe.  */
-  int
+  static int
   totalExponent(const char *p, int exponentAdjustment)
   {
     integerPart unsignedExponent;
@@ -206,7 +206,7 @@ namespace {
     return exponent;
   }
 
-  const char *
+  static const char *
   skipLeadingZeroesAndAnyDot(const char *p, const char **dot)
   {
     *dot = 0;
@@ -242,7 +242,7 @@ namespace {
     int normalizedExponent;
   };
 
-  void
+  static void
   interpretDecimal(const char *p, decimalInfo *D)
   {
     const char *dot;
@@ -291,7 +291,7 @@ namespace {
   /* Return the trailing fraction of a hexadecimal number.
      DIGITVALUE is the first hex digit of the fraction, P points to
      the next digit.  */
-  lostFraction
+  static lostFraction
   trailingHexadecimalFraction(const char *p, unsigned int digitValue)
   {
     unsigned int hexDigit;
@@ -319,7 +319,7 @@ namespace {
 
   /* Return the fraction lost were a bignum truncated losing the least
      significant BITS bits.  */
-  lostFraction
+  static lostFraction
   lostFractionThroughTruncation(const integerPart *parts,
                                 unsigned int partCount,
                                 unsigned int bits)
@@ -341,7 +341,7 @@ namespace {
   }
 
   /* Shift DST right BITS bits noting lost fraction.  */
-  lostFraction
+  static lostFraction
   shiftRight(integerPart *dst, unsigned int parts, unsigned int bits)
   {
     lostFraction lost_fraction;
@@ -354,7 +354,7 @@ namespace {
   }
 
   /* Combine the effect of two lost fractions.  */
-  lostFraction
+  static lostFraction
   combineLostFractions(lostFraction moreSignificant,
                        lostFraction lessSignificant)
   {
@@ -375,7 +375,7 @@ namespace {
 
      See "How to Read Floating Point Numbers Accurately" by William D
      Clinger.  */
-  unsigned int
+  static unsigned int
   HUerrBound(bool inexactMultiply, unsigned int HUerr1, unsigned int HUerr2)
   {
     assert(HUerr1 < 2 || HUerr2 < 2 || (HUerr1 + HUerr2 < 8));
@@ -389,7 +389,7 @@ namespace {
   /* The number of ulps from the boundary (zero, or half if ISNEAREST)
      when the least significant BITS are truncated.  BITS cannot be
      zero.  */
-  integerPart
+  static integerPart
   ulpsFromBoundary(const integerPart *parts, unsigned int bits, bool isNearest)
   {
     unsigned int count, partBits;
@@ -434,7 +434,7 @@ namespace {
 
   /* Place pow(5, power) in DST, and return the number of parts used.
      DST must be at least one part larger than size of the answer.  */
-  unsigned int
+  static unsigned int
   powerOf5(integerPart *dst, unsigned int power)
   {
     static integerPart firstEightPowers[] = { 1, 5, 25, 125, 625, 3125,
@@ -505,7 +505,7 @@ namespace {
   /* Write out an integerPart in hexadecimal, starting with the most
      significant nibble.  Write out exactly COUNT hexdigits, return
      COUNT.  */
-  unsigned int
+  static unsigned int
   partAsHex (char *dst, integerPart part, unsigned int count,
              const char *hexDigitChars)
   {
@@ -523,7 +523,7 @@ namespace {
   }
 
   /* Write out an unsigned decimal integer.  */
-  char *
+  static char *
   writeUnsignedDecimal (char *dst, unsigned int n)
   {
     char buff[40], *p;
@@ -541,7 +541,7 @@ namespace {
   }
 
   /* Write out a signed decimal integer.  */
-  char *
+  static char *
   writeSignedDecimal (char *dst, int value)
   {
     if (value < 0) {

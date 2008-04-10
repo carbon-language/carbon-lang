@@ -2087,7 +2087,7 @@ namespace {
 
   /* Returns the integer part with the least significant BITS set.
      BITS cannot be zero.  */
-  inline integerPart
+  static inline integerPart
   lowBitMask(unsigned int bits)
   {
     assert (bits != 0 && bits <= integerPartWidth);
@@ -2096,14 +2096,14 @@ namespace {
   }
 
   /* Returns the value of the lower half of PART.  */
-  inline integerPart
+  static inline integerPart
   lowHalf(integerPart part)
   {
     return part & lowBitMask(integerPartWidth / 2);
   }
 
   /* Returns the value of the upper half of PART.  */
-  inline integerPart
+  static inline integerPart
   highHalf(integerPart part)
   {
     return part >> (integerPartWidth / 2);
@@ -2111,7 +2111,7 @@ namespace {
 
   /* Returns the bit number of the most significant set bit of a part.
      If the input number has no bits set -1U is returned.  */
-  unsigned int
+  static unsigned int
   partMSB(integerPart value)
   {
     unsigned int n, msb;
@@ -2136,7 +2136,7 @@ namespace {
 
   /* Returns the bit number of the least significant set bit of a
      part.  If the input number has no bits set -1U is returned.  */
-  unsigned int
+  static unsigned int
   partLSB(integerPart value)
   {
     unsigned int n, lsb;

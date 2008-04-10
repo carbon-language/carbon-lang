@@ -29,32 +29,32 @@ using namespace llvm;
 
 namespace {
 
-bool StackTraceRequested = false; 
+static bool StackTraceRequested = false; 
 
 /// InterruptFunction - The function to call if ctrl-c is pressed.
-void (*InterruptFunction)() = 0;
+static void (*InterruptFunction)() = 0;
 
-std::vector<sys::Path> *FilesToRemove = 0 ;
-std::vector<sys::Path> *DirectoriesToRemove = 0;
+static std::vector<sys::Path> *FilesToRemove = 0 ;
+static std::vector<sys::Path> *DirectoriesToRemove = 0;
 
 // IntSigs - Signals that may interrupt the program at any time.
-const int IntSigs[] = {
+static const int IntSigs[] = {
   SIGHUP, SIGINT, SIGQUIT, SIGPIPE, SIGTERM, SIGUSR1, SIGUSR2
 };
-const int *IntSigsEnd = IntSigs + sizeof(IntSigs) / sizeof(IntSigs[0]);
+static const int *IntSigsEnd = IntSigs + sizeof(IntSigs) / sizeof(IntSigs[0]);
 
 // KillSigs - Signals that are synchronous with the program that will cause it
 // to die.
-const int KillSigs[] = {
+static const int KillSigs[] = {
   SIGILL, SIGTRAP, SIGABRT, SIGFPE, SIGBUS, SIGSEGV, SIGSYS, SIGXCPU, SIGXFSZ
 #ifdef SIGEMT
   , SIGEMT
 #endif
 };
-const int *KillSigsEnd = KillSigs + sizeof(KillSigs) / sizeof(KillSigs[0]);
+static const int *KillSigsEnd = KillSigs + sizeof(KillSigs) / sizeof(KillSigs[0]);
 
 #ifdef HAVE_BACKTRACE
-void* StackTrace[256];
+static void* StackTrace[256];
 #endif
 
 // PrintStackTrace - In the case of a program crash or fault, print out a stack
@@ -62,7 +62,7 @@ void* StackTrace[256];
 //
 // On glibc systems we have the 'backtrace' function, which works nicely, but
 // doesn't demangle symbols.  
-void PrintStackTrace() {
+static void PrintStackTrace() {
 #ifdef HAVE_BACKTRACE
   // Use backtrace() to output a backtrace on Linux systems with glibc.
   int depth = backtrace(StackTrace, array_lengthof(StackTrace));
@@ -71,7 +71,7 @@ void PrintStackTrace() {
 }
 
 // SignalHandler - The signal handler that runs...
-RETSIGTYPE SignalHandler(int Sig) {
+static RETSIGTYPE SignalHandler(int Sig) {
   if (FilesToRemove != 0)
     while (!FilesToRemove->empty()) {
       FilesToRemove->back().eraseFromDisk(true);
@@ -103,7 +103,7 @@ RETSIGTYPE SignalHandler(int Sig) {
 }
 
 // Just call signal
-void RegisterHandler(int Signal) { 
+static void RegisterHandler(int Signal) { 
   signal(Signal, SignalHandler); 
 }
 
