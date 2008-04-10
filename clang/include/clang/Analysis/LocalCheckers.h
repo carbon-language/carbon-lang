@@ -30,7 +30,7 @@ void CheckUninitializedValues(CFG& cfg, ASTContext& Ctx, Diagnostic& Diags,
                               bool FullUninitTaint=false);
   
 GRTransferFuncs* MakeGRSimpleValsTF();
-GRTransferFuncs* MakeCFRefCountTF();
+GRTransferFuncs* MakeCFRefCountTF(ASTContext& Ctx);
   
 } // end namespace clang
 

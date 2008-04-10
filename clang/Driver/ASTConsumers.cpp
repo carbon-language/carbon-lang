@@ -636,6 +636,7 @@ ASTConsumer *clang::CreateUnitValsChecker(Diagnostic &Diags) {
 namespace {
   
 class CheckerConsumer : public CFGVisitor {
+protected:
   Diagnostic &Diags;
   ASTContext* Ctx;
   const std::string& HTMLDir;
@@ -755,7 +756,7 @@ public:
   virtual const char* getCheckerName() { return "CFRefCountChecker"; }
   
   virtual GRTransferFuncs* getTransferFunctions() {
-    return MakeCFRefCountTF();
+    return MakeCFRefCountTF(*Ctx);
   }
 };
 } // end anonymous namespace

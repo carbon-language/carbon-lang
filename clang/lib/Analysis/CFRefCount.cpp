@@ -37,14 +37,10 @@ namespace {
 
 namespace llvm {
   template <> struct FoldingSetTrait<ArgEffects> {
-    static void Profile(const ArgEffects& X, FoldingSetNodeID ID) {
+    static void Profile(const ArgEffects& X, FoldingSetNodeID& ID) {
       for (ArgEffects::const_iterator I = X.begin(), E = X.end(); I!= E; ++I)
         ID.AddInteger((unsigned) *I);
-    }
-    
-    static void Profile(ArgEffects& X, FoldingSetNodeID ID) {
-      Profile(X, ID);
-    }
+    }    
   };
 } // end llvm namespace
 
@@ -56,7 +52,7 @@ public:
 
 private:
   unsigned Data;
-  RetEffect(Kind k, unsigned D) { Data = (Data << 2) | (unsigned) k; }
+  RetEffect(Kind k, unsigned D) { Data = (D << 2) | (unsigned) k; }
   
 public:
 
@@ -64,7 +60,7 @@ public:
 
   unsigned getValue() const { 
     assert(getKind() == Alias);
-    return Data & ~0x3;
+    return Data >> 2;
   }
   
   static RetEffect MakeAlias(unsigned Idx) { return RetEffect(Alias, Idx); }
@@ -118,12 +114,12 @@ class CFRefSummaryManager {
   typedef llvm::FoldingSet<CFRefSummary>                SummarySetTy;
   typedef llvm::DenseMap<FunctionDecl*, CFRefSummary*>  SummaryMapTy;
   
-  SummarySetTy           SummarySet;
-  SummaryMapTy           SummaryMap;  
-  AESetTy                AESet;  
-  llvm::BumpPtrAllocator BPAlloc;
-  
-  ArgEffects             ScratchArgs;
+  ASTContext& Ctx;  
+  SummarySetTy SummarySet;
+  SummaryMapTy SummaryMap;  
+  AESetTy AESet;  
+  llvm::BumpPtrAllocator BPAlloc;  
+  ArgEffects ScratchArgs;
   
   
   ArgEffects*   getArgEffects();
@@ -138,7 +134,7 @@ class CFRefSummaryManager {
   CFRefSummary* getPersistentSummary(ArgEffects* AE, RetEffect RE);
   
 public:
-  CFRefSummaryManager() {}
+  CFRefSummaryManager(ASTContext& ctx) : Ctx(ctx) {}
   ~CFRefSummaryManager();
   
   CFRefSummary* getSummary(FunctionDecl* FD, ASTContext& Ctx);
@@ -306,19 +302,26 @@ CFRefSummary* CFRefSummaryManager::getCannedCFSummary(FunctionTypeProto* FT,
   const char* TDName = ArgT->getDecl()->getIdentifier()->getName();
   assert (TDName);
   
-  if (strcmp("CFTypeRef", TDName) == 0)
+  if (strcmp("CFTypeRef", TDName) != 0)
     return NULL;
   
   if (!ArgT->isPointerType())
     return NULL;
-  
-  // Check the return type.  It should also be "CFTypeRef".
-  
+
   QualType RetTy = FT->getResultType();
   
-  if (RetTy.getTypePtr() != ArgT)
-    return NULL;
-  
+  if (isRetain) {
+    // CFRetain: the return type should also be "CFTypeRef".
+    if (RetTy.getTypePtr() != ArgT)
+      return NULL;
+  }
+  else {
+    // CFRelease: the return type should be void.
+    
+    if (RetTy != Ctx.VoidTy)
+      return NULL;
+  }
+    
   // The function's interface checks out.  Generate a canned summary.
   
   assert (ScratchArgs.empty());
@@ -446,11 +449,11 @@ class VISIBILITY_HIDDEN RefVal {
   unsigned Data;
   
   RefVal(unsigned K, unsigned D) : Data((D << 3) | K) {
-    assert ((K & ~0x5) == 0x0);
+    assert ((K & ~0x7) == 0x0);
   }
   
   RefVal(unsigned K) : Data(K) {
-    assert ((K & ~0x5) == 0x0);
+    assert ((K & ~0x7) == 0x0);
   }
 
 public:  
@@ -554,7 +557,7 @@ class VISIBILITY_HIDDEN CFRefCount : public GRSimpleVals {
  
   
 public:
-  CFRefCount() {}
+  CFRefCount(ASTContext& Ctx) : Summaries(Ctx) {}
   virtual ~CFRefCount() {}
   
   virtual void RegisterChecks(GRExprEngine& Eng);
@@ -877,4 +880,6 @@ void BadRelease::EmitWarnings(BugReporter& BR) {
 // Transfer function creation for external clients.
 //===----------------------------------------------------------------------===//
 
-GRTransferFuncs* clang::MakeCFRefCountTF() { return new CFRefCount(); }  
+GRTransferFuncs* clang::MakeCFRefCountTF(ASTContext& Ctx) {
+  return new CFRefCount(Ctx);
+}  
