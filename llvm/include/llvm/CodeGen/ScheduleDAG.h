@@ -256,7 +256,7 @@ namespace llvm {
     DenseMap<SDNode*, std::vector<SUnit*> > SUnitMap;
                                           // SDNode to SUnit mapping (n -> n).
     std::vector<SUnit> SUnits;            // The scheduling units.
-    SmallSet<SDNode*, 16> CommuteSet;     // Nodes the should be commuted.
+    SmallSet<SDNode*, 16> CommuteSet;     // Nodes that should be commuted.
 
     ScheduleDAG(SelectionDAG &dag, MachineBasicBlock *bb,
                 const TargetMachine &tm);
