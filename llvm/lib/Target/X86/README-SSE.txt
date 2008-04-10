@@ -472,7 +472,13 @@ _doload64:
 	addl	$12, %esp
 	ret
 
-instead of movsd from the stack.
+instead of movsd from the stack.  This is actually not too bad to implement. The
+best way to do this is to implement a dag combine that turns 
+bitconvert(build_pair(load a, load b)) into one load of the right type.  The
+only trick to this is writing the predicate that determines that a/b are at the
+right offset from each other.  For the enterprising hacker, InferAlignment is a
+helpful place to start poking if interested.
+
 
 //===---------------------------------------------------------------------===//
 
