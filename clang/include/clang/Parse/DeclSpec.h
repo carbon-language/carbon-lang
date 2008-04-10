@@ -670,7 +670,7 @@ public:
 struct FieldDeclarator {
   Declarator D;
   Action::ExprTy *BitfieldSize;
-  FieldDeclarator(DeclSpec &DS) : D(DS, Declarator::MemberContext) {
+  explicit FieldDeclarator(DeclSpec &DS) : D(DS, Declarator::MemberContext) {
     BitfieldSize = 0;
   }
 };

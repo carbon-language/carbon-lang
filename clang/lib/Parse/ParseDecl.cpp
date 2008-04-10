@@ -677,7 +677,7 @@ ParseStructDeclaration(DeclSpec &DS,
   }
 
   // Read struct-declarators until we find the semicolon.
-  Fields.push_back(DS);
+  Fields.push_back(FieldDeclarator(DS));
   while (1) {
     FieldDeclarator &DeclaratorInfo = Fields.back();
     
@@ -708,7 +708,7 @@ ParseStructDeclaration(DeclSpec &DS,
     ConsumeToken();
     
     // Parse the next declarator.
-    Fields.push_back(DS);
+    Fields.push_back(FieldDeclarator(DS));
     
     // Attributes are only allowed on the second declarator.
     if (Tok.is(tok::kw___attribute))
