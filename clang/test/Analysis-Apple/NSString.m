@@ -1,4 +1,4 @@
-// RUN: clang -grsimple -verify %s
+// RUN: clang -checker-simple -verify %s
 
 #include <Foundation/NSString.h>
 #include <Foundation/NSObjCRuntime.h>

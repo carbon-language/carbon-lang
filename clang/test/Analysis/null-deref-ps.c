@@ -1,4 +1,4 @@
-// RUN: clang -grsimple -verify %s
+// RUN: clang -checker-simple -verify %s
 
 void f1(int *p) {  
   if (p) *p = 1;

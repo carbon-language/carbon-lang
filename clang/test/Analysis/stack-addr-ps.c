@@ -1,4 +1,4 @@
-// RUN: clang -grsimple -verify %s
+// RUN: clang -checker-simple -verify %s
 
 int* f1() {
   int x = 0;

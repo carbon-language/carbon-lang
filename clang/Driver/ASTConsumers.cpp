@@ -22,6 +22,8 @@
 #include "clang/AST/CFG.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/LocalCheckers.h"
+#include "clang/Analysis/PathSensitive/GRTransferFuncs.h"
+#include "clang/Analysis/PathSensitive/GRExprEngine.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -628,26 +630,105 @@ ASTConsumer *clang::CreateUnitValsChecker(Diagnostic &Diags) {
 }
 
 //===----------------------------------------------------------------------===//
+// CheckeRConsumer - Generic Driver for running intra-procedural path-sensitive
+//  analyses.
+
+namespace {
+  
+class CheckerConsumer : public CFGVisitor {
+  Diagnostic &Diags;
+  ASTContext* Ctx;
+  const std::string& HTMLDir;
+  bool Visualize;
+  bool TrimGraph;
+  llvm::OwningPtr<PathDiagnosticClient> PD;
+public:
+  CheckerConsumer(Diagnostic &diags, const std::string& fname,
+            const std::string& htmldir,
+            bool visualize, bool trim)
+    : CFGVisitor(fname), Diags(diags), HTMLDir(htmldir),
+      Visualize(visualize), TrimGraph(trim) {}
+  
+  virtual void Initialize(ASTContext &Context) { Ctx = &Context; }    
+  virtual void VisitCFG(CFG& C, Decl&);
+  virtual bool printFuncDeclStart() { return false; }
+
+  virtual const char* getCheckerName() = 0;
+  virtual GRTransferFuncs* getTransferFunctions() = 0;
+};
+} // end anonymous namespace
+
+void CheckerConsumer::VisitCFG(CFG& C, Decl& CD) {
+  
+  if (Diags.hasErrorOccurred())
+    return;
+  
+  SourceLocation Loc = CD.getLocation();
+  
+  if (!Loc.isFileID() ||
+      Loc.getFileID() != Ctx->getSourceManager().getMainFileID())
+    return;
+  
+  // Lazily create the diagnostic client.
+  
+  if (!HTMLDir.empty() && PD.get() == NULL)
+    PD.reset(CreateHTMLDiagnosticClient(HTMLDir));
+  
+
+  if (!Visualize) {
+    
+    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(&CD)) {
+      llvm::cerr << "ANALYZE: "
+      << Ctx->getSourceManager().getSourceName(FD->getLocation())
+      << ' '
+      << FD->getIdentifier()->getName()
+      << '\n';
+    }
+    else if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(&CD)) {
+      llvm::cerr << "ANALYZE (ObjC Method): "
+      << Ctx->getSourceManager().getSourceName(MD->getLocation())
+      << " '"
+      << MD->getSelector().getName() << "'\n";
+    }
+  }
+  else
+    llvm::cerr << '\n';    
+  
+  // Construct the analysis engine.
+  GRExprEngine Eng(C, CD, *Ctx);
+  
+  // Set base transfer functions.
+  llvm::OwningPtr<GRTransferFuncs> TF(getTransferFunctions());
+  Eng.setTransferFunctions(TF.get());
+  
+  // Execute the worklist algorithm.
+  Eng.ExecuteWorkList();
+  
+  // Display warnings.
+  Eng.EmitWarnings(Diags, PD.get());
+  
+#ifndef NDEBUG
+  if (Visualize) Eng.ViewGraph(TrimGraph);
+#endif
+}
+
+//===----------------------------------------------------------------------===//
 // GRSimpleVals - Perform intra-procedural, path-sensitive constant propagation.
 
 namespace {
-  class GRSimpleValsVisitor : public CFGVisitor {
-    Diagnostic &Diags;
-    ASTContext* Ctx;
-    const std::string& HTMLDir;
-    bool Visualize;
-    bool TrimGraph;
-  public:
-    GRSimpleValsVisitor(Diagnostic &diags, const std::string& fname,
-                        const std::string& htmldir,
-                        bool visualize, bool trim)
-      : CFGVisitor(fname), Diags(diags), HTMLDir(htmldir),
-        Visualize(visualize), TrimGraph(trim) {}
-    
-    virtual void Initialize(ASTContext &Context) { Ctx = &Context; }    
-    virtual void VisitCFG(CFG& C, Decl&);
-    virtual bool printFuncDeclStart() { return false; }
-  };
+class GRSimpleValsVisitor : public CheckerConsumer {
+public:
+  GRSimpleValsVisitor(Diagnostic &diags, const std::string& fname,
+                      const std::string& htmldir,
+                      bool visualize, bool trim)
+  : CheckerConsumer(diags, fname, htmldir, visualize, trim) {}
+
+  virtual const char* getCheckerName() { return "GRSimpleVals"; }
+  
+  virtual GRTransferFuncs* getTransferFunctions() {
+    return MakeGRSimpleValsTF();
+  }
+};
 } // end anonymous namespace
 
 ASTConsumer* clang::CreateGRSimpleVals(Diagnostic &Diags,
@@ -659,92 +740,33 @@ ASTConsumer* clang::CreateGRSimpleVals(Diagnostic &Diags,
                                  Visualize, TrimGraph);
 }
 
-void GRSimpleValsVisitor::VisitCFG(CFG& C, Decl& CD) {
-  
-  if (Diags.hasErrorOccurred())
-    return;
-  
-  SourceLocation Loc = CD.getLocation();
-
-  if (!Loc.isFileID() ||
-       Loc.getFileID() != Ctx->getSourceManager().getMainFileID())
-    return;
-
-  if (!Visualize) {
-    
-    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(&CD)) {
-      llvm::cerr << "ANALYZE: "
-                 << Ctx->getSourceManager().getSourceName(FD->getLocation())
-                 << ' '
-                 << FD->getIdentifier()->getName()
-                 << '\n';
-    }
-    else if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(&CD)) {
-      llvm::cerr << "ANALYZE (ObjC Method): "
-        << Ctx->getSourceManager().getSourceName(MD->getLocation())
-        << " '"
-        << MD->getSelector().getName() << "'\n";
-    }
-
-#if 0
-    llvm::Timer T("GRSimpleVals");
-    T.startTimer();
-    unsigned size = RunGRSimpleVals(C, CD, *Ctx, Diags, NULL, false, false);
-    T.stopTimer();    
-    llvm::cerr << size << ' ' << T.getWallTime() << '\n';
-#else
-    llvm::OwningPtr<PathDiagnosticClient> PD;
-    
-    if (!HTMLDir.empty())
-      PD.reset(CreateHTMLDiagnosticClient(HTMLDir));
-    
-    RunGRSimpleVals(C, CD, *Ctx, Diags, PD.get(), false, false);
-#endif
-  }
-  else {  
-    llvm::cerr << '\n';    
-    RunGRSimpleVals(C, CD, *Ctx, Diags, NULL, Visualize, TrimGraph);
-  }    
-}
-
 
 //===----------------------------------------------------------------------===//
 // Core Foundation Reference Counting Checker
 
 namespace {
-  class CFRefCountCheckerVisitor : public CFGVisitor {
-    Diagnostic &Diags;
-    ASTContext* Ctx;
-    const std::string& HTMLDir;
-    
-  public:
-    CFRefCountCheckerVisitor(Diagnostic &diags, const std::string& fname,
-                             const std::string& htmldir)
-      : CFGVisitor(fname), Diags(diags), HTMLDir(htmldir) {}
-    
-    virtual void Initialize(ASTContext &Context) { Ctx = &Context; }    
-    virtual void VisitCFG(CFG& C, Decl&);
-    virtual bool printFuncDeclStart() { return false; }
-  };
+class CFRefCountCheckerVisitor : public CheckerConsumer {
+public:
+  CFRefCountCheckerVisitor(Diagnostic &diags, const std::string& fname,
+                      const std::string& htmldir,
+                      bool visualize, bool trim)
+  : CheckerConsumer(diags, fname, htmldir, visualize, trim) {}
+  
+  virtual const char* getCheckerName() { return "CFRefCountChecker"; }
+  
+  virtual GRTransferFuncs* getTransferFunctions() {
+    return MakeCFRefCountTF();
+  }
+};
 } // end anonymous namespace
-
 
 ASTConsumer* clang::CreateCFRefChecker(Diagnostic &Diags,
                                        const std::string& FunctionName,
-                                       const std::string& HTMLDir) {
+                                       const std::string& HTMLDir,
+                                       bool Visualize, bool TrimGraph) {
   
-  return new CFRefCountCheckerVisitor(Diags, FunctionName, HTMLDir);
-}
-
-void CFRefCountCheckerVisitor::VisitCFG(CFG& C, Decl& CD) {
-    
-  SourceLocation Loc = CD.getLocation();
-  
-  if (!Loc.isFileID() ||
-      Loc.getFileID() != Ctx->getSourceManager().getMainFileID())
-    return;
-     
-  CheckCFRefCount(C, CD, *Ctx, Diags, NULL);
+  return new CFRefCountCheckerVisitor(Diags, FunctionName, HTMLDir,
+                                      Visualize, TrimGraph);
 }
 
 //===----------------------------------------------------------------------===//

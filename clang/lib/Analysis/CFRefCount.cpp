@@ -874,22 +874,7 @@ void BadRelease::EmitWarnings(BugReporter& BR) {
 }
 
 //===----------------------------------------------------------------------===//
-// Driver for the CFRefCount Checker.
+// Transfer function creation for external clients.
 //===----------------------------------------------------------------------===//
 
-namespace clang {
-  
-void CheckCFRefCount(CFG& cfg, Decl& CD, ASTContext& Ctx,
-                     Diagnostic& Diag, PathDiagnosticClient* PD) {
-  
-  if (Diag.hasErrorOccurred())
-    return;
-  
-  GRExprEngine Eng(cfg, CD, Ctx);
-  CFRefCount TF;
-  Eng.setTransferFunctions(TF);
-  Eng.ExecuteWorkList();
-  Eng.EmitWarnings(Diag, PD);
-}
-
-} // end clang namespace
+GRTransferFuncs* clang::MakeCFRefCountTF() { return new CFRefCount(); }  

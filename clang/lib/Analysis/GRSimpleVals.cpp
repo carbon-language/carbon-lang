@@ -19,6 +19,7 @@
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/Analysis/PathSensitive/ValueState.h"
 #include "clang/Analysis/PathSensitive/BugReporter.h"
+#include "clang/Analysis/LocalCheckers.h"
 #include "llvm/Support/Compiler.h"
 #include <sstream>
 
@@ -310,36 +311,10 @@ void GRSimpleVals::RegisterChecks(GRExprEngine& Eng) {
 }
 
 //===----------------------------------------------------------------------===//
-// Analysis Driver.
+// Transfer Function creation for External clients.
 //===----------------------------------------------------------------------===//
 
-namespace clang {
-  
-unsigned RunGRSimpleVals(CFG& cfg, Decl& CD, ASTContext& Ctx,
-                         Diagnostic& Diag, PathDiagnosticClient* PD,
-                         bool Visualize, bool TrimGraph) {
-
-  // Construct the analysis engine.
-  GRExprEngine Eng(cfg, CD, Ctx);
-  
-  // Set base transfer functions.
-  GRSimpleVals GRSV;
-  Eng.setTransferFunctions(GRSV);
-  
-  // Execute the worklist algorithm.
-  Eng.ExecuteWorkList();
-  
-  // Display warnings.
-  Eng.EmitWarnings(Diag, PD);
-  
-#ifndef NDEBUG
-  if (Visualize) Eng.ViewGraph(TrimGraph);
-#endif
-  
-  return Eng.getGraph().size();
-}
-  
-} // end clang namespace
+GRTransferFuncs* clang::MakeGRSimpleValsTF() { return new GRSimpleVals(); }  
 
 //===----------------------------------------------------------------------===//
 // Transfer function for Casts.

@@ -122,11 +122,9 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Flag warnings of stores to dead variables."),
              clEnumValN(WarnUninitVals, "warn-uninit-values",
                         "Flag warnings of uses of unitialized variables."),
-             clEnumValN(AnalysisGRSimpleVals, "grsimple",
+             clEnumValN(AnalysisGRSimpleVals, "checker-simple",
                         "Perform path-sensitive constant propagation."),
-             clEnumValN(AnalysisGRSimpleValsView, "grsimple-view",
-                        "View results of path-sensitive constant propagation."),
-             clEnumValN(CheckerCFRef, "check-cfref",
+             clEnumValN(CheckerCFRef, "checker-cfref",
                         "Run the Core Foundation reference count checker."),
              clEnumValN(TestSerialization, "test-pickling",
                         "Run prototype serialization code."),
@@ -152,6 +150,10 @@ OutputFile("o",
 static llvm::cl::opt<bool>
 VerifyDiagnostics("verify",
                   llvm::cl::desc("Verify emitted diagnostics and warnings."));
+
+static llvm::cl::opt<bool>
+VisualizeEG("visualize-egraph",
+            llvm::cl::desc("Display static analysis Exploded Graph."));
 
 static llvm::cl::opt<std::string>
 HTMLDiag("html-diags",
@@ -480,9 +482,8 @@ AnalyzeSpecificFunction("analyze-function",
                 llvm::cl::desc("Run analysis on specific function."));
 
 static llvm::cl::opt<bool>
-TrimGraph("trim-path-graph",
+TrimGraph("trim-egraph",
       llvm::cl::desc("Only show error-related paths in the analysis graph."));
-
 
 //===----------------------------------------------------------------------===//
 // Target Triple Processing.
@@ -1052,14 +1053,12 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
       return CreateUnitValsChecker(Diag);
       
     case AnalysisGRSimpleVals:
-      return CreateGRSimpleVals(Diag, AnalyzeSpecificFunction, OutputFile);
-      
-    case AnalysisGRSimpleValsView:
       return CreateGRSimpleVals(Diag, AnalyzeSpecificFunction, OutputFile,
-                                true, TrimGraph);
+                                VisualizeEG, TrimGraph);
       
     case CheckerCFRef:
-      return CreateCFRefChecker(Diag, AnalyzeSpecificFunction, OutputFile);
+      return CreateCFRefChecker(Diag, AnalyzeSpecificFunction, OutputFile,
+                                VisualizeEG, TrimGraph);
       
     case TestSerialization:
       return CreateSerializationTest(Diag, FileMgr, LangOpts);
