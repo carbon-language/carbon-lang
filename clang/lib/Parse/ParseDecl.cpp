@@ -657,14 +657,14 @@ void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
 ///         declarator[opt] ':' constant-expression
 /// [GNU]   declarator[opt] ':' constant-expression attributes[opt]
 ///
-void Parser::ParseStructDeclaration(DeclTy *TagDecl,
-  llvm::SmallVectorImpl<DeclTy*> &FieldDecls) {
+void Parser::
+ParseStructDeclaration(DeclSpec &DS,
+                       llvm::SmallVectorImpl<FieldDeclarator> &Fields) {
   // FIXME: When __extension__ is specified, disable extension diagnostics.
-  if (Tok.is(tok::kw___extension__))
+  while (Tok.is(tok::kw___extension__))
     ConsumeToken();
   
   // Parse the common specifier-qualifiers-list piece.
-  DeclSpec DS;
   SourceLocation DSStart = Tok.getLocation();
   ParseSpecifierQualifierList(DS);
   // TODO: Does specifier-qualifier list correctly check that *something* is
@@ -677,33 +677,27 @@ void Parser::ParseStructDeclaration(DeclTy *TagDecl,
   }
 
   // Read struct-declarators until we find the semicolon.
-  Declarator DeclaratorInfo(DS, Declarator::MemberContext);
-
+  Fields.push_back(DS);
   while (1) {
+    FieldDeclarator &DeclaratorInfo = Fields.back();
+    
     /// struct-declarator: declarator
     /// struct-declarator: declarator[opt] ':' constant-expression
     if (Tok.isNot(tok::colon))
-      ParseDeclarator(DeclaratorInfo);
+      ParseDeclarator(DeclaratorInfo.D);
     
-    ExprTy *BitfieldSize = 0;
     if (Tok.is(tok::colon)) {
       ConsumeToken();
       ExprResult Res = ParseConstantExpression();
       if (Res.isInvalid)
         SkipUntil(tok::semi, true, true);
       else
-        BitfieldSize = Res.Val;
+        DeclaratorInfo.BitfieldSize = Res.Val;
     }
     
     // If attributes exist after the declarator, parse them.
     if (Tok.is(tok::kw___attribute))
-      DeclaratorInfo.AddAttributes(ParseAttributes());
-    
-    // Install the declarator into the current TagDecl.
-    DeclTy *Field = Actions.ActOnField(CurScope, TagDecl,
-                                       DS.getSourceRange().getBegin(),
-                                       DeclaratorInfo, BitfieldSize);
-    FieldDecls.push_back(Field);
+      DeclaratorInfo.D.AddAttributes(ParseAttributes());
     
     // If we don't have a comma, it is either the end of the list (a ';')
     // or an error, bail out.
@@ -714,11 +708,11 @@ void Parser::ParseStructDeclaration(DeclTy *TagDecl,
     ConsumeToken();
     
     // Parse the next declarator.
-    DeclaratorInfo.clear();
+    Fields.push_back(DS);
     
     // Attributes are only allowed on the second declarator.
     if (Tok.is(tok::kw___attribute))
-      DeclaratorInfo.AddAttributes(ParseAttributes());
+      Fields.back().D.AddAttributes(ParseAttributes());
   }
 }
 
@@ -743,7 +737,8 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
          DeclSpec::getSpecifierName((DeclSpec::TST)TagType));
 
   llvm::SmallVector<DeclTy*, 32> FieldDecls;
-  
+  llvm::SmallVector<FieldDeclarator, 8> FieldDeclarators;
+
   // While we still have something to read, read the declarations in the struct.
   while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {
     // Each iteration of this loop reads one struct-declaration.
@@ -754,7 +749,22 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
       ConsumeToken();
       continue;
     }
-    ParseStructDeclaration(TagDecl, FieldDecls);
+
+    // Parse all the comma separated declarators.
+    DeclSpec DS;
+    FieldDeclarators.clear();
+    ParseStructDeclaration(DS, FieldDeclarators);
+    
+    // Convert them all to fields.
+    for (unsigned i = 0, e = FieldDeclarators.size(); i != e; ++i) {
+      FieldDeclarator &FD = FieldDeclarators[i];
+      // Install the declarator into the current TagDecl.
+      DeclTy *Field = Actions.ActOnField(CurScope, TagDecl,
+                                         DS.getSourceRange().getBegin(),
+                                         FD.D, FD.BitfieldSize);
+      FieldDecls.push_back(Field);
+    }
+    
 
     if (Tok.is(tok::semi)) {
       ConsumeToken();

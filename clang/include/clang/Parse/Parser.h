@@ -21,6 +21,7 @@ namespace clang {
   class DeclSpec;
   class ObjCDeclSpec;
   class Declarator;
+  class FieldDeclarator;
   class AttributeList;
   class Scope;
 
@@ -453,8 +454,8 @@ private:
   void ParseStructUnionSpecifier(DeclSpec &DS);
   void ParseStructUnionBody(SourceLocation StartLoc, unsigned TagType,
                             DeclTy *TagDecl);
-  void ParseStructDeclaration(DeclTy *TagDecl,
-                              llvm::SmallVectorImpl<DeclTy*> &FieldDecls);
+  void ParseStructDeclaration(DeclSpec &DS,
+                              llvm::SmallVectorImpl<FieldDeclarator> &Fields);
                               
   bool isDeclarationSpecifier() const;
   bool isTypeSpecifierQualifier() const;

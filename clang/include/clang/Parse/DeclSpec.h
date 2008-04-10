@@ -665,6 +665,17 @@ public:
   bool getInvalidType() const { return InvalidType; }
 };
 
+/// FieldDeclarator - This little struct is used to capture information about
+/// structure field declarators, which is basically just a bitfield size.
+struct FieldDeclarator {
+  Declarator D;
+  Action::ExprTy *BitfieldSize;
+  FieldDeclarator(DeclSpec &DS) : D(DS, Declarator::MemberContext) {
+    BitfieldSize = 0;
+  }
+};
+
+
 } // end namespace clang
 
 #endif

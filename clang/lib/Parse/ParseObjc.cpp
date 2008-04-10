@@ -378,16 +378,31 @@ Parser::DeclTy *Parser::ParseObjCPropertyDecl(DeclTy *interfaceDecl,
                                               SourceLocation AtLoc) {
   assert(Tok.isObjCAtKeyword(tok::objc_property) &&
          "ParseObjCPropertyDecl(): Expected @property");
-  ObjCDeclSpec DS;
+  ObjCDeclSpec OCDS;
   ConsumeToken(); // the "property" identifier
   // Parse property attribute list, if any. 
   if (Tok.is(tok::l_paren)) {
     // property has attribute list.
-    ParseObjCPropertyAttribute(DS);
+    ParseObjCPropertyAttribute(OCDS);
   }
   // Parse declaration portion of @property.
   llvm::SmallVector<DeclTy*, 8> PropertyDecls;
-  ParseStructDeclaration(interfaceDecl, PropertyDecls);
+  
+  // Parse all the comma separated declarators.
+  DeclSpec DS;
+  llvm::SmallVector<FieldDeclarator, 8> FieldDeclarators;
+  ParseStructDeclaration(DS, FieldDeclarators);
+  
+  // Convert them all to fields.
+  for (unsigned i = 0, e = FieldDeclarators.size(); i != e; ++i) {
+    FieldDeclarator &FD = FieldDeclarators[i];
+    // Install the declarator into interfaceDecl.
+    DeclTy *Field = Actions.ActOnField(CurScope, interfaceDecl,
+                                       DS.getSourceRange().getBegin(),
+                                       FD.D, FD.BitfieldSize);
+    PropertyDecls.push_back(Field);
+  }
+  
   if (Tok.is(tok::semi)) 
     ConsumeToken();
   else {
@@ -395,7 +410,7 @@ Parser::DeclTy *Parser::ParseObjCPropertyDecl(DeclTy *interfaceDecl,
     SkipUntil(tok::r_brace, true, true);
   }
   return Actions.ActOnAddObjCProperties(AtLoc,  &PropertyDecls[0],
-                                        PropertyDecls.size(), DS);
+                                        PropertyDecls.size(), OCDS);
 }
 
 ///   objc-method-proto:
@@ -756,10 +771,10 @@ bool Parser::ParseObjCProtocolReferences(
 void Parser::ParseObjCClassInstanceVariables(DeclTy *interfaceDecl,
                                              SourceLocation atLoc) {
   assert(Tok.is(tok::l_brace) && "expected {");
-  llvm::SmallVector<DeclTy*, 16> IvarDecls;
   llvm::SmallVector<DeclTy*, 32> AllIvarDecls;
   llvm::SmallVector<tok::ObjCKeywordKind, 32> AllVisibilities;
-  
+  llvm::SmallVector<FieldDeclarator, 8> FieldDeclarators;
+
   SourceLocation LBraceLoc = ConsumeBrace(); // the "{"
   
   tok::ObjCKeywordKind visibility = tok::objc_private;
@@ -773,6 +788,7 @@ void Parser::ParseObjCClassInstanceVariables(DeclTy *interfaceDecl,
       ConsumeToken();
       continue;
     }
+    
     // Set the default visibility to private.
     if (Tok.is(tok::at)) { // parse objc-visibility-spec
       ConsumeToken(); // eat the @ sign
@@ -786,16 +802,25 @@ void Parser::ParseObjCClassInstanceVariables(DeclTy *interfaceDecl,
         continue; 
       default:
         Diag(Tok, diag::err_objc_illegal_visibility_spec);
-        ConsumeToken();
         continue;
       }
     }
-    ParseStructDeclaration(interfaceDecl, IvarDecls);
-    for (unsigned i = 0; i < IvarDecls.size(); i++) {
-      AllIvarDecls.push_back(IvarDecls[i]);
+    
+    // Parse all the comma separated declarators.
+    DeclSpec DS;
+    FieldDeclarators.clear();
+    ParseStructDeclaration(DS, FieldDeclarators);
+    
+    // Convert them all to fields.
+    for (unsigned i = 0, e = FieldDeclarators.size(); i != e; ++i) {
+      FieldDeclarator &FD = FieldDeclarators[i];
+      // Install the declarator into interfaceDecl.
+      DeclTy *Field = Actions.ActOnField(CurScope, interfaceDecl,
+                                         DS.getSourceRange().getBegin(),
+                                         FD.D, FD.BitfieldSize);
+      AllIvarDecls.push_back(Field);
       AllVisibilities.push_back(visibility);
     }
-    IvarDecls.clear();
     
     if (Tok.is(tok::semi)) {
       ConsumeToken();
