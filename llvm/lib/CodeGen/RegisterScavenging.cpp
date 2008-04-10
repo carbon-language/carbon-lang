@@ -55,22 +55,28 @@ static bool RedefinesSuperRegPart(const MachineInstr *MI,
 }
 
 /// setUsed - Set the register and its sub-registers as being used.
-void RegScavenger::setUsed(unsigned Reg) {
+void RegScavenger::setUsed(unsigned Reg, bool ImpDef) {
   RegsAvailable.reset(Reg);
+  ImplicitDefed[Reg] = ImpDef;
 
   for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
-       unsigned SubReg = *SubRegs; ++SubRegs)
+       unsigned SubReg = *SubRegs; ++SubRegs) {
     RegsAvailable.reset(SubReg);
+    ImplicitDefed[SubReg] = ImpDef;
+  }
 }
 
 /// setUnused - Set the register and its sub-registers as being unused.
 void RegScavenger::setUnused(unsigned Reg, const MachineInstr *MI) {
   RegsAvailable.set(Reg);
+  ImplicitDefed.reset(Reg);
 
   for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
        unsigned SubReg = *SubRegs; ++SubRegs)
-    if (!RedefinesSuperRegPart(MI, Reg, TRI))
+    if (!RedefinesSuperRegPart(MI, Reg, TRI)) {
       RegsAvailable.set(SubReg);
+      ImplicitDefed.reset(SubReg);
+    }
 }
 
 void RegScavenger::enterBasicBlock(MachineBasicBlock *mbb) {
@@ -86,6 +92,7 @@ void RegScavenger::enterBasicBlock(MachineBasicBlock *mbb) {
   if (!MBB) {
     NumPhysRegs = TRI->getNumRegs();
     RegsAvailable.resize(NumPhysRegs);
+    ImplicitDefed.resize(NumPhysRegs);
 
     // Create reserved registers bitvector.
     ReservedRegs = TRI->getReservedRegs(MF);
@@ -216,6 +223,7 @@ void RegScavenger::forward() {
   setUnused(ChangedRegs);
 
   // Process defs.
+  bool IsImpDef = MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF;
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
 
@@ -240,12 +248,13 @@ void RegScavenger::forward() {
     if (RedefinesSuperRegPart(MI, MO, TRI))
       continue;
 
-    // Implicit def is allowed to "re-define" any register.
+    // Implicit def is allowed to "re-define" any register. Similarly,
+    // implicitly defined registers can be clobbered.
     assert((isReserved(Reg) || isUnused(Reg) ||
-            MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF ||
+            IsImpDef || isImplicitlyDefined(Reg) ||
             isLiveInButUnusedBefore(Reg, MI, MBB, TRI, MRI)) &&
            "Re-defining a live register!");
-    setUsed(Reg);
+    setUsed(Reg, IsImpDef);
   }
 }
 

@@ -53,6 +53,10 @@ class RegScavenger {
   /// available, unset means the register is currently being used.
   BitVector RegsAvailable;
 
+  /// ImplicitDefed - If bit is set that means the register is defined by an
+  /// implicit_def instructions. That means it can be clobbered at will.
+  BitVector ImplicitDefed;
+
 public:
   RegScavenger()
     : MBB(NULL), NumPhysRegs(0), Tracking(false),
@@ -92,15 +96,26 @@ public:
   bool isUsed(unsigned Reg) const   { return !RegsAvailable[Reg]; }
   bool isUnused(unsigned Reg) const { return RegsAvailable[Reg]; }
 
+  bool isImplicitlyDefined(unsigned Reg) const { return ImplicitDefed[Reg]; }
+
   /// getRegsUsed - return all registers currently in use in used.
   void getRegsUsed(BitVector &used, bool includeReserved);
 
   /// setUsed / setUnused - Mark the state of one or a number of registers.
   ///
-  void setUsed(unsigned Reg);
-  void setUsed(BitVector Regs)   { RegsAvailable &= ~Regs; }
+  void setUsed(unsigned Reg, bool ImpDef = false);
+  void setUsed(BitVector Regs, bool ImpDef = false) {
+    RegsAvailable &= ~Regs;
+    if (ImpDef)
+      ImplicitDefed |= Regs;
+    else
+      ImplicitDefed &= ~Regs;
+  }
   void setUnused(unsigned Reg, const MachineInstr *MI);
-  void setUnused(BitVector Regs) { RegsAvailable |= Regs; }
+  void setUnused(BitVector Regs) {
+    RegsAvailable |= Regs;
+    ImplicitDefed &= ~Regs;
+  }
 
   /// FindUnusedReg - Find a unused register of the specified register class
   /// from the specified set of registers. It return 0 is none is found.
