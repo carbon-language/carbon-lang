@@ -1179,9 +1179,17 @@ public:
       // pow(x, 0.0) -> 1.0
       return ReplaceCallWith(CI, ConstantFP::get(CI->getType(), 1.0));
     } else if (Op2C->isExactlyValue(0.5)) {
+      // FIXME: This is not safe for -0.0 and -inf.  This can only be done when
+      // 'unsafe' math optimizations are allowed.
+      // x    pow(x, 0.5)  sqrt(x)
+      // ---------------------------------------------
+      // -0.0    +0.0       -0.0
+      // -inf    +inf       NaN
+#if 0
       // pow(x, 0.5) -> sqrt(x)
       Value *Sqrt = CallInst::Create(SLC.get_sqrt(), Op1, "sqrt", CI);
       return ReplaceCallWith(CI, Sqrt);
+#endif
     } else if (Op2C->isExactlyValue(1.0)) {
       // pow(x, 1.0) -> x
       return ReplaceCallWith(CI, Op1);
